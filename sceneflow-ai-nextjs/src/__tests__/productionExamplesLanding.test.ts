@@ -210,15 +210,14 @@ describe('Production Examples i18n contract', () => {
     expect(documentary.solutionPillars?.[0]?.title).toBe('Era-Specific Visual Accuracy')
   })
 
-  it('includes a localization comparison card with locale toggle', () => {
-    const localization = enMessages.productionShowcase.cards.find((card) => card.id === 'localization')!
-    expect(localization.title).toContain('Beyond Dubbing')
-    expect(localization.subtitle).toContain('Houston')
-    expect(localization.subtitle).toContain('Paulo')
-    expect(localization.badge).toBe('Localized')
-    expect((localization as Record<string, unknown>).localeToggle).toBe(true)
-    expect((localization as Record<string, unknown>).locales).toHaveLength(2)
-    expect(localization.solutionPillars).toHaveLength(3)
+  it('uses a training series card in place of a localization comparison', () => {
+    const training = enMessages.productionShowcase.cards.find((card) => card.id === 'training')!
+    expect(training.title).toContain('Training Series')
+    expect(training.subtitle).toContain('instructor')
+    expect(training.badge).toBe('Curriculum-Ready')
+    expect(training).not.toHaveProperty('localeToggle')
+    expect(training.solutionPillars).toHaveLength(4)
+    expect(enMessages.productionShowcase.cards.some((card) => card.id === 'localization')).toBe(false)
   })
 
   it('keeps card ids stable', () => {
@@ -226,7 +225,7 @@ describe('Production Examples i18n contract', () => {
       'drama',
       'animation',
       'documentary',
-      'localization',
+      'training',
     ])
   })
 
@@ -417,7 +416,7 @@ describe('Production showcase videos', () => {
     expect(card).not.toContain('TabsContent')
     expect(card).not.toContain('ScreeningRoomPreview')
     expect(card).not.toContain('getProductionShowcaseVideoLocales')
-    expect(card).toContain('TrailerEntry')
+    expect(card).toContain('TrailerPlayer')
     expect(card).toContain('media.longformHref')
     expect(card).toContain('screeningRoomInstruction')
     expect(card).not.toContain('aria-label="Play preview"')
@@ -429,30 +428,35 @@ describe('Production showcase videos', () => {
     }
   })
 
-  it('shows the Screening Room player and collapsible solutions on each card', () => {
+  it('shows the trailer, fullscreen control, and pipeline links without a solutions dropdown', () => {
     const card = readSource('src/components/landing/ProductionStyleCard.tsx')
     const section = readSource('src/components/landing/ProductionExamplesSection.tsx')
+    const player = readSource('src/components/landing/TrailerPlayer.tsx')
 
-    expect(card).toContain('solutionsSectionOpen')
-    expect(card).toContain('aria-expanded={solutionsSectionOpen}')
-    expect(card).toContain('showSolutionsSectionLabel')
-    expect(card).toContain('hideSolutionsSectionLabel')
-    expect(card).toContain('TrailerEntry')
+    expect(card).not.toContain('solutionsSectionOpen')
+    expect(card).not.toContain('showSolutionsSectionLabel')
+    expect(card).not.toContain('localeToggle')
+    expect(card).not.toContain('SolutionPillarBody')
+    expect(card).toContain('TrailerPlayer')
+    expect(card).toContain('enterFullscreenLabel')
+    expect(card).toContain('aria-label="Screening Room"')
+    expect(card).toContain('roughDoorLabel')
     expect(card).toContain('explorerHandoff')
-    expect(card).toContain('Accordion')
-    expect(card).toContain('type="single"')
-    expect(card).toContain('collapsible')
-    expect(card).toContain('SolutionPillarBody')
-    expect(card).toContain('border-rose-500/20')
-    expect(card).toContain('border-indigo-500/20')
-    expect(card).toContain('solutionPillars')
-    expect(section).toContain('frictionLabel')
-    expect(section).toContain('solutionPillarLabel')
-    expect(section).toContain("t('showSolutionsSection')")
-    expect(section).toContain("t('hideSolutionsSection')")
+    expect(player).toContain('enterPhoneVideoFullscreen')
+    expect(player).toContain('requestFullscreen')
+    expect(player).toContain('controlsList="nodownload"')
+    expect(player).not.toContain('nofullscreen')
+    expect(player).toContain('type="video/webm"')
+    expect(player).toContain('type="video/mp4"')
+    expect(section).not.toContain("t('showSolutionsSection')")
+    expect(section).not.toContain("t('hideSolutionsSection')")
     expect(section).toContain("t('explorerHandoff')")
     expect(section).toContain("t('watchLongform')")
     expect(section).toContain("t('trailerLabel')")
+    expect(section).toContain("t('roughDoor')")
+    expect(section).toContain("t('enterFullscreen')")
+    expect(section).toContain("t('screeningRoomGroup')")
+    expect(section).toContain('MobileAccordion')
   })
 })
 
@@ -477,26 +481,34 @@ describe('Production showcase screening embeds', () => {
     expect(LANDING_SAMPLE.storyboardShareSlug).toBe('')
   })
 
-  it('ships the drama walk first and hides later play until that master exists', () => {
+  it('ships a trailer and pipeline doors on every example before the longform master exists', () => {
     expect(getProductionExampleMedia('drama').isFlagship).toBe(true)
-    expect(getProductionExampleMedia('drama').trailerSrc).toBeNull()
+    expect(getProductionExampleMedia('drama').trailerSrc).toBe('/videos/cinematic-drama-trailer.webm')
+    expect(getProductionExampleMedia('drama').trailerMp4Src).toContain(
+      'e3401893-6250-41c2-aca5-4425434c57ab.mp4'
+    )
     expect(getProductionExampleMedia('drama').longformHref).toBeNull()
     expect(getProductionExampleMedia('animation').isFlagship).toBe(false)
-    expect(getProductionExampleMedia('documentary').trailerSrc).toBeNull()
-    expect(getProductionExampleMedia('localization', 'houston').longformHref).toBeNull()
-    expect([...PRODUCTION_WALK_IDS]).toEqual([
-      'drama',
-      'animation',
-      'documentary',
-      'localization-houston',
-      'localization-saopaulo',
+    expect(getProductionExampleMedia('animation').trailerSrc).toBeNull()
+    expect(getProductionExampleMedia('documentary').longformHref).toBeNull()
+    expect(getProductionExampleMedia('training').longformHref).toBeNull()
+    expect(getProductionExampleMedia('training').doors.map((door) => door.href)).toEqual([
+      '/blueprint/share/example-training-blueprint',
+      '/share/script-resonance/example-training-script',
+      '/share/screening-room/example-training?playback=animatic&cut=previs',
+      '/share/screening-room/example-training?playback=video&cut=rough',
+      '/share/screening-room/example-training?playback=video&cut=scenes',
+      '/share/screening-room/example-training?cut=trailer',
+      '/share/screening-room/example-training?playback=video&cut=final',
     ])
+    expect([...PRODUCTION_WALK_IDS]).toEqual(['drama', 'animation', 'documentary', 'training'])
 
     const empty: ProductionPipelineWalk = {
       blueprintShareToken: '',
       scriptResonanceShareToken: '',
       screeningRoomSlug: '',
       trailerSrc: '',
+      trailerMp4Src: '',
       longformRuntimeLabel: '',
       longformPublished: false,
     }
@@ -505,13 +517,27 @@ describe('Production showcase screening embeds', () => {
     ) as Record<ProductionWalkId, ProductionPipelineWalk>
     walks.animation = {
       ...empty,
-      trailerSrc: 'https://example.com/animation-trailer.mp4',
+      trailerSrc: 'https://example.com/animation-trailer.webm',
+      trailerMp4Src: 'https://example.com/animation-trailer.mp4',
       screeningRoomSlug: 'animation-master',
       longformRuntimeLabel: '22 min',
-      longformPublished: true,
+      longformPublished: false,
+      blueprintShareToken: 'animation-blueprint',
+      scriptResonanceShareToken: 'animation-script',
     }
-    expect(buildProductionExampleMedia(walks, 'animation').trailerSrc).toBeNull()
-    expect(buildProductionExampleMedia(walks, 'animation').longformHref).toBeNull()
+    const animationBeforeMaster = buildProductionExampleMedia(walks, 'animation')
+    expect(animationBeforeMaster.trailerSrc).toBe('https://example.com/animation-trailer.webm')
+    expect(animationBeforeMaster.trailerMp4Src).toBe('https://example.com/animation-trailer.mp4')
+    expect(animationBeforeMaster.longformHref).toBeNull()
+    expect(animationBeforeMaster.doors.map((door) => door.id)).toEqual([
+      'blueprint',
+      'script-ar',
+      'previs',
+      'rough',
+      'scenes',
+      'trailer',
+      'final',
+    ])
 
     walks.drama = {
       ...empty,
@@ -532,26 +558,49 @@ describe('Production showcase screening embeds', () => {
       'blueprint',
       'script-ar',
       'previs',
+      'rough',
       'scenes',
       'trailer',
+      'final',
     ])
 
+    walks.animation = { ...walks.animation, longformPublished: true }
     const animation = buildProductionExampleMedia(walks, 'animation')
-    expect(animation.trailerSrc).toBe('https://example.com/animation-trailer.mp4')
+    expect(animation.trailerSrc).toBe('https://example.com/animation-trailer.webm')
     expect(animation.longformHref).toBe(
       '/share/screening-room/animation-master?playback=video&cut=final'
     )
   })
 
-  it('keeps pipeline demo shares empty until listen-only tokens are published', () => {
-    expect(PRODUCTION_PIPELINE_DEMO.blueprintShareToken).toBe('')
-    expect(PRODUCTION_PIPELINE_DEMO.scriptResonanceShareToken).toBe('')
-    expect(PRODUCTION_PIPELINE_DEMO.screeningRoomSlug).toBe('')
-    expect(getPipelineDemoBlueprintHref()).toBeNull()
-    expect(getPipelineDemoScriptARHref()).toBeNull()
+  it('uses placeholder share links until listen-only tokens are published', () => {
+    expect(PRODUCTION_PIPELINE_DEMO.blueprintShareToken).toBe('example-drama-blueprint')
+    expect(PRODUCTION_PIPELINE_DEMO.scriptResonanceShareToken).toBe('example-drama-script')
+    expect(PRODUCTION_PIPELINE_DEMO.screeningRoomSlug).toBe('example-drama')
+    expect(getPipelineDemoBlueprintHref()).toBe('/blueprint/share/example-drama-blueprint')
+    expect(getPipelineDemoScriptARHref()).toBe('/share/script-resonance/example-drama-script')
     expect(getPipelineDemoScreeningHref()).toBeNull()
     expect(matchPipelineDemoStage('')).toBeNull()
     expect(matchPipelineDemoStage('50IuESZwELvHkNd4bTaULp1pli56zXWg')).toBeNull()
+    expect(matchPipelineDemoStage('example-drama-blueprint')).toBe('blueprint')
+    expect(matchPipelineDemoStage('example-drama-script')).toBe('script-ar')
+    expect(matchPipelineDemoStage('example-drama')).toBe('screening-room')
+  })
+
+  it('renders a prepared stage for example share tokens instead of fetching a project', () => {
+    for (const relativePath of [
+      'src/components/blueprint/BlueprintShareViewer.tsx',
+      'src/components/vision/ScriptResonanceShareViewer.tsx',
+      'src/app/share/screening-room/[shareToken]/page.tsx',
+    ]) {
+      const source = readSource(relativePath)
+      expect(source, relativePath).toContain('isPipelinePlaceholderToken')
+      expect(source, relativePath).toContain('PipelinePlaceholderStage')
+    }
+
+    const page = readSource('src/app/share/screening-room/[shareToken]/page.tsx')
+    expect(page).toContain("value === 'rough'")
+    expect(page).toContain('TrailerPlayer')
+    expect(page).toContain('getPipelineTrailerMp4Src')
   })
 
   it('falls back to the placeholder when a configured share is gone', () => {

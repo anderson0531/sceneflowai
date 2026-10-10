@@ -4,8 +4,7 @@ export const PRODUCTION_SHOWCASE_SCREENING_SLUGS: Record<string, string> = {
   drama: '',
   animation: '',
   documentary: '',
-  'localization-houston': '',
-  'localization-saopaulo': '',
+  training: '',
 } as const
 
 export type ProductionShowcaseScreeningCardId =

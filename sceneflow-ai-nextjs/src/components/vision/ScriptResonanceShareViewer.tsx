@@ -4,6 +4,8 @@ import React, { useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
 import { SceneFlowStudioBrand } from '@/components/layout/SceneFlowStudioBrand'
 import { PipelineDemoChrome } from '@/components/landing/PipelineDemoChrome'
+import { PipelinePlaceholderStage } from '@/components/landing/PipelinePlaceholderStage'
+import { isPipelinePlaceholderToken } from '@/config/landing/productionPipelineDemo'
 import { BlueprintShareLanguageControls } from '@/components/blueprint/BlueprintShareLanguageControls'
 import { BlueprintSectionAudioPlayer } from '@/components/blueprint/BlueprintSectionAudioPlayer'
 import { cn } from '@/lib/utils'
@@ -38,7 +40,13 @@ export function ScriptResonanceShareViewer({ token }: { token: string }) {
   >({})
   const [tab, setTab] = useState<ScriptARShareSection>('overview')
 
+  const placeholder = isPipelinePlaceholderToken(token)
+
   useEffect(() => {
+    if (placeholder) {
+      setLoading(false)
+      return
+    }
     let cancelled = false
     ;(async () => {
       try {
@@ -65,7 +73,7 @@ export function ScriptResonanceShareViewer({ token }: { token: string }) {
     return () => {
       cancelled = true
     }
-  }, [token])
+  }, [token, placeholder])
 
   const audio = audioByLang[language] || {}
   const copy = translations[language] || {}
@@ -142,6 +150,10 @@ export function ScriptResonanceShareViewer({ token }: { token: string }) {
       </div>
     )
   }, [copy, review, tab])
+
+  if (placeholder) {
+    return <PipelinePlaceholderStage tokenOrSlug={token} />
+  }
 
   if (loading) {
     return (

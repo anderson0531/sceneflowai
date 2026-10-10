@@ -19,20 +19,19 @@ import { getSignupUrlForTier } from '@/lib/billing/checkoutIntent'
 
 function exampleLabels(t: ReturnType<typeof useTranslations<'productionShowcase'>>) {
   return {
-    workflowLabel: t('workflowLabel'),
     ctaLabel: t('startProduction'),
     screeningRoomInstruction: t('screeningRoomInstruction'),
-    frictionLabel: t('frictionLabel'),
-    solutionPillarLabel: t('solutionPillarLabel'),
-    showSolutionsSectionLabel: t('showSolutionsSection'),
-    hideSolutionsSectionLabel: t('hideSolutionsSection'),
     trailerLabel: t('trailerLabel'),
     watchLongformLabel: t('watchLongform'),
     blueprintDoorLabel: t('blueprintDoor'),
     scriptArDoorLabel: t('scriptArDoor'),
+    screeningRoomLabel: t('screeningRoomGroup'),
     previsDoorLabel: t('previsDoor'),
+    roughDoorLabel: t('roughDoor'),
     scenesDoorLabel: t('scenesDoor'),
     finalDoorLabel: t('finalDoor'),
+    enterFullscreenLabel: t('enterFullscreen'),
+    exitFullscreenLabel: t('exitFullscreen'),
     explorerHandoff: t('explorerHandoff'),
   }
 }

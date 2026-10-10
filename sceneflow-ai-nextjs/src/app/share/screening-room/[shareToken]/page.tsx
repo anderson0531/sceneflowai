@@ -6,8 +6,12 @@ import { ScreeningRoomV2 } from '@/components/vision/ScreeningRoomV2'
 import { readFinalCutSelection } from '@/hooks/final-cut/useFinalCutSelection'
 import { Loader, AlertCircle } from 'lucide-react'
 import { PipelineDemoChrome } from '@/components/landing/PipelineDemoChrome'
+import { PipelinePlaceholderStage } from '@/components/landing/PipelinePlaceholderStage'
+import { TrailerPlayer } from '@/components/landing/TrailerPlayer'
 import {
+  getPipelineTrailerMp4Src,
   getPipelineTrailerSrc,
+  isPipelinePlaceholderToken,
   type ScreeningCut,
 } from '@/config/landing/productionPipelineDemo'
 
@@ -18,7 +22,13 @@ function parsePlaybackMode(value: string | null): 'animatic' | 'video' | 'auto' 
 }
 
 function parseScreeningCut(value: string | null): ScreeningCut | null {
-  if (value === 'previs' || value === 'scenes' || value === 'trailer' || value === 'final') {
+  if (
+    value === 'previs' ||
+    value === 'rough' ||
+    value === 'scenes' ||
+    value === 'trailer' ||
+    value === 'final'
+  ) {
     return value
   }
   return null
@@ -29,7 +39,7 @@ function playbackForCut(
   playbackParam: string | null
 ): 'animatic' | 'video' | 'auto' {
   if (cut === 'previs') return 'animatic'
-  if (cut === 'scenes' || cut === 'final') return 'video'
+  if (cut === 'rough' || cut === 'scenes' || cut === 'final') return 'video'
   return parsePlaybackMode(playbackParam)
 }
 
@@ -58,10 +68,13 @@ function SharedScreeningRoomPageInner({ params }: { params: Promise<{ shareToken
   const initialLanguage = searchParams.get('lang') || undefined
   const activeCut = parseScreeningCut(searchParams.get('cut'))
   const playbackMode = playbackForCut(activeCut, searchParams.get('playback'))
+  const placeholder = isPipelinePlaceholderToken(shareToken)
   const trailerSrc = activeCut === 'trailer' ? getPipelineTrailerSrc(shareToken) : null
+  const trailerMp4Src = activeCut === 'trailer' ? getPipelineTrailerMp4Src(shareToken) : null
+  const hasTrailer = Boolean(trailerSrc || trailerMp4Src)
 
   useEffect(() => {
-    if (trailerSrc) {
+    if (placeholder || hasTrailer) {
       setLoading(false)
       return
     }
@@ -85,27 +98,29 @@ function SharedScreeningRoomPageInner({ params }: { params: Promise<{ shareToken
     }
 
     loadSharedProject()
-  }, [shareToken, trailerSrc])
+  }, [shareToken, placeholder, hasTrailer])
 
   const finalCutSelection = useMemo(
     () => (projectData ? readFinalCutSelection(projectData.metadata) : null),
     [projectData]
   )
 
-  if (trailerSrc) {
+  if (placeholder && !hasTrailer) {
+    return <PipelinePlaceholderStage tokenOrSlug={shareToken} activeCut={activeCut} />
+  }
+
+  if (hasTrailer) {
     return (
       <div className="min-h-screen bg-black">
         <div className="relative z-[60]">
           <PipelineDemoChrome tokenOrSlug={shareToken} activeCut="trailer" />
         </div>
         <div className="flex min-h-[70vh] items-center justify-center p-4">
-          <video
-            key={trailerSrc}
-            src={trailerSrc}
-            controls
-            playsInline
-            className="max-h-[80vh] w-full max-w-5xl rounded-lg"
-            aria-label="Trailer"
+          <TrailerPlayer
+            webmSrc={trailerSrc}
+            mp4Src={trailerMp4Src}
+            label="Trailer"
+            className="max-h-[80vh] max-w-5xl"
           />
         </div>
       </div>

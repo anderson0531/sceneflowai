@@ -1,31 +1,24 @@
 'use client'
 
-import React, { useState } from 'react'
+import React from 'react'
 import { motion } from 'framer-motion'
 import {
-  AlertCircle,
   ArrowRight,
-  ChevronDown,
-  ChevronUp,
   Clapperboard,
   Film,
-  Globe,
+  GraduationCap,
   Palette,
   Sparkles,
   Target,
 } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from '@/components/ui/accordion'
 import { getLoginUrl } from '@/lib/auth/postLoginRedirect'
 import {
   getProductionExampleMedia,
   type ProductionExampleDoor,
+  type ProductionExampleDoorId,
 } from '@/config/landing/productionPipelineDemo'
+import { TrailerPlayer } from '@/components/landing/TrailerPlayer'
 
 export type SolutionPillar = {
   title: string
@@ -33,12 +26,6 @@ export type SolutionPillar = {
   friction: string
   solutionHeadline: string
   solution: string
-}
-
-export type LocaleOption = {
-  id: string
-  label: string
-  lang: string
 }
 
 export type ProductionStyleCardData = {
@@ -50,8 +37,6 @@ export type ProductionStyleCardData = {
   solutionPillars?: SolutionPillar[]
   benefit?: string
   screeningRoomPreview: string
-  localeToggle?: boolean
-  locales?: LocaleOption[]
 }
 
 type CardStyle = {
@@ -88,8 +73,8 @@ const CARD_STYLES: Record<string, CardStyle> = {
     badge: 'bg-rose-500/20 text-rose-400',
     ctaGradient: 'from-rose-500 to-amber-500',
   },
-  localization: {
-    icon: Globe,
+  training: {
+    icon: GraduationCap,
     surface: 'from-emerald-500/10 to-teal-500/5',
     border: 'border-emerald-500/30',
     accent: 'text-emerald-400',
@@ -107,88 +92,53 @@ const FALLBACK_STYLE: CardStyle = {
   ctaGradient: 'from-slate-500 to-slate-600',
 }
 
-function TrailerEntry({ src, label }: { src: string | null; label: string }) {
-  return (
-    <figure className="mb-4 min-w-0">
-      <figcaption className="mb-2 text-[10px] font-semibold uppercase tracking-widest text-gray-400">
-        {label}
-      </figcaption>
-      {src ? (
-        <video
-          key={src}
-          src={src}
-          className="aspect-video w-full rounded-xl bg-black object-contain"
-          controls
-          playsInline
-          preload="metadata"
-          controlsList="nodownload"
-          onContextMenu={(event) => event.preventDefault()}
-          aria-label={label}
-        />
-      ) : (
-        <div className="flex aspect-video w-full items-center justify-center rounded-xl border border-slate-700/50 bg-gradient-to-br from-slate-900 via-slate-950 to-indigo-950">
-          <p className="text-sm font-medium text-slate-300">{label}</p>
-        </div>
-      )}
-    </figure>
-  )
-}
+const PRIMARY_DOORS: ProductionExampleDoorId[] = ['blueprint', 'script-ar']
 
 function PipelineDoors({
   doors,
   labels,
+  screeningRoomLabel,
 }: {
   doors: ProductionExampleDoor[]
-  labels: Record<ProductionExampleDoor['id'], string>
+  labels: Record<ProductionExampleDoorId, string>
+  screeningRoomLabel: string
 }) {
   if (doors.length === 0) return null
+  const primary = doors.filter((door) => PRIMARY_DOORS.includes(door.id))
+  const cuts = doors.filter((door) => !PRIMARY_DOORS.includes(door.id))
   return (
-    <nav aria-label="Production pipeline" className="mb-4 flex flex-wrap gap-2">
-      {doors.map((door) => (
-        <a
-          key={door.id}
-          href={door.href}
-          className="rounded-full border border-slate-600/80 px-3 py-1.5 text-xs font-medium text-slate-200 transition hover:border-cyan-400/50 hover:text-white"
-        >
-          {labels[door.id]}
-        </a>
-      ))}
-    </nav>
-  )
-}
-
-function SolutionPillarBody({
-  pillar,
-  frictionLabel,
-  solutionPillarLabel,
-}: {
-  pillar: SolutionPillar
-  frictionLabel: string
-  solutionPillarLabel: string
-}) {
-  return (
-    <div className="space-y-3 px-1 pb-1">
-      <div className="rounded-xl border border-rose-500/20 bg-rose-500/[0.06] p-3">
-        <div className="mb-2 inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-rose-300">
-          <AlertCircle className="h-4 w-4 shrink-0" />
-          {frictionLabel}
+    <div className="mb-4 space-y-3">
+      {primary.length > 0 ? (
+        <nav aria-label="Production pipeline" className="flex flex-wrap gap-2">
+          {primary.map((door) => (
+            <a
+              key={door.id}
+              href={door.href}
+              className="rounded-full border border-slate-600/80 px-3 py-1.5 text-xs font-medium text-slate-200 transition hover:border-cyan-400/50 hover:text-white"
+            >
+              {labels[door.id]}
+            </a>
+          ))}
+        </nav>
+      ) : null}
+      {cuts.length > 0 ? (
+        <div>
+          <p className="mb-2 text-[10px] font-semibold uppercase tracking-widest text-gray-400">
+            {screeningRoomLabel}
+          </p>
+          <nav aria-label="Screening Room" className="flex flex-wrap gap-2">
+            {cuts.map((door) => (
+              <a
+                key={door.id}
+                href={door.href}
+                className="rounded-full border border-slate-600/80 px-3 py-1.5 text-xs font-medium text-slate-200 transition hover:border-cyan-400/50 hover:text-white"
+              >
+                {labels[door.id]}
+              </a>
+            ))}
+          </nav>
         </div>
-        <p className="text-sm leading-relaxed text-gray-300">
-          <span className="font-semibold text-white">{pillar.frictionHeadline}</span>{' '}
-          {pillar.friction}
-        </p>
-      </div>
-
-      <div className="rounded-xl border border-indigo-500/20 bg-indigo-500/[0.06] p-3">
-        <div className="mb-2 inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-indigo-300">
-          <Sparkles className="h-4 w-4 shrink-0" />
-          {solutionPillarLabel}
-        </div>
-        <p className="text-sm leading-relaxed text-gray-300">
-          <span className="font-semibold text-white">{pillar.solutionHeadline}</span>{' '}
-          {pillar.solution}
-        </p>
-      </div>
+      ) : null}
     </div>
   )
 }
@@ -196,54 +146,49 @@ function SolutionPillarBody({
 export function ProductionStyleCard({
   card,
   index,
-  workflowLabel,
   ctaLabel,
   screeningRoomInstruction,
-  frictionLabel,
-  solutionPillarLabel,
-  showSolutionsSectionLabel,
-  hideSolutionsSectionLabel,
   trailerLabel,
   watchLongformLabel,
   blueprintDoorLabel,
   scriptArDoorLabel,
+  screeningRoomLabel,
   previsDoorLabel,
+  roughDoorLabel,
   scenesDoorLabel,
   finalDoorLabel,
+  enterFullscreenLabel,
+  exitFullscreenLabel,
   explorerHandoff,
 }: {
   card: ProductionStyleCardData
   index: number
-  workflowLabel: string
   ctaLabel: string
   screeningRoomInstruction?: string
-  frictionLabel?: string
-  solutionPillarLabel?: string
-  showSolutionsSectionLabel?: string
-  hideSolutionsSectionLabel?: string
   trailerLabel: string
   watchLongformLabel: string
   blueprintDoorLabel: string
   scriptArDoorLabel: string
+  screeningRoomLabel: string
   previsDoorLabel: string
+  roughDoorLabel: string
   scenesDoorLabel: string
   finalDoorLabel: string
+  enterFullscreenLabel: string
+  exitFullscreenLabel: string
   explorerHandoff: string
 }) {
   const style = CARD_STYLES[card.id] ?? FALLBACK_STYLE
   const Icon = style.icon
-  const [solutionsSectionOpen, setSolutionsSectionOpen] = useState(false)
-  const [activeLocale, setActiveLocale] = useState(card.locales?.[0]?.id ?? '')
-
-  const walkLocale = card.localeToggle ? activeLocale : undefined
-  const media = getProductionExampleMedia(card.id, walkLocale)
+  const media = getProductionExampleMedia(card.id)
   const watchLabel = media.longformRuntimeLabel
     ? `${watchLongformLabel} · ${media.longformRuntimeLabel}`
     : watchLongformLabel
-  const doorLabels: Record<ProductionExampleDoor['id'], string> = {
+  const doorLabels: Record<ProductionExampleDoorId, string> = {
     blueprint: blueprintDoorLabel,
     'script-ar': scriptArDoorLabel,
     previs: previsDoorLabel,
+    rough: roughDoorLabel,
     scenes: scenesDoorLabel,
     trailer: trailerLabel,
     final: finalDoorLabel,
@@ -273,22 +218,30 @@ export function ProductionStyleCard({
         {card.badge}
       </div>
 
-      {media.isFlagship ? (
-        <div className="pt-6 sm:pt-0">
-          <TrailerEntry src={media.trailerSrc} label={trailerLabel} />
-          {media.longformHref ? (
-            <a
-              href={media.longformHref}
-              className={`mb-4 inline-flex w-full items-center justify-center rounded-xl bg-gradient-to-r px-4 py-3 text-sm font-semibold text-white ${style.ctaGradient}`}
-            >
-              {watchLabel}
-            </a>
-          ) : null}
-          <PipelineDoors doors={media.doors} labels={doorLabels} />
-        </div>
-      ) : null}
+      <div className="pt-6 sm:pt-0">
+        <figure className="mb-4 min-w-0">
+          <figcaption className="mb-2 text-[10px] font-semibold uppercase tracking-widest text-gray-400">
+            {trailerLabel}
+          </figcaption>
+          <TrailerPlayer
+            webmSrc={media.trailerSrc}
+            mp4Src={media.trailerMp4Src}
+            label={trailerLabel}
+            enterFullscreenLabel={enterFullscreenLabel}
+            exitFullscreenLabel={exitFullscreenLabel}
+          />
+        </figure>
+        {media.longformHref ? (
+          <a
+            href={media.longformHref}
+            className={`mb-4 inline-flex w-full items-center justify-center rounded-xl bg-gradient-to-r px-4 py-3 text-sm font-semibold text-white ${style.ctaGradient}`}
+          >
+            {watchLabel}
+          </a>
+        ) : null}
+      </div>
 
-      <div className="mb-4 flex items-start gap-4 pt-6 sm:pt-0 sm:pr-28">
+      <div className="mb-4 flex items-start gap-4 sm:pr-28">
         <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-gray-900/50">
           <Icon className={`h-6 w-6 ${style.accent}`} />
         </div>
@@ -298,95 +251,15 @@ export function ProductionStyleCard({
         </div>
       </div>
 
-      {/* Locale toggle for localization comparison card */}
-      {card.localeToggle && card.locales && card.locales.length > 1 && (
-        <div className="mb-3 flex gap-1 rounded-lg border border-gray-700/50 bg-gray-900/60 p-1">
-          {card.locales.map((locale) => (
-            <button
-              key={locale.id}
-              type="button"
-              onClick={() => setActiveLocale(locale.id)}
-              className={`flex-1 rounded-md px-3 py-2 text-xs font-medium transition-all sm:text-sm ${
-                activeLocale === locale.id
-                  ? `bg-gradient-to-r ${style.ctaGradient} text-white shadow`
-                  : 'text-gray-400 hover:text-white hover:bg-slate-700/50'
-              }`}
-            >
-              {locale.label}
-            </button>
-          ))}
-        </div>
-      )}
+      <PipelineDoors
+        doors={media.doors}
+        labels={doorLabels}
+        screeningRoomLabel={screeningRoomLabel}
+      />
 
-      {!media.isFlagship ? <PipelineDoors doors={media.doors} labels={doorLabels} /> : null}
-
-      {screeningRoomInstruction && media.isFlagship ? (
+      {screeningRoomInstruction ? (
         <p className="mb-4 text-xs text-gray-500 italic">{screeningRoomInstruction}</p>
       ) : null}
-
-      {/* Collapsible solutions */}
-      <div className="mb-4 min-w-0">
-        <button
-          type="button"
-          onClick={() => setSolutionsSectionOpen((open) => !open)}
-          aria-expanded={solutionsSectionOpen}
-          className={`mb-3 flex w-full items-center justify-between rounded-lg border border-gray-700/50 bg-gray-900/60 px-3 py-2 text-left text-sm font-medium text-gray-200 transition-colors hover:border-gray-600 hover:bg-gray-900/80 ${style.accent}`}
-        >
-          <span>
-            {solutionsSectionOpen
-              ? (hideSolutionsSectionLabel ?? 'Hide Solutions')
-              : (showSolutionsSectionLabel ?? 'Show Solutions')}
-          </span>
-          {solutionsSectionOpen ? (
-            <ChevronUp className="h-4 w-4 shrink-0 text-gray-400" />
-          ) : (
-            <ChevronDown className="h-4 w-4 shrink-0 text-gray-400" />
-          )}
-        </button>
-
-        {solutionsSectionOpen ? (
-          <div className="space-y-2">
-            <p className="text-xs uppercase tracking-wider text-gray-500">{workflowLabel}</p>
-            {card.solutionPillars && card.solutionPillars.length > 0 ? (
-              <Accordion type="single" collapsible className="space-y-2">
-                {card.solutionPillars.map((pillar) => (
-                  <AccordionItem
-                    key={pillar.title}
-                    value={pillar.title}
-                    className="overflow-hidden rounded-lg border border-gray-700/30 bg-gray-900/40 px-3 border-b-0"
-                  >
-                    <AccordionTrigger
-                      className={`py-3 text-sm font-semibold hover:no-underline ${style.accent}`}
-                    >
-                      {pillar.title}
-                    </AccordionTrigger>
-                    <AccordionContent>
-                      <SolutionPillarBody
-                        pillar={pillar}
-                        frictionLabel={frictionLabel ?? 'The Friction'}
-                        solutionPillarLabel={solutionPillarLabel ?? 'The SceneFlow Solution'}
-                      />
-                    </AccordionContent>
-                  </AccordionItem>
-                ))}
-              </Accordion>
-            ) : (
-              <ol className="space-y-2">
-                {(card.workflow ?? []).map((step, stepIndex) => (
-                  <li key={step} className="flex items-start gap-2 text-sm">
-                    <span
-                      className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-xs font-bold ${style.badge}`}
-                    >
-                      {stepIndex + 1}
-                    </span>
-                    <span className="text-gray-300">{step}</span>
-                  </li>
-                ))}
-              </ol>
-            )}
-          </div>
-        ) : null}
-      </div>
 
       {card.benefit ? (
         <div className="mt-auto border-t border-white/10 pt-4">
@@ -399,9 +272,7 @@ export function ProductionStyleCard({
         <div className="mt-auto" />
       )}
 
-      {media.isFlagship ? (
-        <p className="text-xs leading-relaxed text-gray-400">{explorerHandoff}</p>
-      ) : null}
+      <p className="text-xs leading-relaxed text-gray-400">{explorerHandoff}</p>
 
       <Button
         onClick={startProduction}
