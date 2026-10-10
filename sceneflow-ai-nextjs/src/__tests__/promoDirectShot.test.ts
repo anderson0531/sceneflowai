@@ -285,6 +285,17 @@ describe('promo audio mix', () => {
     expect(source).toContain('shelf.frequency.value = PROMO_NARRATION_BASS_HZ')
     expect(source).toContain('shelf.gain.value = PROMO_NARRATION_BASS_DB')
     expect(source).toContain('gain.gain.value = PROMO_AUDIO_MIX.narration')
+    expect(source).toContain('crossOrigin="anonymous"')
+    expect(source).toContain('narration.volume = 1')
+    const resumeAt = source.indexOf('context.resume()')
+    const connectAt = source.indexOf('createMediaElementSource')
+    expect(resumeAt).toBeGreaterThan(-1)
+    expect(connectAt).toBeGreaterThan(resumeAt)
+    expect(source).not.toMatch(
+      /useEffect\(\(\) => \{[\s\S]*?createMediaElementSource[\s\S]*?\}, \[narrationUrl\]\)/
+    )
+    const tab = read('src/components/publishing/PublishingPromoTab.tsx')
+    expect(tab).toContain('previewRef.current?.start()')
     expect(promoPreviewMusicVolume({ beatKind: 'dialogue' })).toBe(PROMO_AUDIO_MIX.musicDucked)
     expect(promoPreviewMusicVolume({ beatKind: 'narration' })).toBe(PROMO_AUDIO_MIX.musicDucked)
     expect(promoPreviewMusicVolume({ beatKind: 'action' })).toBe(PROMO_AUDIO_MIX.music)

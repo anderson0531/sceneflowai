@@ -45,7 +45,7 @@ import {
   type PromoAgentRunRequest,
   type PromoBeatClipRequest,
 } from '@/lib/publish/promoLanguage'
-import { PromoCutPreview } from '@/components/publishing/PromoCutPreview'
+import { PromoCutPreview, type PromoCutPreviewHandle } from '@/components/publishing/PromoCutPreview'
 import { findPromoSceneIndex, isPromoCinematicScene } from '@/lib/publish/buildPromoScene'
 import { getSceneBeats } from '@/lib/script/beatMigration'
 import { treatmentBeatsFromMetadata } from '@/lib/script/sceneDecomposition'
@@ -206,6 +206,7 @@ export function PublishingPromoTab({
   const [addShotKey, setAddShotKey] = useState('')
   const [addPosition, setAddPosition] = useState(1)
   const [timelineSaving, setTimelineSaving] = useState(false)
+  const previewRef = useRef<PromoCutPreviewHandle>(null)
   const metadataRef = useRef(metadata)
   metadataRef.current = metadata
   const saveRef = useRef(onSaveMetadata)
@@ -813,7 +814,14 @@ export function PublishingPromoTab({
               <Button
                 size="sm"
                 variant="outline"
-                onClick={() => setPreviewing((current) => !current)}
+                onClick={() => {
+                  if (previewing) {
+                    setPreviewing(false)
+                    return
+                  }
+                  previewRef.current?.start()
+                  setPreviewing(true)
+                }}
                 disabled={rendering || previewShots.length === 0}
               >
                 {previewing ? <Square className="w-4 h-4 mr-1" /> : <Play className="w-4 h-4 mr-1" />}
@@ -855,6 +863,7 @@ export function PublishingPromoTab({
         </div>
 
         <PromoCutPreview
+          ref={previewRef}
           playing={previewing}
           shots={previewShots}
           watermark={watermarkEnabled}
