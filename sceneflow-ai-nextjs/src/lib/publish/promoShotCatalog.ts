@@ -57,6 +57,8 @@ export interface PromoShotCatalogEntry {
   spokenDurationSec?: number
   /** Title, outro, or story. A credit on an outro is not the title card. */
   cinematicType?: string
+  /** English on-screen title or credit. */
+  overlayText?: string
   blueprintBeatIndex?: number
   /** Opening or character-intro subject. Repeated names are redundant intros. */
   introCharacter?: string
@@ -266,6 +268,7 @@ export function buildPromoShotCatalog(input: PromoShotCatalogInput): PromoShotCa
         videoUrl,
         spokenDurationSec: spokenDurationSec && spokenDurationSec > 0 ? spokenDurationSec : undefined,
         cinematicType: typeof scene.cinematicType === 'string' ? scene.cinematicType : undefined,
+        overlayText: beat.overlayText?.trim() || undefined,
         blueprintBeatIndex:
           typeof scene.blueprintBeatIndex === 'number' ? scene.blueprintBeatIndex : undefined,
         introCharacter: introCharacterForBeat(beat, scene),

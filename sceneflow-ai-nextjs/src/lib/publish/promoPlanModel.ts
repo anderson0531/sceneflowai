@@ -94,6 +94,8 @@ function toBeatPlan(shot: PromoShotCatalogEntry, pick: ModelPick, score: number)
     beatRole: shot.beatRole,
     beatKind: shot.beatKind,
     trailerRole: pick.trailerRole,
+    ...(shot.cinematicType ? { cinematicType: shot.cinematicType } : {}),
+    ...(shot.overlayText ? { overlayText: shot.overlayText } : {}),
   }
 }
 

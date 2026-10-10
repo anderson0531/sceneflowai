@@ -61,6 +61,8 @@ function beatFromCatalog(shot: PromoShotCatalogEntry): PromoTrailerBeatPlan {
     beatRole: shot.beatRole,
     beatKind: shot.beatKind,
     trailerRole: trailerRoleForBeatRole(shot.beatRole),
+    ...(shot.cinematicType ? { cinematicType: shot.cinematicType } : {}),
+    ...(shot.overlayText ? { overlayText: shot.overlayText } : {}),
   }
 }
 
@@ -97,6 +99,22 @@ export function movePromoShot(
   const [shot] = next.splice(fromIndex, 1)
   next.splice(toIndex, 0, shot!)
   return next
+}
+
+/** Seconds of included picture before narration should begin. An unknown shot starts at 0. */
+export function promoNarrationStartSec(
+  plan: PromoTrailerBeatPlan[],
+  key: string | undefined
+): number {
+  const startKey = key?.trim()
+  if (!startKey) return 0
+  let elapsed = 0
+  for (const beat of plan) {
+    if (!promoShotIncluded(beat)) continue
+    if (promoShotKey(beat) === startKey) return elapsed
+    elapsed += beat.durationSec ?? Math.max(0, beat.endSec - beat.startSec)
+  }
+  return 0
 }
 
 /**
@@ -148,6 +166,8 @@ export function sanitizePromoTimeline(
       beatRole: shot.beatRole,
       beatKind: shot.beatKind,
       trailerRole,
+      ...(shot.cinematicType ? { cinematicType: shot.cinematicType } : {}),
+      ...(shot.overlayText ? { overlayText: shot.overlayText } : {}),
       ...(record.included === false ? { included: false } : {}),
     })
   }

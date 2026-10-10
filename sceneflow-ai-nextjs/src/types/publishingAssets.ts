@@ -50,6 +50,10 @@ export interface PromoTrailerBeatPlan {
   videoUrl?: string
   beatRole?: string
   beatKind?: string
+  /** Title, outro, or story. Copied from the source scene so a language pass can see it. */
+  cinematicType?: string
+  /** English on-screen title or credit. */
+  overlayText?: string
   /** Where this shot sits in the trailer: hook, rise, peak, or button. */
   trailerRole?: PromoTrailerRole
   /** Missing means the shot plays. False keeps it on the timeline and out of the cut. */
@@ -85,6 +89,8 @@ export interface ProjectPublishingPromo {
   languages?: string[]
   /** Missing means the SceneFlow Studio watermark is burned into the promo. */
   watermarkEnabled?: boolean
+  /** Included shot where narration begins. Missing starts with the first shot. */
+  narrationStartShotKey?: string
 }
 
 export interface PublishingReadiness {

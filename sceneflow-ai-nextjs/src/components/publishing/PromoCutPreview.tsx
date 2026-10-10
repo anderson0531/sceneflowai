@@ -9,7 +9,7 @@ import {
 } from '@/lib/publish/promoAudioMix'
 import { promoFrameClass } from '@/lib/publish/promoFrame'
 import { promoStudioWatermarkPayload } from '@/lib/publish/promoTimeline'
-import type { PromoPreviewShot } from '@/lib/publish/promoPreviewSequence'
+import { promoPreviewNarrationOn, type PromoPreviewShot } from '@/lib/publish/promoPreviewSequence'
 import type { PromoFrameAspect } from '@/types/publishingAssets'
 import { cn } from '@/lib/utils'
 
@@ -17,6 +17,8 @@ export interface PromoCutPreviewProps {
   playing: boolean
   shots: PromoPreviewShot[]
   narrationUrl?: string
+  /** Seconds of picture before the voice begins. */
+  narrationStartSec?: number
   musicUrl?: string
   onEnded: () => void
   /** Source frame. 16:9 unless the blueprint is vertical. */
@@ -44,6 +46,7 @@ export const PromoCutPreview = forwardRef<PromoCutPreviewHandle, PromoCutPreview
       playing,
       shots,
       narrationUrl,
+      narrationStartSec = 0,
       musicUrl,
       onEnded,
       aspect = '16:9',
@@ -107,7 +110,15 @@ export const PromoCutPreview = forwardRef<PromoCutPreviewHandle, PromoCutPreview
       const music = musicRef.current
       if (narration) {
         narration.currentTime = 0
-        void narration.play().catch(() => undefined)
+        const started = narration.play()
+        if (narrationStartSec > 0.05) {
+          void started
+            ?.then(() => {
+              narration.pause()
+              narration.currentTime = 0
+            })
+            .catch(() => undefined)
+        }
       }
       if (music) {
         music.currentTime = 0
@@ -123,7 +134,7 @@ export const PromoCutPreview = forwardRef<PromoCutPreviewHandle, PromoCutPreview
       }
       if (narrationConnectingRef.current) return
       connectNarrationGraph()
-    }, [connectNarrationGraph])
+    }, [connectNarrationGraph, narrationStartSec])
 
     useImperativeHandle(ref, () => ({ start: startPreviewAudio }), [startPreviewAudio])
 
@@ -173,9 +184,17 @@ export const PromoCutPreview = forwardRef<PromoCutPreviewHandle, PromoCutPreview
         return
       }
       if (music) music.volume = PROMO_AUDIO_MIX.music
-      void narration?.play().catch(() => undefined)
+      const voiceOn = promoPreviewNarrationOn(shots, index, narrationStartSec)
+      if (narration) {
+        if (!voiceOn) {
+          narration.pause()
+          narration.currentTime = 0
+        } else if (narration.paused) {
+          void narration.play().catch(() => undefined)
+        }
+      }
       void music?.play().catch(() => undefined)
-    }, [playing, narrationUrl, musicUrl])
+    }, [playing, narrationUrl, musicUrl, shots, index, narrationStartSec])
 
     useEffect(() => {
       const music = musicRef.current

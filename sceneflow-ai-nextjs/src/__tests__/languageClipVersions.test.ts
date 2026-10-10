@@ -15,6 +15,7 @@ import {
   buildLanguageClipPrompt,
   composeLanguageClipPrompt,
   preferStoredSpokenTranslation,
+  replacePromoOnScreenText,
 } from '@/lib/scene/languageClipPrompt'
 
 function take(id: string, url = `${id}.mp4`): SceneSegmentTake {
@@ -145,6 +146,17 @@ describe('language clip prompts', () => {
     expect(buildLanguageClipPrompt(source, 'Hola', 'ELARA')).toBe(
       'ELARA speaks with natural lip sync: "Hola". Delivery: softly. Close-up; slow push.'
     )
+  })
+
+  it('replaces title and credit copy without a lip-sync line', () => {
+    const source = 'A black card holds the title "The Current" in white serif type.'
+    expect(replacePromoOnScreenText(source, 'The Current', 'La Corriente')).toBe(
+      'A black card holds the title "La Corriente" in white serif type.'
+    )
+    expect(replacePromoOnScreenText('Slow fade over water.', 'The Current', 'La Corriente')).toBe(
+      'Slow fade over water. On-screen text: "La Corriente".'
+    )
+    expect(replacePromoOnScreenText(source, 'The Current', 'La Corriente')).not.toContain('lip sync')
   })
 
   it('leaves narration and action pictures in English and translates the guide line', () => {

@@ -420,11 +420,23 @@ import {
 } from '@/lib/publish/publishingState'
 import type { PublishingLibraryTab } from '@/types/publishingAssets'
 import { resolvePromoBeatMedia, resolvePromoPlayback } from '@/lib/publish/promoBeatMedia'
-import { promoAgentShotNeedsGeneration, type PromoAgentRunRequest, type PromoBeatClipRequest } from '@/lib/publish/promoLanguage'
+import {
+  promoAgentShotNeedsGeneration,
+  promoOnScreenEnglish,
+  promoShotLocalizes,
+  readPromoShotLocalization,
+  type PromoAgentRunRequest,
+  type PromoBeatClipRequest,
+} from '@/lib/publish/promoLanguage'
 import { slimPromoProductionState } from '@/lib/publish/promoShotCatalog'
 import { runPromoAgent } from '@/lib/publish/runPromoAgent'
 import { isOptimizedShotDirection } from '@/lib/publish/promoShotCatalog'
-import { composeLanguageClipPrompt, englishSpokenLine, preferStoredSpokenTranslation } from '@/lib/scene/languageClipPrompt'
+import {
+  composeLanguageClipPrompt,
+  englishSpokenLine,
+  preferStoredSpokenTranslation,
+  replacePromoOnScreenText,
+} from '@/lib/scene/languageClipPrompt'
 import { translateGuideDialogueLine } from '@/lib/scene/translateGuideDialogue'
 import { resolveDirectShotTarget, type DirectShotRequest, type DirectShotTarget } from '@/lib/vision/directShotTarget'
 import { saveDirectorPatchToScenes, resolveBeatReferenceSelection } from '@/lib/vision/saveBeatDirection'
@@ -5455,49 +5467,77 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     }: PromoBeatClipRequest & { segmentId: string }) => {
       const method = frameUrl?.trim() ? 'I2V' : 'T2V'
       const frame = aspectRatio === '9:16' ? '9:16' : '16:9'
-      if (clipLanguage && isLanguageClipTarget(clipLanguage) && beatKind === 'dialogue') {
+      if (clipLanguage && isLanguageClipTarget(clipLanguage)) {
         const scenes = scriptRef.current?.script?.scenes ?? scriptRef.current?.scenes ?? []
         const scene = scenes[sceneIndex ?? -1] as Record<string, unknown> | undefined
         const beat = getSceneBeats(scene).find((entry) => entry.beatId === beatId)
+        const kind = promoShotLocalizes({
+          beatKind: beat?.kind || beatKind,
+          beatRole: beat?.beatRole,
+          cinematicType: typeof scene?.cinematicType === 'string' ? scene.cinematicType : undefined,
+          overlayText: beat?.overlayText,
+        })
         const segments = sceneProductionStateRef.current[sceneId]?.segments
         const segment =
           segments?.find((row) => row.segmentId === segmentId) ||
           segments?.find((row) => row.beatId === beatId)
-        const englishLine = englishSpokenLine({
-          excerpt: segment?.dialoguePortion?.excerpt,
-          beatLine: beat?.line,
-          dialogueLines: segment?.dialogueLines,
-        })
-        const stored = preferStoredSpokenTranslation({
-          translation: sceneIndex != null ? storedTranslations[clipLanguage]?.[sceneIndex] : undefined,
-          kind: beat?.kind || beatKind,
-          lineId: beat?.lineId || segment?.dialoguePortion?.lineId,
-          dialogue: Array.isArray(scene?.dialogue) ? scene.dialogue : undefined,
-          englishLine,
-          isExcerpt: !!segment?.dialoguePortion?.excerpt?.trim(),
-        })
-        let translated = stored
-        if (!translated && englishLine.trim()) {
-          translated = await translateGuideDialogueLine(englishLine, clipLanguage)
-        }
         const sourcePrompt = segment?.userEditedPrompt || segment?.generatedPrompt || ''
-        const composed = composeLanguageClipPrompt({
-          sourcePrompt,
-          character: beat?.character || segment?.dialogueLines?.[0]?.character,
-          kind: 'dialogue',
-          englishLine,
-          translatedLine: translated,
-        })
-        await handleSegmentGenerate(sceneId, segmentId, method, {
-          prompt: composed.prompt || sourcePrompt,
-          guidePrompt: composed.guidePrompt,
-          startFrameUrl: frameUrl,
-          duration: durationSec,
-          aspectRatio: frame,
-          generationMethod: method,
-          clipLanguage,
-        })
-        return
+        if (kind === 'title') {
+          const english = promoOnScreenEnglish({
+            overlayText: beat?.overlayText,
+            line: beat?.line,
+            actionDescription: beat?.actionDescription,
+          })
+          const translated = english.trim()
+            ? await translateGuideDialogueLine(english, clipLanguage)
+            : ''
+          const prompt = replacePromoOnScreenText(sourcePrompt, english, translated)
+          await handleSegmentGenerate(sceneId, segmentId, method, {
+            prompt: prompt || sourcePrompt,
+            startFrameUrl: frameUrl,
+            duration: durationSec,
+            aspectRatio: frame,
+            generationMethod: method,
+            clipLanguage,
+          })
+          return
+        }
+        if (kind === 'dialogue') {
+          const englishLine = englishSpokenLine({
+            excerpt: segment?.dialoguePortion?.excerpt,
+            beatLine: beat?.line,
+            dialogueLines: segment?.dialogueLines,
+          })
+          const stored = preferStoredSpokenTranslation({
+            translation: sceneIndex != null ? storedTranslations[clipLanguage]?.[sceneIndex] : undefined,
+            kind: beat?.kind || beatKind,
+            lineId: beat?.lineId || segment?.dialoguePortion?.lineId,
+            dialogue: Array.isArray(scene?.dialogue) ? scene.dialogue : undefined,
+            englishLine,
+            isExcerpt: !!segment?.dialoguePortion?.excerpt?.trim(),
+          })
+          let translated = stored
+          if (!translated && englishLine.trim()) {
+            translated = await translateGuideDialogueLine(englishLine, clipLanguage)
+          }
+          const composed = composeLanguageClipPrompt({
+            sourcePrompt,
+            character: beat?.character || segment?.dialogueLines?.[0]?.character,
+            kind: 'dialogue',
+            englishLine,
+            translatedLine: translated,
+          })
+          await handleSegmentGenerate(sceneId, segmentId, method, {
+            prompt: composed.prompt || sourcePrompt,
+            guidePrompt: composed.guidePrompt,
+            startFrameUrl: frameUrl,
+            duration: durationSec,
+            aspectRatio: frame,
+            generationMethod: method,
+            clipLanguage,
+          })
+          return
+        }
       }
       await handleSegmentGenerate(sceneId, segmentId, method, {
         startFrameUrl: frameUrl,
@@ -5611,26 +5651,28 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       const runId = `promo-agent-${project.id}`
       const promoLanguage = language || 'en'
       const frame = aspectRatio === '9:16' ? '9:16' : '16:9'
-      const dialogueClips = new Set<string>()
+      const languageClips = new Set<string>()
       const beatKinds = new Map<string, string | undefined>()
+      const scriptScenes = scriptRef.current?.script?.scenes ?? scriptRef.current?.scenes ?? []
       const shots = beatPlan.map((beat) => {
+        const localizedBeat = { ...beat, ...readPromoShotLocalization(scriptScenes, beat) }
         const media = resolvePromoBeatMedia(
-          beat,
+          localizedBeat,
           sceneProductionStateRef.current as Record<string, unknown>
         )
         const playback = resolvePromoPlayback(
-          beat,
+          localizedBeat,
           sceneProductionStateRef.current as Record<string, unknown>,
           promoLanguage
         )
         const decision = promoAgentShotNeedsGeneration({
-          beatKind: beat.beatKind,
+          ...readPromoShotLocalization(scriptScenes, beat),
           language: promoLanguage,
           hasMasterClip: media.hasClip,
           hasLanguageClip: playback.hasLanguageClip,
         })
         const key = `clip:${beat.sceneIndex}:${beat.beatId}`
-        if (decision.dialogue) dialogueClips.add(key)
+        if (decision.localized) languageClips.add(key)
         beatKinds.set(key, beat.beatKind)
         const sourceScene = (scriptRef.current?.script?.scenes ?? scriptRef.current?.scenes ?? [])[
           beat.sceneIndex
@@ -5729,7 +5771,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
               durationSec: shot.durationSec,
               aspectRatio: frame,
               beatKind: beatKinds.get(shot.key),
-              clipLanguage: dialogueClips.has(shot.key) ? promoLanguage : undefined,
+              clipLanguage: languageClips.has(shot.key) ? promoLanguage : undefined,
             }),
           generateNarration: () => postPromo('narration'),
           generateMusic: () => postPromo('music'),

@@ -1,10 +1,14 @@
 import { describe, expect, it } from 'vitest'
 import { readFileSync } from 'fs'
 import path from 'path'
+import { resolvePromoPlayback } from '@/lib/publish/promoBeatMedia'
 import {
   promoAgentShotNeedsGeneration,
   promoAssetForLanguage,
   promoNarrationWordBudget,
+  promoOnScreenEnglish,
+  promoShotLocalizes,
+  readPromoShotLocalization,
   upsertPromoLanguageTrailer,
 } from '@/lib/publish/promoLanguage'
 import type { PromoTrailerAsset } from '@/types/publishingAssets'
@@ -29,7 +33,7 @@ describe('promoAgentShotNeedsGeneration', () => {
         hasMasterClip: false,
         hasLanguageClip: false,
       })
-    ).toEqual({ generate: true, dialogue: false })
+    ).toEqual({ generate: true, dialogue: false, localized: false })
     expect(
       promoAgentShotNeedsGeneration({
         beatKind: 'dialogue',
@@ -37,10 +41,10 @@ describe('promoAgentShotNeedsGeneration', () => {
         hasMasterClip: true,
         hasLanguageClip: false,
       })
-    ).toEqual({ generate: false, dialogue: false })
+    ).toEqual({ generate: false, dialogue: false, localized: false })
   })
 
-  it('regenerates only dialogue clips for another language', () => {
+  it('regenerates dialogue, titles, and credits, and shares plain action', () => {
     expect(
       promoAgentShotNeedsGeneration({
         beatKind: 'dialogue',
@@ -48,15 +52,26 @@ describe('promoAgentShotNeedsGeneration', () => {
         hasMasterClip: true,
         hasLanguageClip: false,
       })
-    ).toEqual({ generate: true, dialogue: true })
+    ).toEqual({ generate: true, dialogue: true, localized: true })
     expect(
       promoAgentShotNeedsGeneration({
-        beatKind: 'dialogue',
+        beatKind: 'action',
+        beatRole: 'title_reveal',
+        cinematicType: 'title',
+        language: 'es',
+        hasMasterClip: true,
+        hasLanguageClip: false,
+      })
+    ).toEqual({ generate: true, dialogue: false, localized: true })
+    expect(
+      promoAgentShotNeedsGeneration({
+        beatKind: 'action',
+        beatRole: 'credit',
         language: 'es',
         hasMasterClip: true,
         hasLanguageClip: true,
       })
-    ).toEqual({ generate: false, dialogue: true })
+    ).toEqual({ generate: false, dialogue: false, localized: true })
     expect(
       promoAgentShotNeedsGeneration({
         beatKind: 'action',
@@ -64,7 +79,16 @@ describe('promoAgentShotNeedsGeneration', () => {
         hasMasterClip: true,
         hasLanguageClip: false,
       })
-    ).toEqual({ generate: false, dialogue: false })
+    ).toEqual({ generate: false, dialogue: false, localized: false })
+    expect(
+      promoAgentShotNeedsGeneration({
+        beatKind: 'action',
+        overlayText: 'THE CURRENT',
+        language: 'es',
+        hasMasterClip: true,
+        hasLanguageClip: false,
+      })
+    ).toEqual({ generate: true, dialogue: false, localized: true })
     expect(
       promoAgentShotNeedsGeneration({
         beatKind: 'action',
@@ -72,7 +96,93 @@ describe('promoAgentShotNeedsGeneration', () => {
         hasMasterClip: false,
         hasLanguageClip: false,
       })
-    ).toEqual({ generate: true, dialogue: false })
+    ).toEqual({ generate: true, dialogue: false, localized: false })
+  })
+})
+
+describe('promo shot localization', () => {
+  it('reads title copy from the source scene when the plan omitted it', () => {
+    const fields = readPromoShotLocalization(
+      [
+        {
+          cinematicType: 'title',
+          beats: [{ beatId: 'title', kind: 'action', beatRole: 'title_reveal', overlayText: 'The Current' }],
+        },
+      ],
+      { sceneIndex: 0, beatId: 'title', beatKind: 'action' }
+    )
+    expect(promoShotLocalizes(fields)).toBe('title')
+    expect(promoOnScreenEnglish({ overlayText: 'The Current', line: 'ignored' })).toBe('The Current')
+    expect(promoShotLocalizes({ beatKind: 'action' })).toBeNull()
+  })
+
+  it('plays a language title clip and keeps a shared action clip', () => {
+    const production = {
+      title: {
+        segments: [
+          {
+            beatId: 'card',
+            segmentId: 'seg-title',
+            activeAssetUrl: 'https://cdn.example/master.mp4',
+            takes: [
+              {
+                id: 'master',
+                assetUrl: 'https://cdn.example/master.mp4',
+                status: 'COMPLETE',
+                createdAt: '2026-01-01T00:00:00.000Z',
+              },
+            ],
+            currentTakeId: 'master',
+            languageVersions: {
+              es: {
+                currentTakeId: 'es',
+                takes: [
+                  {
+                    id: 'es',
+                    assetUrl: 'https://cdn.example/es.mp4',
+                    status: 'COMPLETE',
+                    createdAt: '2026-01-02T00:00:00.000Z',
+                  },
+                ],
+              },
+            },
+          },
+        ],
+      },
+    }
+    const title = resolvePromoPlayback(
+      {
+        sceneId: 'title',
+        beatId: 'card',
+        sceneIndex: 0,
+        startSec: 0,
+        endSec: 5,
+        score: 1,
+        beatKind: 'action',
+        beatRole: 'title_reveal',
+        cinematicType: 'title',
+      },
+      production,
+      'es'
+    )
+    expect(title.videoUrl).toBe('https://cdn.example/es.mp4')
+    expect(title.hasLanguageClip).toBe(true)
+
+    const action = resolvePromoPlayback(
+      {
+        sceneId: 'title',
+        beatId: 'card',
+        sceneIndex: 0,
+        startSec: 0,
+        endSec: 5,
+        score: 1,
+        beatKind: 'action',
+      },
+      production,
+      'es'
+    )
+    expect(action.videoUrl).toBe('https://cdn.example/master.mp4')
+    expect(action.hasLanguageClip).toBe(false)
   })
 })
 
