@@ -139,8 +139,9 @@ const hasImage = (url?: string): boolean => Boolean(url && url.trim())
 
 export function referenceExpressAgentLabel(
   kinds?: ReferenceExpressKind[],
-  options?: { sceneScoped?: boolean }
+  options?: { sceneScoped?: boolean; continuity?: boolean }
 ): string {
+  if (options?.continuity) return 'Continuity Agent'
   if (options?.sceneScoped && !kinds?.length) return 'Scene Ref Agent'
   if (!kinds?.length) return 'Library Agent'
   if (kinds.length === 1) {

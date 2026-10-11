@@ -34,6 +34,13 @@ describe('referenceExpressAgentLabel', () => {
     expect(referenceExpressAgentLabel(['cast', 'location', 'prop'])).toBe('Library Agent')
   })
 
+  it('names Continuity Agent for a promo shot pass', () => {
+    expect(referenceExpressAgentLabel(undefined, { continuity: true })).toBe('Continuity Agent')
+    expect(referenceExpressAgentLabel(['location'], { continuity: true, sceneScoped: true })).toBe(
+      'Continuity Agent'
+    )
+  })
+
   it('names Scene Ref Agent for a scene-scoped run', () => {
     expect(referenceExpressAgentLabel(undefined, { sceneScoped: true })).toBe('Scene Ref Agent')
     expect(referenceExpressAgentLabel(['location'], { sceneScoped: true })).toBe('Location Agent')

@@ -13,6 +13,7 @@ import {
 } from '@/lib/vision/referenceExpress/estimate'
 import {
   loadReferenceExpressContext,
+  planContinuityItems,
   planSceneReferenceExpressItems,
   planSelectedLibraryBaseItems,
   planSelectedLocationExpressItems,
@@ -29,6 +30,20 @@ import { referenceExpressAgentLabel } from '@/lib/vision/libraryKindAgents'
 import { isSceneScriptReadyForReferences } from '@/lib/vision/sceneScriptReadiness'
 
 const EXPRESS_KINDS: readonly ReferenceExpressKind[] = ['cast', 'location', 'prop']
+
+function parseContinuityShots(
+  value: unknown
+): Array<{ sceneIndex: number; beatId: string }> | undefined {
+  if (!Array.isArray(value)) return undefined
+  return value.flatMap((entry) => {
+    if (!entry || typeof entry !== 'object') return []
+    const sceneIndex = (entry as { sceneIndex?: unknown }).sceneIndex
+    const beatId = (entry as { beatId?: unknown }).beatId
+    if (!Number.isInteger(sceneIndex) || (sceneIndex as number) < 0) return []
+    if (typeof beatId !== 'string' || !beatId.trim()) return []
+    return [{ sceneIndex: sceneIndex as number, beatId: beatId.trim() }]
+  })
+}
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
@@ -57,13 +72,16 @@ export async function POST(req: NextRequest) {
     }
 
     const body = await req.json().catch(() => ({}))
-    const { projectId, sceneIndices, itemKeys, kinds, locationIds } = body as {
+    const { projectId, sceneIndices, itemKeys, kinds, locationIds, continuityShots } = body as {
       projectId?: string
       sceneIndices?: unknown
       itemKeys?: unknown
       kinds?: unknown
       locationIds?: unknown
+      continuityShots?: unknown
     }
+    const parsedContinuityShots = parseContinuityShots(continuityShots)
+    const continuityRun = Array.isArray(continuityShots)
 
     if (!projectId) {
       return NextResponse.json({ error: 'projectId required' }, { status: 400 })
@@ -76,13 +94,24 @@ export async function POST(req: NextRequest) {
           )
         )]
       : undefined
+    const continuitySceneIndices = continuityRun
+      ? [...new Set((parsedContinuityShots ?? []).map((shot) => shot.sceneIndex))].sort(
+          (a, b) => a - b
+        )
+      : undefined
     const scope: ReferenceExpressScope = {
-      sceneIndices: Array.isArray(sceneIndices)
-        ? sceneIndices.filter((index): index is number => Number.isInteger(index) && index >= 0)
-        : undefined,
-      itemKeys: Array.isArray(itemKeys)
-        ? itemKeys.filter((key): key is string => typeof key === 'string' && !!key.trim())
-        : undefined,
+      sceneIndices: continuityRun
+        ? continuitySceneIndices
+        : Array.isArray(sceneIndices)
+          ? sceneIndices.filter((index): index is number => Number.isInteger(index) && index >= 0)
+          : undefined,
+      // A continuity shot list must not become itemKeys. Those force a redraw.
+      itemKeys: continuityRun
+        ? undefined
+        : Array.isArray(itemKeys)
+          ? itemKeys.filter((key): key is string => typeof key === 'string' && !!key.trim())
+          : undefined,
+      continuityShots: continuityRun ? parsedContinuityShots : undefined,
       kinds: parsedKinds?.length ? parsedKinds : undefined,
       locationIds: Array.isArray(locationIds)
         ? [...new Set(locationIds.filter((id): id is string => typeof id === 'string' && !!id.trim()))]
@@ -114,11 +143,13 @@ export async function POST(req: NextRequest) {
       !scope.locationIds?.length &&
       !scope.kinds?.length &&
       !!scope.itemKeys?.length
-    const items = scope.locationIds?.length
-      ? planSelectedLocationExpressItems(context, scope)
-      : selectedLibraryBases
-        ? planSelectedLibraryBaseItems(context, scope.itemKeys!)
-        : planSceneReferenceExpressItems(context, scope)
+    const items = continuityRun
+      ? planContinuityItems(context, parsedContinuityShots ?? [])
+      : scope.locationIds?.length
+        ? planSelectedLocationExpressItems(context, scope)
+        : selectedLibraryBases
+          ? planSelectedLibraryBaseItems(context, scope.itemKeys!)
+          : planSceneReferenceExpressItems(context, scope)
     const catalogSync = wantsLocationCatalogSync(scope) ? 'location' : undefined
     const scopedScenes = sceneScoped
       ? (scope.sceneIndices ?? []).filter(
@@ -189,7 +220,10 @@ export async function POST(req: NextRequest) {
               preexistingVersionIds: scope.preexistingVersionIds ?? [],
             }
           : {}),
-        agentLabel: referenceExpressAgentLabel(scope.kinds, { sceneScoped }),
+        agentLabel: referenceExpressAgentLabel(scope.kinds, {
+          sceneScoped,
+          continuity: continuityRun,
+        }),
       },
     })
 

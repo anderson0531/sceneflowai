@@ -46,6 +46,11 @@ export interface PromoAgentRunRequest {
   audienceDefinition?: AudienceDefinition
 }
 
+/** Included promo shots whose missing plates Continuity Agent should draw. */
+export interface PromoContinuityRunRequest {
+  beatPlan: Array<{ sceneIndex: number; beatId: string }>
+}
+
 export type PromoLocalizedKind = 'dialogue' | 'title'
 
 export interface PromoShotLocalization {

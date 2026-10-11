@@ -3,9 +3,11 @@ import { Project } from '@/models/Project'
 import { resolveCharacterId } from '@/lib/vision/updateCharacterReference'
 import type { CastingBriefVoiceConfig } from '@/lib/character/applyCastingBriefUpdate'
 import type { ScreenplayContext } from '@/lib/voiceRecommendation'
+import { getSceneBeats } from '@/lib/script/beatMigration'
 import {
   requirementKey,
   readProjectReferenceSources,
+  resolveBeatReferenceRequirements,
   resolveSceneRequiredReferences,
   type SceneReferenceOverrides,
   type SceneReferenceRequirement,
@@ -839,6 +841,75 @@ export function planSceneReferenceExpressItems(
     }),
     scope.kinds
   )
+}
+
+export type ContinuityShotRef = {
+  sceneIndex: number
+  beatId: string
+}
+
+/**
+ * Plates for the included promo shots: wardrobe, location, props, and a
+ * character identity still only when a required look has no face yet.
+ *
+ * A shot with a saved selection contributes that selection alone. A shot
+ * without one falls back to its scene, once. Other scenes stay out of the
+ * batch. Finished plates are skipped; stale plates are drawn again.
+ * `itemKeys` is intentionally unused — a named key would force a redraw.
+ */
+export function planContinuityItems(
+  input: ReferenceExpressPlanInput,
+  shots: ContinuityShotRef[]
+): ReferenceExpressItem[] {
+  const scenes = input.scenes ?? []
+  const requirements = new Map<string, SceneReferenceRequirement>()
+  const sceneFallback = new Set<number>()
+
+  const addAll = (resolved: SceneReferenceRequirement[]) => {
+    for (const requirement of resolved) {
+      const key = requirementKey(requirement)
+      if (!requirements.has(key)) requirements.set(key, requirement)
+    }
+  }
+
+  for (const shot of shots) {
+    const sceneIndex = shot.sceneIndex
+    if (!Number.isInteger(sceneIndex) || sceneIndex < 0 || sceneIndex >= scenes.length) continue
+    const scene = scenes[sceneIndex]
+    if (!isSceneScriptReadyForReferences(scene)) continue
+    const beatId = shot.beatId?.trim()
+    const beat = beatId
+      ? getSceneBeats(scene).find((entry) => entry.beatId === beatId)
+      : undefined
+    const selected = beat
+      ? resolveBeatReferenceRequirements({
+          beat,
+          scene,
+          sceneIndex,
+          characters: input.characters,
+          locationReferences: input.locations,
+          objectReferences: input.props,
+        })
+      : null
+    if (selected) {
+      addAll(selected)
+      continue
+    }
+    if (sceneFallback.has(sceneIndex)) continue
+    sceneFallback.add(sceneIndex)
+    addAll(
+      resolveSceneRequiredReferences({
+        scene,
+        sceneIndex,
+        characters: input.characters,
+        locationReferences: input.locations,
+        objectReferences: input.props,
+        overrides: (scene?.referenceOverrides as SceneReferenceOverrides | undefined) ?? null,
+      })
+    )
+  }
+
+  return planItemsForRequirements(input, [...requirements.values()])
 }
 
 export type ReferenceExpressContext = ReferenceExpressPlanInput & {

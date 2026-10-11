@@ -95,6 +95,66 @@ describe('runPromoAgent', () => {
     expect(calls.some((call) => call === 'optimize:a')).toBe(false)
   })
 
+  it('draws continuity plates after shot optimization and before any clip', async () => {
+    const calls: string[] = []
+    const flagged = shots.map((shot) =>
+      shot.beatId === 'b' ? { ...shot, optimizeDirection: true } : shot
+    )
+    await runPromoAgent(flagged, {
+      upsertScene: async () => {
+        calls.push('upsert')
+      },
+      ensureSegment: async (shot) => `seg-${shot.beatId}`,
+      optimizeDirection: async (shot) => {
+        calls.push(`optimize:${shot.beatId}`)
+      },
+      ensureContinuity: async () => {
+        calls.push('continuity')
+      },
+      generateClip: async (shot) => {
+        calls.push(`clip:${shot.beatId}`)
+      },
+      generateNarration: async () => {
+        calls.push('narration')
+      },
+      generateMusic: async () => {},
+      onStatus: () => {},
+    })
+
+    const optimizeAt = calls.indexOf('optimize:b')
+    const continuityAt = calls.indexOf('continuity')
+    const clipAt = calls.indexOf('clip:b')
+    expect(optimizeAt).toBeGreaterThanOrEqual(0)
+    expect(continuityAt).toBeGreaterThan(optimizeAt)
+    expect(clipAt).toBeGreaterThan(continuityAt)
+    expect(calls.filter((call) => call === 'continuity')).toHaveLength(1)
+    expect(calls.indexOf('narration')).toBeGreaterThan(clipAt)
+  })
+
+  it('blocks clips when continuity plates fail and still narrates and scores', async () => {
+    const calls: string[] = []
+    const result = await runPromoAgent(shots, {
+      upsertScene: async () => {},
+      ensureSegment: async () => 'seg',
+      ensureContinuity: async () => {
+        throw new Error('plates failed')
+      },
+      generateClip: async () => {
+        calls.push('clip')
+      },
+      generateNarration: async () => {
+        calls.push('narration')
+      },
+      generateMusic: async () => {
+        calls.push('music')
+      },
+      onStatus: () => {},
+    })
+
+    expect(result.failed).toBe(1)
+    expect(calls).toEqual(['narration', 'music'])
+  })
+
   it('still generates narration and music when a clip fails', async () => {
     const calls: string[] = []
     const result = await runPromoAgent(shots, {

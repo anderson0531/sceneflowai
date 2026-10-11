@@ -40,6 +40,7 @@ export const GLOSSARY_TERMS = [
   'Stills Agent',
   'Video Agent',
   'Promo Agent',
+  'Continuity Agent',
   'Clips Agent',
   'Run All Agents',
   'Library Agent',
