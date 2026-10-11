@@ -4,7 +4,9 @@ import { sequelize } from '@/config/database'
 import { loadProjectProduction } from '@/lib/projects/loadProjectRead'
 import { getSceneBeats, isBeatExcluded } from '@/lib/script/beatMigration'
 import { findSceneById, getVisionScriptScenes } from '@/lib/script/resolveSceneById'
+import { appendSceneRender } from '@/lib/projects/appendSceneRender'
 import { mergeSceneProductionData } from '@/lib/storyboard/mergeProductionMedia'
+import type { ProductionStream } from '@/components/vision/scene-production/types'
 
 // Increase timeout for production updates
 export const maxDuration = 30
@@ -63,9 +65,54 @@ export async function PATCH(
     const { id } = await params
     const body = await request.json()
     
-    const { sceneId, productionData } = body
-    
-    if (!sceneId || !productionData) {
+    const { sceneId, productionData, appendStream } = body
+
+    if (!sceneId) {
+      return NextResponse.json(
+        { error: 'Missing required field: sceneId' },
+        { status: 400 }
+      )
+    }
+
+    if (appendStream) {
+      const stream = appendStream as ProductionStream
+      const downloadUrl = typeof stream?.mp4Url === 'string' ? stream.mp4Url.trim() : ''
+      const streamType = stream?.streamType === 'animatic' ? 'animatic' : stream?.streamType
+      if (!stream?.id || !downloadUrl || (streamType !== 'video' && streamType !== 'animatic')) {
+        return NextResponse.json(
+          { error: 'appendStream requires id, streamType, and mp4Url' },
+          { status: 400 }
+        )
+      }
+
+      console.log('[Projects PATCH Production] Append render:', {
+        projectId: id,
+        sceneId,
+        streamId: stream.id,
+        timestamp: new Date().toISOString(),
+      })
+
+      await sequelize.authenticate()
+      const saved = await appendSceneRender({
+        projectId: id,
+        sceneId,
+        stream: { ...stream, streamType, mp4Url: downloadUrl, status: 'complete' },
+        previousUrl: typeof body.previousUrl === 'string' ? body.previousUrl : undefined,
+      })
+      if (!saved) {
+        return NextResponse.json({ error: 'Project not found' }, { status: 404 })
+      }
+
+      return NextResponse.json({
+        success: true,
+        projectId: id,
+        sceneId,
+        streamId: stream.id,
+        updatedAt: new Date().toISOString(),
+      })
+    }
+
+    if (!productionData) {
       return NextResponse.json(
         { error: 'Missing required fields: sceneId and productionData' },
         { status: 400 }

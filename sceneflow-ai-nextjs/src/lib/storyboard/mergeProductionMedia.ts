@@ -16,14 +16,27 @@ import {
   START_FRAME_STILL_SLOT,
   mergeStillSlot,
   resolveCurrentTakeId,
+  segmentHasPlayableVideo,
   unionRowsById,
 } from '@/lib/storyboard/mediaVersions'
+
+function takeMediaUrl(take: { assetUrl?: string | null; videoUrl?: string | null }): string {
+  const asset = typeof take.assetUrl === 'string' ? take.assetUrl.trim() : ''
+  if (asset) return asset
+  return typeof take.videoUrl === 'string' ? take.videoUrl.trim() : ''
+}
+
+/** A same-id take with no file must not erase the stored video. */
+function mergeTakeRow(incoming: SceneSegmentTake, existing: SceneSegmentTake): SceneSegmentTake {
+  if (takeMediaUrl(existing) && !takeMediaUrl(incoming)) return existing
+  return incoming
+}
 
 export function mergeProductionSegment(
   incoming: SceneSegment,
   existing: SceneSegment
 ): SceneSegment {
-  const takes = unionRowsById(incoming.takes, existing.takes, 'id') as SceneSegmentTake[]
+  const takes = unionRowsById(incoming.takes, existing.takes, 'id', mergeTakeRow) as SceneSegmentTake[]
   const refs: Record<string, unknown> = {
     ...(existing.references || {}),
     ...(incoming.references || {}),
@@ -73,6 +86,14 @@ export function mergeProductionSegment(
   if (clearable.videoTrimInSec === null) delete merged.videoTrimInSec
   if (clearable.videoTrimOutSec === null) delete merged.videoTrimOutSec
   if (clearable.mixerBeatIncluded === null) delete merged.mixerBeatIncluded
+  // A stale save (for example status GENERATING before the file existed) must
+  // not clear a clip that is already stored.
+  if (segmentHasPlayableVideo(existing) && !segmentHasPlayableVideo(incoming)) {
+    merged.activeAssetUrl = existing.activeAssetUrl
+    if (existing.assetType) merged.assetType = existing.assetType
+    if (existing.status) merged.status = existing.status
+    if (existing.currentTakeId) merged.currentTakeId = existing.currentTakeId
+  }
   return merged
 }
 

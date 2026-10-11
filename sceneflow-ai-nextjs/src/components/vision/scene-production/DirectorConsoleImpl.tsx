@@ -205,6 +205,11 @@ function normalizeGuideCharacters(raw: unknown): GuideCharacterDemographic[] {
 import { upload } from '@vercel/blob/client'
 import { SUPPORTED_LANGUAGES } from '@/constants/languages'
 import { getNextProductionStreamVersion, getProductionStreamDisplayName } from './defaults'
+import { planSceneRenderAppend } from '@/lib/projects/planSceneRenderAppend'
+import {
+  appendSceneRenderClient,
+  dispatchAppendedSceneRender,
+} from '@/lib/projects/appendSceneRenderClient'
 
 // Stable empty segments reference to prevent TDZ render loops
 // Using a module-level constant guarantees the same reference for the app's lifecycle
@@ -370,7 +375,6 @@ export function DirectorConsoleRoot({
   scene,
   onGenerate,
   onSegmentUpload,
-  onRenderedSceneUrlChange,
   onProductionDataChange,
   artStyleId,
   sceneIndex,
@@ -1483,52 +1487,67 @@ export function DirectorConsoleRoot({
     [productionStreams, productionData, onProductionDataChange]
   )
   
-  // Update stream when render completes
+  const publishAppendedRender = useCallback((stream: ProductionStream) => {
+    const planned = planSceneRenderAppend({
+      streams: productionStreams,
+      renderedSceneUrl,
+      stream,
+    })
+    const saved = planned.streams.find((item) => item.id === stream.id) ?? stream
+    setProductionStreams(planned.streams)
+    if (planned.renderedSceneUrl) setRenderedSceneUrl(planned.renderedSceneUrl)
+    dispatchAppendedSceneRender(sceneId, saved)
+    void appendSceneRenderClient(projectId, sceneId, saved).catch((error) => {
+      console.error('[DirectorConsole] Failed to append scene render:', error)
+    })
+  }, [productionStreams, renderedSceneUrl, projectId, sceneId])
+
+  // Update stream when render completes. Adds the file only — shot clips stay put.
   const handleRenderComplete = useCallback((
     downloadUrl: string,
     streamType?: 'video' | 'animatic',
     meta?: { durationSeconds?: number }
   ) => {
     console.log('[DirectorConsole] Scene render complete:', downloadUrl)
-    setRenderedSceneUrl(downloadUrl)
-    
+    const dur =
+      typeof meta?.durationSeconds === 'number' &&
+      Number.isFinite(meta.durationSeconds) &&
+      meta.durationSeconds > 0
+        ? meta.durationSeconds
+        : undefined
+    const st = streamType === 'animatic' ? 'animatic' : 'video'
+    const existing = renderingStreamId
+      ? productionStreams.find((stream) => stream.id === renderingStreamId)
+      : undefined
+    const language = existing?.language || productionTarget.language
+    const languageInfo = SUPPORTED_LANGUAGES.find((item) => item.code === language)
+    const stream: ProductionStream = existing
+      ? {
+          ...existing,
+          status: 'complete',
+          mp4Url: downloadUrl,
+          completedAt: new Date().toISOString(),
+          streamType: st,
+          source: existing.source ?? 'render',
+          ...(dur !== undefined ? { duration: dur } : {}),
+        }
+      : {
+          id: `scene-render-${Date.now()}`,
+          language,
+          languageLabel: languageInfo?.name || language,
+          status: 'complete',
+          streamType: st,
+          mp4Url: downloadUrl,
+          completedAt: new Date().toISOString(),
+          source: 'render',
+          ...(dur !== undefined ? { duration: dur } : {}),
+        }
+    publishAppendedRender(stream)
     if (renderingStreamId) {
-      const dur =
-        typeof meta?.durationSeconds === 'number' &&
-        Number.isFinite(meta.durationSeconds) &&
-        meta.durationSeconds > 0
-          ? meta.durationSeconds
-          : undefined
-      const updatedStreams = productionStreams.map(s => 
-        s.id === renderingStreamId 
-          ? { 
-              ...s, 
-              status: 'complete' as const, 
-              mp4Url: downloadUrl,
-              completedAt: new Date().toISOString(),
-              streamType: streamType === 'animatic' ? 'animatic' as const : 'video' as const,
-              ...(dur !== undefined ? { duration: dur } : {}),
-            }
-          : s
-      )
-      setProductionStreams(updatedStreams)
       setRenderingStreamId(null)
       setStreamRenderProgress(0)
-      
-      // Persist production streams to database
-      if (onProductionDataChange && productionData) {
-        onProductionDataChange({
-          ...productionData,
-          productionStreams: updatedStreams,
-        })
-      }
     }
-    
-    // Persist rendered scene URL to database
-    if (onRenderedSceneUrlChange) {
-      onRenderedSceneUrlChange(downloadUrl)
-    }
-  }, [renderingStreamId, productionStreams, productionData, onProductionDataChange, onRenderedSceneUrlChange])
+  }, [renderingStreamId, productionStreams, productionTarget.language, publishAppendedRender])
   
   // Count segments by status
   const statusCounts = {
@@ -1898,46 +1917,25 @@ export function DirectorConsoleRoot({
         onScriptChange={onScriptChange}
         onSceneRenderQueued={onSceneRenderQueued}
         onRenderComplete={(downloadUrl, language, streamType = productionTarget.streamType, meta) => {
-          setRenderedSceneUrl(downloadUrl)
           const languageInfo = SUPPORTED_LANGUAGES.find(l => l.code === language)
           const st = streamType === 'animatic' ? 'animatic' : 'video'
-          const updatedStreams = (() => {
-            const prev = productionStreams
-            const v = getNextProductionStreamVersion(prev, language, st)
-            const id = `stream-${st}-${language}-v${v}-${Date.now()}`
-            return [
-              ...prev,
-              {
-                id,
-                language,
-                languageLabel: languageInfo?.name || language,
-                status: 'complete' as const,
-                streamType: st,
-                streamVersion: v,
-                mp4Url: downloadUrl,
-                completedAt: new Date().toISOString(),
-                duration:
-                  typeof meta?.durationSeconds === 'number' &&
-                  Number.isFinite(meta.durationSeconds) &&
-                  meta.durationSeconds > 0
-                    ? meta.durationSeconds
-                    : undefined,
-              } satisfies ProductionStream,
-            ]
-          })()
-          setProductionStreams(updatedStreams)
-          if (onRenderedSceneUrlChange) {
-            onRenderedSceneUrlChange(downloadUrl)
-          }
-          if (onProductionDataChange) {
-            const baseData = productionData || { isSegmented: false, segments: [] }
-            onProductionDataChange({
-              ...baseData,
-              renderedSceneUrl: downloadUrl,
-              renderedAt: new Date().toISOString(),
-              productionStreams: updatedStreams,
-            } as SceneProductionData)
-          }
+          const duration =
+            typeof meta?.durationSeconds === 'number' &&
+            Number.isFinite(meta.durationSeconds) &&
+            meta.durationSeconds > 0
+              ? meta.durationSeconds
+              : undefined
+          publishAppendedRender({
+            id: `stream-${st}-${language}-${Date.now()}`,
+            language,
+            languageLabel: languageInfo?.name || language,
+            status: 'complete',
+            streamType: st,
+            mp4Url: downloadUrl,
+            completedAt: new Date().toISOString(),
+            source: 'render',
+            ...(duration !== undefined ? { duration } : {}),
+          })
           import('sonner').then(({ toast }) => {
             toast.success('Stream rendered', {
               description: 'Review the MP4 in Streams or open Screening Room.',

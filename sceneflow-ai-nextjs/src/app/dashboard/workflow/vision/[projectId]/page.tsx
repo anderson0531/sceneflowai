@@ -442,7 +442,12 @@ import { resolveDirectShotTarget, type DirectShotRequest, type DirectShotTarget 
 import { saveDirectorPatchToScenes, resolveBeatReferenceSelection } from '@/lib/vision/saveBeatDirection'
 import { requestOptimizedShotDirection } from '@/lib/vision/shotDirectionAgent'
 import { VisualReference, VisualReferenceType, VisionReferencesPayload, LocationReference, LocationVersion } from '@/types/visionReferences'
-import type { SceneProductionData, SceneProductionReferences, SegmentKeyframeSettings } from '@/components/vision/scene-production/types'
+import type { ProductionStream, SceneProductionData, SceneProductionReferences, SegmentKeyframeSettings } from '@/components/vision/scene-production/types'
+import { withAppendedProductionStream } from '@/lib/projects/planSceneRenderAppend'
+import {
+  SCENE_RENDER_APPENDED_EVENT,
+  appendSceneRenderClient,
+} from '@/lib/projects/appendSceneRenderClient'
 import { patchMixerTrackVolumes } from '@/lib/scene/screeningTrackVolume'
 import { applyIntelligentDefaults } from '@/lib/audio/anchoredTiming'
 // audioTrackBuilder functions are imported dynamically inside callbacks to break TDZ scope-hoisting chain
@@ -2725,6 +2730,41 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     return () => window.removeEventListener('sceneflow:shot-clip-audio', handler)
   }, [applySceneProductionUpdate])
 
+  const rememberAppendedSceneRender = useCallback((sceneId: string, stream: ProductionStream) => {
+    const prev = sceneProductionStateRef.current
+    const current = prev[sceneId]
+    if (!current) return
+
+    const nextScene = withAppendedProductionStream(current, stream)
+    const nextState = { ...prev, [sceneId]: nextScene }
+    sceneProductionStateRef.current = nextState
+    setSceneProductionState(nextState)
+
+    setScenes((prevScenes) => {
+      let changed = false
+      const nextScenes = prevScenes.map((sceneEntry, index) => {
+        const key = getSceneProductionKey(sceneEntry as Scene, index)
+        if (key !== sceneId) return sceneEntry
+        if ((sceneEntry as { productionData?: SceneProductionData }).productionData === nextScene) {
+          return sceneEntry
+        }
+        changed = true
+        return { ...sceneEntry, productionData: nextScene }
+      })
+      return changed ? nextScenes : prevScenes
+    })
+  }, [])
+
+  useEffect(() => {
+    const handler = (event: Event) => {
+      const detail = (event as CustomEvent<{ sceneId?: string; stream?: ProductionStream }>).detail
+      if (!detail?.sceneId || !detail.stream?.id || !detail.stream.mp4Url) return
+      rememberAppendedSceneRender(detail.sceneId, detail.stream)
+    }
+    window.addEventListener(SCENE_RENDER_APPENDED_EVENT, handler)
+    return () => window.removeEventListener(SCENE_RENDER_APPENDED_EVENT, handler)
+  }, [rememberAppendedSceneRender])
+
   const syncBeatStartFrameToProduction = useCallback(
     (sceneId: string, beatId: string, newUrl: string) => {
       if (!beatId?.trim() || !newUrl?.trim()) return
@@ -4276,18 +4316,25 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
   // Handle rendered scene URL changes (persists to DB for Play Scene button)
   const handleRenderedSceneUrlChange = useCallback(
     (sceneId: string, url: string | null) => {
-      console.log('[handleRenderedSceneUrlChange] Persisting rendered URL:', { sceneId, url: url?.substring(0, 50) })
-      applySceneProductionUpdate(sceneId, (current) => {
-        // Create minimal production data if it doesn't exist yet
-        const base = current || { isSegmented: false, segments: [] }
-        return { 
-          ...base, 
-          renderedSceneUrl: url,
-          renderedAt: url ? new Date().toISOString() : null,
-        }
+      const downloadUrl = url?.trim()
+      if (!downloadUrl || !project?.id) return
+      console.log('[handleRenderedSceneUrlChange] Appending render:', { sceneId, url: downloadUrl.substring(0, 50) })
+      const stream: ProductionStream = {
+        id: `scene-render-url-${Date.now()}`,
+        streamType: 'video',
+        language: 'en',
+        languageLabel: 'English',
+        status: 'complete',
+        source: 'render',
+        mp4Url: downloadUrl,
+        completedAt: new Date().toISOString(),
+      }
+      rememberAppendedSceneRender(sceneId, stream)
+      void appendSceneRenderClient(project.id, sceneId, stream).catch((error) => {
+        console.error('[handleRenderedSceneUrlChange] Failed to append render:', error)
       })
     },
-    [applySceneProductionUpdate]
+    [project?.id, rememberAppendedSceneRender]
   )
 
   // Handle production data changes (persists production streams and other data)

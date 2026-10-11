@@ -2651,7 +2651,8 @@ export function SceneProductionMixer({
     productionTarget,
     selectedLanguage,
     textOverlayTranslations,
-    onMixerSettingsChange,
+    // Read through the ref updated each render. A fresh callback identity
+    // re-saved the whole scene on every parent render.
     schedulePersistMixerSettings,
   ])
   
@@ -3312,8 +3313,6 @@ export function SceneProductionMixer({
   
   // Render Scene Handler
   const handleRender = useCallback(async () => {
-    schedulePersistMixerSettings.flush()
-
     const serverRenderSegments =
       productionTarget.streamType === 'video' ? videoSegments : renderedSegments
 
@@ -3592,7 +3591,7 @@ export function SceneProductionMixer({
     textOverlays, displayOverlays, masterSegmentVolume, watermarkConfig, displayWatermarkConfig,
     preserveBackgroundStem, includeSpeechStem, klingLipsyncEnabled, resolvedDialogueClips,
     shotMethodFor, shotVideoRateFor,
-    measuredSegmentDurations, getPlaybackSegmentDuration, schedulePersistMixerSettings,
+    measuredSegmentDurations, getPlaybackSegmentDuration,
     onSceneRenderQueued, sceneEnd, nextSceneFrameUrl,
   ])
 
@@ -3610,7 +3609,6 @@ export function SceneProductionMixer({
   
   // === Headless Render Handler (GCP Cloud Run) ===
   const handleHeadlessRender = useCallback(async () => {
-    schedulePersistMixerSettings.flush()
     if (videoSegments.length === 0) {
       setRenderError('No video segments available for headless rendering')
       return
@@ -3837,7 +3835,7 @@ export function SceneProductionMixer({
     dialogueClipConfigs, watermarkConfig,
     preserveBackgroundStem, includeSpeechStem, productionTarget.language,
     productionTarget.streamType,
-    measuredSegmentDurations, getPlaybackSegmentDuration, schedulePersistMixerSettings,
+    measuredSegmentDurations, getPlaybackSegmentDuration,
     shotVideoRateFor,
     projectId, sceneId, sceneNumber, selectedLanguage, languageLabel, onSceneRenderQueued,
   ])

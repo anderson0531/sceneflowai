@@ -1,7 +1,6 @@
 import '@/models'
 import { Op } from 'sequelize'
 import GenerationJob from '@/models/GenerationJob'
-import Project from '@/models/Project'
 import {
   createGenerationJob,
   findActiveJob,
@@ -11,12 +10,8 @@ import {
 import { ACTIVE_JOB_STATUSES } from '@/lib/jobs/jobStatus'
 import { getJobStatusAsync } from '@/lib/render/jobStatusStore'
 import { getSignedDownloadUrl } from '@/lib/gcs/renderStorage'
-import { mergeSceneProductionData } from '@/lib/storyboard/mergeProductionMedia'
-import { getNextProductionStreamVersion } from '@/components/vision/scene-production/defaults'
-import type {
-  ProductionStream,
-  SceneProductionData,
-} from '@/components/vision/scene-production/types'
+import { appendSceneRender } from '@/lib/projects/appendSceneRender'
+import type { ProductionStream } from '@/components/vision/scene-production/types'
 
 export type SceneRenderMode = 'cloud' | 'headless'
 
@@ -125,6 +120,7 @@ async function claimTerminal(
 /**
  * Append or replace this job's production stream and rendered-scene URL.
  * The stream id is the generation job id, so a repeated callback updates one row.
+ * Shot clips are not read or written.
  */
 export async function writeSceneRenderOutput(
   job: GenerationJob,
@@ -134,73 +130,28 @@ export async function writeSceneRenderOutput(
   const payload = payloadOf(job)
   if (!payload) return
 
-  const project = await Project.findByPk(job.project_id)
-  if (!project) return
-
-  const metadata = ((project.metadata ?? {}) as Record<string, unknown>) || {}
-  const visionPhase = ((metadata.visionPhase ?? {}) as Record<string, unknown>) || {}
-  const production = ((visionPhase.production ?? {}) as Record<string, unknown>) || {}
-  const scenes = ((production.scenes ?? {}) as Record<string, SceneProductionData>) || {}
-  const existing = scenes[payload.sceneId]
-  const streams = existing?.productionStreams ?? []
-  const streamId = sceneRenderStreamId(job.id)
-  const previous = streams.find((stream) => stream.id === streamId)
-  const streamVersion =
-    previous?.streamVersion ??
-    getNextProductionStreamVersion(
-      streams.filter((stream) => stream.id !== streamId),
-      payload.language,
-      payload.streamType
-    )
-
   const duration =
     typeof payload.durationSeconds === 'number' && payload.durationSeconds > 0
       ? payload.durationSeconds
-      : previous?.duration
+      : undefined
 
   const stream: ProductionStream = {
-    id: streamId,
+    id: sceneRenderStreamId(job.id),
     language: payload.language,
     languageLabel: payload.languageLabel,
     status: 'complete',
     streamType: payload.streamType,
-    streamVersion,
     mp4Url: downloadUrl,
     completedAt: new Date().toISOString(),
     source: 'render',
     ...(duration !== undefined ? { duration } : {}),
   }
 
-  const renderedSceneUrl =
-    previousUrl && existing?.renderedSceneUrl && existing.renderedSceneUrl !== previousUrl
-      ? existing.renderedSceneUrl
-      : downloadUrl
-
-  const incoming: SceneProductionData = {
-    isSegmented: existing?.isSegmented ?? false,
-    targetSegmentDuration: existing?.targetSegmentDuration ?? 10,
-    segments: existing?.segments ?? [],
-    productionStreams: [stream],
-    renderedSceneUrl,
-    renderedAt: new Date().toISOString(),
-  }
-  const merged = mergeSceneProductionData(existing, incoming) ?? incoming
-
-  await project.update({
-    metadata: {
-      ...metadata,
-      visionPhase: {
-        ...visionPhase,
-        production: {
-          ...production,
-          lastUpdated: new Date().toISOString(),
-          scenes: {
-            ...scenes,
-            [payload.sceneId]: merged,
-          },
-        },
-      },
-    },
+  await appendSceneRender({
+    projectId: job.project_id,
+    sceneId: payload.sceneId,
+    stream,
+    previousUrl,
   })
 }
 
