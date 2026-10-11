@@ -154,6 +154,89 @@ describe('mergeSceneProductionData', () => {
     expect(merged.segments[1].activeAssetUrl).toBe('https://cdn.example/upload.mp4')
   })
 
+  it('keeps a stored video when the incoming segment has no media URL', () => {
+    const existing: SceneProductionData = {
+      isSegmented: true,
+      targetSegmentDuration: 8,
+      segments: [
+        segment({
+          status: 'COMPLETE',
+          assetType: 'video',
+          activeAssetUrl: 'https://cdn.example/shot.mp4',
+          currentTakeId: 't1',
+          takes: [
+            {
+              id: 't1',
+              createdAt: '2026-01-01T00:00:00.000Z',
+              assetUrl: 'https://cdn.example/shot.mp4',
+              status: 'COMPLETE',
+            },
+          ],
+        }),
+      ],
+    }
+    const incoming: SceneProductionData = {
+      isSegmented: true,
+      targetSegmentDuration: 8,
+      segments: [
+        segment({
+          status: 'GENERATING',
+          assetType: null,
+          activeAssetUrl: null,
+          takes: [],
+        }),
+      ],
+    }
+    const merged = mergeSceneProductionData(existing, incoming)!
+    expect(merged.segments[0].activeAssetUrl).toBe('https://cdn.example/shot.mp4')
+    expect(merged.segments[0].status).toBe('COMPLETE')
+    expect(merged.segments[0].assetType).toBe('video')
+    expect(merged.segments[0].currentTakeId).toBe('t1')
+    expect(merged.segments[0].takes[0].assetUrl).toBe('https://cdn.example/shot.mp4')
+  })
+
+  it('does not replace a stored take when the same id arrives without a URL', () => {
+    const existing: SceneProductionData = {
+      isSegmented: true,
+      targetSegmentDuration: 8,
+      segments: [
+        segment({
+          activeAssetUrl: 'https://cdn.example/shot.mp4',
+          currentTakeId: 't1',
+          takes: [
+            {
+              id: 't1',
+              createdAt: '2026-01-01T00:00:00.000Z',
+              assetUrl: 'https://cdn.example/shot.mp4',
+              status: 'COMPLETE',
+            },
+          ],
+        }),
+      ],
+    }
+    const incoming: SceneProductionData = {
+      isSegmented: true,
+      targetSegmentDuration: 8,
+      segments: [
+        segment({
+          activeAssetUrl: null,
+          takes: [
+            {
+              id: 't1',
+              createdAt: '2026-01-02T00:00:00.000Z',
+              assetUrl: '',
+              status: 'GENERATING',
+            },
+          ],
+        }),
+      ],
+    }
+    const merged = mergeSceneProductionData(existing, incoming)!
+    expect(merged.segments[0].takes[0].assetUrl).toBe('https://cdn.example/shot.mp4')
+    expect(merged.segments[0].takes[0].status).toBe('COMPLETE')
+    expect(merged.segments[0].activeAssetUrl).toBe('https://cdn.example/shot.mp4')
+  })
+
   it('keeps the stored clip when a re-derive mints a new id for the same beat', () => {
     const existing: SceneProductionData = {
       isSegmented: true,

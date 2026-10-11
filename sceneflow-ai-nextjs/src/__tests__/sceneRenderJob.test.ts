@@ -77,6 +77,40 @@ vi.mock('@/models/GenerationJob', () => ({
   },
 }))
 
+vi.mock('@/lib/projects/appendSceneRender', async () => {
+  const { planSceneRenderAppend } = await import('@/lib/projects/planSceneRenderAppend')
+  return {
+    appendSceneRender: vi.fn(async (input: {
+      sceneId: string
+      stream: { id: string }
+      previousUrl?: string
+    }) => {
+      const vision = state.metadata.visionPhase as {
+        production: {
+          scenes: Record<
+            string,
+            {
+              productionStreams?: Array<{ id?: string }>
+              renderedSceneUrl?: string
+            }
+          >
+        }
+      }
+      const scene = vision.production.scenes[input.sceneId]
+      if (!scene) return false
+      const planned = planSceneRenderAppend({
+        streams: scene.productionStreams as never,
+        renderedSceneUrl: scene.renderedSceneUrl,
+        stream: input.stream as never,
+        previousUrl: input.previousUrl,
+      })
+      scene.productionStreams = planned.streams as never
+      scene.renderedSceneUrl = planned.renderedSceneUrl
+      return true
+    }),
+  }
+})
+
 vi.mock('@/lib/jobs/jobService', () => ({
   notifyUser: vi.fn(async () => {}),
   updateGenerationJob: vi.fn(async (_id: string, patch: Partial<Row>) => {
@@ -87,6 +121,7 @@ vi.mock('@/lib/jobs/jobService', () => ({
 }))
 
 import { notifyUser } from '@/lib/jobs/jobService'
+import { appendSceneRender } from '@/lib/projects/appendSceneRender'
 import { recordSceneRenderCallback } from '@/lib/jobs/sceneRenderJob'
 
 const DOWNLOAD = 'https://storage.googleapis.com/bucket/outputs/render-1.mp4'
@@ -99,7 +134,13 @@ function seed() {
           'scene-1': {
             isSegmented: true,
             targetSegmentDuration: 10,
-            segments: [],
+            segments: [
+              {
+                segmentId: 'shot-1',
+                activeAssetUrl: 'https://blob.example/shot.mp4',
+                status: 'COMPLETE',
+              },
+            ],
             productionStreams: [
               {
                 id: 'existing',
@@ -137,6 +178,7 @@ function seed() {
     result: null,
     error: null,
   }
+  vi.mocked(appendSceneRender).mockClear()
   state.projectUpdate.mockReset()
   state.projectUpdate.mockImplementation(async (patch: { metadata: Record<string, unknown> }) => {
     state.metadata = patch.metadata
@@ -146,7 +188,16 @@ function seed() {
 
 function sceneData() {
   const vision = state.metadata.visionPhase as {
-    production: { scenes: Record<string, { productionStreams: Array<Record<string, unknown>>; renderedSceneUrl?: string }> }
+    production: {
+      scenes: Record<
+        string,
+        {
+          productionStreams: Array<Record<string, unknown>>
+          renderedSceneUrl?: string
+          segments: Array<Record<string, unknown>>
+        }
+      >
+    }
   }
   return vision.production.scenes['scene-1']
 }
@@ -175,9 +226,18 @@ describe('recordSceneRenderCallback', () => {
     })
     expect(scene.productionStreams).toHaveLength(2)
     expect(scene.renderedSceneUrl).toBe(DOWNLOAD)
+    expect(scene.segments).toEqual([
+      {
+        segmentId: 'shot-1',
+        activeAssetUrl: 'https://blob.example/shot.mp4',
+        status: 'COMPLETE',
+      },
+    ])
     expect(state.row?.status).toBe('completed')
     expect(state.row?.result).toMatchObject({ downloadUrl: DOWNLOAD, promoted: false })
-    expect(state.projectUpdate).toHaveBeenCalledTimes(1)
+    expect(appendSceneRender).toHaveBeenCalledTimes(1)
+    expect(vi.mocked(appendSceneRender).mock.calls[0][0]).not.toHaveProperty('segments')
+    expect(state.projectUpdate).not.toHaveBeenCalled()
     expect(notifyUser).toHaveBeenCalledTimes(1)
     expect(notifyUser).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -203,7 +263,8 @@ describe('recordSceneRenderCallback', () => {
       downloadUrl: 'https://storage.googleapis.com/bucket/outputs/again.mp4',
     })
 
-    expect(state.projectUpdate).toHaveBeenCalledTimes(1)
+    expect(appendSceneRender).toHaveBeenCalledTimes(1)
+    expect(state.projectUpdate).not.toHaveBeenCalled()
     expect(notifyUser).toHaveBeenCalledTimes(1)
     expect(sceneData().renderedSceneUrl).toBe(DOWNLOAD)
   })
@@ -215,6 +276,7 @@ describe('recordSceneRenderCallback', () => {
       error: 'encode crashed',
     })
 
+    expect(appendSceneRender).not.toHaveBeenCalled()
     expect(state.projectUpdate).not.toHaveBeenCalled()
     expect(state.row?.status).toBe('failed')
     expect(state.row?.error).toBe('encode crashed')
