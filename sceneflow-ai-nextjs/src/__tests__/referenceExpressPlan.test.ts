@@ -8,6 +8,7 @@ import {
   canStartReferenceExpressJob,
   castFingerprint,
   locationFingerprint,
+  planContinuityItems,
   planFollowOnNestedItems,
   planReferenceExpressItems,
   planSceneReferenceExpressItems,
@@ -63,6 +64,141 @@ function readyScene(scene: Record<string, any>) {
     },
   }
 }
+
+describe('planContinuityItems', () => {
+  const mira = cast({
+    referenceImage: 'https://cdn/mira.png',
+    wardrobes: [
+      { id: 'wd-1', name: 'Parka', description: 'Grease-stained parka' },
+      {
+        id: 'wd-2',
+        name: 'Coat',
+        description: 'Wet wool coat',
+        fullBodyUrl: 'https://cdn/coat.png',
+      },
+    ],
+  })
+  const dockyard = location()
+  const atrium = location({ id: 'l2', location: 'Atrium', description: 'Glass and stone' })
+  const key = prop()
+  const ledger = prop({ id: 'p2', name: 'Leather ledger', imageUrl: 'https://cdn/ledger.png' })
+
+  const promoScene = readyScene({
+    heading: 'EXT. DOCKYARD - NIGHT',
+    sceneNumber: 1,
+    action: 'Mira turns the brass key.',
+    beats: [
+      {
+        beatId: 'shot-1',
+        referenceSelection: {
+          characterIds: ['c1'],
+          characterWardrobes: [{ characterId: 'c1', wardrobeId: 'wd-1' }],
+          locationRefId: 'l1',
+          objectRefIds: ['p1'],
+        },
+      },
+    ],
+  })
+  const otherScene = readyScene({
+    heading: 'INT. ATRIUM - DAY',
+    sceneNumber: 2,
+    action: 'Bo signs the leather ledger.',
+    beats: [
+      {
+        beatId: 'shot-2',
+        referenceSelection: {
+          characterIds: ['c2'],
+          locationRefId: 'l2',
+          objectRefIds: ['p2'],
+        },
+      },
+    ],
+  })
+
+  const input = {
+    characters: [mira, cast({ id: 'c2', name: 'Bo' })],
+    locations: [dockyard, atrium],
+    props: [key, ledger],
+    scenes: [promoScene, otherScene],
+  }
+
+  it('draws the promo shot’s missing wardrobe, location, and prop, and leaves the rest of the library', () => {
+    const items = planContinuityItems(input, [{ sceneIndex: 0, beatId: 'shot-1' }])
+
+    expect(items.map((item) => referenceExpressItemKey(item))).toEqual([
+      'wardrobe:wd-1',
+      'location:l1',
+      'prop:p1',
+    ])
+    expect(items.every((item) => item.forceRegenerate !== true)).toBe(true)
+  })
+
+  it('skips a finished plate and redraws a stale wardrobe', () => {
+    const drawn = {
+      ...input,
+      characters: [
+        cast({
+          referenceImage: 'https://cdn/mira.png',
+          wardrobes: [
+            {
+              id: 'wd-1',
+              name: 'Parka',
+              description: 'Grease-stained parka',
+              fullBodyUrl: 'https://cdn/parka.png',
+              needsImageRegen: true,
+            },
+          ],
+        }),
+      ],
+      locations: [location({ imageUrl: 'https://cdn/dock.png' }), atrium],
+      props: [prop({ imageUrl: 'https://cdn/key.png' }), ledger],
+    }
+    const items = planContinuityItems(drawn, [{ sceneIndex: 0, beatId: 'shot-1' }])
+
+    expect(items.map((item) => referenceExpressItemKey(item))).toEqual(['wardrobe:wd-1'])
+  })
+
+  it('draws the identity still when the required look has no face yet', () => {
+    const unfaced = {
+      ...input,
+      characters: [
+        cast({
+          wardrobes: [{ id: 'wd-1', name: 'Parka', description: 'Grease-stained parka' }],
+        }),
+        cast({ id: 'c2', name: 'Bo' }),
+      ],
+    }
+    const items = planContinuityItems(unfaced, [{ sceneIndex: 0, beatId: 'shot-1' }])
+
+    expect(items.map((item) => referenceExpressItemKey(item))).toEqual([
+      'cast:c1',
+      'location:l1',
+      'prop:p1',
+    ])
+  })
+
+  it('falls back to the scene once when the shot has no selection, and still ignores the other scene', () => {
+    const unplanned = {
+      ...input,
+      scenes: [
+        readyScene({
+          heading: 'EXT. DOCKYARD - NIGHT',
+          sceneNumber: 1,
+          action: 'Mira turns the brass key.',
+          beats: [{ beatId: 'shot-1' }],
+        }),
+        otherScene,
+      ],
+    }
+    const items = planContinuityItems(unplanned, [
+      { sceneIndex: 0, beatId: 'shot-1' },
+      { sceneIndex: 0, beatId: 'missing' },
+    ])
+
+    expect(items.map((item) => item.targetId)).toEqual(['c1', 'l1', 'p1'])
+    expect(items.some((item) => item.targetId === 'l2' || item.targetId === 'c2')).toBe(false)
+  })
+})
 
 describe('planReferenceExpressItems', () => {
   it('plans cast before locations and props', () => {

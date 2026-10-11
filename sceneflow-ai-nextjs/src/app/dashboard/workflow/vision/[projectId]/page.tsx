@@ -5687,6 +5687,40 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     [setProductionViewWithUrl]
   )
 
+  const ensurePromoContinuityRef = useRef<
+    (beatPlan: Array<{ sceneIndex: number; beatId: string }>) => Promise<void>
+  >(async () => {
+    throw new Error('Continuity Agent is not ready')
+  })
+
+  const handleRunContinuityAgent = useCallback(
+    async ({ beatPlan }: { beatPlan: Array<{ sceneIndex: number; beatId: string }> }) => {
+      if (!project?.id) throw new Error('Project must be loaded before Continuity Agent runs.')
+      const runId = `continuity-agent-${project.id}`
+      startAgentRun({
+        id: runId,
+        title: 'Continuity Agent',
+        subtitle: 'Drawing wardrobe, location, and prop plates for the promo shots',
+        items: [{ key: 'continuity', label: 'Continuity', status: 'running' }],
+      })
+      try {
+        await ensurePromoContinuityRef.current(beatPlan)
+        setAgentRunItem(runId, 'continuity', { status: 'done' })
+        finishAgentRun(runId, {
+          subtitle: 'Continuity plates are ready',
+          tone: 'success',
+        })
+        toast.success('Continuity Agent finished')
+      } catch (error) {
+        const message = error instanceof Error ? error.message : 'Continuity Agent failed'
+        setAgentRunItem(runId, 'continuity', { status: 'error', error: message })
+        failAgentRun(runId, message)
+        throw error
+      }
+    },
+    [project?.id]
+  )
+
   const handleRunPromoAgent = useCallback(
     async ({
       beatPlan,
@@ -5782,8 +5816,9 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       startAgentRun({
         id: runId,
         title: 'Promo Agent',
-        subtitle: 'Generating the trailer shots, narration, and music',
+        subtitle: 'Drawing continuity plates, then the trailer shots, narration, and music',
         items: [
+          { key: 'continuity', label: 'Continuity', status: 'pending' as const },
           ...shots.map((shot) => ({
             key: shot.key,
             label: `S${shot.sceneIndex + 1} · ${shot.label}`,
@@ -5809,6 +5844,10 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
               beatId: shot.beatId,
               policyBlocked: shot.policyBlocked,
             }),
+          ensureContinuity: () =>
+            ensurePromoContinuityRef.current(
+              beatPlan.map((beat) => ({ sceneIndex: beat.sceneIndex, beatId: beat.beatId }))
+            ),
           generateClip: (shot, _method, segmentId) =>
             generatePromoClip({
               sceneId: shot.sceneId,
@@ -11763,8 +11802,10 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
   ): Promise<ReferenceExpressStartOutcome> => {
     if (!projectId) return { outcome: 'error', error: 'No project loaded' }
 
+    const continuityRun = !!scope?.continuityShots?.length
     const agentLabel = referenceExpressAgentLabel(scope?.kinds, {
       sceneScoped: !!scope?.sceneIndices?.length,
+      continuity: continuityRun,
     })
 
     if (referenceExpressJob.isActive) {
@@ -11787,9 +11828,10 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         body: JSON.stringify({
           projectId,
           sceneIndices: scope?.sceneIndices,
-          itemKeys: scope?.itemKeys,
+          itemKeys: continuityRun ? undefined : scope?.itemKeys,
           kinds: scope?.kinds,
           locationIds: scope?.locationIds,
+          ...(continuityRun ? { continuityShots: scope?.continuityShots } : {}),
         }),
       })
       const data = await res.json().catch(() => ({}))
@@ -11859,6 +11901,106 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       return { outcome: 'error', error: message }
     }
   }
+
+  const refreshPromoSceneDirection = async (sceneIndex: number) => {
+    const scenes = scriptRef.current?.script?.scenes ?? scriptRef.current?.scenes ?? []
+    const scene = scenes[sceneIndex] as Record<string, unknown> | undefined
+    if (!scene || isSceneOutline(scene) || !sceneHasScreenplayBody(scene)) return
+    if (isSceneScriptReadyForReferences(scene)) return
+    if (!project?.id) throw new Error('Project must be loaded before Continuity Agent runs.')
+    const directionResponse = await fetch('/api/scene/generate-direction', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        projectId: project.id,
+        sceneIndex,
+        scene: {
+          heading: scene.heading,
+          action: scene.action,
+          visualDescription: scene.visualDescription,
+          narration: scene.narration,
+          dialogue: scene.dialogue,
+          characters: scene.characters,
+          beats: scene.beats,
+          sceneMovements: scene.sceneMovements,
+        },
+      }),
+    })
+    const data = await directionResponse.json().catch(() => ({}))
+    if (!directionResponse.ok || !data?.success || !data?.sceneDirection) {
+      throw new Error(
+        typeof data?.error === 'string'
+          ? data.error
+          : 'Scene direction has to match the script before continuity plates are drawn.'
+      )
+    }
+    const nextScene = ensureSceneBeats({
+      ...scene,
+      sceneDirection: {
+        ...data.sceneDirection,
+        basedOnContentHash: generateSceneContentHash(scene),
+      },
+    } as Record<string, unknown>) as Record<string, unknown>
+    setScript((currentScript: any) => {
+      if (!currentScript) return currentScript
+      const list = currentScript.script?.scenes ?? currentScript.scenes
+      if (!Array.isArray(list)) return currentScript
+      const updatedScenes = [...list]
+      updatedScenes[sceneIndex] = nextScene
+      const next = currentScript.script?.scenes
+        ? { ...currentScript, script: { ...currentScript.script, scenes: updatedScenes } }
+        : { ...currentScript, scenes: updatedScenes }
+      scriptRef.current = next
+      return next
+    })
+  }
+
+  const ensurePromoContinuityPlates = async (
+    beatPlan: Array<{ sceneIndex: number; beatId: string }>
+  ) => {
+    const scenes = scriptRef.current?.script?.scenes ?? scriptRef.current?.scenes ?? []
+    const shots = beatPlan.filter((beat) => {
+      const scene = scenes[beat.sceneIndex] as Record<string, unknown> | undefined
+      return !!scene && !isSceneOutline(scene) && sceneHasScreenplayBody(scene)
+    })
+    if (shots.length === 0) return
+
+    const sceneIndices = [...new Set(shots.map((shot) => shot.sceneIndex))].sort((a, b) => a - b)
+    for (const sceneIndex of sceneIndices) {
+      await refreshPromoSceneDirection(sceneIndex)
+    }
+
+    const start = () =>
+      handleExpressGenerateReferences({
+        sceneIndices,
+        continuityShots: shots.map((shot) => ({
+          sceneIndex: shot.sceneIndex,
+          beatId: shot.beatId,
+        })),
+      })
+
+    let started = await start()
+    if (started.outcome === 'already-running') {
+      await referenceExpressJob.waitUntilSettled()
+      await refreshReferencesFromServer()
+      started = await start()
+    }
+    if (started.outcome === 'nothing-to-do') return
+    if (started.outcome === 'script-not-ready') {
+      throw new Error('Finish the promo scenes’ scripts before drawing continuity plates.')
+    }
+    if (started.outcome === 'error') throw new Error(started.error)
+    if (started.outcome !== 'started') {
+      throw new Error('Continuity Agent is already running.')
+    }
+
+    const settled = await referenceExpressJob.waitUntilSettled()
+    await refreshReferencesFromServer()
+    if (!settled || settled.status !== 'completed') {
+      throw new Error(settled?.error || 'Continuity plates failed')
+    }
+  }
+  ensurePromoContinuityRef.current = ensurePromoContinuityPlates
 
   /**
    * The scene card's own Express References — the same job, planned against one
@@ -17994,6 +18136,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         }}
         onGenerateBeatClip={handleGeneratePromoBeatClip}
         onRunPromoAgent={handleRunPromoAgent}
+        onRunContinuityAgent={handleRunContinuityAgent}
         onOpenDirectShot={focusStudioShot}
         onOptimizeDirection={async (request) => {
           await optimizePromoSourceShot({

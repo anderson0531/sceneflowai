@@ -574,7 +574,9 @@ describe('promo source guards', () => {
     const tab = path.join(process.cwd(), 'src/components/publishing/PublishingPromoTab.tsx')
     const source = readFileSync(tab, 'utf8')
     expect(source).toContain('Promo Agent')
+    expect(source).toContain('Continuity Agent')
     expect(source).toContain('onRunPromoAgent')
+    expect(source).toContain('onRunContinuityAgent')
     expect(source).not.toContain('existing shots, frames, and clips')
     expect(source).not.toContain('This shot needs a Studio segment first')
     const page = path.join(
@@ -583,7 +585,10 @@ describe('promo source guards', () => {
     )
     const pageSource = readFileSync(page, 'utf8')
     expect(pageSource).toContain("title: 'Promo Agent'")
+    expect(pageSource).toContain("title: 'Continuity Agent'")
     expect(pageSource).toContain('ensurePromoShotSegment')
+    expect(pageSource).toContain('continuityShots')
+    expect(pageSource).toContain("key: 'continuity'")
   })
 
   it('trailer render enables narration/music for promo', () => {

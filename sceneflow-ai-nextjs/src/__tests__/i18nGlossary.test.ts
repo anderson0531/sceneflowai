@@ -129,6 +129,7 @@ describe('glossary contents', () => {
       'Stills Agent',
       'Video Agent',
       'Promo Agent',
+      'Continuity Agent',
       'Run All Agents',
     ]) {
       expect(GLOSSARY_TERMS).toContain(term)

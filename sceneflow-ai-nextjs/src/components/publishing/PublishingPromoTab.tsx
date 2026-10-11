@@ -6,6 +6,7 @@ import { toast } from 'sonner'
 import {
   Download,
   Bot,
+  Images,
   ChevronDown,
   ChevronUp,
   Film,
@@ -48,6 +49,7 @@ import {
   seedPromoAudience,
   upsertPromoLanguageTrailer,
   type PromoAgentRunRequest,
+  type PromoContinuityRunRequest,
   type PromoBeatClipRequest,
 } from '@/lib/publish/promoLanguage'
 import { PromoCutPreview, type PromoCutPreviewHandle } from '@/components/publishing/PromoCutPreview'
@@ -84,6 +86,8 @@ export interface PublishingPromoTabProps {
   onGenerateBeatClip?: (input: PromoBeatClipRequest) => Promise<void>
   /** Produce missing plan clips, narration, and music. The run lives on the page. */
   onRunPromoAgent?: (input: PromoAgentRunRequest) => Promise<void>
+  /** Draw missing wardrobe, location, and prop plates for the included shots. */
+  onRunContinuityAgent?: (input: PromoContinuityRunRequest) => Promise<void>
   /** Open this shot in Studio's Direct Shot dialog. */
   onOpenDirectShot?: (input: DirectShotRequest) => void
   /** Rewrite a source shot with Direct Shot optimize before it is generated. */
@@ -203,6 +207,7 @@ export function PublishingPromoTab({
   onOpenPromoInStudio,
   onGenerateBeatClip,
   onRunPromoAgent,
+  onRunContinuityAgent,
   onOpenDirectShot,
   onOptimizeDirection,
 }: PublishingPromoTabProps) {
@@ -217,6 +222,7 @@ export function PublishingPromoTab({
   const [generatingBeatKey, setGeneratingBeatKey] = useState<string | null>(null)
   const [audioGenerating, setAudioGenerating] = useState<'narration' | 'music' | null>(null)
   const [agentRunning, setAgentRunning] = useState(false)
+  const [continuityRunning, setContinuityRunning] = useState(false)
   const [directorOpen, setDirectorOpen] = useState(false)
   const [analysis, setAnalysis] = useState<PromoPlanFinding[] | null>(null)
   const [optimizingKey, setOptimizingKey] = useState<string | null>(null)
@@ -614,6 +620,27 @@ export function PublishingPromoTab({
     }
   }, [onRunPromoAgent, timelineBeats, targetDuration, language, aspect, audiencePayload])
 
+  const handleRunContinuityAgent = useCallback(async () => {
+    const playing = timelineBeats.filter((beat) => promoShotIncluded(beat))
+    if (!onRunContinuityAgent || playing.length === 0) {
+      toast.error('Plan the promo first.')
+      return
+    }
+    setContinuityRunning(true)
+    try {
+      await onRunContinuityAgent({
+        beatPlan: playing.map((beat) => ({
+          sceneIndex: beat.sceneIndex,
+          beatId: beat.beatId,
+        })),
+      })
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Continuity Agent failed')
+    } finally {
+      setContinuityRunning(false)
+    }
+  }, [onRunContinuityAgent, timelineBeats])
+
   const handleRenderTrailer = useCallback(async () => {
     const source = (beatPlan.length > 0 ? beatPlan : timelineBeats)
       .filter((beat) => promoShotIncluded(beat))
@@ -868,16 +895,38 @@ export function PublishingPromoTab({
           <Button
             size="sm"
             variant="outline"
+            onClick={() => void handleRunContinuityAgent()}
+            disabled={
+              continuityRunning ||
+              agentRunning ||
+              !onRunContinuityAgent ||
+              timelineBeats.length === 0
+            }
+            className="border-fuchsia-500/40 text-fuchsia-100"
+          >
+            {continuityRunning ? (
+              <Loader2 className="w-4 h-4 animate-spin mr-1" />
+            ) : (
+              <Images className="w-4 h-4 mr-1" />
+            )}
+            Continuity Agent
+          </Button>
+          <Button
+            size="sm"
+            variant="outline"
             onClick={() => void handleRunPromoAgent()}
-            disabled={agentRunning || !onRunPromoAgent || timelineBeats.length === 0}
+            disabled={
+              agentRunning || continuityRunning || !onRunPromoAgent || timelineBeats.length === 0
+            }
             className="border-fuchsia-500/40 text-fuchsia-100"
           >
             {agentRunning ? <Loader2 className="w-4 h-4 animate-spin mr-1" /> : <Bot className="w-4 h-4 mr-1" />}
             Promo Agent
           </Button>
           <p className="min-w-0 flex-1 text-[11px] leading-relaxed text-zinc-400">
-            Builds the missing clips, narration, and music for {languageLabel}. Dialogue, titles,
-            and credits are translated. Action shots are shared.
+            Continuity Agent draws the missing wardrobe, location, and prop plates for these shots.
+            Promo Agent does that, then builds the clips, narration, and music for {languageLabel}.
+            Dialogue, titles, and credits are translated. Action shots are shared.
           </p>
         </div>
 

@@ -87,6 +87,12 @@ export type ReferenceExpressScope = {
    * even though the user had not checked it yet.
    */
   preexistingVersionIds?: string[]
+  /**
+   * Promo Continuity Agent. Each entry is one included trailer shot.
+   * Planning uses these beats and does not widen to the rest of the library.
+   * This is not `itemKeys`: naming a shot must not force a redraw.
+   */
+  continuityShots?: Array<{ sceneIndex: number; beatId: string }>
 }
 
 export type ReferenceExpressItemResult = {
