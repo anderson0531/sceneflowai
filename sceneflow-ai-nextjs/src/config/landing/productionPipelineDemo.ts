@@ -12,9 +12,10 @@
 
 export const FLAGSHIP_PRODUCTION_ID = 'drama' as const
 
-export const CINEMATIC_DRAMA_TRAILER_WEBM = '/videos/cinematic-drama-trailer.webm'
+/** Same-path public file. The query busts the previous cached trailer. */
+export const CINEMATIC_DRAMA_TRAILER_WEBM = '/videos/cinematic-drama-trailer.webm?v=20261011'
 export const CINEMATIC_DRAMA_TRAILER_MP4 =
-  'https://xxavfkdhdebrqida.public.blob.vercel-storage.com/e3401893-6250-41c2-aca5-4425434c57ab.mp4'
+  'https://xxavfkdhdebrqida.public.blob.vercel-storage.com/25467ce3-606a-4e07-98ba-a91cf2be7ff2.mp4'
 
 export const PRODUCTION_WALK_IDS = ['drama', 'animation', 'documentary', 'training'] as const
 
