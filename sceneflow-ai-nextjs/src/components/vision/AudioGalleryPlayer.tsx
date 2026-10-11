@@ -308,7 +308,7 @@ interface AudioGalleryPlayerProps {
   onLanguageChange: (language: string) => void
   availableLanguages: string[]
   onClose?: () => void
-  onShare?: () => void
+  onShare?: (opts?: { viewOnly?: boolean }) => void
   onSceneChange?: (index: number) => void
   isSharedView?: boolean
   /** Landing embed: hide player header; language pill overlays image area. */
@@ -339,7 +339,7 @@ interface AudioGalleryPlayerProps {
   /** Project-level language stream masters. */
   projectStreams?: ProjectStream[]
   /** Share rendered stream master (stream playback mode). */
-  onShareStream?: (language: string) => void | Promise<void>
+  onShareStream?: (language: string, opts?: { viewOnly?: boolean }) => void | Promise<void>
   /** One-shot open hint from Production or Streams. */
   screeningPlaybackHint?: import('@/lib/scene/screeningReviewModes').ScreeningPlaybackHint | null
   onScreeningPlaybackHintConsumed?: () => void
@@ -413,6 +413,7 @@ export function AudioGalleryPlayer({
   promoTrailerUrl,
   onSceneMixChange,
 }: AudioGalleryPlayerProps) {
+  const [viewOnlyShare, setViewOnlyShare] = useState(false)
   const [currentSceneIndex, setCurrentSceneIndex] = useState(() =>
     typeof screeningPlaybackHint?.sceneIndex === 'number' && screeningPlaybackHint.sceneIndex >= 0
       ? screeningPlaybackHint.sceneIndex
@@ -1728,21 +1729,35 @@ export function AudioGalleryPlayer({
           </a>
         )}
         {(onShare || onShareStream) && !isSharedView && (
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => {
-              if (playbackMode === 'stream' && onShareStream) {
-                void onShareStream(selectedLanguage)
-              } else if (onShare) {
-                onShare()
-              }
-            }}
-            className="h-7 text-xs bg-gray-800 border-gray-700 hover:bg-gray-700 hover:text-white"
-          >
-            <Share2 className="w-3.5 h-3.5 mr-1.5" />
-            Share
-          </Button>
+          <>
+            {screeningLayout ? (
+              <label className="flex items-center gap-1.5 text-[10px] text-gray-300 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={viewOnlyShare}
+                  onChange={(event) => setViewOnlyShare(event.target.checked)}
+                  className="rounded border-gray-600"
+                />
+                View only (no feedback)
+              </label>
+            ) : null}
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                const shareOpts = screeningLayout && viewOnlyShare ? { viewOnly: true } : undefined
+                if (playbackMode === 'stream' && onShareStream) {
+                  void onShareStream(selectedLanguage, shareOpts)
+                } else if (onShare) {
+                  onShare(shareOpts)
+                }
+              }}
+              className="h-7 text-xs bg-gray-800 border-gray-700 hover:bg-gray-700 hover:text-white"
+            >
+              <Share2 className="w-3.5 h-3.5 mr-1.5" />
+              Share
+            </Button>
+          </>
         )}
         {languageFilterCodes === undefined || languageFilterCodes.length > 0 ? (
           <div className="flex items-center gap-2">

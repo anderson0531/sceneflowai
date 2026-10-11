@@ -77,6 +77,8 @@ interface AudiencePlayerProps {
   variantLabel?: string
   /** Contained landing embed: skip consent modal, fill parent height */
   embedMode?: boolean
+  /** When false, play the film with no consent, emoji, or camera feedback. */
+  enableAudienceFeedback?: boolean
   className?: string
 }
 
@@ -114,6 +116,7 @@ export function AudiencePlayer({
   onComplete,
   variantLabel,
   embedMode = false,
+  enableAudienceFeedback = true,
   className,
 }: AudiencePlayerProps) {
   // ============================================================================
@@ -121,7 +124,7 @@ export function AudiencePlayer({
   // ============================================================================
   
   // Consent state
-  const [showConsentModal, setShowConsentModal] = useState(!embedMode)
+  const [showConsentModal, setShowConsentModal] = useState(enableAudienceFeedback && !embedMode)
   const [cameraConsent, setCameraConsent] = useState(false)
   const [demographics, setDemographics] = useState<SessionDemographics>()
   
@@ -248,9 +251,10 @@ export function AudiencePlayer({
   }, [screeningId, onSessionStart])
 
   useEffect(() => {
-    if (!embedMode || isInitialized || showConsentModal) return
+    const skipConsent = embedMode || !enableAudienceFeedback
+    if (!skipConsent || isInitialized || showConsentModal) return
     void handleConsentComplete({ cameraConsent: false })
-  }, [embedMode, isInitialized, showConsentModal, handleConsentComplete])
+  }, [embedMode, enableAudienceFeedback, isInitialized, showConsentModal, handleConsentComplete])
   
   // ============================================================================
   // Playback Handlers
@@ -483,13 +487,14 @@ export function AudiencePlayer({
         )}
       </AnimatePresence>
       
-      {/* Emoji Reaction Bar */}
-      <EmojiReactionBar
-        currentTime={playerState.currentTime}
-        visible={playerState.showControls}
-        onReaction={handleEmojiReaction}
-        compact={playerState.isFullscreen}
-      />
+      {enableAudienceFeedback ? (
+        <EmojiReactionBar
+          currentTime={playerState.currentTime}
+          visible={playerState.showControls}
+          onReaction={handleEmojiReaction}
+          compact={playerState.isFullscreen}
+        />
+      ) : null}
       
       {/* Calibration Indicator */}
       <AnimatePresence>

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { v4 as uuidv4 } from 'uuid'
 import { consumeReviewerEmailToken } from '@/lib/email/reviewerOtp'
 import { findActiveShareProject } from '@/lib/storyboard/shareProjectLookup'
+import { isScreeningFeedbackAllowed, matchingShareLink } from '@/lib/screening/shareFeedback'
 
 export const runtime = 'nodejs'
 export const maxDuration = 30
@@ -57,6 +58,10 @@ export async function POST(
     }
 
     const metadata = project.metadata || {}
+    const matchedLink = matchingShareLink(metadata, shareToken)
+    if (matchedLink && !isScreeningFeedbackAllowed(matchedLink)) {
+      return NextResponse.json({ error: 'This link is view only' }, { status: 403 })
+    }
     const storyboardLink = metadata.storyboardShareLink
     const actualShareToken = storyboardLink?.shareToken || shareToken
 

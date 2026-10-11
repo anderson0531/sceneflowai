@@ -237,10 +237,11 @@ export function ProductionStyleCard({
       <PipelineReviewDialog
         open={reviewOpen}
         title={card.title}
-        milestones={media.milestones}
-        labels={milestoneLabels}
-        activeId={activeMilestone}
-        onSelect={setActiveMilestone}
+        href={
+          media.milestones.find((milestone) => milestone.id === activeMilestone)?.href ??
+          media.milestones[0]?.href ??
+          ''
+        }
         onClose={() => setReviewOpen(false)}
         closeLabel={exitFullscreenLabel}
       />

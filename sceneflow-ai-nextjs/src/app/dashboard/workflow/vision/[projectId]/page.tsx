@@ -2193,7 +2193,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
   )
 
   const handleShareStream = useCallback(
-    async (language: string) => {
+    async (language: string, opts?: { viewOnly?: boolean }) => {
       try {
         const res = await fetch('/api/vision/create-share-link', {
           method: 'POST',
@@ -2203,6 +2203,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
             linkType: 'screening-room',
             language,
             playbackMode: 'stream',
+            viewOnly: opts?.viewOnly === true,
           }),
         })
         const data = await res.json()

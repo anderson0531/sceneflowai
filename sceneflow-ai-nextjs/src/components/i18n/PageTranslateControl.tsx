@@ -10,37 +10,32 @@ import { GoogleTranslate } from '@/app/components/GoogleTranslate'
 import { applyGoogleTranslateLanguage } from '@/components/blueprint/BlueprintShareLanguageControls'
 import { LocalePicker } from '@/components/i18n/LocalePicker'
 import { allowsGoogleTranslate } from '@/config/i18n/gtSurfaces'
-import { DEFAULT_LOCALE, getLocaleNativeName, isLocale } from '@/i18n/locale'
+import { DEFAULT_LOCALE, getLocaleNativeName } from '@/i18n/locale'
 import { readUiLocaleCookie } from '@/i18n/useUiLocale'
 
 const ACTIVE_COOKIE = 'sf-gt-active'
 
-function readActiveLocale(): string | undefined {
-  if (typeof document === 'undefined') return undefined
-  const match = document.cookie.match(new RegExp(`(?:^|;\\s*)${ACTIVE_COOKIE}=([^;]+)`))
-  const value = match?.[1] ? decodeURIComponent(match[1]) : undefined
-  return isLocale(value) ? value : undefined
+function clearStoredTranslation(): void {
+  if (typeof document === 'undefined') return
+  document.cookie = `${ACTIVE_COOKIE}=; path=/; max-age=0; SameSite=Lax`
+  document.cookie = 'googtrans=; path=/; max-age=0'
+  document.cookie = `googtrans=; domain=${window.location.hostname}; path=/; max-age=0`
 }
 
-function writeActiveLocale(locale: string | null): void {
-  if (typeof document === 'undefined') return
-  if (locale) {
-    document.cookie = `${ACTIVE_COOKIE}=${locale}; path=/; max-age=86400; SameSite=Lax`
-  } else {
-    document.cookie = `${ACTIVE_COOKIE}=; path=/; max-age=0; SameSite=Lax`
-    // Clearing Google's own cookie is what actually reverts the page.
-    document.cookie = 'googtrans=; path=/; max-age=0'
-    document.cookie = `googtrans=; domain=${window.location.hostname}; path=/; max-age=0`
-  }
+function holdDocumentUntranslated(): void {
+  document.documentElement.setAttribute('translate', 'no')
+}
+
+function releaseDocumentForTranslation(): void {
+  document.documentElement.removeAttribute('translate')
 }
 
 /**
  * Opt-in browser translation for read-mostly surfaces.
  *
- * Never auto-on, and never rendered on a studio route — see
- * `src/config/i18n/gtSurfaces.ts` for why. The honest framing matters: this is a
- * machine translating the page in the browser, not a translated build, and the
- * control says so rather than implying the same quality as the catalogs.
+ * The Google script stays unloaded until the viewer picks a language. A stored
+ * `googtrans` cookie or the marketing locale must not start a translation on
+ * its own. Never rendered on a studio route — see `src/config/i18n/gtSurfaces.ts`.
  */
 export function PageTranslateControl({ className }: { className?: string }) {
   const pathname = usePathname()
@@ -53,27 +48,34 @@ export function PageTranslateControl({ className }: { className?: string }) {
 
   useEffect(() => {
     setMounted(true)
-    const stored = readActiveLocale()
-    if (stored) setActive(stored)
   }, [])
+
+  useEffect(() => {
+    if (!permitted) return
+    // A previous visit must not turn translation back on.
+    clearStoredTranslation()
+    holdDocumentUntranslated()
+  }, [permitted])
 
   // Re-apply after client navigation: the widget does not observe route changes.
   useEffect(() => {
     if (!active || !permitted) return
+    releaseDocumentForTranslation()
     const timer = window.setTimeout(() => applyGoogleTranslateLanguage(active), 600)
     return () => window.clearTimeout(timer)
   }, [active, permitted, pathname])
 
   const translateTo = useCallback((locale: string) => {
+    releaseDocumentForTranslation()
     setActive(locale)
-    writeActiveLocale(locale)
     applyGoogleTranslateLanguage(locale)
     setExpanded(false)
   }, [])
 
   const revert = useCallback(() => {
     setActive(null)
-    writeActiveLocale(null)
+    clearStoredTranslation()
+    holdDocumentUntranslated()
     // Google's widget has no clean teardown; a reload is the reliable revert.
     window.location.reload()
   }, [])
@@ -120,7 +122,7 @@ export function PageTranslateControl({ className }: { className?: string }) {
         </button>
       )}
 
-      <GoogleTranslate />
+      {active ? <GoogleTranslate /> : null}
     </div>
   )
 }

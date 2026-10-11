@@ -10,6 +10,7 @@ import { buildFeedbackNotification, feedbackExcerpt } from '@/lib/companion/feed
 import { notifyUser } from '@/lib/jobs/jobService'
 import Project from '@/models/Project'
 import '@/models'
+import { getPremiereScreeningById } from '@/lib/premiere/screeningLookup'
 
 export const dynamic = 'force-dynamic'
 
@@ -55,6 +56,11 @@ export async function POST(request: NextRequest) {
         { error: 'projectId, screeningId, and comment are required' },
         { status: 400 }
       )
+    }
+
+    const screening = await getPremiereScreeningById(screeningId)
+    if (screening && screening.feedbackEnabled === false) {
+      return NextResponse.json({ error: 'This link is view only' }, { status: 403 })
     }
 
     const item = await createPremiereFeedback({

@@ -386,7 +386,8 @@ export default function AudienceScreeningPage() {
           videoUrl={videoData.videoUrl}
           title={videoData.title}
           description={videoData.description}
-          collectDemographics={videoData.collectDemographics}
+          collectDemographics={videoData.feedbackEnabled && videoData.collectDemographics}
+          enableAudienceFeedback={videoData.feedbackEnabled}
           onSessionStart={handleSessionStart}
           onComplete={handleComplete}
         />

@@ -43,6 +43,8 @@ export interface CreatePremiereScreeningInput {
   locale?: string
   sourceType?: PremiereSourceType
   source?: PremiereScreeningSource
+  /** When false, the public player has no feedback, biometrics, or demographics. */
+  feedbackEnabled?: boolean
 }
 
 export interface UpdatePremiereScreeningInput {
@@ -134,6 +136,7 @@ export async function createPremiereScreeningFromUpload(
 
   const createdAt = new Date().toISOString()
   const id = `premiere-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
+  const feedbackEnabled = input.feedbackEnabled !== false
   const record: PremiereScreeningRecord = {
     id,
     projectId,
@@ -155,9 +158,9 @@ export async function createPremiereScreeningFromUpload(
     feedbackCount: 0,
     avgRating: 0,
     openItems: 0,
-    feedbackEnabled: true,
-    collectBiometrics: true,
-    collectDemographics: true,
+    feedbackEnabled,
+    collectBiometrics: feedbackEnabled,
+    collectDemographics: feedbackEnabled,
     source: input.source || 'external_upload',
   }
 

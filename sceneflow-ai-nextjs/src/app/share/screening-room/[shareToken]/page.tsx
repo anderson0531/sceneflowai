@@ -5,7 +5,6 @@ import { useSearchParams } from 'next/navigation'
 import { ScreeningRoomV2 } from '@/components/vision/ScreeningRoomV2'
 import { readFinalCutSelection } from '@/hooks/final-cut/useFinalCutSelection'
 import { Loader, AlertCircle } from 'lucide-react'
-import { PipelineDemoChrome } from '@/components/landing/PipelineDemoChrome'
 import { PipelinePlaceholderStage } from '@/components/landing/PipelinePlaceholderStage'
 import { TrailerPlayer } from '@/components/landing/TrailerPlayer'
 import {
@@ -112,9 +111,6 @@ function SharedScreeningRoomPageInner({ params }: { params: Promise<{ shareToken
   if (hasTrailer) {
     return (
       <div className="min-h-screen bg-black">
-        <div className="relative z-[60]">
-          <PipelineDemoChrome tokenOrSlug={shareToken} activeCut="trailer" />
-        </div>
         <div className="flex min-h-[70vh] items-center justify-center p-4">
           <TrailerPlayer
             webmSrc={trailerSrc}
@@ -163,12 +159,8 @@ function SharedScreeningRoomPageInner({ params }: { params: Promise<{ shareToken
 
   return (
     <div className="min-h-screen bg-black">
-      <div className="relative z-[60]">
-        <PipelineDemoChrome tokenOrSlug={shareToken} activeCut={activeCut} />
-      </div>
-
       {showSharedHint ? (
-        <div className="absolute top-16 left-1/2 z-[70] w-[min(28rem,calc(100%-2rem))] -translate-x-1/2 rounded-lg border border-white/15 bg-black/80 px-4 py-3 text-sm text-white">
+        <div className="absolute top-4 left-1/2 z-[70] w-[min(28rem,calc(100%-2rem))] -translate-x-1/2 rounded-lg border border-white/15 bg-black/80 px-4 py-3 text-sm text-white">
           <p>This is a shared Screening Room. Close this browser tab to leave.</p>
           <button
             type="button"

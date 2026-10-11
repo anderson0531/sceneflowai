@@ -97,6 +97,7 @@ export async function GET(
         visionPhase: { streams: getProjectStreams(md) },
       },
       allowedFeatures: shareLink.allowedFeatures,
+      allowFeedback: shareLink.allowFeedback !== false,
       shareToken: actualShareToken, // Pass this back so the feedback API can find it
       storyboardRevision,
       audienceResonance,

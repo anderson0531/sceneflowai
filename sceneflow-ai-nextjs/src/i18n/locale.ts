@@ -32,6 +32,20 @@ export function isAppSurfacePath(pathname: string | null | undefined): boolean {
   return Boolean(pathname && pathname.startsWith(APP_SURFACE_PATH_PREFIX))
 }
 
+/**
+ * Share and pipeline-demo pages are English until the viewer picks a language.
+ * The marketing locale cookie must not rewrite `<html lang>` here, or Google
+ * Translate treats the page as already translated.
+ */
+export const ENGLISH_UNTIL_TRANSLATE_PREFIXES = ['/share', '/blueprint/share', '/s/series'] as const
+
+export function keepsEnglishUntilTranslate(pathname: string | null | undefined): boolean {
+  if (!pathname) return false
+  return ENGLISH_UNTIL_TRANSLATE_PREFIXES.some(
+    (prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`)
+  )
+}
+
 /** Locales that render right-to-left. */
 export const RTL_LOCALES = new Set(['ar', 'he', 'fa', 'ur'])
 

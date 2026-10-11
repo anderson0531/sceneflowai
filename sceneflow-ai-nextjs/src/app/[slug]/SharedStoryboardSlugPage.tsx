@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from 'react'
 import { StandaloneStoryboardPlayer } from '@/components/vision/StandaloneStoryboardPlayer'
-import { PipelineDemoChrome } from '@/components/landing/PipelineDemoChrome'
 import { Loader } from 'lucide-react'
 import { notFound } from 'next/navigation'
 
@@ -52,8 +51,11 @@ export default function SharedStoryboardSlugPage({ slug }: { slug: string }) {
 
   return (
     <div className="min-h-screen bg-black">
-      <PipelineDemoChrome tokenOrSlug={slug} />
-      <StandaloneStoryboardPlayer projectData={projectData} shareToken={shareToken || slug} />
+      <StandaloneStoryboardPlayer
+        projectData={projectData}
+        shareToken={shareToken || slug}
+        allowFeedback={projectData.allowFeedback !== false}
+      />
     </div>
   )
 }
