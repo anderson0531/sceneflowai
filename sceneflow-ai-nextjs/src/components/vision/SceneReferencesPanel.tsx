@@ -89,10 +89,18 @@ export interface SceneReferencesPanelProps {
     payload: DirectedLocationVersionInput & { locationId: string }
   ) => void | Promise<void>
   /**
-   * False while the scene is still an outline or its direction does not match
-   * the script. The agent waits; a still the user opens in the library does not.
+   * False for an outline, or for a written scene that has neither current
+   * scene direction nor optimized shot direction.
    */
-  scriptReady?: boolean
+  canGenerate?: boolean
+  /** Scene direction is missing or stale. Offers Lock direction on this tab. */
+  needsSceneDirection?: boolean
+  /** Rewrite each shot's plates from the current scene and shot direction. */
+  onSyncReferences?: () => void | Promise<unknown>
+  /** Write scene direction for this scene, then the plates can be drawn here. */
+  onLockDirection?: () => void | Promise<unknown>
+  syncingReferences?: boolean
+  lockingDirection?: boolean
 }
 
 type GroupConfig = {
@@ -168,7 +176,12 @@ export function SceneReferencesPanel({
   objectReferences = [],
   beats = [],
   onAddDirectedLocationVersion,
-  scriptReady = true,
+  canGenerate = true,
+  needsSceneDirection = false,
+  onSyncReferences,
+  onLockDirection,
+  syncingReferences = false,
+  lockingDirection = false,
 }: SceneReferencesPanelProps) {
   const tLocation = useTranslations('production.direction.locationLibrary')
   const [addOpen, setAddOpen] = useState(false)
@@ -445,7 +458,7 @@ export function SceneReferencesPanel({
                 e.stopPropagation()
                 void onExpressReferences({ itemKeys: [key] })
               }}
-              disabled={busy || !scriptReady}
+              disabled={busy || lockingDirection || !canGenerate}
               className="text-[11px] px-2 py-1 bg-cyan-600 hover:bg-cyan-700 text-white rounded disabled:opacity-50"
               title={
                 drawn
@@ -493,15 +506,50 @@ export function SceneReferencesPanel({
             reference that gets named but has no image is drawn differently in every frame.
             Gen draws a default still; customise looks in the Continuity Library.
           </p>
-          {!scriptReady && (
+          {!canGenerate && !needsSceneDirection && (
             <p className="text-[11px] text-amber-700 dark:text-amber-300 mt-1">
               This scene’s script is not finalized yet. Finish the scene and its direction
               before drawing references — generating now would be redrawn when the script changes.
             </p>
           )}
+          {!canGenerate && needsSceneDirection && (
+            <p className="text-[11px] text-amber-700 dark:text-amber-300 mt-1">
+              Lock scene direction, or run Shot Direction Agent, before drawing these references.
+            </p>
+          )}
         </div>
 
         <div className="flex items-center gap-1.5 shrink-0">
+          {needsSceneDirection && onLockDirection && (
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation()
+                void onLockDirection()
+              }}
+              disabled={busy || lockingDirection}
+              className="text-xs px-2.5 py-1.5 rounded border border-amber-400/70 text-amber-800 dark:text-amber-200 hover:bg-amber-100 dark:hover:bg-amber-900/40 disabled:opacity-50 inline-flex items-center gap-1.5"
+              title="Write this scene’s direction from the script so the plates match it"
+            >
+              {lockingDirection ? <Loader className="w-3 h-3 animate-spin" /> : null}
+              Lock direction
+            </button>
+          )}
+          {onSyncReferences && (
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation()
+                void onSyncReferences()
+              }}
+              disabled={syncingReferences}
+              className="text-xs px-2.5 py-1.5 rounded border border-cyan-300 dark:border-cyan-700 text-cyan-800 dark:text-cyan-200 hover:bg-cyan-100 dark:hover:bg-cyan-900/40 disabled:opacity-50 flex items-center gap-1.5"
+              title="Set each shot’s wardrobe, location, and props from the current scene and shot direction"
+            >
+              {syncingReferences ? <Loader className="w-3 h-3 animate-spin" /> : <RotateCcw className="w-3 h-3" />}
+              Update references
+            </button>
+          )}
           {pending.length > 0 && onExpressReferences && expressable.length > 0 && (
             <button
               type="button"
@@ -509,7 +557,7 @@ export function SceneReferencesPanel({
                 e.stopPropagation()
                 void onExpressReferences()
               }}
-              disabled={busy || !scriptReady}
+              disabled={busy || lockingDirection || !canGenerate}
               className="text-xs px-2.5 py-1.5 bg-cyan-600 hover:bg-cyan-700 text-white rounded disabled:opacity-50 flex items-center gap-1.5"
               title={`Draw the ${expressable.length} missing reference${expressable.length === 1 ? '' : 's'} this scene needs`}
             >

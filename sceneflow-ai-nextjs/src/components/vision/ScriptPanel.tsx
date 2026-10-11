@@ -120,6 +120,7 @@ import { ReportType, StoryboardData, SceneDirectionData } from '@/lib/types/repo
 import { resolveSegmentEditCharacterReferences } from '@/lib/vision/resolveFrameEditCharacterReferences'
 import { flattenSceneToStoryboardFrames } from '@/lib/storyboard/types'
 import {
+  ensureSceneBeats,
   findBrokenContinuityBeats,
   getSceneBeats,
   isBeatFirstPipelineEnabled,
@@ -174,8 +175,8 @@ import { SceneAudioWorkbench, SceneNarrationAudioCard } from '@/components/visio
 import { SceneDirectionWorkbench } from '@/components/vision/scene-production/SceneDirectionWorkbench'
 import { BeatDirectionEditor } from '@/components/vision/BeatDirectionEditor'
 import { ExportDialog } from './ExportDialog'
-import { isDirectionStale, isImageStale } from '@/lib/utils/contentHash'
-import { isSceneScriptReadyForReferences } from '@/lib/vision/sceneScriptReadiness'
+import { generateSceneContentHash, isDirectionStale, isImageStale } from '@/lib/utils/contentHash'
+import { sceneContinuityActions } from '@/lib/vision/sceneScriptReadiness'
 import { isPreVisStale, sceneHasStalePromptKeys } from '@/lib/storyboard/preVisSync'
 import { getKenBurnsConfig, generateKenBurnsKeyframes, type KenBurnsIntensity } from '@/lib/animation/kenBurns'
 import { SceneDirectionProvider } from '@/contexts/SceneDirectionContext'
@@ -203,8 +204,10 @@ import { getProjectCreditsBudget } from '@/lib/credits/projectBudgetShared'
 import type { DirectShotRequest, DirectShotTarget } from '@/lib/vision/directShotTarget'
 import { isPromoCinematicScene } from '@/lib/publish/buildPromoScene'
 import {
-  resolveBeatReferenceSelection,
+  directionFromDirectorPatch,
+  freshBeatReferenceSelection,
   saveDirectorPatchToScenes,
+  syncSceneReferenceSelections,
 } from '@/lib/vision/saveBeatDirection'
 import {
   requestOptimizedShotDirection,
@@ -4456,6 +4459,8 @@ function SceneCard({
     done: number
     total: number
   } | null>(null)
+  const [lockingSceneDirection, setLockingSceneDirection] = useState(false)
+  const [syncingSceneReferences, setSyncingSceneReferences] = useState(false)
   const shotDirectionAbortRef = useRef<AbortController | null>(null)
   useEffect(() => () => shotDirectionAbortRef.current?.abort(), [])
   const shotDirectionRunning = shotDirectionProgress !== null
@@ -4489,14 +4494,19 @@ function SceneCard({
           const workingScene = workingScenes[sceneIdx]
           const current = getSceneBeats(workingScene ?? {}).find((beat) => beat.beatId === shot.beatId)
           if (!current) return
+          const directed = {
+            ...current,
+            actionDescription: patch.actionDescription?.trim() || current.actionDescription,
+            beatDirection: directionFromDirectorPatch(current.beatDirection, patch),
+          }
           workingScenes = saveDirectorPatchToScenes({
             scenes: workingScenes,
             sceneIdx,
             beatId: shot.beatId,
             patch,
-            referenceSelection: resolveBeatReferenceSelection({
+            referenceSelection: freshBeatReferenceSelection({
               scene: workingScene,
-              beat: current,
+              beat: directed,
               sceneIdx,
               characters,
               locationReferences,
@@ -4757,6 +4767,76 @@ function SceneCard({
   // The tab earns its place as soon as the scene has anything to shoot, even
   // with nothing detected yet: "nothing needed" is the answer the user came for.
   const hasReferencesTab = hasBeatsTab || hasPreVisTab || sceneRequiredReferences.length > 0
+
+  const continuityActions = useMemo(
+    () => sceneContinuityActions(scene as Record<string, unknown>),
+    [scene]
+  )
+
+  const handleLockSceneDirection = useCallback(async () => {
+    if (!projectId || !onScriptChange || !script || !Array.isArray(scenes)) return
+    setLockingSceneDirection(true)
+    try {
+      const directionResponse = await fetch('/api/scene/generate-direction', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          projectId,
+          sceneIndex: sceneIdx,
+          scene: {
+            heading: scene.heading,
+            action: scene.action,
+            visualDescription: scene.visualDescription,
+            narration: scene.narration,
+            dialogue: scene.dialogue,
+            characters: scene.characters,
+            beats: scene.beats,
+            sceneMovements: scene.sceneMovements,
+          },
+        }),
+      })
+      const data = await directionResponse.json().catch(() => ({}))
+      if (!directionResponse.ok || !data?.success || !data?.sceneDirection) {
+        throw new Error(
+          typeof data?.error === 'string' ? data.error : 'Scene direction could not be locked'
+        )
+      }
+      const nextScene = ensureSceneBeats({
+        ...scene,
+        sceneDirection: {
+          ...data.sceneDirection,
+          basedOnContentHash: generateSceneContentHash(scene),
+        },
+      } as Record<string, unknown>)
+      const updatedScenes = scenes.map((entry: any, idx: number) =>
+        idx === sceneIdx ? nextScene : entry
+      )
+      onScriptChange({ ...script, script: { ...script.script, scenes: updatedScenes } })
+      toast.success('Scene direction locked. Update references, then draw the plates.')
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Scene direction could not be locked')
+    } finally {
+      setLockingSceneDirection(false)
+    }
+  }, [projectId, onScriptChange, script, scenes, scene, sceneIdx])
+
+  const handleSyncSceneReferences = useCallback(() => {
+    if (!onScriptChange || !script || !Array.isArray(scenes)) return
+    setSyncingSceneReferences(true)
+    try {
+      const updatedScenes = syncSceneReferenceSelections({
+        scenes,
+        sceneIdx,
+        characters: characters ?? [],
+        locationReferences: locationReferences ?? [],
+        objectReferences: objectReferences ?? [],
+      })
+      onScriptChange({ ...script, script: { ...script.script, scenes: updatedScenes } })
+      toast.success('Continuity references now follow this scene’s direction.')
+    } finally {
+      setSyncingSceneReferences(false)
+    }
+  }, [onScriptChange, script, scenes, sceneIdx, characters, locationReferences, objectReferences])
 
   const handleSceneReferenceOverridesChange = useCallback(
     (next: SceneReferenceOverrides) => {
@@ -6630,9 +6710,20 @@ function SceneCard({
                         sceneNumber
                       )}
                       onAddDirectedLocationVersion={onAddDirectedLocationVersion}
-                      scriptReady={isSceneScriptReadyForReferences(
-                        scene as Record<string, unknown>
-                      )}
+                      canGenerate={continuityActions.canGenerate}
+                      needsSceneDirection={continuityActions.needsSceneDirection}
+                      onSyncReferences={
+                        continuityActions.canSyncReferences && onScriptChange
+                          ? handleSyncSceneReferences
+                          : undefined
+                      }
+                      onLockDirection={
+                        continuityActions.needsSceneDirection && projectId && onScriptChange
+                          ? handleLockSceneDirection
+                          : undefined
+                      }
+                      syncingReferences={syncingSceneReferences}
+                      lockingDirection={lockingSceneDirection}
                     />
                   </TabsContent>
                   )}
