@@ -68,7 +68,7 @@ export async function POST(request: NextRequest) {
           startTime: beat.videoUrl ? 0 : beat.startSec,
           endTime: beat.videoUrl ? Math.max(0.5, duration) : beat.endSec,
           audioSource: 'original' as const,
-          audioVolume: PROMO_AUDIO_MIX.clip,
+          audioVolume: body.narrationAudioUrl ? 0 : PROMO_AUDIO_MIX.clip,
           pauseDuration: 0,
         }
       })
@@ -103,7 +103,7 @@ export async function POST(request: NextRequest) {
             startTime: beat.startSec,
             endTime: beat.endSec,
             audioSource: 'original' as const,
-            audioVolume: PROMO_AUDIO_MIX.clip,
+            audioVolume: body.narrationAudioUrl ? 0 : PROMO_AUDIO_MIX.clip,
             pauseDuration: 0,
           }))
 

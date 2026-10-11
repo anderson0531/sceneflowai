@@ -113,9 +113,9 @@ function sourceDirectionOptimized(scenes: unknown[], beat: PromoTrailerBeatPlan)
 function narrationTrackFor(
   scene: Record<string, unknown> | null,
   language: string
-): { audioUrl?: string; line?: string } | undefined {
+): { audioUrl?: string; line?: string; durationSec?: number } | undefined {
   const tracks = scene?.dialogueAudio as
-    | Record<string, Array<{ audioUrl?: string; line?: string }>>
+    | Record<string, Array<{ audioUrl?: string; line?: string; durationSec?: number }>>
     | undefined
   const track = tracks?.[language]?.[0]
   return track && typeof track === 'object' ? track : undefined
@@ -129,6 +129,20 @@ function narrationUrlFor(scene: Record<string, unknown> | null, language: string
 function narrationLineFor(scene: Record<string, unknown> | null, language: string): string | undefined {
   const line = narrationTrackFor(scene, language)?.line
   return typeof line === 'string' && line.trim() ? line.trim() : undefined
+}
+
+function narrationDetailFor(scene: Record<string, unknown> | null, language: string): string | undefined {
+  const track = narrationTrackFor(scene, language)
+  const line = typeof track?.line === 'string' ? track.line.trim() : ''
+  const seconds = track?.durationSec
+  const length =
+    typeof seconds === 'number' && seconds > 0 ? `${Math.round(seconds)}s recording` : ''
+  const short =
+    typeof seconds === 'number' && seconds > 0 && seconds <= 12
+      ? 'This recording is about 10 seconds. A full voice-over should cover the cut.'
+      : ''
+  const detail = [line, length, short].filter(Boolean).join(' · ')
+  return detail || undefined
 }
 
 function PromoAudioRow({
@@ -1218,7 +1232,7 @@ export function PublishingPromoTab({
               })}
               <PromoAudioRow
                 label="Narration"
-                detail={narrationLineFor(promoScene, language)}
+                detail={narrationDetailFor(promoScene, language)}
                 ready={Boolean(narrationAudioUrl)}
                 generating={audioGenerating === 'narration'}
                 disabled={audioGenerating !== null}

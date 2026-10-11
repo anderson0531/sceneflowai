@@ -13,6 +13,7 @@ import { getGeminiTextModel } from '@/lib/config/modelConfig'
 import { getSceneProductionStateFromMetadata } from '@/lib/final-cut/projectProductionState'
 import { clampGenerationDuration } from '@/lib/audio/lyriaClient'
 import { generateMusicTrackServer } from '@/lib/audio/musicClient'
+import { getContainerAudioDurationSeconds } from '@/lib/audio/audioContainerDuration'
 import { chunkNarrationText } from '@/lib/blueprint/sectionNarrationText'
 import {
   findCachedNarrationAudio,
@@ -225,7 +226,7 @@ async function synthesizeNarrationTts(opts: {
   text: string
   language: string
   voiceId: string
-}): Promise<string | null> {
+}): Promise<{ audioUrl: string; durationSec?: number } | null> {
   try {
     const languageCode = resolveGeminiTtsLanguageCode(opts.language)
     const voiceId = opts.voiceId
@@ -239,7 +240,7 @@ async function synthesizeNarrationTts(opts: {
       })
     )
     const cached = await findCachedNarrationAudio(pathname)
-    if (cached) return cached
+    if (cached) return { audioUrl: cached }
 
     const chunks = chunkNarrationText(opts.text, NARRATION_CHUNK_BYTES)
     const buffers: Buffer[] = []
@@ -255,7 +256,13 @@ async function synthesizeNarrationTts(opts: {
     }
     const audio = buffers.length === 1 ? buffers[0]! : Buffer.concat(buffers)
     if (!audio.length) return null
-    return await storeNarrationAudio(pathname, audio)
+    const stored = await storeNarrationAudio(pathname, audio)
+    if (!stored) return null
+    const durationSec = getContainerAudioDurationSeconds(audio)
+    return {
+      audioUrl: stored,
+      ...(durationSec && durationSec > 0 ? { durationSec: Math.round(durationSec * 10) / 10 } : {}),
+    }
   } catch (err) {
     console.warn('[Promo Scene] TTS error:', err)
     return null
@@ -516,7 +523,7 @@ export async function POST(request: NextRequest) {
         visionPhase.narrationVoice && typeof visionPhase.narrationVoice === 'object'
           ? (visionPhase.narrationVoice as { voiceId?: string })
           : null
-      const audioUrl = await synthesizeNarrationTts({
+      const narrationAudio = await synthesizeNarrationTts({
         text: narrationText,
         language,
         voiceId: resolvePromoNarrationVoiceId({
@@ -524,6 +531,7 @@ export async function POST(request: NextRequest) {
           narrationVoice,
         }),
       })
+      const audioUrl = narrationAudio?.audioUrl
 
       // Rebuild with narration beat while preserving music
       const storedPlan =
@@ -573,6 +581,7 @@ export async function POST(request: NextRequest) {
             kind: 'narration',
             line: narrationText,
             ...(audioUrl ? { audioUrl } : {}),
+            ...(narrationAudio?.durationSec ? { durationSec: narrationAudio.durationSec } : {}),
           },
         ],
       }
