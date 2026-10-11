@@ -63,6 +63,7 @@ export const PromoCutPreview = forwardRef<PromoCutPreviewHandle, PromoCutPreview
     const advanced = useRef(false)
     const narrationRef = useRef<HTMLAudioElement>(null)
     const musicRef = useRef<HTMLAudioElement>(null)
+    const videoRef = useRef<HTMLVideoElement | null>(null)
     const narrationGraphRef = useRef<AudioContext | null>(null)
     const narrationSourceRef = useRef<MediaElementAudioSourceNode | null>(null)
     const narrationConnectingRef = useRef(false)
@@ -134,10 +135,29 @@ export const PromoCutPreview = forwardRef<PromoCutPreviewHandle, PromoCutPreview
         })
     }, [])
 
+    const playClip = useCallback((video: HTMLVideoElement | null) => {
+      if (!video) return
+      // Shot sound ends with the clip. Narration is a separate track and keeps
+      // playing across later shots at the shared mix.
+      video.muted = false
+      video.volume = PROMO_AUDIO_MIX.clip
+      void video.play().catch(() => {
+        // Autoplay with sound can be refused; keep the cut moving without it.
+        video.muted = true
+        void video.play().catch(() => undefined)
+      })
+    }, [])
+
+    const startClip = useCallback((video: HTMLVideoElement | null) => {
+      videoRef.current = video
+      playClip(video)
+    }, [playClip])
+
     const startPreviewAudio = useCallback(() => {
       const narration = narrationRef.current
       const music = musicRef.current
       narrationCueStartedRef.current = false
+      playClip(videoRef.current)
       if (narration) {
         narration.currentTime = 0
         const unlock = narration.play()
@@ -163,7 +183,7 @@ export const PromoCutPreview = forwardRef<PromoCutPreviewHandle, PromoCutPreview
       }
       if (narrationConnectingRef.current) return
       connectNarrationGraph()
-    }, [connectNarrationGraph, narrationStartSec])
+    }, [connectNarrationGraph, narrationStartSec, playClip])
 
     useEffect(() => {
       narrationCueStartedRef.current = false
@@ -229,24 +249,6 @@ export const PromoCutPreview = forwardRef<PromoCutPreviewHandle, PromoCutPreview
       if (!music) return
       music.volume = promoPreviewMusicVolume({ beatKind: musicKind })
     }, [musicKind, playing])
-
-    const startClip = useCallback((video: HTMLVideoElement | null) => {
-      if (!video) return
-      // Clip audio ends with the shot. The narration track is the voice that
-      // continues across later shots, so the picture stays silent while it plays.
-      if (narrationUrl) {
-        video.muted = true
-        video.volume = 0
-      } else {
-        video.muted = false
-        video.volume = PROMO_AUDIO_MIX.clip
-      }
-      void video.play().catch(() => {
-        // Autoplay with sound can be refused; keep the cut moving without it.
-        video.muted = true
-        void video.play().catch(() => undefined)
-      })
-    }, [narrationUrl])
 
     const shot = playing ? shots[index] : undefined
 
