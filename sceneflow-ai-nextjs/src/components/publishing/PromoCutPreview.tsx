@@ -232,13 +232,21 @@ export const PromoCutPreview = forwardRef<PromoCutPreviewHandle, PromoCutPreview
 
     const startClip = useCallback((video: HTMLVideoElement | null) => {
       if (!video) return
-      video.volume = PROMO_AUDIO_MIX.clip
+      // Clip audio ends with the shot. The narration track is the voice that
+      // continues across later shots, so the picture stays silent while it plays.
+      if (narrationUrl) {
+        video.muted = true
+        video.volume = 0
+      } else {
+        video.muted = false
+        video.volume = PROMO_AUDIO_MIX.clip
+      }
       void video.play().catch(() => {
         // Autoplay with sound can be refused; keep the cut moving without it.
         video.muted = true
         void video.play().catch(() => undefined)
       })
-    }, [])
+    }, [narrationUrl])
 
     const shot = playing ? shots[index] : undefined
 

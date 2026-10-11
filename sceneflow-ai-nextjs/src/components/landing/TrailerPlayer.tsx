@@ -49,10 +49,10 @@ export function TrailerPlayer({
       return
     }
     if (background) {
-      video.muted = true
+      video.muted = isMuted
       void video.play().catch(() => {})
     }
-  }, [background, hasVideo, prefersReducedMotion, theaterOpen, webm, mp4])
+  }, [background, hasVideo, isMuted, prefersReducedMotion, theaterOpen, webm, mp4])
 
   useEffect(() => {
     if (!theaterOpen) return
@@ -72,6 +72,15 @@ export function TrailerPlayer({
       document.body.style.overflow = ''
     }
   }, [theaterOpen])
+
+  const toggleMute = () => {
+    const video = videoRef.current
+    if (!video) return
+    const next = !video.muted
+    video.muted = next
+    setIsMuted(next)
+    if (!next) void video.play().catch(() => {})
+  }
 
   const expand = () => {
     const video = videoRef.current
@@ -137,15 +146,26 @@ export function TrailerPlayer({
         )}
       </div>
       {background && hasVideo ? (
-        <button
-          type="button"
-          onClick={expand}
-          className="pointer-events-auto absolute left-3 top-3 z-30 inline-flex items-center gap-1.5 rounded-full border border-white/20 bg-black/70 px-3 py-1.5 text-xs font-medium text-white hover:bg-black/85"
-          aria-label={enterFullscreenLabel}
-        >
-          <Maximize className="h-3.5 w-3.5" />
-          {enterFullscreenLabel}
-        </button>
+        <div className="pointer-events-auto absolute left-3 top-3 z-30 flex items-center gap-2">
+          <button
+            type="button"
+            onClick={toggleMute}
+            className="inline-flex items-center gap-1.5 rounded-full border border-white/20 bg-black/70 px-3 py-1.5 text-xs font-medium text-white hover:bg-black/85"
+            aria-label={isMuted ? 'Unmute' : 'Mute'}
+          >
+            {isMuted ? <VolumeX className="h-3.5 w-3.5" /> : <Volume2 className="h-3.5 w-3.5" />}
+            {isMuted ? 'Unmute' : 'Mute'}
+          </button>
+          <button
+            type="button"
+            onClick={expand}
+            className="inline-flex items-center gap-1.5 rounded-full border border-white/20 bg-black/70 px-3 py-1.5 text-xs font-medium text-white hover:bg-black/85"
+            aria-label={enterFullscreenLabel}
+          >
+            <Maximize className="h-3.5 w-3.5" />
+            {enterFullscreenLabel}
+          </button>
+        </div>
       ) : null}
 
       {theaterOpen && typeof document !== 'undefined'
