@@ -1,6 +1,7 @@
 'use client'
 
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { flushSync } from 'react-dom'
 import { toast } from 'sonner'
 import {
   Download,
@@ -835,8 +836,10 @@ export function PublishingPromoTab({
                     setPreviewing(false)
                     return
                   }
+                  flushSync(() => {
+                    setPreviewing(true)
+                  })
                   previewRef.current?.start()
-                  setPreviewing(true)
                 }}
                 disabled={rendering || previewShots.length === 0}
               >
