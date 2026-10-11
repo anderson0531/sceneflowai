@@ -344,6 +344,10 @@ export interface SceneRenderVideoSegment {
   videoTrimOutSec?: number
   /** Picture speed. 1 is unchanged. Wall time of the source window is playable / rate. */
   playbackRate?: number
+  /** How this shot arrives from the previous one. Absent is a hard cut. */
+  transitionIn?: 'dissolve' | 'fade'
+  /** Seconds of the join, painted on the shot edges. Does not change duration. */
+  transitionInSec?: number
 }
 
 /**
@@ -559,6 +563,10 @@ export interface CreateSceneRenderJobRequest {
     videoTrimInSec?: number
     videoTrimOutSec?: number
     playbackRate?: number
+    /** How this shot arrives from the previous one. Absent is a hard cut. */
+    transitionIn?: 'dissolve' | 'fade'
+    /** Seconds of the join, painted on the shot edges. Does not change duration. */
+    transitionInSec?: number
   }>
   /** Audio tracks with timing */
   audioTracks: {
@@ -642,6 +650,12 @@ export function toSceneRenderVideoSegment(
     videoTrimInSec: seg.videoTrimInSec,
     videoTrimOutSec: seg.videoTrimOutSec,
     playbackRate: seg.playbackRate,
+    ...(seg.transitionIn === 'dissolve' || seg.transitionIn === 'fade'
+      ? {
+          transitionIn: seg.transitionIn,
+          transitionInSec: seg.transitionInSec,
+        }
+      : {}),
   }
 }
 

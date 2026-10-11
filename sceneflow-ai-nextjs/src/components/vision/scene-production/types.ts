@@ -751,6 +751,12 @@ export interface SceneSegment {
   /** When false, beat video is hidden from mixer preview and scene render (asset is not deleted). Null clears a stored exclusion. */
   mixerBeatIncluded?: boolean | null
 
+  /**
+   * How this shot hands over to the next shot in the Mixer and the scene MP4.
+   * Absent or cut is a hard cut. Null clears a stored join.
+   */
+  shotJoin?: 'cut' | 'dissolve' | 'fade' | null
+
   /** Seconds into source MP4 where beat playback begins (default 0). Null clears a stored trim. */
   videoTrimInSec?: number | null
   /** Seconds into source MP4 where beat playback ends (omit = end of file). Null clears a stored trim. */
