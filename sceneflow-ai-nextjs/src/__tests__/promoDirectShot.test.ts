@@ -246,7 +246,40 @@ describe('Shot Direction Agent', () => {
     })
     expect(second.actionDescription).toContain('presses her palm flat')
     expect(second.storyboardImagePrompt).toContain('palm flat against the cold glass')
+    expect(second.referenceSelection).toEqual(noSelection)
     expect(scenes[0].beats[1].beatDirection?.shotType).toBe('Medium Shot')
+  })
+
+  it('replaces a previous plate list with the selection the save is given', () => {
+    const previous = {
+      characterIds: ['old-cast'],
+      objectRefIds: ['old-prop'],
+      locationRefId: 'old-location',
+      source: 'user' as const,
+      resolvedAt: '2020-01-01T00:00:00.000Z',
+    }
+    const nextSelection = {
+      characterIds: ['mira'],
+      objectRefIds: ['key'],
+      locationRefId: 'dock',
+      source: 'user' as const,
+      resolvedAt: '2026-10-11T00:00:00.000Z',
+    }
+    const scenes = [
+      {
+        id: 'scene-a',
+        beats: [beat('a1', 0, { referenceSelection: previous })],
+      },
+    ]
+    const next = saveDirectorPatchToScenes({
+      scenes,
+      sceneIdx: 0,
+      beatId: 'a1',
+      patch: { frozenMoment: 'Mira turns the key' },
+      referenceSelection: nextSelection,
+      objectReferences: [],
+    })
+    expect(getSceneBeats(next[0])[0].referenceSelection).toEqual(nextSelection)
   })
 
   it('is the save the Direct Shot dialog uses', () => {

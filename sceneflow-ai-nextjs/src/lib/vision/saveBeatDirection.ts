@@ -1,4 +1,4 @@
-import { applyBeatsToScene, getSceneBeats } from '@/lib/script/beatMigration'
+import { applyBeatsToScene, getSceneBeats, isBeatExcluded } from '@/lib/script/beatMigration'
 import type {
   BeatDirection,
   BeatReferenceSelection,
@@ -62,6 +62,72 @@ export function resolveBeatReferenceSelection(args: {
     objectReferences: args.objectReferences as VisualReference[],
   })
   return selectionFromBeat(args.beat, resolved)
+}
+
+/**
+ * Plates for the direction this shot has now.
+ * A saved user selection is ignored so Update references and a new Direct
+ * Shot optimize can replace the previous wardrobe, location, and props.
+ */
+export function freshBeatReferenceSelection(args: {
+  scene: Record<string, unknown> | undefined
+  beat: SceneBeat
+  sceneIdx: number
+  characters: Array<{ id?: string; name: string; referenceImage?: string; type?: string }>
+  locationReferences: Array<{ id: string }>
+  objectReferences: Array<{ id: string; name: string }>
+  resolvedAt?: string
+}): BeatReferenceSelection {
+  const unlocked: SceneBeat = { ...args.beat }
+  delete unlocked.referenceSelection
+  const resolved = resolveBeatElementSelection({
+    scene: args.scene ?? {},
+    beat: unlocked,
+    sceneIndex: args.sceneIdx,
+    projectCharacters: args.characters,
+    locationReferences: args.locationReferences as LocationReference[],
+    objectReferences: args.objectReferences as VisualReference[],
+  })
+  return {
+    characterIds: resolved.characterIds,
+    objectRefIds: resolved.objectRefIds,
+    locationRefId: resolved.locationRefId ?? null,
+    locationVersionId: resolved.locationVersionId ?? null,
+    characterWardrobes: resolved.characterWardrobes,
+    source: 'user',
+    resolvedAt: args.resolvedAt ?? new Date().toISOString(),
+  }
+}
+
+/** Rewrite every shootable shot's plates from the current scene and shot direction. */
+export function syncSceneReferenceSelections(args: {
+  scenes: any[]
+  sceneIdx: number
+  characters: Array<{ id?: string; name: string; referenceImage?: string; type?: string }>
+  locationReferences: Array<{ id: string }>
+  objectReferences: Array<{ id: string; name: string }>
+  resolvedAt?: string
+}): any[] {
+  if (!Array.isArray(args.scenes) || !args.scenes[args.sceneIdx]) return args.scenes
+  const scene = args.scenes[args.sceneIdx]
+  const beats = getSceneBeats(scene).map((beat) => {
+    if (isBeatExcluded(beat)) return beat
+    return {
+      ...beat,
+      referenceSelection: freshBeatReferenceSelection({
+        scene,
+        beat,
+        sceneIdx: args.sceneIdx,
+        characters: args.characters,
+        locationReferences: args.locationReferences,
+        objectReferences: args.objectReferences,
+        resolvedAt: args.resolvedAt,
+      }),
+    }
+  })
+  const updated = [...args.scenes]
+  updated[args.sceneIdx] = applyBeatsToScene({ ...scene }, beats)
+  return updated
 }
 
 /** Merges a Direct Shot preview patch over the beat's saved direction. */
@@ -218,6 +284,7 @@ export function saveDirectorPatchToScenes(args: {
     direction: alignDirectionToConnectedObjects(merged, objectNames) ?? merged,
     refreshPrompts: 'recompute',
     actionDescription: args.patch.actionDescription,
+    referenceSelection: args.referenceSelection,
     promptComposition: args.promptComposition,
   })
 }

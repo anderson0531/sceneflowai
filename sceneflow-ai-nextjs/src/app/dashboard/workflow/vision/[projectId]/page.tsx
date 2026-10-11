@@ -404,6 +404,7 @@ import { generateSceneContentHash, getScriptDirectionReadiness } from '@/lib/uti
 import {
   isSceneOutline,
   isSceneScriptReadyForReferences,
+  sceneContinuityActions,
   sceneHasScreenplayBody,
 } from '@/lib/vision/sceneScriptReadiness'
 import { sanitizeReturnTo } from '@/lib/navigation/sanitizeReturnTo'
@@ -439,7 +440,11 @@ import {
 } from '@/lib/scene/languageClipPrompt'
 import { translateGuideDialogueLine } from '@/lib/scene/translateGuideDialogue'
 import { resolveDirectShotTarget, type DirectShotRequest, type DirectShotTarget } from '@/lib/vision/directShotTarget'
-import { saveDirectorPatchToScenes, resolveBeatReferenceSelection } from '@/lib/vision/saveBeatDirection'
+import {
+  directionFromDirectorPatch,
+  freshBeatReferenceSelection,
+  saveDirectorPatchToScenes,
+} from '@/lib/vision/saveBeatDirection'
 import { requestOptimizedShotDirection } from '@/lib/vision/shotDirectionAgent'
 import { VisualReference, VisualReferenceType, VisionReferencesPayload, LocationReference, LocationVersion } from '@/types/visionReferences'
 import type { ProductionStream, SceneProductionData, SceneProductionReferences, SegmentKeyframeSettings } from '@/components/vision/scene-production/types'
@@ -5639,23 +5644,29 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       const scene = scenes[shot.sceneIndex]
       const beat = getSceneBeats(scene).find((entry) => entry.beatId === shot.beatId)
       if (!beat) throw new Error('That shot is no longer in the script.')
+      const castForSelection = (characters || []).map(
+        (character: { id?: string; name?: string; referenceImage?: string; type?: string }) => ({
+          id: character.id,
+          name: character.name || '',
+          referenceImage: character.referenceImage,
+          type: character.type,
+        })
+      )
+      const directed = {
+        ...beat,
+        actionDescription: patch.actionDescription?.trim() || beat.actionDescription,
+        beatDirection: directionFromDirectorPatch(beat.beatDirection, patch),
+      }
       const nextScenes = saveDirectorPatchToScenes({
         scenes,
         sceneIdx: shot.sceneIndex,
         beatId: shot.beatId,
         patch,
-        referenceSelection: resolveBeatReferenceSelection({
+        referenceSelection: freshBeatReferenceSelection({
           scene,
-          beat,
+          beat: directed,
           sceneIdx: shot.sceneIndex,
-          characters: (characters || []).map(
-            (character: { id?: string; name?: string; referenceImage?: string; type?: string }) => ({
-              id: character.id,
-              name: character.name || '',
-              referenceImage: character.referenceImage,
-              type: character.type,
-            })
-          ),
+          characters: castForSelection,
           locationReferences: locationReferencesRef.current,
           objectReferences: objectReferencesRef.current,
         }),
@@ -12009,11 +12020,18 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
   const handleExpressSceneReferences = useCallback(
     (sceneIndex: number, options?: { itemKeys?: string[] }) => {
       const scene = scriptRef.current?.script?.scenes?.[sceneIndex]
-      if (scene && !isSceneScriptReadyForReferences(scene)) {
-        toast.info('This scene’s script is not finalized yet', {
-          description:
-            'Finish the scene script and its direction before drawing references. Generating now would be redrawn when the script changes.',
-        })
+      const continuity = sceneContinuityActions(scene as Record<string, unknown> | undefined)
+      if (scene && !continuity.canGenerate) {
+        toast.info(
+          continuity.needsSceneDirection
+            ? 'Lock this scene’s direction first'
+            : 'This scene’s script is not finalized yet',
+          {
+            description: continuity.needsSceneDirection
+              ? 'Lock direction on the Continuity tab, or run Shot Direction Agent, before drawing references.'
+              : 'Finish the scene script and its direction before drawing references. Generating now would be redrawn when the script changes.',
+          }
+        )
         return Promise.resolve({ outcome: 'script-not-ready' as const })
       }
       return handleExpressGenerateReferences({

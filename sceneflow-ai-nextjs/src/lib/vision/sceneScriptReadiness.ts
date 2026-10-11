@@ -4,6 +4,7 @@
  * edit makes that stamp stale — that is the signal to wait instead of redrawing.
  */
 
+import { getSceneBeats, isBeatExcluded } from '@/lib/script/beatMigration'
 import { isDirectionStale } from '@/lib/utils/contentHash'
 
 export function isSceneOutline(scene: Record<string, unknown> | null | undefined): boolean {
@@ -41,4 +42,41 @@ export function isSceneScriptReadyForReferences(
   if (!sceneHasScreenplayBody(scene)) return false
   if (!scene.sceneDirection) return false
   return !isDirectionStale(scene)
+}
+
+function shotDirectionIsOptimized(beat: { beatDirection?: { generatedBy?: string } | null }): boolean {
+  const generatedBy = beat.beatDirection?.generatedBy
+  return generatedBy === 'user' || generatedBy === 'director'
+}
+
+export interface SceneContinuityActions {
+  /** Gen, Regen, and Scene Ref Agent may draw plates. */
+  canGenerate: boolean
+  /** Scene direction is missing or no longer matches the script. */
+  needsSceneDirection: boolean
+  /** The scene has shootable shots whose plates can be rewritten. */
+  canSyncReferences: boolean
+}
+
+/**
+ * Continuity generate follows the locked direction the frames will use.
+ * Scene direction is one lock. Optimized shot direction is the other, so a
+ * scene can draw its plates before a separate scene-direction pass exists.
+ * An outline stays blocked. A written scene with neither lock offers Lock
+ * direction instead of a dead generate button.
+ */
+export function sceneContinuityActions(
+  scene: Record<string, unknown> | null | undefined
+): SceneContinuityActions {
+  if (!scene || isSceneOutline(scene) || !sceneHasScreenplayBody(scene)) {
+    return { canGenerate: false, needsSceneDirection: false, canSyncReferences: false }
+  }
+  const shootable = getSceneBeats(scene).filter((beat) => !isBeatExcluded(beat))
+  const directionReady = isSceneScriptReadyForReferences(scene)
+  const shotsOptimized = shootable.some((beat) => shotDirectionIsOptimized(beat))
+  return {
+    canGenerate: directionReady || shotsOptimized,
+    needsSceneDirection: !directionReady,
+    canSyncReferences: shootable.length > 0,
+  }
 }
