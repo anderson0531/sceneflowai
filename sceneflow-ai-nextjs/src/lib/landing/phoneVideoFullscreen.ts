@@ -8,6 +8,12 @@ export function isPhoneViewport(): boolean {
   return window.matchMedia('(max-width: 767px)').matches
 }
 
+/** Touch phones, including landscape, where the page itself must not go fullscreen. */
+export function isCoarsePointer(): boolean {
+  if (typeof window === 'undefined') return false
+  return window.matchMedia('(hover: none) and (pointer: coarse), (max-width: 767px)').matches
+}
+
 /**
  * Enter native video fullscreen from a click.
  * iOS uses webkitEnterFullscreen; other phones use the Fullscreen API.

@@ -2,6 +2,9 @@
 
 import React, { useEffect, useState } from 'react'
 import { BookOpen, Loader2 } from 'lucide-react'
+import { PipelineDemoChrome } from '@/components/landing/PipelineDemoChrome'
+import { PipelinePlaceholderStage } from '@/components/landing/PipelinePlaceholderStage'
+import { isPipelinePlaceholderToken } from '@/config/landing/productionPipelineDemo'
 
 interface SharePayload {
   title: string
@@ -30,8 +33,10 @@ export default function SharedSeriesBiblePage({
     void params.then((p) => setToken(p.token))
   }, [params])
 
+  const placeholder = token ? isPipelinePlaceholderToken(token) : false
+
   useEffect(() => {
-    if (!token) return
+    if (!token || placeholder) return
     let cancelled = false
     fetch(`/api/series/share/${encodeURIComponent(token)}`)
       .then((r) => r.json())
@@ -49,7 +54,11 @@ export default function SharedSeriesBiblePage({
     return () => {
       cancelled = true
     }
-  }, [token])
+  }, [token, placeholder])
+
+  if (token && placeholder) {
+    return <PipelinePlaceholderStage tokenOrSlug={token} />
+  }
 
   if (error) {
     return (
@@ -69,6 +78,7 @@ export default function SharedSeriesBiblePage({
 
   return (
     <div className="min-h-screen bg-gray-950 text-white">
+      {token ? <PipelineDemoChrome tokenOrSlug={token} /> : null}
       <div className="max-w-3xl mx-auto px-4 py-12 space-y-8">
         <div className="flex items-start gap-4">
           <div className="w-12 h-12 rounded-xl bg-amber-500/20 flex items-center justify-center border border-amber-500/30">

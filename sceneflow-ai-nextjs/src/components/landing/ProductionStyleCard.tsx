@@ -1,6 +1,6 @@
 'use client'
 
-import React from 'react'
+import React, { useState } from 'react'
 import { motion } from 'framer-motion'
 import {
   ArrowRight,
@@ -15,10 +15,10 @@ import { Button } from '@/components/ui/Button'
 import { getLoginUrl } from '@/lib/auth/postLoginRedirect'
 import {
   getProductionExampleMedia,
-  type ProductionExampleDoor,
-  type ProductionExampleDoorId,
+  type ReviewerMilestoneId,
 } from '@/config/landing/productionPipelineDemo'
 import { TrailerPlayer } from '@/components/landing/TrailerPlayer'
+import { PipelineReviewDialog } from '@/components/landing/PipelineReviewDialog'
 
 export type SolutionPillar = {
   title: string
@@ -92,57 +92,6 @@ const FALLBACK_STYLE: CardStyle = {
   ctaGradient: 'from-slate-500 to-slate-600',
 }
 
-const PRIMARY_DOORS: ProductionExampleDoorId[] = ['blueprint', 'script-ar']
-
-function PipelineDoors({
-  doors,
-  labels,
-  screeningRoomLabel,
-}: {
-  doors: ProductionExampleDoor[]
-  labels: Record<ProductionExampleDoorId, string>
-  screeningRoomLabel: string
-}) {
-  if (doors.length === 0) return null
-  const primary = doors.filter((door) => PRIMARY_DOORS.includes(door.id))
-  const cuts = doors.filter((door) => !PRIMARY_DOORS.includes(door.id))
-  return (
-    <div className="mb-4 space-y-3">
-      {primary.length > 0 ? (
-        <nav aria-label="Production pipeline" className="flex flex-wrap gap-2">
-          {primary.map((door) => (
-            <a
-              key={door.id}
-              href={door.href}
-              className="rounded-full border border-slate-600/80 px-3 py-1.5 text-xs font-medium text-slate-200 transition hover:border-cyan-400/50 hover:text-white"
-            >
-              {labels[door.id]}
-            </a>
-          ))}
-        </nav>
-      ) : null}
-      {cuts.length > 0 ? (
-        <div>
-          <p className="mb-2 text-[10px] font-semibold uppercase tracking-widest text-gray-400">
-            {screeningRoomLabel}
-          </p>
-          <nav aria-label="Screening Room" className="flex flex-wrap gap-2">
-            {cuts.map((door) => (
-              <a
-                key={door.id}
-                href={door.href}
-                className="rounded-full border border-slate-600/80 px-3 py-1.5 text-xs font-medium text-slate-200 transition hover:border-cyan-400/50 hover:text-white"
-              >
-                {labels[door.id]}
-              </a>
-            ))}
-          </nav>
-        </div>
-      ) : null}
-    </div>
-  )
-}
-
 export function ProductionStyleCard({
   card,
   index,
@@ -150,13 +99,10 @@ export function ProductionStyleCard({
   screeningRoomInstruction,
   trailerLabel,
   watchLongformLabel,
+  seriesDoorLabel,
   blueprintDoorLabel,
   scriptArDoorLabel,
-  screeningRoomLabel,
-  previsDoorLabel,
-  roughDoorLabel,
-  scenesDoorLabel,
-  finalDoorLabel,
+  screeningDoorLabel,
   enterFullscreenLabel,
   exitFullscreenLabel,
   explorerHandoff,
@@ -167,13 +113,10 @@ export function ProductionStyleCard({
   screeningRoomInstruction?: string
   trailerLabel: string
   watchLongformLabel: string
+  seriesDoorLabel: string
   blueprintDoorLabel: string
   scriptArDoorLabel: string
-  screeningRoomLabel: string
-  previsDoorLabel: string
-  roughDoorLabel: string
-  scenesDoorLabel: string
-  finalDoorLabel: string
+  screeningDoorLabel: string
   enterFullscreenLabel: string
   exitFullscreenLabel: string
   explorerHandoff: string
@@ -184,15 +127,14 @@ export function ProductionStyleCard({
   const watchLabel = media.longformRuntimeLabel
     ? `${watchLongformLabel} · ${media.longformRuntimeLabel}`
     : watchLongformLabel
-  const doorLabels: Record<ProductionExampleDoorId, string> = {
+  const milestoneLabels: Record<ReviewerMilestoneId, string> = {
+    series: seriesDoorLabel,
     blueprint: blueprintDoorLabel,
     'script-ar': scriptArDoorLabel,
-    previs: previsDoorLabel,
-    rough: roughDoorLabel,
-    scenes: scenesDoorLabel,
-    trailer: trailerLabel,
-    final: finalDoorLabel,
+    screening: screeningDoorLabel,
   }
+  const [reviewOpen, setReviewOpen] = useState(false)
+  const [activeMilestone, setActiveMilestone] = useState<ReviewerMilestoneId>('series')
 
   const startProduction = () => {
     window.location.href = getLoginUrl({
@@ -202,85 +144,106 @@ export function ProductionStyleCard({
     })
   }
 
+  const openReview = (id: ReviewerMilestoneId) => {
+    setActiveMilestone(id)
+    setReviewOpen(true)
+  }
+
   return (
     <motion.div
       id={`production-showcase-${card.id}`}
-      className={`group relative flex min-w-0 scroll-mt-24 flex-col rounded-2xl border bg-gradient-to-br p-4 backdrop-blur-sm transition-transform duration-300 sm:p-6 md:hover:scale-[1.02] ${style.surface} ${style.border}`}
+      className={`group relative flex min-h-[32rem] min-w-0 scroll-mt-24 flex-col overflow-hidden rounded-2xl border bg-slate-950 transition-transform duration-300 md:hover:scale-[1.02] ${style.border}`}
       initial={{ opacity: 0, y: 20 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true }}
       transition={{ duration: 0.5, delay: index * 0.1 }}
     >
-      <div
-        className={`absolute top-4 right-4 flex items-center gap-1 rounded-full px-3 py-1 text-xs font-semibold ${style.badge}`}
-      >
-        <Sparkles className="h-3 w-3" />
-        {card.badge}
-      </div>
+      <TrailerPlayer
+        mode="background"
+        webmSrc={media.trailerSrc}
+        mp4Src={media.trailerMp4Src}
+        label={trailerLabel}
+        enterFullscreenLabel={enterFullscreenLabel}
+        exitFullscreenLabel={exitFullscreenLabel}
+      />
+      <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/85 to-slate-950/45" />
 
-      <div className="pt-6 sm:pt-0">
-        <figure className="mb-4 min-w-0">
-          <figcaption className="mb-2 text-[10px] font-semibold uppercase tracking-widest text-gray-400">
-            {trailerLabel}
-          </figcaption>
-          <TrailerPlayer
-            webmSrc={media.trailerSrc}
-            mp4Src={media.trailerMp4Src}
-            label={trailerLabel}
-            enterFullscreenLabel={enterFullscreenLabel}
-            exitFullscreenLabel={exitFullscreenLabel}
-          />
-        </figure>
+      <div className="pointer-events-none relative z-10 flex flex-1 flex-col p-4 sm:p-6">
+        <div
+          className={`absolute top-4 right-4 flex items-center gap-1 rounded-full px-3 py-1 text-xs font-semibold ${style.badge}`}
+        >
+          <Sparkles className="h-3 w-3" />
+          {card.badge}
+        </div>
+
+        <div className="mb-4 flex items-start gap-4 pt-10 sm:pr-28">
+          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-gray-900/50">
+            <Icon className={`h-6 w-6 ${style.accent}`} />
+          </div>
+          <div>
+            <h3 className="mb-1 text-lg font-bold text-white">{card.title}</h3>
+            <p className="text-sm text-gray-300">{card.subtitle}</p>
+          </div>
+        </div>
+
+        {screeningRoomInstruction ? (
+          <p className="mb-4 text-sm leading-relaxed text-gray-200">{screeningRoomInstruction}</p>
+        ) : null}
+
+        <nav aria-label="Production review" className="pointer-events-auto mb-4 grid grid-cols-2 gap-2">
+          {media.milestones.map((milestone) => (
+            <button
+              key={milestone.id}
+              type="button"
+              onClick={() => openReview(milestone.id)}
+              className={`rounded-xl bg-gradient-to-r px-3 py-3 text-sm font-semibold text-white ${style.ctaGradient}`}
+            >
+              {milestoneLabels[milestone.id]}
+            </button>
+          ))}
+        </nav>
+
         {media.longformHref ? (
           <a
             href={media.longformHref}
-            className={`mb-4 inline-flex w-full items-center justify-center rounded-xl bg-gradient-to-r px-4 py-3 text-sm font-semibold text-white ${style.ctaGradient}`}
+            className={`pointer-events-auto mb-4 inline-flex w-full items-center justify-center rounded-xl bg-gradient-to-r px-4 py-3 text-sm font-semibold text-white ${style.ctaGradient}`}
           >
             {watchLabel}
           </a>
         ) : null}
-      </div>
 
-      <div className="mb-4 flex items-start gap-4 sm:pr-28">
-        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-gray-900/50">
-          <Icon className={`h-6 w-6 ${style.accent}`} />
-        </div>
-        <div>
-          <h3 className="mb-1 text-lg font-bold text-white">{card.title}</h3>
-          <p className="text-sm text-gray-400">{card.subtitle}</p>
-        </div>
-      </div>
-
-      <PipelineDoors
-        doors={media.doors}
-        labels={doorLabels}
-        screeningRoomLabel={screeningRoomLabel}
-      />
-
-      {screeningRoomInstruction ? (
-        <p className="mb-4 text-xs text-gray-500 italic">{screeningRoomInstruction}</p>
-      ) : null}
-
-      {card.benefit ? (
-        <div className="mt-auto border-t border-white/10 pt-4">
-          <div className="flex items-center gap-2">
-            <Target className={`h-4 w-4 shrink-0 ${style.accent}`} />
-            <p className={`text-sm font-medium ${style.accent}`}>{card.benefit}</p>
+        {card.benefit ? (
+          <div className="mt-auto border-t border-white/10 pt-4">
+            <div className="flex items-center gap-2">
+              <Target className={`h-4 w-4 shrink-0 ${style.accent}`} />
+              <p className={`text-sm font-medium ${style.accent}`}>{card.benefit}</p>
+            </div>
           </div>
-        </div>
-      ) : (
-        <div className="mt-auto" />
-      )}
+        ) : (
+          <div className="mt-auto" />
+        )}
 
-      <p className="text-xs leading-relaxed text-gray-400">{explorerHandoff}</p>
+        <p className="text-xs leading-relaxed text-gray-300">{explorerHandoff}</p>
 
-      <Button
-        onClick={startProduction}
-        className={`mt-4 w-full bg-gradient-to-r text-white ${style.ctaGradient}`}
-      >
-        {ctaLabel}
-        <ArrowRight className="ml-2 h-4 w-4" />
-      </Button>
+        <Button
+          onClick={startProduction}
+          className={`pointer-events-auto mt-4 w-full bg-gradient-to-r text-white ${style.ctaGradient}`}
+        >
+          {ctaLabel}
+          <ArrowRight className="ml-2 h-4 w-4" />
+        </Button>
+      </div>
+
+      <PipelineReviewDialog
+        open={reviewOpen}
+        title={card.title}
+        milestones={media.milestones}
+        labels={milestoneLabels}
+        activeId={activeMilestone}
+        onSelect={setActiveMilestone}
+        onClose={() => setReviewOpen(false)}
+        closeLabel={exitFullscreenLabel}
+      />
     </motion.div>
   )
 }

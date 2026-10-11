@@ -3,10 +3,7 @@
 import Link from 'next/link'
 import {
   PIPELINE_DEMO_STAGES,
-  SCREENING_CUTS,
-  SCREENING_CUT_LABELS,
   getPipelineDemoNextStage,
-  getScreeningCutHref,
   getWalkStageHref,
   matchPipelineWalk,
   type PipelineDemoStageId,
@@ -14,9 +11,10 @@ import {
 } from '@/config/landing/productionPipelineDemo'
 
 const STAGE_LABELS: Record<PipelineDemoStageId, string> = {
-  blueprint: 'Blueprint + AR',
-  'script-ar': 'Script AR',
-  'screening-room': 'Screening Room',
+  series: 'Series',
+  blueprint: 'Blueprint',
+  'script-ar': 'AR Analysis',
+  'screening-room': 'Screening',
 }
 
 type Props = {
@@ -24,7 +22,7 @@ type Props = {
   activeCut?: ScreeningCut | null
 }
 
-export function PipelineDemoChrome({ tokenOrSlug, activeCut = null }: Props) {
+export function PipelineDemoChrome({ tokenOrSlug }: Props) {
   const match = matchPipelineWalk(tokenOrSlug)
   if (!match) return null
 
@@ -70,32 +68,6 @@ export function PipelineDemoChrome({ tokenOrSlug, activeCut = null }: Props) {
           </Link>
         )}
       </div>
-      {stage === 'screening-room' ? (
-        <nav
-          aria-label="Screening Room cuts"
-          className="mx-auto flex max-w-4xl flex-wrap gap-2 px-4 pb-2"
-        >
-          {SCREENING_CUTS.map((cut) => {
-            const href = getScreeningCutHref(walkId, cut)
-            if (!href) return null
-            const current = activeCut === cut || (activeCut == null && cut === 'final')
-            return (
-              <Link
-                key={cut}
-                href={href}
-                aria-current={current ? 'page' : undefined}
-                className={
-                  current
-                    ? 'rounded-full bg-white/15 px-2.5 py-1 text-xs font-medium text-white'
-                    : 'rounded-full px-2.5 py-1 text-xs text-slate-400 hover:text-white'
-                }
-              >
-                {SCREENING_CUT_LABELS[cut]}
-              </Link>
-            )
-          })}
-        </nav>
-      ) : null}
     </div>
   )
 }
