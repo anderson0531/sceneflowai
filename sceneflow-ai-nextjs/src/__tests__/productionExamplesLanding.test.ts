@@ -236,8 +236,11 @@ describe('Production Examples i18n contract', () => {
   })
 
   it('provides screening room instruction copy', () => {
-    expect(enMessages.productionShowcase.screeningRoomInstruction).toContain('Pre-Vis')
-    expect(enMessages.productionShowcase.screeningRoomInstruction).toContain('Arabic')
+    expect(enMessages.productionShowcase.screeningRoomInstruction).toContain('reviewer')
+    expect(enMessages.productionShowcase.screeningRoomInstruction).toContain('Screening')
+    expect(enMessages.productionShowcase.seriesDoor).toBe('Series')
+    expect(enMessages.productionShowcase.scriptArDoor).toBe('AR Analysis')
+    expect(enMessages.productionShowcase.screeningDoor).toBe('Screening')
   })
 })
 
@@ -417,6 +420,7 @@ describe('Production showcase videos', () => {
     expect(card).not.toContain('ScreeningRoomPreview')
     expect(card).not.toContain('getProductionShowcaseVideoLocales')
     expect(card).toContain('TrailerPlayer')
+    expect(card).toContain('mode="background"')
     expect(card).toContain('media.longformHref')
     expect(card).toContain('screeningRoomInstruction')
     expect(card).not.toContain('aria-label="Play preview"')
@@ -439,23 +443,35 @@ describe('Production showcase videos', () => {
     expect(card).not.toContain('SolutionPillarBody')
     expect(card).toContain('TrailerPlayer')
     expect(card).toContain('enterFullscreenLabel')
-    expect(card).toContain('aria-label="Screening Room"')
-    expect(card).toContain('roughDoorLabel')
+    expect(card).toContain('PipelineReviewDialog')
+    expect(card).toContain('aria-label="Production review"')
+    expect(card).not.toContain('roughDoorLabel')
+    expect(card).not.toContain('previsDoorLabel')
+    expect(card).not.toContain('Pre-Vis')
+    expect(card).not.toContain('Rough Cut')
+    expect(card).not.toContain('>Draft<')
+    expect(card).not.toContain('>Master<')
     expect(card).toContain('explorerHandoff')
     expect(player).toContain('enterPhoneVideoFullscreen')
-    expect(player).toContain('requestFullscreen')
-    expect(player).toContain('controlsList="nodownload"')
+    expect(player).toContain('isCoarsePointer')
+    expect(player).toContain('mode === \'background\'')
     expect(player).not.toContain('nofullscreen')
+    expect(player).not.toContain('containerRef')
     expect(player).toContain('type="video/webm"')
     expect(player).toContain('type="video/mp4"')
+    const dialog = readSource('src/components/landing/PipelineReviewDialog.tsx')
+    expect(dialog).toContain('<iframe')
+    expect(dialog).not.toContain('Pre-Vis')
+    expect(dialog).not.toContain('Rough Cut')
     expect(section).not.toContain("t('showSolutionsSection')")
     expect(section).not.toContain("t('hideSolutionsSection')")
+    expect(section).not.toContain("t('roughDoor')")
     expect(section).toContain("t('explorerHandoff')")
     expect(section).toContain("t('watchLongform')")
     expect(section).toContain("t('trailerLabel')")
-    expect(section).toContain("t('roughDoor')")
+    expect(section).toContain("t('seriesDoor')")
+    expect(section).toContain("t('screeningDoor')")
     expect(section).toContain("t('enterFullscreen')")
-    expect(section).toContain("t('screeningRoomGroup')")
     expect(section).toContain('MobileAccordion')
   })
 })
@@ -492,21 +508,32 @@ describe('Production showcase screening embeds', () => {
     expect(getProductionExampleMedia('animation').trailerSrc).toBeNull()
     expect(getProductionExampleMedia('documentary').longformHref).toBeNull()
     expect(getProductionExampleMedia('training').longformHref).toBeNull()
-    expect(getProductionExampleMedia('training').doors.map((door) => door.href)).toEqual([
+    expect(getProductionExampleMedia('drama').milestones.map((milestone) => milestone.href)).toEqual([
+      '/s/series/cb7cc9e663a87a074e37c62636ef8c00',
+      '/blueprint/share/5GDScu72NC7SWo1ioPMwzUxTg9KM2joz',
+      '/share/script-resonance/_uHqaPHdsD0ZfdJoEwtnHBi4DiAJBW9s',
+      '/TheWhiteCityCurrent',
+    ])
+    expect(getProductionExampleMedia('drama').milestones.every((milestone) => !milestone.placeholder)).toBe(
+      true
+    )
+    expect(getProductionExampleMedia('training').milestones.map((milestone) => milestone.href)).toEqual([
+      '/s/series/example-training-series',
       '/blueprint/share/example-training-blueprint',
       '/share/script-resonance/example-training-script',
-      '/share/screening-room/example-training?playback=animatic&cut=previs',
-      '/share/screening-room/example-training?playback=video&cut=rough',
-      '/share/screening-room/example-training?playback=video&cut=scenes',
-      '/share/screening-room/example-training?cut=trailer',
-      '/share/screening-room/example-training?playback=video&cut=final',
+      '/share/screening-room/example-training',
     ])
+    expect(getProductionExampleMedia('training').milestones.every((milestone) => milestone.placeholder)).toBe(
+      true
+    )
     expect([...PRODUCTION_WALK_IDS]).toEqual(['drama', 'animation', 'documentary', 'training'])
 
     const empty: ProductionPipelineWalk = {
+      seriesShareToken: '',
       blueprintShareToken: '',
       scriptResonanceShareToken: '',
       screeningRoomSlug: '',
+      screeningPath: '',
       trailerSrc: '',
       trailerMp4Src: '',
       longformRuntimeLabel: '',
@@ -522,6 +549,7 @@ describe('Production showcase screening embeds', () => {
       screeningRoomSlug: 'animation-master',
       longformRuntimeLabel: '22 min',
       longformPublished: false,
+      seriesShareToken: 'animation-series',
       blueprintShareToken: 'animation-blueprint',
       scriptResonanceShareToken: 'animation-script',
     }
@@ -529,14 +557,11 @@ describe('Production showcase screening embeds', () => {
     expect(animationBeforeMaster.trailerSrc).toBe('https://example.com/animation-trailer.webm')
     expect(animationBeforeMaster.trailerMp4Src).toBe('https://example.com/animation-trailer.mp4')
     expect(animationBeforeMaster.longformHref).toBeNull()
-    expect(animationBeforeMaster.doors.map((door) => door.id)).toEqual([
+    expect(animationBeforeMaster.milestones.map((milestone) => milestone.id)).toEqual([
+      'series',
       'blueprint',
       'script-ar',
-      'previs',
-      'rough',
-      'scenes',
-      'trailer',
-      'final',
+      'screening',
     ])
 
     walks.drama = {
@@ -545,45 +570,43 @@ describe('Production showcase screening embeds', () => {
       screeningRoomSlug: 'drama-master',
       longformRuntimeLabel: '38 min',
       longformPublished: true,
+      seriesShareToken: 'series-token',
       blueprintShareToken: 'blueprint-token',
       scriptResonanceShareToken: 'script-token',
     }
     const drama = buildProductionExampleMedia(walks, 'drama')
     expect(drama.trailerSrc).toBe('https://example.com/drama-trailer.mp4')
-    expect(drama.longformHref).toBe(
-      '/share/screening-room/drama-master?playback=video&cut=final'
-    )
+    expect(drama.longformHref).toBe('/share/screening-room/drama-master')
     expect(drama.longformRuntimeLabel).toBe('38 min')
-    expect(drama.doors.map((door) => door.id)).toEqual([
+    expect(drama.milestones.map((milestone) => milestone.id)).toEqual([
+      'series',
       'blueprint',
       'script-ar',
-      'previs',
-      'rough',
-      'scenes',
-      'trailer',
-      'final',
+      'screening',
     ])
 
     walks.animation = { ...walks.animation, longformPublished: true }
     const animation = buildProductionExampleMedia(walks, 'animation')
     expect(animation.trailerSrc).toBe('https://example.com/animation-trailer.webm')
-    expect(animation.longformHref).toBe(
-      '/share/screening-room/animation-master?playback=video&cut=final'
-    )
+    expect(animation.longformHref).toBe('/share/screening-room/animation-master')
   })
 
-  it('uses placeholder share links until listen-only tokens are published', () => {
-    expect(PRODUCTION_PIPELINE_DEMO.blueprintShareToken).toBe('example-drama-blueprint')
-    expect(PRODUCTION_PIPELINE_DEMO.scriptResonanceShareToken).toBe('example-drama-script')
-    expect(PRODUCTION_PIPELINE_DEMO.screeningRoomSlug).toBe('example-drama')
-    expect(getPipelineDemoBlueprintHref()).toBe('/blueprint/share/example-drama-blueprint')
-    expect(getPipelineDemoScriptARHref()).toBe('/share/script-resonance/example-drama-script')
+  it('uses the cinematic drama review links and placeholders for the other examples', () => {
+    expect(PRODUCTION_PIPELINE_DEMO.blueprintShareToken).toBe('5GDScu72NC7SWo1ioPMwzUxTg9KM2joz')
+    expect(PRODUCTION_PIPELINE_DEMO.scriptResonanceShareToken).toBe('_uHqaPHdsD0ZfdJoEwtnHBi4DiAJBW9s')
+    expect(PRODUCTION_PIPELINE_DEMO.screeningRoomSlug).toBe('TheWhiteCityCurrent')
+    expect(getPipelineDemoBlueprintHref()).toBe('/blueprint/share/5GDScu72NC7SWo1ioPMwzUxTg9KM2joz')
+    expect(getPipelineDemoScriptARHref()).toBe(
+      '/share/script-resonance/_uHqaPHdsD0ZfdJoEwtnHBi4DiAJBW9s'
+    )
     expect(getPipelineDemoScreeningHref()).toBeNull()
     expect(matchPipelineDemoStage('')).toBeNull()
     expect(matchPipelineDemoStage('50IuESZwELvHkNd4bTaULp1pli56zXWg')).toBeNull()
-    expect(matchPipelineDemoStage('example-drama-blueprint')).toBe('blueprint')
-    expect(matchPipelineDemoStage('example-drama-script')).toBe('script-ar')
-    expect(matchPipelineDemoStage('example-drama')).toBe('screening-room')
+    expect(matchPipelineDemoStage('5GDScu72NC7SWo1ioPMwzUxTg9KM2joz')).toBe('blueprint')
+    expect(matchPipelineDemoStage('_uHqaPHdsD0ZfdJoEwtnHBi4DiAJBW9s')).toBe('script-ar')
+    expect(matchPipelineDemoStage('TheWhiteCityCurrent')).toBe('screening-room')
+    expect(matchPipelineDemoStage('cb7cc9e663a87a074e37c62636ef8c00')).toBe('series')
+    expect(matchPipelineDemoStage('example-training-series')).toBe('series')
   })
 
   it('renders a prepared stage for example share tokens instead of fetching a project', () => {
@@ -591,6 +614,7 @@ describe('Production showcase screening embeds', () => {
       'src/components/blueprint/BlueprintShareViewer.tsx',
       'src/components/vision/ScriptResonanceShareViewer.tsx',
       'src/app/share/screening-room/[shareToken]/page.tsx',
+      'src/app/s/series/[token]/page.tsx',
     ]) {
       const source = readSource(relativePath)
       expect(source, relativePath).toContain('isPipelinePlaceholderToken')

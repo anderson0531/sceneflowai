@@ -14,9 +14,12 @@ function readSource(relativePath: string): string {
 }
 
 describe('Pipeline demo chrome', () => {
-  it('stays hidden when landing tokens are empty', () => {
+  it('walks the cinematic drama milestones and ignores unknown tokens', () => {
     expect(matchPipelineDemoStage('any-token')).toBeNull()
-    expect(getPipelineDemoHref('blueprint')).toBeNull()
+    expect(getPipelineDemoHref('series')).toBe('/s/series/cb7cc9e663a87a074e37c62636ef8c00')
+    expect(getPipelineDemoHref('blueprint')).toBe(
+      '/blueprint/share/5GDScu72NC7SWo1ioPMwzUxTg9KM2joz'
+    )
     expect(getPipelineDemoNextStage('blueprint')).toBe('script-ar')
     expect(getPipelineDemoNextStage('screening-room')).toBeNull()
   })

@@ -9,9 +9,10 @@ import {
 import { PipelineDemoChrome } from '@/components/landing/PipelineDemoChrome'
 
 const STAGE_LABELS = {
+  series: 'Series',
   blueprint: 'Blueprint',
-  'script-ar': 'Audience Resonance',
-  'screening-room': 'Screening Room',
+  'script-ar': 'AR Analysis',
+  'screening-room': 'Screening',
 } as const
 
 type Props = {
@@ -35,8 +36,8 @@ export function PipelinePlaceholderStage({ tokenOrSlug, activeCut = null }: Prop
         <p className="text-xs font-semibold uppercase tracking-widest text-cyan-300">{stageLabel}</p>
         <h1 className="mt-3 text-3xl font-semibold">{title}</h1>
         <p className="mt-4 max-w-xl text-sm leading-relaxed text-slate-300">
-          This share is being prepared. Continue through Blueprint, Audience Resonance, and the
-          Screening Room — Pre-Vis, Rough Cut, Scenes, Trailer, and Final — to walk the pipeline.
+          This share is being prepared. Review the production one milestone at a time: Series,
+          Blueprint, AR Analysis, then Screening.
         </p>
       </main>
     </div>

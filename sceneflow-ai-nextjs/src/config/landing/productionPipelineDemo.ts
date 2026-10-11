@@ -40,9 +40,12 @@ export const SCREENING_CUT_LABELS: Record<ScreeningCut, string> = {
 }
 
 export type ProductionPipelineWalk = {
+  seriesShareToken: string
   blueprintShareToken: string
   scriptResonanceShareToken: string
   screeningRoomSlug: string
+  /** Public Screening path. Empty uses /share/screening-room/{slug}. */
+  screeningPath: string
   /** Picture-only trailer (WebM). Empty until the cut is confirmed. Not the longform. */
   trailerSrc: string
   /** MP4 fallback for the same trailer. */
@@ -58,9 +61,11 @@ function exampleWalk(
   extra?: Partial<ProductionPipelineWalk>
 ): ProductionPipelineWalk {
   return {
+    seriesShareToken: `example-${id}-series`,
     blueprintShareToken: `example-${id}-blueprint`,
     scriptResonanceShareToken: `example-${id}-script`,
     screeningRoomSlug: `example-${id}`,
+    screeningPath: '',
     trailerSrc: '',
     trailerMp4Src: '',
     longformRuntimeLabel: '',
@@ -71,6 +76,11 @@ function exampleWalk(
 
 export const PRODUCTION_PIPELINE_WALKS: Record<ProductionWalkId, ProductionPipelineWalk> = {
   drama: exampleWalk('drama', {
+    seriesShareToken: 'cb7cc9e663a87a074e37c62636ef8c00',
+    blueprintShareToken: '5GDScu72NC7SWo1ioPMwzUxTg9KM2joz',
+    scriptResonanceShareToken: '_uHqaPHdsD0ZfdJoEwtnHBi4DiAJBW9s',
+    screeningRoomSlug: 'TheWhiteCityCurrent',
+    screeningPath: '/TheWhiteCityCurrent',
     trailerSrc: CINEMATIC_DRAMA_TRAILER_WEBM,
     trailerMp4Src: CINEMATIC_DRAMA_TRAILER_MP4,
   }),
@@ -92,26 +102,21 @@ export const PRODUCTION_PIPELINE_DEMO = {
   },
 }
 
-export type PipelineDemoStageId = 'blueprint' | 'script-ar' | 'screening-room'
+export type PipelineDemoStageId = 'series' | 'blueprint' | 'script-ar' | 'screening-room'
 
 export const PIPELINE_DEMO_STAGES: PipelineDemoStageId[] = [
+  'series',
   'blueprint',
   'script-ar',
   'screening-room',
 ]
 
-export type ProductionExampleDoorId =
-  | 'blueprint'
-  | 'script-ar'
-  | 'previs'
-  | 'rough'
-  | 'scenes'
-  | 'trailer'
-  | 'final'
+export type ReviewerMilestoneId = 'series' | 'blueprint' | 'script-ar' | 'screening'
 
-export type ProductionExampleDoor = {
-  id: ProductionExampleDoorId
+export type ReviewerMilestone = {
+  id: ReviewerMilestoneId
   href: string
+  placeholder: boolean
 }
 
 export type ProductionExampleMedia = {
@@ -120,7 +125,7 @@ export type ProductionExampleMedia = {
   trailerMp4Src: string | null
   longformHref: string | null
   longformRuntimeLabel: string
-  doors: ProductionExampleDoor[]
+  milestones: ReviewerMilestone[]
 }
 
 export function productionWalkKey(cardId: string): ProductionWalkId | null {
@@ -139,17 +144,32 @@ export function screeningCutHref(slug: string, cut: ScreeningCut): string {
   return `${base}?playback=video&cut=final`
 }
 
+/** One Screening link. The player inside already has Pre-Vis, Draft, and Master. */
+function walkScreeningReviewHref(walk: ProductionPipelineWalk): string | null {
+  const path = walk.screeningPath.trim()
+  if (path) return path
+  const slug = walk.screeningRoomSlug.trim()
+  if (!slug) return null
+  return `/share/screening-room/${encodeURIComponent(slug)}`
+}
+
 /** Screening link for a published master. Empty until Final exists. */
-function publishedScreeningHref(walk: ProductionPipelineWalk, cut: ScreeningCut): string | null {
+function publishedScreeningHref(walk: ProductionPipelineWalk): string | null {
   if (!walk.longformPublished) return null
-  return screeningSlugHref(walk, cut)
+  return walkScreeningReviewHref(walk)
 }
 
 /** Screening link for the pipeline walk, including placeholder slugs. */
 function screeningSlugHref(walk: ProductionPipelineWalk, cut: ScreeningCut): string | null {
   const slug = walk.screeningRoomSlug.trim()
   if (!slug) return null
+  if (walk.screeningPath.trim()) return walk.screeningPath.trim()
   return screeningCutHref(slug, cut)
+}
+
+function walkSeriesHref(walk: ProductionPipelineWalk): string | null {
+  const token = walk.seriesShareToken.trim()
+  return token ? `/s/series/${encodeURIComponent(token)}` : null
 }
 
 function walkBlueprintHref(walk: ProductionPipelineWalk): string | null {
@@ -171,7 +191,7 @@ export function getPipelineDemoScriptARHref(): string | null {
 }
 
 export function getPipelineDemoScreeningHref(): string | null {
-  return publishedScreeningHref(PRODUCTION_PIPELINE_WALKS.drama, 'final')
+  return publishedScreeningHref(PRODUCTION_PIPELINE_WALKS.drama)
 }
 
 export function getPipelineDemoHref(stage: PipelineDemoStageId): string | null {
@@ -184,12 +204,14 @@ export function getWalkStageHref(
 ): string | null {
   const walk = PRODUCTION_PIPELINE_WALKS[walkId]
   switch (stage) {
+    case 'series':
+      return walkSeriesHref(walk)
     case 'blueprint':
       return walkBlueprintHref(walk)
     case 'script-ar':
       return walkScriptARHref(walk)
     case 'screening-room':
-      return screeningSlugHref(walk, 'final')
+      return walkScreeningReviewHref(walk)
   }
 }
 
@@ -208,6 +230,9 @@ export function matchPipelineWalk(
   if (!value) return null
   for (const walkId of PRODUCTION_WALK_IDS) {
     const walk = PRODUCTION_PIPELINE_WALKS[walkId]
+    if (walk.seriesShareToken && value === walk.seriesShareToken) {
+      return { walkId, stage: 'series' }
+    }
     if (walk.blueprintShareToken && value === walk.blueprintShareToken) {
       return { walkId, stage: 'blueprint' }
     }
@@ -256,9 +281,12 @@ export function getScreeningCutHref(walkId: ProductionWalkId, cut: ScreeningCut)
   return screeningSlugHref(PRODUCTION_PIPELINE_WALKS[walkId], cut)
 }
 
-const PIPELINE_DOOR_CUTS: ScreeningCut[] = ['previs', 'rough', 'scenes', 'trailer', 'final']
+function milestone(id: ReviewerMilestoneId, href: string | null): ReviewerMilestone | null {
+  if (!href) return null
+  return { id, href, placeholder: href.includes('example-') }
+}
 
-/** Pure view of one card. Trailers and pipeline doors show before the longform master exists. */
+/** Pure view of one card. Four reviewer milestones, never the Screening Room cut buttons. */
 export function buildProductionExampleMedia(
   walks: Record<ProductionWalkId, ProductionPipelineWalk>,
   cardId: string
@@ -272,24 +300,20 @@ export function buildProductionExampleMedia(
       trailerMp4Src: null,
       longformHref: null,
       longformRuntimeLabel: '',
-      doors: [],
+      milestones: [],
     }
   }
 
   const walk = walks[walkId]
   const trailerSrc = walk.trailerSrc.trim() || null
   const trailerMp4Src = walk.trailerMp4Src.trim() || null
-  const longformHref = publishedScreeningHref(walk, 'final')
-  const doors: ProductionExampleDoor[] = []
-
-  const blueprint = walkBlueprintHref(walk)
-  const scriptAr = walkScriptARHref(walk)
-  if (blueprint) doors.push({ id: 'blueprint', href: blueprint })
-  if (scriptAr) doors.push({ id: 'script-ar', href: scriptAr })
-  for (const cut of PIPELINE_DOOR_CUTS) {
-    const href = screeningSlugHref(walk, cut)
-    if (href) doors.push({ id: cut, href })
-  }
+  const longformHref = publishedScreeningHref(walk)
+  const milestones = [
+    milestone('series', walkSeriesHref(walk)),
+    milestone('blueprint', walkBlueprintHref(walk)),
+    milestone('script-ar', walkScriptARHref(walk)),
+    milestone('screening', walkScreeningReviewHref(walk)),
+  ].filter((item): item is ReviewerMilestone => item !== null)
 
   return {
     isFlagship,
@@ -297,7 +321,7 @@ export function buildProductionExampleMedia(
     trailerMp4Src,
     longformHref,
     longformRuntimeLabel: longformHref ? walk.longformRuntimeLabel.trim() : '',
-    doors,
+    milestones,
   }
 }
 
