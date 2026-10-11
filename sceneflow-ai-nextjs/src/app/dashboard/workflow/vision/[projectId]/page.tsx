@@ -257,6 +257,11 @@ import {
   type AudioAgentRunState,
 } from '@/components/vision/AudioAgentRunDock'
 import { DirectionRunDock } from '@/components/vision/DirectionRunDock'
+import {
+  ScriptInceptionDock,
+  type ScriptInceptionRunState,
+} from '@/components/vision/ScriptInceptionDock'
+import { runScriptInceptionFollowups } from '@/lib/vision/scriptInceptionFollowups'
 import { DirectFrameRunDock, type DirectFrameRunState } from '@/components/vision/DirectFrameRunDock'
 import {
   VideoAgentRunDock,
@@ -7175,6 +7180,10 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     items: AgentRunItem[]
     finished: boolean
   } | null>(null)
+  /** Scene direction, then shot direction, after a new script is saved. */
+  const [inceptionRun, setInceptionRun] = useState<ScriptInceptionRunState | null>(null)
+  const inceptionAbortRef = useRef<AbortController | null>(null)
+  useEffect(() => () => inceptionAbortRef.current?.abort(), [])
 
   /**
    * Direct prompt-builder frame. One generate-image call, reported in the dock
@@ -9000,8 +9009,11 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
   }, [openScreeningRoomFromVisionUi, openReferenceLibrary, openPublishing, openPromo, setProductionViewWithUrl])
   // ============================================================================
 
-  const loadProject = async (skipAutoGeneration: boolean = false) => {
-    setInitialLoadComplete(false)
+  const loadProject = async (
+    skipAutoGeneration: boolean = false,
+    options?: { quiet?: boolean }
+  ) => {
+    if (!options?.quiet) setInitialLoadComplete(false)
     try {
       // Phase 1: lite mode strips base64 images for fast first paint
       const cacheBuster = `_t=${Date.now()}`
@@ -9814,6 +9826,96 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     }
   }
 
+  const startScriptInceptionFollowups = (sceneCount: number) => {
+    if (!projectId || sceneCount <= 0) return
+    inceptionAbortRef.current?.abort()
+    const controller = new AbortController()
+    inceptionAbortRef.current = controller
+    setInceptionRun({
+      visible: true,
+      finished: false,
+      cancelled: false,
+      phase: 'scene-direction',
+      done: 0,
+      total: sceneCount,
+      failed: 0,
+    })
+    void (async () => {
+      try {
+        const followup = await runScriptInceptionFollowups({
+          projectId,
+          sceneCount,
+          signal: controller.signal,
+          onSceneDirectionProgress: (done, total) => {
+            setInceptionRun((current) =>
+              current
+                ? { ...current, phase: 'scene-direction', done, total: total || current.total }
+                : current
+            )
+          },
+          onShotDirectionProgress: (done, total) => {
+            setInceptionRun((current) =>
+              current
+                ? { ...current, phase: 'shot-direction', done, total: total || current.total }
+                : current
+            )
+          },
+        })
+        try {
+          await loadProject(true, { quiet: true })
+        } catch (reloadError) {
+          console.warn('[Script inception] Reload after direction failed', reloadError)
+        }
+        const sceneProblems =
+          followup.sceneDirection.failures + (followup.sceneDirection.error ? 1 : 0)
+        const shotProblems = followup.shotDirection.failed
+        const failed = sceneProblems + (shotProblems > 0 ? 1 : 0)
+        const stoppedDuringShots = followup.shotDirection.scenesCompleted > 0
+        setInceptionRun((current) =>
+          current
+            ? {
+                ...current,
+                finished: true,
+                cancelled: followup.cancelled,
+                failed,
+                phase: followup.cancelled
+                  ? stoppedDuringShots
+                    ? 'shot-direction'
+                    : 'scene-direction'
+                  : 'done',
+                done: followup.cancelled ? current.done : current.total,
+              }
+            : current
+        )
+        try {
+          const { toast } = require('sonner')
+          if (followup.cancelled) {
+            toast.info('Script inception stopped. Direction already saved is kept.')
+          } else if (followup.sceneDirection.error) {
+            toast.warning(`Scene direction: ${followup.sceneDirection.error}`)
+          } else if (sceneProblems > 0 || shotProblems > 0) {
+            const parts = [
+              sceneProblems > 0
+                ? `${sceneProblems} scene direction${sceneProblems === 1 ? '' : 's'}`
+                : '',
+              shotProblems > 0
+                ? `${shotProblems} shot${shotProblems === 1 ? '' : 's'}`
+                : '',
+            ].filter(Boolean)
+            toast.warning(`Direction finished with ${parts.join(' and ')} to retry.`)
+          } else {
+            toast.success('Scene direction and shot direction are ready.')
+          }
+        } catch {}
+      } catch (error) {
+        console.error('[Script inception] Follow-up failed', error)
+        setInceptionRun((current) =>
+          current ? { ...current, finished: true, failed: current.failed + 1 } : current
+        )
+      }
+    })()
+  }
+
   const generateScript = async (
     proj: Project,
     options?: { confirmScriptReplace?: boolean }
@@ -9955,33 +10057,10 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
               }
             }
                 
-                // Backfill direction only when server inception attach missed scenes.
+                // Scene direction and shot direction are separate passes so the
+                // script route can spend its budget on scenes.
                 if (reloadSucceeded && data.totalScenes > 0) {
-                  const failureIndexes: number[] = Array.isArray(data.directionFailures)
-                    ? data.directionFailures
-                    : []
-                  if (data.directionsAttached && failureIndexes.length === 0) {
-                    console.log(
-                      `[AutoDirection] Script inception attached direction for ${data.totalScenes} scenes — skipping client backfill`
-                    )
-                  } else {
-                    const indexesToGenerate =
-                      failureIndexes.length > 0
-                        ? failureIndexes
-                        : Array.from({ length: data.totalScenes }, (_, i) => i)
-                    console.log(
-                      `[AutoDirection] Backfilling direction for ${indexesToGenerate.length}/${data.totalScenes} scenes`
-                    )
-                    try {
-                      const { toast } = require('sonner')
-                      toast.info('Generating missing scene directions…', { duration: 5000 })
-                    } catch {}
-                    indexesToGenerate.forEach((i: number, staggerIdx: number) => {
-                      setTimeout(() => {
-                        handleBackgroundDirectionGeneration(i)
-                      }, staggerIdx * 2000)
-                    })
-                  }
+                  startScriptInceptionFollowups(data.totalScenes)
                 }
                 
                 // Return empty scriptData - not used anymore
@@ -18719,6 +18798,14 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
             items={directionRun.items}
             finished={directionRun.finished}
             onClose={() => setDirectionRun(null)}
+          />
+        )}
+
+        {inceptionRun?.visible && (
+          <ScriptInceptionDock
+            run={inceptionRun}
+            onClose={() => setInceptionRun(null)}
+            onCancel={() => inceptionAbortRef.current?.abort()}
           />
         )}
 

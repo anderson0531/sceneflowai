@@ -217,8 +217,8 @@ describe('agent batch runs report into the dock, not the blocking overlay', () =
   })
 
   it('still freezes the studio for first-entry script generation', () => {
-    const handler = readHandler(PAGE, 'const initiateGeneration = async (proj: Project) => {')
-    const generateScript = readHandler(PAGE, 'const generateScript = async (proj: Project)')
+    const handler = readHandler(PAGE, 'const initiateGeneration = async (')
+    const generateScript = readHandler(PAGE, 'const generateScript = async (')
 
     expect(handler).toContain('execute(')
     expect(handler).toContain("operationType: 'script-generation'")

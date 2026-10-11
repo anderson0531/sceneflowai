@@ -171,6 +171,8 @@ export function applyBeatDirectionToScenes(args: {
   referenceSelection?: BeatReferenceSelection | null
   actionDescription?: string
   promptComposition?: BeatPromptComposition
+  /** Direct Shot saves as the user. The shot-direction pass stamps the director. */
+  generatedBy?: 'user' | 'director'
 }): any[] {
   const { scenes, sceneIdx, beatId, direction: next, promptComposition } = args
   const refreshPrompts = args.refreshPrompts ?? 'keep'
@@ -186,7 +188,7 @@ export function applyBeatDirectionToScenes(args: {
     if (directionForSave && Object.keys(directionForSave).length > 0) {
       patched.beatDirection = {
         ...directionForSave,
-        generatedBy: 'user',
+        generatedBy: args.generatedBy ?? 'user',
         updatedAt: new Date().toISOString(),
       }
     } else {
@@ -268,6 +270,7 @@ export function saveDirectorPatchToScenes(args: {
   referenceSelection: BeatReferenceSelection
   objectReferences: Array<{ id: string; name: string }>
   promptComposition?: BeatPromptComposition
+  generatedBy?: 'user' | 'director'
 }): any[] {
   const beat = getSceneBeats(args.scenes[args.sceneIdx] ?? {}).find(
     (entry) => entry.beatId === args.beatId
@@ -286,5 +289,6 @@ export function saveDirectorPatchToScenes(args: {
     actionDescription: args.patch.actionDescription,
     referenceSelection: args.referenceSelection,
     promptComposition: args.promptComposition,
+    generatedBy: args.generatedBy,
   })
 }
