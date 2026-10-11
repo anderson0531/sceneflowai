@@ -7,6 +7,7 @@ import {
   freshBeatReferenceSelection,
   syncSceneReferenceSelections,
 } from '@/lib/vision/saveBeatDirection'
+import { resolveSceneRequiredReferences } from '@/lib/vision/sceneReferenceRequirements'
 import { getSceneBeats } from '@/lib/script/beatMigration'
 
 function read(relative: string): string {
@@ -113,7 +114,7 @@ describe('fresh continuity selections', () => {
     expect(selection.resolvedAt).toBe('2026-10-11T00:00:00.000Z')
   })
 
-  it('writes that fresh list onto the scene and leaves an excluded shot alone', () => {
+  it('keeps plates already on the shot and adds the cast the direction now names', () => {
     const scenes = [
       {
         isExpanded: true,
@@ -142,10 +143,146 @@ describe('fresh continuity selections', () => {
       resolvedAt: '2026-10-11T00:00:00.000Z',
     })
     const [first, second] = getSceneBeats(next[0])
-    expect(first.referenceSelection?.characterIds).toEqual(['c-new'])
+    expect(first.referenceSelection?.characterIds).toEqual(['c-old', 'c-new'])
+    expect(first.referenceSelection?.objectRefIds).toEqual(['p-old'])
+    expect(first.referenceSelection?.locationRefId).toBe('l-old')
     expect(first.referenceSelection?.source).toBe('user')
     expect(second.referenceSelection).toEqual(previous)
     expect(scenes[0].beats[0].referenceSelection).toEqual(previous)
+  })
+
+  it('keeps an undrawn location and adds a prop the shot direction now names', () => {
+    const locationReferences = [
+      {
+        id: 'loc-kitchen',
+        location: 'KITCHEN',
+        sceneNumbers: [1],
+      },
+    ]
+    const scenes = [
+      {
+        heading: 'INT. KITCHEN - DAY',
+        isExpanded: true,
+        action: 'Mira waits.',
+        beats: [
+          {
+            beatId: 'shot-1',
+            kind: 'action' as const,
+            characterId: 'c-mira',
+            actionDescription: 'Mira sets the kettle down.',
+            beatDirection: { generatedBy: 'user' as const, keyProps: ['Kettle'] },
+            referenceSelection: {
+              characterIds: ['c-mira'],
+              objectRefIds: ['p-lantern'],
+              locationRefId: null,
+              source: 'user' as const,
+              resolvedAt: '2020-01-01T00:00:00.000Z',
+            },
+          },
+        ],
+      },
+    ]
+    const before = resolveSceneRequiredReferences({
+      scene: scenes[0],
+      sceneIndex: 0,
+      characters: [{ id: 'c-mira', name: 'Mira' }],
+      locationReferences,
+      objectReferences: [
+        { id: 'p-lantern', name: 'Lantern' },
+        { id: 'p-kettle', name: 'Kettle' },
+      ],
+    })
+    expect(before.some((row) => row.kind === 'location' && row.id === 'loc-kitchen')).toBe(false)
+
+    const next = syncSceneReferenceSelections({
+      scenes,
+      sceneIdx: 0,
+      characters: [{ id: 'c-mira', name: 'Mira' }],
+      locationReferences,
+      objectReferences: [
+        { id: 'p-lantern', name: 'Lantern' },
+        { id: 'p-kettle', name: 'Kettle' },
+      ],
+      resolvedAt: '2026-10-11T00:00:00.000Z',
+    })
+    const selection = getSceneBeats(next[0])[0].referenceSelection
+    expect(selection?.locationRefId).toBe('loc-kitchen')
+    expect(selection?.characterIds).toContain('c-mira')
+    expect(selection?.objectRefIds).toEqual(['p-lantern', 'p-kettle'])
+
+    const after = resolveSceneRequiredReferences({
+      scene: next[0],
+      sceneIndex: 0,
+      characters: [{ id: 'c-mira', name: 'Mira' }],
+      locationReferences,
+      objectReferences: [
+        { id: 'p-lantern', name: 'Lantern' },
+        { id: 'p-kettle', name: 'Kettle' },
+      ],
+    })
+    expect(after.some((row) => row.kind === 'location' && row.id === 'loc-kitchen' && !row.imageUrl)).toBe(
+      true
+    )
+    expect(after.some((row) => row.kind === 'prop' && row.id === 'p-lantern')).toBe(true)
+    expect(after.some((row) => row.kind === 'prop' && row.id === 'p-kettle')).toBe(true)
+  })
+
+  it('stores an undrawn scene location even when the shot has no saved plates', () => {
+    const scene = {
+      heading: 'INT. KITCHEN - DAY',
+      isExpanded: true,
+      action: 'Mira waits.',
+      beats: [
+        {
+          beatId: 'shot-1',
+          kind: 'action' as const,
+          actionDescription: 'Mira waits by the door.',
+        },
+      ],
+    }
+    const locationReferences = [
+      {
+        id: 'loc-kitchen',
+        location: 'KITCHEN',
+        sceneNumbers: [1],
+        versions: [
+          {
+            id: 'ver-night',
+            name: 'Night',
+            appliesFrom: { sceneNumber: 1, beatIndex: 0 },
+          },
+        ],
+      },
+    ]
+    const before = resolveSceneRequiredReferences({
+      scene,
+      sceneIndex: 0,
+      characters: [{ id: 'c-mira', name: 'Mira' }],
+      locationReferences,
+      objectReferences: [],
+    })
+    expect(before.some((row) => row.kind === 'location' && row.id === 'loc-kitchen')).toBe(true)
+
+    const next = syncSceneReferenceSelections({
+      scenes: [scene],
+      sceneIdx: 0,
+      characters: [{ id: 'c-mira', name: 'Mira' }],
+      locationReferences,
+      objectReferences: [],
+      resolvedAt: '2026-10-11T00:00:00.000Z',
+    })
+    expect(getSceneBeats(next[0])[0].referenceSelection?.locationRefId).toBe('loc-kitchen')
+    expect(getSceneBeats(next[0])[0].referenceSelection?.locationVersionId).toBe('ver-night')
+    const after = resolveSceneRequiredReferences({
+      scene: next[0],
+      sceneIndex: 0,
+      characters: [{ id: 'c-mira', name: 'Mira' }],
+      locationReferences,
+      objectReferences: [],
+    })
+    expect(after.some((row) => row.kind === 'location' && row.id === 'loc-kitchen' && !row.imageUrl)).toBe(
+      true
+    )
   })
 })
 
@@ -162,6 +299,8 @@ describe('Continuity tab controls', () => {
     const scriptPanel = read('src/components/vision/ScriptPanel.tsx')
     expect(scriptPanel).toContain('sceneContinuityActions')
     expect(scriptPanel).toContain('handleSyncSceneReferences')
+    expect(scriptPanel).toContain('Existing plates stay.')
+    expect(panel).toContain('Plates already listed stay')
     expect(scriptPanel).toContain('handleLockSceneDirection')
     expect(scriptPanel).toContain("fetch('/api/scene/generate-direction'")
     expect(scriptPanel).toContain('freshBeatReferenceSelection')

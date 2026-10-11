@@ -544,7 +544,7 @@ export function SceneReferencesPanel({
               }}
               disabled={syncingReferences}
               className="text-xs px-2.5 py-1.5 rounded border border-cyan-300 dark:border-cyan-700 text-cyan-800 dark:text-cyan-200 hover:bg-cyan-100 dark:hover:bg-cyan-900/40 disabled:opacity-50 flex items-center gap-1.5"
-              title="Set each shot’s wardrobe, location, and props from the current scene and shot direction"
+              title="Add the wardrobe, location, and props this scene’s direction now needs. Plates already listed stay, including ones not drawn yet."
             >
               {syncingReferences ? <Loader className="w-3 h-3 animate-spin" /> : <RotateCcw className="w-3 h-3" />}
               Update references

@@ -13,7 +13,17 @@ import { syncBeatStillPromptToDirection } from '@/lib/storyboard/syncBeatStillPr
 import { resolveBeatElementSelection } from '@/lib/vision/resolveBeatVideoReferences'
 import { shouldUseExplicitBeatReferences } from '@/lib/vision/beatFrameGenerationContext'
 import { alignDirectionToConnectedObjects } from '@/lib/vision/beatReferenceConnections'
+import {
+  findMatchingLocationReferences,
+  resolveSceneNumberForLocationMatch,
+  type LocationReferenceMatchable,
+} from '@/lib/vision/frameGenerationContext'
+import { resolveLocationVersionForBeat } from '@/lib/vision/locationVersionResolve'
 import type { LocationReference, VisualReference } from '@/types/visionReferences'
+
+type ContinuityLocationReference = LocationReferenceMatchable & {
+  versions?: LocationReference['versions']
+}
 
 export interface BeatPromptComposition {
   artStyleAnchor?: string
@@ -64,47 +74,151 @@ export function resolveBeatReferenceSelection(args: {
   return selectionFromBeat(args.beat, resolved)
 }
 
+function trimmedId(value: unknown): string {
+  return typeof value === 'string' ? value.trim() : ''
+}
+
+function uniqueIds(ids: Array<string | null | undefined>): string[] {
+  const out: string[] = []
+  const seen = new Set<string>()
+  for (const id of ids) {
+    const trimmed = trimmedId(id)
+    if (!trimmed || seen.has(trimmed)) continue
+    seen.add(trimmed)
+    out.push(trimmed)
+  }
+  return out
+}
+
 /**
- * Plates for the direction this shot has now.
- * A saved user selection is ignored so Update references and a new Direct
- * Shot optimize can replace the previous wardrobe, location, and props.
+ * Location plate for this shot, including a library row that has no image yet.
+ * Frame generation still ignores undrawn files. The Continuity list must not:
+ * storing `null` here later marks the plan complete and drops the row.
+ */
+function continuityLocationSelection(args: {
+  scene: Record<string, unknown>
+  beat: SceneBeat
+  sceneIdx: number
+  locationReferences: ContinuityLocationReference[]
+  resolvedLocationRefId?: string | null
+  resolvedLocationVersionId?: string | null
+}): { locationRefId: string | null; locationVersionId: string | null } {
+  const matches = findMatchingLocationReferences(
+    args.scene,
+    args.locationReferences,
+    args.sceneIdx,
+    { includeWithoutImages: true }
+  )
+  const matchedId = trimmedId(matches[0]?.id)
+  const resolvedId = trimmedId(args.resolvedLocationRefId)
+  const locationRefId = matchedId || resolvedId || null
+  if (!locationRefId) return { locationRefId: null, locationVersionId: null }
+  if (locationRefId === resolvedId) {
+    return {
+      locationRefId,
+      locationVersionId: args.resolvedLocationVersionId ?? null,
+    }
+  }
+
+  const ref = args.locationReferences.find((entry) => entry.id === locationRefId)
+  const beats = getSceneBeats(args.scene)
+  const beatIndex = Math.max(
+    0,
+    beats.findIndex((entry) => entry.beatId === args.beat.beatId)
+  )
+  const sceneNumber =
+    resolveSceneNumberForLocationMatch(args.scene, args.sceneIdx) ?? args.sceneIdx + 1
+  const version = ref
+    ? resolveLocationVersionForBeat(ref, {
+        sceneNumber,
+        beatIndex,
+        beatId: args.beat.beatId,
+      })
+    : null
+  return { locationRefId, locationVersionId: version?.id ?? null }
+}
+
+/**
+ * Plates the current scene and shot direction ask for.
+ * A saved selection is ignored so Direct Shot can replace that shot's list.
+ * Location matching includes plates that have not been drawn yet.
  */
 export function freshBeatReferenceSelection(args: {
   scene: Record<string, unknown> | undefined
   beat: SceneBeat
   sceneIdx: number
   characters: Array<{ id?: string; name: string; referenceImage?: string; type?: string }>
-  locationReferences: Array<{ id: string }>
+  locationReferences: ContinuityLocationReference[]
   objectReferences: Array<{ id: string; name: string }>
   resolvedAt?: string
 }): BeatReferenceSelection {
+  const scene = args.scene ?? {}
   const unlocked: SceneBeat = { ...args.beat }
   delete unlocked.referenceSelection
   const resolved = resolveBeatElementSelection({
-    scene: args.scene ?? {},
+    scene,
     beat: unlocked,
     sceneIndex: args.sceneIdx,
     projectCharacters: args.characters,
     locationReferences: args.locationReferences as LocationReference[],
     objectReferences: args.objectReferences as VisualReference[],
   })
+  const location = continuityLocationSelection({
+    scene,
+    beat: unlocked,
+    sceneIdx: args.sceneIdx,
+    locationReferences: args.locationReferences,
+    resolvedLocationRefId: resolved.locationRefId,
+    resolvedLocationVersionId: resolved.locationVersionId,
+  })
   return {
     characterIds: resolved.characterIds,
     objectRefIds: resolved.objectRefIds,
-    locationRefId: resolved.locationRefId ?? null,
-    locationVersionId: resolved.locationVersionId ?? null,
+    locationRefId: location.locationRefId,
+    locationVersionId: location.locationVersionId,
     characterWardrobes: resolved.characterWardrobes,
     source: 'user',
     resolvedAt: args.resolvedAt ?? new Date().toISOString(),
   }
 }
 
-/** Rewrite every shootable shot's plates from the current scene and shot direction. */
+/** Keep plates already on the shot and add the ones the current direction names. */
+function unionBeatReferenceSelection(
+  previous: BeatReferenceSelection | undefined,
+  fresh: BeatReferenceSelection
+): BeatReferenceSelection {
+  const freshLocation = trimmedId(fresh.locationRefId)
+  const previousLocation = trimmedId(previous?.locationRefId)
+  const wardrobeSeen = new Set<string>()
+  const characterWardrobes: Array<{ characterId: string; wardrobeId: string }> = []
+  for (const entry of [...(previous?.characterWardrobes ?? []), ...(fresh.characterWardrobes ?? [])]) {
+    const characterId = trimmedId(entry?.characterId)
+    const wardrobeId = trimmedId(entry?.wardrobeId)
+    if (!characterId || !wardrobeId) continue
+    const key = `${characterId}::${wardrobeId}`
+    if (wardrobeSeen.has(key)) continue
+    wardrobeSeen.add(key)
+    characterWardrobes.push({ characterId, wardrobeId })
+  }
+  return {
+    characterIds: uniqueIds([...(previous?.characterIds ?? []), ...fresh.characterIds]),
+    objectRefIds: uniqueIds([...(previous?.objectRefIds ?? []), ...fresh.objectRefIds]),
+    characterWardrobes,
+    locationRefId: freshLocation || previousLocation || null,
+    locationVersionId: freshLocation
+      ? (fresh.locationVersionId ?? null)
+      : (previous?.locationVersionId ?? null),
+    source: 'user',
+    resolvedAt: fresh.resolvedAt,
+  }
+}
+
+/** Add the plates the current direction needs. Plates already on a shot stay. */
 export function syncSceneReferenceSelections(args: {
   scenes: any[]
   sceneIdx: number
   characters: Array<{ id?: string; name: string; referenceImage?: string; type?: string }>
-  locationReferences: Array<{ id: string }>
+  locationReferences: ContinuityLocationReference[]
   objectReferences: Array<{ id: string; name: string }>
   resolvedAt?: string
 }): any[] {
@@ -114,15 +228,18 @@ export function syncSceneReferenceSelections(args: {
     if (isBeatExcluded(beat)) return beat
     return {
       ...beat,
-      referenceSelection: freshBeatReferenceSelection({
-        scene,
-        beat,
-        sceneIdx: args.sceneIdx,
-        characters: args.characters,
-        locationReferences: args.locationReferences,
-        objectReferences: args.objectReferences,
-        resolvedAt: args.resolvedAt,
-      }),
+      referenceSelection: unionBeatReferenceSelection(
+        beat.referenceSelection,
+        freshBeatReferenceSelection({
+          scene,
+          beat,
+          sceneIdx: args.sceneIdx,
+          characters: args.characters,
+          locationReferences: args.locationReferences,
+          objectReferences: args.objectReferences,
+          resolvedAt: args.resolvedAt,
+        })
+      ),
     }
   })
   const updated = [...args.scenes]
