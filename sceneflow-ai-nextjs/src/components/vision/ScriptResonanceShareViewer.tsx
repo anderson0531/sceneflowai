@@ -3,7 +3,6 @@
 import React, { useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
 import { SceneFlowStudioBrand } from '@/components/layout/SceneFlowStudioBrand'
-import { PipelineDemoChrome } from '@/components/landing/PipelineDemoChrome'
 import { PipelinePlaceholderStage } from '@/components/landing/PipelinePlaceholderStage'
 import { isPipelinePlaceholderToken } from '@/config/landing/productionPipelineDemo'
 import { BlueprintShareLanguageControls } from '@/components/blueprint/BlueprintShareLanguageControls'
@@ -176,7 +175,6 @@ export function ScriptResonanceShareViewer({ token }: { token: string }) {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-950 via-slate-950 to-gray-950 text-gray-100">
-      <PipelineDemoChrome tokenOrSlug={token} />
       <header className="sticky top-0 z-20 border-b border-gray-800/60 bg-gray-900/80 backdrop-blur-md">
         <div className="mx-auto max-w-4xl space-y-2 px-4 py-3">
           <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">

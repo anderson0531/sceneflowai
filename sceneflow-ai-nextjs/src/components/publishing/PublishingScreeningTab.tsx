@@ -35,6 +35,7 @@ export function PublishingScreeningTab({
   onOpenScreeningView,
 }: PublishingScreeningTabProps) {
   const [creatingFor, setCreatingFor] = useState<string | null>(null)
+  const [viewOnly, setViewOnly] = useState(false)
 
   const publishingStreams = useMemo(
     () => getPublishingState(metadata).streams,
@@ -73,6 +74,7 @@ export function PublishingScreeningTab({
             locale: stream.language,
             sourceType: stream.format === 'animatic' ? 'animatic' : 'video',
             source: 'final_cut_export',
+            viewOnly,
           }),
         })
         const data = await res.json()
@@ -109,7 +111,7 @@ export function PublishingScreeningTab({
         setCreatingFor(null)
       }
     },
-    [projectId, projectTitle, persistStream]
+    [projectId, projectTitle, persistStream, viewOnly]
   )
 
   if (readyStreams.length === 0) {
@@ -129,6 +131,15 @@ export function PublishingScreeningTab({
       <p className="text-xs text-zinc-500 shrink-0">
         Create a Screening Room premiere from a ready language stream and share the /s/ link.
       </p>
+      <label className="flex items-start gap-2 text-xs text-zinc-300 cursor-pointer">
+        <input
+          type="checkbox"
+          checked={viewOnly}
+          onChange={(event) => setViewOnly(event.target.checked)}
+          className="mt-0.5 rounded border-zinc-600"
+        />
+        <span>View only (no feedback)</span>
+      </label>
       {readyStreams.map((stream) => {
         const shareUrl = stream.publish?.shareUrl
         const isCreating = creatingFor === stream.language

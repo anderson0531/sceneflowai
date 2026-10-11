@@ -6,7 +6,6 @@ import {
   matchPipelineWalk,
   type ScreeningCut,
 } from '@/config/landing/productionPipelineDemo'
-import { PipelineDemoChrome } from '@/components/landing/PipelineDemoChrome'
 
 const STAGE_LABELS = {
   series: 'Series',
@@ -31,7 +30,6 @@ export function PipelinePlaceholderStage({ tokenOrSlug, activeCut = null }: Prop
 
   return (
     <div className="min-h-screen bg-slate-950 text-white">
-      <PipelineDemoChrome tokenOrSlug={tokenOrSlug} activeCut={activeCut} />
       <main className="mx-auto flex min-h-[70vh] max-w-3xl flex-col justify-center px-4 py-16">
         <p className="text-xs font-semibold uppercase tracking-widest text-cyan-300">{stageLabel}</p>
         <h1 className="mt-3 text-3xl font-semibold">{title}</h1>

@@ -25,9 +25,15 @@ import {
 interface StandaloneStoryboardPlayerProps {
   projectData: any
   shareToken: string
+  /** When false, the public page is watch-only: no feedback sidebar or submit. */
+  allowFeedback?: boolean
 }
 
-export function StandaloneStoryboardPlayer({ projectData, shareToken }: StandaloneStoryboardPlayerProps) {
+export function StandaloneStoryboardPlayer({
+  projectData,
+  shareToken,
+  allowFeedback = true,
+}: StandaloneStoryboardPlayerProps) {
   const [selectedLanguage, setSelectedLanguage] = useState('en')
   const [currentSceneIndex, setCurrentSceneIndex] = useState(0)
   const [mobilePanelOpen, setMobilePanelOpen] = useState(false)
@@ -156,10 +162,16 @@ export function StandaloneStoryboardPlayer({ projectData, shareToken }: Standalo
         canSubmit={canSubmit}
         isSubmitting={isSubmitting}
         submitSuccess={submitSuccess}
+        allowFeedback={allowFeedback}
       />
 
       <div className="flex flex-col lg:flex-row flex-1 min-h-0 lg:overflow-hidden">
-        <div className="flex-1 p-2 sm:p-4 overflow-y-auto bg-gray-950 flex flex-col items-center min-h-0 pb-20 lg:pb-4">
+        <div
+          className={cn(
+            'flex-1 p-2 sm:p-4 overflow-y-auto bg-gray-950 flex flex-col items-center min-h-0',
+            allowFeedback ? 'pb-20 lg:pb-4' : 'pb-4'
+          )}
+        >
           <div className="w-full max-w-5xl">
             <AudioGalleryPlayer
               scenes={resolvedScenes}
@@ -173,6 +185,7 @@ export function StandaloneStoryboardPlayer({ projectData, shareToken }: Standalo
           </div>
         </div>
 
+        {allowFeedback ? (
         <div className="hidden lg:flex w-80 xl:w-96 shrink-0 flex-col overflow-hidden">
           <UnifiedPlayerFeedbackPanel
             mode="collect"
@@ -185,9 +198,11 @@ export function StandaloneStoryboardPlayer({ projectData, shareToken }: Standalo
             className="h-full"
           />
         </div>
+        ) : null}
       </div>
 
       {/* Mobile review drawer */}
+      {allowFeedback ? (
       <div className="lg:hidden fixed bottom-0 inset-x-0 z-30 bg-gray-900 border-t border-gray-800">
         <button
           type="button"
@@ -218,6 +233,7 @@ export function StandaloneStoryboardPlayer({ projectData, shareToken }: Standalo
           />
         </div>
       </div>
+      ) : null}
 
       {audienceResonance && (
         <StoryboardAudienceResonancePanel
@@ -227,6 +243,7 @@ export function StandaloneStoryboardPlayer({ projectData, shareToken }: Standalo
         />
       )}
 
+      {allowFeedback ? (
       <StoryboardReviewerIdentitySheet
         open={identitySheetOpen}
         onOpenChange={setIdentitySheetOpen}
@@ -235,6 +252,7 @@ export function StandaloneStoryboardPlayer({ projectData, shareToken }: Standalo
         isSubmitting={isSubmitting}
         submitError={submitError}
       />
+      ) : null}
     </div>
   )
 }

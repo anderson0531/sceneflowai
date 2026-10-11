@@ -24,15 +24,16 @@ describe('Pipeline demo chrome', () => {
     expect(getPipelineDemoNextStage('screening-room')).toBeNull()
   })
 
-  it('is mounted on all three listen-only surfaces', () => {
-    expect(readSource('src/components/blueprint/BlueprintShareViewer.tsx')).toContain(
-      'PipelineDemoChrome'
-    )
-    expect(readSource('src/components/vision/ScriptResonanceShareViewer.tsx')).toContain(
-      'PipelineDemoChrome'
-    )
-    expect(readSource('src/app/share/screening-room/[shareToken]/page.tsx')).toContain(
-      'PipelineDemoChrome'
-    )
+  it('does not mount a second milestone menu on live review pages', () => {
+    for (const relativePath of [
+      'src/components/blueprint/BlueprintShareViewer.tsx',
+      'src/components/vision/ScriptResonanceShareViewer.tsx',
+      'src/app/share/screening-room/[shareToken]/page.tsx',
+      'src/app/[slug]/SharedStoryboardSlugPage.tsx',
+      'src/app/s/series/[token]/page.tsx',
+      'src/components/landing/PipelinePlaceholderStage.tsx',
+    ]) {
+      expect(readSource(relativePath), relativePath).not.toContain('PipelineDemoChrome')
+    }
   })
 })

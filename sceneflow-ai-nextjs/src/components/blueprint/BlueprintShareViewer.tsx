@@ -40,7 +40,6 @@ import { fromTtsLanguageCode } from '@/i18n/languageCodeBridge'
 import { isBlueprintFeedbackAllowed } from '@/lib/blueprint/shareSettings'
 import type { SharedBlueprintARSnapshot } from '@/lib/blueprint/sanitizeShareAR'
 import { BlueprintShareResonancePanel } from './BlueprintShareResonancePanel'
-import { PipelineDemoChrome } from '@/components/landing/PipelineDemoChrome'
 import { PipelinePlaceholderStage } from '@/components/landing/PipelinePlaceholderStage'
 import { isPipelinePlaceholderToken } from '@/config/landing/productionPipelineDemo'
 import type { BlueprintSectionAudioEntry } from '@/lib/blueprint/shareTypes'
@@ -443,7 +442,6 @@ export function BlueprintShareViewer({ token }: Props) {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-950 via-slate-950 to-gray-950 text-gray-100">
-      <PipelineDemoChrome tokenOrSlug={token} />
       <header className="border-b border-gray-800/60 bg-gray-900/80 backdrop-blur-md sticky top-0 z-20">
         <div className="max-w-4xl mx-auto px-4 py-3 space-y-2">
           <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">

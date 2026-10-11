@@ -126,7 +126,7 @@ interface SceneGalleryProps {
   /** Project-level rendered language masters (visionPhase.streams). */
   projectStreams?: ProjectStream[]
   /** Share a rendered stream master from Screening Room stream mode. */
-  onShareStream?: (language: string) => void | Promise<void>
+  onShareStream?: (language: string, opts?: { viewOnly?: boolean }) => void | Promise<void>
   /** One-shot hint to open Screening Room on a mode, language, and scene. */
   screeningPlaybackHint?: import('@/lib/scene/screeningReviewModes').ScreeningPlaybackHint | null
   onScreeningPlaybackHintConsumed?: () => void
@@ -415,14 +415,18 @@ export function SceneGallery({
     }
   }, [isExpressRunning, expressStatus])
 
-  const handleShareStoryboard = async () => {
+  const handleShareStoryboard = async (opts?: { viewOnly?: boolean }) => {
     try {
       const projectId = scenes[0]?.projectId || window.location.pathname.split('/').pop()
 
       const response = await fetch('/api/vision/create-share-link', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ projectId, linkType: 'storyboard' })
+        body: JSON.stringify({
+          projectId,
+          linkType: 'storyboard',
+          viewOnly: opts?.viewOnly === true,
+        })
       })
 
       const data = await response.json()

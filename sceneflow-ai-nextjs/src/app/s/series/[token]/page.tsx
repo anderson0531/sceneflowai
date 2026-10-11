@@ -2,7 +2,6 @@
 
 import React, { useEffect, useState } from 'react'
 import { BookOpen, Loader2 } from 'lucide-react'
-import { PipelineDemoChrome } from '@/components/landing/PipelineDemoChrome'
 import { PipelinePlaceholderStage } from '@/components/landing/PipelinePlaceholderStage'
 import { isPipelinePlaceholderToken } from '@/config/landing/productionPipelineDemo'
 
@@ -78,7 +77,6 @@ export default function SharedSeriesBiblePage({
 
   return (
     <div className="min-h-screen bg-gray-950 text-white">
-      {token ? <PipelineDemoChrome tokenOrSlug={token} /> : null}
       <div className="max-w-3xl mx-auto px-4 py-12 space-y-8">
         <div className="flex items-start gap-4">
           <div className="w-12 h-12 rounded-xl bg-amber-500/20 flex items-center justify-center border border-amber-500/30">

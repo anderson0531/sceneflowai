@@ -1,9 +1,18 @@
 import { describe, expect, it } from 'vitest'
+import { readFileSync } from 'fs'
+import path from 'path'
 import {
   allowsGoogleTranslate,
   localizationModeForPath,
   localizationReasonForPath,
 } from '@/config/i18n/gtSurfaces'
+import { keepsEnglishUntilTranslate } from '@/i18n/locale'
+
+const ROOT = path.resolve(__dirname, '../..')
+
+function readSource(relativePath: string): string {
+  return readFileSync(path.join(ROOT, relativePath), 'utf8')
+}
 
 /**
  * These assertions are the guard on the hard constraint from the plan: Google
@@ -76,5 +85,23 @@ describe('prefix resolution', () => {
     for (const route of ['/dashboard/workflow', '/share/abc', '/admin']) {
       expect(localizationReasonForPath(route)).toBeTruthy()
     }
+  })
+})
+
+describe('demo share pages stay English until a language is chosen', () => {
+  it('does not inherit the marketing locale on pipeline review routes', () => {
+    expect(keepsEnglishUntilTranslate('/share/script-resonance/abc')).toBe(true)
+    expect(keepsEnglishUntilTranslate('/blueprint/share/abc')).toBe(true)
+    expect(keepsEnglishUntilTranslate('/s/series/abc')).toBe(true)
+    expect(keepsEnglishUntilTranslate('/privacy')).toBe(false)
+    expect(keepsEnglishUntilTranslate('/dashboard')).toBe(false)
+  })
+
+  it('loads the Google script only after an explicit selection', () => {
+    const control = readSource('src/components/i18n/PageTranslateControl.tsx')
+    expect(control).toContain('active ? <GoogleTranslate /> : null')
+    expect(control).toContain('clearStoredTranslation()')
+    expect(control).not.toContain('readActiveLocale')
+    expect(control).toContain("setAttribute('translate', 'no')")
   })
 })

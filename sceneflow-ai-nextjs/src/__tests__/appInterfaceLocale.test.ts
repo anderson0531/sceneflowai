@@ -88,6 +88,9 @@ describe('the client-side locale readers agree with the server', () => {
     expect(script).toMatch(
       /if\(!l&&location\.pathname\.indexOf\(.+\)!==0\)\{l=v\[.*LANDING_LOCALE_COOKIE/
     )
+    expect(script).toContain('ENGLISH_UNTIL_TRANSLATE_PREFIXES')
+    expect(script).toContain("held.lang='en'")
+    expect(script).toContain("held.setAttribute('translate','no')")
   })
 
   // <html lang> can hold a marketing locale after a client-side navigation out

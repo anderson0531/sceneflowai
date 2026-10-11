@@ -16,7 +16,7 @@ describe('Shared Screening Room listen-only page', () => {
     expect(page).not.toContain("alert(")
     expect(page).toContain('searchParams.get(\'lang\')')
     expect(page).toContain('searchParams.get(\'playback\')')
-    expect(page).toContain('PipelineDemoChrome')
+    expect(page).not.toContain('PipelineDemoChrome')
   })
 
   it('points the landing pipeline walk at /share/screening-room, not a storyboard slug', () => {

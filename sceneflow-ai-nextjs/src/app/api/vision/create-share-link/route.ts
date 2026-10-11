@@ -8,7 +8,7 @@ export const maxDuration = 30
 
 export async function POST(request: NextRequest) {
   try {
-    const { projectId, linkType = 'screening-room', language, playbackMode } = await request.json()
+    const { projectId, linkType = 'screening-room', language, playbackMode, viewOnly } = await request.json()
     
     if (!projectId) {
       return NextResponse.json({ error: 'Project ID required' }, { status: 400 })
@@ -60,7 +60,9 @@ export async function POST(request: NextRequest) {
         translation: true,
         download: false,
         captions: true
-      }
+      },
+      /** Existing links omit this and stay open for feedback. */
+      allowFeedback: viewOnly !== true,
     }
 
     // Save to project metadata

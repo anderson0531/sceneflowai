@@ -52,6 +52,7 @@ export async function POST(request: NextRequest) {
       locale?: string
       sourceType?: 'video' | 'animatic'
       source?: 'external_upload' | 'final_cut_export'
+      viewOnly?: boolean
     }
 
     const projectId = (body.projectId || '').trim()
@@ -73,6 +74,7 @@ export async function POST(request: NextRequest) {
       locale: body.locale,
       sourceType: body.sourceType,
       source: body.source || 'external_upload',
+      feedbackEnabled: body.viewOnly !== true,
     })
 
     return NextResponse.json({ success: true, item: record })
