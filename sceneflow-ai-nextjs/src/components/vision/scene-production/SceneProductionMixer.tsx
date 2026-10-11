@@ -42,8 +42,10 @@ import {
   setBeatsMusicEnabled,
 } from '@/lib/script/sceneMusicCues'
 import {
+  renderTransitionFromPreviousShot,
   resolveMixerSceneEnd,
   sceneOpeningFrameUrl,
+  type ShotJoin,
 } from '@/lib/storyboard/transitions'
 import { SceneTransitionSelect } from '@/components/vision/SceneTransitionSelect'
 import { toast } from 'sonner'
@@ -1248,6 +1250,7 @@ function SegmentBeatVideoControls({
   shotConfigs = {},
   onShotConfigChange,
   onRegenerateShot,
+  onShotJoinChange,
 }: {
   rows: MixerBeatRow[]
   onBeatIncludeChange: (segmentId: string, included: boolean) => void
@@ -1262,6 +1265,7 @@ function SegmentBeatVideoControls({
   shotConfigs?: Record<string, MixerLanguageShotConfig>
   onShotConfigChange?: (segmentId: string, patch: MixerLanguageShotConfig) => void
   onRegenerateShot?: (segment: SceneSegment) => void
+  onShotJoinChange?: (segmentId: string, shotJoin: ShotJoin) => void
 }) {
   if (rows.length === 0) return null
 
@@ -1426,6 +1430,27 @@ function SegmentBeatVideoControls({
                       </span>
                     </div>
                   </div>
+                )}
+                {i < rows.length - 1 && seg && (
+                  <label
+                    className="flex items-center gap-2 pl-12 text-[10px] text-gray-500"
+                    onClick={(event) => event.stopPropagation()}
+                  >
+                    <span>Into next</span>
+                    <select
+                      value={seg.shotJoin === 'dissolve' || seg.shotJoin === 'fade' ? seg.shotJoin : 'cut'}
+                      disabled={disabled}
+                      onChange={(event) =>
+                        onShotJoinChange?.(seg.segmentId, event.target.value as ShotJoin)
+                      }
+                      aria-label={`Transition from shot ${i + 1} to shot ${i + 2}`}
+                      className="bg-gray-900 border border-gray-700 rounded px-2 py-0.5 text-[10px] text-gray-200 disabled:opacity-60"
+                    >
+                      <option value="cut">Cut</option>
+                      <option value="dissolve">Dissolve</option>
+                      <option value="fade">Fade to black</option>
+                    </select>
+                  </label>
                 )}
               </div>
             )
@@ -2214,6 +2239,19 @@ export function SceneProductionMixer({
         segments.map((seg) =>
           seg.segmentId === segmentId
             ? { ...seg, mixerBeatIncluded: included }
+            : seg
+        )
+      )
+    },
+    [segments, onSegmentsChange]
+  )
+
+  const handleShotJoinChange = useCallback(
+    (segmentId: string, shotJoin: ShotJoin) => {
+      onSegmentsChange?.(
+        segments.map((seg) =>
+          seg.segmentId === segmentId
+            ? { ...seg, shotJoin: shotJoin === 'cut' ? null : shotJoin }
             : seg
         )
       )
@@ -3364,7 +3402,7 @@ export function SceneProductionMixer({
 
       // Build segment data
       const useStemDubbingPolicy = productionTarget.language !== 'en' && preserveBackgroundStem
-      const segmentData = serverRenderSegments.map(seg => {
+      const segmentData = serverRenderSegments.map((seg, index) => {
         const audioConfig = segmentAudioConfigs[seg.segmentId] || { includeAudio: true, volume: 1.0, postSegmentPause: 0 }
         const hasBackgroundStem = !!seg.stemSeparation?.backgroundStemUrl
         const embedAudio = resolveSegmentEmbedAudioForRender(audioConfig, masterSegmentVolume, {
@@ -3379,6 +3417,11 @@ export function SceneProductionMixer({
         const trimWin = resolveVideoTrimWindow(seg, sourceDur)
         const videoRate = shotVideoRateFor(seg.segmentId)
         const videoWall = videoWallDurationSec(trimWin.playableSec, videoRate)
+        const previous = index > 0 ? serverRenderSegments[index - 1] : undefined
+        const join = renderTransitionFromPreviousShot(
+          previous,
+          previous ? getPlaybackSegmentDuration(previous) : undefined
+        )
         return {
           segmentId: seg.segmentId,
           sequenceIndex: seg.sequenceIndex,
@@ -3394,6 +3437,7 @@ export function SceneProductionMixer({
           videoTrimInSec: trimWin.inSec > 0.001 ? trimWin.inSec : undefined,
           videoTrimOutSec: trimWin.isTrimmed ? trimWin.outSec : undefined,
           playbackRate: videoRate,
+          ...join,
         }
       })
       
@@ -4794,7 +4838,8 @@ export function SceneProductionMixer({
                   onBeatIncludeAll={handleMixerBeatIncludeAll}
                   disabled={isRendering || !onSegmentsChange}
                   isCollapsed={collapsedSections.beatVideo}
-                  onToggleCollapse={() => toggleSection('shotVideo')}
+                  onToggleCollapse={() => toggleSection('beatVideo')}
+                  onShotJoinChange={handleShotJoinChange}
                   languageActive={!isEnglish}
                   languageCode={selectedLanguage}
                   languageLabel={languageLabel}
@@ -4821,7 +4866,7 @@ export function SceneProductionMixer({
                   onPreviewBeat={handlePreviewTrimBeat}
                   disabled={isRendering || !onSegmentsChange}
                   isCollapsed={collapsedSections.beatTrim}
-                  onToggleCollapse={() => toggleSection('shotTrim')}
+                  onToggleCollapse={() => toggleSection('beatTrim')}
                 />
               )}
 

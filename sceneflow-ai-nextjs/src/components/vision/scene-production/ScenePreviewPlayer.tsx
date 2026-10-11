@@ -34,6 +34,7 @@ import {
   resolveVideoTrimWindow,
 } from '@/lib/video/segmentVideoTrim'
 import { videoWallDurationSec } from '@/lib/scene/languageShotLocalize'
+import { resolveShotJoin } from '@/lib/storyboard/transitions'
 import type {
   MixerAudioTracks,
   MixerDialogueClipConfig,
@@ -184,6 +185,7 @@ export function ScenePreviewPlayer({
 }) {
   const containerRef = useRef<HTMLDivElement>(null)
   const videoRef = useRef<HTMLVideoElement>(null)
+  const dissolveVideoRef = useRef<HTMLVideoElement>(null)
   const narrationRef = useRef<HTMLAudioElement>(null)
   const musicRefsById = useRef<Map<string, HTMLAudioElement | null>>(new Map())
   const dialogueRefsById = useRef<Map<string, HTMLAudioElement | null>>(new Map())
@@ -943,6 +945,68 @@ export function ScenePreviewPlayer({
     return () => document.removeEventListener('fullscreenchange', handleFullscreenChange)
   }, [])
   
+  const shotJoinVisual = (() => {
+    if (playbackKind === 'image-sequence') return null
+    const index = activeSegmentIndex
+    const segment = segments[index]
+    if (!segment) return null
+    const duration = getPlaybackSegmentDuration(segment)
+    const local = Math.max(0, currentTime - getSegmentStartTime(index))
+    const incoming =
+      index > 0
+        ? resolveShotJoin(segments[index - 1]?.shotJoin, getPlaybackSegmentDuration(segments[index - 1]))
+        : null
+    const outgoing =
+      index < segments.length - 1 ? resolveShotJoin(segment.shotJoin, duration) : null
+    let fadeBlack = 0
+    if (incoming?.effect === 'fade' && incoming.durationSec > 0) {
+      fadeBlack = Math.max(fadeBlack, Math.max(0, 1 - local / incoming.durationSec))
+    }
+    if (outgoing?.effect === 'fade' && outgoing.durationSec > 0) {
+      fadeBlack = Math.max(fadeBlack, Math.max(0, 1 - (duration - local) / outgoing.durationSec))
+    }
+    const next = index + 1 < segments.length ? segments[index + 1] : undefined
+    const nextUrl = next?.activeAssetUrl?.trim()
+    let dissolve: { url: string; opacity: number; trimIn: number; rate: number } | null = null
+    if (outgoing?.effect === 'dissolve' && outgoing.durationSec > 0 && next && nextUrl) {
+      const start = Math.max(0, duration - outgoing.durationSec)
+      if (local >= start) {
+        dissolve = {
+          url: nextUrl,
+          opacity: Math.min(1, (local - start) / outgoing.durationSec),
+          trimIn: getTrimForSegment(next).inSec,
+          rate: getVideoPlaybackRate?.(next.segmentId) ?? 1,
+        }
+      }
+    }
+    if (fadeBlack <= 0 && !dissolve) return null
+    return { fadeBlack, dissolve }
+  })()
+
+  const dissolveJoin = shotJoinVisual?.dissolve ?? null
+  const dissolveUrl = dissolveJoin?.url ?? null
+  const dissolveTrimIn = dissolveJoin?.trimIn ?? 0
+  const dissolveRate = dissolveJoin?.rate ?? 1
+  useEffect(() => {
+    const video = dissolveVideoRef.current
+    if (!video || !dissolveUrl) return
+    if (video.getAttribute('data-join-src') !== dissolveUrl) {
+      video.setAttribute('data-join-src', dissolveUrl)
+      video.src = dissolveUrl
+      const seekTo = dissolveTrimIn
+      const seek = () => {
+        video.currentTime = seekTo
+      }
+      video.addEventListener('loadedmetadata', seek, { once: true })
+    }
+    video.playbackRate = dissolveRate
+    if (isPlaying) {
+      void video.play().catch(() => {})
+    } else {
+      video.pause()
+    }
+  }, [dissolveUrl, dissolveTrimIn, dissolveRate, isPlaying])
+
   const sceneEndOverlay = (() => {
     if (!sceneEnd || sceneEnd.effect === 'cut' || !(sceneEnd.durationSec > 0)) return null
     const contentEnd = Math.max(0, totalDuration - (sceneEnd.holdSec || 0))
@@ -1010,6 +1074,21 @@ export function ScenePreviewPlayer({
           </div>
         )}
 
+        {dissolveJoin && (
+          <video
+            ref={dissolveVideoRef}
+            className="absolute inset-0 w-full h-full object-contain pointer-events-none"
+            muted
+            playsInline
+            style={{ opacity: dissolveJoin.opacity }}
+          />
+        )}
+        {shotJoinVisual && shotJoinVisual.fadeBlack > 0 && (
+          <div
+            className="absolute inset-0 bg-black pointer-events-none"
+            style={{ opacity: shotJoinVisual.fadeBlack }}
+          />
+        )}
         {sceneEndOverlay?.kind === 'dissolve' && nextSceneFrameUrl && (
           // eslint-disable-next-line @next/next/no-img-element
           <img

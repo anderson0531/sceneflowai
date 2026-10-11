@@ -1054,6 +1054,8 @@ def video_stream_copy_block_reason(
     end_effect = (scene_end_transition or {}).get('effect')
     if end_effect in ('fade', 'dissolve'):
         return 'scene end transition'
+    if any(segment.get('transitionIn') in ('fade', 'dissolve') for segment in video_segments):
+        return 'shot join'
     if len(probes) != len(video_segments):
         return 'probe count'
     if text_overlays:
@@ -1366,6 +1368,73 @@ def build_stream_copy_ffmpeg_command(
     return cmd
 
 
+def shot_join_fade_filters(index: int, segments: List[Dict[str, Any]]) -> List[str]:
+    """Fade to black on the edges of a shot. Length stays the same."""
+    segment = segments[index]
+    duration = _segment_output_duration(segment)
+    filters: List[str] = []
+
+    def seconds(row: Dict[str, Any]) -> float:
+        try:
+            return max(0.0, float(row.get('transitionInSec') or 0))
+        except (TypeError, ValueError):
+            return 0.0
+
+    incoming_sec = seconds(segment)
+    if segment.get('transitionIn') == 'fade' and incoming_sec >= MIN_TRANSITION_SEC and duration > incoming_sec:
+        filters.append(f"fade=t=in:st=0:d={min(incoming_sec, duration):.4f}:color=black")
+
+    if index + 1 < len(segments) and segments[index + 1].get('transitionIn') == 'fade':
+        out_sec = seconds(segments[index + 1])
+        if out_sec >= MIN_TRANSITION_SEC and duration > out_sec:
+            start = max(0.0, duration - out_sec)
+            filters.append(f"fade=t=out:st={start:.4f}:d={min(out_sec, duration):.4f}:color=black")
+    return filters
+
+
+def apply_same_length_dissolves(
+    filter_parts: List[str],
+    segments: List[Dict[str, Any]],
+) -> List[str]:
+    """
+    Blend the opening of a shot over the end of the previous one.
+
+    The previous shot stays its full length and the incoming shot still plays
+    from its first frame afterwards, so the soundtrack does not move.
+    """
+    labels = [f"[v{i}]" for i in range(len(segments))]
+    for i in range(1, len(segments)):
+        if segments[i].get('transitionIn') != 'dissolve':
+            continue
+        try:
+            requested = float(segments[i].get('transitionInSec') or 0)
+        except (TypeError, ValueError):
+            continue
+        prev_dur = _segment_output_duration(segments[i - 1])
+        next_dur = _segment_output_duration(segments[i])
+        sec = min(requested, prev_dur, next_dur)
+        body = prev_dur - sec
+        if sec < MIN_TRANSITION_SEC or body < MIN_TRANSITION_SEC:
+            continue
+        filter_parts.append(f"{labels[i - 1]}split[jpa{i}][jpb{i}]")
+        filter_parts.append(f"{labels[i]}split[jna{i}][jnb{i}]")
+        filter_parts.append(
+            f"[jpa{i}]trim=duration={body:.4f},setpts=PTS-STARTPTS[jbody{i}]"
+        )
+        filter_parts.append(
+            f"[jpb{i}]trim=start={body:.4f}:duration={sec:.4f},setpts=PTS-STARTPTS[jtail{i}]"
+        )
+        filter_parts.append(
+            f"[jnb{i}]trim=duration={sec:.4f},setpts=PTS-STARTPTS,format=yuva420p,"
+            f"fade=t=in:st=0:d={sec:.4f}:alpha=1[jhead{i}]"
+        )
+        filter_parts.append(f"[jtail{i}][jhead{i}]overlay=format=auto[jblend{i}]")
+        filter_parts.append(f"[jbody{i}][jblend{i}]concat=n=2:v=1:a=0[jprev{i}]")
+        labels[i - 1] = f"[jprev{i}]"
+        labels[i] = f"[jna{i}]"
+    return labels
+
+
 def build_concat_ffmpeg_command(
     video_segments: List[Dict[str, Any]],
     audio_clips: List[Dict[str, Any]],
@@ -1490,13 +1559,15 @@ def build_concat_ffmpeg_command(
         speed_filter = ""
         if abs(playback_rate - 1.0) > 0.001:
             speed_filter = f"setpts=PTS/{playback_rate:.4f},"
+
+        fade_suffix = "".join(f",{part}" for part in shot_join_fade_filters(i, video_segments))
         
         # Scale to target resolution and set framerate
         # setpts=PTS-STARTPTS resets video timestamps to start at 0 for proper concatenation sync
         filter_str = (
             f"[{i}:v]{trim_filter}setpts=PTS-STARTPTS,{speed_filter}{crop_filter}scale={width}:{height}:force_original_aspect_ratio=decrease,"
             f"pad={width}:{height}:(ow-iw)/2:(oh-ih)/2:black,"
-            f"fps={fps},setsar=1{tpad_str}[v{i}]"
+            f"fps={fps},setsar=1{tpad_str}{fade_suffix}[v{i}]"
         )
         filter_parts.append(filter_str)
         video_concat_inputs.append(f"[v{i}]")
@@ -1554,7 +1625,9 @@ def build_concat_ffmpeg_command(
             filter_parts.append(audio_filter)
             segment_audio_streams.append((f"[seg_audio_{i}]", silent_dur))
     
-    # Concatenate all video segments (video only)
+    # Concatenate all video segments (video only). A dissolve blends inside
+    # the outgoing shot and still concatenates the full incoming shot.
+    video_concat_inputs = apply_same_length_dissolves(filter_parts, video_segments)
     if len(video_concat_inputs) > 1:
         concat_filter = f"{''.join(video_concat_inputs)}concat=n={len(video_segments)}:v=1:a=0[outv]"
         filter_parts.append(concat_filter)

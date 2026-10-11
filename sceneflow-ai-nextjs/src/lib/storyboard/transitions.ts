@@ -96,6 +96,36 @@ export function resolveBeatTransition(
   )
 }
 
+/** Mixer join stored on a shot. Absent or cut is a hard cut. */
+export type ShotJoin = 'cut' | 'dissolve' | 'fade'
+
+/**
+ * Join from one shot clip into the next.
+ *
+ * Uses the same lengths as a beat join. The soundtrack does not move: fade
+ * and dissolve are painted on the existing shot edges.
+ */
+export function resolveShotJoin(
+  shotJoin: string | null | undefined,
+  outgoingDurationSec?: number
+): ResolvedTransition {
+  if (shotJoin === 'dissolve' || shotJoin === 'fade') {
+    return resolveBeatTransition(shotJoin === 'dissolve' ? 'DISSOLVE' : 'FADE', outgoingDurationSec)
+  }
+  return HARD_CUT
+}
+
+/** Incoming render join copied from the previous shot. The first shot has none. */
+export function renderTransitionFromPreviousShot(
+  previous: { shotJoin?: string | null } | null | undefined,
+  outgoingDurationSec?: number
+): { transitionIn?: 'dissolve' | 'fade'; transitionInSec?: number } {
+  if (!previous) return {}
+  const resolved = resolveShotJoin(previous.shotJoin, outgoingDurationSec)
+  if (resolved.effect === 'cut' || resolved.durationSec <= 0) return {}
+  return { transitionIn: resolved.effect, transitionInSec: resolved.durationSec }
+}
+
 /**
  * The transition out of one scene and into the next.
  *
