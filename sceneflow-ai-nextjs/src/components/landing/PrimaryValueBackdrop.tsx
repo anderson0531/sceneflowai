@@ -16,6 +16,8 @@ import { useLandingVideoLocale } from '@/i18n/useLandingVideoLocale'
 import { getSignupUrlForTier } from '@/lib/billing/checkoutIntent'
 import { getDistributionDestinations } from '@/lib/network/destinations'
 import { useReducedMotion } from '@/hooks/useReducedMotion'
+import { HeroScriptDialog } from '@/components/landing/HeroScriptDialog'
+import type { HeroVideoScript } from '@/config/landing/heroSectionScripts'
 
 type ComparisonCopy = {
   id: string
@@ -23,6 +25,12 @@ type ComparisonCopy = {
 }
 
 type PrimaryValueNamespace = 'twoModes' | 'directControl' | 'publishCut'
+
+const HERO_SCRIPT_BY_NAMESPACE: Record<PrimaryValueNamespace, HeroVideoScript['id']> = {
+  twoModes: 'friction',
+  directControl: 'control',
+  publishCut: 'cut',
+}
 
 export function PrimaryValueBackdrop({
   sectionId,
@@ -307,6 +315,7 @@ export function PrimaryValueBackdrop({
             <p className="mx-auto mt-5 max-w-3xl text-balance text-base text-gray-100 sm:text-lg">
               {t('subtitle', destinations)}
             </p>
+            <HeroScriptDialog scriptId={HERO_SCRIPT_BY_NAMESPACE[namespace]} />
           </motion.div>
 
           <motion.div

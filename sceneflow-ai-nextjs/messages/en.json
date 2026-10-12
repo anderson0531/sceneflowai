@@ -948,31 +948,31 @@
   "twoModes": {
     "eyebrow": "The friction we remove",
     "title": "One pipeline. Not a stack of tools.",
-    "subtitle": "SceneFlow replaces single-clip generators and a pile of separate docs, editors, and re-renders. Build the series or the 90-minute master, then publish a scene or a chapter when you are ready to earn.",
+    "subtitle": "Clip prompts, music, and narration used to live in separate tools. SceneFlow is one pipeline for the series or the 90-minute master, then a scene or a chapter when you are ready to earn.",
     "comingSoon": "Coming soon",
     "comparison": {
       "id": "comparison",
-      "caption": "Fragmented tools beside one SceneFlow pipeline."
+      "caption": "Separate clip, music, and narration tools beside one SceneFlow pipeline."
     },
     "cta": "Launch Studio ($9)"
   },
   "directControl": {
     "eyebrow": "The control you keep",
     "title": "Direct the story. Let agents do the prompting.",
-    "subtitle": "You set the cast, the beat, and the shot in plain language. Audio, Stills, and Video Agents attach the Reference Library and generate in the background. Watch the animatic, change a shot if it is wrong, and only then spend on motion.",
+    "subtitle": "You direct the shot in plain language. Shot direction writes the still and the clip prompt. Music cues and narration sit on the beat. Watch the animatic, change a shot if it is wrong, and only then spend on motion.",
     "comparison": {
       "id": "direction",
-      "caption": "A director note beside agents building the scene."
+      "caption": "A director note, a clip prompt, and music and narration on the same beat."
     },
     "cta": "Launch Studio ($9)"
   },
   "publishCut": {
     "eyebrow": "The cut you publish",
     "title": "Export anywhere. Premiere on SceneFlow when you earn it.",
-    "subtitle": "Download a master and ship it yourself, or publish finished scenes and chapters to {longForm} and cut trailers for {shorts} — without waiting on the whole cut. Before anything hits the public feed, run drafts or your final master through the Screening Room. Standout projects can apply for the invite-only SceneFlow Network; it is a curated accelerator, not an open storefront.",
+    "subtitle": "Download a master and ship it yourself, or publish finished scenes and chapters to {longForm} and cut trailers for {shorts} — picture, music, and narration already in the cut. Before anything hits the public feed, run drafts or your final master through the Screening Room. Standout projects can apply for the invite-only SceneFlow Network; it is a curated accelerator, not an open storefront.",
     "comparison": {
       "id": "publish",
-      "caption": "A finished scene or chapter, and the 90-minute master, from one studio."
+      "caption": "A finished scene or chapter, with music and narration, and the 90-minute master, from one studio."
     },
     "cta": "Launch Studio ($9)"
   },
@@ -1790,8 +1790,8 @@
       },
       {
         "id": "animation",
-        "title": "Full-Season Animated Series. One Consistent Art Style.",
-        "subtitle": "Lock character designs, line weights, and shading models across an entire season. Direct comedic timing beat by beat, then review the assembled episode in the Screening Room.",
+        "title": "Multi-Style Full-Season Animated Series. One Consistent Art Style.",
+        "subtitle": "Lock one flat-cel style, the Hart family, and the town of Millwick from the first episode to the last. Direct the joke beat by beat, then review the episode in the Screening Room.",
         "badge": "Multi-Style",
         "solutionPillars": [
           {
@@ -1823,12 +1823,12 @@
             "solution": "Map vocal delivery directly to energetic facial performance. Dialogue, expressive mouth shapes, and comedic voice tracks match seamlessly for maximum comedic impact."
           }
         ],
-        "screeningRoomPreview": "The Animated Comedy — Screening Room"
+        "screeningRoomPreview": "Hart House — Screening Room"
       },
       {
         "id": "documentary",
-        "title": "Long-Form Documentaries. Sustained Period Accuracy.",
-        "subtitle": "Maintain era-specific detail, narrator pacing, and expert-witness continuity across a 40-minute episode or multi-part series. Review the full timeline in the Screening Room before committing to high-res renders.",
+        "title": "Long-Form Documentaries. The Rise of Intelligence.",
+        "subtitle": "Follow the rise of AI and superintelligence across continents. Each chapter looks like its own year — no modern objects in an early lab, no 1950s sets in the present.",
         "badge": "Period-Accurate",
         "solutionPillars": [
           {
@@ -1860,12 +1860,12 @@
             "solution": "Structure dramatic tension, suspenseful pauses, and evidence reveals visually inside Blueprint Room, delivering a fully assembled master file in one seamless pass."
           }
         ],
-        "screeningRoomPreview": "Documentary Production — Screening Room"
+        "screeningRoomPreview": "The Long Thought — Screening Room"
       },
       {
         "id": "training",
-        "title": "Multi-Module Training Series. One Locked Instructor.",
-        "subtitle": "Hold the instructor, classroom, and lesson graphics from the first module to the last quiz. Walk Blueprint, Audience Resonance, and the Screening Room — Pre-Vis, rough cut, scenes, and the finished course — then switch languages to hear the localized version.",
+        "title": "Curriculum-Ready Multi-Module Training Series. One Locked Chef.",
+        "subtitle": "One chef, one kitchen, five meals. The face, the coat, and the tiles stay locked from the broth to the last dessert.",
         "badge": "Curriculum-Ready",
         "solutionPillars": [
           {
@@ -1897,7 +1897,7 @@
             "solution": "Blueprint, Audience Resonance, and the Screening Room carry a module from outline to Pre-Vis, rough cut, scenes, and the finished course."
           }
         ],
-        "screeningRoomPreview": "The Training Series — Screening Room"
+        "screeningRoomPreview": "Five Plates — Screening Room"
       }
     ]
   },

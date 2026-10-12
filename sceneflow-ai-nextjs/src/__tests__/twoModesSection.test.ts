@@ -29,13 +29,16 @@ describe('one-pipeline landing section', () => {
     expect(TWO_MODES_COPY.title).toBe('One pipeline. Not a stack of tools.')
     expect(TWO_MODES_COPY.comparison).toEqual({
       id: 'comparison',
-      caption: 'Fragmented tools beside one SceneFlow pipeline.',
+      caption: 'Separate clip, music, and narration tools beside one SceneFlow pipeline.',
     })
     expect(TWO_MODES_COPY).not.toHaveProperty('retired')
     expect(TWO_MODES_COPY).not.toHaveProperty('earn')
     expect(TWO_MODES_COPY).not.toHaveProperty('languages')
     expect(TWO_MODES_COPY).not.toHaveProperty('stages')
     expect(TWO_MODES_COPY.subtitle).toContain('90-minute master')
+    expect(TWO_MODES_COPY.subtitle).toContain('Clip prompts')
+    expect(TWO_MODES_COPY.subtitle).toContain('music')
+    expect(TWO_MODES_COPY.subtitle).toContain('narration')
     expect(TWO_MODES_COPY.cta).toBe('Launch Studio ($9)')
   })
 
