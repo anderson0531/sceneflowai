@@ -48,6 +48,7 @@
                 "landing:publish-hero-public": "node scripts/publish-hero-public-assets.mjs",
                 "landing:transcode-hero": "npx tsx scripts/transcode-landing-videos.ts",
                 "landing:setup-hero-cdn": "bash scripts/setup-landing-video-cdn.sh",
+                "brand:wordmark-lockup": "node scripts/generate-brand-wordmark-lockup.mjs",
                 "tts:calibrate-voices": "tsx scripts/calibrate-gemini-voices.ts"
         },
         "dependencies": {

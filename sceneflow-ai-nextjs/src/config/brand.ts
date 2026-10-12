@@ -26,6 +26,13 @@ export const BRAND = {
     width: 512,
     height: 512,
   },
+  /** Horizontal badge + SceneFlow Studio wordmark */
+  wordmarkLockup: {
+    dark: '/brand/sf-wordmark-lockup-dark.png',
+    light: '/brand/sf-wordmark-lockup-light.png',
+    navy: '/brand/sf-wordmark-lockup-navy.png',
+    dark2x: '/brand/sf-wordmark-lockup-dark@2x.png',
+  },
   colors: {
     cyan: '#00F2FF',
     navy: '#050A18',
