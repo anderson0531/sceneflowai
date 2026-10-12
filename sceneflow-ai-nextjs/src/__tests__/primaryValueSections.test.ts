@@ -68,8 +68,8 @@ describe('primary value sections', () => {
     expect(PRIMARY_VALUE_MEDIA.direction).toEqual({
       imageUrl: '',
       posterUrl: '/landing/primary-value/direction.webp',
-      webmUrl: '/landing/primary-value/direction-en.webm',
-      mp4Url: '/landing/primary-value/direction-en.mp4',
+      webmUrl: '/landing/primary-value/direction-en.webm?v=20261012',
+      mp4Url: '/landing/primary-value/direction-en.mp4?v=20261012',
     })
     expect(PRIMARY_VALUE_MEDIA.publish).toEqual({
       imageUrl: '',
@@ -80,29 +80,28 @@ describe('primary value sections', () => {
 
     const direct = readFileSync(join(ROOT, 'src/components/landing/DirectControlSection.tsx'), 'utf8')
     const publish = readFileSync(join(ROOT, 'src/components/landing/PublishCutSection.tsx'), 'utf8')
-    expect(direct).toContain('videoLocales={getDirectControlVideoLocales()}')
+    expect(direct).not.toContain('videoLocales')
+    expect(direct).not.toContain('getDirectControlVideoLocales')
     expect(publish).toContain('videoLocales={getPublishCutVideoLocales()}')
 
     const locales = getDirectControlVideoLocales()
     expect(locales.map((locale) => locale.id)).toEqual([...VIDEO_LOCALE_ORDER])
+    expect(locales.filter((locale) => locale.available).map((locale) => locale.id)).toEqual(['en'])
     for (const id of VIDEO_LOCALE_ORDER) {
       expect(DIRECT_CONTROL_VIDEO_BLOB_PATHS[id]).toBe(directControlVideoBlobPath(id))
-      const locale = locales.find((entry) => entry.id === id)
-      if (!locale) throw new Error(`missing control locale ${id}`)
-      expect(locale.available).toBe(true)
-      expect(locale.webmUrl).toBe(`/landing/primary-value/direction-${id}.webm`)
-      expect(locale.mp4Url).toBe(`/landing/primary-value/direction-${id}.mp4`)
-      expect(locale.src).toBe(`/landing/primary-value/direction-${id}.mp4`)
-      expect(
-        twoModesVideoSources({
-          imageUrl: '',
-          posterUrl: '',
-          webmUrl: locale.webmUrl,
-          mp4Url: locale.mp4Url,
-        }).map((source) => source.type)
-      ).toEqual(['video/webm', 'video/mp4'])
     }
-    expect(directControlVideoBlobPath('en')).toBe('The Control (English).mp4')
+    const english = locales.find((locale) => locale.id === 'en')
+    expect(english?.webmUrl).toBe('/landing/primary-value/direction-en.webm?v=20261012')
+    expect(english?.mp4Url).toBe('/landing/primary-value/direction-en.mp4?v=20261012')
+    expect(
+      twoModesVideoSources({
+        imageUrl: '',
+        posterUrl: '',
+        webmUrl: english?.webmUrl ?? '',
+        mp4Url: english?.mp4Url ?? '',
+      }).map((source) => source.type)
+    ).toEqual(['video/webm', 'video/mp4'])
+    expect(directControlVideoBlobPath('en')).toBe('The control (English).mp4')
     expect(directControlVideoBlobPath('es')).toBe('The Control (Spanish).mp4')
     expect(directControlVideoBlobPath('zh')).toBe('The Control (Chinese).mp4')
     expect(directControlVideoBlobPath('ar')).toBe('The Control (Arabic).mp4')
