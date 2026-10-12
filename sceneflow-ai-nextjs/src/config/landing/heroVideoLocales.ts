@@ -125,6 +125,8 @@ export const HERO_PUBLIC_POSTER_FALLBACK = '/images/hero-poster.webp'
 const HERO_PUBLIC_MEDIA_VERSION: Partial<Record<HeroVideoLocaleId, string>> = {
   en: '20261004',
   es: '20261005',
+  zh: '20261012',
+  ar: '20261012',
 }
 
 function withHeroMediaVersion(path: string, locale: HeroVideoLocaleId): string {

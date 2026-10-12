@@ -77,7 +77,7 @@ describe('public hero playback sources', () => {
   it('points every locale at same-origin WebM + MP4 paths and a localized poster', () => {
     for (const locale of HERO_VIDEO_LOCALES) {
       const sources = getHeroPublicVideoSources(locale.id)
-      const version = { en: '20261004', es: '20261005' }[locale.id]
+      const version = { en: '20261004', es: '20261005', zh: '20261012', ar: '20261012' }[locale.id]
       expect(sources.webmSrc).toBe(
         version ? `/videos/hero-${locale.id}.webm?v=${version}` : `/videos/hero-${locale.id}.webm`
       )
@@ -89,17 +89,18 @@ describe('public hero playback sources', () => {
     expect(HERO_PUBLIC_POSTER_FALLBACK).toBe('/images/hero-poster.webp')
   })
 
-  it('rewrites hero WebM and 1080p MP4s to Blob so they are not packed into serverless functions', () => {
+  it('serves Chinese and Arabic hero files from public/videos, not Blob rewrites', () => {
     const config = readFileSync(join(process.cwd(), 'next.config.mjs'), 'utf8')
+    const root = join(process.cwd(), 'public', 'videos')
     expect(config).toContain('outputFileTracingExcludes')
     expect(config).toContain('public/videos/**/*.mp4')
-    expect(config).toContain('/videos/hero-:locale')
-    expect(config).toContain('sceneflow-hero-:locale.webm')
-    expect(config).toContain('sceneflow-hero-:locale-1080p.mp4')
-    expect(config).not.toContain('sceneflow-hero-:locale.mp4')
-    expect(config).toContain('const blobHeroLocales = "zh|ar"')
-    expect(config).toContain('hero-:locale(${blobHeroLocales}).webm')
-    expect(config).toContain('hero-:locale(${blobHeroLocales}).mp4')
+    expect(config).not.toContain('blobHeroLocales')
+    expect(config).not.toContain('sceneflow-hero-:locale.webm')
+    expect(config).not.toContain('sceneflow-hero-:locale-1080p.mp4')
+    for (const locale of ['zh', 'ar'] as const) {
+      expect(existsSync(join(root, `hero-${locale}.webm`)), `hero-${locale}.webm`).toBe(true)
+      expect(existsSync(join(root, `hero-${locale}.mp4`)), `hero-${locale}.mp4`).toBe(true)
+    }
   })
 
   it('uploads latest WebM and 1080p MP4 from the 4K masters, not the watermarked files', () => {

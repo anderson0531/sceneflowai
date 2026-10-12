@@ -130,22 +130,10 @@ const nextConfig = {
     ];
   },
   async rewrites() {
-    const blob = "https://xxavfkdhdebrqida.public.blob.vercel-storage.com";
-    // English and Spanish WebM and 1080p MP4 are committed under public/videos/.
-    // Leaving them out of these rewrites keeps those files.
-    const blobHeroLocales = "zh|ar";
     return [
       {
         source: "/sw.js",
         destination: "/serwist/sw.js",
-      },
-      {
-        source: `/videos/hero-:locale(${blobHeroLocales}).mp4`,
-        destination: `${blob}/landing/hero/sceneflow-hero-:locale-1080p.mp4`,
-      },
-      {
-        source: `/videos/hero-:locale(${blobHeroLocales}).webm`,
-        destination: `${blob}/landing/hero/sceneflow-hero-:locale.webm`,
       },
     ];
   },
