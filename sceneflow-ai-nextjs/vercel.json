@@ -9,6 +9,12 @@
     "src/app/api/vision/generate-script-v2/route.ts": {
       "maxDuration": 600
     },
+    "src/app/api/vision/attach-scene-directions/route.ts": {
+      "maxDuration": 600
+    },
+    "src/app/api/vision/direct-scene-shots/route.ts": {
+      "maxDuration": 300
+    },
     "src/app/api/vision/generate-script/route.ts": {
       "maxDuration": 300
     },

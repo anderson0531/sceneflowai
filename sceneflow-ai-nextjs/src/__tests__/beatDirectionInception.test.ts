@@ -66,14 +66,13 @@ describe('script inception ships beat direction contracts', () => {
     expect(rules.toLowerCase()).toMatch(/beat\s*direction|beatdirection/)
   })
 
-  it('generate-script-v2 route imports the beat-direction migration + wires it after direction attach', () => {
-    const source = readSource('src/app/api/vision/generate-script-v2/route.ts')
+  it('scene-direction pass wires beat-direction migration after direction attach', () => {
+    const source = readSource('src/app/api/vision/attach-scene-directions/route.ts')
     expect(source).toContain('migrateProjectBeatDirection')
 
-    const attachIdx = source.indexOf('attachSceneDirectionsToScript')
-    const migrateIdx = source.indexOf('migrateProjectBeatDirection(metadataToPersist)')
+    const attachIdx = source.indexOf('await attachSceneDirectionsToScript')
+    const migrateIdx = source.indexOf('migrateProjectBeatDirection(metadata)')
     expect(attachIdx).toBeGreaterThan(-1)
-    expect(migrateIdx).toBeGreaterThan(-1)
     expect(migrateIdx).toBeGreaterThan(attachIdx)
   })
 

@@ -203,17 +203,12 @@ import { ProductionBudgetManager } from '@/components/credits/ProductionBudgetMa
 import { getProjectCreditsBudget } from '@/lib/credits/projectBudgetShared'
 import type { DirectShotRequest, DirectShotTarget } from '@/lib/vision/directShotTarget'
 import { isPromoCinematicScene } from '@/lib/publish/buildPromoScene'
+import { syncSceneReferenceSelections } from '@/lib/vision/saveBeatDirection'
+import { shotsForDirectionAgent } from '@/lib/vision/shotDirectionAgent'
 import {
-  directionFromDirectorPatch,
-  freshBeatReferenceSelection,
-  saveDirectorPatchToScenes,
-  syncSceneReferenceSelections,
-} from '@/lib/vision/saveBeatDirection'
-import {
-  requestOptimizedShotDirection,
-  runShotDirectionAgent as runShotDirection,
-  shotsForDirectionAgent,
-} from '@/lib/vision/shotDirectionAgent'
+  isAbortError,
+  requestSceneShotDirection,
+} from '@/lib/vision/scriptInceptionFollowups'
 import {
   applyMethodDefaults,
   buildProductionBudgetParams,
@@ -4478,50 +4473,20 @@ function SceneCard({
     const controller = new AbortController()
     shotDirectionAbortRef.current = controller
     setShotDirectionProgress({ done: 0, total: shots.length })
-    let workingScenes: any[] = Array.isArray(scenes) ? scenes : []
     try {
-      const result = await runShotDirection({
-        shots,
+      const result = await requestSceneShotDirection({
+        projectId,
+        sceneIndex: sceneIdx,
+        force: true,
         signal: controller.signal,
-        requestPatch: (shot) =>
-          requestOptimizedShotDirection({
-            projectId,
-            sceneIndex: sceneIdx,
-            beatId: shot.beatId,
-            signal: controller.signal,
-          }),
-        savePatch: (shot, patch) => {
-          const workingScene = workingScenes[sceneIdx]
-          const current = getSceneBeats(workingScene ?? {}).find((beat) => beat.beatId === shot.beatId)
-          if (!current) return
-          const directed = {
-            ...current,
-            actionDescription: patch.actionDescription?.trim() || current.actionDescription,
-            beatDirection: directionFromDirectorPatch(current.beatDirection, patch),
-          }
-          workingScenes = saveDirectorPatchToScenes({
-            scenes: workingScenes,
-            sceneIdx,
-            beatId: shot.beatId,
-            patch,
-            referenceSelection: freshBeatReferenceSelection({
-              scene: workingScene,
-              beat: directed,
-              sceneIdx,
-              characters,
-              locationReferences,
-              objectReferences,
-            }),
-            objectReferences,
-            promptComposition,
-          })
-          onScriptChange({ ...script, script: { ...script?.script, scenes: workingScenes } })
-        },
-        onProgress: (done, total) => setShotDirectionProgress({ done, total }),
       })
-      if (result.cancelled) {
-        toast.info(`Shot Direction Agent stopped after ${result.optimized} of ${shots.length} shots.`)
-      } else if (result.failed > 0) {
+      if (result.scene && onScriptChange) {
+        const workingScenes: any[] = Array.isArray(scenes) ? [...scenes] : []
+        workingScenes[sceneIdx] = result.scene
+        onScriptChange({ ...script, script: { ...script?.script, scenes: workingScenes } })
+      }
+      setShotDirectionProgress({ done: result.optimized, total: shots.length })
+      if (result.failed > 0) {
         toast.warning(
           `Optimized ${result.optimized} of ${shots.length} shots. Open the other ${result.failed} in Direct Shot.`
         )
@@ -4530,6 +4495,12 @@ function SceneCard({
           `Optimized direction for ${result.optimized} shots. Run Stills Agent and Video Agent next.`
         )
       }
+    } catch (error) {
+      if (controller.signal.aborted || isAbortError(error)) {
+        toast.info('Shot Direction Agent stopped.')
+        return
+      }
+      toast.error(error instanceof Error ? error.message : 'Shot direction failed')
     } finally {
       shotDirectionAbortRef.current = null
       setShotDirectionProgress(null)

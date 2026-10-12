@@ -42,8 +42,6 @@ import {
   ensureSceneBeats,
   embedCharacterIdsInSceneBeats,
   migrateProjectToBeats,
-  migrateProjectBeatDirection,
-  migrateProjectBeatSetContext,
   migrateProjectBeatsToStartFrameOnly,
 } from '@/lib/script/beatMigration'
 import {
@@ -51,11 +49,6 @@ import {
   ensureCinematicBookends,
 } from '@/lib/script/cinematicBookends'
 import { isUnconfirmedScriptShrink } from '@/lib/script/scriptShrinkGuard'
-import {
-  attachSceneDirectionsToScript,
-  readScenesFromVisionMetadata,
-  writeScenesIntoVisionMetadata,
-} from '@/lib/sceneGeneration/attachSceneDirectionsToScript'
 import {
   buildBeatDirectionPromptBlock,
   buildBeatDirectionSchemaExample,
@@ -83,9 +76,6 @@ import {
 } from '@/lib/script/scriptCraftPrompt'
 export const runtime = 'nodejs'
 export const maxDuration = 600  // 10 minutes for large script generation (requires Vercel Pro)
-
-/** Wall-clock budget for this route, mirroring `maxDuration` / vercel.json. */
-const ROUTE_BUDGET_MS = maxDuration * 1000
 
 export async function POST(request: NextRequest) {
   const encoder = new TextEncoder()
@@ -792,81 +782,8 @@ export async function POST(request: NextRequest) {
           console.warn('[Script Gen V2] Segmented-script pass failed; persisting flat shape only', segErr)
         }
 
-        // Attach detailed scene direction before the script is marked ready so
-        // inception includes full DetailedSceneDirection (not a post-hoc client loop).
-        let directionFailures: number[] = []
-        let directionsAttached = false
-        try {
-          const scenesForDirection = readScenesFromVisionMetadata(metadataToPersist)
-          if (scenesForDirection.length > 0) {
-            controller.enqueue(encoder.encode(`data: ${JSON.stringify({
-              type: 'progress',
-              status: 'Generating scene directions…',
-              phase: 'direction',
-              totalScenes: scenesForDirection.length,
-            })}\n\n`))
-
-            // Route budget is 600s (vercel.json). Leave ~90s for persistence and
-            // the final migrations rather than letting direction consume it all.
-            const directionDeadlineMs = Math.max(
-              30_000,
-              ROUTE_BUDGET_MS - (Date.now() - generationStartTime) - 90_000
-            )
-
-            const attachResult = await attachSceneDirectionsToScript(scenesForDirection, {
-              deadlineMs: directionDeadlineMs,
-              onProgress: (done, total) => {
-                controller.enqueue(encoder.encode(`data: ${JSON.stringify({
-                  type: 'progress',
-                  status: `Scene directions ${done}/${total}`,
-                  phase: 'direction',
-                  done,
-                  total,
-                })}\n\n`))
-              },
-            })
-            metadataToPersist = writeScenesIntoVisionMetadata(
-              metadataToPersist,
-              attachResult.scenes
-            )
-            directionFailures = attachResult.directionFailures
-            directionsAttached = attachResult.directionsAttached
-            console.log('[Script Gen V2] Scene directions attached:', {
-              attached: attachResult.attachedCount,
-              skipped: attachResult.skippedCount,
-              deferred: attachResult.deferredCount,
-              failures: directionFailures,
-            })
-          }
-        } catch (dirErr) {
-          console.warn('[Script Gen V2] Direction attach failed (non-blocking):', dirErr)
-        }
-
-        try {
-          const beatDirectionResult = migrateProjectBeatDirection(metadataToPersist)
-          metadataToPersist = beatDirectionResult.metadata
-          if (beatDirectionResult.changed) {
-            console.log('[Script Gen V2] Beat-direction backfill:', {
-              migratedSceneCount: beatDirectionResult.migratedSceneCount,
-            })
-          }
-        } catch (bdErr) {
-          console.warn('[Script Gen V2] Beat-direction backfill failed (non-blocking):', bdErr)
-        }
-
-        // Runs after the direction backfill, which copies a beat's action text
-        // into frozenMoment and re-matches the scene prop catalog out of it.
-        try {
-          const setContextResult = migrateProjectBeatSetContext(metadataToPersist)
-          metadataToPersist = setContextResult.metadata
-          if (setContextResult.changed) {
-            console.log('[Script Gen V2] Beat set-context cleanup:', {
-              migratedSceneCount: setContextResult.migratedSceneCount,
-            })
-          }
-        } catch (scErr) {
-          console.warn('[Script Gen V2] Beat set-context cleanup failed (non-blocking):', scErr)
-        }
+        // Scene direction and shot direction run as their own passes after this
+        // response, so the script model can spend this budget on scenes.
 
         // Duration is now DERIVED from the script the model actually wrote,
         // rather than a target the content was forced to hit. Persist it so the
@@ -907,8 +824,6 @@ export async function POST(request: NextRequest) {
           partial: false,
           expectedScenes: allScenes.length,
           projectId: projectId,
-          directionsAttached,
-          ...(directionFailures.length > 0 ? { directionFailures } : {}),
           ...(sceneLimitWarning ? { sceneLimitWarning } : {}),
         })}\n\n`))
         

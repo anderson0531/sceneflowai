@@ -287,8 +287,12 @@ describe('Shot Direction Agent', () => {
       'saveDirectorPatchToScenes({'
     )
     const panel = read('src/components/vision/ScriptPanel.tsx')
-    expect(panel).toContain('saveDirectorPatchToScenes({')
+    expect(panel).toContain('requestSceneShotDirection({')
+    expect(panel).toContain('force: true')
     expect(panel).toContain('Shot Direction Agent')
+    expect(read('src/lib/vision/scriptInceptionFollowups.ts')).toContain(
+      '/api/vision/direct-scene-shots'
+    )
   })
 
   it('keeps its name out of machine translation', () => {
