@@ -87,9 +87,9 @@ export const PRODUCTION_SHOWCASE_COPY = {
     },
     {
       id: 'animation',
-      title: 'Full-Season Animated Series. One Consistent Art Style.',
+      title: 'Multi-Style Full-Season Animated Series. One Consistent Art Style.',
       subtitle:
-        'Lock character designs, line weights, and shading models across an entire season. Direct comedic timing beat by beat, then review the assembled episode in the Screening Room.',
+        'Lock one flat-cel style, the Hart family, and the town of Millwick from the first episode to the last. Direct the joke beat by beat, then review the episode in the Screening Room.',
       badge: 'Multi-Style',
       solutionPillars: [
         {
@@ -129,13 +129,13 @@ export const PRODUCTION_SHOWCASE_COPY = {
             'Map vocal delivery directly to energetic facial performance. Dialogue, expressive mouth shapes, and comedic voice tracks match seamlessly for maximum comedic impact.',
         },
       ],
-      screeningRoomPreview: 'The Animated Comedy — Screening Room',
+      screeningRoomPreview: 'Hart House — Screening Room',
     },
     {
       id: 'documentary',
-      title: 'Long-Form Documentaries. Sustained Period Accuracy.',
+      title: 'Long-Form Documentaries. The Rise of Intelligence.',
       subtitle:
-        'Maintain era-specific detail, narrator pacing, and expert-witness continuity across a 40-minute episode or multi-part series. Review the full timeline in the Screening Room before committing to high-res renders.',
+        'Follow the rise of AI and superintelligence across continents. Each chapter looks like its own year — no modern objects in an early lab, no 1950s sets in the present.',
       badge: 'Period-Accurate',
       solutionPillars: [
         {
@@ -175,13 +175,13 @@ export const PRODUCTION_SHOWCASE_COPY = {
             'Structure dramatic tension, suspenseful pauses, and evidence reveals visually inside Blueprint Room, delivering a fully assembled master file in one seamless pass.',
         },
       ],
-      screeningRoomPreview: 'Documentary Production — Screening Room',
+      screeningRoomPreview: 'The Long Thought — Screening Room',
     },
     {
       id: 'training',
-      title: 'Multi-Module Training Series. One Locked Instructor.',
+      title: 'Curriculum-Ready Multi-Module Training Series. One Locked Chef.',
       subtitle:
-        'Hold the instructor, classroom, and lesson graphics from the first module to the last quiz. Walk Blueprint, Audience Resonance, and the Screening Room — Pre-Vis, rough cut, scenes, and the finished course — then switch languages to hear the localized version.',
+        'One chef, one kitchen, five meals. The face, the coat, and the tiles stay locked from the broth to the last dessert.',
       badge: 'Curriculum-Ready',
       solutionPillars: [
         {
@@ -221,7 +221,7 @@ export const PRODUCTION_SHOWCASE_COPY = {
             'Blueprint, Audience Resonance, and the Screening Room carry a module from outline to Pre-Vis, rough cut, scenes, and the finished course.',
         },
       ],
-      screeningRoomPreview: 'The Training Series — Screening Room',
+      screeningRoomPreview: 'Five Plates — Screening Room',
     },
   ],
 } as const

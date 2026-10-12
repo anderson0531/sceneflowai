@@ -19,6 +19,7 @@ import {
 } from '@/config/landing/productionPipelineDemo'
 import { TrailerPlayer } from '@/components/landing/TrailerPlayer'
 import { PipelineReviewDialog } from '@/components/landing/PipelineReviewDialog'
+import { SeriesInputPanel } from '@/components/landing/SeriesInputPanel'
 
 export type SolutionPillar = {
   title: string
@@ -185,6 +186,8 @@ export function ProductionStyleCard({
             <p className="text-sm text-gray-300">{card.subtitle}</p>
           </div>
         </div>
+
+        <SeriesInputPanel cardId={card.id} />
 
         {screeningRoomInstruction ? (
           <p className="mb-4 text-sm leading-relaxed text-gray-200">{screeningRoomInstruction}</p>

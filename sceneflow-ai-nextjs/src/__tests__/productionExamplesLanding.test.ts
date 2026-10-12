@@ -4,6 +4,12 @@ import { describe, it, expect } from 'vitest'
 import enMessages from '../../messages/en.json'
 import { PRODUCTION_SHOWCASE_COPY } from '@/config/landing/productionShowcaseCopy'
 import {
+  EXAMPLE_SERIES_INPUTS,
+  formatSeriesInput,
+} from '@/config/landing/exampleSeriesInputs'
+import { HERO_SECTION_SCRIPTS, formatHeroVideoScript } from '@/config/landing/heroSectionScripts'
+import { formatFrontPageCopyPack } from '@/config/landing/frontPageCopyPack'
+import {
   VIDEO_CATEGORIES,
   buildUseCaseExampleHash,
   parseUseCaseExampleHash,
@@ -213,11 +219,63 @@ describe('Production Examples i18n contract', () => {
   it('uses a training series card in place of a localization comparison', () => {
     const training = enMessages.productionShowcase.cards.find((card) => card.id === 'training')!
     expect(training.title).toContain('Training Series')
-    expect(training.subtitle).toContain('instructor')
+    expect(training.subtitle).toContain('chef')
     expect(training.badge).toBe('Curriculum-Ready')
     expect(training).not.toHaveProperty('localeToggle')
     expect(training.solutionPillars).toHaveLength(4)
     expect(enMessages.productionShowcase.cards.some((card) => card.id === 'localization')).toBe(false)
+  })
+
+  it('shows a series input and Copy all on the examples', () => {
+    const section = readSource('src/components/landing/ProductionExamplesSection.tsx')
+    const card = readSource('src/components/landing/ProductionStyleCard.tsx')
+    expect(section).toContain('Copy all')
+    expect(section).toContain('formatFrontPageCopyPack')
+    expect(card).toContain('SeriesInputPanel')
+    expect(readSource('src/components/landing/PrimaryValueBackdrop.tsx')).toContain('HeroScriptDialog')
+    expect(readSource('src/components/landing/HeroScriptDialog.tsx')).toContain('Copy script')
+  })
+
+  it('gives the three examples a storyline, five episodes, and a copyable pack', () => {
+    expect(EXAMPLE_SERIES_INPUTS.map((series) => series.cardId)).toEqual([
+      'animation',
+      'documentary',
+      'training',
+    ])
+    for (const series of EXAMPLE_SERIES_INPUTS) {
+      expect(series.logline.length).toBeGreaterThan(20)
+      expect(series.storyline.length).toBeGreaterThan(40)
+      expect(series.episodes).toHaveLength(5)
+      const text = formatSeriesInput(series)
+      expect(text).toContain('Create Series input')
+      expect(text).toContain('Storyline')
+      expect(text).toContain('1. ')
+      expect(text).toContain('5. ')
+    }
+    const animation = formatSeriesInput(EXAMPLE_SERIES_INPUTS[0])
+    expect(animation).toContain('Hart House')
+    expect(animation).toContain('Millwick')
+    expect(animation).not.toMatch(/Cosmic Roommates|Springfield|Homer|Bart Simpson|Marge|Lisa Simpson/)
+    const documentary = formatSeriesInput(EXAMPLE_SERIES_INPUTS[1])
+    expect(documentary).toContain('superintelligence')
+    expect(documentary).toContain('The Long Thought')
+    const training = formatSeriesInput(EXAMPLE_SERIES_INPUTS[2])
+    expect(training).toContain('Five Plates')
+    expect(training).toContain('Chef Lila Mensah')
+
+    for (const script of HERO_SECTION_SCRIPTS) {
+      const text = formatHeroVideoScript(script).toLowerCase()
+      expect(text).toContain('clip prompt')
+      expect(text).toContain('music')
+      expect(text).toContain('narration')
+    }
+    const pack = formatFrontPageCopyPack()
+    expect(pack).toContain('SERIES INPUTS')
+    expect(pack).toContain('HERO VIDEO SCRIPTS')
+    expect(pack).toContain('Hart House')
+    expect(pack).toContain('The friction we remove')
+    expect(pack).toContain('The control you keep')
+    expect(pack).toContain('The cut you publish')
   })
 
   it('keeps card ids stable', () => {
