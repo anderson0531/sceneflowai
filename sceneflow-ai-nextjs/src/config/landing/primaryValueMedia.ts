@@ -1,8 +1,7 @@
 /**
  * Background slots for the two value sections under friction.
- * Direction ("The control you keep") plays one English cut.
- * Publish ("The cut you publish") plays a dubbed WebM per language,
- * with an H.264 MP4 fallback, encoded from the Blob master.
+ * Direction ("The control you keep") and publish ("The cut you publish")
+ * each play one English cut: WebM first, then an H.264 MP4 fallback.
  */
 
 import type { TwoModesMediaEntry, TwoModesVideoLocale } from '@/config/landing/twoModesMedia'
@@ -84,7 +83,7 @@ function directionMedia(id: VideoLocaleId): TwoModesMediaEntry {
   }
 }
 
-/** Blob master for each Cut dub. */
+/** Blob master for each Cut dub. The section plays English only. */
 export const PUBLISH_CUT_VIDEO_BLOB_PATHS: Record<VideoLocaleId, string> = {
   en: 'The Cut (English).mp4',
   es: 'The Cut (Spanish).mp4',
@@ -96,11 +95,19 @@ export function publishCutVideoBlobPath(locale: VideoLocaleId): string {
   return PUBLISH_CUT_VIDEO_BLOB_PATHS[locale]
 }
 
-/** 720p encodes shipped with the app, transcoded from each locale's Blob master. */
-const PUBLISH_CUT_LOCAL_MEDIA: Record<VideoLocaleId, { webmUrl: string; mp4Url: string }> = {
+/** The cut section ships one English cut. */
+const PUBLISH_CUT_PRODUCED = new Set<VideoLocaleId>(['en'])
+
+/** Cache-bust when the English cut is replaced at the same path. */
+const PUBLISH_EN_VERSION = '20261012'
+
+/** Encodes shipped with the app. English is the only cut the section plays. */
+const PUBLISH_CUT_LOCAL_MEDIA: Partial<
+  Record<VideoLocaleId, { webmUrl: string; mp4Url: string }>
+> = {
   en: {
-    webmUrl: `${ILLUSTRATION_BASE}/publish-en.webm`,
-    mp4Url: `${ILLUSTRATION_BASE}/publish-en.mp4`,
+    webmUrl: `${ILLUSTRATION_BASE}/publish-en.webm?v=${PUBLISH_EN_VERSION}`,
+    mp4Url: `${ILLUSTRATION_BASE}/publish-en.mp4?v=${PUBLISH_EN_VERSION}`,
   },
   es: {
     webmUrl: `${ILLUSTRATION_BASE}/publish-es.webm`,
@@ -117,12 +124,13 @@ const PUBLISH_CUT_LOCAL_MEDIA: Record<VideoLocaleId, { webmUrl: string; mp4Url: 
 }
 
 function publishMedia(id: VideoLocaleId): TwoModesMediaEntry {
+  if (!PUBLISH_CUT_PRODUCED.has(id)) return EMPTY_MEDIA
   const local = PUBLISH_CUT_LOCAL_MEDIA[id]
   return {
     ...EMPTY_MEDIA,
     posterUrl: id === 'en' ? PUBLISH_POSTER : '',
-    webmUrl: local.webmUrl,
-    mp4Url: local.mp4Url,
+    webmUrl: local?.webmUrl ?? '',
+    mp4Url: local?.mp4Url ?? '',
   }
 }
 
