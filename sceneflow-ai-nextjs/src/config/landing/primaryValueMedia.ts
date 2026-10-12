@@ -1,8 +1,8 @@
 /**
  * Background slots for the two value sections under friction.
- * Direction ("The control you keep") and publish ("The cut you publish")
- * each play a dubbed WebM per language, with an H.264 MP4 fallback,
- * encoded from the Blob master.
+ * Direction ("The control you keep") plays one English cut.
+ * Publish ("The cut you publish") plays a dubbed WebM per language,
+ * with an H.264 MP4 fallback, encoded from the Blob master.
  */
 
 import type { TwoModesMediaEntry, TwoModesVideoLocale } from '@/config/landing/twoModesMedia'
@@ -33,9 +33,9 @@ const LOCALE_FILENAME_LABELS: Record<VideoLocaleId, string> = {
   ar: 'Arabic',
 }
 
-/** Blob master for each Control dub. */
+/** Blob master for each Control dub. The section plays English only. */
 export const DIRECT_CONTROL_VIDEO_BLOB_PATHS: Record<VideoLocaleId, string> = {
-  en: 'The Control (English).mp4',
+  en: 'The control (English).mp4',
   es: 'The Control (Spanish).mp4',
   zh: `The Control (${LOCALE_FILENAME_LABELS.zh}).mp4`,
   ar: `The Control (${LOCALE_FILENAME_LABELS.ar}).mp4`,
@@ -45,14 +45,19 @@ export function directControlVideoBlobPath(locale: VideoLocaleId): string {
   return DIRECT_CONTROL_VIDEO_BLOB_PATHS[locale]
 }
 
-/** 720p encodes shipped with the app, transcoded from each locale's Blob master. */
-const DIRECT_CONTROL_LOCAL_MEDIA: Record<
-  VideoLocaleId,
-  { webmUrl: string; mp4Url: string }
+/** The control section ships one English cut. */
+const DIRECT_CONTROL_PRODUCED = new Set<VideoLocaleId>(['en'])
+
+/** Cache-bust when the English cut is replaced at the same path. */
+const DIRECTION_EN_VERSION = '20261012'
+
+/** Encodes shipped with the app. English is the only cut the section plays. */
+const DIRECT_CONTROL_LOCAL_MEDIA: Partial<
+  Record<VideoLocaleId, { webmUrl: string; mp4Url: string }>
 > = {
   en: {
-    webmUrl: `${ILLUSTRATION_BASE}/direction-en.webm`,
-    mp4Url: `${ILLUSTRATION_BASE}/direction-en.mp4`,
+    webmUrl: `${ILLUSTRATION_BASE}/direction-en.webm?v=${DIRECTION_EN_VERSION}`,
+    mp4Url: `${ILLUSTRATION_BASE}/direction-en.mp4?v=${DIRECTION_EN_VERSION}`,
   },
   es: {
     webmUrl: `${ILLUSTRATION_BASE}/direction-es.webm`,
@@ -69,12 +74,13 @@ const DIRECT_CONTROL_LOCAL_MEDIA: Record<
 }
 
 function directionMedia(id: VideoLocaleId): TwoModesMediaEntry {
+  if (!DIRECT_CONTROL_PRODUCED.has(id)) return EMPTY_MEDIA
   const local = DIRECT_CONTROL_LOCAL_MEDIA[id]
   return {
     ...EMPTY_MEDIA,
     posterUrl: id === 'en' ? DIRECTION_POSTER : '',
-    webmUrl: local.webmUrl,
-    mp4Url: local.mp4Url,
+    webmUrl: local?.webmUrl ?? '',
+    mp4Url: local?.mp4Url ?? '',
   }
 }
 
