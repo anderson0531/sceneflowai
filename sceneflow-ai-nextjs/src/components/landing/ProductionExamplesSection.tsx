@@ -5,8 +5,6 @@ import { motion } from 'framer-motion'
 import { useTranslations } from 'next-intl'
 import { Clapperboard, Target } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
-import { CopyTextButton } from '@/components/landing/CopyTextButton'
-import { formatFrontPageCopyPack } from '@/config/landing/frontPageCopyPack'
 import {
   Accordion,
   AccordionContent,
@@ -130,9 +128,6 @@ export default function ProductionExamplesSection() {
           </p>
           <p className="mx-auto mt-3 max-w-3xl text-sm text-gray-400">{t('languagesBanner')}</p>
           <p className="mx-auto mt-3 max-w-3xl text-sm text-gray-300">{t('explorerHandoff')}</p>
-          <div className="mt-4 flex justify-center">
-            <CopyTextButton text={formatFrontPageCopyPack()} label="Copy all" />
-          </div>
         </motion.div>
 
         {/* Desktop: 2-column grid */}

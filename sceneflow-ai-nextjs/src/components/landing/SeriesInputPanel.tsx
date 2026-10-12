@@ -1,10 +1,6 @@
 'use client'
 
-import { CopyTextButton } from '@/components/landing/CopyTextButton'
-import {
-  formatSeriesInput,
-  getExampleSeriesInput,
-} from '@/config/landing/exampleSeriesInputs'
+import { getExampleSeriesInput } from '@/config/landing/exampleSeriesInputs'
 
 export function SeriesInputPanel({ cardId }: { cardId: string }) {
   const series = getExampleSeriesInput(cardId)
@@ -12,9 +8,8 @@ export function SeriesInputPanel({ cardId }: { cardId: string }) {
 
   return (
     <div className="pointer-events-auto mb-4 rounded-xl border border-white/10 bg-black/40 p-3">
-      <div className="mb-2 flex items-center justify-between gap-2">
+      <div className="mb-2">
         <p className="text-xs font-semibold uppercase tracking-wide text-cyan-200">Series input</p>
-        <CopyTextButton text={formatSeriesInput(series)} label="Copy" />
       </div>
       <div className="max-h-52 space-y-3 overflow-y-auto pr-1 text-sm text-gray-200">
         <p className="font-semibold text-white">{series.showTitle}</p>

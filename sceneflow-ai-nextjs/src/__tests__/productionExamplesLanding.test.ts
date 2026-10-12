@@ -226,14 +226,17 @@ describe('Production Examples i18n contract', () => {
     expect(enMessages.productionShowcase.cards.some((card) => card.id === 'localization')).toBe(false)
   })
 
-  it('shows a series input and Copy all on the examples', () => {
+  it('shows a series input on the examples without copy controls', () => {
     const section = readSource('src/components/landing/ProductionExamplesSection.tsx')
     const card = readSource('src/components/landing/ProductionStyleCard.tsx')
-    expect(section).toContain('Copy all')
-    expect(section).toContain('formatFrontPageCopyPack')
+    const backdrop = readSource('src/components/landing/PrimaryValueBackdrop.tsx')
+    const seriesPanel = readSource('src/components/landing/SeriesInputPanel.tsx')
+    expect(section).not.toContain('Copy all')
+    expect(section).not.toContain('CopyTextButton')
     expect(card).toContain('SeriesInputPanel')
-    expect(readSource('src/components/landing/PrimaryValueBackdrop.tsx')).toContain('HeroScriptDialog')
-    expect(readSource('src/components/landing/HeroScriptDialog.tsx')).toContain('Copy script')
+    expect(seriesPanel).not.toContain('CopyTextButton')
+    expect(backdrop).not.toContain('HeroScriptDialog')
+    expect(backdrop).not.toContain('Copy script')
   })
 
   it('gives the three examples a storyline, five episodes, and a copyable pack', () => {

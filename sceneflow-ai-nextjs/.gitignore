@@ -35,8 +35,8 @@ google-cloud-cli*.tar.gz
 
 # Hero video encodes are served from Vercel Blob via next.config rewrites.
 # Shipping them in public/ made serverless NFT 618MB (limit 250MB).
-# English, Spanish, and Portuguese landing cuts are committed under public/videos/.
-# The cinematic drama production-example trailer is committed the same way.
+# English, Spanish, Portuguese, Chinese, and Arabic landing cuts are committed
+# under public/videos/. The cinematic drama production-example trailer is too.
 /public/videos/*.mp4
 /public/videos/*.webm
 !/public/videos/hero-en.webm
@@ -45,6 +45,10 @@ google-cloud-cli*.tar.gz
 !/public/videos/hero-es.mp4
 !/public/videos/hero-pt.webm
 !/public/videos/hero-pt.mp4
+!/public/videos/hero-zh.webm
+!/public/videos/hero-zh.mp4
+!/public/videos/hero-ar.webm
+!/public/videos/hero-ar.mp4
 !/public/videos/cinematic-drama-trailer.webm
 
 # debug
