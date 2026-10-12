@@ -1,8 +1,6 @@
 /**
  * Media for the section under the hero.
- * The comparison slot is a dubbed background: WebM first when present, then MP4.
- * Every produced locale plays a 1080p WebM (MP4 fallback) encoded from its
- * 4K Blob master.
+ * The comparison slot is one English background: WebM first, then MP4.
  */
 
 import {
@@ -50,9 +48,9 @@ const LOCALE_FILENAME_LABELS: Record<VideoLocaleId, string> = {
   ar: 'Arabic',
 }
 
-/** Reserved Blob object for each dub. Enable a locale by adding it to PRODUCED_LOCALES. */
+/** Reserved Blob object for each dub. The friction section plays English only. */
 export const TWO_MODES_VIDEO_BLOB_PATHS: Record<VideoLocaleId, string> = {
-  en: 'demo/The Friction (English).mp4',
+  en: 'The friction (English).mp4',
   es: 'The Friction (Spanish).mp4',
   zh: `The Friction (${LOCALE_FILENAME_LABELS.zh}).mp4`,
   ar: `The Friction (${LOCALE_FILENAME_LABELS.ar}).mp4`,
@@ -62,18 +60,21 @@ export function twoModesVideoBlobPath(locale: VideoLocaleId): string {
   return TWO_MODES_VIDEO_BLOB_PATHS[locale]
 }
 
-/** Locales whose video is published. Others render as disabled "Soon" pills. */
-const PRODUCED_LOCALES = new Set<VideoLocaleId>(['en', 'es', 'zh', 'ar'])
+/** The friction section ships one English cut. */
+const PRODUCED_LOCALES = new Set<VideoLocaleId>(['en'])
+
+/** Cache-bust when the English cut is replaced at the same path. */
+const FRICTION_EN_VERSION = '20261012'
 
 /**
- * 1080p encodes shipped with the app, transcoded from each locale's 4K Blob master.
+ * Encodes shipped with the app. English is the only cut the section plays.
  */
 const LOCAL_ENCODED_MEDIA: Partial<
   Record<VideoLocaleId, { webmUrl: string; mp4Url: string }>
 > = {
   en: {
-    webmUrl: '/landing/two-modes/friction-en.webm',
-    mp4Url: '/landing/two-modes/friction-en.mp4',
+    webmUrl: `/landing/two-modes/friction-en.webm?v=${FRICTION_EN_VERSION}`,
+    mp4Url: `/landing/two-modes/friction-en.mp4?v=${FRICTION_EN_VERSION}`,
   },
   es: {
     webmUrl: '/landing/two-modes/friction-es.webm',

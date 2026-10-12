@@ -115,47 +115,27 @@ describe('one-pipeline landing section', () => {
 
     expect(section).toContain('VideoLanguageControl')
     expect(theater).toContain('VideoLanguageControl')
-    expect(twoModesSection).toContain('videoLocales={getTwoModesVideoLocales()}')
+    expect(twoModesSection).not.toContain('videoLocales')
+    expect(twoModesSection).not.toContain('getTwoModesVideoLocales')
 
     expect([TWO_MODES_COPY.comparison.id]).toEqual([...TWO_MODES_MEDIA_IDS])
 
     const english = TWO_MODES_MEDIA.comparison
     expect(english.imageUrl).toBe('')
     expect(english.posterUrl).toBe('/landing/two-modes/comparison.webp')
-    expect(english.webmUrl).toBe('/landing/two-modes/friction-en.webm')
-    expect(english.mp4Url).toBe('/landing/two-modes/friction-en.mp4')
+    expect(english.webmUrl).toBe('/landing/two-modes/friction-en.webm?v=20261012')
+    expect(english.mp4Url).toBe('/landing/two-modes/friction-en.mp4?v=20261012')
     expect(getTwoModesMedia('comparison')).toEqual(english)
 
     const locales = getTwoModesVideoLocales()
     expect(locales.map((locale) => locale.id)).toEqual([...VIDEO_LOCALE_ORDER])
-    expect(locales.filter((locale) => locale.available).map((locale) => locale.id)).toEqual([
-      'en',
-      'es',
-      'zh',
-      'ar',
-    ])
+    expect(locales.filter((locale) => locale.available).map((locale) => locale.id)).toEqual(['en'])
     expect(locales.find((locale) => locale.id === 'en')?.mp4Url).toBe(english.mp4Url)
-    expect(locales.find((locale) => locale.id === 'en')?.webmUrl).toBe(
-      '/landing/two-modes/friction-en.webm'
-    )
+    expect(locales.find((locale) => locale.id === 'en')?.webmUrl).toBe(english.webmUrl)
     for (const id of VIDEO_LOCALE_ORDER) {
       expect(TWO_MODES_VIDEO_BLOB_PATHS[id]).toBe(twoModesVideoBlobPath(id))
-      const locale = locales.find((entry) => entry.id === id)
-      if (!locale) throw new Error(`missing friction locale ${id}`)
-      expect(locale.available).toBe(true)
-      expect(locale.webmUrl).toBe(`/landing/two-modes/friction-${id}.webm`)
-      expect(locale.mp4Url).toBe(`/landing/two-modes/friction-${id}.mp4`)
-      expect(locale.src).toBe(`/landing/two-modes/friction-${id}.mp4`)
-      expect(
-        twoModesVideoSources({
-          imageUrl: '',
-          posterUrl: '',
-          webmUrl: locale.webmUrl,
-          mp4Url: locale.mp4Url,
-        }).map((source) => source.type)
-      ).toEqual(['video/webm', 'video/mp4'])
     }
-    expect(twoModesVideoBlobPath('en')).toBe('demo/The Friction (English).mp4')
+    expect(twoModesVideoBlobPath('en')).toBe('The friction (English).mp4')
     expect(twoModesVideoBlobPath('es')).toBe('The Friction (Spanish).mp4')
     expect(twoModesVideoBlobPath('zh')).toBe('The Friction (Chinese).mp4')
     expect(twoModesVideoBlobPath('ar')).toBe('The Friction (Arabic).mp4')
