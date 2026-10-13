@@ -88,3 +88,23 @@ export function readSeriesIdeationSeed(series: SeriesIdeationSeedSource): Series
     audience,
   }
 }
+
+export type SeriesStudioEntry = 'generate' | 'ideate' | 'wait' | 'ready'
+
+/**
+ * Decide what the studio should do when a series record loads.
+ * A pending create (metadata flag or autoGenerate query) must generate before
+ * the empty ideation dialog can open, even if the query is not visible yet.
+ */
+export function resolveSeriesStudioEntry(input: {
+  hasContent: boolean
+  ideaTopic?: string
+  pendingAutoGenerate?: boolean
+  searchAutoGenerate?: boolean
+}): SeriesStudioEntry {
+  if (input.hasContent) return 'ready'
+  const wantsGenerate = input.pendingAutoGenerate === true || input.searchAutoGenerate === true
+  if (wantsGenerate && (input.ideaTopic || '').trim()) return 'generate'
+  if (wantsGenerate) return 'wait'
+  return 'ideate'
+}

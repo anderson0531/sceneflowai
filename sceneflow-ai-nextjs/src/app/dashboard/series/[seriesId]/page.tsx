@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useEffect, useCallback, useMemo } from 'react'
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   BookOpen,
@@ -62,7 +62,7 @@ import { SeriesSynopsisIdeation } from '@/components/series/SeriesSynopsisIdeati
 import { createAudienceDefinition, type AudienceDefinition } from '@/lib/types/audienceResonance'
 import type { SeriesSynopsisLock } from '@/lib/series/clarifySynopsis'
 import { NEW_SERIES_EPISODE_COUNT } from '@/config/series/productionFormats'
-import { readSeriesIdeationSeed } from '@/lib/series/seriesIdeation'
+import { readSeriesIdeationSeed, resolveSeriesStudioEntry } from '@/lib/series/seriesIdeation'
 import { resolveContentIntentFromMetadata } from '@/lib/content/contentIntent'
 import { SeriesResonancePanel } from '@/components/series/SeriesResonancePanel'
 import { SeriesReferenceLibraryPanel } from '@/components/series/SeriesReferenceLibraryPanel'
@@ -205,6 +205,7 @@ export default function SeriesStudioPage() {
 
   // Track if we've auto-opened the dialog in this session to prevent loops
   const [hasAutoOpened, setHasAutoOpened] = useState(false)
+  const autoGenerateStarted = useRef(false)
 
   const [postStartImport, setPostStartImport] = useState<{
     projectId: string
@@ -233,63 +234,22 @@ export default function SeriesStudioPage() {
     setIdeateSession((session) => session + 1)
   }, [series])
 
-  // Open ideation with a pre-filled synopsis from Market Insights, or an empty bible for a new series
-  useEffect(() => {
-    if (!series || hasAutoOpened) return
-
-    const hasContent = !!(series.productionBible?.synopsis || series.productionBible?.logline)
-    
-    // Check if we need to auto-generate from the new dashboard flow
-    const isAutoGenerate = searchParams?.get('autoGenerate') === 'true'
-    
-    if (isAutoGenerate) {
-      const meta = series.metadata as any
-      if (meta && meta.ideaTopic) {
-        // Clear param immediately
-        router.replace(`/dashboard/series/${series.id}`, { scroll: false })
-        applyIdeationSeed()
-        setHasAutoOpened(true)
-        
-        // Wait slightly for react state and then trigger generation
-        setTimeout(() => {
-          import('sonner').then(({ toast }) => toast.info('Auto-generating series storyline...'))
-          handleAutoGenerate(meta)
-        }, 500)
-        return
-      }
-    }
-    
-    // Only auto-open for brand new series without a generated storyline
-    if (!hasContent && !isAutoGenerate) {
-      applyIdeationSeed()
-      setIsIdeateDialogOpen(true)
-      setHasAutoOpened(true)
-    }
-  }, [series, hasAutoOpened, searchParams, router, applyIdeationSeed])
-
-  // Must stay above loading/not-found returns — React error #310 if hook count changes after load.
-  useEffect(() => {
-    const tab = searchParams?.get('tab')
-    const section = searchParams?.get('section')
-    if (tab) setActiveTab(tab)
-    if (section === 'cast' || section === 'locations' || section === 'props' || section === 'settings') {
-      setRefLibrarySection(section)
-    } else if (
-      section === 'aesthetics' ||
-      section === 'key-events' ||
-      section === 'story-threads' ||
-      section === 'review-updates'
-    ) {
-      setContinuitySection(section)
-    }
-  }, [searchParams])
-
-  const handleAutoGenerate = async (meta: any) => {
+  const handleAutoGenerate = useCallback(async (meta: {
+    ideaTopic?: string
+    episodeCount?: number
+    genre?: string
+    tone?: string
+    format?: string
+  }) => {
+    const topic = typeof meta.ideaTopic === 'string' ? meta.ideaTopic.trim() : ''
+    if (!topic || !series) return
     const requestedEpisodes = meta.episodeCount || NEW_SERIES_EPISODE_COUNT
     try {
+      router.replace(`/dashboard/series/${series.id}`, { scroll: false })
+      await updateSeries({ metadata: { pendingAutoGenerate: false } })
       const result = await executeWithOverlay(async () => {
         return await generateStoryline({
-          topic: meta.ideaTopic,
+          topic,
           episodeCount: requestedEpisodes,
           genre: meta.genre && meta.genre !== 'any' ? meta.genre : undefined,
           tone: meta.tone && meta.tone !== 'any' ? meta.tone : undefined,
@@ -311,10 +271,67 @@ export default function SeriesStudioPage() {
       )
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Failed to generate storyline')
-      // Open dialog if it fails so user can retry
+      applyIdeationSeed()
       setIsIdeateDialogOpen(true)
     }
-  }
+  }, [applyIdeationSeed, executeWithOverlay, generateStoryline, router, series, updateSeries])
+
+  // Generate immediately after create. Open ideation only for an empty series that was not just created.
+  useEffect(() => {
+    if (!series || hasAutoOpened) return
+
+    const hasContent = !!(series.productionBible?.synopsis || series.productionBible?.logline)
+    const meta = (series.metadata || {}) as {
+      ideaTopic?: string
+      episodeCount?: number
+      genre?: string
+      tone?: string
+      format?: string
+      pendingAutoGenerate?: boolean
+    }
+    const searchAutoGenerate =
+      searchParams?.get('autoGenerate') === 'true' ||
+      (typeof window !== 'undefined' &&
+        new URLSearchParams(window.location.search).get('autoGenerate') === 'true')
+    const entry = resolveSeriesStudioEntry({
+      hasContent,
+      ideaTopic: meta.ideaTopic,
+      pendingAutoGenerate: meta.pendingAutoGenerate === true,
+      searchAutoGenerate,
+    })
+
+    if (entry === 'generate') {
+      if (autoGenerateStarted.current) return
+      autoGenerateStarted.current = true
+      setHasAutoOpened(true)
+      void handleAutoGenerate(meta)
+      return
+    }
+    if (entry === 'wait') return
+
+    if (entry === 'ideate') {
+      applyIdeationSeed()
+      setIsIdeateDialogOpen(true)
+      setHasAutoOpened(true)
+    }
+  }, [series, hasAutoOpened, searchParams, applyIdeationSeed, handleAutoGenerate])
+
+  // Must stay above loading/not-found returns — React error #310 if hook count changes after load.
+  useEffect(() => {
+    const tab = searchParams?.get('tab')
+    const section = searchParams?.get('section')
+    if (tab) setActiveTab(tab)
+    if (section === 'cast' || section === 'locations' || section === 'props' || section === 'settings') {
+      setRefLibrarySection(section)
+    } else if (
+      section === 'aesthetics' ||
+      section === 'key-events' ||
+      section === 'story-threads' ||
+      section === 'review-updates'
+    ) {
+      setContinuitySection(section)
+    }
+  }, [searchParams])
 
   const openIdeation = useCallback(() => {
     applyIdeationSeed()
@@ -1254,21 +1271,8 @@ interface OverviewPanelProps {
   onOpenBibleSync?: () => void
 }
 
-const overviewCardClass = 'rounded-xl border border-white/10 bg-gray-950/40 p-6'
+const overviewCardClass = 'rounded-xl border border-gray-600 bg-gray-950/40 p-6'
 const overviewHeadingClass = 'text-sm font-bold text-white'
-
-function resonanceScoreClass(score: number | undefined): string {
-  if (score == null) return 'text-gray-500'
-  if (score >= 90) return 'text-emerald-400'
-  if (score >= 70) return 'text-amber-400'
-  return 'text-red-400'
-}
-
-function resonanceBarClass(score: number): string {
-  if (score >= 90) return 'bg-emerald-500'
-  if (score >= 70) return 'bg-amber-500'
-  return 'bg-red-500'
-}
 
 function ResonanceScoreBar({ label, score }: { label: string; score?: number }) {
   return (
@@ -1276,12 +1280,15 @@ function ResonanceScoreBar({ label, score }: { label: string; score?: number }) 
       <span className="w-28 shrink-0 truncate text-xs text-gray-300" title={label}>
         {label}
       </span>
-      <div className="h-1.5 min-w-0 flex-1 overflow-hidden rounded-full bg-slate-700">
+      <div className="h-1.5 min-w-0 flex-1 overflow-hidden rounded-full bg-gray-700">
         {score != null ? (
-          <div className={`h-full rounded-full ${resonanceBarClass(score)}`} style={{ width: `${Math.max(0, Math.min(100, score))}%` }} />
+          <div
+            className="h-full rounded-full bg-gray-400"
+            style={{ width: `${Math.max(0, Math.min(100, score))}%` }}
+          />
         ) : null}
       </div>
-      <span className={`w-7 shrink-0 text-right text-xs font-bold ${resonanceScoreClass(score)}`}>
+      <span className="w-7 shrink-0 text-right text-xs font-bold text-white">
         {score ?? ''}
       </span>
     </div>
@@ -1521,7 +1528,7 @@ function OverviewPanel({
         </div>
       </div>
 
-      <div className="space-y-4 rounded-2xl bg-gray-900/60 p-4 shadow-lg shadow-black/40">
+      <div className="space-y-4 rounded-2xl border border-gray-600 bg-gray-900/60 p-4 shadow-lg shadow-black/40">
         {onOpenBibleSync ? (
           <div className={overviewCardClass}>
             <h3 className={`mb-3 ${overviewHeadingClass}`}>Series Bible Sync</h3>

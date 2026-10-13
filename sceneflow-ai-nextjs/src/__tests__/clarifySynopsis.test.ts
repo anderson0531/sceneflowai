@@ -7,7 +7,7 @@ import {
   sanitizeSynopsisMessages,
   type SynopsisMessage,
 } from '@/lib/series/clarifySynopsis'
-import { readSeriesIdeationSeed } from '@/lib/series/seriesIdeation'
+import { readSeriesIdeationSeed, resolveSeriesStudioEntry } from '@/lib/series/seriesIdeation'
 import { NEW_SERIES_EPISODE_COUNT } from '@/config/series/productionFormats'
 
 const BEEKEEPERS = 'Follow three urban beekeepers through one honey season in Chicago.'
@@ -152,6 +152,53 @@ describe('readSeriesIdeationSeed', () => {
     expect(seed.locked).toBeNull()
     expect(seed.draft).toContain('street food')
     expect(seed.format).toBe('narrative')
+  })
+})
+
+describe('resolveSeriesStudioEntry', () => {
+  it('generates from the create flag before the empty dialog can open', () => {
+    expect(
+      resolveSeriesStudioEntry({
+        hasContent: false,
+        ideaTopic: 'Five friends open a haunted house.',
+        pendingAutoGenerate: true,
+        searchAutoGenerate: false,
+      })
+    ).toBe('generate')
+  })
+
+  it('uses the query as a backup and waits until the synopsis is present', () => {
+    expect(
+      resolveSeriesStudioEntry({
+        hasContent: false,
+        ideaTopic: '',
+        pendingAutoGenerate: false,
+        searchAutoGenerate: true,
+      })
+    ).toBe('wait')
+    expect(
+      resolveSeriesStudioEntry({
+        hasContent: false,
+        ideaTopic: 'A documentary about harbor pilots.',
+        searchAutoGenerate: true,
+      })
+    ).toBe('generate')
+  })
+
+  it('opens ideation only for an empty series that was not just created', () => {
+    expect(
+      resolveSeriesStudioEntry({
+        hasContent: false,
+        ideaTopic: 'A weekly show about street food.',
+      })
+    ).toBe('ideate')
+    expect(
+      resolveSeriesStudioEntry({
+        hasContent: true,
+        ideaTopic: 'Already generated.',
+        pendingAutoGenerate: true,
+      })
+    ).toBe('ready')
   })
 })
 

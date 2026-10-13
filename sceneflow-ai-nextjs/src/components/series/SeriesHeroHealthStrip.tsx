@@ -31,14 +31,6 @@ export function SeriesHeroHealthStrip({
   const slate = computeSlateStats(episodes)
 
   const resonanceScore = resonanceAnalysis?.greenlightScore?.score
-  const resonanceScoreClass =
-    resonanceScore == null
-      ? 'text-gray-400'
-      : resonanceScore >= 90
-        ? 'text-emerald-400'
-        : resonanceScore >= 70
-          ? 'text-amber-400'
-          : 'text-red-400'
 
   const chips: Array<{
     id: string
@@ -82,11 +74,11 @@ export function SeriesHeroHealthStrip({
           key={chip.id}
           type="button"
           onClick={() => (chip.action ? chip.action() : chip.tab && onNavigate(chip.tab))}
-          className="rounded-xl border border-white/10 bg-gray-900/50 p-4 text-left transition-colors hover:bg-gray-900"
+          className="rounded-xl border border-gray-600 bg-gray-900/50 p-4 text-left transition-colors hover:bg-gray-900"
         >
           <p className="text-xs font-medium text-gray-400">{chip.label}</p>
           {chip.id === 'resonance' ? (
-            <p className={`mt-1 text-sm font-bold ${resonanceScoreClass}`}>
+            <p className="mt-1 text-sm font-bold text-white">
               {chip.score ?? 'Not analyzed'}
             </p>
           ) : (

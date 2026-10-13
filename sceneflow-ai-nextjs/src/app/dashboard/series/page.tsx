@@ -109,6 +109,7 @@ export default function SeriesPage() {
           tone: lockedSynopsis?.tone,
           episodeCount,
           synopsisLocked: true,
+          pendingAutoGenerate: true,
           audienceDefinition: hasAudience ? audienceDef : undefined,
           contentIntent: resolveContentIntentFromMetadata({
             format,
