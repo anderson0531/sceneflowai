@@ -866,11 +866,11 @@ export default function SeriesStudioPage() {
             </TabsTrigger>
             <TabsTrigger value="continuity" className={seriesTabClass}>
               <GitBranch className="w-4 h-4" />
-              Continuity
+              Consistency
             </TabsTrigger>
             <TabsTrigger value="reference-library" className={seriesTabClass}>
               <BookOpen className="w-4 h-4" />
-              Reference Library
+              Continuity
             </TabsTrigger>
           </TabsList>
 

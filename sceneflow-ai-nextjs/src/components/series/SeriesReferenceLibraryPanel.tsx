@@ -230,7 +230,7 @@ export function SeriesReferenceLibraryPanel({
     <div className="space-y-6">
       <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
         <div>
-          <h2 className="text-sm font-bold text-white">Reference Library</h2>
+          <h2 className="text-sm font-bold text-white">Continuity</h2>
           <p className="mt-1 text-sm text-gray-400">
             {seriesTitle}
             {bible?.version ? ` · v${bible.version}` : ''}
