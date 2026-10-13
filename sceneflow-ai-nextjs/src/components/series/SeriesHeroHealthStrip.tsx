@@ -56,7 +56,7 @@ export function SeriesHeroHealthStrip({
     },
     {
       id: 'continuity',
-      label: 'Continuity',
+      label: 'Consistency',
       detail: `${continuity.characters} cast · ${continuity.threads} threads · ${continuity.keyEvents} events`,
       tab: 'continuity',
     },

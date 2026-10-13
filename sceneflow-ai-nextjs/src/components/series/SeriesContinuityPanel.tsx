@@ -76,7 +76,7 @@ export function SeriesContinuityPanel({
     <div className="space-y-6">
       <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
         <div>
-          <h2 className="text-sm font-bold text-white">Continuity</h2>
+          <h2 className="text-sm font-bold text-white">Consistency</h2>
           <p className="mt-1 text-sm text-gray-400">
             Aesthetics, canon events, and story threads for {seriesTitle}.
           </p>
@@ -85,7 +85,7 @@ export function SeriesContinuityPanel({
             href={`/dashboard/series/${seriesId}?tab=reference-library`}
             className="text-sm text-amber-400 hover:text-amber-300 inline-flex items-center gap-1"
           >
-            Cast, locations & props in Reference Library
+            Cast, locations & props in Continuity
             <ExternalLink className="w-3.5 h-3.5" />
           </Link>
       </div>
