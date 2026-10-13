@@ -16,13 +16,6 @@ import {
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select'
-import {
   Dialog,
   DialogContent,
   DialogHeader,
@@ -75,9 +68,10 @@ export default function SeriesPage() {
   const [isCreating, setIsCreating] = useState(false)
   
   // Filter series by search and status
-  const filteredSeries = series.filter(s => {
+  const filteredSeries = (Array.isArray(series) ? series : []).filter(s => {
+    const title = s.title || ''
     const matchesSearch = !searchQuery || 
-      s.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      title.toLowerCase().includes(searchQuery.toLowerCase()) ||
       s.logline?.toLowerCase().includes(searchQuery.toLowerCase())
     const matchesStatus = statusFilter === 'all' || s.status === statusFilter
     return matchesSearch && matchesStatus
@@ -206,19 +200,21 @@ export default function SeriesPage() {
                 className="pl-9 bg-gray-800 border-gray-700 text-white"
               />
             </div>
-            <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="w-32 bg-gray-800 border-gray-700">
-                <Filter className="w-4 h-4 mr-2" />
-                <SelectValue placeholder="Status" />
-              </SelectTrigger>
-              <SelectContent className="bg-gray-800 border-gray-700">
-                <SelectItem value="all">All</SelectItem>
-                <SelectItem value="draft">Draft</SelectItem>
-                <SelectItem value="active">Active</SelectItem>
-                <SelectItem value="completed">Completed</SelectItem>
-                <SelectItem value="archived">Archived</SelectItem>
-              </SelectContent>
-            </Select>
+            <label className="relative">
+              <Filter className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-500" />
+              <select
+                aria-label="Status"
+                value={statusFilter}
+                onChange={(event) => setStatusFilter(event.target.value)}
+                className="h-10 w-36 appearance-none rounded-md border border-gray-700 bg-gray-800 pl-9 pr-3 text-sm text-white"
+              >
+                <option value="all">All</option>
+                <option value="draft">Draft</option>
+                <option value="active">Active</option>
+                <option value="completed">Completed</option>
+                <option value="archived">Archived</option>
+              </select>
+            </label>
           </div>
           
           <div className="flex items-center gap-2">

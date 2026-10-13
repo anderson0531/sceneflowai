@@ -34,6 +34,34 @@ const serwist = new Serwist({
 
 serwist.addEventListeners()
 
+// A crashed Series Room tab keeps the old JavaScript until the document reloads.
+// When this worker takes control, reload that tab onto the current deployment.
+self.addEventListener('activate', (event) => {
+  event.waitUntil(
+    (async () => {
+      await self.clients.claim()
+      const windows = await self.clients.matchAll({ type: 'window', includeUncontrolled: true })
+      await Promise.all(
+        windows.map(async (client) => {
+          if (!('navigate' in client)) return
+          let pathname = ''
+          try {
+            pathname = new URL(client.url).pathname
+          } catch {
+            return
+          }
+          if (pathname !== '/dashboard/series') return
+          try {
+            await client.navigate(client.url)
+          } catch {
+            // The tab can stay put if the browser rejects the navigation.
+          }
+        })
+      )
+    })()
+  )
+})
+
 self.addEventListener('push', (event) => {
   let payload: { title?: string; message?: string; url?: string } = {}
   try {
