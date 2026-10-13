@@ -20,8 +20,11 @@ describe('key feature chapter map', () => {
   })
 
   it('gives shared gestures one demo and leaves deploy inside the room film', () => {
-    expect(standaloneDemoKey('reshapeSeries')).toBe('reshapeSeries')
-    expect(standaloneDemoKey('directEpisode')).toBe('reshapeSeries')
+    expect(standaloneDemoKey('newSeries')).toBe('newSeries')
+    expect(standaloneDemoKey('seriesReview')).toBe('seriesReview')
+    expect(standaloneDemoKey('seriesResonance')).toBe('seriesResonance')
+    expect(standaloneDemoKey('seriesDirector')).toBe('seriesDirector')
+    expect(standaloneDemoKey('directEpisode')).toBe('seriesDirector')
     expect(standaloneDemoKey('blueprintDirector')).toBeNull()
     expect(standaloneDemoKey('sceneDirector')).toBe('sceneDirector')
     expect(standaloneDemoKey('byok')).toBe('byok')
@@ -30,6 +33,7 @@ describe('key feature chapter map', () => {
     expect(standaloneDemoKey('preVis')).toBe('preVis')
     expect(standaloneDemoKey('mixer')).toBe('mixer')
     for (const icon of [
+      'startEpisode',
       'productionAgents',
       'directShot',
       'languageStreams',

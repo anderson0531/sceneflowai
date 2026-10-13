@@ -31,13 +31,15 @@ export const FEATURE_CHAPTER_MAP: readonly FeatureRoomChapterPlan[] = [
     roomId: 'series-desk',
     filmSeconds: 90,
     beats: [
-      { id: 'season-universe', demoIcons: ['seasonUniverse'], standaloneDemo: true },
-      { id: 'episode-handoff', demoIcons: ['episodeHandoff'], standaloneDemo: true },
+      { id: 'new-series', demoIcons: ['newSeries'], standaloneDemo: true },
+      { id: 'first-cut', demoIcons: ['seriesReview'], standaloneDemo: true },
+      { id: 'series-resonance', demoIcons: ['seriesResonance'], standaloneDemo: true },
       {
-        id: 'reshape',
-        demoIcons: ['reshapeSeries', 'directEpisode'],
+        id: 'series-director',
+        demoIcons: ['seriesDirector', 'directEpisode'],
         standaloneDemo: true,
       },
+      { id: 'start-episode', demoIcons: ['startEpisode'], standaloneDemo: false },
     ],
   },
   {

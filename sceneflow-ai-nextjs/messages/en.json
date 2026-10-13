@@ -262,66 +262,88 @@
       {
         "id": "series-desk",
         "label": "Series Room",
-        "promise": "The Series Room is your franchise command center for long-form AI production. It establishes your universe’s core architecture to guarantee perfect continuity. Lock the franchise once. Season arcs, cast, tone, and world rules automatically carry into every episode, eliminating repetitive setup and ensuring persistent world-building. A single film can skip this room.",
+        "promise": "The Series Room is where a season starts. The same characters and the same story carry into every episode you add. Read it, listen to it, and direct it before an episode opens in the Blueprint Room. A film with no season can skip this room.",
         "features": [
           {
-            "icon": "seasonUniverse",
-            "title": "Season universe",
-            "description": "Define the franchise once. Season arcs, recurring cast, tone, and world rules live on the series, and every new episode inherits them instead of starting from a blank page. A single film can skip this room and open in the Blueprint Room.",
-            "screenshot": "Series overview",
+            "icon": "newSeries",
+            "title": "New Series",
+            "description": "Start here. Describe the series you intend, in your own words. Clarify and Confirm iterates that intent with you until the synopsis is ready, and Generate Series writes the baseline. A new series starts as five episodes, and you can add more.",
+            "screenshot": "Create New Series — intent, Clarify and Confirm, Generate Series",
             "learnMore": {
               "items": [
                 {
-                  "title": "Franchise lock",
-                  "description": "Season arcs, recurring cast, tone, and world rules live on the series."
+                  "title": "Your intent",
+                  "description": "Say what the series is, including the format, the audience, and the art style."
                 },
                 {
-                  "title": "Inherited episodes",
-                  "description": "Every new episode starts from that franchise instead of a blank page."
+                  "title": "Iterate",
+                  "description": "Clarify and Confirm refines the synopsis with you before anything is generated."
                 },
                 {
-                  "title": "Single film",
-                  "description": "A film with no season skips this room and opens in the Blueprint Room."
+                  "title": "Baseline",
+                  "description": "Generate Series writes the season you will review, starting as five episodes."
                 }
               ]
             }
           },
           {
-            "icon": "episodeHandoff",
-            "title": "Episode handoff",
-            "description": "Each episode outline, synopsis, and story beats sync into that episode’s Blueprint Room and Production Stage. Episode 12 still knows the cast, the world, and what already happened.",
-            "screenshot": "Episode handoff into Blueprint and Production",
+            "icon": "seriesReview",
+            "title": "Review the first cut",
+            "description": "Read the overview, or press Listen. Then read the episodes, or listen to them. Consistency holds the story threads, and Continuity holds the cast, locations, props, and settings those episodes share.",
+            "screenshot": "Overview Listen, Episodes Listen, Consistency, Continuity — Cast, Locations, Props, Settings",
             "learnMore": {
               "items": [
                 {
-                  "title": "Outline sync",
-                  "description": "Each episode’s outline, synopsis, and story beats sync into that episode’s Blueprint Room and Production Stage."
+                  "title": "Read or listen",
+                  "description": "Overview and Episodes can be read, or heard with Listen."
+                },
+                {
+                  "title": "Consistency",
+                  "description": "Aesthetics, key events, and story threads stay with the season."
                 },
                 {
                   "title": "Continuity",
-                  "description": "Episode 12 still knows the cast, the world, and what already happened."
+                  "description": "Cast, locations, props, and settings are the same ones every episode uses."
                 }
               ]
             }
           },
           {
-            "icon": "reshapeSeries",
-            "title": "Reshape · with Direction",
-            "description": "The series edit dialog. Speak or type what should change — a more sympathetic antagonist, a new subplot, a different climax — and optionally focus the edit on plot, characters, episode content, tone, or setting. The revision is targeted. Unrelated parts of the storyline stay put, and you apply the change yourself.",
-            "screenshot": "Reshape dialog",
+            "icon": "seriesResonance",
+            "title": "Audience Resonance",
+            "description": "Run Audience Resonance when you want a read on the season. Review the scores and the analysis. Apply an Actionable Insight only if you choose to, and nothing in the series changes until you do.",
+            "screenshot": "Audience Resonance analysis, then Actionable Insights, unapplied",
             "learnMore": {
               "items": [
                 {
-                  "title": "Spoken or typed note",
-                  "description": "Say or type the change, such as a more sympathetic antagonist, a new subplot, or a different climax."
+                  "title": "The read",
+                  "description": "Scores and analysis show what lands for the audience you named."
                 },
                 {
-                  "title": "Focused edit",
-                  "description": "Optionally limit the revision to plot, characters, episode content, tone, or setting."
+                  "title": "Optional",
+                  "description": "An Actionable Insight changes the series only when you apply it."
+                }
+              ]
+            }
+          },
+          {
+            "icon": "seriesDirector",
+            "title": "Series Director",
+            "description": "Direct the whole series in your own words, spoken or typed. You choose the change and the focus, and you accept it. A recommendation can help, and unrelated parts of the storyline stay put.",
+            "screenshot": "Series Director — direction, focus, accept",
+            "learnMore": {
+              "items": [
+                {
+                  "title": "Your words",
+                  "description": "Speak or type the change, and optionally limit it to plot, characters, episode content, tone, or setting."
                 },
                 {
-                  "title": "You apply it",
-                  "description": "Unrelated parts of the storyline stay put, and nothing changes until you accept it."
+                  "title": "You accept it",
+                  "description": "Nothing changes until you accept it, and unrelated parts of the storyline stay put."
+                },
+                {
+                  "title": "A recommendation",
+                  "description": "Recommendations can help, and you still choose what to keep."
                 }
               ]
             }
@@ -329,17 +351,35 @@
           {
             "icon": "directEpisode",
             "title": "Direct this episode",
-            "description": "The series-episode edit. On one episode, dictate the change (raise the stakes, deepen the B-story) and apply it to that episode only. The rest of the season is left alone.",
-            "screenshot": "Direct this episode",
+            "description": "Open an episode and direct that hour alone. Raise the stakes or deepen the story, then apply it. The other episodes stay as they are.",
+            "screenshot": "Episodes — Direct this episode, other episodes unchanged",
             "learnMore": {
               "items": [
                 {
                   "title": "One episode",
-                  "description": "Dictate the change, such as raising the stakes or deepening the B-story, and apply it to that episode only."
+                  "description": "Direct this episode applies the change to that episode only."
                 },
                 {
-                  "title": "Season stays",
-                  "description": "The rest of the season is left alone."
+                  "title": "The season stays",
+                  "description": "The other episodes are left as they are."
+                }
+              ]
+            }
+          },
+          {
+            "icon": "startEpisode",
+            "title": "Start the episode",
+            "description": "When an episode is ready, start its project. The outline, synopsis, and beats go with it into the Blueprint Room. The cast and the world are already known.",
+            "screenshot": "Start Project — outline and cast already on the episode",
+            "learnMore": {
+              "items": [
+                {
+                  "title": "Start Project",
+                  "description": "Start Project opens that episode in the Blueprint Room."
+                },
+                {
+                  "title": "Already known",
+                  "description": "The outline, the synopsis, the beats, and the cast go with it."
                 }
               ]
             }
