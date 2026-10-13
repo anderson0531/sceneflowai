@@ -6,33 +6,44 @@ import { STUDIO_DISPLAY_NAMES } from '@/constants/studioDisplayNames'
 const ROOT = join(process.cwd())
 const STUDIO_PAGE = join(ROOT, 'src/app/dashboard/series/[seriesId]/page.tsx')
 const HUB_PAGE = join(ROOT, 'src/app/dashboard/series/page.tsx')
+const IDEATION = join(ROOT, 'src/components/series/SeriesSynopsisIdeation.tsx')
 
 describe('Series Studio in-box dictation', () => {
-  it('uses DictationTextarea for Generate, Reshape, and Direct this episode', () => {
+  it('uses DictationTextarea for reshape and direct-this-episode, and the ideation synopsis', () => {
     const source = readFileSync(STUDIO_PAGE, 'utf8')
+    const ideation = readFileSync(IDEATION, 'utf8')
     expect(source).toContain("import { DictationTextarea } from '@/components/ui/DictationTextarea'")
     expect(source).not.toContain("from '@/components/ui/textarea'")
+    expect(source).toContain('SeriesSynopsisIdeation')
+    expect(source).toContain('Generate Series')
+    expect(source).not.toContain('Generate Storyline')
+    expect(source).not.toContain('Topic / Concept')
 
-    const generateStart = source.indexOf('Topic / Concept')
+    expect(ideation).toContain('Synopsis')
+    expect(ideation).toContain('<DictationTextarea')
+    expect(ideation).toContain('Clarify and Confirm')
+
     const reshapeStart = source.indexOf('What would you like to change?')
     const directStart = source.indexOf('Direct this episode')
 
-    expect(generateStart).toBeGreaterThan(-1)
-    expect(reshapeStart).toBeGreaterThan(generateStart)
+    expect(reshapeStart).toBeGreaterThan(-1)
     expect(directStart).toBeGreaterThan(reshapeStart)
 
-    expect(source.slice(generateStart, reshapeStart)).toContain('<DictationTextarea')
     expect(source.slice(reshapeStart, directStart)).toContain('<DictationTextarea')
     expect(source.slice(directStart)).toContain('<DictationTextarea')
     expect(source.slice(directStart)).toContain('min-w-0 flex-1')
   })
 
-  it('uses DictationTextarea for Create New Series Topic / Concept', () => {
+  it('uses the synopsis ideation field for Create New Series', () => {
     const source = readFileSync(HUB_PAGE, 'utf8')
-    expect(source).toContain("import { DictationTextarea } from '@/components/ui/DictationTextarea'")
-    expect(source).not.toContain("from '@/components/ui/textarea'")
-    expect(source).toContain('Topic / Concept')
-    expect(source).toContain('<DictationTextarea')
+    const ideation = readFileSync(IDEATION, 'utf8')
+    expect(source).toContain('SeriesSynopsisIdeation')
+    expect(source).toContain('Generate Series')
+    expect(source).not.toContain('Generate Storyline')
+    expect(source).not.toContain('Topic / Concept')
+    expect(source).not.toContain('Start from template')
+    expect(ideation).toContain('<DictationTextarea')
+    expect(ideation).toContain('Synopsis')
   })
 })
 

@@ -57,7 +57,13 @@ import { useSession } from 'next-auth/react'
 import { useRouter, useParams, useSearchParams } from 'next/navigation'
 import { toast } from 'sonner'
 import Link from 'next/link'
-import { DEFAULT_MAX_EPISODES, ABSOLUTE_MAX_EPISODES, SeriesResonanceAnalysis, getSeriesGreenlightTier } from '@/types/series'
+import { SeriesResonanceAnalysis, getSeriesGreenlightTier } from '@/types/series'
+import { SeriesSynopsisIdeation } from '@/components/series/SeriesSynopsisIdeation'
+import { createAudienceDefinition, type AudienceDefinition } from '@/lib/types/audienceResonance'
+import type { SeriesSynopsisLock } from '@/lib/series/clarifySynopsis'
+import { NEW_SERIES_EPISODE_COUNT } from '@/config/series/productionFormats'
+import { readSeriesIdeationSeed } from '@/lib/series/seriesIdeation'
+import { resolveContentIntentFromMetadata } from '@/lib/content/contentIntent'
 import { SeriesResonancePanel } from '@/components/series/SeriesResonancePanel'
 import { SeriesReferenceLibraryPanel } from '@/components/series/SeriesReferenceLibraryPanel'
 import { ReferenceTransferDialog } from '@/components/series/ReferenceTransferDialog'
@@ -154,11 +160,14 @@ export default function SeriesStudioPage() {
     return 'cast'
   })
   const [isAddingEpisodes, setIsAddingEpisodes] = useState(false)
-  const [ideaTopic, setIdeaTopic] = useState('')
-  const [episodeCount, setEpisodeCount] = useState(DEFAULT_MAX_EPISODES)
-  const [genre, setGenre] = useState('any')
-  const [tone, setTone] = useState('any')
+  const [episodeCount, setEpisodeCount] = useState(NEW_SERIES_EPISODE_COUNT)
   const [format, setFormat] = useState('narrative')
+  const [audienceDef, setAudienceDef] = useState<AudienceDefinition>(() =>
+    createAudienceDefinition({ description: '', source: 'series' })
+  )
+  const [lockedSynopsis, setLockedSynopsis] = useState<SeriesSynopsisLock | null>(null)
+  const [synopsisDraft, setSynopsisDraft] = useState('')
+  const [ideateSession, setIdeateSession] = useState(0)
   const [isIdeateDialogOpen, setIsIdeateDialogOpen] = useState(false)
   const [isResetConfirmOpen, setIsResetConfirmOpen] = useState(false)
   const [isResonancePanelOpen, setIsResonancePanelOpen] = useState(false)
@@ -213,7 +222,18 @@ export default function SeriesStudioPage() {
     [series?.episodeBlueprints]
   )
 
-  // Open ideation with pre-filled topic from Market Insights, or empty bible for new series
+  const applyIdeationSeed = useCallback(() => {
+    if (!series) return
+    const seed = readSeriesIdeationSeed(series)
+    setFormat(seed.format)
+    setEpisodeCount(seed.episodeCount)
+    setAudienceDef(seed.audience)
+    setLockedSynopsis(seed.locked)
+    setSynopsisDraft(seed.draft)
+    setIdeateSession((session) => session + 1)
+  }, [series])
+
+  // Open ideation with a pre-filled synopsis from Market Insights, or an empty bible for a new series
   useEffect(() => {
     if (!series || hasAutoOpened) return
 
@@ -227,14 +247,7 @@ export default function SeriesStudioPage() {
       if (meta && meta.ideaTopic) {
         // Clear param immediately
         router.replace(`/dashboard/series/${series.id}`, { scroll: false })
-        
-        // Populate state from metadata
-        setIdeaTopic(meta.ideaTopic)
-        setFormat(meta.format || 'narrative')
-        setEpisodeCount(meta.episodeCount || 10)
-        setGenre(meta.genre || 'any')
-        setTone(meta.tone || 'any')
-        
+        applyIdeationSeed()
         setHasAutoOpened(true)
         
         // Wait slightly for react state and then trigger generation
@@ -248,21 +261,11 @@ export default function SeriesStudioPage() {
     
     // Only auto-open for brand new series without a generated storyline
     if (!hasContent && !isAutoGenerate) {
-      const meta = series.metadata as Record<string, unknown> | undefined
-      const seed = typeof meta?.ideaTopic === 'string' ? meta.ideaTopic : ''
-      const fromMarket = meta?.source === 'market_insights'
-
-      if (fromMarket && seed.trim()) {
-        setIdeaTopic(seed)
-        setIsIdeateDialogOpen(true)
-        setHasAutoOpened(true)
-        return
-      }
-
+      applyIdeationSeed()
       setIsIdeateDialogOpen(true)
       setHasAutoOpened(true)
     }
-  }, [series, hasAutoOpened, searchParams, router])
+  }, [series, hasAutoOpened, searchParams, router, applyIdeationSeed])
 
   // Must stay above loading/not-found returns — React error #310 if hook count changes after load.
   useEffect(() => {
@@ -282,18 +285,19 @@ export default function SeriesStudioPage() {
   }, [searchParams])
 
   const handleAutoGenerate = async (meta: any) => {
+    const requestedEpisodes = meta.episodeCount || NEW_SERIES_EPISODE_COUNT
     try {
       const result = await executeWithOverlay(async () => {
         return await generateStoryline({
           topic: meta.ideaTopic,
-          episodeCount: meta.episodeCount || 10,
-          genre: meta.genre === 'any' ? undefined : meta.genre,
-          tone: meta.tone === 'any' ? undefined : meta.tone,
-          format: meta.format === 'narrative' ? undefined : meta.format
+          episodeCount: requestedEpisodes,
+          genre: meta.genre && meta.genre !== 'any' ? meta.genre : undefined,
+          tone: meta.tone && meta.tone !== 'any' ? meta.tone : undefined,
+          format: meta.format || 'narrative',
         })
       }, {
-        message: `Generating ${meta.episodeCount || 10} episode storyline...`,
-        estimatedDuration: (meta.episodeCount || 10) * 3 + 15,
+        message: `Generating ${requestedEpisodes} episode storyline...`,
+        estimatedDuration: requestedEpisodes * 3 + 15,
         operationType: 'series-generation'
       })
 
@@ -312,28 +316,19 @@ export default function SeriesStudioPage() {
     }
   }
 
+  const openIdeation = useCallback(() => {
+    applyIdeationSeed()
+    setIsIdeateDialogOpen(true)
+  }, [applyIdeationSeed])
+
   const handleIdeateDialogOpenChange = useCallback((open: boolean) => {
     setIsIdeateDialogOpen(open)
-    if (!open || !series) return
-    setIdeaTopic((prev) => {
-      if (prev.trim()) return prev
-      const meta = series.metadata as Record<string, unknown> | undefined
-      const fromMeta = typeof meta?.ideaTopic === 'string' ? meta.ideaTopic.trim() : ''
-      const fromLast =
-        meta?.lastGeneration &&
-        typeof meta.lastGeneration === 'object' &&
-        meta.lastGeneration !== null &&
-        typeof (meta.lastGeneration as { topic?: string }).topic === 'string'
-          ? (meta.lastGeneration as { topic: string }).topic.trim()
-          : ''
-      const next = fromMeta || fromLast
-      return next || prev
-    })
-  }, [series])
+  }, [])
 
   const handleGenerate = async () => {
-    if (!ideaTopic.trim()) {
-      toast.error('Please enter a topic or concept')
+    const ideaTopic = lockedSynopsis?.synopsis.trim() || ''
+    if (!ideaTopic) {
+      toast.error('Confirm the synopsis before generating the series')
       return
     }
 
@@ -341,13 +336,32 @@ export default function SeriesStudioPage() {
     setIsIdeateDialogOpen(false)
     
     try {
+      const hasAudience = !!audienceDef.description?.trim()
+      await updateSeries({
+        genre: lockedSynopsis?.genre,
+        targetAudience: hasAudience ? audienceDef.description.trim() : undefined,
+        metadata: {
+          ideaTopic,
+          format,
+          genre: lockedSynopsis?.genre ?? null,
+          tone: lockedSynopsis?.tone ?? null,
+          episodeCount,
+          synopsisLocked: true,
+          audienceDefinition: hasAudience ? audienceDef : undefined,
+          contentIntent: resolveContentIntentFromMetadata({
+            format,
+            genre: lockedSynopsis?.genre,
+          }),
+        },
+      })
+
       const result = await executeWithOverlay(async () => {
         return await generateStoryline({
           topic: ideaTopic,
           episodeCount,
-          genre: genre === 'any' ? undefined : genre,
-          tone: tone === 'any' ? undefined : tone,
-          format: format === 'narrative' ? undefined : format
+          genre: lockedSynopsis?.genre,
+          tone: lockedSynopsis?.tone,
+          format,
         })
       }, {
         message: `Generating ${episodeCount} episode storyline...`,
@@ -792,10 +806,10 @@ export default function SeriesStudioPage() {
                 </TooltipProvider>
               ) : (
                 <Button
-                  onClick={() => setIsIdeateDialogOpen(true)}
+                  onClick={openIdeation}
                   className="bg-amber-500 text-gray-950 hover:bg-amber-400"
                 >
-                  Generate storyline
+                  Generate Series
                 </Button>
               )}
             </div>
@@ -918,7 +932,7 @@ export default function SeriesStudioPage() {
             <Button
               onClick={() => {
                 setIsResetConfirmOpen(false)
-                setIsIdeateDialogOpen(true)
+                openIdeation()
               }}
               className="bg-amber-500 text-gray-950 hover:bg-amber-400"
             >
@@ -930,108 +944,29 @@ export default function SeriesStudioPage() {
 
       {/* Ideate Dialog */}
       <Dialog open={isIdeateDialogOpen} onOpenChange={handleIdeateDialogOpenChange}>
-        <DialogContent className="bg-gray-900 border-gray-700 text-white max-w-lg">
+        <DialogContent className="bg-gray-900 border-gray-700 text-white max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader className="pb-4 border-b border-gray-700/50">
-            <DialogTitle className="flex items-center gap-2 text-lg">
-              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-cyan-500/20 to-purple-600/20 flex items-center justify-center border border-cyan-500/30">
-                <Sparkles className="w-4 h-4 text-cyan-400" />
-              </div>
-              <span>Generate</span>
-              <span className="text-gray-500 font-normal">· Series Storyline</span>
-            </DialogTitle>
+            <DialogTitle className="text-lg">Generate Series</DialogTitle>
             <DialogDescription className="text-gray-400 text-sm mt-2">
               Lock the series bible, then produce each episode against it.
             </DialogDescription>
           </DialogHeader>
 
           <div className="space-y-4 pt-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">
-                Topic / Concept <span className="text-cyan-400">*</span>
-              </label>
-              <DictationTextarea
-                placeholder="e.g., A comedy about a group of friends who start a haunted house business but discover their house is actually haunted..."
-                value={ideaTopic}
-                onChange={setIdeaTopic}
-                className="bg-gray-800 border-gray-700 text-white min-h-24 focus:border-cyan-500/50 focus:ring-cyan-500/20"
+            {isIdeateDialogOpen ? (
+              <SeriesSynopsisIdeation
+                key={ideateSession}
+                format={format}
+                onFormatChange={setFormat}
+                audience={audienceDef}
+                onAudienceChange={setAudienceDef}
+                episodeCount={episodeCount}
+                initialDraft={synopsisDraft}
+                initialLock={lockedSynopsis}
+                onLockedChange={setLockedSynopsis}
+                seriesId={seriesId}
               />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">
-                Production Format
-              </label>
-              <Select value={format} onValueChange={setFormat}>
-                <SelectTrigger className="bg-gray-800 border-gray-700 focus:border-cyan-500/50">
-                  <SelectValue placeholder="Select format" />
-                </SelectTrigger>
-                <SelectContent className="bg-gray-800 border-gray-700">
-                  <SelectItem value="narrative">Narrative Series (Default)</SelectItem>
-                  <SelectItem value="educational">Educational/Instructional</SelectItem>
-                  <SelectItem value="podcast">Podcast</SelectItem>
-                  <SelectItem value="documentary">Documentary</SelectItem>
-                  <SelectItem value="demo">Product Demo</SelectItem>
-                  <SelectItem value="sales">Sales / Walkthrough</SelectItem>
-                  <SelectItem value="news">News / Current Events</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">
-                  Number of Episodes
-                </label>
-                <Input
-                  type="number"
-                  min={1}
-                  value={episodeCount}
-                  onChange={(event) => setEpisodeCount(Math.max(1, Number(event.target.value) || 1))}
-                  className="bg-gray-800 border-gray-700 text-white"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">
-                  Genre <span className="text-gray-500 text-xs">(optional)</span>
-                </label>
-                <Select value={genre} onValueChange={setGenre}>
-                  <SelectTrigger className="bg-gray-800 border-gray-700 focus:border-cyan-500/50">
-                    <SelectValue placeholder="Select genre" />
-                  </SelectTrigger>
-                  <SelectContent className="bg-gray-800 border-gray-700">
-                    <SelectItem value="any">Any</SelectItem>
-                    <SelectItem value="comedy">Comedy</SelectItem>
-                    <SelectItem value="drama">Drama</SelectItem>
-                    <SelectItem value="thriller">Thriller</SelectItem>
-                    <SelectItem value="sci-fi">Sci-Fi</SelectItem>
-                    <SelectItem value="fantasy">Fantasy</SelectItem>
-                    <SelectItem value="horror">Horror</SelectItem>
-                    <SelectItem value="documentary">Documentary</SelectItem>
-                    <SelectItem value="educational">Educational</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">
-                Tone <span className="text-gray-500 text-xs">(optional)</span>
-              </label>
-              <Select value={tone} onValueChange={setTone}>
-                <SelectTrigger className="bg-gray-800 border-gray-700 focus:border-cyan-500/50">
-                  <SelectValue placeholder="Select tone" />
-                </SelectTrigger>
-                <SelectContent className="bg-gray-800 border-gray-700">
-                  <SelectItem value="any">Any</SelectItem>
-                  <SelectItem value="lighthearted">Lighthearted</SelectItem>
-                  <SelectItem value="dramatic">Dramatic</SelectItem>
-                  <SelectItem value="dark">Dark</SelectItem>
-                  <SelectItem value="inspirational">Inspirational</SelectItem>
-                  <SelectItem value="suspenseful">Suspenseful</SelectItem>
-                  <SelectItem value="whimsical">Whimsical</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+            ) : null}
 
             <div className="flex items-center gap-3 pt-3">
               <Button
@@ -1043,7 +978,7 @@ export default function SeriesStudioPage() {
               </Button>
               <Button
                 onClick={handleGenerate}
-                disabled={!ideaTopic.trim() || isGenerating}
+                disabled={!lockedSynopsis?.synopsis.trim() || isGenerating}
                 className="flex-1 bg-gradient-to-r from-cyan-500 to-purple-600 hover:from-cyan-600 hover:to-purple-700 shadow-lg shadow-cyan-500/25"
               >
                 {isGenerating ? (
@@ -1052,10 +987,7 @@ export default function SeriesStudioPage() {
                     Generating...
                   </>
                 ) : (
-                  <>
-                    <Sparkles className="w-4 h-4 mr-2" />
-                    Generate Storyline
-                  </>
+                  'Generate Series'
                 )}
               </Button>
             </div>

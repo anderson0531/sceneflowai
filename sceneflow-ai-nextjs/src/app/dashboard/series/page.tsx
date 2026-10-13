@@ -10,20 +10,11 @@ import {
   Filter,
   Grid,
   List,
-  Users,
-  Sparkles,
   Clapperboard,
+  Loader2,
 } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
-import { DictationTextarea } from '@/components/ui/DictationTextarea'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue
-} from '@/components/ui/select'
 import {
   Dialog,
   DialogContent,
@@ -32,19 +23,19 @@ import {
   DialogDescription
 } from '@/components/ui/dialog'
 import { SeriesCard } from '@/components/series/SeriesCard'
-import { AudienceDescriptionField } from '@/components/audience/AudienceDescriptionField'
+import { SeriesSynopsisIdeation } from '@/components/series/SeriesSynopsisIdeation'
 import {
   createAudienceDefinition,
   type AudienceDefinition,
 } from '@/lib/types/audienceResonance'
+import type { SeriesSynopsisLock } from '@/lib/series/clarifySynopsis'
+import { NEW_SERIES_EPISODE_COUNT } from '@/config/series/productionFormats'
 import { ProductPageShell, ProductPageHeader, ProductEmptyState } from '@/components/product'
 import { STUDIO_DISPLAY_NAMES } from '@/constants/studioDisplayNames'
 import { useSeriesList, useEpisode } from '@/hooks/useSeries'
 import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
-import { SERIES_TEMPLATES, type SeriesTemplateId } from '@/config/series/seriesTemplates'
-
 export default function SeriesPage() {
   const { data: session } = useSession()
   const userId = session?.user?.id || null
@@ -68,27 +59,13 @@ export default function SeriesPage() {
   const [searchQuery, setSearchQuery] = useState('')
   const [statusFilter, setStatusFilter] = useState<string>('all')
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false)
-  const [ideaTopic, setIdeaTopic] = useState('')
   const [format, setFormat] = useState('narrative')
-  const [episodeCount, setEpisodeCount] = useState(10)
-  const [genre, setGenre] = useState('any')
-  const [tone, setTone] = useState('any')
   const [audienceDef, setAudienceDef] = useState<AudienceDefinition>(() =>
     createAudienceDefinition({ description: '', source: 'series' })
   )
+  const [lockedSynopsis, setLockedSynopsis] = useState<SeriesSynopsisLock | null>(null)
+  const [createSession, setCreateSession] = useState(0)
   const [isCreating, setIsCreating] = useState(false)
-  const [selectedTemplateId, setSelectedTemplateId] = useState<SeriesTemplateId | 'custom'>('custom')
-
-  const applyTemplate = (templateId: SeriesTemplateId) => {
-    const t = SERIES_TEMPLATES.find((x) => x.id === templateId)
-    if (!t) return
-    setSelectedTemplateId(templateId)
-    setFormat(t.format)
-    setGenre(t.genre === 'any' ? 'any' : t.genre)
-    setTone(t.tone === 'any' ? 'any' : t.tone)
-    setEpisodeCount(t.episodeCount)
-    if (!ideaTopic.trim()) setIdeaTopic(t.sampleConcept)
-  }
   
   // Filter series by search and status
   const filteredSeries = series.filter(s => {
@@ -99,43 +76,49 @@ export default function SeriesPage() {
     return matchesSearch && matchesStatus
   })
 
+  const resetCreateForm = () => {
+    setFormat('narrative')
+    setAudienceDef(createAudienceDefinition({ description: '', source: 'series' }))
+    setLockedSynopsis(null)
+    setCreateSession((session) => session + 1)
+  }
+
   const handleCreateSeries = async () => {
-    if (!ideaTopic.trim() || !userId) return
+    const ideaTopic = lockedSynopsis?.synopsis.trim() || ''
+    if (!ideaTopic || !userId) return
     
     setIsCreating(true)
     try {
-      // Auto-generate a working title from the concept
-      const words = ideaTopic.trim().split(/\s+/)
+      // Auto-generate a working title from the synopsis
+      const words = ideaTopic.split(/\s+/)
       const workingTitle = words.slice(0, 5).join(' ') + (words.length > 5 ? '...' : '')
       
       const hasAudience = !!audienceDef.description?.trim()
+      const episodeCount = NEW_SERIES_EPISODE_COUNT
       const newSeries = await createSeries({
         userId,
         title: workingTitle || 'Untitled Series',
         maxEpisodes: episodeCount,
+        genre: lockedSynopsis?.genre,
         targetAudience: hasAudience ? audienceDef.description.trim() : undefined,
         metadata: {
           ideaTopic,
           format,
-          genre: genre === 'any' ? undefined : genre,
-          tone: tone === 'any' ? undefined : tone,
+          genre: lockedSynopsis?.genre,
+          tone: lockedSynopsis?.tone,
           episodeCount,
+          synopsisLocked: true,
           audienceDefinition: hasAudience ? audienceDef : undefined,
           contentIntent: resolveContentIntentFromMetadata({
             format,
-            genre: genre === 'any' ? undefined : genre,
+            genre: lockedSynopsis?.genre,
           }),
         }
       })
       
       toast.success('Series created! Generating storyline...')
       setIsCreateDialogOpen(false)
-      setIdeaTopic('')
-      setFormat('narrative')
-      setEpisodeCount(10)
-      setGenre('any')
-      setTone('any')
-      setAudienceDef(createAudienceDefinition({ description: '', source: 'series' }))
+      resetCreateForm()
       
       // Navigate to series studio for ideation with autoGenerate flag
       router.push(`/dashboard/series/${newSeries.id}?autoGenerate=true`)
@@ -336,7 +319,7 @@ export default function SeriesPage() {
 
       {/* Create Series Dialog */}
       <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
-        <DialogContent className="bg-gray-900 border-gray-700 text-white max-w-xl">
+        <DialogContent className="bg-gray-900 border-gray-700 text-white max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="text-xl">Create New Series</DialogTitle>
             <DialogDescription className="text-gray-400">
@@ -345,137 +328,17 @@ export default function SeriesPage() {
           </DialogHeader>
           
           <div className="space-y-4 pt-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">
-                Start from template <span className="text-gray-500 text-xs">(optional)</span>
-              </label>
-              <div className="grid grid-cols-2 gap-2">
-                {SERIES_TEMPLATES.map((t) => (
-                  <button
-                    key={t.id}
-                    type="button"
-                    onClick={() => applyTemplate(t.id)}
-                    className={`text-left rounded-lg border p-3 transition-colors ${
-                      selectedTemplateId === t.id
-                        ? 'border-cyan-500/50 bg-cyan-500/10'
-                        : 'border-gray-700 bg-gray-800/50 hover:border-gray-600'
-                    }`}
-                  >
-                    <p className="text-sm font-medium text-white">{t.label}</p>
-                    <p className="text-xs text-gray-500 mt-0.5 line-clamp-2">{t.description}</p>
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">
-                Topic / Concept <span className="text-cyan-400">*</span>
-              </label>
-              <DictationTextarea
-                placeholder={
-                  SERIES_TEMPLATES.find((t) => t.id === selectedTemplateId)?.conceptPlaceholder ||
-                  'e.g., A comedy about a group of friends who start a haunted house business but discover their house is actually haunted...'
-                }
-                value={ideaTopic}
-                onChange={setIdeaTopic}
-                className="bg-gray-800 border-gray-700 text-white min-h-24 focus:border-cyan-500/50 focus:ring-cyan-500/20"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">
-                Production Format
-              </label>
-              <Select value={format} onValueChange={setFormat}>
-                <SelectTrigger className="bg-gray-800 border-gray-700 focus:border-cyan-500/50">
-                  <SelectValue placeholder="Select format" />
-                </SelectTrigger>
-                <SelectContent className="bg-gray-800 border-gray-700">
-                  <SelectItem value="narrative">Narrative Series (Default)</SelectItem>
-                  <SelectItem value="educational">Educational/Instructional</SelectItem>
-                  <SelectItem value="podcast">Podcast</SelectItem>
-                  <SelectItem value="documentary">Documentary</SelectItem>
-                  <SelectItem value="demo">Product Demo</SelectItem>
-                  <SelectItem value="sales">Sales / Walkthrough</SelectItem>
-                  <SelectItem value="news">News / Current Events</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">
-                  Number of Episodes
-                </label>
-                <Input
-                  type="number"
-                  min={1}
-                  value={episodeCount}
-                  onChange={(event) => setEpisodeCount(Math.max(1, Number(event.target.value) || 1))}
-                  className="bg-gray-800 border-gray-700 text-white"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">
-                  Genre <span className="text-gray-500 text-xs">(optional)</span>
-                </label>
-                <Select value={genre} onValueChange={setGenre}>
-                  <SelectTrigger className="bg-gray-800 border-gray-700 focus:border-cyan-500/50">
-                    <SelectValue placeholder="Select genre" />
-                  </SelectTrigger>
-                  <SelectContent className="bg-gray-800 border-gray-700">
-                    <SelectItem value="any">Any</SelectItem>
-                    <SelectItem value="comedy">Comedy</SelectItem>
-                    <SelectItem value="drama">Drama</SelectItem>
-                    <SelectItem value="thriller">Thriller</SelectItem>
-                    <SelectItem value="sci-fi">Sci-Fi</SelectItem>
-                    <SelectItem value="fantasy">Fantasy</SelectItem>
-                    <SelectItem value="horror">Horror</SelectItem>
-                    <SelectItem value="documentary">Documentary</SelectItem>
-                    <SelectItem value="educational">Educational</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">
-                Tone <span className="text-gray-500 text-xs">(optional)</span>
-              </label>
-              <Select value={tone} onValueChange={setTone}>
-                <SelectTrigger className="bg-gray-800 border-gray-700 focus:border-cyan-500/50">
-                  <SelectValue placeholder="Select tone" />
-                </SelectTrigger>
-                <SelectContent className="bg-gray-800 border-gray-700">
-                  <SelectItem value="any">Any</SelectItem>
-                  <SelectItem value="dark">Dark & Gritty</SelectItem>
-                  <SelectItem value="lighthearted">Lighthearted</SelectItem>
-                  <SelectItem value="suspenseful">Suspenseful</SelectItem>
-                  <SelectItem value="dramatic">Dramatic</SelectItem>
-                  <SelectItem value="satirical">Satirical</SelectItem>
-                  <SelectItem value="inspirational">Inspirational</SelectItem>
-                  <SelectItem value="professional">Professional / Informative</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div>
-              <label className="flex items-center gap-2 text-sm font-medium text-gray-300 mb-2">
-                <Users className="w-4 h-4 text-cyan-400" />
-                Target Audience <span className="text-gray-500 text-xs">(optional, shared across the series)</span>
-              </label>
-              <AudienceDescriptionField
-                value={audienceDef}
-                onChange={setAudienceDef}
-                context={{
-                  title: ideaTopic || undefined,
-                  genre: genre === 'any' ? undefined : genre,
-                  format,
-                }}
-                rows={3}
-              />
-            </div>
+            <SeriesSynopsisIdeation
+              key={createSession}
+              format={format}
+              onFormatChange={setFormat}
+              audience={audienceDef}
+              onAudienceChange={setAudienceDef}
+              episodeCount={NEW_SERIES_EPISODE_COUNT}
+              showEpisodeHint
+              initialLock={lockedSynopsis}
+              onLockedChange={setLockedSynopsis}
+            />
 
             <div className="flex items-center gap-3 pt-2">
               <Button
@@ -487,11 +350,17 @@ export default function SeriesPage() {
               </Button>
               <Button
                 onClick={handleCreateSeries}
-                disabled={!ideaTopic.trim() || isCreating}
+                disabled={!lockedSynopsis?.synopsis.trim() || isCreating}
                 className="flex-1 bg-gradient-to-r from-cyan-500 to-purple-600 hover:from-cyan-600 hover:to-purple-700"
               >
-                {isCreating ? 'Generating...' : 'Generate Storyline'}
-                <Sparkles className="w-4 h-4 ml-2" />
+                {isCreating ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    Generating...
+                  </>
+                ) : (
+                  'Generate Series'
+                )}
               </Button>
             </div>
           </div>
