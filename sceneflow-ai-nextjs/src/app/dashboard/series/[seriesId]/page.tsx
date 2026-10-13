@@ -57,7 +57,13 @@ import { useSession } from 'next-auth/react'
 import { useRouter, useParams, useSearchParams } from 'next/navigation'
 import { toast } from 'sonner'
 import Link from 'next/link'
-import { SeriesResonanceAnalysis, getSeriesGreenlightTier } from '@/types/series'
+import {
+  getSeriesGreenlightTier,
+  SeriesResonanceAnalysis,
+  type EpisodeBlueprintResponse,
+  type SeriesProductionBible,
+  type SeriesResonanceAxis,
+} from '@/types/series'
 import { SeriesSynopsisIdeation } from '@/components/series/SeriesSynopsisIdeation'
 import { createAudienceDefinition, type AudienceDefinition } from '@/lib/types/audienceResonance'
 import type { SeriesSynopsisLock } from '@/lib/series/clarifySynopsis'
@@ -74,11 +80,6 @@ import { getEpisodeDriftWarnings, UPDATE_EPISODE_CAST_INSTRUCTION } from '@/lib/
 import { STUDIO_DISPLAY_NAMES } from '@/constants/studioDisplayNames'
 import { applyOptimisticScoreDelta, axisDisplayLabel, normalizeSeriesResonanceAnalysis } from '@/lib/series/resonanceScoring'
 import { ensureSeasons, groupEpisodesBySeason } from '@/lib/series/seasons'
-import type {
-  EpisodeBlueprintResponse,
-  SeriesProductionBible,
-  SeriesResonanceAxis,
-} from '@/types/series'
 
 const OVERVIEW_AR_AXES: SeriesResonanceAxis['id'][] = [
   'concept-originality',
@@ -1285,20 +1286,23 @@ const overviewCardClass = 'rounded-xl border border-gray-600 bg-gray-950/40 p-6'
 const overviewHeadingClass = 'text-sm font-bold text-white'
 
 function ResonanceScoreBar({ label, score }: { label: string; score?: number }) {
+  const color = score != null ? getSeriesGreenlightTier(score).color : undefined
+  const width = `${Math.max(0, Math.min(100, score ?? 0))}%`
   return (
     <div className="flex items-center gap-2">
-      <span className="w-28 shrink-0 truncate text-xs text-gray-300" title={label}>
-        {label}
-      </span>
+      <span className="w-36 shrink-0 text-xs leading-snug text-gray-300">{label}</span>
       <div className="h-1.5 min-w-0 flex-1 overflow-hidden rounded-full bg-gray-700">
         {score != null ? (
-          <div
-            className="h-full rounded-full bg-gray-400"
-            style={{ width: `${Math.max(0, Math.min(100, score))}%` }}
+          <motion.div
+            className="h-full rounded-full"
+            initial={{ width: 0 }}
+            animate={{ width }}
+            transition={{ duration: 0.8, ease: 'easeOut' }}
+            style={{ backgroundColor: color }}
           />
         ) : null}
       </div>
-      <span className="w-7 shrink-0 text-right text-xs font-bold text-white">
+      <span className="w-7 shrink-0 text-right text-xs font-bold" style={{ color }}>
         {score ?? ''}
       </span>
     </div>

@@ -43,8 +43,8 @@ import {
   SeriesResonanceInsight,
   EpisodeEngagementScore,
   SeriesResponse,
-  getSeriesGreenlightTier
 } from '@/types/series'
+import { SeriesGreenlightGauge } from '@/components/series/SeriesGreenlightGauge'
 import {
   axisDisplayLabel,
   buildSeriesAnalysisNarration,
@@ -448,8 +448,8 @@ export function SeriesResonancePanel({
             {/* Greenlight Score */}
             <div className="bg-slate-800/50 border border-slate-700/50 rounded-xl p-6">
               <div className="flex flex-col items-center">
-                <GreenlightScoreDisplay 
-                  score={analysis.greenlightScore.score} 
+                <SeriesGreenlightGauge
+                  score={analysis.greenlightScore.score}
                   targetMarkets={targetMarkets}
                   targetAudience={targetAudience}
                 />
@@ -1014,84 +1014,6 @@ export function SeriesResonancePanel({
 // =============================================================================
 // Sub-Components
 // =============================================================================
-
-function GreenlightScoreDisplay({ score, targetMarkets, targetAudience }: { score: number, targetMarkets?: string[], targetAudience?: string }) {
-  const { tier, label, color } = getSeriesGreenlightTier(score)
-  
-  const radius = 60
-  const strokeWidth = 8
-  const circumference = 2 * Math.PI * radius
-  const strokeDashoffset = circumference - (score / 100) * circumference
-  
-  const glowColor = tier === 'market-ready' 
-    ? 'rgba(34, 197, 94, 0.4)' 
-    : tier === 'strong-potential' 
-      ? 'rgba(245, 158, 11, 0.3)' 
-      : 'rgba(239, 68, 68, 0.2)'
-  
-  return (
-    <div className="flex flex-col items-center">
-      <div className="relative" style={{ width: 140, height: 140 }}>
-        {/* Glow */}
-        <div 
-          className="absolute inset-0 rounded-full blur-xl"
-          style={{ backgroundColor: glowColor }}
-        />
-        
-        {/* SVG */}
-        <svg className="transform -rotate-90 relative z-10" width={140} height={140}>
-          <circle
-            cx={70}
-            cy={70}
-            r={radius}
-            stroke="rgba(255, 255, 255, 0.1)"
-            strokeWidth={strokeWidth}
-            fill="transparent"
-          />
-          <motion.circle
-            cx={70}
-            cy={70}
-            r={radius}
-            stroke={color}
-            strokeWidth={strokeWidth}
-            fill="transparent"
-            strokeLinecap="round"
-            strokeDasharray={circumference}
-            initial={{ strokeDashoffset: circumference }}
-            animate={{ strokeDashoffset }}
-            transition={{ duration: 1.2, ease: 'easeOut' }}
-            style={{ filter: `drop-shadow(0 0 6px ${color})` }}
-          />
-        </svg>
-        
-        {/* Center */}
-        <div className="absolute inset-0 flex flex-col items-center justify-center z-20">
-          <motion.span
-            className="text-4xl font-bold"
-            style={{ color }}
-            initial={{ opacity: 0, scale: 0.5 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.5, delay: 0.5 }}
-          >
-            {score}
-          </motion.span>
-          <span className="text-xs text-gray-400 mt-1">{label}</span>
-        </div>
-      </div>
-      
-      {/* Target Market Context Note */}
-      <div className="mt-3 text-[10px] text-center text-gray-500 max-w-[180px]">
-        Score factors in targeting: <br/>
-        <span className="text-gray-400">
-          {targetMarkets?.join(', ') || 'Global'}
-        </span>
-        {targetAudience && (
-          <> &bull; <span className="text-gray-400">{targetAudience}</span></>
-        )}
-      </div>
-    </div>
-  )
-}
 
 function ScoreMetric({ label, value, max }: { label: string; value: number; max: number }) {
   const percentage = (value / max) * 100

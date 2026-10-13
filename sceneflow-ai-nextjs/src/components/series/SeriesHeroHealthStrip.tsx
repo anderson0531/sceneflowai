@@ -9,6 +9,7 @@ import {
   computeContinuityStats,
   computeSlateStats,
 } from '@/lib/series/seriesHealth'
+import { SeriesGreenlightGauge } from '@/components/series/SeriesGreenlightGauge'
 
 export type SeriesHealthTab = 'overview' | 'episodes' | 'continuity' | 'reference-library'
 
@@ -78,9 +79,13 @@ export function SeriesHeroHealthStrip({
         >
           <p className="text-xs font-medium text-gray-400">{chip.label}</p>
           {chip.id === 'resonance' ? (
-            <p className="mt-1 text-sm font-bold text-white">
-              {chip.score ?? 'Not analyzed'}
-            </p>
+            chip.score != null ? (
+              <div className="mt-2 flex justify-center">
+                <SeriesGreenlightGauge score={chip.score} size="compact" />
+              </div>
+            ) : (
+              <p className="mt-1 text-sm font-bold text-white">Not analyzed</p>
+            )
           ) : (
             <p className="mt-1 text-sm text-white">{chip.detail}</p>
           )}
