@@ -26,8 +26,12 @@ export const ASSISTANT_FULL_WITH_ABBR = `${ASSISTANT.full} (${ASSISTANT.abbr})`
  * import these labels, and they should not pull in an icon library to do it.
  */
 
-/** Dialog title for a Co-Director surface, e.g. "Co-Director · Blueprint". */
+/**
+ * Dialog title for a Co-Director surface, e.g. "Co-Director · Scene 3".
+ * Blueprint uses Blueprint Director, matching Series Director and Scene Director.
+ */
 export function assistantTitle(context: string): string {
+  if (context === 'Blueprint') return 'Blueprint Director'
   return `${ASSISTANT.short} · ${context}`
 }
 

@@ -73,10 +73,12 @@ const EXPECTED_TITLES: Record<string, string[]> = {
     'Start the episode',
   ],
   'blueprint-board': [
-    'Treatment and beat sheet',
+    'Start the Blueprint',
+    'Direct the beats',
+    'Direct the cast and locations',
+    'Blueprint Director',
     'Audience Resonance',
-    'Co-Director · Blueprint',
-    'Stakeholder review',
+    'Go to Production Stage',
   ],
   'production-stage': [
     'Bring Your Own Key',
@@ -140,7 +142,11 @@ describe('keyFeatures structure', () => {
     for (const icon of icons) {
       expect(FEATURE_ICONS[icon]).toBeDefined()
     }
-    expect(Object.keys(FEATURE_ICONS).sort()).toEqual([...new Set(icons)].sort())
+    // Share stays in the icon map for the film-only handoff beat. It is not a card.
+    const filmOnlyIcons = ['stakeholderReview']
+    expect(Object.keys(FEATURE_ICONS).sort()).toEqual(
+      [...new Set([...icons, ...filmOnlyIcons])].sort()
+    )
   })
 
   it('gives every card a detailed description, a screenshot, and a one-sentence feature list', () => {

@@ -46,10 +46,16 @@ export const FEATURE_CHAPTER_MAP: readonly FeatureRoomChapterPlan[] = [
     roomId: 'blueprint-board',
     filmSeconds: 75,
     beats: [
-      { id: 'treatment', demoIcons: ['treatment'], standaloneDemo: true },
+      { id: 'start-blueprint', demoIcons: ['startBlueprint'], standaloneDemo: true },
+      { id: 'direct-beats', demoIcons: ['treatment'], standaloneDemo: true },
+      { id: 'cast-locations', demoIcons: ['castLocations'], standaloneDemo: true },
+      { id: 'blueprint-director', demoIcons: ['blueprintDirector'], standaloneDemo: true },
       { id: 'resonance', demoIcons: ['blueprintResonance'], standaloneDemo: true },
-      { id: 'stakeholder-review', demoIcons: ['stakeholderReview'], standaloneDemo: true },
-      { id: 'co-director', demoIcons: ['blueprintDirector'], standaloneDemo: false },
+      {
+        id: 'go-production',
+        demoIcons: ['goToProduction', 'stakeholderReview'],
+        standaloneDemo: false,
+      },
     ],
   },
   {

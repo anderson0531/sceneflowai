@@ -58,7 +58,7 @@ describe('Assistant naming', () => {
   })
 
   it('builds dialog titles and accessible names from the short label', () => {
-    expect(assistantTitle('Blueprint')).toBe('Co-Director · Blueprint')
+    expect(assistantTitle('Blueprint')).toBe('Blueprint Director')
     expect(assistantTitle('Scene 3')).toBe('Co-Director · Scene 3')
     expect(assistantAriaLabel('Beats & Runtime')).toBe('Co-Director — Beats & Runtime')
     expect(assistantAriaLabel()).toBe('Co-Director')
@@ -71,13 +71,15 @@ describe('Assistant naming', () => {
     expect(BLUEPRINT_COPY.reimagine).toBe('Regenerate Blueprint')
   })
 
-  it('uses the same icon in-app and on the landing feature card', () => {
-    expect(FEATURE_ICONS.iad).toBe(ASSISTANT_ICON)
+  it('uses the same icon in-app and on the Blueprint and Scene Director cards', () => {
+    expect(FEATURE_ICONS.blueprintDirector).toBe(ASSISTANT_ICON)
+    expect(FEATURE_ICONS.sceneDirector).toBe(ASSISTANT_ICON)
   })
 
   it('does not reuse the Assistant icon for another landing feature', () => {
+    const directorCards = new Set(['blueprintDirector', 'sceneDirector'])
     const collisions = Object.entries(FEATURE_ICONS).filter(
-      ([key, icon]) => key !== 'iad' && icon === ASSISTANT_ICON
+      ([key, icon]) => !directorCards.has(key) && icon === ASSISTANT_ICON
     )
     expect(collisions).toEqual([])
   })
@@ -127,12 +129,12 @@ describe('Assistant naming', () => {
     expect(messages).toContain(ASSISTANT_FULL_WITH_ABBR)
   })
 
-  it('keeps the short label in the English Blueprint catalogue', () => {
+  it('labels the Blueprint button Blueprint Director', () => {
     const catalog = JSON.parse(readSource('messages/app/en/blueprint.json')) as {
       assistantButton: { label: string; scopedLabel: string }
     }
-    expect(catalog.assistantButton.label).toBe(ASSISTANT.short)
-    expect(catalog.assistantButton.scopedLabel).toContain(ASSISTANT.short)
+    expect(catalog.assistantButton.label).toBe('Blueprint Director')
+    expect(catalog.assistantButton.scopedLabel).toBe('Blueprint Director — {scope}')
   })
 
   it('keeps the label module free of the icon library so API routes stay light', () => {
