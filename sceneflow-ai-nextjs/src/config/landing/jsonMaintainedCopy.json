@@ -389,26 +389,88 @@
       {
         "id": "blueprint-board",
         "label": "Blueprint Room",
-        "promise": "The Blueprint Room is where a sentence or a brief becomes the film. It writes the treatment and the only beat sheet, so motivations, characters, art direction, and story beats are locked before production. Score that board for the audience you named, then share it as a read-and-listen link. Picture spend starts only after you decide what to revise. Production Stage turns each beat into a chapter and does not invent a second beat sheet.",
+        "promise": "The Blueprint Room is where you perfect the storyline before the 90-minute script. Start from a series episode or a new project. Direct the beats and the cast here, so Production Stage does not have to rebuild them.",
         "features": [
           {
-            "icon": "treatment",
-            "title": "Treatment and beat sheet",
-            "description": "A sentence or a full brief becomes the film treatment: motivations, characters, art direction, and a beat sheet. Beats exist only here. Production Stage turns each beat into a chapter; it does not invent a second beat sheet.",
-            "screenshot": "Treatment board",
+            "icon": "startBlueprint",
+            "title": "Start the Blueprint",
+            "description": "Start from a series episode, or start a new project. A series episode arrives with its outline, synopsis, and beats. A new project begins when you describe the intent, use Validate & Enhance with AI, and choose Generate Blueprint.",
+            "screenshot": "Series episode already known, or Start Your Project — intent, Validate & Enhance with AI, Generate Blueprint",
             "learnMore": {
               "items": [
                 {
-                  "title": "From a sentence or a brief",
-                  "description": "The treatment covers motivations, characters, art direction, and the beat sheet."
+                  "title": "Series episode",
+                  "description": "A series episode opens with its outline, synopsis, and beats already attached."
                 },
+                {
+                  "title": "New project",
+                  "description": "Start Your Project takes the intent, then Validate & Enhance with AI, then Generate Blueprint."
+                }
+              ]
+            }
+          },
+          {
+            "icon": "treatment",
+            "title": "Direct the beats",
+            "description": "Open the Beats tab and listen to the beat sheet. Optimize the beats here, because they drive the script build. Beats exist only here. Production Stage turns each beat into a chapter.",
+            "screenshot": "Beats tab, with Listen",
+            "learnMore": {
+              "items": [
                 {
                   "title": "One beat sheet",
                   "description": "Beats exist only here."
                 },
                 {
-                  "title": "Chapters, not a second sheet",
+                  "title": "Script build",
+                  "description": "The beats drive the script build, so they are optimized before Production Stage."
+                },
+                {
+                  "title": "Chapters",
                   "description": "Production Stage turns each beat into a chapter."
+                }
+              ]
+            }
+          },
+          {
+            "icon": "castLocations",
+            "title": "Direct the cast and locations",
+            "description": "Open Characters and direct the cast. Open Setting on the Story tab and direct the locations with them. The cast influences the script build, so both are set before Production Stage would have to refactor the script.",
+            "screenshot": "Characters tab, then Setting on Story",
+            "learnMore": {
+              "items": [
+                {
+                  "title": "Cast",
+                  "description": "The Characters tab is the cast, and the cast influences the script build."
+                },
+                {
+                  "title": "Locations",
+                  "description": "Locations are the Setting on the Story tab."
+                },
+                {
+                  "title": "Before the script",
+                  "description": "Directing both here avoids a major script refactor in Production Stage."
+                }
+              ]
+            }
+          },
+          {
+            "icon": "blueprintDirector",
+            "title": "Blueprint Director",
+            "description": "Blueprint Director takes the change in your own words, spoken or typed. Focus the edit on Beats, Characters, or Story, then preview the revision. Nothing changes until you apply it.",
+            "screenshot": "Blueprint Director — direction, focus, preview, Apply revision",
+            "learnMore": {
+              "items": [
+                {
+                  "title": "Your words",
+                  "description": "Speak or type the change, and focus it on Beats, Characters, or Story."
+                },
+                {
+                  "title": "Preview",
+                  "description": "Generate balanced revision shows the change before you apply it."
+                },
+                {
+                  "title": "You apply it",
+                  "description": "Nothing changes until you apply the revision."
                 }
               ]
             }
@@ -416,57 +478,35 @@
           {
             "icon": "blueprintResonance",
             "title": "Audience Resonance",
-            "description": "Score concept, tone, characters, and beats against the audience you named, before anyone spends on pictures. You see the score and the recommendations, then decide what to revise.",
-            "screenshot": "Audience Resonance scores",
+            "description": "Save the audience, then Analyze. You see the scores and the recommendations. Nothing in the blueprint changes until you apply a recommendation in Blueprint Director.",
+            "screenshot": "Audience Resonance — saved audience, scores, recommendations unapplied",
             "learnMore": {
               "items": [
                 {
-                  "title": "Before picture spend",
-                  "description": "Score concept, tone, characters, and beats against the audience you named."
+                  "title": "The read",
+                  "description": "Save the audience, then Analyze, and read the scores and recommendations."
                 },
                 {
-                  "title": "You decide",
-                  "description": "The score and the recommendations are shown, and you choose what to revise."
+                  "title": "Optional",
+                  "description": "A recommendation changes the blueprint only when you apply it in Blueprint Director."
                 }
               ]
             }
           },
           {
-            "icon": "blueprintDirector",
-            "title": "Co-Director · Blueprint",
-            "description": "The Blueprint edit dialog (Co-Director · Blueprint). Describe the change in plain words. Preview the rewrite, keep the parts you want, and apply it without throwing away the visual foundation already locked in the treatment.",
-            "screenshot": "Co-Director · Blueprint",
+            "icon": "goToProduction",
+            "title": "Go to Production Stage",
+            "description": "Go to Production Stage when the storyline, the beats, and the cast are set. The 90-minute script is built from this board. The storyline does not have to be rebuilt in Production Stage.",
+            "screenshot": "Go to Production Stage — storyline, beats, and cast already set",
             "learnMore": {
               "items": [
                 {
-                  "title": "Plain words",
-                  "description": "Describe the change, preview the rewrite, and keep the parts you want."
+                  "title": "The handoff",
+                  "description": "Go to Production Stage opens the script from this blueprint."
                 },
                 {
-                  "title": "Locked art",
-                  "description": "Apply it without throwing away the visual foundation already in the treatment."
-                }
-              ]
-            }
-          },
-          {
-            "icon": "stakeholderReview",
-            "title": "Stakeholder review",
-            "description": "Share the treatment as a read-and-listen link. Collaborators hear the narration and see the same board you do. Their notes come back as guided revision, not a new document in another tool. A new note notifies you, and you can read it on your phone.",
-            "screenshot": "Share link",
-            "learnMore": {
-              "items": [
-                {
-                  "title": "Read and listen",
-                  "description": "Collaborators hear the narration and see the same board."
-                },
-                {
-                  "title": "Guided revision",
-                  "description": "Notes come back on the board, not as a new document."
-                },
-                {
-                  "title": "Phone notes",
-                  "description": "A new note notifies you, and you can read it on your phone while the studio stays on a desktop or tablet."
+                  "title": "Already set",
+                  "description": "The storyline, the beats, and the cast are already directed."
                 }
               ]
             }
