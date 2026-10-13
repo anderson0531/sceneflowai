@@ -19,6 +19,8 @@ type Props = {
   className?: string
   highlightArtStyle?: boolean
   highlightAspectRatio?: boolean
+  /** Inception dialogs show art style above the synopsis. Aspect ratio stays here. */
+  showArtStyle?: boolean
 }
 
 export function BlueprintFoundationFields({
@@ -29,15 +31,18 @@ export function BlueprintFoundationFields({
   className,
   highlightArtStyle,
   highlightAspectRatio,
+  showArtStyle = true,
 }: Props) {
   return (
     <div className={cn('space-y-4', className)}>
-      <div className={cn(highlightArtStyle && 'ring-2 ring-amber-500/50 rounded-lg p-1')}>
-        <ArtStyleGrid
-          artStyle={artStyle || DEFAULT_ART_STYLE}
-          onArtStyleChange={onArtStyleChange}
-        />
-      </div>
+      {showArtStyle ? (
+        <div className={cn(highlightArtStyle && 'ring-2 ring-amber-500/50 rounded-lg p-1')}>
+          <ArtStyleGrid
+            artStyle={artStyle || DEFAULT_ART_STYLE}
+            onArtStyleChange={onArtStyleChange}
+          />
+        </div>
+      ) : null}
 
       <div
         className={cn(

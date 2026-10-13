@@ -6,6 +6,8 @@ import { sequelize } from '@/config/database'
 import { resolveUser } from '@/lib/userHelper'
 import { resolveContentIntentFromMetadata } from '@/lib/content/contentIntent'
 import { createAudienceDefinition } from '@/lib/types/audienceResonance'
+import { resolveSeriesArtStyle } from '@/lib/series/seriesIdeation'
+import { getArtStylePresetName } from '@/lib/treatment/blueprintFoundation'
 import { v4 as uuidv4 } from 'uuid'
 
 export const dynamic = 'force-dynamic'
@@ -84,6 +86,11 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     // Inherit the shared audience definition from the series so every episode
     // blueprint is analyzed against the same audience.
     const seriesMeta = (series.metadata || {}) as Record<string, any>
+    const seriesArtStyle = resolveSeriesArtStyle({
+      metadata: seriesMeta,
+      productionBible: bible,
+    })
+    const seriesArtStyleName = getArtStylePresetName(seriesArtStyle)
     const seriesDef = seriesMeta.audienceDefinition as
       | { description?: string }
       | undefined
@@ -116,6 +123,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
         episodeId,
         episodeNumber: episode.episodeNumber,
         format: series.metadata?.format || 'narrative',
+        artStyle: seriesArtStyle,
         contentIntent: resolveContentIntentFromMetadata({
           format: series.metadata?.format,
           genre: series.genre,
@@ -128,6 +136,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
         
         // Vision phase with inherited characters
         visionPhase: {
+          artStyle: seriesArtStyle,
           characters: visionPhaseCharacters,
           scenes: [],
           references: {
@@ -136,7 +145,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
             sceneReferences: [],
           },
           generationSettings: {
-            imageStyle: bible.aesthetic?.visualStyle || 'cinematic',
+            imageStyle: seriesArtStyleName,
             aspectRatio: bible.aesthetic?.aspectRatio || '16:9'
           }
         },
@@ -381,9 +390,12 @@ function buildBlueprintPrimeInput(episode: any, bible: any, series: any): string
     lines.push('')
   }
   
-  // Visual style from reference library aesthetic
+  lines.push('Visual Style:')
+  lines.push(`Art style: ${getArtStylePresetName(resolveSeriesArtStyle({
+    metadata: series?.metadata,
+    productionBible: bible,
+  }))}`)
   if (bible.aesthetic) {
-    lines.push('Visual Style:')
     if (bible.aesthetic.visualStyle) {
       lines.push(`Style: ${bible.aesthetic.visualStyle}`)
     }
@@ -396,8 +408,8 @@ function buildBlueprintPrimeInput(episode: any, bible: any, series: any): string
     if (bible.aesthetic.lightingStyle) {
       lines.push(`Lighting: ${bible.aesthetic.lightingStyle}`)
     }
-    lines.push('')
   }
+  lines.push('')
   
   // Episode beats if available (gives structure hints)
   if (episode.beats?.length > 0) {

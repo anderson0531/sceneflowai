@@ -8,7 +8,8 @@ import { englishForModel, resolveRequestStoryLocale } from '@/i18n/server/reques
 import { DEFAULT_PROMPT_TEMPLATES, TREATMENT_VISUAL_CREDITS } from '@/types/treatment-visuals'
 import type { TreatmentMood, TreatmentVisuals, GeneratedImage, CharacterPortrait, ActAnchor } from '@/types/treatment-visuals'
 import type { FilmTreatmentData } from '@/lib/types/reports'
-import { blueprintAspectRatioToImageApi } from '@/lib/treatment/blueprintFoundation'
+import { blueprintAspectRatioToImageApi, resolveVariantArtStyle } from '@/lib/treatment/blueprintFoundation'
+import { getArtStylePromptSuffix } from '@/lib/vision/artStyle'
 import { classifyAiError, errorMessageOf } from '@/lib/errors/aiErrorClassification'
 
 export const runtime = 'nodejs'
@@ -187,7 +188,8 @@ async function generateHeroImage(
     conflictDynamic = `${protagonist.name || 'protagonist'} (${protRole}) vs ${antagonist.name || 'antagonist'} (${antRole})`
   }
   
-  const prompt = buildPromptWithMood(
+  const artStyleId = resolveVariantArtStyle(treatment as unknown as Record<string, unknown>)
+  const styledPrompt = buildPromptWithMood(
     DEFAULT_PROMPT_TEMPLATES.heroImage({
       title: treatment.title || 'Untitled',
       genre: treatment.genre || 'drama',
@@ -200,10 +202,16 @@ async function generateHeroImage(
       antagonistAppearance,
       themes,
       visualStyle: treatment.visual_style || '',
-      conflictDynamic
+      conflictDynamic,
+      artStyle: artStyleId,
     }),
     mood
   )
+  const artStyleSuffix = getArtStylePromptSuffix(artStyleId)
+  const prompt =
+    artStyleSuffix && !styledPrompt.includes(artStyleSuffix)
+      ? `${styledPrompt} ${artStyleSuffix}`
+      : styledPrompt
   
   // Log final prompt for debugging hero image quality
   console.log('[HeroImage] Final prompt generated:', {

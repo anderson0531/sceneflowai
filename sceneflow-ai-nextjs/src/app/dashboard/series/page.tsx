@@ -30,6 +30,7 @@ import {
 } from '@/lib/types/audienceResonance'
 import type { SeriesSynopsisLock } from '@/lib/series/clarifySynopsis'
 import { NEW_SERIES_EPISODE_COUNT } from '@/config/series/productionFormats'
+import { DEFAULT_ART_STYLE } from '@/lib/treatment/blueprintFoundation'
 import { ProductPageShell, ProductPageHeader, ProductEmptyState } from '@/components/product'
 import { STUDIO_DISPLAY_NAMES } from '@/constants/studioDisplayNames'
 import { useSeriesList, useEpisode } from '@/hooks/useSeries'
@@ -60,6 +61,7 @@ export default function SeriesPage() {
   const [statusFilter, setStatusFilter] = useState<string>('all')
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false)
   const [format, setFormat] = useState('narrative')
+  const [artStyle, setArtStyle] = useState(DEFAULT_ART_STYLE)
   const [audienceDef, setAudienceDef] = useState<AudienceDefinition>(() =>
     createAudienceDefinition({ description: '', source: 'series' })
   )
@@ -79,6 +81,7 @@ export default function SeriesPage() {
 
   const resetCreateForm = () => {
     setFormat('narrative')
+    setArtStyle(DEFAULT_ART_STYLE)
     setAudienceDef(createAudienceDefinition({ description: '', source: 'series' }))
     setLockedSynopsis(null)
     setCreateSession((session) => session + 1)
@@ -105,6 +108,7 @@ export default function SeriesPage() {
         metadata: {
           ideaTopic,
           format,
+          artStyle,
           genre: lockedSynopsis?.genre,
           tone: lockedSynopsis?.tone,
           episodeCount,
@@ -338,6 +342,8 @@ export default function SeriesPage() {
               onFormatChange={setFormat}
               audience={audienceDef}
               onAudienceChange={setAudienceDef}
+              artStyle={artStyle}
+              onArtStyleChange={setArtStyle}
               episodeCount={NEW_SERIES_EPISODE_COUNT}
               showEpisodeHint
               initialLock={lockedSynopsis}

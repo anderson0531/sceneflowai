@@ -23,6 +23,7 @@ import {
 } from 'lucide-react'
 import {
   resolveContentIntent,
+  resolveContentIntentFromMetadata,
   defaultFormatForIntent,
   getIntentLabel,
   type ContentIntent,
@@ -36,10 +37,12 @@ import { ConceptDescriptionField } from '@/components/blueprint/ConceptDescripti
 import { TreatmentImportDialog } from '@/components/blueprint/TreatmentImportDialog'
 import type { TreatmentImportResult } from '@/lib/blueprint/importTreatment'
 import { AudienceDescriptionField } from '@/components/audience/AudienceDescriptionField'
+import { SeriesSynopsisIdeation } from '@/components/series/SeriesSynopsisIdeation'
 import {
   createAudienceDefinition,
   type AudienceDefinition,
 } from '@/lib/types/audienceResonance'
+import type { SeriesSynopsisLock } from '@/lib/series/clarifySynopsis'
 import {
   type BlueprintAspectRatio,
   resolveVariantArtStyle,
@@ -95,6 +98,14 @@ const CONTENT_TYPE_OPTIONS: { value: ContentIntent; label: string; description: 
 
 // Scope is advisory only. "auto" lets the story/illustration determine its own
 // length instead of forcing beats and scenes to hit a fixed duration target.
+function productionFormatForIntent(intent: ContentIntent | null): string | null {
+  if (intent === 'informational') return 'documentary'
+  if (intent === 'commercial') return 'demo'
+  if (intent === 'conversational') return 'podcast'
+  if (intent === 'fiction') return 'narrative'
+  return null
+}
+
 const SCOPE_OPTIONS = [
   { value: 'auto', label: 'Auto (let the story decide)' },
   { value: 'micro_short', label: 'Brief (~ under 5 min)' },
@@ -130,15 +141,30 @@ export function BlueprintReimaginDialog({
   const [audienceDef, setAudienceDef] = useState<AudienceDefinition>(() =>
     createAudienceDefinition({ description: '', source: 'blueprint' })
   )
+  const [productionFormat, setProductionFormat] = useState('narrative')
+  const [lockedSynopsis, setLockedSynopsis] = useState<SeriesSynopsisLock | null>(null)
+  const [synopsisDraft, setSynopsisDraft] = useState('')
+  const [ideationSession, setIdeationSession] = useState(0)
   const [treatmentImportOpen, setTreatmentImportOpen] = useState(false)
 
-  // Apply an imported treatment: set the description and prefill content type /
-  // genre / tone only when the user has not already provided them.
+  // Apply an imported treatment. Create mode confirms the synopsis immediately.
+  // Reimagine mode prefills description, content type, genre, and tone.
   const applyTreatmentImport = (result: TreatmentImportResult) => {
     if (result.synopsis) setSynopsis(result.synopsis)
     if (result.contentIntent && !contentType) setContentType(result.contentIntent)
     if (result.genre && !genre.trim()) setGenre(result.genre)
     if (result.tone && !tone.trim()) setTone(result.tone)
+    if (!existingVariant && result.synopsis.trim()) {
+      const importedFormat = productionFormatForIntent(result.contentIntent)
+      if (importedFormat) setProductionFormat(importedFormat)
+      setLockedSynopsis({
+        synopsis: result.synopsis.trim(),
+        genre: result.genre.trim() || undefined,
+        tone: result.tone.trim() || undefined,
+      })
+      setSynopsisDraft('')
+      setIdeationSession((session) => session + 1)
+    }
     toast.success('Treatment imported — review and generate your Blueprint.')
   }
 
@@ -171,40 +197,60 @@ export function BlueprintReimaginDialog({
         })
       )
     } else if (initialIdea) {
-      setSynopsis(initialIdea.synopsis || initialIdea.logline)
+      const draft = initialIdea.synopsis || initialIdea.logline || ''
+      setSynopsis(draft)
+      setSynopsisDraft(draft)
+      setLockedSynopsis(null)
       setGenre(initialIdea.genre || '')
       setTone(initialIdea.tone || '')
       if (initialIdea.genre) setContentType(resolveContentIntent(initialIdea.genre))
+      setIdeationSession((session) => session + 1)
     }
   }, [existingVariant, initialIdea, open])
 
+  const scopeLabel = SCOPE_OPTIONS.find((option) => option.value === duration)?.label
+
   // Handle generate
   const handleGenerate = async () => {
-    if (!synopsis.trim()) {
-      toast.error('Please describe your project')
-      return
-    }
-    if (!contentType) {
-      toast.error('Please select a content type')
-      return
-    }
-    if (!genre.trim()) {
-      toast.error('Please enter a genre')
-      return
-    }
-    if (!tone.trim()) {
-      toast.error('Please enter a tone')
-      return
-    }
+    const contentIntent = isReimaginMode
+      ? (contentType as ContentIntent)
+      : resolveContentIntentFromMetadata({
+          format: productionFormat,
+          genre: lockedSynopsis?.genre,
+        })
+    const synopsisText = isReimaginMode
+      ? synopsis.trim()
+      : lockedSynopsis?.synopsis.trim() || ''
+    const resolvedFormat = isReimaginMode ? defaultFormatForIntent(contentIntent) : productionFormat
 
-    const contentIntent = contentType as ContentIntent
-    const format = defaultFormatForIntent(contentIntent)
+    if (!synopsisText) {
+      toast.error(
+        isReimaginMode
+          ? 'Please describe your project'
+          : 'Confirm the synopsis before creating the blueprint'
+      )
+      return
+    }
+    if (isReimaginMode) {
+      if (!contentType) {
+        toast.error('Please select a content type')
+        return
+      }
+      if (!genre.trim()) {
+        toast.error('Please enter a genre')
+        return
+      }
+      if (!tone.trim()) {
+        toast.error('Please enter a tone')
+        return
+      }
+    }
 
     setIsGenerating(true)
     try {
-      await onGenerate(synopsis.trim(), {
-        genre: genre.trim(),
-        tone: tone.trim(),
+      await onGenerate(synopsisText, {
+        genre: isReimaginMode ? genre.trim() : lockedSynopsis?.genre,
+        tone: isReimaginMode ? tone.trim() : lockedSynopsis?.tone,
         artStyle,
         aspectRatio,
         duration,
@@ -214,7 +260,7 @@ export function BlueprintReimaginDialog({
         hasStoryDirections: false,
         generateThreeDirections: false,
         rigor: 'thorough',
-        format,
+        format: resolvedFormat,
         contentIntent,
       })
 
@@ -251,7 +297,20 @@ export function BlueprintReimaginDialog({
         </DialogHeader>
         
         <div className="space-y-6 py-4">
-          {/* Main Input — project description with AI validate/enhance */}
+          {isReimaginMode ? null : (
+            <div className="flex justify-end">
+              <button
+                type="button"
+                onClick={() => setTreatmentImportOpen(true)}
+                className="inline-flex items-center gap-1.5 rounded-md border border-slate-600 px-2.5 py-1 text-[11px] font-medium text-slate-300 hover:bg-slate-800 hover:text-white"
+              >
+                <Upload className="h-3.5 w-3.5" />
+                {t('importTreatment')}
+              </button>
+            </div>
+          )}
+
+          {isReimaginMode ? (
           <div className="space-y-3">
             <div className="flex items-center justify-between gap-2">
               <label className="flex items-center gap-2 text-sm font-medium text-gray-300">
@@ -280,7 +339,28 @@ export function BlueprintReimaginDialog({
               rows={6}
             />
           </div>
+          ) : (
+            <SeriesSynopsisIdeation
+              key={ideationSession}
+              format={productionFormat}
+              onFormatChange={setProductionFormat}
+              audience={audienceDef}
+              onAudienceChange={setAudienceDef}
+              artStyle={artStyle}
+              onArtStyleChange={setArtStyle}
+              episodeCount={1}
+              surface="project"
+              scope={scopeLabel}
+              audienceHint="(optional)"
+              initialDraft={synopsisDraft}
+              initialLock={lockedSynopsis}
+              onLockedChange={setLockedSynopsis}
+              projectId={projectId}
+            />
+          )}
 
+          {isReimaginMode ? (
+          <>
           {/* Content type — required master switch that keeps intent aligned */}
           <div className="space-y-1.5">
             <label className="text-xs text-gray-400 flex items-center gap-1">
@@ -306,8 +386,7 @@ export function BlueprintReimaginDialog({
             )}
           </div>
 
-          {/* Genre / Tone (free-form, required) + Scope */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             <div className="space-y-1.5">
               <label className="text-xs text-gray-400 flex items-center gap-1">
                 <Palette className="w-3 h-3" /> {t('genre')} <span className="text-red-400">{t('required')}</span>
@@ -329,25 +408,6 @@ export function BlueprintReimaginDialog({
                 className="bg-slate-800/50 border-slate-700 text-sm"
               />
             </div>
-
-            <div className="space-y-1.5">
-              <label className="text-xs text-gray-400 flex items-center gap-1">
-                <Clock className="w-3 h-3" /> {t('scope')} <span className="text-gray-500">{t('optional')}</span>
-              </label>
-              <Select value={duration} onValueChange={setDuration}>
-                <SelectTrigger className="bg-slate-800/50 border-slate-700 text-sm">
-                  <SelectValue placeholder="Auto (let the story decide)" />
-                </SelectTrigger>
-                <SelectContent>
-                  {SCOPE_OPTIONS.map(opt => (
-                    <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              {duration === 'auto' && (
-                <p className="text-[10px] text-gray-500">{t('autoLengthHint')}</p>
-              )}
-            </div>
           </div>
 
           {/* Target Audience — free-text description (speech or typing) + AI enhance */}
@@ -368,14 +428,36 @@ export function BlueprintReimaginDialog({
               rows={3}
             />
           </div>
-          
-          {/* Visual Foundation — art style + aspect ratio */}
-          <div className="space-y-2">
-            <label className="flex items-center gap-2 text-sm font-medium text-gray-300">
-              <Palette className="w-4 h-4 text-cyan-400" />
-              {t('visualFoundation')}
-              <span className="text-xs text-gray-500 font-normal">{t('lockedAtBlueprint')}</span>
+          </>
+          ) : null}
+
+          <div className="space-y-1.5">
+            <label className="text-xs text-gray-400 flex items-center gap-1">
+              <Clock className="w-3 h-3" /> {t('scope')} <span className="text-gray-500">{t('optional')}</span>
             </label>
+            <Select value={duration} onValueChange={setDuration}>
+              <SelectTrigger className="bg-slate-800/50 border-slate-700 text-sm">
+                <SelectValue placeholder="Auto (let the story decide)" />
+              </SelectTrigger>
+              <SelectContent>
+                {SCOPE_OPTIONS.map(opt => (
+                  <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            {duration === 'auto' && (
+              <p className="text-[10px] text-gray-500">{t('autoLengthHint')}</p>
+            )}
+          </div>
+          
+          <div className="space-y-2">
+            {isReimaginMode ? (
+              <label className="flex items-center gap-2 text-sm font-medium text-gray-300">
+                <Palette className="w-4 h-4 text-cyan-400" />
+                {t('visualFoundation')}
+                <span className="text-xs text-gray-500 font-normal">{t('lockedAtBlueprint')}</span>
+              </label>
+            ) : null}
             <BlueprintFoundationFields
               artStyle={artStyle}
               aspectRatio={aspectRatio}
@@ -383,6 +465,7 @@ export function BlueprintReimaginDialog({
               onAspectRatioChange={setAspectRatio}
               highlightArtStyle={focusField === 'artStyle'}
               highlightAspectRatio={focusField === 'aspectRatio'}
+              showArtStyle={isReimaginMode}
             />
           </div>
         </div>
@@ -394,7 +477,12 @@ export function BlueprintReimaginDialog({
           </Button>
           <Button
             onClick={handleGenerate}
-            disabled={isGenerating || !synopsis.trim() || !contentType || !genre.trim() || !tone.trim()}
+            disabled={
+              isGenerating ||
+              (isReimaginMode
+                ? !synopsis.trim() || !contentType || !genre.trim() || !tone.trim()
+                : !lockedSynopsis?.synopsis.trim())
+            }
             className="bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-600 hover:to-blue-600"
           >
             {isGenerating ? (

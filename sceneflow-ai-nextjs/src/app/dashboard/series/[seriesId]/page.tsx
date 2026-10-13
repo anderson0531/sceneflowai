@@ -63,6 +63,7 @@ import { createAudienceDefinition, type AudienceDefinition } from '@/lib/types/a
 import type { SeriesSynopsisLock } from '@/lib/series/clarifySynopsis'
 import { NEW_SERIES_EPISODE_COUNT } from '@/config/series/productionFormats'
 import { readSeriesIdeationSeed, resolveSeriesStudioEntry } from '@/lib/series/seriesIdeation'
+import { DEFAULT_ART_STYLE } from '@/lib/treatment/blueprintFoundation'
 import { resolveContentIntentFromMetadata } from '@/lib/content/contentIntent'
 import { SeriesResonancePanel } from '@/components/series/SeriesResonancePanel'
 import { SeriesReferenceLibraryPanel } from '@/components/series/SeriesReferenceLibraryPanel'
@@ -162,6 +163,7 @@ export default function SeriesStudioPage() {
   const [isAddingEpisodes, setIsAddingEpisodes] = useState(false)
   const [episodeCount, setEpisodeCount] = useState(NEW_SERIES_EPISODE_COUNT)
   const [format, setFormat] = useState('narrative')
+  const [artStyle, setArtStyle] = useState(DEFAULT_ART_STYLE)
   const [audienceDef, setAudienceDef] = useState<AudienceDefinition>(() =>
     createAudienceDefinition({ description: '', source: 'series' })
   )
@@ -228,6 +230,7 @@ export default function SeriesStudioPage() {
     const seed = readSeriesIdeationSeed(series)
     setFormat(seed.format)
     setEpisodeCount(seed.episodeCount)
+    setArtStyle(seed.artStyle)
     setAudienceDef(seed.audience)
     setLockedSynopsis(seed.locked)
     setSynopsisDraft(seed.draft)
@@ -240,6 +243,7 @@ export default function SeriesStudioPage() {
     genre?: string
     tone?: string
     format?: string
+    artStyle?: string
   }) => {
     const topic = typeof meta.ideaTopic === 'string' ? meta.ideaTopic.trim() : ''
     if (!topic || !series) return
@@ -254,6 +258,7 @@ export default function SeriesStudioPage() {
           genre: meta.genre && meta.genre !== 'any' ? meta.genre : undefined,
           tone: meta.tone && meta.tone !== 'any' ? meta.tone : undefined,
           format: meta.format || 'narrative',
+          artStyle: meta.artStyle || DEFAULT_ART_STYLE,
         })
       }, {
         message: `Generating ${requestedEpisodes} episode storyline...`,
@@ -288,6 +293,7 @@ export default function SeriesStudioPage() {
       tone?: string
       format?: string
       pendingAutoGenerate?: boolean
+      artStyle?: string
     }
     const searchAutoGenerate =
       searchParams?.get('autoGenerate') === 'true' ||
@@ -360,6 +366,7 @@ export default function SeriesStudioPage() {
         metadata: {
           ideaTopic,
           format,
+          artStyle,
           genre: lockedSynopsis?.genre ?? null,
           tone: lockedSynopsis?.tone ?? null,
           episodeCount,
@@ -379,6 +386,7 @@ export default function SeriesStudioPage() {
           genre: lockedSynopsis?.genre,
           tone: lockedSynopsis?.tone,
           format,
+          artStyle,
         })
       }, {
         message: `Generating ${episodeCount} episode storyline...`,
@@ -977,6 +985,8 @@ export default function SeriesStudioPage() {
                 onFormatChange={setFormat}
                 audience={audienceDef}
                 onAudienceChange={setAudienceDef}
+                artStyle={artStyle}
+                onArtStyleChange={setArtStyle}
                 episodeCount={episodeCount}
                 initialDraft={synopsisDraft}
                 initialLock={lockedSynopsis}

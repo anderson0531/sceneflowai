@@ -40,6 +40,7 @@ import { uploadAssetViaAPI } from '@/lib/vision/uploads'
 import { resolveLoadedBlueprintVariants } from '@/lib/blueprint/resolveLoadedVariants'
 import type { ReimagineFoundationField } from '@/components/vision/ReimagineFoundationDialog'
 import { normalizeVariantFoundation } from '@/lib/treatment/blueprintFoundation'
+import { resolveSeriesArtStyle } from '@/lib/series/seriesIdeation'
 import { checkBeatsPatch } from '@/lib/treatment/blueprintRevisionValidate'
 import { focusScopeForRecommendations } from '@/lib/treatment/resonanceFixInstructions'
 import { toast } from 'sonner'
@@ -760,7 +761,9 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
               themes: variant.themes || [],
               // Visual styling
               visual_style: variant.visual_style || variant.visualStyle || '',
-              visualStyle: variant.visualStyle || variant.visual_style || ''
+              visualStyle: variant.visualStyle || variant.visual_style || '',
+              artStyle: variant.artStyle,
+              aspectRatio: variant.aspectRatio,
             },
             visualType: 'hero',
             mood: 'balanced',
@@ -1225,6 +1228,8 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
                 genre: metadata.genre || projectData.genre || undefined,
                 tone: metadata.tone || projectData.tone || undefined,
                 targetAudience: metadata.targetAudience || 'General Audience',
+                artStyle: resolveSeriesArtStyle({ metadata }),
+                aspectRatio: metadata.aspectRatio,
                 variantCount: 1,
                 hasStoryDirections: true,
                 contentIntent: primeIntent,

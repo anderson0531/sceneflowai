@@ -28,6 +28,8 @@ export interface FilmTreatmentData {
     minutes: number
   }>
   visual_style?: string
+  artStyle?: string
+  aspectRatio?: string
   tone?: string
   themes?: string[] | string
   setting?: string

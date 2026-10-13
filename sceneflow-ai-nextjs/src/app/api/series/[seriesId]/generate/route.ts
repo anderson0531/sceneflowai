@@ -10,6 +10,8 @@ import { SERIES_CHARACTER_NAMING_BLOCK } from '@/lib/character/characterNamingPr
 import { resolveStoryLocale } from '@/i18n/server/storyLocale'
 import { buildProperNounGlossary, localeDirective } from '@/lib/prompts/localeDirective'
 import { getGeminiProductModel } from '@/lib/config/modelConfig'
+import { buildArtStylePromptBlock, getArtStylePresetName } from '@/lib/treatment/blueprintFoundation'
+import { resolveSeriesArtStyle } from '@/lib/series/seriesIdeation'
 
 export const dynamic = 'force-dynamic'
 export const maxDuration = 600 // Allow 10 minutes for full series generation
@@ -176,7 +178,8 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       preserveExisting = false,
       genre,
       tone,
-      format = 'narrative'
+      format = 'narrative',
+      artStyle
     } = body
     
     if (!topic && !regenerateField) {
@@ -214,20 +217,29 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     // Build the generation prompt based on what needs to be generated
     let generatedData: any
     
+    const existingMetaForStyle =
+      series.metadata && typeof series.metadata === 'object' && !Array.isArray(series.metadata)
+        ? (series.metadata as Record<string, unknown>)
+        : {}
+    const requestedArtStyle = typeof artStyle === 'string' ? artStyle.trim() : ''
+    const storedArtStyle =
+      typeof existingMetaForStyle.artStyle === 'string' ? existingMetaForStyle.artStyle.trim() : ''
+    const lockedArtStyleId = requestedArtStyle || storedArtStyle || undefined
+
     if (regenerateField) {
       // Regenerate specific field
       generatedData = await regenerateSpecificField(
         series,
         regenerateField,
         topic || series.production_bible?.synopsis || series.title,
-        { genre, tone, targetEpisodeCount, format }
+        { genre, tone, targetEpisodeCount, format, artStyle: lockedArtStyleId }
       )
     } else {
       // Generate full series storyline
       generatedData = await generateFullSeriesStoryline(
         topic,
         targetEpisodeCount,
-        { genre, tone, format, storyLocale }
+        { genre, tone, format, storyLocale, artStyle: lockedArtStyleId }
       )
     }
     
@@ -239,6 +251,16 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     
     updatedBible.version = incrementVersion(currentBible.version || '1.0.0')
     updatedBible.lastUpdated = new Date().toISOString()
+    if (lockedArtStyleId) {
+      const resolvedArtStyle = resolveSeriesArtStyle({ artStyle: lockedArtStyleId })
+      updatedBible.aesthetic = {
+        ...(updatedBible.aesthetic && typeof updatedBible.aesthetic === 'object'
+          ? updatedBible.aesthetic
+          : {}),
+        artStyle: resolvedArtStyle,
+        visualStyle: getArtStylePresetName(resolvedArtStyle),
+      }
+    }
     
     const existingMeta =
       series.metadata && typeof series.metadata === 'object' && !Array.isArray(series.metadata)
@@ -258,6 +280,9 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       metadata: {
         ...existingMeta,
         format,
+        ...(lockedArtStyleId
+          ? { artStyle: resolveSeriesArtStyle({ artStyle: lockedArtStyleId }) }
+          : {}),
         ...(preservedIdeaTopic !== undefined && preservedIdeaTopic !== null
           ? { ideaTopic: preservedIdeaTopic }
           : {}),
@@ -321,11 +346,12 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
 async function generateFullSeriesStoryline(
   topic: string,
   episodeCount: number,
-  options: { genre?: string; tone?: string; format?: string; storyLocale?: string }
+  options: { genre?: string; tone?: string; format?: string; storyLocale?: string; artStyle?: string }
 ): Promise<any> {
   console.log(`[generateFullSeriesStoryline] Generating ${episodeCount} episodes with Flash workhorse`)
   
   const format = options.format || 'narrative'
+  const artStyleBlock = options.artStyle ? buildArtStylePromptBlock(options.artStyle).trim() : ''
 
   // The bible is authored first and then every episode batch inherits its
   // names, so the language directive has to be present from the bible onward or
@@ -434,7 +460,7 @@ Generate:
 ${SERIES_CHARACTER_NAMING_BLOCK}
 
 ${mappingInstruction}
-${languageBlock}
+${artStyleBlock ? `${artStyleBlock}\nvisualGuidelines must describe how this locked art style appears on screen. Do not switch to a different medium.\n` : ''}${languageBlock}
 Return ONLY valid JSON:
 {
   "title": "Series Title",
@@ -580,7 +606,7 @@ Continue the content naturally. Each new installment must:
 3. End with a hook for the next installment (unless finale)
 
 ${mappingInstruction}
-${batchLanguageBlock}
+${artStyleBlock ? `${artStyleBlock}\nKeep every installment in this locked art style.\n` : ''}${batchLanguageBlock}
 Return ONLY valid JSON array:
 [
   {
@@ -642,7 +668,7 @@ async function regenerateSpecificField(
   series: Series,
   field: string,
   context: string,
-  options: { genre?: string; tone?: string; targetEpisodeCount: number; format?: string }
+  options: { genre?: string; tone?: string; targetEpisodeCount: number; format?: string; artStyle?: string }
 ): Promise<any> {
   const currentBible = series.production_bible || {}
   const format = options.format || 'narrative'
@@ -679,6 +705,7 @@ async function regenerateSpecificField(
 ${options.genre ? `Genre: ${options.genre}` : ''}
 ${options.tone ? `Tone: ${options.tone}` : ''}
 Format: ${format}
+${options.artStyle ? buildArtStylePromptBlock(options.artStyle) : ''}
 ${field === 'characters' || field === 'protagonist' ? SERIES_CHARACTER_NAMING_BLOCK : ''}
 
 Return ONLY valid JSON.`
