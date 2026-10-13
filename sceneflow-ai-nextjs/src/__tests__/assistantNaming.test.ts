@@ -71,13 +71,12 @@ describe('Assistant naming', () => {
     expect(BLUEPRINT_COPY.reimagine).toBe('Regenerate Blueprint')
   })
 
-  it('uses the same icon in-app and on the Blueprint and Scene Director cards', () => {
+  it('uses the Assistant icon on the Blueprint Director card', () => {
     expect(FEATURE_ICONS.blueprintDirector).toBe(ASSISTANT_ICON)
-    expect(FEATURE_ICONS.sceneDirector).toBe(ASSISTANT_ICON)
   })
 
   it('does not reuse the Assistant icon for another landing feature', () => {
-    const directorCards = new Set(['blueprintDirector', 'sceneDirector'])
+    const directorCards = new Set(['blueprintDirector'])
     const collisions = Object.entries(FEATURE_ICONS).filter(
       ([key, icon]) => !directorCards.has(key) && icon === ASSISTANT_ICON
     )
