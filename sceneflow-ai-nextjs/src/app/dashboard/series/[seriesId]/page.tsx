@@ -57,7 +57,13 @@ import { useSession } from 'next-auth/react'
 import { useRouter, useParams, useSearchParams } from 'next/navigation'
 import { toast } from 'sonner'
 import Link from 'next/link'
-import { SeriesResonanceAnalysis, getSeriesGreenlightTier } from '@/types/series'
+import {
+  getSeriesGreenlightTier,
+  SeriesResonanceAnalysis,
+  type EpisodeBlueprintResponse,
+  type SeriesProductionBible,
+  type SeriesResonanceAxis,
+} from '@/types/series'
 import { SeriesSynopsisIdeation } from '@/components/series/SeriesSynopsisIdeation'
 import { createAudienceDefinition, type AudienceDefinition } from '@/lib/types/audienceResonance'
 import type { SeriesSynopsisLock } from '@/lib/series/clarifySynopsis'
@@ -74,12 +80,6 @@ import { getEpisodeDriftWarnings, UPDATE_EPISODE_CAST_INSTRUCTION } from '@/lib/
 import { STUDIO_DISPLAY_NAMES } from '@/constants/studioDisplayNames'
 import { applyOptimisticScoreDelta, axisDisplayLabel, normalizeSeriesResonanceAnalysis } from '@/lib/series/resonanceScoring'
 import { ensureSeasons, groupEpisodesBySeason } from '@/lib/series/seasons'
-import {
-  getSeriesGreenlightTier,
-  type EpisodeBlueprintResponse,
-  type SeriesProductionBible,
-  type SeriesResonanceAxis,
-} from '@/types/series'
 
 const OVERVIEW_AR_AXES: SeriesResonanceAxis['id'][] = [
   'concept-originality',
