@@ -65,10 +65,12 @@ function featuresOf(room: Room): Feature[] {
 
 const EXPECTED_TITLES: Record<string, string[]> = {
   'series-desk': [
-    'Season universe',
-    'Episode handoff',
-    'Reshape · with Direction',
+    'New Series',
+    'Review the first cut',
+    'Audience Resonance',
+    'Series Director',
     'Direct this episode',
+    'Start the episode',
   ],
   'blueprint-board': [
     'Treatment and beat sheet',
