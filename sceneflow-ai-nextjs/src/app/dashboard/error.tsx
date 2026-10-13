@@ -33,7 +33,10 @@ export default function DashboardError({
         ) : null}
         <div className="mt-6 flex items-center justify-center gap-3">
           <button
-            onClick={() => reset()}
+            onClick={() => {
+              if (typeof window !== 'undefined') window.location.reload()
+              else reset()
+            }}
             className="inline-flex items-center gap-2 rounded-lg bg-cyan-500 px-4 py-2 text-sm font-medium text-zinc-950 hover:bg-cyan-400"
           >
             <RefreshCw className="h-4 w-4" />

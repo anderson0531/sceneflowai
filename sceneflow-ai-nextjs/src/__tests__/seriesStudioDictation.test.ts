@@ -42,6 +42,8 @@ describe('Series Studio in-box dictation', () => {
     expect(source).not.toContain('Generate Storyline')
     expect(source).not.toContain('Topic / Concept')
     expect(source).not.toContain('Start from template')
+    expect(source).toContain('aria-label="Status"')
+    expect(source).not.toContain('<Select')
     expect(ideation).toContain('<DictationTextarea')
     expect(ideation).toContain('Synopsis')
   })
