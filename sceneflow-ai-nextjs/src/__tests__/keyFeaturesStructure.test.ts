@@ -83,18 +83,17 @@ const EXPECTED_TITLES: Record<string, string[]> = {
   'production-stage': [
     'Bring Your Own Key',
     'Production Planner',
-    'Script',
-    'Script Audience Resonance',
-    'Scene Director',
-    'Reference Library',
-    'Production Agents',
+    'Audience Resonance',
+    'Cast, wardrobe, and voice',
     'Direct Shot',
-    'Pre-Vis before motion',
+    'Audio Agent',
+    'Continuity',
+    'Stills Agent',
+    'Animatic',
+    'Video Agent',
     'Mixer',
-    'Language Streams',
-    'Delivery resolution',
-    'Version control',
-    'Promotion trailers',
+    'Language versions',
+    'Package and ship',
   ],
   'screening-room': [
     'One player',
@@ -124,11 +123,11 @@ describe('keyFeatures structure', () => {
 
   it('matches the room feature titles, including Production Stage groups', () => {
     const production = rooms.find((room) => room.id === 'production-stage')
-    expect(production?.spend?.label).toBe('Spend')
+    expect(production?.spend?.label).toBe('Control Spend')
     expect(production?.groups?.map((group) => group.label)).toEqual([
-      'Script',
-      'Production',
-      'Deployment',
+      'Optimize the script',
+      'Video',
+      'Publish',
     ])
     for (const room of rooms) {
       expect(featuresOf(room).map((feature) => feature.title)).toEqual(
@@ -211,11 +210,12 @@ describe('keyFeatures structure', () => {
     expect(text).toContain('Production Stage turns each beat into a chapter')
     expect(text).toContain('3–5 minute scene')
     expect(text).toContain('8–12 minute chapter')
-    expect(text).toContain('Scene Director · Scene N')
+    expect(text).toContain('every scene in concert')
     expect(text).toContain('Direct Shot · Scene N · Shot N')
     expect(text).toContain('Gemini TTS speaks the dub in 44 languages')
-    expect(text).toContain('Veo 3.1 renders the master in 4K')
-    expect(text).toContain('January 2027')
+    expect(text).not.toContain('Scene Director')
+    expect(text).not.toContain('Veo 3.1')
+    expect(text).not.toContain('January 2027')
     expect(text).not.toContain('70+')
     expect(text).not.toContain('Google AI Studio')
     expect(text).not.toContain('Omni already')

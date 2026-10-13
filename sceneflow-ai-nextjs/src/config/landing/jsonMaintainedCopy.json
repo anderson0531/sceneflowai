@@ -516,14 +516,14 @@
       {
         "id": "production-stage",
         "label": "Production Stage",
-        "promise": "The Production Stage is where the locked story becomes picture and sound. Write the shot-by-shot script, plan credits and the schedule, and generate from a locked Reference Library so faces and places stay consistent. Mix the scene, then deploy language versions, a native 4K master, saved takes, and promotion trailers. Check pace, spend, and new notes on your phone. Editing stays on a desktop or tablet.",
+        "promise": "Production Stage is where the locked blueprint becomes the picture. Control the spend with your own keys and a plan. Optimize every scene together, then build each scene in order — direction, audio, music, continuity, and stills — and review the animatic before you spend on video. Generate the clips, mix them, make language versions, and ship the scene, the chapter, the master, or the promo.",
         "spend": {
-          "label": "Spend",
+          "label": "Control Spend",
           "features": [
             {
               "icon": "byok",
               "title": "Bring Your Own Key",
-              "description": "Connect your own image and video provider keys. Generation runs on your account, with your rates, while the guided studio — agents, references, Mixer, and Screening Room — stays in place. You are not choosing between cost control and the pipeline.",
+              "description": "Connect your own image and video provider keys. Generation runs on your account, at your rates, while the guided studio — agents, continuity, the Mixer, and Screening Room — stays in place.",
               "screenshot": "BYOK keys",
               "learnMore": {
                 "items": [
@@ -533,7 +533,7 @@
                   },
                   {
                     "title": "Same studio",
-                    "description": "Agents, references, the Mixer, and Screening Room stay in place."
+                    "description": "Agents, continuity, the Mixer, and Screening Room stay in place."
                   }
                 ]
               }
@@ -541,7 +541,7 @@
             {
               "icon": "budget",
               "title": "Production Planner",
-              "description": "Set still and clip iterations per shot. Those targets roll up to the scene, the chapter, and the master. A start date and workdays build a dated schedule with cumulative credits, and finished scenes can reset the targets from actuals. Draft generation and dubbing are the recommended savings. On your phone, read pace, spend, and the finish date. Editing stays on a desktop or tablet.",
+              "description": "Set still and clip iterations per shot before you spend. Those targets roll up to the scene, the chapter, and the master, and a start date builds a schedule with the day you finish.",
               "screenshot": "Production Planner",
               "learnMore": {
                 "items": [
@@ -558,10 +558,6 @@
                     "description": "Finished scenes can reset the targets from what they actually cost."
                   },
                   {
-                    "title": "Recommended savings",
-                    "description": "Draft generation and dubbing are the recommended savings."
-                  },
-                  {
                     "title": "Phone status",
                     "description": "Read pace, spend, and the finish date on your phone, while editing stays on a desktop or tablet."
                   }
@@ -573,116 +569,44 @@
         "groups": [
           {
             "id": "script",
-            "label": "Script",
+            "label": "Optimize the script",
             "features": [
               {
-                "icon": "writersRoom",
-                "title": "Script",
-                "description": "The Script tab holds the scene and the shot-by-shot script, plus dialogue and SFX. Direction, Music, References, and Stills sit beside it so Audience Resonance and Pre-Vis review happen before a clip is spent.",
-                "screenshot": "Script",
-                "learnMore": {
-                  "items": [
-                    {
-                      "title": "Page before spend",
-                      "description": "The Script tab holds the scene and the shot-by-shot script, plus dialogue and SFX."
-                    },
-                    {
-                      "title": "Beside the page",
-                      "description": "Direction, Music, References, and Stills sit beside it so Audience Resonance and Pre-Vis review happen before a clip is spent."
-                    }
-                  ]
-                }
-              },
-              {
                 "icon": "scriptResonance",
-                "title": "Script Audience Resonance",
-                "description": "A test-audience read of the script: overview, analysis, and scene notes, with section scores and recommendations. You choose which notes to act on. Nothing is rewritten until you open a director dialog and apply it.",
-                "screenshot": "Script report",
+                "title": "Audience Resonance",
+                "description": "Audience Resonance reads the whole script at once, every scene in concert. You see the scores and the notes together, and nothing is rewritten until you choose it.",
+                "screenshot": "Audience Resonance — scores and notes across every scene, unapplied",
                 "learnMore": {
                   "items": [
                     {
-                      "title": "Test-audience read",
-                      "description": "It shows an overview, analysis, and scene notes, with section scores and recommendations."
+                      "title": "Every scene together",
+                      "description": "It scores the script as one piece, with notes on the scenes in concert."
                     },
                     {
                       "title": "You choose",
-                      "description": "Nothing is rewritten until you open a director dialog and apply it."
+                      "description": "Nothing is rewritten until you choose which notes to act on."
                     }
                   ]
                 }
               },
               {
-                "icon": "sceneDirector",
-                "title": "Scene Director",
-                "description": "The script-scene dialog, titled Scene Director · Scene N, opened from a scene’s Audience Resonance recommendations (Scene Director, or Scene Director & Apply). You direct that scene, preview the changes, and select which changes to keep. The rest of the script stays as you left it.",
-                "screenshot": "Scene Director",
+                "icon": "castVisual",
+                "title": "Cast, wardrobe, and voice",
+                "description": "Establish the cast before the scenes. Lock the character, the wardrobe, and the voice, so every later still and clip asks for the same person.",
+                "screenshot": "Character, wardrobe, and voice",
                 "learnMore": {
                   "items": [
                     {
-                      "title": "One scene",
-                      "description": "Scene Director · Scene N opens from a scene’s Audience Resonance recommendations, Scene Director or Scene Director & Apply."
+                      "title": "Character and wardrobe",
+                      "description": "Cast Agent draws the character and the wardrobe looks."
                     },
                     {
-                      "title": "Preview and keep",
-                      "description": "Direct that scene, preview the changes, and select which to keep."
+                      "title": "Voice",
+                      "description": "The voice is set on the character before the scenes are built."
                     },
                     {
-                      "title": "Rest of the script",
-                      "description": "The rest of the script stays as you left it."
-                    }
-                  ]
-                }
-              }
-            ]
-          },
-          {
-            "id": "production",
-            "label": "Production",
-            "features": [
-              {
-                "icon": "referenceLibrary",
-                "title": "Reference Library",
-                "description": "Lock cast, wardrobe, voices, locations, and props to the production’s art style. Every still and clip asks this library for the same faces and places, so a later scene does not recast the lead.",
-                "screenshot": "Reference Library",
-                "learnMore": {
-                  "items": [
-                    {
-                      "title": "Locked look",
-                      "description": "Lock cast, wardrobe, voices, locations, and props to the production’s art style."
-                    },
-                    {
-                      "title": "Same faces",
-                      "description": "Every still and clip asks this library for the same faces and places, so a later scene does not recast the lead."
-                    }
-                  ]
-                }
-              },
-              {
-                "icon": "productionAgents",
-                "title": "Production Agents",
-                "description": "Audio, Stills, and Video agents read the locked direction, attach the right references, and build the scene in the background. You iterate in draft, then render motion. Standard clips use Veo 3.1, which delivers 4K. Longer Omni preview clips are a separate model; their 4K option is not on yet. You direct and approve; the agents prompt and generate.",
-                "screenshot": "Agent run",
-                "learnMore": {
-                  "items": [
-                    {
-                      "title": "Background build",
-                      "description": "Audio, Stills, and Video agents read the locked direction, attach the right references, and build the scene in the background."
-                    },
-                    {
-                      "title": "Draft then motion",
-                      "description": "You iterate in draft, then render motion."
-                    },
-                    {
-                      "title": "Veo 3.1",
-                      "description": "Standard clips use Veo 3.1, which delivers 4K."
-                    },
-                    {
-                      "title": "Omni preview",
-                      "description": "Longer Omni preview clips are a separate model, and their 4K option is not on yet."
-                    },
-                    {
-                      "title": "You approve",
-                      "description": "You direct and approve; the agents prompt and generate."
+                      "title": "Same person",
+                      "description": "Every still and every clip asks for that lock."
                     }
                   ]
                 }
@@ -690,69 +614,117 @@
               {
                 "icon": "directShot",
                 "title": "Direct Shot",
-                "description": "The shot dialog, titled Direct Shot · Scene N · Shot N. You direct the shot in plain language, preview the direction, and save it. The preview spells out the shot you are approving: frozen moment and action, camera (shot, angle, movement, transition), blocking, emotion, gaze, lighting, props, and audio. Connected references — cast, locations, and objects — stay attached to that shot. Saving updates the still prompt and the clip prompt together. You can also steer a clip with the video-direction chips: Camera move, Action shots, Hold the start frame, Match the end frame, and Keep faces.",
-                "screenshot": "Direct Shot with camera and references",
+                "description": "Direct Shot takes the shot in your own words, typed or dictated. You preview the direction and save it, and the still prompt and the clip prompt update together.",
+                "screenshot": "Direct Shot — type or dictate, preview, save",
                 "learnMore": {
                   "items": [
                     {
                       "title": "Named shot",
-                      "description": "Direct Shot · Scene N · Shot N takes plain language and shows a preview before you save."
+                      "description": "The dialog is titled Direct Shot · Scene N · Shot N."
                     },
                     {
-                      "title": "What you approve",
-                      "description": "The preview spells out frozen moment and action, camera, blocking, emotion, gaze, lighting, props, and audio."
-                    },
-                    {
-                      "title": "References stay",
-                      "description": "Connected cast, locations, and objects stay attached to that shot."
+                      "title": "Type or dictate",
+                      "description": "Write the note or dictate it, then preview the direction before you save."
                     },
                     {
                       "title": "Both prompts",
                       "description": "Saving updates the still prompt and the clip prompt together."
                     },
                     {
-                      "title": "Clip chips",
-                      "description": "Steer a clip with Camera move, Action shots, Hold the start frame, Match the end frame, and Keep faces."
+                      "title": "Again after clips",
+                      "description": "If a generated shot is wrong, open Direct Shot and direct it again."
                     }
                   ]
                 }
               },
               {
-                "icon": "preVis",
-                "title": "Pre-Vis before motion",
-                "description": "A Ken Burns animatic with dialogue, score, and sound effects, built from the approved stills. Watch the scene, change direction with Direct Shot if it is wrong, and only then render motion.",
-                "screenshot": "Animatic player",
+                "icon": "audioAgent",
+                "title": "Audio Agent",
+                "description": "Audio Agent builds the scene’s dialogue, sound effects, and music. The scene can be heard before a clip is spent.",
+                "screenshot": "Audio Agent — dialogue, effects, and music",
                 "learnMore": {
                   "items": [
                     {
-                      "title": "Animatic",
-                      "description": "A Ken Burns animatic with dialogue, score, and sound effects, built from the approved stills."
+                      "title": "Dialogue and effects",
+                      "description": "Dialogue stays on speech, and sound effects are for shots with a distinct cue."
                     },
                     {
-                      "title": "Then motion",
-                      "description": "Watch the scene, change it with Direct Shot if it is wrong, and only then render motion."
+                      "title": "Music",
+                      "description": "Music carries the scene with the dialogue."
+                    },
+                    {
+                      "title": "Before motion",
+                      "description": "Hear the scene before you open Clips."
                     }
                   ]
                 }
               },
               {
-                "icon": "mixer",
-                "title": "Mixer",
-                "description": "The scene finish inside Production Stage. Balance dialogue, narration, score, and effects, include or drop individual shots, and render the scene with its audio. Language Streams are prepared from this same Mixer, and the rendered scene is what Screening Room plays.",
-                "screenshot": "Mixer",
+                "icon": "continuity",
+                "title": "Continuity",
+                "description": "Generate only the references this scene needs, when the scene is ready. Earlier scenes stay as you locked them, so you do not redraw references that are already approved.",
+                "screenshot": "Continuity — this scene’s references only",
                 "learnMore": {
                   "items": [
                     {
-                      "title": "Scene finish",
-                      "description": "Balance dialogue, narration, score, and effects, include or drop shots, and render the scene with its audio."
+                      "title": "This scene only",
+                      "description": "Draw the cast, locations, and props this scene needs, and leave the others alone."
                     },
                     {
-                      "title": "Same Mixer",
-                      "description": "Language Streams are prepared from this Mixer."
+                      "title": "Just in time",
+                      "description": "Generate them when the scene is ready, not as a batch for the whole film."
                     },
                     {
-                      "title": "What plays",
-                      "description": "Screening Room plays the rendered scene."
+                      "title": "Already locked",
+                      "description": "A change in one scene does not redraw references the earlier scenes already use."
+                    }
+                  ]
+                }
+              },
+              {
+                "icon": "stillsAgent",
+                "title": "Stills Agent",
+                "description": "Stills Agent builds the shot frames from the approved direction. Direction and audio stay as you left them, and the clips come later.",
+                "screenshot": "Stills Agent — shot frames",
+                "learnMore": {
+                  "items": [
+                    {
+                      "title": "Shot frames",
+                      "description": "It draws the still for each shot in the scene."
+                    },
+                    {
+                      "title": "Direction stays",
+                      "description": "Regenerating a frame updates the image, and direction and audio are left unchanged."
+                    },
+                    {
+                      "title": "Before clips",
+                      "description": "Approve the stills before you open Clips."
+                    }
+                  ]
+                }
+              },
+              {
+                "icon": "animatic",
+                "title": "Animatic",
+                "description": "Watch the scene in the Screening Room as an animatic, stills with dialogue, score, and effects. Share it for feedback, and finish every scene this way before video so a script change does not rerun the clips. For many creators the animatic is the finished piece, and it can be rendered to an MP4.",
+                "screenshot": "Screening Room animatic, with share",
+                "learnMore": {
+                  "items": [
+                    {
+                      "title": "Picture and sound",
+                      "description": "The animatic plays the approved stills with dialogue, score, and effects."
+                    },
+                    {
+                      "title": "Share",
+                      "description": "Send one link so reviewers watch the animatic and leave notes on the picture."
+                    },
+                    {
+                      "title": "Before video",
+                      "description": "Finish the scenes as animatics before you generate clips, so a script change does not rerun video."
+                    },
+                    {
+                      "title": "The MP4",
+                      "description": "For many creators the animatic is the end product, and it can be rendered to an MP4."
                     }
                   ]
                 }
@@ -760,23 +732,83 @@
             ]
           },
           {
-            "id": "deployment",
-            "label": "Deployment",
+            "id": "video",
+            "label": "Video",
             "features": [
               {
-                "icon": "languageStreams",
-                "title": "Language Streams",
-                "description": "A language version of the scene, not a new production. Gemini TTS speaks the dub in 44 languages. On each shot, choose Double to overlay the dubbed voice, Lip-sync to perform it on the picture, or Regenerate to build a new clip from the translated line. Video speed is saved on that language version, because a translation is often 10–30% longer than the master.",
-                "screenshot": "Language Streams with per-shot Double, Lip-sync, and Regenerate",
+                "icon": "videoAgent",
+                "title": "Video Agent",
+                "description": "Video Agent generates the shot clips on the Clips tab. Watch the stitched scene in the Screening Room, and if a shot is wrong, direct it again in Direct Shot.",
+                "screenshot": "Video Agent, then the stitched scene",
                 "learnMore": {
                   "items": [
                     {
-                      "title": "A version, not a new production",
+                      "title": "Shot clips",
+                      "description": "Video Agent generates the clip for each shot from the approved still."
+                    },
+                    {
+                      "title": "Stitched scene",
+                      "description": "Review the scene stitched in the Screening Room."
+                    },
+                    {
+                      "title": "Direct it again",
+                      "description": "Open Direct Shot, typed or dictated, when a clip is wrong."
+                    }
+                  ]
+                }
+              },
+              {
+                "icon": "mixer",
+                "title": "Mixer",
+                "description": "The Mixer finishes the scene inside Production Stage. Include or drop shots, trim them, balance the sound, and render the scene with its audio.",
+                "screenshot": "Mixer — include, trim, balance, overlay, watermark",
+                "learnMore": {
+                  "items": [
+                    {
+                      "title": "Shots",
+                      "description": "Include or drop individual shots, and trim the ones that stay."
+                    },
+                    {
+                      "title": "Dialogue",
+                      "description": "Set volume and speed on each dialogue line."
+                    },
+                    {
+                      "title": "Tracks",
+                      "description": "Balance narration, dialogue, sound effects, and music, including music fade and loop."
+                    },
+                    {
+                      "title": "Overlays",
+                      "description": "Place text overlays on the scene."
+                    },
+                    {
+                      "title": "Watermark",
+                      "description": "Add a text or image watermark."
+                    },
+                    {
+                      "title": "Render",
+                      "description": "Render the scene with its audio, and that render is what Screening Room plays."
+                    }
+                  ]
+                }
+              },
+              {
+                "icon": "languageStreams",
+                "title": "Language versions",
+                "description": "A language version is this scene, not a new production. Gemini TTS speaks the dub in 44 languages, and on each shot you dub the line or regenerate the clip, including signage.",
+                "screenshot": "Language version — Double, Lip-sync, or Regenerate, including signage",
+                "learnMore": {
+                  "items": [
+                    {
+                      "title": "Forty-four languages",
                       "description": "Gemini TTS speaks the dub in 44 languages."
                     },
                     {
                       "title": "Per shot",
-                      "description": "On each shot, choose Double, Lip-sync, or Regenerate from the translated line."
+                      "description": "On each shot, choose Double to overlay the dubbed voice, Lip-sync to perform it, or Regenerate to build a new clip from the translated line."
+                    },
+                    {
+                      "title": "Signage",
+                      "description": "Regenerate a signage shot when the picture has text that must change."
                     },
                     {
                       "title": "Timing",
@@ -784,69 +816,35 @@
                     }
                   ]
                 }
-              },
+              }
+            ]
+          },
+          {
+            "id": "publish",
+            "label": "Publish",
+            "features": [
               {
-                "icon": "deliveryResolution",
-                "title": "Delivery resolution",
-                "description": "Veo 3.1 renders the master in 4K. That is a native render, not an upscale. Choose the delivery tier when you stitch the language master; optional Topaz upscaling still sharpens a cut when those credentials are connected. Omni stays in preview. Its 4K control is expected in January 2027.",
-                "screenshot": "Veo 3.1 4K delivery settings",
+                "icon": "shipPackage",
+                "title": "Package and ship",
+                "description": "Package a scene, a chapter, the master, or a promo when that piece is ready. Publish it to YouTube, Facebook, or TikTok, or download the MP4, and keep building the rest.",
+                "screenshot": "Package and ship — scene, chapter, master, promo; YouTube, Facebook, TikTok, MP4",
                 "learnMore": {
                   "items": [
                     {
-                      "title": "Native 4K",
-                      "description": "Veo 3.1 renders the master in 4K as a native render, not an upscale."
+                      "title": "Pieces",
+                      "description": "Ship a scene, a chapter, the master, or a promo."
                     },
                     {
-                      "title": "Delivery tier",
-                      "description": "Choose the delivery tier when you stitch the language master."
+                      "title": "Language streams",
+                      "description": "Each language version can ship with the package."
                     },
                     {
-                      "title": "Topaz",
-                      "description": "Optional Topaz upscaling still sharpens a cut when those credentials are connected."
+                      "title": "Destinations",
+                      "description": "Publish to YouTube, Facebook, or TikTok, or download the MP4."
                     },
                     {
-                      "title": "Omni",
-                      "description": "Omni stays in preview, and its 4K control is expected in January 2027."
-                    }
-                  ]
-                }
-              },
-              {
-                "icon": "versionControl",
-                "title": "Version control",
-                "description": "Every take of a stream is kept. Compare them, pin the one people liked, and come back to it after later edits. A new generation does not erase the previous cut.",
-                "screenshot": "Version list",
-                "learnMore": {
-                  "items": [
-                    {
-                      "title": "Every take",
-                      "description": "Every take of a stream is kept."
-                    },
-                    {
-                      "title": "Pin one",
-                      "description": "Compare them, pin the one people liked, and come back to it after later edits."
-                    },
-                    {
-                      "title": "No erase",
-                      "description": "A new generation does not erase the previous cut."
-                    }
-                  ]
-                }
-              },
-              {
-                "icon": "promoTrailer",
-                "title": "Promotion trailers",
-                "description": "Promotion trailers weave a 30–60 second 9:16 promo from the strongest beats. It is ready for Shorts, Reels, and TikTok, and it is cut from the same locked timeline as the master.",
-                "screenshot": "Trailer cut",
-                "learnMore": {
-                  "items": [
-                    {
-                      "title": "30–60 seconds",
-                      "description": "It weaves a 30–60 second 9:16 promo from the strongest beats."
-                    },
-                    {
-                      "title": "Same timeline",
-                      "description": "It is ready for Shorts, Reels, and TikTok, and it is cut from the same locked timeline as the master."
+                      "title": "Keep building",
+                      "description": "Ship the piece that is finished and keep building the rest."
                     }
                   ]
                 }

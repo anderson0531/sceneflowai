@@ -65,8 +65,8 @@ describe('keyFeatureVideos', () => {
     expect(keyFeatureVideoBlobPath('byok', 'es')).toBe('features/byok/BYOK (Spanish).mp4')
     expect(keyFeatureVideoBlobPath('byok', 'zh')).toBe('features/byok/BYOK (Chinese).mp4')
     expect(keyFeatureVideoBlobPath('byok', 'ar')).toBe('features/byok/BYOK (Arabic).mp4')
-    expect(keyFeatureVideoBlobPath('writersRoom', 'ar')).toBe(
-      "features/writersRoom/Writer's Room (Arabic).mp4"
+    expect(keyFeatureVideoBlobPath('directShot', 'ar')).toBe(
+      'features/directShot/Direct Shot (Arabic).mp4'
     )
   })
 })

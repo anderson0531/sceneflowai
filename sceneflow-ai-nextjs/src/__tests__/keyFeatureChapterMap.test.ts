@@ -19,7 +19,7 @@ describe('key feature chapter map', () => {
     expect(source.map((room) => room.filmSeconds)).toEqual([90, 75, 90, 60])
   })
 
-  it('gives shared gestures one demo and leaves deploy inside the room film', () => {
+  it('gives shared gestures one demo and leaves publish inside the room film', () => {
     expect(standaloneDemoKey('newSeries')).toBe('newSeries')
     expect(standaloneDemoKey('seriesReview')).toBe('seriesReview')
     expect(standaloneDemoKey('seriesResonance')).toBe('seriesResonance')
@@ -32,20 +32,21 @@ describe('key feature chapter map', () => {
     expect(standaloneDemoKey('blueprintResonance')).toBe('blueprintResonance')
     expect(standaloneDemoKey('goToProduction')).toBeNull()
     expect(standaloneDemoKey('stakeholderReview')).toBeNull()
-    expect(standaloneDemoKey('sceneDirector')).toBe('sceneDirector')
     expect(standaloneDemoKey('byok')).toBe('byok')
     expect(standaloneDemoKey('budget')).toBe('byok')
-    expect(standaloneDemoKey('referenceLibrary')).toBe('referenceLibrary')
-    expect(standaloneDemoKey('preVis')).toBe('preVis')
+    expect(standaloneDemoKey('scriptResonance')).toBe('scriptResonance')
+    expect(standaloneDemoKey('castVisual')).toBe('castVisual')
+    expect(standaloneDemoKey('directShot')).toBe('directShot')
+    expect(standaloneDemoKey('audioAgent')).toBe('audioAgent')
+    expect(standaloneDemoKey('continuity')).toBe('continuity')
+    expect(standaloneDemoKey('stillsAgent')).toBe('stillsAgent')
+    expect(standaloneDemoKey('animatic')).toBe('animatic')
+    expect(standaloneDemoKey('videoAgent')).toBe('videoAgent')
     expect(standaloneDemoKey('mixer')).toBe('mixer')
+    expect(standaloneDemoKey('languageStreams')).toBe('languageStreams')
     for (const icon of [
       'startEpisode',
-      'productionAgents',
-      'directShot',
-      'languageStreams',
-      'deliveryResolution',
-      'versionControl',
-      'promoTrailer',
+      'shipPackage',
       'screeningPlayer',
       'screeningCollab',
       'packageShip',
