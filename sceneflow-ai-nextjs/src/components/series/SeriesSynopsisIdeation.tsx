@@ -5,26 +5,38 @@ import { CheckCircle2, Loader2, RotateCcw, Sparkles, Users } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { DictationTextarea } from '@/components/ui/DictationTextarea'
 import { AudienceDescriptionField } from '@/components/audience/AudienceDescriptionField'
+import { ArtStyleGrid } from '@/components/image-gen/ArtStyleGrid'
 import { SERIES_PRODUCTION_FORMATS } from '@/config/series/productionFormats'
 import type { AudienceDefinition } from '@/lib/types/audienceResonance'
 import type {
   ClarifySynopsisResult,
+  ClarifySynopsisSurface,
   SeriesSynopsisLock,
   SynopsisMessage,
 } from '@/lib/series/clarifySynopsis'
+import { DEFAULT_ART_STYLE } from '@/lib/treatment/blueprintFoundation'
 
 interface SeriesSynopsisIdeationProps {
   format: string
   onFormatChange: (format: string) => void
   audience: AudienceDefinition
   onAudienceChange: (audience: AudienceDefinition) => void
+  artStyle?: string
+  onArtStyleChange: (artStyle: string) => void
   episodeCount: number
   /** Quiet “Starts as 5 episodes.” line under the format chips. */
   showEpisodeHint?: boolean
+  /** Series bible vs a single blueprint. Defaults to series. */
+  surface?: ClarifySynopsisSurface
+  /** Project length hint sent with clarify. */
+  scope?: string
+  audienceHint?: string
   initialDraft?: string
   initialLock?: SeriesSynopsisLock | null
   onLockedChange: (locked: SeriesSynopsisLock | null) => void
   seriesId?: string
+  /** Credit attribution for the audience refine call. */
+  projectId?: string
 }
 
 const DRAFT_PLACEHOLDER =
@@ -35,12 +47,18 @@ export function SeriesSynopsisIdeation({
   onFormatChange,
   audience,
   onAudienceChange,
+  artStyle = DEFAULT_ART_STYLE,
+  onArtStyleChange,
   episodeCount,
   showEpisodeHint = false,
+  surface = 'series',
+  scope,
+  audienceHint = '(optional, shared across the series)',
   initialDraft = '',
   initialLock = null,
   onLockedChange,
   seriesId,
+  projectId,
 }: SeriesSynopsisIdeationProps) {
   const [draft, setDraft] = useState(initialLock ? '' : initialDraft)
   const [turns, setTurns] = useState<SynopsisMessage[]>([])
@@ -56,7 +74,7 @@ export function SeriesSynopsisIdeation({
   const [contextStale, setContextStale] = useState(false)
 
   const audienceText = (audience.description || '').trim()
-  const contextSignature = `${format}::${audienceText}`
+  const contextSignature = `${format}::${audienceText}::${artStyle}`
   const signedRef = useRef<string | null>(initialLock ? contextSignature : null)
   const contextSignatureRef = useRef(contextSignature)
   contextSignatureRef.current = contextSignature
@@ -96,6 +114,9 @@ export function SeriesSynopsisIdeation({
           productionFormat: format,
           episodeCount,
           targetAudience: audienceText || undefined,
+          artStyle,
+          surface,
+          scope: surface === 'project' ? scope : undefined,
           messages: nextMessages,
           currentSynopsis: proposed || undefined,
           seriesId,
@@ -128,6 +149,7 @@ export function SeriesSynopsisIdeation({
       setIsClarifying(false)
     }
   }, [
+    artStyle,
     audienceText,
     clearLock,
     draft,
@@ -135,7 +157,9 @@ export function SeriesSynopsisIdeation({
     format,
     isClarifying,
     proposed,
+    scope,
     seriesId,
+    surface,
     turns,
   ])
 
@@ -210,7 +234,7 @@ export function SeriesSynopsisIdeation({
         <label className="flex items-center gap-2 text-sm font-medium text-gray-300 mb-2">
           <Users className="w-4 h-4 text-cyan-400" />
           Target Audience{' '}
-          <span className="text-gray-500 text-xs font-normal">(optional, shared across the series)</span>
+          <span className="text-gray-500 text-xs font-normal">{audienceHint}</span>
         </label>
         <AudienceDescriptionField
           value={audience}
@@ -219,9 +243,12 @@ export function SeriesSynopsisIdeation({
             title: proposed || draft || undefined,
             format,
           }}
+          projectId={projectId}
           rows={3}
         />
       </div>
+
+      <ArtStyleGrid artStyle={artStyle || DEFAULT_ART_STYLE} onArtStyleChange={onArtStyleChange} />
 
       <div className="space-y-3">
         <label className="block text-sm font-medium text-gray-300">
@@ -260,8 +287,8 @@ export function SeriesSynopsisIdeation({
             ) : null}
             {contextStale ? (
               <p className="text-[11px] text-amber-200">
-                Production format or audience changed. Clarify again so the synopsis matches, or
-                confirm this version.
+                Production format, audience, or art style changed. Clarify again so the synopsis
+                matches, or confirm this version.
               </p>
             ) : null}
             <button

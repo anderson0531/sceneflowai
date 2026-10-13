@@ -23,6 +23,9 @@ interface ClarifyRequestBody {
   productionFormat?: string
   episodeCount?: number
   targetAudience?: string
+  artStyle?: string
+  surface?: string
+  scope?: string
   messages?: unknown
   currentSynopsis?: string
   seriesId?: string
@@ -60,6 +63,9 @@ export async function POST(request: NextRequest) {
     const episodeCount = Math.max(1, Math.min(40, Math.floor(Number(body.episodeCount) || 5)))
     const targetAudience = (body.targetAudience || '').trim()
     const currentSynopsis = (body.currentSynopsis || '').trim()
+    const artStyle = (body.artStyle || '').trim()
+    const surface = body.surface === 'project' ? 'project' : 'series'
+    const scope = (body.scope || '').trim()
 
     const hasCredits = await CreditService.ensureCredits(userId, CREDIT_COST)
     if (!hasCredits) {
@@ -73,6 +79,9 @@ export async function POST(request: NextRequest) {
       productionFormat,
       episodeCount,
       targetAudience,
+      artStyle: artStyle || undefined,
+      surface,
+      scope: scope || undefined,
       messages,
       currentSynopsis,
     })

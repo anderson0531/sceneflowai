@@ -7,7 +7,7 @@ import {
   sanitizeSynopsisMessages,
   type SynopsisMessage,
 } from '@/lib/series/clarifySynopsis'
-import { readSeriesIdeationSeed, resolveSeriesStudioEntry } from '@/lib/series/seriesIdeation'
+import { readSeriesIdeationSeed, resolveSeriesArtStyle, resolveSeriesStudioEntry } from '@/lib/series/seriesIdeation'
 import { NEW_SERIES_EPISODE_COUNT } from '@/config/series/productionFormats'
 
 const BEEKEEPERS = 'Follow three urban beekeepers through one honey season in Chicago.'
@@ -59,6 +59,36 @@ describe('buildClarifySynopsisPrompt', () => {
     expect(prompt).not.toContain('turn_02')
     expect(prompt).toContain(`turn_${String(MAX_SYNOPSIS_TURNS + 2).padStart(2, '0')}`)
     expect(prompt).toContain(`turn_${String(messages.length - MAX_SYNOPSIS_TURNS).padStart(2, '0')}`)
+  })
+
+  it('locks the chosen art style into the series brief', () => {
+    const prompt = buildClarifySynopsisPrompt({
+      productionFormat: 'narrative',
+      episodeCount: 5,
+      artStyle: 'ghibli',
+      messages: [{ role: 'user', content: 'A family keeps a lighthouse.' }],
+    })
+
+    expect(prompt).toContain('LOCKED ART STYLE — Ghibli-esque')
+    expect(prompt).toContain('watercolor aesthetic')
+    expect(prompt).toContain('EPISODE COUNT: 5')
+  })
+
+  it('writes a single-production brief when the surface is a project', () => {
+    const prompt = buildClarifySynopsisPrompt({
+      productionFormat: 'demo',
+      episodeCount: 5,
+      surface: 'project',
+      scope: 'Short (5-30 min)',
+      artStyle: 'anime-90s',
+      messages: [{ role: 'user', content: 'Show how the field kit packs in under a minute.' }],
+    })
+
+    expect(prompt).toContain('single production')
+    expect(prompt).toContain('SCOPE: Short (5-30 min)')
+    expect(prompt).toContain('anime style')
+    expect(prompt).not.toContain('EPISODE COUNT')
+    expect(prompt).toContain('Do NOT invent a fictional plot')
   })
 })
 
@@ -152,6 +182,27 @@ describe('readSeriesIdeationSeed', () => {
     expect(seed.locked).toBeNull()
     expect(seed.draft).toContain('street food')
     expect(seed.format).toBe('narrative')
+    expect(seed.artStyle).toBe('photorealistic')
+  })
+
+  it('reads a stored art style preset', () => {
+    const seed = readSeriesIdeationSeed({
+      metadata: { artStyle: 'ghibli', ideaTopic: 'A weekly show about street food.' },
+    })
+    expect(seed.artStyle).toBe('ghibli')
+  })
+})
+
+describe('resolveSeriesArtStyle', () => {
+  it('prefers an explicit preset, then metadata, then the vision phase', () => {
+    expect(resolveSeriesArtStyle({ artStyle: 'pixar', metadata: { artStyle: 'ghibli' } })).toBe('pixar')
+    expect(resolveSeriesArtStyle({ metadata: { artStyle: 'comic-book' } })).toBe('comic-book')
+    expect(
+      resolveSeriesArtStyle({
+        metadata: { visionPhase: { artStyle: 'anime-90s' } },
+      })
+    ).toBe('anime-90s')
+    expect(resolveSeriesArtStyle({})).toBe('photorealistic')
   })
 })
 

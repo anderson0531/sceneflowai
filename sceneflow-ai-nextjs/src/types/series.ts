@@ -207,6 +207,8 @@ export interface SeriesAesthetic {
   cinematography?: string
   colorPalette?: Record<string, string[]>
   aspectRatio?: string
+  /** Art style preset id, locked when the series is created. */
+  artStyle?: string
   visualStyle?: string
   lightingStyle?: string
   lockedPromptTokens?: {
@@ -365,6 +367,8 @@ export interface GenerateSeriesRequest {
   format?: string
   genre?: string
   tone?: string
+  /** Art style preset id locked at series inception. */
+  artStyle?: string
   regenerateField?: 'title' | 'logline' | 'synopsis' | 'protagonist' | 'antagonist' | 'setting' | 'episodes' | 'characters'
   preserveExisting?: boolean
 }

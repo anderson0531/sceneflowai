@@ -348,6 +348,16 @@ describe('composeBeatStillPrompt', () => {
     ).toBe('[SCENE COMPOSITION & BEAT]\nAction/Framing: Wide shot of the booth.')
   })
 
+  it('expands a preset id into the art-style name and suffix', () => {
+    const prompt = composeBeatStillPrompt({
+      actionFraming: 'Wide shot of the booth.',
+      sceneIndex: 0,
+      artStyleAnchor: 'ghibli',
+    })
+    expect(prompt).toContain('Master Style: Ghibli-esque: Studio Ghibli style, watercolor aesthetic')
+    expect(prompt).not.toContain('Master Style: ghibli\n')
+  })
+
   it('anchors on the code-owned art style when the lookbook is missing', () => {
     const prompt = composeBeatStillPrompt({
       actionFraming: 'Wide shot of the booth.',

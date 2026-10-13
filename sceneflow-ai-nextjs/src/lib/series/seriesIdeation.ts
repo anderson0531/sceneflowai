@@ -7,6 +7,7 @@ import {
   type AudienceDefinition,
 } from '@/lib/types/audienceResonance'
 import type { SeriesSynopsisLock } from '@/lib/series/clarifySynopsis'
+import { resolveVariantArtStyle } from '@/lib/treatment/blueprintFoundation'
 
 export interface SeriesIdeationSeedSource {
   maxEpisodes?: number
@@ -17,9 +18,41 @@ export interface SeriesIdeationSeedSource {
 export interface SeriesIdeationSeed {
   format: string
   episodeCount: number
+  artStyle: string
   draft: string
   locked: SeriesSynopsisLock | null
   audience: AudienceDefinition
+}
+
+/**
+ * Preset id for a series, from an explicit request, series metadata, the bible,
+ * or the vision phase copied onto an episode project.
+ */
+export function resolveSeriesArtStyle(source: {
+  artStyle?: unknown
+  metadata?: Record<string, unknown> | null
+  productionBible?: { aesthetic?: { artStyle?: unknown; visualStyle?: unknown } } | null
+}): string {
+  const meta =
+    source.metadata && typeof source.metadata === 'object' && !Array.isArray(source.metadata)
+      ? source.metadata
+      : {}
+  const visionPhase = meta.visionPhase
+  const visionArtStyle =
+    visionPhase && typeof visionPhase === 'object' && !Array.isArray(visionPhase)
+      ? (visionPhase as { artStyle?: unknown }).artStyle
+      : undefined
+  const aesthetic = source.productionBible?.aesthetic
+  const explicit =
+    (typeof source.artStyle === 'string' && source.artStyle.trim()) ||
+    (typeof meta.artStyle === 'string' && meta.artStyle.trim()) ||
+    (typeof aesthetic?.artStyle === 'string' && aesthetic.artStyle.trim()) ||
+    (typeof visionArtStyle === 'string' && visionArtStyle.trim()) ||
+    undefined
+  return resolveVariantArtStyle({
+    artStyle: explicit,
+    visual_style: typeof aesthetic?.visualStyle === 'string' ? aesthetic.visualStyle : undefined,
+  })
 }
 
 function optionalMetaString(value: unknown): string | undefined {
@@ -83,6 +116,7 @@ export function readSeriesIdeationSeed(series: SeriesIdeationSeedSource): Series
   return {
     format,
     episodeCount,
+    artStyle: resolveSeriesArtStyle({ metadata: meta }),
     draft: locked ? '' : ideaTopic,
     locked,
     audience,

@@ -38,6 +38,7 @@ import { storedStillDirectionKeyMatches } from '@/lib/script/beatDirectionFinger
 import { formatSceneArcBlock, getSceneMovements } from '@/lib/script/sceneMovements'
 import type { BeatDirection, SceneBeat } from '@/lib/script/segmentTypes'
 import { resolveBeatDirectedEmotion } from '@/lib/scene/performanceCues'
+import { describeArtStyleAnchor } from '@/lib/vision/artStyle'
 import {
   enrichActionFramingWithCastPerformance,
   parseNamedCastEmotions,
@@ -163,22 +164,22 @@ export function composeBeatStillPrompt(args: ComposeBeatStillPromptArgs): string
   if (!actionFraming) return ''
 
   const composition = `[SCENE COMPOSITION & BEAT]\nAction/Framing: ${actionFraming}`
+  const anchor = describeArtStyleAnchor(args.artStyleAnchor)
   if (!args.lookbook) {
-    const anchor = args.artStyleAnchor?.trim()
     return anchor
       ? `[GLOBAL STYLE ANCHOR]\nMaster Style: ${anchor}\n\n${composition}`
       : composition
   }
 
-  const anchor = formatLookbookStyleAnchor(args.lookbook, {
-    artStyleAnchor: args.artStyleAnchor,
+  const formattedAnchor = formatLookbookStyleAnchor(args.lookbook, {
+    artStyleAnchor: anchor || undefined,
     sceneLookNote: getSceneLookNote(args.lookbook, args.sceneIndex),
     beatLighting: args.lighting,
     beatLens: args.lensMm,
     beatShotType: normalizeStillShotType(args.shotType),
   })
 
-  return `${anchor}\n\n${composition}`
+  return `${formattedAnchor}\n\n${composition}`
 }
 
 function asSentence(value: string): string {

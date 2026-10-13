@@ -13,6 +13,18 @@ export function getArtStylePromptSuffix(artStyleId?: string | null): string {
 }
 
 /**
+ * Turn a stored anchor into prompt text.
+ * Preset ids expand to the preset name and suffix. Free-text anchors stay as written.
+ */
+export function describeArtStyleAnchor(anchor?: string | null): string {
+  const trimmed = anchor?.trim() || ''
+  if (!trimmed) return ''
+  const preset = artStylePresets.find((style) => style.id === trimmed)
+  if (!preset) return trimmed
+  return preset.promptSuffix ? `${preset.name}: ${preset.promptSuffix}` : preset.name
+}
+
+/**
  * Motion suffix for video prompts.
  *
  * The still preset says "cinematic film still" and "8K, sharp focus", which

@@ -11,6 +11,9 @@ import {
   isSeriesProductionFormat,
   type SeriesProductionFormat,
 } from '@/config/series/productionFormats'
+import { buildArtStylePromptBlock } from '@/lib/treatment/blueprintFoundation'
+
+export type ClarifySynopsisSurface = 'series' | 'project'
 
 export interface SynopsisMessage {
   role: 'user' | 'assistant'
@@ -23,6 +26,12 @@ export interface ClarifySynopsisInput {
   targetAudience?: string
   messages: SynopsisMessage[]
   currentSynopsis?: string
+  /** Preset id. Omitted prompts still name the default live-action look. */
+  artStyle?: string
+  /** Series bible vs a single blueprint production. */
+  surface?: ClarifySynopsisSurface
+  /** Project length hint. Series prompts use episode count instead. */
+  scope?: string
 }
 
 export interface ClarifySynopsisResult {
@@ -110,14 +119,22 @@ function formatLabel(format: string): string {
   return format
 }
 
-function formatGuidance(format: SeriesProductionFormat | string): string {
+function formatGuidance(
+  format: SeriesProductionFormat | string,
+  surface: ClarifySynopsisSurface
+): string {
+  const kind = surface === 'project' ? 'production' : 'series'
   if (isNonFictionProductionFormat(format)) {
-    return `This is a non-fiction ${format} series. Do NOT invent a fictional plot, characters, or dramatized conflict. Preserve real subjects, facts, and the instructional, journalistic, or commercial structure the creator described.`
+    return `This is a non-fiction ${format} ${kind}. Do NOT invent a fictional plot, characters, or dramatized conflict. Preserve real subjects, facts, and the instructional, journalistic, or commercial structure the creator described.`
   }
   if (format === 'podcast') {
-    return 'This is a podcast series. If the creator is describing a hosted show, keep it conversational. If they are describing fiction audio, shape that premise without adding events they did not suggest.'
+    return surface === 'project'
+      ? 'This is a podcast production. If the creator is describing a hosted show, keep it conversational. If they are describing fiction audio, shape that premise without adding events they did not suggest.'
+      : 'This is a podcast series. If the creator is describing a hosted show, keep it conversational. If they are describing fiction audio, shape that premise without adding events they did not suggest.'
   }
-  return 'This is a narrative series. Clarify implied stakes and shape a dramatic premise, but do not replace the creator\'s characters, setting, or events.'
+  return surface === 'project'
+    ? 'This is a narrative production. Clarify implied stakes and shape a dramatic premise, but do not replace the creator\'s characters, setting, or events.'
+    : 'This is a narrative series. Clarify implied stakes and shape a dramatic premise, but do not replace the creator\'s characters, setting, or events.'
 }
 
 export function buildClarifySynopsisPrompt(input: ClarifySynopsisInput): string {
@@ -126,19 +143,47 @@ export function buildClarifySynopsisPrompt(input: ClarifySynopsisInput): string 
   const episodeCount = Math.max(1, Math.floor(Number(input.episodeCount) || 1))
   const audience = (input.targetAudience || '').trim()
   const current = (input.currentSynopsis || '').trim()
+  const surface: ClarifySynopsisSurface = input.surface === 'project' ? 'project' : 'series'
+  const scope = (input.scope || '').trim() || 'Let the story decide its length'
+  const styleBlock = buildArtStylePromptBlock(input.artStyle).trim()
   const transcript = messages
     .map((message) => `${message.role === 'user' ? 'Creator' : 'You'}: ${message.content.trim()}`)
     .join('\n')
 
-  return `You are a development producer helping a creator ideate a multi-episode series before an AI writes the full storyline.
+  const intro =
+    surface === 'project'
+      ? `You are a development producer helping a creator ideate a single production before an AI writes the blueprint.
 
-Use the production format, the target audience, and the conversation to write an optimized series synopsis. The synopsis is the brief the storyline generator will follow.
+Use the production format, the locked art style, the target audience, and the conversation to write an optimized synopsis. The synopsis is the brief the blueprint generator will follow.
+
+PRODUCTION FORMAT: ${format}
+SCOPE: ${scope}
+TARGET AUDIENCE: ${audience || 'Not specified'}`
+      : `You are a development producer helping a creator ideate a multi-episode series before an AI writes the full storyline.
+
+Use the production format, the locked art style, the target audience, and the conversation to write an optimized series synopsis. The synopsis is the brief the storyline generator will follow.
 
 PRODUCTION FORMAT: ${format}
 EPISODE COUNT: ${episodeCount}
-TARGET AUDIENCE: ${audience || 'Not specified'}
+TARGET AUDIENCE: ${audience || 'Not specified'}`
 
-${formatGuidance(format)}
+  const lengthInstruction =
+    surface === 'project'
+      ? 'Write a synopsis of 2-5 sentences for this single production.'
+      : `Write a synopsis of 2-5 sentences shaped for ${episodeCount} episodes.`
+
+  const synopsisField =
+    surface === 'project'
+      ? '<optimized 2-5 sentence production synopsis>'
+      : '<optimized 2-5 sentence series synopsis>'
+
+  return `${intro}
+
+${styleBlock}
+
+${formatGuidance(format, surface)}
+
+The locked art style is already chosen. Keep the synopsis visually coherent with it, and do not switch the production to a different medium.
 
 CONVERSATION:
 ${transcript || '(no messages yet)'}
@@ -148,14 +193,14 @@ CURRENT PROPOSED SYNOPSIS:
 ${current || '(none yet)'}
 """
 
-Write a synopsis of 2-5 sentences shaped for ${episodeCount} episodes. Preserve every concrete detail the creator gave. When something material is still missing, ask exactly one question in assistantMessage. If the synopsis is already specific enough to generate from, ask no question and set readyToLock to true.
+${lengthInstruction} Preserve every concrete detail the creator gave. When something material is still missing, ask exactly one question in assistantMessage. If the synopsis is already specific enough to generate from, ask no question and set readyToLock to true.
 
 assistantMessage is a short conversational reply in the second person (2-4 sentences). Do not use a bullet list.
 
 Return ONLY valid JSON (no markdown):
 {
   "assistantMessage": "<conversational reply>",
-  "synopsis": "<optimized 2-5 sentence series synopsis>",
+  "synopsis": "${synopsisField}",
   "readyToLock": <boolean>,
   "genre": "<optional short genre label, or empty string>",
   "tone": "<optional short tone label, or empty string>"

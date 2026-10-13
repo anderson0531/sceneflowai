@@ -205,7 +205,7 @@ export function AudienceDescriptionField({
           ) : (
             <Sparkles className="h-3.5 w-3.5" />
           )}
-          {isEnhancing ? 'Enhancing…' : 'Validate & Enhance with AI'}
+          {isEnhancing ? 'Clarifying…' : 'Clarify and Confirm'}
         </button>
 
         {value.aiEnhanced ? (

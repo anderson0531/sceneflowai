@@ -1,3 +1,5 @@
+import { getArtStylePromptSuffix } from '@/lib/vision/artStyle'
+
 /**
  * Modern Treatment Visual Types
  * 
@@ -140,6 +142,8 @@ export interface TreatmentPromptTemplates {
     themes?: string[]
     visualStyle?: string
     conflictDynamic?: string  // e.g., "father-son ideological battle"
+    /** Preset id. Photoreal keeps the live-action poster line; other presets use their suffix. */
+    artStyle?: string
   }) => string
   
   characterPortrait: (params: {
@@ -263,7 +267,7 @@ export const TONE_LIGHTING_STYLES: Record<string, string> = {
  * Default prompt templates
  */
 export const DEFAULT_PROMPT_TEMPLATES: TreatmentPromptTemplates = {
-  heroImage: ({ title, genre, mood, setting, synopsis, protagonist, mainCharacterAppearance, antagonist, antagonistAppearance, themes, visualStyle, conflictDynamic }) => {
+  heroImage: ({ title, genre, mood, setting, synopsis, protagonist, mainCharacterAppearance, antagonist, antagonistAppearance, themes, visualStyle, conflictDynamic, artStyle }) => {
     /**
      * LAYERED NARRATIVE CONSTRUCTION METHOD
      * Formula: [Subject & Micro-Expression] + [Environment & "The Trap"] + 
@@ -272,6 +276,9 @@ export const DEFAULT_PROMPT_TEMPLATES: TreatmentPromptTemplates = {
      * This produces cinematic hero images with emotional resonance and visual subtext.
      */
     const parts: string[] = []
+    const styleId = (artStyle || '').trim()
+    const isPhotoreal = !styleId || styleId === 'photorealistic'
+    const presetSuffix = styleId ? getArtStylePromptSuffix(styleId) : ''
     
     // Normalize genre for cinematography lookup
     const normalizedGenre = (genre || 'drama').toLowerCase().replace(/[^a-z]/g, '')
@@ -332,10 +339,14 @@ export const DEFAULT_PROMPT_TEMPLATES: TreatmentPromptTemplates = {
     
     // =========================================================================
     // LAYER 4: CINEMATOGRAPHY & TECHNICAL SPECS
-    // Professional camera/lens specs for film-quality output
+    // Live-action keeps camera specs. Other presets use the locked art-style suffix.
     // =========================================================================
-    parts.push(`(Cinematography): ${cinSpecs.camera}, ${cinSpecs.lens}, sharp focus on eyes.`)
-    parts.push(`${cinSpecs.colorGrade}, 8K resolution, ultra-realistic texture.`)
+    if (isPhotoreal) {
+      parts.push(`(Cinematography): ${cinSpecs.camera}, ${cinSpecs.lens}, sharp focus on eyes.`)
+      parts.push(`${cinSpecs.colorGrade}, 8K resolution, ultra-realistic texture.`)
+    } else if (presetSuffix) {
+      parts.push(`(Art style): ${presetSuffix}`)
+    }
     
     // Conflict dynamic for compositional tension
     if (conflictDynamic) {
@@ -343,7 +354,11 @@ export const DEFAULT_PROMPT_TEMPLATES: TreatmentPromptTemplates = {
     }
     
     // Final technical requirements
-    parts.push(`Cinematic movie poster composition, professional film quality, no text overlays, 16:9 aspect ratio.`)
+    if (isPhotoreal) {
+      parts.push(`Cinematic movie poster composition, professional film quality, no text overlays, 16:9 aspect ratio.`)
+    } else {
+      parts.push(`Poster composition in this locked art style, no text overlays.`)
+    }
     
     return parts.join(' ')
   },
