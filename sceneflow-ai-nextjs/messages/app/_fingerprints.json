@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "generatedAt": "2026-10-10T05:34:14.713Z",
+  "generatedAt": "2026-10-13T12:29:50.002Z",
   "surfaces": {
     "common": {
       "actions.save": "1509f561f2416598",
@@ -376,7 +376,7 @@
       "audio.playing": "eae55e904e6f3670",
       "menu.reimagine": "9edfa5b681a7fb43",
       "regenerate.sectionTitle": "7730fc2f31b8182a",
-      "regenerate.sectionHint": "595df629bad043b3",
+      "regenerate.sectionHint": "b6a2767f65263af9",
       "regenerate.confirmTitle": "d2855e2b4f8d3035",
       "regenerate.confirmDescription": "5279776e66fee439",
       "regenerate.cancel": "19766ed6ccb2f4a3",
@@ -663,7 +663,7 @@
       "tour.welcome.tip": "b0c8383f3fb1cf99",
       "tour.generate.title": "ebb2331319520432",
       "tour.generate.description": "1a1981ffff6e15dc",
-      "tour.generate.tip": "da35bc1a1646afe5",
+      "tour.generate.tip": "46977004eb9bf3f2",
       "tour.review.title": "1ee66e8f09014bec",
       "tour.review.description": "23c69da70f3b8f47",
       "tour.review.tip": "53483b56f9d81d17",
@@ -701,8 +701,8 @@
       "gate.needAudience": "badc867cf49673d5",
       "gate.needArRun": "3b98c1499ddf4bf2",
       "gate.needScore": "21fe18e69b850d84",
-      "assistantButton.label": "bb7049be9daf6820",
-      "assistantButton.scopedLabel": "6361e0b59f0983dc",
+      "assistantButton.label": "f991e18503ebd72b",
+      "assistantButton.scopedLabel": "be7c938763366e85",
       "assistantButton.tooltip": "635ab6204f8a4c2c",
       "chips.strong-concept": "8330da38cc2d5194",
       "chips.needs-clarity": "03d7cce3b65d3897",
