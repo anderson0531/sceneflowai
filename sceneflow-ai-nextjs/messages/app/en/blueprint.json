@@ -420,6 +420,7 @@
   "reimagine": {
     "reimagineTitle": "Reimagine Blueprint",
     "startTitle": "Start Project",
+    "startDescription": "Lock the synopsis, then generate the blueprint from it.",
     "describeProject": "Describe Your Project",
     "importTreatment": "Import treatment",
     "contentType": "Content Type",

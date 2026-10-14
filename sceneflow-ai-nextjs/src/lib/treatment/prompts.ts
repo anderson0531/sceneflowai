@@ -5,8 +5,11 @@ import {
   formatLabel,
   getFormatBlock,
   getIntentPromptBlocks,
+  resolveBlueprintProductionFormat,
   resolveContentIntent,
+  resolveContentIntentFromMetadata,
 } from '@/lib/content/contentIntent'
+import { getSeriesProductionProfile } from '@/config/series/productionFormats'
 import {
   buildFoundationPromptBlock,
   getArtStylePresetName,
@@ -17,6 +20,34 @@ import { BLUEPRINT_CHARACTER_IDENTITY_BLOCK } from '@/lib/character/characterNam
 import { localeDirective } from '@/lib/prompts/localeDirective'
 
 type Format = ProductionFormat
+
+function nonFictionChecklistGenre(format: Format): string {
+  switch (format) {
+    case 'education':
+    case 'training':
+    case 'news':
+    case 'podcast':
+    case 'interview':
+    case 'explainer':
+    case 'advertisement':
+      return format
+    case 'product_demo':
+      return 'product_demo'
+    case 'case_study':
+      return 'case_study'
+    case 'documentary':
+    default:
+      return 'documentary'
+  }
+}
+
+const NONFICTION_SCHEMA_OVERRIDE = `
+SCHEMA FIELD OVERRIDE (NON-FICTION):
+- "protagonist" is the narrator or host who presents the creator's stated subject. Not a fictional hero.
+- "antagonist" is the real issue, event, or question being examined. Not a fictional villain.
+- fatalFlaw is a real obstacle only. Do NOT invent a fatal flaw.
+- scene_descriptions and illustrations depict the events being narrated.
+- Do NOT invent a fictional plot or cast.`
 
 // =============================================================================
 // STATIC SCHEMA TEMPLATE - Built once at module load, not per-request
@@ -149,7 +180,8 @@ function getFormatSpecificBlocks(format: Format, contentIntent?: ContentIntent) 
 export function buildTreatmentPrompt(opts: {
   input: string
   coreConcept: any
-  format: Format
+  /** Blueprint format or a New Series production type id. */
+  format: Format | string
   targetMinutes: number
   autoScope?: boolean
   advisoryScopeLabel?: string
@@ -169,8 +201,17 @@ export function buildTreatmentPrompt(opts: {
   /** Series continuity block including asset roster */
   seriesContinuityBlock?: string
 }) {
-  const { input, coreConcept, format, targetMinutes, autoScope, advisoryScopeLabel, styleHint, context, beatStructure, persona, hasExplicitSettings, contentIntent, rigor = 'thorough', storyLocale, properNouns, referenceCatalogBlock, seriesContinuityBlock } = opts
-  const intent = contentIntent ?? resolveContentIntent(context?.genre)
+  const { input, coreConcept, targetMinutes, autoScope, advisoryScopeLabel, styleHint, context, beatStructure, persona, contentIntent, rigor = 'thorough', storyLocale, properNouns, referenceCatalogBlock, seriesContinuityBlock } = opts
+  const productionType = getSeriesProductionProfile(opts.format)
+  const format = resolveBlueprintProductionFormat(opts.format)
+  const intent = resolveContentIntentFromMetadata({
+    contentIntent,
+    format: opts.format,
+    genre: context?.genre,
+  })
+  const productionTypeBlock = productionType
+    ? `PRODUCTION TYPE: ${productionType.label}\nCRAFT: ${productionType.craft}\n`
+    : ''
   const pacingPhilosophy = buildPacingPhilosophyBlock(intent)
   // In auto scope, runtime is advisory: the story/illustration decides its own
   // length. In fixed scope, honor the user's selected target.
@@ -189,10 +230,11 @@ Start from a long-form assumption: unless the input clearly describes something 
     ? '\nVOICE: Write as an engaging, neutral narrator with professional tone.'
     : ''
   
+  const scoringGenre = intent === 'fiction' ? context?.genre : nonFictionChecklistGenre(format)
   const scoringChecklist = rigor === 'fast'
-    ? buildLightweightChecklist(context?.genre, context?.targetAudience, context?.tone, intent)
+    ? buildLightweightChecklist(scoringGenre, context?.targetAudience, context?.tone, intent)
     : buildScoringAwareChecklist({
-        genre: context?.genre,
+        genre: scoringGenre,
         targetAudience: context?.targetAudience,
         tone: context?.tone,
         contentIntent: intent,
@@ -208,6 +250,7 @@ Start from a long-form assumption: unless the input clearly describes something 
   const antiFictionBlock = formatSpecifics.antiFictionalizationRule
     ? `\n${formatSpecifics.antiFictionalizationRule}\n`
     : ''
+  const schemaOverride = intent === 'fiction' ? '' : `\n${NONFICTION_SCHEMA_OVERRIDE}\n`
 
   const artStyle = context?.artStyle || resolveVariantArtStyle(context || {})
   const aspectRatio = context?.aspectRatio || resolveVariantAspectRatio(context || {})
@@ -219,7 +262,7 @@ Start from a long-form assumption: unless the input clearly describes something 
   })
 
   return `CRITICAL INSTRUCTIONS: You are a professional ${formatSpecifics.personaLabel} showrunner.
-CONTENT INTENT: ${intent.toUpperCase()} — ${formatSpecifics.schemaFieldSemantics}
+${productionTypeBlock}CONTENT INTENT: ${intent.toUpperCase()} — ${formatSpecifics.schemaFieldSemantics}
 ${scopeBlock}
 PRIORITIES: ${formatBlock.priorities}
 ${personaBlock}${structureBlock}
@@ -265,7 +308,7 @@ ${formatSpecifics.step1Thinking}
 STEP 2: START YOUR JSON OUTPUT WITH THESE 4 FIELDS FIRST, THEN ADD ALL OTHER FIELDS.
 
 ${schemaBlock}
-
+${schemaOverride}
 ${formatSpecifics.characterBlock}`
 }
 

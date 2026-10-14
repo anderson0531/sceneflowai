@@ -21,6 +21,8 @@ type Props = {
   highlightAspectRatio?: boolean
   /** Inception dialogs show art style above the synopsis. Aspect ratio stays here. */
   showArtStyle?: boolean
+  /** Match the New Series dialog chrome. Reimagine keeps the slate surface. */
+  surface?: 'slate' | 'gray'
 }
 
 export function BlueprintFoundationFields({
@@ -32,7 +34,16 @@ export function BlueprintFoundationFields({
   highlightArtStyle,
   highlightAspectRatio,
   showArtStyle = true,
+  surface = 'slate',
 }: Props) {
+  const panel =
+    surface === 'gray'
+      ? 'border-gray-700 bg-gray-800/50'
+      : 'border-slate-700 bg-slate-800/50'
+  const idleButton =
+    surface === 'gray'
+      ? 'border-gray-700 bg-gray-900/50 text-gray-400 hover:border-gray-600 hover:text-gray-300'
+      : 'border-slate-700 bg-slate-900/50 text-gray-400 hover:border-slate-600 hover:text-gray-300'
   return (
     <div className={cn('space-y-4', className)}>
       {showArtStyle ? (
@@ -46,11 +57,12 @@ export function BlueprintFoundationFields({
 
       <div
         className={cn(
-          'space-y-2 p-3 rounded border border-slate-700 bg-slate-800/50',
+          'space-y-2 p-3 rounded border',
+          panel,
           highlightAspectRatio && 'ring-2 ring-amber-500/50'
         )}
       >
-        <h4 className="text-sm font-medium text-slate-200 flex items-center gap-2">
+        <h4 className="text-sm font-medium text-gray-200 flex items-center gap-2">
           <Monitor className="w-4 h-4 text-cyan-400" />
           Aspect Ratio
         </h4>
@@ -67,7 +79,7 @@ export function BlueprintFoundationFields({
                 'text-left p-2.5 rounded-lg border text-xs transition-all',
                 aspectRatio === format.ratio
                   ? 'border-cyan-500/60 bg-cyan-500/10 text-cyan-200'
-                  : 'border-slate-700 bg-slate-900/50 text-gray-400 hover:border-slate-600 hover:text-gray-300'
+                  : idleButton
               )}
             >
               <div className="font-medium text-sm">{format.label}</div>
