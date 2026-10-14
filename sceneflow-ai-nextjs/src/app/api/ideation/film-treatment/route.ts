@@ -7,9 +7,12 @@ import { analyzeDuration, normalizeDuration } from '@/lib/treatment/duration'
 import { buildTreatmentPrompt } from '@/lib/treatment/prompts'
 import {
   type ContentIntent,
-  resolveContentIntent,
+  resolveBlueprintProductionFormat,
+  resolveContentIntentFromMetadata,
   resolveProductionFormat,
 } from '@/lib/content/contentIntent'
+import { getSeriesProductionProfile } from '@/config/series/productionFormats'
+import { autoDetectFilmStructure } from '@/lib/treatment/filmStructure'
 import { getGeminiProductModel } from '@/lib/config/modelConfig'
 import { BEAT_STRUCTURES, type BeatStructureKey } from '@/lib/treatment/structures'
 import { repairTreatment } from '@/lib/treatment/validate'
@@ -276,108 +279,6 @@ function getAdvisoryScopeLabel(contentIntent: ContentIntent): string {
   }
 }
 
-/**
- * Auto-detect the optimal film structure based on content analysis
- * Uses keyword matching, format hints, and duration to select the best beat structure
- */
-function autoDetectFilmStructure(
-  input: string,
-  coreConcept: CoreConceptData | null,
-  format: string,
-  targetMinutes: number,
-  contentIntent?: ContentIntent
-): { structure: BeatStructureKey; confidence: number; reason: string } {
-  const content = `${input} ${coreConcept?.input_synopsis || ''} ${coreConcept?.core_themes?.join(' ') || ''}`.toLowerCase()
-  
-  // Check for instructional/educational content
-  const instructionalPatterns = /\b(tutorial|how-to|guide|lesson|learn|teach|step-by-step|instructions|training|course|module|explain|explainer|walkthrough|demonstration)\b/i
-  if (instructionalPatterns.test(content) || format === 'education' || format === 'educational' || format === 'training') {
-    return {
-      structure: 'instructional',
-      confidence: 0.9,
-      reason: 'Content has educational/instructional focus'
-    }
-  }
-  
-  // Check for sales/demo/commercial content
-  const salesDemoPatterns = /\b(demo|product|sales|pitch|walkthrough|tour|feature|benefit|roi|conversion|prospect|lead|explainer|case study|advertisement|ad\b)\b/i
-  const commercialFormats = ['demo', 'sales', 'product_demo', 'explainer', 'case_study', 'advertisement']
-  if (salesDemoPatterns.test(content) || commercialFormats.includes(format)) {
-    return {
-      structure: 'instructional',
-      confidence: 0.85,
-      reason: 'Content suits commercial/demo format'
-    }
-  }
-
-  // Check for news/reporting content
-  const newsPatterns = /\b(news|report|breaking|investigate|coverage|headline|anchor|correspondent|journalism|update)\b/i
-  if (newsPatterns.test(content) || format === 'news') {
-    return {
-      structure: 'mini_doc', // News fits well with documentary structure
-      confidence: 0.85,
-      reason: 'Content suits news/reporting format'
-    }
-  }
-
-  // Check for documentary/mini-doc style
-  const documentaryPatterns = /\b(documentary|real|authentic|behind-the-scenes|journey|explore|discover|reveal|interview|profile|portrait|day-in-the-life|story of|true story|podcast)\b/i
-  if (documentaryPatterns.test(content) || format === 'documentary' || format === 'podcast' || format === 'interview') {
-    return {
-      structure: 'mini_doc',
-      confidence: 0.85,
-      reason: 'Content suits documentary/podcast/mini-doc format'
-    }
-  }
-  
-  // Check for hero's journey patterns
-  const herosJourneyPatterns = /\b(hero|journey|quest|adventure|transform|overcome|destiny|calling|mentor|ordeal|return|triumph|dragon|villain|chosen one|reluctant|crossing threshold)\b/i
-  if (herosJourneyPatterns.test(content)) {
-    return {
-      structure: 'heros_journey',
-      confidence: 0.8,
-      reason: 'Content contains hero\'s journey narrative elements'
-    }
-  }
-  
-  // Check for Save the Cat patterns (commercial/Hollywood style)
-  const saveTheCatPatterns = /\b(commercial|blockbuster|mainstream|hook|catalyst|fun and games|midpoint|twist|all is lost|finale|crowd-pleaser|high-concept|entertainment)\b/i
-  if (saveTheCatPatterns.test(content) || targetMinutes >= 30) {
-    // Save the Cat works well for longer, more structured narratives
-    if (targetMinutes >= 20) {
-      return {
-        structure: 'save_the_cat',
-        confidence: 0.75,
-        reason: 'Content suits structured commercial narrative'
-      }
-    }
-  }
-  
-  // Intent-aware default: only fiction should fall back to three-act. Non-fiction
-  // intents must not be coerced into a cinematic storyline structure.
-  if (contentIntent && contentIntent !== 'fiction') {
-    if (contentIntent === 'commercial') {
-      return {
-        structure: 'instructional',
-        confidence: 0.7,
-        reason: 'Commercial intent defaults to problem/solution instructional structure',
-      }
-    }
-    return {
-      structure: 'mini_doc',
-      confidence: 0.7,
-      reason: `${contentIntent} intent defaults to documentary/segment structure (not three-act)`,
-    }
-  }
-
-  // Default to three-act structure - the most versatile for fiction
-  return {
-    structure: 'three_act',
-    confidence: 0.7,
-    reason: 'Using versatile three-act structure as default'
-  }
-}
-
 export async function POST(request: NextRequest) {
   const requestStartMs = Date.now()
   try {
@@ -403,8 +304,12 @@ export async function POST(request: NextRequest) {
     
     const requestedFilmType = body.filmType && body.filmType !== 'auto' ? body.filmType : undefined
     const format = body.format || resolveProductionFormat(genre) || 'short_film'
-    const contentIntent: ContentIntent =
-      body.contentIntent || resolveContentIntent(genre)
+    const blueprintFormat = resolveBlueprintProductionFormat(format)
+    const contentIntent: ContentIntent = resolveContentIntentFromMetadata({
+      contentIntent: body.contentIntent,
+      format,
+      genre,
+    })
 
     // Scope mode: when the user leaves scope on "Auto" (or omits it), duration is
     // advisory only. Beats are shaped by the story, not rescaled to a target.
@@ -437,14 +342,18 @@ export async function POST(request: NextRequest) {
         rigor === 'fast' ||
         shouldUseSyntheticCoreConcept(rigor, genre, tone, targetAudience, hasExplicitSettings)
       if (useSynthetic) {
-        const effectiveGenre = genre || 'drama'
+        const effectiveGenre =
+          genre ||
+          (contentIntent === 'fiction'
+            ? 'drama'
+            : getSeriesProductionProfile(format)?.label || 'documentary')
         const effectiveTone = tone || 'professional'
         console.log(`[Film Treatment] Building synthetic core concept (rigor=${rigor}, skipping LLM extraction)`)
         const narrativeStructure =
           contentIntent === 'fiction'
             ? 'three_act'
             : contentIntent === 'informational'
-              ? format === 'documentary' || format === 'news'
+              ? blueprintFormat === 'documentary' || blueprintFormat === 'news'
                 ? 'Documentary Structure'
                 : 'Instructional Structure'
               : contentIntent === 'commercial'
@@ -472,14 +381,21 @@ export async function POST(request: NextRequest) {
       console.log(`[Film Treatment] Auto-detected structure: ${effectiveBeatStructure} (confidence: ${autoDetectedStructure.confidence}, reason: ${autoDetectedStructure.reason})`)
     }
 
-    // Prepare diversified variant styles
-    const variantConfigs: Array<{ id: string; label: string; styleHint: string }> = [
-      // A is the hint used whenever variantsCount is 1, which is every Reimagine
-      // run — "crisp pacing" there was steering the default toward short-form.
-      { id: 'A', label: 'A', styleHint: 'Contemporary, grounded, character-driven, clean visual language with room for scenes to breathe' },
-      { id: 'B', label: 'B', styleHint: 'Nostalgic, warm, human-centric tone, cinematic texture' },
-      { id: 'C', label: 'C', styleHint: 'Energetic, bold, high-contrast visuals, rhythmic editing' },
-    ].slice(0, variantsCount)
+    // A is the hint used whenever variantsCount is 1. Non-fiction must not be
+    // steered into a character-driven fictional treatment.
+    const variantConfigs: Array<{ id: string; label: string; styleHint: string }> = (
+      contentIntent === 'fiction'
+        ? [
+            { id: 'A', label: 'A', styleHint: 'Contemporary, grounded, character-driven, clean visual language with room for scenes to breathe' },
+            { id: 'B', label: 'B', styleHint: 'Nostalgic, warm, human-centric tone, cinematic texture' },
+            { id: 'C', label: 'C', styleHint: 'Energetic, bold, high-contrast visuals, rhythmic editing' },
+          ]
+        : [
+            { id: 'A', label: 'A', styleHint: 'Factual and concrete. Hosts and narrators present the stated subject, and illustrations depict those events. Do not invent a fictional plot.' },
+            { id: 'B', label: 'B', styleHint: 'Clear explanatory pace. Evidence and illustration before the takeaway. No invented drama.' },
+            { id: 'C', label: 'C', styleHint: 'Direct and specific. Real subjects and places. No fictional antagonist or fatal flaw.' },
+          ]
+    ).slice(0, variantsCount)
 
     const isExistingProject = body.projectId && !body.projectId.startsWith('new-project')
     const { storyLocale, properNouns, source: storyLocaleSource } = isExistingProject

@@ -3,7 +3,10 @@
  * Derives intent from UI genre selection and flows through blueprint, series, script, and AR.
  */
 
-import { intentForSeriesProductionFormat } from '@/config/series/productionFormats'
+import {
+  getSeriesProductionProfile,
+  intentForSeriesProductionFormat,
+} from '@/config/series/productionFormats'
 
 export type ContentIntent = 'fiction' | 'informational' | 'commercial' | 'conversational'
 
@@ -109,6 +112,68 @@ export function defaultFormatForIntent(intent: ContentIntent): ProductionFormat 
     default:
       return 'short_film'
   }
+}
+
+const BLUEPRINT_PRODUCTION_FORMATS = new Set<string>([
+  'youtube',
+  'short_film',
+  'documentary',
+  'education',
+  'training',
+  'news',
+  'podcast',
+  'interview',
+  'product_demo',
+  'explainer',
+  'case_study',
+  'advertisement',
+])
+
+/**
+ * Map a New Series production type onto the blueprint format its engine already
+ * uses. Older blueprint format ids pass through. Unknown ids become short_film.
+ */
+export function resolveBlueprintProductionFormat(format?: string | null): ProductionFormat {
+  const profile = getSeriesProductionProfile(format)
+  if (profile) {
+    switch (profile.value) {
+      case 'training':
+        return 'training'
+      case 'explainer':
+        return 'explainer'
+      case 'interview':
+        return 'interview'
+      case 'demo':
+        return 'product_demo'
+      case 'case_study':
+        return 'case_study'
+      case 'sales':
+      case 'advertisement':
+        return 'advertisement'
+      default:
+        break
+    }
+    switch (profile.engine) {
+      case 'documentary':
+        return 'documentary'
+      case 'educational':
+        return 'education'
+      case 'news':
+        return 'news'
+      case 'podcast':
+        return 'podcast'
+      case 'demo':
+        return 'product_demo'
+      case 'sales':
+        return 'advertisement'
+      case 'narrative':
+      default:
+        return 'short_film'
+    }
+  }
+  const key = format?.trim().toLowerCase()
+  if (key && BLUEPRINT_PRODUCTION_FORMATS.has(key)) return key as ProductionFormat
+  return 'short_film'
 }
 
 export function isFictionIntent(intent: ContentIntent): boolean {

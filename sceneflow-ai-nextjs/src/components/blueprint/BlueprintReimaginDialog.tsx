@@ -10,7 +10,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { toast } from 'sonner'
 import { useGuideStore } from '@/store/useGuideStore'
 import { 
-  Sparkles, 
   Loader2, 
   Film,
   Palette,
@@ -277,33 +276,34 @@ export function BlueprintReimaginDialog({
   
   return (
     <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
-      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto bg-slate-900 border-slate-700">
+      <DialogContent
+        className={
+          isReimaginMode
+            ? 'max-w-3xl max-h-[90vh] overflow-y-auto bg-slate-900 border-slate-700'
+            : 'bg-gray-900 border-gray-700 text-white max-w-2xl max-h-[90vh] overflow-y-auto'
+        }
+      >
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2 text-xl">
-            {isReimaginMode ? (
-              <>
-                <RefreshCw className="w-5 h-5 text-cyan-400" />
-                <span>{t('reimagineTitle')}</span>
-              </>
-            ) : (
-              <>
-                <Sparkles className="w-5 h-5 text-amber-400" />
-                <span>{t('startTitle')}</span>
-              </>
-            )}
-          </DialogTitle>
-          <DialogDescription className="sr-only">
-            {isReimaginMode ? 'Form to reimagine an existing blueprint' : 'Form to create a new blueprint'}
+          {isReimaginMode ? (
+            <DialogTitle className="flex items-center gap-2 text-xl">
+              <RefreshCw className="w-5 h-5 text-cyan-400" />
+              <span>{t('reimagineTitle')}</span>
+            </DialogTitle>
+          ) : (
+            <DialogTitle className="text-xl">{t('startTitle')}</DialogTitle>
+          )}
+          <DialogDescription className={isReimaginMode ? 'sr-only' : 'text-gray-400'}>
+            {isReimaginMode ? 'Form to reimagine an existing blueprint' : t('startDescription')}
           </DialogDescription>
         </DialogHeader>
         
-        <div className="space-y-6 py-4">
+        <div className={isReimaginMode ? 'space-y-6 py-4' : 'space-y-4 pt-4'}>
           {isReimaginMode ? null : (
             <div className="flex justify-end">
               <button
                 type="button"
                 onClick={() => setTreatmentImportOpen(true)}
-                className="inline-flex items-center gap-1.5 rounded-md border border-slate-600 px-2.5 py-1 text-[11px] font-medium text-slate-300 hover:bg-slate-800 hover:text-white"
+                className="inline-flex items-center gap-1.5 rounded-md border border-gray-600 px-2.5 py-1 text-[11px] font-medium text-gray-300 hover:bg-gray-800 hover:text-white"
               >
                 <Upload className="h-3.5 w-3.5" />
                 {t('importTreatment')}
@@ -433,11 +433,23 @@ export function BlueprintReimaginDialog({
           ) : null}
 
           <div className="space-y-1.5">
-            <label className="text-xs text-gray-400 flex items-center gap-1">
-              <Clock className="w-3 h-3" /> {t('scope')} <span className="text-gray-500">{t('optional')}</span>
+            <label
+              className={
+                isReimaginMode
+                  ? 'text-xs text-gray-400 flex items-center gap-1'
+                  : 'text-sm font-medium text-gray-300 flex items-center gap-1'
+              }
+            >
+              <Clock className="w-3 h-3" /> {t('scope')} <span className="text-gray-500 text-xs font-normal">{t('optional')}</span>
             </label>
             <Select value={duration} onValueChange={setDuration}>
-              <SelectTrigger className="bg-slate-800/50 border-slate-700 text-sm">
+              <SelectTrigger
+                className={
+                  isReimaginMode
+                    ? 'bg-slate-800/50 border-slate-700 text-sm'
+                    : 'bg-gray-800 border-gray-700 text-white text-sm'
+                }
+              >
                 <SelectValue placeholder="Auto (let the story decide)" />
               </SelectTrigger>
               <SelectContent>
@@ -467,38 +479,60 @@ export function BlueprintReimaginDialog({
               highlightArtStyle={focusField === 'artStyle'}
               highlightAspectRatio={focusField === 'aspectRatio'}
               showArtStyle={isReimaginMode}
+              surface={isReimaginMode ? 'slate' : 'gray'}
             />
           </div>
         </div>
         
-        {/* Actions */}
-        <div className="flex justify-end gap-3 pt-4 border-t border-slate-700">
-          <Button variant="ghost" onClick={onClose} disabled={isGenerating}>
-            {tc('actions.cancel')}
-          </Button>
-          <Button
-            onClick={handleGenerate}
-            disabled={
-              isGenerating ||
-              (isReimaginMode
-                ? !synopsis.trim() || !contentType || !genre.trim() || !tone.trim()
-                : !lockedSynopsis?.synopsis.trim())
-            }
-            className="bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-600 hover:to-blue-600"
-          >
-            {isGenerating ? (
-              <>
-                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                {isReimaginMode ? 'Reimagining...' : 'Creating...'}
-              </>
-            ) : (
-              <>
-                <Zap className="w-4 h-4 mr-2" />
-                {isReimaginMode ? 'Reimagine Blueprint' : 'Create Blueprint'}
-              </>
-            )}
-          </Button>
-        </div>
+        {isReimaginMode ? (
+          <div className="flex justify-end gap-3 pt-4 border-t border-slate-700">
+            <Button variant="ghost" onClick={onClose} disabled={isGenerating}>
+              {tc('actions.cancel')}
+            </Button>
+            <Button
+              onClick={handleGenerate}
+              disabled={isGenerating || !synopsis.trim() || !contentType || !genre.trim() || !tone.trim()}
+              className="bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-600 hover:to-blue-600"
+            >
+              {isGenerating ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Reimagining...
+                </>
+              ) : (
+                <>
+                  <Zap className="w-4 h-4 mr-2" />
+                  Reimagine Blueprint
+                </>
+              )}
+            </Button>
+          </div>
+        ) : (
+          <div className="flex items-center gap-3 pt-2">
+            <Button
+              variant="outline"
+              onClick={onClose}
+              disabled={isGenerating}
+              className="flex-1 border-gray-600"
+            >
+              {tc('actions.cancel')}
+            </Button>
+            <Button
+              onClick={handleGenerate}
+              disabled={isGenerating || !lockedSynopsis?.synopsis.trim()}
+              className="flex-1 bg-gradient-to-r from-cyan-500 to-purple-600 hover:from-cyan-600 hover:to-purple-700"
+            >
+              {isGenerating ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Generating...
+                </>
+              ) : (
+                'Generate Blueprint'
+              )}
+            </Button>
+          </div>
+        )}
       </DialogContent>
 
       <TreatmentImportDialog
