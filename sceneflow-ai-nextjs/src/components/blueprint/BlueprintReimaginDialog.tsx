@@ -38,6 +38,7 @@ import { TreatmentImportDialog } from '@/components/blueprint/TreatmentImportDia
 import type { TreatmentImportResult } from '@/lib/blueprint/importTreatment'
 import { AudienceDescriptionField } from '@/components/audience/AudienceDescriptionField'
 import { SeriesSynopsisIdeation } from '@/components/series/SeriesSynopsisIdeation'
+import { DEFAULT_SERIES_PRODUCTION_FORMAT } from '@/config/series/productionFormats'
 import {
   createAudienceDefinition,
   type AudienceDefinition,
@@ -141,7 +142,7 @@ export function BlueprintReimaginDialog({
   const [audienceDef, setAudienceDef] = useState<AudienceDefinition>(() =>
     createAudienceDefinition({ description: '', source: 'blueprint' })
   )
-  const [productionFormat, setProductionFormat] = useState('narrative')
+  const [productionFormat, setProductionFormat] = useState(DEFAULT_SERIES_PRODUCTION_FORMAT)
   const [lockedSynopsis, setLockedSynopsis] = useState<SeriesSynopsisLock | null>(null)
   const [synopsisDraft, setSynopsisDraft] = useState('')
   const [ideationSession, setIdeationSession] = useState(0)

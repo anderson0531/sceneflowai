@@ -6,7 +6,10 @@ import { cn } from '@/lib/utils'
 import { DictationTextarea } from '@/components/ui/DictationTextarea'
 import { AudienceDescriptionField } from '@/components/audience/AudienceDescriptionField'
 import { ArtStyleGrid } from '@/components/image-gen/ArtStyleGrid'
-import { SERIES_PRODUCTION_FORMATS } from '@/config/series/productionFormats'
+import {
+  getSeriesProductionProfile,
+  seriesProductionFormatsByCategory,
+} from '@/config/series/productionFormats'
 import type { AudienceDefinition } from '@/lib/types/audienceResonance'
 import type {
   ClarifySynopsisResult,
@@ -39,8 +42,7 @@ interface SeriesSynopsisIdeationProps {
   projectId?: string
 }
 
-const DRAFT_PLACEHOLDER =
-  'e.g., A comedy about a group of friends who start a haunted house business but discover the house is actually haunted...'
+const FALLBACK_PLACEHOLDER = 'e.g., Describe the series you want to make.'
 
 export function SeriesSynopsisIdeation({
   format,
@@ -72,6 +74,7 @@ export function SeriesSynopsisIdeation({
   const [isClarifying, setIsClarifying] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [contextStale, setContextStale] = useState(false)
+  const [typesOpen, setTypesOpen] = useState(false)
 
   const audienceText = (audience.description || '').trim()
   const contextSignature = `${format}::${audienceText}::${artStyle}`
@@ -196,35 +199,63 @@ export function SeriesSynopsisIdeation({
   }, [clearLock])
 
   const showThread = turns.length > 0
-  const composerPlaceholder = proposed ? 'Add a clarification…' : DRAFT_PLACEHOLDER
+  const selectedType = getSeriesProductionProfile(format)
+  const selectedLabel = selectedType?.label ?? 'Narrative'
+  const composerPlaceholder = proposed
+    ? 'Add a clarification…'
+    : selectedType?.placeholder || FALLBACK_PLACEHOLDER
+  const typeGroups = seriesProductionFormatsByCategory()
 
   return (
     <div className="space-y-4">
       <div>
-        <label className="block text-sm font-medium text-gray-300 mb-2">Production Format</label>
-        <div className="flex flex-wrap gap-2">
-          {SERIES_PRODUCTION_FORMATS.map((item) => {
-            const selected = format === item.value
-            return (
-              <button
-                key={item.value}
-                type="button"
-                onClick={() => onFormatChange(item.value)}
-                disabled={isClarifying}
-                className={cn(
-                  'text-left rounded-lg border px-3 py-2 transition-colors',
-                  selected
-                    ? 'border-cyan-500/50 bg-cyan-500/10'
-                    : 'border-gray-700 bg-gray-800/50 hover:border-gray-600',
-                  isClarifying && 'cursor-not-allowed opacity-60'
-                )}
-              >
-                <p className="text-sm font-medium text-white">{item.label}</p>
-                <p className="text-xs text-gray-500 mt-0.5 max-w-[14rem]">{item.hint}</p>
-              </button>
-            )
-          })}
+        <div className="mb-2 flex items-center justify-between gap-3">
+          <label className="text-sm font-medium text-gray-300">
+            Production Type: <span className="text-white">{selectedLabel}</span>
+          </label>
+          <button
+            type="button"
+            onClick={() => setTypesOpen((open) => !open)}
+            aria-expanded={typesOpen}
+            className="shrink-0 rounded-md border border-gray-700 px-2.5 py-1 text-xs font-medium text-gray-300 hover:bg-gray-800"
+          >
+            {typesOpen ? 'Hide' : 'Show'}
+          </button>
         </div>
+        {typesOpen ? (
+          <div className="space-y-3">
+            {typeGroups.map((group) => (
+              <div key={group.id}>
+                <p className="mb-1.5 text-[11px] font-semibold uppercase tracking-wide text-gray-500">
+                  {group.label}
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  {group.formats.map((item) => {
+                    const selected = format === item.value
+                    return (
+                      <button
+                        key={item.value}
+                        type="button"
+                        onClick={() => onFormatChange(item.value)}
+                        disabled={isClarifying}
+                        className={cn(
+                          'text-left rounded-lg border px-3 py-2 transition-colors',
+                          selected
+                            ? 'border-cyan-500/50 bg-cyan-500/10'
+                            : 'border-gray-700 bg-gray-800/50 hover:border-gray-600',
+                          isClarifying && 'cursor-not-allowed opacity-60'
+                        )}
+                      >
+                        <p className="text-sm font-medium text-white">{item.label}</p>
+                        <p className="text-xs text-gray-500 mt-0.5 max-w-[14rem]">{item.hint}</p>
+                      </button>
+                    )
+                  })}
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : null}
         {showEpisodeHint ? (
           <p className="text-xs text-gray-500 mt-2">Starts as 5 episodes.</p>
         ) : null}
@@ -287,7 +318,7 @@ export function SeriesSynopsisIdeation({
             ) : null}
             {contextStale ? (
               <p className="text-[11px] text-amber-200">
-                Production format, audience, or art style changed. Clarify again so the synopsis
+                Production type, audience, or art style changed. Clarify again so the synopsis
                 matches, or confirm this version.
               </p>
             ) : null}

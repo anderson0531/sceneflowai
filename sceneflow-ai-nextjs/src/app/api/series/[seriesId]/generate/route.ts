@@ -12,6 +12,11 @@ import { buildProperNounGlossary, localeDirective } from '@/lib/prompts/localeDi
 import { getGeminiProductModel } from '@/lib/config/modelConfig'
 import { buildArtStylePromptBlock, getArtStylePresetName } from '@/lib/treatment/blueprintFoundation'
 import { resolveSeriesArtStyle } from '@/lib/series/seriesIdeation'
+import {
+  getSeriesFormatMapping,
+  seriesBibleSchemaBlock,
+  seriesBibleTaskBlock,
+} from '@/lib/series/episodeBatchPrompt'
 
 export const dynamic = 'force-dynamic'
 export const maxDuration = 600 // Allow 10 minutes for full series generation
@@ -352,6 +357,7 @@ async function generateFullSeriesStoryline(
   
   const format = options.format || 'narrative'
   const artStyleBlock = options.artStyle ? buildArtStylePromptBlock(options.artStyle).trim() : ''
+  const mapping = getSeriesFormatMapping(format)
 
   // The bible is authored first and then every episode batch inherits its
   // names, so the language directive has to be present from the bible onward or
@@ -360,132 +366,24 @@ async function generateFullSeriesStoryline(
     keepEnglishFields: ['act', 'status', 'type', 'role'],
   })
   
-  // Dynamic persona and instructions based on format
-  let personaInstruction = 'You are an expert TV series showrunner creating a comprehensive series bible.'
-  let mappingInstruction = ''
-  
-  if (format === 'educational') {
-    personaInstruction = 'You are an expert curriculum designer and educational video producer.'
-    mappingInstruction = `
-CRITICAL SCHEMA MAPPING FOR EDUCATIONAL CONTENT:
-- Ensure the curriculum is highly structured, logical, and builds comprehensively on prior knowledge (e.g., for technical certifications or fitness programs).
-- "protagonist": Use this for the Host, Lead Instructor, or Guide.
-- "antagonistConflict": Use this for the core learning challenge, common misconceptions, or the complex problem the viewer must solve.
-- "storyThreads": Use this for core learning objectives or recurring themes across the entire course.
-- "episodes": These are individual lessons or training modules, sequenced intelligently from foundational to advanced.
-- episode "beats": These are lesson segments (e.g., Intro/Hook, Core Concept Breakdown, Practical Exercise/Demo, Review/Conclusion).
-- "episodeHook": Use this to preview the next lesson and build anticipation.
-`
-  } else if (format === 'podcast') {
-    personaInstruction = 'You are an expert podcast producer and showrunner.'
-    mappingInstruction = `
-CRITICAL SCHEMA MAPPING FOR PODCAST CONTENT:
-- "protagonist": Use this for the Main Host.
-- "characters": Use this for co-hosts or recurring guest archetypes.
-- "antagonistConflict": Use this for the central theme of debate, the mystery being investigated, or the overarching topic.
-- "storyThreads": Use this for recurring segments, ongoing investigations, or season-long themes.
-- "episodes": These are podcast episodes.
-- episode "beats": These are show segments (e.g., Intro/Banter, Main Interview/Deep Dive, Outro/Call to Action).
-`
-  } else if (format === 'documentary') {
-    personaInstruction = 'You are an expert documentary filmmaker and docuseries producer.'
-    mappingInstruction = `
-CRITICAL SCHEMA MAPPING FOR DOCUMENTARY CONTENT:
-- "protagonist": Use this for the main subject of the documentary or the narrator/investigator.
-- "characters": Use this for key interviewees, historical figures, or subjects.
-- "antagonistConflict": Use this for the central conflict, systemic issue, or historical challenge being explored.
-- "storyThreads": Use this for different angles of the investigation or historical timelines.
-- "episodes": These are documentary parts/installments.
-- episode "beats": These are narrative segments (e.g., Establishing the Mystery, Presenting Evidence, Resolution/Impact).
-`
-  } else if (format === 'demo') {
-    personaInstruction = 'You are an expert product marketer and technical evangelist.'
-    mappingInstruction = `
-CRITICAL SCHEMA MAPPING FOR DEMO / WALKTHROUGH CONTENT:
-- "protagonist": Use this for the Presenter or Product Specialist.
-- "characters": Use this for user personas or specific use-cases being demonstrated.
-- "antagonistConflict": Use this for the customer pain points, inefficiencies, or technical hurdles the product solves.
-- "storyThreads": Use this for overarching value propositions or key product pillars.
-- "episodes": These are specific feature demonstrations or workflow walkthroughs.
-- episode "beats": These are demonstration segments (e.g., Identifying the Problem, Showing the Feature/Solution, Emphasizing the Value/Benefit).
-`
-  } else if (format === 'sales') {
-    personaInstruction = 'You are an expert sales director and persuasive storyteller.'
-    mappingInstruction = `
-CRITICAL SCHEMA MAPPING FOR SALES CONTENT:
-- "protagonist": Use this for the Sales Lead, Agent, or Brand Ambassador.
-- "characters": Use this for the target customer profiles or stakeholders.
-- "antagonistConflict": Use this for the competitive alternatives, market challenges, or the cost of inaction.
-- "storyThreads": Use this for recurring sales arguments, core benefits, or ROI considerations.
-- "episodes": These are stages of the pitch, property tours, or specific value propositions.
-- episode "beats": These are pitch segments (e.g., Hook/Pain Resonance, Value Presentation, Handling Objections, Call to Action).
-`
-  } else if (format === 'news') {
-    personaInstruction = 'You are an expert investigative journalist and news producer.'
-    mappingInstruction = `
-CRITICAL SCHEMA MAPPING FOR NEWS CONTENT:
-- "protagonist": Use this for the Lead Anchor or Investigative Reporter.
-- "characters": Use this for key sources, experts, or public figures involved in the story.
-- "antagonistConflict": Use this for the core controversy, societal issue, or unfolding crisis.
-- "storyThreads": Use this for different perspectives, ongoing developments, or historical context.
-- "episodes": These are news segments, special reports, or chronological updates.
-- episode "beats": These are reporting segments (e.g., Breaking the Headline, Field Reporting/Interviews, Expert Analysis/Context).
-`
-  } else {
-    mappingInstruction = `
-CRITICAL: Each episode must advance the overall series arc. Include "storyThreads" to track ongoing plots.
-`
-  }
-  
   // Phase 1: Generate series bible ONLY (0 episodes) to prevent memory limits
-  const firstBatchSize = 0
-  
-  const biblePrompt = `${personaInstruction}
+  const biblePrompt = `${mapping.personaInstruction}
 
 TOPIC: ${topic}
+PRODUCTION TYPE: ${format}
 ${options.genre ? `GENRE: ${options.genre}` : ''}
 ${options.tone ? `TONE: ${options.tone}` : ''}
 TOTAL PLANNED EPISODES/INSTALLMENTS: ${episodeCount}
 TO GENERATE NOW: 0
 
-Create a series bible that can sustain ${episodeCount} episodes/installments with compelling arcs.
-
-Generate:
-1. Series title (memorable, evocative)
-2. Logline (1-2 sentences, hooks the audience)
-3. Setting (vivid, specific), Protagonist (name, goal, fatal flaw), Antagonist/Conflict
-4. Synopsis (2 paragraphs covering the full series arc)
-5. Comprehensive characters and locations arrays.
+${seriesBibleTaskBlock(format, episodeCount)}
 
 ${SERIES_CHARACTER_NAMING_BLOCK}
 
-${mappingInstruction}
+${mapping.mappingInstruction}
 ${artStyleBlock ? `${artStyleBlock}\nvisualGuidelines must describe how this locked art style appears on screen. Do not switch to a different medium.\n` : ''}${languageBlock}
 Return ONLY valid JSON:
-{
-  "title": "Series Title",
-  "logline": "Hook that sells the series",
-  "genre": "Genre",
-  "productionBible": {
-    "logline": "Hook",
-    "synopsis": "Full series arc synopsis...",
-    "setting": "Where and when",
-    "timeframe": "Time period",
-    "protagonist": {"characterId": "char_1", "name": "Name", "goal": "What they want", "flaw": "Fatal flaw"},
-    "antagonistConflict": {"type": "character|nature|society|self|technology", "description": "Central conflict", "characterId": "char_2"},
-    "characters": [
-      {"id": "char_1", "name": "Name", "role": "protagonist", "description": "Character arc", "appearance": "Visual look", "personality": "Traits"},
-      {"id": "char_2", "name": "Name", "role": "antagonist", "description": "Motivation", "appearance": "Look", "personality": "Traits"}
-    ],
-    "locations": [
-      {"id": "loc_1", "name": "Name", "description": "Significance", "visualDescription": "Visual style"}
-    ],
-    "toneGuidelines": "Emotional tone and style",
-    "visualGuidelines": "Cinematography and visual approach",
-    "seriesArcs": ["Main arc description", "Subplot arc description"]
-  },
-  "episodeBlueprints": []
-}`
+${seriesBibleSchemaBlock(format)}`
 
   const bibleResponse = await callLLM(
     { 
@@ -575,37 +473,45 @@ Return ONLY valid JSON:
       keepEnglishFields: ['act', 'status', 'type', 'role'],
     })
 
-    const batchPrompt = `You are continuing an existing series/production with consistent arcs/curriculum.
+    const continuation = mapping.nonFiction
+      ? `Continue the stated subject. Each new installment must:
+1. Pick up logically from the previous installment
+2. Advance the subject, lesson, or report
+3. End with a preview of the next installment (unless finale)
+Do NOT invent a fictional plot, antagonist, or fatal flaw.`
+      : `Continue the story naturally. Each new installment must:
+1. Pick up logically from the previous installment
+2. Advance active threads
+3. End with a hook for the next installment (unless finale)`
+
+    const batchPrompt = `${mapping.personaInstruction}
 
 SERIES/PRODUCTION: ${parsed.title}
 LOGLINE: ${parsed.logline}
 SYNOPSIS: ${parsed.productionBible?.synopsis || ''}
-FORMAT: ${format}
+PRODUCTION TYPE: ${format}
 GENRE: ${parsed.genre || options.genre || 'Unspecified'}
 TONE: ${parsed.productionBible?.toneGuidelines || options.tone || ''}
 
 CHARACTERS/SUBJECTS:
 ${parsed.productionBible?.characters?.map((c: any) => `- ${c.name} (${c.role}): ${c.description}`).join('\n') || 'Not specified'}
 
-PROTAGONIST/HOST: ${parsed.productionBible?.protagonist?.name || 'Not specified'} - Goal: ${parsed.productionBible?.protagonist?.goal || ''}, Flaw/Trait: ${parsed.productionBible?.protagonist?.flaw || ''}
+${mapping.leadLabel}: ${parsed.productionBible?.protagonist?.name || 'Not specified'} - Goal/Role: ${parsed.productionBible?.protagonist?.goal || ''}, Trait: ${parsed.productionBible?.protagonist?.flaw || ''}
 
-ANTAGONIST/CONFLICT/CHALLENGE: ${parsed.productionBible?.antagonistConflict?.description || 'Not specified'}
+${mapping.oppositionLabel}: ${parsed.productionBible?.antagonistConflict?.description || 'Not specified'}
 
 PREVIOUS INSTALLMENTS (last 3):
 ${episodeSummaries || 'None'}
 
-ACTIVE THREADS/OBJECTIVES:
+${mapping.threadsLabel}:
 ${activeThreads.map(t => `- ${t.name} (${t.type}): ${t.status} - ${t.description || ''}`).join('\n') || 'None yet'}
 
 TOTAL LENGTH: ${episodeCount} installments
 NOW GENERATING: ${startEpisodeNum} to ${startEpisodeNum + batchSize - 1}
 
-Continue the content naturally. Each new installment must:
-1. Pick up logically from the previous (or follow the curriculum)
-2. Advance active threads/objectives
-3. End with a hook for the next installment (unless finale)
+${continuation}
 
-${mappingInstruction}
+${mapping.mappingInstruction}
 ${artStyleBlock ? `${artStyleBlock}\nKeep every installment in this locked art style.\n` : ''}${batchLanguageBlock}
 Return ONLY valid JSON array:
 [
@@ -615,13 +521,13 @@ Return ONLY valid JSON array:
     "logline": "One sentence hook",
     "synopsis": "Full summary",
     "beats": [
-      {"beatNumber": 1, "title": "Opening", "description": "Pickup from previous", "act": 1},
-      {"beatNumber": 2, "title": "Middle", "description": "Core action", "act": 2},
-      {"beatNumber": 3, "title": "End", "description": "Climax/resolution", "act": 3}
+      {"beatNumber": 1, "title": "Opening", "description": "${mapping.nonFiction ? 'Continue the subject' : 'Pickup from previous'}", "act": 1},
+      {"beatNumber": 2, "title": "Middle", "description": "${mapping.nonFiction ? 'Develop the subject' : 'Core action'}", "act": 2},
+      {"beatNumber": 3, "title": "End", "description": "${mapping.nonFiction ? 'What this installment established' : 'Climax/resolution'}", "act": 3}
     ],
-    "characters": [{"characterId": "char_1", "role": "protagonist"}],
+    "characters": [{"characterId": "char_1", "role": "${mapping.nonFiction ? 'narrator' : 'protagonist'}"}],
     "storyThreads": [{"id": "thread_1", "name": "Name", "type": "main", "status": "developing", "description": "Progress"}],
-    "plotDevelopments": ["Key event"],
+    "plotDevelopments": ["Key development"],
     "episodeHook": "Setup for next",
     "status": "blueprint"
   }
@@ -672,15 +578,11 @@ async function regenerateSpecificField(
 ): Promise<any> {
   const currentBible = series.production_bible || {}
   const format = options.format || 'narrative'
-  
-  // Dynamic persona
-  let persona = 'You are a professional TV series writer.'
-  if (format === 'educational') persona = 'You are an expert curriculum designer and educational video producer.'
-  else if (format === 'podcast') persona = 'You are an expert podcast producer and showrunner.'
-  else if (format === 'documentary') persona = 'You are an expert documentary filmmaker and docuseries producer.'
-  else if (format === 'demo') persona = 'You are an expert product marketer and technical evangelist.'
-  else if (format === 'sales') persona = 'You are an expert sales director and persuasive storyteller.'
-  else if (format === 'news') persona = 'You are an expert investigative journalist and news producer.'
+  const mapping = getSeriesFormatMapping(format)
+  const persona = mapping.personaInstruction
+  const nonFictionGuard = mapping.nonFiction
+    ? 'Do NOT invent a fictional plot, cast, antagonist, or fatal flaw. Stay with the stated subject.'
+    : ''
 
   // Limit episode generation to batches of 5 to avoid token limits
   const episodeBatchSize = Math.min(options.targetEpisodeCount, 5)
@@ -688,12 +590,18 @@ async function regenerateSpecificField(
   const fieldPrompts: Record<string, string> = {
     title: `Generate a new series title for: ${context}\nCurrent title: ${series.title}\nReturn JSON: {"title": "New Title"}`,
     logline: `Generate a new logline for: ${context}\nReturn JSON: {"logline": "New logline"}`,
-    synopsis: `Generate a new synopsis for: ${context}\nReturn JSON: {"productionBible": {"synopsis": "New synopsis"}}`,
-    protagonist: `Generate a new protagonist for: ${context}\nReturn JSON matching the protagonist schema`,
-    antagonist: `Generate a new antagonist/conflict for: ${context}\nReturn JSON matching the antagonistConflict schema`,
+    synopsis: `Generate a new synopsis for: ${context}\n${nonFictionGuard}\nReturn JSON: {"productionBible": {"synopsis": "New synopsis"}}`,
+    protagonist: mapping.nonFiction
+      ? `Generate a narrator or host who presents the stated subject for: ${context}\nDo NOT invent a fictional protagonist or fatal flaw.\nReturn JSON matching the protagonist schema, with flaw set to a real obstacle or left factual.`
+      : `Generate a new protagonist for: ${context}\nReturn JSON matching the protagonist schema`,
+    antagonist: mapping.nonFiction
+      ? `Generate the real issue, question, or challenge for: ${context}\nDo NOT invent a fictional antagonist.\nReturn JSON matching the antagonistConflict schema.`
+      : `Generate a new antagonist/conflict for: ${context}\nReturn JSON matching the antagonistConflict schema`,
     setting: `Generate a new setting for: ${context}\nReturn JSON: {"productionBible": {"setting": "New setting", "timeframe": "Timeframe"}}`,
-    episodes: `Generate ${episodeBatchSize} episode blueprints (simple: title, logline, synopsis, 3 beats each) for: ${context}\nSynopsis: ${currentBible.synopsis}\nReturn JSON: {"episodeBlueprints": [...]}`,
-    characters: `Generate supporting characters for: ${context}\nExisting: ${JSON.stringify(currentBible.characters || [])}\nReturn JSON: {"productionBible": {"characters": [...]}}`
+    episodes: `Generate ${episodeBatchSize} episode blueprints (simple: title, logline, synopsis, 3 beats each) for: ${context}\nSynopsis: ${currentBible.synopsis}\n${nonFictionGuard}\nReturn JSON: {"episodeBlueprints": [...]}`,
+    characters: mapping.nonFiction
+      ? `Generate narrators, hosts, or real subjects for: ${context}\nDo NOT invent a fictional cast.\nExisting: ${JSON.stringify(currentBible.characters || [])}\nReturn JSON: {"productionBible": {"characters": [...]}}`
+      : `Generate supporting characters for: ${context}\nExisting: ${JSON.stringify(currentBible.characters || [])}\nReturn JSON: {"productionBible": {"characters": [...]}}`
   }
   
   const prompt = fieldPrompts[field]
@@ -704,7 +612,8 @@ async function regenerateSpecificField(
   const fullPrompt = `${persona} ${prompt}
 ${options.genre ? `Genre: ${options.genre}` : ''}
 ${options.tone ? `Tone: ${options.tone}` : ''}
-Format: ${format}
+Production type: ${format}
+${mapping.mappingInstruction}
 ${options.artStyle ? buildArtStylePromptBlock(options.artStyle) : ''}
 ${field === 'characters' || field === 'protagonist' ? SERIES_CHARACTER_NAMING_BLOCK : ''}
 
