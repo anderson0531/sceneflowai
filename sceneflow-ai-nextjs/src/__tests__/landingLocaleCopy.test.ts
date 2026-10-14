@@ -54,7 +54,8 @@ const OUTDATED_PATTERNS = [
 const FOUNDING_CREATOR_BANNED_NAMESPACES = ['hero', 'pricing', 'finalCta', 'notify', 'twoModes'] as const
 
 function hasExplorerPrice(text: string): boolean {
-  return /[9۹]/.test(text)
+  // ASCII 9, Arabic-Indic ٩, and Bengali ৯.
+  return /[9۹৯]/.test(text)
 }
 
 function getAtPath(obj: unknown, path: string): unknown {
@@ -102,6 +103,27 @@ describe('landing locale copy', () => {
     expect(String(enMessages.hero.ctaSupportingLine)).toContain('{longForm}')
     expect(String(zhCNMessages.hero.ctaSupportingLine)).toContain('{longForm}')
     expect(String(enMessages.publishCut.subtitle)).toContain('{longForm}')
+  })
+
+  it('translates current hero and Key Features copy in priority locales', () => {
+    const paths = [
+      'hero.headline',
+      'hero.ctaPrimaryLaunch',
+      'keyFeatures.title',
+      'forFilmmakers.heading',
+    ] as const
+    for (const code of ['es', 'ja', 'zh-CN', 'ar']) {
+      const localeMessages = JSON.parse(readFileSync(join(ROOT, `${code}.json`), 'utf8')) as Record<
+        string,
+        unknown
+      >
+      for (const path of paths) {
+        const value = String(getAtPath(localeMessages, path))
+        const source = String(getAtPath(enMessages, path))
+        expect(value.length, `${code} ${path}`).toBeGreaterThan(4)
+        expect(value, `${code} ${path} is still English`).not.toBe(source)
+      }
+    }
   })
 
   it('names the footer trust section Trust & Safety in English', () => {

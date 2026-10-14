@@ -1,10 +1,945 @@
 {
+  "pipeline": {
+    "badge": "SceneFlowとは何ですか？",
+    "title": "3つの柱からなるパイプライン・アーキテクチャ",
+    "subtitle": "最初のアイデアから公開可能なマスターに至るまでの3つのフェーズ — Series Room、Blueprint Room、および Production Stage。",
+    "ui": {
+      "expandFullscreen": "全画面表示",
+      "closeFullscreen": "閉じる",
+      "landscapeHint": "デバイスを回転させて、より広い横向きの画面で表示してください。",
+      "howItWorksLabel": "この段階での仕組み",
+      "showHowItWorks": "仕組みを見せる",
+      "hideHowItWorks": "仕組みを隠す",
+      "imagePlaceholder": "スクリーンショットのプレースホルダー",
+      "videoWalkthrough": "30秒のウォークスルー",
+      "comingSoon": "製品のスクリーンショットは近日公開予定です。"
+    },
+    "pillars": [
+      {
+        "id": "series",
+        "tabLabel": "SFAIシリーズ_部屋の期間",
+        "number": "01",
+        "title": "Series Roomの生成",
+        "header": "単なるクリップではなく、一つの世界を築け",
+        "body": "シリーズやYouTubeチャンネルの概要を一度入力するだけで、SceneFlowがストーリー展開、キャスト、そして無制限のエピソード構成を含む世界観全体を構築します。その際、共有のReference Libraryを活用することで、すべてのエピソードにおいてブランドの一貫性が保たれます。",
+        "steps": [
+          {
+            "id": "series-concept",
+            "number": "1",
+            "title": "まずはコンセプトから始めましょう。",
+            "description": "シリーズやYouTubeチャンネルのコンセプト、あるいは詳細な説明を入力するだけで、SceneFlowがそれを制作にすぐ使える構成の整った土台へと変換します。プロンプトエンジニアリングの知識は一切不要です。",
+            "imagePlaceholder": "新シリーズの受付 — コンセプトまたはチャンネル概要"
+          },
+          {
+            "id": "series-baseline",
+            "number": "2",
+            "title": "SceneFlowのベースラインをレビューする",
+            "description": "SceneFlowは、Audience Resonance分析によってスコア化されたプロフェッショナルな基準値を提示します。ナレーション付きの概要を読み（または聴き）確認した上で、ご自身の方針に合わせて方向性を調整してください。",
+            "imagePlaceholder": "シリーズのベースライン — Audience Resonanceスコアおよび解説付き概要"
+          },
+          {
+            "id": "series-episodes",
+            "number": "3",
+            "title": "無制限にエピソードを作成する",
+            "description": "物語に必要なだけの数のエピソードを制作できます。各エピソードはシリーズの「DNA」を受け継いでいるため、キャスト、トーン、世界観は第1話からシーズン最終話まで一貫性が保たれます。",
+            "imagePlaceholder": "エピソード・ラインナップ — シリーズの全体構成から生成される無制限のエピソード"
+          },
+          {
+            "id": "series-reference-library",
+            "number": "4",
+            "title": "Reference Library を確認してください。",
+            "description": "Production Stageを通じて作成・管理され、各エピソードで再利用される共有アセット（キャラクター、ボイス、衣装、ロケーション、小道具）を閲覧します。",
+            "imagePlaceholder": "共有 SFAI 参照ライブラリ項目 — キャラクター、ボイス、ロケーション、小道具"
+          },
+          {
+            "id": "series-assistant-writer",
+            "number": "5",
+            "title": "インテリジェント・アシスタント・ライターに指示を出す",
+            "description": "指示を話すか入力するだけで、シリーズや各エピソードの内容を自在に作り変えることができます。インテリジェント・アシスタント・ライターがプロ品質の文章を即座に作成するため、白紙の状態から悩んだり、複雑なプロンプトを駆使したりする必要はありません。",
+            "imagePlaceholder": "インテリジェント・アシスタント・ライター — シリーズやエピソードに関する音声またはテキストでの指示・提案"
+          },
+          {
+            "id": "series-start-production",
+            "number": "6",
+            "title": "ワンクリックで生産を開始",
+            "description": "「これだ」と思えるエピソードがあれば、ワンクリックで制作を開始し、ガイド付きの Production Stage パイプラインへとスムーズに移行できます。",
+            "imagePlaceholder": "選択したエピソードの制作をワンクリックで開始"
+          }
+        ]
+      },
+      {
+        "id": "blueprint",
+        "tabLabel": "Blueprint Room",
+        "number": "02",
+        "title": "Blueprint Room",
+        "header": "あなたのクリエイティブなDNAを、確かなものに。",
+        "body": "SFAIBLUEPRINTは、あらすじ、ストーリー展開（ビート）、キャラクター、トーン、スタイルを網羅した詳細なフィルム・トリートメントです。SFAIAUDIENCE_RESONANCE分析による事前評価が組み込まれているため、映像のレンダリングを開始する前に、観客に確実に響くストーリーであることを確認・承認できます。",
+        "steps": [
+          {
+            "id": "blueprint-baseline",
+            "number": "1",
+            "title": "ベースラインの Blueprint を確認してください。",
+            "description": "オーディエンスの共鳴（Audience Resonance）分析が組み込まれた、プロフェッショナルなSFAIブループリントを開いてください。ナレーション付きの概要を読み、あるいは聴くことで、その仕組みや効果の理由を詳しく確認できます。",
+            "imagePlaceholder": "ベースライン Blueprint — Audience Resonance スコアによる処置"
+          },
+          {
+            "id": "blueprint-assistant-writer",
+            "number": "2",
+            "title": "インテリジェント・アシスタント・ライターに指示を出す",
+            "description": "指示を話すか入力するだけで、あらすじ、ストーリーの展開（ビート）、キャラクターなどをブラッシュアップできます。インテリジェント・アシスタント・ライターが即座にトリートメントを修正するため、複雑なプロンプトエンジニアリングは不要です。",
+            "imagePlaceholder": "インテリジェント・ライティング・アシスタント — シノプシス、ビート、キャラクターの編集"
+          },
+          {
+            "id": "blueprint-reasoning",
+            "number": "3",
+            "title": "根拠を再検討する",
+            "description": "「Reasoning（根拠）」のセクションを開き、現在のBlueprintに関するクリエイティブな解説をご覧ください。そこでは、各ビートやキャラクターの選択の背後にある物語の論理が説明されています。",
+            "imagePlaceholder": "論拠パネル — Blueprintに関する独創的な解説"
+          },
+          {
+            "id": "blueprint-start-production",
+            "number": "4",
+            "title": "準備ができ次第、生産を開始してください。",
+            "description": "物語が確かな輝きを放つようになったら、いよいよ制作を開始します。その際、承認されたクリエイティブのDNAは、一切のブレが生じることなく、制作パイプライン全体へと確実に継承されます。",
+            "imagePlaceholder": "Production Stage を開始 — 承認済みブループリントに基づく準備状況ゲート"
+          }
+        ]
+      },
+      {
+        "id": "production",
+        "tabLabel": "Production Stage",
+        "number": "03",
+        "title": "Production Stage",
+        "header": "脚本から完成版マスターまで",
+        "body": "Production Stageは、Intelligent Assistant DirectorやScreening Room、そして多言語ストリームと連携し、スクリプト、音声、フレーム、映像といった要素のマルチエンジン生成を並行して実行します。これにより、承認されたスクリプトから公開可能な4Kマスターの完成まで、一貫した制作プロセスを実現します。",
+        "steps": [
+          {
+            "id": "production-script-ara",
+            "number": "1",
+            "title": "ベースライン・スクリプトをレビューする",
+            "description": "Audience Resonance分析に基づいたプロ仕様のベースライン・スクリプトから始めましょう。クレジットを消費する前に、ナレーション付きの分析を読んだり聞いたりして、何が聴衆に響くのかを確認できます。",
+            "imagePlaceholder": "ベースライン・スクリプト — Audience Resonanceの分析およびナレーション付き概要"
+          },
+          {
+            "id": "production-assistant-writer",
+            "number": "2",
+            "title": "シーンごとに最適化する",
+            "description": "「インテリジェント・アシスタント・ライター」を活用して、シーンごとに脚本を最適化しましょう。セリフの無駄を削ぎ落とし、物語の展開（ビート）を調整し、音声やテキストによるワンクリック操作で改善を適用できます。",
+            "imagePlaceholder": "インテリジェント・アシスタント・ライター — シーンごとの脚本最適化"
+          },
+          {
+            "id": "production-reference-library",
+            "number": "3",
+            "title": "Reference Library をビルドする",
+            "description": "スクリプト、カスタム、またはアップロードされたキャラクター、ボイス、衣装、ロケーション、小道具を使用して、Reference Libraryを作成または更新します。リファレンス画像を直接編集できるため、「スロットマシン」のような再生成に頼る必要はありません。",
+            "imagePlaceholder": "Reference Library — キャラクター、ボイス、衣装、ロケーション、小道具"
+          },
+          {
+            "id": "production-audio",
+            "number": "4",
+            "title": "音声を生成する",
+            "description": "全シーン、シーンごと、あるいはビート単位で、セリフ、ナレーション、効果音、音楽を生成できます。70以上の言語で、ネイティブ品質のボイスオーバーを提供します。",
+            "imagePlaceholder": "Audio Agent — すべてのシーン、単一のシーン、またはビート単位"
+          },
+          {
+            "id": "production-frames",
+            "number": "5",
+            "title": "フレームの生成と編集",
+            "description": "シーンごと、またはビートごとに Run All Agents や Stills Agent を使用してビートフレームを生成し、Intelligent Assistant Director (IAD) を使って任意のフレームを編集します（変更内容を記述するだけで済みます）。",
+            "imagePlaceholder": "Intelligent Assistant Directorによる編集で、ビートに合わせたフレーム調整を行う"
+          },
+          {
+            "id": "production-animatic",
+            "number": "6",
+            "title": "アニマティックを確認する",
+            "description": "インタラクティブなScreening Room上で、フレーム、セリフ、効果音、音楽を含むアニマティックの全編を再生し、ファイルを書き出すことなくフィードバック用のリンクを共有できます。",
+            "imagePlaceholder": "Screening Room — インタラクティブなアニマティックのレビューと共有"
+          },
+          {
+            "id": "production-video",
+            "number": "7",
+            "title": "動画を生成する",
+            "description": "Video Agentを使い、承認済みのフレームをシーン単位やビート単位で動画化しましょう。Intelligent Assistant Directorなら、スロットマシンのように延々と生成を繰り返すことなく、任意のショットを撮り直すことが可能です。",
+            "imagePlaceholder": "IADの再撮影を含むVideo Agentの生成"
+          },
+          {
+            "id": "production-mixer",
+            "number": "8",
+            "title": "ミキサーで編集する",
+            "description": "「ミキサー」機能で、キャプション、トリミング、アフレコ、オーバーレイ、オーディオバランスなど、あらゆるシーンを洗練させましょう。スタジオから一歩も出ることなく、ブランドの安全性を確保した仕上がりを実現します。",
+            "imagePlaceholder": "ミキサー — キャプション、トリミング、ダビング、オーディオコントロール"
+          },
+          {
+            "id": "production-render-scenes",
+            "number": "9",
+            "title": "シーンをレンダリングして確認する",
+            "description": "シーンをレンダリングし、Screening Room を介してレビューと共有を行い、最終的な組み立ての前に承認を確定させてください。",
+            "imagePlaceholder": "Screening Roomにて、レンダリングされたシーンのレビューおよび共有が行われました。"
+          },
+          {
+            "id": "production-multilanguage",
+            "number": "10",
+            "title": "多言語ストリームを生成する",
+            "description": "承認済みの同一カットから、吹き替えやリップシンク（口の動きに合わせた音声）版の言語ストリームを即座に展開。1フレームたりとも再撮影することなく、70以上の市場へリーチできます。",
+            "imagePlaceholder": "多言語ストリーム — 地域ごとの吹き替えおよびリップシンク対応"
+          },
+          {
+            "id": "production-publish",
+            "number": "11",
+            "title": "最終レンダリングを行い、公開する",
+            "description": "最終作品をマスターとして書き出し、公開しましょう。YouTubeチャンネルなどにそのまま使えるサムネイル、タイトル、説明文も自動生成されます。",
+            "imagePlaceholder": "最終レンダリングとYouTubeへのワンクリック公開"
+          }
+        ]
+      }
+    ]
+  },
+  "screeningRoom": {
+    "badge": "インタラクティブ・スクリーニング・ルーム — アニマティック・プレビュー利用可能",
+    "languagePrompt": "ターゲット市場におけるパイプラインの状況を確認する：",
+    "languages": [
+      {
+        "id": "en",
+        "label": "英語",
+        "flag": "🇺🇸"
+      },
+      {
+        "id": "es",
+        "label": "スペイン語",
+        "flag": "🇪🇸"
+      },
+      {
+        "id": "pt",
+        "label": "ポルトガル語",
+        "flag": "🇧🇷"
+      },
+      {
+        "id": "hi",
+        "label": "ヒンディー語",
+        "flag": "🇮🇳"
+      },
+      {
+        "id": "zh",
+        "label": "中国語",
+        "flag": "🇨🇳"
+      }
+    ],
+    "steps": [
+      {
+        "id": "concept",
+        "label": "コンセプトとスクリプトの最適化"
+      },
+      {
+        "id": "animatic",
+        "label": "30分でわかるAnimaticのレビュー"
+      },
+      {
+        "id": "video",
+        "label": "フルモーション・レンダリング"
+      }
+    ],
+    "previewLabel": "プレビュー"
+  },
+  "keyFeatures": {
+    "badge": "主な特徴",
+    "title": "アイデアからマスターまで。",
+    "subtitle": "Series Room → Blueprint Room → Production Stage → Screening Room.",
+    "learnMoreLabel": "詳細はこちら",
+    "showLessLabel": "表示を減らす",
+    "videoComingSoon": "機能デモ、近日公開",
+    "videoSoon": "まもなく",
+    "overviewComingSoon": "概要は近日公開予定です。",
+    "pauseOverview": "一時停止の概要",
+    "playOverview": "プレイの概要",
+    "muteOverview": "ミュートの概要",
+    "unmuteOverview": "ミュート解除の概要",
+    "enterFullscreenOverview": "フルスクリーン",
+    "exitFullscreenOverview": "全画面表示を終了",
+    "watchLongformLabel": "長尺の動画をご覧ください",
+    "screenshotLabel": "スクリーンショット",
+    "landingUiLanguagesLabel": "44言語での制作・吹き替えを行っています。当サイトは以下の39言語でご利用いただけます。",
+    "rooms": [
+      {
+        "id": "series-desk",
+        "label": "SFAIシリーズ_部屋の期間",
+        "promise": "Series Roomは、シーズンが始まる場所です。ここで設定したキャラクターやストーリーは、追加するすべてのエピソードに引き継がれます。Blueprint Roomでエピソードを開始する前に、このルームで内容を確認し、演出の構想を練ってください。シーズンを持たない作品の場合、このルームはスキップできます。",
+        "features": [
+          {
+            "icon": "newSeries",
+            "title": "新シリーズ",
+            "description": "まずはここから始めましょう。構想しているシリーズについて、ご自身の言葉で説明してください。あらすじが完成するまで「明確化と確認（Clarify and Confirm）」のプロセスを繰り返して意図を具体化し、「シリーズ生成（Generate Series）」機能で基本となる内容を作成します。新しいシリーズは5つのエピソードからスタートしますが、後からエピソードを追加することも可能です。",
+            "screenshot": "新規シリーズの作成 — インテント、明確化と確認、シリーズの生成",
+            "learnMore": {
+              "items": [
+                {
+                  "title": "あなたの意図",
+                  "description": "そのシリーズがどのようなものか、形式、ターゲット層、アートスタイルを含めて説明してください。"
+                },
+                {
+                  "title": "反復する",
+                  "description": "「明確化と確認（Clarify and Confirm）」のステップでは、コンテンツが生成される前に、あなたと相談しながらあらすじをブラッシュアップします。"
+                },
+                {
+                  "title": "ベースライン",
+                  "description": "「Generate Series」は、あなたがレビューすることになるシーズンを、まずは5つのエピソードとして作成します。"
+                }
+              ]
+            }
+          },
+          {
+            "icon": "seriesReview",
+            "title": "初稿を確認する",
+            "description": "概要を読むか、「聴く」ボタンを押してください。続いて、各エピソードを読むか、音声で聴いてみましょう。「一貫性」が物語の筋をつなぎ、「継続性」がエピソード間で共有されるキャスト、ロケーション、小道具、設定を支えています。",
+            "screenshot": "概要・視聴、エピソード・視聴、一貫性・継続性 — キャスト、ロケ地、小道具、設定",
+            "learnMore": {
+              "items": [
+                {
+                  "title": "読む、または聞く",
+                  "description": "概要やエピソードは、読むことも、「Listen」機能を使って聴くこともできます。"
+                },
+                {
+                  "title": "一貫性",
+                  "description": "美意識、重要な出来事、そして物語の筋は、そのシーズンに根付いています。"
+                },
+                {
+                  "title": "継続性",
+                  "description": "キャスト、ロケ地、小道具、そして設定は、どのエピソードでも共通です。"
+                }
+              ]
+            }
+          },
+          {
+            "icon": "seriesResonance",
+            "title": "SFAIオーディエンス共鳴期間",
+            "description": "シーズンの状況を把握したいときは、Audience Resonanceを実行してください。スコアと分析結果を確認し、必要に応じて「実行可能なインサイト（Actionable Insight）」を適用します。適用しない限り、シリーズの内容が変更されることはありません。",
+            "screenshot": "Audience Resonanceの分析、および実行可能なインサイト（未適用）",
+            "learnMore": {
+              "items": [
+                {
+                  "title": "読み",
+                  "description": "スコアと分析により、特定したオーディエンスに何が響くかが明らかになります。"
+                },
+                {
+                  "title": "任意",
+                  "description": "実行可能なインサイトは、それを適用したときにのみ、そのシリーズを変化させます。"
+                }
+              ]
+            }
+          },
+          {
+            "icon": "seriesDirector",
+            "title": "シリーズディレクター",
+            "description": "話し言葉であれ書き言葉であれ、あなた自身の言葉でシリーズ全体を導いてください。変化や焦点を選ぶのはあなたであり、それを受け入れるのもあなたです。提案が役立つこともありますが、ストーリーラインの無関係な部分はそのまま維持されます。",
+            "screenshot": "シリーズディレクター — 演出、焦点、受容",
+            "learnMore": {
+              "items": [
+                {
+                  "title": "あなたの言葉",
+                  "description": "変更内容を話すか入力してください。その際、必要に応じて、対象をプロット、キャラクター、エピソードの内容、トーン、または設定に限定することも可能です。"
+                },
+                {
+                  "title": "あなたはそれを受け入れます。",
+                  "description": "それを受け入れない限り何も変わらず、物語の無関係な部分はそのまま残ります。"
+                },
+                {
+                  "title": "おすすめ",
+                  "description": "おすすめ情報は役に立ちますが、何を残すかはあくまでご自身で選べます。"
+                }
+              ]
+            }
+          },
+          {
+            "icon": "directEpisode",
+            "title": "このエピソードを監督する",
+            "description": "あるエピソードを選び、その1時間分だけを演出してみましょう。緊張感を高めるか、物語を深めるかして、それを適用するのです。他のエピソードはそのままにしておきます。",
+            "screenshot": "エピソード — このエピソードを監督する（他のエピソードは変更なし）",
+            "learnMore": {
+              "items": [
+                {
+                  "title": "1話",
+                  "description": "「Direct this episode」は、その変更を当該エピソードにのみ適用します。"
+                },
+                {
+                  "title": "その季節はとどまる",
+                  "description": "その他のエピソードは、そのまま残されています。"
+                }
+              ]
+            }
+          },
+          {
+            "icon": "startEpisode",
+            "title": "エピソードを再生する",
+            "description": "エピソードの準備が整ったら、そのプロジェクトを開始します。アウトライン、シノプシス、そしてビートは、プロジェクトと共にBlueprint Roomへと持ち込まれます。キャストや世界観については、すでに把握されています。",
+            "screenshot": "プロジェクト開始 — 概要とキャストはすでにエピソードに記載済み",
+            "learnMore": {
+              "items": [
+                {
+                  "title": "プロジェクトを開始する",
+                  "description": "「Start Project」は、Blueprint Room 内でそのエピソードを開きます。"
+                },
+                {
+                  "title": "既知",
+                  "description": "アウトライン、あらすじ、ビート、そしてキャストもそれに含まれます。"
+                }
+              ]
+            }
+          }
+        ]
+      },
+      {
+        "id": "blueprint-board",
+        "label": "Blueprint Room",
+        "promise": "Blueprint Roomは、90分の脚本を執筆する前にストーリーラインを完成させるための場所です。シリーズのエピソードや新規プロジェクトから作業を開始できます。ここでビートやキャストの演出を確定させておけば、Production Stageの段階でそれらを再構築する必要がなくなります。",
+        "features": [
+          {
+            "icon": "startBlueprint",
+            "title": "Blueprintを開始する",
+            "description": "シリーズのエピソードから始めるか、新しいプロジェクトを開始します。シリーズのエピソードには、アウトライン、あらすじ、およびビートが含まれています。新しいプロジェクトは、意図を記述し、「AIによる検証と強化（Validate & Enhance with AI）」を使用し、「Blueprintの生成（Generate Blueprint）」を選択することで開始されます。",
+            "screenshot": "シリーズのエピソードが既知の場合、またはプロジェクトを開始 — 意図の特定、AIによる検証と強化、Blueprintの生成",
+            "learnMore": {
+              "items": [
+                {
+                  "title": "シリーズのエピソード",
+                  "description": "シリーズの各エピソードは、アウトライン、あらすじ、そしてビートがすでに付随した状態で始まります。"
+                },
+                {
+                  "title": "新規プロジェクト",
+                  "description": "「プロジェクトを開始」では、意図を把握し、AIによる検証と強化を経て、SFAIブループリントを生成します。"
+                }
+              ]
+            }
+          },
+          {
+            "icon": "treatment",
+            "title": "ビートを指揮する",
+            "description": "「Beats」タブを開き、ビートシートの内容を確認してください。ビートはスクリプト構築の基盤となるため、ここで最適化を行います。ビートはこの場所にのみ存在します。Production Stageによって、各ビートがチャプターへと変換されます。",
+            "screenshot": "「Listen」を含むBeatsタブ",
+            "learnMore": {
+              "items": [
+                {
+                  "title": "ビートシート1枚",
+                  "description": "ビートはここにしか存在しない。"
+                },
+                {
+                  "title": "スクリプトビルド",
+                  "description": "ビートがスクリプトの構築を主導するため、それらは Production Stage の前に最適化されます。"
+                },
+                {
+                  "title": "章",
+                  "description": "Production Stageは、各ビートを一つの章へと変えます。"
+                }
+              ]
+            }
+          },
+          {
+            "icon": "castLocations",
+            "title": "キャストとロケーションを指揮する",
+            "description": "「Characters（キャラクター）」を開いてキャストを指示し、「Story（ストーリー）」タブの「Setting（設定）」を開いてロケーションを指示してください。キャストはスクリプトの構築に影響を与えるため、Production Stageによるスクリプトの再構築が必要になる前に、これら両方を設定しておく必要があります。",
+            "screenshot": "「キャラクター」タブ、続いてストーリーの「設定」",
+            "learnMore": {
+              "items": [
+                {
+                  "title": "キャスト",
+                  "description": "「キャラクター」タブはキャストを扱うものであり、そのキャストがスクリプトの構築に影響を与えます。"
+                },
+                {
+                  "title": "所在地",
+                  "description": "「ロケーション」は、「ストーリー」タブにおける「設定」にあたります。"
+                },
+                {
+                  "title": "台本の前",
+                  "description": "両方をこちらに向けることで、Production Stage における大規模なスクリプト・リファクタリングを回避できます。"
+                }
+              ]
+            }
+          },
+          {
+            "icon": "blueprintDirector",
+            "title": "Blueprint ディレクター",
+            "description": "Directorは、話し言葉や書き言葉によるあなたの言葉で変更内容を受け付けます。ビート、キャラクター、ストーリーのいずれかに焦点を当てて編集を行い、修正内容をプレビューできます。実際に適用するまでは、何も変更されません。",
+            "screenshot": "Blueprint ディレクター — 方向性、焦点、プレビュー、リビジョンの適用",
+            "learnMore": {
+              "items": [
+                {
+                  "title": "あなたの言葉",
+                  "description": "変更内容を口頭またはテキストで伝え、ビート、キャラクター、あるいはストーリーに焦点を当ててください。"
+                },
+                {
+                  "title": "プレビュー",
+                  "description": "「バランスの取れたリビジョンを生成」機能では、変更を適用する前にその内容を確認できます。"
+                },
+                {
+                  "title": "それを塗布します",
+                  "description": "修正を適用するまでは、何も変更されません。"
+                }
+              ]
+            }
+          },
+          {
+            "icon": "blueprintResonance",
+            "title": "SFAIオーディエンス共鳴期間",
+            "description": "オーディエンスを保存し、分析を実行します。すると、スコアと推奨事項が表示されます。Blueprint Director で推奨事項を適用するまでは、ブループリントの内容は変更されません。",
+            "screenshot": "Audience Resonance — 保存済みオーディエンス、スコア、未適用の推奨事項",
+            "learnMore": {
+              "items": [
+                {
+                  "title": "読み",
+                  "description": "オーディエンスを保存してから「分析」を行い、スコアと推奨事項を確認してください。"
+                },
+                {
+                  "title": "任意",
+                  "description": "推奨事項は、Blueprint Director で適用した場合にのみ、ブループリントを変更します。"
+                }
+              ]
+            }
+          },
+          {
+            "icon": "goToProduction",
+            "title": "Production Stage に移動します。",
+            "description": "ストーリーライン、ビート、キャストが確定したら、Production Stageに移行してください。90分の脚本はこのボードを基に作成されます。Production Stageでストーリーラインを再構築する必要はありません。",
+            "screenshot": "Production Stageへ移動 — ストーリーライン、ビート、キャストは設定済み",
+            "learnMore": {
+              "items": [
+                {
+                  "title": "引き継ぎ",
+                  "description": "Production Stage に移動すると、このブループリントからスクリプトが開きます。"
+                },
+                {
+                  "title": "設定済み",
+                  "description": "ストーリーライン、展開の要所、そしてキャストについては、すでに演出の方針が定まっています。"
+                }
+              ]
+            }
+          }
+        ]
+      },
+      {
+        "id": "production-stage",
+        "label": "Production Stage",
+        "promise": "Production Stageは、確定した設計図が実際の映像へと形を変える段階です。計画と管理の仕組みを駆使して、コストをコントロールしましょう。各シーンを最適化した上で、演出、音声、音楽、構成、静止画といった要素を順次構築し、本格的な映像制作に着手する前にアニマティック（絵コンテ動画）で確認を行います。その後、クリップの生成、ミックス、言語別バージョンの作成を経て、シーン、チャプター、マスター、あるいはプロモーション用映像を納品します。",
+        "spend": {
+          "label": "支出の管理",
+          "features": [
+            {
+              "icon": "byok",
+              "title": "独自の鍵の持ち込み",
+              "description": "独自の画像・動画プロバイダーのキーを接続してください。生成処理はお客様のアカウントと料金設定で行われますが、エージェント、コンティニュイティ、ミキサー、スクリーニングルームといった「ガイド付きスタジオ」の機能はそのまま利用可能です。",
+              "screenshot": "BYOKキー",
+              "learnMore": {
+                "items": [
+                  {
+                    "title": "あなたの鍵",
+                    "description": "画像および動画プロバイダーのキーを接続することで、ご自身のアカウントと料金設定で生成が行われるようになります。"
+                  },
+                  {
+                    "title": "同じスタジオ",
+                    "description": "エージェント、コンティニュイティ、ミキサー、および Screening Room はそのまま維持されます。"
+                  }
+                ]
+              }
+            },
+            {
+              "icon": "budget",
+              "title": "生産計画担当者",
+              "description": "制作に着手する前に、ショットごとの静止画およびクリップの修正回数（イテレーション）の目標を設定してください。これらの目標はシーン、チャプター、そしてマスター全体へと集約され、開始日を設定することで、完了日までのスケジュールが構築されます。",
+              "screenshot": "生産計画担当者",
+              "learnMore": {
+                "items": [
+                  {
+                    "title": "射撃された標的",
+                    "description": "ショットごとにスチルおよびクリップのイテレーションを設定し、それらをシーン、チャプター、そしてマスターへと集約します。"
+                  },
+                  {
+                    "title": "日付入りスケジュール",
+                    "description": "開始日と稼働日によって、累積クレジットを伴うスケジュールが構成されます。"
+                  },
+                  {
+                    "title": "実績値に基づいてリセットする",
+                    "description": "完了したシーンでは、実際のコストに基づいて目標値をリセットすることができます。"
+                  },
+                  {
+                    "title": "電話の状態",
+                    "description": "読むペース、費やした時間、完了予定日はスマートフォンで確認し、編集はデスクトップやタブレットで行います。"
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        "groups": [
+          {
+            "id": "script",
+            "label": "スクリプトを最適化する",
+            "features": [
+              {
+                "icon": "scriptResonance",
+                "title": "SFAIオーディエンス共鳴期間",
+                "description": "Audience Resonanceは、すべてのシーンを連動させながら、脚本全体を一度に読み込みます。スコアと注釈を並べて確認でき、自ら選択しない限り、内容が書き換えられることはありません。",
+                "screenshot": "Audience Resonance — 全シーンにわたるスコアおよび注記（未適用）",
+                "learnMore": {
+                  "items": [
+                    {
+                      "title": "二人が一緒のすべてのシーン",
+                      "description": "それは台本を一つの作品として捉え、各シーンに関する注釈を交えながら構成されています。"
+                    },
+                    {
+                      "title": "あなたが選んでください",
+                      "description": "どのメモに基づいて行動するかを選ぶまでは、何も書き直されません。"
+                    }
+                  ]
+                }
+              },
+              {
+                "icon": "castVisual",
+                "title": "キャスト、衣装、声",
+                "description": "シーンを作り始める前に、キャストを確定させておきましょう。キャラクター、衣装、そして声を固定することで、その後のすべての静止画や動画において、同一人物が確実に表現されるようにします。",
+                "screenshot": "キャラクター、衣装、そして声",
+                "learnMore": {
+                  "items": [
+                    {
+                      "title": "キャラクターと衣装",
+                      "description": "Cast Agentは、キャラクターと衣装のルックを描画します。"
+                    },
+                    {
+                      "title": "声",
+                      "description": "シーンが構築される前に、キャラクターの声が設定されます。"
+                    },
+                    {
+                      "title": "同一人物",
+                      "description": "どの静止画も、どのクリップも、そのロックを求めている。"
+                    }
+                  ]
+                }
+              },
+              {
+                "icon": "directShot",
+                "title": "ダイレクトショット",
+                "description": "「Direct Shot」では、入力または音声入力した自分の言葉で撮影を行います。指示内容をプレビューして保存すると、静止画用プロンプトと動画用プロンプトが連動して更新されます。",
+                "screenshot": "Direct Shot — 入力または音声入力、プレビュー、保存",
+                "learnMore": {
+                  "items": [
+                    {
+                      "title": "銘柄指定のショット",
+                      "description": "そのダイアログのタイトルは「Direct Shot · Scene N · Shot N」です。"
+                    },
+                    {
+                      "title": "入力または音声入力",
+                      "description": "メモを記入または音声入力し、保存する前に指示内容をプレビューしてください。"
+                    },
+                    {
+                      "title": "両方のプロンプト",
+                      "description": "保存すると、静止画用プロンプトとクリップ用プロンプトが同時に更新されます。"
+                    },
+                    {
+                      "title": "クリップの後、再び",
+                      "description": "生成されたショットが正しくない場合は、Direct Shotを開いて再度指示を行ってください。"
+                    }
+                  ]
+                }
+              },
+              {
+                "icon": "audioAgent",
+                "title": "Audio Agent",
+                "description": "Audio Agentは、シーンのセリフ、効果音、音楽を構築します。クリップが消費される前に、そのシーンの音声を聴くことができます。",
+                "screenshot": "Audio Agent — セリフ、効果音、および音楽",
+                "learnMore": {
+                  "items": [
+                    {
+                      "title": "セリフと効果音",
+                      "description": "セリフは話し言葉に限定し、効果音は明確なきっかけ（キュー）があるカットに使用します。"
+                    },
+                    {
+                      "title": "音楽",
+                      "description": "音楽が、セリフとともにそのシーンを牽引しています。"
+                    },
+                    {
+                      "title": "動き出す前に",
+                      "description": "Clipsを開く前に、そのシーンの音を聞いてみてください。"
+                    }
+                  ]
+                }
+              },
+              {
+                "icon": "continuity",
+                "title": "継続性",
+                "description": "シーンの準備が整った段階で、そのシーンに必要なリファレンスのみを生成します。それ以前のシーンはロックされた状態が維持されるため、すでに承認済みのリファレンスを再生成する必要はありません。",
+                "screenshot": "連続性 — このシーンの参照のみ",
+                "learnMore": {
+                  "items": [
+                    {
+                      "title": "このシーンのみ",
+                      "description": "このシーンに必要なキャスト、ロケーション、小道具を描き、それ以外はそのままにしておいてください。"
+                    },
+                    {
+                      "title": "ギリギリ間に合って",
+                      "description": "映画全体を対象に一括して生成するのではなく、シーンの準備が整った時点で生成してください。"
+                    },
+                    {
+                      "title": "すでにロックされています",
+                      "description": "あるシーンでの変更は、それより前のシーンがすでに使用している参照を再描画することはありません。"
+                    }
+                  ]
+                }
+              },
+              {
+                "icon": "stillsAgent",
+                "title": "SFAISTILLS_エージェント期間",
+                "description": "Stills Agentは、承認された演出に基づいてショットのフレームを構築します。演出と音声はそのまま維持され、クリップは後から追加されます。",
+                "screenshot": "Stills Agent — ショットフレーム",
+                "learnMore": {
+                  "items": [
+                    {
+                      "title": "ショットのフレーム",
+                      "description": "シーン内の各ショットの静止画を描画します。"
+                    },
+                    {
+                      "title": "方向は維持されます",
+                      "description": "フレームを再生成すると画像は更新されますが、演出や音声は変更されません。"
+                    },
+                    {
+                      "title": "クリップの前",
+                      "description": "Clipsを開く前に、静止画を承認してください。"
+                    }
+                  ]
+                }
+              },
+              {
+                "icon": "animatic",
+                "title": "SFAIアニメーション・ターム",
+                "description": "Screening Roomで、セリフ、音楽、効果音を付けた静止画（アニマティク）としてシーンを確認しましょう。フィードバックを得るために共有し、本編映像の制作に入る前にすべてのシーンをこの段階で完成させておけば、脚本の変更によってクリップを作り直す手間を省けます。多くのクリエイターにとって、アニマティクは完成作品そのものであり、MP4形式で書き出すことも可能です。",
+                "screenshot": "Screening Room アニマティク（共有機能付き）",
+                "learnMore": {
+                  "items": [
+                    {
+                      "title": "映像と音声",
+                      "description": "アニマティックは、承認された静止画を、セリフ、音楽、効果音と共に再生します。"
+                    },
+                    {
+                      "title": "共有",
+                      "description": "レビュアーがアニマティクスを視聴し、映像に直接コメントを残せるよう、リンクを1つ送ってください。"
+                    },
+                    {
+                      "title": "動画の前に",
+                      "description": "クリップを生成する前にシーンをアニマティクスとして完成させておけば、スクリプトの変更によって映像を作り直す必要がなくなります。"
+                    },
+                    {
+                      "title": "MP4",
+                      "description": "多くのクリエイターにとって、アニマティックは最終的な成果物であり、MP4形式で書き出すことができます。"
+                    }
+                  ]
+                }
+              }
+            ]
+          },
+          {
+            "id": "video",
+            "label": "動画",
+            "features": [
+              {
+                "icon": "videoAgent",
+                "title": "Video Agent",
+                "description": "Video Agentは、[Clips]タブにショットクリップを生成します。Screening Roomでつなぎ合わせたシーンを確認し、修正が必要なショットがあれば、[Direct Shot]で再度演出を行ってください。",
+                "screenshot": "Video Agent、続いてつなぎ合わされたシーン",
+                "learnMore": {
+                  "items": [
+                    {
+                      "title": "撮影したクリップ",
+                      "description": "Video Agentは、承認済みの静止画から各ショットのクリップを生成します。"
+                    },
+                    {
+                      "title": "スティッチされたシーン",
+                      "description": "Screening Roomでつなぎ合わされたシーンを確認してください。"
+                    },
+                    {
+                      "title": "もう一度指揮してください",
+                      "description": "クリップに誤りがある場合は、テキスト入力または音声入力で「Direct Shot」を開いてください。"
+                    }
+                  ]
+                }
+              },
+              {
+                "icon": "mixer",
+                "title": "ミキサー",
+                "description": "ミキサーは、Production Stage 内でシーンの仕上げを行います。ショットの採用・除外やトリミング、サウンドのバランス調整を行い、オーディオを含めた状態でシーンをレンダリングします。",
+                "screenshot": "ミキサー — 追加、トリミング、バランス調整、オーバーレイ、ウォーターマーク",
+                "learnMore": {
+                  "items": [
+                    {
+                      "title": "ショット",
+                      "description": "個々のショットを採用するか除外するかを決め、採用するショットはトリミングします。"
+                    },
+                    {
+                      "title": "対話",
+                      "description": "各セリフの音量と速度を設定します。"
+                    },
+                    {
+                      "title": "トラック",
+                      "description": "ナレーション、セリフ、効果音、音楽（フェードやループを含む）のバランスを調整します。"
+                    },
+                    {
+                      "title": "オーバーレイ",
+                      "description": "シーンにテキストオーバーレイを配置します。"
+                    },
+                    {
+                      "title": "ウォーターマーク",
+                      "description": "テキストまたは画像の透かしを追加します。"
+                    },
+                    {
+                      "title": "レンダリングする",
+                      "description": "シーンを音声と共にレンダリングし、そのレンダリング結果を Screening Room が再生します。"
+                    }
+                  ]
+                }
+              },
+              {
+                "icon": "languageStreams",
+                "title": "言語バージョン",
+                "description": "これは新規制作ではなく、既存シーンの言語別バージョンです。Gemini TTSが44言語で吹き替え音声を出力し、各ショットにおいてセリフの吹き替えやクリップの再生成（看板などの要素を含む）を行います。",
+                "screenshot": "言語版 — 吹き替え、リップシンク、または再生成（看板・標識を含む）",
+                "learnMore": {
+                  "items": [
+                    {
+                      "title": "44の言語",
+                      "description": "Gemini TTSは、44言語で吹き替え音声を生成します。"
+                    },
+                    {
+                      "title": "1ショットあたり",
+                      "description": "各ショットにおいて、「Double（ダブ）」で吹き替え音声を重ねるか、「Lip-sync（リップシンク）」で音声を適用するか、あるいは「Regenerate（再生成）」で翻訳されたセリフから新しいクリップを作成するかを選択します。"
+                    },
+                    {
+                      "title": "サイン",
+                      "description": "変更が必要なテキストが含まれている場合は、看板の写真を再生成してください。"
+                    },
+                    {
+                      "title": "タイミング",
+                      "description": "翻訳版では動画の再生速度が調整・保存されます。これは、翻訳版の長さがマスター版よりも10～30%長くなることが多いためです。"
+                    }
+                  ]
+                }
+              }
+            ]
+          },
+          {
+            "id": "publish",
+            "label": "公開",
+            "features": [
+              {
+                "icon": "shipPackage",
+                "title": "梱包・発送",
+                "description": "シーン、チャプター、マスター、あるいはプロモーション動画など、各要素が完成したらパッケージ化しましょう。YouTube、Facebook、TikTokに公開したり、MP4ファイルをダウンロードしたりしつつ、残りの部分の制作も進めていきます。",
+                "screenshot": "パッケージ化と納品 — シーン、チャプター、マスター、プロモ；YouTube、Facebook、TikTok、MP4",
+                "learnMore": {
+                  "items": [
+                    {
+                      "title": "ピース",
+                      "description": "シーン、チャプター、マスター、あるいはプロモーション映像を納品する。"
+                    },
+                    {
+                      "title": "言語コース",
+                      "description": "各言語版をパッケージに同梱して出荷することが可能です。"
+                    },
+                    {
+                      "title": "目的地",
+                      "description": "YouTube、Facebook、またはTikTokに公開するか、MP4をダウンロードしてください。"
+                    },
+                    {
+                      "title": "作り続けよう",
+                      "description": "完成した部分をリリースし、残りの部分の構築を続けてください。"
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "screening-room",
+        "label": "SFAIスクリーニングルーム利用期間",
+        "promise": "Screening Roomは、完成したカットの視聴、レビュー、および公開を行う場所です。1つのプレーヤーでプリビズ、シーン、チャプター、マスター、プロモーション映像、そして各言語ストリームを扱えるため、吹き替え版もミキサーがレンダリングしたものと同一のカットとなります。再生や映像へのコメント（ノート）のやり取りは、1つのリンクを共有するだけで完結します。3～5分のシーン、8～12分のチャプター、マスター、あるいはプロモーション映像など、準備が整ったものから順次公開し、残りの部分の制作を継続していくことができます。",
+        "features": [
+          {
+            "icon": "screeningPlayer",
+            "title": "1人プレイ",
+            "description": "プレビズ、シーン、チャプター、マスター、プロモを切り替えて再生できます。言語ストリームを選択すれば、ダビング、リップシンク、あるいはショット単位で再生成された各バージョンを視聴可能です。再生される映像は、ミキサーがレンダリングしたものと同一のカットです。",
+            "screenshot": "Screening Room プレーヤー",
+            "learnMore": {
+              "items": [
+                {
+                  "title": "1つの面",
+                  "description": "プリビズ、シーン、チャプター、マスター、プロモを切り替えます。"
+                },
+                {
+                  "title": "言語ストリーム",
+                  "description": "バージョンを選び、ダブリング、リップシンク、あるいはショットごとの再生成を聴いてみてください。"
+                },
+                {
+                  "title": "同じカット",
+                  "description": "そのプレーヤーは、ミキサーがレンダリングしたカットです。"
+                }
+              ]
+            }
+          },
+          {
+            "icon": "screeningCollab",
+            "title": "カット（編集）で協力する",
+            "description": "リンクを1つ共有するだけです。レビュアーは実際の再生環境で動画を確認し、映像上の特定の箇所に直接メモを残せます。フィードバックを得るためにラフ版のファイルを書き出してメールで送る必要はありません。メモが追加されると通知が届き、スマートフォンで内容を確認できます。",
+            "screenshot": "共有レビュー",
+            "learnMore": {
+              "items": [
+                {
+                  "title": "1つのリンク",
+                  "description": "レビュアーは実際の再生状態で映像を確認し、映像上にメモを残します。"
+                },
+                {
+                  "title": "メール不要のラフカット",
+                  "description": "フィードバックを収集するために、未完成のファイルを書き出してメールで送るようなことはしません。"
+                },
+                {
+                  "title": "電話のメモ",
+                  "description": "メッセージが届くと通知が入り、スマートフォンで内容を確認できます。一方、スタジオ画面はデスクトップやタブレットに表示されたままとなります。"
+                }
+              ]
+            }
+          },
+          {
+            "icon": "packageShip",
+            "title": "準備が整い次第、リリースしてください。",
+            "description": "3〜5分のシーン、8〜12分のチャプター、マスター、あるいはプロモーション動画を、16:9または9:16の形式でYouTube、Facebook、TikTokに公開したり、ファイルをダウンロードしたりできます。タイトル、説明文、プライバシー設定もコンテンツとセットで引き継がれます。完成した部分を公開しつつ、残りの制作を続けることが可能です。",
+            "screenshot": "パッケージを公開する",
+            "learnMore": {
+              "items": [
+                {
+                  "title": "1点を発送する",
+                  "description": "3～5分のシーン、8～12分のチャプター、マスター、またはプロモーション映像を公開しましょう。"
+                },
+                {
+                  "title": "目的地",
+                  "description": "YouTube、Facebook、またはTikTokに16:9または9:16で公開するか、ファイルをダウンロードしてください。"
+                },
+                {
+                  "title": "パッケージ",
+                  "description": "タイトル、説明、プライバシー設定は、パッケージに付随します。"
+                },
+                {
+                  "title": "作り続けよう",
+                  "description": "完成した部分をリリースし、残りの部分の構築を続けてください。"
+                }
+              ]
+            }
+          }
+        ]
+      }
+    ]
+  },
   "metadata": {
     "title": "SceneFlow Studio - AIを活用した動画制作",
     "description": "AIを活用したワークフローの自動化で、アイデアをプロ品質の動画に。"
   },
   "nav": {
     "plansPricing": "プランと価格",
+    "productionExamples": "例",
+    "keyFeatures": "特長",
     "trustSafety": "信頼性＆安全性",
     "signIn": "サインイン",
     "startProject": "プロジェクトを開始する",
@@ -14,89 +949,118 @@
     "goToDashboard": "ダッシュボードへ移動",
     "userFallback": "ユーザー",
     "searchLanguages": "言語を検索",
-    "noLanguagesFound": "言語が見つかりません",
-    "productionExamples": "例",
-    "keyFeatures": "特長"
+    "noLanguagesFound": "言語が見つかりません"
   },
   "floatingNav": {
-    "preVisEngine": "Pre-Vis Engine",
-    "trustSafety": "Trust & Safety",
-    "pricing": "Pricing",
-    "productionExamples": "Examples",
-    "twoModes": "One Pipeline",
-    "keyFeatures": "Key Features",
-    "audienceResonance": "Audience Resonance"
+    "productionExamples": "例",
+    "twoModes": "ワン・パイプライン",
+    "directControl": "直接",
+    "publishCut": "公開",
+    "keyFeatures": "主な特徴",
+    "audienceResonance": "SFAIオーディエンス共鳴期間",
+    "preVisEngine": "プリビズ・エンジン",
+    "trustSafety": "信頼と安全",
+    "pricing": "料金"
   },
   "hero": {
-    "headline": "From first spark to finished master.",
-    "subheadline": "SceneFlow is one guided pipeline. You direct the story, the cast, and the tone. It builds the Blueprint, holds continuity, plays the full animatic, and assembles the master — without prompt trials or a timeline of loose clips.",
-    "ctaPrimaryLaunch": "Launch Studio ($9)",
-    "ctaSupportingLine": "The all-in-one studio to craft, export, and distribute your stories. Download a master and ship anywhere — or publish long-form cuts and chapters to {longForm}, and promote trailers on {shorts}.",
-    "ctaSecondary": "Explore the pipeline",
-    "ctaToolStack": "See how it replaces your tool stack",
+    "eyebrow": "映画・シリーズ作品の自動制作",
+    "headline": "最初のひらめきから、完成された傑作へ。",
+    "subheadline": "SceneFlowは、一貫したガイダンスを備えたパイプラインです。ストーリー、キャスト、トーンをあなたが指揮し、Blueprintの構築、整合性の維持、完全なアニマティックの再生、そしてマスターの組み立てを行います。プロンプトの試行錯誤や、バラバラなクリップを並べただけのタイムラインとは無縁のプロセスです。",
+    "ctaPrimaryLaunch": "Launch Studio（9ドル）",
+    "ctaSupportingLine": "ストーリーの制作、書き出し、配信をこれ一つで行えるオールインワン・スタジオです。マスターをダウンロードしてあらゆる場所へ展開できるほか、長尺のカットやチャプターを{longForm}で公開したり、{shorts}で予告編をプロモーションしたりすることも可能です。",
+    "ctaNetworkInvite": "際立ったプロジェクトは、招待制の「SceneFlow Network」への参加を申請できます。",
+    "ctaNetworkInviteHref": "#for-filmmakers",
+    "ctaSecondary": "パイプラインを探索する",
+    "ctaToolStack": "既存のツールスタックをどのように置き換えられるかをご覧ください。",
     "chips": [
       {
-        "label": "From Concept to Feature",
-        "detail": "Expand ideas into 90-minute scripts in the Blueprint Room. Define characters, art, and beats, then let Audience Resonance analysis fine-tune your story before you shoot."
+        "label": "コンセプトから機能へ",
+        "detail": "Blueprint Roomでアイデアを90分の脚本へと発展させましょう。キャラクター、アート、ビートを定義し、撮影前にAudience Resonanceの分析を活用してストーリーを微調整してください。"
       },
       {
-        "label": "Direct With Intent, Not Prompts",
-        "detail": "Speak the language of film with intelligent assistants that understand your direction. The Reference Library locks your custom cast, wardrobe, and locations for absolute continuity."
+        "label": "プロンプトではなく、意図を持って指示する",
+        "detail": "あなたの演出意図を理解するインテリジェントなアシスタントと共に、映画制作の言語で対話しましょう。Reference Libraryは、独自のキャスト、衣装、ロケーション情報を固定し、完璧な整合性を維持します。"
       },
       {
-        "label": "Agent-Driven Production",
-        "detail": "Accelerate generation 5X with intelligent agents that build 30-shot scenes in the background. Iterate freely in draft mode, then publish your final vision in stunning Hi-Res."
+        "label": "エージェント主導型生産",
+        "detail": "バックグラウンドで30ショットのシーンを構築するインテリジェント・エージェントを活用し、生成スピードを5倍に加速させましょう。ドラフトモードで自由に試行錯誤を重ね、最終的なビジョンを圧倒的な高解像度で公開できます。"
       },
       {
-        "label": "Screen, Collaborate, Ship",
-        "detail": "Share progress at every milestone—from audio animatics to the final master—in the Screening Room. Distribute as shorts or features in multiple languages for a global reach."
+        "label": "選別・連携・リリース",
+        "detail": "オーディオ・アニマティクスから最終マスターに至るまで、各マイルストーンでの進捗状況をScreening Roomで共有しましょう。短編や長編作品として多言語で配信し、世界中の視聴者に届けましょう。"
       }
     ],
     "pipelineSteps": [
-      "Blueprint",
-      "Production",
-      "Screening Room"
+      "SFAIブループリント期間",
+      "生産",
+      "SFAIスクリーニングルーム利用期間"
     ],
-    "languagePrompt": "Hear the hero in your language — same pipeline, new markets",
-    "multilangHint": "Hero dubs in 7 languages — full pipeline supports 70+ in Production Stage.",
-    "playWithNarration": "Play with narration",
-    "tapToHear": "Tap to hear",
-    "fullscreen": "Fullscreen",
+    "languagePrompt": "英語、スペイン語、中国語、アラビア語から選択 — 同じパイプラインで、新たな市場へ",
+    "multilangHint": "ヒーロー（主要）の吹き替えは4言語 — Production Stageにおけるフルパイプラインは70以上の言語をサポート。",
+    "playWithNarration": "ナレーション付きで再生する",
+    "tapToHear": "タップして聞く",
+    "fullscreen": "フルスクリーン",
+    "pauseBackgroundVideo": "背景動画を一時停止する",
+    "playBackgroundVideo": "背景動画を再生する",
     "heroVideoLanguages": {
       "en": {
-        "label": "English",
+        "label": "英語",
         "nativeLabel": "English"
       },
       "es": {
-        "label": "Spanish",
+        "label": "スペイン語",
         "nativeLabel": "Español"
       },
-      "pt": {
-        "label": "Portuguese",
-        "nativeLabel": "Português"
-      },
-      "hi": {
-        "label": "Hindi",
-        "nativeLabel": "हिन्दी"
-      },
       "zh": {
-        "label": "Chinese",
+        "label": "中国語",
         "nativeLabel": "中文"
       },
       "ar": {
-        "label": "Arabic",
+        "label": "アラビア語",
         "nativeLabel": "العربية"
-      },
-      "th": {
-        "label": "Thai",
-        "nativeLabel": "ไทย"
       }
     },
-    "soon": "Soon",
-    "videoLanguageCount": "{count, plural, =1 {# language} other {# languages}}",
-    "eyebrow": "Automated filmmaking for films and series",
-    "ctaNetworkInvite": "Standout projects can apply for the invite-only SceneFlow Network.",
-    "ctaNetworkInviteHref": "#for-filmmakers"
+    "soon": "まもなく",
+    "videoLanguageCount": "{count, plural, =1 {# language} other {# languages}}"
+  },
+  "twoModes": {
+    "eyebrow": "私たちが取り除く摩擦",
+    "title": "単一のパイプライン。ツールの寄せ集めではありません。",
+    "subtitle": "SceneFlow replaces single-clip generators and a pile of separate docs, editors, and re-renders. Build the series or the 90-minute master, then publish a scene or a chapter when you are ready to earn.",
+    "comingSoon": "近日公開",
+    "comparison": {
+      "id": "comparison",
+      "caption": "Fragmented tools beside one SceneFlow pipeline."
+    },
+    "cta": "Launch Studio（9ドル）"
+  },
+  "directControl": {
+    "eyebrow": "あなたが維持するコントロール",
+    "title": "物語を指揮し、プロンプトの作成はエージェントに任せましょう。",
+    "subtitle": "ショットの指示は平易な言葉で行います。その指示内容が、静止画や動画クリップを生成するためのプロンプトになります。音楽のキューやナレーションは、ビートに合わせて配置します。アニマティクスを確認し、修正が必要ならショットを変更してから、初めて「動き」の制作にコストをかけます。",
+    "comparison": {
+      "id": "direction",
+      "caption": "ディレクターの指示、クリップの指示、そして同じビートに合わせた音楽とナレーション。"
+    },
+    "cta": "Launch Studio（9ドル）"
+  },
+  "publishCut": {
+    "eyebrow": "公開するカット",
+    "title": "どこへでも書き出し可能。獲得後は SceneFlow 上で Premiere を利用できます。",
+    "subtitle": "Download a master and ship it yourself, or publish finished scenes and chapters to {longForm} and cut trailers for {shorts} — without waiting on the whole cut. Before anything hits the public feed, run drafts or your final master through the Screening Room. Standout projects can apply for the invite-only SceneFlow Network; it is a curated accelerator, not an open storefront.",
+    "comparison": {
+      "id": "publish",
+      "caption": "A finished scene or chapter, and the 90-minute master, from one studio."
+    },
+    "cta": "Launch Studio（9ドル）"
+  },
+  "infrastructure": {
+    "title": "エンタープライズグレードのインフラとセキュリティ",
+    "description": "エンタープライズレベルの信頼性、多言語吹き替えモデル、および安全なアセット処理を実現するため、Google CloudとVertex AIを活用しています。",
+    "badges": {
+      "googleCloud": "Google Cloud",
+      "vertexAi": "Vertex AI"
+    }
   },
   "valueProp": {
     "pills": [
@@ -150,7 +1114,7 @@
         "icon": "動画",
         "label": "クリエイター",
         "outcome": "予定通りにリリースを — ツールごとに作り直すのはやめましょう",
-        "narrative": "ストーリーはあっても、エピソードごとにアセットを再エクスポートし、新しいタブでプロンプトを打ち直し、整合性が保たれることを祈るような作業になっていませんか？SceneFlowなら、シリーズ、Blueprint、そして制作工程を一つのスタジオ環境で統合できます。そのため、ゼロから作り直すことなく、プリビズでルックを承認し、シーンごとに生成を行い、一貫性のあるエピソードを予定通りにリリースすることが可能になります。",
+        "narrative": "ストーリーはあっても、エピソードごとにアセットを再エクスポートし、新しいタブでプロンプトを打ち直し、整合性が保たれることを祈る……といった作業に追われていませんか？SceneFlowは、Series Room、Blueprint Room、Production Stageを一つのスタジオ環境で統合します。そのため、ゼロから作り直すことなく、プリビジュアライゼーションでルックを承認し、シーンごとに生成を行い、一貫性のあるエピソードを予定通りにリリースすることが可能になります。",
         "useCases": [
           "16:9 YouTubeテレビドラマ",
           "9:16の縦型モバイルドラマ",
@@ -243,7 +1207,7 @@
         "icon": "カチンコ",
         "label": "映画制作",
         "outcome": "撮影前に上映・テストが可能な、インタラクティブ・アニマティック用の台本",
-        "narrative": "かつて、撮影前のプリビジュアライゼーションやオーディエンス・テストといえば、何週間にも及ぶ絵コンテ制作や仮ナレーションの収録、そして多額の費用を投じた「手探り」の作業を意味していました。しかし、SceneFlowなら、Expressプリビズ機能を使って脚本をインタラクティブなアニマティックへと即座に変換できます。Audience Resonanceで最適化を図り、Screening Roomで上映・検証を行い、ストーリーの完成度が確かなものとなって初めて予算を投じることが可能になります。",
+        "narrative": "かつて、撮影前のプリビジュアライゼーションやオーディエンス・テストといえば、何週間にもわたる絵コンテ制作や仮ナレーションの収録、そして多額の費用を要する「手探り」の作業を意味していました。しかし、SceneFlowとPre-vis Agentを活用すれば、脚本をインタラクティブなアニマティクスへと即座に変換できます。Audience Resonanceで最適化を図り、Screening Roomで上映・検証を行い、ストーリーの完成度が確かなものとなって初めて予算を投入することが可能になります。",
         "useCases": [
           "長編・インディペンデント映画のプレビズ",
           "投資家向けピッチ用アニマティクス",
@@ -256,7 +1220,7 @@
           "challengeTitle": "ストーリーを検証する前の、時間のかかるプリビジュアライゼーション",
           "challengeDescription": "脚本はあっても、本読みや絵コンテの制作サイクル、断片的なプリビジュアライゼーション（プリビズ）ツールが、投資家へのプレゼン、観客テスト、そして製作決定（グリーンライト）の遅れを招いています。",
           "solutionTitle": "スクリプト先行型インタラクティブ・プリビジュアライゼーション",
-          "solutionDescription": "脚本（MDX、FDXなどの形式）をアップロードし、Audience Resonanceで最適化して、上映やテストが可能なインタラクティブ・プレビズを生成しましょう。ビートごとの高速な同時生成、70以上の言語オプション、そして迅速な多言語オーバーレイ機能が利用可能です。",
+          "solutionDescription": "スクリプト（MDX、FDXなどの形式）をアップロードし、Audience Resonanceで最適化した上で、上映・テスト用のインタラクティブなプレビジュアライゼーションを生成します。その際、Production Agentsがプロンプトの作成や各ビートにわたる生成を担い、70以上の言語オプションや高速な多言語オーバーレイ機能も活用されます。",
           "win": "数週間を要するプレビズの工程ではなく、共有可能なアニマティックを活用し、本撮影の前にストーリーとターゲット層との適合性を検証しましょう。"
         }
       }
@@ -272,7 +1236,7 @@
       },
       {
         "them": "セッション間での手動操作の整合性",
-        "us": "Reference Library + Shot Frames：映像に先立ち、ビジュアルをロックする"
+        "us": "Reference Library + Shot Frames：ビデオの前にビジュアルを固定する"
       },
       {
         "them": "オーディエンス検証のワークフローなし",
@@ -290,10 +1254,10 @@
     "title": "ビート先行型動画制作パイプライン",
     "subtitle": "レンダリング前に承認を — スロットマシンのような再生成ではなく",
     "intro": "手探りで生成を繰り返す必要はありません。SceneFlowが最終動画の生成にクレジットを消費する前に、仕上がりを確認し、承認することができます。",
-    "description": "SceneFlowは、各段階でのビジュアル承認プロセスを体系化しています。具体的には、レビュー用のPre-vis Agent、構図を確定するShot Frames、そしてショットごとのF2V（フレーム・ツー・ビデオ）です。これにより、ドリフトやハルシネーション（幻覚）でクレジットを浪費する前に、映像のルックを洗練させることができます。",
+    "description": "SceneFlowは、各段階でのビジュアル承認プロセスを体系化しています。具体的には、レビュー用のPre-vis Agent、構図を確定するShot Frames、そしてビートごとのF2V（Frame-to-Video）へと進みます。これにより、意図しない変化（ドリフト）やハルシネーション（誤生成）でクレジットを浪費する前に、ルックを洗練させることが可能になります。",
     "steps": [
-      "Pre-vis Agent — 映像付きのビートを共有し、数分でレビューを受ける",
-      "Shot Frames — Reference Libraryの連続性による開始／終了構成の固定",
+      "Pre-vis Agent — 専門家によるプロンプティング後、レビュー用に視聴覚ビートを共有する",
+      "Shot Frames — Reference Libraryの連続性を維持した状態で、コンポジションの開始点と終了点を固定する",
       "ショットごとのF2V — 確実なプロンプトではなく、承認済みフレームから動画を生成",
       "連続EXTチェーン — 長尺のセリフのやり取りに対応する、ネイティブな7秒単位の延長ステップ",
       "Production Mixer — Screening Roomへのタイミング、オーディオ、およびストリームの書き出し"
@@ -371,7 +1335,7 @@
     "steps": [
       {
         "title": "8秒の冒頭クリップ",
-        "description": "承認済みの Shot Frames を使用したフレームから動画、または画像から動画への変換では、動きが始まる前にコンポジションが固定されます。"
+        "description": "承認済みのShot Framesに基づくフレーム／画像から動画への変換では、モーション開始前に構図が固定されます。"
       },
       {
         "title": "+7秒延長のステップ",
@@ -406,7 +1370,7 @@
     "badge": "クリエイティブ・レンジ",
     "title": "あらゆるスタイル、あらゆるスクリーン",
     "titleAccent": "あなたのクリエイティブなDNA、Blueprintに刻まれる",
-    "subtitle": "Blueprintは、アートスタイル、アスペクト比、トーン、物語の核といった、あなたのクリエイティブなDNAが定まる場所です。SceneFlowは、それらの選択内容をトリートメント、Audience Resonance、そして脚本生成のプロセスに反映させます。そのため、単なる最終書き出し時の設定としてではなく、物語の冒頭から、シーンの演出があなたの意図する構図やルックと整合するようになります。",
+    "subtitle": "Blueprint Roomは、アートスタイル、アスペクト比、トーン、物語の核といった、あなたのクリエイティブなDNAを確定させる場所です。SceneFlowは、それらの選択内容をトリートメント、Audience Resonance、そして脚本生成のプロセスに反映させます。これにより、単なる最終的な書き出し設定としてではなく、物語の冒頭（ビート1）から、映像の構図やルックと整合性の取れたシーン演出が可能になります。",
     "pillars": [
       {
         "title": "形態は機能（およびフレーミング）に従う",
@@ -430,87 +1394,121 @@
       "items": [
         {
           "id": "フォトリアリスティックな",
-          "name": "フォトリアリスティック",
+          "name": "映画的な実写",
           "displayTitle": "フォトリアリズム",
-          "description": "プロフェッショナルな写真のスタイル",
+          "description": "フォトリアリスティックで映画的なライティング",
           "tagline": "格調高い長編リアリズム",
           "marketingBody": "フォトリアリズムは、上質なテレビドラマやドキュメンタリーの視聴者が期待する、大衆的な魅力を生み出します。一連の展開（ビート）を通じてリアルなキャラクターやライティングを固定することで、エピソード形式のドラマやドキュメンタリー・シリーズにおいて、オープニングからフィナーレまで感情的な一貫性を保つことができます。",
+          "featured": true,
           "thumbnail": "https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Gemini_Generated_Image_w5y03bw5y03bw5y0.jpeg"
         },
         {
           "id": "90年代アニメ",
-          "name": "アニメ（90年代）",
-          "displayTitle": "アニメ",
-          "description": "90年代アニメの王道スタイル",
-          "tagline": "連続的な物語の展開",
-          "marketingBody": "アニメ調のセルシェーディングは、複数話構成のウェブシリーズや長編ストーリーにおいて、ファンの深い関心を引きつけます。このスタイルを学習した生成エンジンは、鮮明な線画と安定した構図を実現するため、大規模なシリーズ制作に最適です。",
+          "name": "シネマティック3D / CGI",
+          "displayTitle": "シネマティック3D / CGI",
+          "description": "レンダリングされた長編映画のようなルック",
+          "featured": false,
           "thumbnail": "https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Gemini_Generated_Image_5qoasf5qoasf5qoa.jpeg"
         },
         {
           "id": "ピクサー",
-          "name": "ピクサー・アニメーション",
+          "name": "3Dアニメーション（ピクサー風）",
           "displayTitle": "3Dシネマティック / ピクサー風",
-          "description": "ピクサー風の3Dアニメーション",
+          "description": "スタイライズされた3D長編アニメーション",
           "tagline": "エピソード間における感情の連続性",
           "marketingBody": "丸みを帯びた柔らかなフォルムと表情豊かなキャラクターデザインが、シーズンを通して視聴者の心を惹きつけ続ける温かみを生み出します。キャラクターの一貫性が常に求められるアニメシリーズやファミリー向け長編作品、ブランド・ストーリーテリングに最適です。",
+          "featured": true,
           "thumbnail": "https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Gemini_Generated_Image_zi32rnzi32rnzi32.jpeg"
         },
         {
           "id": "コンセプトアート",
-          "name": "コンセプトアート",
-          "displayTitle": "コンセプトアート",
-          "description": "ゲーム・映画のコンセプトアート",
-          "tagline": "映画やシリーズ作品向けの、雰囲気のある実制作レベルのライティングを施したプリビズ用キーフレーム。",
+          "name": "アニメ",
+          "displayTitle": "アニメ",
+          "description": "セルシェーディングのアニメスタイル",
+          "tagline": "連続的な物語の展開",
+          "marketingBody": "アニメ調のセルシェーディングは、複数話構成のウェブシリーズや長編ストーリーにおいて、ファンの深い関心を引きつけます。このスタイルを学習した生成エンジンは、鮮明な線画と安定した構図を実現するため、大規模なシリーズ制作に最適です。",
+          "featured": true,
           "thumbnail": "https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Gemini_Generated_Image_qlf261qlf261qlf2.jpeg"
         },
         {
           "id": "ジブリ",
           "name": "ジブリ風の",
           "displayTitle": "手描き / ジブリ風",
-          "description": "スタジオジブリにインスパイアされた",
+          "description": "手描きで、絵画的なアニメーション",
           "tagline": "ラグジュアリーとしてのクラフト",
           "marketingBody": "このスタイルは、「クラフト（職人技）こそが贅沢である」とする主要なクリエイティブ・ムーブメントを直接的に反映しています。水彩の質感や絵画的な背景が、手作り感あふれるエピソードごとの世界を構築し、有機的で不完全な要素が、長編シリーズ全体を通じて意図的な芸術性として表現されています。",
+          "featured": true,
           "thumbnail": "https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Gemini_Generated_Image_xojqsuxojqsuxojq.jpeg"
         },
         {
           "id": "コミックブック",
           "name": "コミックブック",
           "displayTitle": "コミックブック",
-          "description": "コミックのインク画風",
+          "description": "力強いインク使い、グラフィックノベルのようなスタイル",
           "tagline": "連載形式のストーリーテリングを彩る、力強いインクのタッチ、ハーフトーンの質感、そしてポップアート調の色彩。",
+          "featured": false,
           "thumbnail": "https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Gemini_Generated_Image_ezhp8cezhp8cezhp.jpeg"
         },
         {
           "id": "油絵",
-          "name": "油絵",
-          "displayTitle": "油絵",
-          "description": "古典的な油絵",
-          "tagline": "ドキュメンタリーや歴史を題材とした長編作品に向けた、古典的な筆致と豊かな色彩。",
+          "name": "コンセプトアート",
+          "displayTitle": "コンセプトアート",
+          "description": "シネマティックなゲーム・映画用コンセプトアート",
+          "tagline": "映画やシリーズ作品向けの、雰囲気のある実制作レベルのライティングを施したプリビズ用キーフレーム。",
+          "featured": false,
           "thumbnail": "https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Gemini_Generated_Image_7z9qm7z9qm7z9qm7.jpeg"
         },
         {
           "id": "デジタルアート",
-          "name": "デジタルアート",
-          "displayTitle": "デジタルアート",
-          "description": "現代的なデジタルイラストレーション",
-          "tagline": "アニメーション・ドキュメンタリーやエピソード形式の解説シリーズ向けの、スタイライズされたイラスト。",
+          "name": "フラットベクター / モーショングラフィックス",
+          "displayTitle": "フラットベクター / モーショングラフィックス",
+          "description": "解説動画向けのクリーンなベクター調のスタイル",
+          "featured": false,
           "thumbnail": "https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Gemini_Generated_Image_omdmt6omdmt6omdm.jpeg"
         },
         {
           "id": "水彩画",
-          "name": "水彩画",
-          "displayTitle": "水彩画",
-          "description": "柔らかな水彩画",
-          "tagline": "回想録、ドキュメンタリー、そして思索的な長編作品にふさわしい、柔らかな顔料のウォッシュ（色面）。",
+          "name": "絵コンテ / アニマティクス",
+          "displayTitle": "絵コンテ / アニマティクス",
+          "description": "グレースケールのラフな絵コンテ・コマ",
+          "featured": false,
           "thumbnail": "https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Gemini_Generated_Image_7i1wus7i1wus7i1w.jpeg"
         },
         {
           "id": "スケッチ",
-          "name": "スケッチ／線画",
-          "displayTitle": "スケッチ／線画",
+          "name": "デジタルアート",
+          "displayTitle": "デジタルアート",
+          "description": "現代的なデジタルイラストレーション",
+          "tagline": "アニメーション・ドキュメンタリーやエピソード形式の解説シリーズ向けの、スタイライズされたイラスト。",
+          "featured": false,
+          "thumbnail": "https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Gemini_Generated_Image_bmbpbibmbpbibmbp.jpeg"
+        },
+        {
+          "id": "watercolor",
+          "name": "水彩画",
+          "displayTitle": "水彩画",
+          "description": "柔らかな水彩画",
+          "tagline": "回想録、ドキュメンタリー、そして思索的な長編作品にふさわしい、柔らかな顔料のウォッシュ（色面）。",
+          "featured": false,
+          "thumbnail": "https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Gemini_Generated_Image_7i1wus7i1wus7i1w.jpeg"
+        },
+        {
+          "id": "sketch",
+          "name": "スケッチ / 線画",
+          "displayTitle": "スケッチ / 線画",
           "description": "鉛筆スケッチ風",
           "tagline": "プリビズから本制作に至る長尺のシーケンスに向けた、緻密な線画と鉛筆の質感。",
+          "featured": false,
           "thumbnail": "https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Gemini_Generated_Image_bmbpbibmbpbibmbp.jpeg"
+        },
+        {
+          "id": "oil-painting",
+          "name": "油絵",
+          "displayTitle": "油絵",
+          "description": "古典的な油絵",
+          "tagline": "ドキュメンタリーや歴史を題材とした長編作品に向けた、古典的な筆致と豊かな色彩。",
+          "featured": false,
+          "thumbnail": "https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Gemini_Generated_Image_7z9qm7z9qm7z9qm7.jpeg"
         }
       ]
     },
@@ -603,7 +1601,7 @@
           "detail": "一貫性のあるキャラクター"
         },
         {
-          "label": "生産",
+          "label": "Production Stage",
           "detail": "音声と映像"
         },
         {
@@ -627,15 +1625,15 @@
     "proofLine": "住宅物件のツアーで検証を実施：完全手動での処理に4時間以上を要していたところ、SceneFlowでは1時間未満で同等の成果物を作成できました。"
   },
   "comparison": {
-    "title": "Stop pulling the lever. Start running a production.",
-    "subtitle": "Clip generators re-roll the dice on every prompt — new face, new room, new voice. SceneFlow reads every shot from the same locked references, so scene 100 still matches scene 1.",
+    "title": "レバーを引くのはやめなさい。生産を動かし始めるのです。",
+    "subtitle": "クリップ生成ツールはプロンプトごとに毎回ランダムに要素を決定し直すため、顔や部屋、声が変わってしまいます。一方、SceneFlowは固定された同一の参照情報を基にすべてのショットを生成するため、シーン100とシーン1の間でも整合性が保たれます。",
     "caption": "断片的なプロンプトツール、手作業による編集、複数プラットフォーム間での引き継ぎを、一つのスタジオ環境に集約します。",
     "imageAlt": "従来の制作に伴う負担と SceneFlow 自動化スタジオの比較 — コンセプトから公開可能な動画までの時間を短縮"
   },
   "howItWorks": {
     "title": "コンセプトから公開可能な動画まで",
     "titleAccent": "1つのガイド付きパイプライン",
-    "subtitle": "シリーズ化は任意です。基本となる工程は Blueprint → プロダクション → Screening Room であり、その過程でプリビズ、アニマティック、シーン動画、マスターMP4が作成されます。",
+    "subtitle": "シリーズは任意です。中核となるパスは Blueprint Room → Production Stage → Screening Room であり、その過程でプリビズ、アニマティック、シーン動画、マスターMP4が作成されます。",
     "tagline": "すべてのステップが巧みに自動化されています。そして、どの段階でも完全にコントロールできます。",
     "optionalBadge": "任意",
     "optionalSuffix": " （任意）",
@@ -644,20 +1642,21 @@
     "phases": [
       {
         "id": "シリーズ",
-        "stepLabel": "シリーズ",
-        "subtitle": "ショーランナー・エンジン",
+        "stepLabel": "SFAIシリーズ_部屋の期間",
+        "subtitle": "複数エピソードにわたる連続性",
         "description": "世界観を一度定義するだけで、一貫性のある複数エピソードにわたるストーリー展開を生成できます。共有されたReference Libraryにより、シーズン全体を通じてキャラクターやトーンの整合性が保たれます。",
         "keySteps": [
           "世界観の定義 — キャラクター、トーン、シーズン・アーク",
           "シーズン全体の各エピソードの概要を自動生成する",
-          "Blueprintへの同期およびエピソードごとの制作"
+          "エピソードごとに Blueprint Room および Production Stage へ同期する"
         ],
         "keyFeatures": [
           "キャラクター、トーン、シーズン全体の構成といった「世界観」を、一度しっかりと定義しましょう。",
           "シーズン全体にわたる、一貫性のあるエピソード構成案（自動生成）",
           "ストーリーの継続性管理 — 複数エピソードからなるシーズンの整合性確保",
-          "シリーズとエピソードの同期 — Blueprint RoomおよびProductionへの連携"
-        ]
+          "シリーズとエピソードの同期 — Blueprint Room および Production Stage への同期"
+        ],
+        "optional": true
       },
       {
         "id": "青写真",
@@ -665,38 +1664,42 @@
         "subtitle": "ストーリー開発",
         "description": "コンセプトを、ログライン、ビート、キャラクター、トーンを含む構成の整ったトリートメントへと具体化してください。負荷の高いレンダリングを行う前に、Audience Resonanceを実行し、共同作業を行ってください。",
         "keySteps": [
-          "生成 → レビュー → 反復 → 本番開始",
+          "生成 → レビュー → 反復 → Production Stageへ",
           "Audience Resonance 目標スコア80点以上での採点",
           "共同作業者向けの共有リンクおよびエクスポート（PDF、Doc、PPTX）"
         ],
         "keyFeatures": [
-          "生成 → レビュー → 反復 → 本番稼働開始のワークフロー",
+          "生成 → レビュー → 反復 → Production Stageワークフローへ移行",
           "コンセプトから構成までを数分で――ログライン、ビート、キャラクター、トーン",
-          "本番稼働前のSFTERM6スコアリング（目標値80以上）",
+          "Production Stage より前に、ターゲット値 80 以上で Audience Resonance のスコアリングを行う",
           "共同作業者との共有リンク — フィードバックの統合とそれに基づく修正の実施"
-        ]
+        ],
+        "optional": false
       },
       {
         "id": "生産",
-        "stepLabel": "生産",
-        "subtitle": "Screening Roomへのスクリプト",
-        "description": "「Script」および「Shoot」タブが、Foundation → Pre-Vis → Footage → Mixer → Streams という工程を案内します。シーンごとのチェックポイントが手戻りを最小限に抑え、Screening Roomがプレビュー、組み立て、公開を担います。",
+        "stepLabel": "Production Stage",
+        "subtitle": "流れを通じた方向性",
+        "description": "演出、脚本、音楽、リファレンス、およびスチール画像は、Audience Resonance（オーディエンスの共鳴指標）とプリビジュアライゼーション（Pre-Vis）のレビューを活用して脚本を最適化します。クリップ、ミキサー、ストリームは、各ショットの映像を生成します。Screening Roomは、プレビュー、アセンブリ（構成・編集）、および公開の工程を担います。",
         "keySteps": [
           "脚本、ボイス、シーン音声を確定する",
-          "シーンごとのプリビジュアライゼーション — ギャラリー表示とレビュー用共有",
-          "「Shoot」タブ — Footage → Mixer → Streams per scene",
-          "Screening Room — プレビュー、マスターの構築、公開"
+          "シーンごとのプリビジュアライゼーション — 静止画の作成とレビュー用共有",
+          "クリップ、ミキサー、ストリーム — 各ショットを生成",
+          "プロダクション・プランナー — 撮影目標、日付入りスケジュール、電話のステータス",
+          "Screening Room — プレビュー、マスター作成、公開"
         ],
         "keyFeatures": [
-          "Foundation — スクリプト、ボイス、シーンオーディオ、Audience Resonance",
-          "プリビジュアライゼーション — シーンごとの演出、音声、ショットフレーム（共有リンク付き）",
-          "撮影 — 制作環境を離れることなく、映像収録、ミキシング、ストリーミングを実行",
+          "演出、脚本、音楽、リファレンス、スチール — 脚本、ボイス、シーン音声、Audience Resonance分析",
+          "スチール — 各シーンの演出、音声、ビートごとのフレーム（共有リンク付き）",
+          "クリップ、ミキサー、ストリーム — Production Stageを離れることなく各ショットを生成",
+          "プロダクション・プランナー — 撮影目標、日付入りスケジュール、電話のステータス",
           "Screening Room — シーンプレビュー、マスター編集、上映会、およびYouTube公開"
-        ]
+        ],
+        "optional": false
       },
       {
         "id": "試写室",
-        "stepLabel": "Screening Room",
+        "stepLabel": "SFAIスクリーニングルーム利用期間",
         "subtitle": "プレビュー · 組み立て · 公開",
         "description": "Production内の統合的な仕上げ環境：シーン動画のプレビュー、ストリームを結合したマスターMP4の作成、分析機能付きの共有可能な上映会の実施、YouTubeへの公開やバンドルの書き出しが可能です。",
         "keySteps": [
@@ -710,7 +1713,8 @@
           "アセンブリプリセット — すべてビデオ、ハイブリッド、またはシーンごとのカスタムミックス",
           "共有可能なスクリーニング — スコアリングと構造化されたフィードバックを含む /s/ リンク",
           "YouTubeウィザード、ショート動画の書き出し、配信バンドル"
-        ]
+        ],
+        "optional": false
       }
     ]
   },
@@ -735,9 +1739,9 @@
       },
       {
         "id": "青写真",
-        "stepLabel": "Blueprintでコンセプトを最適化しましょう。",
+        "stepLabel": "Blueprint Roomでコンセプトを最適化しましょう。",
         "shortDescription": "本格的なレンダリングを行う前に、アイデアを構造化されたトリートメント（ログライン、ビート、キャラクター、トーン）へと落とし込んでください。",
-        "detailedDescription": "Blueprintは、包括的なストーリーの構成案を自動的に作成します。AIによる的確な提案を活用して、キャラクターの成長（アーク）、プロットの展開、物語のトーンを洗練させることができます。また、共有リンク機能により、制作段階に入る前にステークホルダーによる確認を行うことが可能です。",
+        "detailedDescription": "Blueprintは、包括的なストーリーの構成案を自動的に作成します。AIによる的確な提案を活用して、キャラクターの成長の軌跡（アーク）、プロットの展開、物語のトーンを洗練させることができます。また、共同作業者向けの共有リンクを使用することで、Production Stageへ移行する前に、関係者による確認を行うことが可能です。",
         "media": "動画"
       },
       {
@@ -757,13 +1761,13 @@
       {
         "id": "撃つ",
         "stepLabel": "作品を撮影する",
-        "shortDescription": "ビート単位の映像生成、オーディオとオーバーレイのミキシング、そしてシーン全体のストリーム書き出しを、「Shoot」タブひとつで完結（フッテージ、ミキサー、ストリームを統合）。",
-        "detailedDescription": "「Production」内の「Shoot」タブは、いわば撮影現場です。承認済みのプリビズ・フレーム（Footage）から映像を生成し、「Mixer」でタイミング、ウォーターマーク、音声を微調整した後、「Streams」で完成したシーンのMP4をレンダリングします。",
+        "shortDescription": "Clipsで各ショットを生成し、Mixerで音声をミックスし、Streamsで言語別バージョンを書き出します。",
+        "detailedDescription": "「クリップ」は、承認済みのスチル（静止画）から各ショットの動画を生成します。「ミキサー」は、タイミング、ウォーターマーク、および音声を設定します。「ストリーム」は、そのシーンの言語別バージョンです。",
         "media": "動画",
         "subPoints": [
-          "フッテージ — プリビズの開始フレームと終了フレームに基づく、ビートごとの動画生成",
+          "クリップ — 承認済みスチール画像から撮影した動画",
           "ミキサー — シーンごとのウォーターマーク、テキストオーバーレイ、およびオーディオのタイミング",
-          "ストリーム — Screening Room対応のフルレンダリング・シーン動画（全ビート）"
+          "ストリーム — Screening Room向けに準備された、シーンの言語別バージョン"
         ]
       },
       {
@@ -790,6 +1794,191 @@
       "openFeatureVideo": "特集動画を開く"
     }
   },
+  "productionShowcase": {
+    "badge": "制作事例",
+    "title": "パイプライン全体を表示する",
+    "titleAccent": "実際に動いている様子",
+    "subtitle": "各事例は短いトレーラーから始まります。ブループリント（基本設計）からプリビジュアライゼーション、そしてファイナルカットに至る制作の全工程を網羅した長尺のマスター映像は、スクリーニングルームで上映されます。",
+    "subtitleTagline": "長尺の作品。クリップではありません。",
+    "screeningRoomInstruction": "レビュアーの視点に立ち、マイルストーンを一つずつ順に追って、この制作物のレビューを行ってください。まずは「Series（シリーズ）」から始め、「Blueprint」、「AR Analysis（AR分析）」でのスクリプト、そして最後に「Screening（スクリーニング）」へと進めてください。",
+    "trailerLabel": "予告編",
+    "watchLongform": "長尺の動画をご覧ください",
+    "seriesDoor": "シリーズ",
+    "blueprintDoor": "SFAIブループリント期間",
+    "scriptArDoor": "AR分析",
+    "screeningDoor": "スクリーニング",
+    "screeningRoomGroup": "SFAIスクリーニングルーム利用期間",
+    "previsDoor": "プリビズ",
+    "roughDoor": "ラフカット",
+    "scenesDoor": "シーン",
+    "finalDoor": "最終",
+    "enterFullscreen": "全画面表示にする",
+    "exitFullscreen": "全画面表示を終了",
+    "explorerHandoff": "これらのリンク先は完成した作品です。Explorerは、あなた自身が作品を制作する場です。",
+    "languagesBanner": "公開されているサンプルは、英語、スペイン語、中国語、アラビア語の4言語で提供されています。",
+    "workflowLabel": "ソリューション",
+    "startProduction": "制作を開始する",
+    "cta": "制作を開始する",
+    "continuityNote": "Series Roomは継続性を管理します。",
+    "resonanceNote": "Audience Resonance™はスクリプトを最適化します。",
+    "videoLanguagePrompt": "英語、スペイン語、中国語、またはアラビア語で視聴する",
+    "videoComingSoon": "吹き替え版、近日公開",
+    "videoSoon": "まもなく",
+    "frictionLabel": "摩擦",
+    "solutionPillarLabel": "SceneFlowソリューション",
+    "showSolutionsSection": "解答を表示",
+    "hideSolutionsSection": "ソリューションを非表示にする",
+    "cards": [
+      {
+        "id": "drama",
+        "title": "長編映画さながらのドラマ。キャラクターのブレは一切なし。",
+        "subtitle": "シーン1からシーン100まで、キャラクターの顔、衣装、ロケーションを保持します。スクリーニングルームでプレビズ、シーンごとのモーションビデオ、そして最終的なProRes 4Kマスターを確認し、言語を切り替えてフルダビング版を視聴します。",
+        "badge": "シリーズ化の準備が整っている",
+        "solutionPillars": [
+          {
+            "title": "ビジュアルとキャラクターの一貫性",
+            "frictionHeadline": "キャラクターの変質と不安定な設定",
+            "friction": "生成モデルはショットごとにリセットされるため、シーンの切り替わりに伴い、キャラクターの顔や衣装、照明が絶えず変化してしまいます。",
+            "solutionHeadline": "ロックされた資産 SFAIブループリント利用規約",
+            "solution": "Blueprint Roomにて、キャラクターのマスタープロファイル、環境、およびビジュアルスタイルをあらかじめ定義します。SceneFlowは、あらゆるレンダリングにおいてビジュアルの一貫性を維持し、物語への没入感を損なわないようにします。"
+          },
+          {
+            "title": "物語のペース配分とシーンの制御",
+            "frictionHeadline": "10秒クリップの罠",
+            "friction": "断片的なマイクロプロンプトを組み合わせて映像を制作すると、テンポのぎこちなさや感情の起伏の乏しさを招き、タイムライン上での終わりのない手作業による編集が必要になります。",
+            "solutionHeadline": "ビート先行型ストーリーボード",
+            "solution": "プロンプト単位ではなく、シーン単位で演出を行ってください。映像を1フレームでも生成する前に、ドラマチックな展開の要所（ビート）、カメラワーク、そしてストーリーの構成を視覚的に組み立てておきましょう。"
+          },
+          {
+            "title": "セリフと音声の同期",
+            "frictionHeadline": "説得力に欠けるセリフ",
+            "friction": "リップシンクのズレ、口の動きの浮き、そして音声トラックの違和感は、視聴者を即座にドラマの世界から引き戻してしまいます。",
+            "solutionHeadline": "統合型音声・同期エンジン",
+            "solution": "ダイナミックなボイスパフォーマンスと正確なリップシンクが映像制作パイプラインに直接組み込まれており、外部でのポストプロダクション工程を経ることなく、説得力のあるセリフを実現します。"
+          },
+          {
+            "title": "ワークフローの摩擦とリロール疲れ",
+            "frictionHeadline": "アセットの混沌と終わりのないリロール",
+            "friction": "短編映画を制作するとなれば、通常、200以上の未加工動画ファイルの管理、手作業でのアップスケーリング、そして何十回もの無駄な生成作業に追われることになります。",
+            "solutionHeadline": "自動化されたスタジオ・パイプライン",
+            "solution": "コンセプト立案から最終的なマスターMP4の書き出しまで、すべてを単一の統合プラットフォームで完結させます。「Blueprint Room」でストーリーを構築し、「Production Stage」でストリームを活用した演出・制作を行い、「Screening Room」で最終的な書き出し（エクスポート）を行います。"
+          }
+        ],
+        "screeningRoomPreview": "シネマティック・ドラマ — Screening Room"
+      },
+      {
+        "id": "animation",
+        "title": "多彩なスタイルを取り入れたフルシーズンのアニメシリーズ。一貫したアートスタイル。",
+        "subtitle": "第1話から最終話まで、フラットセル・スタイル、ハート一家、そしてミルウィックの町を固定してください。ジョークの「ビート（間や展開の区切り）」ごとに演出を施し、その後、スクリーニングルームでエピソードを確認してください。",
+        "badge": "マルチスタイル",
+        "solutionPillars": [
+          {
+            "title": "文体の整合性",
+            "frictionHeadline": "スタイル・メルトダウン",
+            "friction": "カートゥーンやアニメのスタイルはカットごとに絶えず歪み、線画が変化し、配色が崩れ、キャラクターはフォトリアリスティックで不気味な「スロップ（不快な泥状の塊）」へと変貌していく。",
+            "solutionHeadline": "固定アートスタイル・エンジン",
+            "solution": "最初のフレームから、その独自のスタイルを固定しましょう。SceneFlowは、キャラクターデザイン、線の太さ、シェーディングモデルをエピソード全体にわたって固定し、あなたのキャラクターが持つ唯一無二の個性を保ち続けます。"
+          },
+          {
+            "title": "誇張されたアニメーションと物理挙動",
+            "frictionHeadline": "ぎこちなく、不具合のある動き。",
+            "friction": "生成モデルは、テンポの速いスラップスティックや「二度見（ダブルテイク）」、そしてカートゥーン特有の柔軟な物理挙動の表現を苦手としており、勢いのあるギャグを、形が崩れて溶け出したような映像の乱れ（アーティファクト）に変えてしまいがちです。",
+            "solutionHeadline": "アクションとポーズのアンカリング",
+            "solution": "ジオメトリを破綻させることなく、ダイナミックなキャラクターの動きや表現力豊かなポーズを実現します。完全なモーション制御により、インパクトのある身体的コメディ、急なカットバック、そして大胆な表情演出を自在に演出可能です。"
+          },
+          {
+            "title": "コメディのタイミングとリズム",
+            "frictionHeadline": "台無しにされたオチ",
+            "friction": "ユーモアは「間」やビートの切れ目に宿るものです。標準的な5秒間の生成ループでは不自然なテンポを強いられ、ジョークの「オチ」や語り口が台無しになってしまいます。",
+            "solutionHeadline": "ビート単位の精密な編集",
+            "solution": "シーンのペースをフレーム単位で制御しましょう。最終的なレンダリングを行う前に、ビートを重視したタイムライン上で、ドラマチックな「間」、セットアップからオチへのタイミング、そして素早いリアクションショットなどを直接調整します。"
+          },
+          {
+            "title": "エネルギッシュなセリフとボーカル・シンク",
+            "frictionHeadline": "生気のない操り人形の口",
+            "friction": "AIによるありきたりなセリフは平板で機械的な印象を与え、シットコム特有のテンポの良い軽妙な掛け合いに不可欠な活気を台無しにしてしまう。",
+            "solutionHeadline": "音声と表情の動的同期",
+            "solution": "セリフの表現を、躍動感あふれる表情の演技に直接反映させます。セリフ、豊かな口元の動き、そしてコミカルな音声トラックがシームレスに連動し、笑いの効果を最大限に引き出します。"
+          }
+        ],
+        "screeningRoomPreview": "ハート・ハウス — SFAIスクリーニング・ルーム"
+      },
+      {
+        "id": "documentary",
+        "title": "長編ドキュメンタリー：インテリジェンスの台頭",
+        "subtitle": "大陸をまたいで展開するAIと超知能の台頭を追体験しましょう。各章はそれぞれ特定の年代を反映しており、初期の研究所に現代の品が置かれたり、現代の場面に1950年代のセットが登場したりすることはありません。",
+        "badge": "時代考証に忠実な",
+        "solutionPillars": [
+          {
+            "title": "時代特有の視覚的正確さ",
+            "frictionHeadline": "時代錯誤な遺物",
+            "friction": "標準的な生成モデルは、歴史的な場面の再現において、現代の物品やスマートフォンの画面、あるいは時代考証に合わない服装を頻繁に紛れ込ませてしまいます。",
+            "solutionHeadline": "過去のスタイルに関するガードレール",
+            "solution": "1920年代のフィルムの粒状感から18世紀の衣装の質感に至るまで、正確な時代設定のパラメータを指定することで、生成されるすべてのシーンにおいて歴史的なリアリティを維持します。"
+          },
+          {
+            "title": "アーカイブ・カットアウェイ＆Bロール・エンジン",
+            "frictionHeadline": "長尺のナレーションにおける映像の単調さ",
+            "friction": "詳細な解説を行う長いナレーションに静止画のストック素材を組み合わせると、視聴者が途中で離脱する原因となります。",
+            "solutionHeadline": "トランスクリプト主導型Bロール生成エンジン",
+            "solution": "ナレーターが歴史的事実を語るのに合わせ、SceneFlowは、音声の書き起こしデータと直接連動した、タイミングの合ったシネマティックな再現映像、資料のオーバーレイ表示、そしてアーカイブ風のカットアウェイ映像を自動的に生成します。"
+          },
+          {
+            "title": "インタビューと「トーキング・ヘッド」のリアリズム",
+            "frictionHeadline": "不気味な専門家証人",
+            "friction": "生成された歴史家、調査員、あるいは目撃者は、顎の動きが浮いているように見えたり、視線の合わせ方が不自然であったりと、しばしば人工的な印象を与えます。",
+            "solutionHeadline": "固定されたエキスパートプロフィールとボーカル同期",
+            "solution": "自然な微細な表情、正確なリップシンク、そしてシリーズ全体を通じた一貫した専門家の人物像により、リアルで信頼性の高いインタビュー映像を維持します。"
+          },
+          {
+            "title": "エピソードごとのペース配分と物語の連続性",
+            "frictionHeadline": "断片化されたタイムライン編集",
+            "friction": "40分間のエピソード全体にわたり、ナレーション、再現映像、証拠の提示、そして緊張感を高める「間（ま）」のバランスを調整する作業は、従来のNLE（ノンリニア編集システム）では通常、数週間を要します。",
+            "solutionHeadline": "ビート先行型ドキュメンタリー・パイプライン",
+            "solution": "Blueprint Room内で、劇的な緊張感、サスペンスフルな「間」、そして証拠の提示を視覚的に構成し、完全に組み上げられたマスターファイルをシームレスな工程で完成させます。"
+          }
+        ],
+        "screeningRoomPreview": "長い思考 — Screening Room"
+      },
+      {
+        "id": "training",
+        "title": "カリキュラム対応型マルチモジュール・トレーニング・シリーズ。「One Locked Chef」",
+        "subtitle": "一人のシェフ、一つの厨房、五つの料理。ブイヨンから最後のデザートに至るまで、その顔、コックコート、そしてタイルの背景は変わることなく固定されたままです。",
+        "badge": "カリキュラム対応",
+        "solutionPillars": [
+          {
+            "title": "インストラクターと環境の一貫性",
+            "frictionHeadline": "モジュールごとに異なる講師",
+            "friction": "生成AIによる動画クリップでは、レッスンごとに講師の顔や服装、教室の背景がリセットされてしまうため、コース全体が関連性のない動画の寄せ集めのように感じられてしまいます。",
+            "solutionHeadline": "ロック済みインストラクター SFAIブループリント・ターム",
+            "solution": "Blueprint Roomで、インストラクター、セット、およびビジュアルシステムを一度定義します。SceneFlowは、すべてのモジュールにわたってそのアイデンティティを維持・固定します。"
+          },
+          {
+            "title": "カリキュラムの進度",
+            "frictionHeadline": "クリップに分割されたスライド",
+            "friction": "シラバスを断片的なプロンプト（指示）に変えてしまうと、授業の展開や具体的な解答例、そしてクイズの前の「間」が失われてしまいます。",
+            "solutionHeadline": "モジュール先行型ストーリーボーディング",
+            "solution": "各モジュールを、フレームがレンダリングされる前に「セットアップ」「デモンストレーション」「確認」という一連の指導の構成要素（ティーチング・ビート）として演出してください。"
+          },
+          {
+            "title": "ナレーションと画面上での解説",
+            "frictionHeadline": "グラフィックを捉え損ねた声",
+            "friction": "ナレーション、キャプション、図解のタイミングがずれてしまうため、学習者はある手順の音声を聞きながら、別の手順の映像を目にすることになります。",
+            "solutionHeadline": "同期されたレッスン用トラック",
+            "solution": "音声、字幕、そして画面上の解説が完璧なタイミングで同期しているため、それぞれの説明が、それを裏付ける映像と一体となって伝わります。"
+          },
+          {
+            "title": "コースの組み立て",
+            "frictionHeadline": "エディターでの数週間",
+            "friction": "従来のスケジュールでモジュール、再録音、ローカライズ版を継ぎ合わせようとすると、カリキュラムの更新作業が制作の遅延を招くことになります。",
+            "solutionHeadline": "単一のスタジオ・パイプライン",
+            "solution": "SFAIBLUEPRINT、SFAIAUDIENCE_RESONANCE、およびSFAISCREENING_ROOMは、モジュールを「アウトライン」から「プリビジュアライゼーション（Pre-Vis）」、「ラフカット」、「シーン」、そして「完成したコース」へと進めていきます。"
+          }
+        ],
+        "screeningRoomPreview": "ファイブ・プレート — Screening Room"
+      }
+    ]
+  },
   "platformWalkthrough": {
     "badge": "内部構造、舞台裏、ボンネットの下",
     "title": "プラットフォームの詳細なウォークスルー",
@@ -802,30 +1991,33 @@
     "chapters": [
       {
         "id": "ここから始める",
-        "label": "まずはここから — 計画、一貫性、そしてオーディエンスへの適合性"
+        "label": "まずはここから — 計画、一貫性、そしてオーディエンスへの適合性",
+        "defaultExpanded": false
       },
       {
         "id": "制作・出版",
-        "label": "制作・公開 — Screening RoomへShootタブを送信"
+        "label": "制作・公開 — Screening Room へのクリップ",
+        "defaultExpanded": false
       }
     ],
     "close": "閉じる",
     "viewDetails": "詳細を見る",
     "beatFirst": {
+      "id": 15,
       "title": "ビート先行型動画制作パイプライン",
-      "description": "F2V（映像生成）の前にプリビズの構成要素（ショット）とShot Framesを承認することで、ハルシネーションやビジュアルの乖離に起因する無駄な再生成を減らせます。レビューから最終クリップ完成まで、一貫したプロセスを実現します。",
+      "description": "F2V（動画生成）の前にプリビズの構成要素とショットのフレーム範囲を承認することで、ハルシネーションやビジュアルの乖離による無駄な再生成を減らせます。レビューから最終クリップまで、一貫したプロセスで進められます。",
       "keyFeatures": [
-        "Pre-vis Agent レビュー用 — 高負荷なレンダリングの前にビートを共有",
-        "Shot Frames ロック構成 — Reference Library 連続性",
+        "Pre-vis Agent（レビュー用）— 本格的なレンダリングの前にビート（構成案）を共有",
+        "Shot Frames 構図の固定 — Reference Library 連続性",
         "F2V（ショットごと） — 承認済みフレームから動画を生成",
         "連続EXTチェーン — ビート内で長尺のセリフに対応するネイティブな+7秒ステップ",
         "ミキサーのタイミングとストリーム — Screening Room を開いて組み立てと公開を行う"
       ],
-      "screenshotSlot": "スクリーンショットを挿入：Shot Frames および動画生成前のプリビジュアライゼーション承認",
+      "screenshotSlot": "スクリーンショットを挿入：Shot Frames、および動画生成前のプリビズ承認",
       "videoSlot": "00:30のクリップを挿入：ビートの承認、フレームの固定、そしてF2Vクリップの生成"
     },
     "screeningRoom": {
-      "title": "Screening Room",
+      "title": "SFAIスクリーニングルーム利用期間",
       "description": "「Production」上で、シーン動画のプレビュー、マスターの編集・構成、そして公開までを一貫して行えます。関係者向けには、構造化されたフィードバック機能やオプションのエンゲージメント分析を備えた、非公開の共有リンク（/s/リンク）を利用可能です。",
       "keyFeatures": [
         "シーン動画プレビュー — レンダリングされたストリームを順番に再生",
@@ -853,13 +2045,13 @@
         "title": "プラットフォームの概要",
         "description": "アイデア出しから公開可能な動画の完成まで、すべてを一つのスタジオで完結。トレーニング、ポッドキャスト、ニュース、シネマティック・シリーズなど、あらゆるコンテンツに共通の制作パイプラインを採用し、最終レンダリングにコストをかける前にプリビジュアライゼーション（プレビズ）の段階で承認を行えます。",
         "keyFeatures": [
-          "シリーズ → Blueprint → 生産 → Screening Room",
-          "ビート単位での承認 — F2Vに先立つプリビズおよびShot Frames",
+          "Series Room → Blueprint Room → Production Stage → Screening Room",
+          "ビート単位での承認 — F2Vに先立つプリビズおよびショット・フレームの承認",
           "ネイティブなVeo拡張チェーンを用いたGoogle Vertex AIの生成",
           "Trust & Safety（信頼と安全）のガードレールおよび配信時の署名付き来歴情報"
         ],
         "screenshotSlot": "スクリーンショットを挿入：ランディングページのヒーローエリア ＋ 簡略化されたウォークスルー・ストリップ",
-        "videoSlot": "01:30のクリップを挿入：ヒーロー → 新規プロジェクト → Blueprint → 本番撮影 → Screening Room → 公開"
+        "videoSlot": "01:30のクリップを挿入：Hero → 新規プロジェクト → Blueprint Room → Production Stage 撮影 → Screening Room → 公開"
       },
       {
         "id": "9",
@@ -869,19 +2061,19 @@
           "キャラクター、トーン、シーズン全体の構成といった「世界観」を、一度しっかりと定義しましょう。",
           "シーズン全体にわたる、一貫性のあるエピソード構成案（自動生成）",
           "ストーリーの継続性管理 — 複数エピソードからなるシーズンの整合性確保",
-          "シリーズとエピソードの同期 — Blueprint RoomおよびProductionへの連携"
+          "シリーズとエピソードの同期 — Blueprint Room および Production Stage への同期"
         ],
         "screenshotSlot": "スクリーンショットを挿入：自動生成されたエピソード・アークを含むシリーズの概要",
         "videoSlot": "30秒のクリップを挿入：複数エピソードからなるシーズンへと展開するコンセプト"
       },
       {
         "id": "10",
-        "title": "Blueprint 自動化",
+        "title": "Blueprint Room 自動化",
         "description": "コンセプトを、ログライン、ビート、キャラクター、トーンを含む構成の整ったトリートメントへと具体化してください。負荷の高いレンダリングを行う前に、Audience Resonanceを実行し、共同作業を行ってください。",
         "keyFeatures": [
-          "生成 → レビュー → 反復 → 本番稼働開始のワークフロー",
+          "生成 → レビュー → 反復 → Production Stageワークフローへ移行",
           "コンセプトから構成までを数分で――ログライン、ビート、キャラクター、トーン",
-          "本番稼働前のSFTERM6スコアリング（目標値80以上）",
+          "Production Stage より前に、ターゲット値 80 以上で Audience Resonance のスコアリングを行う",
           "共同作業者との共有リンク — フィードバックの統合とそれに基づく修正の実施"
         ],
         "screenshotSlot": "スクリーンショットを挿入：ストーリーの要所（ビート）とキャラクターアークを含む、自動生成されたBlueprint",
@@ -903,7 +2095,7 @@
       {
         "id": "7",
         "title": "Audience Resonance 分析",
-        "description": "ターゲットオーディエンスを設定して、即座にスコアリング、分析、推奨事項を確認しましょう。「ワンクリック修正」や「ガイド付き編集」を活用すれば、エピソード、Blueprint、スクリプトを最適化し、最大限のインパクトを生み出すことができます。",
+        "description": "ターゲットオーディエンスを特定し、即座にスコアリング、分析、推奨事項の提示を受けましょう。「ワンクリック修正」や「ガイド付き編集」を活用して、エピソードやスクリプトを最適化し、最大限のインパクトを実現してください。",
         "keyFeatures": [
           "ターゲットオーディエンスのスコアリング（カテゴリー別内訳付き）",
           "セクション別の改善提案 — ストーリーの適切な箇所を修正する",
@@ -915,20 +2107,21 @@
       },
       {
         "id": "11",
-        "title": "生産自動化",
-        "description": "「Script」および「Shoot」タブが、Foundation → Pre-Vis → Footage → Mixer → Streams という工程を案内します。シーンごとのチェックポイントが手戻りを最小限に抑え、Screening Roomがプレビュー、組み立て、公開を担います。",
+        "title": "Production Stage 自動化",
+        "description": "演出、脚本、音楽、リファレンス、およびスチール画像は、Audience Resonance（オーディエンスの共鳴指標）とプリビジュアライゼーション（Pre-Vis）のレビューを活用して脚本を最適化します。クリップ、ミキサー、ストリームは、各ショットの映像を生成します。Screening Roomは、プレビュー、アセンブリ（構成・編集）、および公開の工程を担います。",
         "keyFeatures": [
-          "Foundation — スクリプト、ボイス、シーンオーディオ、Audience Resonance",
-          "プリビジュアライゼーション — シーンごとの演出、音声、ショットフレーム（共有リンク付き）",
-          "撮影 — 制作環境を離れることなく、映像収録、ミキシング、ストリーミングを実行",
+          "演出、脚本、音楽、リファレンス、スチール — 脚本、ボイス、シーン音声、Audience Resonance分析",
+          "スチール — 各シーンの演出、音声、ビートごとのフレーム（共有リンク付き）",
+          "クリップ、ミキサー、ストリーム — Production Stageを離れることなく各ショットを生成",
+          "プロダクション・プランナー — 撮影目標、日付入りスケジュール、電話のステータス",
           "Screening Room — シーンプレビュー、マスター編集、上映会、およびYouTube公開"
         ],
-        "screenshotSlot": "スクリーンショットを挿入：「スクリプト」「撮影」「プリビジュアライゼーション」の各タブが表示された制作ダッシュボード",
-        "videoSlot": "60秒クリップの挿入：スクリプト確定 → シーンごとにPre-vis Agent → 撮影 → ミキサー → ストリーム"
+        "screenshotSlot": "スクリーンショットを挿入：演出、台本、スチール、クリップ、ミキサー、ストリームを表示した制作ダッシュボード",
+        "videoSlot": "60秒クリップの挿入：スクリプトの確定 → シーンごとの静止画 → クリップ → ミキサー → ストリーム"
       },
       {
         "id": "14",
-        "title": "Screening Room",
+        "title": "SFAIスクリーニングルーム利用期間",
         "description": "「Production」上で、シーン動画のプレビュー、マスターの編集・構成、そして公開までを一貫して行えます。関係者向けには、構造化されたフィードバック機能やオプションのエンゲージメント分析を備えた、非公開の共有リンク（/s/リンク）を利用可能です。",
         "keyFeatures": [
           "シーン動画プレビュー — レンダリングされたストリームを順番に再生",
@@ -1041,56 +2234,56 @@
   },
   "coreCapabilities": {
     "audienceResonance": {
-      "badge": "Intelligence Layer",
-      "title": "Audience Resonance: build for a culture, not a language code",
-      "description": "Subtitles stretch one video’s reach. SceneFlow lets you name the culture, region, and demographic you are making for, score the story against that audience before you render, and then ship either a dubbed master or a separate high-resonance version per audience.",
+      "badge": "インテリジェンス層",
+      "title": "Audience Resonance: 言語コードではなく、文化に合わせて構築する",
+      "description": "字幕は、1本の動画が届く範囲を拡大します。SceneFlowを使えば、ターゲットとする文化、地域、層を定義し、レンダリング前にその視聴者層に合わせてストーリーを評価・調整した上で、吹き替え版マスターや、各層に最適化された別バージョンの動画を出力・展開することが可能です。",
       "bullets": [
-        "Define the audience: eight target regions, plus age, gender, education, and community",
-        "Describe culture, faith, and values in your own words — SceneFlow reads the signals",
-        "Get a resonance score with section-level fixes before you spend on renders",
-        "Dub the master, or produce a distinct version tuned to each audience"
+        "オーディエンスを定義する：8つのターゲット地域に加え、年齢、性別、学歴、コミュニティ",
+        "文化、信仰、価値観をあなた自身の言葉で表現してください――SceneFlowがそのシグナルを読み取ります。",
+        "レンダリングに費用をかける前に、セクション単位で修正を加えた状態での共感度スコア（レゾナンス・スコア）を確認しましょう。",
+        "マスター音源を吹き替えるか、あるいは各オーディエンスに合わせて調整した個別のバージョンを制作する。"
       ],
-      "cta": "Analyze Your Script",
+      "cta": "スクリプトを分析する",
       "howWeScore": {
-        "toggle": "How we score",
-        "title": "How Audience Resonance works",
-        "description": "Audience Resonance combines narrative-structure analysis (clarity, pacing, emotional arc) with target-persona fit against the audience you define in Blueprint — not vanity metrics or post-publish retention data. When your audience description carries cultural signals, the analysis adds an authenticity pass over names, dialect, customs, faith, and sensitivities. Recommendations are tied to specific script sections so you can fix issues before agents run video generation.",
+        "toggle": "評価方法",
+        "title": "Audience Resonanceの仕組み",
+        "description": "Audience Resonanceは、物語の構成（明快さ、テンポ、感情の起伏）の分析と、Blueprintで定義したターゲットペルソナとの適合性評価を組み合わせたものです（単なる「見栄えの良い指標（バニティメトリクス）」や公開後の継続率データとは異なります）。ターゲット層の定義に文化的要素が含まれる場合、名前、方言、慣習、信仰、文化的配慮といった点についても、その真正性が検証されます。改善提案はスクリプトの特定の箇所と紐付けられているため、AIエージェントによる動画生成が実行される前に問題を修正することが可能です。",
         "bullets": [
-          "Scores Blueprint and script against your stated target audience",
-          "Cultural authenticity checks on names, dialect, customs, faith, and sensitivities",
-          "Section-level recommendations — not a black-box “trust us” number",
-          "Run before heavy render spend, not after publish"
+          "設定されたターゲットオーディエンスを基準に、Blueprintとスクリプトをスコアリングします。",
+          "名前、方言、慣習、信仰、および文化的配慮を要する事項に関する、文化的正確性の確認",
+          "セクション単位の推奨事項 — ブラックボックス化された「とにかく信じて」という数値ではありません",
+          "公開後ではなく、レンダリングに多大なコストがかかる前に実行してください。"
         ]
       }
     },
     "express": {
-      "badge": "Hyper-Speed Production",
-      "title": "SceneFlow Agents",
-      "description": "Generate Pre-Vis, motion video, and delivery masters concurrently. Go from script to a shareable Pre-Vis in minutes — then approve the shot frames before you spend on motion video. Throughput is what makes a version per audience affordable instead of theoretical.",
+      "badge": "インテリジェント・プロダクション",
+      "title": "SFAIシーンフロー・エージェント・ターム",
+      "description": "Audio Agent、Stills Agent、Video Agentは、ビートの指示に基づいて専門的なプロンプトを作成し、適切なリファレンスを付加した上で、並行して生成を行います。各エージェントが専門的な処理を行うため、シーンの生成には数分かかる場合がありますが、動画制作のコストをかける前に、Shot Frames（ショットのフレーム）を確認・承認することができます。",
       "items": [
         {
           "title": "Pre-vis Agent",
-          "desc": "Fully voiced, scored shot frames per scene, ready to share in the Screening Room.",
-          "time": "Minutes vs Hours"
+          "desc": "確定した演出方針に基づき、全編のボイスと音楽（スコア）を組み込んだシーンごとのビートフレームが完成しており、Screening Roomでの共有が可能な状態です。",
+          "time": "品質第一"
         },
         {
           "title": "Video Agent",
-          "desc": "Per-scene motion video generated after Pre-Vis approval, as native-language streams or a lower-cost dub, with scene-level edits.",
-          "time": "Minutes vs Days"
+          "desc": "プリビズの承認後に生成されるシーンごとの動画であり、シーン単位の編集を施した上で、現地語版または低コストな吹き替え版として制作されます。",
+          "time": "承認して、レンダリングする"
         },
         {
-          "title": "Delivery Agent",
-          "desc": "Assemble the ProRes 4K master and auto-publish to YouTube or download the bundle.",
-          "time": "Minutes vs Weeks"
+          "title": "SFAI配送代理店契約条件",
+          "desc": "ProRes 4Kマスターを生成し、YouTubeへ自動公開するか、バンドルをダウンロードします。",
+          "time": "カット品を出荷する"
         }
       ],
-      "cta": "Run Production Agents"
+      "cta": "Production Agents を実行します。"
     }
   },
   "preVisEngine": {
-    "badge": "Creative Decision Engine",
-    "title": "Pre-Visualization Engine",
-    "subtitle": "Generating a fully voiced, scored, 40-minute Pre-Vis (the industry term: animatic) in 15 minutes is not a workflow step — that is the product. In Hollywood, pre-vis takes weeks and costs hundreds of thousands of dollars. SceneFlow scales it to minutes and pocket change.",
+    "badge": "SFAIクリエイティブ・デシジョン・エンジン",
+    "title": "SFAIPRE_可視化エンジン用語",
+    "subtitle": "音声や音楽を完備した40分間のプリビジュアライゼーション（業界用語では「アニマティック」）をわずか15分で生成することは、単なる制作工程の一部ではありません。それ自体が完成された「製品」なのです。ハリウッドでは、プリビジュアライゼーションの制作に数週間と数十万ドルの費用を要しますが、本技術なら、それを数分という短時間かつ、ごくわずかなコストで実現可能にします。",
     "narrative": "映画業界において、絵コンテは制作クルーに渡すものです。一方、Pre-visは、プロジェクトの承認（ゴーサイン）を得るためにスタジオ幹部、投資家、プロデューサーに提示するものです。SceneFlowは、制作プロセスを単なるコンシューマー向けクリエイターツールから、エンタープライズレベルのパイプライン・アセットへと進化させます。",
     "pillars": [
       {
@@ -1107,257 +2300,308 @@
       }
     ],
     "workflow": {
-      "title": "Reference Library → Pre-Vis → Motion Video → ProRes 4K master",
+      "title": "Reference Library → プリビジュアライゼーション → モーションビデオ → ProRes 4Kマスター",
       "steps": [
-        "Build the Reference Library — characters, locations, and props locked to your production art style.",
-        "Generate Pre-Vis shot frames per scene with dialogue, SFX, and music — iterate direction in the Screening Room at low cost.",
-        "Approve the Pre-Vis, then generate per-scene motion video with multilanguage dubbing and scene-level edits.",
-        "Deliver the ProRes 4K master from the Screening Room — auto-publish to YouTube or download the bundle."
+        "制作のアートスタイルに準拠したキャラクター、ロケーション、プロップからなるリファレンスライブラリを構築します。",
+        "セリフ、SFX、音楽を組み込んだシーンごとのプリビズ用ビートフレームを生成し、低コストで演出のブラッシュアップ（イテレーション）を行います。",
+        "プリビジュアライゼーションを承認した後、多言語の吹き替えとシーン単位の編集を施した、シーンごとのモーションビデオを生成します。",
+        "Screening RoomからProRes 4Kマスターを配信します。YouTubeへの自動公開、またはバンドルのダウンロードが可能です。"
       ]
     },
     "cta": "スクリプトのアップロードから始める",
     "ctaSubtext": "伝統的な映画制作と生成AIの架け橋となる"
   },
   "exitIntent": {
-    "title": "Before you go — want launch news?",
-    "subtitle": "Leave your email and we'll tell you when we announce.",
+    "title": "その前に――リリース情報を受け取りませんか？",
+    "subtitle": "メールアドレスをご登録いただければ、発表の際にお知らせいたします。",
     "benefits": [
-      "Launch notification when we announce",
-      "Weekly AI filmmaking tutorials",
-      "Exclusive creator discounts"
+      "発表時の通知",
+      "毎週配信のAI映像制作チュートリアル",
+      "クリエイター限定割引"
     ],
-    "emailPlaceholder": "Enter your email",
-    "subscribe": "Notify me",
-    "subscribing": "Subscribing...",
-    "or": "or",
-    "startNow": "Start directing now for just $9 →",
-    "privacy": "No spam, ever. Unsubscribe anytime.",
-    "successTitle": "You're on the list!",
-    "successSubtitle": "We'll email you when we announce — plus the occasional filmmaking tip.",
-    "ctaText": "Start Exploring — $9",
-    "closePopup": "Close popup"
+    "emailPlaceholder": "メールアドレスを入力してください",
+    "subscribe": "通知を受け取る",
+    "subscribing": "登録中...",
+    "or": "または",
+    "startNow": "たった9ドルで、今すぐディレクションを始めましょう →",
+    "privacy": "スパムは一切送信しません。いつでも配信停止が可能です。",
+    "successTitle": "リストに載っていますよ！",
+    "successSubtitle": "発表の際にお知らせするほか、映画制作のヒントなども時折お届けします。",
+    "ctaText": "探索を始める — $9",
+    "closePopup": "ポップアップを閉じる"
   },
   "pricing": {
-    "badge": "Simple Pricing",
-    "title": "Start with Explorer — $9",
-    "subtitle": "Test the complete pipeline now with a frictionless $9 entry.",
+    "badge": "シンプルな料金設定",
+    "title": "Explorerで始める — 9ドル",
+    "subtitle": "わずか9ドルで、手間なくすぐに完全なパイプラインをお試しいただけます。",
+    "explorerHighlight": "コンセプトから上映まで、SceneFlowスタジオのすべてを体験する最速の方法です。",
+    "trustBadges": [
+      "Whopによる安全な支払い",
+      "スタジオをお試しいただける「Explorer」プラン（9ドル）",
+      "月間クレジットは期間終了時に失効します。",
+      "いつでもキャンセル可能"
+    ],
     "valueAnchor": {
-      "traditionalCost": "$2,000+",
-      "traditionalLabel": "Traditional pre-vis",
-      "vs": "vs",
-      "sceneFlowCost": "$49-149",
-      "sceneFlowLabel": "SceneFlow monthly",
-      "saveBadge": "Save 90%+ per project"
+      "traditionalCost": "2,000ドル以上",
+      "traditionalLabel": "従来のプリビジュアライゼーション",
+      "vs": "対",
+      "sceneFlowCost": "49〜149ドル",
+      "sceneFlowLabel": "SceneFlow 月次",
+      "saveBadge": "プロジェクトごとに90%以上のコストを削減"
     },
     "teamCta": {
-      "title": "In-house team or institution?",
-      "description": "Book a workflow walkthrough for comms, L&D, and marketing teams",
-      "button": "Book Walkthrough"
+      "title": "社内チーム、それとも外部機関ですか？",
+      "description": "コミュニケーション、L&D、マーケティングチーム向けのワークフロー・ウォークスルーを予約する",
+      "button": "書籍の概要・解説"
     },
     "agencyCta": {
-      "title": "Agency or production shop?",
-      "description": "Custom credits, SLA, and dedicated support at scale",
-      "button": "Contact Sales"
+      "title": "エージェンシーですか、それとも制作会社ですか？",
+      "description": "大規模利用向けのカスタムクレジット、SLA、および専任サポート",
+      "button": "営業へのお問い合わせ"
     },
     "byok": {
-      "title": "Bring Your Own Key",
-      "badge": "Pro & Studio Plans",
-      "description": "Your API key can run reference, still, and clip generations. SceneFlow charges a 20% orchestration fee on those jobs. Hosted SceneFlow rates can be lower than a personal API account as platform volume grows.",
-      "savingsHighlight": "20% orchestration fee",
+      "title": "独自の鍵の持ち込み",
+      "badge": "ProおよびStudioプラン",
+      "description": "お手持ちのAPIキーを使用して、リファレンス、静止画、およびクリップの生成を行うことができます。SceneFlowは、これらのジョブに対して20%のオーケストレーション手数料を請求します。プラットフォームの利用規模が拡大するにつれ、ホスト型SceneFlowの利用料金は、個人用APIアカウントの料金よりも低く抑えられる可能性があります。",
+      "savingsHighlight": "20%のオーケストレーション手数料",
       "benefits": [
         {
-          "title": "References, stills, and clips",
-          "description": "BYOK applies only when your key actually runs those generations"
+          "title": "参考資料、スチール、クリップ",
+          "description": "BYOKは、お客様のキーが実際にそれらの世代を実行する場合にのみ適用されます。"
         },
         {
-          "title": "Hosted rates can be lower",
-          "description": "SceneFlow platform pricing can undercut a personal Vertex or Kling account"
+          "title": "ホスト経由の料金の方が安くなる場合があります。",
+          "description": "SceneFlowプラットフォームの価格は、VertexやKlingの個人向けアカウントの価格を下回る可能性があります。"
         },
         {
-          "title": "Full Control",
-          "description": "Your keys, your provider bill, plus a platform orchestration fee"
+          "title": "完全な制御",
+          "description": "お客様のキー、プロバイダーへの利用料、そしてプラットフォーム・オーケストレーション・フィー"
         }
       ],
-      "supportedProviders": "Supported Providers",
+      "supportedProviders": "対応プロバイダー",
       "vertexName": "Google Vertex AI",
-      "vertexDetail": "References, stills, and Omni clips",
-      "elevenLabsName": "ElevenLabs",
-      "elevenLabsDetail": "Text-to-Speech & Voice Cloning",
-      "savingsLabel": "20% fee",
-      "onImagesVideo": "on references, stills, and clips",
-      "onVoiceover": "on voiceover",
-      "note": "The 20% fee is a SceneFlow orchestration charge. Provider usage bills to your account. SceneFlow-hosted generation can cost less than bringing a personal key."
+      "vertexDetail": "リファレンス、スチール、Omniクリップ",
+      "elevenLabsName": "クリング",
+      "elevenLabsDetail": "キーが使用された際のクリップ生成",
+      "savingsLabel": "20%の手数料",
+      "onImagesVideo": "リファレンス、スチール、クリップについて",
+      "onVoiceover": "あなたのキーがジョブを実行する際",
+      "note": "20%の手数料は、SceneFlowによるオーケストレーション料金です。プロバイダーの利用料は、お客様のアカウントに請求されます。SceneFlowがホストする生成機能を利用する場合、独自のキーを持ち込むよりもコストを抑えられる可能性があります。"
     },
     "creditTopUps": {
-      "title": "Need More Credits?",
-      "subtitle": "Top up anytime. Each add-on pack lasts 12 months.",
+      "title": "クレジットがもっと必要ですか？",
+      "subtitle": "25ドル、100ドル、または250ドルのアドオンを、必要なときにいつでもご購入いただけます。各パックの有効期間は12ヶ月です。",
       "packs": [
         {
-          "label": "Starter Pack",
-          "description": "Perfect for quick revisions"
+          "label": "25ドルの追加オプション",
+          "description": "2,000クレジット。必要な時に何度でも購入できます。"
         },
         {
-          "label": "Scene Pack",
-          "description": "Complete a short project"
+          "label": "100ドルの追加オプション",
+          "description": "9,000クレジット。必要な時に何度でも購入できます。"
         },
         {
-          "label": "Production Pack",
-          "description": "Major film sequence"
-        },
-        {
-          "label": "Studio Pack",
-          "description": "Full production capacity"
+          "label": "250ドルの追加オプション",
+          "description": "25,000クレジット。必要な時に何度でも購入可能です。"
         }
       ],
-      "creditsUnit": "credits"
+      "creditsUnit": "クレジット"
     },
     "calculator": {
-      "sectionTitle": "Estimate Your Project",
-      "sectionSubtitle": "Know exactly what you'll pay before you commit",
-      "title": "Project Budget Calculator",
-      "subtitle": "Set a credit budget, track production charges, and plan Pre-Vis first before motion video.",
-      "customize": "Customize parameters",
-      "imagesLabel": "Images to generate",
-      "videoClipsLabel": "Video clips",
-      "voiceoverLabel": "Voiceover (minutes)",
-      "byokTitle": "Bring Your Own Key (BYOK)",
-      "byokBadge": "Pro & Studio",
-      "byokDescription": "Use your own key for references, stills, and clips. SceneFlow charges a 20% orchestration fee, and hosted rates can be lower than a personal API account.",
-      "vertexToggle": "Vertex AI (references, stills, and clips)",
-      "elevenLabsToggle": "ElevenLabs (Voiceover)",
-      "imageGeneration": "Image Generation",
-      "videoGeneration": "Video Generation",
-      "voiceover": "Voiceover",
+      "sectionTitle": "プロジェクトの見積もり",
+      "sectionSubtitle": "契約する前に、支払う金額を正確に把握しましょう。",
+      "title": "生産計画担当者",
+      "subtitle": "ショットの反復作業や日程入りスケジュールを計画し、進捗ペースやコストをスマートフォンで確認しましょう。",
+      "customize": "パラメータをカスタマイズする",
+      "imagesLabel": "生成する画像",
+      "videoClipsLabel": "動画クリップ",
+      "voiceoverLabel": "ナレーション（分）",
+      "byokTitle": "独自の鍵の持ち込み (BYOK)",
+      "byokBadge": "プロ＆スタジオ",
+      "byokDescription": "リファレンス、スチル、クリップには、ご自身のキーを使用してください。SceneFlowでは20%のオーケストレーション手数料が請求されますが、ホスト型サービスの料金は個人のAPIアカウントを利用する場合よりも安くなる可能性があります。",
+      "vertexToggle": "Vertex AI（リファレンス、スチール、クリップ）",
+      "elevenLabsToggle": "ElevenLabs（ナレーション）",
+      "imageGeneration": "画像生成",
+      "videoGeneration": "動画生成",
+      "voiceover": "ナレーション",
       "byokTag": "(BYOK)",
-      "totalEstimate": "Total Estimate",
-      "withTopUps": "with top-ups",
-      "creditSavings": "SceneFlow credit savings",
-      "savePercent": "You save {percent}% on SceneFlow credits",
-      "transparency": "Full transparency: You'll see real-time credit usage as you work. No surprises—adjust your project scope anytime.",
-      "transparencyHighlight": "Full transparency:",
-      "byokDisclaimer": "BYOK Note: The platform fee applies only to reference, still, and clip generations that run on your key. SceneFlow-hosted model rates can be lower than an individual account.",
-      "byokDisclaimerHighlight": "BYOK Note:",
+      "totalEstimate": "見積もり合計",
+      "withTopUps": "追加チャージ付きで",
+      "creditSavings": "SceneFlow クレジットの節約",
+      "savePercent": "SceneFlowクレジットが{percent}%割引になります。",
+      "transparency": "完全な透明性：作業中、クレジットの消費状況をリアルタイムで確認できます。予期せぬ事態は起こりません。プロジェクトの範囲はいつでも調整可能です。",
+      "transparencyHighlight": "包み隠さず申し上げますと、",
+      "byokDisclaimer": "注：プラットフォーム手数料は、お客様のキーを使用して実行されるリファレンス、静止画、およびクリップの生成にのみ適用されます。SceneFlowでホストされるモデルの料金は、個人アカウントの場合よりも低く設定できる可能性があります。",
+      "byokDisclaimerHighlight": "BYOK 注記：",
       "presets": [
         {
           "id": "commercial",
-          "name": "30-sec Commercial"
+          "name": "30秒CM"
         },
         {
           "id": "short",
-          "name": "2-min Short Film"
+          "name": "2分間の短編映画"
         },
         {
           "id": "episode",
-          "name": "10-min Episode"
+          "name": "10分間のエピソード"
         },
         {
           "id": "feature",
-          "name": "90-min Feature"
+          "name": "90分長編作品"
         }
       ],
-      "minSuffix": "min"
+      "minSuffix": "分"
     },
     "tierGrid": {
-      "productionTestFlight": "Production Test Flight",
-      "getStarted": "Get Started",
-      "startTestFlight": "Start Test Flight",
-      "loading": "Loading...",
-      "mostPopular": "Most Popular",
-      "creditsPerMonth": "Credits/mo",
-      "storage": "Storage",
+      "productionTestFlight": "量産機試験飛行",
+      "getStarted": "始める",
+      "startTestFlight": "テストフライトを開始する",
+      "loading": "読み込み中...",
+      "mostPopular": "最も人気",
+      "creditsPerMonth": "クレジット/月",
+      "storage": "ストレージ",
       "perMonth": "/month"
     },
     "trust": {
-      "cancelAnytime": "Cancel anytime",
-      "moneyBack": "$9 Explorer to try the studio",
-      "creditsNeverExpire": "Explorer credits last 90 days"
+      "cancelAnytime": "いつでもキャンセル可能",
+      "moneyBack": "スタジオをお試しいただける「Explorer」プラン（9ドル）",
+      "creditsNeverExpire": "Explorer 過去90日間のクレジット"
     },
     "plans": {
       "explorer": {
-        "name": "Explorer",
-        "description": "One-time purchase to try it out",
+        "name": "Explorer — デモ",
+        "description": "デモ — 製品版を試用するための買い切り型購入",
         "features": [
-          "One-time purchase",
-          "750 credits (expire 90 days after purchase)",
-          "5 GB storage (30 days)",
-          "Full platform access",
-          "MP4 export (any resolution)",
-          "AI voiceover (70+ languages)"
+          "買い切り",
+          "750クレジット（購入後90日で有効期限切れ）",
+          "5 GBのストレージ（30日間）",
+          "プラットフォームへの完全なアクセス",
+          "MP4書き出し（任意の解像度）",
+          "AI音声ナレーション（70以上の言語）"
         ]
       },
       "subscriptions": [
         {
           "id": "starter",
-          "name": "Starter",
-          "description": "For individual creators",
+          "name": "スターター — サンドボックス",
+          "description": "サンドボックス — 本番のショーの前にアイデアを試すための場所",
           "features": [
-            "Full platform access",
-            "4,500 credits/month included",
-            "Unused monthly credits expire at period end",
-            "25 GB active storage",
-            "MP4 export (any resolution)",
-            "AI voiceover (70+ languages)",
-            "Email support"
+            "プラットフォームへの完全なアクセス",
+            "月間4,500クレジットが含まれています",
+            "未使用の月間クレジットは、期間終了時に失効します。",
+            "25 GBのアクティブストレージ",
+            "MP4書き出し（任意の解像度）",
+            "AI音声ナレーション（70以上の言語）",
+            "メールサポート"
           ]
         },
         {
           "id": "pro",
-          "name": "Pro",
-          "description": "For professional creators",
+          "name": "プロ — YouTuber",
+          "description": "YouTuber — 定期的なエピソードおよびチャンネル動画",
           "features": [
-            "Everything in Starter, plus:",
-            "15,000 credits/month included",
-            "Unused monthly credits expire at period end",
-            "100 GB active storage",
-            "Veo 3.1 Quality (4K) access",
-            "Character Consistency Engine",
-            "Voice cloning",
-            "BYOK (Bring Your Own Key)",
-            "3 team seats",
-            "Priority support"
+            "Starterの全機能に加え、以下が含まれます：",
+            "月間15,000クレジット込み",
+            "未使用の月間クレジットは、期間終了時に失効します。",
+            "100 GBのアクティブストレージ",
+            "Veo 3.1 高画質（4K）へのアクセス",
+            "キャラクター一貫性エンジン",
+            "音声クローニング",
+            "BYOK（独自の鍵の持ち込み）",
+            "チーム用シート3席",
+            "優先サポート"
           ]
         },
         {
           "id": "studio",
-          "name": "Studio",
-          "description": "For teams & agencies",
+          "name": "スタジオ — インディペンデント映画作家",
+          "description": "インディペンデント映画作家 — インディペンデント映画・シリーズ作品",
           "features": [
-            "Everything in Pro, plus:",
-            "75,000 credits/month included",
-            "Unused monthly credits expire at period end",
-            "500 GB active storage",
-            "Veo 3.1 4K Priority Queue",
-            "Unlimited Character Consistency",
-            "White-label exports",
-            "API access",
-            "10 team seats",
-            "Dedicated account manager",
-            "Enterprise SLA available on request"
+            "Proの全機能に加え、以下が含まれます：",
+            "月間75,000クレジットが含まれています",
+            "未使用の月間クレジットは、期間終了時に失効します。",
+            "500 GBのアクティブストレージ",
+            "Veo 3.1 4K 優先キュー",
+            "無制限のキャラクターの一貫性",
+            "ホワイトラベル輸出",
+            "APIアクセス",
+            "チーム用10席",
+            "専任のアカウントマネージャー",
+            "ご要望に応じて、エンタープライズ向けSLAをご提供します。"
           ]
         }
       ]
-    },
-    "explorerHighlight": "The fastest way to experience the complete SceneFlow studio — from concept to Screening Room.",
-    "trustBadges": [
-      "Secure payments via Whop",
-      "$9 Explorer to try the studio",
-      "Monthly credits expire at period end",
-      "Cancel anytime"
-    ]
+    }
   },
   "landingSections": {
     "expandSection": "セクションを表示",
     "collapseSection": "セクションを非表示にする"
   },
+  "notify": {
+    "heading": "ローンチに関する最新情報を受け取る",
+    "description": "メールアドレスをご登録いただければ、発表の際にお知らせします。それ以外の目的には使用しません。",
+    "placeholder": "you@studio.com",
+    "submit": "通知を受け取る",
+    "submitting": "送信中…",
+    "successTitle": "受信トレイを確認してください。",
+    "successBody": "確認用リンクをお送りしました。そちらをクリックして、ローンチリストにご登録ください。それ以外の手続きは不要です。",
+    "errorEmpty": "ご連絡ができるよう、メールアドレスを入力してください。",
+    "errorInvalid": "そのメールアドレスは正しくないようです。確認して、もう一度試してください。",
+    "errorGeneric": "問題が発生しました。しばらくしてからもう一度お試しください。",
+    "privacy": "まず確認用リンクをメールでお送りします。確認後にリリースのお知らせを1通お送りするのみで、スパムメールなどは一切送信しません。",
+    "confirmTitle": "リストに載っています。",
+    "confirmBody": "発表の際にメールをお送りします。それ以外の連絡はいたしません。",
+    "confirmExpiredTitle": "そのリンクの有効期限が切れました。",
+    "confirmExpiredBody": "ランディングページで再度メールアドレスを送信していただければ、新しい確認用リンクをお送りします。",
+    "confirmInvalidTitle": "そのリンクは無効です。",
+    "confirmInvalidBody": "ランディングページから、新しい確認をリクエストしてください。",
+    "confirmHome": "SceneFlowに戻る"
+  },
+  "forFilmmakers": {
+    "badge": "SceneFlow Originals Seed Programに申し込む",
+    "heading": "映像制作者の皆様へ：プラットフォームでの配信と収益化に向けて、パイロット版をご提出ください。",
+    "subtitle": "SceneFlowネットワークは、オープンなマーケットプレイスではなく、厳選された5〜10作品からなる「創設クリエイター」限定のグループです。収益分配は、有料登録者が発生した時点から開始されます。私たちが現在提供しているのは、配信におけるレバレッジ（拡散力）です。具体的には、独占的な先行公開期間を設けていただくことを条件に、ティーザー広告の費用を負担いたします。",
+    "closedNote": "申請は編集者によって審査されます。提出しても、作品がカタログに公開されるわけではありません。",
+    "fields": {
+      "email": "Eメール",
+      "emailPlaceholder": "you@studio.com",
+      "name": "お名前",
+      "namePlaceholder": "監督またはプロデューサーの氏名",
+      "title": "パイロット版または長編映画のタイトル",
+      "titlePlaceholder": "仮題",
+      "logline": "ログライン",
+      "loglinePlaceholder": "その物語の魅力を伝える、1〜2文の文章。",
+      "audienceUrl": "既存のオーディエンス",
+      "audiencePlaceholder": "YouTube、Bilibili、フェスティバル、またはSNSのURL",
+      "exclusivePremiere": "ティーザー広告の制作費を負担していただけることを条件に、SceneFlowでの独占先行公開を行うことについて前向きに検討します。"
+    },
+    "submit": "申請を提出する",
+    "submitting": "送信中…",
+    "successTitle": "受信トレイを確認してください。",
+    "successBody": "確認用リンクをお送りしました。リンクをクリックして、Seedへの申し込みを確定させてください。必要な操作はそれだけです。",
+    "errorEmpty": "パイロット版を審査できるよう、すべての項目にご記入ください。",
+    "errorInvalidEmail": "そのメールアドレスは正しくないようです。確認して、もう一度試してください。",
+    "errorInvalidUrl": "既存のオーディエンス向けに公開URLを追加してください。",
+    "errorGeneric": "問題が発生しました。しばらくしてからもう一度お試しください。",
+    "confirmTitle": "申し込みを受け付けました。",
+    "confirmBody": "現在、Seedの審査待ちリストに入っています。提出されたものはすべて目を通しています。これは公開カタログへの掲載ではありません。",
+    "confirmExpiredTitle": "そのリンクの有効期限が切れました。",
+    "confirmExpiredBody": "映画制作者用フォームを再度送信してください。新しい確認用リンクをお送りします。",
+    "confirmInvalidTitle": "そのリンクは無効です。",
+    "confirmInvalidBody": "映像作家向けフォームから、新たな確認を依頼してください。",
+    "confirmHome": "SceneFlowに戻る",
+    "privacy": "まず確認用リンクをメールでお送りします。編集者限定。スパムは送信しません。"
+  },
   "finalCta": {
-    "title": "Built for the stories that have to hold.",
-    "subtitle": "Leave your email for launch news — or start directing now from the $9 Explorer plan.",
-    "cta": "Explore plans",
-    "ctaSecondary": "See how it works",
+    "title": "語り継ぐべき物語のために。",
+    "subtitle": "ローンチに関する最新情報を受け取るにはメールアドレスをご登録ください。あるいは、月額9ドルの「Explorer」プランで、今すぐディレクションを開始することも可能です。",
+    "cta": "プランを見る",
+    "ctaSecondary": "仕組みを見る",
     "ctaSecondaryHref": "#two-modes"
   },
   "footer": {
-    "description": "コンセプトから出版可能なマスターまで、エンドツーエンドの自動ビデオ制作。ONE GUIDED STUDIO ： Series Room → Blueprint Room → Production Stage → Screening Room。",
+    "description": "コンセプトから公開可能なマスターまで、一貫して自動化された動画制作。ガイド付きの単一スタジオ：Series Room → Blueprint Room → Production Stage → Screening Room。",
     "product": "製品",
     "resources": "リソース",
     "legal": "信頼性＆安全性",
@@ -1376,7 +2620,7 @@
     "taglineSub": "アイデアから公開されたビデオへ",
     "securePayments": "登録業者であるWhopが処理する安全な支払い",
     "morLine": "安全な支払い、税金の計算、およびコンプライアンスは、Life Focus, LLCに代わって、登録商人であるWhopによって処理されます。",
-    "copyright": "© 2026 SceneFlow Studio.無断複写・転載を禁じます。",
+    "copyright": "© 2026 SceneFlow Studio. All rights reserved.",
     "address": "Life Focus, LLC • 2900 W Anderson Ln, Suite C 200, Austin, TX 78757, United States •連絡先: support@sceneflowai.studio",
     "poweredBy": "Google搭載のインテリジェンス· Google Cloudでオーケストレーション"
   },
@@ -1393,290 +2637,5 @@
     "mute": "ミュート",
     "unmute": "ミュートを解除",
     "expandVideo": "動画を拡大する"
-  },
-  "productionShowcase": {
-    "badge": "Production Examples",
-    "title": "See the Full Pipeline",
-    "titleAccent": "in Action",
-    "subtitle": "Each example below is a complete production — from Blueprint through Pre-Vis to the final ProRes 4K master. Walk the Screening Room to compare the Pre-Vis, per-scene motion video, and the finished master in multiple languages.",
-    "subtitleTagline": "Long-form productions. Not clips.",
-    "screeningRoomInstruction": "Review this production the way a reviewer would — one milestone at a time. Start with Series, then Blueprint, then the script in AR Analysis, and finish in Screening.",
-    "languagesBanner": "Public examples ship in 7 languages: English, Spanish, Portuguese, Hindi, Chinese, Arabic, and Thai.",
-    "explorePipelineCta": "Explore a full production",
-    "explorePipelineHint": "Start with Cinematic Drama below to walk the full pipeline from concept to multi-language master.",
-    "workflowLabel": "Solutions",
-    "startProduction": "Start Your Production",
-    "cta": "Start Your Production",
-    "continuityNote": "Series Room manages continuity",
-    "resonanceNote": "Audience Resonance™ optimizes scripts",
-    "videoLanguagePrompt": "Watch this production in your language",
-    "videoComingSoon": "Dub coming soon",
-    "videoSoon": "Soon",
-    "frictionLabel": "The Friction",
-    "solutionPillarLabel": "The SceneFlow Solution",
-    "showSolutionsSection": "Show Solutions",
-    "hideSolutionsSection": "Hide Solutions",
-    "cards": [
-      {
-        "id": "drama",
-        "title": "Feature-Length Cinematic Drama. Zero Character Drift.",
-        "subtitle": "Hold character faces, wardrobe, and locations from scene 1 to scene 100. Walk the Screening Room to see the Pre-Vis, per-scene motion video, and the final ProRes 4K master — then switch languages to hear the full dub.",
-        "badge": "Series-Ready",
-        "solutionPillars": [
-          {
-            "title": "Visual & Character Consistency",
-            "frictionHeadline": "Character Drift & Wobbly Sets.",
-            "friction": "Generative models reset with every shot — causing character faces, outfits, and lighting to morph continuously across scene cuts.",
-            "solutionHeadline": "Locked Asset Blueprints.",
-            "solution": "Define master character profiles, environments, and visual styles up front in Blueprint Room. SceneFlow enforces visual identity across every render to preserve narrative immersion."
-          },
-          {
-            "title": "Narrative Pacing & Scene Control",
-            "frictionHeadline": "The 10-Second Clip Trap.",
-            "friction": "Building a film out of disconnected micro-prompts creates choppy pacing, flat emotion, and endless manual timeline editing.",
-            "solutionHeadline": "Beat-First Storyboarding.",
-            "solution": "Direct at the scene level, not the prompt level. Structure dramatic beats, camera movements, and story arcs visually before generating a single frame of video."
-          },
-          {
-            "title": "Dialogue & Audio Alignment",
-            "frictionHeadline": "Unconvincing Dialogue.",
-            "friction": "Mismatched lip-sync, floating mouth movements, and detached voice tracks immediately pull viewers out of the drama.",
-            "solutionHeadline": "Integrated Voice & Sync Engine.",
-            "solution": "Dynamic voice performance and precise lip-sync are baked directly into the video pipeline — delivering believable dialogue without external post-production passes."
-          },
-          {
-            "title": "Workflow Friction & Reroll Fatigue",
-            "frictionHeadline": "Asset Chaos & Endless Rerolls.",
-            "friction": "Generating a short film usually means juggling 200+ raw video files, manual upscaling, and dozens of wasted generations.",
-            "solutionHeadline": "Automated Studio Pipeline.",
-            "solution": "From concept to final master MP4 in one unified platform. Blueprint Room handles story setup, Production Stage runs Direction through Streams, and Screening Room delivers your final export."
-          }
-        ],
-        "screeningRoomPreview": "The Cinematic Drama — Screening Room"
-      },
-      {
-        "id": "animation",
-        "title": "Full-Season Animated Series. One Consistent Art Style.",
-        "subtitle": "Lock character designs, line weights, and shading models across an entire season. Direct comedic timing shot by shot, then review the assembled episode in the Screening Room.",
-        "badge": "Multi-Style",
-        "solutionPillars": [
-          {
-            "title": "Stylistic Consistency",
-            "frictionHeadline": "Style Meltdown.",
-            "friction": "Cartoon and anime styles constantly warp between shots, shifting line art, breaking color palettes, and morphing characters into photorealistic uncanny slop.",
-            "solutionHeadline": "Locked Art Style Engine.",
-            "solution": "Freeze your aesthetic from the first frame. SceneFlow locks character designs, line weights, and shading models across the entire episode so your characters stay uniquely yours."
-          },
-          {
-            "title": "Exaggerated Animation & Physics",
-            "frictionHeadline": "Stiff & Glitchy Motion.",
-            "friction": "Generative models struggle with fast slapstick, double-takes, and squishy cartoon physics, turning high-energy gags into melting artifacts.",
-            "solutionHeadline": "Action & Pose Anchoring.",
-            "solution": "Drive dynamic character movement and expressive poses without breaking geometry. Direct punchy physical comedy, sudden cutaways, and wild expressions with full motion control."
-          },
-          {
-            "title": "Comedic Timing & Rhythm",
-            "frictionHeadline": "Ruined Punchlines.",
-            "friction": "Humor lives in the pauses and beat-cuts. Standard 5-second generative loops force awkward pacing that destroys joke delivery.",
-            "solutionHeadline": "Beat-Precision Editing.",
-            "solution": "Control scene pacing down to the frame. Adjust dramatic pauses, setup-to-punchline timing, and quick reaction shots directly inside the beat-first timeline before final render."
-          },
-          {
-            "title": "High-Energy Dialogue & Vocal Sync",
-            "frictionHeadline": "Lifeless Puppet Mouths.",
-            "friction": "Generic AI dialogue feels flat and mechanical, destroying the energy needed for snappy sitcom banter.",
-            "solutionHeadline": "Dynamic Voice & Expression Sync.",
-            "solution": "Map vocal delivery directly to energetic facial performance. Dialogue, expressive mouth shapes, and comedic voice tracks match seamlessly for maximum comedic impact."
-          }
-        ],
-        "screeningRoomPreview": "The Animated Comedy — Screening Room"
-      },
-      {
-        "id": "documentary",
-        "title": "Long-Form Documentaries. Sustained Period Accuracy.",
-        "subtitle": "Maintain era-specific detail, narrator pacing, and expert-witness continuity across a 40-minute episode or multi-part series. Review the full timeline in the Screening Room before committing to high-res renders.",
-        "badge": "Period-Accurate",
-        "solutionPillars": [
-          {
-            "title": "Era-Specific Visual Accuracy",
-            "frictionHeadline": "Anachronistic Artifacts",
-            "friction": "Standard generative models routinely bleed modern objects, smartphone screens, or incorrect period clothing into historical re-enactments.",
-            "solutionHeadline": "Historical Style Guardrails",
-            "solution": "Set exact temporal parameters — from 1920s film grain to 18th-century wardrobe textures — so every generated scene stays historically authentic."
-          },
-          {
-            "title": "Archival Cutaways & B-Roll Engine",
-            "frictionHeadline": "Visual Monotony in Long Voiceovers",
-            "friction": "Pairing long-form narrator audio with static stock images leads to rapid viewer drop-off during deep dives.",
-            "solutionHeadline": "Transcript-Driven B-Roll Engine",
-            "solution": "As your narrator discusses historical facts, SceneFlow automatically generates timed cinematic re-enactments, document overlays, and archival-style cutaways tied directly to the audio transcript."
-          },
-          {
-            "title": "Interview & Talking-Head Realism",
-            "frictionHeadline": "Uncanny Expert Witnesses",
-            "friction": "Generated historians, investigators, or witnesses often look artificial, with floating jaw movements and unnatural eye contact.",
-            "solutionHeadline": "Locked Expert Profiles & Vocal Sync",
-            "solution": "Maintain realistic, trustworthy interview setups with natural micro-expressions, accurate lip-sync, and consistent expert identities across multi-part series."
-          },
-          {
-            "title": "Episodic Pacing & Narrative Continuity",
-            "frictionHeadline": "Fragmented Timeline Editing",
-            "friction": "Balancing narrator audio, re-enactments, evidence reveals, and tension-building pauses across a 40-minute episode usually takes weeks in traditional NLEs.",
-            "solutionHeadline": "Beat-First Documentary Pipeline",
-            "solution": "Structure dramatic tension, suspenseful pauses, and evidence reveals visually inside Blueprint Room, delivering a fully assembled master file in one seamless pass."
-          }
-        ],
-        "screeningRoomPreview": "Documentary Production — Screening Room"
-      },
-      {
-        "id": "training",
-        "title": "Multi-Module Training Series. One Locked Instructor.",
-        "subtitle": "Hold the instructor, classroom, and lesson graphics from the first module to the last quiz. Walk Blueprint, Audience Resonance, and the Screening Room — Pre-Vis, rough cut, scenes, and the finished course — then switch languages to hear the localized version.",
-        "badge": "Curriculum-Ready",
-        "solutionPillars": [
-          {
-            "title": "Instructor & Setting Consistency",
-            "frictionHeadline": "A Different Teacher Every Module.",
-            "friction": "Generative clips reset the instructor face, wardrobe, and classroom between lessons, so a course feels like a pile of unrelated videos.",
-            "solutionHeadline": "Locked Instructor Blueprints.",
-            "solution": "Define the instructor, set, and visual system once in Blueprint Room. SceneFlow keeps that identity locked across every module."
-          },
-          {
-            "title": "Curriculum Pacing",
-            "frictionHeadline": "Slides Chopped into Clips.",
-            "friction": "Turning a syllabus into disconnected prompts loses the lesson arc, the worked example, and the pause before a quiz.",
-            "solutionHeadline": "Module-First Storyboarding.",
-            "solution": "Direct each module as a sequence of teaching beats — setup, demonstration, and check — before a frame is rendered."
-          },
-          {
-            "title": "Narration & On-Screen Teaching",
-            "frictionHeadline": "Voice That Misses the Graphic.",
-            "friction": "Narration, captions, and diagrams drift apart, so learners hear one step while the picture shows another.",
-            "solutionHeadline": "Synced Lesson Tracks.",
-            "solution": "Voice, captions, and on-screen teaching stay on the same beat, so each explanation lands with the visual that proves it."
-          },
-          {
-            "title": "Course Assembly",
-            "frictionHeadline": "Weeks in an Editor.",
-            "friction": "Stitching modules, retakes, and localized versions in a traditional timeline turns a curriculum update into a production delay.",
-            "solutionHeadline": "One Studio Pipeline.",
-            "solution": "Blueprint, Audience Resonance, and the Screening Room carry a module from outline to Pre-Vis, rough cut, scenes, and the finished course."
-          }
-        ],
-        "screeningRoomPreview": "The Training Series — Screening Room"
-      }
-    ]
-  },
-  "keyFeatures": {
-    "landingUiLanguagesLabel": "Produce and dub in 70+ languages. This site is available in these 39:",
-    "subtitle": "Series Room → Blueprint Room → Production Stage → Screening Room."
-  },
-  "twoModes": {
-    "eyebrow": "The friction we remove",
-    "title": "One pipeline. Not a stack of tools.",
-    "subtitle": "SceneFlow replaces single-clip generators and a pile of separate docs, editors, and re-renders. Build the series or the 90-minute master, then publish a scene or a chapter when you are ready to earn.",
-    "comingSoon": "Coming soon",
-    "comparison": {
-      "id": "comparison",
-      "caption": "Fragmented tools beside one SceneFlow pipeline.",
-      "themLabel": "Fragmented production",
-      "usLabel": "SceneFlow",
-      "rows": [
-        {
-          "them": "Prompt trial and error across tools",
-          "us": "One Blueprint locks the story and the look"
-        },
-        {
-          "them": "Hand-built treatments and formatting",
-          "us": "A film treatment and beat sheet from your premise or brief"
-        },
-        {
-          "them": "Short clips that do not share a cast",
-          "us": "Shots generated from the locked Reference Library"
-        },
-        {
-          "them": "Dragging clips into another editor",
-          "us": "Scenes, chapters, and the master assemble in the Screening Room"
-        },
-        {
-          "them": "Re-rendering to test a note",
-          "us": "Direct on the animatic, then render"
-        }
-      ]
-    },
-    "cta": "Launch Studio ($9)"
-  },
-  "infrastructure": {
-    "title": "Enterprise-Grade Infrastructure & Security",
-    "description": "Powered by Google Cloud and Vertex AI for enterprise reliability, multi-language dubbing models, and secure asset processing.",
-    "badges": {
-      "googleCloud": "Google Cloud",
-      "vertexAi": "Vertex AI"
-    }
-  },
-  "notify": {
-    "heading": "Get launch news",
-    "description": "Leave your email and we’ll tell you when we announce. Nothing else.",
-    "placeholder": "you@studio.com",
-    "submit": "Notify me",
-    "submitting": "Sending…",
-    "successTitle": "Check your inbox.",
-    "successBody": "We sent a confirmation link. Click it to join the launch list. Nothing else.",
-    "errorEmpty": "Enter your email so we can reach you.",
-    "errorInvalid": "That email doesn’t look right. Check it and try again.",
-    "errorGeneric": "Something went wrong. Try again in a moment.",
-    "privacy": "We email a confirmation link first. One launch note after you confirm. No spam.",
-    "confirmTitle": "You’re on the list.",
-    "confirmBody": "We’ll email you when we announce. Nothing else.",
-    "confirmExpiredTitle": "That link expired.",
-    "confirmExpiredBody": "Submit your email on the landing page again and we’ll send a new confirmation link.",
-    "confirmInvalidTitle": "That link isn’t valid.",
-    "confirmInvalidBody": "Request a new confirmation from the landing page.",
-    "confirmHome": "Back to SceneFlow"
-  },
-  "forFilmmakers": {
-    "badge": "Apply for the SceneFlow Originals Seed Program",
-    "heading": "For Filmmakers: Submit your pilot for platform distribution and monetization.",
-    "subtitle": "The SceneFlow Network is a closed Founding Creator cohort — 5 to 10 hand-picked titles at launch, not an open marketplace. Revenue share starts only after paying subscribers exist. What we offer now is distribution leverage: funded teaser ads in exchange for an exclusive premiere window.",
-    "closedNote": "Applications are reviewed by editors. Submitting does not publish your film to a catalog.",
-    "fields": {
-      "email": "Email",
-      "emailPlaceholder": "you@studio.com",
-      "name": "Your name",
-      "namePlaceholder": "Director or producer name",
-      "title": "Pilot or feature title",
-      "titlePlaceholder": "Working title",
-      "logline": "Logline",
-      "loglinePlaceholder": "One or two sentences that sell the story.",
-      "audienceUrl": "Existing audience",
-      "audiencePlaceholder": "YouTube, Bilibili, festival, or social URL",
-      "exclusivePremiere": "I am open to an exclusive premiere window on SceneFlow in exchange for funded teaser ads."
-    },
-    "submit": "Submit application",
-    "submitting": "Sending…",
-    "successTitle": "Check your inbox.",
-    "successBody": "We sent a confirmation link. Click it to lock in your Seed application. Nothing else.",
-    "errorEmpty": "Fill in every field so we can review your pilot.",
-    "errorInvalidEmail": "That email doesn’t look right. Check it and try again.",
-    "errorInvalidUrl": "Add a public URL for your existing audience.",
-    "errorGeneric": "Something went wrong. Try again in a moment.",
-    "confirmTitle": "Application received.",
-    "confirmBody": "You’re in the Seed review queue. We read every submission. This is not a public catalog listing.",
-    "confirmExpiredTitle": "That link expired.",
-    "confirmExpiredBody": "Submit the filmmaker form again and we’ll send a new confirmation link.",
-    "confirmInvalidTitle": "That link isn’t valid.",
-    "confirmInvalidBody": "Request a new confirmation from the filmmaker form.",
-    "confirmHome": "Back to SceneFlow",
-    "privacy": "We email a confirmation link first. Editors only. No spam."
-  },
-  "publishCut": {
-    "eyebrow": "The cut you publish",
-    "title": "Export anywhere. Premiere on SceneFlow when you earn it.",
-    "subtitle": "Download a master and ship it yourself, or publish finished scenes and chapters to {longForm} and cut trailers for {shorts} — without waiting on the whole cut. Before anything hits the public feed, run drafts or your final master through the Screening Room. Standout projects can apply for the invite-only SceneFlow Network; it is a curated accelerator, not an open storefront.",
-    "comparison": {
-      "id": "publish",
-      "caption": "A finished scene or chapter, and the 90-minute master, from one studio."
-    },
-    "cta": "Launch Studio ($9)"
   }
 }

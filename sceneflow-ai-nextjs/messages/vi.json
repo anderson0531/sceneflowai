@@ -1,102 +1,1066 @@
 {
+  "pipeline": {
+    "badge": "SceneFlow là gì?",
+    "title": "Kiến trúc Pipeline 3 trụ cột",
+    "subtitle": "Ba giai đoạn từ ý tưởng ban đầu đến bản hoàn thiện sẵn sàng phát hành — Series Room, Blueprint Room và Production Stage.",
+    "ui": {
+      "expandFullscreen": "Xem toàn màn hình",
+      "closeFullscreen": "Đóng",
+      "landscapeHint": "Xoay thiết bị của bạn để có góc nhìn ngang rộng hơn.",
+      "howItWorksLabel": "Cách thức hoạt động trong giai đoạn này",
+      "showHowItWorks": "Cho thấy cách thức hoạt động",
+      "hideHowItWorks": "Ẩn cách thức hoạt động",
+      "imagePlaceholder": "Vị trí giữ chỗ cho ảnh chụp màn hình",
+      "videoWalkthrough": "Hướng dẫn nhanh trong 30 giây",
+      "comingSoon": "Ảnh chụp màn hình sản phẩm sẽ sớm ra mắt"
+    },
+    "pillars": [
+      {
+        "id": "series",
+        "tabLabel": "Series Room",
+        "number": "01",
+        "title": "Tạo Series Room",
+        "header": "Xây dựng một vũ trụ, không phải một đoạn clip.",
+        "body": "Chỉ cần mô tả loạt nội dung hoặc kênh YouTube của bạn một lần, SceneFlow sẽ xây dựng toàn bộ thế giới — bao gồm cốt truyện, dàn nhân vật và danh sách tập không giới hạn — dựa trên Reference Library dùng chung, giúp đảm bảo mọi tập phim đều nhất quán với hình ảnh thương hiệu.",
+        "steps": [
+          {
+            "id": "series-concept",
+            "number": "1",
+            "title": "Hãy bắt đầu với ý tưởng của bạn.",
+            "description": "Chỉ cần nhập ý tưởng hoặc mô tả chi tiết về loạt nội dung hay kênh YouTube của bạn. SceneFlow sẽ chuyển đổi nó thành một nền tảng có cấu trúc, sẵn sàng cho khâu sản xuất — mà không đòi hỏi kỹ năng viết câu lệnh (prompt engineering) phức tạp.",
+            "imagePlaceholder": "Tiếp nhận loạt chương trình mới — ý tưởng hoặc mô tả kênh"
+          },
+          {
+            "id": "series-baseline",
+            "number": "2",
+            "title": "Xem xét mô hình cơ sở SceneFlow",
+            "description": "SceneFlow cung cấp một chỉ số tham chiếu chuyên nghiệp được chấm điểm thông qua phân tích Audience Resonance. Hãy đọc hoặc nghe phần tổng quan có thuyết minh, sau đó định hướng lại theo ý muốn của bạn.",
+            "imagePlaceholder": "Mức cơ sở của chuỗi — Điểm số Audience Resonance và phần tổng quan có thuyết minh"
+          },
+          {
+            "id": "series-episodes",
+            "number": "3",
+            "title": "Tạo số lượng tập không giới hạn",
+            "description": "Bạn có thể sản xuất bao nhiêu tập tùy theo nhu cầu của câu chuyện. Mỗi tập đều mang đậm dấu ấn đặc trưng của loạt phim, đảm bảo dàn nhân vật, phong cách và thế giới trong phim luôn nhất quán từ tập mở đầu cho đến tập cuối cùng của mùa.",
+            "imagePlaceholder": "Danh sách tập phim — số lượng tập không giới hạn được tạo ra từ cốt truyện tổng thể của loạt phim"
+          },
+          {
+            "id": "series-reference-library",
+            "number": "4",
+            "title": "Xem lại Reference Library",
+            "description": "Duyệt qua thư viện dùng chung — bao gồm nhân vật, giọng nói, trang phục, bối cảnh và đạo cụ — được tạo và duy trì trong quá trình sản xuất, đồng thời được tái sử dụng cho mọi tập phim.",
+            "imagePlaceholder": "Reference Library dùng chung — nhân vật, giọng nói, địa điểm, đạo cụ"
+          },
+          {
+            "id": "series-assistant-writer",
+            "number": "5",
+            "title": "Điều phối Trợ lý Viết thông minh",
+            "description": "Điều chỉnh lại toàn bộ loạt nội dung hoặc bất kỳ tập nào chỉ bằng cách nói hoặc nhập yêu cầu của bạn. Trợ lý Viết thông minh sẽ ngay lập tức viết lại nội dung một cách chuyên nghiệp — không còn nỗi lo trang giấy trắng hay cần kỹ thuật đặt câu lệnh (prompt engineering) phức tạp.",
+            "imagePlaceholder": "Trợ lý biên kịch thông minh — đưa ra định hướng bằng giọng nói hoặc văn bản cho loạt phim và các tập phim."
+          },
+          {
+            "id": "series-start-production",
+            "number": "6",
+            "title": "Bắt đầu sản xuất chỉ với một cú nhấp chuột",
+            "description": "Khi một tập phim đã đạt yêu cầu, hãy bắt đầu quy trình sản xuất chỉ với một cú nhấp chuột và chuyển thẳng vào quy trình Production Stage có hướng dẫn.",
+            "imagePlaceholder": "Bắt đầu sản xuất tập phim đã chọn chỉ với một cú nhấp chuột"
+          }
+        ]
+      },
+      {
+        "id": "blueprint",
+        "tabLabel": "SFAIBLUEPRINT_THUẬT_NGỮ_PHÒNG",
+        "number": "02",
+        "title": "SFAIBLUEPRINT_THUẬT_NGỮ_PHÒNG",
+        "header": "DNA sáng tạo của bạn – được định hình vững chắc",
+        "body": "Blueprint Room là bản phác thảo chi tiết cho bộ phim của bạn — bao gồm tóm tắt cốt truyện, các điểm nút, nhân vật, tông giọng và phong cách — đã được đánh giá trước thông qua phân tích Audience Resonance, giúp bạn phê duyệt một câu chuyện có sức hút ngay cả trước khi khung hình đầu tiên được dựng lên.",
+        "steps": [
+          {
+            "id": "blueprint-baseline",
+            "number": "1",
+            "title": "Xem xét Blueprint cơ sở.",
+            "description": "Hãy mở một bản thiết kế chuẩn chuyên nghiệp có tích hợp tính năng phân tích mức độ cộng hưởng với khán giả. Hãy đọc hoặc nghe phần tổng quan có thuyết minh để hiểu rõ lý do tại sao giải pháp này mang lại hiệu quả.",
+            "imagePlaceholder": "Blueprint cơ sở — can thiệp với điểm số Audience Resonance"
+          },
+          {
+            "id": "blueprint-assistant-writer",
+            "number": "2",
+            "title": "Điều phối Trợ lý Viết thông minh",
+            "description": "Tinh chỉnh tóm tắt nội dung, các điểm nút cốt truyện, nhân vật và nhiều yếu tố khác chỉ bằng cách nói hoặc gõ yêu cầu của bạn. Trợ lý Viết thông minh sẽ sửa đổi bản phác thảo ngay lập tức — không cần kỹ thuật soạn câu lệnh phức tạp.",
+            "imagePlaceholder": "Trợ lý viết thông minh — biên tập tóm tắt cốt truyện, các điểm nút cốt truyện và nhân vật"
+          },
+          {
+            "id": "blueprint-reasoning",
+            "number": "3",
+            "title": "Xem lại lập luận",
+            "description": "Hãy mở phần Lý giải để xem cách giải thích đầy sáng tạo về Blueprint hiện tại — tức logic cốt truyện đằng sau từng nhịp diễn biến và lựa chọn về nhân vật.",
+            "imagePlaceholder": "Khung giải trình — cách diễn giải đầy sáng tạo về Blueprint"
+          },
+          {
+            "id": "blueprint-start-production",
+            "number": "4",
+            "title": "Bắt đầu sản xuất khi đã sẵn sàng",
+            "description": "Một khi câu chuyện đã thực sự thăng hoa, hãy bắt đầu khâu sản xuất — và toàn bộ quy trình sẽ kế thừa trọn vẹn \"DNA sáng tạo\" đã được phê duyệt mà không hề bị chệch hướng.",
+            "imagePlaceholder": "Mở Production Stage — chốt kiểm tra mức độ sẵn sàng từ bản thiết kế đã được phê duyệt"
+          }
+        ]
+      },
+      {
+        "id": "production",
+        "tabLabel": "Production Stage",
+        "number": "03",
+        "title": "Production Stage",
+        "header": "Từ kịch bản đến bản hoàn thiện đã xuất bản",
+        "body": "Production Stage thực hiện quy trình tạo nội dung đồng thời bằng nhiều công cụ — bao gồm kịch bản, âm thanh, khung hình và video — phối hợp cùng Intelligent Assistant Director, Screening Room và các luồng đa ngôn ngữ, đưa dự án của bạn đi từ giai đoạn kịch bản được phê duyệt đến bản master 4K hoàn chỉnh sẵn sàng phát hành.",
+        "steps": [
+          {
+            "id": "production-script-ara",
+            "number": "1",
+            "title": "Xem xét kịch bản cơ sở",
+            "description": "Hãy bắt đầu với một kịch bản mẫu chuyên nghiệp đi kèm phân tích Audience Resonance. Hãy đọc hoặc nghe phần phân tích được thuyết minh để biết yếu tố nào thực sự hiệu quả trước khi bạn sử dụng credit.",
+            "imagePlaceholder": "Kịch bản cơ sở — Phân tích Audience Resonance và tổng quan có thuyết minh"
+          },
+          {
+            "id": "production-assistant-writer",
+            "number": "2",
+            "title": "Tối ưu hóa từng cảnh",
+            "description": "Sử dụng Trợ lý Viết thông minh để tối ưu hóa kịch bản theo từng cảnh — tinh chỉnh lời thoại, điều chỉnh nhịp điệu và áp dụng các cải tiến chỉ với một cú nhấp chuột thông qua giọng nói hoặc văn bản.",
+            "imagePlaceholder": "Trợ lý Viết thông minh — tối ưu hóa kịch bản theo từng cảnh"
+          },
+          {
+            "id": "production-reference-library",
+            "number": "3",
+            "title": "Xây dựng Reference Library",
+            "description": "Tạo hoặc cập nhật thư viện tham chiếu với các nhân vật, giọng nói, trang phục, bối cảnh và đạo cụ — bao gồm các mục có sẵn theo kịch bản, tùy chỉnh hoặc do bạn tải lên. Chỉnh sửa trực tiếp hình ảnh tham chiếu — không cần tạo lại ngẫu nhiên kiểu \"máy đánh bạc\".",
+            "imagePlaceholder": "Reference Library — nhân vật, giọng nói, trang phục, bối cảnh, đạo cụ"
+          },
+          {
+            "id": "production-audio",
+            "number": "4",
+            "title": "Tạo âm thanh",
+            "description": "Tạo lời thoại, lời dẫn, hiệu ứng âm thanh (SFX) và âm nhạc bằng cách sử dụng Run All Agents cho toàn bộ các cảnh, Audio Agent cho từng cảnh, hoặc theo từng nhịp — với chất lượng lồng tiếng chuẩn bản ngữ ở hơn 70 ngôn ngữ.",
+            "imagePlaceholder": "Audio Agent — tất cả các cảnh, một cảnh duy nhất, hoặc từng nhịp (beat)"
+          },
+          {
+            "id": "production-frames",
+            "number": "5",
+            "title": "Tạo và chỉnh sửa khung hình",
+            "description": "Tạo các khung hình đánh dấu nhịp (beat frames) bằng Run All Agents và Stills Agent cho mỗi cảnh hoặc theo từng nhịp, sau đó chỉnh sửa bất kỳ khung hình nào bằng Intelligent Assistant Director (IAD) — chỉ cần mô tả thay đổi cần thực hiện.",
+            "imagePlaceholder": "Khớp các khung hình với các chỉnh sửa của Intelligent Assistant Director"
+          },
+          {
+            "id": "production-animatic",
+            "number": "6",
+            "title": "Xem xét bản animatic",
+            "description": "Phát toàn bộ bản animatic — bao gồm các khung hình, lời thoại, hiệu ứng âm thanh (SFX) và âm nhạc — trong phòng chiếu tương tác, đồng thời chia sẻ liên kết để nhận phản hồi mà không cần xuất tệp.",
+            "imagePlaceholder": "Screening Room — đánh giá và chia sẻ animatic tương tác"
+          },
+          {
+            "id": "production-video",
+            "number": "7",
+            "title": "Tạo video",
+            "description": "Biến các khung hình đã được duyệt thành chuyển động bằng Video Agent, theo từng cảnh hoặc từng nhịp phim. Thực hiện lại bất kỳ cảnh quay nào với Intelligent Assistant Director — không còn cảnh phải tạo lại hình ảnh vô tận đầy may rủi như máy đánh bạc.",
+            "imagePlaceholder": "Tạo Video Agent kèm các lần quay lại IAD"
+          },
+          {
+            "id": "production-mixer",
+            "number": "8",
+            "title": "Chỉnh sửa trong Mixer",
+            "description": "Hoàn thiện từng cảnh quay trong Mixer — từ phụ đề, cắt ghép, lồng tiếng, lớp phủ hình ảnh cho đến cân chỉnh âm thanh — đảm bảo tính an toàn cho thương hiệu ngay tại studio.",
+            "imagePlaceholder": "Bộ trộn — phụ đề, cắt, lồng tiếng và các tùy chọn điều chỉnh âm thanh"
+          },
+          {
+            "id": "production-render-scenes",
+            "number": "9",
+            "title": "Kết xuất và xem lại các cảnh",
+            "description": "Hãy kết xuất (render) các cảnh của bạn, sau đó xem xét và chia sẻ chúng qua Screening Room để chốt phê duyệt trước khi tiến hành lắp ráp hoàn thiện.",
+            "imagePlaceholder": "Các cảnh đã kết xuất được xem xét và chia sẻ trong Screening Room."
+          },
+          {
+            "id": "production-multilanguage",
+            "number": "10",
+            "title": "Tạo các luồng phát đa ngôn ngữ",
+            "description": "Triển khai các phiên bản ngôn ngữ lồng tiếng hoặc khớp khẩu hình từ cùng một bản dựng đã được phê duyệt — tiếp cận hơn 70 thị trường mà không cần quay lại dù chỉ một khung hình.",
+            "imagePlaceholder": "Luồng phát đa ngôn ngữ — lồng tiếng và khớp khẩu hình theo từng khu vực"
+          },
+          {
+            "id": "production-publish",
+            "number": "11",
+            "title": "Kết xuất bản cuối cùng và xuất bản",
+            "description": "Xuất bản video hoàn chỉnh — với hình thu nhỏ, tiêu đề và mô tả được tạo tự động, sẵn sàng cho kênh YouTube của bạn và các nền tảng khác.",
+            "imagePlaceholder": "Kết xuất video hoàn chỉnh và đăng lên YouTube chỉ với một cú nhấp chuột"
+          }
+        ]
+      }
+    ]
+  },
+  "screeningRoom": {
+    "badge": "Phòng chiếu tương tác — Bản xem trước Animatics hiện có sẵn",
+    "languagePrompt": "Lắng nghe thông tin về quy trình bán hàng tại thị trường mục tiêu của bạn:",
+    "languages": [
+      {
+        "id": "en",
+        "label": "Tiếng Anh",
+        "flag": "🇺🇸"
+      },
+      {
+        "id": "es",
+        "label": "Tiếng Tây Ban Nha",
+        "flag": "🇪🇸"
+      },
+      {
+        "id": "pt",
+        "label": "Tiếng Bồ Đào Nha",
+        "flag": "🇧🇷"
+      },
+      {
+        "id": "hi",
+        "label": "Tiếng Hindi",
+        "flag": "🇮🇳"
+      },
+      {
+        "id": "zh",
+        "label": "Tiếng Trung",
+        "flag": "🇨🇳"
+      }
+    ],
+    "steps": [
+      {
+        "id": "concept",
+        "label": "Tối ưu hóa ý tưởng và kịch bản"
+      },
+      {
+        "id": "animatic",
+        "label": "Đánh giá Animatic trong 30 phút"
+      },
+      {
+        "id": "video",
+        "label": "Các bản kết xuất chuyển động toàn phần Video Agent"
+      }
+    ],
+    "previewLabel": "Xem trước"
+  },
+  "keyFeatures": {
+    "badge": "Các tính năng chính",
+    "title": "Từ ý tưởng đến bản gốc hoàn chỉnh.",
+    "subtitle": "Series Room → Blueprint Room → Production Stage → Screening Room.",
+    "learnMoreLabel": "Tìm hiểu thêm",
+    "showLessLabel": "Thu gọn",
+    "videoComingSoon": "Sắp ra mắt bản demo tính năng",
+    "videoSoon": "Sớm thôi",
+    "overviewComingSoon": "Tổng quan sẽ sớm ra mắt",
+    "pauseOverview": "Tổng quan về trạng thái tạm dừng",
+    "playOverview": "Tổng quan về lối chơi",
+    "muteOverview": "Tổng quan về tính năng Tắt tiếng",
+    "unmuteOverview": "Tổng quan về tính năng bật âm thanh",
+    "enterFullscreenOverview": "Toàn màn hình",
+    "exitFullscreenOverview": "Thoát chế độ toàn màn hình",
+    "watchLongformLabel": "Xem bài viết chuyên sâu",
+    "screenshotLabel": "Ảnh chụp màn hình",
+    "landingUiLanguagesLabel": "Sản xuất và lồng tiếng bằng 44 ngôn ngữ. Trang web này có sẵn bằng 39 ngôn ngữ sau:",
+    "rooms": [
+      {
+        "id": "series-desk",
+        "label": "Series Room",
+        "promise": "Series Room là nơi khởi đầu cho một mùa phim. Các nhân vật và cốt truyện sẽ được tiếp nối trong mọi tập phim mà bạn thêm vào. Hãy đọc, lắng nghe và chỉ đạo nội dung tại đây trước khi bắt đầu thực hiện tập phim trong Blueprint Room. Đối với phim không chia theo mùa, bạn có thể bỏ qua bước này.",
+        "features": [
+          {
+            "icon": "newSeries",
+            "title": "Loạt phim mới",
+            "description": "Hãy bắt đầu tại đây. Hãy mô tả loạt nội dung bạn dự định thực hiện bằng ngôn ngữ của riêng mình. Tính năng \"Làm rõ và Xác nhận\" sẽ cùng bạn tinh chỉnh ý tưởng này cho đến khi bản tóm tắt nội dung hoàn tất, sau đó tính năng \"Tạo loạt nội dung\" sẽ viết nên phần khung sườn cơ bản. Một loạt nội dung mới sẽ khởi đầu với năm tập, và bạn có thể bổ sung thêm các tập khác.",
+            "screenshot": "Tạo chuỗi mới — xác định ý định, làm rõ và xác nhận, tạo chuỗi",
+            "learnMore": {
+              "items": [
+                {
+                  "title": "Ý định của bạn",
+                  "description": "Hãy giới thiệu về loạt tác phẩm này, bao gồm định dạng, đối tượng khán giả và phong cách nghệ thuật."
+                },
+                {
+                  "title": "Lặp lại",
+                  "description": "Bước \"Làm rõ và Xác nhận\" giúp tinh chỉnh bản tóm tắt cùng bạn trước khi bất kỳ nội dung nào được tạo ra."
+                },
+                {
+                  "title": "Mức cơ sở",
+                  "description": "Generate Series viết phần phim mà bạn sẽ đánh giá, bắt đầu với năm tập."
+                }
+              ]
+            }
+          },
+          {
+            "icon": "seriesReview",
+            "title": "Xem xét bản dựng sơ bộ",
+            "description": "Hãy đọc phần tổng quan hoặc nhấn nút Nghe. Sau đó, hãy đọc hoặc nghe các tập phim. Sự nhất quán giúp kết nối các mạch truyện, còn tính liên tục duy trì sự thống nhất về dàn diễn viên, địa điểm, đạo cụ và bối cảnh giữa các tập phim đó.",
+            "screenshot": "Tổng quan, Các tập phim, Tính nhất quán, Tính liên tục — Dàn diễn viên, Địa điểm, Đạo cụ, Bối cảnh",
+            "learnMore": {
+              "items": [
+                {
+                  "title": "Đọc hoặc nghe",
+                  "description": "Bạn có thể đọc phần Tổng quan và các Tập, hoặc nghe qua tính năng Nghe."
+                },
+                {
+                  "title": "Sự nhất quán",
+                  "description": "Phong cách thẩm mỹ, các sự kiện then chốt và những mạch truyện sẽ gắn liền với mùa đó."
+                },
+                {
+                  "title": "Tính liên tục",
+                  "description": "Dàn diễn viên, địa điểm, đạo cụ và bối cảnh đều được sử dụng chung cho mọi tập phim."
+                }
+              ]
+            }
+          },
+          {
+            "icon": "seriesResonance",
+            "title": "Audience Resonance",
+            "description": "Hãy chạy Audience Resonance khi bạn muốn đánh giá tình hình trong mùa giải. Hãy xem xét các điểm số và phần phân tích. Chỉ áp dụng thông tin chi tiết có thể hành động (Actionable Insight) nếu bạn muốn; mọi yếu tố trong chuỗi dữ liệu sẽ không thay đổi cho đến khi bạn thực hiện việc đó.",
+            "screenshot": "Phân tích Audience Resonance, tiếp theo là các thông tin chi tiết có thể hành động (Actionable Insights) – chưa được áp dụng.",
+            "learnMore": {
+              "items": [
+                {
+                  "title": "Bài đọc",
+                  "description": "Điểm số và kết quả phân tích cho thấy những yếu tố nào thực sự gây ấn tượng với đối tượng khán giả mà bạn đã xác định."
+                },
+                {
+                  "title": "Tùy chọn",
+                  "description": "Một thông tin chi tiết có thể hành động được chỉ làm thay đổi chuỗi dữ liệu khi bạn áp dụng nó."
+                }
+              ]
+            }
+          },
+          {
+            "icon": "seriesDirector",
+            "title": "Đạo diễn loạt phim",
+            "description": "Hãy tự mình định hướng toàn bộ loạt nội dung bằng ngôn ngữ của riêng bạn, dù là nói hay viết. Bạn là người lựa chọn thay đổi và xác định trọng tâm, cũng như chấp nhận những điều đó. Các gợi ý có thể mang lại sự hỗ trợ, trong khi những phần không liên quan của cốt truyện vẫn được giữ nguyên.",
+            "screenshot": "Đạo diễn loạt phim — định hướng, trọng tâm, chấp nhận",
+            "learnMore": {
+              "items": [
+                {
+                  "title": "Lời nói của bạn",
+                  "description": "Hãy nói hoặc nhập nội dung thay đổi, và tùy chọn giới hạn phạm vi thay đổi vào cốt truyện, nhân vật, nội dung tập phim, tông giọng hoặc bối cảnh."
+                },
+                {
+                  "title": "Bạn chấp nhận nó.",
+                  "description": "Không có gì thay đổi cho đến khi bạn chấp nhận nó, và những phần không liên quan của cốt truyện vẫn giữ nguyên."
+                },
+                {
+                  "title": "Một lời giới thiệu",
+                  "description": "Các gợi ý có thể hữu ích, và bạn vẫn là người quyết định giữ lại những gì."
+                }
+              ]
+            }
+          },
+          {
+            "icon": "directEpisode",
+            "title": "Đạo diễn tập này",
+            "description": "Hãy chọn một tập phim và tự mình đạo diễn riêng tập đó. Hãy đẩy cao kịch tính hoặc làm sâu sắc thêm cốt truyện, rồi áp dụng những thay đổi đó. Các tập còn lại vẫn giữ nguyên như cũ.",
+            "screenshot": "Các tập — Đạo diễn tập này, các tập khác giữ nguyên",
+            "learnMore": {
+              "items": [
+                {
+                  "title": "Một tập",
+                  "description": "Lệnh này áp dụng thay đổi chỉ cho tập đó."
+                },
+                {
+                  "title": "Mùa vẫn ở lại",
+                  "description": "Các tập còn lại được giữ nguyên."
+                }
+              ]
+            }
+          },
+          {
+            "icon": "startEpisode",
+            "title": "Bắt đầu tập phim",
+            "description": "Khi một tập phim đã sẵn sàng, hãy bắt đầu dự án cho tập đó. Dàn ý, tóm tắt nội dung và các điểm nhấn cốt truyện sẽ được đưa vào Blueprint Room cùng với dự án. Dàn diễn viên và bối cảnh thế giới trong phim đều đã được xác định từ trước.",
+            "screenshot": "Bắt đầu dự án — dàn ý và danh sách diễn viên đã có sẵn trong tập phim",
+            "learnMore": {
+              "items": [
+                {
+                  "title": "Bắt đầu dự án",
+                  "description": "Start Project mở tập đó trong Blueprint Room."
+                },
+                {
+                  "title": "Đã biết",
+                  "description": "Dàn ý, tóm tắt nội dung, các điểm nút cốt truyện và danh sách diễn viên đều đi kèm với nó."
+                }
+              ]
+            }
+          }
+        ]
+      },
+      {
+        "id": "blueprint-board",
+        "label": "SFAIBLUEPRINT_THUẬT_NGỮ_PHÒNG",
+        "promise": "Đây là nơi bạn hoàn thiện cốt truyện trước khi viết kịch bản dài 90 phút. Hãy bắt đầu từ một tập phim trong series hoặc một dự án mới. Tại đây, hãy định hướng các nhịp truyện và dàn nhân vật để giai đoạn sản xuất không cần phải xây dựng lại từ đầu.",
+        "features": [
+          {
+            "icon": "startBlueprint",
+            "title": "Bắt đầu Blueprint",
+            "description": "Hãy bắt đầu từ một tập phim trong loạt phim hoặc khởi tạo một dự án mới. Một tập phim sẽ đi kèm với dàn ý, tóm tắt nội dung và các nhịp truyện (beats). Dự án mới bắt đầu khi bạn mô tả mục đích, sử dụng tính năng Xác thực & Cải thiện bằng AI (Validate & Enhance with AI), và chọn Tạo Blueprint.",
+            "screenshot": "Đã biết tập phim trong series, hoặc Bắt đầu dự án — xác định ý định, Xác thực & Cải thiện bằng AI, Tạo Blueprint",
+            "learnMore": {
+              "items": [
+                {
+                  "title": "Tập phim",
+                  "description": "Một tập phim trong loạt phim bắt đầu với phần dàn ý, tóm tắt nội dung và các điểm nhấn cốt truyện đã được đính kèm sẵn."
+                },
+                {
+                  "title": "Dự án mới",
+                  "description": "Tính năng \"Bắt đầu dự án\" tiếp nhận ý định, sau đó xác thực và cải thiện bằng AI, rồi tạo ra Blueprint."
+                }
+              ]
+            }
+          },
+          {
+            "icon": "treatment",
+            "title": "Điều phối nhịp điệu",
+            "description": "Hãy mở tab Beats và nghe danh sách các nhịp (beat sheet). Hãy tối ưu hóa các nhịp tại đây, vì chúng là yếu tố định hình quá trình xây dựng kịch bản. Các nhịp chỉ tồn tại ở đây. Production Stage sẽ chuyển đổi mỗi nhịp thành một chương.",
+            "screenshot": "Tab Beats, cùng mục Nghe",
+            "learnMore": {
+              "items": [
+                {
+                  "title": "Một bản tóm tắt nhịp truyện",
+                  "description": "Nhịp điệu chỉ tồn tại ở đây."
+                },
+                {
+                  "title": "Xây dựng tập lệnh",
+                  "description": "Các \"beat\" điều khiển quá trình xây dựng kịch bản, do đó chúng được tối ưu hóa trước giai đoạn Production Stage."
+                },
+                {
+                  "title": "Các chương",
+                  "description": "Production Stage biến mỗi nhịp điệu thành một chương."
+                }
+              ]
+            }
+          },
+          {
+            "icon": "castLocations",
+            "title": "Chỉ đạo dàn diễn viên và các địa điểm quay",
+            "description": "Mở mục Characters (Nhân vật) và chỉ đạo dàn nhân vật. Mở mục Setting (Bối cảnh) trong thẻ Story (Cốt truyện) và chỉ đạo các địa điểm tương ứng. Dàn nhân vật có ảnh hưởng đến quá trình xây dựng kịch bản, do đó cả hai cần được thiết lập trước khi Production Stage phải thực hiện tái cấu trúc kịch bản.",
+            "screenshot": "Tab Nhân vật, sau đó là mục Bối cảnh trong phần Cốt truyện.",
+            "learnMore": {
+              "items": [
+                {
+                  "title": "Dàn diễn viên",
+                  "description": "Tab Nhân vật đại diện cho dàn nhân vật, và dàn nhân vật này ảnh hưởng đến quá trình xây dựng kịch bản."
+                },
+                {
+                  "title": "Địa điểm",
+                  "description": "Các địa điểm chính là bối cảnh trong thẻ Story."
+                },
+                {
+                  "title": "Trước kịch bản",
+                  "description": "Việc chuyển hướng cả hai về đây giúp tránh phải tái cấu trúc lớn đối với script Production Stage."
+                }
+              ]
+            }
+          },
+          {
+            "icon": "blueprintDirector",
+            "title": "Giám đốc Blueprint",
+            "description": "Director tiếp nhận các thay đổi dựa trên chính lời nói hoặc văn bản của bạn. Bạn có thể tập trung chỉnh sửa các nhịp truyện (beats), nhân vật hoặc cốt truyện, sau đó xem trước bản sửa đổi. Mọi thứ sẽ không thay đổi cho đến khi bạn xác nhận áp dụng.",
+            "screenshot": "Giám đốc Blueprint — định hướng, trọng tâm, xem trước, Áp dụng bản sửa đổi",
+            "learnMore": {
+              "items": [
+                {
+                  "title": "Lời nói của bạn",
+                  "description": "Hãy nói hoặc nhập nội dung thay đổi, và tập trung vào các nhịp truyện (beats), nhân vật hoặc cốt truyện."
+                },
+                {
+                  "title": "Xem trước",
+                  "description": "Tính năng tạo bản sửa đổi cân bằng hiển thị thay đổi trước khi bạn áp dụng nó."
+                },
+                {
+                  "title": "Bạn thoa nó lên",
+                  "description": "Không có gì thay đổi cho đến khi bạn áp dụng bản sửa đổi."
+                }
+              ]
+            }
+          },
+          {
+            "icon": "blueprintResonance",
+            "title": "Audience Resonance",
+            "description": "Lưu đối tượng, sau đó thực hiện phân tích. Bạn sẽ thấy các điểm số và các đề xuất. Không có gì trong bản thiết kế (blueprint) thay đổi cho đến khi bạn áp dụng một đề xuất trong Blueprint Director.",
+            "screenshot": "Audience Resonance — đối tượng đã lưu, điểm số, các đề xuất chưa được áp dụng",
+            "learnMore": {
+              "items": [
+                {
+                  "title": "Bài đọc",
+                  "description": "Lưu đối tượng, sau đó thực hiện phân tích, rồi xem các chỉ số đánh giá và đề xuất."
+                },
+                {
+                  "title": "Tùy chọn",
+                  "description": "Đề xuất chỉ thay đổi bản thiết kế khi bạn áp dụng nó trong Blueprint Director."
+                }
+              ]
+            }
+          },
+          {
+            "icon": "goToProduction",
+            "title": "Đi tới Production Stage",
+            "description": "Hãy chuyển sang Production Stage khi cốt truyện, các nhịp truyện (beats) và dàn nhân vật đã được xác định. Kịch bản dài 90 phút sẽ được xây dựng dựa trên bảng này; bạn không cần phải xây dựng lại cốt truyện trong Production Stage.",
+            "screenshot": "Chuyển sang Production Stage — cốt truyện, các điểm nhấn chính và dàn diễn viên đã được ấn định.",
+            "learnMore": {
+              "items": [
+                {
+                  "title": "Việc bàn giao",
+                  "description": "Truy cập Production Stage để mở tập lệnh từ blueprint này."
+                },
+                {
+                  "title": "Đã được thiết lập",
+                  "description": "Cốt truyện, các nhịp điệu và dàn diễn viên đều đã được chỉ đạo."
+                }
+              ]
+            }
+          }
+        ]
+      },
+      {
+        "id": "production-stage",
+        "label": "Production Stage",
+        "promise": "Đây là giai đoạn chuyển hóa bản thiết kế đã chốt thành hình ảnh thực tế. Hãy kiểm soát chi phí bằng các tiêu chí và kế hoạch cụ thể của bạn. Tối ưu hóa từng cảnh quay, sau đó triển khai theo trình tự — từ chỉ đạo, âm thanh, âm nhạc, tính liền mạch cho đến hình ảnh tĩnh — và xem xét bản dựng phác thảo (animatic) trước khi đầu tư vào khâu sản xuất video. Cuối cùng là tạo và phối hợp các đoạn phim, sản xuất các phiên bản ngôn ngữ, rồi bàn giao thành phẩm (dù là cảnh quay, chương phim, bản master hay video quảng bá).",
+        "spend": {
+          "label": "Kiểm soát chi tiêu",
+          "features": [
+            {
+              "icon": "byok",
+              "title": "Tự cung cấp khóa",
+              "description": "Kết nối các khóa nhà cung cấp hình ảnh và video của riêng bạn. Quá trình tạo nội dung sẽ diễn ra trên tài khoản và theo mức phí của bạn, trong khi studio có hỗ trợ hướng dẫn — bao gồm các tác nhân (agents), tính nhất quán (continuity), Mixer và Screening Room — vẫn được duy trì nguyên vẹn.",
+              "screenshot": "Các khóa BYOK",
+              "learnMore": {
+                "items": [
+                  {
+                    "title": "Chìa khóa của bạn",
+                    "description": "Kết nối các khóa của nhà cung cấp hình ảnh và video để quá trình tạo nội dung được thực hiện trên tài khoản của bạn và theo mức phí của bạn."
+                  },
+                  {
+                    "title": "Cùng một studio",
+                    "description": "Các tác nhân (agents), tính liên tục (continuity), bộ trộn (Mixer) và Screening Room vẫn được giữ nguyên."
+                  }
+                ]
+              }
+            },
+            {
+              "icon": "budget",
+              "title": "Nhân viên lập kế hoạch sản xuất",
+              "description": "Hãy xác định số lần chỉnh sửa cho ảnh tĩnh và video clip của mỗi cảnh quay trước khi bắt đầu chi phí. Các mục tiêu này sẽ được tổng hợp lên cấp độ cảnh, chương và toàn bộ dự án; đồng thời, ngày bắt đầu sẽ giúp thiết lập lịch trình bao gồm cả ngày hoàn thành.",
+              "screenshot": "Nhân viên lập kế hoạch sản xuất",
+              "learnMore": {
+                "items": [
+                  {
+                    "title": "Mục tiêu đã bị bắn",
+                    "description": "Thiết lập các phiên bản hình ảnh tĩnh và clip cho từng cảnh quay, sau đó tổng hợp chúng lên cấp độ phân cảnh, chương và bản hoàn thiện tổng thể (master)."
+                  },
+                  {
+                    "title": "Lịch trình có ghi ngày tháng",
+                    "description": "Ngày bắt đầu và các ngày làm việc tạo nên một lịch trình với các khoản tín chỉ tích lũy."
+                  },
+                  {
+                    "title": "Đặt lại dựa trên số liệu thực tế",
+                    "description": "Các cảnh đã hoàn tất có thể đặt lại các mục tiêu dựa trên chi phí thực tế của chúng."
+                  },
+                  {
+                    "title": "Trạng thái điện thoại",
+                    "description": "Xem tốc độ đọc, mức chi tiêu và ngày hoàn tất trên điện thoại, trong khi việc chỉnh sửa được thực hiện trên máy tính để bàn hoặc máy tính bảng."
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        "groups": [
+          {
+            "id": "script",
+            "label": "Tối ưu hóa tập lệnh",
+            "features": [
+              {
+                "icon": "scriptResonance",
+                "title": "Audience Resonance",
+                "description": "Audience Resonance đọc toàn bộ kịch bản cùng lúc, với mọi cảnh diễn ra đồng bộ. Bạn sẽ thấy cả phần nhạc phổ lẫn các ghi chú hiển thị song song, và không có nội dung nào bị viết lại cho đến khi bạn quyết định chọn thực hiện điều đó.",
+                "screenshot": "Audience Resonance — các điểm số và ghi chú xuyên suốt mọi cảnh, chưa được áp dụng",
+                "learnMore": {
+                  "items": [
+                    {
+                      "title": "Mọi cảnh quay chung",
+                      "description": "Nó biên soạn phần nhạc cho kịch bản như một tác phẩm thống nhất, kết hợp với các ghi chú về các cảnh diễn."
+                    },
+                    {
+                      "title": "Bạn chọn",
+                      "description": "Không có gì được viết lại cho đến khi bạn chọn những ghi chú nào để hành động."
+                    }
+                  ]
+                }
+              },
+              {
+                "icon": "castVisual",
+                "title": "Dàn diễn viên, phục trang và giọng nói",
+                "description": "Hãy xác định dàn nhân vật trước khi xây dựng các cảnh quay. Cố định các yếu tố về nhân vật, trang phục và giọng nói để đảm bảo mọi hình ảnh tĩnh và video sau đó đều thể hiện cùng một người.",
+                "screenshot": "Nhân vật, trang phục và giọng nói",
+                "learnMore": {
+                  "items": [
+                    {
+                      "title": "Nhân vật và trang phục",
+                      "description": "Cast Agent phác họa nhân vật và các bộ trang phục."
+                    },
+                    {
+                      "title": "Giọng nói",
+                      "description": "Giọng nói được định hình cho nhân vật trước khi các cảnh quay được xây dựng."
+                    },
+                    {
+                      "title": "Cùng một người",
+                      "description": "Mỗi hình ảnh tĩnh và mỗi đoạn video đều đòi hỏi sự cố định đó."
+                    }
+                  ]
+                }
+              },
+              {
+                "icon": "directShot",
+                "title": "Cú sút trực diện",
+                "description": "Direct Shot thực hiện cảnh quay dựa trên mô tả của chính bạn, dù là nhập văn bản hay đọc bằng giọng nói. Bạn xem trước hướng quay và lưu lại, khi đó cả câu lệnh tạo ảnh tĩnh lẫn câu lệnh tạo video ngắn sẽ cùng được cập nhật.",
+                "screenshot": "Direct Shot — nhập văn bản hoặc đọc để nhập, xem trước, lưu",
+                "learnMore": {
+                  "items": [
+                    {
+                      "title": "Cú đánh được chỉ định",
+                      "description": "Hộp thoại có tiêu đề Direct Shot · Cảnh N · Cú máy N."
+                    },
+                    {
+                      "title": "Nhập hoặc đọc",
+                      "description": "Viết hoặc đọc nội dung ghi chú, sau đó xem trước chỉ dẫn trước khi lưu."
+                    },
+                    {
+                      "title": "Cả hai gợi ý",
+                      "description": "Việc lưu sẽ cập nhật đồng thời cả câu lệnh cho ảnh tĩnh và câu lệnh cho đoạn clip."
+                    },
+                    {
+                      "title": "Tiếp tục sau các đoạn clip",
+                      "description": "Nếu cảnh quay được tạo ra bị lỗi, hãy mở Direct Shot và thực hiện lại việc chỉ đạo cảnh quay đó."
+                    }
+                  ]
+                }
+              },
+              {
+                "icon": "audioAgent",
+                "title": "Audio Agent",
+                "description": "Audio Agent tạo ra phần thoại, hiệu ứng âm thanh và âm nhạc cho cảnh. Người chơi có thể nghe thấy âm thanh của cảnh trước khi đoạn phim (clip) kết thúc.",
+                "screenshot": "Audio Agent — lời thoại, hiệu ứng và âm nhạc",
+                "learnMore": {
+                  "items": [
+                    {
+                      "title": "Đối thoại và hiệu ứng",
+                      "description": "Phần thoại chỉ bao gồm lời nói, còn hiệu ứng âm thanh được dành cho các cảnh quay có tín hiệu âm thanh rõ rệt."
+                    },
+                    {
+                      "title": "Âm nhạc",
+                      "description": "Âm nhạc cùng với lời thoại dẫn dắt cảnh phim."
+                    },
+                    {
+                      "title": "Trước khi chuyển động",
+                      "description": "Nghe âm thanh của cảnh quay trước khi bạn mở Clips."
+                    }
+                  ]
+                }
+              },
+              {
+                "icon": "continuity",
+                "title": "Tính liên tục",
+                "description": "Chỉ tạo các tài liệu tham chiếu cần thiết cho cảnh này khi cảnh đã sẵn sàng. Các cảnh trước đó vẫn giữ nguyên trạng thái đã chốt, nhờ vậy bạn không cần phải vẽ lại các tài liệu tham chiếu đã được phê duyệt.",
+                "screenshot": "Tính liên tục — chỉ xét các chi tiết tham chiếu trong cảnh này",
+                "learnMore": {
+                  "items": [
+                    {
+                      "title": "Chỉ cảnh này thôi",
+                      "description": "Hãy vẽ các nhân vật, bối cảnh và đạo cụ cần thiết cho cảnh này, và bỏ qua những thứ còn lại."
+                    },
+                    {
+                      "title": "Vừa kịp lúc",
+                      "description": "Hãy tạo chúng khi cảnh phim đã sẵn sàng, thay vì tạo theo lô cho toàn bộ bộ phim."
+                    },
+                    {
+                      "title": "Đã khóa",
+                      "description": "Một thay đổi trong một cảnh không làm thay đổi lại các tham chiếu mà các cảnh trước đó đã sử dụng."
+                    }
+                  ]
+                }
+              },
+              {
+                "icon": "stillsAgent",
+                "title": "Stills Agent",
+                "description": "Stills Agent tạo ra các khung hình dựa trên định hướng đã được phê duyệt. Định hướng và âm thanh được giữ nguyên như trạng thái ban đầu, còn các đoạn clip sẽ được thêm vào sau.",
+                "screenshot": "Stills Agent — các khung hình",
+                "learnMore": {
+                  "items": [
+                    {
+                      "title": "Khung hình",
+                      "description": "Nó vẽ hình ảnh tĩnh cho từng cảnh quay trong phân cảnh."
+                    },
+                    {
+                      "title": "Hướng đi được duy trì",
+                      "description": "Việc tái tạo khung hình sẽ cập nhật hình ảnh, trong khi hướng và âm thanh vẫn được giữ nguyên."
+                    },
+                    {
+                      "title": "Trước các đoạn clip",
+                      "description": "Hãy phê duyệt các hình ảnh tĩnh trước khi bạn mở Clips."
+                    }
+                  ]
+                }
+              },
+              {
+                "icon": "animatic",
+                "title": "Animatic",
+                "description": "Hãy xem cảnh phim tại phòng chiếu (Screening Room) dưới dạng animatic—bao gồm các hình ảnh tĩnh kết hợp cùng lời thoại, nhạc nền và hiệu ứng. Hãy chia sẻ bản này để nhận phản hồi và hoàn thiện mọi cảnh theo cách này trước khi chuyển sang giai đoạn dựng video; nhờ đó, nếu kịch bản có thay đổi, bạn sẽ không phải thực hiện lại các đoạn clip. Đối với nhiều nhà sáng tạo, animatic chính là sản phẩm hoàn chỉnh và có thể được xuất ra định dạng MP4.",
+                "screenshot": "Animatic Screening Room (có chia sẻ)",
+                "learnMore": {
+                  "items": [
+                    {
+                      "title": "Hình ảnh và âm thanh",
+                      "description": "Bản animatic trình chiếu các hình ảnh tĩnh đã được phê duyệt, kết hợp với lời thoại, nhạc nền và hiệu ứng."
+                    },
+                    {
+                      "title": "Chia sẻ",
+                      "description": "Hãy gửi một đường dẫn để người đánh giá xem bản animatic và để lại ghi chú trực tiếp trên hình ảnh."
+                    },
+                    {
+                      "title": "Trước video",
+                      "description": "Hãy hoàn thiện các cảnh dưới dạng animatic trước khi tạo video, để việc thay đổi kịch bản không buộc bạn phải thực hiện lại quy trình tạo video."
+                    },
+                    {
+                      "title": "MP4",
+                      "description": "Đối với nhiều nhà sáng tạo, animatic chính là sản phẩm hoàn chỉnh và có thể được xuất ra định dạng MP4."
+                    }
+                  ]
+                }
+              }
+            ]
+          },
+          {
+            "id": "video",
+            "label": "Video",
+            "features": [
+              {
+                "icon": "videoAgent",
+                "title": "SFAIVIDEO_ĐIỀU_KHOẢN_ĐẠI_LÝ",
+                "description": "Video Agent tạo các đoạn clip quay (shot clip) trên tab Clips. Hãy xem cảnh đã được ghép nối trong Screening Room; nếu có cảnh nào bị lỗi, hãy thực hiện lại việc chỉ đạo trong mục Direct Shot.",
+                "screenshot": "Video Agent, sau đó là cảnh đã được ghép lại",
+                "learnMore": {
+                  "items": [
+                    {
+                      "title": "Các đoạn phim đã quay",
+                      "description": "Video Agent tạo đoạn video cho mỗi cảnh quay từ hình ảnh tĩnh đã được phê duyệt."
+                    },
+                    {
+                      "title": "Khung cảnh được ghép nối",
+                      "description": "Xem lại cảnh đã được ghép nối trong Screening Room."
+                    },
+                    {
+                      "title": "Hãy chỉ đạo lại việc đó",
+                      "description": "Hãy mở Direct Shot (dưới dạng văn bản hoặc đọc lệnh) khi một đoạn clip bị sai."
+                    }
+                  ]
+                }
+              },
+              {
+                "icon": "mixer",
+                "title": "Máy trộn",
+                "description": "Công cụ Mixer hoàn thiện cảnh quay trong Production Stage. Tại đây, bạn có thể thêm hoặc loại bỏ các cảnh quay, cắt tỉa, cân chỉnh âm thanh và xuất (render) cảnh quay cùng với âm thanh đi kèm.",
+                "screenshot": "Bộ trộn — thêm, cắt, cân bằng, phủ lớp, đóng dấu",
+                "learnMore": {
+                  "items": [
+                    {
+                      "title": "Các cú sút",
+                      "description": "Giữ lại hoặc loại bỏ các cảnh quay riêng lẻ, đồng thời cắt tỉa những cảnh được giữ lại."
+                    },
+                    {
+                      "title": "Đối thoại",
+                      "description": "Thiết lập âm lượng và tốc độ cho từng câu thoại."
+                    },
+                    {
+                      "title": "Các bản nhạc",
+                      "description": "Cân bằng giữa lời dẫn, lời thoại, hiệu ứng âm thanh và âm nhạc, bao gồm cả hiệu ứng mờ dần và lặp lại nhạc."
+                    },
+                    {
+                      "title": "Lớp phủ",
+                      "description": "Đặt các lớp văn bản lên cảnh."
+                    },
+                    {
+                      "title": "Hình mờ",
+                      "description": "Thêm hình mờ dạng văn bản hoặc hình ảnh."
+                    },
+                    {
+                      "title": "Kết xuất",
+                      "description": "Kết xuất cảnh cùng với âm thanh của nó, và kết quả kết xuất đó chính là nội dung mà Screening Room phát."
+                    }
+                  ]
+                }
+              },
+              {
+                "icon": "languageStreams",
+                "title": "Các phiên bản ngôn ngữ",
+                "description": "Đây là phiên bản ngôn ngữ của cảnh quay hiện có, chứ không phải là một sản phẩm mới. Gemini TTS thực hiện lồng tiếng bằng 44 ngôn ngữ; với mỗi cảnh quay, bạn có thể lồng tiếng cho lời thoại hoặc tạo lại đoạn clip, bao gồm cả việc xử lý các biển báo.",
+                "screenshot": "Phiên bản ngôn ngữ — Lồng tiếng, khớp khẩu hình hoặc tạo lại nội dung, bao gồm cả các biển báo/bảng hiệu.",
+                "learnMore": {
+                  "items": [
+                    {
+                      "title": "Bốn mươi bốn ngôn ngữ",
+                      "description": "Gemini TTS đọc phần lồng tiếng bằng 44 ngôn ngữ."
+                    },
+                    {
+                      "title": "Mỗi shot",
+                      "description": "Đối với mỗi cảnh quay, hãy chọn Double để chèn giọng lồng tiếng, Lip-sync để thực hiện khớp khẩu hình, hoặc Regenerate để tạo một đoạn clip mới từ câu thoại đã dịch."
+                    },
+                    {
+                      "title": "Hệ thống biển báo",
+                      "description": "Tạo lại ảnh chụp biển hiệu khi hình ảnh có chứa nội dung văn bản cần thay đổi."
+                    },
+                    {
+                      "title": "Thời điểm",
+                      "description": "Tốc độ video được lưu lại cho phiên bản ngôn ngữ đó, vì bản dịch thường dài hơn bản gốc từ 10–30%."
+                    }
+                  ]
+                }
+              }
+            ]
+          },
+          {
+            "id": "publish",
+            "label": "Đăng",
+            "features": [
+              {
+                "icon": "shipPackage",
+                "title": "Đóng gói và vận chuyển",
+                "description": "Hãy đóng gói một cảnh, một chương, bản hoàn thiện (master) hoặc video quảng bá khi phần đó đã sẵn sàng. Đăng tải lên YouTube, Facebook hoặc TikTok, hoặc tải xuống tệp MP4, rồi tiếp tục hoàn thiện các phần còn lại.",
+                "screenshot": "Đóng gói và xuất bản — phân cảnh, chương, bản gốc (master), video quảng bá; YouTube, Facebook, TikTok, MP4",
+                "learnMore": {
+                  "items": [
+                    {
+                      "title": "Các mảnh",
+                      "description": "Gửi đi một cảnh, một chương, bản gốc hoàn chỉnh hoặc video quảng bá."
+                    },
+                    {
+                      "title": "Các luồng ngôn ngữ",
+                      "description": "Mỗi phiên bản ngôn ngữ đều có thể được cung cấp kèm theo gói sản phẩm."
+                    },
+                    {
+                      "title": "Điểm đến",
+                      "description": "Đăng lên YouTube, Facebook hoặc TikTok, hoặc tải xuống tệp MP4."
+                    },
+                    {
+                      "title": "Hãy tiếp tục xây dựng",
+                      "description": "Hãy phát hành phần đã hoàn thiện và tiếp tục xây dựng phần còn lại."
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "screening-room",
+        "label": "Thuật ngữ phòng chiếu SFAI",
+        "promise": "Phòng chiếu (Screening Room) là nơi bản dựng hoàn chỉnh được xem, đánh giá và phát hành. Một trình phát duy nhất sẽ chứa các nội dung như bản dựng nháp (Pre-Vis), các cảnh, các chương, bản master, video quảng bá (promo) và các luồng ngôn ngữ; nhờ đó, bản lồng tiếng sẽ khớp hoàn toàn với bản dựng mà kỹ sư âm thanh đã xuất ra. Bạn chỉ cần chia sẻ một đường dẫn duy nhất để xem lại và ghi chú trực tiếp lên hình ảnh. Hãy đăng tải một cảnh (dài 3–5 phút), một chương (dài 8–12 phút), bản master hoặc video quảng bá ngay khi các phần này hoàn tất, trong khi vẫn tiếp tục thực hiện các phần còn lại.",
+        "features": [
+          {
+            "icon": "screeningPlayer",
+            "title": "Một người chơi",
+            "description": "Chuyển đổi giữa bản dựng nháp (Pre-Vis), các cảnh, chương, bản hoàn thiện (master) và video quảng bá. Chọn một luồng ngôn ngữ để nghe phiên bản tương ứng — dù là lồng tiếng, khớp khẩu hình hay được tái tạo lại theo từng cảnh quay. Trình phát này hiển thị chính xác bản dựng mà Mixer đã xuất ra.",
+            "screenshot": "Trình phát Screening Room",
+            "learnMore": {
+              "items": [
+                {
+                  "title": "Một bề mặt",
+                  "description": "Chuyển đổi giữa Pre-Vis, các cảnh, các chương, bản master và bản quảng bá."
+                },
+                {
+                  "title": "Luồng ngôn ngữ",
+                  "description": "Hãy chọn một phiên bản và nghe nó được lồng tiếng đè, khớp khẩu hình hoặc tái tạo lại theo từng cảnh quay."
+                },
+                {
+                  "title": "Cùng kiểu cắt",
+                  "description": "Trình phát hiển thị bản dựng đã được Mixer kết xuất."
+                }
+              ]
+            }
+          },
+          {
+            "icon": "screeningCollab",
+            "title": "Cùng hợp tác thực hiện khâu cắt dựng",
+            "description": "Chỉ cần chia sẻ một đường dẫn duy nhất. Người xem có thể phát lại video và để lại ghi chú trực tiếp trên hình ảnh. Bạn không cần phải xuất file nháp rồi gửi qua email để lấy ý kiến phản hồi. Khi có ghi chú mới, bạn sẽ nhận được thông báo và có thể xem nội dung ngay trên điện thoại.",
+            "screenshot": "Đánh giá được chia sẻ",
+            "learnMore": {
+              "items": [
+                {
+                  "title": "Một liên kết",
+                  "description": "Người đánh giá xem lại nội dung ở chế độ phát thực tế và để lại ghi chú ngay trên hình ảnh."
+                },
+                {
+                  "title": "Không gửi bản dựng thô qua email",
+                  "description": "Bạn không xuất một tệp bản nháp để gửi qua email nhằm thu thập phản hồi."
+                },
+                {
+                  "title": "Ghi chú cuộc gọi",
+                  "description": "Một tin nhắn văn bản sẽ thông báo cho bạn và bạn có thể đọc nó trên điện thoại, trong khi ứng dụng studio vẫn hiển thị trên máy tính để bàn hoặc máy tính bảng."
+                }
+              ]
+            }
+          },
+          {
+            "icon": "packageShip",
+            "title": "Phát hành khi đã sẵn sàng",
+            "description": "Đăng tải một phân cảnh dài 3–5 phút, một chương dài 8–12 phút, bản hoàn chỉnh (master) hoặc video quảng bá lên YouTube, Facebook hay TikTok với tỷ lệ khung hình 16:9 hoặc 9:16, hoặc tải tệp về máy. Các thông tin như tiêu đề, mô tả và chế độ quyền riêng tư sẽ đi kèm với nội dung đó. Hãy phát hành phần đã hoàn thiện và tiếp tục thực hiện các phần còn lại.",
+            "screenshot": "Xuất bản gói",
+            "learnMore": {
+              "items": [
+                {
+                  "title": "Gửi đi một kiện hàng",
+                  "description": "Đăng tải một phân cảnh dài 3–5 phút, một chương dài 8–12 phút, bản hoàn chỉnh hoặc video quảng bá."
+                },
+                {
+                  "title": "Điểm đến",
+                  "description": "Đăng lên YouTube, Facebook hoặc TikTok với tỷ lệ khung hình 16:9 hoặc 9:16, hoặc tải tệp xuống."
+                },
+                {
+                  "title": "Gói",
+                  "description": "Tiêu đề, mô tả và chế độ riêng tư sẽ đi kèm với gói này."
+                },
+                {
+                  "title": "Hãy tiếp tục xây dựng",
+                  "description": "Hãy phát hành phần đã hoàn thiện và tiếp tục xây dựng phần còn lại."
+                }
+              ]
+            }
+          }
+        ]
+      }
+    ]
+  },
   "metadata": {
-    "title": "SceneFlow Studio - Tạo video bằng AI",
+    "title": "SceneFlow Studio - Sáng tạo video hỗ trợ bởi AI",
     "description": "Biến ý tưởng của bạn thành video chuyên nghiệp với quy trình làm việc tự động hóa được hỗ trợ bởi AI."
   },
   "nav": {
     "plansPricing": "Gói dịch vụ &amp; Mức phí",
+    "productionExamples": "Ví dụ thực hiện sáng chế",
+    "keyFeatures": "Tính năng",
     "trustSafety": "Độ tin cậy và an toàn",
     "signIn": "Đăng nhập",
     "startProject": "Bắt đầu một dự án",
     "dashboard": "Trang tổng quan",
-    "adminPanel": "Admin Panel",
+    "adminPanel": "Bảng điều khiển quản trị",
     "signOut": "Thoát",
     "goToDashboard": "Về trang chủ",
     "userFallback": "Người dùng",
     "searchLanguages": "Tìm kiếm ngôn ngữ...",
-    "noLanguagesFound": "Không tìm thấy ngôn ngữ",
-    "productionExamples": "Ví dụ thực hiện sáng chế",
-    "keyFeatures": "Tính năng"
+    "noLanguagesFound": "Không tìm thấy ngôn ngữ"
   },
   "floatingNav": {
-    "preVisEngine": "Pre-Vis Engine",
-    "trustSafety": "Trust & Safety",
-    "pricing": "Pricing",
-    "productionExamples": "Examples",
-    "twoModes": "One Pipeline",
-    "keyFeatures": "Key Features",
-    "audienceResonance": "Audience Resonance"
+    "productionExamples": "Ví dụ",
+    "twoModes": "Một quy trình",
+    "directControl": "Trực tiếp",
+    "publishCut": "Đăng",
+    "keyFeatures": "Các tính năng chính",
+    "audienceResonance": "Audience Resonance",
+    "preVisEngine": "Công cụ tiền hình ảnh hóa",
+    "trustSafety": "Tin cậy & An toàn",
+    "pricing": "Bảng giá"
   },
   "hero": {
-    "headline": "From first spark to finished master.",
-    "subheadline": "SceneFlow is one guided pipeline. You direct the story, the cast, and the tone. It builds the Blueprint, holds continuity, plays the full animatic, and assembles the master — without prompt trials or a timeline of loose clips.",
-    "ctaPrimaryLaunch": "Launch Studio ($9)",
-    "ctaSupportingLine": "The all-in-one studio to craft, export, and distribute your stories. Download a master and ship anywhere — or publish long-form cuts and chapters to {longForm}, and promote trailers on {shorts}.",
-    "ctaSecondary": "Explore the pipeline",
-    "ctaToolStack": "See how it replaces your tool stack",
+    "eyebrow": "Sản xuất phim và loạt phim tự động",
+    "headline": "Từ tia sáng khởi đầu đến kiệt tác hoàn thiện.",
+    "subheadline": "Đây là một quy trình thực hiện có sự dẫn dắt. Bạn trực tiếp chỉ đạo cốt truyện, dàn nhân vật và tông màu chủ đạo. Hệ thống này sẽ xây dựng bản thiết kế tổng thể, duy trì tính nhất quán, phát bản dựng nháp động (animatic) hoàn chỉnh và lắp ráp thành phẩm cuối cùng — mà không cần phải thử nghiệm câu lệnh nhiều lần hay xử lý một dòng thời gian gồm các đoạn phim rời rạc.",
+    "ctaPrimaryLaunch": "Launch Studio (9 USD)",
+    "ctaSupportingLine": "Studio tất cả trong một giúp bạn sáng tạo, xuất và phân phối các câu chuyện của mình. Tải xuống bản master để gửi đi bất cứ đâu — hoặc đăng tải các bản dựng dài và các chương lên {longForm}, đồng thời quảng bá trailer trên {shorts}.",
+    "ctaNetworkInvite": "Các dự án nổi bật có thể nộp đơn tham gia mạng lưới SceneFlow – mạng lưới dành riêng cho các thành viên được mời.",
+    "ctaNetworkInviteHref": "#for-filmmakers",
+    "ctaSecondary": "Khám phá quy trình",
+    "ctaToolStack": "Khám phá cách giải pháp này thay thế bộ công cụ hiện tại của bạn.",
     "chips": [
       {
-        "label": "From Concept to Feature",
-        "detail": "Expand ideas into 90-minute scripts in the Blueprint Room. Define characters, art, and beats, then let Audience Resonance analysis fine-tune your story before you shoot."
+        "label": "Từ ý tưởng đến tính năng",
+        "detail": "Phát triển các ý tưởng thành kịch bản dài 90 phút trong Blueprint Room. Xác định nhân vật, phong cách hình ảnh và các nhịp truyện (beats), sau đó để quá trình phân tích Audience Resonance tinh chỉnh câu chuyện của bạn trước khi tiến hành quay phim."
       },
       {
-        "label": "Direct With Intent, Not Prompts",
-        "detail": "Speak the language of film with intelligent assistants that understand your direction. The Reference Library locks your custom cast, wardrobe, and locations for absolute continuity."
+        "label": "Điều hướng bằng chủ đích, không phải bằng các câu lệnh gợi ý.",
+        "detail": "Giao tiếp bằng ngôn ngữ điện ảnh cùng các trợ lý thông minh thấu hiểu ý đồ của bạn. Thư viện tham chiếu giúp cố định dàn diễn viên, trang phục và bối cảnh tùy chỉnh, đảm bảo tính nhất quán tuyệt đối."
       },
       {
-        "label": "Agent-Driven Production",
-        "detail": "Accelerate generation 5X with intelligent agents that build 30-shot scenes in the background. Iterate freely in draft mode, then publish your final vision in stunning Hi-Res."
+        "label": "Sản xuất do tác nhân điều phối",
+        "detail": "Tăng tốc quá trình tạo hình ảnh lên gấp 5 lần nhờ các tác nhân thông minh tự động xây dựng các cảnh gồm 30 góc chụp ở chế độ nền. Thỏa sức tinh chỉnh ở chế độ nháp, sau đó xuất bản tác phẩm hoàn thiện với độ phân giải cao đầy ấn tượng."
       },
       {
-        "label": "Screen, Collaborate, Ship",
-        "detail": "Share progress at every milestone—from audio animatics to the final master—in the Screening Room. Distribute as shorts or features in multiple languages for a global reach."
+        "label": "Sàng lọc, Cộng tác, Triển khai",
+        "detail": "Chia sẻ tiến độ tại từng cột mốc quan trọng—từ bản audio animatic đến bản hoàn thiện cuối cùng—trong Screening Room. Phát hành dưới dạng phim ngắn hoặc phim dài với nhiều ngôn ngữ để tiếp cận khán giả toàn cầu."
       }
     ],
     "pipelineSteps": [
       "Blueprint",
-      "Production",
-      "Screening Room"
+      "Sản xuất",
+      "Thuật ngữ phòng chiếu SFAI"
     ],
-    "languagePrompt": "Hear the hero in your language — same pipeline, new markets",
-    "multilangHint": "Hero dubs in 7 languages — full pipeline supports 70+ in Production Stage.",
-    "playWithNarration": "Play with narration",
-    "tapToHear": "Tap to hear",
-    "fullscreen": "Fullscreen",
+    "languagePrompt": "Chọn tiếng Anh, Tây Ban Nha, Trung Quốc hoặc Ả Rập — cùng một quy trình, thị trường mới.",
+    "multilangHint": "Lồng tiếng chính (hero dubs) bằng 4 ngôn ngữ — quy trình hoàn chỉnh hỗ trợ hơn 70 ngôn ngữ trong Production Stage.",
+    "playWithNarration": "Phát kèm lời dẫn",
+    "tapToHear": "Chạm để nghe",
+    "fullscreen": "Toàn màn hình",
+    "pauseBackgroundVideo": "Tạm dừng video nền",
+    "playBackgroundVideo": "Phát video nền",
     "heroVideoLanguages": {
       "en": {
-        "label": "English",
+        "label": "Tiếng Anh",
         "nativeLabel": "English"
       },
       "es": {
-        "label": "Spanish",
+        "label": "Tiếng Tây Ban Nha",
         "nativeLabel": "Español"
       },
-      "pt": {
-        "label": "Portuguese",
-        "nativeLabel": "Português"
-      },
-      "hi": {
-        "label": "Hindi",
-        "nativeLabel": "हिन्दी"
-      },
       "zh": {
-        "label": "Chinese",
+        "label": "Tiếng Trung",
         "nativeLabel": "中文"
       },
       "ar": {
-        "label": "Arabic",
+        "label": "Tiếng Ả Rập",
         "nativeLabel": "العربية"
-      },
-      "th": {
-        "label": "Thai",
-        "nativeLabel": "ไทย"
       }
     },
-    "soon": "Soon",
-    "videoLanguageCount": "{count, plural, =1 {# language} other {# languages}}",
-    "eyebrow": "Automated filmmaking for films and series",
-    "ctaNetworkInvite": "Standout projects can apply for the invite-only SceneFlow Network.",
-    "ctaNetworkInviteHref": "#for-filmmakers"
+    "soon": "Sớm thôi",
+    "videoLanguageCount": "{count, plural, =1 {# language} other {# languages}}"
+  },
+  "twoModes": {
+    "eyebrow": "Những trở ngại mà chúng tôi loại bỏ",
+    "title": "Một quy trình liền mạch. Không phải là một tập hợp các công cụ rời rạc.",
+    "subtitle": "SceneFlow replaces single-clip generators and a pile of separate docs, editors, and re-renders. Build the series or the 90-minute master, then publish a scene or a chapter when you are ready to earn.",
+    "comingSoon": "Sắp ra mắt",
+    "comparison": {
+      "id": "comparison",
+      "caption": "Fragmented tools beside one SceneFlow pipeline."
+    },
+    "cta": "Launch Studio (9 USD)"
+  },
+  "directControl": {
+    "eyebrow": "Quyền kiểm soát mà bạn nắm giữ",
+    "title": "Hãy định hướng câu chuyện. Để các tác nhân thực hiện việc đưa ra gợi ý.",
+    "subtitle": "Bạn chỉ đạo cảnh quay bằng ngôn ngữ đơn giản, dễ hiểu. Các chỉ dẫn này sẽ định hình nội dung cho hình ảnh tĩnh và các đoạn clip. Các điểm chuyển nhạc và lời dẫn cần khớp với nhịp điệu. Hãy xem bản phác thảo động (animatic), điều chỉnh lại cảnh quay nếu cần, rồi mới đầu tư vào phần chuyển động.",
+    "comparison": {
+      "id": "direction",
+      "caption": "Ghi chú của đạo diễn, gợi ý về đoạn phim, cùng âm nhạc và lời dẫn khớp với cùng một nhịp."
+    },
+    "cta": "Launch Studio (9 USD)"
+  },
+  "publishCut": {
+    "eyebrow": "Bản dựng bạn công bố",
+    "title": "Xuất ra bất cứ đâu. Nhận quyền truy cập Premiere và SceneFlow khi bạn đạt được.",
+    "subtitle": "Download a master and ship it yourself, or publish finished scenes and chapters to {longForm} and cut trailers for {shorts} — without waiting on the whole cut. Before anything hits the public feed, run drafts or your final master through the Screening Room. Standout projects can apply for the invite-only SceneFlow Network; it is a curated accelerator, not an open storefront.",
+    "comparison": {
+      "id": "publish",
+      "caption": "A finished scene or chapter, and the 90-minute master, from one studio."
+    },
+    "cta": "Launch Studio (9 USD)"
+  },
+  "infrastructure": {
+    "title": "Hạ tầng và bảo mật cấp doanh nghiệp",
+    "description": "Được vận hành bởi Google Cloud và Vertex AI, mang lại độ tin cậy cấp doanh nghiệp, các mô hình lồng tiếng đa ngôn ngữ và quy trình xử lý tài nguyên an toàn.",
+    "badges": {
+      "googleCloud": "Google Cloud",
+      "vertexAi": "Vertex AI"
+    }
   },
   "valueProp": {
     "pills": [
@@ -150,7 +1114,7 @@
         "icon": "video",
         "label": "Người sáng tạo",
         "outcome": "Ra mắt đúng tiến độ — đừng tốn công xây dựng lại trên từng công cụ",
-        "narrative": "Bạn đã có cốt truyện, nhưng mỗi tập phim lại đòi hỏi phải xuất lại các tài sản (assets), nhập lại câu lệnh (prompt) trong các tab mới và hy vọng tính nhất quán được duy trì. SceneFlow kết nối Series, Blueprint và khâu Sản xuất trong cùng một studio — nhờ đó, bạn có thể phê duyệt hình ảnh ở giai đoạn tiền hình ảnh hóa (pre-vis), tạo nội dung từng cảnh một và hoàn thiện các tập phim đồng bộ đúng tiến độ thay vì phải xây dựng lại từ đầu.",
+        "narrative": "Bạn đã có cốt truyện, nhưng mỗi tập phim lại đòi hỏi phải xuất lại các tài nguyên, nhập lại câu lệnh (prompt) trong các tab mới và hy vọng tính nhất quán được duy trì. SceneFlow kết nối Series Room, Blueprint Room và Production Stage trong cùng một studio — nhờ đó, bạn có thể phê duyệt hình ảnh ở giai đoạn tiền hình ảnh hóa (pre-vis), tạo nội dung từng cảnh và hoàn thiện các tập phim với sự đồng bộ cao đúng tiến độ, thay vì phải xây dựng lại mọi thứ từ đầu.",
         "useCases": [
           "Phim truyền hình YouTube tỷ lệ 16:9",
           "Phim bộ dọc định dạng 9:16 dành cho thiết bị di động",
@@ -243,7 +1207,7 @@
         "icon": "bảng clapperboard",
         "label": "Sản xuất phim",
         "outcome": "Kịch bản cho bản animatic tương tác mà bạn có thể trình chiếu và thử nghiệm trước khi quay.",
-        "narrative": "Trước đây, quy trình tiền hình ảnh (previz) và thử nghiệm với khán giả thường đòi hỏi hàng tuần làm bảng phân cảnh (storyboard), thu âm tạm và những phỏng đoán tốn kém trước khi bấm máy. SceneFlow chuyển đổi kịch bản của bạn thành bản dựng hoạt hình (animatic) tương tác nhờ công nghệ Pre-vis Agent — cho phép tối ưu hóa với Audience Resonance, trình chiếu tại Screening Room và chỉ giải ngân ngân sách khi câu chuyện đã thực sự thuyết phục.",
+        "narrative": "Trước đây, quy trình tiền hình ảnh (previz) và thử nghiệm với khán giả thường đòi hỏi hàng tuần làm bảng phân cảnh (storyboard), thu âm tạm và những phỏng đoán tốn kém trước khi bấm máy. Giờ đây, SceneFlow chuyển đổi kịch bản của bạn thành bản dựng hoạt hình tương tác (animatic) nhờ Pre-vis Agent; bạn có thể tối ưu hóa nội dung dựa trên Audience Resonance, trình chiếu tại Screening Room và chỉ giải ngân ngân sách khi câu chuyện thực sự tạo được hiệu quả mong muốn.",
         "useCases": [
           "Tiền hình ảnh hóa cho phim điện ảnh và phim độc lập",
           "Bản phác thảo hoạt hình cho bài thuyết trình gọi vốn",
@@ -256,7 +1220,7 @@
           "challengeTitle": "Quy trình tiền hình ảnh hóa (pre-vis) chậm chạp trước khi có thể kiểm thử cốt truyện",
           "challengeDescription": "Bạn đã có kịch bản — nhưng các buổi đọc kịch bản, quy trình làm storyboard và các công cụ tiền hình ảnh hóa (previz) rời rạc lại gây chậm trễ cho việc thuyết trình với nhà đầu tư, thử nghiệm với khán giả và các quyết định phê duyệt dự án.",
           "solutionTitle": "Tiền hình ảnh hóa tương tác lấy kịch bản làm trọng tâm",
-          "solutionDescription": "Tải lên kịch bản của bạn (định dạng MDX, FDX và các định dạng khác), tối ưu hóa bằng Audience Resonance và tạo bản dựng hình ảnh sơ bộ (pre-vis) tương tác để trình chiếu và thử nghiệm — với khả năng tạo đồng thời nhanh chóng cho các phân đoạn (beats), hỗ trợ hơn 70 ngôn ngữ cùng tính năng hiển thị lớp phủ đa ngôn ngữ tốc độ cao.",
+          "solutionDescription": "Tải lên kịch bản của bạn (định dạng MDX, FDX và các định dạng khác), tối ưu hóa bằng Audience Resonance, và tạo bản dựng hình ảnh sơ bộ (pre-vis) tương tác để trình chiếu và thử nghiệm — với sự hỗ trợ của Production Agents trong việc soạn thảo câu lệnh (prompt) và tạo nội dung xuyên suốt các phân đoạn, hỗ trợ hơn 70 ngôn ngữ cùng khả năng hiển thị lớp phủ đa ngôn ngữ nhanh chóng.",
           "win": "Kiểm chứng sự phù hợp giữa câu chuyện và khán giả trước khi bước vào giai đoạn quay chính — thông qua bản animatic dễ dàng chia sẻ, thay vì quy trình tiền hình ảnh hóa (previz) kéo dài hàng tuần."
         }
       }
@@ -272,7 +1236,7 @@
       },
       {
         "them": "Tính nhất quán thủ công giữa các phiên",
-        "us": "Reference Library + Shot Frames khóa hình ảnh trước khi có video"
+        "us": "Khóa hình ảnh trước video"
       },
       {
         "them": "Không có quy trình xác thực đối tượng",
@@ -290,10 +1254,10 @@
     "title": "Quy trình sản xuất video lấy nhịp điệu làm trọng tâm",
     "subtitle": "Phê duyệt trước khi kết xuất — thay vì tái tạo ngẫu nhiên kiểu máy đánh bạc",
     "intro": "Không cần tạo thử rồi kiểm tra lại nhiều lần. Bạn có thể xem trước và phê duyệt hình ảnh hiển thị trước khi SceneFlow sử dụng credit để tạo video hoàn chỉnh.",
-    "description": "SceneFlow thiết lập quy trình phê duyệt hình ảnh ở từng bước: Pre-vis Agent để xem xét, Shot Frames để chốt bố cục, sau đó là F2V cho từng nhịp. Bạn tinh chỉnh hình ảnh trước khi tiêu tốn credit vào các lỗi trôi hình (drift) và ảo giác (hallucination).",
+    "description": "SceneFlow tổ chức quy trình phê duyệt hình ảnh ở từng bước: Pre-vis Agent để xem xét, Shot Frames để chốt bố cục, sau đó là F2V cho từng nhịp (beat). Bạn tinh chỉnh phần hình ảnh trước khi tiêu tốn credit vào các lỗi lệch hướng (drift) hay hiện tượng ảo giác (hallucination) của AI.",
     "steps": [
-      "Pre-vis Agent — chia sẻ các bản beat kết hợp hình ảnh và âm thanh để đánh giá chỉ trong vài phút",
-      "Shot Frames — khóa điểm đầu/cuối của bố cục với tính liên tục của Reference Library",
+      "Pre-vis Agent — chia sẻ các phân đoạn âm thanh-hình ảnh để xem xét sau khi có gợi ý từ chuyên gia.",
+      "Shot Frames — khóa điểm bắt đầu/kết thúc của composition theo tính liên tục của Reference Library",
       "F2V theo nhịp — tạo video từ các khung hình đã được duyệt, thay vì các câu lệnh (prompt) thiếu định hướng cụ thể.",
       "Chuỗi mở rộng (EXT) liên tục — các bước mở rộng 7 giây tích hợp sẵn dành cho các phân đoạn hội thoại dài.",
       "Production Mixer — xuất dữ liệu định thời, âm thanh và luồng sang Screening Room"
@@ -371,7 +1335,7 @@
     "steps": [
       {
         "title": "Đoạn clip mở đầu dài 8 giây",
-        "description": "Việc chuyển đổi từ khung hình hoặc hình ảnh sang video dựa trên nội dung Shot Frames đã được phê duyệt sẽ cố định bố cục trước khi thực hiện chuyển động."
+        "description": "Việc chuyển đổi từ khung hình hoặc hình ảnh sang video dựa trên Shot Frames đã được phê duyệt sẽ cố định bố cục trước khi tạo chuyển động."
       },
       {
         "title": "Các bước gia hạn +7 giây",
@@ -406,7 +1370,7 @@
     "badge": "Phạm vi sáng tạo",
     "title": "Mọi phong cách, mọi màn hình",
     "titleAccent": "DNA sáng tạo của bạn, được lưu giữ trong Blueprint",
-    "subtitle": "Blueprint là nơi định hình \"DNA sáng tạo\" của bạn—bao gồm phong cách nghệ thuật, tỷ lệ khung hình, tông màu và cốt truyện chủ đạo. SceneFlow sẽ đưa các lựa chọn này vào bản phác thảo ý tưởng, Audience Resonance và quá trình viết kịch bản, đảm bảo chỉ dẫn cảnh quay luôn đồng bộ với khung hình và phong cách hình ảnh ngay từ những bước đầu tiên, thay vì chỉ là các thiết lập xuất file vào phút chót.",
+    "subtitle": "Blueprint Room là nơi định hình \"DNA sáng tạo\" của bạn—bao gồm phong cách nghệ thuật, tỷ lệ khung hình, tông màu và cốt truyện chủ đạo. SceneFlow sẽ đưa các lựa chọn này vào quá trình xây dựng ý tưởng (treatment), Audience Resonance và khâu viết kịch bản, đảm bảo các chỉ dẫn cảnh quay luôn đồng bộ với khung hình và phong cách hình ảnh ngay từ những nhịp đầu tiên, thay vì chỉ là các thiết lập xuất file vào phút chót.",
     "pillars": [
       {
         "title": "Hình thức tuân theo công năng (và cách định khung)",
@@ -430,87 +1394,121 @@
       "items": [
         {
           "id": "giống như ảnh thật",
-          "name": "Giống như ảnh thật",
+          "name": "Live-action đậm chất điện ảnh",
           "displayTitle": "Chủ nghĩa hiện thực nhiếp ảnh",
-          "description": "Phong cách nhiếp ảnh chuyên nghiệp",
+          "description": "Ánh sáng đậm chất điện ảnh, chân thực như ảnh chụp",
           "tagline": "Chủ nghĩa hiện thực quy mô lớn đầy đẳng cấp",
           "marketingBody": "Phong cách chân thực như ảnh chụp (photorealism) mang lại sức hút đại chúng mà khán giả của các chương trình truyền hình chất lượng cao và phim tài liệu mong đợi. Việc duy trì sự nhất quán về nhân vật và ánh sáng chân thực xuyên suốt các phân đoạn sẽ giúp phim truyền hình dài tập và loạt phim tài liệu giữ được mạch cảm xúc liền mạch từ tập mở đầu cho đến tập kết thúc.",
+          "featured": true,
           "thumbnail": "https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Gemini_Generated_Image_w5y03bw5y03bw5y0.jpeg"
         },
         {
           "id": "Anime thập niên 90",
-          "name": "Anime (thập niên 90)",
-          "displayTitle": "Anime",
-          "description": "Phong cách anime cổ điển thập niên 90",
-          "tagline": "Các tuyến truyện có tính tiếp nối",
-          "marketingBody": "Phong cách tô màu cel-shading kiểu anime tạo được sự gắn kết sâu sắc với người hâm mộ trong các loạt phim web nhiều tập và những cốt truyện dài kỳ. Các hệ thống tạo nội dung được huấn luyện dựa trên phong cách này mang lại những đường nét sắc sảo cùng bố cục khung hình ổn định — những yếu tố lý tưởng cho quy trình sản xuất hàng loạt các tác phẩm nhiều tập.",
+          "name": "Đồ họa 3D/CGI phong cách điện ảnh",
+          "displayTitle": "Đồ họa 3D/CGI phong cách điện ảnh",
+          "description": "Diện mạo phim điện ảnh 3D đã qua kết xuất",
+          "featured": false,
           "thumbnail": "https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Gemini_Generated_Image_5qoasf5qoasf5qoa.jpeg"
         },
         {
           "id": "Pixar",
-          "name": "Pixar Animation",
+          "name": "Hoạt hình 3D (phong cách Pixar)",
           "displayTitle": "Đồ họa 3D đậm chất điện ảnh / Phong cách Pixar",
-          "description": "Hoạt hình 3D phong cách Pixar",
+          "description": "Phim hoạt hình 3D phong cách hóa",
           "tagline": "Sự liền mạch về mặt cảm xúc xuyên suốt các tập phim",
           "marketingBody": "Các đường nét hình học mềm mại, bo tròn cùng thiết kế nhân vật giàu biểu cảm tạo nên sự ấm áp, gắn kết cảm xúc với khán giả xuyên suốt cả mùa phim. Đây là lựa chọn lý tưởng cho các loạt phim hoạt hình, nội dung dài tập dành cho gia đình và các dự án kể chuyện thương hiệu, nơi sự nhất quán của nhân vật đóng vai trò then chốt trong từng khoảnh khắc.",
+          "featured": true,
           "thumbnail": "https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Gemini_Generated_Image_zi32rnzi32rnzi32.jpeg"
         },
         {
           "id": "nghệ thuật ý tưởng",
-          "name": "Nghệ thuật ý tưởng",
-          "displayTitle": "Nghệ thuật ý tưởng",
-          "description": "Concept art cho game/phim",
-          "tagline": "Các hình ảnh chủ đạo (keyframes) tiền hình ảnh hóa cho phim điện ảnh và phim dài tập, với hệ thống ánh sáng giàu cảm xúc và sẵn sàng cho khâu sản xuất.",
+          "name": "Anime",
+          "displayTitle": "Anime",
+          "description": "Phong cách anime cel-shaded",
+          "tagline": "Các tuyến truyện có tính tiếp nối",
+          "marketingBody": "Phong cách tô màu cel-shading kiểu anime tạo được sự gắn kết sâu sắc với người hâm mộ trong các loạt phim web nhiều tập và những cốt truyện dài kỳ. Các hệ thống tạo nội dung được huấn luyện dựa trên phong cách này mang lại những đường nét sắc sảo cùng bố cục khung hình ổn định — những yếu tố lý tưởng cho quy trình sản xuất hàng loạt các tác phẩm nhiều tập.",
+          "featured": true,
           "thumbnail": "https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Gemini_Generated_Image_qlf261qlf261qlf2.jpeg"
         },
         {
           "id": "Ghibli",
           "name": "Mang phong cách Ghibli",
           "displayTitle": "Vẽ tay / Phong cách Ghibli",
-          "description": "Lấy cảm hứng từ Studio Ghibli",
+          "description": "Hoạt hình vẽ tay mang phong cách hội họa",
           "tagline": "Tay nghề thủ công là sự xa xỉ",
           "marketingBody": "Phong cách này khai thác trực tiếp một trào lưu sáng tạo lớn đề cao quan điểm \"Thủ công là sự xa xỉ\". Các kết cấu màu nước và phông nền mang phong cách hội họa kiến tạo nên những thế giới được chế tác thủ công qua từng tập phim; tại đó, những khiếm khuyết tự nhiên được cảm nhận như một nét nghệ thuật đầy chủ đích xuyên suốt cả loạt phim dài kỳ.",
+          "featured": true,
           "thumbnail": "https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Gemini_Generated_Image_xojqsuxojqsuxojq.jpeg"
         },
         {
           "id": "truyện tranh",
           "name": "Truyện tranh",
           "displayTitle": "Truyện tranh",
-          "description": "Phong cách nét mực truyện tranh",
+          "description": "Nét mực đậm, phong cách tiểu thuyết đồ họa",
           "tagline": "Nét mực đậm, hiệu ứng halftone và màu sắc phong cách pop-art dành cho lối kể chuyện nhiều kỳ.",
+          "featured": false,
           "thumbnail": "https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Gemini_Generated_Image_ezhp8cezhp8cezhp.jpeg"
         },
         {
           "id": "tranh sơn dầu",
-          "name": "Tranh sơn dầu",
-          "displayTitle": "Tranh sơn dầu",
-          "description": "Tranh sơn dầu cổ điển",
-          "tagline": "Nét cọ cổ điển và sắc màu phong phú dành cho các tác phẩm tài liệu và lịch sử quy mô lớn.",
+          "name": "Nghệ thuật ý tưởng",
+          "displayTitle": "Nghệ thuật ý tưởng",
+          "description": "Concept art mang phong cách điện ảnh cho game/phim",
+          "tagline": "Các hình ảnh chủ đạo (keyframes) tiền hình ảnh hóa cho phim điện ảnh và phim dài tập, với hệ thống ánh sáng giàu cảm xúc và sẵn sàng cho khâu sản xuất.",
+          "featured": false,
           "thumbnail": "https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Gemini_Generated_Image_7z9qm7z9qm7z9qm7.jpeg"
         },
         {
           "id": "nghệ thuật kỹ thuật số",
-          "name": "Nghệ thuật kỹ thuật số",
-          "displayTitle": "Nghệ thuật kỹ thuật số",
-          "description": "Minh họa kỹ thuật số hiện đại",
-          "tagline": "Minh họa cách điệu dành cho phim tài liệu hoạt hình và loạt video giải thích theo tập.",
+          "name": "Vector phẳng / Đồ họa chuyển động",
+          "displayTitle": "Vector phẳng / Đồ họa chuyển động",
+          "description": "Phong cách vector tinh gọn cho video giải thích",
+          "featured": false,
           "thumbnail": "https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Gemini_Generated_Image_omdmt6omdmt6omdm.jpeg"
         },
         {
           "id": "màu nước",
-          "name": "Màu nước",
-          "displayTitle": "Màu nước",
-          "description": "Tranh màu nước nhẹ nhàng",
-          "tagline": "Những mảng màu loang nhẹ nhàng dành cho hồi ký, phim tài liệu và các bài viết chuyên sâu mang tính chiêm nghiệm.",
+          "name": "Bảng phân cảnh / Animatic",
+          "displayTitle": "Bảng phân cảnh / Animatic",
+          "description": "Các khung hình phác thảo đen trắng cho bảng phân cảnh",
+          "featured": false,
           "thumbnail": "https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Gemini_Generated_Image_7i1wus7i1wus7i1w.jpeg"
         },
         {
           "id": "bản phác thảo",
-          "name": "Phác thảo/Nét vẽ",
-          "displayTitle": "Phác thảo/Nét vẽ",
+          "name": "Nghệ thuật kỹ thuật số",
+          "displayTitle": "Nghệ thuật kỹ thuật số",
+          "description": "Minh họa kỹ thuật số hiện đại",
+          "tagline": "Minh họa cách điệu dành cho phim tài liệu hoạt hình và loạt video giải thích theo tập.",
+          "featured": false,
+          "thumbnail": "https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Gemini_Generated_Image_bmbpbibmbpbibmbp.jpeg"
+        },
+        {
+          "id": "watercolor",
+          "name": "Màu nước",
+          "displayTitle": "Màu nước",
+          "description": "Tranh màu nước nhẹ nhàng",
+          "tagline": "Những mảng màu loang nhẹ nhàng dành cho hồi ký, phim tài liệu và các bài viết chuyên sâu mang tính chiêm nghiệm.",
+          "featured": false,
+          "thumbnail": "https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Gemini_Generated_Image_7i1wus7i1wus7i1w.jpeg"
+        },
+        {
+          "id": "sketch",
+          "name": "Phác thảo / Nét vẽ",
+          "displayTitle": "Phác thảo / Nét vẽ",
           "description": "Phong cách phác thảo bằng bút chì",
           "tagline": "Nét vẽ chi tiết và chất liệu chì dành cho các phân đoạn dài hơi, xuyên suốt từ giai đoạn tiền hình ảnh hóa (pre-vis) đến sản xuất.",
+          "featured": false,
           "thumbnail": "https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Gemini_Generated_Image_bmbpbibmbpbibmbp.jpeg"
+        },
+        {
+          "id": "oil-painting",
+          "name": "Tranh sơn dầu",
+          "displayTitle": "Tranh sơn dầu",
+          "description": "Tranh sơn dầu cổ điển",
+          "tagline": "Nét cọ cổ điển và sắc màu phong phú dành cho các tác phẩm tài liệu và lịch sử quy mô lớn.",
+          "featured": false,
+          "thumbnail": "https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Gemini_Generated_Image_7z9qm7z9qm7z9qm7.jpeg"
         }
       ]
     },
@@ -595,7 +1593,7 @@
       "tagline": "Một studio duy nhất. Tự động hóa có hướng dẫn — hoặc hiệu suất xử lý vượt trội nếu bạn đã am hiểu về nền tảng công nghệ này.",
       "stages": [
         {
-          "label": "Blueprint Room",
+          "label": "SFAIBLUEPRINT_THUẬT_NGỮ_PHÒNG",
           "detail": "Kế hoạch cốt truyện có cấu trúc"
         },
         {
@@ -603,7 +1601,7 @@
           "detail": "Các nhân vật có tính cách nhất quán"
         },
         {
-          "label": "Sản xuất",
+          "label": "Production Stage",
           "detail": "Âm thanh + hình ảnh"
         },
         {
@@ -627,15 +1625,15 @@
     "proofLine": "Đã được kiểm chứng qua quy trình thực hiện cho một bất động sản nhà ở: quy trình thủ công toàn diện mất hơn 4 giờ → kết quả tương đương được hoàn thành trong SceneFlow với thời gian chưa đầy một giờ."
   },
   "comparison": {
-    "title": "Stop pulling the lever. Start running a production.",
-    "subtitle": "Clip generators re-roll the dice on every prompt — new face, new room, new voice. SceneFlow reads every shot from the same locked references, so scene 100 still matches scene 1.",
+    "title": "Ngừng việc chỉ gạt cần. Hãy bắt đầu vận hành quy trình sản xuất.",
+    "subtitle": "Các công cụ tạo video sẽ \"đổ xúc xắc\" lại với mỗi câu lệnh — tạo ra gương mặt mới, căn phòng mới và giọng nói mới. Trong khi đó, SceneFlow xử lý mọi cảnh quay dựa trên cùng một bộ tham chiếu cố định, nhờ vậy cảnh số 100 vẫn đồng nhất với cảnh số 1.",
     "caption": "Một studio duy nhất thay thế cho các công cụ tạo prompt rời rạc, quy trình chỉnh sửa thủ công và việc chuyển giao giữa nhiều nền tảng.",
     "imageAlt": "Chi phí vận hành sản xuất truyền thống so với studio tự động hóa SceneFlow — rút ngắn thời gian từ khâu lên ý tưởng đến khi có video hoàn chỉnh sẵn sàng phát hành."
   },
   "howItWorks": {
     "title": "Từ ý tưởng đến video hoàn chỉnh sẵn sàng phát hành",
     "titleAccent": "Một quy trình có hướng dẫn",
-    "subtitle": "Phần series là tùy chọn. Lộ trình cốt lõi là Blueprint → Sản xuất → Screening Room — bao gồm các bước pre-vis, animatic, video cảnh quay và file master MP4 trong quá trình thực hiện.",
+    "subtitle": "Series là tùy chọn. Quy trình cốt lõi là Blueprint Room → Production Stage → Screening Room — bao gồm các bước pre-vis, animatic, video cảnh quay và file master MP4 trong suốt quá trình thực hiện.",
     "tagline": "Mỗi bước đều được tự động hóa một cách chuyên nghiệp. Mỗi bước đều mang lại cho bạn toàn quyền kiểm soát.",
     "optionalBadge": "Tùy chọn",
     "optionalSuffix": " (tùy chọn)",
@@ -644,59 +1642,64 @@
     "phases": [
       {
         "id": "chuỗi, loạt, bộ",
-        "stepLabel": "Loạt",
-        "subtitle": "Công cụ Showrunner",
+        "stepLabel": "Series Room",
+        "subtitle": "Tính liên tục xuyên suốt nhiều tập",
         "description": "Hãy định hình thế giới của bạn một lần và tạo ra các mạch truyện xuyên suốt nhiều tập một cách nhất quán. Việc sử dụng chung Reference Library giúp duy trì sự đồng bộ về nhân vật và tông giọng trong suốt cả mùa phim.",
         "keySteps": [
           "Xác định thế giới — các nhân vật, tông giọng và mạch truyện chính của mùa phim.",
           "Tự động tạo dàn ý các tập phim cho toàn bộ mùa",
-          "Đồng bộ hóa vào Blueprint và quy trình sản xuất theo tập"
+          "Đồng bộ vào Blueprint Room và Production Stage cho mỗi tập."
         ],
         "keyFeatures": [
           "Xác định thế giới của bạn ngay từ đầu — bao gồm nhân vật, tông giọng và mạch truyện chính của mùa phim.",
           "Dàn ý tập phim nhất quán — được tự động tạo ra cho toàn bộ mùa phim",
           "Theo dõi tính nhất quán — đảm bảo sự đồng bộ giữa các tập trong cùng một mùa",
-          "Đồng bộ hóa giữa loạt phim và tập phim — tích hợp vào Studio và khâu Sản xuất Blueprint"
-        ]
+          "Đồng bộ hóa từ loạt phim sang tập phim — vào Blueprint Room và Production Stage"
+        ],
+        "optional": true
       },
       {
         "id": "bản thiết kế",
-        "stepLabel": "Blueprint Room",
+        "stepLabel": "SFAIBLUEPRINT_THUẬT_NGỮ_PHÒNG",
         "subtitle": "Phát triển cốt truyện",
         "description": "Chuyển đổi các ý tưởng thành bản phác thảo có cấu trúc, bao gồm tóm tắt cốt truyện (logline), các nhịp truyện (beats), nhân vật và tông giọng. Hãy chạy Audience Resonance và phối hợp thực hiện trước khi tiến hành kết xuất (render) nặng.",
         "keySteps": [
-          "Tạo → Xem xét → Cải tiến → Bắt đầu sản xuất",
+          "Tạo → Xem xét → Lặp lại → Chuyển đến Production Stage",
           "Audience Resonance đạt điểm mục tiêu từ 80 trở lên",
           "Cộng tác viên chia sẻ liên kết và xuất tệp (PDF, Doc, PPTX)"
         ],
         "keyFeatures": [
-          "Quy trình: Tạo → Xem xét → Cải tiến → Bắt đầu sản xuất",
+          "Tạo → Xem xét → Lặp lại → Chuyển đến quy trình Production Stage",
           "Từ ý tưởng đến cấu trúc chỉ trong vài phút — logline, các điểm nút cốt truyện, nhân vật và tông giọng.",
-          "Audience Resonance chấm điểm với mục tiêu từ 80 trở lên trước khi đưa vào môi trường sản xuất (Production)",
+          "Tính điểm Audience Resonance với mục tiêu từ 80 trở lên trước Production Stage",
           "Liên kết chia sẻ cho cộng tác viên — tổng hợp phản hồi để thực hiện chỉnh sửa có định hướng"
-        ]
+        ],
+        "optional": false
       },
       {
         "id": "sản xuất",
-        "stepLabel": "Sản xuất",
-        "subtitle": "Tập lệnh gửi tới Screening Room",
-        "description": "Các tab Script và Shoot dẫn dắt quy trình từ Foundation → Pre-Vis → Footage → Mixer đến Streams. Các điểm kiểm tra theo từng cảnh giúp giảm thiểu việc phải làm lại; Screening Room đảm nhiệm khâu xem trước, lắp ghép và xuất bản.",
+        "stepLabel": "Production Stage",
+        "subtitle": "Định hướng qua các dòng chảy",
+        "description": "Đạo diễn, Kịch bản, Âm nhạc, Tài liệu tham khảo và Hình ảnh tĩnh giúp tối ưu hóa kịch bản dựa trên chỉ số cộng hưởng khán giả và quy trình đánh giá tiền hình ảnh (Pre-Vis). Các đoạn clip, bộ trộn (Mixer) và luồng dữ liệu (Streams) tạo ra video cho từng cảnh quay. Phòng chiếu (Screening Room) đảm nhiệm khâu xem trước, lắp ghép và phát hành.",
         "keySteps": [
           "Chốt kịch bản, phần lồng tiếng và âm thanh hiện trường",
-          "Hình ảnh mô phỏng (Pre-Vis) từng cảnh — thư viện và chia sẻ để đánh giá",
-          "Tab Quay — Tư liệu → Bộ trộn → Luồng mỗi cảnh",
-          "Screening Room — xem trước, tạo bản gốc hoàn chỉnh, xuất bản"
+          "Dựng hình ảnh mô phỏng (Pre-Vis) từng cảnh — Xuất ảnh tĩnh và chia sẻ để xem xét",
+          "Clip, Bộ trộn và Luồng phát — tạo ra từng cảnh quay",
+          "Công cụ lập kế hoạch sản xuất — mục tiêu quay, lịch trình theo ngày và trạng thái điện thoại",
+          "Screening Room — xem trước, tạo bản master, xuất bản"
         ],
         "keyFeatures": [
-          "Foundation — kịch bản, giọng lồng tiếng, âm thanh cảnh, Audience Resonance",
-          "Pre-Vis — chỉ đạo, âm thanh và các khung hình chủ đạo (shot frames) cho từng cảnh, kèm liên kết chia sẻ.",
-          "Ghi hình — Xử lý cảnh quay, trộn âm thanh và phát trực tuyến ngay trong môi trường sản xuất.",
-          "Screening Room — xem trước cảnh, dựng bản hoàn chỉnh, tổ chức chiếu và đăng lên YouTube"
-        ]
+          "Đạo diễn, Kịch bản, Âm nhạc, Tài liệu tham khảo và Hình ảnh tĩnh — kịch bản, giọng lồng tiếng, âm thanh hiện trường, Phân tích Audience Resonance",
+          "Hình ảnh tĩnh — chỉ đạo, âm thanh và các khung hình theo nhịp cho từng cảnh, kèm liên kết chia sẻ.",
+          "Clips, Mixer và Streams — tạo từng cảnh quay mà không cần rời khỏi Production Stage.",
+          "Công cụ lập kế hoạch sản xuất — mục tiêu quay, lịch trình theo ngày và trạng thái điện thoại",
+          "Screening Room — xem trước cảnh, dựng bản hoàn chỉnh (master assembly), tổ chức chiếu thử và đăng lên YouTube"
+        ],
+        "optional": false
       },
       {
         "id": "phòng chiếu phim",
-        "stepLabel": "Screening Room",
+        "stepLabel": "Thuật ngữ phòng chiếu SFAI",
         "subtitle": "Xem trước · Lắp ráp · Xuất bản",
         "description": "Một giao diện hoàn thiện duy nhất trong Production: xem trước video các cảnh, ghép các luồng thành tệp MP4 tổng, tổ chức các buổi chiếu có thể chia sẻ kèm số liệu phân tích, cũng như đăng lên YouTube hoặc xuất ra các gói nội dung.",
         "keySteps": [
@@ -710,7 +1713,8 @@
           "Các thiết lập sẵn về bố trí — Toàn bộ video, Kết hợp (Hybrid), hoặc phối hợp tùy chỉnh theo từng cảnh",
           "Các bài đánh giá có thể chia sẻ — liên kết /s/ kèm chấm điểm và phản hồi có cấu trúc",
           "Công cụ hỗ trợ YouTube, xuất video dạng ngắn và các gói phân phối"
-        ]
+        ],
+        "optional": false
       }
     ]
   },
@@ -735,9 +1739,9 @@
       },
       {
         "id": "bản thiết kế",
-        "stepLabel": "Tối ưu hóa ý tưởng của bạn với Blueprint",
+        "stepLabel": "Tối ưu hóa ý tưởng của bạn với Blueprint Room",
         "shortDescription": "Chuyển đổi các ý tưởng thành một bản phác thảo có cấu trúc — bao gồm logline, các điểm nút cốt truyện, nhân vật và tông giọng — trước khi tiến hành công đoạn kết xuất (render) nặng.",
-        "detailedDescription": "Blueprint tự động xây dựng dàn ý cốt truyện toàn diện. Tinh chỉnh hành trình nhân vật, các điểm nút cốt truyện và giọng điệu kể chuyện nhờ những gợi ý thông minh. Các liên kết chia sẻ dành cho cộng tác viên cho phép các bên liên quan xem xét nội dung trước khi bước vào giai đoạn sản xuất.",
+        "detailedDescription": "Blueprint tự động xây dựng một dàn ý cốt truyện toàn diện. Bạn có thể tinh chỉnh hành trình nhân vật, các điểm nút cốt truyện và giọng điệu kể chuyện nhờ vào những gợi ý thông minh. Các liên kết chia sẻ dành cho cộng tác viên cho phép các bên liên quan xem xét nội dung trước khi chuyển sang giai đoạn Production Stage.",
         "media": "video"
       },
       {
@@ -757,13 +1761,13 @@
       {
         "id": "bắn",
         "stepLabel": "Quay tác phẩm của bạn",
-        "shortDescription": "Tạo video khớp theo nhịp, phối âm thanh và lớp phủ, cũng như xuất luồng video toàn cảnh — tất cả các tính năng Footage, Mixer và Streams đều nằm trong một thẻ Shoot duy nhất.",
-        "detailedDescription": "Tab \"Shoot\" trong phần Production đóng vai trò như trường quay của bạn: tạo video từ các khung hình Pre-Vis đã được duyệt (Footage), tinh chỉnh thời lượng, hình mờ (watermark) và âm thanh trong mục Mixer, sau đó xuất (render) các tệp MP4 hoàn chỉnh cho cảnh quay tại mục Streams.",
+        "shortDescription": "Tạo từng cảnh quay trong Clips, phối âm thanh trong Mixer và xuất các phiên bản ngôn ngữ trong Streams.",
+        "detailedDescription": "Các Clip tạo video cho từng cảnh quay từ các hình ảnh tĩnh đã được phê duyệt. Bộ trộn (Mixer) thiết lập thời lượng, hình mờ (watermark) và âm thanh. Các Stream là các phiên bản ngôn ngữ của cảnh quay đó.",
         "media": "video",
         "subPoints": [
-          "Cảnh quay — tạo video từng nhịp dựa trên các khung hình bắt đầu và kết thúc từ bản dựng sơ bộ (Pre-Vis)",
+          "Các đoạn clip — video được quay từ các hình ảnh tĩnh đã được phê duyệt",
           "Mixer — hình mờ, lớp phủ văn bản và thời gian âm thanh cho từng cảnh",
-          "Các luồng — video cảnh đã kết xuất hoàn chỉnh (tất cả các nhịp) sẵn sàng cho Screening Room"
+          "Các luồng — các phiên bản ngôn ngữ của cảnh phim, sẵn sàng cho Screening Room"
         ]
       },
       {
@@ -790,6 +1794,191 @@
       "openFeatureVideo": "Mở video giới thiệu tính năng"
     }
   },
+  "productionShowcase": {
+    "badge": "Ví dụ về sản xuất",
+    "title": "Xem toàn bộ quy trình",
+    "titleAccent": "đang hoạt động",
+    "subtitle": "Mỗi ví dụ đều bắt đầu bằng một đoạn giới thiệu ngắn. Bản hoàn chỉnh (master) — bao gồm toàn bộ quá trình sản xuất từ giai đoạn lên ý tưởng (blueprint) và tiền hình ảnh hóa (pre-vis) cho đến bản dựng cuối cùng — sẽ được trình chiếu tại phòng chiếu phim.",
+    "subtitleTagline": "Các sản phẩm có thời lượng dài. Không phải các đoạn clip ngắn.",
+    "screeningRoomInstruction": "Hãy đánh giá sản phẩm này theo cách của một người thẩm định — thực hiện từng cột mốc một. Bắt đầu với Series, tiếp đến là Blueprint, sau đó là kịch bản trong phần AR Analysis, và kết thúc ở khâu Screening.",
+    "trailerLabel": "Trailer",
+    "watchLongform": "Xem bài viết chuyên sâu",
+    "seriesDoor": "Loạt",
+    "blueprintDoor": "Blueprint",
+    "scriptArDoor": "Phân tích khoản phải thu",
+    "screeningDoor": "Sàng lọc",
+    "screeningRoomGroup": "Thuật ngữ phòng chiếu SFAI",
+    "previsDoor": "Tiền hình ảnh hóa",
+    "roughDoor": "Bản dựng thô",
+    "scenesDoor": "Các cảnh",
+    "finalDoor": "Chung kết",
+    "enterFullscreen": "Chuyển sang chế độ toàn màn hình",
+    "exitFullscreen": "Thoát chế độ toàn màn hình",
+    "explorerHandoff": "Các liên kết này là sản phẩm đã hoàn thiện. Explorer là nơi bạn tự tạo ra sản phẩm của riêng mình.",
+    "languagesBanner": "Các ví dụ công khai được cung cấp bằng 4 ngôn ngữ: tiếng Anh, tiếng Tây Ban Nha, tiếng Trung và tiếng Ả Rập.",
+    "workflowLabel": "Các giải pháp",
+    "startProduction": "Bắt đầu quá trình sản xuất của bạn",
+    "cta": "Bắt đầu quá trình sản xuất của bạn",
+    "continuityNote": "Series Room quản lý tính liên tục.",
+    "resonanceNote": "Audience Resonance™ tối ưu hóa kịch bản",
+    "videoLanguagePrompt": "Xem bằng tiếng Anh, tiếng Tây Ban Nha, tiếng Trung hoặc tiếng Ả Rập",
+    "videoComingSoon": "Sắp có bản lồng tiếng",
+    "videoSoon": "Sớm thôi",
+    "frictionLabel": "Sự ma sát",
+    "solutionPillarLabel": "Giải pháp SceneFlow",
+    "showSolutionsSection": "Hiển thị lời giải",
+    "hideSolutionsSection": "Ẩn các giải pháp",
+    "cards": [
+      {
+        "id": "drama",
+        "title": "Phim chính kịch điện ảnh thời lượng dài. Nhân vật giữ trọn vẹn bản sắc, không hề chệch hướng.",
+        "subtitle": "Duy trì sự nhất quán về gương mặt nhân vật, trang phục và bối cảnh từ cảnh 1 đến cảnh 100. Hãy đến phòng chiếu để xem bản Pre-Vis, video chuyển động (motion video) của từng cảnh và bản master ProRes 4K hoàn chỉnh — sau đó chuyển đổi ngôn ngữ để nghe bản lồng tiếng đầy đủ.",
+        "badge": "Sẵn sàng sản xuất thành loạt phim",
+        "solutionPillars": [
+          {
+            "title": "Sự nhất quán về hình ảnh và nhân vật",
+            "frictionHeadline": "Sự lệch ký tự & Các bộ ký tự thiếu ổn định.",
+            "friction": "Các mô hình tạo nội dung sẽ thiết lập lại sau mỗi lần quay, khiến khuôn mặt nhân vật, trang phục và ánh sáng liên tục thay đổi khi chuyển cảnh.",
+            "solutionHeadline": "Tài sản bị khóa theo các điều khoản SFAIBLUEPRINT.",
+            "solution": "Xác định các hồ sơ nhân vật chủ đạo, môi trường và phong cách hình ảnh ngay từ đầu trong Blueprint Room. SceneFlow đảm bảo tính nhất quán về nhận diện hình ảnh trong mọi khung hình được kết xuất nhằm duy trì sự đắm chìm vào câu chuyện."
+          },
+          {
+            "title": "Nhịp độ tự sự & Kiểm soát cảnh",
+            "frictionHeadline": "Cạm bẫy video ngắn 10 giây.",
+            "friction": "Việc dựng phim từ các câu lệnh ngắn rời rạc sẽ tạo ra nhịp điệu ngắt quãng, cảm xúc thiếu chiều sâu và đòi hỏi công đoạn chỉnh sửa thủ công trên dòng thời gian kéo dài bất tận.",
+            "solutionHeadline": "Xây dựng bảng phân cảnh dựa trên các nhịp kể chuyện trước tiên.",
+            "solution": "Hãy đạo diễn ở cấp độ cảnh quay thay vì cấp độ câu lệnh (prompt). Hãy xây dựng cấu trúc cho các điểm nhấn kịch tính, chuyển động máy quay và diễn biến cốt truyện dưới dạng hình ảnh trước khi tạo ra bất kỳ khung hình video nào."
+          },
+          {
+            "title": "Căn chỉnh thoại và âm thanh",
+            "frictionHeadline": "Lời thoại thiếu thuyết phục.",
+            "friction": "Việc khớp khẩu hình không chuẩn, cử động miệng thiếu tự nhiên và âm thanh tách biệt khỏi hình ảnh ngay lập tức khiến người xem mất hứng thú với bộ phim.",
+            "solutionHeadline": "Công cụ tích hợp Thoại & Đồng bộ hóa.",
+            "solution": "Khả năng thể hiện giọng nói đầy sống động và kỹ thuật khớp khẩu hình chính xác được tích hợp trực tiếp vào quy trình sản xuất video, mang lại phần thoại chân thực mà không cần đến các công đoạn hậu kỳ bổ sung."
+          },
+          {
+            "title": "Trở ngại trong quy trình làm việc & Sự mệt mỏi khi phải làm lại nhiều lần",
+            "frictionHeadline": "Hỗn loạn tài nguyên & Quay lại không giới hạn.",
+            "friction": "Việc tạo ra một bộ phim ngắn thường đồng nghĩa với việc phải xoay xở với hơn 200 tệp video thô, thực hiện nâng cấp độ phân giải thủ công và chấp nhận hàng chục lần tạo phim không đạt yêu cầu.",
+            "solutionHeadline": "Quy trình studio tự động hóa.",
+            "solution": "Từ ý tưởng đến tệp MP4 hoàn chỉnh trên một nền tảng thống nhất. Blueprint Room đảm nhiệm khâu thiết lập cốt truyện, Production Stage điều phối công tác đạo diễn thông qua các luồng xử lý (Streams), và Screening Room cung cấp sản phẩm đầu ra cuối cùng."
+          }
+        ],
+        "screeningRoomPreview": "Phim chính kịch — Screening Room"
+      },
+      {
+        "id": "animation",
+        "title": "Loạt phim hoạt hình trọn mùa kết hợp nhiều phong cách, nhưng vẫn giữ vững một phong cách nghệ thuật xuyên suốt.",
+        "subtitle": "Ấn định một phong cách hoạt hình phẳng (flat-cel), tạo hình gia đình Hart và bối cảnh thị trấn Millwick xuyên suốt từ tập đầu đến tập cuối. Chỉ đạo từng nhịp hài hước, sau đó xem lại tập phim tại phòng chiếu.",
+        "badge": "Đa phong cách",
+        "solutionPillars": [
+          {
+            "title": "Sự nhất quán về phong cách",
+            "frictionHeadline": "Sự sụp đổ phong cách.",
+            "friction": "Phong cách hoạt hình và anime liên tục biến đổi giữa các khung hình: nét vẽ thay đổi, bảng màu bị phá vỡ, còn nhân vật thì bị biến dạng thành những hình thù kỳ quái, trông vừa giống thật một cách gượng gạo vừa nham nhở.",
+            "solutionHeadline": "Công cụ phong cách nghệ thuật cố định.",
+            "solution": "Cố định phong cách hình ảnh ngay từ khung hình đầu tiên. SceneFlow khóa chặt các yếu tố như thiết kế nhân vật, độ dày nét vẽ và mô hình đổ bóng xuyên suốt toàn bộ tập phim, đảm bảo nhân vật của bạn luôn giữ được nét độc đáo riêng biệt."
+          },
+          {
+            "title": "Hoạt ảnh và vật lý được cường điệu hóa",
+            "frictionHeadline": "Chuyển động cứng nhắc và bị lỗi.",
+            "friction": "Các mô hình tạo nội dung gặp khó khăn với những pha hài hình thể tốc độ cao, các khoảnh khắc khựng lại đầy bất ngờ (double-take) và cơ chế vật lý biến dạng kiểu hoạt hình, khiến các tình huống gây cười đầy sôi động trở thành những hình ảnh bị biến dạng, tan chảy.",
+            "solutionHeadline": "Neo giữ hành động và tư thế.",
+            "solution": "Tạo ra các chuyển động nhân vật đầy sống động và tư thế giàu biểu cảm mà không làm biến dạng cấu trúc hình khối. Dàn dựng các màn hài hước hình thể ấn tượng, những cú chuyển cảnh bất ngờ và các biểu cảm phóng khoáng với khả năng kiểm soát chuyển động toàn diện."
+          },
+          {
+            "title": "Nhịp điệu và thời điểm gây cười",
+            "frictionHeadline": "Những câu chốt bị hỏng.",
+            "friction": "Sự hài hước nằm ở những khoảng lặng và nhịp ngắt. Các vòng lặp tạo sinh tiêu chuẩn dài 5 giây buộc phải tuân theo nhịp độ gượng gạo, làm hỏng cách truyền tải câu đùa.",
+            "solutionHeadline": "Chỉnh sửa chính xác từng nhịp",
+            "solution": "Kiểm soát nhịp độ cảnh quay đến từng khung hình. Tinh chỉnh các khoảng lặng tạo kịch tính, thời điểm chuyển từ phần dẫn dắt sang điểm nhấn hài hước (punchline) và các cảnh phản ứng nhanh ngay trên timeline được thiết lập theo nhịp điệu, trước khi thực hiện bước xuất file cuối cùng."
+          },
+          {
+            "title": "Đối thoại sôi nổi & Đồng bộ hóa giọng nói",
+            "frictionHeadline": "Những cái miệng rối vô hồn.",
+            "friction": "Lời thoại do AI tạo ra thường mang tính rập khuôn, khô khan và thiếu tự nhiên, làm mất đi sự sôi nổi cần thiết cho những màn đối đáp dí dỏm, nhanh nhạy đặc trưng của phim hài tình huống (sitcom).",
+            "solutionHeadline": "Đồng bộ hóa linh hoạt giữa giọng nói và biểu cảm.",
+            "solution": "Đồng bộ trực tiếp phần thể hiện giọng nói với biểu cảm khuôn mặt đầy năng lượng. Lời thoại, khẩu hình sinh động và phần âm thanh hài hước kết hợp hoàn hảo để tạo nên hiệu ứng gây cười tối đa."
+          }
+        ],
+        "screeningRoomPreview": "Hart House — Phòng chiếu phim SFAI"
+      },
+      {
+        "id": "documentary",
+        "title": "Phim tài liệu chuyên đề. Sự trỗi dậy của trí tuệ.",
+        "subtitle": "Theo dõi sự trỗi dậy của AI và siêu trí tuệ trên khắp các châu lục. Mỗi chương mang đậm dấu ấn của một thời kỳ riêng biệt — không có đồ vật hiện đại trong phòng thí nghiệm thời kỳ đầu, cũng không có bối cảnh thập niên 1950 xuất hiện ở thời hiện tại.",
+        "badge": "Đúng với bối cảnh lịch sử",
+        "solutionPillars": [
+          {
+            "title": "Độ chính xác về mặt hình ảnh phù hợp với thời kỳ",
+            "frictionHeadline": "Các hiện vật sai lệch niên đại",
+            "friction": "Các mô hình tạo nội dung tiêu chuẩn thường xuyên để lọt các vật thể hiện đại, màn hình điện thoại thông minh hoặc trang phục sai thời kỳ vào các hình ảnh tái hiện lịch sử.",
+            "solutionHeadline": "Các rào chắn kiểm soát phong cách dựa trên dữ liệu lịch sử",
+            "solution": "Thiết lập các thông số thời gian chính xác — từ độ nhiễu hạt phim thập niên 1920 đến kết cấu trang phục thế kỷ 18 — để đảm bảo mọi cảnh quay được tạo ra đều giữ được tính chân thực về mặt lịch sử."
+          },
+          {
+            "title": "Hệ thống quản lý và khai thác cảnh chèn tư liệu & B-roll",
+            "frictionHeadline": "Sự đơn điệu về mặt hình ảnh trong các đoạn thuyết minh dài",
+            "friction": "Việc kết hợp phần lời bình dài với các hình ảnh minh họa tĩnh khiến lượng người xem sụt giảm nhanh chóng trong các nội dung đi sâu vào chi tiết.",
+            "solutionHeadline": "Công cụ tạo cảnh bổ trợ (B-roll) dựa trên bản ghi lời thoại",
+            "solution": "Khi người dẫn chuyện trình bày các sự kiện lịch sử, SceneFlow sẽ tự động tạo ra các cảnh tái hiện mang phong cách điện ảnh, lớp phủ tài liệu và các cảnh chèn (cutaway) theo phong cách tư liệu được đồng bộ chính xác với nội dung lời thoại."
+          },
+          {
+            "title": "Tính chân thực trong phỏng vấn và kiểu quay \"talking-head\"",
+            "frictionHeadline": "Những nhân chứng chuyên gia kỳ lạ",
+            "friction": "Các nhân vật sử gia, điều tra viên hoặc nhân chứng được tạo ra thường trông thiếu tự nhiên, với cử động hàm rời rạc và ánh mắt không tự nhiên.",
+            "solutionHeadline": "Hồ sơ chuyên gia đã khóa & Đồng bộ hóa giọng nói",
+            "solution": "Duy trì bối cảnh phỏng vấn chân thực và đáng tin cậy, với các biểu cảm vi mô tự nhiên, khẩu hình khớp chính xác và hình ảnh chuyên gia nhất quán xuyên suốt loạt nội dung nhiều phần."
+          },
+          {
+            "title": "Nhịp độ theo từng tập & Tính liền mạch của cốt truyện",
+            "frictionHeadline": "Dựng phim theo dòng thời gian phân mảnh",
+            "friction": "Việc cân đối giữa lời dẫn chuyện, các cảnh tái hiện, những khoảnh khắc hé lộ bằng chứng và các khoảng lặng tạo kịch tính trong một tập phim dài 40 phút thường tiêu tốn hàng tuần lễ khi sử dụng các phần mềm dựng phim phi tuyến tính (NLE) truyền thống.",
+            "solutionHeadline": "Quy trình sản xuất phim tài liệu lấy nhịp điệu làm trọng tâm",
+            "solution": "Thiết lập cấu trúc cho sự kịch tính, những khoảng lặng đầy hồi hộp và các màn hé lộ bằng chứng trực quan ngay trong Blueprint Room, nhằm tạo ra tệp tổng thể hoàn chỉnh chỉ trong một quy trình liền mạch."
+          }
+        ],
+        "screeningRoomPreview": "Suy ngẫm dài hơi — Screening Room"
+      },
+      {
+        "id": "training",
+        "title": "Chuỗi đào tạo đa học phần sẵn sàng đưa vào giảng dạy. Một đầu bếp bị nhốt.",
+        "subtitle": "Một đầu bếp, một căn bếp, năm món ăn. Gương mặt, chiếc áo khoác và những mảng gạch ốp tường vẫn giữ nguyên trạng từ lúc nấu nước dùng cho đến khi hoàn tất món tráng miệng cuối cùng.",
+        "badge": "Sẵn sàng cho chương trình giảng dạy",
+        "solutionPillars": [
+          {
+            "title": "Sự nhất quán về giảng viên và bối cảnh",
+            "frictionHeadline": "Giáo viên khác nhau cho mỗi học phần.",
+            "friction": "Các đoạn video được tạo tự động sẽ thay đổi diện mạo, trang phục và bối cảnh lớp học của giảng viên giữa các bài học, khiến khóa học có cảm giác như một tập hợp các video rời rạc, thiếu sự liên kết.",
+            "solutionHeadline": "Các học kỳ SFAIBLUEPRINT dành cho giảng viên đã bị khóa.",
+            "solution": "Hãy xác định giảng viên, bối cảnh và hệ thống hình ảnh một lần duy nhất trong Blueprint Room. SceneFlow sẽ duy trì sự nhất quán của các yếu tố này trên mọi mô-đun."
+          },
+          {
+            "title": "Tiến độ triển khai chương trình giảng dạy",
+            "frictionHeadline": "Các slide được cắt thành các đoạn clip.",
+            "friction": "Việc chuyển đổi đề cương khóa học thành các gợi ý rời rạc sẽ làm mất đi mạch bài giảng, các ví dụ minh họa chi tiết và khoảng dừng trước khi làm bài kiểm tra.",
+            "solutionHeadline": "Xây dựng kịch bản phân cảnh ưu tiên mô-đun.",
+            "solution": "Hãy chỉ đạo mỗi mô-đun theo trình tự các bước giảng dạy — thiết lập, minh họa và kiểm tra — trước khi một khung hình được kết xuất."
+          },
+          {
+            "title": "Thuyết minh & Giảng dạy trên màn hình",
+            "frictionHeadline": "Giọng nói không ăn khớp với hình ảnh đồ họa.",
+            "friction": "Lời thuyết minh, phụ đề và sơ đồ bị lệch nhau, khiến người học nghe thấy một bước trong khi hình ảnh lại hiển thị một bước khác.",
+            "solutionHeadline": "Các bản âm thanh bài học đã được đồng bộ hóa.",
+            "solution": "Giọng nói, phụ đề và nội dung giảng dạy trên màn hình luôn đồng bộ nhịp nhàng, nhờ đó mỗi lời giải thích đều khớp hoàn hảo với hình ảnh minh họa tương ứng."
+          },
+          {
+            "title": "Lắp ráp khóa học",
+            "frictionHeadline": "Những tuần làm biên tập viên.",
+            "friction": "Việc ghép nối các mô-đun, các phần quay lại và các phiên bản đã bản địa hóa theo quy trình truyền thống biến việc cập nhật chương trình đào tạo thành sự chậm trễ trong khâu sản xuất.",
+            "solutionHeadline": "Quy trình làm việc thống nhất cho studio.",
+            "solution": "Các giai đoạn SFAIBLUEPRINT, SFAIAUDIENCE_RESONANCE và SFAISCREENING_ROOM đưa một học phần đi từ bước phác thảo đến Pre-Vis (hình ảnh hóa sơ bộ), bản dựng thô, các cảnh quay và cuối cùng là khóa học hoàn chỉnh."
+          }
+        ],
+        "screeningRoomPreview": "Five Plates — Screening Room"
+      }
+    ]
+  },
   "platformWalkthrough": {
     "badge": "Bên dưới lớp vỏ (hoặc: cơ chế bên trong)",
     "title": "Hướng dẫn chi tiết về nền tảng",
@@ -802,30 +1991,33 @@
     "chapters": [
       {
         "id": "Bắt đầu tại đây",
-        "label": "Bắt đầu từ đây — kế hoạch, tính nhất quán và sự phù hợp với đối tượng khán giả."
+        "label": "Bắt đầu từ đây — kế hoạch, tính nhất quán và sự phù hợp với đối tượng khán giả.",
+        "defaultExpanded": false
       },
       {
         "id": "sản xuất - xuất bản",
-        "label": "Sản xuất và xuất bản — Chuyển đến tab Shoot tại Screening Room"
+        "label": "Sản xuất và xuất bản — Các đoạn phim gửi tới Screening Room",
+        "defaultExpanded": false
       }
     ],
     "close": "Đóng",
     "viewDetails": "Xem chi tiết",
     "beatFirst": {
+      "id": 15,
       "title": "Quy trình sản xuất video lấy nhịp điệu làm trọng tâm",
-      "description": "Phê duyệt các phân đoạn tiền hình ảnh hóa (pre-vis shots) và Shot Frames trước giai đoạn F2V — giúp giảm thiểu việc tái tạo lại một cách thiếu định hướng do lỗi \"ảo giác\" (hallucination) hoặc sai lệch hình ảnh. Tạo ra một quy trình thống nhất từ khâu đánh giá đến khi hoàn thiện clip cuối cùng.",
+      "description": "Phê duyệt các phân đoạn tiền hình ảnh hóa (pre-vis beats) và thông số khung hình trước khi thực hiện F2V — giúp giảm thiểu việc tái tạo lại một cách thiếu định hướng do lỗi \"ảo giác\" (hallucination) hoặc sai lệch hình ảnh. Thiết lập một quy trình bài bản từ khâu đánh giá đến khi hoàn thiện clip cuối cùng.",
       "keyFeatures": [
-        "Pre-vis Agent để xem xét — chia sẻ bản nháp (beat) trước khi thực hiện render nặng",
-        "Shot Frames cấu trúc khóa — Reference Library tính liên tục",
+        "Pre-vis Agent cần xem xét — chia sẻ các phân đoạn (beats) trước khi thực hiện render nặng.",
+        "Cố định bố cục khung hình — Tính liên tục",
         "F2V theo nhịp — tạo video từ các khung hình đã được duyệt",
         "Chuỗi EXT liên tục — các bước +7s tự nhiên dành cho lời thoại dài trong cùng một nhịp (beat).",
         "Thời gian và luồng Mixer — mở Screening Room để lắp ráp và xuất bản"
       ],
-      "screenshotSlot": "Chèn ảnh chụp màn hình: Shot Frames và phê duyệt bản dựng sơ bộ (pre-vis) trước khi tạo video.",
+      "screenshotSlot": "Chèn ảnh chụp màn hình: Shot Frames và việc phê duyệt bản dựng sơ bộ (pre-vis) trước khi tạo video.",
       "videoSlot": "Chèn đoạn clip dài 30 giây: Phê duyệt nhịp (beat), cố định khung hình, sau đó tạo các clip F2V."
     },
     "screeningRoom": {
-      "title": "Screening Room",
+      "title": "Thuật ngữ phòng chiếu SFAI",
       "description": "Xem trước video các cảnh quay, dựng bản hoàn chỉnh và xuất bản — tất cả đều thực hiện ngay trong Production. Cung cấp các liên kết chia sẻ riêng tư dành cho các bên liên quan, hỗ trợ thu thập phản hồi có cấu trúc và tùy chọn xem số liệu phân tích mức độ tương tác.",
       "keyFeatures": [
         "Xem trước video cảnh — phát các luồng đã kết xuất theo trình tự",
@@ -853,13 +2045,13 @@
         "title": "Tổng quan về nền tảng",
         "description": "Một studio duy nhất thực hiện trọn gói từ khâu ý tưởng đến video hoàn thiện sẵn sàng phát hành. Quy trình thống nhất áp dụng cho video đào tạo, podcast, bản tin và các loạt phim chất lượng cao — cho phép duyệt bản dựng mô phỏng (pre-vis) trước khi đầu tư chi phí cho khâu kết xuất (render) cuối cùng.",
         "keyFeatures": [
-          "Chuỗi → Blueprint → Sản xuất → Screening Room",
-          "Phê duyệt theo từng phân đoạn (beat) trước — pre-vis và Shot Frames trước giai đoạn F2V",
+          "Series Room → Blueprint Room → Production Stage → Screening Room",
+          "Phê duyệt theo từng phân đoạn (beat) — thực hiện pre-vis và Shot Frames trước giai đoạn F2V.",
           "Tạo Google Vertex AI với các chuỗi mở rộng Veo nguyên bản",
           "Các cơ chế bảo vệ về độ tin cậy và an toàn cùng thông tin xác thực nguồn gốc có chữ ký khi bàn giao"
         ],
         "screenshotSlot": "Chèn ảnh chụp màn hình: Phần Hero của trang đích + dải hướng dẫn quy trình được đơn giản hóa",
-        "videoSlot": "Chèn đoạn clip 01:30: Hero → dự án mới → Blueprint → Quay phim → Screening Room → Đăng tải"
+        "videoSlot": "Chèn clip 01:30: Hero → dự án mới → Blueprint Room → Production Stage Quay → Screening Room → Xuất bản"
       },
       {
         "id": "9",
@@ -869,19 +2061,19 @@
           "Xác định thế giới của bạn ngay từ đầu — bao gồm nhân vật, tông giọng và mạch truyện chính của mùa phim.",
           "Dàn ý tập phim nhất quán — được tự động tạo ra cho toàn bộ mùa phim",
           "Theo dõi tính nhất quán — đảm bảo sự đồng bộ giữa các tập trong cùng một mùa",
-          "Đồng bộ hóa giữa loạt phim và tập phim — tích hợp vào Studio và khâu Sản xuất Blueprint"
+          "Đồng bộ hóa từ loạt phim sang tập phim — vào Blueprint Room và Production Stage"
         ],
         "screenshotSlot": "Chèn ảnh chụp màn hình: Tổng quan về loạt phim cùng các mạch truyện của từng tập được tạo tự động.",
         "videoSlot": "Chèn đoạn clip dài 30 giây: Ý tưởng phát triển thành một mùa phim gồm nhiều tập."
       },
       {
         "id": "10",
-        "title": "Blueprint Tự động hóa",
+        "title": "Tự động hóa Blueprint Room",
         "description": "Chuyển đổi các ý tưởng thành bản phác thảo có cấu trúc, bao gồm tóm tắt cốt truyện (logline), các nhịp truyện (beats), nhân vật và tông giọng. Hãy chạy Audience Resonance và phối hợp thực hiện trước khi tiến hành kết xuất (render) nặng.",
         "keyFeatures": [
-          "Quy trình: Tạo → Xem xét → Cải tiến → Bắt đầu sản xuất",
+          "Tạo → Xem xét → Lặp lại → Chuyển đến quy trình Production Stage",
           "Từ ý tưởng đến cấu trúc chỉ trong vài phút — logline, các điểm nút cốt truyện, nhân vật và tông giọng.",
-          "Audience Resonance chấm điểm với mục tiêu từ 80 trở lên trước khi đưa vào môi trường sản xuất (Production)",
+          "Tính điểm Audience Resonance với mục tiêu từ 80 trở lên trước Production Stage",
           "Liên kết chia sẻ cho cộng tác viên — tổng hợp phản hồi để thực hiện chỉnh sửa có định hướng"
         ],
         "screenshotSlot": "Chèn ảnh chụp màn hình: Blueprint được tạo tự động, bao gồm các điểm nhấn cốt truyện và diễn biến tâm lý nhân vật.",
@@ -903,7 +2095,7 @@
       {
         "id": "7",
         "title": "Audience Resonance Phân tích",
-        "description": "Xác định đối tượng mục tiêu để nhận ngay điểm số, phân tích và các đề xuất. Áp dụng các chỉnh sửa nhanh chỉ với một cú nhấp chuột hoặc sử dụng tính năng Chỉnh sửa có hướng dẫn để tối ưu hóa hoàn hảo các Tập phim, Blueprint và Kịch bản, nhằm đạt hiệu quả tối đa.",
+        "description": "Xác định đối tượng mục tiêu để nhận ngay điểm số, phân tích và các đề xuất. Áp dụng các chỉnh sửa nhanh chỉ với một cú nhấp chuột hoặc sử dụng tính năng Chỉnh sửa có hướng dẫn để tối ưu hóa hoàn hảo các Tập phim, Bối cảnh và Kịch bản, nhằm đạt hiệu quả tối đa.",
         "keyFeatures": [
           "Chấm điểm đối tượng mục tiêu — kèm phân tích chi tiết theo danh mục",
           "Các đề xuất gắn liền với từng phần — chỉnh sửa đúng phần cần thiết trong câu chuyện của bạn",
@@ -915,20 +2107,21 @@
       },
       {
         "id": "11",
-        "title": "Tự động hóa sản xuất",
-        "description": "Các tab Script và Shoot dẫn dắt quy trình từ Foundation → Pre-Vis → Footage → Mixer đến Streams. Các điểm kiểm tra theo từng cảnh giúp giảm thiểu việc phải làm lại; Screening Room đảm nhiệm khâu xem trước, lắp ghép và xuất bản.",
+        "title": "Tự động hóa Production Stage",
+        "description": "Đạo diễn, Kịch bản, Âm nhạc, Tài liệu tham khảo và Hình ảnh tĩnh giúp tối ưu hóa kịch bản dựa trên chỉ số cộng hưởng khán giả và quy trình đánh giá tiền hình ảnh (Pre-Vis). Các đoạn clip, bộ trộn (Mixer) và luồng dữ liệu (Streams) tạo ra video cho từng cảnh quay. Phòng chiếu (Screening Room) đảm nhiệm khâu xem trước, lắp ghép và phát hành.",
         "keyFeatures": [
-          "Foundation — kịch bản, giọng lồng tiếng, âm thanh cảnh, Audience Resonance",
-          "Pre-Vis — chỉ đạo, âm thanh và các khung hình chủ đạo (shot frames) cho từng cảnh, kèm liên kết chia sẻ.",
-          "Ghi hình — Xử lý cảnh quay, trộn âm thanh và phát trực tuyến ngay trong môi trường sản xuất.",
-          "Screening Room — xem trước cảnh, dựng bản hoàn chỉnh, tổ chức chiếu và đăng lên YouTube"
+          "Đạo diễn, Kịch bản, Âm nhạc, Tài liệu tham khảo và Hình ảnh tĩnh — kịch bản, giọng lồng tiếng, âm thanh hiện trường, Phân tích Audience Resonance",
+          "Hình ảnh tĩnh — chỉ đạo, âm thanh và các khung hình theo nhịp cho từng cảnh, kèm liên kết chia sẻ.",
+          "Clips, Mixer và Streams — tạo từng cảnh quay mà không cần rời khỏi Production Stage.",
+          "Công cụ lập kế hoạch sản xuất — mục tiêu quay, lịch trình theo ngày và trạng thái điện thoại",
+          "Screening Room — xem trước cảnh, dựng bản hoàn chỉnh (master assembly), tổ chức chiếu thử và đăng lên YouTube"
         ],
-        "screenshotSlot": "Chèn ảnh chụp màn hình: Bảng điều khiển sản xuất hiển thị các tab Kịch bản (Script), Quay phim (Shoot) và Tiền hình ảnh hóa (Pre-Vis).",
-        "videoSlot": "Chèn clip 60 giây: Chốt kịch bản → Pre-vis Agent theo từng cảnh → Quay phim → Bộ trộn (Mixer) → Các luồng phát (Streams)"
+        "screenshotSlot": "Chèn ảnh chụp màn hình: Bảng điều khiển sản xuất hiển thị Đạo diễn, Kịch bản, Ảnh tĩnh, Video clip, Bộ trộn âm thanh và Luồng phát.",
+        "videoSlot": "Chèn clip 60 giây: Chốt kịch bản → Ảnh tĩnh theo cảnh → Clip → Bộ trộn → Luồng phát"
       },
       {
         "id": "14",
-        "title": "Screening Room",
+        "title": "Thuật ngữ phòng chiếu SFAI",
         "description": "Xem trước video các cảnh quay, dựng bản hoàn chỉnh và xuất bản — tất cả đều thực hiện ngay trong Production. Cung cấp các liên kết chia sẻ riêng tư dành cho các bên liên quan, hỗ trợ thu thập phản hồi có cấu trúc và tùy chọn xem số liệu phân tích mức độ tương tác.",
         "keyFeatures": [
           "Xem trước video cảnh — phát các luồng đã kết xuất theo trình tự",
@@ -1041,56 +2234,56 @@
   },
   "coreCapabilities": {
     "audienceResonance": {
-      "badge": "Intelligence Layer",
-      "title": "Audience Resonance: build for a culture, not a language code",
-      "description": "Subtitles stretch one video’s reach. SceneFlow lets you name the culture, region, and demographic you are making for, score the story against that audience before you render, and then ship either a dubbed master or a separate high-resonance version per audience.",
+      "badge": "Lớp trí tuệ",
+      "title": "Audience Resonance: xây dựng vì một nền văn hóa, không phải vì một mã ngôn ngữ",
+      "description": "Phụ đề giúp mở rộng phạm vi tiếp cận của một video. SceneFlow cho phép bạn xác định văn hóa, khu vực và nhóm nhân khẩu học mục tiêu, đánh giá nội dung dựa trên nhóm khán giả đó trước khi xuất file, và sau đó phát hành bản gốc đã lồng tiếng hoặc các phiên bản riêng biệt được tối ưu hóa cho từng nhóm khán giả.",
       "bullets": [
-        "Define the audience: eight target regions, plus age, gender, education, and community",
-        "Describe culture, faith, and values in your own words — SceneFlow reads the signals",
-        "Get a resonance score with section-level fixes before you spend on renders",
-        "Dub the master, or produce a distinct version tuned to each audience"
+        "Xác định đối tượng: tám khu vực mục tiêu, cùng với độ tuổi, giới tính, trình độ học vấn và cộng đồng.",
+        "Hãy mô tả văn hóa, đức tin và các giá trị theo cách hiểu của riêng bạn — SceneFlow sẽ đọc các tín hiệu đó.",
+        "Nhận điểm số về mức độ cộng hưởng cùng các đề xuất chỉnh sửa chi tiết cho từng phần trước khi chi tiền cho khâu kết xuất (render).",
+        "Lồng tiếng cho bản gốc, hoặc sản xuất các phiên bản riêng biệt được tinh chỉnh cho từng đối tượng khán giả."
       ],
-      "cta": "Analyze Your Script",
+      "cta": "Phân tích kịch bản của bạn",
       "howWeScore": {
-        "toggle": "How we score",
-        "title": "How Audience Resonance works",
-        "description": "Audience Resonance combines narrative-structure analysis (clarity, pacing, emotional arc) with target-persona fit against the audience you define in Blueprint — not vanity metrics or post-publish retention data. When your audience description carries cultural signals, the analysis adds an authenticity pass over names, dialect, customs, faith, and sensitivities. Recommendations are tied to specific script sections so you can fix issues before agents run video generation.",
+        "toggle": "Cách chúng tôi chấm điểm",
+        "title": "Cách thức hoạt động của Audience Resonance",
+        "description": "Audience Resonance kết hợp việc phân tích cấu trúc kể chuyện (độ rõ ràng, nhịp độ, diễn biến cảm xúc) với mức độ phù hợp với chân dung khán giả mục tiêu mà bạn đã xác định trong Blueprint — thay vì dựa vào các chỉ số bề nổi hay dữ liệu giữ chân người xem sau khi đã xuất bản. Khi phần mô tả khán giả chứa đựng các yếu tố văn hóa, quá trình phân tích sẽ bổ sung bước kiểm tra tính xác thực đối với tên gọi, phương ngữ, phong tục, tín ngưỡng và các vấn đề nhạy cảm. Các đề xuất được gắn liền với từng phần cụ thể của kịch bản, giúp bạn khắc phục vấn đề trước khi các tác nhân (agent) tiến hành tạo video.",
         "bullets": [
-          "Scores Blueprint and script against your stated target audience",
-          "Cultural authenticity checks on names, dialect, customs, faith, and sensitivities",
-          "Section-level recommendations — not a black-box “trust us” number",
-          "Run before heavy render spend, not after publish"
+          "Chấm điểm Blueprint và kịch bản dựa trên đối tượng mục tiêu mà bạn đã xác định.",
+          "Kiểm tra tính xác thực về mặt văn hóa đối với tên gọi, phương ngữ, phong tục, tín ngưỡng và các vấn đề nhạy cảm.",
+          "Các khuyến nghị ở cấp độ từng phần — chứ không phải một con số kiểu \"hộp đen\" chỉ yêu cầu người dùng tin tưởng.",
+          "Hãy thực hiện trước khi tốn chi phí cho việc render nặng, chứ không phải sau khi đã xuất bản."
         ]
       }
     },
     "express": {
-      "badge": "Hyper-Speed Production",
+      "badge": "Sản xuất thông minh",
       "title": "SceneFlow Agents",
-      "description": "Generate Pre-Vis, motion video, and delivery masters concurrently. Go from script to a shareable Pre-Vis in minutes — then approve the shot frames before you spend on motion video. Throughput is what makes a version per audience affordable instead of theoretical.",
+      "description": "Các tác nhân SFAIAUDIO, SFAISTILLS và SFAIVIDEO sẽ soạn thảo các câu lệnh (prompt) chuyên sâu dựa trên chỉ dẫn về nhịp điệu, đính kèm các tài liệu tham khảo phù hợp và thực hiện quy trình tạo nội dung song song. Quá trình này có thể mất vài phút do các tác nhân đang thực hiện các tác vụ chuyên môn; sau đó, bạn sẽ phê duyệt các khung hình (shot frames) trước khi tiến hành chi phí cho video chuyển động.",
       "items": [
         {
           "title": "Pre-vis Agent",
-          "desc": "Fully voiced, scored shot frames per scene, ready to share in the Screening Room.",
-          "time": "Minutes vs Hours"
+          "desc": "Đã hoàn thiện lồng tiếng và nhạc nền cho các khung hình chủ đạo (beat frames) của từng cảnh, bám sát định hướng đã chốt và sẵn sàng để chia sẻ tại Screening Room.",
+          "time": "Chất lượng là trên hết"
         },
         {
-          "title": "Video Agent",
-          "desc": "Per-scene motion video generated after Pre-Vis approval, as native-language streams or a lower-cost dub, with scene-level edits.",
-          "time": "Minutes vs Days"
+          "title": "SFAIVIDEO_ĐIỀU_KHOẢN_ĐẠI_LÝ",
+          "desc": "Video chuyển động cho từng cảnh được tạo ra sau khi phê duyệt bản dựng sơ bộ (Pre-Vis), dưới dạng các phiên bản ngôn ngữ gốc hoặc lồng tiếng chi phí thấp hơn, kèm theo các chỉnh sửa ở cấp độ cảnh.",
+          "time": "Phê duyệt, sau đó kết xuất"
         },
         {
-          "title": "Delivery Agent",
-          "desc": "Assemble the ProRes 4K master and auto-publish to YouTube or download the bundle.",
-          "time": "Minutes vs Weeks"
+          "title": "Điều khoản dành cho Đại lý Giao hàng SFAI",
+          "desc": "Ghép nối bản master ProRes 4K và tự động đăng lên YouTube hoặc tải xuống gói dữ liệu.",
+          "time": "Gửi phần đã cắt đi"
         }
       ],
-      "cta": "Run Production Agents"
+      "cta": "Chạy Production Agents"
     }
   },
   "preVisEngine": {
-    "badge": "Creative Decision Engine",
-    "title": "Pre-Visualization Engine",
-    "subtitle": "Generating a fully voiced, scored, 40-minute Pre-Vis (the industry term: animatic) in 15 minutes is not a workflow step — that is the product. In Hollywood, pre-vis takes weeks and costs hundreds of thousands of dollars. SceneFlow scales it to minutes and pocket change.",
+    "badge": "Thuật ngữ SFAI Creative Decision Engine",
+    "title": "Thuật ngữ công cụ trực quan hóa SFAIPRE",
+    "subtitle": "Việc tạo ra một bản Pre-Vis (thuật ngữ trong ngành là *animatic*) dài 40 phút, hoàn chỉnh với lồng tiếng và nhạc nền, chỉ trong vòng 15 phút không đơn thuần là một bước trong quy trình làm việc — đó chính là sản phẩm hoàn thiện. Tại Hollywood, công đoạn này thường tốn hàng tuần lễ cùng chi phí lên tới hàng trăm nghìn đô la; trong khi đó, giải pháp này rút ngắn thời gian xuống còn vài phút và giảm chi phí xuống mức cực thấp.",
     "narrative": "Trong ngành điện ảnh, storyboard là thứ bạn bàn giao cho ê-kíp sản xuất. Pre-vis là thứ bạn trình bày trước các lãnh đạo hãng phim, nhà đầu tư và nhà sản xuất để được phê duyệt dự án. SceneFlow nâng tầm quy trình sản xuất, chuyển đổi từ một công cụ dành cho người sáng tạo cá nhân thành tài sản quy trình chuẩn doanh nghiệp.",
     "pillars": [
       {
@@ -1107,257 +2300,308 @@
       }
     ],
     "workflow": {
-      "title": "Reference Library → Pre-Vis → Motion Video → ProRes 4K master",
+      "title": "Reference Library → Tiền hình ảnh hóa (Pre-Vis) → Video chuyển động → Bản gốc ProRes 4K",
       "steps": [
-        "Build the Reference Library — characters, locations, and props locked to your production art style.",
-        "Generate Pre-Vis shot frames per scene with dialogue, SFX, and music — iterate direction in the Screening Room at low cost.",
-        "Approve the Pre-Vis, then generate per-scene motion video with multilanguage dubbing and scene-level edits.",
-        "Deliver the ProRes 4K master from the Screening Room — auto-publish to YouTube or download the bundle."
+        "Xây dựng thư viện tham chiếu — bao gồm nhân vật, bối cảnh và đạo cụ được định hình theo phong cách nghệ thuật của dự án.",
+        "Tạo các khung hình Pre-Vis (tiền hình ảnh hóa) cho từng cảnh, bao gồm lời thoại, hiệu ứng âm thanh (SFX) và âm nhạc — đồng thời điều chỉnh định hướng ngay tại phòng chiếu với chi phí thấp.",
+        "Phê duyệt bản dựng sơ bộ (Pre-Vis), sau đó tạo video chuyển động cho từng cảnh với phần lồng tiếng đa ngôn ngữ và các chỉnh sửa ở cấp độ cảnh.",
+        "Xuất bản tệp gốc ProRes 4K từ Screening Room — tự động đăng lên YouTube hoặc tải xuống gói dữ liệu."
       ]
     },
     "cta": "Bắt đầu bằng việc tải lên kịch bản",
     "ctaSubtext": "Kết nối giữa làm phim truyền thống và AI tạo sinh"
   },
   "exitIntent": {
-    "title": "Before you go — want launch news?",
-    "subtitle": "Leave your email and we'll tell you when we announce.",
+    "title": "Trước khi rời đi — bạn có muốn nhận tin tức về đợt ra mắt không?",
+    "subtitle": "Hãy để lại email của bạn và chúng tôi sẽ thông báo cho bạn khi có tin mới.",
     "benefits": [
-      "Launch notification when we announce",
-      "Weekly AI filmmaking tutorials",
-      "Exclusive creator discounts"
+      "Thông báo khi chúng tôi công bố",
+      "Hướng dẫn làm phim bằng AI hàng tuần",
+      "Ưu đãi độc quyền dành cho nhà sáng tạo"
     ],
-    "emailPlaceholder": "Enter your email",
-    "subscribe": "Notify me",
-    "subscribing": "Subscribing...",
-    "or": "or",
-    "startNow": "Start directing now for just $9 →",
-    "privacy": "No spam, ever. Unsubscribe anytime.",
-    "successTitle": "You're on the list!",
-    "successSubtitle": "We'll email you when we announce — plus the occasional filmmaking tip.",
-    "ctaText": "Start Exploring — $9",
-    "closePopup": "Close popup"
+    "emailPlaceholder": "Nhập email của bạn",
+    "subscribe": "Thông báo cho tôi",
+    "subscribing": "Đang đăng ký...",
+    "or": "hoặc",
+    "startNow": "Bắt đầu đạo diễn ngay chỉ với $9 →",
+    "privacy": "Tuyệt đối không gửi thư rác. Hủy đăng ký bất cứ lúc nào.",
+    "successTitle": "Bạn có tên trong danh sách rồi!",
+    "successSubtitle": "Chúng tôi sẽ gửi email cho bạn khi có thông báo mới, kèm theo đó là một số mẹo làm phim hữu ích.",
+    "ctaText": "Bắt đầu khám phá — $9",
+    "closePopup": "Đóng cửa sổ bật lên"
   },
   "pricing": {
-    "badge": "Simple Pricing",
-    "title": "Start with Explorer — $9",
-    "subtitle": "Test the complete pipeline now with a frictionless $9 entry.",
+    "badge": "Giá cả đơn giản",
+    "title": "Bắt đầu với Explorer — $9",
+    "subtitle": "Hãy thử nghiệm toàn bộ quy trình ngay bây giờ với mức phí tham gia chỉ 9 USD và thủ tục cực kỳ đơn giản.",
+    "explorerHighlight": "Cách nhanh nhất để trải nghiệm trọn vẹn quy trình làm việc tại studio — từ khâu ý tưởng đến phòng chiếu.",
+    "trustBadges": [
+      "Thanh toán an toàn qua Whop",
+      "$9 Explorer để trải nghiệm phòng tập",
+      "Các khoản tín dụng hàng tháng sẽ hết hạn vào cuối kỳ.",
+      "Hủy bất cứ lúc nào"
+    ],
     "valueAnchor": {
-      "traditionalCost": "$2,000+",
-      "traditionalLabel": "Traditional pre-vis",
-      "vs": "vs",
-      "sceneFlowCost": "$49-149",
-      "sceneFlowLabel": "SceneFlow monthly",
-      "saveBadge": "Save 90%+ per project"
+      "traditionalCost": "Trên 2.000 USD",
+      "traditionalLabel": "Tiền hình ảnh hóa truyền thống",
+      "vs": "so với",
+      "sceneFlowCost": "$49–$149",
+      "sceneFlowLabel": "SceneFlow hàng tháng",
+      "saveBadge": "Tiết kiệm hơn 90% chi phí mỗi dự án"
     },
     "teamCta": {
-      "title": "In-house team or institution?",
-      "description": "Book a workflow walkthrough for comms, L&D, and marketing teams",
-      "button": "Book Walkthrough"
+      "title": "Đội ngũ nội bộ hay tổ chức?",
+      "description": "Đặt lịch hướng dẫn quy trình làm việc cho các nhóm truyền thông, đào tạo & phát triển (L&D) và tiếp thị.",
+      "button": "Hướng dẫn chi tiết về cuốn sách"
     },
     "agencyCta": {
-      "title": "Agency or production shop?",
-      "description": "Custom credits, SLA, and dedicated support at scale",
-      "button": "Contact Sales"
+      "title": "Agency hay đơn vị sản xuất?",
+      "description": "Tín dụng tùy chỉnh, SLA và hỗ trợ chuyên biệt ở quy mô lớn",
+      "button": "Liên hệ bộ phận kinh doanh"
     },
     "byok": {
-      "title": "Bring Your Own Key",
-      "badge": "Pro & Studio Plans",
-      "description": "Your API key can run reference, still, and clip generations. SceneFlow charges a 20% orchestration fee on those jobs. Hosted SceneFlow rates can be lower than a personal API account as platform volume grows.",
-      "savingsHighlight": "20% orchestration fee",
+      "title": "Tự cung cấp khóa",
+      "badge": "Các gói Pro & Studio",
+      "description": "Khóa API của bạn có thể thực hiện các tác vụ tạo hình ảnh tham chiếu, hình ảnh tĩnh và video clip. SceneFlow thu phí điều phối 20% đối với các tác vụ này. Mức phí dịch vụ SceneFlow được lưu trữ (hosted) có thể thấp hơn so với tài khoản API cá nhân khi lưu lượng sử dụng trên nền tảng gia tăng.",
+      "savingsHighlight": "Phí điều phối 20%",
       "benefits": [
         {
-          "title": "References, stills, and clips",
-          "description": "BYOK applies only when your key actually runs those generations"
+          "title": "Tài liệu tham khảo, ảnh tĩnh và các đoạn phim",
+          "description": "BYOK chỉ áp dụng khi khóa của bạn thực sự thực hiện các lượt tạo đó."
         },
         {
-          "title": "Hosted rates can be lower",
-          "description": "SceneFlow platform pricing can undercut a personal Vertex or Kling account"
+          "title": "Mức giá thông qua đại lý có thể thấp hơn.",
+          "description": "Mức giá của nền tảng SceneFlow có thể thấp hơn chi phí cho tài khoản cá nhân trên Vertex hoặc Kling."
         },
         {
-          "title": "Full Control",
-          "description": "Your keys, your provider bill, plus a platform orchestration fee"
+          "title": "Toàn quyền kiểm soát",
+          "description": "Khóa của bạn, hóa đơn từ nhà cung cấp của bạn, cộng với phí điều phối nền tảng"
         }
       ],
-      "supportedProviders": "Supported Providers",
+      "supportedProviders": "Các nhà cung cấp được hỗ trợ",
       "vertexName": "Google Vertex AI",
-      "vertexDetail": "References, stills, and Omni clips",
-      "elevenLabsName": "ElevenLabs",
-      "elevenLabsDetail": "Text-to-Speech & Voice Cloning",
-      "savingsLabel": "20% fee",
-      "onImagesVideo": "on references, stills, and clips",
-      "onVoiceover": "on voiceover",
-      "note": "The 20% fee is a SceneFlow orchestration charge. Provider usage bills to your account. SceneFlow-hosted generation can cost less than bringing a personal key."
+      "vertexDetail": "Tài liệu tham khảo, ảnh tĩnh và các đoạn clip Omni",
+      "elevenLabsName": "Kling",
+      "elevenLabsDetail": "Tạo clip khi khóa của bạn được sử dụng",
+      "savingsLabel": "Phí 20%",
+      "onImagesVideo": "dựa trên tài liệu tham khảo, hình ảnh tĩnh và các đoạn phim",
+      "onVoiceover": "khi chìa khóa của bạn thực hiện công việc",
+      "note": "Mức phí 20% là phí điều phối của SceneFlow. Nhà cung cấp sẽ tính phí sử dụng vào tài khoản của bạn. Việc tạo nội dung trên nền tảng SceneFlow có thể tiết kiệm chi phí hơn so với việc sử dụng khóa cá nhân."
     },
     "creditTopUps": {
-      "title": "Need More Credits?",
-      "subtitle": "Top up anytime. Each add-on pack lasts 12 months.",
+      "title": "Bạn cần thêm tín dụng?",
+      "subtitle": "Mua các gói bổ sung trị giá $25, $100 hoặc $250 bất cứ khi nào bạn cần. Mỗi gói có thời hạn sử dụng 12 tháng.",
       "packs": [
         {
-          "label": "Starter Pack",
-          "description": "Perfect for quick revisions"
+          "label": "Dịch vụ bổ sung $25",
+          "description": "2.000 tín dụng. Mua bao nhiêu lần tùy nhu cầu."
         },
         {
-          "label": "Scene Pack",
-          "description": "Complete a short project"
+          "label": "Dịch vụ/Sản phẩm bổ sung trị giá 100 USD",
+          "description": "9.000 tín dụng. Mua bao nhiêu lần tùy nhu cầu."
         },
         {
-          "label": "Production Pack",
-          "description": "Major film sequence"
-        },
-        {
-          "label": "Studio Pack",
-          "description": "Full production capacity"
+          "label": "Dịch vụ bổ sung trị giá 250 USD",
+          "description": "25.000 tín dụng. Mua bao nhiêu lần tùy nhu cầu."
         }
       ],
-      "creditsUnit": "credits"
+      "creditsUnit": "Danh sách thực hiện"
     },
     "calculator": {
-      "sectionTitle": "Estimate Your Project",
-      "sectionSubtitle": "Know exactly what you'll pay before you commit",
-      "title": "Project Budget Calculator",
-      "subtitle": "Set a credit budget, track production charges, and plan Pre-Vis first before motion video.",
-      "customize": "Customize parameters",
-      "imagesLabel": "Images to generate",
-      "videoClipsLabel": "Video clips",
-      "voiceoverLabel": "Voiceover (minutes)",
-      "byokTitle": "Bring Your Own Key (BYOK)",
-      "byokBadge": "Pro & Studio",
-      "byokDescription": "Use your own key for references, stills, and clips. SceneFlow charges a 20% orchestration fee, and hosted rates can be lower than a personal API account.",
-      "vertexToggle": "Vertex AI (references, stills, and clips)",
-      "elevenLabsToggle": "ElevenLabs (Voiceover)",
-      "imageGeneration": "Image Generation",
-      "videoGeneration": "Video Generation",
-      "voiceover": "Voiceover",
+      "sectionTitle": "Ước tính chi phí dự án của bạn",
+      "sectionSubtitle": "Biết chính xác số tiền bạn sẽ phải trả trước khi cam kết.",
+      "title": "Nhân viên lập kế hoạch sản xuất",
+      "subtitle": "Lên kế hoạch cho các phiên bản chỉnh sửa cảnh quay và lịch trình cụ thể theo ngày, sau đó theo dõi tiến độ và chi phí ngay trên điện thoại.",
+      "customize": "Tùy chỉnh các tham số",
+      "imagesLabel": "Hình ảnh cần tạo",
+      "videoClipsLabel": "Các đoạn video",
+      "voiceoverLabel": "Lời bình (phút)",
+      "byokTitle": "Tự cung cấp khóa (BYOK)",
+      "byokBadge": "Chuyên nghiệp & Studio",
+      "byokDescription": "Hãy sử dụng khóa (key) của riêng bạn cho các tài liệu tham khảo, hình ảnh tĩnh và video clip. SceneFlow thu phí điều phối 20%, và mức giá dịch vụ lưu trữ có thể thấp hơn so với khi sử dụng tài khoản API cá nhân.",
+      "vertexToggle": "Vertex AI (tài liệu tham khảo, ảnh tĩnh và video clip)",
+      "elevenLabsToggle": "ElevenLabs (Lời bình)",
+      "imageGeneration": "Tạo ảnh",
+      "videoGeneration": "Tạo video",
+      "voiceover": "Lời bình",
       "byokTag": "(BYOK)",
-      "totalEstimate": "Total Estimate",
-      "withTopUps": "with top-ups",
-      "creditSavings": "SceneFlow credit savings",
-      "savePercent": "You save {percent}% on SceneFlow credits",
-      "transparency": "Full transparency: You'll see real-time credit usage as you work. No surprises—adjust your project scope anytime.",
-      "transparencyHighlight": "Full transparency:",
-      "byokDisclaimer": "BYOK Note: The platform fee applies only to reference, still, and clip generations that run on your key. SceneFlow-hosted model rates can be lower than an individual account.",
-      "byokDisclaimerHighlight": "BYOK Note:",
+      "totalEstimate": "Tổng dự toán",
+      "withTopUps": "kèm theo các khoản nạp thêm",
+      "creditSavings": "Tiết kiệm tín dụng SceneFlow",
+      "savePercent": "Bạn tiết kiệm được {percent}% khi mua tín dụng SceneFlow.",
+      "transparency": "Minh bạch tuyệt đối: Bạn có thể theo dõi mức sử dụng credit theo thời gian thực trong quá trình làm việc. Không lo phát sinh bất ngờ—bạn có thể điều chỉnh phạm vi dự án bất cứ lúc nào.",
+      "transparencyHighlight": "Hoàn toàn minh bạch:",
+      "byokDisclaimer": "Lưu ý: Phí nền tảng chỉ áp dụng cho việc tạo hình ảnh tham chiếu, hình ảnh tĩnh và video clip sử dụng khóa (key) của bạn. Mức phí đối với các mô hình do SceneFlow lưu trữ có thể thấp hơn so với mức phí dành cho tài khoản cá nhân.",
+      "byokDisclaimerHighlight": "Lưu ý về BYOK:",
       "presets": [
         {
           "id": "commercial",
-          "name": "30-sec Commercial"
+          "name": "Quảng cáo dài 30 giây"
         },
         {
           "id": "short",
-          "name": "2-min Short Film"
+          "name": "Phim ngắn 2 phút"
         },
         {
           "id": "episode",
-          "name": "10-min Episode"
+          "name": "Tập phim dài 10 phút"
         },
         {
           "id": "feature",
-          "name": "90-min Feature"
+          "name": "Phim dài 90 phút"
         }
       ],
-      "minSuffix": "min"
+      "minSuffix": "tối thiểu"
     },
     "tierGrid": {
-      "productionTestFlight": "Production Test Flight",
-      "getStarted": "Get Started",
-      "startTestFlight": "Start Test Flight",
-      "loading": "Loading...",
-      "mostPopular": "Most Popular",
-      "creditsPerMonth": "Credits/mo",
-      "storage": "Storage",
+      "productionTestFlight": "Chuyến bay thử nghiệm sản phẩm",
+      "getStarted": "Bắt đầu",
+      "startTestFlight": "Bắt đầu chuyến bay thử nghiệm",
+      "loading": "Đang tải...",
+      "mostPopular": "Phổ biến nhất",
+      "creditsPerMonth": "Số tín dụng/tháng",
+      "storage": "Lưu trữ",
       "perMonth": "/month"
     },
     "trust": {
-      "cancelAnytime": "Cancel anytime",
-      "moneyBack": "$9 Explorer to try the studio",
-      "creditsNeverExpire": "Explorer credits last 90 days"
+      "cancelAnytime": "Hủy bất cứ lúc nào",
+      "moneyBack": "$9 Explorer để trải nghiệm phòng tập",
+      "creditsNeverExpire": "Các khoản tín dụng Explorer trong 90 ngày qua"
     },
     "plans": {
       "explorer": {
-        "name": "Explorer",
-        "description": "One-time purchase to try it out",
+        "name": "Explorer — Bản demo",
+        "description": "Bản demo — mua một lần để trải nghiệm trọn vẹn sản phẩm",
         "features": [
-          "One-time purchase",
-          "750 credits (expire 90 days after purchase)",
-          "5 GB storage (30 days)",
-          "Full platform access",
-          "MP4 export (any resolution)",
-          "AI voiceover (70+ languages)"
+          "Mua một lần",
+          "750 tín dụng (hết hạn 90 ngày sau khi mua)",
+          "Dung lượng lưu trữ 5 GB (30 ngày)",
+          "Toàn quyền truy cập nền tảng",
+          "Xuất file MP4 (mọi độ phân giải)",
+          "Lồng tiếng AI (hơn 70 ngôn ngữ)"
         ]
       },
       "subscriptions": [
         {
           "id": "starter",
-          "name": "Starter",
-          "description": "For individual creators",
+          "name": "Gói khởi đầu — Môi trường thử nghiệm",
+          "description": "Sandbox — nơi thử nghiệm các ý tưởng trước khi thực hiện chương trình chính thức.",
           "features": [
-            "Full platform access",
-            "4,500 credits/month included",
-            "Unused monthly credits expire at period end",
-            "25 GB active storage",
-            "MP4 export (any resolution)",
-            "AI voiceover (70+ languages)",
-            "Email support"
+            "Toàn quyền truy cập nền tảng",
+            "Bao gồm 4.500 tín dụng/tháng",
+            "Các khoản tín dụng hàng tháng chưa sử dụng sẽ hết hạn vào cuối kỳ.",
+            "25 GB dung lượng lưu trữ đang hoạt động",
+            "Xuất file MP4 (mọi độ phân giải)",
+            "Lồng tiếng AI (hơn 70 ngôn ngữ)",
+            "Hỗ trợ qua email"
           ]
         },
         {
           "id": "pro",
-          "name": "Pro",
-          "description": "For professional creators",
+          "name": "YouTuber chuyên nghiệp",
+          "description": "YouTuber — các tập định kỳ và video trên kênh",
           "features": [
-            "Everything in Starter, plus:",
-            "15,000 credits/month included",
-            "Unused monthly credits expire at period end",
-            "100 GB active storage",
-            "Veo 3.1 Quality (4K) access",
-            "Character Consistency Engine",
-            "Voice cloning",
-            "BYOK (Bring Your Own Key)",
-            "3 team seats",
-            "Priority support"
+            "Tất cả các tính năng của gói Starter, cùng với:",
+            "Bao gồm 15.000 credit mỗi tháng",
+            "Các khoản tín dụng hàng tháng chưa sử dụng sẽ hết hạn vào cuối kỳ.",
+            "100 GB dung lượng lưu trữ đang hoạt động",
+            "Quyền truy cập chất lượng Veo 3.1 (4K)",
+            "Công cụ duy trì tính nhất quán của nhân vật",
+            "Sao chép giọng nói",
+            "BYOK (Tự cung cấp khóa)",
+            "3 chỗ ngồi cho đội",
+            "Hỗ trợ ưu tiên"
           ]
         },
         {
           "id": "studio",
-          "name": "Studio",
-          "description": "For teams & agencies",
+          "name": "Studio — Nhà làm phim độc lập",
+          "description": "Nhà làm phim độc lập — phim điện ảnh và phim bộ độc lập",
           "features": [
-            "Everything in Pro, plus:",
-            "75,000 credits/month included",
-            "Unused monthly credits expire at period end",
-            "500 GB active storage",
-            "Veo 3.1 4K Priority Queue",
-            "Unlimited Character Consistency",
-            "White-label exports",
-            "API access",
-            "10 team seats",
-            "Dedicated account manager",
-            "Enterprise SLA available on request"
+            "Tất cả các tính năng của gói Pro, cùng với:",
+            "Bao gồm 75.000 credit/tháng",
+            "Các khoản tín dụng hàng tháng chưa sử dụng sẽ hết hạn vào cuối kỳ.",
+            "500 GB dung lượng lưu trữ đang hoạt động",
+            "Hàng đợi ưu tiên Veo 3.1 4K",
+            "Tính nhất quán của nhân vật không giới hạn",
+            "Xuất khẩu sản phẩm nhãn trắng",
+            "Quyền truy cập API",
+            "10 chỗ ngồi cho nhóm",
+            "Quản lý khách hàng chuyên trách",
+            "SLA dành cho doanh nghiệp được cung cấp theo yêu cầu."
           ]
         }
       ]
-    },
-    "explorerHighlight": "The fastest way to experience the complete SceneFlow studio — from concept to Screening Room.",
-    "trustBadges": [
-      "Secure payments via Whop",
-      "$9 Explorer to try the studio",
-      "Monthly credits expire at period end",
-      "Cancel anytime"
-    ]
+    }
   },
   "landingSections": {
     "expandSection": "Hiển thị phần",
     "collapseSection": "Ẩn phần này"
   },
+  "notify": {
+    "heading": "Nhận tin tức về đợt ra mắt",
+    "description": "Hãy để lại email và chúng tôi sẽ thông báo cho bạn khi có tin mới. Chỉ vậy thôi.",
+    "placeholder": "you@studio.com",
+    "submit": "Thông báo cho tôi",
+    "submitting": "Đang gửi…",
+    "successTitle": "Hãy kiểm tra hộp thư đến của bạn.",
+    "successBody": "Chúng tôi đã gửi một liên kết xác nhận. Hãy nhấp vào đó để tham gia danh sách chờ ra mắt. Chỉ vậy thôi.",
+    "errorEmpty": "Vui lòng nhập email của bạn để chúng tôi có thể liên hệ với bạn.",
+    "errorInvalid": "Địa chỉ email đó có vẻ không đúng. Hãy kiểm tra lại và thử lại.",
+    "errorGeneric": "Đã xảy ra lỗi. Vui lòng thử lại sau một lát.",
+    "privacy": "Trước tiên, chúng tôi sẽ gửi email chứa liên kết xác nhận. Sau khi bạn xác nhận, chúng tôi sẽ gửi một thông báo ra mắt. Không gửi thư rác.",
+    "confirmTitle": "Bạn có tên trong danh sách.",
+    "confirmBody": "Chúng tôi sẽ gửi email cho bạn khi có thông báo. Ngoài ra sẽ không có gì khác.",
+    "confirmExpiredTitle": "Liên kết đó đã hết hạn.",
+    "confirmExpiredBody": "Vui lòng nhập lại email của bạn trên trang đích và chúng tôi sẽ gửi một liên kết xác nhận mới.",
+    "confirmInvalidTitle": "Liên kết đó không hợp lệ.",
+    "confirmInvalidBody": "Yêu cầu xác nhận mới từ trang đích.",
+    "confirmHome": "Quay lại SceneFlow"
+  },
+  "forFilmmakers": {
+    "badge": "Đăng ký tham gia Chương trình SceneFlow Originals Seed",
+    "heading": "Dành cho nhà làm phim: Gửi tập thí điểm của bạn để được phân phối và kiếm tiền trên nền tảng.",
+    "subtitle": "Mạng lưới SceneFlow là một nhóm kín quy tụ các nhà sáng tạo tiên phong (Founding Creators) — với 5 đến 10 tựa nội dung được tuyển chọn kỹ lưỡng ngay khi ra mắt, thay vì hoạt động như một nền tảng mở. Việc chia sẻ doanh thu chỉ bắt đầu khi đã có người đăng ký trả phí. Giá trị cốt lõi mà chúng tôi mang lại hiện nay là lợi thế về phân phối: tài trợ chi phí quảng cáo giới thiệu (teaser) để đổi lấy quyền công chiếu độc quyền trong một khoảng thời gian nhất định.",
+    "closedNote": "Các hồ sơ đăng ký sẽ được biên tập viên xem xét. Việc gửi hồ sơ không đồng nghĩa với việc phim của bạn được đăng tải lên danh mục.",
+    "fields": {
+      "email": "Email",
+      "emailPlaceholder": "you@studio.com",
+      "name": "Tên của bạn",
+      "namePlaceholder": "Tên đạo diễn hoặc nhà sản xuất",
+      "title": "Tựa đề tập thí điểm hoặc phim điện ảnh",
+      "titlePlaceholder": "Tên gọi tạm thời",
+      "logline": "Tóm tắt cốt truyện",
+      "loglinePlaceholder": "Một hoặc hai câu giúp thu hút sự quan tâm đến câu chuyện.",
+      "audienceUrl": "Khán giả hiện có",
+      "audiencePlaceholder": "URL YouTube, Bilibili, lễ hội hoặc mạng xã hội",
+      "exclusivePremiere": "Tôi sẵn sàng cân nhắc việc công chiếu độc quyền trên SceneFlow để đổi lấy kinh phí cho các quảng cáo giới thiệu (teaser)."
+    },
+    "submit": "Nộp đơn",
+    "submitting": "Đang gửi…",
+    "successTitle": "Hãy kiểm tra hộp thư đến của bạn.",
+    "successBody": "Chúng tôi đã gửi một đường dẫn xác nhận. Hãy nhấp vào đó để chốt hồ sơ đăng ký Seed của bạn. Chỉ vậy thôi.",
+    "errorEmpty": "Vui lòng điền vào tất cả các trường thông tin để chúng tôi có thể xem xét dự án thí điểm của bạn.",
+    "errorInvalidEmail": "Địa chỉ email đó có vẻ không đúng. Hãy kiểm tra lại và thử lại.",
+    "errorInvalidUrl": "Thêm một URL công khai cho đối tượng khán giả hiện tại của bạn.",
+    "errorGeneric": "Đã xảy ra lỗi. Vui lòng thử lại sau một lát.",
+    "confirmTitle": "Đã nhận được hồ sơ.",
+    "confirmBody": "Bạn đang nằm trong hàng chờ xét duyệt của Seed. Chúng tôi xem xét mọi nội dung được gửi đến. Đây không phải là danh mục niêm yết công khai.",
+    "confirmExpiredTitle": "Liên kết đó đã hết hạn.",
+    "confirmExpiredBody": "Hãy gửi lại biểu mẫu dành cho nhà làm phim và chúng tôi sẽ gửi một liên kết xác nhận mới.",
+    "confirmInvalidTitle": "Liên kết đó không hợp lệ.",
+    "confirmInvalidBody": "Yêu cầu xác nhận mới từ biểu mẫu dành cho nhà làm phim.",
+    "confirmHome": "Quay lại SceneFlow",
+    "privacy": "Trước tiên, chúng tôi sẽ gửi email chứa liên kết xác nhận. Chỉ dành cho biên tập viên. Không gửi thư rác."
+  },
   "finalCta": {
-    "title": "Built for the stories that have to hold.",
-    "subtitle": "Leave your email for launch news — or start directing now from the $9 Explorer plan.",
-    "cta": "Explore plans",
-    "ctaSecondary": "See how it works",
+    "title": "Được tạo ra cho những câu chuyện cần trường tồn.",
+    "subtitle": "Hãy để lại email để nhận thông tin ra mắt — hoặc bắt đầu điều hướng ngay với gói Explorer giá 9 USD.",
+    "cta": "Khám phá các gói",
+    "ctaSecondary": "Xem cách thức hoạt động",
     "ctaSecondaryHref": "#two-modes"
   },
   "footer": {
-    "description": "Sản xuất video tự động từ đầu đến cuối — từ ý tưởng đến tổng thể sẵn sàng xuất bản. Một studio được hướng dẫn: SFAISERIES_→STUDIOTERM SFAIBLUEPRINT_→STUDIOTERM Production Stage → Screening Room.",
+    "description": "Quy trình sản xuất video tự động toàn diện — từ khâu lên ý tưởng đến bản hoàn thiện sẵn sàng phát hành. Một studio có quy trình dẫn dắt: Series Room → Blueprint Room → Production Stage → Screening Room.",
     "product": "Sản phẩm",
     "resources": "Nguồn Tài Nguyên",
     "legal": "Độ tin cậy và an toàn",
@@ -1393,290 +2637,5 @@
     "mute": "Tắt tiếng",
     "unmute": "Bật tiếng",
     "expandVideo": "Mở rộng video"
-  },
-  "productionShowcase": {
-    "badge": "Production Examples",
-    "title": "See the Full Pipeline",
-    "titleAccent": "in Action",
-    "subtitle": "Each example below is a complete production — from Blueprint through Pre-Vis to the final ProRes 4K master. Walk the Screening Room to compare the Pre-Vis, per-scene motion video, and the finished master in multiple languages.",
-    "subtitleTagline": "Long-form productions. Not clips.",
-    "screeningRoomInstruction": "Review this production the way a reviewer would — one milestone at a time. Start with Series, then Blueprint, then the script in AR Analysis, and finish in Screening.",
-    "languagesBanner": "Public examples ship in 7 languages: English, Spanish, Portuguese, Hindi, Chinese, Arabic, and Thai.",
-    "explorePipelineCta": "Explore a full production",
-    "explorePipelineHint": "Start with Cinematic Drama below to walk the full pipeline from concept to multi-language master.",
-    "workflowLabel": "Solutions",
-    "startProduction": "Start Your Production",
-    "cta": "Start Your Production",
-    "continuityNote": "Series Room manages continuity",
-    "resonanceNote": "Audience Resonance™ optimizes scripts",
-    "videoLanguagePrompt": "Watch this production in your language",
-    "videoComingSoon": "Dub coming soon",
-    "videoSoon": "Soon",
-    "frictionLabel": "The Friction",
-    "solutionPillarLabel": "The SceneFlow Solution",
-    "showSolutionsSection": "Show Solutions",
-    "hideSolutionsSection": "Hide Solutions",
-    "cards": [
-      {
-        "id": "drama",
-        "title": "Feature-Length Cinematic Drama. Zero Character Drift.",
-        "subtitle": "Hold character faces, wardrobe, and locations from scene 1 to scene 100. Walk the Screening Room to see the Pre-Vis, per-scene motion video, and the final ProRes 4K master — then switch languages to hear the full dub.",
-        "badge": "Series-Ready",
-        "solutionPillars": [
-          {
-            "title": "Visual & Character Consistency",
-            "frictionHeadline": "Character Drift & Wobbly Sets.",
-            "friction": "Generative models reset with every shot — causing character faces, outfits, and lighting to morph continuously across scene cuts.",
-            "solutionHeadline": "Locked Asset Blueprints.",
-            "solution": "Define master character profiles, environments, and visual styles up front in Blueprint Room. SceneFlow enforces visual identity across every render to preserve narrative immersion."
-          },
-          {
-            "title": "Narrative Pacing & Scene Control",
-            "frictionHeadline": "The 10-Second Clip Trap.",
-            "friction": "Building a film out of disconnected micro-prompts creates choppy pacing, flat emotion, and endless manual timeline editing.",
-            "solutionHeadline": "Beat-First Storyboarding.",
-            "solution": "Direct at the scene level, not the prompt level. Structure dramatic beats, camera movements, and story arcs visually before generating a single frame of video."
-          },
-          {
-            "title": "Dialogue & Audio Alignment",
-            "frictionHeadline": "Unconvincing Dialogue.",
-            "friction": "Mismatched lip-sync, floating mouth movements, and detached voice tracks immediately pull viewers out of the drama.",
-            "solutionHeadline": "Integrated Voice & Sync Engine.",
-            "solution": "Dynamic voice performance and precise lip-sync are baked directly into the video pipeline — delivering believable dialogue without external post-production passes."
-          },
-          {
-            "title": "Workflow Friction & Reroll Fatigue",
-            "frictionHeadline": "Asset Chaos & Endless Rerolls.",
-            "friction": "Generating a short film usually means juggling 200+ raw video files, manual upscaling, and dozens of wasted generations.",
-            "solutionHeadline": "Automated Studio Pipeline.",
-            "solution": "From concept to final master MP4 in one unified platform. Blueprint Room handles story setup, Production Stage runs Direction through Streams, and Screening Room delivers your final export."
-          }
-        ],
-        "screeningRoomPreview": "The Cinematic Drama — Screening Room"
-      },
-      {
-        "id": "animation",
-        "title": "Full-Season Animated Series. One Consistent Art Style.",
-        "subtitle": "Lock character designs, line weights, and shading models across an entire season. Direct comedic timing shot by shot, then review the assembled episode in the Screening Room.",
-        "badge": "Multi-Style",
-        "solutionPillars": [
-          {
-            "title": "Stylistic Consistency",
-            "frictionHeadline": "Style Meltdown.",
-            "friction": "Cartoon and anime styles constantly warp between shots, shifting line art, breaking color palettes, and morphing characters into photorealistic uncanny slop.",
-            "solutionHeadline": "Locked Art Style Engine.",
-            "solution": "Freeze your aesthetic from the first frame. SceneFlow locks character designs, line weights, and shading models across the entire episode so your characters stay uniquely yours."
-          },
-          {
-            "title": "Exaggerated Animation & Physics",
-            "frictionHeadline": "Stiff & Glitchy Motion.",
-            "friction": "Generative models struggle with fast slapstick, double-takes, and squishy cartoon physics, turning high-energy gags into melting artifacts.",
-            "solutionHeadline": "Action & Pose Anchoring.",
-            "solution": "Drive dynamic character movement and expressive poses without breaking geometry. Direct punchy physical comedy, sudden cutaways, and wild expressions with full motion control."
-          },
-          {
-            "title": "Comedic Timing & Rhythm",
-            "frictionHeadline": "Ruined Punchlines.",
-            "friction": "Humor lives in the pauses and beat-cuts. Standard 5-second generative loops force awkward pacing that destroys joke delivery.",
-            "solutionHeadline": "Beat-Precision Editing.",
-            "solution": "Control scene pacing down to the frame. Adjust dramatic pauses, setup-to-punchline timing, and quick reaction shots directly inside the beat-first timeline before final render."
-          },
-          {
-            "title": "High-Energy Dialogue & Vocal Sync",
-            "frictionHeadline": "Lifeless Puppet Mouths.",
-            "friction": "Generic AI dialogue feels flat and mechanical, destroying the energy needed for snappy sitcom banter.",
-            "solutionHeadline": "Dynamic Voice & Expression Sync.",
-            "solution": "Map vocal delivery directly to energetic facial performance. Dialogue, expressive mouth shapes, and comedic voice tracks match seamlessly for maximum comedic impact."
-          }
-        ],
-        "screeningRoomPreview": "The Animated Comedy — Screening Room"
-      },
-      {
-        "id": "documentary",
-        "title": "Long-Form Documentaries. Sustained Period Accuracy.",
-        "subtitle": "Maintain era-specific detail, narrator pacing, and expert-witness continuity across a 40-minute episode or multi-part series. Review the full timeline in the Screening Room before committing to high-res renders.",
-        "badge": "Period-Accurate",
-        "solutionPillars": [
-          {
-            "title": "Era-Specific Visual Accuracy",
-            "frictionHeadline": "Anachronistic Artifacts",
-            "friction": "Standard generative models routinely bleed modern objects, smartphone screens, or incorrect period clothing into historical re-enactments.",
-            "solutionHeadline": "Historical Style Guardrails",
-            "solution": "Set exact temporal parameters — from 1920s film grain to 18th-century wardrobe textures — so every generated scene stays historically authentic."
-          },
-          {
-            "title": "Archival Cutaways & B-Roll Engine",
-            "frictionHeadline": "Visual Monotony in Long Voiceovers",
-            "friction": "Pairing long-form narrator audio with static stock images leads to rapid viewer drop-off during deep dives.",
-            "solutionHeadline": "Transcript-Driven B-Roll Engine",
-            "solution": "As your narrator discusses historical facts, SceneFlow automatically generates timed cinematic re-enactments, document overlays, and archival-style cutaways tied directly to the audio transcript."
-          },
-          {
-            "title": "Interview & Talking-Head Realism",
-            "frictionHeadline": "Uncanny Expert Witnesses",
-            "friction": "Generated historians, investigators, or witnesses often look artificial, with floating jaw movements and unnatural eye contact.",
-            "solutionHeadline": "Locked Expert Profiles & Vocal Sync",
-            "solution": "Maintain realistic, trustworthy interview setups with natural micro-expressions, accurate lip-sync, and consistent expert identities across multi-part series."
-          },
-          {
-            "title": "Episodic Pacing & Narrative Continuity",
-            "frictionHeadline": "Fragmented Timeline Editing",
-            "friction": "Balancing narrator audio, re-enactments, evidence reveals, and tension-building pauses across a 40-minute episode usually takes weeks in traditional NLEs.",
-            "solutionHeadline": "Beat-First Documentary Pipeline",
-            "solution": "Structure dramatic tension, suspenseful pauses, and evidence reveals visually inside Blueprint Room, delivering a fully assembled master file in one seamless pass."
-          }
-        ],
-        "screeningRoomPreview": "Documentary Production — Screening Room"
-      },
-      {
-        "id": "training",
-        "title": "Multi-Module Training Series. One Locked Instructor.",
-        "subtitle": "Hold the instructor, classroom, and lesson graphics from the first module to the last quiz. Walk Blueprint, Audience Resonance, and the Screening Room — Pre-Vis, rough cut, scenes, and the finished course — then switch languages to hear the localized version.",
-        "badge": "Curriculum-Ready",
-        "solutionPillars": [
-          {
-            "title": "Instructor & Setting Consistency",
-            "frictionHeadline": "A Different Teacher Every Module.",
-            "friction": "Generative clips reset the instructor face, wardrobe, and classroom between lessons, so a course feels like a pile of unrelated videos.",
-            "solutionHeadline": "Locked Instructor Blueprints.",
-            "solution": "Define the instructor, set, and visual system once in Blueprint Room. SceneFlow keeps that identity locked across every module."
-          },
-          {
-            "title": "Curriculum Pacing",
-            "frictionHeadline": "Slides Chopped into Clips.",
-            "friction": "Turning a syllabus into disconnected prompts loses the lesson arc, the worked example, and the pause before a quiz.",
-            "solutionHeadline": "Module-First Storyboarding.",
-            "solution": "Direct each module as a sequence of teaching beats — setup, demonstration, and check — before a frame is rendered."
-          },
-          {
-            "title": "Narration & On-Screen Teaching",
-            "frictionHeadline": "Voice That Misses the Graphic.",
-            "friction": "Narration, captions, and diagrams drift apart, so learners hear one step while the picture shows another.",
-            "solutionHeadline": "Synced Lesson Tracks.",
-            "solution": "Voice, captions, and on-screen teaching stay on the same beat, so each explanation lands with the visual that proves it."
-          },
-          {
-            "title": "Course Assembly",
-            "frictionHeadline": "Weeks in an Editor.",
-            "friction": "Stitching modules, retakes, and localized versions in a traditional timeline turns a curriculum update into a production delay.",
-            "solutionHeadline": "One Studio Pipeline.",
-            "solution": "Blueprint, Audience Resonance, and the Screening Room carry a module from outline to Pre-Vis, rough cut, scenes, and the finished course."
-          }
-        ],
-        "screeningRoomPreview": "The Training Series — Screening Room"
-      }
-    ]
-  },
-  "keyFeatures": {
-    "landingUiLanguagesLabel": "Produce and dub in 70+ languages. This site is available in these 39:",
-    "subtitle": "Series Room → Blueprint Room → Production Stage → Screening Room."
-  },
-  "twoModes": {
-    "eyebrow": "The friction we remove",
-    "title": "One pipeline. Not a stack of tools.",
-    "subtitle": "SceneFlow replaces single-clip generators and a pile of separate docs, editors, and re-renders. Build the series or the 90-minute master, then publish a scene or a chapter when you are ready to earn.",
-    "comingSoon": "Coming soon",
-    "comparison": {
-      "id": "comparison",
-      "caption": "Fragmented tools beside one SceneFlow pipeline.",
-      "themLabel": "Fragmented production",
-      "usLabel": "SceneFlow",
-      "rows": [
-        {
-          "them": "Prompt trial and error across tools",
-          "us": "One Blueprint locks the story and the look"
-        },
-        {
-          "them": "Hand-built treatments and formatting",
-          "us": "A film treatment and beat sheet from your premise or brief"
-        },
-        {
-          "them": "Short clips that do not share a cast",
-          "us": "Shots generated from the locked Reference Library"
-        },
-        {
-          "them": "Dragging clips into another editor",
-          "us": "Scenes, chapters, and the master assemble in the Screening Room"
-        },
-        {
-          "them": "Re-rendering to test a note",
-          "us": "Direct on the animatic, then render"
-        }
-      ]
-    },
-    "cta": "Launch Studio ($9)"
-  },
-  "infrastructure": {
-    "title": "Enterprise-Grade Infrastructure & Security",
-    "description": "Powered by Google Cloud and Vertex AI for enterprise reliability, multi-language dubbing models, and secure asset processing.",
-    "badges": {
-      "googleCloud": "Google Cloud",
-      "vertexAi": "Vertex AI"
-    }
-  },
-  "notify": {
-    "heading": "Get launch news",
-    "description": "Leave your email and we’ll tell you when we announce. Nothing else.",
-    "placeholder": "you@studio.com",
-    "submit": "Notify me",
-    "submitting": "Sending…",
-    "successTitle": "Check your inbox.",
-    "successBody": "We sent a confirmation link. Click it to join the launch list. Nothing else.",
-    "errorEmpty": "Enter your email so we can reach you.",
-    "errorInvalid": "That email doesn’t look right. Check it and try again.",
-    "errorGeneric": "Something went wrong. Try again in a moment.",
-    "privacy": "We email a confirmation link first. One launch note after you confirm. No spam.",
-    "confirmTitle": "You’re on the list.",
-    "confirmBody": "We’ll email you when we announce. Nothing else.",
-    "confirmExpiredTitle": "That link expired.",
-    "confirmExpiredBody": "Submit your email on the landing page again and we’ll send a new confirmation link.",
-    "confirmInvalidTitle": "That link isn’t valid.",
-    "confirmInvalidBody": "Request a new confirmation from the landing page.",
-    "confirmHome": "Back to SceneFlow"
-  },
-  "forFilmmakers": {
-    "badge": "Apply for the SceneFlow Originals Seed Program",
-    "heading": "For Filmmakers: Submit your pilot for platform distribution and monetization.",
-    "subtitle": "The SceneFlow Network is a closed Founding Creator cohort — 5 to 10 hand-picked titles at launch, not an open marketplace. Revenue share starts only after paying subscribers exist. What we offer now is distribution leverage: funded teaser ads in exchange for an exclusive premiere window.",
-    "closedNote": "Applications are reviewed by editors. Submitting does not publish your film to a catalog.",
-    "fields": {
-      "email": "Email",
-      "emailPlaceholder": "you@studio.com",
-      "name": "Your name",
-      "namePlaceholder": "Director or producer name",
-      "title": "Pilot or feature title",
-      "titlePlaceholder": "Working title",
-      "logline": "Logline",
-      "loglinePlaceholder": "One or two sentences that sell the story.",
-      "audienceUrl": "Existing audience",
-      "audiencePlaceholder": "YouTube, Bilibili, festival, or social URL",
-      "exclusivePremiere": "I am open to an exclusive premiere window on SceneFlow in exchange for funded teaser ads."
-    },
-    "submit": "Submit application",
-    "submitting": "Sending…",
-    "successTitle": "Check your inbox.",
-    "successBody": "We sent a confirmation link. Click it to lock in your Seed application. Nothing else.",
-    "errorEmpty": "Fill in every field so we can review your pilot.",
-    "errorInvalidEmail": "That email doesn’t look right. Check it and try again.",
-    "errorInvalidUrl": "Add a public URL for your existing audience.",
-    "errorGeneric": "Something went wrong. Try again in a moment.",
-    "confirmTitle": "Application received.",
-    "confirmBody": "You’re in the Seed review queue. We read every submission. This is not a public catalog listing.",
-    "confirmExpiredTitle": "That link expired.",
-    "confirmExpiredBody": "Submit the filmmaker form again and we’ll send a new confirmation link.",
-    "confirmInvalidTitle": "That link isn’t valid.",
-    "confirmInvalidBody": "Request a new confirmation from the filmmaker form.",
-    "confirmHome": "Back to SceneFlow",
-    "privacy": "We email a confirmation link first. Editors only. No spam."
-  },
-  "publishCut": {
-    "eyebrow": "The cut you publish",
-    "title": "Export anywhere. Premiere on SceneFlow when you earn it.",
-    "subtitle": "Download a master and ship it yourself, or publish finished scenes and chapters to {longForm} and cut trailers for {shorts} — without waiting on the whole cut. Before anything hits the public feed, run drafts or your final master through the Screening Room. Standout projects can apply for the invite-only SceneFlow Network; it is a curated accelerator, not an open storefront.",
-    "comparison": {
-      "id": "publish",
-      "caption": "A finished scene or chapter, and the 90-minute master, from one studio."
-    },
-    "cta": "Launch Studio ($9)"
   }
 }
