@@ -557,6 +557,7 @@ export function useSeriesStudio(seriesId: string | null, userId: string | null) 
     generateStoryline: seriesHook.generateStoryline,
     addMoreEpisodes: seriesHook.addMoreEpisodes,
     refreshSeries: seriesHook.fetchSeries,
+    setSeries: seriesHook.setSeries,
     
     // Episode state
     selectedEpisodeId,
