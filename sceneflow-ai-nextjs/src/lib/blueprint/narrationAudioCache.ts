@@ -64,13 +64,14 @@ export async function findCachedNarrationAudio(pathname: string): Promise<string
 /** Store a clip and return its public URL, or null when storage is unavailable. */
 export async function storeNarrationAudio(
   pathname: string,
-  audio: Buffer
+  audio: Buffer,
+  contentType = 'audio/mpeg'
 ): Promise<string | null> {
   if (!isNarrationAudioCacheConfigured()) return null
   try {
     const blob = await put(pathname, audio, {
       access: 'public',
-      contentType: 'audio/mpeg',
+      contentType,
       addRandomSuffix: false,
     })
     return blob.url

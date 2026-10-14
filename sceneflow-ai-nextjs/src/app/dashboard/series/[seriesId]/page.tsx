@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react'
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   BookOpen,
@@ -80,6 +80,15 @@ import { ReferenceTransferDialog } from '@/components/series/ReferenceTransferDi
 import { SeriesHeroHealthStrip } from '@/components/series/SeriesHeroHealthStrip'
 import { SeriesContinuityPanel } from '@/components/series/SeriesContinuityPanel'
 import { getEpisodeDriftWarnings, UPDATE_EPISODE_CAST_INSTRUCTION } from '@/lib/series/seriesHealth'
+import {
+  readEpisodeNarration,
+  readOverviewNarration,
+  seriesEpisodeNarrationText,
+  seriesOverviewNarrationText,
+  withSavedSeriesNarration,
+  type SavedSeriesNarration,
+} from '@/lib/series/seriesNarrationSync'
+import { useSeriesNarrationPlayer } from '@/hooks/useSeriesNarrationPlayer'
 import { STUDIO_DISPLAY_NAMES } from '@/constants/studioDisplayNames'
 import { applyOptimisticScoreDelta, axisDisplayLabel, normalizeSeriesResonanceAnalysis } from '@/lib/series/resonanceScoring'
 import { ensureSeasons, groupEpisodesBySeason } from '@/lib/series/seasons'
@@ -138,6 +147,7 @@ export default function SeriesStudioPage() {
     generateStoryline,
     addMoreEpisodes,
     refreshSeries,
+    setSeries,
     selectedEpisodeId,
     selectedEpisode,
     isStartingEpisode,
@@ -884,6 +894,19 @@ export default function SeriesStudioPage() {
               resonanceAnalysis={resonanceAnalysis}
               onRegenerate={handleRegenerateField}
               isGenerating={isGenerating}
+              onNarrationSaved={(narration) => {
+                setSeries((current) =>
+                  current
+                    ? {
+                        ...current,
+                        metadata: withSavedSeriesNarration(current.metadata, {
+                          section: 'overview',
+                          narration,
+                        }),
+                      }
+                    : current
+                )
+              }}
               onOpenBibleSync={() => {
                 setContinuitySection('review-updates')
                 navigateTab('continuity')
@@ -910,6 +933,21 @@ export default function SeriesStudioPage() {
               userId={userId}
               isDirecting={isEditingStoryline}
               onConnected={refreshSeries}
+              narrationMetadata={series.metadata}
+              onNarrationSaved={(episodeId, narration) => {
+                setSeries((current) =>
+                  current
+                    ? {
+                        ...current,
+                        metadata: withSavedSeriesNarration(current.metadata, {
+                          section: 'episode',
+                          episodeId,
+                          narration,
+                        }),
+                      }
+                    : current
+                )
+              }}
             />
           </TabsContent>
 
@@ -1283,6 +1321,41 @@ interface OverviewPanelProps {
   onRegenerate: (field: string) => void
   isGenerating: boolean
   onOpenBibleSync?: () => void
+  onNarrationSaved: (narration: SavedSeriesNarration) => void
+}
+
+function RegenerateNarrationButton({
+  label,
+  spinning,
+  disabled,
+  onClick,
+  className,
+}: {
+  label: string
+  spinning: boolean
+  disabled: boolean
+  onClick: () => void
+  className?: string
+}) {
+  return (
+    <TooltipProvider>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={onClick}
+            disabled={disabled}
+            aria-label="Regenerate narration"
+            className={className ?? 'text-gray-400 hover:text-amber-400 hover:bg-amber-500/10 h-9 w-9 p-0'}
+          >
+            <RefreshCw className={`w-4 h-4 ${spinning ? 'animate-spin' : ''}`} />
+          </Button>
+        </TooltipTrigger>
+        <TooltipContent>{label}</TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
+  )
 }
 
 const overviewCardClass = 'rounded-xl border border-gray-600 bg-gray-950/40 p-6'
@@ -1318,6 +1391,7 @@ function OverviewPanel({
   onRegenerate,
   isGenerating,
   onOpenBibleSync,
+  onNarrationSaved,
 }: OverviewPanelProps) {
   const bible = series.productionBible
   const [shareUrl, setShareUrl] = useState<string | null>(null)
@@ -1340,13 +1414,27 @@ function OverviewPanel({
   }
 
   // --- TTS State & Logic ---
-  const [isPlaying, setIsPlaying] = useState(false)
-  const [isGeneratingTTS, setIsGeneratingTTS] = useState(false)
   const [voiceSelectorOpen, setVoiceSelectorOpen] = useState(false)
   const [selectedVoiceId, setSelectedVoiceId] = useState<string>(DEFAULT_CINEMATIC_NARRATOR.voiceId)
   const [selectedVoiceName, setSelectedVoiceName] = useState<string>(DEFAULT_CINEMATIC_NARRATOR.displayName)
   const [audioProfilePrompt, setAudioProfilePrompt] = useState<string>(DEFAULT_CINEMATIC_NARRATOR.profile)
-  const audioRef = React.useRef<HTMLAudioElement | null>(null)
+  const {
+    isPlaying,
+    isGeneratingTTS,
+    play: handlePlayAudio,
+    regenerate: handleRegenerateNarration,
+  } = useSeriesNarrationPlayer({
+    seriesId: series.id,
+    section: 'overview',
+    text: seriesOverviewNarrationText({
+      logline: series.logline,
+      productionBible: bible,
+    }),
+    saved: readOverviewNarration(series.metadata),
+    voiceId: selectedVoiceId,
+    prompt: audioProfilePrompt,
+    onSaved: onNarrationSaved,
+  })
 
   // Initialize with a saved cinematic narrator preset if available
   useEffect(() => {
@@ -1367,65 +1455,6 @@ function OverviewPanel({
       console.error('Failed to load favorites', e)
     }
   }, [])
-
-  // Clean up audio on unmount
-  useEffect(() => {
-    return () => {
-      if (audioRef.current) {
-        audioRef.current.pause()
-        audioRef.current = null
-      }
-    }
-  }, [])
-
-  const handlePlayAudio = async () => {
-    // If playing, stop it
-    if (isPlaying) {
-      if (audioRef.current) {
-        audioRef.current.pause()
-        audioRef.current = null
-      }
-      setIsPlaying(false)
-      return
-    }
-
-    const textToSpeak = `${bible?.logline || series.logline || ''}\n\n${bible?.synopsis || ''}`.trim()
-    if (!textToSpeak) {
-      toast.error('No logline or synopsis to play.')
-      return
-    }
-
-    setIsGeneratingTTS(true)
-    try {
-      const response = await fetch('/api/tts/google', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          text: textToSpeak,
-          voiceId: selectedVoiceId,
-          ...(selectedVoiceId.startsWith('gemini-') && audioProfilePrompt ? { prompt: audioProfilePrompt } : {})
-        })
-      })
-
-      if (!response.ok) throw new Error('TTS failed')
-
-      const blob = await response.blob()
-      const url = URL.createObjectURL(blob)
-      
-      audioRef.current = new Audio(url)
-      audioRef.current.onended = () => setIsPlaying(false)
-      audioRef.current.onerror = () => setIsPlaying(false)
-      
-      await audioRef.current.play()
-      setIsPlaying(true)
-    } catch (err) {
-      console.error('TTS error:', err)
-      toast.error('Failed to generate audio readout.')
-      setIsPlaying(false)
-    } finally {
-      setIsGeneratingTTS(false)
-    }
-  }
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -1451,7 +1480,7 @@ function OverviewPanel({
                 <Button
                   variant="ghost"
                   size="sm"
-                  onClick={handlePlayAudio}
+                  onClick={() => void handlePlayAudio()}
                   disabled={isGeneratingTTS}
                   className={`h-7 px-3 text-xs font-medium ${
                     isPlaying 
@@ -1473,15 +1502,12 @@ function OverviewPanel({
                 </Button>
               </div>
 
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => onRegenerate('title')}
-                disabled={isGenerating}
-                className="text-gray-400 hover:text-amber-400 hover:bg-amber-500/10 h-9 w-9 p-0"
-              >
-                <RefreshCw className={`w-4 h-4 ${isGenerating ? 'animate-spin' : ''}`} />
-              </Button>
+              <RegenerateNarrationButton
+                label="Regenerate narration. Listen replays the saved audio unless the overview has changed."
+                spinning={isGeneratingTTS}
+                disabled={isGeneratingTTS}
+                onClick={() => void handleRegenerateNarration()}
+              />
             </div>
           </div>
           <div className="space-y-4">
@@ -1698,6 +1724,8 @@ interface EpisodesPanelProps {
   userId?: string | null
   isDirecting?: boolean
   onConnected?: () => Promise<unknown> | void
+  narrationMetadata?: Record<string, any> | null
+  onNarrationSaved: (episodeId: string, narration: SavedSeriesNarration) => void
 }
 
 type EpisodeStatusFilter = 'all' | 'blueprint' | 'in_progress' | 'completed'
@@ -1718,6 +1746,8 @@ function EpisodesPanel({
   userId,
   isDirecting = false,
   onConnected,
+  narrationMetadata,
+  onNarrationSaved,
 }: EpisodesPanelProps) {
   const [statusFilter, setStatusFilter] = useState<EpisodeStatusFilter>('all')
   const [connectEpisodeId, setConnectEpisodeId] = useState<string | null>(null)
@@ -1756,13 +1786,28 @@ function EpisodesPanel({
   const canAddMore = true
 
   // --- TTS State & Logic ---
-  const [isPlaying, setIsPlaying] = useState(false)
-  const [isGeneratingTTS, setIsGeneratingTTS] = useState(false)
   const [voiceSelectorOpen, setVoiceSelectorOpen] = useState(false)
   const [selectedVoiceId, setSelectedVoiceId] = useState<string>(DEFAULT_CINEMATIC_NARRATOR.voiceId)
   const [selectedVoiceName, setSelectedVoiceName] = useState<string>(DEFAULT_CINEMATIC_NARRATOR.displayName)
   const [audioProfilePrompt, setAudioProfilePrompt] = useState<string>(DEFAULT_CINEMATIC_NARRATOR.profile)
-  const audioRef = React.useRef<HTMLAudioElement | null>(null)
+  const {
+    isPlaying,
+    isGeneratingTTS,
+    play: handlePlayAudio,
+    regenerate: handleRegenerateNarration,
+  } = useSeriesNarrationPlayer({
+    seriesId,
+    section: 'episode',
+    episodeId: selectedEpisode?.id,
+    text: seriesEpisodeNarrationText(selectedEpisode),
+    saved: selectedEpisode ? readEpisodeNarration(narrationMetadata, selectedEpisode.id) : null,
+    voiceId: selectedVoiceId,
+    prompt: audioProfilePrompt,
+    resetKey: selectedEpisodeId ?? undefined,
+    onSaved: (narration, savedEpisodeId) => {
+      if (savedEpisodeId) onNarrationSaved(savedEpisodeId, narration)
+    },
+  })
 
   // Initialize with a saved cinematic narrator preset if available
   useEffect(() => {
@@ -1783,21 +1828,6 @@ function EpisodesPanel({
       console.error('Failed to load favorites', e)
     }
   }, [])
-
-  // Clean up audio on unmount or episode change
-  useEffect(() => {
-    if (audioRef.current) {
-      audioRef.current.pause()
-      audioRef.current = null
-    }
-    setIsPlaying(false)
-    return () => {
-      if (audioRef.current) {
-        audioRef.current.pause()
-        audioRef.current = null
-      }
-    }
-  }, [selectedEpisodeId])
 
   const openConnect = async (episodeId: string) => {
     if (!userId) {
@@ -1839,54 +1869,6 @@ function EpisodesPanel({
       toast.error(err instanceof Error ? err.message : 'Failed to connect project')
     } finally {
       setIsConnecting(false)
-    }
-  }
-
-  const handlePlayAudio = async () => {
-    if (isPlaying) {
-      if (audioRef.current) {
-        audioRef.current.pause()
-        audioRef.current = null
-      }
-      setIsPlaying(false)
-      return
-    }
-
-    const textToSpeak = `${selectedEpisode?.logline || ''}\n\n${selectedEpisode?.synopsis || ''}`.trim()
-    if (!textToSpeak) {
-      toast.error('No logline or synopsis to play.')
-      return
-    }
-
-    setIsGeneratingTTS(true)
-    try {
-      const response = await fetch('/api/tts/google', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          text: textToSpeak,
-          voiceId: selectedVoiceId,
-          ...(selectedVoiceId.startsWith('gemini-') && audioProfilePrompt ? { prompt: audioProfilePrompt } : {})
-        })
-      })
-
-      if (!response.ok) throw new Error('TTS failed')
-
-      const blob = await response.blob()
-      const url = URL.createObjectURL(blob)
-      
-      audioRef.current = new Audio(url)
-      audioRef.current.onended = () => setIsPlaying(false)
-      audioRef.current.onerror = () => setIsPlaying(false)
-      
-      await audioRef.current.play()
-      setIsPlaying(true)
-    } catch (err) {
-      console.error('TTS error:', err)
-      toast.error('Failed to generate audio readout.')
-      setIsPlaying(false)
-    } finally {
-      setIsGeneratingTTS(false)
     }
   }
 
@@ -2057,8 +2039,8 @@ function EpisodesPanel({
                 )}
 
                 {/* TTS Controls */}
-                <div className="flex flex-col items-end gap-2 mt-2 w-full max-w-[280px]">
-                  <div className="flex items-center bg-gray-900/50 rounded-lg border border-gray-700/50 p-1 self-end">
+                <div className="flex items-center gap-2 mt-2 self-end">
+                  <div className="flex items-center bg-gray-900/50 rounded-lg border border-gray-700/50 p-1">
                     <Button
                       variant="ghost"
                       size="sm"
@@ -2072,7 +2054,7 @@ function EpisodesPanel({
                     <Button
                       variant="ghost"
                       size="sm"
-                      onClick={handlePlayAudio}
+                      onClick={() => void handlePlayAudio()}
                       disabled={isGeneratingTTS}
                       className={`h-7 px-3 text-xs font-medium ${
                         isPlaying 
@@ -2093,6 +2075,13 @@ function EpisodesPanel({
                       )}
                     </Button>
                   </div>
+                  <RegenerateNarrationButton
+                    label="Regenerate narration. Listen replays the saved audio unless this episode text has changed."
+                    spinning={isGeneratingTTS}
+                    disabled={isGeneratingTTS}
+                    onClick={() => void handleRegenerateNarration()}
+                    className="text-gray-400 hover:text-amber-400 hover:bg-amber-500/10 h-7 w-7 p-0"
+                  />
                 </div>
               </div>
             </div>
