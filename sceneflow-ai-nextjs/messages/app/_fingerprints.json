@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "generatedAt": "2026-10-14T04:11:24.980Z",
+  "generatedAt": "2026-10-14T04:21:54.015Z",
   "surfaces": {
     "common": {
       "actions.save": "1509f561f2416598",
@@ -639,6 +639,8 @@
       "assistant.reviseIntent": "e40c80dfe57ff804",
       "assistant.applyRevision": "b4c385c3d4e1479f",
       "reimagine.reimagineTitle": "8eb7dda17f57d670",
+      "reimagine.reimagining": "c86c92d99620bf6d",
+      "reimagine.generateBlueprint": "e26f72b23cf3749b",
       "reimagine.startTitle": "fd8ff1102656ccec",
       "reimagine.startDescription": "8703662593e3c7dc",
       "reimagine.describeProject": "c99749f12599a067",
