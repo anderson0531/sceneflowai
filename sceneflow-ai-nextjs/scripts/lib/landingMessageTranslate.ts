@@ -158,11 +158,51 @@ const LIBRETRANSLATE_URL = (process.env.LIBRETRANSLATE_URL || 'http://127.0.0.1:
 /** Locales without Argos models — translated via deep-translator (Google) instead. */
 export const DEEP_TRANSLATOR_LOCALES = new Set(['am', 'yo', 'zu', 'af'])
 
-function shouldSkipTranslation(path: string, value: string): boolean {
-  if (path.endsWith('.id')) return true
+/** Identifiers, hashes, and endonyms that must stay byte-for-byte. */
+const STRUCTURAL_LEAVES = new Set([
+  'id',
+  'icon',
+  'hash',
+  'nativeLabel',
+  'media',
+  'number',
+  'ratio',
+  'flag',
+])
+
+export function shouldSkipTranslation(path: string, value: string): boolean {
+  const leaf = path.split('.').pop() ?? ''
+  if (STRUCTURAL_LEAVES.has(leaf)) return true
+  if (leaf.endsWith('Href') || leaf === 'href') return true
   if (/^https?:\/\//.test(value)) return true
-  if (path.endsWith('ctaSecondaryHref')) return true
+  if (value.startsWith('#') || value.startsWith('/')) return true
   return false
+}
+
+/**
+ * English strings a locale is still showing: the key is missing, or the stored
+ * value is still the English source. Existing translations (value differs) stay.
+ */
+export function extractStaleLandingFlat(
+  en: Record<string, unknown>,
+  existing: Record<string, unknown>,
+  previousEn?: Record<string, unknown> | null
+): Record<string, string> {
+  const enFlat = flattenMessages(en)
+  const existingFlat = flattenMessages(existing)
+  const previousFlat = previousEn ? flattenMessages(previousEn) : null
+  const stale: Record<string, string> = {}
+  for (const [path, value] of Object.entries(enFlat)) {
+    if (shouldSkipTranslation(path, value)) continue
+    const current = existingFlat[path]
+    // A previous English catalog marks copy that changed after the last
+    // translation. Those locales still hold the old sentence, so they are
+    // stale even when the text is no longer identical to today's English.
+    const englishChanged =
+      previousFlat != null && previousFlat[path] !== undefined && previousFlat[path] !== value
+    if (current === undefined || current === value || englishChanged) stale[path] = value
+  }
+  return stale
 }
 
 export type TranslateProvider =

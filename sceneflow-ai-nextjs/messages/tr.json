@@ -1,10 +1,945 @@
 {
+  "pipeline": {
+    "badge": "SceneFlow nedir?",
+    "title": "3 Sütunlu İş Akışı Mimarisi",
+    "subtitle": "İlk fikirden yayına hazır ana kopyaya kadar üç aşama: Series Room, Blueprint Room ve Production Stage.",
+    "ui": {
+      "expandFullscreen": "Tam ekranda görüntüle",
+      "closeFullscreen": "Kapat",
+      "landscapeHint": "Daha geniş bir yatay görünüm için cihazınızı döndürün.",
+      "howItWorksLabel": "Bu aşamada nasıl işliyor?",
+      "showHowItWorks": "Nasıl çalıştığını göster",
+      "hideHowItWorks": "Nasıl çalıştığını gizle",
+      "imagePlaceholder": "Ekran görüntüsü yer tutucusu",
+      "videoWalkthrough": "30 saniyelik genel bakış",
+      "comingSoon": "Ürün ekran görüntüsü yakında geliyor"
+    },
+    "pillars": [
+      {
+        "id": "series",
+        "tabLabel": "SFAISERIES_ODA_DÖNEMİ",
+        "number": "01",
+        "title": "Series Room Oluşturma",
+        "header": "Bir klip değil, bir evren inşa et.",
+        "body": "Dizinizi veya YouTube kanalınızı bir kez tanımlayın; SceneFlow, her bölümün marka kimliğiyle uyumlu kalmasını sağlayan Paylaşımlı Reference Library aracılığıyla hikaye örgüsü, oyuncu kadrosu ve sınırsız bölüm listesi dahil olmak üzere tüm dünyayı oluştursun.",
+        "steps": [
+          {
+            "id": "series-concept",
+            "number": "1",
+            "title": "Konseptinizle başlayın.",
+            "description": "Dizinizin veya YouTube kanalınızın konseptini ya da ayrıntılı bir açıklamasını girin. SceneFlow bunu, herhangi bir \"prompt mühendisliği\" gerektirmeden, yapılandırılmış ve prodüksiyona hazır bir temele dönüştürür.",
+            "imagePlaceholder": "Yeni dizi başvurusu — konsept veya kanal açıklaması"
+          },
+          {
+            "id": "series-baseline",
+            "number": "2",
+            "title": "SceneFlow temel modelini inceleyin.",
+            "description": "SceneFlow, Audience Resonance analiziyle puanlanmış profesyonel bir referans düzeyi sunar. Seslendirmeli genel bakışı okuyun veya dinleyin, ardından süreci kendi yönünüz doğrultusunda şekillendirin.",
+            "imagePlaceholder": "Seri referans noktası — Audience Resonance puanı ve anlatımlı genel bakış"
+          },
+          {
+            "id": "series-episodes",
+            "number": "3",
+            "title": "Sınırsız sayıda bölüm oluşturun",
+            "description": "Hikâyenizin gerektirdiği sayıda bölüm oluşturun. Her biri dizinizin DNA'sını taşır; böylece oyuncu kadrosu, ton ve evren, ilk bölümden sezon finaline kadar tutarlılığını korur.",
+            "imagePlaceholder": "Bölüm yelpazesi — dizi kurgusundan türetilen sınırsız sayıda bölüm"
+          },
+          {
+            "id": "series-reference-library",
+            "number": "4",
+            "title": "Reference Library'i inceleyin.",
+            "description": "Production Stage aracılığıyla oluşturulan ve yönetilen; her bölümde yeniden kullanılan paylaşılan Reference Library öğelerine (karakterler, sesler, kostümler, mekânlar ve aksesuarlar) göz atın.",
+            "imagePlaceholder": "Paylaşılan Reference Library — karakterler, sesler, mekânlar, aksesuarlar"
+          },
+          {
+            "id": "series-assistant-writer",
+            "number": "5",
+            "title": "Akıllı Yazma Asistanını Yönlendir",
+            "description": "Talimatlarınızı sesli veya yazılı olarak ileterek seriyi ya da herhangi bir bölümü yeniden şekillendirin. Akıllı Yazım Asistanı, profesyonel metinleri anında yeniden yazar; böylece boş bir sayfayla uğraşmanıza veya karmaşık komutlar (prompt engineering) hazırlamanıza gerek kalmaz.",
+            "imagePlaceholder": "Akıllı Asistan Yazar — dizi ve bölümler için sesli veya yazılı yönlendirme"
+          },
+          {
+            "id": "series-start-production",
+            "number": "6",
+            "title": "Tek tıklamayla üretime başlayın",
+            "description": "Bir bölüm için doğru zaman olduğunu hissettiğinizde, tek bir tıklamayla prodüksiyonu başlatın ve doğrudan yönlendirmeli Production Stage iş akışına geçiş yapın.",
+            "imagePlaceholder": "Seçili bir bölümün üretimini tek tıklamayla başlatın"
+          }
+        ]
+      },
+      {
+        "id": "blueprint",
+        "tabLabel": "SFAIBLUEPRINT_ODA_TERİMİ",
+        "number": "02",
+        "title": "SFAIBLUEPRINT_ODA_TERİMİ",
+        "header": "Yaratıcı DNA'nız, Güvence Altında",
+        "body": "Blueprint Room; sinopsis, olay örgüsü aşamaları (beats), karakterler, ton ve üslup unsurlarını içeren kapsamlı bir film taslağıdır. Bu taslak, Audience Resonance Analizi ile önceden değerlendirilmiştir; böylece henüz tek bir kare bile işlenmeden (render edilmeden), izleyicide karşılık bulacağı kesinleşmiş bir hikâyeye onay verirsiniz.",
+        "steps": [
+          {
+            "id": "blueprint-baseline",
+            "number": "1",
+            "title": "Temel Blueprint'i gözden geçirin.",
+            "description": "Kendi bünyesinde Audience Resonance Analizi barındıran profesyonel bir Blueprint açın. Tam olarak neden işe yaradığını öğrenmek için seslendirmeli genel bakışı okuyun veya dinleyin.",
+            "imagePlaceholder": "Başlangıç Blueprint — Audience Resonance puanı ile uygulama"
+          },
+          {
+            "id": "blueprint-assistant-writer",
+            "number": "2",
+            "title": "Akıllı Yazma Asistanını Yönlendir",
+            "description": "Talimatlarınızı sesli veya yazılı olarak ileterek sinopsisi, hikaye akışını, karakterleri ve daha fazlasını geliştirin. Akıllı Yazarlık Asistanı, herhangi bir \"prompt mühendisliği\" gerektirmeden taslağı anında düzenler.",
+            "imagePlaceholder": "Akıllı Yazarlık Asistanı — sinopsis, olay örgüsü aşamaları ve karakterler üzerinde düzenleme"
+          },
+          {
+            "id": "blueprint-reasoning",
+            "number": "3",
+            "title": "Gerekçeyi gözden geçirin",
+            "description": "Mevcut Blueprint'e —yani her bir anlatı aşamasının ve karakter seçiminin ardındaki hikâye mantığına— dair yaratıcı bir açıklama için \"Gerekçe\" (Reasoning) bölümünü açın.",
+            "imagePlaceholder": "Gerekçelendirme paneli — Blueprint'in yaratıcı açıklaması"
+          },
+          {
+            "id": "blueprint-start-production",
+            "number": "4",
+            "title": "Hazır olduğunda üretime başla",
+            "description": "Hikâye tam anlamıyla etkileyici bir kıvama geldiğinde üretime başlayın; böylece tüm üretim süreci, onayladığınız yaratıcı DNA'yı hiçbir sapma olmaksızın devralır.",
+            "imagePlaceholder": "Production Stage'i açın — onaylanmış bir taslaktan hazırlık aşaması kontrolü"
+          }
+        ]
+      },
+      {
+        "id": "production",
+        "tabLabel": "Production Stage",
+        "number": "03",
+        "title": "Production Stage",
+        "header": "Senaryodan Yayınlanmış Nihai Esere",
+        "body": "Production Stage; onaylanmış senaryodan yayınlanmaya hazır 4K ana kopyaya (master) uzanan süreçte Intelligent Assistant Director, Screening Room ve çok dilli akışlarla birlikte senaryo, ses, kareler ve videodan oluşan eş zamanlı ve çok motorlu bir üretim gerçekleştirir.",
+        "steps": [
+          {
+            "id": "production-script-ara",
+            "number": "1",
+            "title": "Temel senaryoyu gözden geçirin.",
+            "description": "Audience Resonance Analizi içeren profesyonel bir taslak metinle işe başlayın. Kredi harcamadan önce nelerin etkili olduğunu anlamak için seslendirilmiş analizi okuyun veya dinleyin.",
+            "imagePlaceholder": "Temel metin — Audience Resonance analizi ve seslendirmeli genel bakış"
+          },
+          {
+            "id": "production-assistant-writer",
+            "number": "2",
+            "title": "Sahne sahne optimize edin",
+            "description": "Senaryoyu sahne sahne optimize etmek için Akıllı Yazım Asistanı'nı kullanın; diyalogları sıkılaştırın, anlatım akışını (beat'leri) yeniden şekillendirin ve sesli ya da yazılı komutlarla tek tıkla iyileştirmeler yapın.",
+            "imagePlaceholder": "Akıllı Yazarlık Asistanı — sahne bazlı senaryo optimizasyonu"
+          },
+          {
+            "id": "production-reference-library",
+            "number": "3",
+            "title": "Reference Library'i oluşturun.",
+            "description": "Senaryo tabanlı, özel veya yüklenmiş karakterler, sesler, kostümler, mekânlar ve aksesuarlarla Reference Library'i oluşturun ya da güncelleyin. Referans görsellerini doğrudan düzenleyin; \"slot makinesi\" tarzı rastgele yeniden oluşturma süreçleriyle uğraşmayın.",
+            "imagePlaceholder": "Reference Library — karakterler, sesler, kostümler, mekânlar, aksesuarlar"
+          },
+          {
+            "id": "production-audio",
+            "number": "4",
+            "title": "Ses oluştur",
+            "description": "Tüm sahneler genelinde, sahne bazında veya sahne içindeki her bir ritim noktasına göre diyalog, anlatım, ses efektleri ve müzik oluşturun; üstelik 70'ten fazla dilde ana dil kalitesinde seslendirme ile.",
+            "imagePlaceholder": "Audio Agent — tüm sahneler, tek bir sahne veya adım adım"
+          },
+          {
+            "id": "production-frames",
+            "number": "5",
+            "title": "Kareler oluşturun ve düzenleyin",
+            "description": "Her sahne için veya adım adım (beat by beat) Run All Agents ve Stills Agent kullanarak \"beat\" kareleri oluşturun; ardından Intelligent Assistant Director (IAD) ile dilediğiniz kareyi düzenleyin — yapılması gereken değişikliği tarif etmeniz yeterlidir.",
+            "imagePlaceholder": "Intelligent Assistant Director düzenlemeleriyle vuruş kareleri"
+          },
+          {
+            "id": "production-animatic",
+            "number": "6",
+            "title": "Animatiği inceleyin",
+            "description": "Kareler, diyalog, ses efektleri ve müzik dahil olmak üzere animatiğin tamamını etkileşimli Screening Room içinde oynatın ve herhangi bir dosya dışa aktarmaya gerek kalmadan geri bildirim almak için bir bağlantı paylaşın.",
+            "imagePlaceholder": "Screening Room — etkileşimli animatik incelemesi ve paylaşımı"
+          },
+          {
+            "id": "production-video",
+            "number": "7",
+            "title": "Video oluştur",
+            "description": "Video Agent ile onaylanmış kareleri sahne bazında veya adım adım harekete dönüştürün. Intelligent Assistant Director sayesinde herhangi bir çekimi yeniden yapın; böylece slot makinesi mantığıyla işleyen sonsuz yeniden üretim süreçleriyle uğraşmak zorunda kalmazsınız.",
+            "imagePlaceholder": "IAD tekrarlarıyla Video Agent oluşturma"
+          },
+          {
+            "id": "production-mixer",
+            "number": "8",
+            "title": "Mikserde düzenle",
+            "description": "Mixer'da her sahneye son dokunuşları yapın; altyazılar, kırpmalar, seslendirme, bindirmeler ve ses dengesi dahil olmak üzere, stüdyodan ayrılmadan markaya uygun nihai düzenlemeleri gerçekleştirin.",
+            "imagePlaceholder": "Mikser — altyazılar, kırpma, seslendirme ve ses kontrolleri"
+          },
+          {
+            "id": "production-render-scenes",
+            "number": "9",
+            "title": "Sahneleri işle ve incele",
+            "description": "Sahnelerinizi render edin; ardından, nihai birleştirmeden önce onay sürecini tamamlamak üzere bunları Screening Room üzerinden inceleyip paylaşın.",
+            "imagePlaceholder": "Screening Room'de incelenen ve paylaşılan render alınmış sahneler"
+          },
+          {
+            "id": "production-multilanguage",
+            "number": "10",
+            "title": "Çok dilli yayınlar oluşturun",
+            "description": "Aynı onaylanmış kurgu üzerinden seslendirmeli veya dudak senkronizasyonlu dil versiyonları oluşturun; tek bir kareyi bile yeniden çekmeden 70'ten fazla pazara ulaşın.",
+            "imagePlaceholder": "Çok dilli yayınlar — bölgeye özel seslendirme ve dudak senkronizasyonu"
+          },
+          {
+            "id": "production-publish",
+            "number": "11",
+            "title": "Nihai render'ı al ve yayınla",
+            "description": "Nihai yapımı ana kopyaya dönüştürüp yayınlayın; YouTube kanalınız ve diğer platformlar için otomatik olarak oluşturulmuş küçük resimler, başlıklar ve açıklamalar hazır.",
+            "imagePlaceholder": "Nihai render ve tek tıkla YouTube'da yayınlama"
+          }
+        ]
+      }
+    ]
+  },
+  "screeningRoom": {
+    "badge": "Etkileşimli Screening Room — Animatic Önizlemesi Mevcut",
+    "languagePrompt": "Hedef pazarınızdaki satış hattının sesine kulak verin:",
+    "languages": [
+      {
+        "id": "en",
+        "label": "İngilizce",
+        "flag": "🇺🇸"
+      },
+      {
+        "id": "es",
+        "label": "İspanyolca",
+        "flag": "🇪🇸"
+      },
+      {
+        "id": "pt",
+        "label": "Portekizce",
+        "flag": "🇧🇷"
+      },
+      {
+        "id": "hi",
+        "label": "Hintçe",
+        "flag": "🇮🇳"
+      },
+      {
+        "id": "zh",
+        "label": "Çince",
+        "flag": "🇨🇳"
+      }
+    ],
+    "steps": [
+      {
+        "id": "concept",
+        "label": "Konsept ve Senaryo Optimizasyonu"
+      },
+      {
+        "id": "animatic",
+        "label": "30 Dakikalık Animatic İncelemesi"
+      },
+      {
+        "id": "video",
+        "label": "Tam Hareketli Video Agent Render'ları"
+      }
+    ],
+    "previewLabel": "Önizleme"
+  },
+  "keyFeatures": {
+    "badge": "Temel Özellikler",
+    "title": "Fikirden ustaya.",
+    "subtitle": "Series Room → Blueprint Room → Production Stage → Screening Room.",
+    "learnMoreLabel": "Daha fazla bilgi edinin",
+    "showLessLabel": "Daha az göster",
+    "videoComingSoon": "Özellik demosu yakında geliyor",
+    "videoSoon": "Yakında",
+    "overviewComingSoon": "Genel bakış yakında",
+    "pauseOverview": "Duraklatma genel bakışı",
+    "playOverview": "Oyun genel bakışı",
+    "muteOverview": "Sessize alma genel bakışı",
+    "unmuteOverview": "Sesi açma genel bakışı",
+    "enterFullscreenOverview": "Tam ekran",
+    "exitFullscreenOverview": "Tam ekrandan çık",
+    "watchLongformLabel": "Uzun versiyonu izleyin",
+    "screenshotLabel": "Ekran görüntüsü",
+    "landingUiLanguagesLabel": "44 dilde yapım ve seslendirme gerçekleştirin. Bu site şu 39 dilde mevcuttur:",
+    "rooms": [
+      {
+        "id": "series-desk",
+        "label": "SFAISERIES_ODA_DÖNEMİ",
+        "promise": "Series Room, bir sezonun başladığı yerdir. Aynı karakterler ve aynı hikâye, eklediğiniz her bölüme taşınır. Blueprint Room içinde bir bölüm açılmadan önce burayı okuyun, dinleyin ve yönetin. Sezonu olmayan bir film bu odayı atlayabilir.",
+        "features": [
+          {
+            "icon": "newSeries",
+            "title": "Yeni Seri",
+            "description": "İşe buradan başlayın. Planladığınız diziyi kendi ifadelerinizle tanımlayın. \"Netleştir ve Onayla\" (Clarify and Confirm) özelliği, sinopsis hazır olana kadar bu niyeti sizinle birlikte geliştirip olgunlaştırır; \"Dizi Oluştur\" (Generate Series) özelliği ise temel taslağı yazar. Yeni bir dizi beş bölümle başlar; dilerseniz daha fazla bölüm ekleyebilirsiniz.",
+            "screenshot": "Yeni Seri Oluştur — niyet, Netleştir ve Onayla, Seri Oluştur",
+            "learnMore": {
+              "items": [
+                {
+                  "title": "Niyetiniz",
+                  "description": "Formatı, hedef kitlesi ve sanat tarzı dahil olmak üzere dizinin ne olduğunu belirtin."
+                },
+                {
+                  "title": "Yinele",
+                  "description": "\"Clarify and Confirm\" (Netleştirme ve Onaylama), herhangi bir içerik oluşturulmadan önce sinopsisi sizinle birlikte geliştirip netleştirir."
+                },
+                {
+                  "title": "Temel",
+                  "description": "Generate Series, inceleyeceğiniz sezonu beş bölümden oluşacak şekilde kaleme alıyor."
+                }
+              ]
+            }
+          },
+          {
+            "icon": "seriesReview",
+            "title": "İlk kurguyu gözden geçir",
+            "description": "Genel bakışı okuyun veya \"Dinle\"ye basın. Ardından bölümleri okuyun ya da dinleyin. Tutarlılık hikâye örgüsünü bir arada tutarken; süreklilik ise bu bölümlerin ortaklaşa kullandığı oyuncu kadrosunu, mekânları, aksesuarları ve ortamları birbirine bağlar.",
+            "screenshot": "Genel Bakış, Bölümler, Tutarlılık, Devamlılık — Oyuncu Kadrosu, Mekânlar, Aksesuarlar, Ortamlar",
+            "learnMore": {
+              "items": [
+                {
+                  "title": "Oku veya dinle",
+                  "description": "Genel Bakış ve Bölümler okunabilir ya da \"Dinle\" özelliğiyle dinlenebilir."
+                },
+                {
+                  "title": "Tutarlılık",
+                  "description": "Estetik, kilit olaylar ve hikâye örgüsü sezonla sınırlı kalır."
+                },
+                {
+                  "title": "Süreklilik",
+                  "description": "Oyuncu kadrosu, mekânlar, aksesuarlar ve dekorlar, her bölümde kullanılanların aynısıdır."
+                }
+              ]
+            }
+          },
+          {
+            "icon": "seriesResonance",
+            "title": "Audience Resonance",
+            "description": "Sezona dair bir değerlendirme almak istediğinizde Audience Resonance'i çalıştırın. Puanları ve analizi inceleyin. Yalnızca tercih ettiğiniz takdirde eyleme dönüştürülebilir bir içgörüyü uygulayın; siz bunu yapana kadar serideki hiçbir şey değişmez.",
+            "screenshot": "Audience Resonance analizi ve ardından uygulanmamış eyleme geçirilebilir içgörüler",
+            "learnMore": {
+              "items": [
+                {
+                  "title": "Okuma",
+                  "description": "Puanlar ve analizler, belirlediğiniz kitlede nelerin karşılık bulduğunu gösteriyor."
+                },
+                {
+                  "title": "İsteğe bağlı",
+                  "description": "Eyleme geçirilebilir bir içgörü, seriyi yalnızca onu uyguladığınızda değiştirir."
+                }
+              ]
+            }
+          },
+          {
+            "icon": "seriesDirector",
+            "title": "Dizi Yönetmeni",
+            "description": "Tüm süreci kendi sözcüklerinizle —ister sözlü ister yazılı olarak— yönlendirin. Değişikliği ve odak noktasını siz seçer, bunu siz benimsersiniz. Bir öneri faydalı olabilir; hikâye akışının konuyla ilgisiz kısımları ise olduğu gibi kalır.",
+            "screenshot": "Dizi Yönetmeni — yönetim, odak, kabul",
+            "learnMore": {
+              "items": [
+                {
+                  "title": "Sözlerin",
+                  "description": "Yapılacak değişikliği söyleyin veya yazın; dilerseniz bu değişikliği olay örgüsü, karakterler, bölüm içeriği, ton veya mekan ile sınırlandırın."
+                },
+                {
+                  "title": "Onu kabul ediyorsun.",
+                  "description": "Siz onu kabullenene kadar hiçbir şey değişmez ve hikâye akışının birbiriyle bağlantısız kısımları olduğu gibi kalır."
+                },
+                {
+                  "title": "Bir tavsiye",
+                  "description": "Öneriler yardımcı olabilir; yine de neleri saklayacağınıza siz karar verirsiniz."
+                }
+              ]
+            }
+          },
+          {
+            "icon": "directEpisode",
+            "title": "Bu bölümü yönet",
+            "description": "Bir bölümü açın ve o bir saati tek başınıza yönetin. Bahsi yükseltin ya da hikâyeyi derinleştirin, ardından bunu uygulayın. Diğer bölümler olduğu gibi kalır.",
+            "screenshot": "Bölümler — Bu bölümü yönet; diğer bölümler değişmeden kalsın",
+            "learnMore": {
+              "items": [
+                {
+                  "title": "Bir bölüm",
+                  "description": "\"Direct bu bölüm\", değişikliği yalnızca ilgili bölüme uygular."
+                },
+                {
+                  "title": "Mevsim sürüyor",
+                  "description": "Diğer bölümler oldukları gibi bırakılmıştır."
+                }
+              ]
+            }
+          },
+          {
+            "icon": "startEpisode",
+            "title": "Bölümü başlat",
+            "description": "Bir bölüm hazır olduğunda, o bölümün projesini başlatın. Taslak, sinopsis ve olay akışı (beats) ile birlikte Blueprint Room'e aktarılır. Oyuncu kadrosu ve hikâye dünyası halihazırda bellidir.",
+            "screenshot": "Projeyi Başlat — taslak ve oyuncu kadrosu halihazırda bölümde mevcut",
+            "learnMore": {
+              "items": [
+                {
+                  "title": "Projeyi Başlat",
+                  "description": "Start Project, ilgili bölümü Blueprint Room içinde açar."
+                },
+                {
+                  "title": "Halihazırda biliniyor",
+                  "description": "Taslak, sinopsis, hikâye akışı ve oyuncu kadrosu da buna dahildir."
+                }
+              ]
+            }
+          }
+        ]
+      },
+      {
+        "id": "blueprint-board",
+        "label": "SFAIBLUEPRINT_ODA_TERİMİ",
+        "promise": "Blueprint Room, 90 dakikalık senaryo aşamasına geçmeden önce hikâye akışını kusursuz hale getirdiğiniz yerdir. İşe bir dizi bölümüyle veya yeni bir projeyle başlayın. Hikâye akışındaki önemli anları ve oyuncu kadrosunu burada şekillendirin; böylece Production Stage bunları yeniden oluşturmak zorunda kalmaz.",
+        "features": [
+          {
+            "icon": "startBlueprint",
+            "title": "Blueprint'i başlatın",
+            "description": "Bir dizi bölümüyle veya yeni bir projeyle başlayın. Bir dizi bölümü; taslağı, sinopsisi ve hikaye akış noktalarıyla (beats) birlikte gelir. Yeni bir proje ise; amacı tanımlayıp \"Yapay Zeka ile Doğrula ve Geliştir\" özelliğini kullandığınızda ve \"Blueprint Oluştur\" seçeneğini tercih ettiğinizde başlar.",
+            "screenshot": "Dizi bölümü halihazırda belli veya Projenizi Başlatın — niyet, Yapay Zeka ile Doğrulama ve Geliştirme, Blueprint Oluşturma",
+            "learnMore": {
+              "items": [
+                {
+                  "title": "Dizi bölümü",
+                  "description": "Bir dizi bölümü; taslağı, sinopsisi ve olay akış noktaları halihazırda eklenmiş olarak başlar."
+                },
+                {
+                  "title": "Yeni proje",
+                  "description": "\"Start Your Project\" (Projeyi Başlat) işlevi niyeti alır, ardından yapay zeka ile doğrulayıp geliştirir ve sonrasında Blueprint'i oluşturur."
+                }
+              ]
+            }
+          },
+          {
+            "icon": "treatment",
+            "title": "Ritimleri yönlendir",
+            "description": "Beats sekmesini açın ve beat listesini dinleyin. Buradaki beat'leri optimize edin; çünkü senaryo yapısını bunlar belirler. Beat'ler yalnızca burada bulunur. Production Stage, her bir beat'i bir bölüme dönüştürür.",
+            "screenshot": "Dinle özellikli Beats sekmesi",
+            "learnMore": {
+              "items": [
+                {
+                  "title": "Bir olay akış çizelgesi",
+                  "description": "Vuruşlar yalnızca burada var olur."
+                },
+                {
+                  "title": "Betik derlemesi",
+                  "description": "Betik derleme sürecini \"beat\"ler yönlendirir; bu nedenle, Production Stage öncesinde optimize edilirler."
+                },
+                {
+                  "title": "Bölümler",
+                  "description": "Production Stage, her bir ritmi bir bölüme dönüştürür."
+                }
+              ]
+            }
+          },
+          {
+            "icon": "castLocations",
+            "title": "Oyuncu kadrosunu ve çekim mekanlarını yönetin",
+            "description": "Characters (Karakterler) bölümünü açın ve oyuncu kadrosunu belirleyin. Story (Hikaye) sekmesindeki Setting (Ortam) kısmını açın ve mekanları buna göre ayarlayın. Oyuncu kadrosu senaryo yapısını etkilediğinden, Production Stage'in senaryoyu yeniden düzenlemesi gerekmeden önce her ikisi de ayarlanmalıdır.",
+            "screenshot": "Karakterler sekmesi, ardından Hikâye kısmında Mekân",
+            "learnMore": {
+              "items": [
+                {
+                  "title": "Oyuncu Kadrosu",
+                  "description": "Karakterler sekmesi oyuncu kadrosunu temsil eder ve bu kadro, senaryonun oluşturulma sürecini etkiler."
+                },
+                {
+                  "title": "Konumlar",
+                  "description": "Konumlar, Hikâye sekmesindeki mekânı oluşturur."
+                },
+                {
+                  "title": "Senaryodan önce",
+                  "description": "Her ikisini de buraya yönlendirmek, Production Stage içinde kapsamlı bir betik yeniden düzenlemesi yapılmasını önler."
+                }
+              ]
+            }
+          },
+          {
+            "icon": "blueprintDirector",
+            "title": "Blueprint Direktörü",
+            "description": "Yönetmen, değişikliği kendi sözcüklerinizle (ister sözlü ister yazılı olarak) alır. Düzenlemeyi Anlatı Adımları (Beats), Karakterler veya Hikâye üzerine yoğunlaştırın ve ardından yapılan değişikliği önizleyin. Siz onaylayıp uygulayana kadar hiçbir şey değişmez.",
+            "screenshot": "Blueprint Direktör — yön, odak, önizleme, revizyonu uygula",
+            "learnMore": {
+              "items": [
+                {
+                  "title": "Sözlerin",
+                  "description": "Değişikliği sözlü veya yazılı olarak belirtin ve bunu anlatı akışına (beats), karakterlere ya da hikâyeye odaklayın."
+                },
+                {
+                  "title": "Önizleme",
+                  "description": "\"Dengeli revizyon oluştur\" özelliği, değişikliği uygulamadan önce size gösterir."
+                },
+                {
+                  "title": "Onu uyguluyorsunuz",
+                  "description": "Revizyonu uygulayana kadar hiçbir şey değişmez."
+                }
+              ]
+            }
+          },
+          {
+            "icon": "blueprintResonance",
+            "title": "Audience Resonance",
+            "description": "Hedef kitleyi kaydedin ve ardından Analiz edin. Puanları ve önerileri görürsünüz. Blueprint Director'da bir öneriyi uygulayana kadar taslakta (blueprint) hiçbir şey değişmez.",
+            "screenshot": "Audience Resonance — kaydedilmiş kitle, puanlar, uygulanmamış öneriler",
+            "learnMore": {
+              "items": [
+                {
+                  "title": "Okuma",
+                  "description": "Hedef kitleyi kaydedin, ardından analiz edin; puanları ve önerileri inceleyin."
+                },
+                {
+                  "title": "İsteğe bağlı",
+                  "description": "Bir öneri, yalnızca Blueprint Director'da uyguladığınızda taslağı değiştirir."
+                }
+              ]
+            }
+          },
+          {
+            "icon": "goToProduction",
+            "title": "Production Stage'e gidin",
+            "description": "Hikâye akışı, anlatı aşamaları (beats) ve oyuncu kadrosu belirlendiğinde Production Stage'e geçin. 90 dakikalık senaryo bu pano üzerinden oluşturulur. Production Stage aşamasında hikâye akışının yeniden oluşturulması gerekmez.",
+            "screenshot": "Production Stage'e gidin — hikâye akışı, olay örgüsü aşamaları ve oyuncu kadrosu halihazırda belirlenmiş durumda.",
+            "learnMore": {
+              "items": [
+                {
+                  "title": "Devir",
+                  "description": "Production Stage'e gitmek, bu blueprint'teki betiği açar."
+                },
+                {
+                  "title": "Çoktan ayarlandı",
+                  "description": "Hikâye akışı, olay örgüsü ve oyuncu kadrosu halihazırda yönetilmiş durumda."
+                }
+              ]
+            }
+          }
+        ]
+      },
+      {
+        "id": "production-stage",
+        "label": "Production Stage",
+        "promise": "Production Stage, kesinleşmiş planın görüntüye dönüştüğü aşamadır. Harcamaları kendi kontrol mekanizmalarınız ve bir plan dahilinde yönetin. Her sahneyi birlikte optimize edin; ardından yönetmenlik, ses, müzik, süreklilik ve sabit görseller gibi unsurlarla sahneleri sırasıyla oluşturun ve video prodüksiyonuna bütçe ayırmadan önce animatiği gözden geçirin. Klipleri oluşturup miksleyin, dil versiyonlarını hazırlayın ve sahneyi, bölümü, ana kopyayı (master) veya tanıtım videosunu teslimata hazır hale getirin.",
+        "spend": {
+          "label": "Harcamaları Kontrol Et",
+          "features": [
+            {
+              "icon": "byok",
+              "title": "Kendi Anahtarını Getir",
+              "description": "Kendi görsel ve video sağlayıcı anahtarlarınızı bağlayın. İçerik oluşturma işlemi sizin hesabınız üzerinden ve sizin tarifelerinizle gerçekleşirken; yönlendirmeli stüdyo — yani ajanlar, süreklilik, Mixer ve Screening Room — varlığını korur.",
+              "screenshot": "BYOK anahtarları",
+              "learnMore": {
+                "items": [
+                  {
+                    "title": "Anahtarlarınız",
+                    "description": "Oluşturma işleminin kendi hesabınız üzerinden ve kendi fiyatlandırmanızla gerçekleşmesi için görsel ve video sağlayıcı anahtarlarını bağlayın."
+                  },
+                  {
+                    "title": "Aynı stüdyo",
+                    "description": "Aracılar, süreklilik, Mikser ve Screening Room yerinde kalır."
+                  }
+                ]
+              }
+            },
+            {
+              "icon": "budget",
+              "title": "Üretim Planlamacı",
+              "description": "Harcama yapmadan önce, çekim başına durağan görsel ve video klibi yineleme sayılarını belirleyin. Bu hedefler sahne, bölüm ve ana proje (master) düzeyinde birleştirilir; bir başlangıç tarihi ile bitiş tarihi de takvimi oluşturur.",
+              "screenshot": "Üretim Planlamacı",
+              "learnMore": {
+                "items": [
+                  {
+                    "title": "Vurulmuş hedefler",
+                    "description": "Her çekim için durağan görüntü ve klip yinelemelerini belirleyin; ardından bunları sahne, bölüm ve ana (master) düzeyinde birleştirin."
+                  },
+                  {
+                    "title": "Tarihli program",
+                    "description": "Bir başlangıç tarihi ve çalışma günleri, kümülatif kredilere dayalı bir program oluşturur."
+                  },
+                  {
+                    "title": "Gerçekleşen değerlere göre sıfırla",
+                    "description": "Tamamlanan sahneler, hedefleri gerçek maliyetlerine göre sıfırlayabilir."
+                  },
+                  {
+                    "title": "Telefon durumu",
+                    "description": "Okuma hızını, harcamayı ve bitiş tarihini telefonunuzdan takip edin; düzenleme işlemleri ise masaüstü bilgisayar veya tablette kalsın."
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        "groups": [
+          {
+            "id": "script",
+            "label": "Betiği optimize edin",
+            "features": [
+              {
+                "icon": "scriptResonance",
+                "title": "Audience Resonance",
+                "description": "Audience Resonance tüm metni bir kerede, her sahneyi eşzamanlı olarak okur. Skorları ve notları bir arada görürsünüz; siz tercih edene kadar da hiçbir şey yeniden yazılmaz.",
+                "screenshot": "Audience Resonance — tüm sahneler genelinde partisyonlar ve notlar, uygulanmamış",
+                "learnMore": {
+                  "items": [
+                    {
+                      "title": "Birlikte oldukları her sahne",
+                      "description": "Senaryoyu, sahnelerle uyum içinde notalar eşliğinde tek bir bütün olarak besteler."
+                    },
+                    {
+                      "title": "Siz seçin",
+                      "description": "Hangi notlar doğrultusunda harekete geçeceğinize karar verene kadar hiçbir şey yeniden yazılmaz."
+                    }
+                  ]
+                }
+              },
+              {
+                "icon": "castVisual",
+                "title": "Oyuncu kadrosu, kostüm ve ses",
+                "description": "Sahnelerden önce oyuncu kadrosunu belirleyin. Karakteri, kıyafetleri ve sesi sabitleyin; böylece sonraki her bir görsel ve video klibi aynı kişiyi yansıtsın.",
+                "screenshot": "Karakter, kostüm ve ses",
+                "learnMore": {
+                  "items": [
+                    {
+                      "title": "Karakter ve kostüm",
+                      "description": "Cast Agent, karakteri ve kostüm görünümlerini çizer."
+                    },
+                    {
+                      "title": "Ses",
+                      "description": "Sahneler oluşturulmadan önce karakterin sesi belirlenir."
+                    },
+                    {
+                      "title": "Aynı kişi",
+                      "description": "Her bir kare ve her bir klip o kilidi gerektiriyor."
+                    }
+                  ]
+                }
+              },
+              {
+                "icon": "directShot",
+                "title": "Doğrudan Atış",
+                "description": "Direct Shot, çekimi kendi ifadelerinizle (yazarak veya sesli dikte ederek) gerçekleştirir. Yönlendirmeyi önizleyip kaydettiğinizde, hem sabit görüntü hem de video klibi istemleri eşzamanlı olarak güncellenir.",
+                "screenshot": "Direct Shot — yazın veya dikte edin, önizleyin, kaydedin",
+                "learnMore": {
+                  "items": [
+                    {
+                      "title": "Belirtilen atış",
+                      "description": "Diyalog, Doğrudan Çekim · Sahne N · Çekim N başlığını taşıyor."
+                    },
+                    {
+                      "title": "Yazın veya dikte edin",
+                      "description": "Notu yazın veya dikte edin, ardından kaydetmeden önce talimatı önizleyin."
+                    },
+                    {
+                      "title": "Her iki istem",
+                      "description": "Kaydetme işlemi, durağan görüntü istemini ve klip istemini birlikte günceller."
+                    },
+                    {
+                      "title": "Kliplerden sonra tekrar",
+                      "description": "Oluşturulan bir çekim hatalıysa, Direct Shot'ı açın ve çekimi yeniden yönlendirin."
+                    }
+                  ]
+                }
+              },
+              {
+                "icon": "audioAgent",
+                "title": "Audio Agent",
+                "description": "Audio Agent; sahnenin diyaloglarını, ses efektlerini ve müziğini oluşturur. Sahne, şarjör tüketilmeden önce duyulabilir.",
+                "screenshot": "Audio Agent — diyalog, efektler ve müzik",
+                "learnMore": {
+                  "items": [
+                    {
+                      "title": "Diyalog ve efektler",
+                      "description": "Diyalog konuşma ile sınırlıdır; ses efektleri ise belirgin bir işarete (cue) sahip çekimler için kullanılır."
+                    },
+                    {
+                      "title": "Müzik",
+                      "description": "Müzik, diyalogla birlikte sahneyi taşıyor."
+                    },
+                    {
+                      "title": "Hareketten önce",
+                      "description": "Clips'i açmadan önce sahneyi dinleyin."
+                    }
+                  ]
+                }
+              },
+              {
+                "icon": "continuity",
+                "title": "Süreklilik",
+                "description": "Yalnızca sahne hazır olduğunda, o sahnenin ihtiyaç duyduğu referansları oluşturun. Önceki sahneler kilitlediğiniz halleriyle kalır; böylece halihazırda onaylanmış referansları yeniden çizmek zorunda kalmazsınız.",
+                "screenshot": "Devamlılık — yalnızca bu sahneye ait referanslar",
+                "learnMore": {
+                  "items": [
+                    {
+                      "title": "Sadece bu sahne",
+                      "description": "Bu sahnenin ihtiyaç duyduğu oyuncu kadrosunu, mekânları ve aksesuarları çizin; diğerlerine dokunmayın."
+                    },
+                    {
+                      "title": "Tam zamanında",
+                      "description": "Bunları tüm film için toplu halde değil, sahne hazır olduğunda oluşturun."
+                    },
+                    {
+                      "title": "Zaten kilitli",
+                      "description": "Bir sahnedeki değişiklik, önceki sahnelerin halihazırda kullandığı referansları yeniden oluşturmaz."
+                    }
+                  ]
+                }
+              },
+              {
+                "icon": "stillsAgent",
+                "title": "SFAISTILLS_TEMSİLCİ_TERİMİ",
+                "description": "Stills Agent, onaylanmış yönlendirmeye dayanarak çekim karelerini oluşturur. Yönlendirme ve ses bıraktığınız şekilde kalır; klipler ise daha sonra gelir.",
+                "screenshot": "Stills Agent — çekim kareleri",
+                "learnMore": {
+                  "items": [
+                    {
+                      "title": "Çekim kareleri",
+                      "description": "Sahnedeki her bir çekim için durağan görüntüyü çizer."
+                    },
+                    {
+                      "title": "Yön değişmez",
+                      "description": "Bir kareyi yeniden oluşturmak görüntüyü günceller; yön ve ses ise değiştirilmeden bırakılır."
+                    },
+                    {
+                      "title": "Kliplerden önce",
+                      "description": "Clips'i açmadan önce durağan görüntüleri onaylayın."
+                    }
+                  ]
+                }
+              },
+              {
+                "icon": "animatic",
+                "title": "Animatic",
+                "description": "Sahneyi Screening Room içinde; diyalog, müzik ve efektlerle desteklenen sabit görsellerden oluşan bir animatik olarak izleyin. Geri bildirim almak için paylaşın ve senaryo değişikliği nedeniyle klipler üzerinde yeniden çalışmak zorunda kalmamak adına, video aşamasına geçmeden önce her sahneyi bu yöntemle tamamlayın. Pek çok içerik üreticisi için animatik nihai eser niteliğindedir ve MP4 formatında render alınabilir.",
+                "screenshot": "Screening Room animatiği, paylaşım özellikli",
+                "learnMore": {
+                  "items": [
+                    {
+                      "title": "Görüntü ve ses",
+                      "description": "Animatik; onaylanmış sabit görüntüleri diyalog, müzik ve efektlerle birlikte oynatır."
+                    },
+                    {
+                      "title": "Paylaş",
+                      "description": "İnceleyenlerin animatiği izleyip görsel üzerine notlar bırakabilmesi için tek bir bağlantı gönderin."
+                    },
+                    {
+                      "title": "Video öncesi",
+                      "description": "Klipleri oluşturmadan önce sahneleri animatik olarak tamamlayın; böylece senaryodaki bir değişiklik, video üretim sürecini baştan başlatmanızı gerektirmez."
+                    },
+                    {
+                      "title": "MP4",
+                      "description": "Birçok içerik üreticisi için animatik nihai üründür ve MP4 formatında render alınabilir."
+                    }
+                  ]
+                }
+              }
+            ]
+          },
+          {
+            "id": "video",
+            "label": "Video",
+            "features": [
+              {
+                "icon": "videoAgent",
+                "title": "SFAIVIDEO_TEMSİLCİ_SÜRESİ",
+                "description": "Video Agent, Clips sekmesinde çekim kliplerini oluşturur. Birleştirilmiş sahneyi Screening Room içinde izleyin; eğer bir çekim hatalıysa, Direct Shot bölümünde çekimi yeniden yönetin.",
+                "screenshot": "Video Agent, ardından birleştirilmiş sahne",
+                "learnMore": {
+                  "items": [
+                    {
+                      "title": "Çekilen klipler",
+                      "description": "Video Agent, onaylanmış sabit görüntüden her bir çekim için klibi oluşturur."
+                    },
+                    {
+                      "title": "Birleştirilmiş sahne",
+                      "description": "Screening Room içinde birleştirilmiş sahneyi inceleyin."
+                    },
+                    {
+                      "title": "Onu tekrar yönlendir",
+                      "description": "Bir klip hatalı olduğunda, yazılı veya sözlü olarak Direct Shot'ı açın."
+                    }
+                  ]
+                }
+              },
+              {
+                "icon": "mixer",
+                "title": "Mikser",
+                "description": "Mikser, Production Stage içindeki sahneyi tamamlar. Çekimleri dahil edin veya çıkarın, kırpın, ses dengesini ayarlayın ve sahneyi sesiyle birlikte render edin.",
+                "screenshot": "Mikser — dahil etme, kırpma, dengeleme, bindirme, filigran",
+                "learnMore": {
+                  "items": [
+                    {
+                      "title": "Atışlar",
+                      "description": "Tekil çekimleri dahil edin veya çıkarın ve kalanları kırpın."
+                    },
+                    {
+                      "title": "Diyalog",
+                      "description": "Her bir diyalog satırının ses düzeyini ve hızını ayarlayın."
+                    },
+                    {
+                      "title": "Parçalar",
+                      "description": "Müzik geçişleri (fade) ve döngüleri (loop) dahil olmak üzere; dış ses, diyalog, ses efektleri ve müzik arasındaki dengeyi sağlayın."
+                    },
+                    {
+                      "title": "Bindirmeler",
+                      "description": "Sahneye metin katmanları yerleştirin."
+                    },
+                    {
+                      "title": "Filigran",
+                      "description": "Metin veya resim filigranı ekleyin."
+                    },
+                    {
+                      "title": "Oluştur",
+                      "description": "Sahneyi sesiyle birlikte render edin; Screening Room'in oynattığı şey işte bu renderdır."
+                    }
+                  ]
+                }
+              },
+              {
+                "icon": "languageStreams",
+                "title": "Dil sürümleri",
+                "description": "Bu sahne yeni bir yapım değil, mevcut sahnenin farklı bir dildeki versiyonudur. Gemini TTS seslendirmeyi 44 dilde gerçekleştirir; ayrıca her bir çekimde, tabelalar da dahil olmak üzere, ilgili repliği seslendirebilir veya klibi yeniden oluşturabilirsiniz.",
+                "screenshot": "Dil versiyonu — Seslendirme, dudak senkronizasyonu veya yeniden oluşturma (tabelalar dahil)",
+                "learnMore": {
+                  "items": [
+                    {
+                      "title": "Kırk dört dil",
+                      "description": "Gemini TTS, seslendirmeyi 44 dilde gerçekleştiriyor."
+                    },
+                    {
+                      "title": "Atış başına",
+                      "description": "Her bir çekimde; seslendirmeyi bindirmek için \"Double\" (Çiftleme), seslendirmeyi uygulamak için \"Lip-sync\" (Dudak Senkronizasyonu) veya çevrilen metinden yeni bir klip oluşturmak için \"Regenerate\" (Yeniden Oluşturma) seçeneğini belirleyin."
+                    },
+                    {
+                      "title": "Tabelalar",
+                      "description": "Resimde değiştirilmesi gereken bir metin bulunduğunda, tabela görüntüsünü yeniden oluşturun."
+                    },
+                    {
+                      "title": "Zamanlama",
+                      "description": "Video hızı o dil sürümünde kaydedilir; çünkü çeviri genellikle orijinalinden %10–30 daha uzundur."
+                    }
+                  ]
+                }
+              }
+            ]
+          },
+          {
+            "id": "publish",
+            "label": "Yayınla",
+            "features": [
+              {
+                "icon": "shipPackage",
+                "title": "Paketle ve gönder",
+                "description": "Bir sahne, bölüm, ana kurgu veya tanıtım videosu hazır olduğunda onu paketleyin. YouTube, Facebook veya TikTok'ta yayınlayın ya da MP4 olarak indirin ve projenin geri kalanını oluşturmaya devam edin.",
+                "screenshot": "Paketle ve gönder — sahne, bölüm, master, tanıtım; YouTube, Facebook, TikTok, MP4",
+                "learnMore": {
+                  "items": [
+                    {
+                      "title": "Parçalar",
+                      "description": "Bir sahne, bir bölüm, ana kopyayı veya bir tanıtım videosunu gönderin."
+                    },
+                    {
+                      "title": "Dil akışları",
+                      "description": "Her bir dil sürümü paketle birlikte gönderilebilir."
+                    },
+                    {
+                      "title": "Destinasyonlar",
+                      "description": "YouTube, Facebook veya TikTok'ta yayınlayın ya da MP4 olarak indirin."
+                    },
+                    {
+                      "title": "İnşa etmeye devam et",
+                      "description": "Tamamlanan parçayı teslim edin ve geri kalanını geliştirmeye devam edin."
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "screening-room",
+        "label": "SFAI_TARAMA_ODASI_DÖNEMİ",
+        "promise": "Screening Room; tamamlanmış kurgunun izlendiği, incelendiği ve yayına sunulduğu alandır. Tek bir oynatıcı; ön görselleştirme (Pre-Vis), sahneler, bölümler, ana kurgu (master), tanıtım videosu ve her bir dil akışını barındırır; böylece seslendirme versiyonu, ses miksajı uzmanının (Mixer) aldığı çıktıyla birebir aynı kurguya sahip olur. Görüntü üzerinde oynatma ve not paylaşımı için tek bir bağlantı kullanmanız yeterlidir. Hazır olan parçaları —ister 3-5 dakikalık bir sahne, ister 8-12 dakikalık bir bölüm, ister ana kurgu veya tanıtım videosu olsun— yayınlayabilir ve projenin geri kalanını oluşturmaya devam edebilirsiniz.",
+        "features": [
+          {
+            "icon": "screeningPlayer",
+            "title": "Tek oyuncu",
+            "description": "Pre-Vis (ön görselleştirme), sahneler, bölümler, ana kurgu (master) ve tanıtım (promo) arasında geçiş yapın. Bir dil akışı seçin ve o versiyonu dinleyin; ister seslendirme (dublaj), ister dudak senkronizasyonu, isterse de kare kare yeniden oluşturulmuş hali olsun. Oynatıcıdaki kurgu, Mixer'ın render aldığı kurguyla birebir aynıdır.",
+            "screenshot": "Screening Room oynatıcısı",
+            "learnMore": {
+              "items": [
+                {
+                  "title": "Tek bir yüzey",
+                  "description": "Pre-Vis, sahneler, bölümler, master ve tanıtım arasında geçiş yapın."
+                },
+                {
+                  "title": "Dil Akışı",
+                  "description": "Bir versiyon seçin ve onun seslendirilmiş, dudak senkronizasyonu yapılmış veya kare kare yeniden oluşturulmuş halini dinleyin."
+                },
+                {
+                  "title": "Aynı kesim",
+                  "description": "Oynatıcı, Mixer'in oluşturduğu kurgudur."
+                }
+              ]
+            }
+          },
+          {
+            "icon": "screeningCollab",
+            "title": "Kurgu üzerinde iş birliği yapın",
+            "description": "Tek bir bağlantı paylaşın. İnceleyenler videoyu gerçek oynatma akışıyla izler ve görüntü üzerine notlar bırakır. Geri bildirim toplamak için e-postayla taslak dosya göndermek zorunda kalmazsınız. Yazılı bir not size bildirim olarak gelir ve bu notu telefonunuzdan okuyabilirsiniz.",
+            "screenshot": "Paylaşılan inceleme",
+            "learnMore": {
+              "items": [
+                {
+                  "title": "Bir bağlantı",
+                  "description": "İnceleyenler, gerçek zamanlı oynatımla izler ve görüntü üzerine notlar bırakır."
+                },
+                {
+                  "title": "E-posta taslağı yok",
+                  "description": "Geri bildirim toplamak için e-postaya ham bir dosya aktarmıyorsunuz."
+                },
+                {
+                  "title": "Telefon notları",
+                  "description": "Yazılı bir not sizi bilgilendirir ve siz bunu telefonunuzdan okuyabilirsiniz; bu sırada stüdyo masaüstü bilgisayarda veya tablette kalmaya devam eder."
+                }
+              ]
+            }
+          },
+          {
+            "icon": "packageShip",
+            "title": "Hazır olduğunda yayınlayın",
+            "description": "3–5 dakikalık bir sahneyi, 8–12 dakikalık bir bölümü, ana kopyayı (master) veya bir tanıtım videosunu 16:9 ya da 9:16 formatında YouTube, Facebook veya TikTok'ta yayınlayın ya da dosyayı indirin. Başlıklar, açıklama ve gizlilik ayarları da içerikle birlikte gelir. Tamamlanan kısmı yayınlayın; geri kalanını oluşturmaya devam edin.",
+            "screenshot": "Paketi yayınla",
+            "learnMore": {
+              "items": [
+                {
+                  "title": "Bir parça gönderin",
+                  "description": "3–5 dakikalık bir sahne, 8–12 dakikalık bir bölüm, ana kopyayı veya bir tanıtım videosu yayınlayın."
+                },
+                {
+                  "title": "Destinasyonlar",
+                  "description": "YouTube, Facebook veya TikTok'ta 16:9 ya da 9:16 formatında yayınlayın veya dosyayı indirin."
+                },
+                {
+                  "title": "Paket",
+                  "description": "Başlıklar, açıklama ve gizlilik ayarları paketle birlikte gelir."
+                },
+                {
+                  "title": "İnşa etmeye devam et",
+                  "description": "Tamamlanan parçayı teslim edin ve geri kalanını geliştirmeye devam edin."
+                }
+              ]
+            }
+          }
+        ]
+      }
+    ]
+  },
   "metadata": {
     "title": "SceneFlow Studio - Yapay Zeka Destekli Video Oluşturma",
     "description": "Yapay zeka destekli iş akışı otomasyonuyla fikirlerinizi profesyonel videolara dönüştürün."
   },
   "nav": {
     "plansPricing": "Planlar & Fiyatlandırmalar",
+    "productionExamples": "Örnekler",
+    "keyFeatures": "Özellikler",
     "trustSafety": "Güven ve İtibar",
     "signIn": "Oturum Açma",
     "startProject": "Bir Proje Başlatın",
@@ -14,89 +949,118 @@
     "goToDashboard": "Kontrol Paneline Git",
     "userFallback": "Kullanıcı",
     "searchLanguages": "Dil Ara",
-    "noLanguagesFound": "Dil bulunamadı",
-    "productionExamples": "Örnekler",
-    "keyFeatures": "Özellikler"
+    "noLanguagesFound": "Dil bulunamadı"
   },
   "floatingNav": {
-    "preVisEngine": "Pre-Vis Engine",
-    "trustSafety": "Trust & Safety",
-    "pricing": "Pricing",
-    "productionExamples": "Examples",
-    "twoModes": "One Pipeline",
-    "keyFeatures": "Key Features",
-    "audienceResonance": "Audience Resonance"
+    "productionExamples": "Örnekler",
+    "twoModes": "Tek Bir İş Akışı",
+    "directControl": "Doğrudan",
+    "publishCut": "Yayınla",
+    "keyFeatures": "Temel Özellikler",
+    "audienceResonance": "Audience Resonance",
+    "preVisEngine": "Ön Görselleştirme Motoru",
+    "trustSafety": "Güven ve Güvenlik",
+    "pricing": "Fiyatlandırma"
   },
   "hero": {
-    "headline": "From first spark to finished master.",
-    "subheadline": "SceneFlow is one guided pipeline. You direct the story, the cast, and the tone. It builds the Blueprint, holds continuity, plays the full animatic, and assembles the master — without prompt trials or a timeline of loose clips.",
-    "ctaPrimaryLaunch": "Launch Studio ($9)",
-    "ctaSupportingLine": "The all-in-one studio to craft, export, and distribute your stories. Download a master and ship anywhere — or publish long-form cuts and chapters to {longForm}, and promote trailers on {shorts}.",
-    "ctaSecondary": "Explore the pipeline",
-    "ctaToolStack": "See how it replaces your tool stack",
+    "eyebrow": "Filmler ve diziler için otomatik film yapımı",
+    "headline": "İlk kıvılcımdan tamamlanmış başyapıta.",
+    "subheadline": "SceneFlow, rehberlik edilen tek bir iş akışıdır. Hikayeyi, oyuncu kadrosunu ve tonu siz yönetirsiniz. Bu sistem; deneme yanılma yoluyla komut (prompt) arayışlarına veya birbirinden kopuk kliplerden oluşan bir zaman çizelgesine gerek kalmaksızın Blueprint'i oluşturur, sürekliliği sağlar, animatiğin tamamını oynatır ve nihai yapımı (master) bir araya getirir.",
+    "ctaPrimaryLaunch": "Launch Studio (9 $)",
+    "ctaSupportingLine": "Hikayelerinizi oluşturmak, dışa aktarmak ve dağıtmak için hepsi bir arada stüdyo. Bir ana kopyayı (master) indirip dilediğiniz yere gönderin; ya da uzun versiyonları ve bölümleri {longForm}'de yayınlayıp fragmanların tanıtımını {shorts}'de yapın.",
+    "ctaNetworkInvite": "Öne çıkan projeler, yalnızca davetle girilebilen SceneFlow Ağı'na başvurabilir.",
+    "ctaNetworkInviteHref": "#for-filmmakers",
+    "ctaSecondary": "İş akışını keşfedin",
+    "ctaToolStack": "Mevcut araç setinizin yerini nasıl aldığını görün.",
     "chips": [
       {
-        "label": "From Concept to Feature",
-        "detail": "Expand ideas into 90-minute scripts in the Blueprint Room. Define characters, art, and beats, then let Audience Resonance analysis fine-tune your story before you shoot."
+        "label": "Kavramdan Özelliğe",
+        "detail": "Blueprint Room ortamında fikirlerinizi 90 dakikalık senaryolara dönüştürün. Karakterleri, görsel dünyayı ve hikaye akışını belirleyin; ardından çekime başlamadan önce Audience Resonance analizinin hikayenize ince ayar yapmasını sağlayın."
       },
       {
-        "label": "Direct With Intent, Not Prompts",
-        "detail": "Speak the language of film with intelligent assistants that understand your direction. The Reference Library locks your custom cast, wardrobe, and locations for absolute continuity."
+        "label": "Komutlarla Değil, Niyetle Yönlendir",
+        "detail": "Yönlendirmelerinizi anlayan akıllı asistanlarla sinemanın dilini konuşun. Reference Library; kusursuz bir devamlılık sağlamak adına özel oyuncu kadronuzu, kostümlerinizi ve çekim mekanlarınızı sabitler."
       },
       {
-        "label": "Agent-Driven Production",
-        "detail": "Accelerate generation 5X with intelligent agents that build 30-shot scenes in the background. Iterate freely in draft mode, then publish your final vision in stunning Hi-Res."
+        "label": "Ajan Odaklı Üretim",
+        "detail": "Arka planda 30 karelik sahneler oluşturan akıllı ajanlarla üretim sürecini 5 kat hızlandırın. Taslak modunda özgürce denemeler yapın ve ardından nihai tasarımınızı çarpıcı yüksek çözünürlükte yayınlayın."
       },
       {
-        "label": "Screen, Collaborate, Ship",
-        "detail": "Share progress at every milestone—from audio animatics to the final master—in the Screening Room. Distribute as shorts or features in multiple languages for a global reach."
+        "label": "Değerlendir, İşbirliği Yap, Yayına Al",
+        "detail": "Sesli animatiklerden nihai master kopyaya kadar her aşamadaki ilerlemeyi Screening Room'de paylaşın. Küresel bir erişim sağlamak amacıyla, kısa veya uzun metrajlı yapımlar olarak ve çeşitli dillerde dağıtımını gerçekleştirin."
       }
     ],
     "pipelineSteps": [
-      "Blueprint",
-      "Production",
-      "Screening Room"
+      "SFAI Taslak Plan Dönemi",
+      "Üretim",
+      "SFAI_TARAMA_ODASI_DÖNEMİ"
     ],
-    "languagePrompt": "Hear the hero in your language — same pipeline, new markets",
-    "multilangHint": "Hero dubs in 7 languages — full pipeline supports 70+ in Production Stage.",
-    "playWithNarration": "Play with narration",
-    "tapToHear": "Tap to hear",
-    "fullscreen": "Fullscreen",
+    "languagePrompt": "İngilizce, İspanyolca, Çince veya Arapçayı seçin; aynı iş akışı, yeni pazarlar.",
+    "multilangHint": "Hero 4 dilde seslendirme; Production Stage'deki tam iş akışı ise 70'ten fazla dili destekliyor.",
+    "playWithNarration": "Anlatımlı oynat",
+    "tapToHear": "Duymak için dokunun",
+    "fullscreen": "Tam ekran",
+    "pauseBackgroundVideo": "Arka plan videosunu duraklat",
+    "playBackgroundVideo": "Arka plan videosunu oynat",
     "heroVideoLanguages": {
       "en": {
-        "label": "English",
+        "label": "İngilizce",
         "nativeLabel": "English"
       },
       "es": {
-        "label": "Spanish",
+        "label": "İspanyolca",
         "nativeLabel": "Español"
       },
-      "pt": {
-        "label": "Portuguese",
-        "nativeLabel": "Português"
-      },
-      "hi": {
-        "label": "Hindi",
-        "nativeLabel": "हिन्दी"
-      },
       "zh": {
-        "label": "Chinese",
+        "label": "Çince",
         "nativeLabel": "中文"
       },
       "ar": {
-        "label": "Arabic",
+        "label": "Arapça",
         "nativeLabel": "العربية"
-      },
-      "th": {
-        "label": "Thai",
-        "nativeLabel": "ไทย"
       }
     },
-    "soon": "Soon",
-    "videoLanguageCount": "{count, plural, =1 {# language} other {# languages}}",
-    "eyebrow": "Automated filmmaking for films and series",
-    "ctaNetworkInvite": "Standout projects can apply for the invite-only SceneFlow Network.",
-    "ctaNetworkInviteHref": "#for-filmmakers"
+    "soon": "Yakında",
+    "videoLanguageCount": "{count, plural, =1 {# language} other {# languages}}"
+  },
+  "twoModes": {
+    "eyebrow": "Ortadan kaldırdığımız sürtünme",
+    "title": "Tek bir pipeline. Araç yığını değil.",
+    "subtitle": "SceneFlow replaces single-clip generators and a pile of separate docs, editors, and re-renders. Build the series or the 90-minute master, then publish a scene or a chapter when you are ready to earn.",
+    "comingSoon": "Yakında",
+    "comparison": {
+      "id": "comparison",
+      "caption": "Fragmented tools beside one SceneFlow pipeline."
+    },
+    "cta": "Launch Studio (9 $)"
+  },
+  "directControl": {
+    "eyebrow": "Elinde tuttuğun kontrol",
+    "title": "Hikâyeyi yönlendirin. İstemi (prompting) ajanlar yapsın.",
+    "subtitle": "Çekimi sade bir dille yönlendirirsiniz. Çekim talimatları; durağan görsel ve video klibi için gereken komutları (prompt) belirler. Müzik girişleri ve dış ses, ritimle uyumlu şekilde yerleştirilir. Animatiği izleyin, hatalıysa çekimi değiştirin ve ancak ondan sonra hareketli görüntü üretimine bütçe ayırın.",
+    "comparison": {
+      "id": "direction",
+      "caption": "Bir yönetmen notu, bir klip yönergesi ve aynı vuruşta müzik ile dış ses."
+    },
+    "cta": "Launch Studio (9 $)"
+  },
+  "publishCut": {
+    "eyebrow": "Yayınladığınız kurgu",
+    "title": "İstediğiniz yere dışa aktarın. Kazandığınızda SceneFlow üzerinde Premiere.",
+    "subtitle": "Download a master and ship it yourself, or publish finished scenes and chapters to {longForm} and cut trailers for {shorts} — without waiting on the whole cut. Before anything hits the public feed, run drafts or your final master through the Screening Room. Standout projects can apply for the invite-only SceneFlow Network; it is a curated accelerator, not an open storefront.",
+    "comparison": {
+      "id": "publish",
+      "caption": "A finished scene or chapter, and the 90-minute master, from one studio."
+    },
+    "cta": "Launch Studio (9 $)"
+  },
+  "infrastructure": {
+    "title": "Kurumsal Düzeyde Altyapı ve Güvenlik",
+    "description": "Kurumsal düzeyde güvenilirlik, çok dilli seslendirme modelleri ve güvenli varlık işleme özellikleri için Google Cloud ve Vertex AI tarafından desteklenmektedir.",
+    "badges": {
+      "googleCloud": "Google Cloud",
+      "vertexAi": "Vertex AI"
+    }
   },
   "valueProp": {
     "pills": [
@@ -150,7 +1114,7 @@
         "icon": "video",
         "label": "Yaratıcı",
         "outcome": "Zamanında teslim edin; her araçta yeniden oluşturmayı bırakın.",
-        "narrative": "Elinizde bir hikâye var; ancak her yeni bölüm; varlıkların (asset) yeniden dışa aktarılmasını, yeni sekmelerde komutların (prompt) tekrar girilmesini ve görsel sürekliliğin korunmasını ummayı gerektiriyor. SceneFlow; Seri, Blueprint ve Yapım süreçlerini tek bir stüdyo ortamında birleştiriyor. Böylece her şeyi sıfırdan oluşturmak yerine; ön görselleştirme (pre-vis) aşamasında görünümü onaylayıp sahneleri tek tek üretebilir ve tutarlı bölümleri planlanan takvime uygun şekilde teslim edebilirsiniz.",
+        "narrative": "Elinizde bir hikâye var; ancak her yeni bölüm; varlıkların (asset) yeniden dışa aktarılmasını, yeni sekmelerde komutların (prompt) tekrar girilmesini ve görsel sürekliliğin korunmasını ummayı gerektiriyor. SceneFlow; Series Room, Blueprint Room ve Production Stage bileşenlerini tek bir stüdyo ortamında birbirine bağlar. Böylece her şeyi sıfırdan oluşturmak yerine; ön görselleştirme (pre-vis) aşamasında görsel tarzı onaylayabilir, sahneleri tek tek üretebilir ve tutarlı bölümleri planlanan takvime uygun şekilde teslim edebilirsiniz.",
         "useCases": [
           "16:9 YouTube TV dizisi",
           "9:16 dikey mobil drama",
@@ -243,7 +1207,7 @@
         "icon": "klaket",
         "label": "Film Yapımı",
         "outcome": "Çekimden önce gösterimini yapıp test edebileceğiniz interaktif bir animatiğin senaryosu",
-        "narrative": "Çekim öncesi görselleştirme (previz) ve izleyici testleri; eskiden kameralar çalışmadan önce haftalar süren storyboard çalışmaları, geçici seslendirmeler ve maliyetli varsayımlar anlamına geliyordu. SceneFlow, Pre-vis Agent özelliğiyle senaryonuzu etkileşimli bir animatiğe dönüştürür; Audience Resonance ile optimize edip Screening Room ortamında izletmenizi ve bütçeyi ancak hikâye tam anlamıyla karşılık bulduğunda ayırmanızı sağlar.",
+        "narrative": "Çekim öncesi görselleştirme (previz) ve izleyici testleri; eskiden kameralar çalışmaya başlamadan önce haftalar süren storyboard çalışmaları, geçici seslendirmeler ve maliyetli varsayımlar anlamına geliyordu. SceneFlow, Pre-vis Agent aracılığıyla senaryonuzu etkileşimli bir animatiğe dönüştürür; Audience Resonance ile optimize edip Screening Room'de izletmenizi ve bütçeyi ancak hikaye tam anlamıyla karşılığını bulduğunda ayırmanızı sağlar.",
         "useCases": [
           "Uzun metraj ve bağımsız film ön görselleştirme",
           "Yatırımcı sunumu animatikleri",
@@ -256,7 +1220,7 @@
           "challengeTitle": "Hikayeyi Test Edebilmeden Önce Yavaş Ön Görselleştirme",
           "challengeDescription": "Elinizde bir senaryo var; ancak masa başı okumaları, storyboard süreçleri ve birbirinden kopuk ön görselleştirme (previz) araçları; yatırımcı sunumlarını, izleyici testlerini ve yapım onay kararlarını geciktiriyor.",
           "solutionTitle": "Senaryo Odaklı Etkileşimli Ön Görselleştirme",
-          "solutionDescription": "Senaryonuzu (MDX, FDX ve diğer formatlar) yükleyin, Audience Resonance ile optimize edin ve izleyip test edebileceğiniz etkileşimli bir ön görselleştirme (pre-vis) oluşturun; üstelik sahneler (beats) genelinde eş zamanlı ve hızlı oluşturma, 70'ten fazla dil seçeneği ve hızlı çok dilli bindirme (overlay) imkanlarıyla.",
+          "solutionDescription": "Senaryonuzu (MDX, FDX ve diğer formatlar) yükleyin, Audience Resonance ile optimize edin ve izleyip test edebileceğiniz etkileşimli bir ön görselleştirme (pre-vis) oluşturun; bu süreçte Production Agents; 70'ten fazla dil seçeneği ve hızlı çok dilli bindirmelerle istemleri hazırlar ve hikaye akışındaki çeşitli aşamalar (beats) genelinde içerik üretir.",
           "win": "Haftalar süren bir ön görselleştirme (previz) süreciyle değil, paylaşılabilir bir animatikle; ana çekimlere başlamadan önce hikaye ve izleyici uyumunu doğrulayın."
         }
       }
@@ -272,7 +1236,7 @@
       },
       {
         "them": "Oturumlar arası manuel tutarlılık",
-        "us": "Reference Library + Shot Frames video öncesinde görselleri kilitler"
+        "us": "Reference Library + Shot Frames video öncesinde görselleri kilitleyin"
       },
       {
         "them": "Kitle doğrulama iş akışı yok",
@@ -290,10 +1254,10 @@
     "title": "Vuruş Odaklı Video İş Akışı",
     "subtitle": "Oluşturmadan önce onaylayın; şans oyunları makinesi misali rastgele yeniden oluşturma değil.",
     "intro": "Deneme yanılma yoluyla üretim yapmaya gerek yok. SceneFlow nihai video için kredi harcamadan önce, ortaya çıkacak görüntüyü önizler ve onaylarsınız.",
-    "description": "SceneFlow, görsel onay sürecini her aşamada yapılandırır: inceleme için Pre-vis Agent, kompozisyonu sabitlemek için Shot Frames ve ardından her bir vuruş (shot) için F2V. Böylece, sapmalar (drift) ve halüsinasyonlar uğruna kredilerinizi tüketmeden önce görseli iyileştirirsiniz.",
+    "description": "SceneFlow, görsel onay sürecini her aşamada yapılandırır: inceleme için Pre-vis Agent, kompozisyonu sabitlemek için Shot Frames ve ardından her bir anlatım ritmi (beat) için F2V. Böylece, sapmalar ve halüsinasyonlar uğruna kredilerinizi boşa harcamadan önce görseli iyileştirirsiniz.",
     "steps": [
-      "Pre-vis Agent — Görsel-işitsel beat'leri dakikalar içinde incelemeye sunun",
-      "Shot Frames — Reference Library sürekliliği ile başlangıç/bitiş kompozisyonunu kilitleme",
+      "Pre-vis Agent — uzman yönlendirmesinin ardından, gözden geçirilmek üzere görsel-işitsel kesitleri paylaşın",
+      "Shot Frames — başlangıç/bitiş kompozisyonunu Reference Library sürekliliği ile kilitleyin",
       "Vuruş başına F2V — körü körüne girilen komutlarla değil, onaylanmış karelerden video oluşturun",
       "Kesintisiz EXT zinciri — uzun diyalog bölümleri için yerel +7 saniyelik uzatma adımları",
       "Production Mixer — Screening Room'ye zamanlama, ses ve akış dışa aktarımı"
@@ -371,7 +1335,7 @@
     "steps": [
       {
         "title": "8 saniyelik ilk klip",
-        "description": "Onaylanmış Shot Frames üzerinden kare-videoya veya görüntü-videoya dönüştürme işlemi, hareket başlamadan önce kompozisyonu kilitler."
+        "description": "Onaylanmış Shot Frames üzerinden gerçekleştirilen kare-videoya veya görüntü-videoya dönüştürme işlemi, hareket başlamadan önce kompozisyonu sabitler."
       },
       {
         "title": "+7 saniyelik uzatma adımları",
@@ -406,7 +1370,7 @@
     "badge": "Yaratıcı Yelpaze",
     "title": "Her Tarz, Her Ekran",
     "titleAccent": "Yaratıcı DNA'nız Blueprint'te kilitli",
-    "subtitle": "Blueprint, yaratıcı DNA'nızın —sanat tarzı, en-boy oranı, ton ve temel anlatı— tam olarak oturduğu noktadır. SceneFlow bu tercihleri tretman, Audience Resonance ve senaryo oluşturma süreçlerine aktarır; böylece sahne yönergeleri, son dakika dışa aktarım ayarları olarak değil, en başından itibaren kadrajınız ve görsel tarzınızla uyumlu hale gelir.",
+    "subtitle": "Blueprint Room; sanat tarzı, en-boy oranı, ton ve temel anlatı gibi yaratıcı DNA'nızın şekillendiği ve sabitlendiği yerdir. SceneFlow ise bu tercihleri tretman, Audience Resonance ve senaryo oluşturma süreçlerine aktarır; böylece sahne yönergeleri, son dakika dışa aktarım ayarları olarak değil, en başından itibaren kadrajınız ve görsel tarzınızla uyumlu hale gelir.",
     "pillars": [
       {
         "title": "Biçim İşlevi (ve Çerçevelemeyi) İzler",
@@ -430,87 +1394,121 @@
       "items": [
         {
           "id": "fotogerçekçi",
-          "name": "Fotogerçekçi",
+          "name": "Sinematik Canlı Çekim",
           "displayTitle": "Fotorealizm",
-          "description": "Profesyonel fotoğrafçılık tarzı",
+          "description": "Fotorealistik, sinematik aydınlatma",
           "tagline": "Prestijli uzun soluklu gerçekçilik",
           "marketingBody": "Fotorealizm, prestijli televizyon yapımları ve belgesel izleyicilerinin beklediği o geniş kitlelere hitap etme gücünü sağlar. Birbirini takip eden anlatı aşamaları boyunca gerçekçi karakterleri ve aydınlatmayı tutarlı kılarak, epizodik dramaların ve belgesel dizilerinin açılıştan finale kadar duygusal sürekliliğini korumasını sağlayın.",
+          "featured": true,
           "thumbnail": "https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Gemini_Generated_Image_w5y03bw5y03bw5y0.jpeg"
         },
         {
           "id": "90'lar animesi",
-          "name": "Anime (90'lar)",
-          "displayTitle": "Anime",
-          "description": "Klasik 90'lar anime tarzı",
-          "tagline": "Bölümler halinde ilerleyen hikâye örgüleri",
-          "marketingBody": "Anime tarzı \"cel shading\" (hücresel gölgelendirme) tekniği, çok bölümlü web dizileri ve uzun soluklu hikâye akışları genelinde hayranların derin bir bağlılık kurmasını sağlar. Bu tarz üzerinde eğitilmiş üretken yapay zeka motorları, net çizgi çalışmaları ve öngörülebilir kadrajlar sunarak, büyük ölçekli seri yapımlar için ideal bir ortam yaratır.",
+          "name": "Sinematik 3D / CGI",
+          "displayTitle": "Sinematik 3D / CGI",
+          "description": "Render alınmış 3D sinema filmi görünümü",
+          "featured": false,
           "thumbnail": "https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Gemini_Generated_Image_5qoasf5qoasf5qoa.jpeg"
         },
         {
           "id": "Pixar",
-          "name": "Pixar Animasyon",
+          "name": "3D Animasyon (Pixar tarzı)",
           "displayTitle": "Sinematik 3D / Pixar Tarzı",
-          "description": "Pixar tarzı 3D animasyon",
+          "description": "Stilize 3D animasyon filmi",
           "tagline": "Bölümler arası duygusal süreklilik",
           "marketingBody": "Yumuşak, yuvarlak hatlı geometrik yapılar ve etkileyici karakter tasarımları, izleyicilerin ilgisini tüm sezon boyunca canlı tutan duygusal bir sıcaklık yaratır. Bu yaklaşım; karakter tutarlılığının her sahnede büyük önem taşıdığı animasyon dizileri, aileye yönelik uzun soluklu yapımlar ve markalı hikâye anlatımı çalışmaları için idealdir.",
+          "featured": true,
           "thumbnail": "https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Gemini_Generated_Image_zi32rnzi32rnzi32.jpeg"
         },
         {
           "id": "konsept sanatı",
-          "name": "Konsept Tasarım",
-          "displayTitle": "Konsept Tasarım",
-          "description": "Oyun/film konsept sanatı",
-          "tagline": "Atmosferik ve prodüksiyona hazır aydınlatmaya sahip film ve dizi ön görselleştirme (pre-vis) kareleri.",
+          "name": "Anime",
+          "displayTitle": "Anime",
+          "description": "Cel-shaded anime tarzı",
+          "tagline": "Bölümler halinde ilerleyen hikâye örgüleri",
+          "marketingBody": "Anime tarzı \"cel shading\" (hücresel gölgelendirme) tekniği, çok bölümlü web dizileri ve uzun soluklu hikâye akışları genelinde hayranların derin bir bağlılık kurmasını sağlar. Bu tarz üzerinde eğitilmiş üretken yapay zeka motorları, net çizgi çalışmaları ve öngörülebilir kadrajlar sunarak, büyük ölçekli seri yapımlar için ideal bir ortam yaratır.",
+          "featured": true,
           "thumbnail": "https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Gemini_Generated_Image_qlf261qlf261qlf2.jpeg"
         },
         {
           "id": "Ghibli",
           "name": "Ghibli tarzı",
           "displayTitle": "Elle Çizilmiş / Ghibli Tarzı",
-          "description": "Studio Ghibli esintili",
+          "description": "Elle çizilmiş, resimsi animasyon",
           "tagline": "Lüks olarak zanaat",
           "marketingBody": "Bu tarz, \"Lüks Olarak Zanaat\" anlayışını öne çıkaran önemli bir yaratıcı akımdan doğrudan besleniyor. Suluboya dokuları ve resimsel arka planlar; organik kusurların, uzun soluklu bir seri boyunca bilinçli bir sanatçılık ifadesi olarak algılandığı, el işçiliğiyle yaratılmış epizodik dünyalar oluşturuyor.",
+          "featured": true,
           "thumbnail": "https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Gemini_Generated_Image_xojqsuxojqsuxojq.jpeg"
         },
         {
           "id": "çizgi roman",
           "name": "Çizgi Roman",
           "displayTitle": "Çizgi Roman",
-          "description": "Çizgi roman mürekkepleme tarzı",
+          "description": "Güçlü mürekkep, grafik roman görünümü",
           "tagline": "Çok bölümlü, tefrika tarzı hikâye anlatımı için belirgin mürekkep çizgileri, yarım ton dokusu ve pop-art renkler.",
+          "featured": false,
           "thumbnail": "https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Gemini_Generated_Image_ezhp8cezhp8cezhp.jpeg"
         },
         {
           "id": "yağlı boya tablo",
-          "name": "Yağlı Boya Tablo",
-          "displayTitle": "Yağlı Boya Tablo",
-          "description": "Klasik yağlı boya tablo",
-          "tagline": "Belgesel ve tarihi nitelikteki kapsamlı çalışmalar için klasik fırça işçiliği ve zengin pigmentler.",
+          "name": "Konsept Tasarım",
+          "displayTitle": "Konsept Tasarım",
+          "description": "Sinematik oyun/film konsept sanatı",
+          "tagline": "Atmosferik ve prodüksiyona hazır aydınlatmaya sahip film ve dizi ön görselleştirme (pre-vis) kareleri.",
+          "featured": false,
           "thumbnail": "https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Gemini_Generated_Image_7z9qm7z9qm7z9qm7.jpeg"
         },
         {
           "id": "dijital sanat",
-          "name": "Dijital Sanat",
-          "displayTitle": "Dijital Sanat",
-          "description": "Modern dijital illüstrasyon",
-          "tagline": "Animasyonlu belgesel ve bölüm bazlı açıklayıcı seri için stilize edilmiş illüstrasyon.",
+          "name": "Flat Vektör / Hareketli Grafikler",
+          "displayTitle": "Flat Vektör / Hareketli Grafikler",
+          "description": "Açıklayıcı videolar için temiz vektör görünümü",
+          "featured": false,
           "thumbnail": "https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Gemini_Generated_Image_omdmt6omdmt6omdm.jpeg"
         },
         {
           "id": "suluboya",
-          "name": "Suluboya",
-          "displayTitle": "Suluboya",
-          "description": "Yumuşak sulu boya çalışması",
-          "tagline": "Anı, belgesel ve derinlemesine, tefekküre dayalı uzun soluklu anlatılar için yumuşak pigment yıkamaları.",
+          "name": "Storyboard / SFAI Animasyon Dönemi",
+          "displayTitle": "Storyboard / SFAI Animasyon Dönemi",
+          "description": "Taslak gri tonlamalı storyboard kareleri",
+          "featured": false,
           "thumbnail": "https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Gemini_Generated_Image_7i1wus7i1wus7i1w.jpeg"
         },
         {
           "id": "eskiz",
-          "name": "Taslak/Çizgi Çalışması",
-          "displayTitle": "Taslak/Çizgi Çalışması",
+          "name": "Dijital Sanat",
+          "displayTitle": "Dijital Sanat",
+          "description": "Modern dijital illüstrasyon",
+          "tagline": "Animasyonlu belgesel ve bölüm bazlı açıklayıcı seri için stilize edilmiş illüstrasyon.",
+          "featured": false,
+          "thumbnail": "https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Gemini_Generated_Image_bmbpbibmbpbibmbp.jpeg"
+        },
+        {
+          "id": "watercolor",
+          "name": "Suluboya",
+          "displayTitle": "Suluboya",
+          "description": "Yumuşak sulu boya çalışması",
+          "tagline": "Anı, belgesel ve derinlemesine, tefekküre dayalı uzun soluklu anlatılar için yumuşak pigment yıkamaları.",
+          "featured": false,
+          "thumbnail": "https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Gemini_Generated_Image_7i1wus7i1wus7i1w.jpeg"
+        },
+        {
+          "id": "sketch",
+          "name": "Taslak / Çizgi Çalışması",
+          "displayTitle": "Taslak / Çizgi Çalışması",
           "description": "Kurşun kalem eskiz tarzı",
           "tagline": "Ön görselleştirmeden üretime uzanan süreçteki uzun soluklu sahneler için detaylı çizimler ve kalem dokusu.",
+          "featured": false,
           "thumbnail": "https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Gemini_Generated_Image_bmbpbibmbpbibmbp.jpeg"
+        },
+        {
+          "id": "oil-painting",
+          "name": "Yağlı Boya Tablo",
+          "displayTitle": "Yağlı Boya Tablo",
+          "description": "Klasik yağlı boya tablo",
+          "tagline": "Belgesel ve tarihi nitelikteki kapsamlı çalışmalar için klasik fırça işçiliği ve zengin pigmentler.",
+          "featured": false,
+          "thumbnail": "https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Gemini_Generated_Image_7z9qm7z9qm7z9qm7.jpeg"
         }
       ]
     },
@@ -595,7 +1593,7 @@
       "tagline": "Tek bir stüdyo. Rehberli otomasyon; ya da teknoloji yığınına zaten hakimseniz, yüksek iş hacmi.",
       "stages": [
         {
-          "label": "Blueprint Room",
+          "label": "SFAIBLUEPRINT_ODA_TERİMİ",
           "detail": "Yapılandırılmış hikâye planı"
         },
         {
@@ -603,7 +1601,7 @@
           "detail": "Tutarlı karakterler"
         },
         {
-          "label": "Üretim",
+          "label": "Production Stage",
           "detail": "Ses + görseller"
         },
         {
@@ -627,15 +1625,15 @@
     "proofLine": "Bir konut portföyü turunda doğrulandı: tamamen manuel işlem 4 saatten uzun sürerken → aynı çıktı SceneFlow ile bir saatten kısa sürede elde edildi."
   },
   "comparison": {
-    "title": "Stop pulling the lever. Start running a production.",
-    "subtitle": "Clip generators re-roll the dice on every prompt — new face, new room, new voice. SceneFlow reads every shot from the same locked references, so scene 100 still matches scene 1.",
+    "title": "Kolu çekmeyi bırak. Bir üretim süreci yürütmeye başla.",
+    "subtitle": "Klip oluşturucular her komutta işi yeniden şansa bırakır; yeni bir yüz, yeni bir oda, yeni bir ses ortaya çıkar. SceneFlow ise her bir çekimi aynı sabit referanslar üzerinden işler; böylece 100. sahne, 1. sahneyle uyumunu korur.",
     "caption": "Tek bir stüdyo; parçalı istem araçlarının, manuel düzenlemelerin ve platformlar arası iş teslimi süreçlerinin yerini alıyor.",
     "imageAlt": "Geleneksel prodüksiyonun getirdiği ek yükler ile SceneFlow otomatik stüdyo karşılaştırması — konsept aşamasından yayına hazır videoya daha hızlı geçiş"
   },
   "howItWorks": {
     "title": "Konseptten yayına hazır videoya",
     "titleAccent": "Tek bir yönlendirmeli iş akışı",
-    "subtitle": "Seri seçime bağlıdır. Temel izlek Blueprint → Prodüksiyon → Screening Room şeklindedir; süreç boyunca pre-viz, animatik, sahne videosu ve ana MP4 dosyası hazırlanır.",
+    "subtitle": "Seri kullanımı isteğe bağlıdır. Temel iş akışı Blueprint Room → Production Stage → Screening Room şeklindedir; bu süreçte pre-viz, animatik, sahne videosu ve master MP4 gibi çıktılar yer alır.",
     "tagline": "Her adım ustalıkla otomatikleştirilmiştir. Her adım size tam kontrol sağlar.",
     "optionalBadge": "İsteğe bağlı",
     "optionalSuffix": " (isteğe bağlı)",
@@ -644,59 +1642,64 @@
     "phases": [
       {
         "id": "dizi",
-        "stepLabel": "Seri",
-        "subtitle": "Showrunner Motoru",
+        "stepLabel": "SFAISERIES_ODA_DÖNEMİ",
+        "subtitle": "Birden fazla bölüme yayılan süreklilik",
         "description": "Evreninizi bir kez tanımlayın ve bölümler arası tutarlı hikâye akışları oluşturun. Ortak Reference Library, sezon boyunca karakterlerin ve tonun uyum içinde kalmasını sağlar.",
         "keySteps": [
           "Evreni tanımlayın — karakterler, ton ve sezon akışı",
           "Sezon genelinde bölüm taslaklarını otomatik olarak oluşturun",
-          "Blueprint ile senkronizasyon ve bölüm başına yapım"
+          "Bölüm başına Blueprint Room ve Production Stage ile senkronize edin."
         ],
         "keyFeatures": [
           "Evreninizi bir kez tanımlayın: karakterler, ton ve sezon akışı.",
           "Sezon genelinde otomatik olarak oluşturulan, bütünlüklü bölüm taslakları",
           "Süreklilik takibi — çok bölümlü sezonların uyum içinde olması",
-          "Dizi-bölüm senkronizasyonu — Blueprint Stüdyo ve Prodüksiyon sistemine"
-        ]
+          "Dizi-bölüm senkronizasyonu — Blueprint Room ve Production Stage'e"
+        ],
+        "optional": true
       },
       {
         "id": "mavi kopya",
-        "stepLabel": "Blueprint Room",
+        "stepLabel": "SFAIBLUEPRINT_ODA_TERİMİ",
         "subtitle": "Hikâye Geliştirme",
         "description": "Konseptleri; logline, hikâye akışı (beats), karakterler ve tonu içeren yapılandırılmış taslaklara (treatment) dönüştürün. Yoğun render işleminden önce Audience Resonance'yı çalıştırın ve iş birliği yapın.",
         "keySteps": [
-          "Oluştur → İncele → Yinele → Üretime Başla",
+          "Oluştur → İncele → Yinele → Production Stage'e git",
           "Audience Resonance 80+ hedef puanı ile puanlama",
           "İş birliği yapanlar için paylaşım bağlantıları ve dışa aktarma (PDF, Doc, PPTX)"
         ],
         "keyFeatures": [
-          "Oluşturma → İnceleme → Yineleme → Üretime Başlama iş akışı",
+          "Oluştur → İncele → Yinele → Production Stage iş akışına git",
           "Dakikalar içinde konseptten yapıya — logline, hikâye aşamaları, karakterler ve ton",
-          "Canlı ortama geçiş öncesinde 80+ hedefiyle Audience Resonance puanlaması",
+          "Production Stage öncesinde 80+ hedefli Audience Resonance puanlaması",
           "İş birliği yapanlarla paylaşılan bağlantılar — geri bildirimlerin sentezlenerek yönlendirmeli revizyona dönüştürülmesi"
-        ]
+        ],
+        "optional": false
       },
       {
         "id": "üretim",
-        "stepLabel": "Üretim",
-        "subtitle": "Screening Room'ye yönelik betik",
-        "description": "Script ve Shoot sekmeleri; Foundation → Pre-Vis → Footage → Mixer → Streams akışına yön verir. Sahne bazlı kontrol noktaları yeniden yapma ihtiyacını en aza indirirken; Screening Room önizleme, birleştirme ve yayınlama işlemlerini gerçekleştirir.",
+        "stepLabel": "Production Stage",
+        "subtitle": "Akışlar Yoluyla Yönlendirme",
+        "description": "Yönetim, Senaryo, Müzik, Referanslar ve Hareketsiz Görüntüler; Audience Resonance ve Pre-Vis (ön görselleştirme) incelemesiyle senaryoyu optimize eder. Klipler, Mikser ve Akışlar, her bir çekim için videoyu oluşturur. Screening Room ise ön izleme, birleştirme ve yayınlama süreçlerini yönetir.",
         "keySteps": [
           "Senaryoyu, seslendirmeleri ve sahne seslerini sabitleyin",
-          "Sahne sahne ön görselleştirme (Pre-Vis) — galeri ve inceleme için paylaşım",
-          "Çekim sekmesi — Görüntü → Mikser → Sahne başına akışlar",
-          "Screening Room — önizleme, ana sürümü oluşturma, yayımlama"
+          "Sahne sahne ön görselleştirme — İnceleme için görseller ve paylaşım",
+          "Klipler, Mikser ve Yayınlar — her bir çekimi oluşturun",
+          "Prodüksiyon Planlayıcı — çekim hedefleri, tarihli bir program ve telefon durumu",
+          "Screening Room — önizleme, ana kopyayı oluşturma, yayınlama"
         ],
         "keyFeatures": [
-          "Foundation — senaryo, seslendirmeler, sahne sesi, Audience Resonance",
-          "Pre-Vis — paylaşım bağlantılarıyla birlikte sahne başına yönetmenlik, ses ve kilit kareler (shot frames)",
-          "Çekim — Prodüksiyon ortamından ayrılmadan görüntü, mikser ve yayınlar",
-          "Screening Room — sahne önizlemesi, ana montaj, gösterimler ve YouTube'da yayınlama"
-        ]
+          "Yönetim, Senaryo, Müzik, Referanslar ve Kareler — senaryo, seslendirmeler, sahne sesi, Audience Resonance Analizi",
+          "Sabit Görüntüler — paylaşım bağlantılarıyla birlikte sahne başına yönetmenlik notları, ses ve ritim kareleri",
+          "Klipler, Mikser ve Yayınlar — Production Stage'den ayrılmadan her bir çekimi oluşturun.",
+          "Prodüksiyon Planlayıcı — çekim hedefleri, tarihli bir program ve telefon durumu",
+          "Screening Room — sahne önizlemesi, ana kurgu birleştirme, gösterimler ve YouTube'da yayınlama"
+        ],
+        "optional": false
       },
       {
         "id": "gösterim odası",
-        "stepLabel": "Screening Room",
+        "stepLabel": "SFAI_TARAMA_ODASI_DÖNEMİ",
         "subtitle": "Önizleme · Oluştur · Yayınla",
         "description": "Production içinde tek bir son işlem alanı: sahne videolarını önizleyin, yayın akışlarını birleştirerek ana bir MP4 dosyası oluşturun, analiz özellikli ve paylaşılabilir gösterimler gerçekleştirin ve YouTube'da yayınlayın ya da paketler halinde dışa aktarın.",
         "keySteps": [
@@ -710,7 +1713,8 @@
           "Birleştirme ön ayarları — Tüm Video, Hibrit veya sahne bazında özel karışım",
           "Paylaşılabilir değerlendirmeler — Puanlama ve yapılandırılmış geri bildirim içeren /s/ bağlantıları",
           "YouTube sihirbazı, kısa formatlı dışa aktarımlar ve dağıtım paketleri"
-        ]
+        ],
+        "optional": false
       }
     ]
   },
@@ -735,9 +1739,9 @@
       },
       {
         "id": "mavi kopya",
-        "stepLabel": "Konseptinizi Blueprint ile optimize edin.",
+        "stepLabel": "Blueprint Room ile konseptinizi optimize edin.",
         "shortDescription": "Yoğun render işlemine geçmeden önce fikirleri; logline, hikâye akışı (beats), karakterler ve tonu içeren yapılandırılmış bir taslağa (treatment) dönüştürün.",
-        "detailedDescription": "Blueprint kapsamlı bir hikâye taslağını otomatik olarak oluşturur. Akıllı önerilerle karakter gelişim süreçlerini, olay örgüsü aşamalarını ve anlatım tonunu geliştirin. İş birliği paylaşım bağlantıları, ilgili tarafların yapım aşamasına geçilmeden önce inceleme yapmasına olanak tanır.",
+        "detailedDescription": "Blueprint, kapsamlı bir hikaye taslağını otomatik olarak oluşturur. Akıllı önerilerle karakter gelişim süreçlerini, olay örgüsü aşamalarını ve anlatım tonunu iyileştirin. İş birliği paylaşım bağlantıları, paydaşların Production Stage öncesinde inceleme yapmasına olanak tanır.",
         "media": "video"
       },
       {
@@ -757,13 +1761,13 @@
       {
         "id": "ateş et",
         "stepLabel": "Yapımınızın çekimini gerçekleştirin",
-        "shortDescription": "Vuruş (beat) düzeyinde videolar oluşturun, ses ve bindirmeleri (overlay) miksleyin ve tam sahne akışlarını dışa aktarın; hepsi tek bir \"Shoot\" sekmesinde: Görüntü (Footage), Mikser ve Akışlar.",
-        "detailedDescription": "Production (Yapım) bölümündeki Shoot (Çekim) sekmesi sizin set ortamınızdır: Onaylanmış Pre-Vis karelerinden video (Footage) oluşturun, Mixer'da zamanlama, filigran ve ses ayarlarını hassas bir şekilde yapın ve ardından Streams kısmında sahnenin tamamını içeren MP4 dosyalarını render edin.",
+        "shortDescription": "Clips'te her bir çekimi oluşturun, Mixer'da sesi miksleyin ve Streams'te dil versiyonlarını dışa aktarın.",
+        "detailedDescription": "Klipler, onaylanmış sabit görüntülerden (stills) her bir çekim için videoyu oluşturur. Mikser; zamanlamayı, filigranları ve sesi ayarlar. Akışlar (streams), sahnenin dil versiyonlarıdır.",
         "media": "video",
         "subPoints": [
-          "Görüntü — Pre-Vis başlangıç ve bitiş karelerinden adım adım video oluşturma",
+          "Klipler — onaylanmış sabit görüntülerden çekilmiş videolar",
           "Mikser — sahne başına filigran, metin katmanı ve ses zamanlaması",
-          "Akışlar — Screening Room için hazır, tam render alınmış sahne videosu (tüm aşamalar)"
+          "Akışlar — Screening Room için hazır, sahnenin dil versiyonları"
         ]
       },
       {
@@ -790,6 +1794,191 @@
       "openFeatureVideo": "Özellik videosunu aç"
     }
   },
+  "productionShowcase": {
+    "badge": "Üretim Örnekleri",
+    "title": "Tüm İş Akışını Görüntüle",
+    "titleAccent": "İş Başında",
+    "subtitle": "Her bir örnek, kısa bir tanıtım filmiyle başlar. Blueprint aşamasından ön görselleştirmeye (Pre-Vis) ve nihai kurguya kadar tüm üretim sürecini kapsayan uzun metrajlı ana kopyaysa Screening Room'de gösterilir.",
+    "subtitleTagline": "Uzun soluklu yapımlar. Klipler değil.",
+    "screeningRoomInstruction": "Bu yapımı bir değerlendirmecinin yapacağı şekilde, her seferinde bir aşamayı ele alarak inceleyin. İşe Series ile başlayın; ardından sırasıyla Blueprint, AR Analysis aşamasındaki senaryo ve son olarak Screening ile devam edin.",
+    "trailerLabel": "Fragman",
+    "watchLongform": "Uzun versiyonu izleyin",
+    "seriesDoor": "Seri",
+    "blueprintDoor": "SFAI Taslak Plan Dönemi",
+    "scriptArDoor": "Ticari Alacaklar Analizi",
+    "screeningDoor": "Tarama",
+    "screeningRoomGroup": "SFAI_TARAMA_ODASI_DÖNEMİ",
+    "previsDoor": "Ön Görselleştirme",
+    "roughDoor": "Ham Kurgu",
+    "scenesDoor": "Sahneler",
+    "finalDoor": "Final",
+    "enterFullscreen": "Tam ekrana geç",
+    "exitFullscreen": "Tam ekrandan çık",
+    "explorerHandoff": "Bu bağlantılar tamamlanmış birer çalışmadır. Explorer ise kendi çalışmanızı oluşturacağınız yerdir.",
+    "languagesBanner": "Herkese açık örnekler 4 dilde sunulmaktadır: İngilizce, İspanyolca, Çince ve Arapça.",
+    "workflowLabel": "Çözümler",
+    "startProduction": "Üretiminize başlayın",
+    "cta": "Üretiminize başlayın",
+    "continuityNote": "Series Room sürekliliği yönetir.",
+    "resonanceNote": "Audience Resonance™, metinleri optimize eder.",
+    "videoLanguagePrompt": "İngilizce, İspanyolca, Çince veya Arapça izleyin",
+    "videoComingSoon": "Seslendirmesi yakında geliyor",
+    "videoSoon": "Yakında",
+    "frictionLabel": "Sürtünme",
+    "solutionPillarLabel": "SceneFlow Çözümü",
+    "showSolutionsSection": "Çözümleri Göster",
+    "hideSolutionsSection": "Çözümleri Gizle",
+    "cards": [
+      {
+        "id": "drama",
+        "title": "Uzun metrajlı sinematik drama. Karakterlerde hiç sapma yok.",
+        "subtitle": "1. sahneden 100. sahneye kadar karakter yüzlerini, kostümleri ve mekânları tutarlı bir şekilde koruyun. Pre-Vis (ön görselleştirme), sahne bazlı hareket videoları ve nihai ProRes 4K master kaydını incelemek için Screening Room alanını dolaşın; ardından tam seslendirmeyi dinlemek için diller arası geçiş yapın.",
+        "badge": "Diziye Hazır",
+        "solutionPillars": [
+          {
+            "title": "Görsel ve Karakter Tutarlılığı",
+            "frictionHeadline": "Karakter Kayması ve Sarsak Setler.",
+            "friction": "Üretken modeller her çekimde sıfırlanır; bu da sahne geçişlerinde karakter yüzlerinin, kıyafetlerin ve ışıklandırmanın sürekli olarak değişime uğramasına yol açar.",
+            "solutionHeadline": "Kilitli Varlık Blueprints.",
+            "solution": "Blueprint Room içerisinde ana karakter profillerini, ortamları ve görsel stilleri en baştan tanımlayın. SceneFlow, anlatısal sürükleyiciliği korumak amacıyla her bir render işleminde görsel kimliği tutarlı bir şekilde uygular."
+          },
+          {
+            "title": "Anlatı Temposu ve Sahne Kontrolü",
+            "frictionHeadline": "10 Saniyelik Klip Tuzağı.",
+            "friction": "Bir filmi birbiriyle bağlantısız mikro komutlardan oluşturmak; kesik kesik bir tempoya, duygusal derinlikten yoksun bir anlatıma ve zaman çizelgesi üzerinde bitmek bilmeyen manuel düzenlemelere yol açar.",
+            "solutionHeadline": "Önce \"Beat\"lere Dayalı Storyboard Oluşturma",
+            "solution": "Yönlendirmeyi istem (prompt) düzeyinde değil, sahne düzeyinde yapın. Tek bir video karesi bile oluşturmadan önce dramatik anları, kamera hareketlerini ve hikâye akışını görsel olarak kurgulayın."
+          },
+          {
+            "title": "Diyalog ve Ses Hizalama",
+            "frictionHeadline": "İnandırıcı olmayan diyalog.",
+            "friction": "Uyumsuz dudak senkronizasyonu, havada asılı kalan ağız hareketleri ve görüntüden kopuk ses kayıtları, izleyicileri anında yapımın atmosferinden koparır.",
+            "solutionHeadline": "Entegre Ses ve Senkronizasyon Motoru.",
+            "solution": "Dinamik ses performansı ve hassas dudak senkronizasyonu doğrudan video işleme sürecine entegre edilmiştir; böylece harici post-prodüksiyon işlemlerine gerek kalmadan inandırıcı diyaloglar elde edilir."
+          },
+          {
+            "title": "İş Akışı Sürtünmesi ve Yeniden Deneme Yorgunluğu",
+            "frictionHeadline": "Varlık Kaosu ve Sonsuz Yeniden Çekilişler.",
+            "friction": "Bir kısa film oluşturmak genellikle 200'den fazla ham video dosyasıyla uğraşmayı, manuel ölçek büyütmeyi ve boşa giden düzinelerce üretim denemesini beraberinde getirir.",
+            "solutionHeadline": "Otomatikleştirilmiş Stüdyo İş Akışı.",
+            "solution": "Konsept aşamasından nihai master MP4 dosyasına kadar her şey tek bir entegre platformda. Blueprint Room hikâye kurgusunu yönetir, Production Stage Akışlar (Streams) aracılığıyla yönetmenlik sürecini yürütür ve Screening Room nihai çıktınızı sunar."
+          }
+        ],
+        "screeningRoomPreview": "Sinematik Dram — Screening Room"
+      },
+      {
+        "id": "animation",
+        "title": "Çoklu Tarza Sahip, Tam Sezonluk Animasyon Dizisi. Tutarlı Tek Bir Sanat Tarzı.",
+        "subtitle": "İlk bölümden son bölüme kadar tek bir \"flat-cel\" (düz hücre) stilini, Hart ailesini ve Millwick kasabasını sabitleyin. Şakayı adım adım yönetin ve ardından bölümü Screening Room'de inceleyin.",
+        "badge": "Çoklu Stil",
+        "solutionPillars": [
+          {
+            "title": "Üslup Tutarlılığı",
+            "frictionHeadline": "Tarz Çöküşü.",
+            "friction": "Çizgi film ve anime tarzları sahneler arasında sürekli biçim değiştiriyor; çizim hatları kayıyor, renk paletleri bozuluyor ve karakterler fotogerçekçi, tekinsiz birer yığını andıran şekillere bürünüyor.",
+            "solutionHeadline": "Sabit Sanat Tarzı Motoru.",
+            "solution": "Estetik tarzınızı daha ilk kareden sabitleyin. SceneFlow; karakter tasarımlarını, çizgi kalınlıklarını ve gölgelendirme modellerini tüm bölüm boyunca kilitleyerek karakterlerinizin size özgü kalmasını sağlar."
+          },
+          {
+            "title": "Abartılı Animasyon ve Fizik",
+            "frictionHeadline": "Sert ve Hatalı Hareket.",
+            "friction": "Üretken modeller; hızlı slapstick hareketleri, şaşkınlıkla duraksayıp tekrar bakma (double-take) anları ve esnek çizgi film fiziği karşısında zorlanarak, yüksek enerjili şakaları eriyip şekli bozulmuş görüntülere dönüştürüyor.",
+            "solutionHeadline": "Eylem ve Poz Çapalama.",
+            "solution": "Geometriyi bozmadan dinamik karakter hareketleri ve etkileyici pozlar oluşturun. Tam hareket kontrolüyle vurucu fiziksel komediyi, ani kesmeleri ve sıra dışı yüz ifadelerini yönetin."
+          },
+          {
+            "title": "Komedi Zamanlaması ve Ritmi",
+            "frictionHeadline": "Mahvedilmiş Espri Finali Cümleleri",
+            "friction": "Mizah, duraklamalarda ve ritmik kesmelerde hayat bulur. Standart 5 saniyelik üretken döngüler, şakanın sunumunu mahveden, yapay ve aksak bir tempoya zorlar.",
+            "solutionHeadline": "Vuruş Hassasiyetinde Düzenleme",
+            "solution": "Sahne temposunu kare hassasiyetinde kontrol edin. Nihai render işleminden önce; dramatik duraklamaları, hazırlık ile vurucu nokta (punchline) arasındaki zamanlamayı ve hızlı tepki çekimlerini doğrudan \"beat\" (ritim/akış) odaklı zaman çizelgesi üzerinde ayarlayın."
+          },
+          {
+            "title": "Yüksek Enerjili Diyalog ve Vokal Senkronizasyonu",
+            "frictionHeadline": "Cansız kukla ağızları.",
+            "friction": "Sıradan yapay zeka diyalogları yavan ve mekanik hissettirerek, tempolu sitcom atışmaları için gereken enerjiyi yok ediyor.",
+            "solutionHeadline": "Dinamik Ses ve İfade Senkronizasyonu.",
+            "solution": "Seslendirmeyi, enerjik bir yüz performansıyla doğrudan eşleştirin. Maksimum komedi etkisi için diyaloglar, etkileyici ağız hareketleri ve komedi odaklı ses kayıtları kusursuz bir uyumla bir araya gelir."
+          }
+        ],
+        "screeningRoomPreview": "Hart House — SFAI Gösterim Odası"
+      },
+      {
+        "id": "documentary",
+        "title": "Uzun Metrajlı Belgeseller. Zekânın Yükselişi.",
+        "subtitle": "Yapay zekâ ve süper zekânın kıtalar genelindeki yükselişine tanık olun. Her bir bölüm, ait olduğu dönemin atmosferini yansıtıyor; erken dönem bir laboratuvarda modern nesneler ya da günümüzde 1950'lerden kalma dekorlar yer almıyor.",
+        "badge": "Dönemine uygun",
+        "solutionPillars": [
+          {
+            "title": "Döneme Özgü Görsel Doğruluk",
+            "frictionHeadline": "Anakronistik Eserler",
+            "friction": "Standart üretken modeller, tarihsel canlandırmaların içine sıklıkla modern nesneler, akıllı telefon ekranları veya döneme uygun olmayan giysiler sızdırır.",
+            "solutionHeadline": "Tarihsel Tarz Sınırları",
+            "solution": "1920'lerin film dokusundan 18. yüzyıl giysi dokularına kadar uzanan hassas zamansal parametreler belirleyin; böylece oluşturulan her sahne tarihsel açıdan aslına sadık kalsın."
+          },
+          {
+            "title": "Arşivsel Ara Görüntü ve B-Roll Motoru",
+            "frictionHeadline": "Uzun Dış Seslerde Görsel Tekdüzelik",
+            "friction": "Uzun soluklu bir anlatıcı sesini durağan stok görsellerle eşleştirmek, derinlemesine incelemeler sırasında izleyicilerin hızla yayından kopmasına yol açar.",
+            "solutionHeadline": "Transkript Tabanlı B-Roll Motoru",
+            "solution": "Anlatıcınız tarihi gerçekleri aktarırken, SceneFlow; doğrudan ses dökümüne bağlı, zamanlaması ayarlanmış sinematik canlandırmalar, belge bindirmeleri ve arşiv tarzı ara görüntüler oluşturur."
+          },
+          {
+            "title": "Röportaj ve \"Talking-Head\" Gerçekçiliği",
+            "frictionHeadline": "Tuhaf ve Tedirgin Edici Bilirkişiler",
+            "friction": "Yapay olarak oluşturulan tarihçiler, araştırmacılar veya tanıklar; havada asılı kalıyormuş gibi duran çene hareketleri ve doğal olmayan göz temasıyla sıklıkla yapay bir görünüme sahiptir.",
+            "solutionHeadline": "Kilitli Uzman Profilleri ve Ses Senkronizasyonu",
+            "solution": "Doğal mikro ifadeler, hassas dudak senkronizasyonu ve çok bölümlü seriler boyunca tutarlı uzman kimlikleri ile gerçekçi ve güvenilir röportaj kurguları oluşturun."
+          },
+          {
+            "title": "Bölümsel Tempo ve Anlatı Sürekliliği",
+            "frictionHeadline": "Parçalı Zaman Çizelgesi Düzenleme",
+            "friction": "40 dakikalık bir bölüm genelinde anlatıcı sesini, canlandırmaları, kanıtların açığa çıkarılmasını ve gerilimi artıran duraklamaları dengelemek, geleneksel doğrusal olmayan kurgu (NLE) sistemlerinde genellikle haftalar sürer.",
+            "solutionHeadline": "Önce Anlara/Bölümlere Odaklanan Belgesel İş Akışı",
+            "solution": "Blueprint Room içinde dramatik gerilimi, gerilim dolu duraksamaları ve kanıtların açığa çıkış anlarını görsel olarak kurgulayın; böylece tek ve kesintisiz bir işlemle, bütünüyle tamamlanmış bir ana dosya elde edin."
+          }
+        ],
+        "screeningRoomPreview": "Uzun Düşünce — Screening Room"
+      },
+      {
+        "id": "training",
+        "title": "Müfredata Hazır, Çok Modüllü Eğitim Serisi. Kilit Altında Bir Şef.",
+        "subtitle": "Bir şef, bir mutfak, beş yemek. Et suyundan son tatlıya kadar yüz, önlük ve fayanslar değişmeden kalır.",
+        "badge": "Müfredata Uygun",
+        "solutionPillars": [
+          {
+            "title": "Eğitmen ve Ortam Tutarlılığı",
+            "frictionHeadline": "Her modülde farklı bir öğretmen.",
+            "friction": "Üretken klipler dersler arasında eğitmenin yüzünü, kıyafetini ve sınıf ortamını sıfırladığı için, kurs birbiriyle ilgisiz videolardan oluşan bir yığın hissi veriyor.",
+            "solutionHeadline": "Kilitli Eğitmen Blueprints.",
+            "solution": "Eğitmeni, seti ve görsel sistemi Blueprint Room içinde bir kez tanımlayın. SceneFlow, bu kimliği tüm modüller genelinde sabit tutar."
+          },
+          {
+            "title": "Müfredat İlerleme Hızı",
+            "frictionHeadline": "Kliplere bölünmüş slaytlar.",
+            "friction": "Bir ders izlencesini birbirinden kopuk yönergelere dönüştürmek; dersin akışını, çözümlü örneği ve kısa sınav öncesindeki o duraksama anını kaybetmeye yol açar.",
+            "solutionHeadline": "Modül Öncelikli Taslak Oluşturma",
+            "solution": "Her bir modülü, bir kare oluşturulmadan önce hazırlık, gösterim ve kontrol aşamalarından oluşan bir öğretim adımları dizisi olarak yönetin."
+          },
+          {
+            "title": "Dış Ses ve Ekran Üzerinden Öğretim",
+            "frictionHeadline": "Grafiği ıskalayan ses.",
+            "friction": "Anlatım, altyazılar ve şemalar birbirinden kopar; böylece öğrenenler bir adımı duyarken görüntüde başka bir adım gösterilir.",
+            "solutionHeadline": "Senkronize Edilmiş Ders Kayıtları",
+            "solution": "Ses, altyazılar ve ekrandaki anlatım tam bir uyum içinde ilerler; böylece her açıklama, onu doğrulayan görselle eşzamanlı olarak sunulur."
+          },
+          {
+            "title": "Ders Oluşturma",
+            "frictionHeadline": "Bir Editörün Gözünden Haftalar",
+            "friction": "Modülleri, yeniden çekimleri ve yerelleştirilmiş sürümleri geleneksel bir zaman çizelgesi içinde bir araya getirmek, müfredat güncellemesini bir üretim gecikmesine dönüştürür.",
+            "solutionHeadline": "Tek Stüdyo İş Akışı.",
+            "solution": "Blueprint, Audience Resonance ve Screening Room; bir modülü taslaktan ön görselleştirmeye (Pre-Vis), kaba kurguya, sahnelere ve tamamlanmış kursa taşıyan süreçlerdir."
+          }
+        ],
+        "screeningRoomPreview": "Beş Tabak — Screening Room"
+      }
+    ]
+  },
   "platformWalkthrough": {
     "badge": "Kaputun altı",
     "title": "Ayrıntılı Platform İncelemesi",
@@ -802,30 +1991,33 @@
     "chapters": [
       {
         "id": "Buradan başlayın",
-        "label": "İşe buradan başlayın: planlama, süreklilik ve hedef kitleye uygunluk"
+        "label": "İşe buradan başlayın: planlama, süreklilik ve hedef kitleye uygunluk",
+        "defaultExpanded": false
       },
       {
         "id": "üret-yayınla",
-        "label": "Üret ve yayınla — Screening Room'ye Çekim sekmesi"
+        "label": "Üret ve yayınla — Screening Room'e klipler",
+        "defaultExpanded": false
       }
     ],
     "close": "Kapat",
     "viewDetails": "Ayrıntıları Görüntüle",
     "beatFirst": {
+      "id": 15,
       "title": "Vuruş Odaklı Video İş Akışı",
-      "description": "F2V öncesinde ön görselleştirme (pre-vis) aşamalarını ve Shot Frames'i onaylayın; böylece halüsinasyon ve görsel sapma kaynaklı, ne sonuç vereceği belirsiz yeniden üretim süreçleri azalır. İncelemeden nihai klibe uzanan tek ve yapılandırılmış bir iş akışı.",
+      "description": "F2V öncesinde ön görselleştirme (pre-vis) aşamalarını ve çekim karelerini onaylayın; böylece halüsinasyon ve görsel sapma kaynaklı, ne sonuç vereceği belirsiz yeniden üretim süreçleri azalır. İncelemeden nihai klibe uzanan tek ve yapılandırılmış bir iş akışı.",
       "keyFeatures": [
-        "İnceleme için Pre-vis Agent — ağır render işleminden önce beat'leri paylaşın",
-        "Shot Frames kilitleme kompozisyonu — Reference Library süreklilik",
+        "İnceleme için Pre-vis Agent — ağır render işleminden önce sahneleri (beats) paylaşın",
+        "Shot Frames kompozisyonu sabitleme — Reference Library devamlılık",
         "Vuruş başına F2V — onaylanmış karelerden video oluşturma",
         "Kesintisiz EXT zincirleri — bir sahne akışı (beat) içindeki uzun diyaloglar için doğal +7 saniyelik adımlar",
         "Mikser zamanlaması ve akışları — birleştirmek ve yayınlamak için Screening Room'yi açın"
       ],
-      "screenshotSlot": "Ekran görüntüsü ekleyin: Shot Frames ve video oluşturma öncesi ön görselleştirme (pre-vis) onayı",
+      "screenshotSlot": "Ekran görüntüsü ekleyin: Video oluşturma öncesinde Shot Frames ve ön görselleştirme (pre-vis) onayı.",
       "videoSlot": "00:30'luk klibi ekleyin: Vuruşların onaylanması, karelerin sabitlenmesi ve ardından F2V kliplerinin oluşturulması."
     },
     "screeningRoom": {
-      "title": "Screening Room",
+      "title": "SFAI_TARAMA_ODASI_DÖNEMİ",
       "description": "Production üzerinden sahne videolarını önizleyin, ana kurguyu oluşturun ve yayınlayın. Paydaşlar için yapılandırılmış geri bildirim ve isteğe bağlı etkileşim analizleri içeren özel /s/ paylaşım bağlantıları kullanın.",
       "keyFeatures": [
         "Sahne videosu önizlemesi — işlenmiş akışları sırayla oynat",
@@ -853,13 +2045,13 @@
         "title": "Platforma Genel Bakış",
         "description": "Fikirden yayına hazır videoya kadar tek bir stüdyo. Eğitim içerikleri, podcast'ler, haberler ve sinematik diziler için aynı üretim süreci; nihai render maliyetine girmeden önce ön görselleştirmeyi (pre-vis) onaylayın.",
         "keyFeatures": [
-          "Seri → Blueprint → Üretim → Screening Room",
-          "Sahne bölümü (beat) bazlı onay — F2V öncesinde pre-vis ve Shot Frames",
+          "Series Room → Blueprint Room → Production Stage → Screening Room",
+          "Önce \"beat\" (sahne akış birimi) bazlı onay — F2V öncesinde pre-viz ve Shot Frames",
           "Yerel Veo uzantı zincirleri ile Google Vertex AI oluşturma",
           "Güven ve Güvenlik koruma mekanizmaları ve teslimat sırasında imzalı köken bilgisi"
         ],
         "screenshotSlot": "Ekran görüntüsü ekleyin: Açılış sayfası ana görseli + basitleştirilmiş adım adım anlatım şeridi",
-        "videoSlot": "01:30'luk klibi ekle: Hero → yeni proje → Blueprint → Prodüksiyon Çekimi → Screening Room → Yayınla"
+        "videoSlot": "01:30'luk klibi ekle: Hero → yeni proje → Blueprint Room → Production Stage Çekim → Screening Room → Yayınla"
       },
       {
         "id": "9",
@@ -869,19 +2061,19 @@
           "Evreninizi bir kez tanımlayın: karakterler, ton ve sezon akışı.",
           "Sezon genelinde otomatik olarak oluşturulan, bütünlüklü bölüm taslakları",
           "Süreklilik takibi — çok bölümlü sezonların uyum içinde olması",
-          "Dizi-bölüm senkronizasyonu — Blueprint Stüdyo ve Prodüksiyon sistemine"
+          "Dizi-bölüm senkronizasyonu — Blueprint Room ve Production Stage'e"
         ],
         "screenshotSlot": "Ekran görüntüsü ekle: Otomatik oluşturulmuş bölüm akışlarıyla diziye genel bakış",
         "videoSlot": "00:30'luk klibi ekleyin: Çok bölümlü bir sezona genişleyen konsept"
       },
       {
         "id": "10",
-        "title": "Blueprint Otomasyon",
+        "title": "Blueprint Room Otomasyonu",
         "description": "Konseptleri; logline, hikâye akışı (beats), karakterler ve tonu içeren yapılandırılmış taslaklara (treatment) dönüştürün. Yoğun render işleminden önce Audience Resonance'yı çalıştırın ve iş birliği yapın.",
         "keyFeatures": [
-          "Oluşturma → İnceleme → Yineleme → Üretime Başlama iş akışı",
+          "Oluştur → İncele → Yinele → Production Stage iş akışına git",
           "Dakikalar içinde konseptten yapıya — logline, hikâye aşamaları, karakterler ve ton",
-          "Canlı ortama geçiş öncesinde 80+ hedefiyle Audience Resonance puanlaması",
+          "Production Stage öncesinde 80+ hedefli Audience Resonance puanlaması",
           "İş birliği yapanlarla paylaşılan bağlantılar — geri bildirimlerin sentezlenerek yönlendirmeli revizyona dönüştürülmesi"
         ],
         "screenshotSlot": "Ekran görüntüsü ekle: Hikaye aşamaları ve karakter gelişim süreçlerini içeren, otomatik oluşturulmuş Blueprint",
@@ -903,7 +2095,7 @@
       {
         "id": "7",
         "title": "Audience Resonance Analizi",
-        "description": "Anında puanlama, analiz ve öneriler almak için hedef kitlenizi belirleyin. Maksimum etki elde etmek amacıyla Bölümlerinizi, Blueprint ve Senaryonuzu mükemmel şekilde optimize etmek için tek tıklamayla düzeltmeler uygulayın veya Rehberli Düzenlemelerden yararlanın.",
+        "description": "Anında puanlama, analiz ve öneriler almak için hedef kitlenizi belirleyin. Maksimum etki elde etmek amacıyla Bölümlerinizi, Blueprint Room'inizi ve Senaryonuzu mükemmel şekilde optimize etmek için tek tıklamayla düzeltmeler uygulayın veya Rehberli Düzenlemelerden yararlanın.",
         "keyFeatures": [
           "Hedef kitle puanlaması — kategori kırılımıyla",
           "Bölüm bazlı öneriler — hikayenizin doğru kısmını düzeltin",
@@ -915,20 +2107,21 @@
       },
       {
         "id": "11",
-        "title": "Üretim Otomasyonu",
-        "description": "Script ve Shoot sekmeleri; Foundation → Pre-Vis → Footage → Mixer → Streams akışına yön verir. Sahne bazlı kontrol noktaları yeniden yapma ihtiyacını en aza indirirken; Screening Room önizleme, birleştirme ve yayınlama işlemlerini gerçekleştirir.",
+        "title": "Production Stage Otomasyonu",
+        "description": "Yönetim, Senaryo, Müzik, Referanslar ve Hareketsiz Görüntüler; Audience Resonance ve Pre-Vis (ön görselleştirme) incelemesiyle senaryoyu optimize eder. Klipler, Mikser ve Akışlar, her bir çekim için videoyu oluşturur. Screening Room ise ön izleme, birleştirme ve yayınlama süreçlerini yönetir.",
         "keyFeatures": [
-          "Foundation — senaryo, seslendirmeler, sahne sesi, Audience Resonance",
-          "Pre-Vis — paylaşım bağlantılarıyla birlikte sahne başına yönetmenlik, ses ve kilit kareler (shot frames)",
-          "Çekim — Prodüksiyon ortamından ayrılmadan görüntü, mikser ve yayınlar",
-          "Screening Room — sahne önizlemesi, ana montaj, gösterimler ve YouTube'da yayınlama"
+          "Yönetim, Senaryo, Müzik, Referanslar ve Kareler — senaryo, seslendirmeler, sahne sesi, Audience Resonance Analizi",
+          "Sabit Görüntüler — paylaşım bağlantılarıyla birlikte sahne başına yönetmenlik notları, ses ve ritim kareleri",
+          "Klipler, Mikser ve Yayınlar — Production Stage'den ayrılmadan her bir çekimi oluşturun.",
+          "Prodüksiyon Planlayıcı — çekim hedefleri, tarihli bir program ve telefon durumu",
+          "Screening Room — sahne önizlemesi, ana kurgu birleştirme, gösterimler ve YouTube'da yayınlama"
         ],
-        "screenshotSlot": "Ekran görüntüsü ekleyin: Senaryo, Çekim ve Ön Görselleştirme (Pre-Vis) sekmelerini gösteren yapım paneli.",
-        "videoSlot": "00:60'lık klip ekle: Senaryoyu sabitle → Sahne başına Pre-vis Agent → Çekim yap → Mikser → Yayınlar"
+        "screenshotSlot": "Ekran görüntüsü ekleyin: Yönetim, Senaryo, Sabit Görüntüler, Klipler, Mikser ve Yayınları gösteren prodüksiyon paneli",
+        "videoSlot": "00:60'lık klip ekle: Senaryoyu kilitle → Sahne başına sabit görseller → Klipler → Mikser → Yayınlar"
       },
       {
         "id": "14",
-        "title": "Screening Room",
+        "title": "SFAI_TARAMA_ODASI_DÖNEMİ",
         "description": "Production üzerinden sahne videolarını önizleyin, ana kurguyu oluşturun ve yayınlayın. Paydaşlar için yapılandırılmış geri bildirim ve isteğe bağlı etkileşim analizleri içeren özel /s/ paylaşım bağlantıları kullanın.",
         "keyFeatures": [
           "Sahne videosu önizlemesi — işlenmiş akışları sırayla oynat",
@@ -1041,56 +2234,56 @@
   },
   "coreCapabilities": {
     "audienceResonance": {
-      "badge": "Intelligence Layer",
-      "title": "Audience Resonance: build for a culture, not a language code",
-      "description": "Subtitles stretch one video’s reach. SceneFlow lets you name the culture, region, and demographic you are making for, score the story against that audience before you render, and then ship either a dubbed master or a separate high-resonance version per audience.",
+      "badge": "Zeka Katmanı",
+      "title": "Audience Resonance: bir dil kodu için değil, bir kültür için inşa edin",
+      "description": "Altyazılar, tek bir videonun erişim alanını genişletir. SceneFlow; hedeflediğiniz kültürü, bölgeyi ve demografik grubu tanımlamanıza, render işleminden önce hikayeyi bu kitleye göre değerlendirmenize ve ardından her bir kitle için ya seslendirmeli bir ana kopyayı ya da o kitlede yüksek etki yaratacak ayrı bir versiyonu hazırlayıp sunmanıza olanak tanır.",
       "bullets": [
-        "Define the audience: eight target regions, plus age, gender, education, and community",
-        "Describe culture, faith, and values in your own words — SceneFlow reads the signals",
-        "Get a resonance score with section-level fixes before you spend on renders",
-        "Dub the master, or produce a distinct version tuned to each audience"
+        "Hedef kitleyi tanımlayın: sekiz hedef bölge; ayrıca yaş, cinsiyet, eğitim ve topluluk.",
+        "Kültür, inanç ve değerleri kendi sözcüklerinizle tanımlayın — SceneFlow sinyalleri okur.",
+        "Render işlemlerine harcama yapmadan önce, bölüm düzeyinde iyileştirmeleri içeren bir rezonans puanı alın.",
+        "Ana kopyayı seslendirin veya her bir izleyici kitlesine göre uyarlanmış, kendine özgü bir versiyon hazırlayın."
       ],
-      "cta": "Analyze Your Script",
+      "cta": "Senaryonu analiz et",
       "howWeScore": {
-        "toggle": "How we score",
-        "title": "How Audience Resonance works",
-        "description": "Audience Resonance combines narrative-structure analysis (clarity, pacing, emotional arc) with target-persona fit against the audience you define in Blueprint — not vanity metrics or post-publish retention data. When your audience description carries cultural signals, the analysis adds an authenticity pass over names, dialect, customs, faith, and sensitivities. Recommendations are tied to specific script sections so you can fix issues before agents run video generation.",
+        "toggle": "Nasıl puanlıyoruz",
+        "title": "Audience Resonance nasıl çalışır?",
+        "description": "Audience Resonance; anlatı yapısı analizini (netlik, tempo, duygusal akış), Blueprint kapsamında tanımladığınız kitleye yönelik hedef persona uyumuyla birleştirir; bunu yaparken yüzeysel metrikleri veya yayın sonrası izleyiciyi elde tutma verilerini değil, doğrudan kitle uyumunu esas alır. Kitle tanımınız kültürel unsurlar içeriyorsa, analiz süreci; isimler, lehçe, gelenekler, inanç ve hassasiyetler açısından bir özgünlük denetimi de gerçekleştirir. Öneriler senaryonun belirli bölümleriyle ilişkilendirilir; böylece yapay zeka ajanları video oluşturma işlemine başlamadan önce sorunları giderebilirsiniz.",
         "bullets": [
-          "Scores Blueprint and script against your stated target audience",
-          "Cultural authenticity checks on names, dialect, customs, faith, and sensitivities",
-          "Section-level recommendations — not a black-box “trust us” number",
-          "Run before heavy render spend, not after publish"
+          "Blueprint ve metni, belirttiğiniz hedef kitleye göre puanlar.",
+          "İsimler, lehçe, gelenekler, inanç ve hassasiyetler açısından kültürel özgünlük kontrolleri",
+          "Bölüm düzeyinde öneriler; \"bize güvenin\" diyen bir kara kutu sayısı değil.",
+          "Yayınladıktan sonra değil, yüksek render maliyetine yol açan işlemlerden önce çalıştırın."
         ]
       }
     },
     "express": {
-      "badge": "Hyper-Speed Production",
+      "badge": "Akıllı Üretim",
       "title": "SceneFlow Agents",
-      "description": "Generate Pre-Vis, motion video, and delivery masters concurrently. Go from script to a shareable Pre-Vis in minutes — then approve the shot frames before you spend on motion video. Throughput is what makes a version per audience affordable instead of theoretical.",
+      "description": "Audio Agent, Stills Agent ve Video Agent; ritim yönlendirmelerinden yola çıkarak uzman düzeyinde istemler oluşturur, doğru referansları ekler ve eş zamanlı olarak üretim yapar. Ajanın uzmanlık gerektiren bir iş yürütmesi nedeniyle bir sahnenin tamamlanması birkaç dakika sürebilir; ardından, hareketli video için harcama yapmadan önce Shot Frames çıktısını onaylarsınız.",
       "items": [
         {
           "title": "Pre-vis Agent",
-          "desc": "Fully voiced, scored shot frames per scene, ready to share in the Screening Room.",
-          "time": "Minutes vs Hours"
+          "desc": "Sahne başına seslendirmesi ve müzik/ses tasarımı tamamlanmış, kesinleşmiş yönetmenlik kararları doğrultusunda hazırlanmış ve Screening Room'de paylaşılmaya hazır kareler.",
+          "time": "Önce kalite"
         },
         {
-          "title": "Video Agent",
-          "desc": "Per-scene motion video generated after Pre-Vis approval, as native-language streams or a lower-cost dub, with scene-level edits.",
-          "time": "Minutes vs Days"
+          "title": "SFAIVIDEO_TEMSİLCİ_SÜRESİ",
+          "desc": "Pre-Vis (ön görselleştirme) onayının ardından; sahne düzeyinde düzenlemelerle, ana dilde akışlar veya daha düşük maliyetli bir seslendirme şeklinde oluşturulan, sahne bazlı hareketli videolar.",
+          "time": "Onayla, ardından oluştur"
         },
         {
-          "title": "Delivery Agent",
-          "desc": "Assemble the ProRes 4K master and auto-publish to YouTube or download the bundle.",
-          "time": "Minutes vs Weeks"
+          "title": "SFAIDELIVERY_TESLİMAT_TEMSİLCİSİ_ŞARTI",
+          "desc": "ProRes 4K ana kopyayı oluşturun ve YouTube'da otomatik olarak yayınlayın ya da paketi indirin.",
+          "time": "Kesimi sevk et"
         }
       ],
-      "cta": "Run Production Agents"
+      "cta": "Production Agents'i çalıştırın"
     }
   },
   "preVisEngine": {
-    "badge": "Creative Decision Engine",
-    "title": "Pre-Visualization Engine",
-    "subtitle": "Generating a fully voiced, scored, 40-minute Pre-Vis (the industry term: animatic) in 15 minutes is not a workflow step — that is the product. In Hollywood, pre-vis takes weeks and costs hundreds of thousands of dollars. SceneFlow scales it to minutes and pocket change.",
+    "badge": "SFAICREATIVE_KARAR_MOTORU_TERİMİ",
+    "title": "SFAIPRE_GÖRSELLEŞTİRME_MOTOR_TERİMİ",
+    "subtitle": "Seslendirmesi ve müzikleri tamamlanmış 40 dakikalık bir ön görselleştirme (sektördeki adıyla \"animatik\") hazırlamanın 15 dakika sürmesi, bir iş akışı aşaması değil; bizzat ürünün kendisidir. Hollywood'da ön görselleştirme süreci haftalar sürer ve yüz binlerce dolara mal olur; bu teknoloji ise süreci dakikalara, maliyeti ise cüzi tutarlara indirger.",
     "narrative": "Film endüstrisinde storyboard, prodüksiyon ekibine teslim ettiğiniz bir materyaldir. Pre-vis ise bir projeye onay almak amacıyla stüdyo yöneticilerine, yatırımcılara ve yapımcılara sunduğunuz şeydir. SceneFlow, üretim sürecini bireysel içerik üreticilerine yönelik bir araçtan, kurumsal düzeyde bir iş akışı bileşenine dönüştürür.",
     "pillars": [
       {
@@ -1107,257 +2300,308 @@
       }
     ],
     "workflow": {
-      "title": "Reference Library → Pre-Vis → Motion Video → ProRes 4K master",
+      "title": "Reference Library → Ön Görselleştirme → Hareketli Video → ProRes 4K ana kopyası",
       "steps": [
-        "Build the Reference Library — characters, locations, and props locked to your production art style.",
-        "Generate Pre-Vis shot frames per scene with dialogue, SFX, and music — iterate direction in the Screening Room at low cost.",
-        "Approve the Pre-Vis, then generate per-scene motion video with multilanguage dubbing and scene-level edits.",
-        "Deliver the ProRes 4K master from the Screening Room — auto-publish to YouTube or download the bundle."
+        "Yapım sanat tarzınıza göre sabitlenmiş karakterler, mekânlar ve aksesuarlardan oluşan referans kütüphanesini oluşturun.",
+        "Diyalog, ses efektleri ve müzik eşliğinde sahne bazlı Pre-Vis (ön görselleştirme) kareleri oluşturun; Screening Room ortamında düşük maliyetle yönetmenlik yaklaşımını geliştirin.",
+        "Ön görselleştirmeyi (Pre-Vis) onaylayın; ardından çok dilli seslendirme ve sahne düzeyinde düzenlemeler içeren, sahne bazlı hareketli videolar oluşturun.",
+        "ProRes 4K master dosyasını Screening Room'den teslim edin; YouTube'da otomatik olarak yayınlayın veya paketi indirin."
       ]
     },
     "cta": "Senaryo yükleyerek başlayın",
     "ctaSubtext": "Geleneksel film yapımı ile üretken yapay zeka arasında köprü kurun"
   },
   "exitIntent": {
-    "title": "Before you go — want launch news?",
-    "subtitle": "Leave your email and we'll tell you when we announce.",
+    "title": "Gitmeden önce — lansman haberlerini ister misiniz?",
+    "subtitle": "E-posta adresinizi bırakın; duyuru yaptığımızda size haber verelim.",
     "benefits": [
-      "Launch notification when we announce",
-      "Weekly AI filmmaking tutorials",
-      "Exclusive creator discounts"
+      "Duyuruyu yaptığımızda lansman bildirimi",
+      "Haftalık yapay zeka destekli film yapımı eğitimleri",
+      "İçerik üreticilerine özel indirimler"
     ],
-    "emailPlaceholder": "Enter your email",
-    "subscribe": "Notify me",
-    "subscribing": "Subscribing...",
-    "or": "or",
-    "startNow": "Start directing now for just $9 →",
-    "privacy": "No spam, ever. Unsubscribe anytime.",
-    "successTitle": "You're on the list!",
-    "successSubtitle": "We'll email you when we announce — plus the occasional filmmaking tip.",
-    "ctaText": "Start Exploring — $9",
-    "closePopup": "Close popup"
+    "emailPlaceholder": "E-postanızı girin",
+    "subscribe": "Beni bilgilendir",
+    "subscribing": "Abone olunuyor...",
+    "or": "veya",
+    "startNow": "Sadece 9$ karşılığında hemen yönetmeye başlayın →",
+    "privacy": "Asla spam yok. İstediğiniz zaman abonelikten çıkabilirsiniz.",
+    "successTitle": "Listedesiniz!",
+    "successSubtitle": "Duyuru yaptığımızda size e-posta göndereceğiz; ayrıca ara sıra film yapımıyla ilgili ipuçları da paylaşacağız.",
+    "ctaText": "Keşfetmeye Başlayın — 9 $",
+    "closePopup": "Açılır pencereyi kapat"
   },
   "pricing": {
-    "badge": "Simple Pricing",
-    "title": "Start with Explorer — $9",
-    "subtitle": "Test the complete pipeline now with a frictionless $9 entry.",
+    "badge": "Basit Fiyatlandırma",
+    "title": "Explorer ile başlayın — 9 $",
+    "subtitle": "9 dolarlık zahmetsiz bir girişle tüm iş akışını hemen test edin.",
+    "explorerHighlight": "Konseptten Screening Room'e kadar, eksiksiz SceneFlow stüdyosunu deneyimlemenin en hızlı yolu.",
+    "trustBadges": [
+      "Whop aracılığıyla güvenli ödemeler",
+      "Stüdyoyu denemek için 9$ (Explorer)",
+      "Aylık kredilerin geçerliliği dönem sonunda sona erer.",
+      "İstediğiniz zaman iptal edin"
+    ],
     "valueAnchor": {
-      "traditionalCost": "$2,000+",
-      "traditionalLabel": "Traditional pre-vis",
-      "vs": "vs",
-      "sceneFlowCost": "$49-149",
-      "sceneFlowLabel": "SceneFlow monthly",
-      "saveBadge": "Save 90%+ per project"
+      "traditionalCost": "2.000 $ ve üzeri",
+      "traditionalLabel": "Geleneksel ön görselleştirme",
+      "vs": "karşı",
+      "sceneFlowCost": "49-149 $",
+      "sceneFlowLabel": "SceneFlow aylık",
+      "saveBadge": "Proje başına %90'ın üzerinde tasarruf edin"
     },
     "teamCta": {
-      "title": "In-house team or institution?",
-      "description": "Book a workflow walkthrough for comms, L&D, and marketing teams",
-      "button": "Book Walkthrough"
+      "title": "Kurum içi ekip mi, yoksa kurum mu?",
+      "description": "İletişim, L&D ve pazarlama ekipleri için bir iş akışı inceleme oturumu planlayın.",
+      "button": "Kitap İncelemesi ve Rehberi"
     },
     "agencyCta": {
-      "title": "Agency or production shop?",
-      "description": "Custom credits, SLA, and dedicated support at scale",
-      "button": "Contact Sales"
+      "title": "Ajans mı, prodüksiyon şirketi mi?",
+      "description": "Ölçekli düzeyde özel krediler, SLA ve özel destek",
+      "button": "Satış Ekibiyle İletişime Geçin"
     },
     "byok": {
-      "title": "Bring Your Own Key",
-      "badge": "Pro & Studio Plans",
-      "description": "Your API key can run reference, still, and clip generations. SceneFlow charges a 20% orchestration fee on those jobs. Hosted SceneFlow rates can be lower than a personal API account as platform volume grows.",
-      "savingsHighlight": "20% orchestration fee",
+      "title": "Kendi Anahtarını Getir",
+      "badge": "Pro ve Studio Planları",
+      "description": "API anahtarınız; referans, durağan görüntü ve klip oluşturma işlemlerini gerçekleştirebilir. SceneFlow, bu işlemler için %20 oranında bir düzenleme (orkestrasyon) ücreti uygular. Platform hacmi arttıkça, barındırılan SceneFlow hizmetinin ücretleri, kişisel bir API hesabının maliyetinden daha düşük olabilir.",
+      "savingsHighlight": "%20 orkestrasyon ücreti",
       "benefits": [
         {
-          "title": "References, stills, and clips",
-          "description": "BYOK applies only when your key actually runs those generations"
+          "title": "Referanslar, kareler ve klipler",
+          "description": "BYOK yalnızca anahtarınız söz konusu nesilleri fiilen çalıştırdığında geçerli olur."
         },
         {
-          "title": "Hosted rates can be lower",
-          "description": "SceneFlow platform pricing can undercut a personal Vertex or Kling account"
+          "title": "Barındırılan hizmetlerin fiyatları daha düşük olabilir.",
+          "description": "SceneFlow platform fiyatlandırması, kişisel bir Vertex veya Kling hesabının maliyetinin altına inebilir."
         },
         {
-          "title": "Full Control",
-          "description": "Your keys, your provider bill, plus a platform orchestration fee"
+          "title": "Tam Kontrol",
+          "description": "Anahtarlarınız, sağlayıcı faturanız ve buna ek olarak platform düzenleme ücreti"
         }
       ],
-      "supportedProviders": "Supported Providers",
+      "supportedProviders": "Desteklenen Sağlayıcılar",
       "vertexName": "Google Vertex AI",
-      "vertexDetail": "References, stills, and Omni clips",
-      "elevenLabsName": "ElevenLabs",
-      "elevenLabsDetail": "Text-to-Speech & Voice Cloning",
-      "savingsLabel": "20% fee",
-      "onImagesVideo": "on references, stills, and clips",
-      "onVoiceover": "on voiceover",
-      "note": "The 20% fee is a SceneFlow orchestration charge. Provider usage bills to your account. SceneFlow-hosted generation can cost less than bringing a personal key."
+      "vertexDetail": "Referanslar, sabit görüntüler ve Omni klipleri",
+      "elevenLabsName": "Kling",
+      "elevenLabsDetail": "Anahtarınız kullanıldığında klip oluşturma",
+      "savingsLabel": "%20 ücret",
+      "onImagesVideo": "referanslar, kareler ve klipler üzerine",
+      "onVoiceover": "anahtarınız işi yürüttüğünde",
+      "note": "%20'lik ücret, bir SceneFlow düzenleme (orchestration) bedelidir. Sağlayıcı, kullanım ücretlerini hesabınıza yansıtır. SceneFlow tarafından barındırılan üretim süreci, kişisel bir anahtar kullanmaktan daha düşük maliyetli olabilir."
     },
     "creditTopUps": {
-      "title": "Need More Credits?",
-      "subtitle": "Top up anytime. Each add-on pack lasts 12 months.",
+      "title": "Daha fazla krediye mi ihtiyacınız var?",
+      "subtitle": "İhtiyacınız oldukça 25$, 100$ veya 250$ değerindeki ek paketleri satın alın. Her bir paket 12 ay boyunca geçerlidir.",
       "packs": [
         {
-          "label": "Starter Pack",
-          "description": "Perfect for quick revisions"
+          "label": "25 $'lık Eklenti",
+          "description": "2.000 kredi. İhtiyacınız oldukça satın alın."
         },
         {
-          "label": "Scene Pack",
-          "description": "Complete a short project"
+          "label": "100 $'lık Eklenti",
+          "description": "9.000 kredi. İhtiyacınız oldukça satın alın."
         },
         {
-          "label": "Production Pack",
-          "description": "Major film sequence"
-        },
-        {
-          "label": "Studio Pack",
-          "description": "Full production capacity"
+          "label": "250 $'lık Eklenti",
+          "description": "25.000 kredi. İhtiyacınız olduğu sıklıkta satın alın."
         }
       ],
-      "creditsUnit": "credits"
+      "creditsUnit": "katkıda bulunanlar"
     },
     "calculator": {
-      "sectionTitle": "Estimate Your Project",
-      "sectionSubtitle": "Know exactly what you'll pay before you commit",
-      "title": "Project Budget Calculator",
-      "subtitle": "Set a credit budget, track production charges, and plan Pre-Vis first before motion video.",
-      "customize": "Customize parameters",
-      "imagesLabel": "Images to generate",
-      "videoClipsLabel": "Video clips",
-      "voiceoverLabel": "Voiceover (minutes)",
-      "byokTitle": "Bring Your Own Key (BYOK)",
-      "byokBadge": "Pro & Studio",
-      "byokDescription": "Use your own key for references, stills, and clips. SceneFlow charges a 20% orchestration fee, and hosted rates can be lower than a personal API account.",
-      "vertexToggle": "Vertex AI (references, stills, and clips)",
-      "elevenLabsToggle": "ElevenLabs (Voiceover)",
-      "imageGeneration": "Image Generation",
-      "videoGeneration": "Video Generation",
-      "voiceover": "Voiceover",
+      "sectionTitle": "Projeniz için tahmini maliyet hesaplayın",
+      "sectionSubtitle": "Taahhütte bulunmadan önce tam olarak ne kadar ödeyeceğinizi bilin.",
+      "title": "Üretim Planlamacı",
+      "subtitle": "Çekim yinelemelerini ve tarihli bir takvimi planlayın; ardından ilerleme hızını ve harcamaları telefonunuzdan kontrol edin.",
+      "customize": "Parametreleri özelleştirin",
+      "imagesLabel": "Oluşturulacak görseller",
+      "videoClipsLabel": "Video klipleri",
+      "voiceoverLabel": "Seslendirme (dakika)",
+      "byokTitle": "Kendi Anahtarını Getir (BYOK)",
+      "byokBadge": "Pro ve Stüdyo",
+      "byokDescription": "Referanslar, durağan görüntüler ve klipler için kendi anahtarınızı kullanın. SceneFlow %20 oranında bir düzenleme (orkestrasyon) ücreti alır; barındırılan hizmet fiyatları ise kişisel bir API hesabının maliyetinden daha düşük olabilir.",
+      "vertexToggle": "Vertex AI (referanslar, sabit görüntüler ve klipler)",
+      "elevenLabsToggle": "ElevenLabs (Dış Ses)",
+      "imageGeneration": "Görsel Oluşturma",
+      "videoGeneration": "Video Oluşturma",
+      "voiceover": "Dış ses",
       "byokTag": "(BYOK)",
-      "totalEstimate": "Total Estimate",
-      "withTopUps": "with top-ups",
-      "creditSavings": "SceneFlow credit savings",
-      "savePercent": "You save {percent}% on SceneFlow credits",
-      "transparency": "Full transparency: You'll see real-time credit usage as you work. No surprises—adjust your project scope anytime.",
-      "transparencyHighlight": "Full transparency:",
-      "byokDisclaimer": "BYOK Note: The platform fee applies only to reference, still, and clip generations that run on your key. SceneFlow-hosted model rates can be lower than an individual account.",
-      "byokDisclaimerHighlight": "BYOK Note:",
+      "totalEstimate": "Toplam Tahmin",
+      "withTopUps": "ek yüklemelerle",
+      "creditSavings": "SceneFlow kredi tasarrufu",
+      "savePercent": "SceneFlow kredilerinde {percent}% tasarruf edersiniz.",
+      "transparency": "Tam şeffaflık: Çalışırken kredi kullanımınızı gerçek zamanlı olarak görürsünüz. Sürprizlere yer yok; proje kapsamınızı dilediğiniz zaman ayarlayabilirsiniz.",
+      "transparencyHighlight": "Tam şeffaflık:",
+      "byokDisclaimer": "Not: Platform ücreti, yalnızca anahtarınız üzerinden gerçekleştirilen referans, durağan görüntü ve klip oluşturma işlemleri için geçerlidir. SceneFlow tarafından barındırılan modellerin kullanım ücretleri, bireysel hesaplara kıyasla daha düşük olabilir.",
+      "byokDisclaimerHighlight": "BYOK Notu:",
       "presets": [
         {
           "id": "commercial",
-          "name": "30-sec Commercial"
+          "name": "30 Saniyelik Reklam"
         },
         {
           "id": "short",
-          "name": "2-min Short Film"
+          "name": "2 Dakikalık Kısa Film"
         },
         {
           "id": "episode",
-          "name": "10-min Episode"
+          "name": "10 dakikalık bölüm"
         },
         {
           "id": "feature",
-          "name": "90-min Feature"
+          "name": "90 Dakikalık Uzun Metrajlı Film"
         }
       ],
-      "minSuffix": "min"
+      "minSuffix": "dak."
     },
     "tierGrid": {
-      "productionTestFlight": "Production Test Flight",
-      "getStarted": "Get Started",
-      "startTestFlight": "Start Test Flight",
-      "loading": "Loading...",
-      "mostPopular": "Most Popular",
-      "creditsPerMonth": "Credits/mo",
-      "storage": "Storage",
+      "productionTestFlight": "Üretim Test Uçuşu",
+      "getStarted": "Başlayın",
+      "startTestFlight": "Test Uçuşunu Başlat",
+      "loading": "Yükleniyor...",
+      "mostPopular": "En Popüler",
+      "creditsPerMonth": "Kredi/ay",
+      "storage": "Depolama",
       "perMonth": "/month"
     },
     "trust": {
-      "cancelAnytime": "Cancel anytime",
-      "moneyBack": "$9 Explorer to try the studio",
-      "creditsNeverExpire": "Explorer credits last 90 days"
+      "cancelAnytime": "İstediğiniz zaman iptal edin",
+      "moneyBack": "Stüdyoyu denemek için 9$ (Explorer)",
+      "creditsNeverExpire": "Son 90 gündeki Explorer kredileri"
     },
     "plans": {
       "explorer": {
-        "name": "Explorer",
-        "description": "One-time purchase to try it out",
+        "name": "Explorer — Demo",
+        "description": "Demo — tam bir yapımı denemek için tek seferlik satın alma",
         "features": [
-          "One-time purchase",
-          "750 credits (expire 90 days after purchase)",
-          "5 GB storage (30 days)",
-          "Full platform access",
-          "MP4 export (any resolution)",
-          "AI voiceover (70+ languages)"
+          "Tek seferlik satın alma",
+          "750 kredi (satın alındıktan 90 gün sonra geçerliliğini yitirir)",
+          "5 GB depolama alanı (30 gün)",
+          "Tam platform erişimi",
+          "MP4 dışa aktarma (herhangi bir çözünürlük)",
+          "Yapay zeka seslendirmesi (70'ten fazla dil)"
         ]
       },
       "subscriptions": [
         {
           "id": "starter",
-          "name": "Starter",
-          "description": "For individual creators",
+          "name": "Başlangıç — Sandbox",
+          "description": "Sandbox — gerçek bir gösteriden önce fikirleri denemek için",
           "features": [
-            "Full platform access",
-            "4,500 credits/month included",
-            "Unused monthly credits expire at period end",
-            "25 GB active storage",
-            "MP4 export (any resolution)",
-            "AI voiceover (70+ languages)",
-            "Email support"
+            "Tam platform erişimi",
+            "Ayda 4.500 kredi dahildir",
+            "Kullanılmayan aylık kredilerin geçerliliği dönem sonunda sona erer.",
+            "25 GB aktif depolama alanı",
+            "MP4 dışa aktarma (herhangi bir çözünürlük)",
+            "Yapay zeka seslendirmesi (70'ten fazla dil)",
+            "E-posta desteği"
           ]
         },
         {
           "id": "pro",
-          "name": "Pro",
-          "description": "For professional creators",
+          "name": "Profesyonel — YouTuber",
+          "description": "YouTuber — düzenli bölümler ve kanal videoları",
           "features": [
-            "Everything in Starter, plus:",
-            "15,000 credits/month included",
-            "Unused monthly credits expire at period end",
-            "100 GB active storage",
-            "Veo 3.1 Quality (4K) access",
-            "Character Consistency Engine",
-            "Voice cloning",
-            "BYOK (Bring Your Own Key)",
-            "3 team seats",
-            "Priority support"
+            "Starter paketindeki her şeye ek olarak:",
+            "Ayda 15.000 kredi dahildir",
+            "Kullanılmayan aylık kredilerin geçerliliği dönem sonunda sona erer.",
+            "100 GB aktif depolama alanı",
+            "Veo 3.1 Kalite (4K) erişimi",
+            "Karakter Tutarlılığı Motoru",
+            "Ses kopyalama",
+            "BYOK (Kendi Anahtarını Getir)",
+            "3 takım koltuğu",
+            "Öncelikli destek"
           ]
         },
         {
           "id": "studio",
-          "name": "Studio",
-          "description": "For teams & agencies",
+          "name": "Stüdyo — Bağımsız Film Yapımcısı",
+          "description": "Bağımsız Film Yapımcısı — bağımsız filmler ve diziler",
           "features": [
-            "Everything in Pro, plus:",
-            "75,000 credits/month included",
-            "Unused monthly credits expire at period end",
-            "500 GB active storage",
-            "Veo 3.1 4K Priority Queue",
-            "Unlimited Character Consistency",
-            "White-label exports",
-            "API access",
-            "10 team seats",
-            "Dedicated account manager",
-            "Enterprise SLA available on request"
+            "Pro'daki her şeye ek olarak:",
+            "Ayda 75.000 kredi dahil",
+            "Kullanılmayan aylık kredilerin geçerliliği dönem sonunda sona erer.",
+            "500 GB aktif depolama alanı",
+            "Veo 3.1 4K Öncelik Kuyruğu",
+            "Sınırsız Karakter Tutarlılığı",
+            "White-label ihracatı",
+            "API erişimi",
+            "10 kişilik ekip yeri",
+            "Özel müşteri yöneticisi",
+            "Kurumsal SLA talep üzerine sağlanır"
           ]
         }
       ]
-    },
-    "explorerHighlight": "The fastest way to experience the complete SceneFlow studio — from concept to Screening Room.",
-    "trustBadges": [
-      "Secure payments via Whop",
-      "$9 Explorer to try the studio",
-      "Monthly credits expire at period end",
-      "Cancel anytime"
-    ]
+    }
   },
   "landingSections": {
     "expandSection": "Bölümü göster",
     "collapseSection": "Bölümü gizle"
   },
+  "notify": {
+    "heading": "Lansman haberlerini alın",
+    "description": "E-posta adresinizi bırakın; duyuru yaptığımızda size haber verelim. Başka hiçbir şey için kullanılmayacak.",
+    "placeholder": "you@studio.com",
+    "submit": "Beni bilgilendir",
+    "submitting": "Gönderiliyor…",
+    "successTitle": "Gelen kutunuzu kontrol edin.",
+    "successBody": "Bir onay bağlantısı gönderdik. Lansman listesine katılmak için bağlantıya tıklayın. Başka bir şeye gerek yok.",
+    "errorEmpty": "Size ulaşabilmemiz için e-posta adresinizi girin.",
+    "errorInvalid": "O e-posta doğru görünmüyor. Kontrol et ve tekrar dene.",
+    "errorGeneric": "Bir şeyler ters gitti. Birazdan tekrar deneyin.",
+    "privacy": "Önce bir onay bağlantısı e-postası gönderiyoruz. Onayınızın ardından tek bir lansman bildirimi iletiyoruz. Spam yok.",
+    "confirmTitle": "Listedesiniz.",
+    "confirmBody": "Duyuru yaptığımızda size e-posta göndereceğiz. Başka bir şey yok.",
+    "confirmExpiredTitle": "O bağlantının süresi doldu.",
+    "confirmExpiredBody": "E-posta adresinizi açılış sayfasında tekrar girin; size yeni bir onay bağlantısı gönderelim.",
+    "confirmInvalidTitle": "O bağlantı geçerli değil.",
+    "confirmInvalidBody": "Varış sayfasından yeni bir onay talebinde bulunun.",
+    "confirmHome": "SceneFlow'e Dön"
+  },
+  "forFilmmakers": {
+    "badge": "SceneFlow Originals Tohum Programı'na başvurun",
+    "heading": "Film Yapımcıları İçin: Pilot bölümünüzü platformda dağıtım ve gelir elde etme amacıyla gönderin.",
+    "subtitle": "SceneFlow Ağı, açık bir pazar yeri değil; lansman aşamasında özenle seçilmiş 5 ila 10 yapımdan oluşan, kapalı bir \"Kurucu İçerik Üreticisi\" grubudur. Gelir paylaşımı, yalnızca ücretli aboneler sisteme dahil olduktan sonra başlar. Şu aşamada sunduğumuz şey ise dağıtım gücüdür: Özel bir prömiyer süresi karşılığında, masrafları tarafımızca karşılanan tanıtım reklamları.",
+    "closedNote": "Başvurular editörler tarafından incelenir. Başvuru yapmak, filminizi bir katalogda yayınlamaz.",
+    "fields": {
+      "email": "E-posta",
+      "emailPlaceholder": "you@studio.com",
+      "name": "Adınız",
+      "namePlaceholder": "Yönetmen veya yapımcı adı",
+      "title": "Pilot bölüm veya uzun metrajlı film başlığı",
+      "titlePlaceholder": "Çalışma başlığı",
+      "logline": "Özet Cümle",
+      "loglinePlaceholder": "Hikâyeyi pazarlayan bir veya iki cümle.",
+      "audienceUrl": "Mevcut kitle",
+      "audiencePlaceholder": "YouTube, Bilibili, festival veya sosyal medya URL'si",
+      "exclusivePremiere": "Finanse edilen tanıtım reklamları karşılığında, SceneFlow platformunda özel bir prömiyer dönemine açığım."
+    },
+    "submit": "Başvuruyu gönder",
+    "submitting": "Gönderiliyor…",
+    "successTitle": "Gelen kutunuzu kontrol edin.",
+    "successBody": "Bir onay bağlantısı gönderdik. Seed başvurunuzu kesinleştirmek için bağlantıya tıklayın. Başka bir işlem yapmanıza gerek yok.",
+    "errorEmpty": "Pilotunuzu inceleyebilmemiz için tüm alanları doldurun.",
+    "errorInvalidEmail": "O e-posta doğru görünmüyor. Kontrol et ve tekrar dene.",
+    "errorInvalidUrl": "Mevcut kitleniz için herkese açık bir URL ekleyin.",
+    "errorGeneric": "Bir şeyler ters gitti. Birazdan tekrar deneyin.",
+    "confirmTitle": "Başvuru alındı.",
+    "confirmBody": "Seed inceleme sırasındasınız. Gönderilen her şeyi okuyoruz. Bu, herkese açık bir katalog kaydı değildir.",
+    "confirmExpiredTitle": "O bağlantının süresi doldu.",
+    "confirmExpiredBody": "Film yapımcısı formunu tekrar gönderin; size yeni bir onay bağlantısı göndereceğiz.",
+    "confirmInvalidTitle": "O bağlantı geçerli değil.",
+    "confirmInvalidBody": "Film yapımcısı formundan yeni bir onay talep edin.",
+    "confirmHome": "SceneFlow'e Dön",
+    "privacy": "Önce bir onay bağlantısı e-postası gönderiyoruz. Yalnızca editörler için. Spam yok."
+  },
   "finalCta": {
-    "title": "Built for the stories that have to hold.",
-    "subtitle": "Leave your email for launch news — or start directing now from the $9 Explorer plan.",
-    "cta": "Explore plans",
-    "ctaSecondary": "See how it works",
+    "title": "Ayakta kalması gereken hikâyeler için inşa edildi.",
+    "subtitle": "Lansman haberleri için e-posta adresinizi bırakın ya da 9 dolarlık Explorer planıyla hemen yönlendirmeye başlayın.",
+    "cta": "Planları inceleyin",
+    "ctaSecondary": "Nasıl çalıştığını görün",
     "ctaSecondaryHref": "#two-modes"
   },
   "footer": {
-    "description": "Konseptten yayınlanmaya hazır mastera kadar uçtan uca otomatik video prodüksiyonu. Bir rehberli stüdyo→: Series Room → Blueprint Room → Production Stage Screening Room.",
+    "description": "Uçtan uca otomatik video prodüksiyonu — konsept aşamasından yayına hazır nihai yapıma kadar. Tek bir rehberli stüdyo süreci: Series Room → Blueprint Room → Production Stage → Screening Room.",
     "product": "Ürün",
     "resources": "Kaynaklar",
     "legal": "Güven ve İtibar",
@@ -1393,290 +2637,5 @@
     "mute": "Sessize al",
     "unmute": "Sesi aç",
     "expandVideo": "Videoyu Genişlet"
-  },
-  "productionShowcase": {
-    "badge": "Production Examples",
-    "title": "See the Full Pipeline",
-    "titleAccent": "in Action",
-    "subtitle": "Each example below is a complete production — from Blueprint through Pre-Vis to the final ProRes 4K master. Walk the Screening Room to compare the Pre-Vis, per-scene motion video, and the finished master in multiple languages.",
-    "subtitleTagline": "Long-form productions. Not clips.",
-    "screeningRoomInstruction": "Review this production the way a reviewer would — one milestone at a time. Start with Series, then Blueprint, then the script in AR Analysis, and finish in Screening.",
-    "languagesBanner": "Public examples ship in 7 languages: English, Spanish, Portuguese, Hindi, Chinese, Arabic, and Thai.",
-    "explorePipelineCta": "Explore a full production",
-    "explorePipelineHint": "Start with Cinematic Drama below to walk the full pipeline from concept to multi-language master.",
-    "workflowLabel": "Solutions",
-    "startProduction": "Start Your Production",
-    "cta": "Start Your Production",
-    "continuityNote": "Series Room manages continuity",
-    "resonanceNote": "Audience Resonance™ optimizes scripts",
-    "videoLanguagePrompt": "Watch this production in your language",
-    "videoComingSoon": "Dub coming soon",
-    "videoSoon": "Soon",
-    "frictionLabel": "The Friction",
-    "solutionPillarLabel": "The SceneFlow Solution",
-    "showSolutionsSection": "Show Solutions",
-    "hideSolutionsSection": "Hide Solutions",
-    "cards": [
-      {
-        "id": "drama",
-        "title": "Feature-Length Cinematic Drama. Zero Character Drift.",
-        "subtitle": "Hold character faces, wardrobe, and locations from scene 1 to scene 100. Walk the Screening Room to see the Pre-Vis, per-scene motion video, and the final ProRes 4K master — then switch languages to hear the full dub.",
-        "badge": "Series-Ready",
-        "solutionPillars": [
-          {
-            "title": "Visual & Character Consistency",
-            "frictionHeadline": "Character Drift & Wobbly Sets.",
-            "friction": "Generative models reset with every shot — causing character faces, outfits, and lighting to morph continuously across scene cuts.",
-            "solutionHeadline": "Locked Asset Blueprints.",
-            "solution": "Define master character profiles, environments, and visual styles up front in Blueprint Room. SceneFlow enforces visual identity across every render to preserve narrative immersion."
-          },
-          {
-            "title": "Narrative Pacing & Scene Control",
-            "frictionHeadline": "The 10-Second Clip Trap.",
-            "friction": "Building a film out of disconnected micro-prompts creates choppy pacing, flat emotion, and endless manual timeline editing.",
-            "solutionHeadline": "Beat-First Storyboarding.",
-            "solution": "Direct at the scene level, not the prompt level. Structure dramatic beats, camera movements, and story arcs visually before generating a single frame of video."
-          },
-          {
-            "title": "Dialogue & Audio Alignment",
-            "frictionHeadline": "Unconvincing Dialogue.",
-            "friction": "Mismatched lip-sync, floating mouth movements, and detached voice tracks immediately pull viewers out of the drama.",
-            "solutionHeadline": "Integrated Voice & Sync Engine.",
-            "solution": "Dynamic voice performance and precise lip-sync are baked directly into the video pipeline — delivering believable dialogue without external post-production passes."
-          },
-          {
-            "title": "Workflow Friction & Reroll Fatigue",
-            "frictionHeadline": "Asset Chaos & Endless Rerolls.",
-            "friction": "Generating a short film usually means juggling 200+ raw video files, manual upscaling, and dozens of wasted generations.",
-            "solutionHeadline": "Automated Studio Pipeline.",
-            "solution": "From concept to final master MP4 in one unified platform. Blueprint Room handles story setup, Production Stage runs Direction through Streams, and Screening Room delivers your final export."
-          }
-        ],
-        "screeningRoomPreview": "The Cinematic Drama — Screening Room"
-      },
-      {
-        "id": "animation",
-        "title": "Full-Season Animated Series. One Consistent Art Style.",
-        "subtitle": "Lock character designs, line weights, and shading models across an entire season. Direct comedic timing shot by shot, then review the assembled episode in the Screening Room.",
-        "badge": "Multi-Style",
-        "solutionPillars": [
-          {
-            "title": "Stylistic Consistency",
-            "frictionHeadline": "Style Meltdown.",
-            "friction": "Cartoon and anime styles constantly warp between shots, shifting line art, breaking color palettes, and morphing characters into photorealistic uncanny slop.",
-            "solutionHeadline": "Locked Art Style Engine.",
-            "solution": "Freeze your aesthetic from the first frame. SceneFlow locks character designs, line weights, and shading models across the entire episode so your characters stay uniquely yours."
-          },
-          {
-            "title": "Exaggerated Animation & Physics",
-            "frictionHeadline": "Stiff & Glitchy Motion.",
-            "friction": "Generative models struggle with fast slapstick, double-takes, and squishy cartoon physics, turning high-energy gags into melting artifacts.",
-            "solutionHeadline": "Action & Pose Anchoring.",
-            "solution": "Drive dynamic character movement and expressive poses without breaking geometry. Direct punchy physical comedy, sudden cutaways, and wild expressions with full motion control."
-          },
-          {
-            "title": "Comedic Timing & Rhythm",
-            "frictionHeadline": "Ruined Punchlines.",
-            "friction": "Humor lives in the pauses and beat-cuts. Standard 5-second generative loops force awkward pacing that destroys joke delivery.",
-            "solutionHeadline": "Beat-Precision Editing.",
-            "solution": "Control scene pacing down to the frame. Adjust dramatic pauses, setup-to-punchline timing, and quick reaction shots directly inside the beat-first timeline before final render."
-          },
-          {
-            "title": "High-Energy Dialogue & Vocal Sync",
-            "frictionHeadline": "Lifeless Puppet Mouths.",
-            "friction": "Generic AI dialogue feels flat and mechanical, destroying the energy needed for snappy sitcom banter.",
-            "solutionHeadline": "Dynamic Voice & Expression Sync.",
-            "solution": "Map vocal delivery directly to energetic facial performance. Dialogue, expressive mouth shapes, and comedic voice tracks match seamlessly for maximum comedic impact."
-          }
-        ],
-        "screeningRoomPreview": "The Animated Comedy — Screening Room"
-      },
-      {
-        "id": "documentary",
-        "title": "Long-Form Documentaries. Sustained Period Accuracy.",
-        "subtitle": "Maintain era-specific detail, narrator pacing, and expert-witness continuity across a 40-minute episode or multi-part series. Review the full timeline in the Screening Room before committing to high-res renders.",
-        "badge": "Period-Accurate",
-        "solutionPillars": [
-          {
-            "title": "Era-Specific Visual Accuracy",
-            "frictionHeadline": "Anachronistic Artifacts",
-            "friction": "Standard generative models routinely bleed modern objects, smartphone screens, or incorrect period clothing into historical re-enactments.",
-            "solutionHeadline": "Historical Style Guardrails",
-            "solution": "Set exact temporal parameters — from 1920s film grain to 18th-century wardrobe textures — so every generated scene stays historically authentic."
-          },
-          {
-            "title": "Archival Cutaways & B-Roll Engine",
-            "frictionHeadline": "Visual Monotony in Long Voiceovers",
-            "friction": "Pairing long-form narrator audio with static stock images leads to rapid viewer drop-off during deep dives.",
-            "solutionHeadline": "Transcript-Driven B-Roll Engine",
-            "solution": "As your narrator discusses historical facts, SceneFlow automatically generates timed cinematic re-enactments, document overlays, and archival-style cutaways tied directly to the audio transcript."
-          },
-          {
-            "title": "Interview & Talking-Head Realism",
-            "frictionHeadline": "Uncanny Expert Witnesses",
-            "friction": "Generated historians, investigators, or witnesses often look artificial, with floating jaw movements and unnatural eye contact.",
-            "solutionHeadline": "Locked Expert Profiles & Vocal Sync",
-            "solution": "Maintain realistic, trustworthy interview setups with natural micro-expressions, accurate lip-sync, and consistent expert identities across multi-part series."
-          },
-          {
-            "title": "Episodic Pacing & Narrative Continuity",
-            "frictionHeadline": "Fragmented Timeline Editing",
-            "friction": "Balancing narrator audio, re-enactments, evidence reveals, and tension-building pauses across a 40-minute episode usually takes weeks in traditional NLEs.",
-            "solutionHeadline": "Beat-First Documentary Pipeline",
-            "solution": "Structure dramatic tension, suspenseful pauses, and evidence reveals visually inside Blueprint Room, delivering a fully assembled master file in one seamless pass."
-          }
-        ],
-        "screeningRoomPreview": "Documentary Production — Screening Room"
-      },
-      {
-        "id": "training",
-        "title": "Multi-Module Training Series. One Locked Instructor.",
-        "subtitle": "Hold the instructor, classroom, and lesson graphics from the first module to the last quiz. Walk Blueprint, Audience Resonance, and the Screening Room — Pre-Vis, rough cut, scenes, and the finished course — then switch languages to hear the localized version.",
-        "badge": "Curriculum-Ready",
-        "solutionPillars": [
-          {
-            "title": "Instructor & Setting Consistency",
-            "frictionHeadline": "A Different Teacher Every Module.",
-            "friction": "Generative clips reset the instructor face, wardrobe, and classroom between lessons, so a course feels like a pile of unrelated videos.",
-            "solutionHeadline": "Locked Instructor Blueprints.",
-            "solution": "Define the instructor, set, and visual system once in Blueprint Room. SceneFlow keeps that identity locked across every module."
-          },
-          {
-            "title": "Curriculum Pacing",
-            "frictionHeadline": "Slides Chopped into Clips.",
-            "friction": "Turning a syllabus into disconnected prompts loses the lesson arc, the worked example, and the pause before a quiz.",
-            "solutionHeadline": "Module-First Storyboarding.",
-            "solution": "Direct each module as a sequence of teaching beats — setup, demonstration, and check — before a frame is rendered."
-          },
-          {
-            "title": "Narration & On-Screen Teaching",
-            "frictionHeadline": "Voice That Misses the Graphic.",
-            "friction": "Narration, captions, and diagrams drift apart, so learners hear one step while the picture shows another.",
-            "solutionHeadline": "Synced Lesson Tracks.",
-            "solution": "Voice, captions, and on-screen teaching stay on the same beat, so each explanation lands with the visual that proves it."
-          },
-          {
-            "title": "Course Assembly",
-            "frictionHeadline": "Weeks in an Editor.",
-            "friction": "Stitching modules, retakes, and localized versions in a traditional timeline turns a curriculum update into a production delay.",
-            "solutionHeadline": "One Studio Pipeline.",
-            "solution": "Blueprint, Audience Resonance, and the Screening Room carry a module from outline to Pre-Vis, rough cut, scenes, and the finished course."
-          }
-        ],
-        "screeningRoomPreview": "The Training Series — Screening Room"
-      }
-    ]
-  },
-  "keyFeatures": {
-    "landingUiLanguagesLabel": "Produce and dub in 70+ languages. This site is available in these 39:",
-    "subtitle": "Series Room → Blueprint Room → Production Stage → Screening Room."
-  },
-  "twoModes": {
-    "eyebrow": "The friction we remove",
-    "title": "One pipeline. Not a stack of tools.",
-    "subtitle": "SceneFlow replaces single-clip generators and a pile of separate docs, editors, and re-renders. Build the series or the 90-minute master, then publish a scene or a chapter when you are ready to earn.",
-    "comingSoon": "Coming soon",
-    "comparison": {
-      "id": "comparison",
-      "caption": "Fragmented tools beside one SceneFlow pipeline.",
-      "themLabel": "Fragmented production",
-      "usLabel": "SceneFlow",
-      "rows": [
-        {
-          "them": "Prompt trial and error across tools",
-          "us": "One Blueprint locks the story and the look"
-        },
-        {
-          "them": "Hand-built treatments and formatting",
-          "us": "A film treatment and beat sheet from your premise or brief"
-        },
-        {
-          "them": "Short clips that do not share a cast",
-          "us": "Shots generated from the locked Reference Library"
-        },
-        {
-          "them": "Dragging clips into another editor",
-          "us": "Scenes, chapters, and the master assemble in the Screening Room"
-        },
-        {
-          "them": "Re-rendering to test a note",
-          "us": "Direct on the animatic, then render"
-        }
-      ]
-    },
-    "cta": "Launch Studio ($9)"
-  },
-  "infrastructure": {
-    "title": "Enterprise-Grade Infrastructure & Security",
-    "description": "Powered by Google Cloud and Vertex AI for enterprise reliability, multi-language dubbing models, and secure asset processing.",
-    "badges": {
-      "googleCloud": "Google Cloud",
-      "vertexAi": "Vertex AI"
-    }
-  },
-  "notify": {
-    "heading": "Get launch news",
-    "description": "Leave your email and we’ll tell you when we announce. Nothing else.",
-    "placeholder": "you@studio.com",
-    "submit": "Notify me",
-    "submitting": "Sending…",
-    "successTitle": "Check your inbox.",
-    "successBody": "We sent a confirmation link. Click it to join the launch list. Nothing else.",
-    "errorEmpty": "Enter your email so we can reach you.",
-    "errorInvalid": "That email doesn’t look right. Check it and try again.",
-    "errorGeneric": "Something went wrong. Try again in a moment.",
-    "privacy": "We email a confirmation link first. One launch note after you confirm. No spam.",
-    "confirmTitle": "You’re on the list.",
-    "confirmBody": "We’ll email you when we announce. Nothing else.",
-    "confirmExpiredTitle": "That link expired.",
-    "confirmExpiredBody": "Submit your email on the landing page again and we’ll send a new confirmation link.",
-    "confirmInvalidTitle": "That link isn’t valid.",
-    "confirmInvalidBody": "Request a new confirmation from the landing page.",
-    "confirmHome": "Back to SceneFlow"
-  },
-  "forFilmmakers": {
-    "badge": "Apply for the SceneFlow Originals Seed Program",
-    "heading": "For Filmmakers: Submit your pilot for platform distribution and monetization.",
-    "subtitle": "The SceneFlow Network is a closed Founding Creator cohort — 5 to 10 hand-picked titles at launch, not an open marketplace. Revenue share starts only after paying subscribers exist. What we offer now is distribution leverage: funded teaser ads in exchange for an exclusive premiere window.",
-    "closedNote": "Applications are reviewed by editors. Submitting does not publish your film to a catalog.",
-    "fields": {
-      "email": "Email",
-      "emailPlaceholder": "you@studio.com",
-      "name": "Your name",
-      "namePlaceholder": "Director or producer name",
-      "title": "Pilot or feature title",
-      "titlePlaceholder": "Working title",
-      "logline": "Logline",
-      "loglinePlaceholder": "One or two sentences that sell the story.",
-      "audienceUrl": "Existing audience",
-      "audiencePlaceholder": "YouTube, Bilibili, festival, or social URL",
-      "exclusivePremiere": "I am open to an exclusive premiere window on SceneFlow in exchange for funded teaser ads."
-    },
-    "submit": "Submit application",
-    "submitting": "Sending…",
-    "successTitle": "Check your inbox.",
-    "successBody": "We sent a confirmation link. Click it to lock in your Seed application. Nothing else.",
-    "errorEmpty": "Fill in every field so we can review your pilot.",
-    "errorInvalidEmail": "That email doesn’t look right. Check it and try again.",
-    "errorInvalidUrl": "Add a public URL for your existing audience.",
-    "errorGeneric": "Something went wrong. Try again in a moment.",
-    "confirmTitle": "Application received.",
-    "confirmBody": "You’re in the Seed review queue. We read every submission. This is not a public catalog listing.",
-    "confirmExpiredTitle": "That link expired.",
-    "confirmExpiredBody": "Submit the filmmaker form again and we’ll send a new confirmation link.",
-    "confirmInvalidTitle": "That link isn’t valid.",
-    "confirmInvalidBody": "Request a new confirmation from the filmmaker form.",
-    "confirmHome": "Back to SceneFlow",
-    "privacy": "We email a confirmation link first. Editors only. No spam."
-  },
-  "publishCut": {
-    "eyebrow": "The cut you publish",
-    "title": "Export anywhere. Premiere on SceneFlow when you earn it.",
-    "subtitle": "Download a master and ship it yourself, or publish finished scenes and chapters to {longForm} and cut trailers for {shorts} — without waiting on the whole cut. Before anything hits the public feed, run drafts or your final master through the Screening Room. Standout projects can apply for the invite-only SceneFlow Network; it is a curated accelerator, not an open storefront.",
-    "comparison": {
-      "id": "publish",
-      "caption": "A finished scene or chapter, and the 90-minute master, from one studio."
-    },
-    "cta": "Launch Studio ($9)"
   }
 }

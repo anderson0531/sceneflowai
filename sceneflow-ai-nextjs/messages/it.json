@@ -1,10 +1,945 @@
 {
+  "pipeline": {
+    "badge": "Cos'è SceneFlow?",
+    "title": "L'architettura del gasdotto a 3 pilastri",
+    "subtitle": "Tre fasi, dall'idea iniziale al master pronto per la pubblicazione: Series Room, Blueprint Room e Production Stage.",
+    "ui": {
+      "expandFullscreen": "Visualizza a schermo intero",
+      "closeFullscreen": "Chiudi",
+      "landscapeHint": "Ruota il dispositivo per una visione orizzontale più ampia",
+      "howItWorksLabel": "Come funziona in questa fase",
+      "showHowItWorks": "MOSTRAMI COME FUNZIONA",
+      "hideHowItWorks": "COME FUNZIONA",
+      "imagePlaceholder": "Segnaposto screenshot",
+      "videoWalkthrough": "Procedura dettagliata di 30 secondi",
+      "comingSoon": "Screenshot del prodotto in arrivo"
+    },
+    "pillars": [
+      {
+        "id": "series",
+        "tabLabel": "Series Room",
+        "number": "01",
+        "title": "Generazione di Series Room",
+        "header": "Costruisci un universo, non una clip",
+        "body": "Descrivi una volta la tua serie o il tuo canale YouTube e SceneFlow costruisce il mondo intero — trama, cast e un elenco illimitato di episodi — con un Reference Library condiviso che mantiene ogni episodio on-brand.",
+        "steps": [
+          {
+            "id": "series-concept",
+            "number": "1",
+            "title": "Inizia con il tuo concetto",
+            "description": "Inserisci un concetto o una descrizione dettagliata della tua serie o del tuo canale YouTube. SceneFlow lo trasforma in una base strutturata e pronta per la produzione, senza necessità di ingegneria rapida.",
+            "imagePlaceholder": "Nuova presa serie — concept o descrizione canale"
+          },
+          {
+            "id": "series-baseline",
+            "number": "2",
+            "title": "Rivedere la linea di base SceneFlow",
+            "description": "SceneFlow restituisce una baseline professionale valutata da Audience Resonance Analysis. Leggi o ascolta la panoramica narrata, quindi guidala con la tua direzione.",
+            "imagePlaceholder": "Serie baseline — punteggio Audience Resonance E panoramica narrata"
+          },
+          {
+            "id": "series-episodes",
+            "number": "3",
+            "title": "Crea episodi illimitati",
+            "description": "Crea tutti gli episodi di cui la tua storia ha bisogno. Ognuno eredita il DNA della tua serie, quindi il cast, il tono e il mondo rimangono coerenti dall'episodio uno al finale di stagione.",
+            "imagePlaceholder": "Ardesia di episodi — episodi illimitati generati dalla serie ARC"
+          },
+          {
+            "id": "series-reference-library",
+            "number": "4",
+            "title": "Rivedere IL Reference Library",
+            "description": "Esplora la libreria di riferimento condivisa — personaggi, voci, costumi, ambientazioni e oggetti di scena — creata e gestita tramite la fase di produzione e riutilizzata in ogni episodio.",
+            "imagePlaceholder": "Shared Reference Library - personaggi, voci, luoghi, oggetti DI scena"
+          },
+          {
+            "id": "series-assistant-writer",
+            "number": "5",
+            "title": "Dirigere l'Intelligent Assistant Writer",
+            "description": "Rimodella la serie o qualsiasi episodio parlando o digitando la tua direzione. L'Intelligent Assistant Writer riscrive istantaneamente la copia professionale: nessuna pagina vuota, nessuna progettazione rapida.",
+            "imagePlaceholder": "Intelligent Assistant Writer — regia vocale o testuale su serie ed episodi"
+          },
+          {
+            "id": "series-start-production",
+            "number": "6",
+            "title": "Avvia la produzione in un clic",
+            "description": "Quando un episodio appare pronto, avviane la produzione con un solo clic e passa direttamente alla pipeline guidata Production Stage.",
+            "imagePlaceholder": "Avvia la produzione con un clic su un episodio selezionato"
+          }
+        ]
+      },
+      {
+        "id": "blueprint",
+        "tabLabel": "Blueprint Room",
+        "number": "02",
+        "title": "Blueprint Room",
+        "header": "Il tuo DNA creativo, bloccato",
+        "body": "Blueprint Room è il tuo trattamento cinematografico approfondito — sinossi, snodi narrativi, personaggi, tono e stile — pre-valutato tramite l'analisi Audience Resonance, permettendoti di approvare una storia capace di fare centro ancora prima che venga renderizzato un singolo fotogramma.",
+        "steps": [
+          {
+            "id": "blueprint-baseline",
+            "number": "1",
+            "title": "Rivedere lo Blueprint basale",
+            "description": "Aprire un Blueprint di base professionale con Audience Resonance Analysis integrato. Leggi o ascolta la panoramica narrata per capire esattamente perché funziona.",
+            "imagePlaceholder": "Blueprint basale — trattamento con Audience Resonance score"
+          },
+          {
+            "id": "blueprint-assistant-writer",
+            "number": "2",
+            "title": "Dirigere l'Intelligent Assistant Writer",
+            "description": "Perfeziona la sinossi, i ritmi, i personaggi e altro ancora parlando o digitando la tua direzione. L'Intelligent Assistant Writer rivede il trattamento all'istante, senza interventi tecnici immediati.",
+            "imagePlaceholder": "Intelligent Assistant Writer — montaggio sinossi, battute e personaggi"
+          },
+          {
+            "id": "blueprint-reasoning",
+            "number": "3",
+            "title": "Rivedere il ragionamento",
+            "description": "Apri la sezione Ragionamento per una spiegazione creativa dell'attuale Blueprint — la logica della storia dietro ogni battuta e scelta del personaggio.",
+            "imagePlaceholder": "Pannello di ragionamento — spiegazione creativa dello Blueprint"
+          },
+          {
+            "id": "blueprint-start-production",
+            "number": "4",
+            "title": "Avvia la produzione quando sei pronto",
+            "description": "Una volta che la storia canta, inizia la produzione e l'intera pipeline eredita il tuo DNA creativo approvato senza alcuna deriva.",
+            "imagePlaceholder": "Apri Production Stage — gate di prontezza basato su un blueprint approvato"
+          }
+        ]
+      },
+      {
+        "id": "production",
+        "tabLabel": "Production Stage",
+        "number": "03",
+        "title": "Production Stage",
+        "header": "Da script a master pubblicato",
+        "body": "Production Stage gestisce la generazione simultanea e multi-motore — di sceneggiatura, audio, fotogrammi e video — in collaborazione con Intelligent Assistant Director e Screening Room, avvalendosi di flussi multilingua per accompagnarti dalla sceneggiatura approvata al master 4K pubblicato.",
+        "steps": [
+          {
+            "id": "production-script-ara",
+            "number": "1",
+            "title": "Rivedere lo script di base",
+            "description": "Inizia da uno script di base professionale con Audience Resonance Analysis. Leggi o ascolta l'analisi narrata per sapere cosa atterra prima di spendere un credito.",
+            "imagePlaceholder": "Script di base — analisi Audience Resonance e panoramica narrata"
+          },
+          {
+            "id": "production-assistant-writer",
+            "number": "2",
+            "title": "Ottimizza scena per scena",
+            "description": "Usa l'Intelligent Assistant Writer per ottimizzare la sceneggiatura scena per scena: stringi i dialoghi, rimodella i ritmi e applica miglioramenti con un clic tramite voce o testo.",
+            "imagePlaceholder": "Intelligent Assistant Writer — ottimizzazione degli script scena per scena"
+          },
+          {
+            "id": "production-reference-library",
+            "number": "3",
+            "title": "Costruisci IL Reference Library",
+            "description": "Crea o aggiorna Reference Library con personaggi, voci, armadi, luoghi e oggetti di scena con script, personalizzati o caricati. Modifica direttamente le immagini di riferimento — nessuna rigenerazione \"slot machine\".",
+            "imagePlaceholder": "Reference Library — personaggi, voci, guardaroba, location, oggetti di scena"
+          },
+          {
+            "id": "production-audio",
+            "number": "4",
+            "title": "Genera audio",
+            "description": "Genera dialoghi, narrazione, effetti sonori e musica utilizzando Run All Agents per tutte le scene, Audio Agent per singola scena o passo dopo passo, con voci fuori campo di qualità madrelingua in oltre 70 lingue.",
+            "imagePlaceholder": "Audio Agent — tutte le scene, singola scena o battuta per battuta"
+          },
+          {
+            "id": "production-frames",
+            "number": "5",
+            "title": "Genera e modifica frame",
+            "description": "Genera i fotogrammi chiave (beat frames) utilizzando Run All Agents e Stills Agent per scena o beat dopo beat, quindi modifica qualsiasi fotogramma con Intelligent Assistant Director (IAD): basta descrivere la modifica.",
+            "imagePlaceholder": "Batti i fotogrammi con le modifiche di Intelligent Assistant Director"
+          },
+          {
+            "id": "production-animatic",
+            "number": "6",
+            "title": "Rivedi l'animatic",
+            "description": "Riproduci l'animazione completa — fotogrammi, dialoghi, effetti sonori e musica — nello Screening Room interattivo e condividi un link per il feedback senza esportare un file.",
+            "imagePlaceholder": "Screening Room — revisione E condivisione animata interattiva"
+          },
+          {
+            "id": "production-video",
+            "number": "7",
+            "title": "Genera video",
+            "description": "Trasforma i fotogrammi approvati in sequenze animate con Video Agent, scena per scena o passo dopo passo. Rifai qualsiasi inquadratura con Intelligent Assistant Director: niente più infinite rigenerazioni casuali stile slot-machine.",
+            "imagePlaceholder": "Generazione di Video Agent con riprese IAD"
+          },
+          {
+            "id": "production-mixer",
+            "number": "8",
+            "title": "Modifica nel mixer",
+            "description": "Lucida ogni scena del Mixer — didascalie, finiture, doppiaggio, sovrapposizioni e bilanciamento audio — finitura sicura per il marchio senza uscire dallo studio.",
+            "imagePlaceholder": "Mixer — didascalie, trim, doppiaggio e controlli audio"
+          },
+          {
+            "id": "production-render-scenes",
+            "number": "9",
+            "title": "Rendering e revisione delle scene",
+            "description": "Esegui il rendering delle tue scene, quindi rivedile e condividile tramite Screening Room per bloccare l'approvazione prima dell'assemblaggio finale.",
+            "imagePlaceholder": "Scene renderizzate recensite e condivise nello Screening Room"
+          },
+          {
+            "id": "production-multilanguage",
+            "number": "10",
+            "title": "Genera flussi multilingue",
+            "description": "Spin up di flussi linguistici doppiati o sincronizzati a labbro dallo stesso taglio approvato: raggiungi oltre 70 mercati senza ripetere un singolo fotogramma.",
+            "imagePlaceholder": "Flussi multilingue — doppiati e sincronizzati con le labbra per locale"
+          },
+          {
+            "id": "production-publish",
+            "number": "11",
+            "title": "Rendere definitivo e pubblicare",
+            "description": "Effettua il rendering della produzione finale in un master e pubblica: miniature, titoli e descrizioni generati automaticamente pronti per il tuo canale YouTube e non solo.",
+            "imagePlaceholder": "Rendering finale e pubblicazione su YouTube con un clic"
+          }
+        ]
+      }
+    ]
+  },
+  "screeningRoom": {
+    "badge": "Interactive Screening Room — Anteprima Animatic disponibile",
+    "languagePrompt": "Ascolta la pipeline nel tuo mercato di riferimento:",
+    "languages": [
+      {
+        "id": "en",
+        "label": "Inglese",
+        "flag": "🇺🇸"
+      },
+      {
+        "id": "es",
+        "label": "Spagnolo",
+        "flag": "🇪🇸"
+      },
+      {
+        "id": "pt",
+        "label": "Portoghese",
+        "flag": "🇧🇷"
+      },
+      {
+        "id": "hi",
+        "label": "Lingua hindi",
+        "flag": "🇮🇳"
+      },
+      {
+        "id": "zh",
+        "label": "Cinese",
+        "flag": "🇨🇳"
+      }
+    ],
+    "steps": [
+      {
+        "id": "concept",
+        "label": "Ottimizzazione del concetto e dello script"
+      },
+      {
+        "id": "animatic",
+        "label": "Recensione DI Animatic DI 30 minuti"
+      },
+      {
+        "id": "video",
+        "label": "Render in movimento completo Video Agent"
+      }
+    ],
+    "previewLabel": "Anteprima"
+  },
+  "keyFeatures": {
+    "badge": "Caratteristiche Chiave",
+    "title": "Dall'idea al master.",
+    "subtitle": "Series Room → Blueprint Room → Production Stage → Screening Room.",
+    "learnMoreLabel": "Scopri di più",
+    "showLessLabel": "Mostra meno",
+    "videoComingSoon": "Funzionalità in arrivo prossimamente",
+    "videoSoon": "Presto",
+    "overviewComingSoon": "Panoramica in arrivo",
+    "pauseOverview": "Panoramica della pausa",
+    "playOverview": "Panoramica del gioco",
+    "muteOverview": "Panoramica sulla funzione Mute",
+    "unmuteOverview": "Panoramica su \"Riattiva audio\"",
+    "enterFullscreenOverview": "Schermo intero",
+    "exitFullscreenOverview": "Esci dalla modalità a schermo intero",
+    "watchLongformLabel": "Guarda il video di approfondimento",
+    "screenshotLabel": "Schermata",
+    "landingUiLanguagesLabel": "Produzione e doppiaggio in 44 lingue. Questo sito è disponibile in queste 39:",
+    "rooms": [
+      {
+        "id": "series-desk",
+        "label": "Series Room",
+        "promise": "La Series Room è il punto di partenza di una stagione. Gli stessi personaggi e la stessa storia vengono trasferiti in ogni episodio aggiunto. Leggi, ascolta e dirigi il tutto prima che un episodio venga aperto nella Blueprint Room. Un film privo di stagioni può saltare questa stanza.",
+        "features": [
+          {
+            "icon": "newSeries",
+            "title": "Nuova serie",
+            "description": "Inizia da qui. Descrivi con parole tue la serie che hai in mente. La funzione \"Clarify and Confirm\" (Chiarisci e Conferma) rielabora l'idea insieme a te finché la sinossi non è pronta, mentre \"Generate Series\" (Genera Serie) ne scrive la struttura di base. Una nuova serie parte con cinque episodi, ma è possibile aggiungerne altri.",
+            "screenshot": "Crea nuova serie — intento, Chiarisci e conferma, Genera serie",
+            "learnMore": {
+              "items": [
+                {
+                  "title": "La tua intenzione",
+                  "description": "Descrivi la serie, includendo il formato, il pubblico di riferimento e lo stile grafico."
+                },
+                {
+                  "title": "Iterare",
+                  "description": "\"Clarify and Confirm\" perfeziona la sinossi insieme a te prima che venga generato qualsiasi contenuto."
+                },
+                {
+                  "title": "Linea di base",
+                  "description": "Generate Series scrive la stagione che recensirai, iniziando con cinque episodi."
+                }
+              ]
+            }
+          },
+          {
+            "icon": "seriesReview",
+            "title": "Esaminare il primo montaggio",
+            "description": "Leggi la panoramica o premi \"Ascolta\". Poi leggi gli episodi oppure ascoltali. La coerenza tiene insieme i fili della storia, mentre la continuità lega il cast, le ambientazioni, gli oggetti di scena e gli scenari condivisi dagli episodi.",
+            "screenshot": "Panoramica, Episodi, Coerenza, Continuità — Cast, Location, Oggetti di scena, Ambientazioni",
+            "learnMore": {
+              "items": [
+                {
+                  "title": "Leggi o ascolta",
+                  "description": "La panoramica e gli episodi possono essere letti o ascoltati tramite la funzione di ascolto."
+                },
+                {
+                  "title": "Coerenza",
+                  "description": "L'estetica, gli eventi chiave e i fili narrativi rimangono legati alla stagione."
+                },
+                {
+                  "title": "Continuità",
+                  "description": "Il cast, le location, gli oggetti di scena e le ambientazioni sono gli stessi utilizzati in ogni episodio."
+                }
+              ]
+            }
+          },
+          {
+            "icon": "seriesResonance",
+            "title": "Audience Resonance",
+            "description": "Esegui Audience Resonance quando desideri una valutazione della stagione. Esamina i punteggi e l'analisi. Applica un'indicazione operativa (Actionable Insight) solo se decidi di farlo; nulla nella serie cambierà finché non procederai in tal senso.",
+            "screenshot": "Analisi Audience Resonance, seguita da Actionable Insights non applicati",
+            "learnMore": {
+              "items": [
+                {
+                  "title": "La lettura",
+                  "description": "I punteggi e le analisi mostrano cosa fa presa sul pubblico che hai indicato."
+                },
+                {
+                  "title": "Facoltativo",
+                  "description": "Un'intuizione operativa modifica la serie solo quando la si applica."
+                }
+              ]
+            }
+          },
+          {
+            "icon": "seriesDirector",
+            "title": "Regista della serie",
+            "description": "Dirigi l'intera serie con parole tue, pronunciate o scritte. Sei tu a scegliere il cambiamento e il fulcro, e ad accettarli. Un suggerimento può essere d'aiuto, mentre le parti della trama non correlate rimangono invariate.",
+            "screenshot": "Direttore della serie — regia, focalizzazione, accettazione",
+            "learnMore": {
+              "items": [
+                {
+                  "title": "Le tue parole",
+                  "description": "Pronuncia o digita la modifica e, facoltativamente, limitala alla trama, ai personaggi, al contenuto dell'episodio, al tono o all'ambientazione."
+                },
+                {
+                  "title": "Lo accetti",
+                  "description": "Nulla cambia finché non lo accetti, e le parti della trama non correlate rimangono invariate."
+                },
+                {
+                  "title": "Una raccomandazione",
+                  "description": "I suggerimenti possono essere utili, e sei comunque tu a scegliere cosa tenere."
+                }
+              ]
+            }
+          },
+          {
+            "icon": "directEpisode",
+            "title": "Dirigi questo episodio",
+            "description": "Prendi un episodio e dirigine autonomamente l'ora di durata. Innalza la posta in gioco o approfondisci la storia, quindi applica i cambiamenti. Gli altri episodi rimangono invariati.",
+            "screenshot": "Episodi — Dirigi questo episodio; gli altri episodi rimangono invariati",
+            "learnMore": {
+              "items": [
+                {
+                  "title": "Un episodio",
+                  "description": "Questa opzione applica la modifica esclusivamente a quell'episodio."
+                },
+                {
+                  "title": "La stagione resta",
+                  "description": "Gli altri episodi vengono lasciati così come sono."
+                }
+              ]
+            }
+          },
+          {
+            "icon": "startEpisode",
+            "title": "Avvia l'episodio",
+            "description": "Quando un episodio è pronto, avvia il relativo progetto. La scaletta, la sinossi e i passaggi chiave (beats) vengono trasferiti insieme ad esso nella Blueprint Room. Il cast e l'ambientazione sono già noti.",
+            "screenshot": "Avvia progetto — scaletta e cast già presenti nell'episodio",
+            "learnMore": {
+              "items": [
+                {
+                  "title": "Avvia progetto",
+                  "description": "Start Project apre quell'episodio nella Blueprint Room."
+                },
+                {
+                  "title": "Già noto",
+                  "description": "Lo accompagnano la scaletta, la sinossi, i passaggi chiave e il cast."
+                }
+              ]
+            }
+          }
+        ]
+      },
+      {
+        "id": "blueprint-board",
+        "label": "Blueprint Room",
+        "promise": "La Blueprint Room è il luogo in cui perfezioni la trama prima di passare alla sceneggiatura da 90 minuti. Parti da un episodio di una serie o da un nuovo progetto. Definisci qui i passaggi narrativi e il cast, in modo che la Production Stage non debba ricostruirli da capo.",
+        "features": [
+          {
+            "icon": "startBlueprint",
+            "title": "Avvia Blueprint",
+            "description": "Parti da un episodio di una serie o avvia un nuovo progetto. Un episodio di una serie include già scaletta, sinossi e snodi narrativi (beats). Un nuovo progetto inizia quando descrivi l'intento, utilizzi la funzione \"Valida e migliora con l'IA\" e scegli di generare lo Blueprint.",
+            "screenshot": "Episodio della serie già noto, oppure Avvia il tuo progetto — intento, Convalida e arricchisci con l'IA, Genera Blueprint",
+            "learnMore": {
+              "items": [
+                {
+                  "title": "Episodio di una serie",
+                  "description": "Un episodio di una serie si apre con la scaletta, la sinossi e i passaggi chiave già allegati."
+                },
+                {
+                  "title": "Nuovo progetto",
+                  "description": "\"Start Your Project\" acquisisce l'intento, quindi convalida e arricchisce tramite l'IA e infine genera il blueprint SFAI."
+                }
+              ]
+            }
+          },
+          {
+            "icon": "treatment",
+            "title": "Dirigi i beat",
+            "description": "Apri la scheda \"Beats\" e ascolta la scaletta (beat sheet). Ottimizza i beat in questa sezione, poiché determinano la struttura della sceneggiatura. I beat esistono solo qui. Production Stage trasforma ogni beat in un capitolo.",
+            "screenshot": "Scheda Beats, con Ascolta",
+            "learnMore": {
+              "items": [
+                {
+                  "title": "Una scaletta degli snodi narrativi",
+                  "description": "I battiti esistono solo qui."
+                },
+                {
+                  "title": "Compilazione dello script",
+                  "description": "I beat guidano la generazione dello script, pertanto vengono ottimizzati prima di Production Stage."
+                },
+                {
+                  "title": "Capitoli",
+                  "description": "Production Stage trasforma ogni battito in un capitolo."
+                }
+              ]
+            }
+          },
+          {
+            "icon": "castLocations",
+            "title": "Dirigere il cast e le location",
+            "description": "Apri la sezione Personaggi e gestisci il cast. Apri l'impostazione Ambientazione nella scheda Storia e definisci le relative location. Il cast influisce sulla struttura dello script; pertanto, entrambi gli elementi vanno configurati prima che Production Stage debba rielaborare lo script stesso.",
+            "screenshot": "Scheda Personaggi, poi Ambientazione nella Storia",
+            "learnMore": {
+              "items": [
+                {
+                  "title": "Cast",
+                  "description": "La scheda Personaggi rappresenta il cast, e il cast influenza la costruzione della sceneggiatura."
+                },
+                {
+                  "title": "Sedi",
+                  "description": "Le ambientazioni corrispondono alla voce \"Setting\" nella scheda \"Story\"."
+                },
+                {
+                  "title": "Prima del copione",
+                  "description": "Convogliarli entrambi qui evita un importante refactoring dello script in Production Stage."
+                }
+              ]
+            }
+          },
+          {
+            "icon": "blueprintDirector",
+            "title": "Direttore Blueprint",
+            "description": "Il Director recepisce la modifica espressa con parole tue, sia a voce che per iscritto. Concentra l'intervento su snodi narrativi (beats), personaggi o trama, quindi visualizza un'anteprima della revisione. Nulla viene modificato finché non applichi la modifica.",
+            "screenshot": "Blueprint Direttore — direzione, focus, anteprima, Applica revisione",
+            "learnMore": {
+              "items": [
+                {
+                  "title": "Le tue parole",
+                  "description": "Esponi o digita la modifica, concentrandoti su snodi narrativi, personaggi o storia."
+                },
+                {
+                  "title": "Anteprima",
+                  "description": "\"Genera revisione bilanciata\" mostra la modifica prima di applicarla."
+                },
+                {
+                  "title": "Lo applichi",
+                  "description": "Nulla cambia finché non applichi la revisione."
+                }
+              ]
+            }
+          },
+          {
+            "icon": "blueprintResonance",
+            "title": "Audience Resonance",
+            "description": "Salva il pubblico, quindi esegui l'analisi. Visualizzerai i punteggi e i suggerimenti. Nulla nel blueprint subirà modifiche finché non applicherai un suggerimento in Blueprint Director.",
+            "screenshot": "Audience Resonance — pubblico salvato, punteggi, suggerimenti non applicati",
+            "learnMore": {
+              "items": [
+                {
+                  "title": "La lettura",
+                  "description": "Salva il pubblico, quindi analizzalo e leggi i punteggi e i suggerimenti."
+                },
+                {
+                  "title": "Facoltativo",
+                  "description": "Un suggerimento modifica il blueprint solo quando lo si applica in Blueprint Director."
+                }
+              ]
+            }
+          },
+          {
+            "icon": "goToProduction",
+            "title": "Vai a Production Stage",
+            "description": "Passa a Production Stage una volta definiti la trama, i passaggi narrativi (beats) e il cast. La sceneggiatura da 90 minuti viene sviluppata a partire da questa bacheca; non è necessario ricostruire la trama in Production Stage.",
+            "screenshot": "Vai a Production Stage — trama, snodi narrativi e cast già definiti.",
+            "learnMore": {
+              "items": [
+                {
+                  "title": "Il passaggio di consegne",
+                  "description": "Vai a Production Stage per aprire lo script da questo blueprint."
+                },
+                {
+                  "title": "Già impostato",
+                  "description": "La trama, i passaggi chiave e il cast sono già stati impostati a livello di regia."
+                }
+              ]
+            }
+          }
+        ]
+      },
+      {
+        "id": "production-stage",
+        "label": "Production Stage",
+        "promise": "In questa fase, il progetto definitivo prende forma visiva. Tieni sotto controllo la spesa seguendo un piano preciso. Ottimizza ogni scena, poi realizzale in sequenza — regia, audio, musica, continuità e immagini fisse — e revisiona l'animatic prima di investire nella produzione video. Genera le clip, effettua il mixaggio, crea le versioni linguistiche e consegna la scena, il capitolo, il master o il promo.",
+        "spend": {
+          "label": "Controllare la spesa",
+          "features": [
+            {
+              "icon": "byok",
+              "title": "Porta la tua chiave",
+              "description": "Collega le tue chiavi per i provider di immagini e video. La generazione avviene sul tuo account e alle tue tariffe, mentre lo studio guidato — agenti, continuità, Mixer e Screening Room — rimane operativo.",
+              "screenshot": "Chiavi BYOK",
+              "learnMore": {
+                "items": [
+                  {
+                    "title": "Le tue chiavi",
+                    "description": "Collega le chiavi dei provider di immagini e video in modo che la generazione avvenga tramite il tuo account e alle tue tariffe."
+                  },
+                  {
+                    "title": "Stesso studio",
+                    "description": "Gli agenti, la continuità, il Mixer e Screening Room rimangono invariati."
+                  }
+                ]
+              }
+            },
+            {
+              "icon": "budget",
+              "title": "Pianificatore della produzione",
+              "description": "Definisci il numero di iterazioni per le immagini fisse e le clip di ogni inquadratura prima di sostenere le spese. Tali obiettivi si aggregano a livello di scena, capitolo e master; inoltre, partendo dalla data di inizio, si definisce la pianificazione fino alla data di completamento.",
+              "screenshot": "Pianificatore della produzione",
+              "learnMore": {
+                "items": [
+                  {
+                    "title": "Bersagli colpiti",
+                    "description": "Imposta le iterazioni per le immagini fisse e le clip di ciascuna inquadratura, e aggregale a livello di scena, capitolo e master."
+                  },
+                  {
+                    "title": "Programma datato",
+                    "description": "Una data di inizio e i giorni lavorativi definiscono un programma con crediti cumulativi."
+                  },
+                  {
+                    "title": "Ripristina dai dati effettivi",
+                    "description": "Le scene completate possono reimpostare gli obiettivi in base ai costi effettivi."
+                  },
+                  {
+                    "title": "Stato del telefono",
+                    "description": "Visualizza il ritmo di lettura, la spesa e la data di completamento sul telefono, mentre le modifiche si effettuano su desktop o tablet."
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        "groups": [
+          {
+            "id": "script",
+            "label": "Ottimizza lo script",
+            "features": [
+              {
+                "icon": "scriptResonance",
+                "title": "Audience Resonance",
+                "description": "Audience Resonance legge l'intera sceneggiatura in una sola volta, con tutte le scene in relazione tra loro. Visualizzi contemporaneamente le partiture e le note, e nulla viene riscritto finché non sei tu a deciderlo.",
+                "screenshot": "Audience Resonance — partiture e annotazioni per tutte le scene, non applicate",
+                "learnMore": {
+                  "items": [
+                    {
+                      "title": "Ogni scena insieme",
+                      "description": "Tratta la sceneggiatura come un'opera unitaria, corredandola di note sulle scene nel loro insieme."
+                    },
+                    {
+                      "title": "Scegli tu",
+                      "description": "Nulla viene riscritto finché non scegli su quali note intervenire."
+                    }
+                  ]
+                }
+              },
+              {
+                "icon": "castVisual",
+                "title": "Cast, costumi e voce",
+                "description": "Definisci il cast prima di creare le scene. Fissa il personaggio, il guardaroba e la voce, in modo che ogni immagine o clip successiva richiami la stessa persona.",
+                "screenshot": "Personaggio, guardaroba e voce",
+                "learnMore": {
+                  "items": [
+                    {
+                      "title": "Personaggio e guardaroba",
+                      "description": "Cast Agent disegna il personaggio e gli outfit."
+                    },
+                    {
+                      "title": "Voce",
+                      "description": "La voce viene definita per il personaggio prima che le scene vengano costruite."
+                    },
+                    {
+                      "title": "Stessa persona",
+                      "description": "Ogni fotogramma e ogni clip richiedono quel blocco."
+                    }
+                  ]
+                }
+              },
+              {
+                "icon": "directShot",
+                "title": "Tiro diretto",
+                "description": "Direct Shot realizza lo scatto basandosi sulle tue parole, digitate o dettate. Visualizzi un'anteprima dell'impostazione e la salvi; di conseguenza, i prompt per l'immagine statica e per il video si aggiornano simultaneamente.",
+                "screenshot": "Direct Shot — scrivi o detta, visualizza l'anteprima, salva",
+                "learnMore": {
+                  "items": [
+                    {
+                      "title": "Colpo dichiarato",
+                      "description": "Il dialogo è intitolato Ripresa diretta · Scena N · Inquadratura N."
+                    },
+                    {
+                      "title": "Digita o detta",
+                      "description": "Scrivi la nota o dettala, quindi visualizza l'anteprima dell'indicazione prima di salvare."
+                    },
+                    {
+                      "title": "Entrambi gli spunti",
+                      "description": "Il salvataggio aggiorna contemporaneamente il prompt per l'immagine statica e quello per la clip."
+                    },
+                    {
+                      "title": "Di nuovo dopo le clip",
+                      "description": "Se un'inquadratura generata è errata, apri Direct Shot e impostala nuovamente."
+                    }
+                  ]
+                }
+              },
+              {
+                "icon": "audioAgent",
+                "title": "Audio Agent",
+                "description": "Audio Agent compone i dialoghi, gli effetti sonori e la musica della scena. È possibile ascoltare la scena prima di utilizzare la clip.",
+                "screenshot": "Audio Agent — dialoghi, effetti e musica",
+                "learnMore": {
+                  "items": [
+                    {
+                      "title": "Dialoghi ed effetti",
+                      "description": "Il dialogo è riservato al parlato, mentre gli effetti sonori sono destinati alle inquadrature con un segnale specifico."
+                    },
+                    {
+                      "title": "Musica",
+                      "description": "La musica sostiene la scena insieme al dialogo."
+                    },
+                    {
+                      "title": "Prima del movimento",
+                      "description": "Ascolta la scena prima di aprire Clips."
+                    }
+                  ]
+                }
+              },
+              {
+                "icon": "continuity",
+                "title": "Continuità",
+                "description": "Genera solo i riferimenti necessari per questa scena, una volta che la scena è pronta. Le scene precedenti rimangono bloccate così come le hai fissate, evitando quindi di ridisegnare riferimenti già approvati.",
+                "screenshot": "Continuità — solo i riferimenti di questa scena",
+                "learnMore": {
+                  "items": [
+                    {
+                      "title": "Solo questa scena",
+                      "description": "Disegna il cast, le ambientazioni e gli oggetti di scena necessari per questa sequenza, e lascia stare gli altri."
+                    },
+                    {
+                      "title": "Proprio in tempo",
+                      "description": "Generali quando la scena è pronta, non in blocco per l'intero film."
+                    },
+                    {
+                      "title": "Già bloccato",
+                      "description": "Una modifica in una scena non ridefinisce i riferimenti già utilizzati dalle scene precedenti."
+                    }
+                  ]
+                }
+              },
+              {
+                "icon": "stillsAgent",
+                "title": "Stills Agent",
+                "description": "Stills Agent genera i fotogrammi delle inquadrature a partire dalla regia approvata. La regia e l'audio rimangono invariati, mentre le clip vengono aggiunte in una fase successiva.",
+                "screenshot": "Stills Agent — fotogrammi",
+                "learnMore": {
+                  "items": [
+                    {
+                      "title": "Fotogrammi",
+                      "description": "Renderizza l'immagine statica per ogni inquadratura della scena."
+                    },
+                    {
+                      "title": "Tiranti di direzione",
+                      "description": "La rigenerazione di un fotogramma aggiorna l'immagine, mentre la direzione e l'audio rimangono invariati."
+                    },
+                    {
+                      "title": "Prima delle clip",
+                      "description": "Approva le immagini fisse prima di aprire Clips."
+                    }
+                  ]
+                }
+              },
+              {
+                "icon": "animatic",
+                "title": "Animatic",
+                "description": "Visualizza la scena nella sala di proiezione sotto forma di animatic: immagini fisse accompagnate da dialoghi, colonna sonora ed effetti. Condividila per ricevere feedback e completa ogni scena in questo modo prima di passare alla fase video; in questo modo, eventuali modifiche alla sceneggiatura non comporteranno la necessità di rielaborare le clip. Per molti creatori, l'animatic rappresenta il prodotto finito e può essere renderizzato in formato MP4.",
+                "screenshot": "Animatic Screening Room, con condivisione",
+                "learnMore": {
+                  "items": [
+                    {
+                      "title": "Immagine e suono",
+                      "description": "L'animatic riproduce le immagini fisse approvate insieme a dialoghi, colonna sonora ed effetti."
+                    },
+                    {
+                      "title": "Condividi",
+                      "description": "Invia un unico link affinché i revisori possano guardare l'animatic e lasciare note sull'immagine."
+                    },
+                    {
+                      "title": "Prima del video",
+                      "description": "Completa le scene sotto forma di animatic prima di generare le clip, in modo che una modifica alla sceneggiatura non richieda di rigenerare il video."
+                    },
+                    {
+                      "title": "L'MP4",
+                      "description": "Per molti creatori, l'animatic è il prodotto finale e può essere renderizzato in formato MP4."
+                    }
+                  ]
+                }
+              }
+            ]
+          },
+          {
+            "id": "video",
+            "label": "Video",
+            "features": [
+              {
+                "icon": "videoAgent",
+                "title": "Video Agent",
+                "description": "Video Agent genera le clip delle inquadrature nella scheda Clips. Visualizza la scena assemblata nella Screening Room e, se un'inquadratura non è corretta, dirigila nuovamente in Direct Shot.",
+                "screenshot": "Video Agent, quindi la scena ricomposta",
+                "learnMore": {
+                  "items": [
+                    {
+                      "title": "Clip girate",
+                      "description": "Video Agent genera la clip per ciascuna inquadratura a partire dall'immagine statica approvata."
+                    },
+                    {
+                      "title": "Scena ricamata",
+                      "description": "Esamina la scena assemblata nella Screening Room."
+                    },
+                    {
+                      "title": "Dirigilo di nuovo",
+                      "description": "Apri una Direct Shot (digitata o dettata) quando una clip è errata."
+                    }
+                  ]
+                }
+              },
+              {
+                "icon": "mixer",
+                "title": "Mixer",
+                "description": "Il Mixer finalizza la scena all'interno di Production Stage. Include o esclude le inquadrature, le rifila, bilancia l'audio e renderizza la scena completa di audio.",
+                "screenshot": "Mixer — includi, ritaglia, bilancia, sovrapponi, filigrana",
+                "learnMore": {
+                  "items": [
+                    {
+                      "title": "Shot",
+                      "description": "Includi o scarta le singole inquadrature e accorcia quelle che mantieni."
+                    },
+                    {
+                      "title": "Dialogo",
+                      "description": "Imposta il volume e la velocità per ogni battuta di dialogo."
+                    },
+                    {
+                      "title": "Tracce",
+                      "description": "Bilancia narrazione, dialoghi, effetti sonori e musica, inclusi dissolvenze e loop musicali."
+                    },
+                    {
+                      "title": "Sovrapposizioni",
+                      "description": "Posiziona sovrapposizioni di testo sulla scena."
+                    },
+                    {
+                      "title": "Filigrana",
+                      "description": "Aggiungi una filigrana di testo o di immagine."
+                    },
+                    {
+                      "title": "Render",
+                      "description": "Renderizza la scena con il relativo audio: è questo render che Screening Room riproduce."
+                    }
+                  ]
+                }
+              },
+              {
+                "icon": "languageStreams",
+                "title": "Versioni linguistiche",
+                "description": "Questa scena rappresenta una versione in un'altra lingua, non una nuova produzione. Gemini TTS esegue il doppiaggio in 44 lingue e, per ogni inquadratura, è possibile doppiare la battuta o rigenerare la clip, inclusa la segnaletica.",
+                "screenshot": "Versione linguistica — Doppiaggio, lip-sync o rigenerazione, inclusa la segnaletica",
+                "learnMore": {
+                  "items": [
+                    {
+                      "title": "Quarantaquattro lingue",
+                      "description": "Gemini TTS riproduce il doppiaggio in 44 lingue."
+                    },
+                    {
+                      "title": "Per dose",
+                      "description": "Per ogni inquadratura, scegli Double per sovrapporre la voce doppiata, Lip-sync per eseguirla oppure Regenerate per creare una nuova clip a partire dalla battuta tradotta."
+                    },
+                    {
+                      "title": "Segnaletica",
+                      "description": "Rigenera lo scatto di una insegna o di un cartello quando l'immagine contiene testo che deve essere modificato."
+                    },
+                    {
+                      "title": "Tempistica",
+                      "description": "La velocità del video viene salvata per quella versione linguistica, poiché una traduzione è spesso più lunga del master del 10–30%."
+                    }
+                  ]
+                }
+              }
+            ]
+          },
+          {
+            "id": "publish",
+            "label": "Pubblica",
+            "features": [
+              {
+                "icon": "shipPackage",
+                "title": "Imballare e spedire",
+                "description": "Finalizza una scena, un capitolo, il master o un promo non appena il contenuto è pronto. Pubblicalo su YouTube, Facebook o TikTok, oppure scarica l'MP4 e continua a realizzare il resto.",
+                "screenshot": "Pacchettizzazione e consegna — scena, capitolo, master, promo; YouTube, Facebook, TikTok, MP4",
+                "learnMore": {
+                  "items": [
+                    {
+                      "title": "Pezzi",
+                      "description": "Invia una scena, un capitolo, il master o un promo."
+                    },
+                    {
+                      "title": "Percorsi linguistici",
+                      "description": "Ogni versione linguistica può essere inclusa nel pacchetto."
+                    },
+                    {
+                      "title": "Destinazioni",
+                      "description": "Pubblica su YouTube, Facebook o TikTok, oppure scarica il file MP4."
+                    },
+                    {
+                      "title": "Continua a costruire",
+                      "description": "Spedisci la parte completata e continua a realizzare il resto."
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "screening-room",
+        "label": "Screening Room",
+        "promise": "La Screening Room è lo spazio in cui il montaggio finale viene visionato, revisionato e rilasciato. Un unico player ospita pre-visualizzazioni, scene, capitoli, master, promo e i vari flussi audio (Language Stream), garantendo che il doppiaggio corrisponda esattamente al montaggio renderizzato dal mixer audio. È possibile condividere un unico link per la riproduzione e l'inserimento di note sul video. Pubblica una scena da 3-5 minuti, un capitolo da 8-12 minuti, il master o un promo non appena il materiale è pronto, continuando nel frattempo a lavorare al resto del progetto.",
+        "features": [
+          {
+            "icon": "screeningPlayer",
+            "title": "Un giocatore",
+            "description": "Passa da Pre-Vis, scene, capitoli e master al promo. Seleziona un flusso linguistico e ascolta la relativa versione: doppiata, in sincrono labiale o rigenerata inquadratura per inquadratura. Il player riproduce lo stesso montaggio renderizzato dal Mixer.",
+            "screenshot": "Lettore Screening Room",
+            "learnMore": {
+              "items": [
+                {
+                  "title": "Una superficie",
+                  "description": "Passa da Pre-Vis, scene, capitoli e master al promo."
+                },
+                {
+                  "title": "Indirizzo linguistico",
+                  "description": "Scegli una versione e ascoltala doppiata, sincronizzata con il labiale o rigenerata inquadratura per inquadratura."
+                },
+                {
+                  "title": "Stesso taglio",
+                  "description": "Il player riproduce il montaggio generato dal Mixer."
+                }
+              ]
+            }
+          },
+          {
+            "icon": "screeningCollab",
+            "title": "Collaborare al montaggio",
+            "description": "Condividi un unico link. I revisori guardano il video in riproduzione reale e lasciano note direttamente sull'immagine. Non devi esportare file grezzi via email per raccogliere feedback: ricevi una notifica per ogni nota scritta, che puoi leggere comodamente dal telefono.",
+            "screenshot": "Recensione condivisa",
+            "learnMore": {
+              "items": [
+                {
+                  "title": "Un link",
+                  "description": "I revisori visualizzano il contenuto in riproduzione reale e lasciano annotazioni sull'immagine."
+                },
+                {
+                  "title": "Nessun montaggio preliminare via email",
+                  "description": "Non stai esportando un file grezzo via email per raccogliere feedback."
+                },
+                {
+                  "title": "Appunti telefonici",
+                  "description": "Una nota scritta ti avvisa e puoi leggerla sul telefono, mentre lo studio rimane su desktop o tablet."
+                }
+              ]
+            }
+          },
+          {
+            "icon": "packageShip",
+            "title": "Rilascia quando è pronto",
+            "description": "Pubblica una scena di 3-5 minuti, un capitolo di 8-12 minuti, il master o un promo su YouTube, Facebook o TikTok, in formato 16:9 o 9:16, oppure scarica il file. Titoli, descrizione e impostazioni di privacy accompagnano il pacchetto. Pubblica la parte completata e continua a sviluppare il resto.",
+            "screenshot": "Pubblica pacchetto",
+            "learnMore": {
+              "items": [
+                {
+                  "title": "Spedire un pezzo",
+                  "description": "Pubblica una scena di 3–5 minuti, un capitolo di 8–12 minuti, il master o un promo."
+                },
+                {
+                  "title": "Destinazioni",
+                  "description": "Pubblica su YouTube, Facebook o TikTok in formato 16:9 o 9:16, oppure scarica il file."
+                },
+                {
+                  "title": "Pacchetto",
+                  "description": "Titoli, descrizione e privacy viaggiano insieme al pacchetto."
+                },
+                {
+                  "title": "Continua a costruire",
+                  "description": "Spedisci la parte completata e continua a realizzare il resto."
+                }
+              ]
+            }
+          }
+        ]
+      }
+    ]
+  },
   "metadata": {
     "title": "SceneFlow Studio - Creazione di video basata sull'IA",
     "description": "Trasforma le tue idee in video professionali grazie all'automazione del flusso di lavoro basata sull'IA."
   },
   "nav": {
     "plansPricing": "Piani e prezzi",
+    "productionExamples": "Esempi",
+    "keyFeatures": "Caratteristiche",
     "trustSafety": "Trust &amp; Safety",
     "signIn": "Accedi",
     "startProject": "Inizia un progetto",
@@ -14,89 +949,118 @@
     "goToDashboard": "Vai al pannello di controllo",
     "userFallback": "Utente",
     "searchLanguages": "Cerca Lingue",
-    "noLanguagesFound": "Lingue trovate",
-    "productionExamples": "Esempi",
-    "keyFeatures": "Caratteristiche"
+    "noLanguagesFound": "Lingue trovate"
   },
   "floatingNav": {
-    "preVisEngine": "Pre-Vis Engine",
-    "trustSafety": "Trust & Safety",
-    "pricing": "Pricing",
-    "productionExamples": "Examples",
-    "twoModes": "One Pipeline",
-    "keyFeatures": "Key Features",
-    "audienceResonance": "Audience Resonance"
+    "productionExamples": "Esempi",
+    "twoModes": "Un'unica pipeline",
+    "directControl": "Diretto",
+    "publishCut": "Pubblica",
+    "keyFeatures": "Caratteristiche principali",
+    "audienceResonance": "Audience Resonance",
+    "preVisEngine": "Motore di pre-visualizzazione",
+    "trustSafety": "Fiducia e sicurezza",
+    "pricing": "Prezzi"
   },
   "hero": {
-    "headline": "From first spark to finished master.",
-    "subheadline": "SceneFlow is one guided pipeline. You direct the story, the cast, and the tone. It builds the Blueprint, holds continuity, plays the full animatic, and assembles the master — without prompt trials or a timeline of loose clips.",
-    "ctaPrimaryLaunch": "Launch Studio ($9)",
-    "ctaSupportingLine": "The all-in-one studio to craft, export, and distribute your stories. Download a master and ship anywhere — or publish long-form cuts and chapters to {longForm}, and promote trailers on {shorts}.",
-    "ctaSecondary": "Explore the pipeline",
-    "ctaToolStack": "See how it replaces your tool stack",
+    "eyebrow": "Produzione cinematografica automatizzata per film e serie",
+    "headline": "Dalla prima scintilla al master finito.",
+    "subheadline": "SceneFlow è una pipeline guidata. Tu dirigi la storia, il cast e il tono. Il sistema crea il Blueprint, mantiene la continuità, riproduce l'animatic completo e assembla il master, senza tentativi basati su prompt o una timeline di clip slegate.",
+    "ctaPrimaryLaunch": "Launch Studio (9 $)",
+    "ctaSupportingLine": "Lo studio all-in-one per creare, esportare e distribuire le tue storie. Scarica un master e invialo ovunque, oppure pubblica versioni estese e capitoli su {longForm} e promuovi i trailer su {shorts}.",
+    "ctaNetworkInvite": "I progetti di spicco possono candidarsi per entrare a far parte del network SceneFlow, accessibile solo su invito.",
+    "ctaNetworkInviteHref": "#for-filmmakers",
+    "ctaSecondary": "Esplora la pipeline",
+    "ctaToolStack": "Scopri come sostituisce il tuo stack di strumenti",
     "chips": [
       {
-        "label": "From Concept to Feature",
-        "detail": "Expand ideas into 90-minute scripts in the Blueprint Room. Define characters, art, and beats, then let Audience Resonance analysis fine-tune your story before you shoot."
+        "label": "Dal concept alla funzionalità",
+        "detail": "Sviluppa le idee in sceneggiature da 90 minuti all'interno della Blueprint Room. Definisci personaggi, elementi visivi e snodi narrativi, quindi lascia che l'analisi Audience Resonance perfezioni la tua storia prima delle riprese."
       },
       {
-        "label": "Direct With Intent, Not Prompts",
-        "detail": "Speak the language of film with intelligent assistants that understand your direction. The Reference Library locks your custom cast, wardrobe, and locations for absolute continuity."
+        "label": "Guida con intenzionalità, non con suggerimenti.",
+        "detail": "Parla il linguaggio del cinema con assistenti intelligenti che comprendono la tua visione creativa. La Reference Library fissa cast, costumi e location personalizzati per garantire una continuità assoluta."
       },
       {
-        "label": "Agent-Driven Production",
-        "detail": "Accelerate generation 5X with intelligent agents that build 30-shot scenes in the background. Iterate freely in draft mode, then publish your final vision in stunning Hi-Res."
+        "label": "Produzione guidata da agenti",
+        "detail": "Accelera la generazione di 5 volte grazie ad agenti intelligenti che costruiscono scene da 30 inquadrature in background. Sperimenta liberamente in modalità bozza, quindi pubblica la tua visione finale in una straordinaria alta risoluzione."
       },
       {
-        "label": "Screen, Collaborate, Ship",
-        "detail": "Share progress at every milestone—from audio animatics to the final master—in the Screening Room. Distribute as shorts or features in multiple languages for a global reach."
+        "label": "Valuta, collabora, rilascia",
+        "detail": "Condividi i progressi a ogni tappa fondamentale — dagli animatic audio al master finale — nella Screening Room. Distribuisci il progetto come cortometraggio o lungometraggio in più lingue per raggiungere un pubblico globale."
       }
     ],
     "pipelineSteps": [
       "Blueprint",
-      "Production",
+      "Produzione",
       "Screening Room"
     ],
-    "languagePrompt": "Hear the hero in your language — same pipeline, new markets",
-    "multilangHint": "Hero dubs in 7 languages — full pipeline supports 70+ in Production Stage.",
-    "playWithNarration": "Play with narration",
-    "tapToHear": "Tap to hear",
-    "fullscreen": "Fullscreen",
+    "languagePrompt": "Scegli inglese, spagnolo, cinese o arabo: stesso flusso di lavoro, nuovi mercati.",
+    "multilangHint": "Doppiaggio principale in 4 lingue — la pipeline completa ne supporta oltre 70 in Production Stage.",
+    "playWithNarration": "Riproduci con narrazione",
+    "tapToHear": "Tocca per ascoltare",
+    "fullscreen": "Schermo intero",
+    "pauseBackgroundVideo": "Metti in pausa il video in sottofondo",
+    "playBackgroundVideo": "Riproduci video di sfondo",
     "heroVideoLanguages": {
       "en": {
-        "label": "English",
+        "label": "Inglese",
         "nativeLabel": "English"
       },
       "es": {
-        "label": "Spanish",
+        "label": "Spagnolo",
         "nativeLabel": "Español"
       },
-      "pt": {
-        "label": "Portuguese",
-        "nativeLabel": "Português"
-      },
-      "hi": {
-        "label": "Hindi",
-        "nativeLabel": "हिन्दी"
-      },
       "zh": {
-        "label": "Chinese",
+        "label": "Cinese",
         "nativeLabel": "中文"
       },
       "ar": {
-        "label": "Arabic",
+        "label": "Arabo",
         "nativeLabel": "العربية"
-      },
-      "th": {
-        "label": "Thai",
-        "nativeLabel": "ไทย"
       }
     },
-    "soon": "Soon",
-    "videoLanguageCount": "{count, plural, =1 {# language} other {# languages}}",
-    "eyebrow": "Automated filmmaking for films and series",
-    "ctaNetworkInvite": "Standout projects can apply for the invite-only SceneFlow Network.",
-    "ctaNetworkInviteHref": "#for-filmmakers"
+    "soon": "Presto",
+    "videoLanguageCount": "{count, plural, =1 {# language} other {# languages}}"
+  },
+  "twoModes": {
+    "eyebrow": "Le frizioni che eliminiamo",
+    "title": "Una sola pipeline. Non una serie di strumenti.",
+    "subtitle": "SceneFlow replaces single-clip generators and a pile of separate docs, editors, and re-renders. Build the series or the 90-minute master, then publish a scene or a chapter when you are ready to earn.",
+    "comingSoon": "Prossimamente",
+    "comparison": {
+      "id": "comparison",
+      "caption": "Fragmented tools beside one SceneFlow pipeline."
+    },
+    "cta": "Launch Studio (9 $)"
+  },
+  "directControl": {
+    "eyebrow": "Il controllo che mantieni",
+    "title": "Dirigi la storia. Lascia che siano gli agenti a fornire i prompt.",
+    "subtitle": "Definisci l'inquadratura con un linguaggio semplice. Le indicazioni di regia determinano il prompt sia per l'immagine statica che per la clip. Gli attacchi musicali e la narrazione devono seguire il ritmo. Guarda l'animatic, modifica l'inquadratura se necessario e solo allora investi risorse nel movimento.",
+    "comparison": {
+      "id": "direction",
+      "caption": "Una nota di regia, un'indicazione per la clip e musica e narrazione sullo stesso battito."
+    },
+    "cta": "Launch Studio (9 $)"
+  },
+  "publishCut": {
+    "eyebrow": "Il montaggio che pubblichi",
+    "title": "Esporta ovunque. Ottieni Premiere su SceneFlow quando te lo guadagni.",
+    "subtitle": "Download a master and ship it yourself, or publish finished scenes and chapters to {longForm} and cut trailers for {shorts} — without waiting on the whole cut. Before anything hits the public feed, run drafts or your final master through the Screening Room. Standout projects can apply for the invite-only SceneFlow Network; it is a curated accelerator, not an open storefront.",
+    "comparison": {
+      "id": "publish",
+      "caption": "A finished scene or chapter, and the 90-minute master, from one studio."
+    },
+    "cta": "Launch Studio (9 $)"
+  },
+  "infrastructure": {
+    "title": "Infrastruttura e sicurezza di livello enterprise",
+    "description": "Basato su Google Cloud e Vertex AI per garantire affidabilità di livello enterprise, modelli di doppiaggio multilingua ed elaborazione sicura degli asset.",
+    "badges": {
+      "googleCloud": "Google Cloud",
+      "vertexAi": "Vertex AI"
+    }
   },
   "valueProp": {
     "pills": [
@@ -150,7 +1114,7 @@
         "icon": "video",
         "label": "Creatore",
         "outcome": "Rilascia nei tempi previsti: smetti di ricostruire tutto in ogni singolo strumento.",
-        "narrative": "Hai la storia, ma ogni episodio comporta riesportare gli asset, inserire nuovamente i prompt in nuove schede e sperare che la continuità regga. SceneFlow collega Serie, Blueprint e Produzione in un unico studio: così puoi approvare l'estetica in fase di pre-visualizzazione, generare i contenuti scena per scena e consegnare episodi coerenti rispettando le scadenze, invece di dover ricostruire tutto da zero.",
+        "narrative": "Hai la storia, ma ogni episodio comporta riesportare gli asset, inserire nuovamente i prompt in nuove schede e sperare che la continuità regga. SceneFlow collega Series Room, Blueprint Room e Production Stage in un unico studio: così puoi approvare l'estetica in fase di pre-visualizzazione, generare i contenuti scena per scena e consegnare episodi coerenti rispettando le scadenze, invece di dover ricostruire tutto da zero.",
         "useCases": [
           "Serie drammatica per YouTube TV in formato 16:9",
           "Serie drammatica verticale per dispositivi mobili in formato 9:16",
@@ -243,7 +1207,7 @@
         "icon": "ciak",
         "label": "Produzione cinematografica",
         "outcome": "Sceneggiatura per un animatic interattivo da proiettare e testare prima delle riprese.",
-        "narrative": "In passato, la pre-visualizzazione e i test sul pubblico comportavano settimane di storyboard, voci guida provvisorie e costose incognite prima ancora di iniziare le riprese. SceneFlow trasforma la tua sceneggiatura in un animatic interattivo grazie alla pre-visualizzazione rapida: ottimizza il progetto con Audience Resonance, proiettalo in Screening Room e investi il budget solo quando la storia convince davvero.",
+        "narrative": "In passato, la pre-visualizzazione e i test sul pubblico comportavano settimane di storyboard, voci guida provvisorie e costose incertezze prima ancora di iniziare le riprese. SceneFlow trasforma la tua sceneggiatura in un animatic interattivo grazie a Pre-vis Agent: ottimizza il risultato con Audience Resonance, proiettalo in Screening Room e stanzia il budget solo quando la storia convince davvero.",
         "useCases": [
           "Previsualizzazione per lungometraggi e film indipendenti",
           "Animatic per pitch agli investitori",
@@ -256,7 +1220,7 @@
           "challengeTitle": "Una pre-visualizzazione lenta prima di poter testare la storia",
           "challengeDescription": "Hai una sceneggiatura, ma le letture a tavolino, i cicli di storyboard e gli strumenti di pre-visualizzazione frammentati ritardano le presentazioni agli investitori, i test con il pubblico e le decisioni di approvazione del progetto.",
           "solutionTitle": "Pre-visualizzazione interattiva basata sulla sceneggiatura",
-          "solutionDescription": "Carica la tua sceneggiatura (MDX, FDX e altri formati), ottimizzala con Audience Resonance e genera una pre-visualizzazione interattiva da visionare e testare, sfruttando la generazione simultanea \"Express\" per i vari beat, oltre 70 opzioni linguistiche e rapidi overlay multilingua.",
+          "solutionDescription": "Carica la tua sceneggiatura (MDX, FDX e altri formati), ottimizzala con Audience Resonance e genera una pre-visualizzazione interattiva da visionare e testare; il tutto avvalendosi di Production Agents per comporre prompt e generare contenuti sequenza per sequenza, con supporto per oltre 70 lingue e rapide sovrapposizioni multilingua.",
           "win": "Valida la storia e la sua sintonia con il pubblico prima delle riprese principali, utilizzando un animatic condivisibile anziché un ciclo di pre-visualizzazione della durata di settimane."
         }
       }
@@ -272,7 +1236,7 @@
       },
       {
         "them": "Coerenza manuale tra le sessioni",
-        "us": "Reference Library + Shot Frames blocca le immagini prima del video"
+        "us": "Bloccare le immagini prima del video"
       },
       {
         "them": "Nessun flusso di lavoro per la convalida del pubblico",
@@ -290,10 +1254,10 @@
     "title": "Pipeline video basata sul ritmo",
     "subtitle": "Approva prima di renderizzare — niente rigenerazione stile slot machine",
     "intro": "Nessuna generazione basata su tentativi ed errori. Puoi visualizzare un'anteprima e approvare l'aspetto visivo prima che SceneFlow utilizzi i crediti per il video finale.",
-    "description": "SceneFlow struttura l'approvazione visiva in ogni fase: Pre-vis Agent per la revisione, Shot Frames per bloccare la composizione, e infine F2V per ogni inquadratura. Perfezioni l'aspetto visivo prima di consumare crediti in derive e allucinazioni.",
+    "description": "SceneFlow struttura l'approvazione visiva in ogni fase: Pre-vis Agent per la revisione, Shot Frames per fissare la composizione e infine F2V per ogni beat. Affini l'estetica prima di sprecare crediti a causa di derive e allucinazioni.",
     "steps": [
-      "Pre-vis Agent — condividi bozze audiovisive per la revisione in pochi minuti",
-      "Shot Frames — blocca l'inizio/fine della composizione con continuità Reference Library",
+      "Pre-vis Agent — condividere segmenti audiovisivi per la revisione in seguito a prompting da parte di esperti",
+      "Shot Frames — blocca l'inizio/la fine della composizione con la continuità di Reference Library",
       "F2V per shot: genera video a partire da fotogrammi approvati, non da prompt alla cieca.",
       "Catena di estensione continua — passaggi di estensione nativi da +7 secondi per lunghe sequenze di dialogo",
       "Production Mixer — esportazione di timing, audio e stream verso Screening Room"
@@ -371,7 +1335,7 @@
     "steps": [
       {
         "title": "Clip iniziale di 8 secondi",
-        "description": "La conversione da fotogramma a video o da immagine a video, a partire dall'elemento Shot Frames approvato, blocca la composizione prima dell'animazione."
+        "description": "La conversione da fotogramma a video o da immagine a video, a partire da Shot Frames approvato, blocca la composizione prima del movimento."
       },
       {
         "title": "Passaggi di estensione di +7 s",
@@ -406,7 +1370,7 @@
     "badge": "Gamma creativa",
     "title": "Ogni stile, ogni schermo",
     "titleAccent": "Il tuo DNA creativo, racchiuso in Blueprint",
-    "subtitle": "È in Blueprint che si definisce il tuo DNA creativo: stile artistico, formato dell'immagine, tono e nucleo narrativo. SceneFlow integra queste scelte nel trattamento, in Audience Resonance e nella generazione della sceneggiatura, facendo sì che le indicazioni di scena corrispondano all'inquadratura e all'estetica fin dal primo momento, anziché ridursi a semplici impostazioni di esportazione dell'ultimo minuto.",
+    "subtitle": "Blueprint Room è il punto in cui si definisce il tuo DNA creativo: stile artistico, formato dell'immagine, tono e nucleo narrativo. SceneFlow integra queste scelte nel trattamento, in Audience Resonance e nella generazione della sceneggiatura, garantendo che le indicazioni di scena siano coerenti con l'inquadratura e l'estetica fin dal primo istante, anziché ridursi a semplici impostazioni di esportazione dell'ultimo minuto.",
     "pillars": [
       {
         "title": "La forma segue la funzione (e l'inquadramento)",
@@ -430,87 +1394,121 @@
       "items": [
         {
           "id": "fotorealistico",
-          "name": "Fotorealistico",
+          "name": "Live-action cinematografico",
           "displayTitle": "Fotorealismo",
-          "description": "Stile fotografico professionale",
+          "description": "Illuminazione fotorealistica e cinematografica",
           "tagline": "Realismo di prestigio a lungo respiro",
           "marketingBody": "Il fotorealismo offre quell'attrattiva per il grande pubblico attesa dagli spettatori di serie TV di prestigio e documentari. Mantenere coerenti personaggi e illuminazione realistici attraverso le diverse sequenze narrative assicura che i drama a episodi e le docuserie conservino una continuità emotiva, dall'inizio alla fine.",
+          "featured": true,
           "thumbnail": "https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Gemini_Generated_Image_w5y03bw5y03bw5y0.jpeg"
         },
         {
           "id": "anime degli anni '90",
-          "name": "Anime (anni '90)",
-          "displayTitle": "Anime",
-          "description": "Stile classico degli anime degli anni '90",
-          "tagline": "Archi narrativi seriali",
-          "marketingBody": "La tecnica di *cel shading* in stile anime favorisce un forte coinvolgimento dei fan nelle web serie a più episodi e nelle narrazioni di ampio respiro. I motori generativi addestrati su questo linguaggio visivo producono tratti nitidi e inquadrature dalla resa prevedibile: caratteristiche ideali per una produzione seriale su larga scala.",
+          "name": "3D / CGI di qualità cinematografica",
+          "displayTitle": "3D / CGI di qualità cinematografica",
+          "description": "Aspetto da lungometraggio in 3D renderizzato",
+          "featured": false,
           "thumbnail": "https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Gemini_Generated_Image_5qoasf5qoasf5qoa.jpeg"
         },
         {
           "id": "Pixar",
-          "name": "Pixar Animation",
+          "name": "Animazione 3D (stile Pixar)",
           "displayTitle": "3D cinematografico / Ispirato a Pixar",
-          "description": "Animazione 3D in stile Pixar",
+          "description": "Lungometraggio d'animazione 3D stilizzato",
           "tagline": "Continuità emotiva tra gli episodi",
           "marketingBody": "Geometrie morbide e arrotondate e un character design espressivo creano un calore emotivo capace di mantenere vivo l'interesse del pubblico per un'intera stagione. Ideale per serie animate, contenuti di lunga durata per famiglie e branded storytelling, dove la coerenza dei personaggi è fondamentale in ogni momento della narrazione.",
+          "featured": true,
           "thumbnail": "https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Gemini_Generated_Image_zi32rnzi32rnzi32.jpeg"
         },
         {
           "id": "concept art",
-          "name": "Concept art",
-          "displayTitle": "Concept art",
-          "description": "Concept art per videogiochi e film",
-          "tagline": "Keyframe di pre-visualizzazione per film e serie, con un'illuminazione suggestiva e pronta per la produzione.",
+          "name": "Anime",
+          "displayTitle": "Anime",
+          "description": "Stile anime in cel-shading",
+          "tagline": "Archi narrativi seriali",
+          "marketingBody": "La tecnica di *cel shading* in stile anime favorisce un forte coinvolgimento dei fan nelle web serie a più episodi e nelle narrazioni di ampio respiro. I motori generativi addestrati su questo linguaggio visivo producono tratti nitidi e inquadrature dalla resa prevedibile: caratteristiche ideali per una produzione seriale su larga scala.",
+          "featured": true,
           "thumbnail": "https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Gemini_Generated_Image_qlf261qlf261qlf2.jpeg"
         },
         {
           "id": "Ghibli",
           "name": "In stile Ghibli",
           "displayTitle": "Disegnato a mano / Stile Ghibli",
-          "description": "Ispirato allo Studio Ghibli",
+          "description": "Animazione disegnata a mano dallo stile pittorico",
           "tagline": "L'artigianato come lusso",
           "marketingBody": "Questo stile attinge direttamente a un importante movimento creativo che pone al centro il concetto di \"artigianato come lusso\". Texture acquerellate e sfondi pittorici danno vita a mondi episodici di fattura artigianale, in cui l'imperfezione organica si trasforma in una scelta artistica consapevole che attraversa l'intera serie.",
+          "featured": true,
           "thumbnail": "https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Gemini_Generated_Image_xojqsuxojqsuxojq.jpeg"
         },
         {
           "id": "fumetto",
           "name": "Fumetto",
           "displayTitle": "Fumetto",
-          "description": "Stile a inchiostro da fumetto",
+          "description": "Tratto deciso, stile graphic novel",
           "tagline": "Tratti decisi, texture a mezzatinta e colori pop-art per una narrazione seriale a più episodi.",
+          "featured": false,
           "thumbnail": "https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Gemini_Generated_Image_ezhp8cezhp8cezhp.jpeg"
         },
         {
           "id": "pittura a olio",
-          "name": "Pittura a olio",
-          "displayTitle": "Pittura a olio",
-          "description": "Pittura a olio classica",
-          "tagline": "Pennellate classiche e pigmenti ricchi per documentari e narrazioni storiche di ampio respiro.",
+          "name": "Concept art",
+          "displayTitle": "Concept art",
+          "description": "Concept art cinematografica per videogiochi o film",
+          "tagline": "Keyframe di pre-visualizzazione per film e serie, con un'illuminazione suggestiva e pronta per la produzione.",
+          "featured": false,
           "thumbnail": "https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Gemini_Generated_Image_7z9qm7z9qm7z9qm7.jpeg"
         },
         {
           "id": "arte digitale",
-          "name": "Arte digitale",
-          "displayTitle": "Arte digitale",
-          "description": "Illustrazione digitale moderna",
-          "tagline": "Illustrazione stilizzata per documentari d'animazione e serie divulgative a episodi.",
+          "name": "Vettoriale flat / Motion graphics",
+          "displayTitle": "Vettoriale flat / Motion graphics",
+          "description": "Stile vettoriale pulito per video esplicativi",
+          "featured": false,
           "thumbnail": "https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Gemini_Generated_Image_omdmt6omdmt6omdm.jpeg"
         },
         {
           "id": "acquerello",
-          "name": "Acquerello",
-          "displayTitle": "Acquerello",
-          "description": "Dipinto ad acquerello dai toni delicati",
-          "tagline": "Delicate velature di pigmento per memorie, documentari e narrazioni di ampio respiro dal tono contemplativo.",
+          "name": "Storyboard / Animatic",
+          "displayTitle": "Storyboard / Animatic",
+          "description": "Bozzetti preliminari di storyboard in scala di grigi",
+          "featured": false,
           "thumbnail": "https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Gemini_Generated_Image_7i1wus7i1wus7i1w.jpeg"
         },
         {
           "id": "schizzo",
-          "name": "Schizzo/Line art",
-          "displayTitle": "Schizzo/Line art",
+          "name": "Arte digitale",
+          "displayTitle": "Arte digitale",
+          "description": "Illustrazione digitale moderna",
+          "tagline": "Illustrazione stilizzata per documentari d'animazione e serie divulgative a episodi.",
+          "featured": false,
+          "thumbnail": "https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Gemini_Generated_Image_bmbpbibmbpbibmbp.jpeg"
+        },
+        {
+          "id": "watercolor",
+          "name": "Acquerello",
+          "displayTitle": "Acquerello",
+          "description": "Dipinto ad acquerello dai toni delicati",
+          "tagline": "Delicate velature di pigmento per memorie, documentari e narrazioni di ampio respiro dal tono contemplativo.",
+          "featured": false,
+          "thumbnail": "https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Gemini_Generated_Image_7i1wus7i1wus7i1w.jpeg"
+        },
+        {
+          "id": "sketch",
+          "name": "Schizzo / Line art",
+          "displayTitle": "Schizzo / Line art",
           "description": "Stile schizzo a matita",
           "tagline": "Tratto dettagliato e texture a matita per le sequenze narrative di progetti a lungo formato, dalla pre-visualizzazione alla produzione.",
+          "featured": false,
           "thumbnail": "https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Gemini_Generated_Image_bmbpbibmbpbibmbp.jpeg"
+        },
+        {
+          "id": "oil-painting",
+          "name": "Pittura a olio",
+          "displayTitle": "Pittura a olio",
+          "description": "Pittura a olio classica",
+          "tagline": "Pennellate classiche e pigmenti ricchi per documentari e narrazioni storiche di ampio respiro.",
+          "featured": false,
+          "thumbnail": "https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Gemini_Generated_Image_7z9qm7z9qm7z9qm7.jpeg"
         }
       ]
     },
@@ -603,7 +1601,7 @@
           "detail": "Personaggi coerenti"
         },
         {
-          "label": "Produzione",
+          "label": "Production Stage",
           "detail": "Voce e immagini"
         },
         {
@@ -627,15 +1625,15 @@
     "proofLine": "Validato su un tour di un immobile residenziale: elaborazione manuale completa (oltre 4 ore) → stesso risultato finale in SceneFlow in meno di un'ora."
   },
   "comparison": {
-    "title": "Stop pulling the lever. Start running a production.",
-    "subtitle": "Clip generators re-roll the dice on every prompt — new face, new room, new voice. SceneFlow reads every shot from the same locked references, so scene 100 still matches scene 1.",
+    "title": "Smetti di tirare la leva. Inizia a gestire una produzione.",
+    "subtitle": "I generatori di clip rimettono tutto in gioco a ogni prompt: nuovo volto, nuova stanza, nuova voce. SceneFlow elabora ogni inquadratura basandosi sugli stessi riferimenti fissi, garantendo così che la scena 100 rimanga coerente con la scena 1.",
     "caption": "Un unico ambiente sostituisce strumenti di prompting frammentati, modifiche manuali e passaggi di consegne tra più piattaforme.",
     "imageAlt": "Costi di produzione tradizionali vs studio automatizzato SceneFlow: dal concept al video pronto per la pubblicazione in meno tempo"
   },
   "howItWorks": {
     "title": "Dal concept al video pronto per la pubblicazione",
     "titleAccent": "Una pipeline guidata",
-    "subtitle": "La serie è facoltativa. Il percorso principale è Blueprint → Produzione → Screening Room, includendo lungo il tragitto pre-visualizzazione, animatic, video della scena e master MP4.",
+    "subtitle": "La serie è facoltativa. Il percorso principale è Blueprint Room → Production Stage → Screening Room, includendo pre-visualizzazione, animatic, video della scena e master MP4 lungo il processo.",
     "tagline": "Ogni fase è automatizzata in modo esperto. Ogni fase ti offre il pieno controllo.",
     "optionalBadge": "Facoltativo",
     "optionalSuffix": " (facoltativo)",
@@ -644,20 +1642,21 @@
     "phases": [
       {
         "id": "serie",
-        "stepLabel": "Serie",
-        "subtitle": "Showrunner Engine",
+        "stepLabel": "Series Room",
+        "subtitle": "Continuità narrativa tra più episodi",
         "description": "Definisci il tuo universo una sola volta e genera archi narrativi coerenti che si sviluppano su più episodi. L'elemento condiviso Reference Library mantiene l'allineamento di personaggi e tono per tutta la stagione.",
         "keySteps": [
           "Definisci l'universo: personaggi, tono e arco narrativo della stagione.",
           "Genera automaticamente le scalette degli episodi per l'intera stagione",
-          "Sincronizzazione con Blueprint e produzione per episodio"
+          "Sincronizzazione con Blueprint Room e Production Stage per episodio"
         ],
         "keyFeatures": [
           "Definisci il tuo universo una volta sola: personaggi, tono e arco narrativo della stagione.",
           "Trame coerenti degli episodi — generate automaticamente per l'intera stagione",
           "Monitoraggio della continuità — allineamento delle stagioni a più episodi",
-          "Sincronizzazione serie-episodio — in Blueprint Room e Produzione"
-        ]
+          "Sincronizzazione serie-episodio — in Blueprint Room e Production Stage"
+        ],
+        "optional": true
       },
       {
         "id": "progetto",
@@ -665,34 +1664,38 @@
         "subtitle": "Sviluppo della storia",
         "description": "Trasforma i concetti in trattamenti strutturati comprensivi di logline, snodi narrativi, personaggi e tono. Esegui Audience Resonance e collabora prima di procedere al rendering pesante.",
         "keySteps": [
-          "Generazione → Revisione → Iterazione → Avvio della produzione",
+          "Genera → Revisiona → Iterazione → Vai a Production Stage",
           "Audience Resonance punteggio con obiettivo 80+",
           "Link di condivisione per collaboratori ed esportazione (PDF, Doc, PPTX)"
         ],
         "keyFeatures": [
-          "Flusso di lavoro: Generazione → Revisione → Iterazione → Avvio della produzione",
+          "Genera → Revisiona → Iterazione → Vai al workflow Production Stage",
           "Dal concept alla struttura in pochi minuti: logline, snodi narrativi, personaggi e tono.",
-          "Audience Resonance punteggio con obiettivo 80+ prima della produzione",
+          "Calcolo del punteggio Audience Resonance con target 80+ prima di Production Stage",
           "Link di condivisione per i collaboratori — sintesi dei feedback per una revisione guidata"
-        ]
+        ],
+        "optional": false
       },
       {
         "id": "produzione",
-        "stepLabel": "Produzione",
-        "subtitle": "Script per Screening Room",
-        "description": "Le schede Script e Shoot guidano il flusso Foundation → Pre-Vis → Footage → Mixer → Streams. I punti di controllo scena per scena riducono al minimo le rilavorazioni; Screening Room gestisce anteprima, assemblaggio e pubblicazione.",
+        "stepLabel": "Production Stage",
+        "subtitle": "Orientamento attraverso i flussi",
+        "description": "Regia, sceneggiatura, musica, riferimenti e immagini fisse ottimizzano il copione tramite Audience Resonance e la revisione della pre-visualizzazione. Clip, mixer e flussi generano il video per ogni inquadratura. Screening Room gestisce l'anteprima, il montaggio e la pubblicazione.",
         "keySteps": [
           "Bloccare la sceneggiatura, le voci e l'audio della scena",
-          "Pre-visualizzazione scena per scena: galleria e condivisione per revisione",
-          "Scheda Ripresa — Riprese → Mixer → Flussi per scena",
-          "Screening Room — anteprima, assemblaggio del master, pubblicazione"
+          "Pre-visualizzazione scena per scena — Immagini fisse e condivisione per revisione",
+          "Clip, mixer e stream: genera ogni inquadratura",
+          "Pianificatore di produzione — obiettivi di ripresa, calendario con date e stato dei telefoni",
+          "Screening Room — anteprima, assemblaggio master, pubblicazione"
         ],
         "keyFeatures": [
-          "Foundation — copione, voci, audio della scena, Audience Resonance",
-          "Pre-visualizzazione — regia, audio e fotogrammi chiave per scena, con link di condivisione",
-          "Riprese — Filmati, mixer e streaming senza uscire dalla produzione",
+          "Regia, sceneggiatura, musica, riferimenti e fotogrammi — sceneggiatura, voci, audio della scena, analisi Audience Resonance",
+          "Immagini fisse — regia, audio e fotogrammi chiave per scena, con link di condivisione",
+          "Clip, mixer e stream: genera ogni inquadratura senza uscire da Production Stage.",
+          "Pianificatore di produzione — obiettivi di ripresa, calendario con date e stato dei telefoni",
           "Screening Room — anteprima delle scene, assemblaggio del master, proiezioni e pubblicazione su YouTube"
-        ]
+        ],
+        "optional": false
       },
       {
         "id": "sala di proiezione",
@@ -710,7 +1713,8 @@
           "Preset di assemblaggio — Solo video, ibrido o mix personalizzato per scena",
           "Screening condivisibili — link /s/ con punteggio e feedback strutturato",
           "Procedura guidata per YouTube, esportazioni di contenuti brevi e pacchetti di distribuzione"
-        ]
+        ],
+        "optional": false
       }
     ]
   },
@@ -735,9 +1739,9 @@
       },
       {
         "id": "progetto",
-        "stepLabel": "Ottimizza il tuo concept con Blueprint",
+        "stepLabel": "Ottimizza il tuo concept con Blueprint Room",
         "shortDescription": "Trasforma le idee in un trattamento strutturato — logline, snodi narrativi, personaggi e tono — prima di procedere con il rendering complesso.",
-        "detailedDescription": "Blueprint genera automaticamente una struttura narrativa completa. Affina gli archi dei personaggi, i momenti chiave della trama e il tono narrativo grazie a suggerimenti intelligenti. I link di condivisione consentono agli stakeholder di revisionare il materiale prima della fase di produzione.",
+        "detailedDescription": "Blueprint crea automaticamente una struttura narrativa completa. Affina gli archi dei personaggi, i momenti chiave della trama e il tono narrativo grazie a suggerimenti intelligenti. I link di condivisione per i collaboratori consentono agli stakeholder di esaminare il materiale prima della fase Production Stage.",
         "media": "video"
       },
       {
@@ -757,13 +1761,13 @@
       {
         "id": "sparare",
         "stepLabel": "Realizza le riprese della tua produzione",
-        "shortDescription": "Genera video sincronizzati con il beat, mixa audio e overlay ed esporta stream dell'intera scena: riprese, mixer e stream in un'unica scheda Shoot.",
-        "detailedDescription": "La scheda Shoot all'interno di Production rappresenta il tuo set: genera video a partire dai frame di Pre-Vis approvati (Footage), rifinisci tempistiche, watermark e audio nel Mixer, quindi renderizza i file MP4 delle scene complete in Streams.",
+        "shortDescription": "Genera ogni inquadratura in Clips, mixa l'audio nel Mixer ed esporta le versioni linguistiche in Streams.",
+        "detailedDescription": "Le clip generano il video di ogni inquadratura a partire dalle immagini fisse approvate. Il Mixer definisce tempistiche, watermark e audio. Gli stream rappresentano le versioni linguistiche della scena.",
         "media": "video",
         "subPoints": [
-          "Riprese — generazione video passo dopo passo a partire dai fotogrammi iniziale e finale della pre-visualizzazione",
+          "Clip — video realizzati a partire da immagini fisse approvate",
           "Mixer — watermark, sovrapposizione di testo e temporizzazione audio per scena",
-          "Stream — video della scena renderizzato per intero (tutti i beat) pronto per Screening Room"
+          "Flussi — versioni linguistiche della scena, pronte per la sala di proiezione"
         ]
       },
       {
@@ -790,6 +1794,191 @@
       "openFeatureVideo": "Apri il video di presentazione"
     }
   },
+  "productionShowcase": {
+    "badge": "Esempi di produzione",
+    "title": "Visualizza l'intera pipeline",
+    "titleAccent": "in azione",
+    "subtitle": "Ogni esempio si apre con un breve trailer. Il master in versione integrale — una produzione completa che spazia dal blueprint alla pre-visualizzazione fino al montaggio finale — viene proiettato nella sala di proiezione.",
+    "subtitleTagline": "Produzioni di lunga durata. Non clip.",
+    "screeningRoomInstruction": "Esamina questa produzione come farebbe un revisore: una tappa alla volta. Inizia con la Serie, poi passa a Blueprint, quindi alla sceneggiatura in AR Analysis e infine alla fase di Screening.",
+    "trailerLabel": "Trailer",
+    "watchLongform": "Guarda il video di approfondimento",
+    "seriesDoor": "Serie",
+    "blueprintDoor": "Blueprint",
+    "scriptArDoor": "Analisi dei crediti verso clienti",
+    "screeningDoor": "Screening",
+    "screeningRoomGroup": "Screening Room",
+    "previsDoor": "Pre-visualizzazione",
+    "roughDoor": "Montaggio preliminare",
+    "scenesDoor": "Scene",
+    "finalDoor": "Finale",
+    "enterFullscreen": "Passa a schermo intero",
+    "exitFullscreen": "Esci dalla modalità a schermo intero",
+    "explorerHandoff": "Questi link rappresentano un prodotto finito. Explorer è il luogo in cui puoi crearne uno tuo.",
+    "languagesBanner": "Gli esempi pubblici sono disponibili in quattro lingue: inglese, spagnolo, cinese e arabo.",
+    "workflowLabel": "Soluzioni",
+    "startProduction": "Avvia la tua produzione",
+    "cta": "Avvia la tua produzione",
+    "continuityNote": "Series Room gestisce la continuità.",
+    "resonanceNote": "Audience Resonance™ ottimizza i copioni.",
+    "videoLanguagePrompt": "Guarda in inglese, spagnolo, cinese o arabo",
+    "videoComingSoon": "Doppiaggio in arrivo",
+    "videoSoon": "Presto",
+    "frictionLabel": "L'attrito",
+    "solutionPillarLabel": "La soluzione SceneFlow",
+    "showSolutionsSection": "Mostra soluzioni",
+    "hideSolutionsSection": "Nascondi soluzioni",
+    "cards": [
+      {
+        "id": "drama",
+        "title": "Dramma cinematografico di lungometraggio. Coerenza assoluta dei personaggi.",
+        "subtitle": "Mantieni la coerenza di volti dei personaggi, costumi e ambientazioni dalla scena 1 alla 100. Esplora la sala di proiezione per visualizzare la pre-visualizzazione, i video di animazione per singola scena e il master finale in ProRes 4K; dopodiché, cambia lingua per ascoltare il doppiaggio completo.",
+        "badge": "Pronto per la produzione in serie",
+        "solutionPillars": [
+          {
+            "title": "Coerenza visiva e dei personaggi",
+            "frictionHeadline": "Deriva dei personaggi e scenografie instabili.",
+            "friction": "I modelli generativi si resettano a ogni inquadratura, facendo sì che i volti dei personaggi, gli abiti e l'illuminazione subiscano continue trasformazioni in corrispondenza dei cambi di scena.",
+            "solutionHeadline": "Termini relativi all'asset vincolato SFAIBLUEPRINT.",
+            "solution": "Definisci preventivamente i profili master dei personaggi, gli ambienti e gli stili visivi in Blueprint Room. SceneFlow garantisce la coerenza dell'identità visiva in ogni render, preservando così l'immersione narrativa."
+          },
+          {
+            "title": "Ritmo narrativo e gestione delle scene",
+            "frictionHeadline": "La trappola della clip da 10 secondi.",
+            "friction": "Realizzare un film a partire da micro-prompt slegati tra loro genera un ritmo frammentato, una carica emotiva piatta e un lavoro infinito di montaggio manuale sulla timeline.",
+            "solutionHeadline": "Storyboard basato sui beat narrativi.",
+            "solution": "Dirigi a livello di scena, non di prompt. Struttura visivamente i momenti drammatici, i movimenti di macchina e gli archi narrativi prima di generare anche solo un singolo fotogramma video."
+          },
+          {
+            "title": "Allineamento di dialoghi e audio",
+            "frictionHeadline": "Dialogo poco convincente.",
+            "friction": "La mancata sincronizzazione labiale, i movimenti della bocca che sembrano fluttuare e le tracce vocali scollegate distolgono immediatamente gli spettatori dalla narrazione.",
+            "solutionHeadline": "Motore integrato per voce e sincronizzazione.",
+            "solution": "Una recitazione vocale dinamica e un lip-sync preciso sono integrati direttamente nella pipeline video, garantendo dialoghi realistici senza passaggi di post-produzione esterni."
+          },
+          {
+            "title": "Attrito nel flusso di lavoro e stanchezza da reroll",
+            "frictionHeadline": "Caos degli asset e rilanci infiniti.",
+            "friction": "Realizzare un cortometraggio comporta solitamente destreggiarsi tra oltre 200 file video grezzi, l'upscaling manuale e decine di generazioni sprecate.",
+            "solutionHeadline": "Pipeline di studio automatizzata.",
+            "solution": "Dal concept al master MP4 finale in un'unica piattaforma integrata. Blueprint Room gestisce l'impostazione della storia, Production Stage coordina la regia tramite Stream e Screening Room fornisce l'export finale."
+          }
+        ],
+        "screeningRoomPreview": "Il dramma cinematografico — Screening Room"
+      },
+      {
+        "id": "animation",
+        "title": "Serie animata completa dagli stili variegati. Uno stile artistico coerente.",
+        "subtitle": "Definisci uno stile di animazione \"flat-cel\" e mantienilo costante per la famiglia Hart e la città di Millwick, dal primo all'ultimo episodio. Dirigi la comicità passo dopo passo, quindi rivedi l'episodio nella sala di proiezione.",
+        "badge": "Multistile",
+        "solutionPillars": [
+          {
+            "title": "Coerenza stilistica",
+            "frictionHeadline": "Collasso di stile.",
+            "friction": "Gli stili dei cartoni animati e degli anime si deformano continuamente da un'inquadratura all'altra: il tratto grafico muta, le palette cromatiche si sfaldano e i personaggi si trasformano in un ammasso informe, fotorealistico e inquietante.",
+            "solutionHeadline": "Motore di stile artistico bloccato.",
+            "solution": "Fissa il tuo stile fin dal primo fotogramma. SceneFlow blocca il design dei personaggi, lo spessore del tratto e i modelli di ombreggiatura per l'intero episodio, garantendo che i tuoi personaggi mantengano la loro identità unica."
+          },
+          {
+            "title": "Animazione e fisica esagerate",
+            "frictionHeadline": "Movimento rigido e irregolare.",
+            "friction": "I modelli generativi faticano a gestire la comicità fisica frenetica, le reazioni improvvise e la fisica elastica tipica dei cartoni animati, trasformando gag dinamiche in artefatti visivi deformati e indistinti.",
+            "solutionHeadline": "Ancoraggio di azioni e pose.",
+            "solution": "Gestisci movimenti dinamici dei personaggi e pose espressive senza compromettere la geometria. Dirigi gag fisiche incisive, stacchi improvvisi ed espressioni esagerate con un controllo totale del movimento."
+          },
+          {
+            "title": "Tempismo e ritmo comico",
+            "frictionHeadline": "Battute rovinate.",
+            "friction": "L'umorismo risiede nelle pause e nei tagli ritmici. I loop generativi standard da 5 secondi impongono un ritmo innaturale che vanifica la resa della battuta.",
+            "solutionHeadline": "Editing con precisione al beat",
+            "solution": "Controlla il ritmo della scena con precisione al singolo fotogramma. Regola le pause drammatiche, i tempi tra premessa e battuta e le rapide inquadrature di reazione direttamente nella timeline basata sui \"beat\", prima del rendering finale."
+          },
+          {
+            "title": "Dialoghi ad alta energia e sincronizzazione vocale",
+            "frictionHeadline": "Bocche di marionetta prive di vita.",
+            "friction": "I dialoghi generati dall'IA risultano piatti e meccanici, distruggendo l'energia necessaria per le battute brillanti e incalzanti tipiche delle sitcom.",
+            "solutionHeadline": "Sincronizzazione dinamica di voce ed espressione.",
+            "solution": "Associa l'interpretazione vocale direttamente a un'espressività facciale energica. Dialoghi, movimenti espressivi della bocca e tracce vocali comiche si fondono alla perfezione per garantire la massima comicità."
+          }
+        ],
+        "screeningRoomPreview": "Hart House — Sala proiezioni SFAI"
+      },
+      {
+        "id": "documentary",
+        "title": "Documentari di lungo formato. L'ascesa dell'intelligenza.",
+        "subtitle": "Segui l'ascesa dell'IA e della superintelligenza attraverso i vari continenti. Ogni capitolo riflette la propria epoca: niente oggetti moderni nei laboratori delle origini, né scenografie anni '50 nel presente.",
+        "badge": "Storicamente accurato",
+        "solutionPillars": [
+          {
+            "title": "Accuratezza visiva specifica per l'epoca",
+            "frictionHeadline": "Artefatti anacronistici",
+            "friction": "I modelli generativi standard introducono regolarmente oggetti moderni, schermi di smartphone o abbigliamento anacronistico nelle rievocazioni storiche.",
+            "solutionHeadline": "Vincoli di stile storico",
+            "solution": "Imposta parametri temporali precisi — dalla grana della pellicola degli anni '20 alle texture dei costumi del XVIII secolo — affinché ogni scena generata mantenga la sua autenticità storica."
+          },
+          {
+            "title": "Motore per inserti d'archivio e B-roll",
+            "frictionHeadline": "Monotonia visiva nelle voci fuori campo prolungate",
+            "friction": "Abbinare una narrazione audio estesa a immagini stock statiche porta a un rapido abbandono da parte degli spettatori durante gli approfondimenti.",
+            "solutionHeadline": "Motore per B-roll basato sulla trascrizione",
+            "solution": "Mentre il narratore espone fatti storici, SceneFlow genera automaticamente ricostruzioni cinematografiche sincronizzate, sovrapposizioni di documenti e inserti visivi in stile archivistico, collegati direttamente alla trascrizione audio."
+          },
+          {
+            "title": "Realismo dell'intervista e del \"talking head\"",
+            "frictionHeadline": "Testimoni esperti inquietanti",
+            "friction": "Storici, investigatori o testimoni generati appaiono spesso artificiali, con movimenti della mascella che sembrano fluttuare e un contatto visivo innaturale.",
+            "solutionHeadline": "Profili esperti bloccati e sincronizzazione vocale",
+            "solution": "Mantenere configurazioni di intervista realistiche e credibili, caratterizzate da micro-espressioni naturali, sincronizzazione labiale precisa e identità degli esperti coerenti lungo l'intera serie."
+          },
+          {
+            "title": "Ritmo episodico e continuità narrativa",
+            "frictionHeadline": "Montaggio a linea temporale frammentata",
+            "friction": "Bilanciare la voce narrante, le ricostruzioni, la presentazione delle prove e le pause che creano tensione nell'arco di un episodio di 40 minuti richiede solitamente settimane con i sistemi di montaggio non lineare (NLE) tradizionali.",
+            "solutionHeadline": "Workflow documentaristico basato sui \"beat\"",
+            "solution": "Struttura visivamente la tensione drammatica, le pause cariche di suspense e la rivelazione degli indizi all'interno di Blueprint Room, generando un file master completo in un'unica sequenza fluida."
+          }
+        ],
+        "screeningRoomPreview": "Il pensiero lungo — Screening Room"
+      },
+      {
+        "id": "training",
+        "title": "Serie di formazione modulare pronta per l'integrazione nei programmi didattici. Uno chef \"sotto chiave\".",
+        "subtitle": "Uno chef, una cucina, cinque portate. Il volto, la giacca e le piastrelle restano immutati dal brodo fino all'ultimo dessert.",
+        "badge": "Pronto per il curriculum",
+        "solutionPillars": [
+          {
+            "title": "Coerenza di istruttore e contesto",
+            "frictionHeadline": "Un insegnante diverso per ogni modulo.",
+            "friction": "I clip generativi reimpostano il volto, l'abbigliamento e l'aula dell'istruttore tra una lezione e l'altra, facendo sì che il corso appaia come un insieme di video privi di collegamento tra loro.",
+            "solutionHeadline": "Termini del modello SFAI per istruttori (bloccati)",
+            "solution": "Definisci l'istruttore, l'ambientazione e il sistema visivo una sola volta in Blueprint Room. SceneFlow mantiene tale identità costante in tutti i moduli."
+          },
+          {
+            "title": "Ritmo di svolgimento del programma",
+            "frictionHeadline": "Slide suddivise in clip.",
+            "friction": "Trasformare un programma di studi in una serie di spunti slegati comporta la perdita della struttura della lezione, dell'esempio svolto e della pausa che precede un quiz.",
+            "solutionHeadline": "Storyboarding incentrato sui moduli.",
+            "solution": "Gestisci ogni modulo come una sequenza di fasi didattiche — preparazione, dimostrazione e verifica — prima che venga renderizzato un fotogramma."
+          },
+          {
+            "title": "Narrazione e insegnamento a video",
+            "frictionHeadline": "Una voce che manca il grafico.",
+            "friction": "La narrazione, le didascalie e i diagrammi si sfasano, per cui chi apprende ascolta la descrizione di una fase mentre l'immagine ne mostra un'altra.",
+            "solutionHeadline": "Tracce della lezione sincronizzate.",
+            "solution": "Voce, sottotitoli ed elementi didattici a schermo sono perfettamente sincronizzati, in modo che ogni spiegazione coincida con l'elemento visivo che la conferma."
+          },
+          {
+            "title": "Assemblaggio del percorso",
+            "frictionHeadline": "Settimane in un editor.",
+            "friction": "Integrare moduli, nuove registrazioni e versioni localizzate in una timeline tradizionale trasforma l'aggiornamento di un corso in un ritardo di produzione.",
+            "solutionHeadline": "Pipeline unica per lo studio.",
+            "solution": "Blueprint, Audience Resonance e Screening Room accompagnano un modulo attraverso le fasi di scaletta, pre-visualizzazione, montaggio preliminare, scene e corso completato."
+          }
+        ],
+        "screeningRoomPreview": "Cinque piatti — Screening Room"
+      }
+    ]
+  },
   "platformWalkthrough": {
     "badge": "Sotto il cofano",
     "title": "Panoramica dettagliata della piattaforma",
@@ -802,21 +1991,24 @@
     "chapters": [
       {
         "id": "inizia-qui",
-        "label": "Parti da qui: pianificazione, continuità e adeguatezza al pubblico"
+        "label": "Parti da qui: pianificazione, continuità e adeguatezza al pubblico",
+        "defaultExpanded": false
       },
       {
         "id": "produrre-pubblicare",
-        "label": "Produci e pubblica — Invia scheda a Screening Room"
+        "label": "Produzione e pubblicazione — Clip per Screening Room",
+        "defaultExpanded": false
       }
     ],
     "close": "Chiudi",
     "viewDetails": "Visualizza dettagli",
     "beatFirst": {
+      "id": 15,
       "title": "Pipeline video basata sul ritmo",
-      "description": "Approva le sequenze di pre-visualizzazione e Shot Frames prima della fase F2V: meno rigenerazioni alla cieca dovute ad allucinazioni e deriva visiva. Un unico percorso strutturato, dalla revisione alla clip finale.",
+      "description": "Approva le fasi della pre-visualizzazione e i fotogrammi chiave prima della generazione video (F2V): riduci le rigenerazioni \"alla cieca\" causate da allucinazioni e deriva visiva. Un unico percorso strutturato, dalla revisione alla clip finale.",
       "keyFeatures": [
-        "Pre-vis Agent per revisione — condividi le basi prima del rendering pesante",
-        "Shot Frames composizione del blocco — Reference Library continuità",
+        "Pre-vis Agent per revisione — condividere le sequenze chiave prima del rendering pesante",
+        "Blocco della composizione dell'inquadratura — Continuità",
         "F2V per shot — genera video a partire dai fotogrammi approvati",
         "Catene EXT continue — step nativi da +7 secondi per dialoghi lunghi all'interno di un beat",
         "Tempistiche e flussi del mixer — apri Screening Room per assemblare e pubblicare"
@@ -853,13 +2045,13 @@
         "title": "Panoramica della piattaforma",
         "description": "Un unico studio, dall'idea al video pronto per la pubblicazione. Lo stesso workflow per formazione, podcast, notizie e serie cinematografiche: approva la pre-visualizzazione prima di sostenere i costi del rendering finale.",
         "keyFeatures": [
-          "Serie → Blueprint → Produzione → Screening Room",
-          "Approvazione basata sui beat — pre-vis e Shot Frames prima della F2V",
+          "Series Room → Blueprint Room → Production Stage → Screening Room",
+          "Approvazione basata sui beat — pre-visualizzazione e inquadrature (frames) prima della fase F2V",
           "Generazione Google Vertex AI con catene di estensione native Veo",
           "Misure di tutela per la fiducia e la sicurezza e attestazione di provenienza firmata alla consegna"
         ],
         "screenshotSlot": "Inserisci screenshot: Hero della landing page + fascia con procedura guidata semplificata",
-        "videoSlot": "Inserisci clip da 01:30: Hero → nuovo progetto → Blueprint → Riprese → Screening Room → Pubblica"
+        "videoSlot": "Inserisci clip da 01:30: Hero → nuovo progetto → Blueprint Room → Production Stage Riprese → Screening Room → Pubblica"
       },
       {
         "id": "9",
@@ -869,19 +2061,19 @@
           "Definisci il tuo universo una volta sola: personaggi, tono e arco narrativo della stagione.",
           "Trame coerenti degli episodi — generate automaticamente per l'intera stagione",
           "Monitoraggio della continuità — allineamento delle stagioni a più episodi",
-          "Sincronizzazione serie-episodio — in Blueprint Room e Produzione"
+          "Sincronizzazione serie-episodio — in Blueprint Room e Production Stage"
         ],
         "screenshotSlot": "Inserisci screenshot: panoramica della serie con archi narrativi degli episodi generati automaticamente",
         "videoSlot": "Inserire clip da 30 secondi: il concept si espande in una stagione composta da più episodi."
       },
       {
         "id": "10",
-        "title": "Blueprint Automazione",
+        "title": "Automazione Blueprint Room",
         "description": "Trasforma i concetti in trattamenti strutturati comprensivi di logline, snodi narrativi, personaggi e tono. Esegui Audience Resonance e collabora prima di procedere al rendering pesante.",
         "keyFeatures": [
-          "Flusso di lavoro: Generazione → Revisione → Iterazione → Avvio della produzione",
+          "Genera → Revisiona → Iterazione → Vai al workflow Production Stage",
           "Dal concept alla struttura in pochi minuti: logline, snodi narrativi, personaggi e tono.",
-          "Audience Resonance punteggio con obiettivo 80+ prima della produzione",
+          "Calcolo del punteggio Audience Resonance con target 80+ prima di Production Stage",
           "Link di condivisione per i collaboratori — sintesi dei feedback per una revisione guidata"
         ],
         "screenshotSlot": "Inserisci screenshot: Blueprint generato automaticamente con i punti salienti della storia e gli archi narrativi dei personaggi.",
@@ -903,7 +2095,7 @@
       {
         "id": "7",
         "title": "Analisi Audience Resonance",
-        "description": "Definisci il tuo pubblico di riferimento per ottenere valutazioni, analisi e suggerimenti immediati. Applica correzioni con un solo clic o utilizza le modifiche guidate per ottimizzare alla perfezione episodi, Blueprint e sceneggiatura, garantendo il massimo impatto.",
+        "description": "Definisci il tuo pubblico di riferimento per ottenere valutazioni, analisi e suggerimenti immediati. Applica correzioni con un solo clic o utilizza le modifiche guidate per ottimizzare alla perfezione episodi, ambienti e sceneggiatura, garantendo il massimo impatto.",
         "keyFeatures": [
           "Punteggio del pubblico di riferimento — con suddivisione per categoria",
           "Suggerimenti legati a specifiche sezioni: correggi la parte giusta della tua storia",
@@ -915,16 +2107,17 @@
       },
       {
         "id": "11",
-        "title": "Automazione della produzione",
-        "description": "Le schede Script e Shoot guidano il flusso Foundation → Pre-Vis → Footage → Mixer → Streams. I punti di controllo scena per scena riducono al minimo le rilavorazioni; Screening Room gestisce anteprima, assemblaggio e pubblicazione.",
+        "title": "Automazione Production Stage",
+        "description": "Regia, sceneggiatura, musica, riferimenti e immagini fisse ottimizzano il copione tramite Audience Resonance e la revisione della pre-visualizzazione. Clip, mixer e flussi generano il video per ogni inquadratura. Screening Room gestisce l'anteprima, il montaggio e la pubblicazione.",
         "keyFeatures": [
-          "Foundation — copione, voci, audio della scena, Audience Resonance",
-          "Pre-visualizzazione — regia, audio e fotogrammi chiave per scena, con link di condivisione",
-          "Riprese — Filmati, mixer e streaming senza uscire dalla produzione",
+          "Regia, sceneggiatura, musica, riferimenti e fotogrammi — sceneggiatura, voci, audio della scena, analisi Audience Resonance",
+          "Immagini fisse — regia, audio e fotogrammi chiave per scena, con link di condivisione",
+          "Clip, mixer e stream: genera ogni inquadratura senza uscire da Production Stage.",
+          "Pianificatore di produzione — obiettivi di ripresa, calendario con date e stato dei telefoni",
           "Screening Room — anteprima delle scene, assemblaggio del master, proiezioni e pubblicazione su YouTube"
         ],
-        "screenshotSlot": "Inserire screenshot: dashboard di produzione che mostra le schede Script, Riprese e Pre-visualizzazione.",
-        "videoSlot": "Inserimento clip da 60 secondi: Blocco script → Pre-vis Agent per scena → Riprese → Mixer → Stream"
+        "screenshotSlot": "Inserire screenshot: dashboard di produzione che mostra Regia, Script, Immagini fisse, Clip, Mixer e Stream.",
+        "videoSlot": "Inserimento clip da 60 secondi: Blocco script → Immagini fisse per scena → Clip → Mixer → Stream"
       },
       {
         "id": "14",
@@ -1041,56 +2234,56 @@
   },
   "coreCapabilities": {
     "audienceResonance": {
-      "badge": "Intelligence Layer",
-      "title": "Audience Resonance: build for a culture, not a language code",
-      "description": "Subtitles stretch one video’s reach. SceneFlow lets you name the culture, region, and demographic you are making for, score the story against that audience before you render, and then ship either a dubbed master or a separate high-resonance version per audience.",
+      "badge": "Livello di intelligence",
+      "title": "Audience Resonance: progetta per una cultura, non per un codice linguistico",
+      "description": "I sottotitoli ampliano la portata di un singolo video. SceneFlow ti consente di definire la cultura, la regione e il segmento demografico di riferimento, di valutare la narrazione in funzione di quel pubblico prima del rendering e, infine, di distribuire un master doppiato oppure versioni distinte e altamente coinvolgenti per ciascun target.",
       "bullets": [
-        "Define the audience: eight target regions, plus age, gender, education, and community",
-        "Describe culture, faith, and values in your own words — SceneFlow reads the signals",
-        "Get a resonance score with section-level fixes before you spend on renders",
-        "Dub the master, or produce a distinct version tuned to each audience"
+        "Definire il pubblico: otto regioni target, oltre a età, genere, istruzione e comunità.",
+        "Descrivi cultura, fede e valori con parole tue: SceneFlow legge i segnali.",
+        "Ottieni un punteggio di risonanza con suggerimenti di intervento a livello di singola sezione prima di investire nei rendering.",
+        "Doppiare la versione originale o realizzare una versione specifica adattata a ciascun pubblico."
       ],
-      "cta": "Analyze Your Script",
+      "cta": "Analizza la tua sceneggiatura",
       "howWeScore": {
-        "toggle": "How we score",
-        "title": "How Audience Resonance works",
-        "description": "Audience Resonance combines narrative-structure analysis (clarity, pacing, emotional arc) with target-persona fit against the audience you define in Blueprint — not vanity metrics or post-publish retention data. When your audience description carries cultural signals, the analysis adds an authenticity pass over names, dialect, customs, faith, and sensitivities. Recommendations are tied to specific script sections so you can fix issues before agents run video generation.",
+        "toggle": "Come assegniamo i punteggi",
+        "title": "Come funziona Audience Resonance",
+        "description": "Audience Resonance combina l'analisi della struttura narrativa (chiarezza, ritmo, arco emotivo) con la coerenza rispetto alla target persona definita in Blueprint, prescindendo da metriche di vanità o dati di retention post-pubblicazione. Se la descrizione del pubblico include elementi culturali, l'analisi verifica l'autenticità di nomi, dialetti, usanze, credo e sensibilità. I suggerimenti sono collegati a sezioni specifiche dello script, consentendoti di correggere eventuali criticità prima che gli agenti avviino la generazione del video.",
         "bullets": [
-          "Scores Blueprint and script against your stated target audience",
-          "Cultural authenticity checks on names, dialect, customs, faith, and sensitivities",
-          "Section-level recommendations — not a black-box “trust us” number",
-          "Run before heavy render spend, not after publish"
+          "Valuta Blueprint e lo script in relazione al pubblico di riferimento dichiarato.",
+          "Verifiche di autenticità culturale relative a nomi, dialetto, usanze, fede e sensibilità",
+          "Raccomandazioni a livello di sezione, non un numero \"black-box\" basato sul semplice \"fidatevi di noi\"",
+          "Eseguilo prima di sostenere costi elevati di rendering, non dopo la pubblicazione."
         ]
       }
     },
     "express": {
-      "badge": "Hyper-Speed Production",
+      "badge": "Produzione intelligente",
       "title": "SceneFlow Agents",
-      "description": "Generate Pre-Vis, motion video, and delivery masters concurrently. Go from script to a shareable Pre-Vis in minutes — then approve the shot frames before you spend on motion video. Throughput is what makes a version per audience affordable instead of theoretical.",
+      "description": "Audio Agent, Stills Agent e Video Agent elaborano prompt specialistici basati sulle indicazioni della sequenza, vi associano i riferimenti appropriati ed eseguono la generazione in parallelo. La realizzazione di una scena può richiedere diversi minuti, trattandosi di un lavoro specialistico; successivamente, si approvano i fotogrammi (Shot Frames) prima di sostenere i costi per il video animato.",
       "items": [
         {
           "title": "Pre-vis Agent",
-          "desc": "Fully voiced, scored shot frames per scene, ready to share in the Screening Room.",
-          "time": "Minutes vs Hours"
+          "desc": "Beat frame per scena completi di doppiaggio e colonna sonora, realizzati sulla base di una regia definitiva e pronti per la condivisione nella Screening Room.",
+          "time": "La qualità prima di tutto"
         },
         {
           "title": "Video Agent",
-          "desc": "Per-scene motion video generated after Pre-Vis approval, as native-language streams or a lower-cost dub, with scene-level edits.",
-          "time": "Minutes vs Days"
+          "desc": "Video in movimento realizzati scena per scena dopo l'approvazione della pre-visualizzazione, sotto forma di flussi in lingua originale o di doppiaggio a costi contenuti, con montaggio a livello di singola scena.",
+          "time": "Approva, quindi renderizza"
         },
         {
-          "title": "Delivery Agent",
-          "desc": "Assemble the ProRes 4K master and auto-publish to YouTube or download the bundle.",
-          "time": "Minutes vs Weeks"
+          "title": "Termini per l'agente di consegna SFAI",
+          "desc": "Assembla il master ProRes 4K e pubblicalo automaticamente su YouTube oppure scarica il pacchetto.",
+          "time": "Spedisci il taglio"
         }
       ],
-      "cta": "Run Production Agents"
+      "cta": "Esegui Production Agents"
     }
   },
   "preVisEngine": {
     "badge": "Creative Decision Engine",
     "title": "Pre-Visualization Engine",
-    "subtitle": "Generating a fully voiced, scored, 40-minute Pre-Vis (the industry term: animatic) in 15 minutes is not a workflow step — that is the product. In Hollywood, pre-vis takes weeks and costs hundreds of thousands of dollars. SceneFlow scales it to minutes and pocket change.",
+    "subtitle": "Generare una pre-visualizzazione (o \"animatic\", secondo la terminologia del settore) di 40 minuti, completa di voci e colonna sonora, in soli 15 minuti non è una semplice fase del flusso di lavoro: è il prodotto finito. A Hollywood, la pre-visualizzazione richiede settimane e costa centinaia di migliaia di dollari; con questa soluzione, i tempi si riducono a pochi minuti e i costi a una cifra irrisoria.",
     "narrative": "Nell'industria cinematografica, lo storyboard è un elemento che si consegna alla troupe. Pre-vis è ciò che si mostra ai dirigenti degli studi, agli investitori e ai produttori per ottenere il via libera a un progetto. SceneFlow eleva la produzione, trasformandola da semplice strumento per creator consumer in una risorsa di pipeline di livello enterprise.",
     "pillars": [
       {
@@ -1107,257 +2300,308 @@
       }
     ],
     "workflow": {
-      "title": "Reference Library → Pre-Vis → Motion Video → ProRes 4K master",
+      "title": "Reference Library → Pre-visualizzazione → Video in movimento → Master ProRes 4K",
       "steps": [
-        "Build the Reference Library — characters, locations, and props locked to your production art style.",
-        "Generate Pre-Vis shot frames per scene with dialogue, SFX, and music — iterate direction in the Screening Room at low cost.",
-        "Approve the Pre-Vis, then generate per-scene motion video with multilanguage dubbing and scene-level edits.",
-        "Deliver the ProRes 4K master from the Screening Room — auto-publish to YouTube or download the bundle."
+        "Crea la libreria di riferimento: personaggi, ambientazioni ed elementi di scena definiti in base allo stile artistico della produzione.",
+        "Genera fotogrammi chiave di pre-visualizzazione per ogni scena, completi di dialoghi, effetti sonori e musica, e perfeziona la regia nella sala di proiezione virtuale a costi contenuti.",
+        "Approva la pre-visualizzazione, quindi genera video animati per singola scena con doppiaggio multilingue e montaggio a livello di scena.",
+        "Consegna il master ProRes 4K dalla Screening Room: pubblica automaticamente su YouTube o scarica il pacchetto."
       ]
     },
     "cta": "Inizia caricando lo script",
     "ctaSubtext": "Creare un ponte tra il cinema tradizionale e l'IA generativa"
   },
   "exitIntent": {
-    "title": "Before you go — want launch news?",
-    "subtitle": "Leave your email and we'll tell you when we announce.",
+    "title": "Prima di andare: vuoi ricevere notizie sul lancio?",
+    "subtitle": "Lascia la tua email e ti avviseremo quando faremo l'annuncio.",
     "benefits": [
-      "Launch notification when we announce",
-      "Weekly AI filmmaking tutorials",
-      "Exclusive creator discounts"
+      "Notifica di lancio al momento dell'annuncio",
+      "Tutorial settimanali di filmmaking con l'IA",
+      "Sconti esclusivi per i creator"
     ],
-    "emailPlaceholder": "Enter your email",
-    "subscribe": "Notify me",
-    "subscribing": "Subscribing...",
-    "or": "or",
-    "startNow": "Start directing now for just $9 →",
-    "privacy": "No spam, ever. Unsubscribe anytime.",
-    "successTitle": "You're on the list!",
-    "successSubtitle": "We'll email you when we announce — plus the occasional filmmaking tip.",
-    "ctaText": "Start Exploring — $9",
-    "closePopup": "Close popup"
+    "emailPlaceholder": "Inserisci la tua email",
+    "subscribe": "Avvisami",
+    "subscribing": "Iscrizione in corso...",
+    "or": "o",
+    "startNow": "Inizia a dirigere subito a soli 9 $ →",
+    "privacy": "Mai spam. Puoi disiscriverti in qualsiasi momento.",
+    "successTitle": "Sei sulla lista!",
+    "successSubtitle": "Ti invieremo un'email al momento dell'annuncio, oltre a qualche consiglio occasionale sul filmmaking.",
+    "ctaText": "Inizia a esplorare — 9 $",
+    "closePopup": "Chiudi popup"
   },
   "pricing": {
-    "badge": "Simple Pricing",
-    "title": "Start with Explorer — $9",
-    "subtitle": "Test the complete pipeline now with a frictionless $9 entry.",
+    "badge": "Prezzi semplici",
+    "title": "Inizia con Explorer — 9 $",
+    "subtitle": "Prova subito l'intera pipeline con un accesso immediato e senza intoppi a 9 $.",
+    "explorerHighlight": "Il modo più rapido per vivere l'esperienza completa dello studio SceneFlow: dal concept alla Screening Room.",
+    "trustBadges": [
+      "Pagamenti sicuri tramite Whop",
+      "$9 Explorer per provare lo studio",
+      "I crediti mensili scadono al termine del periodo.",
+      "Puoi disdire in qualsiasi momento"
+    ],
     "valueAnchor": {
-      "traditionalCost": "$2,000+",
-      "traditionalLabel": "Traditional pre-vis",
-      "vs": "vs",
-      "sceneFlowCost": "$49-149",
-      "sceneFlowLabel": "SceneFlow monthly",
-      "saveBadge": "Save 90%+ per project"
+      "traditionalCost": "Oltre 2.000 $",
+      "traditionalLabel": "Pre-visualizzazione tradizionale",
+      "vs": "contro",
+      "sceneFlowCost": "49-149 $",
+      "sceneFlowLabel": "SceneFlow mensile",
+      "saveBadge": "Risparmia oltre il 90% per progetto"
     },
     "teamCta": {
-      "title": "In-house team or institution?",
-      "description": "Book a workflow walkthrough for comms, L&D, and marketing teams",
-      "button": "Book Walkthrough"
+      "title": "Team interno o istituzione?",
+      "description": "Prenota una presentazione del flusso di lavoro per i team di comunicazione, formazione e sviluppo (L&D) e marketing.",
+      "button": "Guida al libro"
     },
     "agencyCta": {
-      "title": "Agency or production shop?",
-      "description": "Custom credits, SLA, and dedicated support at scale",
-      "button": "Contact Sales"
+      "title": "Agenzia o casa di produzione?",
+      "description": "Crediti personalizzati, SLA e supporto dedicato su larga scala",
+      "button": "Contatta l'ufficio vendite"
     },
     "byok": {
-      "title": "Bring Your Own Key",
-      "badge": "Pro & Studio Plans",
-      "description": "Your API key can run reference, still, and clip generations. SceneFlow charges a 20% orchestration fee on those jobs. Hosted SceneFlow rates can be lower than a personal API account as platform volume grows.",
-      "savingsHighlight": "20% orchestration fee",
+      "title": "Porta la tua chiave",
+      "badge": "Piani Pro e Studio",
+      "description": "La tua chiave API consente di generare riferimenti, immagini statiche e clip. SceneFlow applica una commissione di orchestrazione del 20% su tali attività. Le tariffe per la soluzione ospitata SceneFlow possono risultare inferiori rispetto a quelle di un account API personale man mano che aumenta il volume di utilizzo della piattaforma.",
+      "savingsHighlight": "Commissione di orchestrazione del 20%",
       "benefits": [
         {
-          "title": "References, stills, and clips",
-          "description": "BYOK applies only when your key actually runs those generations"
+          "title": "Riferimenti, fotogrammi e clip",
+          "description": "BYOK si applica solo quando la tua chiave esegue effettivamente quelle generazioni."
         },
         {
-          "title": "Hosted rates can be lower",
-          "description": "SceneFlow platform pricing can undercut a personal Vertex or Kling account"
+          "title": "Le tariffe \"hosted\" possono essere più basse.",
+          "description": "I prezzi della piattaforma SceneFlow possono risultare più convenienti rispetto a un account personale Vertex o Kling."
         },
         {
-          "title": "Full Control",
-          "description": "Your keys, your provider bill, plus a platform orchestration fee"
+          "title": "Controllo totale",
+          "description": "Le tue chiavi, la fattura del provider e una commissione di orchestrazione della piattaforma"
         }
       ],
-      "supportedProviders": "Supported Providers",
+      "supportedProviders": "Provider supportati",
       "vertexName": "Google Vertex AI",
-      "vertexDetail": "References, stills, and Omni clips",
-      "elevenLabsName": "ElevenLabs",
-      "elevenLabsDetail": "Text-to-Speech & Voice Cloning",
-      "savingsLabel": "20% fee",
-      "onImagesVideo": "on references, stills, and clips",
-      "onVoiceover": "on voiceover",
-      "note": "The 20% fee is a SceneFlow orchestration charge. Provider usage bills to your account. SceneFlow-hosted generation can cost less than bringing a personal key."
+      "vertexDetail": "Riferimenti, fotogrammi e clip Omni",
+      "elevenLabsName": "Kling",
+      "elevenLabsDetail": "Generazione di clip quando viene utilizzata la tua chiave",
+      "savingsLabel": "Commissione del 20%",
+      "onImagesVideo": "su riferimenti, fotogrammi e clip",
+      "onVoiceover": "quando la tua chiave gestisce il lavoro",
+      "note": "La commissione del 20% è un costo di orchestrazione di SceneFlow. Il provider addebita i costi di utilizzo sul tuo account. La generazione ospitata da SceneFlow può risultare più economica rispetto all'utilizzo di una chiave personale."
     },
     "creditTopUps": {
-      "title": "Need More Credits?",
-      "subtitle": "Top up anytime. Each add-on pack lasts 12 months.",
+      "title": "Hai bisogno di altri crediti?",
+      "subtitle": "Acquista pacchetti aggiuntivi da 25 $, 100 $ o 250 $ tutte le volte che ne hai bisogno. Ciascun pacchetto ha una durata di 12 mesi.",
       "packs": [
         {
-          "label": "Starter Pack",
-          "description": "Perfect for quick revisions"
+          "label": "Componente aggiuntivo da 25 $",
+          "description": "2.000 crediti. Acquista tutte le volte che vuoi."
         },
         {
-          "label": "Scene Pack",
-          "description": "Complete a short project"
+          "label": "Componente aggiuntivo da 100 $",
+          "description": "9.000 crediti. Acquista tutte le volte che vuoi."
         },
         {
-          "label": "Production Pack",
-          "description": "Major film sequence"
-        },
-        {
-          "label": "Studio Pack",
-          "description": "Full production capacity"
+          "label": "Componente aggiuntivo da 250 $",
+          "description": "25.000 crediti. Acquista tutte le volte che vuoi."
         }
       ],
-      "creditsUnit": "credits"
+      "creditsUnit": "crediti"
     },
     "calculator": {
-      "sectionTitle": "Estimate Your Project",
-      "sectionSubtitle": "Know exactly what you'll pay before you commit",
-      "title": "Project Budget Calculator",
-      "subtitle": "Set a credit budget, track production charges, and plan Pre-Vis first before motion video.",
-      "customize": "Customize parameters",
-      "imagesLabel": "Images to generate",
-      "videoClipsLabel": "Video clips",
-      "voiceoverLabel": "Voiceover (minutes)",
+      "sectionTitle": "Stima il tuo progetto",
+      "sectionSubtitle": "Scopri esattamente quanto pagherai prima di impegnarti.",
+      "title": "Pianificatore della produzione",
+      "subtitle": "Pianifica le iterazioni delle inquadrature e un calendario con le relative scadenze, quindi monitora l'avanzamento e la spesa dal tuo smartphone.",
+      "customize": "Personalizza i parametri",
+      "imagesLabel": "Immagini da generare",
+      "videoClipsLabel": "Videoclip",
+      "voiceoverLabel": "Voiceover (minuti)",
       "byokTitle": "Bring Your Own Key (BYOK)",
-      "byokBadge": "Pro & Studio",
-      "byokDescription": "Use your own key for references, stills, and clips. SceneFlow charges a 20% orchestration fee, and hosted rates can be lower than a personal API account.",
-      "vertexToggle": "Vertex AI (references, stills, and clips)",
-      "elevenLabsToggle": "ElevenLabs (Voiceover)",
-      "imageGeneration": "Image Generation",
-      "videoGeneration": "Video Generation",
-      "voiceover": "Voiceover",
+      "byokBadge": "Pro e Studio",
+      "byokDescription": "Utilizza la tua chiave per riferimenti, fotogrammi e clip. SceneFlow applica una commissione di orchestrazione del 20%, mentre le tariffe per i servizi ospitati possono risultare inferiori rispetto a quelle di un account API personale.",
+      "vertexToggle": "Vertex AI (riferimenti, fotogrammi e clip)",
+      "elevenLabsToggle": "ElevenLabs (Voce fuori campo)",
+      "imageGeneration": "Generazione di immagini",
+      "videoGeneration": "Generazione di video",
+      "voiceover": "Voce fuori campo",
       "byokTag": "(BYOK)",
-      "totalEstimate": "Total Estimate",
-      "withTopUps": "with top-ups",
-      "creditSavings": "SceneFlow credit savings",
-      "savePercent": "You save {percent}% on SceneFlow credits",
-      "transparency": "Full transparency: You'll see real-time credit usage as you work. No surprises—adjust your project scope anytime.",
-      "transparencyHighlight": "Full transparency:",
-      "byokDisclaimer": "BYOK Note: The platform fee applies only to reference, still, and clip generations that run on your key. SceneFlow-hosted model rates can be lower than an individual account.",
-      "byokDisclaimerHighlight": "BYOK Note:",
+      "totalEstimate": "Preventivo totale",
+      "withTopUps": "con ricariche",
+      "creditSavings": "Risparmi sui crediti SceneFlow",
+      "savePercent": "Risparmi {percent}% sui crediti SceneFlow",
+      "transparency": "Massima trasparenza: potrai visualizzare l'utilizzo dei crediti in tempo reale mentre lavori. Nessuna sorpresa: modifica l'ambito del progetto in qualsiasi momento.",
+      "transparencyHighlight": "Massima trasparenza:",
+      "byokDisclaimer": "Nota: la tariffa della piattaforma si applica solo alla generazione di riferimenti, immagini statiche e clip eseguita utilizzando la tua chiave. Le tariffe per i modelli ospitati da SceneFlow possono essere inferiori rispetto a quelle previste per un account individuale.",
+      "byokDisclaimerHighlight": "Nota BYOK:",
       "presets": [
         {
           "id": "commercial",
-          "name": "30-sec Commercial"
+          "name": "Spot da 30 secondi"
         },
         {
           "id": "short",
-          "name": "2-min Short Film"
+          "name": "Cortometraggio di 2 minuti"
         },
         {
           "id": "episode",
-          "name": "10-min Episode"
+          "name": "Episodio di 10 minuti"
         },
         {
           "id": "feature",
-          "name": "90-min Feature"
+          "name": "Lungometraggio di 90 minuti"
         }
       ],
       "minSuffix": "min"
     },
     "tierGrid": {
-      "productionTestFlight": "Production Test Flight",
-      "getStarted": "Get Started",
-      "startTestFlight": "Start Test Flight",
-      "loading": "Loading...",
-      "mostPopular": "Most Popular",
-      "creditsPerMonth": "Credits/mo",
-      "storage": "Storage",
+      "productionTestFlight": "Volo di collaudo di produzione",
+      "getStarted": "Inizia",
+      "startTestFlight": "Avvia volo di prova",
+      "loading": "Caricamento in corso...",
+      "mostPopular": "I più popolari",
+      "creditsPerMonth": "Crediti/mese",
+      "storage": "Archiviazione",
       "perMonth": "/month"
     },
     "trust": {
-      "cancelAnytime": "Cancel anytime",
-      "moneyBack": "$9 Explorer to try the studio",
-      "creditsNeverExpire": "Explorer credits last 90 days"
+      "cancelAnytime": "Puoi disdire in qualsiasi momento",
+      "moneyBack": "$9 Explorer per provare lo studio",
+      "creditsNeverExpire": "Crediti Explorer degli ultimi 90 giorni"
     },
     "plans": {
       "explorer": {
-        "name": "Explorer",
-        "description": "One-time purchase to try it out",
+        "name": "Explorer — Demo",
+        "description": "Demo — acquisto una tantum per provare una produzione completa",
         "features": [
-          "One-time purchase",
-          "750 credits (expire 90 days after purchase)",
-          "5 GB storage (30 days)",
-          "Full platform access",
-          "MP4 export (any resolution)",
-          "AI voiceover (70+ languages)"
+          "Acquisto una tantum",
+          "750 crediti (scadono 90 giorni dopo l'acquisto)",
+          "5 GB di spazio di archiviazione (30 giorni)",
+          "Accesso completo alla piattaforma",
+          "Esportazione in MP4 (qualsiasi risoluzione)",
+          "Voiceover basato su IA (oltre 70 lingue)"
         ]
       },
       "subscriptions": [
         {
           "id": "starter",
-          "name": "Starter",
-          "description": "For individual creators",
+          "name": "Starter — Sandbox",
+          "description": "Sandbox — per sperimentare idee prima di uno spettacolo vero e proprio",
           "features": [
-            "Full platform access",
-            "4,500 credits/month included",
-            "Unused monthly credits expire at period end",
-            "25 GB active storage",
-            "MP4 export (any resolution)",
-            "AI voiceover (70+ languages)",
-            "Email support"
+            "Accesso completo alla piattaforma",
+            "4.500 crediti/mese inclusi",
+            "I crediti mensili inutilizzati scadono al termine del periodo.",
+            "25 GB di spazio di archiviazione attivo",
+            "Esportazione in MP4 (qualsiasi risoluzione)",
+            "Voiceover basato su IA (oltre 70 lingue)",
+            "Assistenza via e-mail"
           ]
         },
         {
           "id": "pro",
-          "name": "Pro",
-          "description": "For professional creators",
+          "name": "Professionista — YouTuber",
+          "description": "YouTuber — episodi ricorrenti e video del canale",
           "features": [
-            "Everything in Starter, plus:",
-            "15,000 credits/month included",
-            "Unused monthly credits expire at period end",
-            "100 GB active storage",
-            "Veo 3.1 Quality (4K) access",
-            "Character Consistency Engine",
-            "Voice cloning",
+            "Tutto ciò che è incluso nel piano Starter, più:",
+            "15.000 crediti/mese inclusi",
+            "I crediti mensili inutilizzati scadono al termine del periodo.",
+            "100 GB di spazio di archiviazione attivo",
+            "Accesso alla qualità Veo 3.1 (4K)",
+            "Motore di coerenza dei personaggi",
+            "Clonazione vocale",
             "BYOK (Bring Your Own Key)",
-            "3 team seats",
-            "Priority support"
+            "3 posti per la squadra",
+            "Assistenza prioritaria"
           ]
         },
         {
           "id": "studio",
-          "name": "Studio",
-          "description": "For teams & agencies",
+          "name": "Studio — Filmmaker indipendente",
+          "description": "Cineasta indipendente — film e serie indipendenti",
           "features": [
-            "Everything in Pro, plus:",
-            "75,000 credits/month included",
-            "Unused monthly credits expire at period end",
-            "500 GB active storage",
-            "Veo 3.1 4K Priority Queue",
-            "Unlimited Character Consistency",
-            "White-label exports",
-            "API access",
-            "10 team seats",
-            "Dedicated account manager",
-            "Enterprise SLA available on request"
+            "Tutto ciò che è incluso in Pro, più:",
+            "75.000 crediti/mese inclusi",
+            "I crediti mensili inutilizzati scadono al termine del periodo.",
+            "500 GB di storage attivo",
+            "Coda di priorità Veo 3.1 4K",
+            "Coerenza illimitata dei personaggi",
+            "Esportazioni white-label",
+            "Accesso API",
+            "10 posti per il team",
+            "Account manager dedicato",
+            "SLA Enterprise disponibili su richiesta"
           ]
         }
       ]
-    },
-    "explorerHighlight": "The fastest way to experience the complete SceneFlow studio — from concept to Screening Room.",
-    "trustBadges": [
-      "Secure payments via Whop",
-      "$9 Explorer to try the studio",
-      "Monthly credits expire at period end",
-      "Cancel anytime"
-    ]
+    }
   },
   "landingSections": {
     "expandSection": "Mostra sezione",
     "collapseSection": "Nascondi sezione"
   },
+  "notify": {
+    "heading": "Ricevi notizie sul lancio",
+    "description": "Lascia la tua email e ti avviseremo al momento dell'annuncio. Nient'altro.",
+    "placeholder": "you@studio.com",
+    "submit": "Avvisami",
+    "submitting": "Invio in corso…",
+    "successTitle": "Controlla la tua casella di posta in arrivo.",
+    "successBody": "Abbiamo inviato un link di conferma. Cliccaci sopra per iscriverti alla lista di lancio. Nient'altro.",
+    "errorEmpty": "Inserisci la tua email così possiamo contattarti.",
+    "errorInvalid": "Quell'indirizzo email non sembra corretto. Controllalo e riprova.",
+    "errorGeneric": "Qualcosa è andato storto. Riprova tra un attimo.",
+    "privacy": "Per prima cosa inviamo un link di conferma via email. Una sola comunicazione al momento del lancio, dopo la conferma. Niente spam.",
+    "confirmTitle": "Sei sulla lista.",
+    "confirmBody": "Ti invieremo un'email al momento dell'annuncio. Nient'altro.",
+    "confirmExpiredTitle": "Quel link è scaduto.",
+    "confirmExpiredBody": "Inserisci nuovamente la tua email nella landing page e ti invieremo un nuovo link di conferma.",
+    "confirmInvalidTitle": "Quel link non è valido.",
+    "confirmInvalidBody": "Richiedi una nuova conferma dalla landing page.",
+    "confirmHome": "Torna a SceneFlow"
+  },
+  "forFilmmakers": {
+    "badge": "Candidati per il programma SceneFlow Originals Seed",
+    "heading": "Per i filmmaker: inviate il vostro episodio pilota per la distribuzione sulla piattaforma e la monetizzazione.",
+    "subtitle": "Il network SceneFlow è un gruppo chiuso di \"Founding Creator\" — da 5 a 10 titoli selezionati accuratamente al lancio, non un marketplace aperto. La condivisione dei ricavi ha inizio solo in presenza di abbonati paganti. Ciò che offriamo attualmente è una leva distributiva: campagne teaser finanziate in cambio di una finestra di anteprima esclusiva.",
+    "closedNote": "Le candidature vengono esaminate dai redattori. L'invio non comporta la pubblicazione del film in un catalogo.",
+    "fields": {
+      "email": "E-mail",
+      "emailPlaceholder": "you@studio.com",
+      "name": "Il tuo nome",
+      "namePlaceholder": "Nome del regista o del produttore",
+      "title": "Titolo del pilot o del lungometraggio",
+      "titlePlaceholder": "Titolo provvisorio",
+      "logline": "Logline",
+      "loglinePlaceholder": "Una o due frasi che vendono la storia.",
+      "audienceUrl": "Pubblico esistente",
+      "audiencePlaceholder": "URL di YouTube, Bilibili, festival o social",
+      "exclusivePremiere": "Sono disponibile a concedere una finestra di anteprima esclusiva su SceneFlow in cambio del finanziamento di annunci teaser."
+    },
+    "submit": "Inviare la domanda",
+    "submitting": "Invio in corso…",
+    "successTitle": "Controlla la tua casella di posta in arrivo.",
+    "successBody": "Abbiamo inviato un link di conferma. Cliccaci sopra per confermare la tua candidatura Seed. Nient'altro.",
+    "errorEmpty": "Compila tutti i campi affinché possiamo esaminare il tuo pilot.",
+    "errorInvalidEmail": "Quell'indirizzo email non sembra corretto. Controllalo e riprova.",
+    "errorInvalidUrl": "Aggiungi un URL pubblico per il tuo pubblico attuale.",
+    "errorGeneric": "Qualcosa è andato storto. Riprova tra un attimo.",
+    "confirmTitle": "Candidatura ricevuta.",
+    "confirmBody": "Ti trovi nella coda di revisione di Seed. Esaminiamo ogni proposta. Non si tratta di una voce di catalogo pubblica.",
+    "confirmExpiredTitle": "Quel link è scaduto.",
+    "confirmExpiredBody": "Invia nuovamente il modulo per i filmmaker e ti invieremo un nuovo link di conferma.",
+    "confirmInvalidTitle": "Quel link non è valido.",
+    "confirmInvalidBody": "Richiedi una nuova conferma tramite il modulo per i filmmaker.",
+    "confirmHome": "Torna a SceneFlow",
+    "privacy": "Inviamo prima un link di conferma via e-mail. Solo per editor. Niente spam."
+  },
   "finalCta": {
-    "title": "Built for the stories that have to hold.",
-    "subtitle": "Leave your email for launch news — or start directing now from the $9 Explorer plan.",
-    "cta": "Explore plans",
-    "ctaSecondary": "See how it works",
+    "title": "Costruito per le storie che devono reggere.",
+    "subtitle": "Lascia la tua email per ricevere notizie sul lancio, oppure inizia subito a dirigere con il piano Explorer da 9 $.",
+    "cta": "Scopri i piani",
+    "ctaSecondary": "Scopri come funziona",
     "ctaSecondaryHref": "#two-modes"
   },
   "footer": {
-    "description": "Produzione video automatizzata end-to-end: dal concept al master pronto per la pubblicazione. Uno studio guidato: Series Room → Blueprint Room → Production Stage → Screening Room.",
+    "description": "Produzione video automatizzata end-to-end: dal concept al master pronto per la pubblicazione. Un unico studio guidato: Series Room → Blueprint Room → Production Stage → Screening Room.",
     "product": "Prodotto",
     "resources": "Risorse",
     "legal": "Trust &amp; Safety",
@@ -1393,540 +2637,5 @@
     "mute": "Disattiva audio",
     "unmute": "Riattiva audio",
     "expandVideo": "Espandi video"
-  },
-  "productionShowcase": {
-    "badge": "Production Examples",
-    "title": "See the Full Pipeline",
-    "titleAccent": "in Action",
-    "subtitle": "Each example below is a complete production — from Blueprint through Pre-Vis to the final ProRes 4K master. Walk the Screening Room to compare the Pre-Vis, per-scene motion video, and the finished master in multiple languages.",
-    "subtitleTagline": "Long-form productions. Not clips.",
-    "screeningRoomInstruction": "Review this production the way a reviewer would — one milestone at a time. Start with Series, then Blueprint, then the script in AR Analysis, and finish in Screening.",
-    "languagesBanner": "Public examples ship in 7 languages: English, Spanish, Portuguese, Hindi, Chinese, Arabic, and Thai.",
-    "explorePipelineCta": "Explore a full production",
-    "explorePipelineHint": "Start with Cinematic Drama below to walk the full pipeline from concept to multi-language master.",
-    "workflowLabel": "Solutions",
-    "startProduction": "Start Your Production",
-    "cta": "Start Your Production",
-    "continuityNote": "Series Room manages continuity",
-    "resonanceNote": "Audience Resonance™ optimizes scripts",
-    "videoLanguagePrompt": "Watch this production in your language",
-    "videoComingSoon": "Dub coming soon",
-    "videoSoon": "Soon",
-    "frictionLabel": "The Friction",
-    "solutionPillarLabel": "The SceneFlow Solution",
-    "showSolutionsSection": "Show Solutions",
-    "hideSolutionsSection": "Hide Solutions",
-    "cards": [
-      {
-        "id": "drama",
-        "title": "Feature-Length Cinematic Drama. Zero Character Drift.",
-        "subtitle": "Hold character faces, wardrobe, and locations from scene 1 to scene 100. Walk the Screening Room to see the Pre-Vis, per-scene motion video, and the final ProRes 4K master — then switch languages to hear the full dub.",
-        "badge": "Series-Ready",
-        "solutionPillars": [
-          {
-            "title": "Visual & Character Consistency",
-            "frictionHeadline": "Character Drift & Wobbly Sets.",
-            "friction": "Generative models reset with every shot — causing character faces, outfits, and lighting to morph continuously across scene cuts.",
-            "solutionHeadline": "Locked Asset Blueprints.",
-            "solution": "Define master character profiles, environments, and visual styles up front in Blueprint Room. SceneFlow enforces visual identity across every render to preserve narrative immersion."
-          },
-          {
-            "title": "Narrative Pacing & Scene Control",
-            "frictionHeadline": "The 10-Second Clip Trap.",
-            "friction": "Building a film out of disconnected micro-prompts creates choppy pacing, flat emotion, and endless manual timeline editing.",
-            "solutionHeadline": "Beat-First Storyboarding.",
-            "solution": "Direct at the scene level, not the prompt level. Structure dramatic beats, camera movements, and story arcs visually before generating a single frame of video."
-          },
-          {
-            "title": "Dialogue & Audio Alignment",
-            "frictionHeadline": "Unconvincing Dialogue.",
-            "friction": "Mismatched lip-sync, floating mouth movements, and detached voice tracks immediately pull viewers out of the drama.",
-            "solutionHeadline": "Integrated Voice & Sync Engine.",
-            "solution": "Dynamic voice performance and precise lip-sync are baked directly into the video pipeline — delivering believable dialogue without external post-production passes."
-          },
-          {
-            "title": "Workflow Friction & Reroll Fatigue",
-            "frictionHeadline": "Asset Chaos & Endless Rerolls.",
-            "friction": "Generating a short film usually means juggling 200+ raw video files, manual upscaling, and dozens of wasted generations.",
-            "solutionHeadline": "Automated Studio Pipeline.",
-            "solution": "From concept to final master MP4 in one unified platform. Blueprint Room handles story setup, Production Stage runs Direction through Streams, and Screening Room delivers your final export."
-          }
-        ],
-        "screeningRoomPreview": "The Cinematic Drama — Screening Room"
-      },
-      {
-        "id": "animation",
-        "title": "Full-Season Animated Series. One Consistent Art Style.",
-        "subtitle": "Lock character designs, line weights, and shading models across an entire season. Direct comedic timing shot by shot, then review the assembled episode in the Screening Room.",
-        "badge": "Multi-Style",
-        "solutionPillars": [
-          {
-            "title": "Stylistic Consistency",
-            "frictionHeadline": "Style Meltdown.",
-            "friction": "Cartoon and anime styles constantly warp between shots, shifting line art, breaking color palettes, and morphing characters into photorealistic uncanny slop.",
-            "solutionHeadline": "Locked Art Style Engine.",
-            "solution": "Freeze your aesthetic from the first frame. SceneFlow locks character designs, line weights, and shading models across the entire episode so your characters stay uniquely yours."
-          },
-          {
-            "title": "Exaggerated Animation & Physics",
-            "frictionHeadline": "Stiff & Glitchy Motion.",
-            "friction": "Generative models struggle with fast slapstick, double-takes, and squishy cartoon physics, turning high-energy gags into melting artifacts.",
-            "solutionHeadline": "Action & Pose Anchoring.",
-            "solution": "Drive dynamic character movement and expressive poses without breaking geometry. Direct punchy physical comedy, sudden cutaways, and wild expressions with full motion control."
-          },
-          {
-            "title": "Comedic Timing & Rhythm",
-            "frictionHeadline": "Ruined Punchlines.",
-            "friction": "Humor lives in the pauses and beat-cuts. Standard 5-second generative loops force awkward pacing that destroys joke delivery.",
-            "solutionHeadline": "Beat-Precision Editing.",
-            "solution": "Control scene pacing down to the frame. Adjust dramatic pauses, setup-to-punchline timing, and quick reaction shots directly inside the beat-first timeline before final render."
-          },
-          {
-            "title": "High-Energy Dialogue & Vocal Sync",
-            "frictionHeadline": "Lifeless Puppet Mouths.",
-            "friction": "Generic AI dialogue feels flat and mechanical, destroying the energy needed for snappy sitcom banter.",
-            "solutionHeadline": "Dynamic Voice & Expression Sync.",
-            "solution": "Map vocal delivery directly to energetic facial performance. Dialogue, expressive mouth shapes, and comedic voice tracks match seamlessly for maximum comedic impact."
-          }
-        ],
-        "screeningRoomPreview": "The Animated Comedy — Screening Room"
-      },
-      {
-        "id": "documentary",
-        "title": "Long-Form Documentaries. Sustained Period Accuracy.",
-        "subtitle": "Maintain era-specific detail, narrator pacing, and expert-witness continuity across a 40-minute episode or multi-part series. Review the full timeline in the Screening Room before committing to high-res renders.",
-        "badge": "Period-Accurate",
-        "solutionPillars": [
-          {
-            "title": "Era-Specific Visual Accuracy",
-            "frictionHeadline": "Anachronistic Artifacts",
-            "friction": "Standard generative models routinely bleed modern objects, smartphone screens, or incorrect period clothing into historical re-enactments.",
-            "solutionHeadline": "Historical Style Guardrails",
-            "solution": "Set exact temporal parameters — from 1920s film grain to 18th-century wardrobe textures — so every generated scene stays historically authentic."
-          },
-          {
-            "title": "Archival Cutaways & B-Roll Engine",
-            "frictionHeadline": "Visual Monotony in Long Voiceovers",
-            "friction": "Pairing long-form narrator audio with static stock images leads to rapid viewer drop-off during deep dives.",
-            "solutionHeadline": "Transcript-Driven B-Roll Engine",
-            "solution": "As your narrator discusses historical facts, SceneFlow automatically generates timed cinematic re-enactments, document overlays, and archival-style cutaways tied directly to the audio transcript."
-          },
-          {
-            "title": "Interview & Talking-Head Realism",
-            "frictionHeadline": "Uncanny Expert Witnesses",
-            "friction": "Generated historians, investigators, or witnesses often look artificial, with floating jaw movements and unnatural eye contact.",
-            "solutionHeadline": "Locked Expert Profiles & Vocal Sync",
-            "solution": "Maintain realistic, trustworthy interview setups with natural micro-expressions, accurate lip-sync, and consistent expert identities across multi-part series."
-          },
-          {
-            "title": "Episodic Pacing & Narrative Continuity",
-            "frictionHeadline": "Fragmented Timeline Editing",
-            "friction": "Balancing narrator audio, re-enactments, evidence reveals, and tension-building pauses across a 40-minute episode usually takes weeks in traditional NLEs.",
-            "solutionHeadline": "Beat-First Documentary Pipeline",
-            "solution": "Structure dramatic tension, suspenseful pauses, and evidence reveals visually inside Blueprint Room, delivering a fully assembled master file in one seamless pass."
-          }
-        ],
-        "screeningRoomPreview": "Documentary Production — Screening Room"
-      },
-      {
-        "id": "training",
-        "title": "Multi-Module Training Series. One Locked Instructor.",
-        "subtitle": "Hold the instructor, classroom, and lesson graphics from the first module to the last quiz. Walk Blueprint, Audience Resonance, and the Screening Room — Pre-Vis, rough cut, scenes, and the finished course — then switch languages to hear the localized version.",
-        "badge": "Curriculum-Ready",
-        "solutionPillars": [
-          {
-            "title": "Instructor & Setting Consistency",
-            "frictionHeadline": "A Different Teacher Every Module.",
-            "friction": "Generative clips reset the instructor face, wardrobe, and classroom between lessons, so a course feels like a pile of unrelated videos.",
-            "solutionHeadline": "Locked Instructor Blueprints.",
-            "solution": "Define the instructor, set, and visual system once in Blueprint Room. SceneFlow keeps that identity locked across every module."
-          },
-          {
-            "title": "Curriculum Pacing",
-            "frictionHeadline": "Slides Chopped into Clips.",
-            "friction": "Turning a syllabus into disconnected prompts loses the lesson arc, the worked example, and the pause before a quiz.",
-            "solutionHeadline": "Module-First Storyboarding.",
-            "solution": "Direct each module as a sequence of teaching beats — setup, demonstration, and check — before a frame is rendered."
-          },
-          {
-            "title": "Narration & On-Screen Teaching",
-            "frictionHeadline": "Voice That Misses the Graphic.",
-            "friction": "Narration, captions, and diagrams drift apart, so learners hear one step while the picture shows another.",
-            "solutionHeadline": "Synced Lesson Tracks.",
-            "solution": "Voice, captions, and on-screen teaching stay on the same beat, so each explanation lands with the visual that proves it."
-          },
-          {
-            "title": "Course Assembly",
-            "frictionHeadline": "Weeks in an Editor.",
-            "friction": "Stitching modules, retakes, and localized versions in a traditional timeline turns a curriculum update into a production delay.",
-            "solutionHeadline": "One Studio Pipeline.",
-            "solution": "Blueprint, Audience Resonance, and the Screening Room carry a module from outline to Pre-Vis, rough cut, scenes, and the finished course."
-          }
-        ],
-        "screeningRoomPreview": "The Training Series — Screening Room"
-      }
-    ]
-  },
-  "keyFeatures": {
-    "badge": "Caratteristiche Chiave",
-    "title": "Le caratteristiche che distinguono SceneFlow",
-    "subtitle": "Series Room → Blueprint Room → Production Stage → Screening Room.",
-    "learnMoreLabel": "Scopri di più",
-    "showLessLabel": "Mostra meno",
-    "problemLabel": "Il problema",
-    "solutionLabel": "La soluzione",
-    "outcomeLabel": "La ricompensa?",
-    "videoComingSoon": "Funzionalità in arrivo prossimamente",
-    "videoSoon": "Presto",
-    "landingUiLanguagesLabel": "Produce and dub in 70+ languages. This site is available in these 39:"
-  },
-  "pipeline": {
-    "badge": "Cos'è SceneFlow?",
-    "title": "L'architettura del gasdotto a 3 pilastri",
-    "subtitle": "Tre fasi dalla prima idea al master pronto per la pubblicazione: Series Room, Blueprint Room e Production Stage.",
-    "ui": {
-      "expandFullscreen": "Visualizza a schermo intero",
-      "closeFullscreen": "Chiudi",
-      "landscapeHint": "Ruota il dispositivo per una visione orizzontale più ampia",
-      "howItWorksLabel": "Come funziona in questa fase",
-      "showHowItWorks": "MOSTRAMI COME FUNZIONA",
-      "hideHowItWorks": "COME FUNZIONA",
-      "imagePlaceholder": "Segnaposto screenshot",
-      "videoWalkthrough": "Procedura dettagliata di 30 secondi",
-      "comingSoon": "Screenshot del prodotto in arrivo"
-    },
-    "pillars": [
-      {
-        "id": "series",
-        "tabLabel": "Series Room",
-        "number": "01",
-        "title": "Generazione Series Room",
-        "header": "Costruisci un universo, non una clip",
-        "body": "Descrivi una volta la tua serie o il tuo canale YouTube e SceneFlow costruisce il mondo intero — trama, cast e un elenco illimitato di episodi — con un Reference Library condiviso che mantiene ogni episodio on-brand.",
-        "steps": [
-          {
-            "id": "series-concept",
-            "number": "1",
-            "title": "Inizia con il tuo concetto",
-            "description": "Inserisci un concetto o una descrizione dettagliata della tua serie o del tuo canale YouTube. SceneFlow lo trasforma in una base strutturata e pronta per la produzione, senza necessità di ingegneria rapida.",
-            "imagePlaceholder": "Nuova presa serie — concept o descrizione canale"
-          },
-          {
-            "id": "series-baseline",
-            "number": "2",
-            "title": "Rivedere la linea di base SceneFlow",
-            "description": "SceneFlow restituisce una baseline professionale valutata da Audience Resonance Analysis. Leggi o ascolta la panoramica narrata, quindi guidala con la tua direzione.",
-            "imagePlaceholder": "Serie baseline — punteggio Audience Resonance E panoramica narrata"
-          },
-          {
-            "id": "series-episodes",
-            "number": "3",
-            "title": "Crea episodi illimitati",
-            "description": "Crea tutti gli episodi di cui la tua storia ha bisogno. Ognuno eredita il DNA della tua serie, quindi il cast, il tono e il mondo rimangono coerenti dall'episodio uno al finale di stagione.",
-            "imagePlaceholder": "Ardesia di episodi — episodi illimitati generati dalla serie ARC"
-          },
-          {
-            "id": "series-reference-library",
-            "number": "4",
-            "title": "Rivedere IL Reference Library",
-            "description": "Sfoglia lo Reference Library condiviso — personaggi, voci, guardaroba, location e oggetti di scena — creato e mantenuto attraverso Production Stage e riutilizzato in ogni episodio.",
-            "imagePlaceholder": "Shared Reference Library - personaggi, voci, luoghi, oggetti DI scena"
-          },
-          {
-            "id": "series-assistant-writer",
-            "number": "5",
-            "title": "Dirigere l'Intelligent Assistant Writer",
-            "description": "Rimodella la serie o qualsiasi episodio parlando o digitando la tua direzione. L'Intelligent Assistant Writer riscrive istantaneamente la copia professionale: nessuna pagina vuota, nessuna progettazione rapida.",
-            "imagePlaceholder": "Intelligent Assistant Writer — regia vocale o testuale su serie ed episodi"
-          },
-          {
-            "id": "series-start-production",
-            "number": "6",
-            "title": "Avvia la produzione in un clic",
-            "description": "Quando un episodio ti sembra giusto, inizia la sua produzione con un solo clic e fluisci direttamente nella pipeline guidata Production Stage.",
-            "imagePlaceholder": "Avvia la produzione con un clic su un episodio selezionato"
-          }
-        ]
-      },
-      {
-        "id": "blueprint",
-        "tabLabel": "Blueprint Room",
-        "number": "02",
-        "title": "Blueprint Room",
-        "header": "Il tuo DNA creativo, bloccato",
-        "body": "Blueprint Room è il tuo trattamento cinematografico profondo — sinossi, battiti, personaggi, tono e stile — pre-scritto da Audience Resonance Analysis in modo da approvare una storia che atterra prima del rendering di un singolo fotogramma.",
-        "steps": [
-          {
-            "id": "blueprint-baseline",
-            "number": "1",
-            "title": "Rivedere lo Blueprint basale",
-            "description": "Aprire un Blueprint di base professionale con Audience Resonance Analysis integrato. Leggi o ascolta la panoramica narrata per capire esattamente perché funziona.",
-            "imagePlaceholder": "Blueprint basale — trattamento con Audience Resonance score"
-          },
-          {
-            "id": "blueprint-assistant-writer",
-            "number": "2",
-            "title": "Dirigere l'Intelligent Assistant Writer",
-            "description": "Perfeziona la sinossi, i ritmi, i personaggi e altro ancora parlando o digitando la tua direzione. L'Intelligent Assistant Writer rivede il trattamento all'istante, senza interventi tecnici immediati.",
-            "imagePlaceholder": "Intelligent Assistant Writer — montaggio sinossi, battute e personaggi"
-          },
-          {
-            "id": "blueprint-reasoning",
-            "number": "3",
-            "title": "Rivedere il ragionamento",
-            "description": "Apri la sezione Ragionamento per una spiegazione creativa dell'attuale Blueprint — la logica della storia dietro ogni battuta e scelta del personaggio.",
-            "imagePlaceholder": "Pannello di ragionamento — spiegazione creativa dello Blueprint"
-          },
-          {
-            "id": "blueprint-start-production",
-            "number": "4",
-            "title": "Avvia la produzione quando sei pronto",
-            "description": "Una volta che la storia canta, inizia la produzione e l'intera pipeline eredita il tuo DNA creativo approvato senza alcuna deriva.",
-            "imagePlaceholder": "Apri Production Stage — cancello di prontezza da un progetto approvato"
-          }
-        ]
-      },
-      {
-        "id": "production",
-        "tabLabel": "Production Stage",
-        "number": "03",
-        "title": "Production Stage",
-        "header": "Da script a master pubblicato",
-        "body": "Production Stage esegue la generazione simultanea di più motori — script, audio, fotogrammi e video — con Intelligent Assistant Director, Screening Room e flussi multilingue che ti portano dallo script approvato a un master 4K pubblicato.",
-        "steps": [
-          {
-            "id": "production-script-ara",
-            "number": "1",
-            "title": "Rivedere lo script di base",
-            "description": "Inizia da uno script di base professionale con Audience Resonance Analysis. Leggi o ascolta l'analisi narrata per sapere cosa atterra prima di spendere un credito.",
-            "imagePlaceholder": "Script di base — analisi Audience Resonance e panoramica narrata"
-          },
-          {
-            "id": "production-assistant-writer",
-            "number": "2",
-            "title": "Ottimizza scena per scena",
-            "description": "Usa l'Intelligent Assistant Writer per ottimizzare la sceneggiatura scena per scena: stringi i dialoghi, rimodella i ritmi e applica miglioramenti con un clic tramite voce o testo.",
-            "imagePlaceholder": "Intelligent Assistant Writer — ottimizzazione degli script scena per scena"
-          },
-          {
-            "id": "production-reference-library",
-            "number": "3",
-            "title": "Costruisci IL Reference Library",
-            "description": "Crea o aggiorna Reference Library con personaggi, voci, armadi, luoghi e oggetti di scena con script, personalizzati o caricati. Modifica direttamente le immagini di riferimento — nessuna rigenerazione \"slot machine\".",
-            "imagePlaceholder": "Reference Library — personaggi, voci, guardaroba, location, oggetti di scena"
-          },
-          {
-            "id": "production-audio",
-            "number": "4",
-            "title": "Genera audio",
-            "description": "Genera dialoghi, narrazioni, effetti sonori e musica con Run All Agents in tutte le scene, per-scene agents o shot by shot — voiceover di qualità nativa in oltre 70 lingue.",
-            "imagePlaceholder": "Audio espresso: tutte le scene, scena singola o battito per battito"
-          },
-          {
-            "id": "production-frames",
-            "number": "5",
-            "title": "Genera e modifica frame",
-            "description": "Genera fotogrammi di inquadratura con Run All Agents, per-scene agents o shot by shot, quindi modifica qualsiasi fotogramma con l'Intelligent Assistant Director (IAD): descrivi semplicemente il cambiamento.",
-            "imagePlaceholder": "Batti i fotogrammi con le modifiche di Intelligent Assistant Director"
-          },
-          {
-            "id": "production-animatic",
-            "number": "6",
-            "title": "Rivedi l'animatic",
-            "description": "Riproduci l'animazione completa — fotogrammi, dialoghi, effetti sonori e musica — nello Screening Room interattivo e condividi un link per il feedback senza esportare un file.",
-            "imagePlaceholder": "Screening Room — revisione E condivisione animata interattiva"
-          },
-          {
-            "id": "production-video",
-            "number": "7",
-            "title": "Genera video",
-            "description": "Trasforma i fotogrammi approvati in movimento con per-scene agents o shot by shot. Riprendi qualsiasi inquadratura con l'Intelligent Assistant Director: nessuna rigenerazione infinita di slot machine.",
-            "imagePlaceholder": "Generazione video rapida con riprese IAD"
-          },
-          {
-            "id": "production-mixer",
-            "number": "8",
-            "title": "Modifica nel mixer",
-            "description": "Lucida ogni scena del Mixer — didascalie, finiture, doppiaggio, sovrapposizioni e bilanciamento audio — finitura sicura per il marchio senza uscire dallo studio.",
-            "imagePlaceholder": "Mixer — didascalie, trim, doppiaggio e controlli audio"
-          },
-          {
-            "id": "production-render-scenes",
-            "number": "9",
-            "title": "Rendering e revisione delle scene",
-            "description": "Esegui il rendering delle tue scene, quindi rivedile e condividile tramite Screening Room per bloccare l'approvazione prima dell'assemblaggio finale.",
-            "imagePlaceholder": "Scene renderizzate recensite e condivise nello Screening Room"
-          },
-          {
-            "id": "production-multilanguage",
-            "number": "10",
-            "title": "Genera flussi multilingue",
-            "description": "Spin up di flussi linguistici doppiati o sincronizzati a labbro dallo stesso taglio approvato: raggiungi oltre 70 mercati senza ripetere un singolo fotogramma.",
-            "imagePlaceholder": "Flussi multilingue — doppiati e sincronizzati con le labbra per locale"
-          },
-          {
-            "id": "production-publish",
-            "number": "11",
-            "title": "Rendere definitivo e pubblicare",
-            "description": "Effettua il rendering della produzione finale in un master e pubblica: miniature, titoli e descrizioni generati automaticamente pronti per il tuo canale YouTube e non solo.",
-            "imagePlaceholder": "Rendering finale e pubblicazione su YouTube con un clic"
-          }
-        ]
-      }
-    ]
-  },
-  "screeningRoom": {
-    "badge": "Interactive Screening Room — Anteprima Animatic disponibile",
-    "languagePrompt": "Ascolta la pipeline nel tuo mercato di riferimento:",
-    "languages": [
-      {
-        "id": "en",
-        "label": "English",
-        "flag": "🇺🇸"
-      },
-      {
-        "id": "es",
-        "label": "Español",
-        "flag": "🇪🇸"
-      },
-      {
-        "id": "pt",
-        "label": "Português",
-        "flag": "🇧🇷"
-      },
-      {
-        "id": "hi",
-        "label": "Lingua hindi",
-        "flag": "🇮🇳"
-      },
-      {
-        "id": "zh",
-        "label": "中文",
-        "flag": "🇨🇳"
-      }
-    ],
-    "steps": [
-      {
-        "id": "concept",
-        "label": "Ottimizzazione del concetto e dello script"
-      },
-      {
-        "id": "animatic",
-        "label": "Recensione DI Animatic DI 30 minuti"
-      },
-      {
-        "id": "video",
-        "label": "Render video Full Motion Express"
-      }
-    ],
-    "previewLabel": "Anteprima"
-  },
-  "twoModes": {
-    "eyebrow": "The friction we remove",
-    "title": "One pipeline. Not a stack of tools.",
-    "subtitle": "SceneFlow replaces single-clip generators and a pile of separate docs, editors, and re-renders. Build the series or the 90-minute master, then publish a scene or a chapter when you are ready to earn.",
-    "comingSoon": "Coming soon",
-    "comparison": {
-      "id": "comparison",
-      "caption": "Fragmented tools beside one SceneFlow pipeline.",
-      "themLabel": "Fragmented production",
-      "usLabel": "SceneFlow",
-      "rows": [
-        {
-          "them": "Prompt trial and error across tools",
-          "us": "One Blueprint locks the story and the look"
-        },
-        {
-          "them": "Hand-built treatments and formatting",
-          "us": "A film treatment and beat sheet from your premise or brief"
-        },
-        {
-          "them": "Short clips that do not share a cast",
-          "us": "Shots generated from the locked Reference Library"
-        },
-        {
-          "them": "Dragging clips into another editor",
-          "us": "Scenes, chapters, and the master assemble in the Screening Room"
-        },
-        {
-          "them": "Re-rendering to test a note",
-          "us": "Direct on the animatic, then render"
-        }
-      ]
-    },
-    "cta": "Launch Studio ($9)"
-  },
-  "infrastructure": {
-    "title": "Enterprise-Grade Infrastructure & Security",
-    "description": "Powered by Google Cloud and Vertex AI for enterprise reliability, multi-language dubbing models, and secure asset processing.",
-    "badges": {
-      "googleCloud": "Google Cloud",
-      "vertexAi": "Vertex AI"
-    }
-  },
-  "notify": {
-    "heading": "Get launch news",
-    "description": "Leave your email and we’ll tell you when we announce. Nothing else.",
-    "placeholder": "you@studio.com",
-    "submit": "Notify me",
-    "submitting": "Sending…",
-    "successTitle": "Check your inbox.",
-    "successBody": "We sent a confirmation link. Click it to join the launch list. Nothing else.",
-    "errorEmpty": "Enter your email so we can reach you.",
-    "errorInvalid": "That email doesn’t look right. Check it and try again.",
-    "errorGeneric": "Something went wrong. Try again in a moment.",
-    "privacy": "We email a confirmation link first. One launch note after you confirm. No spam.",
-    "confirmTitle": "You’re on the list.",
-    "confirmBody": "We’ll email you when we announce. Nothing else.",
-    "confirmExpiredTitle": "That link expired.",
-    "confirmExpiredBody": "Submit your email on the landing page again and we’ll send a new confirmation link.",
-    "confirmInvalidTitle": "That link isn’t valid.",
-    "confirmInvalidBody": "Request a new confirmation from the landing page.",
-    "confirmHome": "Back to SceneFlow"
-  },
-  "forFilmmakers": {
-    "badge": "Apply for the SceneFlow Originals Seed Program",
-    "heading": "For Filmmakers: Submit your pilot for platform distribution and monetization.",
-    "subtitle": "The SceneFlow Network is a closed Founding Creator cohort — 5 to 10 hand-picked titles at launch, not an open marketplace. Revenue share starts only after paying subscribers exist. What we offer now is distribution leverage: funded teaser ads in exchange for an exclusive premiere window.",
-    "closedNote": "Applications are reviewed by editors. Submitting does not publish your film to a catalog.",
-    "fields": {
-      "email": "Email",
-      "emailPlaceholder": "you@studio.com",
-      "name": "Your name",
-      "namePlaceholder": "Director or producer name",
-      "title": "Pilot or feature title",
-      "titlePlaceholder": "Working title",
-      "logline": "Logline",
-      "loglinePlaceholder": "One or two sentences that sell the story.",
-      "audienceUrl": "Existing audience",
-      "audiencePlaceholder": "YouTube, Bilibili, festival, or social URL",
-      "exclusivePremiere": "I am open to an exclusive premiere window on SceneFlow in exchange for funded teaser ads."
-    },
-    "submit": "Submit application",
-    "submitting": "Sending…",
-    "successTitle": "Check your inbox.",
-    "successBody": "We sent a confirmation link. Click it to lock in your Seed application. Nothing else.",
-    "errorEmpty": "Fill in every field so we can review your pilot.",
-    "errorInvalidEmail": "That email doesn’t look right. Check it and try again.",
-    "errorInvalidUrl": "Add a public URL for your existing audience.",
-    "errorGeneric": "Something went wrong. Try again in a moment.",
-    "confirmTitle": "Application received.",
-    "confirmBody": "You’re in the Seed review queue. We read every submission. This is not a public catalog listing.",
-    "confirmExpiredTitle": "That link expired.",
-    "confirmExpiredBody": "Submit the filmmaker form again and we’ll send a new confirmation link.",
-    "confirmInvalidTitle": "That link isn’t valid.",
-    "confirmInvalidBody": "Request a new confirmation from the filmmaker form.",
-    "confirmHome": "Back to SceneFlow",
-    "privacy": "We email a confirmation link first. Editors only. No spam."
-  },
-  "publishCut": {
-    "eyebrow": "The cut you publish",
-    "title": "Export anywhere. Premiere on SceneFlow when you earn it.",
-    "subtitle": "Download a master and ship it yourself, or publish finished scenes and chapters to {longForm} and cut trailers for {shorts} — without waiting on the whole cut. Before anything hits the public feed, run drafts or your final master through the Screening Room. Standout projects can apply for the invite-only SceneFlow Network; it is a curated accelerator, not an open storefront.",
-    "comparison": {
-      "id": "publish",
-      "caption": "A finished scene or chapter, and the 90-minute master, from one studio."
-    },
-    "cta": "Launch Studio ($9)"
   }
 }

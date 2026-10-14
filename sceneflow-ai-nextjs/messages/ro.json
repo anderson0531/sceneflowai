@@ -1,10 +1,945 @@
 {
+  "pipeline": {
+    "badge": "Ce este SceneFlow?",
+    "title": "Arhitectura de pipeline cu trei piloni",
+    "subtitle": "Trei etape, de la ideea inițială până la masterul gata de publicare — Series Room, Blueprint Room și Production Stage.",
+    "ui": {
+      "expandFullscreen": "Vizualizare pe tot ecranul",
+      "closeFullscreen": "Închide",
+      "landscapeHint": "Rotește dispozitivul pentru o vizualizare orizontală mai largă.",
+      "howItWorksLabel": "Cum funcționează în această etapă",
+      "showHowItWorks": "Arată cum funcționează",
+      "hideHowItWorks": "Ascunde modul de funcționare",
+      "imagePlaceholder": "Spațiu rezervat pentru captură de ecran",
+      "videoWalkthrough": "Prezentare rapidă de 30 de secunde",
+      "comingSoon": "Captura de ecran a produsului va fi disponibilă în curând"
+    },
+    "pillars": [
+      {
+        "id": "series",
+        "tabLabel": "Series Room",
+        "number": "01",
+        "title": "Generare Series Room",
+        "header": "Construiește un univers, nu un clip",
+        "body": "Descrie-ți o singură dată serialul sau canalul de YouTube, iar SceneFlow construiește întregul univers — intriga, distribuția și o listă nelimitată de episoade — folosind o bibliotecă de referință partajată (Reference Library) care asigură consecvența stilului mărcii în fiecare episod.",
+        "steps": [
+          {
+            "id": "series-concept",
+            "number": "1",
+            "title": "Începe cu conceptul tău",
+            "description": "Introdu un concept sau o descriere detaliată a seriei ori a canalului tău de YouTube. SceneFlow le transformă într-o bază structurată, gata de producție — fără a fi nevoie de ingineria prompturilor.",
+            "imagePlaceholder": "Preluare de noi serii – concept sau descrierea canalului"
+          },
+          {
+            "id": "series-baseline",
+            "number": "2",
+            "title": "Examinați linia de bază SceneFlow",
+            "description": "SceneFlow furnizează un punct de referință profesional, evaluat prin analiza Audience Resonance. Parcurgeți sau ascultați prezentarea narată, apoi orientați demersul în direcția dorită.",
+            "imagePlaceholder": "Valoarea de referință a seriei — scorul Audience Resonance și prezentare generală comentată"
+          },
+          {
+            "id": "series-episodes",
+            "number": "3",
+            "title": "Creează episoade nelimitate",
+            "description": "Creează câte episoade necesită povestea ta. Fiecare dintre ele moștenește ADN-ul seriei, astfel încât distribuția, tonul și universul rămân constante, de la primul episod până la finalul sezonului.",
+            "imagePlaceholder": "Gamă de episoade — episoade nelimitate generate pe baza firului narativ al seriei"
+          },
+          {
+            "id": "series-reference-library",
+            "number": "4",
+            "title": "Examinați Reference Library",
+            "description": "Explorează biblioteca partajată — personaje, voci, costume, locații și recuzită — creată și gestionată în etapa de producție și reutilizată în fiecare episod.",
+            "imagePlaceholder": "Elemente partajate — personaje, voci, locații, recuzită"
+          },
+          {
+            "id": "series-assistant-writer",
+            "number": "5",
+            "title": "Coordonează asistentul inteligent de scriere",
+            "description": "Remodelează seria sau orice episod dictând sau tastând instrucțiunile. Asistentul inteligent de scriere rescrie instantaneu texte profesionale — fără pagină albă și fără a necesita tehnici complexe de formulare a solicitărilor (prompt engineering).",
+            "imagePlaceholder": "Scenarist asistent inteligent — direcție vocală sau textuală pentru seriale și episoade"
+          },
+          {
+            "id": "series-start-production",
+            "number": "6",
+            "title": "Pornește producția cu un singur clic",
+            "description": "Atunci când un episod pare potrivit, începe producția acestuia cu un singur clic și treci direct în fluxul ghidat Production Stage.",
+            "imagePlaceholder": "Inițierea producției unui episod selectat cu un singur clic"
+          }
+        ]
+      },
+      {
+        "id": "blueprint",
+        "tabLabel": "Blueprint Room",
+        "number": "02",
+        "title": "Blueprint Room",
+        "header": "ADN-ul tău creativ, consolidat",
+        "body": "Blueprint Room reprezintă tratamentul detaliat al filmului tău — sinopsis, momente cheie, personaje, ton și stil — evaluat în prealabil prin analiza Audience Resonance, astfel încât să aprobi o poveste cu impact garantat înainte ca măcar un singur cadru să fie randat.",
+        "steps": [
+          {
+            "id": "blueprint-baseline",
+            "number": "1",
+            "title": "Examinați termenul de referință Blueprint",
+            "description": "Deschide un model de referință profesional, cu analiză de rezonanță cu publicul integrată. Citește sau ascultă prezentarea narată pentru a afla exact de ce funcționează.",
+            "imagePlaceholder": "Valoare de referință Blueprint — tratament cu scorul Audience Resonance"
+          },
+          {
+            "id": "blueprint-assistant-writer",
+            "number": "2",
+            "title": "Coordonează asistentul inteligent de scriere",
+            "description": "Rafinează sinopsisul, momentele cheie, personajele și multe altele, transmițând instrucțiunile prin voce sau tastare. Asistentul inteligent de scriere revizuiește tratamentul instantaneu – fără a fi nevoie de tehnici complexe de formulare a solicitărilor (prompt engineering).",
+            "imagePlaceholder": "Asistent de scriere inteligent — editarea sinopsisului, a momentelor cheie și a personajelor"
+          },
+          {
+            "id": "blueprint-reasoning",
+            "number": "3",
+            "title": "Analizează raționamentul",
+            "description": "Accesează secțiunea „Raționament” pentru o explicație creativă a elementului curent din Blueprint — logica narativă din spatele fiecărui moment-cheie și al fiecărei alegeri legate de personaje.",
+            "imagePlaceholder": "Panou de argumentare — explicație creativă a termenului Blueprint"
+          },
+          {
+            "id": "blueprint-start-production",
+            "number": "4",
+            "title": "Începeți producția când sunteți pregătiți",
+            "description": "Odată ce povestea prinde viață, începe producția — iar întregul flux de lucru preia ADN-ul creativ aprobat, fără nicio abatere.",
+            "imagePlaceholder": "Deschidere Production Stage — etapă de verificare a pregătirii pe baza unui plan aprobat"
+          }
+        ]
+      },
+      {
+        "id": "production",
+        "tabLabel": "Production Stage",
+        "number": "03",
+        "title": "Production Stage",
+        "header": "De la scenariu la produsul final publicat",
+        "body": "Production Stage gestionează generarea simultană, bazată pe mai multe motoare — scenariu, audio, cadre și video — în colaborare cu Intelligent Assistant Director și Screening Room, utilizând fluxuri multilingve pentru a parcurge etapele de la scenariul aprobat până la masterul 4K publicat.",
+        "steps": [
+          {
+            "id": "production-script-ara",
+            "number": "1",
+            "title": "Revizuiește scenariul de referință",
+            "description": "Pornește de la un scenariu de bază profesional, folosind analiza Audience Resonance. Citește sau ascultă analiza narată pentru a afla ce anume rezonează cu publicul înainte de a consuma un credit.",
+            "imagePlaceholder": "Scenariu de referință — Analiza Audience Resonance și prezentare narată"
+          },
+          {
+            "id": "production-assistant-writer",
+            "number": "2",
+            "title": "Optimizează scenă cu scenă",
+            "description": "Folosește asistentul inteligent de scriere pentru a optimiza scenariul scenă cu scenă: eficientizează dialogul, remodelează momentele cheie și aplică îmbunătățiri printr-un singur clic, folosind comenzi vocale sau text.",
+            "imagePlaceholder": "Asistent inteligent de scriere — optimizarea scenariului scenă cu scenă"
+          },
+          {
+            "id": "production-reference-library",
+            "number": "3",
+            "title": "Construiește Reference Library",
+            "description": "Creează sau actualizează Reference Library folosind personaje, voci, garderobe, locații și elemente de recuzită – fie predefinite, personalizate sau încărcate de tine. Editează direct imaginile de referință – fără regenerări de tip „păcănele”.",
+            "imagePlaceholder": "Reference Library — personaje, voci, costume, locații, recuzită"
+          },
+          {
+            "id": "production-audio",
+            "number": "4",
+            "title": "Generează audio",
+            "description": "Generează dialoguri, narațiune, efecte sonore și muzică folosind Run All Agents pentru toate scenele, Audio Agent pentru fiecare scenă sau secvență cu secvență — voce din off la calitate nativă în peste 70 de limbi.",
+            "imagePlaceholder": "Audio Agent — toate scenele, o singură scenă sau pas cu pas"
+          },
+          {
+            "id": "production-frames",
+            "number": "5",
+            "title": "Generează și editează cadre",
+            "description": "Generează cadre cheie (beat frames) folosind Run All Agents și Stills Agent pentru fiecare scenă sau pas cu pas, apoi modifică orice cadru cu ajutorul Intelligent Assistant Director (IAD) — trebuie doar să descrii modificarea.",
+            "imagePlaceholder": "Sincronizarea cadrelor pe timpii muzicali prin editări asistate de inteligența artificială"
+          },
+          {
+            "id": "production-animatic",
+            "number": "6",
+            "title": "Revizuiește animaticul",
+            "description": "Redă animaticul complet — cadre, dialog, efecte sonore și muzică — în sala de vizionare interactivă și distribuie un link pentru feedback, fără a exporta un fișier.",
+            "imagePlaceholder": "Screening Room — revizuirea și partajarea interactivă a animaticelor"
+          },
+          {
+            "id": "production-video",
+            "number": "7",
+            "title": "Generează videoclip",
+            "description": "Transformă cadrele aprobate în secvențe animate folosind Video Agent, fie la nivel de scenă, fie pas cu pas. Refă orice cadru cu ajutorul Intelligent Assistant Director — fără regenerări nesfârșite, de tip „păcănele”.",
+            "imagePlaceholder": "Generare Video Agent cu reluări IAD"
+          },
+          {
+            "id": "production-mixer",
+            "number": "8",
+            "title": "Editează în mixer",
+            "description": "Finisează fiecare scenă în Mixer — subtitrări, tăieri, dublaj, suprapuneri și echilibrare audio — pentru un rezultat sigur pentru brand, fără a părăsi studioul.",
+            "imagePlaceholder": "Mixer — subtitrări, tăiere, dublaj și controale audio"
+          },
+          {
+            "id": "production-render-scenes",
+            "number": "9",
+            "title": "Randare și revizuire a scenelor",
+            "description": "Randează scenele, apoi revizuiește-le și partajează-le prin intermediul Screening Room pentru a obține aprobarea înainte de asamblarea finală.",
+            "imagePlaceholder": "Scenele randate, revizuite și partajate în Screening Room"
+          },
+          {
+            "id": "production-multilanguage",
+            "number": "10",
+            "title": "Generează fluxuri multilingve",
+            "description": "Generează versiuni dublate sau sincronizate labial pornind de la același montaj aprobat — accesează peste 70 de piețe fără a refilma nici măcar un cadru.",
+            "imagePlaceholder": "Fluxuri multilingve — dublate și sincronizate labial în funcție de regiune"
+          },
+          {
+            "id": "production-publish",
+            "number": "11",
+            "title": "Generează varianta finală și publică",
+            "description": "Generează varianta finală și publică — miniaturi, titluri și descrieri generate automat, gata pentru canalul tău de YouTube și nu numai.",
+            "imagePlaceholder": "Randare finală și publicare pe YouTube cu un singur clic"
+          }
+        ]
+      }
+    ]
+  },
+  "screeningRoom": {
+    "badge": "Previzualizare disponibilă pentru Screening Room interactiv — Animatic",
+    "languagePrompt": "Ascultă fluxul de oportunități de pe piața ta țintă:",
+    "languages": [
+      {
+        "id": "en",
+        "label": "Engleză",
+        "flag": "🇺🇸"
+      },
+      {
+        "id": "es",
+        "label": "Spaniolă",
+        "flag": "🇪🇸"
+      },
+      {
+        "id": "pt",
+        "label": "Portugheză",
+        "flag": "🇧🇷"
+      },
+      {
+        "id": "hi",
+        "label": "Hindi",
+        "flag": "🇮🇳"
+      },
+      {
+        "id": "zh",
+        "label": "Chineză",
+        "flag": "🇨🇳"
+      }
+    ],
+    "steps": [
+      {
+        "id": "concept",
+        "label": "Optimizarea conceptului și a scenariului"
+      },
+      {
+        "id": "animatic",
+        "label": "Recenzie Animatic de 30 de minute"
+      },
+      {
+        "id": "video",
+        "label": "Randări Full Motion Video Agent"
+      }
+    ],
+    "previewLabel": "Previzualizare"
+  },
+  "keyFeatures": {
+    "badge": "Caracteristici principale",
+    "title": "De la idee la master.",
+    "subtitle": "Series Room → Blueprint Room → Production Stage → Screening Room.",
+    "learnMoreLabel": "Află mai multe",
+    "showLessLabel": "Afișează mai puțin",
+    "videoComingSoon": "Demonstrația funcționalității va fi disponibilă în curând",
+    "videoSoon": "În curând",
+    "overviewComingSoon": "Prezentarea generală va fi disponibilă în curând",
+    "pauseOverview": "Prezentare generală a pauzei",
+    "playOverview": "Prezentare generală a jocului",
+    "muteOverview": "Prezentare generală a funcției de dezactivare a sunetului",
+    "unmuteOverview": "Prezentare generală a funcției de reactivare a sunetului",
+    "enterFullscreenOverview": "Ecran complet",
+    "exitFullscreenOverview": "Ieșire din modul ecran complet",
+    "watchLongformLabel": "Urmărește materialul de lungă durată",
+    "screenshotLabel": "Captură de ecran",
+    "landingUiLanguagesLabel": "Realizăm producții și dublaje în 44 de limbi. Acest site este disponibil în următoarele 39:",
+    "rooms": [
+      {
+        "id": "series-desk",
+        "label": "Series Room",
+        "promise": "Series Room este locul unde începe un sezon. Aceleași personaje și aceeași poveste se regăsesc în fiecare episod pe care îl adaugi. Parcurge-l, ascultă-l și regizează-l înainte ca un episod să fie deschis în Blueprint Room. Un film care nu face parte dintr-un sezon poate sări peste această etapă.",
+        "features": [
+          {
+            "icon": "newSeries",
+            "title": "Serie nouă",
+            "description": "Începe aici. Descrie seria pe care o ai în plan, folosind propriile cuvinte. Funcția „Clarify and Confirm” (Clarificare și Confirmare) rafinează această intenție împreună cu tine până când sinopsisul este gata, iar „Generate Series” (Generare Serie) redactează varianta de bază. O serie nouă începe cu cinci episoade, dar poți adăuga și altele.",
+            "screenshot": "Creare serie nouă — intenție, Clarificare și confirmare, Generare serie",
+            "learnMore": {
+              "items": [
+                {
+                  "title": "Intenția dumneavoastră",
+                  "description": "Precizează despre ce fel de serie este vorba, inclusiv formatul, publicul-țintă și stilul vizual."
+                },
+                {
+                  "title": "Iterează",
+                  "description": "Etapa „Clarificare și confirmare” rafinează sinopsisul împreună cu dumneavoastră înainte de a se genera orice conținut."
+                },
+                {
+                  "title": "Nivel de referință",
+                  "description": "Generate Series scrie sezonul pe care îl vei recenza, începând cu cinci episoade."
+                }
+              ]
+            }
+          },
+          {
+            "icon": "seriesReview",
+            "title": "Revizuiește prima variantă de montaj",
+            "description": "Citește prezentarea generală sau apasă pe „Ascultă”. Apoi citește episoadele sau ascultă-le. Coerența leagă firele narative, iar continuitatea asigură unitatea distribuției, locațiilor, recuzitei și decorurilor comune acestor episoade.",
+            "screenshot": "Prezentare generală, episoade, coerență, continuitate — distribuție, locații, recuzită, decoruri",
+            "learnMore": {
+              "items": [
+                {
+                  "title": "Citește sau ascultă",
+                  "description": "Prezentarea generală și episoadele pot fi citite sau ascultate folosind funcția „Ascultă”."
+                },
+                {
+                  "title": "Consecvență",
+                  "description": "Estetica, evenimentele-cheie și firele narative rămân specifice sezonului."
+                },
+                {
+                  "title": "Continuitate",
+                  "description": "Distribuția, locațiile, recuzita și decorurile sunt aceleași în fiecare episod."
+                }
+              ]
+            }
+          },
+          {
+            "icon": "seriesResonance",
+            "title": "Audience Resonance",
+            "description": "Rulează Audience Resonance atunci când dorești o evaluare a sezonului. Analizează scorurile și concluziile. Aplică o recomandare practică (Actionable Insight) doar dacă dorești; nimic nu se schimbă în serie până nu faci acest lucru.",
+            "screenshot": "Analiza Audience Resonance, urmată de perspective acționabile neaplicate",
+            "learnMore": {
+              "items": [
+                {
+                  "title": "Lectura",
+                  "description": "Scorurile și analiza indică ce anume rezonează cu publicul pe care l-ați identificat."
+                },
+                {
+                  "title": "Opțional",
+                  "description": "O perspectivă practică modifică seria doar atunci când o aplici."
+                }
+              ]
+            }
+          },
+          {
+            "icon": "seriesDirector",
+            "title": "Regizor al seriei",
+            "description": "Coordonează întreaga serie folosind propriile cuvinte, fie ele rostite sau scrise. Tu alegi schimbarea și punctul de interes și ți le însușești. O recomandare poate fi de ajutor, iar părțile firului narativ care nu au legătură cu acestea rămân neschimbate.",
+            "screenshot": "Regizor de serie — regie, focalizare, acceptare",
+            "learnMore": {
+              "items": [
+                {
+                  "title": "Cuvintele tale",
+                  "description": "Rostește sau tastează modificarea și, opțional, limiteaz-o la intrigă, personaje, conținutul episodului, ton sau cadru."
+                },
+                {
+                  "title": "Îl accepți",
+                  "description": "Nimic nu se schimbă până nu accepți, iar părțile din firul narativ care nu au legătură rămân pe loc."
+                },
+                {
+                  "title": "O recomandare",
+                  "description": "Recomandările pot fi de ajutor, iar tu alegi în continuare ce să păstrezi."
+                }
+              ]
+            }
+          },
+          {
+            "icon": "directEpisode",
+            "title": "Regizează acest episod",
+            "description": "Deschide un episod și regizează acea oră de unul singur. Intensifică miza sau aprofundează povestea, apoi aplică schimbările. Celelalte episoade rămân neschimbate.",
+            "screenshot": "Episoade — Regizează acest episod; celelalte episoade rămân neschimbate",
+            "learnMore": {
+              "items": [
+                {
+                  "title": "Un episod",
+                  "description": "Această comandă aplică modificarea doar acelui episod."
+                },
+                {
+                  "title": "Sezonul rămâne",
+                  "description": "Celelalte episoade sunt lăsate așa cum sunt."
+                }
+              ]
+            }
+          },
+          {
+            "icon": "startEpisode",
+            "title": "Începe episodul",
+            "description": "Când un episod este gata, inițiază proiectul aferent. Schița, sinopsisul și punctele narative („beats”) sunt incluse în Blueprint Room. Distribuția și universul poveștii sunt deja stabilite.",
+            "screenshot": "Începe proiectul — schița și distribuția sunt deja incluse în episod",
+            "learnMore": {
+              "items": [
+                {
+                  "title": "Începe proiectul",
+                  "description": "Start Project deschide acel episod în Blueprint Room."
+                },
+                {
+                  "title": "Deja cunoscut",
+                  "description": "Schița, sinopsisul, punctele cheie ale acțiunii și distribuția îl însoțesc."
+                }
+              ]
+            }
+          }
+        ]
+      },
+      {
+        "id": "blueprint-board",
+        "label": "Blueprint Room",
+        "promise": "Blueprint Room este locul unde rafinezi firul narativ înainte de redactarea scenariului de 90 de minute. Pornește de la un episod dintr-un serial sau de la un proiect nou. Stabilește aici momentele cheie și distribuția, astfel încât Production Stage să nu fie nevoit să le reconstruiască.",
+        "features": [
+          {
+            "icon": "startBlueprint",
+            "title": "Inițiază Blueprint",
+            "description": "Pornește de la un episod dintr-un serial sau începe un proiect nou. Un episod de serial vine însoțit de schița, sinopsisul și punctele cheie ale acțiunii (beats). Un proiect nou începe atunci când descrii intenția, utilizezi funcția „Validate & Enhance with AI” și alegi opțiunea de generare a planului (Blueprint).",
+            "screenshot": "Episodul din serie este deja cunoscut sau Începe-ți proiectul — intenție, Validează și îmbunătățește cu AI, Generează Blueprint",
+            "learnMore": {
+              "items": [
+                {
+                  "title": "Episod de serial",
+                  "description": "Un episod dintr-un serial începe cu schița, sinopsisul și punctele narative deja atașate."
+                },
+                {
+                  "title": "Proiect nou",
+                  "description": "„Start Your Project” preia intenția, apoi validează și îmbunătățește cu ajutorul IA, după care generează Blueprint."
+                }
+              ]
+            }
+          },
+          {
+            "icon": "treatment",
+            "title": "Coordonează ritmurile",
+            "description": "Deschide fila „Beats” și ascultă lista de momente cheie (beat sheet). Optimizează aceste momente aici, deoarece ele stau la baza structurării scenariului. Momentele cheie există doar aici. Production Stage transformă fiecare moment cheie într-un capitol.",
+            "screenshot": "Tabul Beats, cu secțiunea Ascultă",
+            "learnMore": {
+              "items": [
+                {
+                  "title": "O schemă a momentelor cheie",
+                  "description": "Beat-urile există doar aici."
+                },
+                {
+                  "title": "Compilare script",
+                  "description": "Unitățile de lucru (beats) determină generarea scriptului, așadar sunt optimizate înainte de Production Stage."
+                },
+                {
+                  "title": "Capitole",
+                  "description": "Production Stage transformă fiecare moment-cheie într-un capitol."
+                }
+              ]
+            }
+          },
+          {
+            "icon": "castLocations",
+            "title": "Coordonează distribuția și locațiile",
+            "description": "Deschide secțiunea „Characters” și gestionează distribuția. Deschide secțiunea „Setting” din fila „Story” și stabilește locațiile aferente. Distribuția influențează generarea scenariului, așadar ambele elemente trebuie configurate înainte ca Production Stage să fie nevoit să refacă scenariul.",
+            "screenshot": "Tabul Personaje, apoi Cadrul acțiunii",
+            "learnMore": {
+              "items": [
+                {
+                  "title": "Distribuție",
+                  "description": "Tab-ul „Personaje” reprezintă distribuția, iar distribuția influențează structura scenariului."
+                },
+                {
+                  "title": "Locații",
+                  "description": "Locațiile reprezintă cadrul acțiunii în fila Poveste."
+                },
+                {
+                  "title": "Înainte de scenariu",
+                  "description": "Direcționarea ambelor către acest punct evită o refactorizare majoră a scriptului din Production Stage."
+                }
+              ]
+            }
+          },
+          {
+            "icon": "blueprintDirector",
+            "title": "Director Blueprint",
+            "description": "Director preia modificarea formulată în cuvintele tale, fie rostite, fie tastate. Concentrează editarea asupra momentelor cheie (beats), a personajelor sau a poveștii, apoi vizualizează varianta revizuită. Nimic nu se modifică până când nu aplici schimbarea.",
+            "screenshot": "Director Blueprint — direcție, focalizare, previzualizare, Aplicare revizuire",
+            "learnMore": {
+              "items": [
+                {
+                  "title": "Cuvintele tale",
+                  "description": "Rostește sau tastează modificarea și concentreaz-o asupra momentelor-cheie, a personajelor sau a poveștii."
+                },
+                {
+                  "title": "Previzualizare",
+                  "description": "Funcția „Generare revizuire echilibrată” afișează modificarea înainte de a o aplica."
+                },
+                {
+                  "title": "Îl aplici",
+                  "description": "Nimic nu se schimbă până când nu aplici revizuirea."
+                }
+              ]
+            }
+          },
+          {
+            "icon": "blueprintResonance",
+            "title": "Audience Resonance",
+            "description": "Salvează audiența, apoi analizează. Vei vedea scorurile și recomandările. Nimic din plan nu se modifică până când nu aplici o recomandare în Blueprint Director.",
+            "screenshot": "Audience Resonance — audiență salvată, scoruri, recomandări neaplicate",
+            "learnMore": {
+              "items": [
+                {
+                  "title": "Lectura",
+                  "description": "Salvează audiența, apoi analizează și consultă scorurile și recomandările."
+                },
+                {
+                  "title": "Opțional",
+                  "description": "O recomandare modifică planul de bază (blueprint) doar atunci când o aplicați în Blueprint Director."
+                }
+              ]
+            }
+          },
+          {
+            "icon": "goToProduction",
+            "title": "Accesați Production Stage",
+            "description": "Accesează Production Stage după ce firul narativ, momentele cheie și distribuția au fost stabilite. Scenariul de 90 de minute este construit pornind de la acest panou. Firul narativ nu trebuie reconstruit în Production Stage.",
+            "screenshot": "Mergi la Production Stage — intriga, momentele cheie și distribuția sunt deja stabilite.",
+            "learnMore": {
+              "items": [
+                {
+                  "title": "Predarea",
+                  "description": "Accesarea Production Stage deschide scriptul din acest blueprint."
+                },
+                {
+                  "title": "Deja configurat",
+                  "description": "Firul narativ, momentele cheie și distribuția sunt deja regizate."
+                }
+              ]
+            }
+          }
+        ]
+      },
+      {
+        "id": "production-stage",
+        "label": "Production Stage",
+        "promise": "În această etapă, planul finalizat prinde viață sub formă de imagini. Controlează cheltuielile folosind propriile repere și un plan bine stabilit. Optimizați împreună fiecare scenă, apoi construiți-le în ordine — regie, sunet, muzică, continuitate și imagini statice — și revizuiți animaticul înainte de a investi în producția video propriu-zisă. Generați clipurile, realizați mixajul, creați versiuni lingvistice și livrați scena, capitolul, masterul sau materialul promoțional.",
+        "spend": {
+          "label": "Controlul cheltuielilor",
+          "features": [
+            {
+              "icon": "byok",
+              "title": "Aduceți propria cheie",
+              "description": "Conectează propriile chei de acces pentru furnizorii de imagini și videoclipuri. Generarea se realizează prin contul tău și la tarifele tale, în timp ce studioul asistat — agenții, continuitatea, Mixerul și Screening Room — rămâne disponibil.",
+              "screenshot": "Chei BYOK",
+              "learnMore": {
+                "items": [
+                  {
+                    "title": "Cheile tale",
+                    "description": "Conectează cheile furnizorilor de imagini și videoclipuri, astfel încât generarea să se realizeze prin contul tău și la tarifele tale."
+                  },
+                  {
+                    "title": "Același studio",
+                    "description": "Agenții, continuitatea, Mixerul și Screening Room rămân pe loc."
+                  }
+                ]
+              }
+            },
+            {
+              "icon": "budget",
+              "title": "Planificator de producție",
+              "description": "Stabilește numărul de iterații pentru imagini statice și clipuri per cadru înainte de a aloca resurse. Aceste obiective se cumulează la nivel de scenă, capitol și proiect final, iar o dată de începere generează un calendar care include și ziua finalizării.",
+              "screenshot": "Planificator de producție",
+              "learnMore": {
+                "items": [
+                  {
+                    "title": "Ținte lovite",
+                    "description": "Stabilește iterațiile pentru cadrele statice și clipuri la nivel de plan și cumulează-le la nivel de scenă, capitol și master."
+                  },
+                  {
+                    "title": "Program datat",
+                    "description": "O dată de început și zilele lucrătoare formează un program cu credite cumulate."
+                  },
+                  {
+                    "title": "Resetare pe baza valorilor reale",
+                    "description": "Scenele finalizate pot reseta țintele în funcție de costurile lor reale."
+                  },
+                  {
+                    "title": "Stare telefon",
+                    "description": "Vizualizează ritmul, cheltuielile și data finalizării pe telefon, în timp ce editarea se realizează pe desktop sau tabletă."
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        "groups": [
+          {
+            "id": "script",
+            "label": "Optimizează scriptul",
+            "features": [
+              {
+                "icon": "scriptResonance",
+                "title": "Audience Resonance",
+                "description": "Audience Resonance citește întregul scenariu dintr-odată, toate scenele simultan. Vezi partiturile și notițele împreună, iar nimic nu este rescris până când nu alegi tu acest lucru.",
+                "screenshot": "Audience Resonance — partituri și note pentru toate scenele, neaplicate",
+                "learnMore": {
+                  "items": [
+                    {
+                      "title": "Fiecare scenă împreună",
+                      "description": "Acesta tratează scenariul ca pe o lucrare unitară, incluzând note referitoare la scenele care se desfășoară simultan."
+                    },
+                    {
+                      "title": "Tu alegi",
+                      "description": "Nimic nu este rescris până când nu alegi pe baza căror notițe să acționezi."
+                    }
+                  ]
+                }
+              },
+              {
+                "icon": "castVisual",
+                "title": "Distribuție, costume și voce",
+                "description": "Stabilește distribuția înainte de a crea scenele. Fixează personajul, vestimentația și vocea, astfel încât fiecare imagine sau clip ulterior să implice aceeași persoană.",
+                "screenshot": "Personaj, garderobă și voce",
+                "learnMore": {
+                  "items": [
+                    {
+                      "title": "Personaj și garderobă",
+                      "description": "Cast Agent realizează desenul personajului și al ținutelor vestimentare."
+                    },
+                    {
+                      "title": "Voce",
+                      "description": "Vocea este stabilită pentru personaj înainte ca scenele să fie construite."
+                    },
+                    {
+                      "title": "Aceeași persoană",
+                      "description": "Fiecare cadru fix și fiecare clip necesită acea blocare."
+                    }
+                  ]
+                }
+              },
+              {
+                "icon": "directShot",
+                "title": "Lovitură directă",
+                "description": "Direct Shot realizează captura pe baza propriilor tale cuvinte, tastate sau dictate. Vizualizezi în prealabil indicația și o salvezi, iar solicitările pentru imagine statică și pentru clip se actualizează simultan.",
+                "screenshot": "Direct Shot — tastează sau dictează, previzualizează, salvează",
+                "learnMore": {
+                  "items": [
+                    {
+                      "title": "Lovitură anunțată",
+                      "description": "Dialogul este intitulat Cadru direct · Scena N · Cadrul N."
+                    },
+                    {
+                      "title": "Tastează sau dictează",
+                      "description": "Scrie notița sau dictează-o, apoi previzualizează indicația înainte de a salva."
+                    },
+                    {
+                      "title": "Ambele solicitări",
+                      "description": "Salvarea actualizează simultan promptul pentru imaginea statică și promptul pentru clip."
+                    },
+                    {
+                      "title": "Din nou după clipuri",
+                      "description": "Dacă o lovitură generată este incorectă, deschide Direct Shot și orientează-o din nou."
+                    }
+                  ]
+                }
+              },
+              {
+                "icon": "audioAgent",
+                "title": "Audio Agent",
+                "description": "Audio Agent generează dialogul, efectele sonore și muzica scenei. Scena poate fi auzită înainte de consumarea unui clip.",
+                "screenshot": "Audio Agent — dialog, efecte și muzică",
+                "learnMore": {
+                  "items": [
+                    {
+                      "title": "Dialog și efecte",
+                      "description": "Dialogul se limitează la vorbire, iar efectele sonore sunt destinate cadrelor cu un reper precis."
+                    },
+                    {
+                      "title": "Muzică",
+                      "description": "Muzica susține scena alături de dialog."
+                    },
+                    {
+                      "title": "Înainte de mișcare",
+                      "description": "Ascultă scena înainte de a deschide Clips."
+                    }
+                  ]
+                }
+              },
+              {
+                "icon": "continuity",
+                "title": "Continuitate",
+                "description": "Generează doar referințele necesare pentru această scenă, atunci când scena este gata. Scenele anterioare rămân în stadiul în care le-ai blocat, astfel încât să nu refaci referințele deja aprobate.",
+                "screenshot": "Continuitate — doar referințele acestei scene",
+                "learnMore": {
+                  "items": [
+                    {
+                      "title": "Doar această scenă",
+                      "description": "Desenează distribuția, locațiile și recuzita necesare pentru această scenă și lasă-le pe celelalte în pace."
+                    },
+                    {
+                      "title": "Exact la timp",
+                      "description": "Generează-le atunci când scena este gata, nu ca un lot pentru întregul film."
+                    },
+                    {
+                      "title": "Deja blocat",
+                      "description": "O modificare într-o scenă nu redefinește referințele pe care scenele anterioare le utilizează deja."
+                    }
+                  ]
+                }
+              },
+              {
+                "icon": "stillsAgent",
+                "title": "Stills Agent",
+                "description": "Stills Agent generează cadrele pe baza direcției aprobate. Direcția și sunetul rămân neschimbate, iar clipurile urmează ulterior.",
+                "screenshot": "Stills Agent — cadre",
+                "learnMore": {
+                  "items": [
+                    {
+                      "title": "Cadre",
+                      "description": "Generează imaginea statică pentru fiecare cadru din scenă."
+                    },
+                    {
+                      "title": "Direcția rămâne neschimbată",
+                      "description": "Regenerarea unui cadru actualizează imaginea, în timp ce direcția și sunetul rămân neschimbate."
+                    },
+                    {
+                      "title": "Înainte de clipuri",
+                      "description": "Aprobă imaginile statice înainte de a deschide Clips."
+                    }
+                  ]
+                }
+              },
+              {
+                "icon": "animatic",
+                "title": "Animatic",
+                "description": "Vizualizează scena în sala de proiecție sub formă de animatic – imagini statice însoțite de dialog, coloană sonoră și efecte. Distribuie materialul pentru a primi feedback și finalizează fiecare scenă în acest mod înainte de a trece la etapa video; astfel, o eventuală modificare a scenariului nu va necesita refacerea clipurilor. Pentru mulți creatori, animaticul reprezintă produsul final și poate fi exportat în format MP4.",
+                "screenshot": "Animatic Screening Room, cu opțiune de partajare",
+                "learnMore": {
+                  "items": [
+                    {
+                      "title": "Imagine și sunet",
+                      "description": "Animaticul rulează imaginile statice aprobate, însoțite de dialog, coloană sonoră și efecte."
+                    },
+                    {
+                      "title": "Distribuie",
+                      "description": "Trimite un singur link pentru ca recenzorii să urmărească animaticul și să lase observații pe imagine."
+                    },
+                    {
+                      "title": "Înainte de video",
+                      "description": "Finalizează scenele sub formă de animatice înainte de a genera clipurile, astfel încât o modificare a scenariului să nu necesite regenerarea videoclipurilor."
+                    },
+                    {
+                      "title": "MP4-ul",
+                      "description": "Pentru mulți creatori, animaticul este produsul final și poate fi randat în format MP4."
+                    }
+                  ]
+                }
+              }
+            ]
+          },
+          {
+            "id": "video",
+            "label": "Video",
+            "features": [
+              {
+                "icon": "videoAgent",
+                "title": "Video Agent",
+                "description": "Video Agent generează clipurile cadrelor în fila Clips. Vizionați scena asamblată în Screening Room, iar dacă un cadru este incorect, regizați-l din nou folosind funcția Direct Shot.",
+                "screenshot": "Video Agent, apoi scena îmbinată",
+                "learnMore": {
+                  "items": [
+                    {
+                      "title": "Secvențe filmate",
+                      "description": "Video Agent generează clipul pentru fiecare cadru pornind de la imaginea statică aprobată."
+                    },
+                    {
+                      "title": "Scenă cusută",
+                      "description": "Revizuiește scena îmbinată în Screening Room."
+                    },
+                    {
+                      "title": "Regizează-l din nou",
+                      "description": "Deschideți un Direct Shot – tastat sau dictat – atunci când un clip este incorect."
+                    }
+                  ]
+                }
+              },
+              {
+                "icon": "mixer",
+                "title": "Mixer",
+                "description": "Mixerul finalizează scena în cadrul Production Stage. Includeți sau eliminați cadre, ajustați-le durata, echilibrați sunetul și randați scena împreună cu partea audio.",
+                "screenshot": "Mixer — includere, tăiere, echilibrare, suprapunere, filigran",
+                "learnMore": {
+                  "items": [
+                    {
+                      "title": "Shot-uri",
+                      "description": "Include sau elimină cadre individuale și scurtează-le pe cele păstrate."
+                    },
+                    {
+                      "title": "Dialog",
+                      "description": "Setează volumul și viteza pentru fiecare replică."
+                    },
+                    {
+                      "title": "Piste",
+                      "description": "Echilibrează narațiunea, dialogul, efectele sonore și muzica, inclusiv estomparea și buclarea muzicii."
+                    },
+                    {
+                      "title": "Suprapuneri",
+                      "description": "Plasați suprapuneri de text peste scenă."
+                    },
+                    {
+                      "title": "Filigran",
+                      "description": "Adăugați un filigran text sau imagine."
+                    },
+                    {
+                      "title": "Redare",
+                      "description": "Randează scena împreună cu sunetul, iar acel randare este ceea ce redă Screening Room."
+                    }
+                  ]
+                }
+              },
+              {
+                "icon": "languageStreams",
+                "title": "Versiuni lingvistice",
+                "description": "Această scenă reprezintă o versiune lingvistică, nu o producție nouă. Gemini TTS asigură dublajul în 44 de limbi, iar pentru fiecare cadru poți dubla replica sau regenera clipul, inclusiv elementele de semnalistică.",
+                "screenshot": "Versiune lingvistică — Dublaj, sincronizare labială sau regenerare, inclusiv elemente de semnalistică",
+                "learnMore": {
+                  "items": [
+                    {
+                      "title": "Patruzeci și patru de limbi",
+                      "description": "Gemini TTS redă dublajul în 44 de limbi."
+                    },
+                    {
+                      "title": "Per doză",
+                      "description": "Pentru fiecare cadru, alege „Double” pentru a suprapune vocea dublată, „Lip-sync” pentru a o interpreta sau „Regenerate” pentru a crea un clip nou pe baza replicii traduse."
+                    },
+                    {
+                      "title": "Semnalistică",
+                      "description": "Regenerează imaginea unui indicator atunci când aceasta conține text care trebuie modificat."
+                    },
+                    {
+                      "title": "Momentul ales",
+                      "description": "Viteza video este salvată pentru acea versiune lingvistică, deoarece o traducere este adesea cu 10–30% mai lungă decât varianta originală."
+                    }
+                  ]
+                }
+              }
+            ]
+          },
+          {
+            "id": "publish",
+            "label": "Publică",
+            "features": [
+              {
+                "icon": "shipPackage",
+                "title": "Ambalare și expediere",
+                "description": "Finalizează o scenă, un capitol, varianta master sau un promo atunci când materialul este gata. Publică-l pe YouTube, Facebook sau TikTok ori descarcă fișierul MP4 și continuă să lucrezi la restul.",
+                "screenshot": "Pregătire și livrare — scenă, capitol, master, promo; YouTube, Facebook, TikTok, MP4",
+                "learnMore": {
+                  "items": [
+                    {
+                      "title": "Piese",
+                      "description": "Trimite o scenă, un capitol, masterul sau un promo."
+                    },
+                    {
+                      "title": "Fluxuri lingvistice",
+                      "description": "Fiecare versiune lingvistică poate fi livrată împreună cu pachetul."
+                    },
+                    {
+                      "title": "Destinații",
+                      "description": "Publică pe YouTube, Facebook sau TikTok ori descarcă fișierul MP4."
+                    },
+                    {
+                      "title": "Continuă să construiești",
+                      "description": "Livrează partea finalizată și continuă să construiești restul."
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "screening-room",
+        "label": "Screening Room",
+        "promise": "Sala de vizionare este locul unde montajul final este vizionat, analizat și lansat. Un singur player găzduiește pre-vizualizarea, scenele, capitolele, masterul, promo-ul și fiecare flux lingvistic, astfel încât dublajul să corespundă exact montajului randat de inginerul de sunet. Partajează un singur link pentru redare și pentru adăugarea de observații asupra imaginii. Publică o scenă de 3–5 minute, un capitol de 8–12 minute, masterul sau un promo imediat ce materialul respectiv este gata, continuând în același timp lucrul la restul proiectului.",
+        "features": [
+          {
+            "icon": "screeningPlayer",
+            "title": "Un jucător",
+            "description": "Comută între Pre-Vizualizare, scene, capitole, varianta finală (master) și promo. Alege un flux lingvistic și ascultă acea versiune — dublată, sincronizată labial sau regenerată cadru cu cadru. Playerul redă exact montajul generat de Mixer.",
+            "screenshot": "Player Screening Room",
+            "learnMore": {
+              "items": [
+                {
+                  "title": "O suprafață",
+                  "description": "Comută între Pre-Vizualizare, scene, capitole, master și promo."
+                },
+                {
+                  "title": "Flux lingvistic",
+                  "description": "Alege o versiune și ascult-o dublată, sincronizată labial sau regenerată cadru cu cadru."
+                },
+                {
+                  "title": "Același croi",
+                  "description": "Playerul este montajul pe care Mixerul l-a randat."
+                }
+              ]
+            }
+          },
+          {
+            "icon": "screeningCollab",
+            "title": "Colaborați la montaj",
+            "description": "Distribuiți un singur link. Cei care evaluează materialul îl urmăresc în timp real și lasă notițe direct pe imagine. Nu mai este nevoie să exportați un fișier brut și să-l trimiteți prin e-mail pentru a colecta feedback. Primiți o notificare când este lăsat un comentariu, pe care îl puteți citi direct de pe telefon.",
+            "screenshot": "Recenzie distribuită",
+            "learnMore": {
+              "items": [
+                {
+                  "title": "Un link",
+                  "description": "Recenzorii urmăresc materialul în redare reală și lasă notițe pe imagine."
+                },
+                {
+                  "title": "Fără variantă preliminară prin e-mail",
+                  "description": "Nu exporți un fișier brut prin e-mail pentru a colecta feedback."
+                },
+                {
+                  "title": "Notițe telefonice",
+                  "description": "O notificare scrisă te anunță și o poți citi pe telefon, în timp ce studioul rămâne pe desktop sau tabletă."
+                }
+              ]
+            }
+          },
+          {
+            "icon": "packageShip",
+            "title": "Lansează când este gata",
+            "description": "Publică o scenă de 3–5 minute, un capitol de 8–12 minute, varianta finală sau un promo pe YouTube, Facebook sau TikTok, în format 16:9 sau 9:16, ori descarcă fișierul. Titlurile, descrierea și setările de confidențialitate rămân asociate materialului. Lansează partea finalizată și continuă să lucrezi la restul.",
+            "screenshot": "Publică pachetul",
+            "learnMore": {
+              "items": [
+                {
+                  "title": "Expediază o piesă",
+                  "description": "Publică o scenă de 3–5 minute, un capitol de 8–12 minute, varianta finală sau un promo."
+                },
+                {
+                  "title": "Destinații",
+                  "description": "Publică pe YouTube, Facebook sau TikTok, în format 16:9 sau 9:16, sau descarcă fișierul."
+                },
+                {
+                  "title": "Pachet",
+                  "description": "Titlurile, descrierea și setările de confidențialitate însoțesc pachetul."
+                },
+                {
+                  "title": "Continuă să construiești",
+                  "description": "Livrează partea finalizată și continuă să construiești restul."
+                }
+              ]
+            }
+          }
+        ]
+      }
+    ]
+  },
   "metadata": {
-    "title": "SceneFlow Studio - Creare de videoclipuri asistată de IA",
+    "title": "SceneFlow Studio – Creare de conținut video bazată pe IA",
     "description": "Transformă-ți ideile în videoclipuri profesionale cu automatizarea fluxului de lucru bazată pe inteligență artificială."
   },
   "nav": {
     "plansPricing": "Planuri și prețuri",
+    "productionExamples": "Exemple",
+    "keyFeatures": "Caracteristici",
     "trustSafety": "Încredere și siguranță",
     "signIn": "Autentificare",
     "startProject": "demararea proiectului.",
@@ -14,89 +949,118 @@
     "goToDashboard": "Înapoi la panoul de Control",
     "userFallback": "Utilizator",
     "searchLanguages": "Caută limbi",
-    "noLanguagesFound": "Nu s-au găsit limbi",
-    "productionExamples": "Exemple",
-    "keyFeatures": "Caracteristici"
+    "noLanguagesFound": "Nu s-au găsit limbi"
   },
   "floatingNav": {
-    "preVisEngine": "Pre-Vis Engine",
-    "trustSafety": "Trust & Safety",
-    "pricing": "Pricing",
-    "productionExamples": "Examples",
-    "twoModes": "One Pipeline",
-    "keyFeatures": "Key Features",
-    "audienceResonance": "Audience Resonance"
+    "productionExamples": "Exemple",
+    "twoModes": "Un singur flux",
+    "directControl": "Direct",
+    "publishCut": "Publică",
+    "keyFeatures": "Caracteristici principale",
+    "audienceResonance": "Audience Resonance",
+    "preVisEngine": "Motor de pre-vizualizare",
+    "trustSafety": "Încredere și siguranță",
+    "pricing": "Prețuri"
   },
   "hero": {
-    "headline": "From first spark to finished master.",
-    "subheadline": "SceneFlow is one guided pipeline. You direct the story, the cast, and the tone. It builds the Blueprint, holds continuity, plays the full animatic, and assembles the master — without prompt trials or a timeline of loose clips.",
-    "ctaPrimaryLaunch": "Launch Studio ($9)",
-    "ctaSupportingLine": "The all-in-one studio to craft, export, and distribute your stories. Download a master and ship anywhere — or publish long-form cuts and chapters to {longForm}, and promote trailers on {shorts}.",
-    "ctaSecondary": "Explore the pipeline",
-    "ctaToolStack": "See how it replaces your tool stack",
+    "eyebrow": "Producție cinematografică automatizată pentru filme și seriale",
+    "headline": "De la prima scânteie până la capodopera finalizată.",
+    "subheadline": "SceneFlow este un flux de lucru ghidat. Tu coordonezi povestea, distribuția și tonul. Acesta generează Blueprint, asigură continuitatea, redă animaticul complet și asamblează varianta finală — totul fără încercări repetate de prompt-uri sau o cronologie formată din clipuri disparate.",
+    "ctaPrimaryLaunch": "Launch Studio (9 $)",
+    "ctaSupportingLine": "Studioul complet pentru crearea, exportul și distribuirea poveștilor tale. Descarcă un master și trimite-l oriunde — sau publică versiuni extinse și capitole pe {longForm} și promovează trailere pe {shorts}.",
+    "ctaNetworkInvite": "Proiectele remarcabile pot aplica pentru rețeaua SceneFlow, accesibilă doar pe bază de invitație.",
+    "ctaNetworkInviteHref": "#for-filmmakers",
+    "ctaSecondary": "Explorează fluxul de lucru",
+    "ctaToolStack": "Vezi cum înlocuiește setul tău de instrumente",
     "chips": [
       {
-        "label": "From Concept to Feature",
-        "detail": "Expand ideas into 90-minute scripts in the Blueprint Room. Define characters, art, and beats, then let Audience Resonance analysis fine-tune your story before you shoot."
+        "label": "De la concept la funcționalitate",
+        "detail": "Dezvoltă ideile în scenarii de 90 de minute în cadrul Blueprint Room. Definește personajele, elementele vizuale și momentele cheie, apoi lasă analiza Audience Resonance să îți rafineze povestea înainte de filmare."
       },
       {
-        "label": "Direct With Intent, Not Prompts",
-        "detail": "Speak the language of film with intelligent assistants that understand your direction. The Reference Library locks your custom cast, wardrobe, and locations for absolute continuity."
+        "label": "Oferă instrucțiuni bazate pe intenție, nu pe prompturi.",
+        "detail": "Vorbește limbajul cinematografiei cu ajutorul unor asistenți inteligenți care îți înțeleg viziunea. Biblioteca de referință fixează distribuția, costumele și locațiile personalizate, asigurând o continuitate absolută."
       },
       {
-        "label": "Agent-Driven Production",
-        "detail": "Accelerate generation 5X with intelligent agents that build 30-shot scenes in the background. Iterate freely in draft mode, then publish your final vision in stunning Hi-Res."
+        "label": "Producție bazată pe agenți",
+        "detail": "Accelerează generarea de 5 ori cu ajutorul agenților inteligenți care construiesc scene din 30 de cadre în fundal. Experimentează liber în modul schiță, apoi publică viziunea finală la o rezoluție înaltă spectaculoasă."
       },
       {
-        "label": "Screen, Collaborate, Ship",
-        "detail": "Share progress at every milestone—from audio animatics to the final master—in the Screening Room. Distribute as shorts or features in multiple languages for a global reach."
+        "label": "Selectează, Colaborează, Livrează",
+        "detail": "Partajează progresele înregistrate la fiecare etapă importantă — de la animaticuri audio până la masterul final — în Screening Room. Distribuie materialele sub formă de scurtmetraje sau lungmetraje, în mai multe limbi, pentru a asigura o acoperire globală."
       }
     ],
     "pipelineSteps": [
       "Blueprint",
-      "Production",
+      "Producție",
       "Screening Room"
     ],
-    "languagePrompt": "Hear the hero in your language — same pipeline, new markets",
-    "multilangHint": "Hero dubs in 7 languages — full pipeline supports 70+ in Production Stage.",
-    "playWithNarration": "Play with narration",
-    "tapToHear": "Tap to hear",
-    "fullscreen": "Fullscreen",
+    "languagePrompt": "Alege engleza, spaniola, chineza sau araba — același flux de lucru, piețe noi.",
+    "multilangHint": "Dublaje principale în 4 limbi — fluxul complet de lucru suportă peste 70 de limbi în Production Stage.",
+    "playWithNarration": "Redare cu narațiune",
+    "tapToHear": "Apasă pentru a asculta",
+    "fullscreen": "Ecran complet",
+    "pauseBackgroundVideo": "Întrerupe videoclipul de fundal",
+    "playBackgroundVideo": "Redă videoclipul de fundal",
     "heroVideoLanguages": {
       "en": {
-        "label": "English",
+        "label": "Engleză",
         "nativeLabel": "English"
       },
       "es": {
-        "label": "Spanish",
+        "label": "Spaniolă",
         "nativeLabel": "Español"
       },
-      "pt": {
-        "label": "Portuguese",
-        "nativeLabel": "Português"
-      },
-      "hi": {
-        "label": "Hindi",
-        "nativeLabel": "हिन्दी"
-      },
       "zh": {
-        "label": "Chinese",
+        "label": "Chineză",
         "nativeLabel": "中文"
       },
       "ar": {
-        "label": "Arabic",
+        "label": "Arabă",
         "nativeLabel": "العربية"
-      },
-      "th": {
-        "label": "Thai",
-        "nativeLabel": "ไทย"
       }
     },
-    "soon": "Soon",
-    "videoLanguageCount": "{count, plural, =1 {# language} other {# languages}}",
-    "eyebrow": "Automated filmmaking for films and series",
-    "ctaNetworkInvite": "Standout projects can apply for the invite-only SceneFlow Network.",
-    "ctaNetworkInviteHref": "#for-filmmakers"
+    "soon": "În curând",
+    "videoLanguageCount": "{count, plural, =1 {# language} other {# languages}}"
+  },
+  "twoModes": {
+    "eyebrow": "Fricțiunea pe care o eliminăm",
+    "title": "Un singur flux de lucru. Nu o suită de instrumente.",
+    "subtitle": "SceneFlow replaces single-clip generators and a pile of separate docs, editors, and re-renders. Build the series or the 90-minute master, then publish a scene or a chapter when you are ready to earn.",
+    "comingSoon": "În curând",
+    "comparison": {
+      "id": "comparison",
+      "caption": "Fragmented tools beside one SceneFlow pipeline."
+    },
+    "cta": "Launch Studio (9 $)"
+  },
+  "directControl": {
+    "eyebrow": "Controlul pe care îl păstrezi",
+    "title": "Coordonează povestea. Lasă agenții să se ocupe de generarea solicitărilor.",
+    "subtitle": "Regizezi cadrul folosind un limbaj simplu. Indicațiile de regie generează prompturile pentru imaginea statică și pentru clip. Momentele muzicale și narațiunea sunt sincronizate cu ritmul. Urmărește animaticul, modifică cadrul dacă nu este potrivit și abia apoi investește în animație.",
+    "comparison": {
+      "id": "direction",
+      "caption": "O notă a regizorului, o indicație pentru clip, precum și muzică și narațiune pe același timp muzical."
+    },
+    "cta": "Launch Studio (9 $)"
+  },
+  "publishCut": {
+    "eyebrow": "Varianta pe care o publici",
+    "title": "Exportă oriunde. Beneficiază de SFAI PREMIERE și SFAI SCENEFLOW odată ce le obții.",
+    "subtitle": "Download a master and ship it yourself, or publish finished scenes and chapters to {longForm} and cut trailers for {shorts} — without waiting on the whole cut. Before anything hits the public feed, run drafts or your final master through the Screening Room. Standout projects can apply for the invite-only SceneFlow Network; it is a curated accelerator, not an open storefront.",
+    "comparison": {
+      "id": "publish",
+      "caption": "A finished scene or chapter, and the 90-minute master, from one studio."
+    },
+    "cta": "Launch Studio (9 $)"
+  },
+  "infrastructure": {
+    "title": "Infrastructură și securitate la nivel enterprise",
+    "description": "Susținut de Google Cloud și Vertex AI pentru fiabilitate la nivel enterprise, modele de dublaj în mai multe limbi și procesare securizată a activelor.",
+    "badges": {
+      "googleCloud": "Google Cloud",
+      "vertexAi": "Vertex AI"
+    }
   },
   "valueProp": {
     "pills": [
@@ -150,7 +1114,7 @@
         "icon": "video",
         "label": "Creator",
         "outcome": "Lansează la timp — nu mai reface totul în fiecare instrument",
-        "narrative": "Ai povestea, dar fiecare episod presupune re-exportarea activelor, introducerea din nou a instrucțiunilor în file noi și speranța că se păstrează continuitatea. SceneFlow reunește etapele de serie, Blueprint și producție într-un singur studio — astfel încât aprobi aspectul vizual în faza de pre-vizualizare, generezi conținutul scenă cu scenă și livrezi episoade coerente, respectând termenele limită, în loc să reiei totul de la zero.",
+        "narrative": "Ai povestea, dar fiecare episod presupune re-exportarea activelor, introducerea din nou a instrucțiunilor în file noi și speranța că se va păstra continuitatea. SceneFlow conectează Series Room, Blueprint Room și Production Stage într-un singur studio — astfel încât poți aproba aspectul vizual în etapa de pre-vizualizare, poți genera conținutul scenă cu scenă și poți livra episoade coerente, conform programului, în loc să reiei totul de la zero.",
         "useCases": [
           "Dramă TV pe YouTube în format 16:9",
           "Dramă verticală pentru mobil (format 9:16)",
@@ -243,7 +1207,7 @@
         "icon": "clapă de filmare",
         "label": "Producție de film",
         "outcome": "Scenariu pentru un animatic interactiv pe care îl poți viziona și testa înainte de filmare",
-        "narrative": "În trecut, pre-vizualizarea și testarea în fața publicului presupuneau săptămâni întregi de lucru la storyboard-uri, înregistrări vocale provizorii și estimări costisitoare, înainte ca filmările să înceapă efectiv. SceneFlow transformă scenariul tău într-un animatic interactiv prin pre-vizualizare rapidă (Pre-vis Agent) — optimizează-l cu Audience Resonance, proiectează-l în Screening Room și alocă bugetul abia atunci când povestea funcționează cu adevărat.",
+        "narrative": "În trecut, previzualizarea și testarea în fața publicului implicau săptămâni întregi de lucru la storyboard-uri, înregistrări vocale provizorii și presupuneri costisitoare înainte de începerea filmărilor. SceneFlow transformă scenariul tău într-un animatic interactiv cu ajutorul Pre-vis Agent — optimizează rezultatul folosind Audience Resonance, vizionează-l în Screening Room și alocă bugetul abia atunci când povestea rezonează cu adevărat.",
         "useCases": [
           "Previzualizare pentru lungmetraje și filme independente",
           "Animatice pentru prezentarea către investitori",
@@ -256,7 +1220,7 @@
           "challengeTitle": "Previzualizare lentă înainte de a putea testa povestea",
           "challengeDescription": "Ai un scenariu, însă lecturile, ciclurile de realizare a storyboard-ului și instrumentele fragmentate de pre-vizualizare întârzie prezentările pentru investitori, testele cu publicul și deciziile de aprobare a proiectului.",
           "solutionTitle": "Previzualizare interactivă bazată pe scenariu",
-          "solutionDescription": "Încarcă-ți scenariul (MDX, FDX și alte formate), optimizează-l cu Audience Resonance și generează o previzualizare interactivă pentru vizionare și testare — beneficiind de generare simultană rapidă (Express) pe segmentele narative, peste 70 de opțiuni lingvistice și suprapuneri rapide în mai multe limbi.",
+          "solutionDescription": "Încarcă-ți scenariul (MDX, FDX și alte formate), optimizează-l folosind Audience Resonance și generează o previzualizare interactivă pentru vizionare și testare — cu Production Agents compunând prompturi și generând conținut pe segmente narative, în peste 70 de limbi și cu suprapuneri rapide în mai multe limbi.",
           "win": "Validează compatibilitatea dintre poveste și public înainte de filmările principale — folosind un animatic ușor de distribuit, nu un proces de pre-vizualizare care durează săptămâni întregi."
         }
       }
@@ -272,7 +1236,7 @@
       },
       {
         "them": "Consecvență manuală între sesiuni",
-        "us": "Reference Library + Shot Frames blochează elementele vizuale înainte de video"
+        "us": "Blocarea elementelor vizuale înaintea videoclipului"
       },
       {
         "them": "Fără flux de lucru pentru validarea audienței",
@@ -290,10 +1254,10 @@
     "title": "Flux de lucru video bazat pe ritm",
     "subtitle": "Aprobă înainte de randare — nu regenerare de tip „păcănele”",
     "intro": "Fără generări bazate pe încercări și erori. Vizualizezi și aprobi aspectul înainte ca SceneFlow să consume credite pentru videoclipul final.",
-    "description": "SceneFlow structurează aprobarea vizuală la fiecare etapă: Pre-vis Agent pentru revizuire, Shot Frames pentru fixarea compoziției, apoi F2V pentru fiecare „shot”. Rafinezi aspectul vizual înainte de a consuma credite pe deriva și halucinațiile modelului.",
+    "description": "SceneFlow structurează procesul de aprobare vizuală la fiecare etapă: Pre-vis Agent pentru revizuire, Shot Frames pentru fixarea compoziției, urmat de F2V pentru fiecare segment narativ (beat). Astfel, rafinezi aspectul vizual înainte de a consuma credite pe devieri și halucinații.",
     "steps": [
-      "Pre-vis Agent — partajează secvențe audio-vizuale pentru revizuire în câteva minute",
-      "Shot Frames — blocare început/sfârșit compoziție cu continuitate Reference Library",
+      "Pre-vis Agent — partajarea secvențelor audiovizuale pentru revizuire în urma solicitărilor ghidate de experți",
+      "Shot Frames — blochează începutul/sfârșitul compoziției cu continuitatea Reference Library",
       "F2V per shot — generează video din cadre aprobate, nu din prompturi oarbe",
       "Lanț EXT continuu — pași de extensie nativi de +7 secunde pentru segmente lungi de dialog",
       "Production Mixer — sincronizare, audio și export de flux către Screening Room"
@@ -371,7 +1335,7 @@
     "steps": [
       {
         "title": "Clip inițial de 8 secunde",
-        "description": "Conversia cadru-la-video sau imagine-la-video din sursa aprobată Shot Frames blochează compoziția înainte de mișcare."
+        "description": "Conversia cadru-la-video sau imagine-la-video din Shot Frames aprobat blochează compoziția înainte de mișcare."
       },
       {
         "title": "Pași de prelungire cu 7 secunde",
@@ -406,7 +1370,7 @@
     "badge": "Gamă creativă",
     "title": "Orice stil, orice ecran",
     "titleAccent": "ADN-ul tău creativ, fixat în Blueprint",
-    "subtitle": "În Blueprint se cristalizează ADN-ul tău creativ: stilul vizual, raportul de aspect, tonul și nucleul narativ. SceneFlow integrează aceste alegeri în tratament, în Audience Resonance și în generarea scenariului, astfel încât indicațiile de scenă să corespundă încadraturii și esteticii vizuale încă de la bun început – și nu doar ca setări de export aplicate în ultimul moment.",
+    "subtitle": "Blueprint Room este etapa în care se consolidează ADN-ul tău creativ: stilul vizual, raportul de aspect, tonul și nucleul narativ. SceneFlow integrează aceste alegeri în tratament, în Audience Resonance și în generarea scenariului, astfel încât indicațiile scenice să corespundă încadraturii și aspectului vizual încă de la început – și nu să fie doar niște setări de export aplicate în ultimul moment.",
     "pillars": [
       {
         "title": "Forma urmează funcția (și încadrarea)",
@@ -430,87 +1394,121 @@
       "items": [
         {
           "id": "fotorealist",
-          "name": "Fotorealist",
+          "name": "Live-action cinematografic",
           "displayTitle": "Fotorealism",
-          "description": "Stil de fotografie profesională",
+          "description": "Iluminare fotorealistă, de tip cinematografic",
           "tagline": "Realism de prestigiu în format extins",
           "marketingBody": "Fotorealismul oferă acea atractivitate pentru publicul larg pe care o așteaptă spectatorii de seriale și documentare de prestigiu. Asigură consistența personajelor și a iluminatului realist de-a lungul secvențelor narative interconectate, astfel încât dramele episodice și docuseriile să-și păstreze continuitatea emoțională, de la episodul de debut până la final.",
+          "featured": true,
           "thumbnail": "https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Gemini_Generated_Image_w5y03bw5y03bw5y0.jpeg"
         },
         {
           "id": "anime din anii '90",
-          "name": "Anime (anii '90)",
-          "displayTitle": "Anime",
-          "description": "Stil clasic de anime din anii '90",
-          "tagline": "Arcuri narative serializate",
-          "marketingBody": "Tehnica de umbrire de tip „cel shading” specifică stilului anime generează o implicare profundă a fanilor, atât în cazul serialelor web cu mai multe episoade, cât și al arcurilor narative de mare amploare. Motoarele generative antrenate pe acest stil produc linii bine definite și o încadrare previzibilă – caracteristici ideale pentru producția în serie la scară largă.",
+          "name": "3D / CGI cinematic",
+          "displayTitle": "3D / CGI cinematic",
+          "description": "Aspect de lungmetraj 3D randat",
+          "featured": false,
           "thumbnail": "https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Gemini_Generated_Image_5qoasf5qoasf5qoa.jpeg"
         },
         {
           "id": "Pixar",
-          "name": "Pixar Animation",
+          "name": "Animație 3D (în stil Pixar)",
           "displayTitle": "Cinematografic 3D / Inspirat de Pixar",
-          "description": "Animație 3D în stil Pixar",
+          "description": "Lungmetraj de animație 3D stilizat",
           "tagline": "Continuitate emoțională între episoade",
           "marketingBody": "Geometria blândă, cu forme rotunjite, și designul expresiv al personajelor creează o căldură emoțională care menține interesul spectatorilor pe parcursul unui întreg sezon. Este o soluție ideală pentru seriale de animație, producții de lungă durată pentru întreaga familie și storytelling de brand, unde consistența personajelor este esențială în fiecare moment al narațiunii.",
+          "featured": true,
           "thumbnail": "https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Gemini_Generated_Image_zi32rnzi32rnzi32.jpeg"
         },
         {
           "id": "artă conceptuală",
-          "name": "Artă conceptuală",
-          "displayTitle": "Artă conceptuală",
-          "description": "Artă conceptuală pentru jocuri/filme",
-          "tagline": "Cadre-cheie de pre-vizualizare pentru filme și seriale, cu iluminare atmosferică, pregătită pentru producție.",
+          "name": "Anime",
+          "displayTitle": "Anime",
+          "description": "Stil anime cel-shaded",
+          "tagline": "Arcuri narative serializate",
+          "marketingBody": "Tehnica de umbrire de tip „cel shading” specifică stilului anime generează o implicare profundă a fanilor, atât în cazul serialelor web cu mai multe episoade, cât și al arcurilor narative de mare amploare. Motoarele generative antrenate pe acest stil produc linii bine definite și o încadrare previzibilă – caracteristici ideale pentru producția în serie la scară largă.",
+          "featured": true,
           "thumbnail": "https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Gemini_Generated_Image_qlf261qlf261qlf2.jpeg"
         },
         {
           "id": "Ghibli",
           "name": "în stil Ghibli",
           "displayTitle": "Desenat manual / Stil Ghibli",
-          "description": "Inspirat de Studio Ghibli",
+          "description": "Animație desenată manual, cu un stil pictural",
           "tagline": "Măiestria ca lux",
           "marketingBody": "Acest stil valorifică direct o mișcare creativă majoră care pune preț pe conceptul de „măiestrie ca lux”. Texturile de acuarelă și fundalurile cu aspect pictural creează lumi episodice lucrate manual, în care imperfecțiunea organică este percepută drept o expresie artistică deliberată pe parcursul unei serii de lungă durată.",
+          "featured": true,
           "thumbnail": "https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Gemini_Generated_Image_xojqsuxojqsuxojq.jpeg"
         },
         {
           "id": "bandă desenată",
           "name": "Bandă desenată",
           "displayTitle": "Bandă desenată",
-          "description": "Stil de tuș specific benzilor desenate",
+          "description": "Tuș intens, aspect de roman grafic",
           "tagline": "Tuș intens, textură de tip semton și culori pop-art pentru o narațiune serială în mai multe episoade.",
+          "featured": false,
           "thumbnail": "https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Gemini_Generated_Image_ezhp8cezhp8cezhp.jpeg"
         },
         {
           "id": "pictură în ulei",
-          "name": "Pictură în ulei",
-          "displayTitle": "Pictură în ulei",
-          "description": "Pictură clasică în ulei",
-          "tagline": "Tușe clasice și pigmenți bogați pentru materiale documentare și istorice de amploare.",
+          "name": "Artă conceptuală",
+          "displayTitle": "Artă conceptuală",
+          "description": "Artă conceptuală cinematică pentru jocuri/filme",
+          "tagline": "Cadre-cheie de pre-vizualizare pentru filme și seriale, cu iluminare atmosferică, pregătită pentru producție.",
+          "featured": false,
           "thumbnail": "https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Gemini_Generated_Image_7z9qm7z9qm7z9qm7.jpeg"
         },
         {
           "id": "artă digitală",
-          "name": "Artă digitală",
-          "displayTitle": "Artă digitală",
-          "description": "Ilustrație digitală modernă",
-          "tagline": "Ilustrație stilizată pentru documentar animat și serie episodică de tip „explainer”.",
+          "name": "Grafică vectorială plată / Motion graphics",
+          "displayTitle": "Grafică vectorială plată / Motion graphics",
+          "description": "Aspect vectorial curat pentru videoclipuri explicative",
+          "featured": false,
           "thumbnail": "https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Gemini_Generated_Image_omdmt6omdmt6omdm.jpeg"
         },
         {
           "id": "acuarelă",
-          "name": "Acuarelă",
-          "displayTitle": "Acuarelă",
-          "description": "Pictură delicată în acuarelă",
-          "tagline": "Straturi fine de pigment pentru memorii, documentare și materiale narative ample, cu caracter contemplativ.",
+          "name": "Storyboard / Animatic",
+          "displayTitle": "Storyboard / Animatic",
+          "description": "Cadre preliminare de storyboard în tonuri de gri",
+          "featured": false,
           "thumbnail": "https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Gemini_Generated_Image_7i1wus7i1wus7i1w.jpeg"
         },
         {
           "id": "schiță",
-          "name": "Schiță/Desen în linii",
-          "displayTitle": "Schiță/Desen în linii",
+          "name": "Artă digitală",
+          "displayTitle": "Artă digitală",
+          "description": "Ilustrație digitală modernă",
+          "tagline": "Ilustrație stilizată pentru documentar animat și serie episodică de tip „explainer”.",
+          "featured": false,
+          "thumbnail": "https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Gemini_Generated_Image_bmbpbibmbpbibmbp.jpeg"
+        },
+        {
+          "id": "watercolor",
+          "name": "Acuarelă",
+          "displayTitle": "Acuarelă",
+          "description": "Pictură delicată în acuarelă",
+          "tagline": "Straturi fine de pigment pentru memorii, documentare și materiale narative ample, cu caracter contemplativ.",
+          "featured": false,
+          "thumbnail": "https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Gemini_Generated_Image_7i1wus7i1wus7i1w.jpeg"
+        },
+        {
+          "id": "sketch",
+          "name": "Schiță / Desen în linii",
+          "displayTitle": "Schiță / Desen în linii",
           "description": "Stil de schiță în creion",
           "tagline": "Trasări detaliate și textură de creion pentru secvențe extinse, de la etapa de pre-vizualizare până la producție.",
+          "featured": false,
           "thumbnail": "https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Gemini_Generated_Image_bmbpbibmbpbibmbp.jpeg"
+        },
+        {
+          "id": "oil-painting",
+          "name": "Pictură în ulei",
+          "displayTitle": "Pictură în ulei",
+          "description": "Pictură clasică în ulei",
+          "tagline": "Tușe clasice și pigmenți bogați pentru materiale documentare și istorice de amploare.",
+          "featured": false,
+          "thumbnail": "https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Gemini_Generated_Image_7z9qm7z9qm7z9qm7.jpeg"
         }
       ]
     },
@@ -603,7 +1601,7 @@
           "detail": "Personaje consecvente"
         },
         {
-          "label": "Producție",
+          "label": "Production Stage",
           "detail": "Voce + elemente vizuale"
         },
         {
@@ -627,15 +1625,15 @@
     "proofLine": "Validat în cadrul unui tur de prezentare a unei locuințe: procesare manuală completă – peste 4 ore → același rezultat final în SceneFlow, în mai puțin de o oră."
   },
   "comparison": {
-    "title": "Stop pulling the lever. Start running a production.",
-    "subtitle": "Clip generators re-roll the dice on every prompt — new face, new room, new voice. SceneFlow reads every shot from the same locked references, so scene 100 still matches scene 1.",
+    "title": "Nu mai trage de manetă. Începe să rulezi o producție.",
+    "subtitle": "Generatoarele de clipuri reiau totul de la zero la fiecare solicitare: față nouă, încăpere nouă, voce nouă. SceneFlow prelucrează fiecare cadru pornind de la aceleași referințe fixe, astfel încât scena 100 rămâne în concordanță cu scena 1.",
     "caption": "O singură platformă înlocuiește instrumentele fragmentate pentru prompturi, editările manuale și transferurile între multiple platforme.",
     "imageAlt": "Costurile indirecte ale producției tradiționale vs. studioul automatizat SceneFlow — trecere mai rapidă de la concept la videoclipul gata de publicare"
   },
   "howItWorks": {
     "title": "De la concept la videoclip gata de publicare",
     "titleAccent": "Un flux de lucru ghidat",
-    "subtitle": "Seria este opțională. Traseul principal este Blueprint → Producție → Screening Room — incluzând, pe parcurs, pre-vizualizarea, animaticul, videoclipul scenei și fișierul master MP4.",
+    "subtitle": "Seria este opțională. Fluxul principal este Blueprint Room → Production Stage → Screening Room — incluzând, pe parcurs, pre-vizualizarea, animaticul, videoclipul scenei și fișierul master MP4.",
     "tagline": "Fiecare etapă este automatizată cu expertiză. Fiecare etapă îți oferă control deplin.",
     "optionalBadge": "Opțional",
     "optionalSuffix": " (opțional)",
@@ -644,20 +1642,21 @@
     "phases": [
       {
         "id": "serie",
-        "stepLabel": "Serie",
-        "subtitle": "Motorul Showrunner",
+        "stepLabel": "Series Room",
+        "subtitle": "Continuitate pe parcursul mai multor episoade",
         "description": "Definește-ți universul o singură dată și generează arcuri narative coerente, întinse pe mai multe episoade. Utilizarea unui Reference Library comun asigură consecvența personajelor și a tonului pe parcursul întregului sezon.",
         "keySteps": [
           "Definește universul — personaje, ton și firul narativ al sezonului",
           "Generează automat schițe ale episoadelor pentru întregul sezon",
-          "Sincronizare cu Blueprint și producție per episod"
+          "Sincronizare în Blueprint Room și Production Stage pentru fiecare episod"
         ],
         "keyFeatures": [
           "Definește-ți universul o singură dată — personajele, tonul și firul narativ al sezonului.",
           "Schițe coerente ale episoadelor — generate automat pe parcursul sezonului",
           "Urmărirea continuității — alinierea sezoanelor cu mai multe episoade",
-          "Sincronizare serie-episod — în Blueprint Room și Producție"
-        ]
+          "Sincronizare serie-episod — în Blueprint Room și Production Stage"
+        ],
+        "optional": true
       },
       {
         "id": "plan detaliat",
@@ -665,34 +1664,38 @@
         "subtitle": "Dezvoltarea poveștii",
         "description": "Transformă conceptele în tratamente structurate, incluzând logline, puncte narative (beats), personaje și ton. Rulează Audience Resonance și colaborează înainte de procesul intensiv de randare.",
         "keySteps": [
-          "Generare → Revizuire → Iterare → Începerea producției",
+          "Generare → Revizuire → Iterare → Accesează Production Stage",
           "Audience Resonance punctare cu un obiectiv de peste 80",
           "Linkuri de partajare pentru colaboratori și export (PDF, Doc, PPTX)"
         ],
         "keyFeatures": [
-          "Flux de lucru: Generare → Revizuire → Iterare → Lansarea producției",
+          "Generare → Revizuire → Iterare → Trecere la fluxul de lucru Production Stage",
           "De la concept la structură în câteva minute — logline, momente cheie, personaje și ton",
-          "Audience Resonance punctare cu un obiectiv de peste 80 înainte de faza de producție",
+          "Scor Audience Resonance cu o țintă de peste 80 înainte de Production Stage",
           "Linkuri de partajare pentru colaboratori — sinteza feedbackului pentru revizuire ghidată"
-        ]
+        ],
+        "optional": false
       },
       {
         "id": "producție",
-        "stepLabel": "Producție",
-        "subtitle": "Script către Screening Room",
-        "description": "Taburile Script și Shoot ghidează fluxul: Foundation → Pre-Vis → Footage → Mixer → Streams. Punctele de verificare etapizate pe scene minimizează necesitatea refacerilor; Screening Room gestionează previzualizarea, asamblarea și publicarea.",
+        "stepLabel": "Production Stage",
+        "subtitle": "Direcție prin fluxuri",
+        "description": "Regia, scenariul, muzica, referințele și cadrele statice optimizează scenariul pe baza rezonanței cu publicul și a revizuirii pre-vizualizării. Clip-urile, mixerul și fluxurile generează materialul video pentru fiecare cadru. Modulul de vizionare gestionează previzualizarea, asamblarea și publicarea.",
         "keySteps": [
           "Blochează scenariul, vocile și sunetul scenei",
-          "Previzualizare scenă cu scenă — galerie și partajare pentru revizuire",
-          "Tabul Shoot — Materiale → Mixer → Fluxuri per scenă",
+          "Previzualizare scenă cu scenă — Imagini statice și partajare pentru revizuire",
+          "Clipuri, Mixer și Fluxuri — generează fiecare cadru",
+          "Planificator de producție — obiective de filmare, un program calendaristic și starea telefonului",
           "Screening Room — previzualizare, asamblare master, publicare"
         ],
         "keyFeatures": [
-          "Foundation — scenariu, voci, sunet de scenă, Audience Resonance",
-          "Previzualizare — regie, audio și cadre-cheie pentru fiecare scenă, cu linkuri de partajare",
-          "Filmare — Materiale video, mixer și fluxuri live, fără a părăsi mediul de producție",
-          "Screening Room — previzualizarea scenelor, montajul final, proiecții și publicarea pe YouTube"
-        ]
+          "Regie, scenariu, muzică, referințe și cadre fixe — scenariu, voci, sunetul scenei, analiză Audience Resonance",
+          "Cadre fixe — indicații de regie, audio și cadre-cheie pentru fiecare scenă, cu linkuri de partajare",
+          "Clipuri, Mixer și Fluxuri — generează fiecare cadru fără a părăsi Production Stage",
+          "Planificator de producție — obiective de filmare, un program calendaristic și starea telefonului",
+          "Screening Room — previzualizarea scenelor, asamblarea finală, proiecții și publicarea pe YouTube"
+        ],
+        "optional": false
       },
       {
         "id": "sală de proiecție",
@@ -710,7 +1713,8 @@
           "Presetări de asamblare — Doar video, hibrid sau mixaj personalizat pentru fiecare scenă",
           "Evaluări partajabile — linkuri /s/ cu punctaj și feedback structurat",
           "Asistent YouTube, exporturi de conținut scurt și pachete de distribuție"
-        ]
+        ],
+        "optional": false
       }
     ]
   },
@@ -735,9 +1739,9 @@
       },
       {
         "id": "plan detaliat",
-        "stepLabel": "Optimizează-ți conceptul cu Blueprint",
+        "stepLabel": "Optimizează-ți conceptul cu Blueprint Room",
         "shortDescription": "Transformă ideile într-un tratament structurat — logline, momente cheie, personaje și ton — înainte de a trece la procesul intensiv de randare.",
-        "detailedDescription": "Blueprint generează automat o schiță detaliată a poveștii. Rafinează evoluția personajelor, momentele cheie ale intrigii și tonul narativ cu ajutorul unor sugestii inteligente. Linkurile de partajare permit părților interesate să revizuiască materialul înainte de etapa de producție.",
+        "detailedDescription": "Blueprint generează automat o schiță detaliată a poveștii. Rafinează evoluția personajelor, momentele cheie ale intrigii și tonul narativ cu ajutorul unor sugestii inteligente. Linkurile de partajare pentru colaboratori permit părților interesate să revizuiască materialul înainte de Production Stage.",
         "media": "video"
       },
       {
@@ -757,13 +1761,13 @@
       {
         "id": "trage",
         "stepLabel": "Filmează-ți producția",
-        "shortDescription": "Generează conținut video sincronizat cu ritmul, mixează sunetul și elementele suprapuse și exportă fluxuri video pentru scene complete — Materiale video, Mixer și Fluxuri, toate într-o singură filă „Shoot”.",
-        "detailedDescription": "Secțiunea „Shoot” din modulul de producție reprezintă spațiul tău de lucru pe platou: generează materiale video pe baza cadrelor de pre-vizualizare aprobate (Footage), ajustează cu precizie sincronizarea, elementele grafice (watermarks) și sunetul în Mixer, apoi randează fișierele MP4 ale scenelor complete în secțiunea Streams.",
+        "shortDescription": "Generează fiecare cadru în Clips, mixează sunetul în Mixer și exportă versiunile lingvistice în Streams.",
+        "detailedDescription": "Clipurile generează videoclipul pentru fiecare cadru pe baza imaginilor statice aprobate. Mixerul stabilește sincronizarea, marcajele de apă și sunetul. Fluxurile reprezintă versiunile lingvistice ale scenei.",
         "media": "video",
         "subPoints": [
-          "Material video — generare video pas cu pas pornind de la cadrele de început și de sfârșit din pre-vizualizare",
+          "Clipuri — secvențe video realizate pe baza imaginilor statice aprobate",
           "Mixer — filigran, suprapunere de text și sincronizare audio pentru fiecare scenă",
-          "Fluxuri — videoclip cu scena complet randată (toate momentele cheie), pregătit pentru Screening Room"
+          "Fluxuri — versiuni lingvistice ale scenei, pregătite pentru Screening Room"
         ]
       },
       {
@@ -790,6 +1794,191 @@
       "openFeatureVideo": "Deschide videoclipul de prezentare"
     }
   },
+  "productionShowcase": {
+    "badge": "Exemple de producție",
+    "title": "Vizualizează întregul flux de lucru",
+    "titleAccent": "în acțiune",
+    "subtitle": "Fiecare exemplu începe cu un scurt trailer. Varianta finală completă — o producție integrală, de la etapa de planificare (blueprint) și pre-vizualizare până la montajul final — este difuzată în sala de proiecție.",
+    "subtitleTagline": "Producții de lungă durată. Nu clipuri.",
+    "screeningRoomInstruction": "Evaluează această producție așa cum ar face-o un critic: etapă cu etapă. Începe cu „Series”, continuă cu „Blueprint”, apoi cu scenariul din „AR Analysis” și încheie cu „Screening”.",
+    "trailerLabel": "Trailer",
+    "watchLongform": "Urmărește materialul de lungă durată",
+    "seriesDoor": "Serie",
+    "blueprintDoor": "Blueprint",
+    "scriptArDoor": "Analiza creanțelor",
+    "screeningDoor": "Screening",
+    "screeningRoomGroup": "Screening Room",
+    "previsDoor": "Previzualizare",
+    "roughDoor": "Montaj preliminar",
+    "scenesDoor": "Scene",
+    "finalDoor": "Final",
+    "enterFullscreen": "Treci la ecran complet",
+    "exitFullscreen": "Ieșire din modul ecran complet",
+    "explorerHandoff": "Aceste linkuri reprezintă un produs finit. Explorer este locul unde îți poți crea propriul produs.",
+    "languagesBanner": "Exemplele publice sunt disponibile în patru limbi: engleză, spaniolă, chineză și arabă.",
+    "workflowLabel": "Soluții",
+    "startProduction": "Începeți producția",
+    "cta": "Începeți producția",
+    "continuityNote": "Series Room gestionează continuitatea",
+    "resonanceNote": "Audience Resonance™ optimizează scenariile",
+    "videoLanguagePrompt": "Urmărește în engleză, spaniolă, chineză sau arabă",
+    "videoComingSoon": "Dublajul apare în curând",
+    "videoSoon": "În curând",
+    "frictionLabel": "Frecarea",
+    "solutionPillarLabel": "Soluția SceneFlow",
+    "showSolutionsSection": "Afișează soluțiile",
+    "hideSolutionsSection": "Ascunde soluțiile",
+    "cards": [
+      {
+        "id": "drama",
+        "title": "Dramă cinematografică de lungmetraj. Fără nicio abatere de la evoluția personajelor.",
+        "subtitle": "Păstrează trăsăturile feței personajelor, costumele și locațiile de la scena 1 până la scena 100. Parcurge sala de proiecție pentru a vizualiza pre-vizualizarea (Pre-Vis), videoclipurile cu mișcare pentru fiecare scenă și masterul final ProRes 4K, apoi schimbă limba pentru a asculta dublajul complet.",
+        "badge": "Pregătit pentru producția de serie",
+        "solutionPillars": [
+          {
+            "title": "Consecvență vizuală și a personajelor",
+            "frictionHeadline": "Deriva personajelor și decoruri instabile.",
+            "friction": "Modelele generative se resetează la fiecare cadru, determinând transformarea continuă a fețelor personajelor, a vestimentației și a iluminării la trecerea dintre cadre.",
+            "solutionHeadline": "Activ blocat – Termeni SFAIBLUEPRINT",
+            "solution": "Definește profilurile principale ale personajelor, mediile și stilurile vizuale încă de la început în Blueprint Room. SceneFlow asigură respectarea identității vizuale în fiecare randare, pentru a menține imersiunea narativă."
+          },
+          {
+            "title": "Ritmul narațiunii și controlul scenelor",
+            "frictionHeadline": "Capcana clipului de 10 secunde.",
+            "friction": "Realizarea unui film pornind de la micro-indicii disparate duce la un ritm sacadat, o încărcătură emoțională plată și o editare manuală nesfârșită pe cronologie.",
+            "solutionHeadline": "Storyboard bazat pe momentele cheie ale acțiunii",
+            "solution": "Coordonează la nivel de scenă, nu la nivel de prompt. Structurează vizual momentele dramatice, mișcările de cameră și arcurile narative înainte de a genera un singur cadru video."
+          },
+          {
+            "title": "Alinierea dialogului și a sunetului",
+            "frictionHeadline": "Dialog neconvingător.",
+            "friction": "Sincronizarea deficitară a buzelor, mișcările gurii care par desprinse de fizionomie și pistele audio care nu se aliniază cu imaginea îi scot imediat pe spectatori din atmosfera dramei.",
+            "solutionHeadline": "Motor integrat de voce și sincronizare.",
+            "solution": "Interpretarea vocală dinamică și sincronizarea precisă a buzelor sunt integrate direct în fluxul de lucru video, oferind dialoguri verosimile fără a necesita etape suplimentare de post-producție."
+          },
+          {
+            "title": "Blocaje în fluxul de lucru și oboseala cauzată de reîncercări",
+            "frictionHeadline": "Haos al activelor și relansări nesfârșite.",
+            "friction": "Generarea unui scurtmetraj presupune, de obicei, gestionarea a peste 200 de fișiere video brute, upscaling manual și zeci de încercări ratate.",
+            "solutionHeadline": "Flux de lucru automatizat în studio.",
+            "solution": "De la concept până la fișierul master MP4 final, totul într-o platformă unificată. Blueprint Room gestionează configurarea poveștii, Production Stage asigură regia prin intermediul fluxurilor de lucru, iar Screening Room livrează exportul final."
+          }
+        ],
+        "screeningRoomPreview": "Drama cinematografică — Screening Room"
+      },
+      {
+        "id": "animation",
+        "title": "Serial de animație cu stiluri multiple, pe durata unui sezon întreg. Un stil artistic unitar.",
+        "subtitle": "Stabilește un stil vizual de tip „flat-cel” și fixează aspectul familiei Hart și al orașului Millwick, menținându-le constante de la primul până la ultimul episod. Regizează momentele comice pas cu pas, apoi vizionează episodul în sala de proiecție.",
+        "badge": "Multistil",
+        "solutionPillars": [
+          {
+            "title": "Consecvență stilistică",
+            "frictionHeadline": "Colaps stilistic.",
+            "friction": "Stilurile de desen animat și anime se deformează continuu de la un cadru la altul: liniile își schimbă forma, paletele de culori se dezintegrează, iar personajele se transformă într-o masă fotorealistă și grotescă, ce provoacă un sentiment de neliniște.",
+            "solutionHeadline": "Motor de stil artistic fixat.",
+            "solution": "Fixează-ți estetica încă de la primul cadru. SceneFlow blochează designul personajelor, grosimea liniilor și modelele de umbrire pe parcursul întregului episod, astfel încât personajele tale să rămână inconfundabile."
+          },
+          {
+            "title": "Animație și fizică exagerate",
+            "frictionHeadline": "Mișcare rigidă și cu sacadări.",
+            "friction": "Modelele generative întâmpină dificultăți cu umorul fizic alert, reacțiile de tip „double-take” și fizica maleabilă specifică desenelor animate, transformând gagurile dinamice în artefacte vizuale care par să se topească.",
+            "solutionHeadline": "Ancorarea acțiunii și a posturii.",
+            "solution": "Generează mișcări dinamice ale personajelor și ipostaze expresive fără a compromite geometria. Coordonează momente de comedie fizică pline de impact, tranziții bruște și expresii faciale intense, beneficiind de un control total asupra mișcării."
+          },
+          {
+            "title": "Timing și ritm comic",
+            "frictionHeadline": "Poante stricate.",
+            "friction": "Umorul rezidă în pauze și în tăieturile de ritm. Buclele generative standard de 5 secunde impun un ritm stângaci, care compromite livrarea poantei.",
+            "solutionHeadline": "Editare cu precizie la nivel de tact",
+            "solution": "Controlează ritmul scenei până la nivel de cadru. Ajustează pauzele dramatice, sincronizarea dintre premisă și poantă, precum și cadrele rapide de reacție direct în cronologia structurată pe momente cheie, înainte de randarea finală."
+          },
+          {
+            "title": "Dialog plin de energie și sincronizare vocală",
+            "frictionHeadline": "Guri de marionetă lipsite de viață.",
+            "friction": "Dialogul generic generat de AI pare fad și mecanic, distrugând energia necesară pentru schimbul de replici spumos specific sitcomurilor.",
+            "solutionHeadline": "Sincronizare dinamică a vocii și a expresiei.",
+            "solution": "Corelează interpretarea vocală direct cu o expresivitate facială plină de energie. Dialogul, mișcările expresive ale gurii și înregistrările vocale comice se îmbină perfect pentru un impact comic maxim."
+          }
+        ],
+        "screeningRoomPreview": "Hart House — Sală de proiecție"
+      },
+      {
+        "id": "documentary",
+        "title": "Documentare de lung metraj. Ascensiunea inteligenței.",
+        "subtitle": "Urmărește ascensiunea inteligenței artificiale și a superinteligenței pe diverse continente. Fiecare capitol reflectă o anumită epocă: fără obiecte moderne în laboratoarele de la începuturi și fără decoruri specifice anilor '50 în prezent.",
+        "badge": "Autentic pentru epoca respectivă",
+        "solutionPillars": [
+          {
+            "title": "Acuratețe vizuală specifică epocii",
+            "frictionHeadline": "Artefacte anacronice",
+            "friction": "Modelele generative standard introduc frecvent, în mod eronat, obiecte moderne, ecrane de smartphone-uri sau vestimentație neadecvată epocii în reconstituiri istorice.",
+            "solutionHeadline": "Linii directoare privind stilul istoric",
+            "solution": "Stabilește parametri temporali preciși — de la granulația specifică filmului din anii '20 până la texturile vestimentare din secolul al XVIII-lea — astfel încât fiecare scenă generată să rămână autentică din punct de vista istoric."
+          },
+          {
+            "title": "Motor de generare a inserțiilor video de arhivă și a materialelor B-roll",
+            "frictionHeadline": "Monotonia vizuală în comentariile audio lungi",
+            "friction": "Combinarea unei narațiuni extinse cu imagini de stoc statice duce la o scădere rapidă a numărului de spectatori în timpul materialelor care aprofundează un subiect.",
+            "solutionHeadline": "Motor de generare a materialelor B-roll bazat pe transcriere",
+            "solution": "Pe măsură ce naratorul prezintă fapte istorice, SceneFlow generează automat reconstituiri cinematografice sincronizate, suprapuneri de documente și inserții vizuale în stil de arhivă, toate corelate direct cu transcrierea audio."
+          },
+          {
+            "title": "Realismul interviului și al formatului „talking-head”",
+            "frictionHeadline": "Martori experți neliniștitori",
+            "friction": "Istoricii, anchetatorii sau martorii generați par adesea artificiali, având mișcări ale maxilarului care par să plutească și un contact vizual nenatural.",
+            "solutionHeadline": "Profiluri de experți blocate și sincronizare vocală",
+            "solution": "Mențineți cadre de interviu realiste și credibile, cu micro-expresii naturale, o sincronizare precisă a mișcării buzelor și identități constante ale experților pe parcursul seriilor cu mai multe episoade."
+          },
+          {
+            "title": "Ritmul episodic și continuitatea narativă",
+            "frictionHeadline": "Editare pe o cronologie fragmentată",
+            "friction": "Echilibrarea vocii naratorului, a reconstituirilor, a momentelor de dezvăluire a probelor și a pauzelor care creează tensiune pe parcursul unui episod de 40 de minute necesită, de obicei, săptămâni întregi în sistemele tradiționale de editare neliniară (NLE).",
+            "solutionHeadline": "Flux de lucru pentru documentare bazat pe momente cheie",
+            "solution": "Structurează vizual tensiunea dramatică, pauzele pline de suspans și dezvăluirea dovezilor în cadrul Blueprint Room, generând un fișier master complet asamblat într-o singură etapă fluidă."
+          }
+        ],
+        "screeningRoomPreview": "Gândul îndelungat — Screening Room"
+      },
+      {
+        "id": "training",
+        "title": "Serie de instruire cu mai multe module, gata de integrare în programul de studiu. Un Chef „Locked”.",
+        "subtitle": "Un bucătar, o bucătărie, cinci feluri de mâncare. Chipul, tunica și plăcile de faianță rămân neschimbate, de la supă până la ultimul desert.",
+        "badge": "Pregătit pentru programul școlar",
+        "solutionPillars": [
+          {
+            "title": "Consecvența instructorului și a cadrului de desfășurare",
+            "frictionHeadline": "Un profesor diferit pentru fiecare modul.",
+            "friction": "Clipurile generate resetează aspectul instructorului, vestimentația și sala de curs între lecții, astfel încât cursul pare o simplă înșiruire de videoclipuri fără nicio legătură între ele.",
+            "solutionHeadline": "Termeni și condiții SFAIBLUEPRINT pentru instructori (acces restricționat)",
+            "solution": "Definește instructorul, decorul și sistemul vizual o singură dată în Blueprint Room. SceneFlow menține această identitate fixă în toate modulele."
+          },
+          {
+            "title": "Ritmul de parcurgere a programei",
+            "frictionHeadline": "Slide-uri fragmentate în clipuri.",
+            "friction": "Transformarea unei programe în cerințe disparate duce la pierderea firului narativ al lecției, a exemplului rezolvat și a pauzei de dinaintea unui test.",
+            "solutionHeadline": "Crearea de storyboard-uri cu accent pe module",
+            "solution": "Coordonează fiecare modul ca pe o succesiune de etape de predare — pregătire, demonstrație și verificare — înainte de a randa vreun cadru."
+          },
+          {
+            "title": "Narațiune și instruire pe ecran",
+            "frictionHeadline": "O voce care ratează elementul grafic.",
+            "friction": "Narațiunea, legendele și diagramele nu mai sunt sincronizate, astfel încât cursanții aud descrierea unei etape în timp ce imaginea prezintă o alta.",
+            "solutionHeadline": "Piste de lecție sincronizate.",
+            "solution": "Vocea, subtitrările și elementele didactice de pe ecran sunt perfect sincronizate, astfel încât fiecare explicație coincide cu elementul vizual care o confirmă."
+          },
+          {
+            "title": "Asamblarea cursului",
+            "frictionHeadline": "Săptămâni într-un editor.",
+            "friction": "Integrarea modulelor, a reluărilor și a versiunilor localizate într-un flux de lucru tradițional transformă actualizarea programei într-o întârziere a producției.",
+            "solutionHeadline": "Flux de lucru unificat pentru studio.",
+            "solution": "Blueprint, Audience Resonance și Screening Room conduc un modul de la schiță la Pre-Vizualizare, montaj brut, scene și cursul finalizat."
+          }
+        ],
+        "screeningRoomPreview": "Cinci farfurii — Screening Room"
+      }
+    ]
+  },
   "platformWalkthrough": {
     "badge": "Sub capotă",
     "title": "Prezentare detaliată a platformei",
@@ -802,26 +1991,29 @@
     "chapters": [
       {
         "id": "Începe aici",
-        "label": "Începe aici — planificare, continuitate și adaptare la public"
+        "label": "Începe aici — planificare, continuitate și adaptare la public",
+        "defaultExpanded": false
       },
       {
         "id": "producere-publicare",
-        "label": "Producere și publicare — Tab-ul Shoot către Screening Room"
+        "label": "Producție și publicare — Clipuri pentru Screening Room",
+        "defaultExpanded": false
       }
     ],
     "close": "Închide",
     "viewDetails": "Vezi detalii",
     "beatFirst": {
+      "id": 15,
       "title": "Flux de lucru video bazat pe ritm",
-      "description": "Aprobă secvențele de pre-vizualizare și Shot Frames înainte de etapa F2V — astfel se reduc regenerările „oarbe” cauzate de halucinații și de deviațiile vizuale. Un flux structurat, de la revizuire până la clipul final.",
+      "description": "Aprobă secvențele de pre-vizualizare și cadrele cheie înainte de etapa F2V — astfel se reduc regenerările „oarbe” cauzate de halucinații și de deviațiile vizuale. Un flux de lucru structurat, de la revizuire până la clipul final.",
       "keyFeatures": [
-        "Pre-vis Agent pentru revizuire — partajează beat-urile înainte de randarea complexă",
-        "Shot Frames compoziția blocării — Reference Library continuitate",
+        "Pre-vis Agent spre revizuire — transmiteți secvențele (beats) înainte de randarea complexă",
+        "fixarea compoziției — continuitate",
         "F2V per shot — generare de video din cadre aprobate",
         "Lanțuri EXT continue — pași nativi de +7s pentru dialoguri lungi în cadrul unui „beat”",
         "Sincronizarea și fluxurile mixerului — deschideți Screening Room pentru a asambla și publica"
       ],
-      "screenshotSlot": "Inserează captură de ecran: Shot Frames și aprobarea previzualizării înainte de generarea videoclipului",
+      "screenshotSlot": "Inserează captură de ecran: Shot Frames și aprobarea pre-vizualizării înainte de generarea videoclipului",
       "videoSlot": "Inserare clip de 30 de secunde: aprobarea secvențelor, fixarea cadrelor, apoi generarea clipurilor F2V."
     },
     "screeningRoom": {
@@ -853,13 +2045,13 @@
         "title": "Prezentare generală a platformei",
         "description": "Un singur studio, de la idee până la videoclipul gata de publicare. Același flux de lucru pentru materiale de instruire, podcasturi, știri și seriale cinematografice — aprobi previzualizarea înainte de a investi în randarea finală.",
         "keyFeatures": [
-          "Serie → Blueprint → Producție → Screening Room",
-          "Aprobare pe secvențe (beat-first) — pre-vizualizare și Shot Frames înainte de F2V",
+          "Series Room → Blueprint Room → Production Stage → Screening Room",
+          "Aprobare etapizată (pe secvențe) — pre-vizualizare și cadre-cheie înainte de F2V",
           "Generare Google Vertex AI cu lanțuri de extensii native Veo",
           "Măsuri de protecție privind încrederea și siguranța și confirmarea provenienței prin semnătură la livrare"
         ],
         "screenshotSlot": "Inserează captură de ecran: Secțiunea principală a paginii de destinație + bandă cu pași simplificați",
-        "videoSlot": "Inserează clipul de 01:30: Hero → proiect nou → Blueprint → Filmare → Screening Room → Publică"
+        "videoSlot": "Introducere clip 01:30: Hero → proiect nou → Blueprint Room → Production Stage Filmare → Screening Room → Publicare"
       },
       {
         "id": "9",
@@ -869,19 +2061,19 @@
           "Definește-ți universul o singură dată — personajele, tonul și firul narativ al sezonului.",
           "Schițe coerente ale episoadelor — generate automat pe parcursul sezonului",
           "Urmărirea continuității — alinierea sezoanelor cu mai multe episoade",
-          "Sincronizare serie-episod — în Blueprint Room și Producție"
+          "Sincronizare serie-episod — în Blueprint Room și Production Stage"
         ],
         "screenshotSlot": "Inserează captură de ecran: Prezentare generală a seriei cu arcuri narative ale episoadelor generate automat",
         "videoSlot": "Inserare clip de 30 de secunde: Conceptul se extinde într-un sezon cu mai multe episoade"
       },
       {
         "id": "10",
-        "title": "Blueprint Automatizare",
+        "title": "Automatizare Blueprint Room",
         "description": "Transformă conceptele în tratamente structurate, incluzând logline, puncte narative (beats), personaje și ton. Rulează Audience Resonance și colaborează înainte de procesul intensiv de randare.",
         "keyFeatures": [
-          "Flux de lucru: Generare → Revizuire → Iterare → Lansarea producției",
+          "Generare → Revizuire → Iterare → Trecere la fluxul de lucru Production Stage",
           "De la concept la structură în câteva minute — logline, momente cheie, personaje și ton",
-          "Audience Resonance punctare cu un obiectiv de peste 80 înainte de faza de producție",
+          "Scor Audience Resonance cu o țintă de peste 80 înainte de Production Stage",
           "Linkuri de partajare pentru colaboratori — sinteza feedbackului pentru revizuire ghidată"
         ],
         "screenshotSlot": "Inserează captură de ecran: Blueprint generat automat, cu punctele cheie ale poveștii și arcurile evoluției personajelor",
@@ -903,7 +2095,7 @@
       {
         "id": "7",
         "title": "Analiza Audience Resonance",
-        "description": "Stabilește-ți publicul-țintă pentru a obține instantaneu scoruri, analize și recomandări. Aplică remedieri printr-un singur clic sau utilizează funcția de editare asistată pentru a optimiza perfect episoadele, Blueprint și scenariul, în vederea obținerii unui impact maxim.",
+        "description": "Stabilește-ți publicul țintă pentru a obține instantaneu scoruri, analize și recomandări. Aplică remedieri cu un singur clic sau utilizează funcția de editare asistată pentru a optimiza perfect episoadele, decorurile și scenariul, asigurând astfel un impact maxim.",
         "keyFeatures": [
           "Scorarea publicului-țintă — cu defalcare pe categorii",
           "Recomandări legate de secțiuni — corectează partea potrivită a poveștii tale",
@@ -915,16 +2107,17 @@
       },
       {
         "id": "11",
-        "title": "Automatizarea producției",
-        "description": "Taburile Script și Shoot ghidează fluxul: Foundation → Pre-Vis → Footage → Mixer → Streams. Punctele de verificare etapizate pe scene minimizează necesitatea refacerilor; Screening Room gestionează previzualizarea, asamblarea și publicarea.",
+        "title": "Automatizare Production Stage",
+        "description": "Regia, scenariul, muzica, referințele și cadrele statice optimizează scenariul pe baza rezonanței cu publicul și a revizuirii pre-vizualizării. Clip-urile, mixerul și fluxurile generează materialul video pentru fiecare cadru. Modulul de vizionare gestionează previzualizarea, asamblarea și publicarea.",
         "keyFeatures": [
-          "Foundation — scenariu, voci, sunet de scenă, Audience Resonance",
-          "Previzualizare — regie, audio și cadre-cheie pentru fiecare scenă, cu linkuri de partajare",
-          "Filmare — Materiale video, mixer și fluxuri live, fără a părăsi mediul de producție",
-          "Screening Room — previzualizarea scenelor, montajul final, proiecții și publicarea pe YouTube"
+          "Regie, scenariu, muzică, referințe și cadre fixe — scenariu, voci, sunetul scenei, analiză Audience Resonance",
+          "Cadre fixe — indicații de regie, audio și cadre-cheie pentru fiecare scenă, cu linkuri de partajare",
+          "Clipuri, Mixer și Fluxuri — generează fiecare cadru fără a părăsi Production Stage",
+          "Planificator de producție — obiective de filmare, un program calendaristic și starea telefonului",
+          "Screening Room — previzualizarea scenelor, asamblarea finală, proiecții și publicarea pe YouTube"
         ],
-        "screenshotSlot": "Inserează captură de ecran: Tabloul de bord al producției, care afișează filele Scenariu, Filmare și Previzualizare.",
-        "videoSlot": "Inserare clip de 60 de secunde: Finalizare scenariu → Pre-vis Agent per scenă → Filmare → Mixer → Fluxuri"
+        "screenshotSlot": "Inserează captură de ecran: Panoul de control al producției care afișează Regia, Scenariul, Imaginile statice, Clipurile, Mixerul și Fluxurile",
+        "videoSlot": "Inserare clip de 60 de secunde: Blocare scenariu → Imagini statice pe scenă → Clipuri → Mixer → Fluxuri"
       },
       {
         "id": "14",
@@ -1041,56 +2234,56 @@
   },
   "coreCapabilities": {
     "audienceResonance": {
-      "badge": "Intelligence Layer",
-      "title": "Audience Resonance: build for a culture, not a language code",
-      "description": "Subtitles stretch one video’s reach. SceneFlow lets you name the culture, region, and demographic you are making for, score the story against that audience before you render, and then ship either a dubbed master or a separate high-resonance version per audience.",
+      "badge": "Nivel de inteligență",
+      "title": "Audience Resonance: construiește pentru o cultură, nu pentru un cod lingvistic",
+      "description": "Subtitrările extind aria de acoperire a unui videoclip. SceneFlow îți permite să definești cultura, regiunea și segmentul demografic vizate, să evaluezi povestea în raport cu acel public înainte de randare și, ulterior, să livrezi fie o variantă master dublată, fie o versiune distinctă, optimizată pentru a rezona puternic cu fiecare public în parte.",
       "bullets": [
-        "Define the audience: eight target regions, plus age, gender, education, and community",
-        "Describe culture, faith, and values in your own words — SceneFlow reads the signals",
-        "Get a resonance score with section-level fixes before you spend on renders",
-        "Dub the master, or produce a distinct version tuned to each audience"
+        "Definiți publicul: opt regiuni-țintă, plus vârsta, genul, educația și comunitatea.",
+        "Descrie cultura, credința și valorile în propriile cuvinte — SceneFlow interpretează semnalele.",
+        "Obține un scor de rezonanță și sugestii de îmbunătățire la nivel de secțiune înainte de a investi în randări.",
+        "Realizează o dublaj-master sau produce o versiune distinctă, adaptată fiecărui public."
       ],
-      "cta": "Analyze Your Script",
+      "cta": "Analizează-ți scenariul",
       "howWeScore": {
-        "toggle": "How we score",
-        "title": "How Audience Resonance works",
-        "description": "Audience Resonance combines narrative-structure analysis (clarity, pacing, emotional arc) with target-persona fit against the audience you define in Blueprint — not vanity metrics or post-publish retention data. When your audience description carries cultural signals, the analysis adds an authenticity pass over names, dialect, customs, faith, and sensitivities. Recommendations are tied to specific script sections so you can fix issues before agents run video generation.",
+        "toggle": "Cum acordăm punctajul",
+        "title": "Cum funcționează Audience Resonance",
+        "description": "Audience Resonance combină analiza structurii narative (claritate, ritm, parcurs emoțional) cu gradul de adecvare la profilul publicului definit în Blueprint — dincolo de metricile superficiale sau de datele privind retenția de după publicare. Atunci când descrierea publicului include elemente culturale, analiza verifică autenticitatea numelor, a dialectului, a obiceiurilor, a credințelor și a aspectelor sensibile. Recomandările sunt asociate unor secțiuni specifice ale scenariului, permițându-vă să remediați problemele înainte ca agenții să inițieze generarea videoclipului.",
         "bullets": [
-          "Scores Blueprint and script against your stated target audience",
-          "Cultural authenticity checks on names, dialect, customs, faith, and sensitivities",
-          "Section-level recommendations — not a black-box “trust us” number",
-          "Run before heavy render spend, not after publish"
+          "Evaluează Blueprint și scenariul în raport cu publicul-țintă specificat",
+          "Verificări privind autenticitatea culturală a numelor, dialectului, obiceiurilor, credinței și aspectelor sensibile",
+          "Recomandări la nivel de secțiune — nu o cifră de tip „cutie neagră” bazată pe un simplu „aveți încredere în noi”",
+          "Rulează înainte de a aloca resurse semnificative pentru randare, nu după publicare."
         ]
       }
     },
     "express": {
-      "badge": "Hyper-Speed Production",
+      "badge": "Producție inteligentă",
       "title": "SceneFlow Agents",
-      "description": "Generate Pre-Vis, motion video, and delivery masters concurrently. Go from script to a shareable Pre-Vis in minutes — then approve the shot frames before you spend on motion video. Throughput is what makes a version per audience affordable instead of theoretical.",
+      "description": "Audio Agent, Stills Agent și Video Agent elaborează prompturi specializate pe baza indicațiilor de ritm, atașează referințele adecvate și generează conținutul în paralel. O scenă poate necesita câteva minute, deoarece agentul execută o sarcină de specialitate; ulterior, aprobi Shot Frames înainte de a investi în producția video propriu-zisă.",
       "items": [
         {
           "title": "Pre-vis Agent",
-          "desc": "Fully voiced, scored shot frames per scene, ready to share in the Screening Room.",
-          "time": "Minutes vs Hours"
+          "desc": "Cadre-cheie complet sonorizate și cu coloană sonoră, realizate pe baza direcției artistice stabilite și gata de partajat în Screening Room.",
+          "time": "Calitatea pe primul loc"
         },
         {
           "title": "Video Agent",
-          "desc": "Per-scene motion video generated after Pre-Vis approval, as native-language streams or a lower-cost dub, with scene-level edits.",
-          "time": "Minutes vs Days"
+          "desc": "Videoclipuri animate generate pentru fiecare scenă după aprobarea pre-vizualizării (Pre-Vis), sub formă de fluxuri în limba nativă sau dublaj cu costuri reduse, incluzând editări la nivel de scenă.",
+          "time": "Aprobă, apoi randează"
         },
         {
           "title": "Delivery Agent",
-          "desc": "Assemble the ProRes 4K master and auto-publish to YouTube or download the bundle.",
-          "time": "Minutes vs Weeks"
+          "desc": "Asamblează masterul ProRes 4K și publică-l automat pe YouTube sau descarcă pachetul.",
+          "time": "Expediază bucata tăiată"
         }
       ],
-      "cta": "Run Production Agents"
+      "cta": "Rulează Production Agents"
     }
   },
   "preVisEngine": {
-    "badge": "Creative Decision Engine",
-    "title": "Pre-Visualization Engine",
-    "subtitle": "Generating a fully voiced, scored, 40-minute Pre-Vis (the industry term: animatic) in 15 minutes is not a workflow step — that is the product. In Hollywood, pre-vis takes weeks and costs hundreds of thousands of dollars. SceneFlow scales it to minutes and pocket change.",
+    "badge": "SFAICREATIVE_MOTOR_DE_DECIZIE",
+    "title": "SFAIPRE_MOTOR_DE_VIZUALIZARE",
+    "subtitle": "Generarea unei pre-vizualizări (termenul din industrie: animatic) de 40 de minute, complet sonorizată și cu coloană sonoră, în doar 15 minute, nu este o simplă etapă a fluxului de lucru – este produsul în sine. La Hollywood, pre-vizualizarea durează săptămâni întregi și costă sute de mii de dolari. Această soluție reduce timpul la câteva minute și costurile la o sumă infimă.",
     "narrative": "În industria cinematografică, un storyboard este un material pe care îl înmânezi echipei de producție. Pre-vis este ceea ce le prezinți directorilor de studio, investitorilor și producătorilor pentru a obține aprobarea unui proiect. SceneFlow transformă producția dintr-un instrument destinat creatorilor individuali într-o resursă de nivel profesional, integrată în fluxul de lucru al companiilor.",
     "pillars": [
       {
@@ -1107,257 +2300,308 @@
       }
     ],
     "workflow": {
-      "title": "Reference Library → Pre-Vis → Motion Video → ProRes 4K master",
+      "title": "Reference Library → Previzualizare → Video animat → Master ProRes 4K",
       "steps": [
-        "Build the Reference Library — characters, locations, and props locked to your production art style.",
-        "Generate Pre-Vis shot frames per scene with dialogue, SFX, and music — iterate direction in the Screening Room at low cost.",
-        "Approve the Pre-Vis, then generate per-scene motion video with multilanguage dubbing and scene-level edits.",
-        "Deliver the ProRes 4K master from the Screening Room — auto-publish to YouTube or download the bundle."
+        "Construiește biblioteca de referințe — personaje, locații și elemente de decor adaptate stilului vizual al producției tale.",
+        "Generează cadre de pre-vizualizare (beat frames) pentru fiecare scenă, incluzând dialog, efecte sonore și muzică — și ajustează regia în sala de vizionare la costuri reduse.",
+        "Aprobă pre-vizualizarea, apoi generează videoclipuri animate pentru fiecare scenă, cu dublaj în mai multe limbi și editări la nivel de scenă.",
+        "Livrați masterul ProRes 4K din Screening Room — publicați automat pe YouTube sau descărcați pachetul."
       ]
     },
     "cta": "Începeți cu încărcarea scriptului",
     "ctaSubtext": "Conectează cinematografia tradițională cu inteligența artificială generativă"
   },
   "exitIntent": {
-    "title": "Before you go — want launch news?",
-    "subtitle": "Leave your email and we'll tell you when we announce.",
+    "title": "Înainte de a pleca — vrei noutăți despre lansare?",
+    "subtitle": "Lasă-ți adresa de e-mail și te vom anunța când facem anunțul.",
     "benefits": [
-      "Launch notification when we announce",
-      "Weekly AI filmmaking tutorials",
-      "Exclusive creator discounts"
+      "Notificare privind lansarea, la momentul anunțului",
+      "Tutoriale săptămânale de realizare a filmelor cu AI",
+      "reduceri exclusive pentru creatori"
     ],
-    "emailPlaceholder": "Enter your email",
-    "subscribe": "Notify me",
-    "subscribing": "Subscribing...",
-    "or": "or",
-    "startNow": "Start directing now for just $9 →",
-    "privacy": "No spam, ever. Unsubscribe anytime.",
-    "successTitle": "You're on the list!",
-    "successSubtitle": "We'll email you when we announce — plus the occasional filmmaking tip.",
-    "ctaText": "Start Exploring — $9",
-    "closePopup": "Close popup"
+    "emailPlaceholder": "Introdu adresa de e-mail",
+    "subscribe": "Anunță-mă",
+    "subscribing": "Se abonează...",
+    "or": "sau",
+    "startNow": "Începe să regizezi acum pentru doar 9 $ →",
+    "privacy": "Fără spam, niciodată. Te poți dezabona oricând.",
+    "successTitle": "Ești pe listă!",
+    "successSubtitle": "Îți vom trimite un e-mail când facem anunțul — și, din când în când, și câte un sfat despre realizarea de filme.",
+    "ctaText": "Începe explorarea — 9 $",
+    "closePopup": "Închide fereastra pop-up"
   },
   "pricing": {
-    "badge": "Simple Pricing",
-    "title": "Start with Explorer — $9",
-    "subtitle": "Test the complete pipeline now with a frictionless $9 entry.",
+    "badge": "Prețuri simple",
+    "title": "Începe cu Explorer — 9 $",
+    "subtitle": "Testează acum întregul flux de lucru, cu un acces simplu și rapid pentru 9 $.",
+    "explorerHighlight": "Cea mai rapidă modalitate de a experimenta studioul complet — de la concept până la sala de proiecție.",
+    "trustBadges": [
+      "Plăți securizate prin Whop",
+      "9 $ – Explorer pentru a încerca studioul",
+      "Creditele lunare expiră la sfârșitul perioadei.",
+      "Anulează oricând"
+    ],
     "valueAnchor": {
-      "traditionalCost": "$2,000+",
-      "traditionalLabel": "Traditional pre-vis",
-      "vs": "vs",
-      "sceneFlowCost": "$49-149",
-      "sceneFlowLabel": "SceneFlow monthly",
-      "saveBadge": "Save 90%+ per project"
+      "traditionalCost": "Peste 2.000 $",
+      "traditionalLabel": "Previzualizare tradițională",
+      "vs": "vs.",
+      "sceneFlowCost": "49–149 $",
+      "sceneFlowLabel": "SceneFlow lunar",
+      "saveBadge": "Economisiți peste 90% per proiect"
     },
     "teamCta": {
-      "title": "In-house team or institution?",
-      "description": "Book a workflow walkthrough for comms, L&D, and marketing teams",
-      "button": "Book Walkthrough"
+      "title": "Echipă internă sau instituție?",
+      "description": "Programează o prezentare a fluxului de lucru pentru echipele de comunicare, L&D și marketing",
+      "button": "Prezentare detaliată a cărții"
     },
     "agencyCta": {
-      "title": "Agency or production shop?",
-      "description": "Custom credits, SLA, and dedicated support at scale",
-      "button": "Contact Sales"
+      "title": "Agenție sau casă de producție?",
+      "description": "Credite personalizate, SLA și asistență dedicată la scară largă",
+      "button": "Contactează departamentul de vânzări"
     },
     "byok": {
-      "title": "Bring Your Own Key",
-      "badge": "Pro & Studio Plans",
-      "description": "Your API key can run reference, still, and clip generations. SceneFlow charges a 20% orchestration fee on those jobs. Hosted SceneFlow rates can be lower than a personal API account as platform volume grows.",
-      "savingsHighlight": "20% orchestration fee",
+      "title": "Aduceți propria cheie",
+      "badge": "Planuri Pro și Studio",
+      "description": "Cheia ta API poate genera imagini de referință, imagini statice și clipuri. SceneFlow percepe o taxă de orchestrare de 20% pentru aceste operațiuni. Tarifele pentru serviciul găzduit SceneFlow pot fi mai mici decât cele pentru un cont API personal, pe măsură ce volumul de utilizare a platformei crește.",
+      "savingsHighlight": "Comision de orchestrare de 20%",
       "benefits": [
         {
-          "title": "References, stills, and clips",
-          "description": "BYOK applies only when your key actually runs those generations"
+          "title": "Referințe, cadre și clipuri",
+          "description": "BYOK se aplică doar atunci când cheia dumneavoastră execută efectiv acele generații."
         },
         {
-          "title": "Hosted rates can be lower",
-          "description": "SceneFlow platform pricing can undercut a personal Vertex or Kling account"
+          "title": "Tarifele oferite prin intermediari pot fi mai mici.",
+          "description": "Prețurile platformei SceneFlow pot fi mai mici decât costurile unui cont personal Vertex sau Kling."
         },
         {
-          "title": "Full Control",
-          "description": "Your keys, your provider bill, plus a platform orchestration fee"
+          "title": "Control total",
+          "description": "Cheile tale, factura furnizorului tău, plus o taxă de orchestrare a platformei"
         }
       ],
-      "supportedProviders": "Supported Providers",
+      "supportedProviders": "Furnizori acceptați",
       "vertexName": "Google Vertex AI",
-      "vertexDetail": "References, stills, and Omni clips",
-      "elevenLabsName": "ElevenLabs",
-      "elevenLabsDetail": "Text-to-Speech & Voice Cloning",
-      "savingsLabel": "20% fee",
-      "onImagesVideo": "on references, stills, and clips",
-      "onVoiceover": "on voiceover",
-      "note": "The 20% fee is a SceneFlow orchestration charge. Provider usage bills to your account. SceneFlow-hosted generation can cost less than bringing a personal key."
+      "vertexDetail": "Referințe, cadre statice și clipuri Omni",
+      "elevenLabsName": "Kling",
+      "elevenLabsDetail": "Generarea de clipuri atunci când este utilizată cheia ta",
+      "savingsLabel": "Comision de 20%",
+      "onImagesVideo": "pe baza referințelor, cadrelor fixe și fragmentelor video",
+      "onVoiceover": "când cheia ta execută lucrarea",
+      "note": "Comisionul de 20% reprezintă o taxă de orchestrare SceneFlow. Furnizorul facturează utilizarea în contul dumneavoastră. Generarea găzduită de SceneFlow poate costa mai puțin decât utilizarea unei chei proprii."
     },
     "creditTopUps": {
-      "title": "Need More Credits?",
-      "subtitle": "Top up anytime. Each add-on pack lasts 12 months.",
+      "title": "Ai nevoie de mai multe credite?",
+      "subtitle": "Achiziționează pachete suplimentare de 25 $, 100 $ sau 250 $ ori de câte ori ai nevoie. Fiecare pachet este valabil 12 luni.",
       "packs": [
         {
-          "label": "Starter Pack",
-          "description": "Perfect for quick revisions"
+          "label": "Opțiune suplimentară de 25 $",
+          "description": "2.000 de credite. Cumpără ori de câte ori ai nevoie."
         },
         {
-          "label": "Scene Pack",
-          "description": "Complete a short project"
+          "label": "Opțiune suplimentară de 100 $",
+          "description": "9.000 de credite. Cumpără ori de câte ori ai nevoie."
         },
         {
-          "label": "Production Pack",
-          "description": "Major film sequence"
-        },
-        {
-          "label": "Studio Pack",
-          "description": "Full production capacity"
+          "label": "Opțiune suplimentară de 250 $",
+          "description": "25.000 de credite. Cumpără ori de câte ori ai nevoie."
         }
       ],
-      "creditsUnit": "credits"
+      "creditsUnit": "credite"
     },
     "calculator": {
-      "sectionTitle": "Estimate Your Project",
-      "sectionSubtitle": "Know exactly what you'll pay before you commit",
-      "title": "Project Budget Calculator",
-      "subtitle": "Set a credit budget, track production charges, and plan Pre-Vis first before motion video.",
-      "customize": "Customize parameters",
-      "imagesLabel": "Images to generate",
-      "videoClipsLabel": "Video clips",
-      "voiceoverLabel": "Voiceover (minutes)",
-      "byokTitle": "Bring Your Own Key (BYOK)",
-      "byokBadge": "Pro & Studio",
-      "byokDescription": "Use your own key for references, stills, and clips. SceneFlow charges a 20% orchestration fee, and hosted rates can be lower than a personal API account.",
-      "vertexToggle": "Vertex AI (references, stills, and clips)",
-      "elevenLabsToggle": "ElevenLabs (Voiceover)",
-      "imageGeneration": "Image Generation",
-      "videoGeneration": "Video Generation",
-      "voiceover": "Voiceover",
+      "sectionTitle": "Estimează-ți proiectul",
+      "sectionSubtitle": "Află exact cât vei plăti înainte de a te angaja.",
+      "title": "Planificator de producție",
+      "subtitle": "Planifică iterațiile cadrelor și un calendar cu termene precise, apoi urmărește ritmul de lucru și cheltuielile de pe telefon.",
+      "customize": "Personalizează parametrii",
+      "imagesLabel": "Imagini de generat",
+      "videoClipsLabel": "Clipuri video",
+      "voiceoverLabel": "Voice-over (minute)",
+      "byokTitle": "Utilizarea propriei chei (BYOK)",
+      "byokBadge": "Pro și Studio",
+      "byokDescription": "Folosește propria cheie pentru referințe, cadre statice și clipuri. SceneFlow percepe o taxă de orchestrare de 20%, iar tarifele pentru serviciile găzduite pot fi mai mici decât cele pentru un cont API personal.",
+      "vertexToggle": "Vertex AI (referințe, imagini statice și clipuri)",
+      "elevenLabsToggle": "ElevenLabs (Voce din off)",
+      "imageGeneration": "Generare de imagini",
+      "videoGeneration": "Generare video",
+      "voiceover": "Voice-over",
       "byokTag": "(BYOK)",
-      "totalEstimate": "Total Estimate",
-      "withTopUps": "with top-ups",
-      "creditSavings": "SceneFlow credit savings",
-      "savePercent": "You save {percent}% on SceneFlow credits",
-      "transparency": "Full transparency: You'll see real-time credit usage as you work. No surprises—adjust your project scope anytime.",
-      "transparencyHighlight": "Full transparency:",
-      "byokDisclaimer": "BYOK Note: The platform fee applies only to reference, still, and clip generations that run on your key. SceneFlow-hosted model rates can be lower than an individual account.",
-      "byokDisclaimerHighlight": "BYOK Note:",
+      "totalEstimate": "Estimare totală",
+      "withTopUps": "cu reîncărcări",
+      "creditSavings": "Economii prin credit SceneFlow",
+      "savePercent": "Economisiți {percent}% la creditele SceneFlow",
+      "transparency": "Transparență totală: Vei vedea consumul de credite în timp real pe măsură ce lucrezi. Fără surprize – poți ajusta oricând anvergura proiectului.",
+      "transparencyHighlight": "Transparență totală:",
+      "byokDisclaimer": "Notă: Taxa de platformă se aplică doar generărilor de referințe, imagini statice și clipuri realizate folosind cheia dumneavoastră. Tarifele pentru modelele găzduite pe platformă pot fi mai mici decât cele aplicabile unui cont individual.",
+      "byokDisclaimerHighlight": "Notă BYOK:",
       "presets": [
         {
           "id": "commercial",
-          "name": "30-sec Commercial"
+          "name": "Spot publicitar de 30 de secunde"
         },
         {
           "id": "short",
-          "name": "2-min Short Film"
+          "name": "Scurtmetraj de 2 minute"
         },
         {
           "id": "episode",
-          "name": "10-min Episode"
+          "name": "Episod de 10 minute"
         },
         {
           "id": "feature",
-          "name": "90-min Feature"
+          "name": "Lungmetraj de 90 de minute"
         }
       ],
-      "minSuffix": "min"
+      "minSuffix": "min."
     },
     "tierGrid": {
-      "productionTestFlight": "Production Test Flight",
-      "getStarted": "Get Started",
-      "startTestFlight": "Start Test Flight",
-      "loading": "Loading...",
-      "mostPopular": "Most Popular",
-      "creditsPerMonth": "Credits/mo",
-      "storage": "Storage",
+      "productionTestFlight": "Zbor de testare de producție",
+      "getStarted": "Începe",
+      "startTestFlight": "Începe zborul de test",
+      "loading": "Se încarcă...",
+      "mostPopular": "Cele mai populare",
+      "creditsPerMonth": "Credite/lună",
+      "storage": "Depozitare",
       "perMonth": "/month"
     },
     "trust": {
-      "cancelAnytime": "Cancel anytime",
-      "moneyBack": "$9 Explorer to try the studio",
-      "creditsNeverExpire": "Explorer credits last 90 days"
+      "cancelAnytime": "Anulează oricând",
+      "moneyBack": "9 $ – Explorer pentru a încerca studioul",
+      "creditsNeverExpire": "Credite Explorer din ultimele 90 de zile"
     },
     "plans": {
       "explorer": {
-        "name": "Explorer",
-        "description": "One-time purchase to try it out",
+        "name": "Explorer — Demo",
+        "description": "Demo — achiziție unică pentru a testa o producție completă",
         "features": [
-          "One-time purchase",
-          "750 credits (expire 90 days after purchase)",
-          "5 GB storage (30 days)",
-          "Full platform access",
-          "MP4 export (any resolution)",
-          "AI voiceover (70+ languages)"
+          "Achiziție unică",
+          "750 de credite (expiră la 90 de zile de la achiziție)",
+          "Stocare de 5 GB (30 de zile)",
+          "Acces complet la platformă",
+          "Export MP4 (orice rezoluție)",
+          "Voiceover AI (peste 70 de limbi)"
         ]
       },
       "subscriptions": [
         {
           "id": "starter",
-          "name": "Starter",
-          "description": "For individual creators",
+          "name": "Starter — Sandbox",
+          "description": "Sandbox — pentru testarea ideilor înainte de un spectacol propriu-zis",
           "features": [
-            "Full platform access",
-            "4,500 credits/month included",
-            "Unused monthly credits expire at period end",
-            "25 GB active storage",
-            "MP4 export (any resolution)",
-            "AI voiceover (70+ languages)",
-            "Email support"
+            "Acces complet la platformă",
+            "4.500 de credite/lună incluse",
+            "Creditele lunare neutilizate expiră la sfârșitul perioadei.",
+            "Stocare activă de 25 GB",
+            "Export MP4 (orice rezoluție)",
+            "Voiceover AI (peste 70 de limbi)",
+            "Asistență prin e-mail"
           ]
         },
         {
           "id": "pro",
-          "name": "Pro",
-          "description": "For professional creators",
+          "name": "Profesionist — YouTuber",
+          "description": "YouTuber — episoade recurente și videoclipuri de canal",
           "features": [
-            "Everything in Starter, plus:",
-            "15,000 credits/month included",
-            "Unused monthly credits expire at period end",
-            "100 GB active storage",
-            "Veo 3.1 Quality (4K) access",
-            "Character Consistency Engine",
-            "Voice cloning",
-            "BYOK (Bring Your Own Key)",
-            "3 team seats",
-            "Priority support"
+            "Tot ce este inclus în pachetul Starter, plus:",
+            "15.000 de credite/lună incluse",
+            "Creditele lunare neutilizate expiră la sfârșitul perioadei.",
+            "100 GB stocare activă",
+            "Acces la calitate Veo 3.1 (4K)",
+            "Motor de consistență a personajelor",
+            "Clonarea vocii",
+            "BYOK (Aduceți propria cheie)",
+            "3 locuri pentru echipă",
+            "Asistență prioritară"
           ]
         },
         {
           "id": "studio",
-          "name": "Studio",
-          "description": "For teams & agencies",
+          "name": "Studio — Cineast independent",
+          "description": "Cineast independent — filme și seriale independente",
           "features": [
-            "Everything in Pro, plus:",
-            "75,000 credits/month included",
-            "Unused monthly credits expire at period end",
-            "500 GB active storage",
-            "Veo 3.1 4K Priority Queue",
-            "Unlimited Character Consistency",
-            "White-label exports",
-            "API access",
-            "10 team seats",
-            "Dedicated account manager",
-            "Enterprise SLA available on request"
+            "Tot ce include varianta Pro, plus:",
+            "75.000 de credite/lună incluse",
+            "Creditele lunare neutilizate expiră la sfârșitul perioadei.",
+            "Stocare activă de 500 GB",
+            "Coadă de prioritate Veo 3.1 4K",
+            "Consecvență nelimitată a personajelor",
+            "Exporturi în regim white-label",
+            "Acces API",
+            "10 locuri pentru echipă",
+            "Manager de cont dedicat",
+            "SLA pentru companii disponibil la cerere"
           ]
         }
       ]
-    },
-    "explorerHighlight": "The fastest way to experience the complete SceneFlow studio — from concept to Screening Room.",
-    "trustBadges": [
-      "Secure payments via Whop",
-      "$9 Explorer to try the studio",
-      "Monthly credits expire at period end",
-      "Cancel anytime"
-    ]
+    }
   },
   "landingSections": {
     "expandSection": "Afișează secțiunea",
     "collapseSection": "Ascunde secțiunea"
   },
+  "notify": {
+    "heading": "Primește noutăți despre lansare",
+    "description": "Lasă-ți adresa de e-mail și te vom anunța când facem anunțul. Nimic altceva.",
+    "placeholder": "you@studio.com",
+    "submit": "Anunță-mă",
+    "submitting": "Se trimite…",
+    "successTitle": "Verifică-ți căsuța de e-mail.",
+    "successBody": "Am trimis un link de confirmare. Dă clic pe el pentru a te înscrie pe lista de lansare. Atât.",
+    "errorEmpty": "Introdu adresa de e-mail pentru a te putea contacta.",
+    "errorInvalid": "Acea adresă de e-mail nu pare corectă. Verific-o și încearcă din nou.",
+    "errorGeneric": "A apărut o problemă. Încearcă din nou peste puțin timp.",
+    "privacy": "Mai întâi, trimitem prin e-mail un link de confirmare. Un singur mesaj despre lansare, după ce confirmi. Fără spam.",
+    "confirmTitle": "Ești pe listă.",
+    "confirmBody": "Îți vom trimite un e-mail când facem anunțul. Nimic altceva.",
+    "confirmExpiredTitle": "Acel link a expirat.",
+    "confirmExpiredBody": "Introdu din nou adresa de e-mail pe pagina de destinație, iar noi îți vom trimite un nou link de confirmare.",
+    "confirmInvalidTitle": "Acel link nu este valid.",
+    "confirmInvalidBody": "Solicită o nouă confirmare de pe pagina de destinație.",
+    "confirmHome": "Înapoi la SceneFlow"
+  },
+  "forFilmmakers": {
+    "badge": "Înscrie-te în programul SceneFlow Originals Seed",
+    "heading": "Pentru cineaști: Trimiteți episodul pilot pentru distribuție pe platformă și monetizare.",
+    "subtitle": "Rețeaua SceneFlow este un grup restrâns de creatori fondatori — cuprinzând între 5 și 10 titluri selectate cu grijă la lansare — și nu o piață deschisă. Împărțirea veniturilor începe abia după apariția abonaților plătitori. Ceea ce oferim în prezent este un avantaj în distribuție: reclame de tip teaser finanțate de noi, în schimbul unei perioade de premieră exclusivă.",
+    "closedNote": "Solicitările sunt evaluate de editori. Trimiterea acestora nu publică filmul tău într-un catalog.",
+    "fields": {
+      "email": "E-mail",
+      "emailPlaceholder": "you@studio.com",
+      "name": "Numele tău",
+      "namePlaceholder": "Numele regizorului sau al producătorului",
+      "title": "Titlul episodului pilot sau al lungmetrajului",
+      "titlePlaceholder": "Titlu de lucru",
+      "logline": "Sinopsis pe scurt",
+      "loglinePlaceholder": "Una sau două propoziții care vând povestea.",
+      "audienceUrl": "Audiență existentă",
+      "audiencePlaceholder": "URL YouTube, Bilibili, festival sau rețea de socializare",
+      "exclusivePremiere": "Sunt deschis la o fereastră de premieră exclusivă pe SceneFlow, în schimbul finanțării reclamelor de tip teaser."
+    },
+    "submit": "Trimiteți cererea",
+    "submitting": "Se trimite…",
+    "successTitle": "Verifică-ți căsuța de e-mail.",
+    "successBody": "Am trimis un link de confirmare. Dă clic pe el pentru a finaliza înscrierea pentru Seed. Atât.",
+    "errorEmpty": "Completați toate câmpurile pentru a putea evalua proiectul-pilot.",
+    "errorInvalidEmail": "Acea adresă de e-mail nu pare corectă. Verific-o și încearcă din nou.",
+    "errorInvalidUrl": "Adaugă un URL public pentru publicul tău existent.",
+    "errorGeneric": "A apărut o problemă. Încearcă din nou peste puțin timp.",
+    "confirmTitle": "Cerere primită.",
+    "confirmBody": "Te afli în coada de examinare Seed. Citim fiecare propunere primită. Aceasta nu este o înregistrare într-un catalog public.",
+    "confirmExpiredTitle": "Acel link a expirat.",
+    "confirmExpiredBody": "Trimiteți din nou formularul pentru cineaști și vă vom trimite un nou link de confirmare.",
+    "confirmInvalidTitle": "Acel link nu este valid.",
+    "confirmInvalidBody": "Solicită o nouă confirmare din formularul pentru cineast.",
+    "confirmHome": "Înapoi la SceneFlow",
+    "privacy": "Mai întâi, trimitem prin e-mail un link de confirmare. Doar pentru editori. Fără spam."
+  },
   "finalCta": {
-    "title": "Built for the stories that have to hold.",
-    "subtitle": "Leave your email for launch news — or start directing now from the $9 Explorer plan.",
-    "cta": "Explore plans",
-    "ctaSecondary": "See how it works",
+    "title": "Construit pentru poveștile care trebuie să reziste.",
+    "subtitle": "Lasă-ți adresa de e-mail pentru a primi noutăți despre lansare — sau începe să direcționezi chiar acum, folosind planul Explorer de 9 $.",
+    "cta": "Explorează planurile",
+    "ctaSecondary": "Vezi cum funcționează",
     "ctaSecondaryHref": "#two-modes"
   },
   "footer": {
-    "description": "Producție video automată end-to-end — de la concept la master gata de publicare. Un studio ghidat: Series Room → Blueprint Room → Production Stage → Screening Room.",
+    "description": "Producție video automatizată cap-la-cap — de la concept până la masterul gata de publicare. Un studio ghidat: Series Room → Blueprint Room → Production Stage → Screening Room.",
     "product": "Produs",
     "resources": "Resurselor",
     "legal": "Încredere și siguranță",
@@ -1393,290 +2637,5 @@
     "mute": "Mut",
     "unmute": "Activează sunetul",
     "expandVideo": "Extinde videoclipul"
-  },
-  "productionShowcase": {
-    "badge": "Production Examples",
-    "title": "See the Full Pipeline",
-    "titleAccent": "in Action",
-    "subtitle": "Each example below is a complete production — from Blueprint through Pre-Vis to the final ProRes 4K master. Walk the Screening Room to compare the Pre-Vis, per-scene motion video, and the finished master in multiple languages.",
-    "subtitleTagline": "Long-form productions. Not clips.",
-    "screeningRoomInstruction": "Review this production the way a reviewer would — one milestone at a time. Start with Series, then Blueprint, then the script in AR Analysis, and finish in Screening.",
-    "languagesBanner": "Public examples ship in 7 languages: English, Spanish, Portuguese, Hindi, Chinese, Arabic, and Thai.",
-    "explorePipelineCta": "Explore a full production",
-    "explorePipelineHint": "Start with Cinematic Drama below to walk the full pipeline from concept to multi-language master.",
-    "workflowLabel": "Solutions",
-    "startProduction": "Start Your Production",
-    "cta": "Start Your Production",
-    "continuityNote": "Series Room manages continuity",
-    "resonanceNote": "Audience Resonance™ optimizes scripts",
-    "videoLanguagePrompt": "Watch this production in your language",
-    "videoComingSoon": "Dub coming soon",
-    "videoSoon": "Soon",
-    "frictionLabel": "The Friction",
-    "solutionPillarLabel": "The SceneFlow Solution",
-    "showSolutionsSection": "Show Solutions",
-    "hideSolutionsSection": "Hide Solutions",
-    "cards": [
-      {
-        "id": "drama",
-        "title": "Feature-Length Cinematic Drama. Zero Character Drift.",
-        "subtitle": "Hold character faces, wardrobe, and locations from scene 1 to scene 100. Walk the Screening Room to see the Pre-Vis, per-scene motion video, and the final ProRes 4K master — then switch languages to hear the full dub.",
-        "badge": "Series-Ready",
-        "solutionPillars": [
-          {
-            "title": "Visual & Character Consistency",
-            "frictionHeadline": "Character Drift & Wobbly Sets.",
-            "friction": "Generative models reset with every shot — causing character faces, outfits, and lighting to morph continuously across scene cuts.",
-            "solutionHeadline": "Locked Asset Blueprints.",
-            "solution": "Define master character profiles, environments, and visual styles up front in Blueprint Room. SceneFlow enforces visual identity across every render to preserve narrative immersion."
-          },
-          {
-            "title": "Narrative Pacing & Scene Control",
-            "frictionHeadline": "The 10-Second Clip Trap.",
-            "friction": "Building a film out of disconnected micro-prompts creates choppy pacing, flat emotion, and endless manual timeline editing.",
-            "solutionHeadline": "Beat-First Storyboarding.",
-            "solution": "Direct at the scene level, not the prompt level. Structure dramatic beats, camera movements, and story arcs visually before generating a single frame of video."
-          },
-          {
-            "title": "Dialogue & Audio Alignment",
-            "frictionHeadline": "Unconvincing Dialogue.",
-            "friction": "Mismatched lip-sync, floating mouth movements, and detached voice tracks immediately pull viewers out of the drama.",
-            "solutionHeadline": "Integrated Voice & Sync Engine.",
-            "solution": "Dynamic voice performance and precise lip-sync are baked directly into the video pipeline — delivering believable dialogue without external post-production passes."
-          },
-          {
-            "title": "Workflow Friction & Reroll Fatigue",
-            "frictionHeadline": "Asset Chaos & Endless Rerolls.",
-            "friction": "Generating a short film usually means juggling 200+ raw video files, manual upscaling, and dozens of wasted generations.",
-            "solutionHeadline": "Automated Studio Pipeline.",
-            "solution": "From concept to final master MP4 in one unified platform. Blueprint Room handles story setup, Production Stage runs Direction through Streams, and Screening Room delivers your final export."
-          }
-        ],
-        "screeningRoomPreview": "The Cinematic Drama — Screening Room"
-      },
-      {
-        "id": "animation",
-        "title": "Full-Season Animated Series. One Consistent Art Style.",
-        "subtitle": "Lock character designs, line weights, and shading models across an entire season. Direct comedic timing shot by shot, then review the assembled episode in the Screening Room.",
-        "badge": "Multi-Style",
-        "solutionPillars": [
-          {
-            "title": "Stylistic Consistency",
-            "frictionHeadline": "Style Meltdown.",
-            "friction": "Cartoon and anime styles constantly warp between shots, shifting line art, breaking color palettes, and morphing characters into photorealistic uncanny slop.",
-            "solutionHeadline": "Locked Art Style Engine.",
-            "solution": "Freeze your aesthetic from the first frame. SceneFlow locks character designs, line weights, and shading models across the entire episode so your characters stay uniquely yours."
-          },
-          {
-            "title": "Exaggerated Animation & Physics",
-            "frictionHeadline": "Stiff & Glitchy Motion.",
-            "friction": "Generative models struggle with fast slapstick, double-takes, and squishy cartoon physics, turning high-energy gags into melting artifacts.",
-            "solutionHeadline": "Action & Pose Anchoring.",
-            "solution": "Drive dynamic character movement and expressive poses without breaking geometry. Direct punchy physical comedy, sudden cutaways, and wild expressions with full motion control."
-          },
-          {
-            "title": "Comedic Timing & Rhythm",
-            "frictionHeadline": "Ruined Punchlines.",
-            "friction": "Humor lives in the pauses and beat-cuts. Standard 5-second generative loops force awkward pacing that destroys joke delivery.",
-            "solutionHeadline": "Beat-Precision Editing.",
-            "solution": "Control scene pacing down to the frame. Adjust dramatic pauses, setup-to-punchline timing, and quick reaction shots directly inside the beat-first timeline before final render."
-          },
-          {
-            "title": "High-Energy Dialogue & Vocal Sync",
-            "frictionHeadline": "Lifeless Puppet Mouths.",
-            "friction": "Generic AI dialogue feels flat and mechanical, destroying the energy needed for snappy sitcom banter.",
-            "solutionHeadline": "Dynamic Voice & Expression Sync.",
-            "solution": "Map vocal delivery directly to energetic facial performance. Dialogue, expressive mouth shapes, and comedic voice tracks match seamlessly for maximum comedic impact."
-          }
-        ],
-        "screeningRoomPreview": "The Animated Comedy — Screening Room"
-      },
-      {
-        "id": "documentary",
-        "title": "Long-Form Documentaries. Sustained Period Accuracy.",
-        "subtitle": "Maintain era-specific detail, narrator pacing, and expert-witness continuity across a 40-minute episode or multi-part series. Review the full timeline in the Screening Room before committing to high-res renders.",
-        "badge": "Period-Accurate",
-        "solutionPillars": [
-          {
-            "title": "Era-Specific Visual Accuracy",
-            "frictionHeadline": "Anachronistic Artifacts",
-            "friction": "Standard generative models routinely bleed modern objects, smartphone screens, or incorrect period clothing into historical re-enactments.",
-            "solutionHeadline": "Historical Style Guardrails",
-            "solution": "Set exact temporal parameters — from 1920s film grain to 18th-century wardrobe textures — so every generated scene stays historically authentic."
-          },
-          {
-            "title": "Archival Cutaways & B-Roll Engine",
-            "frictionHeadline": "Visual Monotony in Long Voiceovers",
-            "friction": "Pairing long-form narrator audio with static stock images leads to rapid viewer drop-off during deep dives.",
-            "solutionHeadline": "Transcript-Driven B-Roll Engine",
-            "solution": "As your narrator discusses historical facts, SceneFlow automatically generates timed cinematic re-enactments, document overlays, and archival-style cutaways tied directly to the audio transcript."
-          },
-          {
-            "title": "Interview & Talking-Head Realism",
-            "frictionHeadline": "Uncanny Expert Witnesses",
-            "friction": "Generated historians, investigators, or witnesses often look artificial, with floating jaw movements and unnatural eye contact.",
-            "solutionHeadline": "Locked Expert Profiles & Vocal Sync",
-            "solution": "Maintain realistic, trustworthy interview setups with natural micro-expressions, accurate lip-sync, and consistent expert identities across multi-part series."
-          },
-          {
-            "title": "Episodic Pacing & Narrative Continuity",
-            "frictionHeadline": "Fragmented Timeline Editing",
-            "friction": "Balancing narrator audio, re-enactments, evidence reveals, and tension-building pauses across a 40-minute episode usually takes weeks in traditional NLEs.",
-            "solutionHeadline": "Beat-First Documentary Pipeline",
-            "solution": "Structure dramatic tension, suspenseful pauses, and evidence reveals visually inside Blueprint Room, delivering a fully assembled master file in one seamless pass."
-          }
-        ],
-        "screeningRoomPreview": "Documentary Production — Screening Room"
-      },
-      {
-        "id": "training",
-        "title": "Multi-Module Training Series. One Locked Instructor.",
-        "subtitle": "Hold the instructor, classroom, and lesson graphics from the first module to the last quiz. Walk Blueprint, Audience Resonance, and the Screening Room — Pre-Vis, rough cut, scenes, and the finished course — then switch languages to hear the localized version.",
-        "badge": "Curriculum-Ready",
-        "solutionPillars": [
-          {
-            "title": "Instructor & Setting Consistency",
-            "frictionHeadline": "A Different Teacher Every Module.",
-            "friction": "Generative clips reset the instructor face, wardrobe, and classroom between lessons, so a course feels like a pile of unrelated videos.",
-            "solutionHeadline": "Locked Instructor Blueprints.",
-            "solution": "Define the instructor, set, and visual system once in Blueprint Room. SceneFlow keeps that identity locked across every module."
-          },
-          {
-            "title": "Curriculum Pacing",
-            "frictionHeadline": "Slides Chopped into Clips.",
-            "friction": "Turning a syllabus into disconnected prompts loses the lesson arc, the worked example, and the pause before a quiz.",
-            "solutionHeadline": "Module-First Storyboarding.",
-            "solution": "Direct each module as a sequence of teaching beats — setup, demonstration, and check — before a frame is rendered."
-          },
-          {
-            "title": "Narration & On-Screen Teaching",
-            "frictionHeadline": "Voice That Misses the Graphic.",
-            "friction": "Narration, captions, and diagrams drift apart, so learners hear one step while the picture shows another.",
-            "solutionHeadline": "Synced Lesson Tracks.",
-            "solution": "Voice, captions, and on-screen teaching stay on the same beat, so each explanation lands with the visual that proves it."
-          },
-          {
-            "title": "Course Assembly",
-            "frictionHeadline": "Weeks in an Editor.",
-            "friction": "Stitching modules, retakes, and localized versions in a traditional timeline turns a curriculum update into a production delay.",
-            "solutionHeadline": "One Studio Pipeline.",
-            "solution": "Blueprint, Audience Resonance, and the Screening Room carry a module from outline to Pre-Vis, rough cut, scenes, and the finished course."
-          }
-        ],
-        "screeningRoomPreview": "The Training Series — Screening Room"
-      }
-    ]
-  },
-  "keyFeatures": {
-    "landingUiLanguagesLabel": "Produce and dub in 70+ languages. This site is available in these 39:",
-    "subtitle": "Series Room → Blueprint Room → Production Stage → Screening Room."
-  },
-  "twoModes": {
-    "eyebrow": "The friction we remove",
-    "title": "One pipeline. Not a stack of tools.",
-    "subtitle": "SceneFlow replaces single-clip generators and a pile of separate docs, editors, and re-renders. Build the series or the 90-minute master, then publish a scene or a chapter when you are ready to earn.",
-    "comingSoon": "Coming soon",
-    "comparison": {
-      "id": "comparison",
-      "caption": "Fragmented tools beside one SceneFlow pipeline.",
-      "themLabel": "Fragmented production",
-      "usLabel": "SceneFlow",
-      "rows": [
-        {
-          "them": "Prompt trial and error across tools",
-          "us": "One Blueprint locks the story and the look"
-        },
-        {
-          "them": "Hand-built treatments and formatting",
-          "us": "A film treatment and beat sheet from your premise or brief"
-        },
-        {
-          "them": "Short clips that do not share a cast",
-          "us": "Shots generated from the locked Reference Library"
-        },
-        {
-          "them": "Dragging clips into another editor",
-          "us": "Scenes, chapters, and the master assemble in the Screening Room"
-        },
-        {
-          "them": "Re-rendering to test a note",
-          "us": "Direct on the animatic, then render"
-        }
-      ]
-    },
-    "cta": "Launch Studio ($9)"
-  },
-  "infrastructure": {
-    "title": "Enterprise-Grade Infrastructure & Security",
-    "description": "Powered by Google Cloud and Vertex AI for enterprise reliability, multi-language dubbing models, and secure asset processing.",
-    "badges": {
-      "googleCloud": "Google Cloud",
-      "vertexAi": "Vertex AI"
-    }
-  },
-  "notify": {
-    "heading": "Get launch news",
-    "description": "Leave your email and we’ll tell you when we announce. Nothing else.",
-    "placeholder": "you@studio.com",
-    "submit": "Notify me",
-    "submitting": "Sending…",
-    "successTitle": "Check your inbox.",
-    "successBody": "We sent a confirmation link. Click it to join the launch list. Nothing else.",
-    "errorEmpty": "Enter your email so we can reach you.",
-    "errorInvalid": "That email doesn’t look right. Check it and try again.",
-    "errorGeneric": "Something went wrong. Try again in a moment.",
-    "privacy": "We email a confirmation link first. One launch note after you confirm. No spam.",
-    "confirmTitle": "You’re on the list.",
-    "confirmBody": "We’ll email you when we announce. Nothing else.",
-    "confirmExpiredTitle": "That link expired.",
-    "confirmExpiredBody": "Submit your email on the landing page again and we’ll send a new confirmation link.",
-    "confirmInvalidTitle": "That link isn’t valid.",
-    "confirmInvalidBody": "Request a new confirmation from the landing page.",
-    "confirmHome": "Back to SceneFlow"
-  },
-  "forFilmmakers": {
-    "badge": "Apply for the SceneFlow Originals Seed Program",
-    "heading": "For Filmmakers: Submit your pilot for platform distribution and monetization.",
-    "subtitle": "The SceneFlow Network is a closed Founding Creator cohort — 5 to 10 hand-picked titles at launch, not an open marketplace. Revenue share starts only after paying subscribers exist. What we offer now is distribution leverage: funded teaser ads in exchange for an exclusive premiere window.",
-    "closedNote": "Applications are reviewed by editors. Submitting does not publish your film to a catalog.",
-    "fields": {
-      "email": "Email",
-      "emailPlaceholder": "you@studio.com",
-      "name": "Your name",
-      "namePlaceholder": "Director or producer name",
-      "title": "Pilot or feature title",
-      "titlePlaceholder": "Working title",
-      "logline": "Logline",
-      "loglinePlaceholder": "One or two sentences that sell the story.",
-      "audienceUrl": "Existing audience",
-      "audiencePlaceholder": "YouTube, Bilibili, festival, or social URL",
-      "exclusivePremiere": "I am open to an exclusive premiere window on SceneFlow in exchange for funded teaser ads."
-    },
-    "submit": "Submit application",
-    "submitting": "Sending…",
-    "successTitle": "Check your inbox.",
-    "successBody": "We sent a confirmation link. Click it to lock in your Seed application. Nothing else.",
-    "errorEmpty": "Fill in every field so we can review your pilot.",
-    "errorInvalidEmail": "That email doesn’t look right. Check it and try again.",
-    "errorInvalidUrl": "Add a public URL for your existing audience.",
-    "errorGeneric": "Something went wrong. Try again in a moment.",
-    "confirmTitle": "Application received.",
-    "confirmBody": "You’re in the Seed review queue. We read every submission. This is not a public catalog listing.",
-    "confirmExpiredTitle": "That link expired.",
-    "confirmExpiredBody": "Submit the filmmaker form again and we’ll send a new confirmation link.",
-    "confirmInvalidTitle": "That link isn’t valid.",
-    "confirmInvalidBody": "Request a new confirmation from the filmmaker form.",
-    "confirmHome": "Back to SceneFlow",
-    "privacy": "We email a confirmation link first. Editors only. No spam."
-  },
-  "publishCut": {
-    "eyebrow": "The cut you publish",
-    "title": "Export anywhere. Premiere on SceneFlow when you earn it.",
-    "subtitle": "Download a master and ship it yourself, or publish finished scenes and chapters to {longForm} and cut trailers for {shorts} — without waiting on the whole cut. Before anything hits the public feed, run drafts or your final master through the Screening Room. Standout projects can apply for the invite-only SceneFlow Network; it is a curated accelerator, not an open storefront.",
-    "comparison": {
-      "id": "publish",
-      "caption": "A finished scene or chapter, and the 90-minute master, from one studio."
-    },
-    "cta": "Launch Studio ($9)"
   }
 }

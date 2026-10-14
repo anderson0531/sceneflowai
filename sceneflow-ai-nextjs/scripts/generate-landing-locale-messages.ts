@@ -81,12 +81,7 @@ async function main() {
       messages = structuredClone(en)
       console.log('  (offline — copied from en.json)')
     } else {
-      try {
-        messages = await translateLocale(en, locale, provider)
-      } catch (err) {
-        console.warn(`  MT failed (${(err as Error).message}) — falling back to en copy`)
-        messages = structuredClone(en)
-      }
+      messages = await translateLocale(en, locale, provider)
     }
 
     const tierAPath = join(MESSAGES_DIR, 'tier-a', `${locale}.json`)

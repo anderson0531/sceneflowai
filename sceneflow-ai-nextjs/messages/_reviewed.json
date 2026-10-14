@@ -28,7 +28,192 @@
     "th": {
       "tier": "A-reviewed",
       "mt": true,
-      "scope": "landing"
+      "scope": "fill-english"
+    },
+    "es": {
+      "tier": "A-reviewed",
+      "mt": true,
+      "scope": "fill-english"
+    },
+    "pt": {
+      "tier": "A-reviewed",
+      "mt": true,
+      "scope": "fill-english"
+    },
+    "fr": {
+      "tier": "B-mt",
+      "mt": true,
+      "scope": "fill-english"
+    },
+    "de": {
+      "tier": "B-mt",
+      "mt": true,
+      "scope": "fill-english"
+    },
+    "it": {
+      "tier": "B-mt",
+      "mt": true,
+      "scope": "fill-english"
+    },
+    "nl": {
+      "tier": "B-mt",
+      "mt": true,
+      "scope": "fill-english"
+    },
+    "pl": {
+      "tier": "B-mt",
+      "mt": true,
+      "scope": "fill-english"
+    },
+    "ru": {
+      "tier": "B-mt",
+      "mt": true,
+      "scope": "fill-english"
+    },
+    "uk": {
+      "tier": "B-mt",
+      "mt": true,
+      "scope": "fill-english"
+    },
+    "cs": {
+      "tier": "B-mt",
+      "mt": true,
+      "scope": "fill-english"
+    },
+    "sv": {
+      "tier": "B-mt",
+      "mt": true,
+      "scope": "fill-english"
+    },
+    "da": {
+      "tier": "B-mt",
+      "mt": true,
+      "scope": "fill-english"
+    },
+    "no": {
+      "tier": "B-mt",
+      "mt": true,
+      "scope": "fill-english"
+    },
+    "fi": {
+      "tier": "B-mt",
+      "mt": true,
+      "scope": "fill-english"
+    },
+    "el": {
+      "tier": "B-mt",
+      "mt": true,
+      "scope": "fill-english"
+    },
+    "tr": {
+      "tier": "B-mt",
+      "mt": true,
+      "scope": "fill-english"
+    },
+    "ro": {
+      "tier": "B-mt",
+      "mt": true,
+      "scope": "fill-english"
+    },
+    "hu": {
+      "tier": "B-mt",
+      "mt": true,
+      "scope": "fill-english"
+    },
+    "zh-CN": {
+      "tier": "A-reviewed",
+      "mt": true,
+      "scope": "fill-english"
+    },
+    "zh-TW": {
+      "tier": "B-mt",
+      "mt": true,
+      "scope": "fill-english"
+    },
+    "ja": {
+      "tier": "B-mt",
+      "mt": true,
+      "scope": "fill-english"
+    },
+    "ko": {
+      "tier": "B-mt",
+      "mt": true,
+      "scope": "fill-english"
+    },
+    "hi": {
+      "tier": "A-reviewed",
+      "mt": true,
+      "scope": "fill-english"
+    },
+    "bn": {
+      "tier": "B-mt",
+      "mt": true,
+      "scope": "fill-english"
+    },
+    "vi": {
+      "tier": "B-mt",
+      "mt": true,
+      "scope": "fill-english"
+    },
+    "id": {
+      "tier": "B-mt",
+      "mt": true,
+      "scope": "fill-english"
+    },
+    "ms": {
+      "tier": "B-mt",
+      "mt": true,
+      "scope": "fill-english"
+    },
+    "tl": {
+      "tier": "B-mt",
+      "mt": true,
+      "scope": "fill-english"
+    },
+    "ur": {
+      "tier": "B-mt",
+      "mt": true,
+      "scope": "fill-english"
+    },
+    "ar": {
+      "tier": "A-reviewed",
+      "mt": true,
+      "scope": "fill-english"
+    },
+    "he": {
+      "tier": "B-mt",
+      "mt": true,
+      "scope": "fill-english"
+    },
+    "fa": {
+      "tier": "B-mt",
+      "mt": true,
+      "scope": "fill-english"
+    },
+    "sw": {
+      "tier": "B-mt",
+      "mt": true,
+      "scope": "fill-english"
+    },
+    "am": {
+      "tier": "B-mt",
+      "mt": true,
+      "scope": "fill-english"
+    },
+    "yo": {
+      "tier": "B-mt",
+      "mt": true,
+      "scope": "fill-english"
+    },
+    "zu": {
+      "tier": "B-mt",
+      "mt": true,
+      "scope": "fill-english"
+    },
+    "af": {
+      "tier": "B-mt",
+      "mt": true,
+      "scope": "fill-english"
     }
   },
   "landingSync": {
@@ -52,5 +237,12 @@
     "batchSize": null,
     "batchNumber": null,
     "syncedAt": "2026-08-02T05:23:49.220Z"
+  },
+  "landingFill": {
+    "provider": "vertex",
+    "scope": "fill-english",
+    "batchSize": null,
+    "batchNumber": null,
+    "syncedAt": "2026-10-14T07:00:52.976Z"
   }
 }

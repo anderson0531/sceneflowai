@@ -1,10 +1,945 @@
 {
+  "pipeline": {
+    "badge": "Wat is SceneFlow?",
+    "title": "De pipeline-architectuur met drie pijlers",
+    "subtitle": "Drie fasen van het eerste idee tot de publicatieklare master — Series Room, Blueprint Room en Production Stage.",
+    "ui": {
+      "expandFullscreen": "Volledig scherm weergeven",
+      "closeFullscreen": "Sluiten",
+      "landscapeHint": "Draai uw apparaat voor een bredere liggende weergave.",
+      "howItWorksLabel": "Hoe het in deze fase werkt",
+      "showHowItWorks": "Laat zien hoe het werkt",
+      "hideHowItWorks": "Verberg hoe het werkt",
+      "imagePlaceholder": "Placeholder voor schermafbeelding",
+      "videoWalkthrough": "Rondleiding van 30 seconden",
+      "comingSoon": "Product-screenshot volgt binnenkort"
+    },
+    "pillars": [
+      {
+        "id": "series",
+        "tabLabel": "SFAISERIES_RUIMTETERM",
+        "number": "01",
+        "title": "Generatie van Series Room",
+        "header": "Bouw een universum, geen clip",
+        "body": "Beschrijf je serie of YouTube-kanaal één keer, en SceneFlow bouwt de volledige wereld op — inclusief verhaallijn, cast en een onbeperkt aantal afleveringen — met behulp van een gedeelde Reference Library die ervoor zorgt dat elke aflevering trouw blijft aan je merk.",
+        "steps": [
+          {
+            "id": "series-concept",
+            "number": "1",
+            "title": "Begin met je concept",
+            "description": "Voer een concept of een gedetailleerde beschrijving van je serie of YouTube-kanaal in. SceneFlow zet dit om in een gestructureerde, productieklare basis — zonder dat er prompt engineering voor nodig is.",
+            "imagePlaceholder": "Aanmelding nieuwe series — concept- of zenderbeschrijving"
+          },
+          {
+            "id": "series-baseline",
+            "number": "2",
+            "title": "Beoordeel de SceneFlow-baseline",
+            "description": "SceneFlow levert een professionele basislijn op, beoordeeld via Audience Resonance-analyse. Lees of beluister het toegelichte overzicht en stuur het vervolgens bij volgens uw eigen visie.",
+            "imagePlaceholder": "Basislijn voor de serie — Audience Resonance-score en toegelicht overzicht"
+          },
+          {
+            "id": "series-episodes",
+            "number": "3",
+            "title": "Maak onbeperkt afleveringen",
+            "description": "Creëer zoveel afleveringen als je verhaal vereist. Elke aflevering draagt het DNA van je serie in zich, waardoor de cast, de toon en de wereld consistent blijven – van de eerste aflevering tot de seizoensfinale.",
+            "imagePlaceholder": "Afleveringenreeks — onbeperkt aantal afleveringen gegenereerd op basis van de verhaallijn van de serie"
+          },
+          {
+            "id": "series-reference-library",
+            "number": "4",
+            "title": "Beoordeel de Reference Library",
+            "description": "Bekijk de gedeelde Reference Library — personages, stemmen, kostuums, locaties en rekwisieten — die via Production Stage zijn gecreëerd en worden onderhouden, en die in elke aflevering opnieuw worden gebruikt.",
+            "imagePlaceholder": "Gedeelde Reference Library — personages, stemmen, locaties, rekwisieten"
+          },
+          {
+            "id": "series-assistant-writer",
+            "number": "5",
+            "title": "Stuur de intelligente schrijfassistent aan",
+            "description": "Pas de serie of een aflevering aan door je instructies in te spreken of te typen. De intelligente schrijfassistent herschrijft professionele teksten direct – geen leeg blad, geen ingewikkelde prompts nodig.",
+            "imagePlaceholder": "Intelligente schrijfassistent — aansturing via spraak of tekst voor series en afleveringen"
+          },
+          {
+            "id": "series-start-production",
+            "number": "6",
+            "title": "Start de productie met één klik",
+            "description": "Wanneer een aflevering goed aanvoelt, start je de productie met één klik en ga je direct over naar de begeleide Production Stage-pipeline.",
+            "imagePlaceholder": "Start de productie van een geselecteerde aflevering met één klik"
+          }
+        ]
+      },
+      {
+        "id": "blueprint",
+        "tabLabel": "SFAIBLUEPRINT_RUIMTETERM",
+        "number": "02",
+        "title": "SFAIBLUEPRINT_RUIMTETERM",
+        "header": "Jouw creatieve DNA, vastgelegd",
+        "body": "Blueprint Room is je diepgaande filmtreatment — synopsis, verhaalmomenten, personages, toon en stijl — vooraf getoetst via Audience Resonance-analyse, zodat je een verhaal goedkeurt dat aanslaat nog voordat er ook maar één frame wordt gerenderd.",
+        "steps": [
+          {
+            "id": "blueprint-baseline",
+            "number": "1",
+            "title": "Beoordeel de baseline Blueprint",
+            "description": "Open een professionele basis-Blueprint met ingebouwde Audience Resonance-analyse. Lees of beluister het toegelichte overzicht om precies te horen waarom het werkt.",
+            "imagePlaceholder": "Uitgangswaarde Blueprint — behandeling met Audience Resonance-score"
+          },
+          {
+            "id": "blueprint-assistant-writer",
+            "number": "2",
+            "title": "Stuur de intelligente schrijfassistent aan",
+            "description": "Verfijn de synopsis, verhaalmomenten, personages en meer door je aanwijzingen in te spreken of te typen. De intelligente schrijfassistent past het treatment direct aan – zonder dat daar complexe prompt-technieken voor nodig zijn.",
+            "imagePlaceholder": "Intelligente schrijfassistent — bewerken van synopsis, verhaalmomenten en personages"
+          },
+          {
+            "id": "blueprint-reasoning",
+            "number": "3",
+            "title": "Beoordeel de redenering",
+            "description": "Open de sectie 'Onderbouwing' voor een creatieve toelichting op de huidige Blueprint — de verhaallogica achter elke 'beat' en elke keuze met betrekking tot de personages.",
+            "imagePlaceholder": "Toelichtingspaneel — creatieve uitleg van de Blueprint"
+          },
+          {
+            "id": "blueprint-start-production",
+            "number": "4",
+            "title": "Start de productie zodra alles gereed is",
+            "description": "Zodra het verhaal staat als een huis, start je de productie — en neemt de volledige pipeline je goedgekeurde creatieve DNA over, zonder afwijkingen.",
+            "imagePlaceholder": "Open Production Stage — gereedheidscontrole op basis van een goedgekeurde blueprint"
+          }
+        ]
+      },
+      {
+        "id": "production",
+        "tabLabel": "Production StageIJN",
+        "number": "03",
+        "title": "Production StageIJN",
+        "header": "Van script tot gepubliceerde master",
+        "body": "Production Stage voert gelijktijdige generatie uit via meerdere engines — voor script, audio, frames en video — in samenwerking met Intelligent Assistant Director en Screening Room, waarbij meertalige streams u begeleiden van een goedgekeurd script naar een gepubliceerde 4K-master.",
+        "steps": [
+          {
+            "id": "production-script-ara",
+            "number": "1",
+            "title": "Beoordeel het basisscript",
+            "description": "Begin met een professioneel basisscript inclusief Audience Resonance-analyse. Lees of beluister de ingesproken analyse om te weten wat aanslaat, voordat je een credit verbruikt.",
+            "imagePlaceholder": "Basisscript — Analyse van Audience Resonance en toegelicht overzicht"
+          },
+          {
+            "id": "production-assistant-writer",
+            "number": "2",
+            "title": "Optimaliseer scène voor scène",
+            "description": "Gebruik de Intelligent Assistant Writer om het script scène voor scène te optimaliseren: scherp dialogen aan, pas dramatische momenten aan en voer met één klik verbeteringen door via spraak of tekst.",
+            "imagePlaceholder": "Intelligente schrijfassistent — scène-voor-scène optimalisatie van het script"
+          },
+          {
+            "id": "production-reference-library",
+            "number": "3",
+            "title": "Bouw de Reference Library",
+            "description": "Maak de referentiebibliotheek aan of werk deze bij met gescripte, aangepaste of geüploade personages, stemmen, kleding, locaties en rekwisieten. Bewerk referentieafbeeldingen rechtstreeks — geen regeneraties die op een gokkast lijken.",
+            "imagePlaceholder": "Reference Library — personages, stemmen, kostuums, locaties, rekwisieten"
+          },
+          {
+            "id": "production-audio",
+            "number": "4",
+            "title": "Audio genereren",
+            "description": "Genereer dialogen, voice-overs, geluidseffecten en muziek voor alle scènes, per scène of stap voor stap – met voice-overs van moedertaalkwaliteit in meer dan 70 talen.",
+            "imagePlaceholder": "Audio Agent — alle scènes, één scène of beat voor beat"
+          },
+          {
+            "id": "production-frames",
+            "number": "5",
+            "title": "Frames genereren en bewerken",
+            "description": "Genereer 'beat frames' met Run All Agents en Stills Agent per scène of per beat, en pas vervolgens elk frame aan met de Intelligent Assistant Director (IAD) — beschrijf simpelweg de wijziging.",
+            "imagePlaceholder": "Beat-frames met Intelligent Assistant Director-montages"
+          },
+          {
+            "id": "production-animatic",
+            "number": "6",
+            "title": "Beoordeel de animatic",
+            "description": "Speel de volledige animatic af — inclusief frames, dialoog, geluidseffecten en muziek — in de interactieve Screening Room en deel een link voor feedback zonder een bestand te exporteren.",
+            "imagePlaceholder": "Screening Room — interactieve beoordeling en uitwisseling van animatics"
+          },
+          {
+            "id": "production-video",
+            "number": "7",
+            "title": "Video genereren",
+            "description": "Zet goedgekeurde frames om in bewegend beeld met de Video Agent, per scène of stap voor stap. Maak een nieuwe opname van elk shot met de Intelligent Assistant Director — zonder eindeloze, op gokkasten lijkende regeneraties.",
+            "imagePlaceholder": "Genereren van Video Agent met IAD-heropnames"
+          },
+          {
+            "id": "production-mixer",
+            "number": "8",
+            "title": "Bewerken in de mixer",
+            "description": "Verfijn elke scène in de Mixer — ondertiteling, inkorten, nasynchronisatie, overlays en audiobalans — voor een brand-safe eindresultaat, zonder de studio te verlaten.",
+            "imagePlaceholder": "Mixer — bijschriften, bijsnijden, nasynchronisatie en audiobediening"
+          },
+          {
+            "id": "production-render-scenes",
+            "number": "9",
+            "title": "Scènes renderen en beoordelen",
+            "description": "Render je scènes en beoordeel en deel ze vervolgens via de Screening Room om goedkeuring vast te leggen vóór de uiteindelijke montage.",
+            "imagePlaceholder": "Gerenderde scènes beoordeeld en gedeeld in de Screening Room"
+          },
+          {
+            "id": "production-multilanguage",
+            "number": "10",
+            "title": "Meertalige streams genereren",
+            "description": "Creëer nagesynchroniseerde of lipsynchrone taalversies op basis van dezelfde goedgekeurde montage – bereik meer dan 70 markten zonder ook maar één frame opnieuw te hoeven opnemen.",
+            "imagePlaceholder": "Meertalige streams — nagesynchroniseerd en lip-sync per regio"
+          },
+          {
+            "id": "production-publish",
+            "number": "11",
+            "title": "Definitief renderen en publiceren",
+            "description": "Render de uiteindelijke productie tot een master en publiceer deze – met automatisch gegenereerde thumbnails, titels en beschrijvingen die klaar zijn voor je YouTube-kanaal en daarbuiten.",
+            "imagePlaceholder": "Definitieve rendering en publiceren naar YouTube met één klik"
+          }
+        ]
+      }
+    ]
+  },
+  "screeningRoom": {
+    "badge": "Interactieve Screening Room — Animatic-preview beschikbaar",
+    "languagePrompt": "Krijg inzicht in de pipeline in uw doelmarkt:",
+    "languages": [
+      {
+        "id": "en",
+        "label": "Engels",
+        "flag": "🇺🇸"
+      },
+      {
+        "id": "es",
+        "label": "Spaans",
+        "flag": "🇪🇸"
+      },
+      {
+        "id": "pt",
+        "label": "Portugees",
+        "flag": "🇧🇷"
+      },
+      {
+        "id": "hi",
+        "label": "Hindi",
+        "flag": "🇮🇳"
+      },
+      {
+        "id": "zh",
+        "label": "Chinees",
+        "flag": "🇨🇳"
+      }
+    ],
+    "steps": [
+      {
+        "id": "concept",
+        "label": "Optimalisatie van concept en script"
+      },
+      {
+        "id": "animatic",
+        "label": "30 minuten durende Animatic-recensie"
+      },
+      {
+        "id": "video",
+        "label": "Full-motion Video Agent-renders"
+      }
+    ],
+    "previewLabel": "Voorbeeld"
+  },
+  "keyFeatures": {
+    "badge": "Belangrijkste kenmerken",
+    "title": "Van het idee tot de master.",
+    "subtitle": "Series Room → Blueprint Room → Production Stage → Screening Room.",
+    "learnMoreLabel": "Meer informatie",
+    "showLessLabel": "Minder weergeven",
+    "videoComingSoon": "Demo van de functie volgt binnenkort",
+    "videoSoon": "Binnenkort",
+    "overviewComingSoon": "Overzicht volgt binnenkort",
+    "pauseOverview": "Overzicht pauzeren",
+    "playOverview": "Overzicht van het spel",
+    "muteOverview": "Overzicht van gedempte items",
+    "unmuteOverview": "Overzicht van het opheffen van de demping",
+    "enterFullscreenOverview": "Volledig scherm",
+    "exitFullscreenOverview": "Volledig scherm afsluiten",
+    "watchLongformLabel": "Bekijk de uitgebreide video",
+    "screenshotLabel": "Schermafbeelding",
+    "landingUiLanguagesLabel": "Produceer en nasynchroniseer in 44 talen. Deze site is beschikbaar in deze 39:",
+    "rooms": [
+      {
+        "id": "series-desk",
+        "label": "SFAISERIES_RUIMTETERM",
+        "promise": "In de Series Room begint een seizoen. Dezelfde personages en hetzelfde verhaal lopen door in elke aflevering die je toevoegt. Lees, beluister en regisseer het geheel voordat een aflevering wordt geopend in de Blueprint Room. Een film zonder seizoen kan deze ruimte overslaan.",
+        "features": [
+          {
+            "icon": "newSeries",
+            "title": "Nieuwe serie",
+            "description": "Begin hier. Beschrijf de serie die je voor ogen hebt in je eigen woorden. Via 'Verduidelijken en bevestigen' werk je samen aan de invulling totdat de synopsis klaar is, waarna 'Serie genereren' de basisversie schrijft. Een nieuwe serie start met vijf afleveringen, maar je kunt er meer toevoegen.",
+            "screenshot": "Nieuwe reeks aanmaken — intentie, verduidelijken en bevestigen, reeks genereren",
+            "learnMore": {
+              "items": [
+                {
+                  "title": "Uw intentie",
+                  "description": "Beschrijf wat de serie inhoudt, inclusief het format, de doelgroep en de tekenstijl."
+                },
+                {
+                  "title": "Itereren",
+                  "description": "'Clarify and Confirm' verfijnt de synopsis samen met u voordat er iets wordt gegenereerd."
+                },
+                {
+                  "title": "Nulmeting",
+                  "description": "Generate Series schrijft het seizoen dat je gaat beoordelen, beginnend met vijf afleveringen."
+                }
+              ]
+            }
+          },
+          {
+            "icon": "seriesReview",
+            "title": "Beoordeel de eerste versie",
+            "description": "Lees het overzicht of druk op 'Luisteren'. Lees vervolgens de afleveringen of luister ernaar. Consistentie verbindt de verhaallijnen, terwijl continuïteit zorgt voor de samenhang wat betreft de cast, locaties, rekwisieten en decors die deze afleveringen delen.",
+            "screenshot": "Overzicht, Afleveringen, Consistentie, Continuïteit — Cast, Locaties, Rekwisieten, Decors",
+            "learnMore": {
+              "items": [
+                {
+                  "title": "Lees of luister",
+                  "description": "Het overzicht en de afleveringen kunnen worden gelezen of beluisterd via de luisterfunctie."
+                },
+                {
+                  "title": "Consistentie",
+                  "description": "Esthetiek, sleutelmomenten en verhaallijnen blijven verbonden aan het seizoen."
+                },
+                {
+                  "title": "Continuïteit",
+                  "description": "De cast, locaties, rekwisieten en decors zijn in elke aflevering hetzelfde."
+                }
+              ]
+            }
+          },
+          {
+            "icon": "seriesResonance",
+            "title": "SFAIAUDIENCE_RESONANTIETERM",
+            "description": "Voer Audience Resonance uit wanneer je inzicht wilt krijgen in het seizoen. Bekijk de scores en de analyse. Pas een bruikbaar inzicht alleen toe als je dat wilt; er verandert niets aan de reeks totdat je dat doet.",
+            "screenshot": "Analyse van Audience Resonance, gevolgd door bruikbare inzichten (niet toegepast)",
+            "learnMore": {
+              "items": [
+                {
+                  "title": "De lezing",
+                  "description": "Scores en analyses laten zien wat aanslaat bij de doelgroep die je hebt aangewezen."
+                },
+                {
+                  "title": "Optioneel",
+                  "description": "Een bruikbaar inzicht verandert de reeks pas wanneer je het toepast."
+                }
+              ]
+            }
+          },
+          {
+            "icon": "seriesDirector",
+            "title": "Regisseur van de serie",
+            "description": "Stuur de hele reeks aan in je eigen woorden, gesproken of getypt. Jij kiest de verandering en de focus, en je accepteert die. Een aanbeveling kan helpen, en losstaande delen van het verhaal blijven ongemoeid.",
+            "screenshot": "Serieregisseur — regie, focus, accepteren",
+            "learnMore": {
+              "items": [
+                {
+                  "title": "Jouw woorden",
+                  "description": "Spreek de wijziging in of typ deze, en beperk deze eventueel tot de plot, personages, inhoud van de aflevering, toon of setting."
+                },
+                {
+                  "title": "Je accepteert het",
+                  "description": "Niets verandert totdat je het accepteert, en niet-gerelateerde delen van het verhaal blijven ongewijzigd."
+                },
+                {
+                  "title": "Een aanbeveling",
+                  "description": "Aanbevelingen kunnen helpen, en jij kiest zelf wat je behoudt."
+                }
+              ]
+            }
+          },
+          {
+            "icon": "directEpisode",
+            "title": "Regisseer deze aflevering",
+            "description": "Open een aflevering en regisseer dat uur op zichzelf. Verhoog de inzet of verdiep het verhaal en pas dit vervolgens toe. De andere afleveringen blijven zoals ze zijn.",
+            "screenshot": "Afleveringen — Regisseer deze aflevering, overige afleveringen ongewijzigd",
+            "learnMore": {
+              "items": [
+                {
+                  "title": "Eén aflevering",
+                  "description": "Met 'Direct this episode' wordt de wijziging uitsluitend op die aflevering toegepast."
+                },
+                {
+                  "title": "Het seizoen blijft",
+                  "description": "De andere afleveringen blijven zoals ze zijn."
+                }
+              ]
+            }
+          },
+          {
+            "icon": "startEpisode",
+            "title": "Start de aflevering",
+            "description": "Wanneer een aflevering klaar is, start je het bijbehorende project. De outline, synopsis en beats gaan mee naar de Blueprint Room. De cast en de wereld zijn al bekend.",
+            "screenshot": "Project starten — opzet en cast voor de aflevering liggen al klaar",
+            "learnMore": {
+              "items": [
+                {
+                  "title": "Project starten",
+                  "description": "Start Project opent die episode in de Blueprint Room."
+                },
+                {
+                  "title": "Reeds bekend",
+                  "description": "De opzet, de synopsis, de verhaalmomenten en de cast horen erbij."
+                }
+              ]
+            }
+          }
+        ]
+      },
+      {
+        "id": "blueprint-board",
+        "label": "SFAIBLUEPRINT_RUIMTETERM",
+        "promise": "In de Blueprint Room verfijn je de verhaallijn voorafgaand aan het script van 90 minuten. Begin vanuit een aflevering van een serie of een nieuw project. Regisseer hier de verhaalmomenten en de cast, zodat de Production Stage deze niet opnieuw hoeft op te bouwen.",
+        "features": [
+          {
+            "icon": "startBlueprint",
+            "title": "Start de Blueprint",
+            "description": "Begin met een aflevering van een serie of start een nieuw project. Bij een aflevering van een serie zijn de opzet, synopsis en verhaalmomenten (beats) al aanwezig. Een nieuw project begint wanneer je de intentie beschrijft, de functie 'Valideren & Verbeteren met AI' gebruikt en kiest voor 'Blueprint genereren'.",
+            "screenshot": "Aflevering van de serie al bekend, of Start uw project — intentie, Valideren & Verrijken met AI, Blueprint genereren",
+            "learnMore": {
+              "items": [
+                {
+                  "title": "Aflevering van een serie",
+                  "description": "Een aflevering van een serie begint met de bijbehorende opzet, synopsis en verhaalslagen."
+                },
+                {
+                  "title": "Nieuw project",
+                  "description": "'Start Your Project' neemt de intentie, valideert en verrijkt deze vervolgens met AI, en genereert daarna de Blueprint."
+                }
+              ]
+            }
+          },
+          {
+            "icon": "treatment",
+            "title": "Stuur de beats aan",
+            "description": "Open het tabblad 'Beats' en luister naar de beatlijst. Optimaliseer de beats hier, want zij vormen de basis voor de opbouw van het script. Beats bestaan alleen hier. Production Stage zet elke beat om in een hoofdstuk.",
+            "screenshot": "Beats-tabblad, met Luisteren",
+            "learnMore": {
+              "items": [
+                {
+                  "title": "Eén beat sheet",
+                  "description": "Beats bestaan alleen hier."
+                },
+                {
+                  "title": "Script-build",
+                  "description": "De beats sturen de scriptopbouw aan, dus worden ze geoptimaliseerd vóór Production Stage."
+                },
+                {
+                  "title": "Hoofdstukken",
+                  "description": "Production Stage verandert elke beat in een hoofdstuk."
+                }
+              ]
+            }
+          },
+          {
+            "icon": "castLocations",
+            "title": "De cast en locaties regisseren",
+            "description": "Open 'Characters' en regisseer de cast. Open 'Setting' op het tabblad 'Story' en regisseer de bijbehorende locaties. De cast is van invloed op de opbouw van het script; daarom worden beide ingesteld voordat Production Stage het script zou moeten herstructureren.",
+            "screenshot": "Tabblad Personages, vervolgens Locatie bij Verhaal",
+            "learnMore": {
+              "items": [
+                {
+                  "title": "Rolverdeling",
+                  "description": "Het tabblad 'Personages' vertegenwoordigt de cast, en de cast is van invloed op de opbouw van het script."
+                },
+                {
+                  "title": "Locaties",
+                  "description": "Locaties vormen de setting op het tabblad Verhaal."
+                },
+                {
+                  "title": "Voor het script",
+                  "description": "Door beide hierheen te leiden, wordt een ingrijpende refactoring van het script in Production Stage vermeden."
+                }
+              ]
+            }
+          },
+          {
+            "icon": "blueprintDirector",
+            "title": "Directeur Blueprint",
+            "description": "De Director verwerkt de wijziging in je eigen woorden, gesproken of getypt. Richt de aanpassing op beats, personages of het verhaal en bekijk vervolgens een voorbeeld van de herziening. Er verandert niets totdat je de wijziging doorvoert.",
+            "screenshot": "Blueprint-directeur — richting, focus, voorbeeldweergave, revisie toepassen",
+            "learnMore": {
+              "items": [
+                {
+                  "title": "Jouw woorden",
+                  "description": "Spreek de wijziging uit of typ deze, en richt je daarbij op beats, personages of het verhaal."
+                },
+                {
+                  "title": "Voorbeeld",
+                  "description": "'Gebalanceerde revisie genereren' toont de wijziging voordat u deze toepast."
+                },
+                {
+                  "title": "Je brengt het aan",
+                  "description": "Er verandert niets totdat u de revisie toepast."
+                }
+              ]
+            }
+          },
+          {
+            "icon": "blueprintResonance",
+            "title": "SFAIAUDIENCE_RESONANTIETERM",
+            "description": "Sla de doelgroep op en voer vervolgens een analyse uit. U ziet de scores en de aanbevelingen. Er verandert niets in het blauwdrukmodel totdat u een aanbeveling toepast in Blueprint Director.",
+            "screenshot": "Audience Resonance — opgeslagen doelgroep, scores, aanbevelingen niet toegepast",
+            "learnMore": {
+              "items": [
+                {
+                  "title": "De lezing",
+                  "description": "Sla de doelgroep op, voer vervolgens een analyse uit en bekijk de scores en aanbevelingen."
+                },
+                {
+                  "title": "Optioneel",
+                  "description": "Een aanbeveling wijzigt de blauwdruk alleen wanneer u deze toepast in Blueprint Director."
+                }
+              ]
+            }
+          },
+          {
+            "icon": "goToProduction",
+            "title": "Ga naar Production Stage",
+            "description": "Ga naar Production Stage zodra de verhaallijn, de beats en de cast vastliggen. Het script van 90 minuten wordt op basis van dit bord opgebouwd. De verhaallijn hoeft niet opnieuw te worden opgebouwd in Production Stage.",
+            "screenshot": "Ga naar Production Stage — verhaallijn, verhaalmomenten en cast staan al vast.",
+            "learnMore": {
+              "items": [
+                {
+                  "title": "De overdracht",
+                  "description": "Ga naar Production Stage; hiermee wordt het script vanuit deze blueprint geopend."
+                },
+                {
+                  "title": "Al ingesteld",
+                  "description": "De verhaallijn, de verhaalelementen en de cast zijn al geregisseerd."
+                }
+              ]
+            }
+          }
+        ]
+      },
+      {
+        "id": "production-stage",
+        "label": "Production StageIJN",
+        "promise": "In deze fase wordt het definitieve ontwerp omgezet in beeldmateriaal. Beheer de uitgaven aan de hand van een plan en eigen sturingsmechanismen. Optimaliseer elke scène in overleg en bouw deze vervolgens stap voor stap op — regie, audio, muziek, continuïteit en stills — en beoordeel de animatic voordat er kosten worden gemaakt voor de videoproductie. Genereer de clips, verzorg de mixage en taalversies, en lever de scène, het hoofdstuk, de master of de promo op.",
+        "spend": {
+          "label": "Uitgavenbeheersing",
+          "features": [
+            {
+              "icon": "byok",
+              "title": "Bring Your Own Key",
+              "description": "Koppel je eigen sleutels voor beeld- en videoproviders. De generatie verloopt via jouw account en tegen jouw tarieven, terwijl de begeleide studio — agents, continuïteit, de Mixer en de screeningruimte — behouden blijft.",
+              "screenshot": "BYOK-sleutels",
+              "learnMore": {
+                "items": [
+                  {
+                    "title": "Uw sleutels",
+                    "description": "Koppel de sleutels van aanbieders van afbeeldingen en video's, zodat de generatie via jouw account en tegen jouw tarieven verloopt."
+                  },
+                  {
+                    "title": "Dezelfde studio",
+                    "description": "Agents, continuïteit, de Mixer en Screening Room blijven behouden."
+                  }
+                ]
+              }
+            },
+            {
+              "icon": "budget",
+              "title": "Productieplanner",
+              "description": "Bepaal het aantal iteraties voor stills en clips per shot voordat je kosten maakt. Deze doelstellingen worden samengevoegd op scène-, hoofdstuk- en masterniveau, en op basis van de startdatum wordt een planning opgesteld die uitmondt in de einddatum.",
+              "screenshot": "Productieplanner",
+              "learnMore": {
+                "items": [
+                  {
+                    "title": "Beschoten doelen",
+                    "description": "Stel iteraties voor stills en clips per shot in en voeg deze samen op scène-, hoofdstuk- en masterniveau."
+                  },
+                  {
+                    "title": "Gedateerd schema",
+                    "description": "Een startdatum en werkdagen vormen een planning met cumulatieve tegoeden."
+                  },
+                  {
+                    "title": "Resetten op basis van werkelijke waarden",
+                    "description": "Bij voltooide scènes kunnen de doelstellingen worden aangepast aan de werkelijke kosten."
+                  },
+                  {
+                    "title": "Telefoonstatus",
+                    "description": "Bekijk het leestempo, de bestedingen en de einddatum op je telefoon, terwijl het bewerken op een desktop of tablet gebeurt."
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        "groups": [
+          {
+            "id": "script",
+            "label": "Optimaliseer het script",
+            "features": [
+              {
+                "icon": "scriptResonance",
+                "title": "SFAIAUDIENCE_RESONANTIETERM",
+                "description": "Audience Resonance leest het volledige script in één keer, waarbij alle scènes in samenhang worden bekeken. Je ziet de partituren en de aantekeningen tegelijkertijd, en er wordt niets herschreven totdat jij daarvoor kiest.",
+                "screenshot": "Audience Resonance — scores en aantekeningen voor alle scènes, niet toegepast",
+                "learnMore": {
+                  "items": [
+                    {
+                      "title": "Elke scène samen",
+                      "description": "Het voorziet het script van muziek als één geheel, met aantekeningen bij de scènes in samenhang."
+                    },
+                    {
+                      "title": "Jij kiest",
+                      "description": "Er wordt niets herschreven totdat je kiest met welke opmerkingen je iets gaat doen."
+                    }
+                  ]
+                }
+              },
+              {
+                "icon": "castVisual",
+                "title": "Cast, kostuums en stem",
+                "description": "Bepaal de cast voordat je de scènes maakt. Leg het personage, de kleding en de stem vast, zodat elk later beeld en elke latere clip om dezelfde persoon vraagt.",
+                "screenshot": "Personage, kostuum en stem",
+                "learnMore": {
+                  "items": [
+                    {
+                      "title": "Personage en kostuum",
+                      "description": "Cast Agent tekent het personage en de kledingstijlen."
+                    },
+                    {
+                      "title": "Stem",
+                      "description": "De stem van het personage wordt vastgelegd voordat de scènes worden opgebouwd."
+                    },
+                    {
+                      "title": "Dezelfde persoon",
+                      "description": "Elk stilstaand beeld en elke clip vraagt om die vergrendeling."
+                    }
+                  ]
+                }
+              },
+              {
+                "icon": "directShot",
+                "title": "Direct schot",
+                "description": "Met Direct Shot leg je de opname vast in je eigen woorden, door te typen of te dicteren. Je bekijkt een voorbeeld van de insteek en slaat deze op, waarna de prompts voor zowel de stilstaande afbeelding als de videoclip gelijktijdig worden bijgewerkt.",
+                "screenshot": "Direct Shot — typen of dicteren, voorbeeld bekijken, opslaan",
+                "learnMore": {
+                  "items": [
+                    {
+                      "title": "Aangekondigde stoot",
+                      "description": "Het dialoogfragment heeft de titel Direct Shot · Scène N · Shot N."
+                    },
+                    {
+                      "title": "Typen of dicteren",
+                      "description": "Schrijf de notitie of dicteer deze, en bekijk vervolgens een voorbeeld van de aanwijzing voordat u deze opslaat."
+                    },
+                    {
+                      "title": "Beide prompts",
+                      "description": "Bij het opslaan worden zowel de prompt voor de stilstaande afbeelding als de prompt voor de clip bijgewerkt."
+                    },
+                    {
+                      "title": "Opnieuw op jacht naar fragmenten",
+                      "description": "Als een gegenereerde opname niet klopt, open dan Direct Shot en stel deze opnieuw in."
+                    }
+                  ]
+                }
+              },
+              {
+                "icon": "audioAgent",
+                "title": "Audio Agent",
+                "description": "Audio Agent stelt de dialoog, geluidseffecten en muziek van de scène samen. De scène is te horen voordat een clip wordt verbruikt.",
+                "screenshot": "Audio Agent — dialoog, geluidseffecten en muziek",
+                "learnMore": {
+                  "items": [
+                    {
+                      "title": "Dialoog en geluidseffecten",
+                      "description": "Dialoog blijft beperkt tot gesproken tekst, en geluidseffecten zijn bedoeld voor shots met een duidelijk cue-moment."
+                    },
+                    {
+                      "title": "Muziek",
+                      "description": "De muziek draagt de scène samen met de dialoog."
+                    },
+                    {
+                      "title": "Vóór de beweging",
+                      "description": "Luister naar de scène voordat je Clips opent."
+                    }
+                  ]
+                }
+              },
+              {
+                "icon": "continuity",
+                "title": "Continuïteit",
+                "description": "Genereer alleen de referenties die deze scène nodig heeft, zodra de scène gereed is. Eerdere scènes blijven behouden zoals je ze hebt vastgelegd, zodat je geen referenties opnieuw hoeft te tekenen die al zijn goedgekeurd.",
+                "screenshot": "Continuïteit — alleen verwijzingen binnen deze scène",
+                "learnMore": {
+                  "items": [
+                    {
+                      "title": "Alleen deze scène",
+                      "description": "Teken de cast, locaties en rekwisieten die deze scène nodig heeft, en laat de rest met rust."
+                    },
+                    {
+                      "title": "Net op tijd",
+                      "description": "Genereer ze wanneer de scène klaar is, niet als een batch voor de hele film."
+                    },
+                    {
+                      "title": "Al vergrendeld",
+                      "description": "Een wijziging in de ene scène past de verwijzingen die eerdere scènes al gebruiken niet aan."
+                    }
+                  ]
+                }
+              },
+              {
+                "icon": "stillsAgent",
+                "title": "Stills Agent",
+                "description": "Stills Agent genereert de shotframes op basis van de goedgekeurde regie. De regie en audio blijven behouden zoals je ze hebt achtergelaten, en de clips volgen in een later stadium.",
+                "screenshot": "Stills Agent — opnameframes",
+                "learnMore": {
+                  "items": [
+                    {
+                      "title": "Opnameframes",
+                      "description": "Het tekent het stilstaande beeld voor elke opname in de scène."
+                    },
+                    {
+                      "title": "De richting blijft behouden",
+                      "description": "Bij het opnieuw genereren van een frame wordt de afbeelding bijgewerkt, terwijl de richting en audio ongewijzigd blijven."
+                    },
+                    {
+                      "title": "Voorafgaande fragmenten",
+                      "description": "Keur de stilstaande beelden goed voordat je Clips opent."
+                    }
+                  ]
+                }
+              },
+              {
+                "icon": "animatic",
+                "title": "Animatic",
+                "description": "Bekijk de scène in de Screening Room als animatic: stilstaande beelden met dialoog, muziek en geluidseffecten. Deel het resultaat voor feedback en voltooi elke scène op deze manier voordat je met de uiteindelijke video aan de slag gaat; zo voorkom je dat wijzigingen in het script betekenen dat de clips opnieuw moeten worden verwerkt. Voor veel makers is de animatic het eindproduct, dat naar een MP4-bestand kan worden gerenderd.",
+                "screenshot": "Screening Room-animatic, met deeloptie",
+                "learnMore": {
+                  "items": [
+                    {
+                      "title": "Beeld en geluid",
+                      "description": "De animatic speelt de goedgekeurde stilstaande beelden af, voorzien van dialoog, muziek en geluidseffecten."
+                    },
+                    {
+                      "title": "Delen",
+                      "description": "Stuur één link zodat reviewers de animatic kunnen bekijken en opmerkingen bij het beeld kunnen achterlaten."
+                    },
+                    {
+                      "title": "Vóór video",
+                      "description": "Werk de scènes af als animatics voordat je clips genereert, zodat een wijziging in het script niet leidt tot het opnieuw moeten genereren van de video."
+                    },
+                    {
+                      "title": "De MP4",
+                      "description": "Voor veel makers is de animatic het eindproduct, en deze kan worden gerenderd naar een MP4-bestand."
+                    }
+                  ]
+                }
+              }
+            ]
+          },
+          {
+            "id": "video",
+            "label": "Video",
+            "features": [
+              {
+                "icon": "videoAgent",
+                "title": "Video Agent",
+                "description": "Video Agent genereert de shot-clips op het tabblad Clips. Bekijk de samengevoegde scène in de Screening Room; als een shot niet goed is, regisseer het dan opnieuw via Direct Shot.",
+                "screenshot": "Video Agent, gevolgd door de samengevoegde scène",
+                "learnMore": {
+                  "items": [
+                    {
+                      "title": "Opgenomen fragmenten",
+                      "description": "Video Agent genereert de clip voor elke opname op basis van de goedgekeurde still."
+                    },
+                    {
+                      "title": "Samengestelde scène",
+                      "description": "Bekijk de scène die is samengevoegd in de Screening Room."
+                    },
+                    {
+                      "title": "Regisseer het opnieuw",
+                      "description": "Open Direct Shot (getypt of ingesproken) wanneer een clip onjuist is."
+                    }
+                  ]
+                }
+              },
+              {
+                "icon": "mixer",
+                "title": "Mixer",
+                "description": "De Mixer rondt de scène af binnen Production Stage. Voeg shots toe of verwijder ze, kort ze in, balanceer het geluid en render de scène inclusief de audio.",
+                "screenshot": "Mixer — toevoegen, bijsnijden, balanceren, overlay, watermerk",
+                "learnMore": {
+                  "items": [
+                    {
+                      "title": "Shots",
+                      "description": "Neem afzonderlijke opnames op of verwijder ze, en kort de opnames in die behouden blijven."
+                    },
+                    {
+                      "title": "Dialoog",
+                      "description": "Stel het volume en de snelheid in voor elke dialoogregel."
+                    },
+                    {
+                      "title": "Tracks",
+                      "description": "Breng vertelling, dialoog, geluidseffecten en muziek in balans, inclusief het in- en uitfaden en loopen van muziek."
+                    },
+                    {
+                      "title": "Overlays",
+                      "description": "Plaats tekstoverlays op de scène."
+                    },
+                    {
+                      "title": "Watermerk",
+                      "description": "Voeg een tekst- of afbeeldingswatermerk toe."
+                    },
+                    {
+                      "title": "Weergave",
+                      "description": "Render de scène inclusief de audio; die render is wat Screening Room afspeelt."
+                    }
+                  ]
+                }
+              },
+              {
+                "icon": "languageStreams",
+                "title": "Taalversies",
+                "description": "Deze scène is een taalversie, geen nieuwe productie. Gemini TTS verzorgt de nasynchronisatie in 44 talen; per shot spreek je de tekst in of genereer je de clip opnieuw, inclusief de tekst op borden en dergelijke.",
+                "screenshot": "Taalversie — Dubbing, lipsynchronisatie of regeneratie, inclusief bewegwijzering",
+                "learnMore": {
+                  "items": [
+                    {
+                      "title": "Vierenveertig talen",
+                      "description": "Gemini TTS spreekt de nasynchronisatie uit in 44 talen."
+                    },
+                    {
+                      "title": "Per shot",
+                      "description": "Kies voor elk shot 'Double' om de nagesynchroniseerde stem eroverheen te leggen, 'Lip-sync' om deze te laten uitvoeren, of 'Regenerate' om een nieuwe clip te maken op basis van de vertaalde zin."
+                    },
+                    {
+                      "title": "Bewegwijzering",
+                      "description": "Genereer een opname van een bord opnieuw wanneer de afbeelding tekst bevat die gewijzigd moet worden."
+                    },
+                    {
+                      "title": "Timing",
+                      "description": "De videosnelheid wordt voor die taalversie aangepast, omdat een vertaling vaak 10 tot 30% langer is dan de masterversie."
+                    }
+                  ]
+                }
+              }
+            ]
+          },
+          {
+            "id": "publish",
+            "label": "Publiceren",
+            "features": [
+              {
+                "icon": "shipPackage",
+                "title": "Verpakken en verzenden",
+                "description": "Maak een pakket van een scène, een hoofdstuk, de master of een promo zodra dat onderdeel klaar is. Publiceer het op YouTube, Facebook of TikTok, of download de MP4, en ga door met het maken van de rest.",
+                "screenshot": "Verpakken en aanleveren — scène, hoofdstuk, master, promo; YouTube, Facebook, TikTok, MP4",
+                "learnMore": {
+                  "items": [
+                    {
+                      "title": "Stukken",
+                      "description": "Verstuur een scène, een hoofdstuk, de master of een promo."
+                    },
+                    {
+                      "title": "Taalstromen",
+                      "description": "Elke taalversie kan met het pakket worden meegeleverd."
+                    },
+                    {
+                      "title": "Bestemmingen",
+                      "description": "Publiceer op YouTube, Facebook of TikTok, of download de MP4."
+                    },
+                    {
+                      "title": "Blijf bouwen",
+                      "description": "Lever het deel dat klaar is en blijf doorbouwen aan de rest."
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "screening-room",
+        "label": "Screening Room",
+        "promise": "In de Screening Room wordt de definitieve montage bekeken, beoordeeld en vrijgegeven. Eén enkele speler bevat de pre-vis, scènes, hoofdstukken, de master, de promo en alle taalversies, zodat de nasynchronisatie overeenkomt met de montage die door de mixer is gerenderd. Deel één link voor het afspelen en het plaatsen van opmerkingen bij het beeld. Publiceer een scène van 3–5 minuten, een hoofdstuk van 8–12 minuten, de master of een promo zodra dat onderdeel klaar is, en blijf ondertussen werken aan de rest.",
+        "features": [
+          {
+            "icon": "screeningPlayer",
+            "title": "Eén speler",
+            "description": "Schakel tussen Pre-Vis, scènes, hoofdstukken, de master en de promo. Kies een taalstream en beluister die versie – nagesynchroniseerd, lip-sync of shot voor shot opnieuw gegenereerd. De speler toont dezelfde montage als die door de Mixer is gerenderd.",
+            "screenshot": "Screening Room-speler",
+            "learnMore": {
+              "items": [
+                {
+                  "title": "Eén oppervlak",
+                  "description": "Schakel tussen Pre-Vis, scènes, hoofdstukken, de master en promo."
+                },
+                {
+                  "title": "Taalstroom",
+                  "description": "Kies een versie en hoor deze gedubd, nagesynchroniseerd of shot voor shot opnieuw gegenereerd."
+                },
+                {
+                  "title": "Dezelfde snit",
+                  "description": "De speler is de montage die de mixer heeft gerenderd."
+                }
+              ]
+            }
+          },
+          {
+            "icon": "screeningCollab",
+            "title": "Samenwerken aan de montage",
+            "description": "Deel één link. Beoordelaars bekijken de video met echte weergave en plaatsen opmerkingen direct bij het beeld. Je hoeft geen ruw bestand te exporteren en per e-mail te versturen om feedback te verzamelen. Je krijgt een melding van een opmerking en kunt deze op je telefoon lezen.",
+            "screenshot": "Gedeelde recensie",
+            "learnMore": {
+              "items": [
+                {
+                  "title": "Eén link",
+                  "description": "Reviewers bekijken de beelden met echte weergave en plaatsen opmerkingen bij het beeld."
+                },
+                {
+                  "title": "Geen ruwe versie per e-mail",
+                  "description": "Je exporteert geen ruw bestand naar e-mail om feedback te verzamelen."
+                },
+                {
+                  "title": "Telefoonnotities",
+                  "description": "Een geschreven bericht stelt je op de hoogte en je kunt dit op je telefoon lezen, terwijl de studio op een desktop of tablet blijft staan."
+                }
+              ]
+            }
+          },
+          {
+            "icon": "packageShip",
+            "title": "Uitbrengen wanneer het klaar is",
+            "description": "Publiceer een scène van 3 tot 5 minuten, een hoofdstuk van 8 tot 12 minuten, de master of een promo op YouTube, Facebook of TikTok – in 16:9 of 9:16 – of download het bestand. Titels, beschrijving en privacy-instellingen worden meegeleverd. Publiceer het deel dat klaar is en blijf ondertussen verder werken aan de rest.",
+            "screenshot": "Pakket publiceren",
+            "learnMore": {
+              "items": [
+                {
+                  "title": "Een stuk verzenden",
+                  "description": "Publiceer een scène van 3 tot 5 minuten, een hoofdstuk van 8 tot 12 minuten, de master of een promo."
+                },
+                {
+                  "title": "Bestemmingen",
+                  "description": "Publiceer op YouTube, Facebook of TikTok in 16:9 of 9:16, of download het bestand."
+                },
+                {
+                  "title": "Pakket",
+                  "description": "Titels, beschrijving en privacyinstellingen gaan mee met het pakket."
+                },
+                {
+                  "title": "Blijf bouwen",
+                  "description": "Lever het deel dat klaar is en blijf doorbouwen aan de rest."
+                }
+              ]
+            }
+          }
+        ]
+      }
+    ]
+  },
   "metadata": {
-    "title": "SceneFlow Studio - Videoproductie met AI",
+    "title": "SceneFlow Studio - Videocreatie met AI",
     "description": "Zet je ideeën om in professionele video's met workflowautomatisering op basis van AI."
   },
   "nav": {
     "plansPricing": "Pakketten &amp; Prijzen",
+    "productionExamples": "Voorbeelden",
+    "keyFeatures": "Kenmerken",
     "trustSafety": "trust &amp; safety",
     "signIn": "Aanmelden",
     "startProject": "Een project starten",
@@ -14,89 +949,118 @@
     "goToDashboard": "Ga naar dashboard",
     "userFallback": "Gebruiker",
     "searchLanguages": "Talen zoeken...",
-    "noLanguagesFound": "Geen talen gevonden",
-    "productionExamples": "Voorbeelden",
-    "keyFeatures": "Kenmerken"
+    "noLanguagesFound": "Geen talen gevonden"
   },
   "floatingNav": {
-    "preVisEngine": "Pre-Vis Engine",
-    "trustSafety": "Trust & Safety",
-    "pricing": "Pricing",
-    "productionExamples": "Examples",
-    "twoModes": "One Pipeline",
-    "keyFeatures": "Key Features",
-    "audienceResonance": "Audience Resonance"
+    "productionExamples": "Voorbeelden",
+    "twoModes": "Eén pijplijn",
+    "directControl": "Direct",
+    "publishCut": "Publiceren",
+    "keyFeatures": "Belangrijkste kenmerken",
+    "audienceResonance": "SFAIAUDIENCE_RESONANTIETERM",
+    "preVisEngine": "Pre-vis-engine",
+    "trustSafety": "Vertrouwen en veiligheid",
+    "pricing": "Prijzen"
   },
   "hero": {
-    "headline": "From first spark to finished master.",
-    "subheadline": "SceneFlow is one guided pipeline. You direct the story, the cast, and the tone. It builds the Blueprint, holds continuity, plays the full animatic, and assembles the master — without prompt trials or a timeline of loose clips.",
+    "eyebrow": "Geautomatiseerde filmproductie voor films en series",
+    "headline": "Van de eerste vonk tot het voltooide meesterwerk.",
+    "subheadline": "SceneFlow is één gestuurde pipeline. Jij regisseert het verhaal, de cast en de toon. Het systeem bouwt de Blueprint op, bewaakt de continuïteit, speelt de volledige animatic af en stelt de master samen — zonder proberen met prompts of een tijdlijn van losse clips.",
     "ctaPrimaryLaunch": "Launch Studio ($9)",
-    "ctaSupportingLine": "The all-in-one studio to craft, export, and distribute your stories. Download a master and ship anywhere — or publish long-form cuts and chapters to {longForm}, and promote trailers on {shorts}.",
-    "ctaSecondary": "Explore the pipeline",
-    "ctaToolStack": "See how it replaces your tool stack",
+    "ctaSupportingLine": "De alles-in-één studio om je verhalen te creëren, te exporteren en te verspreiden. Download een master en verstuur deze waarheen je maar wilt — of publiceer langere versies en hoofdstukken op {longForm} en promoot trailers op {shorts}.",
+    "ctaNetworkInvite": "Uitmuntende projecten kunnen zich aanmelden voor het SceneFlow-netwerk, dat uitsluitend op uitnodiging toegankelijk is.",
+    "ctaNetworkInviteHref": "#for-filmmakers",
+    "ctaSecondary": "Verken de pijplijn",
+    "ctaToolStack": "Ontdek hoe het je toolstack vervangt",
     "chips": [
       {
-        "label": "From Concept to Feature",
-        "detail": "Expand ideas into 90-minute scripts in the Blueprint Room. Define characters, art, and beats, then let Audience Resonance analysis fine-tune your story before you shoot."
+        "label": "Van concept tot functionaliteit",
+        "detail": "Werk ideeën uit tot scripts van 90 minuten in de Blueprint Room. Definieer personages, beeldtaal en verhaalmomenten, en laat vervolgens de Audience Resonance-analyse je verhaal verfijnen voordat je gaat filmen."
       },
       {
-        "label": "Direct With Intent, Not Prompts",
-        "detail": "Speak the language of film with intelligent assistants that understand your direction. The Reference Library locks your custom cast, wardrobe, and locations for absolute continuity."
+        "label": "Stuur aan op basis van intentie, niet via prompts.",
+        "detail": "Spreek de taal van film met intelligente assistenten die jouw regieaanwijzingen begrijpen. De Reference Library legt je specifieke cast, kostuums en locaties vast voor absolute continuïteit."
       },
       {
-        "label": "Agent-Driven Production",
-        "detail": "Accelerate generation 5X with intelligent agents that build 30-shot scenes in the background. Iterate freely in draft mode, then publish your final vision in stunning Hi-Res."
+        "label": "Agentgestuurde productie",
+        "detail": "Versnel het generatieproces tot wel vijf keer met intelligente agents die op de achtergrond scènes met 30 shots opbouwen. Experimenteer vrijuit in de conceptmodus en publiceer vervolgens je uiteindelijke visie in verbluffende hoge resolutie."
       },
       {
-        "label": "Screen, Collaborate, Ship",
-        "detail": "Share progress at every milestone—from audio animatics to the final master—in the Screening Room. Distribute as shorts or features in multiple languages for a global reach."
+        "label": "Selecteren, samenwerken, opleveren",
+        "detail": "Deel de voortgang bij elke mijlpaal — van audio-animatics tot de uiteindelijke master — in de Screening Room. Distribueer de content als korte films of speelfilms in meerdere talen voor een wereldwijd bereik."
       }
     ],
     "pipelineSteps": [
       "Blueprint",
-      "Production",
+      "Productie",
       "Screening Room"
     ],
-    "languagePrompt": "Hear the hero in your language — same pipeline, new markets",
-    "multilangHint": "Hero dubs in 7 languages — full pipeline supports 70+ in Production Stage.",
-    "playWithNarration": "Play with narration",
-    "tapToHear": "Tap to hear",
-    "fullscreen": "Fullscreen",
+    "languagePrompt": "Kies voor Engels, Spaans, Chinees of Arabisch — dezelfde pipeline, nieuwe markten",
+    "multilangHint": "Hoofddubs in 4 talen — de volledige pipeline ondersteunt er meer dan 70 in Production Stage.",
+    "playWithNarration": "Afspelen met vertelling",
+    "tapToHear": "Tik om te horen",
+    "fullscreen": "Volledig scherm",
+    "pauseBackgroundVideo": "Achtergrondvideo pauzeren",
+    "playBackgroundVideo": "Achtergrondvideo afspelen",
     "heroVideoLanguages": {
       "en": {
-        "label": "English",
+        "label": "Engels",
         "nativeLabel": "English"
       },
       "es": {
-        "label": "Spanish",
+        "label": "Spaans",
         "nativeLabel": "Español"
       },
-      "pt": {
-        "label": "Portuguese",
-        "nativeLabel": "Português"
-      },
-      "hi": {
-        "label": "Hindi",
-        "nativeLabel": "हिन्दी"
-      },
       "zh": {
-        "label": "Chinese",
+        "label": "Chinees",
         "nativeLabel": "中文"
       },
       "ar": {
-        "label": "Arabic",
+        "label": "Arabisch",
         "nativeLabel": "العربية"
-      },
-      "th": {
-        "label": "Thai",
-        "nativeLabel": "ไทย"
       }
     },
-    "soon": "Soon",
-    "videoLanguageCount": "{count, plural, =1 {# language} other {# languages}}",
-    "eyebrow": "Automated filmmaking for films and series",
-    "ctaNetworkInvite": "Standout projects can apply for the invite-only SceneFlow Network.",
-    "ctaNetworkInviteHref": "#for-filmmakers"
+    "soon": "Binnenkort",
+    "videoLanguageCount": "{count, plural, =1 {# language} other {# languages}}"
+  },
+  "twoModes": {
+    "eyebrow": "De wrijving die we wegnemen",
+    "title": "Eén pipeline. Geen stapel tools.",
+    "subtitle": "SceneFlow replaces single-clip generators and a pile of separate docs, editors, and re-renders. Build the series or the 90-minute master, then publish a scene or a chapter when you are ready to earn.",
+    "comingSoon": "Binnenkort",
+    "comparison": {
+      "id": "comparison",
+      "caption": "Fragmented tools beside one SceneFlow pipeline."
+    },
+    "cta": "Launch Studio ($9)"
+  },
+  "directControl": {
+    "eyebrow": "De controle die u behoudt",
+    "title": "Stuur het verhaal aan. Laat agents de prompts verzorgen.",
+    "subtitle": "Je regisseert het shot in begrijpelijke taal. De regieaanwijzingen vormen de basis voor de prompts voor zowel de stilstaande beelden als de videoclips. Muziek en voice-over lopen synchroon met de beat. Bekijk de animatic, pas shots aan die niet kloppen, en investeer pas daarna in bewegend beeld.",
+    "comparison": {
+      "id": "direction",
+      "caption": "Een regieaanwijzing, een cue voor een clip, en muziek en voice-over op dezelfde tel."
+    },
+    "cta": "Launch Studio ($9)"
+  },
+  "publishCut": {
+    "eyebrow": "De versie die je publiceert",
+    "title": "Exporteer naar elke locatie. Premiere op SceneFlow zodra je het hebt verdiend.",
+    "subtitle": "Download a master and ship it yourself, or publish finished scenes and chapters to {longForm} and cut trailers for {shorts} — without waiting on the whole cut. Before anything hits the public feed, run drafts or your final master through the Screening Room. Standout projects can apply for the invite-only SceneFlow Network; it is a curated accelerator, not an open storefront.",
+    "comparison": {
+      "id": "publish",
+      "caption": "A finished scene or chapter, and the 90-minute master, from one studio."
+    },
+    "cta": "Launch Studio ($9)"
+  },
+  "infrastructure": {
+    "title": "Infrastructuur en beveiliging van enterprise-niveau",
+    "description": "Aangedreven door Google Cloud en Vertex AI voor betrouwbaarheid op bedrijfsniveau, meertalige nasynchronisatiemodellen en veilige verwerking van assets.",
+    "badges": {
+      "googleCloud": "Google Cloud",
+      "vertexAi": "Vertex AI"
+    }
   },
   "valueProp": {
     "pills": [
@@ -150,7 +1114,7 @@
         "icon": "video",
         "label": "Maker",
         "outcome": "Lever op tijd — stop met opnieuw bouwen in elke tool",
-        "narrative": "Je hebt het verhaal, maar elke aflevering vereist het opnieuw exporteren van assets, het opnieuw invoeren van prompts in nieuwe tabbladen en de hoop dat de continuïteit behouden blijft. SceneFlow verbindt Series, Blueprint en Productie in één studio: zo keur je de visuele stijl goed tijdens de pre-vis, genereer je scènes en lever je consistente afleveringen op tijd op, in plaats van alles vanaf nul opnieuw op te bouwen.",
+        "narrative": "Je hebt het verhaal, maar elke aflevering vereist het opnieuw exporteren van assets, het opnieuw invoeren van prompts in nieuwe tabbladen en de hoop dat de continuïteit behouden blijft. SceneFlow verbindt Series Room, Blueprint Room en Production Stage in één studio: zo keur je de visuele stijl goed tijdens de pre-vis, genereer je scènes stuk voor stuk en lever je consistente afleveringen volgens planning op, in plaats van alles vanaf nul opnieuw op te bouwen.",
         "useCases": [
           "16:9 YouTube TV-drama",
           "Verticaal mobiel drama in 9:16-formaat",
@@ -243,7 +1207,7 @@
         "icon": "klapbord",
         "label": "Filmproductie",
         "outcome": "Van script naar een interactieve animatic die je kunt vertonen en testen voordat je gaat filmen.",
-        "narrative": "Voorheen betekenden pre-visualisatie en publiekstests wekenlang werken aan storyboards, tijdelijke voice-overs en kostbaar giswerk voordat de camera's gingen draaien. SceneFlow zet je script om in een interactieve animatic met Pre-vis Agent: optimaliseer met Audience Resonance, vertoon het in de Screening Room en stel pas budget beschikbaar als het verhaal echt staat.",
+        "narrative": "Voorheen betekenden pre-visualisatie en publiekstests wekenlang werken aan storyboards, tijdelijke voice-overs en kostbaar giswerk voordat de camera's gingen draaien. Met SceneFlow zet je je script om in een interactieve animatic via de Pre-vis Agent; optimaliseer het met Audience Resonance, vertoon het in de Screening Room en stel pas budget beschikbaar als het verhaal echt aanslaat.",
         "useCases": [
           "Previz voor speelfilms en indie-producties",
           "Animatics voor investeerderspresentaties",
@@ -256,7 +1220,7 @@
           "challengeTitle": "Trage pre-visualisatie voordat je het verhaal kunt testen",
           "challengeDescription": "Je hebt een script, maar tafelrondes, storyboard-cycli en gefragmenteerde previz-tools vertragen pitches voor investeerders, publiekstests en beslissingen over groen licht.",
           "solutionTitle": "Interactieve pre-visualisatie op basis van het script",
-          "solutionDescription": "Upload je script (MDX, FDX en andere formaten), optimaliseer het met Audience Resonance en genereer een interactieve pre-vis om te bekijken en te testen — inclusief gelijktijdige 'Express'-generatie voor verschillende scènedelen, ondersteuning voor meer dan 70 talen en snelle meertalige overlays.",
+          "solutionDescription": "Upload je script (MDX, FDX en andere formaten), optimaliseer het met Audience Resonance en genereer een interactieve pre-vis om te bekijken en te testen — waarbij Production Agents prompts opstelt en content genereert per verhaalmoment, in meer dan 70 talen en met snelle meertalige overlays.",
           "win": "Valideer de aansluiting tussen verhaal en publiek vóór de hoofdopnames — met een deelbare animatic, niet met een wekenlang previz-traject."
         }
       }
@@ -272,7 +1236,7 @@
       },
       {
         "them": "Consistentie van de handleiding over verschillende sessies heen",
-        "us": "Reference Library + Shot Frames vergrendelen beeld vóór video"
+        "us": "Reference Library + Shot Frames: beeldmateriaal vastleggen vóór de video"
       },
       {
         "them": "Geen workflow voor publieksvalidatie",
@@ -290,10 +1254,10 @@
     "title": "Videopijplijn op basis van beats",
     "subtitle": "Goedkeuren vóór het renderen — geen regeneratie à la een gokkast",
     "intro": "Geen generaties op basis van vallen en opstaan. Je bekijkt een voorbeeld en keurt de uitstraling goed voordat SceneFlow credits verbruikt voor de uiteindelijke video.",
-    "description": "SceneFlow structureert de visuele goedkeuring in elke fase: Pre-vis Agent voor beoordeling, Shot Frames om de compositie vast te leggen, en vervolgens F2V per shot. Je verfijnt de visuele stijl voordat je credits verspilt aan drift en hallucinaties.",
+    "description": "SceneFlow structureert de visuele goedkeuring in elke fase: Pre-vis Agent voor beoordeling, Shot Frames om de compositie vast te leggen, en vervolgens F2V per beat. Je verfijnt de visuele stijl voordat je credits verspilt aan drift en hallucinaties.",
     "steps": [
-      "Pre-vis Agent — deel audiovisuele beats binnen enkele minuten ter beoordeling",
-      "Shot Frames — vergrendel begin-/eindsamenstelling met Reference Library-continuïteit",
+      "Pre-vis Agent — audiovisuele segmenten delen ter beoordeling na aansturing door een expert",
+      "Shot Frames — begin/einde van compositie vergrendelen met Reference Library-continuïteit",
       "F2V per shot — genereer video op basis van goedgekeurde frames, niet op basis van blinde prompts",
       "Continue EXT-keten — native verlengingsstappen van +7 seconden voor lange dialoogfragmenten",
       "Production Mixer — timing, audio en stream-export naar Screening Room"
@@ -371,7 +1335,7 @@
     "steps": [
       {
         "title": "Initiële clip van 8 seconden",
-        "description": "Frame-naar-video of afbeelding-naar-video op basis van goedgekeurde Shot Frames vergrendelt de compositie vóór de beweging."
+        "description": "Bij frame-naar-video of afbeelding-naar-video op basis van goedgekeurde Shot Frames wordt de compositie vastgezet vóór de beweging."
       },
       {
         "title": "+7s verlengingsstappen",
@@ -406,7 +1370,7 @@
     "badge": "Creatief assortiment",
     "title": "Elke stijl, elk scherm",
     "titleAccent": "Jouw creatieve DNA, vastgelegd in Blueprint",
-    "subtitle": "In Blueprint wordt je creatieve DNA vastgelegd: de kunststijl, beeldverhouding, toon en het kernverhaal. SceneFlow verwerkt deze keuzes in de treatment, Audience Resonance en het script, zodat scène-aanwijzingen vanaf het allereerste begin aansluiten bij je beeldkader en visuele stijl – en niet pas als exportinstellingen op het laatste moment.",
+    "subtitle": "In Blueprint Room wordt je creatieve DNA vastgelegd: de kunststijl, beeldverhouding, toon en het kernverhaal. SceneFlow verwerkt deze keuzes in de treatment, Audience Resonance en het script, zodat scène-aanwijzingen vanaf het allereerste moment aansluiten bij je beeldkader en visuele stijl – en niet pas achteraf als exportinstellingen worden toegepast.",
     "pillars": [
       {
         "title": "Vorm volgt functie (en framing)",
@@ -430,87 +1394,121 @@
       "items": [
         {
           "id": "fotorealistisch",
-          "name": "Fotorealistisch",
+          "name": "Cinematische live-action",
           "displayTitle": "Fotorealisme",
-          "description": "Professionele fotografiestijl",
+          "description": "Fotorealistische, filmische belichting",
           "tagline": "Prestigieus, realistisch langvormverhaal",
           "marketingBody": "Fotorealisme zorgt voor de brede aantrekkingskracht die het publiek van prestigieuze tv-series en documentaires verwacht. Zorg voor consistente, realistische personages en belichting in opeenvolgende scènes, zodat episodische drama's en documentaireseries hun emotionele continuïteit behouden, van de eerste aflevering tot de finale.",
+          "featured": true,
           "thumbnail": "https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Gemini_Generated_Image_w5y03bw5y03bw5y0.jpeg"
         },
         {
           "id": "anime uit de jaren 90",
-          "name": "Anime (jaren 90)",
-          "displayTitle": "Anime",
-          "description": "Klassieke anime-stijl uit de jaren 90",
-          "tagline": "Verhaallijnen die over meerdere afleveringen doorlopen",
-          "marketingBody": "Cel-shading in anime-stijl zorgt voor een sterke betrokkenheid bij fans, zowel in webseries met meerdere afleveringen als in verhalen die zich over langere tijd ontvouwen. Generatieve systemen die op deze stijl zijn getraind, leveren strak lijnwerk en een voorspelbare beeldcompositie op – ideaal voor grootschalige productie van series.",
+          "name": "Cinematische 3D / CGI",
+          "displayTitle": "Cinematische 3D / CGI",
+          "description": "Gerenderde 3D-speelfilm-look",
+          "featured": false,
           "thumbnail": "https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Gemini_Generated_Image_5qoasf5qoasf5qoa.jpeg"
         },
         {
           "id": "Pixar",
-          "name": "Pixar Animation",
+          "name": "3D-animatie (Pixar-stijl)",
           "displayTitle": "Cinematische 3D / Geïnspireerd door Pixar",
-          "description": "3D-animatie in Pixar-stijl",
+          "description": "Gestileerde 3D-animatiefilm",
           "tagline": "Emotionele continuïteit over de afleveringen heen",
           "marketingBody": "Zachte, ronde vormen en een expressief karakterontwerp zorgen voor een emotionele warmte die kijkers gedurende een heel seizoen blijft boeien. Ideaal voor animatieseries, langere producties voor het hele gezin en branded storytelling, waarbij de consistentie van de personages van cruciaal belang is.",
+          "featured": true,
           "thumbnail": "https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Gemini_Generated_Image_zi32rnzi32rnzi32.jpeg"
         },
         {
           "id": "concept art",
-          "name": "Concept art",
-          "displayTitle": "Concept art",
-          "description": "Concept art voor games/films",
-          "tagline": "Pre-vis-keyframes voor films en series, met sfeervolle, productieklare belichting.",
+          "name": "Anime",
+          "displayTitle": "Anime",
+          "description": "Anime-stijl met cel-shading",
+          "tagline": "Verhaallijnen die over meerdere afleveringen doorlopen",
+          "marketingBody": "Cel-shading in anime-stijl zorgt voor een sterke betrokkenheid bij fans, zowel in webseries met meerdere afleveringen als in verhalen die zich over langere tijd ontvouwen. Generatieve systemen die op deze stijl zijn getraind, leveren strak lijnwerk en een voorspelbare beeldcompositie op – ideaal voor grootschalige productie van series.",
+          "featured": true,
           "thumbnail": "https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Gemini_Generated_Image_qlf261qlf261qlf2.jpeg"
         },
         {
           "id": "Ghibli",
           "name": "Ghibli-achtig",
           "displayTitle": "Handgetekend / Ghibli-stijl",
-          "description": "Geïnspireerd door Studio Ghibli",
+          "description": "Handgetekende, schilderachtige animatie",
           "tagline": "Ambacht als luxe",
           "marketingBody": "Deze stijl sluit direct aan bij een belangrijke creatieve stroming waarin 'ambacht als luxe' centraal staat. Aquareltexturen en schilderachtige achtergronden vormen handgemaakte, episodische werelden waarin organische imperfectie over de gehele reeks heen overkomt als bewuste artistieke expressie.",
+          "featured": true,
           "thumbnail": "https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Gemini_Generated_Image_xojqsuxojqsuxojq.jpeg"
         },
         {
           "id": "stripboek",
           "name": "Stripboek",
           "displayTitle": "Stripboek",
-          "description": "Inktstijl van stripboeken",
+          "description": "Krachtige inkt, graphic novel-stijl",
           "tagline": "Krachtige inktlijnen, halftoontexturen en pop-artkleuren voor een verhaal dat zich over meerdere afleveringen uitstrekt.",
+          "featured": false,
           "thumbnail": "https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Gemini_Generated_Image_ezhp8cezhp8cezhp.jpeg"
         },
         {
           "id": "olieverfschilderij",
-          "name": "Olieverfschilderij",
-          "displayTitle": "Olieverfschilderij",
-          "description": "Klassiek olieverfschilderij",
-          "tagline": "Klassieke penseelvoering en rijke pigmenten voor documentaires en historische longreads.",
+          "name": "Concept art",
+          "displayTitle": "Concept art",
+          "description": "Cinematische concept art voor games/films",
+          "tagline": "Pre-vis-keyframes voor films en series, met sfeervolle, productieklare belichting.",
+          "featured": false,
           "thumbnail": "https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Gemini_Generated_Image_7z9qm7z9qm7z9qm7.jpeg"
         },
         {
           "id": "digitale kunst",
-          "name": "Digitale kunst",
-          "displayTitle": "Digitale kunst",
-          "description": "Moderne digitale illustratie",
-          "tagline": "Gestileerde illustratie voor een geanimeerde documentaire en een episodische uitlegserie.",
+          "name": "Flat vector / Motion graphics",
+          "displayTitle": "Flat vector / Motion graphics",
+          "description": "Strakke vectorstijl voor uitlegvideo's",
+          "featured": false,
           "thumbnail": "https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Gemini_Generated_Image_omdmt6omdmt6omdm.jpeg"
         },
         {
           "id": "aquarel",
-          "name": "Aquarel",
-          "displayTitle": "Aquarel",
-          "description": "Zachte aquarel",
-          "tagline": "Zachte pigmentwassingen voor memoires, documentaires en beschouwende longreads.",
+          "name": "Storyboard / SFAI-animatieterm",
+          "displayTitle": "Storyboard / SFAI-animatieterm",
+          "description": "Ruwe storyboardbeelden in grijstinten",
+          "featured": false,
           "thumbnail": "https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Gemini_Generated_Image_7i1wus7i1wus7i1w.jpeg"
         },
         {
           "id": "schets",
-          "name": "Schets/Lijntekening",
-          "displayTitle": "Schets/Lijntekening",
+          "name": "Digitale kunst",
+          "displayTitle": "Digitale kunst",
+          "description": "Moderne digitale illustratie",
+          "tagline": "Gestileerde illustratie voor een geanimeerde documentaire en een episodische uitlegserie.",
+          "featured": false,
+          "thumbnail": "https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Gemini_Generated_Image_bmbpbibmbpbibmbp.jpeg"
+        },
+        {
+          "id": "watercolor",
+          "name": "Aquarel",
+          "displayTitle": "Aquarel",
+          "description": "Zachte aquarel",
+          "tagline": "Zachte pigmentwassingen voor memoires, documentaires en beschouwende longreads.",
+          "featured": false,
+          "thumbnail": "https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Gemini_Generated_Image_7i1wus7i1wus7i1w.jpeg"
+        },
+        {
+          "id": "sketch",
+          "name": "Schets / Lijntekening",
+          "displayTitle": "Schets / Lijntekening",
           "description": "Potloodschetsstijl",
           "tagline": "Gedetailleerd lijnwerk en potloodtextuur voor scènes in langere producties, van pre-visualisatie tot productie.",
+          "featured": false,
           "thumbnail": "https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Gemini_Generated_Image_bmbpbibmbpbibmbp.jpeg"
+        },
+        {
+          "id": "oil-painting",
+          "name": "Olieverfschilderij",
+          "displayTitle": "Olieverfschilderij",
+          "description": "Klassiek olieverfschilderij",
+          "tagline": "Klassieke penseelvoering en rijke pigmenten voor documentaires en historische longreads.",
+          "featured": false,
+          "thumbnail": "https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Gemini_Generated_Image_7z9qm7z9qm7z9qm7.jpeg"
         }
       ]
     },
@@ -595,7 +1593,7 @@
       "tagline": "Eén studio. Begeleide automatisering — of een hoge doorvoersnelheid als je de stack al kent.",
       "stages": [
         {
-          "label": "Blueprint Room",
+          "label": "SFAIBLUEPRINT_RUIMTETERM",
           "detail": "Gestructureerd verhaalplan"
         },
         {
@@ -603,7 +1601,7 @@
           "detail": "Consistente personages"
         },
         {
-          "label": "Productie",
+          "label": "Production StageIJN",
           "detail": "Stem + beeld"
         },
         {
@@ -627,15 +1625,15 @@
     "proofLine": "Gevalideerd aan de hand van een rondgang door een woning: volledig handmatig proces duurde meer dan 4 uur → hetzelfde eindresultaat in SceneFlow in minder dan een uur."
   },
   "comparison": {
-    "title": "Stop pulling the lever. Start running a production.",
-    "subtitle": "Clip generators re-roll the dice on every prompt — new face, new room, new voice. SceneFlow reads every shot from the same locked references, so scene 100 still matches scene 1.",
+    "title": "Stop met het overhalen van de hendel. Begin met het draaien van een productie.",
+    "subtitle": "Clipgeneratoren gooien bij elke prompt opnieuw de dobbelstenen: een nieuw gezicht, een nieuwe kamer, een nieuwe stem. SceneFlow leest elke opname op basis van dezelfde vastgelegde referenties, waardoor scène 100 nog steeds aansluit bij scène 1.",
     "caption": "Eén studio vervangt gefragmenteerde prompt-tools, handmatige aanpassingen en overdrachten tussen meerdere platforms.",
     "imageAlt": "Traditionele productiekosten vs. SceneFlow-geautomatiseerde studio — sneller van concept naar publicatieklare video"
   },
   "howItWorks": {
     "title": "Van concept tot publicatieklare video",
     "titleAccent": "Eén begeleide pijplijn",
-    "subtitle": "De reeks is optioneel. Het basistraject is Blueprint → Productie → Screening Room — met onderweg pre-vis, animatic, scènevideo en master-MP4.",
+    "subtitle": "Een serie is optioneel. Het basistraject is Blueprint Room → Production Stage → Screening Room — met onderweg pre-vis, animatic, scènevideo en master-MP4.",
     "tagline": "Elke stap is vakkundig geautomatiseerd. Elke stap geeft u volledige controle.",
     "optionalBadge": "Optioneel",
     "optionalSuffix": " (optioneel)",
@@ -644,55 +1642,60 @@
     "phases": [
       {
         "id": "serie",
-        "stepLabel": "Series Room",
-        "subtitle": "Showrunner Engine",
+        "stepLabel": "SFAISERIES_RUIMTETERM",
+        "subtitle": "Continuïteit over meerdere afleveringen",
         "description": "Definieer je universum eenmalig en genereer samenhangende verhaallijnen die over meerdere afleveringen lopen. Dankzij gedeelde Reference Library blijven personages en toon gedurende het hele seizoen op elkaar afgestemd.",
         "keySteps": [
           "Definieer het universum — personages, toon en seizoensboog",
           "Genereer automatisch afleveringsoverzichten voor het hele seizoen",
-          "Synchronisatie met Blueprint en productie per aflevering"
+          "Synchroniseren naar Blueprint Room en Production Stage per aflevering"
         ],
         "keyFeatures": [
           "Definieer je universum één keer — personages, toon en seizoensboog.",
           "Samenhangende afleveringsoverzichten — automatisch gegenereerd voor het hele seizoen",
           "Bijhouden van continuïteit — afstemming van seizoenen met meerdere afleveringen",
-          "Synchronisatie tussen serie en aflevering — naar Blueprint Room en Productie"
-        ]
+          "Synchronisatie van serie naar aflevering — naar Blueprint Room en Production Stage"
+        ],
+        "optional": true
       },
       {
         "id": "blauwdruk",
-        "stepLabel": "Blueprint Room",
+        "stepLabel": "SFAIBLUEPRINT_RUIMTETERM",
         "subtitle": "Verhaalontwikkeling",
         "description": "Zet concepten om in gestructureerde treatments, inclusief logline, verhaalmomenten, personages en toon. Voer Audience Resonance uit en werk samen voordat het zware renderproces begint.",
         "keySteps": [
-          "Genereren → Beoordelen → Itereren → Productie starten",
+          "Genereren → Beoordelen → Herhalen → Naar Production Stage",
           "Audience Resonance scoren met een streefwaarde van 80+",
           "Deellinks voor medewerkers en exporteren (PDF, Doc, PPTX)"
         ],
         "keyFeatures": [
-          "Genereren → Beoordelen → Itereren → Productieworkflow starten",
+          "Genereren → Beoordelen → Herhalen → Naar Production Stage-workflow",
           "Van concept naar structuur in enkele minuten — logline, verhaalmomenten, personages en toon",
-          "Audience Resonance puntentelling met doelwaarde 80+ vóór productie",
+          "Audience Resonance-scoring met een doelwaarde van 80+ vóór Production Stage",
           "Deellinks voor samenwerkers — synthese van feedback tot begeleide herziening"
-        ]
+        ],
+        "optional": false
       },
       {
         "id": "productie",
-        "stepLabel": "Productie",
-        "subtitle": "Script naar Screening Room",
-        "description": "De tabbladen Script en Shoot leiden door het proces: Foundation → Pre-Vis → Footage → Mixer → Streams. Controlepunten per scène beperken het overdoen van werk tot een minimum; Screening Room verzorgt de preview, montage en publicatie.",
+        "stepLabel": "Production StageIJN",
+        "subtitle": "Richting door stromen",
+        "description": "Regie, script, muziek, referenties en stills optimaliseren het script aan de hand van publieksresonantie en pre-vis-beoordeling. Clips, mixer en streams genereren de video voor elke opname. De screeningruimte verzorgt de preview, montage en publicatie.",
         "keySteps": [
           "Script, stemmen en scène-audio vastleggen",
-          "Pre-vis per scène — galerij en delen voor beoordeling",
-          "Tabblad Opname — Beeldmateriaal → Mixer → Streams per scène",
-          "Screening Room — voorbeeld bekijken, master samenstellen, publiceren"
+          "Pre-visualisatie scène voor scène — Stills en delen ter beoordeling",
+          "Clips, mixer en streams — genereer elke opname",
+          "Productieplanner — opnamedoelen, een gedateerd schema en telefoonstatus",
+          "Screening Room — voorbeeldweergave, master samenstellen, publiceren"
         ],
         "keyFeatures": [
-          "Foundation — script, stemmen, scène-audio, Audience Resonance",
-          "Pre-vis — regie, audio en shot-frames per scène, inclusief deellinks",
-          "Opnemen — Beeldmateriaal, mixer en streams zonder de productieomgeving te verlaten",
-          "Screening Room — scène-preview, montage van de master, vertoningen en publicatie op YouTube"
-        ]
+          "Regie, script, muziek, referenties en stills — script, stemmen, scène-audio, Audience Resonance-analyse",
+          "Stills — regie, audio en beat-frames per scène, inclusief deellinks",
+          "Clips, Mixer en Streams — genereer elke shot zonder Production Stage te verlaten.",
+          "Productieplanner — opnamedoelen, een gedateerd schema en telefoonstatus",
+          "Screening Room — scènevoorvertoning, montage van de master, vertoningen en publicatie op YouTube"
+        ],
+        "optional": false
       },
       {
         "id": "projectieruimte",
@@ -710,7 +1713,8 @@
           "Voorinstellingen voor samenstelling — Alleen video, hybride of aangepaste mix per scène",
           "Deelbare screenings — /s/-links met scoring en gestructureerde feedback",
           "YouTube-wizard, exports voor korte video's en distributiepakketten"
-        ]
+        ],
+        "optional": false
       }
     ]
   },
@@ -735,9 +1739,9 @@
       },
       {
         "id": "blauwdruk",
-        "stepLabel": "Optimaliseer uw concept met Blueprint",
+        "stepLabel": "Optimaliseer uw concept met Blueprint Room",
         "shortDescription": "Zet ideeën om in een gestructureerd treatment — logline, verhaalmomenten, personages en toon — voordat je begint met intensief renderen.",
-        "detailedDescription": "Blueprint stelt automatisch een gedetailleerde verhaalschets op. Verfijn personage-ontwikkelingen, plotmomenten en de verteltoon met intelligente suggesties. Dankzij deellinks kunnen betrokkenen het concept beoordelen vóór de productie.",
+        "detailedDescription": "Blueprint stelt automatisch een gedetailleerde verhaalopzet op. Verfijn personage-ontwikkelingen, plotmomenten en de verteltoon met behulp van slimme suggesties. Dankzij deellinks voor samenwerkers kunnen betrokkenen de opzet beoordelen voorafgaand aan Production Stage.",
         "media": "video"
       },
       {
@@ -757,13 +1761,13 @@
       {
         "id": "schieten",
         "stepLabel": "Neem je productie op",
-        "shortDescription": "Genereer video op beatniveau, mix audio en overlays, en exporteer streams van volledige scènes — Footage, Mixer en Streams in één Shoot-tabblad.",
-        "detailedDescription": "Het tabblad 'Shoot' in Production fungeert als je set: genereer video op basis van goedgekeurde Pre-Vis-frames (Footage), verfijn timing, watermerken en audio in de Mixer, en render vervolgens volledige scène-MP4's in Streams.",
+        "shortDescription": "Genereer elk shot in Clips, mix de audio in de Mixer en exporteer taalversies in Streams.",
+        "detailedDescription": "Clips genereren de video voor elke opname op basis van goedgekeurde stills. De mixer bepaalt de timing, watermerken en audio. Streams zijn de taalversies van de scène.",
         "media": "video",
         "subPoints": [
-          "Beeldmateriaal — video-generatie stap voor stap op basis van start- en eindframes uit de pre-vis",
+          "Clips — video-opnamen op basis van goedgekeurde stills",
           "Mixer — watermerk, tekst-overlay en audiotiming per scène",
-          "Streams — volledig gerenderde scènevideo (alle beats) gereed voor Screening Room"
+          "Streams — taalversies van de scène, gereed voor Screening Room"
         ]
       },
       {
@@ -790,6 +1794,191 @@
       "openFeatureVideo": "Video over de functies openen"
     }
   },
+  "productionShowcase": {
+    "badge": "Productievoorbeelden",
+    "title": "Bekijk de volledige pipeline",
+    "titleAccent": "in actie",
+    "subtitle": "Elk voorbeeld begint met een korte trailer. De volledige masterversie — een complete productie, van het blauwdrukstadium en de pre-visualisatie tot de uiteindelijke montage — wordt afgespeeld in de projectieruimte.",
+    "subtitleTagline": "Producties van lange duur. Geen clips.",
+    "screeningRoomInstruction": "Beoordeel deze productie zoals een recensent dat zou doen: mijlpaal voor mijlpaal. Begin bij Series, ga door naar Blueprint, vervolgens het script in AR Analysis, en sluit af bij Screening.",
+    "trailerLabel": "Trailer",
+    "watchLongform": "Bekijk de uitgebreide video",
+    "seriesDoor": "Series",
+    "blueprintDoor": "Blueprint",
+    "scriptArDoor": "Analyse van debiteuren",
+    "screeningDoor": "Screening",
+    "screeningRoomGroup": "Screening Room",
+    "previsDoor": "Pre-vis",
+    "roughDoor": "Ruwe montage",
+    "scenesDoor": "Scènes",
+    "finalDoor": "Definitief",
+    "enterFullscreen": "Naar volledig scherm",
+    "exitFullscreen": "Volledig scherm afsluiten",
+    "explorerHandoff": "Deze links vormen een voltooid product. Bij Explorer maak je je eigen versie.",
+    "languagesBanner": "Openbare voorbeelden worden in vier talen geleverd: Engels, Spaans, Chinees en Arabisch.",
+    "workflowLabel": "Oplossingen",
+    "startProduction": "Start uw productie",
+    "cta": "Start uw productie",
+    "continuityNote": "Series Room beheert de continuïteit.",
+    "resonanceNote": "Audience Resonance™ optimaliseert scripts",
+    "videoLanguagePrompt": "Bekijk in het Engels, Spaans, Chinees of Arabisch",
+    "videoComingSoon": "Nasynchronisatie volgt binnenkort",
+    "videoSoon": "Binnenkort",
+    "frictionLabel": "De wrijving",
+    "solutionPillarLabel": "De SceneFlow-oplossing",
+    "showSolutionsSection": "Show Solutions",
+    "hideSolutionsSection": "Oplossingen verbergen",
+    "cards": [
+      {
+        "id": "drama",
+        "title": "Cinematisch drama van speelfilmlengte. Geen enkele afwijking in de karakterontwikkeling.",
+        "subtitle": "Behoud de gezichten van de personages, de kostuums en de locaties van scène 1 tot en met scène 100. Loop door de screeningsruimte om de pre-vis, de bewegingsvideo per scène en de uiteindelijke ProRes 4K-master te bekijken — en wissel vervolgens van taal om de volledige nasynchronisatie te horen.",
+        "badge": "Klaar voor serieproductie",
+        "solutionPillars": [
+          {
+            "title": "Visuele en karakterconsistentie",
+            "frictionHeadline": "Afwijking in personages & wankele decors.",
+            "friction": "Generatieve modellen resetten bij elke opname, waardoor de gezichten, kleding en belichting van personages voortdurend veranderen bij overgangen tussen scènes.",
+            "solutionHeadline": "Vergrendeld activum Blueprints.",
+            "solution": "Leg de basisprofielen voor personages, omgevingen en visuele stijlen vooraf vast in Blueprint Room. SceneFlow waarborgt de visuele identiteit in elke render om de narratieve onderdompeling te behouden."
+          },
+          {
+            "title": "Verteltempo en scènebeheersing",
+            "frictionHeadline": "De valstrik van de clip van 10 seconden.",
+            "friction": "Een film opbouwen uit losstaande micro-prompts leidt tot een schokkerig tempo, vlakke emoties en eindeloos handmatig montagewerk op de tijdlijn.",
+            "solutionHeadline": "Storyboarden op basis van beats",
+            "solution": "Regisseer op scèneniveau, niet op promptniveau. Breng dramatische momenten, camerabewegingen en verhaallijnen visueel in kaart voordat je ook maar één frame video genereert."
+          },
+          {
+            "title": "Uitlijning van dialoog en audio",
+            "frictionHeadline": "Niet-overtuigende dialogen.",
+            "friction": "Niet synchroon lopende lippen, zwevende mondbewegingen en losgekoppelde audiosporen halen de kijker direct uit het drama.",
+            "solutionHeadline": "Geïntegreerde spraak- en synchronisatie-engine.",
+            "solution": "Dynamische stemvertolking en nauwkeurige lipsynchronisatie zijn direct in de videopipeline geïntegreerd, wat zorgt voor geloofwaardige dialogen zonder externe nabewerking."
+          },
+          {
+            "title": "Wrijving in de workflow & vermoeidheid door herhaaldelijk opnieuw proberen",
+            "frictionHeadline": "Asset-chaos & eindeloze rerolls.",
+            "friction": "Het genereren van een korte film betekent doorgaans jongleren met meer dan 200 ruwe videobestanden, handmatige upscaling en tientallen mislukte generaties.",
+            "solutionHeadline": "Geautomatiseerde studiopijplijn.",
+            "solution": "Van concept tot definitieve master-MP4 op één geïntegreerd platform. Blueprint Room verzorgt de opzet van het verhaal, Production Stage regelt de regie via streams en Screening Room levert de uiteindelijke export op."
+          }
+        ],
+        "screeningRoomPreview": "Het filmische drama — Screening Room"
+      },
+      {
+        "id": "animation",
+        "title": "Animatieserie met meerdere stijlen voor een volledig seizoen. Eén consistente beeldstijl.",
+        "subtitle": "Leg de 'flat-cel'-stijl, de familie Hart en het stadje Millwick vast voor de gehele reeks, van de eerste tot de laatste aflevering. Regisseer de grap stap voor stap en bekijk de aflevering vervolgens in de screeningsruimte.",
+        "badge": "Multistijl",
+        "solutionPillars": [
+          {
+            "title": "Stilistische consistentie",
+            "frictionHeadline": "Stijl-instorting.",
+            "friction": "Cartoon- en animestijlen vervormen voortdurend tussen shots door: lijnen verschuiven, kleurenpaletten raken ontregeld en personages transformeren tot fotorealistische, ongemakkelijke brij.",
+            "solutionHeadline": "Vaste kunststijl-engine.",
+            "solution": "Leg je visuele stijl vanaf het eerste beeld vast. SceneFlow vergrendelt personageontwerpen, lijndiktes en schaduwstijlen voor de gehele aflevering, zodat je personages uniek en herkenbaar blijven."
+          },
+          {
+            "title": "Overdreven animatie en fysica",
+            "frictionHeadline": "Stijve en haperende beweging.",
+            "friction": "Generatieve modellen hebben moeite met snelle slapstick, plotselinge reacties en de vervormbare fysica van tekenfilms, waardoor energieke grappen veranderen in smeltende artefacten.",
+            "solutionHeadline": "Ankeren van actie en houding.",
+            "solution": "Creëer dynamische bewegingen en expressieve poses voor personages zonder de geometrie te vervormen. Regisseer krachtige fysieke komedie, plotselinge cuts en wilde gezichtsuitdrukkingen met volledige controle over de beweging."
+          },
+          {
+            "title": "Komische timing en ritme",
+            "frictionHeadline": "Verpeste clou's.",
+            "friction": "Humor schuilt in de pauzes en de timing van de cuts. Standaard generatieve loops van vijf seconden dwingen een ongemakkelijk tempo af dat de timing van de grap om zeep helpt.",
+            "solutionHeadline": "Op de tel nauwkeurige montage.",
+            "solution": "Beheers het tempo van scènes tot op het frame nauwkeurig. Pas dramatische pauzes, de timing tussen opbouw en punchline, en snelle reactiebeelden direct aan in de op beats gebaseerde tijdlijn, nog vóór de uiteindelijke rendering."
+          },
+          {
+            "title": "Energieke dialoog & vocale synchronisatie",
+            "frictionHeadline": "Levenloze poppenmonden.",
+            "friction": "Generieke AI-dialogen voelen vlak en mechanisch aan, waardoor de energie die nodig is voor gevatte sitcom-wisselingen verloren gaat.",
+            "solutionHeadline": "Dynamische synchronisatie van stem en expressie.",
+            "solution": "Koppel de vocale uitvoering direct aan een energieke mimiek. Dialoog, expressieve mondbewegingen en komische stemopnames sluiten naadloos op elkaar aan voor een maximaal komisch effect."
+          }
+        ],
+        "screeningRoomPreview": "Hart House — Filmzaal"
+      },
+      {
+        "id": "documentary",
+        "title": "Documentaires van lange duur. De opkomst van intelligentie.",
+        "subtitle": "Volg de opkomst van AI en superintelligentie over verschillende continenten heen. Elk hoofdstuk ademt de sfeer van zijn eigen tijdperk: geen moderne voorwerpen in een vroeg laboratorium, geen decors uit de jaren 50 in het heden.",
+        "badge": "Historisch correct",
+        "solutionPillars": [
+          {
+            "title": "Visuele nauwkeurigheid passend bij het tijdperk",
+            "frictionHeadline": "Anachronistische artefacten",
+            "friction": "Standaard generatieve modellen laten regelmatig moderne voorwerpen, smartphoneschermen of historisch onjuiste kleding binnendringen in historische reconstructies.",
+            "solutionHeadline": "Richtlijnen voor historische stijl",
+            "solution": "Stel nauwkeurige tijdgebonden parameters in — van filmkorrel uit de jaren 20 tot texturen van kleding uit de 18e eeuw — zodat elke gegenereerde scène historisch authentiek blijft."
+          },
+          {
+            "title": "Systeem voor archiefbeelden en B-roll",
+            "frictionHeadline": "Visuele monotonie bij lange voice-overs",
+            "friction": "Het combineren van een langdurige voice-over met statische stockbeelden leidt tot een snelle uitval van kijkers tijdens diepgaande analyses.",
+            "solutionHeadline": "Op transcriptie gebaseerde B-roll-engine",
+            "solution": "Terwijl de verteller historische feiten bespreekt, genereert SceneFlow automatisch getimede filmische reconstructies, document-overlays en archiefachtige tussenbeelden die direct gekoppeld zijn aan het audiotranscript."
+          },
+          {
+            "title": "Realisme van interviews en 'talking heads'",
+            "frictionHeadline": "Unheimliche deskundige getuigen",
+            "friction": "Gegenereerde historici, onderzoekers of getuigen ogen vaak kunstmatig, met zwevende kaakbewegingen en onnatuurlijk oogcontact.",
+            "solutionHeadline": "Vastgezette expertprofielen & spraaksynchronisatie",
+            "solution": "Zorg voor realistische, geloofwaardige interviewopstellingen met natuurlijke micro-expressies, nauwkeurige lipsynchronisatie en consistente identiteiten van experts in meerdelige series."
+          },
+          {
+            "title": "Episodisch tempo en narratieve continuïteit",
+            "frictionHeadline": "Montage met gefragmenteerde tijdlijn",
+            "friction": "Het in balans brengen van de voice-over, reconstructies, het onthullen van bewijsmateriaal en spanningsopbouwende pauzes in een aflevering van 40 minuten kost in traditionele montagesystemen doorgaans weken.",
+            "solutionHeadline": "Documentaire-workflow op basis van beats",
+            "solution": "Structureer dramatische spanning, spanningsverhogende pauzes en de onthulling van bewijsmateriaal visueel binnen Blueprint Room, en lever in één naadloze doorloop een volledig samengesteld masterbestand op."
+          }
+        ],
+        "screeningRoomPreview": "De lange gedachte — Screening Room"
+      },
+      {
+        "id": "training",
+        "title": "Trainingsreeks met meerdere modules, klaar voor gebruik in het curriculum. Eén chef, één uitdaging.",
+        "subtitle": "Eén chef, één keuken, vijf gerechten. Het gezicht, het koksbuis en de tegels blijven onveranderd, van de bouillon tot het laatste dessert.",
+        "badge": "Geschikt voor het curriculum",
+        "solutionPillars": [
+          {
+            "title": "Consistentie van instructeur en setting",
+            "frictionHeadline": "Elke module een andere docent.",
+            "friction": "Bij generatieve clips worden het gezicht, de kleding en het klaslokaal van de instructeur tussen de lessen door opnieuw ingesteld, waardoor de cursus aanvoelt als een verzameling losstaande video's.",
+            "solutionHeadline": "Vergrendelde SFAIBLUEPRINT-instructeursvoorwaarden.",
+            "solution": "Definieer de instructeur, de set en het visuele systeem eenmalig in Blueprint Room. SceneFlow waarborgt het behoud van die identiteit in alle modules."
+          },
+          {
+            "title": "Tempo van het curriculum",
+            "frictionHeadline": "Slides opgedeeld in clips.",
+            "friction": "Bij het omzetten van een syllabus in losstaande opdrachten gaan de opbouw van de les, het uitgewerkte voorbeeld en het pauzemoment voorafgaand aan een quiz verloren.",
+            "solutionHeadline": "Storyboarding op basis van modules.",
+            "solution": "Zet elke module op als een reeks onderwijsstappen — opzet, demonstratie en controle — voordat er een frame wordt gerenderd."
+          },
+          {
+            "title": "Vertelstem & Instructie in beeld",
+            "frictionHeadline": "Stem die de afbeelding mist.",
+            "friction": "Vertelling, bijschriften en diagrammen lopen uiteen, waardoor cursisten de ene stap horen terwijl de afbeelding een andere laat zien.",
+            "solutionHeadline": "Gesynchroniseerde lestracks.",
+            "solution": "Stem, ondertiteling en uitleg in beeld lopen synchroon, zodat elke uitleg samenvalt met het beeld dat deze onderbouwt."
+          },
+          {
+            "title": "Samenstelling van de cursus",
+            "frictionHeadline": "Weken in een editor.",
+            "friction": "Het samenvoegen van modules, opnieuw opgenomen materiaal en gelokaliseerde versies binnen een traditionele tijdlijn verandert een curriculumupdate in een productievertraging.",
+            "solutionHeadline": "Eén studio-pipeline.",
+            "solution": "Blueprint, Audience Resonance en Screening Room voeren een module door alle stadia: van opzet tot pre-vis, ruwe montage, scènes en de uiteindelijke cursus."
+          }
+        ],
+        "screeningRoomPreview": "Five Plates — Screening Room"
+      }
+    ]
+  },
   "platformWalkthrough": {
     "badge": "Onder de motorkap",
     "title": "Gedetailleerde rondleiding door het platform",
@@ -802,26 +1991,29 @@
     "chapters": [
       {
         "id": "begin-hier",
-        "label": "Begin hier — planning, continuïteit en afstemming op het publiek"
+        "label": "Begin hier — planning, continuïteit en afstemming op het publiek",
+        "defaultExpanded": false
       },
       {
         "id": "produceren en publiceren",
-        "label": "Produceren en publiceren — Tabblad Opname naar Screening Room"
+        "label": "Produceren en publiceren — Clips naar Screening Room",
+        "defaultExpanded": false
       }
     ],
     "close": "Sluiten",
     "viewDetails": "Details bekijken",
     "beatFirst": {
+      "id": 15,
       "title": "Videopijplijn op basis van beats",
-      "description": "Keur pre-vis-sequenties en Shot Frames goed vóór F2V — dit leidt tot minder blinde regeneraties als gevolg van hallucinaties en visuele drift. Eén gestructureerd traject van beoordeling tot de uiteindelijke clip.",
+      "description": "Keur pre-vis-sequenties en shots goed vóór de F2V-fase — dit leidt tot minder blinde regeneraties als gevolg van hallucinaties en visuele drift. Eén gestructureerd traject van beoordeling tot eindclip.",
       "keyFeatures": [
-        "Pre-vis Agent ter beoordeling — deel beats vóór zware rendering",
-        "Shot Frames compositie van de vergrendeling — Reference Library continuïteit",
+        "Pre-vis Agent ter beoordeling — deel de beats vóór de zware rendering",
+        "Shot Frames compositie vastleggen — Reference Library continuïteit",
         "F2V per shot — genereer video op basis van goedgekeurde frames",
         "Doorlopende EXT-reeksen — native stappen van meer dan 7 seconden voor lange dialogen binnen een beat",
         "Mixertiming en -streams — open Screening Room om samen te stellen en te publiceren"
       ],
-      "screenshotSlot": "Schermopname invoegen: Shot Frames en goedkeuring van de pre-vis vóór het genereren van de video",
+      "screenshotSlot": "Screenshot invoegen: Shot Frames en goedkeuring van de pre-vis vóór het genereren van de video",
       "videoSlot": "Fragment van 00:30 invoegen: beats goedkeuren, frames vastzetten en vervolgens F2V-clips genereren"
     },
     "screeningRoom": {
@@ -853,13 +2045,13 @@
         "title": "Platformoverzicht",
         "description": "Eén studio, van idee tot publicatieklare video. Dezelfde workflow voor trainingen, podcasts, nieuws en filmische series — keur de pre-visualisatie goed voordat de kosten voor de definitieve rendering worden gemaakt.",
         "keyFeatures": [
-          "Reeks → Blueprint → Productie → Screening Room",
-          "Goedkeuring per scène — pre-vis en Shot Frames vóór F2V",
+          "Series Room → Blueprint Room → Production Stage → Screening Room",
+          "Goedkeuring per beat — pre-vis en shots vóór F2V",
           "Google Vertex AI-generatie met native Veo-extensieketens",
           "Waarborgen voor vertrouwen en veiligheid, en ondertekende herkomstinformatie bij levering"
         ],
         "screenshotSlot": "Voeg screenshot in: Hero-sectie van de landingspagina + vereenvoudigde walkthrough-balk",
-        "videoSlot": "Fragment van 01:30 invoegen: Hero → nieuw project → Blueprint → Productie-opname → Screening Room → Publiceren"
+        "videoSlot": "Fragment van 01:30 invoegen: Hero → nieuw project → Blueprint Room → Production Stage Opname → Screening Room → Publiceren"
       },
       {
         "id": "9",
@@ -869,19 +2061,19 @@
           "Definieer je universum één keer — personages, toon en seizoensboog.",
           "Samenhangende afleveringsoverzichten — automatisch gegenereerd voor het hele seizoen",
           "Bijhouden van continuïteit — afstemming van seizoenen met meerdere afleveringen",
-          "Synchronisatie tussen serie en aflevering — naar Blueprint Room en Productie"
+          "Synchronisatie van serie naar aflevering — naar Blueprint Room en Production Stage"
         ],
         "screenshotSlot": "Voeg screenshot in: Serieoverzicht met automatisch gegenereerde verhaallijnen per aflevering",
         "videoSlot": "Fragment van 30 seconden invoegen: concept dat uitgroeit tot een seizoen met meerdere afleveringen"
       },
       {
         "id": "10",
-        "title": "Blueprint Automatisering",
+        "title": "Blueprint Room-automatisering",
         "description": "Zet concepten om in gestructureerde treatments, inclusief logline, verhaalmomenten, personages en toon. Voer Audience Resonance uit en werk samen voordat het zware renderproces begint.",
         "keyFeatures": [
-          "Genereren → Beoordelen → Itereren → Productieworkflow starten",
+          "Genereren → Beoordelen → Herhalen → Naar Production Stage-workflow",
           "Van concept naar structuur in enkele minuten — logline, verhaalmomenten, personages en toon",
-          "Audience Resonance puntentelling met doelwaarde 80+ vóór productie",
+          "Audience Resonance-scoring met een doelwaarde van 80+ vóór Production Stage",
           "Deellinks voor samenwerkers — synthese van feedback tot begeleide herziening"
         ],
         "screenshotSlot": "Voeg screenshot in: Automatisch gegenereerde Blueprint met verhaalmomenten en karakterbogen",
@@ -903,7 +2095,7 @@
       {
         "id": "7",
         "title": "Audience Resonance Analyse",
-        "description": "Bepaal je doelgroep voor directe scores, analyses en aanbevelingen. Pas correcties met één klik toe of gebruik Guided Edits om je afleveringen, Blueprint en script perfect te optimaliseren voor maximale impact.",
+        "description": "Bepaal je doelgroep voor directe scores, analyses en aanbevelingen. Pas correcties met één klik toe of gebruik Guided Edits om je afleveringen, Blueprint Room en script perfect te optimaliseren voor maximale impact.",
         "keyFeatures": [
           "Scoring van de doelgroep — met uitsplitsing per categorie",
           "Aanbevelingen per sectie — verbeter het juiste deel van je verhaal",
@@ -915,16 +2107,17 @@
       },
       {
         "id": "11",
-        "title": "Productieautomatisering",
-        "description": "De tabbladen Script en Shoot leiden door het proces: Foundation → Pre-Vis → Footage → Mixer → Streams. Controlepunten per scène beperken het overdoen van werk tot een minimum; Screening Room verzorgt de preview, montage en publicatie.",
+        "title": "Production Stage-automatisering",
+        "description": "Regie, script, muziek, referenties en stills optimaliseren het script aan de hand van publieksresonantie en pre-vis-beoordeling. Clips, mixer en streams genereren de video voor elke opname. De screeningruimte verzorgt de preview, montage en publicatie.",
         "keyFeatures": [
-          "Foundation — script, stemmen, scène-audio, Audience Resonance",
-          "Pre-vis — regie, audio en shot-frames per scène, inclusief deellinks",
-          "Opnemen — Beeldmateriaal, mixer en streams zonder de productieomgeving te verlaten",
-          "Screening Room — scène-preview, montage van de master, vertoningen en publicatie op YouTube"
+          "Regie, script, muziek, referenties en stills — script, stemmen, scène-audio, Audience Resonance-analyse",
+          "Stills — regie, audio en beat-frames per scène, inclusief deellinks",
+          "Clips, Mixer en Streams — genereer elke shot zonder Production Stage te verlaten.",
+          "Productieplanner — opnamedoelen, een gedateerd schema en telefoonstatus",
+          "Screening Room — scènevoorvertoning, montage van de master, vertoningen en publicatie op YouTube"
         ],
-        "screenshotSlot": "Voeg screenshot in: Productiedashboard met de tabbladen Script, Opname en Pre-vis",
-        "videoSlot": "Clip van 60 seconden invoegen: Script vastleggen → Pre-vis Agent per scène → Opnames maken → Mixer → Streams"
+        "screenshotSlot": "Voeg screenshot in: Productiedashboard met Regie, Script, Stills, Clips, Mixer en Streams",
+        "videoSlot": "Clip van 60 seconden invoegen: Script vastleggen → Stills per scène → Clips → Mixer → Streams"
       },
       {
         "id": "14",
@@ -1041,56 +2234,56 @@
   },
   "coreCapabilities": {
     "audienceResonance": {
-      "badge": "Intelligence Layer",
-      "title": "Audience Resonance: build for a culture, not a language code",
-      "description": "Subtitles stretch one video’s reach. SceneFlow lets you name the culture, region, and demographic you are making for, score the story against that audience before you render, and then ship either a dubbed master or a separate high-resonance version per audience.",
+      "badge": "Intelligentielaag",
+      "title": "Audience Resonance: bouw voor een cultuur, niet voor een taalcode",
+      "description": "Ondertiteling vergroot het bereik van een video. Met SceneFlow kun je de cultuur, regio en doelgroep specificeren waarvoor je de video maakt, het verhaal voorafgaand aan het renderen toetsen aan die doelgroep, en vervolgens een nagesynchroniseerde master of een aparte, specifiek op de doelgroep afgestemde versie opleveren.",
       "bullets": [
-        "Define the audience: eight target regions, plus age, gender, education, and community",
-        "Describe culture, faith, and values in your own words — SceneFlow reads the signals",
-        "Get a resonance score with section-level fixes before you spend on renders",
-        "Dub the master, or produce a distinct version tuned to each audience"
+        "Definieer de doelgroep: acht doelregio's, plus leeftijd, geslacht, opleiding en gemeenschap.",
+        "Beschrijf cultuur, geloof en waarden in eigen woorden — SceneFlow leest de signalen",
+        "Ontvang een resonantiescore met verbeterpunten per sectie voordat je geld uitgeeft aan renders.",
+        "Voorzie de master van nasynchronisatie of produceer een aparte versie die is afgestemd op elk publiek."
       ],
-      "cta": "Analyze Your Script",
+      "cta": "Analyseer je script",
       "howWeScore": {
-        "toggle": "How we score",
-        "title": "How Audience Resonance works",
-        "description": "Audience Resonance combines narrative-structure analysis (clarity, pacing, emotional arc) with target-persona fit against the audience you define in Blueprint — not vanity metrics or post-publish retention data. When your audience description carries cultural signals, the analysis adds an authenticity pass over names, dialect, customs, faith, and sensitivities. Recommendations are tied to specific script sections so you can fix issues before agents run video generation.",
+        "toggle": "Hoe we beoordelen",
+        "title": "Hoe Audience Resonance werkt",
+        "description": "Audience Resonance combineert een analyse van de narratieve structuur (helderheid, tempo, emotionele boog) met de aansluiting op de doelgroep-persona die je in Blueprint hebt gedefinieerd — en kijkt dus niet naar 'vanity metrics' of retentiegegevens van na publicatie. Als de beschrijving van je doelgroep culturele kenmerken bevat, voert de analyse ook een authenticiteitscontrole uit op namen, dialect, gebruiken, geloofsovertuigingen en gevoeligheden. Aanbevelingen zijn gekoppeld aan specifieke delen van het script, zodat je problemen kunt verhelpen voordat de agents de videogeneratie starten.",
         "bullets": [
-          "Scores Blueprint and script against your stated target audience",
-          "Cultural authenticity checks on names, dialect, customs, faith, and sensitivities",
-          "Section-level recommendations — not a black-box “trust us” number",
-          "Run before heavy render spend, not after publish"
+          "Beoordeelt Blueprint en het script aan de hand van uw opgegeven doelgroep.",
+          "Controles op culturele authenticiteit van namen, dialect, gebruiken, geloof en gevoeligheden",
+          "Aanbevelingen op sectieniveau – geen ‘black-box’-cijfer waarbij je ons maar op ons woord moet geloven.",
+          "Voer dit uit vóór de hoge renderkosten, niet na het publiceren."
         ]
       }
     },
     "express": {
-      "badge": "Hyper-Speed Production",
+      "badge": "Intelligente productie",
       "title": "SceneFlow Agents",
-      "description": "Generate Pre-Vis, motion video, and delivery masters concurrently. Go from script to a shareable Pre-Vis in minutes — then approve the shot frames before you spend on motion video. Throughput is what makes a version per audience affordable instead of theoretical.",
+      "description": "Audio Agent, Stills Agent en Video Agent stellen op basis van de aanwijzingen per scène gespecialiseerde prompts op, koppelen de juiste referenties en genereren de content parallel. Het genereren van een scène kan enkele minuten duren omdat de agent specialistisch werk verricht; vervolgens keur je de Shot Frames goed voordat je kosten maakt voor bewegend beeld.",
       "items": [
         {
           "title": "Pre-vis Agent",
-          "desc": "Fully voiced, scored shot frames per scene, ready to share in the Screening Room.",
-          "time": "Minutes vs Hours"
+          "desc": "Volledig ingesproken en voorzien van muziek, met beat-frames per scène, uitgewerkt op basis van vastgelegde regie en klaar om te worden gedeeld in de Screening Room.",
+          "time": "Kwaliteit staat voorop"
         },
         {
           "title": "Video Agent",
-          "desc": "Per-scene motion video generated after Pre-Vis approval, as native-language streams or a lower-cost dub, with scene-level edits.",
-          "time": "Minutes vs Days"
+          "desc": "Per scène gegenereerde bewegende beelden na goedkeuring van de pre-vis, in de vorm van streams in de moedertaal of een voordeligere nasynchronisatie, inclusief bewerkingen op scèneniveau.",
+          "time": "Goedkeuren, vervolgens renderen"
         },
         {
           "title": "Delivery Agent",
-          "desc": "Assemble the ProRes 4K master and auto-publish to YouTube or download the bundle.",
-          "time": "Minutes vs Weeks"
+          "desc": "Stel de ProRes 4K-master samen en publiceer deze automatisch op YouTube, of download het pakket.",
+          "time": "Verzend het gesneden product"
         }
       ],
-      "cta": "Run Production Agents"
+      "cta": "Voer Production Agents uit"
     }
   },
   "preVisEngine": {
     "badge": "Creative Decision Engine",
-    "title": "Pre-Visualization Engine",
-    "subtitle": "Generating a fully voiced, scored, 40-minute Pre-Vis (the industry term: animatic) in 15 minutes is not a workflow step — that is the product. In Hollywood, pre-vis takes weeks and costs hundreds of thousands of dollars. SceneFlow scales it to minutes and pocket change.",
+    "title": "SFAIPRE_VISUALISATIEMOTORTERM",
+    "subtitle": "Het genereren van een pre-vis van 40 minuten – voorzien van stemmen en muziek (in de sector bekend als 'animatic') – in slechts 15 minuten is niet zomaar een stap in het werkproces; het is het eindproduct zelf. In Hollywood vergt pre-vis weken aan tijd en kost het honderdduizenden dollars. Met deze technologie wordt dat teruggebracht tot enkele minuten en een fractie van de kosten.",
     "narrative": "In de filmindustrie overhandig je een storyboard aan de filmploeg. Pre-vis is wat je aan studiobestuurders, investeerders en producenten laat zien om groen licht voor een project te krijgen. SceneFlow tilt de productie naar een hoger niveau: van een tool voor consumenten en makers naar een professionele asset binnen de workflow van grote ondernemingen.",
     "pillars": [
       {
@@ -1107,257 +2300,308 @@
       }
     ],
     "workflow": {
-      "title": "Reference Library → Pre-Vis → Motion Video → ProRes 4K master",
+      "title": "Reference Library → Pre-vis → Bewegend beeld → ProRes 4K-master",
       "steps": [
-        "Build the Reference Library — characters, locations, and props locked to your production art style.",
-        "Generate Pre-Vis shot frames per scene with dialogue, SFX, and music — iterate direction in the Screening Room at low cost.",
-        "Approve the Pre-Vis, then generate per-scene motion video with multilanguage dubbing and scene-level edits.",
-        "Deliver the ProRes 4K master from the Screening Room — auto-publish to YouTube or download the bundle."
+        "Stel de referentiebibliotheek samen — personages, locaties en rekwisieten die zijn afgestemd op de art-stijl van je productie.",
+        "Genereer per scène 'beat frames' voor pre-visualisatie – inclusief dialoog, geluidseffecten en muziek – en pas de regie kostenefficiënt aan in de Screening Room.",
+        "Keur de pre-visualisatie goed en genereer vervolgens per scène een bewegende video met meertalige nasynchronisatie en bewerkingen op scèneniveau.",
+        "Lever de ProRes 4K-master aan vanuit de Screening Room — publiceer automatisch naar YouTube of download het pakket."
       ]
     },
     "cta": "Begin met het uploaden van het script",
     "ctaSubtext": "Een brug slaan tussen traditionele filmproductie en generatieve AI"
   },
   "exitIntent": {
-    "title": "Before you go — want launch news?",
-    "subtitle": "Leave your email and we'll tell you when we announce.",
+    "title": "Voordat je weggaat — wil je nieuws over de lancering?",
+    "subtitle": "Laat je e-mailadres achter en we laten het je weten wanneer we de aankondiging doen.",
     "benefits": [
-      "Launch notification when we announce",
-      "Weekly AI filmmaking tutorials",
-      "Exclusive creator discounts"
+      "Melding bij de lancering zodra we de aankondiging doen",
+      "Wekelijkse tutorials over AI-filmmaken",
+      "Exclusieve kortingen voor creators"
     ],
-    "emailPlaceholder": "Enter your email",
-    "subscribe": "Notify me",
-    "subscribing": "Subscribing...",
-    "or": "or",
-    "startNow": "Start directing now for just $9 →",
-    "privacy": "No spam, ever. Unsubscribe anytime.",
-    "successTitle": "You're on the list!",
-    "successSubtitle": "We'll email you when we announce — plus the occasional filmmaking tip.",
-    "ctaText": "Start Exploring — $9",
-    "closePopup": "Close popup"
+    "emailPlaceholder": "Voer uw e-mailadres in",
+    "subscribe": "Breng me op de hoogte",
+    "subscribing": "Bezig met abonneren...",
+    "or": "of",
+    "startNow": "Begin nu met regisseren voor slechts $9 →",
+    "privacy": "Nooit spam. Je kunt je op elk moment afmelden.",
+    "successTitle": "Je staat op de lijst!",
+    "successSubtitle": "We sturen je een e-mail zodra we een aankondiging doen – en af en toe een tip over filmmaken.",
+    "ctaText": "Begin met ontdekken — $9",
+    "closePopup": "Pop-up sluiten"
   },
   "pricing": {
-    "badge": "Simple Pricing",
-    "title": "Start with Explorer — $9",
-    "subtitle": "Test the complete pipeline now with a frictionless $9 entry.",
+    "badge": "Eenvoudige prijzen",
+    "title": "Begin met Explorer — $9",
+    "subtitle": "Test de volledige pipeline nu met een drempelloze instap van $9.",
+    "explorerHighlight": "De snelste manier om de volledige SceneFlow-studio te ervaren — van concept tot Screening Room.",
+    "trustBadges": [
+      "Veilige betalingen via Whop",
+      "$9 Explorer om de studio uit te proberen",
+      "Maandelijkse tegoeden vervallen aan het einde van de periode.",
+      "Op elk moment opzeggen"
+    ],
     "valueAnchor": {
-      "traditionalCost": "$2,000+",
-      "traditionalLabel": "Traditional pre-vis",
-      "vs": "vs",
-      "sceneFlowCost": "$49-149",
-      "sceneFlowLabel": "SceneFlow monthly",
-      "saveBadge": "Save 90%+ per project"
+      "traditionalCost": "Meer dan $2.000",
+      "traditionalLabel": "Traditionele pre-vis",
+      "vs": "tegen",
+      "sceneFlowCost": "$49–149",
+      "sceneFlowLabel": "SceneFlow maandelijks",
+      "saveBadge": "Bespaar meer dan 90% per project"
     },
     "teamCta": {
-      "title": "In-house team or institution?",
-      "description": "Book a workflow walkthrough for comms, L&D, and marketing teams",
-      "button": "Book Walkthrough"
+      "title": "Intern team of instelling?",
+      "description": "Plan een workflow-demonstratie voor communicatie-, L&D- en marketingteams",
+      "button": "Rondleiding door het boek"
     },
     "agencyCta": {
-      "title": "Agency or production shop?",
-      "description": "Custom credits, SLA, and dedicated support at scale",
-      "button": "Contact Sales"
+      "title": "Bureau of productiehuis?",
+      "description": "Op maat gemaakte tegoeden, SLA en toegewijde ondersteuning op grote schaal",
+      "button": "Contact opnemen met Sales"
     },
     "byok": {
       "title": "Bring Your Own Key",
-      "badge": "Pro & Studio Plans",
-      "description": "Your API key can run reference, still, and clip generations. SceneFlow charges a 20% orchestration fee on those jobs. Hosted SceneFlow rates can be lower than a personal API account as platform volume grows.",
-      "savingsHighlight": "20% orchestration fee",
+      "badge": "Pro- en Studio-abonnementen",
+      "description": "Met uw API-sleutel kunt u generaties van referenties, stilstaande beelden en clips uitvoeren. SceneFlow brengt voor deze taken een orkestratiekostenvergoeding van 20% in rekening. Naarmate het platformvolume groeit, kunnen de tarieven voor gehoste SceneFlow-diensten lager uitvallen dan die voor een persoonlijk API-account.",
+      "savingsHighlight": "20% orkestratievergoeding",
       "benefits": [
         {
-          "title": "References, stills, and clips",
-          "description": "BYOK applies only when your key actually runs those generations"
+          "title": "Referenties, stills en fragmenten",
+          "description": "BYOK is alleen van toepassing wanneer uw sleutel die generaties daadwerkelijk uitvoert."
         },
         {
-          "title": "Hosted rates can be lower",
-          "description": "SceneFlow platform pricing can undercut a personal Vertex or Kling account"
+          "title": "Tarieven via een host kunnen lager zijn.",
+          "description": "De platformtarieven van SceneFlow kunnen lager uitvallen dan de kosten van een persoonlijk Vertex- of Kling-account."
         },
         {
-          "title": "Full Control",
-          "description": "Your keys, your provider bill, plus a platform orchestration fee"
+          "title": "Volledige controle",
+          "description": "Uw sleutels, de factuur van uw provider en een platformorkestratiekosten"
         }
       ],
-      "supportedProviders": "Supported Providers",
+      "supportedProviders": "Ondersteunde aanbieders",
       "vertexName": "Google Vertex AI",
-      "vertexDetail": "References, stills, and Omni clips",
-      "elevenLabsName": "ElevenLabs",
-      "elevenLabsDetail": "Text-to-Speech & Voice Cloning",
-      "savingsLabel": "20% fee",
-      "onImagesVideo": "on references, stills, and clips",
-      "onVoiceover": "on voiceover",
-      "note": "The 20% fee is a SceneFlow orchestration charge. Provider usage bills to your account. SceneFlow-hosted generation can cost less than bringing a personal key."
+      "vertexDetail": "Referenties, stills en Omni-clips",
+      "elevenLabsName": "Kling",
+      "elevenLabsDetail": "Clipgeneratie wanneer uw sleutel wordt gebruikt",
+      "savingsLabel": "20% vergoeding",
+      "onImagesVideo": "op basis van referenties, stills en fragmenten",
+      "onVoiceover": "wanneer jouw sleutel de klus uitvoert",
+      "note": "De toeslag van 20% is een SceneFlow-orkestratiekost. De aanbieder brengt het verbruik in rekening op uw account. Generatie via SceneFlow kan goedkoper zijn dan het gebruik van een eigen sleutel."
     },
     "creditTopUps": {
-      "title": "Need More Credits?",
-      "subtitle": "Top up anytime. Each add-on pack lasts 12 months.",
+      "title": "Meer credits nodig?",
+      "subtitle": "Koop zo vaak als nodig add-ons van $25, $100 of $250. Elk pakket is 12 maanden geldig.",
       "packs": [
         {
-          "label": "Starter Pack",
-          "description": "Perfect for quick revisions"
+          "label": "Extra optie van $25",
+          "description": "2.000 credits. Koop ze zo vaak als nodig is."
         },
         {
-          "label": "Scene Pack",
-          "description": "Complete a short project"
+          "label": "Extra optie van $100",
+          "description": "9.000 credits. Koop ze zo vaak als nodig is."
         },
         {
-          "label": "Production Pack",
-          "description": "Major film sequence"
-        },
-        {
-          "label": "Studio Pack",
-          "description": "Full production capacity"
+          "label": "Extra optie van $250",
+          "description": "25.000 credits. Koop ze zo vaak als nodig is."
         }
       ],
       "creditsUnit": "credits"
     },
     "calculator": {
-      "sectionTitle": "Estimate Your Project",
-      "sectionSubtitle": "Know exactly what you'll pay before you commit",
-      "title": "Project Budget Calculator",
-      "subtitle": "Set a credit budget, track production charges, and plan Pre-Vis first before motion video.",
-      "customize": "Customize parameters",
-      "imagesLabel": "Images to generate",
-      "videoClipsLabel": "Video clips",
-      "voiceoverLabel": "Voiceover (minutes)",
+      "sectionTitle": "Schat de kosten van uw project",
+      "sectionSubtitle": "Weet precies wat je betaalt voordat je je vastlegt.",
+      "title": "Productieplanner",
+      "subtitle": "Plan shot-iteraties en een tijdlijn, en controleer vervolgens het tempo en de uitgaven op je telefoon.",
+      "customize": "Parameters aanpassen",
+      "imagesLabel": "Te genereren afbeeldingen",
+      "videoClipsLabel": "Videoclips",
+      "voiceoverLabel": "Voice-over (minuten)",
       "byokTitle": "Bring Your Own Key (BYOK)",
       "byokBadge": "Pro & Studio",
-      "byokDescription": "Use your own key for references, stills, and clips. SceneFlow charges a 20% orchestration fee, and hosted rates can be lower than a personal API account.",
-      "vertexToggle": "Vertex AI (references, stills, and clips)",
-      "elevenLabsToggle": "ElevenLabs (Voiceover)",
-      "imageGeneration": "Image Generation",
-      "videoGeneration": "Video Generation",
-      "voiceover": "Voiceover",
+      "byokDescription": "Gebruik je eigen sleutel voor referenties, stills en clips. SceneFlow brengt 20% orkestratiekosten in rekening, en de tarieven voor gehoste diensten kunnen lager uitvallen dan die voor een persoonlijk API-account.",
+      "vertexToggle": "Vertex AI (referenties, stills en clips)",
+      "elevenLabsToggle": "ElevenLabs (Voice-over)",
+      "imageGeneration": "Afbeeldingsgeneratie",
+      "videoGeneration": "Videogeneratie",
+      "voiceover": "Voice-over",
       "byokTag": "(BYOK)",
-      "totalEstimate": "Total Estimate",
-      "withTopUps": "with top-ups",
-      "creditSavings": "SceneFlow credit savings",
-      "savePercent": "You save {percent}% on SceneFlow credits",
-      "transparency": "Full transparency: You'll see real-time credit usage as you work. No surprises—adjust your project scope anytime.",
-      "transparencyHighlight": "Full transparency:",
-      "byokDisclaimer": "BYOK Note: The platform fee applies only to reference, still, and clip generations that run on your key. SceneFlow-hosted model rates can be lower than an individual account.",
-      "byokDisclaimerHighlight": "BYOK Note:",
+      "totalEstimate": "Totale schatting",
+      "withTopUps": "met opwaarderingen",
+      "creditSavings": "SceneFlow-kredietsaldo",
+      "savePercent": "Je bespaart {percent}% op SceneFlow-credits.",
+      "transparency": "Volledige transparantie: je ziet het kredietverbruik in realtime terwijl je werkt. Geen verrassingen: pas de omvang van je project op elk gewenst moment aan.",
+      "transparencyHighlight": "Volledige transparantie:",
+      "byokDisclaimer": "Opmerking: De platformkosten zijn alleen van toepassing op het genereren van referenties, stilstaande beelden en clips die gebruikmaken van uw sleutel. De tarieven voor modellen die via SceneFlow worden gehost, kunnen lager zijn dan die voor een individueel account.",
+      "byokDisclaimerHighlight": "BYOK-opmerking:",
       "presets": [
         {
           "id": "commercial",
-          "name": "30-sec Commercial"
+          "name": "Commercial van 30 seconden"
         },
         {
           "id": "short",
-          "name": "2-min Short Film"
+          "name": "Korte film van 2 minuten"
         },
         {
           "id": "episode",
-          "name": "10-min Episode"
+          "name": "Aflevering van 10 minuten"
         },
         {
           "id": "feature",
-          "name": "90-min Feature"
+          "name": "Speelfilm van 90 minuten"
         }
       ],
-      "minSuffix": "min"
+      "minSuffix": "min."
     },
     "tierGrid": {
-      "productionTestFlight": "Production Test Flight",
-      "getStarted": "Get Started",
-      "startTestFlight": "Start Test Flight",
-      "loading": "Loading...",
-      "mostPopular": "Most Popular",
-      "creditsPerMonth": "Credits/mo",
-      "storage": "Storage",
+      "productionTestFlight": "Productietestvlucht",
+      "getStarted": "Aan de slag",
+      "startTestFlight": "Testvlucht starten",
+      "loading": "Laden...",
+      "mostPopular": "Populairst",
+      "creditsPerMonth": "Credits/maand",
+      "storage": "Opslag",
       "perMonth": "/month"
     },
     "trust": {
-      "cancelAnytime": "Cancel anytime",
-      "moneyBack": "$9 Explorer to try the studio",
-      "creditsNeverExpire": "Explorer credits last 90 days"
+      "cancelAnytime": "Op elk moment opzeggen",
+      "moneyBack": "$9 Explorer om de studio uit te proberen",
+      "creditsNeverExpire": "Explorer-credits van de afgelopen 90 dagen"
     },
     "plans": {
       "explorer": {
-        "name": "Explorer",
-        "description": "One-time purchase to try it out",
+        "name": "Explorer — Demo",
+        "description": "Demo — eenmalige aankoop om een volledige productie uit te proberen",
         "features": [
-          "One-time purchase",
-          "750 credits (expire 90 days after purchase)",
-          "5 GB storage (30 days)",
-          "Full platform access",
-          "MP4 export (any resolution)",
-          "AI voiceover (70+ languages)"
+          "Eenmalige aankoop",
+          "750 credits (vervallen 90 dagen na aankoop)",
+          "5 GB opslag (30 dagen)",
+          "Volledige toegang tot het platform",
+          "MP4-export (elke resolutie)",
+          "AI-voice-over (meer dan 70 talen)"
         ]
       },
       "subscriptions": [
         {
           "id": "starter",
-          "name": "Starter",
-          "description": "For individual creators",
+          "name": "Starter — Sandbox",
+          "description": "Sandbox — om ideeën uit te proberen vóór een echte show",
           "features": [
-            "Full platform access",
-            "4,500 credits/month included",
-            "Unused monthly credits expire at period end",
-            "25 GB active storage",
-            "MP4 export (any resolution)",
-            "AI voiceover (70+ languages)",
-            "Email support"
+            "Volledige toegang tot het platform",
+            "4.500 credits per maand inbegrepen",
+            "Ongebruikte maandelijkse tegoeden vervallen aan het einde van de periode.",
+            "25 GB actieve opslag",
+            "MP4-export (elke resolutie)",
+            "AI-voice-over (meer dan 70 talen)",
+            "E-mailondersteuning"
           ]
         },
         {
           "id": "pro",
-          "name": "Pro",
-          "description": "For professional creators",
+          "name": "Pro — YouTuber",
+          "description": "YouTuber — terugkerende afleveringen en kanaalvideo's",
           "features": [
-            "Everything in Starter, plus:",
-            "15,000 credits/month included",
-            "Unused monthly credits expire at period end",
-            "100 GB active storage",
-            "Veo 3.1 Quality (4K) access",
-            "Character Consistency Engine",
-            "Voice cloning",
+            "Alles in Starter, plus:",
+            "15.000 credits per maand inbegrepen",
+            "Ongebruikte maandelijkse tegoeden vervallen aan het einde van de periode.",
+            "100 GB actieve opslag",
+            "Toegang tot Veo 3.1-kwaliteit (4K)",
+            "Engine voor personageconsistentie",
+            "Stemklonen",
             "BYOK (Bring Your Own Key)",
-            "3 team seats",
-            "Priority support"
+            "3 teamstoelen",
+            "Prioriteitsondersteuning"
           ]
         },
         {
           "id": "studio",
-          "name": "Studio",
-          "description": "For teams & agencies",
+          "name": "Studio — Onafhankelijk filmmaker",
+          "description": "Indie-filmmaker — onafhankelijke films en series",
           "features": [
-            "Everything in Pro, plus:",
-            "75,000 credits/month included",
-            "Unused monthly credits expire at period end",
-            "500 GB active storage",
-            "Veo 3.1 4K Priority Queue",
-            "Unlimited Character Consistency",
-            "White-label exports",
-            "API access",
-            "10 team seats",
-            "Dedicated account manager",
-            "Enterprise SLA available on request"
+            "Alles in Pro, plus:",
+            "75.000 credits per maand inbegrepen",
+            "Ongebruikte maandelijkse tegoeden vervallen aan het einde van de periode.",
+            "500 GB actieve opslag",
+            "Veo 3.1 4K-prioriteitswachtrij",
+            "Onbeperkte consistentie van personages",
+            "White-label-export",
+            "API-toegang",
+            "10 teamplaatsen",
+            "Vaste accountmanager",
+            "Enterprise-SLA op aanvraag beschikbaar"
           ]
         }
       ]
-    },
-    "explorerHighlight": "The fastest way to experience the complete SceneFlow studio — from concept to Screening Room.",
-    "trustBadges": [
-      "Secure payments via Whop",
-      "$9 Explorer to try the studio",
-      "Monthly credits expire at period end",
-      "Cancel anytime"
-    ]
+    }
   },
   "landingSections": {
     "expandSection": "Toon sectie",
     "collapseSection": "Sectie verbergen"
   },
+  "notify": {
+    "heading": "Ontvang nieuws over de lancering",
+    "description": "Laat je e-mailadres achter en we laten je weten wanneer we de aankondiging doen. Verder niets.",
+    "placeholder": "you@studio.com",
+    "submit": "Breng me op de hoogte",
+    "submitting": "Verzenden…",
+    "successTitle": "Controleer je inbox.",
+    "successBody": "We hebben een bevestigingslink gestuurd. Klik erop om je aan te melden voor de wachtlijst voor de lancering. Verder niets.",
+    "errorEmpty": "Vul uw e-mailadres in zodat we contact met u kunnen opnemen.",
+    "errorInvalid": "Dat e-mailadres ziet er niet goed uit. Controleer het en probeer het opnieuw.",
+    "errorGeneric": "Er is iets misgegaan. Probeer het zo nog eens.",
+    "privacy": "We sturen eerst een bevestigingslink per e-mail. Eén bericht over de lancering nadat je hebt bevestigd. Geen spam.",
+    "confirmTitle": "Je staat op de lijst.",
+    "confirmBody": "We sturen je een e-mail zodra we de aankondiging doen. Verder niets.",
+    "confirmExpiredTitle": "Die link is verlopen.",
+    "confirmExpiredBody": "Voer je e-mailadres opnieuw in op de landingspagina, dan sturen we een nieuwe bevestigingslink.",
+    "confirmInvalidTitle": "Die link is niet geldig.",
+    "confirmInvalidBody": "Vraag een nieuwe bevestiging aan via de landingspagina.",
+    "confirmHome": "Terug naar SceneFlow"
+  },
+  "forFilmmakers": {
+    "badge": "Meld je aan voor het SceneFlow Originals Seed Program",
+    "heading": "Voor filmmakers: dien je pilot in voor distributie via platforms en het genereren van inkomsten.",
+    "subtitle": "Het SceneFlow-netwerk is een besloten groep van 'Founding Creators' — 5 tot 10 zorgvuldig geselecteerde titels bij de lancering, geen open marktplaats. De verdeling van de inkomsten start pas zodra er betalende abonnees zijn. Wat we nu bieden, is een voorsprong op het gebied van distributie: gefinancierde teaser-advertenties in ruil voor een exclusieve premièreperiode.",
+    "closedNote": "Aanmeldingen worden beoordeeld door redacteuren. Door in te dienen, wordt je film niet in een catalogus gepubliceerd.",
+    "fields": {
+      "email": "E-mail",
+      "emailPlaceholder": "you@studio.com",
+      "name": "Uw naam",
+      "namePlaceholder": "Naam van de regisseur of producent",
+      "title": "Titel van pilot of speelfilm",
+      "titlePlaceholder": "Werktitel",
+      "logline": "Logline",
+      "loglinePlaceholder": "Een of twee zinnen die het verhaal verkopen.",
+      "audienceUrl": "Bestaand publiek",
+      "audiencePlaceholder": "YouTube-, Bilibili-, festival- of socialemedia-URL",
+      "exclusivePremiere": "Ik sta open voor een exclusieve premièreperiode op SceneFlow in ruil voor gefinancierde teaser-advertenties."
+    },
+    "submit": "Aanvraag indienen",
+    "submitting": "Verzenden…",
+    "successTitle": "Controleer je inbox.",
+    "successBody": "We hebben een bevestigingslink gestuurd. Klik erop om je Seed-aanvraag definitief te maken. Meer is er niet nodig.",
+    "errorEmpty": "Vul alle velden in, zodat we uw pilot kunnen beoordelen.",
+    "errorInvalidEmail": "Dat e-mailadres ziet er niet goed uit. Controleer het en probeer het opnieuw.",
+    "errorInvalidUrl": "Voeg een openbare URL toe voor je bestaande publiek.",
+    "errorGeneric": "Er is iets misgegaan. Probeer het zo nog eens.",
+    "confirmTitle": "Aanmelding ontvangen.",
+    "confirmBody": "Je staat in de beoordelingswachtrij voor Seed. We lezen elke inzending. Dit is geen vermelding in een openbare catalogus.",
+    "confirmExpiredTitle": "Die link is verlopen.",
+    "confirmExpiredBody": "Dien het filmmakersformulier opnieuw in en we sturen een nieuwe bevestigingslink.",
+    "confirmInvalidTitle": "Die link is niet geldig.",
+    "confirmInvalidBody": "Vraag een nieuwe bevestiging aan via het formulier voor filmmakers.",
+    "confirmHome": "Terug naar SceneFlow",
+    "privacy": "We sturen eerst een bevestigingslink per e-mail. Alleen voor redacteuren. Geen spam."
+  },
   "finalCta": {
-    "title": "Built for the stories that have to hold.",
-    "subtitle": "Leave your email for launch news — or start directing now from the $9 Explorer plan.",
-    "cta": "Explore plans",
-    "ctaSecondary": "See how it works",
+    "title": "Gebouwd voor de verhalen die stand moeten houden.",
+    "subtitle": "Laat je e-mailadres achter voor nieuws over de lancering — of begin direct met regisseren via het Explorer-abonnement van $9.",
+    "cta": "Bekijk de abonnementen",
+    "ctaSecondary": "Bekijk hoe het werkt",
     "ctaSecondaryHref": "#two-modes"
   },
   "footer": {
-    "description": "End-to-end geautomatiseerde videoproductie — van concept tot publicatieklare master. Eén begeleid atelier: Series Room → Blueprint Room → Production Stage → Screening Room.",
+    "description": "Volledig geautomatiseerde videoproductie — van concept tot publicatieklare master. Eén begeleide studio: Series Room → Blueprint Room → Production Stage → Screening Room.",
     "product": "Product",
     "resources": "Hulpmiddelen",
     "legal": "trust &amp; safety",
@@ -1393,290 +2637,5 @@
     "mute": "Dempen",
     "unmute": "Geluid inschakelen",
     "expandVideo": "Video uitvouwen"
-  },
-  "productionShowcase": {
-    "badge": "Production Examples",
-    "title": "See the Full Pipeline",
-    "titleAccent": "in Action",
-    "subtitle": "Each example below is a complete production — from Blueprint through Pre-Vis to the final ProRes 4K master. Walk the Screening Room to compare the Pre-Vis, per-scene motion video, and the finished master in multiple languages.",
-    "subtitleTagline": "Long-form productions. Not clips.",
-    "screeningRoomInstruction": "Review this production the way a reviewer would — one milestone at a time. Start with Series, then Blueprint, then the script in AR Analysis, and finish in Screening.",
-    "languagesBanner": "Public examples ship in 7 languages: English, Spanish, Portuguese, Hindi, Chinese, Arabic, and Thai.",
-    "explorePipelineCta": "Explore a full production",
-    "explorePipelineHint": "Start with Cinematic Drama below to walk the full pipeline from concept to multi-language master.",
-    "workflowLabel": "Solutions",
-    "startProduction": "Start Your Production",
-    "cta": "Start Your Production",
-    "continuityNote": "Series Room manages continuity",
-    "resonanceNote": "Audience Resonance™ optimizes scripts",
-    "videoLanguagePrompt": "Watch this production in your language",
-    "videoComingSoon": "Dub coming soon",
-    "videoSoon": "Soon",
-    "frictionLabel": "The Friction",
-    "solutionPillarLabel": "The SceneFlow Solution",
-    "showSolutionsSection": "Show Solutions",
-    "hideSolutionsSection": "Hide Solutions",
-    "cards": [
-      {
-        "id": "drama",
-        "title": "Feature-Length Cinematic Drama. Zero Character Drift.",
-        "subtitle": "Hold character faces, wardrobe, and locations from scene 1 to scene 100. Walk the Screening Room to see the Pre-Vis, per-scene motion video, and the final ProRes 4K master — then switch languages to hear the full dub.",
-        "badge": "Series-Ready",
-        "solutionPillars": [
-          {
-            "title": "Visual & Character Consistency",
-            "frictionHeadline": "Character Drift & Wobbly Sets.",
-            "friction": "Generative models reset with every shot — causing character faces, outfits, and lighting to morph continuously across scene cuts.",
-            "solutionHeadline": "Locked Asset Blueprints.",
-            "solution": "Define master character profiles, environments, and visual styles up front in Blueprint Room. SceneFlow enforces visual identity across every render to preserve narrative immersion."
-          },
-          {
-            "title": "Narrative Pacing & Scene Control",
-            "frictionHeadline": "The 10-Second Clip Trap.",
-            "friction": "Building a film out of disconnected micro-prompts creates choppy pacing, flat emotion, and endless manual timeline editing.",
-            "solutionHeadline": "Beat-First Storyboarding.",
-            "solution": "Direct at the scene level, not the prompt level. Structure dramatic beats, camera movements, and story arcs visually before generating a single frame of video."
-          },
-          {
-            "title": "Dialogue & Audio Alignment",
-            "frictionHeadline": "Unconvincing Dialogue.",
-            "friction": "Mismatched lip-sync, floating mouth movements, and detached voice tracks immediately pull viewers out of the drama.",
-            "solutionHeadline": "Integrated Voice & Sync Engine.",
-            "solution": "Dynamic voice performance and precise lip-sync are baked directly into the video pipeline — delivering believable dialogue without external post-production passes."
-          },
-          {
-            "title": "Workflow Friction & Reroll Fatigue",
-            "frictionHeadline": "Asset Chaos & Endless Rerolls.",
-            "friction": "Generating a short film usually means juggling 200+ raw video files, manual upscaling, and dozens of wasted generations.",
-            "solutionHeadline": "Automated Studio Pipeline.",
-            "solution": "From concept to final master MP4 in one unified platform. Blueprint Room handles story setup, Production Stage runs Direction through Streams, and Screening Room delivers your final export."
-          }
-        ],
-        "screeningRoomPreview": "The Cinematic Drama — Screening Room"
-      },
-      {
-        "id": "animation",
-        "title": "Full-Season Animated Series. One Consistent Art Style.",
-        "subtitle": "Lock character designs, line weights, and shading models across an entire season. Direct comedic timing shot by shot, then review the assembled episode in the Screening Room.",
-        "badge": "Multi-Style",
-        "solutionPillars": [
-          {
-            "title": "Stylistic Consistency",
-            "frictionHeadline": "Style Meltdown.",
-            "friction": "Cartoon and anime styles constantly warp between shots, shifting line art, breaking color palettes, and morphing characters into photorealistic uncanny slop.",
-            "solutionHeadline": "Locked Art Style Engine.",
-            "solution": "Freeze your aesthetic from the first frame. SceneFlow locks character designs, line weights, and shading models across the entire episode so your characters stay uniquely yours."
-          },
-          {
-            "title": "Exaggerated Animation & Physics",
-            "frictionHeadline": "Stiff & Glitchy Motion.",
-            "friction": "Generative models struggle with fast slapstick, double-takes, and squishy cartoon physics, turning high-energy gags into melting artifacts.",
-            "solutionHeadline": "Action & Pose Anchoring.",
-            "solution": "Drive dynamic character movement and expressive poses without breaking geometry. Direct punchy physical comedy, sudden cutaways, and wild expressions with full motion control."
-          },
-          {
-            "title": "Comedic Timing & Rhythm",
-            "frictionHeadline": "Ruined Punchlines.",
-            "friction": "Humor lives in the pauses and beat-cuts. Standard 5-second generative loops force awkward pacing that destroys joke delivery.",
-            "solutionHeadline": "Beat-Precision Editing.",
-            "solution": "Control scene pacing down to the frame. Adjust dramatic pauses, setup-to-punchline timing, and quick reaction shots directly inside the beat-first timeline before final render."
-          },
-          {
-            "title": "High-Energy Dialogue & Vocal Sync",
-            "frictionHeadline": "Lifeless Puppet Mouths.",
-            "friction": "Generic AI dialogue feels flat and mechanical, destroying the energy needed for snappy sitcom banter.",
-            "solutionHeadline": "Dynamic Voice & Expression Sync.",
-            "solution": "Map vocal delivery directly to energetic facial performance. Dialogue, expressive mouth shapes, and comedic voice tracks match seamlessly for maximum comedic impact."
-          }
-        ],
-        "screeningRoomPreview": "The Animated Comedy — Screening Room"
-      },
-      {
-        "id": "documentary",
-        "title": "Long-Form Documentaries. Sustained Period Accuracy.",
-        "subtitle": "Maintain era-specific detail, narrator pacing, and expert-witness continuity across a 40-minute episode or multi-part series. Review the full timeline in the Screening Room before committing to high-res renders.",
-        "badge": "Period-Accurate",
-        "solutionPillars": [
-          {
-            "title": "Era-Specific Visual Accuracy",
-            "frictionHeadline": "Anachronistic Artifacts",
-            "friction": "Standard generative models routinely bleed modern objects, smartphone screens, or incorrect period clothing into historical re-enactments.",
-            "solutionHeadline": "Historical Style Guardrails",
-            "solution": "Set exact temporal parameters — from 1920s film grain to 18th-century wardrobe textures — so every generated scene stays historically authentic."
-          },
-          {
-            "title": "Archival Cutaways & B-Roll Engine",
-            "frictionHeadline": "Visual Monotony in Long Voiceovers",
-            "friction": "Pairing long-form narrator audio with static stock images leads to rapid viewer drop-off during deep dives.",
-            "solutionHeadline": "Transcript-Driven B-Roll Engine",
-            "solution": "As your narrator discusses historical facts, SceneFlow automatically generates timed cinematic re-enactments, document overlays, and archival-style cutaways tied directly to the audio transcript."
-          },
-          {
-            "title": "Interview & Talking-Head Realism",
-            "frictionHeadline": "Uncanny Expert Witnesses",
-            "friction": "Generated historians, investigators, or witnesses often look artificial, with floating jaw movements and unnatural eye contact.",
-            "solutionHeadline": "Locked Expert Profiles & Vocal Sync",
-            "solution": "Maintain realistic, trustworthy interview setups with natural micro-expressions, accurate lip-sync, and consistent expert identities across multi-part series."
-          },
-          {
-            "title": "Episodic Pacing & Narrative Continuity",
-            "frictionHeadline": "Fragmented Timeline Editing",
-            "friction": "Balancing narrator audio, re-enactments, evidence reveals, and tension-building pauses across a 40-minute episode usually takes weeks in traditional NLEs.",
-            "solutionHeadline": "Beat-First Documentary Pipeline",
-            "solution": "Structure dramatic tension, suspenseful pauses, and evidence reveals visually inside Blueprint Room, delivering a fully assembled master file in one seamless pass."
-          }
-        ],
-        "screeningRoomPreview": "Documentary Production — Screening Room"
-      },
-      {
-        "id": "training",
-        "title": "Multi-Module Training Series. One Locked Instructor.",
-        "subtitle": "Hold the instructor, classroom, and lesson graphics from the first module to the last quiz. Walk Blueprint, Audience Resonance, and the Screening Room — Pre-Vis, rough cut, scenes, and the finished course — then switch languages to hear the localized version.",
-        "badge": "Curriculum-Ready",
-        "solutionPillars": [
-          {
-            "title": "Instructor & Setting Consistency",
-            "frictionHeadline": "A Different Teacher Every Module.",
-            "friction": "Generative clips reset the instructor face, wardrobe, and classroom between lessons, so a course feels like a pile of unrelated videos.",
-            "solutionHeadline": "Locked Instructor Blueprints.",
-            "solution": "Define the instructor, set, and visual system once in Blueprint Room. SceneFlow keeps that identity locked across every module."
-          },
-          {
-            "title": "Curriculum Pacing",
-            "frictionHeadline": "Slides Chopped into Clips.",
-            "friction": "Turning a syllabus into disconnected prompts loses the lesson arc, the worked example, and the pause before a quiz.",
-            "solutionHeadline": "Module-First Storyboarding.",
-            "solution": "Direct each module as a sequence of teaching beats — setup, demonstration, and check — before a frame is rendered."
-          },
-          {
-            "title": "Narration & On-Screen Teaching",
-            "frictionHeadline": "Voice That Misses the Graphic.",
-            "friction": "Narration, captions, and diagrams drift apart, so learners hear one step while the picture shows another.",
-            "solutionHeadline": "Synced Lesson Tracks.",
-            "solution": "Voice, captions, and on-screen teaching stay on the same beat, so each explanation lands with the visual that proves it."
-          },
-          {
-            "title": "Course Assembly",
-            "frictionHeadline": "Weeks in an Editor.",
-            "friction": "Stitching modules, retakes, and localized versions in a traditional timeline turns a curriculum update into a production delay.",
-            "solutionHeadline": "One Studio Pipeline.",
-            "solution": "Blueprint, Audience Resonance, and the Screening Room carry a module from outline to Pre-Vis, rough cut, scenes, and the finished course."
-          }
-        ],
-        "screeningRoomPreview": "The Training Series — Screening Room"
-      }
-    ]
-  },
-  "keyFeatures": {
-    "landingUiLanguagesLabel": "Produce and dub in 70+ languages. This site is available in these 39:",
-    "subtitle": "Series Room → Blueprint Room → Production Stage → Screening Room."
-  },
-  "twoModes": {
-    "eyebrow": "The friction we remove",
-    "title": "One pipeline. Not a stack of tools.",
-    "subtitle": "SceneFlow replaces single-clip generators and a pile of separate docs, editors, and re-renders. Build the series or the 90-minute master, then publish a scene or a chapter when you are ready to earn.",
-    "comingSoon": "Coming soon",
-    "comparison": {
-      "id": "comparison",
-      "caption": "Fragmented tools beside one SceneFlow pipeline.",
-      "themLabel": "Fragmented production",
-      "usLabel": "SceneFlow",
-      "rows": [
-        {
-          "them": "Prompt trial and error across tools",
-          "us": "One Blueprint locks the story and the look"
-        },
-        {
-          "them": "Hand-built treatments and formatting",
-          "us": "A film treatment and beat sheet from your premise or brief"
-        },
-        {
-          "them": "Short clips that do not share a cast",
-          "us": "Shots generated from the locked Reference Library"
-        },
-        {
-          "them": "Dragging clips into another editor",
-          "us": "Scenes, chapters, and the master assemble in the Screening Room"
-        },
-        {
-          "them": "Re-rendering to test a note",
-          "us": "Direct on the animatic, then render"
-        }
-      ]
-    },
-    "cta": "Launch Studio ($9)"
-  },
-  "infrastructure": {
-    "title": "Enterprise-Grade Infrastructure & Security",
-    "description": "Powered by Google Cloud and Vertex AI for enterprise reliability, multi-language dubbing models, and secure asset processing.",
-    "badges": {
-      "googleCloud": "Google Cloud",
-      "vertexAi": "Vertex AI"
-    }
-  },
-  "notify": {
-    "heading": "Get launch news",
-    "description": "Leave your email and we’ll tell you when we announce. Nothing else.",
-    "placeholder": "you@studio.com",
-    "submit": "Notify me",
-    "submitting": "Sending…",
-    "successTitle": "Check your inbox.",
-    "successBody": "We sent a confirmation link. Click it to join the launch list. Nothing else.",
-    "errorEmpty": "Enter your email so we can reach you.",
-    "errorInvalid": "That email doesn’t look right. Check it and try again.",
-    "errorGeneric": "Something went wrong. Try again in a moment.",
-    "privacy": "We email a confirmation link first. One launch note after you confirm. No spam.",
-    "confirmTitle": "You’re on the list.",
-    "confirmBody": "We’ll email you when we announce. Nothing else.",
-    "confirmExpiredTitle": "That link expired.",
-    "confirmExpiredBody": "Submit your email on the landing page again and we’ll send a new confirmation link.",
-    "confirmInvalidTitle": "That link isn’t valid.",
-    "confirmInvalidBody": "Request a new confirmation from the landing page.",
-    "confirmHome": "Back to SceneFlow"
-  },
-  "forFilmmakers": {
-    "badge": "Apply for the SceneFlow Originals Seed Program",
-    "heading": "For Filmmakers: Submit your pilot for platform distribution and monetization.",
-    "subtitle": "The SceneFlow Network is a closed Founding Creator cohort — 5 to 10 hand-picked titles at launch, not an open marketplace. Revenue share starts only after paying subscribers exist. What we offer now is distribution leverage: funded teaser ads in exchange for an exclusive premiere window.",
-    "closedNote": "Applications are reviewed by editors. Submitting does not publish your film to a catalog.",
-    "fields": {
-      "email": "Email",
-      "emailPlaceholder": "you@studio.com",
-      "name": "Your name",
-      "namePlaceholder": "Director or producer name",
-      "title": "Pilot or feature title",
-      "titlePlaceholder": "Working title",
-      "logline": "Logline",
-      "loglinePlaceholder": "One or two sentences that sell the story.",
-      "audienceUrl": "Existing audience",
-      "audiencePlaceholder": "YouTube, Bilibili, festival, or social URL",
-      "exclusivePremiere": "I am open to an exclusive premiere window on SceneFlow in exchange for funded teaser ads."
-    },
-    "submit": "Submit application",
-    "submitting": "Sending…",
-    "successTitle": "Check your inbox.",
-    "successBody": "We sent a confirmation link. Click it to lock in your Seed application. Nothing else.",
-    "errorEmpty": "Fill in every field so we can review your pilot.",
-    "errorInvalidEmail": "That email doesn’t look right. Check it and try again.",
-    "errorInvalidUrl": "Add a public URL for your existing audience.",
-    "errorGeneric": "Something went wrong. Try again in a moment.",
-    "confirmTitle": "Application received.",
-    "confirmBody": "You’re in the Seed review queue. We read every submission. This is not a public catalog listing.",
-    "confirmExpiredTitle": "That link expired.",
-    "confirmExpiredBody": "Submit the filmmaker form again and we’ll send a new confirmation link.",
-    "confirmInvalidTitle": "That link isn’t valid.",
-    "confirmInvalidBody": "Request a new confirmation from the filmmaker form.",
-    "confirmHome": "Back to SceneFlow",
-    "privacy": "We email a confirmation link first. Editors only. No spam."
-  },
-  "publishCut": {
-    "eyebrow": "The cut you publish",
-    "title": "Export anywhere. Premiere on SceneFlow when you earn it.",
-    "subtitle": "Download a master and ship it yourself, or publish finished scenes and chapters to {longForm} and cut trailers for {shorts} — without waiting on the whole cut. Before anything hits the public feed, run drafts or your final master through the Screening Room. Standout projects can apply for the invite-only SceneFlow Network; it is a curated accelerator, not an open storefront.",
-    "comparison": {
-      "id": "publish",
-      "caption": "A finished scene or chapter, and the 90-minute master, from one studio."
-    },
-    "cta": "Launch Studio ($9)"
   }
 }

@@ -1,10 +1,945 @@
 {
+  "pipeline": {
+    "badge": "SceneFlow 是什麼？",
+    "title": "三柱式管線架構",
+    "subtitle": "從最初構想到可發布成品的三個階段——Series Room、Blueprint Room 與 Production Stage。",
+    "ui": {
+      "expandFullscreen": "全螢幕檢視",
+      "closeFullscreen": "關閉",
+      "landscapeHint": "旋轉您的裝置，以獲得更寬廣的橫向視野。",
+      "howItWorksLabel": "在此階段的運作方式",
+      "showHowItWorks": "展示其運作方式",
+      "hideHowItWorks": "隱藏運作方式",
+      "imagePlaceholder": "螢幕截圖預留位置",
+      "videoWalkthrough": "30 秒快速導覽",
+      "comingSoon": "產品截圖即將推出"
+    },
+    "pillars": [
+      {
+        "id": "series",
+        "tabLabel": "SFAI系列_房間術語",
+        "number": "01",
+        "title": "Series Room 產生",
+        "header": "打造宇宙，而非片段",
+        "body": "只需描述一次您的影集或 YouTube 頻道，SceneFlow 就能建構出完整的世界觀——涵蓋劇情、角色陣容及無限的集數規劃——並透過共用的 Reference Library 確保每一集都維持品牌風格。",
+        "steps": [
+          {
+            "id": "series-concept",
+            "number": "1",
+            "title": "從你的概念著手",
+            "description": "只需輸入您的影集或 YouTube 頻道的概念或詳細描述，SceneFlow 就能將其轉化為結構化且可直接投入製作的基礎架構——完全無需進行提示詞工程（prompt engineering）。",
+            "imagePlaceholder": "新系列提案 —— 概念或頻道簡介"
+          },
+          {
+            "id": "series-baseline",
+            "number": "2",
+            "title": "檢視 SceneFlow 基線",
+            "description": "SceneFlow 會提供一份經由 Audience Resonance 分析評分的專業基準。您可以閱讀或聆聽語音導覽摘要，再依據您的想法調整方向。",
+            "imagePlaceholder": "系列基準 — Audience Resonance 評分與解說概覽"
+          },
+          {
+            "id": "series-episodes",
+            "number": "3",
+            "title": "建立無限集數",
+            "description": "您可以視故事需求製作任意數量的集數。每一集都承襲了該系列的獨特基因，確保從首集到季終，演員陣容、風格基調與世界觀始終保持一致。",
+            "imagePlaceholder": "劇集清單 —— 根據系列故事主線生成的無限集數"
+          },
+          {
+            "id": "series-reference-library",
+            "number": "4",
+            "title": "檢閱 Reference Library",
+            "description": "瀏覽透過 Production Stage 建立與維護，並在各集節目中重複使用的共用 Reference Library（包括角色、配音、服裝、場景與道具）。",
+            "imagePlaceholder": "共用 Reference Library —— 角色、配音、場景、道具"
+          },
+          {
+            "id": "series-assistant-writer",
+            "number": "5",
+            "title": "指揮智慧寫作助理",
+            "description": "只需口述或輸入指令，即可重新構思整個系列或任一集內容。智慧寫作助手能即刻重寫出專業文案——無需面對空白頁面，也無需鑽研提示詞技巧。",
+            "imagePlaceholder": "智慧編劇助手 — 提供影集與單集內容的語音或文字指導"
+          },
+          {
+            "id": "series-start-production",
+            "number": "6",
+            "title": "一鍵啟動生產",
+            "description": "當某個單元感覺到位時，只需按一下即可啟動製作，並直接進入引導式的 Production Stage 流程。",
+            "imagePlaceholder": "一鍵開始製作所選集數"
+          }
+        ]
+      },
+      {
+        "id": "blueprint",
+        "tabLabel": "SFAIBLUEPRINT_房間術語",
+        "number": "02",
+        "title": "SFAIBLUEPRINT_房間術語",
+        "header": "鎖定您的創意 DNA",
+        "body": "Blueprint Room 是您的深度電影企劃案（涵蓋劇情大綱、敘事節奏、角色、基調與風格），並已預先通過 Audience Resonance 分析評估；這讓您在正式算圖製作之前，就能確認該故事具備強大的市場共鳴潛力。",
+        "steps": [
+          {
+            "id": "blueprint-baseline",
+            "number": "1",
+            "title": "審查基準 Blueprint",
+            "description": "開啟一份內建「受眾共鳴分析」功能的專業基準藍圖。閱讀或聆聽語音導覽，深入了解其運作原理與成效。",
+            "imagePlaceholder": "基準 Blueprint — 採用 Audience Resonance 分數進行處理"
+          },
+          {
+            "id": "blueprint-assistant-writer",
+            "number": "2",
+            "title": "指揮智慧寫作助理",
+            "description": "只需透過語音或文字輸入指令，即可優化劇情大綱、情節節點、角色設定等內容。智慧寫作助手會即時修改故事構想，無需費心撰寫提示詞（prompt）。",
+            "imagePlaceholder": "智慧寫作助手——編輯劇情大綱、情節節點與角色"
+          },
+          {
+            "id": "blueprint-reasoning",
+            "number": "3",
+            "title": "檢視推論",
+            "description": "請開啟「推論」（Reasoning）區塊，查看針對當前 Blueprint 的創意解析——即每個劇情節點與角色抉擇背後的敘事邏輯。",
+            "imagePlaceholder": "推論面板 — Blueprint 的創意解說"
+          },
+          {
+            "id": "blueprint-start-production",
+            "number": "4",
+            "title": "準備就緒後開始生產",
+            "description": "一旦故事精彩到位，即可展開製作——整個製作流程將完整承襲您核准的創意基因，確保不偏離初衷。",
+            "imagePlaceholder": "開啟 Production Stage — 來自已核准藍圖的就緒檢查點"
+          }
+        ]
+      },
+      {
+        "id": "production",
+        "tabLabel": "Production Stage",
+        "number": "03",
+        "title": "Production Stage",
+        "header": "從劇本到正式發行母帶",
+        "body": "Production Stage 結合 Intelligent Assistant Director、Screening Room 與多語言串流功能，同步執行劇本、音訊、畫面及影片等多引擎生成作業，帶領您從核准的劇本一路邁向發布級 4K 母帶。",
+        "steps": [
+          {
+            "id": "production-script-ara",
+            "number": "1",
+            "title": "審查基準腳本",
+            "description": "從包含 Audience Resonance 分析的專業基準腳本開始。在消耗點數之前，先閱讀或聆聽分析解說，掌握哪些內容能引起共鳴。",
+            "imagePlaceholder": "基準腳本 — Audience Resonance 分析與解說概覽"
+          },
+          {
+            "id": "production-assistant-writer",
+            "number": "2",
+            "title": "逐場景進行優化",
+            "description": "利用智慧寫作助手逐場優化劇本——精簡對白、調整情節節奏，並透過語音或文字一鍵套用優化建議。",
+            "imagePlaceholder": "智慧寫作助手 — 逐場劇本優化"
+          },
+          {
+            "id": "production-reference-library",
+            "number": "3",
+            "title": "建置 Reference Library",
+            "description": "利用腳本生成、自訂或上傳的角色、語音、服裝、場景與道具，來建立或更新參考資料庫。直接編輯參考影像，無需依賴「吃角子老虎機」式的隨機重新生成。",
+            "imagePlaceholder": "Reference Library — 角色、配音、服裝、場景、道具"
+          },
+          {
+            "id": "production-audio",
+            "number": "4",
+            "title": "生成音訊",
+            "description": "利用 Run All Agents 跨場景、Audio Agent 針對單一場景，或逐拍生成對白、旁白、音效與音樂，並提供超過 70 種語言、母語水準的配音。",
+            "imagePlaceholder": "Audio Agent — 所有場景、單一場景，或逐拍（beat-by-beat）"
+          },
+          {
+            "id": "production-frames",
+            "number": "5",
+            "title": "生成並編輯影格",
+            "description": "針對每個場景或逐個節拍（beat），使用 Run All Agents 與 Stills Agent 生成節拍畫面（beat frames），接著利用 Intelligent Assistant Director (IAD) 編輯任一畫面——只需描述變更內容即可。",
+            "imagePlaceholder": "利用 SFAI 智慧助理導演功能進行剪輯，精準掌握節奏幀點"
+          },
+          {
+            "id": "production-animatic",
+            "number": "6",
+            "title": "檢視動態分鏡",
+            "description": "在互動式 Screening Room 中播放完整的動態分鏡（包含畫面、對白、音效與音樂），並分享連結以收集回饋，無需匯出檔案。",
+            "imagePlaceholder": "Screening Room — 互動式動態分鏡審閱與分享"
+          },
+          {
+            "id": "production-video",
+            "number": "7",
+            "title": "生成影片",
+            "description": "利用 Video Agent，按場景或逐個節拍將確認的畫面轉化為動態影像。透過 Intelligent Assistant Director 重新拍攝任何鏡頭——無需再經歷無止盡、如同拉動吃角子老虎機般的隨機生成過程。",
+            "imagePlaceholder": "包含 IAD 重拍的 Video Agent 產生"
+          },
+          {
+            "id": "production-mixer",
+            "number": "8",
+            "title": "在混音器中編輯",
+            "description": "在 Mixer 中精修每一個場景——包括字幕、剪輯、配音、疊加效果與音訊平衡——無需離開工作室，即可完成符合品牌安全標準的最終製作。",
+            "imagePlaceholder": "混音器 — 字幕、修剪、配音與音訊控制"
+          },
+          {
+            "id": "production-render-scenes",
+            "number": "9",
+            "title": "渲染並檢視場景",
+            "description": "請算圖輸出您的場景，接著透過 Screening Room 進行審閱與分享，以便在最終組裝前確認核准。",
+            "imagePlaceholder": "在 Screening Room 中審閱並分享已算圖的場景"
+          },
+          {
+            "id": "production-multilanguage",
+            "number": "10",
+            "title": "生成多語言串流",
+            "description": "利用同一支已定案的影片版本，快速製作配音或對嘴同步的多語言版本——無需重拍任何畫面，即可觸及 70 多個市場。",
+            "imagePlaceholder": "多語言串流——針對各地區進行配音與對嘴同步"
+          },
+          {
+            "id": "production-publish",
+            "number": "11",
+            "title": "進行最終算圖並發布",
+            "description": "將最終成品算圖輸出並發布——系統會自動生成縮圖、標題與說明，隨時準備好發布至您的 YouTube 頻道及其他平台。",
+            "imagePlaceholder": "最終算圖並一鍵發布至 YouTube"
+          }
+        ]
+      }
+    ]
+  },
+  "screeningRoom": {
+    "badge": "互動式 SFAI 放映室 — SFAI 動態分鏡預覽現已推出",
+    "languagePrompt": "了解您目標市場中的業務管線狀況：",
+    "languages": [
+      {
+        "id": "en",
+        "label": "英語",
+        "flag": "🇺🇸"
+      },
+      {
+        "id": "es",
+        "label": "西班牙語",
+        "flag": "🇪🇸"
+      },
+      {
+        "id": "pt",
+        "label": "葡萄牙語",
+        "flag": "🇧🇷"
+      },
+      {
+        "id": "hi",
+        "label": "印地語",
+        "flag": "🇮🇳"
+      },
+      {
+        "id": "zh",
+        "label": "中文",
+        "flag": "🇨🇳"
+      }
+    ],
+    "steps": [
+      {
+        "id": "concept",
+        "label": "概念與腳本優化"
+      },
+      {
+        "id": "animatic",
+        "label": "30 分鐘 Animatic 回顧"
+      },
+      {
+        "id": "video",
+        "label": "全動態 Video Agent 渲染"
+      }
+    ],
+    "previewLabel": "預覽"
+  },
+  "keyFeatures": {
+    "badge": "主要特色",
+    "title": "從構想到大師之作。",
+    "subtitle": "Series Room → Blueprint Room → Production Stage → Screening Room.",
+    "learnMoreLabel": "了解更多",
+    "showLessLabel": "顯示較少",
+    "videoComingSoon": "功能展示即將推出",
+    "videoSoon": "很快",
+    "overviewComingSoon": "概覽即將推出",
+    "pauseOverview": "暫停概覽",
+    "playOverview": "玩法概覽",
+    "muteOverview": "靜音功能概覽",
+    "unmuteOverview": "取消靜音功能概覽",
+    "enterFullscreenOverview": "全螢幕",
+    "exitFullscreenOverview": "退出全螢幕",
+    "watchLongformLabel": "觀看完整版影片",
+    "screenshotLabel": "螢幕截圖",
+    "landingUiLanguagesLabel": "以 44 種語言進行製作與配音。本網站提供以下 39 種語言版本：",
+    "rooms": [
+      {
+        "id": "series-desk",
+        "label": "SFAI系列_房間術語",
+        "promise": "Series Room 是影集一季的起點。相同的角色與故事會延續至您新增的每一集。在 Blueprint Room 展開單集製作之前，請先在此進行閱讀、聆聽與執導。若為無分季架構的電影，則可跳過此房間。",
+        "features": [
+          {
+            "icon": "newSeries",
+            "title": "全新系列",
+            "description": "從這裡開始。請用您自己的話描述您構想中的系列作品。「釐清與確認」功能會與您反覆確認構想，直到完成劇情大綱；「生成系列」則會撰寫基礎內容。新系列預設包含五集，您也可以視需求增加集數。",
+            "screenshot": "建立新系列 — 意圖、釐清與確認、產生系列",
+            "learnMore": {
+              "items": [
+                {
+                  "title": "您的意圖",
+                  "description": "說明該系列作品的內容，包括形式、目標受眾及美術風格。"
+                },
+                {
+                  "title": "迭代",
+                  "description": "「釐清與確認」會在生成任何內容之前，與您一同精修概要。"
+                },
+                {
+                  "title": "基準線",
+                  "description": "Generate Series 會撰寫您將審閱的季度內容，該季度最初包含五集。"
+                }
+              ]
+            }
+          },
+          {
+            "icon": "seriesReview",
+            "title": "審閱初剪版本",
+            "description": "您可以閱讀概覽或點選「聆聽」；接著閱讀各集內容或收聽音訊。「一致性」維繫著故事脈絡，而「連貫性」則串聯起各集共有的角色陣容、場景、道具與設定。",
+            "screenshot": "概覽、各集內容、一致性與連貫性 —— 演員陣容、拍攝地點、道具、場景設定",
+            "learnMore": {
+              "items": [
+                {
+                  "title": "閱讀或聆聽",
+                  "description": "您可以閱讀「概覽」與「單集」內容，或使用「聆聽」功能收聽。"
+                },
+                {
+                  "title": "一致性",
+                  "description": "美學風格、關鍵事件與故事脈絡將貫穿整個賽季。"
+                },
+                {
+                  "title": "連續性",
+                  "description": "每一集都使用相同的演員陣容、拍攝地點、道具與場景設定。"
+                }
+              ]
+            }
+          },
+          {
+            "icon": "seriesResonance",
+            "title": "Audience Resonance",
+            "description": "當您想要了解當季狀況時，請執行 Audience Resonance。檢視評分與分析結果。您可以選擇是否應用具備實務價值的洞察（Actionable Insight）；在您採取行動之前，該系列內容不會發生任何變更。",
+            "screenshot": "Audience Resonance 分析，隨後為可付諸行動的洞察（未套用）",
+            "learnMore": {
+              "items": [
+                {
+                  "title": "這篇讀物",
+                  "description": "評分與分析顯示了哪些內容能引起您指定的受眾共鳴。"
+                },
+                {
+                  "title": "選用",
+                  "description": "唯有在您付諸實行時，具備行動價值的洞察才會改變該系列。"
+                }
+              ]
+            }
+          },
+          {
+            "icon": "seriesDirector",
+            "title": "系列導演",
+            "description": "用你自己的話語——無論是口述或書寫——來主導整個系列。由你選擇變更之處與焦點，並予以採納。建議或許能提供助力，而劇情中與之無關的部分則維持原樣。",
+            "screenshot": "系列導演 —— 方向、焦點、接納",
+            "learnMore": {
+              "items": [
+                {
+                  "title": "你的話",
+                  "description": "請口述或輸入要做的變更，並可選擇將範圍限定於劇情、角色、單集內容、基調或背景設定。"
+                },
+                {
+                  "title": "你接受它",
+                  "description": "除非你接受它，否則一切都不會改變，而劇情中不相關的部分也會維持原樣。"
+                },
+                {
+                  "title": "一項推薦",
+                  "description": "推薦建議很有幫助，而保留什麼仍由你決定。"
+                }
+              ]
+            }
+          },
+          {
+            "icon": "directEpisode",
+            "title": "執導這一集",
+            "description": "挑出一集，由你獨自執導。提高劇情的張力或深化故事內涵，並將這些調整落實到該集中；至於其他集數，則維持原樣。",
+            "screenshot": "集數 — 執導本集，其餘集數不變",
+            "learnMore": {
+              "items": [
+                {
+                  "title": "一集",
+                  "description": "「直接套用至此集」僅將變更套用至該集。"
+                },
+                {
+                  "title": "季節延續",
+                  "description": "其他集數維持原樣。"
+                }
+              ]
+            }
+          },
+          {
+            "icon": "startEpisode",
+            "title": "開始播放這一集",
+            "description": "當某一集準備就緒時，便啟動該集的專案。大綱、劇情摘要與劇情節點（beats）將一併送入 Blueprint Room；至於演員陣容與故事世界觀，則已預先確立。",
+            "screenshot": "啟動專案 —— 該集的大綱與演員陣容已就緒",
+            "learnMore": {
+              "items": [
+                {
+                  "title": "啟動專案",
+                  "description": "「開始專案」（Start Project）會在 Blueprint Room 中開啟該章節。"
+                },
+                {
+                  "title": "已知",
+                  "description": "大綱、劇情簡介、劇情節點與演員陣容也都包含在內。"
+                }
+              ]
+            }
+          }
+        ]
+      },
+      {
+        "id": "blueprint-board",
+        "label": "SFAIBLUEPRINT_房間術語",
+        "promise": "Blueprint Room 是您在撰寫 90 分鐘劇本前完善故事線的空間。您可以從系列劇集或全新專案著手，在此規劃劇情節奏與演員陣容，讓 Production Stage 無需重新建構這些內容。",
+        "features": [
+          {
+            "icon": "startBlueprint",
+            "title": "啟動 Blueprint",
+            "description": "您可以從影集單集開始，也可以建立新專案。影集單集會包含大綱、劇情摘要與劇情節點。建立新專案時，您需說明創作意圖，使用「AI 驗證與增強」功能，並選擇「生成 Blueprint」。",
+            "screenshot": "系列集數已知，或開始您的專案 — 設定意圖、利用 AI 驗證與增強、生成 Blueprint",
+            "learnMore": {
+              "items": [
+                {
+                  "title": "影集單集",
+                  "description": "影集單集的製作始於已備妥的大綱、劇情摘要與情節節點。"
+                },
+                {
+                  "title": "新專案",
+                  "description": "「啟動專案」會接收您的意圖，接著利用 AI 進行驗證與強化，最後生成 Blueprint。"
+                }
+              ]
+            }
+          },
+          {
+            "icon": "treatment",
+            "title": "掌控節奏",
+            "description": "開啟「節拍」（Beats）頁籤並聆聽節拍表。請在此處優化節拍，因為它們主導了劇本的建構過程。節拍僅存在於此處；Production Stage 會將每個節拍轉換為一個章節。",
+            "screenshot": "包含「聆聽」功能的 Beats 標籤頁",
+            "learnMore": {
+              "items": [
+                {
+                  "title": "一份節拍表",
+                  "description": "節奏只存在於此。"
+                },
+                {
+                  "title": "指令碼建置",
+                  "description": "節拍（beats）驅動了腳本的建構，因此它們會在 Production Stage 之前進行最佳化。"
+                },
+                {
+                  "title": "章節",
+                  "description": "Production Stage 將每一個節拍轉化為一個篇章。"
+                }
+              ]
+            }
+          },
+          {
+            "icon": "castLocations",
+            "title": "指導演員與場景",
+            "description": "開啟「角色」（Characters）並安排演出陣容；接著在「故事」（Story）頁籤中開啟「場景設定」（Setting）並指定地點。由於演出陣容會影響腳本的建構，因此必須在 Production Stage 觸發腳本重構之前，先設定好這兩項內容。",
+            "screenshot": "「角色」分頁，接著是「故事」中的「設定」",
+            "learnMore": {
+              "items": [
+                {
+                  "title": "演員陣容",
+                  "description": "「角色」頁籤代表的是演出陣容，而這組陣容會影響劇本的建構。"
+                },
+                {
+                  "title": "地點",
+                  "description": "「地點」即「故事」頁籤中的「場景」。"
+                },
+                {
+                  "title": "在劇本之前",
+                  "description": "將兩者都導向此處，可避免對 Production Stage 進行大規模的指令碼重構。"
+                }
+              ]
+            }
+          },
+          {
+            "icon": "blueprintDirector",
+            "title": "Blueprint 總監",
+            "description": "Director 會接收您以口述或文字表達的修改內容。您可以針對劇情節奏（Beats）、角色或故事進行調整，並預覽修改結果；除非您確認套用，否則不會實際變更內容。",
+            "screenshot": "Blueprint 指導者 —— 方向、焦點、預覽、套用修訂",
+            "learnMore": {
+              "items": [
+                {
+                  "title": "你的話",
+                  "description": "口述或輸入變更內容，並聚焦於情節節拍、角色或故事。"
+                },
+                {
+                  "title": "預覽",
+                  "description": "「產生平衡修訂」功能會在您套用變更之前顯示該變更。"
+                },
+                {
+                  "title": "你把它塗上去",
+                  "description": "在您套用修訂之前，不會有任何變更。"
+                }
+              ]
+            }
+          },
+          {
+            "icon": "blueprintResonance",
+            "title": "Audience Resonance",
+            "description": "儲存受眾，然後進行分析。您會看到評分與建議。除非您在 Blueprint Director 中套用建議，否則藍圖中的任何內容都不會變更。",
+            "screenshot": "Audience Resonance — 已儲存的受眾、評分、未套用的建議",
+            "learnMore": {
+              "items": [
+                {
+                  "title": "這篇讀物",
+                  "description": "儲存受眾，接著進行分析，並查看評分與建議。"
+                },
+                {
+                  "title": "選用",
+                  "description": "唯有在 Blueprint Director 中套用建議，該建議才會變更藍圖。"
+                }
+              ]
+            }
+          },
+          {
+            "icon": "goToProduction",
+            "title": "前往 Production Stage",
+            "description": "當故事大綱、劇情節奏（beats）與演員陣容確定後，請前往 Production Stage。這部 90 分鐘的劇本將以此看板為基礎進行建構；您無需在 Production Stage 重新建立故事大綱。",
+            "screenshot": "前往 Production Stage —— 劇情大綱、敘事節奏與演員陣容皆已定案。",
+            "learnMore": {
+              "items": [
+                {
+                  "title": "交接",
+                  "description": "前往 Production Stage，即可從此藍圖開啟指令碼。"
+                },
+                {
+                  "title": "已設定",
+                  "description": "故事情節、敘事節奏與演員陣容都已完成執導安排。"
+                }
+              ]
+            }
+          }
+        ]
+      },
+      {
+        "id": "production-stage",
+        "label": "Production Stage",
+        "promise": "這是將定案藍圖轉化為實際影像的階段。請依據計畫與預算控管機制來掌控支出。先共同優化每個場景，再依序進行製作——涵蓋導演構思、音效、配樂、連貫性與靜態畫面——並在投入正式影像製作前先審閱動態分鏡（animatic）。接著產出片段、進行混音、製作多語言版本，最後交付場景、章節、母帶或宣傳短片。",
+        "spend": {
+          "label": "控制支出",
+          "features": [
+            {
+              "icon": "byok",
+              "title": "自備金鑰",
+              "description": "連結您自己的影像與影片供應商金鑰。生成作業將在您的帳戶下、依您的費率執行，同時保留引導式工作室的功能——包括代理程式 (Agents)、連貫性 (Continuity)、Mixer 以及審閱室 (Screening Room)。",
+              "screenshot": "BYOK 鍵",
+              "learnMore": {
+                "items": [
+                  {
+                    "title": "您的鑰匙",
+                    "description": "連結圖片與影片供應商的金鑰，讓生成作業使用您的帳戶與費率執行。"
+                  },
+                  {
+                    "title": "同一間工作室",
+                    "description": "代理程式、連續性、混音器（Mixer）以及 Screening Room 均維持原狀。"
+                  }
+                ]
+              }
+            },
+            {
+              "icon": "budget",
+              "title": "生產計畫員",
+              "description": "在投入預算之前，先設定好每個鏡頭的靜態影像與短片片段的修改次數。這些目標會層層匯總至場景、章節及整體專案層級；結合開始日期，即可排定包含完工日的時程表。",
+              "screenshot": "生產計畫員",
+              "learnMore": {
+                "items": [
+                  {
+                    "title": "已射擊的目標",
+                    "description": "針對每個鏡頭設定靜態影像與剪輯片段的疊代版本，並將其彙整至場景、章節及主版本層級。"
+                  },
+                  {
+                    "title": "標註日期的時程表",
+                    "description": "起始日期與工作日構成了包含累計學分的時程表。"
+                  },
+                  {
+                    "title": "根據實際值重設",
+                    "description": "已完成的場景可以根據實際成本重設目標。"
+                  },
+                  {
+                    "title": "手機狀態",
+                    "description": "您可以在手機上查看閱讀進度、花費時間與預計完成日期，同時在桌機或平板電腦上進行編輯。"
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        "groups": [
+          {
+            "id": "script",
+            "label": "優化腳本",
+            "features": [
+              {
+                "icon": "scriptResonance",
+                "title": "Audience Resonance",
+                "description": "Audience Resonance 會一次讀取整份劇本，讓所有場景同步呈現。您可以同時看到樂譜與註記，且除非您親自選擇，否則內容不會被改寫。",
+                "screenshot": "Audience Resonance — 涵蓋各場景的評分與筆記（未套用）",
+                "learnMore": {
+                  "items": [
+                    {
+                      "title": "每一場對手戲",
+                      "description": "它將劇本視為單一整體進行譜曲，並針對各場景的配合呈現附上註記。"
+                    },
+                    {
+                      "title": "由你選擇",
+                      "description": "除非你決定採納哪些筆記並據此採取行動，否則內容不會被重寫。"
+                    }
+                  ]
+                }
+              },
+              {
+                "icon": "castVisual",
+                "title": "演員陣容、服裝與配音",
+                "description": "在製作場景之前，先確立好角色陣容。將角色、服裝與聲音設定固定下來，確保後續產出的每一張靜態影像與影片片段，呈現的都是同一個人物。",
+                "screenshot": "角色、服裝與聲音",
+                "learnMore": {
+                  "items": [
+                    {
+                      "title": "角色與服裝",
+                      "description": "Cast Agent 繪製角色及其服裝造型。"
+                    },
+                    {
+                      "title": "語音",
+                      "description": "在場景建構之前，角色的聲音就已設定完成。"
+                    },
+                    {
+                      "title": "同一個人",
+                      "description": "每一張靜態影像與每一個片段都需要那把鎖。"
+                    }
+                  ]
+                }
+              },
+              {
+                "icon": "directShot",
+                "title": "直接射門",
+                "description": "Direct Shot 讓您能以自己的話語（透過輸入或語音聽寫）來設定拍攝內容。您可以預覽拍攝方向並進行儲存，此時靜態影像與短片片段的提示詞也會同步更新。",
+                "screenshot": "Direct Shot — 輸入或語音聽寫、預覽、儲存",
+                "learnMore": {
+                  "items": [
+                    {
+                      "title": "指定目標擊球",
+                      "description": "該對話的標題為「直接鏡頭 · 場次 N · 鏡頭 N」。"
+                    },
+                    {
+                      "title": "輸入或聽寫",
+                      "description": "撰寫或口述備忘錄，然後在儲存前預覽指示。"
+                    },
+                    {
+                      "title": "兩項提示",
+                      "description": "儲存動作會同時更新靜態提示詞與片段提示詞。"
+                    },
+                    {
+                      "title": "片段之後再次出現",
+                      "description": "如果生成的鏡頭有誤，請開啟 Direct Shot 並重新進行導向。"
+                    }
+                  ]
+                }
+              },
+              {
+                "icon": "audioAgent",
+                "title": "Audio Agent",
+                "description": "Audio Agent 負責建構場景中的對話、音效與音樂。在消耗片段（clip）之前，即可聽到該場景的聲音。",
+                "screenshot": "Audio Agent — 對話、音效與音樂",
+                "learnMore": {
+                  "items": [
+                    {
+                      "title": "對白與音效",
+                      "description": "對白僅限於人聲對話，音效則用於有明確提示點的鏡頭。"
+                    },
+                    {
+                      "title": "音樂",
+                      "description": "音樂與對話共同承載了這場戲。"
+                    },
+                    {
+                      "title": "動作之前",
+                      "description": "在開啟 Clips 之前，先聆聽現場聲音。"
+                    }
+                  ]
+                }
+              },
+              {
+                "icon": "continuity",
+                "title": "連續性",
+                "description": "僅在場景準備就緒時，才產生該場景所需的參考資料。先前的場景會維持鎖定狀態，因此您無需重新繪製已獲核准的參考資料。",
+                "screenshot": "連貫性——僅限本場景的參照資訊",
+                "learnMore": {
+                  "items": [
+                    {
+                      "title": "僅限此場景",
+                      "description": "畫出這場戲所需的演員、場景與道具，其他的則不必畫。"
+                    },
+                    {
+                      "title": "及時",
+                      "description": "請在場景準備就緒時進行生成，而非針對整部影片進行批次處理。"
+                    },
+                    {
+                      "title": "已鎖定",
+                      "description": "對某個場景所做的變更，不會重新繪製先前場景已使用的參照。"
+                    }
+                  ]
+                }
+              },
+              {
+                "icon": "stillsAgent",
+                "title": "SFAISTILLS_代理商條款",
+                "description": "Stills Agent 根據已核准的製作方向建立鏡頭畫面。製作方向與音訊維持原狀，而實際的影片片段則會在後續階段加入。",
+                "screenshot": "Stills Agent — 鏡頭畫面",
+                "learnMore": {
+                  "items": [
+                    {
+                      "title": "鏡頭畫面",
+                      "description": "它會繪製場景中每個鏡頭的靜態畫面。"
+                    },
+                    {
+                      "title": "方向維持不變",
+                      "description": "重新生成影格會更新影像，而方向與音訊則保持不變。"
+                    },
+                    {
+                      "title": "剪輯前",
+                      "description": "在開啟 Clips 之前，請先核准這些靜態影像。"
+                    }
+                  ]
+                }
+              },
+              {
+                "icon": "animatic",
+                "title": "SFAI 動畫術語",
+                "description": "在 Screening Room 中觀看該場景的動態分鏡（animatic）——即結合對白、配樂與音效的靜態畫面呈現。您可以分享作品以徵求回饋，並在進入正式影片製作前以此方式完成每個場景，以免因劇本變更而需重新處理片段。對許多創作者而言，動態分鏡本身即為成品，並可直接輸出為 MP4 檔案。",
+                "screenshot": "Screening Room 动态分镜（含分享功能）",
+                "learnMore": {
+                  "items": [
+                    {
+                      "title": "影像與聲音",
+                      "description": "動態分鏡（animatic）將已核准的靜態畫面，搭配對白、配樂與音效進行播放。"
+                    },
+                    {
+                      "title": "分享",
+                      "description": "請發送一個連結，讓審閱者觀看動態分鏡（animatic）並直接在畫面上留下註記。"
+                    },
+                    {
+                      "title": "影片前",
+                      "description": "在生成影片片段之前，先將場景製作成動態分鏡（animatics），這樣若劇本有所更動，就不需要重新製作影片。"
+                    },
+                    {
+                      "title": "MP4",
+                      "description": "對許多創作者而言，動態分鏡（animatic）就是最終成品，且可輸出為 MP4 格式。"
+                    }
+                  ]
+                }
+              }
+            ]
+          },
+          {
+            "id": "video",
+            "label": "影片",
+            "features": [
+              {
+                "icon": "videoAgent",
+                "title": "SFAIVIDEO_代理條款",
+                "description": "Video Agent 會在「Clips」（片段）頁籤中生成鏡頭片段。請在 Screening Room 中觀看拼接完成的場景；若發現某個鏡頭有誤，請使用「Direct Shot」（鏡頭執導）功能重新執導該鏡頭。",
+                "screenshot": "Video Agent，接著是拼接後的場景",
+                "learnMore": {
+                  "items": [
+                    {
+                      "title": "拍攝片段",
+                      "description": "Video Agent 根據核准的靜態影像，為每個鏡頭生成影片片段。"
+                    },
+                    {
+                      "title": "拼接場景",
+                      "description": "檢視於 Screening Room 中拼接的場景。"
+                    },
+                    {
+                      "title": "再次執導",
+                      "description": "當片段有誤時，請開啟 Direct Shot 並輸入或口述內容。"
+                    }
+                  ]
+                }
+              },
+              {
+                "icon": "mixer",
+                "title": "攪拌機",
+                "description": "混音師在 Production Stage 中完成場景製作。工作內容包括納入或捨棄鏡頭、進行剪輯、平衡音效，以及將場景連同音訊進行算圖輸出。",
+                "screenshot": "混合器 — 包含、修剪、平衡、疊加、浮水印",
+                "learnMore": {
+                  "items": [
+                    {
+                      "title": "烈酒純飲（Shot）",
+                      "description": "選擇保留或捨棄個別鏡頭，並修剪保留下來的鏡頭。"
+                    },
+                    {
+                      "title": "對話",
+                      "description": "設定每一句對白的音量與語速。"
+                    },
+                    {
+                      "title": "曲目",
+                      "description": "平衡旁白、對話、音效與音樂，包括音樂的淡入淡出及循環播放。"
+                    },
+                    {
+                      "title": "疊加層",
+                      "description": "在場景上放置文字疊加層。"
+                    },
+                    {
+                      "title": "浮水印",
+                      "description": "新增文字或圖片浮水印。"
+                    },
+                    {
+                      "title": "渲染",
+                      "description": "將場景連同音訊進行算圖，而 Screening Room 播放的正是該算圖結果。"
+                    }
+                  ]
+                }
+              },
+              {
+                "icon": "languageStreams",
+                "title": "語言版本",
+                "description": "這只是該場景的語言版本，而非全新製作。Gemini TTS 能以 44 種語言進行配音；針對每個鏡頭，您可以進行台詞配音或重新生成片段（包含畫面中的標示文字）。",
+                "screenshot": "語言版本 — 配音、對嘴或重新製作（含標示牌）",
+                "learnMore": {
+                  "items": [
+                    {
+                      "title": "四十四種語言",
+                      "description": "Gemini TTS 以 44 種語言進行配音。"
+                    },
+                    {
+                      "title": "每份（濃縮咖啡）",
+                      "description": "針對每個鏡頭，您可以選擇「配音」（Double）來疊加配音，選擇「對嘴」（Lip-sync）來進行對嘴演出，或是選擇「重新生成」（Regenerate）來根據翻譯後的台詞建立新片段。"
+                    },
+                    {
+                      "title": "標示",
+                      "description": "當圖片中的文字需要變更時，請重新製作該標示的影像。"
+                    },
+                    {
+                      "title": "時機",
+                      "description": "該語言版本的影片播放速度會經過調整，因為譯文長度往往比原版長 10% 到 30%。"
+                    }
+                  ]
+                }
+              }
+            ]
+          },
+          {
+            "id": "publish",
+            "label": "發布",
+            "features": [
+              {
+                "icon": "shipPackage",
+                "title": "包裝與出貨",
+                "description": "當片段、章節、成片或宣傳短片製作完成後，即可進行封裝。您可以將其發布至 YouTube、Facebook 或 TikTok，或是下載 MP4 檔案，同時繼續製作其餘內容。",
+                "screenshot": "封裝與交付 — 場景、章節、母帶、宣傳片；YouTube、Facebook、TikTok、MP4",
+                "learnMore": {
+                  "items": [
+                    {
+                      "title": "碎片",
+                      "description": "交付場次、章節、母帶或宣傳短片。"
+                    },
+                    {
+                      "title": "語言組別",
+                      "description": "各語言版本均可隨套件一同出貨。"
+                    },
+                    {
+                      "title": "目的地",
+                      "description": "發布至 YouTube、Facebook 或 TikTok，或下載 MP4 檔案。"
+                    },
+                    {
+                      "title": "持續打造",
+                      "description": "先交付已完成的部分，並繼續開發其餘部分。"
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "screening-room",
+        "label": "SFAI 放映室學期",
+        "promise": "「Screening Room」是用於觀看、審閱及發布最終剪輯版本的空間。單一播放器整合了預覽視覺化（Pre-Vis）、各場次、章節、母片、宣傳片及各語言版本音軌，確保配音版本與混音師輸出的剪輯完全一致。您只需分享單一連結，即可進行播放並針對畫面標註意見。當特定片段（如 3–5 分鐘的場次、8–12 分鐘的章節、母片或宣傳片）製作完成時，即可先行發布，同時繼續製作其餘內容。",
+        "features": [
+          {
+            "icon": "screeningPlayer",
+            "title": "單人玩家",
+            "description": "您可以在預覽視效（Pre-Vis）、場景、章節、母片與宣傳片之間切換。選擇語言串流即可聆聽該版本——無論是配音、對嘴同步，還是逐鏡重新生成的版本。播放器呈現的剪輯內容，正是由 Mixer 算圖輸出的版本。",
+            "screenshot": "Screening Room 播放器",
+            "learnMore": {
+              "items": [
+                {
+                  "title": "單一面",
+                  "description": "在預覽視覺化（Pre-Vis）、場景、章節、母帶與宣傳片之間切換。"
+                },
+                {
+                  "title": "語言流",
+                  "description": "選擇一個版本，聆聽其配音、對嘴或逐鏡頭重新生成的版本。"
+                },
+                {
+                  "title": "同樣的剪裁",
+                  "description": "播放器播放的是由 Mixer 算繪出的剪輯片段。"
+                }
+              ]
+            }
+          },
+          {
+            "icon": "screeningCollab",
+            "title": "針對剪輯進行協作",
+            "description": "只需分享一個連結。審閱者可直接觀看實際播放內容，並在畫面上留下註記。您無需再為了收集意見回饋而將粗剪檔案匯出並透過電子郵件傳送；系統會發送通知，讓您隨時隨地都能透過手機查看留言。",
+            "screenshot": "共用評論",
+            "learnMore": {
+              "items": [
+                {
+                  "title": "一個連結",
+                  "description": "審閱者進行實際回放觀看，並在畫面上留下註記。"
+                },
+                {
+                  "title": "無需電子郵件確認的初剪版本",
+                  "description": "您並非將未經精修的檔案匯出並透過電子郵件傳送，以收集意見回饋。"
+                },
+                {
+                  "title": "通話筆記",
+                  "description": "系統會發送文字通知，讓您在手機上閱讀，而 Studio 應用程式則維持在桌機或平板電腦上運作。"
+                }
+              ]
+            }
+          },
+          {
+            "icon": "packageShip",
+            "title": "準備好時再發布",
+            "description": "您可以將 3–5 分鐘的片段、8–12 分鐘的章節、完整成片或宣傳短片發布至 YouTube、Facebook 或 TikTok（支援 16:9 或 9:16 比例），也可以直接下載檔案。標題、說明與隱私設定等資訊會隨檔案一併保留。您可以先發布已完成的部分，同時繼續製作其餘內容。",
+            "screenshot": "發布套件",
+            "learnMore": {
+              "items": [
+                {
+                  "title": "寄送一件",
+                  "description": "發布一段 3 至 5 分鐘的場景、一章 8 至 12 分鐘的內容、母帶或宣傳短片。"
+                },
+                {
+                  "title": "目的地",
+                  "description": "以 16:9 或 9:16 比例發布至 YouTube、Facebook 或 TikTok，或下載檔案。"
+                },
+                {
+                  "title": "包裹",
+                  "description": "標題、說明與隱私設定將隨同套件一併傳輸。"
+                },
+                {
+                  "title": "持續打造",
+                  "description": "先交付已完成的部分，並繼續開發其餘部分。"
+                }
+              ]
+            }
+          }
+        ]
+      }
+    ]
+  },
   "metadata": {
     "title": "SceneFlow Studio - AI 驅動的影片創作",
     "description": "利用 AI 驅動的自動化工作流程，將您的創意轉化為專業影片。"
   },
   "nav": {
     "plansPricing": "方案和定價",
+    "productionExamples": "範例",
+    "keyFeatures": "特色Features",
     "trustSafety": "信任與安全",
     "signIn": "登入, 登入",
     "startProject": "開新的專案",
@@ -14,89 +949,118 @@
     "goToDashboard": "前往 [控制台]",
     "userFallback": "使用者",
     "searchLanguages": "搜尋語言",
-    "noLanguagesFound": "未找到語言",
-    "productionExamples": "範例",
-    "keyFeatures": "特色Features"
+    "noLanguagesFound": "未找到語言"
   },
   "floatingNav": {
-    "preVisEngine": "Pre-Vis Engine",
-    "trustSafety": "Trust & Safety",
-    "pricing": "Pricing",
-    "productionExamples": "Examples",
-    "twoModes": "One Pipeline",
-    "keyFeatures": "Key Features",
-    "audienceResonance": "Audience Resonance"
+    "productionExamples": "範例",
+    "twoModes": "單一管線",
+    "directControl": "直接",
+    "publishCut": "發布",
+    "keyFeatures": "主要特色",
+    "audienceResonance": "Audience Resonance",
+    "preVisEngine": "預覽引擎",
+    "trustSafety": "信任與安全",
+    "pricing": "定價"
   },
   "hero": {
-    "headline": "From first spark to finished master.",
-    "subheadline": "SceneFlow is one guided pipeline. You direct the story, the cast, and the tone. It builds the Blueprint, holds continuity, plays the full animatic, and assembles the master — without prompt trials or a timeline of loose clips.",
+    "eyebrow": "電影與影集的自動化製作",
+    "headline": "從最初的靈感火花，到最終的傑作。",
+    "subheadline": "這是一套引導式的製作流程。您負責主導故事、角色陣容與整體基調。系統會建立藍圖、維持連貫性、播放完整動態分鏡（animatic），並組裝最終成品——過程中無需反覆測試提示詞，也不必處理零散片段構成的時間軸。",
     "ctaPrimaryLaunch": "Launch Studio ($9)",
-    "ctaSupportingLine": "The all-in-one studio to craft, export, and distribute your stories. Download a master and ship anywhere — or publish long-form cuts and chapters to {longForm}, and promote trailers on {shorts}.",
-    "ctaSecondary": "Explore the pipeline",
-    "ctaToolStack": "See how it replaces your tool stack",
+    "ctaSupportingLine": "這是一套集創作、匯出與發行故事功能於一身的整合式工作室解決方案。您可以下載母檔並發送至任何平台，也可以將長篇剪輯版本與章節發布至 {longForm}，並在 {shorts} 上推廣預告片。",
+    "ctaNetworkInvite": "表現傑出的專案可申請加入採邀請制的 SceneFlow 網絡。",
+    "ctaNetworkInviteHref": "#for-filmmakers",
+    "ctaSecondary": "探索管線",
+    "ctaToolStack": "看看它如何取代您現有的工具組合",
     "chips": [
       {
-        "label": "From Concept to Feature",
-        "detail": "Expand ideas into 90-minute scripts in the Blueprint Room. Define characters, art, and beats, then let Audience Resonance analysis fine-tune your story before you shoot."
+        "label": "從概念到功能",
+        "detail": "在 Blueprint Room 中將構想發展為 90 分鐘的劇本。確立角色、美術風格與劇情節奏，並在開拍前利用 Audience Resonance 的分析結果來精修故事。"
       },
       {
-        "label": "Direct With Intent, Not Prompts",
-        "detail": "Speak the language of film with intelligent assistants that understand your direction. The Reference Library locks your custom cast, wardrobe, and locations for absolute continuity."
+        "label": "依據意圖進行引導，而非單純依賴提示詞",
+        "detail": "透過能理解您創作意圖的智慧型助理，以電影語言進行溝通。Reference Library 功能可鎖定您自訂的演員陣容、服裝與拍攝場景，確保絕對的連貫性。"
       },
       {
-        "label": "Agent-Driven Production",
-        "detail": "Accelerate generation 5X with intelligent agents that build 30-shot scenes in the background. Iterate freely in draft mode, then publish your final vision in stunning Hi-Res."
+        "label": "代理驅動生產",
+        "detail": "利用智慧代理在背景建構 30 鏡頭場景，將生成速度提升 5 倍。您可在草稿模式下自由反覆調整，最後以驚豔的高解析度呈現您的最終構想。"
       },
       {
-        "label": "Screen, Collaborate, Ship",
-        "detail": "Share progress at every milestone—from audio animatics to the final master—in the Screening Room. Distribute as shorts or features in multiple languages for a global reach."
+        "label": "篩選、協作、交付",
+        "detail": "在 Screening Room 中，分享從音訊動態分鏡（audio animatics）到最終成片（final master）各個階段的進度；並以多種語言發行短片或長片，觸及全球觀眾。"
       }
     ],
     "pipelineSteps": [
-      "Blueprint",
-      "Production",
-      "Screening Room"
+      "SFAI 藍圖條款",
+      "生產",
+      "SFAI 放映室學期"
     ],
-    "languagePrompt": "Hear the hero in your language — same pipeline, new markets",
-    "multilangHint": "Hero dubs in 7 languages — full pipeline supports 70+ in Production Stage.",
-    "playWithNarration": "Play with narration",
-    "tapToHear": "Tap to hear",
-    "fullscreen": "Fullscreen",
+    "languagePrompt": "選擇英語、西班牙語、中文或阿拉伯語——同一流程，開拓新市場",
+    "multilangHint": "主打內容提供 4 種語言配音——完整管線在 Production Stage 階段支援超過 70 種語言。",
+    "playWithNarration": "播放並附帶旁白",
+    "tapToHear": "點擊聆聽",
+    "fullscreen": "全螢幕",
+    "pauseBackgroundVideo": "暫停背景影片",
+    "playBackgroundVideo": "播放背景影片",
     "heroVideoLanguages": {
       "en": {
-        "label": "English",
+        "label": "英語",
         "nativeLabel": "English"
       },
       "es": {
-        "label": "Spanish",
+        "label": "西班牙語",
         "nativeLabel": "Español"
       },
-      "pt": {
-        "label": "Portuguese",
-        "nativeLabel": "Português"
-      },
-      "hi": {
-        "label": "Hindi",
-        "nativeLabel": "हिन्दी"
-      },
       "zh": {
-        "label": "Chinese",
+        "label": "中文",
         "nativeLabel": "中文"
       },
       "ar": {
-        "label": "Arabic",
+        "label": "阿拉伯語",
         "nativeLabel": "العربية"
-      },
-      "th": {
-        "label": "Thai",
-        "nativeLabel": "ไทย"
       }
     },
-    "soon": "Soon",
-    "videoLanguageCount": "{count, plural, =1 {# language} other {# languages}}",
-    "eyebrow": "Automated filmmaking for films and series",
-    "ctaNetworkInvite": "Standout projects can apply for the invite-only SceneFlow Network.",
-    "ctaNetworkInviteHref": "#for-filmmakers"
+    "soon": "很快",
+    "videoLanguageCount": "{count, plural, =1 {# language} other {# languages}}"
+  },
+  "twoModes": {
+    "eyebrow": "我們消除的阻力",
+    "title": "單一管線，而非一堆工具。",
+    "subtitle": "SceneFlow replaces single-clip generators and a pile of separate docs, editors, and re-renders. Build the series or the 90-minute master, then publish a scene or a chapter when you are ready to earn.",
+    "comingSoon": "即將推出",
+    "comparison": {
+      "id": "comparison",
+      "caption": "Fragmented tools beside one SceneFlow pipeline."
+    },
+    "cta": "Launch Studio ($9)"
+  },
+  "directControl": {
+    "eyebrow": "你所保有的掌控權",
+    "title": "主導故事走向，讓代理程式負責下達指令。",
+    "subtitle": "以淺顯易懂的語言指導鏡頭。鏡頭指令需包含靜態畫面與動態片段的提示。音樂節點與旁白須配合節拍。檢視動態分鏡（animatic），若有不妥即進行調整，確認無誤後才投入資源製作動態畫面。",
+    "comparison": {
+      "id": "direction",
+      "caption": "導演備註、片段提示，以及音樂與旁白在同一拍點上。"
+    },
+    "cta": "Launch Studio ($9)"
+  },
+  "publishCut": {
+    "eyebrow": "你發布的剪輯版本",
+    "title": "隨處匯出。一旦取得資格，即可在 SceneFlow 上使用 Premiere。",
+    "subtitle": "Download a master and ship it yourself, or publish finished scenes and chapters to {longForm} and cut trailers for {shorts} — without waiting on the whole cut. Before anything hits the public feed, run drafts or your final master through the Screening Room. Standout projects can apply for the invite-only SceneFlow Network; it is a curated accelerator, not an open storefront.",
+    "comparison": {
+      "id": "publish",
+      "caption": "A finished scene or chapter, and the 90-minute master, from one studio."
+    },
+    "cta": "Launch Studio ($9)"
+  },
+  "infrastructure": {
+    "title": "企業級基礎架構與安全性",
+    "description": "由 Google Cloud 與 Vertex AI 支援，確保企業級可靠性、提供多語言配音模型並實現安全的資產處理。",
+    "badges": {
+      "googleCloud": "Google Cloud",
+      "vertexAi": "Vertex AI"
+    }
   },
   "valueProp": {
     "pills": [
@@ -150,7 +1114,7 @@
         "icon": "影片",
         "label": "創作者",
         "outcome": "按時交付——別再於各個工具中重複建構",
-        "narrative": "故事構想雖已就緒，但製作每一集時，往往得重新匯出素材、在不同分頁重新輸入提示詞，還得擔心風格連貫性是否跑掉。SceneFlow 將「系列規劃」、「Blueprint」與「實際製作」整合於單一工作室環境中——讓您能在預覽階段（pre-vis）確認視覺風格，逐場景進行生成，並如期產出風格一致的劇集，無需從零開始重新製作。",
+        "narrative": "故事構想雖已就緒，但製作每一集往往意味著必須重新匯出素材、在不同分頁重新輸入提示詞（prompt），同時還得擔心風格連貫性是否跑掉。SceneFlow 將 Series Room、Blueprint Room 與 Production Stage 整合於同一個工作室環境中——讓您能在預覽階段（pre-vis）確認視覺風格，逐場景進行生成，並按時產出風格一致的劇集，無需從零開始重新製作。",
         "useCases": [
           "16:9 YouTube 電視劇",
           "9:16 直式手機劇",
@@ -243,7 +1207,7 @@
         "icon": "場記板",
         "label": "電影製作",
         "outcome": "適用於互動式動態分鏡（animatic）的腳本，讓您能在正式拍攝前進行放映與測試。",
-        "narrative": "以往在正式開拍前，預覽（Previz）與觀眾測試往往意味著耗時數週製作分鏡圖、錄製暫時配音，以及代價高昂的推測性決策。SceneFlow 透過 Express 預覽技術，將您的劇本轉化為互動式動態分鏡（animatic）；您可以利用 Audience Resonance 進行優化，並在 Screening Room 進行放映測試，待故事內容真正到位後，再投入預算進行製作。",
+        "narrative": "過去，在正式開拍前的預覽（Previz）與觀眾測試階段，往往意味著耗時數週製作分鏡圖、錄製暫時配音，以及代價高昂的憑空臆測。現在，透過 SceneFlow 與 Pre-vis Agent，您可以將劇本轉化為互動式動態分鏡（animatic）；接著利用 Audience Resonance 進行優化，並在 Screening Room 進行試映——唯有當故事內容真正打動人心時，才投入預算進行製作。",
         "useCases": [
           "劇情長片與獨立電影預覽",
           "投資人簡報動態分鏡",
@@ -256,7 +1220,7 @@
           "challengeTitle": "在測試故事之前，預覽製作（Pre-Vis）進度緩慢",
           "challengeDescription": "你手握劇本，但劇本圍讀、分鏡製作流程以及零散的預覽視覺化（previz）工具，卻拖慢了向投資人提案、進行觀眾測試以及取得製作許可（greenlight）決策的進度。",
           "solutionTitle": "以劇本為先的互動式預覽",
-          "solutionDescription": "上傳您的劇本（MDX、FDX 及其他格式），利用 Audience Resonance 進行優化，並生成互動式預覽（pre-vis）以供審閱與測試——系統支援跨場景（beats）的快速同步生成、超過 70 種語言選項，以及快速的多語言疊加功能。",
+          "solutionDescription": "上傳您的劇本（MDX、FDX 及其他格式），利用 Audience Resonance 進行優化，並生成互動式預覽畫面以供審閱與測試；此過程由 Production Agents 負責撰寫提示詞並跨場景生成內容，支援超過 70 種語言選項及快速多語言疊加功能。",
           "win": "在正式拍攝前驗證故事與受眾的契合度——利用可分享的動態分鏡（animatic），而非耗時數週的預覽製作（previz）流程。"
         }
       }
@@ -272,7 +1236,7 @@
       },
       {
         "them": "跨工作階段的手動一致性",
-        "us": "Reference Library + Shot Frames 在視訊前鎖定影像"
+        "us": "Reference Library + Shot Frames 在視訊之前鎖定視覺畫面"
       },
       {
         "them": "無受眾驗證工作流程",
@@ -290,10 +1254,10 @@
     "title": "以節拍為先的影片製作流程",
     "subtitle": "渲染前先確認——而非像吃角子老虎機那樣隨機重新生成",
     "intro": "無需憑感覺反覆嘗試生成。在 SceneFlow 消耗點數製作最終影片之前，您可以先預覽並確認畫面效果。",
-    "description": "SceneFlow 針對視覺確認流程進行了結構化安排：先透過 Pre-vis Agent 進行審閱，利用 Shot Frames 鎖定構圖，接著針對每個鏡頭（shot）執行 F2V。這讓您能在消耗點數處理畫面偏移（drift）或幻覺（hallucinations）問題之前，先完善視覺效果。",
+    "description": "SceneFlow 在每個階段都規劃了視覺審核流程：先由 Pre-vis Agent 進行檢視，再透過 Shot Frames 鎖定構圖，最後針對每個節拍（beat）執行 F2V 轉換。這讓您能在因生成偏差（drift）或幻覺（hallucinations）而耗費點數之前，先完善視覺效果。",
     "steps": [
-      "Pre-vis Agent — 在幾分鐘內分享影音節拍以供審閱",
-      "Shot Frames — 鎖定起始/結束組合與 Reference Library 的連續性",
+      "Pre-vis Agent — 在專家提示後，分享視聽節點以供審閱",
+      "Shot Frames — 鎖定與 Reference Library 連續性相關的合成起點/終點",
       "逐镜头 F2V — 根據已核准的影格生成影片，而非僅憑盲目提示詞。",
       "連續式 EXT 鏈 — 針對長對話段落的原生 +7 秒延展步驟",
       "Production Mixer — 時序、音訊及串流匯出至 Screening Room"
@@ -371,7 +1335,7 @@
     "steps": [
       {
         "title": "8秒初始片段",
-        "description": "使用經核准的 Shot Frames 進行「單格轉影片」或「影像轉影片」作業時，會在動態產生前鎖定構圖。"
+        "description": "利用經核准的 Shot Frames 進行「單幀轉影片」或「圖像轉影片」時，會在產生動態前鎖定構圖。"
       },
       {
         "title": "+7秒延長步驟",
@@ -406,7 +1370,7 @@
     "badge": "創意範疇",
     "title": "各種風格，各種螢幕",
     "titleAccent": "您的創意 DNA，鎖定於 Blueprint",
-    "subtitle": "Blueprint 是確立您創作 DNA 的核心環節，涵蓋了美術風格、畫面比例、調性與核心敘事。SceneFlow 會將這些設定整合至企劃大綱、Audience Resonance 及劇本生成流程中，確保場景指示從一開始就與您的構圖及視覺風格完美契合，而非僅作為最後輸出階段的設定。",
+    "subtitle": "Blueprint Room 是確立您創作 DNA 的核心環節，涵蓋了美術風格、畫面比例、影調氛圍及核心敘事。SceneFlow 則將這些設定整合至製作大綱、Audience Resonance 及劇本生成流程中，確保場景構思從一開始就與您的畫面構圖及視覺風格完美契合，而非僅作為最後階段匯出時的設定。",
     "pillars": [
       {
         "title": "形式追隨功能（與框架）",
@@ -430,87 +1394,121 @@
       "items": [
         {
           "id": "照片級真實感",
-          "name": "照片級寫實",
+          "name": "電影級真人實拍",
           "displayTitle": "照相寫實主義",
-          "description": "專業攝影風格",
+          "description": "照片級寫實、電影感光效",
           "tagline": "高品質長篇寫實風格",
           "marketingBody": "照片級寫實風格能滿足優質影集與紀錄片觀眾所期待的大眾吸引力。透過在各個敘事節點間維持寫實的角色與光影呈現，確保單元劇或系列紀錄片從開篇到結局都能保持情感連貫性。",
+          "featured": true,
           "thumbnail": "https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Gemini_Generated_Image_w5y03bw5y03bw5y0.jpeg"
         },
         {
           "id": "90年代動畫",
-          "name": "90年代動畫",
-          "displayTitle": "動畫",
-          "description": "經典 90 年代動畫風格",
-          "tagline": "連載式敘事弧線",
-          "marketingBody": "動畫風格的賽璐珞渲染（cel shading）能讓粉絲在多集網路影集與長篇敘事中建立深厚的情感連結。針對此風格訓練的生成式引擎，能產出線條俐落且構圖穩定的影像，極適合大規模的系列化製作。",
+          "name": "電影級 3D / CGI",
+          "displayTitle": "電影級 3D / CGI",
+          "description": "經渲染的 3D 電影質感",
+          "featured": false,
           "thumbnail": "https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Gemini_Generated_Image_5qoasf5qoasf5qoa.jpeg"
         },
         {
           "id": "皮克斯",
-          "name": "皮克斯動畫",
+          "name": "3D 動畫（皮克斯風格）",
           "displayTitle": "3D 電影質感 / 皮克斯風格",
-          "description": "皮克斯風格 3D 動畫",
+          "description": "風格化 3D 動畫長片",
           "tagline": "跨集的情感延續性",
           "marketingBody": "柔和圓潤的幾何造型與富有表現力的角色設計，營造出溫暖的情感氛圍，能讓觀眾在整季劇集中持續投入。這類風格非常適合動畫影集、闔家觀賞的長篇作品，以及重視角色形象在各個情節段落中保持一致性的品牌敘事內容。",
+          "featured": true,
           "thumbnail": "https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Gemini_Generated_Image_zi32rnzi32rnzi32.jpeg"
         },
         {
           "id": "概念藝術",
-          "name": "概念藝術",
-          "displayTitle": "概念藝術",
-          "description": "遊戲／電影概念美術",
-          "tagline": "具備氛圍感且已達製作水準之燈光效果的影視預覽（Pre-vis）關鍵影格。",
+          "name": "動畫",
+          "displayTitle": "動畫",
+          "description": "賽璐珞風格動漫畫風",
+          "tagline": "連載式敘事弧線",
+          "marketingBody": "動畫風格的賽璐珞渲染（cel shading）能讓粉絲在多集網路影集與長篇敘事中建立深厚的情感連結。針對此風格訓練的生成式引擎，能產出線條俐落且構圖穩定的影像，極適合大規模的系列化製作。",
+          "featured": true,
           "thumbnail": "https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Gemini_Generated_Image_qlf261qlf261qlf2.jpeg"
         },
         {
           "id": "吉卜力",
           "name": "吉卜力風格的",
           "displayTitle": "手繪 / 吉卜力風格",
-          "description": "受吉卜力工作室啟發",
+          "description": "手繪、具繪畫感的動畫",
           "tagline": "工藝即奢華",
           "marketingBody": "这种风格直接呼应了「工艺即奢华」这一重要的创作趋势。水彩质感与充满绘画感的背景，共同构建出充满手作气息的叙事世界；在这里，那种自然的瑕疵感在长篇系列作品中，被赋予了刻意为之的艺术美感。",
+          "featured": true,
           "thumbnail": "https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Gemini_Generated_Image_xojqsuxojqsuxojq.jpeg"
         },
         {
           "id": "漫畫書",
           "name": "漫畫書",
           "displayTitle": "漫畫書",
-          "description": "漫畫墨線風格",
+          "description": "濃郁墨色，圖像小說風格",
           "tagline": "運用粗獷筆觸、網點質感與普普藝術色彩，呈現多集連載敘事。",
+          "featured": false,
           "thumbnail": "https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Gemini_Generated_Image_ezhp8cezhp8cezhp.jpeg"
         },
         {
           "id": "油畫",
-          "name": "油畫",
-          "displayTitle": "油畫",
-          "description": "古典油畫",
-          "tagline": "運用古典筆觸與豐厚色彩，呈現紀錄片與歷史題材的長篇作品。",
+          "name": "概念藝術",
+          "displayTitle": "概念藝術",
+          "description": "電影感遊戲／影視概念美術",
+          "tagline": "具備氛圍感且已達製作水準之燈光效果的影視預覽（Pre-vis）關鍵影格。",
+          "featured": false,
           "thumbnail": "https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Gemini_Generated_Image_7z9qm7z9qm7z9qm7.jpeg"
         },
         {
           "id": "數位藝術",
-          "name": "數位藝術",
-          "displayTitle": "數位藝術",
-          "description": "現代數位插畫",
-          "tagline": "適用於動畫紀錄片與系列解說影片的風格化插畫。",
+          "name": "扁平化向量 / 動態圖形",
+          "displayTitle": "扁平化向量 / 動態圖形",
+          "description": "適合解說影片的簡潔向量風格",
+          "featured": false,
           "thumbnail": "https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Gemini_Generated_Image_omdmt6omdmt6omdm.jpeg"
         },
         {
           "id": "水彩畫",
-          "name": "水彩畫",
-          "displayTitle": "水彩畫",
-          "description": "柔和的水彩畫",
-          "tagline": "柔和的顏料渲染風格，適用於回憶錄、紀錄片及沉思型長篇作品。",
+          "name": "分鏡腳本 / 動態分鏡",
+          "displayTitle": "分鏡腳本 / 動態分鏡",
+          "description": "灰階分鏡草圖",
+          "featured": false,
           "thumbnail": "https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Gemini_Generated_Image_7i1wus7i1wus7i1w.jpeg"
         },
         {
           "id": "素描；草圖；速寫",
-          "name": "草圖／線稿",
-          "displayTitle": "草圖／線稿",
+          "name": "數位藝術",
+          "displayTitle": "數位藝術",
+          "description": "現代數位插畫",
+          "tagline": "適用於動畫紀錄片與系列解說影片的風格化插畫。",
+          "featured": false,
+          "thumbnail": "https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Gemini_Generated_Image_bmbpbibmbpbibmbp.jpeg"
+        },
+        {
+          "id": "watercolor",
+          "name": "水彩畫",
+          "displayTitle": "水彩畫",
+          "description": "柔和的水彩畫",
+          "tagline": "柔和的顏料渲染風格，適用於回憶錄、紀錄片及沉思型長篇作品。",
+          "featured": false,
+          "thumbnail": "https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Gemini_Generated_Image_7i1wus7i1wus7i1w.jpeg"
+        },
+        {
+          "id": "sketch",
+          "name": "草圖 / 線稿",
+          "displayTitle": "草圖 / 線稿",
           "description": "鉛筆素描風格",
           "tagline": "適用於從預覽（pre-vis）到正式製作階段、長篇敘事節點的細緻線條與鉛筆質感。",
+          "featured": false,
           "thumbnail": "https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Gemini_Generated_Image_bmbpbibmbpbibmbp.jpeg"
+        },
+        {
+          "id": "oil-painting",
+          "name": "油畫",
+          "displayTitle": "油畫",
+          "description": "古典油畫",
+          "tagline": "運用古典筆觸與豐厚色彩，呈現紀錄片與歷史題材的長篇作品。",
+          "featured": false,
+          "thumbnail": "https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Gemini_Generated_Image_7z9qm7z9qm7z9qm7.jpeg"
         }
       ]
     },
@@ -595,7 +1593,7 @@
       "tagline": "單一開發環境。既提供引導式自動化功能，若您已熟悉相關技術堆疊，也能實現極高的處理效能。",
       "stages": [
         {
-          "label": "Blueprint Room",
+          "label": "SFAIBLUEPRINT_房間術語",
           "detail": "結構化故事大綱"
         },
         {
@@ -603,7 +1601,7 @@
           "detail": "性格連貫的角色"
         },
         {
-          "label": "生產",
+          "label": "Production Stage",
           "detail": "聲音與影像"
         },
         {
@@ -627,15 +1625,15 @@
     "proofLine": "經住宅物件導覽實測驗證：全手動堆疊處理需 4 小時以上 → 使用 SceneFlow 產出相同成果僅需不到 1 小時。"
   },
   "comparison": {
-    "title": "Stop pulling the lever. Start running a production.",
-    "subtitle": "Clip generators re-roll the dice on every prompt — new face, new room, new voice. SceneFlow reads every shot from the same locked references, so scene 100 still matches scene 1.",
+    "title": "別再只是拉動拉桿了，開始進行生產吧。",
+    "subtitle": "影片生成器在每次輸入提示詞時都會重新隨機生成——出現新面孔、新場景與新聲音。而 SceneFlow 則是根據同一組已鎖定的參考資料來處理每個鏡頭，確保第 100 個場景仍能與第 1 個場景保持一致。",
     "caption": "單一工作室即可取代零散的提示詞工具、手動編輯以及跨平台交接流程。",
     "imageAlt": "傳統製作的額外成本與 SceneFlow 自動化攝影棚 — 從構思到發布就緒影片，速度更快"
   },
   "howItWorks": {
     "title": "從構思到可發布的影片",
     "titleAccent": "一條引導式管線",
-    "subtitle": "系列製作為選修項目。核心流程為 Blueprint → 製作 (Production) → Screening Room，期間涵蓋預覽 (pre-vis)、動態分鏡 (animatic)、場景影片及主檔 MP4 的製作。",
+    "subtitle": "「系列」（Series）為選填項目。核心流程為 Blueprint Room → Production Stage → Screening Room，期間涵蓋預覽（pre-vis）、動態分鏡（animatic）、場景影片及主檔 MP4。",
     "tagline": "每個步驟均經專業自動化處理，同時讓您全程掌控。",
     "optionalBadge": "選用",
     "optionalSuffix": " （選填）",
@@ -644,59 +1642,64 @@
     "phases": [
       {
         "id": "系列",
-        "stepLabel": "系列",
-        "subtitle": "Showrunner 引擎",
+        "stepLabel": "SFAI系列_房間術語",
+        "subtitle": "跨集劇情連貫性",
         "description": "只需定義一次您的世界觀，即可生成連貫的多集劇情線。共用的 Reference Library 能確保整季的角色與基調保持一致。",
         "keySteps": [
           "定義世界觀——角色、基調與季度劇情主線",
           "自動生成整季的單集大綱",
-          "同步至 Blueprint 及單集製作"
+          "針對每一集同步至 Blueprint Room 與 Production Stage"
         ],
         "keyFeatures": [
           "一次確立你的世界觀——包含角色、基調與季度劇情走向。",
           "連貫的單集大綱——跨全季自動生成",
           "劇情連貫性追蹤——確保多集數季度的連貫一致",
-          "系列與單集同步 — 導入 Blueprint Room 與 Production Stage"
-        ]
+          "系列與單集同步 — 寫入 Blueprint Room 與 Production Stage"
+        ],
+        "optional": true
       },
       {
         "id": "藍圖",
-        "stepLabel": "Blueprint Room",
+        "stepLabel": "SFAIBLUEPRINT_房間術語",
         "subtitle": "故事發展",
         "description": "將構想轉化為包含故事大綱、劇情節點、角色與基調的結構化劇本大綱。在進行繁重的渲染作業前，請執行 Audience Resonance 並進行協作。",
         "keySteps": [
-          "生成 → 審核 → 迭代 → 開始生產",
+          "生成 → 審查 → 迭代 → 前往 Production Stage",
           "Audience Resonance 評分（目標 80 分以上）",
           "協作者分享連結與匯出 (PDF、Doc、PPTX)"
         ],
         "keyFeatures": [
-          "生成 → 審閱 → 迭代 → 啟動生產流程",
+          "生成 → 審查 → 迭代 → 進入 Production Stage 工作流程",
           "從構想成形到架構確立，只需數分鐘——涵蓋故事大綱（logline）、關鍵情節點、角色與基調。",
-          "Audience Resonance 上線前評分（目標 80 分以上）",
+          "在 Production Stage 之前，針對目標值 80 以上進行 Audience Resonance 評分",
           "協作者分享連結 —— 彙整回饋並進行引導式修訂"
-        ]
+        ],
+        "optional": false
       },
       {
         "id": "生產",
-        "stepLabel": "生產",
-        "subtitle": "指向 Screening Room 的指令碼",
-        "description": "「腳本」與「拍攝」頁籤引導流程從「基礎設定」→「預覽視覺化 (Pre-Vis)」→「素材」→「混製」至「串流輸出」。逐場景的檢查點設計能將重做需求降至最低；Screening Room 則負責處理預覽、組裝與發布作業。",
+        "stepLabel": "Production Stage",
+        "subtitle": "透過串流指引方向",
+        "description": "導演、劇本、音樂、參考資料與靜態影像，結合 Audience Resonance 與預覽視覺化（Pre-Vis）審核來優化劇本。剪輯片段、混音與串流處理則負責生成各鏡頭的影片。Screening Room 則負責處理預覽、組裝與發布。",
         "keySteps": [
           "鎖定劇本、配音及場景音訊",
-          "逐場預覽 (Pre-Vis) —— 圖庫與審閱分享",
-          "「拍攝」頁籤 — 拍攝素材 → 混音器 → 每個場景的串流數",
-          "Screening Room — 預覽、組裝主檔、發布"
+          "逐場預覽（Pre-Vis）—— 產出靜態畫面並分享以供審閱",
+          "短片、混音與串流 — 產出每一個鏡頭",
+          "製作規劃表 — 拍攝目標、附日期的時程表及電話狀態",
+          "Screening Room — 預覽、組裝母帶、發布"
         ],
         "keyFeatures": [
-          "Foundation — 劇本、配音、場景音訊、Audience Resonance",
-          "預覽視覺化 (Pre-Vis) — 各場次的執導方向、音訊與關鍵畫面，並附帶分享連結",
-          "拍攝 — 涵蓋素材、混音與串流，無需離開製作環境",
-          "Screening Room — 場景預覽、總剪輯、放映與 YouTube 發布"
-        ]
+          "導演、劇本、音樂、參考資料與劇照 —— 劇本、配音、場景音效、Audience Resonance 分析",
+          "靜態畫面 —— 包含各場景的執導方向、音訊及節奏關鍵影格，並附帶分享連結",
+          "片段、混音器與串流 — 無需離開 Production Stage 即可生成每個鏡頭。",
+          "製作規劃表 — 拍攝目標、附日期的時程表及電話狀態",
+          "Screening Room — 場景預覽、總成組裝、放映及 YouTube 發布"
+        ],
+        "optional": false
       },
       {
         "id": "放映室",
-        "stepLabel": "Screening Room",
+        "stepLabel": "SFAI 放映室學期",
         "subtitle": "預覽 · 組裝 · 發布",
         "description": "Production 內建單一完稿介面：可預覽場景影片、將串流片段拼接成主 MP4 檔案、舉辦附帶數據分析功能的分享式放映，以及發布至 YouTube 或匯出成套檔案。",
         "keySteps": [
@@ -710,7 +1713,8 @@
           "組裝預設 — 全視訊、混合模式，或針對各場景的自訂組合",
           "可分享的篩選評估 — 包含評分與結構化回饋的 /s/ 連結",
           "YouTube 導覽精靈、短影音匯出與發布組合包"
-        ]
+        ],
+        "optional": false
       }
     ]
   },
@@ -735,9 +1739,9 @@
       },
       {
         "id": "藍圖",
-        "stepLabel": "利用 Blueprint 優化您的概念",
+        "stepLabel": "利用 Blueprint Room 優化您的概念",
         "shortDescription": "在進行繁重的渲染工作之前，先將構想轉化為結構完整的企劃大綱，涵蓋故事核心（logline）、關鍵情節點（beats）、角色設定與整體調性。",
-        "detailedDescription": "Blueprint 能自動構建詳盡的故事大綱。透過智慧建議，協助您精進角色發展軌跡、劇情節點與敘事基調；協作分享連結則方便相關人員在進入製作階段前進行審閱。",
+        "detailedDescription": "Blueprint 能自動構建詳盡的故事大綱。透過智慧建議，您可以優化角色發展軌跡、劇情節點及敘事基調。協作分享連結讓相關人員能在進入 Production Stage 階段前進行審閱。",
         "media": "影片"
       },
       {
@@ -757,13 +1761,13 @@
       {
         "id": "射擊",
         "stepLabel": "拍攝您的作品",
-        "shortDescription": "生成精準對應節拍的影片、混合音訊與疊加圖層，並匯出完整場景串流——「素材」、「混音器」與「串流」功能全數整合於單一「拍攝」分頁中。",
-        "detailedDescription": "「製作」（Production）模組中的「拍攝」（Shoot）分頁就是您的拍攝現場：您可以根據核准的預覽視覺化（Pre-Vis）畫面生成影片（Footage），在「混音器」（Mixer）中微調時間點、浮水印與音訊，最後在「串流」（Streams）中算圖輸出完整的場景 MP4 檔案。",
+        "shortDescription": "在 Clips 中生成各個鏡頭，在 Mixer 中進行音訊混音，並在 Streams 中匯出不同語言版本。",
+        "detailedDescription": "「片段」（Clips）利用核准的靜態影像（Stills）為每個鏡頭生成影片。「混製」（Mixer）負責設定時間點、浮水印與音訊。「串流」（Streams）則是指該場景的不同語言版本。",
         "media": "影片",
         "subPoints": [
-          "影像素材 —— 根據預覽（Pre-Vis）的起始與結束影格，逐拍生成影片",
+          "短片 — 根據核准靜態影像拍攝的影片",
           "混音器 — 各場景的浮水印、文字疊加與音訊時序",
-          "串流 — 適用於 Screening Room 的完整渲染場景影片（包含所有節拍）"
+          "串流 — 該場景的語言版本，已準備好用於 Screening Room"
         ]
       },
       {
@@ -790,6 +1794,191 @@
       "openFeatureVideo": "開啟功能介紹影片"
     }
   },
+  "productionShowcase": {
+    "badge": "製作範例",
+    "title": "查看完整流程",
+    "titleAccent": "實際運作中",
+    "subtitle": "每個範例都以一段短預告片開場。完整版母片——涵蓋從藍圖規劃（Blueprint）、預覽視覺化（Pre-Vis）到最終剪輯的完整製作流程——則於放映室（Screening Room）內播放。",
+    "subtitleTagline": "長篇製作，而非短片片段。",
+    "screeningRoomInstruction": "請以審查員的角度來審視這項製作——逐一檢視各個里程碑。依序從「系列」（Series）開始，接著是「Blueprint」，然後是「AR 分析」（AR Analysis）階段的劇本，最後以「試映」（Screening）作結。",
+    "trailerLabel": "預告片",
+    "watchLongform": "觀看完整版影片",
+    "seriesDoor": "系列",
+    "blueprintDoor": "SFAI 藍圖條款",
+    "scriptArDoor": "應收帳款分析",
+    "screeningDoor": "篩檢",
+    "screeningRoomGroup": "SFAI 放映室學期",
+    "previsDoor": "預覽",
+    "roughDoor": "粗剪",
+    "scenesDoor": "場景",
+    "finalDoor": "最終",
+    "enterFullscreen": "進入全螢幕",
+    "exitFullscreen": "退出全螢幕",
+    "explorerHandoff": "這些連結呈現的是成品；Explorer 則是讓您自行創作的地方。",
+    "languagesBanner": "公開範例提供四種語言版本：英語、西班牙語、中文與阿拉伯語。",
+    "workflowLabel": "解決方案",
+    "startProduction": "開始您的生產",
+    "cta": "開始您的生產",
+    "continuityNote": "Series Room 管理連續性",
+    "resonanceNote": "Audience Resonance™ 優化了腳本",
+    "videoLanguagePrompt": "以英語、西班牙語、中文或阿拉伯語觀看",
+    "videoComingSoon": "配音版即將推出",
+    "videoSoon": "很快",
+    "frictionLabel": "摩擦",
+    "solutionPillarLabel": "SceneFlow 解決方案",
+    "showSolutionsSection": "顯示解答",
+    "hideSolutionsSection": "隱藏解決方案",
+    "cards": [
+      {
+        "id": "drama",
+        "title": "電影級長篇劇情作品，角色性格始終如一。",
+        "subtitle": "保持從第 1 幕到第 100 幕的角色面部特徵、服裝與場景設定。進入放映室檢視預覽視覺化（Pre-Vis）、各場次的動態影像，以及最終的 ProRes 4K 母片，隨後切換語言聆聽完整配音。",
+        "badge": "已準備好進行系列化生產",
+        "solutionPillars": [
+          {
+            "title": "視覺與角色的一致性",
+            "frictionHeadline": "字元偏移與字體不穩",
+            "friction": "生成式模型會在每次鏡頭切換時重置，導致角色的面容、服裝與光影在場景轉換間不斷發生變化。",
+            "solutionHeadline": "鎖定資產 SFAI 藍圖條款",
+            "solution": "請預先在 Blueprint Room 中定義核心角色檔案、環境與視覺風格。SceneFlow 則確保在每次渲染時維持視覺識別的一致性，以維護敘事的沉浸感。"
+          },
+          {
+            "title": "敘事節奏與場景掌控",
+            "frictionHeadline": "10秒短片的陷阱",
+            "friction": "若以零散的微型提示詞（micro-prompts）來構建影片，會導致節奏破碎、情感平淡，並需要無止盡的手動時間軸編輯。",
+            "solutionHeadline": "以節拍為優先的分鏡製作",
+            "solution": "應從「場景」層面而非「提示詞」層面進行執導。在生成任何畫面之前，先在視覺上構思好戲劇節奏、運鏡方式與故事脈絡。"
+          },
+          {
+            "title": "對白與音訊對齊",
+            "frictionHeadline": "缺乏說服力的對白。",
+            "friction": "對嘴不同步、嘴部動作浮動以及音軌與畫面脫節，瞬間讓觀眾從劇情中抽離。",
+            "solutionHeadline": "整合式語音與同步引擎",
+            "solution": "生動的配音演繹與精準的對嘴效果直接整合於影片製作流程之中，無需額外的後期製作工序，即可呈現逼真的對話。"
+          },
+          {
+            "title": "工作流程阻礙與重抽疲勞",
+            "frictionHeadline": "素材混亂與無止盡的重抽。",
+            "friction": "製作一部短片，通常意味著得同時處理兩百多個原始影片檔、進行手動升頻，以及面對數十次白費工夫的生成過程。",
+            "solutionHeadline": "自動化工作室管線",
+            "solution": "在單一整合平台上，完成從概念發想到最終 MP4 母檔製作的全程作業。Blueprint Room 負責故事架構設定，Production Stage 透過串流流程執行導演工作，Screening Room 則產出最終成品。"
+          }
+        ],
+        "screeningRoomPreview": "電影式戲劇 — Screening Room"
+      },
+      {
+        "id": "animation",
+        "title": "融合多種風格的完整動畫影集，維持統一的藝術風格。",
+        "subtitle": "從第一集到最後一集，統一採用單一的平面賽璐珞（flat-cel）風格，並固定哈特（Hart）一家與米爾威克（Millwick）小鎮的設定。逐拍指導笑點的呈現，隨後在放映室審閱該集內容。",
+        "badge": "多種風格",
+        "solutionPillars": [
+          {
+            "title": "風格一致性",
+            "frictionHeadline": "風格崩壞",
+            "friction": "卡通與動畫風格在鏡頭間不斷扭曲變形：線條走樣、配色崩壞，角色更異變成一種逼真卻令人感到詭異不適的混亂樣貌。",
+            "solutionHeadline": "鎖定美術風格引擎",
+            "solution": "從第一幀畫面起，即刻定格您的獨特美學。SceneFlow 能鎖定整集內容中的角色設計、線條粗細與陰影模型，確保您的角色始終保有專屬的風格特色。"
+          },
+          {
+            "title": "誇張的動畫與物理效果",
+            "frictionHeadline": "僵硬且不流暢的動作",
+            "friction": "生成式模型難以處理快節奏的鬧劇動作、驚愕回頭（double-takes）以及卡通特有的柔軟物理特性，往往會將充滿動感的搞笑橋段變成融化變形的畫面瑕疵。",
+            "solutionHeadline": "動作與姿勢錨定",
+            "solution": "在不破壞模型結構的前提下，驅動充滿動感的角色動作與富有表現力的姿態。透過完整的動作控制，執導充滿力道的肢體喜劇、突發的鏡頭切換以及誇張狂放的表情。"
+          },
+          {
+            "title": "喜劇時機與節奏",
+            "frictionHeadline": "被毀掉的笑點",
+            "friction": "幽默感往往蘊含於停頓與節奏切換之中。標準的 5 秒生成式循環會迫使節奏變得生硬，進而破壞笑點的呈現效果。",
+            "solutionHeadline": "精確至拍點的剪輯",
+            "solution": "精確掌控場景節奏至「幀」的層級。在進行最終算圖之前，直接於以節奏為導向的時間軸上，調整戲劇性停頓、鋪陳與笑點（或關鍵轉折）之間的時間點，以及快速反應鏡頭。"
+          },
+          {
+            "title": "高能量對話與語音同步",
+            "frictionHeadline": "毫無生氣的木偶嘴巴。",
+            "friction": "AI 生成的對話往往平淡且機械，破壞了情境喜劇中那種機智對答所需的活力。",
+            "solutionHeadline": "語音與表情動態同步",
+            "solution": "將語音演繹直接對應到充滿活力的臉部表情。對白、生動的嘴型與喜劇風格的配音完美契合，營造出極佳的喜劇效果。"
+          }
+        ],
+        "screeningRoomPreview": "Hart House — SFAI 放映室"
+      },
+      {
+        "id": "documentary",
+        "title": "長篇紀錄片：智慧的崛起",
+        "subtitle": "見證人工智慧與超智慧跨越各大洲的崛起。每一章都呈現出特定年代的風貌——早期的實驗室裡不會出現現代物品，現代場景中也不會有 1950 年代的陳設。",
+        "badge": "符合時代考究",
+        "solutionPillars": [
+          {
+            "title": "符合時代特徵的視覺準確性",
+            "frictionHeadline": "時代錯置的器物",
+            "friction": "標準生成式模型經常會將現代物品、智慧型手機螢幕或不符合時代背景的服飾，不經意地融入歷史重現場景之中。",
+            "solutionHeadline": "歷史風格規範",
+            "solution": "設定精確的時代參數——從 1920 年代的膠卷顆粒感，到 18 世紀的服裝質感——確保每個生成的場景都保有歷史真實感。"
+          },
+          {
+            "title": "檔案畫面與 B-Roll 引擎",
+            "frictionHeadline": "長篇旁白中的視覺單調感",
+            "friction": "將冗長的旁白與靜態圖庫影像搭配，會導致觀眾在深入探討內容的過程中迅速流失。",
+            "solutionHeadline": "由逐字稿驅動的 B-Roll 引擎",
+            "solution": "當旁白講述歷史事實時，SceneFlow 會根據音訊逐字稿，自動生成與之精確同步的電影級情境重現、文件疊加畫面以及檔案風格的插入鏡頭。"
+          },
+          {
+            "title": "訪談與「人頭特寫」式的寫實感",
+            "frictionHeadline": "令人不安的專家證人",
+            "friction": "生成的歷史學家、調查員或目擊者往往顯得不自然，伴隨著浮動的下顎動作與不自然的眼神接觸。",
+            "solutionHeadline": "鎖定專家個人檔案與語音同步",
+            "solution": "打造逼真且令人信服的訪談場景，呈現自然的微表情、精準的唇形同步，並在系列影片中維持專家形象的一致性。"
+          },
+          {
+            "title": "分集節奏與敘事連貫性",
+            "frictionHeadline": "片段式時間軸剪輯",
+            "friction": "若要在長達 40 分鐘的節目中，平衡旁白音訊、情境重現、證據揭露以及營造張力的停頓，使用傳統非線性剪輯系統（NLE）通常需要耗費數週時間。",
+            "solutionHeadline": "以「節拍點」（Beat）為核心的紀錄片製作流程",
+            "solution": "在 Blueprint Room 內，以視覺化方式建構戲劇張力、營造懸疑停頓並呈現關鍵證據，一次性產出完整整合的主檔案。"
+          }
+        ],
+        "screeningRoomPreview": "漫長的思索 — Screening Room"
+      },
+      {
+        "id": "training",
+        "title": "即用型多單元培訓系列：One Locked Chef",
+        "subtitle": "一位主廚、一間廚房、五道佳餚。從高湯到最後的甜點，那張臉龐、那件廚師服與背景的磁磚，始終如一。",
+        "badge": "適用於課程",
+        "solutionPillars": [
+          {
+            "title": "講師與環境的一致性",
+            "frictionHeadline": "每個單元由不同的老師授課。",
+            "friction": "生成式影片片段會在各個課程單元之間重置講師的面容、服裝與教室場景，導致整門課程給人一種像是零散、互不相關的影片堆疊而成的感覺。",
+            "solutionHeadline": "已鎖定的講師 SFAI 藍圖學期",
+            "solution": "在 Blueprint Room 中定義一次講師、場景設定與視覺系統；SceneFlow 則確保這項識別設定在所有模組中保持一致。"
+          },
+          {
+            "title": "課程進度安排",
+            "frictionHeadline": "投影片被切分成片段。",
+            "friction": "若將課程大綱轉化為零散的提示，便會失去課程的起承轉合、詳解範例，以及測驗前的停頓緩衝。",
+            "solutionHeadline": "模組優先的分鏡設計",
+            "solution": "在畫面算圖之前，將每個模組規劃為一系列的教學步驟：準備、示範與檢核。"
+          },
+          {
+            "title": "旁白與螢幕教學",
+            "frictionHeadline": "未能呼應圖像的聲音",
+            "friction": "旁白、字幕與圖解彼此脫節，導致學習者聽到的步驟與畫面顯示的內容不一致。",
+            "solutionHeadline": "同步課程軌道",
+            "solution": "旁白、字幕與畫面教學的節奏完全同步，確保每一項解說都能與佐證該說明的畫面精準搭配。"
+          },
+          {
+            "title": "課程組裝",
+            "frictionHeadline": "在編輯器中度過的數週",
+            "friction": "若在傳統時程內整合各個模組、重錄內容及在地化版本，會導致課程更新演變成製作延宕。",
+            "solutionHeadline": "單一工作室流程",
+            "solution": "Blueprint、Audience Resonance 與 Screening Room 涵蓋了從大綱、預覽視覺化（Pre-Vis）、粗剪、場景製作到最終成品的完整模組流程。"
+          }
+        ],
+        "screeningRoomPreview": "五盤 — Screening Room"
+      }
+    ]
+  },
   "platformWalkthrough": {
     "badge": "在引擎蓋下；幕後；內部運作機制",
     "title": "平台詳細導覽",
@@ -802,30 +1991,33 @@
     "chapters": [
       {
         "id": "由此開始",
-        "label": "從這裡開始——規劃、連貫性與受眾契合度"
+        "label": "從這裡開始——規劃、連貫性與受眾契合度",
+        "defaultExpanded": false
       },
       {
         "id": "製作與發布",
-        "label": "製作與發布 — 切換至 Screening Room 頁籤"
+        "label": "製作並發布 — 將片段發布至 Screening Room",
+        "defaultExpanded": false
       }
     ],
     "close": "關閉",
     "viewDetails": "查看詳情",
     "beatFirst": {
+      "id": 15,
       "title": "以節拍為先的影片製作流程",
-      "description": "在進行 F2V 之前先確認預覽（pre-vis）的關鍵節點與 Shot Frames，可減少因 AI 幻覺或視覺漂移導致的盲目重新生成。從審閱到最終成片，流程井然有序。",
+      "description": "在進行 F2V 之前，先確認預覽分鏡（pre-vis beats）與鏡頭畫面設定；這能減少因 AI 幻覺或視覺漂移而導致的盲目重新生成，並建立從審核到最終成片的單一結構化流程。",
       "keyFeatures": [
-        "Pre-vis Agent 待審核 —— 在進行耗時的渲染作業前先分享 Beat",
-        "Shot Frames 鎖定構成 — Reference Library 連續性",
+        "Pre-vis Agent 待審閱 — 在進行高負載渲染前先分享分鏡節奏（beats）",
+        "鏡頭構圖鎖定 — 連貫性",
         "F2V（逐镜头）——根據核准的影格生成影片",
         "連續 EXT 鏈 — 針對單一節拍內長對話的原生 +7 秒步進",
         "混音器時序與串流 — 開啟 Screening Room 進行組裝與發布"
       ],
-      "screenshotSlot": "插入螢幕截圖：Shot Frames 以及影片生成前的預覽視覺化（pre-vis）核准",
+      "screenshotSlot": "插入螢幕截圖：Shot Frames 以及影片生成前的預覽（pre-vis）核准",
       "videoSlot": "插入 00:30 的片段：確認節拍、鎖定影格，隨後生成 F2V 片段。"
     },
     "screeningRoom": {
-      "title": "Screening Room",
+      "title": "SFAI 放映室學期",
       "description": "在 Production 平台即可預覽場景影片、組裝成片並進行發布。您可以為利害關係人提供私密的 /s/ 分享連結，並搭配結構化回饋與選用的互動分析數據。",
       "keyFeatures": [
         "場景影片預覽 — 依序播放算繪完成的串流",
@@ -853,13 +2045,13 @@
         "title": "平台概覽",
         "description": "由單一工作室包辦從構思到成片發布的全程製作。無論是培訓影片、Podcast、新聞節目還是影視系列，均採用同一套製作流程——在投入最終算圖成本前，先確認預覽影像（pre-vis）。",
         "keyFeatures": [
-          "系列 → Blueprint → 生產 → Screening Room",
-          "以段落（Beat）為優先的核准——在 F2V 之前進行預覽（pre-vis）與 Shot Frames",
+          "Series Room → Blueprint Room → Production Stage → Screening Room",
+          "以「節拍」（beat）為單位的優先審核——在 F2V 之前完成預覽（pre-vis）與鏡頭定案（shot framing）。",
           "使用原生 Veo 擴充鏈進行 Google Vertex AI 生成",
           "信任與安全防護機制，以及交付時附帶經簽署的來源證明"
         ],
         "screenshotSlot": "插入螢幕截圖：首頁主視覺 + 簡化版導覽列",
-        "videoSlot": "插入 01:30 的片段：Hero → 新專案 → Blueprint → 製作拍攝 → Screening Room → 發布"
+        "videoSlot": "插入 01:30 的片段：Hero → 新專案 → Blueprint Room → Production Stage 拍攝 → Screening Room → 發布"
       },
       {
         "id": "9",
@@ -869,19 +2061,19 @@
           "一次確立你的世界觀——包含角色、基調與季度劇情走向。",
           "連貫的單集大綱——跨全季自動生成",
           "劇情連貫性追蹤——確保多集數季度的連貫一致",
-          "系列與單集同步 — 導入 Blueprint Room 與 Production Stage"
+          "系列與單集同步 — 寫入 Blueprint Room 與 Production Stage"
         ],
         "screenshotSlot": "插入螢幕截圖：包含自動生成單集劇情走向的系列概覽",
         "videoSlot": "插入 00:30 片段：概念擴展為多集數的季度內容"
       },
       {
         "id": "10",
-        "title": "Blueprint 自動化",
+        "title": "Blueprint Room 自動化",
         "description": "將構想轉化為包含故事大綱、劇情節點、角色與基調的結構化劇本大綱。在進行繁重的渲染作業前，請執行 Audience Resonance 並進行協作。",
         "keyFeatures": [
-          "生成 → 審閱 → 迭代 → 啟動生產流程",
+          "生成 → 審查 → 迭代 → 進入 Production Stage 工作流程",
           "從構想成形到架構確立，只需數分鐘——涵蓋故事大綱（logline）、關鍵情節點、角色與基調。",
-          "Audience Resonance 上線前評分（目標 80 分以上）",
+          "在 Production Stage 之前，針對目標值 80 以上進行 Audience Resonance 評分",
           "協作者分享連結 —— 彙整回饋並進行引導式修訂"
         ],
         "screenshotSlot": "插入螢幕截圖：自動生成的 Blueprint，包含劇情節點與角色發展軌跡",
@@ -903,7 +2095,7 @@
       {
         "id": "7",
         "title": "Audience Resonance 分析",
-        "description": "鎖定目標受眾，即可即時獲取評分、分析與建議。透過一鍵修正或引導式編輯功能，完美優化您的單集內容、Blueprint 與劇本，以發揮最大成效。",
+        "description": "鎖定目標受眾，即可獲得即時評分、分析與建議。透過一鍵修正或引導式編輯功能，完美優化您的單集內容、場景與劇本，以發揮最大成效。",
         "keyFeatures": [
           "目標受眾評分 — 含類別細分",
           "針對特定段落的建議——修正故事中正確的部分",
@@ -915,20 +2107,21 @@
       },
       {
         "id": "11",
-        "title": "生產自動化",
-        "description": "「腳本」與「拍攝」頁籤引導流程從「基礎設定」→「預覽視覺化 (Pre-Vis)」→「素材」→「混製」至「串流輸出」。逐場景的檢查點設計能將重做需求降至最低；Screening Room 則負責處理預覽、組裝與發布作業。",
+        "title": "Production Stage 自動化",
+        "description": "導演、劇本、音樂、參考資料與靜態影像，結合 Audience Resonance 與預覽視覺化（Pre-Vis）審核來優化劇本。剪輯片段、混音與串流處理則負責生成各鏡頭的影片。Screening Room 則負責處理預覽、組裝與發布。",
         "keyFeatures": [
-          "Foundation — 劇本、配音、場景音訊、Audience Resonance",
-          "預覽視覺化 (Pre-Vis) — 各場次的執導方向、音訊與關鍵畫面，並附帶分享連結",
-          "拍攝 — 涵蓋素材、混音與串流，無需離開製作環境",
-          "Screening Room — 場景預覽、總剪輯、放映與 YouTube 發布"
+          "導演、劇本、音樂、參考資料與劇照 —— 劇本、配音、場景音效、Audience Resonance 分析",
+          "靜態畫面 —— 包含各場景的執導方向、音訊及節奏關鍵影格，並附帶分享連結",
+          "片段、混音器與串流 — 無需離開 Production Stage 即可生成每個鏡頭。",
+          "製作規劃表 — 拍攝目標、附日期的時程表及電話狀態",
+          "Screening Room — 場景預覽、總成組裝、放映及 YouTube 發布"
         ],
-        "screenshotSlot": "插入螢幕截圖：顯示「劇本」、「拍攝」與「預覽視覺化（Pre-Vis）」分頁的製作儀表板",
-        "videoSlot": "插入 60 秒片段：定案劇本 → 依場次執行 Pre-vis Agent → 拍攝素材 → 混音/混訊 → 串流輸出"
+        "screenshotSlot": "插入螢幕截圖：顯示「導演」、「腳本」、「靜態影像」、「短片」、「混音器」與「串流」的製作儀表板。",
+        "videoSlot": "插入 60 秒片段：鎖定腳本 → 各場景靜態畫面 → 片段 → 混音器 → 串流"
       },
       {
         "id": "14",
-        "title": "Screening Room",
+        "title": "SFAI 放映室學期",
         "description": "在 Production 平台即可預覽場景影片、組裝成片並進行發布。您可以為利害關係人提供私密的 /s/ 分享連結，並搭配結構化回饋與選用的互動分析數據。",
         "keyFeatures": [
           "場景影片預覽 — 依序播放算繪完成的串流",
@@ -1041,56 +2234,56 @@
   },
   "coreCapabilities": {
     "audienceResonance": {
-      "badge": "Intelligence Layer",
-      "title": "Audience Resonance: build for a culture, not a language code",
-      "description": "Subtitles stretch one video’s reach. SceneFlow lets you name the culture, region, and demographic you are making for, score the story against that audience before you render, and then ship either a dubbed master or a separate high-resonance version per audience.",
+      "badge": "智慧層",
+      "title": "Audience Resonance：為文化而打造，而非僅針對語言代碼",
+      "description": "字幕能擴大單一影片的觸及範圍。SceneFlow 讓您能指定目標受眾所屬的文化、地區與人口特徵，並在算圖前針對該受眾評估故事內容；隨後，您即可針對不同受眾發布配音版母帶，或是個別製作能引發強烈共鳴的版本。",
       "bullets": [
-        "Define the audience: eight target regions, plus age, gender, education, and community",
-        "Describe culture, faith, and values in your own words — SceneFlow reads the signals",
-        "Get a resonance score with section-level fixes before you spend on renders",
-        "Dub the master, or produce a distinct version tuned to each audience"
+        "定義受眾：八個目標區域，以及年齡、性別、教育程度與社群。",
+        "用您自己的話描述文化、信仰與價值觀——SceneFlow 負責讀取這些訊號。",
+        "在投入預算製作渲染圖之前，先取得包含分區調整建議的共鳴評分。",
+        "製作配音母帶，或針對不同受眾製作專屬版本"
       ],
-      "cta": "Analyze Your Script",
+      "cta": "分析您的劇本",
       "howWeScore": {
-        "toggle": "How we score",
-        "title": "How Audience Resonance works",
-        "description": "Audience Resonance combines narrative-structure analysis (clarity, pacing, emotional arc) with target-persona fit against the audience you define in Blueprint — not vanity metrics or post-publish retention data. When your audience description carries cultural signals, the analysis adds an authenticity pass over names, dialect, customs, faith, and sensitivities. Recommendations are tied to specific script sections so you can fix issues before agents run video generation.",
+        "toggle": "評分方式",
+        "title": "Audience Resonance 的運作方式",
+        "description": "Audience Resonance 結合了敘事結構分析（涵蓋清晰度、節奏與情感起伏）與目標受眾的契合度評估——這些受眾是您在 Blueprint 中定義的對象，而非虛浮的指標或發布後的留存數據。若您的受眾描述包含文化特徵，分析過程還會針對名稱、方言、習俗、信仰及敏感議題進行真實性檢核。相關建議會對應至特定的腳本段落，讓您能在 AI 代理執行影片生成之前先行修正問題。",
         "bullets": [
-          "Scores Blueprint and script against your stated target audience",
-          "Cultural authenticity checks on names, dialect, customs, faith, and sensitivities",
-          "Section-level recommendations — not a black-box “trust us” number",
-          "Run before heavy render spend, not after publish"
+          "根據您設定的目標受眾，為 Blueprint 與腳本進行評分。",
+          "針對姓名、方言、習俗、信仰及敏感議題進行文化真實性查核",
+          "針對各區段的建議——而非「請相信我們」這類黑箱作業產出的數據",
+          "請在投入大量算圖成本之前執行，而非發布之後。"
         ]
       }
     },
     "express": {
-      "badge": "Hyper-Speed Production",
+      "badge": "智慧生產",
       "title": "SceneFlow Agents",
-      "description": "Generate Pre-Vis, motion video, and delivery masters concurrently. Go from script to a shareable Pre-Vis in minutes — then approve the shot frames before you spend on motion video. Throughput is what makes a version per audience affordable instead of theoretical.",
+      "description": "Audio Agent、Stills Agent 和 Video Agent 會根據節拍指示（beat direction）構建專業提示詞、附上適當的參考資料，並進行平行生成。由於代理程式（agent）執行的是專業級任務，單一場景的處理可能需要數分鐘；在投入製作動態影片之前，您需先審核並核准 Shot Frames。",
       "items": [
         {
           "title": "Pre-vis Agent",
-          "desc": "Fully voiced, scored shot frames per scene, ready to share in the Screening Room.",
-          "time": "Minutes vs Hours"
+          "desc": "已完成配音與配樂，並依據定案的導演方向製作了各場次的節奏分鏡（beat frames），隨時可在 Screening Room 進行分享。",
+          "time": "品質第一"
         },
         {
-          "title": "Video Agent",
-          "desc": "Per-scene motion video generated after Pre-Vis approval, as native-language streams or a lower-cost dub, with scene-level edits.",
-          "time": "Minutes vs Days"
+          "title": "SFAIVIDEO_代理條款",
+          "desc": "在預覽（Pre-Vis）獲准後製作的逐場動態影片，包含場景層級的剪輯，並提供原生語言版本或低成本配音版本。",
+          "time": "核准後進行算圖"
         },
         {
-          "title": "Delivery Agent",
-          "desc": "Assemble the ProRes 4K master and auto-publish to YouTube or download the bundle.",
-          "time": "Minutes vs Weeks"
+          "title": "SFAI 配送代理條款",
+          "desc": "組建 ProRes 4K 母片並自動發布至 YouTube，或下載該套件。",
+          "time": "出貨該批裁切品"
         }
       ],
-      "cta": "Run Production Agents"
+      "cta": "執行 Production Agents"
     }
   },
   "preVisEngine": {
-    "badge": "Creative Decision Engine",
-    "title": "Pre-Visualization Engine",
-    "subtitle": "Generating a fully voiced, scored, 40-minute Pre-Vis (the industry term: animatic) in 15 minutes is not a workflow step — that is the product. In Hollywood, pre-vis takes weeks and costs hundreds of thousands of dollars. SceneFlow scales it to minutes and pocket change.",
+    "badge": "SFAI 創意決策引擎",
+    "title": "SFAIPRE_視覺化引擎術語",
+    "subtitle": "能在 15 分鐘內產出一部長達 40 分鐘、包含完整配音與配樂的預覽影片（業界稱為 animatic），這不只是工作流程中的一個環節，而是最終成品本身。在好萊塢，製作預覽影片往往耗時數週，成本高達數十萬美元；而這項技術將製作時間縮短至幾分鐘，成本也降至微不足道的程度。",
     "narrative": "在影視產業中，分鏡腳本是交給製作團隊使用的；而 Pre-vis 則是展示給片廠高層、投資人及製片人看，以爭取專案獲准製作的素材。SceneFlow 將製作流程從消費級創作工具，提升為企業級的管線資產。",
     "pillars": [
       {
@@ -1107,257 +2300,308 @@
       }
     ],
     "workflow": {
-      "title": "Reference Library → Pre-Vis → Motion Video → ProRes 4K master",
+      "title": "Reference Library → 預覽視覺化 (Pre-Vis) → 動態影片 → ProRes 4K 母帶",
       "steps": [
-        "Build the Reference Library — characters, locations, and props locked to your production art style.",
-        "Generate Pre-Vis shot frames per scene with dialogue, SFX, and music — iterate direction in the Screening Room at low cost.",
-        "Approve the Pre-Vis, then generate per-scene motion video with multilanguage dubbing and scene-level edits.",
-        "Deliver the ProRes 4K master from the Screening Room — auto-publish to YouTube or download the bundle."
+        "建立參考資料庫——包含已定案符合製作美術風格的角色、場景與道具。",
+        "針對每個場景製作包含對白、音效與配樂的預覽（Pre-Vis）關鍵畫面，並以低成本在審閱室（Screening Room）中反覆調整創作方向。",
+        "核准預覽視效（Pre-Vis），隨後生成包含多語言配音與場景級剪輯的各場景動態影片。",
+        "從 Screening Room 交付 ProRes 4K 母片——自動發布至 YouTube 或下載套件。"
       ]
     },
     "cta": "從上傳腳本開始",
     "ctaSubtext": "連結傳統電影製作與生成式 AI"
   },
   "exitIntent": {
-    "title": "Before you go — want launch news?",
-    "subtitle": "Leave your email and we'll tell you when we announce.",
+    "title": "離開前——想接收發布消息嗎？",
+    "subtitle": "請留下您的電子郵件，我們會在發布消息時通知您。",
     "benefits": [
-      "Launch notification when we announce",
-      "Weekly AI filmmaking tutorials",
-      "Exclusive creator discounts"
+      "我們發布消息時的發布通知",
+      "每週 AI 影視製作教學",
+      "創作者專屬優惠"
     ],
-    "emailPlaceholder": "Enter your email",
-    "subscribe": "Notify me",
-    "subscribing": "Subscribing...",
-    "or": "or",
-    "startNow": "Start directing now for just $9 →",
-    "privacy": "No spam, ever. Unsubscribe anytime.",
-    "successTitle": "You're on the list!",
-    "successSubtitle": "We'll email you when we announce — plus the occasional filmmaking tip.",
-    "ctaText": "Start Exploring — $9",
-    "closePopup": "Close popup"
+    "emailPlaceholder": "輸入您的電子郵件",
+    "subscribe": "通知我",
+    "subscribing": "正在訂閱...",
+    "or": "或",
+    "startNow": "立即開始執導，只需 9 美元 →",
+    "privacy": "絕無垃圾郵件。可隨時取消訂閱。",
+    "successTitle": "你在名單上了！",
+    "successSubtitle": "我們會在發布消息時寄信通知您，同時也會不定期分享電影製作的小撇步。",
+    "ctaText": "開始探索 — $9",
+    "closePopup": "關閉彈出視窗"
   },
   "pricing": {
-    "badge": "Simple Pricing",
-    "title": "Start with Explorer — $9",
-    "subtitle": "Test the complete pipeline now with a frictionless $9 entry.",
+    "badge": "簡單的定價",
+    "title": "從 Explorer 開始 — 9 美元",
+    "subtitle": "立即以 9 美元的低門檻輕鬆試用完整流程。",
+    "explorerHighlight": "體驗完整 SceneFlow 工作室的最快途徑——從概念到 Screening Room。",
+    "trustBadges": [
+      "透過 Whop 進行安全付款",
+      "以 9 美元使用 Explorer 體驗工作室",
+      "每月額度於期間結束時失效。",
+      "隨時可取消"
+    ],
     "valueAnchor": {
-      "traditionalCost": "$2,000+",
-      "traditionalLabel": "Traditional pre-vis",
-      "vs": "vs",
-      "sceneFlowCost": "$49-149",
-      "sceneFlowLabel": "SceneFlow monthly",
-      "saveBadge": "Save 90%+ per project"
+      "traditionalCost": "$2,000 以上",
+      "traditionalLabel": "傳統預覽",
+      "vs": "對",
+      "sceneFlowCost": "$49–149",
+      "sceneFlowLabel": "SceneFlow 每月",
+      "saveBadge": "每個專案節省 90% 以上"
     },
     "teamCta": {
-      "title": "In-house team or institution?",
-      "description": "Book a workflow walkthrough for comms, L&D, and marketing teams",
-      "button": "Book Walkthrough"
+      "title": "內部團隊還是機構？",
+      "description": "為溝通、學習與發展（L&D）及行銷團隊預約工作流程導覽",
+      "button": "書籍導覽"
     },
     "agencyCta": {
-      "title": "Agency or production shop?",
-      "description": "Custom credits, SLA, and dedicated support at scale",
-      "button": "Contact Sales"
+      "title": "代理商還是製作公司？",
+      "description": "大規模客製化抵扣額度、SLA 與專屬支援服務",
+      "button": "聯絡業務"
     },
     "byok": {
-      "title": "Bring Your Own Key",
-      "badge": "Pro & Studio Plans",
-      "description": "Your API key can run reference, still, and clip generations. SceneFlow charges a 20% orchestration fee on those jobs. Hosted SceneFlow rates can be lower than a personal API account as platform volume grows.",
-      "savingsHighlight": "20% orchestration fee",
+      "title": "自備金鑰",
+      "badge": "專業版與工作室版方案",
+      "description": "您的 API 金鑰可用於執行參考圖（reference）、靜態圖（still）及短片（clip）的生成任務。SceneFlow 針對這些任務收取 20% 的協調費用（orchestration fee）。隨著平台使用量增加，託管式 SceneFlow 的費率可能會低於個人 API 帳戶的費率。",
+      "savingsHighlight": "20% 編曲費",
       "benefits": [
         {
-          "title": "References, stills, and clips",
-          "description": "BYOK applies only when your key actually runs those generations"
+          "title": "參考資料、劇照與片段",
+          "description": "BYOK 僅適用於您的金鑰實際執行這些世代的情況。"
         },
         {
-          "title": "Hosted rates can be lower",
-          "description": "SceneFlow platform pricing can undercut a personal Vertex or Kling account"
+          "title": "由代管方提供的費率可能會較低。",
+          "description": "SceneFlow 平台的定價可低於 Vertex 或 Kling 的個人帳戶費用。"
         },
         {
-          "title": "Full Control",
-          "description": "Your keys, your provider bill, plus a platform orchestration fee"
+          "title": "完全掌控",
+          "description": "您自備金鑰、支付供應商帳單，外加平台編排費用"
         }
       ],
-      "supportedProviders": "Supported Providers",
+      "supportedProviders": "支援的供應商",
       "vertexName": "Google Vertex AI",
-      "vertexDetail": "References, stills, and Omni clips",
-      "elevenLabsName": "ElevenLabs",
-      "elevenLabsDetail": "Text-to-Speech & Voice Cloning",
-      "savingsLabel": "20% fee",
-      "onImagesVideo": "on references, stills, and clips",
-      "onVoiceover": "on voiceover",
-      "note": "The 20% fee is a SceneFlow orchestration charge. Provider usage bills to your account. SceneFlow-hosted generation can cost less than bringing a personal key."
+      "vertexDetail": "參考資料、靜態影像與 Omni 剪輯片段",
+      "elevenLabsName": "克林",
+      "elevenLabsDetail": "當您的金鑰被使用時產生剪輯片段",
+      "savingsLabel": "20% 費用",
+      "onImagesVideo": "關於參考資料、劇照與片段",
+      "onVoiceover": "當您的金鑰執行該作業時",
+      "note": "這 20% 的費用屬於 SceneFlow 的協調（orchestration）費用。服務供應商會將使用費用計入您的帳戶。相較於使用個人金鑰，採用 SceneFlow 託管的生成服務，成本可能更低。"
     },
     "creditTopUps": {
-      "title": "Need More Credits?",
-      "subtitle": "Top up anytime. Each add-on pack lasts 12 months.",
+      "title": "需要更多點數嗎？",
+      "subtitle": "您可以視需求隨時加購 25 美元、100 美元或 250 美元的方案。每項方案的效期均為 12 個月。",
       "packs": [
         {
-          "label": "Starter Pack",
-          "description": "Perfect for quick revisions"
+          "label": "25 美元加購項目",
+          "description": "2,000 點數。可視需求多次購買。"
         },
         {
-          "label": "Scene Pack",
-          "description": "Complete a short project"
+          "label": "100 美元加購項目",
+          "description": "9,000 點數。可視需求隨時購買。"
         },
         {
-          "label": "Production Pack",
-          "description": "Major film sequence"
-        },
-        {
-          "label": "Studio Pack",
-          "description": "Full production capacity"
+          "label": "250 美元加購項目",
+          "description": "25,000 點數。可視需求隨時購買。"
         }
       ],
-      "creditsUnit": "credits"
+      "creditsUnit": "製作名單"
     },
     "calculator": {
-      "sectionTitle": "Estimate Your Project",
-      "sectionSubtitle": "Know exactly what you'll pay before you commit",
-      "title": "Project Budget Calculator",
-      "subtitle": "Set a credit budget, track production charges, and plan Pre-Vis first before motion video.",
-      "customize": "Customize parameters",
-      "imagesLabel": "Images to generate",
-      "videoClipsLabel": "Video clips",
-      "voiceoverLabel": "Voiceover (minutes)",
-      "byokTitle": "Bring Your Own Key (BYOK)",
-      "byokBadge": "Pro & Studio",
-      "byokDescription": "Use your own key for references, stills, and clips. SceneFlow charges a 20% orchestration fee, and hosted rates can be lower than a personal API account.",
-      "vertexToggle": "Vertex AI (references, stills, and clips)",
-      "elevenLabsToggle": "ElevenLabs (Voiceover)",
-      "imageGeneration": "Image Generation",
-      "videoGeneration": "Video Generation",
-      "voiceover": "Voiceover",
+      "sectionTitle": "估算您的專案",
+      "sectionSubtitle": "在決定之前，清楚了解您將支付的費用。",
+      "title": "生產計畫員",
+      "subtitle": "規劃鏡頭的迭代與附帶日期的時程表，接著透過手機查看進度與支出。",
+      "customize": "自訂參數",
+      "imagesLabel": "待生成的影像",
+      "videoClipsLabel": "影片片段",
+      "voiceoverLabel": "旁白（分鐘）",
+      "byokTitle": "自備金鑰 (BYOK)",
+      "byokBadge": "專業與工作室",
+      "byokDescription": "針對參考素材、靜態影像與短片，請使用您自己的金鑰。SceneFlow 會收取 20% 的協調服務費，而託管方案的費率可能低於個人 API 帳戶的費率。",
+      "vertexToggle": "Vertex AI（參考資料、靜態影像與片段）",
+      "elevenLabsToggle": "ElevenLabs（旁白）",
+      "imageGeneration": "影像生成",
+      "videoGeneration": "影片生成",
+      "voiceover": "旁白",
       "byokTag": "(BYOK)",
-      "totalEstimate": "Total Estimate",
-      "withTopUps": "with top-ups",
-      "creditSavings": "SceneFlow credit savings",
-      "savePercent": "You save {percent}% on SceneFlow credits",
-      "transparency": "Full transparency: You'll see real-time credit usage as you work. No surprises—adjust your project scope anytime.",
-      "transparencyHighlight": "Full transparency:",
-      "byokDisclaimer": "BYOK Note: The platform fee applies only to reference, still, and clip generations that run on your key. SceneFlow-hosted model rates can be lower than an individual account.",
-      "byokDisclaimerHighlight": "BYOK Note:",
+      "totalEstimate": "預估總額",
+      "withTopUps": "包含加值",
+      "creditSavings": "SceneFlow 信用節省",
+      "savePercent": "購買 SceneFlow 點數可享 {percent}% 優惠",
+      "transparency": "資訊完全透明：您在作業過程中可即時查看點數使用情況。一切盡在掌握，無需擔心意外狀況，並可隨時調整專案範疇。",
+      "transparencyHighlight": "完全公開透明：",
+      "byokDisclaimer": "注意：平台費用僅適用於使用您的金鑰執行的參考圖、靜態影像及短片生成作業。託管模型的費率可能低於個人帳戶的費率。",
+      "byokDisclaimerHighlight": "BYOK 備註：",
       "presets": [
         {
           "id": "commercial",
-          "name": "30-sec Commercial"
+          "name": "30秒廣告"
         },
         {
           "id": "short",
-          "name": "2-min Short Film"
+          "name": "2分鐘短片"
         },
         {
           "id": "episode",
-          "name": "10-min Episode"
+          "name": "10 分鐘單集"
         },
         {
           "id": "feature",
-          "name": "90-min Feature"
+          "name": "90分鐘劇情長片"
         }
       ],
-      "minSuffix": "min"
+      "minSuffix": "分鐘"
     },
     "tierGrid": {
-      "productionTestFlight": "Production Test Flight",
-      "getStarted": "Get Started",
-      "startTestFlight": "Start Test Flight",
-      "loading": "Loading...",
-      "mostPopular": "Most Popular",
-      "creditsPerMonth": "Credits/mo",
-      "storage": "Storage",
+      "productionTestFlight": "生產試飛",
+      "getStarted": "開始使用",
+      "startTestFlight": "開始測試飛行",
+      "loading": "載入中...",
+      "mostPopular": "最受歡迎",
+      "creditsPerMonth": "每月點數",
+      "storage": "儲存",
       "perMonth": "/month"
     },
     "trust": {
-      "cancelAnytime": "Cancel anytime",
-      "moneyBack": "$9 Explorer to try the studio",
-      "creditsNeverExpire": "Explorer credits last 90 days"
+      "cancelAnytime": "隨時可取消",
+      "moneyBack": "以 9 美元使用 Explorer 體驗工作室",
+      "creditsNeverExpire": "Explorer 過去 90 天的點數"
     },
     "plans": {
       "explorer": {
-        "name": "Explorer",
-        "description": "One-time purchase to try it out",
+        "name": "Explorer — 示範",
+        "description": "示範版 —— 一次性購買，體驗完整製作",
         "features": [
-          "One-time purchase",
-          "750 credits (expire 90 days after purchase)",
-          "5 GB storage (30 days)",
-          "Full platform access",
-          "MP4 export (any resolution)",
-          "AI voiceover (70+ languages)"
+          "單次購買",
+          "750 點數（購買後 90 天到期）",
+          "5 GB 儲存空間（30 天）",
+          "完整平台存取權限",
+          "MP4 匯出（任意解析度）",
+          "AI 語音配音（70 多種語言）"
         ]
       },
       "subscriptions": [
         {
           "id": "starter",
-          "name": "Starter",
-          "description": "For individual creators",
+          "name": "入門版 — 沙盒",
+          "description": "沙盒 —— 用於在正式演出前嘗試各種構想",
           "features": [
-            "Full platform access",
-            "4,500 credits/month included",
-            "Unused monthly credits expire at period end",
-            "25 GB active storage",
-            "MP4 export (any resolution)",
-            "AI voiceover (70+ languages)",
-            "Email support"
+            "完整平台存取權限",
+            "包含每月 4,500 點數",
+            "未使用的每月額度將於期末失效。",
+            "25 GB 活躍儲存空間",
+            "MP4 匯出（任意解析度）",
+            "AI 語音配音（70 多種語言）",
+            "電子郵件支援"
           ]
         },
         {
           "id": "pro",
-          "name": "Pro",
-          "description": "For professional creators",
+          "name": "職業 YouTuber",
+          "description": "YouTuber —— 系列節目與頻道影片",
           "features": [
-            "Everything in Starter, plus:",
-            "15,000 credits/month included",
-            "Unused monthly credits expire at period end",
-            "100 GB active storage",
-            "Veo 3.1 Quality (4K) access",
-            "Character Consistency Engine",
-            "Voice cloning",
-            "BYOK (Bring Your Own Key)",
-            "3 team seats",
-            "Priority support"
+            "包含 Starter 方案的所有內容，外加：",
+            "包含每月 15,000 點數",
+            "未使用的每月額度將於期末失效。",
+            "100 GB 活躍儲存空間",
+            "Veo 3.1 高畫質 (4K) 存取權限",
+            "角色一致性引擎",
+            "語音複製",
+            "BYOK（自備金鑰）",
+            "3 個團隊席位",
+            "優先支援"
           ]
         },
         {
           "id": "studio",
-          "name": "Studio",
-          "description": "For teams & agencies",
+          "name": "工作室 — 獨立電影創作者",
+          "description": "獨立電影創作者 —— 獨立電影與影集",
           "features": [
-            "Everything in Pro, plus:",
-            "75,000 credits/month included",
-            "Unused monthly credits expire at period end",
-            "500 GB active storage",
-            "Veo 3.1 4K Priority Queue",
-            "Unlimited Character Consistency",
-            "White-label exports",
-            "API access",
-            "10 team seats",
-            "Dedicated account manager",
-            "Enterprise SLA available on request"
+            "包含 Pro 版的所有功能，外加：",
+            "包含每月 75,000 點數",
+            "未使用的每月額度將於期末失效。",
+            "500 GB 活躍儲存空間",
+            "Veo 3.1 4K 優先佇列",
+            "無限角色一致性",
+            "白牌出口",
+            "API 存取",
+            "10 個團隊席位",
+            "專屬客戶經理",
+            "可應要求提供企業級 SLA"
           ]
         }
       ]
-    },
-    "explorerHighlight": "The fastest way to experience the complete SceneFlow studio — from concept to Screening Room.",
-    "trustBadges": [
-      "Secure payments via Whop",
-      "$9 Explorer to try the studio",
-      "Monthly credits expire at period end",
-      "Cancel anytime"
-    ]
+    }
   },
   "landingSections": {
     "expandSection": "顯示區段",
     "collapseSection": "隱藏區塊"
   },
+  "notify": {
+    "heading": "獲取發布消息",
+    "description": "留下您的電子郵件，我們會在發布消息時通知您。除此之外，不會有其他訊息。",
+    "placeholder": "you@studio.com",
+    "submit": "通知我",
+    "submitting": "正在傳送…",
+    "successTitle": "請查看您的收件匣。",
+    "successBody": "我們已寄出確認連結。點擊即可加入發布名單，無需其他步驟。",
+    "errorEmpty": "請輸入您的電子郵件，以便我們與您聯繫。",
+    "errorInvalid": "那個電子郵件地址看起來有問題。請檢查一下再試一次。",
+    "errorGeneric": "發生錯誤。請稍後再試。",
+    "privacy": "我們會先寄送確認連結。您確認後，只會收到一則關於正式推出的通知。絕無垃圾郵件。",
+    "confirmTitle": "你在名單上。",
+    "confirmBody": "我們會在發布消息時寄電子郵件通知您，不會有其他訊息。",
+    "confirmExpiredTitle": "該連結已失效。",
+    "confirmExpiredBody": "請再次於登陸頁面提交您的電子郵件，我們會寄送新的確認連結。",
+    "confirmInvalidTitle": "該連結無效。",
+    "confirmInvalidBody": "從登陸頁面要求新的確認資訊。",
+    "confirmHome": "返回 SceneFlow"
+  },
+  "forFilmmakers": {
+    "badge": "申請 SceneFlow 原創種子計畫",
+    "heading": "致影視創作者：提交您的試播集，以進行平台發行與營利。",
+    "subtitle": "SceneFlow 網路是一個封閉式的「創始創作者」社群——上線時僅包含 5 到 10 部精選作品，而非開放式市集。營收分潤機制將於出現付費訂閱用戶後啟動。我們目前提供的優勢在於發行助力：透過資助製作預告廣告，換取作品的獨家首映檔期。",
+    "closedNote": "申請將由編輯進行審核。提交申請並不代表您的影片會被發布至目錄中。",
+    "fields": {
+      "email": "電子郵件",
+      "emailPlaceholder": "you@studio.com",
+      "name": "您的姓名",
+      "namePlaceholder": "導演或製片人姓名",
+      "title": "試播集或劇情長片標題",
+      "titlePlaceholder": "暫定標題",
+      "logline": "故事大綱",
+      "loglinePlaceholder": "一兩句能推銷這個故事的話。",
+      "audienceUrl": "既有受眾",
+      "audiencePlaceholder": "YouTube、Bilibili、影展或社群媒體連結",
+      "exclusivePremiere": "我願意在 SceneFlow 進行獨家首映，以換取由對方出資製作的預告廣告。"
+    },
+    "submit": "提交申請",
+    "submitting": "正在傳送…",
+    "successTitle": "請查看您的收件匣。",
+    "successBody": "我們已寄出確認連結。請點擊該連結以確認您的 Seed 申請，無需其他步驟。",
+    "errorEmpty": "請填寫所有欄位，以便我們審核您的試行計畫。",
+    "errorInvalidEmail": "那個電子郵件地址看起來有問題。請檢查一下再試一次。",
+    "errorInvalidUrl": "為您現有的受眾新增一個公開網址。",
+    "errorGeneric": "發生錯誤。請稍後再試。",
+    "confirmTitle": "已收到申請。",
+    "confirmBody": "您的項目已進入 Seed 審核佇列。我們會閱讀每一份提交的內容。這並非公開目錄列表。",
+    "confirmExpiredTitle": "該連結已失效。",
+    "confirmExpiredBody": "請再次提交電影創作者表單，我們會寄送新的確認連結。",
+    "confirmInvalidTitle": "該連結無效。",
+    "confirmInvalidBody": "透過「電影製作人表單」要求重新確認。",
+    "confirmHome": "返回 SceneFlow",
+    "privacy": "我們會先寄送確認連結。僅限編輯，絕無垃圾郵件。"
+  },
   "finalCta": {
-    "title": "Built for the stories that have to hold.",
-    "subtitle": "Leave your email for launch news — or start directing now from the $9 Explorer plan.",
-    "cta": "Explore plans",
-    "ctaSecondary": "See how it works",
+    "title": "為那些必須長久留存的故事而打造。",
+    "subtitle": "留下您的電子郵件以接收發布消息，或立即選用 9 美元的 Explorer 方案開始進行導向。",
+    "cta": "探索方案",
+    "ctaSecondary": "了解運作方式",
     "ctaSecondaryHref": "#two-modes"
   },
   "footer": {
-    "description": "端對端自動化影片製作—從概念到發佈就緒。ONE GUIDED STUDIO ： Series Room → Blueprint Room → Production Stage → Screening Room。",
+    "description": "端到端自動化影片製作——從構思到可發布的成品母帶。單一引導式工作室流程：Series Room → Blueprint Room → Production Stage → Screening Room。",
     "product": "產品",
     "resources": "資源",
     "legal": "信任與安全",
@@ -1376,7 +2620,7 @@
     "taglineSub": "從構想到已發佈的影片",
     "securePayments": "由我們的記錄商家Whop處理的安全付款",
     "morLine": "安全付款、稅務計算和合規性由我們的記錄商家Whop代表Life Focus, LLC處理。",
-    "copyright": "© 2026 SceneFlow Studio。版權所有。",
+    "copyright": "© 2026 SceneFlow Studio。保留所有權利。",
     "address": "Life Focus, LLC • 2900 W Anderson Ln, Suite C200, Austin, TX 78757, United States •聯系方式： support@sceneflowai.studio",
     "poweredBy": "Google驅動的情報·在Google Cloud上編排"
   },
@@ -1393,290 +2637,5 @@
     "mute": "靜音",
     "unmute": "取消靜音",
     "expandVideo": "展開影片"
-  },
-  "productionShowcase": {
-    "badge": "Production Examples",
-    "title": "See the Full Pipeline",
-    "titleAccent": "in Action",
-    "subtitle": "Each example below is a complete production — from Blueprint through Pre-Vis to the final ProRes 4K master. Walk the Screening Room to compare the Pre-Vis, per-scene motion video, and the finished master in multiple languages.",
-    "subtitleTagline": "Long-form productions. Not clips.",
-    "screeningRoomInstruction": "Review this production the way a reviewer would — one milestone at a time. Start with Series, then Blueprint, then the script in AR Analysis, and finish in Screening.",
-    "languagesBanner": "Public examples ship in 7 languages: English, Spanish, Portuguese, Hindi, Chinese, Arabic, and Thai.",
-    "explorePipelineCta": "Explore a full production",
-    "explorePipelineHint": "Start with Cinematic Drama below to walk the full pipeline from concept to multi-language master.",
-    "workflowLabel": "Solutions",
-    "startProduction": "Start Your Production",
-    "cta": "Start Your Production",
-    "continuityNote": "Series Room manages continuity",
-    "resonanceNote": "Audience Resonance™ optimizes scripts",
-    "videoLanguagePrompt": "Watch this production in your language",
-    "videoComingSoon": "Dub coming soon",
-    "videoSoon": "Soon",
-    "frictionLabel": "The Friction",
-    "solutionPillarLabel": "The SceneFlow Solution",
-    "showSolutionsSection": "Show Solutions",
-    "hideSolutionsSection": "Hide Solutions",
-    "cards": [
-      {
-        "id": "drama",
-        "title": "Feature-Length Cinematic Drama. Zero Character Drift.",
-        "subtitle": "Hold character faces, wardrobe, and locations from scene 1 to scene 100. Walk the Screening Room to see the Pre-Vis, per-scene motion video, and the final ProRes 4K master — then switch languages to hear the full dub.",
-        "badge": "Series-Ready",
-        "solutionPillars": [
-          {
-            "title": "Visual & Character Consistency",
-            "frictionHeadline": "Character Drift & Wobbly Sets.",
-            "friction": "Generative models reset with every shot — causing character faces, outfits, and lighting to morph continuously across scene cuts.",
-            "solutionHeadline": "Locked Asset Blueprints.",
-            "solution": "Define master character profiles, environments, and visual styles up front in Blueprint Room. SceneFlow enforces visual identity across every render to preserve narrative immersion."
-          },
-          {
-            "title": "Narrative Pacing & Scene Control",
-            "frictionHeadline": "The 10-Second Clip Trap.",
-            "friction": "Building a film out of disconnected micro-prompts creates choppy pacing, flat emotion, and endless manual timeline editing.",
-            "solutionHeadline": "Beat-First Storyboarding.",
-            "solution": "Direct at the scene level, not the prompt level. Structure dramatic beats, camera movements, and story arcs visually before generating a single frame of video."
-          },
-          {
-            "title": "Dialogue & Audio Alignment",
-            "frictionHeadline": "Unconvincing Dialogue.",
-            "friction": "Mismatched lip-sync, floating mouth movements, and detached voice tracks immediately pull viewers out of the drama.",
-            "solutionHeadline": "Integrated Voice & Sync Engine.",
-            "solution": "Dynamic voice performance and precise lip-sync are baked directly into the video pipeline — delivering believable dialogue without external post-production passes."
-          },
-          {
-            "title": "Workflow Friction & Reroll Fatigue",
-            "frictionHeadline": "Asset Chaos & Endless Rerolls.",
-            "friction": "Generating a short film usually means juggling 200+ raw video files, manual upscaling, and dozens of wasted generations.",
-            "solutionHeadline": "Automated Studio Pipeline.",
-            "solution": "From concept to final master MP4 in one unified platform. Blueprint Room handles story setup, Production Stage runs Direction through Streams, and Screening Room delivers your final export."
-          }
-        ],
-        "screeningRoomPreview": "The Cinematic Drama — Screening Room"
-      },
-      {
-        "id": "animation",
-        "title": "Full-Season Animated Series. One Consistent Art Style.",
-        "subtitle": "Lock character designs, line weights, and shading models across an entire season. Direct comedic timing shot by shot, then review the assembled episode in the Screening Room.",
-        "badge": "Multi-Style",
-        "solutionPillars": [
-          {
-            "title": "Stylistic Consistency",
-            "frictionHeadline": "Style Meltdown.",
-            "friction": "Cartoon and anime styles constantly warp between shots, shifting line art, breaking color palettes, and morphing characters into photorealistic uncanny slop.",
-            "solutionHeadline": "Locked Art Style Engine.",
-            "solution": "Freeze your aesthetic from the first frame. SceneFlow locks character designs, line weights, and shading models across the entire episode so your characters stay uniquely yours."
-          },
-          {
-            "title": "Exaggerated Animation & Physics",
-            "frictionHeadline": "Stiff & Glitchy Motion.",
-            "friction": "Generative models struggle with fast slapstick, double-takes, and squishy cartoon physics, turning high-energy gags into melting artifacts.",
-            "solutionHeadline": "Action & Pose Anchoring.",
-            "solution": "Drive dynamic character movement and expressive poses without breaking geometry. Direct punchy physical comedy, sudden cutaways, and wild expressions with full motion control."
-          },
-          {
-            "title": "Comedic Timing & Rhythm",
-            "frictionHeadline": "Ruined Punchlines.",
-            "friction": "Humor lives in the pauses and beat-cuts. Standard 5-second generative loops force awkward pacing that destroys joke delivery.",
-            "solutionHeadline": "Beat-Precision Editing.",
-            "solution": "Control scene pacing down to the frame. Adjust dramatic pauses, setup-to-punchline timing, and quick reaction shots directly inside the beat-first timeline before final render."
-          },
-          {
-            "title": "High-Energy Dialogue & Vocal Sync",
-            "frictionHeadline": "Lifeless Puppet Mouths.",
-            "friction": "Generic AI dialogue feels flat and mechanical, destroying the energy needed for snappy sitcom banter.",
-            "solutionHeadline": "Dynamic Voice & Expression Sync.",
-            "solution": "Map vocal delivery directly to energetic facial performance. Dialogue, expressive mouth shapes, and comedic voice tracks match seamlessly for maximum comedic impact."
-          }
-        ],
-        "screeningRoomPreview": "The Animated Comedy — Screening Room"
-      },
-      {
-        "id": "documentary",
-        "title": "Long-Form Documentaries. Sustained Period Accuracy.",
-        "subtitle": "Maintain era-specific detail, narrator pacing, and expert-witness continuity across a 40-minute episode or multi-part series. Review the full timeline in the Screening Room before committing to high-res renders.",
-        "badge": "Period-Accurate",
-        "solutionPillars": [
-          {
-            "title": "Era-Specific Visual Accuracy",
-            "frictionHeadline": "Anachronistic Artifacts",
-            "friction": "Standard generative models routinely bleed modern objects, smartphone screens, or incorrect period clothing into historical re-enactments.",
-            "solutionHeadline": "Historical Style Guardrails",
-            "solution": "Set exact temporal parameters — from 1920s film grain to 18th-century wardrobe textures — so every generated scene stays historically authentic."
-          },
-          {
-            "title": "Archival Cutaways & B-Roll Engine",
-            "frictionHeadline": "Visual Monotony in Long Voiceovers",
-            "friction": "Pairing long-form narrator audio with static stock images leads to rapid viewer drop-off during deep dives.",
-            "solutionHeadline": "Transcript-Driven B-Roll Engine",
-            "solution": "As your narrator discusses historical facts, SceneFlow automatically generates timed cinematic re-enactments, document overlays, and archival-style cutaways tied directly to the audio transcript."
-          },
-          {
-            "title": "Interview & Talking-Head Realism",
-            "frictionHeadline": "Uncanny Expert Witnesses",
-            "friction": "Generated historians, investigators, or witnesses often look artificial, with floating jaw movements and unnatural eye contact.",
-            "solutionHeadline": "Locked Expert Profiles & Vocal Sync",
-            "solution": "Maintain realistic, trustworthy interview setups with natural micro-expressions, accurate lip-sync, and consistent expert identities across multi-part series."
-          },
-          {
-            "title": "Episodic Pacing & Narrative Continuity",
-            "frictionHeadline": "Fragmented Timeline Editing",
-            "friction": "Balancing narrator audio, re-enactments, evidence reveals, and tension-building pauses across a 40-minute episode usually takes weeks in traditional NLEs.",
-            "solutionHeadline": "Beat-First Documentary Pipeline",
-            "solution": "Structure dramatic tension, suspenseful pauses, and evidence reveals visually inside Blueprint Room, delivering a fully assembled master file in one seamless pass."
-          }
-        ],
-        "screeningRoomPreview": "Documentary Production — Screening Room"
-      },
-      {
-        "id": "training",
-        "title": "Multi-Module Training Series. One Locked Instructor.",
-        "subtitle": "Hold the instructor, classroom, and lesson graphics from the first module to the last quiz. Walk Blueprint, Audience Resonance, and the Screening Room — Pre-Vis, rough cut, scenes, and the finished course — then switch languages to hear the localized version.",
-        "badge": "Curriculum-Ready",
-        "solutionPillars": [
-          {
-            "title": "Instructor & Setting Consistency",
-            "frictionHeadline": "A Different Teacher Every Module.",
-            "friction": "Generative clips reset the instructor face, wardrobe, and classroom between lessons, so a course feels like a pile of unrelated videos.",
-            "solutionHeadline": "Locked Instructor Blueprints.",
-            "solution": "Define the instructor, set, and visual system once in Blueprint Room. SceneFlow keeps that identity locked across every module."
-          },
-          {
-            "title": "Curriculum Pacing",
-            "frictionHeadline": "Slides Chopped into Clips.",
-            "friction": "Turning a syllabus into disconnected prompts loses the lesson arc, the worked example, and the pause before a quiz.",
-            "solutionHeadline": "Module-First Storyboarding.",
-            "solution": "Direct each module as a sequence of teaching beats — setup, demonstration, and check — before a frame is rendered."
-          },
-          {
-            "title": "Narration & On-Screen Teaching",
-            "frictionHeadline": "Voice That Misses the Graphic.",
-            "friction": "Narration, captions, and diagrams drift apart, so learners hear one step while the picture shows another.",
-            "solutionHeadline": "Synced Lesson Tracks.",
-            "solution": "Voice, captions, and on-screen teaching stay on the same beat, so each explanation lands with the visual that proves it."
-          },
-          {
-            "title": "Course Assembly",
-            "frictionHeadline": "Weeks in an Editor.",
-            "friction": "Stitching modules, retakes, and localized versions in a traditional timeline turns a curriculum update into a production delay.",
-            "solutionHeadline": "One Studio Pipeline.",
-            "solution": "Blueprint, Audience Resonance, and the Screening Room carry a module from outline to Pre-Vis, rough cut, scenes, and the finished course."
-          }
-        ],
-        "screeningRoomPreview": "The Training Series — Screening Room"
-      }
-    ]
-  },
-  "keyFeatures": {
-    "landingUiLanguagesLabel": "Produce and dub in 70+ languages. This site is available in these 39:",
-    "subtitle": "Series Room → Blueprint Room → Production Stage → Screening Room."
-  },
-  "twoModes": {
-    "eyebrow": "The friction we remove",
-    "title": "One pipeline. Not a stack of tools.",
-    "subtitle": "SceneFlow replaces single-clip generators and a pile of separate docs, editors, and re-renders. Build the series or the 90-minute master, then publish a scene or a chapter when you are ready to earn.",
-    "comingSoon": "Coming soon",
-    "comparison": {
-      "id": "comparison",
-      "caption": "Fragmented tools beside one SceneFlow pipeline.",
-      "themLabel": "Fragmented production",
-      "usLabel": "SceneFlow",
-      "rows": [
-        {
-          "them": "Prompt trial and error across tools",
-          "us": "One Blueprint locks the story and the look"
-        },
-        {
-          "them": "Hand-built treatments and formatting",
-          "us": "A film treatment and beat sheet from your premise or brief"
-        },
-        {
-          "them": "Short clips that do not share a cast",
-          "us": "Shots generated from the locked Reference Library"
-        },
-        {
-          "them": "Dragging clips into another editor",
-          "us": "Scenes, chapters, and the master assemble in the Screening Room"
-        },
-        {
-          "them": "Re-rendering to test a note",
-          "us": "Direct on the animatic, then render"
-        }
-      ]
-    },
-    "cta": "Launch Studio ($9)"
-  },
-  "infrastructure": {
-    "title": "Enterprise-Grade Infrastructure & Security",
-    "description": "Powered by Google Cloud and Vertex AI for enterprise reliability, multi-language dubbing models, and secure asset processing.",
-    "badges": {
-      "googleCloud": "Google Cloud",
-      "vertexAi": "Vertex AI"
-    }
-  },
-  "notify": {
-    "heading": "Get launch news",
-    "description": "Leave your email and we’ll tell you when we announce. Nothing else.",
-    "placeholder": "you@studio.com",
-    "submit": "Notify me",
-    "submitting": "Sending…",
-    "successTitle": "Check your inbox.",
-    "successBody": "We sent a confirmation link. Click it to join the launch list. Nothing else.",
-    "errorEmpty": "Enter your email so we can reach you.",
-    "errorInvalid": "That email doesn’t look right. Check it and try again.",
-    "errorGeneric": "Something went wrong. Try again in a moment.",
-    "privacy": "We email a confirmation link first. One launch note after you confirm. No spam.",
-    "confirmTitle": "You’re on the list.",
-    "confirmBody": "We’ll email you when we announce. Nothing else.",
-    "confirmExpiredTitle": "That link expired.",
-    "confirmExpiredBody": "Submit your email on the landing page again and we’ll send a new confirmation link.",
-    "confirmInvalidTitle": "That link isn’t valid.",
-    "confirmInvalidBody": "Request a new confirmation from the landing page.",
-    "confirmHome": "Back to SceneFlow"
-  },
-  "forFilmmakers": {
-    "badge": "Apply for the SceneFlow Originals Seed Program",
-    "heading": "For Filmmakers: Submit your pilot for platform distribution and monetization.",
-    "subtitle": "The SceneFlow Network is a closed Founding Creator cohort — 5 to 10 hand-picked titles at launch, not an open marketplace. Revenue share starts only after paying subscribers exist. What we offer now is distribution leverage: funded teaser ads in exchange for an exclusive premiere window.",
-    "closedNote": "Applications are reviewed by editors. Submitting does not publish your film to a catalog.",
-    "fields": {
-      "email": "Email",
-      "emailPlaceholder": "you@studio.com",
-      "name": "Your name",
-      "namePlaceholder": "Director or producer name",
-      "title": "Pilot or feature title",
-      "titlePlaceholder": "Working title",
-      "logline": "Logline",
-      "loglinePlaceholder": "One or two sentences that sell the story.",
-      "audienceUrl": "Existing audience",
-      "audiencePlaceholder": "YouTube, Bilibili, festival, or social URL",
-      "exclusivePremiere": "I am open to an exclusive premiere window on SceneFlow in exchange for funded teaser ads."
-    },
-    "submit": "Submit application",
-    "submitting": "Sending…",
-    "successTitle": "Check your inbox.",
-    "successBody": "We sent a confirmation link. Click it to lock in your Seed application. Nothing else.",
-    "errorEmpty": "Fill in every field so we can review your pilot.",
-    "errorInvalidEmail": "That email doesn’t look right. Check it and try again.",
-    "errorInvalidUrl": "Add a public URL for your existing audience.",
-    "errorGeneric": "Something went wrong. Try again in a moment.",
-    "confirmTitle": "Application received.",
-    "confirmBody": "You’re in the Seed review queue. We read every submission. This is not a public catalog listing.",
-    "confirmExpiredTitle": "That link expired.",
-    "confirmExpiredBody": "Submit the filmmaker form again and we’ll send a new confirmation link.",
-    "confirmInvalidTitle": "That link isn’t valid.",
-    "confirmInvalidBody": "Request a new confirmation from the filmmaker form.",
-    "confirmHome": "Back to SceneFlow",
-    "privacy": "We email a confirmation link first. Editors only. No spam."
-  },
-  "publishCut": {
-    "eyebrow": "The cut you publish",
-    "title": "Export anywhere. Premiere on SceneFlow when you earn it.",
-    "subtitle": "Download a master and ship it yourself, or publish finished scenes and chapters to {longForm} and cut trailers for {shorts} — without waiting on the whole cut. Before anything hits the public feed, run drafts or your final master through the Screening Room. Standout projects can apply for the invite-only SceneFlow Network; it is a curated accelerator, not an open storefront.",
-    "comparison": {
-      "id": "publish",
-      "caption": "A finished scene or chapter, and the 90-minute master, from one studio."
-    },
-    "cta": "Launch Studio ($9)"
   }
 }
