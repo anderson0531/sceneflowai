@@ -293,7 +293,7 @@ export function BlueprintReimaginDialog({
             <DialogTitle className="text-xl">{t('startTitle')}</DialogTitle>
           )}
           <DialogDescription className={isReimaginMode ? 'sr-only' : 'text-gray-400'}>
-            {isReimaginMode ? 'Form to reimagine an existing blueprint' : t('startDescription')}
+            {isReimaginMode ? t('reimagineDescription') : t('startDescription')}
           </DialogDescription>
         </DialogHeader>
         
@@ -497,12 +497,12 @@ export function BlueprintReimaginDialog({
               {isGenerating ? (
                 <>
                   <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  Reimagining...
+                  {t('reimagining')}
                 </>
               ) : (
                 <>
                   <Zap className="w-4 h-4 mr-2" />
-                  Reimagine Blueprint
+                  {t('reimagineTitle')}
                 </>
               )}
             </Button>
@@ -525,10 +525,10 @@ export function BlueprintReimaginDialog({
               {isGenerating ? (
                 <>
                   <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  Generating...
+                  {t('generating')}
                 </>
               ) : (
-                'Generate Blueprint'
+                t('generateBlueprint')
               )}
             </Button>
           </div>

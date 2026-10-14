@@ -419,6 +419,10 @@
   },
   "reimagine": {
     "reimagineTitle": "Reimagine Blueprint",
+    "reimagineDescription": "Form to reimagine an existing blueprint",
+    "reimagining": "Reimagining…",
+    "generating": "Generating…",
+    "generateBlueprint": "Generate Blueprint",
     "startTitle": "Start Project",
     "startDescription": "Lock the synopsis, then generate the blueprint from it.",
     "describeProject": "Describe Your Project",
