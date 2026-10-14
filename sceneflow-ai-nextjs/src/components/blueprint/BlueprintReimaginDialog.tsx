@@ -497,12 +497,12 @@ export function BlueprintReimaginDialog({
               {isGenerating ? (
                 <>
                   <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  Reimagining...
+                  {t('reimagining')}
                 </>
               ) : (
                 <>
                   <Zap className="w-4 h-4 mr-2" />
-                  Reimagine Blueprint
+                  {t('reimagineTitle')}
                 </>
               )}
             </Button>
@@ -525,10 +525,10 @@ export function BlueprintReimaginDialog({
               {isGenerating ? (
                 <>
                   <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  Generating...
+                  {tc('status.generating')}
                 </>
               ) : (
-                'Generate Blueprint'
+                t('generateBlueprint')
               )}
             </Button>
           </div>
