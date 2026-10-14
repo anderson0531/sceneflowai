@@ -3,6 +3,8 @@
  * Derives intent from UI genre selection and flows through blueprint, series, script, and AR.
  */
 
+import { intentForSeriesProductionFormat } from '@/config/series/productionFormats'
+
 export type ContentIntent = 'fiction' | 'informational' | 'commercial' | 'conversational'
 
 export type ProductionFormat =
@@ -532,8 +534,11 @@ export function resolveContentIntentFromMetadata(metadata?: {
   format?: string
 }): ContentIntent {
   if (metadata?.contentIntent) return metadata.contentIntent
+  // A chosen series production type outranks a free-text genre from synopsis clarify.
+  // Otherwise "documentary" plus an inferred genre of "drama" is stored as fiction.
+  const seriesIntent = intentForSeriesProductionFormat(metadata?.format)
+  if (seriesIntent) return seriesIntent
   if (metadata?.genre) return resolveContentIntent(metadata.genre)
-  // Series format fallback
   const fmt = metadata?.format?.toLowerCase()
   if (fmt === 'educational' || fmt === 'documentary' || fmt === 'news') return 'informational'
   if (fmt === 'demo' || fmt === 'sales') return 'commercial'

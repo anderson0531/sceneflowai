@@ -7,9 +7,8 @@
  */
 
 import {
+  getSeriesProductionProfile,
   isNonFictionProductionFormat,
-  isSeriesProductionFormat,
-  type SeriesProductionFormat,
 } from '@/config/series/productionFormats'
 import { buildArtStylePromptBlock } from '@/lib/treatment/blueprintFoundation'
 
@@ -114,32 +113,33 @@ export function parseClarifySynopsisResult(
   }
 }
 
-function formatLabel(format: string): string {
-  if (!isSeriesProductionFormat(format)) return format || 'narrative'
-  return format
+function productionTypeLabel(format: string): string {
+  return getSeriesProductionProfile(format)?.label || format || 'Narrative'
 }
 
-function formatGuidance(
-  format: SeriesProductionFormat | string,
-  surface: ClarifySynopsisSurface
-): string {
+function formatGuidance(format: string, surface: ClarifySynopsisSurface): string {
   const kind = surface === 'project' ? 'production' : 'series'
+  const profile = getSeriesProductionProfile(format)
+  const label = productionTypeLabel(format)
+  const craft = profile?.craft ? ` ${profile.craft}` : ''
   if (isNonFictionProductionFormat(format)) {
-    return `This is a non-fiction ${format} ${kind}. Do NOT invent a fictional plot, characters, or dramatized conflict. Preserve real subjects, facts, and the instructional, journalistic, or commercial structure the creator described.`
+    const documentary =
+      profile?.engine === 'documentary'
+        ? ' Hosts and narrators present the creator\'s stated subject, and illustrations depict those events. Do not fill missing facts with invented drama.'
+        : ''
+    const hostedEscape =
+      profile?.engine === 'podcast'
+        ? ' If the creator explicitly describes a fictional audio story, follow that premise instead of forcing a hosted show.'
+        : ''
+    return `This is a non-fiction ${label} ${kind}. Do NOT invent a fictional plot, characters, or dramatized conflict. Preserve real subjects, facts, and the instructional, journalistic, or commercial structure the creator described.${documentary}${hostedEscape}${craft}`
   }
-  if (format === 'podcast') {
-    return surface === 'project'
-      ? 'This is a podcast production. If the creator is describing a hosted show, keep it conversational. If they are describing fiction audio, shape that premise without adding events they did not suggest.'
-      : 'This is a podcast series. If the creator is describing a hosted show, keep it conversational. If they are describing fiction audio, shape that premise without adding events they did not suggest.'
-  }
-  return surface === 'project'
-    ? 'This is a narrative production. Clarify implied stakes and shape a dramatic premise, but do not replace the creator\'s characters, setting, or events.'
-    : 'This is a narrative series. Clarify implied stakes and shape a dramatic premise, but do not replace the creator\'s characters, setting, or events.'
+  return `This is a ${label} ${kind}. Clarify implied stakes and shape a dramatic premise, but do not replace the creator's characters, setting, or events.${craft}`
 }
 
 export function buildClarifySynopsisPrompt(input: ClarifySynopsisInput): string {
   const messages = input.messages.slice(-MAX_SYNOPSIS_TURNS)
-  const format = formatLabel(input.productionFormat)
+  const formatId = input.productionFormat
+  const format = productionTypeLabel(formatId)
   const episodeCount = Math.max(1, Math.floor(Number(input.episodeCount) || 1))
   const audience = (input.targetAudience || '').trim()
   const current = (input.currentSynopsis || '').trim()
@@ -154,16 +154,16 @@ export function buildClarifySynopsisPrompt(input: ClarifySynopsisInput): string 
     surface === 'project'
       ? `You are a development producer helping a creator ideate a single production before an AI writes the blueprint.
 
-Use the production format, the locked art style, the target audience, and the conversation to write an optimized synopsis. The synopsis is the brief the blueprint generator will follow.
+Use the production type, the locked art style, the target audience, and the conversation to write an optimized synopsis. The synopsis is the brief the blueprint generator will follow.
 
-PRODUCTION FORMAT: ${format}
+PRODUCTION TYPE: ${format}
 SCOPE: ${scope}
 TARGET AUDIENCE: ${audience || 'Not specified'}`
       : `You are a development producer helping a creator ideate a multi-episode series before an AI writes the full storyline.
 
-Use the production format, the locked art style, the target audience, and the conversation to write an optimized series synopsis. The synopsis is the brief the storyline generator will follow.
+Use the production type, the locked art style, the target audience, and the conversation to write an optimized series synopsis. The synopsis is the brief the storyline generator will follow.
 
-PRODUCTION FORMAT: ${format}
+PRODUCTION TYPE: ${format}
 EPISODE COUNT: ${episodeCount}
 TARGET AUDIENCE: ${audience || 'Not specified'}`
 
@@ -181,7 +181,7 @@ TARGET AUDIENCE: ${audience || 'Not specified'}`
 
 ${styleBlock}
 
-${formatGuidance(format, surface)}
+${formatGuidance(formatId, surface)}
 
 The locked art style is already chosen. Keep the synopsis visually coherent with it, and do not switch the production to a different medium.
 

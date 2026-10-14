@@ -22,7 +22,7 @@ describe('buildClarifySynopsisPrompt', () => {
     })
 
     expect(prompt).toContain(BEEKEEPERS)
-    expect(prompt).toContain('PRODUCTION FORMAT: documentary')
+    expect(prompt).toContain('PRODUCTION TYPE: Documentary')
     expect(prompt).toContain('city planners')
     expect(prompt).toContain('5 episodes')
   })
@@ -38,9 +38,30 @@ describe('buildClarifySynopsisPrompt', () => {
       episodeCount: 5,
       messages: [{ role: 'user', content: 'A family drama in a coastal town.' }],
     })
+    const drama = buildClarifySynopsisPrompt({
+      productionFormat: 'cinematic_drama',
+      episodeCount: 5,
+      messages: [{ role: 'user', content: 'A family drama in a coastal town.' }],
+    })
+    const audioDrama = buildClarifySynopsisPrompt({
+      productionFormat: 'audio_drama',
+      episodeCount: 5,
+      messages: [{ role: 'user', content: 'Two operators overhear a city changing.' }],
+    })
+    const news = buildClarifySynopsisPrompt({
+      productionFormat: 'news',
+      episodeCount: 5,
+      messages: [{ role: 'user', content: 'A nightly briefing on a water crisis.' }],
+    })
 
     expect(documentary).toContain('Do NOT invent a fictional plot')
+    expect(documentary).toContain('stated subject')
+    expect(news).toContain('Do NOT invent a fictional plot')
     expect(narrative).not.toContain('Do NOT invent a fictional plot')
+    expect(drama).not.toContain('Do NOT invent a fictional plot')
+    expect(drama).toContain('PRODUCTION TYPE: Cinematic Drama')
+    expect(audioDrama).not.toContain('Do NOT invent a fictional plot')
+    expect(audioDrama).toContain('audio drama')
   })
 
   it('keeps only the latest turns in the prompt', () => {

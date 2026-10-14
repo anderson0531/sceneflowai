@@ -29,7 +29,10 @@ import {
   type AudienceDefinition,
 } from '@/lib/types/audienceResonance'
 import type { SeriesSynopsisLock } from '@/lib/series/clarifySynopsis'
-import { NEW_SERIES_EPISODE_COUNT } from '@/config/series/productionFormats'
+import {
+  DEFAULT_SERIES_PRODUCTION_FORMAT,
+  NEW_SERIES_EPISODE_COUNT,
+} from '@/config/series/productionFormats'
 import { DEFAULT_ART_STYLE } from '@/lib/treatment/blueprintFoundation'
 import { ProductPageShell, ProductPageHeader, ProductEmptyState } from '@/components/product'
 import { STUDIO_DISPLAY_NAMES } from '@/constants/studioDisplayNames'
@@ -60,7 +63,7 @@ export default function SeriesPage() {
   const [searchQuery, setSearchQuery] = useState('')
   const [statusFilter, setStatusFilter] = useState<string>('all')
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false)
-  const [format, setFormat] = useState('narrative')
+  const [format, setFormat] = useState(DEFAULT_SERIES_PRODUCTION_FORMAT)
   const [artStyle, setArtStyle] = useState(DEFAULT_ART_STYLE)
   const [audienceDef, setAudienceDef] = useState<AudienceDefinition>(() =>
     createAudienceDefinition({ description: '', source: 'series' })
@@ -80,7 +83,7 @@ export default function SeriesPage() {
   })
 
   const resetCreateForm = () => {
-    setFormat('narrative')
+    setFormat(DEFAULT_SERIES_PRODUCTION_FORMAT)
     setArtStyle(DEFAULT_ART_STYLE)
     setAudienceDef(createAudienceDefinition({ description: '', source: 'series' }))
     setLockedSynopsis(null)

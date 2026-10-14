@@ -5,6 +5,10 @@
 
 import type { ContentIntent } from '@/lib/content/contentIntent'
 import { resolveContentIntentFromMetadata } from '@/lib/content/contentIntent'
+import {
+  getSeriesProductionProfile,
+  type SeriesProductionEngine,
+} from '@/config/series/productionFormats'
 import { SERIES_CHARACTER_NAMING_BLOCK } from '@/lib/character/characterNamingPrompt'
 import { buildProperNounGlossary, localeDirective } from '@/lib/prompts/localeDirective'
 
@@ -35,14 +39,20 @@ export function resolveSeriesContentIntent(format?: string, genre?: string): Con
   return resolveContentIntentFromMetadata({ format, genre })
 }
 
-export function getSeriesFormatMapping(format: string): {
+export interface SeriesFormatMapping {
   personaInstruction: string
   mappingInstruction: string
   leadLabel: string
   oppositionLabel: string
   threadsLabel: string
-} {
-  if (format === 'educational') {
+  nonFiction: boolean
+}
+
+const NONFICTION_BAN =
+  'Do NOT invent a fictional plot, cast, antagonist, or fatal flaw.'
+
+function engineMapping(engine: SeriesProductionEngine): Omit<SeriesFormatMapping, 'nonFiction'> {
+  if (engine === 'educational') {
     return {
       personaInstruction: 'You are an expert curriculum designer and educational video producer.',
       leadLabel: 'HOST/INSTRUCTOR',
@@ -50,78 +60,98 @@ export function getSeriesFormatMapping(format: string): {
       threadsLabel: 'LEARNING OBJECTIVES / THEMES',
       mappingInstruction: `
 CRITICAL SCHEMA MAPPING FOR EDUCATIONAL CONTENT:
-- "protagonist": Host, Lead Instructor, or Guide
-- "antagonistConflict": Core learning challenge or misconception
-- "storyThreads": Learning objectives or recurring themes
-- episode "beats": Lesson segments (Intro, Concept, Demo, Review)
-- Do NOT invent fictional plot or characters`,
+- Ensure the curriculum is structured and builds on prior knowledge.
+- "protagonist": Host, Lead Instructor, or Guide. This is a presenter, not a fictional hero.
+- "antagonistConflict": Core learning challenge or misconception, not a fictional villain.
+- "storyThreads": Learning objectives or recurring themes.
+- "episodes": Individual lessons or training modules, sequenced from foundational to advanced.
+- episode "beats": Lesson segments (Intro, Core Concept, Demonstration, Review).
+- ${NONFICTION_BAN}`,
     }
   }
 
-  if (format === 'podcast') {
+  if (engine === 'podcast') {
     return {
       personaInstruction: 'You are an expert podcast producer and showrunner.',
       leadLabel: 'HOST',
-      oppositionLabel: 'TENSION TOPIC',
+      oppositionLabel: 'TOPIC TENSION',
       threadsLabel: 'RECURRING SEGMENTS / THEMES',
       mappingInstruction: `
 CRITICAL SCHEMA MAPPING FOR PODCAST CONTENT:
-- "protagonist": Main Host
-- "antagonistConflict": Central theme, mystery, or debate angle
-- "storyThreads": Recurring segments or season themes
-- episode "beats": Show segments (Intro, Main, Outro)
-- Do NOT invent fictional narrative plot`,
+- "protagonist": Main host. This is a presenter, not a fictional hero.
+- "characters": Co-hosts or guests from the creator's subject.
+- "antagonistConflict": The question, debate, or subject tension. Not a fictional villain.
+- "storyThreads": Recurring segments or season themes.
+- episode "beats": Show segments (Intro, Main conversation, Outro).
+- ${NONFICTION_BAN} If the creator explicitly describes fiction audio, follow that premise instead.`,
     }
   }
 
-  if (format === 'documentary') {
+  if (engine === 'documentary') {
     return {
       personaInstruction: 'You are an expert documentary filmmaker and docuseries producer.',
-      leadLabel: 'SUBJECT/NARRATOR',
-      oppositionLabel: 'CORE ISSUE',
-      threadsLabel: 'INVESTIGATION ANGLES / TIMELINES',
+      leadLabel: 'NARRATOR/HOST',
+      oppositionLabel: 'REAL SUBJECT',
+      threadsLabel: 'SUBJECT ANGLES / TIMELINES',
       mappingInstruction: `
 CRITICAL SCHEMA MAPPING FOR DOCUMENTARY CONTENT:
-- "protagonist": Main subject or narrator/investigator
-- "antagonistConflict": Central conflict or systemic issue (real, not fictional)
-- "storyThreads": Investigation angles or historical timelines
-- episode "beats": Narrative segments over real subjects
-- Do NOT fictionalize real subjects or invent drama`,
+- Hosts and narrators present the creator's stated subject. Pictures and scenes illustrate those events.
+- "protagonist": Narrator, host, or the real subject being followed. Not a fictional hero, and not a fatal flaw.
+- "characters": Narrators, interviewees, or real people from the stated subject. Do not invent a fictional cast.
+- "antagonistConflict": The real issue, event, or question being examined. Do NOT invent a fictional antagonist.
+- "storyThreads": Angles, timelines, or questions about the stated subject.
+- "episodes": Installments that move through the real subject.
+- episode "beats": Narration segments (Introduce the event, illustrate what happened, explain what it means).
+- ${NONFICTION_BAN} Do not fill missing facts with invented drama.`,
     }
   }
 
-  if (format === 'demo' || format === 'sales') {
+  if (engine === 'demo') {
     return {
-      personaInstruction:
-        format === 'demo'
-          ? 'You are an expert product marketer and technical evangelist.'
-          : 'You are an expert sales director and persuasive content producer.',
+      personaInstruction: 'You are an expert product marketer and technical evangelist.',
       leadLabel: 'PRESENTER',
-      oppositionLabel: 'PAIN POINT / OBJECTION',
-      threadsLabel: 'VALUE PILLARS / CAMPAIGN NARRATIVE',
+      oppositionLabel: 'PAIN POINT',
+      threadsLabel: 'VALUE PILLARS',
       mappingInstruction: `
 CRITICAL SCHEMA MAPPING FOR COMMERCIAL CONTENT:
-- "protagonist": Presenter or Brand Voice
-- "antagonistConflict": Customer pain point or objection
-- "storyThreads": Value propositions or product pillars
-- episode "beats": Problem → Solution → Proof → CTA segments
-- Do NOT convert into fictional screenplay`,
+- "protagonist": Presenter, product specialist, or customer in the real use case.
+- "antagonistConflict": Customer pain point or the problem the product addresses. Not a fictional villain.
+- "storyThreads": Features, workflows, or proof points.
+- episode "beats": Problem, demonstration, result.
+- ${NONFICTION_BAN} Do NOT convert this into a fictional screenplay.`,
     }
   }
 
-  if (format === 'news') {
+  if (engine === 'sales') {
     return {
-      personaInstruction: 'You are an expert investigative journalist and news producer.',
+      personaInstruction: 'You are an expert sales director and persuasive content producer.',
+      leadLabel: 'PRESENTER',
+      oppositionLabel: 'OBJECTION',
+      threadsLabel: 'OFFER / CAMPAIGN',
+      mappingInstruction: `
+CRITICAL SCHEMA MAPPING FOR SALES CONTENT:
+- "protagonist": Presenter, brand voice, or the customer in the offer.
+- "antagonistConflict": The objection, cost of inaction, or problem the offer addresses. Not a fictional villain.
+- "storyThreads": Benefits, proof, and the offer.
+- episode "beats": Hook, value, objection, call to action.
+- ${NONFICTION_BAN} Do NOT convert this into a fictional screenplay.`,
+    }
+  }
+
+  if (engine === 'news') {
+    return {
+      personaInstruction: 'You are an expert journalist and news producer.',
       leadLabel: 'ANCHOR/REPORTER',
-      oppositionLabel: 'CORE CONTROVERSY',
-      threadsLabel: 'ONGOING DEVELOPMENTS',
+      oppositionLabel: 'STORY BEING REPORTED',
+      threadsLabel: 'DEVELOPMENTS',
       mappingInstruction: `
 CRITICAL SCHEMA MAPPING FOR NEWS CONTENT:
-- "protagonist": Lead anchor or reporter
-- "antagonistConflict": Core controversy or crisis
-- "storyThreads": Perspectives or ongoing developments
-- episode "beats": Headline, Field reporting, Analysis segments
-- Maintain factual framing — no fictionalization`,
+- "protagonist": Anchor, reporter, or the real person at the center of the report.
+- "characters": Sources, experts, or public figures from the stated story. Do not invent a fictional cast.
+- "antagonistConflict": The controversy, crisis, or question being reported. Not a fictional villain.
+- "storyThreads": Developments, perspectives, or context from the stated story.
+- episode "beats": Lead, reporting, context.
+- Maintain factual framing. ${NONFICTION_BAN}`,
     }
   }
 
@@ -133,6 +163,98 @@ CRITICAL SCHEMA MAPPING FOR NEWS CONTENT:
     mappingInstruction: `
 CRITICAL: Each episode must advance the overall series arc. Include "storyThreads" to track ongoing plots.`,
   }
+}
+
+export function getSeriesFormatMapping(format: string): SeriesFormatMapping {
+  const profile = getSeriesProductionProfile(format)
+  const engine = profile?.engine ?? 'narrative'
+  const base = engineMapping(engine)
+  const craft = profile?.craft ? `\nCRAFT: ${profile.craft}` : ''
+  const nonFiction = profile ? profile.intent !== 'fiction' : false
+  return {
+    ...base,
+    nonFiction,
+    mappingInstruction: `${base.mappingInstruction}${craft}`,
+  }
+}
+
+/** Variable bible instructions. Fiction keeps a dramatic arc; non-fiction narrates the subject. */
+export function seriesBibleTaskBlock(format: string, episodeCount: number): string {
+  const mapping = getSeriesFormatMapping(format)
+  if (!mapping.nonFiction) {
+    return `Create a series bible that can sustain ${episodeCount} episodes/installments with compelling arcs.
+
+Generate:
+1. Series title (memorable, evocative)
+2. Logline (1-2 sentences, hooks the audience)
+3. Setting (vivid, specific), Protagonist (name, goal, fatal flaw), Antagonist/Conflict
+4. Synopsis (2 paragraphs covering the full series arc)
+5. Comprehensive characters and locations arrays.`
+  }
+
+  return `Create a series bible that can sustain ${episodeCount} installments about the creator's stated subject.
+${NONFICTION_BAN} Hosts and narrators present that subject, and illustrations depict those events.
+
+Generate:
+1. Series title
+2. Logline that states the real subject
+3. Setting, narrator or host (name and role), and the real issue or question. Do NOT invent a protagonist fatal flaw or a fictional antagonist.
+4. Synopsis covering how the stated subject unfolds across the installments
+5. Narrators, real subjects, and locations. Do not invent a fictional cast.`
+}
+
+export function seriesBibleSchemaBlock(format: string): string {
+  const mapping = getSeriesFormatMapping(format)
+  if (!mapping.nonFiction) {
+    return `{
+  "title": "Series Title",
+  "logline": "Hook that sells the series",
+  "genre": "Genre",
+  "productionBible": {
+    "logline": "Hook",
+    "synopsis": "Full series arc synopsis...",
+    "setting": "Where and when",
+    "timeframe": "Time period",
+    "protagonist": {"characterId": "char_1", "name": "Name", "goal": "What they want", "flaw": "Fatal flaw"},
+    "antagonistConflict": {"type": "character|nature|society|self|technology", "description": "Central conflict", "characterId": "char_2"},
+    "characters": [
+      {"id": "char_1", "name": "Name", "role": "protagonist", "description": "Character arc", "appearance": "Visual look", "personality": "Traits"},
+      {"id": "char_2", "name": "Name", "role": "antagonist", "description": "Motivation", "appearance": "Look", "personality": "Traits"}
+    ],
+    "locations": [
+      {"id": "loc_1", "name": "Name", "description": "Significance", "visualDescription": "Visual style"}
+    ],
+    "toneGuidelines": "Emotional tone and style",
+    "visualGuidelines": "Cinematography and visual approach",
+    "seriesArcs": ["Main arc description", "Subplot arc description"]
+  },
+  "episodeBlueprints": []
+}`
+  }
+
+  return `{
+  "title": "Series Title",
+  "logline": "What this non-fiction series is about",
+  "genre": "Genre",
+  "productionBible": {
+    "logline": "The stated subject",
+    "synopsis": "How the subject unfolds across the installments...",
+    "setting": "Where and when the subject takes place",
+    "timeframe": "Time period",
+    "protagonist": {"characterId": "char_1", "name": "Narrator or host", "goal": "What they present", "flaw": "Real obstacle only. Do not invent a fatal flaw."},
+    "antagonistConflict": {"type": "society|nature|issue", "description": "The real issue or question. Not a fictional antagonist."},
+    "characters": [
+      {"id": "char_1", "name": "Name", "role": "narrator", "description": "How they present the subject", "appearance": "Visual look", "personality": "On-screen manner"}
+    ],
+    "locations": [
+      {"id": "loc_1", "name": "Name", "description": "Why this place matters to the subject", "visualDescription": "What the illustration should show"}
+    ],
+    "toneGuidelines": "Editorial tone",
+    "visualGuidelines": "How illustrations depict the events being narrated",
+    "seriesArcs": ["How understanding of the subject develops"]
+  },
+  "episodeBlueprints": []
+}`
 }
 
 export function buildEpisodeBatchPrompt(input: EpisodeBatchPromptInput): string {

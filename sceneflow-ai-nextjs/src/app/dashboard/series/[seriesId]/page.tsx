@@ -67,7 +67,10 @@ import {
 import { SeriesSynopsisIdeation } from '@/components/series/SeriesSynopsisIdeation'
 import { createAudienceDefinition, type AudienceDefinition } from '@/lib/types/audienceResonance'
 import type { SeriesSynopsisLock } from '@/lib/series/clarifySynopsis'
-import { NEW_SERIES_EPISODE_COUNT } from '@/config/series/productionFormats'
+import {
+  DEFAULT_SERIES_PRODUCTION_FORMAT,
+  NEW_SERIES_EPISODE_COUNT,
+} from '@/config/series/productionFormats'
 import { readSeriesIdeationSeed, resolveSeriesStudioEntry } from '@/lib/series/seriesIdeation'
 import { DEFAULT_ART_STYLE } from '@/lib/treatment/blueprintFoundation'
 import { resolveContentIntentFromMetadata } from '@/lib/content/contentIntent'
@@ -163,7 +166,7 @@ export default function SeriesStudioPage() {
   })
   const [isAddingEpisodes, setIsAddingEpisodes] = useState(false)
   const [episodeCount, setEpisodeCount] = useState(NEW_SERIES_EPISODE_COUNT)
-  const [format, setFormat] = useState('narrative')
+  const [format, setFormat] = useState(DEFAULT_SERIES_PRODUCTION_FORMAT)
   const [artStyle, setArtStyle] = useState(DEFAULT_ART_STYLE)
   const [audienceDef, setAudienceDef] = useState<AudienceDefinition>(() =>
     createAudienceDefinition({ description: '', source: 'series' })
