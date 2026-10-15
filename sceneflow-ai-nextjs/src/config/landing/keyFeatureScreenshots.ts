@@ -12,7 +12,7 @@
  * at 5120×5648. Series Audience Resonance is a lossless WebP at 5120×6008.
  * Series Director is a lossless WebP at 5120×2805.
  * Direct this episode is a lossless WebP at 5120×4407.
- * Start the episode is a lossless WebP at 1906×1136.
+ * Start the episode is a lossless WebP at 1534×2425.
  */
 
 export const NEW_SERIES_SCREENSHOT_WEBM =
@@ -31,7 +31,7 @@ export const DIRECT_EPISODE_SCREENSHOT_WEBP =
   '/landing/key-features/screenshots/episode-director.webp'
 
 export const START_EPISODE_SCREENSHOT_WEBP =
-  '/landing/key-features/screenshots/series-start-project.webp'
+  '/landing/key-features/screenshots/series-start-project.webp?v=20261015'
 
 export type KeyFeatureScreenshot = {
   webmUrl?: string
