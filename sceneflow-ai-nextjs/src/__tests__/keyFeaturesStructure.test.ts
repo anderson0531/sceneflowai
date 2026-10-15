@@ -7,7 +7,8 @@ import {
   FEATURE_ROOM_FILM_MAX_SECONDS,
   FEATURE_ROOM_FILM_MIN_SECONDS,
   FEATURE_ROOM_IDS,
-  SERIES_OVERVIEW_EN_MP4,
+  SERIES_ROOM_OVERVIEW_MP4,
+  SERIES_ROOM_OVERVIEW_WEBM,
   featureRoomHasVideo,
   featureRoomVideoSources,
   getFeatureRoomMedia,
@@ -182,10 +183,11 @@ describe('keyFeatures structure', () => {
       if (roomId === 'series-desk') {
         const english = locales.find((locale) => locale.id === 'en')
         expect(english?.available).toBe(true)
-        expect(english?.src).toBe(SERIES_OVERVIEW_EN_MP4)
+        expect(english?.src).toBe(SERIES_ROOM_OVERVIEW_MP4)
         expect(featureRoomHasVideo(getFeatureRoomMedia(roomId, 'en'))).toBe(true)
         expect(featureRoomVideoSources(roomId, 'en')).toEqual([
-          { src: SERIES_OVERVIEW_EN_MP4, type: 'video/mp4' },
+          { src: SERIES_ROOM_OVERVIEW_WEBM, type: 'video/webm' },
+          { src: SERIES_ROOM_OVERVIEW_MP4, type: 'video/mp4' },
         ])
         expect(locales.filter((locale) => locale.id !== 'en').every((locale) => !locale.available)).toBe(
           true
@@ -305,8 +307,8 @@ describe('keyFeatures structure', () => {
     expect(overview).toContain('IntersectionObserver')
     expect(overview).toContain('useReducedMotion')
     expect(overview).toContain('comingSoonLabel')
-    expect(overview).toContain('useLandingVideoLocale')
-    expect(overview).toContain('VideoLanguageControl')
-    expect(overview).toContain('soonLabel')
+    expect(overview).not.toContain('useLandingVideoLocale')
+    expect(overview).not.toContain('VideoLanguageControl')
+    expect(overview).not.toContain('soonLabel')
   })
 })

@@ -1,18 +1,14 @@
 'use client'
 
-import { useEffect, useMemo, useState, useRef } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { Maximize, Minimize, Pause, Play, Volume2, VolumeX } from 'lucide-react'
-import { VideoLanguageControl } from '@/components/landing/VideoLanguagePicker'
 import { cn } from '@/lib/utils'
 import { useReducedMotion } from '@/hooks/useReducedMotion'
-import { useLandingVideoLocale } from '@/i18n/useLandingVideoLocale'
 import {
   FEATURE_ROOM_COLD_OPEN_SECONDS,
   featureRoomHasVideo,
   getFeatureRoomMedia,
-  getFeatureRoomVideoLocales,
 } from '@/config/landing/featureRoomMedia'
-import type { VideoLocaleId } from '@/config/landing/videoLocales'
 
 type FullscreenVideo = HTMLVideoElement & {
   webkitEnterFullscreen?: () => void
@@ -42,7 +38,6 @@ type FeatureRoomOverviewProps = {
   title: string
   promise: string
   comingSoonLabel: string
-  soonLabel: string
   pauseLabel: string
   playLabel: string
   muteLabel: string
@@ -58,7 +53,6 @@ export function FeatureRoomOverview({
   title,
   promise,
   comingSoonLabel,
-  soonLabel,
   pauseLabel,
   playLabel,
   muteLabel,
@@ -68,15 +62,9 @@ export function FeatureRoomOverview({
   watchLongformHref,
   watchLongformLabel,
 }: FeatureRoomOverviewProps) {
-  const videoLocales = useMemo(() => getFeatureRoomVideoLocales(roomId), [roomId])
-  const pageLocaleId = useLandingVideoLocale()
-  const playerLocaleId = useLandingVideoLocale(videoLocales)
-  const anyAvailable = videoLocales.some((locale) => locale.available)
-  const syncedLocaleId = anyAvailable ? playerLocaleId : pageLocaleId
   const prefersReducedMotion = useReducedMotion()
   const bandRef = useRef<HTMLDivElement>(null)
   const videoRef = useRef<HTMLVideoElement>(null)
-  const [activeLocaleId, setActiveLocaleId] = useState<VideoLocaleId>(syncedLocaleId)
   const [inView, setInView] = useState(false)
   const [pausedByUser, setPausedByUser] = useState(false)
   const [isPlaying, setIsPlaying] = useState(false)
@@ -84,12 +72,8 @@ export function FeatureRoomOverview({
   const [isFullscreen, setIsFullscreen] = useState(false)
   const [filmEngaged, setFilmEngaged] = useState(false)
 
-  const media = getFeatureRoomMedia(roomId, activeLocaleId)
+  const media = getFeatureRoomMedia(roomId)
   const hasVideo = featureRoomHasVideo(media)
-
-  useEffect(() => {
-    setActiveLocaleId(syncedLocaleId)
-  }, [syncedLocaleId])
 
   useEffect(() => {
     setPausedByUser(false)
@@ -114,7 +98,7 @@ export function FeatureRoomOverview({
       video?.removeEventListener('webkitbeginfullscreen', syncFullscreen)
       video?.removeEventListener('webkitendfullscreen', syncFullscreen)
     }
-  }, [hasVideo, activeLocaleId, roomId])
+  }, [hasVideo, roomId, media.webmUrl, media.mp4Url])
 
   useEffect(() => {
     if (hasVideo) return
@@ -154,7 +138,6 @@ export function FeatureRoomOverview({
     prefersReducedMotion,
     filmEngaged,
     isFullscreen,
-    activeLocaleId,
     media.webmUrl,
     media.mp4Url,
   ])
@@ -229,13 +212,6 @@ export function FeatureRoomOverview({
     }
   }
 
-  const selectLocale = (id: VideoLocaleId) => {
-    const entry = videoLocales.find((locale) => locale.id === id)
-    if (!entry?.available) return
-    setActiveLocaleId(id)
-    setPausedByUser(false)
-  }
-
   return (
     <div
       ref={bandRef}
@@ -246,7 +222,7 @@ export function FeatureRoomOverview({
     >
       {hasVideo ? (
         <video
-          key={`${roomId}-${activeLocaleId}`}
+          key={`${roomId}:${media.webmUrl}:${media.mp4Url}`}
           ref={videoRef}
           poster={media.posterUrl || undefined}
           autoPlay={!prefersReducedMotion && !filmEngaged}
@@ -338,14 +314,6 @@ export function FeatureRoomOverview({
           ) : null}
         </div>
       </div>
-      <VideoLanguageControl
-        locales={videoLocales}
-        activeLocaleId={activeLocaleId}
-        onSelect={selectLocale}
-        soonLabel={soonLabel}
-        variant="overlay"
-        align="start"
-      />
     </div>
   )
 }
