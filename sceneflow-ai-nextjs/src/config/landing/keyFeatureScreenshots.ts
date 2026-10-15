@@ -12,6 +12,7 @@
  * at 5120×5648. Series Audience Resonance is a lossless WebP at 5120×6008.
  * Series Director is a lossless WebP at 5120×2805.
  * Direct this episode is a lossless WebP at 5120×4407.
+ * Start the episode is a lossless WebP at 1906×1136.
  */
 
 export const NEW_SERIES_SCREENSHOT_WEBM =
@@ -29,6 +30,9 @@ export const SERIES_DIRECTOR_SCREENSHOT_WEBP =
 export const DIRECT_EPISODE_SCREENSHOT_WEBP =
   '/landing/key-features/screenshots/episode-director.webp'
 
+export const START_EPISODE_SCREENSHOT_WEBP =
+  '/landing/key-features/screenshots/series-start-project.webp'
+
 export type KeyFeatureScreenshot = {
   webmUrl?: string
   imageUrl?: string
@@ -40,6 +44,7 @@ const KEY_FEATURE_SCREENSHOTS: Record<string, KeyFeatureScreenshot> = {
   seriesResonance: { imageUrl: SERIES_RESONANCE_SCREENSHOT_WEBP },
   seriesDirector: { imageUrl: SERIES_DIRECTOR_SCREENSHOT_WEBP },
   directEpisode: { imageUrl: DIRECT_EPISODE_SCREENSHOT_WEBP },
+  startEpisode: { imageUrl: START_EPISODE_SCREENSHOT_WEBP },
 }
 
 export function getKeyFeatureScreenshot(icon: string): KeyFeatureScreenshot | null {

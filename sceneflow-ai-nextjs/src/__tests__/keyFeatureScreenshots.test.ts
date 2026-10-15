@@ -4,6 +4,7 @@ import { describe, expect, it } from 'vitest'
 import {
   DIRECT_EPISODE_SCREENSHOT_WEBP,
   NEW_SERIES_SCREENSHOT_WEBM,
+  START_EPISODE_SCREENSHOT_WEBP,
   SERIES_DIRECTOR_SCREENSHOT_WEBP,
   SERIES_RESONANCE_SCREENSHOT_WEBP,
   SERIES_REVIEW_SCREENSHOT_WEBP,
@@ -36,6 +37,12 @@ describe('key feature screenshots', () => {
     expect(keyFeatureScreenshotSrc(getKeyFeatureScreenshot('directEpisode')!)).toBe(
       DIRECT_EPISODE_SCREENSHOT_WEBP
     )
+    expect(getKeyFeatureScreenshot('startEpisode')).toEqual({
+      imageUrl: START_EPISODE_SCREENSHOT_WEBP,
+    })
+    expect(keyFeatureScreenshotSrc(getKeyFeatureScreenshot('startEpisode')!)).toBe(
+      START_EPISODE_SCREENSHOT_WEBP
+    )
     expect(NEW_SERIES_SCREENSHOT_WEBM).toBe(
       '/landing/key-features/screenshots/new-series.webm'
     )
@@ -50,6 +57,9 @@ describe('key feature screenshots', () => {
     )
     expect(DIRECT_EPISODE_SCREENSHOT_WEBP).toBe(
       '/landing/key-features/screenshots/episode-director.webp'
+    )
+    expect(START_EPISODE_SCREENSHOT_WEBP).toBe(
+      '/landing/key-features/screenshots/series-start-project.webp'
     )
 
     const webm = readFileSync(path.join(ROOT, 'public', NEW_SERIES_SCREENSHOT_WEBM))
@@ -67,6 +77,12 @@ describe('key feature screenshots', () => {
       expect(webp.subarray(8, 12).toString('ascii')).toBe('WEBP')
       expect(webp.length).toBeGreaterThan(200_000)
     }
+
+    const startEpisode = readFileSync(path.join(ROOT, 'public', START_EPISODE_SCREENSHOT_WEBP))
+    expect(startEpisode.subarray(0, 4).toString('ascii')).toBe('RIFF')
+    expect(startEpisode.subarray(8, 12).toString('ascii')).toBe('WEBP')
+    expect(startEpisode.subarray(12, 16).toString('ascii')).toBe('VP8L')
+    expect(startEpisode.length).toBeGreaterThan(50_000)
   })
 
   it('gives the still a fullscreen control and keeps other cards on the placeholder', () => {
