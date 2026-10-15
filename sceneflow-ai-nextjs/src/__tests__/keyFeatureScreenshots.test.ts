@@ -107,6 +107,7 @@ describe('key feature screenshots', () => {
     expect(frameUse).toContain('{learnMore}')
     expect(frameUse).toContain('bg-black/50')
     expect(frameUse).not.toContain('bg-slate-900/40')
+    expect(frameUse).toContain("feature.icon === 'startEpisode' ? 'contain' : 'cover'")
 
     expect(frame).toContain('type="video/webm"')
     expect(frame).toContain('<img')
@@ -114,6 +115,8 @@ describe('key feature screenshots', () => {
     expect(frame).toContain('min-h-[70vh]')
     expect(frame).toContain('justify-start')
     expect(frame).toContain('object-cover object-center')
+    expect(frame).toContain("fit === 'contain'")
+    expect(frame).toContain('block h-auto w-full')
     expect(frame).not.toContain('bg-black/40')
     expect(frame).toContain('bg-gradient-to-b from-black/70 via-black/30 to-transparent')
     expect(frame).toContain('object-contain object-center')

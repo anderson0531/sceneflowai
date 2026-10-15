@@ -376,6 +376,7 @@ function ScreenshotFeatureBlock({
     <FeatureScreenshotFrame
       src={src}
       label={feature.title}
+      fit={feature.icon === 'startEpisode' ? 'contain' : 'cover'}
       enterFullscreenLabel={enterFullscreenLabel}
       exitFullscreenLabel={exitFullscreenLabel}
     >

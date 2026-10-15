@@ -27,11 +27,15 @@ function exitNativeVideoFullscreen(video: HTMLVideoElement) {
   if (element.webkitDisplayingFullscreen) element.webkitExitFullscreen?.()
 }
 
+type FeatureScreenshotFit = 'cover' | 'contain'
+
 type FeatureScreenshotFrameProps = {
   src: string
   label: string
   enterFullscreenLabel: string
   exitFullscreenLabel: string
+  /** Cover fills a 70vh block and center-crops. Contain shows the whole still at section width. */
+  fit?: FeatureScreenshotFit
   children: ReactNode
 }
 
@@ -49,6 +53,7 @@ export function FeatureScreenshotFrame({
   label,
   enterFullscreenLabel,
   exitFullscreenLabel,
+  fit = 'cover',
   children,
 }: FeatureScreenshotFrameProps) {
   const frameRef = useRef<HTMLDivElement>(null)
@@ -101,18 +106,23 @@ export function FeatureScreenshotFrame({
     if (video) enterNativeVideoFullscreen(video)
   }
 
+  const contain = fit === 'contain' && !isFullscreen
   const mediaClass = cn(
-    'absolute inset-0 z-0 h-full w-full bg-black',
-    isFullscreen ? 'object-contain object-center' : 'object-cover object-center'
+    'z-0 bg-black',
+    isFullscreen
+      ? 'absolute inset-0 h-full w-full object-contain object-center'
+      : contain
+        ? 'block h-auto w-full'
+        : 'absolute inset-0 h-full w-full object-cover object-center'
   )
 
   return (
-    <div className="relative min-h-[70vh] overflow-hidden">
+    <div className={cn('relative overflow-hidden', !contain && 'min-h-[70vh]')}>
       <div
         ref={frameRef}
         className={cn(
           'bg-black',
-          isFullscreen ? 'relative h-full w-full' : 'absolute inset-0'
+          isFullscreen ? 'relative h-full w-full' : contain ? 'relative w-full' : 'absolute inset-0'
         )}
       >
         {image ? (
@@ -160,8 +170,9 @@ export function FeatureScreenshotFrame({
       </div>
       <div
         className={cn(
-          'pointer-events-none relative z-10 flex min-h-[70vh] flex-col justify-start p-5 sm:p-6',
-          isFullscreen && 'hidden'
+          'pointer-events-none z-10 flex flex-col justify-start p-5 sm:p-6',
+          isFullscreen && 'hidden',
+          contain ? 'absolute inset-x-0 top-0' : 'relative min-h-[70vh]'
         )}
       >
         {children}
