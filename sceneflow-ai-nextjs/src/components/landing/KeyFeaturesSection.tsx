@@ -376,7 +376,7 @@ function ScreenshotFeatureBlock({
       enterFullscreenLabel={enterFullscreenLabel}
       exitFullscreenLabel={exitFullscreenLabel}
     >
-      <div className="pointer-events-auto max-w-3xl pe-36">
+      <div className="pointer-events-auto max-w-3xl rounded-2xl bg-black/50 p-4 pe-36 sm:p-5 sm:pe-36">
         <h3 className="mb-2 text-lg font-semibold text-white">{feature.title}</h3>
         <p className="text-sm leading-relaxed text-gray-100">{feature.description}</p>
         {learnMore}

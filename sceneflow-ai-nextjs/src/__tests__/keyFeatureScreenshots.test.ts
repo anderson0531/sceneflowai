@@ -40,6 +40,7 @@ describe('key feature screenshots', () => {
     const frameUse = section.slice(frameUseStart, section.indexOf('</FeatureScreenshotFrame>'))
     expect(frameUse).toContain('{feature.description}')
     expect(frameUse).toContain('{learnMore}')
+    expect(frameUse).toContain('bg-black/50')
     expect(frameUse).not.toContain('bg-slate-900/40')
 
     expect(frame).toContain('type="video/webm"')
