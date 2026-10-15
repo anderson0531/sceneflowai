@@ -76,7 +76,7 @@ import { DEFAULT_ART_STYLE } from '@/lib/treatment/blueprintFoundation'
 import { resolveContentIntentFromMetadata } from '@/lib/content/contentIntent'
 import { SeriesResonancePanel } from '@/components/series/SeriesResonancePanel'
 import { SeriesReferenceLibraryPanel } from '@/components/series/SeriesReferenceLibraryPanel'
-import { ReferenceTransferDialog } from '@/components/series/ReferenceTransferDialog'
+import { resolveFeaturedCharacter } from '@/lib/series/featuredCharacter'
 import { SeriesHeroHealthStrip } from '@/components/series/SeriesHeroHealthStrip'
 import { SeriesContinuityPanel } from '@/components/series/SeriesContinuityPanel'
 import { getEpisodeDriftWarnings, UPDATE_EPISODE_CAST_INSTRUCTION } from '@/lib/series/seriesHealth'
@@ -222,11 +222,6 @@ export default function SeriesStudioPage() {
   // Track if we've auto-opened the dialog in this session to prevent loops
   const [hasAutoOpened, setHasAutoOpened] = useState(false)
   const autoGenerateStarted = useRef(false)
-
-  const [postStartImport, setPostStartImport] = useState<{
-    projectId: string
-    projectTitle: string
-  } | null>(null)
 
   const episodeProjects = useMemo(
     () =>
@@ -442,10 +437,7 @@ export default function SeriesStudioPage() {
       console.log(`[DEBUG_START_PROJECT] Success. Project ID: ${result.project.id}`);
       toast.success(`Started Episode ${result.episode.episodeNumber}`, { id: 'start-ep' })
       await refreshSeries()
-      setPostStartImport({
-        projectId: result.project.id,
-        projectTitle: `Episode ${result.episode.episodeNumber}: ${result.episode.title || 'Untitled'}`,
-      })
+      window.location.href = `/dashboard/studio/${result.project.id}?primeBlueprint=true`
     } catch (err) {
       console.error(`[DEBUG_START_PROJECT] Error starting episode:`, err);
       toast.error(err instanceof Error ? err.message : 'Failed to start episode', { id: 'start-ep' })
@@ -1282,33 +1274,6 @@ export default function SeriesStudioPage() {
         </DialogContent>
       </Dialog>
 
-      {postStartImport && series ? (
-        <ReferenceTransferDialog
-          open
-          onOpenChange={(open) => {
-            if (!open) {
-              window.location.href = `/dashboard/studio/${postStartImport.projectId}?primeBlueprint=true`
-              setPostStartImport(null)
-            }
-          }}
-          seriesId={series.id}
-          projectId={postStartImport.projectId}
-          seriesTitle={series.title}
-          projectTitle={postStartImport.projectTitle}
-          initialDirection="series_to_project"
-          lockDirection
-          condensed
-          condensedTitle="Import series reference library into this episode?"
-          onComplete={() => {
-            window.location.href = `/dashboard/studio/${postStartImport.projectId}?primeBlueprint=true`
-            setPostStartImport(null)
-          }}
-          onSkip={() => {
-            window.location.href = `/dashboard/studio/${postStartImport.projectId}?primeBlueprint=true`
-            setPostStartImport(null)
-          }}
-        />
-      ) : null}
     </div>
   )
 }
@@ -2179,15 +2144,22 @@ function EpisodesPanel({
             {selectedEpisode.characters?.length > 0 && (
               <div>
                 <h4 className="text-sm font-medium text-gray-400 mb-3">Featured Characters</h4>
-                <div className="flex flex-wrap gap-2">
-                  {selectedEpisode.characters.map((char, i) => (
-                    <span
-                      key={i}
-                      className="text-xs px-3 py-1.5 bg-gray-700 rounded-full text-gray-300"
-                    >
-                      {char.characterId} ({char.role})
-                    </span>
-                  ))}
+                <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                  {selectedEpisode.characters.map((char, i) => {
+                    const featured = resolveFeaturedCharacter(char, bible?.characters)
+                    return (
+                      <div
+                        key={char.characterId || i}
+                        className="rounded-lg border border-gray-700 bg-gray-800/80 px-3 py-2"
+                      >
+                        <p className="text-sm font-medium text-white">{featured.name}</p>
+                        <p className="text-xs capitalize text-amber-200/80">{featured.role}</p>
+                        {featured.description ? (
+                          <p className="mt-1 text-xs leading-relaxed text-gray-400">{featured.description}</p>
+                        ) : null}
+                      </div>
+                    )
+                  })}
                 </div>
               </div>
             )}

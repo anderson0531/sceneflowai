@@ -48,6 +48,7 @@ import {
   resolveVariantArtStyle,
   resolveVariantAspectRatio,
 } from '@/lib/treatment/blueprintFoundation'
+import { resolveRequiredBlueprintFields } from '@/lib/blueprint/regenerateDefaults'
 
 // =============================================================================
 // TYPES & CONSTANTS
@@ -84,6 +85,13 @@ type Props = {
   initialIdea?: IdeationConcept // Pre-populated from Ideation
   projectId?: string
   focusField?: 'artStyle' | 'aspectRatio'
+  /** Series or project values used when the existing Blueprint left a required field empty. */
+  fallback?: {
+    synopsis?: string
+    genre?: string
+    tone?: string
+    contentIntent?: ContentIntent
+  }
 }
 
 // Content type maps directly to ContentIntent and is the master switch that
@@ -127,6 +135,7 @@ export function BlueprintReimaginDialog({
   initialIdea,
   projectId,
   focusField,
+  fallback,
 }: Props) {
   const t = useTranslations('blueprint.reimagine')
   const tc = useTranslations('common')
@@ -176,13 +185,22 @@ export function BlueprintReimaginDialog({
 
   useEffect(() => {
     if (existingVariant) {
-      setSynopsis(existingVariant.synopsis || existingVariant.content || '')
-      setGenre(existingVariant.genre || '')
-      setTone(existingVariant.tone_description || existingVariant.tone || '')
-      setContentType(
-        (existingVariant.contentIntent as ContentIntent | undefined) ||
-          resolveContentIntent(existingVariant.genre)
-      )
+      const required = resolveRequiredBlueprintFields({
+        synopsis: existingVariant.synopsis || existingVariant.content || '',
+        logline: existingVariant.logline,
+        genre: existingVariant.genre,
+        tone: existingVariant.tone,
+        toneDescription: existingVariant.tone_description,
+        contentIntent: existingVariant.contentIntent,
+        fallbackSynopsis: fallback?.synopsis,
+        fallbackGenre: fallback?.genre,
+        fallbackTone: fallback?.tone,
+        fallbackIntent: fallback?.contentIntent,
+      })
+      setSynopsis(required.synopsis)
+      setGenre(required.genre)
+      setTone(required.tone)
+      setContentType(required.contentIntent)
       setArtStyle(resolveVariantArtStyle(existingVariant))
       setAspectRatio(resolveVariantAspectRatio(existingVariant))
       setDuration(existingVariant.duration || 'auto')
@@ -206,7 +224,15 @@ export function BlueprintReimaginDialog({
       if (initialIdea.genre) setContentType(resolveContentIntent(initialIdea.genre))
       setIdeationSession((session) => session + 1)
     }
-  }, [existingVariant, initialIdea, open])
+  }, [
+    existingVariant,
+    initialIdea,
+    open,
+    fallback?.synopsis,
+    fallback?.genre,
+    fallback?.tone,
+    fallback?.contentIntent,
+  ])
 
   const scopeLabel = SCOPE_OPTIONS.find((option) => option.value === duration)?.label
 

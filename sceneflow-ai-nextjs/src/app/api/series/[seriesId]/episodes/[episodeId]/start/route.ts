@@ -7,6 +7,10 @@ import { resolveUser } from '@/lib/userHelper'
 import { resolveContentIntentFromMetadata } from '@/lib/content/contentIntent'
 import { createAudienceDefinition } from '@/lib/types/audienceResonance'
 import { resolveSeriesArtStyle } from '@/lib/series/seriesIdeation'
+import {
+  buildEpisodeBlueprintBrief,
+  resolveSeriesTone,
+} from '@/lib/series/episodeBlueprintBrief'
 import { getArtStylePresetName } from '@/lib/treatment/blueprintFoundation'
 import { v4 as uuidv4 } from 'uuid'
 
@@ -80,7 +84,8 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     const { locationReferences, objectReferences } = buildVisionPhaseReferences(bible)
     
     // Build Blueprint prime input from series data for auto-generation
-    const blueprintPrimeInput = buildBlueprintPrimeInput(episode, bible, series)
+    const blueprintPrimeInput = buildEpisodeBlueprintBrief(episode, bible, series)
+    const seriesTone = resolveSeriesTone(bible)
     console.log(`[${timestamp}] [DEBUG_START_PROJECT] Built prime input (len: ${blueprintPrimeInput.length}):`, blueprintPrimeInput.substring(0, 100).replace(/\n/g, ' '));
 
     // Inherit the shared audience definition from the series so every episode
@@ -123,6 +128,8 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
         episodeId,
         episodeNumber: episode.episodeNumber,
         format: series.metadata?.format || 'narrative',
+        genre: series.genre || undefined,
+        tone: seriesTone,
         artStyle: seriesArtStyle,
         contentIntent: resolveContentIntentFromMetadata({
           format: series.metadata?.format,
@@ -308,159 +315,3 @@ function buildVisionPhaseCharacters(episode: any, bible: any) {
     })
 }
 
-/**
- * Build Blueprint prime input from series data for auto-generation in Studio
- * Combines: Series overview, episode details, characters, locations, and visual style
- */
-function buildBlueprintPrimeInput(episode: any, bible: any, series: any): string {
-  const lines: string[] = []
-  
-  // Series and Episode header
-  lines.push(`Series: ${series.title}`)
-  lines.push(`Episode ${episode.episodeNumber}: ${episode.title}`)
-  lines.push('')
-  
-  // Episode logline and synopsis
-  if (episode.logline) {
-    lines.push(`Logline: ${episode.logline}`)
-  }
-  if (episode.synopsis) {
-    lines.push('')
-    lines.push(`Synopsis: ${episode.synopsis}`)
-  }
-  lines.push('')
-  
-  // Setting from reference library (bible.setting is a string in the canonical type)
-  if (typeof bible.setting === 'string' && bible.setting.trim()) {
-    lines.push('Setting:')
-    lines.push(bible.setting.trim())
-    if (bible.timeframe) {
-      lines.push(`Time Period: ${bible.timeframe}`)
-    }
-    lines.push('')
-  }
-  
-  // Protagonist from reference library
-  if (bible.protagonist?.name || bible.protagonist?.goal) {
-    lines.push('Protagonist:')
-    if (bible.protagonist.name) {
-      lines.push(`${bible.protagonist.name}`)
-    }
-    if (bible.protagonist.goal) {
-      lines.push(`Goal: ${bible.protagonist.goal}`)
-    }
-    lines.push('')
-  }
-  
-  // Antagonist/Conflict from reference library
-  if (bible.antagonistConflict?.description) {
-    lines.push('Antagonist/Conflict:')
-    lines.push(bible.antagonistConflict.description)
-    if (bible.antagonistConflict.type) {
-      lines.push(`Type: ${bible.antagonistConflict.type}`)
-    }
-    lines.push('')
-  }
-  
-  // Characters from reference library (those appearing in this episode)
-  const episodeCharacterIds = (episode.characters || []).map((ec: any) => ec.characterId)
-  const episodeCharacters = (bible.characters || []).filter((char: any) => 
-    episodeCharacterIds.includes(char.id)
-  )
-  
-  if (episodeCharacters.length > 0) {
-    lines.push('Characters in this episode:')
-    episodeCharacters.forEach((char: any) => {
-      const episodeChar = episode.characters?.find((ec: any) => ec.characterId === char.id)
-      const role = episodeChar?.role || char.role || 'supporting'
-      lines.push(`- ${char.name} (${role}): ${char.description || 'No description'}`)
-      if (episodeChar?.episodeArc) {
-        lines.push(`  Episode arc: ${episodeChar.episodeArc}`)
-      }
-    })
-    lines.push('')
-  }
-  
-  // Locations from reference library
-  if (bible.locations?.length > 0) {
-    lines.push('Locations:')
-    bible.locations.forEach((loc: any) => {
-      lines.push(`- ${loc.name}: ${loc.description || 'No description'}`)
-    })
-    lines.push('')
-  }
-  
-  lines.push('Visual Style:')
-  lines.push(`Art style: ${getArtStylePresetName(resolveSeriesArtStyle({
-    metadata: series?.metadata,
-    productionBible: bible,
-  }))}`)
-  if (bible.aesthetic) {
-    if (bible.aesthetic.visualStyle) {
-      lines.push(`Style: ${bible.aesthetic.visualStyle}`)
-    }
-    if (bible.aesthetic.mood) {
-      lines.push(`Mood: ${bible.aesthetic.mood}`)
-    }
-    if (bible.aesthetic.colorPalette) {
-      lines.push(`Color Palette: ${bible.aesthetic.colorPalette}`)
-    }
-    if (bible.aesthetic.lightingStyle) {
-      lines.push(`Lighting: ${bible.aesthetic.lightingStyle}`)
-    }
-  }
-  lines.push('')
-  
-  // Episode beats if available (gives structure hints)
-  if (episode.beats?.length > 0) {
-    lines.push('Story Beats:')
-    episode.beats.forEach((beat: any) => {
-      lines.push(`Act ${beat.act}, Beat ${beat.beatNumber}: ${beat.title}`)
-      if (beat.description) {
-        lines.push(`  ${beat.description}`)
-      }
-    })
-    lines.push('')
-  }
-  
-  // Continuity from previous episodes (from reference library)
-  const episodeSummaries = bible.episodeSummaries || []
-  const previousSummaries = episodeSummaries.filter((s: any) => s.episodeNumber < episode.episodeNumber)
-  if (previousSummaries.length > 0) {
-    lines.push('Continuity from previous episodes:')
-    previousSummaries.forEach((s: any) => {
-      lines.push(`- Ep ${s.episodeNumber} "${s.title}": ${s.summary}`)
-    })
-    lines.push('')
-  }
-  
-  // Active story threads
-  const activeThreads = (bible.storyThreads || []).filter((t: any) => t.status !== 'resolved')
-  if (activeThreads.length > 0) {
-    lines.push('Active story threads to continue:')
-    activeThreads.forEach((t: any) => {
-      lines.push(`- ${t.name} (${t.type}, ${t.status}): ${t.description || ''}`)
-    })
-    lines.push('')
-  }
-  
-  // Key events / canon constraints
-  const keyEvents = (bible.keyEvents || []).filter((e: any) => e.episodeNumber < episode.episodeNumber)
-  if (keyEvents.length > 0) {
-    lines.push('Key canon events (do not contradict):')
-    keyEvents.forEach((e: any) => {
-      lines.push(`- [Ep ${e.episodeNumber}] ${e.type}: ${e.description}${e.irreversible ? ' (IRREVERSIBLE)' : ''}`)
-    })
-    lines.push('')
-  }
-  
-  // Unresolved hooks
-  if (bible.unresolvedHooks?.length > 0) {
-    lines.push('Unresolved hooks to address:')
-    bible.unresolvedHooks.forEach((hook: any) => {
-      lines.push(`- ${hook}`)
-    })
-  }
-  
-  return lines.join('\n').trim()
-}

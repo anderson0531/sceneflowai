@@ -134,6 +134,14 @@ const TREATMENT_SCHEMA_TEMPLATE = `SCHEMA - GENERATE IN THIS EXACT ORDER:
 // =============================================================================
 const CULTURAL_AUTHENTICITY_BLOCK = BLUEPRINT_CHARACTER_IDENTITY_BLOCK
 
+const SERIES_LIBRARY_IDENTITY_BLOCK = `
+CHARACTER, LOCATION, AND PROP IDENTITY — SERIES LIBRARY:
+- The series reference library is the source of characters, locations, and props.
+- Use each locked name, role, and description verbatim. Do not rename or replace them.
+- Write this episode's arc around those characters. Do not invent a parallel cast.
+- A new character, location, or prop is allowed only when it is not already in the library. Set "isNew": true and start its description with "New:".
+- Follow the consistency rules, story threads, canon events, and previous episodes in the continuity block. Do not contradict them.`
+
 const OUTPUT_RULES_BLOCK = `
 OUTPUT RULES - CRITICAL:
 1. **START YOUR JSON WITH THESE 4 REQUIRED FIELDS** (in this exact order):
@@ -251,6 +259,21 @@ Start from a long-form assumption: unless the input clearly describes something 
     ? `\n${formatSpecifics.antiFictionalizationRule}\n`
     : ''
   const schemaOverride = intent === 'fiction' ? '' : `\n${NONFICTION_SCHEMA_OVERRIDE}\n`
+  const characterIdentityBlock = seriesContinuityBlock
+    ? SERIES_LIBRARY_IDENTITY_BLOCK
+    : CULTURAL_AUTHENTICITY_BLOCK
+  const libraryRules = seriesContinuityBlock
+    ? `REFERENCE ASSET RULES:
+- The reference roster is the series library. Reuse those characters, locations, and props verbatim.
+- Do NOT rename or re-describe established assets; reference them by the same names and roles.
+- Author a new character, location, or prop ONLY when it is not in the library. Set "isNew": true and start its description with "New:".
+- Follow the consistency rules and storyline tracking in the continuity block. Do not contradict them.`
+    : referenceCatalogBlock
+      ? `REFERENCE ASSET RULES:
+- Reuse catalog characters, locations, and props verbatim when the story requires them.
+- Do NOT rename or re-describe established assets; reference them by the same names.
+- Author new character_descriptions or scene_descriptions ONLY for genuinely new assets; mark new entries clearly in description.`
+      : ''
 
   const artStyle = context?.artStyle || resolveVariantArtStyle(context || {})
   const aspectRatio = context?.aspectRatio || resolveVariantAspectRatio(context || {})
@@ -271,14 +294,11 @@ ${LONGFORM_DEPTH_BLOCK}
 ${pacingPhilosophy}
 
 ${scoringChecklist}
-${CULTURAL_AUTHENTICITY_BLOCK}
+${characterIdentityBlock}
 ${formatSpecifics.optimizationBlock}
 ${antiFictionBlock}
 
-${seriesContinuityBlock ? `\n${seriesContinuityBlock}\n` : ''}${referenceCatalogBlock ? `\n${referenceCatalogBlock}\n` : ''}${referenceCatalogBlock || seriesContinuityBlock ? `\nREFERENCE ASSET RULES:
-- Reuse catalog characters, locations, and props verbatim when the story requires them.
-- Do NOT rename or re-describe established assets; reference them by the same names.
-- Author new character_descriptions or scene_descriptions ONLY for genuinely new assets; mark new entries clearly in description.\n` : ''}
+${seriesContinuityBlock ? `\n${seriesContinuityBlock}\n` : ''}${referenceCatalogBlock ? `\n${referenceCatalogBlock}\n` : ''}${libraryRules ? `\n${libraryRules}\n` : ''}
 
 INPUT:
 ${input}

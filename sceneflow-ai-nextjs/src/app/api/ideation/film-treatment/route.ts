@@ -26,6 +26,8 @@ import {
 import { generateText } from '@/lib/vertexai/gemini'
 import { resolveStoryLocale, resolveExistingContentStoryLocale } from '@/i18n/server/storyLocale'
 import { loadContinuityContextForProject } from '@/lib/series/continuityContext'
+import { bindTreatmentToLibrary, type SeriesLibraryLock } from '@/lib/series/bindLibraryAssets'
+import { DEFAULT_BLUEPRINT_TONE } from '@/lib/blueprint/regenerateDefaults'
 import { loadProjectReferenceCatalog } from '@/lib/referenceLibrary/catalogLoader'
 import { formatReferenceCatalogForPrompt } from '@/lib/referenceLibrary/projection'
 import Project from '@/models/Project'
@@ -423,6 +425,7 @@ export async function POST(request: NextRequest) {
 
     let seriesContinuityBlock = ''
     let referenceCatalogBlock = ''
+    let lockedLibrary: SeriesLibraryLock | undefined
     if (isExistingProject && session?.user?.id && body.projectId) {
       try {
         const project = await Project.findByPk(body.projectId)
@@ -430,6 +433,7 @@ export async function POST(request: NextRequest) {
           const continuityCtx = await loadContinuityContextForProject(project)
           if (continuityCtx) {
             seriesContinuityBlock = continuityCtx.continuityPromptBlock
+            lockedLibrary = continuityCtx.lockedLibrary
           }
           const catalog = await loadProjectReferenceCatalog(body.projectId, session.user.id)
           if (
@@ -470,6 +474,7 @@ export async function POST(request: NextRequest) {
       properNouns,
       seriesContinuityBlock,
       referenceCatalogBlock,
+      lockedLibrary,
     }
 
     const variantsStartMs = Date.now()
@@ -635,7 +640,7 @@ async function generateFilmTreatment(
       visual_style: parsed.visual_style || parsed.style || getArtStylePresetName(context?.artStyle || DEFAULT_ART_STYLE),
       artStyle: context?.artStyle || DEFAULT_ART_STYLE,
       aspectRatio: context?.aspectRatio || DEFAULT_ASPECT_RATIO,
-      tone_description: parsed.tone_description || parsed.tone || 'Engaging and informative tone',
+      tone_description: parsed.tone_description || parsed.tone || context?.tone || DEFAULT_BLUEPRINT_TONE,
       target_audience: parsed.target_audience || 'General audience',
 
       // Structured
@@ -661,7 +666,7 @@ async function generateFilmTreatment(
       antagonist: parsed.antagonist,
       act_breakdown: (parsed as any).act_breakdown,
 
-      tone: parsed.tone,
+      tone: parsed.tone || context?.tone || DEFAULT_BLUEPRINT_TONE,
       style: parsed.style,
       themes: parsed.themes,
       mood_references: parsed.mood_references,
@@ -724,6 +729,9 @@ async function generateFilmTreatment(
       }
     }
     
+    const locked = context?.lockedLibrary as SeriesLibraryLock | undefined
+    const bound = locked ? bindTreatmentToLibrary(result, locked) : result
+
     console.log('[Film Treatment] narrative_reasoning fields present:', !!((parsed as any).character_focus || (parsed as any).story_strengths))
     if ((parsed as any).character_focus || (parsed as any).story_strengths) {
       console.log('[Film Treatment] narrative_reasoning data:', JSON.stringify({
@@ -734,7 +742,7 @@ async function generateFilmTreatment(
       }, null, 2))
     }
     
-    return result
+    return bound as FilmTreatmentItem
     
   } catch (parseError: any) {
     // Retry on JSON parse errors if attempts remaining

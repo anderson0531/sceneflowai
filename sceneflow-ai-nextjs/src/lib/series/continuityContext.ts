@@ -26,15 +26,17 @@ import {
   type ContentIntent,
   resolveContentIntentFromMetadata,
 } from '@/lib/content/contentIntent'
+import type { SeriesLibraryLock } from '@/lib/series/bindLibraryAssets'
 
 // Maximum tokens (approximate) to keep the continuity block within budget.
 // Full detail for the last 3 episodes, one-line summaries for older ones.
+export type SeriesContinuityResult = SeriesContinuityContext & {
+  lockedLibrary: SeriesLibraryLock
+}
+
 const MAX_RECENT_EPISODES_FULL = 3
 const MAX_KEY_EVENTS_IN_PROMPT = 30
 const MAX_STORY_THREADS_IN_PROMPT = 15
-const MAX_ROSTER_CHARS = 12
-const MAX_ROSTER_LOCATIONS = 10
-const MAX_ROSTER_PROPS = 10
 
 /**
  * Build a SeriesContinuityContext from raw series data.
@@ -57,7 +59,7 @@ export function buildContinuityContext(
   format?: string,
   genre?: string,
   referenceCatalog?: ReferenceCatalog
-): SeriesContinuityContext {
+): SeriesContinuityResult {
   const contentIntent = resolveContentIntentFromMetadata({ format, genre })
   // 1. Gather episode summaries from bible (canonical) or fall back to blueprint synopses
   const episodeSummaries = gatherEpisodeSummaries(bible, blueprints, currentEpisodeNumber)
@@ -72,11 +74,18 @@ export function buildContinuityContext(
   const characterStatuses = deriveCharacterStatuses(bible, keyEvents)
 
   // 5. Build the pre-formatted prompt block
-  const referenceRoster = buildReferenceRosterFromBible(bible, referenceCatalog)
+  const episodeCharacterIds = episodeLibraryCharacterIds(blueprints, currentEpisodeNumber)
+  const lockedLibrary = lockedLibraryFromBible(bible, episodeCharacterIds)
+  const referenceRoster = buildReferenceRosterFromBible(
+    bible,
+    referenceCatalog,
+    episodeCharacterIds
+  )
 
   const continuityPromptBlock = formatContinuityPromptBlock({
     seriesTitle,
     seriesLogline,
+    seriesSynopsis: bible.synopsis || '',
     currentEpisodeNumber,
     totalEpisodes,
     setting: bible.setting || '',
@@ -114,6 +123,7 @@ export function buildContinuityContext(
     visualGuidelines: bible.visualGuidelines,
     audioGuidelines: bible.audioGuidelines,
     continuityPromptBlock,
+    lockedLibrary,
   }
 }
 
@@ -252,34 +262,72 @@ function deriveCharacterStatuses(
   return statuses
 }
 
+function episodeLibraryCharacterIds(
+  blueprints: SeriesEpisodeBlueprint[],
+  currentEpisodeNumber: number
+): string[] {
+  const episode = blueprints.find((entry) => entry.episodeNumber === currentEpisodeNumber)
+  return (episode?.characters || []).map((character) => character.characterId).filter(Boolean)
+}
+
+function lockedLibraryFromBible(
+  bible: SeriesProductionBible,
+  episodeCharacterIds: string[]
+): SeriesLibraryLock {
+  const characters = bible.characters || []
+  const featured = episodeCharacterIds.length
+    ? characters.filter((character) => episodeCharacterIds.includes(character.id))
+    : characters
+  const cast = featured.length > 0 ? featured : characters
+  return {
+    characters: cast.map((character) => ({
+      id: character.id,
+      name: character.name,
+      role: character.role,
+      description: character.description || character.appearance || '',
+    })),
+    locations: (bible.locations || []).map((location) => ({
+      id: location.id,
+      name: location.name,
+      description: location.description || location.visualDescription || '',
+    })),
+    props: (bible.props || []).map((prop) => ({
+      id: prop.id,
+      name: prop.name,
+      description: prop.description || '',
+    })),
+  }
+}
+
 function buildReferenceRosterFromBible(
   bible: SeriesProductionBible,
-  referenceCatalog?: ReferenceCatalog
+  referenceCatalog: ReferenceCatalog | undefined,
+  episodeCharacterIds: string[]
 ): string {
-  if (referenceCatalog) {
+  const library = lockedLibraryFromBible(bible, episodeCharacterIds)
+  const hasBibleAssets =
+    library.characters.length + library.locations.length + library.props.length > 0
+  if (!hasBibleAssets && referenceCatalog) {
     return formatReferenceCatalogForPrompt(referenceCatalog, MAX_ROSTER_ENTRIES)
   }
 
-  const lines: string[] = ['REFERENCE ROSTER (reuse these established assets verbatim):']
-  let count = 0
-
-  for (const c of bible.characters || []) {
-    if (count >= MAX_ROSTER_CHARS) break
-    lines.push(`  [CHARACTER] id=${c.id} name="${c.name}" — ${(c.description || c.appearance || '').slice(0, 80)}`)
-    count++
+  const lines: string[] = [
+    'REFERENCE ROSTER (locked series library — reuse these names, roles, and descriptions verbatim):',
+  ]
+  for (const character of library.characters) {
+    lines.push(
+      `  [CHARACTER] id=${character.id} name="${character.name}" role="${character.role}" description="${character.description}"`
+    )
   }
-  for (const l of bible.locations || []) {
-    if (count >= MAX_ROSTER_CHARS + MAX_ROSTER_LOCATIONS) break
-    lines.push(`  [LOCATION] id=${l.id} name="${l.name}" — ${(l.description || l.visualDescription || '').slice(0, 80)}`)
-    count++
+  for (const location of library.locations) {
+    lines.push(
+      `  [LOCATION] id=${location.id} name="${location.name}" description="${location.description}"`
+    )
   }
-  for (const p of bible.props || []) {
-    if (count >= MAX_ROSTER_CHARS + MAX_ROSTER_LOCATIONS + MAX_ROSTER_PROPS) break
-    lines.push(`  [PROP] id=${p.id} name="${p.name}" — ${(p.description || '').slice(0, 80)}`)
-    count++
+  for (const prop of library.props) {
+    lines.push(`  [PROP] id=${prop.id} name="${prop.name}" description="${prop.description}"`)
   }
-
-  if (count === 0) return ''
+  if (lines.length === 1) return ''
   lines.push('')
   return lines.join('\n')
 }
@@ -287,6 +335,7 @@ function buildReferenceRosterFromBible(
 function formatContinuityPromptBlock(ctx: {
   seriesTitle: string
   seriesLogline: string
+  seriesSynopsis?: string
   currentEpisodeNumber: number
   totalEpisodes: number
   setting: string
@@ -319,6 +368,8 @@ function formatContinuityPromptBlock(ctx: {
 
   lines.push('=== SERIES CONTINUITY CONTEXT (MUST FOLLOW) ===')
   lines.push(`Series: "${ctx.seriesTitle}"`)
+  if (ctx.seriesLogline) lines.push(`Series logline: ${ctx.seriesLogline}`)
+  if (ctx.seriesSynopsis) lines.push(`Series synopsis: ${ctx.seriesSynopsis}`)
   lines.push(`Episode: ${ctx.currentEpisodeNumber} of ${ctx.totalEpisodes}`)
   if (ctx.setting) lines.push(`Setting: ${ctx.setting}`)
   if (ctx.protagonist?.name) {
@@ -413,6 +464,9 @@ function formatContinuityPromptBlock(ctx: {
   if (ctx.visualGuidelines) lines.push(`Visual: ${ctx.visualGuidelines}`)
   if (ctx.audioGuidelines) lines.push(`Audio: ${ctx.audioGuidelines}`)
 
+  lines.push(
+    'Follow the consistency rules, active story threads, canon events, and previous episodes. Do not contradict them.'
+  )
   lines.push('=== END SERIES CONTINUITY ===')
   lines.push('')
 
@@ -432,7 +486,7 @@ function formatContinuityPromptBlock(ctx: {
 export async function loadSeriesContinuityContext(
   seriesId: string,
   currentEpisodeNumber: number
-): Promise<SeriesContinuityContext | null> {
+): Promise<SeriesContinuityResult | null> {
   try {
     // Dynamic import to avoid bundling Sequelize models in client code
     const { Series } = await import('@/models/Series')
@@ -469,7 +523,7 @@ export async function loadSeriesContinuityContext(
  */
 export async function loadContinuityContextForProject(
   project: any
-): Promise<SeriesContinuityContext | null> {
+): Promise<SeriesContinuityResult | null> {
   const seriesId = project.series_id
   if (!seriesId) return null
 

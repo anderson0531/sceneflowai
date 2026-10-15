@@ -464,7 +464,10 @@ function SeriesCastSection({
               )}
               <div className="min-w-0 flex-1">
                 <h4 className="font-semibold text-white">{char.name}</h4>
-                <p className="text-xs text-gray-500">{char.role}</p>
+                <p className="text-xs capitalize text-amber-200/80">{char.role}</p>
+                {char.description ? (
+                  <p className="mt-1 text-sm leading-relaxed text-gray-400">{char.description}</p>
+                ) : null}
                 <AssetUsageMeta
                   usageEpisodes={getCharacterUsageEpisodes(char.id, episodeBlueprints)}
                   authorProjectId={resolveAssetAuthorProjectId(char.id, episodeBlueprints, (ep) =>
