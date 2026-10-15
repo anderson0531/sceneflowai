@@ -71,7 +71,7 @@ const EXPECTED_TITLES: Record<string, string[]> = {
     'Audience Resonance',
     'Series Director',
     'Direct this episode',
-    'Start the episode',
+    'Start the Project',
   ],
   'blueprint-board': [
     'Start the Blueprint',

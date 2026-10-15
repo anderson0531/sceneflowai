@@ -368,7 +368,7 @@
           },
           {
             "icon": "startEpisode",
-            "title": "Start the episode",
+            "title": "Start the Project",
             "description": "When an episode is ready, start its project. The outline, synopsis, and beats go with it into the Blueprint Room. The cast and the world are already known.",
             "screenshot": "Start Project — outline and cast already on the episode",
             "learnMore": {
