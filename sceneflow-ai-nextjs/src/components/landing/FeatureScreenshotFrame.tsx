@@ -40,6 +40,10 @@ function holdStill(video: HTMLVideoElement) {
   if (!video.paused) video.pause()
 }
 
+function isImageScreenshot(src: string): boolean {
+  return /\.(webp|png|jpe?g)(?:$|[?#])/i.test(src)
+}
+
 export function FeatureScreenshotFrame({
   src,
   label,
@@ -50,6 +54,7 @@ export function FeatureScreenshotFrame({
   const frameRef = useRef<HTMLDivElement>(null)
   const videoRef = useRef<HTMLVideoElement>(null)
   const [isFullscreen, setIsFullscreen] = useState(false)
+  const image = isImageScreenshot(src)
 
   useEffect(() => {
     const syncFullscreen = () => {
@@ -73,13 +78,13 @@ export function FeatureScreenshotFrame({
   const toggleFullscreen = () => {
     const frame = frameRef.current
     const video = videoRef.current
-    if (!frame || !video) return
+    if (!frame) return
 
     if (document.fullscreenElement === frame) {
       void document.exitFullscreen?.()
       return
     }
-    if (isNativeVideoFullscreen(video)) {
+    if (video && isNativeVideoFullscreen(video)) {
       exitNativeVideoFullscreen(video)
       return
     }
@@ -89,12 +94,17 @@ export function FeatureScreenshotFrame({
       (frame as FullscreenElement).webkitRequestFullscreen?.bind(frame)
     if (request) {
       void Promise.resolve(request()).catch(() => {
-        enterNativeVideoFullscreen(video)
+        if (video) enterNativeVideoFullscreen(video)
       })
       return
     }
-    enterNativeVideoFullscreen(video)
+    if (video) enterNativeVideoFullscreen(video)
   }
+
+  const mediaClass = cn(
+    'absolute inset-0 z-0 h-full w-full bg-black',
+    isFullscreen ? 'object-contain object-center' : 'object-cover object-center'
+  )
 
   return (
     <div className="relative min-h-[70vh] overflow-hidden">
@@ -105,25 +115,32 @@ export function FeatureScreenshotFrame({
           isFullscreen ? 'relative h-full w-full' : 'absolute inset-0'
         )}
       >
-        <video
-          key={src}
-          ref={videoRef}
-          className={cn(
-            'absolute inset-0 z-0 h-full w-full bg-black',
-            isFullscreen ? 'object-contain object-center' : 'object-cover object-center'
-          )}
-          autoPlay
-          muted
-          playsInline
-          preload="auto"
-          disablePictureInPicture
-          aria-label={label}
-          onLoadedData={(event) => holdStill(event.currentTarget)}
-          onPlaying={(event) => holdStill(event.currentTarget)}
-          onContextMenu={(event) => event.preventDefault()}
-        >
-          <source src={`${src}#t=0.1`} type="video/webm" />
-        </video>
+        {image ? (
+          <img
+            key={src}
+            src={src}
+            alt={label}
+            className={mediaClass}
+            onContextMenu={(event) => event.preventDefault()}
+          />
+        ) : (
+          <video
+            key={src}
+            ref={videoRef}
+            className={mediaClass}
+            autoPlay
+            muted
+            playsInline
+            preload="auto"
+            disablePictureInPicture
+            aria-label={label}
+            onLoadedData={(event) => holdStill(event.currentTarget)}
+            onPlaying={(event) => holdStill(event.currentTarget)}
+            onContextMenu={(event) => event.preventDefault()}
+          >
+            <source src={`${src}#t=0.1`} type="video/webm" />
+          </video>
+        )}
         <div
           className={cn(
             'pointer-events-none absolute inset-x-0 top-0 z-[1] h-48 bg-gradient-to-b from-black/70 via-black/30 to-transparent',
