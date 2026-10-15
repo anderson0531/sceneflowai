@@ -202,19 +202,63 @@ function FeatureDetail({
     setDemoLocaleId(syncedLocaleId)
   }, [syncedLocaleId, feature.icon])
 
-  return (
-    <div className="rounded-2xl border border-slate-800 bg-slate-900/40 p-5 sm:p-6">
-      <h3 className="text-lg font-semibold text-white mb-2">{feature.title}</h3>
-      <p className="text-gray-400 text-sm leading-relaxed">{feature.description}</p>
-
-      {screenshot ? (
-        <FeatureScreenshotFrame
-          src={screenshot.webmUrl}
-          label={feature.title}
-          enterFullscreenLabel={enterFullscreenLabel}
-          exitFullscreenLabel={exitFullscreenLabel}
+  const learnMore = feature.learnMore ? (
+    <div className="pt-4">
+      <button
+        type="button"
+        onClick={onToggle}
+        aria-expanded={expanded}
+        aria-controls={panelId}
+        className={cn(
+          'inline-flex items-center gap-1.5 text-sm font-medium bg-gradient-to-r bg-clip-text text-transparent transition-opacity hover:opacity-80',
+          gradient
+        )}
+      >
+        {expanded ? showLessLabel : learnMoreLabel}
+        <ChevronDown
+          className={cn(
+            'h-4 w-4 text-gray-400 transition-transform duration-300',
+            expanded && 'rotate-180'
+          )}
         />
-      ) : (
+      </button>
+
+      <AnimatePresence initial={false}>
+        {expanded && (
+          <motion.div
+            id={panelId}
+            key="panel"
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.3, ease: 'easeInOut' }}
+            className="overflow-hidden"
+          >
+            <div className="mt-4 space-y-4 border-t border-slate-800 pt-4">
+              {feature.learnMore.items.map((item) => (
+                <LearnMoreRow
+                  key={item.title}
+                  gradient={gradient}
+                  label={item.title}
+                  text={item.description}
+                />
+              ))}
+              {feature.icon === 'languageStreams' ? (
+                <LandingUiLanguagesBlock label={landingUiLanguagesLabel} />
+              ) : null}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  ) : null
+
+  if (!screenshot) {
+    return (
+      <div className="rounded-2xl border border-slate-800 bg-slate-900/40 p-5 sm:p-6">
+        <h3 className="text-lg font-semibold text-white mb-2">{feature.title}</h3>
+        <p className="text-gray-400 text-sm leading-relaxed">{feature.description}</p>
+
         <div className="relative mt-4 aspect-video overflow-hidden rounded-xl border border-dashed border-slate-700 bg-slate-950/70">
           {demoSrc ? (
             <>
@@ -255,58 +299,24 @@ function FeatureDetail({
             </div>
           )}
         </div>
-      )}
 
-      {feature.learnMore && (
-        <div className="pt-4">
-          <button
-            type="button"
-            onClick={onToggle}
-            aria-expanded={expanded}
-            aria-controls={panelId}
-            className={cn(
-              'inline-flex items-center gap-1.5 text-sm font-medium bg-gradient-to-r bg-clip-text text-transparent transition-opacity hover:opacity-80',
-              gradient
-            )}
-          >
-            {expanded ? showLessLabel : learnMoreLabel}
-            <ChevronDown
-              className={cn(
-                'h-4 w-4 text-gray-400 transition-transform duration-300',
-                expanded && 'rotate-180'
-              )}
-            />
-          </button>
+        {learnMore}
+      </div>
+    )
+  }
 
-          <AnimatePresence initial={false}>
-            {expanded && (
-              <motion.div
-                id={panelId}
-                key="panel"
-                initial={{ height: 0, opacity: 0 }}
-                animate={{ height: 'auto', opacity: 1 }}
-                exit={{ height: 0, opacity: 0 }}
-                transition={{ duration: 0.3, ease: 'easeInOut' }}
-                className="overflow-hidden"
-              >
-                <div className="mt-4 space-y-4 border-t border-slate-800 pt-4">
-                  {feature.learnMore.items.map((item) => (
-                    <LearnMoreRow
-                      key={item.title}
-                      gradient={gradient}
-                      label={item.title}
-                      text={item.description}
-                    />
-                  ))}
-                  {feature.icon === 'languageStreams' ? (
-                    <LandingUiLanguagesBlock label={landingUiLanguagesLabel} />
-                  ) : null}
-                </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </div>
-      )}
+  return (
+    <div className="overflow-hidden rounded-2xl border border-slate-800">
+      <FeatureScreenshotFrame
+        src={screenshot.webmUrl}
+        label={feature.title}
+        enterFullscreenLabel={enterFullscreenLabel}
+        exitFullscreenLabel={exitFullscreenLabel}
+      >
+        <h3 className="text-lg font-semibold text-white mb-2">{feature.title}</h3>
+        <p className="text-sm leading-relaxed text-gray-100">{feature.description}</p>
+        {learnMore}
+      </FeatureScreenshotFrame>
     </div>
   )
 }
