@@ -3,6 +3,7 @@ import path from 'path'
 import { describe, expect, it } from 'vitest'
 import {
   NEW_SERIES_SCREENSHOT_WEBM,
+  SERIES_DIRECTOR_SCREENSHOT_WEBP,
   SERIES_RESONANCE_SCREENSHOT_WEBP,
   SERIES_REVIEW_SCREENSHOT_WEBP,
   getKeyFeatureScreenshot,
@@ -25,7 +26,10 @@ describe('key feature screenshots', () => {
     expect(keyFeatureScreenshotSrc(getKeyFeatureScreenshot('seriesResonance')!)).toBe(
       SERIES_RESONANCE_SCREENSHOT_WEBP
     )
-    expect(getKeyFeatureScreenshot('seriesDirector')).toBeNull()
+    expect(getKeyFeatureScreenshot('seriesDirector')).toEqual({
+      imageUrl: SERIES_DIRECTOR_SCREENSHOT_WEBP,
+    })
+    expect(getKeyFeatureScreenshot('directEpisode')).toBeNull()
     expect(NEW_SERIES_SCREENSHOT_WEBM).toBe(
       '/landing/key-features/screenshots/new-series.webm'
     )
@@ -35,12 +39,19 @@ describe('key feature screenshots', () => {
     expect(SERIES_RESONANCE_SCREENSHOT_WEBP).toBe(
       '/landing/key-features/screenshots/series-resonance.webp'
     )
+    expect(SERIES_DIRECTOR_SCREENSHOT_WEBP).toBe(
+      '/landing/key-features/screenshots/series-director.webp'
+    )
 
     const webm = readFileSync(path.join(ROOT, 'public', NEW_SERIES_SCREENSHOT_WEBM))
     expect(webm.subarray(0, 4).toString('hex')).toBe('1a45dfa3')
     expect(webm.length).toBeGreaterThan(500_000)
 
-    for (const src of [SERIES_REVIEW_SCREENSHOT_WEBP, SERIES_RESONANCE_SCREENSHOT_WEBP]) {
+    for (const src of [
+      SERIES_REVIEW_SCREENSHOT_WEBP,
+      SERIES_RESONANCE_SCREENSHOT_WEBP,
+      SERIES_DIRECTOR_SCREENSHOT_WEBP,
+    ]) {
       const webp = readFileSync(path.join(ROOT, 'public', src))
       expect(webp.subarray(0, 4).toString('ascii')).toBe('RIFF')
       expect(webp.subarray(8, 12).toString('ascii')).toBe('WEBP')
