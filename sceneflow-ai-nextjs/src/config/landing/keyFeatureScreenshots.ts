@@ -8,15 +8,15 @@
  * lossless full-resolution image. Neither is a dubbed feature demo.
  *
  * New Series is 5120×3558. The source PNG was 5120×3559; the height is even
- * so 4:2:0 can keep the full width. Review the first cut is 5120×2804.
- * Series Audience Resonance is a lossless WebP at 5120×6008.
+ * so 4:2:0 can keep the full width. Review the first cut is a lossless WebP
+ * at 5120×5648. Series Audience Resonance is a lossless WebP at 5120×6008.
  */
 
 export const NEW_SERIES_SCREENSHOT_WEBM =
   '/landing/key-features/screenshots/new-series.webm'
 
-export const SERIES_REVIEW_SCREENSHOT_WEBM =
-  '/landing/key-features/screenshots/series-review.webm'
+export const SERIES_REVIEW_SCREENSHOT_WEBP =
+  '/landing/key-features/screenshots/series-review.webp'
 
 export const SERIES_RESONANCE_SCREENSHOT_WEBP =
   '/landing/key-features/screenshots/series-resonance.webp'
@@ -28,7 +28,7 @@ export type KeyFeatureScreenshot = {
 
 const KEY_FEATURE_SCREENSHOTS: Record<string, KeyFeatureScreenshot> = {
   newSeries: { webmUrl: NEW_SERIES_SCREENSHOT_WEBM },
-  seriesReview: { webmUrl: SERIES_REVIEW_SCREENSHOT_WEBM },
+  seriesReview: { imageUrl: SERIES_REVIEW_SCREENSHOT_WEBP },
   seriesResonance: { imageUrl: SERIES_RESONANCE_SCREENSHOT_WEBP },
 }
 

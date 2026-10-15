@@ -4,7 +4,7 @@ import { describe, expect, it } from 'vitest'
 import {
   NEW_SERIES_SCREENSHOT_WEBM,
   SERIES_RESONANCE_SCREENSHOT_WEBP,
-  SERIES_REVIEW_SCREENSHOT_WEBM,
+  SERIES_REVIEW_SCREENSHOT_WEBP,
   getKeyFeatureScreenshot,
   keyFeatureScreenshotSrc,
 } from '@/config/landing/keyFeatureScreenshots'
@@ -17,7 +17,7 @@ describe('key feature screenshots', () => {
       webmUrl: NEW_SERIES_SCREENSHOT_WEBM,
     })
     expect(getKeyFeatureScreenshot('seriesReview')).toEqual({
-      webmUrl: SERIES_REVIEW_SCREENSHOT_WEBM,
+      imageUrl: SERIES_REVIEW_SCREENSHOT_WEBP,
     })
     expect(getKeyFeatureScreenshot('seriesResonance')).toEqual({
       imageUrl: SERIES_RESONANCE_SCREENSHOT_WEBP,
@@ -29,23 +29,23 @@ describe('key feature screenshots', () => {
     expect(NEW_SERIES_SCREENSHOT_WEBM).toBe(
       '/landing/key-features/screenshots/new-series.webm'
     )
-    expect(SERIES_REVIEW_SCREENSHOT_WEBM).toBe(
-      '/landing/key-features/screenshots/series-review.webm'
+    expect(SERIES_REVIEW_SCREENSHOT_WEBP).toBe(
+      '/landing/key-features/screenshots/series-review.webp'
     )
     expect(SERIES_RESONANCE_SCREENSHOT_WEBP).toBe(
       '/landing/key-features/screenshots/series-resonance.webp'
     )
 
-    for (const src of [NEW_SERIES_SCREENSHOT_WEBM, SERIES_REVIEW_SCREENSHOT_WEBM]) {
-      const webm = readFileSync(path.join(ROOT, 'public', src))
-      expect(webm.subarray(0, 4).toString('hex')).toBe('1a45dfa3')
-      expect(webm.length).toBeGreaterThan(500_000)
-    }
+    const webm = readFileSync(path.join(ROOT, 'public', NEW_SERIES_SCREENSHOT_WEBM))
+    expect(webm.subarray(0, 4).toString('hex')).toBe('1a45dfa3')
+    expect(webm.length).toBeGreaterThan(500_000)
 
-    const webp = readFileSync(path.join(ROOT, 'public', SERIES_RESONANCE_SCREENSHOT_WEBP))
-    expect(webp.subarray(0, 4).toString('ascii')).toBe('RIFF')
-    expect(webp.subarray(8, 12).toString('ascii')).toBe('WEBP')
-    expect(webp.length).toBeGreaterThan(200_000)
+    for (const src of [SERIES_REVIEW_SCREENSHOT_WEBP, SERIES_RESONANCE_SCREENSHOT_WEBP]) {
+      const webp = readFileSync(path.join(ROOT, 'public', src))
+      expect(webp.subarray(0, 4).toString('ascii')).toBe('RIFF')
+      expect(webp.subarray(8, 12).toString('ascii')).toBe('WEBP')
+      expect(webp.length).toBeGreaterThan(200_000)
+    }
   })
 
   it('gives the still a fullscreen control and keeps other cards on the placeholder', () => {
