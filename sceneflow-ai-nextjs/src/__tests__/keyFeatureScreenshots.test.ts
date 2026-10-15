@@ -3,24 +3,33 @@ import path from 'path'
 import { describe, expect, it } from 'vitest'
 import {
   NEW_SERIES_SCREENSHOT_WEBM,
+  SERIES_REVIEW_SCREENSHOT_WEBM,
   getKeyFeatureScreenshot,
 } from '@/config/landing/keyFeatureScreenshots'
 
 const ROOT = path.resolve(__dirname, '../..')
 
 describe('key feature screenshots', () => {
-  it('plays the New Series still in the screenshot slot', () => {
+  it('plays New Series and Review the first cut as full-block stills', () => {
     expect(getKeyFeatureScreenshot('newSeries')).toEqual({
       webmUrl: NEW_SERIES_SCREENSHOT_WEBM,
     })
-    expect(getKeyFeatureScreenshot('seriesReview')).toBeNull()
+    expect(getKeyFeatureScreenshot('seriesReview')).toEqual({
+      webmUrl: SERIES_REVIEW_SCREENSHOT_WEBM,
+    })
+    expect(getKeyFeatureScreenshot('seriesResonance')).toBeNull()
     expect(NEW_SERIES_SCREENSHOT_WEBM).toBe(
       '/landing/key-features/screenshots/new-series.webm'
     )
+    expect(SERIES_REVIEW_SCREENSHOT_WEBM).toBe(
+      '/landing/key-features/screenshots/series-review.webm'
+    )
 
-    const webm = readFileSync(path.join(ROOT, 'public', NEW_SERIES_SCREENSHOT_WEBM))
-    expect(webm.subarray(0, 4).toString('hex')).toBe('1a45dfa3')
-    expect(webm.length).toBeGreaterThan(500_000)
+    for (const src of [NEW_SERIES_SCREENSHOT_WEBM, SERIES_REVIEW_SCREENSHOT_WEBM]) {
+      const webm = readFileSync(path.join(ROOT, 'public', src))
+      expect(webm.subarray(0, 4).toString('hex')).toBe('1a45dfa3')
+      expect(webm.length).toBeGreaterThan(500_000)
+    }
   })
 
   it('gives the still a fullscreen control and keeps other cards on the placeholder', () => {
