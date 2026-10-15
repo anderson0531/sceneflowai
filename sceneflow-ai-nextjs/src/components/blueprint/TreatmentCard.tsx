@@ -97,6 +97,15 @@ export type TreatmentCardProps = {
   onOpenFoundation?: () => void
   /** Project's production format, used when the variant predates storing its own. */
   projectFormat?: string | null
+  /** Existing project id so Regenerate receives series continuity and the library lock. */
+  projectId?: string
+  /** Series values used when the current Blueprint left a required field empty. */
+  regenerateFallback?: {
+    synopsis?: string
+    genre?: string
+    tone?: string
+    contentIntent?: 'fiction' | 'informational' | 'commercial' | 'conversational'
+  }
   /**
    * Language the stored creative text was written in (`metadata.i18n`).
    * Defaults to English when unset so existing projects still content-MT into
@@ -117,6 +126,8 @@ export function TreatmentCard({
   onOpenCollaborate,
   onOpenFoundation,
   projectFormat,
+  projectId: projectIdProp,
+  regenerateFallback,
   contentI18n,
 }: TreatmentCardProps = {}) {
   const t = useTranslations('blueprint')
@@ -124,6 +135,7 @@ export function TreatmentCard({
   const { data: session } = useSession()
   const { profile: creatorProfile, loading: creatorProfileLoading } = useCreatorProfile()
   const { guide } = useGuideStore()
+  const projectId = projectIdProp || guide.projectId
   const { selectTreatmentVariant } = useGuideStore() as any
   const { setTreatmentVariants } = useGuideStore() as any
   const { updateTreatmentVariant } = useGuideStore() as any
@@ -1132,6 +1144,8 @@ export function TreatmentCard({
           open={reimaginOpen}
           onClose={() => setReimaginOpen(false)}
           existingVariant={activeVariant as any}
+          projectId={projectId}
+          fallback={regenerateFallback}
           onGenerate={async (input, opts) => {
             // Call the film-treatment API to regenerate
             const response = await fetch('/api/ideation/film-treatment', {
@@ -1139,6 +1153,7 @@ export function TreatmentCard({
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({
                 input,
+                projectId,
                 format: opts?.format || 'short_film',
                 filmType: opts?.duration || 'auto',
                 genre: opts?.genre,

@@ -1622,6 +1622,12 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
                   onOpenCollaborate={openCollaboratePanel}
                   onOpenFoundation={openFoundationPanel}
                   projectFormat={currentProject?.metadata?.format ?? null}
+                  projectId={projectId}
+                  regenerateFallback={{
+                    genre: currentProject?.metadata?.genre,
+                    tone: currentProject?.metadata?.tone,
+                    contentIntent: currentProject?.metadata?.contentIntent,
+                  }}
                   contentI18n={contentI18n}
                 />
               </div>
@@ -1733,6 +1739,11 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
         existingVariant={activeTreatmentVariant}
         focusField={foundationFocus}
         projectId={projectId}
+        fallback={{
+          genre: currentProject?.metadata?.genre,
+          tone: currentProject?.metadata?.tone,
+          contentIntent: currentProject?.metadata?.contentIntent,
+        }}
         onGenerate={async (input, opts) => {
           setShowFoundationReimagineDialog(false)
           await handleGenerateBlueprint(input, {
