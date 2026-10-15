@@ -2,6 +2,7 @@ import { readFileSync } from 'fs'
 import path from 'path'
 import { describe, expect, it } from 'vitest'
 import {
+  DIRECT_EPISODE_SCREENSHOT_WEBP,
   NEW_SERIES_SCREENSHOT_WEBM,
   SERIES_DIRECTOR_SCREENSHOT_WEBP,
   SERIES_RESONANCE_SCREENSHOT_WEBP,
@@ -29,7 +30,12 @@ describe('key feature screenshots', () => {
     expect(getKeyFeatureScreenshot('seriesDirector')).toEqual({
       imageUrl: SERIES_DIRECTOR_SCREENSHOT_WEBP,
     })
-    expect(getKeyFeatureScreenshot('directEpisode')).toBeNull()
+    expect(getKeyFeatureScreenshot('directEpisode')).toEqual({
+      imageUrl: DIRECT_EPISODE_SCREENSHOT_WEBP,
+    })
+    expect(keyFeatureScreenshotSrc(getKeyFeatureScreenshot('directEpisode')!)).toBe(
+      DIRECT_EPISODE_SCREENSHOT_WEBP
+    )
     expect(NEW_SERIES_SCREENSHOT_WEBM).toBe(
       '/landing/key-features/screenshots/new-series.webm'
     )
@@ -42,6 +48,9 @@ describe('key feature screenshots', () => {
     expect(SERIES_DIRECTOR_SCREENSHOT_WEBP).toBe(
       '/landing/key-features/screenshots/series-director.webp'
     )
+    expect(DIRECT_EPISODE_SCREENSHOT_WEBP).toBe(
+      '/landing/key-features/screenshots/episode-director.webp'
+    )
 
     const webm = readFileSync(path.join(ROOT, 'public', NEW_SERIES_SCREENSHOT_WEBM))
     expect(webm.subarray(0, 4).toString('hex')).toBe('1a45dfa3')
@@ -51,6 +60,7 @@ describe('key feature screenshots', () => {
       SERIES_REVIEW_SCREENSHOT_WEBP,
       SERIES_RESONANCE_SCREENSHOT_WEBP,
       SERIES_DIRECTOR_SCREENSHOT_WEBP,
+      DIRECT_EPISODE_SCREENSHOT_WEBP,
     ]) {
       const webp = readFileSync(path.join(ROOT, 'public', src))
       expect(webp.subarray(0, 4).toString('ascii')).toBe('RIFF')
