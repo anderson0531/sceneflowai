@@ -7,7 +7,9 @@ import { Sparkles, ChevronDown, ImageIcon } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { FEATURE_ICONS } from './keyFeatureIcons'
 import { FeatureRoomOverview } from '@/components/landing/FeatureRoomOverview'
+import { FeatureScreenshotFrame } from '@/components/landing/FeatureScreenshotFrame'
 import { VideoLanguageControl } from '@/components/landing/VideoLanguagePicker'
+import { getKeyFeatureScreenshot } from '@/config/landing/keyFeatureScreenshots'
 import { LANDING_TRANSLATE_LANGUAGES } from '@/config/landingTranslateLanguages'
 import { standaloneDemoKey } from '@/config/landing/keyFeatureChapterMap'
 import { getKeyFeatureVideoLocales } from '@/config/landing/keyFeatureVideos'
@@ -167,6 +169,8 @@ function FeatureDetail({
   screenshotLabel,
   landingUiLanguagesLabel,
   videoSoonLabel,
+  enterFullscreenLabel,
+  exitFullscreenLabel,
 }: {
   feature: FeatureData
   gradient: string
@@ -177,6 +181,8 @@ function FeatureDetail({
   screenshotLabel: string
   landingUiLanguagesLabel: string
   videoSoonLabel: string
+  enterFullscreenLabel: string
+  exitFullscreenLabel: string
 }) {
   const panelId = `key-feature-panel-${feature.icon}`
   const demoKey = standaloneDemoKey(feature.icon)
@@ -190,6 +196,7 @@ function FeatureDetail({
   const activeDemo =
     producedLocales.find((locale) => locale.id === demoLocaleId) ?? producedLocales[0]
   const demoSrc = activeDemo?.src ?? ''
+  const screenshot = demoSrc ? null : getKeyFeatureScreenshot(feature.icon)
 
   useEffect(() => {
     setDemoLocaleId(syncedLocaleId)
@@ -200,46 +207,55 @@ function FeatureDetail({
       <h3 className="text-lg font-semibold text-white mb-2">{feature.title}</h3>
       <p className="text-gray-400 text-sm leading-relaxed">{feature.description}</p>
 
-      <div className="relative mt-4 aspect-video overflow-hidden rounded-xl border border-dashed border-slate-700 bg-slate-950/70">
-        {demoSrc ? (
-          <>
-            <video
-              key={demoSrc}
-              src={demoSrc}
-              className="absolute inset-0 h-full w-full object-contain bg-black"
-              autoPlay
-              muted
-              controls
-              playsInline
-              preload="metadata"
-              controlsList="nodownload"
-              onContextMenu={(event) => event.preventDefault()}
-              aria-label={feature.title}
-            />
-            {producedLocales.length > 1 ? (
-              <VideoLanguageControl
-                locales={videoLocales}
-                activeLocaleId={activeDemo?.id ?? demoLocaleId}
-                onSelect={(id) => {
-                  if (!producedLocales.some((locale) => locale.id === id)) return
-                  setDemoLocaleId(id)
-                }}
-                soonLabel={videoSoonLabel}
-                variant="overlay"
-                align="start"
+      {screenshot ? (
+        <FeatureScreenshotFrame
+          src={screenshot.webmUrl}
+          label={feature.title}
+          enterFullscreenLabel={enterFullscreenLabel}
+          exitFullscreenLabel={exitFullscreenLabel}
+        />
+      ) : (
+        <div className="relative mt-4 aspect-video overflow-hidden rounded-xl border border-dashed border-slate-700 bg-slate-950/70">
+          {demoSrc ? (
+            <>
+              <video
+                key={demoSrc}
+                src={demoSrc}
+                className="absolute inset-0 h-full w-full object-contain bg-black"
+                autoPlay
+                muted
+                controls
+                playsInline
+                preload="metadata"
+                controlsList="nodownload"
+                onContextMenu={(event) => event.preventDefault()}
+                aria-label={feature.title}
               />
-            ) : null}
-          </>
-        ) : (
-          <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 px-4 text-center">
-            <ImageIcon className="h-5 w-5 text-slate-600" aria-hidden="true" />
-            <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-500">
-              {screenshotLabel}
-            </p>
-            <p className="text-xs leading-relaxed text-slate-400">{feature.screenshot}</p>
-          </div>
-        )}
-      </div>
+              {producedLocales.length > 1 ? (
+                <VideoLanguageControl
+                  locales={videoLocales}
+                  activeLocaleId={activeDemo?.id ?? demoLocaleId}
+                  onSelect={(id) => {
+                    if (!producedLocales.some((locale) => locale.id === id)) return
+                    setDemoLocaleId(id)
+                  }}
+                  soonLabel={videoSoonLabel}
+                  variant="overlay"
+                  align="start"
+                />
+              ) : null}
+            </>
+          ) : (
+            <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 px-4 text-center">
+              <ImageIcon className="h-5 w-5 text-slate-600" aria-hidden="true" />
+              <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-500">
+                {screenshotLabel}
+              </p>
+              <p className="text-xs leading-relaxed text-slate-400">{feature.screenshot}</p>
+            </div>
+          )}
+        </div>
+      )}
 
       {feature.learnMore && (
         <div className="pt-4">
@@ -350,6 +366,8 @@ export default function KeyFeaturesSection() {
     screenshotLabel: t('screenshotLabel'),
     landingUiLanguagesLabel: t('landingUiLanguagesLabel'),
     videoSoonLabel: t('videoSoon'),
+    enterFullscreenLabel: t('enterFullscreenOverview'),
+    exitFullscreenLabel: t('exitFullscreenOverview'),
   }
 
   if (!activeRoom || !selected) return null

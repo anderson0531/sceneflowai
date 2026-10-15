@@ -251,6 +251,10 @@ describe('keyFeatures structure', () => {
       path.join(ROOT, 'src/components/landing/FeatureRoomOverview.tsx'),
       'utf8'
     )
+    const screenshotFrame = readFileSync(
+      path.join(ROOT, 'src/components/landing/FeatureScreenshotFrame.tsx'),
+      'utf8'
+    )
 
     expect(section).toContain("const SECTION_ID = 'key-features'")
     expect(section).toContain('id={room.id}')
@@ -261,6 +265,8 @@ describe('keyFeatures structure', () => {
     expect(section).toContain("t('enterFullscreenOverview')")
     expect(section).toContain("t('exitFullscreenOverview')")
     expect(overview).toContain('requestFullscreen')
+    expect(screenshotFrame).toContain('requestFullscreen')
+    expect(screenshotFrame).toContain('aria-pressed={isFullscreen}')
     expect(overview).toContain('enterFullscreenLabel')
     expect(overview).toContain('exitFullscreenLabel')
     expect(overview).toContain('aria-pressed={isFullscreen}')
@@ -269,6 +275,9 @@ describe('keyFeatures structure', () => {
     expect(section).toContain('key-feature-group-')
     expect(section).toContain('lg:grid')
     expect(section.split('feature.screenshot').length - 1).toBe(1)
+    expect(section).toContain('getKeyFeatureScreenshot')
+    expect(section).toContain('demoSrc ? null : getKeyFeatureScreenshot')
+    expect(section).toContain('<FeatureScreenshotFrame')
     expect(section).toContain('aspect-video')
     expect(section).not.toContain('MultiLanguageVideoPlayer')
     expect(section).not.toContain('Chapter map')
