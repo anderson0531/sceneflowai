@@ -7,7 +7,9 @@ import { Sparkles, ChevronDown, ImageIcon } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { FEATURE_ICONS } from './keyFeatureIcons'
 import { FeatureRoomOverview } from '@/components/landing/FeatureRoomOverview'
+import { FeatureScreenshotFrame } from '@/components/landing/FeatureScreenshotFrame'
 import { VideoLanguageControl } from '@/components/landing/VideoLanguagePicker'
+import { getKeyFeatureScreenshot } from '@/config/landing/keyFeatureScreenshots'
 import { LANDING_TRANSLATE_LANGUAGES } from '@/config/landingTranslateLanguages'
 import { standaloneDemoKey } from '@/config/landing/keyFeatureChapterMap'
 import { getKeyFeatureVideoLocales } from '@/config/landing/keyFeatureVideos'
@@ -157,6 +159,77 @@ function LearnMoreRow({
   )
 }
 
+function FeatureLearnMore({
+  feature,
+  gradient,
+  expanded,
+  onToggle,
+  learnMoreLabel,
+  showLessLabel,
+  landingUiLanguagesLabel,
+}: {
+  feature: FeatureData
+  gradient: string
+  expanded: boolean
+  onToggle: () => void
+  learnMoreLabel: string
+  showLessLabel: string
+  landingUiLanguagesLabel: string
+}) {
+  if (!feature.learnMore) return null
+  const panelId = `key-feature-panel-${feature.icon}`
+  return (
+    <div className="pt-4">
+      <button
+        type="button"
+        onClick={onToggle}
+        aria-expanded={expanded}
+        aria-controls={panelId}
+        className={cn(
+          'inline-flex items-center gap-1.5 text-sm font-medium bg-gradient-to-r bg-clip-text text-transparent transition-opacity hover:opacity-80',
+          gradient
+        )}
+      >
+        {expanded ? showLessLabel : learnMoreLabel}
+        <ChevronDown
+          className={cn(
+            'h-4 w-4 text-gray-400 transition-transform duration-300',
+            expanded && 'rotate-180'
+          )}
+        />
+      </button>
+
+      <AnimatePresence initial={false}>
+        {expanded && (
+          <motion.div
+            id={panelId}
+            key="panel"
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.3, ease: 'easeInOut' }}
+            className="overflow-hidden"
+          >
+            <div className="mt-4 space-y-4 border-t border-slate-800 pt-4">
+              {feature.learnMore.items.map((item) => (
+                <LearnMoreRow
+                  key={item.title}
+                  gradient={gradient}
+                  label={item.title}
+                  text={item.description}
+                />
+              ))}
+              {feature.icon === 'languageStreams' ? (
+                <LandingUiLanguagesBlock label={landingUiLanguagesLabel} />
+              ) : null}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  )
+}
+
 function FeatureDetail({
   feature,
   gradient,
@@ -178,7 +251,6 @@ function FeatureDetail({
   landingUiLanguagesLabel: string
   videoSoonLabel: string
 }) {
-  const panelId = `key-feature-panel-${feature.icon}`
   const demoKey = standaloneDemoKey(feature.icon)
   const videoLocales = useMemo(
     () => (demoKey ? getKeyFeatureVideoLocales(demoKey) : []),
@@ -194,6 +266,18 @@ function FeatureDetail({
   useEffect(() => {
     setDemoLocaleId(syncedLocaleId)
   }, [syncedLocaleId, feature.icon])
+
+  const learnMore = (
+    <FeatureLearnMore
+      feature={feature}
+      gradient={gradient}
+      expanded={expanded}
+      onToggle={onToggle}
+      learnMoreLabel={learnMoreLabel}
+      showLessLabel={showLessLabel}
+      landingUiLanguagesLabel={landingUiLanguagesLabel}
+    />
+  )
 
   return (
     <div className="rounded-2xl border border-slate-800 bg-slate-900/40 p-5 sm:p-6">
@@ -241,57 +325,93 @@ function FeatureDetail({
         )}
       </div>
 
-      {feature.learnMore && (
-        <div className="pt-4">
-          <button
-            type="button"
-            onClick={onToggle}
-            aria-expanded={expanded}
-            aria-controls={panelId}
-            className={cn(
-              'inline-flex items-center gap-1.5 text-sm font-medium bg-gradient-to-r bg-clip-text text-transparent transition-opacity hover:opacity-80',
-              gradient
-            )}
-          >
-            {expanded ? showLessLabel : learnMoreLabel}
-            <ChevronDown
-              className={cn(
-                'h-4 w-4 text-gray-400 transition-transform duration-300',
-                expanded && 'rotate-180'
-              )}
-            />
-          </button>
-
-          <AnimatePresence initial={false}>
-            {expanded && (
-              <motion.div
-                id={panelId}
-                key="panel"
-                initial={{ height: 0, opacity: 0 }}
-                animate={{ height: 'auto', opacity: 1 }}
-                exit={{ height: 0, opacity: 0 }}
-                transition={{ duration: 0.3, ease: 'easeInOut' }}
-                className="overflow-hidden"
-              >
-                <div className="mt-4 space-y-4 border-t border-slate-800 pt-4">
-                  {feature.learnMore.items.map((item) => (
-                    <LearnMoreRow
-                      key={item.title}
-                      gradient={gradient}
-                      label={item.title}
-                      text={item.description}
-                    />
-                  ))}
-                  {feature.icon === 'languageStreams' ? (
-                    <LandingUiLanguagesBlock label={landingUiLanguagesLabel} />
-                  ) : null}
-                </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </div>
-      )}
+      {learnMore}
     </div>
+  )
+}
+
+function ScreenshotFeatureBlock({
+  feature,
+  features,
+  gradient,
+  expanded,
+  onToggle,
+  onSelect,
+  learnMoreLabel,
+  showLessLabel,
+  landingUiLanguagesLabel,
+  enterFullscreenLabel,
+  exitFullscreenLabel,
+  src,
+}: {
+  feature: FeatureData
+  features: FeatureData[]
+  gradient: string
+  expanded: boolean
+  onToggle: () => void
+  onSelect: (icon: string) => void
+  learnMoreLabel: string
+  showLessLabel: string
+  landingUiLanguagesLabel: string
+  enterFullscreenLabel: string
+  exitFullscreenLabel: string
+  src: string
+}) {
+  const learnMore = (
+    <FeatureLearnMore
+      feature={feature}
+      gradient={gradient}
+      expanded={expanded}
+      onToggle={onToggle}
+      learnMoreLabel={learnMoreLabel}
+      showLessLabel={showLessLabel}
+      landingUiLanguagesLabel={landingUiLanguagesLabel}
+    />
+  )
+
+  return (
+    <FeatureScreenshotFrame
+      src={src}
+      label={feature.title}
+      enterFullscreenLabel={enterFullscreenLabel}
+      exitFullscreenLabel={exitFullscreenLabel}
+    >
+      <div className="pointer-events-auto max-w-3xl rounded-2xl bg-black/50 p-4 pe-36 sm:p-5 sm:pe-36">
+        <h3 className="mb-2 text-lg font-semibold text-white">{feature.title}</h3>
+        <p className="text-sm leading-relaxed text-gray-100">{feature.description}</p>
+        {learnMore}
+      </div>
+      <div className="pointer-events-auto mt-6 flex w-full max-w-xs flex-col gap-1">
+        {features.map((item) => {
+          const Icon = FEATURE_ICONS[item.icon] ?? Sparkles
+          const isSelected = item.icon === feature.icon
+          return (
+            <button
+              key={item.icon}
+              type="button"
+              aria-pressed={isSelected}
+              onClick={() => onSelect(item.icon)}
+              className={cn(
+                'flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm transition-colors',
+                isSelected
+                  ? 'bg-white/15 text-white'
+                  : 'bg-slate-950/50 text-gray-200 hover:bg-white/10 hover:text-white'
+              )}
+            >
+              <span
+                className={cn(
+                  'flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br',
+                  gradient
+                )}
+              >
+                <Icon className="h-4 w-4 text-white" />
+              </span>
+              <span className="font-medium">{item.title}</span>
+            </button>
+          )
+        })}
+      </div>
+    </FeatureScreenshotFrame>
   )
 }
 
@@ -344,6 +464,14 @@ export default function KeyFeaturesSection() {
     setExpandedFeature(null)
   }
 
+  if (!activeRoom || !selected) return null
+
+  const demoKey = standaloneDemoKey(selected.icon)
+  const demoSrc = demoKey
+    ? (getKeyFeatureVideoLocales(demoKey).find((locale) => locale.available && locale.src)?.src ?? '')
+    : ''
+  const screenshot = demoSrc ? null : getKeyFeatureScreenshot(selected.icon)
+
   const detailLabels = {
     learnMoreLabel: t('learnMoreLabel'),
     showLessLabel: t('showLessLabel'),
@@ -351,8 +479,8 @@ export default function KeyFeaturesSection() {
     landingUiLanguagesLabel: t('landingUiLanguagesLabel'),
     videoSoonLabel: t('videoSoon'),
   }
-
-  if (!activeRoom || !selected) return null
+  const toggleSelectedLearnMore = () =>
+    setExpandedFeature((current) => (current === selected.icon ? null : selected.icon))
 
   return (
     <section
@@ -456,59 +584,75 @@ export default function KeyFeaturesSection() {
             </div>
           ) : null}
 
-          <div className="flex flex-col gap-1 lg:grid lg:grid-cols-[minmax(16rem,20rem)_minmax(0,1fr)] lg:items-start lg:gap-x-6 lg:gap-y-1">
-            {visibleFeatures.map((feature, index) => {
-              const Icon = FEATURE_ICONS[feature.icon] ?? Sparkles
-              const isSelected = feature.icon === selected.icon
-              return (
-                <button
-                  key={feature.icon}
-                  type="button"
-                  aria-pressed={isSelected}
-                  onClick={() => {
-                    setSelectedIcon(feature.icon)
-                    setExpandedFeature(null)
-                  }}
-                  className={cn(
-                    'flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm transition-colors lg:col-start-1 lg:order-none',
-                    FEATURE_ROW_ORDER[index],
-                    FEATURE_ROW_START[index],
-                    isSelected
-                      ? 'bg-slate-800 text-white'
-                      : 'text-gray-400 hover:bg-slate-800/60 hover:text-white'
-                  )}
-                >
-                  <span
+          {screenshot ? (
+            <ScreenshotFeatureBlock
+              feature={selected}
+              features={visibleFeatures}
+              gradient={gradient}
+              expanded={expandedFeature === selected.icon}
+              onToggle={toggleSelectedLearnMore}
+              onSelect={(icon) => {
+                setSelectedIcon(icon)
+                setExpandedFeature(null)
+              }}
+              src={screenshot.webmUrl}
+              learnMoreLabel={detailLabels.learnMoreLabel}
+              showLessLabel={detailLabels.showLessLabel}
+              landingUiLanguagesLabel={detailLabels.landingUiLanguagesLabel}
+              enterFullscreenLabel={t('enterFullscreenOverview')}
+              exitFullscreenLabel={t('exitFullscreenOverview')}
+            />
+          ) : (
+            <div className="flex flex-col gap-1 lg:grid lg:grid-cols-[minmax(16rem,20rem)_minmax(0,1fr)] lg:items-start lg:gap-x-6 lg:gap-y-1">
+              {visibleFeatures.map((feature, index) => {
+                const Icon = FEATURE_ICONS[feature.icon] ?? Sparkles
+                const isSelected = feature.icon === selected.icon
+                return (
+                  <button
+                    key={feature.icon}
+                    type="button"
+                    aria-pressed={isSelected}
+                    onClick={() => {
+                      setSelectedIcon(feature.icon)
+                      setExpandedFeature(null)
+                    }}
                     className={cn(
-                      'flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br',
-                      gradient
+                      'flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm transition-colors lg:col-start-1 lg:order-none',
+                      FEATURE_ROW_ORDER[index],
+                      FEATURE_ROW_START[index],
+                      isSelected
+                        ? 'bg-slate-800 text-white'
+                        : 'text-gray-400 hover:bg-slate-800/60 hover:text-white'
                     )}
                   >
-                    <Icon className="h-4 w-4 text-white" />
-                  </span>
-                  <span className="font-medium">{feature.title}</span>
-                </button>
-              )
-            })}
-            <div
-              className={cn(
-                'lg:col-start-2 lg:row-span-6 lg:row-start-1 lg:order-none',
-                FEATURE_DETAIL_ORDER[visibleFeatures.findIndex((feature) => feature.icon === selected.icon)]
-              )}
-            >
-              <FeatureDetail
-                feature={selected}
-                gradient={gradient}
-                expanded={expandedFeature === selected.icon}
-                onToggle={() =>
-                  setExpandedFeature((current) =>
-                    current === selected.icon ? null : selected.icon
-                  )
-                }
-                {...detailLabels}
-              />
+                    <span
+                      className={cn(
+                        'flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br',
+                        gradient
+                      )}
+                    >
+                      <Icon className="h-4 w-4 text-white" />
+                    </span>
+                    <span className="font-medium">{feature.title}</span>
+                  </button>
+                )
+              })}
+              <div
+                className={cn(
+                  'lg:col-start-2 lg:row-span-6 lg:row-start-1 lg:order-none',
+                  FEATURE_DETAIL_ORDER[visibleFeatures.findIndex((feature) => feature.icon === selected.icon)]
+                )}
+              >
+                <FeatureDetail
+                  feature={selected}
+                  gradient={gradient}
+                  expanded={expandedFeature === selected.icon}
+                  onToggle={toggleSelectedLearnMore}
+                  {...detailLabels}
+                />
+              </div>
             </div>
-          </div>
+          )}
         </div>
       </div>
     </section>

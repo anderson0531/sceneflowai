@@ -251,6 +251,10 @@ describe('keyFeatures structure', () => {
       path.join(ROOT, 'src/components/landing/FeatureRoomOverview.tsx'),
       'utf8'
     )
+    const screenshotFrame = readFileSync(
+      path.join(ROOT, 'src/components/landing/FeatureScreenshotFrame.tsx'),
+      'utf8'
+    )
 
     expect(section).toContain("const SECTION_ID = 'key-features'")
     expect(section).toContain('id={room.id}')
@@ -261,6 +265,14 @@ describe('keyFeatures structure', () => {
     expect(section).toContain("t('enterFullscreenOverview')")
     expect(section).toContain("t('exitFullscreenOverview')")
     expect(overview).toContain('requestFullscreen')
+    expect(screenshotFrame).toContain('requestFullscreen')
+    expect(screenshotFrame).toContain('aria-pressed={isFullscreen}')
+    expect(screenshotFrame).toContain('object-cover object-center')
+    expect(screenshotFrame).toContain('bg-gradient-to-b from-black/70 via-black/30 to-transparent')
+    expect(screenshotFrame).not.toContain('bg-black/40')
+    expect(screenshotFrame).toContain('justify-start')
+    expect(screenshotFrame).toContain('min-h-[70vh]')
+    expect(section).toContain('bg-slate-950/50')
     expect(overview).toContain('enterFullscreenLabel')
     expect(overview).toContain('exitFullscreenLabel')
     expect(overview).toContain('aria-pressed={isFullscreen}')
@@ -269,6 +281,9 @@ describe('keyFeatures structure', () => {
     expect(section).toContain('key-feature-group-')
     expect(section).toContain('lg:grid')
     expect(section.split('feature.screenshot').length - 1).toBe(1)
+    expect(section).toContain('getKeyFeatureScreenshot')
+    expect(section).toContain('demoSrc ? null : getKeyFeatureScreenshot')
+    expect(section).toContain('<FeatureScreenshotFrame')
     expect(section).toContain('aspect-video')
     expect(section).not.toContain('MultiLanguageVideoPlayer')
     expect(section).not.toContain('Chapter map')
@@ -283,15 +298,17 @@ describe('keyFeatures structure', () => {
     expect(section).toContain("t('videoSoon')")
     expect(section).toContain('LANDING_TRANSLATE_LANGUAGES')
 
-    const descriptionEnd = section.indexOf('{feature.description}')
-    const screenshotStart = section.indexOf('feature.screenshot')
+    const cardStart = section.indexOf('bg-slate-900/40')
+    const card = section.slice(cardStart, section.indexOf('<FeatureScreenshotFrame'))
+    const descriptionEnd = card.indexOf('{feature.description}')
+    const screenshotStart = card.indexOf('feature.screenshot')
     const featureList = section.indexOf('learnMore.items')
     const languagesBlock = section.indexOf('<LandingUiLanguagesBlock')
     expect(descriptionEnd).toBeGreaterThan(-1)
     expect(screenshotStart).toBeGreaterThan(descriptionEnd)
-    expect(featureList).toBeGreaterThan(screenshotStart)
+    expect(card.indexOf('{learnMore}')).toBeGreaterThan(screenshotStart)
     expect(languagesBlock).toBeGreaterThan(featureList)
-    expect(section.slice(descriptionEnd, screenshotStart)).not.toContain('LandingUiLanguagesBlock')
+    expect(card.slice(descriptionEnd, screenshotStart)).not.toContain('LandingUiLanguagesBlock')
 
     expect(en.keyFeatures.landingUiLanguagesLabel).toContain('44 languages')
     expect(en.keyFeatures.landingUiLanguagesLabel).toContain('39')
