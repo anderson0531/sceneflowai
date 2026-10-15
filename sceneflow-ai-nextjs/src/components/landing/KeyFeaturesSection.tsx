@@ -412,7 +412,6 @@ export default function KeyFeaturesSection() {
             title={activeRoom.label}
             promise={activeRoom.promise}
             comingSoonLabel={t('overviewComingSoon')}
-            soonLabel={t('videoSoon')}
             pauseLabel={t('pauseOverview')}
             playLabel={t('playOverview')}
             muteLabel={t('muteOverview')}

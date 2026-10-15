@@ -2,8 +2,8 @@
  * Room films for the four feature rooms.
  * Each film defines the room and walks its workflow (60–90 seconds).
  * The in-page band loops an 8-second muted cold open until the visitor
- * plays the film with sound. English ships before any dub.
- * WebM is listed before the MP4 fallback. A room stays empty until its English film is set.
+ * plays the film with sound. The Series Room film is one version.
+ * WebM is listed before the MP4 fallback. A room stays empty until its film is set.
  */
 
 import {
@@ -47,12 +47,13 @@ const EMPTY_ROOM_MEDIA: FeatureRoomMediaEntry = {
 }
 
 /**
- * English Series overview. The published master is an MP4. The player uses it
- * until a WebM encode of the same cut is added beside it.
- * A dub for a room is ignored until that room's English film is in this map.
+ * Series Room overview. One version: WebM plays first, and the Blob MP4 is the fallback.
+ * A dub for a room is ignored until that room's film is in this map.
  */
-export const SERIES_OVERVIEW_EN_MP4 =
-  'https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Series%20Overview.mp4'
+export const SERIES_ROOM_OVERVIEW_WEBM = '/landing/key-features/rooms/series-desk-en.webm'
+
+export const SERIES_ROOM_OVERVIEW_MP4 =
+  'https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Series%20Room%20Overview%20.mp4'
 
 const PRODUCED_ROOM_FILMS: Partial<
   Record<FeatureRoomId, Partial<Record<VideoLocaleId, FeatureRoomMediaEntry>>>
@@ -60,8 +61,8 @@ const PRODUCED_ROOM_FILMS: Partial<
   'series-desk': {
     en: {
       posterUrl: '',
-      webmUrl: '',
-      mp4Url: SERIES_OVERVIEW_EN_MP4,
+      webmUrl: SERIES_ROOM_OVERVIEW_WEBM,
+      mp4Url: SERIES_ROOM_OVERVIEW_MP4,
     },
   },
 }
