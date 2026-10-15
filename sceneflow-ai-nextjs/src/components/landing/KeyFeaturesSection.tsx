@@ -9,7 +9,10 @@ import { FEATURE_ICONS } from './keyFeatureIcons'
 import { FeatureRoomOverview } from '@/components/landing/FeatureRoomOverview'
 import { FeatureScreenshotFrame } from '@/components/landing/FeatureScreenshotFrame'
 import { VideoLanguageControl } from '@/components/landing/VideoLanguagePicker'
-import { getKeyFeatureScreenshot } from '@/config/landing/keyFeatureScreenshots'
+import {
+  getKeyFeatureScreenshot,
+  keyFeatureScreenshotSrc,
+} from '@/config/landing/keyFeatureScreenshots'
 import { LANDING_TRANSLATE_LANGUAGES } from '@/config/landingTranslateLanguages'
 import { standaloneDemoKey } from '@/config/landing/keyFeatureChapterMap'
 import { getKeyFeatureVideoLocales } from '@/config/landing/keyFeatureVideos'
@@ -595,7 +598,7 @@ export default function KeyFeaturesSection() {
                 setSelectedIcon(icon)
                 setExpandedFeature(null)
               }}
-              src={screenshot.webmUrl}
+              src={keyFeatureScreenshotSrc(screenshot)}
               learnMoreLabel={detailLabels.learnMoreLabel}
               showLessLabel={detailLabels.showLessLabel}
               landingUiLanguagesLabel={detailLabels.landingUiLanguagesLabel}
