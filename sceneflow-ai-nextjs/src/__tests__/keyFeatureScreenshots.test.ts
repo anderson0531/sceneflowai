@@ -59,7 +59,7 @@ describe('key feature screenshots', () => {
       '/landing/key-features/screenshots/episode-director.webp'
     )
     expect(START_EPISODE_SCREENSHOT_WEBP).toBe(
-      '/landing/key-features/screenshots/series-start-project.webp'
+      '/landing/key-features/screenshots/series-start-project.webp?v=20261015'
     )
 
     const webm = readFileSync(path.join(ROOT, 'public', NEW_SERIES_SCREENSHOT_WEBM))
@@ -78,7 +78,9 @@ describe('key feature screenshots', () => {
       expect(webp.length).toBeGreaterThan(200_000)
     }
 
-    const startEpisode = readFileSync(path.join(ROOT, 'public', START_EPISODE_SCREENSHOT_WEBP))
+    const startEpisode = readFileSync(
+      path.join(ROOT, 'public', START_EPISODE_SCREENSHOT_WEBP.split('?')[0])
+    )
     expect(startEpisode.subarray(0, 4).toString('ascii')).toBe('RIFF')
     expect(startEpisode.subarray(8, 12).toString('ascii')).toBe('WEBP')
     expect(startEpisode.subarray(12, 16).toString('ascii')).toBe('VP8L')
