@@ -110,9 +110,7 @@ export function FeatureScreenshotFrame({
           ref={videoRef}
           className={cn(
             'absolute inset-0 z-0 h-full w-full bg-black',
-            isFullscreen
-              ? 'object-contain object-center'
-              : 'object-cover object-top lg:object-contain lg:object-center'
+            isFullscreen ? 'object-contain object-center' : 'object-cover object-center'
           )}
           autoPlay
           muted
@@ -128,13 +126,7 @@ export function FeatureScreenshotFrame({
         </video>
         <div
           className={cn(
-            'pointer-events-none absolute inset-0 z-[1] bg-black/40',
-            isFullscreen && 'hidden'
-          )}
-        />
-        <div
-          className={cn(
-            'pointer-events-none absolute inset-0 z-[1] bg-gradient-to-t from-black/80 via-black/25 to-black/35',
+            'pointer-events-none absolute inset-x-0 top-0 z-[1] h-48 bg-gradient-to-b from-black/70 via-black/30 to-transparent',
             isFullscreen && 'hidden'
           )}
         />
@@ -149,8 +141,13 @@ export function FeatureScreenshotFrame({
           {isFullscreen ? exitFullscreenLabel : enterFullscreenLabel}
         </button>
       </div>
-      <div className="pointer-events-none relative z-10 flex min-h-[70vh] flex-col justify-end p-5 sm:p-6">
-        <div className="pointer-events-auto">{children}</div>
+      <div
+        className={cn(
+          'pointer-events-none relative z-10 flex min-h-[70vh] flex-col justify-start p-5 sm:p-6',
+          isFullscreen && 'hidden'
+        )}
+      >
+        {children}
       </div>
     </div>
   )
