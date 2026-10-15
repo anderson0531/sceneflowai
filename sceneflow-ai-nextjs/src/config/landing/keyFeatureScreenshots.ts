@@ -1,9 +1,8 @@
 /**
  * Still screenshots for Key Features cards.
- * Every listed feature uses the same full-block layout: the still fills the
- * feature menu and the open display, with the title, description, and Learn
- * more on a 50% black panel at the top. A card keeps the text placeholder
- * until its screenshot is listed here.
+ * A listed feature shows its still inside the shared card window, beside the
+ * feature menu. A card keeps the text placeholder until its screenshot is
+ * listed here.
  * A WebM entry is one full-resolution still (VP9). A WebP entry is a
  * lossless full-resolution image. Neither is a dubbed feature demo.
  *

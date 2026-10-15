@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useRef, useState, type ReactNode } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Maximize, Minimize } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
@@ -27,16 +27,11 @@ function exitNativeVideoFullscreen(video: HTMLVideoElement) {
   if (element.webkitDisplayingFullscreen) element.webkitExitFullscreen?.()
 }
 
-type FeatureScreenshotFit = 'cover' | 'contain'
-
 type FeatureScreenshotFrameProps = {
   src: string
   label: string
   enterFullscreenLabel: string
   exitFullscreenLabel: string
-  /** Cover fills a 70vh block and center-crops. Contain shows the whole still at section width. */
-  fit?: FeatureScreenshotFit
-  children: ReactNode
 }
 
 /** Holds a still WebM on its first frame so the panel reads as a screenshot. */
@@ -53,8 +48,6 @@ export function FeatureScreenshotFrame({
   label,
   enterFullscreenLabel,
   exitFullscreenLabel,
-  fit = 'cover',
-  children,
 }: FeatureScreenshotFrameProps) {
   const frameRef = useRef<HTMLDivElement>(null)
   const videoRef = useRef<HTMLVideoElement>(null)
@@ -106,77 +99,55 @@ export function FeatureScreenshotFrame({
     if (video) enterNativeVideoFullscreen(video)
   }
 
-  const contain = fit === 'contain' && !isFullscreen
   const mediaClass = cn(
-    'z-0 bg-black',
-    isFullscreen
-      ? 'absolute inset-0 h-full w-full object-contain object-center'
-      : contain
-        ? 'block h-auto w-full'
-        : 'absolute inset-0 h-full w-full object-cover object-center'
+    'w-full bg-black object-contain object-center',
+    isFullscreen ? 'absolute inset-0 h-full' : 'h-auto max-h-[70vh]'
   )
 
   return (
-    <div className={cn('relative overflow-hidden', !contain && 'min-h-[70vh]')}>
-      <div
-        ref={frameRef}
-        className={cn(
-          'bg-black',
-          isFullscreen ? 'relative h-full w-full' : contain ? 'relative w-full' : 'absolute inset-0'
-        )}
-      >
-        {image ? (
-          <img
-            key={src}
-            src={src}
-            alt={label}
-            className={mediaClass}
-            onContextMenu={(event) => event.preventDefault()}
-          />
-        ) : (
-          <video
-            key={src}
-            ref={videoRef}
-            className={mediaClass}
-            autoPlay
-            muted
-            playsInline
-            preload="auto"
-            disablePictureInPicture
-            aria-label={label}
-            onLoadedData={(event) => holdStill(event.currentTarget)}
-            onPlaying={(event) => holdStill(event.currentTarget)}
-            onContextMenu={(event) => event.preventDefault()}
-          >
-            <source src={`${src}#t=0.1`} type="video/webm" />
-          </video>
-        )}
-        <div
-          className={cn(
-            'pointer-events-none absolute inset-x-0 top-0 z-[1] h-48 bg-gradient-to-b from-black/70 via-black/30 to-transparent',
-            isFullscreen && 'hidden'
-          )}
+    <div
+      ref={frameRef}
+      className={cn(
+        'relative mt-4 min-h-[56vh] w-full overflow-hidden rounded-xl border border-slate-700 bg-black',
+        isFullscreen && 'mt-0 h-full min-h-0 rounded-none border-0'
+      )}
+    >
+      {image ? (
+        <img
+          key={src}
+          src={src}
+          alt={label}
+          className={mediaClass}
+          onContextMenu={(event) => event.preventDefault()}
         />
-        <button
-          type="button"
-          onClick={toggleFullscreen}
-          className="absolute right-3 top-3 z-20 inline-flex items-center gap-2 rounded-full border border-white/20 bg-black/60 px-3 py-2 text-xs font-medium text-white transition hover:border-cyan-400/40"
-          aria-label={isFullscreen ? exitFullscreenLabel : enterFullscreenLabel}
-          aria-pressed={isFullscreen}
+      ) : (
+        <video
+          key={src}
+          ref={videoRef}
+          className={mediaClass}
+          autoPlay
+          muted
+          playsInline
+          preload="auto"
+          disablePictureInPicture
+          aria-label={label}
+          onLoadedData={(event) => holdStill(event.currentTarget)}
+          onPlaying={(event) => holdStill(event.currentTarget)}
+          onContextMenu={(event) => event.preventDefault()}
         >
-          {isFullscreen ? <Minimize className="h-4 w-4" /> : <Maximize className="h-4 w-4" />}
-          {isFullscreen ? exitFullscreenLabel : enterFullscreenLabel}
-        </button>
-      </div>
-      <div
-        className={cn(
-          'pointer-events-none z-10 flex flex-col justify-start p-5 sm:p-6',
-          isFullscreen && 'hidden',
-          contain ? 'absolute inset-x-0 top-0' : 'relative min-h-[70vh]'
-        )}
+          <source src={`${src}#t=0.1`} type="video/webm" />
+        </video>
+      )}
+      <button
+        type="button"
+        onClick={toggleFullscreen}
+        className="absolute right-3 top-3 z-20 inline-flex items-center gap-2 rounded-full border border-white/20 bg-black/60 px-3 py-2 text-xs font-medium text-white transition hover:border-cyan-400/40"
+        aria-label={isFullscreen ? exitFullscreenLabel : enterFullscreenLabel}
+        aria-pressed={isFullscreen}
       >
-        {children}
-      </div>
+        {isFullscreen ? <Minimize className="h-4 w-4" /> : <Maximize className="h-4 w-4" />}
+        {isFullscreen ? exitFullscreenLabel : enterFullscreenLabel}
+      </button>
     </div>
   )
 }
