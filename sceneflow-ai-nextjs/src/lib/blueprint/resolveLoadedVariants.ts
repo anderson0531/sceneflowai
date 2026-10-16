@@ -39,15 +39,45 @@ const EMPTY: ResolvedBlueprintVariants = {
   treatmentText: '',
 }
 
+function isUnprimedEpisodeSeed(
+  variant: Record<string, unknown>,
+  hasPrimeInput: boolean
+): boolean {
+  if (!hasPrimeInput) return false
+  const hasGeneratedCharacters =
+    Array.isArray(variant.character_descriptions) && variant.character_descriptions.length > 0
+  if (hasGeneratedCharacters) return false
+
+  const hasLegacyEpisodeBeats =
+    Array.isArray(variant.beats) &&
+    variant.beats.length > 0 &&
+    variant.beats.every((b) => {
+      const rec = asRecord(b)
+      return rec && ('beat_title' in rec || 'beat_description' in rec) && !('synopsis' in rec)
+    })
+
+  if (variant.id === 'approved-treatment' || asRecord(variant.seriesContext) || hasLegacyEpisodeBeats) {
+    return true
+  }
+  return false
+}
+
 export function resolveLoadedBlueprintVariants(
   metadata: Record<string, unknown> | null | undefined,
   fallbackTitle?: string
 ): ResolvedBlueprintVariants {
   if (!metadata) return EMPTY
 
+  const hasPrimeInput =
+    typeof metadata.blueprintPrimeInput === 'string' &&
+    metadata.blueprintPrimeInput.trim().length > 0
+
   const stored = metadata.treatmentVariants
   if (Array.isArray(stored) && stored.length > 0) {
-    const variants = stored.filter((v): v is Record<string, unknown> => !!asRecord(v))
+    const variants = stored.filter(
+      (v): v is Record<string, unknown> =>
+        !!asRecord(v) && !isUnprimedEpisodeSeed(v as Record<string, unknown>, hasPrimeInput)
+    )
     if (variants.length > 0) {
       return {
         variants,
@@ -58,8 +88,11 @@ export function resolveLoadedBlueprintVariants(
   }
 
   for (const key of ['filmTreatmentVariant', 'approvedTreatment'] as const) {
+    if (key === 'approvedTreatment' && hasPrimeInput) {
+      continue
+    }
     const variant = asRecord(metadata[key])
-    if (variant) {
+    if (variant && !isUnprimedEpisodeSeed(variant, hasPrimeInput)) {
       const id = typeof variant.id === 'string' && variant.id ? variant.id : 'approved-treatment'
       return {
         variants: [{ ...variant, id }],
@@ -71,19 +104,30 @@ export function resolveLoadedBlueprintVariants(
 
   const legacy = metadata.filmTreatment
   if (typeof legacy === 'string' && legacy.trim()) {
-    return {
-      variants: [
-        {
-          id: 'legacy-treatment',
-          label: fallbackTitle || 'Film Treatment',
-          content: legacy,
-          synopsis: legacy,
-        },
-      ],
-      source: 'filmTreatment',
-      treatmentText: legacy,
+    // If filmTreatment only mirrors an unprimed episode seed's synopsis while
+    // blueprintPrimeInput is waiting to generate, let primeBlueprint run first.
+    const approvedSeed = asRecord(metadata.approvedTreatment) ?? asRecord(metadata.episodeSeed)
+    const matchesUnprimedSeed =
+      hasPrimeInput &&
+      approvedSeed &&
+      typeof approvedSeed.synopsis === 'string' &&
+      approvedSeed.synopsis.trim() === legacy.trim()
+    if (!matchesUnprimedSeed) {
+      return {
+        variants: [
+          {
+            id: 'legacy-treatment',
+            label: fallbackTitle || 'Film Treatment',
+            content: legacy,
+            synopsis: legacy,
+          },
+        ],
+        source: 'filmTreatment',
+        treatmentText: legacy,
+      }
     }
   }
 
   return EMPTY
 }
+

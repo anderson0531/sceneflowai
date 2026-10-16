@@ -38,6 +38,7 @@ import {
 import { resolveBlueprintHeroImageUrl } from '@/lib/blueprint/resolveBlueprintHeroImage'
 import { uploadAssetViaAPI } from '@/lib/vision/uploads'
 import { resolveLoadedBlueprintVariants } from '@/lib/blueprint/resolveLoadedVariants'
+import { resolveRequiredBlueprintFields } from '@/lib/blueprint/regenerateDefaults'
 import type { ReimagineFoundationField } from '@/components/vision/ReimagineFoundationDialog'
 import { normalizeVariantFoundation } from '@/lib/treatment/blueprintFoundation'
 import { resolveSeriesArtStyle } from '@/lib/series/seriesIdeation'
@@ -588,30 +589,43 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
     extra: Record<string, unknown>
   ) => {
     if (!projectId || projectId.startsWith('new-project')) return false
+    const latestProject = useStore.getState().currentProject || currentProject
+    const latestGuide = useGuideStore.getState().guide || guide
     const mergedMetadata = {
-      ...(currentProject?.metadata || {}),
+      ...(latestProject?.metadata || {}),
       blueprintInput: lastInput,
-      filmTreatment: guide.filmTreatment,
-      treatmentVariants: (guide as any).treatmentVariants || [],
+      filmTreatment: latestGuide.filmTreatment,
+      treatmentVariants: (latestGuide as any).treatmentVariants || [],
       beats: beatsView,
       estimatedRuntime: estimatedRuntime,
-      audienceDefinition,
+      audienceDefinition:
+        audienceDefinition ??
+        ((latestProject?.metadata as Record<string, unknown> | undefined)?.audienceDefinition as
+          | AudienceDefinition
+          | undefined) ??
+        null,
       blueprintAudienceResonance: savedBlueprintAR,
       ...extra,
     }
+    const resolvedTitle =
+      (typeof extra.title === 'string' && extra.title.trim()) ||
+      latestGuide.title ||
+      latestProject?.title ||
+      'Untitled Project'
     const res = await fetch('/api/projects', {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         id: projectId,
-        title: guide.title || 'Untitled Project',
-        description: '',
+        title: resolvedTitle,
+        description: latestProject?.description ?? '',
         metadata: mergedMetadata,
       }),
     })
-    if (res.ok && currentProject) {
+    if (res.ok && latestProject) {
       setCurrentProject({
-        ...currentProject,
+        ...latestProject,
+        title: resolvedTitle,
         metadata: mergedMetadata,
       })
     }
@@ -884,12 +898,13 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
     console.log('[StudioPage] Generating Blueprint with', variantCount, 'variant(s)', hasExplicitSettings ? '(explicit settings detected)' : '', opts?.hasStoryDirections ? '(story directions active)' : '')
     
     try {
+      const liveProjectBeforeGen = useStore.getState().currentProject || currentProject
       const response = await fetch('/api/ideation/film-treatment', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           input: text,
-          format: opts?.format || currentProject?.metadata?.format || 'short_film',
+          format: opts?.format || liveProjectBeforeGen?.metadata?.format || 'short_film',
           filmType: opts?.duration || 'auto',
           rigor: opts?.rigor || 'thorough',
           variants: variantCount,
@@ -940,11 +955,17 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
         setTreatmentVariants(variants)
         setSavedBlueprintAR(null)
 
+        const latestProject = useStore.getState().currentProject || currentProject
         setCurrentProject({
-          ...(currentProject || {}),
+          ...(latestProject || {}),
           metadata: mergeEntityI18nIntoMetadata(
             {
-              ...(currentProject?.metadata || {}),
+              ...(latestProject?.metadata || {}),
+              blueprintInput: text,
+              filmTreatment: variants[0]?.synopsis || variants[0]?.content || '',
+              treatmentVariants: variants,
+              ...(data.beats && { beats: data.beats }),
+              ...(data.estimatedRuntime !== undefined && { estimatedRuntime: data.estimatedRuntime }),
               ...(opts?.genre && { genre: opts.genre }),
               ...(opts?.format && { format: opts.format }),
               ...(opts?.contentIntent && { contentIntent: opts.contentIntent }),
@@ -954,7 +975,7 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
         } as any)
         
         if (variants[0]) {
-          updateTitle(variants[0].title || 'Untitled Project')
+          updateTitle(variants[0].title || latestProject?.title || 'Untitled Project')
           updateTreatment(variants[0].synopsis || variants[0].content || '')
           
           if (!hadBlueprintOnLoadRef.current) {
@@ -1028,6 +1049,8 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
           }
         } else if (projectId && !projectId.startsWith('new-project')) {
           void persistBlueprintMetadata({
+            title: variants[0]?.title || latestProject?.title || 'Untitled Project',
+            blueprintInput: text,
             i18n: contentI18nStamp,
             treatmentVariants: variants,
             filmTreatment: variants[0]?.synopsis || variants[0]?.content || '',
@@ -1169,6 +1192,14 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
               `[StudioPage] Restored blueprint from ${resolvedBlueprint.source}:`,
               resolvedBlueprint.variants.length
             )
+          } else {
+            // Clear any stale treatment state from a previously viewed project
+            setTreatmentVariants([])
+            updateTreatment('')
+            hadBlueprintOnLoadRef.current = false
+            if (typeof metadata.blueprintPrimeInput === 'string' && metadata.blueprintPrimeInput.trim()) {
+              setLastInput(metadata.blueprintPrimeInput)
+            }
           }
           
           if (projectData.title) {
@@ -1208,37 +1239,69 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
             setTimeout(() => generateHeroImage(loadedVariant), 500)
           }
 
-          // Directly check URL for primeBlueprint bypasses hydration delays
+          // Directly check URL for primeBlueprint bypasses hydration delays.
+          // Also auto-generate if a series episode has blueprintPrimeInput and no
+          // stored Blueprint yet (e.g., if ?primeBlueprint=true was stripped on a prior reload).
           const urlParams = new URLSearchParams(window.location.search)
           const isPrimeBlueprint = urlParams.get('primeBlueprint') === 'true'
-          const hasBlueprintPrimeInput = metadata.blueprintPrimeInput && !hasStoredBlueprint
+          const hasBlueprintPrimeInput = Boolean(metadata.blueprintPrimeInput) && !hasStoredBlueprint
 
-          if (isPrimeBlueprint && hasBlueprintPrimeInput) {
+          if (hasBlueprintPrimeInput && (isPrimeBlueprint || Boolean(metadata.seriesId))) {
             console.log('[StudioPage] Series episode detected - auto-generating Blueprint directly from load()')
-            router.replace(`/dashboard/studio/${projectId}`, { scroll: false })
+            if (isPrimeBlueprint) {
+              router.replace(`/dashboard/studio/${projectId}`, { scroll: false })
+            }
+            setIsGen(true)
+            startProgress()
             setTimeout(() => {
-              // Honor the series/episode's stored intent instead of forcing a
-              // fiction (Drama/Cinematic) storyline for every auto-generation.
+              // Match the exact field resolution and generation options used by
+              // the Reimagine Blueprint dialog (resolveRequiredBlueprintFields).
+              const seed = (metadata.episodeSeed || metadata.approvedTreatment || {}) as Record<
+                string,
+                any
+              >
               const primeIntent = resolveContentIntentFromMetadata({
                 contentIntent: metadata.contentIntent,
-                genre: metadata.genre || projectData.genre,
+                genre: metadata.genre || projectData.genre || seed.genre,
                 format: metadata.format || projectData.metadata?.format,
               })
-              handleGenerateBlueprint(metadata.blueprintPrimeInput, {
-                genre: metadata.genre || projectData.genre || undefined,
-                tone: metadata.tone || projectData.tone || undefined,
-                targetAudience: metadata.targetAudience || 'General Audience',
-                artStyle: resolveSeriesArtStyle({ metadata }),
-                aspectRatio: metadata.aspectRatio,
-                variantCount: 1,
-                hasStoryDirections: true,
+              const required = resolveRequiredBlueprintFields({
+                synopsis: metadata.blueprintPrimeInput,
+                logline: seed.logline,
+                genre: metadata.genre || projectData.genre || seed.genre,
+                tone: metadata.tone || projectData.tone || seed.tone,
+                toneDescription: seed.tone_description || seed.tone_style,
                 contentIntent: primeIntent,
-                format: metadata.format || projectData.metadata?.format || defaultFormatForIntent(primeIntent),
+                fallbackSynopsis: projectData.description,
+                fallbackGenre: metadata.genre || projectData.genre,
+                fallbackTone: metadata.tone || projectData.tone,
+                fallbackIntent: primeIntent,
+              })
+              handleGenerateBlueprint(required.synopsis, {
+                genre: required.genre,
+                tone: required.tone,
+                targetAudience:
+                  metadata.targetAudience ||
+                  metadata.audienceDefinition?.description ||
+                  projectData.target_audience ||
+                  undefined,
+                artStyle: resolveSeriesArtStyle({ metadata }),
+                aspectRatio:
+                  metadata.aspectRatio ||
+                  metadata.visionPhase?.generationSettings?.aspectRatio,
+                variantCount: 1,
+                hasStoryDirections: false,
+                rigor: 'thorough',
+                contentIntent: required.contentIntent,
+                format:
+                  metadata.format ||
+                  projectData.metadata?.format ||
+                  defaultFormatForIntent(required.contentIntent),
               }).catch((err) => {
                 console.error('[StudioPage] Auto-generation failed:', err)
                 toast.error(t('toast.autoGenerateFailed'))
               })
-            }, 800)
+            }, 300)
           }
         }
       } catch (err) {
@@ -1624,7 +1687,12 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
                   projectFormat={currentProject?.metadata?.format ?? null}
                   projectId={projectId}
                   regenerateFallback={{
-                    genre: currentProject?.metadata?.genre,
+                    synopsis:
+                      (currentProject?.metadata?.episodeSeed as { synopsis?: string } | undefined)
+                        ?.synopsis ||
+                      currentProject?.metadata?.blueprintPrimeInput ||
+                      currentProject?.description,
+                    genre: currentProject?.metadata?.genre || currentProject?.genre,
                     tone: currentProject?.metadata?.tone,
                     contentIntent: currentProject?.metadata?.contentIntent,
                   }}
@@ -1740,7 +1808,12 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
         focusField={foundationFocus}
         projectId={projectId}
         fallback={{
-          genre: currentProject?.metadata?.genre,
+          synopsis:
+            (currentProject?.metadata?.episodeSeed as { synopsis?: string } | undefined)
+              ?.synopsis ||
+            currentProject?.metadata?.blueprintPrimeInput ||
+            currentProject?.description,
+          genre: currentProject?.metadata?.genre || currentProject?.genre,
           tone: currentProject?.metadata?.tone,
           contentIntent: currentProject?.metadata?.contentIntent,
         }}
@@ -1772,7 +1845,42 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
       <BlueprintReimaginDialog
         open={showReimaginDialog}
         onClose={() => setShowReimaginDialog(false)}
-        existingVariant={null}
+        projectId={projectId}
+        existingVariant={
+          activeTreatmentVariant ||
+          (currentProject?.metadata?.blueprintPrimeInput || currentProject?.metadata?.seriesId
+            ? {
+                synopsis:
+                  (currentProject?.metadata?.episodeSeed as { synopsis?: string } | undefined)
+                    ?.synopsis ||
+                  currentProject?.metadata?.blueprintPrimeInput ||
+                  currentProject?.description ||
+                  '',
+                logline: (currentProject?.metadata?.episodeSeed as { logline?: string } | undefined)
+                  ?.logline,
+                genre: currentProject?.genre || currentProject?.metadata?.genre,
+                tone: currentProject?.metadata?.tone,
+                contentIntent: currentProject?.metadata?.contentIntent,
+                artStyle: resolveSeriesArtStyle({ metadata: currentProject?.metadata }),
+                aspectRatio:
+                  currentProject?.metadata?.aspectRatio ||
+                  currentProject?.metadata?.visionPhase?.generationSettings?.aspectRatio,
+                audienceDefinition: currentProject?.metadata?.audienceDefinition,
+                target_audience:
+                  currentProject?.metadata?.targetAudience || currentProject?.target_audience,
+              }
+            : null)
+        }
+        fallback={{
+          synopsis:
+            (currentProject?.metadata?.episodeSeed as { synopsis?: string } | undefined)
+              ?.synopsis ||
+            currentProject?.metadata?.blueprintPrimeInput ||
+            currentProject?.description,
+          genre: currentProject?.metadata?.genre || currentProject?.genre,
+          tone: currentProject?.metadata?.tone,
+          contentIntent: currentProject?.metadata?.contentIntent,
+        }}
         initialIdea={
           currentProject?.metadata?.blueprintPrimeInput
             ? {

@@ -125,12 +125,14 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
         seriesId,
         seriesTitle: series.title,
         audienceDefinition: inheritedAudienceDefinition || undefined,
+        targetAudience: inheritedAudienceDefinition?.description || undefined,
         episodeId,
         episodeNumber: episode.episodeNumber,
         format: series.metadata?.format || 'narrative',
         genre: series.genre || undefined,
         tone: seriesTone,
         artStyle: seriesArtStyle,
+        aspectRatio: bible.aesthetic?.aspectRatio || '16:9',
         contentIntent: resolveContentIntentFromMetadata({
           format: series.metadata?.format,
           genre: series.genre,
@@ -138,8 +140,10 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
         // Blueprint prime input for auto-generation in Studio
         blueprintPrimeInput,
         
-        // Pre-populated from series bible (legacy - kept for compatibility)
-        approvedTreatment: treatmentFromEpisode,
+        // Episode seed from series bible (do not store under approvedTreatment
+        // so Studio does not mistake the ungenerated episode outline for a
+        // completed Blueprint and skip first-pass generation)
+        episodeSeed: treatmentFromEpisode,
         
         // Vision phase with inherited characters
         visionPhase: {

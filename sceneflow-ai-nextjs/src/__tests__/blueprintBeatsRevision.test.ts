@@ -165,4 +165,83 @@ describe('resolveLoadedBlueprintVariants', () => {
     expect(resolveLoadedBlueprintVariants({}).source).toBe('none')
     expect(resolveLoadedBlueprintVariants(null).source).toBe('none')
   })
+
+  it('REGRESSION: ignores ungenerated Series Episode approvedTreatment seed when blueprintPrimeInput is present', () => {
+    const episodeSeed = {
+      title: 'Episode 1: The Signal',
+      logline: 'A deep-space relay operator intercepts an impossible transmission.',
+      synopsis: 'Full episode synopsis from series bible.',
+      characters: ['Maya Lin (Protagonist): Relay engineer'],
+      beats: [
+        { act: 1, beat_title: 'Static in Sector 9', beat_description: 'Maya hears the signal.' },
+        { act: 2, beat_title: 'Lockdown', beat_description: 'Command seals the array.' },
+      ],
+      seriesContext: {
+        seriesTitle: 'Echoes of Orion',
+        episodeNumber: 1,
+      },
+    }
+
+    const resolved = resolveLoadedBlueprintVariants({
+      seriesId: 'series-123',
+      blueprintPrimeInput: 'SERIES: Echoes of Orion\nEPISODE 1: "The Signal"',
+      approvedTreatment: episodeSeed,
+    })
+
+    expect(resolved.source).toBe('none')
+    expect(resolved.variants).toEqual([])
+  })
+
+  it('REGRESSION: ignores auto-saved approved-treatment episode stub with heroImage so Blueprint still generates', () => {
+    const autoSavedStub = {
+      id: 'approved-treatment',
+      title: 'Episode 1: The Signal',
+      logline: 'A deep-space relay operator intercepts an impossible transmission.',
+      synopsis: 'Full episode synopsis from series bible.',
+      characters: ['Maya Lin (Protagonist): Relay engineer'],
+      beats: [
+        { act: 1, beat_title: 'Static in Sector 9', beat_description: 'Maya hears the signal.' },
+      ],
+      seriesContext: {
+        seriesTitle: 'Echoes of Orion',
+        episodeNumber: 1,
+      },
+      heroImage: {
+        url: 'https://blob.vercel-storage.com/hero.png',
+      },
+    }
+
+    const resolved = resolveLoadedBlueprintVariants({
+      seriesId: 'series-123',
+      blueprintPrimeInput: 'SERIES: Echoes of Orion\nEPISODE 1: "The Signal"',
+      treatmentVariants: [autoSavedStub],
+      filmTreatment: 'Full episode synopsis from series bible.',
+      approvedTreatment: autoSavedStub,
+    })
+
+    expect(resolved.source).toBe('none')
+    expect(resolved.variants).toEqual([])
+  })
+
+  it('restores generated Series Episode treatmentVariants once real Blueprint data exists', () => {
+    const generatedVariant = {
+      id: 'treatment-1700000000-0',
+      title: 'The Signal',
+      logline: 'A deep-space relay operator intercepts an impossible transmission.',
+      synopsis: 'Expanded treatment synopsis.',
+      character_descriptions: [
+        { name: 'Maya Lin', role: 'Protagonist', description: 'Relay engineer' },
+      ],
+      beats: [beat(1), beat(2)],
+    }
+
+    const resolved = resolveLoadedBlueprintVariants({
+      seriesId: 'series-123',
+      blueprintPrimeInput: 'SERIES: Echoes of Orion\nEPISODE 1: "The Signal"',
+      treatmentVariants: [generatedVariant],
+    })
+
+    expect(resolved.source).toBe('treatmentVariants')
+    expect(resolved.variants[0].id).toBe('treatment-1700000000-0')
+  })
 })

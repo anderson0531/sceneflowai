@@ -184,6 +184,12 @@ interface CoreConceptData {
 // When user provides explicit settings, we can build a core concept without LLM
 
 function extractTitleFromInput(input: string): string {
+  // If this is a structured Series Episode brief from buildEpisodeBlueprintBrief,
+  // prefer the "Episode N: <Title>" line over the leading "Series: <Series Title>" line.
+  const episodeMatch = input.match(/^Episode\s+\d+\s*:\s*(.+)$/im)
+  if (episodeMatch?.[1]?.trim()) {
+    return episodeMatch[1].trim()
+  }
   // Try to extract a title from the first line or sentence
   const firstLine = input.split('\n')[0].trim()
   if (firstLine.length > 0 && firstLine.length < 100) {
@@ -363,7 +369,7 @@ export async function POST(request: NextRequest) {
                 : 'Segment Flow'
         coreConcept = {
           input_title: extractTitleFromInput(input),
-          input_synopsis: input.slice(0, 500),
+          input_synopsis: input.slice(0, 2500),
           core_themes: extractThemesFromGenreTone(effectiveGenre, effectiveTone),
           narrative_structure: narrativeStructure,
         }
