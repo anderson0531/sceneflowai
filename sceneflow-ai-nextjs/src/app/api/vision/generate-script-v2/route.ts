@@ -74,6 +74,7 @@ import {
   buildLongformScriptLengthBlock,
   buildScriptCraftPromptBlock,
 } from '@/lib/script/scriptCraftPrompt'
+import { buildVisionPhaseContinuityFromVariant } from '@/lib/blueprint/blueprintContinuity'
 export const runtime = 'nodejs'
 export const maxDuration = 600  // 10 minutes for large script generation (requires Vercel Pro)
 
@@ -237,35 +238,51 @@ export async function POST(request: NextRequest) {
           console.warn('[Script Gen V2] Scene limit check failed:', error)
         }
 
-        // Load existing characters - defer alias generation for memory optimization
+        // Load existing characters & continuity references - defer alias generation for memory optimization
         let existingCharacters = (project.metadata?.visionPhase?.characters || []).map((c: any) => ({
           ...c,
           id: c.id || uuidv4(),
           name: toCanonicalName(c.name || c.displayName || '') // Normalize to canonical format
         }))
-    
-        if (existingCharacters.length === 0 && treatment.character_descriptions) {
-          existingCharacters = treatment.character_descriptions.map((c: any) => ({
-            ...c,
-            id: c.id || uuidv4(),
-            name: toCanonicalName(c.name || ''), // Normalize to canonical format
-            version: 1,
-            lastModified: new Date().toISOString(),
-            referenceImage: c.referenceImage || null,
-            generating: false,
-          }))
-          
+
+        const existingLocRefs = project.metadata?.visionPhase?.references?.locationReferences || []
+        const existingObjRefs = project.metadata?.visionPhase?.references?.objectReferences || []
+        const needsContinuitySync =
+          (existingCharacters.length === 0 && Array.isArray(treatment.character_descriptions) && treatment.character_descriptions.length > 0) ||
+          (existingLocRefs.length === 0 && Array.isArray(treatment.scene_descriptions) && treatment.scene_descriptions.length > 0) ||
+          (existingObjRefs.length === 0 && Array.isArray(treatment.prop_descriptions) && treatment.prop_descriptions.length > 0)
+
+        if (needsContinuitySync) {
+          const syncedContinuity = buildVisionPhaseContinuityFromVariant(
+            treatment,
+            project.metadata?.visionPhase
+          )
+          if (existingCharacters.length === 0) {
+            existingCharacters = syncedContinuity.characters.map((c: any) => ({
+              ...c,
+              id: c.id || uuidv4(),
+              name: toCanonicalName(c.name || ''),
+              version: 1,
+              lastModified: new Date().toISOString(),
+              referenceImage: c.referenceImage || null,
+              generating: false,
+            }))
+          }
+
           await project.update({
             metadata: {
               ...project.metadata,
               visionPhase: {
                 ...(project.metadata?.visionPhase || {}),
                 characters: existingCharacters,
-              }
-            }
+                references: syncedContinuity.references,
+              },
+            },
           })
-          
-          console.log(`[Script Gen V2] Auto-synced ${existingCharacters.length} characters from Film Treatment`)
+
+          console.log(
+            `[Script Gen V2] Auto-synced Continuity from Film Treatment: ${existingCharacters.length} cast, ${syncedContinuity.references.locationReferences.length} locations, ${syncedContinuity.references.objectReferences.length} props`
+          )
         }
 
         // ============================================================

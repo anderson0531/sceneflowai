@@ -95,43 +95,136 @@ function SectionContent({
       )
     case 'characters': {
       const chars = normalizeCharacters(variant)
-      if (chars.length === 0) {
-        return <p className="sf-review-body-muted">No characters listed.</p>
+      const scenes = Array.isArray(variant.scene_descriptions)
+        ? (variant.scene_descriptions as Array<{
+            name?: string
+            type?: string
+            location?: string
+            description?: string
+            atmosphere?: string
+            furniture_props?: string
+          }>)
+        : []
+      const props = Array.isArray(variant.prop_descriptions)
+        ? (variant.prop_descriptions as Array<{
+            name?: string
+            category?: string
+            description?: string
+            significance?: string
+          }>)
+        : []
+      if (chars.length === 0 && scenes.length === 0 && props.length === 0) {
+        return <p className="sf-review-body-muted">No continuity assets listed.</p>
       }
       return (
-        <div className="space-y-4">
-          {chars.map((c, i) => (
-            <div
-              key={i}
-              className="rounded-lg border border-amber-500/15 bg-amber-500/5 px-3 py-3 border-l-2 border-l-amber-500/40"
-            >
-              <div className="sf-review-body font-semibold text-white">
-                {c.name || 'Character'}
-                {c.role ? (
-                  <span className="sf-review-body-muted font-normal"> — {c.role}</span>
-                ) : null}
-              </div>
-              {c.description ? (
-                <p className="sf-review-body mt-1">{c.description}</p>
-              ) : null}
-              {(c as { externalGoal?: string }).externalGoal ? (
-                <p className="sf-review-body-muted mt-2">
-                  <span className="sf-review-field-label normal-case tracking-normal">
-                    Goal:{' '}
-                  </span>
-                  {(c as { externalGoal?: string }).externalGoal}
-                </p>
-              ) : null}
-              {(c as { internalNeed?: string }).internalNeed ? (
-                <p className="sf-review-body-muted">
-                  <span className="sf-review-field-label normal-case tracking-normal">
-                    Need:{' '}
-                  </span>
-                  {(c as { internalNeed?: string }).internalNeed}
-                </p>
-              ) : null}
+        <div className="space-y-5">
+          {chars.length > 0 && (
+            <div className="space-y-3">
+              <div className="sf-review-field-label text-amber-300/90">Cast ({chars.length})</div>
+              {chars.map((c, i) => (
+                <div
+                  key={i}
+                  className="rounded-lg border border-amber-500/15 bg-amber-500/5 px-3 py-3 border-l-2 border-l-amber-500/40"
+                >
+                  <div className="sf-review-body font-semibold text-white">
+                    {c.name || 'Character'}
+                    {c.role ? (
+                      <span className="sf-review-body-muted font-normal"> — {c.role}</span>
+                    ) : null}
+                  </div>
+                  {c.description ? (
+                    <p className="sf-review-body mt-1">{c.description}</p>
+                  ) : null}
+                  {(c as { externalGoal?: string }).externalGoal ? (
+                    <p className="sf-review-body-muted mt-2">
+                      <span className="sf-review-field-label normal-case tracking-normal">
+                        Goal:{' '}
+                      </span>
+                      {(c as { externalGoal?: string }).externalGoal}
+                    </p>
+                  ) : null}
+                  {(c as { internalNeed?: string }).internalNeed ? (
+                    <p className="sf-review-body-muted">
+                      <span className="sf-review-field-label normal-case tracking-normal">
+                        Need:{' '}
+                      </span>
+                      {(c as { internalNeed?: string }).internalNeed}
+                    </p>
+                  ) : null}
+                </div>
+              ))}
             </div>
-          ))}
+          )}
+
+          {scenes.length > 0 && (
+            <div className="space-y-3">
+              <div className="sf-review-field-label text-emerald-300/90">
+                Locations ({scenes.length})
+              </div>
+              {scenes.map((loc, i) => (
+                <div
+                  key={i}
+                  className="rounded-lg border border-emerald-500/15 bg-emerald-500/5 px-3 py-3 border-l-2 border-l-emerald-500/40"
+                >
+                  <div className="sf-review-body font-semibold text-white">
+                    {loc.name || 'Location'}
+                    {loc.type ? (
+                      <span className="sf-review-body-muted font-normal"> ({loc.type})</span>
+                    ) : null}
+                  </div>
+                  {loc.location || loc.description ? (
+                    <p className="sf-review-body mt-1">{loc.location || loc.description}</p>
+                  ) : null}
+                  {loc.atmosphere ? (
+                    <p className="sf-review-body-muted mt-1">
+                      <span className="sf-review-field-label normal-case tracking-normal">
+                        Atmosphere:{' '}
+                      </span>
+                      {loc.atmosphere}
+                    </p>
+                  ) : null}
+                  {loc.furniture_props ? (
+                    <p className="sf-review-body-muted">
+                      <span className="sf-review-field-label normal-case tracking-normal">
+                        Props:{' '}
+                      </span>
+                      {loc.furniture_props}
+                    </p>
+                  ) : null}
+                </div>
+              ))}
+            </div>
+          )}
+
+          {props.length > 0 && (
+            <div className="space-y-3">
+              <div className="sf-review-field-label text-cyan-300/90">Props ({props.length})</div>
+              {props.map((prop, i) => (
+                <div
+                  key={i}
+                  className="rounded-lg border border-cyan-500/15 bg-cyan-500/5 px-3 py-3 border-l-2 border-l-cyan-500/40"
+                >
+                  <div className="sf-review-body font-semibold text-white">
+                    {prop.name || 'Prop'}
+                    {prop.category ? (
+                      <span className="sf-review-body-muted font-normal"> — {prop.category}</span>
+                    ) : null}
+                  </div>
+                  {prop.description ? (
+                    <p className="sf-review-body mt-1">{prop.description}</p>
+                  ) : null}
+                  {prop.significance ? (
+                    <p className="sf-review-body-muted mt-1">
+                      <span className="sf-review-field-label normal-case tracking-normal">
+                        Significance:{' '}
+                      </span>
+                      {prop.significance}
+                    </p>
+                  ) : null}
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       )
     }

@@ -70,6 +70,24 @@ export function buildTreatmentVariantDisplayFields(
     })
   }
 
+  if (Array.isArray(variant.scene_descriptions)) {
+    variant.scene_descriptions.forEach((scene: LooseRecord, index: number) => {
+      const base = `${prefix}.scene_descriptions[${index}]`
+      fields[`${base}.location`] = scene?.location
+      fields[`${base}.description`] = scene?.description
+      fields[`${base}.atmosphere`] = scene?.atmosphere
+      fields[`${base}.furniture_props`] = scene?.furniture_props
+    })
+  }
+
+  if (Array.isArray(variant.prop_descriptions)) {
+    variant.prop_descriptions.forEach((prop: LooseRecord, index: number) => {
+      const base = `${prefix}.prop_descriptions[${index}]`
+      fields[`${base}.description`] = prop?.description
+      fields[`${base}.significance`] = prop?.significance
+    })
+  }
+
   return fields
 }
 
@@ -321,6 +339,58 @@ export function applyTreatmentVariantTranslations(
             resolve,
             `${base}.arcEndingState`,
             String(character?.arcEndingState || '')
+          ),
+        }
+      }
+    )
+  }
+
+  if (Array.isArray(variant.scene_descriptions)) {
+    localized.scene_descriptions = variant.scene_descriptions.map(
+      (scene: LooseRecord, index: number) => {
+        const base = `${prefix}.scene_descriptions[${index}]`
+        return {
+          ...scene,
+          location: resolvedText(
+            resolve,
+            `${base}.location`,
+            String(scene?.location || '')
+          ),
+          description: resolvedText(
+            resolve,
+            `${base}.description`,
+            String(scene?.description || '')
+          ),
+          atmosphere: resolvedText(
+            resolve,
+            `${base}.atmosphere`,
+            String(scene?.atmosphere || '')
+          ),
+          furniture_props: resolvedText(
+            resolve,
+            `${base}.furniture_props`,
+            String(scene?.furniture_props || '')
+          ),
+        }
+      }
+    )
+  }
+
+  if (Array.isArray(variant.prop_descriptions)) {
+    localized.prop_descriptions = variant.prop_descriptions.map(
+      (prop: LooseRecord, index: number) => {
+        const base = `${prefix}.prop_descriptions[${index}]`
+        return {
+          ...prop,
+          description: resolvedText(
+            resolve,
+            `${base}.description`,
+            String(prop?.description || '')
+          ),
+          significance: resolvedText(
+            resolve,
+            `${base}.significance`,
+            String(prop?.significance || '')
           ),
         }
       }

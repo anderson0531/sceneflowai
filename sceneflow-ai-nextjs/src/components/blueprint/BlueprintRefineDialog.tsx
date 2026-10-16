@@ -151,6 +151,10 @@ function BlueprintSnapshot({
   const beats = (localized.beats as Array<{ title?: string; synopsis?: string }>) || []
   const chars =
     (localized.character_descriptions as Array<{ name?: string; role?: string }>) || []
+  const locs =
+    (localized.scene_descriptions as Array<{ name?: string; type?: string }>) || []
+  const props =
+    (localized.prop_descriptions as Array<{ name?: string; category?: string }>) || []
 
   return (
     <div className="space-y-2 rounded-xl border border-slate-700/50 bg-slate-800/30 p-3">
@@ -190,19 +194,56 @@ function BlueprintSnapshot({
           },
           {
             key: 'characters',
-            title: 'Characters',
+            title: 'Continuity',
             content: (
-              <ul className="text-xs text-gray-300 space-y-1">
-                {chars.length === 0 ? (
-                  <li className="text-gray-500">{t('noCharacters')}</li>
-                ) : (
-                  chars.map((c, i) => (
-                    <li key={i}>
-                      {c.name || 'Character'} — {c.role || 'role'}
-                    </li>
-                  ))
+              <div className="space-y-2 text-xs text-gray-300">
+                <div>
+                  <div className="text-[10px] uppercase tracking-wide text-gray-500 mb-0.5">
+                    Cast ({chars.length})
+                  </div>
+                  <ul className="space-y-1">
+                    {chars.length === 0 ? (
+                      <li className="text-gray-500">{t('noCharacters')}</li>
+                    ) : (
+                      chars.map((c, i) => (
+                        <li key={i}>
+                          {c.name || 'Character'} — {c.role || 'role'}
+                        </li>
+                      ))
+                    )}
+                  </ul>
+                </div>
+                {locs.length > 0 && (
+                  <div>
+                    <div className="text-[10px] uppercase tracking-wide text-gray-500 mb-0.5">
+                      Locations ({locs.length})
+                    </div>
+                    <ul className="space-y-1">
+                      {locs.map((loc, i) => (
+                        <li key={i}>
+                          {loc.name || 'Location'}
+                          {loc.type ? ` (${loc.type})` : ''}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
                 )}
-              </ul>
+                {props.length > 0 && (
+                  <div>
+                    <div className="text-[10px] uppercase tracking-wide text-gray-500 mb-0.5">
+                      Props ({props.length})
+                    </div>
+                    <ul className="space-y-1">
+                      {props.map((p, i) => (
+                        <li key={i}>
+                          {p.name || 'Prop'}
+                          {p.category ? ` — ${p.category}` : ''}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+              </div>
             ),
           },
           {

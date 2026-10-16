@@ -178,6 +178,22 @@ export const BLUEPRINT_SECTION_TEMPLATES: Record<
       instruction:
         'Enrich the relationships and dynamics between characters.',
     },
+    {
+      id: 'enrich-locations',
+      icon: '📍',
+      label: 'Enrich Locations',
+      description: 'Key sets & atmosphere',
+      instruction:
+        'Expand scene_descriptions with vivid locations, atmosphere, lighting, and set dressing.',
+    },
+    {
+      id: 'story-props',
+      icon: '📦',
+      label: 'Key Story Props',
+      description: 'Recurring props & significance',
+      instruction:
+        'Define key recurring props in prop_descriptions with physical details and narrative significance.',
+    },
   ],
 }
 
@@ -186,5 +202,5 @@ export const FIX_SECTION_LABELS: Record<string, string> = {
   story: 'Story (synopsis, characters setup)',
   tone: 'Tone & visual style',
   beats: 'Story beats',
-  characters: 'Character descriptions',
+  characters: 'Continuity (cast, locations, props)',
 }

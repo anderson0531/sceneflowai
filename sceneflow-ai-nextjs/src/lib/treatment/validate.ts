@@ -91,6 +91,7 @@ const TreatmentSchema = z.object({
   character_descriptions: z
     .array(
       z.object({
+        id: z.string().optional(),
         name: z.string().optional(),
         role: z.string().optional(),
         subject: z.string().optional(),
@@ -101,8 +102,16 @@ const TreatmentSchema = z.object({
         eyeColor: z.string().optional(),
         expression: z.string().optional(),
         build: z.string().optional(),
+        defaultWardrobe: z.string().optional(),
+        wardrobeAccessories: z.string().optional(),
+        appearance: z.string().optional(),
         description: z.string().optional(),
         image_prompt: z.string().optional(),
+        imagePrompt: z.string().optional(),
+        referenceImage: z.string().nullable().optional(),
+        libraryCharacterId: z.string().optional(),
+        libraryAssetId: z.string().optional(),
+        isNew: z.boolean().optional(),
         // Psychological depth fields
         externalGoal: z.string().optional(),
         internalNeed: z.string().optional(),
@@ -110,6 +119,55 @@ const TreatmentSchema = z.object({
         arcStartingState: z.string().optional(),
         arcShift: z.string().optional(),
         arcEndingState: z.string().optional(),
+      })
+    )
+    .optional(),
+  scene_descriptions: z
+    .array(
+      z.object({
+        id: z.string().optional(),
+        name: z.string().optional(),
+        type: z.string().optional(),
+        location: z.string().optional(),
+        atmosphere: z.string().optional(),
+        furniture_props: z.string().optional(),
+        description: z.string().optional(),
+        referenceImage: z.string().nullable().optional(),
+        libraryLocationId: z.string().optional(),
+        libraryAssetId: z.string().optional(),
+        isNew: z.boolean().optional(),
+      })
+    )
+    .optional(),
+  prop_descriptions: z
+    .array(
+      z.object({
+        id: z.string().optional(),
+        name: z.string().optional(),
+        category: z.string().optional(),
+        description: z.string().optional(),
+        significance: z.string().optional(),
+        importance: z.string().optional(),
+        referenceImage: z.string().nullable().optional(),
+        libraryPropId: z.string().optional(),
+        libraryAssetId: z.string().optional(),
+        isNew: z.boolean().optional(),
+      })
+    )
+    .optional(),
+  props: z
+    .array(
+      z.object({
+        id: z.string().optional(),
+        name: z.string().optional(),
+        category: z.string().optional(),
+        description: z.string().optional(),
+        significance: z.string().optional(),
+        importance: z.string().optional(),
+        referenceImage: z.string().nullable().optional(),
+        libraryPropId: z.string().optional(),
+        libraryAssetId: z.string().optional(),
+        isNew: z.boolean().optional(),
       })
     )
     .optional(),

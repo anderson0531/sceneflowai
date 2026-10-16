@@ -89,6 +89,10 @@ import {
   useCueBlueprintMode,
 } from '@/hooks/studio/useStudioBlueprintEvents'
 import { scrollToBlueprintSection } from '@/lib/blueprint/blueprintProgress'
+import {
+  buildVisionPhaseContinuityFromVariant,
+  type SharedContinuitySource,
+} from '@/lib/blueprint/blueprintContinuity'
 
 interface StudioPageClientProps {
   projectId: string;
@@ -118,6 +122,47 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
     seriesTitle: string
     episodeNumber: number
   } | null>(null)
+  const [seriesBibleContinuity, setSeriesBibleContinuity] =
+    useState<SharedContinuitySource | null>(null)
+
+  const sharedContinuitySource = useMemo<SharedContinuitySource | null>(() => {
+    const visionPhase = (currentProject?.metadata as Record<string, any> | undefined)?.visionPhase
+    const visionChars = Array.isArray(visionPhase?.characters) ? visionPhase.characters : []
+    const visionLocs = Array.isArray(visionPhase?.references?.locationReferences)
+      ? visionPhase.references.locationReferences
+      : []
+    const visionProps = Array.isArray(visionPhase?.references?.objectReferences)
+      ? visionPhase.references.objectReferences
+      : []
+    if (
+      !seriesBibleContinuity &&
+      !seriesContext &&
+      !visionChars.length &&
+      !visionLocs.length &&
+      !visionProps.length
+    ) {
+      return null
+    }
+    return {
+      seriesId: seriesContext?.seriesId ?? seriesBibleContinuity?.seriesId ?? null,
+      seriesTitle: seriesContext?.seriesTitle ?? seriesBibleContinuity?.seriesTitle ?? null,
+      bibleCharacters: seriesBibleContinuity?.bibleCharacters ?? [],
+      bibleLocations: seriesBibleContinuity?.bibleLocations ?? [],
+      bibleProps: seriesBibleContinuity?.bibleProps ?? [],
+      visionCharacters: [
+        ...visionChars,
+        ...(seriesBibleContinuity?.visionCharacters ?? []),
+      ],
+      visionLocations: [
+        ...visionLocs,
+        ...(seriesBibleContinuity?.visionLocations ?? []),
+      ],
+      visionProps: [
+        ...visionProps,
+        ...(seriesBibleContinuity?.visionProps ?? []),
+      ],
+    }
+  }, [currentProject?.metadata, seriesBibleContinuity, seriesContext])
   
   // Side panel visibility state
   const [showSidePanel, setShowSidePanel] = useState(true)
@@ -956,6 +1001,18 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
         setSavedBlueprintAR(null)
 
         const latestProject = useStore.getState().currentProject || currentProject
+        const existingVisionPhase = (latestProject?.metadata as Record<string, any> | undefined)?.visionPhase
+        const syncedContinuity = variants[0]
+          ? buildVisionPhaseContinuityFromVariant(variants[0], existingVisionPhase)
+          : null
+        const nextVisionPhase = syncedContinuity
+          ? {
+              ...(existingVisionPhase || {}),
+              characters: syncedContinuity.characters,
+              references: syncedContinuity.references,
+            }
+          : existingVisionPhase
+
         setCurrentProject({
           ...(latestProject || {}),
           metadata: mergeEntityI18nIntoMetadata(
@@ -964,6 +1021,7 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
               blueprintInput: text,
               filmTreatment: variants[0]?.synopsis || variants[0]?.content || '',
               treatmentVariants: variants,
+              ...(nextVisionPhase && { visionPhase: nextVisionPhase }),
               ...(data.beats && { beats: data.beats }),
               ...(data.estimatedRuntime !== undefined && { estimatedRuntime: data.estimatedRuntime }),
               ...(opts?.genre && { genre: opts.genre }),
@@ -1026,6 +1084,7 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
                     blueprintInput: text,
                     filmTreatment: variants[0]?.synopsis || variants[0]?.content || '',
                     treatmentVariants: variants,
+                    ...(nextVisionPhase && { visionPhase: nextVisionPhase }),
                     beats: data.beats || [],
                     estimatedRuntime: data.estimatedRuntime || null,
                     ...(opts?.genre && { genre: opts.genre }),
@@ -1053,6 +1112,7 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
             blueprintInput: text,
             i18n: contentI18nStamp,
             treatmentVariants: variants,
+            ...(nextVisionPhase && { visionPhase: nextVisionPhase }),
             filmTreatment: variants[0]?.synopsis || variants[0]?.content || '',
             beats: data.beats || beatsView,
             estimatedRuntime: data.estimatedRuntime ?? estimatedRuntime,
@@ -1170,14 +1230,60 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
           const resolvedBlueprint = resolveLoadedBlueprintVariants(metadata, projectData?.title)
           const hasStoredBlueprint = resolvedBlueprint.source !== 'none'
           
-          // Check if this is a series episode and set context for badge
-          if (metadata.seriesId && metadata.seriesTitle && metadata.episodeNumber) {
+          // Check if this is a series episode and load shared Series Continuity
+          const resolvedSeriesId = projectData.series_id || metadata.seriesId
+          const resolvedEpNum =
+            projectData.episode_number ?? metadata.episodeNumber ?? 1
+          if (resolvedSeriesId) {
             setSeriesContext({
-              seriesId: metadata.seriesId,
-              seriesTitle: metadata.seriesTitle,
-              episodeNumber: metadata.episodeNumber
+              seriesId: String(resolvedSeriesId),
+              seriesTitle: String(metadata.seriesTitle || ''),
+              episodeNumber: Number(resolvedEpNum) || 1,
             })
-            console.log('[StudioPage] Series episode detected:', metadata.seriesTitle, 'Ep', metadata.episodeNumber)
+            console.log(
+              '[StudioPage] Series episode detected:',
+              metadata.seriesTitle || resolvedSeriesId,
+              'Ep',
+              resolvedEpNum
+            )
+            void (async () => {
+              try {
+                const [seriesRes, refsRes] = await Promise.all([
+                  fetch(`/api/series/${resolvedSeriesId}`).catch(() => null),
+                  fetch(`/api/series/${resolvedSeriesId}/production-references`).catch(() => null),
+                ])
+                const seriesJson = seriesRes?.ok ? await seriesRes.json().catch(() => null) : null
+                const refsJson = refsRes?.ok ? await refsRes.json().catch(() => null) : null
+                const seriesData = seriesJson?.series || seriesJson
+                const bible = seriesData?.production_bible || seriesData?.productionBible || {}
+                const resolvedSeriesTitle =
+                  seriesData?.title || metadata.seriesTitle || 'Series'
+                setSeriesContext({
+                  seriesId: String(resolvedSeriesId),
+                  seriesTitle: String(resolvedSeriesTitle),
+                  episodeNumber: Number(resolvedEpNum) || 1,
+                })
+                setSeriesBibleContinuity({
+                  seriesId: String(resolvedSeriesId),
+                  seriesTitle: String(resolvedSeriesTitle),
+                  bibleCharacters: Array.isArray(bible.characters) ? bible.characters : [],
+                  bibleLocations: Array.isArray(bible.locations) ? bible.locations : [],
+                  bibleProps: Array.isArray(bible.props) ? bible.props : [],
+                  visionCharacters: Array.isArray(refsJson?.characters) ? refsJson.characters : [],
+                  visionLocations: Array.isArray(refsJson?.sceneReferences)
+                    ? refsJson.sceneReferences
+                    : [],
+                  visionProps: Array.isArray(refsJson?.objectReferences)
+                    ? refsJson.objectReferences
+                    : [],
+                })
+              } catch (seriesErr) {
+                console.warn('[StudioPage] Non-fatal error loading Series continuity:', seriesErr)
+              }
+            })()
+          } else {
+            setSeriesContext(null)
+            setSeriesBibleContinuity(null)
           }
           
           if (hasStoredBlueprint) {
@@ -1423,6 +1529,22 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
           currentProject?.metadata as Record<string, unknown> | undefined
         )?.filmTreatmentVariant
         const shouldSyncFoundation = !!existingFoundation && !!activeVariant
+        const existingVisionPhase = (
+          currentProject?.metadata as Record<string, any> | undefined
+        )?.visionPhase
+        const syncedContinuity = activeVariant
+          ? buildVisionPhaseContinuityFromVariant(
+              activeVariant as Record<string, any>,
+              existingVisionPhase
+            )
+          : null
+        const nextVisionPhase = syncedContinuity
+          ? {
+              ...(existingVisionPhase || {}),
+              characters: syncedContinuity.characters,
+              references: syncedContinuity.references,
+            }
+          : existingVisionPhase
         const blueprintData = {
           id: projectId,
           title: guide.title || 'Untitled Project',
@@ -1432,6 +1554,7 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
             blueprintInput: lastInput,
             filmTreatment: guide.filmTreatment,
             treatmentVariants: treatmentVariants,
+            ...(nextVisionPhase && { visionPhase: nextVisionPhase }),
             ...(shouldSyncFoundation && {
               filmTreatmentVariant: normalizeVariantFoundation(
                 activeVariant as Record<string, unknown>
@@ -1686,6 +1809,8 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
                   onOpenFoundation={openFoundationPanel}
                   projectFormat={currentProject?.metadata?.format ?? null}
                   projectId={projectId}
+                  seriesContext={seriesContext}
+                  sharedContinuitySource={sharedContinuitySource}
                   regenerateFallback={{
                     synopsis:
                       (currentProject?.metadata?.episodeSeed as { synopsis?: string } | undefined)

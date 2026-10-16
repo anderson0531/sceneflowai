@@ -71,7 +71,9 @@ export const BLUEPRINT_FIELD_LABELS: Record<string, string> = {
   themes: 'Themes',
   mood_references: 'Mood References',
   beats: 'Story Beats',
-  character_descriptions: 'Characters',
+  character_descriptions: 'Cast',
+  scene_descriptions: 'Locations',
+  prop_descriptions: 'Props',
   total_duration_seconds: 'Duration',
   estimatedDurationMinutes: 'Est. Runtime',
   scriptCraft: 'Script Craft',
@@ -99,7 +101,7 @@ export const SECTION_FIELDS: Record<BlueprintFixSection, string[]> = {
   story: ['synopsis', 'setting', 'protagonist', 'antagonist', 'act_breakdown'],
   tone: ['tone', 'tone_description', 'style', 'artStyle', 'aspectRatio', 'visual_style', 'themes', 'mood_references', 'scriptCraft', 'scriptCraftNotes'],
   beats: ['beats', 'total_duration_seconds', 'estimatedDurationMinutes'],
-  characters: ['character_descriptions'],
+  characters: ['character_descriptions', 'scene_descriptions', 'prop_descriptions'],
 }
 
 /**
@@ -107,7 +109,7 @@ export const SECTION_FIELDS: Record<BlueprintFixSection, string[]> = {
  * and by request validation so the two cannot drift apart.
  */
 export const SECTION_INTENT_PATTERNS: Record<BlueprintFixSection, RegExp> = {
-  characters: /character|protagonist|antagonist|arc\b|role\b|cast\b/,
+  characters: /character|protagonist|antagonist|arc\b|role\b|cast\b|location|prop\b|props\b|continuity/,
   beats: /beat|pacing|act\b|structure|duration|runtime/,
   tone: /tone|mood|theme|visual|style|art\s*style|script\s*craft|subtext/,
   core: /logline|genre|title|format|audience|length/,

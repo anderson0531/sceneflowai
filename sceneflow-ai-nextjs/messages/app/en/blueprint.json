@@ -45,8 +45,8 @@
     "story": "Story",
     "tone": "Tone",
     "beats": "Beats",
-    "characters": "Characters",
-    "charactersWithCount": "Characters ({count})"
+    "characters": "Continuity",
+    "charactersWithCount": "Continuity ({count})"
   },
   "toolbar": {
     "documentLabel": "Treatment",
@@ -66,9 +66,9 @@
     "beatsDescription": "Story structure and pacing",
     "beatsTotalling": "{count} beats totalling {display}",
     "runtimeTotal": "{display} total",
-    "characters": "Characters",
-    "charactersWithCount": "Characters ({count})",
-    "charactersDescription": "Character details and psychological depth",
+    "characters": "Continuity",
+    "charactersWithCount": "Continuity ({count})",
+    "charactersDescription": "Cast, locations, and props continuity",
     "wholeBlueprint": "whole blueprint"
   },
   "audio": {
@@ -147,7 +147,29 @@
     "arcStarting": "Starting",
     "arcShift": "Shift",
     "arcEnding": "Ending",
-    "refineNote": "💡 Characters will be refined with images and detailed attributes in Production"
+    "refineNote": "💡 Continuity assets (Cast, Locations, and Props) carry into Production Stage"
+  },
+  "continuity": {
+    "subTabs": {
+      "all": "All ({count})",
+      "cast": "Cast ({count})",
+      "locations": "Locations ({count})",
+      "props": "Props ({count})"
+    },
+    "castTitle": "Cast",
+    "locationsTitle": "Locations",
+    "propsTitle": "Props",
+    "sharedSeriesBannerTitle": "Shared Series Continuity Library",
+    "sharedSeriesBannerDesc": "Cast, locations, and props from {series} are shared with this episode blueprint.",
+    "sharedSeriesBannerGeneric": "Series Bible continuity assets are shared with this episode blueprint.",
+    "openSeriesContinuity": "Series Room",
+    "seriesAssetBadge": "Series Continuity",
+    "newEpisodeAssetBadge": "Episode Asset",
+    "locationAtmosphere": "Atmosphere & Lighting",
+    "locationProps": "Set Dressing & Props",
+    "propSignificance": "Narrative Significance",
+    "emptyLocations": "No locations defined yet. Use the {assistant} to generate key locations for this blueprint.",
+    "emptyProps": "No props defined yet. Use the {assistant} to generate key props for this blueprint."
   },
   "reasoning": {
     "whyChoices": "Why these choices?",
@@ -405,7 +427,7 @@
       "all": "Full blueprint balance",
       "core": "Core info",
       "story": "Story",
-      "characters": "Characters",
+      "characters": "Continuity",
       "beats": "Beats",
       "tone": "Tone & style"
     },

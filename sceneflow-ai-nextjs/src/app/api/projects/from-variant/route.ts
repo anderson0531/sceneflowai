@@ -14,6 +14,7 @@ import {
   type AudienceDefinition,
   type PersistedBlueprintAudienceResonance,
 } from '@/lib/types/audienceResonance'
+import { buildVisionPhaseContinuityFromVariant } from '@/lib/blueprint/blueprintContinuity'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
@@ -170,11 +171,11 @@ export async function POST(request: NextRequest) {
       tone: validatedTone
     })
 
-    // Inherit the shared audience definition (and prior AR) from the source
-    // blueprint so Production analyzes against the same audience. Priority:
-    // variant.audienceDefinition → source blueprint project → variant.target_audience string.
+    // Inherit the shared audience definition (and prior AR) and Series continuity
+    // from the source blueprint project so Production has full Cast, Locations, Props.
     let inheritedAudienceDefinition: AudienceDefinition | undefined
     let inheritedBlueprintAR: PersistedBlueprintAudienceResonance | undefined
+    let sourceProject: any = null
     try {
       if (variant?.audienceDefinition?.description) {
         inheritedAudienceDefinition = createAudienceDefinition({
@@ -183,7 +184,7 @@ export async function POST(request: NextRequest) {
         })
       }
       if (sourceBlueprintProjectId) {
-        const sourceProject = await Project.findByPk(sourceBlueprintProjectId)
+        sourceProject = await Project.findByPk(sourceBlueprintProjectId)
         const loaded = loadBlueprintARFromMetadata(
           (sourceProject?.metadata || {}) as Record<string, unknown>
         )
@@ -202,6 +203,16 @@ export async function POST(request: NextRequest) {
       console.warn('[from-variant] Failed to inherit audience definition:', inheritError)
     }
 
+    const sourceMetadata = (sourceProject?.metadata || {}) as Record<string, any>
+    const continuity = buildVisionPhaseContinuityFromVariant(
+      variant,
+      sourceMetadata.visionPhase
+    )
+    const inheritedSeriesId =
+      sourceProject?.series_id || sourceMetadata.seriesId || undefined
+    const inheritedEpisodeNumber =
+      sourceProject?.episode_number ?? sourceMetadata.episodeNumber ?? undefined
+
     // Create project
     const project = await Project.create({
       user_id: userId,
@@ -211,6 +222,8 @@ export async function POST(request: NextRequest) {
       duration: validatedDuration,
       tone: validatedTone,
       target_audience: inheritedAudienceDefinition?.description || undefined,
+      ...(inheritedSeriesId && { series_id: inheritedSeriesId }),
+      ...(inheritedEpisodeNumber !== undefined && { episode_number: inheritedEpisodeNumber }),
       current_step: 'storyboard', // Move to Vision
       status: 'in_progress',
       metadata: {
@@ -218,15 +231,20 @@ export async function POST(request: NextRequest) {
         filmTreatmentVariant: variant,
         blueprintInput: variant.content || variant.synopsis,
         sourceBlueprintProjectId: sourceBlueprintProjectId || undefined,
+        ...(inheritedSeriesId && { seriesId: inheritedSeriesId }),
+        ...(sourceMetadata.seriesTitle && { seriesTitle: sourceMetadata.seriesTitle }),
+        ...(inheritedEpisodeNumber !== undefined && { episodeNumber: inheritedEpisodeNumber }),
         audienceDefinition: inheritedAudienceDefinition || undefined,
         blueprintAudienceResonance: inheritedBlueprintAR || undefined,
         visionPhase: {
+          ...(sourceMetadata.visionPhase || {}),
           scriptGenerated: false,
-          charactersGenerated: false,
+          charactersGenerated: continuity.characters.length > 0,
           scenesGenerated: false,
           script: null,
           artStyle: resolveVariantArtStyle(variant),
-          characters: variant.character_descriptions || [],
+          characters: continuity.characters,
+          references: continuity.references,
           scenes: [],
           beatSheet: variant.act_breakdown || null,
         },

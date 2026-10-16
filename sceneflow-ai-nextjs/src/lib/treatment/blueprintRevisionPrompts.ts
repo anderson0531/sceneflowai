@@ -89,6 +89,30 @@ export function trimVariantForPrompt(variant: Record<string, unknown>): Record<s
         }))
     : variant.character_descriptions
 
+  const scenes = Array.isArray(variant.scene_descriptions)
+    ? (variant.scene_descriptions as Array<Record<string, unknown>>)
+        .slice(0, 8)
+        .map((s) => ({
+          name: s.name,
+          type: s.type,
+          location: truncateStr(s.location, 160),
+          atmosphere: truncateStr(s.atmosphere, 120),
+          furniture_props: truncateStr(s.furniture_props, 120),
+        }))
+    : variant.scene_descriptions
+
+  const props = Array.isArray(variant.prop_descriptions)
+    ? (variant.prop_descriptions as Array<Record<string, unknown>>)
+        .slice(0, 8)
+        .map((p) => ({
+          name: p.name,
+          category: p.category,
+          description: truncateStr(p.description, 160),
+          significance: truncateStr(p.significance, 120),
+          importance: p.importance,
+        }))
+    : variant.prop_descriptions
+
   return {
     title: truncateStr(variant.title, 200),
     logline: truncateStr(variant.logline, 400),
@@ -107,6 +131,8 @@ export function trimVariantForPrompt(variant: Record<string, unknown>): Record<s
       : variant.mood_references,
     beats,
     character_descriptions: characters,
+    scene_descriptions: scenes,
+    prop_descriptions: props,
     total_duration_seconds: variant.total_duration_seconds,
     estimatedDurationMinutes: variant.estimatedDurationMinutes,
   }

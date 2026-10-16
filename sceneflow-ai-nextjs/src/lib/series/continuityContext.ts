@@ -270,9 +270,9 @@ function episodeLibraryCharacterIds(
   return (episode?.characters || []).map((character) => character.characterId).filter(Boolean)
 }
 
-function lockedLibraryFromBible(
+export function lockedLibraryFromBible(
   bible: SeriesProductionBible,
-  episodeCharacterIds: string[]
+  episodeCharacterIds: string[] = []
 ): SeriesLibraryLock {
   const characters = bible.characters || []
   const featured = episodeCharacterIds.length
@@ -285,16 +285,23 @@ function lockedLibraryFromBible(
       name: character.name,
       role: character.role,
       description: character.description || character.appearance || '',
+      ...(character.appearance ? { appearance: character.appearance } : {}),
+      ...(character.referenceImage ? { referenceImage: character.referenceImage } : {}),
     })),
     locations: (bible.locations || []).map((location) => ({
       id: location.id,
       name: location.name,
       description: location.description || location.visualDescription || '',
+      ...(location.referenceImage ? { referenceImage: location.referenceImage } : {}),
     })),
     props: (bible.props || []).map((prop) => ({
       id: prop.id,
       name: prop.name,
       description: prop.description || '',
+      ...(prop.category ? { category: prop.category } : {}),
+      ...(prop.significance ? { significance: prop.significance } : {}),
+      ...(prop.importance ? { importance: prop.importance } : {}),
+      ...(prop.referenceImage ? { referenceImage: prop.referenceImage } : {}),
     })),
   }
 }

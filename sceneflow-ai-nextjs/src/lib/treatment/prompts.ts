@@ -114,6 +114,16 @@ const TREATMENT_SCHEMA_TEMPLATE = `SCHEMA - GENERATE IN THIS EXACT ORDER:
       "furniture_props": "Key objects, furniture, decorations"
     }
   ],
+
+  "prop_descriptions": [
+    {
+      "name": "Prop Name",
+      "category": "prop | vehicle | set_piece | technology | document | wardrobe_item",
+      "description": "Visual appearance, material, condition, and scale",
+      "significance": "Narrative or functional role in the story",
+      "importance": "critical | high | medium | low"
+    }
+  ],
   
   "themes": ["Theme 1", "Theme 2"],
   "opening_hook": "string",

@@ -6,7 +6,7 @@ import { useSession } from 'next-auth/react'
 import { useTranslations } from 'next-intl'
 import { useGuideStore } from '@/store/useGuideStore'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { ChevronDown, MessageSquare, Loader2, Wand2, X, Users, Lightbulb, SparklesIcon, Award, RotateCcw, FileText, ArrowRight, Volume2 } from 'lucide-react'
+import { ChevronDown, MessageSquare, Loader2, Wand2, X, Users, MapPin, Package, Film, ExternalLink, Lightbulb, SparklesIcon, Award, RotateCcw, FileText, ArrowRight, Volume2 } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from '@/components/ui/tooltip'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
@@ -66,6 +66,11 @@ import {
   blueprintNeedsEnglishRewrite,
   REWRITE_BLUEPRINT_ENGLISH_INTENT,
 } from '@/lib/blueprint/rewriteBlueprintEnglish'
+import {
+  resolveBlueprintContinuity,
+  type BlueprintContinuitySubSection,
+  type SharedContinuitySource,
+} from '@/lib/blueprint/blueprintContinuity'
 
 /**
  * Blueprint body sections, in tab order. Labels resolve through the catalog.
@@ -99,6 +104,14 @@ export type TreatmentCardProps = {
   projectFormat?: string | null
   /** Existing project id so Regenerate receives series continuity and the library lock. */
   projectId?: string
+  /** Series context when this project is an episode in a Series. */
+  seriesContext?: {
+    seriesId: string
+    seriesTitle?: string | null
+    episodeNumber?: number | null
+  } | null
+  /** Shared continuity assets from Series Bible / episode library / Vision references. */
+  sharedContinuitySource?: SharedContinuitySource | null
   /** Series values used when the current Blueprint left a required field empty. */
   regenerateFallback?: {
     synopsis?: string
@@ -127,6 +140,8 @@ export function TreatmentCard({
   onOpenFoundation,
   projectFormat,
   projectId: projectIdProp,
+  seriesContext,
+  sharedContinuitySource,
   regenerateFallback,
   contentI18n,
 }: TreatmentCardProps = {}) {
@@ -165,6 +180,27 @@ export function TreatmentCard({
     generating?: boolean;
     version?: number;
     lastModified?: string;
+  }>; scene_descriptions?: Array<{
+    name: string;
+    type?: string;
+    location?: string;
+    description?: string;
+    atmosphere?: string;
+    furniture_props?: string;
+    referenceImage?: string | null;
+    libraryLocationId?: string;
+    libraryAssetId?: string;
+    isNew?: boolean;
+  }>; prop_descriptions?: Array<{
+    name: string;
+    category?: string;
+    description?: string;
+    significance?: string;
+    importance?: string;
+    referenceImage?: string | null;
+    libraryPropId?: string;
+    libraryAssetId?: string;
+    isNew?: boolean;
   }>; beats?: Array<{ title: string; intent?: string; minutes: number; synopsis?: string }>; total_duration_seconds?: number; estimatedDurationMinutes?: number; scriptCraft?: Array<'characterDepth' | 'actionClarity' | 'subtext' | 'dialogueRichness' | 'visualFirst'>; scriptCraftNotes?: string; narrative_reasoning?: { character_focus: string; key_decisions: Array<{ decision: string; why: string; impact: string }>; story_strengths: string; user_adjustments: string }; }> | undefined
   const selectedId = (guide as any)?.selectedTreatmentId as string | undefined
 
@@ -173,6 +209,7 @@ export function TreatmentCard({
   const [reimaginOpen, setReimaginOpen] = useState(false)
   const openRefine = (opts?: OpenBlueprintRefineOptions) => onOpenBlueprintRefine?.(opts)
   const [activeSection, setActiveSection] = useState<BlueprintFixSection>('core')
+  const [continuitySubTab, setContinuitySubTab] = useState<BlueprintContinuitySubSection>('all')
   const openGuidedForSection = (scope: BlueprintFixSection) => {
     // Keep the card on the section being edited so the applied diff is visible.
     setActiveSection(scope)
@@ -291,7 +328,8 @@ export function TreatmentCard({
       const after = activeVariant as any
       const keys: string[] = [
         'title','logline','genre','format_length','target_audience','author_writer','date',
-        'setting','protagonist','antagonist','tone','tone_description','style','artStyle','aspectRatio','visual_style','synopsis','content','themes','beats','scriptCraft','scriptCraftNotes'
+        'setting','protagonist','antagonist','tone','tone_description','style','artStyle','aspectRatio','visual_style','synopsis','content','themes','beats','scriptCraft','scriptCraftNotes',
+        'character_descriptions','scene_descriptions','prop_descriptions'
       ]
       const changed = new Set<string>()
       for (const k of keys) {
@@ -540,9 +578,9 @@ export function TreatmentCard({
                 v as Record<string, unknown>,
                 projectFormat
               )
-              const characterCount = Array.isArray(v.character_descriptions)
-                ? v.character_descriptions.length
-                : 0
+              const continuity = resolveBlueprintContinuity(v as any, sharedContinuitySource)
+              const characterCount = continuity.counts.cast
+              const continuityCount = continuity.counts.total
               return (
                 <div className="space-y-5 text-sm">
                   {/* Callout */}
@@ -574,8 +612,8 @@ export function TreatmentCard({
                                 beatsRuntime.display,
                                 t('tabs.beats')
                               )
-                            : tab.id === 'characters' && characterCount > 0
-                              ? t('tabs.charactersWithCount', { count: characterCount })
+                            : tab.id === 'characters' && (continuityCount > 0 || characterCount > 0)
+                              ? t('tabs.charactersWithCount', { count: continuityCount })
                               : t(tab.labelKey)}
                         </TabsTrigger>
                       ))}
@@ -949,13 +987,15 @@ export function TreatmentCard({
                   </TabsContent>
 
                   <TabsContent value="characters" className="mt-4">
-                  {/* Characters - Expanded View with Psychological Depth. The heading
-                      always renders now that it owns a tab, so an empty cast shows a
-                      prompt rather than an unexplained blank panel. */}
+                  {/* Continuity — Cast, Locations, and Props (consistent with Series Room and Production Stage). */}
                   <BlueprintSubsectionHeading
                     sectionId="characters"
                     variant="studio"
-                    title={characterCount > 0 ? t('sections.charactersWithCount', { count: characterCount }) : t('sections.characters')}
+                    title={
+                      continuityCount > 0 || characterCount > 0
+                        ? t('sections.charactersWithCount', { count: continuityCount })
+                        : t('sections.characters')
+                    }
                     data-blueprint-section="characters"
                     actions={
                       <AssistantButton
@@ -964,112 +1004,439 @@ export function TreatmentCard({
                       />
                     }
                   >
-                  {characterCount === 0 ? (
-                    <div className="rounded-lg border border-amber-500/30 bg-amber-500/5 p-3 text-xs text-amber-200/90">
-                      {t('empty.noCharactersCast', { assistant: ASSISTANT.short })}
-                    </div>
-                  ) : (
-                    <>
-                      <div className="space-y-3">
-                        {(v.character_descriptions ?? []).map((c, idx) => {
-                          const charBase = `${prefix}.character_descriptions[${idx}]`
-                          const description = localized(`${charBase}.description`, c.description || '')
-                          const externalGoal = localized(`${charBase}.externalGoal`, c.externalGoal || '')
-                          const internalNeed = localized(`${charBase}.internalNeed`, c.internalNeed || '')
-                          const fatalFlaw = localized(`${charBase}.fatalFlaw`, c.fatalFlaw || '')
-                          const arcStarting = localized(`${charBase}.arcStartingState`, c.arcStartingState || '')
-                          const arcShift = localized(`${charBase}.arcShift`, c.arcShift || '')
-                          const arcEnding = localized(`${charBase}.arcEndingState`, c.arcEndingState || '')
+                    <div className="space-y-4">
+                      {/* Shared Series Continuity Library Banner (for Series episodes) */}
+                      {(continuity.isSeriesShared || Boolean(seriesContext?.seriesId)) && (
+                        <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-cyan-500/30 bg-cyan-500/10 p-3">
+                          <div className="flex items-start gap-2.5">
+                            <Film className="w-4 h-4 text-cyan-400 shrink-0 mt-0.5" />
+                            <div>
+                              <div className="text-xs font-semibold text-cyan-200">
+                                {t('continuity.sharedSeriesBannerTitle')}
+                              </div>
+                              <div className="text-xs text-cyan-100/80 mt-0.5">
+                                {(seriesContext?.seriesTitle || continuity.seriesTitle)
+                                  ? t('continuity.sharedSeriesBannerDesc', {
+                                      series: String(seriesContext?.seriesTitle || continuity.seriesTitle),
+                                    })
+                                  : t('continuity.sharedSeriesBannerGeneric')}
+                              </div>
+                            </div>
+                          </div>
+                          {(seriesContext?.seriesId || continuity.seriesId) && (
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="sm"
+                              className="h-7 px-2.5 text-xs border-cyan-500/40 text-cyan-200 hover:bg-cyan-500/15"
+                              onClick={() =>
+                                router.push(
+                                  `/dashboard/series/${seriesContext?.seriesId || continuity.seriesId}`
+                                )
+                              }
+                            >
+                              {t('continuity.openSeriesContinuity')}
+                              <ExternalLink className="w-3 h-3 ml-1.5" />
+                            </Button>
+                          )}
+                        </div>
+                      )}
+
+                      {/* Sub-section Filter Pills (All | Cast | Locations | Props) */}
+                      <div className="flex flex-wrap items-center gap-1.5 border-b border-slate-700/60 pb-2.5">
+                        {(
+                          [
+                            { id: 'all' as const, label: t('continuity.subTabs.all', { count: continuity.counts.total }), icon: null },
+                            { id: 'cast' as const, label: t('continuity.subTabs.cast', { count: continuity.counts.cast }), icon: Users },
+                            { id: 'locations' as const, label: t('continuity.subTabs.locations', { count: continuity.counts.locations }), icon: MapPin },
+                            { id: 'props' as const, label: t('continuity.subTabs.props', { count: continuity.counts.props }), icon: Package },
+                          ]
+                        ).map((sub) => {
+                          const Icon = sub.icon
+                          const isSelected = continuitySubTab === sub.id
                           return (
-                          <details 
-                            key={idx}
-                            className="group rounded-lg border border-slate-700/60 bg-slate-800/50 overflow-hidden"
-                          >
-                            <summary className="flex items-center justify-between p-3 cursor-pointer hover:bg-slate-700/40 transition-colors">
-                              <div className="flex items-center gap-3">
-                                {/* Amber matches the Characters section accent; the
-                                    avatar was purple, which reads as Core. */}
-                                <div className="w-8 h-8 rounded-full bg-amber-500/20 flex items-center justify-center">
-                                  <span className="text-amber-300 text-sm font-bold">{c.name?.charAt(0) || '?'}</span>
-                                </div>
-                                <div>
-                                  <div className="font-medium text-gray-100">{c.name}</div>
-                                  <div className="text-xs text-amber-400">{c.role || 'Character'}</div>
-                                </div>
-                              </div>
-                              <ChevronDown className="w-4 h-4 text-gray-400 group-open:rotate-180 transition-transform" />
-                            </summary>
-                            <div className="px-4 pb-4 pt-2 border-t border-slate-700/60 space-y-3">
-                              {/* Description */}
-                              {description && (
-                                <div className="text-sm text-gray-300">{description}</div>
+                            <button
+                              key={sub.id}
+                              type="button"
+                              onClick={() => setContinuitySubTab(sub.id)}
+                              className={cn(
+                                'inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium transition-colors border',
+                                isSelected
+                                  ? 'border-amber-500/50 bg-amber-500/15 text-amber-200'
+                                  : 'border-slate-700/70 bg-slate-800/40 text-gray-400 hover:text-gray-200 hover:border-slate-600'
                               )}
-                              
-                              {/* Goals & Flaws Grid. These three keep distinct hues
-                                  because they are genuinely different things a reader
-                                  compares at a glance, unlike the metadata chips. */}
-                              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                                {externalGoal && (
-                                  <div className="p-2.5 rounded-lg border border-sky-500/25 bg-sky-500/10">
-                                    <div className="text-[10px] font-semibold text-sky-400 uppercase tracking-wide mb-1">{t('character.externalGoal')}</div>
-                                    <div className="text-xs text-sky-100">{externalGoal}</div>
-                                  </div>
-                                )}
-                                {internalNeed && (
-                                  <div className="p-2.5 rounded-lg border border-amber-500/25 bg-amber-500/10">
-                                    <div className="text-[10px] font-semibold text-amber-400 uppercase tracking-wide mb-1">{t('character.internalNeed')}</div>
-                                    <div className="text-xs text-amber-100">{internalNeed}</div>
-                                  </div>
-                                )}
-                                {fatalFlaw && (
-                                  <div className="p-2.5 rounded-lg border border-red-500/25 bg-red-500/10">
-                                    <div className="text-[10px] font-semibold text-red-400 uppercase tracking-wide mb-1">{t('character.fatalFlaw')}</div>
-                                    <div className="text-xs text-red-100">{fatalFlaw}</div>
-                                  </div>
-                                )}
-                              </div>
-                              
-                              {/* Character Arc */}
-                              {(arcStarting || arcShift || arcEnding) && (
-                                <div className="p-3 rounded-lg border border-amber-500/25 bg-amber-500/5">
-                                  <div className="text-[10px] font-semibold text-amber-400 uppercase tracking-wide mb-2">{t('character.arc')}</div>
-                                  <div className="flex items-center gap-2 text-xs">
-                                    {arcStarting && (
-                                      <div className="flex-1 p-2 rounded bg-slate-900/60">
-                                        <div className="text-[9px] text-gray-400 uppercase">{t('character.arcStarting')}</div>
-                                        <div className="text-gray-300">{arcStarting}</div>
+                            >
+                              {Icon ? <Icon className="w-3.5 h-3.5" /> : null}
+                              {sub.label}
+                            </button>
+                          )
+                        })}
+                      </div>
+
+                      {/* Sub-section 1: Cast */}
+                      {(continuitySubTab === 'all' || continuitySubTab === 'cast') && (
+                        <div className={cn('space-y-3', v.id === activeVariant.id ? flashIf('character_descriptions') : '')}>
+                          <div className="flex items-center justify-between">
+                            <div className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-amber-300">
+                              <Users className="w-3.5 h-3.5" />
+                              <span>{t('continuity.castTitle')}</span>
+                              <span className="px-1.5 py-0.5 rounded-full bg-amber-500/15 text-amber-300 text-[10px]">
+                                {continuity.counts.cast}
+                              </span>
+                            </div>
+                          </div>
+                          {characterCount === 0 ? (
+                            <div className="rounded-lg border border-amber-500/30 bg-amber-500/5 p-3 text-xs text-amber-200/90">
+                              {t('empty.noCharactersCast', { assistant: ASSISTANT.short })}
+                            </div>
+                          ) : (
+                            <div className="space-y-3">
+                              {continuity.cast.map((c, idx) => {
+                                const vIdx = c.variantIndex ?? idx
+                                const charBase = `${prefix}.character_descriptions[${vIdx}]`
+                                const description =
+                                  c.variantIndex != null
+                                    ? localized(`${charBase}.description`, c.description || '')
+                                    : c.description || ''
+                                const externalGoal =
+                                  c.variantIndex != null
+                                    ? localized(`${charBase}.externalGoal`, c.externalGoal || '')
+                                    : c.externalGoal || ''
+                                const internalNeed =
+                                  c.variantIndex != null
+                                    ? localized(`${charBase}.internalNeed`, c.internalNeed || '')
+                                    : c.internalNeed || ''
+                                const fatalFlaw =
+                                  c.variantIndex != null
+                                    ? localized(`${charBase}.fatalFlaw`, c.fatalFlaw || '')
+                                    : c.fatalFlaw || ''
+                                const arcStarting =
+                                  c.variantIndex != null
+                                    ? localized(`${charBase}.arcStartingState`, c.arcStartingState || '')
+                                    : c.arcStartingState || ''
+                                const arcShift =
+                                  c.variantIndex != null
+                                    ? localized(`${charBase}.arcShift`, c.arcShift || '')
+                                    : c.arcShift || ''
+                                const arcEnding =
+                                  c.variantIndex != null
+                                    ? localized(`${charBase}.arcEndingState`, c.arcEndingState || '')
+                                    : c.arcEndingState || ''
+                                return (
+                                  <details
+                                    key={`${c.name}-${idx}`}
+                                    className="group rounded-lg border border-slate-700/60 bg-slate-800/50 overflow-hidden"
+                                  >
+                                    <summary className="flex items-center justify-between p-3 cursor-pointer hover:bg-slate-700/40 transition-colors">
+                                      <div className="flex items-center gap-3 min-w-0">
+                                        {c.referenceImage ? (
+                                          <img
+                                            src={c.referenceImage}
+                                            alt={c.name}
+                                            className="w-9 h-9 rounded-full object-cover border border-amber-500/40 shrink-0"
+                                          />
+                                        ) : (
+                                          <div className="w-8 h-8 rounded-full bg-amber-500/20 flex items-center justify-center shrink-0">
+                                            <span className="text-amber-300 text-sm font-bold">
+                                              {c.name?.charAt(0) || '?'}
+                                            </span>
+                                          </div>
+                                        )}
+                                        <div className="min-w-0">
+                                          <div className="flex flex-wrap items-center gap-2">
+                                            <span className="font-medium text-gray-100">{c.name}</span>
+                                            {c.isSharedFromSeries && (
+                                              <span className="px-1.5 py-0.5 rounded border border-cyan-500/35 bg-cyan-500/10 text-[10px] text-cyan-300">
+                                                {t('continuity.seriesAssetBadge')}
+                                              </span>
+                                            )}
+                                            {!c.isSharedFromSeries && c.isNew && (
+                                              <span className="px-1.5 py-0.5 rounded border border-violet-500/35 bg-violet-500/10 text-[10px] text-violet-300">
+                                                {t('continuity.newEpisodeAssetBadge')}
+                                              </span>
+                                            )}
+                                          </div>
+                                          <div className="text-xs text-amber-400">{c.role || 'Character'}</div>
+                                        </div>
+                                      </div>
+                                      <ChevronDown className="w-4 h-4 text-gray-400 group-open:rotate-180 transition-transform shrink-0" />
+                                    </summary>
+                                    <div className="px-4 pb-4 pt-2 border-t border-slate-700/60 space-y-3">
+                                      {description && (
+                                        <div className="text-sm text-gray-300">{description}</div>
+                                      )}
+                                      {(externalGoal || internalNeed || fatalFlaw) && (
+                                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                                          {externalGoal && (
+                                            <div className="p-2.5 rounded-lg border border-sky-500/25 bg-sky-500/10">
+                                              <div className="text-[10px] font-semibold text-sky-400 uppercase tracking-wide mb-1">
+                                                {t('character.externalGoal')}
+                                              </div>
+                                              <div className="text-xs text-sky-100">{externalGoal}</div>
+                                            </div>
+                                          )}
+                                          {internalNeed && (
+                                            <div className="p-2.5 rounded-lg border border-amber-500/25 bg-amber-500/10">
+                                              <div className="text-[10px] font-semibold text-amber-400 uppercase tracking-wide mb-1">
+                                                {t('character.internalNeed')}
+                                              </div>
+                                              <div className="text-xs text-amber-100">{internalNeed}</div>
+                                            </div>
+                                          )}
+                                          {fatalFlaw && (
+                                            <div className="p-2.5 rounded-lg border border-red-500/25 bg-red-500/10">
+                                              <div className="text-[10px] font-semibold text-red-400 uppercase tracking-wide mb-1">
+                                                {t('character.fatalFlaw')}
+                                              </div>
+                                              <div className="text-xs text-red-100">{fatalFlaw}</div>
+                                            </div>
+                                          )}
+                                        </div>
+                                      )}
+                                      {(arcStarting || arcShift || arcEnding) && (
+                                        <div className="p-3 rounded-lg border border-amber-500/25 bg-amber-500/5">
+                                          <div className="text-[10px] font-semibold text-amber-400 uppercase tracking-wide mb-2">
+                                            {t('character.arc')}
+                                          </div>
+                                          <div className="flex items-center gap-2 text-xs">
+                                            {arcStarting && (
+                                              <div className="flex-1 p-2 rounded bg-slate-900/60">
+                                                <div className="text-[9px] text-gray-400 uppercase">
+                                                  {t('character.arcStarting')}
+                                                </div>
+                                                <div className="text-gray-300">{arcStarting}</div>
+                                              </div>
+                                            )}
+                                            {arcShift && (
+                                              <>
+                                                <ArrowRight className="w-3 h-3 text-amber-400 flex-shrink-0" />
+                                                <div className="flex-1 p-2 rounded bg-slate-900/60">
+                                                  <div className="text-[9px] text-gray-400 uppercase">
+                                                    {t('character.arcShift')}
+                                                  </div>
+                                                  <div className="text-gray-300">{arcShift}</div>
+                                                </div>
+                                              </>
+                                            )}
+                                            {arcEnding && (
+                                              <>
+                                                <ArrowRight className="w-3 h-3 text-cyan-400 flex-shrink-0" />
+                                                <div className="flex-1 p-2 rounded bg-slate-900/60">
+                                                  <div className="text-[9px] text-gray-400 uppercase">
+                                                    {t('character.arcEnding')}
+                                                  </div>
+                                                  <div className="text-gray-300">{arcEnding}</div>
+                                                </div>
+                                              </>
+                                            )}
+                                          </div>
+                                        </div>
+                                      )}
+                                    </div>
+                                  </details>
+                                )
+                              })}
+                            </div>
+                          )}
+                        </div>
+                      )}
+
+                      {/* Sub-section 2: Locations */}
+                      {(continuitySubTab === 'all' || continuitySubTab === 'locations') && (
+                        <div className={cn('space-y-3', v.id === activeVariant.id ? flashIf('scene_descriptions') : '')}>
+                          <div className="flex items-center justify-between">
+                            <div className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-emerald-300">
+                              <MapPin className="w-3.5 h-3.5" />
+                              <span>{t('continuity.locationsTitle')}</span>
+                              <span className="px-1.5 py-0.5 rounded-full bg-emerald-500/15 text-emerald-300 text-[10px]">
+                                {continuity.counts.locations}
+                              </span>
+                            </div>
+                          </div>
+                          {continuity.locations.length === 0 ? (
+                            <div className="rounded-lg border border-slate-700/60 bg-slate-800/30 p-3 text-xs text-gray-400">
+                              {t('continuity.emptyLocations', { assistant: ASSISTANT.short })}
+                            </div>
+                          ) : (
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                              {continuity.locations.map((loc, idx) => {
+                                const vIdx = loc.variantIndex
+                                const locBase =
+                                  vIdx != null ? `${prefix}.scene_descriptions[${vIdx}]` : null
+                                const locDescription = locBase
+                                  ? localized(
+                                      `${locBase}.location`,
+                                      localized(`${locBase}.description`, loc.location || loc.description || '')
+                                    )
+                                  : loc.location || loc.description || ''
+                                const locAtmosphere = locBase
+                                  ? localized(`${locBase}.atmosphere`, loc.atmosphere || '')
+                                  : loc.atmosphere || ''
+                                const locProps = locBase
+                                  ? localized(`${locBase}.furniture_props`, loc.furniture_props || '')
+                                  : loc.furniture_props || ''
+                                return (
+                                  <div
+                                    key={`${loc.name}-${idx}`}
+                                    className="rounded-lg border border-slate-700/60 bg-slate-800/50 p-3.5 space-y-2.5"
+                                  >
+                                    <div className="flex items-start justify-between gap-2.5">
+                                      <div className="flex items-center gap-2.5 min-w-0">
+                                        {loc.referenceImage ? (
+                                          <img
+                                            src={loc.referenceImage}
+                                            alt={loc.name}
+                                            className="w-10 h-10 rounded-md object-cover border border-emerald-500/40 shrink-0"
+                                          />
+                                        ) : (
+                                          <div className="w-8 h-8 rounded-md bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center shrink-0">
+                                            <MapPin className="w-4 h-4 text-emerald-300" />
+                                          </div>
+                                        )}
+                                        <div className="min-w-0">
+                                          <div className="font-medium text-gray-100 truncate">{loc.name}</div>
+                                          <div className="flex flex-wrap items-center gap-1.5 mt-0.5">
+                                            {loc.type && (
+                                              <span className="px-1.5 py-0.5 rounded bg-emerald-500/15 text-emerald-300 text-[10px] font-semibold uppercase">
+                                                {loc.type}
+                                              </span>
+                                            )}
+                                            {loc.isSharedFromSeries && (
+                                              <span className="px-1.5 py-0.5 rounded border border-cyan-500/35 bg-cyan-500/10 text-[10px] text-cyan-300">
+                                                {t('continuity.seriesAssetBadge')}
+                                              </span>
+                                            )}
+                                            {!loc.isSharedFromSeries && loc.isNew && (
+                                              <span className="px-1.5 py-0.5 rounded border border-violet-500/35 bg-violet-500/10 text-[10px] text-violet-300">
+                                                {t('continuity.newEpisodeAssetBadge')}
+                                              </span>
+                                            )}
+                                          </div>
+                                        </div>
+                                      </div>
+                                    </div>
+                                    {locDescription && (
+                                      <p className="text-xs text-gray-300 leading-relaxed">{locDescription}</p>
+                                    )}
+                                    {(locAtmosphere || locProps) && (
+                                      <div className="space-y-1.5 pt-1.5 border-t border-slate-700/50 text-xs">
+                                        {locAtmosphere && (
+                                          <div>
+                                            <span className="text-[10px] font-semibold uppercase tracking-wide text-emerald-400/90 mr-1.5">
+                                              {t('continuity.locationAtmosphere')}:
+                                            </span>
+                                            <span className="text-gray-300">{locAtmosphere}</span>
+                                          </div>
+                                        )}
+                                        {locProps && (
+                                          <div>
+                                            <span className="text-[10px] font-semibold uppercase tracking-wide text-cyan-400/90 mr-1.5">
+                                              {t('continuity.locationProps')}:
+                                            </span>
+                                            <span className="text-gray-300">{locProps}</span>
+                                          </div>
+                                        )}
                                       </div>
                                     )}
-                                    {arcShift && (
-                                      <>
-                                        <ArrowRight className="w-3 h-3 text-amber-400 flex-shrink-0" />
-                                        <div className="flex-1 p-2 rounded bg-slate-900/60">
-                                          <div className="text-[9px] text-gray-400 uppercase">{t('character.arcShift')}</div>
-                                          <div className="text-gray-300">{arcShift}</div>
+                                  </div>
+                                )
+                              })}
+                            </div>
+                          )}
+                        </div>
+                      )}
+
+                      {/* Sub-section 3: Props */}
+                      {(continuitySubTab === 'all' || continuitySubTab === 'props') && (
+                        <div className={cn('space-y-3', v.id === activeVariant.id ? flashIf('prop_descriptions') : '')}>
+                          <div className="flex items-center justify-between">
+                            <div className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-cyan-300">
+                              <Package className="w-3.5 h-3.5" />
+                              <span>{t('continuity.propsTitle')}</span>
+                              <span className="px-1.5 py-0.5 rounded-full bg-cyan-500/15 text-cyan-300 text-[10px]">
+                                {continuity.counts.props}
+                              </span>
+                            </div>
+                          </div>
+                          {continuity.props.length === 0 ? (
+                            <div className="rounded-lg border border-slate-700/60 bg-slate-800/30 p-3 text-xs text-gray-400">
+                              {t('continuity.emptyProps', { assistant: ASSISTANT.short })}
+                            </div>
+                          ) : (
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                              {continuity.props.map((prop, idx) => {
+                                const vIdx = prop.variantIndex
+                                const propBase =
+                                  vIdx != null ? `${prefix}.prop_descriptions[${vIdx}]` : null
+                                const propDesc = propBase
+                                  ? localized(`${propBase}.description`, prop.description || '')
+                                  : prop.description || ''
+                                const propSig = propBase
+                                  ? localized(`${propBase}.significance`, prop.significance || '')
+                                  : prop.significance || ''
+                                return (
+                                  <div
+                                    key={`${prop.name}-${idx}`}
+                                    className="rounded-lg border border-slate-700/60 bg-slate-800/50 p-3.5 space-y-2"
+                                  >
+                                    <div className="flex items-start justify-between gap-2.5">
+                                      <div className="flex items-center gap-2.5 min-w-0">
+                                        {prop.referenceImage ? (
+                                          <img
+                                            src={prop.referenceImage}
+                                            alt={prop.name}
+                                            className="w-10 h-10 rounded-md object-cover border border-cyan-500/40 shrink-0"
+                                          />
+                                        ) : (
+                                          <div className="w-8 h-8 rounded-md bg-cyan-500/15 border border-cyan-500/30 flex items-center justify-center shrink-0">
+                                            <Package className="w-4 h-4 text-cyan-300" />
+                                          </div>
+                                        )}
+                                        <div className="min-w-0">
+                                          <div className="font-medium text-gray-100 truncate">{prop.name}</div>
+                                          <div className="flex flex-wrap items-center gap-1.5 mt-0.5">
+                                            {prop.category && (
+                                              <span className="px-1.5 py-0.5 rounded bg-cyan-500/15 text-cyan-300 text-[10px] font-medium capitalize">
+                                                {prop.category}
+                                              </span>
+                                            )}
+                                            {prop.importance && (
+                                              <span className="px-1.5 py-0.5 rounded bg-slate-700/80 text-gray-300 text-[10px] capitalize">
+                                                {prop.importance}
+                                              </span>
+                                            )}
+                                            {prop.isSharedFromSeries && (
+                                              <span className="px-1.5 py-0.5 rounded border border-cyan-500/35 bg-cyan-500/10 text-[10px] text-cyan-300">
+                                                {t('continuity.seriesAssetBadge')}
+                                              </span>
+                                            )}
+                                          </div>
                                         </div>
-                                      </>
+                                      </div>
+                                    </div>
+                                    {propDesc && (
+                                      <p className="text-xs text-gray-300 leading-relaxed">{propDesc}</p>
                                     )}
-                                    {arcEnding && (
-                                      <>
-                                        <ArrowRight className="w-3 h-3 text-cyan-400 flex-shrink-0" />
-                                        <div className="flex-1 p-2 rounded bg-slate-900/60">
-                                          <div className="text-[9px] text-gray-400 uppercase">{t('character.arcEnding')}</div>
-                                          <div className="text-gray-300">{arcEnding}</div>
-                                        </div>
-                                      </>
+                                    {propSig && (
+                                      <div className="pt-1.5 border-t border-slate-700/50 text-xs">
+                                        <span className="text-[10px] font-semibold uppercase tracking-wide text-cyan-400/90 mr-1.5">
+                                          {t('continuity.propSignificance')}:
+                                        </span>
+                                        <span className="text-gray-300">{propSig}</span>
+                                      </div>
                                     )}
                                   </div>
-                                </div>
-                              )}
+                                )
+                              })}
                             </div>
-                          </details>
-                        )})}
-                      </div>
-                      <div className="text-xs text-gray-400 italic mt-2 px-3">
+                          )}
+                        </div>
+                      )}
+
+                      <div className="text-xs text-gray-400 italic mt-2 px-1">
                         {t('character.refineNote')}
                       </div>
-                    </>
-                  )}
+                    </div>
                   </BlueprintSubsectionHeading>
                   </TabsContent>
                   </Tabs>

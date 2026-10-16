@@ -27,6 +27,7 @@ import { generateText } from '@/lib/vertexai/gemini'
 import { resolveStoryLocale, resolveExistingContentStoryLocale } from '@/i18n/server/storyLocale'
 import { loadContinuityContextForProject } from '@/lib/series/continuityContext'
 import { bindTreatmentToLibrary, type SeriesLibraryLock } from '@/lib/series/bindLibraryAssets'
+import { extractFallbackPropsFromSceneDescriptions } from '@/lib/blueprint/blueprintContinuity'
 import { DEFAULT_BLUEPRINT_TONE } from '@/lib/blueprint/regenerateDefaults'
 import { loadProjectReferenceCatalog } from '@/lib/referenceLibrary/catalogLoader'
 import { formatReferenceCatalogForPrompt } from '@/lib/referenceLibrary/projection'
@@ -679,6 +680,7 @@ async function generateFilmTreatment(
 
       character_descriptions: Array.isArray((parsed as any).character_descriptions)
         ? ((parsed as any).character_descriptions as any[]).map((c: any) => ({
+            ...(c?.id ? { id: String(c.id) } : {}),
             name: String(c?.name || ''),
             role: String(c?.role || 'supporting'),
             subject: String(c?.subject || c?.name || ''),
@@ -691,9 +693,19 @@ async function generateFilmTreatment(
             build: String(c?.build || ''),
             defaultWardrobe: String(c?.defaultWardrobe || ''),
             wardrobeAccessories: String(c?.wardrobeAccessories || ''),
+            ...(c?.appearance ? { appearance: String(c.appearance) } : {}),
             description: String(c?.description || ''),
+            ...(c?.externalGoal ? { externalGoal: String(c.externalGoal) } : {}),
+            ...(c?.internalNeed ? { internalNeed: String(c.internalNeed) } : {}),
+            ...(c?.fatalFlaw ? { fatalFlaw: String(c.fatalFlaw) } : {}),
+            ...(c?.arcStartingState ? { arcStartingState: String(c.arcStartingState) } : {}),
+            ...(c?.arcShift ? { arcShift: String(c.arcShift) } : {}),
+            ...(c?.arcEndingState ? { arcEndingState: String(c.arcEndingState) } : {}),
+            ...(c?.libraryCharacterId ? { libraryCharacterId: String(c.libraryCharacterId) } : {}),
+            ...(c?.libraryAssetId ? { libraryAssetId: String(c.libraryAssetId) } : {}),
+            ...(typeof c?.isNew === 'boolean' ? { isNew: c.isNew } : {}),
             imagePrompt: c?.imagePrompt || c?.image_prompt ? String(c.imagePrompt || c.image_prompt) : undefined,
-            referenceImage: null,
+            referenceImage: c?.referenceImage || null,
             generating: false,
             version: 1,
             lastModified: new Date().toISOString(),
@@ -702,13 +714,43 @@ async function generateFilmTreatment(
       
       scene_descriptions: Array.isArray((parsed as any).scene_descriptions)
         ? ((parsed as any).scene_descriptions as any[]).map((s: any) => ({
+            ...(s?.id ? { id: String(s.id) } : {}),
             name: String(s?.name || ''),
             type: String(s?.type || 'INT'),
-            location: String(s?.location || ''),
+            location: String(s?.location || s?.description || ''),
             atmosphere: String(s?.atmosphere || ''),
-            furniture_props: String(s?.furniture_props || '')
+            furniture_props: String(s?.furniture_props || ''),
+            ...(s?.description ? { description: String(s.description) } : {}),
+            ...(s?.referenceImage ? { referenceImage: String(s.referenceImage) } : {}),
+            ...(s?.libraryLocationId ? { libraryLocationId: String(s.libraryLocationId) } : {}),
+            ...(s?.libraryAssetId ? { libraryAssetId: String(s.libraryAssetId) } : {}),
+            ...(typeof s?.isNew === 'boolean' ? { isNew: s.isNew } : {}),
           }))
         : undefined,
+
+      prop_descriptions: (() => {
+        const rawProps = Array.isArray((parsed as any).prop_descriptions)
+          ? ((parsed as any).prop_descriptions as any[])
+          : Array.isArray((parsed as any).props)
+            ? ((parsed as any).props as any[])
+            : []
+        if (rawProps.length > 0) {
+          return rawProps.map((p: any) => ({
+            ...(p?.id ? { id: String(p.id) } : {}),
+            name: String(p?.name || ''),
+            category: String(p?.category || 'prop'),
+            description: String(p?.description || ''),
+            ...(p?.significance ? { significance: String(p.significance) } : {}),
+            importance: String(p?.importance || 'medium'),
+            ...(p?.referenceImage ? { referenceImage: String(p.referenceImage) } : {}),
+            ...(p?.libraryPropId ? { libraryPropId: String(p.libraryPropId) } : {}),
+            ...(p?.libraryAssetId ? { libraryAssetId: String(p.libraryAssetId) } : {}),
+            ...(typeof p?.isNew === 'boolean' ? { isNew: p.isNew } : {}),
+          }))
+        }
+        const fallback = extractFallbackPropsFromSceneDescriptions((parsed as any).scene_descriptions)
+        return fallback.length > 0 ? fallback : undefined
+      })(),
       
       // Embed summarized beats and estimate
       beats: normalizedBeats.map((b: any, i: number) => ({
