@@ -26,6 +26,15 @@ export const BRAND = {
     width: 512,
     height: 512,
   },
+  /** Horizontal marketing lockup: infinity mark plus the SceneFlow Studio wordmark. */
+  studioLockup: {
+    /** Transparent. Place on dark backgrounds. */
+    src: '/brand/sf-studio-lockup.png',
+    /** Solid brand navy (#050A18), for light layouts and slides. */
+    srcNavy: '/brand/sf-studio-lockup-navy.png',
+    width: 6174,
+    height: 1040,
+  },
   colors: {
     cyan: '#00F2FF',
     navy: '#050A18',
