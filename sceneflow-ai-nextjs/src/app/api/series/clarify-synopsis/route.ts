@@ -29,6 +29,7 @@ interface ClarifyRequestBody {
   messages?: unknown
   currentSynopsis?: string
   seriesId?: string
+  baselineBlueprint?: Record<string, unknown>
 }
 
 export async function POST(request: NextRequest) {
@@ -43,7 +44,13 @@ export async function POST(request: NextRequest) {
     }
 
     const body = (await request.json().catch(() => ({}))) as ClarifyRequestBody
-    const productionFormat = (body.productionFormat || '').trim()
+    const rawFormat = (body.productionFormat || '').trim()
+    const productionFormat =
+      isSeriesProductionFormat(rawFormat)
+        ? rawFormat
+        : body.baselineBlueprint && typeof body.baselineBlueprint === 'object'
+          ? 'narrative'
+          : rawFormat
     if (!isSeriesProductionFormat(productionFormat)) {
       return NextResponse.json(
         { success: false, error: 'A production format is required.' },
@@ -66,6 +73,10 @@ export async function POST(request: NextRequest) {
     const artStyle = (body.artStyle || '').trim()
     const surface = body.surface === 'project' ? 'project' : 'series'
     const scope = (body.scope || '').trim()
+    const baselineBlueprint =
+      body.baselineBlueprint && typeof body.baselineBlueprint === 'object'
+        ? body.baselineBlueprint
+        : undefined
 
     const hasCredits = await CreditService.ensureCredits(userId, CREDIT_COST)
     if (!hasCredits) {
@@ -84,6 +95,7 @@ export async function POST(request: NextRequest) {
       scope: scope || undefined,
       messages,
       currentSynopsis,
+      baselineBlueprint,
     })
 
     const result = await generateText(prompt, {

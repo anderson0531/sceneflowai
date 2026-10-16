@@ -49,6 +49,18 @@ export function capPatchSize(patch: Record<string, unknown>): Record<string, unk
       8
     )
   }
+  if (Array.isArray(out.scene_descriptions)) {
+    out.scene_descriptions = (out.scene_descriptions as Array<Record<string, unknown>>).slice(
+      0,
+      8
+    )
+  }
+  if (Array.isArray(out.prop_descriptions)) {
+    out.prop_descriptions = (out.prop_descriptions as Array<Record<string, unknown>>).slice(
+      0,
+      8
+    )
+  }
   return out
 }
 
@@ -67,6 +79,23 @@ function serializeValue(value: unknown): string {
         .map((b, i) => `${i + 1}. ${b.title || 'Beat'}: ${b.synopsis || ''}`)
         .join('\n')
       return truncateForDiff(beats)
+    }
+    if (typeof value[0] === 'object' && value[0] !== null && 'name' in value[0]) {
+      const items = (
+        value as Array<{
+          name?: string
+          role?: string
+          type?: string
+          category?: string
+          description?: string
+          location?: string
+        }>
+      ).map((item, i) => {
+        const tag = item.role || item.type || item.category || ''
+        const detail = item.description || item.location || ''
+        return `${i + 1}. ${item.name || 'Item'}${tag ? ` (${tag})` : ''}${detail ? `: ${detail}` : ''}`
+      })
+      return truncateForDiff(items.join('\n'))
     }
     return truncateForDiff(value.map(String).join(', '))
   }
@@ -105,11 +134,47 @@ export function buildFieldDiffs(
   return diffs
 }
 
+function mergeContinuityArray(
+  originalArr: unknown,
+  patchedArr: unknown
+): Array<Record<string, unknown>> | undefined {
+  if (!Array.isArray(patchedArr)) return undefined
+  const origList = Array.isArray(originalArr)
+    ? (originalArr as Array<Record<string, unknown>>)
+    : []
+  if (origList.length === 0) {
+    return patchedArr as Array<Record<string, unknown>>
+  }
+
+  return (patchedArr as Array<Record<string, unknown>>).map((item, index) => {
+    if (!item || typeof item !== 'object') return item
+    const name = typeof item.name === 'string' ? item.name.trim().toLowerCase() : ''
+    const byName = name
+      ? origList.find(
+          (o) =>
+            o &&
+            typeof o === 'object' &&
+            typeof o.name === 'string' &&
+            o.name.trim().toLowerCase() === name
+        )
+      : undefined
+    const match = byName ?? origList[index]
+    if (!match || typeof match !== 'object') return item
+    return { ...match, ...item }
+  })
+}
+
 export function mergeRevisionIntoVariant(
   original: Record<string, unknown>,
   patch: Record<string, unknown>
 ): Record<string, unknown> {
-  const merged = { ...original, ...patch, updatedAt: Date.now() }
+  const merged: Record<string, unknown> = { ...original, ...patch, updatedAt: Date.now() }
+  for (const key of ['character_descriptions', 'scene_descriptions', 'prop_descriptions'] as const) {
+    if (Array.isArray(patch[key])) {
+      const mergedArr = mergeContinuityArray(original[key], patch[key])
+      if (mergedArr) merged[key] = mergedArr
+    }
+  }
   if (patch.narrative_reasoning && typeof patch.narrative_reasoning === 'object') {
     const prev =
       (original.narrative_reasoning as Record<string, unknown>) || {}

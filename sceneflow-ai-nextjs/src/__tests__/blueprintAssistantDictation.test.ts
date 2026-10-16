@@ -48,14 +48,22 @@ describe('the Assistant direction field', () => {
     expect(catalog.assistant.whatShouldChangePlaceholder.length).toBeGreaterThan(0)
   })
 
-  it('routes the focus-scope chip labels through the catalog too', () => {
-    expect(dialog).toContain('labelKey:')
-    expect(dialog).toContain('{t(opt.labelKey)}')
+  it('includes direction and target audience clarification/confirmation and omits read-only snapshot and focus chips', () => {
+    expect(dialog).not.toContain('BlueprintSnapshot')
+    expect(dialog).not.toContain("t('currentBlueprint')")
+    expect(dialog).not.toContain("t('focusOptional')")
+    expect(dialog).toContain("t('clarifyAndConfirm')")
+    expect(dialog).toContain("t('confirmDirection')")
+    expect(dialog).toContain("t('directionConfirmed')")
+    expect(dialog).toContain('<AudienceDescriptionField')
+    expect(dialog).toContain("t('targetAudience')")
+    expect(dialog).toContain("t('confirmTargetAudience')")
+    expect(dialog).toContain("t('targetAudienceConfirmed')")
 
     const catalog = JSON.parse(readSource('messages/app/en/blueprint.json'))
-    for (const scope of ['all', 'core', 'story', 'characters', 'beats', 'tone']) {
-      expect(typeof catalog.assistant.scopes[scope]).toBe('string')
-    }
+    expect(typeof catalog.assistant.clarifyAndConfirm).toBe('string')
+    expect(typeof catalog.assistant.confirmDirection).toBe('string')
+    expect(typeof catalog.assistant.targetAudience).toBe('string')
   })
 
   it('does not run the keyword content-safety preflight', () => {

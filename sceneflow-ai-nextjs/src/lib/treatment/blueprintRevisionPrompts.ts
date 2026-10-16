@@ -262,12 +262,39 @@ export function inferPlanFromUserIntent(userIntent: string): BlueprintChangePlan
   }
 }
 
-/** Skip planner LLM call when user scoped a single section (saves memory + latency). */
+export const ALL_BLUEPRINT_SECTIONS: BlueprintFixSection[] = [
+  'core',
+  'story',
+  'tone',
+  'beats',
+  'characters',
+]
+
+/** Skip planner LLM call when user scoped a single section or requested full-blueprint regeneration. */
 export function inferPlanFromFocus(
   focusScope: BlueprintFixSection | 'all' | undefined,
   intentText: string
 ): BlueprintChangePlan | null {
-  if (!focusScope || focusScope === 'all') return null
+  if (!focusScope) return null
+
+  if (focusScope === 'all') {
+    return {
+      primaryGoal:
+        truncateStr(intentText, 300) ||
+        'Regenerate blueprint considering baseline and new direction',
+      sectionsToUpdate: [...ALL_BLUEPRINT_SECTIONS],
+      crossSectionDependencies: [
+        'Reconcile Core, Story, Continuity (Cast, Locations, Props), Beats, and Tone holistically against the baseline blueprint, new direction, and target audience',
+      ],
+      preserveConstraints: [
+        'Preserve baseline elements not affected by the new direction',
+        'Preserve character, location, and prop names unless user requests a rename',
+      ],
+      coherenceActions: [
+        'Regenerate blueprint considering baseline and new direction across Core, Story, Continuity, Beats, and Tone',
+      ],
+    }
+  }
 
   const sections = new Set<BlueprintFixSection>([focusScope])
   if (focusScope === 'characters') {
@@ -394,18 +421,19 @@ export function buildRewriterPrompt(
 }`
     : `Return ONLY modified blueprint fields (no narrative_reasoning on this pass).`
 
-  return `You are an expert ${intent === 'fiction' ? 'film treatment editor' : 'content blueprint editor'} performing a GUIDED, BALANCED blueprint revision.
+  return `You are an expert ${intent === 'fiction' ? 'film treatment editor' : 'content blueprint editor'} regenerating a production blueprint by considering the BASELINE BLUEPRINT and the creator's NEW DIRECTION.
 
 CRITICAL RULES:
+- Regenerate the blueprint holistically considering both the BASELINE BLUEPRINT and the NEW DIRECTION (including any updated target audience).
 - You are REPLACING content, NOT appending. Return complete new values for each field you change.
-- Apply the change plan and cross-section coupling. The blueprint must read as one coherent document.
-- Do NOT change fields outside the allowed list unless coupling requires it.
+- Apply the change plan and cross-section coupling across Core, Story, Continuity (Cast, Locations, Props), Beats, and Tone so the blueprint reads as one coherent document.
+- Preserve baseline elements that are still coherent with the new direction, and do NOT change fields outside the allowed list unless coupling requires it.
 - Beat "minutes" MUST sum to the target runtime. Let the beat count follow from that
   target and the pacing the story needs (up to ${MAX_BEATS} beats) — do NOT keep the
   existing beat count when the runtime changes.
 - Every beat you return MUST include title, intent, minutes, and a 1-3 sentence synopsis.
 - When returning "beats", return the COMPLETE ordered array, not just changed entries.
-- character_descriptions: preserve participant NAMES unless user explicitly requests rename.
+- character_descriptions, scene_descriptions, prop_descriptions: preserve existing participant, location, and prop NAMES unless the creator explicitly requests a rename or replacement.
 - Return ONLY fields you modify — do not echo unchanged fields.
 ${CREATOR_DIRECTION_IS_INTENT}
 ${intentGuard}
@@ -413,11 +441,14 @@ ${intentGuard}
 CHANGE PLAN:
 ${compactJson(plan)}
 
-CREATOR DIRECTION (INTENT):
+NEW DIRECTION (CREATOR INTENT):
 ${truncateStr(userIntent, MAX_INTENT_CHARS)}
 ${recBlock ? `\nRECOMMENDATIONS:\n${recBlock}` : ''}
 
 ALLOWED FIELDS TO RETURN (include all you modify): ${allowedFields.join(', ')}
+
+BASELINE BLUEPRINT (full context):
+${compactJson(trimmed)}
 
 CURRENT VALUES (allowed fields only):
 ${compactJson(scopedBlueprint)}

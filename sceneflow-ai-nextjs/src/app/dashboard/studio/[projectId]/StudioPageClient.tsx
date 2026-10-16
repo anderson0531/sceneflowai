@@ -1918,6 +1918,8 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
           storyLocale={blueprintRefineStoryLocale}
           initialIntent={blueprintRefineIntent}
           rewriteToEnglish={blueprintRefineRewrite}
+          audienceDefinition={audienceDefinition}
+          onAudienceDefinitionChange={handleAudienceDefinitionSave}
         />
       )}
 

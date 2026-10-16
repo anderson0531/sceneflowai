@@ -111,10 +111,70 @@ describe('runGuidedRevise', () => {
     expect(String(capped.synopsis).length).toBeLessThan(9000)
   })
 
-  it('mergeRevisionIntoVariant applies patch fields', () => {
-    const merged = mergeRevisionIntoVariant(baseVariant, { logline: 'New logline.' })
+  it('mergeRevisionIntoVariant applies patch fields and preserves continuity asset metadata', () => {
+    const originalWithContinuity = {
+      ...baseVariant,
+      character_descriptions: [
+        {
+          id: 'char-1',
+          name: 'Elena Vance',
+          role: 'Protagonist',
+          description: 'Old bio',
+          referenceImage: 'https://cdn.example.com/elena.png',
+          libraryCharacterId: 'lib-char-1',
+        },
+      ],
+      scene_descriptions: [
+        {
+          id: 'loc-1',
+          name: 'Glass Archive',
+          type: 'INT',
+          location: 'Old look',
+          referenceImage: 'https://cdn.example.com/archive.png',
+          libraryLocationId: 'lib-loc-1',
+        },
+      ],
+      prop_descriptions: [
+        {
+          id: 'prop-1',
+          name: 'Chrono Key',
+          category: 'Artifact',
+          description: 'Old prop',
+          referenceImage: 'https://cdn.example.com/key.png',
+          libraryPropId: 'lib-prop-1',
+        },
+      ],
+    }
+    const merged = mergeRevisionIntoVariant(originalWithContinuity, {
+      logline: 'New logline.',
+      character_descriptions: [
+        { name: 'Elena Vance', role: 'Protagonist', description: 'Updated bio' },
+      ],
+      scene_descriptions: [
+        { name: 'Glass Archive', type: 'INT', location: 'Updated look' },
+      ],
+      prop_descriptions: [
+        { name: 'Chrono Key', category: 'Artifact', description: 'Updated prop' },
+      ],
+    })
     expect(merged.logline).toBe('New logline.')
     expect(merged.title).toBe('Test Film')
+    const chars = merged.character_descriptions as Array<Record<string, unknown>>
+    const locs = merged.scene_descriptions as Array<Record<string, unknown>>
+    const props = merged.prop_descriptions as Array<Record<string, unknown>>
+    expect(chars[0].description).toBe('Updated bio')
+    expect(chars[0].referenceImage).toBe('https://cdn.example.com/elena.png')
+    expect(chars[0].libraryCharacterId).toBe('lib-char-1')
+    expect(locs[0].location).toBe('Updated look')
+    expect(locs[0].libraryLocationId).toBe('lib-loc-1')
+    expect(props[0].description).toBe('Updated prop')
+    expect(props[0].libraryPropId).toBe('lib-prop-1')
+  })
+
+  it('resolveInitialPlan("all") regenerates all blueprint sections without a separate planner call', () => {
+    const plan = resolveInitialPlan('all', 'Shift the protagonist motivation and raise Act 2 stakes', [])
+    expect(plan.sectionsToUpdate).toEqual(['core', 'story', 'tone', 'beats', 'characters'])
+    expect(shouldRunPlanner('all', [], 'Shift the protagonist motivation')).toBe(false)
   })
 })
 

@@ -111,6 +111,29 @@ describe('buildClarifySynopsisPrompt', () => {
     expect(prompt).not.toContain('EPISODE COUNT')
     expect(prompt).toContain('Do NOT invent a fictional plot')
   })
+
+  it('includes the baseline blueprint when clarifying new direction in Blueprint Director', () => {
+    const prompt = buildClarifySynopsisPrompt({
+      productionFormat: 'narrative',
+      episodeCount: 1,
+      surface: 'project',
+      targetAudience: 'Thai millennials in Bangkok',
+      messages: [{ role: 'user', content: 'Make the mentor secretly the antagonist.' }],
+      baselineBlueprint: {
+        title: 'The Glass Archive',
+        logline: 'A historian uncovers a conspiracy.',
+        genre: 'Thriller',
+        synopsis: 'Elena investigates the disappearance of her mentor.',
+        character_descriptions: [{ name: 'Elena Vance', role: 'Protagonist' }],
+      },
+    })
+
+    expect(prompt).toContain('BASELINE BLUEPRINT:')
+    expect(prompt).toContain('Title: The Glass Archive')
+    expect(prompt).toContain('Cast: Elena Vance (Protagonist)')
+    expect(prompt).toContain('Thai millennials in Bangkok')
+    expect(prompt).toContain('direction brief')
+  })
 })
 
 describe('parseClarifySynopsisResult', () => {

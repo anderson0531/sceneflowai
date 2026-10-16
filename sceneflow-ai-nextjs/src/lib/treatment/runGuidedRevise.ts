@@ -21,6 +21,7 @@ import {
   trimRecommendationsForPrompt,
 } from './blueprintRevisionPrompts'
 import {
+  reattachPreservedAssets,
   stripHeavyFieldsFromVariant,
   type PreservedCharacterAssets,
 } from './blueprintVariantSanitize'
@@ -416,10 +417,18 @@ export function finalizeGuidedRevise(
     Object.assign(fieldPatch, derivedRuntime)
   }
 
-  const merged = mergeRevisionIntoVariant(payload.rawVariant, fieldPatch)
+  const mergedWithAssets = reattachPreservedAssets(
+    mergeRevisionIntoVariant(payload.rawVariant, fieldPatch),
+    payload.preservedCharacterAssets
+  )
+  for (const key of ['character_descriptions', 'scene_descriptions', 'prop_descriptions'] as const) {
+    if (Array.isArray(fieldPatch[key]) && Array.isArray(mergedWithAssets[key])) {
+      fieldPatch[key] = mergedWithAssets[key]
+    }
+  }
   const diff = buildFieldDiffs(
     payload.variant,
-    trimVariantForPrompt(merged)
+    trimVariantForPrompt(mergedWithAssets)
   )
 
   const changePlan: BlueprintChangePlan = {

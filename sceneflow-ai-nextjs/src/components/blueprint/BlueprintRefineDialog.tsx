@@ -14,14 +14,18 @@ import {
   CheckSquare,
   Square,
   ChevronDown,
-  ChevronRight,
   Wand2,
   Check,
+  CheckCircle2,
   RefreshCw,
+  RotateCcw,
+  Users,
 } from 'lucide-react'
-import type {
-  BlueprintAudienceRecommendation,
-  BlueprintFixSection,
+import { AudienceDescriptionField } from '@/components/audience/AudienceDescriptionField'
+import {
+  createAudienceDefinition,
+  type AudienceDefinition,
+  type BlueprintAudienceRecommendation,
 } from '@/lib/types/audienceResonance'
 import {
   BLUEPRINT_SECTION_TEMPLATES,
@@ -33,7 +37,6 @@ import {
   stripHeavyFieldsFromVariant,
 } from '@/lib/treatment/blueprintVariantSanitize'
 import {
-  buildFieldDiffs,
   mergeRevisionIntoVariant,
 } from '@/lib/treatment/blueprintRevisionDiff'
 import { trimVariantForPrompt } from '@/lib/treatment/blueprintRevisionPrompts'
@@ -53,13 +56,20 @@ import { ASSISTANT, assistantTitle } from '@/lib/constants/assistant'
 import { ASSISTANT_ICON as AssistantIcon } from '@/lib/constants/assistantIcon'
 import { useBackgroundJob } from '@/hooks/useBackgroundJob'
 import { cn } from '@/lib/utils'
-import type { ContentIntent } from '@/lib/content/contentIntent'
-import { resolveContentIntent } from '@/lib/content/contentIntent'
+import {
+  defaultFormatForIntent,
+  resolveContentIntent,
+  type ContentIntent,
+} from '@/lib/content/contentIntent'
+import { resolveVariantArtStyle } from '@/lib/treatment/blueprintFoundation'
+import type {
+  ClarifySynopsisResult,
+  SeriesSynopsisLock,
+  SynopsisMessage,
+} from '@/lib/series/clarifySynopsis'
 import { useContentTranslation } from '@/i18n/content/useContentTranslation'
 import {
-  applyTreatmentVariantTranslations,
   buildRefineDiffDisplayFields,
-  buildTreatmentVariantDisplayFields,
 } from '@/i18n/content/buildBlueprintDisplayFields'
 import { EMPTY_ENTITY_I18N, type EntityI18n } from '@/i18n/content/entityI18n'
 
@@ -74,7 +84,7 @@ type Props = {
   onRefineApplied?: (diff: FieldDiff[]) => void
   projectId?: string
   resonanceRecommendations?: BlueprintAudienceRecommendation[]
-  /** Initial focus scope (from section pencil or AR fixSection) */
+  /** Legacy prop retained for callers; Blueprint Director always balances the full blueprint. */
   initialActiveTab?: string
   onRequestReanalyze?: () => void
   contentIntent?: ContentIntent | null
@@ -83,216 +93,17 @@ type Props = {
   storyLocale?: string
   initialIntent?: string
   rewriteToEnglish?: boolean
+  audienceDefinition?: AudienceDefinition | null
+  onAudienceDefinitionChange?: (def: AudienceDefinition) => void | Promise<void>
 }
 
-/** Focus scopes, ordered to match the studio tabs and the share viewer nav. */
-const SCOPE_OPTIONS: { id: BlueprintFixSection | 'all'; labelKey: string }[] = [
-  { id: 'all', labelKey: 'scopes.all' },
-  { id: 'core', labelKey: 'scopes.core' },
-  { id: 'story', labelKey: 'scopes.story' },
-  { id: 'characters', labelKey: 'scopes.characters' },
-  { id: 'beats', labelKey: 'scopes.beats' },
-  { id: 'tone', labelKey: 'scopes.tone' },
+const ALL_TEMPLATE_SECTIONS: BlueprintSection[] = [
+  'core',
+  'story',
+  'tone',
+  'beats',
+  'characters',
 ]
-
-function sectionFromTab(tab?: string): BlueprintFixSection | 'all' {
-  const valid: BlueprintFixSection[] = ['core', 'story', 'tone', 'beats', 'characters']
-  if (tab && valid.includes(tab as BlueprintFixSection)) return tab as BlueprintFixSection
-  return 'all'
-}
-
-function ReadOnlyField({ label, value }: { label: string; value: string }) {
-  if (!value.trim()) return null
-  return (
-    <div className="space-y-0.5">
-      <div className="text-[10px] uppercase tracking-wide text-gray-500">{label}</div>
-      <p className="text-xs text-gray-300 whitespace-pre-wrap leading-relaxed">{value}</p>
-    </div>
-  )
-}
-
-function BlueprintSnapshot({
-  variant,
-  contentI18n,
-}: {
-  variant: TreatmentVariant
-  contentI18n?: EntityI18n
-}) {
-  const t = useTranslations('blueprint.assistant')
-  const [expanded, setExpanded] = useState<Record<string, boolean>>({
-    core: true,
-    story: false,
-    characters: false,
-    beats: false,
-    tone: false,
-  })
-
-  const toggle = (key: string) =>
-    setExpanded((p) => ({ ...p, [key]: !p[key] }))
-
-  const fields = useMemo(
-    () => buildTreatmentVariantDisplayFields(variant),
-    [variant]
-  )
-  const { resolve } = useContentTranslation({
-    fields,
-    i18n: contentI18n ?? EMPTY_ENTITY_I18N,
-    enabled: Boolean(variant?.id),
-  })
-  const localized = useMemo(
-    () => applyTreatmentVariantTranslations(variant, resolve) || variant,
-    [variant, resolve]
-  )
-
-  const themes = Array.isArray(localized.themes)
-    ? (localized.themes as string[]).join(', ')
-    : String(localized.themes || '')
-
-  const beats = (localized.beats as Array<{ title?: string; synopsis?: string }>) || []
-  const chars =
-    (localized.character_descriptions as Array<{ name?: string; role?: string }>) || []
-  const locs =
-    (localized.scene_descriptions as Array<{ name?: string; type?: string }>) || []
-  const props =
-    (localized.prop_descriptions as Array<{ name?: string; category?: string }>) || []
-
-  return (
-    <div className="space-y-2 rounded-xl border border-slate-700/50 bg-slate-800/30 p-3">
-      <p className="text-xs text-gray-500 mb-2">{t('currentBlueprint')}</p>
-      {(
-        [
-          {
-            key: 'core',
-            title: 'Core',
-            content: (
-              <>
-                <ReadOnlyField label="Title" value={String(localized.title || '')} />
-                <ReadOnlyField label="Logline" value={String(localized.logline || '')} />
-                <ReadOnlyField label="Genre" value={String(localized.genre || '')} />
-              </>
-            ),
-          },
-          {
-            key: 'story',
-            title: 'Story',
-            content: (
-              <>
-                <ReadOnlyField
-                  label="Synopsis"
-                  value={String(localized.synopsis || localized.content || '')}
-                />
-                <ReadOnlyField
-                  label="Protagonist"
-                  value={String(localized.protagonist || '')}
-                />
-                <ReadOnlyField
-                  label="Antagonist"
-                  value={String(localized.antagonist || '')}
-                />
-              </>
-            ),
-          },
-          {
-            key: 'characters',
-            title: 'Continuity',
-            content: (
-              <div className="space-y-2 text-xs text-gray-300">
-                <div>
-                  <div className="text-[10px] uppercase tracking-wide text-gray-500 mb-0.5">
-                    Cast ({chars.length})
-                  </div>
-                  <ul className="space-y-1">
-                    {chars.length === 0 ? (
-                      <li className="text-gray-500">{t('noCharacters')}</li>
-                    ) : (
-                      chars.map((c, i) => (
-                        <li key={i}>
-                          {c.name || 'Character'} — {c.role || 'role'}
-                        </li>
-                      ))
-                    )}
-                  </ul>
-                </div>
-                {locs.length > 0 && (
-                  <div>
-                    <div className="text-[10px] uppercase tracking-wide text-gray-500 mb-0.5">
-                      Locations ({locs.length})
-                    </div>
-                    <ul className="space-y-1">
-                      {locs.map((loc, i) => (
-                        <li key={i}>
-                          {loc.name || 'Location'}
-                          {loc.type ? ` (${loc.type})` : ''}
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
-                {props.length > 0 && (
-                  <div>
-                    <div className="text-[10px] uppercase tracking-wide text-gray-500 mb-0.5">
-                      Props ({props.length})
-                    </div>
-                    <ul className="space-y-1">
-                      {props.map((p, i) => (
-                        <li key={i}>
-                          {p.name || 'Prop'}
-                          {p.category ? ` — ${p.category}` : ''}
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
-              </div>
-            ),
-          },
-          {
-            key: 'beats',
-            title: 'Beats',
-            content: (
-              <ul className="text-xs text-gray-300 space-y-1">
-                {beats.map((b, i) => (
-                  <li key={i}>
-                    {i + 1}. {b.title || 'Beat'}
-                  </li>
-                ))}
-              </ul>
-            ),
-          },
-          {
-            key: 'tone',
-            title: 'Tone',
-            content: (
-              <>
-                <ReadOnlyField
-                  label="Tone"
-                  value={String(localized.tone_description || localized.tone || '')}
-                />
-                <ReadOnlyField label="Themes" value={themes} />
-              </>
-            ),
-          },
-        ] as const
-      ).map(({ key, title, content }) => (
-        <div key={key} className="border border-slate-700/40 rounded-lg overflow-hidden">
-          <button
-            type="button"
-            onClick={() => toggle(key)}
-            className="w-full flex items-center justify-between px-2 py-1.5 text-xs font-medium text-gray-400 hover:bg-slate-800/50"
-          >
-            {title}
-            {expanded[key] ? (
-              <ChevronDown className="w-3.5 h-3.5" />
-            ) : (
-              <ChevronRight className="w-3.5 h-3.5" />
-            )}
-          </button>
-          {expanded[key] && <div className="px-2 pb-2 space-y-2">{content}</div>}
-        </div>
-      ))}
-    </div>
-  )
-}
 
 function DiffPanel({
   diffs,
@@ -355,19 +166,19 @@ export function BlueprintRefineDialog({
   onRefineApplied,
   projectId,
   resonanceRecommendations,
-  initialActiveTab,
   onRequestReanalyze,
   contentIntent: contentIntentProp,
   contentI18n,
   storyLocale,
   initialIntent,
   rewriteToEnglish = false,
+  audienceDefinition,
+  onAudienceDefinitionChange,
 }: Props) {
   const t = useTranslations('blueprint.assistant')
   const tc = useTranslations('common')
   const [phase, setPhase] = useState<'intent' | 'preview'>('intent')
   const [userIntent, setUserIntent] = useState('')
-  const [focusScope, setFocusScope] = useState<BlueprintFixSection | 'all'>('all')
   const [selectedRecIds, setSelectedRecIds] = useState<Set<string>>(new Set())
   const [selectedTemplateKeys, setSelectedTemplateKeys] = useState<Set<string>>(new Set())
   const [showResonanceRecs, setShowResonanceRecs] = useState(true)
@@ -377,6 +188,20 @@ export function BlueprintRefineDialog({
   const [diff, setDiff] = useState<FieldDiff[]>([])
   const [jobStatusText, setJobStatusText] = useState<string | null>(null)
 
+  // Target Audience clarification & confirmation state
+  const [audienceDef, setAudienceDef] = useState<AudienceDefinition>(() =>
+    createAudienceDefinition({ description: '', source: 'blueprint' })
+  )
+  const [audienceConfirmed, setAudienceConfirmed] = useState(false)
+
+  // Direction clarification & confirmation state (consistent with SeriesSynopsisIdeation)
+  const [directionTurns, setDirectionTurns] = useState<SynopsisMessage[]>([])
+  const [proposedDirection, setProposedDirection] = useState<string | null>(null)
+  const [lockedDirection, setLockedDirection] = useState<SeriesSynopsisLock | null>(null)
+  const [directionReadyToLock, setDirectionReadyToLock] = useState(false)
+  const [isClarifyingDirection, setIsClarifyingDirection] = useState(false)
+  const [directionError, setDirectionError] = useState<string | null>(null)
+
   const applyRevisionResult = useCallback(
     (
       patch: Record<string, unknown>,
@@ -384,14 +209,24 @@ export function BlueprintRefineDialog({
       plan: BlueprintChangePlan | null
     ) => {
       if (!variant) return
-      const merged = mergeRevisionIntoVariant(variant, patch)
+      const audienceText = (audienceDef.description || '').trim()
+      const enrichedPatch: Record<string, unknown> = {
+        ...patch,
+        ...(audienceText
+          ? {
+              target_audience: audienceText,
+              audienceDefinition: audienceDef,
+            }
+          : {}),
+      }
+      const merged = mergeRevisionIntoVariant(variant, enrichedPatch)
       setPreviewVariant(merged)
       setChangePlan(plan)
       setDiff(resultDiff)
       setPhase('preview')
       toast.success('Balanced revision ready — review before applying')
     },
-    [variant]
+    [variant, audienceDef]
   )
 
   const {
@@ -428,7 +263,7 @@ export function BlueprintRefineDialog({
     },
   })
 
-  const fullBalanceJobBlocksGenerate = jobActive && focusScope === 'all'
+  const fullBalanceJobBlocksGenerate = jobActive
 
   useEffect(() => {
     if (!jobActive || !backgroundJob) return
@@ -479,12 +314,33 @@ export function BlueprintRefineDialog({
     if (!open) return
     setPhase('intent')
     setUserIntent(initialIntent ?? '')
-    setFocusScope(rewriteToEnglish ? 'all' : sectionFromTab(initialActiveTab))
     setPreviewVariant(null)
     setChangePlan(null)
     setDiff([])
     setJobStatusText(null)
     setSelectedTemplateKeys(new Set())
+    setDirectionTurns([])
+    setProposedDirection(null)
+    setLockedDirection(null)
+    setDirectionReadyToLock(false)
+    setDirectionError(null)
+
+    const existingAud =
+      audienceDefinition ??
+      (variant?.audienceDefinition as AudienceDefinition | undefined) ??
+      null
+    const initialAudText =
+      existingAud?.description ||
+      (typeof variant?.target_audience === 'string' ? variant.target_audience : '') ||
+      ''
+    const resolvedAud = createAudienceDefinition({
+      ...(existingAud || {}),
+      description: initialAudText,
+      source: 'blueprint',
+    })
+    setAudienceDef(resolvedAud)
+    setAudienceConfirmed(Boolean(resolvedAud.aiEnhanced || initialAudText.trim()))
+
     if (resonanceRecommendations?.length) {
       setSelectedRecIds(new Set(resonanceRecommendations.map((r) => r.id)))
       setShowResonanceRecs(true)
@@ -494,43 +350,58 @@ export function BlueprintRefineDialog({
     } else {
       setSelectedRecIds(new Set())
     }
-  }, [open, initialActiveTab, initialIntent, rewriteToEnglish, resonanceRecommendations])
+  }, [
+    open,
+    initialIntent,
+    rewriteToEnglish,
+    resonanceRecommendations,
+    audienceDefinition,
+    variant,
+  ])
 
-  const templateSections = useMemo(() => {
-    const scope = focusScope === 'all' ? null : focusScope
-    const sections: BlueprintSection[] = scope
-      ? [scope as BlueprintSection]
-      : ['core', 'story', 'tone', 'beats', 'characters']
-    return sections.map((s) => ({
-      section: s,
-      templates: BLUEPRINT_SECTION_TEMPLATES[s] || [],
-    }))
-  }, [focusScope])
+  const templateSections = useMemo(
+    () =>
+      ALL_TEMPLATE_SECTIONS.map((s) => ({
+        section: s,
+        templates: BLUEPRINT_SECTION_TEMPLATES[s] || [],
+      })),
+    []
+  )
 
   const combinedIntent = useMemo(() => {
     const parts: string[] = []
-    if (userIntent.trim()) parts.push(userIntent.trim())
+    const baseDirection = lockedDirection?.synopsis?.trim() || userIntent.trim()
+    if (baseDirection) parts.push(baseDirection)
     const selectedRecs =
       resonanceRecommendations?.filter((r) => selectedRecIds.has(r.id)) ?? []
     for (const rec of selectedRecs) {
       const fix = fixInstructionForRecommendation(rec)
-      if (fix && !userIntent.includes(fix)) parts.push(fix)
+      if (fix && !baseDirection.includes(fix)) parts.push(fix)
     }
     for (const { section, templates } of templateSections) {
-      for (const t of templates) {
-        const key = `${section}:${t.id}`
+      for (const tpl of templates) {
+        const key = `${section}:${tpl.id}`
         if (selectedTemplateKeys.has(key)) {
-          parts.push(t.instruction)
+          parts.push(tpl.instruction)
         }
       }
     }
+    const confirmedAud = (audienceDef.description || '').trim()
+    const baselineAud =
+      typeof variant?.target_audience === 'string' ? variant.target_audience.trim() : ''
+    if (confirmedAud && confirmedAud !== baselineAud) {
+      parts.push(`Align the blueprint for target audience: ${confirmedAud}`)
+    }
     return parts.join('\n')
   }, [
+    lockedDirection,
     userIntent,
     templateSections,
     selectedTemplateKeys,
     resonanceRecommendations,
     selectedRecIds,
+    audienceDef.description,
+    variant?.target_audience,
   ])
 
   // All validation below is pure and synchronous, so it can run per keystroke.
@@ -543,16 +414,130 @@ export function BlueprintRefineDialog({
     () =>
       validateRevisionRequest({
         intentText: combinedIntent,
-        focusScope,
+        focusScope: 'all',
         variant,
         hasSelectedRecommendations: selectedRecCount > 0,
       }),
-    [combinedIntent, focusScope, variant, selectedRecCount]
+    [combinedIntent, variant, selectedRecCount]
   )
 
   const blockers = requestIssues.filter((i) => i.severity === 'blocker')
   const warnings = requestIssues.filter((i) => i.severity === 'warning')
   const submitBlocked = hasBlockingIssue(requestIssues)
+
+  const handleAudienceChange = useCallback(
+    (next: AudienceDefinition) => {
+      setAudienceDef(next)
+      if (next.aiEnhanced) {
+        setAudienceConfirmed(true)
+        void onAudienceDefinitionChange?.(next)
+      } else {
+        setAudienceConfirmed(false)
+      }
+    },
+    [onAudienceDefinitionChange]
+  )
+
+  const handleConfirmAudience = useCallback(() => {
+    if (!audienceDef.description?.trim()) return
+    setAudienceConfirmed(true)
+    void onAudienceDefinitionChange?.(audienceDef)
+  }, [audienceDef, onAudienceDefinitionChange])
+
+  const handleClarifyDirection = useCallback(async () => {
+    if (!variant) return
+    const text = userIntent.trim() || combinedIntent.trim()
+    if (!text || isClarifyingDirection) return
+
+    const previousTurns = directionTurns
+    const nextMessages: SynopsisMessage[] = [
+      ...directionTurns,
+      { role: 'user', content: text },
+    ]
+    setDirectionTurns(nextMessages)
+    setDirectionError(null)
+    setIsClarifyingDirection(true)
+
+    try {
+      const resolvedIntent =
+        contentIntentProp ?? resolveContentIntent(String(variant?.genre || ''))
+      const format = defaultFormatForIntent(resolvedIntent) || 'narrative'
+      const audienceText = (audienceDef.description || '').trim()
+
+      const response = await fetch('/api/series/clarify-synopsis', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({
+          productionFormat: format,
+          episodeCount: 1,
+          targetAudience: audienceText || undefined,
+          artStyle: resolveVariantArtStyle(variant),
+          surface: 'project',
+          messages: nextMessages,
+          currentSynopsis: proposedDirection || undefined,
+          baselineBlueprint: trimVariantForPrompt(variant),
+        }),
+      })
+      const data = await response.json().catch(() => null)
+      if (!response.ok || !data?.success) {
+        const message =
+          response.status === 402
+            ? 'Not enough credits to clarify this direction.'
+            : data?.error || 'Could not clarify the direction.'
+        throw new Error(message)
+      }
+      const result = data.result as ClarifySynopsisResult
+      setDirectionTurns([
+        ...nextMessages,
+        { role: 'assistant', content: result.assistantMessage },
+      ])
+      setProposedDirection(result.synopsis)
+      setDirectionReadyToLock(result.readyToLock)
+      setLockedDirection(null)
+    } catch (err) {
+      setDirectionTurns(previousTurns)
+      setDirectionError(
+        err instanceof Error ? err.message : 'Could not clarify the direction.'
+      )
+    } finally {
+      setIsClarifyingDirection(false)
+    }
+  }, [
+    variant,
+    userIntent,
+    combinedIntent,
+    isClarifyingDirection,
+    directionTurns,
+    contentIntentProp,
+    audienceDef.description,
+    proposedDirection,
+  ])
+
+  const handleConfirmDirection = useCallback(() => {
+    const synopsis = proposedDirection?.trim() || userIntent.trim()
+    if (!synopsis) return
+    const next: SeriesSynopsisLock = { synopsis }
+    setLockedDirection(next)
+    setUserIntent(synopsis)
+  }, [proposedDirection, userIntent])
+
+  const handleReviseDirection = useCallback(() => {
+    if (!lockedDirection) return
+    setProposedDirection(lockedDirection.synopsis)
+    setUserIntent(lockedDirection.synopsis)
+    setDirectionReadyToLock(true)
+    setLockedDirection(null)
+  }, [lockedDirection])
+
+  const handleStartOverDirection = useCallback(() => {
+    setUserIntent('')
+    setDirectionTurns([])
+    setProposedDirection(null)
+    setLockedDirection(null)
+    setDirectionReadyToLock(false)
+    setDirectionError(null)
+  }, [])
 
   const addRecToIntent = (rec: BlueprintAudienceRecommendation) => {
     const text = fixInstructionForRecommendation(rec)
@@ -598,59 +583,32 @@ export function BlueprintRefineDialog({
       return
     }
 
+    if (!projectId) {
+      toast.error('Open this project from the studio to run a full-balance revision')
+      return
+    }
+
     setIsGenerating(true)
     setJobStatusText(null)
 
     try {
-      const { variant: payloadVariant } = stripHeavyFieldsFromVariant(variant)
+      const audienceText = (audienceDef.description || '').trim()
+      const baselineWithAudience: Record<string, unknown> = {
+        ...variant,
+        ...(audienceText
+          ? {
+              target_audience: audienceText,
+              audienceDefinition: audienceDef,
+            }
+          : {}),
+      }
+      if (audienceText) {
+        void onAudienceDefinitionChange?.(audienceDef)
+      }
+
+      const { variant: payloadVariant } = stripHeavyFieldsFromVariant(baselineWithAudience)
       const contentIntent =
         contentIntentProp ?? resolveContentIntent(String(variant?.genre || ''))
-
-      // Sync fast-path: single-section edits use the proven refine route (one LLM call, draft only).
-      if (focusScope !== 'all') {
-        const response = await fetch('/api/treatment/refine', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          credentials: 'include',
-          body: JSON.stringify({
-            variant: payloadVariant,
-            section: focusScope,
-            instructions: combinedIntent,
-            contentIntent,
-            projectId,
-            storyLocale,
-          }),
-        })
-        const data = await readJsonSafe(response)
-        if (!response.ok) {
-          throw new Error(String(data.message || 'Section revision failed'))
-        }
-        if (data.success && data.draft) {
-          const patch = data.draft as Record<string, unknown>
-          const merged = mergeRevisionIntoVariant(variant, patch)
-          const resultDiff = buildFieldDiffs(
-            trimVariantForPrompt(variant),
-            trimVariantForPrompt(merged)
-          )
-          const plan: BlueprintChangePlan = {
-            primaryGoal: combinedIntent.slice(0, 300) || `Revise ${focusScope}`,
-            sectionsToUpdate: [focusScope],
-            crossSectionDependencies: [],
-            preserveConstraints: ['Preserve title unless user requests a rename'],
-            coherenceActions: [`Updated ${focusScope} section`],
-          }
-          applyRevisionResult(patch, resultDiff, plan)
-        } else {
-          throw new Error(String(data.message || 'Section revision failed'))
-        }
-        return
-      }
-
-      // Full-balance: durable Inngest job (fresh memory per section step).
-      if (!projectId) {
-        toast.error('Open this project from the studio to run a full-balance revision')
-        return
-      }
 
       const response = await fetch('/api/treatment/guided-revise/start', {
         method: 'POST',
@@ -661,7 +619,7 @@ export function BlueprintRefineDialog({
           userIntent: combinedIntent,
           selectedRecommendationIds: [...selectedRecIds],
           resonanceRecommendations: recs,
-          focusScope: undefined,
+          focusScope: 'all',
           projectId,
           contentIntent,
           storyLocale,
@@ -671,7 +629,7 @@ export function BlueprintRefineDialog({
       if (!response.ok && response.status !== 202) {
         const fallback =
           response.status === 503 || response.status === 504 || response.status === 502
-            ? 'Revision timed out — try a narrower focus (e.g. Story only).'
+            ? 'Revision timed out — please try again.'
             : 'Revision failed'
         throw new Error(String(data.message || fallback))
       }
@@ -682,7 +640,7 @@ export function BlueprintRefineDialog({
         })
         setJobStatusText(data.alreadyRunning ? 'Resuming revision…' : 'Queued…')
         if (!data.alreadyRunning) {
-          toast.message('Full-balance revision started — you can keep working')
+          toast.message('Blueprint regeneration started — you can keep working')
         }
       } else {
         throw new Error(String(data.message || 'Failed to queue revision'))
@@ -691,10 +649,6 @@ export function BlueprintRefineDialog({
       setIsGenerating(false)
       setJobStatusText(null)
       toast.error(err instanceof Error ? err.message : 'Failed to generate revision')
-    } finally {
-      if (focusScope !== 'all') {
-        setIsGenerating(false)
-      }
     }
   }
 
@@ -740,21 +694,22 @@ export function BlueprintRefineDialog({
 
   if (!variant) return null
 
+  const resolvedContentIntent =
+    contentIntentProp ?? resolveContentIntent(String(variant?.genre || ''))
+
   return (
     <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
-      <DialogContent className="max-w-4xl max-h-[90vh] flex flex-col overflow-hidden bg-slate-900 border-slate-700">
+      <DialogContent className="max-w-3xl max-h-[90vh] flex flex-col overflow-hidden bg-slate-900 border-slate-700">
         {isGenerating && (
           <div className="absolute inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center rounded-lg">
             <div className="bg-slate-900 border border-cyan-500/30 rounded-xl p-8 shadow-2xl flex flex-col items-center max-w-sm text-center">
               <Loader2 className="w-12 h-12 animate-spin text-cyan-400 mb-4" />
               <h3 className="text-lg font-semibold text-white mb-2">
-                {focusScope === 'all' ? 'Balancing full blueprint' : 'Revising section'}
+                Balancing full blueprint
               </h3>
               <p className="text-sm text-gray-400">
                 {jobStatusText ??
-                  (focusScope === 'all'
-                    ? 'Planning changes and reconciling story, characters, and beats…'
-                    : 'Applying your direction to the selected section…')}
+                  'Regenerating blueprint from baseline and new direction across Core, Story, Continuity, Beats, and Tone…'}
               </p>
             </div>
           </div>
@@ -765,12 +720,12 @@ export function BlueprintRefineDialog({
             <AssistantIcon className="w-5 h-5 text-cyan-400" />
             {assistantTitle('Blueprint')}
           </DialogTitle>
-          <p className="text-xs text-gray-500 mt-1">
+          <p className="text-xs text-gray-400 mt-1">
             {t('assistantIntro', { assistant: ASSISTANT.full })}
           </p>
         </DialogHeader>
 
-        <div className="flex-1 overflow-y-auto min-h-0 space-y-4 pr-1">
+        <div className="flex-1 overflow-y-auto min-h-0 space-y-5 pr-1">
           {phase === 'intent' && (
             <>
               {resonanceRecommendations && resonanceRecommendations.length > 0 && (
@@ -789,7 +744,7 @@ export function BlueprintRefineDialog({
                     />
                   </button>
                   {showResonanceRecs && (
-                    <div className="space-y-1.5 max-h-[280px] overflow-y-auto">
+                    <div className="space-y-1.5 max-h-[240px] overflow-y-auto">
                       {resonanceRecommendations.map((rec) => {
                         const selected = selectedRecIds.has(rec.id)
                         const heading = rec.intentLabel || rec.title || rec.category
@@ -866,10 +821,11 @@ export function BlueprintRefineDialog({
                 </div>
               )}
 
-              <div className="space-y-2">
+              {/* Direction Clarification & Confirmation */}
+              <div className="space-y-3">
                 <div className="flex items-baseline justify-between gap-2">
-                  <label className="text-xs font-medium text-gray-400">
-                    {t('whatShouldChange')}
+                  <label className="text-sm font-medium text-gray-200">
+                    {t('whatShouldChange')} <span className="text-cyan-400">*</span>
                   </label>
                   {userIntent.length > 0 && (
                     <span
@@ -884,49 +840,157 @@ export function BlueprintRefineDialog({
                     </span>
                   )}
                 </div>
+
+                {directionTurns.length > 0 && (
+                  <div className="max-h-48 space-y-2 overflow-y-auto pr-1">
+                    {directionTurns.map((turn, index) => (
+                      <div
+                        key={`${turn.role}-${index}`}
+                        className={cn(
+                          'rounded-lg px-3 py-2 text-sm leading-relaxed',
+                          turn.role === 'user'
+                            ? 'bg-slate-800 text-gray-200'
+                            : 'border border-cyan-500/20 bg-cyan-500/5 text-gray-200'
+                        )}
+                      >
+                        <p className="mb-1 text-[10px] font-semibold uppercase tracking-wide text-gray-500">
+                          {turn.role === 'user' ? 'You' : 'Clarify'}
+                        </p>
+                        {turn.content}
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {proposedDirection && !lockedDirection && (
+                  <div className="space-y-2 rounded-lg border border-emerald-500/30 bg-emerald-500/5 px-3 py-3">
+                    <p className="text-xs font-medium text-emerald-200">
+                      {t('proposedDirection')}
+                    </p>
+                    <p className="text-sm leading-relaxed text-gray-200">
+                      {proposedDirection}
+                    </p>
+                    {directionReadyToLock && (
+                      <p className="text-[11px] text-emerald-300/90">
+                        {t('directionReadyToConfirm')}
+                      </p>
+                    )}
+                    <button
+                      type="button"
+                      onClick={handleConfirmDirection}
+                      disabled={isClarifyingDirection}
+                      className="inline-flex items-center gap-1.5 rounded-md border border-emerald-500/50 bg-emerald-500/15 px-2.5 py-1 text-xs font-medium text-emerald-100 hover:bg-emerald-500/25 disabled:cursor-not-allowed disabled:opacity-50"
+                    >
+                      <CheckCircle2 className="h-3.5 w-3.5" />
+                      {t('confirmDirection')}
+                    </button>
+                  </div>
+                )}
+
+                {lockedDirection && (
+                  <div className="space-y-3 rounded-lg border border-cyan-500/30 bg-cyan-500/5 px-3 py-3">
+                    <div className="flex items-center gap-1.5 text-xs font-medium text-cyan-100">
+                      <CheckCircle2 className="h-3.5 w-3.5 text-emerald-300" />
+                      {t('directionConfirmed')}
+                    </div>
+                    <p className="text-sm leading-relaxed text-gray-100">
+                      {lockedDirection.synopsis}
+                    </p>
+                    <div className="flex flex-wrap gap-2">
+                      <button
+                        type="button"
+                        onClick={handleReviseDirection}
+                        className="rounded-md border border-slate-600 px-2.5 py-1 text-xs font-medium text-gray-200 hover:bg-slate-800"
+                      >
+                        {t('reviseDirection')}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={handleStartOverDirection}
+                        className="inline-flex items-center gap-1.5 rounded-md border border-slate-600 px-2.5 py-1 text-xs font-medium text-gray-200 hover:bg-slate-800"
+                      >
+                        <RotateCcw className="h-3.5 w-3.5" />
+                        {t('startOver')}
+                      </button>
+                    </div>
+                  </div>
+                )}
+
                 <DictationTextarea
                   value={userIntent}
                   onChange={setUserIntent}
                   placeholder={t('whatShouldChangePlaceholder')}
                   rows={3}
                   disabled={isGenerating}
-                  className="min-h-[88px] bg-slate-800/50 border-slate-700 text-sm"
+                  className={cn(
+                    'min-h-[88px] bg-slate-800/50 border-slate-700 text-sm',
+                    lockedDirection && 'hidden'
+                  )}
                 />
-              </div>
 
-              <div className="space-y-2">
-                <span className="text-xs text-gray-500">{t('focusOptional')}</span>
-                <div className="flex flex-wrap gap-1.5">
-                  {SCOPE_OPTIONS.map((opt) => (
+                {!lockedDirection && (
+                  <div className="flex flex-wrap items-center gap-2">
                     <button
-                      key={opt.id}
                       type="button"
-                      onClick={() => setFocusScope(opt.id)}
+                      onClick={() => void handleClarifyDirection()}
+                      disabled={isClarifyingDirection || isGenerating || !userIntent.trim()}
                       className={cn(
-                        'px-2 py-1 text-[10px] rounded-md border transition-colors',
-                        focusScope === opt.id
-                          ? 'border-cyan-500/50 bg-cyan-500/15 text-cyan-200'
-                          : 'border-slate-700 text-gray-400 hover:border-slate-500'
+                        'inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-medium transition-all',
+                        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500/50',
+                        isClarifyingDirection || isGenerating || !userIntent.trim()
+                          ? 'cursor-not-allowed border-slate-700/60 bg-slate-800/40 text-slate-500'
+                          : 'border-cyan-500/50 bg-cyan-500/15 text-cyan-100 hover:bg-cyan-500/25'
                       )}
                     >
-                      {t(opt.labelKey)}
+                      {isClarifyingDirection ? (
+                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                      ) : (
+                        <Sparkles className="h-3.5 w-3.5" />
+                      )}
+                      {isClarifyingDirection ? t('clarifying') : t('clarifyAndConfirm')}
                     </button>
-                  ))}
-                </div>
+                    {userIntent.trim() && !proposedDirection && (
+                      <button
+                        type="button"
+                        onClick={handleConfirmDirection}
+                        disabled={isClarifyingDirection || isGenerating}
+                        className="inline-flex items-center gap-1.5 rounded-lg border border-emerald-500/40 bg-emerald-500/10 px-3 py-1.5 text-xs font-medium text-emerald-200 hover:bg-emerald-500/20 disabled:cursor-not-allowed disabled:opacity-50"
+                      >
+                        <CheckCircle2 className="h-3.5 w-3.5" />
+                        {t('confirmDirection')}
+                      </button>
+                    )}
+                    {(proposedDirection || directionTurns.length > 0) && (
+                      <button
+                        type="button"
+                        onClick={handleStartOverDirection}
+                        disabled={isClarifyingDirection || isGenerating}
+                        className="inline-flex items-center gap-1.5 rounded-lg border border-slate-700 px-3 py-1.5 text-xs font-medium text-gray-300 hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-50"
+                      >
+                        <RotateCcw className="h-3.5 w-3.5" />
+                        {t('startOver')}
+                      </button>
+                    )}
+                  </div>
+                )}
+
+                {directionError && (
+                  <p className="text-[11px] text-red-300">{directionError}</p>
+                )}
               </div>
 
               <div className="space-y-2">
                 <span className="text-xs text-gray-500">{t('guidedRefinements')}</span>
                 <div className="flex flex-wrap gap-1.5">
                   {templateSections.flatMap(({ section, templates }) =>
-                    templates.map((t) => {
-                      const key = `${section}:${t.id}`
+                    templates.map((tpl) => {
+                      const key = `${section}:${tpl.id}`
                       const on = selectedTemplateKeys.has(key)
                       return (
                         <button
                           key={key}
                           type="button"
-                          onClick={() => toggleTemplate(section, t.id)}
+                          onClick={() => toggleTemplate(section, tpl.id)}
                           className={cn(
                             'px-2 py-1 text-[10px] rounded-md border transition-colors flex items-center gap-1',
                             on
@@ -934,8 +998,8 @@ export function BlueprintRefineDialog({
                               : 'border-slate-700 text-gray-400 hover:border-slate-500'
                           )}
                         >
-                          <span>{t.icon}</span>
-                          {t.label}
+                          <span>{tpl.icon}</span>
+                          {tpl.label}
                         </button>
                       )
                     })
@@ -943,7 +1007,46 @@ export function BlueprintRefineDialog({
                 </div>
               </div>
 
-              <BlueprintSnapshot variant={variant} contentI18n={contentI18n} />
+              {/* Target Audience Clarification & Confirmation */}
+              <div className="space-y-2 rounded-xl border border-slate-700/60 bg-slate-800/25 p-3.5">
+                <div className="flex items-center justify-between gap-2">
+                  <label className="flex items-center gap-2 text-sm font-medium text-gray-200">
+                    <Users className="w-4 h-4 text-cyan-400" />
+                    {t('targetAudience')}{' '}
+                    <span className="text-gray-500 text-xs font-normal">
+                      {t('targetAudienceHint')}
+                    </span>
+                  </label>
+                  {audienceConfirmed && audienceDef.description?.trim() ? (
+                    <span className="inline-flex items-center gap-1 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-2.5 py-0.5 text-[11px] font-medium text-emerald-300">
+                      <CheckCircle2 className="h-3 w-3" />
+                      {t('targetAudienceConfirmed')}
+                    </span>
+                  ) : audienceDef.description?.trim() ? (
+                    <button
+                      type="button"
+                      onClick={handleConfirmAudience}
+                      className="inline-flex items-center gap-1 rounded-md border border-emerald-500/40 bg-emerald-500/10 px-2.5 py-1 text-[11px] font-medium text-emerald-200 hover:bg-emerald-500/20"
+                    >
+                      <CheckCircle2 className="h-3 w-3" />
+                      {t('confirmTargetAudience')}
+                    </button>
+                  ) : null}
+                </div>
+                <AudienceDescriptionField
+                  value={audienceDef}
+                  onChange={handleAudienceChange}
+                  context={{
+                    title: String(variant.title || ''),
+                    logline: String(variant.logline || ''),
+                    genre: String(variant.genre || ''),
+                    format: defaultFormatForIntent(resolvedContentIntent) || undefined,
+                    contentIntent: resolvedContentIntent,
+                  }}
+                  projectId={projectId}
+                  rows={3}
+                />
+              </div>
             </>
           )}
 

@@ -31,6 +31,8 @@ export interface ClarifySynopsisInput {
   surface?: ClarifySynopsisSurface
   /** Project length hint. Series prompts use episode count instead. */
   scope?: string
+  /** Existing baseline blueprint when clarifying new direction in Blueprint Director. */
+  baselineBlueprint?: Record<string, unknown>
 }
 
 export interface ClarifySynopsisResult {
@@ -136,6 +138,57 @@ function formatGuidance(format: string, surface: ClarifySynopsisSurface): string
   return `This is a ${label} ${kind}. Clarify implied stakes and shape a dramatic premise, but do not replace the creator's characters, setting, or events.${craft}`
 }
 
+function formatBaselineBlueprintBlock(baseline?: Record<string, unknown>): string {
+  if (!baseline || typeof baseline !== 'object') return ''
+  const lines: string[] = []
+  if (typeof baseline.title === 'string' && baseline.title.trim()) {
+    lines.push(`Title: ${baseline.title.trim()}`)
+  }
+  if (typeof baseline.logline === 'string' && baseline.logline.trim()) {
+    lines.push(`Logline: ${baseline.logline.trim()}`)
+  }
+  if (typeof baseline.genre === 'string' && baseline.genre.trim()) {
+    lines.push(`Genre: ${baseline.genre.trim()}`)
+  }
+  const tone = baseline.tone_description || baseline.tone
+  if (typeof tone === 'string' && tone.trim()) {
+    lines.push(`Tone: ${tone.trim()}`)
+  }
+  const synopsis = baseline.synopsis || baseline.content
+  if (typeof synopsis === 'string' && synopsis.trim()) {
+    lines.push(`Baseline Synopsis: ${synopsis.trim().slice(0, 800)}`)
+  }
+  if (typeof baseline.protagonist === 'string' && baseline.protagonist.trim()) {
+    lines.push(`Protagonist: ${baseline.protagonist.trim()}`)
+  }
+  if (typeof baseline.antagonist === 'string' && baseline.antagonist.trim()) {
+    lines.push(`Antagonist / Conflict: ${baseline.antagonist.trim()}`)
+  }
+  if (Array.isArray(baseline.character_descriptions) && baseline.character_descriptions.length > 0) {
+    const names = (baseline.character_descriptions as Array<{ name?: string; role?: string }>)
+      .map((c) => (c?.name ? `${c.name}${c.role ? ` (${c.role})` : ''}` : ''))
+      .filter(Boolean)
+    if (names.length > 0) lines.push(`Cast: ${names.join(', ')}`)
+  }
+  if (Array.isArray(baseline.scene_descriptions) && baseline.scene_descriptions.length > 0) {
+    const locs = (baseline.scene_descriptions as Array<{ name?: string }>)
+      .map((s) => s?.name || '')
+      .filter(Boolean)
+    if (locs.length > 0) lines.push(`Locations: ${locs.join(', ')}`)
+  }
+  if (Array.isArray(baseline.prop_descriptions) && baseline.prop_descriptions.length > 0) {
+    const props = (baseline.prop_descriptions as Array<{ name?: string }>)
+      .map((p) => p?.name || '')
+      .filter(Boolean)
+    if (props.length > 0) lines.push(`Props: ${props.join(', ')}`)
+  }
+  if (Array.isArray(baseline.beats) && baseline.beats.length > 0) {
+    lines.push(`Beats: ${baseline.beats.length} story beats`)
+  }
+  if (lines.length === 0) return ''
+  return `\nBASELINE BLUEPRINT:\n"""\n${lines.join('\n')}\n"""\n`
+}
+
 export function buildClarifySynopsisPrompt(input: ClarifySynopsisInput): string {
   const messages = input.messages.slice(-MAX_SYNOPSIS_TURNS)
   const formatId = input.productionFormat
@@ -146,12 +199,21 @@ export function buildClarifySynopsisPrompt(input: ClarifySynopsisInput): string 
   const surface: ClarifySynopsisSurface = input.surface === 'project' ? 'project' : 'series'
   const scope = (input.scope || '').trim() || 'Let the story decide its length'
   const styleBlock = buildArtStylePromptBlock(input.artStyle).trim()
+  const baselineBlock = formatBaselineBlueprintBlock(input.baselineBlueprint)
+  const hasBaseline = Boolean(baselineBlock)
   const transcript = messages
     .map((message) => `${message.role === 'user' ? 'Creator' : 'You'}: ${message.content.trim()}`)
     .join('\n')
 
-  const intro =
-    surface === 'project'
+  const intro = hasBaseline
+    ? `You are a development producer helping a creator clarify and confirm new direction for an existing production blueprint before an AI regenerates the blueprint from the baseline and new direction.
+
+Use the baseline blueprint, the target audience, and the conversation to synthesize a clear, actionable direction brief that captures what should change and how the blueprint should evolve while preserving coherent baseline elements.
+
+PRODUCTION TYPE: ${format}
+SCOPE: ${scope}
+TARGET AUDIENCE: ${audience || 'Not specified'}${baselineBlock}`
+    : surface === 'project'
       ? `You are a development producer helping a creator ideate a single production before an AI writes the blueprint.
 
 Use the production type, the locked art style, the target audience, and the conversation to write an optimized synopsis. The synopsis is the brief the blueprint generator will follow.
@@ -167,13 +229,15 @@ PRODUCTION TYPE: ${format}
 EPISODE COUNT: ${episodeCount}
 TARGET AUDIENCE: ${audience || 'Not specified'}`
 
-  const lengthInstruction =
-    surface === 'project'
+  const lengthInstruction = hasBaseline
+    ? 'Write a clear 2-5 sentence direction brief describing the updated creative direction relative to the baseline blueprint.'
+    : surface === 'project'
       ? 'Write a synopsis of 2-5 sentences for this single production.'
       : `Write a synopsis of 2-5 sentences shaped for ${episodeCount} episodes.`
 
-  const synopsisField =
-    surface === 'project'
+  const synopsisField = hasBaseline
+    ? '<optimized 2-5 sentence direction brief combining the creator direction with the baseline blueprint context>'
+    : surface === 'project'
       ? '<optimized 2-5 sentence production synopsis>'
       : '<optimized 2-5 sentence series synopsis>'
 
