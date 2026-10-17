@@ -3,6 +3,8 @@ import path from 'path'
 import { describe, it, expect } from 'vitest'
 import { FEATURE_ICONS } from '@/components/landing/keyFeatureIcons'
 import {
+  BLUEPRINT_ROOM_OVERVIEW_MP4,
+  BLUEPRINT_ROOM_OVERVIEW_WEBM,
   FEATURE_ROOM_COLD_OPEN_SECONDS,
   FEATURE_ROOM_FILM_MAX_SECONDS,
   FEATURE_ROOM_FILM_MIN_SECONDS,
@@ -177,17 +179,28 @@ describe('keyFeatures structure', () => {
       expect(room.filmSeconds).toBeGreaterThanOrEqual(FEATURE_ROOM_FILM_MIN_SECONDS)
       expect(room.filmSeconds).toBeLessThanOrEqual(FEATURE_ROOM_FILM_MAX_SECONDS)
     }
+    const producedByRoom: Partial<Record<string, { webm: string; mp4: string }>> = {
+      'series-desk': {
+        webm: SERIES_ROOM_OVERVIEW_WEBM,
+        mp4: SERIES_ROOM_OVERVIEW_MP4,
+      },
+      'blueprint-board': {
+        webm: BLUEPRINT_ROOM_OVERVIEW_WEBM,
+        mp4: BLUEPRINT_ROOM_OVERVIEW_MP4,
+      },
+    }
     for (const roomId of FEATURE_ROOM_IDS) {
       const locales = getFeatureRoomVideoLocales(roomId)
       expect(locales.map((locale) => locale.id)).toEqual([...VIDEO_LOCALE_ORDER])
-      if (roomId === 'series-desk') {
+      const produced = producedByRoom[roomId]
+      if (produced) {
         const english = locales.find((locale) => locale.id === 'en')
         expect(english?.available).toBe(true)
-        expect(english?.src).toBe(SERIES_ROOM_OVERVIEW_MP4)
+        expect(english?.src).toBe(produced.mp4)
         expect(featureRoomHasVideo(getFeatureRoomMedia(roomId, 'en'))).toBe(true)
         expect(featureRoomVideoSources(roomId, 'en')).toEqual([
-          { src: SERIES_ROOM_OVERVIEW_WEBM, type: 'video/webm' },
-          { src: SERIES_ROOM_OVERVIEW_MP4, type: 'video/mp4' },
+          { src: produced.webm, type: 'video/webm' },
+          { src: produced.mp4, type: 'video/mp4' },
         ])
         expect(locales.filter((locale) => locale.id !== 'en').every((locale) => !locale.available)).toBe(
           true
@@ -197,7 +210,7 @@ describe('keyFeatures structure', () => {
         expect(featureRoomHasVideo(getFeatureRoomMedia(roomId))).toBe(false)
       }
       for (const locale of VIDEO_LOCALE_ORDER) {
-        if (roomId === 'series-desk' && locale === 'en') continue
+        if (produced && locale === 'en') continue
         const sources = featureRoomVideoSources(roomId, locale)
         expect(sources.map((source) => source.type)).toEqual(['video/webm', 'video/mp4'])
         expect(sources[0].src).toBe(`/landing/key-features/rooms/${roomId}-${locale}.webm`)

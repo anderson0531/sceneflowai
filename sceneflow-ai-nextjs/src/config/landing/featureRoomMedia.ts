@@ -47,13 +47,18 @@ const EMPTY_ROOM_MEDIA: FeatureRoomMediaEntry = {
 }
 
 /**
- * Series Room overview. One version: WebM plays first, and the Blob MP4 is the fallback.
+ * Room overviews. One version per room: WebM plays first, and the Blob MP4 is the fallback.
  * A dub for a room is ignored until that room's film is in this map.
  */
 export const SERIES_ROOM_OVERVIEW_WEBM = '/landing/key-features/rooms/series-desk-en.webm'
 
 export const SERIES_ROOM_OVERVIEW_MP4 =
   'https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Series%20Room%20Overview%20.mp4'
+
+export const BLUEPRINT_ROOM_OVERVIEW_WEBM = '/landing/key-features/rooms/blueprint-board-en.webm'
+
+export const BLUEPRINT_ROOM_OVERVIEW_MP4 =
+  'https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Blueprint%20Room%20Overview.mp4'
 
 const PRODUCED_ROOM_FILMS: Partial<
   Record<FeatureRoomId, Partial<Record<VideoLocaleId, FeatureRoomMediaEntry>>>
@@ -63,6 +68,13 @@ const PRODUCED_ROOM_FILMS: Partial<
       posterUrl: '',
       webmUrl: SERIES_ROOM_OVERVIEW_WEBM,
       mp4Url: SERIES_ROOM_OVERVIEW_MP4,
+    },
+  },
+  'blueprint-board': {
+    en: {
+      posterUrl: '',
+      webmUrl: BLUEPRINT_ROOM_OVERVIEW_WEBM,
+      mp4Url: BLUEPRINT_ROOM_OVERVIEW_MP4,
     },
   },
 }
