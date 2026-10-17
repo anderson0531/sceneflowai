@@ -84,6 +84,7 @@ describe('the Assistant direction field', () => {
     expect(dialog).toContain('tpl.description')
 
     const catalog = JSON.parse(readSource('messages/app/en/blueprint.json'))
+    expect(catalog.assistant.whatShouldChange).toBe('Direction')
     expect(catalog.assistant.guidedRefinements).toBe('Recommendations & Quick Edits')
 
     const globalsCss = readSource('src/app/globals.css')

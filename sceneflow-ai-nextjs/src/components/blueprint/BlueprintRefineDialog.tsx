@@ -864,8 +864,8 @@ export function BlueprintRefineDialog({
               {/* Step 1: Direction Clarification & Confirmation */}
               <div className="rounded-xl border border-slate-800/90 bg-slate-900/40 p-4 space-y-3.5">
                 <div className="flex items-center justify-between gap-2">
-                  <label className="text-xs font-semibold text-slate-200">
-                    {t('whatShouldChange')} <span className="text-cyan-400">*</span>
+                  <label className="text-sm font-medium text-gray-300">
+                    {t('whatShouldChange')}
                   </label>
                   {userIntent.length > 0 && (
                     <span
