@@ -223,6 +223,19 @@ export function BlueprintReimaginDialog({
       setTone(initialIdea.tone || '')
       if (initialIdea.genre) setContentType(resolveContentIntent(initialIdea.genre))
       setIdeationSession((session) => session + 1)
+    } else if (open) {
+      setSynopsis('')
+      setSynopsisDraft('')
+      setLockedSynopsis(null)
+      setGenre('')
+      setTone('')
+      setContentType('')
+      setArtStyle(DEFAULT_ART_STYLE)
+      setAspectRatio(DEFAULT_ASPECT_RATIO)
+      setDuration('auto')
+      setProductionFormat(DEFAULT_SERIES_PRODUCTION_FORMAT)
+      setAudienceDef(createAudienceDefinition({ description: '', source: 'blueprint' }))
+      setIdeationSession((session) => session + 1)
     }
   }, [
     existingVariant,

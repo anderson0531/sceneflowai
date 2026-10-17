@@ -223,7 +223,7 @@ export function Sidebar() {
                   return (
                     <Link
                       key={item.name}
-                      href={item.name === 'Start Project' ? studioHref : item.href}
+                      href={item.href}
                       prefetch={false}
                       className={`flex items-center px-4 py-3 text-base font-semibold rounded-xl transition-all duration-200 ${
                         isActiveItem 

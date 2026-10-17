@@ -103,7 +103,7 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
   const searchParams = useSearchParams();
   const router = useRouter();
   const { data: session, status: authStatus } = useSession();
-  const { guide, updateTitle, updateTreatment, setTreatmentVariants, variantsLastModified } = useGuideStore();
+  const { guide, resetProject, updateTitle, updateTreatment, setTreatmentVariants, variantsLastModified } = useGuideStore();
   const { updateTreatmentVariant } = useGuideStore() as {
     updateTreatmentVariant: (id: string, patch: Record<string, unknown>) => void
   };
@@ -1200,11 +1200,40 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
     }
   };
 
-  // Load project data
+  // Load project data (or reset stale project state when entering new-project)
   useEffect(() => {
-    if (!projectId || projectId.startsWith('new-project')) return
+    if (!projectId) return
+    if (projectId === 'new-project' || projectId.startsWith('new-project')) {
+      if (loadedProjectRef.current !== projectId) {
+        loadedProjectRef.current = projectId
+        hadBlueprintOnLoadRef.current = false
+        autoOpenBlueprintRef.current = true
+        resetProject()
+        setTreatmentVariants([])
+        updateTreatment('')
+        updateTitle('')
+        setCurrentProject(null)
+        setBeats([])
+        setBeatsView([])
+        setEstimatedRuntime(null)
+        setAudienceDefinition(null)
+        setSavedBlueprintAR(null)
+        setLegacyARIntent(null)
+        setSeriesContext(null)
+        setSeriesBibleContinuity(null)
+        setSessionId(null)
+        setShareToken(null)
+        setShareUrl(null)
+        setLastInput('')
+        setRefineDiffSummary([])
+        setHeroImageError(null)
+        setShowReimaginDialog(true)
+      }
+      return
+    }
     // Prevent re-loading the same project
     if (loadedProjectRef.current === projectId) return
+    autoOpenBlueprintRef.current = false
     
     const load = async () => {
       try {
@@ -1415,7 +1444,7 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
       }
     }
     load()
-  }, [projectId, setCurrentProject, setBeats, updateTreatment, setTreatmentVariants, updateTitle])
+  }, [projectId, resetProject, setCurrentProject, setBeats, updateTreatment, setTreatmentVariants, updateTitle])
 
   // Auto-save effect - debounced to prevent excessive API calls
   // Access treatmentVariants with proper typing (not in ProductionGuide interface yet)

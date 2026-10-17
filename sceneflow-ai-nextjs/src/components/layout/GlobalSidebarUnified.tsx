@@ -322,6 +322,11 @@ export function GlobalSidebarUnified({ children }: GlobalSidebarProps) {
                 <Link
                   key={item.key}
                   href={item.href}
+                  onClick={
+                    item.key === 'start' && pathname === item.href
+                      ? () => window.dispatchEvent(new CustomEvent('blueprint:generate-treatment'))
+                      : undefined
+                  }
                   className={cn(
                     'flex items-center gap-2 py-2 text-sm font-medium rounded-lg transition-colors',
                     pathname === item.href
