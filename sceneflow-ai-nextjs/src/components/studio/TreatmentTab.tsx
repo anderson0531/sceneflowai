@@ -1005,7 +1005,7 @@ export function TreatmentTab() {
                     AI Narrative Reasoning
                   </h3>
                   <span className="text-xs text-gray-400">
-                    Why the AI made these storytelling choices
+                    The reasoning for the Blueprint narrative
                   </span>
                 </div>
                 <ChevronDown className={`w-5 h-5 transition-transform ${showReasoning ? 'rotate-180' : ''}`} />

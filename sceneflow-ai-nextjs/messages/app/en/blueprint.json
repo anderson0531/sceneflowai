@@ -174,7 +174,7 @@
   "reasoning": {
     "whyChoices": "Why these choices?",
     "title": "Narrative Reasoning",
-    "subtitle": "Why the AI made these storytelling choices",
+    "subtitle": "The reasoning for the Blueprint narrative",
     "noneRecorded": "No reasoning recorded for this blueprint yet. Regenerate it to capture why the AI made its storytelling choices.",
     "notProvided": "The AI did not provide narrative reasoning for this blueprint. Regenerate it to see the creative decisions.",
     "characterFocus": "Character Focus",
