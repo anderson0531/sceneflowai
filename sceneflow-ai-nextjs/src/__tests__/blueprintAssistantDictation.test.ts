@@ -72,6 +72,13 @@ describe('the Assistant direction field', () => {
     expect(dialog).not.toContain('policyBlocks')
     expect(dialog).toContain('submitBlocked = hasBlockingIssue(requestIssues)')
   })
+
+  it('uses a compact bold dialog title and omits emoji icons on Guided refinement buttons', () => {
+    expect(dialog).toContain('!text-sm !font-bold')
+    expect(dialog).not.toContain('tpl.icon')
+    const globalsCss = readSource('src/app/globals.css')
+    expect(globalsCss).toContain("h2:not(:where(.landing-section-heading, .dashboard-widget-title, [role='dialog'] *))")
+  })
 })
 
 describe('resonance recommendations become instruction text', () => {

@@ -122,32 +122,38 @@ function DiffPanel({
 
   if (diffs.length === 0) {
     return (
-      <p className="text-sm text-gray-500 text-center py-4">
+      <p className="!mb-0 text-xs text-slate-400 text-center py-6">
         {t('noFieldChanges')}
       </p>
     )
   }
   return (
-    <div className="space-y-3 max-h-[280px] overflow-y-auto pr-1">
+    <div className="space-y-2.5 max-h-[340px] overflow-y-auto pr-1">
       {diffs.map((d, index) => (
         <div
           key={d.field}
-          className="rounded-lg border border-slate-700/50 bg-slate-800/40 p-2.5 space-y-1.5"
+          className="rounded-lg border border-slate-800 bg-slate-900/60 p-3 space-y-2"
         >
-          <div className="text-xs font-medium text-cyan-300/90">
-            {d.label}{' '}
-            <span className="text-gray-500 font-normal">({FIX_SECTION_LABELS[d.section] || d.section})</span>
+          <div className="flex items-center justify-between gap-2">
+            <span className="text-xs font-semibold text-slate-200">{d.label}</span>
+            <span className="rounded-md border border-slate-700/70 bg-slate-800/70 px-2 py-0.5 text-[10px] font-medium text-slate-400">
+              {FIX_SECTION_LABELS[d.section] || d.section}
+            </span>
           </div>
-          <div className="grid grid-cols-1 gap-2 text-[11px]">
-            <div>
-              <span className="text-red-400/80">{t('before')}</span>
-              <p className="text-gray-500 line-clamp-4 whitespace-pre-wrap">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5 text-xs">
+            <div className="rounded-md border border-slate-800/80 bg-slate-950/50 p-2.5 space-y-1">
+              <span className="block text-[10px] font-semibold uppercase tracking-wider text-rose-400/80">
+                {t('before')}
+              </span>
+              <p className="!mb-0 text-xs text-slate-400 line-clamp-5 whitespace-pre-wrap leading-relaxed">
                 {resolve(`refineDiff[${index}].before`).text || d.before || '—'}
               </p>
             </div>
-            <div>
-              <span className="text-emerald-400/80">{t('after')}</span>
-              <p className="text-gray-200 line-clamp-6 whitespace-pre-wrap">
+            <div className="rounded-md border border-emerald-500/20 bg-emerald-500/5 p-2.5 space-y-1">
+              <span className="block text-[10px] font-semibold uppercase tracking-wider text-emerald-400/90">
+                {t('after')}
+              </span>
+              <p className="!mb-0 text-xs text-slate-100 line-clamp-6 whitespace-pre-wrap leading-relaxed">
                 {resolve(`refineDiff[${index}].after`).text || d.after || '—'}
               </p>
             </div>
@@ -699,15 +705,17 @@ export function BlueprintRefineDialog({
 
   return (
     <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
-      <DialogContent className="max-w-3xl max-h-[90vh] flex flex-col overflow-hidden bg-slate-900 border-slate-700">
+      <DialogContent className="max-w-2xl max-h-[88vh] flex flex-col overflow-hidden bg-slate-950 border-slate-800 p-0 shadow-2xl sm:rounded-xl">
         {isGenerating && (
-          <div className="absolute inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center rounded-lg">
-            <div className="bg-slate-900 border border-cyan-500/30 rounded-xl p-8 shadow-2xl flex flex-col items-center max-w-sm text-center">
-              <Loader2 className="w-12 h-12 animate-spin text-cyan-400 mb-4" />
-              <h3 className="text-lg font-semibold text-white mb-2">
+          <div className="absolute inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center rounded-xl">
+            <div className="bg-slate-900 border border-slate-700/80 rounded-xl p-6 shadow-2xl flex flex-col items-center max-w-sm text-center space-y-3">
+              <div className="w-10 h-10 rounded-full bg-cyan-500/10 border border-cyan-500/25 flex items-center justify-center">
+                <Loader2 className="w-5 h-5 animate-spin text-cyan-400" />
+              </div>
+              <h3 className="!text-sm !font-bold !mb-0 text-white">
                 Balancing full blueprint
               </h3>
-              <p className="text-sm text-gray-400">
+              <p className="!mb-0 text-xs text-slate-400 leading-relaxed">
                 {jobStatusText ??
                   'Regenerating blueprint from baseline and new direction across Core, Story, Continuity, Beats, and Tone…'}
               </p>
@@ -715,36 +723,40 @@ export function BlueprintRefineDialog({
           </div>
         )}
 
-        <DialogHeader className="flex-shrink-0 pb-2">
-          <DialogTitle className="flex items-center gap-2 text-xl">
-            <AssistantIcon className="w-5 h-5 text-cyan-400" />
-            {assistantTitle('Blueprint')}
-          </DialogTitle>
-          <p className="text-xs text-gray-400 mt-1">
+        <DialogHeader className="flex-shrink-0 px-6 py-4 border-b border-slate-800/80 bg-slate-900/50 space-y-1 text-left">
+          <div className="flex items-center gap-2.5 pr-6">
+            <div className="w-7 h-7 rounded-md bg-cyan-500/10 border border-cyan-500/25 flex items-center justify-center shrink-0">
+              <AssistantIcon className="w-3.5 h-3.5 text-cyan-400" />
+            </div>
+            <DialogTitle className="!text-sm !font-bold !leading-snug !mb-0 text-white tracking-tight">
+              {assistantTitle('Blueprint')}
+            </DialogTitle>
+          </div>
+          <p className="!mb-0 text-xs text-slate-400 leading-relaxed">
             {t('assistantIntro', { assistant: ASSISTANT.full })}
           </p>
         </DialogHeader>
 
-        <div className="flex-1 overflow-y-auto min-h-0 space-y-5 pr-1">
+        <div className="flex-1 overflow-y-auto min-h-0 px-6 py-5 space-y-4">
           {phase === 'intent' && (
             <>
               {resonanceRecommendations && resonanceRecommendations.length > 0 && (
-                <div className="rounded-xl border border-amber-500/20 bg-amber-500/5 p-3 space-y-2">
+                <div className="rounded-xl border border-amber-500/25 bg-amber-500/5 p-3.5 space-y-2.5">
                   <button
                     type="button"
                     onClick={() => setShowResonanceRecs(!showResonanceRecs)}
-                    className="flex items-center justify-between w-full text-sm font-medium text-amber-200/90"
+                    className="flex items-center justify-between w-full text-xs font-semibold text-amber-200"
                   >
                     <span className="flex items-center gap-2">
-                      <AlertTriangle className="w-4 h-4" />
+                      <AlertTriangle className="w-3.5 h-3.5 text-amber-400" />
                       {t('resonanceRecommendations', { count: resonanceRecommendations.length })}
                     </span>
                     <ChevronDown
-                      className={cn('w-4 h-4 transition-transform', showResonanceRecs && 'rotate-180')}
+                      className={cn('w-3.5 h-3.5 transition-transform', showResonanceRecs && 'rotate-180')}
                     />
                   </button>
                   {showResonanceRecs && (
-                    <div className="space-y-1.5 max-h-[240px] overflow-y-auto">
+                    <div className="space-y-1.5 max-h-[200px] overflow-y-auto pr-1">
                       {resonanceRecommendations.map((rec) => {
                         const selected = selectedRecIds.has(rec.id)
                         const heading = rec.intentLabel || rec.title || rec.category
@@ -754,10 +766,10 @@ export function BlueprintRefineDialog({
                           <div
                             key={rec.id}
                             className={cn(
-                              'flex items-start gap-2 p-2 rounded-lg border text-left text-xs',
+                              'flex items-start gap-2.5 p-2.5 rounded-lg border text-left text-xs transition-colors',
                               selected
-                                ? 'border-cyan-500/40 bg-cyan-500/10'
-                                : 'border-slate-700/50 bg-slate-800/40'
+                                ? 'border-cyan-500/35 bg-cyan-500/10'
+                                : 'border-slate-800 bg-slate-900/60'
                             )}
                           >
                             <button
@@ -769,23 +781,23 @@ export function BlueprintRefineDialog({
                               {selected ? (
                                 <CheckSquare className="w-3.5 h-3.5 text-cyan-400" />
                               ) : (
-                                <Square className="w-3.5 h-3.5 text-gray-500" />
+                                <Square className="w-3.5 h-3.5 text-slate-500" />
                               )}
                             </button>
-                            <div className="flex-1 min-w-0 space-y-1">
+                            <div className="flex-1 min-w-0 space-y-0.5">
                               {heading && (
-                                <div className="font-medium text-gray-200">
+                                <div className="font-medium text-slate-200">
                                   {heading}
-                                  <span className="text-red-400/80 ml-1 font-mono font-normal">
+                                  <span className="text-rose-400/80 ml-1.5 font-mono text-[11px] font-normal">
                                     {t('minusPoints', { points: rec.pointsDeducted })}
                                   </span>
                                 </div>
                               )}
                               {fixText && (
-                                <p className="text-gray-300 leading-relaxed">{fixText}</p>
+                                <p className="!mb-0 text-xs text-slate-300 leading-relaxed">{fixText}</p>
                               )}
                               {gapText && gapText !== fixText && (
-                                <p className="text-[10px] text-gray-500 leading-relaxed">
+                                <p className="!mb-0 text-[11px] text-slate-500 leading-relaxed">
                                   {t('resonanceGap')}: {gapText}
                                 </p>
                               )}
@@ -794,7 +806,7 @@ export function BlueprintRefineDialog({
                               <button
                                 type="button"
                                 onClick={() => removeRecFromIntent(rec)}
-                                className="flex items-center gap-1 text-cyan-400 text-[10px] font-medium flex-shrink-0 mt-0.5"
+                                className="flex items-center gap-1 text-cyan-300 text-[11px] font-medium flex-shrink-0 mt-0.5"
                               >
                                 <Check className="w-3 h-3" />
                                 {t('addedToInstructions')}
@@ -803,7 +815,7 @@ export function BlueprintRefineDialog({
                               <Button
                                 variant="ghost"
                                 size="sm"
-                                className="h-6 px-2 text-[10px] text-cyan-400 hover:text-cyan-300 hover:bg-cyan-900/30 flex-shrink-0"
+                                className="h-6 px-2 text-[11px] text-cyan-400 hover:text-cyan-300 hover:bg-cyan-950/50 flex-shrink-0"
                                 disabled={
                                   !fixText ||
                                   appendFixInstruction(userIntent, fixText) === userIntent
@@ -821,19 +833,19 @@ export function BlueprintRefineDialog({
                 </div>
               )}
 
-              {/* Direction Clarification & Confirmation */}
-              <div className="space-y-3">
-                <div className="flex items-baseline justify-between gap-2">
-                  <label className="text-sm font-medium text-gray-200">
+              {/* Step 1: Direction Clarification & Confirmation */}
+              <div className="rounded-xl border border-slate-800/90 bg-slate-900/40 p-4 space-y-3.5">
+                <div className="flex items-center justify-between gap-2">
+                  <label className="text-xs font-semibold text-slate-200">
                     {t('whatShouldChange')} <span className="text-cyan-400">*</span>
                   </label>
                   {userIntent.length > 0 && (
                     <span
                       className={cn(
-                        'text-[10px] tabular-nums',
+                        'text-[11px] tabular-nums',
                         userIntent.trim().length > MAX_INTENT_CHARS
                           ? 'text-amber-300'
-                          : 'text-gray-500'
+                          : 'text-slate-500'
                       )}
                     >
                       {userIntent.trim().length} / {MAX_INTENT_CHARS}
@@ -842,77 +854,81 @@ export function BlueprintRefineDialog({
                 </div>
 
                 {directionTurns.length > 0 && (
-                  <div className="max-h-48 space-y-2 overflow-y-auto pr-1">
+                  <div className="max-h-40 space-y-2 overflow-y-auto pr-1">
                     {directionTurns.map((turn, index) => (
                       <div
                         key={`${turn.role}-${index}`}
                         className={cn(
-                          'rounded-lg px-3 py-2 text-sm leading-relaxed',
+                          'rounded-lg px-3 py-2 text-xs leading-relaxed',
                           turn.role === 'user'
-                            ? 'bg-slate-800 text-gray-200'
-                            : 'border border-cyan-500/20 bg-cyan-500/5 text-gray-200'
+                            ? 'bg-slate-800/90 text-slate-200'
+                            : 'border border-cyan-500/20 bg-cyan-500/5 text-slate-200'
                         )}
                       >
-                        <p className="mb-1 text-[10px] font-semibold uppercase tracking-wide text-gray-500">
+                        <p className="!mb-0.5 text-[10px] font-semibold uppercase tracking-wider text-slate-400">
                           {turn.role === 'user' ? 'You' : 'Clarify'}
                         </p>
-                        {turn.content}
+                        <p className="!mb-0 text-xs text-slate-200 leading-relaxed">{turn.content}</p>
                       </div>
                     ))}
                   </div>
                 )}
 
                 {proposedDirection && !lockedDirection && (
-                  <div className="space-y-2 rounded-lg border border-emerald-500/30 bg-emerald-500/5 px-3 py-3">
-                    <p className="text-xs font-medium text-emerald-200">
+                  <div className="space-y-2 rounded-lg border border-emerald-500/30 bg-emerald-500/5 p-3">
+                    <p className="!mb-0 text-[11px] font-semibold uppercase tracking-wider text-emerald-300">
                       {t('proposedDirection')}
                     </p>
-                    <p className="text-sm leading-relaxed text-gray-200">
+                    <p className="!mb-0 text-xs leading-relaxed text-slate-100">
                       {proposedDirection}
                     </p>
                     {directionReadyToLock && (
-                      <p className="text-[11px] text-emerald-300/90">
+                      <p className="!mb-0 text-[11px] text-emerald-300/90">
                         {t('directionReadyToConfirm')}
                       </p>
                     )}
-                    <button
-                      type="button"
-                      onClick={handleConfirmDirection}
-                      disabled={isClarifyingDirection}
-                      className="inline-flex items-center gap-1.5 rounded-md border border-emerald-500/50 bg-emerald-500/15 px-2.5 py-1 text-xs font-medium text-emerald-100 hover:bg-emerald-500/25 disabled:cursor-not-allowed disabled:opacity-50"
-                    >
-                      <CheckCircle2 className="h-3.5 w-3.5" />
-                      {t('confirmDirection')}
-                    </button>
+                    <div className="pt-1">
+                      <button
+                        type="button"
+                        onClick={handleConfirmDirection}
+                        disabled={isClarifyingDirection}
+                        className="inline-flex items-center gap-1.5 rounded-md border border-emerald-500/40 bg-emerald-500/15 px-2.5 py-1 text-xs font-medium text-emerald-100 hover:bg-emerald-500/25 disabled:cursor-not-allowed disabled:opacity-50"
+                      >
+                        <CheckCircle2 className="h-3.5 w-3.5" />
+                        {t('confirmDirection')}
+                      </button>
+                    </div>
                   </div>
                 )}
 
                 {lockedDirection && (
-                  <div className="space-y-3 rounded-lg border border-cyan-500/30 bg-cyan-500/5 px-3 py-3">
-                    <div className="flex items-center gap-1.5 text-xs font-medium text-cyan-100">
-                      <CheckCircle2 className="h-3.5 w-3.5 text-emerald-300" />
-                      {t('directionConfirmed')}
+                  <div className="space-y-2.5 rounded-lg border border-cyan-500/30 bg-cyan-500/5 p-3">
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-cyan-100">
+                        <CheckCircle2 className="h-3.5 w-3.5 text-emerald-400" />
+                        {t('directionConfirmed')}
+                      </span>
+                      <div className="flex items-center gap-1.5">
+                        <button
+                          type="button"
+                          onClick={handleReviseDirection}
+                          className="rounded-md border border-slate-700 bg-slate-900/60 px-2.5 py-1 text-[11px] font-medium text-slate-200 hover:bg-slate-800"
+                        >
+                          {t('reviseDirection')}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={handleStartOverDirection}
+                          className="inline-flex items-center gap-1 rounded-md border border-slate-700 bg-slate-900/60 px-2.5 py-1 text-[11px] font-medium text-slate-300 hover:bg-slate-800"
+                        >
+                          <RotateCcw className="h-3 w-3" />
+                          {t('startOver')}
+                        </button>
+                      </div>
                     </div>
-                    <p className="text-sm leading-relaxed text-gray-100">
+                    <p className="!mb-0 text-xs leading-relaxed text-slate-100">
                       {lockedDirection.synopsis}
                     </p>
-                    <div className="flex flex-wrap gap-2">
-                      <button
-                        type="button"
-                        onClick={handleReviseDirection}
-                        className="rounded-md border border-slate-600 px-2.5 py-1 text-xs font-medium text-gray-200 hover:bg-slate-800"
-                      >
-                        {t('reviseDirection')}
-                      </button>
-                      <button
-                        type="button"
-                        onClick={handleStartOverDirection}
-                        className="inline-flex items-center gap-1.5 rounded-md border border-slate-600 px-2.5 py-1 text-xs font-medium text-gray-200 hover:bg-slate-800"
-                      >
-                        <RotateCcw className="h-3.5 w-3.5" />
-                        {t('startOver')}
-                      </button>
-                    </div>
                   </div>
                 )}
 
@@ -923,7 +939,7 @@ export function BlueprintRefineDialog({
                   rows={3}
                   disabled={isGenerating}
                   className={cn(
-                    'min-h-[88px] bg-slate-800/50 border-slate-700 text-sm',
+                    'min-h-[84px] bg-slate-950/70 border-slate-800 text-xs leading-relaxed focus:border-cyan-500/50',
                     lockedDirection && 'hidden'
                   )}
                 />
@@ -935,11 +951,11 @@ export function BlueprintRefineDialog({
                       onClick={() => void handleClarifyDirection()}
                       disabled={isClarifyingDirection || isGenerating || !userIntent.trim()}
                       className={cn(
-                        'inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-medium transition-all',
-                        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500/50',
+                        'inline-flex items-center gap-1.5 rounded-md border px-3 py-1.5 text-xs font-medium transition-colors',
+                        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500/40',
                         isClarifyingDirection || isGenerating || !userIntent.trim()
-                          ? 'cursor-not-allowed border-slate-700/60 bg-slate-800/40 text-slate-500'
-                          : 'border-cyan-500/50 bg-cyan-500/15 text-cyan-100 hover:bg-cyan-500/25'
+                          ? 'cursor-not-allowed border-slate-800 bg-slate-900/50 text-slate-500'
+                          : 'border-cyan-500/40 bg-cyan-500/15 text-cyan-100 hover:bg-cyan-500/25'
                       )}
                     >
                       {isClarifyingDirection ? (
@@ -954,9 +970,9 @@ export function BlueprintRefineDialog({
                         type="button"
                         onClick={handleConfirmDirection}
                         disabled={isClarifyingDirection || isGenerating}
-                        className="inline-flex items-center gap-1.5 rounded-lg border border-emerald-500/40 bg-emerald-500/10 px-3 py-1.5 text-xs font-medium text-emerald-200 hover:bg-emerald-500/20 disabled:cursor-not-allowed disabled:opacity-50"
+                        className="inline-flex items-center gap-1.5 rounded-md border border-slate-700 bg-slate-800/60 px-3 py-1.5 text-xs font-medium text-slate-200 hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-50"
                       >
-                        <CheckCircle2 className="h-3.5 w-3.5" />
+                        <CheckCircle2 className="h-3.5 w-3.5 text-emerald-400" />
                         {t('confirmDirection')}
                       </button>
                     )}
@@ -965,9 +981,9 @@ export function BlueprintRefineDialog({
                         type="button"
                         onClick={handleStartOverDirection}
                         disabled={isClarifyingDirection || isGenerating}
-                        className="inline-flex items-center gap-1.5 rounded-lg border border-slate-700 px-3 py-1.5 text-xs font-medium text-gray-300 hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-50"
+                        className="inline-flex items-center gap-1.5 rounded-md border border-slate-800 px-2.5 py-1.5 text-xs font-medium text-slate-400 hover:bg-slate-800/60 hover:text-slate-200 disabled:cursor-not-allowed disabled:opacity-50"
                       >
-                        <RotateCcw className="h-3.5 w-3.5" />
+                        <RotateCcw className="h-3 w-3" />
                         {t('startOver')}
                       </button>
                     )}
@@ -975,50 +991,64 @@ export function BlueprintRefineDialog({
                 )}
 
                 {directionError && (
-                  <p className="text-[11px] text-red-300">{directionError}</p>
+                  <p className="!mb-0 text-xs text-rose-300">{directionError}</p>
                 )}
-              </div>
 
-              <div className="space-y-2">
-                <span className="text-xs text-gray-500">{t('guidedRefinements')}</span>
-                <div className="flex flex-wrap gap-1.5">
-                  {templateSections.flatMap(({ section, templates }) =>
-                    templates.map((tpl) => {
-                      const key = `${section}:${tpl.id}`
-                      const on = selectedTemplateKeys.has(key)
-                      return (
-                        <button
-                          key={key}
-                          type="button"
-                          onClick={() => toggleTemplate(section, tpl.id)}
-                          className={cn(
-                            'px-2 py-1 text-[10px] rounded-md border transition-colors flex items-center gap-1',
-                            on
-                              ? 'border-cyan-500/50 bg-cyan-500/15 text-cyan-200'
-                              : 'border-slate-700 text-gray-400 hover:border-slate-500'
-                          )}
-                        >
-                          <span>{tpl.icon}</span>
-                          {tpl.label}
-                        </button>
-                      )
-                    })
-                  )}
+                {/* Guided refinements (text-only pills, no icons) */}
+                <div className="pt-2 border-t border-slate-800/70 space-y-2">
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="text-[11px] font-medium text-slate-400">
+                      {t('guidedRefinements')}
+                    </span>
+                    {selectedTemplateKeys.size > 0 && (
+                      <button
+                        type="button"
+                        onClick={() => setSelectedTemplateKeys(new Set())}
+                        className="text-[11px] text-slate-400 hover:text-slate-200"
+                      >
+                        Clear ({selectedTemplateKeys.size})
+                      </button>
+                    )}
+                  </div>
+                  <div className="flex flex-wrap gap-1.5">
+                    {templateSections.flatMap(({ section, templates }) =>
+                      templates.map((tpl) => {
+                        const key = `${section}:${tpl.id}`
+                        const on = selectedTemplateKeys.has(key)
+                        return (
+                          <button
+                            key={key}
+                            type="button"
+                            onClick={() => toggleTemplate(section, tpl.id)}
+                            className={cn(
+                              'px-2.5 py-1 text-[11px] font-medium rounded-md border transition-colors inline-flex items-center gap-1.5',
+                              on
+                                ? 'border-cyan-500/50 bg-cyan-500/15 text-cyan-100'
+                                : 'border-slate-800 bg-slate-950/50 text-slate-400 hover:border-slate-700 hover:text-slate-200'
+                            )}
+                          >
+                            {on && <Check className="w-3 h-3 text-cyan-400 shrink-0" />}
+                            <span>{tpl.label}</span>
+                          </button>
+                        )
+                      })
+                    )}
+                  </div>
                 </div>
               </div>
 
-              {/* Target Audience Clarification & Confirmation */}
-              <div className="space-y-2 rounded-xl border border-slate-700/60 bg-slate-800/25 p-3.5">
+              {/* Step 2: Target Audience Clarification & Confirmation */}
+              <div className="rounded-xl border border-slate-800/90 bg-slate-900/40 p-4 space-y-3">
                 <div className="flex items-center justify-between gap-2">
-                  <label className="flex items-center gap-2 text-sm font-medium text-gray-200">
-                    <Users className="w-4 h-4 text-cyan-400" />
-                    {t('targetAudience')}{' '}
-                    <span className="text-gray-500 text-xs font-normal">
+                  <label className="flex items-center gap-2 text-xs font-semibold text-slate-200">
+                    <Users className="w-3.5 h-3.5 text-cyan-400" />
+                    <span>{t('targetAudience')}</span>
+                    <span className="text-slate-500 text-[11px] font-normal">
                       {t('targetAudienceHint')}
                     </span>
                   </label>
                   {audienceConfirmed && audienceDef.description?.trim() ? (
-                    <span className="inline-flex items-center gap-1 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-2.5 py-0.5 text-[11px] font-medium text-emerald-300">
+                    <span className="inline-flex items-center gap-1 rounded-md border border-emerald-500/30 bg-emerald-500/10 px-2 py-0.5 text-[11px] font-medium text-emerald-300">
                       <CheckCircle2 className="h-3 w-3" />
                       {t('targetAudienceConfirmed')}
                     </span>
@@ -1026,9 +1056,9 @@ export function BlueprintRefineDialog({
                     <button
                       type="button"
                       onClick={handleConfirmAudience}
-                      className="inline-flex items-center gap-1 rounded-md border border-emerald-500/40 bg-emerald-500/10 px-2.5 py-1 text-[11px] font-medium text-emerald-200 hover:bg-emerald-500/20"
+                      className="inline-flex items-center gap-1 rounded-md border border-slate-700 bg-slate-800/60 px-2.5 py-1 text-[11px] font-medium text-slate-200 hover:bg-slate-800"
                     >
-                      <CheckCircle2 className="h-3 w-3" />
+                      <CheckCircle2 className="h-3 w-3 text-emerald-400" />
                       {t('confirmTargetAudience')}
                     </button>
                   ) : null}
@@ -1044,7 +1074,8 @@ export function BlueprintRefineDialog({
                     contentIntent: resolvedContentIntent,
                   }}
                   projectId={projectId}
-                  rows={3}
+                  variant="compact"
+                  rows={2}
                 />
               </div>
             </>
@@ -1052,14 +1083,14 @@ export function BlueprintRefineDialog({
 
           {phase === 'preview' && changePlan && (
             <div className="space-y-4">
-              <div className="rounded-xl border border-emerald-500/25 bg-emerald-500/5 p-3 space-y-2">
-                <h3 className="text-sm font-semibold text-emerald-200 flex items-center gap-2">
-                  <Check className="w-4 h-4" />
+              <div className="rounded-xl border border-emerald-500/25 bg-emerald-500/5 p-3.5 space-y-2">
+                <h3 className="!text-xs !font-bold !mb-0 text-emerald-200 flex items-center gap-1.5">
+                  <Check className="w-3.5 h-3.5" />
                   {t('revisionPlan')}
                 </h3>
-                <p className="text-xs text-gray-300">{changePlan.primaryGoal}</p>
+                <p className="!mb-0 text-xs text-slate-200 leading-relaxed">{changePlan.primaryGoal}</p>
                 {changePlan.coherenceActions.length > 0 && (
-                  <ul className="text-xs text-gray-400 space-y-1 list-disc list-inside">
+                  <ul className="!mb-0 text-xs text-slate-400 space-y-1 list-disc list-inside">
                     {changePlan.coherenceActions.map((a, i) => (
                       <li key={i}>{a}</li>
                     ))}
@@ -1072,14 +1103,14 @@ export function BlueprintRefineDialog({
         </div>
 
         {phase === 'intent' && (blockers.length > 0 || warnings.length > 0) && (
-          <div className="flex-shrink-0 space-y-2 pt-3">
+          <div className="flex-shrink-0 space-y-2 px-6 pb-3">
             {blockers.map((issue) => (
               <div
                 key={issue.code}
-                className="rounded-lg border border-red-500/40 bg-red-500/10 p-2.5 flex items-start gap-2"
+                className="rounded-lg border border-rose-500/40 bg-rose-500/10 p-2.5 flex items-start gap-2"
               >
-                <AlertTriangle className="w-4 h-4 text-red-400 flex-shrink-0 mt-0.5" />
-                <p className="text-xs text-red-200/90">{issue.message}</p>
+                <AlertTriangle className="w-3.5 h-3.5 text-rose-400 flex-shrink-0 mt-0.5" />
+                <p className="!mb-0 text-xs text-rose-200/90 leading-relaxed">{issue.message}</p>
               </div>
             ))}
             {warnings.map((issue) => (
@@ -1087,16 +1118,16 @@ export function BlueprintRefineDialog({
                 key={issue.code}
                 className="rounded-lg border border-amber-500/30 bg-amber-500/5 p-2.5 flex items-start gap-2"
               >
-                <AlertTriangle className="w-4 h-4 text-amber-400 flex-shrink-0 mt-0.5" />
-                <p className="text-xs text-amber-200/90">{issue.message}</p>
+                <AlertTriangle className="w-3.5 h-3.5 text-amber-400 flex-shrink-0 mt-0.5" />
+                <p className="!mb-0 text-xs text-amber-200/90 leading-relaxed">{issue.message}</p>
               </div>
             ))}
           </div>
         )}
 
-        <div className="flex-shrink-0 flex items-center justify-between gap-2 pt-3 border-t border-slate-700">
+        <div className="flex-shrink-0 flex items-center justify-between gap-3 px-6 py-3.5 border-t border-slate-800/80 bg-slate-900/50">
           {fullBalanceJobBlocksGenerate && (
-            <p className="text-[11px] text-amber-300/90 flex-1 min-w-0">
+            <p className="!mb-0 text-xs text-amber-300/90 flex-1 min-w-0">
               {jobStatusText || 'A full-balance revision is already running.'}{' '}
               <button
                 type="button"
@@ -1107,7 +1138,7 @@ export function BlueprintRefineDialog({
               </button>
             </p>
           )}
-          <Button variant="ghost" size="sm" onClick={onClose}>
+          <Button variant="ghost" size="sm" onClick={onClose} className="text-xs text-slate-300 hover:text-white">
             {tc('actions.cancel')}
           </Button>
           {phase === 'intent' ? (
@@ -1115,27 +1146,27 @@ export function BlueprintRefineDialog({
               size="sm"
               disabled={isGenerating || fullBalanceJobBlocksGenerate || submitBlocked}
               onClick={handleGenerate}
-              className="bg-gradient-to-r from-cyan-600 to-blue-600"
+              className="bg-cyan-600 hover:bg-cyan-500 text-white text-xs font-semibold px-4"
             >
               {isGenerating ? (
-                <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                <Loader2 className="w-3.5 h-3.5 animate-spin mr-1.5" />
               ) : (
-                <Wand2 className="w-4 h-4 mr-2" />
+                <Wand2 className="w-3.5 h-3.5 mr-1.5" />
               )}
               {t('generateBalanced')}
             </Button>
           ) : (
-            <div className="flex gap-2">
-              <Button variant="outline" size="sm" onClick={handleDiscardPreview}>
-                <RefreshCw className="w-4 h-4 mr-1" />
+            <div className="flex items-center gap-2">
+              <Button variant="outline" size="sm" onClick={handleDiscardPreview} className="text-xs border-slate-700">
+                <RefreshCw className="w-3.5 h-3.5 mr-1.5" />
                 {t('reviseIntent')}
               </Button>
               <Button
                 size="sm"
                 onClick={handleApplyPreview}
-                className="bg-gradient-to-r from-emerald-600 to-cyan-600"
+                className="bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold px-4"
               >
-                <Sparkles className="w-4 h-4 mr-2" />
+                <Sparkles className="w-3.5 h-3.5 mr-1.5" />
                 {t('applyRevision')}
               </Button>
             </div>

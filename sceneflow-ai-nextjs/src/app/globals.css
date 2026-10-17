@@ -93,14 +93,14 @@
     margin-bottom: 1.5rem;
   }
 
-  h2:not(.landing-section-heading):not(.dashboard-widget-title) {
+  h2:not(:where(.landing-section-heading, .dashboard-widget-title, [role='dialog'] *)) {
     font-weight: 600;
     font-size: clamp(1.75rem, 3vw + 0.75rem, 2.75rem); /* 28px → 44px */
     line-height: 1.25;
     margin-bottom: 1.25rem;
   }
 
-  h3:not(.landing-section-heading):not(.dashboard-widget-title) {
+  h3:not(:where(.landing-section-heading, .dashboard-widget-title, [role='dialog'] *)) {
     font-weight: 600;
     font-size: clamp(1.5rem, 2vw + 0.5rem, 2.25rem); /* 24px → 36px */
     line-height: 1.3;
@@ -116,15 +116,15 @@
   }
 
   [role='dialog'] :is(h1, h2, h3, h4, h5, h6) {
-    font-size: 1rem;
-    font-weight: 600;
+    font-size: 0.9375rem;
+    font-weight: 700;
     line-height: 1.35;
-    letter-spacing: 0;
-    margin-bottom: 0.35rem;
+    letter-spacing: -0.01em;
+    margin-bottom: 0;
     overflow-wrap: anywhere;
   }
 
-  h4 {
+  h4:not(:where([role='dialog'] *)) {
     font-weight: 600;
     font-size: clamp(1.25rem, 1.5vw + 0.5rem, 1.875rem); /* 20px → 30px */
     line-height: 1.4;
@@ -146,9 +146,14 @@
   }
 
   /* Paragraphs with enhanced spacing */
-  p {
+  p:not(:where([role='dialog'] *)) {
     margin-bottom: 1.25rem;
     line-height: 1.75; /* Increased for better readability */
+  }
+
+  [role='dialog'] p {
+    margin-bottom: 0;
+    line-height: 1.5;
   }
 
   /* Lists with proper spacing */
