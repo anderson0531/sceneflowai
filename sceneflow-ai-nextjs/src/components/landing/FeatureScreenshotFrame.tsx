@@ -95,6 +95,10 @@ const SCREENSHOT_FRAMING_PRESETS: Array<{
     match: 'series-start-project.webp',
     preset: { width: 1534, height: 2425, contentWidthFraction: 0.95, anchorY: 0.95 },
   },
+  {
+    match: 'start-blueprint.webp',
+    preset: { width: 5120, height: 2804, contentWidthFraction: 0.48, anchorY: 0.85 },
+  },
 ]
 
 const DEFAULT_PRESET: ScreenshotFramingPreset = {

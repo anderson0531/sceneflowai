@@ -12,6 +12,7 @@
  * Series Director is a lossless WebP at 5120×2805.
  * Direct this episode is a lossless WebP at 5120×4407.
  * Start the episode is a lossless WebP at 1534×2425.
+ * Start the Blueprint is a lossless WebP at 5120×2804.
  */
 
 export const NEW_SERIES_SCREENSHOT_WEBM =
@@ -32,6 +33,9 @@ export const DIRECT_EPISODE_SCREENSHOT_WEBP =
 export const START_EPISODE_SCREENSHOT_WEBP =
   '/landing/key-features/screenshots/series-start-project.webp?v=20261015'
 
+export const START_BLUEPRINT_SCREENSHOT_WEBP =
+  '/landing/key-features/screenshots/start-blueprint.webp'
+
 export type KeyFeatureScreenshot = {
   webmUrl?: string
   imageUrl?: string
@@ -44,6 +48,7 @@ const KEY_FEATURE_SCREENSHOTS: Record<string, KeyFeatureScreenshot> = {
   seriesDirector: { imageUrl: SERIES_DIRECTOR_SCREENSHOT_WEBP },
   directEpisode: { imageUrl: DIRECT_EPISODE_SCREENSHOT_WEBP },
   startEpisode: { imageUrl: START_EPISODE_SCREENSHOT_WEBP },
+  startBlueprint: { imageUrl: START_BLUEPRINT_SCREENSHOT_WEBP },
 }
 
 export function getKeyFeatureScreenshot(icon: string): KeyFeatureScreenshot | null {
