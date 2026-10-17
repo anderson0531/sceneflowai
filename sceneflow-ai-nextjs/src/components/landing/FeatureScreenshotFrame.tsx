@@ -123,6 +123,10 @@ const SCREENSHOT_FRAMING_PRESETS: Array<{
       anchorY: 0.94,
     },
   },
+  {
+    match: 'blueprint-production-stage.webp',
+    preset: { width: 5120, height: 3088, contentWidthFraction: 0.62, anchorY: 0.85 },
+  },
 ]
 
 const DEFAULT_PRESET: ScreenshotFramingPreset = {

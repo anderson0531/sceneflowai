@@ -17,6 +17,7 @@
  * Direct the cast and locations is a lossless WebP at 5120×9875.
  * Blueprint Director is a lossless WebP at 5120×2805.
  * Blueprint Audience Resonance is a lossless WebP at 5120×9875.
+ * Go to Production Stage is a lossless WebP at 5120×3088.
  */
 
 export const NEW_SERIES_SCREENSHOT_WEBM =
@@ -52,6 +53,9 @@ export const BLUEPRINT_DIRECTOR_SCREENSHOT_WEBP =
 export const BLUEPRINT_RESONANCE_SCREENSHOT_WEBP =
   '/landing/key-features/screenshots/blueprint-resonance.webp'
 
+export const GO_TO_PRODUCTION_SCREENSHOT_WEBP =
+  '/landing/key-features/screenshots/blueprint-production-stage.webp'
+
 export type KeyFeatureScreenshot = {
   webmUrl?: string
   imageUrl?: string
@@ -69,6 +73,7 @@ const KEY_FEATURE_SCREENSHOTS: Record<string, KeyFeatureScreenshot> = {
   castLocations: { imageUrl: CAST_LOCATIONS_SCREENSHOT_WEBP },
   blueprintDirector: { imageUrl: BLUEPRINT_DIRECTOR_SCREENSHOT_WEBP },
   blueprintResonance: { imageUrl: BLUEPRINT_RESONANCE_SCREENSHOT_WEBP },
+  goToProduction: { imageUrl: GO_TO_PRODUCTION_SCREENSHOT_WEBP },
 }
 
 export function getKeyFeatureScreenshot(icon: string): KeyFeatureScreenshot | null {
