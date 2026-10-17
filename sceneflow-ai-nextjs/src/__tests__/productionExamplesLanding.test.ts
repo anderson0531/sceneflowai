@@ -273,8 +273,12 @@ describe('Production Examples i18n contract', () => {
       expect(text).toContain('narration')
     }
     const pack = formatFrontPageCopyPack()
+    expect(pack).toContain('HERO LANDING COPY')
+    expect(pack).toContain('PRODUCTION EXAMPLES')
     expect(pack).toContain('SERIES INPUTS')
     expect(pack).toContain('HERO VIDEO SCRIPTS')
+    expect(pack).toContain('One pipeline. Not a stack of tools.')
+    expect(pack).toContain('YouTube')
     expect(pack).toContain('Hart House')
     expect(pack).toContain('The friction we remove')
     expect(pack).toContain('The control you keep')
