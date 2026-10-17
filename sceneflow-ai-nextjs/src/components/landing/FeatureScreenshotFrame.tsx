@@ -58,6 +58,8 @@ type ScreenshotFramingPreset = {
   height: number
   /** Fraction of horizontal canvas occupied by the active UI column or modal (0..1). */
   contentWidthFraction: number
+  /** Horizontal anchor in [-1, 1] where 1 = left edge, 0 = center, -1 = right edge. */
+  anchorX?: number
   /** Vertical anchor in [-1, 1] where 1 = top edge, 0 = center, -1 = bottom edge. */
   anchorY: number
 }
@@ -110,6 +112,16 @@ const SCREENSHOT_FRAMING_PRESETS: Array<{
   {
     match: 'blueprint-director.webp',
     preset: { width: 5120, height: 2805, contentWidthFraction: 0.48, anchorY: 0.85 },
+  },
+  {
+    match: 'blueprint-resonance.webp',
+    preset: {
+      width: 5120,
+      height: 9875,
+      contentWidthFraction: 0.85,
+      anchorX: -1,
+      anchorY: 0.94,
+    },
   },
 ]
 
@@ -241,8 +253,17 @@ export function FeatureScreenshotFrame({
       preset.width,
       preset.height
     )
-    const { maxPanY } = computePanBounds(880, 620, baseWidth, baseHeight, initialFocusZoom)
-    return { x: 0, y: preset.anchorY * maxPanY }
+    const { maxPanX, maxPanY } = computePanBounds(
+      880,
+      620,
+      baseWidth,
+      baseHeight,
+      initialFocusZoom
+    )
+    return {
+      x: (preset.anchorX ?? 0) * maxPanX,
+      y: preset.anchorY * maxPanY,
+    }
   })
   const [isDragging, setIsDragging] = useState(false)
 
@@ -344,7 +365,7 @@ export function FeatureScreenshotFrame({
       const bounds = computePanBounds(cw, ch, base.baseWidth, base.baseHeight, targetZoom)
       setZoom(targetZoom)
       setPan({
-        x: 0,
+        x: clamp((preset.anchorX ?? 0) * bounds.maxPanX, -bounds.maxPanX, bounds.maxPanX),
         y: clamp(preset.anchorY * bounds.maxPanY, -bounds.maxPanY, bounds.maxPanY),
       })
       setViewMode('readable')
@@ -382,7 +403,7 @@ export function FeatureScreenshotFrame({
     const bounds = computePanBounds(cw, ch, base.baseWidth, base.baseHeight, targetZoom)
     setZoom(targetZoom)
     setPan({
-      x: 0,
+      x: clamp((nextPreset.anchorX ?? 0) * bounds.maxPanX, -bounds.maxPanX, bounds.maxPanX),
       y: clamp(nextPreset.anchorY * bounds.maxPanY, -bounds.maxPanY, bounds.maxPanY),
     })
     setViewMode('readable')
