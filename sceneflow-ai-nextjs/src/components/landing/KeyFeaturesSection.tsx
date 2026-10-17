@@ -41,6 +41,8 @@ type FeatureData = {
 type FeatureGroup = {
   id: string
   label: string
+  headline?: string
+  description?: string
   features: FeatureData[]
 }
 
@@ -52,6 +54,7 @@ type SpendGroup = {
 type RoomData = {
   id: string
   label: string
+  headline?: string
   promise: string
   features?: FeatureData[]
   spend?: SpendGroup
@@ -61,6 +64,8 @@ type RoomData = {
 type FeaturePane = {
   id: string
   label: string
+  headline?: string
+  description?: string
   features: FeatureData[]
 }
 
@@ -97,7 +102,13 @@ function panesForRoom(room: RoomData): FeaturePane[] {
     panes.push({ id: 'spend', label: room.spend.label, features: room.spend.features })
   }
   for (const group of room.groups ?? []) {
-    panes.push({ id: group.id, label: group.label, features: group.features })
+    panes.push({
+      id: group.id,
+      label: group.label,
+      headline: group.headline,
+      description: group.description,
+      features: group.features,
+    })
   }
   return panes
 }
@@ -471,6 +482,7 @@ export default function KeyFeaturesSection() {
           <FeatureRoomOverview
             roomId={activeRoom.id}
             title={activeRoom.label}
+            headline={activeRoom.headline}
             promise={activeRoom.promise}
             comingSoonLabel={t('overviewComingSoon')}
             pauseLabel={t('pauseOverview')}
@@ -514,6 +526,21 @@ export default function KeyFeaturesSection() {
                   </button>
                 )
               })}
+            </div>
+          ) : null}
+
+          {activePane && (activePane.headline || activePane.description) ? (
+            <div className="mb-5 rounded-2xl border border-slate-800/80 bg-slate-900/30 px-4 py-3.5 sm:px-5">
+              {activePane.headline ? (
+                <p className="text-sm font-semibold text-white sm:text-base">
+                  {activePane.headline}
+                </p>
+              ) : null}
+              {activePane.description ? (
+                <p className="mt-1 max-w-3xl text-xs leading-relaxed text-gray-400 sm:text-sm">
+                  {activePane.description}
+                </p>
+              ) : null}
             </div>
           ) : null}
 

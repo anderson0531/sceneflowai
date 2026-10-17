@@ -50,6 +50,7 @@ export const KEY_FEATURE_VIDEO_LABELS: Record<string, string> = {
   videoAgent: 'Video Agent',
   mixer: 'Mixer',
   languageStreams: 'Language versions',
+  promoTrailers: 'Promo & Trailers',
   shipPackage: 'Package and ship',
   screeningPlayer: 'Screening Room player',
   screeningCollab: 'Collaborate on the cut',

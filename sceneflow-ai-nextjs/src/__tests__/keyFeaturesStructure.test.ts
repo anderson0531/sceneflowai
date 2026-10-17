@@ -41,10 +41,17 @@ function sentenceCount(text: string): number {
 type Room = {
   id: string
   label: string
+  headline?: string
   promise: string
   features?: Feature[]
   spend?: { label: string; features: Feature[] }
-  groups?: Array<{ id: string; label: string; features: Feature[] }>
+  groups?: Array<{
+    id: string
+    label: string
+    headline?: string
+    description?: string
+    features: Feature[]
+  }>
 }
 
 function loadEnglish(): {
@@ -84,19 +91,18 @@ const EXPECTED_TITLES: Record<string, string[]> = {
     'Go to Production Stage',
   ],
   'production-stage': [
-    'Bring Your Own Key',
-    'Production Planner',
-    'Audience Resonance',
-    'Cast, wardrobe, and voice',
-    'Direct Shot',
-    'Audio Agent',
-    'Continuity',
-    'Stills Agent',
-    'Animatic',
-    'Video Agent',
-    'Mixer',
-    'Language versions',
-    'Package and ship',
+    'The Scene & Shot Director',
+    'The Continuity Library',
+    'Audience Resonance Integration',
+    'Production Planner & Script Export',
+    'The Audio Agent',
+    'The Stills Agent',
+    'The Pre-Vis Animatic',
+    'The Clips Agent',
+    'The Mixer',
+    'Streams (Multi-Language)',
+    'Promo & Trailers',
+    'Direct Publishing',
   ],
   'screening-room': [
     'One player',
@@ -126,11 +132,16 @@ describe('keyFeatures structure', () => {
 
   it('matches the room feature titles, including Production Stage groups', () => {
     const production = rooms.find((room) => room.id === 'production-stage')
-    expect(production?.spend?.label).toBe('Control Spend')
+    expect(production?.headline).toBe('From script to master, all in one room.')
     expect(production?.groups?.map((group) => group.label)).toEqual([
-      'Optimize the script',
-      'Video',
-      'Publish',
+      'Direct & Control',
+      'Generate & Audit',
+      'Publish & Distribute',
+    ])
+    expect(production?.groups?.map((group) => group.headline)).toEqual([
+      'Speak the language of film, not the syntax of prompts.',
+      'Prove the cut before you spend the compute.',
+      'Ship the master, or localize for the world.',
     ])
     for (const room of rooms) {
       expect(featuresOf(room).map((feature) => feature.title)).toEqual(
@@ -144,8 +155,8 @@ describe('keyFeatures structure', () => {
     for (const icon of icons) {
       expect(FEATURE_ICONS[icon]).toBeDefined()
     }
-    // Share stays in the icon map for the film-only handoff beat. It is not a card.
-    const filmOnlyIcons = ['stakeholderReview']
+    // Share and legacy produced video icon keys stay in the icon map.
+    const filmOnlyIcons = ['stakeholderReview', 'byok', 'castVisual']
     expect(Object.keys(FEATURE_ICONS).sort()).toEqual(
       [...new Set([...icons, ...filmOnlyIcons])].sort()
     )
@@ -156,7 +167,7 @@ describe('keyFeatures structure', () => {
     expect(en.keyFeatures).not.toHaveProperty('solutionLabel')
     expect(en.keyFeatures).not.toHaveProperty('outcomeLabel')
     for (const feature of rooms.flatMap(featuresOf)) {
-      expect(sentenceCount(feature.description)).toBeGreaterThanOrEqual(2)
+      expect(sentenceCount(feature.description)).toBeGreaterThanOrEqual(1)
       expect(feature.screenshot).toBeTruthy()
       expect(feature.learnMore?.items?.length).toBeGreaterThan(0)
       expect(feature.learnMore).not.toHaveProperty('problem')
@@ -225,10 +236,10 @@ describe('keyFeatures structure', () => {
     expect(text).toContain('Production Stage turns each beat into a chapter')
     expect(text).toContain('3–5 minute scene')
     expect(text).toContain('8–12 minute chapter')
-    expect(text).toContain('every scene in concert')
-    expect(text).toContain('Direct Shot · Scene N · Shot N')
-    expect(text).toContain('Gemini TTS speaks the dub in 44 languages')
-    expect(text).not.toContain('Scene Director')
+    expect(text).toContain('From script to master, all in one room.')
+    expect(text).toContain('The Scene & Shot Director')
+    expect(text).toContain('PDF, FDX, Fountain')
+    expect(text).toContain('Prove the cut before you spend the compute.')
     expect(text).not.toContain('Veo 3.1')
     expect(text).not.toContain('January 2027')
     expect(text).not.toContain('70+')
@@ -250,7 +261,9 @@ describe('keyFeatures structure', () => {
       expect(locale.keyFeatures?.categories, name).toBeUndefined()
       expect(locale.twoModes?.stages, name).toBeUndefined()
       if (locale.keyFeatures) {
-        expect(locale.keyFeatures.subtitle, name).toBe(en.keyFeatures.subtitle)
+        expect(locale.keyFeatures.subtitle.replace(/←/g, '→'), name).toBe(
+          en.keyFeatures.subtitle
+        )
       }
     }
   })

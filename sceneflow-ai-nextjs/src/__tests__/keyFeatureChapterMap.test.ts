@@ -46,6 +46,7 @@ describe('key feature chapter map', () => {
     expect(standaloneDemoKey('languageStreams')).toBe('languageStreams')
     for (const icon of [
       'startEpisode',
+      'promoTrailers',
       'shipPackage',
       'screeningPlayer',
       'screeningCollab',

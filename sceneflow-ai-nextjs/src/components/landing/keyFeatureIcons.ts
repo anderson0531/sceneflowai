@@ -55,6 +55,7 @@ export const FEATURE_ICONS: Record<string, LucideIcon> = {
   videoAgent: Film,
   mixer: SlidersHorizontal,
   languageStreams: Languages,
+  promoTrailers: Clapperboard,
   shipPackage: Package,
   screeningPlayer: AudioLines,
   screeningCollab: Share2,

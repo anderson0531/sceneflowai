@@ -36,6 +36,7 @@ function exitNativeVideoFullscreen(video: HTMLVideoElement) {
 type FeatureRoomOverviewProps = {
   roomId: string
   title: string
+  headline?: string
   promise: string
   comingSoonLabel: string
   pauseLabel: string
@@ -51,6 +52,7 @@ type FeatureRoomOverviewProps = {
 export function FeatureRoomOverview({
   roomId,
   title,
+  headline,
   promise,
   comingSoonLabel,
   pauseLabel,
@@ -269,7 +271,19 @@ export function FeatureRoomOverview({
         {isFullscreen ? null : (
           <>
             <h3 className="text-2xl font-bold text-white sm:text-3xl">{title}</h3>
-            <p className="mt-3 max-w-3xl text-sm leading-relaxed text-gray-200 sm:text-base">{promise}</p>
+            {headline ? (
+              <p className="mt-2 max-w-3xl text-base font-semibold text-white sm:text-lg">
+                {headline}
+              </p>
+            ) : null}
+            <p
+              className={cn(
+                'max-w-3xl text-sm leading-relaxed text-gray-200 sm:text-base',
+                headline ? 'mt-1.5' : 'mt-3'
+              )}
+            >
+              {promise}
+            </p>
           </>
         )}
         <div className="mt-5 flex flex-wrap items-center gap-3">
