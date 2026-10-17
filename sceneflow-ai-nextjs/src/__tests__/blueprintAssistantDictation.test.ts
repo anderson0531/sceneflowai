@@ -73,9 +73,19 @@ describe('the Assistant direction field', () => {
     expect(dialog).toContain('submitBlocked = hasBlockingIssue(requestIssues)')
   })
 
-  it('uses a compact bold dialog title and omits emoji icons on Guided refinement buttons', () => {
+  it('uses a compact bold dialog title, larger entry window, and Series-style Hide/Show option cards that apply text to the entry', () => {
     expect(dialog).toContain('!text-sm !font-bold')
     expect(dialog).not.toContain('tpl.icon')
+    expect(dialog).toContain('rows={6}')
+    expect(dialog).toContain('min-h-[150px]')
+    expect(dialog).toContain("showGuidedRefinements ? 'Hide' : 'Show'")
+    expect(dialog).toContain('appendFixInstruction(prev, tpl.instruction)')
+    expect(dialog).toContain('removeFixInstruction(prev, tpl.instruction)')
+    expect(dialog).toContain('tpl.description')
+
+    const catalog = JSON.parse(readSource('messages/app/en/blueprint.json'))
+    expect(catalog.assistant.guidedRefinements).toBe('Recommendations & Quick Edits')
+
     const globalsCss = readSource('src/app/globals.css')
     expect(globalsCss).toContain("h2:not(:where(.landing-section-heading, .dashboard-widget-title, [role='dialog'] *))")
   })

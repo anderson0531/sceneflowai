@@ -100,9 +100,9 @@ type Props = {
 const ALL_TEMPLATE_SECTIONS: BlueprintSection[] = [
   'core',
   'story',
-  'tone',
-  'beats',
   'characters',
+  'beats',
+  'tone',
 ]
 
 function DiffPanel({
@@ -188,6 +188,7 @@ export function BlueprintRefineDialog({
   const [selectedRecIds, setSelectedRecIds] = useState<Set<string>>(new Set())
   const [selectedTemplateKeys, setSelectedTemplateKeys] = useState<Set<string>>(new Set())
   const [showResonanceRecs, setShowResonanceRecs] = useState(true)
+  const [showGuidedRefinements, setShowGuidedRefinements] = useState(false)
   const [isGenerating, setIsGenerating] = useState(false)
   const [previewVariant, setPreviewVariant] = useState<Record<string, unknown> | null>(null)
   const [changePlan, setChangePlan] = useState<BlueprintChangePlan | null>(null)
@@ -325,6 +326,7 @@ export function BlueprintRefineDialog({
     setDiff([])
     setJobStatusText(null)
     setSelectedTemplateKeys(new Set())
+    setShowGuidedRefinements(false)
     setDirectionTurns([])
     setProposedDirection(null)
     setLockedDirection(null)
@@ -374,6 +376,19 @@ export function BlueprintRefineDialog({
     []
   )
 
+  const selectedTemplateLabels = useMemo(() => {
+    const labels: string[] = []
+    for (const { section, templates } of templateSections) {
+      for (const tpl of templates) {
+        const key = `${section}:${tpl.id}`
+        if (selectedTemplateKeys.has(key) || userIntent.includes(tpl.instruction)) {
+          labels.push(tpl.label)
+        }
+      }
+    }
+    return labels
+  }, [templateSections, selectedTemplateKeys, userIntent])
+
   const combinedIntent = useMemo(() => {
     const parts: string[] = []
     const baseDirection = lockedDirection?.synopsis?.trim() || userIntent.trim()
@@ -387,7 +402,7 @@ export function BlueprintRefineDialog({
     for (const { section, templates } of templateSections) {
       for (const tpl of templates) {
         const key = `${section}:${tpl.id}`
-        if (selectedTemplateKeys.has(key)) {
+        if (selectedTemplateKeys.has(key) && !baseDirection.includes(tpl.instruction)) {
           parts.push(tpl.instruction)
         }
       }
@@ -566,14 +581,27 @@ export function BlueprintRefineDialog({
     else addRecToIntent(rec)
   }
 
-  const toggleTemplate = (section: string, id: string) => {
-    const key = `${section}:${id}`
-    setSelectedTemplateKeys((prev) => {
-      const next = new Set(prev)
-      if (next.has(key)) next.delete(key)
-      else next.add(key)
-      return next
-    })
+  const toggleTemplate = (
+    section: string,
+    tpl: { id: string; label: string; description: string; instruction: string }
+  ) => {
+    const key = `${section}:${tpl.id}`
+    const isSelected =
+      selectedTemplateKeys.has(key) || userIntent.includes(tpl.instruction)
+    if (isSelected) {
+      setUserIntent((prev) => removeFixInstruction(prev, tpl.instruction))
+      setSelectedTemplateKeys((prev) => {
+        const next = new Set(prev)
+        next.delete(key)
+        return next
+      })
+    } else {
+      setUserIntent((prev) => appendFixInstruction(prev, tpl.instruction))
+      setSelectedTemplateKeys((prev) => new Set(prev).add(key))
+      if (lockedDirection) {
+        setLockedDirection(null)
+      }
+    }
   }
 
   const handleGenerate = async () => {
@@ -936,10 +964,10 @@ export function BlueprintRefineDialog({
                   value={userIntent}
                   onChange={setUserIntent}
                   placeholder={t('whatShouldChangePlaceholder')}
-                  rows={3}
+                  rows={6}
                   disabled={isGenerating}
                   className={cn(
-                    'min-h-[84px] bg-slate-950/70 border-slate-800 text-xs leading-relaxed focus:border-cyan-500/50',
+                    'min-h-[150px] bg-gray-800 border-gray-700 text-white text-sm leading-relaxed focus:border-cyan-500/50 focus:ring-cyan-500/20',
                     lockedDirection && 'hidden'
                   )}
                 />
@@ -994,46 +1022,68 @@ export function BlueprintRefineDialog({
                   <p className="!mb-0 text-xs text-rose-300">{directionError}</p>
                 )}
 
-                {/* Guided refinements (text-only pills, no icons) */}
-                <div className="pt-2 border-t border-slate-800/70 space-y-2">
-                  <div className="flex items-center justify-between gap-2">
-                    <span className="text-[11px] font-medium text-slate-400">
+                {/* Recommendations & Quick Edits (matching Series option design with Hide/Show & apply to entry) */}
+                <div className="pt-3 border-t border-slate-800/70">
+                  <div className="mb-2 flex items-center justify-between gap-3">
+                    <label className="text-sm font-medium text-gray-300">
                       {t('guidedRefinements')}
-                    </span>
-                    {selectedTemplateKeys.size > 0 && (
-                      <button
-                        type="button"
-                        onClick={() => setSelectedTemplateKeys(new Set())}
-                        className="text-[11px] text-slate-400 hover:text-slate-200"
-                      >
-                        Clear ({selectedTemplateKeys.size})
-                      </button>
-                    )}
+                      {selectedTemplateLabels.length > 0 ? (
+                        <>
+                          : <span className="text-white">{selectedTemplateLabels.join(', ')}</span>
+                        </>
+                      ) : null}
+                    </label>
+                    <button
+                      type="button"
+                      onClick={() => setShowGuidedRefinements((open) => !open)}
+                      aria-expanded={showGuidedRefinements}
+                      className="shrink-0 rounded-md border border-gray-700 px-2.5 py-1 text-xs font-medium text-gray-300 hover:bg-gray-800"
+                    >
+                      {showGuidedRefinements ? 'Hide' : 'Show'}
+                    </button>
                   </div>
-                  <div className="flex flex-wrap gap-1.5">
-                    {templateSections.flatMap(({ section, templates }) =>
-                      templates.map((tpl) => {
-                        const key = `${section}:${tpl.id}`
-                        const on = selectedTemplateKeys.has(key)
-                        return (
-                          <button
-                            key={key}
-                            type="button"
-                            onClick={() => toggleTemplate(section, tpl.id)}
-                            className={cn(
-                              'px-2.5 py-1 text-[11px] font-medium rounded-md border transition-colors inline-flex items-center gap-1.5',
-                              on
-                                ? 'border-cyan-500/50 bg-cyan-500/15 text-cyan-100'
-                                : 'border-slate-800 bg-slate-950/50 text-slate-400 hover:border-slate-700 hover:text-slate-200'
-                            )}
-                          >
-                            {on && <Check className="w-3 h-3 text-cyan-400 shrink-0" />}
-                            <span>{tpl.label}</span>
-                          </button>
-                        )
-                      })
-                    )}
-                  </div>
+                  {showGuidedRefinements ? (
+                    <div className="space-y-3 pt-1">
+                      {templateSections.map(({ section, templates }) => (
+                        <div key={section}>
+                          <p className="!mb-1.5 text-[11px] font-semibold uppercase tracking-wide text-gray-500">
+                            {FIX_SECTION_LABELS[section] || section}
+                          </p>
+                          <div className="flex flex-wrap gap-2">
+                            {templates.map((tpl) => {
+                              const key = `${section}:${tpl.id}`
+                              const on =
+                                selectedTemplateKeys.has(key) ||
+                                userIntent.includes(tpl.instruction)
+                              return (
+                                <button
+                                  key={key}
+                                  type="button"
+                                  onClick={() => toggleTemplate(section, tpl)}
+                                  disabled={isGenerating || isClarifyingDirection}
+                                  className={cn(
+                                    'text-left rounded-lg border px-3 py-2 transition-colors',
+                                    on
+                                      ? 'border-cyan-500/50 bg-cyan-500/10'
+                                      : 'border-gray-700 bg-gray-800/50 hover:border-gray-600',
+                                    (isGenerating || isClarifyingDirection) &&
+                                      'cursor-not-allowed opacity-60'
+                                  )}
+                                >
+                                  <p className="!mb-0 text-sm font-medium text-white">
+                                    {tpl.label}
+                                  </p>
+                                  <p className="!mb-0 text-xs text-gray-500 mt-0.5 max-w-[14rem]">
+                                    {tpl.description}
+                                  </p>
+                                </button>
+                              )
+                            })}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : null}
                 </div>
               </div>
 
