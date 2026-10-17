@@ -15,6 +15,7 @@
  * Start the Blueprint is a lossless WebP at 5120×2804.
  * Direct the beats is a lossless WebP at 5120×8059.
  * Direct the cast and locations is a lossless WebP at 5120×9875.
+ * Blueprint Director is a lossless WebP at 5120×2805.
  */
 
 export const NEW_SERIES_SCREENSHOT_WEBM =
@@ -44,6 +45,9 @@ export const DIRECT_BEATS_SCREENSHOT_WEBP =
 export const CAST_LOCATIONS_SCREENSHOT_WEBP =
   '/landing/key-features/screenshots/blueprint-cast.webp'
 
+export const BLUEPRINT_DIRECTOR_SCREENSHOT_WEBP =
+  '/landing/key-features/screenshots/blueprint-director.webp'
+
 export type KeyFeatureScreenshot = {
   webmUrl?: string
   imageUrl?: string
@@ -59,6 +63,7 @@ const KEY_FEATURE_SCREENSHOTS: Record<string, KeyFeatureScreenshot> = {
   startBlueprint: { imageUrl: START_BLUEPRINT_SCREENSHOT_WEBP },
   treatment: { imageUrl: DIRECT_BEATS_SCREENSHOT_WEBP },
   castLocations: { imageUrl: CAST_LOCATIONS_SCREENSHOT_WEBP },
+  blueprintDirector: { imageUrl: BLUEPRINT_DIRECTOR_SCREENSHOT_WEBP },
 }
 
 export function getKeyFeatureScreenshot(icon: string): KeyFeatureScreenshot | null {
