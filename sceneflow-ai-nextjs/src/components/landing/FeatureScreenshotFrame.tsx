@@ -103,6 +103,10 @@ const SCREENSHOT_FRAMING_PRESETS: Array<{
     match: 'blueprint-beats.webp',
     preset: { width: 5120, height: 8059, contentWidthFraction: 0.56, anchorY: 0.94 },
   },
+  {
+    match: 'blueprint-cast.webp',
+    preset: { width: 5120, height: 9875, contentWidthFraction: 0.56, anchorY: 0.94 },
+  },
 ]
 
 const DEFAULT_PRESET: ScreenshotFramingPreset = {
