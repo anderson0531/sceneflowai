@@ -10,21 +10,44 @@ export const TreatmentRenderer = React.forwardRef<HTMLDivElement, RendererProps>
     <div ref={ref} className="report-wrapper">
       <style>{`
         /* Header and footer styles - visible by default for preview */
-        .report-header {
+        .report-wrapper,
+        .dark .report-wrapper {
+          background-color: #ffffff !important;
+          color: #111827 !important;
+        }
+        .report-wrapper p,
+        .report-wrapper span,
+        .report-wrapper div,
+        .report-wrapper li,
+        .dark .report-wrapper p,
+        .dark .report-wrapper span,
+        .dark .report-wrapper div,
+        .dark .report-wrapper li {
+          color: #111827 !important;
+        }
+        .report-header,
+        .report-header span,
+        .dark .report-header span {
           display: flex;
           justify-content: space-between;
-          width: 100%;
           font-size: 10pt;
-          color: #666 !important;
+          color: #4b5563 !important;
+        }
+        .report-header {
+          width: 100%;
           margin-bottom: 0.5in;
         }
         
-        .report-footer {
+        .report-footer,
+        .report-footer span,
+        .dark .report-footer span {
           display: flex;
           justify-content: space-between;
-          width: 100%;
           font-size: 10pt;
-          color: #666 !important;
+          color: #4b5563 !important;
+        }
+        .report-footer {
+          width: 100%;
           margin-top: 0.5in;
         }
         
