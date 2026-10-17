@@ -117,6 +117,7 @@ import { ModerationValidateButton } from '@/components/moderation/ModerationVali
 import { saveAudioFile } from '@/lib/download/saveFile'
 import { ReportPreviewModal } from '@/components/reports/ReportPreviewModal'
 import { ReportType, StoryboardData, SceneDirectionData } from '@/lib/types/reports'
+import { ProductionScriptExportDialog } from './ProductionScriptExportDialog'
 import { resolveSegmentEditCharacterReferences } from '@/lib/vision/resolveFrameEditCharacterReferences'
 import { flattenSceneToStoryboardFrames } from '@/lib/storyboard/types'
 import {
@@ -3024,6 +3025,21 @@ export function ScriptPanel({ script, onScriptChange, onAudioSlotSaved, isGenera
               </Button>
             )}
 
+            {/* Preview & Export Production Script Button */}
+            {scenes.length > 0 && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setReportPreviewOpen(true)}
+                className="h-8 px-2.5 gap-1.5 border-indigo-500/30 hover:border-indigo-500/50 hover:bg-indigo-500/10 text-indigo-300"
+                title="Preview and export full production script (Final Draft, Fountain, PDF, Markdown, Text)"
+                aria-label="Preview and export production script"
+              >
+                <FileText className="w-4 h-4 text-indigo-400" />
+                <span className="text-xs font-medium hidden sm:inline">Script</span>
+              </Button>
+            )}
+
             {/* Review Treatment Button */}
             {onShowTreatmentReview && (
               <Button
@@ -3082,7 +3098,23 @@ export function ScriptPanel({ script, onScriptChange, onAudioSlotSaved, isGenera
                   <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="1"/><circle cx="12" cy="5" r="1"/><circle cx="12" cy="19" r="1"/></svg>
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-56 bg-gray-900 border-gray-700">
+              <DropdownMenuContent align="end" className="w-60 bg-gray-900 border-gray-700">
+                <DropdownMenuLabel className="text-gray-400">Script &amp; Export</DropdownMenuLabel>
+                <DropdownMenuItem
+                  onClick={() => setReportPreviewOpen(true)}
+                  className="text-gray-200 hover:bg-gray-800 cursor-pointer"
+                >
+                  <FileText className="w-4 h-4 mr-2 text-indigo-400" />
+                  Preview &amp; Export Script...
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={() => setExportDialogOpen(true)}
+                  className="text-gray-200 hover:bg-gray-800 cursor-pointer"
+                >
+                  <Printer className="w-4 h-4 mr-2 text-purple-400" />
+                  Export Storyboard / Direction...
+                </DropdownMenuItem>
+                <DropdownMenuSeparator className="bg-gray-700" />
                 <DropdownMenuLabel className="text-gray-400">Translation Tools</DropdownMenuLabel>
                 <DropdownMenuItem
                   onClick={handleExportDialogue}
@@ -3099,7 +3131,7 @@ export function ScriptPanel({ script, onScriptChange, onAudioSlotSaved, isGenera
                   {tStudio('importTranslation')}
                 </DropdownMenuItem>
                 <DropdownMenuSeparator className="bg-gray-700" />
-                <DropdownMenuLabel className="text-gray-400">Script</DropdownMenuLabel>
+                <DropdownMenuLabel className="text-gray-400">Script Management</DropdownMenuLabel>
                 {onRegenerateScript && (
                   <DropdownMenuItem
                     onClick={() => onRegenerateScript?.()}
@@ -3679,15 +3711,18 @@ export function ScriptPanel({ script, onScriptChange, onAudioSlotSaved, isGenera
         </DialogContent>
       </Dialog>
       
-      {/* Report Preview Modals */}
+      {/* Production Script Preview & Export Modal + Report Preview Modals */}
       {script && (
         <>
-          <ReportPreviewModal
-            type={ReportType.PROFESSIONAL_SCRIPT}
-            data={script as any}
-            projectName={script.title || 'Untitled Script'}
+          <ProductionScriptExportDialog
             open={reportPreviewOpen}
             onOpenChange={setReportPreviewOpen}
+            title={projectTitle || script.title || 'Untitled Script'}
+            logline={projectLogline || script.logline}
+            scenes={scenes}
+            characters={characters}
+            blueprintBeats={blueprintBeats}
+            metadata={projectMetadata}
           />
           <ReportPreviewModal
             type={ReportType.STORYBOARD}

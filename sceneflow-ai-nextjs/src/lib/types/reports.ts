@@ -42,20 +42,58 @@ export interface FilmTreatmentData {
   }
 }
 
-// Align with existing script structure
+// Align with existing script structure + rich Production Stage script export
 export interface ScriptData {
   title: string
   logline?: string
   author?: string
-  script: {
+  createdAt?: Date | string
+  characters?: Array<{
+    id?: string
+    name: string
+    role?: string
+    description?: string
+    appearanceDescription?: string
+    defaultWardrobe?: string
+    wardrobes?: Array<{
+      id?: string
+      name: string
+      description?: string
+      fullBodyPrompt?: string
+      accessories?: string
+      continuityNotes?: string
+      sceneNumbers?: number[]
+    }>
+  }>
+  chapters?: Array<{
+    id: string
+    number: number
+    heading: string
+    title: string
+    description?: string
+    minutes?: number
+    sceneNumbers?: number[]
+  }>
+  scenes?: any[]
+  script?: {
     scenes: Array<{
       sceneNumber?: number
       heading?: string | { text: string }
       visualDescription?: string
+      sceneDescription?: string
       action?: string
+      narration?: string
+      chapterId?: string
+      chapterHeading?: string
+      chapterTitle?: string
+      chapterDescription?: string
+      sceneDirection?: DetailedSceneDirection
+      sceneDirectionText?: Record<string, string | undefined>
+      shots?: any[]
       dialogue?: Array<{
         character: string
-        text: string
+        text?: string
+        line?: string
         parenthetical?: string
       }>
     }>
