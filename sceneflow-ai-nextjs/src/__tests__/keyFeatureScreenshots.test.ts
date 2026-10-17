@@ -2,6 +2,7 @@ import { readFileSync } from 'fs'
 import path from 'path'
 import { describe, expect, it } from 'vitest'
 import {
+  DIRECT_BEATS_SCREENSHOT_WEBP,
   DIRECT_EPISODE_SCREENSHOT_WEBP,
   NEW_SERIES_SCREENSHOT_WEBM,
   START_BLUEPRINT_SCREENSHOT_WEBP,
@@ -50,6 +51,12 @@ describe('key feature screenshots', () => {
     expect(keyFeatureScreenshotSrc(getKeyFeatureScreenshot('startBlueprint')!)).toBe(
       START_BLUEPRINT_SCREENSHOT_WEBP
     )
+    expect(getKeyFeatureScreenshot('treatment')).toEqual({
+      imageUrl: DIRECT_BEATS_SCREENSHOT_WEBP,
+    })
+    expect(keyFeatureScreenshotSrc(getKeyFeatureScreenshot('treatment')!)).toBe(
+      DIRECT_BEATS_SCREENSHOT_WEBP
+    )
     expect(NEW_SERIES_SCREENSHOT_WEBM).toBe(
       '/landing/key-features/screenshots/new-series.webm'
     )
@@ -71,6 +78,9 @@ describe('key feature screenshots', () => {
     expect(START_BLUEPRINT_SCREENSHOT_WEBP).toBe(
       '/landing/key-features/screenshots/start-blueprint.webp'
     )
+    expect(DIRECT_BEATS_SCREENSHOT_WEBP).toBe(
+      '/landing/key-features/screenshots/blueprint-beats.webp'
+    )
 
     const webm = readFileSync(path.join(ROOT, 'public', NEW_SERIES_SCREENSHOT_WEBM))
     expect(webm.subarray(0, 4).toString('hex')).toBe('1a45dfa3')
@@ -82,6 +92,7 @@ describe('key feature screenshots', () => {
       SERIES_DIRECTOR_SCREENSHOT_WEBP,
       DIRECT_EPISODE_SCREENSHOT_WEBP,
       START_BLUEPRINT_SCREENSHOT_WEBP,
+      DIRECT_BEATS_SCREENSHOT_WEBP,
     ]) {
       const webp = readFileSync(path.join(ROOT, 'public', src))
       expect(webp.subarray(0, 4).toString('ascii')).toBe('RIFF')
