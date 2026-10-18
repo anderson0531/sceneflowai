@@ -18,6 +18,7 @@ import {
 export const KEY_FEATURE_VIDEO_LABELS: Record<string, string> = {
   byok: 'BYOK',
   budget: 'Production Planner',
+  productionScript: 'Production Script',
   series: 'Series Room',
   blueprint: 'Blueprint Room',
   ara: 'Audience Resonance Analysis',

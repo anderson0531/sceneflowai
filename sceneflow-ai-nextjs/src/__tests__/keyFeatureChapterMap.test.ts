@@ -34,6 +34,7 @@ describe('key feature chapter map', () => {
     expect(standaloneDemoKey('stakeholderReview')).toBeNull()
     expect(standaloneDemoKey('byok')).toBe('byok')
     expect(standaloneDemoKey('budget')).toBe('byok')
+    expect(standaloneDemoKey('productionScript')).toBe('productionScript')
     expect(standaloneDemoKey('scriptResonance')).toBe('scriptResonance')
     expect(standaloneDemoKey('castVisual')).toBe('castVisual')
     expect(standaloneDemoKey('directShot')).toBe('directShot')

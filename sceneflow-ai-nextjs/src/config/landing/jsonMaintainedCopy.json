@@ -585,18 +585,40 @@
               },
               {
                 "icon": "budget",
-                "title": "Production Planner & Script Export",
-                "description": "Lock the script, establish the budget, and schedule generation using SceneFlow credits or your own BYOK API keys. Export the final text in industry-standard formats (PDF, FDX, Fountain).",
-                "screenshot": "Production Planner & Script Export — budget, BYOK keys, and PDF/FDX/Fountain export",
+                "title": "Production Planner",
+                "description": "Establish the budget and schedule generation across every scene and chapter using SceneFlow credits or your own BYOK API keys. Set still and clip targets per shot before you spend compute.",
+                "screenshot": "Production Planner — budget, schedule, and BYOK API keys",
                 "learnMore": {
                   "items": [
                     {
                       "title": "Budget and schedule",
-                      "description": "Lock the script, establish the budget, and schedule generation using SceneFlow credits or your own BYOK API keys."
+                      "description": "Establish the budget and schedule generation across every scene and chapter before you render."
                     },
                     {
-                      "title": "Industry-standard export",
-                      "description": "Export the final text in PDF, Final Draft FDX, or Fountain format."
+                      "title": "Credits or BYOK",
+                      "description": "Run generation using SceneFlow credits or your own BYOK API keys."
+                    }
+                  ]
+                }
+              },
+              {
+                "icon": "productionScript",
+                "title": "Production Script",
+                "description": "Designed for traditional filmmakers, Production Script includes an in-platform preview and exports in industry-standard formats (PDF, FDX, Fountain). For many traditional filmmakers, using SceneFlow as an intelligent script production platform is a powerful standalone tool without video generation—and packaging your script with a Pre-Vis Animatic and Promo Trailers is a powerful tool for acquiring project funding.",
+                "screenshot": "Production Script — in-platform preview and PDF, FDX, and Fountain export",
+                "learnMore": {
+                  "items": [
+                    {
+                      "title": "In-platform preview & export",
+                      "description": "Preview the formatted script in the studio and export in industry-standard PDF, Final Draft FDX, or Fountain format."
+                    },
+                    {
+                      "title": "For traditional filmmakers",
+                      "description": "Use SceneFlow as an intelligent script production platform without generating video."
+                    },
+                    {
+                      "title": "Pitch & project funding",
+                      "description": "Package your script with a Pre-Vis Animatic and Promo Trailers to pitch and acquire project funding."
                     }
                   ]
                 }

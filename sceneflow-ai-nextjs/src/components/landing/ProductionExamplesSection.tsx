@@ -1,6 +1,6 @@
 'use client'
 
-import { useMemo } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { motion } from 'framer-motion'
 import { useTranslations } from 'next-intl'
 import { Clapperboard, Target } from 'lucide-react'
@@ -16,6 +16,7 @@ import {
   type ProductionStyleCardData,
 } from '@/components/landing/ProductionStyleCard'
 import { getSignupUrlForTier } from '@/lib/billing/checkoutIntent'
+import { isPhoneHandset } from '@/lib/landing/phoneVideoFullscreen'
 
 function exampleLabels(t: ReturnType<typeof useTranslations<'productionShowcase'>>) {
   return {
@@ -96,6 +97,23 @@ function MobileAccordion({
 export default function ProductionExamplesSection() {
   const t = useTranslations('productionShowcase')
   const cards = useMemo(() => t.raw('cards') as ProductionStyleCardData[], [t])
+  const [phoneHandset, setPhoneHandset] = useState(() => isPhoneHandset())
+
+  useEffect(() => {
+    const syncLayout = () => {
+      if (document.fullscreenElement) return
+      setPhoneHandset(isPhoneHandset())
+    }
+    syncLayout()
+    window.addEventListener('resize', syncLayout)
+    window.addEventListener('orientationchange', syncLayout)
+    document.addEventListener('fullscreenchange', syncLayout)
+    return () => {
+      window.removeEventListener('resize', syncLayout)
+      window.removeEventListener('orientationchange', syncLayout)
+      document.removeEventListener('fullscreenchange', syncLayout)
+    }
+  }, [])
 
   return (
     <section
@@ -131,12 +149,12 @@ export default function ProductionExamplesSection() {
         </motion.div>
 
         {/* Desktop: 2-column grid */}
-        <div className="hidden md:block">
+        <div className={phoneHandset ? 'hidden' : 'hidden md:block'}>
           <CardGrid cards={cards} t={t} />
         </div>
 
         {/* Mobile: accordion — one card visible at a time */}
-        <div className="md:hidden">
+        <div className={phoneHandset ? 'block' : 'md:hidden'}>
           <MobileAccordion cards={cards} t={t} />
         </div>
 

@@ -8,6 +8,7 @@ import { useReducedMotion } from '@/hooks/useReducedMotion'
 import {
   enterPhoneVideoFullscreen,
   isCoarsePointer,
+  isNativeVideoFullscreen,
 } from '@/lib/landing/phoneVideoFullscreen'
 
 type Props = {
@@ -36,6 +37,7 @@ export function TrailerPlayer({
   const [theaterOpen, setTheaterOpen] = useState(false)
   const [isPlaying, setIsPlaying] = useState(mode === 'background')
   const [isMuted, setIsMuted] = useState(true)
+  const [isFullscreen, setIsFullscreen] = useState(false)
   const webm = webmSrc?.trim() || ''
   const mp4 = mp4Src?.trim() || ''
   const hasVideo = Boolean(webm || mp4)
@@ -44,15 +46,32 @@ export function TrailerPlayer({
   useEffect(() => {
     const video = videoRef.current
     if (!video || !hasVideo) return
-    if (prefersReducedMotion || theaterOpen) {
+    const syncFullscreen = () => {
+      const native = isNativeVideoFullscreen(video)
+      setIsFullscreen(document.fullscreenElement === video || native)
+    }
+    document.addEventListener('fullscreenchange', syncFullscreen)
+    video.addEventListener('webkitbeginfullscreen', syncFullscreen)
+    video.addEventListener('webkitendfullscreen', syncFullscreen)
+    return () => {
+      document.removeEventListener('fullscreenchange', syncFullscreen)
+      video.removeEventListener('webkitbeginfullscreen', syncFullscreen)
+      video.removeEventListener('webkitendfullscreen', syncFullscreen)
+    }
+  }, [hasVideo, webm, mp4, mode])
+
+  useEffect(() => {
+    const video = videoRef.current
+    if (!video || !hasVideo) return
+    if ((prefersReducedMotion && !isFullscreen) || theaterOpen) {
       video.pause()
       return
     }
-    if (background) {
+    if (background || isFullscreen) {
       video.muted = isMuted
       void video.play().catch(() => {})
     }
-  }, [background, hasVideo, isMuted, prefersReducedMotion, theaterOpen, webm, mp4])
+  }, [background, hasVideo, isFullscreen, isMuted, prefersReducedMotion, theaterOpen, webm, mp4])
 
   useEffect(() => {
     if (!theaterOpen) return
@@ -88,8 +107,8 @@ export function TrailerPlayer({
     if (isCoarsePointer()) {
       video.muted = false
       setIsMuted(false)
-      enterPhoneVideoFullscreen(video)
-      return
+      void video.play().catch(() => {})
+      if (enterPhoneVideoFullscreen(video)) return
     }
     setTheaterOpen(true)
   }
@@ -110,23 +129,34 @@ export function TrailerPlayer({
 
   return (
     <>
-      <div className={cn(background ? 'pointer-events-none absolute inset-0 z-0' : 'relative', className)}>
+      <div
+        className={cn(
+          background
+            ? isFullscreen
+              ? 'pointer-events-auto absolute inset-0 z-0'
+              : 'pointer-events-none absolute inset-0 z-0'
+            : 'relative',
+          className
+        )}
+      >
         <video
           key={`${webm}|${mp4}|${mode}`}
           ref={videoRef}
           className={cn(
-            'bg-black',
+            'pointer-events-auto bg-black',
             background
-              ? 'h-full w-full object-cover'
+              ? isFullscreen
+                ? 'h-full w-full object-contain'
+                : 'h-full w-full object-cover'
               : 'aspect-video w-full rounded-xl object-contain'
           )}
           autoPlay={background && !prefersReducedMotion}
           loop={background}
-          muted={background || isMuted}
+          muted={isMuted}
           playsInline
           preload={prefersReducedMotion ? 'none' : 'metadata'}
-          controls={!background}
-          controlsList={background ? undefined : 'nodownload'}
+          controls={!background || isFullscreen}
+          controlsList={background && !isFullscreen ? undefined : 'nodownload'}
           onContextMenu={(event) => event.preventDefault()}
           aria-label={label}
         >

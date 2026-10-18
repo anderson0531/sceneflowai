@@ -63,6 +63,7 @@ export const FEATURE_CHAPTER_MAP: readonly FeatureRoomChapterPlan[] = [
     filmSeconds: 90,
     beats: [
       { id: 'spend', demoIcons: ['byok', 'budget'], standaloneDemo: true },
+      { id: 'production-script', demoIcons: ['productionScript'], standaloneDemo: true },
       { id: 'script-resonance', demoIcons: ['scriptResonance'], standaloneDemo: true },
       { id: 'cast-visual', demoIcons: ['castVisual'], standaloneDemo: true },
       { id: 'direct-shot', demoIcons: ['directShot'], standaloneDemo: true },
