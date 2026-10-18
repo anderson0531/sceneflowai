@@ -60,6 +60,11 @@ export const BLUEPRINT_ROOM_OVERVIEW_WEBM = '/landing/key-features/rooms/bluepri
 export const BLUEPRINT_ROOM_OVERVIEW_MP4 =
   'https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Blueprint%20Room%20Overview.mp4'
 
+export const PRODUCTION_STAGE_OVERVIEW_WEBM = '/landing/key-features/rooms/production-stage-en.webm'
+
+export const PRODUCTION_STAGE_OVERVIEW_MP4 =
+  'https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Production%20Stage%20.mp4'
+
 const PRODUCED_ROOM_FILMS: Partial<
   Record<FeatureRoomId, Partial<Record<VideoLocaleId, FeatureRoomMediaEntry>>>
 > = {
@@ -75,6 +80,13 @@ const PRODUCED_ROOM_FILMS: Partial<
       posterUrl: '',
       webmUrl: BLUEPRINT_ROOM_OVERVIEW_WEBM,
       mp4Url: BLUEPRINT_ROOM_OVERVIEW_MP4,
+    },
+  },
+  'production-stage': {
+    en: {
+      posterUrl: '',
+      webmUrl: PRODUCTION_STAGE_OVERVIEW_WEBM,
+      mp4Url: PRODUCTION_STAGE_OVERVIEW_MP4,
     },
   },
 }
