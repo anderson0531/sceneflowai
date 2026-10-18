@@ -116,7 +116,7 @@ export async function generateLocationReferenceImage(
     throw new ReferenceGenerationError('Missing required field: locationName', 400)
   }
 
-  const creditCost = getCreditCost('IMAGE_GENERATION')
+  const creditCost = IMAGE_CREDITS.SCENE_REFERENCE
 
   let prompt =
     locationPrompt && locationPrompt.trim()
@@ -158,10 +158,11 @@ export async function generateLocationReferenceImage(
     projectId: projectId || null,
     quoteInput: {
       kind: 'reference',
+      model: result.model,
       imageCount: 1,
       floorCredits: creditCost,
     },
-    meta: { label: `Location reference: ${locationName}` },
+    meta: { label: `Location reference: ${locationName}`, model: result.model },
   })
 
   return { imageUrl, prompt, creditCost: charged.credits }
@@ -207,7 +208,7 @@ export async function generateLocationVersionReferenceImage(
     throw new ReferenceGenerationError('Missing required field: stateNotes', 400)
   }
 
-  const creditCost = getCreditCost('IMAGE_GENERATION')
+  const creditCost = IMAGE_CREDITS.SCENE_REFERENCE
 
   let prompt =
     locationPrompt && locationPrompt.trim()
@@ -260,10 +261,11 @@ export async function generateLocationVersionReferenceImage(
     projectId: projectId || null,
     quoteInput: {
       kind: 'reference',
+      model: result.model,
       imageCount: 1,
       floorCredits: creditCost,
     },
-    meta: { label: `Location version: ${locationName}` },
+    meta: { label: `Location version: ${locationName}`, model: result.model },
   })
 
   return { imageUrl, prompt, creditCost: charged.credits }
@@ -512,6 +514,8 @@ export async function generateCastReferenceImage(
       projectId: projectId || null,
       quoteInput: {
         kind: 'reference',
+        model: ENHANCE_IDENTITY_MODEL,
+        resolution: quality === 'max' ? '4k' : '1080p',
         imageCount: 1,
         floorCredits: CAST_IMAGE_CREDIT_COST,
       },

@@ -50,6 +50,8 @@ import { resolveGeminiTtsLanguageCode, resolveGoogleTtsLanguageCode } from '../.
 import { persistSceneAudioAtomic } from '../../../../lib/audio/persistSceneAudioAtomic'
 import { audioSourceFingerprintForSpoken } from '../../../../lib/audio/beatAudioStale'
 import { characterStateHash } from '../../../../lib/tts/characterStateHash'
+import { CreditService } from '../../../../services/CreditService'
+import { AUDIO_CREDITS, ANIMATIC_CREDITS } from '../../../../lib/credits/creditCosts'
 
 export const maxDuration = 180
 export const runtime = 'nodejs'
@@ -511,6 +513,46 @@ export async function POST(req: NextRequest) {
         usedProvider,
         sourceFingerprint
       )
+    }
+
+    // Step 8: Charge credits when fresh paid TTS synthesis ran (skip cached hits and free Edge fallback)
+    if (!cached && usedProvider !== 'edge') {
+      try {
+        const proj = await Project.findByPk(projectId, { attributes: ['user_id'] })
+        const ownerUserId = proj?.user_id ? String(proj.user_id) : null
+        if (ownerUserId) {
+          const baseAudioCredits =
+            usedProvider === 'elevenlabs'
+              ? Math.max(
+                  AUDIO_CREDITS.DIALOGUE_PER_LINE,
+                  Math.ceil((textForTts.length / 1000) * AUDIO_CREDITS.ELEVENLABS_PER_1K_CHARS)
+                )
+              : Math.max(
+                  AUDIO_CREDITS.DIALOGUE_PER_LINE,
+                  Math.ceil(textForTts.length / 250) * AUDIO_CREDITS.DIALOGUE_PER_LINE
+                )
+          const translationCredits =
+            language !== 'en' && !skipTranslation
+              ? Math.max(
+                  ANIMATIC_CREDITS.TRANSLATION_PER_1K_CHARS,
+                  Math.ceil((text.length / 1000) * ANIMATIC_CREDITS.TRANSLATION_PER_1K_CHARS)
+                )
+              : 0
+          const totalAudioCredits = baseAudioCredits + translationCredits
+          await CreditService.charge(ownerUserId, totalAudioCredits, 'ai_usage', projectId, {
+            operation: 'scene_audio_synthesis',
+            provider: usedProvider,
+            audioType,
+            sceneIndex,
+            dialogueIndex,
+            lineId,
+            language,
+            charCount: textForTts.length,
+          })
+        }
+      } catch (chargeErr) {
+        console.warn('[Scene Audio] Non-blocking credit charge failed:', chargeErr)
+      }
     }
 
     console.log('[Scene Audio] Response payload', {

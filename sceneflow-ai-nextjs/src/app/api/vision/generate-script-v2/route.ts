@@ -75,6 +75,8 @@ import {
   buildScriptCraftPromptBlock,
 } from '@/lib/script/scriptCraftPrompt'
 import { buildVisionPhaseContinuityFromVariant } from '@/lib/blueprint/blueprintContinuity'
+import { CreditService } from '../../../../services/CreditService'
+import { BLUEPRINT_CREDITS, TEXT_CREDITS } from '@/lib/credits/creditCosts'
 export const runtime = 'nodejs'
 export const maxDuration = 600  // 10 minutes for large script generation (requires Vercel Pro)
 
@@ -831,6 +833,30 @@ export async function POST(request: NextRequest) {
         })
         if (derivedDuration > 0) {
           console.log(`[Script Gen V2] Derived project duration from script: ${derivedDuration}s (was ${project.duration || 'unset'}s)`)
+        }
+
+        // Charge script generation credits scaled by generated scene count
+        if (project.user_id) {
+          try {
+            const scriptCredits = Math.max(
+              BLUEPRINT_CREDITS.SCRIPT_BATCH,
+              finalScenes.length * TEXT_CREDITS.SCRIPT_PER_SCENE
+            )
+            await CreditService.charge(
+              String(project.user_id),
+              scriptCredits,
+              'ai_usage',
+              projectId,
+              {
+                operation: 'generate_script_v2',
+                sceneCount: finalScenes.length,
+                totalDurationSec: derivedDuration,
+              }
+            )
+            console.log(`[Script Gen V2] Charged ${scriptCredits} credits for ${finalScenes.length} scenes`)
+          } catch (chargeErr) {
+            console.warn('[Script Gen V2] Non-blocking credit charge failed:', chargeErr)
+          }
         }
 
         // Send completion (single-pass is always complete, not partial)

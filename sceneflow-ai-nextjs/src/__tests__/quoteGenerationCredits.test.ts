@@ -32,11 +32,11 @@ describe('quoteGenerationCredits', () => {
     })
     expect(quote.operation).toBe('omni_1080p')
     expect(quote.providerUsd).toBeCloseTo(1.52, 2)
-    expect(quote.credits).toBe(274)
+    expect(quote.credits).toBe(304)
     expect(quote.credits * 0.008).toBeGreaterThan(quote.providerUsd)
   })
 
-  it('prices Kling 4K above list cost and 1080p audio under the old 280-credit flat rate', () => {
+  it('prices Kling 4K above list cost and 1080p audio at the 2.0x markup', () => {
     const hd = quoteGenerationCredits({
       kind: 'clip',
       provider: 'kling',
@@ -50,9 +50,64 @@ describe('quoteGenerationCredits', () => {
       resolution: '4k',
       durationSeconds: 10,
     })
-    expect(hd.credits).toBe(252)
-    expect(uhd.credits).toBe(756)
+    expect(hd.credits).toBe(280)
+    expect(uhd.credits).toBe(840)
     expect(uhd.credits * 0.008).toBeGreaterThan(uhd.providerUsd)
+  })
+
+  it('routes Veo 3.1 Fast and Veo 3.1 Premium to their respective per-second COGS', () => {
+    const veoFast = quoteGenerationCredits({
+      kind: 'clip',
+      provider: 'google_vertex',
+      model: 'veo-3.1-fast-generate-001',
+      resolution: '1080p',
+      durationSeconds: 8,
+    })
+    const veoPremium = quoteGenerationCredits({
+      kind: 'clip',
+      provider: 'google_vertex',
+      model: 'veo-3.1-generate-001',
+      resolution: '1080p',
+      durationSeconds: 8,
+    })
+    expect(veoFast.operation).toBe('veo_fast')
+    expect(veoFast.providerUsd).toBeCloseTo(1.2, 2)
+    expect(veoFast.credits).toBe(240)
+    expect(veoPremium.operation).toBe('veo_premium')
+    expect(veoPremium.providerUsd).toBeCloseTo(3.2, 2)
+    expect(veoPremium.credits).toBe(640)
+    expect(veoPremium.credits * 0.008).toBeGreaterThan(veoPremium.providerUsd)
+  })
+
+  it('tiers image stills between Flash 1K, Pro 2K, and Pro 4K', () => {
+    const flash = quoteGenerationCredits({
+      kind: 'still',
+      model: 'gemini-3.1-flash-image',
+      imageCount: 1,
+      floorCredits: 10,
+    })
+    const pro2k = quoteGenerationCredits({
+      kind: 'still',
+      model: 'gemini-3-pro-image-preview',
+      resolution: '1080p',
+      imageCount: 1,
+      floorCredits: 30,
+    })
+    const pro4k = quoteGenerationCredits({
+      kind: 'still',
+      model: 'gemini-3-pro-image-preview',
+      resolution: '4k',
+      imageCount: 1,
+      floorCredits: 50,
+    })
+    expect(flash.operation).toBe('gemini_still')
+    expect(flash.credits).toBe(10)
+    expect(pro2k.operation).toBe('gemini_pro_still_2k')
+    expect(pro2k.providerUsd).toBeCloseTo(0.14, 3)
+    expect(pro2k.credits).toBe(30)
+    expect(pro4k.operation).toBe('gemini_pro_still_4k')
+    expect(pro4k.providerUsd).toBeCloseTo(0.24, 3)
+    expect(pro4k.credits).toBe(50)
   })
 
   it('adds a flat ingredient surcharge and applies BYOK only for media kinds', () => {

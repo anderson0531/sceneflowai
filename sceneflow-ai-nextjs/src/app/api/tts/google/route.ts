@@ -1,17 +1,21 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { getServerSession } from 'next-auth'
+import { authOptions } from '@/lib/auth'
 import { chunkNarrationText } from '@/lib/blueprint/sectionNarrationText'
 import { synthesizeGeminiFlashMp3, isGeminiTtsConfigured } from '@/lib/tts/geminiFlashTts'
 import { synthesizeDesignedGeminiVoiceWav } from '@/lib/tts/geminiDesignedVoiceTts'
 import { isDesignedGeminiVoiceId } from '@/lib/tts/geminiVoiceDesign'
 import { NARRATION_CHUNK_BYTES } from '@/lib/tts/blueprintTtsConstants'
 import type { GeminiTtsAudioType } from '@/lib/tts/geminiTtsPrompt'
+import { CreditService } from '@/services/CreditService'
+import { AUDIO_CREDITS } from '@/lib/credits/creditCosts'
 
 export const dynamic = 'force-dynamic'
 export const maxDuration = 60
 
 export async function POST(request: NextRequest) {
   try {
-    const { text, voiceId, prompt, audioType, designPrompt } = await request.json()
+    const { text, voiceId, prompt, audioType, designPrompt, projectId } = await request.json()
 
     if (!text || typeof text !== 'string') {
       return NextResponse.json({ error: 'Missing text parameter' }, { status: 400 })
@@ -20,6 +24,9 @@ export async function POST(request: NextRequest) {
     if (!isGeminiTtsConfigured()) {
       return NextResponse.json({ error: 'TTS not configured' }, { status: 500 })
     }
+
+    const session = await getServerSession(authOptions)
+    const userId = session?.user?.id || session?.user?.email || null
 
     let cleanText = text
     let directorNotes = typeof prompt === 'string' ? prompt : undefined
@@ -37,6 +44,21 @@ export async function POST(request: NextRequest) {
         designPrompt: typeof designPrompt === 'string' ? designPrompt : undefined,
         displayName: 'SceneFlow character',
       })
+      if (userId) {
+        try {
+          const credits = Math.max(
+            AUDIO_CREDITS.VOICE_PREVIEW,
+            Math.ceil(cleanText.length / 250) * AUDIO_CREDITS.DIALOGUE_PER_LINE
+          )
+          await CreditService.charge(userId, credits, 'ai_usage', projectId || null, {
+            operation: 'google_designed_voice_tts',
+            voiceId: voice,
+            charCount: cleanText.length,
+          })
+        } catch (chargeErr) {
+          console.warn('[Google TTS] Non-blocking credit charge failed:', chargeErr)
+        }
+      }
       return new Response(new Uint8Array(designed), {
         status: 200,
         headers: {
@@ -70,6 +92,23 @@ export async function POST(request: NextRequest) {
 
     const finalAudioBuffer =
       audioBuffers.length === 1 ? audioBuffers[0]! : Buffer.concat(audioBuffers)
+
+    if (userId) {
+      try {
+        const credits = Math.max(
+          AUDIO_CREDITS.VOICE_PREVIEW,
+          Math.ceil(cleanText.length / 500) * AUDIO_CREDITS.DIALOGUE_PER_LINE
+        )
+        await CreditService.charge(userId, credits, 'ai_usage', projectId || null, {
+          operation: 'google_gemini_tts',
+          voiceId: voice,
+          audioType: ttsAudioType,
+          charCount: cleanText.length,
+        })
+      } catch (chargeErr) {
+        console.warn('[Google TTS] Non-blocking credit charge failed:', chargeErr)
+      }
+    }
 
     return new Response(finalAudioBuffer, {
       status: 200,

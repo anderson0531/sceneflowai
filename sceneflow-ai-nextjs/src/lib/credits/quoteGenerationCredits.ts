@@ -5,20 +5,23 @@
  * per credit, so a fully spent Studio balance must still cover list COGS.
  *
  * credits = max(ceil(providerUsd * markup / 0.01), ceil(providerUsd / 0.008))
- * Default markup is 1.8 (80% above list cost at face value).
+ * Default markup is 2.0 (100% above list cost at face value, ~38% gross margin on Studio).
  *
  * Live charges prefer a published credit_pricing row. These seeds are the
  * fallback when that table is empty or unreachable.
  */
 
-export const DEFAULT_MARKUP = 1.8
+export const DEFAULT_MARKUP = 2.0
 export const CREDIT_FACE_USD = 0.01
 export const STUDIO_CASH_PER_CREDIT_USD = 0.008
 export const REFERENCE_IMAGE_ADDON_CREDITS = 5
 
 export const OMNI_MODEL_ID = 'gemini-omni-1.1-flash-preview'
+export const VEO_FAST_MODEL_ID = 'veo-3.1-fast-generate-001'
+export const VEO_PREMIUM_MODEL_ID = 'veo-3.1-generate-001'
 export const KLING_OMNI_MODEL_ID = 'kling-v3-omni'
 export const GEMINI_STILL_MODEL_ID = 'gemini-3.1-flash-image'
+export const GEMINI_PRO_STILL_MODEL_ID = 'gemini-3-pro-image-preview'
 
 export const OMNI_PRICING_SOURCE_URL = 'https://ai.google.dev/gemini-api/docs/pricing'
 export const KLING_PRICING_SOURCE_URL = 'https://kling.ai/document-api/pricing/base/video.md'
@@ -92,6 +95,30 @@ export const SEEDED_PROVIDER_RATES: SeededProviderRate[] = [
     notes: 'Gemini Omni preview video output, 4K (~17,376 tokens/s at $17.50/1M)',
   },
   {
+    operation: 'veo_fast',
+    provider: 'google_vertex',
+    category: 'video_generation',
+    model: VEO_FAST_MODEL_ID,
+    resolution: '1080p',
+    audio: true,
+    metric: 'per_second',
+    usdPerUnit: 0.15,
+    sourceUrl: OMNI_PRICING_SOURCE_URL,
+    notes: 'Veo 3.1 Fast video output with native audio ($0.15/s)',
+  },
+  {
+    operation: 'veo_premium',
+    provider: 'google_vertex',
+    category: 'video_generation',
+    model: VEO_PREMIUM_MODEL_ID,
+    resolution: '1080p',
+    audio: true,
+    metric: 'per_second',
+    usdPerUnit: 0.4,
+    sourceUrl: OMNI_PRICING_SOURCE_URL,
+    notes: 'Veo 3.1 Standard/Premium video output with native audio ($0.40/s)',
+  },
+  {
     operation: 'kling_omni_720p_silent',
     provider: 'kling',
     category: 'video_generation',
@@ -161,7 +188,31 @@ export const SEEDED_PROVIDER_RATES: SeededProviderRate[] = [
     metric: 'per_image',
     usdPerUnit: 0.04,
     sourceUrl: OMNI_PRICING_SOURCE_URL,
-    notes: 'Gemini image still / reference. Callers keep a 10–15 credit floor.',
+    notes: 'Gemini Flash image still / draft reference (~$0.04/image, 10 credit floor).',
+  },
+  {
+    operation: 'gemini_pro_still_2k',
+    provider: 'google_vertex',
+    category: 'image_generation',
+    model: GEMINI_PRO_STILL_MODEL_ID,
+    resolution: null,
+    audio: null,
+    metric: 'per_image',
+    usdPerUnit: 0.14,
+    sourceUrl: OMNI_PRICING_SOURCE_URL,
+    notes: 'Gemini 3 Pro Image 2K (designer tier) with reference conditioning (~$0.14/image, 30 credit floor).',
+  },
+  {
+    operation: 'gemini_pro_still_4k',
+    provider: 'google_vertex',
+    category: 'image_generation',
+    model: GEMINI_PRO_STILL_MODEL_ID,
+    resolution: null,
+    audio: null,
+    metric: 'per_image',
+    usdPerUnit: 0.24,
+    sourceUrl: OMNI_PRICING_SOURCE_URL,
+    notes: 'Gemini 3 Pro Image 4K (director tier) with reference conditioning (~$0.24/image, 50 credit floor).',
   },
 ]
 
@@ -254,8 +305,24 @@ export interface GenerationQuote {
   studioMarginPercent: number
 }
 
+export function operationForImage(args: {
+  model?: string | null
+  resolution?: string | null
+}): string {
+  const model = (args.model || '').toLowerCase()
+  const rawRes = (args.resolution || '').toLowerCase().replace(/\s+/g, '')
+  if (model.includes('pro') || model.includes('designer') || model.includes('director')) {
+    if (rawRes === '4k' || rawRes === '2160p' || rawRes === 'uhd' || model.includes('director')) {
+      return 'gemini_pro_still_4k'
+    }
+    return 'gemini_pro_still_2k'
+  }
+  return 'gemini_still'
+}
+
 export function operationForVideo(args: {
   provider?: QuoteProvider
+  model?: string | null
   resolution?: string | null
   audio?: boolean
 }): { operation: string; resolution: VideoResolution; audio: boolean | null } {
@@ -268,6 +335,14 @@ export function operationForVideo(args: {
     const operation = `kling_omni_${resolution}_${audio ? 'audio' : 'silent'}`
     return { operation, resolution, audio }
   }
+  const model = (args.model || '').toLowerCase()
+  if (model.includes('veo')) {
+    const audio = args.audio !== false
+    if (model.includes('fast') || model.includes('lite')) {
+      return { operation: 'veo_fast', resolution, audio }
+    }
+    return { operation: 'veo_premium', resolution, audio }
+  }
   return { operation: `omni_${resolution}`, resolution, audio: true }
 }
 
@@ -278,10 +353,13 @@ export function quoteGenerationCredits(input: QuoteGenerationInput): GenerationQ
     ? null
     : operationForVideo({
         provider,
+        model: input.model,
         resolution: input.resolution,
         audio: input.audio,
       })
-  const operation = imageLike ? 'gemini_still' : video!.operation
+  const operation = imageLike
+    ? operationForImage({ model: input.model, resolution: input.resolution })
+    : video!.operation
   const seed = getSeededRate(operation) ?? getSeededRate('gemini_still')!
   const usdPerUnit = input.rate?.usdPerUnit ?? seed.usdPerUnit
   const markup = input.rate?.markup ?? DEFAULT_MARKUP

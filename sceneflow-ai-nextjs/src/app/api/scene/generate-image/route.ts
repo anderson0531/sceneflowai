@@ -3440,13 +3440,26 @@ async function postGenerateImage(req: NextRequest) {
 
     // 3. Charge credits after successful generation
     try {
+      const isProStill =
+        generationModelId.toLowerCase().includes('pro') ||
+        resolvedGen.storyboardQuality === 'final'
+      const effectiveFloorCredits =
+        generationProvider === 'kling'
+          ? IMAGE_CREDITS.FAL_KLING_IMAGE
+          : effectiveImageSize === '4K'
+            ? IMAGE_CREDITS.PRO_IMAGE_4K
+            : isProStill
+              ? IMAGE_CREDITS.FINAL_FRAME_GENERATION
+              : CREDIT_COST
       const charged = await quoteAndCharge({
         userId: userId!,
         projectId: projectId || null,
         quoteInput: {
           kind: 'still',
+          model: generationModelId,
+          resolution: effectiveImageSize === '4K' ? '4k' : '1080p',
           imageCount: 1,
-          floorCredits: CREDIT_COST,
+          floorCredits: effectiveFloorCredits,
         },
         meta: {
           label: generationProvider === 'kling' ? 'kling_image_generate' : 'vertex_image_generate',
@@ -3457,7 +3470,7 @@ async function postGenerateImage(req: NextRequest) {
         },
       })
       creditsCharged = charged.credits
-      console.log(`[Scene Image] Charged ${CREDIT_COST} credits to user ${userId}`)
+      console.log(`[Scene Image] Charged ${creditsCharged} credits to user ${userId}`)
     } catch (chargeError: any) {
       console.error('[Scene Image] Failed to charge credits:', chargeError)
       // Don't fail the request if credit charge fails - image was already generated

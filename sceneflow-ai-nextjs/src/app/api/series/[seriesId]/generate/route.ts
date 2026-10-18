@@ -17,6 +17,8 @@ import {
   seriesBibleSchemaBlock,
   seriesBibleTaskBlock,
 } from '@/lib/series/episodeBatchPrompt'
+import { CreditService } from '@/services/CreditService'
+import { BLUEPRINT_CREDITS, TEXT_CREDITS } from '@/lib/credits/creditCosts'
 
 export const dynamic = 'force-dynamic'
 export const maxDuration = 600 // Allow 10 minutes for full series generation
@@ -318,6 +320,28 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     
     await series.update(updates)
     await series.reload()
+
+    if ((series as any).user_id) {
+      try {
+        const seriesCredits = regenerateField
+          ? BLUEPRINT_CREDITS.BLUEPRINT_REFINE
+          : TEXT_CREDITS.STORY_GENERATION + Math.max(0, Math.ceil((targetEpisodeCount - 4) / 2)) * 5
+        await CreditService.charge(
+          String((series as any).user_id),
+          seriesCredits,
+          'ai_usage',
+          null,
+          {
+            operation: 'series_generate',
+            seriesId,
+            regenerateField: regenerateField || 'full',
+            episodeCount: targetEpisodeCount,
+          }
+        )
+      } catch (chargeErr) {
+        console.warn(`[POST /api/series/${seriesId}/generate] Non-blocking credit charge failed:`, chargeErr)
+      }
+    }
     
     console.log(`[${timestamp}] [POST /api/series/${seriesId}/generate] Generation complete`)
     

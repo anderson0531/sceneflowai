@@ -637,6 +637,7 @@ export async function POST(
           ? await resolveGenerationQuote({
               kind: 'clip',
               provider: 'google_vertex',
+              model: videoModel || undefined,
               resolution: resolution || (qualityTier === 'premium' ? '1080p' : '720p'),
               durationSeconds: previewDuration,
               audio: true,
@@ -743,7 +744,7 @@ export async function POST(
       const billedDuration = requestedVideoDurationSeconds ?? duration ?? 10
       const billedUserId = dbUserId
 
-      if (generationProvider === 'kling' && !videoResult.wasVeoFallback) {
+      if (generationProvider === 'kling') {
         await quoteAndCharge({
           userId: billedUserId,
           projectId,
@@ -761,6 +762,7 @@ export async function POST(
           meta: {
             generationProvider: 'kling',
             klingModel: videoResult.klingModel || klingModel,
+            ...(videoResult.wasVeoFallback ? { wasVeoFallback: true } : {}),
           },
         })
       }
@@ -824,7 +826,7 @@ export async function POST(
           quoteInput: {
             kind: 'clip',
             provider: 'google_vertex',
-            model: responseVideoModel || undefined,
+            model: responseVideoModel || videoModel || undefined,
             resolution: resolution || (qualityTier === 'premium' ? '1080p' : '720p'),
             durationSeconds: billedDuration,
             audio: true,

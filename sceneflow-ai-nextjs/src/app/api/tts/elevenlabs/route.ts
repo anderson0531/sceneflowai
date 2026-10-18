@@ -11,6 +11,8 @@ import {
   synthesizeGeminiFlashMp3,
 } from '@/lib/tts/geminiFlashTts'
 import { NARRATION_CHUNK_BYTES } from '@/lib/tts/blueprintTtsConstants'
+import { CreditService } from '@/services/CreditService'
+import { AUDIO_CREDITS } from '@/lib/credits/creditCosts'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
@@ -57,9 +59,10 @@ export async function POST(request: NextRequest) {
     }
 
     const saveToBlob = !!body.saveToBlob
+    const session = await getServerSession(authOptions)
+    const userId = session?.user?.id || session?.user?.email || null
 
     if (saveToBlob) {
-      const session = await getServerSession(authOptions)
       if (!session?.user?.id) {
         return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
       }
@@ -105,6 +108,22 @@ export async function POST(request: NextRequest) {
       }
       const buffer = buffers.length === 1 ? buffers[0]! : Buffer.concat(buffers)
 
+      if (userId) {
+        try {
+          const geminiTtsCredits = Math.max(
+            AUDIO_CREDITS.VOICE_PREVIEW,
+            Math.ceil(text.length / 500) * AUDIO_CREDITS.DIALOGUE_PER_LINE
+          )
+          await CreditService.charge(userId, geminiTtsCredits, 'ai_usage', body.projectId || null, {
+            operation: 'gemini_tts_narration',
+            audioType: audioType || 'blueprint',
+            charCount: text.length,
+          })
+        } catch (chargeErr) {
+          console.warn('[ElevenLabs TTS] Non-blocking Gemini TTS credit charge failed:', chargeErr)
+        }
+      }
+
       if (saveToBlob) {
         const projectId = body.projectId as string
         const sceneId =
@@ -147,6 +166,22 @@ export async function POST(request: NextRequest) {
       modelId: body.modelId,
       delivery,
     })
+
+    if (userId) {
+      try {
+        const elevenLabsCredits = Math.max(
+          AUDIO_CREDITS.VOICE_PREVIEW,
+          Math.ceil((text.length / 1000) * AUDIO_CREDITS.ELEVENLABS_PER_1K_CHARS)
+        )
+        await CreditService.charge(userId, elevenLabsCredits, 'ai_usage', body.projectId || null, {
+          operation: 'elevenlabs_tts',
+          audioType: audioType || 'tts',
+          charCount: text.length,
+        })
+      } catch (chargeErr) {
+        console.warn('[ElevenLabs TTS] Non-blocking credit charge failed:', chargeErr)
+      }
+    }
 
     if (saveToBlob) {
       const projectId = body.projectId as string

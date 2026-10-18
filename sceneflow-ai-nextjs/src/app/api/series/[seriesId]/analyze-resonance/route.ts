@@ -39,6 +39,8 @@ import {
   mergeSeriesInsights,
   stableSeriesInsightId,
 } from '@/lib/series/resonanceScoring'
+import { CreditService } from '@/services/CreditService'
+import { BLUEPRINT_CREDITS } from '@/lib/credits/creditCosts'
 
 export const dynamic = 'force-dynamic'
 export const maxDuration = 180 // 3 minutes for comprehensive analysis
@@ -308,6 +310,25 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
         resonance_analysis: persistedAnalysis,
       }
     })
+
+    if ((series as any).user_id) {
+      try {
+        await CreditService.charge(
+          String((series as any).user_id),
+          BLUEPRINT_CREDITS.AUDIENCE_RESONANCE_ANALYSIS,
+          'ai_usage',
+          null,
+          {
+            operation: 'series_resonance_analysis',
+            seriesId,
+            iterationCount: currentIteration,
+            episodeCount: episodes.length,
+          }
+        )
+      } catch (chargeErr) {
+        console.warn(`[POST /api/series/${seriesId}/analyze-resonance] Non-blocking credit charge failed:`, chargeErr)
+      }
+    }
 
     const analysisWithMetadata = persistedAnalysis
     

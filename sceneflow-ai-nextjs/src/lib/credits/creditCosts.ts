@@ -112,29 +112,35 @@ export const VIDEO_GUARDRAIL_MIN_CREDITS_PER_8S = 120;
 // =============================================================================
 
 export const IMAGE_CREDITS = {
-  /** Imagen 4 - $0.04/image → 10 credits ($0.10, 60% margin) */
+  /** Gemini 3.1 Flash Image / Imagen 4 (Draft 1K) - $0.04/image → 10 credits */
   IMAGEN_3: 10,
   IMAGEN_4: 10,
   
-  /** Gemini image edit - minimal cost */
-  GEMINI_EDIT: 5,
+  /** Gemini image edit pass (1K/2K) */
+  GEMINI_EDIT: 15,
   
-  /** Scene reference / backdrop generation */
-  SCENE_REFERENCE: 10,
+  /** Scene reference / location plate generation (Gemini 3 Pro Image 2K) */
+  SCENE_REFERENCE: 30,
   
-  /** Frame generation (start/end frames) */
+  /** Draft frame generation (1K start/end frames) */
   FRAME_GENERATION: 10,
 
-  /** Scene/wardrobe character reference headshot (Gemini Pro Image 4K) */
-  SCENE_CHARACTER_HEADSHOT: 15,
+  /** Final storyboard frame generation (Gemini 3 Pro Image 2K with multi-ref) */
+  FINAL_FRAME_GENERATION: 30,
 
-  /** Identity headshot generation (designer 2K) + auto-enhance pass */
-  CHARACTER_IDENTITY_WITH_ENHANCE: 15,
+  /** Director 4K reference / hero still generation (Gemini 3 Pro Image 4K) */
+  PRO_IMAGE_4K: 50,
 
-  /** Fal-hosted Kling image fallback after Vertex policy block (~$0.04–0.06) */
-  FAL_KLING_IMAGE: 12,
+  /** Scene/wardrobe character reference headshot (Gemini Pro Image 2K/4K) */
+  SCENE_CHARACTER_HEADSHOT: 30,
+
+  /** Identity headshot generation (designer 2K) + auto-enhance Pro pass */
+  CHARACTER_IDENTITY_WITH_ENHANCE: 45,
+
+  /** Final / Creative Kling 2K multi-ref image or policy fallback */
+  FAL_KLING_IMAGE: 30,
   /** @deprecated Use FAL_KLING_IMAGE */
-  KLING_IMAGE: 12,
+  KLING_IMAGE: 30,
 } as const;
 
 // =============================================================================
@@ -335,11 +341,11 @@ export type ProductionType = 'full_video' | 'animatic';
 // =============================================================================
 
 export const TEXT_CREDITS = {
-  /** Gemini 2.5 Flash - minimal cost (smart request) */
-  GEMINI_FLASH: 5,
+  /** Gemini 3 Flash with thinking - scene analysis / direction */
+  GEMINI_FLASH: 10,
   
-  /** Gemini 2.5 Pro - script analysis */
-  GEMINI_PRO: 10,
+  /** Gemini 3.1 Pro with thinking - deep script analysis */
+  GEMINI_PRO: 15,
   
   /** Story/treatment generation */
   STORY_GENERATION: 25,
