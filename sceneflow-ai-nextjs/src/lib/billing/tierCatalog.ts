@@ -69,7 +69,7 @@ export const TIER_CATALOG: Record<BillingTierName, TierDefinition> = {
       'Full platform access',
       'Email support',
     ],
-    marketingDescription: 'Demo — one-time purchase to try a complete production',
+    marketingDescription: 'One-time Test Flight — experience the full pipeline from concept to Screening Room',
     marketingFeatures: [
       'One-time purchase',
       EXPLORER_CREDIT_PACK_COPY,
@@ -83,7 +83,7 @@ export const TIER_CATALOG: Record<BillingTierName, TierDefinition> = {
   },
   starter: {
     name: 'starter',
-    displayName: 'Starter — Sandbox',
+    displayName: 'Starter — Creator',
     priceUsd: 49,
     credits: 4500,
     isOneTime: false,
@@ -106,7 +106,7 @@ export const TIER_CATALOG: Record<BillingTierName, TierDefinition> = {
       '1 voice clone',
       'Priority email support',
     ],
-    marketingDescription: 'Sandbox — for trying ideas before a real show',
+    marketingDescription: 'Creator — for short films, pitch animatics, and standalone productions',
     marketingFeatures: [
       'Full platform access',
       '4,500 credits/month included',
@@ -121,7 +121,7 @@ export const TIER_CATALOG: Record<BillingTierName, TierDefinition> = {
   },
   pro: {
     name: 'pro',
-    displayName: 'Pro — YouTuber',
+    displayName: 'Pro — Series & Channel',
     priceUsd: 149,
     credits: 15000,
     isOneTime: false,
@@ -146,7 +146,7 @@ export const TIER_CATALOG: Record<BillingTierName, TierDefinition> = {
       '10 collaboration seats',
       'Priority support',
     ],
-    marketingDescription: 'YouTuber — recurring episodes and channel videos',
+    marketingDescription: 'Series & Channel — for recurring episodes, multi-language channels, and 4K production',
     marketingFeatures: [
       'Everything in Starter, plus:',
       '15,000 credits/month included',
@@ -165,7 +165,7 @@ export const TIER_CATALOG: Record<BillingTierName, TierDefinition> = {
   },
   studio: {
     name: 'studio',
-    displayName: 'Studio — Indie Filmmaker',
+    displayName: 'Studio — Production House',
     priceUsd: 599,
     credits: 75000,
     isOneTime: false,
@@ -191,7 +191,7 @@ export const TIER_CATALOG: Record<BillingTierName, TierDefinition> = {
       '50 collaboration seats',
       'Dedicated support',
     ],
-    marketingDescription: 'Indie Filmmaker — independent films and series',
+    marketingDescription: 'Production House — for feature films, full-season slates, and multi-seat teams',
     marketingFeatures: [
       'Everything in Pro, plus:',
       '75,000 credits/month included',

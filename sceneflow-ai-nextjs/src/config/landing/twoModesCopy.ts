@@ -4,7 +4,7 @@ export const TWO_MODES_COPY = {
   eyebrow: 'The friction we remove',
   title: 'One pipeline. Not a stack of tools.',
   subtitle:
-    'Clip prompts, music, and narration used to live in separate tools. SceneFlow is one pipeline for the series or the 90-minute master, then a scene or a chapter when you are ready to earn.',
+    'Clip prompts, keyframes, voice narration, and music used to live in separate tools. SceneFlow unifies the entire production into one pipeline—so you can build a multi-episode series or a 90-minute master, and publish finished scenes or chapters as you go.',
   comingSoon: 'Coming soon',
   comparison: {
     id: 'comparison',

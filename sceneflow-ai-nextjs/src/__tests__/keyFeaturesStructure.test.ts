@@ -78,19 +78,19 @@ function featuresOf(room: Room): Feature[] {
 const EXPECTED_TITLES: Record<string, string[]> = {
   'series-desk': [
     'New Series',
-    'Review the first cut',
+    'Season Bible & Continuity',
     'Audience Resonance',
-    'Series Director',
-    'Direct this episode',
-    'Start the Project',
+    'The Series Director',
+    'Episode-Level Direction',
+    'One-Click Episode Launch',
   ],
   'blueprint-board': [
     'Start the Blueprint',
-    'Direct the beats',
-    'Direct the cast and locations',
-    'Blueprint Director',
+    'The Beat Sheet',
+    'Cast & World Design',
+    'The Blueprint Director',
     'Audience Resonance',
-    'Go to Production Stage',
+    'Greenlight to Production',
   ],
   'production-stage': [
     'The Scene & Shot Director',
@@ -108,9 +108,9 @@ const EXPECTED_TITLES: Record<string, string[]> = {
     'Direct Publishing',
   ],
   'screening-room': [
-    'One player',
-    'Collaborate on the cut',
-    'Release when it is ready',
+    'One Unified Player',
+    'Frame-Accurate Collaboration',
+    'Modular Release & Distribution',
   ],
 }
 
@@ -134,8 +134,13 @@ describe('keyFeatures structure', () => {
   })
 
   it('matches the room feature titles, including Production Stage groups', () => {
+    expect(rooms.map((room) => room.headline)).toEqual([
+      'Build a universe once. Produce episodes forever.',
+      'Lock the story and the look before a single frame renders.',
+      'From script to master, all in one room.',
+      'Screen the cut, rally your team, and premiere globally.',
+    ])
     const production = rooms.find((room) => room.id === 'production-stage')
-    expect(production?.headline).toBe('From script to master, all in one room.')
     expect(production?.groups?.map((group) => group.label)).toEqual([
       'Direct & Control',
       'Generate & Audit',
@@ -239,7 +244,7 @@ describe('keyFeatures structure', () => {
 
   it('keeps beats on the Blueprint and ships finished pieces from Screening Room', () => {
     const text = JSON.stringify(en.keyFeatures.rooms)
-    expect(text).toContain('Beats exist only here')
+    expect(text).toContain('Beats are authored and locked in the Blueprint Room')
     expect(text).toContain('Production Stage turns each beat into a chapter')
     expect(text).toContain('3–5 minute scene')
     expect(text).toContain('8–12 minute chapter')

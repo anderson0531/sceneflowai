@@ -262,48 +262,49 @@
       {
         "id": "series-desk",
         "label": "Series Room",
-        "promise": "The Series Room is where a season starts. The same characters and the same story carry into every episode you add. Read it, listen to it, and direct it before an episode opens in the Blueprint Room. A film with no season can skip this room.",
+        "headline": "Build a universe once. Produce episodes forever.",
+        "promise": "Develop a multi-episode season with one shared creative bible. Your cast, locations, story threads, and visual DNA carry automatically into every episode you spin up. Producing a standalone film? Skip straight to the Blueprint Room.",
         "features": [
           {
             "icon": "newSeries",
             "title": "New Series",
-            "description": "Start here. Describe the series you intend, in your own words. Clarify and Confirm iterates that intent with you until the synopsis is ready, and Generate Series writes the baseline. A new series starts as five episodes, and you can add more.",
+            "description": "Pitch your series or channel concept in plain language. Interactive AI refinement sharpens your premise and generates a multi-episode season baseline—complete with overarching plot arcs and episode breakdowns.",
             "screenshot": "Create New Series — intent, Clarify and Confirm, Generate Series",
             "learnMore": {
               "items": [
                 {
                   "title": "Your intent",
-                  "description": "Say what the series is, including the format, the audience, and the art style."
+                  "description": "Pitch the premise, format, target audience, and visual art style in plain language."
                 },
                 {
-                  "title": "Iterate",
-                  "description": "Clarify and Confirm refines the synopsis with you before anything is generated."
+                  "title": "Interactive refinement",
+                  "description": "Clarify and Confirm sharpens the season synopsis with you before anything is generated."
                 },
                 {
-                  "title": "Baseline",
-                  "description": "Generate Series writes the season you will review, starting as five episodes."
+                  "title": "Season baseline",
+                  "description": "Generate Series builds a five-episode season arc that you can expand anytime."
                 }
               ]
             }
           },
           {
             "icon": "seriesReview",
-            "title": "Review the first cut",
-            "description": "Read the overview, or press Listen. Then read the episodes, or listen to them. Consistency holds the story threads, and Continuity holds the cast, locations, props, and settings those episodes share.",
+            "title": "Season Bible & Continuity",
+            "description": "Read or listen to the narrated season overview and episode slate. SceneFlow locks your story threads, cast profiles, locations, and signature props into a shared Reference Library that every episode inherits.",
             "screenshot": "Overview Listen, Episodes Listen, Consistency, Continuity — Cast, Locations, Props, Settings",
             "learnMore": {
               "items": [
                 {
                   "title": "Read or listen",
-                  "description": "Overview and Episodes can be read, or heard with Listen."
+                  "description": "Audit the season overview and every episode synopsis with built-in audio narration."
                 },
                 {
-                  "title": "Consistency",
-                  "description": "Aesthetics, key events, and story threads stay with the season."
+                  "title": "Story consistency",
+                  "description": "Aesthetics, key plot events, and narrative threads stay locked across the entire season."
                 },
                 {
-                  "title": "Continuity",
-                  "description": "Cast, locations, props, and settings are the same ones every episode uses."
+                  "title": "Shared continuity",
+                  "description": "Cast, locations, props, and settings carry automatically into every episode you produce."
                 }
               ]
             }
@@ -311,75 +312,75 @@
           {
             "icon": "seriesResonance",
             "title": "Audience Resonance",
-            "description": "Run Audience Resonance when you want a read on the season. Review the scores and the analysis. Apply an Actionable Insight only if you choose to, and nothing in the series changes until you do.",
+            "description": "Test your season arc against your target demographic before writing a single script. Review episode-by-episode resonance scores and apply data-backed story improvements with one click—only when you agree with the note.",
             "screenshot": "Audience Resonance analysis, then Actionable Insights, unapplied",
             "learnMore": {
               "items": [
                 {
-                  "title": "The read",
-                  "description": "Scores and analysis show what lands for the audience you named."
+                  "title": "Demographic scoring",
+                  "description": "Scores and structural analysis reveal how your season lands with your target audience."
                 },
                 {
-                  "title": "Optional",
-                  "description": "An Actionable Insight changes the series only when you apply it."
+                  "title": "Director's prerogative",
+                  "description": "Actionable Insights update your series only when you choose to apply them."
                 }
               ]
             }
           },
           {
             "icon": "seriesDirector",
-            "title": "Series Director",
-            "description": "Direct the whole series in your own words, spoken or typed. You choose the change and the focus, and you accept it. A recommendation can help, and unrelated parts of the storyline stay put.",
+            "title": "The Series Director",
+            "description": "Reshape the entire season by voice or text. Shift the tone, raise the stakes, or rework a character arc across all episodes at once while keeping the rest of your storyline intact.",
             "screenshot": "Series Director — direction, focus, accept",
             "learnMore": {
               "items": [
                 {
-                  "title": "Your words",
-                  "description": "Speak or type the change, and optionally limit it to plot, characters, episode content, tone, or setting."
+                  "title": "Plain-language direction",
+                  "description": "Speak or type your note and target plot, characters, episode arcs, tone, or setting."
                 },
                 {
-                  "title": "You accept it",
-                  "description": "Nothing changes until you accept it, and unrelated parts of the storyline stay put."
+                  "title": "Surgical updates",
+                  "description": "Nothing changes until you accept the revision, and unrelated story threads stay untouched."
                 },
                 {
-                  "title": "A recommendation",
-                  "description": "Recommendations can help, and you still choose what to keep."
+                  "title": "Guided recommendations",
+                  "description": "Apply AI-suggested story improvements or steer every creative choice yourself."
                 }
               ]
             }
           },
           {
             "icon": "directEpisode",
-            "title": "Direct this episode",
-            "description": "Open an episode and direct that hour alone. Raise the stakes or deepen the story, then apply it. The other episodes stay as they are.",
+            "title": "Episode-Level Direction",
+            "description": "Zoom into any individual episode to rework its plot, pacing, or hook in isolation—without destabilizing the rest of your season slate.",
             "screenshot": "Episodes — Direct this episode, other episodes unchanged",
             "learnMore": {
               "items": [
                 {
-                  "title": "One episode",
-                  "description": "Direct this episode applies the change to that episode only."
+                  "title": "Isolated rewrites",
+                  "description": "Direct changes to a single episode's outline and beats without altering neighboring episodes."
                 },
                 {
-                  "title": "The season stays",
-                  "description": "The other episodes are left as they are."
+                  "title": "Season integrity",
+                  "description": "The overarching season bible and remaining episode slate stay locked."
                 }
               ]
             }
           },
           {
             "icon": "startEpisode",
-            "title": "Start the Project",
-            "description": "When an episode is ready, start its project. The outline, synopsis, and beats go with it into the Blueprint Room. The cast and the world are already known.",
+            "title": "One-Click Episode Launch",
+            "description": "When an episode's outline hits the mark, launch it straight into the Blueprint Room with its synopsis, story beats, cast, and world already wired in.",
             "screenshot": "Start Project — outline and cast already on the episode",
             "learnMore": {
               "items": [
                 {
-                  "title": "Start Project",
-                  "description": "Start Project opens that episode in the Blueprint Room."
+                  "title": "Instant handoff",
+                  "description": "Launch any episode directly into the Blueprint Room with a single click."
                 },
                 {
-                  "title": "Already known",
-                  "description": "The outline, the synopsis, the beats, and the cast go with it."
+                  "title": "Pre-wired DNA",
+                  "description": "The episode outline, synopsis, story beats, cast, and locations travel automatically."
                 }
               ]
             }
@@ -389,43 +390,44 @@
       {
         "id": "blueprint-board",
         "label": "Blueprint Room",
-        "promise": "The Blueprint Room is where you perfect the storyline before the 90-minute script. Start from a series episode or a new project. Direct the beats and the cast here, so Production Stage does not have to rebuild them.",
+        "headline": "Lock the story and the look before a single frame renders.",
+        "promise": "Whether you are launching an episode from the Series Room or starting a standalone feature, the Blueprint Room is where your creative DNA locks in. Perfect the beat sheet, cast, locations, and visual style here—so the Production Stage builds the right script on the first pass.",
         "features": [
           {
             "icon": "startBlueprint",
             "title": "Start the Blueprint",
-            "description": "Start from a series episode, or start a new project. A series episode arrives with its outline, synopsis, and beats. A new project begins when you describe the intent, use Validate & Enhance with AI, and choose Generate Blueprint.",
+            "description": "Bring in an episode from your series slate with its outline and cast pre-loaded, or pitch a brand-new film concept from scratch and let AI structure the foundational treatment.",
             "screenshot": "Series episode already known, or Start Your Project — intent, Validate & Enhance with AI, Generate Blueprint",
             "learnMore": {
               "items": [
                 {
-                  "title": "Series episode",
-                  "description": "A series episode opens with its outline, synopsis, and beats already attached."
+                  "title": "From Series Room",
+                  "description": "Series episodes arrive with their outline, synopsis, beats, and cast already attached."
                 },
                 {
-                  "title": "New project",
-                  "description": "Start Your Project takes the intent, then Validate & Enhance with AI, then Generate Blueprint."
+                  "title": "Standalone project",
+                  "description": "Pitch a new film concept, refine it with AI validation, and generate a complete treatment."
                 }
               ]
             }
           },
           {
             "icon": "treatment",
-            "title": "Direct the beats",
-            "description": "Open the Beats tab and listen to the beat sheet. Optimize the beats here, because they drive the script build. Beats exist only here. Production Stage turns each beat into a chapter.",
+            "title": "The Beat Sheet",
+            "description": "Structure the spine of your film. Read or listen to your narrative beat sheet and fine-tune the pacing here—every beat you lock in the Blueprint Room drives a chapter in the Production Stage.",
             "screenshot": "Beats tab, with Listen",
             "learnMore": {
               "items": [
                 {
-                  "title": "One beat sheet",
-                  "description": "Beats exist only here."
+                  "title": "Narrative spine",
+                  "description": "Beats are authored and locked in the Blueprint Room before script generation begins."
                 },
                 {
-                  "title": "Script build",
-                  "description": "The beats drive the script build, so they are optimized before Production Stage."
+                  "title": "Pacing first",
+                  "description": "Optimizing the beat sheet here ensures the screenplay builds with tight dramatic structure."
                 },
                 {
-                  "title": "Chapters",
+                  "title": "Beat-to-chapter mapping",
                   "description": "Production Stage turns each beat into a chapter."
                 }
               ]
@@ -433,44 +435,44 @@
           },
           {
             "icon": "castLocations",
-            "title": "Direct the cast and locations",
-            "description": "Open Characters and direct the cast. Open Setting on the Story tab and direct the locations with them. The cast influences the script build, so both are set before Production Stage would have to refactor the script.",
+            "title": "Cast & World Design",
+            "description": "Define your characters, wardrobe, and primary locations before the screenplay is generated—ensuring the script is written around your exact cast and settings from page one.",
             "screenshot": "Characters tab, then Setting on Story",
             "learnMore": {
               "items": [
                 {
-                  "title": "Cast",
-                  "description": "The Characters tab is the cast, and the cast influences the script build."
+                  "title": "Character profiles",
+                  "description": "Direct your cast profiles up front so dialogue and blocking match each character."
                 },
                 {
-                  "title": "Locations",
-                  "description": "Locations are the Setting on the Story tab."
+                  "title": "World & locations",
+                  "description": "Establish primary settings on the Story tab to anchor every scene's environment."
                 },
                 {
-                  "title": "Before the script",
-                  "description": "Directing both here avoids a major script refactor in Production Stage."
+                  "title": "Zero script refactoring",
+                  "description": "Locking cast and locations before script generation eliminates costly rewrites on the Production Stage."
                 }
               ]
             }
           },
           {
             "icon": "blueprintDirector",
-            "title": "Blueprint Director",
-            "description": "Blueprint Director takes the change in your own words, spoken or typed. Focus the edit on Beats, Characters, or Story, then preview the revision. Nothing changes until you apply it.",
+            "title": "The Blueprint Director",
+            "description": "Speak or type your story notes to revise beats, characters, or world details. Preview a balanced revision side-by-side—nothing changes in your treatment until you approve the cut.",
             "screenshot": "Blueprint Director — direction, focus, preview, Apply revision",
             "learnMore": {
               "items": [
                 {
-                  "title": "Your words",
-                  "description": "Speak or type the change, and focus it on Beats, Characters, or Story."
+                  "title": "Targeted notes",
+                  "description": "Speak or type your direction and focus the revision on Beats, Characters, or Story."
                 },
                 {
-                  "title": "Preview",
-                  "description": "Generate balanced revision shows the change before you apply it."
+                  "title": "Side-by-side preview",
+                  "description": "Review a balanced revision before committing any changes to your Blueprint."
                 },
                 {
-                  "title": "You apply it",
-                  "description": "Nothing changes until you apply the revision."
+                  "title": "You hold the lock",
+                  "description": "Nothing in your treatment changes until you explicitly apply the revision."
                 }
               ]
             }
@@ -478,35 +480,35 @@
           {
             "icon": "blueprintResonance",
             "title": "Audience Resonance",
-            "description": "Save the audience, then Analyze. You see the scores and the recommendations. Nothing in the blueprint changes until you apply a recommendation in Blueprint Director.",
+            "description": "Score your treatment against your target audience's cultural and demographic profile. Catch structural pacing gaps early and apply targeted recommendations in the Blueprint Director.",
             "screenshot": "Audience Resonance — saved audience, scores, recommendations unapplied",
             "learnMore": {
               "items": [
                 {
-                  "title": "The read",
-                  "description": "Save the audience, then Analyze, and read the scores and recommendations."
+                  "title": "Pre-script validation",
+                  "description": "Analyze your treatment against your target audience to see category scores and story notes."
                 },
                 {
-                  "title": "Optional",
-                  "description": "A recommendation changes the blueprint only when you apply it in Blueprint Director."
+                  "title": "Selective application",
+                  "description": "Recommendations only modify your Blueprint when you choose to apply them."
                 }
               ]
             }
           },
           {
             "icon": "goToProduction",
-            "title": "Go to Production Stage",
-            "description": "Go to Production Stage when the storyline, the beats, and the cast are set. The 90-minute script is built from this board. The storyline does not have to be rebuilt in Production Stage.",
+            "title": "Greenlight to Production",
+            "description": "When the treatment, beat sheet, and cast are locked, step onto the Production Stage. SceneFlow compiles your full multi-chapter script directly from your approved Blueprint.",
             "screenshot": "Go to Production Stage — storyline, beats, and cast already set",
             "learnMore": {
               "items": [
                 {
-                  "title": "The handoff",
-                  "description": "Go to Production Stage opens the script from this blueprint."
+                  "title": "Seamless compilation",
+                  "description": "Stepping onto the Production Stage compiles the full script directly from your approved Blueprint."
                 },
                 {
-                  "title": "Already set",
-                  "description": "The storyline, the beats, and the cast are already directed."
+                  "title": "Locked foundation",
+                  "description": "Your storyline, beat structure, and cast arrive ready for scene and shot direction."
                 }
               ]
             }
@@ -604,7 +606,7 @@
               {
                 "icon": "productionScript",
                 "title": "Production Script",
-                "description": "Designed for traditional filmmakers, Production Script includes an in-platform preview and exports in industry-standard formats (PDF, FDX, Fountain). For many traditional filmmakers, using SceneFlow as an intelligent script production platform is a powerful standalone tool without video generation—and packaging your script with a Pre-Vis Animatic and Promo Trailers is a powerful tool for acquiring project funding.",
+                "description": "Built for traditional and AI filmmakers alike. Preview a clean, formatted screenplay in-studio and export in industry-standard formats (PDF, FDX, Fountain). Use SceneFlow as a standalone script room—or pair your screenplay with a Pre-Vis Animatic and Promo Trailer to pitch financiers and secure project funding.",
                 "screenshot": "Production Script — in-platform preview and PDF, FDX, and Fountain export",
                 "learnMore": {
                   "items": [
@@ -790,74 +792,75 @@
       {
         "id": "screening-room",
         "label": "Screening Room",
-        "promise": "The Screening Room is where the finished cut is watched, reviewed, and released. One player holds Pre-Vis, scenes, chapters, the master, the promo, and each Language Stream, so the dub is the same cut the Mixer rendered. Share one link for playback and notes on the picture. Publish a 3–5 minute scene, an 8–12 minute chapter, the master, or a promo when that piece is ready, and keep building the rest.",
+        "headline": "Screen the cut, rally your team, and premiere globally.",
+        "promise": "Your private theatre and finishing suite. Watch the Pre-Vis animatic, individual scenes, chapters, promos, and multi-language streams in one unified player. Share a single link for timestamped stakeholder notes—and ship a 3–5 minute scene, an 8–12 minute chapter, a promo, or the master while the rest of the production continues.",
         "features": [
           {
             "icon": "screeningPlayer",
-            "title": "One player",
-            "description": "Switch among Pre-Vis, scenes, chapters, the master, and promo. Pick a Language Stream and hear that version — doubled, lip-synced, or regenerated shot by shot. The player is the same cut the Mixer rendered.",
+            "title": "One Unified Player",
+            "description": "Toggle seamlessly between Pre-Vis animatics, scenes, chapters, trailers, and your final master. Switch Language Streams on the fly to audition dubbed, lip-synced, or shot-regenerated localizations—always locked to the exact cut from the Mixer.",
             "screenshot": "Screening Room player",
             "learnMore": {
               "items": [
                 {
-                  "title": "One surface",
-                  "description": "Switch among Pre-Vis, scenes, chapters, the master, and promo."
+                  "title": "Every milestone in one view",
+                  "description": "Switch effortlessly among Pre-Vis, scenes, chapters, promos, and the final master."
                 },
                 {
-                  "title": "Language Stream",
-                  "description": "Pick a version and hear it doubled, lip-synced, or regenerated shot by shot."
+                  "title": "Live language switching",
+                  "description": "Audition any Language Stream—dubbed, lip-synced, or shot-regenerated—on the fly."
                 },
                 {
-                  "title": "Same cut",
-                  "description": "The player is the cut the Mixer rendered."
+                  "title": "Frame-locked to the Mixer",
+                  "description": "Every stream plays the exact edit and timing rendered in the Mixer."
                 }
               ]
             }
           },
           {
             "icon": "screeningCollab",
-            "title": "Collaborate on the cut",
-            "description": "Share one link. Reviewers watch with real playback and leave notes on the picture. You are not exporting a rough file into email to collect feedback. A written note notifies you, and you can read it on your phone.",
+            "title": "Frame-Accurate Collaboration",
+            "description": "Stop exporting rough cuts to email. Share a private screening link where collaborators and investors watch in real time and drop notes directly on the picture—with instant notifications sent straight to your phone.",
             "screenshot": "Shared review",
             "learnMore": {
               "items": [
                 {
-                  "title": "One link",
-                  "description": "Reviewers watch with real playback and leave notes on the picture."
+                  "title": "Private screening links",
+                  "description": "Reviewers watch full-resolution playback and leave timestamped notes on the picture."
                 },
                 {
-                  "title": "No email rough cut",
-                  "description": "You are not exporting a rough file into email to collect feedback."
+                  "title": "No rough-cut file exports",
+                  "description": "Collect stakeholder feedback in one place without mailing heavy video files."
                 },
                 {
-                  "title": "Phone notes",
-                  "description": "A written note notifies you, and you can read it on your phone, while the studio stays on a desktop or tablet."
+                  "title": "Instant mobile alerts",
+                  "description": "New reviewer notes notify you immediately on your phone while you direct on desktop."
                 }
               ]
             }
           },
           {
             "icon": "packageShip",
-            "title": "Release when it is ready",
-            "description": "Publish a 3–5 minute scene, an 8–12 minute chapter, the master, or a promo to YouTube, Facebook, or TikTok, in 16:9 or 9:16, or download the file. Titles, description, and privacy travel with the package. Ship the piece that is finished; keep building the rest.",
+            "title": "Modular Release & Distribution",
+            "description": "Don't wait for a 90-minute render to build your audience. Publish a 3–5 minute scene, an 8–12 minute chapter, a vertical promo, or the full master to YouTube, TikTok, and Facebook in 16:9 or 9:16—complete with titles, descriptions, and privacy controls.",
             "screenshot": "Publish package",
             "learnMore": {
               "items": [
                 {
-                  "title": "Ship a piece",
-                  "description": "Publish a 3–5 minute scene, an 8–12 minute chapter, the master, or a promo."
+                  "title": "Episodic or full release",
+                  "description": "Publish a 3–5 minute scene, an 8–12 minute chapter, a promo trailer, or the full master."
                 },
                 {
-                  "title": "Destinations",
-                  "description": "Publish to YouTube, Facebook, or TikTok, in 16:9 or 9:16, or download the file."
+                  "title": "Multi-platform formats",
+                  "description": "Ship directly to YouTube, Facebook, or TikTok in 16:9 or 9:16, or download the master MP4."
                 },
                 {
-                  "title": "Package",
-                  "description": "Titles, description, and privacy travel with the package."
+                  "title": "Complete release package",
+                  "description": "Titles, descriptions, thumbnails, and privacy settings travel with every export."
                 },
                 {
-                  "title": "Keep building",
-                  "description": "Ship the piece that is finished and keep building the rest."
+                  "title": "Build while you release",
+                  "description": "Ship the scene or chapter that is finished while you continue producing the rest."
                 }
               ]
             }

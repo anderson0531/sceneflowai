@@ -35,7 +35,7 @@ export const PRICING_LANDING_COPY = {
     title: 'Bring Your Own Key',
     badge: 'Pro & Studio Plans',
     description:
-      'Your API key can run reference, still, and clip generations. SceneFlow charges a 20% orchestration fee on those jobs. Hosted SceneFlow rates can be lower than a personal API account as platform volume grows.',
+      "Connect your own Google Vertex AI or Kling API keys on Pro & Studio plans for direct provider billing (with a 20% platform orchestration fee)—or use SceneFlow's hosted credits to take advantage of our volume-discounted model rates.",
     savingsHighlight: '20% orchestration fee',
     benefits: [
       {
