@@ -290,6 +290,21 @@ export class SubscriptionService {
   }
 
   /**
+   * Check if user has an active recurring subscription required to purchase 12-month Add-On credit packs
+   */
+  static async canPurchaseAddonPack(userId: string): Promise<boolean> {
+    try {
+      const subscription = await this.getUserSubscription(userId)
+      return (
+        subscription.status === 'active' &&
+        Boolean(subscription.tier && !subscription.tier.is_one_time)
+      )
+    } catch {
+      return false
+    }
+  }
+
+  /**
    * Grant Explorer one-time purchase (750 addon credits)
    */
   static async grantExplorerPurchase(userId: string): Promise<void> {
@@ -373,7 +388,16 @@ export class SubscriptionService {
       throw new Error(`Invalid subscription tier: ${tierName}`)
     }
 
-    const tier = await SubscriptionTier.findOne({ where: { name: normalizedTier } })
+    let tier = await SubscriptionTier.findOne({ where: { name: normalizedTier } })
+    if (!tier) {
+      try {
+        const { seedSubscriptionTiers } = await import('@/lib/database/seedSubscriptionTiers')
+        await seedSubscriptionTiers()
+        tier = await SubscriptionTier.findOne({ where: { name: normalizedTier } })
+      } catch (seedErr) {
+        console.warn('[SubscriptionService] Auto-seed tiers warning:', seedErr)
+      }
+    }
     if (!tier) {
       throw new Error(`Subscription tier "${normalizedTier}" not found in database`)
     }

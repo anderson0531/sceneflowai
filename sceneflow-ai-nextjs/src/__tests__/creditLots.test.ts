@@ -266,6 +266,17 @@ describe('published pricing copy', () => {
     expect(terms).toContain('more credits on purchases and renewals')
     expect(terms).not.toContain('never expire')
   })
+
+  it('includes the $19/mo Hobbyist tier, Continuity Vault retention, and 4 filmmaker perspectives', () => {
+    expect(TIER_CATALOG.hobbyist.priceUsd).toBe(19)
+    expect(TIER_CATALOG.hobbyist.credits).toBe(1500)
+    expect(TIER_CATALOG.hobbyist.storageGb).toBe(10)
+    expect(TIER_CATALOG.hobbyist.isOneTime).toBe(false)
+    expect(TIER_CATALOG.hobbyist.marketingFeatures.join('\n')).toContain('expire at period end')
+    expect(PRICING_LANDING_COPY.filmmakerPerspectives.cards).toHaveLength(4)
+    expect(PRICING_LANDING_COPY.membershipModel.pillars).toHaveLength(2)
+    expect(PRICING_LANDING_COPY.creditTopUps.subscriberNote).toContain('active monthly membership')
+  })
 })
 
 describe('subscription credit cron does not mint a free month', () => {

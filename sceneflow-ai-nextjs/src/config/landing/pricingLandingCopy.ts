@@ -1,25 +1,82 @@
 /** Pricing section — display strings for landing i18n. */
 
 export const PRICING_LANDING_COPY = {
-  badge: 'Simple Pricing',
+  badge: 'Studio Membership & Usage Pricing',
   title: 'Start with Explorer — $9',
   subtitle:
-    'Test the complete pipeline now with a frictionless $9 entry.',
+    'Test the complete pipeline with a $9 Test Flight, then choose a monthly Studio Membership to retain your Continuity Vault and scale production at your pace.',
   explorerHighlight:
-    'The fastest way to experience the complete SceneFlow studio — from concept to Screening Room.',
+    'From personal stories and 5–15 minute episodic chapters to investor Pre-Vis pitch packages and $500–$5,000 hybrid productions.',
   trustBadges: [
     'Secure payments via Whop',
     '$9 Explorer to try the studio',
-    'Monthly credits expire at period end',
+    'Active membership retains Continuity Vault',
     'Cancel anytime',
   ],
   valueAnchor: {
-    traditionalCost: '$2,000+',
-    traditionalLabel: 'Traditional pre-vis',
+    traditionalCost: '$5,000–$50,000+',
+    traditionalLabel: 'Traditional pre-vis & production',
     vs: 'vs',
-    sceneFlowCost: '$49-149',
-    sceneFlowLabel: 'SceneFlow monthly',
-    saveBadge: 'Save 90%+ per project',
+    sceneFlowCost: '$19–$599/mo + Add-Ons',
+    sceneFlowLabel: 'SceneFlow Studio & Continuity Vault',
+    saveBadge: 'Save 90%+ per production',
+  },
+  filmmakerPerspectives: {
+    heading: 'One Studio Pipeline. Built for Four Filmmaker Realities.',
+    subheading:
+      'Whether you are crafting a personal film for family, building a monetized social series one chapter at a time, pitching financiers, or running a hybrid live-action + AI shoot, your plan scales with how you produce.',
+    cards: [
+      {
+        id: 'hobbyist',
+        badge: 'Personal & Vault Keeper • $19/mo',
+        title: 'Personal Stories & Off-Season Vault Retention',
+        description:
+          'Create meaningful films, memoirs, and stories for family and friends using voiced Pre-Vis animatics and selective video clips—or use the $19/mo plan between shoots to keep your Continuity Library of characters, wardrobes, and sets active.',
+        recommendedPlan: 'Hobbyist ($19/mo)',
+      },
+      {
+        id: 'chapter',
+        badge: 'New & Indie Creators • $49/mo',
+        title: 'The 5–15 Minute Chapter Strategy',
+        description:
+          'Skip the cost and time barrier of rendering a 90-minute feature upfront. Publish your story in 5–15 minute scenes or episodic chapters to manage your monthly compute budget while steadily building an audience.',
+        recommendedPlan: 'Starter ($49/mo)',
+      },
+      {
+        id: 'series',
+        badge: 'Monetized Channels • $149/mo',
+        title: 'Sticky Character Continuity for Social Series',
+        description:
+          'Audiences subscribe to channels when they recognize recurring characters. Your Continuity Vault locks cast faces, outfits, custom voice clones, and locations across episodes so you can sustainably monetize on YouTube, TikTok, and Reels.',
+        recommendedPlan: 'Pro ($149/mo)',
+      },
+      {
+        id: 'hybrid',
+        badge: 'Experienced & Hybrid Filmmakers • $149–$599/mo',
+        title: 'Pre-Vis Funding Packages & $500–$5,000 Hybrid Shoots',
+        description:
+          'Export industry-standard scripts (PDF, FDX, Fountain) paired with a Pre-Vis Animatic and Promo Trailer to secure investor funding—or upload live-filmed scenes and blend them with 4K AI shots at a fraction of physical production costs.',
+        recommendedPlan: 'Pro / Studio + Add-Ons',
+      },
+    ],
+  },
+  membershipModel: {
+    badge: 'Predictable Base + Flexible Compute',
+    title: 'How Studio Membership & Pay-As-You-Produce Add-Ons Work',
+    description:
+      'SceneFlow separates recurring studio & asset hosting from burst production compute—so your characters and world stay locked year-round, and you only pay for heavy generation when cameras roll.',
+    pillars: [
+      {
+        title: '1. Base Membership Retains Your Continuity Vault',
+        description:
+          'An active monthly plan ($19–$599/mo) maintains your studio access, Screening Room links, and Active Continuity Vault—preserving your recurring cast faces, wardrobes, custom voice clones, locations, and Series Bibles across seasons, plus monthly base credits.',
+      },
+      {
+        title: '2. Scale Up Anytime with 12-Month Add-On Packs',
+        description:
+          'Active monthly members can purchase $25, $100, or $250 Add-On credit packs on demand whenever ramping up for a multi-episode season or a $500–$5,000 hybrid feature shoot. Add-On packs last 12 months while your membership remains active.',
+      },
+    ],
   },
   teamCta: {
     title: 'In-house team or institution?',
@@ -63,13 +120,28 @@ export const PRICING_LANDING_COPY = {
       'The 20% fee is a SceneFlow orchestration charge. Provider usage bills to your account. SceneFlow-hosted generation can cost less than bringing a personal key.',
   },
   creditTopUps: {
-    title: 'Need More Credits?',
-    subtitle: 'Buy $25, $100, or $250 add-ons as often as you need. Each pack lasts 12 months.',
+    title: 'Subscriber Pay-As-You-Produce Add-On Packs',
+    subtitle:
+      'Exclusively for active monthly members. Buy $25, $100, or $250 add-ons as often as you need. Each pack lasts 12 months.',
     packs: [
-      { label: '$25 Add-on', description: '2,000 credits. Buy as often as you need.' },
-      { label: '$100 Add-on', description: '9,000 credits. Buy as often as you need.' },
-      { label: '$250 Add-on', description: '25,000 credits. Buy as often as you need.' },
+      {
+        label: '$25 Add-on',
+        credits: '2,000 credits',
+        description: '2,000 credits ($0.0125/cr) — ideal for finishing a 5–15 min chapter or Promo Trailer.',
+      },
+      {
+        label: '$100 Add-on',
+        credits: '9,000 credits',
+        description: '9,000 credits ($0.0111/cr) — ideal for multi-chapter series bursts or Pre-Vis pitch packages.',
+      },
+      {
+        label: '$250 Add-on',
+        credits: '25,000 credits',
+        description: '25,000 credits ($0.0100/cr) — built for $500–$5,000 hybrid productions and feature slates.',
+      },
     ],
+    subscriberNote:
+      'Requires an active monthly membership (Hobbyist, Starter, Pro, or Studio) to purchase and retain Continuity Vault storage.',
     creditsUnit: 'credits',
   },
   calculator: {
@@ -110,13 +182,13 @@ export const PRICING_LANDING_COPY = {
     minSuffix: 'min',
   },
   tierGrid: {
-    productionTestFlight: 'Production Test Flight',
+    productionTestFlight: '30-Day Studio Test Flight',
     getStarted: 'Get Started',
     startTestFlight: 'Start Test Flight',
     loading: 'Loading...',
     mostPopular: 'Most Popular',
     creditsPerMonth: 'Credits/mo',
-    storage: 'Storage',
+    storage: 'Continuity Vault',
     perMonth: '/month',
   },
   trust: {
@@ -125,3 +197,4 @@ export const PRICING_LANDING_COPY = {
     creditsNeverExpire: 'Explorer credits last 90 days',
   },
 } as const
+

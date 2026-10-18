@@ -3,7 +3,7 @@ import { sequelize } from '../config/database'
 
 export interface SubscriptionTierAttributes {
   id: string
-  name: 'explorer' | 'trial' | 'starter' | 'pro' | 'studio' | 'enterprise'
+  name: 'explorer' | 'trial' | 'hobbyist' | 'starter' | 'pro' | 'studio' | 'enterprise'
   display_name: string
   monthly_price_usd: number
   annual_price_usd: number
@@ -27,7 +27,7 @@ export interface SubscriptionTierCreationAttributes extends Optional<Subscriptio
 
 export class SubscriptionTier extends Model<SubscriptionTierAttributes, SubscriptionTierCreationAttributes> implements SubscriptionTierAttributes {             
   declare id: string
-  declare name: 'trial' | 'starter' | 'pro' | 'studio' | 'enterprise'
+  declare name: 'explorer' | 'trial' | 'hobbyist' | 'starter' | 'pro' | 'studio' | 'enterprise'
   declare display_name: string
   declare monthly_price_usd: number
   declare annual_price_usd: number
@@ -68,9 +68,10 @@ export class SubscriptionTier extends Model<SubscriptionTierAttributes, Subscrip
     const slotsByTier: Record<string, number> = {
       explorer: 0,
       trial: 0,
+      hobbyist: 0,
       starter: 0,
-      pro: 3,
-      studio: 10,
+      pro: 5,
+      studio: 25,
       enterprise: 999,
     }
     return slotsByTier[this.name] ?? 0
@@ -85,7 +86,7 @@ SubscriptionTier.init(
       primaryKey: true,
     },
     name: {
-      type: DataTypes.ENUM('explorer', 'trial', 'starter', 'pro', 'studio', 'enterprise'),
+      type: DataTypes.ENUM('explorer', 'trial', 'hobbyist', 'starter', 'pro', 'studio', 'enterprise'),
       allowNull: false,
       unique: true,
     },

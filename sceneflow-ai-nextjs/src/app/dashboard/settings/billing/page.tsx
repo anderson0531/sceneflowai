@@ -360,7 +360,7 @@ export default function BillingPage() {
               </div>
             </CardHeader>
             <CardContent>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
                 {CHECKOUT_PLANS.map((plan) => {
                   const isCurrent = currentTierName === plan.name
                   const isExplorerOwned = plan.name === 'explorer' && explorerPurchased
@@ -369,26 +369,26 @@ export default function BillingPage() {
                   return (
                     <div
                       key={plan.name}
-                      className={`p-4 rounded-lg border-2 transition-all ${
+                      className={`p-4 rounded-lg border-2 transition-all flex flex-col justify-between ${
                         isCurrent || isExplorerOwned
                           ? 'border-green-500/60 bg-green-900/20'
                           : 'border-gray-700/60 bg-gray-900/80 hover:border-sf-primary/40'
                       }`}
                     >
                       <div className="text-center mb-3">
-                        <div className="text-lg font-bold text-white">{plan.displayName}</div>
-                        <div className="text-2xl font-bold text-sf-primary">
+                        <div className="text-base font-bold text-white leading-snug">{plan.displayName}</div>
+                        <div className="text-2xl font-bold text-sf-primary mt-1">
                           ${plan.price}
                           <span className="text-sm text-gray-400">
                             {plan.isOneTime ? ' once' : '/mo'}
                           </span>
                         </div>
                         <div className="text-xs text-gray-400 mt-1">
-                          {plan.credits.toLocaleString()} credits{plan.isOneTime ? '' : '/mo'}
+                          {plan.credits.toLocaleString()} credits{plan.isOneTime ? '' : '/mo'} • {plan.storageGb} GB Vault
                         </div>
                         {plan.isOneTime && (
                           <div className="text-[10px] text-gray-500 mt-1">
-                            Add-on credits only — does not unlock Pro features
+                            30-day Test Flight — subscribe to retain Continuity Vault & unlock Add-Ons
                           </div>
                         )}
                       </div>
@@ -580,8 +580,10 @@ export default function BillingPage() {
 
               <div className="flex items-center justify-between p-4 bg-gray-900/80 rounded-lg border border-gray-700/60">
                 <div>
-                  <h4 className="text-white font-semibold">Purchase Add-on Credits</h4>
-                  <p className="text-gray-400 text-sm">Each add-on pack lasts 12 months from purchase</p>
+                  <h4 className="text-white font-semibold">Purchase Add-on Credits ($25 / $100 / $250)</h4>
+                  <p className="text-gray-400 text-sm">
+                    Exclusive to active monthly members (Hobbyist, Starter, Pro, Studio). Each add-on pack lasts 12 months from purchase.
+                  </p>
                 </div>
                 <Button variant="outline" className="border-gray-700/60 text-gray-200 hover:bg-gray-900/80 flex items-center gap-2" disabled>
                   Coming Soon

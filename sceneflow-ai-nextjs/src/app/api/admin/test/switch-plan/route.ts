@@ -24,13 +24,14 @@ import { applyPackGrant, applySubscriptionGrant } from '@/lib/credits/creditLots
 import { writeLedgerIntents } from '@/services/CreditService';
 
 // Valid tier names
-const VALID_TIERS = ['explorer', 'trial', 'starter', 'pro', 'studio', 'enterprise'] as const;
+const VALID_TIERS = ['explorer', 'trial', 'hobbyist', 'starter', 'pro', 'studio', 'enterprise'] as const;
 type TierName = typeof VALID_TIERS[number];
 
 // Credit amounts per tier
 const TIER_CREDITS: Record<TierName, number> = {
   explorer: 750,
   trial: 750,
+  hobbyist: 1500,
   starter: 4500,
   pro: 15000,
   studio: 75000,
@@ -106,9 +107,19 @@ export async function POST(request: NextRequest) {
 
     // Find the subscription tier (map legacy trial → explorer)
     const lookupName = tierName === 'trial' ? 'explorer' : tierName
-    const tier = await SubscriptionTier.findOne({
+    let tier = await SubscriptionTier.findOne({
       where: { name: lookupName },
     });
+
+    if (!tier) {
+      try {
+        const { seedSubscriptionTiers } = await import('@/lib/database/seedSubscriptionTiers');
+        await seedSubscriptionTiers();
+        tier = await SubscriptionTier.findOne({ where: { name: lookupName } });
+      } catch (seedErr) {
+        console.warn('[Test Plan Switch] Auto-seed warning:', seedErr);
+      }
+    }
 
     if (!tier) {
       return NextResponse.json(

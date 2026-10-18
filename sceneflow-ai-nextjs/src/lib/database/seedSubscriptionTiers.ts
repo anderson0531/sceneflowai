@@ -22,6 +22,17 @@ export async function seedSubscriptionTiers(): Promise<{
     await sequelize.authenticate()
     console.log('[Seed Tiers] Database connection established')
 
+    // Ensure PostgreSQL enum includes 'explorer' and 'hobbyist'
+    for (const enumType of ['subscription_tiers_name_enum', 'enum_subscription_tiers_name']) {
+      for (const val of ['explorer', 'hobbyist']) {
+        try {
+          await sequelize.query(`ALTER TYPE ${enumType} ADD VALUE IF NOT EXISTS '${val}';`)
+        } catch {
+          // Ignore if enum type name differs
+        }
+      }
+    }
+
     for (const tierData of SUBSCRIPTION_TIERS) {
       try {
         const existingTier = await SubscriptionTier.findOne({
