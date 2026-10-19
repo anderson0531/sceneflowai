@@ -10,6 +10,7 @@ import {
   CONTINUITY_LIBRARY_SCREENSHOT_WEBP,
   DIRECT_BEATS_SCREENSHOT_WEBP,
   DIRECT_EPISODE_SCREENSHOT_WEBP,
+  DIRECT_PUBLISHING_SCREENSHOT_WEBP,
   GO_TO_PRODUCTION_SCREENSHOT_WEBP,
   NEW_SERIES_SCREENSHOT_WEBM,
   PRE_VIS_ANIMATIC_SCREENSHOT_WEBP,
@@ -169,6 +170,12 @@ describe('key feature screenshots', () => {
     expect(keyFeatureScreenshotSrc(getKeyFeatureScreenshot('promoTrailers')!)).toBe(
       PROMO_TRAILERS_SCREENSHOT_WEBP
     )
+    expect(getKeyFeatureScreenshot('shipPackage')).toEqual({
+      imageUrl: DIRECT_PUBLISHING_SCREENSHOT_WEBP,
+    })
+    expect(keyFeatureScreenshotSrc(getKeyFeatureScreenshot('shipPackage')!)).toBe(
+      DIRECT_PUBLISHING_SCREENSHOT_WEBP
+    )
     expect(NEW_SERIES_SCREENSHOT_WEBM).toBe(
       '/landing/key-features/screenshots/new-series.webm'
     )
@@ -241,6 +248,9 @@ describe('key feature screenshots', () => {
     expect(PROMO_TRAILERS_SCREENSHOT_WEBP).toBe(
       '/landing/key-features/screenshots/promo-trailers.webp'
     )
+    expect(DIRECT_PUBLISHING_SCREENSHOT_WEBP).toBe(
+      '/landing/key-features/screenshots/direct-publishing.webp'
+    )
 
     const webm = readFileSync(path.join(ROOT, 'public', NEW_SERIES_SCREENSHOT_WEBM))
     expect(webm.subarray(0, 4).toString('hex')).toBe('1a45dfa3')
@@ -269,6 +279,7 @@ describe('key feature screenshots', () => {
       PRODUCTION_MIXER_SCREENSHOT_WEBP,
       STREAMS_MULTILANGUAGE_SCREENSHOT_WEBP,
       PROMO_TRAILERS_SCREENSHOT_WEBP,
+      DIRECT_PUBLISHING_SCREENSHOT_WEBP,
     ]) {
       const webp = readFileSync(path.join(ROOT, 'public', src))
       expect(webp.subarray(0, 4).toString('ascii')).toBe('RIFF')

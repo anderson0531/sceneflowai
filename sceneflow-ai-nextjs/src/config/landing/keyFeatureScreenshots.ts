@@ -30,6 +30,7 @@
  * The Mixer is a lossless WebP at 5120×4896.
  * Multilanguage Streams is a lossless WebP at 5120×2902.
  * Promo & Trailers is a lossless WebP at 5120×5148.
+ * Direct Publishing is a lossless WebP at 5120×2805.
  */
 
 export const NEW_SERIES_SCREENSHOT_WEBM =
@@ -104,6 +105,9 @@ export const STREAMS_MULTILANGUAGE_SCREENSHOT_WEBP =
 export const PROMO_TRAILERS_SCREENSHOT_WEBP =
   '/landing/key-features/screenshots/promo-trailers.webp'
 
+export const DIRECT_PUBLISHING_SCREENSHOT_WEBP =
+  '/landing/key-features/screenshots/direct-publishing.webp'
+
 export type KeyFeatureScreenshot = {
   webmUrl?: string
   imageUrl?: string
@@ -134,6 +138,7 @@ const KEY_FEATURE_SCREENSHOTS: Record<string, KeyFeatureScreenshot> = {
   mixer: { imageUrl: PRODUCTION_MIXER_SCREENSHOT_WEBP },
   languageStreams: { imageUrl: STREAMS_MULTILANGUAGE_SCREENSHOT_WEBP },
   promoTrailers: { imageUrl: PROMO_TRAILERS_SCREENSHOT_WEBP },
+  shipPackage: { imageUrl: DIRECT_PUBLISHING_SCREENSHOT_WEBP },
 }
 
 export function getKeyFeatureScreenshot(icon: string): KeyFeatureScreenshot | null {

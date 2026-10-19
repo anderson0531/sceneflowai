@@ -187,6 +187,10 @@ const SCREENSHOT_FRAMING_PRESETS: Array<{
     match: 'promo-trailers.webp',
     preset: { width: 5120, height: 5148, contentWidthFraction: 0.45, anchorY: 0.92 },
   },
+  {
+    match: 'direct-publishing.webp',
+    preset: { width: 5120, height: 2805, contentWidthFraction: 0.48, anchorY: 0.5 },
+  },
 ]
 
 const DEFAULT_PRESET: ScreenshotFramingPreset = {
