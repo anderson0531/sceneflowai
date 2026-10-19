@@ -901,32 +901,6 @@
                 }
               ]
             }
-          },
-          {
-            "icon": "packageShip",
-            "title": "Itoe itakapokuwa tayari",
-            "description": "Chapisha kipande cha dakika 3–5, sura ya dakika 8–12, nakala kuu, au video ya utangazaji kwenye YouTube, Facebook, au TikTok, katika uwiano wa 16:9 au 9:16, au pakua faili hiyo. Vichwa vya habari, maelezo, na mipangilio ya faragha huambatana na faili hiyo. Toa sehemu iliyokamilika; endelea kuandaa sehemu nyingine.",
-            "screenshot": "Chapisha kifurushi",
-            "learnMore": {
-              "items": [
-                {
-                  "title": "Tuma kipande",
-                  "description": "Chapisha tukio la dakika 3–5, sura ya dakika 8–12, nakala kuu, au tangazo."
-                },
-                {
-                  "title": "Maeneo ya kwenda",
-                  "description": "Chapisha kwenye YouTube, Facebook, au TikTok, kwa uwiano wa 16:9 au 9:16, au pakua faili."
-                },
-                {
-                  "title": "Kifurushi",
-                  "description": "Vichwa vya habari, maelezo, na faragha huambatana na kifurushi hicho."
-                },
-                {
-                  "title": "Endelea kujenga",
-                  "description": "Safirisha sehemu iliyokamilika na uendelee kutengeneza sehemu iliyobaki."
-                }
-              ]
-            }
           }
         ]
       }

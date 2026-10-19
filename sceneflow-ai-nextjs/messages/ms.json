@@ -901,32 +901,6 @@
                 }
               ]
             }
-          },
-          {
-            "icon": "packageShip",
-            "title": "Lancarkan apabila ia sudah siap",
-            "description": "Terbitkan babak berdurasi 3–5 minit, bab berdurasi 8–12 minit, versi induk, atau video promosi ke YouTube, Facebook, atau TikTok dalam format 16:9 atau 9:16, ataupun muat turun fail tersebut. Tajuk, keterangan, dan tetapan privasi disertakan bersama pakej tersebut. Terbitkan bahagian yang telah siap; teruskan pembinaan bahagian yang selebihnya.",
-            "screenshot": "Terbitkan pakej",
-            "learnMore": {
-              "items": [
-                {
-                  "title": "Hantar satu unit",
-                  "description": "Terbitkan babak berdurasi 3–5 minit, bab berdurasi 8–12 minit, versi induk, atau bahan promosi."
-                },
-                {
-                  "title": "Destinasi",
-                  "description": "Terbitkan ke YouTube, Facebook, atau TikTok dalam nisbah 16:9 atau 9:16, atau muat turun fail tersebut."
-                },
-                {
-                  "title": "Pakej",
-                  "description": "Tajuk, penerangan dan privasi turut serta bersama pakej tersebut."
-                },
-                {
-                  "title": "Teruskan membina",
-                  "description": "Hantarkan bahagian yang telah siap dan teruskan pembinaan bahagian yang selebihnya."
-                }
-              ]
-            }
           }
         ]
       }

@@ -55,7 +55,6 @@ export const KEY_FEATURE_VIDEO_LABELS: Record<string, string> = {
   shipPackage: 'Package and ship',
   screeningPlayer: 'Screening Room player',
   screeningCollab: 'Collaborate on the cut',
-  packageShip: 'Release when it is ready',
 }
 
 const LOCALE_FILENAME_LABELS: Record<VideoLocaleId, string> = {

@@ -83,7 +83,7 @@ export const FEATURE_CHAPTER_MAP: readonly FeatureRoomChapterPlan[] = [
     beats: [
       {
         id: 'player',
-        demoIcons: ['screeningPlayer', 'screeningCollab', 'packageShip'],
+        demoIcons: ['screeningPlayer', 'screeningCollab'],
         standaloneDemo: false,
       },
     ],

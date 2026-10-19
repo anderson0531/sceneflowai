@@ -901,32 +901,6 @@
                 }
               ]
             }
-          },
-          {
-            "icon": "packageShip",
-            "title": "Julkaise, kun se on valmis",
-            "description": "Julkaise 3–5-minuuttinen kohtaus, 8–12-minuuttinen luku, valmis pääversio tai mainosvideo YouTubeen, Facebookiin tai TikTokiin (kuvasuhteella 16:9 tai 9:16) tai lataa tiedosto. Otsikot, kuvaus ja yksityisyysasetukset kulkevat paketin mukana. Julkaise valmis osuus ja jatka muun sisällön työstämistä.",
-            "screenshot": "Julkaise paketti",
-            "learnMore": {
-              "items": [
-                {
-                  "title": "Lähetä kappale",
-                  "description": "Julkaise 3–5-minuuttinen kohtaus, 8–12-minuuttinen luku, master-versio tai promo."
-                },
-                {
-                  "title": "Matkakohteet",
-                  "description": "Julkaise YouTubessa, Facebookissa tai TikTokissa 16:9- tai 9:16-muodossa tai lataa tiedosto."
-                },
-                {
-                  "title": "Paketti",
-                  "description": "Otsikot, kuvaus ja yksityisyysasetukset kulkevat paketin mukana."
-                },
-                {
-                  "title": "Jatka rakentamista",
-                  "description": "Toimita valmis osa ja jatka lopun rakentamista."
-                }
-              ]
-            }
           }
         ]
       }

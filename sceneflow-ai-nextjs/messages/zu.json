@@ -901,32 +901,6 @@
                 }
               ]
             }
-          },
-          {
-            "icon": "packageShip",
-            "title": "Khipha uma sekulungile",
-            "description": "Shicilela isigcawu esithatha imizuzu engu-3–5, isahluko esithatha imizuzu engu-8–12, ifayela eliyinhloko (master), noma ividiyo yokukhangisa ku-YouTube, Facebook, noma TikTok, ngefomethi engu-16:9 noma 9:16, noma ulande ifayela. Izihloko, incazelo, kanye nezilungiselelo zobumfihlo kuhamba kanye naleli fayela. Khipha ingxenye eseqediwe; qhubeka nokusebenza kwezinye izingxenye.",
-            "screenshot": "Shicilela iphakethe",
-            "learnMore": {
-              "items": [
-                {
-                  "title": "Thumela ucezu",
-                  "description": "Shicilela isigcawu esithatha imizuzu engu-3–5, isahluko esithatha imizuzu engu-8–12, inguqulo eyinhloko, noma ividiyo yokukhangisa."
-                },
-                {
-                  "title": "Izindawo okuyiwa kuzo",
-                  "description": "Shicilela ku-YouTube, ku-Facebook, noma ku-TikTok, ngesilinganiso esingu-16:9 noma 9:16, noma ulande ifayela."
-                },
-                {
-                  "title": "Iphakethe",
-                  "description": "Izihloko, incazelo, kanye nemithetho yobumfihlo kuhamba naleli phakethe."
-                },
-                {
-                  "title": "Qhubeka nokwakha",
-                  "description": "Thumela ingxenye esiqediwe bese uqhubeka nokwakha okunye."
-                }
-              ]
-            }
           }
         ]
       }

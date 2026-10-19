@@ -838,32 +838,6 @@
                 }
               ]
             }
-          },
-          {
-            "icon": "packageShip",
-            "title": "Modular Release & Distribution",
-            "description": "Don't wait for a 90-minute render to build your audience. Publish a 3–5 minute scene, an 8–12 minute chapter, a vertical promo, or the full master to YouTube, TikTok, and Facebook in 16:9 or 9:16—complete with titles, descriptions, and privacy controls.",
-            "screenshot": "Publish package",
-            "learnMore": {
-              "items": [
-                {
-                  "title": "Episodic or full release",
-                  "description": "Publish a 3–5 minute scene, an 8–12 minute chapter, a promo trailer, or the full master."
-                },
-                {
-                  "title": "Multi-platform formats",
-                  "description": "Ship directly to YouTube, Facebook, or TikTok in 16:9 or 9:16, or download the master MP4."
-                },
-                {
-                  "title": "Complete release package",
-                  "description": "Titles, descriptions, thumbnails, and privacy settings travel with every export."
-                },
-                {
-                  "title": "Build while you release",
-                  "description": "Ship the scene or chapter that is finished while you continue producing the rest."
-                }
-              ]
-            }
           }
         ]
       }

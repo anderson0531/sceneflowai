@@ -901,32 +901,6 @@
                 }
               ]
             }
-          },
-          {
-            "icon": "packageShip",
-            "title": "Wydaj, gdy będzie gotowe",
-            "description": "Opublikuj scenę (3–5 min), rozdział (8–12 min), wersję finalną lub materiał promocyjny w serwisach YouTube, Facebook czy TikTok (w formacie 16:9 lub 9:16) albo pobierz plik. Tytuły, opis i ustawienia prywatności są częścią pakietu. Udostępnij gotowy fragment i pracuj dalej nad resztą.",
-            "screenshot": "Opublikuj pakiet",
-            "learnMore": {
-              "items": [
-                {
-                  "title": "Wysłać egzemplarz",
-                  "description": "Opublikuj scenę trwającą 3–5 minut, rozdział trwający 8–12 minut, wersję finalną lub materiał promocyjny."
-                },
-                {
-                  "title": "Kierunki",
-                  "description": "Opublikuj w serwisie YouTube, Facebook lub TikTok w formacie 16:9 albo 9:16 lub pobierz plik."
-                },
-                {
-                  "title": "Pakiet",
-                  "description": "Tytuły, opis i ustawienia prywatności są przenoszone wraz z pakietem."
-                },
-                {
-                  "title": "Buduj dalej",
-                  "description": "Wypuść gotowy element i kontynuuj prace nad resztą."
-                }
-              ]
-            }
           }
         ]
       }

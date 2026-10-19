@@ -901,32 +901,6 @@
                 }
               ]
             }
-          },
-          {
-            "icon": "packageShip",
-            "title": "Ilabas kapag handa na",
-            "description": "Mag-publish ng eksenang may habang 3–5 minuto, kabanatang 8–12 minuto, ang master copy, o isang promo sa YouTube, Facebook, o TikTok—sa format na 16:9 o 9:16—o kaya ay i-download ang file. Kasama sa package ang mga pamagat, paglalarawan, at privacy settings. Ilabas na ang tapos nang bahagi; ipagpatuloy ang pagbuo sa natitira.",
-            "screenshot": "I-publish ang package",
-            "learnMore": {
-              "items": [
-                {
-                  "title": "Magpadala ng isang piraso",
-                  "description": "Mag-publish ng eksenang may habang 3–5 minuto, kabanatang may habang 8–12 minuto, ng master, o ng promo."
-                },
-                {
-                  "title": "Mga Destinasyon",
-                  "description": "I-publish sa YouTube, Facebook, o TikTok sa 16:9 o 9:16, o i-download ang file."
-                },
-                {
-                  "title": "Pakete",
-                  "description": "Kasama ng package ang mga pamagat, paglalarawan, at privacy."
-                },
-                {
-                  "title": "Patuloy na magtayo",
-                  "description": "Ipadala ang bahaging tapos na at ipagpatuloy ang pagbuo sa natitirang bahagi."
-                }
-              ]
-            }
           }
         ]
       }

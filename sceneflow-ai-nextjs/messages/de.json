@@ -901,32 +901,6 @@
                 }
               ]
             }
-          },
-          {
-            "icon": "packageShip",
-            "title": "Veröffentlichung, sobald es fertig ist",
-            "description": "Veröffentliche eine 3–5-minütige Szene, ein 8–12-minütiges Kapitel, das Master oder einen Promo-Clip auf YouTube, Facebook oder TikTok – im 16:9- oder 9:16-Format – oder lade die Datei herunter. Titel, Beschreibung und Datenschutzeinstellungen sind im Paket enthalten. Veröffentliche den fertigen Teil und arbeite am Rest weiter.",
-            "screenshot": "Paket veröffentlichen",
-            "learnMore": {
-              "items": [
-                {
-                  "title": "Ein Stück versenden",
-                  "description": "Veröffentlichen Sie eine 3–5-minütige Szene, ein 8–12-minütiges Kapitel, das Master oder einen Promo-Clip."
-                },
-                {
-                  "title": "Reiseziele",
-                  "description": "Veröffentliche es auf YouTube, Facebook oder TikTok im Format 16:9 oder 9:16 oder lade die Datei herunter."
-                },
-                {
-                  "title": "Paket",
-                  "description": "Titel, Beschreibung und Datenschutzeinstellungen werden mit dem Paket übertragen."
-                },
-                {
-                  "title": "Baut weiter",
-                  "description": "Liefern Sie den Teil aus, der fertig ist, und bauen Sie am Rest weiter."
-                }
-              ]
-            }
           }
         ]
       }

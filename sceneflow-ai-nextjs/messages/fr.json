@@ -901,32 +901,6 @@
                 }
               ]
             }
-          },
-          {
-            "icon": "packageShip",
-            "title": "Sortir quand c'est prêt",
-            "description": "Publiez une scène de 3 à 5 minutes, un chapitre de 8 à 12 minutes, la version finale ou une vidéo promotionnelle sur YouTube, Facebook ou TikTok, au format 16:9 ou 9:16, ou téléchargez le fichier. Les titres, la description et les paramètres de confidentialité sont inclus dans le package. Diffusez la partie terminée tout en continuant à travailler sur le reste.",
-            "screenshot": "Publier le package",
-            "learnMore": {
-              "items": [
-                {
-                  "title": "Expédier une pièce",
-                  "description": "Publiez une scène de 3 à 5 minutes, un chapitre de 8 à 12 minutes, le master ou une vidéo promotionnelle."
-                },
-                {
-                  "title": "Destinations",
-                  "description": "Publiez sur YouTube, Facebook ou TikTok, au format 16:9 ou 9:16, ou téléchargez le fichier."
-                },
-                {
-                  "title": "Forfait",
-                  "description": "Les titres, la description et les paramètres de confidentialité accompagnent le package."
-                },
-                {
-                  "title": "Continuez à bâtir",
-                  "description": "Livrez la partie terminée et continuez à développer le reste."
-                }
-              ]
-            }
           }
         ]
       }

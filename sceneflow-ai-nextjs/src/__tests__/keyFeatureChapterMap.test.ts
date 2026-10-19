@@ -51,7 +51,6 @@ describe('key feature chapter map', () => {
       'shipPackage',
       'screeningPlayer',
       'screeningCollab',
-      'packageShip',
     ]) {
       expect(standaloneDemoKey(icon)).toBeNull()
     }

@@ -901,32 +901,6 @@
                 }
               ]
             }
-          },
-          {
-            "icon": "packageShip",
-            "title": "Lançar quando estiver pronto",
-            "description": "Publique uma cena de 3 a 5 minutos, um capítulo de 8 a 12 minutos, o master ou um vídeo promocional no YouTube, Facebook ou TikTok — nos formatos 16:9 ou 9:16 — ou baixe o arquivo. Títulos, descrição e configurações de privacidade acompanham o pacote. Publique a parte que já está pronta e continue produzindo o restante.",
-            "screenshot": "Publicar pacote",
-            "learnMore": {
-              "items": [
-                {
-                  "title": "Enviar uma peça",
-                  "description": "Publique uma cena de 3 a 5 minutos, um capítulo de 8 a 12 minutos, o master ou uma chamada promocional."
-                },
-                {
-                  "title": "Destinos",
-                  "description": "Publique no YouTube, Facebook ou TikTok, em 16:9 ou 9:16, ou baixe o arquivo."
-                },
-                {
-                  "title": "Pacote",
-                  "description": "Títulos, descrição e privacidade acompanham o pacote."
-                },
-                {
-                  "title": "Continue construindo",
-                  "description": "Entregue a parte que está pronta e continue construindo o restante."
-                }
-              ]
-            }
           }
         ]
       }

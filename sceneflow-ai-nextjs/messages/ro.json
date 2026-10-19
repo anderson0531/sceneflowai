@@ -901,32 +901,6 @@
                 }
               ]
             }
-          },
-          {
-            "icon": "packageShip",
-            "title": "Lansează când este gata",
-            "description": "Publică o scenă de 3–5 minute, un capitol de 8–12 minute, varianta finală sau un promo pe YouTube, Facebook sau TikTok, în format 16:9 sau 9:16, ori descarcă fișierul. Titlurile, descrierea și setările de confidențialitate rămân asociate materialului. Lansează partea finalizată și continuă să lucrezi la restul.",
-            "screenshot": "Publică pachetul",
-            "learnMore": {
-              "items": [
-                {
-                  "title": "Expediază o piesă",
-                  "description": "Publică o scenă de 3–5 minute, un capitol de 8–12 minute, varianta finală sau un promo."
-                },
-                {
-                  "title": "Destinații",
-                  "description": "Publică pe YouTube, Facebook sau TikTok, în format 16:9 sau 9:16, sau descarcă fișierul."
-                },
-                {
-                  "title": "Pachet",
-                  "description": "Titlurile, descrierea și setările de confidențialitate însoțesc pachetul."
-                },
-                {
-                  "title": "Continuă să construiești",
-                  "description": "Livrează partea finalizată și continuă să construiești restul."
-                }
-              ]
-            }
           }
         ]
       }

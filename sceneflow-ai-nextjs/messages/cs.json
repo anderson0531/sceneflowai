@@ -901,32 +901,6 @@
                 }
               ]
             }
-          },
-          {
-            "icon": "packageShip",
-            "title": "Vydat, až to bude hotové",
-            "description": "Zveřejněte 3–5minutovou scénu, 8–12minutovou kapitolu, finální verzi nebo promo video na YouTube, Facebook či TikTok (ve formátu 16:9 nebo 9:16), případně si soubor stáhněte. Součástí balíčku jsou i titulky, popis a nastavení soukromí. Publikujte hotovou část a na zbytku dále pracujte.",
-            "screenshot": "Publikovat balíček",
-            "learnMore": {
-              "items": [
-                {
-                  "title": "Odeslat kus",
-                  "description": "Zveřejněte tří- až pětiminutovou scénu, osm- až dvanáctiminutovou kapitolu, finální verzi nebo promo."
-                },
-                {
-                  "title": "Destinace",
-                  "description": "Publikujte na YouTube, Facebooku nebo TikToku ve formátu 16:9 či 9:16, případně si soubor stáhněte."
-                },
-                {
-                  "title": "Balíček",
-                  "description": "Názvy, popis a nastavení soukromí se přenášejí společně s balíčkem."
-                },
-                {
-                  "title": "Budujte dál",
-                  "description": "Vydejte hotovou část a pokračujte ve vytváření zbytku."
-                }
-              ]
-            }
           }
         ]
       }

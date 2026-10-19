@@ -901,32 +901,6 @@
                 }
               ]
             }
-          },
-          {
-            "icon": "packageShip",
-            "title": "Rilis saat sudah siap",
-            "description": "Publikasikan adegan berdurasi 3–5 menit, bab berdurasi 8–12 menit, versi master, atau video promo ke YouTube, Facebook, atau TikTok dalam format 16:9 atau 9:16, atau unduh filenya. Judul, deskripsi, dan pengaturan privasi disertakan dalam paket tersebut. Rilis bagian yang sudah rampung, lalu lanjutkan pengerjaan sisanya.",
-            "screenshot": "Publikasikan paket",
-            "learnMore": {
-              "items": [
-                {
-                  "title": "Mengirimkan satu unit",
-                  "description": "Publikasikan adegan berdurasi 3–5 menit, bab berdurasi 8–12 menit, versi master, atau promo."
-                },
-                {
-                  "title": "Destinasi",
-                  "description": "Publikasikan ke YouTube, Facebook, atau TikTok dalam format 16:9 atau 9:16, atau unduh filenya."
-                },
-                {
-                  "title": "Paket",
-                  "description": "Judul, deskripsi, dan pengaturan privasi turut serta bersama paket tersebut."
-                },
-                {
-                  "title": "Teruslah membangun",
-                  "description": "Rilis bagian yang sudah selesai dan terus kerjakan sisanya."
-                }
-              ]
-            }
           }
         ]
       }

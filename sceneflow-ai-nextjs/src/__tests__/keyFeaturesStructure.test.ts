@@ -110,7 +110,6 @@ const EXPECTED_TITLES: Record<string, string[]> = {
   'screening-room': [
     'One Unified Player',
     'Frame-Accurate Collaboration',
-    'Modular Release & Distribution',
   ],
 }
 

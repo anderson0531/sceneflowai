@@ -901,32 +901,6 @@
                 }
               ]
             }
-          },
-          {
-            "icon": "packageShip",
-            "title": "Tu silẹ nigba ti o ba ti ṣetan",
-            "description": "Ṣe àtẹ̀jáde apá kan tó gba ìṣẹ́jú 3 sí 5, orí kan tó gba ìṣẹ́jú 8 sí 12, àkọsílẹ̀ àkọ́kọ́ (master), tàbí fídíò ìpolówó sí YouTube, Facebook, tàbí TikTok ní ìwọ̀n 16:9 tàbí 9:16, tàbí kí o ṣe àgbékalẹ̀ (download) fáìlì náà. Àwọn àkọlé, àpèjúwe, àti ètò ìpamọ́ yóò wà pẹ̀lú rẹ̀. Gbé apá tí ó ti parí jáde; kí o sì máa bá iṣẹ́ lórí àwọn apá yòókù lọ.",
-            "screenshot": "Ṣe àtẹ̀jáde àkópọ̀",
-            "learnMore": {
-              "items": [
-                {
-                  "title": "Fi apakan kan ranṣẹ",
-                  "description": "Ṣe àtẹ̀jáde apá kan tó gba ìṣẹ́jú 3 sí 5, orí kan tó gba ìṣẹ́jú 8 sí 12, ẹ̀dà àkọ́kọ́ tó péye, tàbí fíìmù ìpolówó."
-                },
-                {
-                  "title": "Àwọn ibi tí a ń lọ",
-                  "description": "Ṣe àtẹ̀jáde rẹ̀ sí YouTube, Facebook, tàbí TikTok ní ìwọ̀n 16:9 tàbí 9:16, tàbí kí o ṣe ìgbàsílẹ̀ fáìlì náà."
-                },
-                {
-                  "title": "Àpòpọ̀",
-                  "description": "Awọn akọle, apejuwe, ati eto aṣiri maa n tẹle package naa."
-                },
-                {
-                  "title": "Tẹ̀síwájú láti máa kọ́",
-                  "description": "Fi apá tí ó ti parí ránṣẹ́, kí o sì máa bá a nìṣó láti kọ́ àwọn ìyókù."
-                }
-              ]
-            }
           }
         ]
       }

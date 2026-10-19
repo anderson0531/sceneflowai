@@ -901,32 +901,6 @@
                 }
               ]
             }
-          },
-          {
-            "icon": "packageShip",
-            "title": "准备就绪时发布",
-            "description": "您可以将 3–5 分钟的片段、8–12 分钟的章节、成片或宣传片发布到 YouTube、Facebook 或 TikTok（支持 16:9 或 9:16 比例），也可以直接下载文件。标题、描述和隐私设置会随内容一并保留。您可以先发布已完成的部分，同时继续制作其余内容。",
-            "screenshot": "发布包",
-            "learnMore": {
-              "items": [
-                {
-                  "title": "发运一件",
-                  "description": "发布一段 3–5 分钟的场景、一个 8–12 分钟的章节、母版或宣传片。"
-                },
-                {
-                  "title": "目的地",
-                  "description": "以 16:9 或 9:16 比例发布到 YouTube、Facebook 或 TikTok，或者下载该文件。"
-                },
-                {
-                  "title": "套餐",
-                  "description": "标题、描述和隐私设置将随该包一同传递。"
-                },
-                {
-                  "title": "持续构建",
-                  "description": "交付已完成的部分，并继续构建其余部分。"
-                }
-              ]
-            }
           }
         ]
       }

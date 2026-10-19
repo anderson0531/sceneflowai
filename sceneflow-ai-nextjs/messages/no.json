@@ -901,32 +901,6 @@
                 }
               ]
             }
-          },
-          {
-            "icon": "packageShip",
-            "title": "Lanser når det er klart",
-            "description": "Publiser en scene på 3–5 minutter, et kapittel på 8–12 minutter, masterversjonen eller en promo til YouTube, Facebook eller TikTok – i 16:9- eller 9:16-format – eller last ned filen. Titler, beskrivelse og personverninnstillinger følger med pakken. Publiser den delen som er ferdig, og fortsett arbeidet med resten.",
-            "screenshot": "Publiser pakke",
-            "learnMore": {
-              "items": [
-                {
-                  "title": "Sende et eksemplar",
-                  "description": "Publiser en scene på 3–5 minutter, et kapittel på 8–12 minutter, masterversjonen eller en promo."
-                },
-                {
-                  "title": "Reisemål",
-                  "description": "Publiser til YouTube, Facebook eller TikTok i 16:9 eller 9:16, eller last ned filen."
-                },
-                {
-                  "title": "Pakke",
-                  "description": "Titler, beskrivelse og personverninnstillinger følger med pakken."
-                },
-                {
-                  "title": "Fortsett å bygge",
-                  "description": "Lever delen som er ferdig, og fortsett å bygge resten."
-                }
-              ]
-            }
           }
         ]
       }

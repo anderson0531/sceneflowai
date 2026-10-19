@@ -901,32 +901,6 @@
                 }
               ]
             }
-          },
-          {
-            "icon": "packageShip",
-            "title": "Stel vry wanneer dit gereed is",
-            "description": "Publiseer ’n toneel van 3–5 minute, ’n hoofstuk van 8–12 minute, die meesteropname of ’n promosievideo na YouTube, Facebook of TikTok in 16:9- of 9:16-formaat, of laai die lêer af. Titels, beskrywing en privaatheidinstellings bly deel van die pakket. Stel die voltooide gedeelte vry en gaan voort om aan die res te werk.",
-            "screenshot": "Publiseer pakket",
-            "learnMore": {
-              "items": [
-                {
-                  "title": "Stuur 'n stuk",
-                  "description": "Publiseer ’n toneel van 3–5 minute, ’n hoofstuk van 8–12 minute, die meesteropname of ’n promosie."
-                },
-                {
-                  "title": "Bestemmings",
-                  "description": "Publiseer na YouTube, Facebook of TikTok in 16:9 of 9:16, of laai die lêer af."
-                },
-                {
-                  "title": "Pakket",
-                  "description": "Titels, beskrywing en privaatheid vergesel die pakket."
-                },
-                {
-                  "title": "Hou aan bou",
-                  "description": "Stuur die deel wat voltooi is en gaan voort om die res te bou."
-                }
-              ]
-            }
           }
         ]
       }

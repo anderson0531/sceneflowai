@@ -24,7 +24,6 @@ import {
   UserRound,
   Users,
   Wallet,
-  Youtube,
   type LucideIcon,
 } from 'lucide-react'
 import { ASSISTANT_ICON } from '@/lib/constants/assistantIcon'
@@ -61,7 +60,6 @@ export const FEATURE_ICONS: Record<string, LucideIcon> = {
   shipPackage: Package,
   screeningPlayer: AudioLines,
   screeningCollab: Share2,
-  packageShip: Youtube,
 }
 
 export const KEY_FEATURE_ICON_KEYS = Object.keys(FEATURE_ICONS)

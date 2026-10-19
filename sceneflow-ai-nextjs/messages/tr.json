@@ -901,32 +901,6 @@
                 }
               ]
             }
-          },
-          {
-            "icon": "packageShip",
-            "title": "Hazır olduğunda yayınlayın",
-            "description": "3–5 dakikalık bir sahneyi, 8–12 dakikalık bir bölümü, ana kopyayı (master) veya bir tanıtım videosunu 16:9 ya da 9:16 formatında YouTube, Facebook veya TikTok'ta yayınlayın ya da dosyayı indirin. Başlıklar, açıklama ve gizlilik ayarları da içerikle birlikte gelir. Tamamlanan kısmı yayınlayın; geri kalanını oluşturmaya devam edin.",
-            "screenshot": "Paketi yayınla",
-            "learnMore": {
-              "items": [
-                {
-                  "title": "Bir parça gönderin",
-                  "description": "3–5 dakikalık bir sahne, 8–12 dakikalık bir bölüm, ana kopyayı veya bir tanıtım videosu yayınlayın."
-                },
-                {
-                  "title": "Destinasyonlar",
-                  "description": "YouTube, Facebook veya TikTok'ta 16:9 ya da 9:16 formatında yayınlayın veya dosyayı indirin."
-                },
-                {
-                  "title": "Paket",
-                  "description": "Başlıklar, açıklama ve gizlilik ayarları paketle birlikte gelir."
-                },
-                {
-                  "title": "İnşa etmeye devam et",
-                  "description": "Tamamlanan parçayı teslim edin ve geri kalanını geliştirmeye devam edin."
-                }
-              ]
-            }
           }
         ]
       }

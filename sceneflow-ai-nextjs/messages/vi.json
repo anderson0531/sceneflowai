@@ -901,32 +901,6 @@
                 }
               ]
             }
-          },
-          {
-            "icon": "packageShip",
-            "title": "Phát hành khi đã sẵn sàng",
-            "description": "Đăng tải một phân cảnh dài 3–5 phút, một chương dài 8–12 phút, bản hoàn chỉnh (master) hoặc video quảng bá lên YouTube, Facebook hay TikTok với tỷ lệ khung hình 16:9 hoặc 9:16, hoặc tải tệp về máy. Các thông tin như tiêu đề, mô tả và chế độ quyền riêng tư sẽ đi kèm với nội dung đó. Hãy phát hành phần đã hoàn thiện và tiếp tục thực hiện các phần còn lại.",
-            "screenshot": "Xuất bản gói",
-            "learnMore": {
-              "items": [
-                {
-                  "title": "Gửi đi một kiện hàng",
-                  "description": "Đăng tải một phân cảnh dài 3–5 phút, một chương dài 8–12 phút, bản hoàn chỉnh hoặc video quảng bá."
-                },
-                {
-                  "title": "Điểm đến",
-                  "description": "Đăng lên YouTube, Facebook hoặc TikTok với tỷ lệ khung hình 16:9 hoặc 9:16, hoặc tải tệp xuống."
-                },
-                {
-                  "title": "Gói",
-                  "description": "Tiêu đề, mô tả và chế độ riêng tư sẽ đi kèm với gói này."
-                },
-                {
-                  "title": "Hãy tiếp tục xây dựng",
-                  "description": "Hãy phát hành phần đã hoàn thiện và tiếp tục xây dựng phần còn lại."
-                }
-              ]
-            }
           }
         ]
       }

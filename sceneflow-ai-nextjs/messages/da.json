@@ -901,32 +901,6 @@
                 }
               ]
             }
-          },
-          {
-            "icon": "packageShip",
-            "title": "Udgiv, når det er klar",
-            "description": "Udgiv en scene på 3–5 minutter, et kapitel på 8–12 minutter, master-versionen eller en promo på YouTube, Facebook eller TikTok i 16:9- eller 9:16-format, eller download filen. Titler, beskrivelse og privatlivsindstillinger følger med pakken. Udgiv den del, der er færdig, og fortsæt arbejdet med resten.",
-            "screenshot": "Udgiv pakke",
-            "learnMore": {
-              "items": [
-                {
-                  "title": "Send en enhed",
-                  "description": "Udgiv en scene på 3–5 minutter, et kapitel på 8–12 minutter, master-versionen eller en promo."
-                },
-                {
-                  "title": "Destinationer",
-                  "description": "Udgiv til YouTube, Facebook eller TikTok i 16:9 eller 9:16, eller download filen."
-                },
-                {
-                  "title": "Pakke",
-                  "description": "Titler, beskrivelse og privatlivsindstillinger følger med pakken."
-                },
-                {
-                  "title": "Bliv ved med at bygge",
-                  "description": "Send den del, der er færdig, og fortsæt med at bygge resten."
-                }
-              ]
-            }
           }
         ]
       }

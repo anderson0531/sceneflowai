@@ -901,32 +901,6 @@
                 }
               ]
             }
-          },
-          {
-            "icon": "packageShip",
-            "title": "準備好時再發布",
-            "description": "您可以將 3–5 分鐘的片段、8–12 分鐘的章節、完整成片或宣傳短片發布至 YouTube、Facebook 或 TikTok（支援 16:9 或 9:16 比例），也可以直接下載檔案。標題、說明與隱私設定等資訊會隨檔案一併保留。您可以先發布已完成的部分，同時繼續製作其餘內容。",
-            "screenshot": "發布套件",
-            "learnMore": {
-              "items": [
-                {
-                  "title": "寄送一件",
-                  "description": "發布一段 3 至 5 分鐘的場景、一章 8 至 12 分鐘的內容、母帶或宣傳短片。"
-                },
-                {
-                  "title": "目的地",
-                  "description": "以 16:9 或 9:16 比例發布至 YouTube、Facebook 或 TikTok，或下載檔案。"
-                },
-                {
-                  "title": "包裹",
-                  "description": "標題、說明與隱私設定將隨同套件一併傳輸。"
-                },
-                {
-                  "title": "持續打造",
-                  "description": "先交付已完成的部分，並繼續開發其餘部分。"
-                }
-              ]
-            }
           }
         ]
       }

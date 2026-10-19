@@ -901,32 +901,6 @@
                 }
               ]
             }
-          },
-          {
-            "icon": "packageShip",
-            "title": "Släpp när det är klart",
-            "description": "Publicera en scen på 3–5 minuter, ett kapitel på 8–12 minuter, masterversionen eller en promo på YouTube, Facebook eller TikTok – i formatet 16:9 eller 9:16 – eller ladda ner filen. Titlar, beskrivning och sekretessinställningar följer med paketet. Publicera det som är färdigt och fortsätt arbeta på resten.",
-            "screenshot": "Publicera paket",
-            "learnMore": {
-              "items": [
-                {
-                  "title": "Skicka en del",
-                  "description": "Publicera en scen på 3–5 minuter, ett kapitel på 8–12 minuter, masterversionen eller en promo."
-                },
-                {
-                  "title": "Resmål",
-                  "description": "Publicera på YouTube, Facebook eller TikTok i 16:9 eller 9:16, eller ladda ned filen."
-                },
-                {
-                  "title": "Paket",
-                  "description": "Titlar, beskrivning och integritetsinställningar följer med paketet."
-                },
-                {
-                  "title": "Fortsätt bygga",
-                  "description": "Leverera den del som är färdig och fortsätt bygga på resten."
-                }
-              ]
-            }
           }
         ]
       }

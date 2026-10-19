@@ -901,32 +901,6 @@
                 }
               ]
             }
-          },
-          {
-            "icon": "packageShip",
-            "title": "Uitbrengen wanneer het klaar is",
-            "description": "Publiceer een scène van 3 tot 5 minuten, een hoofdstuk van 8 tot 12 minuten, de master of een promo op YouTube, Facebook of TikTok – in 16:9 of 9:16 – of download het bestand. Titels, beschrijving en privacy-instellingen worden meegeleverd. Publiceer het deel dat klaar is en blijf ondertussen verder werken aan de rest.",
-            "screenshot": "Pakket publiceren",
-            "learnMore": {
-              "items": [
-                {
-                  "title": "Een stuk verzenden",
-                  "description": "Publiceer een scène van 3 tot 5 minuten, een hoofdstuk van 8 tot 12 minuten, de master of een promo."
-                },
-                {
-                  "title": "Bestemmingen",
-                  "description": "Publiceer op YouTube, Facebook of TikTok in 16:9 of 9:16, of download het bestand."
-                },
-                {
-                  "title": "Pakket",
-                  "description": "Titels, beschrijving en privacyinstellingen gaan mee met het pakket."
-                },
-                {
-                  "title": "Blijf bouwen",
-                  "description": "Lever het deel dat klaar is en blijf doorbouwen aan de rest."
-                }
-              ]
-            }
           }
         ]
       }

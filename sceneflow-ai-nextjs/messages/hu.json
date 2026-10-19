@@ -901,32 +901,6 @@
                 }
               ]
             }
-          },
-          {
-            "icon": "packageShip",
-            "title": "Akkor adják ki, amikor elkészült.",
-            "description": "Tedd közzé YouTube-on, Facebookon vagy TikTokon – 16:9-es vagy 9:16-os képarányban – a 3–5 perces jelenetet, a 8–12 perces fejezetet, a végleges anyagot vagy egy promóciós videót, esetleg töltsd le a fájlt. A címek, a leírás és az adatvédelmi beállítások a csomag részei maradnak. Publikáld a már elkészült részt, miközben a többin tovább dolgozol.",
-            "screenshot": "Csomag közzététele",
-            "learnMore": {
-              "items": [
-                {
-                  "title": "Egy darab feladása",
-                  "description": "Tegyél közzé egy 3–5 perces jelenetet, egy 8–12 perces fejezetet, a mesterpéldányt vagy egy promót."
-                },
-                {
-                  "title": "Úti célok",
-                  "description": "Tedd közzé YouTube-on, Facebookon vagy TikTokon 16:9-es vagy 9:16-os képaránnyal, vagy töltsd le a fájlt."
-                },
-                {
-                  "title": "Csomag",
-                  "description": "A címek, a leírás és az adatvédelmi beállítások a csomaggal együtt járnak."
-                },
-                {
-                  "title": "Építs tovább",
-                  "description": "Szállítsd le a kész részt, a többit pedig építsd tovább."
-                }
-              ]
-            }
           }
         ]
       }
