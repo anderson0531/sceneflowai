@@ -18,6 +18,7 @@
  * Blueprint Director is a lossless WebP at 5120×2805.
  * Blueprint Audience Resonance is a lossless WebP at 5120×9875.
  * Go to Production Stage is a lossless WebP at 5120×3088.
+ * Scene & Shot Director is a lossless WebP at 5120×3389.
  */
 
 export const NEW_SERIES_SCREENSHOT_WEBM =
@@ -56,6 +57,9 @@ export const BLUEPRINT_RESONANCE_SCREENSHOT_WEBP =
 export const GO_TO_PRODUCTION_SCREENSHOT_WEBP =
   '/landing/key-features/screenshots/blueprint-production-stage.webp'
 
+export const SCENE_DIRECTOR_SCREENSHOT_WEBP =
+  '/landing/key-features/screenshots/scene-director.webp'
+
 export type KeyFeatureScreenshot = {
   webmUrl?: string
   imageUrl?: string
@@ -74,6 +78,7 @@ const KEY_FEATURE_SCREENSHOTS: Record<string, KeyFeatureScreenshot> = {
   blueprintDirector: { imageUrl: BLUEPRINT_DIRECTOR_SCREENSHOT_WEBP },
   blueprintResonance: { imageUrl: BLUEPRINT_RESONANCE_SCREENSHOT_WEBP },
   goToProduction: { imageUrl: GO_TO_PRODUCTION_SCREENSHOT_WEBP },
+  directShot: { imageUrl: SCENE_DIRECTOR_SCREENSHOT_WEBP },
 }
 
 export function getKeyFeatureScreenshot(icon: string): KeyFeatureScreenshot | null {
