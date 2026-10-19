@@ -21,6 +21,7 @@ import {
   START_BLUEPRINT_SCREENSHOT_WEBP,
   START_EPISODE_SCREENSHOT_WEBP,
   STILLS_AGENT_SCREENSHOT_WEBP,
+  STREAMS_MULTILANGUAGE_SCREENSHOT_WEBP,
   SERIES_DIRECTOR_SCREENSHOT_WEBP,
   SERIES_RESONANCE_SCREENSHOT_WEBP,
   SERIES_REVIEW_SCREENSHOT_WEBP,
@@ -155,6 +156,12 @@ describe('key feature screenshots', () => {
     expect(keyFeatureScreenshotSrc(getKeyFeatureScreenshot('mixer')!)).toBe(
       PRODUCTION_MIXER_SCREENSHOT_WEBP
     )
+    expect(getKeyFeatureScreenshot('languageStreams')).toEqual({
+      imageUrl: STREAMS_MULTILANGUAGE_SCREENSHOT_WEBP,
+    })
+    expect(keyFeatureScreenshotSrc(getKeyFeatureScreenshot('languageStreams')!)).toBe(
+      STREAMS_MULTILANGUAGE_SCREENSHOT_WEBP
+    )
     expect(NEW_SERIES_SCREENSHOT_WEBM).toBe(
       '/landing/key-features/screenshots/new-series.webm'
     )
@@ -221,6 +228,9 @@ describe('key feature screenshots', () => {
     expect(PRODUCTION_MIXER_SCREENSHOT_WEBP).toBe(
       '/landing/key-features/screenshots/production-mixer.webp'
     )
+    expect(STREAMS_MULTILANGUAGE_SCREENSHOT_WEBP).toBe(
+      '/landing/key-features/screenshots/streams-multilanguage.webp'
+    )
 
     const webm = readFileSync(path.join(ROOT, 'public', NEW_SERIES_SCREENSHOT_WEBM))
     expect(webm.subarray(0, 4).toString('hex')).toBe('1a45dfa3')
@@ -247,6 +257,7 @@ describe('key feature screenshots', () => {
       PRE_VIS_ANIMATIC_SCREENSHOT_WEBP,
       CLIPS_AGENT_SCREENSHOT_WEBP,
       PRODUCTION_MIXER_SCREENSHOT_WEBP,
+      STREAMS_MULTILANGUAGE_SCREENSHOT_WEBP,
     ]) {
       const webp = readFileSync(path.join(ROOT, 'public', src))
       expect(webp.subarray(0, 4).toString('ascii')).toBe('RIFF')

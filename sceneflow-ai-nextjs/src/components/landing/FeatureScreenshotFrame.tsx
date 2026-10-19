@@ -173,6 +173,16 @@ const SCREENSHOT_FRAMING_PRESETS: Array<{
     match: 'production-mixer.webp',
     preset: { width: 5120, height: 4896, contentWidthFraction: 0.92, anchorY: -0.88 },
   },
+  {
+    match: 'streams-multilanguage.webp',
+    preset: {
+      width: 5120,
+      height: 2902,
+      contentWidthFraction: 0.68,
+      anchorX: 1,
+      anchorY: -1,
+    },
+  },
 ]
 
 const DEFAULT_PRESET: ScreenshotFramingPreset = {
