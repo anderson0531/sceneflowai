@@ -31,6 +31,8 @@
  * Multilanguage Streams is a lossless WebP at 5120×2902.
  * Promo & Trailers is a lossless WebP at 5120×5148.
  * Direct Publishing is a lossless WebP at 5120×2805.
+ * One Unified Player is a lossless WebP at 5120×2805.
+ * Frame-Accurate Collaboration is a lossless WebP at 5100×2536.
  */
 
 export const NEW_SERIES_SCREENSHOT_WEBM =
@@ -108,6 +110,12 @@ export const PROMO_TRAILERS_SCREENSHOT_WEBP =
 export const DIRECT_PUBLISHING_SCREENSHOT_WEBP =
   '/landing/key-features/screenshots/direct-publishing.webp'
 
+export const SCREENING_PLAYER_SCREENSHOT_WEBP =
+  '/landing/key-features/screenshots/screening-player.webp'
+
+export const SCREENING_COLLAB_SCREENSHOT_WEBP =
+  '/landing/key-features/screenshots/screening-collab.webp'
+
 export type KeyFeatureScreenshot = {
   webmUrl?: string
   imageUrl?: string
@@ -139,6 +147,8 @@ const KEY_FEATURE_SCREENSHOTS: Record<string, KeyFeatureScreenshot> = {
   languageStreams: { imageUrl: STREAMS_MULTILANGUAGE_SCREENSHOT_WEBP },
   promoTrailers: { imageUrl: PROMO_TRAILERS_SCREENSHOT_WEBP },
   shipPackage: { imageUrl: DIRECT_PUBLISHING_SCREENSHOT_WEBP },
+  screeningPlayer: { imageUrl: SCREENING_PLAYER_SCREENSHOT_WEBP },
+  screeningCollab: { imageUrl: SCREENING_COLLAB_SCREENSHOT_WEBP },
 }
 
 export function getKeyFeatureScreenshot(icon: string): KeyFeatureScreenshot | null {

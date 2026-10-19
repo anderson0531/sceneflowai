@@ -191,6 +191,26 @@ const SCREENSHOT_FRAMING_PRESETS: Array<{
     match: 'direct-publishing.webp',
     preset: { width: 5120, height: 2805, contentWidthFraction: 0.48, anchorY: 0.5 },
   },
+  {
+    match: 'screening-player.webp',
+    preset: {
+      width: 5120,
+      height: 2805,
+      contentWidthFraction: 0.72,
+      anchorX: -1,
+      anchorY: 0.5,
+    },
+  },
+  {
+    match: 'screening-collab.webp',
+    preset: {
+      width: 5100,
+      height: 2536,
+      contentWidthFraction: 0.78,
+      anchorX: -1,
+      anchorY: 0.5,
+    },
+  },
 ]
 
 const DEFAULT_PRESET: ScreenshotFramingPreset = {

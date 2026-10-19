@@ -19,6 +19,8 @@ import {
   PRODUCTION_SCRIPT_SCREENSHOT_WEBP,
   PROMO_TRAILERS_SCREENSHOT_WEBP,
   SCENE_DIRECTOR_SCREENSHOT_WEBP,
+  SCREENING_COLLAB_SCREENSHOT_WEBP,
+  SCREENING_PLAYER_SCREENSHOT_WEBP,
   SCRIPT_RESONANCE_SCREENSHOT_WEBP,
   START_BLUEPRINT_SCREENSHOT_WEBP,
   START_EPISODE_SCREENSHOT_WEBP,
@@ -176,6 +178,18 @@ describe('key feature screenshots', () => {
     expect(keyFeatureScreenshotSrc(getKeyFeatureScreenshot('shipPackage')!)).toBe(
       DIRECT_PUBLISHING_SCREENSHOT_WEBP
     )
+    expect(getKeyFeatureScreenshot('screeningPlayer')).toEqual({
+      imageUrl: SCREENING_PLAYER_SCREENSHOT_WEBP,
+    })
+    expect(keyFeatureScreenshotSrc(getKeyFeatureScreenshot('screeningPlayer')!)).toBe(
+      SCREENING_PLAYER_SCREENSHOT_WEBP
+    )
+    expect(getKeyFeatureScreenshot('screeningCollab')).toEqual({
+      imageUrl: SCREENING_COLLAB_SCREENSHOT_WEBP,
+    })
+    expect(keyFeatureScreenshotSrc(getKeyFeatureScreenshot('screeningCollab')!)).toBe(
+      SCREENING_COLLAB_SCREENSHOT_WEBP
+    )
     expect(NEW_SERIES_SCREENSHOT_WEBM).toBe(
       '/landing/key-features/screenshots/new-series.webm'
     )
@@ -251,6 +265,12 @@ describe('key feature screenshots', () => {
     expect(DIRECT_PUBLISHING_SCREENSHOT_WEBP).toBe(
       '/landing/key-features/screenshots/direct-publishing.webp'
     )
+    expect(SCREENING_PLAYER_SCREENSHOT_WEBP).toBe(
+      '/landing/key-features/screenshots/screening-player.webp'
+    )
+    expect(SCREENING_COLLAB_SCREENSHOT_WEBP).toBe(
+      '/landing/key-features/screenshots/screening-collab.webp'
+    )
 
     const webm = readFileSync(path.join(ROOT, 'public', NEW_SERIES_SCREENSHOT_WEBM))
     expect(webm.subarray(0, 4).toString('hex')).toBe('1a45dfa3')
@@ -280,6 +300,8 @@ describe('key feature screenshots', () => {
       STREAMS_MULTILANGUAGE_SCREENSHOT_WEBP,
       PROMO_TRAILERS_SCREENSHOT_WEBP,
       DIRECT_PUBLISHING_SCREENSHOT_WEBP,
+      SCREENING_PLAYER_SCREENSHOT_WEBP,
+      SCREENING_COLLAB_SCREENSHOT_WEBP,
     ]) {
       const webp = readFileSync(path.join(ROOT, 'public', src))
       expect(webp.subarray(0, 4).toString('ascii')).toBe('RIFF')
