@@ -25,6 +25,7 @@
  * Production Script is a lossless WebP at 5120×2804.
  * Audio Agent is a lossless WebP at 5120×2805.
  * Stills Agent is a lossless WebP at 5120×2805.
+ * Pre-vis Animatic is a lossless WebP at 5120×2805.
  */
 
 export const NEW_SERIES_SCREENSHOT_WEBM =
@@ -84,6 +85,9 @@ export const AUDIO_AGENT_SCREENSHOT_WEBP =
 export const STILLS_AGENT_SCREENSHOT_WEBP =
   '/landing/key-features/screenshots/stills-agent.webp'
 
+export const PRE_VIS_ANIMATIC_SCREENSHOT_WEBP =
+  '/landing/key-features/screenshots/pre-vis-animatic.webp'
+
 export type KeyFeatureScreenshot = {
   webmUrl?: string
   imageUrl?: string
@@ -109,6 +113,7 @@ const KEY_FEATURE_SCREENSHOTS: Record<string, KeyFeatureScreenshot> = {
   productionScript: { imageUrl: PRODUCTION_SCRIPT_SCREENSHOT_WEBP },
   audioAgent: { imageUrl: AUDIO_AGENT_SCREENSHOT_WEBP },
   stillsAgent: { imageUrl: STILLS_AGENT_SCREENSHOT_WEBP },
+  animatic: { imageUrl: PRE_VIS_ANIMATIC_SCREENSHOT_WEBP },
 }
 
 export function getKeyFeatureScreenshot(icon: string): KeyFeatureScreenshot | null {

@@ -155,6 +155,16 @@ const SCREENSHOT_FRAMING_PRESETS: Array<{
     match: 'stills-agent.webp',
     preset: { width: 5120, height: 2805, contentWidthFraction: 0.48, anchorY: 0.25 },
   },
+  {
+    match: 'pre-vis-animatic.webp',
+    preset: {
+      width: 5120,
+      height: 2805,
+      contentWidthFraction: 0.68,
+      anchorX: -1,
+      anchorY: -0.5,
+    },
+  },
 ]
 
 const DEFAULT_PRESET: ScreenshotFramingPreset = {
