@@ -6,6 +6,7 @@ import {
   BLUEPRINT_DIRECTOR_SCREENSHOT_WEBP,
   BLUEPRINT_RESONANCE_SCREENSHOT_WEBP,
   CAST_LOCATIONS_SCREENSHOT_WEBP,
+  CLIPS_AGENT_SCREENSHOT_WEBP,
   CONTINUITY_LIBRARY_SCREENSHOT_WEBP,
   DIRECT_BEATS_SCREENSHOT_WEBP,
   DIRECT_EPISODE_SCREENSHOT_WEBP,
@@ -141,6 +142,12 @@ describe('key feature screenshots', () => {
     expect(keyFeatureScreenshotSrc(getKeyFeatureScreenshot('animatic')!)).toBe(
       PRE_VIS_ANIMATIC_SCREENSHOT_WEBP
     )
+    expect(getKeyFeatureScreenshot('videoAgent')).toEqual({
+      imageUrl: CLIPS_AGENT_SCREENSHOT_WEBP,
+    })
+    expect(keyFeatureScreenshotSrc(getKeyFeatureScreenshot('videoAgent')!)).toBe(
+      CLIPS_AGENT_SCREENSHOT_WEBP
+    )
     expect(NEW_SERIES_SCREENSHOT_WEBM).toBe(
       '/landing/key-features/screenshots/new-series.webm'
     )
@@ -201,6 +208,9 @@ describe('key feature screenshots', () => {
     expect(PRE_VIS_ANIMATIC_SCREENSHOT_WEBP).toBe(
       '/landing/key-features/screenshots/pre-vis-animatic.webp'
     )
+    expect(CLIPS_AGENT_SCREENSHOT_WEBP).toBe(
+      '/landing/key-features/screenshots/clips-agent.webp'
+    )
 
     const webm = readFileSync(path.join(ROOT, 'public', NEW_SERIES_SCREENSHOT_WEBM))
     expect(webm.subarray(0, 4).toString('hex')).toBe('1a45dfa3')
@@ -225,6 +235,7 @@ describe('key feature screenshots', () => {
       AUDIO_AGENT_SCREENSHOT_WEBP,
       STILLS_AGENT_SCREENSHOT_WEBP,
       PRE_VIS_ANIMATIC_SCREENSHOT_WEBP,
+      CLIPS_AGENT_SCREENSHOT_WEBP,
     ]) {
       const webp = readFileSync(path.join(ROOT, 'public', src))
       expect(webp.subarray(0, 4).toString('ascii')).toBe('RIFF')

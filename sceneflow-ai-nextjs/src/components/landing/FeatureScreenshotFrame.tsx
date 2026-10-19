@@ -165,6 +165,10 @@ const SCREENSHOT_FRAMING_PRESETS: Array<{
       anchorY: -0.5,
     },
   },
+  {
+    match: 'clips-agent.webp',
+    preset: { width: 5120, height: 2805, contentWidthFraction: 0.48, anchorY: 0.25 },
+  },
 ]
 
 const DEFAULT_PRESET: ScreenshotFramingPreset = {
