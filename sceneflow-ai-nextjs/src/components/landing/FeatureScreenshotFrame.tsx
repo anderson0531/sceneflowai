@@ -139,6 +139,10 @@ const SCREENSHOT_FRAMING_PRESETS: Array<{
     match: 'script-resonance.webp',
     preset: { width: 5120, height: 2804, contentWidthFraction: 0.48, anchorY: 0.85 },
   },
+  {
+    match: 'production-planner.webp',
+    preset: { width: 5120, height: 4487, contentWidthFraction: 0.42, anchorY: 0.92 },
+  },
 ]
 
 const DEFAULT_PRESET: ScreenshotFramingPreset = {

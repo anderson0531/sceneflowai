@@ -411,9 +411,10 @@ export default function KeyFeaturesSection() {
   if (!activeRoom || !selected) return null
 
   const demoKey = standaloneDemoKey(selected.icon)
-  const demoSrc = demoKey
-    ? (getKeyFeatureVideoLocales(demoKey).find((locale) => locale.available && locale.src)?.src ?? '')
-    : ''
+  const demoSrc =
+    demoKey && !getKeyFeatureScreenshot(selected.icon)
+      ? (getKeyFeatureVideoLocales(demoKey).find((locale) => locale.available && locale.src)?.src ?? '')
+      : ''
   const screenshot = demoSrc ? null : getKeyFeatureScreenshot(selected.icon)
 
   const detailLabels = {

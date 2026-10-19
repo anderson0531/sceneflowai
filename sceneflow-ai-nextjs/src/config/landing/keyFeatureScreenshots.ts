@@ -21,6 +21,7 @@
  * Scene & Shot Director is a lossless WebP at 5120×3389.
  * Continuity Library is a lossless WebP at 5120×2805.
  * Audience Resonance Integration is a lossless WebP at 5120×2804.
+ * Production Planner is a lossless WebP at 5120×4487.
  */
 
 export const NEW_SERIES_SCREENSHOT_WEBM =
@@ -68,6 +69,9 @@ export const CONTINUITY_LIBRARY_SCREENSHOT_WEBP =
 export const SCRIPT_RESONANCE_SCREENSHOT_WEBP =
   '/landing/key-features/screenshots/script-resonance.webp'
 
+export const PRODUCTION_PLANNER_SCREENSHOT_WEBP =
+  '/landing/key-features/screenshots/production-planner.webp'
+
 export type KeyFeatureScreenshot = {
   webmUrl?: string
   imageUrl?: string
@@ -89,6 +93,7 @@ const KEY_FEATURE_SCREENSHOTS: Record<string, KeyFeatureScreenshot> = {
   directShot: { imageUrl: SCENE_DIRECTOR_SCREENSHOT_WEBP },
   continuity: { imageUrl: CONTINUITY_LIBRARY_SCREENSHOT_WEBP },
   scriptResonance: { imageUrl: SCRIPT_RESONANCE_SCREENSHOT_WEBP },
+  budget: { imageUrl: PRODUCTION_PLANNER_SCREENSHOT_WEBP },
 }
 
 export function getKeyFeatureScreenshot(icon: string): KeyFeatureScreenshot | null {
