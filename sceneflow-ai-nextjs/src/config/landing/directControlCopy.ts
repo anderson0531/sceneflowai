@@ -1,13 +1,13 @@
 /** Direction and agents, under the friction section. */
 
 export const DIRECT_CONTROL_COPY = {
-  eyebrow: 'The control you keep',
-  title: 'Direct the story. Let agents do the prompting.',
+  eyebrow: 'No technical filmmaking required',
+  title: 'Express your vision. Your AI crew handles the craft.',
   subtitle:
-    'Direct every scene in plain language while specialized agents write the underlying still and clip prompts. Music cues, dialogue, and narration lock to the beat automatically. Watch the full animatic, refine any shot on command, and only then spend on motion.',
+    'Whether you are a first-time storyteller or an experienced director, just describe what happens in plain words. Specialized agents handle the cinematography, prompting, music cues, dialogue, and automated scene stitching—so you can watch the full animatic first, refine any beat on command, and only then spend credits on motion.',
   comparison: {
     id: 'direction',
-    caption: 'A director note, a clip prompt, and music and narration on the same beat.',
+    caption: 'Plain-language story direction automatically compiled into cinematography, music, and narration.',
   },
   cta: 'Launch Studio ($9)',
 } as const

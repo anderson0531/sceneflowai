@@ -3,10 +3,10 @@
  */
 
 export const HERO_COPY = {
-  eyebrow: 'Automated filmmaking for films and series',
+  eyebrow: 'Democratized filmmaking for storytellers, series creators & studios',
   headline: 'From first spark to finished master.',
   subheadline:
-    'SceneFlow is one guided pipeline. You direct the story, the cast, and the tone. It builds the Blueprint, holds continuity, plays the full animatic, and assembles the master — without prompt trials or a timeline of loose clips.',
+    'If you can imagine a story, you can direct a film—no technical filmmaking or prompting skills required. Describe your vision in everyday words, and SceneFlow builds the Blueprint, locks character and setting continuity, plays the full animatic, and stitches the finished master.',
   ctaPrimaryLaunch: 'Launch Studio ($9)',
   ctaSupportingLine:
     'The all-in-one studio to craft, export, and distribute your stories. Download a master and ship anywhere — or publish long-form cuts and chapters to {longForm}, and promote trailers on {shorts}.',
@@ -18,24 +18,24 @@ export const HERO_COPY = {
 
 export const HERO_VALUE_CHIPS = [
   {
-    label: 'From Concept to Feature',
+    label: 'From Idea to Script & Chapter',
     detail:
-      'Expand ideas into 90-minute scripts in the Blueprint Room. Define characters, art, and beats, then let Audience Resonance analysis fine-tune your story before you shoot.',
+      'Turn a plain-language idea into structured chapters or a 90-minute screenplay in the Blueprint Room. Define characters, art, and beats, then let Audience Resonance fine-tune your story before you shoot.',
   },
   {
-    label: 'Direct With Intent, Not Prompts',
+    label: 'No Filmmaking Skills Required',
     detail:
-      'Speak the language of film with intelligent assistants that understand your direction. The Reference Library locks your custom cast, wardrobe, and locations for absolute continuity.',
+      'Express your vision in everyday words—your AI Director handles screenwriting format, camera angles, lighting, and prompts while the Continuity Library locks your cast, wardrobe, and locations.',
   },
   {
-    label: 'Agent-Driven Production',
+    label: 'Agent-Driven Scene Stitching',
     detail:
-      'Accelerate generation 5X with intelligent agents that build 30-shot scenes in the background. Iterate freely in draft mode, then publish your final vision in stunning Hi-Res.',
+      'Accelerate production 5X with specialized agents that generate dialogue, music, stills, and clips in parallel and stitch 30-shot scenes automatically. Preview in Pre-Vis first, then render in Hi-Res.',
   },
   {
     label: 'Screen, Collaborate, Ship',
     detail:
-      'Share progress at every milestone\u2014from audio animatics to the final master\u2014in the Screening Room. Distribute as shorts or features in multiple languages for a global reach.',
+      'Share progress at every milestone—from voiced animatics to the final master—in the Screening Room. Publish in episodic chapters or full features across 70+ languages.',
   },
 ] as const
 

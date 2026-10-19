@@ -4,9 +4,9 @@ export const PRICING_LANDING_COPY = {
   badge: 'Studio Membership & Usage Pricing',
   title: 'Start with Explorer — $9',
   subtitle:
-    'Test the complete pipeline with a $9 Test Flight, then choose a monthly Studio Membership to retain your Continuity Vault and scale production at your pace.',
+    'Start your first film today for $9—turn your idea into a structured Blueprint, cast your characters, and preview your first scene. Then subscribe to retain your Continuity Vault and add credits as you finish your production.',
   explorerHighlight:
-    'From personal stories and 5–15 minute episodic chapters to investor Pre-Vis pitch packages and $500–$5,000 hybrid productions.',
+    'No technical filmmaking skills required—built for everyday storytellers, chapter-by-chapter indie creators, series channels, and hybrid film studios.',
   trustBadges: [
     'Secure payments via Whop',
     '$9 Explorer to try the studio',
@@ -22,38 +22,38 @@ export const PRICING_LANDING_COPY = {
     saveBadge: 'Save 90%+ per production',
   },
   filmmakerPerspectives: {
-    heading: 'One Studio Pipeline. Built for Four Filmmaker Realities.',
+    heading: 'One Studio Pipeline. Built for Every Storyteller & Filmmaker.',
     subheading:
-      'Whether you are crafting a personal film for family, building a monetized social series one chapter at a time, pitching financiers, or running a hybrid live-action + AI shoot, your plan scales with how you produce.',
+      'You do not need film school or technical skills to express your vision. Whether you are bringing a personal story to life for the first time, publishing a series chapter by chapter, pitching financiers, or running a hybrid shoot, your plan scales with how you create.',
     cards: [
       {
         id: 'hobbyist',
-        badge: 'Personal & Vault Keeper • $19/mo',
-        title: 'Personal Stories & Off-Season Vault Retention',
+        badge: 'No Film Experience Needed • $19/mo',
+        title: 'Storytellers & Creative Visionaries',
         description:
-          'Create meaningful films, memoirs, and stories for family and friends using voiced Pre-Vis animatics and selective video clips—or use the $19/mo plan between shoots to keep your Continuity Library of characters, wardrobes, and sets active.',
+          'Have a story, book concept, or family history you want to see on screen? Describe your vision in plain words to create voiced Pre-Vis animatics and selective video clips—while keeping your characters, wardrobes, and sets saved in your Continuity Vault.',
         recommendedPlan: 'Hobbyist ($19/mo)',
       },
       {
         id: 'chapter',
         badge: 'New & Indie Creators • $49/mo',
-        title: 'The 5–15 Minute Chapter Strategy',
+        title: 'The Publish Chapter Strategy',
         description:
-          'Skip the cost and time barrier of rendering a 90-minute feature upfront. Publish your story in 5–15 minute scenes or episodic chapters to manage your monthly compute budget while steadily building an audience.',
+          'Skip the cost and time barrier of rendering a 90-minute feature upfront. Publish your story in 5–15 minute scenes or episodic chapters to manage your monthly compute budget while steadily growing your audience.',
         recommendedPlan: 'Starter ($49/mo)',
       },
       {
         id: 'series',
         badge: 'Monetized Channels • $149/mo',
-        title: 'Sticky Character Continuity for Social Series',
+        title: 'Character and Setting Continuity for Series',
         description:
-          'Audiences subscribe to channels when they recognize recurring characters. Your Continuity Vault locks cast faces, outfits, custom voice clones, and locations across episodes so you can sustainably monetize on YouTube, TikTok, and Reels.',
+          'Audiences subscribe to channels when they connect with familiar characters and worlds. Your Continuity Vault preserves cast faces, outfits, custom voice clones, and locations across every episode so you can sustainably grow on YouTube, TikTok, and Reels.',
         recommendedPlan: 'Pro ($149/mo)',
       },
       {
         id: 'hybrid',
         badge: 'Experienced & Hybrid Filmmakers • $149–$599/mo',
-        title: 'Pre-Vis Funding Packages & $500–$5,000 Hybrid Shoots',
+        title: 'Production Funding Packages & Hybrid Shoots',
         description:
           'Export industry-standard scripts (PDF, FDX, Fountain) paired with a Pre-Vis Animatic and Promo Trailer to secure investor funding—or upload live-filmed scenes and blend them with 4K AI shots at a fraction of physical production costs.',
         recommendedPlan: 'Pro / Studio + Add-Ons',
@@ -62,9 +62,9 @@ export const PRICING_LANDING_COPY = {
   },
   membershipModel: {
     badge: 'Predictable Base + Flexible Compute',
-    title: 'How Studio Membership & Pay-As-You-Produce Add-Ons Work',
+    title: 'Start Your Project Today. Scale With Add-Ons as You Produce.',
     description:
-      'SceneFlow separates recurring studio & asset hosting from burst production compute—so your characters and world stay locked year-round, and you only pay for heavy generation when cameras roll.',
+      'SceneFlow separates recurring studio & Continuity Vault hosting from burst production compute—so your characters and world stay locked year-round, and you can top up credits whenever you are ready to finish a chapter or feature.',
     pillars: [
       {
         title: '1. Base Membership Retains Your Continuity Vault',
@@ -72,9 +72,9 @@ export const PRICING_LANDING_COPY = {
           'An active monthly plan ($19–$599/mo) maintains your studio access, Screening Room links, and Active Continuity Vault—preserving your recurring cast faces, wardrobes, custom voice clones, locations, and Series Bibles across seasons, plus monthly base credits.',
       },
       {
-        title: '2. Scale Up Anytime with 12-Month Add-On Packs',
+        title: '2. Finish Any Project on Demand with 12-Month Add-On Packs',
         description:
-          'Active monthly members can purchase $25, $100, or $250 Add-On credit packs on demand whenever ramping up for a multi-episode season or a $500–$5,000 hybrid feature shoot. Add-On packs last 12 months while your membership remains active.',
+          'Once your story is in motion, active monthly members can purchase $25, $100, or $250 Add-On credit packs anytime to complete a chapter, multi-episode season, or hybrid feature shoot. Add-On packs last 12 months while your membership remains active.',
       },
     ],
   },

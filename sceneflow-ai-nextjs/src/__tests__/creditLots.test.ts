@@ -274,6 +274,13 @@ describe('published pricing copy', () => {
     expect(TIER_CATALOG.hobbyist.isOneTime).toBe(false)
     expect(TIER_CATALOG.hobbyist.marketingFeatures.join('\n')).toContain('expire at period end')
     expect(PRICING_LANDING_COPY.filmmakerPerspectives.cards).toHaveLength(4)
+    expect(PRICING_LANDING_COPY.filmmakerPerspectives.cards.map((c) => c.title)).toEqual([
+      'Storytellers & Creative Visionaries',
+      'The Publish Chapter Strategy',
+      'Character and Setting Continuity for Series',
+      'Production Funding Packages & Hybrid Shoots',
+    ])
+    expect(JSON.stringify(PRICING_LANDING_COPY)).not.toContain('Sticky')
     expect(PRICING_LANDING_COPY.membershipModel.pillars).toHaveLength(2)
     expect(PRICING_LANDING_COPY.creditTopUps.subscriberNote).toContain('active monthly membership')
   })

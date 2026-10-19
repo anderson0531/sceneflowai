@@ -48,7 +48,7 @@ export interface TierDefinition {
 export const TIER_CATALOG: Record<BillingTierName, TierDefinition> = {
   explorer: {
     name: 'explorer',
-    displayName: 'Explorer — Test Flight',
+    displayName: 'Explorer — Start Your First Film',
     priceUsd: 9,
     credits: 750,
     isOneTime: true,
@@ -71,9 +71,9 @@ export const TIER_CATALOG: Record<BillingTierName, TierDefinition> = {
       'Production Script export (PDF, FDX, Fountain)',
     ],
     marketingDescription:
-      'One-time 30-day Studio Test Flight — experience the complete pipeline from Blueprint to Screening Room. Subscribe to a monthly plan to retain your Continuity Vault and unlock Add-On packs.',
+      'Turn your idea into a structured Blueprint, cast your characters, and preview your first voiced scene—then subscribe and add credits as you finish your film.',
     marketingFeatures: [
-      'One-time purchase (30-day Test Flight)',
+      'One-time purchase (30-day Studio Test Flight)',
       EXPLORER_CREDIT_PACK_COPY,
       '5 GB trial storage (30 days — subscribe to retain vault)',
       'Full studio access + Production Script export (PDF, FDX, Fountain)',
@@ -85,7 +85,7 @@ export const TIER_CATALOG: Record<BillingTierName, TierDefinition> = {
   },
   hobbyist: {
     name: 'hobbyist',
-    displayName: 'Hobbyist — Personal & Vault',
+    displayName: 'Hobbyist — Storyteller & Vault',
     priceUsd: 19,
     credits: 1500,
     isOneTime: false,
@@ -109,14 +109,14 @@ export const TIER_CATALOG: Record<BillingTierName, TierDefinition> = {
       'Email support',
     ],
     marketingDescription:
-      'Personal & Vault Keeper — for personal stories for family & friends, script + pre-vis writing, and retaining your Continuity Vault between shoots',
+      'Storytellers & Creative Visionaries — express your vision with zero technical filmmaking skills required, and keep your Continuity Vault active between shoots',
     marketingFeatures: [
       'Active Studio Membership & Continuity Vault retention',
       '1,500 credits/month included',
       SUBSCRIPTION_CREDIT_EXPIRY_COPY,
       '10 GB Active Continuity Vault (retains cast, wardrobes & sets)',
       'Unlocks 12-month Subscriber Add-On credit packs',
-      'Ideal for family/friends stories, scripts & Pre-Vis animatics',
+      'Ideal for personal visions, family stories & Pre-Vis animatics',
       'Production Script preview & export (PDF, FDX, Fountain)',
       'MP4 export & AI voiceover (70+ languages)',
     ],
@@ -150,13 +150,13 @@ export const TIER_CATALOG: Record<BillingTierName, TierDefinition> = {
       'Priority email support',
     ],
     marketingDescription:
-      'Chapter & Indie Filmmaker — for 5–15 min episodic chapter releases and traditional filmmakers building Script + Pre-Vis Animatic funding packages',
+      'The Publish Chapter Strategy — for 5–15 min episodic chapter releases and traditional filmmakers building Production Funding Packages',
     marketingFeatures: [
       'Everything in Hobbyist, plus:',
       '4,500 credits/month included (3x Hobbyist compute)',
       SUBSCRIPTION_CREDIT_EXPIRY_COPY,
-      '25 GB Active Continuity Vault for recurring series cast',
-      'Built for 5–15 min chapter releases & Pre-Vis pitch packages',
+      '25 GB Active Continuity Vault for character & setting continuity',
+      'Built for 5–15 min chapter releases & Pre-Vis funding packages',
       'Upload live-action scenes & combine with AI clips in Mixer',
       '1 custom voice clone & 70+ language dubbing',
       'Email support',

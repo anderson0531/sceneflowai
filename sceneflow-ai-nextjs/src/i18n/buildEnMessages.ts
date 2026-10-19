@@ -121,8 +121,7 @@ export function buildEnMessages() {
     directControl: DIRECT_CONTROL_COPY,
     publishCut: PUBLISH_CUT_COPY,
     infrastructure: {
-      title: INFRASTRUCTURE_COPY.title,
-      description: INFRASTRUCTURE_COPY.description,
+      ...INFRASTRUCTURE_COPY,
       badges: { ...INFRASTRUCTURE_COPY.badges },
     },
     valueProp: {
