@@ -29,6 +29,7 @@
  * Clips Agent is a lossless WebP at 5120×2805.
  * The Mixer is a lossless WebP at 5120×4896.
  * Multilanguage Streams is a lossless WebP at 5120×2902.
+ * Promo & Trailers is a lossless WebP at 5120×5148.
  */
 
 export const NEW_SERIES_SCREENSHOT_WEBM =
@@ -100,6 +101,9 @@ export const PRODUCTION_MIXER_SCREENSHOT_WEBP =
 export const STREAMS_MULTILANGUAGE_SCREENSHOT_WEBP =
   '/landing/key-features/screenshots/streams-multilanguage.webp'
 
+export const PROMO_TRAILERS_SCREENSHOT_WEBP =
+  '/landing/key-features/screenshots/promo-trailers.webp'
+
 export type KeyFeatureScreenshot = {
   webmUrl?: string
   imageUrl?: string
@@ -129,6 +133,7 @@ const KEY_FEATURE_SCREENSHOTS: Record<string, KeyFeatureScreenshot> = {
   videoAgent: { imageUrl: CLIPS_AGENT_SCREENSHOT_WEBP },
   mixer: { imageUrl: PRODUCTION_MIXER_SCREENSHOT_WEBP },
   languageStreams: { imageUrl: STREAMS_MULTILANGUAGE_SCREENSHOT_WEBP },
+  promoTrailers: { imageUrl: PROMO_TRAILERS_SCREENSHOT_WEBP },
 }
 
 export function getKeyFeatureScreenshot(icon: string): KeyFeatureScreenshot | null {

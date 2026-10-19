@@ -183,6 +183,10 @@ const SCREENSHOT_FRAMING_PRESETS: Array<{
       anchorY: -1,
     },
   },
+  {
+    match: 'promo-trailers.webp',
+    preset: { width: 5120, height: 5148, contentWidthFraction: 0.45, anchorY: 0.92 },
+  },
 ]
 
 const DEFAULT_PRESET: ScreenshotFramingPreset = {
