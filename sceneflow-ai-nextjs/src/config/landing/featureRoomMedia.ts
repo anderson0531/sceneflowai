@@ -68,7 +68,7 @@ export const PRODUCTION_STAGE_OVERVIEW_MP4 =
 export const SCREENING_ROOM_OVERVIEW_WEBM = '/landing/key-features/rooms/screening-room-en.webm'
 
 export const SCREENING_ROOM_OVERVIEW_MP4 =
-  'https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Screening%20Room%20.mp4'
+  'https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Screening%20Room%202.mp4'
 
 const PRODUCED_ROOM_FILMS: Partial<
   Record<FeatureRoomId, Partial<Record<VideoLocaleId, FeatureRoomMediaEntry>>>
