@@ -2,6 +2,7 @@ import { readFileSync } from 'fs'
 import path from 'path'
 import { describe, expect, it } from 'vitest'
 import {
+  AUDIO_AGENT_SCREENSHOT_WEBP,
   BLUEPRINT_DIRECTOR_SCREENSHOT_WEBP,
   BLUEPRINT_RESONANCE_SCREENSHOT_WEBP,
   CAST_LOCATIONS_SCREENSHOT_WEBP,
@@ -120,6 +121,12 @@ describe('key feature screenshots', () => {
     expect(keyFeatureScreenshotSrc(getKeyFeatureScreenshot('productionScript')!)).toBe(
       PRODUCTION_SCRIPT_SCREENSHOT_WEBP
     )
+    expect(getKeyFeatureScreenshot('audioAgent')).toEqual({
+      imageUrl: AUDIO_AGENT_SCREENSHOT_WEBP,
+    })
+    expect(keyFeatureScreenshotSrc(getKeyFeatureScreenshot('audioAgent')!)).toBe(
+      AUDIO_AGENT_SCREENSHOT_WEBP
+    )
     expect(NEW_SERIES_SCREENSHOT_WEBM).toBe(
       '/landing/key-features/screenshots/new-series.webm'
     )
@@ -171,6 +178,9 @@ describe('key feature screenshots', () => {
     expect(PRODUCTION_SCRIPT_SCREENSHOT_WEBP).toBe(
       '/landing/key-features/screenshots/production-script.webp'
     )
+    expect(AUDIO_AGENT_SCREENSHOT_WEBP).toBe(
+      '/landing/key-features/screenshots/audio-agent.webp'
+    )
 
     const webm = readFileSync(path.join(ROOT, 'public', NEW_SERIES_SCREENSHOT_WEBM))
     expect(webm.subarray(0, 4).toString('hex')).toBe('1a45dfa3')
@@ -192,6 +202,7 @@ describe('key feature screenshots', () => {
       SCRIPT_RESONANCE_SCREENSHOT_WEBP,
       PRODUCTION_PLANNER_SCREENSHOT_WEBP,
       PRODUCTION_SCRIPT_SCREENSHOT_WEBP,
+      AUDIO_AGENT_SCREENSHOT_WEBP,
     ]) {
       const webp = readFileSync(path.join(ROOT, 'public', src))
       expect(webp.subarray(0, 4).toString('ascii')).toBe('RIFF')

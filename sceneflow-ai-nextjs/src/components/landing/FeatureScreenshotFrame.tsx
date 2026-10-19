@@ -147,6 +147,10 @@ const SCREENSHOT_FRAMING_PRESETS: Array<{
     match: 'production-script.webp',
     preset: { width: 5120, height: 2804, contentWidthFraction: 0.56, anchorY: 0.85 },
   },
+  {
+    match: 'audio-agent.webp',
+    preset: { width: 5120, height: 2805, contentWidthFraction: 0.48, anchorY: 0.35 },
+  },
 ]
 
 const DEFAULT_PRESET: ScreenshotFramingPreset = {

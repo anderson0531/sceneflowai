@@ -23,6 +23,7 @@
  * Audience Resonance Integration is a lossless WebP at 5120×2804.
  * Production Planner is a lossless WebP at 5120×4487.
  * Production Script is a lossless WebP at 5120×2804.
+ * Audio Agent is a lossless WebP at 5120×2805.
  */
 
 export const NEW_SERIES_SCREENSHOT_WEBM =
@@ -76,6 +77,9 @@ export const PRODUCTION_PLANNER_SCREENSHOT_WEBP =
 export const PRODUCTION_SCRIPT_SCREENSHOT_WEBP =
   '/landing/key-features/screenshots/production-script.webp'
 
+export const AUDIO_AGENT_SCREENSHOT_WEBP =
+  '/landing/key-features/screenshots/audio-agent.webp'
+
 export type KeyFeatureScreenshot = {
   webmUrl?: string
   imageUrl?: string
@@ -99,6 +103,7 @@ const KEY_FEATURE_SCREENSHOTS: Record<string, KeyFeatureScreenshot> = {
   scriptResonance: { imageUrl: SCRIPT_RESONANCE_SCREENSHOT_WEBP },
   budget: { imageUrl: PRODUCTION_PLANNER_SCREENSHOT_WEBP },
   productionScript: { imageUrl: PRODUCTION_SCRIPT_SCREENSHOT_WEBP },
+  audioAgent: { imageUrl: AUDIO_AGENT_SCREENSHOT_WEBP },
 }
 
 export function getKeyFeatureScreenshot(icon: string): KeyFeatureScreenshot | null {
