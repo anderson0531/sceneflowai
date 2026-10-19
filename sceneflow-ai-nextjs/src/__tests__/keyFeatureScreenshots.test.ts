@@ -17,6 +17,7 @@ import {
   SCRIPT_RESONANCE_SCREENSHOT_WEBP,
   START_BLUEPRINT_SCREENSHOT_WEBP,
   START_EPISODE_SCREENSHOT_WEBP,
+  STILLS_AGENT_SCREENSHOT_WEBP,
   SERIES_DIRECTOR_SCREENSHOT_WEBP,
   SERIES_RESONANCE_SCREENSHOT_WEBP,
   SERIES_REVIEW_SCREENSHOT_WEBP,
@@ -127,6 +128,12 @@ describe('key feature screenshots', () => {
     expect(keyFeatureScreenshotSrc(getKeyFeatureScreenshot('audioAgent')!)).toBe(
       AUDIO_AGENT_SCREENSHOT_WEBP
     )
+    expect(getKeyFeatureScreenshot('stillsAgent')).toEqual({
+      imageUrl: STILLS_AGENT_SCREENSHOT_WEBP,
+    })
+    expect(keyFeatureScreenshotSrc(getKeyFeatureScreenshot('stillsAgent')!)).toBe(
+      STILLS_AGENT_SCREENSHOT_WEBP
+    )
     expect(NEW_SERIES_SCREENSHOT_WEBM).toBe(
       '/landing/key-features/screenshots/new-series.webm'
     )
@@ -181,6 +188,9 @@ describe('key feature screenshots', () => {
     expect(AUDIO_AGENT_SCREENSHOT_WEBP).toBe(
       '/landing/key-features/screenshots/audio-agent.webp'
     )
+    expect(STILLS_AGENT_SCREENSHOT_WEBP).toBe(
+      '/landing/key-features/screenshots/stills-agent.webp'
+    )
 
     const webm = readFileSync(path.join(ROOT, 'public', NEW_SERIES_SCREENSHOT_WEBM))
     expect(webm.subarray(0, 4).toString('hex')).toBe('1a45dfa3')
@@ -203,6 +213,7 @@ describe('key feature screenshots', () => {
       PRODUCTION_PLANNER_SCREENSHOT_WEBP,
       PRODUCTION_SCRIPT_SCREENSHOT_WEBP,
       AUDIO_AGENT_SCREENSHOT_WEBP,
+      STILLS_AGENT_SCREENSHOT_WEBP,
     ]) {
       const webp = readFileSync(path.join(ROOT, 'public', src))
       expect(webp.subarray(0, 4).toString('ascii')).toBe('RIFF')

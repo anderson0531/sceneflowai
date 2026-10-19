@@ -151,6 +151,10 @@ const SCREENSHOT_FRAMING_PRESETS: Array<{
     match: 'audio-agent.webp',
     preset: { width: 5120, height: 2805, contentWidthFraction: 0.48, anchorY: 0.35 },
   },
+  {
+    match: 'stills-agent.webp',
+    preset: { width: 5120, height: 2805, contentWidthFraction: 0.48, anchorY: 0.25 },
+  },
 ]
 
 const DEFAULT_PRESET: ScreenshotFramingPreset = {
