@@ -53,6 +53,10 @@ describe('legal page discoverability', () => {
       join(process.cwd(), 'src/components/landing/FloatingNav.tsx'),
       'utf8'
     )
+    expect(header).toContain('scrollToTop')
+    expect(header).toContain("t('overview')")
+    expect(header.indexOf("t('overview')")).toBeLessThan(header.indexOf("t('keyFeatures')"))
+    expect(enMessages.nav.overview).toBe('Overview')
     expect(header).toContain("scrollToSection('trust-safety')")
     expect(header).toContain("t('trustSafety')")
     expect(floatingNav).toContain("'trust-safety'")

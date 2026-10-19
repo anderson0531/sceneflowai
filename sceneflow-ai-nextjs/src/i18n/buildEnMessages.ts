@@ -75,6 +75,7 @@ export function buildEnMessages() {
         'Transform your ideas into professional videos with AI-powered workflow automation',
     },
     nav: {
+      overview: 'Overview',
       plansPricing: 'Plans & Pricing',
       productionExamples: 'Examples',
       keyFeatures: 'Features',

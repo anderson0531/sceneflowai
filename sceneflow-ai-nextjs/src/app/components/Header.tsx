@@ -3,7 +3,7 @@
 import { Button } from '@/components/ui/Button'
 import { trackCta } from '@/lib/analytics'
 import { motion } from 'framer-motion'
-import { Menu, X, User, LogOut, Shield, Sparkles, ChevronDown, LayoutDashboard, Clapperboard, ArrowRight } from 'lucide-react'
+import { Menu, X, User, LogOut, Shield, Sparkles, ChevronDown, LayoutDashboard, Clapperboard, ArrowRight, Compass } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { useSession, signOut } from 'next-auth/react'
 import {
@@ -66,6 +66,11 @@ export function Header() {
     })()
     return () => { cancelled = true }
   }, [user?.email])
+
+  const scrollToTop = () => {
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+    setIsMobileMenuOpen(false)
+  }
 
   const scrollToSection = (sectionId: string) => {
     const element = document.getElementById(sectionId)
@@ -136,6 +141,14 @@ export function Header() {
             
             {/* Navigation Links - Center */}
             <nav className="flex items-center space-x-2">
+              <button
+                onClick={scrollToTop}
+                className="flex items-center gap-1.5 px-4 py-2 text-gray-300 hover:text-white transition-colors cursor-pointer font-medium rounded-lg hover:bg-slate-800/50"
+              >
+                <Compass className="w-4 h-4 text-sf-primary" />
+                {t('overview')}
+              </button>
+
               <button
                 onClick={() => scrollToSection('key-features')}
                 className="flex items-center gap-1.5 px-4 py-2 text-gray-300 hover:text-white transition-colors cursor-pointer font-medium rounded-lg hover:bg-slate-800/50"
@@ -263,6 +276,10 @@ export function Header() {
             {isMobileMenuOpen && (
               <div className="lg:hidden pb-4 border-t border-gray-800/50">
                 <nav className="flex flex-col space-y-1 pt-4">
+                  <button onClick={scrollToTop} className="flex items-center gap-2 text-gray-300 hover:text-white hover:bg-slate-800/50 transition-colors cursor-pointer font-medium text-base text-left py-3 px-3 rounded-lg">
+                    <Compass className="w-4 h-4 text-sf-primary" />
+                    {t('overview')}
+                  </button>
                   <button onClick={() => scrollToSection('key-features')} className="flex items-center gap-2 text-gray-300 hover:text-white hover:bg-slate-800/50 transition-colors cursor-pointer font-medium text-base text-left py-3 px-3 rounded-lg">
                     <Sparkles className="w-4 h-4 text-sf-primary" />
                     {t('keyFeatures')}
