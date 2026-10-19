@@ -13,6 +13,7 @@ import {
   GO_TO_PRODUCTION_SCREENSHOT_WEBP,
   NEW_SERIES_SCREENSHOT_WEBM,
   PRE_VIS_ANIMATIC_SCREENSHOT_WEBP,
+  PRODUCTION_MIXER_SCREENSHOT_WEBP,
   PRODUCTION_PLANNER_SCREENSHOT_WEBP,
   PRODUCTION_SCRIPT_SCREENSHOT_WEBP,
   SCENE_DIRECTOR_SCREENSHOT_WEBP,
@@ -148,6 +149,12 @@ describe('key feature screenshots', () => {
     expect(keyFeatureScreenshotSrc(getKeyFeatureScreenshot('videoAgent')!)).toBe(
       CLIPS_AGENT_SCREENSHOT_WEBP
     )
+    expect(getKeyFeatureScreenshot('mixer')).toEqual({
+      imageUrl: PRODUCTION_MIXER_SCREENSHOT_WEBP,
+    })
+    expect(keyFeatureScreenshotSrc(getKeyFeatureScreenshot('mixer')!)).toBe(
+      PRODUCTION_MIXER_SCREENSHOT_WEBP
+    )
     expect(NEW_SERIES_SCREENSHOT_WEBM).toBe(
       '/landing/key-features/screenshots/new-series.webm'
     )
@@ -211,6 +218,9 @@ describe('key feature screenshots', () => {
     expect(CLIPS_AGENT_SCREENSHOT_WEBP).toBe(
       '/landing/key-features/screenshots/clips-agent.webp'
     )
+    expect(PRODUCTION_MIXER_SCREENSHOT_WEBP).toBe(
+      '/landing/key-features/screenshots/production-mixer.webp'
+    )
 
     const webm = readFileSync(path.join(ROOT, 'public', NEW_SERIES_SCREENSHOT_WEBM))
     expect(webm.subarray(0, 4).toString('hex')).toBe('1a45dfa3')
@@ -236,6 +246,7 @@ describe('key feature screenshots', () => {
       STILLS_AGENT_SCREENSHOT_WEBP,
       PRE_VIS_ANIMATIC_SCREENSHOT_WEBP,
       CLIPS_AGENT_SCREENSHOT_WEBP,
+      PRODUCTION_MIXER_SCREENSHOT_WEBP,
     ]) {
       const webp = readFileSync(path.join(ROOT, 'public', src))
       expect(webp.subarray(0, 4).toString('ascii')).toBe('RIFF')

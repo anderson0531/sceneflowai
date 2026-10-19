@@ -27,6 +27,7 @@
  * Stills Agent is a lossless WebP at 5120×2805.
  * Pre-vis Animatic is a lossless WebP at 5120×2805.
  * Clips Agent is a lossless WebP at 5120×2805.
+ * The Mixer is a lossless WebP at 5120×4896.
  */
 
 export const NEW_SERIES_SCREENSHOT_WEBM =
@@ -92,6 +93,9 @@ export const PRE_VIS_ANIMATIC_SCREENSHOT_WEBP =
 export const CLIPS_AGENT_SCREENSHOT_WEBP =
   '/landing/key-features/screenshots/clips-agent.webp'
 
+export const PRODUCTION_MIXER_SCREENSHOT_WEBP =
+  '/landing/key-features/screenshots/production-mixer.webp'
+
 export type KeyFeatureScreenshot = {
   webmUrl?: string
   imageUrl?: string
@@ -119,6 +123,7 @@ const KEY_FEATURE_SCREENSHOTS: Record<string, KeyFeatureScreenshot> = {
   stillsAgent: { imageUrl: STILLS_AGENT_SCREENSHOT_WEBP },
   animatic: { imageUrl: PRE_VIS_ANIMATIC_SCREENSHOT_WEBP },
   videoAgent: { imageUrl: CLIPS_AGENT_SCREENSHOT_WEBP },
+  mixer: { imageUrl: PRODUCTION_MIXER_SCREENSHOT_WEBP },
 }
 
 export function getKeyFeatureScreenshot(icon: string): KeyFeatureScreenshot | null {
