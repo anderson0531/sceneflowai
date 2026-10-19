@@ -162,9 +162,13 @@ export function PricingCredits() {
                       {card.description}
                     </p>
                   </div>
-                  <div className="pt-3 border-t border-slate-800/80 flex items-center justify-between text-xs">
-                    <span className="text-gray-500">Recommended path</span>
-                    <span className="font-semibold text-emerald-400">{card.recommendedPlan}</span>
+                  <div className="pt-3 border-t border-slate-800/80 flex flex-col gap-1">
+                    <span className="text-[11px] uppercase tracking-wider text-gray-500">
+                      Recommended path:
+                    </span>
+                    <span className="text-sm font-semibold text-emerald-400">
+                      {card.recommendedPlan}
+                    </span>
                   </div>
                 </div>
               )
