@@ -143,6 +143,10 @@ const SCREENSHOT_FRAMING_PRESETS: Array<{
     match: 'production-planner.webp',
     preset: { width: 5120, height: 4487, contentWidthFraction: 0.42, anchorY: 0.92 },
   },
+  {
+    match: 'production-script.webp',
+    preset: { width: 5120, height: 2804, contentWidthFraction: 0.56, anchorY: 0.85 },
+  },
 ]
 
 const DEFAULT_PRESET: ScreenshotFramingPreset = {

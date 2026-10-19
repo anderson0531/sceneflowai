@@ -11,6 +11,7 @@ import {
   GO_TO_PRODUCTION_SCREENSHOT_WEBP,
   NEW_SERIES_SCREENSHOT_WEBM,
   PRODUCTION_PLANNER_SCREENSHOT_WEBP,
+  PRODUCTION_SCRIPT_SCREENSHOT_WEBP,
   SCENE_DIRECTOR_SCREENSHOT_WEBP,
   SCRIPT_RESONANCE_SCREENSHOT_WEBP,
   START_BLUEPRINT_SCREENSHOT_WEBP,
@@ -113,6 +114,12 @@ describe('key feature screenshots', () => {
     expect(keyFeatureScreenshotSrc(getKeyFeatureScreenshot('budget')!)).toBe(
       PRODUCTION_PLANNER_SCREENSHOT_WEBP
     )
+    expect(getKeyFeatureScreenshot('productionScript')).toEqual({
+      imageUrl: PRODUCTION_SCRIPT_SCREENSHOT_WEBP,
+    })
+    expect(keyFeatureScreenshotSrc(getKeyFeatureScreenshot('productionScript')!)).toBe(
+      PRODUCTION_SCRIPT_SCREENSHOT_WEBP
+    )
     expect(NEW_SERIES_SCREENSHOT_WEBM).toBe(
       '/landing/key-features/screenshots/new-series.webm'
     )
@@ -161,6 +168,9 @@ describe('key feature screenshots', () => {
     expect(PRODUCTION_PLANNER_SCREENSHOT_WEBP).toBe(
       '/landing/key-features/screenshots/production-planner.webp'
     )
+    expect(PRODUCTION_SCRIPT_SCREENSHOT_WEBP).toBe(
+      '/landing/key-features/screenshots/production-script.webp'
+    )
 
     const webm = readFileSync(path.join(ROOT, 'public', NEW_SERIES_SCREENSHOT_WEBM))
     expect(webm.subarray(0, 4).toString('hex')).toBe('1a45dfa3')
@@ -181,6 +191,7 @@ describe('key feature screenshots', () => {
       CONTINUITY_LIBRARY_SCREENSHOT_WEBP,
       SCRIPT_RESONANCE_SCREENSHOT_WEBP,
       PRODUCTION_PLANNER_SCREENSHOT_WEBP,
+      PRODUCTION_SCRIPT_SCREENSHOT_WEBP,
     ]) {
       const webp = readFileSync(path.join(ROOT, 'public', src))
       expect(webp.subarray(0, 4).toString('ascii')).toBe('RIFF')
