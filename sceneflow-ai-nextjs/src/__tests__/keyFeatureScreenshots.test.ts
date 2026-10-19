@@ -5,6 +5,7 @@ import {
   BLUEPRINT_DIRECTOR_SCREENSHOT_WEBP,
   BLUEPRINT_RESONANCE_SCREENSHOT_WEBP,
   CAST_LOCATIONS_SCREENSHOT_WEBP,
+  CONTINUITY_LIBRARY_SCREENSHOT_WEBP,
   DIRECT_BEATS_SCREENSHOT_WEBP,
   DIRECT_EPISODE_SCREENSHOT_WEBP,
   GO_TO_PRODUCTION_SCREENSHOT_WEBP,
@@ -92,6 +93,12 @@ describe('key feature screenshots', () => {
     expect(keyFeatureScreenshotSrc(getKeyFeatureScreenshot('directShot')!)).toBe(
       SCENE_DIRECTOR_SCREENSHOT_WEBP
     )
+    expect(getKeyFeatureScreenshot('continuity')).toEqual({
+      imageUrl: CONTINUITY_LIBRARY_SCREENSHOT_WEBP,
+    })
+    expect(keyFeatureScreenshotSrc(getKeyFeatureScreenshot('continuity')!)).toBe(
+      CONTINUITY_LIBRARY_SCREENSHOT_WEBP
+    )
     expect(NEW_SERIES_SCREENSHOT_WEBM).toBe(
       '/landing/key-features/screenshots/new-series.webm'
     )
@@ -131,6 +138,9 @@ describe('key feature screenshots', () => {
     expect(SCENE_DIRECTOR_SCREENSHOT_WEBP).toBe(
       '/landing/key-features/screenshots/scene-director.webp'
     )
+    expect(CONTINUITY_LIBRARY_SCREENSHOT_WEBP).toBe(
+      '/landing/key-features/screenshots/continuity-library.webp'
+    )
 
     const webm = readFileSync(path.join(ROOT, 'public', NEW_SERIES_SCREENSHOT_WEBM))
     expect(webm.subarray(0, 4).toString('hex')).toBe('1a45dfa3')
@@ -148,6 +158,7 @@ describe('key feature screenshots', () => {
       BLUEPRINT_RESONANCE_SCREENSHOT_WEBP,
       GO_TO_PRODUCTION_SCREENSHOT_WEBP,
       SCENE_DIRECTOR_SCREENSHOT_WEBP,
+      CONTINUITY_LIBRARY_SCREENSHOT_WEBP,
     ]) {
       const webp = readFileSync(path.join(ROOT, 'public', src))
       expect(webp.subarray(0, 4).toString('ascii')).toBe('RIFF')

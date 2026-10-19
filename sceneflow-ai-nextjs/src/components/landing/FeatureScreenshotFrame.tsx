@@ -131,6 +131,10 @@ const SCREENSHOT_FRAMING_PRESETS: Array<{
     match: 'scene-director.webp',
     preset: { width: 5120, height: 3389, contentWidthFraction: 0.56, anchorY: 0.88 },
   },
+  {
+    match: 'continuity-library.webp',
+    preset: { width: 5120, height: 2805, contentWidthFraction: 0.48, anchorY: 0.85 },
+  },
 ]
 
 const DEFAULT_PRESET: ScreenshotFramingPreset = {
