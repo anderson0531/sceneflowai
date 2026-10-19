@@ -11,6 +11,8 @@ import {
   FEATURE_ROOM_IDS,
   PRODUCTION_STAGE_OVERVIEW_MP4,
   PRODUCTION_STAGE_OVERVIEW_WEBM,
+  SCREENING_ROOM_OVERVIEW_MP4,
+  SCREENING_ROOM_OVERVIEW_WEBM,
   SERIES_ROOM_OVERVIEW_MP4,
   SERIES_ROOM_OVERVIEW_WEBM,
   featureRoomHasVideo,
@@ -209,6 +211,10 @@ describe('keyFeatures structure', () => {
       'production-stage': {
         webm: PRODUCTION_STAGE_OVERVIEW_WEBM,
         mp4: PRODUCTION_STAGE_OVERVIEW_MP4,
+      },
+      'screening-room': {
+        webm: SCREENING_ROOM_OVERVIEW_WEBM,
+        mp4: SCREENING_ROOM_OVERVIEW_MP4,
       },
     }
     for (const roomId of FEATURE_ROOM_IDS) {

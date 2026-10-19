@@ -65,6 +65,11 @@ export const PRODUCTION_STAGE_OVERVIEW_WEBM = '/landing/key-features/rooms/produ
 export const PRODUCTION_STAGE_OVERVIEW_MP4 =
   'https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Production%20Stage%20.mp4'
 
+export const SCREENING_ROOM_OVERVIEW_WEBM = '/landing/key-features/rooms/screening-room-en.webm'
+
+export const SCREENING_ROOM_OVERVIEW_MP4 =
+  'https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Screening%20Room%20.mp4'
+
 const PRODUCED_ROOM_FILMS: Partial<
   Record<FeatureRoomId, Partial<Record<VideoLocaleId, FeatureRoomMediaEntry>>>
 > = {
@@ -87,6 +92,13 @@ const PRODUCED_ROOM_FILMS: Partial<
       posterUrl: '',
       webmUrl: PRODUCTION_STAGE_OVERVIEW_WEBM,
       mp4Url: PRODUCTION_STAGE_OVERVIEW_MP4,
+    },
+  },
+  'screening-room': {
+    en: {
+      posterUrl: '',
+      webmUrl: SCREENING_ROOM_OVERVIEW_WEBM,
+      mp4Url: SCREENING_ROOM_OVERVIEW_MP4,
     },
   },
 }
