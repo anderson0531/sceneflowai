@@ -1015,17 +1015,18 @@ export function AudioGalleryPlayer({
     currentVisualFrame?.overlayType,
   ])
   
-  // Fullscreen toggle. Screening Room expands the view stage only.
-  // Gallery, share, and embed still fullscreen the whole player.
+  // Fullscreen toggle. Screening Room (Studio & Shared) expands the view stage only.
+  // Gallery and embed still fullscreen the whole player.
   const toggleFullscreen = useCallback(() => {
-    const target = screeningLayout ? screeningStageRef.current : containerRef.current
+    const target =
+      screeningLayout || isSharedView ? screeningStageRef.current : containerRef.current
     if (!target) return
     if (document.fullscreenElement === target) {
       void document.exitFullscreen()
       return
     }
     void target.requestFullscreen()
-  }, [screeningLayout])
+  }, [screeningLayout, isSharedView])
   
   // Listen for fullscreen changes (including Escape).
   useEffect(() => {
@@ -1034,12 +1035,12 @@ export function AudioGalleryPlayer({
       setScreeningStageFullscreen(current === screeningStageRef.current)
       // Stage fullscreen must not flip the gallery layout, which mounts the
       // scene title and description under the picture.
-      setIsFullscreen(!screeningLayout && !!current)
+      setIsFullscreen(!(screeningLayout || isSharedView) && !!current)
     }
     
     document.addEventListener('fullscreenchange', handleFullscreenChange)
     return () => document.removeEventListener('fullscreenchange', handleFullscreenChange)
-  }, [screeningLayout])
+  }, [screeningLayout, isSharedView])
 
   useEffect(() => {
     saveGalleryMusicIntroFade(musicIntroFade)
@@ -1792,10 +1793,10 @@ export function AudioGalleryPlayer({
                 onClick={toggleFullscreen}
                 className="p-1 rounded hover:bg-gray-700 text-gray-400 hover:text-white transition-colors"
               >
-                {isFullscreen ? <Minimize className="w-4 h-4" /> : <Maximize className="w-4 h-4" />}
+                {pictureFullscreen ? <Minimize className="w-4 h-4" /> : <Maximize className="w-4 h-4" />}
               </button>
             </TooltipTrigger>
-            <TooltipContent>{isFullscreen ? 'Exit fullscreen' : 'Enter fullscreen'}</TooltipContent>
+            <TooltipContent>{pictureFullscreen ? 'Exit fullscreen' : 'Enter fullscreen'}</TooltipContent>
           </Tooltip>
         )}
         {onClose && !isFullscreen && (
@@ -2167,6 +2168,99 @@ export function AudioGalleryPlayer({
     </>
   )
 
+  const screeningStageFullscreenOverlay = (
+    <>
+      <button
+        type="button"
+        className="absolute right-3 top-3 z-30 rounded-md bg-black/60 p-2 text-white opacity-0 transition-opacity hover:bg-black/80 group-hover:opacity-100"
+        onClick={(event) => {
+          event.stopPropagation()
+          toggleFullscreen()
+        }}
+        aria-label="Exit fullscreen"
+      >
+        <Minimize className="h-4 w-4" />
+      </button>
+      {playbackMode !== 'beats' && (
+        <button
+          type="button"
+          className={cn(
+            'absolute left-1/2 top-1/2 z-20 flex h-16 w-16 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full bg-black/60 text-white shadow-lg transition-opacity hover:bg-black/80',
+            effectiveIsPlaying
+              ? 'pointer-events-none opacity-0 group-hover:pointer-events-auto group-hover:opacity-100'
+              : 'opacity-100'
+          )}
+          onClick={toggleEffectivePlayback}
+          aria-label={effectiveIsPlaying ? 'Pause' : 'Play'}
+        >
+          {effectiveIsPlaying ? (
+            <Pause className="h-8 w-8" />
+          ) : (
+            <Play className="ml-0.5 h-8 w-8" />
+          )}
+        </button>
+      )}
+      <div className="pointer-events-none absolute inset-x-0 bottom-0 z-20 bg-gradient-to-t from-black/80 to-transparent p-4 opacity-0 transition-opacity group-hover:pointer-events-auto group-hover:opacity-100">
+        {playbackMode !== 'beats' && (
+          <div
+            className="mb-3 h-1.5 cursor-pointer rounded-full bg-white/20"
+            onClick={(event) => {
+              const rect = event.currentTarget.getBoundingClientRect()
+              const percent = (event.clientX - rect.left) / rect.width
+              seekEffective(percent * effectiveDuration)
+            }}
+          >
+            <div
+              className="h-full rounded-full bg-emerald-500"
+              style={{
+                width: `${Math.min(100, (effectiveCurrentTime / effectiveDuration) * 100)}%`,
+              }}
+            />
+          </div>
+        )}
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={goToPrevScene}
+            disabled={prevSceneDisabled}
+            className="rounded-full p-2 text-white hover:bg-white/10 disabled:opacity-40"
+            aria-label="Previous scene"
+          >
+            <SkipBack className="h-5 w-5" />
+          </button>
+          {playbackMode !== 'beats' && (
+            <button
+              type="button"
+              onClick={toggleEffectivePlayback}
+              className="rounded-full bg-emerald-600 p-3 text-white hover:bg-emerald-500"
+              aria-label={effectiveIsPlaying ? 'Pause' : 'Play'}
+            >
+              {effectiveIsPlaying ? (
+                <Pause className="h-5 w-5" />
+              ) : (
+                <Play className="ml-0.5 h-5 w-5" />
+              )}
+            </button>
+          )}
+          <button
+            type="button"
+            onClick={() => goToNextScene()}
+            disabled={nextSceneDisabled}
+            className="rounded-full p-2 text-white hover:bg-white/10 disabled:opacity-40"
+            aria-label="Next scene"
+          >
+            <SkipForward className="h-5 w-5" />
+          </button>
+          {playbackMode !== 'beats' && (
+            <span className="ml-2 text-xs text-white/70">
+              {formatTime(effectiveCurrentTime)} / {formatTime(effectiveDuration)}
+            </span>
+          )}
+        </div>
+      </div>
+    </>
+  )
+
   return (
     <TooltipProvider>
       <style
@@ -2241,89 +2335,7 @@ export function AudioGalleryPlayer({
                         videoStageContent
                       )}
                     </div>
-                    {screeningStageFullscreen && (
-                      <>
-                        <button
-                          type="button"
-                          className="absolute right-2 top-2 z-30 rounded-md bg-black/60 p-1.5 text-white hover:bg-black/80"
-                          onClick={(event) => {
-                            event.stopPropagation()
-                            toggleFullscreen()
-                          }}
-                          aria-label="Exit fullscreen"
-                        >
-                          <Minimize className="h-4 w-4" />
-                        </button>
-                        {playbackMode !== 'beats' && !effectiveIsPlaying && (
-                          <button
-                            type="button"
-                            className="absolute left-1/2 top-1/2 z-20 flex h-16 w-16 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full bg-black/60 text-white shadow-lg hover:bg-black/80"
-                            onClick={toggleEffectivePlayback}
-                            aria-label="Play"
-                          >
-                            <Play className="ml-0.5 h-8 w-8" />
-                          </button>
-                        )}
-                        <div className="pointer-events-none absolute inset-x-0 bottom-0 z-20 bg-gradient-to-t from-black/80 to-transparent p-4 opacity-0 transition-opacity group-hover:pointer-events-auto group-hover:opacity-100">
-                          {playbackMode !== 'beats' && (
-                            <div
-                              className="mb-3 h-1.5 cursor-pointer rounded-full bg-white/20"
-                              onClick={(event) => {
-                                const rect = event.currentTarget.getBoundingClientRect()
-                                const percent = (event.clientX - rect.left) / rect.width
-                                seekEffective(percent * effectiveDuration)
-                              }}
-                            >
-                              <div
-                                className="h-full rounded-full bg-emerald-500"
-                                style={{
-                                  width: `${Math.min(100, (effectiveCurrentTime / effectiveDuration) * 100)}%`,
-                                }}
-                              />
-                            </div>
-                          )}
-                          <div className="flex items-center gap-2">
-                            <button
-                              type="button"
-                              onClick={goToPrevScene}
-                              disabled={prevSceneDisabled}
-                              className="rounded-full p-2 text-white hover:bg-white/10 disabled:opacity-40"
-                              aria-label="Previous scene"
-                            >
-                              <SkipBack className="h-5 w-5" />
-                            </button>
-                            {playbackMode !== 'beats' && (
-                              <button
-                                type="button"
-                                onClick={toggleEffectivePlayback}
-                                className="rounded-full bg-emerald-600 p-3 text-white hover:bg-emerald-500"
-                                aria-label={effectiveIsPlaying ? 'Pause' : 'Play'}
-                              >
-                                {effectiveIsPlaying ? (
-                                  <Pause className="h-5 w-5" />
-                                ) : (
-                                  <Play className="ml-0.5 h-5 w-5" />
-                                )}
-                              </button>
-                            )}
-                            <button
-                              type="button"
-                              onClick={() => goToNextScene()}
-                              disabled={nextSceneDisabled}
-                              className="rounded-full p-2 text-white hover:bg-white/10 disabled:opacity-40"
-                              aria-label="Next scene"
-                            >
-                              <SkipForward className="h-5 w-5" />
-                            </button>
-                            {playbackMode !== 'beats' && (
-                              <span className="ml-2 text-xs text-white/70">
-                                {formatTime(effectiveCurrentTime)} / {formatTime(effectiveDuration)}
-                              </span>
-                            )}
-                          </div>
-                        </div>
-                      </>
-                    )}
+                    {screeningStageFullscreen && screeningStageFullscreenOverlay}
                   </div>
                 </div>
                 <div className="shrink-0 px-1">{sceneThumbnailsRow}</div>
@@ -2346,39 +2358,58 @@ export function AudioGalleryPlayer({
             </>
           ) : (
             <>
-              {playbackMode === 'beats' ? (
-                <div
-                  className={cn(
-                    'w-full flex-shrink-0',
-                    isFullscreen ? 'max-w-7xl' : landingWide ? 'max-w-none' : sharedCompact ? 'max-w-3xl sm:max-w-4xl' : 'max-w-[500px]'
-                  )}
-                >
-                  <ScreeningBeatPreview
-                    key={`${currentSceneId}:${selectedLanguage}`}
-                    scene={currentScene}
-                    productionData={currentProductionData}
-                    language={selectedLanguage}
-                    showWatermark={playerWatermarkVisible}
-                    autoPlay={beatAutoPlay}
-                    onPlaybackComplete={handleBeatPlaybackComplete}
-                  />
-                </div>
-              ) : (
               <div
+                ref={screeningStageRef}
                 className={cn(
-                  'relative rounded-lg overflow-hidden bg-black flex-shrink-0 w-full',
-                  isFullscreen
-                    ? 'max-w-7xl aspect-video'
-                    : landingWide
-                      ? 'max-w-none aspect-video shadow-lg'
-                      : sharedCompact
-                        ? 'max-w-3xl sm:max-w-4xl aspect-video shadow-lg'
-                        : 'max-w-[500px] aspect-video shadow-xl'
+                  'group relative w-full overflow-hidden bg-black flex-shrink-0',
+                  playbackMode === 'beats'
+                    ? cn(
+                        isFullscreen
+                          ? 'max-w-7xl'
+                          : landingWide
+                            ? 'max-w-none'
+                            : sharedCompact
+                              ? 'max-w-3xl sm:max-w-4xl rounded-lg shadow-lg'
+                              : 'max-w-[500px]'
+                      )
+                    : cn(
+                        'rounded-lg aspect-video',
+                        isFullscreen
+                          ? 'max-w-7xl'
+                          : landingWide
+                            ? 'max-w-none shadow-lg'
+                            : sharedCompact
+                              ? 'max-w-3xl sm:max-w-4xl shadow-lg'
+                              : 'max-w-[500px] shadow-xl'
+                      ),
+                  screeningStageFullscreen &&
+                    'flex h-screen max-h-none max-w-none w-screen items-center justify-center rounded-none shadow-none aspect-auto'
                 )}
               >
-                {videoStageContent}
+                <div
+                  className={cn(
+                    'relative w-full',
+                    playbackMode !== 'beats' && !screeningStageFullscreen && 'h-full',
+                    screeningStageFullscreen && 'absolute inset-0 h-full w-full'
+                  )}
+                >
+                  {playbackMode === 'beats' ? (
+                    <ScreeningBeatPreview
+                      key={`${currentSceneId}:${selectedLanguage}`}
+                      scene={currentScene}
+                      productionData={currentProductionData}
+                      language={selectedLanguage}
+                      showWatermark={playerWatermarkVisible}
+                      autoPlay={beatAutoPlay}
+                      onPlaybackComplete={handleBeatPlaybackComplete}
+                      fillScreen={screeningStageFullscreen}
+                    />
+                  ) : (
+                    videoStageContent
+                  )}
+                </div>
+                {screeningStageFullscreen && screeningStageFullscreenOverlay}
               </div>
-              )}
 
               {isFullscreen && !sharedCompact && !embedMode && (
                 <PreVisSceneInfoPanel

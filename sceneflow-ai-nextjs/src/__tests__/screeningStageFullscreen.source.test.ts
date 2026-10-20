@@ -11,14 +11,17 @@ describe('Screening Room stage fullscreen', () => {
 
   it('fullscreens the view stage and keeps the scene title out of that element', () => {
     expect(player).toContain(
-      'const target = screeningLayout ? screeningStageRef.current : containerRef.current'
+      'screeningLayout || isSharedView ? screeningStageRef.current : containerRef.current'
     )
     expect(player).toContain('setScreeningStageFullscreen(current === screeningStageRef.current)')
-    expect(player).toContain('setIsFullscreen(!screeningLayout && !!current)')
+    expect(player).toContain('setIsFullscreen(!(screeningLayout || isSharedView) && !!current)')
     expect(player).toContain('h-screen max-h-none max-w-none w-screen')
     expect(player).toContain('fillScreen={screeningStageFullscreen}')
     expect(player).toContain('aria-label="Exit fullscreen"')
     expect(player).toContain('group-hover:opacity-100')
+    expect(player).toContain(
+      "effectiveIsPlaying\n              ? 'pointer-events-none opacity-0 group-hover:pointer-events-auto group-hover:opacity-100'\n              : 'opacity-100'"
+    )
 
     const stageStart = player.indexOf('ref={screeningStageRef}')
     const stage = player.slice(stageStart, player.indexOf('min-w-[260px]', stageStart))
@@ -26,7 +29,14 @@ describe('Screening Room stage fullscreen', () => {
     expect(stage).not.toContain('PreVisSceneInfoPanel')
     expect(stage).not.toContain('variant="fullscreen"')
 
-    // Gallery / share fullscreen still shows the title under the picture.
+    // Shared Screening Room also mounts screeningStageRef and screeningStageFullscreenOverlay
+    const sharedStageStart = player.lastIndexOf('ref={screeningStageRef}')
+    expect(sharedStageStart).toBeGreaterThan(stageStart)
+    const sharedStage = player.slice(sharedStageStart, player.indexOf('PreVisSceneInfoPanel', sharedStageStart))
+    expect(sharedStage).toContain('screeningStageFullscreen && screeningStageFullscreenOverlay')
+    expect(sharedStage).toContain('fillScreen={screeningStageFullscreen}')
+
+    // Gallery fullscreen still shows the title under the picture.
     expect(player).toContain('variant="fullscreen"')
   })
 
