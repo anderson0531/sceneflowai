@@ -112,4 +112,22 @@ describe('Video tab inline clip preview', () => {
     expect(gallery).toContain('Regenerate clip')
     expect(gallery).toContain('Retake')
   })
+
+  it('provides Copy prompt buttons for shot stills and shot clips across production views', () => {
+    const gallery = readSource(GALLERY)
+    const frames = readSource(FRAMES)
+    const direction = readSource('src/components/vision/BeatDirectionEditor.tsx')
+    const preVisDialog = readSource('src/components/vision/PreVisFramePromptDialog.tsx')
+    const directorDialog = readSource('src/components/vision/scene-production/DirectorDialog.tsx')
+
+    expect(frames).toContain('Copy still prompt for Google AI Studio')
+    expect(frames).toContain('Still prompt copied')
+    expect(gallery).toContain('Copy clip prompt for Google AI Studio')
+    expect(gallery).toContain('Clip prompt copied')
+    expect(direction).toContain('Copy still prompt')
+    expect(direction).toContain('Copy clip prompt')
+    expect(preVisDialog).toContain('Copy still prompt for Google AI Studio')
+    expect(directorDialog).toContain('Copy clip prompt for Google AI Studio')
+    expect(directorDialog).toContain('Copy assembled API prompt for Google AI Studio')
+  })
 })

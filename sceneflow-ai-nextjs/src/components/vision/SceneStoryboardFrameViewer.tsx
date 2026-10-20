@@ -8,6 +8,7 @@ import {
   ChevronDown,
   ChevronUp,
   Clapperboard,
+  Copy,
   Loader,
   Move,
   MonitorPlay,
@@ -38,6 +39,11 @@ import {
   type StoryboardFrameSlot,
 } from '@/lib/storyboard/types'
 import { getSceneBeats } from '@/lib/script/beatMigration'
+import {
+  composeBeatActionFraming,
+  composePersistedBeatStillPrompt,
+  TITLE_BEAT_ACTION_LEAD_IN,
+} from '@/lib/intelligence/beat-sequence-planner-fallback'
 import { runSceneExpressPreflight } from '@/lib/sceneGeneration/sceneExpressPreflight'
 import {
   countStalePromptKeys,
@@ -581,6 +587,49 @@ export function SceneStoryboardFrameViewer({
     if (!previewSlot?.beatId) return undefined
     return sceneBeats.find((beat) => beat.beatId === previewSlot.beatId)?.kenBurns
   }, [previewSlot?.beatId, sceneBeats])
+
+  const previewStillPrompt = useMemo(() => {
+    if (!previewSlot) return ''
+    if (previewSlot.storyboardImagePrompt?.trim()) {
+      return previewSlot.storyboardImagePrompt.trim()
+    }
+    if (previewSlot.beatId) {
+      const beat = sceneBeats.find((entry) => entry.beatId === previewSlot.beatId)
+      if (beat) {
+        if (beat.beatDirection?.framePrompt?.trim()) {
+          return beat.beatDirection.framePrompt.trim()
+        }
+        const isTitle = beat.beatRole === 'title_reveal' || beat.beatRole === 'credit'
+        return (
+          composePersistedBeatStillPrompt({
+            sceneIndex,
+            beat,
+            actionLeadIn: isTitle ? TITLE_BEAT_ACTION_LEAD_IN : undefined,
+          }) ||
+          composeBeatActionFraming(beat) ||
+          ''
+        ).trim()
+      }
+    }
+    if (previewSlot.key === 'establishing') {
+      return (prompt || String(scene?.imagePrompt ?? '')).trim()
+    }
+    return ''
+  }, [previewSlot, sceneBeats, sceneIndex, prompt, scene?.imagePrompt])
+
+  const [copiedStillSlotKey, setCopiedStillSlotKey] = useState<string | null>(null)
+
+  const handleCopyStillPrompt = useCallback((promptText: string, slotKey: string) => {
+    const trimmed = promptText.trim()
+    if (!trimmed) return
+    void navigator.clipboard.writeText(trimmed).then(() => {
+      setCopiedStillSlotKey(slotKey)
+      toast.success('Still prompt copied')
+      window.setTimeout(() => {
+        setCopiedStillSlotKey((current) => (current === slotKey ? null : current))
+      }, 2000)
+    })
+  }, [])
 
   const editCharacterReferences = useMemo(
     () =>
@@ -1257,6 +1306,28 @@ export function SceneStoryboardFrameViewer({
                         <p className="text-sm font-semibold text-slate-200 truncate flex-1 min-w-0" title={previewSlot.label}>
                           {previewSlot.label}
                         </p>
+                        {previewStillPrompt && (
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            className="h-7 text-[10px] shrink-0 border-slate-600/50 text-slate-300 hover:bg-slate-700/50"
+                            title="Copy still prompt for Google AI Studio"
+                            onClick={() => handleCopyStillPrompt(previewStillPrompt, previewSlot.key)}
+                          >
+                            {copiedStillSlotKey === previewSlot.key ? (
+                              <>
+                                <Check className="w-3 h-3 mr-1 text-emerald-400" />
+                                Copied
+                              </>
+                            ) : (
+                              <>
+                                <Copy className="w-3 h-3 mr-1" />
+                                Copy prompt
+                              </>
+                            )}
+                          </Button>
+                        )}
                         {onSetScreeningPoster &&
                           previewSlot.displayImageUrl &&
                           !previewSlot.isMissing && (
@@ -1303,19 +1374,13 @@ export function SceneStoryboardFrameViewer({
                             </Button>
                           )}
                       </div>
-                      {previewSlot.storyboardImagePrompt?.trim() && (
+                      {previewStillPrompt && (
                         <p
-                          className="mt-1.5 text-xs text-slate-400 leading-relaxed cursor-help"
-                          title={previewSlot.storyboardImagePrompt}
-                          onClick={() => {
-                            void navigator.clipboard
-                              .writeText(previewSlot.storyboardImagePrompt!.trim())
-                              .then(() => {
-                                toast.success('Prompt copied')
-                              })
-                          }}
+                          className="mt-1.5 text-xs text-slate-400 leading-relaxed cursor-pointer"
+                          title={previewStillPrompt}
+                          onClick={() => handleCopyStillPrompt(previewStillPrompt, previewSlot.key)}
                         >
-                          {previewSlot.storyboardImagePrompt.trim()}
+                          {previewStillPrompt}
                         </p>
                       )}
                     </div>

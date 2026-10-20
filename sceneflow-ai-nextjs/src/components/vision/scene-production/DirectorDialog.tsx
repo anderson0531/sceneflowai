@@ -66,6 +66,7 @@ import {
   MapPin,
   Box,
   Shirt,
+  Copy,
 } from 'lucide-react'
 import type { 
   SceneSegment, 
@@ -1800,19 +1801,38 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
             
             {/* Prompt Direction Entry */}
             <div className="flex flex-col gap-2">
-              <div className="flex items-center justify-between">
+              <div className="flex items-center justify-between gap-2">
                 <Label className="text-slate-300">Prompt Direction</Label>
-                {!readOnlyPrompts && (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => setIsDirectionDialogOpen(true)}
-                    className="h-6 px-2 text-xs text-indigo-400 hover:text-indigo-300 hover:bg-indigo-950/30"
-                  >
-                    <Wand2 className="w-3 h-3 mr-1" />
-                    AI Assistant
-                  </Button>
-                )}
+                <div className="flex items-center gap-1.5">
+                  {visualPrompt?.trim() && (
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => {
+                        void navigator.clipboard.writeText(visualPrompt.trim()).then(() => {
+                          toast.success('Clip prompt copied')
+                        })
+                      }}
+                      title="Copy clip prompt for Google AI Studio"
+                      className="h-6 px-2 text-xs text-slate-300 hover:text-white hover:bg-slate-800"
+                    >
+                      <Copy className="w-3 h-3 mr-1" />
+                      Copy prompt
+                    </Button>
+                  )}
+                  {!readOnlyPrompts && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setIsDirectionDialogOpen(true)}
+                      className="h-6 px-2 text-xs text-indigo-400 hover:text-indigo-300 hover:bg-indigo-950/30"
+                    >
+                      <Wand2 className="w-3 h-3 mr-1" />
+                      AI Assistant
+                    </Button>
+                  )}
+                </div>
               </div>
               {readOnlyPrompts && (
                 <p className="text-[11px] text-slate-500 leading-relaxed">
@@ -2252,9 +2272,28 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
                         <Label className="text-slate-400 text-xs">
                           API Prompt {apiPromptPreviewLoading ? '(updating…)' : '(preview)'}
                         </Label>
-                        {apiPromptPreviewLoading && (
-                          <Loader2 className="w-3.5 h-3.5 animate-spin text-slate-400" />
-                        )}
+                        <div className="flex items-center gap-2">
+                          {displayedApiPrompt?.trim() && (
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => {
+                                void navigator.clipboard.writeText(displayedApiPrompt.trim()).then(() => {
+                                  toast.success('API prompt copied')
+                                })
+                              }}
+                              title="Copy assembled API prompt for Google AI Studio"
+                              className="h-6 px-2 text-xs text-slate-300 hover:text-white hover:bg-slate-800"
+                            >
+                              <Copy className="w-3 h-3 mr-1" />
+                              Copy API prompt
+                            </Button>
+                          )}
+                          {apiPromptPreviewLoading && (
+                            <Loader2 className="w-3.5 h-3.5 animate-spin text-slate-400" />
+                          )}
+                        </div>
                       </div>
                       <Textarea
                         value={displayedApiPrompt}

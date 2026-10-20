@@ -1,7 +1,8 @@
 'use client'
 
-import { useMemo, useState } from 'react'
-import { ChevronDown, ChevronRight, Clapperboard } from 'lucide-react'
+import { useCallback, useMemo, useState } from 'react'
+import { Check, ChevronDown, ChevronRight, Clapperboard, Copy } from 'lucide-react'
+import { toast } from 'sonner'
 import { BeatDirectorDialog } from '@/components/vision/BeatDirectorDialog'
 import { BeatExcludeToggle } from '@/components/vision/BeatExcludeToggle'
 import { getSceneBeats } from '@/lib/script/beatMigration'
@@ -122,15 +123,59 @@ const DIRECTION_TILE_ACCENT: Record<string, { border: string; label: string }> =
   Props: { border: 'border-indigo-500/50', label: 'text-indigo-300' },
 }
 
-function DirectionTile({ label, value }: { label: string; value?: string }) {
+function DirectionTile({
+  label,
+  value,
+  copyable = false,
+  copyToastLabel = 'Prompt copied',
+  copyButtonTitle = 'Copy prompt for Google AI Studio',
+}: {
+  label: string
+  value?: string
+  copyable?: boolean
+  copyToastLabel?: string
+  copyButtonTitle?: string
+}) {
+  const [copied, setCopied] = useState(false)
   if (!value?.trim()) return null
   const accent = DIRECTION_TILE_ACCENT[label] ?? {
     border: 'border-slate-600/60',
     label: 'text-slate-400',
   }
+  const handleCopy = () => {
+    const trimmed = value.trim()
+    if (!trimmed) return
+    void navigator.clipboard.writeText(trimmed).then(() => {
+      setCopied(true)
+      toast.success(copyToastLabel)
+      window.setTimeout(() => setCopied(false), 2000)
+    })
+  }
   return (
     <div className={`min-w-0 rounded-md border bg-slate-900/50 px-2.5 py-2 ${accent.border}`}>
-      <p className={`text-[10px] font-semibold uppercase tracking-[0.14em] ${accent.label}`}>{label}</p>
+      <div className="flex items-center justify-between gap-2">
+        <p className={`text-[10px] font-semibold uppercase tracking-[0.14em] ${accent.label}`}>{label}</p>
+        {copyable && (
+          <button
+            type="button"
+            className="inline-flex h-6 items-center gap-1 rounded border border-slate-600/60 px-2 text-[10px] text-slate-300 hover:bg-slate-800/70"
+            title={copyButtonTitle}
+            onClick={handleCopy}
+          >
+            {copied ? (
+              <>
+                <Check className="h-3 w-3 text-emerald-400" />
+                Copied
+              </>
+            ) : (
+              <>
+                <Copy className="h-3 w-3" />
+                Copy prompt
+              </>
+            )}
+          </button>
+        )}
+      </div>
       <p className="mt-1 text-xs leading-relaxed text-slate-200">{value}</p>
     </div>
   )
@@ -528,23 +573,69 @@ export function BeatDirectionEditor({
           )}
 
           <div className="border-t border-slate-800 pt-2">
-            <button
-              type="button"
-              className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-400 hover:text-slate-200"
-              onClick={() => setPromptsOpen((prev) => !prev)}
-              aria-expanded={promptsOpen}
-            >
-              {promptsOpen ? (
-                <ChevronDown className="h-3.5 w-3.5" />
-              ) : (
-                <ChevronRight className="h-3.5 w-3.5" />
-              )}
-              Frame and clip prompts
-            </button>
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <button
+                type="button"
+                className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-400 hover:text-slate-200"
+                onClick={() => setPromptsOpen((prev) => !prev)}
+                aria-expanded={promptsOpen}
+              >
+                {promptsOpen ? (
+                  <ChevronDown className="h-3.5 w-3.5" />
+                ) : (
+                  <ChevronRight className="h-3.5 w-3.5" />
+                )}
+                Frame and clip prompts
+              </button>
+              <div className="flex flex-wrap items-center gap-1.5">
+                {framePreview?.trim() && (
+                  <button
+                    type="button"
+                    className="inline-flex h-6 items-center gap-1 rounded border border-slate-700 px-2 text-[10px] text-slate-300 hover:bg-slate-800/70"
+                    title="Copy still prompt for Google AI Studio"
+                    onClick={() => {
+                      void navigator.clipboard.writeText(framePreview.trim()).then(() => {
+                        toast.success('Still prompt copied')
+                      })
+                    }}
+                  >
+                    <Copy className="h-3 w-3" />
+                    Copy still prompt
+                  </button>
+                )}
+                {videoPreview?.trim() && (
+                  <button
+                    type="button"
+                    className="inline-flex h-6 items-center gap-1 rounded border border-slate-700 px-2 text-[10px] text-slate-300 hover:bg-slate-800/70"
+                    title="Copy clip prompt for Google AI Studio"
+                    onClick={() => {
+                      void navigator.clipboard.writeText(videoPreview.trim()).then(() => {
+                        toast.success('Clip prompt copied')
+                      })
+                    }}
+                  >
+                    <Copy className="h-3 w-3" />
+                    Copy clip prompt
+                  </button>
+                )}
+              </div>
+            </div>
             {promptsOpen && (
               <div className="mt-2 space-y-3">
-                <DirectionTile label="Frame prompt" value={framePreview} />
-                <DirectionTile label="Clip prompt" value={videoPreview} />
+                <DirectionTile
+                  label="Frame prompt"
+                  value={framePreview}
+                  copyable
+                  copyToastLabel="Still prompt copied"
+                  copyButtonTitle="Copy still prompt for Google AI Studio"
+                />
+                <DirectionTile
+                  label="Clip prompt"
+                  value={videoPreview}
+                  copyable
+                  copyToastLabel="Clip prompt copied"
+                  copyButtonTitle="Copy clip prompt for Google AI Studio"
+                />
               </div>
             )}
           </div>

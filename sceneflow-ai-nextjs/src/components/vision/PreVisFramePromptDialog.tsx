@@ -14,7 +14,7 @@ import { Button } from '@/components/ui/Button'
 import { Textarea } from '@/components/ui/textarea'
 import { Badge } from '@/components/ui/badge'
 import { DictationTextarea } from '@/components/ui/DictationTextarea'
-import { Loader2, MapPin, Check, ChevronDown, ChevronUp, AlertTriangle, Sparkles } from 'lucide-react'
+import { Loader2, MapPin, Check, ChevronDown, ChevronUp, AlertTriangle, Sparkles, Copy } from 'lucide-react'
 import {
   LocationSettingSection,
   CharacterSelectionSection,
@@ -288,7 +288,24 @@ export function PreVisFramePromptDialog({
         <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain pr-3 mt-3 space-y-3">
           {compiledActionFraming && (
             <div className="rounded-lg border border-slate-700 bg-slate-800/40 p-3 space-y-1">
-              <p className="text-sm font-medium text-slate-200">{t('compiledFramingTitle')}</p>
+              <div className="flex items-center justify-between gap-2">
+                <p className="text-sm font-medium text-slate-200">{t('compiledFramingTitle')}</p>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="h-6 px-2 text-[10px] border-slate-600/60 text-slate-300 hover:bg-slate-700/60"
+                  title="Copy still prompt for Google AI Studio"
+                  onClick={() => {
+                    void navigator.clipboard.writeText(compiledActionFraming.trim()).then(() => {
+                      toast.success('Still prompt copied')
+                    })
+                  }}
+                >
+                  <Copy className="w-3 h-3 mr-1" />
+                  Copy prompt
+                </Button>
+              </div>
               <p className="text-[11px] text-slate-400">{t('compiledFramingHint')}</p>
               <p className="text-xs text-slate-300 leading-relaxed whitespace-pre-wrap">
                 {compiledActionFraming}

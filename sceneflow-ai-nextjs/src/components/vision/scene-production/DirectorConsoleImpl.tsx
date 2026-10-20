@@ -143,6 +143,9 @@ import { forceDownload } from '@/lib/utils'
 import type { SceneAudioData } from './GuidePromptEditor'
 import type { GuideCharacterDemographic } from '@/lib/scene/segmentGuidePrompt'
 import { refreshProductionSegmentVideoPrompts } from '@/lib/scene/syncBeatVideoPrompt'
+import { compileBeatVideoPromptFromDirection } from '@/lib/scene/beatVideoPromptCompiler'
+import { parsePersistedMusicCues, resolveBeatMusicCue } from '@/lib/script/sceneMusicCues'
+import type { DetailedSceneDirection } from '@/types/scene-direction'
 import {
   getSceneBeats,
   isBeatExcluded,
@@ -1695,9 +1698,12 @@ export function DirectorConsoleRoot({
   ])
 
   const videoClips = useMemo<BeatVideoClip[]>(() => {
-    const beats = getSceneBeats((scene as Record<string, unknown> | undefined) ?? null).filter(
-      (beat) => !isBeatExcluded(beat)
-    )
+    const sceneRecord = (scene as Record<string, unknown> | undefined) ?? null
+    const allBeats = getSceneBeats(sceneRecord)
+    const beats = allBeats.filter((beat) => !isBeatExcluded(beat))
+    const sceneDirection = ((sceneRecord?.sceneDirection ?? sceneRecord?.detailedDirection ?? null) ||
+      null) as DetailedSceneDirection | null
+    const persistedMusicCues = parsePersistedMusicCues(sceneRecord?.sceneMusicCues, allBeats)
     const used = new Set<string>()
     const fromBeats = beats.map((beat, index) => {
       const matches = segments.filter((segment) => segment.beatId === beat.beatId)
@@ -1727,12 +1733,23 @@ export function DirectorConsoleRoot({
         segment?.references?.startFrameUrl ||
         undefined
       const spoken = beat.kind === 'action' ? beat.actionDescription : beat.line
+      const rawBeatIndex = allBeats.findIndex((entry) => entry.beatId === beat.beatId)
+      const musicCue = rawBeatIndex >= 0 ? resolveBeatMusicCue(persistedMusicCues, rawBeatIndex) : undefined
+      const resolvedPrompt =
+        item?.config.prompt ||
+        segment?.userEditedPrompt ||
+        segment?.generatedPrompt ||
+        beat.beatDirection?.videoPrompt?.trim() ||
+        compileBeatVideoPromptFromDirection(beat, sceneDirection, {
+          previousBeat,
+          ...(musicCue ? { musicCue } : {}),
+        }).prompt
       return {
         key: beat.beatId,
         beatId: beat.beatId,
         beatNumber: index + 1,
         label: (spoken || beat.kind || `Shot ${index + 1}`).replace(/\s+/g, ' ').trim(),
-        prompt: item?.config.prompt || segment?.userEditedPrompt || segment?.generatedPrompt,
+        prompt: resolvedPrompt,
         kind: beat.kind,
         thumbnailUrl: thumbnail,
         hasStartFrame: !!thumbnail,

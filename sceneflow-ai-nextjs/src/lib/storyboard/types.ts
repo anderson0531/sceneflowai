@@ -482,6 +482,7 @@ export function enumerateStoryboardFrameSlots(
         customFrameId: frame.id,
         ownImageUrl,
         displayImageUrl: ownImageUrl,
+        storyboardImagePrompt: frame.imagePrompt,
         isPlaceholder: false,
         isMissing: !ownImageUrl,
         imageVersions: stillVersionsOnRow(
@@ -511,6 +512,8 @@ export function enumerateStoryboardFrameSlots(
       kind: 'action',
       ownImageUrl,
       displayImageUrl: ownImageUrl,
+      storyboardImagePrompt:
+        typeof scene.imagePrompt === 'string' ? scene.imagePrompt : undefined,
       isPlaceholder: false,
       isMissing: !ownImageUrl,
     })
@@ -533,6 +536,10 @@ export function enumerateStoryboardFrameSlots(
       dialogueIndex,
       ownImageUrl,
       displayImageUrl,
+      storyboardImagePrompt:
+        typeof line.storyboardImagePrompt === 'string'
+          ? line.storyboardImagePrompt
+          : undefined,
       isPlaceholder: !ownImageUrl && !!displayImageUrl,
       isMissing: !ownImageUrl && !displayImageUrl,
     })
@@ -549,6 +556,7 @@ export function enumerateStoryboardFrameSlots(
       customFrameId: frame.id,
       ownImageUrl,
       displayImageUrl: ownImageUrl,
+      storyboardImagePrompt: frame.imagePrompt,
       isPlaceholder: false,
       isMissing: !ownImageUrl,
     })

@@ -1,7 +1,8 @@
 'use client'
 
-import React, { useEffect, useMemo, useRef, useState } from 'react'
-import { AlertTriangle, Camera, Clapperboard, Film, Maximize2, Minimize2, Pause, PlayCircle, Settings2, Upload, Wand2 } from 'lucide-react'
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { AlertTriangle, Camera, Check, Clapperboard, Copy, Film, Maximize2, Minimize2, Pause, PlayCircle, Settings2, Upload, Wand2 } from 'lucide-react'
+import { toast } from 'sonner'
 import { SUPPORTED_LANGUAGES } from '@/constants/languages'
 import { GroupedLanguageSelector } from '@/components/vision/GroupedLanguageSelector'
 import { Button } from '@/components/ui/Button'
@@ -322,6 +323,20 @@ export function BeatVideoGallery({
     }
     el.pause()
   }
+
+  const [copiedClipKey, setCopiedClipKey] = useState<string | null>(null)
+
+  const handleCopyClipPrompt = useCallback((promptText: string, clipKey: string) => {
+    const trimmed = promptText.trim()
+    if (!trimmed) return
+    void navigator.clipboard.writeText(trimmed).then(() => {
+      setCopiedClipKey(clipKey)
+      toast.success('Clip prompt copied')
+      window.setTimeout(() => {
+        setCopiedClipKey((current) => (current === clipKey ? null : current))
+      }, 2000)
+    })
+  }, [])
 
   return (
     <div id="beat-video-gallery" className="space-y-3">
@@ -808,6 +823,28 @@ export function BeatVideoGallery({
                       Draft
                     </span>
                   )}
+                  {preview.prompt?.trim() && (
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="outline"
+                      className="h-7 shrink-0 border-slate-600/50 text-[10px] text-slate-300 hover:bg-slate-700/50"
+                      title="Copy clip prompt for Google AI Studio"
+                      onClick={() => handleCopyClipPrompt(preview.prompt!, preview.key)}
+                    >
+                      {copiedClipKey === preview.key ? (
+                        <>
+                          <Check className="mr-1 h-3 w-3 text-emerald-400" />
+                          Copied
+                        </>
+                      ) : (
+                        <>
+                          <Copy className="mr-1 h-3 w-3" />
+                          Copy prompt
+                        </>
+                      )}
+                    </Button>
+                  )}
                 </div>
                 {previewFailed && (
                   <div className="mt-2 space-y-2 rounded-md border border-rose-500/40 bg-rose-950/40 p-2">
@@ -844,7 +881,13 @@ export function BeatVideoGallery({
                   </div>
                 )}
                 {preview.prompt?.trim() && (
-                  <p className="mt-1.5 text-xs leading-relaxed text-slate-400">{preview.prompt.trim()}</p>
+                  <p
+                    className="mt-1.5 cursor-pointer text-xs leading-relaxed text-slate-400"
+                    title={preview.prompt.trim()}
+                    onClick={() => handleCopyClipPrompt(preview.prompt!, preview.key)}
+                  >
+                    {preview.prompt.trim()}
+                  </p>
                 )}
                 {readOnlyPrompts && preview.segment && (
                   <p className="mt-1 text-[10px] text-slate-500">
