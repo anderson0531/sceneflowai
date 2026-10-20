@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useEffect, useMemo } from 'react'
+import React, { useEffect, useMemo, useState } from 'react'
 import {
   AlertTriangle,
   Download,
@@ -18,8 +18,13 @@ import { toast } from 'sonner'
 import { Button } from '@/components/ui/Button'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 import { ActionBeatSfxControls, type ExpressBeatSfxStatus } from '@/components/vision/ActionBeatSfxControls'
-import { DialogueQualityToggle } from '@/components/vision/DialogueQualityToggle'
+import { DialogueQualityToggle, isHifiDialogueProvider } from '@/components/vision/DialogueQualityToggle'
 import type { AudioSlotSavedPayload } from '@/lib/audio/cleanupAudio'
+import {
+  extractAndSaveSpokenBeatClipAudio,
+  resolveBeatSegmentDuration,
+  resolveBeatVideoClipUrl,
+} from '@/lib/audio/extractAndApplyShotClipAudio'
 import { BeatAudioStatusBadge } from '@/components/vision/BeatAudioStatusBadge'
 import { BeatCaptionControl } from '@/components/vision/BeatCaptionControl'
 import { BeatMusicToggle } from '@/components/vision/BeatMusicToggle'
@@ -835,12 +840,7 @@ function AudioStage({
   }
   const sceneKey = scene.id || scene.sceneId || `scene-${sceneIdx}`
   const beatNumber = (typeof beat.sequenceIndex === 'number' ? beat.sequenceIndex : beats.indexOf(beat)) + 1
-  const segment =
-    segments?.find((row) => row.beatId === beat.beatId && segmentHasPlayableVideo(row)) ??
-    segments?.find((row) => row.beatId === beat.beatId)
-  const clipUrl = segment
-    ? resolveLiveTake(segment.takes, segment.currentTakeId, segment.activeAssetUrl)?.url
-    : undefined
+  const clipUrl = resolveBeatVideoClipUrl(segments, beat.beatId, selectedLanguage)
 
   return (
     <BeatStillClipViewer
@@ -900,6 +900,9 @@ function ActionBeatAudio(
   }
 ) {
   const { beat, beatNumber, scene, sceneIdx, sfxByBeatId, continuityBroken, hasSceneMusic } = props
+  const sceneKey = scene.id || scene.sceneId || `scene-${sceneIdx}`
+  const clipUrl = resolveBeatVideoClipUrl(props.segments, beat.beatId, props.selectedLanguage)
+  const segmentDuration = resolveBeatSegmentDuration(props.segments, beat.beatId) ?? scene.duration
   const parseInlineBeatSfx = (actionText?: string) => {
     if (!actionText?.trim()) return [] as string[]
     return actionText
@@ -963,8 +966,10 @@ function ActionBeatAudio(
         beat={beat}
         scene={scene}
         sceneIdx={sceneIdx}
+        sceneId={sceneKey}
         projectId={props.projectId}
-        segmentDurationSeconds={scene.duration}
+        clipUrl={clipUrl}
+        segmentDurationSeconds={segmentDuration}
         playingAudio={props.playingAudio ?? null}
         expressStatus={props.expressBeatStatus?.[beat.beatId]}
         isExpressRunning={props.isExpressAudioRunning}
@@ -1021,6 +1026,7 @@ function SpokenBeatAudio(
     characters = [],
     sfxByBeatId,
   } = props
+  const [isExtractingClipAudio, setIsExtractingClipAudio] = useState(false)
   const dialogueLines = Array.isArray(scene.dialogue) ? scene.dialogue : []
   const dialogueIndex = resolveSpokenIndex(beats, beat, dialogueLines)
   const d = dialogueLines[dialogueIndex] ?? {
@@ -1039,6 +1045,8 @@ function SpokenBeatAudio(
   })
   const dialogueAudioUrl = audioEntry?.audioUrl || audioEntry?.url
   const sceneKey = scene.id || scene.sceneId || `scene-${sceneIdx}`
+  const clipUrl = resolveBeatVideoClipUrl(props.segments, beat.beatId, props.selectedLanguage)
+  const segmentDuration = resolveBeatSegmentDuration(props.segments, beat.beatId)
   const dialogueLineText = coerceDialogueLineText(d.line ?? d.text)
   const { chip, spokenDisplay, brief } = dialogueDirectionDisplay(
     dialogueLineText,
@@ -1077,6 +1085,49 @@ function SpokenBeatAudio(
     props.generatingDialogue?.sceneIdx === sceneIdx &&
     props.generatingDialogue?.character === d.character &&
     props.generatingDialogue?.dialogueIndex === i
+
+  const handleExtractClipAudio = async () => {
+    if (!props.projectId) {
+      toast.error('Project context is missing for clip audio extraction.')
+      return
+    }
+    if (!clipUrl) {
+      toast.info('Generate a video clip for this shot first.')
+      return
+    }
+    setIsExtractingClipAudio(true)
+    const toastId = toast.loading('Extracting MP3 from shot video clip...')
+    try {
+      await extractAndSaveSpokenBeatClipAudio({
+        projectId: props.projectId,
+        sceneIndex: sceneIdx,
+        sceneId: sceneKey,
+        beatId: beat.beatId,
+        videoUrl: clipUrl,
+        language: props.selectedLanguage,
+        dialogueIndex: i,
+        characterName: String(d.character ?? beat.character ?? 'Speaker'),
+        lineText: dialogueLineText,
+        voiceDirection: d.voiceDirection ?? beat.voiceDirection,
+        lineId: d.lineId ?? beat.lineId,
+        lineKind: isNarrationBeat ? 'narration' : 'dialogue',
+        characterId: d.characterId ?? beat.characterId,
+        fallbackDuration: segmentDuration,
+        onAudioSlotSaved: props.onAudioSlotSaved,
+        script: props.script,
+        scenes: props.scenes,
+        onScriptChange: props.onScriptChange,
+      })
+      toast.success('Shot audio updated with MP3 from video clip.', { id: toastId })
+    } catch (error) {
+      toast.error(
+        `Failed to extract clip MP3: ${(error as Error)?.message || 'Unknown error'}`,
+        { id: toastId }
+      )
+    } finally {
+      setIsExtractingClipAudio(false)
+    }
+  }
 
   return (
     <div
@@ -1214,9 +1265,16 @@ function SpokenBeatAudio(
           {audioEntry?.duration && (
             <span className="mt-1 text-[10px] text-gray-500">Duration: {audioEntry.duration.toFixed(1)}s</span>
           )}
-          {!isNarrationBeat && (
+          {(!isNarrationBeat || Boolean(clipUrl)) && (
             <DialogueQualityToggle
-              disabled={generating || !String(d.line ?? beat.line ?? '').trim()}
+              disabled={generating || isExtractingClipAudio}
+              lofiDisabled={!String(d.line ?? beat.line ?? '').trim()}
+              hasClip={!!clipUrl}
+              isExtractingClipAudio={isExtractingClipAudio}
+              isClipAudioActive={
+                isHifiDialogueProvider(audioEntry?.provider) ||
+                Boolean(dialogueAudioUrl && dialogueAudioUrl.includes('shot-audio-'))
+              }
               onLofi={() => {
                 if (!props.onGenerateSceneAudio) return
                 props.setGeneratingDialogue?.({ sceneIdx, character: d.character, dialogueIndex: i })
@@ -1229,13 +1287,16 @@ function SpokenBeatAudio(
                   })
                   .finally(() => props.setGeneratingDialogue?.(null))
               }}
+              onExtractClipAudio={() => {
+                void handleExtractClipAudio()
+              }}
               onGenerateClip={() => {
                 window.dispatchEvent(
                   new CustomEvent('production:open-action-tab', {
                     detail: { sceneIndex: sceneIdx, beatId: beat.beatId },
                   })
                 )
-                toast.message('Generate this shot’s clip. HiFi playback uses the clip’s audio.')
+                toast.message('Generate this shot’s clip, then extract its MP3 to update shot audio.')
               }}
             />
           )}

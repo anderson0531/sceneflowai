@@ -14,6 +14,7 @@ import {
   audioSourceFingerprintForSfxBeat,
   isBeatAudioStale,
 } from '@/lib/audio/beatAudioStale'
+import { requestShotClipMp3Extraction } from '@/lib/audio/extractAndApplyShotClipAudio'
 import { getSceneBeats } from '@/lib/script/beatMigration'
 import type { SegmentSFX } from '@/lib/script/segmentTypes'
 import {
@@ -36,6 +37,7 @@ export interface SegmentSfxCardProps {
   positionInSegment: number
   playingAudio: string | null
   projectId?: string
+  clipUrl?: string
   /**
    * Parent segment duration in seconds (segment.endTime - segment.startTime).
    * Drives the "Auto" preset's resolved duration; falls back to 8s when not
@@ -70,15 +72,17 @@ export function SegmentSfxCard({
   positionInSegment,
   playingAudio,
   projectId,
+  clipUrl,
   segmentDurationSeconds,
   onPlayAudio,
   onDeleteSceneAudio,
   onSaveSfxAudio,
 }: SegmentSfxCardProps) {
   const [isGeneratingElevenLabs, setIsGeneratingElevenLabs] = useState(false)
+  const [isExtractingClipAudio, setIsExtractingClipAudio] = useState(false)
   const [durationPreset, setDurationPreset] = useState<SfxDurationOverride>('auto')
   const autoSeconds = resolveAutoSfxDuration(segmentDurationSeconds)
-  const isGenerating = isGeneratingElevenLabs
+  const isGenerating = isGeneratingElevenLabs || isExtractingClipAudio
 
   const legacyIdx = sfx.legacyIndex
   const audioUrl: string | undefined =
@@ -282,9 +286,40 @@ export function SegmentSfxCard({
       <div className="text-sm text-gray-700 dark:text-gray-300 italic">{sfx.description}</div>
       <DialogueQualityToggle
         lofiTitle="ElevenLabs sound effect"
-        disabled={isGenerating || !sfxPrompt}
+        disabled={isGenerating}
+        lofiDisabled={!sfxPrompt}
+        hasClip={!!clipUrl}
+        isExtractingClipAudio={isExtractingClipAudio}
+        isClipAudioActive={Boolean(audioUrl && audioUrl.includes('shot-audio-'))}
         onLofi={() => {
           void dispatchGenerateElevenLabs()
+        }}
+        onExtractClipAudio={() => {
+          if (!projectId || !clipUrl || legacyIdx === undefined) return
+          setIsExtractingClipAudio(true)
+          const toastId = toast.loading('Extracting MP3 from shot video clip...')
+          void requestShotClipMp3Extraction({
+            projectId,
+            videoUrl: clipUrl,
+            beatId: sourceBeat?.beatId,
+            sceneId: scene?.id || scene?.sceneId || `scene-${sceneIdx}`,
+          })
+            .then(async (extracted) => {
+              await onSaveSfxAudio?.(sceneIdx, 'sfx', extracted.audioUrl, legacyIdx, null, {
+                ...(sourceBeat?.beatId ? { beatId: sourceBeat.beatId } : {}),
+                beatDescription: sfxPrompt || 'Shot clip audio',
+              })
+              toast.success('Shot audio updated with MP3 from video clip.', { id: toastId })
+            })
+            .catch((error: any) => {
+              toast.error(
+                `Failed to extract clip MP3: ${error?.message || 'Unknown error'}`,
+                { id: toastId }
+              )
+            })
+            .finally(() => {
+              setIsExtractingClipAudio(false)
+            })
         }}
         onGenerateClip={() => {
           window.dispatchEvent(
@@ -295,7 +330,7 @@ export function SegmentSfxCard({
               },
             })
           )
-          toast.message('Generate this shot’s clip. HiFi playback uses the clip’s audio.')
+          toast.message('Generate this shot’s clip, then extract its MP3 to update shot audio.')
         }}
       />
     </div>

@@ -2291,9 +2291,13 @@ export function ScriptPanel({ script, onScriptChange, onAudioSlotSaved, isGenera
       if (audioType === 'sfx' && sfxIdx !== undefined && sfxAttribution !== undefined) {
         atomicAudioUpdate.sfxAttribution = sfxAttribution
       }
-      if (audioType === 'sfx' && beatContext?.beatDescription) {
-        atomicAudioUpdate.beatDescription = beatContext.beatDescription
-        if (beatContext.beatId) atomicAudioUpdate.beatId = beatContext.beatId
+      if (audioType === 'sfx' && beatContext) {
+        if (beatContext.beatDescription) {
+          atomicAudioUpdate.beatDescription = beatContext.beatDescription
+        }
+        if (beatContext.beatId) {
+          atomicAudioUpdate.beatId = beatContext.beatId
+        }
       }
       if (audioType === 'music' && typeof musicDuration === 'number' && musicDuration > 0) {
         atomicAudioUpdate.musicDuration = musicDuration

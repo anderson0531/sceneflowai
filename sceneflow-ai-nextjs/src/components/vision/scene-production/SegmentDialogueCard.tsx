@@ -1,9 +1,11 @@
 'use client'
 
+import { useState } from 'react'
 import { Download, Loader, Pause, Play, RefreshCw, Trash2, Upload } from 'lucide-react'
 import { BeatAudioStatusBadge } from '@/components/vision/BeatAudioStatusBadge'
-import { DialogueQualityToggle } from '@/components/vision/DialogueQualityToggle'
+import { DialogueQualityToggle, isHifiDialogueProvider } from '@/components/vision/DialogueQualityToggle'
 import type { AudioSlotSavedPayload } from '@/lib/audio/cleanupAudio'
+import { extractAndSaveSpokenBeatClipAudio } from '@/lib/audio/extractAndApplyShotClipAudio'
 import { toast } from 'sonner'
 import { saveAudioFile } from '@/lib/download/saveFile'
 import { findDialogueAudioForLine } from '@/components/vision/scene-production/audioTrackBuilder'
@@ -60,6 +62,7 @@ export interface SegmentDialogueCardProps {
   generatingDialogue?: { sceneIdx: number; character?: string; dialogueIndex?: number; lineId?: string } | null
   setGeneratingDialogue?: (val: any) => void
   projectId?: string
+  clipUrl?: string
   onAudioSlotSaved?: (payload: AudioSlotSavedPayload) => void
 }
 
@@ -77,8 +80,10 @@ export function SegmentDialogueCard({
   generatingDialogue,
   setGeneratingDialogue,
   projectId,
+  clipUrl,
   onAudioSlotSaved,
 }: SegmentDialogueCardProps) {
+  const [isExtractingClipAudio, setIsExtractingClipAudio] = useState(false)
   const isNarrator = line.kind === 'narration'
   const clipBeatId = getSceneBeats(scene).find((beat) => beat.lineId && beat.lineId === line.lineId)?.beatId
 
@@ -227,9 +232,49 @@ export function SegmentDialogueCard({
           )}
           {!isNarrator && dialogueIndex !== null && (
             <DialogueQualityToggle
-              disabled={isGenerating || !lineText.trim()}
+              disabled={isGenerating || isExtractingClipAudio}
+              lofiDisabled={!lineText.trim()}
+              hasClip={!!clipUrl}
+              isExtractingClipAudio={isExtractingClipAudio}
+              isClipAudioActive={
+                isHifiDialogueProvider(dialogueEntry?.provider) ||
+                Boolean(audioUrl && audioUrl.includes('shot-audio-'))
+              }
               onLofi={() => {
                 void dispatchGenerate()
+              }}
+              onExtractClipAudio={() => {
+                if (!projectId || !clipUrl || dialogueIndex === null) return
+                setIsExtractingClipAudio(true)
+                const toastId = toast.loading('Extracting MP3 from shot video clip...')
+                void extractAndSaveSpokenBeatClipAudio({
+                  projectId,
+                  sceneIndex: sceneIdx,
+                  sceneId: scene?.id || scene?.sceneId || `scene-${sceneIdx}`,
+                  beatId: clipBeatId,
+                  videoUrl: clipUrl,
+                  language: selectedLanguage,
+                  dialogueIndex,
+                  characterName: line.character,
+                  lineText,
+                  voiceDirection: line.voiceDirection,
+                  lineId: line.lineId,
+                  lineKind: isNarrator ? 'narration' : 'dialogue',
+                  characterId: line.characterId,
+                  onAudioSlotSaved,
+                })
+                  .then(() => {
+                    toast.success('Shot audio updated with MP3 from video clip.', { id: toastId })
+                  })
+                  .catch((error: any) => {
+                    toast.error(
+                      `Failed to extract clip MP3: ${error?.message || 'Unknown error'}`,
+                      { id: toastId }
+                    )
+                  })
+                  .finally(() => {
+                    setIsExtractingClipAudio(false)
+                  })
               }}
               onGenerateClip={() => {
                 window.dispatchEvent(
@@ -240,7 +285,7 @@ export function SegmentDialogueCard({
                     },
                   })
                 )
-                toast.message('Generate this shot’s clip. HiFi playback uses the clip’s audio.')
+                toast.message('Generate this shot’s clip, then extract its MP3 to update shot audio.')
               }}
             />
           )}

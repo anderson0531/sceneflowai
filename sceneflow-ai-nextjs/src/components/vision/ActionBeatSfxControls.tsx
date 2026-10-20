@@ -11,6 +11,7 @@ import { saveAudioFile } from '@/lib/download/saveFile'
 import { distinctSfxCue } from '@/lib/audio/shotSfxTag'
 import { resolveBeatSfxSlot, readBeatSfxAudio } from '@/lib/script/deriveSfxFromSceneContent'
 import { actionBeatSfxIsStale, audioSourceFingerprintForSfxBeat } from '@/lib/audio/beatAudioStale'
+import { extractAndSaveActionBeatClipAudio } from '@/lib/audio/extractAndApplyShotClipAudio'
 import type { SceneBeat } from '@/lib/script/segmentTypes'
 
 export type ExpressBeatSfxStatus = 'pending' | 'running' | 'done' | 'error'
@@ -19,7 +20,9 @@ export interface ActionBeatSfxControlsProps {
   beat: SceneBeat
   scene: Record<string, unknown>
   sceneIdx: number
+  sceneId?: string
   projectId?: string
+  clipUrl?: string
   segmentDurationSeconds?: number
   playingAudio: string | null
   expressStatus?: ExpressBeatSfxStatus
@@ -39,7 +42,9 @@ export function ActionBeatSfxControls({
   beat,
   scene,
   sceneIdx,
+  sceneId,
   projectId,
+  clipUrl,
   segmentDurationSeconds,
   playingAudio,
   expressStatus,
@@ -48,6 +53,7 @@ export function ActionBeatSfxControls({
   onSaveSfxAudio,
 }: ActionBeatSfxControlsProps) {
   const [isGeneratingElevenLabs, setIsGeneratingElevenLabs] = useState(false)
+  const [isExtractingClipAudio, setIsExtractingClipAudio] = useState(false)
   const [durationPreset, setDurationPreset] = useState<SfxDurationOverride>('auto')
 
   const slot = useMemo(
@@ -70,7 +76,43 @@ export function ActionBeatSfxControls({
     { id: 'long', label: 'Long 15s' },
   ]
 
-  const isBusy = isGeneratingElevenLabs || isExpressRunning || expressStatus === 'running'
+  const isBusy =
+    isGeneratingElevenLabs ||
+    isExtractingClipAudio ||
+    isExpressRunning ||
+    expressStatus === 'running'
+
+  const handleExtractClipAudio = async () => {
+    if (!projectId) {
+      toast.error('Project context is missing for clip audio extraction.')
+      return
+    }
+    if (!clipUrl) {
+      toast.info('Generate a video clip for this shot first.')
+      return
+    }
+    setIsExtractingClipAudio(true)
+    const toastId = toast.loading('Extracting MP3 from shot video clip...')
+    try {
+      await extractAndSaveActionBeatClipAudio({
+        projectId,
+        sceneIndex: sceneIdx,
+        sceneId,
+        beat,
+        sfxIndex: slot.sfxIndex,
+        videoUrl: clipUrl,
+        onSaveSfxAudio,
+      })
+      toast.success('Shot audio updated with MP3 from video clip.', { id: toastId })
+    } catch (error) {
+      toast.error(
+        `Failed to extract clip MP3: ${(error as Error)?.message || 'Unknown error'}`,
+        { id: toastId }
+      )
+    } finally {
+      setIsExtractingClipAudio(false)
+    }
+  }
 
   const handleElevenLabs = async () => {
     if (!projectId) {
@@ -121,7 +163,7 @@ export function ActionBeatSfxControls({
     }
   }
 
-  if (!sfxText && !sfxAudio) {
+  if (!sfxText && !sfxAudio && !clipUrl) {
     return (
       <p className="mt-3 pt-3 border-t border-amber-700/40 text-[10px] text-amber-300/60">
         Score carries this shot.
@@ -251,9 +293,16 @@ export function ActionBeatSfxControls({
       <p className="text-[10px] text-amber-300/50">ElevenLabs · about 15 credits</p>
       <DialogueQualityToggle
         lofiTitle="ElevenLabs sound effect"
-        disabled={isBusy || !sfxText}
+        disabled={isBusy}
+        lofiDisabled={!sfxText}
+        hasClip={!!clipUrl}
+        isExtractingClipAudio={isExtractingClipAudio}
+        isClipAudioActive={Boolean(sfxAudio && sfxAudio.includes('shot-audio-'))}
         onLofi={() => {
           void handleElevenLabs()
+        }}
+        onExtractClipAudio={() => {
+          void handleExtractClipAudio()
         }}
         onGenerateClip={() => {
           window.dispatchEvent(
@@ -261,7 +310,7 @@ export function ActionBeatSfxControls({
               detail: { sceneIndex: sceneIdx, beatId: beat.beatId },
             })
           )
-          toast.message('Generate this shot’s clip. HiFi playback uses the clip’s audio.')
+          toast.message('Generate this shot’s clip, then extract its MP3 to update shot audio.')
         }}
       />
     </div>
