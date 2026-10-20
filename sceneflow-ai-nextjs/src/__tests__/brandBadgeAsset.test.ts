@@ -2,6 +2,7 @@ import { readFileSync } from 'fs'
 import { join } from 'path'
 import sharp from 'sharp'
 import { describe, expect, it } from 'vitest'
+import { BRAND } from '@/config/brand'
 
 const BADGE_PATH = join(process.cwd(), 'public/brand/sf-badge.png')
 
@@ -39,5 +40,32 @@ describe('sf-badge.png brand asset', () => {
     const opaqueSpan =
       maxOpaqueX >= minOpaqueX ? (maxOpaqueX - minOpaqueX + 1) / info.width : 0
     expect(opaqueSpan).toBeGreaterThan(0.85)
+  })
+})
+
+describe('SceneFlow Studio logo lockup assets', () => {
+  it('has horizontal and stacked SceneFlow Studio lockups with expected dimensions', async () => {
+    const horizontalAssets = [
+      BRAND.studioLockup.horizontal.src,
+      BRAND.studioLockup.horizontal.darkBgSrc,
+      BRAND.studioLockup.horizontal.lightBgSrc,
+    ]
+    for (const relPath of horizontalAssets) {
+      const buf = readFileSync(join(process.cwd(), 'public', relPath))
+      const meta = await sharp(buf).metadata()
+      expect(meta.width).toBe(BRAND.studioLockup.horizontal.width)
+      expect(meta.height).toBe(BRAND.studioLockup.horizontal.height)
+    }
+
+    const stackedAssets = [
+      BRAND.studioLockup.stacked.src,
+      BRAND.studioLockup.stacked.darkBgSrc,
+    ]
+    for (const relPath of stackedAssets) {
+      const buf = readFileSync(join(process.cwd(), 'public', relPath))
+      const meta = await sharp(buf).metadata()
+      expect(meta.width).toBe(BRAND.studioLockup.stacked.width)
+      expect(meta.height).toBe(BRAND.studioLockup.stacked.height)
+    }
   })
 })

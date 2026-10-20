@@ -33,13 +33,13 @@ export function StoryboardReviewHeader({
   allowFeedback = true,
 }: StoryboardReviewHeaderProps) {
   return (
-    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between px-3 py-2.5 sm:px-4 sm:py-3 bg-gray-900 border-b border-gray-800 gap-3">
-      <div className="w-full sm:w-auto min-w-0 flex-1">
+    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between px-3 py-2.5 sm:px-5 sm:py-3 bg-gray-950/95 border-b border-gray-800/80 gap-3 backdrop-blur-sm">
+      <div className="w-full sm:w-auto min-w-0 flex-1 flex flex-wrap items-center gap-x-3 gap-y-1">
         <h1 className="text-base sm:text-lg font-semibold text-white truncate">{title}</h1>
-        <div className="flex flex-wrap items-center gap-2 mt-0.5">
-          <p className="text-xs text-gray-400">
-            {allowFeedback ? 'Pre-vis Review' : 'View only'}
-          </p>
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="text-[11px] font-medium px-2 py-0.5 rounded-full bg-gray-800/90 text-gray-300 border border-gray-700/70">
+            {allowFeedback ? 'Screening Room · Feedback Review' : 'Screening Room'}
+          </span>
           <span className="text-[11px] text-gray-500">
             v{storyboardVersion}
             {revisionLabel ? ` · ${revisionLabel}` : ''}

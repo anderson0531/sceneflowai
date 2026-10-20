@@ -917,5 +917,6 @@ describe('applyBeatStoryboardImageToScene', () => {
     expect(beat.storyboardImageUrl).toBe('https://example.com/draft.jpg')
     expect(beat.storyboardImageTier).toBe('draft')
     expect(beat.storyboardImageVersionId).toBe(draftId)
+    expect(restored.imageUrl).toBe('https://example.com/draft.jpg')
   })
 })

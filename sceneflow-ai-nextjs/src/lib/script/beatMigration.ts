@@ -1069,6 +1069,7 @@ export function beatsToLegacyFields(beats: SceneBeat[]): {
         storyboardImageGcsPath: beat.storyboardImageGcsPath,
         storyboardImageVersions: beat.storyboardImageVersions,
         storyboardImageVersionId: beat.storyboardImageVersionId,
+        storyboardImageTier: beat.storyboardImageTier,
         audioUrl: beat.audioUrl,
         duration: beat.durationSeconds,
       })
@@ -1086,6 +1087,7 @@ export function beatsToLegacyFields(beats: SceneBeat[]): {
       storyboardImageGcsPath: beat.storyboardImageGcsPath,
       storyboardImageVersions: beat.storyboardImageVersions,
       storyboardImageVersionId: beat.storyboardImageVersionId,
+      storyboardImageTier: beat.storyboardImageTier,
       audioUrl: beat.audioUrl,
       duration: beat.durationSeconds,
     })
@@ -1237,15 +1239,29 @@ export function applyEstablishingImageToScene(
   }
 ): Record<string, unknown> {
   const source = extras?.source ?? 'generate'
+  const withSceneStill = assignStillUrl(scene, SCENE_STILL_SLOT, imageUrl, {
+    source,
+    prompt: extras?.imagePrompt,
+    restoreVersionId: extras?.restoreVersionId,
+  })
+  const resolvedSceneUrl =
+    (typeof withSceneStill.imageUrl === 'string' && withSceneStill.imageUrl.trim()) || imageUrl
   const beats = getSceneBeats(scene).map((beat) => {
     if (beat.kind !== 'action') return beat
-    const stamped = assignStillUrl(beat as unknown as Record<string, unknown>, BEAT_START_STILL_SLOT, imageUrl, {
-      source,
-      prompt: extras?.imagePrompt,
-      restoreVersionId: extras?.restoreVersionId,
-    })
+    const stamped = assignStillUrl(
+      beat as unknown as Record<string, unknown>,
+      BEAT_START_STILL_SLOT,
+      resolvedSceneUrl,
+      {
+        source,
+        prompt: extras?.imagePrompt,
+        ...(resolvedSceneUrl ? {} : { restoreVersionId: extras?.restoreVersionId }),
+      }
+    )
+    const startTier = tierForAssignedStill(stamped, BEAT_START_STILL_SLOT)
     return {
       ...stamped,
+      ...(startTier ? { storyboardImageTier: startTier } : {}),
       ...(extras?.imageGcsPath
         ? { storyboardImageGcsPath: extras.imageGcsPath }
         : {}),
@@ -1253,11 +1269,6 @@ export function applyEstablishingImageToScene(
         ? { storyboardImagePrompt: extras.imagePrompt }
         : {}),
     } as SceneBeat
-  })
-  const withSceneStill = assignStillUrl(scene, SCENE_STILL_SLOT, imageUrl, {
-    source,
-    prompt: extras?.imagePrompt,
-    restoreVersionId: extras?.restoreVersionId,
   })
   return applyBeatsToScene(
     {
@@ -1475,10 +1486,12 @@ export function applyBeatStoryboardImageToScene(
 
   let updated = applyBeatsToScene(scene, beats)
   if (beatIndex === 0 && beats[0]?.kind === 'action') {
-    updated = assignStillUrl(updated, SCENE_STILL_SLOT, imageUrl, {
+    const resolvedSceneUrl = beats[0]?.storyboardImageUrl || imageUrl
+    updated = assignStillUrl(updated, SCENE_STILL_SLOT, resolvedSceneUrl, {
       source,
       prompt: extras?.imagePrompt,
-      restoreVersionId: extras?.restoreVersionId,
+      tier: startTier,
+      ...(resolvedSceneUrl ? {} : { restoreVersionId: extras?.restoreVersionId }),
     })
     return {
       ...updated,

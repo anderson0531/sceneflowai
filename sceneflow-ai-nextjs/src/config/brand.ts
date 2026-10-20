@@ -26,6 +26,21 @@ export const BRAND = {
     width: 512,
     height: 512,
   },
+  studioLockup: {
+    horizontal: {
+      src: '/brand/sceneflow-studio-logo-horizontal.png',
+      darkBgSrc: '/brand/sceneflow-studio-logo-horizontal-dark.png',
+      lightBgSrc: '/brand/sceneflow-studio-logo-horizontal-light.png',
+      width: 1800,
+      height: 420,
+    },
+    stacked: {
+      src: '/brand/sceneflow-studio-logo-stacked.png',
+      darkBgSrc: '/brand/sceneflow-studio-logo-stacked-dark.png',
+      width: 1400,
+      height: 900,
+    },
+  },
   colors: {
     cyan: '#00F2FF',
     navy: '#050A18',

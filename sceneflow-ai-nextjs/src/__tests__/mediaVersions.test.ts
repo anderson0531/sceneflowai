@@ -71,6 +71,14 @@ describe('pickCurrentMediaUrl', () => {
     expect(pickCurrentMediaUrl(OLD_URL, NEW_URL, incomingVersions, canonicalVersions)).toBe(NEW_URL)
   })
 
+  it('preserves a deliberately restored earlier version when incomingVersions already includes canonical', () => {
+    const sharedVersions = [
+      versionFromUrl(OLD_URL, { createdAt: '2026-01-01T00:00:00.000Z', tier: 'draft' })!,
+      versionFromUrl(NEW_URL, { createdAt: '2026-06-01T00:00:00.000Z', tier: 'final' })!,
+    ]
+    expect(pickCurrentMediaUrl(OLD_URL, NEW_URL, sharedVersions, sharedVersions)).toBe(OLD_URL)
+  })
+
   it('ignores deferred incoming', () => {
     expect(pickCurrentMediaUrl('deferred', NEW_URL)).toBe(NEW_URL)
   })

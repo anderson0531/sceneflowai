@@ -61,4 +61,26 @@ describe('Screening Room view-only share', () => {
     expect(create).toContain('collectBiometrics: feedbackEnabled')
     expect(create).toContain('collectDemographics: feedbackEnabled')
   })
+
+  it('removes HiFi/LOFI toggle, renames Rough Cut to Clips, and streamlines shared Screening Room controls', () => {
+    const player = readSource('src/components/vision/AudioGalleryPlayer.tsx')
+    const standalone = readSource('src/components/vision/StandaloneStoryboardPlayer.tsx')
+    const sharedRoute = readSource('src/app/api/vision/shared-project/[shareToken]/route.ts')
+
+    // No HiFi / LOFI toggle button in the toolbar
+    expect(player).not.toContain("{animaticAudioMode === 'hifi' ? 'HiFi' : 'LOFI'}")
+
+    // Playback modes: Pre-Vis, Clips, Scene, Chapter, Master, Promo
+    expect(player).toContain('Pre-Vis')
+    expect(player).toContain('Clips')
+    expect(player).not.toContain('\n                Rough Cut\n')
+
+    // Shared view keeps Master volume only, hides per-track mix, motion, and intro fade
+    expect(player).toContain('{!isSharedView && (sharedCompact || isFullscreen) && motionControl}')
+    expect(player).toContain('isSharedView\n        ? _availableLanguages')
+    expect(standalone).toContain('finalCutSelection={finalCutSelection}')
+    expect(standalone).toContain('projectStreams={projectStreams}')
+    expect(standalone).toContain('promoTrailerUrl={promoTrailerUrl}')
+    expect(sharedRoute).toContain('promoTrailerUrl')
+  })
 })

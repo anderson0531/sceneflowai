@@ -4,6 +4,7 @@ import { resolveStoryboardScenes } from '../../../../../lib/storyboard/resolveSt
 import { validateAndCleanSceneAudio } from '../../../../../lib/audio/cleanupAudio'
 import { findActiveShareProject } from '../../../../../lib/storyboard/shareProjectLookup'
 import { getProjectStreams } from '@/lib/streams/projectStreams'
+import { getPublishingState } from '@/lib/publish/publishingState'
 
 export const runtime = 'nodejs'
 export const maxDuration = 30
@@ -83,6 +84,8 @@ export async function GET(
       : { script: { scenes: resolvedScenes }, scenes: resolvedScenes }
 
     const audienceResonance = sanitizeAudienceResonance(visionPhase?.reviews?.audience)
+    const publishingState = getPublishingState(md)
+    const promoTrailerUrl = publishingState.promo?.trailer?.mp4Url || null
 
     // Return only necessary data (no sensitive info)
     const sharedData = {
@@ -92,6 +95,10 @@ export async function GET(
       visionPhaseScenes: visionPhase.scenes,
       characters: visionPhase.characters,
       sceneProductionState: visionPhase.production?.scenes,
+      promoTrailerUrl,
+      sceneTranslationsByLanguage: visionPhase.translations || {},
+      playerLabelsByLanguage: visionPhase.playerLabels || {},
+      beatCaptionSettings: visionPhase.beatCaptionSettings || {},
       metadata: {
         finalCut: md.finalCut,
         visionPhase: { streams: getProjectStreams(md) },

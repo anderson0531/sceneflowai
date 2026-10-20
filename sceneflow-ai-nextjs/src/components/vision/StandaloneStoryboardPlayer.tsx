@@ -6,6 +6,9 @@ import { AudioGalleryPlayer } from './AudioGalleryPlayer'
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
 import { resolveStoryboardScenes } from '@/lib/storyboard/resolveStoryboardScenes'
+import { readFinalCutSelection } from '@/hooks/final-cut/useFinalCutSelection'
+import { getProjectStreams, mergeStreamSelectorLanguages } from '@/lib/streams/projectStreams'
+import { isBeatCaptionEnabledForLanguage } from '@/lib/storyboard/beatCaptionSettings'
 import {
   EMPTY_SCENE_FEEDBACK,
   sceneFeedbackHasContent,
@@ -60,7 +63,19 @@ export function StandaloneStoryboardPlayer({
     [projectData]
   )
 
-  const availableLanguages = useMemo(() => {
+  const projectStreams = useMemo(
+    () => getProjectStreams(projectData?.metadata),
+    [projectData?.metadata]
+  )
+
+  const finalCutSelection = useMemo(
+    () => readFinalCutSelection(projectData?.metadata),
+    [projectData?.metadata]
+  )
+
+  const promoTrailerUrl = projectData?.promoTrailerUrl ?? null
+
+  const languagesWithAudio = useMemo(() => {
     const langs = new Set<string>()
     resolvedScenes.forEach((scene: any) => {
       if (scene.narrationAudio) {
@@ -79,6 +94,18 @@ export function StandaloneStoryboardPlayer({
     if (langs.size === 0) langs.add('en')
     return Array.from(langs).sort()
   }, [resolvedScenes])
+
+  const availableLanguages = useMemo(
+    () => mergeStreamSelectorLanguages(projectStreams, languagesWithAudio),
+    [projectStreams, languagesWithAudio]
+  )
+
+  const activeSceneTranslations = projectData?.sceneTranslationsByLanguage?.[selectedLanguage]
+  const activePlayerLabels = projectData?.playerLabelsByLanguage?.[selectedLanguage]
+  const beatCaptionsEnabled = isBeatCaptionEnabledForLanguage(
+    selectedLanguage,
+    projectData?.beatCaptionSettings
+  )
 
   const currentFeedback = feedbacks[currentSceneIndex] ?? EMPTY_SCENE_FEEDBACK
 
@@ -169,10 +196,10 @@ export function StandaloneStoryboardPlayer({
         <div
           className={cn(
             'flex-1 p-2 sm:p-4 overflow-y-auto bg-gray-950 flex flex-col items-center min-h-0',
-            allowFeedback ? 'pb-20 lg:pb-4' : 'pb-4'
+            allowFeedback ? 'pb-20 lg:pb-4' : 'pb-6 justify-start sm:justify-center'
           )}
         >
-          <div className="w-full max-w-5xl">
+          <div className={cn('w-full', allowFeedback ? 'max-w-5xl' : 'max-w-6xl')}>
             <AudioGalleryPlayer
               scenes={resolvedScenes}
               selectedLanguage={selectedLanguage}
@@ -181,12 +208,18 @@ export function StandaloneStoryboardPlayer({
               onSceneChange={setCurrentSceneIndex}
               isSharedView
               sceneProductionState={projectData.sceneProductionState}
+              finalCutSelection={finalCutSelection}
+              projectStreams={projectStreams}
+              promoTrailerUrl={promoTrailerUrl}
+              sceneTranslations={activeSceneTranslations}
+              playerLabels={activePlayerLabels}
+              beatCaptionsEnabled={beatCaptionsEnabled}
             />
           </div>
         </div>
 
         {allowFeedback ? (
-        <div className="hidden lg:flex w-80 xl:w-96 shrink-0 flex-col overflow-hidden">
+        <div className="hidden lg:flex w-80 xl:w-96 shrink-0 flex-col overflow-hidden border-l border-gray-800/80 bg-gray-950">
           <UnifiedPlayerFeedbackPanel
             mode="collect"
             sceneIndex={currentSceneIndex}

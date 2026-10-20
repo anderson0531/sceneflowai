@@ -496,7 +496,6 @@ export function AudioGalleryPlayer({
   const clipExtractAttempted = useRef(new Set<string>())
 
   useEffect(() => {
-    setAnimaticAudioMode(readAnimaticAudioMode())
     setClipAudioCache(readShotClipAudioCache())
   }, [])
 
@@ -1340,7 +1339,9 @@ export function AudioGalleryPlayer({
   const languageFilterCodes =
     playbackMode === 'stream' && streamReadyLanguages.length > 0
       ? streamReadyLanguages
-      : undefined
+      : isSharedView
+        ? _availableLanguages
+        : undefined
 
   // Image motion transform — one Ken Burns cycle per storyboard cut
   const kenBurnsProgress = useMemo(() => {
@@ -1524,33 +1525,6 @@ export function AudioGalleryPlayer({
             </TooltipTrigger>
             <TooltipContent>Pre-Vis frames with synced audio</TooltipContent>
           </Tooltip>
-          {playbackMode === 'animatic' && (
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <button
-                  type="button"
-                  onClick={() => {
-                    const next = animaticAudioMode === 'hifi' ? 'lofi' : 'hifi'
-                    setAnimaticAudioMode(next)
-                    writeAnimaticAudioMode(next)
-                  }}
-                  className={cn(
-                    'px-2 py-0.5 rounded text-[11px] font-medium transition-colors',
-                    animaticAudioMode === 'hifi'
-                      ? 'bg-violet-600 text-white'
-                      : 'text-gray-400 hover:text-white'
-                  )}
-                >
-                  {animaticAudioMode === 'hifi' ? 'HiFi' : 'LOFI'}
-                </button>
-              </TooltipTrigger>
-              <TooltipContent>
-                {animaticAudioMode === 'hifi'
-                  ? 'Shot clip audio for dialogue and effects. Generate a clip when a shot does not have one yet.'
-                  : 'Preview mix: TTS, score, and effects only on tagged shots.'}
-              </TooltipContent>
-            </Tooltip>
-          )}
           <Tooltip>
             <TooltipTrigger asChild>
               <button
@@ -1565,13 +1539,13 @@ export function AudioGalleryPlayer({
                   !hasAnyBeatVideo && 'opacity-40 cursor-not-allowed hover:text-gray-400'
                 )}
               >
-                Rough Cut
+                Clips
               </button>
             </TooltipTrigger>
             <TooltipContent>
               {hasAnyBeatVideo
                 ? 'Play the shot clips for review. This is not the file you ship.'
-                : 'Generate shot videos in the Mixer to enable Rough Cut'}
+                : 'Generate shot videos in the Mixer to enable Clips'}
             </TooltipContent>
           </Tooltip>
           <Tooltip>
@@ -1667,19 +1641,21 @@ export function AudioGalleryPlayer({
             </TooltipContent>
           </Tooltip>
         </div>
-        <button
-          type="button"
-          onClick={() => setPlayerWatermarkVisible((visible) => !visible)}
-          className={cn(
-            'px-2 py-0.5 rounded text-[11px] font-medium border transition-colors',
-            playerWatermarkVisible
-              ? 'border-white/20 bg-white/10 text-white'
-              : 'border-white/10 text-gray-500 hover:text-gray-300'
-          )}
-          aria-pressed={playerWatermarkVisible}
-        >
-          Watermark
-        </button>
+        {!isSharedView && (
+          <button
+            type="button"
+            onClick={() => setPlayerWatermarkVisible((visible) => !visible)}
+            className={cn(
+              'px-2 py-0.5 rounded text-[11px] font-medium border transition-colors',
+              playerWatermarkVisible
+                ? 'border-white/20 bg-white/10 text-white'
+                : 'border-white/10 text-gray-500 hover:text-gray-300'
+            )}
+            aria-pressed={playerWatermarkVisible}
+          >
+            Watermark
+          </button>
+        )}
         <span className="text-xs text-gray-400 bg-gray-800 px-2 py-0.5 rounded">
           {playbackMode === 'promo'
             ? 'Promo trailer'
@@ -1690,7 +1666,7 @@ export function AudioGalleryPlayer({
             : playbackMode === 'video'
             ? `Scene ${videoScenePosition} of ${videoSceneIndices.length}`
             : playbackMode === 'beats'
-            ? `Rough Cut ${Math.max(1, beatSceneIndices.indexOf(currentSceneIndex) + 1)} of ${beatSceneIndices.length}`
+            ? `Clips ${Math.max(1, beatSceneIndices.indexOf(currentSceneIndex) + 1)} of ${beatSceneIndices.length}`
             : `Scene ${filmIndices.indexOf(currentSceneIndex) >= 0 ? filmIndices.indexOf(currentSceneIndex) + 1 : currentSceneIndex + 1} of ${filmIndices.length || scenes.length}`}
         </span>
       </div>
@@ -2025,7 +2001,7 @@ export function AudioGalleryPlayer({
           </div>
 
           <div className="flex items-center gap-2 flex-wrap justify-end">
-            {(sharedCompact || isFullscreen) && motionControl}
+            {!isSharedView && (sharedCompact || isFullscreen) && motionControl}
             {embedMode && (
               <>
                 <span className="text-[10px] text-gray-500 tabular-nums hidden sm:inline">
@@ -2109,78 +2085,82 @@ export function AudioGalleryPlayer({
               className="w-16"
               title={`Master volume: ${Math.round(volume * 100)}%`}
             />
-            <span className="text-[10px] text-gray-500 shrink-0">Dialogue</span>
-            <Slider
-              value={[dialogueVolume * 100]}
-              onValueChange={([val]) => applyTrackVolume('dialogue', val / 100)}
-              onValueCommit={commitSceneMix}
-              max={100}
-              step={1}
-              className="w-16"
-              title={`Dialogue volume: ${Math.round(dialogueVolume * 100)}%`}
-            />
-            <span className="text-[10px] text-gray-500 shrink-0">Music</span>
-            <Slider
-              value={[musicVolume * 100]}
-              onValueChange={([val]) => applyTrackVolume('music', val / 100)}
-              onValueCommit={commitSceneMix}
-              max={100}
-              step={1}
-              className="w-16"
-              title={`Music volume: ${Math.round(musicVolume * 100)}%`}
-            />
-            <span className="text-[10px] text-gray-500 shrink-0">SFX</span>
-            <Slider
-              value={[sfxVolume * 100]}
-              onValueChange={([val]) => applyTrackVolume('sfx', val / 100)}
-              onValueCommit={commitSceneMix}
-              max={100}
-              step={1}
-              className="w-16"
-              title={`SFX volume: ${Math.round(sfxVolume * 100)}%`}
-            />
-            <span className="text-[10px] text-gray-500 shrink-0 whitespace-nowrap">
-              Scene {currentSceneIndex + 1} mix
-            </span>
-            <div className="flex items-center gap-1.5 shrink-0 border-l border-gray-600 pl-2 ml-1">
-              <Switch
-                checked={musicIntroFade.enabled}
-                onCheckedChange={(enabled) => updateMusicIntroFade({ enabled })}
-                className="scale-75"
-                aria-label="Music intro fade"
-              />
-              <span className="text-[10px] text-gray-500 whitespace-nowrap">Intro fade</span>
-              {musicIntroFade.enabled && (
-                <>
-                  <span className="text-[10px] text-gray-500 shrink-0">Start</span>
-                  <Slider
-                    value={[Math.round(musicIntroFade.startLevel * 100)]}
-                    onValueChange={([val]) =>
-                      updateMusicIntroFade({
-                        startLevel: val / 100,
-                      })
-                    }
-                    min={MUSIC_INTRO_FADE_START_MIN * 100}
-                    max={MUSIC_INTRO_FADE_START_MAX * 100}
-                    step={5}
-                    className="w-12"
-                    title={`Intro start level: ${Math.round(musicIntroFade.startLevel * 100)}%`}
+            {!isSharedView && (
+              <>
+                <span className="text-[10px] text-gray-500 shrink-0">Dialogue</span>
+                <Slider
+                  value={[dialogueVolume * 100]}
+                  onValueChange={([val]) => applyTrackVolume('dialogue', val / 100)}
+                  onValueCommit={commitSceneMix}
+                  max={100}
+                  step={1}
+                  className="w-16"
+                  title={`Dialogue volume: ${Math.round(dialogueVolume * 100)}%`}
+                />
+                <span className="text-[10px] text-gray-500 shrink-0">Music</span>
+                <Slider
+                  value={[musicVolume * 100]}
+                  onValueChange={([val]) => applyTrackVolume('music', val / 100)}
+                  onValueCommit={commitSceneMix}
+                  max={100}
+                  step={1}
+                  className="w-16"
+                  title={`Music volume: ${Math.round(musicVolume * 100)}%`}
+                />
+                <span className="text-[10px] text-gray-500 shrink-0">SFX</span>
+                <Slider
+                  value={[sfxVolume * 100]}
+                  onValueChange={([val]) => applyTrackVolume('sfx', val / 100)}
+                  onValueCommit={commitSceneMix}
+                  max={100}
+                  step={1}
+                  className="w-16"
+                  title={`SFX volume: ${Math.round(sfxVolume * 100)}%`}
+                />
+                <span className="text-[10px] text-gray-500 shrink-0 whitespace-nowrap">
+                  Scene {currentSceneIndex + 1} mix
+                </span>
+                <div className="flex items-center gap-1.5 shrink-0 border-l border-gray-600 pl-2 ml-1">
+                  <Switch
+                    checked={musicIntroFade.enabled}
+                    onCheckedChange={(enabled) => updateMusicIntroFade({ enabled })}
+                    className="scale-75"
+                    aria-label="Music intro fade"
                   />
-                  <span className="text-[10px] text-gray-500 shrink-0">
-                    {Math.round(musicIntroFade.durationSec)}s
-                  </span>
-                  <Slider
-                    value={[musicIntroFade.durationSec]}
-                    onValueChange={([val]) => updateMusicIntroFade({ durationSec: val })}
-                    min={MUSIC_INTRO_FADE_DURATION_MIN}
-                    max={MUSIC_INTRO_FADE_DURATION_MAX}
-                    step={1}
-                    className="w-12"
-                    title={`Intro fade duration: ${musicIntroFade.durationSec}s`}
-                  />
-                </>
-              )}
-            </div>
+                  <span className="text-[10px] text-gray-500 whitespace-nowrap">Intro fade</span>
+                  {musicIntroFade.enabled && (
+                    <>
+                      <span className="text-[10px] text-gray-500 shrink-0">Start</span>
+                      <Slider
+                        value={[Math.round(musicIntroFade.startLevel * 100)]}
+                        onValueChange={([val]) =>
+                          updateMusicIntroFade({
+                            startLevel: val / 100,
+                          })
+                        }
+                        min={MUSIC_INTRO_FADE_START_MIN * 100}
+                        max={MUSIC_INTRO_FADE_START_MAX * 100}
+                        step={5}
+                        className="w-12"
+                        title={`Intro start level: ${Math.round(musicIntroFade.startLevel * 100)}%`}
+                      />
+                      <span className="text-[10px] text-gray-500 shrink-0">
+                        {Math.round(musicIntroFade.durationSec)}s
+                      </span>
+                      <Slider
+                        value={[musicIntroFade.durationSec]}
+                        onValueChange={([val]) => updateMusicIntroFade({ durationSec: val })}
+                        min={MUSIC_INTRO_FADE_DURATION_MIN}
+                        max={MUSIC_INTRO_FADE_DURATION_MAX}
+                        step={1}
+                        className="w-12"
+                        title={`Intro fade duration: ${musicIntroFade.durationSec}s`}
+                      />
+                    </>
+                  )}
+                </div>
+              </>
+            )}
           </div>
         </div>
       </div>
@@ -2413,7 +2393,7 @@ export function AudioGalleryPlayer({
                   display={sceneDisplay}
                   variant="compact"
                   totalScenes={scenes.length}
-                  className={landingWide ? 'max-w-4xl mx-auto' : 'max-w-2xl mx-auto'}
+                  className={landingWide ? 'max-w-4xl mx-auto' : 'max-w-3xl sm:max-w-4xl mx-auto w-full'}
                   playerLabels={playerLabels}
                 />
               )}
@@ -2424,7 +2404,7 @@ export function AudioGalleryPlayer({
                   isFullscreen
                     ? 'max-w-7xl mt-3'
                     : sharedCompact
-                      ? cn('mx-auto mt-2', landingWide ? 'max-w-4xl' : 'max-w-2xl')
+                      ? cn('mx-auto mt-1', landingWide ? 'max-w-4xl' : 'max-w-3xl sm:max-w-4xl')
                       : 'flex-1'
                 )}
               >

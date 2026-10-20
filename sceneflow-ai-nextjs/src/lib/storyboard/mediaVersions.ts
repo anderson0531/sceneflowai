@@ -295,7 +295,9 @@ export function mediaRecencyMs(
 
 /**
  * Current pointer for an accepted PUT: incoming wins unless both sides have
- * ISO createdAt and incoming is strictly older.
+ * ISO createdAt, incoming is strictly older, AND incoming does not already
+ * have canonical in its version history (which indicates the user deliberately
+ * restored/selected an earlier version such as a 1K draft after a 2K final).
  */
 export function pickCurrentMediaUrl(
   incomingUrl: unknown,
@@ -308,6 +310,10 @@ export function pickCurrentMediaUrl(
   if (!incoming) return canonical
   if (!canonical) return incoming
   if (incoming === canonical) return incoming
+
+  if (asMediaVersions(incomingVersions).some((version) => version.url === canonical)) {
+    return incoming
+  }
 
   const incomingAt = createdAtForUrl(incomingVersions, incoming)
   const canonicalAt = createdAtForUrl(canonicalVersions, canonical)
@@ -443,7 +449,10 @@ export function salvageStillSlot(
   if (staleUrl) {
     if (!newerUrl) {
       currentUrl = staleUrl
-    } else if (staleUrl !== newerUrl) {
+    } else if (
+      staleUrl !== newerUrl &&
+      !newerVersions.some((version) => version.url === staleUrl)
+    ) {
       const staleAt = mediaRecencyMs(staleUrl, staleVersions)
       const newerAt = mediaRecencyMs(newerUrl, newerVersions)
       if (staleAt && (!newerAt || staleAt > newerAt)) currentUrl = staleUrl

@@ -16791,11 +16791,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           language: language || 'en',
           resolution: '1080p',
           scenes: script.script.scenes,
-          audioMode:
-            typeof window !== 'undefined' &&
-            window.sessionStorage.getItem('sceneflow-animatic-audio-mode') === 'hifi'
-              ? 'hifi'
-              : 'lofi',
+          audioMode: 'lofi',
           clipAudioByBeatId: (() => {
             let cache: Record<string, { audioUrl: string; sourceUrl: string }> = {}
             try {

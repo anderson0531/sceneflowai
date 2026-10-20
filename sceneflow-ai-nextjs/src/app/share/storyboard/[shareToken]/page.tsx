@@ -72,6 +72,7 @@ export default function SharedStoryboardPage({ params }: { params: Promise<{ sha
     <StandaloneStoryboardPlayer 
       projectData={projectData} 
       shareToken={shareToken} 
+      allowFeedback={projectData.allowFeedback !== false}
     />
   )
 }
