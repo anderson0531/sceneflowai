@@ -7,9 +7,10 @@ export function isHifiDialogueProvider(provider: unknown): boolean {
 }
 
 /**
- * LOFI regenerates the TTS / ElevenLabs preview line. When a shot clip exists,
- * Extract clip MP3 pulls the MP3 audio track from the shot's video clip MP4 and
- * updates the shot audio slot. Generate clip opens the shot video tab.
+ * LOFI regenerates the TTS / ElevenLabs preview line. Upload MP3 lets the user
+ * upload a custom MP3 file for the shot. When a shot clip exists, Extract clip MP3
+ * pulls the MP3 audio track from the shot's video clip MP4 and updates the shot
+ * audio slot. Generate clip opens the shot video tab.
  */
 export function DialogueQualityToggle({
   disabled,
@@ -17,8 +18,10 @@ export function DialogueQualityToggle({
   lofiTitle = 'Gemini TTS preview',
   hasClip = false,
   isExtractingClipAudio = false,
+  isUploadingAudio = false,
   isClipAudioActive = false,
   onLofi,
+  onUploadAudio,
   onExtractClipAudio,
   onGenerateClip,
 }: {
@@ -27,19 +30,22 @@ export function DialogueQualityToggle({
   lofiTitle?: string
   hasClip?: boolean
   isExtractingClipAudio?: boolean
+  isUploadingAudio?: boolean
   isClipAudioActive?: boolean
   onLofi: () => void
+  onUploadAudio?: () => void
   onExtractClipAudio?: () => void
   onGenerateClip: () => void
 }) {
   const t = useTranslations('production.expressAudio')
   const extractEnabled = Boolean(hasClip && onExtractClipAudio)
+  const busy = Boolean(disabled || isExtractingClipAudio || isUploadingAudio)
 
   return (
     <div className="mt-2 inline-flex flex-wrap overflow-hidden rounded-md border border-violet-600/40">
       <button
         type="button"
-        disabled={disabled || lofiDisabled || isExtractingClipAudio}
+        disabled={busy || lofiDisabled}
         title={lofiTitle}
         onClick={(event) => {
           event.stopPropagation()
@@ -49,10 +55,24 @@ export function DialogueQualityToggle({
       >
         {t('qualityLofi')}
       </button>
+      {onUploadAudio && (
+        <button
+          type="button"
+          disabled={busy}
+          title="Upload an MP3 audio file for this shot"
+          onClick={(event) => {
+            event.stopPropagation()
+            onUploadAudio()
+          }}
+          className="border-l border-violet-600/40 px-2 py-0.5 text-[10px] font-medium text-violet-200/80 transition-colors hover:bg-violet-900/30 disabled:opacity-50"
+        >
+          {isUploadingAudio ? 'Uploading...' : 'Upload MP3'}
+        </button>
+      )}
       <button
         type="button"
-        disabled={disabled || !extractEnabled || isExtractingClipAudio}
-        aria-disabled={disabled || !extractEnabled || isExtractingClipAudio}
+        disabled={busy || !extractEnabled}
+        aria-disabled={busy || !extractEnabled}
         title={
           extractEnabled
             ? 'Extract MP3 audio from this shot’s video clip MP4 and update shot audio'
@@ -76,7 +96,7 @@ export function DialogueQualityToggle({
       </button>
       <button
         type="button"
-        disabled={disabled || isExtractingClipAudio}
+        disabled={busy}
         title="Open the Clips tab for this shot to generate or update its video clip."
         onClick={(event) => {
           event.stopPropagation()

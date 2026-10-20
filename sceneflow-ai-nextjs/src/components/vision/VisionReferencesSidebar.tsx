@@ -9,6 +9,7 @@ import { Plus, Trash2, ChevronDown, ChevronUp, Images, Package, Users, Info, Max
 import { ReferenceTransferDialog } from '@/components/series/ReferenceTransferDialog'
 import type { ReferenceTransferDirection } from '@/types/series'
 import { toast } from 'sonner'
+import { saveImageFile } from '@/lib/download/saveFile'
 import { ProductTabList, ProductEmptyState } from '@/components/product'
 import { Button } from '@/components/ui/Button'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
@@ -516,6 +517,36 @@ function DraggableReferenceCard({
                 </TooltipTrigger>
                 <TooltipContent>Upload Image</TooltipContent>
               </Tooltip>
+
+              {hasImage && reference.imageUrl && (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <button
+                      type="button"
+                      onPointerDown={(e) => {
+                        e.stopPropagation()
+                        e.preventDefault()
+                      }}
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        void saveImageFile({
+                          url: reference.imageUrl!,
+                          label: `object-${reference.name}`,
+                        })
+                          .then((saved) => {
+                            if (saved) toast.success('Reference image saved')
+                          })
+                          .catch(() => toast.error('Failed to download reference image'))
+                      }}
+                      className="p-3 bg-sky-600/80 hover:bg-sky-600 rounded-full transition-colors"
+                      title="Download Image"
+                    >
+                      <Download className="w-5 h-5 text-white" />
+                    </button>
+                  </TooltipTrigger>
+                  <TooltipContent>Download Image</TooltipContent>
+                </Tooltip>
+              )}
             </div>
           ) : (
             <>
@@ -621,6 +652,26 @@ function DraggableReferenceCard({
                 <Wand2 className="w-4 h-4" />
               </button>
             )}
+            {hasImage && reference.imageUrl && (
+              <button
+                onPointerDown={(e) => {
+                  e.stopPropagation()
+                  e.preventDefault()
+                  void saveImageFile({
+                    url: reference.imageUrl!,
+                    label: `reference-${reference.name}`,
+                  })
+                    .then((saved) => {
+                      if (saved) toast.success('Reference image saved')
+                    })
+                    .catch(() => toast.error('Failed to download reference image'))
+                }}
+                className="p-1.5 rounded-md text-sky-500 hover:text-sky-600 hover:bg-sky-50 dark:hover:bg-sky-900/20 transition-colors"
+                title="Download image"
+              >
+                <Download className="w-4 h-4" />
+              </button>
+            )}
             {onRemove && (
               <button
                 onPointerDown={(e) => {
@@ -683,8 +734,31 @@ function DraggableReferenceCard({
       {isDisplayableImageUrl(reference.imageUrl) && (
         <Dialog open={isExpanded} onOpenChange={setIsExpanded}>
           <DialogContent className={`${splitLayout ? 'max-w-[50vw]' : 'max-w-[90vw]'} max-h-[90vh] p-0 bg-black border-none`}>
-            <DialogHeader className="absolute top-0 left-0 right-0 p-4 bg-gradient-to-b from-black/70 to-transparent z-10">
-              <DialogTitle className="text-white">{reference.name}</DialogTitle>
+            <DialogHeader className="absolute top-0 left-0 right-0 p-4 pr-14 bg-gradient-to-b from-black/70 to-transparent z-10">
+              <div className="flex items-center justify-between gap-2">
+                <DialogTitle className="text-white">{reference.name}</DialogTitle>
+                {reference.imageUrl && (
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      void saveImageFile({
+                        url: reference.imageUrl!,
+                        label: `reference-${reference.name}`,
+                      })
+                        .then((saved) => {
+                          if (saved) toast.success('Reference image saved')
+                        })
+                        .catch(() => toast.error('Failed to download reference image'))
+                    }}
+                    className="p-2 rounded-full bg-white/10 hover:bg-white/20 text-white transition-colors"
+                    title="Download image"
+                    aria-label="Download image"
+                  >
+                    <Download className="w-4 h-4" />
+                  </button>
+                )}
+              </div>
               {reference.description && (
                 <DialogDescription className="text-gray-300">
                   {reference.description}

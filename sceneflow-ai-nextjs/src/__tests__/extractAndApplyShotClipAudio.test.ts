@@ -160,7 +160,7 @@ describe('Shot clip MP3 extraction and shot audio update', () => {
     expect(toggle).toContain('Extract clip MP3')
     expect(toggle).toContain('Extracting MP3...')
     expect(toggle).toContain('const extractEnabled = Boolean(hasClip && onExtractClipAudio)')
-    expect(toggle).toContain('disabled={disabled || !extractEnabled || isExtractingClipAudio}')
+    expect(toggle).toContain('disabled={busy || !extractEnabled}')
 
     expect(workbench).toContain('resolveBeatVideoClipUrl(props.segments, beat.beatId, props.selectedLanguage)')
     expect(workbench).toContain('extractAndSaveSpokenBeatClipAudio')
@@ -168,7 +168,33 @@ describe('Shot clip MP3 extraction and shot audio update', () => {
     expect(workbench).toContain('onExtractClipAudio={() => {')
 
     expect(sfxControls).toContain('extractAndSaveActionBeatClipAudio')
-    expect(sfxControls).toContain('if (!sfxText && !sfxAudio && !clipUrl)')
     expect(sfxControls).toContain('hasClip={!!clipUrl}')
+  })
+
+  it('provides MP3 upload controls on all shot audio cards and persists uploaded shot audio', () => {
+    const toggle = readSource('src/components/vision/DialogueQualityToggle.tsx')
+    const workbench = readSource('src/components/vision/scene-production/SceneAudioWorkbench.tsx')
+    const sfxControls = readSource('src/components/vision/ActionBeatSfxControls.tsx')
+    const segDialogue = readSource('src/components/vision/scene-production/SegmentDialogueCard.tsx')
+    const segSfx = readSource('src/components/vision/scene-production/SegmentSfxCard.tsx')
+    const scriptPanel = readSource('src/components/vision/ScriptPanel.tsx')
+
+    expect(toggle).toContain('Upload MP3')
+    expect(toggle).toContain('onUploadAudio')
+
+    expect(sfxControls).toContain('handleUploadSfxAudio')
+    expect(sfxControls).toContain('title="Upload Shot MP3 Audio"')
+    expect(sfxControls).toContain('onUploadAudio={() => {')
+
+    expect(workbench).toContain("props.uploadAudio?.(sceneIdx, 'dialogue', undefined, i, d.character)")
+    expect(workbench).toContain("onDeleteSfxAudio={")
+
+    expect(segDialogue).toContain('dispatchUpload()')
+    expect(segSfx).toContain('dispatchUploadMp3')
+    expect(segSfx).toContain('onUploadAudio={dispatchUploadMp3}')
+
+    expect(scriptPanel).not.toContain('SFX uploads are no longer supported')
+    expect(scriptPanel).toContain("if (type === 'music' || type === 'sfx')")
+    expect(scriptPanel).toContain('persistDialogueAudioSlot')
   })
 })

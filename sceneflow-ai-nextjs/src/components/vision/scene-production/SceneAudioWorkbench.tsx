@@ -974,6 +974,11 @@ function ActionBeatAudio(
         expressStatus={props.expressBeatStatus?.[beat.beatId]}
         isExpressRunning={props.isExpressAudioRunning}
         onPlayAudio={props.onPlayAudio}
+        onDeleteSfxAudio={
+          props.onDeleteSceneAudio
+            ? (idx, sfxIdx) => props.onDeleteSceneAudio?.(idx, 'sfx', undefined, sfxIdx)
+            : undefined
+        }
         onSaveSfxAudio={props.onSaveSfxAudio}
       />
       <div className="mt-3 flex items-center">
@@ -1265,41 +1270,46 @@ function SpokenBeatAudio(
           {audioEntry?.duration && (
             <span className="mt-1 text-[10px] text-gray-500">Duration: {audioEntry.duration.toFixed(1)}s</span>
           )}
-          {(!isNarrationBeat || Boolean(clipUrl)) && (
-            <DialogueQualityToggle
-              disabled={generating || isExtractingClipAudio}
-              lofiDisabled={!String(d.line ?? beat.line ?? '').trim()}
-              hasClip={!!clipUrl}
-              isExtractingClipAudio={isExtractingClipAudio}
-              isClipAudioActive={
-                isHifiDialogueProvider(audioEntry?.provider) ||
-                Boolean(dialogueAudioUrl && dialogueAudioUrl.includes('shot-audio-'))
-              }
-              onLofi={() => {
-                if (!props.onGenerateSceneAudio) return
-                props.setGeneratingDialogue?.({ sceneIdx, character: d.character, dialogueIndex: i })
-                void Promise.resolve(
-                  props.onGenerateSceneAudio(sceneIdx, 'dialogue', d.character, i, props.selectedLanguage)
-                )
-                  .catch((error) => {
-                    console.error('[SceneAudioWorkbench] Dialogue generation failed:', error)
-                    toast.error(`Failed to generate dialogue for ${d.character}`)
-                  })
-                  .finally(() => props.setGeneratingDialogue?.(null))
-              }}
-              onExtractClipAudio={() => {
-                void handleExtractClipAudio()
-              }}
-              onGenerateClip={() => {
-                window.dispatchEvent(
-                  new CustomEvent('production:open-action-tab', {
-                    detail: { sceneIndex: sceneIdx, beatId: beat.beatId },
-                  })
-                )
-                toast.message('Generate this shot’s clip, then extract its MP3 to update shot audio.')
-              }}
-            />
-          )}
+          <DialogueQualityToggle
+            disabled={generating || isExtractingClipAudio}
+            lofiDisabled={!String(d.line ?? beat.line ?? '').trim()}
+            hasClip={!!clipUrl}
+            isExtractingClipAudio={isExtractingClipAudio}
+            isClipAudioActive={
+              isHifiDialogueProvider(audioEntry?.provider) ||
+              Boolean(dialogueAudioUrl && dialogueAudioUrl.includes('shot-audio-'))
+            }
+            onLofi={() => {
+              if (!props.onGenerateSceneAudio) return
+              props.setGeneratingDialogue?.({ sceneIdx, character: d.character, dialogueIndex: i })
+              void Promise.resolve(
+                props.onGenerateSceneAudio(sceneIdx, 'dialogue', d.character, i, props.selectedLanguage)
+              )
+                .catch((error) => {
+                  console.error('[SceneAudioWorkbench] Dialogue generation failed:', error)
+                  toast.error(`Failed to generate dialogue for ${d.character}`)
+                })
+                .finally(() => props.setGeneratingDialogue?.(null))
+            }}
+            onUploadAudio={
+              props.uploadAudio
+                ? () => {
+                    props.uploadAudio?.(sceneIdx, 'dialogue', undefined, i, d.character)
+                  }
+                : undefined
+            }
+            onExtractClipAudio={() => {
+              void handleExtractClipAudio()
+            }}
+            onGenerateClip={() => {
+              window.dispatchEvent(
+                new CustomEvent('production:open-action-tab', {
+                  detail: { sceneIndex: sceneIdx, beatId: beat.beatId },
+                })
+              )
+              toast.message('Generate this shot’s clip, then extract its MP3 to update shot audio.')
+            }}
+          />
         </div>
         {dialogueAudioUrl ? (
           <div className="flex items-center gap-2">

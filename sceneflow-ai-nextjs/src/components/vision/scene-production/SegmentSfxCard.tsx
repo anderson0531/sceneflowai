@@ -1,11 +1,12 @@
 'use client'
 
 import { useState } from 'react'
-import { Download, Loader2, Pause, Play, Sparkles, Trash2 } from 'lucide-react'
+import { Download, Loader2, Pause, Play, Sparkles, Trash2, Upload } from 'lucide-react'
 import { Volume2 as VolumeIcon } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { toast } from 'sonner'
 import { saveAudioFile } from '@/lib/download/saveFile'
+import { uploadAssetViaAPI } from '@/lib/vision/uploads'
 import { BeatAudioStatusBadge } from '@/components/vision/BeatAudioStatusBadge'
 import { DialogueQualityToggle } from '@/components/vision/DialogueQualityToggle'
 import {
@@ -80,9 +81,10 @@ export function SegmentSfxCard({
 }: SegmentSfxCardProps) {
   const [isGeneratingElevenLabs, setIsGeneratingElevenLabs] = useState(false)
   const [isExtractingClipAudio, setIsExtractingClipAudio] = useState(false)
+  const [isUploadingAudio, setIsUploadingAudio] = useState(false)
   const [durationPreset, setDurationPreset] = useState<SfxDurationOverride>('auto')
   const autoSeconds = resolveAutoSfxDuration(segmentDurationSeconds)
-  const isGenerating = isGeneratingElevenLabs || isExtractingClipAudio
+  const isGenerating = isGeneratingElevenLabs || isExtractingClipAudio || isUploadingAudio
 
   const legacyIdx = sfx.legacyIndex
   const audioUrl: string | undefined =
@@ -115,6 +117,40 @@ export function SegmentSfxCard({
     if (legacyIdx === undefined) return
     if (!confirm('Delete this sound effect? You can re-generate it from the cue description.')) return
     onDeleteSceneAudio?.(sceneIdx, 'sfx', undefined, legacyIdx)
+  }
+
+  const dispatchUploadMp3 = () => {
+    if (legacyIdx === undefined) {
+      toast.error('SFX cue is not linked to a legacy index yet.')
+      return
+    }
+    if (!projectId) {
+      toast.error('Project context is missing for audio upload.')
+      return
+    }
+    const input = document.createElement('input')
+    input.type = 'file'
+    input.accept = '.mp3,audio/mpeg,audio/mp3,audio/wav,audio/ogg,audio/webm,audio/*'
+    input.onchange = async (e) => {
+      const file = (e.target as HTMLInputElement).files?.[0]
+      if (!file) return
+      setIsUploadingAudio(true)
+      const toastId = toast.loading('Uploading shot MP3 audio...')
+      try {
+        const uploadedUrl = await uploadAssetViaAPI(file, projectId)
+        await onSaveSfxAudio?.(sceneIdx, 'sfx', uploadedUrl, legacyIdx, null, {
+          ...(sourceBeat?.beatId ? { beatId: sourceBeat.beatId } : {}),
+          beatDescription: sfxPrompt || 'Uploaded shot audio',
+        })
+        toast.success('Shot MP3 audio uploaded.', { id: toastId })
+      } catch (error: any) {
+        console.error('[SegmentSfxCard] Audio upload failed:', error)
+        toast.error(`Failed to upload audio: ${error?.message || 'Unknown error'}`, { id: toastId })
+      } finally {
+        setIsUploadingAudio(false)
+      }
+    }
+    input.click()
   }
 
   const dispatchGenerateElevenLabs = async () => {
@@ -252,6 +288,18 @@ export function SegmentSfxCard({
               </button>
             </>
           )}
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation()
+              dispatchUploadMp3()
+            }}
+            disabled={isGenerating}
+            className="p-1.5 hover:bg-amber-200 dark:hover:bg-amber-800 rounded disabled:opacity-50"
+            title="Upload MP3 for this shot"
+          >
+            <Upload className="w-4 h-4" />
+          </button>
           <Button
             type="button"
             size="sm"
@@ -290,10 +338,12 @@ export function SegmentSfxCard({
         lofiDisabled={!sfxPrompt}
         hasClip={!!clipUrl}
         isExtractingClipAudio={isExtractingClipAudio}
+        isUploadingAudio={isUploadingAudio}
         isClipAudioActive={Boolean(audioUrl && audioUrl.includes('shot-audio-'))}
         onLofi={() => {
           void dispatchGenerateElevenLabs()
         }}
+        onUploadAudio={dispatchUploadMp3}
         onExtractClipAudio={() => {
           if (!projectId || !clipUrl || legacyIdx === undefined) return
           setIsExtractingClipAudio(true)

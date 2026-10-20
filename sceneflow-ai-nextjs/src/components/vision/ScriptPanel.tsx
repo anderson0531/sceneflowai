@@ -66,6 +66,7 @@ import {
   audioSourceFingerprintForSpoken,
   isBeatAudioStale,
 } from '@/lib/audio/beatAudioStale'
+import { persistDialogueAudioSlot } from '@/lib/audio/clientPersistDialogueAudio'
 import { getExpressAudioConcurrency } from '@/lib/sceneGeneration/expressTrafficCop'
 import { runExpressGenerateAll } from '@/lib/sceneGeneration/runExpressGenerateAll'
 import {
@@ -2165,17 +2166,13 @@ export function ScriptPanel({ script, onScriptChange, onAudioSlotSaved, isGenera
   }
 
   const uploadAudio = async (sceneIdx: number, type: 'description' | 'narration' | 'dialogue' | 'sfx' | 'music', sfxIdx?: number, dialogueIdx?: number, characterName?: string) => {
-    if (type === 'sfx') {
-      toast.info('SFX uploads are no longer supported. Use Generate to create the cue with ElevenLabs.')
-      return
-    }
     if (!projectId) {
       toast.error('Project not loaded — cannot upload audio')
       return
     }
     const input = document.createElement('input')
     input.type = 'file'
-    input.accept = 'audio/mp3,audio/wav,audio/ogg,audio/webm,audio/mpeg'
+    input.accept = '.mp3,audio/mp3,audio/mpeg,audio/wav,audio/ogg,audio/webm,audio/*'
     
     input.onchange = async (e) => {
       const file = (e.target as HTMLInputElement).files?.[0]
@@ -2186,8 +2183,8 @@ export function ScriptPanel({ script, onScriptChange, onAudioSlotSaved, isGenera
         const audioUrl = await uploadAssetViaAPI(file, projectId)
         
         // Handle different audio types
-        if (type === 'music') {
-          await saveSceneAudio(sceneIdx, type, audioUrl, sfxIdx, undefined)
+        if (type === 'music' || type === 'sfx') {
+          await saveSceneAudio(sceneIdx, type, audioUrl, sfxIdx, null)
         } else if (type === 'description') {
           // Update description audio
           const updatedScenes = [...scenes]
@@ -2216,37 +2213,68 @@ export function ScriptPanel({ script, onScriptChange, onAudioSlotSaved, isGenera
           onScriptChange(updatedScript)
         } else if (type === 'dialogue' && dialogueIdx !== undefined) {
           const dialogueLine = scenes[sceneIdx]?.dialogue?.[dialogueIdx]
-          // Update dialogue audio
-          const updatedScenes = [...scenes]
-          if (!updatedScenes[sceneIdx].dialogueAudio) {
-            updatedScenes[sceneIdx].dialogueAudio = {}
+          let measuredDuration = 0
+          try {
+            measuredDuration = await getAudioDuration(audioUrl)
+          } catch {
+            measuredDuration = 0
           }
-          if (!updatedScenes[sceneIdx].dialogueAudio[selectedLanguage]) {
-            updatedScenes[sceneIdx].dialogueAudio[selectedLanguage] = []
-          }
-          const existingIdx = updatedScenes[sceneIdx].dialogueAudio[selectedLanguage].findIndex(
-            (a: any) =>
-              (dialogueLine?.lineId && a?.lineId === dialogueLine.lineId) ||
-              (a.dialogueIndex === dialogueIdx && a.character === characterName)
+          const sourceFingerprint = audioSourceFingerprintForSpoken(
+            dialogueLine?.character || characterName,
+            dialogueLine?.line
           )
-          const audioEntry: Record<string, unknown> = {
+          const saved = await persistDialogueAudioSlot({
+            projectId,
+            sceneIdx,
+            sceneId: scenes[sceneIdx]?.id || scenes[sceneIdx]?.sceneId,
+            language: selectedLanguage,
             audioUrl,
-            character: characterName,
+            duration: measuredDuration > 0 ? measuredDuration : undefined,
+            character: characterName || dialogueLine?.character,
             dialogueIndex: dialogueIdx,
-          }
-          if (dialogueLine?.lineId) audioEntry.lineId = dialogueLine.lineId
-          if (dialogueLine?.kind) audioEntry.kind = dialogueLine.kind
-          if (dialogueLine?.characterId) audioEntry.characterId = dialogueLine.characterId
-          if (existingIdx >= 0) {
-            updatedScenes[sceneIdx].dialogueAudio[selectedLanguage][existingIdx] = {
-              ...updatedScenes[sceneIdx].dialogueAudio[selectedLanguage][existingIdx],
-              ...audioEntry,
-            }
+            lineId: dialogueLine?.lineId,
+            kind: dialogueLine?.kind,
+            characterId: dialogueLine?.characterId,
+            sourceFingerprint,
+          })
+          if (saved && onAudioSlotSaved) {
+            onAudioSlotSaved(saved)
           } else {
-            updatedScenes[sceneIdx].dialogueAudio[selectedLanguage].push(audioEntry)
+            // Update dialogue audio in local state
+            const updatedScenes = [...scenes]
+            if (!updatedScenes[sceneIdx].dialogueAudio) {
+              updatedScenes[sceneIdx].dialogueAudio = {}
+            }
+            if (!updatedScenes[sceneIdx].dialogueAudio[selectedLanguage]) {
+              updatedScenes[sceneIdx].dialogueAudio[selectedLanguage] = []
+            }
+            const existingIdx = updatedScenes[sceneIdx].dialogueAudio[selectedLanguage].findIndex(
+              (a: any) =>
+                (dialogueLine?.lineId && a?.lineId === dialogueLine.lineId) ||
+                (a.dialogueIndex === dialogueIdx && a.character === characterName)
+            )
+            const audioEntry: Record<string, unknown> = {
+              audioUrl,
+              character: characterName,
+              dialogueIndex: dialogueIdx,
+              ...(measuredDuration > 0 ? { duration: measuredDuration } : {}),
+              sourceFingerprint,
+              audioStale: false,
+            }
+            if (dialogueLine?.lineId) audioEntry.lineId = dialogueLine.lineId
+            if (dialogueLine?.kind) audioEntry.kind = dialogueLine.kind
+            if (dialogueLine?.characterId) audioEntry.characterId = dialogueLine.characterId
+            if (existingIdx >= 0) {
+              updatedScenes[sceneIdx].dialogueAudio[selectedLanguage][existingIdx] = {
+                ...updatedScenes[sceneIdx].dialogueAudio[selectedLanguage][existingIdx],
+                ...audioEntry,
+              }
+            } else {
+              updatedScenes[sceneIdx].dialogueAudio[selectedLanguage].push(audioEntry)
+            }
+            const updatedScript = { ...script, script: { ...script.script, scenes: updatedScenes } }
+            onScriptChange(updatedScript)
           }
-          const updatedScript = { ...script, script: { ...script.script, scenes: updatedScenes } }
-          onScriptChange(updatedScript)
         }
         
         toast.success('Audio uploaded!', { id: toastId })

@@ -1,8 +1,9 @@
 'use client'
 
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { AlertTriangle, Camera, Check, Clapperboard, Copy, Film, Maximize2, Minimize2, Pause, PlayCircle, Settings2, Upload, Wand2 } from 'lucide-react'
+import { AlertTriangle, Camera, Check, Clapperboard, Copy, Download, Film, Maximize2, Minimize2, Pause, PlayCircle, Settings2, Upload, Wand2 } from 'lucide-react'
 import { toast } from 'sonner'
+import { saveVideoFile } from '@/lib/download/saveFile'
 import { SUPPORTED_LANGUAGES } from '@/constants/languages'
 import { GroupedLanguageSelector } from '@/components/vision/GroupedLanguageSelector'
 import { Button } from '@/components/ui/Button'
@@ -528,6 +529,28 @@ export function BeatVideoGallery({
                 isPreviewFullscreen && 'flex h-screen max-w-none items-center justify-center bg-black'
               )}
             >
+              {previewVideoUrl && (
+                <button
+                  type="button"
+                  className="absolute bottom-2 right-10 z-30 rounded-md bg-black/60 p-1.5 text-white hover:bg-black/80"
+                  onClick={(event) => {
+                    event.stopPropagation()
+                    void saveVideoFile({
+                      url: previewVideoUrl,
+                      beatNumber: preview?.beatNumber,
+                      label: preview?.label || 'clip',
+                    })
+                      .then((saved) => {
+                        if (saved) toast.success('Video clip saved')
+                      })
+                      .catch(() => toast.error('Failed to download video clip'))
+                  }}
+                  title="Download clip video"
+                  aria-label="Download clip video"
+                >
+                  <Download className="h-4 w-4" />
+                </button>
+              )}
               <button
                 type="button"
                 className="absolute bottom-2 right-2 z-30 rounded-md bg-black/60 p-1.5 text-white hover:bg-black/80"
@@ -702,6 +725,29 @@ export function BeatVideoGallery({
                           <PlayCircle className="mr-1 h-3 w-3" />
                         )}
                         {isPreviewPlaying ? 'Pause' : 'Play'}
+                      </Button>
+                    )}
+                    {previewVideoUrl && (
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="outline"
+                        className="h-7 text-[10px]"
+                        title="Download clip video"
+                        onClick={() => {
+                          void saveVideoFile({
+                            url: previewVideoUrl,
+                            beatNumber: preview?.beatNumber,
+                            label: preview?.label || 'clip',
+                          })
+                            .then((saved) => {
+                              if (saved) toast.success('Video clip saved')
+                            })
+                            .catch(() => toast.error('Failed to download video clip'))
+                        }}
+                      >
+                        <Download className="mr-1 h-3 w-3" />
+                        Download
                       </Button>
                     )}
                     {onGenerateClip && !languageStream && (

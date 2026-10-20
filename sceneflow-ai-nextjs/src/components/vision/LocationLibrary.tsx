@@ -6,6 +6,7 @@ import {
   MapPin,
   Sparkles,
   Upload,
+  Download,
   Loader2,
   ChevronDown,
   ChevronUp,
@@ -26,6 +27,7 @@ import { Button } from '@/components/ui/Button'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 import { toast } from 'sonner'
+import { saveImageFile } from '@/lib/download/saveFile'
 import { LocationReference, LocationVersion } from '@/types/visionReferences'
 import { getSceneBeats } from '@/lib/script/beatMigration'
 import { LocationPromptBuilder, LocationPromptPayload } from './LocationPromptBuilder'
@@ -238,6 +240,7 @@ function LocationStillOverlay({
   onDirector,
   onEdit,
   onUpload,
+  onDownload,
 }: {
   isGenerating: boolean
   isUploading: boolean
@@ -249,6 +252,7 @@ function LocationStillOverlay({
   onDirector?: () => void
   onEdit?: () => void
   onUpload?: () => void
+  onDownload?: () => void
 }) {
   return (
     <div
@@ -351,6 +355,24 @@ function LocationStillOverlay({
             </button>
           </TooltipTrigger>
           <TooltipContent>Upload Image</TooltipContent>
+        </Tooltip>
+      )}
+      {onDownload && (
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation()
+                onDownload()
+              }}
+              className="p-3 bg-sky-600/80 hover:bg-sky-600 rounded-full transition-colors"
+              title="Download Image"
+            >
+              <Download className="w-5 h-5 text-white" />
+            </button>
+          </TooltipTrigger>
+          <TooltipContent>Download Image</TooltipContent>
         </Tooltip>
       )}
     </div>
@@ -941,6 +963,20 @@ export function LocationLibrary({
                             : undefined
                         }
                         onUpload={() => document.getElementById(baseUploadId)?.click()}
+                        onDownload={
+                          hasImage && loc.imageUrl
+                            ? () => {
+                                void saveImageFile({
+                                  url: loc.imageUrl!,
+                                  label: `location-${loc.location}`,
+                                })
+                                  .then((saved) => {
+                                    if (saved) toast.success('Location image saved')
+                                  })
+                                  .catch(() => toast.error('Failed to download location image'))
+                              }
+                            : undefined
+                        }
                       />
                     </div>
                   )
@@ -1191,6 +1227,16 @@ export function LocationLibrary({
                                         onUpload={() =>
                                           document.getElementById(versionUploadId)?.click()
                                         }
+                                        onDownload={() => {
+                                          void saveImageFile({
+                                            url: version.imageUrl!,
+                                            label: `location-${loc.location}-${version.name}`,
+                                          })
+                                            .then((saved) => {
+                                              if (saved) toast.success('Location version image saved')
+                                            })
+                                            .catch(() => toast.error('Failed to download location image'))
+                                        }}
                                       />
                                     </div>
                                   ) : versionGenerating || versionUploading ? (
@@ -1449,6 +1495,20 @@ export function LocationLibrary({
                         : undefined
                     }
                     onUpload={() => document.getElementById(lightboxUploadId)?.click()}
+                    onDownload={
+                      baseHasImage && expandedBaseLocation.imageUrl
+                        ? () => {
+                            void saveImageFile({
+                              url: expandedBaseLocation.imageUrl!,
+                              label: `location-${expandedBaseLocation.location}`,
+                            })
+                              .then((saved) => {
+                                if (saved) toast.success('Location image saved')
+                              })
+                              .catch(() => toast.error('Failed to download location image'))
+                          }
+                        : undefined
+                    }
                   />
                 </div>
               </>
@@ -1545,6 +1605,20 @@ export function LocationLibrary({
                           )
                         }
                         onUpload={() => document.getElementById(dialogUploadId)?.click()}
+                        onDownload={
+                          versionHasImage && expandedVersion.imageUrl
+                            ? () => {
+                                void saveImageFile({
+                                  url: expandedVersion.imageUrl!,
+                                  label: `location-${expandedVersionLocation.location}-${expandedVersion.name}`,
+                                })
+                                  .then((saved) => {
+                                    if (saved) toast.success('Location version image saved')
+                                  })
+                                  .catch(() => toast.error('Failed to download location image'))
+                              }
+                            : undefined
+                        }
                       />
                     )}
                   </div>

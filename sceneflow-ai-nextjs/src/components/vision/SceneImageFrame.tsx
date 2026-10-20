@@ -1,11 +1,12 @@
 'use client'
 
 import React, { useEffect, useState, useRef } from 'react'
-import { ImageIcon, Sparkles, Upload, Wand2, Loader2, CheckCircle2, RefreshCw, FolderPlus, Trash2, AlertTriangle, SlidersHorizontal, Maximize2, Minimize2, Zap, Clapperboard } from 'lucide-react'
+import { ImageIcon, Sparkles, Upload, Download, Wand2, Loader2, CheckCircle2, RefreshCw, FolderPlus, Trash2, AlertTriangle, SlidersHorizontal, Maximize2, Minimize2, Zap, Clapperboard } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { motion, AnimatePresence } from 'framer-motion'
 import { toast } from 'sonner'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
+import { saveImageFile } from '@/lib/download/saveFile'
 import { isImageContentPolicyError, isStillPolicyImageError } from '@/lib/generation/stillPolicy'
 import {
   DeferredImageSkeleton,
@@ -135,6 +136,7 @@ function CompactActionBar({
   onDirect,
   onDirector,
   onUpload,
+  onDownload,
   onEdit,
   onDelete,
   onAddToReferenceLibrary,
@@ -155,6 +157,7 @@ function CompactActionBar({
   onDirect?: () => void
   onDirector?: () => void
   onUpload: () => void
+  onDownload?: () => void
   onEdit?: (imageUrl: string) => void
   onDelete?: () => void
   onAddToReferenceLibrary?: (imageUrl: string, name: string, sceneNumber: number) => void
@@ -273,6 +276,20 @@ function CompactActionBar({
       >
         <Upload className={iconClass} />
       </CompactIconButton>
+
+      {onDownload && hasImage && imageUrl && (
+        <CompactIconButton
+          onClick={(e) => {
+            e.stopPropagation()
+            onDownload()
+          }}
+          title="Download image"
+          className="bg-sky-600/90 hover:bg-sky-500"
+          size={buttonSize}
+        >
+          <Download className={iconClass} />
+        </CompactIconButton>
+      )}
 
       {onDelete && (
         <CompactIconButton
@@ -408,6 +425,22 @@ export function SceneImageFrame({
 
   const triggerUpload = () => {
     fileInputRef.current?.click()
+  }
+
+  const handleDownload = async () => {
+    if (!imageUrl) return
+    try {
+      const saved = await saveImageFile({
+        url: imageUrl,
+        sceneNumber,
+        beatNumber,
+        label: label || 'still',
+      })
+      if (saved) toast.success('Image saved')
+    } catch (error) {
+      console.error('[SceneImageFrame] Download failed:', error)
+      toast.error('Failed to download image')
+    }
   }
 
   useEffect(() => {
@@ -561,6 +594,7 @@ export function SceneImageFrame({
                 onDirect={onDirect}
                 onDirector={onDirector}
                 onUpload={triggerUpload}
+                onDownload={handleDownload}
                 onEdit={onEdit}
                 onDelete={onDelete}
                 onAddToReferenceLibrary={onAddToReferenceLibrary}
@@ -664,6 +698,17 @@ export function SceneImageFrame({
                       title={uploadTitle || 'Upload image'}
                     >
                       <Upload className="w-5 h-5 text-white" />
+                    </button>
+
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        void handleDownload()
+                      }}
+                      className="p-3 bg-sky-600/80 hover:bg-sky-600 rounded-full transition-colors"
+                      title="Download image"
+                    >
+                      <Download className="w-5 h-5 text-white" />
                     </button>
                   </motion.div>
                 )}

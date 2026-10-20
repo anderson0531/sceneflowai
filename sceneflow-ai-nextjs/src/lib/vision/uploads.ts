@@ -74,7 +74,9 @@ async function uploadViaFormEndpoint(file: File, projectId: string, endpoint: st
 }
 
 export async function uploadAssetViaAPI(file: File, projectId: string): Promise<string> {
-  const isAudio = file.type.startsWith('audio/')
+  const isAudio =
+    file.type.startsWith('audio/') ||
+    /\.(mp3|wav|ogg|webm|m4a|aac|flac)$/i.test(file.name || '')
 
   if (!isAudio && typeof window !== 'undefined') {
     return uploadImageViaBlobClient(file, projectId)

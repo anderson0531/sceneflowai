@@ -230,7 +230,7 @@ export function SegmentDialogueCard({
               {brief}
             </div>
           )}
-          {!isNarrator && dialogueIndex !== null && (
+          {dialogueIndex !== null && (
             <DialogueQualityToggle
               disabled={isGenerating || isExtractingClipAudio}
               lofiDisabled={!lineText.trim()}
@@ -243,6 +243,13 @@ export function SegmentDialogueCard({
               onLofi={() => {
                 void dispatchGenerate()
               }}
+              onUploadAudio={
+                uploadAudio
+                  ? () => {
+                      dispatchUpload()
+                    }
+                  : undefined
+              }
               onExtractClipAudio={() => {
                 if (!projectId || !clipUrl || dialogueIndex === null) return
                 setIsExtractingClipAudio(true)

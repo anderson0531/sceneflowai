@@ -1,7 +1,9 @@
 'use client'
 
 import React, { useEffect, useRef, useState } from 'react'
-import { Camera, ChevronDown, ChevronRight, Maximize2, Minimize2 } from 'lucide-react'
+import { Camera, ChevronDown, ChevronRight, Download, Maximize2, Minimize2 } from 'lucide-react'
+import { toast } from 'sonner'
+import { saveImageFile, saveVideoFile } from '@/lib/download/saveFile'
 import { cn } from '@/lib/utils'
 
 /** 80% of the card so Direction, Still, and Clip previews match. */
@@ -130,6 +132,40 @@ export function BeatStillClipViewer({
           </div>
         )}
         {!showClip && stillOverlay}
+        {(showClip ? clipUrl : stillUrl) && (
+          <button
+            type="button"
+            className="absolute right-10 top-2 z-20 rounded-md bg-black/60 p-1.5 text-white hover:bg-black/80"
+            onClick={(event) => {
+              event.stopPropagation()
+              if (showClip && clipUrl) {
+                void saveVideoFile({
+                  url: clipUrl,
+                  beatNumber,
+                  label: 'clip',
+                })
+                  .then((saved) => {
+                    if (saved) toast.success('Video clip saved')
+                  })
+                  .catch(() => toast.error('Failed to download video clip'))
+              } else if (stillUrl) {
+                void saveImageFile({
+                  url: stillUrl,
+                  beatNumber,
+                  label: 'still',
+                })
+                  .then((saved) => {
+                    if (saved) toast.success('Image saved')
+                  })
+                  .catch(() => toast.error('Failed to download image'))
+              }
+            }}
+            title={showClip ? 'Download clip video' : 'Download still image'}
+            aria-label={showClip ? 'Download clip video' : 'Download still image'}
+          >
+            <Download className="h-4 w-4" />
+          </button>
+        )}
         <button
           type="button"
           className="absolute right-2 top-2 z-20 rounded-md bg-black/60 p-1.5 text-white hover:bg-black/80"

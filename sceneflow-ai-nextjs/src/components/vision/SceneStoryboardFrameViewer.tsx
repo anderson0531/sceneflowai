@@ -9,6 +9,7 @@ import {
   ChevronUp,
   Clapperboard,
   Copy,
+  Download,
   Loader,
   Move,
   MonitorPlay,
@@ -19,6 +20,7 @@ import {
   Zap,
 } from 'lucide-react'
 import { toast } from 'sonner'
+import { saveImageFile } from '@/lib/download/saveFile'
 import { ImageEditModal } from './ImageEditModal'
 import {
   ExpressSceneConfirmDialog,
@@ -1326,6 +1328,30 @@ export function SceneStoryboardFrameViewer({
                                 Copy prompt
                               </>
                             )}
+                          </Button>
+                        )}
+                        {previewSlot.displayImageUrl && !previewSlot.isMissing && (
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            className="h-7 text-[10px] shrink-0 border-slate-600/50 text-slate-300 hover:bg-slate-700/50"
+                            title="Download still image"
+                            onClick={() => {
+                              void saveImageFile({
+                                url: previewSlot.displayImageUrl!,
+                                sceneNumber,
+                                beatNumber: previewSlot.beatNumber,
+                                label: previewSlot.label || 'still',
+                              })
+                                .then((saved) => {
+                                  if (saved) toast.success('Image saved')
+                                })
+                                .catch(() => toast.error('Failed to download image'))
+                            }}
+                          >
+                            <Download className="w-3 h-3 mr-1" />
+                            Download
                           </Button>
                         )}
                         {onSetScreeningPoster &&

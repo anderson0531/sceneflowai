@@ -13,6 +13,24 @@ export interface SaveAudioFileOptions {
   filename?: string
 }
 
+export interface SaveImageFileOptions {
+  url: string
+  sceneNumber?: number
+  beatNumber?: number
+  label?: string
+  /** Override auto-generated filename (with or without extension). */
+  filename?: string
+}
+
+export interface SaveVideoFileOptions {
+  url: string
+  sceneNumber?: number
+  beatNumber?: number
+  label?: string
+  /** Override auto-generated filename (with or without extension). */
+  filename?: string
+}
+
 export function sanitizeDownloadFilename(name: string): string {
   const cleaned = name.replace(/[^a-zA-Z0-9._-]+/g, '_').replace(/_+/g, '_').replace(/^_|_$/g, '')
   return cleaned.slice(0, 120) || 'audio'
@@ -82,6 +100,67 @@ function buildAcceptTypes(extension: string): Record<string, string[]> {
   }
 }
 
+function buildImageAcceptTypes(extension: string): Record<string, string[]> {
+  switch (extension) {
+    case '.png':
+      return { 'image/png': ['.png'] }
+    case '.jpg':
+    case '.jpeg':
+      return { 'image/jpeg': ['.jpg', '.jpeg'] }
+    case '.webp':
+      return { 'image/webp': ['.webp'] }
+    case '.gif':
+      return { 'image/gif': ['.gif'] }
+    default:
+      return { 'image/*': [extension], 'application/octet-stream': [extension] }
+  }
+}
+
+function buildVideoAcceptTypes(extension: string): Record<string, string[]> {
+  switch (extension) {
+    case '.mp4':
+    case '.m4v':
+      return { 'video/mp4': ['.mp4', '.m4v'] }
+    case '.webm':
+      return { 'video/webm': ['.webm'] }
+    case '.mov':
+      return { 'video/quicktime': ['.mov'] }
+    default:
+      return { 'video/*': [extension], 'application/octet-stream': [extension] }
+  }
+}
+
+export function buildSuggestedImageFilename(options: SaveImageFileOptions): string {
+  const ext = inferExtensionFromUrl(options.url, '.png')
+  if (options.filename) {
+    const cleaned = sanitizeDownloadFilename(options.filename)
+    return /\.(png|jpe?g|webp|gif|avif)$/i.test(cleaned) ? cleaned : `${cleaned}${ext}`
+  }
+
+  const parts: string[] = []
+  if (typeof options.sceneNumber === 'number') parts.push(`scene-${options.sceneNumber}`)
+  if (typeof options.beatNumber === 'number') parts.push(`shot-${options.beatNumber}`)
+  if (options.label) parts.push(sanitizeDownloadFilename(options.label))
+  const stem = parts.length > 0 ? parts.join('-') : 'still'
+  return `${stem}${ext}`
+}
+
+export function buildSuggestedVideoFilename(options: SaveVideoFileOptions): string {
+  const ext = inferExtensionFromUrl(options.url, '.mp4')
+  if (options.filename) {
+    const cleaned = sanitizeDownloadFilename(options.filename)
+    return /\.(mp4|webm|mov|m4v)$/i.test(cleaned) ? cleaned : `${cleaned}${ext}`
+  }
+
+  const parts: string[] = []
+  if (typeof options.sceneNumber === 'number') parts.push(`scene-${options.sceneNumber}`)
+  if (typeof options.beatNumber === 'number') parts.push(`shot-${options.beatNumber}`)
+  if (options.label) parts.push(sanitizeDownloadFilename(options.label))
+  else parts.push('clip')
+  const stem = parts.length > 0 ? parts.join('-') : 'clip'
+  return `${stem}${ext}`
+}
+
 async function fetchBlob(url: string): Promise<Blob> {
   const response = await fetch(url)
   if (!response.ok) {
@@ -90,9 +169,14 @@ async function fetchBlob(url: string): Promise<Blob> {
   return response.blob()
 }
 
-async function writeBlobWithSavePicker(blob: Blob, suggestedName: string, extension: string): Promise<boolean> {
+async function writeBlobWithSavePicker(
+  blob: Blob,
+  suggestedName: string,
+  description: string,
+  accept: Record<string, string[]>
+): Promise<'saved' | 'cancelled' | 'unsupported'> {
   if (typeof window.showSaveFilePicker !== 'function') {
-    return false
+    return 'unsupported'
   }
 
   try {
@@ -100,18 +184,18 @@ async function writeBlobWithSavePicker(blob: Blob, suggestedName: string, extens
       suggestedName,
       types: [
         {
-          description: 'Audio file',
-          accept: buildAcceptTypes(extension),
+          description,
+          accept,
         },
       ],
     })
     const writable = await handle.createWritable()
     await writable.write(blob)
     await writable.close()
-    return true
+    return 'saved'
   } catch (error) {
     if (error instanceof DOMException && error.name === 'AbortError') {
-      return false
+      return 'cancelled'
     }
     throw error
   }
@@ -134,8 +218,52 @@ export async function saveAudioFile(options: SaveAudioFileOptions): Promise<bool
   const blob = await fetchBlob(options.url)
   const extension = inferExtensionFromUrl(options.url, '.mp3')
 
-  const savedWithPicker = await writeBlobWithSavePicker(blob, suggestedName, extension)
-  if (savedWithPicker) return true
+  const pickerResult = await writeBlobWithSavePicker(
+    blob,
+    suggestedName,
+    'Audio file',
+    buildAcceptTypes(extension)
+  )
+  if (pickerResult === 'saved') return true
+  if (pickerResult === 'cancelled') return false
+
+  triggerBlobDownload(blob, suggestedName)
+  return true
+}
+
+/** Save still or reference image to disk; returns false when the user cancels the save dialog. */
+export async function saveImageFile(options: SaveImageFileOptions): Promise<boolean> {
+  const suggestedName = buildSuggestedImageFilename(options)
+  const blob = await fetchBlob(options.url)
+  const extension = inferExtensionFromUrl(options.url, '.png')
+
+  const pickerResult = await writeBlobWithSavePicker(
+    blob,
+    suggestedName,
+    'Image file',
+    buildImageAcceptTypes(extension)
+  )
+  if (pickerResult === 'saved') return true
+  if (pickerResult === 'cancelled') return false
+
+  triggerBlobDownload(blob, suggestedName)
+  return true
+}
+
+/** Save video clip to disk; returns false when the user cancels the save dialog. */
+export async function saveVideoFile(options: SaveVideoFileOptions): Promise<boolean> {
+  const suggestedName = buildSuggestedVideoFilename(options)
+  const blob = await fetchBlob(options.url)
+  const extension = inferExtensionFromUrl(options.url, '.mp4')
+
+  const pickerResult = await writeBlobWithSavePicker(
+    blob,
+    suggestedName,
+    'Video file',
+    buildVideoAcceptTypes(extension)
+  )
+  if (pickerResult === 'saved') return true
+  if (pickerResult === 'cancelled') return false
 
   triggerBlobDownload(blob, suggestedName)
   return true

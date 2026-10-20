@@ -23,6 +23,7 @@ import { useMemo, useState } from 'react'
 import { useTranslations } from 'next-intl'
 import {
   AlertTriangle,
+  Download,
   Image as ImageIcon,
   Library,
   Loader,
@@ -36,6 +37,8 @@ import {
   Users,
   X,
 } from 'lucide-react'
+import { toast } from 'sonner'
+import { saveImageFile } from '@/lib/download/saveFile'
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import type { ReferenceLibraryTab } from '@/components/vision/ReferenceLibraryDialog'
@@ -438,18 +441,40 @@ export function SceneReferencesPanel({
 
         <div className="flex items-center gap-1 shrink-0">
           {drawn && (
-            <button
-              type="button"
-              onClick={(e) => {
-                e.stopPropagation()
-                setExpanded({ url: requirement.imageUrl!.trim(), name: displayName })
-              }}
-              className="p-1 rounded hover:bg-cyan-200/60 dark:hover:bg-cyan-800/60 text-gray-500 hover:text-gray-800 dark:hover:text-gray-200"
-              title="Expand image"
-              aria-label={`Expand ${displayName}`}
-            >
-              <Maximize2 className="w-3.5 h-3.5" />
-            </button>
+            <>
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation()
+                  void saveImageFile({
+                    url: requirement.imageUrl!.trim(),
+                    sceneNumber,
+                    label: `continuity-${displayName}`,
+                  })
+                    .then((saved) => {
+                      if (saved) toast.success('Reference image saved')
+                    })
+                    .catch(() => toast.error('Failed to download reference image'))
+                }}
+                className="p-1 rounded hover:bg-cyan-200/60 dark:hover:bg-cyan-800/60 text-gray-500 hover:text-gray-800 dark:hover:text-gray-200"
+                title="Download image"
+                aria-label={`Download ${displayName}`}
+              >
+                <Download className="w-3.5 h-3.5" />
+              </button>
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation()
+                  setExpanded({ url: requirement.imageUrl!.trim(), name: displayName })
+                }}
+                className="p-1 rounded hover:bg-cyan-200/60 dark:hover:bg-cyan-800/60 text-gray-500 hover:text-gray-800 dark:hover:text-gray-200"
+                title="Expand image"
+                aria-label={`Expand ${displayName}`}
+              >
+                <Maximize2 className="w-3.5 h-3.5" />
+              </button>
+            </>
           )}
           {expressKind && onExpressReferences && (
             <button
@@ -792,6 +817,28 @@ export function SceneReferencesPanel({
           onClick={(e) => e.stopPropagation()}
         >
           <DialogTitle className="sr-only">{expanded?.name ?? 'Reference'}</DialogTitle>
+          {expanded && (
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation()
+                void saveImageFile({
+                  url: expanded.url,
+                  sceneNumber,
+                  label: `continuity-${expanded.name}`,
+                })
+                  .then((saved) => {
+                    if (saved) toast.success('Reference image saved')
+                  })
+                  .catch(() => toast.error('Failed to download reference image'))
+              }}
+              className="absolute top-4 right-16 z-10 p-2 bg-white/10 hover:bg-white/20 rounded-full transition-colors"
+              title="Download image"
+              aria-label="Download expanded image"
+            >
+              <Download className="w-5 h-5 text-white" />
+            </button>
+          )}
           <button
             type="button"
             onClick={(e) => {

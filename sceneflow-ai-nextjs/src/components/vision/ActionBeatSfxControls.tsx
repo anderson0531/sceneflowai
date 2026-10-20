@@ -1,7 +1,7 @@
 'use client'
 
 import { useMemo, useState } from 'react'
-import { Download, Loader2, Pause, Play, RefreshCw, Volume2 } from 'lucide-react'
+import { Download, Loader2, Pause, Play, RefreshCw, Trash2, Upload, Volume2 } from 'lucide-react'
 import { BeatAudioStatusBadge } from '@/components/vision/BeatAudioStatusBadge'
 import { DialogueQualityToggle } from '@/components/vision/DialogueQualityToggle'
 import { toast } from 'sonner'
@@ -12,6 +12,7 @@ import { distinctSfxCue } from '@/lib/audio/shotSfxTag'
 import { resolveBeatSfxSlot, readBeatSfxAudio } from '@/lib/script/deriveSfxFromSceneContent'
 import { actionBeatSfxIsStale, audioSourceFingerprintForSfxBeat } from '@/lib/audio/beatAudioStale'
 import { extractAndSaveActionBeatClipAudio } from '@/lib/audio/extractAndApplyShotClipAudio'
+import { uploadAssetViaAPI } from '@/lib/vision/uploads'
 import type { SceneBeat } from '@/lib/script/segmentTypes'
 
 export type ExpressBeatSfxStatus = 'pending' | 'running' | 'done' | 'error'
@@ -28,6 +29,7 @@ export interface ActionBeatSfxControlsProps {
   expressStatus?: ExpressBeatSfxStatus
   isExpressRunning?: boolean
   onPlayAudio?: (audioUrl: string, label: string, sceneId?: string) => void
+  onDeleteSfxAudio?: (sceneIndex: number, sfxIndex: number) => void
   onSaveSfxAudio?: (
     sceneIdx: number,
     audioType: 'sfx' | 'music',
@@ -50,10 +52,12 @@ export function ActionBeatSfxControls({
   expressStatus,
   isExpressRunning = false,
   onPlayAudio,
+  onDeleteSfxAudio,
   onSaveSfxAudio,
 }: ActionBeatSfxControlsProps) {
   const [isGeneratingElevenLabs, setIsGeneratingElevenLabs] = useState(false)
   const [isExtractingClipAudio, setIsExtractingClipAudio] = useState(false)
+  const [isUploadingSfx, setIsUploadingSfx] = useState(false)
   const [durationPreset, setDurationPreset] = useState<SfxDurationOverride>('auto')
 
   const slot = useMemo(
@@ -79,8 +83,46 @@ export function ActionBeatSfxControls({
   const isBusy =
     isGeneratingElevenLabs ||
     isExtractingClipAudio ||
+    isUploadingSfx ||
     isExpressRunning ||
     expressStatus === 'running'
+
+  const handleUploadSfxAudio = () => {
+    if (!projectId) {
+      toast.error('Project context is missing for audio upload.')
+      return
+    }
+    const input = document.createElement('input')
+    input.type = 'file'
+    input.accept = '.mp3,audio/mpeg,audio/mp3,audio/wav,audio/ogg,audio/webm'
+    input.onchange = async (event) => {
+      const file = (event.target as HTMLInputElement).files?.[0]
+      if (!file) return
+      setIsUploadingSfx(true)
+      const toastId = toast.loading('Uploading MP3 audio...')
+      try {
+        const audioUrl = await uploadAssetViaAPI(file, projectId)
+        const beatDescription =
+          audioSourceFingerprintForSfxBeat(beat) ||
+          beat.actionDescription?.trim() ||
+          file.name ||
+          'Uploaded shot audio'
+        await onSaveSfxAudio?.(sceneIdx, 'sfx', audioUrl, slot.sfxIndex, null, {
+          beatId: beat.beatId,
+          beatDescription,
+        })
+        toast.success('Shot audio uploaded.', { id: toastId })
+      } catch (error) {
+        toast.error(
+          `Failed to upload audio: ${(error as Error)?.message || 'Unknown error'}`,
+          { id: toastId }
+        )
+      } finally {
+        setIsUploadingSfx(false)
+      }
+    }
+    input.click()
+  }
 
   const handleExtractClipAudio = async () => {
     if (!projectId) {
@@ -163,14 +205,6 @@ export function ActionBeatSfxControls({
     }
   }
 
-  if (!sfxText && !sfxAudio && !clipUrl) {
-    return (
-      <p className="mt-3 pt-3 border-t border-amber-700/40 text-[10px] text-amber-300/60">
-        Score carries this shot.
-      </p>
-    )
-  }
-
   return (
     <div className="mt-3 pt-3 border-t border-amber-700/40">
       <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2 mb-2">
@@ -247,6 +281,37 @@ export function ActionBeatSfxControls({
               >
                 <Download className="w-4 h-4" />
               </button>
+              {onDeleteSfxAudio && (
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    if (confirm('Delete this shot’s audio? You can regenerate or upload a new MP3 later.')) {
+                      onDeleteSfxAudio(sceneIdx, slot.sfxIndex)
+                    }
+                  }}
+                  className="p-1 hover:bg-red-900/40 rounded text-red-400"
+                  title="Delete Shot Audio"
+                >
+                  <Trash2 className="w-4 h-4" />
+                </button>
+              )}
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation()
+                  handleUploadSfxAudio()
+                }}
+                disabled={isBusy}
+                className="p-1 hover:bg-amber-900/40 rounded text-amber-100 disabled:opacity-50"
+                title="Upload Shot MP3 Audio"
+              >
+                {isUploadingSfx ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  <Upload className="w-4 h-4" />
+                )}
+              </button>
             </>
           ) : (
             <span className="flex items-center gap-1.5">
@@ -262,44 +327,72 @@ export function ActionBeatSfxControls({
               >
                 {isGeneratingElevenLabs ? 'ElevenLabs...' : 'ElevenLabs'}
               </button>
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation()
+                  handleUploadSfxAudio()
+                }}
+                disabled={isBusy}
+                className="p-1 hover:bg-amber-900/40 rounded text-amber-100 disabled:opacity-50"
+                title="Upload Shot MP3 Audio"
+              >
+                {isUploadingSfx ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  <Upload className="w-4 h-4" />
+                )}
+              </button>
             </span>
           )}
         </div>
       </div>
-      <div className="flex flex-wrap items-center gap-1.5 mb-2">
-        <span className="text-[10px] uppercase tracking-wide text-amber-300/60 mr-1">Duration</span>
-        {chips.map((chip) => {
-          const active = durationPreset === chip.id
-          return (
-            <button
-              key={chip.id}
-              type="button"
-              disabled={isBusy}
-              onClick={(e) => {
-                e.stopPropagation()
-                setDurationPreset(chip.id)
-              }}
-              className={`text-[10px] leading-none px-2 py-0.5 rounded border transition-colors ${
-                active
-                  ? 'bg-amber-600 border-amber-600 text-white'
-                  : 'bg-transparent border-amber-600/40 text-amber-100/80 hover:bg-amber-900/40'
-              } disabled:opacity-50`}
-            >
-              {chip.label}
-            </button>
-          )
-        })}
-      </div>
-      <p className="text-[10px] text-amber-300/50">ElevenLabs · about 15 credits</p>
+      {sfxText ? (
+        <>
+          <div className="flex flex-wrap items-center gap-1.5 mb-2">
+            <span className="text-[10px] uppercase tracking-wide text-amber-300/60 mr-1">Duration</span>
+            {chips.map((chip) => {
+              const active = durationPreset === chip.id
+              return (
+                <button
+                  key={chip.id}
+                  type="button"
+                  disabled={isBusy}
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    setDurationPreset(chip.id)
+                  }}
+                  className={`text-[10px] leading-none px-2 py-0.5 rounded border transition-colors ${
+                    active
+                      ? 'bg-amber-600 border-amber-600 text-white'
+                      : 'bg-transparent border-amber-600/40 text-amber-100/80 hover:bg-amber-900/40'
+                  } disabled:opacity-50`}
+                >
+                  {chip.label}
+                </button>
+              )
+            })}
+          </div>
+          <p className="text-[10px] text-amber-300/50">ElevenLabs · about 15 credits</p>
+        </>
+      ) : (
+        <p className="text-[10px] text-amber-300/60">
+          {sfxAudio ? 'Custom shot audio ready.' : 'Score carries this shot unless you upload or extract audio.'}
+        </p>
+      )}
       <DialogueQualityToggle
         lofiTitle="ElevenLabs sound effect"
         disabled={isBusy}
         lofiDisabled={!sfxText}
         hasClip={!!clipUrl}
         isExtractingClipAudio={isExtractingClipAudio}
+        isUploadingAudio={isUploadingSfx}
         isClipAudioActive={Boolean(sfxAudio && sfxAudio.includes('shot-audio-'))}
         onLofi={() => {
           void handleElevenLabs()
+        }}
+        onUploadAudio={() => {
+          handleUploadSfxAudio()
         }}
         onExtractClipAudio={() => {
           void handleExtractClipAudio()

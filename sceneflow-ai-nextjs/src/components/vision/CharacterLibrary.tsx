@@ -7,6 +7,7 @@ import {
   Loader,
   Wand2,
   Upload,
+  Download,
   X,
   ChevronDown,
   ChevronUp,
@@ -48,6 +49,7 @@ import {
   TabsTrigger,
 } from "@/components/ui/tabs";
 import { toast } from "sonner";
+import { saveImageFile } from "@/lib/download/saveFile";
 import { useDraggable } from "@dnd-kit/core";
 import { isVertexContentPolicyError } from "@/lib/generation/contentPolicy";
 import { CSS } from "@dnd-kit/utilities";
@@ -1331,6 +1333,25 @@ export function CharacterLibrary({
         >
           <div className={`relative ${splitLayout ? "max-w-[50vw]" : "max-w-4xl"} max-h-[90vh]`}>
             <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                void saveImageFile({
+                  url: zoomedImage.url,
+                  label: `cast-${zoomedImage.name}`,
+                })
+                  .then((saved) => {
+                    if (saved) toast.success("Character image saved");
+                  })
+                  .catch(() => toast.error("Failed to download character image"));
+              }}
+              className="absolute -top-10 right-10 p-2 rounded-full bg-gray-800 hover:bg-gray-700 text-white transition-colors"
+              title="Download Image"
+              aria-label={`Download ${zoomedImage.name}`}
+            >
+              <Download className="w-5 h-5" />
+            </button>
+            <button
               onClick={() => setZoomedImage(null)}
               className="absolute -top-10 right-0 p-2 rounded-full bg-gray-800 hover:bg-gray-700 text-white transition-colors"
             >
@@ -1524,7 +1545,8 @@ const CharacterCard = ({
     variant: "split" | "stacked",
   ) => {
     const isGenerating = generatingWardrobeImageId === w.id;
-    const hasWardrobeImage = Boolean(w.fullBodyUrl || w.headshotUrl);
+    const wardrobeImageUrl = w.fullBodyUrl || w.headshotUrl;
+    const hasWardrobeImage = Boolean(wardrobeImageUrl);
     const loadingOverlay = isGenerating ? (
       <div className="absolute inset-0 bg-black/60 flex items-center justify-center z-20">
         <Loader className="w-6 h-6 animate-spin text-white" />
@@ -1549,6 +1571,26 @@ const CharacterCard = ({
         >
           <Clapperboard className="w-5 h-5 text-white" />
         </button>
+        {wardrobeImageUrl && (
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              void saveImageFile({
+                url: wardrobeImageUrl,
+                label: `wardrobe-${character.name}-${w.name}`,
+              })
+                .then((saved) => {
+                  if (saved) toast.success("Wardrobe image saved");
+                })
+                .catch(() => toast.error("Failed to download wardrobe image"));
+            }}
+            className="p-3 bg-sky-600/80 hover:bg-sky-600 rounded-full transition-colors"
+            title="Download Image"
+          >
+            <Download className="w-5 h-5 text-white" />
+          </button>
+        )}
       </div>
     );
 
@@ -3394,6 +3436,26 @@ const CharacterCard = ({
             <Upload className="w-5 h-5 text-white" />
           )}
         </button>
+        {character.referenceImage && !imageError && (
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              void saveImageFile({
+                url: character.referenceImage!,
+                label: `cast-${character.name}`,
+              })
+                .then((saved) => {
+                  if (saved) toast.success("Character image saved");
+                })
+                .catch(() => toast.error("Failed to download character image"));
+            }}
+            className="p-3 bg-sky-600/80 hover:bg-sky-600 rounded-full transition-colors"
+            title="Download Image"
+          >
+            <Download className="w-5 h-5 text-white" />
+          </button>
+        )}
         <input
           id={`upload-${characterId}`}
           type="file"
@@ -4495,6 +4557,26 @@ const CharacterCard = ({
                                           <Trash2 className="w-3.5 h-3.5" />
                                         </button>
                                       )}
+                                      {(w.fullBodyUrl || w.headshotUrl) && (
+                                        <button
+                                          onClick={(e) => {
+                                            e.stopPropagation();
+                                            const url = (w.fullBodyUrl || w.headshotUrl)!;
+                                            void saveImageFile({
+                                              url,
+                                              label: `wardrobe-${character.name}-${w.name}`,
+                                            })
+                                              .then((saved) => {
+                                                if (saved) toast.success("Wardrobe image saved");
+                                              })
+                                              .catch(() => toast.error("Failed to download wardrobe image"));
+                                          }}
+                                          className="p-1.5 rounded-lg text-zinc-500 dark:text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800/80"
+                                          title="Download wardrobe image"
+                                        >
+                                          <Download className="w-3.5 h-3.5" />
+                                        </button>
+                                      )}
                                       <button
                                         onClick={(e) => {
                                           e.stopPropagation();
@@ -4637,6 +4719,26 @@ const CharacterCard = ({
                                             title="Delete wardrobe"
                                           >
                                             <Trash2 className="w-3.5 h-3.5" />
+                                          </button>
+                                        )}
+                                        {(w.fullBodyUrl || w.headshotUrl) && (
+                                          <button
+                                            onClick={(e) => {
+                                              e.stopPropagation();
+                                              const url = (w.fullBodyUrl || w.headshotUrl)!;
+                                              void saveImageFile({
+                                                url,
+                                                label: `wardrobe-${character.name}-${w.name}`,
+                                              })
+                                                .then((saved) => {
+                                                  if (saved) toast.success("Wardrobe image saved");
+                                                })
+                                                .catch(() => toast.error("Failed to download wardrobe image"));
+                                            }}
+                                            className="p-1.5 rounded-lg text-zinc-500 dark:text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800/80"
+                                            title="Download wardrobe image"
+                                          >
+                                            <Download className="w-3.5 h-3.5" />
                                           </button>
                                         )}
                                         <button
@@ -5276,6 +5378,26 @@ const CharacterCard = ({
                     <ImagePlus className="w-4 h-4 mr-2" />
                   )}
                   {(expandedWardrobe.fullBodyUrl || expandedWardrobe.headshotUrl) ? "Regenerate Image" : "Generate Image"}
+                </Button>
+              )}
+              {expandedWardrobe && (expandedWardrobe.fullBodyUrl || expandedWardrobe.headshotUrl) && (
+                <Button
+                  variant="outline"
+                  className="h-7 text-xs font-medium"
+                  onClick={() => {
+                    const url = (expandedWardrobe.fullBodyUrl || expandedWardrobe.headshotUrl)!;
+                    void saveImageFile({
+                      url,
+                      label: `wardrobe-${character.name}-${expandedWardrobe.name}`,
+                    })
+                      .then((saved) => {
+                        if (saved) toast.success("Wardrobe image saved");
+                      })
+                      .catch(() => toast.error("Failed to download wardrobe image"));
+                  }}
+                >
+                  <Download className="w-4 h-4 mr-2" />
+                  Download
                 </Button>
               )}
               <Button

@@ -27,7 +27,12 @@ export async function uploadAudioToBlob(
   file: File,
   projectId: string
 ): Promise<UploadAudioToBlobResult> {
-  if (!file.type.startsWith('audio/') && !AUDIO_BLOB_ALLOWED_TYPES.includes(file.type)) {
+  const hasAllowedExtension = /\.(mp3|wav|ogg|webm|m4a|mp4|aac)$/i.test(file.name || '')
+  if (
+    !file.type.startsWith('audio/') &&
+    !AUDIO_BLOB_ALLOWED_TYPES.includes(file.type) &&
+    !hasAllowedExtension
+  ) {
     throw new Error(`Invalid file type: ${file.type}. Allowed types: mp3, wav, ogg, webm`)
   }
 

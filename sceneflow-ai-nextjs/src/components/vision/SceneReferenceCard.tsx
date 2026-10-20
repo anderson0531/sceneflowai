@@ -25,9 +25,12 @@ import {
   MapPin,
   Lightbulb,
   Maximize2,
+  Download,
   X,
   Image as ImageIcon
 } from 'lucide-react'
+import { toast } from 'sonner'
+import { saveImageFile } from '@/lib/download/saveFile'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { DetailedSceneDirection } from '@/types/scene-direction'
 import { formatSceneHeading } from '@/lib/script/formatSceneHeading'
@@ -337,6 +340,34 @@ export function SceneReferenceCard({
               <TooltipContent>Save to Library</TooltipContent>
             </Tooltip>
           )}
+
+          {/* Download (only if image exists) */}
+          {hasImage && sceneRefImageUrl && (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    void saveImageFile({
+                      url: sceneRefImageUrl,
+                      sceneNumber,
+                      label: 'scene-reference',
+                    })
+                      .then((saved) => {
+                        if (saved) toast.success('Scene reference image saved')
+                      })
+                      .catch(() => toast.error('Failed to download scene reference image'))
+                  }}
+                  className="p-2.5 bg-sky-600/90 hover:bg-sky-600 rounded-full transition-colors"
+                  title="Download Image"
+                >
+                  <Download className="w-4 h-4 text-white" />
+                </button>
+              </TooltipTrigger>
+              <TooltipContent>Download Image</TooltipContent>
+            </Tooltip>
+          )}
         </div>
       </div>
       
@@ -346,6 +377,27 @@ export function SceneReferenceCard({
           className="fixed inset-0 z-50 bg-black/95 flex items-center justify-center p-8"
           onClick={() => setIsExpanded(false)}
         >
+          {sceneRefImageUrl && (
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation()
+                void saveImageFile({
+                  url: sceneRefImageUrl,
+                  sceneNumber,
+                  label: 'scene-reference',
+                })
+                  .then((saved) => {
+                    if (saved) toast.success('Scene reference image saved')
+                  })
+                  .catch(() => toast.error('Failed to download scene reference image'))
+              }}
+              className="absolute top-4 right-16 p-2 bg-white/10 hover:bg-white/20 rounded-full transition-colors"
+              title="Download Image"
+            >
+              <Download className="w-6 h-6 text-white" />
+            </button>
+          )}
           <button
             onClick={() => setIsExpanded(false)}
             className="absolute top-4 right-4 p-2 bg-white/10 hover:bg-white/20 rounded-full transition-colors"
