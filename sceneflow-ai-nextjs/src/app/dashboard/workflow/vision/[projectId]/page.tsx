@@ -126,6 +126,7 @@ import {
   mountedFixturesForLocation,
   withMountedFixturesInLocationDescription,
 } from '@/lib/vision/mountedSetFixtures'
+import { resolveParentLocationAnchor } from '@/lib/vision/locationFamily'
 import {
   applyStartFrameUrlToProductionSegments,
   resolveEffectiveStartFrameUrl,
@@ -11495,6 +11496,8 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       const locationPrompt = storedPrompt
         ? withMountedFixturesInLocationDescription(storedPrompt, fixtures)
         : undefined
+      const parentAnchor = resolveParentLocationAnchor(location, locationReferencesRef.current || locationReferences)
+      const parentLoc = parentAnchor?.parentLocation
       
       const response = await fetch('/api/vision/generate-location', {
         method: 'POST',
@@ -11506,6 +11509,10 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           timeOfDay: location.timeOfDay,
           description,
           locationPrompt,
+          parentLocationName: parentLoc?.location || parentLoc?.locationDisplay,
+          parentLocationDescription: parentLoc?.description,
+          subZoneLabel: parentAnchor?.subZoneLabel,
+          parentReferenceImageUrl: parentLoc?.imageUrl,
           screenplayContext: {
             genre: project?.genre,
             tone: project?.tone || project?.metadata?.filmTreatmentVariant?.tone_description,
@@ -11613,6 +11620,13 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       const locationPrompt = version
         ? payload.locationPrompt
         : withMountedFixturesInLocationDescription(payload.locationPrompt, fixtures)
+      const parentAnchor = !version
+        ? resolveParentLocationAnchor(location, locationReferencesRef.current || locationReferences)
+        : null
+      const parentLoc = parentAnchor?.parentLocation
+      const versionsList = location.versions || []
+      const versionIdx = version ? versionsList.findIndex((v) => v.id === version.id) : -1
+      const previousVersion = versionIdx > 0 ? versionsList[versionIdx - 1] : undefined
 
       const response = await fetch('/api/vision/generate-location', {
         method: 'POST',
@@ -11630,6 +11644,14 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           lighting: payload.lighting,
           additionalDetails: payload.additionalDetails,
           rawMode: payload.rawMode,
+          ...(parentLoc
+            ? {
+                parentLocationName: parentLoc.location || parentLoc.locationDisplay,
+                parentLocationDescription: parentLoc.description,
+                subZoneLabel: parentAnchor?.subZoneLabel,
+                parentReferenceImageUrl: parentLoc.imageUrl,
+              }
+            : {}),
           screenplayContext: {
             genre: project?.genre,
             tone: project?.tone || project?.metadata?.filmTreatmentVariant?.tone_description,
@@ -11640,6 +11662,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
             ? {
                 baseImageUrl: location.imageUrl,
                 stateNotes: version.stateNotes,
+                previousStateNotes: previousVersion?.stateNotes,
                 versionId: version.id,
                 catalogPropNames,
               }

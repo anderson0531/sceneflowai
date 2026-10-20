@@ -4,7 +4,9 @@
  */
 
 import {
+  beatHasLocationStateChange,
   extractLocationStateHitsFromScene,
+  stripCharacterMetaphorsAndPosture,
   type LocationAnalysisSceneInput,
 } from '@/lib/vision/locationStateAnalysis'
 import { compareBeatPosition, versionStart } from '@/lib/vision/locationVersionResolve'
@@ -203,8 +205,144 @@ export function matchSuggestionToExistingVersion(
   return bestScore >= 0.4 ? best : null
 }
 
+function subsetCoverage(subset: Set<string>, superset: Set<string>): number {
+  if (subset.size === 0) return 1
+  if (superset.size === 0) return 0
+  let hits = 0
+  for (const token of subset) {
+    if (superset.has(token)) hits++
+  }
+  return hits / subset.size
+}
+
+function splitIntoStateClauses(rawNotes: string): string[] {
+  return (rawNotes || '')
+    .split(/\n+|(?<=[.!?])\s+|;\s*/)
+    .map((part) => part.trim().replace(/^[.!;,\s]+|[.!;,\s]+$/g, '').trim())
+    .filter(Boolean)
+}
+
+function isFalsePositiveCharacterClause(clause: string): boolean {
+  const trimmed = clause.trim()
+  if (!trimmed) return true
+  const stripped = stripCharacterMetaphorsAndPosture(trimmed)
+  if (stripped !== trimmed && !beatHasLocationStateChange(trimmed)) {
+    return true
+  }
+  return false
+}
+
 /**
- * Later versions must carry earlier lasting damage (door gone AND later fire).
+ * Deduplicate state-note clauses at the sentence/clause level, dropping:
+ * - bare 1-word fragments (such as "; debris")
+ * - character blocking / emotion metaphors (such as "Piper leaning forward from the floor... eyes burning")
+ * - shortened repeat sentences when a richer version of the same clause is already present
+ *   (e.g. "A thick, jagged horizontal chalk slash marks the massive slate board" vs
+ *    "A thick, jagged horizontal chalk slash marks the massive slate board over the equation 'RESONANCE FLUX = 0'")
+ */
+export function dedupeStateNoteClauses(rawNotes: string): string {
+  const trimmed = (rawNotes || '').trim()
+  if (!trimmed) return ''
+
+  const rawClauses = splitIntoStateClauses(trimmed)
+  const kept: Array<{ text: string; tokens: Set<string> }> = []
+
+  for (const clause of rawClauses) {
+    if (!/\s/.test(clause)) continue
+    if (isFalsePositiveCharacterClause(clause)) continue
+    const tokens = significantTokens(clause)
+    if (tokens.size === 0) continue
+
+    let handled = false
+    for (let i = 0; i < kept.length; i++) {
+      const existing = kept[i]
+      const covCandidateByExisting = subsetCoverage(tokens, existing.tokens)
+      const covExistingByCandidate = subsetCoverage(existing.tokens, tokens)
+
+      if (covCandidateByExisting >= 0.8) {
+        // Existing clause already covers this candidate (or is more detailed)
+        handled = true
+        break
+      }
+      if (covExistingByCandidate >= 0.8 && tokens.size > existing.tokens.size) {
+        // Candidate is a strictly richer version of the existing clause
+        kept[i] = { text: clause, tokens }
+        handled = true
+        break
+      }
+    }
+
+    if (!handled) {
+      kept.push({ text: clause, tokens })
+    }
+  }
+
+  if (kept.length === 0) return ''
+  if (kept.length === 1 && rawClauses.length === 1) {
+    return trimmed
+  }
+  return kept
+    .map((entry) => `${entry.text.replace(/[.!?;,\s]+$/, '')}.`)
+    .join(' ')
+}
+
+/**
+ * Identify the newly added focal state change in `currentStateNotes` relative
+ * to `previousStateNotes` (or the final clause of a multi-clause progression),
+ * so version generation can frame a camera angle around the active zone.
+ */
+export function extractVersionFocalDelta(
+  currentStateNotes: string,
+  previousStateNotes?: string
+): { focalDelta: string; backgroundState: string; deduplicatedState: string } {
+  const deduplicatedState = dedupeStateNoteClauses(currentStateNotes)
+  const currentClauses = splitIntoStateClauses(deduplicatedState)
+  if (currentClauses.length <= 1) {
+    return {
+      focalDelta: deduplicatedState,
+      backgroundState: '',
+      deduplicatedState,
+    }
+  }
+
+  if (previousStateNotes?.trim()) {
+    const prevClauses = splitIntoStateClauses(dedupeStateNoteClauses(previousStateNotes)).map(
+      (c) => significantTokens(c)
+    )
+    const novel: string[] = []
+    const carried: string[] = []
+    for (const clause of currentClauses) {
+      const tokens = significantTokens(clause)
+      const isCoveredByPrev = prevClauses.some(
+        (prev) => subsetCoverage(tokens, prev) >= 0.75 || subsetCoverage(prev, tokens) >= 0.75
+      )
+      if (isCoveredByPrev) {
+        carried.push(clause)
+      } else {
+        novel.push(clause)
+      }
+    }
+    if (novel.length > 0) {
+      return {
+        focalDelta: novel.map((c) => `${c.replace(/[.]+$/, '')}.`).join(' '),
+        backgroundState: carried.map((c) => `${c.replace(/[.]+$/, '')}.`).join(' '),
+        deduplicatedState,
+      }
+    }
+  }
+
+  const last = currentClauses[currentClauses.length - 1]!
+  const earlier = currentClauses.slice(0, -1)
+  return {
+    focalDelta: `${last.replace(/[.]+$/, '')}.`,
+    backgroundState: earlier.map((c) => `${c.replace(/[.]+$/, '')}.`).join(' '),
+    deduplicatedState,
+  }
+}
+
+/**
+ * Later versions must carry earlier lasting damage (door gone AND later fire)
+ * without repeating shared clauses across versions.
  */
 export function accumulateStateNotes(
   versions: Array<{ stateNotes: string; appliesFrom?: LocationVersionAppliesFrom; sceneNumbers?: number[] }>
@@ -239,13 +377,11 @@ export function accumulateStateNotes(
   const accumulated: string[] = new Array(versions.length).fill('')
   let running = ''
   for (const item of ordered) {
-    const notes = (item.stateNotes || '').trim()
+    const notes = dedupeStateNoteClauses(item.stateNotes || '')
     if (!running) {
       running = notes
-    } else if (notes && !notesCoverState(notes, running)) {
-      running = running ? `${running}; ${notes}` : notes
     } else if (notes) {
-      running = notes
+      running = dedupeStateNoteClauses(`${running}; ${notes}`)
     }
     accumulated[item.index] = running
   }
@@ -421,8 +557,8 @@ export function enrichSuggestionsWithBeatLocationState(
         continue
       }
       target.stateNotes = target.stateNotes?.trim()
-        ? `${target.stateNotes}; ${hit.notes}`
-        : hit.notes
+        ? dedupeStateNoteClauses(`${target.stateNotes}; ${hit.notes}`)
+        : dedupeStateNoteClauses(hit.notes)
       if (!target.appliesFrom) {
         target.appliesFrom = {
           sceneNumber: hit.sceneNumber,

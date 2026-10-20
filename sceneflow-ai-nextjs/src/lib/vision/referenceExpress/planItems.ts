@@ -23,6 +23,7 @@ import {
   parseLocationVersionRequirementId,
 } from '@/lib/vision/locationVersionResolve'
 import { filterScenesForLocation } from '@/lib/vision/mountedSetFixtures'
+import { sortLocationsParentsFirst } from '@/lib/vision/locationFamily'
 import { isSceneScriptReadyForReferences } from '@/lib/vision/sceneScriptReadiness'
 
 export type CastSource = {
@@ -284,7 +285,9 @@ export function planReferenceExpressItems(
     })
   }
 
-  input.locations.forEach((location) => {
+  const orderedLocations = sortLocationsParentsFirst(input.locations)
+
+  orderedLocations.forEach((location) => {
     if (hasImage(location.imageUrl)) return
     if (!location.id) return
     items.push({
@@ -296,7 +299,7 @@ export function planReferenceExpressItems(
   })
 
   if (includeNested) {
-    input.locations.forEach((location) => {
+    orderedLocations.forEach((location) => {
       if (!location.id) return
       for (const version of location.versions || []) {
         if (!versionNeedsGeneration(location, version)) continue
@@ -366,7 +369,7 @@ export function planSelectedLocationExpressItems(
   const preexisting = new Set(scope.preexistingVersionIds ?? [])
   const items: ReferenceExpressItem[] = []
 
-  for (const location of input.locations) {
+  for (const location of sortLocationsParentsFirst(input.locations)) {
     if (!location.id || !locationIds.has(location.id)) continue
     const baseKey = referenceExpressItemKey({ kind: 'location', targetId: location.id })
     if (itemKeys.has(baseKey.toLowerCase())) {

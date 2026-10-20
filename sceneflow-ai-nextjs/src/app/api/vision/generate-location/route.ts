@@ -54,10 +54,17 @@ interface GenerateLocationImageRequest {
   baseImageUrl?: string
   /** Full post-change set state to bake into the version still. */
   stateNotes?: string
+  /** Preceding version's state notes, used to isolate the focal delta for this version's camera angle. */
+  previousStateNotes?: string
   /** Existing version id (storage path only). */
   versionId?: string
   /** Object-library / scene Key Props names to strip from version bake prompts. */
   catalogPropNames?: string[]
+  /** Parent complex location anchor for sub-areas / adjacent vaults. */
+  parentLocationName?: string
+  parentLocationDescription?: string
+  subZoneLabel?: string
+  parentReferenceImageUrl?: string
 }
 
 /**
@@ -129,6 +136,7 @@ export async function POST(req: NextRequest) {
           locale,
           baseImageUrl: body.baseImageUrl!,
           stateNotes: body.stateNotes!,
+          previousStateNotes: body.previousStateNotes,
           versionId: body.versionId,
           catalogPropNames: body.catalogPropNames,
         })
@@ -141,6 +149,10 @@ export async function POST(req: NextRequest) {
           description: body.description,
           aspectRatio: body.aspectRatio,
           locationPrompt: body.locationPrompt,
+          parentLocationName: body.parentLocationName,
+          parentLocationDescription: body.parentLocationDescription,
+          subZoneLabel: body.subZoneLabel,
+          parentReferenceImageUrl: body.parentReferenceImageUrl,
           locale,
         })
 

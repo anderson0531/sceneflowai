@@ -6,6 +6,11 @@ import {
   SET_PIECE_NOUN_PATTERN,
   beatHasLocationStateChange,
 } from '@/lib/vision/locationStateAnalysis'
+import {
+  dedupeStateNoteClauses,
+  extractVersionFocalDelta,
+} from '@/lib/vision/locationScriptSync'
+import { buildRelatedLocationContinuityClause } from '@/lib/vision/locationFamily'
 import { isWideEstablishingShotType } from '@/lib/character/characterReferenceAssembly'
 import {
   isDetailShot,
@@ -23,6 +28,13 @@ import {
 
 export const LOCATION_REFERENCE_ASPECT_RATIO = '16:9' as const
 
+export interface BuildLocationBasePromptOptions {
+  parentLocationName?: string
+  parentLocationDescription?: string
+  subZoneLabel?: string
+  hasParentReferenceImage?: boolean
+}
+
 /**
  * Client-safe seed for a location base establishing still.
  * Matches the server composition used when no custom prompt is stored.
@@ -31,7 +43,8 @@ export function buildLocationBasePrompt(
   locationName: string,
   intExt?: string,
   timeOfDay?: string,
-  description?: string
+  description?: string,
+  options?: BuildLocationBasePromptOptions
 ): string {
   const parts: string[] = []
 
@@ -39,6 +52,19 @@ export function buildLocationBasePrompt(
     parts.push(description)
   } else {
     parts.push(`${locationName} setting`)
+  }
+
+  if (options?.parentLocationName) {
+    const continuityClause = buildRelatedLocationContinuityClause({
+      locationName,
+      parentLocationName: options.parentLocationName,
+      parentLocationDescription: options.parentLocationDescription,
+      subZoneLabel: options.subZoneLabel,
+      hasParentReferenceImage: options.hasParentReferenceImage,
+    })
+    if (continuityClause) {
+      parts.push(continuityClause.replace(/[.]+$/, ''))
+    }
   }
 
   if (intExt) {
@@ -104,7 +130,8 @@ export const LOCATION_OBJECT_INSERT_CONSUMPTION_INSTRUCTION =
 export const LOCATION_ENVIRONMENT_CONSUMPTION_INSTRUCTION =
   'LOCATION REFERENCE: The attached plate is the set, not a second wide establishing subject. ' +
   'Match architectural layout, color palette, and lighting as the surrounding environment. ' +
-  'Do not copy the plate as an extreme-wide establishing shot or empty room.'
+  'Do not copy the plate as an extreme-wide establishing shot or empty room. ' +
+  'Only include specific wall-mounted fixtures (such as chalkboards, gauges, or wall instruments) if the shot angle directly faces that wall; do not duplicate every fixture from the wide plate into the background.'
 
 export function isObjectInsertLocationShot(options?: {
   shotType?: string | null
@@ -174,7 +201,8 @@ export function buildLocationConsumptionInstruction(options?: {
     return withScale(
       'LOCATION REFERENCE: The attached plate is the set, not a second wide establishing subject. ' +
         `Match architectural layout, color palette, and lighting of ${token} as the surrounding environment. ` +
-        `Do not copy ${token} as an extreme-wide establishing shot or empty room.`
+        `Do not copy ${token} as an extreme-wide establishing shot or empty room. ` +
+        'Only include specific wall-mounted fixtures (such as chalkboards, gauges, or wall instruments) if the shot angle directly faces that wall; do not duplicate every fixture from the wide plate into the background.'
     )
   }
   if (!isDetailShot(options?.shotType) && !shot.isDetail) {
@@ -183,7 +211,8 @@ export function buildLocationConsumptionInstruction(options?: {
       return withScale(
         'LOCATION REFERENCE: The attached plate is the set, not a second wide establishing subject. ' +
           `Match architectural layout, color palette, and lighting of ${token} as the surrounding environment. ` +
-          `Do not copy ${token} as an extreme-wide establishing shot or empty room.`
+          `Do not copy ${token} as an extreme-wide establishing shot or empty room. ` +
+          'Only include specific wall-mounted fixtures (such as chalkboards, gauges, or wall instruments) if the shot angle directly faces that wall; do not duplicate every fixture from the wide plate into the background.'
       )
     }
     return withScale(LOCATION_TURNAROUND_CONSUMPTION_INSTRUCTION)
@@ -205,6 +234,7 @@ export const LOCATION_VERSION_CONSUMPTION_SUFFIX =
 export const LOCATION_VERSION_GENERATION_INSTRUCTION =
   'Same location as the attached base reference photograph — match architecture, layout, ' +
   'materials, palette, and any furniture that is NOT listed as changed, exactly. ' +
+  'Treat the attached base location photograph as the master wide-shot set containing all resident fixtures, and render this version as a camera angle of that base location showing the active structural set-state changes on existing set pieces without inventing new objects. ' +
   'Paint ONLY lasting structural set-state changes as the new source of truth: architecture, ' +
   'doors, windows, walls, floors, built-in or overturned set furniture (desks, chairs bolted to the room), ' +
   'built-in hardware (hatch wheels, vault door wheels, lockdown wheels, bolted valves), ' +
@@ -218,7 +248,7 @@ export const LOCATION_VERSION_GENERATION_INSTRUCTION =
  * These belong on the beat frame when a character introduces them.
  */
 export const HANDHELD_BEAT_PROP_PATTERN =
-  /\b(?:(?:heavy\s+)?(?:roll(?:\s+of)?\s+)?(?:drafting\s+)?vellum|journals?|notebooks?|scrolls?|letters?|envelopes?|schematics?|blueprints?|documents?|maps?|tools?|weapons?|guns?|pistols?|rifles?|knives?|swords?|phones?|smartphones?|cameras?|flashlights?|lanterns?|briefcases?|handbags?|purses?|wallets?|books?|tablets?|laptops?|bottles?|cigarettes?|cigars?)\b/i
+  /\b(?:(?:heavy\s+)?(?:roll(?:\s+of)?\s+)?(?:drafting\s+)?vellum|journals?|notebooks?|scrolls?|letters?|envelopes?|schematics?|blueprints?|documents?|maps?|tools?|weapons?|guns?|pistols?|rifles?|knives?|swords?|phones?|smartphones?|cameras?|flashlights?|lanterns?|briefcases?|handbags?|purses?|wallets?|books?|tablets?|laptops?|bottles?|cigarettes?|cigars?|canisters?|vials?|flasks?|syringes?|keys?|watches?|compasses?|badges?|medallions?|coins?|rings?|lockets?)\b/i
 
 function escapeRegExp(value: string): string {
   return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
@@ -226,7 +256,7 @@ function escapeRegExp(value: string): string {
 
 function splitStateNoteClauses(notes: string): string[] {
   return notes
-    .split(/\n+|(?<=[.!;])\s+/)
+    .split(/\n+|(?<=[.!;])\s+|;\s*/)
     .map((part) => part.trim().replace(/^[.!;,\s]+|[.!;,\s]+$/g, '').trim())
     .filter(Boolean)
 }
@@ -288,7 +318,8 @@ function clauseCarriesLastingSetState(clause: string): boolean {
 }
 
 /**
- * Drop beat keyProps / handheld objects from version `stateNotes` at image bake time.
+ * Drop beat keyProps / handheld objects from version `stateNotes` at image bake time,
+ * and deduplicate repeated clauses across cumulative versions.
  * Stored library notes stay as-is; only generation + prompt-builder seeds are cleaned.
  */
 export function stripBeatPropsFromLocationStateNotes(
@@ -315,7 +346,9 @@ export function stripBeatPropsFromLocationStateNotes(
     }
   }
 
-  return kept.join('. ').replace(/\s+/g, ' ').trim()
+  if (kept.length === 0) return ''
+  const deduped = dedupeStateNoteClauses(kept.join('; '))
+  return deduped.replace(/[.]+$/, '').replace(/\s+/g, ' ').trim()
 }
 
 /** Ensure a custom builder prompt still carries the structural-only contract. */
@@ -339,6 +372,7 @@ export function ensureLocationVersionPromptIsStructural(
 export interface LocationVersionPromptInput {
   locationName: string
   stateNotes: string
+  previousStateNotes?: string
   intExt?: string
   timeOfDay?: string
   description?: string
@@ -349,6 +383,10 @@ export function buildLocationVersionPrompt(input: LocationVersionPromptInput): s
   const structuralNotes = stripBeatPropsFromLocationStateNotes(
     input.stateNotes,
     input.catalogPropNames
+  )
+  const { focalDelta, backgroundState } = extractVersionFocalDelta(
+    structuralNotes,
+    input.previousStateNotes
   )
   const lines = [
     LOCATION_TURNAROUND_GENERATION_INSTRUCTION,
@@ -368,6 +406,11 @@ export function buildLocationVersionPrompt(input: LocationVersionPromptInput): s
     lines.push(
       `Current structural set state (source of truth — bake into this establishing shot; ignore handheld beat props): ${structuralNotes}.`
     )
+    if (backgroundState && focalDelta && focalDelta !== structuralNotes) {
+      lines.push(
+        `Version camera angle & focal zone: Frame this version as a camera angle of the attached base wide-shot location focusing on the newly affected set zone (${focalDelta.replace(/[.]+$/, '')}), while maintaining architectural continuity with the base plate. Do not crowd unrelated wall fixtures from outside this camera angle into the frame.`
+      )
+    }
   } else {
     lines.push(
       'No lasting structural set changes remain after removing beat props — match the intact base architecture and set furniture. Do not invent handheld objects.'

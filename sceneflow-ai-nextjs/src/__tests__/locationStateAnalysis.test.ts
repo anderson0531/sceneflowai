@@ -121,4 +121,38 @@ describe('locationStateAnalysis', () => {
     )
     expect(text).toContain('line: Shut the damn door.')
   })
+
+  it('rejects character blocking and emotion metaphors like "leaning forward from the floor ... eyes burning"', () => {
+    const piperBlocking =
+      'Piper leaning forward from the floor, arm outstretched with the canister, eyes burning with intensity'
+    expect(beatHasLocationStateChange(piperBlocking)).toBe(false)
+    expect(distillLocationStateNotesFromText(piperBlocking)).toBeUndefined()
+
+    const hits = extractLocationStateHitsFromScene({
+      sceneNumber: 2,
+      heading: 'INT. FREIGHT TUNNEL VAULT - WORKSHOP - NIGHT',
+      beats: [
+        {
+          beatId: 'b-piper',
+          actionDescription: piperBlocking,
+          blocking: piperBlocking,
+          propInteraction: 'Arm outstretched with the canister on the floor',
+        },
+      ],
+    })
+    expect(hits).toHaveLength(0)
+  })
+
+  it('recognizes slate board chalk slashes, scratched acoustic seismograph drums, and sheared pneumatic dispatch hatches', () => {
+    const v2 =
+      "A thick, jagged horizontal chalk slash marks the massive slate board over the equation 'RESONANCE FLUX = 0'."
+    const v3 =
+      "The wall-mounted acoustic seismograph's smoked-paper drum is heavily scratched with irregular zig-zag arcs."
+    const v4 =
+      'The overhead eighteen-inch pneumatic mail dispatch hatch is sheared open, its cast-iron seam rivets broken, and a thick layer of black coal silt covers the floor and surrounding area.'
+
+    expect(beatHasLocationStateChange(v2)).toBe(true)
+    expect(beatHasLocationStateChange(v3)).toBe(true)
+    expect(beatHasLocationStateChange(v4)).toBe(true)
+  })
 })

@@ -121,7 +121,11 @@ async function syncOneLocation(projectId: string, locationId: string): Promise<v
   )
   await persistLocationCatalogPatch({
     projectId,
-    patchById: { id: location.id, versions: applied.location.versions || [] },
+    patchById: {
+      id: location.id,
+      versions: applied.location.versions || [],
+      ...(applied.location.description ? { description: applied.location.description } : {}),
+    },
   })
 }
 

@@ -9,9 +9,10 @@
  */
 
 const INSTRUMENT_ADJ =
-  'vintage|antique|brass|bronze|copper|steel|iron|glass|pneumatic|steam|vacuum|compression|pressure|wall|mounted|instrument|gauge|meter'
+  'vintage|antique|brass|bronze|copper|steel|iron|glass|pneumatic|steam|vacuum|compression|pressure|acoustic|mechanical|electrical|recording|smoked[- ]paper|chute|wall|mounted|instrument|gauge|meter'
 
-const INSTRUMENT_NOUN = 'gauges?|galvanometers?|manometers?|barometers?'
+const INSTRUMENT_NOUN =
+  'gauges?|galvanometers?|manometers?|barometers?|seismographs?|telegraphs?|oscilloscopes?|switchboards?|chronometers?|thermometers?|hygrometers?|ammeters?|voltmeters?'
 
 /** "brass pressure gauge", "vintage brass galvanometer", "steam manometer". */
 const INSTRUMENT_PATTERN = new RegExp(

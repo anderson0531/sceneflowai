@@ -7,7 +7,10 @@ import {
   formatSceneForLocationVersionAnalysis,
   type LocationAnalysisSceneInput,
 } from '@/lib/vision/locationStateAnalysis'
-import { enrichSuggestionsWithBeatLocationState } from '@/lib/vision/locationScriptSync'
+import {
+  dedupeStateNoteClauses,
+  enrichSuggestionsWithBeatLocationState,
+} from '@/lib/vision/locationScriptSync'
 import type { LocationVersionAppliesFrom } from '@/types/visionReferences'
 
 export const runtime = 'nodejs'
@@ -173,6 +176,11 @@ Respond with valid JSON only:
     }
 
     suggestions = enrichSuggestionsWithBeatLocationState(suggestions, scenes)
+      .map((s) => ({
+        ...s,
+        stateNotes: dedupeStateNoteClauses(s.stateNotes),
+      }))
+      .filter((s) => Boolean(s.stateNotes.trim()))
 
     suggestions.sort((a, b) => {
       const aFirst = a.appliesFrom?.sceneNumber ?? Math.min(...(a.sceneNumbers || [999]))

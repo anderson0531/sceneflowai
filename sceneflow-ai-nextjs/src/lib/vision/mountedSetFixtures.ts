@@ -9,6 +9,7 @@
  */
 
 import { extractLocation } from '@/lib/script/formatSceneHeading'
+import { extractLocationResidentInstrumentPhrases } from '@/lib/vision/locationResidentInstruments'
 
 const MOUNT_KIND = 'door|hatch|vault|gate|bulkhead|airlock|lockdown|valve'
 const ADJ = 'heavy|frozen|jammed|iron|brass|steel|cast[- ]iron|rusted|massive|vault|hatch'
@@ -31,7 +32,32 @@ const HANDWHEEL_PATTERN = new RegExp(
   'i'
 )
 
+/**
+ * Built-in architectural hatches and chutes ("overhead eighteen-inch pneumatic mail dispatch hatch",
+ * "eighteen-inch pneumatic mail sorting chute", "cast-iron bulkhead hatch").
+ */
+const HATCH_CHUTE_ADJ =
+  'overhead|ceiling|wall[- ]mounted|eighteen[- ]inch|twelve[- ]inch|heavy|cast[- ]iron|iron|brass|steel|pneumatic|mail|dispatch|sorting|pressure|steam|airlock|bulkhead|vault'
+const QUALIFIED_HATCH_CHUTE_PATTERN = new RegExp(
+  String.raw`\b((?:(?:${HATCH_CHUTE_ADJ})\s+){1,6}(?:hatch(?:es)?|chutes?))\b`,
+  'i'
+)
+
+/**
+ * Large wall-mounted / resident room boards ("massive slate board", "slate board", "massive chalkboard").
+ */
+const BOARD_ADJ = 'massive|large|huge|wall[- ]mounted|heavy|framed'
+const RESIDENT_BOARD_PATTERN = new RegExp(
+  String.raw`\b((?:(?:${BOARD_ADJ})\s+){0,3}(?:slate\s+boards?|chalkboards?|blackboards?))\b`,
+  'i'
+)
+
 const FIXTURE_PATTERNS = [QUALIFIED_WHEEL_PATTERN, WHEEL_ON_APERTURE_PATTERN, HANDWHEEL_PATTERN]
+const RESIDENT_SET_PIECE_PATTERNS = [
+  ...FIXTURE_PATTERNS,
+  QUALIFIED_HATCH_CHUTE_PATTERN,
+  RESIDENT_BOARD_PATTERN,
+]
 
 export const MOUNTED_FIXTURE_DESCRIPTION_PREFIX =
   'Built-in set architecture (mounted in place)'
@@ -45,6 +71,7 @@ export interface LocationFixtureScene {
   sceneDirection?: {
     scene?: {
       location?: string
+      atmosphere?: string
       keyProps?: string[]
     }
   }
@@ -54,6 +81,7 @@ export interface LocationFixtureTarget {
   location?: string
   sceneNumbers?: number[]
   description?: string
+  versions?: Array<{ stateNotes?: string }>
 }
 
 function headingText(scene: LocationFixtureScene): string {
@@ -100,6 +128,44 @@ export function extractMountedSetFixturePhrases(text: string): string[] {
   return [...byKey.values()]
 }
 
+/**
+ * Distinct resident set pieces (mounted wheels, architectural hatches/chutes,
+ * wall boards, and wall-mounted instruments) mentioned in scene or version text.
+ */
+export function extractResidentSetPiecesFromText(text: string): string[] {
+  const trimmed = (text || '').trim()
+  if (!trimmed) return []
+
+  const byKey = new Map<string, string>()
+  for (const pattern of RESIDENT_SET_PIECE_PATTERNS) {
+    for (const match of trimmed.matchAll(clonePattern(pattern))) {
+      const phrase = (match[1] || match[0] || '').replace(/\s+/g, ' ').trim()
+      const key = normalizeFixtureKey(phrase)
+      if (!key) continue
+      const existing = byKey.get(key)
+      if (!existing || phrase.length > existing.length) byKey.set(key, phrase)
+    }
+  }
+
+  for (const instrument of extractLocationResidentInstrumentPhrases(trimmed)) {
+    const phrase = instrument.replace(/\s+/g, ' ').trim()
+    const key = normalizeFixtureKey(phrase)
+    if (!key) continue
+    const existing = byKey.get(key)
+    if (!existing || phrase.length > existing.length) byKey.set(key, phrase)
+  }
+
+  const phrases = [...byKey.values()]
+  return phrases.filter((phrase) => {
+    const key = normalizeFixtureKey(phrase)
+    return !phrases.some((other) => {
+      if (other === phrase) return false
+      const otherKey = normalizeFixtureKey(other)
+      return otherKey.length > key.length && otherKey.includes(key)
+    })
+  })
+}
+
 /** True when a library / keyProp name is mounted architectural hardware. */
 export function isMountedSetFixtureName(name: string | null | undefined): boolean {
   const trimmed = String(name ?? '').trim()
@@ -114,12 +180,26 @@ export function isMountedSetFixtureCatalogName(name: string | null | undefined):
   const trimmed = String(name ?? '').trim()
   if (!trimmed) return false
   if (isMountedSetFixtureName(trimmed)) return true
+  if (extractResidentSetPiecesFromText(trimmed).length > 0) return true
   const key = normalizeFixtureKey(trimmed)
   return key === 'wheel' || key === 'wheels'
 }
 
 export function rejectMountedSetFixtures<T extends { name?: string }>(items: T[]): T[] {
   return items.filter((item) => !isMountedSetFixtureName(item.name || ''))
+}
+
+/**
+ * Strip temporal aftermath spoilers (e.g., "and later thick coal silt") from
+ * a base location description so the base wide shot stays strictly intact.
+ */
+export function stripTemporalAftermathFromBaseDescription(description: string | undefined): string {
+  const base = (description || '').trim()
+  if (!base) return ''
+  return base
+    .replace(/,?\s+\band\s+(?:later|eventually|subsequently|afterward)\s+[^.;]+/gi, '')
+    .replace(/\s{2,}/g, ' ')
+    .trim()
 }
 
 function sceneBeatRecords(scene: LocationFixtureScene): Record<string, unknown>[] {
@@ -152,16 +232,32 @@ function sceneHarvestText(scene: LocationFixtureScene): string {
   return parts.filter(Boolean).join(' ')
 }
 
-export function harvestMountedSetFixturesFromScenes(scenes: LocationFixtureScene[]): string[] {
+function deduplicateFixturePhrases(phrases: string[]): string[] {
   const byKey = new Map<string, string>()
-  for (const scene of scenes ?? []) {
-    for (const phrase of extractMountedSetFixturePhrases(sceneHarvestText(scene))) {
-      const key = normalizeFixtureKey(phrase)
-      const existing = byKey.get(key)
-      if (!existing || phrase.length > existing.length) byKey.set(key, phrase)
-    }
+  for (const raw of phrases) {
+    const phrase = (raw || '').replace(/\s+/g, ' ').trim()
+    const key = normalizeFixtureKey(phrase)
+    if (!key) continue
+    const existing = byKey.get(key)
+    if (!existing || phrase.length > existing.length) byKey.set(key, phrase)
   }
-  return [...byKey.values()]
+  const all = [...byKey.values()]
+  return all.filter((phrase) => {
+    const key = normalizeFixtureKey(phrase)
+    return !all.some((other) => {
+      if (other === phrase) return false
+      const otherKey = normalizeFixtureKey(other)
+      return otherKey.length > key.length && otherKey.includes(key)
+    })
+  })
+}
+
+export function harvestMountedSetFixturesFromScenes(scenes: LocationFixtureScene[]): string[] {
+  const collected: string[] = []
+  for (const scene of scenes ?? []) {
+    collected.push(...extractResidentSetPiecesFromText(sceneHarvestText(scene)))
+  }
+  return deduplicateFixturePhrases(collected)
 }
 
 export function filterScenesForLocation<T extends LocationFixtureScene>(
@@ -183,16 +279,8 @@ export function withMountedFixturesInLocationDescription(
   description: string | undefined,
   fixtures: string[]
 ): string {
-  const base = (description || '').trim()
-  const unique: string[] = []
-  const seen = new Set<string>()
-  for (const fixture of fixtures) {
-    const phrase = fixture.trim()
-    const key = normalizeFixtureKey(phrase)
-    if (!phrase || !key || seen.has(key)) continue
-    seen.add(key)
-    unique.push(phrase)
-  }
+  const base = stripTemporalAftermathFromBaseDescription(description)
+  const unique = deduplicateFixturePhrases(fixtures)
   if (unique.length === 0) return base
 
   const lower = base.toLowerCase()
@@ -210,7 +298,13 @@ export function mountedFixturesForLocation(
 ): string[] {
   const scoped = filterScenesForLocation(location, scenes)
   const harvestFrom = scoped.length > 0 ? scoped : scenes
-  return harvestMountedSetFixturesFromScenes(harvestFrom)
+  const fromScenes = harvestMountedSetFixturesFromScenes(harvestFrom)
+  const versionText = (location.versions ?? [])
+    .map((v) => v?.stateNotes || '')
+    .filter(Boolean)
+    .join(' ')
+  const fromVersions = versionText ? extractResidentSetPiecesFromText(versionText) : []
+  return deduplicateFixturePhrases([...fromScenes, ...fromVersions])
 }
 
 export function locationDescriptionWithMountedFixtures(

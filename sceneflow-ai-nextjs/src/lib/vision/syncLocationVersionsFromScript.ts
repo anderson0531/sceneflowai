@@ -14,6 +14,7 @@ import {
 } from '@/lib/vision/locationStateAnalysis'
 import {
   buildLocationVersionSyncDiff,
+  dedupeStateNoteClauses,
   enrichSuggestionsWithBeatLocationState,
   summarizeLocationVersionSyncDiff,
   type ExistingLocationVersionLike,
@@ -187,6 +188,11 @@ Respond with valid JSON only:
   }
 
   suggestions = enrichSuggestionsWithBeatLocationState(suggestions, scenes, existing)
+    .map((s) => ({
+      ...s,
+      stateNotes: dedupeStateNoteClauses(s.stateNotes),
+    }))
+    .filter((s) => Boolean(s.stateNotes.trim()))
 
   suggestions.sort((a, b) => {
     const aFirst = a.appliesFrom?.sceneNumber ?? Math.min(...(a.sceneNumbers || [999]))

@@ -10,7 +10,11 @@ import {
   summarizeLocationVersionSyncDiff,
   type LocationVersionSyncDiff,
 } from '@/lib/vision/locationScriptSync'
-import { locationDescriptionWithMountedFixtures } from '@/lib/vision/mountedSetFixtures'
+import {
+  extractResidentSetPiecesFromText,
+  locationDescriptionWithMountedFixtures,
+  withMountedFixturesInLocationDescription,
+} from '@/lib/vision/mountedSetFixtures'
 import type { ReferenceExpressKind } from '@/lib/vision/referenceExpress/types'
 import { resolveReferenceReadiness } from '@/lib/vision/referenceReadiness'
 
@@ -107,6 +111,12 @@ export function extractHeadingLocationsFromScenes(
     if (existing) {
       existing.sceneNumbers.push(idx + 1)
       if (!existing.headings.includes(text)) existing.headings.push(text)
+      if (!existing.description && scene.sceneDirection?.scene?.location) {
+        existing.description = scene.sceneDirection.scene.location
+        if (scene.sceneDirection.scene.atmosphere) {
+          existing.description += `. ${scene.sceneDirection.scene.atmosphere}`
+        }
+      }
       return
     }
 
@@ -705,8 +715,23 @@ export function applyLocationUpdateFromSyncDiff(
 } {
   const { versions } = mergeLocationVersionSyncDiff(location.versions || [], diff)
   const summary = summarizeLocationVersionSyncDiff(diff)
+  const versionNotesText = versions
+    .map((v) => v.stateNotes || '')
+    .filter(Boolean)
+    .join(' ')
+  const versionFixtures = versionNotesText
+    ? extractResidentSetPiecesFromText(versionNotesText)
+    : []
+  const updatedDescription = withMountedFixturesInLocationDescription(
+    location.description,
+    versionFixtures
+  )
   return {
-    location: { ...location, versions: versions as LocationVersion[] },
+    location: {
+      ...location,
+      ...(updatedDescription ? { description: updatedDescription } : {}),
+      versions: versions as LocationVersion[],
+    },
     created: summary.createCount,
     updated: summary.updateCount,
     stale: summary.staleImageCount,

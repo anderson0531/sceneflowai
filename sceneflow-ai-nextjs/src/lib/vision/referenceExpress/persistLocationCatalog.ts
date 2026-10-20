@@ -12,7 +12,7 @@ import { sequelize } from '@/config/database'
 export async function persistLocationCatalogPatch(input: {
   projectId: string
   append?: Array<Record<string, unknown>>
-  patchById?: { id: string; versions: unknown[] }
+  patchById?: { id: string; versions: unknown[]; description?: string }
 }): Promise<{ saved: boolean }> {
   const { projectId, append, patchById } = input
   if ((!append || append.length === 0) && !patchById) return { saved: false }
@@ -48,7 +48,13 @@ export async function persistLocationCatalogPatch(input: {
         if (entry?.id !== patchById.id) return entry
         found = true
         saved = true
-        return { ...entry, versions: patchById.versions }
+        return {
+          ...entry,
+          versions: patchById.versions,
+          ...(typeof patchById.description === 'string' && patchById.description.trim()
+            ? { description: patchById.description }
+            : {}),
+        }
       })
       if (!found) return { saved: false }
     }

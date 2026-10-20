@@ -172,4 +172,34 @@ describe('locationScriptSync', () => {
     )
     expect(stamped.versions?.[0].appliesFrom?.beatIndex).toBe(9)
   })
+
+  it('deduplicates repeated clauses and strips bare "; debris" across cumulative versions', () => {
+    const rawV2 =
+      "A thick, jagged horizontal chalk slash marks the massive slate board over the equation 'RESONANCE FLUX = 0'.; debris"
+    const rawV3 =
+      "A thick, jagged horizontal chalk slash marks the massive slate board over the equation 'RESONANCE FLUX = 0'.; debris; A thick, jagged horizontal chalk slash marks the massive slate board. The wall-mounted acoustic seismograph's smoked-paper drum is heavily scratched with irregular zig-zag arcs."
+    const rawV4 =
+      "A thick, jagged horizontal chalk slash marks the massive slate board over the equation 'RESONANCE FLUX = 0'.; debris; A thick, jagged horizontal chalk slash marks the massive slate board. The wall-mounted acoustic seismograph's smoked-paper drum is heavily scratched with irregular zig-zag arcs.; A thick, jagged horizontal chalk slash marks the massive slate board. The wall-mounted acoustic seismograph's smoked-paper drum is heavily scratched. The overhead eighteen-inch pneumatic mail dispatch hatch is sheared open, its cast-iron seam rivets broken, and a thick layer of black coal silt covers the floor and surrounding area."
+
+    const accumulated = accumulateStateNotes([
+      { stateNotes: rawV2, sceneNumbers: [2] },
+      { stateNotes: rawV3, sceneNumbers: [3] },
+      { stateNotes: rawV4, sceneNumbers: [4] },
+    ])
+
+    // Bare "; debris" is stripped
+    expect(accumulated[0]).not.toMatch(/;\s*debris\b/i)
+    expect(accumulated[1]).not.toMatch(/;\s*debris\b/i)
+    expect(accumulated[2]).not.toMatch(/;\s*debris\b/i)
+
+    // Chalk slash sentence appears only ONCE in V3 and V4, retaining the full 'RESONANCE FLUX = 0' detail
+    expect(accumulated[1].match(/chalk slash marks the massive slate board/gi)).toHaveLength(1)
+    expect(accumulated[1]).toContain("'RESONANCE FLUX = 0'")
+    expect(accumulated[2].match(/chalk slash marks the massive slate board/gi)).toHaveLength(1)
+
+    // Seismograph sentence appears only ONCE in V4, retaining 'irregular zig-zag arcs'
+    expect(accumulated[2].match(/wall-mounted acoustic seismograph/gi)).toHaveLength(1)
+    expect(accumulated[2]).toContain('irregular zig-zag arcs')
+    expect(accumulated[2]).toContain('overhead eighteen-inch pneumatic mail dispatch hatch is sheared open')
+  })
 })

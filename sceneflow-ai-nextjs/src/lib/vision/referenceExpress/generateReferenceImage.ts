@@ -21,7 +21,9 @@ import {
   buildLocationBasePrompt,
   buildLocationVersionPrompt,
   ensureLocationVersionPromptIsStructural,
+  type BuildLocationBasePromptOptions,
 } from '@/lib/vision/locationReferencePrompts'
+import { buildRelatedLocationContinuityClause } from '@/lib/vision/locationFamily'
 import {
   buildCharacterIdentityReferencePrompt,
   identityAppearanceFromPrompt,
@@ -78,9 +80,10 @@ export function buildLocationPrompt(
   locationName: string,
   intExt?: string,
   timeOfDay?: string,
-  description?: string
+  description?: string,
+  options?: BuildLocationBasePromptOptions
 ): string {
-  return buildLocationBasePrompt(locationName, intExt, timeOfDay, description)
+  return buildLocationBasePrompt(locationName, intExt, timeOfDay, description, options)
 }
 
 export type GenerateLocationImageInput = {
@@ -93,6 +96,11 @@ export type GenerateLocationImageInput = {
   aspectRatio?: ReferenceAspectRatio
   /** Pre-composed prompt from LocationPromptBuilder; overrides composition. */
   locationPrompt?: string
+  /** Optional parent complex anchor for sub-areas / adjacent vaults. */
+  parentLocationName?: string
+  parentLocationDescription?: string
+  subZoneLabel?: string
+  parentReferenceImageUrl?: string
   locale: StoryLocaleContext
 }
 
@@ -109,6 +117,10 @@ export async function generateLocationReferenceImage(
     // Widescreen is best for location establishing shots.
     aspectRatio = '16:9',
     locationPrompt,
+    parentLocationName,
+    parentLocationDescription,
+    subZoneLabel,
+    parentReferenceImageUrl,
     locale,
   } = input
 
@@ -117,16 +129,41 @@ export async function generateLocationReferenceImage(
   }
 
   const creditCost = IMAGE_CREDITS.SCENE_REFERENCE
+  const hasParentReferenceImage = Boolean(parentReferenceImageUrl?.trim())
 
   let prompt =
     locationPrompt && locationPrompt.trim()
       ? locationPrompt
-      : buildLocationPrompt(locationName, intExt, timeOfDay, description)
+      : buildLocationPrompt(locationName, intExt, timeOfDay, description, {
+          parentLocationName,
+          parentLocationDescription,
+          subZoneLabel,
+          hasParentReferenceImage,
+        })
+
+  if (
+    locationPrompt &&
+    locationPrompt.trim() &&
+    parentLocationName?.trim() &&
+    !prompt.toLowerCase().includes(parentLocationName.trim().toLowerCase())
+  ) {
+    const continuityClause = buildRelatedLocationContinuityClause({
+      locationName,
+      parentLocationName,
+      parentLocationDescription,
+      subZoneLabel,
+      hasParentReferenceImage,
+    })
+    if (continuityClause) {
+      prompt = `${prompt.replace(/[.]+$/, '')}. ${continuityClause}`
+    }
+  }
 
   // The builder fields and description are typed by the creator, so the
   // composed prompt can arrive in any language; the image model needs English.
   prompt = await englishForModel(prompt, locale.storyLocale, [
     locationName,
+    ...(parentLocationName ? [parentLocationName] : []),
     ...locale.properNouns,
   ])
 
@@ -136,6 +173,17 @@ export async function generateLocationReferenceImage(
     aspectRatio,
     negativePrompt:
       'people, persons, humans, actors, characters, figures, silhouettes, faces, crowds',
+    ...(hasParentReferenceImage
+      ? {
+          referenceImages: [
+            {
+              imageUrl: parentReferenceImageUrl!.trim(),
+              mimeType: 'image/jpeg',
+              name: `${parentLocationName || locationName} parent complex location`,
+            },
+          ],
+        }
+      : {}),
   })
 
   if (!result.imageBase64) {
@@ -171,6 +219,7 @@ export async function generateLocationReferenceImage(
 export type GenerateLocationVersionImageInput = GenerateLocationImageInput & {
   baseImageUrl: string
   stateNotes: string
+  previousStateNotes?: string
   versionId?: string
   /** Object-library / scene Key Props names to strip from version bake prompts. */
   catalogPropNames?: string[]
@@ -191,6 +240,7 @@ export async function generateLocationVersionReferenceImage(
     locale,
     baseImageUrl,
     stateNotes,
+    previousStateNotes,
     versionId,
     catalogPropNames,
   } = input
@@ -216,6 +266,7 @@ export async function generateLocationVersionReferenceImage(
       : buildLocationVersionPrompt({
           locationName,
           stateNotes,
+          previousStateNotes,
           intExt,
           timeOfDay,
           description,

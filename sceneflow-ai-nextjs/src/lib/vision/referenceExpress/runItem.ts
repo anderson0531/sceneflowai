@@ -30,6 +30,7 @@ import {
   mountedFixturesForLocation,
   withMountedFixturesInLocationDescription,
 } from '@/lib/vision/mountedSetFixtures'
+import { resolveParentLocationAnchor } from '@/lib/vision/locationFamily'
 import { generateAndUploadFullBodyWardrobe } from '@/lib/character/sceneCharacterHeadshot'
 import {
   composeUploadAndPersistCombinedCharacterRef,
@@ -199,6 +200,8 @@ export async function runReferenceExpressItem(input: {
       typeof location.generationPrompt === 'string' && location.generationPrompt.trim()
         ? location.generationPrompt.trim()
         : undefined
+    const parentAnchor = resolveParentLocationAnchor(location, context.locations)
+    const parentLoc = parentAnchor?.parentLocation
 
     const generated = await generateLocationReferenceImage({
       userId,
@@ -210,6 +213,10 @@ export async function runReferenceExpressItem(input: {
       locationPrompt: storedPrompt
         ? withMountedFixturesInLocationDescription(storedPrompt, fixtures)
         : undefined,
+      parentLocationName: parentLoc?.location || parentLoc?.locationDisplay,
+      parentLocationDescription: parentLoc?.description,
+      subZoneLabel: parentAnchor?.subZoneLabel,
+      parentReferenceImageUrl: parentLoc?.imageUrl,
       locale,
     })
 
@@ -426,7 +433,9 @@ async function runLocationVersionItem(input: {
   locale: Awaited<ReturnType<typeof resolveStoryLocale>>
 }): Promise<ReferenceExpressItemResult> {
   const { userId, projectId, item, location, locale } = input
-  const version = (location.versions || []).find((row) => row.id === item.versionId)
+  const versionsList = location.versions || []
+  const versionIndex = versionsList.findIndex((row) => row.id === item.versionId)
+  const version = versionIndex >= 0 ? versionsList[versionIndex] : undefined
   if (!version?.id) return skipped(item, 'missing')
   if (!hasImage(location.imageUrl)) return skipped(item, 'missing')
   if (!version.stateNotes?.trim()) return skipped(item, 'missing')
@@ -434,6 +443,7 @@ async function runLocationVersionItem(input: {
     return skipped(item, 'already-generated')
   }
 
+  const previousVersion = versionIndex > 0 ? versionsList[versionIndex - 1] : undefined
   const usedFingerprint = locationVersionFingerprint(location, version)
   const generated = await generateLocationVersionReferenceImage({
     userId,
@@ -445,6 +455,7 @@ async function runLocationVersionItem(input: {
     locale,
     baseImageUrl: location.imageUrl!.trim(),
     stateNotes: version.stateNotes,
+    previousStateNotes: previousVersion?.stateNotes,
     versionId: version.id,
     locationPrompt:
       typeof version.generationPrompt === 'string' && version.generationPrompt.trim()

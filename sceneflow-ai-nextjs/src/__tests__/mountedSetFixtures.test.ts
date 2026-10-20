@@ -142,3 +142,36 @@ describe('isMountedSetFixtureCatalogName', () => {
     expect(isMountedSetFixtureCatalogName('brass weight')).toBe(false)
   })
 })
+
+describe('Freight Tunnel Vault base location completeness', () => {
+  it('harvests slate board, wall-mounted acoustic seismograph, and pneumatic mail dispatch hatch into base description and strips temporal "and later" spoilers', () => {
+    const baseDescription =
+      'Cavernous 1906 freight tunnel vault with damp limestone walls, narrow-gauge rail tracks, and massive chalkboards. Damp, claustrophobic, filled with rising frost vapor and later thick coal silt'
+    const enriched = locationDescriptionWithMountedFixtures(
+      {
+        location: 'FREIGHT TUNNEL VAULT',
+        description: baseDescription,
+        versions: [
+          {
+            stateNotes:
+              "A thick, jagged horizontal chalk slash marks the massive slate board over the equation 'RESONANCE FLUX = 0'.",
+          },
+          {
+            stateNotes:
+              "The wall-mounted acoustic seismograph's smoked-paper drum is heavily scratched with irregular zig-zag arcs.",
+          },
+          {
+            stateNotes:
+              'The overhead eighteen-inch pneumatic mail dispatch hatch is sheared open, its cast-iron seam rivets broken, and a thick layer of black coal silt covers the floor and surrounding area.',
+          },
+        ],
+      },
+      []
+    )
+
+    expect(enriched.toLowerCase()).not.toContain('and later thick coal silt')
+    expect(enriched.toLowerCase()).toContain('massive slate board')
+    expect(enriched.toLowerCase()).toContain('wall-mounted acoustic seismograph')
+    expect(enriched.toLowerCase()).toContain('overhead eighteen-inch pneumatic mail dispatch hatch')
+  })
+})

@@ -37,21 +37,22 @@ export interface LocationAnalysisSceneInput {
 
 /** Verbs/adjectives that indicate a lasting physical change to the set. */
 export const LOCATION_STATE_KEYWORD_PATTERN =
-  /\b(explod(?:e|es|ed|ing|sion)?|blast(?:ed|ing)?|shatter(?:s|ed|ing)?|collapse(?:s|d|ing)?|smash(?:es|ed|ing)?|wreck(?:s|ed|ing)?|destroy(?:s|ed|ing)?|demolish(?:es|ed|ing)?|flood(?:s|ed|ing)?|burn(?:s|ed|ing)?|engulf(?:s|ed|ing)?|debris|rubble|boarded(?:\s+up)?|overturn(?:s|ed|ing)?|cave[- ]?in|crater|blown(?:\s+(?:out|apart|open))?|implode(?:s|d|ing)?|scorch(?:ed|ing)?|charred|gutted|bullet[- ]?holes?|smash(?:ed)?\s+through)\b/i
+  /\b(explod(?:e|es|ed|ing|sion)?|blast(?:ed|ing)?|shatter(?:s|ed|ing)?|collapse(?:s|d|ing)?|smash(?:es|ed|ing)?|wreck(?:s|ed|ing)?|destroy(?:s|ed|ing)?|demolish(?:es|ed|ing)?|flood(?:s|ed|ing)?|burn(?:s|ed|ing)?|engulf(?:s|ed|ing)?|debris|rubble|boarded(?:\s+up)?|overturn(?:s|ed|ing)?|cave[- ]?in|crater|blown(?:\s+(?:out|apart|open))?|implode(?:s|d|ing)?|scorch(?:ed|ing)?|charred|gutted|bullet[- ]?holes?|smash(?:ed)?\s+through|slash(?:es|ed)?|scratch(?:es|ed)?|shear(?:s|ed)?(?:\s+open)?|coal\s+silt|thick\s+layer\s+of\s+(?:black\s+)?(?:coal\s+)?(?:silt|soot|ash|debris|mud|dust)|rivets?\s+broken|broken\s+rivets?)\b/i
 
 /** Set-piece nouns so "explodes with anger" does not count as a location change. */
 export const SET_PIECE_NOUN_PATTERN =
-  /\b(doors?|windows?|walls?|ceilings?|roofs?|furniture|sofa|couch|table|chairs?|lights?|lamps?|chandeliers?|glass|pillars?|columns?|staircases?|stairs|fireplace|floors?|rooms?|set|building|house|storefront|facade|balcony|railing|beam|support|gates?)\b/i
+  /\b(doors?|windows?|walls?|ceilings?|roofs?|furniture|sofa|couch|table|chairs?|lights?|lamps?|chandeliers?|glass|pillars?|columns?|staircases?|stairs|fireplace|floors?|rooms?|set|building|house|storefront|facade|balcony|railing|beam|support|gates?|slate\s+boards?|chalkboards?|blackboards?|seismographs?|hatch(?:es)?|chutes?)\b/i
 
-const APERTURE_NOUN = '(?:doors?|windows?|gates?|hatches?)'
-const APERTURE_ADJ = '(?:damn\\s+|goddamn\\s+|bloody\\s+|front\\s+|back\\s+|side\\s+|heavy\\s+)*'
+const APERTURE_NOUN = '(?:doors?|windows?|gates?|hatch(?:es)?)'
+const APERTURE_ADJ =
+  '(?:damn\\s+|goddamn\\s+|bloody\\s+|front\\s+|back\\s+|side\\s+|heavy\\s+|overhead\\s+|eighteen[- ]inch\\s+|pneumatic\\s+|mail\\s+|dispatch\\s+|cast[- ]iron\\s+)*'
 
 /**
- * Door / window / gate opening or shutting — lasting set state, including
+ * Door / window / gate / hatch opening or shutting — lasting set state, including
  * spoken commands ("Shut the damn door") that never use explode/shatter.
  */
 export const REVERSIBLE_APERTURE_PATTERN = new RegExp(
-  String.raw`\b(?:(?:shut|clos(?:e|es|ed|ing)|slam(?:s|med|ming)?|lock(?:s|ed|ing)?|unlock(?:s|ed|ing)?|open(?:s|ed|ing)?|swing(?:s|ing)?)\s+(?:the\s+)?${APERTURE_ADJ}${APERTURE_NOUN}|(?:the\s+)?${APERTURE_ADJ}${APERTURE_NOUN}\s+(?:is|are|stays?|remain(?:s)?)?\s*(?:shut|closed|open(?:ed)?|locked|unlocked|slammed))\b`,
+  String.raw`\b(?:(?:shut|clos(?:e|es|ed|ing)|slam(?:s|med|ming)?|lock(?:s|ed|ing)?|unlock(?:s|ed|ing)?|open(?:s|ed|ing)?|swing(?:s|ing)?|shear(?:s|ed)?\s+open)\s+(?:the\s+)?${APERTURE_ADJ}${APERTURE_NOUN}|(?:the\s+)?${APERTURE_ADJ}${APERTURE_NOUN}\s+(?:is|are|stays?|remain(?:s)?)?\s*(?:sheared\s+open|shut|closed|open(?:ed)?|locked|unlocked|slammed))\b`,
   'i'
 )
 
@@ -67,15 +68,16 @@ export const PRACTICAL_LIGHTS_PATTERN = new RegExp(
   'i'
 )
 
-const INSTRUMENT_NOUN = '(?:gauges?|galvanometers?|manometers?|barometers?|dials?)'
+const INSTRUMENT_NOUN =
+  '(?:gauges?|galvanometers?|manometers?|barometers?|dials?|seismographs?|telegraphs?|oscilloscopes?|switchboards?)'
 
 /**
- * A mounted instrument's glass cracking, or its needle pegging into the red.
+ * A mounted instrument's glass cracking, smoked-paper drum scratching, or its needle pegging into the red.
  * "Cracked" is not a general destruction keyword — a cracked smile, or the
  * shattered glass of a framed photograph, is not this.
  */
 export const INSTRUMENT_DAMAGE_PATTERN = new RegExp(
-  String.raw`\b((?:the\s+)?(?:glass\s+face\s+of\s+(?:a\s+|an\s+|the\s+)?)?(?:(?:vintage|antique|brass|bronze|copper|steel|iron)\s+){0,3}(?:pressure\s+|steam\s+|vacuum\s+)?${INSTRUMENT_NOUN}(?:\s+glass)?(?:\s+(?!is\b|was\b|gets?\b|becomes?\b|cracked\b|cracks?\b)\S+){0,14}\s+(?:is\s+|was\s+|gets?\s+|becomes?\s+)?cracked(?:\s+down\s+the\s+middle)?|(?:the\s+)?(?:pressure\s+|steam\s+|vacuum\s+)?${INSTRUMENT_NOUN}\s+glass\s+cracks?(?:\s+down\s+the\s+middle)?)\b`,
+  String.raw`\b((?:the\s+)?(?:glass\s+face\s+of\s+(?:a\s+|an\s+|the\s+)?)?(?:(?:wall[- ]mounted|chute[- ]mounted|mounted|vintage|antique|brass|bronze|copper|steel|iron|acoustic|pneumatic)\s+){0,3}(?:pressure\s+|steam\s+|vacuum\s+|acoustic\s+)?${INSTRUMENT_NOUN}(?:'s\s+(?:smoked[- ]paper\s+)?drum|\s+glass)?(?:\s+(?!is\b|was\b|gets?\b|becomes?\b|cracked\b|cracks?\b|scratched\b)\S+){0,14}\s+(?:is\s+|was\s+|gets?\s+|becomes?\s+)?(?:heavily\s+)?(?:cracked(?:\s+down\s+the\s+middle)?|scratched(?:\s+with\s+[^.;]+)?)|(?:the\s+)?(?:pressure\s+|steam\s+|vacuum\s+|acoustic\s+)?${INSTRUMENT_NOUN}\s+glass\s+cracks?(?:\s+down\s+the\s+middle)?)\b`,
   'i'
 )
 
@@ -83,7 +85,31 @@ export const INSTRUMENT_NEEDLE_RED_PATTERN =
   /\b(needle\s+(?:pegs?|pegged|pins?|pinned)\s+into\s+the\s+red(?:\s+compression\s+arc)?)\b/i
 
 const PHOTO_GLASS_NOUN = /\b(?:photos?|photographs?|pictures?|portraits?|snapshots?|framed\s+photo)\b/i
-const ARCHITECTURAL_DAMAGE_NOUN = /\b(?:doors?|windows?|walls?|hatches?|gates?|floors?|ceilings?)\b/i
+const ARCHITECTURAL_DAMAGE_NOUN =
+  /\b(?:doors?|windows?|walls?|hatch(?:es)?|gates?|floors?|ceilings?|slate\s+boards?|chalkboards?|seismographs?)\b/i
+
+/**
+ * Metaphorical character emotion / body expressions and human posture phrases
+ * that mention "burning" or "floor/wall" without altering the physical set.
+ * E.g. "Piper leaning forward from the floor, arm outstretched with the canister, eyes burning with intensity"
+ */
+const CHARACTER_METAPHOR_PATTERN =
+  /\b(?:(?:eyes?|gaze|stare|cheeks?|face|skin|chest|lungs?|heart|voice|breath|muscles?|veins?|mind|soul|spirit|anger|rage|fury|intensity)\s+(?:is\s+|are\s+|were\s+|was\s+)?(?:burning|burns|burned|blazing|exploding|explodes|shattering|shattered|collapsing|cracking|on\s+fire)|(?:burning|exploding|blazing|shattering)\s+with\s+(?:intensity|anger|rage|fear|grief|determination|panic|fever|desperation|passion))\b/gi
+
+const HUMAN_POSTURE_ON_SET_PATTERN =
+  /\b(?:leaning|leant|rising|pushing|pulling|getting|standing|kneeling|sitting|crouching|lying|sprawled|crawling|rolling|stepping|walking|running|backing|slumping|falling|picking\s+up|reaching)\s+(?:[a-z]+\s+){0,3}(?:from|off|on|onto|across|against|toward|towards|near|by|at)\s+(?:the\s+|a\s+|an\s+)?(?:damp\s+|stone\s+|flagstone\s+|wooden\s+|concrete\s+|dirt\s+|cold\s+)*(?:floor|floors|wall|walls|door|doorway|ground|stairs|steps|table|desk|bench|chair)\b/gi
+
+const CHARACTER_BLOCKING_CLAUSE_PATTERN =
+  /\b(?:arm\s+outstretched|hand\s+outstretched|eyes\s+burning|with\s+the\s+canister|clutches\s+the|holding\s+the\s+canister|leaning\s+forward\s+from\s+the\s+floor)\b/i
+
+export function stripCharacterMetaphorsAndPosture(text: string): string {
+  if (!text) return ''
+  return text
+    .replace(CHARACTER_METAPHOR_PATTERN, ' ')
+    .replace(HUMAN_POSTURE_ON_SET_PATTERN, ' ')
+    .replace(/\s{2,}/g, ' ')
+    .trim()
+}
 
 export function resolveBeatActionText(beat: LocationAnalysisBeatInput): string {
   return (
@@ -94,13 +120,16 @@ export function resolveBeatActionText(beat: LocationAnalysisBeatInput): string {
   )
 }
 
+/**
+ * Only scan beat fields that can describe set state (action, dialogue commands,
+ * frozenMoment, lightingAccent). Never scan `blocking` or `propInteraction`,
+ * which describe character posture and handheld props.
+ */
 export function beatSetStateText(beat: LocationAnalysisBeatInput): string {
   return [
     resolveBeatActionText(beat),
     beat.line,
     beat.frozenMoment,
-    beat.propInteraction,
-    beat.blocking,
     beat.lightingAccent,
   ]
     .filter((part): part is string => Boolean(part?.trim()))
@@ -127,13 +156,21 @@ export function beatHasInstrumentDamage(text: string): boolean {
 }
 
 export function beatHasLocationStateChange(text: string): boolean {
-  const trimmed = (text || '').trim()
+  const raw = (text || '').trim()
+  if (!raw) return false
+  const trimmed = stripCharacterMetaphorsAndPosture(raw)
   if (!trimmed) return false
   if (beatHasInstrumentDamage(trimmed)) return true
   if (REVERSIBLE_APERTURE_PATTERN.test(trimmed) || PRACTICAL_LIGHTS_PATTERN.test(trimmed)) {
     return true
   }
   if (isHandheldPhotoGlassDamage(trimmed)) return false
+  if (
+    CHARACTER_BLOCKING_CLAUSE_PATTERN.test(raw) &&
+    !ARCHITECTURAL_DAMAGE_NOUN.test(trimmed)
+  ) {
+    return false
+  }
   return LOCATION_STATE_KEYWORD_PATTERN.test(trimmed) && SET_PIECE_NOUN_PATTERN.test(trimmed)
 }
 
@@ -229,8 +266,9 @@ export function distillLocationStateNotesFromText(text: string): string | undefi
     { re: /(?:the\s+)?(?:front\s+)?doors?\s+(?:explod(?:e|es|ed)|blast(?:s|ed)|blow(?:s|n)\s+(?:out|apart|open)|shatter(?:s|ed))/i },
     { re: /(?:the\s+)?windows?\s+(?:shatter(?:s|ed)|explod(?:e|es|ed)|blow(?:s|n)\s+out)/i },
     { re: /(?:the\s+)?walls?\s+(?:collapse(?:s|d)|explod(?:e|es|ed)|cave[- ]?in)/i },
-    { re: /(?:the\s+)?(?:room|set|building|house|storefront)\s+(?:is\s+)?(?:flooded|burning|burned|engulfed|gutted|wrecked|destroyed)/i },
-    { re: /debris|rubble|boarded(?:\s+up)?|overturned\s+furniture|scorch(?:ed)?|charred|bullet[- ]?holes?/i },
+    { re: /(?:the\s+)?(?:room|set|building|house|storefront|floor)\s+(?:is\s+)?(?:flooded|burning|burned|engulfed|gutted|wrecked|destroyed)/i },
+    { re: /(?:(?:glass|splinters)\s+and\s+)?(?:debris|rubble|splinters)\s+(?:fills?|covers?|litters?|blankets?|across|on)\s+(?:the\s+)?[a-z]+(?:\s+[a-z]+)?/i },
+    { re: /(?:windows?\s+(?:are\s+|is\s+)?boarded(?:\s+up)?|boarded(?:\s+up)?\s+windows?|overturned\s+furniture|furniture\s+(?:is\s+)?overturned|bullet[- ]?holes?\s+(?:in|across)\s+(?:the\s+)?[a-z]+)/i },
     { re: REVERSIBLE_APERTURE_PATTERN },
     { re: PRACTICAL_LIGHTS_PATTERN },
   ]
@@ -251,6 +289,13 @@ export function distillLocationStateNotesFromText(text: string): string | undefi
     phrases.push(...sentences.map((s) => s.trim()).filter(Boolean))
   }
 
-  const unique = [...new Set(phrases.map((p) => p.trim()).filter(Boolean))]
+  // Never emit bare single-word fragments such as "debris" or "rubble".
+  const unique = [
+    ...new Set(
+      phrases
+        .map((p) => p.trim().replace(/^[.!;,\s]+|[.!;,\s]+$/g, ''))
+        .filter((p) => Boolean(p) && /\s/.test(p))
+    ),
+  ]
   return unique.length > 0 ? unique.join('; ') : undefined
 }
