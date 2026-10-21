@@ -79,7 +79,9 @@ export function StoryboardEmbedPlayer({
       setLoading(true)
       setError(null)
       try {
-        const res = await fetch(`/api/vision/shared-project/${encodeURIComponent(slug)}`)
+        const res = await fetch(`/api/vision/shared-project/${encodeURIComponent(slug)}`, {
+          cache: 'no-store',
+        })
         const data = await res.json()
         if (!res.ok) {
           if (res.status === 404 && onNotFoundRef.current) {

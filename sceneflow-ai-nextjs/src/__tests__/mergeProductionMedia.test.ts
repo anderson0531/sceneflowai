@@ -271,4 +271,40 @@ describe('mergeSceneProductionData', () => {
     expect(merged.segments[0].activeAssetUrl).toBe('a.mp4')
     expect(merged.segments[0].takes.map((take) => take.id)).toEqual(['t1'])
   })
+
+  it('honors deletedStreamIds so deleted production streams are not resurrected on merge', () => {
+    const existing: SceneProductionData = {
+      isSegmented: true,
+      targetSegmentDuration: 8,
+      segments: [],
+      renderedSceneUrl: 'https://cdn.example/old-scene.mp4',
+      currentStreamId: 's_old',
+      productionStreams: [
+        {
+          id: 's_old',
+          streamType: 'video',
+          language: 'en',
+          languageLabel: 'English',
+          status: 'complete',
+          streamVersion: 1,
+          mp4Url: 'https://cdn.example/old-scene.mp4',
+        },
+      ],
+    }
+    const incoming: SceneProductionData = {
+      isSegmented: true,
+      targetSegmentDuration: 8,
+      segments: [],
+      productionStreams: [],
+      deletedStreamIds: ['s_old'],
+      renderedSceneUrl: null,
+      currentStreamId: undefined,
+    }
+
+    const merged = mergeSceneProductionData(existing, incoming)!
+    expect(merged.productionStreams).toEqual([])
+    expect(merged.deletedStreamIds).toEqual(['s_old'])
+    expect(merged.renderedSceneUrl).toBeNull()
+    expect(merged.currentStreamId).toBeUndefined()
+  })
 })

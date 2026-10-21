@@ -162,10 +162,21 @@ export function slimProjectPutPayload<T extends ProjectPutBody>(
     delete nextVision.production
   }
 
+  // Dedicated endpoints own finalCut (/api/projects/[id]/final-cut), share links
+  // (/api/vision/create-share-link), and storyboardRevision (/api/projects/[id]/storyboard-revision).
+  // Dropping them from Vision PUT payloads prevents stale page state from reverting them.
+  const {
+    finalCut: _finalCut,
+    storyboardShareLink: _storyboardShareLink,
+    screeningRoomShareLink: _screeningRoomShareLink,
+    storyboardRevision: _storyboardRevision,
+    ...restMetadata
+  } = metadata
+
   return {
     ...rest,
     metadata: stripBase64FromMetadata({
-      ...metadata,
+      ...restMetadata,
       visionPhase: nextVision,
     }),
   }

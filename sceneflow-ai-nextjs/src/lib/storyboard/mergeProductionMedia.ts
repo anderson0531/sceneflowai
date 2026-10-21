@@ -157,18 +157,65 @@ export function mergeSceneProductionData(
     const beatId = segment.beatId?.trim()
     return !!beatId && preserveBeatIds.has(beatId) && !incomingBeatIds.has(beatId) && !used.has(segment.segmentId)
   })
-  const productionStreams = unionRowsById(
-    incoming.productionStreams,
-    existing.productionStreams,
-    'id'
-  ) as ProductionStream[]
+  const deletedStreamIds = Array.from(
+    new Set([
+      ...(Array.isArray(existing.deletedStreamIds) ? existing.deletedStreamIds : []),
+      ...(Array.isArray(incoming.deletedStreamIds) ? incoming.deletedStreamIds : []),
+    ])
+  ).filter((id): id is string => typeof id === 'string' && id.trim().length > 0)
+  const deletedStreamIdSet = new Set(deletedStreamIds)
+
+  const deletedStreamUrls = new Set<string>()
+  for (const s of [...(existing.productionStreams ?? []), ...(incoming.productionStreams ?? [])]) {
+    if (s?.id && deletedStreamIdSet.has(s.id) && typeof s.mp4Url === 'string' && s.mp4Url.trim()) {
+      deletedStreamUrls.add(s.mp4Url.trim())
+    }
+  }
+
+  const mergedStreams = (
+    unionRowsById(
+      incoming.productionStreams,
+      existing.productionStreams,
+      'id'
+    ) as ProductionStream[]
+  ).filter((s) => !s?.id || !deletedStreamIdSet.has(s.id))
+  const existingNonDeletedStreams = existing.productionStreams
+    ? existing.productionStreams.filter((s) => !s?.id || !deletedStreamIdSet.has(s.id))
+    : undefined
+
+  const productionStreams =
+    mergedStreams.length > 0
+      ? mergedStreams
+      : deletedStreamIdSet.size > 0 || Array.isArray(incoming.productionStreams)
+        ? mergedStreams
+        : existingNonDeletedStreams
+
+  const latestCompleteVideoUrl =
+    (productionStreams ?? [])
+      .filter((s) => (s.streamType === 'video' || !s.streamType) && s.status === 'complete' && s.mp4Url)
+      .slice(-1)[0]?.mp4Url ?? null
+  const rawRenderedSceneUrl =
+    incoming.renderedSceneUrl !== undefined ? incoming.renderedSceneUrl : existing.renderedSceneUrl
+  const renderedSceneUrl =
+    incoming.renderedSceneUrl === null
+      ? latestCompleteVideoUrl
+      : typeof rawRenderedSceneUrl === 'string' && deletedStreamUrls.has(rawRenderedSceneUrl.trim())
+        ? latestCompleteVideoUrl
+        : rawRenderedSceneUrl
+
+  const candidateCurrentStreamId = incoming.currentStreamId || existing.currentStreamId
+  const currentStreamId =
+    candidateCurrentStreamId && deletedStreamIdSet.has(candidateCurrentStreamId)
+      ? (productionStreams ?? []).filter((s) => s.status === 'complete' && s.mp4Url).slice(-1)[0]?.id
+      : candidateCurrentStreamId
 
   return {
     ...existing,
     ...incoming,
     segments: segments ? [...segments, ...preserved] : segments,
-    productionStreams:
-      productionStreams.length > 0 ? productionStreams : existing.productionStreams,
-    currentStreamId: incoming.currentStreamId || existing.currentStreamId,
+    productionStreams,
+    ...(deletedStreamIds.length > 0 ? { deletedStreamIds } : {}),
+    ...(renderedSceneUrl !== undefined ? { renderedSceneUrl } : {}),
+    currentStreamId,
   }
 }

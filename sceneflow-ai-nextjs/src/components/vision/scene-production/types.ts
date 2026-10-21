@@ -1006,6 +1006,8 @@ export interface SceneProductionData {
   renderedAt?: string | null
   /** Multi-language production streams */
   productionStreams?: ProductionStream[]
+  /** Tombstones for deleted production stream IDs so server merges do not resurrect them */
+  deletedStreamIds?: string[]
   /** Pinned stream restore; Final Cut screening override still wins when set. */
   currentStreamId?: string
   /**

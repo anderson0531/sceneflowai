@@ -14,7 +14,9 @@ export default function SharedStoryboardPage({ params }: { params: Promise<{ sha
     async function loadSharedProject() {
       try {
         console.log(`[Shared Storyboard] Loading project with token: ${shareToken}`)
-        const response = await fetch(`/api/vision/shared-project/${shareToken}`)
+        const response = await fetch(`/api/vision/shared-project/${shareToken}`, {
+          cache: 'no-store',
+        })
         const data = await response.json()
 
         if (!response.ok) {

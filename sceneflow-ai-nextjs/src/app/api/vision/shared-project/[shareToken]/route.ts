@@ -5,8 +5,10 @@ import { validateAndCleanSceneAudio } from '../../../../../lib/audio/cleanupAudi
 import { findActiveShareProject } from '../../../../../lib/storyboard/shareProjectLookup'
 import { getProjectStreams } from '@/lib/streams/projectStreams'
 import { getPublishingState } from '@/lib/publish/publishingState'
+import { sequelize } from '../../../../../config/database'
 
 export const runtime = 'nodejs'
+export const dynamic = 'force-dynamic'
 export const maxDuration = 30
 
 function sanitizeAudienceResonance(review: unknown) {
@@ -53,12 +55,27 @@ export async function GET(
     const actualShareToken = shareLink.shareToken
     
     shareLink.viewCount = (shareLink.viewCount || 0) + 1
-    await project.update({
-      metadata: {
-        ...project.metadata,
-        [metadataKey]: shareLink
+    // Atomically increment only the share link viewCount in JSONB so concurrent
+    // scene renders or Final Cut updates are never overwritten by a stale snapshot.
+    await sequelize.query(
+      `
+      UPDATE projects
+      SET metadata = jsonb_set(
+        COALESCE(metadata, '{}'::jsonb),
+        ARRAY[:metadataKey, 'viewCount'],
+        to_jsonb(:viewCount::int),
+        true
+      )
+      WHERE id = :projectId
+      `,
+      {
+        replacements: {
+          projectId: project.id,
+          metadataKey,
+          viewCount: shareLink.viewCount,
+        },
       }
-    })
+    )
 
     const md = project.metadata || {}
     const visionPhase = md.visionPhase || {}
@@ -112,10 +129,12 @@ export async function GET(
 
     console.log(`[Get Shared Project] Serving shared project: ${project.title} (views: ${shareLink.viewCount})`)
 
-    return NextResponse.json({
+    const response = NextResponse.json({
       success: true,
       project: sharedData
     })
+    response.headers.set('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0')
+    return response
   } catch (error: any) {
     console.error('[Get Shared Project] Error:', error)
     return NextResponse.json(

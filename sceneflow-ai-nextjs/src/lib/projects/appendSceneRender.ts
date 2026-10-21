@@ -13,6 +13,7 @@ export interface AppendSceneRenderInput {
 
 interface SceneStreamRow {
   streams: ProductionStream[] | string | null
+  deleted_stream_ids: string[] | string | null
   rendered_scene_url: string | null
 }
 
@@ -27,6 +28,23 @@ function storedStreams(value: ProductionStream[] | string | null): ProductionStr
     }
   }
   return []
+}
+
+function storedDeletedStreamIds(value: string[] | string | null | undefined): Set<string> {
+  if (Array.isArray(value)) {
+    return new Set(value.filter((id): id is string => typeof id === 'string' && id.trim().length > 0))
+  }
+  if (typeof value === 'string') {
+    try {
+      const parsed = JSON.parse(value) as unknown
+      return Array.isArray(parsed)
+        ? new Set(parsed.filter((id): id is string => typeof id === 'string' && id.trim().length > 0))
+        : new Set()
+    } catch {
+      return new Set()
+    }
+  }
+  return new Set()
 }
 
 /**
@@ -47,6 +65,10 @@ export async function appendSceneRender(input: AppendSceneRenderInput): Promise<
           metadata #> ARRAY['visionPhase','production','scenes', :sceneId, 'productionStreams'],
           '[]'::jsonb
         ) AS streams,
+        COALESCE(
+          metadata #> ARRAY['visionPhase','production','scenes', :sceneId, 'deletedStreamIds'],
+          '[]'::jsonb
+        ) AS deleted_stream_ids,
         metadata #>> ARRAY['visionPhase','production','scenes', :sceneId, 'renderedSceneUrl'] AS rendered_scene_url
       FROM projects
       WHERE id = :projectId
@@ -61,8 +83,13 @@ export async function appendSceneRender(input: AppendSceneRenderInput): Promise<
     const row = rows[0]
     if (!row) return false
 
+    const deletedIds = storedDeletedStreamIds(row.deleted_stream_ids)
+    const activeStreams = storedStreams(row.streams).filter(
+      (stream) => !stream?.id || !deletedIds.has(stream.id)
+    )
+
     const planned = planSceneRenderAppend({
-      streams: storedStreams(row.streams),
+      streams: activeStreams,
       renderedSceneUrl: row.rendered_scene_url,
       stream: { ...input.stream, mp4Url: downloadUrl },
       previousUrl: input.previousUrl,

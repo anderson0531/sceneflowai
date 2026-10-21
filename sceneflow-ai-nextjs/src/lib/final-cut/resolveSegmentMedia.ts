@@ -12,6 +12,8 @@ interface ProductionStreamRow {
   mp4Url?: string | null
   status?: string
   duration?: number
+  completedAt?: string
+  createdAt?: string
 }
 
 export function refineAssetTypeFromUrl(url: string, fallback: 'video' | 'image'): 'video' | 'image' {
@@ -32,7 +34,38 @@ export function formatFromStreamType(streamType: 'animatic' | 'video'): Producti
 function readProductionStreams(prodScene: Record<string, unknown> | undefined): ProductionStreamRow[] {
   if (!prodScene) return []
   const list = (prodScene as { productionStreams?: unknown }).productionStreams
-  return Array.isArray(list) ? (list as ProductionStreamRow[]) : []
+  if (!Array.isArray(list)) return []
+  const deletedRaw = (prodScene as { deletedStreamIds?: unknown }).deletedStreamIds
+  const deletedIds = new Set(
+    Array.isArray(deletedRaw)
+      ? deletedRaw.filter((id): id is string => typeof id === 'string' && id.trim().length > 0)
+      : []
+  )
+  return (list as ProductionStreamRow[]).filter(
+    (row) => !row?.id || !deletedIds.has(row.id)
+  )
+}
+
+function streamTimestampMs(row: ProductionStreamRow | undefined): number {
+  if (!row) return 0
+  const raw = row.completedAt || row.createdAt
+  if (typeof raw !== 'string' || !raw.trim()) return 0
+  const parsed = Date.parse(raw)
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : 0
+}
+
+function pickLatestStream(list: ProductionStreamRow[]): ProductionStreamRow | undefined {
+  if (list.length === 0) return undefined
+  return list.reduce((best: ProductionStreamRow, cur: ProductionStreamRow) => {
+    const bt = streamTimestampMs(best)
+    const ct = streamTimestampMs(cur)
+    if (bt > 0 && ct > 0 && bt !== ct) {
+      return ct > bt ? cur : best
+    }
+    const bv = Number(best?.streamVersion) || 1
+    const cv = Number(cur?.streamVersion) || 1
+    return cv >= bv ? cur : best
+  }, list[0])
 }
 
 function isReadyStream(row: ProductionStreamRow): boolean {
@@ -179,17 +212,45 @@ export function resolveSceneStreamUrl(
   ).sort((a, b) => a - b)
 
   const requestedVersion = selection.perSceneOverrides?.[sourceSceneId]?.streamVersion
+  const currentStreamId = typeof prod?.currentStreamId === 'string' ? prod.currentStreamId.trim() : ''
+  const renderedUrl = typeof prod?.renderedSceneUrl === 'string' ? prod.renderedSceneUrl.trim() : ''
+  const latestOverall = pickLatestStream(rows)
 
   let chosen: ProductionStreamRow | undefined
   if (typeof requestedVersion === 'number' && requestedVersion > 0) {
-    chosen = rows.find((r) => (Number(r.streamVersion) || 1) === requestedVersion)
+    const matching = rows.filter((r) => (Number(r.streamVersion) || 1) === requestedVersion)
+    if (matching.length > 0) {
+      chosen =
+        (currentStreamId ? matching.find((r) => r.id === currentStreamId) : undefined) ??
+        pickLatestStream(matching)
+      // Heal stale overrides where an older deleted stream was resurrected in DB
+      // before a newer render completed (or where client designated v1 while DB assigned v2).
+      if (chosen && latestOverall && chosen !== latestOverall) {
+        const chosenTs = streamTimestampMs(chosen)
+        const latestTs = streamTimestampMs(latestOverall)
+        const latestMatchesCurrent = Boolean(currentStreamId && latestOverall.id === currentStreamId)
+        const latestMatchesRendered =
+          Boolean(renderedUrl && latestOverall.mp4Url?.trim() === renderedUrl) &&
+          (!currentStreamId || currentStreamId !== chosen.id)
+        if (latestMatchesCurrent || (chosenTs > 0 && latestTs > chosenTs && latestMatchesRendered)) {
+          chosen = latestOverall
+        }
+      }
+    }
   }
   if (!chosen && rows.length > 0) {
-    chosen = rows.reduce((best: ProductionStreamRow, cur: ProductionStreamRow) => {
-      const bv = Number(best?.streamVersion) || 1
-      const cv = Number(cur?.streamVersion) || 1
-      return cv >= bv ? cur : best
-    }, rows[0])
+    const pinned = currentStreamId ? rows.find((r) => r.id === currentStreamId) : undefined
+    if (
+      pinned &&
+      (!latestOverall ||
+        streamTimestampMs(pinned) === 0 ||
+        streamTimestampMs(latestOverall) === 0 ||
+        streamTimestampMs(pinned) >= streamTimestampMs(latestOverall))
+    ) {
+      chosen = pinned
+    } else {
+      chosen = latestOverall
+    }
   }
 
   if (chosen) {
@@ -207,12 +268,13 @@ export function resolveSceneStreamUrl(
     }
   }
 
-  const rendered = (prod?.renderedSceneUrl as string | undefined)?.trim() ?? ''
-  if (rendered && target.streamType === 'video') {
-    const refined = refineAssetTypeFromUrl(rendered, 'video')
+  const deletedRaw = (prod as { deletedStreamIds?: unknown } | undefined)?.deletedStreamIds
+  const hasDeletedStreams = Array.isArray(deletedRaw) && deletedRaw.length > 0
+  if (!hasDeletedStreams && renderedUrl && target.streamType === 'video') {
+    const refined = refineAssetTypeFromUrl(renderedUrl, 'video')
     if (refined === 'video') {
       return {
-        url: rendered,
+        url: renderedUrl,
         streamType: 'video',
         language: target.language,
         availableVersions,

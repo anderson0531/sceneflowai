@@ -1291,12 +1291,37 @@ export function DirectorConsoleRoot({
     const deletedStream = productionStreams.find((s) => s.id === streamId)
     const updatedStreams = productionStreams.filter(s => s.id !== streamId)
     setProductionStreams(updatedStreams)
-    
+
+    const latestRemainingVideoUrl =
+      updatedStreams
+        .filter((s) => (s.streamType === 'video' || !s.streamType) && s.status === 'complete' && s.mp4Url)
+        .slice(-1)[0]?.mp4Url ?? null
+    const deletedUrl = deletedStream?.mp4Url?.trim()
+    const shouldReplaceRenderedUrl =
+      !!deletedUrl &&
+      (renderedSceneUrl?.trim() === deletedUrl || productionData?.renderedSceneUrl?.trim() === deletedUrl)
+    const nextRenderedSceneUrl = shouldReplaceRenderedUrl
+      ? latestRemainingVideoUrl
+      : productionData?.renderedSceneUrl
+    if (shouldReplaceRenderedUrl) {
+      setRenderedSceneUrl(latestRemainingVideoUrl)
+    }
+
     // Persist to database
     if (onProductionDataChange && productionData) {
+      const deletedStreamIds = Array.from(
+        new Set([...(productionData.deletedStreamIds ?? []), streamId])
+      )
+      const nextCurrentStreamId =
+        productionData.currentStreamId === streamId
+          ? updatedStreams.filter((s) => s.status === 'complete' && s.mp4Url).slice(-1)[0]?.id
+          : productionData.currentStreamId
       onProductionDataChange({
         ...productionData,
         productionStreams: updatedStreams,
+        deletedStreamIds,
+        renderedSceneUrl: nextRenderedSceneUrl,
+        currentStreamId: nextCurrentStreamId,
       })
     }
 
@@ -1315,6 +1340,7 @@ export function DirectorConsoleRoot({
   }, [
     productionStreams,
     productionData,
+    renderedSceneUrl,
     onProductionDataChange,
     currentProject,
     sceneId,
@@ -1448,10 +1474,17 @@ export function DirectorConsoleRoot({
         }
         const updatedStreams = [...productionStreams, newStream]
         setProductionStreams(updatedStreams)
+        if (streamType === 'video') {
+          setRenderedSceneUrl(blob.url)
+        }
         if (onProductionDataChange && productionData) {
           onProductionDataChange({
             ...productionData,
             productionStreams: updatedStreams,
+            currentStreamId: newStream.id,
+            ...(streamType === 'video'
+              ? { renderedSceneUrl: blob.url, renderedAt: newStream.completedAt }
+              : {}),
           })
         }
       } catch (err) {

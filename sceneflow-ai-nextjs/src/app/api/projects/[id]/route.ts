@@ -200,6 +200,22 @@ export async function PUT(
     if (body.metadata) {
       // Shallow merge all top-level properties
       mergedMetadata = { ...existingMetadata, ...body.metadata }
+
+      // Vision PUTs must not clobber fields owned by dedicated endpoints
+      if (body.metadata.visionPhase) {
+        if (existingMetadata.finalCut !== undefined) {
+          mergedMetadata.finalCut = existingMetadata.finalCut
+        }
+        if (existingMetadata.storyboardShareLink !== undefined) {
+          mergedMetadata.storyboardShareLink = existingMetadata.storyboardShareLink
+        }
+        if (existingMetadata.screeningRoomShareLink !== undefined) {
+          mergedMetadata.screeningRoomShareLink = existingMetadata.screeningRoomShareLink
+        }
+        if (existingMetadata.storyboardRevision !== undefined) {
+          mergedMetadata.storyboardRevision = existingMetadata.storyboardRevision
+        }
+      }
       
       // Deep merge visionPhase if it exists in both
       if (body.metadata.visionPhase && existingMetadata.visionPhase) {

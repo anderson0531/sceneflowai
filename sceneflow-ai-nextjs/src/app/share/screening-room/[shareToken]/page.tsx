@@ -80,7 +80,9 @@ function SharedScreeningRoomPageInner({ params }: { params: Promise<{ shareToken
 
     async function loadSharedProject() {
       try {
-        const response = await fetch(`/api/vision/shared-project/${shareToken}`)
+        const response = await fetch(`/api/vision/shared-project/${shareToken}`, {
+          cache: 'no-store',
+        })
         const data = await response.json()
 
         if (!response.ok) {

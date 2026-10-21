@@ -14,7 +14,9 @@ export default function SharedStoryboardSlugPage({ slug }: { slug: string }) {
   useEffect(() => {
     async function loadSharedProject() {
       try {
-        const response = await fetch(`/api/vision/shared-project/${slug}`)
+        const response = await fetch(`/api/vision/shared-project/${slug}`, {
+          cache: 'no-store',
+        })
         const data = await response.json()
 
         if (!response.ok) {
