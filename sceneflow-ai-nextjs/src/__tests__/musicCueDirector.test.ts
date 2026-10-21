@@ -76,4 +76,17 @@ describe('music cue director', () => {
     expect(route).not.toContain('generateMusicTrack')
     expect(panel).toContain('MusicCueDirectorDialog')
   })
+
+  it('exposes MP3 upload controls on music score cues and wires cueId to uploadAudio', () => {
+    const panel = readSource('src/components/vision/SceneMusicCuePanel.tsx')
+    const scriptPanel = readSource('src/components/vision/ScriptPanel.tsx')
+
+    expect(panel).toContain('onUploadCue?: (cueId: string) => void | Promise<void>')
+    expect(panel).toContain('Upload MP3 for ${formatMusicCueRange(cue)}')
+    expect(panel).toContain('void onUploadCue(cue.cueId)')
+
+    expect(scriptPanel).toContain('onUploadCue={')
+    expect(scriptPanel).toContain("uploadAudio(sceneIdx, 'music', undefined, undefined, undefined, cueId)")
+    expect(scriptPanel).toContain('musicCueId?: string')
+  })
 })

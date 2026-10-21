@@ -11,7 +11,7 @@
 
 import { useState } from 'react'
 import { useTranslations } from 'next-intl'
-import { Clapperboard, Download, Loader, Music, Pause, Play, RefreshCw, Sparkles } from 'lucide-react'
+import { Clapperboard, Download, Loader, Music, Pause, Play, RefreshCw, Sparkles, Upload } from 'lucide-react'
 import { Slider } from '@/components/ui/slider'
 import { AUDIO_CREDITS } from '@/lib/credits/creditCosts'
 import {
@@ -43,6 +43,7 @@ export interface SceneMusicCuePanelProps {
   onGenerateCue?: (cueId: string) => void | Promise<void>
   onGenerateAllCues?: () => void | Promise<void>
   onDownloadCue?: (e: React.MouseEvent, cue: SceneMusicCue) => void
+  onUploadCue?: (cueId: string) => void | Promise<void>
   /** Patch volume / fade on a scored cue. Mix applies in the animatic, not preview Play. */
   onCueMixChange?: (cueId: string, mix: CueMixPatch) => void
   /** Cue currently being generated, or `all` while the batch action runs. */
@@ -70,6 +71,7 @@ export function SceneMusicCuePanel({
   onGenerateCue,
   onGenerateAllCues,
   onDownloadCue,
+  onUploadCue,
   onCueMixChange,
   generatingCueId,
   isGeneratingAll,
@@ -202,6 +204,21 @@ export function SceneMusicCuePanel({
                           <Download className="w-4 h-4" />
                         </button>
                       )}
+                      {onUploadCue && (
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            void onUploadCue(cue.cueId)
+                          }}
+                          disabled={busy}
+                          className="p-1 hover:bg-purple-200 dark:hover:bg-purple-800 rounded disabled:opacity-50"
+                          title={`Upload MP3 for ${formatMusicCueRange(cue)}`}
+                          aria-label={`Upload MP3 for ${formatMusicCueRange(cue)}`}
+                        >
+                          <Upload className="w-4 h-4" />
+                        </button>
+                      )}
                       <button
                         type="button"
                         onClick={(e) => {
@@ -221,25 +238,42 @@ export function SceneMusicCuePanel({
                     </>
                   )}
                   {!scored && (
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        void onGenerateCue?.(cue.cueId)
-                      }}
-                      disabled={busy}
-                      className="text-xs px-2 py-1 bg-purple-600 hover:bg-purple-700 text-white rounded disabled:opacity-50 flex items-center gap-1"
-                      title={`Generate this cue (${MUSIC_CREDITS} credits)`}
-                    >
-                      {isGenerating ? (
-                        <>
-                          <Loader className="w-3 h-3 animate-spin" />
-                          Generating...
-                        </>
-                      ) : (
-                        <>Generate ({MUSIC_CREDITS})</>
+                    <>
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          void onGenerateCue?.(cue.cueId)
+                        }}
+                        disabled={busy}
+                        className="text-xs px-2 py-1 bg-purple-600 hover:bg-purple-700 text-white rounded disabled:opacity-50 flex items-center gap-1"
+                        title={`Generate this cue (${MUSIC_CREDITS} credits)`}
+                      >
+                        {isGenerating ? (
+                          <>
+                            <Loader className="w-3 h-3 animate-spin" />
+                            Generating...
+                          </>
+                        ) : (
+                          <>Generate ({MUSIC_CREDITS})</>
+                        )}
+                      </button>
+                      {onUploadCue && (
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            void onUploadCue(cue.cueId)
+                          }}
+                          disabled={busy}
+                          className="p-1 hover:bg-purple-200 dark:hover:bg-purple-800 rounded disabled:opacity-50"
+                          title={`Upload MP3 for ${formatMusicCueRange(cue)}`}
+                          aria-label={`Upload MP3 for ${formatMusicCueRange(cue)}`}
+                        >
+                          <Upload className="w-4 h-4" />
+                        </button>
                       )}
-                    </button>
+                    </>
                   )}
                 </div>
               </div>

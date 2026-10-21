@@ -2165,7 +2165,14 @@ export function ScriptPanel({ script, onScriptChange, onAudioSlotSaved, isGenera
     }
   }
 
-  const uploadAudio = async (sceneIdx: number, type: 'description' | 'narration' | 'dialogue' | 'sfx' | 'music', sfxIdx?: number, dialogueIdx?: number, characterName?: string) => {
+  const uploadAudio = async (
+    sceneIdx: number,
+    type: 'description' | 'narration' | 'dialogue' | 'sfx' | 'music',
+    sfxIdx?: number,
+    dialogueIdx?: number,
+    characterName?: string,
+    musicCueId?: string
+  ) => {
     if (!projectId) {
       toast.error('Project not loaded — cannot upload audio')
       return
@@ -2183,8 +2190,37 @@ export function ScriptPanel({ script, onScriptChange, onAudioSlotSaved, isGenera
         const audioUrl = await uploadAssetViaAPI(file, projectId)
         
         // Handle different audio types
-        if (type === 'music' || type === 'sfx') {
-          await saveSceneAudio(sceneIdx, type, audioUrl, sfxIdx, null)
+        if (type === 'music') {
+          let measuredDuration = 0
+          try {
+            measuredDuration = await getAudioDuration(audioUrl)
+          } catch {
+            measuredDuration = 0
+          }
+          const scene = scenes[sceneIdx]
+          let cueDuration: number | undefined
+          if (musicCueId && scene) {
+            const beats = getSceneBeats(scene)
+            const cue = parsePersistedMusicCues(scene.sceneMusicCues, beats).find(
+              (entry) => entry.cueId === musicCueId
+            )
+            if (cue) {
+              cueDuration = estimateMusicCueDuration(cue, beats, scene)
+            }
+          }
+          await saveSceneAudio(
+            sceneIdx,
+            'music',
+            audioUrl,
+            undefined,
+            null,
+            undefined,
+            cueDuration,
+            measuredDuration > 0 ? measuredDuration : undefined,
+            musicCueId
+          )
+        } else if (type === 'sfx') {
+          await saveSceneAudio(sceneIdx, 'sfx', audioUrl, sfxIdx, null)
         } else if (type === 'description') {
           // Update description audio
           const updatedScenes = [...scenes]
@@ -3938,7 +3974,8 @@ interface SceneCardProps {
     type: 'description' | 'narration' | 'dialogue' | 'sfx' | 'music',
     sfxIdx?: number,
     dialogueIdx?: number,
-    characterName?: string
+    characterName?: string,
+    musicCueId?: string
   ) => void
   // NEW: Enhance scene context with AI-generated beat, character arc, and thematic context
   onEnhanceSceneContext?: (sceneIndex: number) => Promise<void>
@@ -6999,6 +7036,11 @@ function SceneCard({
                           sceneNumber: sceneIdx + 1,
                           track: 'music',
                         })
+                      }
+                      onUploadCue={
+                        uploadAudio
+                          ? (cueId) => uploadAudio(sceneIdx, 'music', undefined, undefined, undefined, cueId)
+                          : undefined
                       }
                       generatingCueId={
                         generatingMusicCue?.sceneIdx === sceneIdx
