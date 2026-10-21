@@ -7,7 +7,7 @@ export interface PersistDialogueAudioInput {
   audioUrl: string
   language: string
   dialogueIndex: number
-  characterName: string
+  characterName?: string
   lineId?: string
   duration?: number
   provider?: string
@@ -21,6 +21,8 @@ export async function persistDialogueAudioSlot(
   input: PersistDialogueAudioInput
 ): Promise<AudioSlotSavedPayload> {
   const provider = input.provider || 'google'
+  const normalizedCharacterName =
+    typeof input.characterName === 'string' ? input.characterName.trim() : ''
   const response = await fetch(`/api/projects/${input.projectId}`, {
     method: 'PATCH',
     headers: { 'Content-Type': 'application/json' },
@@ -31,7 +33,7 @@ export async function persistDialogueAudioSlot(
         audioUrl: input.audioUrl,
         language: input.language,
         dialogueIndex: input.dialogueIndex,
-        characterName: input.characterName,
+        characterName: normalizedCharacterName,
         lineId: input.lineId,
         duration: input.duration,
         provider,
@@ -60,7 +62,7 @@ export async function persistDialogueAudioSlot(
     audioUrl: input.audioUrl,
     language: input.language,
     dialogueIndex: input.dialogueIndex,
-    characterName: input.characterName,
+    characterName: normalizedCharacterName,
     lineId: input.lineId,
     duration: input.duration,
     provider,

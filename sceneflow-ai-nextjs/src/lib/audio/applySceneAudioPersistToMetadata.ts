@@ -343,7 +343,10 @@ function applyDialogueMutation(
   const dialogueArray = [...dialogueAudio[language]]
   const targetLineId = params.lineMeta?.lineId
   const dialogueIndex = params.dialogueIndex
-  const characterName = params.characterName
+  const characterName =
+    typeof params.characterName === 'string' && params.characterName.trim()
+      ? params.characterName.trim()
+      : undefined
 
   let existingIndex = -1
   if (targetLineId) {
@@ -368,8 +371,31 @@ function applyDialogueMutation(
     )
   }
 
+  const existingRecord =
+    existingIndex >= 0 &&
+    typeof dialogueArray[existingIndex] === 'object' &&
+    dialogueArray[existingIndex]
+      ? (dialogueArray[existingIndex] as Record<string, unknown>)
+      : undefined
+  const sceneDialogueLine =
+    Array.isArray(scene.dialogue) &&
+    dialogueIndex !== undefined &&
+    typeof scene.dialogue[dialogueIndex] === 'object' &&
+    scene.dialogue[dialogueIndex]
+      ? (scene.dialogue[dialogueIndex] as Record<string, unknown>)
+      : undefined
+  const resolvedCharacter =
+    characterName ??
+    (typeof existingRecord?.character === 'string' && existingRecord.character.trim()
+      ? existingRecord.character.trim()
+      : undefined) ??
+    (typeof sceneDialogueLine?.character === 'string' && sceneDialogueLine.character.trim()
+      ? sceneDialogueLine.character.trim()
+      : undefined) ??
+    (params.lineMeta?.lineKind === 'narration' ? 'Narrator' : '')
+
   const dialogueEntry: Record<string, unknown> = {
-    character: characterName!,
+    character: resolvedCharacter,
     dialogueIndex: dialogueIndex!,
     ...(targetLineId ? { lineId: targetLineId } : {}),
     ...(params.lineMeta?.lineKind ? { kind: params.lineMeta.lineKind } : {}),

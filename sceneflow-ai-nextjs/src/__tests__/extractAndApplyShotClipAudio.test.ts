@@ -6,6 +6,9 @@ import {
   resolveBeatSegmentDuration,
   resolveBeatVideoClipUrl,
 } from '@/lib/audio/extractAndApplyShotClipAudio'
+import { persistDialogueAudioSlot } from '@/lib/audio/clientPersistDialogueAudio'
+import { applySceneAudioPersistToMetadata } from '@/lib/audio/applySceneAudioPersistToMetadata'
+import { applyAudioSlotToScene } from '@/lib/audio/cleanupAudio'
 import type { SceneSegment } from '@/components/vision/scene-production/types'
 
 function readSource(relativePath: string): string {
@@ -194,7 +197,96 @@ describe('Shot clip MP3 extraction and shot audio update', () => {
     expect(segSfx).toContain('onUploadAudio={dispatchUploadMp3}')
 
     expect(scriptPanel).not.toContain('SFX uploads are no longer supported')
-    expect(scriptPanel).toContain("if (type === 'music' || type === 'sfx')")
+    expect(scriptPanel).toContain("if (type === 'music')")
+    expect(scriptPanel).toContain("} else if (type === 'sfx') {")
     expect(scriptPanel).toContain('persistDialogueAudioSlot')
+  })
+
+  it('bypasses characterName requirement when uploading dialogue shot audio', async () => {
+    const routeSource = readSource('src/app/api/projects/[id]/route.ts')
+    const scriptPanel = readSource('src/components/vision/ScriptPanel.tsx')
+
+    expect(routeSource).not.toContain('Dialogue audio update requires characterName')
+    expect(scriptPanel).toContain('sceneIndex: sceneIdx')
+    expect(scriptPanel).toContain('characterName: resolvedCharacter')
+    expect(scriptPanel).toContain("provider: 'upload'")
+
+    const originalFetch = globalThis.fetch
+    const mockFetch = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({ success: true }),
+    })
+    globalThis.fetch = mockFetch as unknown as typeof fetch
+
+    try {
+      const saved = await persistDialogueAudioSlot({
+        projectId: 'proj-1',
+        sceneIndex: 0,
+        audioUrl: 'https://cdn.test/uploaded-shot.mp3',
+        language: 'en',
+        dialogueIndex: 2,
+        lineId: 'ln-2',
+        duration: 3.4,
+        provider: 'upload',
+      })
+
+      expect(saved.characterName).toBe('')
+      expect(saved.sceneIndex).toBe(0)
+      expect(saved.dialogueIndex).toBe(2)
+
+      const metadata = {
+        visionPhase: {
+          script: {
+            script: {
+              scenes: [
+                {
+                  dialogue: [{ line: 'Line 0' }, { line: 'Line 1' }, { line: 'Line 2', lineId: 'ln-2' }],
+                  dialogueAudio: { en: [] },
+                },
+              ],
+            },
+          },
+        },
+      }
+      applySceneAudioPersistToMetadata(metadata, {
+        projectId: 'proj-1',
+        sceneIndex: 0,
+        audioType: 'dialogue',
+        audioUrl: 'https://cdn.test/uploaded-shot.mp3',
+        language: 'en',
+        dialogueIndex: 2,
+        characterName: '',
+        duration: 3.4,
+        provider: 'upload',
+        lineMeta: { lineId: 'ln-2', lineKind: 'dialogue' },
+      })
+
+      const persistedScene = (metadata.visionPhase.script.script.scenes as any[])[0]
+      expect(persistedScene.dialogueAudio.en).toHaveLength(1)
+      expect(persistedScene.dialogueAudio.en[0]).toMatchObject({
+        audioUrl: 'https://cdn.test/uploaded-shot.mp3',
+        dialogueIndex: 2,
+        lineId: 'ln-2',
+        character: '',
+        provider: 'upload',
+      })
+
+      const clientUpdated = applyAudioSlotToScene(
+        {
+          dialogueAudio: {
+            en: [{ dialogueIndex: 2, lineId: 'ln-2', character: 'Piper Hayes', audioUrl: 'old.mp3' }],
+          },
+        },
+        saved
+      )
+      expect(clientUpdated.dialogueAudio.en[0]).toMatchObject({
+        dialogueIndex: 2,
+        lineId: 'ln-2',
+        character: 'Piper Hayes',
+        audioUrl: 'https://cdn.test/uploaded-shot.mp3',
+      })
+    } finally {
+      globalThis.fetch = originalFetch
+    }
   })
 })

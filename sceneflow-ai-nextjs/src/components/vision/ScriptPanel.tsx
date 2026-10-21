@@ -2248,29 +2248,74 @@ export function ScriptPanel({ script, onScriptChange, onAudioSlotSaved, isGenera
           const updatedScript = { ...script, script: { ...script.script, scenes: updatedScenes } }
           onScriptChange(updatedScript)
         } else if (type === 'dialogue' && dialogueIdx !== undefined) {
-          const dialogueLine = scenes[sceneIdx]?.dialogue?.[dialogueIdx]
+          const scene = scenes[sceneIdx]
+          const dialogueLines = Array.isArray(scene?.dialogue) ? scene.dialogue : []
+          const sceneBeats = scene ? getSceneBeats(scene) : []
+          let matchedSpokenBeat: SceneBeat | undefined
+          {
+            let spoken = 0
+            for (const entry of sceneBeats) {
+              if (entry.kind === 'action') continue
+              let resolvedIdx = spoken
+              if (entry.lineId?.trim()) {
+                const byLineId = dialogueLines.findIndex(
+                  (line: { lineId?: string }) => line?.lineId === entry.lineId
+                )
+                if (byLineId >= 0) resolvedIdx = byLineId
+              }
+              if (resolvedIdx === dialogueIdx) {
+                matchedSpokenBeat = entry
+                break
+              }
+              spoken = Math.max(spoken + 1, resolvedIdx + 1)
+            }
+          }
+          const dialogueLine = dialogueLines[dialogueIdx] ?? matchedSpokenBeat
+          const resolvedCharacter =
+            (typeof characterName === 'string' && characterName.trim()
+              ? characterName.trim()
+              : undefined) ??
+            (typeof dialogueLine?.character === 'string' && dialogueLine.character.trim()
+              ? dialogueLine.character.trim()
+              : undefined) ??
+            (typeof matchedSpokenBeat?.character === 'string' && matchedSpokenBeat.character.trim()
+              ? matchedSpokenBeat.character.trim()
+              : undefined)
+          const resolvedLineKind: 'narration' | 'dialogue' =
+            (dialogueLine?.kind ?? matchedSpokenBeat?.kind) === 'narration'
+              ? 'narration'
+              : 'dialogue'
+          const resolvedLineId = dialogueLine?.lineId ?? matchedSpokenBeat?.lineId
+          const resolvedCharacterId = dialogueLine?.characterId ?? matchedSpokenBeat?.characterId
+          const resolvedLineText =
+            dialogueLine?.line ?? dialogueLine?.text ?? matchedSpokenBeat?.line
+          const resolvedVoiceDirection =
+            dialogueLine?.voiceDirection ?? matchedSpokenBeat?.voiceDirection
+
           let measuredDuration = 0
           try {
             measuredDuration = await getAudioDuration(audioUrl)
           } catch {
             measuredDuration = 0
           }
-          const sourceFingerprint = audioSourceFingerprintForSpoken(
-            dialogueLine?.character || characterName,
-            dialogueLine?.line
-          )
+          const sourceFingerprint = audioSourceFingerprintForSpoken({
+            kind: resolvedLineKind,
+            character: resolvedCharacter,
+            line: resolvedLineText,
+            voiceDirection: resolvedVoiceDirection,
+          })
           const saved = await persistDialogueAudioSlot({
             projectId,
-            sceneIdx,
-            sceneId: scenes[sceneIdx]?.id || scenes[sceneIdx]?.sceneId,
+            sceneIndex: sceneIdx,
             language: selectedLanguage,
             audioUrl,
             duration: measuredDuration > 0 ? measuredDuration : undefined,
-            character: characterName || dialogueLine?.character,
+            characterName: resolvedCharacter,
             dialogueIndex: dialogueIdx,
-            lineId: dialogueLine?.lineId,
-            kind: dialogueLine?.kind,
-            characterId: dialogueLine?.characterId,
+            lineId: resolvedLineId,
+            lineKind: resolvedLineKind,
+            characterId: resolvedCharacterId,
+            provider: 'upload',
             sourceFingerprint,
           })
           if (saved && onAudioSlotSaved) {
@@ -2286,20 +2331,26 @@ export function ScriptPanel({ script, onScriptChange, onAudioSlotSaved, isGenera
             }
             const existingIdx = updatedScenes[sceneIdx].dialogueAudio[selectedLanguage].findIndex(
               (a: any) =>
-                (dialogueLine?.lineId && a?.lineId === dialogueLine.lineId) ||
-                (a.dialogueIndex === dialogueIdx && a.character === characterName)
+                (resolvedLineId && a?.lineId === resolvedLineId) ||
+                a?.dialogueIndex === dialogueIdx
             )
             const audioEntry: Record<string, unknown> = {
               audioUrl,
-              character: characterName,
+              character:
+                resolvedCharacter ??
+                (existingIdx >= 0
+                  ? updatedScenes[sceneIdx].dialogueAudio[selectedLanguage][existingIdx]?.character
+                  : undefined) ??
+                '',
               dialogueIndex: dialogueIdx,
               ...(measuredDuration > 0 ? { duration: measuredDuration } : {}),
+              provider: 'upload',
               sourceFingerprint,
               audioStale: false,
             }
-            if (dialogueLine?.lineId) audioEntry.lineId = dialogueLine.lineId
-            if (dialogueLine?.kind) audioEntry.kind = dialogueLine.kind
-            if (dialogueLine?.characterId) audioEntry.characterId = dialogueLine.characterId
+            if (resolvedLineId) audioEntry.lineId = resolvedLineId
+            if (resolvedLineKind) audioEntry.kind = resolvedLineKind
+            if (resolvedCharacterId) audioEntry.characterId = resolvedCharacterId
             if (existingIdx >= 0) {
               updatedScenes[sceneIdx].dialogueAudio[selectedLanguage][existingIdx] = {
                 ...updatedScenes[sceneIdx].dialogueAudio[selectedLanguage][existingIdx],

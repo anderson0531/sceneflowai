@@ -699,12 +699,15 @@ export async function PATCH(
             { status: 400 }
           )
         }
-        if (typeof characterName !== 'string' || !characterName.trim()) {
-          return NextResponse.json(
-            { error: 'Dialogue audio update requires characterName' },
-            { status: 400 }
-          )
-        }
+        const resolvedCharacterName =
+          typeof characterName === 'string' && characterName.trim()
+            ? characterName.trim()
+            : typeof scene?.dialogue?.[dialogueIndex]?.character === 'string' &&
+                scene.dialogue[dialogueIndex].character.trim()
+              ? scene.dialogue[dialogueIndex].character.trim()
+              : lineKind === 'narration'
+                ? 'Narrator'
+                : ''
         await persistSceneAudioAtomic({
           projectId: id,
           sceneIndex,
@@ -712,7 +715,7 @@ export async function PATCH(
           audioUrl,
           language: typeof language === 'string' && language.trim() ? language : 'en',
           dialogueIndex,
-          characterName,
+          characterName: resolvedCharacterName,
           duration: typeof duration === 'number' ? duration : undefined,
           provider: typeof provider === 'string' && provider.trim() ? provider : 'veo',
           sourceFingerprint:

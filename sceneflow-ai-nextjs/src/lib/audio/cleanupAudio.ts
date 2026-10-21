@@ -176,9 +176,13 @@ function applyDialogueAudioSlot(scene: any, payload: AudioSlotSavedPayload): any
   }
 
   const previous = existingIndex >= 0 && bucket[existingIndex] ? bucket[existingIndex] : {}
+  const nextCharacter =
+    typeof payload.characterName === 'string' && payload.characterName.trim()
+      ? payload.characterName.trim()
+      : previous.character ?? ''
   const nextEntry = {
     ...previous,
-    character: payload.characterName ?? previous.character,
+    character: nextCharacter,
     dialogueIndex: dialogueIndex ?? previous.dialogueIndex,
     ...(lineId ? { lineId } : {}),
     ...(payload.lineKind ? { kind: payload.lineKind } : {}),
