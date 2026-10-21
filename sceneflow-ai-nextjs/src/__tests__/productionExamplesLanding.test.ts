@@ -239,30 +239,48 @@ describe('Production Examples i18n contract', () => {
     expect(backdrop).not.toContain('Copy script')
   })
 
-  it('gives the three examples a storyline, five episodes, and a copyable pack', () => {
+  it('gives all four examples structured specs, a storyline, breakdown beats/episodes, and a copyable pack', () => {
     expect(EXAMPLE_SERIES_INPUTS.map((series) => series.cardId)).toEqual([
+      'drama',
       'animation',
       'documentary',
       'training',
     ])
     for (const series of EXAMPLE_SERIES_INPUTS) {
+      expect(series.format.length).toBeGreaterThan(5)
+      expect(series.genre.length).toBeGreaterThan(5)
+      expect(series.artStyle.length).toBeGreaterThan(10)
+      expect(series.duration.length).toBeGreaterThan(5)
+      expect(series.continuityLock.length).toBeGreaterThan(10)
+      expect(series.unitLabel.length).toBeGreaterThan(5)
       expect(series.logline.length).toBeGreaterThan(20)
       expect(series.storyline.length).toBeGreaterThan(40)
-      expect(series.episodes).toHaveLength(5)
+      expect(series.episodes.length).toBeGreaterThanOrEqual(5)
+      for (const ep of series.episodes) {
+        expect(ep.duration.length).toBeGreaterThan(2)
+      }
       const text = formatSeriesInput(series)
+      expect(text).toContain('Format: ')
+      expect(text).toContain('Art Style: ')
+      expect(text).toContain('Duration: ')
       expect(text).toContain('Create Series input')
       expect(text).toContain('Storyline')
       expect(text).toContain('1. ')
       expect(text).toContain('5. ')
     }
-    const animation = formatSeriesInput(EXAMPLE_SERIES_INPUTS[0])
+    expect(EXAMPLE_SERIES_INPUTS[0].episodes).toHaveLength(8)
+    const drama = formatSeriesInput(EXAMPLE_SERIES_INPUTS[0])
+    expect(drama).toContain('The White City Current')
+    expect(drama).toContain('1893 atmospheric energy artifact')
+    expect(drama).toContain('8. The Harmonic Grid Transmission and Vindication (6 min)')
+    const animation = formatSeriesInput(EXAMPLE_SERIES_INPUTS[1])
     expect(animation).toContain('Hart House')
     expect(animation).toContain('Millwick')
     expect(animation).not.toMatch(/Cosmic Roommates|Springfield|Homer|Bart Simpson|Marge|Lisa Simpson/)
-    const documentary = formatSeriesInput(EXAMPLE_SERIES_INPUTS[1])
+    const documentary = formatSeriesInput(EXAMPLE_SERIES_INPUTS[2])
     expect(documentary).toContain('superintelligence')
     expect(documentary).toContain('The Long Thought')
-    const training = formatSeriesInput(EXAMPLE_SERIES_INPUTS[2])
+    const training = formatSeriesInput(EXAMPLE_SERIES_INPUTS[3])
     expect(training).toContain('Five Plates')
     expect(training).toContain('Chef Lila Mensah')
 
@@ -298,10 +316,11 @@ describe('Production Examples i18n contract', () => {
 
   it('provides screening room instruction copy', () => {
     expect(enMessages.productionShowcase.screeningRoomInstruction).toContain('reviewer')
-    expect(enMessages.productionShowcase.screeningRoomInstruction).toContain('Screening')
-    expect(enMessages.productionShowcase.seriesDoor).toBe('Series')
-    expect(enMessages.productionShowcase.scriptArDoor).toBe('AR Analysis')
-    expect(enMessages.productionShowcase.screeningDoor).toBe('Screening')
+    expect(enMessages.productionShowcase.screeningRoomInstruction).toContain('Screening Room')
+    expect(enMessages.productionShowcase.seriesDoor).toBe('Series Room')
+    expect(enMessages.productionShowcase.blueprintDoor).toBe('Blueprint Room')
+    expect(enMessages.productionShowcase.scriptArDoor).toBe('Production Stage')
+    expect(enMessages.productionShowcase.screeningDoor).toBe('Screening Room')
   })
 })
 

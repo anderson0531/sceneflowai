@@ -8,10 +8,10 @@ import {
 } from '@/config/landing/productionPipelineDemo'
 
 const STAGE_LABELS = {
-  series: 'Series',
-  blueprint: 'Blueprint',
-  'script-ar': 'AR Analysis',
-  'screening-room': 'Screening',
+  series: 'Series Room',
+  blueprint: 'Blueprint Room',
+  'script-ar': 'Production Stage',
+  'screening-room': 'Screening Room',
 } as const
 
 type Props = {
@@ -34,8 +34,8 @@ export function PipelinePlaceholderStage({ tokenOrSlug, activeCut = null }: Prop
         <p className="text-xs font-semibold uppercase tracking-widest text-cyan-300">{stageLabel}</p>
         <h1 className="mt-3 text-3xl font-semibold">{title}</h1>
         <p className="mt-4 max-w-xl text-sm leading-relaxed text-slate-300">
-          This share is being prepared. Review the production one milestone at a time: Series,
-          Blueprint, AR Analysis, then Screening.
+          This share is being prepared. Review the production one milestone at a time: Series Room,
+          Blueprint Room, Production Stage, then Screening Room.
         </p>
       </main>
     </div>
