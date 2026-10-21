@@ -724,7 +724,7 @@ export function ScenePreviewPlayer({
       } else {
         seekToTrimIn()
       }
-      if (isPlaying && !isVideoFrozen) {
+      if (isPlaying && !isVideoFrozen && !segmentEndHandledRef.current) {
         video.play().catch(() => {})
       }
     } else if (video && newUrl && currentSegment.segment) {
@@ -732,7 +732,7 @@ export function ScenePreviewPlayer({
       if (video.currentTime < trim.inSec - 0.05 || video.currentTime > trim.outSec) {
         video.currentTime = trim.inSec
       }
-      if (isPlaying && !isVideoFrozen) {
+      if (isPlaying && !isVideoFrozen && !segmentEndHandledRef.current) {
         video.play().catch(() => {})
       }
     }

@@ -273,6 +273,26 @@ export function storyboardGeneratingSlotKey(
   return `${sceneIndex}-establishing`
 }
 
+export function resolveDesignatedStillUrl(
+  urlValue: unknown,
+  versionIdValue?: unknown,
+  versionsValue?: unknown
+): string | undefined {
+  const direct = isValidStoryboardMediaUrl(urlValue) ? String(urlValue).trim() : undefined
+  const versionId = typeof versionIdValue === 'string' ? versionIdValue.trim() : ''
+  if (versionId && Array.isArray(versionsValue)) {
+    const versions = versionsValue as Array<{ id?: string; url?: string }>
+    const directInHistory =
+      !direct ||
+      versions.some((v) => typeof v?.url === 'string' && v.url.trim() === direct)
+    if (directInHistory) {
+      const byId = versions.find((v) => v?.id === versionId && isValidStoryboardMediaUrl(v?.url))
+      if (byId?.url) return byId.url.trim()
+    }
+  }
+  return direct
+}
+
 function getRawBeatStoryboardUrl(
   scene: Record<string, unknown>,
   beat: SceneBeat
@@ -281,8 +301,12 @@ function getRawBeatStoryboardUrl(
   const raw =
     (beat.beatId && rawBeats.find((b) => b.beatId === beat.beatId)) ||
     rawBeats[beat.sequenceIndex ?? -1]
-  const url = raw?.storyboardImageUrl?.trim()
-  return isValidStoryboardMediaUrl(url) ? url : undefined
+  const rawRec = raw as unknown as Record<string, unknown> | undefined
+  return resolveDesignatedStillUrl(
+    raw?.storyboardImageUrl,
+    raw?.storyboardImageVersionId ?? rawRec?.storyboardVersionId,
+    raw?.storyboardImageVersions
+  )
 }
 
 function getRawBeatStoryboardEndUrl(
@@ -293,8 +317,11 @@ function getRawBeatStoryboardEndUrl(
   const raw =
     (beat.beatId && rawBeats.find((b) => b.beatId === beat.beatId)) ||
     rawBeats[beat.sequenceIndex ?? -1]
-  const url = raw?.storyboardEndImageUrl?.trim()
-  return isValidStoryboardMediaUrl(url) ? url : undefined
+  return resolveDesignatedStillUrl(
+    raw?.storyboardEndImageUrl,
+    raw?.storyboardEndImageVersionId,
+    raw?.storyboardEndImageVersions
+  )
 }
 
 /** Pre-Vis animatic: resolve start frame URL only; never fall back to end-frame URLs. */
@@ -403,8 +430,12 @@ function getOwnDialogueStoryboardUrl(
 ): string | undefined {
   const dialogue = Array.isArray(scene.dialogue) ? scene.dialogue : []
   const entry = dialogue[dialogueIndex] as Record<string, unknown> | undefined
-  const flatUrl = entry?.storyboardImageUrl
-  if (isValidStoryboardMediaUrl(flatUrl)) return flatUrl.trim()
+  const flatUrl = resolveDesignatedStillUrl(
+    entry?.storyboardImageUrl,
+    entry?.storyboardImageVersionId,
+    entry?.storyboardImageVersions
+  )
+  if (flatUrl) return flatUrl
   return findSegmentDialogueStoryboardUrl(scene, dialogueIndex)
 }
 
@@ -429,9 +460,11 @@ export function enumerateStoryboardFrameSlots(
       let ownImageUrl =
         beat.kind === 'action'
           ? getRawBeatStoryboardUrl(scene, beat)
-          : isValidStoryboardMediaUrl(beat.storyboardImageUrl)
-            ? beat.storyboardImageUrl!.trim()
-            : undefined
+          : resolveDesignatedStillUrl(
+              beat.storyboardImageUrl,
+              beat.storyboardImageVersionId,
+              beat.storyboardImageVersions
+            )
       let dialogueIndex: number | undefined
 
       if (beat.kind !== 'action') {
@@ -753,8 +786,7 @@ export function parseDialogueIndexFromClipId(clipId: string): number | undefined
 
 /** Establishing frame URL for narration/description. */
 export function getEstablishingFrameUrl(scene: Record<string, unknown> | null | undefined): string | undefined {
-  const url = scene?.imageUrl
-  return isValidStoryboardMediaUrl(url) ? url.trim() : undefined
+  return resolveDesignatedStillUrl(scene?.imageUrl, scene?.imageVersionId, scene?.imageVersions)
 }
 
 function findSegmentDialogueStoryboardUrl(

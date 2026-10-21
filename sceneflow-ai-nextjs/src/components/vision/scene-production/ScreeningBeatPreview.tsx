@@ -3,6 +3,11 @@
 import React, { useCallback, useMemo, useState } from 'react'
 import { coerceSceneSfxFlatArray } from '@/lib/script/segmentScript'
 import { listIncludedBeatVideos } from '@/lib/scene/mixerBeatInclude'
+import {
+  presentSegmentForShotMethod,
+  resolveLanguageShotMethod,
+  resolveShotVideoPlaybackRate,
+} from '@/lib/scene/languageShotLocalize'
 import { resolveMixerMusicClips } from '@/lib/scene/mixerScoreMusic'
 import {
   buildSegmentAudioConfigsForSegments,
@@ -67,14 +72,32 @@ export function ScreeningBeatPreview({
   const [measuredSegmentDurations, setMeasuredSegmentDurations] = useState<Record<string, number>>({})
   const [isMuted, setIsMuted] = useState(false)
 
-  const segments = useMemo(
-    () => listIncludedBeatVideos(productionData?.segments),
-    [productionData?.segments]
-  )
-
   const settings = useMemo(
     () => mergeMixerSettingsForLanguage(productionData, language),
     [productionData, language]
+  )
+
+  const segments = useMemo(() => {
+    const included = listIncludedBeatVideos(productionData?.segments, scene)
+    return included.map((segment) => {
+      const method = resolveLanguageShotMethod({
+        config: settings.languageShotConfigs?.[segment.segmentId],
+        klingLipsyncEnabled: settings.klingLipsyncEnabled,
+      })
+      return presentSegmentForShotMethod(segment, language, method)
+    })
+  }, [
+    productionData?.segments,
+    scene,
+    settings.languageShotConfigs,
+    settings.klingLipsyncEnabled,
+    language,
+  ])
+
+  const getVideoPlaybackRate = useCallback(
+    (segmentId: string) =>
+      resolveShotVideoPlaybackRate(settings.languageShotConfigs?.[segmentId]),
+    [settings.languageShotConfigs]
   )
 
   const segmentAudioConfigs = useMemo(
@@ -131,6 +154,7 @@ export function ScreeningBeatPreview({
       dialogueEnabled: settings.audioTracks.dialogue.enabled,
       narrationPrefix,
       getPlaybackRate: getDialoguePlaybackRate,
+      videoPlaybackRate: getVideoPlaybackRate(segment.segmentId),
     }),
     [
       resolvedDialogueClips,
@@ -139,6 +163,7 @@ export function ScreeningBeatPreview({
       settings.audioTracks.dialogue.enabled,
       narrationPrefix,
       getDialoguePlaybackRate,
+      getVideoPlaybackRate,
     ]
   )
 
@@ -340,6 +365,7 @@ export function ScreeningBeatPreview({
       segmentAudioConfigs={segmentAudioConfigs}
       masterSegmentVolume={settings.masterSegmentVolume}
       getPlaybackSegmentDuration={playbackSegmentDuration}
+      getVideoPlaybackRate={getVideoPlaybackRate}
       getSegmentDuration={getSegmentDuration}
       measuredSegmentDurations={measuredSegmentDurations}
       onMeasuredDurationsChange={setMeasuredSegmentDurations}

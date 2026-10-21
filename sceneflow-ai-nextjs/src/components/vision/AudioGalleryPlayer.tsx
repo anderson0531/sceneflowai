@@ -166,6 +166,7 @@ const SceneStrip = React.memo(function SceneStrip({
   onSelect: (idx: number) => void
   size: 'screening' | 'gallery'
 }) {
+  const activeButtonRef = useRef<HTMLButtonElement | null>(null)
   const buttonSize =
     size === 'screening'
       ? isFullscreen
@@ -175,16 +176,25 @@ const SceneStrip = React.memo(function SceneStrip({
         ? 'w-24 h-14'
         : 'w-16 h-10'
 
+  useEffect(() => {
+    activeButtonRef.current?.scrollIntoView({
+      behavior: 'smooth',
+      block: 'nearest',
+      inline: 'nearest',
+    })
+  }, [currentSceneIndex])
+
   return (
     <div
       className={cn(
-        'flex gap-2 overflow-x-auto',
-        size === 'screening' ? 'pb-1 justify-start' : 'pb-2 justify-center'
+        'flex w-full gap-2 overflow-x-auto justify-start',
+        size === 'screening' ? 'pb-1' : 'pb-2'
       )}
     >
       {entries.map((entry) => (
         <button
           key={entry.idx}
+          ref={entry.idx === currentSceneIndex ? activeButtonRef : undefined}
           onClick={() => onSelect(entry.idx)}
           className={cn(
             'flex-shrink-0 rounded overflow-hidden border-2 transition-all relative',
@@ -195,7 +205,12 @@ const SceneStrip = React.memo(function SceneStrip({
           )}
         >
           {entry.thumbUrl ? (
-            <SceneStripThumbnail url={entry.thumbUrl} alt={`Scene ${entry.idx + 1}`} />
+            <>
+              <SceneStripThumbnail url={entry.thumbUrl} alt={`Scene ${entry.idx + 1}`} />
+              <span className="absolute bottom-0.5 left-0.5 rounded bg-black/70 px-1 text-[9px] font-medium leading-tight text-white">
+                {entry.idx + 1}
+              </span>
+            </>
           ) : (
             <div className="w-full h-full bg-gray-700 flex items-center justify-center">
               <span className="text-[10px] text-gray-400">{entry.idx + 1}</span>
@@ -206,6 +221,59 @@ const SceneStrip = React.memo(function SceneStrip({
           )}
         </button>
       ))}
+    </div>
+  )
+})
+
+export interface ScreeningChapterGroup {
+  beatIndex: number
+  title: string
+  sceneIndices: number[]
+  videoSceneIndices: number[]
+}
+
+const ChapterStrip = React.memo(function ChapterStrip({
+  chapters,
+  activeBeatIndex,
+  onSelectChapter,
+}: {
+  chapters: ScreeningChapterGroup[]
+  activeBeatIndex: number | null
+  onSelectChapter: (beatIndex: number) => void
+}) {
+  if (chapters.length === 0) return null
+  return (
+    <div
+      role="tablist"
+      aria-label="Chapter selector"
+      className="flex w-full items-center gap-1.5 overflow-x-auto pb-1.5 justify-start"
+    >
+      {chapters.map((chapter, idx) => {
+        const isActive = chapter.beatIndex === activeBeatIndex
+        const displayLabel = /^chapter\b/i.test(chapter.title)
+          ? chapter.title
+          : `Ch ${idx + 1}: ${chapter.title}`
+        return (
+          <button
+            key={chapter.beatIndex}
+            type="button"
+            role="tab"
+            aria-selected={isActive}
+            onClick={() => onSelectChapter(chapter.beatIndex)}
+            className={cn(
+              'flex-shrink-0 rounded-md border px-2.5 py-1 text-xs font-medium transition-colors whitespace-nowrap',
+              isActive
+                ? 'border-amber-500 bg-amber-600/90 text-white shadow-sm'
+                : 'border-white/10 bg-gray-800/80 text-gray-300 hover:border-amber-500/40 hover:text-white'
+            )}
+          >
+            {displayLabel}
+            <span className="ml-1.5 text-[10px] opacity-75">
+              ({chapter.sceneIndices.length})
+            </span>
+          </button>
+        )
+      })}
     </div>
   )
 })
@@ -235,28 +303,49 @@ function getBeatSceneIndices(
     .map((scene, idx) => {
       if (isPromoCinematicScene(scene)) return -1
       const sceneId = scene?.id || scene?.sceneId || `scene-${idx}`
-      return listIncludedBeatVideos(sceneProductionState?.[sceneId]?.segments).length > 0 ? idx : -1
+      return listIncludedBeatVideos(
+        sceneProductionState?.[sceneId]?.segments,
+        scene as Record<string, unknown>
+      ).length > 0
+        ? idx
+        : -1
     })
     .filter((idx) => idx >= 0)
 }
 
-function getChapterSceneIndices(
+export function getScreeningChapterGroups(
   scenes: any[],
-  currentSceneIndex: number,
   language: string,
   sceneProductionState?: Record<string, SceneProductionData>,
   finalCutSelection?: FinalCutSelection | null
-): number[] {
-  const current = scenes[currentSceneIndex]
-  const beatIndex = current?.blueprintBeatIndex
-  if (typeof beatIndex !== 'number') return []
-  return scenes
-    .map((scene, idx) => {
-      if (isPromoCinematicScene(scene)) return -1
-      if (scene?.blueprintBeatIndex !== beatIndex) return -1
-      return resolveSceneVideoUrl(scene, idx, language, sceneProductionState, finalCutSelection) ? idx : -1
-    })
-    .filter((idx) => idx >= 0)
+): ScreeningChapterGroup[] {
+  const order: number[] = []
+  const groups = new Map<number, ScreeningChapterGroup>()
+  scenes.forEach((scene, idx) => {
+    if (isPromoCinematicScene(scene)) return
+    const beatIndex = scene?.blueprintBeatIndex
+    if (typeof beatIndex !== 'number' || !Number.isFinite(beatIndex)) return
+    let group = groups.get(beatIndex)
+    if (!group) {
+      const rawTitle =
+        typeof scene?.blueprintBeatTitle === 'string' && scene.blueprintBeatTitle.trim()
+          ? scene.blueprintBeatTitle.trim()
+          : `Chapter ${beatIndex + 1}`
+      group = {
+        beatIndex,
+        title: rawTitle,
+        sceneIndices: [],
+        videoSceneIndices: [],
+      }
+      groups.set(beatIndex, group)
+      order.push(beatIndex)
+    }
+    group.sceneIndices.push(idx)
+    if (resolveSceneVideoUrl(scene, idx, language, sceneProductionState, finalCutSelection)) {
+      group.videoSceneIndices.push(idx)
+    }
+  })
+  return order.map((beatIndex) => groups.get(beatIndex)!)
 }
 
 function getVideoSceneIndices(
@@ -681,19 +770,44 @@ export function AudioGalleryPlayer({
     [scenes, selectedLanguage, sceneProductionState, finalCutSelection]
   )
 
-  const chapterSceneIndices = useMemo(
+  const chapterGroups = useMemo(
     () =>
-      getChapterSceneIndices(
+      getScreeningChapterGroups(
         scenes,
-        currentSceneIndex,
         selectedLanguage,
         sceneProductionState,
         finalCutSelection
       ),
-    [scenes, currentSceneIndex, selectedLanguage, sceneProductionState, finalCutSelection]
+    [scenes, selectedLanguage, sceneProductionState, finalCutSelection]
   )
-  const hasChapterPlayback = chapterSceneIndices.length > 0
+
+  const activeChapterGroup = useMemo(() => {
+    if (chapterGroups.length === 0) return null
+    const currentBeatIdx =
+      typeof scenes[currentSceneIndex]?.blueprintBeatIndex === 'number'
+        ? scenes[currentSceneIndex]!.blueprintBeatIndex!
+        : 0
+    return (
+      chapterGroups.find((g) => g.beatIndex === currentBeatIdx) ??
+      chapterGroups.find((g) => g.sceneIndices.includes(currentSceneIndex)) ??
+      chapterGroups[0]!
+    )
+  }, [chapterGroups, scenes, currentSceneIndex])
+
+  const chapterSceneIndices = useMemo(() => {
+    if (!activeChapterGroup) return []
+    return activeChapterGroup.videoSceneIndices.length > 0
+      ? activeChapterGroup.videoSceneIndices
+      : activeChapterGroup.sceneIndices
+  }, [activeChapterGroup])
+
+  const hasChapterPlayback = useMemo(
+    () => chapterGroups.some((g) => g.videoSceneIndices.length > 0),
+    [chapterGroups]
+  )
+
   const chapterTitle =
+    activeChapterGroup?.title ||
     (typeof scenes[currentSceneIndex]?.blueprintBeatTitle === 'string' &&
       scenes[currentSceneIndex].blueprintBeatTitle) ||
     (typeof scenes[currentSceneIndex]?.blueprintBeatIndex === 'number'
@@ -729,24 +843,36 @@ export function AudioGalleryPlayer({
 
   const filmIndices = useMemo(() => filmSceneIndices(scenes), [scenes])
 
+  const navigableSceneIndices = useMemo(() => {
+    if (playbackMode === 'chapter') {
+      return activeChapterGroup?.sceneIndices ?? chapterSceneIndices
+    }
+    return filmIndices.length > 0 ? filmIndices : scenes.map((_, i) => i)
+  }, [playbackMode, activeChapterGroup, chapterSceneIndices, filmIndices, scenes])
+
   const sceneStripEntries = useMemo<SceneStripEntry[]>(() => {
-    const indices =
-      playbackMode === 'video'
-        ? videoSceneIndices
-        : playbackMode === 'chapter'
-          ? chapterSceneIndices
-        : playbackMode === 'beats'
-          ? beatSceneIndices
-          : filmIndices
-    return indices.map((idx) => {
+    return navigableSceneIndices.map((idx) => {
       const scene = scenes[idx]
+      const hasSceneMedia =
+        playbackMode === 'video' || playbackMode === 'chapter'
+          ? videoSceneIndices.includes(idx)
+          : playbackMode === 'beats'
+            ? beatSceneIndices.includes(idx)
+            : sceneHasPlayablePreVisAudio(scene, selectedLanguage)
       return {
         idx,
         thumbUrl: getScenePlayableThumbnailUrl(scene),
-        hasSceneAudio: sceneHasPlayablePreVisAudio(scene, selectedLanguage),
+        hasSceneAudio: hasSceneMedia,
       }
     })
-  }, [scenes, selectedLanguage, playbackMode, videoSceneIndices, beatSceneIndices, chapterSceneIndices, filmIndices])
+  }, [
+    scenes,
+    selectedLanguage,
+    playbackMode,
+    navigableSceneIndices,
+    videoSceneIndices,
+    beatSceneIndices,
+  ])
 
   const useVideoForCurrentScene =
     (playbackMode === 'video' && videoSceneIndices.includes(currentSceneIndex)) ||
@@ -755,6 +881,7 @@ export function AudioGalleryPlayer({
   const playAfterSceneChangeRef = useRef<() => void>(() => {})
   const pausePlaybackRef = useRef<() => void>(() => {})
   const resetPlaybackRef = useRef<() => void>(() => {})
+  const prevPlaybackModeRef = useRef<PlaybackMode>(playbackMode)
 
   const goToScene = useCallback(
     (index: number) => {
@@ -780,22 +907,26 @@ export function AudioGalleryPlayer({
     [scenes.length, onSceneChange]
   )
 
+  const selectChapter = useCallback(
+    (group: ScreeningChapterGroup) => {
+      const firstScene = group.videoSceneIndices[0] ?? group.sceneIndices[0]
+      if (firstScene != null) {
+        goToScene(firstScene)
+      }
+    },
+    [goToScene]
+  )
+
   const goToNextScene = useCallback(() => {
-    if (playbackMode === 'video' || playbackMode === 'beats' || playbackMode === 'chapter') {
-      const indices =
-        playbackMode === 'beats'
-          ? beatSceneIndices
-          : playbackMode === 'chapter'
-            ? chapterSceneIndices
-            : videoSceneIndices
-      const next = findNextVideoSceneIndex(indices, currentSceneIndex)
+    if (playbackMode === 'stream' || playbackMode === 'promo') return
+    if (playbackMode === 'chapter') {
+      const next = findNextVideoSceneIndex(navigableSceneIndices, currentSceneIndex)
       if (next != null) goToScene(next)
       return
     }
-    if (playbackMode === 'stream' || playbackMode === 'promo') return
-    const nextFilm = filmIndices.find((idx) => idx > currentSceneIndex)
+    const nextFilm = findNextVideoSceneIndex(navigableSceneIndices, currentSceneIndex)
     if (nextFilm != null) goToScene(nextFilm)
-  }, [playbackMode, videoSceneIndices, beatSceneIndices, chapterSceneIndices, currentSceneIndex, goToScene, filmIndices])
+  }, [playbackMode, navigableSceneIndices, currentSceneIndex, goToScene])
 
   const handleBeatPlaybackComplete = useCallback(() => {
     if (!autoAdvanceRef.current) return false
@@ -1105,21 +1236,10 @@ export function AudioGalleryPlayer({
   }, [inBeatVisual.primaryUrl, inBeatVisual.overlayUrl, arrivingDissolveMs, screeningPosterUrl])
 
   const goToPrevScene = useCallback(() => {
-    if (playbackMode === 'video' || playbackMode === 'beats' || playbackMode === 'chapter') {
-      const indices =
-        playbackMode === 'beats'
-          ? beatSceneIndices
-          : playbackMode === 'chapter'
-            ? chapterSceneIndices
-            : videoSceneIndices
-      const prev = findPrevVideoSceneIndex(indices, currentSceneIndex)
-      if (prev != null) goToScene(prev)
-      return
-    }
     if (playbackMode === 'stream' || playbackMode === 'promo') return
-    const prevFilm = [...filmIndices].reverse().find((idx) => idx < currentSceneIndex)
-    if (prevFilm != null) goToScene(prevFilm)
-  }, [playbackMode, videoSceneIndices, beatSceneIndices, chapterSceneIndices, currentSceneIndex, goToScene, filmIndices])
+    const prev = findPrevVideoSceneIndex(navigableSceneIndices, currentSceneIndex)
+    if (prev != null) goToScene(prev)
+  }, [playbackMode, navigableSceneIndices, currentSceneIndex, goToScene])
 
   const sceneDisplay = useMemo(
     () =>
@@ -1229,6 +1349,9 @@ export function AudioGalleryPlayer({
   ])
 
   useEffect(() => {
+    const modeChanged = prevPlaybackModeRef.current !== playbackMode
+    prevPlaybackModeRef.current = playbackMode
+    if (!modeChanged) return
     const indices =
       playbackMode === 'video'
         ? videoSceneIndices
@@ -1269,7 +1392,8 @@ export function AudioGalleryPlayer({
     setVideoPlaying(false)
     if (useMasterVideo) return
     if (autoAdvanceRef.current) {
-      const next = findNextVideoSceneIndex(videoSceneIndices, currentSceneIndex)
+      const playableIndices = playbackMode === 'chapter' ? chapterSceneIndices : videoSceneIndices
+      const next = findNextVideoSceneIndex(playableIndices, currentSceneIndex)
       if (next != null) {
         setTimeout(() => {
           shouldAutoPlayVideoRef.current = true
@@ -1277,7 +1401,7 @@ export function AudioGalleryPlayer({
         }, 100)
       }
     }
-  }, [useMasterVideo, videoSceneIndices, currentSceneIndex, goToScene])
+  }, [useMasterVideo, playbackMode, chapterSceneIndices, videoSceneIndices, currentSceneIndex, goToScene])
 
   const activeVideoUrl = usePromoMaster
     ? promoTrailerUrl
@@ -1663,11 +1787,7 @@ export function AudioGalleryPlayer({
             : playbackMode === 'stream'
             ? 'Master'
             : playbackMode === 'chapter'
-            ? `${chapterTitle} ${Math.max(1, chapterSceneIndices.indexOf(currentSceneIndex) + 1)} of ${chapterSceneIndices.length}`
-            : playbackMode === 'video'
-            ? `Scene ${videoScenePosition} of ${videoSceneIndices.length}`
-            : playbackMode === 'beats'
-            ? `Clips ${Math.max(1, beatSceneIndices.indexOf(currentSceneIndex) + 1)} of ${beatSceneIndices.length}`
+            ? `${chapterTitle} ${Math.max(1, navigableSceneIndices.indexOf(currentSceneIndex) + 1)} of ${navigableSceneIndices.length}`
             : `Scene ${filmIndices.indexOf(currentSceneIndex) >= 0 ? filmIndices.indexOf(currentSceneIndex) + 1 : currentSceneIndex + 1} of ${filmIndices.length || scenes.length}`}
         </span>
       </div>
@@ -1898,33 +2018,37 @@ export function AudioGalleryPlayer({
     </>
   )
 
+  const chapterSelectorRow =
+    playbackMode === 'chapter' && chapterGroups.length > 0 ? (
+      <ChapterStrip
+        chapters={chapterGroups}
+        activeBeatIndex={activeChapterGroup?.beatIndex ?? null}
+        onSelectChapter={selectChapter}
+      />
+    ) : null
+
   const sceneThumbnailsRow = (
-    <SceneStrip
-      entries={sceneStripEntries}
-      currentSceneIndex={currentSceneIndex}
-      isFullscreen={isFullscreen}
-      onSelect={goToScene}
-      size="screening"
-    />
+    <div className="flex flex-col gap-2">
+      {chapterSelectorRow}
+      <SceneStrip
+        entries={sceneStripEntries}
+        currentSceneIndex={currentSceneIndex}
+        isFullscreen={isFullscreen}
+        onSelect={goToScene}
+        size="screening"
+      />
+    </div>
   )
 
   const prevSceneDisabled =
-    playbackMode === 'video'
-      ? findPrevVideoSceneIndex(videoSceneIndices, currentSceneIndex) == null
-      : playbackMode === 'chapter'
-        ? findPrevVideoSceneIndex(chapterSceneIndices, currentSceneIndex) == null
-        : playbackMode === 'beats'
-          ? findPrevVideoSceneIndex(beatSceneIndices, currentSceneIndex) == null
-          : currentSceneIndex === 0
+    playbackMode === 'stream' || playbackMode === 'promo'
+      ? true
+      : findPrevVideoSceneIndex(navigableSceneIndices, currentSceneIndex) == null
 
   const nextSceneDisabled =
-    playbackMode === 'video'
-      ? findNextVideoSceneIndex(videoSceneIndices, currentSceneIndex) == null
-      : playbackMode === 'chapter'
-        ? findNextVideoSceneIndex(chapterSceneIndices, currentSceneIndex) == null
-        : playbackMode === 'beats'
-          ? findNextVideoSceneIndex(beatSceneIndices, currentSceneIndex) == null
-          : currentSceneIndex === scenes.length - 1
+    playbackMode === 'stream' || playbackMode === 'promo'
+      ? true
+      : findNextVideoSceneIndex(navigableSceneIndices, currentSceneIndex) == null
 
   const playbackControlsBlock = (
     <>
@@ -2460,9 +2584,10 @@ export function AudioGalleryPlayer({
         {/* Scene thumbnails row — hidden in screening tab and in minimal embed fullscreen */}
         {!useScreeningLayout && !embedFullscreen && (
         <div className={cn(
-          "px-4 pb-4",
+          "flex flex-col gap-2 px-4 pb-4",
           isFullscreen && "absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent pt-8"
         )}>
+          {chapterSelectorRow}
           <SceneStrip
             entries={sceneStripEntries}
             currentSceneIndex={currentSceneIndex}

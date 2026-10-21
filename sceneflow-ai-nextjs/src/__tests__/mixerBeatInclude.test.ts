@@ -1,3 +1,5 @@
+import { readFileSync } from 'fs'
+import { join } from 'path'
 import { describe, expect, it } from 'vitest'
 import {
   filterMixerIncludedSegments,
@@ -6,6 +8,7 @@ import {
   listMixerBeatRows,
   restoreIncludedMixerBeats,
 } from '@/lib/scene/mixerBeatInclude'
+import { enumerateStoryboardFrameSlots, resolveDesignatedStillUrl } from '@/lib/storyboard/types'
 
 describe('mixerBeatInclude', () => {
   it('isMixerBeatIncluded treats undefined and true as included', () => {
@@ -94,5 +97,91 @@ describe('mixerBeatInclude', () => {
     expect(filterMixerIncludedSegments(restored.segments).map((segment) => segment.segmentId)).toEqual([
       'kept',
     ])
+  })
+
+  it('picks only one designated clip per beat and resolves its selected take URL', () => {
+    const scene = {
+      beats: [
+        { beatId: 'bt_1', sequenceIndex: 0, kind: 'action', actionDescription: 'Shot 1' },
+        { beatId: 'bt_2', sequenceIndex: 1, kind: 'action', actionDescription: 'Shot 2' },
+      ],
+    }
+    const segments = [
+      {
+        segmentId: 'seg_1_old',
+        beatId: 'bt_1',
+        sequenceIndex: 0,
+        status: 'COMPLETE',
+        assetType: 'video',
+        activeAssetUrl: 'https://cdn.example/shot1-v1.mp4',
+      },
+      {
+        segmentId: 'seg_1_selected',
+        beatId: 'bt_1',
+        sequenceIndex: 1,
+        status: 'COMPLETE',
+        assetType: 'video',
+        activeAssetUrl: 'https://cdn.example/shot1-stale.mp4',
+        currentTakeId: 'take_2',
+        takes: [
+          { id: 'take_1', assetUrl: 'https://cdn.example/shot1-v1.mp4', status: 'COMPLETE' },
+          { id: 'take_2', assetUrl: 'https://cdn.example/shot1-v2-designated.mp4', status: 'COMPLETE' },
+        ],
+      },
+      {
+        segmentId: 'seg_2',
+        beatId: 'bt_2',
+        sequenceIndex: 2,
+        status: 'COMPLETE',
+        assetType: 'video',
+        activeAssetUrl: 'https://cdn.example/shot2.mp4',
+      },
+    ] as Parameters<typeof listIncludedBeatVideos>[0]
+
+    const included = listIncludedBeatVideos(segments, scene)
+    expect(included).toHaveLength(2)
+    expect(included[0]?.segmentId).toBe('seg_1_selected')
+    expect(included[0]?.activeAssetUrl).toBe('https://cdn.example/shot1-v2-designated.mp4')
+    expect(included[1]?.segmentId).toBe('seg_2')
+  })
+
+  it('resolves the designated still version when storyboardImageVersions exist', () => {
+    expect(
+      resolveDesignatedStillUrl('https://cdn.example/v1.png', 'v2', [
+        { id: 'v1', url: 'https://cdn.example/v1.png' },
+        { id: 'v2', url: 'https://cdn.example/v2-selected.png' },
+      ])
+    ).toBe('https://cdn.example/v2-selected.png')
+
+    const scene = {
+      imageUrl: 'https://cdn.example/scene.png',
+      beats: [
+        {
+          beatId: 'bt_1',
+          sequenceIndex: 0,
+          kind: 'action',
+          actionDescription: 'Hero enters',
+          storyboardImageUrl: 'https://cdn.example/v1.png',
+          storyboardImageVersionId: 'v2',
+          storyboardImageVersions: [
+            { id: 'v1', url: 'https://cdn.example/v1.png' },
+            { id: 'v2', url: 'https://cdn.example/v2-designated.png' },
+          ],
+        },
+      ],
+    }
+    const slots = enumerateStoryboardFrameSlots(scene)
+    expect(slots[0]?.displayImageUrl).toBe('https://cdn.example/v2-designated.png')
+  })
+
+  it('configures SceneStrip for full horizontal scroll, consistent scene selector, and ChapterStrip', () => {
+    const playerSource = readFileSync(
+      join(process.cwd(), 'src/components/vision/AudioGalleryPlayer.tsx'),
+      'utf8'
+    )
+    expect(playerSource).toContain("flex w-full gap-2 overflow-x-auto justify-start")
+    expect(playerSource).toContain('aria-label="Chapter selector"')
+    expect(playerSource).toContain('<ChapterStrip')
+    expect(playerSource).toContain('getScreeningChapterGroups')
   })
 })
