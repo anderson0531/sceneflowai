@@ -8,7 +8,7 @@ export const PRODUCTION_SHOWCASE_COPY = {
     'Each example opens on a short trailer. The longform master — a complete production from Blueprint through Pre-Vis to the final cut — plays in the Screening Room.',
   subtitleTagline: 'Long-form productions. Not clips.',
   screeningRoomInstruction:
-    'Review this production the way a reviewer would — one milestone at a time. Start with Series Room, then Blueprint Room, then the script in Production Stage, and finish in Screening Room.',
+    'Open the Screening Room first to experience the production the way a reviewer would — switch across Pre-Vis, Clips, Scenes, Chapters, Master, and Promo — then inspect the Series Room, Blueprint Room, and Production Stage underneath.',
   trailerLabel: 'Trailer',
   watchLongform: 'Watch the longform',
   seriesDoor: 'Series Room',

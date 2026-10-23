@@ -527,10 +527,14 @@ describe('Production showcase videos', () => {
     expect(card).toContain('aria-label="Production review"')
     expect(card).not.toContain('roughDoorLabel')
     expect(card).not.toContain('previsDoorLabel')
-    expect(card).not.toContain('Pre-Vis')
+    expect(card).toContain('SCREENING_ROOM_FEATURE_MODES')
+    for (const modeLabel of ['Pre-Vis', 'Clips', 'Scenes', 'Chapters', 'Master', 'Promo']) {
+      expect(card).toContain(`'${modeLabel}'`)
+    }
+    expect(card).toContain('Featured Player')
+    expect(card).toContain('grid-cols-3')
     expect(card).not.toContain('Rough Cut')
     expect(card).not.toContain('>Draft<')
-    expect(card).not.toContain('>Master<')
     expect(card).toContain('explorerHandoff')
     expect(player).toContain("aria-label={isMuted ? 'Unmute' : 'Mute'}")
     expect(player).toContain('video.muted = isMuted')

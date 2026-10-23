@@ -8,6 +8,7 @@ import {
   Film,
   GraduationCap,
   Palette,
+  Play,
   Sparkles,
   Target,
 } from 'lucide-react'
@@ -93,6 +94,15 @@ const FALLBACK_STYLE: CardStyle = {
   ctaGradient: 'from-slate-500 to-slate-600',
 }
 
+export const SCREENING_ROOM_FEATURE_MODES = [
+  'Pre-Vis',
+  'Clips',
+  'Scenes',
+  'Chapters',
+  'Master',
+  'Promo',
+] as const
+
 export function ProductionStyleCard({
   card,
   index,
@@ -135,7 +145,9 @@ export function ProductionStyleCard({
     screening: screeningDoorLabel,
   }
   const [reviewOpen, setReviewOpen] = useState(false)
-  const [activeMilestone, setActiveMilestone] = useState<ReviewerMilestoneId>('series')
+  const [activeMilestone, setActiveMilestone] = useState<ReviewerMilestoneId>('screening')
+  const screeningMilestone = media.milestones.find((milestone) => milestone.id === 'screening')
+  const supportingMilestones = media.milestones.filter((milestone) => milestone.id !== 'screening')
 
   const startProduction = () => {
     window.location.href = getLoginUrl({
@@ -193,17 +205,60 @@ export function ProductionStyleCard({
           <p className="mb-4 text-sm leading-relaxed text-gray-200">{screeningRoomInstruction}</p>
         ) : null}
 
-        <nav aria-label="Production review" className="pointer-events-auto mb-4 grid grid-cols-2 gap-2">
-          {media.milestones.map((milestone) => (
+        <nav aria-label="Production review" className="pointer-events-auto mb-4 space-y-2.5">
+          {screeningMilestone ? (
             <button
-              key={milestone.id}
+              key={screeningMilestone.id}
               type="button"
-              onClick={() => openReview(milestone.id)}
-              className={`rounded-xl bg-gradient-to-r px-3 py-3 text-sm font-semibold text-white ${style.ctaGradient}`}
+              onClick={() => openReview(screeningMilestone.id)}
+              className={`group/screening relative flex w-full flex-col gap-2.5 rounded-xl bg-gradient-to-r p-3.5 text-left text-white shadow-lg ring-1 ring-white/25 transition-all hover:brightness-110 hover:ring-white/40 ${style.ctaGradient}`}
             >
-              {milestoneLabels[milestone.id]}
+              <div className="flex w-full items-center justify-between gap-2">
+                <div className="flex items-center gap-2.5">
+                  <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-black/25 ring-1 ring-white/20">
+                    <Play className="h-4 w-4 fill-current text-white" />
+                  </span>
+                  <div>
+                    <span className="block text-[10px] font-bold uppercase tracking-widest text-white/80">
+                      Featured Player
+                    </span>
+                    <span className="text-base font-bold tracking-tight text-white">
+                      {milestoneLabels[screeningMilestone.id]}
+                    </span>
+                  </div>
+                </div>
+                <span className="inline-flex items-center gap-1 rounded-full bg-black/25 px-2.5 py-1 text-xs font-semibold text-white ring-1 ring-white/20 transition-transform group-hover/screening:translate-x-0.5">
+                  Open Player
+                  <ArrowRight className="h-3.5 w-3.5" />
+                </span>
+              </div>
+              <div className="flex flex-wrap items-center gap-1.5">
+                {SCREENING_ROOM_FEATURE_MODES.map((modeLabel) => (
+                  <span
+                    key={modeLabel}
+                    className="rounded-md bg-black/30 px-2 py-0.5 text-[11px] font-medium text-white/95 ring-1 ring-white/15"
+                  >
+                    {modeLabel}
+                  </span>
+                ))}
+              </div>
             </button>
-          ))}
+          ) : null}
+
+          {supportingMilestones.length > 0 ? (
+            <div className="grid grid-cols-3 gap-2">
+              {supportingMilestones.map((milestone) => (
+                <button
+                  key={milestone.id}
+                  type="button"
+                  onClick={() => openReview(milestone.id)}
+                  className="rounded-lg border border-white/15 bg-slate-900/75 px-2.5 py-2 text-center text-xs font-medium text-gray-200 transition-colors hover:border-white/30 hover:bg-slate-800/90 hover:text-white"
+                >
+                  {milestoneLabels[milestone.id]}
+                </button>
+              ))}
+            </div>
+          ) : null}
         </nav>
 
         {media.longformHref ? (

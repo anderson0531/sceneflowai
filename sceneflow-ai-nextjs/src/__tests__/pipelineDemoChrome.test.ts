@@ -36,4 +36,26 @@ describe('Pipeline demo chrome', () => {
       expect(readSource(relativePath), relativePath).not.toContain('PipelineDemoChrome')
     }
   })
+
+  it('uses the modern Screening Room loading display instead of legacy Loading Storyboard', () => {
+    const loadingComponent = readSource(
+      'src/components/screening-room/ScreeningRoomLoadingState.tsx'
+    )
+    expect(loadingComponent).toContain('Loading Screening Room')
+    for (const stage of ['Pre-Vis', 'Clips', 'Scenes', 'Chapters', 'Master', 'Promo']) {
+      expect(loadingComponent).toContain(`'${stage}'`)
+    }
+
+    for (const relativePath of [
+      'src/app/[slug]/SharedStoryboardSlugPage.tsx',
+      'src/app/share/storyboard/[shareToken]/page.tsx',
+      'src/app/share/screening-room/[shareToken]/page.tsx',
+      'src/app/screening-room/loading.tsx',
+    ]) {
+      const source = readSource(relativePath)
+      expect(source, relativePath).toContain('ScreeningRoomLoadingState')
+      expect(source, relativePath).not.toContain('Loading Storyboard')
+      expect(source, relativePath).not.toContain('Loading Pre-vis')
+    }
+  })
 })

@@ -3,8 +3,9 @@
 import React, { Suspense, use, useEffect, useMemo, useState } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { ScreeningRoomV2 } from '@/components/vision/ScreeningRoomV2'
+import { ScreeningRoomLoadingState } from '@/components/screening-room/ScreeningRoomLoadingState'
 import { readFinalCutSelection } from '@/hooks/final-cut/useFinalCutSelection'
-import { Loader, AlertCircle } from 'lucide-react'
+import { AlertCircle } from 'lucide-react'
 import { PipelinePlaceholderStage } from '@/components/landing/PipelinePlaceholderStage'
 import { TrailerPlayer } from '@/components/landing/TrailerPlayer'
 import {
@@ -44,13 +45,7 @@ function playbackForCut(
 
 export default function SharedScreeningRoomPage({ params }: { params: Promise<{ shareToken: string }> }) {
   return (
-    <Suspense
-      fallback={
-        <div className="min-h-screen bg-black flex items-center justify-center text-white">
-          <Loader className="w-12 h-12 animate-spin" />
-        </div>
-      }
-    >
+    <Suspense fallback={<ScreeningRoomLoadingState />}>
       <SharedScreeningRoomPageInner params={params} />
     </Suspense>
   )
@@ -126,15 +121,7 @@ function SharedScreeningRoomPageInner({ params }: { params: Promise<{ shareToken
   }
 
   if (loading) {
-    return (
-      <div className="min-h-screen bg-black flex items-center justify-center">
-        <div className="text-center text-white">
-          <Loader className="w-12 h-12 animate-spin mx-auto mb-4" />
-          <p className="text-xl">Loading Screening Room...</p>
-          <p className="text-sm text-gray-400 mt-2">Powered by Sceneflow</p>
-        </div>
-      </div>
-    )
+    return <ScreeningRoomLoadingState />
   }
 
   if (error) {

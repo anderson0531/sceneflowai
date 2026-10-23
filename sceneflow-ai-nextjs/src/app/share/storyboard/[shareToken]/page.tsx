@@ -2,7 +2,8 @@
 
 import React, { use, useEffect, useState } from 'react'
 import { StandaloneStoryboardPlayer } from '@/components/vision/StandaloneStoryboardPlayer'
-import { Loader, AlertCircle } from 'lucide-react'
+import { ScreeningRoomLoadingState } from '@/components/screening-room/ScreeningRoomLoadingState'
+import { AlertCircle } from 'lucide-react'
 
 export default function SharedStoryboardPage({ params }: { params: Promise<{ shareToken: string }> }) {
   const { shareToken } = use(params)
@@ -37,15 +38,7 @@ export default function SharedStoryboardPage({ params }: { params: Promise<{ sha
   }, [shareToken])
 
   if (loading) {
-    return (
-      <div className="min-h-screen bg-black flex items-center justify-center">
-        <div className="text-center text-white">
-          <Loader className="w-12 h-12 animate-spin mx-auto mb-4" />
-          <p className="text-xl">Loading Pre-vis...</p>
-          <p className="text-sm text-gray-400 mt-2">Powered by Sceneflow</p>
-        </div>
-      </div>
-    )
+    return <ScreeningRoomLoadingState />
   }
 
   if (error) {

@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { StandaloneStoryboardPlayer } from '@/components/vision/StandaloneStoryboardPlayer'
-import { Loader } from 'lucide-react'
+import { ScreeningRoomLoadingState } from '@/components/screening-room/ScreeningRoomLoadingState'
 import { notFound } from 'next/navigation'
 
 export default function SharedStoryboardSlugPage({ slug }: { slug: string }) {
@@ -36,15 +36,7 @@ export default function SharedStoryboardSlugPage({ slug }: { slug: string }) {
   }, [slug])
 
   if (loading) {
-    return (
-      <div className="min-h-screen bg-black flex items-center justify-center">
-        <div className="text-center text-white">
-          <Loader className="w-12 h-12 animate-spin mx-auto mb-4" />
-          <p className="text-xl">Loading Storyboard...</p>
-          <p className="text-sm text-gray-400 mt-2">Powered by Sceneflow</p>
-        </div>
-      </div>
-    )
+    return <ScreeningRoomLoadingState />
   }
 
   if (error || !projectData) {
