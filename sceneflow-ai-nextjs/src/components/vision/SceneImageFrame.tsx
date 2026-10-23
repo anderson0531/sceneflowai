@@ -498,7 +498,7 @@ export function SceneImageFrame({
         className={`relative bg-black ${
           expandable || containMedia
             ? `mx-auto aspect-video ${
-                isFullscreen ? 'h-screen w-screen max-h-none max-w-none' : 'w-[80%]'
+                isFullscreen ? 'h-screen w-screen max-h-none max-w-none' : 'w-[80%] max-h-[42vh]'
               }`
             : 'aspect-video bg-slate-800/50'
         }`}

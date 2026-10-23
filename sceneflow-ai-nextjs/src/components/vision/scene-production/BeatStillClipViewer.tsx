@@ -7,7 +7,7 @@ import { saveImageFile, saveVideoFile } from '@/lib/download/saveFile'
 import { cn } from '@/lib/utils'
 
 /** 80% of the card so Direction, Still, and Clip previews match. */
-const PREVIEW_STAGE = 'relative mx-auto aspect-video w-[80%] bg-black'
+const PREVIEW_STAGE = 'relative mx-auto aspect-video w-[80%] max-h-[38vh] bg-black'
 
 interface BeatStillClipViewerProps {
   stillUrl?: string

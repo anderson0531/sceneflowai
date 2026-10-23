@@ -18,7 +18,7 @@ import { useTranslations } from 'next-intl'
 import { ASSISTANT } from '@/lib/constants/assistant'
 import dynamic from 'next/dynamic'
 import { motion, AnimatePresence } from 'framer-motion'
-import { FileText, Eye, Sparkles, Loader, Loader2, Play, Volume2, VolumeX, Image as ImageIcon, ChevronRight, ChevronUp, ChevronLeft, Music, Upload, StopCircle, AlertTriangle, ChevronDown, Check, Pause, Download, Zap, Camera, RefreshCw, Trash2, Film, Users, Star, BarChart3, Clock, Image, Printer, Info, Clapperboard, CheckCircle, CheckCircle2, Circle, ArrowRight, Bookmark, BookmarkPlus, BookmarkCheck, BookMarked, Lightbulb, Maximize2, Expand, Bot, PenTool, FolderPlus, Pencil, Layers, List, Calculator, FileCheck, Lock, Copy, Languages, Globe, Library, ListVideo, Video, Waves, BookOpen, Target, Share2, GalleryHorizontal } from 'lucide-react'
+import { FileText, Eye, Sparkles, Loader, Loader2, Play, Volume2, VolumeX, Image as ImageIcon, ChevronRight, ChevronUp, ChevronLeft, Music, Upload, StopCircle, AlertTriangle, ChevronDown, Check, Pause, Download, Zap, Camera, RefreshCw, Trash2, Film, Users, Star, BarChart3, Clock, Image, Printer, Info, Clapperboard, CheckCircle, CheckCircle2, Circle, ArrowRight, Bookmark, BookmarkPlus, BookmarkCheck, BookMarked, Lightbulb, Maximize2, Minimize2, Expand, Bot, PenTool, FolderPlus, Pencil, Layers, List, Calculator, FileCheck, Lock, Copy, Languages, Globe, Library, ListVideo, Video, Waves, BookOpen, Target, Share2, GalleryHorizontal } from 'lucide-react'
 import { SceneWorkflowCoPilot, type WorkflowStep } from './SceneWorkflowCoPilot'
 import { SceneWorkflowCoPilotPanel } from './SceneWorkflowCoPilotPanel'
 import {
@@ -878,8 +878,8 @@ function SortableSceneCard({ id, onAddScene, onDeleteScene, onEditScene, onGener
   } = useSortable({ id })
 
   const style = {
-    transform: CSS.Transform.toString(transform),
-    transition,
+    transform: props.workflowFullscreen ? undefined : CSS.Transform.toString(transform),
+    transition: props.workflowFullscreen ? undefined : transition,
   }
 
   return (
@@ -1108,20 +1108,27 @@ export function ScriptPanel({ script, onScriptChange, onAudioSlotSaved, isGenera
   const [studioHeaderCollapsed, setStudioHeaderCollapsed] = useState(() => {
     if (typeof window !== 'undefined') {
       const saved = localStorage.getItem('productionStudioHeaderCollapsed')
-      return saved ? JSON.parse(saved) : false
+      return saved ? JSON.parse(saved) : true
     }
-    return false
+    return true
   })
   const [chapterSectionCollapsed, setChapterSectionCollapsed] = useState(() => {
     if (typeof window !== 'undefined') {
       const saved = localStorage.getItem('productionStudioChapterCollapsed')
-      return saved ? JSON.parse(saved) : false
+      return saved ? JSON.parse(saved) : true
     }
-    return false
+    return true
   })
   const [sceneTitleCollapsed, setSceneTitleCollapsed] = useState(() => {
     if (typeof window !== 'undefined') {
       const saved = localStorage.getItem('productionStudioSceneTitleCollapsed')
+      return saved ? JSON.parse(saved) : false
+    }
+    return false
+  })
+  const [workflowFullscreen, setWorkflowFullscreen] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('productionSceneWorkflowFullscreen')
       return saved ? JSON.parse(saved) : false
     }
     return false
@@ -1167,6 +1174,30 @@ export function ScriptPanel({ script, onScriptChange, onAudioSlotSaved, isGenera
       localStorage.setItem('productionStudioSceneTitleCollapsed', JSON.stringify(sceneTitleCollapsed))
     }
   }, [sceneTitleCollapsed])
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('productionSceneWorkflowFullscreen', JSON.stringify(workflowFullscreen))
+    }
+  }, [workflowFullscreen])
+
+  useEffect(() => {
+    if (!workflowFullscreen) return
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key !== 'Escape' || event.defaultPrevented) return
+      if (document.fullscreenElement) return
+      if (
+        document.querySelector(
+          '[role="dialog"][data-state="open"], [role="alertdialog"][data-state="open"]'
+        )
+      ) {
+        return
+      }
+      setWorkflowFullscreen(false)
+    }
+    window.addEventListener('keydown', onKeyDown)
+    return () => window.removeEventListener('keydown', onKeyDown)
+  }, [workflowFullscreen])
   
   // Image Edit Modal state
   const [imageEditModalOpen, setImageEditModalOpen] = useState(false)
@@ -3518,6 +3549,8 @@ export function ScriptPanel({ script, onScriptChange, onAudioSlotSaved, isGenera
                       setSceneNavigationCollapsed={setSceneNavigationCollapsed}
                       sceneTitleCollapsed={sceneTitleCollapsed}
                       setSceneTitleCollapsed={setSceneTitleCollapsed}
+                      workflowFullscreen={workflowFullscreen}
+                      setWorkflowFullscreen={setWorkflowFullscreen}
                       sceneNavigationView={sceneNavigationView}
                       setSceneNavigationView={setSceneNavigationView}
                       showProductionProgress={showProductionProgress}
@@ -4167,6 +4200,8 @@ interface SceneCardProps {
   setSceneNavigationCollapsed?: (collapsed: boolean) => void
   sceneTitleCollapsed?: boolean
   setSceneTitleCollapsed?: (collapsed: boolean) => void
+  workflowFullscreen?: boolean
+  setWorkflowFullscreen?: (fullscreen: boolean) => void
   sceneNavigationView?: 'list' | 'timeline'
   setSceneNavigationView?: (view: 'list' | 'timeline') => void
   showProductionProgress?: boolean
@@ -4418,6 +4453,8 @@ function SceneCard({
   setSceneNavigationCollapsed,
   sceneTitleCollapsed = false,
   setSceneTitleCollapsed,
+  workflowFullscreen = false,
+  setWorkflowFullscreen,
   sceneNavigationView = 'list',
   setSceneNavigationView,
   showProductionProgress = false,
@@ -4523,6 +4560,7 @@ function SceneCard({
   }
   const cardRef = useRef<HTMLDivElement>(null)
   const timelineStripRef = useRef<HTMLDivElement>(null)
+  const workflowWindowRef = useRef<HTMLDivElement>(null)
   const navigationTimeline = useMemo(
     () => buildSceneNavigationTimeline(Array.isArray(scenes) ? scenes : []),
     [scenes]
@@ -5613,9 +5651,9 @@ function SceneCard({
     <div
       ref={cardRef}
       id={domId}
-      className={`relative overflow-hidden p-5 rounded-2xl border transition-all shadow-[0_15px_40px_rgba(8,8,20,0.35)] bg-slate-950/50 backdrop-blur ${selectionClasses} ${bookmarkClasses} ${recentlyUpdatedClasses} ${isOutline ? 'bg-amber-500/10 border-amber-300/40' : ''}`}
+      className={`relative p-4 sm:p-5 rounded-2xl border transition-all shadow-[0_15px_40px_rgba(8,8,20,0.35)] bg-slate-950/50 ${selectionClasses} ${bookmarkClasses} ${recentlyUpdatedClasses} ${isOutline ? 'bg-amber-500/10 border-amber-300/40' : ''}`}
     >
-      <div className={`pointer-events-none absolute inset-0 rounded-2xl bg-gradient-to-br ${accentGradient} opacity-40`} />
+      <div className={`pointer-events-none absolute inset-0 overflow-hidden rounded-2xl backdrop-blur bg-gradient-to-br ${accentGradient} opacity-40`} />
       <div className="relative z-[1]">
         {/* Top Row: Control Buttons */}
         <div className="flex items-center justify-between gap-3 py-2 border-b border-gray-200 dark:border-gray-700 mb-2">
@@ -5900,6 +5938,46 @@ function SceneCard({
           
           {/* Right Side: Scene Actions */}
           <div className="flex items-center gap-2">
+            {!isOutline && setWorkflowFullscreen && (
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        setWorkflowFullscreen(!workflowFullscreen)
+                      }}
+                      aria-label={
+                        workflowFullscreen
+                          ? 'Exit scene workflow fullscreen'
+                          : 'Open scene workflow in fullscreen window'
+                      }
+                      aria-pressed={workflowFullscreen}
+                      className={`inline-flex h-8 items-center gap-1.5 rounded-full border px-2.5 text-xs font-medium transition-colors ${
+                        workflowFullscreen
+                          ? 'border-indigo-400 bg-indigo-500/30 text-indigo-100'
+                          : 'border-indigo-500/40 bg-indigo-500/15 text-indigo-200 hover:bg-indigo-500/25 hover:text-white'
+                      }`}
+                    >
+                      {workflowFullscreen ? (
+                        <Minimize2 className="w-3.5 h-3.5" />
+                      ) : (
+                        <Maximize2 className="w-3.5 h-3.5" />
+                      )}
+                      <span className="hidden sm:inline">
+                        {workflowFullscreen ? 'Exit Fullscreen' : 'Fullscreen Workflow'}
+                      </span>
+                    </button>
+                  </TooltipTrigger>
+                  <TooltipContent className="bg-gray-900 dark:bg-gray-800 text-white border border-gray-700">
+                    {workflowFullscreen
+                      ? 'Return scene workflow to standard view (Esc)'
+                      : 'Expand scene workflow to fit fullscreen window'}
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            )}
 
             {/* Bookmark toggle button */}
             {onBookmarkToggle && (
@@ -6503,10 +6581,200 @@ function SceneCard({
             return null
           })()}
           
-          {/* Tab Content Container - No duplicate tabs, tabs are in header */}
+          {/* Tab Content Container - Dynamic Viewport-Fitted Scene Workflow Window */}
           {!isOutline && (
-            <div className="mt-4">
-              <div className="bg-slate-800/30 rounded-lg p-4 min-h-[200px]">
+            <div className="mt-3">
+              <div
+                ref={workflowWindowRef}
+                data-testid="scene-workflow-window"
+                data-workflow-fullscreen={workflowFullscreen ? 'true' : 'false'}
+                className={
+                  workflowFullscreen
+                    ? 'fixed inset-0 z-40 flex h-dvh w-screen flex-col overflow-hidden bg-slate-950 p-3 sm:p-4 shadow-2xl'
+                    : 'flex max-h-[calc(100dvh-10.5rem)] min-h-[24rem] flex-col overflow-hidden rounded-xl border border-slate-700/60 bg-slate-900/50 p-3 sm:p-4 shadow-lg'
+                }
+              >
+                {workflowFullscreen && (
+                  <div
+                    data-testid="scene-workflow-fullscreen-header"
+                    className="mb-2 flex shrink-0 flex-wrap items-center justify-between gap-2 border-b border-slate-800 pb-2"
+                  >
+                    <div className="flex min-w-0 items-center gap-1.5">
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          if (onNavigateScene && sceneIdx > 0) {
+                            onNavigateScene(sceneIdx - 1)
+                          }
+                        }}
+                        disabled={sceneIdx === 0}
+                        aria-label="Previous scene"
+                        title="Previous scene"
+                        className="rounded-md border border-slate-700 bg-slate-900 p-1.5 text-slate-300 transition-colors hover:bg-slate-800 hover:text-white disabled:cursor-not-allowed disabled:opacity-30"
+                      >
+                        <ChevronLeft className="h-4 w-4" />
+                      </button>
+                      {totalScenes && totalScenes > 1 && Array.isArray(scenes) ? (
+                        <select
+                          aria-label="Jump to scene"
+                          value={sceneIdx}
+                          onChange={(e) => {
+                            const nextIdx = Number(e.target.value)
+                            if (Number.isFinite(nextIdx) && onNavigateScene) {
+                              onNavigateScene(nextIdx)
+                            }
+                          }}
+                          className="h-8 max-w-[20rem] sm:max-w-[28rem] truncate rounded-md border border-indigo-500/40 bg-slate-900 px-2.5 text-xs font-semibold text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                        >
+                          {scenes.map((listScene: any, idx: number) => (
+                            <option key={idx} value={idx}>
+                              SCENE {idx + 1}/{totalScenes}: {sceneHeadingLabel(listScene, idx)}
+                            </option>
+                          ))}
+                        </select>
+                      ) : (
+                        <span className="truncate rounded-md border border-indigo-500/40 bg-slate-900 px-2.5 py-1 text-xs font-semibold text-white">
+                          SCENE {sceneNumber}: {formattedHeading}
+                        </span>
+                      )}
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          if (onNavigateScene && totalScenes && sceneIdx < totalScenes - 1) {
+                            onNavigateScene(sceneIdx + 1)
+                          }
+                        }}
+                        disabled={!totalScenes || sceneIdx >= totalScenes - 1}
+                        aria-label="Next scene"
+                        title="Next scene"
+                        className="rounded-md border border-slate-700 bg-slate-900 p-1.5 text-slate-300 transition-colors hover:bg-slate-800 hover:text-white disabled:cursor-not-allowed disabled:opacity-30"
+                      >
+                        <ChevronRight className="h-4 w-4" />
+                      </button>
+                      <span className="hidden md:inline-flex items-center gap-1 rounded-full border border-indigo-700/50 bg-indigo-950/60 px-2 py-0.5 text-[10px] font-medium tabular-nums text-indigo-200">
+                        {formatNavigationClock(sceneDurationSeconds)}
+                      </span>
+                    </div>
+
+                    <div className="flex flex-wrap items-center gap-1.5">
+                      {onRecommendationsOpenChange && (
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            onRecommendationsOpenChange(true)
+                          }}
+                          className={`${sceneToolbarControl} font-medium border border-violet-400/50 bg-violet-500/20 text-violet-200 hover:bg-violet-500/30`}
+                        >
+                          <Lightbulb className="w-3.5 h-3.5" />
+                          <span className="hidden lg:inline">{tStudio('recommendations')}</span>
+                          {pendingRecommendationCount(scene.audienceAnalysis, scene.polishAnalysis) > 0 && (
+                            <span className="flex items-center justify-center h-4 min-w-4 px-1 text-[10px] font-bold bg-violet-500/40 text-violet-100 rounded-full tabular-nums">
+                              {pendingRecommendationCount(scene.audienceAnalysis, scene.polishAnalysis)}
+                            </span>
+                          )}
+                        </button>
+                      )}
+                      {onPolishScene && (
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            void handlePolishClick()
+                          }}
+                          disabled={polishingSceneIndex === sceneIdx}
+                          className={`${sceneToolbarControl} font-medium border border-emerald-400/60 text-emerald-200 hover:bg-emerald-900/30`}
+                        >
+                          {polishingSceneIndex === sceneIdx ? (
+                            <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                          ) : (
+                            <Sparkles className="w-3.5 h-3.5" />
+                          )}
+                          <span className="hidden lg:inline">{tStudio('polish')}</span>
+                        </button>
+                      )}
+                      {onEditScene && (
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            onEditScene(sceneIdx)
+                          }}
+                          className={`${sceneToolbarControl} font-medium border border-blue-400/60 text-blue-200 hover:bg-blue-900/30`}
+                        >
+                          <Pencil className="w-3.5 h-3.5" />
+                          <span>Scene Director</span>
+                        </button>
+                      )}
+                      <GroupedLanguageSelector
+                        value={selectedLanguage}
+                        onValueChange={(code) => onLanguageChange?.(code)}
+                        size="sm"
+                        intent="generate"
+                        placeholder="Generate language..."
+                        className="border-slate-600 bg-transparent text-slate-200"
+                      />
+                      {activeStep && projectId && onScriptChange && sceneBeatsForTabs.length > 0 && (
+                        <button
+                          type="button"
+                          disabled={isExpressAudioRunning || !!isExpressRunning}
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            void runShotDirectionAgent()
+                          }}
+                          className={`${sceneToolbarControl} font-medium border border-teal-500/60 text-teal-200 hover:bg-teal-900/30`}
+                        >
+                          {shotDirectionProgress ? (
+                            <>
+                              <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                              <span>
+                                Shot Direction {shotDirectionProgress.done}/{shotDirectionProgress.total}
+                              </span>
+                            </>
+                          ) : (
+                            <>
+                              <Clapperboard className="w-3.5 h-3.5" />
+                              <span className="hidden xl:inline">Shot Direction Agent</span>
+                            </>
+                          )}
+                        </button>
+                      )}
+                      {activeStep && (
+                        <button
+                          type="button"
+                          disabled={
+                            isExpressAudioRunning ||
+                            !!isExpressRunning ||
+                            shotDirectionRunning ||
+                            !(productionReadiness?.isAudioReady ?? true) ||
+                            !(productionReadiness?.hasNarrationVoice ?? true) ||
+                            (!onExpressSceneGenerate && expressAudioItems.length === 0)
+                          }
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            setExpressGenerateAllDialogOpen(true)
+                          }}
+                          className={`${sceneToolbarControl} font-medium bg-sky-600 text-white hover:bg-sky-500`}
+                        >
+                          {isExpressAudioRunning || !!isExpressRunning ? (
+                            <>
+                              <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                              <span>Scene Agent...</span>
+                            </>
+                          ) : (
+                            <>
+                              <Zap className="w-3.5 h-3.5" />
+                              <span>Scene Agent</span>
+                            </>
+                          )}
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                )}
+
                 {/* Staleness Warning Banner */}
                 {(() => {
                   // Direction is now hidden, so show Direction stale warning on Frame tab too
@@ -6523,7 +6791,7 @@ function SceneCard({
                       : 'storyboardPreViz'
                   
                   return (
-                    <div className="mb-4 p-3 bg-amber-500/10 border border-amber-500/30 rounded-lg">
+                    <div className="mb-2 shrink-0 p-2.5 bg-amber-500/10 border border-amber-500/30 rounded-lg">
                       <div className="flex items-center gap-2 text-amber-300">
                         <AlertTriangle className="w-4 h-4 flex-shrink-0" />
                         <span className="text-sm font-medium">
@@ -6572,7 +6840,7 @@ function SceneCard({
                 })()}
                 
                 {(
-                  <div className="space-y-4">
+                  <div className="flex min-h-0 flex-1 flex-col gap-2">
                   {(() => {
                     const mood = scene.sceneDirection?.mood || scene.mood
                     const intent = scene.sceneDirection?.intent || scene.objective
@@ -6586,7 +6854,7 @@ function SceneCard({
                     ].filter((bit): bit is { label: string; value: string; capitalize?: boolean } => bit !== null)
                     if (contextBits.length === 0) return null
                     return (
-                      <p className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-slate-400">
+                      <p className="flex shrink-0 flex-wrap items-center gap-x-3 gap-y-1 text-xs text-slate-400">
                         {contextBits.map((bit) => (
                           <span key={bit.label} className="inline-flex min-w-0 items-center gap-1">
                             <span className="text-[10px] uppercase tracking-wide text-slate-500">{bit.label}</span>
@@ -6693,67 +6961,128 @@ function SceneCard({
                     {(slots) => (
                     <Tabs
                       value={activeSceneTab}
-                      onValueChange={(v) => setActiveSceneTab(v as ProductionWorkflowTab)}
-                      className="w-full"
+                      onValueChange={(v) => {
+                        setActiveSceneTab(v as ProductionWorkflowTab)
+                        if (!workflowFullscreen) {
+                          requestAnimationFrame(() => {
+                            workflowWindowRef.current?.scrollIntoView({
+                              behavior: 'smooth',
+                              block: 'nearest',
+                            })
+                          })
+                        }
+                      }}
+                      className="flex min-h-0 flex-1 flex-col w-full"
                     >
-                      <div className="overflow-x-auto rounded-lg border border-indigo-500/40 bg-slate-950">
-                        <TabsList
-                          aria-label="Scene workflow"
-                          className="inline-flex h-auto w-max min-w-full flex-nowrap items-center gap-0.5 border-0 bg-transparent p-1 text-slate-400"
-                        >
-                          <TabsTrigger value="direction" className={sceneTabTriggerClass}>
-                            <Film className="w-3.5 h-3.5 shrink-0" />
-                            Direction
-                          </TabsTrigger>
-                          <TabsTrigger value="beats" title="Dialogue, narration, and sound effects for each shot" className={sceneTabTriggerClass}>
-                            <FileText className="w-3.5 h-3.5 shrink-0" />
-                            Audio
-                            {sceneBeatsForTabs.length > 0 && (
-                              <span className="text-[10px] font-medium opacity-60">
-                                ({sceneBeatsForTabs.length}
-                                {excludedBeatCount > 0 ? `, ${excludedBeatCount} excluded` : ''})
-                              </span>
-                            )}
-                          </TabsTrigger>
-                          <TabsTrigger value="music" className={sceneTabTriggerClass}>
-                            <Music className="w-3.5 h-3.5 shrink-0" />
-                            Music
-                          </TabsTrigger>
-                          <TabsTrigger value="references" className={sceneTabTriggerClass}>
-                            <Library className="w-3.5 h-3.5 shrink-0" />
-                            Continuity
-                            {sceneRequiredReferences.length > 0 && (
-                              <span
-                                className={`text-[10px] font-medium ${missingSceneReferenceCount > 0 ? 'text-amber-500' : 'opacity-60'}`}
-                              >
-                                ({sceneRequiredReferences.length - missingSceneReferenceCount}/
-                                {sceneRequiredReferences.length})
-                              </span>
-                            )}
-                          </TabsTrigger>
-                          <TabsTrigger value="previs" className={sceneTabTriggerClass}>
-                            <Clapperboard className="w-3.5 h-3.5 shrink-0" />
-                            Stills
-                            {preVisFrameStats.total > 0 && (
-                              <span className="text-[10px] font-medium opacity-60">
-                                ({preVisFrameStats.withImage}/{preVisFrameStats.total})
-                              </span>
-                            )}
-                          </TabsTrigger>
-                          <TabsTrigger value="video" className={sceneTabTriggerClass}>
-                            <Film className="w-3.5 h-3.5 shrink-0" />
-                            Clips
-                          </TabsTrigger>
-                          <TabsTrigger value="mixer" className={sceneTabTriggerClass}>
-                            <Clapperboard className="w-3.5 h-3.5 shrink-0" />
-                            Mixer
-                          </TabsTrigger>
-                          <TabsTrigger value="streams" title="Language versions of this scene" className={sceneTabTriggerClass}>
-                            <ListVideo className="w-3.5 h-3.5 shrink-0" />
-                            Streams
-                          </TabsTrigger>
-                        </TabsList>
+                      <div
+                        data-testid="scene-workflow-menu-bar"
+                        className="flex shrink-0 items-center justify-between gap-2 rounded-lg border border-indigo-500/40 bg-slate-950 px-1.5 py-0.5 shadow-md"
+                      >
+                        <div className="min-w-0 flex-1 overflow-x-auto overflow-y-hidden">
+                          <TabsList
+                            aria-label="Scene workflow"
+                            className="inline-flex h-auto w-max min-w-full flex-nowrap items-center gap-0.5 border-0 bg-transparent p-0.5 text-slate-400"
+                          >
+                            <TabsTrigger value="direction" className={sceneTabTriggerClass}>
+                              <Film className="w-3.5 h-3.5 shrink-0" />
+                              Direction
+                            </TabsTrigger>
+                            <TabsTrigger value="beats" title="Dialogue, narration, and sound effects for each shot" className={sceneTabTriggerClass}>
+                              <FileText className="w-3.5 h-3.5 shrink-0" />
+                              Audio
+                              {sceneBeatsForTabs.length > 0 && (
+                                <span className="text-[10px] font-medium opacity-60">
+                                  ({sceneBeatsForTabs.length}
+                                  {excludedBeatCount > 0 ? `, ${excludedBeatCount} excluded` : ''})
+                                </span>
+                              )}
+                            </TabsTrigger>
+                            <TabsTrigger value="music" className={sceneTabTriggerClass}>
+                              <Music className="w-3.5 h-3.5 shrink-0" />
+                              Music
+                            </TabsTrigger>
+                            <TabsTrigger value="references" className={sceneTabTriggerClass}>
+                              <Library className="w-3.5 h-3.5 shrink-0" />
+                              Continuity
+                              {sceneRequiredReferences.length > 0 && (
+                                <span
+                                  className={`text-[10px] font-medium ${missingSceneReferenceCount > 0 ? 'text-amber-500' : 'opacity-60'}`}
+                                >
+                                  ({sceneRequiredReferences.length - missingSceneReferenceCount}/
+                                  {sceneRequiredReferences.length})
+                                </span>
+                              )}
+                            </TabsTrigger>
+                            <TabsTrigger value="previs" className={sceneTabTriggerClass}>
+                              <Clapperboard className="w-3.5 h-3.5 shrink-0" />
+                              Stills
+                              {preVisFrameStats.total > 0 && (
+                                <span className="text-[10px] font-medium opacity-60">
+                                  ({preVisFrameStats.withImage}/{preVisFrameStats.total})
+                                </span>
+                              )}
+                            </TabsTrigger>
+                            <TabsTrigger value="video" className={sceneTabTriggerClass}>
+                              <Film className="w-3.5 h-3.5 shrink-0" />
+                              Clips
+                            </TabsTrigger>
+                            <TabsTrigger value="mixer" className={sceneTabTriggerClass}>
+                              <Clapperboard className="w-3.5 h-3.5 shrink-0" />
+                              Mixer
+                            </TabsTrigger>
+                            <TabsTrigger value="streams" title="Language versions of this scene" className={sceneTabTriggerClass}>
+                              <ListVideo className="w-3.5 h-3.5 shrink-0" />
+                              Streams
+                            </TabsTrigger>
+                          </TabsList>
+                        </div>
+                        {setWorkflowFullscreen && (
+                          <div className="flex shrink-0 items-center border-l border-slate-800 pl-1.5">
+                            <TooltipProvider>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <button
+                                    type="button"
+                                    onClick={(e) => {
+                                      e.stopPropagation()
+                                      setWorkflowFullscreen(!workflowFullscreen)
+                                    }}
+                                    aria-label={
+                                      workflowFullscreen
+                                        ? 'Exit scene workflow fullscreen'
+                                        : 'Open scene workflow in fullscreen window'
+                                    }
+                                    aria-pressed={workflowFullscreen}
+                                    className="inline-flex h-7 items-center gap-1.5 rounded-md border border-indigo-500/40 bg-indigo-500/15 px-2.5 text-xs font-medium text-indigo-200 transition-colors hover:bg-indigo-500/25 hover:text-white"
+                                  >
+                                    {workflowFullscreen ? (
+                                      <>
+                                        <Minimize2 className="h-3.5 w-3.5 shrink-0" />
+                                        <span className="hidden sm:inline">Exit Fullscreen</span>
+                                      </>
+                                    ) : (
+                                      <>
+                                        <Maximize2 className="h-3.5 w-3.5 shrink-0" />
+                                        <span className="hidden sm:inline">Fullscreen</span>
+                                      </>
+                                    )}
+                                  </button>
+                                </TooltipTrigger>
+                                <TooltipContent className="bg-gray-900 dark:bg-gray-800 text-white border border-gray-700">
+                                  {workflowFullscreen
+                                    ? 'Return scene workflow to standard view (Esc)'
+                                    : 'Expand scene workflow to fit fullscreen window'}
+                                </TooltipContent>
+                              </Tooltip>
+                            </TooltipProvider>
+                          </div>
+                        )}
                       </div>
+
+                      <div
+                        data-testid="scene-workflow-body"
+                        className="mt-2 min-h-0 flex-1 overflow-y-auto overscroll-contain pr-1"
+                      >
 
                   {/* Direction */}
                   {hasDirectionTab && (
@@ -7325,6 +7654,7 @@ function SceneCard({
                                   <p className="sr-only">{slots.streamCount} streams</p>
                                 )}
                               </TabsContent>
+                      </div>
 
                     </Tabs>
                     )}

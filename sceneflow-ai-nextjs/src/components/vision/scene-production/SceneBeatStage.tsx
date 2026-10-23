@@ -78,7 +78,7 @@ export interface SceneBeatStageProps {
 }
 
 const RAIL_PANEL_CLASS =
-  'flex w-full max-w-[280px] shrink-0 max-h-[40vh] flex-col rounded-lg border border-slate-600 bg-slate-950 lg:w-[280px] lg:max-h-[min(72vh,40rem)]'
+  'flex w-full max-w-[280px] shrink-0 max-h-[40vh] flex-col rounded-lg border border-slate-600 bg-slate-950 lg:sticky lg:top-2 lg:w-[280px] lg:max-h-[min(72vh,40rem)]'
 
 const RAIL_LIST_CLASS =
   'min-h-0 flex-1 cursor-grab overflow-y-auto overscroll-contain px-1 pb-1 active:cursor-grabbing [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-track]:rounded [&::-webkit-scrollbar-track]:bg-gray-800 [&::-webkit-scrollbar-thumb]:rounded [&::-webkit-scrollbar-thumb]:bg-gray-600 [&::-webkit-scrollbar-thumb]:hover:bg-gray-500'
