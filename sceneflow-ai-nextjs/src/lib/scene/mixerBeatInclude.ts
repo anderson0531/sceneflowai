@@ -50,6 +50,7 @@ export function isMixerVideoAsset(
 
 export interface MixerBeatRow {
   beatId: string
+  beatNumber: number
   segment?: SceneSegment
 }
 
@@ -90,12 +91,22 @@ export function listMixerBeatRows(
   scene: Record<string, unknown> | null | undefined,
   segments: SceneSegment[] | null | undefined
 ): MixerBeatRow[] {
-  const beats = getSceneBeats(scene ?? null).filter((beat) => !isBeatExcluded(beat))
+  const allBeats = getSceneBeats(scene ?? null)
+  const beats = allBeats.filter((beat) => !isBeatExcluded(beat))
   const rows = segments ?? []
-  return beats.map((beat) => {
+  return beats.map((beat, index) => {
+    const rawBeatIndex = allBeats.findIndex((entry) => entry.beatId === beat.beatId)
+    const beatNumber =
+      (typeof beat.sequenceIndex === 'number'
+        ? beat.sequenceIndex
+        : rawBeatIndex >= 0
+          ? rawBeatIndex
+          : index) + 1
     const matches = rows.filter((segment) => segment.beatId === beat.beatId)
     const segment = pickDesignatedBeatSegment(matches)
-    return segment ? { beatId: beat.beatId, segment } : { beatId: beat.beatId }
+    return segment
+      ? { beatId: beat.beatId, beatNumber, segment }
+      : { beatId: beat.beatId, beatNumber }
   })
 }
 

@@ -143,9 +143,7 @@ import { forceDownload } from '@/lib/utils'
 import type { SceneAudioData } from './GuidePromptEditor'
 import type { GuideCharacterDemographic } from '@/lib/scene/segmentGuidePrompt'
 import { refreshProductionSegmentVideoPrompts } from '@/lib/scene/syncBeatVideoPrompt'
-import { compileBeatVideoPromptFromDirection } from '@/lib/scene/beatVideoPromptCompiler'
-import { parsePersistedMusicCues, resolveBeatMusicCue } from '@/lib/script/sceneMusicCues'
-import type { DetailedSceneDirection } from '@/types/scene-direction'
+import { buildBeatVideoClips } from '@/lib/scene/buildBeatVideoClips'
 import {
   getSceneBeats,
   isBeatExcluded,
@@ -156,7 +154,6 @@ import {
   applyVideoTakeSelection,
   healMissingVideoPointer,
   resolveCurrentStillTier,
-  segmentHasPlayableVideo,
 } from '@/lib/storyboard/mediaVersions'
 import {
   isMasterStreamLanguage,
@@ -172,7 +169,7 @@ import { translateGuideDialogueLine } from '@/lib/scene/translateGuideDialogue'
 import { mergeStreamSelectorLanguages } from '@/lib/streams/projectStreams'
 import { BeatVideoGallery, type BeatVideoClip } from './BeatVideoGallery'
 import type { SegmentGuideContext } from '@/lib/vision/segmentConfigBuilder'
-import { resolveEffectiveStartFrameUrl, resolveExpressGenerationMethod, resolveF2VFrameUrls, f2vStartFromPreviousEnd, STANDARD_TAKE_DURATION_SECONDS } from '@/lib/vision/segmentConfigBuilder'
+import { resolveEffectiveStartFrameUrl, resolveExpressGenerationMethod, STANDARD_TAKE_DURATION_SECONDS } from '@/lib/vision/segmentConfigBuilder'
 import { CONCURRENCY_DEFAULTS } from '@/lib/utils/concurrent-processor'
 
 function getAspectRatioTailwindClass(ratio: BlueprintAspectRatio): string {
@@ -1071,36 +1068,46 @@ export function DirectorConsoleRoot({
 
   const videoAgentBeats = useMemo<VideoAgentBeatOption[]>(() => {
     const beats = getSceneBeats((scene as Record<string, unknown> | undefined) ?? null)
-    return queue.map((item) => {
+    return queue.flatMap((item) => {
       const segment = segments.find((s) => s.segmentId === item.segmentId)
       const beat = beats.find((entry) => entry.beatId === segment?.beatId)
+      if (beat && isBeatExcluded(beat)) return []
+      const rawBeatIndex = beat ? beats.findIndex((entry) => entry.beatId === beat.beatId) : -1
+      const sequenceIndex =
+        typeof beat?.sequenceIndex === 'number'
+          ? beat.sequenceIndex
+          : rawBeatIndex >= 0
+            ? rawBeatIndex
+            : item.sequenceIndex
       const inputs = segmentHasVideoAgentInputs(item, segment)
       const spoken = beat
         ? beat.kind === 'action'
           ? beat.actionDescription
           : beat.line
         : undefined
-      const description = (spoken || beat?.character || `Shot ${item.sequenceIndex + 1}`)
+      const description = (spoken || beat?.character || `Shot ${sequenceIndex + 1}`)
         .replace(/\s+/g, ' ')
         .trim()
-      return {
-        segmentId: item.segmentId,
-        sequenceIndex: item.sequenceIndex,
-        description,
-        hasVideo: item.status === 'complete',
-        isRendering: item.status === 'rendering',
-        hasError: item.status === 'error',
-        eligible: inputs.eligible,
-        promptChanged: beat ? isBeatFrameStale(beat) || !!segment?.isStale : !!segment?.isStale,
-        imageTier: beat
-          ? resolveCurrentStillTier({
-              url: beat.storyboardImageUrl,
-              versionId: beat.storyboardImageVersionId,
-              versions: beat.storyboardImageVersions,
-              beatTier: beat.storyboardImageTier,
-            })
-          : undefined,
-      }
+      return [
+        {
+          segmentId: item.segmentId,
+          sequenceIndex,
+          description,
+          hasVideo: item.status === 'complete',
+          isRendering: item.status === 'rendering',
+          hasError: item.status === 'error',
+          eligible: inputs.eligible,
+          promptChanged: beat ? isBeatFrameStale(beat) || !!segment?.isStale : !!segment?.isStale,
+          imageTier: beat
+            ? resolveCurrentStillTier({
+                url: beat.storyboardImageUrl,
+                versionId: beat.storyboardImageVersionId,
+                versions: beat.storyboardImageVersions,
+                beatTier: beat.storyboardImageTier,
+              })
+            : undefined,
+        },
+      ]
     })
   }, [queue, segments, scene, segmentHasVideoAgentInputs])
 
@@ -1585,11 +1592,24 @@ export function DirectorConsoleRoot({
     }
   }, [renderingStreamId, productionStreams, productionTarget.language, publishAppendedRender])
   
-  // Count segments by status
-  const statusCounts = {
-    rendered: queue.filter(q => q.status === 'complete').length,
-    total: queue.length,
-  }
+  // Count active (included) segments by status
+  const statusCounts = useMemo(() => {
+    const allBeats = getSceneBeats((scene as Record<string, unknown> | undefined) ?? null)
+    const excludedIds = new Set(
+      allBeats.filter((beat) => isBeatExcluded(beat)).map((beat) => beat.beatId)
+    )
+    const activeQueue =
+      excludedIds.size === 0
+        ? queue
+        : queue.filter((q) => {
+            const seg = segments.find((s) => s.segmentId === q.segmentId)
+            return !(seg?.beatId && excludedIds.has(seg.beatId))
+          })
+    return {
+      rendered: activeQueue.filter((q) => q.status === 'complete').length,
+      total: activeQueue.length,
+    }
+  }, [queue, segments, scene])
 
   const handleRestoreVideoTake = useCallback((segmentId: string, takeId: string) => {
     if (!onProductionDataChange || !productionData) return
@@ -1730,117 +1750,15 @@ export function DirectorConsoleRoot({
     sceneId,
   ])
 
-  const videoClips = useMemo<BeatVideoClip[]>(() => {
-    const sceneRecord = (scene as Record<string, unknown> | undefined) ?? null
-    const allBeats = getSceneBeats(sceneRecord)
-    const beats = allBeats.filter((beat) => !isBeatExcluded(beat))
-    const sceneDirection = ((sceneRecord?.sceneDirection ?? sceneRecord?.detailedDirection ?? null) ||
-      null) as DetailedSceneDirection | null
-    const persistedMusicCues = parsePersistedMusicCues(sceneRecord?.sceneMusicCues, allBeats)
-    const used = new Set<string>()
-    const fromBeats = beats.map((beat, index) => {
-      const matches = segments.filter((segment) => segment.beatId === beat.beatId)
-      const segment =
-        matches.find((row) => segmentHasPlayableVideo(row)) ??
-        matches.find((row) => (row.dialoguePortion?.partIndex ?? 0) === 0) ??
-        matches[0]
-      if (segment) used.add(segment.segmentId)
-      const item = segment ? queue.find((entry) => entry.segmentId === segment.segmentId) : undefined
-      const f2v = segment
-        ? resolveF2VFrameUrls(segment, scene as Record<string, unknown> | undefined)
-        : { startFrameUrl: null, endFrameUrl: null }
-      const previousBeat = index > 0 ? beats[index - 1] : undefined
-      const previousSegment = previousBeat
-        ? segments.find((row) => row.beatId === previousBeat.beatId)
-        : undefined
-      const previousEndFrameUrl = f2vStartFromPreviousEnd(
-        previousSegment
-          ? resolveF2VFrameUrls(previousSegment, scene as Record<string, unknown> | undefined)
-              .endFrameUrl
-          : null
-      )
-      const thumbnail =
-        beat.storyboardImageUrl?.trim() ||
-        item?.thumbnailUrl ||
-        segment?.startFrameUrl ||
-        segment?.references?.startFrameUrl ||
-        undefined
-      const spoken = beat.kind === 'action' ? beat.actionDescription : beat.line
-      const rawBeatIndex = allBeats.findIndex((entry) => entry.beatId === beat.beatId)
-      const musicCue = rawBeatIndex >= 0 ? resolveBeatMusicCue(persistedMusicCues, rawBeatIndex) : undefined
-      const resolvedPrompt =
-        item?.config.prompt ||
-        segment?.userEditedPrompt ||
-        segment?.generatedPrompt ||
-        beat.beatDirection?.videoPrompt?.trim() ||
-        compileBeatVideoPromptFromDirection(beat, sceneDirection, {
-          previousBeat,
-          ...(musicCue ? { musicCue } : {}),
-        }).prompt
-      return {
-        key: beat.beatId,
-        beatId: beat.beatId,
-        beatNumber: index + 1,
-        label: (spoken || beat.kind || `Shot ${index + 1}`).replace(/\s+/g, ' ').trim(),
-        prompt: resolvedPrompt,
-        kind: beat.kind,
-        thumbnailUrl: thumbnail,
-        hasStartFrame: !!thumbnail,
-        f2vStartUrl: f2v.startFrameUrl,
-        f2vEndUrl: f2v.endFrameUrl,
-        previousEndFrameUrl,
-        segment,
-        queueItem: item,
-        imageTier: resolveCurrentStillTier({
-          url: beat.storyboardImageUrl,
-          versionId: beat.storyboardImageVersionId,
-          versions: beat.storyboardImageVersions,
-          beatTier: beat.storyboardImageTier,
-        }),
-        promptChanged: isBeatFrameStale(beat) || !!segment?.isStale,
-      }
-    })
-    const orphanClips = segments
-      .filter((segment) => !used.has(segment.segmentId) && segmentHasPlayableVideo(segment))
-      .map((segment, index) => {
-        const item = queue.find((entry) => entry.segmentId === segment.segmentId)
-        const beatNumber = fromBeats.length + index + 1
-        return {
-          key: segment.segmentId,
-          beatNumber,
-          label: (item?.config.prompt || segment.userEditedPrompt || segment.generatedPrompt || `Clip ${beatNumber}`)
-            .replace(/\s+/g, ' ')
-            .trim(),
-          prompt: item?.config.prompt || segment.userEditedPrompt || segment.generatedPrompt,
-          thumbnailUrl:
-            item?.thumbnailUrl ||
-            segment.startFrameUrl ||
-            segment.references?.startFrameUrl ||
-            undefined,
-          hasStartFrame: !!(item?.thumbnailUrl || segment.startFrameUrl || segment.references?.startFrameUrl),
-          segment,
-          queueItem: item,
-          promptChanged: !!segment.isStale,
-        }
-      })
-    if (fromBeats.length > 0) return [...fromBeats, ...orphanClips]
-    return queue
-      .filter((item) => !used.has(item.segmentId))
-      .map((item, index) => {
-        const segment = segments.find((row) => row.segmentId === item.segmentId)
-        return {
-          key: item.segmentId,
-          beatNumber: index + 1,
-          label: item.config.prompt || `Clip ${index + 1}`,
-          prompt: item.config.prompt,
-          thumbnailUrl: item.thumbnailUrl || undefined,
-          hasStartFrame: !!(item.thumbnailUrl || segment?.startFrameUrl),
-          segment,
-          queueItem: item,
-          promptChanged: !!segment?.isStale,
-        }
-      })
-  }, [scene, segments, queue])
+  const videoClips = useMemo<BeatVideoClip[]>(
+    () =>
+      buildBeatVideoClips({
+        scene: (scene as Record<string, unknown> | undefined) ?? null,
+        segments,
+        queue,
+      }),
+    [scene, segments, queue]
+  )
 
   // No segments state — only when this console owns the whole layout.
   // The production strip still needs Video / Mixer / Streams slots with zero clips.

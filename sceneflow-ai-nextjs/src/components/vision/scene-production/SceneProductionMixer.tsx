@@ -1363,7 +1363,7 @@ function SegmentBeatVideoControls({
                   {included ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
                 </button>
                 <div className="flex-1 min-w-0">
-                  <span className="text-xs text-gray-300 font-medium">Shot #{i + 1}</span>
+                  <span className="text-xs text-gray-300 font-medium">Shot #{row.beatNumber ?? i + 1}</span>
                   {!seg ? (
                     <span className="ml-2 text-[10px] uppercase tracking-wide text-gray-500">
                       No clip
