@@ -1647,6 +1647,10 @@ export interface AudioTrackConfig {
   fadeOutSec?: number
   /** Music: playback speed (0.5–1.5) */
   playbackRate?: number
+  /** Auto-duck track (-8 dB) when dialogue or narration is active */
+  autoDuck?: boolean
+  /** Gain reduction in dB when auto-ducking (default -8) */
+  duckDb?: number
 }
 
 /**
@@ -1703,11 +1707,23 @@ export interface WatermarkConfig {
   padding: number
 }
 
+/** Visual hold treatment when a shot's playback duration exceeds its source video duration */
+export type ShotHoldStyle = 'freeze' | 'push' | 'pingpong'
+
+/** Master loudness normalization target for export & preview */
+export type MixerLoudnessTarget = 'web-14lufs' | 'broadcast-24lkfs' | 'off'
+
 /** Per-beat audio mix settings in the Production Mixer */
 export interface MixerSegmentAudioConfig {
   includeAudio: boolean
   volume: number
   postSegmentPause?: number
+  /** J-Cut lead-in offset (0–1.0s): starts shot dialogue/audio before the visual cut */
+  audioLeadInSec?: number
+  /** L-Cut tail-out offset (0–1.0s): trails shot audio under the next visual shot */
+  audioTailOutSec?: number
+  /** Visual behavior during tail hold when dialogue or pause extends shot duration */
+  holdStyle?: ShotHoldStyle
 }
 
 /** Per-shot score level in the Production Mixer. Mute lives on the shot itself. */
@@ -1765,6 +1781,7 @@ export interface SceneMixerSettings {
   languageShotConfigs?: Record<string, MixerLanguageShotConfig>
   masterSegmentVolume?: number
   resolution?: '720p' | '1080p' | '4K'
+  loudnessTarget?: MixerLoudnessTarget
   productionTarget?: ProductionTarget
   preserveBackgroundStem?: boolean
   includeSpeechStem?: boolean

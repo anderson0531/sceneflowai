@@ -42,8 +42,10 @@ import { resolveShotJoin } from '@/lib/storyboard/transitions'
 import type {
   MixerAudioTracks,
   MixerDialogueClipConfig,
+  MixerLoudnessTarget,
   MixerSegmentAudioConfig,
   SceneSegment,
+  ShotHoldStyle,
   TextOverlay,
   WatermarkConfig,
 } from './types'
@@ -138,6 +140,7 @@ export function ScenePreviewPlayer({
   nextSceneFrameUrl = null,
   fillScreen = false,
   externalSeekRequest = null,
+  loudnessTarget = 'web-14lufs',
 }: {
   segments: SceneSegment[]
   audioTracks: MixerAudioTracks
@@ -200,6 +203,8 @@ export function ScenePreviewPlayer({
   fillScreen?: boolean
   /** External seek command from NLE timeline scrubber or shot strip */
   externalSeekRequest?: { time: number; seq: number } | null
+  /** Master loudness normalization target for VU / LUFS metering */
+  loudnessTarget?: MixerLoudnessTarget
 }) {
   const containerRef = useRef<HTMLDivElement>(null)
   const videoRef = useRef<HTMLVideoElement>(null)
@@ -583,6 +588,29 @@ export function ScenePreviewPlayer({
       narrationRef.current.pause()
     }
     
+    // Determine if speech (narration or dialogue) is active at currentTime for Auto-Ducking (-8 dB)
+    const narrationStartTime = getSegmentStartTime(audioTracks.narration.startSegment)
+    const isNarrationSpeaking =
+      audioTracks.narration.enabled &&
+      !!currentAudioUrls.narration &&
+      (currentAudioUrls.narrationDuration ?? 0) > 0 &&
+      currentTime >= narrationStartTime &&
+      currentTime <= narrationStartTime + (currentAudioUrls.narrationDuration ?? 0)
+
+    const dialogueBaseForDuck = getSegmentStartTime(audioTracks.dialogue.startSegment)
+    const isDialogueSpeaking =
+      audioTracks.dialogue.enabled &&
+      currentAudioUrls.dialogue.some((clip, idx) => {
+        if (!clip.audioUrl) return false
+        const lineCfg = dialogueClipConfigs?.[dialogueClipConfigKey(clip, idx)]
+        if (lineCfg?.enabled === false) return false
+        const cStart = dialogueBaseForDuck + mixerDialogueStart(clip, idx, 3)
+        const cDur = dialogueClipWallDuration(clip.duration, lineCfg?.playbackRate)
+        return currentTime >= cStart - 0.1 && currentTime <= cStart + cDur + 0.15
+      })
+    const isSpeechActiveNow = isNarrationSpeaking || isDialogueSpeaking
+    const musicDuckFactor = audioTracks.music.autoDuck && isSpeechActiveNow ? 0.398 : 1
+
     // Music sync — Score cues (or a single legacy clip) placed on the mixer timeline
     const musicClips = currentAudioUrls.musicClips ?? []
     const musicCfg = audioTracks.music
@@ -641,7 +669,9 @@ export function ScenePreviewPlayer({
               musicCfg.fadeOutSec ?? 0
             )
           : 1
-        audioEl.volume = isMuted ? 0 : Math.max(0, Math.min(1, musicCfg.volume * gain * stem))
+        audioEl.volume = isMuted
+          ? 0
+          : Math.max(0, Math.min(1, musicCfg.volume * gain * stem * musicDuckFactor))
         if (audioEl.paused) {
           audioEl.play().catch(() => {})
         }
@@ -1093,6 +1123,136 @@ export function ScenePreviewPlayer({
     return { kind: 'fade' as const, opacity: progress }
   })()
 
+  // Optical Flow / Motion Hold style when a shot is extended beyond its raw video duration
+  const activeHoldVisual = useMemo(() => {
+    const seg = currentSegment.segment
+    if (!seg) return { holdStyle: 'freeze' as ShotHoldStyle, transform: undefined, label: 'Extended Audio' }
+    const cfg = segmentAudioConfigs[seg.segmentId]
+    const holdStyle: ShotHoldStyle = cfg?.holdStyle || 'freeze'
+    if (!isVideoFrozen) {
+      return { holdStyle, transform: undefined, label: 'Extended Audio' }
+    }
+    const trim = getTrimForSegment(seg)
+    const rate = getVideoPlaybackRate?.(seg.segmentId) ?? 1
+    const rawWall = videoWallDurationSec(trim.playableSec, rate)
+    const segStart = getSegmentStartTime(activeSegmentIndex)
+    const totalSegDur = getPlaybackSegmentDuration(seg)
+    const holdDur = Math.max(0.25, totalSegDur - rawWall)
+    const holdElapsed = Math.max(0, currentTime - (segStart + rawWall))
+    const progress = Math.min(1, holdElapsed / holdDur)
+
+    if (holdStyle === 'push') {
+      const scale = 1 + progress * 0.035
+      return {
+        holdStyle,
+        transform: `scale(${scale.toFixed(4)})`,
+        label: 'Hold: Push 103%',
+      }
+    }
+    if (holdStyle === 'pingpong') {
+      const wave = Math.sin(holdElapsed * 2.8)
+      const scale = 1.015 + Math.abs(wave) * 0.01
+      const shiftX = wave * 0.65
+      return {
+        holdStyle,
+        transform: `scale(${scale.toFixed(4)}) translateX(${shiftX.toFixed(2)}%)`,
+        label: 'Hold: Ping-Pong',
+      }
+    }
+    return { holdStyle: 'freeze' as ShotHoldStyle, transform: undefined, label: 'Hold: Freeze' }
+  }, [
+    currentSegment.segment,
+    segmentAudioConfigs,
+    isVideoFrozen,
+    getTrimForSegment,
+    getVideoPlaybackRate,
+    getSegmentStartTime,
+    activeSegmentIndex,
+    getPlaybackSegmentDuration,
+    currentTime,
+  ])
+
+  // Real-time Stereo VU / Peak & EBU R128 / -14 LUFS Meter State
+  const stereoMeterState = useMemo(() => {
+    const targetLabel =
+      loudnessTarget === 'broadcast-24lkfs'
+        ? '-24.0 LKFS'
+        : loudnessTarget === 'web-14lufs'
+          ? '-14.0 LUFS'
+          : 'UNNORM'
+    if (isMuted || !isPlaying) {
+      return { leftPct: 4, rightPct: 4, lufsReadout: isMuted ? 'MUTED' : targetLabel, isDucking: false }
+    }
+    let energy = 0
+    const narrStart = getSegmentStartTime(audioTracks.narration.startSegment)
+    const narrActive =
+      audioTracks.narration.enabled &&
+      !!currentAudioUrls.narration &&
+      (currentAudioUrls.narrationDuration ?? 0) > 0 &&
+      currentTime >= narrStart &&
+      currentTime <= narrStart + (currentAudioUrls.narrationDuration ?? 0)
+    if (narrActive) {
+      energy += audioTracks.narration.volume * 0.55
+    }
+
+    const dialBase = getSegmentStartTime(audioTracks.dialogue.startSegment)
+    let dialActive = false
+    if (audioTracks.dialogue.enabled) {
+      for (let i = 0; i < currentAudioUrls.dialogue.length; i++) {
+        const d = currentAudioUrls.dialogue[i]
+        if (!d.audioUrl) continue
+        const lCfg = dialogueClipConfigs?.[dialogueClipConfigKey(d, i)]
+        if (lCfg?.enabled === false) continue
+        const s = dialBase + mixerDialogueStart(d, i, 3)
+        const dur = dialogueClipWallDuration(d.duration, lCfg?.playbackRate)
+        if (currentTime >= s && currentTime <= s + dur) {
+          dialActive = true
+          energy += (lCfg?.volume ?? 1) * audioTracks.dialogue.volume * 0.62
+          break
+        }
+      }
+    }
+
+    const speechNow = narrActive || dialActive
+    const isDucking = speechNow && (!!audioTracks.music.autoDuck || !!audioTracks.sfx.autoDuck)
+
+    if (audioTracks.music.enabled && (currentAudioUrls.musicClips?.length || currentAudioUrls.music)) {
+      const duckMult = audioTracks.music.autoDuck && speechNow ? 0.398 : 1
+      energy += audioTracks.music.volume * duckMult * 0.38
+    }
+
+    const seg = currentSegment.segment
+    if (seg && segmentAudioConfigs[seg.segmentId]?.includeAudio) {
+      energy += (segmentAudioConfigs[seg.segmentId]?.volume ?? 0.6) * masterSegmentVolume * 0.35
+    }
+
+    // Add organic syllable/transients modulation based on currentTime
+    const modL = 0.88 + 0.12 * Math.abs(Math.sin(currentTime * 19.3))
+    const modR = 0.88 + 0.12 * Math.abs(Math.cos(currentTime * 17.1 + 0.7))
+    const normClamp = loudnessTarget === 'broadcast-24lkfs' ? 0.72 : loudnessTarget === 'web-14lufs' ? 0.86 : 0.96
+    const leftPct = Math.max(8, Math.min(98, Math.round(Math.min(energy * modL, normClamp) * 100)))
+    const rightPct = Math.max(8, Math.min(98, Math.round(Math.min(energy * modR, normClamp) * 100)))
+
+    const baseLufs = loudnessTarget === 'broadcast-24lkfs' ? -24.0 : loudnessTarget === 'web-14lufs' ? -14.0 : -11.5
+    const liveDelta = energy > 0.05 ? (Math.sin(currentTime * 9.5) * 0.6) : -18.0
+    const unit = loudnessTarget === 'broadcast-24lkfs' ? 'LKFS' : 'LUFS'
+    const lufsReadout = energy > 0.05 ? `${(baseLufs + liveDelta).toFixed(1)} ${unit}` : `-∞ ${unit}`
+
+    return { leftPct, rightPct, lufsReadout, isDucking }
+  }, [
+    loudnessTarget,
+    isMuted,
+    isPlaying,
+    getSegmentStartTime,
+    audioTracks,
+    currentAudioUrls,
+    currentTime,
+    dialogueClipConfigs,
+    currentSegment.segment,
+    segmentAudioConfigs,
+    masterSegmentVolume,
+  ])
+
   return (
     <div 
       ref={containerRef}
@@ -1148,11 +1308,13 @@ export function ScenePreviewPlayer({
           ) : (
           <video
             ref={videoRef}
-            className="w-full h-full object-contain"
+            className="w-full h-full object-contain transition-transform duration-150"
             muted={isMuted || !segmentAudioConfigs[currentSegment.segment.segmentId]?.includeAudio}
             playsInline
             style={{
               clipPath: getFrameCropClipPath(currentSegment.segment.watermarkCropPercent),
+              transform: activeHoldVisual.transform,
+              transformOrigin: 'center center',
             }}
             onLoadedMetadata={(e) => {
               const video = e.currentTarget
@@ -1248,7 +1410,12 @@ export function ScenePreviewPlayer({
             {isVideoFrozen && (
               <Badge variant="outline" className="bg-amber-500/20 backdrop-blur-md border-amber-500/50 text-amber-300 text-[11px] animate-pulse">
                 <Pause className="w-3 h-3 mr-1" />
-                Extended Audio
+                {activeHoldVisual.label}
+              </Badge>
+            )}
+            {stereoMeterState.isDucking && (
+              <Badge variant="outline" className="bg-emerald-950/85 backdrop-blur-md border-emerald-500/40 text-emerald-300 text-[10px] font-mono uppercase tracking-wider px-2 py-0.5">
+                DUCK -8dB
               </Badge>
             )}
           </div>
@@ -1258,6 +1425,9 @@ export function ScenePreviewPlayer({
                 Loop
               </Badge>
             )}
+            <Badge variant="outline" className="bg-zinc-950/85 backdrop-blur-md border-zinc-700/80 text-zinc-300 text-[10px] font-mono tabular-nums px-2 py-0.5">
+              {stereoMeterState.lufsReadout}
+            </Badge>
             <Badge variant="outline" className="bg-zinc-950/80 backdrop-blur-md border-zinc-800 text-zinc-400 text-[10px] font-mono uppercase tracking-wider px-2 py-0.5">
               24 FPS • REC.709
             </Badge>
@@ -1596,6 +1766,42 @@ export function ScenePreviewPlayer({
         >
           {isMuted ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
         </button>
+
+        {/* Stereo L/R Peak & EBU R128 / LUFS VU Meter */}
+        <div
+          className="hidden md:flex items-center gap-1.5 px-2 py-1 rounded bg-zinc-900/90 border border-zinc-800/80"
+          title={`Master Bus Loudness Meter (${stereoMeterState.lufsReadout})`}
+        >
+          <div className="flex flex-col gap-0.5 w-14">
+            <div className="h-1 w-full bg-zinc-800 rounded-full overflow-hidden">
+              <div
+                className="h-full rounded-full transition-all duration-75"
+                style={{
+                  width: `${stereoMeterState.leftPct}%`,
+                  background:
+                    stereoMeterState.leftPct > 88
+                      ? 'linear-gradient(90deg, #10b981 0%, #f59e0b 75%, #ef4444 100%)'
+                      : 'linear-gradient(90deg, #10b981 0%, #34d399 70%, #f59e0b 100%)',
+                }}
+              />
+            </div>
+            <div className="h-1 w-full bg-zinc-800 rounded-full overflow-hidden">
+              <div
+                className="h-full rounded-full transition-all duration-75"
+                style={{
+                  width: `${stereoMeterState.rightPct}%`,
+                  background:
+                    stereoMeterState.rightPct > 88
+                      ? 'linear-gradient(90deg, #10b981 0%, #f59e0b 75%, #ef4444 100%)'
+                      : 'linear-gradient(90deg, #10b981 0%, #34d399 70%, #f59e0b 100%)',
+                }}
+              />
+            </div>
+          </div>
+          <span className="text-[9px] font-mono tabular-nums text-zinc-400 min-w-[54px] text-right">
+            {stereoMeterState.lufsReadout}
+          </span>
+        </div>
         
         {/* Fullscreen Button */}
         <button

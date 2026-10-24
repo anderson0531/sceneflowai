@@ -4,6 +4,7 @@ import type {
   MixerAudioTracks,
   MixerDialogueClipConfig,
   MixerLanguageShotConfig,
+  MixerLoudnessTarget,
   MixerMusicShotConfig,
   MixerSegmentAudioConfig,
   SceneMixerCollapsedSections,
@@ -67,8 +68,18 @@ export const DEFAULT_MIXER_AUDIO_TRACKS: MixerAudioTracks = {
     fadeInSec: 0,
     fadeOutSec: 0,
     playbackRate: 1,
+    autoDuck: true,
+    duckDb: -8,
   },
-  sfx: { enabled: false, volume: 0.6, startOffset: 0, startSegment: 0, endSegment: -1 },
+  sfx: {
+    enabled: false,
+    volume: 0.6,
+    startOffset: 0,
+    startSegment: 0,
+    endSegment: -1,
+    autoDuck: false,
+    duckDb: -8,
+  },
 }
 
 export const DEFAULT_MIXER_SEGMENT_AUDIO_CONFIG: MixerSegmentAudioConfig = {
@@ -88,6 +99,7 @@ export interface ResolvedMixerSettings {
   languageShotConfigs: Record<string, MixerLanguageShotConfig>
   masterSegmentVolume: number
   resolution: '720p' | '1080p' | '4K'
+  loudnessTarget: MixerLoudnessTarget
   preserveBackgroundStem: boolean
   includeSpeechStem: boolean
   klingLipsyncEnabled: boolean
@@ -190,6 +202,7 @@ export function mergeMixerSettings(saved?: SceneMixerSettings | null): ResolvedM
     languageShotConfigs: mergeLanguageShotConfigs(saved?.languageShotConfigs),
     masterSegmentVolume: saved?.masterSegmentVolume ?? 0.8,
     resolution: saved?.resolution ?? '1080p',
+    loudnessTarget: saved?.loudnessTarget ?? 'web-14lufs',
     preserveBackgroundStem: saved?.preserveBackgroundStem ?? true,
     includeSpeechStem: saved?.includeSpeechStem ?? false,
     klingLipsyncEnabled: saved?.klingLipsyncEnabled ?? false,
@@ -220,6 +233,7 @@ export interface MixerSettingsPersistInput {
   languageShotConfigs?: Record<string, MixerLanguageShotConfig>
   masterSegmentVolume: number
   resolution: '720p' | '1080p' | '4K'
+  loudnessTarget?: MixerLoudnessTarget
   preserveBackgroundStem: boolean
   includeSpeechStem: boolean
   klingLipsyncEnabled: boolean
@@ -239,6 +253,7 @@ export function buildPersistedMixerSettings(input: MixerSettingsPersistInput): S
     languageShotConfigs: input.languageShotConfigs ?? {},
     masterSegmentVolume: input.masterSegmentVolume,
     resolution: input.resolution,
+    loudnessTarget: input.loudnessTarget ?? 'web-14lufs',
     productionTarget: input.productionTarget,
     preserveBackgroundStem: input.preserveBackgroundStem,
     includeSpeechStem: input.includeSpeechStem,

@@ -23,7 +23,7 @@ import {
   Scissors,
   ArrowRightLeft,
 } from 'lucide-react'
-import type { TextOverlay, SceneSegment } from './types'
+import type { TextOverlay, SceneSegment, MixerSegmentAudioConfig } from './types'
 import { Button } from '@/components/ui/Button'
 import {
   resolveSegmentSourceDurationSec,
@@ -132,12 +132,20 @@ interface MixerTimelineProps {
   segmentDurations?: Record<string, number>
   /** Probed video durations per segment ID for trim/hold calculation */
   measuredDurations?: Record<string, number>
+  /** Per-segment audio & hold configs (for J-cut/L-cut & holdStyle badges) */
+  segmentAudioConfigs?: Record<string, MixerSegmentAudioConfig>
+  /** Whether Auto-Ducking (-8 dB under dialogue/narration) is enabled on A4 Score/Music */
+  musicAutoDuck?: boolean
+  /** Whether Auto-Ducking (-8 dB under dialogue/narration) is enabled on A3 SFX */
+  sfxAutoDuck?: boolean
   /** Currently selected segment ID in shot/trim inspector */
   selectedSegmentId?: string | null
   /** Callback when user clicks a video shot block on V1 */
   onSelectSegment?: (segmentId: string) => void
   /** Callback when user clicks a shot transition join badge on V1 */
   onCycleShotJoin?: (segmentId: string) => void
+  /** Callback when user double-clicks or inspects a cut boundary */
+  onInspectShotBoundary?: (shotIndex: number) => void
   /** Current playback time for playhead position */
   currentPlaybackTime?: number
   /** Callback when user clicks or scrubs on the timeline ruler/tracks */
@@ -167,6 +175,59 @@ function formatSmpte(secs: number, fps = 24): string {
   return `${mm.toString().padStart(2, '0')}:${ss.toString().padStart(2, '0')}:${ff.toString().padStart(2, '0')}`
 }
 
+/**
+ * Build an SVG path (in viewBox 0..100 x 0..24) representing an Auto-Ducking gain envelope
+ * for a clip spanning [clipStart, clipStart + clipDuration].
+ * Normal gain is at y=4; ducked gain (-8 dB) dips smoothly to y=17 during speech windows.
+ */
+function buildAutoDuckSvgPath(
+  clipStart: number,
+  clipDuration: number,
+  speechWindows: Array<{ start: number; end: number }>
+): string {
+  if (clipDuration <= 0 || speechWindows.length === 0) {
+    return 'M 0 4 L 100 4'
+  }
+  const clipEnd = clipStart + clipDuration
+  const overlapping = speechWindows
+    .map((w) => ({
+      start: Math.max(clipStart, w.start),
+      end: Math.min(clipEnd, w.end),
+    }))
+    .filter((w) => w.end > w.start + 0.05)
+    .sort((a, b) => a.start - b.start)
+
+  if (overlapping.length === 0) {
+    return 'M 0 4 L 100 4'
+  }
+
+  // Merge adjacent/overlapping windows
+  const merged: Array<{ start: number; end: number }> = []
+  for (const w of overlapping) {
+    const last = merged[merged.length - 1]
+    if (last && w.start <= last.end + 0.25) {
+      last.end = Math.max(last.end, w.end)
+    } else {
+      merged.push({ ...w })
+    }
+  }
+
+  const rampPct = Math.min(3.5, Math.max(0.8, (0.2 / clipDuration) * 100))
+  const parts: string[] = ['M 0 4']
+  for (const w of merged) {
+    const sPct = Math.max(0, Math.min(100, ((w.start - clipStart) / clipDuration) * 100))
+    const ePct = Math.max(0, Math.min(100, ((w.end - clipStart) / clipDuration) * 100))
+    const attackStart = Math.max(0, sPct - rampPct)
+    const releaseEnd = Math.min(100, ePct + rampPct)
+    parts.push(`L ${attackStart.toFixed(1)} 4`)
+    parts.push(`L ${sPct.toFixed(1)} 17`)
+    parts.push(`L ${ePct.toFixed(1)} 17`)
+    parts.push(`L ${releaseEnd.toFixed(1)} 4`)
+  }
+  parts.push('L 100 4')
+  return parts.join(' ')
+}
+
 // ============================================================================
 // MixerTimeline Component
 // ============================================================================
@@ -183,9 +244,13 @@ export const MixerTimeline: React.FC<MixerTimelineProps> = ({
   segments = [],
   segmentDurations = {},
   measuredDurations = {},
+  segmentAudioConfigs = {},
+  musicAutoDuck = false,
+  sfxAutoDuck = false,
   selectedSegmentId = null,
   onSelectSegment,
   onCycleShotJoin,
+  onInspectShotBoundary,
   currentPlaybackTime = 0,
   onSeekTime,
   disabled,
@@ -379,18 +444,40 @@ export const MixerTimeline: React.FC<MixerTimelineProps> = ({
       const sourceSec = resolveSegmentSourceDurationSec(seg, measuredDurations?.[seg.segmentId])
       const trim = resolveVideoTrimWindow(seg, sourceSec)
       const holdSec = Math.max(0, duration - trim.playableSec)
+      const segAudioCfg = segmentAudioConfigs?.[seg.segmentId]
       const pos = {
         start: elapsed,
         duration,
         playableVideoSec: trim.playableSec,
         holdSec,
+        holdStyle: segAudioCfg?.holdStyle ?? 'freeze',
+        audioLeadInSec: segAudioCfg?.audioLeadInSec ?? 0,
+        audioTailOutSec: segAudioCfg?.audioTailOutSec ?? 0,
         isTrimmed: trim.isTrimmed,
         segment: seg,
       }
       elapsed += duration
       return pos
     })
-  }, [segments, segmentDurations, measuredDurations])
+  }, [segments, segmentDurations, measuredDurations, segmentAudioConfigs])
+
+  // Active speech windows (A1 Dialogue + A2 Narration) for Auto-Ducking envelope rendering
+  const speechWindows = useMemo(() => {
+    const wins: Array<{ start: number; end: number }> = []
+    for (const c of dialogueClips) {
+      const dur = wallClockClipDuration(c)
+      if (dur > 0.05) {
+        wins.push({ start: c.startTime, end: c.startTime + dur })
+      }
+    }
+    if (narrationClip && narrationClip.duration > 0.05) {
+      wins.push({
+        start: narrationClip.startTime,
+        end: narrationClip.startTime + narrationClip.duration,
+      })
+    }
+    return wins
+  }, [dialogueClips, narrationClip, wallClockClipDuration])
 
   const clampedPlayheadRatio =
     totalDuration > 0 ? Math.max(0, Math.min(1, currentPlaybackTime / totalDuration)) : 0
@@ -589,8 +676,24 @@ export const MixerTimeline: React.FC<MixerTimelineProps> = ({
                         <span className="text-[8px] font-mono text-zinc-300/80 hidden sm:inline">
                           {pos.duration.toFixed(1)}s
                         </span>
+                        {(pos.audioLeadInSec > 0.05 || pos.audioTailOutSec > 0.05) && (
+                          <span className="text-[7px] font-mono px-1 rounded bg-cyan-950/90 text-cyan-300 border border-cyan-500/40 shrink-0">
+                            {pos.audioLeadInSec > 0.05 ? `J-${pos.audioLeadInSec.toFixed(1)}s` : ''}
+                            {pos.audioLeadInSec > 0.05 && pos.audioTailOutSec > 0.05 ? ' ' : ''}
+                            {pos.audioTailOutSec > 0.05 ? `L+${pos.audioTailOutSec.toFixed(1)}s` : ''}
+                          </span>
+                        )}
                       </div>
                       <div className="flex items-center gap-1 z-10">
+                        {pos.holdSec > 0.15 && (
+                          <span className="text-[7px] font-mono px-1 rounded bg-amber-950/90 text-amber-300 border border-amber-500/40 shrink-0 uppercase">
+                            {pos.holdStyle === 'push'
+                              ? 'PUSH 103%'
+                              : pos.holdStyle === 'pingpong'
+                                ? 'PING-PONG'
+                                : 'FREEZE'}
+                          </span>
+                        )}
                         {pos.isTrimmed && (
                           <Scissors className="w-2.5 h-2.5 text-amber-300 shrink-0" />
                         )}
@@ -599,27 +702,44 @@ export const MixerTimeline: React.FC<MixerTimelineProps> = ({
 
                     {/* Transition Join Pill between shots on V1 */}
                     {idx < segmentPositions.length - 1 && (
-                      <button
-                        type="button"
-                        disabled={disabled || !onCycleShotJoin}
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          onCycleShotJoin?.(pos.segment.segmentId)
-                        }}
+                      <div
                         style={{
                           left: `${startPercent + widthPercent}%`,
                         }}
-                        title={`Transition Shot #${idx + 1} → #${idx + 2}: ${joinEffect.toUpperCase()} (click to cycle)`}
-                        className={`absolute top-1/2 -translate-y-1/2 -translate-x-1/2 z-20 px-1 py-0.5 rounded text-[7px] font-mono uppercase tracking-tighter border transition-colors ${
-                          joinEffect === 'dissolve'
-                            ? 'bg-violet-950/95 border-violet-400/70 text-violet-200'
-                            : joinEffect === 'fade'
-                              ? 'bg-amber-950/95 border-amber-400/70 text-amber-200'
-                              : 'bg-zinc-900/90 border-zinc-700 text-zinc-400 hover:text-white'
-                        }`}
+                        className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 z-20 flex items-center gap-0.5"
                       >
-                        {joinEffect === 'dissolve' ? 'DSL' : joinEffect === 'fade' ? 'FADE' : 'CUT'}
-                      </button>
+                        <button
+                          type="button"
+                          disabled={disabled || !onCycleShotJoin}
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            onCycleShotJoin?.(pos.segment.segmentId)
+                          }}
+                          title={`Transition Shot #${idx + 1} → #${idx + 2}: ${joinEffect.toUpperCase()} (click to cycle)`}
+                          className={`px-1 py-0.5 rounded text-[7px] font-mono uppercase tracking-tighter border transition-colors ${
+                            joinEffect === 'dissolve'
+                              ? 'bg-violet-950/95 border-violet-400/70 text-violet-200'
+                              : joinEffect === 'fade'
+                                ? 'bg-amber-950/95 border-amber-400/70 text-amber-200'
+                                : 'bg-zinc-900/90 border-zinc-700 text-zinc-400 hover:text-white'
+                          }`}
+                        >
+                          {joinEffect === 'dissolve' ? 'DSL' : joinEffect === 'fade' ? 'FADE' : 'CUT'}
+                        </button>
+                        {onInspectShotBoundary && (
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              onInspectShotBoundary(idx)
+                            }}
+                            title={`Inspect Match-Cut Frame Boundary: Shot #${idx + 1} Out vs. Shot #${idx + 2} In`}
+                            className="px-1 py-0.5 rounded text-[7px] font-mono bg-zinc-950/95 border border-cyan-500/40 text-cyan-300 hover:bg-cyan-950/90 transition-colors"
+                          >
+                            ≟
+                          </button>
+                        )}
+                      </div>
                     )}
                   </React.Fragment>
                 )
@@ -715,21 +835,34 @@ export const MixerTimeline: React.FC<MixerTimelineProps> = ({
           {sfxClips.length > 0 && (
             <div className="h-7 relative mb-1.5 rounded bg-zinc-900/50 border border-zinc-800/50 flex">
               <div
-                className="sticky left-0 z-20 shrink-0 flex items-center gap-1 px-2 bg-zinc-950 border-r border-zinc-800/90 h-full"
+                className="sticky left-0 z-20 shrink-0 flex items-center justify-between px-2 bg-zinc-950 border-r border-zinc-800/90 h-full"
                 style={{ width: `${TRACK_HEADER_WIDTH}px` }}
               >
-                <Sparkles
-                  className="w-3 h-3 shrink-0"
-                  style={{ color: SFX_TRACK_VISUAL.color }}
-                />
-                <span className="text-[10px] font-mono text-amber-300">
-                  {SFX_TRACK_VISUAL.code}
-                </span>
+                <div className="flex items-center gap-1">
+                  <Sparkles
+                    className="w-3 h-3 shrink-0"
+                    style={{ color: SFX_TRACK_VISUAL.color }}
+                  />
+                  <span className="text-[10px] font-mono text-amber-300">
+                    {SFX_TRACK_VISUAL.code}
+                  </span>
+                </div>
+                {sfxAutoDuck && (
+                  <span
+                    className="text-[7px] font-mono px-1 rounded bg-amber-950/90 text-amber-300 border border-amber-500/40"
+                    title="Auto-Duck (-8 dB under dialogue/narration) active"
+                  >
+                    DUCK
+                  </span>
+                )}
               </div>
               <div className="flex-1 h-full relative min-w-0">
                 {sfxClips.map((sfx, idx) => {
                   const startPercent = (sfx.startTime / totalDuration) * 100
                   const widthPercent = (sfx.duration / totalDuration) * 100
+                  const duckPath = sfxAutoDuck
+                    ? buildAutoDuckSvgPath(sfx.startTime, sfx.duration, speechWindows)
+                    : null
                   return (
                     <div
                       key={sfx.id || `sfx-${idx}`}
@@ -741,9 +874,24 @@ export const MixerTimeline: React.FC<MixerTimelineProps> = ({
                         backgroundColor: SFX_TRACK_VISUAL.bgColor,
                         borderLeft: `2px solid ${SFX_TRACK_VISUAL.color}`,
                       }}
-                      title={sfx.description || `SFX #${idx + 1}`}
+                      title={`${sfx.description || `SFX #${idx + 1}`}${sfxAutoDuck ? ' • Auto-Duck -8 dB under speech' : ''}`}
                     >
-                      <span className="text-[8px] text-amber-100 truncate">
+                      {duckPath && (
+                        <svg
+                          viewBox="0 0 100 100"
+                          preserveAspectRatio="none"
+                          className="absolute inset-0 w-full h-full pointer-events-none opacity-80"
+                        >
+                          <path
+                            d={duckPath}
+                            fill="none"
+                            stroke="#fcd34d"
+                            strokeWidth="6"
+                            vectorEffect="non-scaling-stroke"
+                          />
+                        </svg>
+                      )}
+                      <span className="text-[8px] text-amber-100 truncate relative z-10">
                         {sfx.description || `SFX ${idx + 1}`}
                       </span>
                     </div>
@@ -757,21 +905,34 @@ export const MixerTimeline: React.FC<MixerTimelineProps> = ({
           {musicClips.length > 0 && (
             <div className="h-7 relative mb-1.5 rounded bg-zinc-900/50 border border-zinc-800/50 flex">
               <div
-                className="sticky left-0 z-20 shrink-0 flex items-center gap-1 px-2 bg-zinc-950 border-r border-zinc-800/90 h-full"
+                className="sticky left-0 z-20 shrink-0 flex items-center justify-between px-2 bg-zinc-950 border-r border-zinc-800/90 h-full"
                 style={{ width: `${TRACK_HEADER_WIDTH}px` }}
               >
-                <Music
-                  className="w-3 h-3 shrink-0"
-                  style={{ color: MUSIC_TRACK_VISUAL.color }}
-                />
-                <span className="text-[10px] font-mono text-emerald-300">
-                  {MUSIC_TRACK_VISUAL.code}
-                </span>
+                <div className="flex items-center gap-1">
+                  <Music
+                    className="w-3 h-3 shrink-0"
+                    style={{ color: MUSIC_TRACK_VISUAL.color }}
+                  />
+                  <span className="text-[10px] font-mono text-emerald-300">
+                    {MUSIC_TRACK_VISUAL.code}
+                  </span>
+                </div>
+                {musicAutoDuck && (
+                  <span
+                    className="text-[7px] font-mono px-1 rounded bg-emerald-950/90 text-emerald-300 border border-emerald-500/40"
+                    title="Auto-Duck (-8 dB under dialogue/narration) active"
+                  >
+                    DUCK
+                  </span>
+                )}
               </div>
               <div className="flex-1 h-full relative min-w-0">
                 {musicClips.map((mc) => {
                   const startPercent = (mc.startTime / totalDuration) * 100
                   const widthPercent = (mc.duration / totalDuration) * 100
+                  const duckPath = musicAutoDuck
+                    ? buildAutoDuckSvgPath(mc.startTime, mc.duration, speechWindows)
+                    : null
                   return (
                     <div
                       key={mc.id}
@@ -783,13 +944,28 @@ export const MixerTimeline: React.FC<MixerTimelineProps> = ({
                         backgroundColor: MUSIC_TRACK_VISUAL.bgColor,
                         borderLeft: `2px solid ${MUSIC_TRACK_VISUAL.color}`,
                       }}
-                      title={`${mc.label || 'Score Cue'} (${mc.duration.toFixed(1)}s)`}
+                      title={`${mc.label || 'Score Cue'} (${mc.duration.toFixed(1)}s)${musicAutoDuck ? ' • Auto-Duck -8 dB under speech' : ''}`}
                     >
-                      <span className="text-[8px] text-emerald-100 truncate">
+                      {duckPath && (
+                        <svg
+                          viewBox="0 0 100 100"
+                          preserveAspectRatio="none"
+                          className="absolute inset-0 w-full h-full pointer-events-none opacity-85"
+                        >
+                          <path
+                            d={duckPath}
+                            fill="none"
+                            stroke="#6ee7b7"
+                            strokeWidth="6"
+                            vectorEffect="non-scaling-stroke"
+                          />
+                        </svg>
+                      )}
+                      <span className="text-[8px] text-emerald-100 truncate relative z-10">
                         {mc.label || 'Score Bed'}
                       </span>
                       {(mc.fadeInSec || mc.fadeOutSec) ? (
-                        <span className="text-[7px] font-mono text-emerald-300/80 ml-1 shrink-0">
+                        <span className="text-[7px] font-mono text-emerald-300/80 ml-1 shrink-0 relative z-10">
                           {mc.fadeInSec ? `↗${mc.fadeInSec}s` : ''}{' '}
                           {mc.fadeOutSec ? `↘${mc.fadeOutSec}s` : ''}
                         </span>

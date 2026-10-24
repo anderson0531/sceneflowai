@@ -54,6 +54,35 @@ describe('mergeMixerSettings', () => {
     expect(merged.musicShotConfigs.bt_a2).toEqual({ volume: 1 })
     expect(mergeMixerSettings().musicShotConfigs).toEqual({})
   })
+
+  it('preserves next-phase clip editing & stitching settings (J/L-cut, holdStyle, autoDuck, loudnessTarget)', () => {
+    const merged = mergeMixerSettings({
+      loudnessTarget: 'broadcast-24lkfs',
+      audioTracks: {
+        music: { autoDuck: true, duckDb: -8 },
+        sfx: { autoDuck: true, duckDb: -8 },
+      },
+      segmentAudioConfigs: {
+        shot_1: {
+          includeAudio: true,
+          volume: 0.85,
+          holdStyle: 'push',
+          audioLeadInSec: 0.4,
+          audioTailOutSec: 0.6,
+        },
+      },
+    })
+    expect(merged.loudnessTarget).toBe('broadcast-24lkfs')
+    expect(merged.audioTracks.music.autoDuck).toBe(true)
+    expect(merged.audioTracks.sfx.autoDuck).toBe(true)
+    expect(merged.segmentAudioConfigs.shot_1).toEqual({
+      includeAudio: true,
+      volume: 0.85,
+      holdStyle: 'push',
+      audioLeadInSec: 0.4,
+      audioTailOutSec: 0.6,
+    })
+  })
 })
 
 describe('buildSegmentAudioConfigsForSegments', () => {

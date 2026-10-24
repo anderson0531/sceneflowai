@@ -147,9 +147,11 @@ import type {
   MixerAudioTracks,
   MixerDialogueClipConfig,
   MixerLanguageShotConfig,
+  MixerLoudnessTarget,
   MixerMusicShotConfig,
   MixerSegmentAudioConfig,
   MixerSettingsPersistPayload,
+  ShotHoldStyle,
   TextOverlayTranslationsByLanguage,
   WatermarkAnchor,
   WatermarkConfig,
@@ -833,6 +835,28 @@ function AudioTrackRow({
               {Math.round(config.volume * 100)}%
             </span>
           </div>
+
+          {/* Auto-Ducking (-8 dB under Dialogue / Narration) for Music & SFX */}
+          {(type === 'music' || type === 'sfx') && (
+            <div className="flex items-center justify-between gap-2 px-2.5 py-1.5 rounded bg-zinc-950/70 border border-zinc-800/80">
+              <div className="flex items-center gap-2 min-w-0">
+                <span className="text-[10px] font-semibold uppercase tracking-wider text-emerald-300">
+                  Auto-Duck (-8 dB)
+                </span>
+                <span className="text-[10px] text-zinc-500 truncate">
+                  Sidechain gain reduction under A1/A2 speech
+                </span>
+              </div>
+              <Switch
+                checked={!!config.autoDuck}
+                onCheckedChange={(autoDuck) =>
+                  onConfigChange({ ...config, autoDuck, duckDb: config.duckDb ?? -8 })
+                }
+                disabled={disabled}
+                className="scale-90"
+              />
+            </div>
+          )}
 
           {/* Music: repeat, fade, speed */}
           {type === 'music' && (
@@ -1971,6 +1995,32 @@ function SegmentAudioControls({
       [segmentId]: { ...current, postSegmentPause: clamped > 0 ? clamped : undefined }
     })
   }
+
+  const updateSegmentHoldStyle = (segmentId: string, holdStyle: ShotHoldStyle) => {
+    const current = segmentConfigs[segmentId] || { includeAudio: true, volume: 1.0 }
+    onConfigChange({
+      ...segmentConfigs,
+      [segmentId]: { ...current, holdStyle }
+    })
+  }
+
+  const updateSegmentLeadIn = (segmentId: string, audioLeadInSec: number) => {
+    const current = segmentConfigs[segmentId] || { includeAudio: true, volume: 1.0 }
+    const clamped = Math.max(0, Math.min(1.0, Math.round(audioLeadInSec * 10) / 10))
+    onConfigChange({
+      ...segmentConfigs,
+      [segmentId]: { ...current, audioLeadInSec: clamped > 0 ? clamped : undefined }
+    })
+  }
+
+  const updateSegmentTailOut = (segmentId: string, audioTailOutSec: number) => {
+    const current = segmentConfigs[segmentId] || { includeAudio: true, volume: 1.0 }
+    const clamped = Math.max(0, Math.min(1.0, Math.round(audioTailOutSec * 10) / 10))
+    onConfigChange({
+      ...segmentConfigs,
+      [segmentId]: { ...current, audioTailOutSec: clamped > 0 ? clamped : undefined }
+    })
+  }
   
   return (
     <div className="bg-zinc-900/80 border border-zinc-800 rounded-lg">
@@ -2104,6 +2154,97 @@ function SegmentAudioControls({
                       <span className="text-zinc-300 font-mono">
                         {autoPauseSec.toFixed(1)}s
                       </span>
+                    </div>
+                  </div>
+
+                  {/* Hold Motion Style (Freeze vs. Ken Burns Push vs. Ping-Pong Tail) */}
+                  <div className="flex flex-wrap items-center justify-between gap-2 pl-11 text-[10px]">
+                    <div className="flex items-center gap-1">
+                      <span className="text-zinc-500 uppercase tracking-wider mr-0.5">Hold Mode:</span>
+                      {(
+                        [
+                          ['freeze', 'Freeze'],
+                          ['push', 'Push 103%'],
+                          ['pingpong', 'Ping-Pong'],
+                        ] as const
+                      ).map(([modeVal, modeLabel]) => {
+                        const activeMode = (config.holdStyle || 'freeze') === modeVal
+                        return (
+                          <button
+                            key={modeVal}
+                            type="button"
+                            disabled={disabled}
+                            onClick={() => updateSegmentHoldStyle(seg.segmentId, modeVal)}
+                            className={cn(
+                              'px-1.5 py-0.5 rounded font-mono border transition-colors',
+                              activeMode
+                                ? 'bg-amber-500/20 border-amber-500/50 text-amber-200'
+                                : 'bg-zinc-900 border-zinc-800 text-zinc-400 hover:text-zinc-200'
+                            )}
+                            title={
+                              modeVal === 'push'
+                                ? 'Subtle 103% slow zoom during extended dialogue/manual hold'
+                                : modeVal === 'pingpong'
+                                  ? 'Micro-motion ping-pong during extended hold so the frame never looks static'
+                                  : 'Standard static last-frame freeze during extended hold'
+                            }
+                          >
+                            {modeLabel}
+                          </button>
+                        )
+                      })}
+                    </div>
+
+                    {/* J-Cut & L-Cut Audio Overlap Offsets */}
+                    <div className="flex items-center gap-2">
+                      {i > 0 && (
+                        <div className="flex items-center gap-1" title="J-Cut: start this shot's dialogue/ambience before the visual cut">
+                          <span className="text-zinc-500 uppercase tracking-wider">J-Cut:</span>
+                          {[0, 0.3, 0.6].map((val) => {
+                            const activeJ = Math.abs((config.audioLeadInSec ?? 0) - val) < 0.05
+                            return (
+                              <button
+                                key={val}
+                                type="button"
+                                disabled={disabled}
+                                onClick={() => updateSegmentLeadIn(seg.segmentId, val)}
+                                className={cn(
+                                  'px-1.5 py-0.5 rounded font-mono border transition-colors',
+                                  activeJ
+                                    ? 'bg-cyan-500/20 border-cyan-500/50 text-cyan-200'
+                                    : 'bg-zinc-900 border-zinc-800 text-zinc-400 hover:text-zinc-200'
+                                )}
+                              >
+                                {val === 0 ? '0s' : `-${val.toFixed(1)}s`}
+                              </button>
+                            )
+                          })}
+                        </div>
+                      )}
+                      {i < segments.length - 1 && (
+                        <div className="flex items-center gap-1" title="L-Cut: trail this shot's audio under the next shot">
+                          <span className="text-zinc-500 uppercase tracking-wider">L-Cut:</span>
+                          {[0, 0.3, 0.6].map((val) => {
+                            const activeL = Math.abs((config.audioTailOutSec ?? 0) - val) < 0.05
+                            return (
+                              <button
+                                key={val}
+                                type="button"
+                                disabled={disabled}
+                                onClick={() => updateSegmentTailOut(seg.segmentId, val)}
+                                className={cn(
+                                  'px-1.5 py-0.5 rounded font-mono border transition-colors',
+                                  activeL
+                                    ? 'bg-indigo-500/20 border-indigo-500/50 text-indigo-200'
+                                    : 'bg-zinc-900 border-zinc-800 text-zinc-400 hover:text-zinc-200'
+                                )}
+                              >
+                                {val === 0 ? '0s' : `+${val.toFixed(1)}s`}
+                              </button>
+                            )
+                          })}
+                        </div>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -2258,6 +2399,8 @@ export function SceneProductionMixer({
   const [isRegeneratingNarration, setIsRegeneratingNarration] = useState(false)
   const [resolution, setResolution] = useState<'720p' | '1080p' | '4K'>('1080p')
   const [encodeQuality, setEncodeQuality] = useState<'delivery' | 'draft'>('delivery')
+  const [loudnessTarget, setLoudnessTarget] = useState<MixerLoudnessTarget>('web-14lufs')
+  const [inspectedBoundaryIndex, setInspectedBoundaryIndex] = useState<number | null>(null)
 
   // === Measured Durations (Lifted from Player for timeline sync) ===
   const [measuredSegmentDurations, setMeasuredSegmentDurations] = useState<Record<string, number>>({})
@@ -2847,6 +2990,7 @@ export function SceneProductionMixer({
       setKlingLipsyncEnabled(merged.klingLipsyncEnabled)
       setLanguageShotConfigs(merged.languageShotConfigs)
       setWatermarkConfig(merged.watermarkConfig)
+      setLoudnessTarget(merged.loudnessTarget)
       setSegmentAudioConfigs(
         buildSegmentAudioConfigsForSegments(
           segments.map((seg) => seg.segmentId),
@@ -2946,6 +3090,7 @@ export function SceneProductionMixer({
         klingLipsyncEnabled,
         languageShotConfigs,
         watermarkConfig,
+        loudnessTarget,
       }),
       productionTarget,
       collapsedSections,
@@ -2964,6 +3109,7 @@ export function SceneProductionMixer({
     klingLipsyncEnabled,
     languageShotConfigs,
     watermarkConfig,
+    loudnessTarget,
     collapsedSections,
     theaterMode,
     productionTarget,
@@ -3212,7 +3358,10 @@ export function SceneProductionMixer({
             segStart += getPlaybackSegmentDuration(segments[i])
           }
 
-          const cursor = segmentTimeCursors.get(segIdx) ?? segStart
+          const segId = segments[segIdx]?.segmentId
+          const jCutLeadIn = segIdx > 0 && segId ? (segmentAudioConfigs[segId]?.audioLeadInSec ?? 0) : 0
+          const effectiveSegStart = Math.max(0, segStart - jCutLeadIn)
+          const cursor = segmentTimeCursors.get(segIdx) ?? effectiveSegStart
           startTime = cursor
           segmentTimeCursors.set(segIdx, cursor + wallDur + MIXER_DIALOGUE_INTRA_GAP_SEC)
         }
@@ -3230,6 +3379,7 @@ export function SceneProductionMixer({
     narrationPrefix,
     getDialoguePlaybackRate,
     mixerAudioSceneStub,
+    segmentAudioConfigs,
   ])
 
   /** Timeline bars reflect wall-clock span (source duration / playback rate). */
@@ -3788,6 +3938,9 @@ export function SceneProductionMixer({
           pauseDuration: audioTracks?.dialogue?.enabled
             ? Math.max(0, getPlaybackSegmentDuration(seg) - videoWall)
             : 0.0,
+          holdStyle: audioConfig.holdStyle || 'freeze',
+          audioLeadInSec: audioConfig.audioLeadInSec,
+          audioTailOutSec: audioConfig.audioTailOutSec,
           watermarkCropPercent: seg.watermarkCropPercent,
           videoTrimInSec: trimWin.inSec > 0.001 ? trimWin.inSec : undefined,
           videoTrimOutSec: trimWin.isTrimmed ? trimWin.outSec : undefined,
@@ -3905,6 +4058,9 @@ export function SceneProductionMixer({
             musicVolume: audioTracks.music.volume,
             sfxVolume: audioTracks.sfx.volume,
             segmentAudioVolume: 1,
+            autoDuckMusic: !!audioTracks.music.autoDuck,
+            autoDuckSfx: !!audioTracks.sfx.autoDuck,
+            loudnessTarget,
           },
           segments: segmentData,
           audioTracks: audioTracksPayload,
@@ -3991,7 +4147,7 @@ export function SceneProductionMixer({
     preserveBackgroundStem, includeSpeechStem, klingLipsyncEnabled, resolvedDialogueClips,
     shotMethodFor, shotVideoRateFor,
     measuredSegmentDurations, getPlaybackSegmentDuration,
-    onSceneRenderQueued, sceneEnd, nextSceneFrameUrl,
+    onSceneRenderQueued, sceneEnd, nextSceneFrameUrl, loudnessTarget,
   ])
 
   /**
@@ -4356,6 +4512,7 @@ export function SceneProductionMixer({
                 onMeasuredDurationsChange={setMeasuredSegmentDurations}
                 onPlaybackTimeChange={handlePlaybackTimeChange}
                 externalSeekRequest={externalSeekRequest}
+                loudnessTarget={loudnessTarget}
                 textOverlays={displayOverlays}
                 watermarkConfig={displayWatermarkConfig}
                 onEditOverlay={(overlay) => {
@@ -4574,7 +4731,7 @@ export function SceneProductionMixer({
 
                           {/* Transition Connector Pill between shots */}
                           {idx < mixerBeatRows.length - 1 && seg && (
-                            <div className="flex flex-col items-center justify-center shrink-0 px-0.5">
+                            <div className="flex flex-col items-center justify-center gap-1 shrink-0 px-0.5">
                               <button
                                 type="button"
                                 disabled={isRendering || !onSegmentsChange}
@@ -4595,12 +4752,308 @@ export function SceneProductionMixer({
                                     ? 'FADE'
                                     : 'CUT'}
                               </button>
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  setInspectedBoundaryIndex((prev) => (prev === idx ? null : idx))
+                                }
+                                className={cn(
+                                  'px-1.5 py-0.5 rounded text-[8px] font-mono border transition-colors',
+                                  inspectedBoundaryIndex === idx
+                                    ? 'bg-cyan-500/25 border-cyan-400 text-cyan-200'
+                                    : 'bg-zinc-950 border-zinc-800 text-zinc-500 hover:text-cyan-300 hover:border-cyan-500/40'
+                                )}
+                                title={`Match-Cut Continuity Inspector: Compare Out-Frame of Shot #${shotNum} vs. In-Frame of Shot #${shotNum + 1}`}
+                              >
+                                ≟ Cut
+                              </button>
                             </div>
                           )}
                         </React.Fragment>
                       )
                     })}
                   </div>
+
+                  {/* Match-Cut & Continuity Boundary Inspector Panel */}
+                  {inspectedBoundaryIndex !== null &&
+                    mixerBeatRows[inspectedBoundaryIndex]?.segment &&
+                    mixerBeatRows[inspectedBoundaryIndex + 1]?.segment && (() => {
+                      const outRow = mixerBeatRows[inspectedBoundaryIndex]
+                      const inRow = mixerBeatRows[inspectedBoundaryIndex + 1]
+                      const outSeg = outRow.segment!
+                      const inSeg = inRow.segment!
+                      const outShotNum = outRow.beatNumber ?? inspectedBoundaryIndex + 1
+                      const inShotNum = inRow.beatNumber ?? inspectedBoundaryIndex + 2
+                      const outSourceDur = resolveSegmentSourceDurationSec(
+                        outSeg,
+                        measuredSegmentDurations[outSeg.segmentId]
+                      )
+                      const inSourceDur = resolveSegmentSourceDurationSec(
+                        inSeg,
+                        measuredSegmentDurations[inSeg.segmentId]
+                      )
+                      const outTrim = resolveVideoTrimWindow(outSeg, outSourceDur)
+                      const inTrim = resolveVideoTrimWindow(inSeg, inSourceDur)
+                      const joinVal: ShotJoin =
+                        outSeg.shotJoin === 'dissolve' || outSeg.shotJoin === 'fade'
+                          ? outSeg.shotJoin
+                          : 'cut'
+                      const inAudioCfg = segmentAudioConfigs[inSeg.segmentId] || {
+                        includeAudio: true,
+                        volume: 1.0,
+                      }
+                      const outAudioCfg = segmentAudioConfigs[outSeg.segmentId] || {
+                        includeAudio: true,
+                        volume: 1.0,
+                      }
+                      const cutTimelineSec =
+                        (shotStartTimesBySegmentId[outSeg.segmentId] ?? 0) +
+                        getPlaybackSegmentDuration(outSeg)
+
+                      return (
+                        <div className="mt-2 pt-2.5 border-t border-zinc-800/90 bg-zinc-950/90 rounded-lg p-3 space-y-2.5">
+                          <div className="flex flex-wrap items-center justify-between gap-2">
+                            <div className="flex items-center gap-2">
+                              <Badge
+                                variant="outline"
+                                className="bg-cyan-500/15 border-cyan-500/40 text-cyan-200 text-[10px] font-mono uppercase"
+                              >
+                                Match-Cut Continuity Inspector
+                              </Badge>
+                              <span className="text-xs font-mono text-zinc-300">
+                                Shot #{outShotNum} Out-Frame → Shot #{inShotNum} In-Frame
+                              </span>
+                            </div>
+                            <div className="flex items-center gap-1.5">
+                              <button
+                                type="button"
+                                onClick={() => handleTimelineSeek(Math.max(0, cutTimelineSec - 1.5))}
+                                className="px-2 py-1 rounded text-[10px] font-mono font-semibold bg-cyan-500/20 border border-cyan-500/40 text-cyan-200 hover:bg-cyan-500/30 transition-colors"
+                                title="Seek main monitor 1.5s before this cut to audition continuity"
+                              >
+                                ▶ Audition Cut (-1.5s Pre-Roll)
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => setInspectedBoundaryIndex(null)}
+                                className="p-1 rounded text-zinc-400 hover:text-white hover:bg-zinc-800"
+                                title="Close Match-Cut Inspector"
+                              >
+                                <X className="w-3.5 h-3.5" />
+                              </button>
+                            </div>
+                          </div>
+
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            {/* Outgoing Shot N Out-Frame */}
+                            <div className="rounded border border-zinc-800 bg-zinc-900/70 p-2 space-y-1.5">
+                              <div className="flex items-center justify-between text-[10px] font-mono">
+                                <span className="text-amber-300 font-semibold">
+                                  OUTGOING • SHOT #{outShotNum} OUT-FRAME
+                                </span>
+                                <span className="text-zinc-400">
+                                  OUT {outTrim.outSec.toFixed(2)}s / {outSourceDur.toFixed(2)}s
+                                </span>
+                              </div>
+                              <div className="relative aspect-video rounded bg-black overflow-hidden border border-zinc-800">
+                                {outSeg.activeAssetUrl ? (
+                                  <video
+                                    key={`${outSeg.segmentId}-${outTrim.outSec}`}
+                                    src={outSeg.activeAssetUrl}
+                                    muted
+                                    playsInline
+                                    preload="metadata"
+                                    className="w-full h-full object-contain"
+                                    onLoadedMetadata={(e) => {
+                                      e.currentTarget.currentTime = Math.max(
+                                        0,
+                                        outTrim.outSec - 0.05
+                                      )
+                                    }}
+                                  />
+                                ) : (
+                                  <div className="w-full h-full flex items-center justify-center text-zinc-600 text-xs">
+                                    No clip
+                                  </div>
+                                )}
+                              </div>
+                              <div className="flex items-center justify-between gap-1 pt-0.5">
+                                <span className="text-[9px] font-mono text-zinc-500 uppercase">
+                                  Nudge Out-Point:
+                                </span>
+                                <div className="flex items-center gap-1">
+                                  <button
+                                    type="button"
+                                    disabled={isRendering || !onSegmentsChange}
+                                    onClick={() =>
+                                      handleSegmentTrimChange(
+                                        outSeg.segmentId,
+                                        outTrim.inSec,
+                                        Math.max(outTrim.inSec + 0.5, outTrim.outSec - 0.1)
+                                      )
+                                    }
+                                    className="px-1.5 py-0.5 rounded bg-zinc-950 border border-zinc-700 text-[10px] font-mono text-zinc-300 hover:text-white"
+                                  >
+                                    -0.1s
+                                  </button>
+                                  <button
+                                    type="button"
+                                    disabled={isRendering || !onSegmentsChange}
+                                    onClick={() =>
+                                      handleSegmentTrimChange(
+                                        outSeg.segmentId,
+                                        outTrim.inSec,
+                                        Math.min(outSourceDur, outTrim.outSec + 0.1)
+                                      )
+                                    }
+                                    className="px-1.5 py-0.5 rounded bg-zinc-950 border border-zinc-700 text-[10px] font-mono text-zinc-300 hover:text-white"
+                                  >
+                                    +0.1s
+                                  </button>
+                                </div>
+                              </div>
+                            </div>
+
+                            {/* Incoming Shot N+1 In-Frame */}
+                            <div className="rounded border border-zinc-800 bg-zinc-900/70 p-2 space-y-1.5">
+                              <div className="flex items-center justify-between text-[10px] font-mono">
+                                <span className="text-cyan-300 font-semibold">
+                                  INCOMING • SHOT #{inShotNum} IN-FRAME
+                                </span>
+                                <span className="text-zinc-400">
+                                  IN {inTrim.inSec.toFixed(2)}s / {inSourceDur.toFixed(2)}s
+                                </span>
+                              </div>
+                              <div className="relative aspect-video rounded bg-black overflow-hidden border border-zinc-800">
+                                {inSeg.activeAssetUrl ? (
+                                  <video
+                                    key={`${inSeg.segmentId}-${inTrim.inSec}`}
+                                    src={inSeg.activeAssetUrl}
+                                    muted
+                                    playsInline
+                                    preload="metadata"
+                                    className="w-full h-full object-contain"
+                                    onLoadedMetadata={(e) => {
+                                      e.currentTarget.currentTime = Math.min(
+                                        inSourceDur,
+                                        inTrim.inSec + 0.04
+                                      )
+                                    }}
+                                  />
+                                ) : (
+                                  <div className="w-full h-full flex items-center justify-center text-zinc-600 text-xs">
+                                    No clip
+                                  </div>
+                                )}
+                              </div>
+                              <div className="flex items-center justify-between gap-1 pt-0.5">
+                                <span className="text-[9px] font-mono text-zinc-500 uppercase">
+                                  Nudge In-Point:
+                                </span>
+                                <div className="flex items-center gap-1">
+                                  <button
+                                    type="button"
+                                    disabled={isRendering || !onSegmentsChange}
+                                    onClick={() =>
+                                      handleSegmentTrimChange(
+                                        inSeg.segmentId,
+                                        Math.max(0, inTrim.inSec - 0.1),
+                                        inTrim.outSec
+                                      )
+                                    }
+                                    className="px-1.5 py-0.5 rounded bg-zinc-950 border border-zinc-700 text-[10px] font-mono text-zinc-300 hover:text-white"
+                                  >
+                                    -0.1s
+                                  </button>
+                                  <button
+                                    type="button"
+                                    disabled={isRendering || !onSegmentsChange}
+                                    onClick={() =>
+                                      handleSegmentTrimChange(
+                                        inSeg.segmentId,
+                                        Math.min(inTrim.outSec - 0.5, inTrim.inSec + 0.1),
+                                        inTrim.outSec
+                                      )
+                                    }
+                                    className="px-1.5 py-0.5 rounded bg-zinc-950 border border-zinc-700 text-[10px] font-mono text-zinc-300 hover:text-white"
+                                  >
+                                    +0.1s
+                                  </button>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Boundary Transition & J/L-Cut Quick Controls */}
+                          <div className="flex flex-wrap items-center justify-between gap-2 pt-1 text-[10px] font-mono">
+                            <div className="flex items-center gap-1.5">
+                              <span className="text-zinc-500 uppercase">Join Mode:</span>
+                              {(['cut', 'dissolve', 'fade'] as const).map((jMode) => (
+                                <button
+                                  key={jMode}
+                                  type="button"
+                                  disabled={isRendering || !onSegmentsChange}
+                                  onClick={() => handleShotJoinChange(outSeg.segmentId, jMode)}
+                                  className={cn(
+                                    'px-2 py-0.5 rounded uppercase border transition-colors',
+                                    joinVal === jMode
+                                      ? 'bg-violet-500/20 border-violet-400 text-violet-200'
+                                      : 'bg-zinc-900 border-zinc-800 text-zinc-400 hover:text-white'
+                                  )}
+                                >
+                                  {jMode}
+                                </button>
+                              ))}
+                            </div>
+                            <div className="flex items-center gap-1.5">
+                              <span className="text-zinc-500 uppercase">Audio Split Edit:</span>
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  setSegmentAudioConfigs((prev) => ({
+                                    ...prev,
+                                    [inSeg.segmentId]: {
+                                      ...inAudioCfg,
+                                      audioLeadInSec:
+                                        (inAudioCfg.audioLeadInSec ?? 0) > 0 ? undefined : 0.4,
+                                    },
+                                  }))
+                                }
+                                className={cn(
+                                  'px-2 py-0.5 rounded border transition-colors',
+                                  (inAudioCfg.audioLeadInSec ?? 0) > 0
+                                    ? 'bg-cyan-500/20 border-cyan-400 text-cyan-200'
+                                    : 'bg-zinc-900 border-zinc-800 text-zinc-400 hover:text-white'
+                                )}
+                              >
+                                J-Cut (-0.4s)
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  setSegmentAudioConfigs((prev) => ({
+                                    ...prev,
+                                    [outSeg.segmentId]: {
+                                      ...outAudioCfg,
+                                      audioTailOutSec:
+                                        (outAudioCfg.audioTailOutSec ?? 0) > 0 ? undefined : 0.4,
+                                    },
+                                  }))
+                                }
+                                className={cn(
+                                  'px-2 py-0.5 rounded border transition-colors',
+                                  (outAudioCfg.audioTailOutSec ?? 0) > 0
+                                    ? 'bg-indigo-500/20 border-indigo-400 text-indigo-200'
+                                    : 'bg-zinc-900 border-zinc-800 text-zinc-400 hover:text-white'
+                                )}
+                              >
+                                L-Cut (+0.4s)
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      )
+                    })()}
                 </div>
               )}
               
@@ -4656,14 +5109,20 @@ export function SceneProductionMixer({
                       segments={previewSegments}
                       segmentDurations={segmentDurationsForTimeline}
                       measuredDurations={measuredSegmentDurations}
+                      segmentAudioConfigs={segmentAudioConfigs}
                       dialogueClips={audioTracks.dialogue.enabled ? dialogueClipsForTimeline : []}
                       narrationClip={narrationClipForTimeline}
                       sfxClips={sfxClipsForTimeline}
                       musicClips={musicClipsForTimeline}
+                      musicAutoDuck={!!audioTracks.music.autoDuck}
+                      sfxAutoDuck={!!audioTracks.sfx.autoDuck}
                       currentPlaybackTime={playbackTime}
                       selectedSegmentId={selectedTrimSegmentId ?? activePlaybackSegmentId}
                       onSelectSegment={(segmentId) => setSelectedTrimSegmentId(segmentId)}
                       onCycleShotJoin={onSegmentsChange ? handleCycleShotJoin : undefined}
+                      onInspectShotBoundary={(idx) =>
+                        setInspectedBoundaryIndex((prev) => (prev === idx ? null : idx))
+                      }
                       onSeekTime={handleTimelineSeek}
                       disabled={isRendering}
                     />
@@ -5875,6 +6334,31 @@ export function SceneProductionMixer({
                 <SelectContent>
                   <SelectItem value="delivery">Delivery</SelectItem>
                   <SelectItem value="draft">Draft</SelectItem>
+                </SelectContent>
+              </Select>
+
+              {/* Loudness Normalization Target (EBU R128 / -14 LUFS) */}
+              <Select
+                value={loudnessTarget}
+                onValueChange={(value) => setLoudnessTarget(value as MixerLoudnessTarget)}
+                disabled={isRendering}
+              >
+                <SelectTrigger
+                  className="w-[158px] h-9 shrink-0 bg-zinc-950 border-zinc-700 [&>span]:text-left font-mono text-xs"
+                  title="Master Loudness Normalization Target (FFmpeg loudnorm / EBU R128)"
+                >
+                  <SelectValue placeholder="Loudness">
+                    {loudnessTarget === 'broadcast-24lkfs'
+                      ? '-24 LKFS (TV)'
+                      : loudnessTarget === 'web-14lufs'
+                        ? '-14 LUFS (Web)'
+                        : 'Loudness: Off'}
+                  </SelectValue>
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="web-14lufs">-14 LUFS (Web / Streaming)</SelectItem>
+                  <SelectItem value="broadcast-24lkfs">-24 LKFS (EBU R128 Broadcast)</SelectItem>
+                  <SelectItem value="off">Off (Unnormalized Raw Mix)</SelectItem>
                 </SelectContent>
               </Select>
 
