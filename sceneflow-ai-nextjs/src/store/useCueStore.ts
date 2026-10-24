@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { useShallow } from 'zustand/react/shallow';
 
 export interface CueContext {
   type: 'text' | 'beatCard' | 'character' | 'template' | 'analysis' | 'pacing' | 'conflict' | 'consistency';
@@ -48,19 +49,18 @@ export const useCueStore = create<CueState>((set, get) => ({
 }));
 
 // Custom hook for easy access to Cue functionality
-export const useCue = () => {
-  const store = useCueStore();
-  
-  return {
-    // State
-    isSidebarOpen: store.isSidebarOpen,
-    activeContext: store.activeContext,
-    
-    // Actions
-    toggleSidebar: store.toggleSidebar,
-    setSidebarOpen: store.setSidebarOpen,
-    setSidebarVisibility: store.setSidebarVisibility,
-    invokeCue: store.invokeCue,
-    clearContext: store.clearContext,
-  };
-};
+export const useCue = () =>
+  useCueStore(
+    useShallow((store) => ({
+      // State
+      isSidebarOpen: store.isSidebarOpen,
+      activeContext: store.activeContext,
+
+      // Actions
+      toggleSidebar: store.toggleSidebar,
+      setSidebarOpen: store.setSidebarOpen,
+      setSidebarVisibility: store.setSidebarVisibility,
+      invokeCue: store.invokeCue,
+      clearContext: store.clearContext,
+    }))
+  );

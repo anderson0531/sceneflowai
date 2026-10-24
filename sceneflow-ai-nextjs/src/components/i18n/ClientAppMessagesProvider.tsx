@@ -1,12 +1,12 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { usePathname } from 'next/navigation'
 import { NextIntlClientProvider } from 'next-intl'
 import enCommon from '../../../messages/app/en/common.json'
 import { DEFAULT_LOCALE, isAppSurfacePath, isLocale } from '@/i18n/locale'
 import { getAppMessages } from '@/i18n/appMessages'
-import { surfacesForPath } from '@/i18n/appSurfaces'
+import { BASE_SURFACE, surfacesForPath } from '@/i18n/appSurfaces'
 import { readUiLocaleCookie } from '@/i18n/useUiLocale'
 
 /**
@@ -36,6 +36,7 @@ export function ClientAppMessagesProvider({ children }: { children: React.ReactN
   const [messages, setMessages] = useState<Record<string, unknown>>({
     common: enCommon as Record<string, unknown>,
   })
+  const loadedKeyRef = useRef<string>(`${DEFAULT_LOCALE}:${BASE_SURFACE}`)
 
   useEffect(() => {
     const documentLocale = document.documentElement.lang
@@ -48,12 +49,17 @@ export function ClientAppMessagesProvider({ children }: { children: React.ReactN
         ? documentLocale
         : DEFAULT_LOCALE
     const surfaces = surfacesForPath(pathname)
+    const nextKey = `${resolved}:${surfaces.join(',')}`
+    if (loadedKeyRef.current === nextKey) {
+      return
+    }
 
     let cancelled = false
     ;(async () => {
       try {
         const loaded = await getAppMessages(resolved, surfaces)
         if (cancelled) return
+        loadedKeyRef.current = nextKey
         setLocale(resolved)
         setMessages(loaded)
       } catch {

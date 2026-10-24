@@ -82,7 +82,7 @@ export function useDashboardData(): DashboardData {
       const [creditsRes, subscriptionRes, projectsRes, seriesRes] = await Promise.all([
         fetch('/api/user/credits'),
         fetch('/api/subscription/status'),
-        fetch(`/api/projects?userId=${userId}&pageSize=50`),
+        fetch(`/api/projects?userId=${userId}&pageSize=50&summary=1`),
         fetch(`/api/series?userId=${userId}&pageSize=1`),
       ])
 
@@ -173,10 +173,14 @@ export function useDashboardData(): DashboardData {
     }
   }, [authStatus, fetchDashboardData])
 
-  // Poll every 60 seconds
+  // Poll every 60 seconds when tab is visible
   useEffect(() => {
     if (authStatus !== 'authenticated') return
-    const interval = setInterval(fetchDashboardData, 60000)
+    const interval = setInterval(() => {
+      if (typeof document === 'undefined' || document.visibilityState === 'visible') {
+        fetchDashboardData()
+      }
+    }, 60000)
     return () => clearInterval(interval)
   }, [authStatus, fetchDashboardData])
 

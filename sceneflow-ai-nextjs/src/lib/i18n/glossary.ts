@@ -73,6 +73,43 @@ export function glossarySlug(term: string): string {
   return term.replace(/[^A-Za-z0-9]+/g, '_').replace(/^_|_$/g, '').toUpperCase()
 }
 
+const SORTED_BASE_TERMS = [...new Set(GLOSSARY_TERMS)]
+  .filter((term) => term && term.length >= 2)
+  .sort((a, b) => b.length - a.length)
+
+const PLACEHOLDER_BY_TERM = new Map<string, string>()
+const FUZZY_REGEX_BY_TERM = new Map<string, RegExp>()
+
+for (const term of SORTED_BASE_TERMS) {
+  const slug = glossarySlug(term)
+  PLACEHOLDER_BY_TERM.set(term, `${GLOSSARY_PLACEHOLDER_PREFIX}${slug}${GLOSSARY_PLACEHOLDER_SUFFIX}`)
+  FUZZY_REGEX_BY_TERM.set(
+    term,
+    new RegExp(`${GLOSSARY_PLACEHOLDER_PREFIX}\\s*${slug}\\s*${GLOSSARY_PLACEHOLDER_SUFFIX}`, 'g')
+  )
+}
+
+function getPlaceholderForTerm(term: string): string {
+  let placeholder = PLACEHOLDER_BY_TERM.get(term)
+  if (!placeholder) {
+    placeholder = `${GLOSSARY_PLACEHOLDER_PREFIX}${glossarySlug(term)}${GLOSSARY_PLACEHOLDER_SUFFIX}`
+    PLACEHOLDER_BY_TERM.set(term, placeholder)
+  }
+  return placeholder
+}
+
+function getFuzzyRegexForTerm(term: string): RegExp {
+  let regex = FUZZY_REGEX_BY_TERM.get(term)
+  if (!regex) {
+    regex = new RegExp(
+      `${GLOSSARY_PLACEHOLDER_PREFIX}\\s*${glossarySlug(term)}\\s*${GLOSSARY_PLACEHOLDER_SUFFIX}`,
+      'g'
+    )
+    FUZZY_REGEX_BY_TERM.set(term, regex)
+  }
+  return regex
+}
+
 export interface ProtectedText {
   protectedText: string
   map: Map<string, string>
@@ -92,16 +129,19 @@ export function protectGlossary(
   const map = new Map<string, string>()
   let protectedText = text
 
-  const terms = [...new Set([...GLOSSARY_TERMS, ...extraTerms])]
-    .filter((term) => term && term.length >= 2)
-    .sort((a, b) => b.length - a.length)
+  const terms =
+    extraTerms.length === 0
+      ? SORTED_BASE_TERMS
+      : [...new Set([...SORTED_BASE_TERMS, ...extraTerms])]
+          .filter((term) => term && term.length >= 2)
+          .sort((a, b) => b.length - a.length)
 
-  terms.forEach((term) => {
-    if (!protectedText.includes(term)) return
-    const placeholder = `${GLOSSARY_PLACEHOLDER_PREFIX}${glossarySlug(term)}${GLOSSARY_PLACEHOLDER_SUFFIX}`
+  for (const term of terms) {
+    if (!protectedText.includes(term)) continue
+    const placeholder = getPlaceholderForTerm(term)
     map.set(placeholder, term)
     protectedText = protectedText.split(term).join(placeholder)
-  })
+  }
 
   return { protectedText, map }
 }
@@ -113,13 +153,12 @@ function scrubLegacyPlaceholders(text: string): string {
 export function restoreGlossary(text: string, map: Map<string, string>): string {
   let restored = text
   for (const [placeholder, term] of map) {
-    restored = restored.split(placeholder).join(term)
-    // Engines sometimes inject spaces inside the token.
-    const fuzzy = new RegExp(
-      `${GLOSSARY_PLACEHOLDER_PREFIX}\\s*${glossarySlug(term)}\\s*${GLOSSARY_PLACEHOLDER_SUFFIX}`,
-      'g'
-    )
-    restored = restored.replace(fuzzy, term)
+    if (restored.includes(placeholder)) {
+      restored = restored.split(placeholder).join(term)
+    } else {
+      // Engines sometimes inject spaces inside the token.
+      restored = restored.replace(getFuzzyRegexForTerm(term), term)
+    }
   }
   return scrubLegacyPlaceholders(restored)
 }

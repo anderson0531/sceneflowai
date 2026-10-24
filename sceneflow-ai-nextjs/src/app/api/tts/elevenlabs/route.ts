@@ -13,6 +13,10 @@ import {
 import { NARRATION_CHUNK_BYTES } from '@/lib/tts/blueprintTtsConstants'
 import { CreditService } from '@/services/CreditService'
 import { AUDIO_CREDITS } from '@/lib/credits/creditCosts'
+import {
+  CONCURRENCY_DEFAULTS,
+  processWithConcurrency,
+} from '@/lib/utils/concurrent-processor'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
@@ -96,16 +100,25 @@ export async function POST(request: NextRequest) {
           : undefined
       // Gemini path, so the same UTF-8 byte ceiling applies.
       const chunks = chunkNarrationText(text, NARRATION_CHUNK_BYTES)
-      const buffers: Buffer[] = []
-      for (const chunk of chunks) {
-        buffers.push(
-          await synthesizeGeminiFlashMp3({
-            text: chunk,
-            voiceId: geminiVoice,
-            directorNotes,
-          })
-        )
+      const results = await processWithConcurrency<Buffer>(
+        chunks.map((chunk, index) => ({
+          id: index,
+          execute: () =>
+            synthesizeGeminiFlashMp3({
+              text: chunk,
+              voiceId: geminiVoice,
+              directorNotes,
+            }),
+        })),
+        CONCURRENCY_DEFAULTS.AUDIO_GENERATION,
+        undefined,
+        false
+      )
+      const failed = results.find((result) => result.status === 'rejected')
+      if (failed) {
+        throw failed.error ?? new Error('TTS chunk failed')
       }
+      const buffers = results.map((result) => result.value!)
       const buffer = buffers.length === 1 ? buffers[0]! : Buffer.concat(buffers)
 
       if (userId) {

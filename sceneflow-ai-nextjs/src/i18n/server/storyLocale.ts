@@ -140,9 +140,18 @@ export async function resolveExistingContentStoryLocale(
       const project = await Project.findByPk(projectId)
       if (project) {
         const content = readContentEntityI18n(project)
-        const properNouns = includeProperNouns
-          ? (await resolveStoryLocale({ ...options, explicit: undefined })).properNouns
-          : []
+        const resolvedSeriesId = options.seriesId ?? project.series_id ?? undefined
+        const properNouns =
+          includeProperNouns && resolvedSeriesId
+            ? (
+                await resolveStoryLocale({
+                  ...options,
+                  explicit: undefined,
+                  projectId: undefined,
+                  seriesId: resolvedSeriesId,
+                })
+              ).properNouns
+            : []
         if (content.contentStamped && isLocale(content.sourceLocale)) {
           return { storyLocale: content.sourceLocale, properNouns, source: 'project' }
         }

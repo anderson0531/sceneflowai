@@ -1,6 +1,6 @@
 'use client'
 
-import React, { createContext, useContext, useState, useCallback, useEffect, ReactNode } from 'react'
+import React, { createContext, useContext, useState, useCallback, useEffect, useMemo, useRef, ReactNode } from 'react'
 import { useSession } from 'next-auth/react'
 
 interface CreditBreakdown {
@@ -36,7 +36,8 @@ export function CreditsProvider({ children }: CreditsProviderProps) {
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [showLowCreditWarning, setShowLowCreditWarning] = useState(false)
-  const [warningDismissed, setWarningDismissed] = useState(false)
+  const warningDismissedRef = useRef(false)
+  const warningTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const refreshCredits = useCallback(async () => {
     if (!session?.user?.id) {
@@ -64,7 +65,7 @@ export function CreditsProvider({ children }: CreditsProviderProps) {
       setCredits(data)
       
       // Check for low credits
-      if (data.total_credits < LOW_CREDIT_THRESHOLD && !warningDismissed) {
+      if (data.total_credits < LOW_CREDIT_THRESHOLD && !warningDismissedRef.current) {
         setShowLowCreditWarning(true)
       }
     } catch (err: any) {
@@ -73,7 +74,7 @@ export function CreditsProvider({ children }: CreditsProviderProps) {
     } finally {
       setIsLoading(false)
     }
-  }, [session?.user?.id, warningDismissed])
+  }, [session?.user?.id])
 
   // Optimistically update credits without refetching (for immediate UI feedback)
   const updateCreditsOptimistic = useCallback((delta: number) => {
@@ -89,9 +90,23 @@ export function CreditsProvider({ children }: CreditsProviderProps) {
 
   const dismissLowCreditWarning = useCallback(() => {
     setShowLowCreditWarning(false)
-    setWarningDismissed(true)
+    warningDismissedRef.current = true
+    if (warningTimerRef.current) {
+      clearTimeout(warningTimerRef.current)
+    }
     // Reset after 10 minutes
-    setTimeout(() => setWarningDismissed(false), 10 * 60 * 1000)
+    warningTimerRef.current = setTimeout(() => {
+      warningDismissedRef.current = false
+      warningTimerRef.current = null
+    }, 10 * 60 * 1000)
+  }, [])
+
+  useEffect(() => {
+    return () => {
+      if (warningTimerRef.current) {
+        clearTimeout(warningTimerRef.current)
+      }
+    }
   }, [])
 
   // Initial fetch when authenticated
@@ -104,12 +119,14 @@ export function CreditsProvider({ children }: CreditsProviderProps) {
     }
   }, [status, refreshCredits])
 
-  // Poll credits every 60 seconds when user is active
+  // Poll credits every 60 seconds when user is active (tab is visible)
   useEffect(() => {
     if (status !== 'authenticated') return
 
     const interval = setInterval(() => {
-      refreshCredits()
+      if (typeof document === 'undefined' || document.visibilityState === 'visible') {
+        refreshCredits()
+      }
     }, 60 * 1000)
 
     return () => clearInterval(interval)
@@ -118,27 +135,36 @@ export function CreditsProvider({ children }: CreditsProviderProps) {
   // Listen for credit update events from API responses
   useEffect(() => {
     const handleCreditUpdate = (event: CustomEvent<{ balance: number }>) => {
-      if (credits) {
-        setCredits(prev => prev ? { ...prev, total_credits: event.detail.balance } : prev)
-      }
+      setCredits(prev => prev ? { ...prev, total_credits: event.detail.balance } : prev)
     }
 
     window.addEventListener('creditsUpdated', handleCreditUpdate as EventListener)
     return () => window.removeEventListener('creditsUpdated', handleCreditUpdate as EventListener)
-  }, [credits])
+  }, [])
+
+  const contextValue = useMemo(
+    () => ({
+      credits,
+      isLoading,
+      error,
+      refreshCredits,
+      updateCreditsOptimistic,
+      showLowCreditWarning,
+      dismissLowCreditWarning,
+    }),
+    [
+      credits,
+      isLoading,
+      error,
+      refreshCredits,
+      updateCreditsOptimistic,
+      showLowCreditWarning,
+      dismissLowCreditWarning,
+    ]
+  )
 
   return (
-    <CreditsContext.Provider 
-      value={{
-        credits,
-        isLoading,
-        error,
-        refreshCredits,
-        updateCreditsOptimistic,
-        showLowCreditWarning,
-        dismissLowCreditWarning
-      }}
-    >
+    <CreditsContext.Provider value={contextValue}>
       {children}
     </CreditsContext.Provider>
   )

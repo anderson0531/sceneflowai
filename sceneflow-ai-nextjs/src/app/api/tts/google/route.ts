@@ -9,6 +9,10 @@ import { NARRATION_CHUNK_BYTES } from '@/lib/tts/blueprintTtsConstants'
 import type { GeminiTtsAudioType } from '@/lib/tts/geminiTtsPrompt'
 import { CreditService } from '@/services/CreditService'
 import { AUDIO_CREDITS } from '@/lib/credits/creditCosts'
+import {
+  CONCURRENCY_DEFAULTS,
+  processWithConcurrency,
+} from '@/lib/utils/concurrent-processor'
 
 export const dynamic = 'force-dynamic'
 export const maxDuration = 60
@@ -74,21 +78,32 @@ export async function POST(request: NextRequest) {
     // Same Gemini ceiling as the Blueprint route: a UTF-8 byte budget, since a
     // character budget lets non-Latin text past the limit.
     const chunks = chunkNarrationText(cleanText, NARRATION_CHUNK_BYTES)
-    const audioBuffers: Buffer[] = []
+    const results = await processWithConcurrency<Buffer>(
+      chunks.map((chunkText, i) => ({
+        id: i,
+        execute: () => {
+          console.log(
+            `[Google TTS] chunk ${i + 1}/${chunks.length} (${chunkText.length} chars) voice=${voice}`
+          )
+          return synthesizeGeminiFlashMp3({
+            text: chunkText,
+            voiceId: voice,
+            directorNotes,
+            audioType: ttsAudioType,
+          })
+        },
+      })),
+      CONCURRENCY_DEFAULTS.AUDIO_GENERATION,
+      undefined,
+      false
+    )
 
-    for (let i = 0; i < chunks.length; i++) {
-      const chunkText = chunks[i]!
-      console.log(
-        `[Google TTS] chunk ${i + 1}/${chunks.length} (${chunkText.length} chars) voice=${voice}`
-      )
-      const buf = await synthesizeGeminiFlashMp3({
-        text: chunkText,
-        voiceId: voice,
-        directorNotes,
-        audioType: ttsAudioType,
-      })
-      audioBuffers.push(buf)
+    const failed = results.find((result) => result.status === 'rejected')
+    if (failed) {
+      throw failed.error ?? new Error('TTS chunk failed')
     }
+
+    const audioBuffers = results.map((result) => result.value!)
 
     const finalAudioBuffer =
       audioBuffers.length === 1 ? audioBuffers[0]! : Buffer.concat(audioBuffers)

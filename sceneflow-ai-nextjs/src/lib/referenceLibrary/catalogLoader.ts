@@ -6,7 +6,7 @@ import Project from '@/models/Project'
 import {
   listReferenceAssets,
   listLinksForProject,
-  getReferenceAssetById,
+  getReferenceAssetsByIds,
 } from './assetRepository'
 import { buildReferenceCatalog, formatReferenceCatalogForPrompt } from './projection'
 import type { ReferenceCatalog } from '@/types/referenceLibrary'
@@ -15,53 +15,35 @@ export async function loadProjectReferenceCatalog(
   projectId: string,
   userId: string
 ): Promise<ReferenceCatalog> {
-  const links = await listLinksForProject(projectId)
-  const assets = []
+  const [links, project] = await Promise.all([
+    listLinksForProject(projectId),
+    Project.findByPk(projectId),
+  ])
 
+  const wantedIds = new Set<string>()
   for (const link of links) {
-    const asset = await getReferenceAssetById(link.assetId, userId)
-    if (asset) assets.push(asset)
+    if (link.assetId) wantedIds.add(link.assetId)
   }
 
   // Include unlinked visionPhase assets that already have libraryAssetId
-  const project = await Project.findByPk(projectId)
   if (project?.user_id === userId) {
     const vp = project.metadata?.visionPhase || {}
     const chars = vp.characters || []
     const locs = vp.references?.locationReferences || []
     const props = vp.references?.objectReferences || []
-    const seen = new Set(assets.map((a) => a.id))
 
     for (const c of chars) {
-      if (c.libraryAssetId && !seen.has(c.libraryAssetId)) {
-        const a = await getReferenceAssetById(c.libraryAssetId, userId)
-        if (a) {
-          assets.push(a)
-          seen.add(a.id)
-        }
-      }
+      if (c?.libraryAssetId) wantedIds.add(c.libraryAssetId)
     }
     for (const loc of locs) {
-      const id = loc.libraryAssetId
-      if (id && !seen.has(id)) {
-        const a = await getReferenceAssetById(id, userId)
-        if (a) {
-          assets.push(a)
-          seen.add(a.id)
-        }
-      }
+      if (loc?.libraryAssetId) wantedIds.add(loc.libraryAssetId)
     }
     for (const prop of props) {
-      const id = prop.libraryAssetId
-      if (id && !seen.has(id)) {
-        const a = await getReferenceAssetById(id, userId)
-        if (a) {
-          assets.push(a)
-          seen.add(a.id)
-        }
-      }
+      if (prop?.libraryAssetId) wantedIds.add(prop.libraryAssetId)
     }
   }
+
+  const assets = await getReferenceAssetsByIds([...wantedIds], userId)
 
   return buildReferenceCatalog(assets)
 }
@@ -75,11 +57,10 @@ export async function loadUserReferenceCatalogForPrompt(
 
   if (projectId) {
     const links = await listLinksForProject(projectId)
-    assets = []
-    for (const link of links) {
-      const a = await getReferenceAssetById(link.assetId, userId)
-      if (a) assets.push(a)
-    }
+    assets = await getReferenceAssetsByIds(
+      links.map((link) => link.assetId),
+      userId
+    )
   } else if (seriesId) {
     const result = await listReferenceAssets(userId, {
       linkedToSeriesId: seriesId,

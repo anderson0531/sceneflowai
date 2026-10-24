@@ -23,14 +23,12 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
   const { seriesId } = await params
   
   try {
-    await sequelize.authenticate()
-    
     const series = await Series.findByPk(seriesId)
     if (!series) {
       return NextResponse.json({ success: false, error: 'Series not found' }, { status: 404 })
     }
     
-    // Get episode project data
+    // Get episode project data (exclude multi-MB script/production blobs)
     const projectIds = series.episode_blueprints
       ?.filter(ep => ep.projectId)
       .map(ep => ep.projectId) || []
@@ -39,7 +37,20 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
     if (projectIds.length > 0) {
       episodeProjects = await Project.findAll({
         where: { id: projectIds },
-        attributes: ['id', 'title', 'status', 'current_step', 'step_progress', 'updated_at', 'metadata']
+        attributes: [
+          'id',
+          'title',
+          'status',
+          'current_step',
+          'step_progress',
+          'updated_at',
+          [
+            sequelize.literal(
+              "metadata #- '{visionPhase,production}' #- '{visionPhase,script}' #- '{visionPhase,scenes}'"
+            ),
+            'metadata',
+          ],
+        ]
       })
     }
 
@@ -90,8 +101,6 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
   const { seriesId } = await params
   
   try {
-    await sequelize.authenticate()
-    
     const series = await Series.findByPk(seriesId)
     if (!series) {
       return NextResponse.json({ success: false, error: 'Series not found' }, { status: 404 })
@@ -158,7 +167,6 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
     }
     
     await series.update(updates)
-    await series.reload()
     
     console.log(`[${timestamp}] [PATCH /api/series/${seriesId}] Updated series`)
     
@@ -186,8 +194,6 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
   const { seriesId } = await params
   
   try {
-    await sequelize.authenticate()
-    
     const series = await Series.findByPk(seriesId)
     if (!series) {
       return NextResponse.json({ success: false, error: 'Series not found' }, { status: 404 })

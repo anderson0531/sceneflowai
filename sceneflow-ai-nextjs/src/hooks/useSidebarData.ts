@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useCallback } from 'react'
+import { useEffect, useRef } from 'react'
 import { useStore } from '@/store/useStore'
 
 interface ReviewScores {
@@ -110,20 +110,25 @@ export function useSidebarData(options: UseSidebarDataOptions) {
 export function useSidebarQuickActions(handlers: Record<string, () => void>) {
   const registerQuickActionHandler = useStore(s => s.registerQuickActionHandler)
   const unregisterQuickActionHandler = useStore(s => s.unregisterQuickActionHandler)
+  const handlersRef = useRef(handlers)
+  handlersRef.current = handlers
+
+  const actionKeysSig = Object.keys(handlers).sort().join('\0')
 
   useEffect(() => {
-    // Register all handlers
-    Object.entries(handlers).forEach(([actionId, handler]) => {
-      registerQuickActionHandler(actionId, handler)
+    const actionIds = actionKeysSig ? actionKeysSig.split('\0') : []
+    actionIds.forEach((actionId) => {
+      registerQuickActionHandler(actionId, () => {
+        handlersRef.current[actionId]?.()
+      })
     })
 
-    // Unregister on unmount or when handlers change
     return () => {
-      Object.keys(handlers).forEach(actionId => {
+      actionIds.forEach((actionId) => {
         unregisterQuickActionHandler(actionId)
       })
     }
-  }, [handlers, registerQuickActionHandler, unregisterQuickActionHandler])
+  }, [actionKeysSig, registerQuickActionHandler, unregisterQuickActionHandler])
 }
 
 export default useSidebarData

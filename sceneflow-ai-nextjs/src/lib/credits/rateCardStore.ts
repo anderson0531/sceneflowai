@@ -6,6 +6,7 @@
 import { Op } from 'sequelize'
 import { CreditPricing } from '@/models'
 import { sequelize } from '@/config/database'
+import { hasColumns, hasTables } from '@/lib/database/schemaProbe'
 import {
   DEFAULT_MARKUP,
   SEEDED_PROVIDER_RATES,
@@ -13,61 +14,86 @@ import {
 } from './quoteGenerationCredits'
 
 let migrationDone = false
+let migrationInFlight: Promise<void> | null = null
 
 export async function ensurePricingAdminSchema(): Promise<void> {
   if (migrationDone) return
-  await sequelize.query(`
-    CREATE TABLE IF NOT EXISTS credit_pricing (
-      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-      provider VARCHAR(50) NOT NULL,
-      category VARCHAR(50) NOT NULL,
-      operation VARCHAR(100) NOT NULL,
-      model VARCHAR(100) NOT NULL,
-      metric VARCHAR(50) NOT NULL,
-      credits_per_unit INTEGER NOT NULL,
-      provider_cost_usd DECIMAL(10, 4) NOT NULL,
-      margin_percent DECIMAL(5, 2) NOT NULL DEFAULT 0,
-      is_active BOOLEAN NOT NULL DEFAULT true,
-      effective_from TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-      effective_to TIMESTAMPTZ,
-      notes TEXT,
-      resolution VARCHAR(20),
-      has_audio BOOLEAN,
-      markup DECIMAL(6, 3) DEFAULT 1.800,
-      credits_override INTEGER,
-      source_url TEXT,
-      fetched_at TIMESTAMPTZ,
-      rate_status VARCHAR(20) NOT NULL DEFAULT 'published',
-      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-      updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-    );
-  `)
-  await sequelize.query(`
-    ALTER TABLE credit_pricing
-      ADD COLUMN IF NOT EXISTS resolution VARCHAR(20),
-      ADD COLUMN IF NOT EXISTS has_audio BOOLEAN,
-      ADD COLUMN IF NOT EXISTS markup DECIMAL(6, 3) DEFAULT 1.800,
-      ADD COLUMN IF NOT EXISTS credits_override INTEGER,
-      ADD COLUMN IF NOT EXISTS source_url TEXT,
-      ADD COLUMN IF NOT EXISTS fetched_at TIMESTAMPTZ,
-      ADD COLUMN IF NOT EXISTS rate_status VARCHAR(20) NOT NULL DEFAULT 'published';
-  `)
-  await sequelize.query(`
-    ALTER TABLE ai_usage
-      ADD COLUMN IF NOT EXISTS meta JSONB;
-  `)
-  await sequelize.query(`
-    CREATE TABLE IF NOT EXISTS platform_infra_costs (
-      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-      period_month DATE NOT NULL,
-      source VARCHAR(20) NOT NULL,
-      amount_usd DECIMAL(12, 2) NOT NULL,
-      notes TEXT,
-      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-      updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-    );
-  `)
-  migrationDone = true
+  if (migrationInFlight) return migrationInFlight
+
+  migrationInFlight = (async () => {
+    const [tablesReady, pricingColsReady, usageColsReady] = await Promise.all([
+      hasTables(['credit_pricing', 'platform_infra_costs']),
+      hasColumns('credit_pricing', [
+        'resolution',
+        'has_audio',
+        'markup',
+        'credits_override',
+        'source_url',
+        'fetched_at',
+        'rate_status',
+      ]),
+      hasColumns('ai_usage', ['meta']),
+    ])
+
+    if (!tablesReady || !pricingColsReady || !usageColsReady) {
+      await sequelize.query(`
+        CREATE TABLE IF NOT EXISTS credit_pricing (
+          id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+          provider VARCHAR(50) NOT NULL,
+          category VARCHAR(50) NOT NULL,
+          operation VARCHAR(100) NOT NULL,
+          model VARCHAR(100) NOT NULL,
+          metric VARCHAR(50) NOT NULL,
+          credits_per_unit INTEGER NOT NULL,
+          provider_cost_usd DECIMAL(10, 4) NOT NULL,
+          margin_percent DECIMAL(5, 2) NOT NULL DEFAULT 0,
+          is_active BOOLEAN NOT NULL DEFAULT true,
+          effective_from TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+          effective_to TIMESTAMPTZ,
+          notes TEXT,
+          resolution VARCHAR(20),
+          has_audio BOOLEAN,
+          markup DECIMAL(6, 3) DEFAULT 1.800,
+          credits_override INTEGER,
+          source_url TEXT,
+          fetched_at TIMESTAMPTZ,
+          rate_status VARCHAR(20) NOT NULL DEFAULT 'published',
+          created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+          updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+        );
+      `)
+      await sequelize.query(`
+        ALTER TABLE credit_pricing
+          ADD COLUMN IF NOT EXISTS resolution VARCHAR(20),
+          ADD COLUMN IF NOT EXISTS has_audio BOOLEAN,
+          ADD COLUMN IF NOT EXISTS markup DECIMAL(6, 3) DEFAULT 1.800,
+          ADD COLUMN IF NOT EXISTS credits_override INTEGER,
+          ADD COLUMN IF NOT EXISTS source_url TEXT,
+          ADD COLUMN IF NOT EXISTS fetched_at TIMESTAMPTZ,
+          ADD COLUMN IF NOT EXISTS rate_status VARCHAR(20) NOT NULL DEFAULT 'published';
+      `)
+      await sequelize.query(`
+        ALTER TABLE ai_usage
+          ADD COLUMN IF NOT EXISTS meta JSONB;
+      `)
+      await sequelize.query(`
+        CREATE TABLE IF NOT EXISTS platform_infra_costs (
+          id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+          period_month DATE NOT NULL,
+          source VARCHAR(20) NOT NULL,
+          amount_usd DECIMAL(12, 2) NOT NULL,
+          notes TEXT,
+          created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+          updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+        );
+      `)
+    }
+    migrationDone = true
+  })().finally(() => {
+    migrationInFlight = null
+  })
+
+  return migrationInFlight
 }
 
 export interface RateCardRow {

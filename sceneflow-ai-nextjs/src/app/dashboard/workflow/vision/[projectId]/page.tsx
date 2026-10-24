@@ -798,8 +798,14 @@ function findDefaultVisionScrollPanelFallback(pointer: { x: number; y: number })
   return markers[0] ?? null
 }
 
-function resolveActiveVisionScrollPanel(pointer: { x: number; y: number }): HTMLElement | null {
-  const hovered = document.elementFromPoint(pointer.x, pointer.y) as HTMLElement | null
+function resolveActiveVisionScrollPanel(
+  pointer: { x: number; y: number },
+  hoveredEl?: HTMLElement | null
+): HTMLElement | null {
+  const hovered =
+    hoveredEl !== undefined
+      ? hoveredEl
+      : (document.elementFromPoint(pointer.x, pointer.y) as HTMLElement | null)
   const fromPointer = findVisionScrollPanelMarker(hovered)
   if (fromPointer) return fromPointer
 
@@ -852,7 +858,21 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
   const router = useRouter()
   const { data: session } = useSession()
   const { execute } = useProcessWithOverlay()
-  const overlayStore = useOverlayStore()
+  const overlayShow = useOverlayStore((s) => s.show)
+  const overlayHide = useOverlayStore((s) => s.hide)
+  const overlaySetProgress = useOverlayStore((s) => s.setProgress)
+  const overlaySetPhase = useOverlayStore((s) => s.setPhase)
+  const overlaySetStatus = useOverlayStore((s) => s.setStatus)
+  const overlayStore = useMemo(
+    () => ({
+      show: overlayShow,
+      hide: overlayHide,
+      setProgress: overlaySetProgress,
+      setPhase: overlaySetPhase,
+      setStatus: overlaySetStatus,
+    }),
+    [overlayShow, overlayHide, overlaySetProgress, overlaySetPhase, overlaySetStatus]
+  )
   const [mounted, setMounted] = useState(false)
   const [project, setProject] = useState<Project | null>(null)
   const [script, setScript] = useState<any>(null)
@@ -2394,7 +2414,11 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         return
       }
 
-      const hovered = document.elementFromPoint(e.clientX, e.clientY) as HTMLElement | null
+      const hovered = (
+        target instanceof HTMLElement
+          ? target
+          : document.elementFromPoint(e.clientX, e.clientY)
+      ) as HTMLElement | null
       if (isInsideOpenDialog(hovered)) {
         return
       }
@@ -2406,7 +2430,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         return
       }
 
-      const panel = resolveActiveVisionScrollPanel({ x: e.clientX, y: e.clientY })
+      const panel = resolveActiveVisionScrollPanel({ x: e.clientX, y: e.clientY }, hovered)
       if (!panel || !canScrollVertically(panel, e.deltaY)) return
 
       panel.scrollTop += e.deltaY
@@ -17693,6 +17717,51 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     return ''
   }
 
+  const sceneProductionReferencesMap = useMemo(() => {
+    const defaultReferences: SceneProductionReferences = {
+      characters,
+      sceneReferences,
+      objectReferences,
+      locationReferences,
+    }
+    const scriptScenes = script?.script?.scenes || scenes || []
+    const referencesMap: Record<string, SceneProductionReferences> = {}
+    scriptScenes.forEach((scene: any, idx: number) => {
+      const sceneId = scene.id || `scene-${idx}`
+      referencesMap[sceneId] = defaultReferences
+    })
+    Object.keys(sceneProductionState).forEach((sceneId) => {
+      if (!referencesMap[sceneId]) {
+        referencesMap[sceneId] = defaultReferences
+      }
+    })
+    return referencesMap
+  }, [
+    characters,
+    sceneReferences,
+    objectReferences,
+    locationReferences,
+    script?.script?.scenes,
+    scenes,
+    sceneProductionState,
+  ])
+
+  const duplicateCastCount = useMemo(
+    () => findPotentialDuplicates(characters).reduce((sum, group) => sum + group.length - 1, 0),
+    [characters]
+  )
+
+  const backdropCharacters = useMemo(
+    () =>
+      characters.map((c) => ({
+        id: c.id,
+        name: c.name,
+        description: c.description,
+        appearance: c.appearance,
+      })),
+    [characters]
+  )
+
   if (!mounted || !initialLoadComplete) {
     return (
       <VisionLoadingOverlay
@@ -17956,34 +18025,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                 generatingDirectionFor={generatingDirectionFor}
                 onGenerateAllCharacters={generateCharacters}
                 sceneProductionData={sceneProductionState}
-                sceneProductionReferences={(() => {
-                  // Create a function that returns references for any scene ID
-                  // References are project-wide, so they're the same for all scenes
-                  const defaultReferences: SceneProductionReferences = {
-                    characters,
-                    sceneReferences,
-                    objectReferences,
-                    locationReferences,
-                  }
-                  
-                  // Build references object for all scenes in the script
-                  const scriptScenes = script?.script?.scenes || scenes || []
-                  const referencesMap: Record<string, SceneProductionReferences> = {}
-                  
-                  scriptScenes.forEach((scene: any, idx: number) => {
-                    const sceneId = scene.id || `scene-${idx}`
-                    referencesMap[sceneId] = defaultReferences
-                  })
-                  
-                  // Also include any scenes that are in production state but might not be in script yet
-                  Object.keys(sceneProductionState).forEach((sceneId) => {
-                    if (!referencesMap[sceneId]) {
-                      referencesMap[sceneId] = defaultReferences
-                    }
-                  })
-                  
-                  return referencesMap
-                })()}
+                sceneProductionReferences={sceneProductionReferencesMap}
                 onInitializeSceneProduction={handleInitializeSceneProduction}
                 onSegmentPromptChange={handleSegmentPromptChange}
                 onSegmentKeyframeChange={handleSegmentKeyframeChange}
@@ -18176,7 +18218,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           if (!open) setReferenceLibraryInitialTab(undefined)
         }}
         initialTab={referenceLibraryInitialTab}
-        duplicateCastCount={findPotentialDuplicates(characters).reduce((sum, group) => sum + group.length - 1, 0)}
+        duplicateCastCount={duplicateCastCount}
         onMergeDuplicateCast={() => {
           const duplicates = findPotentialDuplicates(characters)
           if (duplicates.length > 0) {
@@ -18231,7 +18273,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         scenes={script?.script?.scenes || []}
         allScenes={script?.script?.scenes || []}
         showProductionReadiness={true}
-        backdropCharacters={characters.map(c => ({ id: c.id, name: c.name, description: c.description, appearance: c.appearance }))}
+        backdropCharacters={backdropCharacters}
         onBackdropGenerated={handleBackdropGenerated}
         onInsertBackdropSegment={handleInsertBackdropSegment}
         onObjectGenerated={handleObjectGenerated}

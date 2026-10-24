@@ -8,9 +8,10 @@ import { Button } from "@/components/ui/Button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/Input";
 import { DownloadIcon, Edit, Settings, BarChart3, ChevronRight, Check, HelpCircle, Sparkles, PanelRight, PanelRightClose, RefreshCw, Wand2, Clapperboard } from "lucide-react";
+import { useShallow } from 'zustand/react/shallow';
 import { useGuideStore } from "@/store/useGuideStore";
 import { useStore } from '@/store/useStore'
-import { useCue } from "@/store/useCueStore";
+import { useCueStore } from "@/store/useCueStore";
 import dynamic from 'next/dynamic';
 import { cn } from "@/lib/utils";
 import { resolveCreatorName } from '@/lib/user/displayName';
@@ -103,11 +104,28 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
   const searchParams = useSearchParams();
   const router = useRouter();
   const { data: session, status: authStatus } = useSession();
-  const { guide, resetProject, updateTitle, updateTreatment, setTreatmentVariants, variantsLastModified } = useGuideStore();
-  const { updateTreatmentVariant } = useGuideStore() as {
-    updateTreatmentVariant: (id: string, patch: Record<string, unknown>) => void
-  };
-  const { invokeCue } = useCue();
+  const {
+    guide,
+    resetProject,
+    updateTitle,
+    updateTreatment,
+    setTreatmentVariants,
+    variantsLastModified,
+    updateTreatmentVariant,
+  } = useGuideStore(
+    useShallow((s) => ({
+      guide: s.guide,
+      resetProject: s.resetProject,
+      updateTitle: s.updateTitle,
+      updateTreatment: s.updateTreatment,
+      setTreatmentVariants: s.setTreatmentVariants,
+      variantsLastModified: s.variantsLastModified,
+      updateTreatmentVariant: (s as unknown as {
+        updateTreatmentVariant: (id: string, patch: Record<string, unknown>) => void
+      }).updateTreatmentVariant,
+    }))
+  );
+  const invokeCue = useCueStore((s) => s.invokeCue);
   const currentProject = useStore((s) => s.currentProject);
   const setCurrentProject = useStore((s) => s.setCurrentProject);
   const setBeats = useStore((s) => s.setBeats);

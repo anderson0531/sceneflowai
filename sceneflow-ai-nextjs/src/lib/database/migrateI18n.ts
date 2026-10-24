@@ -1,8 +1,11 @@
 import { sequelize } from '@/config/database'
+import { hasColumns, hasTables } from '@/lib/database/schemaProbe'
 
 /** Column-only migration, safe to run on hot paths. */
 export async function ensureUserLocaleColumns(): Promise<void> {
-  await sequelize.authenticate()
+  if (await hasColumns('users', ['preferred_locale', 'story_locale'])) {
+    return
+  }
   await sequelize.query(`
     ALTER TABLE users ADD COLUMN IF NOT EXISTS preferred_locale VARCHAR(12);
     ALTER TABLE users ADD COLUMN IF NOT EXISTS story_locale VARCHAR(12);
@@ -17,7 +20,9 @@ export async function ensureUserLocaleColumns(): Promise<void> {
  * new key instead of a stale hit, and orphaned rows are LRU-evictable.
  */
 export async function ensureContentTranslationsTable(): Promise<void> {
-  await sequelize.authenticate()
+  if (await hasTables(['content_translations'])) {
+    return
+  }
   await sequelize.query(`
     CREATE TABLE IF NOT EXISTS content_translations (
       source_hash     CHAR(64)     NOT NULL,

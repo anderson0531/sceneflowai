@@ -25,6 +25,8 @@ function pick(module: { default: Messages }): Messages {
   return module.default
 }
 
+const mergedSurfaceCache = new Map<string, Promise<Messages>>()
+
 async function loadSurface(surface: AppSurface, locale: string): Promise<Messages> {
   try {
     return await SURFACE_LOADERS[surface](locale)
@@ -33,6 +35,29 @@ async function loadSurface(surface: AppSurface, locale: string): Promise<Message
     // back to English rather than throwing inside a layout.
     return {}
   }
+}
+
+function loadMergedSurface(surface: AppSurface, resolvedLocale: string): Promise<Messages> {
+  const key = `${resolvedLocale}:${surface}`
+  const existing = mergedSurfaceCache.get(key)
+  if (existing) return existing
+
+  const promise = (async () => {
+    if (resolvedLocale === DEFAULT_LOCALE) {
+      return await loadSurface(surface, DEFAULT_LOCALE)
+    }
+    const [english, localized] = await Promise.all([
+      loadSurface(surface, DEFAULT_LOCALE),
+      loadSurface(surface, resolvedLocale),
+    ])
+    return mergeMessages(
+      english as Record<string, unknown>,
+      localized as Record<string, unknown>
+    )
+  })()
+
+  mergedSurfaceCache.set(key, promise)
+  return promise
 }
 
 /**
@@ -48,18 +73,9 @@ export async function getAppMessages(
   const resolved = isLocale(locale) ? locale : DEFAULT_LOCALE
   const wanted = [...new Set<AppSurface>([BASE_SURFACE, ...surfaces])]
 
-  const out: Messages = {}
+  const entries = await Promise.all(
+    wanted.map(async (surface) => [surface, await loadMergedSurface(surface, resolved)] as const)
+  )
 
-  for (const surface of wanted) {
-    const english = await loadSurface(surface, DEFAULT_LOCALE)
-    const localized =
-      resolved === DEFAULT_LOCALE ? english : await loadSurface(surface, resolved)
-
-    out[surface] =
-      resolved === DEFAULT_LOCALE
-        ? english
-        : mergeMessages(english as Record<string, unknown>, localized as Record<string, unknown>)
-  }
-
-  return out
+  return Object.fromEntries(entries)
 }

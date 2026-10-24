@@ -180,8 +180,25 @@ export function useBackgroundJob(options: {
   useEffect(() => {
     if (!enabled) return
     if (!job || isTerminal(job.status)) return
-    const interval = setInterval(poll, POLL_INTERVAL_MS)
-    return () => clearInterval(interval)
+    const interval = setInterval(() => {
+      if (typeof document === 'undefined' || document.visibilityState === 'visible') {
+        void poll()
+      }
+    }, POLL_INTERVAL_MS)
+    const handleVisibilityChange = () => {
+      if (typeof document !== 'undefined' && document.visibilityState === 'visible') {
+        void poll()
+      }
+    }
+    if (typeof document !== 'undefined') {
+      document.addEventListener('visibilitychange', handleVisibilityChange)
+    }
+    return () => {
+      clearInterval(interval)
+      if (typeof document !== 'undefined') {
+        document.removeEventListener('visibilitychange', handleVisibilityChange)
+      }
+    }
   }, [enabled, job, poll])
 
   /** Begin tracking a newly queued job. */

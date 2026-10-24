@@ -93,6 +93,31 @@ export async function getReferenceAssetById(
   return row ? toRecord(row) : null
 }
 
+export async function getReferenceAssetsByIds(
+  assetIds: readonly string[],
+  userId: string
+): Promise<ReferenceAssetRecord[]> {
+  const uniqueIds = [...new Set(assetIds.filter((id): id is string => typeof id === 'string' && id.length > 0))]
+  if (uniqueIds.length === 0) return []
+  await ensureReferenceLibraryTablesOnce()
+  const rows = await ReferenceAsset.findAll({
+    where: {
+      id: { [Op.in]: uniqueIds },
+      user_id: userId,
+    },
+  })
+  const byId = new Map<string, ReferenceAssetRecord>()
+  for (const row of rows) {
+    byId.set(row.id, toRecord(row))
+  }
+  const ordered: ReferenceAssetRecord[] = []
+  for (const id of uniqueIds) {
+    const record = byId.get(id)
+    if (record) ordered.push(record)
+  }
+  return ordered
+}
+
 export async function findByCanonicalName(
   userId: string,
   kind: ReferenceAssetKind,

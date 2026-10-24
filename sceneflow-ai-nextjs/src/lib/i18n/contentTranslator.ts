@@ -66,6 +66,35 @@ const DEFAULT_CHAR_BUDGET = 60_000
 /** Provider batch size, matching the landing pipeline's chunking. */
 const BATCH_SIZE = 32
 
+/** Bounded in-memory LRU cache to avoid hitting Cloud SQL for warm translations. */
+const MAX_MEMORY_CACHE_ENTRIES = 2000
+const memoryTranslationCache = new Map<string, string>()
+const lastUsedTouchTimestamps = new Map<string, number>()
+const TOUCH_THROTTLE_MS = 10 * 60 * 1000
+
+function getMemoryCache(targetLocale: string, hash: string): string | undefined {
+  const key = `${targetLocale}:${hash}`
+  const value = memoryTranslationCache.get(key)
+  if (value !== undefined) {
+    memoryTranslationCache.delete(key)
+    memoryTranslationCache.set(key, value)
+  }
+  return value
+}
+
+function setMemoryCache(targetLocale: string, hash: string, text: string): void {
+  const key = `${targetLocale}:${hash}`
+  if (memoryTranslationCache.has(key)) {
+    memoryTranslationCache.delete(key)
+  } else if (memoryTranslationCache.size >= MAX_MEMORY_CACHE_ENTRIES) {
+    const oldestKey = memoryTranslationCache.keys().next().value
+    if (oldestKey !== undefined) {
+      memoryTranslationCache.delete(oldestKey)
+    }
+  }
+  memoryTranslationCache.set(key, text)
+}
+
 let tableEnsured = false
 
 async function ensureTableOnce(): Promise<void> {
@@ -86,6 +115,18 @@ async function readCache(
   const found = new Map<string, string>()
   if (hashes.length === 0) return found
 
+  const dbMissHashes: string[] = []
+  for (const hash of hashes) {
+    const memHit = getMemoryCache(targetLocale, hash)
+    if (memHit !== undefined) {
+      found.set(hash, memHit)
+    } else {
+      dbMissHashes.push(hash)
+    }
+  }
+
+  if (dbMissHashes.length === 0) return found
+
   try {
     const sequelize = await getSequelize()
     const rows = await sequelize.query<{ source_hash: string; translated_text: string }>(
@@ -94,21 +135,32 @@ async function readCache(
         WHERE target_locale = :targetLocale
           AND source_hash IN (:hashes)`,
       {
-        replacements: { targetLocale, hashes },
+        replacements: { targetLocale, hashes: dbMissHashes },
         type: QueryTypes.SELECT,
       }
     )
-    for (const row of rows) found.set(row.source_hash, row.translated_text)
+    const now = Date.now()
+    const hashesToTouch: string[] = []
+    for (const row of rows) {
+      found.set(row.source_hash, row.translated_text)
+      setMemoryCache(targetLocale, row.source_hash, row.translated_text)
+      const touchKey = `${targetLocale}:${row.source_hash}`
+      const lastTouch = lastUsedTouchTimestamps.get(touchKey) ?? 0
+      if (now - lastTouch >= TOUCH_THROTTLE_MS) {
+        lastUsedTouchTimestamps.set(touchKey, now)
+        hashesToTouch.push(row.source_hash)
+      }
+    }
 
-    if (found.size > 0) {
-      // Fire-and-forget: LRU bookkeeping must never delay a render.
+    if (hashesToTouch.length > 0) {
+      // Throttled fire-and-forget: LRU bookkeeping must never delay a render.
       sequelize
         .query(
           `UPDATE content_translations
               SET last_used_at = NOW()
             WHERE target_locale = :targetLocale
               AND source_hash IN (:hashes)`,
-          { replacements: { targetLocale, hashes: [...found.keys()] } }
+          { replacements: { targetLocale, hashes: hashesToTouch } }
         )
         .catch(() => undefined)
     }
@@ -126,6 +178,12 @@ async function writeCache(
   provider: string
 ): Promise<void> {
   if (entries.length === 0) return
+
+  const now = Date.now()
+  for (const entry of entries) {
+    setMemoryCache(targetLocale, entry.hash, entry.text)
+    lastUsedTouchTimestamps.set(`${targetLocale}:${entry.hash}`, now)
+  }
 
   try {
     const sequelize = await getSequelize()

@@ -54,7 +54,8 @@ interface ExecutionOptions {
  * - 'default' - Generic processing (spinner)
  */
 export const useProcessWithOverlay = () => {
-  const { show, hide } = useOverlayStore()
+  const show = useOverlayStore((s) => s.show)
+  const hide = useOverlayStore((s) => s.hide)
 
   const execute = useCallback(async <T>(
     fn: () => Promise<T>, 

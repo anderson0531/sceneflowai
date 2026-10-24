@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 export type Track = {
   id?: string | number;
@@ -151,19 +151,22 @@ export function useAudioPlayer() {
 
   const getQueue = useCallback(() => queueRef.current.slice(), []);
 
-  return {
-    audioEl: audioRef.current,
-    current,
-    isPlaying,
-    error,
-    loadPlaylist,
-    play,
-    pause,
-    playNext,
-    playPrev,
-    playSingle,
-    getQueue,
-  };
+  return useMemo(
+    () => ({
+      audioEl: audioRef.current,
+      current,
+      isPlaying,
+      error,
+      loadPlaylist,
+      play,
+      pause,
+      playNext,
+      playPrev,
+      playSingle,
+      getQueue,
+    }),
+    [current, isPlaying, error, loadPlaylist, play, pause, playNext, playPrev, playSingle, getQueue]
+  );
 }
 
 export default useAudioPlayer;

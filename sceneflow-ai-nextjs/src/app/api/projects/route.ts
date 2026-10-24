@@ -6,10 +6,25 @@ import { sequelize } from '@/config/database'
 import { SubscriptionService } from '../../../services/SubscriptionService'
 import { resolveUserId } from '@/lib/userHelper'
 import { normalizeWorkflowStep } from '@/constants/workflowSteps'
+import { slimProjectResponseMetadata } from '@/lib/projects/slimProjectPutPayload'
 
 export const dynamic = 'force-dynamic'
 export const revalidate = 0
+export const maxDuration = 60
 
+const SUMMARY_METADATA_SQL = `jsonb_strip_nulls(jsonb_build_object(
+  'genre', metadata->'genre',
+  'format', metadata->'format',
+  'duration', metadata->'duration',
+  'estimatedCost', metadata->'estimatedCost',
+  'Cost', metadata->'Cost',
+  'seriesId', metadata->'seriesId',
+  'episodeNumber', metadata->'episodeNumber',
+  'thumbnailUrl', COALESCE(metadata->'thumbnailUrl', metadata->'visionPhase'->'thumbnailUrl'),
+  'posterUrl', metadata->'posterUrl'
+))`
+
+const LITE_LIST_METADATA_SQL = `metadata #- '{visionPhase,production}' #- '{visionPhase,scenes}'`
 
 // GET /api/projects?userId=<uuid or email>
 export async function GET(request: NextRequest) {
@@ -18,15 +33,12 @@ export async function GET(request: NextRequest) {
   try {
     console.log(`[${timestamp}] [GET /api/projects] Request received`)
     
-    console.log(`[${timestamp}] [GET /api/projects] Authenticating database connection...`)
-    await sequelize.authenticate()
-    console.log(`[${timestamp}] [GET /api/projects] Database authenticated`)
-    
     const { searchParams } = new URL(request.url)
     const id = searchParams.get('id')
+    const isSummary = searchParams.get('summary') === '1' || searchParams.get('summary') === 'true'
     let userIdParam = searchParams.get('userId') || request.headers.get('x-user-id') || undefined
     
-    console.log(`[${timestamp}] [GET /api/projects] Query params:`, { id, userId: userIdParam })
+    console.log(`[${timestamp}] [GET /api/projects] Query params:`, { id, userId: userIdParam, isSummary })
     
     if (id) {
       console.log(`[${timestamp}] [GET /api/projects] Fetching single project by id:`, id)
@@ -45,7 +57,7 @@ export async function GET(request: NextRequest) {
         createdAt: p.created_at,
         updatedAt: p.updated_at,
         completedSteps: Object.entries((p.step_progress as any) || {}).filter(([_, v]) => (v as number) === 100).map(([k]) => k),
-        metadata: p.metadata || {}
+        metadata: slimProjectResponseMetadata(p.metadata || {})
       }
       console.log(`[${timestamp}] [GET /api/projects] Sending single project response`)
       const response = NextResponse.json({ success: true, project })
@@ -79,10 +91,26 @@ export async function GET(request: NextRequest) {
     const pageSize = Math.min(50, Math.max(1, Number(searchParams.get('pageSize') || '20')))
     const offset = (page - 1) * pageSize
 
-    console.log(`[${timestamp}] [GET /api/projects] Query options:`, { where, page, pageSize, offset })
+    console.log(`[${timestamp}] [GET /api/projects] Query options:`, { where, page, pageSize, offset, isSummary })
+
+    const metadataProjection = isSummary ? SUMMARY_METADATA_SQL : LITE_LIST_METADATA_SQL
 
     const { rows, count } = await Project.findAndCountAll({
       where,
+      attributes: [
+        'id',
+        'user_id',
+        'series_id',
+        'episode_number',
+        'title',
+        'description',
+        'current_step',
+        'step_progress',
+        'status',
+        'created_at',
+        'updated_at',
+        [sequelize.literal(metadataProjection), 'metadata'],
+      ],
       order: [['updated_at', 'DESC']],
       limit: pageSize,
       offset
@@ -100,7 +128,7 @@ export async function GET(request: NextRequest) {
       createdAt: p.created_at,
       updatedAt: p.updated_at,
       completedSteps: Object.entries((p.step_progress as any) || {}).filter(([_, v]) => (v as number) === 100).map(([k]) => k),
-      metadata: p.metadata || {}
+      metadata: isSummary ? (p.metadata || {}) : slimProjectResponseMetadata(p.metadata || {})
     }))
 
     console.log(`[${timestamp}] [GET /api/projects] Sending response with ${projects.length} projects`)
@@ -108,8 +136,6 @@ export async function GET(request: NextRequest) {
     response.headers.set('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0')
     response.headers.set('Pragma', 'no-cache')
     response.headers.set('Expires', '0')
-    
-    console.log(`[${timestamp}] [GET /api/projects] Response headers set, size: ${JSON.stringify({ success: true, projects, page, pageSize, total: count }).length} bytes`)
     
     return response
   } catch (error) {
@@ -131,9 +157,6 @@ export async function GET(request: NextRequest) {
 // Body: { userId?: string, title: string, description?: string, metadata?: any, currentStep?: string }
 export async function POST(request: NextRequest) {
   try {
-    // Ensure database connection
-    await sequelize.authenticate()
-    
     // Note: Run POST /api/setup/database once to create tables in fresh database
     
     const body = await request.json()
@@ -204,9 +227,6 @@ export async function POST(request: NextRequest) {
 // Body: { id: string, metadata?: any, title?, description?, status?, currentStep?, step_progress? }
 export async function PUT(request: NextRequest) {
   try {
-    // Ensure database connection
-    await sequelize.authenticate()
-    
     // Note: Run POST /api/setup/database once to create tables in fresh database
     
     const body = await request.json()
@@ -223,8 +243,7 @@ export async function PUT(request: NextRequest) {
 
     const [count] = await Project.update(updateData, { where: { id } })
     if (count === 0) return NextResponse.json({ success: false, error: 'Project not found or no changes' }, { status: 404 })
-    const updated: any = await Project.findByPk(id)
-    return NextResponse.json({ success: true, project: updated })
+    return NextResponse.json({ success: true, project: { id, ...updateData, metadata: updateData.metadata ? slimProjectResponseMetadata(updateData.metadata) : undefined } })
   } catch (error) {
     console.error('PUT /api/projects failed:', error)
     return NextResponse.json({ success: false, error: error instanceof Error ? error.message : 'Unknown error' }, { status: 500 })

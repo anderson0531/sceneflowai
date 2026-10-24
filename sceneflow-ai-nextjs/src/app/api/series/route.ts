@@ -27,8 +27,6 @@ export async function GET(request: NextRequest) {
   try {
     console.log(`[${timestamp}] [GET /api/series] Request received`)
     
-    await sequelize.authenticate()
-    
     const { searchParams } = new URL(request.url)
     const id = searchParams.get('id')
     let userIdParam = searchParams.get('userId') || request.headers.get('x-user-id') || undefined

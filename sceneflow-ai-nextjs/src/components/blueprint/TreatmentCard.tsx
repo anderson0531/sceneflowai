@@ -4,6 +4,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useSession } from 'next-auth/react'
 import { useTranslations } from 'next-intl'
+import { useShallow } from 'zustand/react/shallow'
 import { useGuideStore } from '@/store/useGuideStore'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { ChevronDown, MessageSquare, Loader2, Wand2, X, Users, MapPin, Package, Film, ExternalLink, Lightbulb, SparklesIcon, Award, RotateCcw, FileText, ArrowRight, Volume2 } from 'lucide-react'
@@ -149,12 +150,26 @@ export function TreatmentCard({
   const router = useRouter()
   const { data: session } = useSession()
   const { profile: creatorProfile, loading: creatorProfileLoading } = useCreatorProfile()
-  const { guide } = useGuideStore()
+  const {
+    guide,
+    selectTreatmentVariant,
+    setTreatmentVariants,
+    updateTreatmentVariant,
+    lastEdit,
+    justAppliedVariantId,
+    appliedAt,
+  } = useGuideStore(
+    useShallow((s: any) => ({
+      guide: s.guide,
+      selectTreatmentVariant: s.selectTreatmentVariant,
+      setTreatmentVariants: s.setTreatmentVariants,
+      updateTreatmentVariant: s.updateTreatmentVariant,
+      lastEdit: s.lastEdit,
+      justAppliedVariantId: s.justAppliedVariantId,
+      appliedAt: s.appliedAt,
+    }))
+  )
   const projectId = projectIdProp || guide.projectId
-  const { selectTreatmentVariant } = useGuideStore() as any
-  const { setTreatmentVariants } = useGuideStore() as any
-  const { updateTreatmentVariant } = useGuideStore() as any
-  const { lastEdit, justAppliedVariantId, appliedAt } = useGuideStore() as any
   const variants = (guide as any)?.treatmentVariants as Array<{ id: string; label?: string; content: string; visual_style?: string; tone_description?: string; target_audience?: string; title?: string; logline?: string; genre?: string; format_length?: string; author_writer?: string; date?: string; synopsis?: string; setting?: string; protagonist?: string; antagonist?: string; act_breakdown?: any; tone?: string; style?: string; themes?: any; mood_references?: string[]; character_descriptions?: Array<{
     name: string;
     role: string;

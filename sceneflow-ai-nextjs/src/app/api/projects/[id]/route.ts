@@ -72,8 +72,6 @@ export async function GET(
         { status: 400 }
       )
     }
-    
-    await sequelize.authenticate()
 
     const project = await loadProjectForRead(id, { includeProduction })
     if (!project) {
@@ -109,9 +107,7 @@ export async function GET(
       ...(truncated ? { truncated: true, omitted: fitted.omitted } : {}),
       ...(liteMode && { base64Size, liteMode: true }),
     }
-    const payloadBytes = JSON.stringify(payload).length
-    console.log('[Projects GET] bytes', payloadBytes, {
-      metadataBytes: fitted.bytes,
+    console.log('[Projects GET] metadataBytes', fitted.bytes, {
       omitted: fitted.omitted,
       liteMode,
       includeProduction,
@@ -200,8 +196,6 @@ export async function PUT(
         console.log(`[Projects PUT] Character ${idx + 1}: ${char.name}, hasReferenceImage: ${!!char.referenceImage}`)
       })
     }
-    
-    await sequelize.authenticate()
 
     let project!: Project
     let mergedMetadata: Record<string, unknown> = {}
@@ -561,9 +555,6 @@ export async function PUT(
 
     await project.save({ transaction })
     })
-
-    // Reload to ensure the updated data is committed and fetched fresh
-    await project.reload()
     
     // Log scene direction status after update
     const scenesAfterUpdate = mergedMetadata?.visionPhase?.script?.script?.scenes || []
@@ -630,8 +621,6 @@ export async function PATCH(
         { status: 400 }
       )
     }
-    
-    await sequelize.authenticate()
     
     const project = await Project.findByPk(id)
     if (!project) {
@@ -818,7 +807,8 @@ function projectDeleteDeps(): DeleteProjectGraphDeps {
     },
     destroyCollabStep: (step, where, transaction) =>
       COLLAB_CLEANUP_MODELS[step].destroy({ where, transaction }),
-    findProject: (projectId, transaction) => Project.findByPk(projectId, { transaction }),
+    findProject: (projectId, transaction) =>
+      Project.findByPk(projectId, { attributes: ['id', 'series_id'], transaction }),
     findSeries: async (seriesId, transaction) => Series.findByPk(seriesId, { transaction }),
     destroyProject: (projectId, transaction) => Project.destroy({ where: { id: projectId }, transaction }),
   }
@@ -844,11 +834,6 @@ export async function DELETE(
         error: 'Project ID is required' 
       }, { status: 400 })
     }
-
-    // Ensure database connection
-    console.log(`[${timestamp}] [DELETE /api/projects/[id]] Authenticating database connection...`)
-    await sequelize.authenticate()
-    console.log(`[${timestamp}] [DELETE /api/projects/[id]] Database authenticated`)
     
     console.log(`[${timestamp}] [DELETE /api/projects/[id]] Attempting to delete project:`, id)
 

@@ -73,11 +73,16 @@ function cloneJson<T>(value: T): T {
 
 function jsonByteLength(value: unknown): number {
   try {
-    return new TextEncoder().encode(JSON.stringify(value)).length
+    const json = JSON.stringify(value)
+    return typeof Buffer !== 'undefined'
+      ? Buffer.byteLength(json, 'utf8')
+      : new TextEncoder().encode(json).length
   } catch {
     return Number.POSITIVE_INFINITY
   }
 }
+
+const fittedPutPayloadCache = new WeakMap<object, Map<number, FitProjectPutResult<any>>>()
 
 function visionScriptScenes(visionPhase: Record<string, any> | undefined): any[] {
   const scenes = visionPhase?.script?.script?.scenes
@@ -200,11 +205,8 @@ export function stringifyProjectPut(body: ProjectPutBody): string {
 
 /** True when the stringified body is large enough that Vercel will 413 it. */
 export function projectPutWouldExceedBodyLimit(body: unknown): boolean {
-  try {
-    return new TextEncoder().encode(JSON.stringify(body)).length >= VERCEL_FUNCTION_BODY_LIMIT_BYTES
-  } catch {
-    return false
-  }
+  const bytes = jsonByteLength(body)
+  return Number.isFinite(bytes) && bytes >= VERCEL_FUNCTION_BODY_LIMIT_BYTES
 }
 
 /**
@@ -216,6 +218,11 @@ export function fitProjectPutPayload<T extends ProjectPutBody>(
   options?: { budgetBytes?: number }
 ): FitProjectPutResult<T> {
   const budget = options?.budgetBytes ?? VERCEL_FUNCTION_REQUEST_BUDGET_BYTES
+  if (body && typeof body === 'object') {
+    const cached = fittedPutPayloadCache.get(body)?.get(budget)
+    if (cached) return cached as FitProjectPutResult<T>
+  }
+
   const next = cloneJson(slimProjectPutPayload(body)) as Omit<T, 'persistProduction'>
   const omitted: ProjectPutOmittedLayer[] = []
   const metadata = next.metadata
@@ -224,13 +231,37 @@ export function fitProjectPutPayload<T extends ProjectPutBody>(
     if (stripMediaVersionPromptsInPlace(metadata)) {
       omitted.push('versionPrompts')
     }
-    if (jsonByteLength(next) >= budget && dropMediaVersionArraysInPlace(metadata)) {
-      omitted.push('versionArrays')
-    }
   }
 
-  const bytes = jsonByteLength(next)
-  return { body: next, omitted, bytes, exceedsLimit: bytes >= budget }
+  let bytes = jsonByteLength(next)
+
+  if (
+    metadata &&
+    typeof metadata === 'object' &&
+    bytes >= budget &&
+    dropMediaVersionArraysInPlace(metadata)
+  ) {
+    omitted.push('versionArrays')
+    bytes = jsonByteLength(next)
+  }
+
+  const result: FitProjectPutResult<T> = {
+    body: next,
+    omitted,
+    bytes,
+    exceedsLimit: bytes >= budget,
+  }
+
+  if (body && typeof body === 'object') {
+    let byBudget = fittedPutPayloadCache.get(body)
+    if (!byBudget) {
+      byBudget = new Map()
+      fittedPutPayloadCache.set(body, byBudget)
+    }
+    byBudget.set(budget, result)
+  }
+
+  return result
 }
 
 function visionPhaseScript(body: ProjectPutBody): unknown {
@@ -346,27 +377,30 @@ export function fitProjectResponseMetadata(
     metadata && typeof metadata === 'object' ? cloneJson(metadata) : {}
   const omitted: ProjectResponseOmittedLayer[] = []
 
-  const measure = () => jsonByteLength(next)
-
   if (stripMediaVersionPromptsInPlace(next)) {
     omitted.push('versionPrompts')
   }
 
-  if (measure() >= budget && dropMediaVersionArraysInPlace(next)) {
+  let bytes = jsonByteLength(next)
+
+  if (bytes >= budget && dropMediaVersionArraysInPlace(next)) {
     omitted.push('versionArrays')
+    bytes = jsonByteLength(next)
   }
 
   const vision = next.visionPhase
-  if (measure() >= budget && vision && typeof vision === 'object' && 'reviewHistory' in vision) {
+  if (bytes >= budget && vision && typeof vision === 'object' && 'reviewHistory' in vision) {
     delete vision.reviewHistory
     omitted.push('reviewHistory')
+    bytes = jsonByteLength(next)
   }
-  if (measure() >= budget && vision && typeof vision === 'object' && 'translations' in vision) {
+  if (bytes >= budget && vision && typeof vision === 'object' && 'translations' in vision) {
     delete vision.translations
     omitted.push('translations')
+    bytes = jsonByteLength(next)
   }
 
-  return { metadata: next, omitted, bytes: measure() }
+  return { metadata: next, omitted, bytes }
 }
 
 export interface CompactProjectPutAckArgs {
