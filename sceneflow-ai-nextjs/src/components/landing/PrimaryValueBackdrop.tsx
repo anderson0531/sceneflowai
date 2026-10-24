@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { motion } from 'framer-motion'
-import { ArrowRight, Loader2, Maximize2, Pause, Play, Volume2, VolumeX } from 'lucide-react'
+import { ArrowRight, Globe, Languages, Loader2, Maximize2, Pause, Play, Volume2, VolumeX } from 'lucide-react'
 import { useTranslations, useLocale } from 'next-intl'
 import { Button } from '@/components/ui/Button'
 import {
@@ -20,6 +20,16 @@ import { useReducedMotion } from '@/hooks/useReducedMotion'
 type ComparisonCopy = {
   id: string
   caption: string
+}
+
+type LocalizationCalloutCopy = {
+  badge: string
+  title: string
+  pillars: Array<{
+    badge: string
+    title: string
+    description: string
+  }>
 }
 
 type PrimaryValueNamespace = 'twoModes' | 'directControl' | 'publishCut'
@@ -44,6 +54,10 @@ export function PrimaryValueBackdrop({
   const landingLocale = useLocale()
   const destinations = getDistributionDestinations(landingLocale)
   const comparison = t.raw('comparison') as ComparisonCopy
+  const localizationCallout =
+    namespace === 'publishCut' && t.has('localizationCallout.title')
+      ? (t.raw('localizationCallout') as LocalizationCalloutCopy)
+      : null
   const syncedLocaleId = useLandingVideoLocale(videoLocales)
   const [activeLocaleId, setActiveLocaleId] = useState<VideoLocaleId>(syncedLocaleId)
   const activeLocale = videoLocales?.find(
@@ -308,6 +322,51 @@ export function PrimaryValueBackdrop({
               {t('subtitle', destinations)}
             </p>
           </motion.div>
+
+          {localizationCallout && Array.isArray(localizationCallout.pillars) && (
+            <motion.div
+              className="mx-auto mt-8 w-full max-w-4xl rounded-2xl border border-white/15 bg-slate-950/65 p-5 backdrop-blur-md sm:p-6"
+              initial={{ opacity: 0, y: 16 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.5 }}
+            >
+              <div className="mb-4 flex flex-col items-center gap-1.5 text-center">
+                <span className="inline-flex items-center gap-1.5 rounded-full border border-cyan-400/30 bg-cyan-500/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-wider text-cyan-300">
+                  <Globe className="h-3.5 w-3.5" aria-hidden />
+                  {localizationCallout.badge}
+                </span>
+                <h3 className="text-base font-semibold text-white sm:text-lg">
+                  {localizationCallout.title}
+                </h3>
+              </div>
+
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                {localizationCallout.pillars.map((pillar, idx) => {
+                  const Icon = idx === 0 ? Languages : Globe
+                  return (
+                    <div
+                      key={pillar.title}
+                      className="rounded-xl border border-white/10 bg-slate-900/70 p-4 text-left"
+                    >
+                      <div className="mb-1.5 flex items-center gap-2">
+                        <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg border border-cyan-500/25 bg-cyan-500/10">
+                          <Icon className="h-3.5 w-3.5 text-cyan-400" aria-hidden />
+                        </div>
+                        <span className="text-[11px] font-semibold uppercase tracking-wider text-cyan-300/90">
+                          {pillar.badge}
+                        </span>
+                      </div>
+                      <p className="text-sm font-semibold text-white">{pillar.title}</p>
+                      <p className="mt-1 text-xs leading-relaxed text-gray-300 sm:text-sm">
+                        {pillar.description}
+                      </p>
+                    </div>
+                  )
+                })}
+              </div>
+            </motion.div>
+          )}
 
           <motion.div
             className="mt-10 flex justify-center"

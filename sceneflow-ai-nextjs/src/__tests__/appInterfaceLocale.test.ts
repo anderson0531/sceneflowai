@@ -49,9 +49,9 @@ describe('resolveUiLocale', () => {
   })
 
   it('prefers the in-app choice over the landing cookie', async () => {
-    cookieJar.set('sf-locale', 'de')
+    cookieJar.set('sf-locale', 'pt')
     cookieJar.set('sf-landing-locale', 'es')
-    await expect(resolveUiLocale()).resolves.toBe('de')
+    await expect(resolveUiLocale()).resolves.toBe('pt')
   })
 
   // The header mock throws, so this also proves Accept-Language is never read.
@@ -131,7 +131,7 @@ describe('GET /api/user/locale', () => {
 describe('matchAcceptLanguage still parses headers correctly', () => {
   // Kept as a utility even though app locale resolution no longer calls it.
   it('honours quality weights', () => {
-    expect(matchAcceptLanguage('de;q=0.5, ja;q=0.9')).toBe('ja')
+    expect(matchAcceptLanguage('es;q=0.5, pt;q=0.9')).toBe('pt')
     expect(matchAcceptLanguage('xh, mi')).toBeUndefined()
   })
 })

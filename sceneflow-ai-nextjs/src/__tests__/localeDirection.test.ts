@@ -44,10 +44,10 @@ describe('normalizeLocale', () => {
     expect(normalizeLocale('en-GB')).toBe('en')
   })
 
-  it('routes script-qualified Chinese to the right variant', () => {
+  it('routes Chinese tags to zh-CN', () => {
     expect(normalizeLocale('zh-Hans-CN')).toBe('zh-CN')
-    expect(normalizeLocale('zh-Hant-TW')).toBe('zh-TW')
-    expect(normalizeLocale('zh-HK')).toBe('zh-TW')
+    expect(normalizeLocale('zh-Hant-TW')).toBe('zh-CN')
+    expect(normalizeLocale('zh-HK')).toBe('zh-CN')
     expect(normalizeLocale('zh')).toBe('zh-CN')
   })
 
@@ -60,15 +60,15 @@ describe('normalizeLocale', () => {
 
 describe('matchAcceptLanguage', () => {
   it('honours quality weights rather than header order', () => {
-    expect(matchAcceptLanguage('de;q=0.5, ja;q=0.9')).toBe('ja')
+    expect(matchAcceptLanguage('es;q=0.5, pt;q=0.9')).toBe('pt')
   })
 
   it('skips unsupported languages to find a supported one', () => {
-    expect(matchAcceptLanguage('xh, mi;q=0.9, fr;q=0.8')).toBe('fr')
+    expect(matchAcceptLanguage('xh, mi;q=0.9, es;q=0.8')).toBe('es')
   })
 
   it('ignores zero-weighted and wildcard entries', () => {
-    expect(matchAcceptLanguage('fr;q=0, *')).toBeUndefined()
+    expect(matchAcceptLanguage('es;q=0, *')).toBeUndefined()
   })
 
   it('returns undefined when nothing matches, so callers can fall back', () => {
@@ -78,8 +78,8 @@ describe('matchAcceptLanguage', () => {
 })
 
 describe('language registry', () => {
-  it('ships at least the 30 languages the reach goal calls for', () => {
-    expect(PLATFORM_LANGUAGES.length).toBeGreaterThanOrEqual(30)
+  it('ships English plus the top 5 Google AI language markets', () => {
+    expect(PLATFORM_LANGUAGES.map((l) => l.code)).toEqual(['en', 'es', 'pt', 'hi', 'zh-CN', 'ar'])
   })
 
   it('gives every language an endonym and an English exonym', () => {

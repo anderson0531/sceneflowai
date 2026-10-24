@@ -8,14 +8,29 @@ export type LandingTranslateLanguage = {
 }
 
 /**
- * Single source of truth for every locale the platform ships: landing page
- * routes, app chrome catalogs (`messages/app/{locale}/`), and the Google
- * Translate fallback selector.
+ * Single source of truth for UI locales the platform ships in the Landing Page
+ * and Studio UI language selectors: English + the Top 5 global language markets
+ * aligned with Google AI compatibility (Spanish, Portuguese, Hindi, Simplified
+ * Chinese, and Arabic).
+ *
+ * Production output (dubbing, lip-sync, and regenerated dialogue & signage clips)
+ * supports 70+ languages via `src/constants/languages.ts`.
  */
 export const LANDING_TRANSLATE_LANGUAGES: LandingTranslateLanguage[] = [
   { code: 'en', name: 'English', englishName: 'English', region: 'Americas' },
   { code: 'es', name: 'Español', englishName: 'Spanish', region: 'Americas' },
   { code: 'pt', name: 'Português', englishName: 'Portuguese', region: 'Americas' },
+  { code: 'hi', name: 'हिन्दी', englishName: 'Hindi', region: 'Asia Pacific' },
+  { code: 'zh-CN', name: '中文 (简体)', englishName: 'Simplified Chinese', region: 'Asia Pacific' },
+  { code: 'ar', name: 'العربية', englishName: 'Arabic', region: 'Middle East & Africa' },
+]
+
+/**
+ * Extended metadata lookup for story/content language directives and legacy
+ * catalog resolution.
+ */
+export const ALL_PLATFORM_LANGUAGES: LandingTranslateLanguage[] = [
+  ...LANDING_TRANSLATE_LANGUAGES,
   { code: 'fr', name: 'Français', englishName: 'French', region: 'Europe' },
   { code: 'de', name: 'Deutsch', englishName: 'German', region: 'Europe' },
   { code: 'it', name: 'Italiano', englishName: 'Italian', region: 'Europe' },
@@ -32,11 +47,9 @@ export const LANDING_TRANSLATE_LANGUAGES: LandingTranslateLanguage[] = [
   { code: 'tr', name: 'Türkçe', englishName: 'Turkish', region: 'Europe' },
   { code: 'ro', name: 'Română', englishName: 'Romanian', region: 'Europe' },
   { code: 'hu', name: 'Magyar', englishName: 'Hungarian', region: 'Europe' },
-  { code: 'zh-CN', name: '中文 (简体)', englishName: 'Simplified Chinese', region: 'Asia Pacific' },
   { code: 'zh-TW', name: '中文 (繁體)', englishName: 'Traditional Chinese', region: 'Asia Pacific' },
   { code: 'ja', name: '日本語', englishName: 'Japanese', region: 'Asia Pacific' },
   { code: 'ko', name: '한국어', englishName: 'Korean', region: 'Asia Pacific' },
-  { code: 'hi', name: 'हिन्दी', englishName: 'Hindi', region: 'Asia Pacific' },
   { code: 'bn', name: 'বাংলা', englishName: 'Bengali', region: 'Asia Pacific' },
   { code: 'th', name: 'ภาษาไทย', englishName: 'Thai', region: 'Asia Pacific' },
   { code: 'vi', name: 'Tiếng Việt', englishName: 'Vietnamese', region: 'Asia Pacific' },
@@ -44,7 +57,6 @@ export const LANDING_TRANSLATE_LANGUAGES: LandingTranslateLanguage[] = [
   { code: 'ms', name: 'Bahasa Melayu', englishName: 'Malay', region: 'Asia Pacific' },
   { code: 'tl', name: 'Tagalog', englishName: 'Tagalog', region: 'Asia Pacific' },
   { code: 'ur', name: 'اردو', englishName: 'Urdu', region: 'Asia Pacific' },
-  { code: 'ar', name: 'العربية', englishName: 'Arabic', region: 'Middle East & Africa' },
   { code: 'he', name: 'עברית', englishName: 'Hebrew', region: 'Middle East & Africa' },
   { code: 'fa', name: 'فارسی', englishName: 'Persian', region: 'Middle East & Africa' },
   { code: 'sw', name: 'Kiswahili', englishName: 'Swahili', region: 'Middle East & Africa' },
@@ -62,7 +74,7 @@ export const LANDING_TRANSLATE_INCLUDED_LANGUAGES = LANDING_TRANSLATE_LANGUAGES.
 export const PLATFORM_LANGUAGES = LANDING_TRANSLATE_LANGUAGES
 export type PlatformLanguage = LandingTranslateLanguage
 
-const BY_CODE = new Map(LANDING_TRANSLATE_LANGUAGES.map((l) => [l.code, l]))
+const BY_CODE = new Map(ALL_PLATFORM_LANGUAGES.map((l) => [l.code, l]))
 
 export function getPlatformLanguage(code: string): PlatformLanguage | undefined {
   return BY_CODE.get(code)

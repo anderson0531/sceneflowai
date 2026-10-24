@@ -241,8 +241,8 @@
   "landingFill": {
     "provider": "deep-translator",
     "scope": "fill-english",
-    "batchSize": 35,
-    "batchNumber": 2,
-    "syncedAt": "2026-10-24T12:01:00.687Z"
+    "batchSize": null,
+    "batchNumber": null,
+    "syncedAt": "2026-10-24T12:29:31.916Z"
   }
 }

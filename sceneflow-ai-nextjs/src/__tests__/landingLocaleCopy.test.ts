@@ -112,7 +112,7 @@ describe('landing locale copy', () => {
       'keyFeatures.title',
       'forFilmmakers.heading',
     ] as const
-    for (const code of ['es', 'ja', 'zh-CN', 'ar']) {
+    for (const code of ['es', 'pt', 'hi', 'zh-CN', 'ar']) {
       const localeMessages = JSON.parse(readFileSync(join(ROOT, `${code}.json`), 'utf8')) as Record<
         string,
         unknown

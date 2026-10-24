@@ -3,6 +3,7 @@ import { join } from 'path'
 import { describe, expect, it } from 'vitest'
 import { APP_SURFACES, BASE_SURFACE, surfacesForPath } from '@/i18n/appSurfaces'
 import { icuArguments } from '@/lib/i18n/glossary'
+import { getPlatformLanguage } from '@/config/landingTranslateLanguages'
 import { LOCALES } from '@/i18n/locale'
 import { buildEnMessages } from '@/i18n/buildEnMessages'
 
@@ -86,8 +87,11 @@ describe('translated app catalogs', () => {
     : []
 
   it('only contains directories for supported locales', () => {
-    const unsupported = translatedLocales.filter((locale) => !LOCALES.includes(locale))
+    const unsupported = translatedLocales.filter((locale) => !getPlatformLanguage(locale))
     expect(unsupported).toEqual([])
+    for (const locale of LOCALES.filter((l) => l !== 'en')) {
+      expect(translatedLocales).toContain(locale)
+    }
   })
 
   for (const locale of translatedLocales) {

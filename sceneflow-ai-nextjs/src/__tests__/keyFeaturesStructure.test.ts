@@ -359,7 +359,7 @@ describe('keyFeatures structure', () => {
     expect(detail.slice(descriptionEnd, screenshotStart)).not.toContain('LandingUiLanguagesBlock')
 
     expect(en.keyFeatures.landingUiLanguagesLabel).toContain('44 languages')
-    expect(en.keyFeatures.landingUiLanguagesLabel).toContain('39')
+    expect(en.keyFeatures.landingUiLanguagesLabel).toContain('6')
     expect(en.keyFeatures.landingUiLanguagesLabel).not.toContain('70+')
 
     const webmAt = overview.indexOf('type="video/webm"')

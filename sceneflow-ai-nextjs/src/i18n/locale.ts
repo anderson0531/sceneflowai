@@ -81,9 +81,8 @@ export function normalizeLocale(tag: string | null | undefined): string | undefi
 
   const lower = cleaned.toLowerCase()
 
-  // Script-qualified Chinese tags carry the region in a later subtag.
+  // All Chinese tags resolve to our core Chinese UI locale (zh-CN).
   if (lower.startsWith('zh')) {
-    if (/hant|\btw\b|\bhk\b|\bmo\b/.test(lower)) return 'zh-TW'
     return 'zh-CN'
   }
 
@@ -121,8 +120,8 @@ export function matchAcceptLanguage(header: string | null | undefined): string |
   return undefined
 }
 
-/** Locales prioritised for human translation review. */
-export const TIER_A_LOCALES = ['es', 'pt', 'hi', 'zh-CN', 'ar', 'th'] as const
+/** Top 5 non-English UI language markets aligned with Google AI compatibility. */
+export const TIER_A_LOCALES = ['es', 'pt', 'hi', 'zh-CN', 'ar'] as const
 
 // ---------------------------------------------------------------------------
 // Landing-page aliases. The landing page predates the app-wide locale setting

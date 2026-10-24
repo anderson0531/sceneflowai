@@ -35,7 +35,7 @@ export const HERO_VALUE_CHIPS = [
   {
     label: 'Screen, Collaborate, Ship',
     detail:
-      'Share progress at every milestone—from voiced animatics to the final master—in the Screening Room. Publish in episodic chapters or full features across 70+ languages.',
+      'Review every milestone in the Screening Room, direct in your native Studio UI language, and localize across 70+ languages—complete with dubbed audio, lip-sync, and regenerated dialogue and signage clips.',
   },
 ] as const
 

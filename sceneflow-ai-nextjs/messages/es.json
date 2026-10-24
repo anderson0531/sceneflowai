@@ -257,7 +257,7 @@
     "exitFullscreenOverview": "Salir de pantalla completa",
     "watchLongformLabel": "Mira el formato largo",
     "screenshotLabel": "Captura de pantalla",
-    "landingUiLanguagesLabel": "Producir y doblar en 44 idiomas. La interfaz completa del estudio y este sitio están disponibles en estos 39:",
+    "landingUiLanguagesLabel": "Produzca, doble y regenere clips de diálogos y señalización en 44 idiomas. La interfaz de usuario completa de Studio y este sitio están localizados para nuestros 6 mercados principales de IA de Google:",
     "rooms": [
       {
         "id": "series-desk",
@@ -711,7 +711,7 @@
             "id": "publish",
             "label": "Publicar y distribuir",
             "headline": "Envíe el maestro o localícelo para el mundo.",
-            "description": "Cuando termina la escena, los activos ya están unificados. Termine la edición, localice el audio y distribúyalo directamente a su audiencia.",
+            "description": "Cuando termina la escena, los activos ya están unificados. Termine la edición, localice el audio, los diálogos en escena y los clips de señalización, y distribúyalos directamente a su audiencia.",
             "features": [
               {
                 "icon": "shipPackage",
@@ -734,17 +734,21 @@
               {
                 "icon": "languageStreams",
                 "title": "Transmisiones (varios idiomas)",
-                "description": "Amplíe su alcance global en 44 idiomas al instante. Genere automáticamente transmisiones en idiomas alternativos doblando audio, sincronizando el movimiento de los labios o regenerando clips de diálogo localizados directamente dentro de la escena.",
-                "screenshot": "Streams (varios idiomas): audio doblado y clips de diálogo localizados",
+                "description": "Amplíe su alcance global en 44 idiomas desde una línea de tiempo maestra. Genere automáticamente transmisiones en idiomas alternativos con audio doblado, sincronización de labios y diálogos regenerados en varios idiomas y clips de señalización en escena, mientras dirige en una interfaz de usuario de Studio localizada.",
+                "screenshot": "Streams (multilingüe): audio doblado, diálogo regenerado y clips de señalización",
                 "learnMore": {
                   "items": [
                     {
-                      "title": "Alcance global",
-                      "description": "Genere automáticamente secuencias de idiomas alternativos en 44 idiomas directamente dentro de la escena."
+                      "title": "Audio doblado y sincronización de labios",
+                      "description": "Genere automáticamente secuencias de idiomas alternativos en 44 idiomas con audio doblado expresivo y movimiento de labios sincronizado."
                     },
                     {
-                      "title": "Duplicar, sincronizar labios o regenerar",
-                      "description": "Localice cada toma doblando audio, sincronizando el movimiento de los labios o regenerando clips de diálogo localizados."
+                      "title": "Clips de diálogo y señalización regenerados",
+                      "description": "Regenere tomas de diálogos localizados y clips de señalización en escena directamente dentro de la escena para que las imágenes y el habla coincidan con cada audiencia."
+                    },
+                    {
+                      "title": "Interfaz de usuario de Studio localizada",
+                      "description": "Dirige y produce en tu interfaz nativa en inglés, español, portugués, hindi, chino simplificado y árabe."
                     }
                   ]
                 }
@@ -798,7 +802,7 @@
           {
             "icon": "screeningPlayer",
             "title": "Un jugador unificado",
-            "description": "Alterna sin problemas entre animaciones, escenas, capítulos, avances y tu master final de Pre-Vis. Cambie Language Streams sobre la marcha para escuchar localizaciones dobladas, sincronizadas con los labios o regeneradas en tomas, siempre sincronizadas con el corte exacto del mezclador.",
+            "description": "Alterna sin problemas entre animaciones, escenas, capítulos, avances y tu master final de Pre-Vis. Cambie Language Streams sobre la marcha para escuchar audio doblado y diálogos regenerados o clips de señalización, siempre sincronizados con el corte exacto del mezclador.",
             "screenshot": "Reproductor Screening Room",
             "learnMore": {
               "items": [
@@ -808,7 +812,7 @@
                 },
                 {
                   "title": "Cambio de idioma en vivo",
-                  "description": "Escuche cualquier secuencia de idiomas (doblada, sincronizada con los labios o regenerada en toma) sobre la marcha."
+                  "description": "Escuche cualquier secuencia de idiomas (audio doblado, sincronización de labios o diálogos regenerados y clips de señalización) sobre la marcha."
                 },
                 {
                   "title": "Marco bloqueado al mezclador",
@@ -901,7 +905,7 @@
       },
       {
         "label": "Evaluar, colaborar, lanzar",
-        "detail": "Comparta el progreso en cada hito, desde animaciones con voz hasta el master final, en Screening Room. Publique en capítulos episódicos o artículos completos en más de 70 idiomas."
+        "detail": "Revise cada hito en Screening Room, diríjalo en su idioma nativo de la interfaz de usuario de Studio y localícelo en más de 70 idiomas, completo con audio doblado, sincronización de labios y diálogos regenerados y clips de señalización."
       }
     ],
     "pipelineSteps": [
@@ -961,7 +965,23 @@
   "publishCut": {
     "eyebrow": "El corte que publicas",
     "title": "Exporta a cualquier lugar. Premiere en SceneFlow cuando lo obtengas.",
-    "subtitle": "Exporte un master y distribúyalo en cualquier lugar, o publique escenas y capítulos terminados directamente en {longForm} con avances verticales cortados para {shorts}: imágenes, música y narraciones ya cortadas. Examine todos los borradores en Screening Room antes de su lanzamiento y presente su solicitud a la red SceneFlow, solo por invitación, para obtener aceleración de audiencia financiada.",
+    "subtitle": "Exporte un master y distribúyalo en cualquier lugar, o publique escenas y capítulos terminados directamente en {longForm} con avances verticales cortados para {shorts}: imágenes, música y narraciones ya cortadas. Localice cada lanzamiento con audio doblado y diálogos regenerados en varios idiomas y clips de señalización, examine cada borrador en Screening Room antes de su lanzamiento y presente su solicitud a la red SceneFlow, solo por invitación, para acelerar la audiencia financiada.",
+    "localizationCallout": {
+      "badge": "Producción global y interfaz de usuario nativa",
+      "title": "Dos capas de localización: directo en su idioma, envío en el de ellos.",
+      "pillars": [
+        {
+          "badge": "Interfaz de usuario de Studio y sitio · Los 6 principales mercados de IA de Google",
+          "title": "Directo en tu idioma nativo",
+          "description": "Navegue por la interfaz de usuario de Studio y escriba historias, cámaras y direcciones de ritmo en lenguaje sencillo en inglés, español, portugués, hindi, chino simplificado o árabe."
+        },
+        {
+          "badge": "Flujos de producción · Más de 70 idiomas",
+          "title": "Audio doblado + diálogos regenerados y clips de señalización",
+          "description": "Vaya más allá de los subtítulos: genere transmisiones en idiomas alternativos con doblaje clonado de voz, sincronización de labios y diálogos regenerados en tomas y clips de señalización en escena."
+        }
+      ]
+    },
     "comparison": {
       "id": "publish",
       "caption": "A finished scene or chapter, and the 90-minute master, from one studio."

@@ -24,13 +24,13 @@ describe('readEntityI18n', () => {
     const entity = {
       metadata: {
         i18n: {
-          sourceLocale: 'ja',
+          sourceLocale: 'pt',
           overrides: { es: { 'treatmentVariants[A].logline': 'Un gancho' } },
         },
       },
     }
     const i18n = readEntityI18n(entity)
-    expect(i18n.sourceLocale).toBe('ja')
+    expect(i18n.sourceLocale).toBe('pt')
     expect(getOverride(i18n, 'es', 'treatmentVariants[A].logline')).toBe('Un gancho')
   })
 

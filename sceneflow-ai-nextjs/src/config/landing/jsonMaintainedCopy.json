@@ -257,7 +257,7 @@
     "exitFullscreenOverview": "Exit fullscreen",
     "watchLongformLabel": "Watch the longform",
     "screenshotLabel": "Screenshot",
-    "landingUiLanguagesLabel": "Produce and dub in 44 languages. Full studio interface and this site are available in these 39:",
+    "landingUiLanguagesLabel": "Produce, dub, and regenerate dialogue & signage clips in 44 languages. Full Studio UI and this site are localized for our 6 core Google AI markets:",
     "rooms": [
       {
         "id": "series-desk",
@@ -711,7 +711,7 @@
             "id": "publish-distribute",
             "label": "Publish & Distribute",
             "headline": "Ship the master, or localize for the world.",
-            "description": "When the scene is done, the assets are already unified. Finish the edit, localize the audio, and distribute directly to your audience.",
+            "description": "When the scene is done, the assets are already unified. Finish the edit, localize audio plus in-scene dialogue and signage clips, and distribute directly to your audience.",
             "features": [
               {
                 "icon": "mixer",
@@ -734,17 +734,21 @@
               {
                 "icon": "languageStreams",
                 "title": "Streams (Multi-Language)",
-                "description": "Expand your global reach across 44 languages instantly. Automatically generate alternate language streams by dubbing audio, syncing lip movement, or regenerating localized dialogue clips directly within the scene.",
-                "screenshot": "Streams (Multi-Language) — dubbed audio and localized dialogue clips",
+                "description": "Expand your global reach across 44 languages from one master timeline. Automatically generate alternate language streams with dubbed audio, lip-sync, and regenerated multi-language dialogue and in-scene signage clips—while directing in a localized Studio UI.",
+                "screenshot": "Streams (Multi-Language) — dubbed audio, regenerated dialogue and signage clips",
                 "learnMore": {
                   "items": [
                     {
-                      "title": "Global reach",
-                      "description": "Automatically generate alternate language streams across 44 languages directly within the scene."
+                      "title": "Dubbed audio & lip-sync",
+                      "description": "Automatically generate alternate language streams across 44 languages with expressive dubbed audio and synced lip movement."
                     },
                     {
-                      "title": "Dub, lip-sync, or regenerate",
-                      "description": "Localize each shot by dubbing audio, syncing lip movement, or regenerating localized dialogue clips."
+                      "title": "Regenerated dialogue & signage clips",
+                      "description": "Regenerate localized dialogue takes and in-scene signage clips directly within the scene so visuals and speech match every audience."
+                    },
+                    {
+                      "title": "Localized Studio UI",
+                      "description": "Direct and produce in your native interface across English, Spanish, Portuguese, Hindi, Simplified Chinese, and Arabic."
                     }
                   ]
                 }
@@ -798,7 +802,7 @@
           {
             "icon": "screeningPlayer",
             "title": "One Unified Player",
-            "description": "Toggle seamlessly between Pre-Vis animatics, scenes, chapters, trailers, and your final master. Switch Language Streams on the fly to audition dubbed, lip-synced, or shot-regenerated localizations—always locked to the exact cut from the Mixer.",
+            "description": "Toggle seamlessly between Pre-Vis animatics, scenes, chapters, trailers, and your final master. Switch Language Streams on the fly to audition dubbed audio and regenerated dialogue or signage clips—always locked to the exact cut from the Mixer.",
             "screenshot": "Screening Room player",
             "learnMore": {
               "items": [
@@ -808,7 +812,7 @@
                 },
                 {
                   "title": "Live language switching",
-                  "description": "Audition any Language Stream—dubbed, lip-synced, or shot-regenerated—on the fly."
+                  "description": "Audition any Language Stream—dubbed audio, lip-sync, or regenerated dialogue and signage clips—on the fly."
                 },
                 {
                   "title": "Frame-locked to the Mixer",

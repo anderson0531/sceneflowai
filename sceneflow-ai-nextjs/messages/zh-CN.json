@@ -257,7 +257,7 @@
     "exitFullscreenOverview": "退出全屏",
     "watchLongformLabel": "观看长篇内容",
     "screenshotLabel": "截图",
-    "landingUiLanguagesLabel": "以 44 种语言制作和配音。完整的工作室界面和本网站可在以下 39 个中找到：",
+    "landingUiLanguagesLabel": "以 44 种语言制作、配音和重新生成对话和标牌剪辑。完整的 Studio UI 和此网站针对我们的 6 个核心 Google AI 市场进行了本地化：",
     "rooms": [
       {
         "id": "series-desk",
@@ -711,7 +711,7 @@
             "id": "publish",
             "label": "发布和分发",
             "headline": "运送母版，或为世界进行本地化。",
-            "description": "当场景完成后，资产就已经统一了。完成编辑、本地化音频并直接分发给观众。",
+            "description": "当场景完成后，资产就已经统一了。完成编辑，本地化音频以及场景中的对话和标牌剪辑，然后直接分发给观众。",
             "features": [
               {
                 "icon": "shipPackage",
@@ -734,17 +734,21 @@
               {
                 "icon": "languageStreams",
                 "title": "流（多语言）",
-                "description": "立即将您的全球影响力扩展到 44 种语言。通过配音、同步嘴唇动作或直接在场景中重新生成本地化对话剪辑，自动生成备用语言流。",
-                "screenshot": "流（多语言）——配音音频和本地化对话剪辑",
+                "description": "通过一条主时间线将您的全球影响力扩展到 44 种语言。自动生成具有配音音频、口型同步和重新生成的多语言对话和场景内标牌剪辑的替代语言流，同时在本地化的 Studio UI 中进行导演。",
+                "screenshot": "流（多语言）——配音音频、重新生成的对话和标牌剪辑",
                 "learnMore": {
                   "items": [
                     {
-                      "title": "全球影响力",
-                      "description": "直接在场景内自动生成跨 44 种语言的替代语言流。"
+                      "title": "配音和口型同步",
+                      "description": "通过富有表现力的配音和同步唇形运动，自动生成 44 种语言的替代语言流。"
                     },
                     {
-                      "title": "配音、口型同步或重新生成",
-                      "description": "通过配音、同步嘴唇动作或重新生成本地化对话剪辑来本地化每个镜头。"
+                      "title": "重新生成的对话和标牌剪辑",
+                      "description": "直接在场景内重新生成本地化的对话镜头和场景内标牌剪辑，以便视觉和语音与每位观众相匹配。"
+                    },
+                    {
+                      "title": "本地化 Studio 用户界面",
+                      "description": "在您的本地界面中进行导演和制作，支持英语、西班牙语、葡萄牙语、印地语、简体中文和阿拉伯语。"
                     }
                   ]
                 }
@@ -798,7 +802,7 @@
           {
             "icon": "screeningPlayer",
             "title": "一个统一的播放器",
-            "description": "在预览动画、场景、章节、预告片和最终母版之间无缝切换。即时切换语言流以试听配音、口型同步或镜头重新生成的本地化，始终锁定到混音器的精确剪辑。",
+            "description": "在预览动画、场景、章节、预告片和最终母版之间无缝切换。即时切换语言流以试听配音音频和重新生成的对话或标牌剪辑 - 始终锁定到混音器的精确剪辑。",
             "screenshot": "Screening Room 播放器",
             "learnMore": {
               "items": [
@@ -808,7 +812,7 @@
                 },
                 {
                   "title": "实时语言切换",
-                  "description": "即时试听任何语言流（配音、口型同步或镜头重新生成）。"
+                  "description": "即时试听任何语言流——配音音频、口型同步或重新生成的对话和标牌剪辑。"
                 },
                 {
                   "title": "框架锁定到混音器",
@@ -901,7 +905,7 @@
       },
       {
         "label": "筛选、协作、交付",
-        "detail": "在 Screening Room 中分享每个里程碑的进度（从配音动画到最终母版）。以章节或完整功能的形式发布，涵盖 70 多种语言。"
+        "detail": "直接使用您的本地 Studio UI 语言查看 Screening Room 中的每个里程碑，并本地化 70 多种语言 - 包括配音音频、口型同步以及重新生成的对话和标牌剪辑。"
       }
     ],
     "pipelineSteps": [
@@ -961,7 +965,23 @@
   "publishCut": {
     "eyebrow": "你发布的剪辑版本",
     "title": "随时随地导出。一旦获得资格，即可在 SceneFlow 上使用 Premiere。",
-    "subtitle": "导出母版并在任何地方分发，或者将完成的场景和章节直接发布到 {longForm}，并使用针对 {shorts} 剪切的垂直预告片 — 图片、音乐和旁白已在剪辑中。在发布前审查 Screening Room 中的每份草稿，并申请仅限受邀者参加的 SceneFlow 网络以获得资助的受众加速。",
+    "subtitle": "导出母版并在任何地方分发，或者将完成的场景和章节直接发布到 {longForm}，并使用针对 {shorts} 剪切的垂直预告片 — 图片、音乐和旁白已在剪辑中。使用配音音频和重新生成的多语言对话和标牌剪辑本地化每个版本，在发布前审查 Screening Room 中的每个草稿，并申请仅限邀请的 SceneFlow 网络以获得资助的观众加速。",
+    "localizationCallout": {
+      "badge": "全球制作和原生 UI",
+      "title": "两层本地化：直接使用您的语言，然后使用他们的语言进行交付。",
+      "pillars": [
+        {
+          "badge": "Studio 和网站 UI · 6 大 Google AI 市场",
+          "title": "直接用您的母语",
+          "description": "浏览 Studio UI 并使用英语、西班牙语、葡萄牙语、印地语、简体中文或阿拉伯语编写简单语言的故事、镜头和节拍指导。"
+        },
+        {
+          "badge": "制作流程 · 70 多种语言",
+          "title": "配音音频 + 重新生成的对话和标牌剪辑",
+          "description": "超越字幕：通过语音克隆配音、口型同步、镜头重新生成的对话和场景内标牌剪辑来生成替代语言流。"
+        }
+      ]
+    },
     "comparison": {
       "id": "publish",
       "caption": "A finished scene or chapter, and the 90-minute master, from one studio."

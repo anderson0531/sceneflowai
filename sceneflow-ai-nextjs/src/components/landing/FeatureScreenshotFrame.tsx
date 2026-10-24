@@ -17,7 +17,6 @@ import {
   Minimize,
   Move,
   RotateCcw,
-  ScanEye,
   ZoomIn,
   ZoomOut,
 } from 'lucide-react'
@@ -884,16 +883,9 @@ export function FeatureScreenshotFrame({
       </div>
 
       {/* Top-Left Studio Viewport Telemetry Pill */}
-      <div className="pointer-events-none absolute left-3 top-3 z-20 flex items-center gap-2 rounded-full border border-white/15 bg-slate-950/75 px-3 py-1.5 text-[11px] font-medium text-slate-200 shadow-lg backdrop-blur-md">
-        <span className="h-2 w-2 rounded-full bg-cyan-400 shadow-[0_0_8px_rgba(34,211,238,0.85)]" />
-        <span className="font-semibold tracking-wider text-cyan-300 uppercase">
-          5K Canvas
-        </span>
-        <span className="hidden text-slate-400 sm:inline">·</span>
-        <span className="hidden items-center gap-1 text-slate-300 sm:inline-flex">
-          <Move className="h-3 w-3 text-cyan-400" />
-          Drag or scroll to pan · Double-click to zoom
-        </span>
+      <div className="pointer-events-none absolute left-3 top-3 z-20 hidden items-center gap-1.5 rounded-full border border-white/15 bg-slate-950/75 px-3 py-1.5 text-[11px] font-medium text-slate-300 shadow-lg backdrop-blur-md sm:flex">
+        <Move className="h-3 w-3 text-cyan-400" />
+        <span>Drag or scroll to pan · Double-click to zoom</span>
       </div>
 
       {/* Top-Right Fullscreen Action */}
@@ -908,13 +900,9 @@ export function FeatureScreenshotFrame({
         {isFullscreen ? exitFullscreenLabel : enterFullscreenLabel}
       </button>
 
-      {/* Corner Interactive Minimap Radar (when zoomed in) */}
+      {/* Corner Interactive Minimap (when zoomed in) */}
       {zoom > 1.08 ? (
-        <div className=" hidden sm:flex flex-col gap-1 absolute right-3 bottom-16 z-20 rounded-xl border border-cyan-500/30 bg-slate-950/90 p-1.5 shadow-[0_12px_32px_rgba(0,0,0,0.75)] backdrop-blur-xl">
-          <div className="flex items-center justify-between px-1 text-[9px] font-semibold tracking-wider text-slate-400 uppercase">
-            <span>Radar</span>
-            <span className="font-mono text-cyan-300">{zoom.toFixed(1)}×</span>
-          </div>
+        <div className="hidden sm:flex flex-col gap-1 absolute right-3 bottom-16 z-20 rounded-xl border border-cyan-500/30 bg-slate-950/90 p-1.5 shadow-[0_12px_32px_rgba(0,0,0,0.75)] backdrop-blur-xl">
           <div
             ref={minimapRef}
             onPointerDown={(event) => {
@@ -975,21 +963,6 @@ export function FeatureScreenshotFrame({
           className="pointer-events-auto flex flex-wrap items-center gap-1.5 rounded-2xl border border-white/15 bg-slate-950/85 px-2.5 py-1.5 text-xs text-white shadow-[0_12px_40px_rgba(0,0,0,0.8)] backdrop-blur-xl sm:gap-2 sm:px-3.5 sm:py-2"
         >
           {/* View Mode Presets */}
-          <button
-            type="button"
-            onClick={() => applyReadableFraming()}
-            className={cn(
-              'inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-xs font-semibold transition',
-              viewMode === 'readable'
-                ? 'bg-gradient-to-r from-cyan-500/30 to-indigo-500/30 text-cyan-200 ring-1 ring-cyan-400/50'
-                : 'text-slate-300 hover:bg-white/10 hover:text-white'
-            )}
-            title="Auto-frame UI for optimal reading"
-          >
-            <ScanEye className="h-3.5 w-3.5 text-cyan-400" />
-            <span>Readable</span>
-          </button>
-
           <button
             type="button"
             onClick={applyFitFraming}
