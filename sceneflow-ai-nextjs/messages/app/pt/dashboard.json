@@ -4,16 +4,16 @@
     "welcome": "Bem-vindo(a) de de novo",
     "continueWorking": "Continua trabalhando.",
     "recentProjects": "Projetos recentes",
-    "noProjects": "Ainda não há projectos",
+    "noProjects": "Ainda não há projetos.",
     "noProjectsHint": "Inicie um projeto para vê-lo aqui.",
-    "startProject": "PROJETO DE INÍCIO DE POÇO"
+    "startProject": "Iniciar projeto"
   },
   "projects": {
     "title": "Projectos",
     "description": "Todos os projetos que iniciou, os mais novos primeiro",
     "newProject": "Novo projeto",
     "search": "Pesquisar projetos",
-    "empty": "Ainda não há projectos",
+    "empty": "Ainda não há projetos.",
     "emptyHint": "O seu primeiro projeto começa em Blueprint Room.",
     "openBlueprint": "Abrir em Blueprint Room",
     "openProduction": "Abrir no Production Stage",

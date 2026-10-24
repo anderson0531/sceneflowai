@@ -41,12 +41,12 @@
     }
   },
   "tabs": {
-    "core": "कोर",
+    "core": "मूल जानकारी",
     "story": "कहानी",
     "tone": "टोन",
     "beats": "बीट्स",
-    "characters": "वर्ण",
-    "charactersWithCount": "अक्षर ({count})"
+    "characters": "पात्र",
+    "charactersWithCount": "पात्र ({count})"
   },
   "sections": {
     "coreInfo": "मुख्य जानकारी",
@@ -86,7 +86,10 @@
     "modeFull": "उपचार का पूरा खर्च",
     "modeBeats": "बीट-बाय-बीट",
     "generating": "कथन तैयार करना",
-    "playing": "कथन बजाना"
+    "playing": "कथन बजाना",
+    "listen": "सुनो",
+    "blueprintListenHint": "इस ब्लूप्रिंट को अपनी चयनित कथावाचक आवाज़ के साथ सुनें।",
+    "reasoningListenHint": "अपने चयनित कथावाचक की आवाज़ के साथ एआई के कथात्मक तर्क को सुनें।"
   },
   "menu": {
     "reimagine": "फिर से कल्पना करें"
@@ -107,7 +110,7 @@
   "reasoning": {
     "whyChoices": "ये विकल्प क्यों?",
     "title": "नैरेटिव रीजनिंग",
-    "subtitle": "एआई ने ये कहानी कहने के विकल्प क्यों बनाए",
+    "subtitle": "Blueprint कथा के लिए तर्क",
     "noneRecorded": "इस ब्लूप्रिंट के लिए अभी तक कोई तर्क दर्ज नहीं किया गया है। यह पता लगाने के लिए इसे फिर से तैयार करें कि एआई ने अपने कहानी कहने के विकल्प क्यों बनाए।",
     "notProvided": "AI ने इस ब्लूप्रिंट के लिए कथात्मक तर्क प्रदान नहीं किया। रचनात्मक निर्णयों को देखने के लिए इसे फिर से बनाएं।",
     "characterFocus": "कैरेक्टर फ़ोकस",
@@ -142,8 +145,8 @@
     "moodReferences": "मनोदशा / संदर्भ",
     "treatmentFallback": "उपचार",
     "synopsis": "सारांश",
-    "setting": "सेटिंग",
-    "protagonist": "एक कहानी या नाटक में केंद्रीय चरित्रl",
+    "setting": "परिवेश",
+    "protagonist": "नायक (प्रोटागोनिस्ट)",
     "antagonist": "विरोधी / संघर्ष",
     "toneDescription": "टोन का विवरण",
     "themes": "थीम (अल्पविराम से अलग)",
@@ -161,7 +164,18 @@
     "internalNeed": "आंतरिक आवश्यकता",
     "fatalFlaw": "घातक दोष",
     "psychologicalDepth": "मनोवैज्ञानिक गहराई (वैकल्पिक)",
-    "customInstruction": "विशिष्ट परिष्करण निर्देश जोड़ें..."
+    "customInstruction": "विशिष्ट परिष्करण निर्देश जोड़ें...",
+    "scriptCraft": "स्क्रिप्ट शिल्प",
+    "scriptCraftHint": "दीर्घकालिक स्क्रिप्ट निर्माण पर जोर - अवधि सीमा नहीं। बहु-चयन.",
+    "scriptCraftNotes": "शिल्प नोट्स",
+    "scriptCraftNotesPlaceholder": "वैकल्पिक नोट्स (चरित्र, क्रिया, उपपाठ...)",
+    "scriptCraftPriorities": {
+      "characterDepth": "चरित्र की गहराई",
+      "actionClarity": "कार्रवाई की स्पष्टता",
+      "subtext": "उपपाठ",
+      "dialogueRichness": "संवाद समृद्धि",
+      "visualFirst": "पहले दृश्य"
+    }
   },
   "refine": {
     "refiningTitle": "रिफ़ाइनिंग {section}",
@@ -227,7 +241,9 @@
     "startProduction": "Production Stage पर जाएँ",
     "reAnalyzeOrRefine": "Blueprint का पुन: विश्लेषण या परिष्कृत करें",
     "improveScoreOrStart": "स्कोर में सुधार करें या Production Stage पर जाएं",
-    "generating": "Blueprint जनरेट किया जा रहा है..."
+    "generating": "Blueprint जनरेट किया जा रहा है...",
+    "readyForProduction": "उत्पादन के लिए तैयार",
+    "nextStepLabel": "अगला कदम"
   },
   "sidePanel": {
     "tabs": {
@@ -254,7 +270,26 @@
       "notes": "नोट्स:",
       "synthesize": "फ़ीडबैक को सुझावों में बदलें",
       "synthesized": "संश्लेषित सिफारिशें",
-      "openAssistant": "{assistant} खोलें"
+      "openAssistant": "{assistant} खोलें",
+      "exportTitle": "निर्यात Blueprint",
+      "exportHint": "अन्य टूल में उपयोग के लिए पीडीएफ, फाउंटेन, मार्कडाउन या जेएसओएन डाउनलोड करें।",
+      "exportButton": "डाउनलोड करें…",
+      "listenOnlyTitle": "केवल-सुनें पूर्वावलोकन",
+      "reviewerLinkTitle": "समीक्षक लिंक",
+      "shareForFeedbackTitle": "प्रतिक्रिया के लिए साझा करें",
+      "listenOnlyHint": "केवल पढ़ें और सुनें. कोई रेटिंग, नोट्स या चैट नहीं। समाप्त नहीं होता.",
+      "reviewerLinkHint": "सभी समीक्षकों के लिए एक लिंक. इसे भेजें ताकि सहयोगी पढ़ सकें, सुन सकें और टिप्पणी कर सकें।",
+      "createLinkHint": "एक लिंक बनाएं जिसे समीक्षक बिना लॉग इन किए खोल सकें।",
+      "listenOnlyCheckbox": "केवल सुनने के लिए पूर्वावलोकन (कोई प्रतिक्रिया नहीं)",
+      "copyLink": "लिंक कॉपी करें",
+      "copied": "नकल की गई!",
+      "createNewLink": "नया लिंक बनाएं (नया यूआरएल)",
+      "creatingNewLink": "नया लिंक बनाया जा रहा है...",
+      "subTabs": {
+        "feedback": "प्रतिक्रिया",
+        "team": "टीम",
+        "messages": "संदेश"
+      }
     }
   },
   "audienceResonance": {
@@ -275,10 +310,13 @@
     "categoryScores": "श्रेणी के स्कोर",
     "jumpToSection": "मैचिंग Blueprint सेक्शन पर जाएँ",
     "emptyHint": "अपने लक्षित दर्शकों को सहेजें, फिर विश्लेषण करें कि आपका ब्लूप्रिंट उस दर्शकों के साथ कैसे प्रतिध्वनित होता है।",
-    "readyOptionalPolish": "Ready for production — optional polish below",
-    "scoreBreakdownBalancedHint": "Impact shown per gap; the headline score uses balanced weighting so a full polish list does not crater a strong blueprint.",
-    "optionalPolish": "Optional polish",
-    "polishBadge": "Polish"
+    "readyOptionalPolish": "उत्पादन के लिए तैयार - नीचे वैकल्पिक पॉलिश",
+    "scoreBreakdownBalancedHint": "प्रति अंतराल दिखाया गया प्रभाव; हेडलाइन स्कोर संतुलित भार का उपयोग करता है ताकि एक पूर्ण पॉलिश सूची एक मजबूत खाका तैयार न कर सके।",
+    "optionalPolish": "वैकल्पिक पॉलिश",
+    "polishBadge": "Polish",
+    "selectGapForFix": "इस अंतर को ठीक करें: {gap}",
+    "fixSelectedWith": "{assistant} के साथ चयनित {count} को ठीक करें",
+    "rewriteInEnglish": "अंग्रेजी में पुनः लिखें"
   },
   "heroImage": {
     "uploading": "...अपलोड हो रही है",
@@ -316,14 +354,38 @@
     "after": "उसके बाद",
     "resonanceRecommendations": "अनुनाद सिफारिशें ({count})",
     "minusPoints": "−{points}",
-    "whatShouldChange": "क्या बदलना चाहिए और क्यों?",
+    "whatShouldChange": "दिशा",
     "focusOptional": "फ़ोकस (ज़रूरी नहीं)",
-    "guidedRefinements": "गाइडेड रिफ़ाइनमेंट (ज़रूरी नहीं)",
+    "guidedRefinements": "सिफ़ारिशें एवं त्वरित संपादन",
     "revisionPlan": "संशोधन योजना",
     "cancelIt": "इसे कैंसिल करें",
     "generateBalanced": "संतुलित संशोधन उत्पन्न करें",
     "reviseIntent": "इरादे में बदलाव करें",
-    "applyRevision": "संशोधन लागू करें"
+    "applyRevision": "संशोधन लागू करें",
+    "addToInstructions": "+ जोड़ें",
+    "addedToInstructions": "जोड़ा गया",
+    "resonanceGap": "अंतराल",
+    "whatShouldChangePlaceholder": "अपनी दिशा टाइप करें या निर्देशित करें - उदा. गुरु को गुप्त रूप से प्रतिपक्षी बनाओ, और दूसरे अधिनियम की धड़कन को पुनर्संतुलित करो ताकि सहस्राब्दी थ्रिलर दर्शकों के लिए विश्वासघात की स्थिति पैदा हो...",
+    "clarifyAndConfirm": "स्पष्ट करें और पुष्टि करें",
+    "clarifying": "स्पष्टीकरण...",
+    "proposedDirection": "प्रस्तावित दिशा",
+    "directionReadyToConfirm": "यह दिशा पुष्टि करने के लिए पर्याप्त विशिष्ट है।",
+    "confirmDirection": "दिशा की पुष्टि करें",
+    "directionConfirmed": "दिशा ने पुष्टि की",
+    "reviseDirection": "संशोधित करें",
+    "startOver": "फिर से शुरू करें",
+    "targetAudience": "लक्षित दर्शक",
+    "targetAudienceHint": "(वैकल्पिक - ब्लूप्रिंट को संरेखित करने के लिए स्पष्ट करें और पुष्टि करें)",
+    "confirmTargetAudience": "लक्षित दर्शकों की पुष्टि करें",
+    "targetAudienceConfirmed": "लक्षित दर्शकों की पुष्टि की गई",
+    "scopes": {
+      "all": "पूर्ण खाका संतुलन",
+      "core": "मुख्य जानकारी",
+      "story": "कहानी",
+      "characters": "निरंतरता",
+      "beats": "धड़कता है",
+      "tone": "स्वर और शैली"
+    }
   },
   "reimagine": {
     "reimagineTitle": "Blueprint की फिर से कल्पना करें",
@@ -340,7 +402,10 @@
     "targetAudience": "लक्षित दर्शक",
     "audienceHint": "(अपने शब्दों में बताएँ)",
     "visualFoundation": "विजुअल फ़ाउंडेशन",
-    "lockedAtBlueprint": "(Blueprint पर बंद)"
+    "lockedAtBlueprint": "(Blueprint पर बंद)",
+    "reimagining": "पुनःकल्पना...",
+    "generateBlueprint": "Blueprint उत्पन्न करें",
+    "startDescription": "सिनोप्सिस को लॉक करें, फिर उससे ब्लूप्रिंट तैयार करें।"
   },
   "tour": {
     "stepCounter": "{total} का {current}",
@@ -458,5 +523,69 @@
       "collaborate-export": "सहयोग करें और एक्सपोर्ट करें",
       "start-production": "Production Stage पर जाएँ"
     }
+  },
+  "toolbar": {
+    "documentLabel": "उपचार",
+    "rewriteInEnglish": "अंग्रेजी में पुनः लिखें"
+  },
+  "regenerate": {
+    "sectionTitle": "बिल्कुल नए सिरे से शुरुआत करें",
+    "sectionHint": "रीजेनरेट संपूर्ण Blueprint को प्रतिस्थापित करता है। इसके बजाय लक्षित संपादनों के लिए Blueprint निदेशक का उपयोग करें।",
+    "confirmTitle": "Blueprint को पुन: उत्पन्न करें?",
+    "confirmDescription": "यह आपके वर्तमान Blueprint को एक नए AI-जनित उपचार से बदल देगा। इस ब्लूप्रिंट के लिए मैन्युअल संपादन, अनुनाद स्कोर और भिन्न इतिहास खो जाएगा। इसे असंपादित नहीं किया जा सकता है।",
+    "cancel": "रद्द करें",
+    "confirmAction": "हाँ, पुनर्जीवित करें"
+  },
+  "export": {
+    "title": "निर्यात Blueprint",
+    "description": "अपने उपचार को अन्य लेखन और उत्पादन उपकरणों के साथ संगत प्रारूप में डाउनलोड करें।",
+    "cancel": "रद्द करें",
+    "download": "डाउनलोड करें",
+    "savePdf": "पीडीएफ के रूप में सहेजें",
+    "noVariant": "निर्यात करने का कोई खाका नहीं.",
+    "pdfNotReady": "निर्यात पूर्वावलोकन अभी तैयार नहीं है.",
+    "pdfHint": "अपने ब्राउज़र के प्रिंट संवाद का उपयोग करें और पीडीएफ के रूप में सहेजें चुनें।",
+    "exportFailed": "निर्यात विफल.",
+    "downloadSuccess": "{format} के रूप में डाउनलोड किया गया",
+    "formats": {
+      "pdf": {
+        "label": "पीडीएफ",
+        "hint": "साझा करने या संग्रहित करने के लिए प्रिंट-गुणवत्ता वाला लेआउट।"
+      },
+      "fountain": {
+        "label": "फव्वारा",
+        "hint": "राइटरडुएट, हाईलैंड और स्लगलाइन के लिए उद्योग-मानक पाठ प्रारूप।"
+      },
+      "markdown": {
+        "label": "मार्कडाउन",
+        "hint": "Google डॉक्स, नोशन, या विकी के लिए पढ़ने योग्य रूपरेखा।"
+      },
+      "json": {
+        "label": "JSON",
+        "hint": "इस ब्लूप्रिंट संस्करण का पूर्ण संरचित बैकअप।"
+      }
+    }
+  },
+  "continuity": {
+    "subTabs": {
+      "all": "सभी ({count})",
+      "cast": "कास्ट ({count})",
+      "locations": "स्थान ({count})",
+      "props": "प्रॉप्स ({count})"
+    },
+    "castTitle": "कास्ट",
+    "locationsTitle": "स्थान",
+    "propsTitle": "सहारा",
+    "sharedSeriesBannerTitle": "साझा श्रृंखला Continuity Library",
+    "sharedSeriesBannerDesc": "{series} के कलाकार, स्थान और प्रॉप्स इस एपिसोड ब्लूप्रिंट के साथ साझा किए गए हैं।",
+    "sharedSeriesBannerGeneric": "श्रृंखला बाइबिल निरंतरता संपत्तियां इस एपिसोड ब्लूप्रिंट के साथ साझा की जाती हैं।",
+    "openSeriesContinuity": "Series Room",
+    "seriesAssetBadge": "शृंखला निरंतरता",
+    "newEpisodeAssetBadge": "एपिसोड एसेट",
+    "locationAtmosphere": "वातावरण एवं प्रकाश व्यवस्था",
+    "locationProps": "ड्रेसिंग और प्रॉप्स सेट करें",
+    "propSignificance": "कथात्मक महत्व",
+    "emptyLocations": "अभी तक कोई स्थान परिभाषित नहीं है. इस ब्लूप्रिंट के लिए प्रमुख स्थान तैयार करने के लिए {assistant} का उपयोग करें।",
+    "emptyProps": "अभी तक कोई प्रॉप्स परिभाषित नहीं है. इस ब्लूप्रिंट के लिए मुख्य प्रॉप्स तैयार करने के लिए {assistant} का उपयोग करें।"
   }
 }

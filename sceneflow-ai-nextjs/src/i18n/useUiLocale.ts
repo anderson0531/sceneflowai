@@ -12,6 +12,7 @@ import {
 import { beginLocaleSwitch, endLocaleSwitch } from './localeSwitchStatus'
 
 const COOKIE_MAX_AGE = 60 * 60 * 24 * 365
+export const UI_LOCALE_CHANGE_EVENT = 'sf-ui-locale-change'
 
 export function readUiLocaleCookie(): string | undefined {
   if (typeof document === 'undefined') return undefined
@@ -29,6 +30,9 @@ export function writeUiLocaleCookie(locale: string): void {
     localStorage.setItem(UI_LOCALE_STORAGE_KEY, locale)
   } catch {
     // Private browsing modes can reject storage writes; the cookie is enough.
+  }
+  if (typeof window !== 'undefined' && typeof window.dispatchEvent === 'function') {
+    window.dispatchEvent(new CustomEvent(UI_LOCALE_CHANGE_EVENT, { detail: { locale } }))
   }
 }
 
@@ -78,7 +82,17 @@ export function useUiLocale() {
   useEffect(() => {
     const resolved = resolveClientUiLocale()
     if (resolved !== locale) setLocale(resolved)
-    // Sync once on mount; switchLocale owns later updates.
+
+    const handleLocaleChange = (event: Event) => {
+      const next = (event as CustomEvent<{ locale?: string }>)?.detail?.locale
+      if (isLocale(next)) {
+        setLocale(next)
+      } else {
+        setLocale(resolveClientUiLocale())
+      }
+    }
+    window.addEventListener(UI_LOCALE_CHANGE_EVENT, handleLocaleChange)
+    return () => window.removeEventListener(UI_LOCALE_CHANGE_EVENT, handleLocaleChange)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 

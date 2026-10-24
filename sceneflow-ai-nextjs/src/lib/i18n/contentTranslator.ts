@@ -213,22 +213,68 @@ async function writeCache(
   }
 }
 
+const GTX_BATCH_DELIM = '\n[[999888]]\n'
+const GTX_BATCH_SPLIT_RE = /\s*\[\[\s*999888\s*\]\]\s*/
+
+async function translateSingleWithGtx(
+  text: string,
+  targetLocale: string,
+  sourceLocale: string
+): Promise<string> {
+  const sl = sourceLocale || 'auto'
+  const url = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=${encodeURIComponent(sl)}&tl=${encodeURIComponent(targetLocale)}&dt=t&q=${encodeURIComponent(text)}`
+  const res = await fetch(url, {
+    headers: { 'User-Agent': 'Mozilla/5.0' },
+    signal: AbortSignal.timeout(8000),
+  })
+  if (!res.ok) throw new Error(`Google GTX HTTP ${res.status}`)
+  const data = (await res.json()) as Array<Array<[string]>>
+  const segments = data?.[0]
+  if (!Array.isArray(segments)) throw new Error('Malformed Google GTX response')
+  return segments.map((s) => s?.[0] ?? '').join('')
+}
+
+async function translateBatchWithGtxFallback(
+  texts: string[],
+  targetLocale: string,
+  sourceLocale: string
+): Promise<string[]> {
+  if (texts.length === 1) {
+    return [await translateSingleWithGtx(texts[0], targetLocale, sourceLocale)]
+  }
+  const joined = texts.join(GTX_BATCH_DELIM)
+  if (joined.length <= 3600) {
+    const raw = await translateSingleWithGtx(joined, targetLocale, sourceLocale)
+    const parts = raw.split(GTX_BATCH_SPLIT_RE)
+    if (parts.length === texts.length) {
+      return parts.map((p) => p.trim())
+    }
+  }
+  return Promise.all(texts.map((t) => translateSingleWithGtx(t, targetLocale, sourceLocale)))
+}
+
 async function translateBatch(
   texts: string[],
   targetLocale: string,
   sourceLocale: string
 ): Promise<{ results: string[]; provider: string }> {
-  if (texts.length === 1) {
-    const result = await translateWithVertexAI({
-      text: texts[0],
-      targetLanguage: targetLocale,
-      sourceLanguage: sourceLocale,
-    })
-    return { results: [result.translatedText], provider: 'vertex' }
-  }
+  try {
+    if (texts.length === 1) {
+      const result = await translateWithVertexAI({
+        text: texts[0],
+        targetLanguage: targetLocale,
+        sourceLanguage: sourceLocale,
+      })
+      return { results: [result.translatedText], provider: 'vertex' }
+    }
 
-  const results = await batchTranslateWithVertexAI(texts, targetLocale, sourceLocale)
-  return { results: results.map((r) => r.translatedText), provider: 'vertex' }
+    const results = await batchTranslateWithVertexAI(texts, targetLocale, sourceLocale)
+    return { results: results.map((r) => r.translatedText), provider: 'vertex' }
+  } catch (vertexError) {
+    if (process.env.VITEST) throw vertexError
+    const fallbackResults = await translateBatchWithGtxFallback(texts, targetLocale, sourceLocale)
+    return { results: fallbackResults, provider: 'google-gtx' }
+  }
 }
 
 export interface TranslateStringsResult {

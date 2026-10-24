@@ -64,6 +64,12 @@ export const GLOSSARY_TERMS = [
   'Google Cloud',
   'Gemini Studio',
   'Google Flow',
+  'Shot Builder',
+  'Continuity Library',
+  'Veo 3.1',
+  'Omni Flash',
+  'Gemini 2.5',
+  'Lyria',
 ]
 
 const GLOSSARY_PLACEHOLDER_PREFIX = 'SFAI'
@@ -85,7 +91,7 @@ for (const term of SORTED_BASE_TERMS) {
   PLACEHOLDER_BY_TERM.set(term, `${GLOSSARY_PLACEHOLDER_PREFIX}${slug}${GLOSSARY_PLACEHOLDER_SUFFIX}`)
   FUZZY_REGEX_BY_TERM.set(
     term,
-    new RegExp(`${GLOSSARY_PLACEHOLDER_PREFIX}\\s*${slug}\\s*${GLOSSARY_PLACEHOLDER_SUFFIX}`, 'g')
+    new RegExp(`${GLOSSARY_PLACEHOLDER_PREFIX}\\s*${slug}\\s*${GLOSSARY_PLACEHOLDER_SUFFIX}`, 'gi')
   )
 }
 
@@ -103,7 +109,7 @@ function getFuzzyRegexForTerm(term: string): RegExp {
   if (!regex) {
     regex = new RegExp(
       `${GLOSSARY_PLACEHOLDER_PREFIX}\\s*${glossarySlug(term)}\\s*${GLOSSARY_PLACEHOLDER_SUFFIX}`,
-      'g'
+      'gi'
     )
     FUZZY_REGEX_BY_TERM.set(term, regex)
   }
@@ -146,8 +152,21 @@ export function protectGlossary(
   return { protectedText, map }
 }
 
+const TERM_BY_UPPER_SLUG = new Map<string, string>(
+  SORTED_BASE_TERMS.map((term) => [glossarySlug(term), term])
+)
+
 function scrubLegacyPlaceholders(text: string): string {
-  return text.replace(/__\s*SFTERM_(\d+)\s*__/g, (_, idx) => GLOSSARY_TERMS[Number(idx)] ?? _)
+  return text
+    .replace(/__\s*SFTERM_(\d+)\s*__/g, (_, idx) => GLOSSARY_TERMS[Number(idx)] ?? _)
+    .replace(/SFAIPRODU[CÇ][AÃ]O_STUDIOTERM/gi, 'Production Stage')
+    .replace(/SFAIA+N[I]?M[A]?TICTERM/gi, 'Animatic')
+    .replace(/SFAISCRE+NING_ROOMTERM/gi, 'Screening Room')
+    .replace(/SFAI(?:11|ELEVEN)LABSTERM/gi, 'ElevenLabs')
+    .replace(/SFAI\s*([A-Za-z0-9_]+?)\s*TERM/gi, (full, rawSlug: string) => {
+      const upper = rawSlug.toUpperCase()
+      return TERM_BY_UPPER_SLUG.get(upper) ?? full
+    })
 }
 
 export function restoreGlossary(text: string, map: Map<string, string>): string {

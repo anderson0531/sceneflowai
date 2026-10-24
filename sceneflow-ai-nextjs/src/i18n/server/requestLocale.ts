@@ -6,6 +6,7 @@ import {
   type ResolvedStoryLocale,
   type ResolveStoryLocaleOptions,
 } from '@/i18n/server/storyLocale'
+import { detectNonEnglishInputLocale } from '@/lib/blueprint/rewriteBlueprintEnglish'
 
 /**
  * Request-aware story language for routes that receive user-typed text.
@@ -55,9 +56,14 @@ export async function englishForModel(
   glossary: readonly string[] = []
 ): Promise<string> {
   if (!text || !text.trim()) return text ?? ''
-  if (storyLocale === DEFAULT_LOCALE) return text
+  const detectedLocale =
+    storyLocale === DEFAULT_LOCALE ? detectNonEnglishInputLocale(text) : null
+  if (storyLocale === DEFAULT_LOCALE && !detectedLocale) {
+    if (storyLocale === DEFAULT_LOCALE) return text
+  }
 
-  const [translated] = await englishForModelBatch([text], storyLocale, glossary)
+  const effectiveLocale = detectedLocale ?? storyLocale
+  const [translated] = await englishForModelBatch([text], effectiveLocale, glossary)
   return translated ?? text
 }
 
@@ -74,15 +80,23 @@ export async function englishForModelBatch(
   glossary: readonly string[] = []
 ): Promise<string[]> {
   const normalized = texts.map((text) => text ?? '')
-  if (storyLocale === DEFAULT_LOCALE) return normalized
   if (!normalized.some((text) => text.trim())) return normalized
+
+  let effectiveLocale = storyLocale
+  if (effectiveLocale === DEFAULT_LOCALE) {
+    const detected = normalized
+      .map((text) => detectNonEnglishInputLocale(text))
+      .find((loc): loc is NonNullable<typeof loc> => loc !== null)
+    if (!detected) return normalized
+    effectiveLocale = detected
+  }
 
   try {
     const { translateStrings } = await import('@/lib/i18n/contentTranslator')
     const { translations } = await translateStrings({
       texts: normalized.filter((text) => text.trim()),
       targetLocale: DEFAULT_LOCALE,
-      sourceLocale: storyLocale,
+      sourceLocale: effectiveLocale,
       glossary,
     })
     return normalized.map((text) => translations.get(text) ?? text)

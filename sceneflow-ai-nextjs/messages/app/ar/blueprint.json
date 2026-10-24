@@ -11,7 +11,7 @@
     "openingProduction": "Production Stage الافتتاحية...",
     "creatingConcept": "إنشاء مفهوم الفيلم الخاص بك...",
     "saving": "جارٍ الحفظ...",
-    "saved": "[ترجمة المصطلح: Saved]",
+    "saved": "تم الحفظ",
     "saveFailed": "فشل الحفظ",
     "syncedToProduction": "Blueprint تمت مزامنته مع Production Stage - قم بتجديد البرنامج النصي الخاص بك عندما يكون جاهزًا.",
     "syncFailed": "تم تحديث Blueprint، ولكن فشلت مزامنة Production Stage",
@@ -41,11 +41,11 @@
     }
   },
   "tabs": {
-    "core": "مهن أساسية",
-    "story": "[غير واضح]",
-    "tone": "الوتيرة",
-    "beats": "يدق",
-    "characters": "الرموز",
+    "core": "المعلومات الأساسية",
+    "story": "القصة",
+    "tone": "النبرة والأسلوب",
+    "beats": "إيقاعات القصة",
+    "characters": "الشخصيات",
     "charactersWithCount": "الشخصيات ({count})"
   },
   "sections": {
@@ -82,11 +82,14 @@
     "language": "اللغة",
     "narration": "البيان",
     "narrationMode": "وضع السرد",
-    "modeSynopsis": "LOGLINE + SYNOPSIS",
+    "modeSynopsis": "السجل + ملخص",
     "modeFull": "العلاج التام",
     "modeBeats": "نبضة تلو الأخرى",
     "generating": "توليد السرد",
-    "playing": "لعب السرد"
+    "playing": "لعب السرد",
+    "listen": "استمع",
+    "blueprintListenHint": "استمع إلى هذا المخطط بصوت الراوي الذي اخترته.",
+    "reasoningListenHint": "استمع إلى المنطق السردي للذكاء الاصطناعي بصوت الراوي الذي اخترته."
   },
   "menu": {
     "reimagine": "إعادة التخيل "
@@ -99,7 +102,7 @@
     "internalNeed": "الحاجة الداخلية",
     "fatalFlaw": "! خطأ فادح",
     "arc": "قوس الشخصية",
-    "arcStarting": "[ترجمة المصطلح: Starting]",
+    "arcStarting": "البدء",
     "arcShift": "الوردية",
     "arcEnding": "النهاية",
     "refineNote": "سيتم تنقيح 💡 الشخصيات بالصور والسمات التفصيلية في الإنتاج"
@@ -107,7 +110,7 @@
   "reasoning": {
     "whyChoices": "لماذا هذه الخيارات ؟",
     "title": "التفكير السردي",
-    "subtitle": "لماذا اتخذ الذكاء الاصطناعي خيارات سرد القصص هذه",
+    "subtitle": "المنطق وراء السرد Blueprint",
     "noneRecorded": "لم يتم تسجيل أي منطق لهذا المخطط حتى الآن. قم بتجديده لالتقاط سبب قيام الذكاء الاصطناعي بخياراته في سرد القصص.",
     "notProvided": "لم يقدم الذكاء الاصطناعي المنطق السردي لهذا المخطط. قم بتجديده لرؤية القرارات الإبداعية.",
     "characterFocus": "التركيز على الشخصية",
@@ -136,14 +139,14 @@
     "createdBy": "إعداد:",
     "date": "التاريخ",
     "tone": "الوتيرة",
-    "artStyle": "طراز فني",
+    "artStyle": "الأسلوب الفني",
     "aspectRatio": "نسبة الارتفاع إلى العرض",
     "themesPlain": "المحاور",
     "moodReferences": "المزاج / المراجع",
     "treatmentFallback": "المعالجة",
     "synopsis": "خلاصة",
-    "setting": "[ترجمة المصطلح: Setting]",
-    "protagonist": "بطل الرواية",
+    "setting": "بيئة القصة",
+    "protagonist": "البطل الرئيسي",
     "antagonist": "خصم / نزاع",
     "toneDescription": "وصف النغمة",
     "themes": "السمات (مفصولة بفواصل)",
@@ -161,7 +164,18 @@
     "internalNeed": "الحاجة الداخلية",
     "fatalFlaw": "! خطأ فادح",
     "psychologicalDepth": "العمق النفسي (اختياري)",
-    "customInstruction": "إضافة تعليمات تنقيح محددة..."
+    "customInstruction": "إضافة تعليمات تنقيح محددة...",
+    "scriptCraft": "حرفة السيناريو",
+    "scriptCraftHint": "التركيز على إنشاء نص طويل - وليس حدود المدة. تحديد متعدد.",
+    "scriptCraftNotes": "الملاحظات الحرفية",
+    "scriptCraftNotesPlaceholder": "ملاحظات اختيارية (الحرف، الإجراء، النص الفرعي ...)",
+    "scriptCraftPriorities": {
+      "characterDepth": "عمق الشخصية",
+      "actionClarity": "وضوح العمل",
+      "subtext": "نص فرعي",
+      "dialogueRichness": "ثراء الحوار",
+      "visualFirst": "البصرية أولا"
+    }
   },
   "refine": {
     "refiningTitle": "تكرير {section}",
@@ -222,12 +236,14 @@
     "remainingToFinish": "{count} للإنهاء",
     "go": "انتقل",
     "generateBlueprint": "إنشاء Blueprint",
-    "saveAudienceAndAnalyze": "حفظ الجمهور وتشغيل SFAIUDIENCE_RESONANCETERM",
+    "saveAudienceAndAnalyze": "حفظ الجمهور وتشغيل Audience Resonance",
     "applyTopFix": "تطبيق TOP Audience Resonance FIX",
     "startProduction": "انتقل إلى Production Stage",
     "reAnalyzeOrRefine": "إعادة تحليل أو تنقيح Blueprint",
     "improveScoreOrStart": "تحسين النتيجة أو الانتقال إلى Production Stage",
-    "generating": "جارٍ التوليد Blueprint..."
+    "generating": "جارٍ التوليد Blueprint...",
+    "readyForProduction": "جاهز للإنتاج",
+    "nextStepLabel": "الخطوة التالية"
   },
   "sidePanel": {
     "tabs": {
@@ -254,7 +270,26 @@
       "notes": "الملاحظات: ",
       "synthesize": "تحويل التعليقات إلى توصيات",
       "synthesized": "توصيات مجمعة",
-      "openAssistant": "افتح {assistant}"
+      "openAssistant": "افتح {assistant}",
+      "exportTitle": "تصدير Blueprint",
+      "exportHint": "قم بتنزيل PDF أو Fountain أو Markdown أو JSON لاستخدامه في أدوات أخرى.",
+      "exportButton": "تحميل…",
+      "listenOnlyTitle": "معاينة للاستماع فقط",
+      "reviewerLinkTitle": "رابط المراجع",
+      "shareForFeedbackTitle": "شارك للحصول على ردود الفعل",
+      "listenOnlyHint": "القراءة والاستماع فقط. لا توجد تقييمات أو ملاحظات أو دردشة. لا تنتهي صلاحيته.",
+      "reviewerLinkHint": "رابط واحد لجميع المراجعين. أرسله حتى يتمكن المتعاونون من القراءة والاستماع والتعليق.",
+      "createLinkHint": "إنشاء رابط يمكن للمراجعين فتحه دون تسجيل الدخول.",
+      "listenOnlyCheckbox": "معاينة للاستماع فقط (لا توجد تعليقات)",
+      "copyLink": "انسخ الرابط",
+      "copied": "منسوخ!",
+      "createNewLink": "إنشاء رابط جديد (عنوان URL جديد)",
+      "creatingNewLink": "جارٍ إنشاء رابط جديد...",
+      "subTabs": {
+        "feedback": "ردود الفعل",
+        "team": "فريق",
+        "messages": "الرسائل"
+      }
     }
   },
   "audienceResonance": {
@@ -273,12 +308,15 @@
     "improveWith": "تحسين مع {assistant} →",
     "strengths": "نقاط القوة",
     "categoryScores": "<g id=\"2\">درجات الفئة</g><x id=\"1\"/>",
-    "jumpToSection": "الانتقال إلى قسم SFAIBLUEPRINTERM المطابق",
+    "jumpToSection": "انتقل إلى قسم Blueprint المطابق",
     "emptyHint": "احفظ جمهورك المستهدف، ثم حلل كيف يتردد صدى مخططك مع هذا الجمهور.",
-    "readyOptionalPolish": "Ready for production — optional polish below",
-    "scoreBreakdownBalancedHint": "Impact shown per gap; the headline score uses balanced weighting so a full polish list does not crater a strong blueprint.",
-    "optionalPolish": "Optional polish",
-    "polishBadge": "Polish"
+    "readyOptionalPolish": "جاهز للإنتاج — تلميع اختياري أدناه",
+    "scoreBreakdownBalancedHint": "التأثير الموضح لكل فجوة؛ تستخدم النتيجة الرئيسية ترجيحًا متوازنًا لذا فإن القائمة الكاملة للتلميع لا تؤدي إلى إحداث تغيير في المخطط القوي.",
+    "optionalPolish": "طلاء اختياري",
+    "polishBadge": "Polish",
+    "selectGapForFix": "أصلح هذه الفجوة: {gap}",
+    "fixSelectedWith": "إصلاح {count} المحدد مع {assistant}",
+    "rewriteInEnglish": "إعادة الكتابة باللغة الإنجليزية"
   },
   "heroImage": {
     "uploading": "Uploading...",
@@ -312,18 +350,42 @@
     "currentBlueprint": "المخطط الحالي (للقراءة فقط)",
     "noCharacters": "لا توجد أحرف",
     "noFieldChanges": "لم يتم اكتشاف أي تغييرات على مستوى الحقل (راجع الملخص أعلاه).",
-    "before": "[ترجمة المصطلح: Before]",
-    "after": "[ترجمة المصطلح: After]",
+    "before": "قبل",
+    "after": "بعد",
     "resonanceRecommendations": "توصيات الرنين ({count})",
     "minusPoints": "-{points}",
-    "whatShouldChange": "ما الذي يجب أن يتغير ولماذا ؟",
+    "whatShouldChange": "الاتجاه",
     "focusOptional": "مجال التركيز (اختياري)",
-    "guidedRefinements": "التحسينات الموجهة (اختياري)",
+    "guidedRefinements": "التوصيات والتعديلات السريعة",
     "revisionPlan": "خطة المراجعة",
     "cancelIt": "إلغائها",
     "generateBalanced": "إنشاء مراجعة متوازنة",
     "reviseIntent": "مراجعة القصد",
-    "applyRevision": "تطبيق المراجعة"
+    "applyRevision": "تطبيق المراجعة",
+    "addToInstructions": "+ أضف",
+    "addedToInstructions": "تمت الإضافة",
+    "resonanceGap": "فجوة",
+    "whatShouldChangePlaceholder": "اكتب أو أملي اتجاهك - على سبيل المثال. اجعل المرشد هو الخصم سرًا، وأعد توازن إيقاعات الفصل الثاني حتى تصل الخيانة إلى جمهور الإثارة من جيل الألفية...",
+    "clarifyAndConfirm": "توضيح وتأكيد",
+    "clarifying": "توضيح…",
+    "proposedDirection": "الاتجاه المقترح",
+    "directionReadyToConfirm": "هذا الاتجاه محدد بما يكفي للتأكيد.",
+    "confirmDirection": "تأكيد الاتجاه",
+    "directionConfirmed": "تم تأكيد الاتجاه",
+    "reviseDirection": "مراجعة",
+    "startOver": "ابدأ من جديد",
+    "targetAudience": "الجمهور المستهدف",
+    "targetAudienceHint": "(اختياري - قم بالتوضيح والتأكيد لمحاذاة المخطط)",
+    "confirmTargetAudience": "تأكيد الجمهور المستهدف",
+    "targetAudienceConfirmed": "تم تأكيد الجمهور المستهدف",
+    "scopes": {
+      "all": "توازن المخطط الكامل",
+      "core": "المعلومات الأساسية",
+      "story": "قصة",
+      "characters": "الاستمرارية",
+      "beats": "يدق",
+      "tone": "النغمة والأسلوب"
+    }
   },
   "reimagine": {
     "reimagineTitle": "Reimagine Blueprint",
@@ -333,20 +395,23 @@
     "contentType": "نوع المحتوى",
     "genre": " النوع",
     "tone": "الوتيرة",
-    "scope": "[ترجمة المصطلح: Scope]",
+    "scope": "النطاق",
     "required": "*",
     "optional": "(اختياري)",
     "autoLengthHint": "الطول يتبع القصة ؛ لا يتم فرض وقت تشغيل ثابت.",
     "targetAudience": "الفئات المستهدفة",
     "audienceHint": "(صف بكلماتك الخاصة)",
     "visualFoundation": "فيجوال فاونديشن",
-    "lockedAtBlueprint": "(مقفل في Blueprint)"
+    "lockedAtBlueprint": "(مقفل في Blueprint)",
+    "reimagining": "إعادة تصور…",
+    "generateBlueprint": "إنشاء Blueprint",
+    "startDescription": "قم بقفل الملخص، ثم قم بإنشاء المخطط منه."
   },
   "tour": {
     "stepCounter": "{current} of {total}",
     "skip": "تخطي الجولة",
-    "back": "[ترجمة المصطلح: Back]",
-    "next": "[ترجمة المصطلح: Next]",
+    "back": "العودة",
+    "next": "التالي",
     "getStarted": "التسجيل في المنصة",
     "welcome": {
       "title": "مرحبًا بك في Blueprint Room",
@@ -458,5 +523,69 @@
       "collaborate-export": "التعاون والتصدير",
       "start-production": "انتقل إلى Production Stage"
     }
+  },
+  "toolbar": {
+    "documentLabel": "العلاج",
+    "rewriteInEnglish": "إعادة الكتابة باللغة الإنجليزية"
+  },
+  "regenerate": {
+    "sectionTitle": "ابدأ من الصفر",
+    "sectionHint": "يستبدل Regenerate ملف Blueprint بالكامل. استخدم Blueprint Director لإجراء التعديلات المستهدفة بدلاً من ذلك.",
+    "confirmTitle": "هل تريد إعادة إنشاء Blueprint؟",
+    "confirmDescription": "سيؤدي هذا إلى استبدال Blueprint الحالي بعلاج جديد تم إنشاؤه بواسطة الذكاء الاصطناعي. سيتم فقدان التعديلات اليدوية ونتائج الرنين وتاريخ المتغيرات لهذا المخطط. لا يمكن التراجع عن هذا.",
+    "cancel": "إلغاء",
+    "confirmAction": "نعم تجديد"
+  },
+  "export": {
+    "title": "تصدير Blueprint",
+    "description": "قم بتنزيل علاجك بتنسيق متوافق مع أدوات الكتابة والإنتاج الأخرى.",
+    "cancel": "إلغاء",
+    "download": "تحميل",
+    "savePdf": "حفظ بصيغة PDF",
+    "noVariant": "لا يوجد مخطط للتصدير.",
+    "pdfNotReady": "معاينة التصدير ليست جاهزة بعد.",
+    "pdfHint": "استخدم مربع حوار الطباعة في متصفحك واختر حفظ بتنسيق PDF.",
+    "exportFailed": "فشل التصدير.",
+    "downloadSuccess": "تم التنزيل باسم {format}",
+    "formats": {
+      "pdf": {
+        "label": "قوات الدفاع الشعبي",
+        "hint": "تخطيط بجودة الطباعة للمشاركة أو الأرشفة."
+      },
+      "fountain": {
+        "label": "نافورة",
+        "hint": "تنسيق نص متوافق مع معايير الصناعة لـ WriterDuet وHighland وSlugline."
+      },
+      "markdown": {
+        "label": "تخفيض السعر",
+        "hint": "مخطط تفصيلي قابل للقراءة لمحرر مستندات Google أو Notion أو wiki."
+      },
+      "json": {
+        "label": "JSON",
+        "hint": "نسخة احتياطية منظمة كاملة لهذا البديل المخطط."
+      }
+    }
+  },
+  "continuity": {
+    "subTabs": {
+      "all": "الكل ({count})",
+      "cast": "فريق التمثيل ({count})",
+      "locations": "المواقع ({count})",
+      "props": "الدعائم ({count})"
+    },
+    "castTitle": "يلقي",
+    "locationsTitle": "المواقع",
+    "propsTitle": "الدعائم",
+    "sharedSeriesBannerTitle": "السلسلة المشتركة Continuity Library",
+    "sharedSeriesBannerDesc": "تمت مشاركة طاقم العمل والمواقع والدعائم من {series} مع مخطط الحلقة هذا.",
+    "sharedSeriesBannerGeneric": "تتم مشاركة أصول استمرارية سلسلة الكتاب المقدس مع مخطط هذه الحلقة.",
+    "openSeriesContinuity": "Series Room",
+    "seriesAssetBadge": "استمرارية السلسلة",
+    "newEpisodeAssetBadge": "أصول الحلقة",
+    "locationAtmosphere": "الجو والإضاءة",
+    "locationProps": "تعيين خلع الملابس والدعائم",
+    "propSignificance": "أهمية السرد",
+    "emptyLocations": "لم يتم تحديد مواقع بعد. استخدم {assistant} لإنشاء المواقع الرئيسية لهذا المخطط.",
+    "emptyProps": "لم يتم تحديد الدعائم حتى الآن. استخدم {assistant} لإنشاء الدعائم الرئيسية لهذا المخطط."
   }
 }

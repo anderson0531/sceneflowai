@@ -3,6 +3,7 @@ import path from 'path'
 import { describe, expect, it } from 'vitest'
 import {
   blueprintNeedsEnglishRewrite,
+  detectNonEnglishInputLocale,
   looksNonEnglishAuthorship,
   REWRITE_BLUEPRINT_ENGLISH_INTENT,
 } from '@/lib/blueprint/rewriteBlueprintEnglish'
@@ -48,6 +49,23 @@ describe('looksNonEnglishAuthorship', () => {
   it('flags cuando, entre, sobre, desde', () => {
     expect(looksNonEnglishAuthorship('Cuando un enigmático artefacto')).toBe(true)
     expect(looksNonEnglishAuthorship('entre las ruinas del pasado')).toBe(true)
+  })
+
+  it('flags all 5 target non-English languages (es, pt, hi, zh-CN, ar)', () => {
+    expect(looksNonEnglishAuthorship('O protagonista descobre a verdade através das sombras.')).toBe(true)
+    expect(looksNonEnglishAuthorship('Ficção Científica / Mistério de Conspiração')).toBe(true)
+    expect(looksNonEnglishAuthorship('एक रहस्यमय कहानी का नायक')).toBe(true)
+    expect(looksNonEnglishAuthorship('一个神秘故事的主角')).toBe(true)
+    expect(looksNonEnglishAuthorship('بطل القصة يكتشف الحقيقة')).toBe(true)
+  })
+
+  it('detects the specific locale for each of the 5 target non-English languages', () => {
+    expect(detectNonEnglishInputLocale('El protagonista enfrenta a su mentor.')).toBe('es')
+    expect(detectNonEnglishInputLocale('O protagonista não conhece a produção.')).toBe('pt')
+    expect(detectNonEnglishInputLocale('एक अकेला नायक')).toBe('hi')
+    expect(detectNonEnglishInputLocale('码头上的孤独身影')).toBe('zh-CN')
+    expect(detectNonEnglishInputLocale('شخص وحيد على الرصيف')).toBe('ar')
+    expect(detectNonEnglishInputLocale('A lone figure on a pier at dusk')).toBeNull()
   })
 })
 

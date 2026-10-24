@@ -154,6 +154,25 @@ describe('englishForModel', () => {
     expect(await englishForModel(undefined, 'es')).toBe('')
     expect(translateStrings).not.toHaveBeenCalled()
   })
+
+  it('auto-detects and translates non-English input even when storyLocale is en', async () => {
+    vi.mocked(translateStrings).mockResolvedValue({
+      translations: new Map([['شخص وحيد على الرصيف', 'a lone figure on the pier']]),
+      cacheHits: new Set(),
+      charsSent: 19,
+      budgetExceeded: false,
+    })
+
+    expect(await englishForModel('شخص وحيد على الرصيف', 'en')).toBe(
+      'a lone figure on the pier'
+    )
+    expect(translateStrings).toHaveBeenCalledWith(
+      expect.objectContaining({
+        targetLocale: 'en',
+        sourceLocale: 'ar',
+      })
+    )
+  })
 })
 
 describe('englishForModelBatch', () => {

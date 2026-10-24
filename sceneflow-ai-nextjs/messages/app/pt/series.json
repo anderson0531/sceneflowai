@@ -3,11 +3,11 @@
     "title": "Series Room",
     "description": "Planeje um arco de vários episódios uma vez e, em seguida, produza cada episódio contra ele",
     "newSeries": "Nova Série",
-    "empty": "Nenhuma série ainda",
+    "empty": "Ainda não há séries",
     "emptyHint": "Uma série mantém personagens, locais e continuidade consistentes ao longo dos episódios."
   },
   "detail": {
-    "episodes": "Surtos",
+    "episodes": "Episódios",
     "productionBible": "Bíblia de Produção",
     "referenceLibrary": "Reference Library",
     "resonance": "Audience Resonance",
@@ -29,7 +29,7 @@
     "seriesTitle": "título da coleção",
     "logline": "Resumo",
     "synopsis": "Sinopse",
-    "setting": "Configuração",
+    "setting": "Cenário",
     "targetAudience": "Produtor delegado",
     "episodeTitle": "Episodio",
     "episodeSynopsis": "Sinopse do episódio",

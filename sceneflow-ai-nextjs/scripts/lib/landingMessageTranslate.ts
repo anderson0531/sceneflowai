@@ -493,18 +493,29 @@ export async function translateBatch(
   const resolved = resolveProvider(provider, target)
 
   if (resolved === 'vertex') {
-    const protectedEntries = texts.map((t) => protectGlossary(t))
-    const q = protectedEntries.map((e) => e.protectedText)
-    const results = await batchTranslateWithVertexAI(q, toGoogleTarget(target), 'en')
-    return results.map((r, i) =>
-      restoreGlossary(r.translatedText, protectedEntries[i].map, protectedEntries[i])
-    )
+    try {
+      const protectedEntries = texts.map((t) => protectGlossary(t))
+      const q = protectedEntries.map((e) => e.protectedText)
+      const results = await batchTranslateWithVertexAI(q, toGoogleTarget(target), 'en')
+      return results.map((r, i) =>
+        restoreGlossary(r.translatedText, protectedEntries[i].map, protectedEntries[i])
+      )
+    } catch (err) {
+      console.warn(
+        `  [translateBatch] Vertex failed for ${target} (${(err as Error).message}); falling back to Google GTX NMT`
+      )
+      return translateBatchDeepTranslator(texts, target)
+    }
   }
 
   if (resolved === 'google-rest') {
     const apiKey = process.env.GOOGLE_TRANSLATE_API_KEY || process.env.GOOGLE_API_KEY
-    if (!apiKey) throw new Error('GOOGLE_TRANSLATE_API_KEY not configured')
-    return translateBatchGoogleRest(texts, target, apiKey)
+    if (!apiKey) return translateBatchDeepTranslator(texts, target)
+    try {
+      return await translateBatchGoogleRest(texts, target, apiKey)
+    } catch {
+      return translateBatchDeepTranslator(texts, target)
+    }
   }
 
   if (resolved === 'libretranslate') {

@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "generatedAt": "2026-10-16T10:41:00.627Z",
+  "generatedAt": "2026-10-24T19:55:31.775Z",
   "surfaces": {
     "common": {
       "actions.save": "1509f561f2416598",
@@ -428,7 +428,7 @@
       "continuity.emptyProps": "5ba707a644e2d24e",
       "reasoning.whyChoices": "af415af66ce338cd",
       "reasoning.title": "8273b3dd44b9a4b9",
-      "reasoning.subtitle": "392695928728486a",
+      "reasoning.subtitle": "0ffb40f982775281",
       "reasoning.noneRecorded": "5b991ca2c66e8f74",
       "reasoning.notProvided": "4e8c36b765797c57",
       "reasoning.characterFocus": "9615c9ba37e239e4",
@@ -641,7 +641,7 @@
       "assistant.addToInstructions": "c007258c23b0c011",
       "assistant.addedToInstructions": "6b02e0d363a4af1c",
       "assistant.resonanceGap": "cb129306bc6fd098",
-      "assistant.whatShouldChange": "581426cbec9a1ef7",
+      "assistant.whatShouldChange": "9c8a9579abe55bdc",
       "assistant.whatShouldChangePlaceholder": "7e33e3f6d1f0d05b",
       "assistant.clarifyAndConfirm": "f9161d1239dd6dfe",
       "assistant.clarifying": "3ecabc7b92932c2c",
@@ -662,7 +662,7 @@
       "assistant.scopes.beats": "b886ee351b9cdf40",
       "assistant.scopes.tone": "a879d55a713b29f2",
       "assistant.focusOptional": "a8a9d9ef5646839a",
-      "assistant.guidedRefinements": "dfb69c2a30744af7",
+      "assistant.guidedRefinements": "7331838c60fc562f",
       "assistant.revisionPlan": "15abc3b9c1e6cdd6",
       "assistant.cancelIt": "1bba70562c558d77",
       "assistant.generateBalanced": "fb9e46caa92b75d8",

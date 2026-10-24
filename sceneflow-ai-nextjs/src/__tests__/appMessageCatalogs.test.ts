@@ -105,6 +105,27 @@ describe('translated app catalogs', () => {
         expect(orphans).toEqual([])
       })
 
+      if ((LOCALES as readonly string[]).includes(locale)) {
+        it.each(APP_SURFACES)(
+          '%s covers every English key with non-empty text and no leaked tokens',
+          (surface) => {
+            const catalog = readCatalog(locale, surface)
+            expect(catalog).not.toBeNull()
+            const flat = flatten(catalog)
+            const missing = Object.keys(ENGLISH[surface]).filter(
+              (key) => !flat[key] || !flat[key].trim()
+            )
+            expect(missing).toEqual([])
+            const leaked = Object.entries(flat)
+              .filter(([, value]) =>
+                /SFAI[A-Z0-9_]+(?:TERM|ZZ)|SFTERM_|\[ترجمة المصطلح:/i.test(value)
+              )
+              .map(([key, value]) => `${key}: ${value}`)
+            expect(leaked).toEqual([])
+          }
+        )
+      }
+
       it.each(APP_SURFACES)('%s preserves every ICU argument', (surface) => {
         const catalog = readCatalog(locale, surface)
         if (!catalog) return

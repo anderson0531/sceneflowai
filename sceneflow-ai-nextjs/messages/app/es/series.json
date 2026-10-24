@@ -3,15 +3,15 @@
     "title": "Series Room",
     "description": "Planifica un arco de varios episodios una vez, luego produce cada episodio en su contra",
     "newSeries": "Nueva serie",
-    "empty": "Ninguna perla",
+    "empty": "Aún no hay series",
     "emptyHint": "Una serie mantiene los personajes, las ubicaciones y la continuidad consistentes en todos los episodios."
   },
   "detail": {
-    "episodes": "Capítulos",
+    "episodes": "Episodios",
     "productionBible": "Biblia de producción",
     "referenceLibrary": "Reference Library",
     "resonance": "Audience Resonance",
-    "generateEpisodes": "Gerar episodios",
+    "generateEpisodes": "Generar episodios",
     "addEpisode": "Añadir episodio",
     "openEpisode": "Abrir episodio {number}",
     "episodeCount": "{count, plural, =1 {# episode} other {# episodes}}"
@@ -20,19 +20,19 @@
     "title": "Motor de continuidad",
     "characters": "Personajes",
     "locations": "Localidades",
-    "aesthetics": "Aesthetics",
+    "aesthetics": "Estética",
     "keyEvents": "Eventos clave",
     "storyThreads": "Hilos de historias",
     "reviewUpdates": "Revisar actualizaciones"
   },
   "fields": {
-    "seriesTitle": "Tìtulo de Series",
+    "seriesTitle": "Título de la serie",
     "logline": "Logline",
     "synopsis": "Sinopsis",
-    "setting": "Ambiente",
+    "setting": "Ambientación",
     "targetAudience": "Público objetivo",
-    "episodeTitle": "Titulo episodios",
-    "episodeSynopsis": "Episode Synopsis",
+    "episodeTitle": "Título del episodio",
+    "episodeSynopsis": "Sinopsis del episodio",
     "episodeHook": "Gancho para el próximo episodio",
     "characterName": "Nombre del personaje",
     "characterDescription": "Descripción",
@@ -44,7 +44,7 @@
   },
   "toast": {
     "created": "Serie creada",
-    "updated": "Series no actualizadas.",
+    "updated": "Serie actualizada",
     "generateFailed": "No se han podido generar episodios",
     "deleted": "Serie eliminada"
   }

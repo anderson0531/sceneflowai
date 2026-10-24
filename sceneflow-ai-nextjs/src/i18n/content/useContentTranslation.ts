@@ -37,6 +37,56 @@ export interface UseContentTranslationOptions {
   targetLocale?: string
 }
 
+const MAX_CLIENT_CACHE_ENTRIES = 2000
+const clientTranslationCache = new Map<string, string>()
+
+function getClientCacheKey(
+  uiLocale: string,
+  sourceLocale: string,
+  path: string,
+  text: string
+): string {
+  return `${uiLocale}\u0000${sourceLocale}\u0000${path}\u0000${text}`
+}
+
+function getClientCachedTranslation(
+  uiLocale: string,
+  sourceLocale: string,
+  path: string,
+  text: string
+): string | undefined {
+  if (!text) return undefined
+  const key = getClientCacheKey(uiLocale, sourceLocale, path, text)
+  const hit = clientTranslationCache.get(key)
+  if (hit !== undefined) {
+    clientTranslationCache.delete(key)
+    clientTranslationCache.set(key, hit)
+  }
+  return hit
+}
+
+function setClientCachedTranslation(
+  uiLocale: string,
+  sourceLocale: string,
+  path: string,
+  text: string,
+  translated: string
+): void {
+  if (!text || !translated) return
+  const key = getClientCacheKey(uiLocale, sourceLocale, path, text)
+  if (clientTranslationCache.has(key)) {
+    clientTranslationCache.delete(key)
+  } else if (clientTranslationCache.size >= MAX_CLIENT_CACHE_ENTRIES) {
+    const oldest = clientTranslationCache.keys().next().value
+    if (oldest !== undefined) clientTranslationCache.delete(oldest)
+  }
+  clientTranslationCache.set(key, translated)
+}
+
+export function clearClientTranslationCache(): void {
+  clientTranslationCache.clear()
+}
+
 /**
  * Resolve stored content into the reader's interface language.
  *
@@ -87,6 +137,9 @@ export function useContentTranslation({
     // already fetched in this session.
     const pending = items.filter((item) => {
       if (getOverride(i18n, uiLocale, item.path)) return false
+      if (getClientCachedTranslation(uiLocale, sourceLocale, item.path, item.text) !== undefined) {
+        return false
+      }
       return !requestedRef.current.has(`${uiLocale}\u0000${item.path}\u0000${item.text}`)
     })
     if (pending.length === 0) return
@@ -114,10 +167,15 @@ export function useContentTranslation({
         }
         if (cancelled || !data.items) return
 
+        const sourceByPath = new Map(pending.map((p) => [p.path, p.text]))
         const next: Record<string, string> = {}
         for (const item of data.items) {
           if (item.state === 'machine' || item.state === 'cached') {
             next[item.path] = item.text
+            const srcText = sourceByPath.get(item.path)
+            if (srcText) {
+              setClientCachedTranslation(uiLocale, sourceLocale, item.path, srcText, item.text)
+            }
           }
         }
         setMachine((current) => ({ ...current, ...next }))
@@ -162,14 +220,15 @@ export function useContentTranslation({
         return { text: override, state: 'override', kind, isLoading: false }
       }
 
-      const translated = machine[path]
+      const translated =
+        machine[path] ?? getClientCachedTranslation(uiLocale, sourceLocale, path, source)
       if (translated) {
         return { text: translated, state: 'machine', kind, isLoading: false }
       }
 
       return { text: source, state: 'source', kind, isLoading }
     },
-    [fields, i18n, machine, needsTranslation, uiLocale, isLoading]
+    [fields, i18n, machine, needsTranslation, uiLocale, sourceLocale, isLoading]
   )
 
   return {

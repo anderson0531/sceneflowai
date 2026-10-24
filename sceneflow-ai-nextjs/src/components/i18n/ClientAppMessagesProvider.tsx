@@ -7,7 +7,7 @@ import enCommon from '../../../messages/app/en/common.json'
 import { DEFAULT_LOCALE, isAppSurfacePath, isLocale } from '@/i18n/locale'
 import { getAppMessages } from '@/i18n/appMessages'
 import { BASE_SURFACE, surfacesForPath } from '@/i18n/appSurfaces'
-import { readUiLocaleCookie } from '@/i18n/useUiLocale'
+import { readUiLocaleCookie, UI_LOCALE_CHANGE_EVENT } from '@/i18n/useUiLocale'
 
 /**
  * Provider for chrome that renders in the root layout, above every route group.
@@ -37,6 +37,13 @@ export function ClientAppMessagesProvider({ children }: { children: React.ReactN
     common: enCommon as Record<string, unknown>,
   })
   const loadedKeyRef = useRef<string>(`${DEFAULT_LOCALE}:${BASE_SURFACE}`)
+  const [localeTick, setLocaleTick] = useState(0)
+
+  useEffect(() => {
+    const onLocaleChange = () => setLocaleTick((t) => t + 1)
+    window.addEventListener(UI_LOCALE_CHANGE_EVENT, onLocaleChange)
+    return () => window.removeEventListener(UI_LOCALE_CHANGE_EVENT, onLocaleChange)
+  }, [])
 
   useEffect(() => {
     const documentLocale = document.documentElement.lang
@@ -70,7 +77,7 @@ export function ClientAppMessagesProvider({ children }: { children: React.ReactN
     return () => {
       cancelled = true
     }
-  }, [pathname])
+  }, [pathname, localeTick])
 
   return (
     <NextIntlClientProvider locale={locale} messages={messages} timeZone="UTC">

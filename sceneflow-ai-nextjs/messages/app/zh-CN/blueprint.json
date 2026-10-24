@@ -13,13 +13,13 @@
     "saving": "正在保存…",
     "saved": "保存成功",
     "saveFailed": "保存失败",
-    "syncedToProduction": "SFAIBLUEPRINTERM已同步到Production Stage —准备就绪时重新生成脚本。",
-    "syncFailed": "SFAIBLUEPRINTERM已更新，但Production Stage同步失败",
+    "syncedToProduction": "Blueprint 已同步到 Production Stage — 准备好后重新生成剧本。",
+    "syncFailed": "Blueprint 已更新，但 Production Stage 同步失败",
     "untitled": "无标题",
     "editHeroImage": "编辑主图— {title}",
     "empty": {
       "title": "开始您的项目",
-      "description": "描述您的项目，并生成具有AI驱动的故事结构、角色和视觉方向的专业SFAIBLUEPRINTERM。",
+      "description": "描述您的项目并生成具有人工智能驱动的故事结构、角色和视觉方向的专业 Blueprint。",
       "action": "项目开始"
     },
     "toast": {
@@ -41,12 +41,12 @@
     }
   },
   "tabs": {
-    "core": "Core",
-    "story": "報導",
-    "tone": "音色",
-    "beats": "节拍",
-    "characters": "人物",
-    "charactersWithCount": "字符({count})"
+    "core": "核心信息",
+    "story": "故事",
+    "tone": "基调",
+    "beats": "故事节拍",
+    "characters": "角色",
+    "charactersWithCount": "角色 ({count})"
   },
   "sections": {
     "coreInfo": "核心信息",
@@ -86,7 +86,10 @@
     "modeFull": "<g x=1 id=\"51\"/>全面治疗",
     "modeBeats": "Beat ‑ by ‑ Beat",
     "generating": "正在生成旁白",
-    "playing": "播放旁白"
+    "playing": "播放旁白",
+    "listen": "听",
+    "blueprintListenHint": "用您选择的旁白声音聆听此蓝图。",
+    "reasoningListenHint": "用您选择的叙述者声音聆听人工智能的叙述推理。"
   },
   "menu": {
     "reimagine": "重新构想"
@@ -107,7 +110,7 @@
   "reasoning": {
     "whyChoices": "为什么要选择这些选项？",
     "title": "叙事推理",
-    "subtitle": "为什么人工智能做出这些讲故事的选择",
+    "subtitle": "Blueprint 叙述的推理",
     "noneRecorded": "此蓝图尚未记录任何推理。重新生成它，以捕捉人工智能为什么做出讲故事的选择。",
     "notProvided": "人工智能没有为这个蓝图提供叙事推理。重新生成以查看创意决策。",
     "characterFocus": "角色专注",
@@ -142,13 +145,13 @@
     "moodReferences": "心情/推荐语",
     "treatmentFallback": "研究治疗前",
     "synopsis": "故事梗概",
-    "setting": "设置",
-    "protagonist": "主人公",
+    "setting": "背景设定",
+    "protagonist": "主角",
     "antagonist": "对手/冲突",
     "toneDescription": "语气描述",
     "themes": "主题（以逗号分隔）",
     "beat": "BEAT {number}",
-    "beatTitle": "Beat title",
+    "beatTitle": "打败标题",
     "beatDescription": "节拍描述...",
     "minutes": "分钟",
     "minutesShort": "最小",
@@ -161,7 +164,18 @@
     "internalNeed": "内部需求",
     "fatalFlaw": "致命缺陷",
     "psychologicalDepth": "心理深度（可选）",
-    "customInstruction": "添加特定的细化说明..."
+    "customInstruction": "添加特定的细化说明...",
+    "scriptCraft": "脚本工艺",
+    "scriptCraftHint": "强调长格式脚本生成——而不是持续时间限制。多选。",
+    "scriptCraftNotes": "工艺笔记",
+    "scriptCraftNotesPlaceholder": "可选注释（人物、动作、潜台词……）",
+    "scriptCraftPriorities": {
+      "characterDepth": "字符深度",
+      "actionClarity": "动作清晰",
+      "subtext": "潜台词",
+      "dialogueRichness": "对话丰富性",
+      "visualFirst": "视觉第一"
+    }
   },
   "refine": {
     "refiningTitle": "精炼{section}",
@@ -193,7 +207,7 @@
     "distinctVoices": "独特的声音",
     "relationshipDynamics": "关系动态",
     "whatShouldChange": "应该改变什么？为什么？",
-    "blueprintUpdated": "SFAIBLUEPRINTERM已更新"
+    "blueprintUpdated": "Blueprint 已更新"
   },
   "dialog": {
     "unsavedChanges": "未保存的更改"
@@ -213,7 +227,7 @@
   },
   "resonance": {
     "run": "运行{feature}",
-    "chipLabel": "SFAIBLUEPRINTERM AR",
+    "chipLabel": "SFAI蓝图术语AR",
     "targetSuffix": "→ target {target} +",
     "pointsToTarget": "{points} PTS",
     "improveWeakest": "改善最弱"
@@ -227,7 +241,9 @@
     "startProduction": "前往Production Stage",
     "reAnalyzeOrRefine": "重新分析或优化Blueprint",
     "improveScoreOrStart": "提高分数或转到Production Stage",
-    "generating": "正在生成Blueprint…"
+    "generating": "正在生成Blueprint…",
+    "readyForProduction": "准备生产",
+    "nextStepLabel": "下一步"
   },
   "sidePanel": {
     "tabs": {
@@ -254,7 +270,26 @@
       "notes": "备注：",
       "synthesize": "将反馈转化为推荐",
       "synthesized": "综合推荐",
-      "openAssistant": "打开{assistant}"
+      "openAssistant": "打开{assistant}",
+      "exportTitle": "导出 Blueprint",
+      "exportHint": "下载 PDF、Fountain、Markdown 或 JSON 以在其他工具中使用。",
+      "exportButton": "下载...",
+      "listenOnlyTitle": "只听预览",
+      "reviewerLinkTitle": "审稿人链接",
+      "shareForFeedbackTitle": "分享以获取反馈",
+      "listenOnlyHint": "只读和听。没有评分、注释或聊天。不会过期。",
+      "reviewerLinkHint": "所有审阅者的一个链接。发送它以便协作者可以阅读、收听和评论。",
+      "createLinkHint": "创建审阅者无需登录即可打开的链接。",
+      "listenOnlyCheckbox": "只听预览（无反馈）",
+      "copyLink": "复制链接",
+      "copied": "复制了！",
+      "createNewLink": "创建新链接（新 URL）",
+      "creatingNewLink": "正在创建新链接...",
+      "subTabs": {
+        "feedback": "反馈意见",
+        "team": "团队",
+        "messages": "留言"
+      }
     }
   },
   "audienceResonance": {
@@ -275,10 +310,13 @@
     "categoryScores": "类别分数",
     "jumpToSection": "跳转到匹配的Blueprint部分",
     "emptyHint": "保存您的目标受众，然后分析您的蓝图如何与该受众产生共鸣。",
-    "readyOptionalPolish": "Ready for production — optional polish below",
-    "scoreBreakdownBalancedHint": "Impact shown per gap; the headline score uses balanced weighting so a full polish list does not crater a strong blueprint.",
-    "optionalPolish": "Optional polish",
-    "polishBadge": "Polish"
+    "readyOptionalPolish": "准备生产 - 下面可选抛光",
+    "scoreBreakdownBalancedHint": "每个间隙显示的影响；标题分数使用平衡权重，因此完整的波兰列表不会破坏强大的蓝图。",
+    "optionalPolish": "可选抛光",
+    "polishBadge": "Polish",
+    "selectGapForFix": "修复此差距：{gap}",
+    "fixSelectedWith": "修复使用 {assistant} 选择 {count}",
+    "rewriteInEnglish": "用英文重写"
   },
   "heroImage": {
     "uploading": "正在上传...",
@@ -316,14 +354,38 @@
     "after": "之后",
     "resonanceRecommendations": "共振建议（ {count} ）",
     "minusPoints": "− {points}",
-    "whatShouldChange": "应该改变什么？为什么？",
+    "whatShouldChange": "方向",
     "focusOptional": "焦点（可选）",
-    "guidedRefinements": "引导式改进（可选）",
+    "guidedRefinements": "推荐和快速编辑",
     "revisionPlan": "修订计划",
     "cancelIt": "是否放弃？",
     "generateBalanced": "生成平衡修订",
     "reviseIntent": "修改意图",
-    "applyRevision": "应用修订"
+    "applyRevision": "应用修订",
+    "addToInstructions": "+ 添加",
+    "addedToInstructions": "已添加",
+    "resonanceGap": "间隙",
+    "whatShouldChangePlaceholder": "输入或指示您的方向 - 例如让导师秘密成为对手，并重新平衡第二幕的节拍，让背叛降临到千禧一代的惊悚片观众面前……",
+    "clarifyAndConfirm": "澄清并确认",
+    "clarifying": "澄清……",
+    "proposedDirection": "拟定方向",
+    "directionReadyToConfirm": "这个方向足够具体，足以确认。",
+    "confirmDirection": "确认方向",
+    "directionConfirmed": "方向已确定",
+    "reviseDirection": "修改",
+    "startOver": "重新开始",
+    "targetAudience": "目标受众",
+    "targetAudienceHint": "（可选 - 澄清并确认以对齐蓝图）",
+    "confirmTargetAudience": "确认目标受众",
+    "targetAudienceConfirmed": "目标受众已确定",
+    "scopes": {
+      "all": "完整蓝图平衡",
+      "core": "核心信息",
+      "story": "故事",
+      "characters": "连续性",
+      "beats": "节拍",
+      "tone": "语气和风格"
+    }
   },
   "reimagine": {
     "reimagineTitle": "重新构想Blueprint",
@@ -340,7 +402,10 @@
     "targetAudience": "目标受众",
     "audienceHint": "（用你自己的话描述）",
     "visualFoundation": "视觉基础",
-    "lockedAtBlueprint": "（锁定在Blueprint ）"
+    "lockedAtBlueprint": "（锁定在Blueprint ）",
+    "reimagining": "重新想象……",
+    "generateBlueprint": "生成 Blueprint",
+    "startDescription": "锁定概要，然后从中生成蓝图。"
   },
   "tour": {
     "stepCounter": "{current}的{total}",
@@ -379,7 +444,7 @@
     },
     "startProduction": {
       "title": "第4步—开始生产",
-      "description": "当您的SFAIBLUEPRINTERM准备就绪时，开始生产移交给脚本生成和生产管道。",
+      "description": "当您的 Blueprint 准备就绪时，开始生产将移交给脚本生成和生产管道。",
       "tip": "软门警告低于80 —您可以通过确认覆盖。"
     }
   },
@@ -458,5 +523,69 @@
       "collaborate-export": "协作和导出",
       "start-production": "前往Production Stage"
     }
+  },
+  "toolbar": {
+    "documentLabel": "治疗",
+    "rewriteInEnglish": "用英文重写"
+  },
+  "regenerate": {
+    "sectionTitle": "从头开始",
+    "sectionHint": "重新生成替换整个 Blueprint。请使用 Blueprint Director 进行有针对性的编辑。",
+    "confirmTitle": "重新生成 Blueprint？",
+    "confirmDescription": "这会将您当前的 Blueprint 替换为新的 AI 生成的治疗方法。该蓝图的手动编辑、共振分数和变体历史记录将丢失。此操作无法撤消。",
+    "cancel": "取消",
+    "confirmAction": "是的，重生"
+  },
+  "export": {
+    "title": "导出 Blueprint",
+    "description": "以与其他写作和制作工具兼容的格式下载您的作品。",
+    "cancel": "取消",
+    "download": "下载",
+    "savePdf": "另存为 PDF",
+    "noVariant": "没有可导出的蓝图。",
+    "pdfNotReady": "导出预览尚未准备好。",
+    "pdfHint": "使用浏览器的打印对话框并选择另存为 PDF。",
+    "exportFailed": "导出失败。",
+    "downloadSuccess": "下载为 {format}",
+    "formats": {
+      "pdf": {
+        "label": "PDF",
+        "hint": "用于共享或存档的打印质量布局。"
+      },
+      "fountain": {
+        "label": "喷泉",
+        "hint": "WriterDuet、Highland 和 Slugline 的行业标准文本格式。"
+      },
+      "markdown": {
+        "label": "降价",
+        "hint": "Google Docs、Notion 或 wiki 的可读大纲。"
+      },
+      "json": {
+        "label": "JSON",
+        "hint": "此蓝图变体的完整结构化备份。"
+      }
+    }
+  },
+  "continuity": {
+    "subTabs": {
+      "all": "全部 ({count})",
+      "cast": "演员 ({count})",
+      "locations": "地点 ({count})",
+      "props": "道具 ({count})"
+    },
+    "castTitle": "演员阵容",
+    "locationsTitle": "地点",
+    "propsTitle": "道具",
+    "sharedSeriesBannerTitle": "共享系列 Continuity Library",
+    "sharedSeriesBannerDesc": "{series} 的演员、地点和道具均与本集蓝图共享。",
+    "sharedSeriesBannerGeneric": "系列圣经连续性资产与本集蓝图共享。",
+    "openSeriesContinuity": "Series Room",
+    "seriesAssetBadge": "系列连续性",
+    "newEpisodeAssetBadge": "剧集资产",
+    "locationAtmosphere": "氛围与灯光",
+    "locationProps": "服装及道具设置",
+    "propSignificance": "叙事意义",
+    "emptyLocations": "尚未定义位置。使用 {assistant} 生成此蓝图的关键位置。",
+    "emptyProps": "尚未定义道具。使用 {assistant} 生成此蓝图的关键道具。"
   }
 }

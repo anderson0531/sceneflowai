@@ -246,6 +246,7 @@ export function applyTreatmentVariantTranslations(
     'antagonist',
     'tone',
     'tone_description',
+    'scriptCraftNotes',
   ] as const
 
   for (const key of scalarKeys) {
