@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { CreditService, ensureWhopMigrationRan } from '@/services/CreditService'
+import { isDatabaseUnavailableError } from '@/lib/database/connectionDiagnostics'
 
 export const dynamic = 'force-dynamic'
 
@@ -46,6 +47,17 @@ export async function GET(request: NextRequest) {
         {
           error: 'Database schema migration required',
           code: 'SCHEMA_MIGRATION_REQUIRED',
+          details: error.message,
+        },
+        { status: 503 }
+      )
+    }
+
+    if (isDatabaseUnavailableError(error)) {
+      return NextResponse.json(
+        {
+          error: 'Database temporarily unavailable',
+          code: 'DATABASE_UNAVAILABLE',
           details: error.message,
         },
         { status: 503 }

@@ -39,8 +39,15 @@ export async function GET(request: NextRequest) {
       isExplicit: isLocale(user.preferred_locale),
     })
   } catch (error) {
-    console.error('Get locale preferences error:', error)
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+    console.warn('Get locale preferences fallback (DB unavailable):', error instanceof Error ? error.message : error)
+    const cookieVal = request.cookies.get(UI_LOCALE_COOKIE)?.value
+    const uiLocale = isLocale(cookieVal) ? cookieVal : DEFAULT_LOCALE
+    return NextResponse.json({
+      uiLocale,
+      storyLocale: uiLocale,
+      isExplicit: isLocale(cookieVal),
+      degraded: true,
+    })
   }
 }
 

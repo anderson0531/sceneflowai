@@ -892,6 +892,12 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
   const hydrationAttemptedRef = useRef(false)
   const pendingPersistAfterHydrationRef = useRef(false)
   const [initialLoadComplete, setInitialLoadComplete] = useState(false)
+  const [projectLoadError, setProjectLoadError] = useState<{
+    message: string
+    details?: string
+    code?: string
+    status?: number
+  } | null>(null)
   // Debounce ref for audio clip persistence
   const audioClipPersistDebounceRef = useRef<NodeJS.Timeout | null>(null)
   
@@ -8643,7 +8649,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
   // A finished render stores a signed URL immediately. If this visit is the
   // first time the studio is open after that, copy it to permanent storage.
   useEffect(() => {
-    if (!projectId) return
+    if (!projectId || !initialLoadComplete || !project) return
     let cancelled = false
 
     const promoteFinishedRenders = async () => {
@@ -8683,7 +8689,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     return () => {
       cancelled = true
     }
-  }, [projectId, reloadSceneProduction])
+  }, [projectId, initialLoadComplete, Boolean(project), reloadSceneProduction])
 
   const startScriptAnalysis = useCallback(
     async (targetDemographic?: string) => {
@@ -9029,7 +9035,10 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     skipAutoGeneration: boolean = false,
     options?: { quiet?: boolean }
   ) => {
-    if (!options?.quiet) setInitialLoadComplete(false)
+    if (!options?.quiet) {
+      setInitialLoadComplete(false)
+      setProjectLoadError(null)
+    }
     try {
       // Phase 1: lite mode strips base64 images for fast first paint
       const cacheBuster = `_t=${Date.now()}`
@@ -9045,7 +9054,21 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       if (!res.ok) {
         const errorText = await res.text()
         console.error('[Load Project] Error response:', errorText)
-        throw new Error(`Failed to load project: ${res.status} ${res.statusText}`)
+        let parsedError: { error?: string; details?: string; code?: string } | null = null
+        try {
+          parsedError = JSON.parse(errorText)
+        } catch {
+          parsedError = null
+        }
+        const serverMessage =
+          parsedError?.error || `Failed to load project: ${res.status} ${res.statusText}`.trim()
+        setProjectLoadError({
+          message: serverMessage,
+          details: parsedError?.details,
+          code: parsedError?.code,
+          status: res.status,
+        })
+        throw new Error(serverMessage)
       }
 
       const productionRes = await fetch(`/api/projects/${projectId}/production`, {
@@ -9699,11 +9722,10 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         }
       }
     } catch (error) {
+      const msg = error instanceof Error ? error.message : String(error)
       console.error('Failed to load project:', error)
-      console.error('Error type:', error instanceof TypeError ? 'TypeError' : error instanceof Error ? error.constructor.name : typeof error)
-      console.error('Error message:', error instanceof Error ? error.message : String(error))
-      // Don't throw - just log and show user-friendly message
-      try { const { toast } = require('sonner'); toast.error('Failed to reload project data') } catch {}
+      setProjectLoadError((prev) => prev ?? { message: msg || 'Failed to load project' })
+      toast.error(msg || 'Failed to reload project data')
     } finally {
       setInitialLoadComplete(true)
     }
@@ -17671,12 +17693,55 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     return ''
   }
 
-  if (!mounted || !project || !initialLoadComplete) {
+  if (!mounted || !initialLoadComplete) {
     return (
       <VisionLoadingOverlay
         visible
         title={!mounted ? tStudio('initializing') : tStudio('opening')}
       />
+    )
+  }
+
+  if (!project) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-950 px-4 py-12 text-gray-100">
+        <div className="w-full max-w-lg rounded-2xl border border-red-500/30 bg-gray-900/90 p-6 shadow-2xl space-y-4">
+          <div className="flex items-start gap-3">
+            <div className="rounded-lg bg-red-500/15 p-2 text-red-400 shrink-0">
+              <AlertTriangle className="h-5 w-5" />
+            </div>
+            <div className="space-y-1.5 min-w-0">
+              <h2 className="text-base font-semibold text-white">Unable to Load Project</h2>
+              <p className="text-sm text-gray-300 leading-relaxed">
+                {projectLoadError?.message || 'The project could not be loaded from the database.'}
+              </p>
+              {projectLoadError?.details && (
+                <p className="text-xs text-gray-400 font-mono bg-gray-950/80 border border-gray-800 rounded-lg px-3 py-2 break-words">
+                  {projectLoadError.details}
+                </p>
+              )}
+            </div>
+          </div>
+          <div className="flex flex-wrap items-center justify-end gap-2 pt-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => router.push('/dashboard/projects')}
+              className="border-gray-700 text-gray-200 hover:bg-gray-800"
+            >
+              Back to Projects
+            </Button>
+            <Button
+              size="sm"
+              onClick={() => void loadProject()}
+              className="bg-cyan-600 hover:bg-cyan-500 text-white"
+            >
+              <RefreshCw className="w-3.5 h-3.5 mr-1.5" />
+              Retry
+            </Button>
+          </div>
+        </div>
+      </div>
     )
   }
 

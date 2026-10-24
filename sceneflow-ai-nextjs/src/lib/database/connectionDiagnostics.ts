@@ -27,14 +27,16 @@ export function extractConnectionErrorCodes(error: unknown): {
 
   return {
     message,
-    code: nested?.code ?? err?.code,
+    code: nested?.code != null ? String(nested.code) : err?.code != null ? String(err.code) : undefined,
     errno: nested?.errno ?? err?.errno,
     sqlState: nested?.sqlState ?? err?.sqlState,
-    reason: message.includes('bad certificate')
-      ? 'TLS alert 42 (bad_certificate) — server rejected client cert during mTLS handshake'
-      : message.includes('SSL') || message.includes('TLS')
-        ? 'SSL/TLS handshake failure'
-        : undefined,
+    reason: message.includes('not in an appropriate state to handle the request')
+      ? 'Cloud SQL Admin API 409 — Cloud SQL instance is suspended (e.g. billing issue) or stopped'
+      : message.includes('bad certificate')
+        ? 'TLS alert 42 (bad_certificate) — server rejected client cert during mTLS handshake'
+        : message.includes('SSL') || message.includes('TLS')
+          ? 'SSL/TLS handshake failure'
+          : undefined,
   }
 }
 
@@ -116,6 +118,29 @@ export function isTransientConnectionCapacityError(error: unknown): boolean {
   if (normalized.includes('too many clients already')) return true
   if (normalized.includes('too many connections')) return true
 
+  return false
+}
+
+export function isCloudSqlInstanceSuspendedError(error: unknown): boolean {
+  const { message, code } = extractConnectionErrorCodes(error)
+  const normalized = message.toLowerCase()
+  if (normalized.includes('not in an appropriate state to handle the request')) return true
+  if (code === '409' && normalized.includes('instance')) return true
+  return false
+}
+
+export function isDatabaseUnavailableError(error: unknown): boolean {
+  if (isCloudSqlInstanceSuspendedError(error)) return true
+  if (isTransientConnectionCapacityError(error)) return true
+  if (isSslOrCertConnectionError(error)) return true
+  const err = error as { name?: string; code?: string; message?: string }
+  const name = err?.name ?? ''
+  if (/Sequelize(Connection|HostNotFound|HostNotReachable|InvalidConnection|AccessDenied)/i.test(name)) {
+    return true
+  }
+  const { code, message } = extractConnectionErrorCodes(error)
+  if (code === 'ECONNREFUSED' || code === 'ETIMEDOUT' || code === 'ENOTFOUND') return true
+  if (/connection terminated|connect ECONNREFUSED|database.*does not exist/i.test(message)) return true
   return false
 }
 

@@ -5,6 +5,9 @@ import {
   isTransientConnectionCapacityError,
   isSslOrCertConnectionError,
   isConnectionAcquireTimeoutError,
+  isCloudSqlInstanceSuspendedError,
+  isDatabaseUnavailableError,
+  extractConnectionErrorCodes,
 } from '@/lib/database/connectionDiagnostics'
 
 const CONFIG = readFileSync(
@@ -111,5 +114,37 @@ describe('retry is configured on Sequelize, not at call sites', () => {
     let total = 0
     for (let i = 0; i < max; i++) total += base * exponent ** i
     expect(total).toBeLessThan(60000)
+  })
+})
+
+describe('Cloud SQL suspended / database unavailability handling', () => {
+  it('recognises Cloud SQL Admin API 409 when the instance is suspended', () => {
+    const err = Object.assign(
+      new Error('The instance or operation is not in an appropriate state to handle the request.'),
+      { code: 409 }
+    )
+    expect(isCloudSqlInstanceSuspendedError(err)).toBe(true)
+    expect(isDatabaseUnavailableError(err)).toBe(true)
+    expect(extractConnectionErrorCodes(err).reason).toMatch(/Cloud SQL Admin API 409/i)
+  })
+
+  it('degrades /api/user/locale and /api/jobs gracefully and shows an error state in Vision page when DB is unavailable', () => {
+    const localeRoute = readFileSync(
+      path.join(process.cwd(), 'src/app/api/user/locale/route.ts'),
+      'utf8'
+    )
+    const jobsRoute = readFileSync(
+      path.join(process.cwd(), 'src/app/api/jobs/route.ts'),
+      'utf8'
+    )
+    const visionPage = readFileSync(
+      path.join(process.cwd(), 'src/app/dashboard/workflow/vision/[projectId]/page.tsx'),
+      'utf8'
+    )
+
+    expect(localeRoute).toContain('degraded: true')
+    expect(jobsRoute).toContain('degraded: true')
+    expect(visionPage).toContain('Unable to Load Project')
+    expect(visionPage).toContain('if (!mounted || !initialLoadComplete)')
   })
 })

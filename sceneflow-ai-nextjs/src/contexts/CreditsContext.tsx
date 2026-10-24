@@ -50,7 +50,14 @@ export function CreditsProvider({ children }: CreditsProviderProps) {
       const response = await fetch('/api/user/credits')
       
       if (!response.ok) {
-        throw new Error('Failed to fetch credits')
+        const errPayload = await response.json().catch(() => null)
+        const msg = errPayload?.error || 'Failed to fetch credits'
+        if (response.status === 503) {
+          console.warn('[CreditsContext] Credits unavailable (503):', msg)
+          setError(msg)
+          return
+        }
+        throw new Error(msg)
       }
       
       const data = await response.json()

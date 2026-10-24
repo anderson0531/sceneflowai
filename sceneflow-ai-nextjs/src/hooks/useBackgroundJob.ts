@@ -21,6 +21,29 @@ export type BackgroundJob = {
 const POLL_INTERVAL_MS = 4000
 const TERMINAL: BackgroundJobStatus[] = ['completed', 'failed', 'cancelled']
 
+const activeJobsInFlight = new Map<string, Promise<BackgroundJob[]>>()
+
+function fetchActiveJobsForProjectCoalesced(projectId: string): Promise<BackgroundJob[]> {
+  const existing = activeJobsInFlight.get(projectId)
+  if (existing) return existing
+  const promise = (async () => {
+    try {
+      const res = await fetch(
+        `/api/jobs?projectId=${encodeURIComponent(projectId)}&active=true`
+      )
+      if (!res.ok) return []
+      const data = await res.json().catch(() => null)
+      return Array.isArray(data?.jobs) ? (data.jobs as BackgroundJob[]) : []
+    } catch {
+      return []
+    } finally {
+      activeJobsInFlight.delete(projectId)
+    }
+  })()
+  activeJobsInFlight.set(projectId, promise)
+  return promise
+}
+
 export function isTerminal(status?: BackgroundJobStatus): boolean {
   return !!status && TERMINAL.includes(status)
 }
@@ -112,12 +135,8 @@ export function useBackgroundJob(options: {
    *  Returns the matched active job, or null when none. */
   const rehydrate = useCallback(async (): Promise<BackgroundJob | null> => {
     try {
-      const res = await fetch(
-        `/api/jobs?projectId=${encodeURIComponent(projectId)}&active=true`
-      )
-      if (!res.ok) return null
-      const data = await res.json()
-      const match = (data.jobs || []).find((j: BackgroundJob) => j.job_type === jobType)
+      const jobs = await fetchActiveJobsForProjectCoalesced(projectId)
+      const match = jobs.find((j: BackgroundJob) => j.job_type === jobType)
       if (match && !isStaleActiveJob(match)) {
         jobIdRef.current = match.id
         // Mark as already-seen so re-attaching never replays a completion toast

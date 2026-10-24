@@ -8,7 +8,8 @@ import {
   listJobsForUser,
 } from '@/lib/jobs/jobService'
 import { ACTIVE_JOB_STATUSES } from '@/lib/jobs/jobStatus'
-import { getSessionUserId } from '@/lib/auth/sessionUser'
+import { getSessionUserId, getSessionUserKey } from '@/lib/auth/sessionUser'
+import { isDatabaseUnavailableError } from '@/lib/database/connectionDiagnostics'
 import type { GenerationJobType } from '@/models/GenerationJob'
 import {
   promoteSceneRenderResult,
@@ -22,9 +23,14 @@ export async function GET(req: NextRequest) {
   try {
     // Session is authoritative — a client-supplied userId would let one
     // account enumerate another's jobs.
+    const sessionKey = await getSessionUserKey()
+    if (!sessionKey) {
+      return NextResponse.json({ error: 'Not authenticated' }, { status: 401 })
+    }
     const userId = await getSessionUserId()
     if (!userId) {
-      return NextResponse.json({ error: 'Not authenticated' }, { status: 401 })
+      // Session exists in NextAuth JWT, but DB user resolution failed (e.g. DB suspended/unreachable).
+      return NextResponse.json({ jobs: [], degraded: true })
     }
 
     const jobId = req.nextUrl.searchParams.get('jobId')
@@ -51,6 +57,9 @@ export async function GET(req: NextRequest) {
     }
     return NextResponse.json({ jobs: synced })
   } catch (err: any) {
+    if (isDatabaseUnavailableError(err)) {
+      return NextResponse.json({ jobs: [], degraded: true })
+    }
     return NextResponse.json({ error: err?.message }, { status: 500 })
   }
 }

@@ -10,6 +10,10 @@ import CollabScore from '@/models/CollabScore'
 import CollabSession from '@/models/CollabSession'
 import { sequelize } from '@/config/database'
 import {
+  isCloudSqlInstanceSuspendedError,
+  isDatabaseUnavailableError,
+} from '@/lib/database/connectionDiagnostics'
+import {
   deleteProjectWithDependents,
   type CollabCleanupStep,
   type DeleteProjectGraphDeps,
@@ -132,24 +136,44 @@ export async function GET(
     
     // Provide more specific error messages
     let errorMessage = 'Failed to load project'
+    let errorCode: string | undefined
     let statusCode = 500
     
-    if (error?.name === 'SequelizeConnectionError' || error?.code === 'ECONNREFUSED') {
+    if (isCloudSqlInstanceSuspendedError(error)) {
+      errorMessage =
+        'Database unavailable: Cloud SQL instance (sceneflow-db) is suspended or not in a runnable state (HTTP 409). Please check Google Cloud Billing for project sceneflowai-2d3e6.'
+      errorCode = 'CLOUD_SQL_SUSPENDED'
+      statusCode = 503
+    } else if (error?.name === 'SequelizeConnectionError' || error?.code === 'ECONNREFUSED') {
       errorMessage = 'Database connection failed'
+      errorCode = 'DATABASE_UNAVAILABLE'
+      statusCode = 503
     } else if (error?.name === 'SequelizeAuthenticationError') {
       errorMessage = 'Database authentication failed'
+      errorCode = 'DATABASE_AUTH_FAILED'
+      statusCode = 503
     } else if (error?.name === 'SequelizeConnectionRefusedError') {
       errorMessage = 'Database connection refused'
+      errorCode = 'DATABASE_UNAVAILABLE'
+      statusCode = 503
     } else if (error?.message?.includes('SSL')) {
       errorMessage = 'Database SSL configuration error'
+      errorCode = 'DATABASE_SSL_ERROR'
+      statusCode = 503
     } else if (error?.message?.includes('MaxClientsInSessionMode') || error?.message?.includes('max clients reached')) {
       errorMessage = 'Database temporarily overloaded. Please try again.'
+      errorCode = 'DATABASE_OVERLOADED'
       statusCode = 503 // Service Unavailable - indicates temporary issue
+    } else if (isDatabaseUnavailableError(error)) {
+      errorMessage = 'Database temporarily unavailable. Please try again shortly.'
+      errorCode = 'DATABASE_UNAVAILABLE'
+      statusCode = 503
     }
     
     return NextResponse.json({ 
       error: errorMessage,
-      details: process.env.NODE_ENV === 'development' ? error?.message : undefined
+      code: errorCode,
+      details: statusCode === 503 || process.env.NODE_ENV === 'development' ? error?.message : undefined
     }, { status: statusCode })
   }
 }
