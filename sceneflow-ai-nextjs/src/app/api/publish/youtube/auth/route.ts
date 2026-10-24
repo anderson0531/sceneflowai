@@ -1,6 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server'
+import '@/models'
 import { sanitizeReturnTo } from '@/lib/navigation/sanitizeReturnTo'
-import { getYouTubeAuthUrl } from '@/lib/publish/youtubeClient'
+import {
+  getYouTubeAuthUrl,
+  resolveYouTubeOAuthCredentials,
+  youtubeRedirectUri,
+} from '@/lib/publish/youtubeClient'
 import { resolveUserId } from '@/lib/userHelper'
 
 export const dynamic = 'force-dynamic'
@@ -20,8 +25,12 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: 'userId required' }, { status: 400 })
     }
     const userId = await resolveUserId(userIdParam)
-    const state = Buffer.from(JSON.stringify({ userId, returnTo })).toString('base64url')
-    const url = getYouTubeAuthUrl(state, req.nextUrl.origin)
+    const creds = await resolveYouTubeOAuthCredentials(userId)
+    const redirectUri = youtubeRedirectUri(req.nextUrl.origin)
+    const state = Buffer.from(JSON.stringify({ userId, returnTo, redirectUri })).toString(
+      'base64url'
+    )
+    const url = getYouTubeAuthUrl(state, req.nextUrl.origin, creds)
     return NextResponse.redirect(url, { headers: NO_STORE })
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : 'Auth failed'

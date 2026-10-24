@@ -93,6 +93,18 @@ export function mergeProductionSegment(
     if (existing.assetType) merged.assetType = existing.assetType
     if (existing.status) merged.status = existing.status
     if (existing.currentTakeId) merged.currentTakeId = existing.currentTakeId
+  } else if (
+    segmentHasPlayableVideo(merged) &&
+    incoming.status !== 'GENERATING' &&
+    incoming.status !== 'ERROR'
+  ) {
+    if (!merged.assetType) {
+      merged.assetType = existing.assetType || 'video'
+    }
+    if (!merged.status || merged.status === 'DRAFT') {
+      merged.status =
+        existing.status && existing.status !== 'DRAFT' ? existing.status : 'COMPLETE'
+    }
   }
   return merged
 }

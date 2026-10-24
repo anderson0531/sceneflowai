@@ -117,6 +117,18 @@ describe('healMissingVideoPointer', () => {
     }
     expect(healMissingVideoPointer(segment)).toBe(segment)
   })
+
+  it('heals status to COMPLETE when activeAssetUrl is already a video URL but status is DRAFT', () => {
+    const healed = healMissingVideoPointer({
+      status: 'DRAFT',
+      assetType: null,
+      activeAssetUrl: CLIP_A,
+      takes: [{ id: 't1', assetUrl: CLIP_A, status: 'COMPLETE' }],
+    })
+    expect(healed.status).toBe('COMPLETE')
+    expect(healed.assetType).toBe('video')
+    expect(healed.activeAssetUrl).toBe(CLIP_A)
+  })
 })
 
 describe('applyVideoTakeSelection', () => {

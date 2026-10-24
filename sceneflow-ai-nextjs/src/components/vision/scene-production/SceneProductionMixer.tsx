@@ -192,6 +192,7 @@ import {
   isMixerBeatIncluded,
   listIncludedBeatVideos,
   listMixerBeatRows,
+  segmentHasMixerPlayableVideo,
   type MixerBeatRow,
 } from '@/lib/scene/mixerBeatInclude'
 import {
@@ -1251,6 +1252,10 @@ function SegmentBeatVideoControls({
   onShotConfigChange,
   onRegenerateShot,
   onShotJoinChange,
+  measuredDurations = {},
+  onTrimChange,
+  onResetTrim,
+  onPreviewBeat,
 }: {
   rows: MixerBeatRow[]
   onBeatIncludeChange: (segmentId: string, included: boolean) => void
@@ -1266,7 +1271,13 @@ function SegmentBeatVideoControls({
   onShotConfigChange?: (segmentId: string, patch: MixerLanguageShotConfig) => void
   onRegenerateShot?: (segment: SceneSegment) => void
   onShotJoinChange?: (segmentId: string, shotJoin: ShotJoin) => void
+  measuredDurations?: Record<string, number>
+  onTrimChange?: (segmentId: string, inSec: number, outSec: number) => void
+  onResetTrim?: (segmentId: string) => void
+  onPreviewBeat?: (segmentId: string) => void
 }) {
+  const [expandedTrimSegmentId, setExpandedTrimSegmentId] = useState<string | null>(null)
+
   if (rows.length === 0) return null
 
   const togglable = rows.filter((row) => row.segment)
@@ -1331,6 +1342,12 @@ function SegmentBeatVideoControls({
           {rows.map((row, i) => {
             const seg = row.segment
             const included = !!seg && isMixerBeatIncluded(seg)
+            const hasPlayableClip = !!seg && segmentHasMixerPlayableVideo(seg)
+            const trimSource = seg
+              ? resolveSegmentSourceDurationSec(seg, measuredDurations[seg.segmentId])
+              : 0
+            const trimWindow = seg ? resolveVideoTrimWindow(seg, trimSource) : null
+            const isTrimExpanded = !!seg && expandedTrimSegmentId === seg.segmentId
             const method = seg
               ? resolveLanguageShotMethod({
                   config: shotConfigs[seg.segmentId],
@@ -1372,14 +1389,52 @@ function SegmentBeatVideoControls({
                     <span className="ml-2 text-[10px] uppercase tracking-wide text-gray-500">
                       Excluded
                     </span>
+                  ) : trimWindow?.isTrimmed ? (
+                    <span className="ml-2 text-[10px] uppercase tracking-wide text-amber-400/90">
+                      Trimmed ({trimWindow.playableSec.toFixed(1)}s)
+                    </span>
                   ) : null}
                 </div>
+                {seg && hasPlayableClip && onTrimChange && (
+                  <button
+                    type="button"
+                    disabled={disabled}
+                    onClick={() =>
+                      setExpandedTrimSegmentId((prev) =>
+                        prev === seg.segmentId ? null : seg.segmentId
+                      )
+                    }
+                    className={cn(
+                      'inline-flex items-center gap-1 px-2 py-1 rounded text-[10px] font-medium border transition-colors',
+                      isTrimExpanded || trimWindow?.isTrimmed
+                        ? 'bg-amber-500/20 border-amber-500/40 text-amber-200 hover:bg-amber-500/30'
+                        : 'bg-gray-800/70 border-gray-600/50 text-gray-300 hover:text-white hover:border-gray-500'
+                    )}
+                    title="Trim start and end of this shot clip"
+                  >
+                    <Scissors className="w-3 h-3 text-amber-400" />
+                    <span>Trim</span>
+                  </button>
+                )}
                 <Switch
                   checked={included}
                   onCheckedChange={(checked) => seg && onBeatIncludeChange(seg.segmentId, checked)}
                   disabled={disabled || !seg}
                 />
                 </div>
+                {seg && hasPlayableClip && isTrimExpanded && onTrimChange && (
+                  <div className="pt-1">
+                    <BeatTrimRangeEditor
+                      segment={seg}
+                      sourceDurationSec={trimSource}
+                      measuredDurations={measuredDurations}
+                      onTrimChange={(inSec, outSec) => onTrimChange(seg.segmentId, inSec, outSec)}
+                      onReset={() => onResetTrim?.(seg.segmentId)}
+                      onPreview={() => onPreviewBeat?.(seg.segmentId)}
+                      disabled={disabled}
+                    />
+                  </div>
+                )}
                 {languageActive && seg && (
                   <div className="space-y-2 pl-12">
                     <div className="flex flex-wrap gap-1">
@@ -1637,6 +1692,7 @@ function BeatTrimRangeEditor({
 
 function SegmentBeatTrimControls({
   segments,
+  shotNumbers,
   selectedSegmentId,
   onSelectSegment,
   measuredDurations,
@@ -1648,6 +1704,7 @@ function SegmentBeatTrimControls({
   onToggleCollapse,
 }: {
   segments: SceneSegment[]
+  shotNumbers?: Record<string, number>
   selectedSegmentId: string | null
   onSelectSegment: (segmentId: string) => void
   measuredDurations: Record<string, number>
@@ -1664,7 +1721,7 @@ function SegmentBeatTrimControls({
     segments.find((s) => s.segmentId === selectedSegmentId) ?? segments[0]
 
   return (
-    <div className="bg-gray-800/50 rounded-lg">
+    <div className="bg-gray-800/50 border border-gray-700/50 rounded-lg">
       <div
         className={`flex items-center justify-between p-3 ${onToggleCollapse ? 'cursor-pointer hover:bg-white/5' : ''}`}
         onClick={onToggleCollapse}
@@ -1702,6 +1759,7 @@ function SegmentBeatTrimControls({
               )
               const { isTrimmed } = resolveVideoTrimWindow(seg, source)
               const active = seg.segmentId === selected.segmentId
+              const shotNum = shotNumbers?.[seg.segmentId] ?? i + 1
               return (
                 <button
                   key={seg.segmentId}
@@ -1715,7 +1773,7 @@ function SegmentBeatTrimControls({
                       : 'bg-gray-700/40 border-gray-600/40 text-gray-400 hover:text-gray-200'
                   )}
                 >
-                  Shot #{i + 1}
+                  Shot #{shotNum}
                   {isTrimmed && (
                     <span className="ml-1 text-[9px] uppercase text-amber-400/80">Trimmed</span>
                   )}
@@ -2320,15 +2378,22 @@ export function SceneProductionMixer({
 
   const handleSegmentTrimChange = useCallback(
     (segmentId: string, inSec: number, outSec: number) => {
-      const seg = segments.find((s) => s.segmentId === segmentId)
+      const seg =
+        segments.find((s) => s.segmentId === segmentId) ??
+        mixerBeatSegments.find((s) => s.segmentId === segmentId)
       if (!seg) return
       const source = resolveSegmentSourceDurationSec(
         seg,
         measuredSegmentDurations[segmentId]
       )
+      const matchesTarget = (s: SceneSegment) =>
+        s.segmentId === segmentId ||
+        (!!seg.beatId &&
+          s.beatId === seg.beatId &&
+          (s.dialoguePortion?.partIndex ?? 0) === (seg.dialoguePortion?.partIndex ?? 0))
       onSegmentsChange?.(
         segments.map((s) =>
-          s.segmentId === segmentId
+          matchesTarget(s)
             ? {
                 ...s,
                 videoTrimInSec: inSec > 0.001 ? inSec : null,
@@ -2338,20 +2403,28 @@ export function SceneProductionMixer({
         )
       )
     },
-    [segments, measuredSegmentDurations, onSegmentsChange]
+    [segments, mixerBeatSegments, measuredSegmentDurations, onSegmentsChange]
   )
 
   const handleSegmentTrimReset = useCallback(
     (segmentId: string) => {
+      const target =
+        segments.find((s) => s.segmentId === segmentId) ??
+        mixerBeatSegments.find((s) => s.segmentId === segmentId)
+      const matchesTarget = (s: SceneSegment) =>
+        s.segmentId === segmentId ||
+        (!!target?.beatId &&
+          s.beatId === target.beatId &&
+          (s.dialoguePortion?.partIndex ?? 0) === (target.dialoguePortion?.partIndex ?? 0))
       onSegmentsChange?.(
         segments.map((seg) =>
-          seg.segmentId === segmentId
+          matchesTarget(seg)
             ? { ...seg, videoTrimInSec: null, videoTrimOutSec: null }
             : seg
         )
       )
     },
-    [segments, onSegmentsChange]
+    [segments, mixerBeatSegments, onSegmentsChange]
   )
 
   const handlePreviewTrimBeat = useCallback((segmentId: string) => {
@@ -2610,7 +2683,7 @@ export function SceneProductionMixer({
 
     const shared = getSharedMixerUiSettings(productionData)
     if (shared.productionTarget && onProductionTargetChange) {
-      onProductionTargetChange(shared.productionTarget)
+      onProductionTargetChange({ ...shared.productionTarget, streamType: 'video' })
     }
 
     hydratedSettingsTokenRef.current = token
@@ -3079,23 +3152,6 @@ export function SceneProductionMixer({
   
   // === Derived Data ===
 
-  const completeRenderableSegments = useMemo(() => {
-    return segments.filter((s) => s.status === 'COMPLETE' && s.activeAssetUrl)
-  }, [segments])
-
-  useEffect(() => {
-    if (completeRenderableSegments.length === 0) {
-      setSelectedTrimSegmentId(null)
-      return
-    }
-    if (
-      !selectedTrimSegmentId ||
-      !completeRenderableSegments.some((s) => s.segmentId === selectedTrimSegmentId)
-    ) {
-      setSelectedTrimSegmentId(completeRenderableSegments[0].segmentId)
-    }
-  }, [completeRenderableSegments, selectedTrimSegmentId])
-  
   // Rendered segments (includes both video and image assets)
   const renderedSegments = useMemo(() => {
     return filterMixerIncludedSegments(mixerBeatSegments)
@@ -3113,10 +3169,39 @@ export function SceneProductionMixer({
                 klingLipsyncEnabled,
               })
           return presentSegmentForShotMethod(segment, productionTarget.language, method)
-        })
+        }),
+        audioAssets.scoreScene
       ),
-    [mixerBeatSegments, productionTarget.language, isEnglish, languageShotConfigs, klingLipsyncEnabled]
+    [mixerBeatSegments, productionTarget.language, isEnglish, languageShotConfigs, klingLipsyncEnabled, audioAssets.scoreScene]
   )
+
+  const completeRenderableSegments = useMemo(() => {
+    if (videoSegments.length > 0) return videoSegments
+    return mixerBeatSegments.filter((s) => segmentHasMixerPlayableVideo(s))
+  }, [videoSegments, mixerBeatSegments])
+
+  const shotNumberBySegmentId = useMemo(() => {
+    const map: Record<string, number> = {}
+    mixerBeatRows.forEach((row, idx) => {
+      if (row.segment) {
+        map[row.segment.segmentId] = row.beatNumber ?? idx + 1
+      }
+    })
+    return map
+  }, [mixerBeatRows])
+
+  useEffect(() => {
+    if (completeRenderableSegments.length === 0) {
+      setSelectedTrimSegmentId(null)
+      return
+    }
+    if (
+      !selectedTrimSegmentId ||
+      !completeRenderableSegments.some((s) => s.segmentId === selectedTrimSegmentId)
+    ) {
+      setSelectedTrimSegmentId(completeRenderableSegments[0].segmentId)
+    }
+  }, [completeRenderableSegments, selectedTrimSegmentId])
 
   const canMixerStitchRender = videoSegments.length > 0
 
@@ -4831,7 +4916,7 @@ export function SceneProductionMixer({
                 )}
               </div>
               
-              {productionTarget.streamType !== 'animatic' && mixerBeatRows.length > 0 && (
+              {mixerBeatRows.length > 0 && (
                 <SegmentBeatVideoControls
                   rows={mixerBeatRows}
                   onBeatIncludeChange={handleMixerBeatIncludeChange}
@@ -4840,6 +4925,10 @@ export function SceneProductionMixer({
                   isCollapsed={collapsedSections.beatVideo}
                   onToggleCollapse={() => toggleSection('beatVideo')}
                   onShotJoinChange={handleShotJoinChange}
+                  measuredDurations={measuredSegmentDurations}
+                  onTrimChange={handleSegmentTrimChange}
+                  onResetTrim={handleSegmentTrimReset}
+                  onPreviewBeat={handlePreviewTrimBeat}
                   languageActive={!isEnglish}
                   languageCode={selectedLanguage}
                   languageLabel={languageLabel}
@@ -4855,9 +4944,10 @@ export function SceneProductionMixer({
                 />
               )}
 
-              {productionTarget.streamType !== 'animatic' && completeRenderableSegments.length > 0 && (
+              {completeRenderableSegments.length > 0 && (
                 <SegmentBeatTrimControls
                   segments={completeRenderableSegments}
+                  shotNumbers={shotNumberBySegmentId}
                   selectedSegmentId={selectedTrimSegmentId}
                   onSelectSegment={setSelectedTrimSegmentId}
                   measuredDurations={measuredSegmentDurations}
@@ -4870,30 +4960,26 @@ export function SceneProductionMixer({
                 />
               )}
 
-              {productionTarget.streamType !== 'animatic' && (
-                <SegmentWatermarkCropControls
-                  segments={previewSegments}
-                  onSegmentCropChange={handleSegmentCropChange}
-                  disabled={isRendering || !onSegmentsChange}
-                  isCollapsed={collapsedSections.watermarkCrop}
-                  onToggleCollapse={() => toggleSection('watermarkCrop')}
-                />
-              )}
+              <SegmentWatermarkCropControls
+                segments={previewSegments}
+                onSegmentCropChange={handleSegmentCropChange}
+                disabled={isRendering || !onSegmentsChange}
+                isCollapsed={collapsedSections.watermarkCrop}
+                onToggleCollapse={() => toggleSection('watermarkCrop')}
+              />
 
-              {productionTarget.streamType !== 'animatic' && (
-                <SegmentAudioControls
-                  segments={previewSegments}
-                  segmentConfigs={segmentAudioConfigs}
-                  onConfigChange={setSegmentAudioConfigs}
-                  masterVolume={masterSegmentVolume}
-                  onMasterVolumeChange={setMasterSegmentVolume}
-                  disabled={isRendering}
-                  isCollapsed={collapsedSections.segmentAudio}
-                  onToggleCollapse={() => toggleSection('segmentAudio')}
-                  getPlaybackSegmentDuration={getPlaybackSegmentDuration}
-                  audioTracks={audioTracks}
-                />
-              )}
+              <SegmentAudioControls
+                segments={previewSegments}
+                segmentConfigs={segmentAudioConfigs}
+                onConfigChange={setSegmentAudioConfigs}
+                masterVolume={masterSegmentVolume}
+                onMasterVolumeChange={setMasterSegmentVolume}
+                disabled={isRendering}
+                isCollapsed={collapsedSections.segmentAudio}
+                onToggleCollapse={() => toggleSection('segmentAudio')}
+                getPlaybackSegmentDuration={getPlaybackSegmentDuration}
+                audioTracks={audioTracks}
+              />
               
               {/* Stream — the language version Clips and Streams share with this mix */}
               {availableLanguages.length > 0 && (

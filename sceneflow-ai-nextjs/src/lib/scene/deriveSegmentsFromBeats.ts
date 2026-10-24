@@ -22,7 +22,7 @@ import { actionFramingFromStoredPrompt } from '@/lib/imagen/structuredStillPromp
 import type { SceneBeat } from '@/lib/script/segmentTypes'
 import type { SceneSegment } from '@/components/vision/scene-production/types'
 import type { VideoGenerationMethod } from '@/components/vision/scene-production/types'
-import { unionRowsById } from '@/lib/storyboard/mediaVersions'
+import { resolveLiveTake, unionRowsById } from '@/lib/storyboard/mediaVersions'
 
 function mintSegmentId(): string {
   if (typeof crypto !== 'undefined' && crypto.randomUUID) {
@@ -482,6 +482,10 @@ export function mergeDerivedSegmentsWithExisting(
       (rows, candidate) => unionRowsById(rows, candidate.takes, 'id'),
       seg.takes ?? []
     )
+    const preferredTakeId = match.currentTakeId || seg.currentTakeId
+    const preferredActiveUrl = match.activeAssetUrl ?? seg.activeAssetUrl
+    const liveTake = resolveLiveTake(takes, preferredTakeId, preferredActiveUrl)
+    const hasPlayableTake = Boolean(liveTake?.url)
 
     const preservedStart =
       match.startFrameUrl?.trim() ||
@@ -491,11 +495,20 @@ export function mergeDerivedSegmentsWithExisting(
     return {
       ...seg,
       segmentId: match.segmentId,
-      status: match.status ?? seg.status,
-      assetType: match.assetType ?? seg.assetType,
-      activeAssetUrl: match.activeAssetUrl ?? seg.activeAssetUrl,
+      status:
+        hasPlayableTake && (!match.status || match.status === 'DRAFT')
+          ? 'COMPLETE'
+          : (match.status ?? seg.status),
+      assetType:
+        hasPlayableTake && !match.assetType
+          ? 'video'
+          : (match.assetType ?? seg.assetType),
+      activeAssetUrl:
+        (typeof preferredActiveUrl === 'string' && preferredActiveUrl.trim()) ||
+        liveTake?.url ||
+        preferredActiveUrl,
       takes,
-      currentTakeId: match.currentTakeId || seg.currentTakeId,
+      currentTakeId: preferredTakeId || liveTake?.id,
       isUserUpload: match.isUserUpload,
       actualVideoDuration: match.actualVideoDuration ?? seg.actualVideoDuration,
       userEditedPrompt: match.userEditedPrompt ?? seg.userEditedPrompt,

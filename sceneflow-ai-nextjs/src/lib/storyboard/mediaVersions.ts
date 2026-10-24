@@ -734,7 +734,19 @@ export function deriveClipQueueStatus(
 export function healMissingVideoPointer<T extends VideoPointerSegment>(segment: T): T {
   if (segment.status === 'GENERATING') return segment
   const current = typeof segment.activeAssetUrl === 'string' ? segment.activeAssetUrl.trim() : ''
-  if (current) return segment
+  if (current) {
+    if (
+      isVideoLikeUrl(current) &&
+      (segment.status === 'DRAFT' || !segment.status || !segment.assetType)
+    ) {
+      return {
+        ...segment,
+        assetType: segment.assetType || 'video',
+        status: segment.status && segment.status !== 'DRAFT' ? segment.status : 'COMPLETE',
+      }
+    }
+    return segment
+  }
   const live = resolveHealTake(segment.takes, segment.currentTakeId)
   if (!live) return segment
   return {

@@ -81,28 +81,38 @@ export class EncryptionService {
   }
 
   /**
-   * Generates a secure encryption key from environment variables
+   * Generates a secure encryption key from environment variables.
+   * Prefers a 64-char hex ENCRYPTION_KEY; otherwise derives a 32-byte key via SHA-256
+   * from ENCRYPTION_KEY, JWT_SECRET, NEXTAUTH_SECRET, or AUTH_SECRET so production
+   * environments with JWT_SECRET configured do not fail token encryption.
    * @returns Buffer containing the encryption key
    */
   private static getEncryptionKey(): Buffer {
-    const encryptionKey = process.env.ENCRYPTION_KEY
-    
-    if (!encryptionKey) {
-      throw new Error('ENCRYPTION_KEY environment variable is not set')
+    const rawEncryptionKey = process.env.ENCRYPTION_KEY?.trim()
+
+    if (rawEncryptionKey) {
+      if (/^[0-9a-fA-F]{64}$/.test(rawEncryptionKey)) {
+        return Buffer.from(rawEncryptionKey, 'hex')
+      }
+      if (rawEncryptionKey.length >= this.KEY_LENGTH * 2) {
+        const keyBuffer = Buffer.from(rawEncryptionKey.slice(0, this.KEY_LENGTH * 2), 'hex')
+        if (keyBuffer.length === this.KEY_LENGTH) {
+          return keyBuffer
+        }
+      }
+      return crypto.createHash('sha256').update(rawEncryptionKey, 'utf8').digest()
     }
-    
-    if (encryptionKey.length < this.KEY_LENGTH * 2) { // hex string length
-      throw new Error('ENCRYPTION_KEY must be at least 64 characters (32 bytes)')
+
+    const fallbackSecret =
+      process.env.JWT_SECRET?.trim() ||
+      process.env.NEXTAUTH_SECRET?.trim() ||
+      process.env.AUTH_SECRET?.trim()
+
+    if (fallbackSecret) {
+      return crypto.createHash('sha256').update(fallbackSecret, 'utf8').digest()
     }
-    
-    // Convert hex string to buffer
-    const keyBuffer = Buffer.from(encryptionKey, 'hex')
-    
-    if (keyBuffer.length !== this.KEY_LENGTH) {
-      throw new Error('Invalid encryption key length')
-    }
-    
-    return keyBuffer
+
+    throw new Error('ENCRYPTION_KEY environment variable is not set')
   }
 
   /**

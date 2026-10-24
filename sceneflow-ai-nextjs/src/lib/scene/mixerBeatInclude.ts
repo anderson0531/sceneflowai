@@ -94,7 +94,24 @@ export function listMixerBeatRows(
   const allBeats = getSceneBeats(scene ?? null)
   const beats = allBeats.filter((beat) => !isBeatExcluded(beat))
   const rows = segments ?? []
-  return beats.map((beat, index) => {
+
+  if (allBeats.length === 0) {
+    return dedupeSegmentsByBeatId(rows).map((rawSeg, index) => {
+      const segment = segmentHasMixerVideo(rawSeg)
+        ? normalizeDesignatedSegmentVideo(rawSeg)
+        : rawSeg
+      return {
+        beatId: segment.beatId?.trim() || segment.segmentId || `seg-${index + 1}`,
+        beatNumber:
+          (typeof segment.sequenceIndex === 'number' && Number.isFinite(segment.sequenceIndex)
+            ? segment.sequenceIndex
+            : index) + 1,
+        segment,
+      }
+    })
+  }
+
+  const mapped = beats.map((beat, index) => {
     const rawBeatIndex = allBeats.findIndex((entry) => entry.beatId === beat.beatId)
     const beatNumber =
       (typeof beat.sequenceIndex === 'number'
@@ -103,11 +120,29 @@ export function listMixerBeatRows(
           ? rawBeatIndex
           : index) + 1
     const matches = rows.filter((segment) => segment.beatId === beat.beatId)
-    const segment = pickDesignatedBeatSegment(matches)
+    const rawSegment = pickDesignatedBeatSegment(matches)
+    const segment =
+      rawSegment && segmentHasMixerVideo(rawSegment)
+        ? normalizeDesignatedSegmentVideo(rawSegment)
+        : rawSegment
     return segment
       ? { beatId: beat.beatId, beatNumber, segment }
       : { beatId: beat.beatId, beatNumber }
   })
+
+  if (rows.length > 0 && mapped.every((row) => !row.segment)) {
+    const deduped = dedupeSegmentsByBeatId(rows)
+    return mapped.map((row, index) => {
+      const rawFallback = deduped[index]
+      if (!rawFallback) return row
+      const segment = segmentHasMixerVideo(rawFallback)
+        ? normalizeDesignatedSegmentVideo(rawFallback)
+        : rawFallback
+      return { ...row, segment }
+    })
+  }
+
+  return mapped
 }
 
 function segmentHasMixerVideo(segment: SceneSegment): boolean {
@@ -120,10 +155,21 @@ function segmentHasMixerVideo(segment: SceneSegment): boolean {
   })
 }
 
+export function segmentHasMixerPlayableVideo(
+  segment: SceneSegment | null | undefined
+): boolean {
+  if (!segment) return false
+  return segmentHasMixerVideo(segment)
+}
+
 function normalizeDesignatedSegmentVideo(segment: SceneSegment): SceneSegment {
   const live = resolveLiveTake(segment.takes, segment.currentTakeId, segment.activeAssetUrl)
   if (!live?.url) return segment
-  if (segment.activeAssetUrl === live.url && segment.assetType === 'video') {
+  if (
+    segment.activeAssetUrl === live.url &&
+    segment.assetType === 'video' &&
+    segment.status === 'COMPLETE'
+  ) {
     return segment
   }
   return {
@@ -131,6 +177,7 @@ function normalizeDesignatedSegmentVideo(segment: SceneSegment): SceneSegment {
     activeAssetUrl: live.url,
     ...(segment.currentTakeId ? {} : { currentTakeId: live.id }),
     assetType: 'video',
+    ...(segment.status === 'GENERATING' ? {} : { status: 'COMPLETE' }),
   }
 }
 

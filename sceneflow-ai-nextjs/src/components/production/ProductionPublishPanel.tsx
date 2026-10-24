@@ -61,6 +61,15 @@ export function ProductionPublishPanel({
   onYoutubePublished,
 }: ProductionPublishPanelProps) {
   const [youtubeConnected, setYoutubeConnected] = useState(false)
+  const [oauthConfigured, setOauthConfigured] = useState(true)
+  const [oauthRedirectUri, setOauthRedirectUri] = useState(
+    'https://sceneflowai.studio/api/auth/callback/youtube'
+  )
+  const [showOAuthSetup, setShowOAuthSetup] = useState(false)
+  const [oauthClientId, setOauthClientId] = useState('')
+  const [oauthClientSecret, setOauthClientSecret] = useState('')
+  const [oauthJsonInput, setOauthJsonInput] = useState('')
+  const [savingOAuthConfig, setSavingOAuthConfig] = useState(false)
   const [checkingAuth, setCheckingAuth] = useState(true)
   const [isDownloading, setIsDownloading] = useState(false)
   const [publishPhase, setPublishPhase] = useState<PublishPhase>('idle')
@@ -105,18 +114,78 @@ export function ProductionPublishPanel({
     }
     fetch(`/api/publish/youtube/upload?userId=${encodeURIComponent(userId)}`)
       .then((r) => r.json())
-      .then((d) => setYoutubeConnected(!!d.connected))
+      .then((d) => {
+        setYoutubeConnected(!!d.connected)
+        if (typeof d.oauthConfigured === 'boolean') {
+          setOauthConfigured(d.oauthConfigured)
+          if (!d.oauthConfigured) {
+            setShowOAuthSetup(true)
+          }
+        }
+        if (typeof d.redirectUri === 'string' && d.redirectUri) {
+          setOauthRedirectUri(d.redirectUri)
+        }
+      })
       .catch(() => setYoutubeConnected(false))
       .finally(() => setCheckingAuth(false))
   }, [userId])
 
-  const handleConnectYouTube = () => {
+  const startYouTubeOAuthRedirect = () => {
     if (!userId) {
       toast.error('Sign in to connect YouTube')
       return
     }
     const returnTo = `${window.location.pathname}${window.location.search}`
     window.location.href = `/api/publish/youtube/auth?userId=${encodeURIComponent(userId)}&returnTo=${encodeURIComponent(returnTo)}`
+  }
+
+  const handleConnectYouTube = () => {
+    if (!userId) {
+      toast.error('Sign in to connect YouTube')
+      return
+    }
+    if (!oauthConfigured) {
+      setShowOAuthSetup(true)
+      return
+    }
+    startYouTubeOAuthRedirect()
+  }
+
+  const handleSaveOAuthAndConnect = async () => {
+    if (!userId) {
+      toast.error('Sign in to configure YouTube OAuth')
+      return
+    }
+    if (!oauthJsonInput.trim() && (!oauthClientId.trim() || !oauthClientSecret.trim())) {
+      toast.error('Enter your Google OAuth Client ID & Secret, or paste client_secret.json')
+      return
+    }
+    setSavingOAuthConfig(true)
+    try {
+      const res = await fetch('/api/publish/youtube/config', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userId,
+          clientId: oauthClientId.trim(),
+          clientSecret: oauthClientSecret.trim(),
+          credentialsJson: oauthJsonInput.trim() || undefined,
+        }),
+      })
+      const data = await res.json()
+      if (!res.ok) {
+        throw new Error(data.error || 'Failed to save YouTube OAuth credentials')
+      }
+      setOauthConfigured(true)
+      setShowOAuthSetup(false)
+      toast.success('YouTube OAuth configured — redirecting to Google…')
+      startYouTubeOAuthRedirect()
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Failed to save OAuth credentials'
+      toast.error(message)
+    } finally {
+      setSavingOAuthConfig(false)
+    }
   }
 
   const toggleMlaLanguage = (lang: string) => {
@@ -327,10 +396,101 @@ export function ProductionPublishPanel({
             <CheckCircle2 className="w-4 h-4" /> YouTube connected
           </p>
         ) : (
-          <Button variant="outline" className="w-full" onClick={handleConnectYouTube}>
-            <Youtube className="w-4 h-4 mr-2 text-red-500" />
-            Connect YouTube Account
-          </Button>
+          <div className="space-y-2">
+            <div className="flex gap-2">
+              <Button variant="outline" className="flex-1" onClick={handleConnectYouTube}>
+                <Youtube className="w-4 h-4 mr-2 text-red-500" />
+                Connect YouTube Account
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                className="border-zinc-700 text-xs text-zinc-400 hover:text-white"
+                onClick={() => setShowOAuthSetup((v) => !v)}
+              >
+                {showOAuthSetup ? 'Hide Setup' : 'OAuth Setup'}
+              </Button>
+            </div>
+
+            {showOAuthSetup && (
+              <div className="rounded-lg border border-amber-500/30 bg-zinc-950/90 p-3.5 space-y-3 text-xs">
+                <div className="flex items-start gap-2 text-amber-200">
+                  <AlertCircle className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
+                  <div className="space-y-1">
+                    <p className="font-medium text-white">Configure Google OAuth for YouTube</p>
+                    <p className="text-zinc-400">
+                      Enter your Google Cloud Web OAuth Client credentials below (saved encrypted on
+                      the server), or set <code className="text-amber-300">GOOGLE_OAUTH_CLIENT_ID</code>{' '}
+                      and <code className="text-amber-300">GOOGLE_OAUTH_CLIENT_SECRET</code> in Vercel.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="rounded border border-zinc-800 bg-zinc-900/80 p-2.5 space-y-1">
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="text-[11px] text-zinc-400">
+                      Authorized Redirect URI (Google Cloud Console):
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        navigator.clipboard.writeText(oauthRedirectUri)
+                        toast.success('Redirect URI copied')
+                      }}
+                      className="text-[11px] text-emerald-400 hover:text-emerald-300 font-medium"
+                    >
+                      Copy URI
+                    </button>
+                  </div>
+                  <code className="block text-[11px] text-zinc-200 break-all select-all">
+                    {oauthRedirectUri}
+                  </code>
+                </div>
+
+                <div className="space-y-2">
+                  <input
+                    type="text"
+                    value={oauthClientId}
+                    onChange={(e) => setOauthClientId(e.target.value)}
+                    placeholder="Google OAuth Client ID (...apps.googleusercontent.com)"
+                    className="w-full bg-zinc-900 border border-zinc-700 rounded px-2.5 py-1.5 text-xs text-white"
+                  />
+                  <input
+                    type="password"
+                    value={oauthClientSecret}
+                    onChange={(e) => setOauthClientSecret(e.target.value)}
+                    placeholder="Google OAuth Client Secret (GOCSPX-...)"
+                    className="w-full bg-zinc-900 border border-zinc-700 rounded px-2.5 py-1.5 text-xs text-white"
+                  />
+                  <textarea
+                    value={oauthJsonInput}
+                    onChange={(e) => setOauthJsonInput(e.target.value)}
+                    rows={2}
+                    placeholder="Or paste downloaded client_secret_*.json contents here (optional)"
+                    className="w-full bg-zinc-900 border border-zinc-700 rounded px-2.5 py-1.5 text-xs text-white font-mono"
+                  />
+                </div>
+
+                <Button
+                  className="w-full bg-red-600 hover:bg-red-500 text-white text-xs"
+                  disabled={savingOAuthConfig}
+                  onClick={handleSaveOAuthAndConnect}
+                >
+                  {savingOAuthConfig ? (
+                    <>
+                      <Loader2 className="w-3.5 h-3.5 mr-2 animate-spin" />
+                      Saving & Connecting…
+                    </>
+                  ) : (
+                    <>
+                      <Youtube className="w-3.5 h-3.5 mr-2" />
+                      Save Credentials & Connect YouTube
+                    </>
+                  )}
+                </Button>
+              </div>
+            )}
+          </div>
         )}
 
         <Button

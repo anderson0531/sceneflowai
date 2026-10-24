@@ -346,6 +346,40 @@ describe('mergeDerivedSegmentsWithExisting', () => {
     expect(merged[0].segmentId).toBe('seg_part_1')
     expect(merged[0].activeAssetUrl).toBe('https://example.com/part1.mp4')
   })
+
+  it('heals a segment whose clip lives in takes with status DRAFT when re-deriving after beat exclude/include', () => {
+    const scene = approvedScene([
+      {
+        beatId: 'bt_1',
+        sequenceIndex: 0,
+        kind: 'action',
+        actionDescription: 'Shot 1',
+      },
+    ])
+    const derived = deriveSegmentsFromBeats(scene).segments
+    const existing = [
+      {
+        ...derived[0],
+        status: 'DRAFT' as const,
+        assetType: null,
+        activeAssetUrl: null,
+        takes: [
+          {
+            id: 'take-clip-1',
+            createdAt: '2026-01-01T00:00:00.000Z',
+            assetUrl: 'https://example.com/shot1.mp4',
+            status: 'COMPLETE' as const,
+          },
+        ],
+      },
+    ]
+
+    const merged = mergeDerivedSegmentsWithExisting(derived, existing)
+    expect(merged[0].status).toBe('COMPLETE')
+    expect(merged[0].assetType).toBe('video')
+    expect(merged[0].activeAssetUrl).toBe('https://example.com/shot1.mp4')
+    expect(merged[0].currentTakeId).toBe('take-clip-1')
+  })
 })
 
 describe('needsProductionDerive', () => {

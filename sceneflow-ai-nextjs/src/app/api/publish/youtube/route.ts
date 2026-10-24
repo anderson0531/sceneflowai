@@ -4,6 +4,14 @@ import { authOptions } from '@/lib/auth'
 import { list, put } from '@vercel/blob'
 import { createPublishJob, updatePublishJob } from '@/lib/premiere/publishJobs'
 import { appendSceneFlowCta } from '@/lib/premiere/distributionMetadata'
+import {
+  getYouTubeAuthUrl,
+  isYouTubeOAuthConfigured,
+  loadYouTubeTokens,
+  resolveYouTubeOAuthCredentials,
+  youtubeRedirectUri,
+} from '@/lib/publish/youtubeClient'
+import { resolveUserId } from '@/lib/userHelper'
 
 export const dynamic = 'force-dynamic'
 export const maxDuration = 300
@@ -17,19 +25,35 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const userId = session.user.id
+    const userId = await resolveUserId(session.user.id).catch(() => session.user.id)
+    const dbTokens = await loadYouTubeTokens(userId).catch(() => null)
+    if (dbTokens?.access_token) {
+      return NextResponse.json({
+        connected: true,
+        oauthConfigured: true,
+      })
+    }
+
     const listing = await list({ prefix: `${CONNECTIONS_PREFIX}${userId}/youtube.json`, limit: 1 })
     const blob = listing.blobs[0]
     if (!blob?.url) {
-      const clientId = process.env.GOOGLE_CLIENT_ID
+      const oauthConfigured = await isYouTubeOAuthConfigured(userId)
+      let authUrl: string | null = null
+      if (oauthConfigured) {
+        const creds = await resolveYouTubeOAuthCredentials(userId)
+        const redirectUri = youtubeRedirectUri(request.nextUrl.origin)
+        const state = Buffer.from(
+          JSON.stringify({ userId, returnTo: '/dashboard', redirectUri })
+        ).toString('base64url')
+        authUrl = getYouTubeAuthUrl(state, request.nextUrl.origin, creds)
+      }
       return NextResponse.json({
         connected: false,
-        authUrl: clientId
-          ? `https://accounts.google.com/o/oauth2/v2/auth?client_id=${clientId}&redirect_uri=${encodeURIComponent(process.env.NEXTAUTH_URL + '/api/publish/youtube/callback')}&response_type=code&scope=${encodeURIComponent('https://www.googleapis.com/auth/youtube.upload https://www.googleapis.com/auth/youtube.readonly')}&access_type=offline&prompt=consent`
-          : null,
-        message: clientId
+        oauthConfigured,
+        authUrl,
+        message: oauthConfigured
           ? 'Connect your YouTube channel to publish directly.'
-          : 'Set GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET to enable YouTube OAuth.',
+          : 'Set GOOGLE_OAUTH_CLIENT_ID and GOOGLE_OAUTH_CLIENT_SECRET to enable YouTube OAuth.',
       })
     }
 
@@ -37,6 +61,7 @@ export async function GET(request: NextRequest) {
     const connection = res.ok ? await res.json() : null
     return NextResponse.json({
       connected: !!connection,
+      oauthConfigured: true,
       accountName: connection?.accountName,
       channelId: connection?.channelId,
     })

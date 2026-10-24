@@ -8,7 +8,12 @@
  */
 import { OAuth2Client } from 'google-auth-library'
 import { EncryptionService } from '@/services/EncryptionService'
-import UserIntegration from '@/models/UserIntegration'
+import type UserIntegrationModel from '@/models/UserIntegration'
+
+async function getUserIntegrationModel(): Promise<typeof UserIntegrationModel> {
+  const mod = await import('@/models/UserIntegration')
+  return mod.default
+}
 
 const YOUTUBE_SCOPES = [
   'https://www.googleapis.com/auth/youtube.upload',
@@ -28,14 +33,64 @@ export type YouTubeTokens = {
 export const YOUTUBE_OAUTH_CALLBACK_PATH = '/api/auth/callback/youtube'
 
 function trimEnv(value: string | undefined): string {
-  return value?.trim() || ''
+  return value?.trim().replace(/^["']|["']$/g, '').trim() || ''
+}
+
+function normalizeStudioOrigin(origin: string): string {
+  const cleaned = origin.trim().replace(/\/$/, '')
+  if (/^https:\/\/www\.sceneflowai\.studio$/i.test(cleaned)) {
+    return 'https://sceneflowai.studio'
+  }
+  return cleaned
+}
+
+/**
+ * Parse a Google Cloud Console OAuth client JSON payload (`{"web":{...}}`, `{"installed":{...}}`,
+ * or flat `{client_id, client_secret}`) into `{ clientId, clientSecret }`.
+ */
+export function parseGoogleOAuthClientJson(
+  raw: string | undefined | null
+): { clientId: string; clientSecret: string } | null {
+  const text = raw?.trim()
+  if (!text || !text.startsWith('{')) return null
+  try {
+    const parsed = JSON.parse(text) as Record<string, unknown>
+    const container =
+      (parsed.web as Record<string, unknown> | undefined) ||
+      (parsed.installed as Record<string, unknown> | undefined) ||
+      parsed
+    const clientId = trimEnv(
+      (container.client_id as string | undefined) || (container.clientId as string | undefined)
+    )
+    const clientSecret = trimEnv(
+      (container.client_secret as string | undefined) ||
+        (container.clientSecret as string | undefined)
+    )
+    if (clientId && clientSecret) {
+      return { clientId, clientSecret }
+    }
+  } catch {
+    // Not valid JSON
+  }
+  return null
+}
+
+function lookupEnvTrimmedKey(targetKeys: readonly string[]): string {
+  const upperTargets = new Set(targetKeys.map((k) => k.toUpperCase()))
+  for (const [rawKey, rawVal] of Object.entries(process.env)) {
+    if (upperTargets.has(rawKey.trim().toUpperCase())) {
+      const val = trimEnv(rawVal)
+      if (val) return val
+    }
+  }
+  return ''
 }
 
 /** Public site first. VERCEL_URL is the deployment host and is not a registered callback. */
 function youtubeAppBaseUrl(): string {
   const explicit =
     trimEnv(process.env.NEXT_PUBLIC_APP_URL) || trimEnv(process.env.NEXTAUTH_URL)
-  if (explicit) return explicit.replace(/\/$/, '')
+  if (explicit) return normalizeStudioOrigin(explicit)
   const vercel = trimEnv(process.env.VERCEL_URL).replace(/^https?:\/\//, '')
   if (vercel) return `https://${vercel}`
   return 'http://localhost:3000'
@@ -43,26 +98,81 @@ function youtubeAppBaseUrl(): string {
 
 /**
  * Callback Google must send the user back to.
- * An explicit redirect wins. Otherwise use the host the connect click came from,
- * then the public app URL, then the deployment host.
+ * An explicit redirect wins. Otherwise use the host the connect click came from
+ * (normalizing www.sceneflowai.studio to sceneflowai.studio), then the public app URL,
+ * then the deployment host.
  */
 export function youtubeRedirectUri(requestOrigin?: string): string {
   const explicit = trimEnv(process.env.GOOGLE_OAUTH_REDIRECT_URI)
   if (explicit) return explicit
   const origin = requestOrigin?.trim().replace(/\/$/, '')
-  const base = origin && /^https?:\/\//i.test(origin) ? origin : youtubeAppBaseUrl()
+  if (
+    origin &&
+    /^https?:\/\//i.test(origin) &&
+    (origin.endsWith(YOUTUBE_OAUTH_CALLBACK_PATH) ||
+      origin.endsWith('/api/publish/youtube/callback'))
+  ) {
+    return origin
+  }
+  const base =
+    origin && /^https?:\/\//i.test(origin)
+      ? normalizeStudioOrigin(origin)
+      : youtubeAppBaseUrl()
   return `${base}${YOUTUBE_OAUTH_CALLBACK_PATH}`
 }
 
+const CLIENT_ID_ENV_KEYS = [
+  'GOOGLE_OAUTH_CLIENT_ID',
+  'GOOGLE_CLIENT_ID',
+  'YOUTUBE_OAUTH_CLIENT_ID',
+  'YOUTUBE_CLIENT_ID',
+  'AUTH_GOOGLE_ID',
+  'NEXT_PUBLIC_GOOGLE_OAUTH_CLIENT_ID',
+  'NEXT_PUBLIC_GOOGLE_CLIENT_ID',
+] as const
+
+const CLIENT_SECRET_ENV_KEYS = [
+  'GOOGLE_OAUTH_CLIENT_SECRET',
+  'GOOGLE_CLIENT_SECRET',
+  'YOUTUBE_OAUTH_CLIENT_SECRET',
+  'YOUTUBE_CLIENT_SECRET',
+  'AUTH_GOOGLE_SECRET',
+] as const
+
+const CLIENT_JSON_ENV_KEYS = [
+  'GOOGLE_OAUTH_CREDENTIALS_JSON',
+  'YOUTUBE_OAUTH_CREDENTIALS_JSON',
+  'GOOGLE_CLIENT_SECRET_JSON',
+] as const
+
 export function youtubeOAuthCredentials(): { clientId: string; clientSecret: string } {
+  const jsonPayload =
+    trimEnv(process.env.GOOGLE_OAUTH_CREDENTIALS_JSON) ||
+    trimEnv(process.env.YOUTUBE_OAUTH_CREDENTIALS_JSON) ||
+    trimEnv(process.env.GOOGLE_CLIENT_SECRET_JSON) ||
+    lookupEnvTrimmedKey(CLIENT_JSON_ENV_KEYS)
+  const fromJson =
+    parseGoogleOAuthClientJson(jsonPayload) ||
+    parseGoogleOAuthClientJson(process.env.GOOGLE_OAUTH_CLIENT_ID) ||
+    parseGoogleOAuthClientJson(process.env.GOOGLE_OAUTH_CLIENT_SECRET)
+  if (fromJson) return fromJson
+
   const clientId =
     trimEnv(process.env.GOOGLE_OAUTH_CLIENT_ID) ||
     trimEnv(process.env.GOOGLE_CLIENT_ID) ||
-    trimEnv(process.env.AUTH_GOOGLE_ID)
+    trimEnv(process.env.YOUTUBE_OAUTH_CLIENT_ID) ||
+    trimEnv(process.env.YOUTUBE_CLIENT_ID) ||
+    trimEnv(process.env.AUTH_GOOGLE_ID) ||
+    trimEnv(process.env.NEXT_PUBLIC_GOOGLE_OAUTH_CLIENT_ID) ||
+    trimEnv(process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID) ||
+    lookupEnvTrimmedKey(CLIENT_ID_ENV_KEYS)
   const clientSecret =
     trimEnv(process.env.GOOGLE_OAUTH_CLIENT_SECRET) ||
     trimEnv(process.env.GOOGLE_CLIENT_SECRET) ||
-    trimEnv(process.env.AUTH_GOOGLE_SECRET)
+    trimEnv(process.env.YOUTUBE_OAUTH_CLIENT_SECRET) ||
+    trimEnv(process.env.YOUTUBE_CLIENT_SECRET) ||
+    trimEnv(process.env.AUTH_GOOGLE_SECRET) ||
+    lookupEnvTrimmedKey(CLIENT_SECRET_ENV_KEYS)
   if (!clientId || !clientSecret) {
     throw new Error(
       'YouTube OAuth is not configured (GOOGLE_OAUTH_CLIENT_ID / GOOGLE_OAUTH_CLIENT_SECRET)'
@@ -71,13 +181,109 @@ export function youtubeOAuthCredentials(): { clientId: string; clientSecret: str
   return { clientId, clientSecret }
 }
 
-function getOAuthClient(requestOrigin?: string): OAuth2Client {
-  const { clientId, clientSecret } = youtubeOAuthCredentials()
+let userIntegrationTableEnsured = false
+async function ensureUserIntegrationTable(): Promise<typeof UserIntegrationModel> {
+  const UserIntegration = await getUserIntegrationModel()
+  if (userIntegrationTableEnsured) return UserIntegration
+  try {
+    await UserIntegration.sync({ force: false })
+    userIntegrationTableEnsured = true
+  } catch (err) {
+    console.warn('[YouTube OAuth] UserIntegration table sync check failed:', err)
+  }
+  return UserIntegration
+}
+
+export async function saveYouTubeOAuthClientConfig(
+  userId: string,
+  creds: { clientId: string; clientSecret: string }
+): Promise<void> {
+  const clientId = trimEnv(creds.clientId)
+  const clientSecret = trimEnv(creds.clientSecret)
+  if (!clientId || !clientSecret) {
+    throw new Error('Both Google OAuth Client ID and Client Secret are required.')
+  }
+  const UserIntegration = await ensureUserIntegrationTable()
+  const encrypted = EncryptionService.encrypt(JSON.stringify({ clientId, clientSecret }))
+  const [row] = await UserIntegration.findOrCreate({
+    where: { user_id: userId, provider: 'youtube_oauth_app' },
+    defaults: {
+      user_id: userId,
+      provider: 'youtube_oauth_app',
+      encrypted_credentials: encrypted,
+      is_valid: true,
+    },
+  })
+  if (row) {
+    await row.update({ encrypted_credentials: encrypted, is_valid: true })
+  }
+}
+
+export async function loadYouTubeOAuthClientConfig(
+  userId?: string
+): Promise<{ clientId: string; clientSecret: string } | null> {
+  try {
+    const UserIntegration = await ensureUserIntegrationTable()
+    let row = userId
+      ? await UserIntegration.findOne({
+          where: { user_id: userId, provider: 'youtube_oauth_app', is_valid: true },
+        })
+      : null
+    if (!row) {
+      row = await UserIntegration.findOne({
+        where: { provider: 'youtube_oauth_app', is_valid: true },
+        order: [['updated_at', 'DESC']],
+      })
+    }
+    if (!row) return null
+    const raw = EncryptionService.decrypt(row.encrypted_credentials)
+    const parsed = JSON.parse(raw) as { clientId?: string; clientSecret?: string }
+    const clientId = trimEnv(parsed.clientId)
+    const clientSecret = trimEnv(parsed.clientSecret)
+    if (clientId && clientSecret) {
+      return { clientId, clientSecret }
+    }
+    return null
+  } catch {
+    return null
+  }
+}
+
+export async function resolveYouTubeOAuthCredentials(
+  userId?: string
+): Promise<{ clientId: string; clientSecret: string }> {
+  try {
+    return youtubeOAuthCredentials()
+  } catch (envErr) {
+    const stored = await loadYouTubeOAuthClientConfig(userId)
+    if (stored) return stored
+    throw envErr
+  }
+}
+
+export async function isYouTubeOAuthConfigured(userId?: string): Promise<boolean> {
+  try {
+    await resolveYouTubeOAuthCredentials(userId)
+    return true
+  } catch {
+    return false
+  }
+}
+
+function getOAuthClient(
+  requestOrigin?: string,
+  credentialsOverride?: { clientId: string; clientSecret: string }
+): OAuth2Client {
+  const { clientId, clientSecret } = credentialsOverride ?? youtubeOAuthCredentials()
   return new OAuth2Client(clientId, clientSecret, youtubeRedirectUri(requestOrigin))
 }
 
-export function getYouTubeAuthUrl(state: string, requestOrigin?: string): string {
-  const client = getOAuthClient(requestOrigin)
+export function getYouTubeAuthUrl(
+  state: string,
+  requestOrigin?: string,
+  credentialsOverride?: { clientId: string; clientSecret: string }
+): string {
+  const client = getOAuthClient(requestOrigin, credentialsOverride)
   return client.generateAuthUrl({
     access_type: 'offline',
     prompt: 'consent',
@@ -88,14 +294,17 @@ export function getYouTubeAuthUrl(state: string, requestOrigin?: string): string
 
 export async function exchangeYouTubeCode(
   code: string,
-  requestOrigin?: string
+  requestOrigin?: string,
+  userId?: string
 ): Promise<YouTubeTokens> {
-  const client = getOAuthClient(requestOrigin)
+  const creds = await resolveYouTubeOAuthCredentials(userId)
+  const client = getOAuthClient(requestOrigin, creds)
   const { tokens } = await client.getToken(code)
   return tokens as YouTubeTokens
 }
 
 export async function saveYouTubeTokens(userId: string, tokens: YouTubeTokens): Promise<void> {
+  const UserIntegration = await ensureUserIntegrationTable()
   const encrypted = EncryptionService.encrypt(JSON.stringify(tokens))
   const [row] = await UserIntegration.findOrCreate({
     where: { user_id: userId, provider: 'youtube' },
@@ -112,6 +321,7 @@ export async function saveYouTubeTokens(userId: string, tokens: YouTubeTokens): 
 }
 
 export async function loadYouTubeTokens(userId: string): Promise<YouTubeTokens | null> {
+  const UserIntegration = await ensureUserIntegrationTable()
   const row = await UserIntegration.findOne({
     where: { user_id: userId, provider: 'youtube', is_valid: true },
   })
@@ -127,7 +337,8 @@ export async function loadYouTubeTokens(userId: string): Promise<YouTubeTokens |
 export async function getAuthorizedYouTubeClient(userId: string): Promise<OAuth2Client | null> {
   const tokens = await loadYouTubeTokens(userId)
   if (!tokens?.access_token) return null
-  const client = getOAuthClient()
+  const creds = await resolveYouTubeOAuthCredentials(userId)
+  const client = getOAuthClient(undefined, creds)
   client.setCredentials(tokens)
 
   client.on('tokens', async (newTokens) => {

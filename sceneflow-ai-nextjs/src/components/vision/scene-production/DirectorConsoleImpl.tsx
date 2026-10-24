@@ -154,6 +154,7 @@ import {
   applyVideoTakeSelection,
   healMissingVideoPointer,
   resolveCurrentStillTier,
+  segmentHasPlayableVideo,
 } from '@/lib/storyboard/mediaVersions'
 import {
   isMasterStreamLanguage,
@@ -463,7 +464,7 @@ export function DirectorConsoleRoot({
   const tVideoAgent = useTranslations('production.videoAgent')
 
   const videoGenerationAvailable = useMemo(
-    () => segments.some(s => s.activeAssetUrl && s.status === 'COMPLETE'),
+    () => segments.some(s => segmentHasPlayableVideo(s)),
     [segments]
   )
 
@@ -620,7 +621,7 @@ export function DirectorConsoleRoot({
     const saved = productionData?.mixerSettings?.productionTarget
     const token = `${sceneId}:${saved ? `${saved.streamType}:${saved.language}` : 'default'}`
     if (hydratedProductionTargetRef.current === token) return
-    setProductionTarget(saved ?? { streamType: 'video', language: 'en' })
+    setProductionTarget(saved ? { ...saved, streamType: 'video' } : { streamType: 'video', language: 'en' })
     hydratedProductionTargetRef.current = token
   }, [sceneId, productionData?.mixerSettings?.productionTarget])
 
@@ -702,8 +703,13 @@ export function DirectorConsoleRoot({
 
   const missingVideoPointerKey = useMemo(() => {
     return (productionData?.segments ?? [])
-      .filter((segment) => !segment.activeAssetUrl?.trim() && (segment.takes?.length ?? 0) > 0)
-      .map((segment) => segment.segmentId)
+      .filter(
+        (segment) =>
+          (!segment.activeAssetUrl?.trim() && (segment.takes?.length ?? 0) > 0) ||
+          (segmentHasPlayableVideo(segment) &&
+            (segment.status === 'DRAFT' || !segment.status || !segment.assetType))
+      )
+      .map((segment) => `${segment.segmentId}:${segment.status ?? ''}:${segment.assetType ?? ''}`)
       .join(',')
   }, [productionData?.segments])
 

@@ -62,6 +62,14 @@ describe('mixer shot panels and joins', () => {
     expect(mixer).toContain('Fade to black')
     expect(mixer).toContain('renderTransitionFromPreviousShot')
   })
+
+  it('keeps Shot Trim available for all playable beat videos regardless of segment DRAFT status', () => {
+    const mixer = readSource('src/components/vision/scene-production/SceneProductionMixer.tsx')
+    expect(mixer).toContain('segmentHasMixerPlayableVideo')
+    expect(mixer).toContain('<SegmentBeatTrimControls')
+    expect(mixer).toContain('shotNumbers={shotNumberBySegmentId}')
+    expect(mixer).toContain('title="Trim start and end of this shot clip"')
+  })
 })
 
 describe('scene mp4 shot joins', () => {

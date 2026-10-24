@@ -272,6 +272,43 @@ describe('mergeSceneProductionData', () => {
     expect(merged.segments[0].takes.map((take) => take.id)).toEqual(['t1'])
   })
 
+  it('promotes status to COMPLETE when a re-derived DRAFT segment carries a playable video take', () => {
+    const existing: SceneProductionData = {
+      isSegmented: true,
+      targetSegmentDuration: 8,
+      segments: [
+        segment({
+          segmentId: 'seg_1',
+          beatId: 'bt_1',
+          status: 'COMPLETE',
+          assetType: 'video',
+          activeAssetUrl: 'https://cdn.example/shot1.mp4',
+          currentTakeId: 't1',
+          takes: [{ id: 't1', createdAt: '2026-01-01T00:00:00.000Z', assetUrl: 'https://cdn.example/shot1.mp4', status: 'COMPLETE' }],
+        }),
+      ],
+    }
+    const incoming: SceneProductionData = {
+      isSegmented: true,
+      targetSegmentDuration: 8,
+      segments: [
+        segment({
+          segmentId: 'seg_1',
+          beatId: 'bt_1',
+          status: 'DRAFT',
+          assetType: null,
+          activeAssetUrl: 'https://cdn.example/shot1.mp4',
+          currentTakeId: 't1',
+          takes: [{ id: 't1', createdAt: '2026-01-01T00:00:00.000Z', assetUrl: 'https://cdn.example/shot1.mp4', status: 'COMPLETE' }],
+        }),
+      ],
+    }
+    const merged = mergeSceneProductionData(existing, incoming)!
+    expect(merged.segments[0].status).toBe('COMPLETE')
+    expect(merged.segments[0].assetType).toBe('video')
+    expect(merged.segments[0].activeAssetUrl).toBe('https://cdn.example/shot1.mp4')
+  })
+
   it('honors deletedStreamIds so deleted production streams are not resurrected on merge', () => {
     const existing: SceneProductionData = {
       isSegmented: true,

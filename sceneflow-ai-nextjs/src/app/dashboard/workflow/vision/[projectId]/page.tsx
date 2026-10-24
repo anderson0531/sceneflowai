@@ -1878,21 +1878,36 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       toast.success('YouTube account connected')
       setProductionView('streams')
       const newParams = new URLSearchParams(searchParams.toString())
+      newParams.delete('youtube')
       newParams.set('view', 'streams')
       window.history.replaceState({}, '', `${window.location.pathname}?${newParams}`)
     }
     if (searchParams.get('youtube') === 'not_configured') {
       toast.error(
-        'YouTube is not configured. Set GOOGLE_OAUTH_CLIENT_ID and GOOGLE_OAUTH_CLIENT_SECRET on the server.'
+        'YouTube OAuth needs your Google Client ID & Secret. Complete OAuth Setup in the Publish panel or set GOOGLE_OAUTH_CLIENT_ID and GOOGLE_OAUTH_CLIENT_SECRET.'
       )
+      setProductionView('streams')
       const newParams = new URLSearchParams(searchParams.toString())
       newParams.delete('youtube')
-      const next = newParams.toString()
-      window.history.replaceState(
-        {},
-        '',
-        next ? `${window.location.pathname}?${next}` : window.location.pathname
+      newParams.set('view', 'streams')
+      window.history.replaceState({}, '', `${window.location.pathname}?${newParams}`)
+    }
+    const youtubeErrorStatus = searchParams.get('youtube')
+    if (
+      youtubeErrorStatus === 'error' ||
+      youtubeErrorStatus === 'callback_failed' ||
+      youtubeErrorStatus === 'missing_code'
+    ) {
+      toast.error(
+        youtubeErrorStatus === 'callback_failed'
+          ? 'YouTube authorization callback failed. Verify the Authorized Redirect URI in Google Cloud Console.'
+          : 'YouTube authorization was canceled or did not complete.'
       )
+      setProductionView('streams')
+      const newParams = new URLSearchParams(searchParams.toString())
+      newParams.delete('youtube')
+      newParams.set('view', 'streams')
+      window.history.replaceState({}, '', `${window.location.pathname}?${newParams}`)
     }
   }, [searchParams])
 

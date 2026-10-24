@@ -1,19 +1,34 @@
 import { readFileSync } from 'fs'
 import path from 'path'
 import { afterEach, describe, expect, it } from 'vitest'
-import { getYouTubeAuthUrl, youtubeOAuthCredentials, youtubeRedirectUri } from '@/lib/publish/youtubeClient'
+import {
+  getYouTubeAuthUrl,
+  parseGoogleOAuthClientJson,
+  youtubeOAuthCredentials,
+  youtubeRedirectUri,
+} from '@/lib/publish/youtubeClient'
+import { EncryptionService } from '@/services/EncryptionService'
 
 const ENV_KEYS = [
   'GOOGLE_OAUTH_CLIENT_ID',
   'GOOGLE_OAUTH_CLIENT_SECRET',
   'GOOGLE_CLIENT_ID',
   'GOOGLE_CLIENT_SECRET',
+  'YOUTUBE_OAUTH_CLIENT_ID',
+  'YOUTUBE_OAUTH_CLIENT_SECRET',
+  'YOUTUBE_CLIENT_ID',
+  'YOUTUBE_CLIENT_SECRET',
   'AUTH_GOOGLE_ID',
   'AUTH_GOOGLE_SECRET',
+  'GOOGLE_OAUTH_CREDENTIALS_JSON',
+  'YOUTUBE_OAUTH_CREDENTIALS_JSON',
+  'GOOGLE_CLIENT_SECRET_JSON',
   'GOOGLE_OAUTH_REDIRECT_URI',
   'NEXT_PUBLIC_APP_URL',
   'NEXTAUTH_URL',
   'VERCEL_URL',
+  'ENCRYPTION_KEY',
+  'JWT_SECRET',
 ] as const
 
 const saved = Object.fromEntries(ENV_KEYS.map((key) => [key, process.env[key]]))
@@ -46,6 +61,53 @@ describe('youtube OAuth config', () => {
     process.env.AUTH_GOOGLE_ID = ' auth-id '
     process.env.AUTH_GOOGLE_SECRET = ' auth-secret '
     expect(youtubeOAuthCredentials()).toEqual({ clientId: 'auth-id', clientSecret: 'auth-secret' })
+
+    clearEnv()
+    process.env.YOUTUBE_CLIENT_ID = ' yt-id '
+    process.env.YOUTUBE_CLIENT_SECRET = ' yt-secret '
+    expect(youtubeOAuthCredentials()).toEqual({ clientId: 'yt-id', clientSecret: 'yt-secret' })
+
+    clearEnv()
+    process.env.GOOGLE_OAUTH_CREDENTIALS_JSON = JSON.stringify({
+      web: { client_id: 'json-web-id', client_secret: 'json-web-secret' },
+    })
+    expect(youtubeOAuthCredentials()).toEqual({
+      clientId: 'json-web-id',
+      clientSecret: 'json-web-secret',
+    })
+  })
+
+  it('parses Google Cloud client_secret JSON formats', () => {
+    expect(
+      parseGoogleOAuthClientJson(
+        JSON.stringify({
+          web: { client_id: 'web-client.apps.googleusercontent.com', client_secret: 'GOCSPX-123' },
+        })
+      )
+    ).toEqual({
+      clientId: 'web-client.apps.googleusercontent.com',
+      clientSecret: 'GOCSPX-123',
+    })
+  })
+
+  it('normalizes www.sceneflowai.studio to the registered apex callback URI', () => {
+    clearEnv()
+    expect(youtubeRedirectUri('https://www.sceneflowai.studio')).toBe(
+      'https://sceneflowai.studio/api/auth/callback/youtube'
+    )
+    expect(youtubeRedirectUri('https://sceneflowai.studio/api/auth/callback/youtube')).toBe(
+      'https://sceneflowai.studio/api/auth/callback/youtube'
+    )
+  })
+
+  it('derives an encryption key from JWT_SECRET when ENCRYPTION_KEY is not set', () => {
+    clearEnv()
+    process.env.JWT_SECRET = 'production-jwt-secret-value'
+    expect(EncryptionService.isEncryptionConfigured()).toBe(true)
+    const ciphertext = EncryptionService.encrypt(JSON.stringify({ access_token: 'ya29.test' }))
+    expect(JSON.parse(EncryptionService.decrypt(ciphertext))).toEqual({
+      access_token: 'ya29.test',
+    })
   })
 
   it('throws when no client id and secret are set', () => {

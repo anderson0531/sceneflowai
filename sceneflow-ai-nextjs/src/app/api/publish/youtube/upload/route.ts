@@ -4,6 +4,8 @@ import {
   uploadVideoToYouTube,
   uploadAudioTrackToYouTube,
   loadYouTubeTokens,
+  isYouTubeOAuthConfigured,
+  youtubeRedirectUri,
   MlaNotAvailableError,
 } from '@/lib/publish/youtubeClient'
 import { resolveUserId } from '@/lib/userHelper'
@@ -22,16 +24,31 @@ export interface AudioTrackResult {
 
 export async function GET(req: NextRequest) {
   try {
+    const redirectUri = youtubeRedirectUri(req.nextUrl.origin)
     const userIdParam = req.nextUrl.searchParams.get('userId')
     if (!userIdParam) {
-      return NextResponse.json({ connected: false })
+      const oauthConfigured = await isYouTubeOAuthConfigured()
+      return NextResponse.json({ connected: false, oauthConfigured, redirectUri })
     }
     const userId = await resolveUserId(userIdParam)
-    const tokens = await loadYouTubeTokens(userId)
-    return NextResponse.json({ connected: !!tokens?.access_token })
+    const [tokens, oauthConfigured] = await Promise.all([
+      loadYouTubeTokens(userId),
+      isYouTubeOAuthConfigured(userId),
+    ])
+    return NextResponse.json({
+      connected: !!tokens?.access_token,
+      oauthConfigured,
+      redirectUri,
+    })
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : 'Unknown error'
-    return NextResponse.json({ connected: false, error: message })
+    const oauthConfigured = await isYouTubeOAuthConfigured().catch(() => false)
+    return NextResponse.json({
+      connected: false,
+      oauthConfigured,
+      redirectUri: youtubeRedirectUri(req.nextUrl.origin),
+      error: message,
+    })
   }
 }
 
