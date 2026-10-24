@@ -12,6 +12,10 @@ import {
   SkipForward,
   Maximize2,
   Minimize2,
+  Repeat,
+  Crosshair,
+  ChevronLeft,
+  ChevronRight,
 } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import {
@@ -73,6 +77,17 @@ function formatTime(secs: number): string {
   return `${m}:${s.toString().padStart(2, '0')}`
 }
 
+/** Broadcast SMPTE timecode MM:SS:FF at 24fps */
+function formatSmpteTimecode(secs: number, fps = 24): string {
+  if (!Number.isFinite(secs) || secs < 0) return '00:00:00'
+  const totalFrames = Math.floor(secs * fps)
+  const ff = totalFrames % fps
+  const totalSecs = Math.floor(secs)
+  const ss = totalSecs % 60
+  const mm = Math.floor(totalSecs / 60)
+  return `${mm.toString().padStart(2, '0')}:${ss.toString().padStart(2, '0')}:${ff.toString().padStart(2, '0')}`
+}
+
 function animaticKeyframeUrl(segment: SceneSegment): string | null {
   const ext = segment as SceneSegment & { keyframeUrl?: string | null; thumbnailUrl?: string | null }
   const u =
@@ -122,6 +137,7 @@ export function ScenePreviewPlayer({
   sceneEnd,
   nextSceneFrameUrl = null,
   fillScreen = false,
+  externalSeekRequest = null,
 }: {
   segments: SceneSegment[]
   audioTracks: MixerAudioTracks
@@ -182,6 +198,8 @@ export function ScenePreviewPlayer({
    * control so it cannot take the fullscreen element.
    */
   fillScreen?: boolean
+  /** External seek command from NLE timeline scrubber or shot strip */
+  externalSeekRequest?: { time: number; seq: number } | null
 }) {
   const containerRef = useRef<HTMLDivElement>(null)
   const videoRef = useRef<HTMLVideoElement>(null)
@@ -192,6 +210,8 @@ export function ScenePreviewPlayer({
   
   const [isPlaying, setIsPlaying] = useState(false)
   const [currentTime, setCurrentTime] = useState(0)
+  const [isLooping, setIsLooping] = useState(false)
+  const [showSafeGuides, setShowSafeGuides] = useState(false)
 
   useEffect(() => {
     onPlaybackTimeChange?.(currentTime)
@@ -201,13 +221,23 @@ export function ScenePreviewPlayer({
   const [isFullscreen, setIsFullscreen] = useState(false)
   const onPlaybackCompleteRef = useRef(onPlaybackComplete)
   onPlaybackCompleteRef.current = onPlaybackComplete
+  const isLoopingRef = useRef(isLooping)
+  isLoopingRef.current = isLooping
   const playbackEndedRef = useRef(false)
 
   const finishPlayback = useCallback(() => {
     if (playbackEndedRef.current) return
     playbackEndedRef.current = true
-    setIsPlaying(false)
     setIsVideoFrozen(false)
+    if (isLoopingRef.current) {
+      playbackEndedRef.current = false
+      setCurrentTime(0)
+      setCurrentSegmentIndex(0)
+      loadedVideoUrlRef.current = null
+      setIsPlaying(true)
+      return
+    }
+    setIsPlaying(false)
     if (onPlaybackCompleteRef.current?.()) return
     setCurrentTime(0)
     setCurrentSegmentIndex(0)
@@ -836,59 +866,102 @@ export function ScenePreviewPlayer({
     }
   }
   
-  const handleSeek = (percent: number) => {
-    const targetTime = (percent / 100) * scrubberTotalDuration
+  const seekToTime = useCallback(
+    (rawTargetTime: number) => {
+      const targetTime = Math.max(0, Math.min(scrubberTotalDuration, rawTargetTime))
 
-    // Clear any frozen state
-    setIsVideoFrozen(false)
-    if (audioTimerRef.current) {
-      cancelAnimationFrame(audioTimerRef.current as unknown as number)
-      audioTimerRef.current = null
-    }
+      // Clear any frozen state
+      setIsVideoFrozen(false)
+      if (audioTimerRef.current) {
+        cancelAnimationFrame(audioTimerRef.current as unknown as number)
+        audioTimerRef.current = null
+      }
 
-    if (playbackKind === 'image-sequence') {
-      setCurrentTime(targetTime)
-      const clamped = Math.min(targetTime, timelineVideoDuration)
+      if (playbackKind === 'image-sequence') {
+        setCurrentTime(targetTime)
+        const clamped = Math.min(targetTime, timelineVideoDuration)
+        let elapsed = 0
+        for (let i = 0; i < segments.length; i++) {
+          const segDuration = getPlaybackSegmentDuration(segments[i])
+          if (clamped < elapsed + segDuration) {
+            setCurrentSegmentIndex(i)
+            return
+          }
+          elapsed += segDuration
+        }
+        setCurrentSegmentIndex(Math.max(0, segments.length - 1))
+        return
+      }
+
+      const videoTargetTime = Math.min(targetTime, timelineVideoDuration)
       let elapsed = 0
       for (let i = 0; i < segments.length; i++) {
         const segDuration = getPlaybackSegmentDuration(segments[i])
-        if (clamped < elapsed + segDuration) {
+        if (videoTargetTime < elapsed + segDuration) {
           setCurrentSegmentIndex(i)
+          const localTime = videoTargetTime - elapsed
+          const trim = getTrimForSegment(segments[i])
+          const rate = getVideoPlaybackRate?.(segments[i].segmentId) ?? 1
+          if (videoRef.current) {
+            videoRef.current.currentTime = Math.min(
+              trim.outSec - 0.01,
+              trim.inSec + localTime * rate
+            )
+          }
+          setCurrentTime(targetTime)
           return
         }
         elapsed += segDuration
       }
+
       setCurrentSegmentIndex(Math.max(0, segments.length - 1))
-      return
-    }
-
-    const videoTargetTime = Math.min(targetTime, timelineVideoDuration)
-    let elapsed = 0
-    for (let i = 0; i < segments.length; i++) {
-      const segDuration = getPlaybackSegmentDuration(segments[i])
-      if (videoTargetTime < elapsed + segDuration) {
-        setCurrentSegmentIndex(i)
-        const localTime = videoTargetTime - elapsed
-        const trim = getTrimForSegment(segments[i])
-        if (videoRef.current) {
-          videoRef.current.currentTime = Math.min(
-            trim.outSec - 0.01,
-            trim.inSec + localTime
-          )
-        }
-        setCurrentTime(targetTime)
-        return
+      if (videoRef.current && segments.length > 0) {
+        const lastSegDuration = getPlaybackSegmentDuration(segments[segments.length - 1])
+        videoRef.current.currentTime = lastSegDuration
       }
-      elapsed += segDuration
-    }
+      setCurrentTime(targetTime)
+    },
+    [
+      scrubberTotalDuration,
+      playbackKind,
+      timelineVideoDuration,
+      segments,
+      getPlaybackSegmentDuration,
+      getTrimForSegment,
+      getVideoPlaybackRate,
+    ]
+  )
 
-    setCurrentSegmentIndex(segments.length - 1)
-    if (videoRef.current) {
-      const lastSegDuration = getPlaybackSegmentDuration(segments[segments.length - 1])
-      videoRef.current.currentTime = lastSegDuration
-    }
-    setCurrentTime(targetTime)
+  const handleSeek = (percent: number) => {
+    const clampedPct = Math.max(0, Math.min(100, percent))
+    seekToTime((clampedPct / 100) * scrubberTotalDuration)
   }
+
+  const stepBySeconds = (deltaSec: number) => {
+    seekToTime(currentTime + deltaSec)
+  }
+
+  const lastExternalSeekSeqRef = useRef<number | null>(null)
+  useEffect(() => {
+    if (!externalSeekRequest) return
+    if (lastExternalSeekSeqRef.current === externalSeekRequest.seq) return
+    lastExternalSeekSeqRef.current = externalSeekRequest.seq
+    seekToTime(externalSeekRequest.time)
+  }, [externalSeekRequest, seekToTime])
+
+  const shotBoundaryPercents = useMemo(() => {
+    if (segments.length <= 1 || scrubberTotalDuration <= 0) return []
+    const marks: Array<{ pct: number; shotNum: number }> = []
+    let elapsed = 0
+    for (let i = 0; i < segments.length - 1; i++) {
+      elapsed += getPlaybackSegmentDuration(segments[i])
+      const pct = (elapsed / scrubberTotalDuration) * 100
+      if (pct > 1 && pct < 99) {
+        marks.push({ pct, shotNum: i + 2 })
+      }
+    }
+    return marks
+  }, [segments, scrubberTotalDuration, getPlaybackSegmentDuration])
   
   const skipToBeat = (direction: 'prev' | 'next') => {
     // Clear frozen state
@@ -1023,14 +1096,38 @@ export function ScenePreviewPlayer({
   return (
     <div 
       ref={containerRef}
-      className={`bg-black overflow-hidden ${
+      tabIndex={0}
+      onKeyDown={(e) => {
+        const tag = (e.target as HTMLElement)?.tagName
+        if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return
+        if (e.key === ' ') {
+          e.preventDefault()
+          handlePlayPause()
+        } else if (e.key === 'ArrowLeft') {
+          e.preventDefault()
+          stepBySeconds(-0.25)
+        } else if (e.key === 'ArrowRight') {
+          e.preventDefault()
+          stepBySeconds(0.25)
+        } else if (e.key === 'm' || e.key === 'M') {
+          e.preventDefault()
+          onToggleMute()
+        } else if (e.key === 'l' || e.key === 'L') {
+          e.preventDefault()
+          setIsLooping((prev) => !prev)
+        } else if (e.key === 'g' || e.key === 'G') {
+          e.preventDefault()
+          setShowSafeGuides((prev) => !prev)
+        }
+      }}
+      className={`bg-zinc-950 overflow-hidden outline-none focus-visible:ring-1 focus-visible:ring-cyan-500/40 ${
         fillScreen
           ? 'flex h-full w-full flex-col rounded-none border-0'
-          : `rounded-lg border border-gray-700 ${isFullscreen ? 'flex flex-col' : ''}`
+          : `rounded-lg border border-zinc-800/90 shadow-xl ${isFullscreen ? 'flex flex-col' : ''}`
       }`}
     >
       {/* Video Display Area */}
-      <div className={`relative bg-gray-900 flex items-center justify-center ${
+      <div className={`relative bg-black flex items-center justify-center ${
         fillScreen || isFullscreen ? 'min-h-0 flex-1' : 'aspect-video'
       }`}>
         {currentSegment.segment?.activeAssetUrl ? (
@@ -1106,22 +1203,65 @@ export function ScenePreviewPlayer({
           />
         )}
         
+        {/* Broadcast Safe Area Guides (90% Action Safe & 80% Title Safe + Center Crosshair) */}
+        {showSafeGuides && !fillScreen && (
+          <div className="absolute inset-0 pointer-events-none z-20">
+            {/* 90% Action Safe */}
+            <div className="absolute inset-[5%] border border-dashed border-cyan-400/45">
+              <span className="absolute -top-3.5 left-1 text-[8px] font-mono uppercase tracking-wider text-cyan-300/75 bg-zinc-950/80 px-1 rounded">
+                Action Safe 90%
+              </span>
+            </div>
+            {/* 80% Title Safe */}
+            <div className="absolute inset-[10%] border border-amber-400/40">
+              <span className="absolute -top-3.5 left-1 text-[8px] font-mono uppercase tracking-wider text-amber-300/75 bg-zinc-950/80 px-1 rounded">
+                Title Safe 80%
+              </span>
+            </div>
+            {/* Center Crosshair */}
+            <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-5 h-px bg-white/35" />
+            <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 h-5 w-px bg-white/35" />
+          </div>
+        )}
+
         {/* Overlay Info — hidden when the parent stage is the fullscreen view */}
         {!fillScreen && (
-        <div className="absolute top-3 left-3 flex items-center gap-2">
-          <Badge variant="outline" className="bg-black/60 border-gray-600 text-white text-xs">
-            <Clock className="w-3 h-3 mr-1" />
-            {formatTime(scrubberTotalDuration)}
-          </Badge>
-          <Badge variant="outline" className="bg-black/60 border-purple-500/50 text-purple-300 text-xs">
-            Seg {activeSegmentIndex + 1}/{segments.length}
-          </Badge>
-          {isVideoFrozen && (
-            <Badge variant="outline" className="bg-amber-500/20 border-amber-500/50 text-amber-300 text-xs animate-pulse">
-              <Pause className="w-3 h-3 mr-1" />
-              Extended Audio
+        <div className="absolute top-3 left-3 right-3 flex items-center justify-between gap-2 pointer-events-none z-20">
+          <div className="flex items-center gap-1.5 flex-wrap">
+            <Badge variant="outline" className="bg-zinc-950/85 backdrop-blur-md border-zinc-700/80 text-zinc-100 text-[11px] font-mono tabular-nums px-2 py-0.5 shadow-sm">
+              <Clock className="w-3 h-3 mr-1.5 text-cyan-400" />
+              {formatSmpteTimecode(currentTime)} <span className="text-zinc-500 mx-1">/</span> {formatSmpteTimecode(scrubberTotalDuration)}
             </Badge>
-          )}
+            <Badge variant="outline" className="bg-zinc-950/85 backdrop-blur-md border-cyan-500/40 text-cyan-200 text-[11px] font-mono tabular-nums px-2 py-0.5 shadow-sm">
+              Seg {activeSegmentIndex + 1}/{segments.length}
+            </Badge>
+            {currentSegment.segment && getTrimForSegment(currentSegment.segment).isTrimmed && (
+              <Badge variant="outline" className="bg-amber-950/80 backdrop-blur-md border-amber-500/40 text-amber-300 text-[10px] uppercase tracking-wider px-2 py-0.5">
+                Trimmed
+              </Badge>
+            )}
+            {currentSegment.segment?.shotJoin && currentSegment.segment.shotJoin !== 'cut' && (
+              <Badge variant="outline" className="bg-violet-950/80 backdrop-blur-md border-violet-500/40 text-violet-200 text-[10px] uppercase tracking-wider px-2 py-0.5">
+                {currentSegment.segment.shotJoin}
+              </Badge>
+            )}
+            {isVideoFrozen && (
+              <Badge variant="outline" className="bg-amber-500/20 backdrop-blur-md border-amber-500/50 text-amber-300 text-[11px] animate-pulse">
+                <Pause className="w-3 h-3 mr-1" />
+                Extended Audio
+              </Badge>
+            )}
+          </div>
+          <div className="hidden sm:flex items-center gap-1.5">
+            {isLooping && (
+              <Badge variant="outline" className="bg-emerald-950/80 backdrop-blur-md border-emerald-500/40 text-emerald-300 text-[10px] uppercase tracking-wider px-2 py-0.5">
+                Loop
+              </Badge>
+            )}
+            <Badge variant="outline" className="bg-zinc-950/80 backdrop-blur-md border-zinc-800 text-zinc-400 text-[10px] font-mono uppercase tracking-wider px-2 py-0.5">
+              24 FPS • REC.709
+            </Badge>
+          </div>
         </div>
         )}
         
@@ -1329,40 +1469,63 @@ export function ScenePreviewPlayer({
       
       {/* Controls Bar — hidden in parent fullscreen so only the hover play button remains */}
       {!fillScreen && (
-      <div className="p-3 bg-gray-800/50 flex items-center gap-3">
-        {/* Skip Prev */}
+      <div className="px-3 py-2.5 bg-zinc-950 border-t border-zinc-800/90 flex items-center gap-2 sm:gap-2.5">
+        {/* Skip Prev Shot */}
         <button
           onClick={() => skipToBeat('prev')}
           disabled={activeSegmentIndex === 0}
-          className="p-1.5 rounded-lg hover:bg-gray-700 text-gray-400 hover:text-white transition-colors disabled:opacity-30"
+          title="Previous shot"
+          className="p-1.5 rounded-md hover:bg-zinc-800 text-zinc-400 hover:text-white transition-colors disabled:opacity-30"
         >
-          <SkipBack className="w-4 h-4" />
+          <SkipBack className="w-3.5 h-3.5" />
+        </button>
+
+        {/* Fine Step Back (-0.25s) */}
+        <button
+          onClick={() => stepBySeconds(-0.25)}
+          disabled={currentTime <= 0}
+          title="Step back 6 frames (-0.25s) [←]"
+          className="hidden sm:inline-flex p-1.5 rounded-md hover:bg-zinc-800 text-zinc-400 hover:text-white transition-colors disabled:opacity-30"
+        >
+          <ChevronLeft className="w-3.5 h-3.5" />
         </button>
         
         {/* Play/Pause */}
         <button
           onClick={handlePlayPause}
-          className="p-2 rounded-full bg-purple-600 hover:bg-purple-700 text-white transition-colors"
+          title={isPlaying ? 'Pause [Space]' : 'Play [Space]'}
+          className="p-2 rounded-md bg-cyan-500 hover:bg-cyan-400 text-zinc-950 font-semibold transition-colors shadow-sm"
         >
           {isPlaying ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4 ml-0.5" />}
         </button>
+
+        {/* Fine Step Forward (+0.25s) */}
+        <button
+          onClick={() => stepBySeconds(0.25)}
+          disabled={currentTime >= scrubberTotalDuration}
+          title="Step forward 6 frames (+0.25s) [→]"
+          className="hidden sm:inline-flex p-1.5 rounded-md hover:bg-zinc-800 text-zinc-400 hover:text-white transition-colors disabled:opacity-30"
+        >
+          <ChevronRight className="w-3.5 h-3.5" />
+        </button>
         
-        {/* Skip Next */}
+        {/* Skip Next Shot */}
         <button
           onClick={() => skipToBeat('next')}
           disabled={activeSegmentIndex === segments.length - 1}
-          className="p-1.5 rounded-lg hover:bg-gray-700 text-gray-400 hover:text-white transition-colors disabled:opacity-30"
+          title="Next shot"
+          className="p-1.5 rounded-md hover:bg-zinc-800 text-zinc-400 hover:text-white transition-colors disabled:opacity-30"
         >
-          <SkipForward className="w-4 h-4" />
+          <SkipForward className="w-3.5 h-3.5" />
         </button>
         
-        <span className="text-xs text-gray-400 font-mono w-10">
+        <span className="text-[11px] text-zinc-300 font-mono tabular-nums min-w-[42px]">
           {formatTime(currentTime)}
         </span>
         
-        {/* Progress Bar */}
+        {/* Progress Bar with Shot Boundary Markers */}
         <div 
-          className="flex-1 h-1.5 bg-gray-700 rounded-full cursor-pointer relative group"
+          className="flex-1 h-2 bg-zinc-800 rounded-full cursor-pointer relative group"
           onClick={(e) => {
             const rect = e.currentTarget.getBoundingClientRect()
             const percent = ((e.clientX - rect.left) / rect.width) * 100
@@ -1370,23 +1533,66 @@ export function ScenePreviewPlayer({
           }}
         >
           <div 
-            className="h-full bg-purple-500 rounded-full transition-all"
+            className="h-full bg-gradient-to-r from-cyan-500 to-indigo-500 rounded-full transition-all"
             style={{ width: `${progressPercent}%` }}
           />
+          {shotBoundaryPercents.map((mark) => (
+            <div
+              key={mark.shotNum}
+              className="absolute top-0 bottom-0 w-0.5 bg-zinc-950/90 z-10 pointer-events-none"
+              style={{ left: `${mark.pct}%` }}
+              title={`Shot #${mark.shotNum}`}
+            />
+          ))}
           <div 
-            className="absolute top-1/2 -translate-y-1/2 w-3 h-3 bg-white rounded-full shadow-lg opacity-0 group-hover:opacity-100 transition-opacity"
+            className="absolute top-1/2 -translate-y-1/2 w-3 h-3 bg-white border border-cyan-500 rounded-full shadow-lg opacity-0 group-hover:opacity-100 transition-opacity z-20"
             style={{ left: `calc(${progressPercent}% - 6px)` }}
           />
         </div>
         
-        <span className="text-xs text-gray-400 font-mono w-10 text-right">
+        <span className="text-[11px] text-zinc-400 font-mono tabular-nums min-w-[42px] text-right">
           {formatTime(scrubberTotalDuration)}
         </span>
+
+        <div className="h-4 w-px bg-zinc-800 mx-0.5 hidden sm:block" />
+
+        {/* Loop Toggle */}
+        <button
+          type="button"
+          onClick={() => setIsLooping((prev) => !prev)}
+          title={isLooping ? 'Disable loop playback [L]' : 'Loop scene playback [L]'}
+          className={`p-1.5 rounded-md transition-colors ${
+            isLooping
+              ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40'
+              : 'hover:bg-zinc-800 text-zinc-400 hover:text-white'
+          }`}
+        >
+          <Repeat className="w-3.5 h-3.5" />
+        </button>
+
+        {/* Safe Guides Toggle */}
+        <button
+          type="button"
+          onClick={() => setShowSafeGuides((prev) => !prev)}
+          title={showSafeGuides ? 'Hide broadcast safe guides [G]' : 'Show broadcast safe guides (Action 90% / Title 80%) [G]'}
+          className={`p-1.5 rounded-md transition-colors ${
+            showSafeGuides
+              ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/40'
+              : 'hover:bg-zinc-800 text-zinc-400 hover:text-white'
+          }`}
+        >
+          <Crosshair className="w-3.5 h-3.5" />
+        </button>
         
         {/* Mute Button */}
         <button
           onClick={onToggleMute}
-          className="p-2 rounded-lg hover:bg-gray-700 text-gray-400 hover:text-white transition-colors"
+          title={isMuted ? 'Unmute monitor [M]' : 'Mute monitor [M]'}
+          className={`p-1.5 rounded-md transition-colors ${
+            isMuted
+              ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40'
+              : 'hover:bg-zinc-800 text-zinc-400 hover:text-white'
+          }`}
         >
           {isMuted ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
         </button>
@@ -1394,7 +1600,7 @@ export function ScenePreviewPlayer({
         {/* Fullscreen Button */}
         <button
           onClick={toggleFullscreen}
-          className="p-2 rounded-lg hover:bg-gray-700 text-gray-400 hover:text-white transition-colors"
+          className="p-1.5 rounded-md hover:bg-zinc-800 text-zinc-400 hover:text-white transition-colors"
           title={isFullscreen ? 'Exit Fullscreen' : 'Enter Fullscreen'}
         >
           {isFullscreen ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}

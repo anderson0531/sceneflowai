@@ -44,14 +44,14 @@ export const DEFAULT_MIXER_COLLAPSED_SECTIONS: SceneMixerCollapsedSections = {
   textOverlays: true,
   watermark: true,
   watermarkCrop: true,
-  beatVideo: true,
+  beatVideo: false,
   beatTrim: true,
   segmentAudio: true,
   narration: true,
-  dialogue: true,
+  dialogue: false,
   sfx: true,
-  music: true,
-  timeline: true,
+  music: false,
+  timeline: false,
 }
 
 export const DEFAULT_MIXER_AUDIO_TRACKS: MixerAudioTracks = {

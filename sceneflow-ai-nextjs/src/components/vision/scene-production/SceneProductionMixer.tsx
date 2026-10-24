@@ -89,7 +89,14 @@ import {
   Eye,
   EyeOff,
   Scissors,
+  Layers,
+  Sliders,
+  ArrowRightLeft,
 } from 'lucide-react'
+import {
+  listPlayableTakes,
+  applyVideoTakeSelection,
+} from '@/lib/storyboard/mediaVersions'
 import { Button } from '@/components/ui/Button'
 import { Slider } from '@/components/ui/slider'
 import { Switch } from '@/components/ui/switch'
@@ -1252,6 +1259,8 @@ function SegmentBeatVideoControls({
   onShotConfigChange,
   onRegenerateShot,
   onShotJoinChange,
+  onApplyAllShotJoins,
+  onTakeSelect,
   measuredDurations = {},
   onTrimChange,
   onResetTrim,
@@ -1271,6 +1280,8 @@ function SegmentBeatVideoControls({
   onShotConfigChange?: (segmentId: string, patch: MixerLanguageShotConfig) => void
   onRegenerateShot?: (segment: SceneSegment) => void
   onShotJoinChange?: (segmentId: string, shotJoin: ShotJoin) => void
+  onApplyAllShotJoins?: (shotJoin: ShotJoin) => void
+  onTakeSelect?: (segmentId: string, takeId: string) => void
   measuredDurations?: Record<string, number>
   onTrimChange?: (segmentId: string, inSec: number, outSec: number) => void
   onResetTrim?: (segmentId: string) => void
@@ -1291,9 +1302,9 @@ function SegmentBeatVideoControls({
   }
 
   return (
-    <div className="bg-gray-800/50 rounded-lg">
+    <div className="bg-zinc-900/80 border border-zinc-800 rounded-lg">
       <div
-        className={`flex items-center justify-between p-3 ${onToggleCollapse ? 'cursor-pointer hover:bg-white/5' : ''}`}
+        className={`flex items-center justify-between p-3 ${onToggleCollapse ? 'cursor-pointer hover:bg-white/[0.03]' : ''}`}
         onClick={onToggleCollapse}
       >
         <div className="flex items-center gap-2">
@@ -1303,14 +1314,14 @@ function SegmentBeatVideoControls({
                 e.stopPropagation()
                 onToggleCollapse()
               }}
-              className="w-5 h-5 flex items-center justify-center text-gray-400 hover:text-white transition-colors"
+              className="w-5 h-5 flex items-center justify-center text-zinc-400 hover:text-white transition-colors"
             >
               {isCollapsed ? <ChevronDown className="w-4 h-4" /> : <ChevronUp className="w-4 h-4" />}
             </button>
           )}
           <Video className="w-4 h-4 text-cyan-400" />
-          <span className="text-xs text-gray-400 uppercase tracking-wide">Shot Video</span>
-          <span className="text-xs text-gray-500">
+          <span className="text-xs font-semibold text-zinc-200 uppercase tracking-wider">Shot Video</span>
+          <span className="text-[11px] text-zinc-500 font-mono">
             {rows.length} {rows.length === 1 ? 'shot' : 'shots'}
             {excludedCount > 0 ? ` · ${excludedCount} excluded` : ''}
           </span>
@@ -1328,10 +1339,34 @@ function SegmentBeatVideoControls({
       </div>
 
       {!isCollapsed && (
-        <div className="px-3 pb-3 space-y-2">
-          <p className="text-[11px] text-gray-500 leading-relaxed">
-            Excluded shots stay in your project but are hidden from preview and scene render.
-          </p>
+        <div className="px-3 pb-3 space-y-2.5 border-t border-zinc-800/80 pt-2.5">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <p className="text-[11px] text-zinc-500 leading-relaxed">
+              Excluded shots stay in your project but are hidden from preview and scene render.
+            </p>
+            {rows.length > 1 && onApplyAllShotJoins && (
+              <div className="flex items-center gap-1 bg-zinc-950/80 border border-zinc-800 rounded px-1.5 py-0.5">
+                <span className="text-[9px] font-semibold uppercase tracking-wider text-zinc-500 mr-1">
+                  Batch Join:
+                </span>
+                {([
+                  ['cut', 'All Cut'],
+                  ['dissolve', 'All Dissolve'],
+                  ['fade', 'All Fade'],
+                ] as const).map(([joinVal, joinLabel]) => (
+                  <button
+                    key={joinVal}
+                    type="button"
+                    disabled={disabled}
+                    onClick={() => onApplyAllShotJoins(joinVal)}
+                    className="px-1.5 py-0.5 rounded text-[9px] font-medium text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800 transition-colors"
+                  >
+                    {joinLabel}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
           {languageActive && (
             <p className="text-[11px] text-amber-200/90 leading-relaxed">
               {languageLabel || 'This language'} is often 10–30% longer than the English master.
@@ -1348,6 +1383,7 @@ function SegmentBeatVideoControls({
               : 0
             const trimWindow = seg ? resolveVideoTrimWindow(seg, trimSource) : null
             const isTrimExpanded = !!seg && expandedTrimSegmentId === seg.segmentId
+            const playableTakes = seg ? listPlayableTakes(seg) : []
             const method = seg
               ? resolveLanguageShotMethod({
                   config: shotConfigs[seg.segmentId],
@@ -1359,10 +1395,10 @@ function SegmentBeatVideoControls({
               <div
                 key={row.beatId}
                 className={cn(
-                  'flex flex-col gap-2 p-2 rounded transition-colors border',
+                  'flex flex-col gap-2 p-2.5 rounded-md transition-colors border',
                   included
-                    ? 'bg-cyan-600/10 border-cyan-500/30'
-                    : 'bg-gray-700/30 border-gray-600/30 opacity-70'
+                    ? 'bg-zinc-950/70 border-zinc-800 hover:border-zinc-700'
+                    : 'bg-zinc-950/30 border-zinc-800/50 opacity-65'
                 )}
               >
                 <div className="flex items-center gap-2">
@@ -1370,30 +1406,64 @@ function SegmentBeatVideoControls({
                   onClick={() => seg && toggleSegment(seg.segmentId)}
                   disabled={disabled || !seg}
                   className={cn(
-                    'w-10 h-8 rounded text-xs font-medium transition-colors flex-shrink-0 flex items-center justify-center',
+                    'w-9 h-7 rounded text-xs font-medium transition-colors flex-shrink-0 flex items-center justify-center border',
                     included
-                      ? 'bg-cyan-600/30 text-cyan-200 hover:bg-cyan-600/40'
-                      : 'bg-gray-600/40 text-gray-400 hover:bg-gray-600/60'
+                      ? 'bg-cyan-500/15 border-cyan-500/40 text-cyan-300 hover:bg-cyan-500/25'
+                      : 'bg-zinc-800/60 border-zinc-700 text-zinc-500 hover:text-zinc-300'
                   )}
                   title={seg ? (included ? 'Exclude from mixer' : 'Include in mixer') : 'This shot has no clip yet'}
                 >
-                  {included ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
+                  {included ? <Eye className="w-3.5 h-3.5" /> : <EyeOff className="w-3.5 h-3.5" />}
                 </button>
-                <div className="flex-1 min-w-0">
-                  <span className="text-xs text-gray-300 font-medium">Shot #{row.beatNumber ?? i + 1}</span>
+                <div className="flex-1 min-w-0 flex items-center gap-1.5 flex-wrap">
+                  <span className="text-xs text-zinc-200 font-semibold font-mono">
+                    Shot #{row.beatNumber ?? i + 1}
+                  </span>
                   {!seg ? (
-                    <span className="ml-2 text-[10px] uppercase tracking-wide text-gray-500">
+                    <span className="text-[10px] uppercase tracking-wide text-zinc-500">
                       No clip
                     </span>
                   ) : !included ? (
-                    <span className="ml-2 text-[10px] uppercase tracking-wide text-gray-500">
+                    <span className="text-[10px] uppercase tracking-wide text-zinc-500">
                       Excluded
                     </span>
                   ) : trimWindow?.isTrimmed ? (
-                    <span className="ml-2 text-[10px] uppercase tracking-wide text-amber-400/90">
+                    <span className="text-[10px] uppercase tracking-wide text-amber-400/90 font-mono">
                       Trimmed ({trimWindow.playableSec.toFixed(1)}s)
                     </span>
+                  ) : trimWindow ? (
+                    <span className="text-[10px] text-zinc-500 font-mono">
+                      {trimWindow.playableSec.toFixed(1)}s
+                    </span>
                   ) : null}
+
+                  {/* Take Switcher pills when multiple takes exist */}
+                  {seg && playableTakes.length > 1 && onTakeSelect && (
+                    <div className="inline-flex items-center gap-0.5 ml-1 bg-zinc-900 border border-zinc-800 rounded px-1 py-0.5">
+                      {playableTakes.map((take, tIdx) => {
+                        const isCurrentTake =
+                          take.assetUrl === seg.activeAssetUrl ||
+                          (!seg.activeAssetUrl && tIdx === playableTakes.length - 1)
+                        return (
+                          <button
+                            key={take.id}
+                            type="button"
+                            disabled={disabled}
+                            onClick={() => onTakeSelect(seg.segmentId, take.id)}
+                            className={cn(
+                              'px-1.5 py-0.2 rounded text-[9px] font-mono font-semibold transition-colors',
+                              isCurrentTake
+                                ? 'bg-cyan-500/25 text-cyan-200 border border-cyan-500/40'
+                                : 'text-zinc-400 hover:text-zinc-200'
+                            )}
+                            title={`Switch to Take ${tIdx + 1}${take.durationSec ? ` (${take.durationSec.toFixed(1)}s)` : ''}`}
+                          >
+                            T{tIdx + 1}
+                          </button>
+                        )
+                      })}
+                    </div>
+                  )}
                 </div>
                 {seg && hasPlayableClip && onTrimChange && (
                   <button
@@ -1408,7 +1478,7 @@ function SegmentBeatVideoControls({
                       'inline-flex items-center gap-1 px-2 py-1 rounded text-[10px] font-medium border transition-colors',
                       isTrimExpanded || trimWindow?.isTrimmed
                         ? 'bg-amber-500/20 border-amber-500/40 text-amber-200 hover:bg-amber-500/30'
-                        : 'bg-gray-800/70 border-gray-600/50 text-gray-300 hover:text-white hover:border-gray-500'
+                        : 'bg-zinc-900 border-zinc-700 text-zinc-300 hover:text-white hover:border-zinc-600'
                     )}
                     title="Trim start and end of this shot clip"
                   >
@@ -1436,7 +1506,7 @@ function SegmentBeatVideoControls({
                   </div>
                 )}
                 {languageActive && seg && (
-                  <div className="space-y-2 pl-12">
+                  <div className="space-y-2 pl-11">
                     <div className="flex flex-wrap gap-1">
                       {([
                         ['double', 'Double'],
@@ -1458,7 +1528,7 @@ function SegmentBeatVideoControls({
                             'px-2 py-0.5 rounded text-[10px] border transition-colors',
                             method === value
                               ? 'bg-violet-600/40 border-violet-400/50 text-violet-100'
-                              : 'bg-gray-800/60 border-gray-600/50 text-gray-400 hover:text-gray-200'
+                              : 'bg-zinc-900 border-zinc-700 text-zinc-400 hover:text-zinc-200'
                           )}
                         >
                           {label}
@@ -1466,7 +1536,7 @@ function SegmentBeatVideoControls({
                       ))}
                     </div>
                     <div className="flex items-center gap-2">
-                      <span className="text-[10px] text-gray-500 w-16 shrink-0">Video speed</span>
+                      <span className="text-[10px] text-zinc-500 w-16 shrink-0">Video speed</span>
                       <Slider
                         value={[Math.round(videoRate * 100)]}
                         onValueChange={([v]) =>
@@ -1480,7 +1550,7 @@ function SegmentBeatVideoControls({
                         className="flex-1"
                         disabled={disabled}
                       />
-                      <span className="text-[10px] text-gray-400 w-10 text-right tabular-nums">
+                      <span className="text-[10px] text-zinc-400 w-10 text-right tabular-nums">
                         {Math.round(videoRate * 100)}%
                       </span>
                     </div>
@@ -1488,7 +1558,7 @@ function SegmentBeatVideoControls({
                 )}
                 {i < rows.length - 1 && seg && (
                   <label
-                    className="flex items-center gap-2 pl-12 text-[10px] text-gray-500"
+                    className="flex items-center gap-2 pl-11 text-[10px] text-zinc-400"
                     onClick={(event) => event.stopPropagation()}
                   >
                     <span>Into next</span>
@@ -1499,7 +1569,7 @@ function SegmentBeatVideoControls({
                         onShotJoinChange?.(seg.segmentId, event.target.value as ShotJoin)
                       }
                       aria-label={`Transition from shot ${i + 1} to shot ${i + 2}`}
-                      className="bg-gray-900 border border-gray-700 rounded px-2 py-0.5 text-[10px] text-gray-200 disabled:opacity-60"
+                      className="bg-zinc-900 border border-zinc-700 rounded px-2 py-0.5 text-[10px] text-zinc-200 disabled:opacity-60"
                     >
                       <option value="cut">Cut</option>
                       <option value="dissolve">Dissolve</option>
@@ -1555,27 +1625,66 @@ function BeatTrimRangeEditor({
   const outPct = source > 0 ? (trim.outSec / source) * 100 : 100
 
   return (
-    <div className="space-y-3 rounded border border-amber-500/20 bg-amber-500/5 p-3">
-      <div className="relative h-8 rounded bg-gray-900/80 overflow-hidden">
-        <div className="absolute inset-y-0 left-0 bg-gray-800/90" style={{ width: `${inPct}%` }} />
+    <div className="space-y-3 rounded-md border border-amber-500/25 bg-zinc-950/90 p-3">
+      <div className="relative h-8 rounded bg-zinc-900 overflow-hidden border border-zinc-800">
+        <div className="absolute inset-y-0 left-0 bg-zinc-950/90" style={{ width: `${inPct}%` }} />
         <div
-          className="absolute inset-y-0 bg-amber-500/35 border-x border-amber-400/50"
+          className="absolute inset-y-0 bg-amber-500/30 border-x-2 border-amber-400"
           style={{ left: `${inPct}%`, width: `${Math.max(0, outPct - inPct)}%` }}
         />
         <div
-          className="absolute inset-y-0 right-0 bg-gray-800/90"
+          className="absolute inset-y-0 right-0 bg-zinc-950/90"
           style={{ width: `${100 - outPct}%` }}
         />
-        <div className="absolute inset-0 flex items-center justify-center">
-          <span className="text-[10px] text-amber-200/80 font-medium">
+        <div className="absolute inset-0 flex items-center justify-between px-2.5 text-[10px] font-mono">
+          <span className="text-zinc-400">IN {formatTrimTimeSec(trim.inSec)}s</span>
+          <span className="text-amber-200 font-semibold">
             {trim.playableSec.toFixed(1)}s playable
           </span>
+          <span className="text-zinc-400">OUT {formatTrimTimeSec(trim.outSec)}s</span>
         </div>
+      </div>
+
+      {/* Quick Trim Presets */}
+      <div className="flex flex-wrap items-center gap-1.5">
+        <span className="text-[9px] uppercase tracking-wider text-zinc-500 mr-1">Quick Trim:</span>
+        <button
+          type="button"
+          disabled={disabled || source <= minGap + 0.5}
+          onClick={() => setIn(Math.min(trim.outSec - minGap, 0.5))}
+          className="px-2 py-0.5 rounded text-[10px] font-mono bg-zinc-900 border border-zinc-700/80 text-zinc-300 hover:text-white hover:border-amber-500/40 disabled:opacity-40"
+          title="Trim 0.5s off the start of the clip"
+        >
+          Trim 0.5s Head
+        </button>
+        <button
+          type="button"
+          disabled={disabled || source <= minGap + 0.5}
+          onClick={() => setOut(Math.max(trim.inSec + minGap, source - 0.5))}
+          className="px-2 py-0.5 rounded text-[10px] font-mono bg-zinc-900 border border-zinc-700/80 text-zinc-300 hover:text-white hover:border-amber-500/40 disabled:opacity-40"
+          title="Trim 0.5s off the end of the clip"
+        >
+          Trim 0.5s Tail
+        </button>
+        <button
+          type="button"
+          disabled={disabled || source <= minGap * 1.5}
+          onClick={() => {
+            const margin = Math.max(0.1, Number((source * 0.1).toFixed(1)))
+            const nextIn = Math.min(margin, source - minGap)
+            const nextOut = Math.max(nextIn + minGap, source - margin)
+            onTrimChange(nextIn, nextOut)
+          }}
+          className="px-2 py-0.5 rounded text-[10px] font-mono bg-zinc-900 border border-zinc-700/80 text-zinc-300 hover:text-white hover:border-amber-500/40 disabled:opacity-40"
+          title="Keep the center 80% of the clip (trim 10% head and 10% tail)"
+        >
+          Center 80%
+        </button>
       </div>
 
       <div className="grid grid-cols-2 gap-3">
         <div>
-          <label className="text-[10px] text-gray-500 uppercase tracking-wide mb-1 block">Start</label>
+          <label className="text-[10px] text-zinc-400 uppercase tracking-wide mb-1 block">Start (In)</label>
           <div className="flex items-center gap-1">
             <Button
               type="button"
@@ -1590,7 +1699,7 @@ function BeatTrimRangeEditor({
             <Input
               value={formatTrimTimeSec(trim.inSec)}
               disabled={disabled}
-              className="h-8 text-xs font-mono"
+              className="h-8 text-xs font-mono bg-zinc-900 border-zinc-700"
               onChange={(e) => {
                 const parsed = parseTrimTimeInput(e.target.value)
                 if (parsed != null) setIn(parsed)
@@ -1618,7 +1727,7 @@ function BeatTrimRangeEditor({
           />
         </div>
         <div>
-          <label className="text-[10px] text-gray-500 uppercase tracking-wide mb-1 block">End</label>
+          <label className="text-[10px] text-zinc-400 uppercase tracking-wide mb-1 block">End (Out)</label>
           <div className="flex items-center gap-1">
             <Button
               type="button"
@@ -1633,7 +1742,7 @@ function BeatTrimRangeEditor({
             <Input
               value={formatTrimTimeSec(trim.outSec)}
               disabled={disabled}
-              className="h-8 text-xs font-mono"
+              className="h-8 text-xs font-mono bg-zinc-900 border-zinc-700"
               onChange={(e) => {
                 const parsed = parseTrimTimeInput(e.target.value)
                 if (parsed != null) setOut(parsed)
@@ -1662,8 +1771,8 @@ function BeatTrimRangeEditor({
         </div>
       </div>
 
-      <div className="flex flex-wrap items-center justify-between gap-2 text-[11px] text-gray-500">
-        <span>
+      <div className="flex flex-wrap items-center justify-between gap-2 text-[11px] text-zinc-500">
+        <span className="font-mono">
           Source {source.toFixed(1)}s · Trimmed {trim.playableSec.toFixed(1)}s
           {trim.isTrimmed ? ' · Trimmed' : ''}
         </span>
@@ -1721,9 +1830,9 @@ function SegmentBeatTrimControls({
     segments.find((s) => s.segmentId === selectedSegmentId) ?? segments[0]
 
   return (
-    <div className="bg-gray-800/50 border border-gray-700/50 rounded-lg">
+    <div className="bg-zinc-900/80 border border-zinc-800 rounded-lg">
       <div
-        className={`flex items-center justify-between p-3 ${onToggleCollapse ? 'cursor-pointer hover:bg-white/5' : ''}`}
+        className={`flex items-center justify-between p-3 ${onToggleCollapse ? 'cursor-pointer hover:bg-white/[0.03]' : ''}`}
         onClick={onToggleCollapse}
       >
         <div className="flex items-center gap-2">
@@ -1733,22 +1842,22 @@ function SegmentBeatTrimControls({
                 e.stopPropagation()
                 onToggleCollapse()
               }}
-              className="w-5 h-5 flex items-center justify-center text-gray-400 hover:text-white transition-colors"
+              className="w-5 h-5 flex items-center justify-center text-zinc-400 hover:text-white transition-colors"
             >
               {isCollapsed ? <ChevronDown className="w-4 h-4" /> : <ChevronUp className="w-4 h-4" />}
             </button>
           )}
           <Scissors className="w-4 h-4 text-amber-400" />
-          <span className="text-xs text-gray-400 uppercase tracking-wide">Shot Trim</span>
-          <span className="text-xs text-gray-500">
+          <span className="text-xs font-semibold text-zinc-200 uppercase tracking-wider">Shot Trim</span>
+          <span className="text-[11px] text-zinc-500 font-mono">
             {segments.length} {segments.length === 1 ? 'shot' : 'shots'}
           </span>
         </div>
       </div>
 
       {!isCollapsed && (
-        <div className="px-3 pb-3 space-y-3">
-          <p className="text-[11px] text-gray-500 leading-relaxed">
+        <div className="px-3 pb-3 space-y-3 border-t border-zinc-800/80 pt-2.5">
+          <p className="text-[11px] text-zinc-500 leading-relaxed">
             Set where each shot video starts and ends in the source file. Trimming is non-destructive.
           </p>
           <div className="flex flex-wrap gap-2">
@@ -1767,10 +1876,10 @@ function SegmentBeatTrimControls({
                   disabled={disabled}
                   onClick={() => onSelectSegment(seg.segmentId)}
                   className={cn(
-                    'px-2.5 py-1 rounded text-xs border transition-colors',
+                    'px-2.5 py-1 rounded text-xs font-mono border transition-colors',
                     active
-                      ? 'bg-amber-600/20 border-amber-500/40 text-amber-200'
-                      : 'bg-gray-700/40 border-gray-600/40 text-gray-400 hover:text-gray-200'
+                      ? 'bg-amber-500/20 border-amber-500/40 text-amber-200'
+                      : 'bg-zinc-950 border-zinc-800 text-zinc-400 hover:text-zinc-200'
                   )}
                 >
                   Shot #{shotNum}
@@ -1800,7 +1909,7 @@ function SegmentBeatTrimControls({
 }
 
 /**
- * SegmentAudioControls - Mute/unmute and volume control for individual segment audio
+ * SegmentAudioControls - Mute/unmute, volume, and manual tail hold control for individual segment audio
  */
 function SegmentAudioControls({
   segments,
@@ -1853,27 +1962,35 @@ function SegmentAudioControls({
       [segmentId]: { ...current, volume }
     })
   }
-  
+
+  const updateSegmentHold = (segmentId: string, postSegmentPause: number) => {
+    const current = segmentConfigs[segmentId] || { includeAudio: true, volume: 1.0 }
+    const clamped = Math.max(0, Math.min(5, Math.round(postSegmentPause * 10) / 10))
+    onConfigChange({
+      ...segmentConfigs,
+      [segmentId]: { ...current, postSegmentPause: clamped > 0 ? clamped : undefined }
+    })
+  }
   
   return (
-    <div className="bg-gray-800/50 rounded-lg">
+    <div className="bg-zinc-900/80 border border-zinc-800 rounded-lg">
       {/* Header with master volume */}
       <div 
-        className={`flex items-center justify-between p-3 ${onToggleCollapse ? 'cursor-pointer hover:bg-white/5' : ''}`}
+        className={`flex items-center justify-between p-3 ${onToggleCollapse ? 'cursor-pointer hover:bg-white/[0.03]' : ''}`}
         onClick={onToggleCollapse}
       >
         <div className="flex items-center gap-2">
           {onToggleCollapse && (
             <button
               onClick={(e) => { e.stopPropagation(); onToggleCollapse(); }}
-              className="w-5 h-5 flex items-center justify-center text-gray-400 hover:text-white transition-colors"
+              className="w-5 h-5 flex items-center justify-center text-zinc-400 hover:text-white transition-colors"
             >
               {isCollapsed ? <ChevronDown className="w-4 h-4" /> : <ChevronUp className="w-4 h-4" />}
             </button>
           )}
           <Film className="w-4 h-4 text-purple-400" />
-          <span className="text-xs text-gray-400 uppercase tracking-wide">Shot Audio</span>
-          <span className="text-xs text-gray-500">
+          <span className="text-xs font-semibold text-zinc-200 uppercase tracking-wider">Shot Audio & Hold</span>
+          <span className="text-[11px] text-zinc-500 font-mono">
             {segments.length} {segments.length === 1 ? 'shot' : 'shots'}
           </span>
         </div>
@@ -1887,79 +2004,112 @@ function SegmentAudioControls({
       </div>
       
       {!isCollapsed && (
-        <div className="px-3 pb-3 space-y-3">
-      {/* Master Volume Slider */}
-      <div className="flex items-center gap-3">
-        <Volume2 className="w-4 h-4 text-gray-400 flex-shrink-0" />
-        <Slider
-          value={[masterVolume * 100]}
-          onValueChange={([v]) => onMasterVolumeChange(v / 100)}
-          max={100}
-          step={1}
-          disabled={disabled}
-          className="flex-1"
-        />
-        <span className="text-xs text-gray-400 w-10 text-right">{Math.round(masterVolume * 100)}%</span>
-      </div>
-      
-      {/* Individual shot controls */}
-      <div className="space-y-2">
-        {segments.map((seg, i) => {
-          const config = segmentConfigs[seg.segmentId] || { includeAudio: true, volume: 1.0 }
-          return (
-            <div 
-              key={seg.segmentId}
-              className={`
-                flex items-center gap-2 p-2 rounded transition-colors
-                ${config.includeAudio 
-                  ? 'bg-purple-600/20 border border-purple-500/30' 
-                  : 'bg-gray-700/30 border border-gray-600/30'
-                }
-              `}
-            >
-              {/* Mute/Unmute Button */}
-              <button
-                onClick={() => toggleSegment(seg.segmentId)}
-                disabled={disabled}
-                className={`
-                  w-10 h-8 rounded text-xs font-medium transition-colors flex-shrink-0
-                  ${config.includeAudio 
-                    ? 'bg-purple-600/40 text-purple-300 hover:bg-purple-600/60' 
-                    : 'bg-gray-700/50 text-gray-500 hover:bg-gray-600/50'
-                  }
-                `}
-              >
-                #{i + 1}
-              </button>
-              
-              {/* Volume Slider (only when enabled) */}
-              {config.includeAudio ? (
-                <>
-                  <Slider
-                    value={[config.volume * 100]}
-                    onValueChange={([v]) => updateSegmentVolume(seg.segmentId, v / 100)}
-                    max={100}
-                    step={1}
-                    disabled={disabled}
-                    className="flex-1"
-                  />
-                  <span className="text-xs text-gray-400 w-10 text-right">{Math.round(config.volume * 100)}%</span>
-                </>
-              ) : (
-                <span className="flex-1 text-xs text-gray-500 italic">Muted</span>
-              )}
-              
-              {/* Auto Pause Indicator */}
-              <div className="flex items-center gap-1 border-l border-gray-600/30 pl-2 ml-2 shrink-0" title="Automatic pause added to sync with dialogue audio duration">
-                <span className="text-[10px] text-gray-400">Auto Pause:</span>
-                <span className="text-xs text-gray-200 font-mono w-8 text-right">
-                  {audioTracks?.dialogue?.enabled ? Math.max(0, getPlaybackSegmentDuration(seg) - (seg.actualVideoDuration ?? seg.imageDuration ?? (seg.endTime - seg.startTime) ?? 4)).toFixed(1) : "0.0"}s
-                </span>
-              </div>
-            </div>
-          )
-        })}
-      </div>
+        <div className="px-3 pb-3 space-y-3 border-t border-zinc-800/80 pt-2.5">
+          {/* Master Volume Slider */}
+          <div className="flex items-center gap-3">
+            <Volume2 className="w-4 h-4 text-zinc-400 flex-shrink-0" />
+            <Slider
+              value={[masterVolume * 100]}
+              onValueChange={([v]) => onMasterVolumeChange(v / 100)}
+              max={100}
+              step={1}
+              disabled={disabled}
+              className="flex-1"
+            />
+            <span className="text-xs text-zinc-400 font-mono w-10 text-right">{Math.round(masterVolume * 100)}%</span>
+          </div>
+          
+          {/* Individual shot controls */}
+          <div className="space-y-2">
+            {segments.map((seg, i) => {
+              const config = segmentConfigs[seg.segmentId] || { includeAudio: true, volume: 1.0 }
+              const manualHold = config.postSegmentPause ?? 0
+              const baseClipDur = seg.actualVideoDuration ?? seg.imageDuration ?? (seg.endTime - seg.startTime) ?? 4
+              const autoPauseSec = audioTracks?.dialogue?.enabled
+                ? Math.max(0, getPlaybackSegmentDuration(seg) - baseClipDur - manualHold)
+                : 0
+              return (
+                <div 
+                  key={seg.segmentId}
+                  className={cn(
+                    'flex flex-col gap-2 p-2 rounded-md transition-colors border',
+                    config.includeAudio 
+                      ? 'bg-zinc-950/70 border-zinc-800' 
+                      : 'bg-zinc-950/30 border-zinc-800/50 opacity-75'
+                  )}
+                >
+                  <div className="flex items-center gap-2">
+                    {/* Mute/Unmute Button */}
+                    <button
+                      onClick={() => toggleSegment(seg.segmentId)}
+                      disabled={disabled}
+                      className={cn(
+                        'w-9 h-7 rounded text-xs font-mono font-semibold transition-colors flex-shrink-0 border',
+                        config.includeAudio 
+                          ? 'bg-purple-500/20 border-purple-500/40 text-purple-200 hover:bg-purple-500/30' 
+                          : 'bg-zinc-800/60 border-zinc-700 text-zinc-500 hover:text-zinc-300'
+                      )}
+                      title={config.includeAudio ? 'Mute embedded shot audio' : 'Unmute embedded shot audio'}
+                    >
+                      #{i + 1}
+                    </button>
+                    
+                    {/* Volume Slider (only when enabled) */}
+                    {config.includeAudio ? (
+                      <>
+                        <Slider
+                          value={[config.volume * 100]}
+                          onValueChange={([v]) => updateSegmentVolume(seg.segmentId, v / 100)}
+                          max={100}
+                          step={1}
+                          disabled={disabled}
+                          className="flex-1"
+                        />
+                        <span className="text-xs text-zinc-400 font-mono w-10 text-right">{Math.round(config.volume * 100)}%</span>
+                      </>
+                    ) : (
+                      <span className="flex-1 text-xs text-zinc-500 italic">Embedded Audio Muted</span>
+                    )}
+                  </div>
+
+                  {/* Pacing Hold & Auto Pause Row */}
+                  <div className="flex items-center justify-between gap-2 pl-11 text-[10px]">
+                    <div className="flex items-center gap-1.5" title="Add manual freeze-frame tail hold after this shot for dramatic pacing or L-cuts">
+                      <span className="text-zinc-500 uppercase tracking-wider">Tail Hold:</span>
+                      <button
+                        type="button"
+                        disabled={disabled || manualHold <= 0}
+                        onClick={() => updateSegmentHold(seg.segmentId, manualHold - 0.5)}
+                        className="px-1.5 py-0.2 rounded bg-zinc-900 border border-zinc-800 text-zinc-400 hover:text-white disabled:opacity-40"
+                      >
+                        -0.5s
+                      </button>
+                      <span className={cn(
+                        'font-mono w-10 text-center',
+                        manualHold > 0 ? 'text-amber-300 font-semibold' : 'text-zinc-400'
+                      )}>
+                        +{manualHold.toFixed(1)}s
+                      </span>
+                      <button
+                        type="button"
+                        disabled={disabled || manualHold >= 5}
+                        onClick={() => updateSegmentHold(seg.segmentId, manualHold + 0.5)}
+                        className="px-1.5 py-0.2 rounded bg-zinc-900 border border-zinc-800 text-zinc-400 hover:text-white disabled:opacity-40"
+                      >
+                        +0.5s
+                      </button>
+                    </div>
+                    <div className="flex items-center gap-1 text-zinc-500" title="Automatic pause added to sync with dialogue audio duration">
+                      <span>Auto Pause:</span>
+                      <span className="text-zinc-300 font-mono">
+                        {autoPauseSec.toFixed(1)}s
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              )
+            })}
+          </div>
         </div>
       )}
     </div>
@@ -2316,6 +2466,63 @@ export function SceneProductionMixer({
     },
     [segments, onSegmentsChange]
   )
+
+  const handleCycleShotJoin = useCallback(
+    (segmentId: string) => {
+      const seg = segments.find((s) => s.segmentId === segmentId)
+      if (!seg) return
+      const current: ShotJoin =
+        seg.shotJoin === 'dissolve' || seg.shotJoin === 'fade' ? seg.shotJoin : 'cut'
+      const next: ShotJoin =
+        current === 'cut' ? 'dissolve' : current === 'dissolve' ? 'fade' : 'cut'
+      handleShotJoinChange(segmentId, next)
+    },
+    [segments, handleShotJoinChange]
+  )
+
+  const handleApplyAllShotJoins = useCallback(
+    (shotJoin: ShotJoin) => {
+      const ids = new Set(mixerBeatSegments.map((s) => s.segmentId))
+      onSegmentsChange?.(
+        segments.map((seg) =>
+          ids.has(seg.segmentId)
+            ? { ...seg, shotJoin: shotJoin === 'cut' ? null : shotJoin }
+            : seg
+        )
+      )
+      toast.success(
+        shotJoin === 'cut'
+          ? 'Applied Cut to all shot joins'
+          : shotJoin === 'dissolve'
+            ? 'Applied Dissolve to all shot joins'
+            : 'Applied Fade to Black to all shot joins'
+      )
+    },
+    [mixerBeatSegments, segments, onSegmentsChange]
+  )
+
+  const handleTakeSelect = useCallback(
+    (segmentId: string, takeId: string) => {
+      onSegmentsChange?.(
+        segments.map((seg) =>
+          seg.segmentId === segmentId ? applyVideoTakeSelection(seg, takeId) : seg
+        )
+      )
+      toast.success('Switched active shot take')
+    },
+    [segments, onSegmentsChange]
+  )
+
+  const [externalSeekRequest, setExternalSeekRequest] = useState<{
+    time: number
+    seq: number
+  } | null>(null)
+
+  const handleTimelineSeek = useCallback((timeSec: number) => {
+    setExternalSeekRequest((prev) => ({ time: timeSec, seq: (prev?.seq ?? 0) + 1 }))
+  }, [])
+
+  const [inspectorTab, setInspectorTab] = useState<'all' | 'shots' | 'audio' | 'graphics'>('all')
 
   const handleMixerBeatIncludeAll = useCallback(
     (included: boolean) => {
@@ -3346,6 +3553,69 @@ export function SceneProductionMixer({
     return Math.max(videoTotalDuration, maxAudioDuration)
   }, [videoTotalDuration, maxAudioDuration])
 
+  const narrationClipForTimeline = useMemo(() => {
+    if (!audioTracks.narration.enabled || !playbackAudioUrls.narration) return null
+    return {
+      id: 'narration-main',
+      label: 'Voiceover Narration',
+      startTime: audioTracks.narration.startOffset || 0,
+      duration: playbackAudioUrls.narrationDuration || Math.max(3, videoTotalDuration),
+      audioUrl: playbackAudioUrls.narration,
+    }
+  }, [
+    audioTracks.narration.enabled,
+    audioTracks.narration.startOffset,
+    playbackAudioUrls.narration,
+    playbackAudioUrls.narrationDuration,
+    videoTotalDuration,
+  ])
+
+  const sfxClipsForTimeline = useMemo(() => {
+    if (!audioTracks.sfx.enabled || !playbackAudioUrls.sfx?.length) return []
+    return playbackAudioUrls.sfx.map((s, idx) => ({
+      id: `sfx-${idx}`,
+      label: s.description || `SFX #${idx + 1}`,
+      startTime: s.startTime ?? 0,
+      duration: s.duration ?? 2,
+      audioUrl: s.audioUrl,
+    }))
+  }, [audioTracks.sfx.enabled, playbackAudioUrls.sfx])
+
+  const musicClipsForTimeline = useMemo(() => {
+    if (!audioTracks.music.enabled || !mixerMusic.clips.length) return []
+    return mixerMusic.clips.map((c) => ({
+      id: c.id,
+      label: c.label || (mixerMusic.usingScore ? 'Score Cue' : 'Music'),
+      startTime: c.startTime,
+      duration: c.duration,
+      fadeInSec: c.fadeInSec,
+      fadeOutSec: c.fadeOutSec,
+    }))
+  }, [audioTracks.music.enabled, mixerMusic.clips, mixerMusic.usingScore])
+
+  const shotStartTimesBySegmentId = useMemo(() => {
+    const map: Record<string, number> = {}
+    let acc = 0
+    previewSegments.forEach((seg) => {
+      map[seg.segmentId] = acc
+      acc += getPlaybackSegmentDuration(seg)
+    })
+    return map
+  }, [previewSegments, getPlaybackSegmentDuration])
+
+  const activePlaybackSegmentId = useMemo(() => {
+    if (previewSegments.length === 0) return null
+    let acc = 0
+    for (const seg of previewSegments) {
+      const dur = getPlaybackSegmentDuration(seg)
+      if (playbackTime >= acc && playbackTime < acc + dur) {
+        return seg.segmentId
+      }
+      acc += dur
+    }
+    return previewSegments[previewSegments.length - 1]?.segmentId ?? null
+  }, [previewSegments, playbackTime, getPlaybackSegmentDuration])
+
   const languageDurationDeltaPct = useMemo(() => {
     if (productionTarget.language === 'en' || videoTotalDuration <= 0) return 0
     const stretch = maxAudioDuration / videoTotalDuration
@@ -3984,35 +4254,42 @@ export function SceneProductionMixer({
     completeRenderableSegments.length > 0 && previewSegments.length === 0
 
   return (
-    <div className="bg-gray-900/50 rounded-xl border border-purple-500/30 overflow-hidden">
-      {/* Header */}
-      <div className="px-4 sm:px-5 py-4 bg-purple-900/20 border-b border-purple-500/20 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+    <div className="bg-zinc-950 rounded-xl border border-zinc-800 shadow-2xl overflow-hidden">
+      {/* Commercial NLE Console Header */}
+      <div className="px-4 sm:px-5 py-3.5 bg-zinc-900/95 border-b border-zinc-800 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-lg bg-purple-600/20 flex items-center justify-center">
-            <Film className="w-5 h-5 text-purple-400" />
+          <div className="w-9 h-9 rounded-lg bg-cyan-500/10 border border-cyan-500/25 flex items-center justify-center">
+            <Film className="w-4 h-4 text-cyan-400" />
           </div>
           <div>
-            <h3 className="!text-lg !leading-normal !mb-0 font-semibold text-white">Mixer</h3>
-            <p className="text-xs text-gray-400">
-              Mix shot video or animatic keyframes with dialogue, music, and SFX — then export from the footer.
+            <div className="flex items-center gap-2">
+              <h3 className="!text-base !leading-normal !mb-0 font-semibold tracking-tight text-zinc-100">
+                Scene Finishing &amp; Stitch Console
+              </h3>
+              <span className="hidden md:inline-flex items-center px-1.5 py-0.5 rounded bg-zinc-800 border border-zinc-700 text-[9px] font-mono uppercase tracking-wider text-zinc-300">
+                SCENE {sceneNumber} • {previewSegments.length} {previewSegments.length === 1 ? 'SHOT' : 'SHOTS'} • {formatTimeWithMs(timelineDuration)}
+              </span>
+            </div>
+            <p className="text-xs text-zinc-400">
+              Trim clips, switch takes, set shot transitions, balance multi-track stems, and render broadcast MP4 masters.
             </p>
           </div>
         </div>
         
-        <div className="flex items-center gap-3 sm:gap-4 w-full sm:w-auto">
+        <div className="flex items-center gap-2.5 sm:gap-3 w-full sm:w-auto justify-end">
           {/* Theater Mode Toggle */}
           {hasRenderablePreview && (
             <button
               onClick={() => setTheaterMode(prev => !prev)}
-              className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all border ${
+              className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs font-medium transition-all border ${
                 theaterMode
-                  ? 'bg-purple-600/30 border-purple-500/50 text-purple-300'
-                  : 'bg-transparent border-gray-600/50 text-gray-500 hover:text-gray-300 hover:border-gray-500 hover:bg-gray-800/40'
+                  ? 'bg-cyan-500/15 border-cyan-500/40 text-cyan-200'
+                  : 'bg-zinc-950/80 border-zinc-800 text-zinc-400 hover:text-zinc-100 hover:border-zinc-700'
               }`}
-              title={theaterMode ? 'Exit Theater Mode' : 'Theater Mode — expand video + timeline for accurate overlay placement and long-scene editing'}
+              title={theaterMode ? 'Exit Theater Mode' : 'Theater Mode — expand monitor + sequence timeline to full width'}
             >
               {theaterMode ? <PanelRightOpen className="w-3.5 h-3.5" /> : <PanelRightClose className="w-3.5 h-3.5" />}
-              <span className="hidden sm:inline">{isGeneratingLanguageAudio ? 'Generating...' : theaterMode ? 'Show Panel' : 'Theater'}</span>
+              <span className="hidden sm:inline">{isGeneratingLanguageAudio ? 'Generating...' : theaterMode ? 'Show Inspector' : 'Wide Workspace'}</span>
             </button>
           )}
           <ProductionTargetSelector
@@ -4025,30 +4302,40 @@ export function SceneProductionMixer({
         </div>
       </div>
 
-      <div className="px-4 sm:px-5 py-2 border-b border-purple-500/15 bg-gray-900/40 flex flex-wrap items-center gap-2 text-xs">
-        <span className="inline-flex items-center gap-1.5 rounded-full border border-cyan-500/30 bg-cyan-500/10 px-2.5 py-1 text-cyan-200">
-          Timing baseline: English — other languages follow this timeline
-        </span>
-        {productionTarget.language !== 'en' && (
-          <span className="text-gray-400">
-            {languageLabel}
-            {languageDurationDeltaPct > 0
-              ? ` +${languageDurationDeltaPct}% longer vs baseline — holds extended automatically`
-              : ' — aligned to baseline timing'}
+      {/* Technical Timing & Stream Status Bar */}
+      <div className="px-4 sm:px-5 py-2 border-b border-zinc-800/80 bg-zinc-950/90 flex flex-wrap items-center justify-between gap-2 text-xs">
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="inline-flex items-center gap-1.5 rounded border border-cyan-500/30 bg-cyan-500/10 px-2 py-0.5 text-[11px] font-medium text-cyan-200">
+            Timing baseline: English — other languages follow this timeline
           </span>
-        )}
+          {productionTarget.language !== 'en' && (
+            <span className="text-zinc-400 text-[11px]">
+              {languageLabel}
+              {languageDurationDeltaPct > 0
+                ? ` +${languageDurationDeltaPct}% longer vs baseline — holds extended automatically`
+                : ' — aligned to baseline timing'}
+            </span>
+          )}
+        </div>
+        <div className="hidden sm:flex items-center gap-3 text-[10px] font-mono text-zinc-500">
+          <span>VIDEO {formatTimeWithMs(videoTotalDuration)}</span>
+          <span>•</span>
+          <span>AUDIO {formatTimeWithMs(maxAudioDuration)}</span>
+          <span>•</span>
+          <span className="text-zinc-300">MASTER {formatTimeWithMs(timelineDuration)}</span>
+        </div>
       </div>
       
       {/* Main Content */}
       <div className="p-4 sm:p-5">
         {hasRenderablePreview ? (
-          <div className={`grid gap-4 sm:gap-6 transition-all duration-300 ${
+          <div className={`grid gap-4 sm:gap-5 transition-all duration-300 ${
             theaterMode 
               ? 'grid-cols-1' 
               : 'grid-cols-1 lg:grid-cols-[1fr,460px] xl:grid-cols-[1fr,500px]'
           }`}>
-            {/* Left Column: Video Preview + Timeline */}
-            <div className="space-y-4 min-w-0">
+            {/* Left Column: Video Preview + Shot Stitch Strip + Sequence Timeline */}
+            <div className="space-y-3.5 min-w-0">
               <ScenePreviewPlayer
                 segments={previewSegments}
                 playbackKind={previewPlaybackKind}
@@ -4068,6 +4355,7 @@ export function SceneProductionMixer({
                 measuredSegmentDurations={measuredSegmentDurations}
                 onMeasuredDurationsChange={setMeasuredSegmentDurations}
                 onPlaybackTimeChange={handlePlaybackTimeChange}
+                externalSeekRequest={externalSeekRequest}
                 textOverlays={displayOverlays}
                 watermarkConfig={displayWatermarkConfig}
                 onEditOverlay={(overlay) => {
@@ -4082,23 +4370,258 @@ export function SceneProductionMixer({
                 focusBeatSegmentId={focusBeatSegmentId}
                 onFocusBeatHandled={() => setFocusBeatSegmentId(null)}
               />
+
+              {/* Visual Shot Sequence & Stitch Strip */}
+              {mixerBeatRows.length > 0 && (
+                <div className="bg-zinc-900/90 border border-zinc-800 rounded-lg p-3 space-y-2.5">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <div className="flex items-center gap-2">
+                      <Layers className="w-3.5 h-3.5 text-cyan-400" />
+                      <span className="text-[11px] font-semibold uppercase tracking-wider text-zinc-200">
+                        Shot Sequence &amp; Stitch Strip
+                      </span>
+                      <span className="text-[10px] font-mono text-zinc-500">
+                        Click shot to seek &amp; trim • Click join pill to cycle Cut / Dissolve / Fade
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                      {mixerBeatRows.length > 1 && onSegmentsChange && (
+                        <div className="flex items-center gap-1 bg-zinc-950 border border-zinc-800 rounded px-1.5 py-0.5">
+                          <ArrowRightLeft className="w-3 h-3 text-zinc-500 mr-0.5" />
+                          {([
+                            ['cut', 'All Cut'],
+                            ['dissolve', 'All Dissolve'],
+                            ['fade', 'All Fade'],
+                          ] as const).map(([joinVal, joinLabel]) => (
+                            <button
+                              key={joinVal}
+                              type="button"
+                              disabled={isRendering}
+                              onClick={() => handleApplyAllShotJoins(joinVal)}
+                              className="px-1.5 py-0.5 rounded text-[9px] font-mono font-medium text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800 transition-colors"
+                            >
+                              {joinLabel}
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                      {onSegmentsChange && audioTracks.dialogue.enabled && (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          disabled={isRendering || resolvedDialogueClips.length === 0}
+                          onClick={handleAlignBeatsToDialogue}
+                          className="h-6 shrink-0 text-[10px] px-2 bg-cyan-500/10 border-cyan-500/30 text-cyan-200 hover:bg-cyan-500/20"
+                          title="Extend segment holds and rebuild start/end times to match dialogue audio"
+                        >
+                          <Zap className="w-3 h-3 mr-1" />
+                          Align to dialogue
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Horizontal Storyboard Shot Cards + Transition Connectors */}
+                  <div className="flex items-stretch gap-1 overflow-x-auto pb-1">
+                    {mixerBeatRows.map((row, idx) => {
+                      const seg = row.segment
+                      const shotNum = row.beatNumber ?? idx + 1
+                      const included = !!seg && isMixerBeatIncluded(seg)
+                      const isPlayheadHere = !!seg && activePlaybackSegmentId === seg.segmentId
+                      const isTrimSelected = !!seg && selectedTrimSegmentId === seg.segmentId
+                      const thumbUrl = seg ? animaticKeyframeUrl(seg) : null
+                      const sourceDur = seg
+                        ? resolveSegmentSourceDurationSec(seg, measuredSegmentDurations[seg.segmentId])
+                        : 0
+                      const trimWin = seg ? resolveVideoTrimWindow(seg, sourceDur) : null
+                      const playDur = seg && included ? getPlaybackSegmentDuration(seg) : trimWin?.playableSec ?? 0
+                      const takes = seg ? listPlayableTakes(seg) : []
+                      const joinToNext: ShotJoin =
+                        seg?.shotJoin === 'dissolve' || seg?.shotJoin === 'fade' ? seg.shotJoin : 'cut'
+
+                      return (
+                        <React.Fragment key={row.beatId}>
+                          <div
+                            onClick={() => {
+                              if (!seg) return
+                              setSelectedTrimSegmentId(seg.segmentId)
+                              const seekTarget = shotStartTimesBySegmentId[seg.segmentId]
+                              if (seekTarget !== undefined) {
+                                handleTimelineSeek(seekTarget)
+                              }
+                            }}
+                            className={cn(
+                              'group relative flex flex-col justify-between min-w-[132px] max-w-[156px] rounded-md border p-1.5 transition-all cursor-pointer select-none shrink-0',
+                              !included
+                                ? 'bg-zinc-950/40 border-zinc-800/60 opacity-55'
+                                : isPlayheadHere
+                                  ? 'bg-zinc-900 border-cyan-400 ring-1 ring-cyan-400/30 shadow-md'
+                                  : isTrimSelected
+                                    ? 'bg-zinc-900/90 border-amber-500/60'
+                                    : 'bg-zinc-950/80 border-zinc-800 hover:border-zinc-700'
+                            )}
+                          >
+                            {/* Thumbnail / Header */}
+                            <div className="relative h-14 w-full rounded bg-zinc-900 overflow-hidden mb-1.5 border border-zinc-800/80">
+                              {thumbUrl ? (
+                                <img
+                                  src={thumbUrl}
+                                  alt={`Shot ${shotNum}`}
+                                  className="w-full h-full object-cover"
+                                />
+                              ) : (
+                                <div className="w-full h-full flex items-center justify-center text-zinc-600">
+                                  <Film className="w-4 h-4" />
+                                </div>
+                              )}
+                              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/15 to-transparent" />
+                              <div className="absolute top-1 left-1 right-1 flex items-center justify-between">
+                                <span
+                                  className={cn(
+                                    'px-1.5 py-0.2 rounded text-[9px] font-mono font-bold uppercase',
+                                    isPlayheadHere
+                                      ? 'bg-cyan-500 text-zinc-950'
+                                      : 'bg-black/75 text-zinc-200 border border-white/10'
+                                  )}
+                                >
+                                  #{shotNum}
+                                </span>
+                                {seg && onSegmentsChange && (
+                                  <button
+                                    type="button"
+                                    disabled={isRendering}
+                                    onClick={(e) => {
+                                      e.stopPropagation()
+                                      handleMixerBeatIncludeChange(seg.segmentId, !included)
+                                    }}
+                                    className={cn(
+                                      'w-5 h-5 rounded flex items-center justify-center transition-colors',
+                                      included
+                                        ? 'bg-black/70 text-cyan-300 hover:bg-black'
+                                        : 'bg-black/80 text-zinc-500 hover:text-zinc-300'
+                                    )}
+                                    title={included ? 'Exclude shot from scene' : 'Include shot in scene'}
+                                  >
+                                    {included ? <Eye className="w-3 h-3" /> : <EyeOff className="w-3 h-3" />}
+                                  </button>
+                                )}
+                              </div>
+                              <div className="absolute bottom-1 left-1 right-1 flex items-center justify-between text-[9px] font-mono">
+                                <span className="text-zinc-200 font-semibold">
+                                  {playDur > 0 ? `${playDur.toFixed(1)}s` : '—'}
+                                </span>
+                                {trimWin?.isTrimmed && (
+                                  <span className="px-1 rounded bg-amber-500/30 border border-amber-400/50 text-amber-200 text-[8px] uppercase">
+                                    Trim
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+
+                            {/* Footer: Take Switcher or Status */}
+                            <div className="flex items-center justify-between gap-1 text-[9px] font-mono">
+                              {seg && takes.length > 1 && onSegmentsChange ? (
+                                <div
+                                  className="flex items-center gap-0.5"
+                                  onClick={(e) => e.stopPropagation()}
+                                >
+                                  {takes.map((t, tIdx) => {
+                                    const activeTake =
+                                      t.assetUrl === seg.activeAssetUrl ||
+                                      (!seg.activeAssetUrl && tIdx === takes.length - 1)
+                                    return (
+                                      <button
+                                        key={t.id}
+                                        type="button"
+                                        disabled={isRendering}
+                                        onClick={() => handleTakeSelect(seg.segmentId, t.id)}
+                                        className={cn(
+                                          'px-1 py-0.2 rounded text-[8px] font-semibold transition-colors',
+                                          activeTake
+                                            ? 'bg-cyan-500/25 text-cyan-200 border border-cyan-500/40'
+                                            : 'bg-zinc-900 text-zinc-500 hover:text-zinc-300'
+                                        )}
+                                        title={`Select Take ${tIdx + 1}`}
+                                      >
+                                        T{tIdx + 1}
+                                      </button>
+                                    )
+                                  })}
+                                </div>
+                              ) : (
+                                <span className="text-zinc-500 truncate">
+                                  {!seg ? 'No clip' : !included ? 'Excluded' : '1 Take'}
+                                </span>
+                              )}
+                              {seg && included && (
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation()
+                                    setSelectedTrimSegmentId(seg.segmentId)
+                                    if (collapsedSections.beatTrim) {
+                                      toggleSection('beatTrim')
+                                    }
+                                  }}
+                                  className="text-zinc-400 hover:text-amber-300 flex items-center gap-0.5"
+                                  title="Open Shot Trim inspector for this clip"
+                                >
+                                  <Scissors className="w-2.5 h-2.5" />
+                                </button>
+                              )}
+                            </div>
+                          </div>
+
+                          {/* Transition Connector Pill between shots */}
+                          {idx < mixerBeatRows.length - 1 && seg && (
+                            <div className="flex flex-col items-center justify-center shrink-0 px-0.5">
+                              <button
+                                type="button"
+                                disabled={isRendering || !onSegmentsChange}
+                                onClick={() => handleCycleShotJoin(seg.segmentId)}
+                                className={cn(
+                                  'px-1.5 py-1 rounded text-[8px] font-mono font-bold uppercase tracking-wider border transition-colors',
+                                  joinToNext === 'dissolve'
+                                    ? 'bg-purple-950/90 border-purple-500/50 text-purple-200 hover:bg-purple-900'
+                                    : joinToNext === 'fade'
+                                      ? 'bg-amber-950/90 border-amber-500/50 text-amber-200 hover:bg-amber-900'
+                                      : 'bg-zinc-900 border-zinc-700 text-zinc-400 hover:text-zinc-200 hover:border-zinc-500'
+                                )}
+                                title={`Transition from Shot #${shotNum} into Shot #${shotNum + 1}: ${joinToNext.toUpperCase()} (click to cycle Cut / Dissolve / Fade)`}
+                              >
+                                {joinToNext === 'dissolve'
+                                  ? 'DSL'
+                                  : joinToNext === 'fade'
+                                    ? 'FADE'
+                                    : 'CUT'}
+                              </button>
+                            </div>
+                          )}
+                        </React.Fragment>
+                      )
+                    })}
+                  </div>
+                </div>
+              )}
               
               {/* Timeline Overview - directly under video for spatial continuity */}
-              <div className="bg-gray-800/50 border border-gray-700/50 rounded-lg">
+              <div className="bg-zinc-900/90 border border-zinc-800 rounded-lg">
                 <div 
-                  className="flex items-center justify-between p-3 cursor-pointer hover:bg-white/5"
+                  className="flex items-center justify-between p-3 cursor-pointer hover:bg-white/[0.03]"
                   onClick={() => toggleSection('timeline')}
                 >
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 flex-wrap">
                     <button
                       onClick={(e) => { e.stopPropagation(); toggleSection('timeline'); }}
-                      className="w-5 h-5 flex items-center justify-center text-gray-400 hover:text-white transition-colors"
+                      className="w-5 h-5 flex items-center justify-center text-zinc-400 hover:text-white transition-colors"
                     >
                       {collapsedSections.timeline ? <ChevronDown className="w-4 h-4" /> : <ChevronUp className="w-4 h-4" />}
                     </button>
-                    <Clock className="w-4 h-4 text-blue-400" />
-                    <span className="text-sm font-medium text-white">Timeline</span>
-                    <span className="text-xs text-gray-500 truncate">Visual: {formatTime(videoTotalDuration)} | Total: {formatTime(timelineDuration)}</span>
+                    <Clock className="w-4 h-4 text-cyan-400" />
+                    <span className="text-xs font-semibold uppercase tracking-wider text-zinc-200">Timeline</span>
+                    <span className="text-[11px] font-mono text-zinc-500 truncate">
+                      Visual: {formatTime(videoTotalDuration)} | Total: {formatTime(timelineDuration)}
+                    </span>
                     <SceneTransitionSelect
                       sceneIdx={effectiveSceneIdx}
                       scenes={scenes}
@@ -4115,7 +4638,7 @@ export function SceneProductionMixer({
                         e.stopPropagation()
                         handleAlignBeatsToDialogue()
                       }}
-                      className="h-7 shrink-0 text-[11px] px-2 bg-blue-500/10 border-blue-500/40 text-blue-300 hover:bg-blue-500/20"
+                      className="h-7 shrink-0 text-[11px] px-2 bg-cyan-500/10 border-cyan-500/30 text-cyan-200 hover:bg-cyan-500/20"
                       title="Extend segment holds and rebuild start/end times to match dialogue audio"
                     >
                       <Zap className="w-3 h-3 mr-1" />
@@ -4132,8 +4655,16 @@ export function SceneProductionMixer({
                       onTextOverlayChange={updateOverlay}
                       segments={previewSegments}
                       segmentDurations={segmentDurationsForTimeline}
+                      measuredDurations={measuredSegmentDurations}
                       dialogueClips={audioTracks.dialogue.enabled ? dialogueClipsForTimeline : []}
+                      narrationClip={narrationClipForTimeline}
+                      sfxClips={sfxClipsForTimeline}
+                      musicClips={musicClipsForTimeline}
                       currentPlaybackTime={playbackTime}
+                      selectedSegmentId={selectedTrimSegmentId ?? activePlaybackSegmentId}
+                      onSelectSegment={(segmentId) => setSelectedTrimSegmentId(segmentId)}
+                      onCycleShotJoin={onSegmentsChange ? handleCycleShotJoin : undefined}
+                      onSeekTime={handleTimelineSeek}
                       disabled={isRendering}
                     />
                   </div>
@@ -4144,8 +4675,33 @@ export function SceneProductionMixer({
             {/* Right Column: Controls Panel — collapses in Theater Mode */}
             {!theaterMode && (
             <div className="space-y-3">
+              {/* Inspector Workspace Filter Tabs */}
+              <div className="flex items-center gap-1 p-1 bg-zinc-900 border border-zinc-800 rounded-lg">
+                {([
+                  ['all', 'All Controls'],
+                  ['shots', 'Shots & Stitch'],
+                  ['audio', 'Audio Stems'],
+                  ['graphics', 'Graphics & Dub'],
+                ] as const).map(([tabKey, tabLabel]) => (
+                  <button
+                    key={tabKey}
+                    type="button"
+                    onClick={() => setInspectorTab(tabKey)}
+                    className={cn(
+                      'flex-1 py-1.5 px-2 rounded-md text-[11px] font-medium transition-colors text-center',
+                      inspectorTab === tabKey
+                        ? 'bg-zinc-800 text-cyan-300 border border-zinc-700 shadow-sm'
+                        : 'text-zinc-400 hover:text-zinc-200'
+                    )}
+                  >
+                    {tabLabel}
+                  </button>
+                ))}
+              </div>
+
+              <div className={cn('space-y-3', inspectorTab !== 'all' && inspectorTab !== 'graphics' && 'hidden')}>
               {/* Text Overlay Controls */}
-              <div className="bg-gray-800/50 border border-gray-700 rounded-lg">
+              <div className="bg-zinc-900/80 border border-zinc-800 rounded-lg">
                 <div 
                   className="flex items-center justify-between p-3 cursor-pointer hover:bg-white/5"
                   onClick={() => toggleSection('textOverlays')}
@@ -4915,7 +5471,9 @@ export function SceneProductionMixer({
                 </div>
                 )}
               </div>
-              
+              </div>
+
+              <div className={cn('space-y-3', inspectorTab !== 'all' && inspectorTab !== 'shots' && 'hidden')}>
               {mixerBeatRows.length > 0 && (
                 <SegmentBeatVideoControls
                   rows={mixerBeatRows}
@@ -4925,6 +5483,8 @@ export function SceneProductionMixer({
                   isCollapsed={collapsedSections.beatVideo}
                   onToggleCollapse={() => toggleSection('beatVideo')}
                   onShotJoinChange={handleShotJoinChange}
+                  onApplyAllShotJoins={handleApplyAllShotJoins}
+                  onTakeSelect={handleTakeSelect}
                   measuredDurations={measuredSegmentDurations}
                   onTrimChange={handleSegmentTrimChange}
                   onResetTrim={handleSegmentTrimReset}
@@ -4967,7 +5527,9 @@ export function SceneProductionMixer({
                 isCollapsed={collapsedSections.watermarkCrop}
                 onToggleCollapse={() => toggleSection('watermarkCrop')}
               />
+              </div>
 
+              <div className={cn('space-y-3', inspectorTab !== 'all' && inspectorTab !== 'audio' && 'hidden')}>
               <SegmentAudioControls
                 segments={previewSegments}
                 segmentConfigs={segmentAudioConfigs}
@@ -4980,10 +5542,12 @@ export function SceneProductionMixer({
                 getPlaybackSegmentDuration={getPlaybackSegmentDuration}
                 audioTracks={audioTracks}
               />
+              </div>
               
+              <div className={cn('space-y-3', inspectorTab !== 'all' && inspectorTab !== 'graphics' && 'hidden')}>
               {/* Stream — the language version Clips and Streams share with this mix */}
               {availableLanguages.length > 0 && (
-                <div className="bg-gray-800/50 border border-gray-700/50 rounded-lg">
+                <div className="bg-zinc-900/80 border border-zinc-800 rounded-lg">
                   <ProductionSectionHeader
                     icon={Languages}
                     title="Stream"
@@ -5001,12 +5565,12 @@ export function SceneProductionMixer({
                           intent="generate"
                           placeholder="+ Add Language"
                           disabled={isRendering || isGeneratingAudio || isGeneratingLanguageAudio}
-                          className="h-[26px] w-auto min-w-[110px] text-[11px] bg-gray-700/30 border-purple-500/40 text-purple-200"
+                          className="h-[26px] w-auto min-w-[110px] text-[11px] bg-zinc-800 border-cyan-500/40 text-cyan-200"
                         />
                       ) : undefined
                     }
                   />
-                  <p className="px-3 pb-2 text-[11px] text-gray-400">
+                  <p className="px-3 pb-2 text-[11px] text-zinc-400">
                     {selectedLanguage === 'en'
                       ? 'Mixing the English master — dialogue, sound effects, and music.'
                       : `Dubbing the ${languageLabel} version — dialogue, sound effects, and music.`}
@@ -5024,14 +5588,14 @@ export function SceneProductionMixer({
                           onClick={() => onProductionTargetChange({ ...productionTarget, language: langCode })}
                           className={`flex items-center gap-1.5 px-2 py-1 rounded-md text-xs transition-all border ${
                             isActive
-                              ? 'bg-purple-600/30 border-purple-500/50 text-purple-200'
-                              : 'bg-gray-700/30 border-gray-600/40 text-gray-400 hover:text-gray-200 hover:border-gray-500'
+                              ? 'bg-cyan-500/20 border-cyan-500/50 text-cyan-200'
+                              : 'bg-zinc-950/70 border-zinc-800 text-zinc-400 hover:text-zinc-200 hover:border-zinc-700'
                           }`}
                         >
                           <span>{FLAG_EMOJIS[langCode] || '🌐'}</span>
                           <span>{streamLanguageLabel(langCode, langInfo?.name)}</span>
                           <div className="flex gap-0.5 ml-0.5">
-                            <span className={`w-1.5 h-1.5 rounded-full ${hasDialogue ? 'bg-blue-400' : 'bg-gray-600'}`} title={hasDialogue ? 'Dialogue ready' : 'No dialogue'} />
+                            <span className={`w-1.5 h-1.5 rounded-full ${hasDialogue ? 'bg-blue-400' : 'bg-zinc-600'}`} title={hasDialogue ? 'Dialogue ready' : 'No dialogue'} />
                           </div>
                         </button>
                       )
@@ -5043,14 +5607,14 @@ export function SceneProductionMixer({
                         filterCodes={availableLanguages}
                         size="xs"
                         showFlags={true}
-                        className="h-[26px] w-auto min-w-[90px] text-[11px] bg-gray-700/30 border-gray-600/40 text-gray-300"
+                        className="h-[26px] w-auto min-w-[90px] text-[11px] bg-zinc-900 border-zinc-800 text-zinc-300"
                         placeholder={`+${availableLanguages.length - 4} more`}
                       />
                     )}
                   </div>
-                  <div className="px-3 pb-3 pt-1 space-y-2 border-t border-gray-700/50">
+                  <div className="px-3 pb-3 pt-2 space-y-2 border-t border-zinc-800">
                     <div className="flex items-center justify-between">
-                      <div className="text-[11px] text-gray-400">
+                      <div className="text-[11px] text-zinc-400">
                         Preserve Veo ambience for dubbed renders
                       </div>
                       <Switch
@@ -5061,7 +5625,7 @@ export function SceneProductionMixer({
                     </div>
                     {preserveBackgroundStem && (
                       <div className="flex items-center justify-between">
-                        <div className="text-[11px] text-gray-500">
+                        <div className="text-[11px] text-zinc-500">
                           Keep original speech stem
                         </div>
                         <Switch
@@ -5079,7 +5643,9 @@ export function SceneProductionMixer({
                   </div>
                 </div>
               )}
+              </div>
               
+              <div className={cn('space-y-3', inspectorTab !== 'all' && inspectorTab !== 'audio' && 'hidden')}>
               {/* Audio Track Controls */}
               <AudioTrackRow
                 type="dialogue"
@@ -5179,17 +5745,18 @@ export function SceneProductionMixer({
                   ) : undefined
                 }
               />
+              </div>
             </div>
             )}
           </div>
         ) : (
           /* Empty State */
           <div className="py-12 text-center space-y-6">
-            <Film className="w-16 h-16 mx-auto mb-4 text-gray-600 opacity-40" />
+            <Film className="w-16 h-16 mx-auto mb-4 text-zinc-600 opacity-40" />
             {allBeatsExcluded ? (
               <>
-                <h4 className="text-lg font-medium text-gray-300 mb-2">All shots are excluded</h4>
-                <p className="text-sm text-gray-500 max-w-md mx-auto">
+                <h4 className="text-lg font-medium text-zinc-300 mb-2">All shots are excluded</h4>
+                <p className="text-sm text-zinc-500 max-w-md mx-auto">
                   Include at least one shot to preview or render. Excluded shots keep their video — they are only hidden from the mixer.
                 </p>
                 {productionTarget.streamType !== 'animatic' && (
@@ -5218,8 +5785,8 @@ export function SceneProductionMixer({
               </>
             ) : (
               <>
-                <h4 className="text-lg font-medium text-gray-300 mb-2">Nothing to preview yet</h4>
-                <p className="text-sm text-gray-500 max-w-md mx-auto">
+                <h4 className="text-lg font-medium text-zinc-300 mb-2">Nothing to preview yet</h4>
+                <p className="text-sm text-zinc-500 max-w-md mx-auto">
                   {animaticPreviewSegments.length > 0
                     ? 'Use Preview output → Animatic above to preview keyframes, or generate shot videos in the Director’s Console for full video output and stitching.'
                     : 'Generate keyframes or video segments in the Director’s Console above, then mix and render from this panel.'}
@@ -5230,21 +5797,21 @@ export function SceneProductionMixer({
         )}
       </div>
       
-      {/* Footer - Render Action */}
+      {/* Commercial Master Export Footer */}
       {hasRenderablePreview && (
-        <div className="px-4 sm:px-5 py-4 bg-gray-800/50 border-t border-gray-700/50">
+        <div className="px-4 sm:px-5 py-4 bg-zinc-900/95 border-t border-zinc-800">
           {/* Render Status Row */}
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
             <div className="flex items-center gap-3 flex-wrap">
               {renderStatus === 'complete' && lastRenderedUrl && (
                 <>
-                  <CheckCircle2 className="w-5 h-5 text-green-400" />
-                  <span className="text-sm text-green-400">
+                  <CheckCircle2 className="w-5 h-5 text-emerald-400" />
+                  <span className="text-sm text-emerald-400 font-medium">
                     Render complete! ({activeRenderMode === 'local' ? 'Fast (WebM)' : activeRenderMode === 'headless' ? 'Cloud (long scenes)' : 'Broadcast (MP4)'})
                   </span>
                   <button 
                     onClick={handleDownload}
-                    className="text-sm text-purple-400 hover:text-purple-300 underline bg-transparent border-none p-0 cursor-pointer"
+                    className="text-sm text-cyan-400 hover:text-cyan-300 underline bg-transparent border-none p-0 cursor-pointer"
                   >
                     Download {activeRenderMode === 'local' ? 'WebM' : activeRenderMode === 'headless' ? 'WebM' : 'MP4'}
                   </button>
@@ -5255,7 +5822,7 @@ export function SceneProductionMixer({
                   <span className="text-sm text-red-400">Error: {renderError}</span>
                   <button
                     onClick={() => setRenderStatus('idle')}
-                    className="text-xs text-gray-400 hover:text-white"
+                    className="text-xs text-zinc-400 hover:text-white"
                   >
                     Dismiss
                   </button>
@@ -5263,11 +5830,11 @@ export function SceneProductionMixer({
               )}
               {isRendering && (
                 <div className="flex items-center gap-3">
-                  <Loader2 className="w-5 h-5 text-purple-400 animate-spin" />
+                  <Loader2 className="w-5 h-5 text-cyan-400 animate-spin" />
                   <div className="w-32 sm:w-48">
                     <Progress value={renderProgress} className="h-2" />
                   </div>
-                  <span className="text-sm text-gray-400">
+                  <span className="text-sm text-zinc-400 font-mono">
                     {Math.round(renderProgress)}%{activeRenderMode === 'headless' ? ' (Pro Cloud)' : ''}
                   </span>
                 </div>
@@ -5282,7 +5849,7 @@ export function SceneProductionMixer({
                 onValueChange={(value) => setResolution(value as '720p' | '1080p' | '4K')}
                 disabled={isRendering}
               >
-                <SelectTrigger className="w-[180px] h-9 shrink-0 bg-gray-800 border-gray-600 [&>span]:text-left">
+                <SelectTrigger className="w-[180px] h-9 shrink-0 bg-zinc-950 border-zinc-700 [&>span]:text-left">
                   <SelectValue placeholder="Res">
                     {RESOLUTION_TRIGGER_LABELS[resolution]}
                   </SelectValue>
@@ -5300,7 +5867,7 @@ export function SceneProductionMixer({
                 onValueChange={(value) => setEncodeQuality(value as 'delivery' | 'draft')}
                 disabled={isRendering}
               >
-                <SelectTrigger className="w-[148px] h-9 shrink-0 bg-gray-800 border-gray-600 [&>span]:text-left">
+                <SelectTrigger className="w-[148px] h-9 shrink-0 bg-zinc-950 border-zinc-700 [&>span]:text-left">
                   <SelectValue placeholder="Quality">
                     {encodeQuality === 'draft' ? 'Draft' : 'Delivery'}
                   </SelectValue>
@@ -5316,13 +5883,13 @@ export function SceneProductionMixer({
                 onClick={handleSmartRender}
                 disabled={isRendering || isQueueingRender || !hasRenderablePreview}
                 size="lg"
-                className={`px-6 whitespace-nowrap min-w-[160px] ${
+                className={`px-6 whitespace-nowrap min-w-[160px] font-semibold ${
                   selectedRenderMode === 'local' 
-                    ? 'bg-yellow-600 hover:bg-yellow-700' 
+                    ? 'bg-amber-600 hover:bg-amber-500' 
                     : selectedRenderMode === 'headless'
-                    ? 'bg-blue-600 hover:bg-blue-700'
-                    : 'bg-purple-600 hover:bg-purple-700'
-                } text-white`}
+                    ? 'bg-blue-600 hover:bg-blue-500'
+                    : 'bg-cyan-600 hover:bg-cyan-500'
+                } text-white shadow-lg`}
                 title={
                   selectedRenderMode === 'local'
                     ? 'Fast (WebM): browser export up to 1080p. Quick drafts — use Broadcast (MP4) for delivery.'
@@ -5355,7 +5922,7 @@ export function SceneProductionMixer({
           
           {/* Render Info */}
           {renderStatus === 'idle' && (
-            <div className="mt-3 pt-3 border-t border-gray-700/50 flex flex-col gap-2 text-xs text-gray-500">
+            <div className="mt-3 pt-3 border-t border-zinc-800/80 flex flex-col gap-2 text-xs text-zinc-500">
               <div className="flex items-center gap-4 flex-wrap">
                 {selectedRenderMode === 'local' && (
                   <>
@@ -5366,11 +5933,11 @@ export function SceneProductionMixer({
                         Browser WebM • Up to 1080p (matches Output; 4K requires Final or Pro Cloud) • May vary vs preview on slower devices
                       </span>
                     </div>
-                    <div className="flex items-center gap-1 text-gray-400">
+                    <div className="flex items-center gap-1 text-zinc-400">
                       <span>Best for: Fast drafts; use Broadcast (MP4) for delivery-grade export</span>
                     </div>
                     {watermarkConfig.enabled && (
-                      <div className="flex items-center gap-1 text-green-400">
+                      <div className="flex items-center gap-1 text-emerald-400">
                         <CheckCircle2 className="w-3 h-3" />
                         <span>Watermark enabled</span>
                       </div>
@@ -5380,15 +5947,15 @@ export function SceneProductionMixer({
                 {selectedRenderMode === 'server' && (
                   <>
                     <div className="flex items-center gap-1">
-                      <Video className="w-3 h-3 text-purple-400" />
-                      <span className="text-purple-300">Final Render (FFmpeg):</span>
+                      <Video className="w-3 h-3 text-cyan-400" />
+                      <span className="text-cyan-300">Final Render (FFmpeg):</span>
                       <span>Cloud MP4 (H.264) at Output resolution ({resolution})</span>
                     </div>
-                    <div className="flex items-center gap-1 text-gray-400">
+                    <div className="flex items-center gap-1 text-zinc-400">
                       <span>Best for: Final delivery and consistent results</span>
                     </div>
                     {watermarkConfig.enabled && (
-                      <div className="flex items-center gap-1 text-green-400">
+                      <div className="flex items-center gap-1 text-emerald-400">
                         <CheckCircle2 className="w-3 h-3" />
                         <span>Watermark burned in</span>
                       </div>
@@ -5402,11 +5969,11 @@ export function SceneProductionMixer({
                       <span className="text-blue-300">Pro Cloud (Puppeteer):</span>
                       <span>Headless WebM at Output resolution ({resolution}) • Frame-accurate overlays and watermarks when enabled</span>
                     </div>
-                    <div className="flex items-center gap-1 text-gray-400">
+                    <div className="flex items-center gap-1 text-zinc-400">
                       <span>Best for: Deterministic output across machines (Pro plan)</span>
                     </div>
                     {watermarkConfig.enabled && (
-                      <div className="flex items-center gap-1 text-green-400">
+                      <div className="flex items-center gap-1 text-emerald-400">
                         <CheckCircle2 className="w-3 h-3" />
                         <span>Guaranteed watermark (frame-by-frame)</span>
                       </div>
@@ -5414,10 +5981,10 @@ export function SceneProductionMixer({
                   </>
                 )}
                 {selectedRenderMode === 'auto' && (
-                  <div className="flex items-center gap-1">
-                    <Sparkles className="w-3 h-3 text-gray-400" />
-                    <span className="text-gray-300">Auto:</span>
-                    <span>Renders a cloud MP4 in the background and notifies you when it is ready</span>
+                  <div className="flex items-center gap-1.5 font-mono text-[11px]">
+                    <Sparkles className="w-3.5 h-3.5 text-cyan-400" />
+                    <span className="text-zinc-300 uppercase tracking-wider font-semibold">Master Cloud Export (H.264 MP4):</span>
+                    <span>Renders a frame-accurate cloud MP4 in the background at {resolution} ({encodeQuality === 'draft' ? 'Draft' : 'Delivery'})</span>
                   </div>
                 )}
               </div>
