@@ -4996,7 +4996,7 @@ function SceneCard({
         objectReferences: objectReferences ?? [],
       })
       onScriptChange({ ...script, script: { ...script.script, scenes: updatedScenes } })
-      toast.success('Continuity references now follow this scene’s direction.')
+      toast.success('Added the plates this scene’s direction needs. Existing plates stay.')
     } finally {
       setSyncingSceneReferences(false)
     }
