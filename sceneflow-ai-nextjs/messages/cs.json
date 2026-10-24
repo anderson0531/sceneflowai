@@ -257,53 +257,54 @@
     "exitFullscreenOverview": "Ukončit režim celé obrazovky",
     "watchLongformLabel": "Podívejte se na rozsáhlý materiál",
     "screenshotLabel": "Snímek obrazovky",
-    "landingUiLanguagesLabel": "Produkce a dabing ve 44 jazycích. Tento web je k dispozici v těchto 39:",
+    "landingUiLanguagesLabel": "Produkujte a dabujte ve 44 jazycích. Úplné rozhraní studia a tato stránka jsou k dispozici v těchto 39:",
     "rooms": [
       {
         "id": "series-desk",
         "label": "Series Room",
-        "promise": "V Series Room začíná sezóna. Stejné postavy a stejný příběh přecházejí do každé epizody, kterou přidáte. Přečtěte si jej, poslechněte a režírujte, než se epizoda otevře v Blueprint Room. U filmu bez sezóny lze tuto místnost vynechat.",
+        "headline": "Jednou postavte vesmír. Vytvářejte epizody navždy.",
+        "promise": "Vytvořte řadu epizod s jednou sdílenou kreativní biblí. Vaše obsazení, umístění, příběhová vlákna a vizuální DNA se automaticky přenesou do každé epizody, kterou roztočíte. Produkce samostatného filmu? Přeskočte přímo na Blueprint Room.",
         "features": [
           {
             "icon": "newSeries",
             "title": "Nová série",
-            "description": "Začněte zde. Popište vlastními slovy seriál, který máte v úmyslu vytvořit. Funkce „Upřesnit a potvrdit“ (Clarify and Confirm) s vámi tento záměr postupně ladí, dokud není hotová synopse, a funkce „Vygenerovat seriál“ (Generate Series) vytvoří jeho základní podobu. Nový seriál začíná pěti epizodami, přičemž další můžete přidat.",
+            "description": "Představte svůj koncept seriálu nebo kanálu srozumitelným jazykem. Interaktivní vylepšování umělé inteligence zdokonalí váš předpoklad a vytvoří základ pro více epizod – doplněný o zastřešující dějové oblouky a rozdělení epizod.",
             "screenshot": "Vytvořit novou řadu — záměr, upřesnění a potvrzení, vygenerování řady",
             "learnMore": {
               "items": [
                 {
                   "title": "Váš záměr",
-                  "description": "Popište, o jaký seriál se jedná, včetně formátu, cílového publika a výtvarného stylu."
+                  "description": "Představte premisu, formát, cílové publikum a styl vizuálního umění srozumitelným jazykem."
                 },
                 {
-                  "title": "Iterovat",
-                  "description": "Funkce „Clarify and Confirm“ s vámi doladí synopsi ještě předtím, než dojde k jakémukoli generování."
+                  "title": "Interaktivní vylepšení",
+                  "description": "Clarify and Confirm s vámi vyostřuje přehled sezóny ještě předtím, než se něco vytvoří."
                 },
                 {
-                  "title": "Výchozí úroveň",
-                  "description": "Generate Series připravuje sezónu, kterou budete hodnotit; ta začíná pěti epizodami."
+                  "title": "Základní linie sezóny",
+                  "description": "Generate Series vytváří pětiepizodový oblouk, který můžete kdykoli rozšířit."
                 }
               ]
             }
           },
           {
             "icon": "seriesReview",
-            "title": "Posoudit první sestřih",
-            "description": "Přečtěte si přehled, nebo zvolte možnost poslechu. Poté si přečtěte jednotlivé epizody, případně si je poslechněte. Zatímco konzistentnost drží pohromadě dějové linie, návaznost (kontinuita) propojuje postavy, lokace, rekvizity a prostředí, které jsou těmto epizodám společné.",
+            "title": "Sezónní Bible a kontinuita",
+            "description": "Přečtěte si nebo si poslechněte vyprávěný přehled sezóny a tabulku epizod. SceneFlow uzamkne vaše vlákna příběhu, profily obsazení, umístění a podpisové rekvizity do sdílené knihovny Reference Library, kterou zdědí každá epizoda.",
             "screenshot": "Přehled, epizody, konzistence, kontinuita – obsazení, lokace, rekvizity, prostředí",
             "learnMore": {
               "items": [
                 {
                   "title": "Čtěte nebo poslouchejte",
-                  "description": "Přehled a epizody si můžete přečíst, nebo si je poslechnout pomocí funkce Poslech."
+                  "description": "Prohlédněte si přehled sezóny a synopse každé epizody s vestavěným zvukovým vyprávěním."
                 },
                 {
-                  "title": "Konzistence",
-                  "description": "Estetika, klíčové události a dějové linie zůstávají spjaty s danou sezónou."
+                  "title": "Konzistence příběhu",
+                  "description": "Estetika, klíčové dějové události a nitky vyprávění zůstávají po celou sezónu uzamčeny."
                 },
                 {
-                  "title": "Kontinuita",
-                  "description": "Herecké obsazení, lokace, rekvizity i prostředí jsou v každé epizodě stejné."
+                  "title": "Sdílená kontinuita",
+                  "description": "Obsazení, umístění, rekvizity a nastavení se automaticky promítnou do každé epizody, kterou vytvoříte."
                 }
               ]
             }
@@ -311,75 +312,75 @@
           {
             "icon": "seriesResonance",
             "title": "Audience Resonance",
-            "description": "Spusťte Audience Resonance, když chcete získat přehled o aktuální sezóně. Projděte si výsledná skóre a analýzu. Konkrétní doporučení (Actionable Insight) aplikujte pouze v případě, že se tak sami rozhodnete; dokud tak neučiníte, v sérii se nic nemění.",
+            "description": "Před napsáním jediného scénáře otestujte svůj sezónní oblouk v porovnání s cílovou demografickou skupinou. Prohlédněte si skóre rezonance epizod po epizodě a aplikujte vylepšení příběhu podložená daty jediným kliknutím – pouze když souhlasíte s poznámkou.",
             "screenshot": "Analýza Audience Resonance a následně prakticky využitelné poznatky (bez aplikace)",
             "learnMore": {
               "items": [
                 {
-                  "title": "Čtení",
-                  "description": "Výsledky a analýzy ukazují, co u vámi určeného publika skutečně zabírá."
+                  "title": "Demografické hodnocení",
+                  "description": "Skóre a strukturální analýza odhalují, jak vaše sezóna přistane vaší cílové skupině."
                 },
                 {
-                  "title": "Volitelné",
-                  "description": "Prakticky využitelný poznatek změní řadu až ve chvíli, kdy jej uplatníte."
+                  "title": "Výsadní právo ředitele",
+                  "description": "Actionable Insights aktualizují vaši sérii pouze tehdy, když se rozhodnete je použít."
                 }
               ]
             }
           },
           {
             "icon": "seriesDirector",
-            "title": "Režisér seriálu",
-            "description": "Veďte celou sérii vlastními slovy – ať už mluvenými, nebo psanými. Sami volíte změnu i zaměření a přijímáte je za své. Pomoci může doporučení, zatímco nesouvisející části příběhu zůstávají beze změny.",
+            "title": "Ředitel seriálu",
+            "description": "Přetvářejte celou sezónu hlasem nebo textem. Změňte tón, zvyšte sázky nebo přepracujte oblouk postavy ve všech epizodách najednou, zatímco zbytek vašeho příběhu zůstane nedotčený.",
             "screenshot": "Režisér seriálu — režie, zaměření, přijetí",
             "learnMore": {
               "items": [
                 {
-                  "title": "Vaše slova",
-                  "description": "Vyslovte nebo napište požadovanou změnu a případně ji omezte na děj, postavy, obsah epizody, ladění či prostředí."
+                  "title": "Směr prostého jazyka",
+                  "description": "Vyslovte nebo napište svou poznámku a cílový děj, postavy, oblouky epizody, tón nebo nastavení."
                 },
                 {
-                  "title": "Přijímáte to",
-                  "description": "Nic se nezmění, dokud to nepřijmeš, a nesouvisející části příběhu zůstanou beze změny."
+                  "title": "Chirurgické aktualizace",
+                  "description": "Dokud revizi nepřijmete, nic se nezmění a nesouvisející vlákna příběhu zůstanou nedotčena."
                 },
                 {
-                  "title": "Doporučení",
-                  "description": "Doporučení mohou pomoci a vy si přesto vybíráte, co si ponecháte."
+                  "title": "Řízená doporučení",
+                  "description": "Použijte vylepšení příběhu navržená umělou inteligencí nebo řiďte každou kreativní volbu sami."
                 }
               ]
             }
           },
           {
             "icon": "directEpisode",
-            "title": "Režírujte tuto epizodu",
-            "description": "Otevřete si jednu epizodu a sami ji zrežírujte. Zvyšte sázky nebo prohloubte příběh a poté tyto změny aplikujte. Ostatní epizody zůstanou beze změny.",
+            "title": "Směr na úrovni epizody",
+            "description": "Přibližte si libovolnou jednotlivou epizodu a přepracujte její děj, tempo nebo háček v izolaci – aniž byste destabilizovali zbytek vaší série.",
             "screenshot": "Epizody — Režírovat tuto epizodu, ostatní epizody beze změny",
             "learnMore": {
               "items": [
                 {
-                  "title": "Jedna epizoda",
-                  "description": "Tato volba aplikuje změnu pouze na danou epizodu."
+                  "title": "Izolované přepisy",
+                  "description": "Přímé změny obrysu a rytmů jedné epizody beze změny sousedních epizod."
                 },
                 {
-                  "title": "Sezóna přetrvává",
-                  "description": "Ostatní epizody zůstávají beze změny."
+                  "title": "Sezónní integrita",
+                  "description": "Zastřešující bible sezóny a zbývající břidlice epizod zůstanou uzamčeny."
                 }
               ]
             }
           },
           {
             "icon": "startEpisode",
-            "title": "Spustit epizodu",
-            "description": "Jakmile je epizoda připravena, zahajte na ní práci. Osnova, synopse a klíčové dějové body (beats) putují společně s ní do Blueprint Room. Obsazení a svět jsou již známy.",
+            "title": "Spuštění epizody jedním kliknutím",
+            "description": "Když obrys epizody narazí na značku, spusťte ji přímo do Blueprint Room s již zapojeným shrnutím, rytmy příběhu, obsazením a světem.",
             "screenshot": "Zahájit projekt – osnova a obsazení jsou již u epizody",
             "learnMore": {
               "items": [
                 {
-                  "title": "Spustit projekt",
-                  "description": "Příkaz Start Project otevře danou epizodu v Blueprint Room."
+                  "title": "Okamžité předání",
+                  "description": "Spusťte jakoukoli epizodu přímo do Blueprint Room jediným kliknutím."
                 },
                 {
-                  "title": "Již známé",
-                  "description": "Součástí je nástin, synopse, klíčové dějové body a obsazení."
+                  "title": "Předem zapojená DNA",
+                  "description": "Nástin epizody, synopse, rytmy příběhu, obsazení a lokace putují automaticky."
                 }
               ]
             }
@@ -389,43 +390,44 @@
       {
         "id": "blueprint-board",
         "label": "Blueprint Room",
-        "promise": "V Blueprint Room pilujete dějovou linii před tvorbou devadesátiminutového scénáře. Začněte epizodou seriálu nebo novým projektem. Přímo zde určujte klíčové momenty a obsazení, aby je fáze Production Stage nemusela znovu vytvářet.",
+        "headline": "Uzamkněte příběh a vzhled před vykreslením jednoho snímku.",
+        "promise": "Ať už spouštíte epizodu ze Series Room nebo spouštíte samostatnou funkci, Blueprint Room je místo, kde se vaše kreativní DNA uzamkne. Zde zdokonalte beat, obsazení, umístění a vizuální styl – takže Production Stage vytvoří správný scénář na první průchod.",
         "features": [
           {
             "icon": "startBlueprint",
             "title": "Spusťte Blueprint",
-            "description": "Začněte epizodou seriálu, nebo založte nový projekt. Epizoda seriálu již obsahuje osnovu, synopsi a klíčové dějové body. Nový projekt začíná popisem záměru, využitím funkce „Ověřit a vylepšit pomocí AI“ a výběrem možnosti „Generovat Blueprint“.",
+            "description": "Přineste epizodu z vaší série s předem nahraným obrysem a obsazením nebo navrhněte zcela nový filmový koncept od začátku a nechte AI strukturovat základní zpracování.",
             "screenshot": "Epizoda seriálu je již známa, nebo Zahajte svůj projekt – záměr, ověření a vylepšení pomocí AI, vygenerování Blueprint",
             "learnMore": {
               "items": [
                 {
-                  "title": "Epizoda seriálu",
-                  "description": "Epizoda seriálu začíná s již připojeným nástinem, synopsí a klíčovými dějovými body."
+                  "title": "Od Series Room",
+                  "description": "Epizody seriálu přicházejí s již připojenými osnovami, synopsemi, rytmy a obsazením."
                 },
                 {
-                  "title": "Nový projekt",
-                  "description": "Funkce „Start Your Project“ přijme záměr, následně jej ověří a vylepší pomocí AI a poté vygeneruje Blueprint."
+                  "title": "Samostatný projekt",
+                  "description": "Navrhněte nový filmový koncept, vylepšete jej pomocí ověřování AI a vytvořte kompletní zpracování."
                 }
               ]
             }
           },
           {
             "icon": "treatment",
-            "title": "Řiďte rytmus",
-            "description": "Otevřete kartu Beats a poslechněte si seznam klíčových bodů (beat sheet). Zde tyto body optimalizujte, protože určují strukturu scénáře. Klíčové body existují pouze zde. Production Stage mění každý bod na kapitolu.",
+            "title": "Beat Sheet",
+            "description": "Uspořádejte hřbet svého filmu. Přečtěte si nebo poslouchejte svůj vyprávěcí rytmus a dolaďte zde tempo – každý úder, který uzamknete v Blueprint Room, vytváří kapitolu v Production Stage.",
             "screenshot": "Karta Beats s možností Poslech",
             "learnMore": {
               "items": [
                 {
-                  "title": "Jeden přehled klíčových bodů děje",
-                  "description": "Beaty existují pouze zde."
+                  "title": "Narativní páteř",
+                  "description": "Beats jsou vytvořeny a uzamčeny v Blueprint Room před začátkem generování skriptů."
                 },
                 {
-                  "title": "Sestavení skriptu",
-                  "description": "Jednotlivé úseky (beats) řídí sestavování skriptu, a proto jsou optimalizovány ještě před fází Production Stage."
+                  "title": "Sledování jako první",
+                  "description": "Optimalizace beatového listu zajišťuje, že scénář bude mít pevnou dramatickou strukturu."
                 },
                 {
-                  "title": "Kapitoly",
+                  "title": "Mapování mezi jednotlivými kapitolami",
                   "description": "Production Stage mění každý dílčí krok v kapitolu."
                 }
               ]
@@ -433,22 +435,22 @@
           },
           {
             "icon": "castLocations",
-            "title": "Režírovat herecké obsazení a lokace",
-            "description": "Otevřete sekci Characters (Postavy) a určete obsazení. Na kartě Story (Příběh) otevřete sekci Setting (Prostředí) a nastavte příslušné lokace. Obsazení ovlivňuje sestavení scénáře, proto se obojí nastavuje ještě předtím, než by Production Stage musel scénář přepracovat.",
+            "title": "Obsazení a světový design",
+            "description": "Před vytvořením scénáře si definujte své postavy, šatník a primární lokace – zajistěte, aby byl scénář napsán přesně podle vašeho obsazení a nastavení z první stránky.",
             "screenshot": "Karta Postavy, poté Nastavení příběhu",
             "learnMore": {
               "items": [
                 {
-                  "title": "Herecké obsazení",
-                  "description": "Karta Postavy představuje obsazení a toto obsazení ovlivňuje tvorbu scénáře."
+                  "title": "Profily postav",
+                  "description": "Nasměrujte své profily obsazení dopředu, aby dialogy a blokování odpovídaly každé postavě."
                 },
                 {
-                  "title": "Lokality",
-                  "description": "Lokace představují dějiště na kartě Příběh."
+                  "title": "Svět a místa",
+                  "description": "Vytvořte primární nastavení na kartě Příběh pro ukotvení prostředí každé scény."
                 },
                 {
-                  "title": "Před scénářem",
-                  "description": "Směrování obou sem umožňuje vyhnout se rozsáhlému refaktorování skriptu v Production Stage."
+                  "title": "Nulové refaktorování skriptů",
+                  "description": "Uzamčení obsazení a umístění před vygenerováním skriptu eliminuje nákladné přepisování na Production Stage."
                 }
               ]
             }
@@ -456,21 +458,21 @@
           {
             "icon": "blueprintDirector",
             "title": "Ředitel Blueprint",
-            "description": "Režisér přijme změnu vyjádřenou vašimi vlastními slovy – ať už mluvenými, nebo napsanými. Zaměřte úpravy na jednotlivé dějové body, postavy či příběh a poté si prohlédněte náhled změn. K žádné změně nedojde, dokud ji nepotvrdíte.",
+            "description": "Vyslovte nebo zadejte své poznámky k příběhu, abyste mohli upravit rytmy, postavy nebo detaily světa. Náhled vyvážené revize vedle sebe – dokud řez neschválíte, na vaší léčbě se nic nezmění.",
             "screenshot": "Blueprint Director – směr, zaměření, náhled, Použít revizi",
             "learnMore": {
               "items": [
                 {
-                  "title": "Vaše slova",
-                  "description": "Vyslovte nebo napište danou změnu a zaměřte ji na klíčové momenty, postavy nebo příběh."
+                  "title": "Cílené poznámky",
+                  "description": "Vyslovte nebo napište svůj směr a zaměřte revizi na Beats, postavy nebo příběh."
                 },
                 {
-                  "title": "Náhled",
-                  "description": "Funkce „Generovat vyváženou revizi“ zobrazí změnu před jejím použitím."
+                  "title": "Náhled vedle sebe",
+                  "description": "Před provedením jakýchkoli změn ve vašem Blueprint zkontrolujte vyváženou revizi."
                 },
                 {
-                  "title": "Aplikujete to",
-                  "description": "Nic se nezmění, dokud revizi neaplikujete."
+                  "title": "Držíš zámek",
+                  "description": "Nic ve vaší léčbě se nezmění, dokud výslovně nepoužijete revizi."
                 }
               ]
             }
@@ -478,35 +480,35 @@
           {
             "icon": "blueprintResonance",
             "title": "Audience Resonance",
-            "description": "Uložte cílovou skupinu a poté proveďte analýzu. Zobrazí se skóre a doporučení. V návrhu (blueprintu) se nic nezmění, dokud v nástroji Blueprint Director neaplikujete některé z doporučení.",
+            "description": "Ohodnoťte svou léčbu podle kulturního a demografického profilu cílového publika. Zachyťte včas strukturální mezery v tempu a aplikujte cílená doporučení v řediteli Blueprint.",
             "screenshot": "Audience Resonance — uložené publikum, skóre, neaplikovaná doporučení",
             "learnMore": {
               "items": [
                 {
-                  "title": "Čtení",
-                  "description": "Uložte cílovou skupinu, poté ji analyzujte a projděte si skóre i doporučení."
+                  "title": "Ověření předběžných skriptů",
+                  "description": "Analyzujte své zacházení s cílovým publikem, abyste viděli skóre kategorií a poznámky k příběhu."
                 },
                 {
-                  "title": "Volitelné",
-                  "description": "Doporučení změní předlohu (blueprint) pouze tehdy, když jej aplikujete v nástroji Blueprint Director."
+                  "title": "Selektivní aplikace",
+                  "description": "Doporučení upraví váš Blueprint pouze tehdy, když se rozhodnete je použít."
                 }
               ]
             }
           },
           {
             "icon": "goToProduction",
-            "title": "Přejít na Production Stage",
-            "description": "Jakmile jsou stanoveny dějová linka, klíčové momenty a obsazení, přejděte do Production Stage. Devadesátiminutový scénář se vytváří na základě této nástěnky. Dějovou linku již v Production Stage není nutné znovu sestavovat.",
+            "title": "Zelená pro výrobu",
+            "description": "Když jsou ošetření, beat list a obsazení uzamčeny, přejděte na Production Stage. SceneFlow zkompiluje váš úplný vícekapitolový skript přímo z vašeho schváleného Blueprint.",
             "screenshot": "Přejděte na Production Stage – dějová linka, klíčové momenty a obsazení jsou již stanoveny.",
             "learnMore": {
               "items": [
                 {
-                  "title": "Předání",
-                  "description": "Přejděte na Production Stage; tím se otevře skript z tohoto blueprintu."
+                  "title": "Bezproblémová kompilace",
+                  "description": "Vstupem do Production Stage se zkompiluje celý skript přímo z vašeho schváleného Blueprint."
                 },
                 {
-                  "title": "Již nastaveno",
-                  "description": "Dějová linka, klíčové momenty i herecké obsazení jsou již režijně zpracovány."
+                  "title": "Uzamčený základ",
+                  "description": "Váš příběh, struktura rytmu a obsazení jsou připraveni pro režii scény a záběru."
                 }
               ]
             }
@@ -516,215 +518,109 @@
       {
         "id": "production-stage",
         "label": "Production Stage",
-        "promise": "Ve fázi Production Stage se schválený plán mění v obraz. Mějte výdaje pod kontrolou díky vlastním parametrům a plánu. Společně optimalizujte každou scénu a poté ji postupně sestavte – režie, zvuk, hudba, návaznost a statické záběry – a před investicí do samotného videa zkontrolujte animatik. Vygenerujte klipy, proveďte jejich mixáž, vytvořte jazykové verze a odešlete hotovou scénu, kapitolu, master nebo promo.",
-        "spend": {
-          "label": "Řízení výdajů",
-          "features": [
-            {
-              "icon": "byok",
-              "title": "Použití vlastního klíče",
-              "description": "Připojte vlastní klíče poskytovatelů obrázků a videí. Generování probíhá na vašem účtu a za vašich podmínek, zatímco řízené studio – zahrnující agenty, kontinuitu, Mixer a Screening Room – zůstává zachováno.",
-              "screenshot": "Klíče BYOK",
-              "learnMore": {
-                "items": [
-                  {
-                    "title": "Vaše klíče",
-                    "description": "Propojte klíče poskytovatelů obrázků a videí, aby generování probíhalo pod vaším účtem a za vašich sazeb."
-                  },
-                  {
-                    "title": "Stejné studio",
-                    "description": "Agenti, kontinuita, Mixer a Screening Room zůstávají zachovány."
-                  }
-                ]
-              }
-            },
-            {
-              "icon": "budget",
-              "title": "Plánovač výroby",
-              "description": "Ještě před zahájením výdajů stanovte počet iterací pro statické záběry i videosekvence. Tyto cílové hodnoty se promítají do úrovně scény, kapitoly i celého projektu a na základě data zahájení se vytvoří harmonogram včetně termínu dokončení.",
-              "screenshot": "Plánovač výroby",
-              "learnMore": {
-                "items": [
-                  {
-                    "title": "Zasažené terče",
-                    "description": "Nastavte iterace statických snímků a klipů pro jednotlivé záběry a agregujte je na úrovni scény, kapitoly a hlavního celku (masteru)."
-                  },
-                  {
-                    "title": "Časový harmonogram s uvedenými daty",
-                    "description": "Datum zahájení a pracovní dny vytvářejí harmonogram s kumulativními kredity."
-                  },
-                  {
-                    "title": "Resetovat podle skutečných hodnot",
-                    "description": "Dokončené scény mohou resetovat cílové hodnoty na úroveň skutečných nákladů."
-                  },
-                  {
-                    "title": "Stav telefonu",
-                    "description": "Údaje o tempu čtení, vynaloženém čase a datu dokončení můžete sledovat v telefonu, zatímco úpravy provádíte na počítači nebo tabletu."
-                  }
-                ]
-              }
-            }
-          ]
-        },
+        "headline": "Od scénáře po master, vše v jedné místnosti.",
+        "promise": "Blueprint je uzamčen. Vaše obsazení je obsazeno. Nyní přejděte na Production Stage. Každá kapitola, scéna a záběr jsou uspořádány do lineárního pracovního postupu. Vy řídíte záměr; inteligentní agenti provádějí generování.",
         "groups": [
           {
             "id": "script",
-            "label": "Optimalizujte skript",
+            "label": "Přímé a ovládání",
+            "headline": "Mluvte jazykem filmu, ne syntaxí výzev.",
+            "description": "Neztrácejte čas psaním klíčových slov v závorkách. Production Stage rozumí přirozenému směru a aplikuje vaši vizi na celou scénu nebo až na konkrétní záběr.",
             "features": [
               {
                 "icon": "scriptResonance",
-                "title": "Audience Resonance",
-                "description": "Audience Resonance čte celý scénář najednou, všechny scény v vzájemné souvislosti. Vidíte partitury i poznámky pohromadě a nic se nepřepisuje, dokud se pro to sami nerozhodnete.",
-                "screenshot": "Audience Resonance — partitury a poznámky napříč všemi scénami, neaplikované",
+                "title": "Režisér scény a záběru",
+                "description": "Napište nebo vyslovte svůj směr srozumitelným jazykem. Řekněte agentovi, kdo je v záběru, kde se pohybuje kamera a jaký je emocionální rytmus. Shot Director automaticky zapisuje komplexní základní výzvy pro vaše fotografie a klipy.",
+                "screenshot": "The Scene & Shot Director — režie fotografií a klipů v jednoduchém jazyce",
                 "learnMore": {
                   "items": [
                     {
-                      "title": "Každá společná scéna",
-                      "description": "Scénář je zde zpracován jako jeden celek, doplněný o poznámky k jednotlivým scénám v jejich vzájemné souvislosti."
+                      "title": "Obyčejný jazyk",
+                      "description": "Napište nebo mluvte, kdo je v záběru, kde se pohybuje kamera a jaký je emocionální rytmus."
                     },
                     {
-                      "title": "Vyberte si",
-                      "description": "Nic se nepřepisuje, dokud se nerozhodnete, podle kterých poznámek budete jednat."
+                      "title": "Scéna nebo záběr",
+                      "description": "Aplikujte svou vizi na celou scénu nebo dolů na konkrétní záběr."
+                    },
+                    {
+                      "title": "Rychlá kompilace",
+                      "description": "Shot Director automaticky zapisuje základní výzvy pro vaše fotografie a klipy."
                     }
                   ]
                 }
               },
               {
                 "icon": "castVisual",
-                "title": "Herecké obsazení, kostýmy a hlas",
-                "description": "Obsazení stanovte ještě před tvorbou samotných scén. Definujte a zafixujte podobu postavy, její oblečení i hlas, aby každý následný statický snímek či videoklip představoval tutéž osobu.",
-                "screenshot": "Postava, kostým a hlas",
+                "title": "Knihovna kontinuity",
+                "description": "Naprostá konzistence napříč sérií. Automaticky vygenerujte nebo ručně přiřaďte referenční obrázky pro své obsazení, šatníky, místa a základní rekvizity, abyste zajistili, že každý záběr bude odpovídat Blueprint.",
+                "screenshot": "Knihovna kontinuity – obsazení, skříně, lokace a základní rekvizity",
                 "learnMore": {
                   "items": [
                     {
-                      "title": "Postava a kostým",
-                      "description": "Cast Agent vytváří podobu postavy a návrhy kostýmů."
+                      "title": "Konzistence série",
+                      "description": "Udržujte obsazení, skříně, lokace a základní rekvizity sjednocené v každém záběru."
                     },
                     {
-                      "title": "Hlas",
-                      "description": "Hlas postavy se určuje ještě předtím, než se začnou vytvářet scény."
-                    },
-                    {
-                      "title": "Stejná osoba",
-                      "description": "Každý statický snímek i každý záběr si žádá toto uzamčení."
+                      "title": "Vygenerovat nebo přiřadit",
+                      "description": "Automaticky generujte referenční obrázky nebo ručně přiřaďte své vlastní, aby odpovídaly Blueprint."
                     }
                   ]
                 }
               },
               {
                 "icon": "directShot",
-                "title": "Přímý zásah",
-                "description": "Funkce Direct Shot vytvoří záběr na základě vašich vlastních slov – ať už je napíšete, nebo nadiktujete. Zobrazíte si náhled směru a uložíte jej, načež se současně aktualizují zadání pro statický snímek i pro videoklip.",
-                "screenshot": "Direct Shot – psaní nebo diktování, náhled, uložení",
+                "title": "Integrace Audience Resonance",
+                "description": "Než začnete renderovat, přečtěte si místnost. Umělá inteligence analyzuje váš scénář proti vašemu cílovému publiku a poskytuje informace o jednotlivých scénách. Okamžitě použijte doporučené pokyny nebo důvěřujte svému nitru a ignorujte je.",
+                "screenshot": "Audience Resonance Integrace — statistiky publika podle jednotlivých scén",
                 "learnMore": {
                   "items": [
                     {
-                      "title": "Ohlášená rána",
-                      "description": "Dialog nese název Přímý záběr · Scéna N · Záběr N."
+                      "title": "Přehled jednotlivých scén",
+                      "description": "Umělá inteligence analyzuje váš skript proti cílovému publiku před vykreslením."
                     },
                     {
-                      "title": "Napište nebo nadiktujte",
-                      "description": "Napište nebo nadiktujte poznámku a před uložením si prohlédněte náhled pokynu."
-                    },
-                    {
-                      "title": "Obě zadání",
-                      "description": "Uložení aktualizuje výzvu pro statický snímek i výzvu pro videoklip současně."
-                    },
-                    {
-                      "title": "Znovu po klipech",
-                      "description": "Pokud je vygenerovaný záběr chybný, otevřete Direct Shot a znovu jej nastavte."
+                      "title": "Váš hovor",
+                      "description": "Okamžitě použijte doporučené pokyny nebo důvěřujte svému nitru a ignorujte je."
                     }
                   ]
                 }
               },
               {
                 "icon": "audioAgent",
-                "title": "Audio Agent",
-                "description": "Audio Agent sestavuje dialogy, zvukové efekty a hudbu dané scény. Scénu lze slyšet ještě předtím, než dojde k vyčerpání klipu.",
-                "screenshot": "Audio Agent — dialogy, efekty a hudba",
+                "title": "Plánovač výroby",
+                "description": "Vytvořte rozpočet a generování plánu pro každou scénu a kapitolu pomocí kreditů SceneFlow nebo vlastních klíčů API BYOK. Před výpočtem nastavte statické a ořezové cíle na snímek.",
+                "screenshot": "Plánovač výroby — rozpočet, plán a klíče API BYOK",
                 "learnMore": {
                   "items": [
                     {
-                      "title": "Dialogy a efekty",
-                      "description": "Dialog se omezuje na mluvené slovo, zatímco zvukové efekty jsou určeny pro záběry s jasně daným podnětem."
+                      "title": "Rozpočet a harmonogram",
+                      "description": "Stanovte rozpočet a generování plánu pro každou scénu a kapitolu před vykreslením."
                     },
                     {
-                      "title": "Hudba",
-                      "description": "Hudba nese scénu spolu s dialogem."
-                    },
-                    {
-                      "title": "Před pohybem",
-                      "description": "Poslechněte si scénu, než otevřete Clips."
+                      "title": "Kredity nebo BYOK",
+                      "description": "Spusťte generování pomocí kreditů SceneFlow nebo vlastních klíčů API BYOK."
                     }
                   ]
                 }
               },
               {
                 "icon": "continuity",
-                "title": "Kontinuita",
-                "description": "Generujte pouze ty reference, které daná scéna vyžaduje, a to až ve chvíli, kdy je scéna připravena. Dřívější scény zůstávají v uzamčeném stavu, takže znovu negenerujete reference, které již byly schváleny.",
-                "screenshot": "Kontinuita – pouze odkazy týkající se této scény",
+                "title": "Produkční skript",
+                "description": "Vytvořeno pro tradiční i AI filmaře. Náhled čistého, formátovaného scénáře ve studiu a export do standardních průmyslových formátů (PDF, FDX, Fountain). Použijte SceneFlow jako samostatnou scénárnu – nebo spárujte svůj scénář s Pre-Vis Animatic a Promo Trailer, abyste nabízeli finančníky a zajistili financování projektu.",
+                "screenshot": "Produkční skript — náhled na platformě a export do PDF, FDX a Fountain",
                 "learnMore": {
                   "items": [
                     {
-                      "title": "Pouze tato scéna",
-                      "description": "Nakresli postavy, lokace a rekvizity, které tato scéna vyžaduje, a ostatní nech být."
+                      "title": "Náhled a export na platformě",
+                      "description": "Náhled naformátovaného skriptu ve studiu a export do standardního formátu PDF, Final Draft FDX nebo Fountain."
                     },
                     {
-                      "title": "Přesně včas",
-                      "description": "Vygenerujte je, až bude scéna hotová, nikoli hromadně pro celý film."
+                      "title": "Pro tradiční filmaře",
+                      "description": "Použijte SceneFlow jako inteligentní platformu pro tvorbu skriptů bez generování videa."
                     },
                     {
-                      "title": "Již uzamčeno",
-                      "description": "Změna v jedné scéně nepřekresluje odkazy, které již využívají dřívější scény."
-                    }
-                  ]
-                }
-              },
-              {
-                "icon": "stillsAgent",
-                "title": "Stills Agent",
-                "description": "Stills Agent vytváří snímky záběrů na základě schváleného tvůrčího záměru. Tvůrčí záměr a zvuk zůstávají beze změny a samotné klipy se přidávají až následně.",
-                "screenshot": "Stills Agent — snímky záběru",
-                "learnMore": {
-                  "items": [
-                    {
-                      "title": "Záběry",
-                      "description": "Vykresluje statický snímek pro každý záběr ve scéně."
-                    },
-                    {
-                      "title": "Směrové vzpěry",
-                      "description": "Opětné vygenerování snímku aktualizuje obraz, zatímco směr a zvuk zůstávají beze změny."
-                    },
-                    {
-                      "title": "Před klipy",
-                      "description": "Schvalte statické snímky, než otevřete aplikaci Clips."
-                    }
-                  ]
-                }
-              },
-              {
-                "icon": "animatic",
-                "title": "Animatic",
-                "description": "Prohlédněte si scénu v promítací místnosti (Screening Room) ve formě animatiku – tedy statických snímků doplněných o dialogy, hudbu a zvukové efekty. Sdílejte jej a vyžádejte si zpětnou vazbu; každou scénu takto dokončete ještě před samotnou videoprodukcí, abyste v případě změny scénáře nemuseli klipy znovu zpracovávat. Pro řadu tvůrců představuje animatik již hotové dílo, které lze vyrenderovat do formátu MP4.",
-                "screenshot": "Animatik Screening Room s možností sdílení",
-                "learnMore": {
-                  "items": [
-                    {
-                      "title": "Obraz a zvuk",
-                      "description": "Animatik přehrává schválené statické záběry spolu s dialogy, hudbou a zvukovými efekty."
-                    },
-                    {
-                      "title": "Sdílet",
-                      "description": "Pošlete jeden odkaz, aby si recenzenti mohli prohlédnout animatik a zanechat poznámky přímo v obraze."
-                    },
-                    {
-                      "title": "Před videem",
-                      "description": "Dokončete scény ve formě animatiků ještě předtím, než začnete generovat klipy; díky tomu nebude nutné video znovu generovat v případě změny scénáře."
-                    },
-                    {
-                      "title": "MP4",
-                      "description": "Pro mnoho tvůrců je animatik výsledným produktem a lze jej vyrenderovat do formátu MP4."
+                      "title": "Financování prezentací a projektů",
+                      "description": "Zabalte svůj scénář s Pre-Vis Animatic a Promo Trailery, abyste mohli navrhnout a získat financování projektu."
                     }
                   ]
                 }
@@ -733,86 +629,78 @@
           },
           {
             "id": "video",
-            "label": "Video",
+            "label": "Generovat a auditovat",
+            "headline": "Než utratíte výpočet, prokažte střih.",
+            "description": "Nehádejte, jak se bude scéna hrát. SceneFlow odděluje zvuk a generování statického obrazu od drahého vykreslování pohybu, což vám umožňuje nejprve auditovat rytmus úprav.",
             "features": [
               {
                 "icon": "videoAgent",
-                "title": "Video Agent",
-                "description": "Video Agent vygeneruje klipy záběrů na kartě Clips. Sledujte sestavenou scénu v Screening Room, a pokud je některý záběr chybný, znovu jej zrežírujte pomocí funkce Direct Shot.",
-                "screenshot": "Video Agent, poté sestavená scéna",
+                "title": "Audio Agent",
+                "description": "Vytvářejte dialogy, zvukové efekty a hudební partitury současně v až 30 záběrech na scénu. Odesílané hlasy automaticky odpovídají profilům postav nebo je lze přizpůsobit.",
+                "screenshot": "Audio Agent — souběžné dialogy, zvukové efekty a hudební partitury",
                 "learnMore": {
                   "items": [
                     {
-                      "title": "Natočené záběry",
-                      "description": "Video Agent generuje klip pro každý záběr ze schváleného statického snímku."
+                      "title": "Souběžný zvuk",
+                      "description": "Vytvářejte dialogy, zvukové efekty a hudební partitury současně v až 30 záběrech na scénu."
                     },
                     {
-                      "title": "Sešívaná scéna",
-                      "description": "Zkontrolujte scénu sestavenou v Screening Room."
-                    },
-                    {
-                      "title": "Znovu to zrežíruj",
-                      "description": "Pokud je klip chybný, otevřete Direct Shot (ať už psaný, nebo diktovaný)."
+                      "title": "Charakterové hlasy",
+                      "description": "Odesílané hlasy automaticky odpovídají profilům postav nebo je lze přizpůsobit."
                     }
                   ]
                 }
               },
               {
                 "icon": "mixer",
-                "title": "Mixér",
-                "description": "Mixér dokončuje scénu v rámci Production Stage. Zahrňte nebo vyřaďte záběry, ořízněte je, vyvažte zvuk a vyrenderujte scénu včetně audia.",
-                "screenshot": "Mixér — zahrnout, oříznout, vyvážit, překrýt, vodoznak",
+                "title": "Stills Agent",
+                "description": "Rychle generujte snímky klíčových snímků, které ilustrují směr vašeho záběru. Obnovte, upravte nebo nahrajte své vlastní reference a uzamkněte kompozici.",
+                "screenshot": "Stills Agent — kompozice klíčových snímků a reference",
                 "learnMore": {
                   "items": [
                     {
-                      "title": "Panáky",
-                      "description": "Zahrňte nebo vyřaďte jednotlivé záběry a ty, které zůstanou, zkraťte."
+                      "title": "Generování klíčových snímků",
+                      "description": "Rychle generujte snímky klíčových snímků, které ilustrují směr vašeho záběru."
                     },
                     {
-                      "title": "Dialog",
-                      "description": "Nastavte hlasitost a rychlost u každého řádku dialogu."
-                    },
-                    {
-                      "title": "Skladby",
-                      "description": "Vyvažte komentář, dialogy, zvukové efekty a hudbu, včetně prolínání a smyčkování hudby."
-                    },
-                    {
-                      "title": "Překryvné vrstvy",
-                      "description": "Umístěte do scény textové překryvy."
-                    },
-                    {
-                      "title": "Vodoznak",
-                      "description": "Přidejte textový nebo obrázkový vodoznak."
-                    },
-                    {
-                      "title": "Vykreslit",
-                      "description": "Vyrenderujte scénu včetně zvuku; právě tento render pak přehrává Screening Room."
+                      "title": "Zamkněte kompozici",
+                      "description": "Obnovte, upravte nebo nahrajte své vlastní reference, než se pustíte do pohybu."
                     }
                   ]
                 }
               },
               {
                 "icon": "languageStreams",
-                "title": "Jazykové verze",
-                "description": "V tomto případě jde o jazykovou verzi scény, nikoli o novou produkci. Gemini TTS zajišťuje dabing ve 44 jazycích a u každého záběru můžete namluvit repliku nebo klip znovu vygenerovat, a to včetně nápisů.",
-                "screenshot": "Jazyková verze – dabing, synchronizace rtů nebo regenerace, včetně nápisů",
+                "title": "Pre-Vis Animatic",
+                "description": "Sledujte, jak scéna dýchá. Prohlédněte si plně sestavený animák – sešívané fotografie, pohyb Kena Burnse a zamčený zvuk – v Screening Room. Zkontrolujte tempo, sdílejte pro zpětnou vazbu a ujistěte se, že střih funguje, než se pustíte do videa.",
+                "screenshot": "Pre-Vis Animatic – sešívané fotografie, pohyb Kena Burnse a uzamčený zvuk",
                 "learnMore": {
                   "items": [
                     {
-                      "title": "Čtyřicet čtyři jazyků",
-                      "description": "Gemini TTS zajišťuje dabing ve 44 jazycích."
+                      "title": "Složené animace",
+                      "description": "Prohlédněte si sešívané fotografie, pohyb Kena Burnse a uzamčený zvuk v Screening Room."
                     },
                     {
-                      "title": "Na dávku",
-                      "description": "U každého záběru zvolte možnost Double pro překrytí dabovaným hlasem, Lip-sync pro jeho provedení, nebo Regenerate pro vytvoření nového klipu z přeložené repliky."
+                      "title": "Auditovat a sdílet",
+                      "description": "Zkontrolujte tempo, sdílejte pro zpětnou vazbu a ujistěte se, že střih funguje, než se pustíte do videa."
+                    }
+                  ]
+                }
+              },
+              {
+                "icon": "videoAgent",
+                "title": "Clips Agent",
+                "description": "Jakmile je Pre-Vis schválen, Clips Agent převezme řízení a vykresluje vysoce věrné pohyblivé klipy, které přísně dodržují vaše schválené statické snímky a reference kontinuity.",
+                "screenshot": "Clips Agent — vysoce věrné pohyblivé klipy ze schválených fotografií",
+                "learnMore": {
+                  "items": [
+                    {
+                      "title": "Po schválení Pre-Vis",
+                      "description": "Clips Agent vykreslí pohyb až po schválení animace Pre-Vis."
                     },
                     {
-                      "title": "Značení",
-                      "description": "Vygenerujte znovu snímek s nápisem, pokud obrázek obsahuje text, který je třeba změnit."
-                    },
-                    {
-                      "title": "Načasování",
-                      "description": "Pro danou jazykovou verzi se ukládá rychlost videa, protože překlad bývá často o 10–30 % delší než původní verze."
+                      "title": "Přísné dodržování",
+                      "description": "Vysoce věrné pohyblivé klipy přísně dodržují vaše schválené fotografie a reference kontinuity."
                     }
                   ]
                 }
@@ -821,30 +709,78 @@
           },
           {
             "id": "publish",
-            "label": "Publikovat",
+            "label": "Publikovat a distribuovat",
+            "headline": "Odešlete master nebo lokalizujte do celého světa.",
+            "description": "Když je scéna hotová, aktiva jsou již sjednocena. Dokončete úpravy, lokalizujte zvuk a distribuujte přímo svému publiku.",
             "features": [
               {
                 "icon": "shipPackage",
-                "title": "Zabalit a odeslat",
-                "description": "Jakmile bude scéna, kapitola, finální verze nebo promo hotové, připravte je k publikaci. Zveřejněte je na YouTube, Facebooku či TikToku, případně si stáhněte MP4 soubor a pokračujte v tvorbě zbytku.",
-                "screenshot": "Zabalení a odeslání – scéna, kapitola, master, promo; YouTube, Facebook, TikTok, MP4",
+                "title": "Mixér",
+                "description": "Vestavěný intuitivní editor scén. Ořízněte klipy, upravte rychlostní rampy, přidejte textové překryvy a použijte vodoznaky, aniž byste opustili studio.",
+                "screenshot": "Mixer — ořízněte klipy, rychlostní rampy, textové překryvy a vodoznaky",
                 "learnMore": {
                   "items": [
                     {
-                      "title": "Kousky",
-                      "description": "Odešlete scénu, kapitolu, master nebo promo."
+                      "title": "Vestavěný editor scén",
+                      "description": "Ořízněte klipy a upravte rychlostní rampy přímo ve studiu."
                     },
                     {
-                      "title": "Jazykové proudy",
-                      "description": "Každá jazyková verze může být součástí balíčku."
+                      "title": "Dokončovací úpravy",
+                      "description": "Přidejte textové překryvy a použijte vodoznaky bez exportu do externího editoru."
+                    }
+                  ]
+                }
+              },
+              {
+                "icon": "languageStreams",
+                "title": "Streamy (vícejazyčné)",
+                "description": "Okamžitě rozšiřte svůj globální dosah ve 44 jazycích. Automaticky generujte proudy v alternativním jazyce pomocí dabingu zvuku, synchronizace pohybu rtů nebo regenerace lokalizovaných dialogových klipů přímo ve scéně.",
+                "screenshot": "Streams (Multi-Language) — dabovaný zvuk a lokalizované dialogy",
+                "learnMore": {
+                  "items": [
+                    {
+                      "title": "Globální dosah",
+                      "description": "Automaticky generujte proudy alternativních jazyků ve 44 jazycích přímo na scéně."
                     },
                     {
-                      "title": "Destinace",
-                      "description": "Publikujte na YouTube, Facebooku nebo TikToku, případně si stáhněte MP4."
+                      "title": "Dub, synchronizace rtů nebo regenerace",
+                      "description": "Lokalizujte každý záběr pomocí dabingu zvuku, synchronizace pohybu rtů nebo regenerace lokalizovaných dialogových klipů."
+                    }
+                  ]
+                }
+              },
+              {
+                "icon": "promoTrailers",
+                "title": "Promo akce a přívěsy",
+                "description": "Střihejte si promo upoutávky připravené na sociální sítě kdykoli během výroby. Vytvářejte vícejazyčné verze optimalizované pro horizontální nebo vertikální formáty.",
+                "screenshot": "Promo & Trailers — vícejazyčné horizontální a vertikální přívěsy",
+                "learnMore": {
+                  "items": [
+                    {
+                      "title": "Upoutávky připravené na sociální sítě",
+                      "description": "Odřízněte propagační přívěsy kdykoli během výroby."
                     },
                     {
-                      "title": "Budujte dál",
-                      "description": "Vydejte hotovou část a pokračujte ve vytváření zbytku."
+                      "title": "Vícejazyčné formáty",
+                      "description": "Vytvářejte vícejazyčné verze optimalizované pro horizontální nebo vertikální formáty."
+                    }
+                  ]
+                }
+              },
+              {
+                "icon": "shipPackage",
+                "title": "Přímé publikování",
+                "description": "Exportujte finální předlohu MP4 nebo nechte SceneFlow automaticky generovat miniatury a popisy a publikovat scény, kapitoly a promo přímo na YouTube, TikTok a Facebook.",
+                "screenshot": "Přímé publikování — export MP4 a přímé publikování na YouTube, TikTok a Facebook",
+                "learnMore": {
+                  "items": [
+                    {
+                      "title": "Master MP4 nebo přímé sociální",
+                      "description": "Exportujte finální předlohu MP4 nebo publikujte scény, kapitoly a promo přímo na YouTube, TikTok a Facebook."
+                    },
+                    {
+                      "title": "Automaticky generovaná metadata",
+                      "description": "Nechte SceneFlow automaticky generovat miniatury a popisy pro každé vydání."
                     }
                   ]
                 }
@@ -856,48 +792,49 @@
       {
         "id": "screening-room",
         "label": "Screening Room",
-        "promise": "Promítací místnost slouží ke sledování, připomínkování a uvolnění finálního střihu. Jeden přehrávač obsahuje vše – od předběžné vizualizace (pre-vis), scén, kapitol a masteru až po promo a jednotlivé jazykové stopy – takže dabing odpovídá přesně tomu střihu, který vyrenderoval zvukař. Pro přehrávání a vkládání poznámek k obrazu stačí sdílet jediný odkaz. Jakmile je konkrétní část hotová, můžete ji publikovat – ať už jde o 3–5minutovou scénu, 8–12minutovou kapitolu, master nebo promo – a mezitím pokračovat v práci na zbytku.",
+        "headline": "Prohlédněte si střih, shromážděte svůj tým a prožijte celosvětovou premiéru.",
+        "promise": "Vaše soukromé divadlo a dokončovací apartmá. Sledujte animaci Pre-Vis, jednotlivé scény, kapitoly, promo akce a vícejazyčné streamy v jednom jednotném přehrávači. Sdílejte jediný odkaz pro poznámky zúčastněných stran s časovým razítkem – a odešlete 3–5 minutovou scénu, 8–12 minutovou kapitolu, promo nebo předlohu, zatímco zbytek produkce pokračuje.",
         "features": [
           {
             "icon": "screeningPlayer",
-            "title": "Jeden hráč",
-            "description": "Přepínejte mezi předběžnou vizualizací (pre-vis), scénami, kapitolami, finální verzí (master) a propagačním materiálem. Zvolte jazykovou stopu a poslechněte si danou verzi – ať už jde o dabing, synchronizaci rtů (lip-sync), nebo verzi přepracovanou záběr po záběru. Přehrávač zobrazuje stejný střih, jaký vygeneroval Mixer.",
+            "title": "Jeden sjednocený přehrávač",
+            "description": "Plynule přepínejte mezi animacemi před Visem, scénami, kapitolami, upoutávkami a vaším finálním předlohou. Přepínejte jazykové proudy za běhu do lokalizací s dabováním, synchronizací rtů nebo záběrem – vždy zamčené na přesný střih z Mixeru.",
             "screenshot": "Přehrávač Screening Room",
             "learnMore": {
               "items": [
                 {
-                  "title": "Jeden povrch",
-                  "description": "Přepínejte mezi pre-vizualizací, scénami, kapitolami, masterem a promo materiálem."
+                  "title": "Každý milník v jednom pohledu",
+                  "description": "Přepínejte bez námahy mezi Pre-Vis, scénami, kapitolami, promo akcemi a finální předlohou."
                 },
                 {
-                  "title": "Jazyková větev",
-                  "description": "Vyberte si verzi a poslechněte si ji s dabingem, synchronizací rtů nebo vygenerovanou záběr po záběru."
+                  "title": "Živé přepínání jazyků",
+                  "description": "Vyzkoušejte jakýkoli jazykový proud – dabovaný, synchronizovaný přes rty nebo regenerovaný záběrem – za běhu."
                 },
                 {
-                  "title": "Stejný střih",
-                  "description": "Přehrávač představuje sestřih, který vygeneroval Mixer."
+                  "title": "Rámově uzamčen k mixéru",
+                  "description": "Každý stream přehrává přesné úpravy a načasování vykreslené v Mixeru."
                 }
               ]
             }
           },
           {
             "icon": "screeningCollab",
-            "title": "Spolupracovat na střihu",
-            "description": "Stačí sdílet jeden odkaz. Recenzenti si video přehrají a přímo do obrazu vkládají poznámky. Nemusíte kvůli zpětné vazbě exportovat pracovní verzi souboru a posílat ji e-mailem. O nové poznámce dostanete upozornění a můžete si ji přečíst v telefonu.",
+            "title": "Rámově přesná spolupráce",
+            "description": "Přestaňte exportovat hrubé řezy do e-mailu. Sdílejte soukromý odkaz na promítání, kde spolupracovníci a investoři sledují v reálném čase a zapisují poznámky přímo do obrazu – s okamžitými upozorněními zaslanými přímo do vašeho telefonu.",
             "screenshot": "Sdílená recenze",
             "learnMore": {
               "items": [
                 {
-                  "title": "Jeden odkaz",
-                  "description": "Recenzenti sledují záznam při skutečném přehrávání a vkládají poznámky přímo do obrazu."
+                  "title": "Odkazy na soukromé promítání",
+                  "description": "Recenzenti sledují přehrávání v plném rozlišení a zanechávají na obrázku poznámky s časovým razítkem."
                 },
                 {
-                  "title": "Žádný hrubý střih zasílaný e-mailem",
-                  "description": "Nevyexportováváte rozpracovaný soubor do e-mailu, abyste získali zpětnou vazbu."
+                  "title": "Žádné exporty souborů s hrubým řezem",
+                  "description": "Sbírejte zpětnou vazbu od zúčastněných stran na jednom místě, aniž byste museli posílat těžké video soubory."
                 },
                 {
-                  "title": "Poznámky z hovoru",
-                  "description": "Upozorní vás textová zpráva, kterou si můžete přečíst v telefonu, zatímco studio zůstává otevřené na stolním počítači nebo tabletu."
+                  "title": "Okamžitá mobilní upozornění",
+                  "description": "Nové poznámky recenzenta vás okamžitě upozorní na váš telefon, zatímco budete přímo na ploše."
                 }
               ]
             }
@@ -911,6 +848,7 @@
     "description": "Proměňte své nápady v profesionální videa díky automatizaci pracovních postupů řízené umělou inteligencí."
   },
   "nav": {
+    "overview": "Přehled",
     "plansPricing": "Tarify a ceny",
     "productionExamples": "Příklady",
     "keyFeatures": "Vlasnosti",
@@ -937,9 +875,9 @@
     "pricing": "Ceny"
   },
   "hero": {
-    "eyebrow": "Automatizovaná tvorba filmů a seriálů",
+    "eyebrow": "Demokratizovaná filmová tvorba pro vypravěče, tvůrce seriálů a studia",
     "headline": "Od první jiskry k hotovému mistrovskému dílu.",
-    "subheadline": "SceneFlow představuje jeden řízený proces tvorby. Vy určujete směr příběhu, obsazení i celkové ladění. Systém vytváří Blueprint, udržuje návaznost, přehrává kompletní animatik a sestavuje finální verzi – to vše bez nutnosti zkoušet různé prompty či pracovat s časovou osou plnou nesourodých záběrů.",
+    "subheadline": "Dokážete-li si představit příběh, můžete režírovat film – nevyžaduje žádné technické filmařské dovednosti ani dovednosti. Popište svou vizi každodenními slovy a SceneFlow vytvoří Blueprint, uzamkne kontinuitu charakteru a nastavení, přehraje celou animaci a sešije hotovou předlohu.",
     "ctaPrimaryLaunch": "Launch Studio (9 $)",
     "ctaSupportingLine": "Komplexní studio pro tvorbu, export a distribuci vašich příběhů. Stáhněte si master a odešlete jej kamkoli – nebo publikujte plné verze a jednotlivé kapitoly na {longForm} a propagujte trailery na {shorts}.",
     "ctaNetworkInvite": "Výjimečné projekty se mohou ucházet o vstup do sítě SceneFlow, která je přístupná pouze na pozvání.",
@@ -948,20 +886,20 @@
     "ctaToolStack": "Podívejte se, jak nahradí vaši sadu nástrojů.",
     "chips": [
       {
-        "label": "Od konceptu k funkci",
-        "detail": "Rozpracujte své nápady do podoby devadesátiminutových scénářů v prostředí Blueprint Room. Definujte postavy, vizuální stránku a klíčové dějové body a poté nechte analýzu Audience Resonance doladit váš příběh ještě před samotným natáčením."
+        "label": "Od nápadu ke scénáři a kapitole",
+        "detail": "Proměňte prostý nápad na strukturované kapitoly nebo 90minutový scénář v Blueprint Room. Definujte postavy, umění a rytmy a poté nechte Audience Resonance doladit váš příběh před natáčením."
       },
       {
-        "label": "Veďte se záměrem, nikoli pomocí pokynů.",
-        "detail": "Komunikujte jazykem filmu díky inteligentním asistentům, kteří rozumí vašim tvůrčím záměrům. Reference Library zafixuje vámi zvolené obsazení, kostýmy i lokace a zajistí tak naprostou kontinuitu."
+        "label": "Nejsou vyžadovány žádné filmařské dovednosti",
+        "detail": "Vyjádřete svou vizi běžnými slovy – váš AI Director se stará o formát psaní scénářů, úhly kamery, osvětlení a výzvy, zatímco Knihovna kontinuity uzamkne vaše obsazení, šatník a umístění."
       },
       {
-        "label": "Výroba řízená agenty",
-        "detail": "Zrychlete generování až pětinásobně díky inteligentním agentům, kteří na pozadí vytvářejí scény složené ze 30 záběrů. Volně experimentujte v režimu konceptu a poté svou finální vizi publikujte v úchvatném vysokém rozlišení."
+        "label": "Sešívání scény řízené agentem",
+        "detail": "Zrychlete produkci 5X se specializovanými agenty, kteří paralelně generují dialogy, hudbu, fotografie a klipy a automaticky spojují 30 snímků. Nejprve si prohlédněte náhled v Pre-Vis a poté vykreslete ve vysokém rozlišení."
       },
       {
         "label": "Prověřit, spolupracovat, vydat",
-        "detail": "Sdílejte pokrok v jednotlivých fázích – od audio animatiků až po finální master – v promítací místnosti SFAI. Distribuujte díla jako krátké či celovečerní snímky ve více jazycích a zajistěte si tak globální dosah."
+        "detail": "Podělte se o pokrok na každém milníku – od vyjádřené animace až po finální předlohu – v Screening Room. Publikujte v epizodických kapitolách nebo v plném rozsahu funkcí ve více než 70 jazycích."
       }
     ],
     "pipelineSteps": [
@@ -1000,7 +938,7 @@
   "twoModes": {
     "eyebrow": "Tření, které odstraňujeme",
     "title": "Jedna pipeline. Ne sada nástrojů.",
-    "subtitle": "SceneFlow replaces single-clip generators and a pile of separate docs, editors, and re-renders. Build the series or the 90-minute master, then publish a scene or a chapter when you are ready to earn.",
+    "subtitle": "Výzvy ke klipům, klíčové snímky, hlasové vyprávění a hudba byly použity v samostatných nástrojích. SceneFlow sjednocuje celou produkci do jednoho kanálu – takže můžete sestavit sérii s více epizodami nebo 90minutovou předlohu a publikovat hotové scény nebo kapitoly za pochodu.",
     "comingSoon": "Již brzy",
     "comparison": {
       "id": "comparison",
@@ -1009,19 +947,19 @@
     "cta": "Launch Studio (9 $)"
   },
   "directControl": {
-    "eyebrow": "Kontrola, kterou si ponecháváte",
-    "title": "Řiďte příběh. Nechte agenty, aby se starali o zadávání pokynů.",
-    "subtitle": "Záběr režírujete srozumitelným jazykem. Pokyny k záběru definují zadání pro statický snímek i videoklip. Hudební vstupy a komentář jsou načasovány do rytmu. Sledujte animatik, v případě potřeby záběr upravte, a teprve poté investujte do tvorby pohybu.",
+    "eyebrow": "Není potřeba žádná technická filmová tvorba",
+    "title": "Vyjádřete svou vizi. Vaše AI posádka řídí plavidlo.",
+    "subtitle": "Ať už jste vypravěč poprvé nebo zkušený režisér, jednoduše popište, co se děje. Specializovaní agenti se starají o kinematografii, nabádání, hudební narážky, dialogy a automatické sešívání scén – takže můžete nejprve sledovat celé animace, upravovat jakýkoli rytmus na příkaz a teprve potom utrácet kredity za pohyb.",
     "comparison": {
       "id": "direction",
-      "caption": "Režijní poznámka, pokyn ke klipu a hudba s komentářem na stejné době."
+      "caption": "Režie příběhu v prostém jazyce automaticky sestavená do kinematografie, hudby a vyprávění."
     },
     "cta": "Launch Studio (9 $)"
   },
   "publishCut": {
     "eyebrow": "Sestřih, který zveřejníte",
     "title": "Exportujte kamkoli. Získejte Premiere na SceneFlow, jakmile na něj dosáhnete.",
-    "subtitle": "Download a master and ship it yourself, or publish finished scenes and chapters to {longForm} and cut trailers for {shorts} — without waiting on the whole cut. Before anything hits the public feed, run drafts or your final master through the Screening Room. Standout projects can apply for the invite-only SceneFlow Network; it is a curated accelerator, not an open storefront.",
+    "subtitle": "Exportujte předlohu a distribuujte ji kamkoli nebo publikujte hotové scény a kapitoly přímo do {longForm} se svislými upoutávkami vystřiženými pro {shorts} – obraz, hudba a vyprávění jsou již ve střihu. Před vydáním prověřte každý koncept v Screening Room a přihlaste se do sítě SceneFlow pouze pro pozvané pro financovanou akceleraci publika.",
     "comparison": {
       "id": "publish",
       "caption": "A finished scene or chapter, and the 90-minute master, from one studio."
@@ -1034,6 +972,25 @@
     "badges": {
       "googleCloud": "Google Cloud",
       "vertexAi": "Vertex AI"
+    },
+    "wave": {
+      "eyebrow": "Ride the AI → Superintelligence Wave",
+      "headline": "Vysoce kvalitní produkce dnes. Automatické upgrady modelu zítra.",
+      "subheadline": "V minulém roce poskočilo generování videa z odpojeného „AI slopu“ k realistickému filmu. V kombinaci se strukturovaným vyprávěním příběhů a automatickým sešíváním scén SceneFlow můžete dnes dodávat produkci na úrovni studia – zatímco každá postava a svět, které postavíte, se automaticky veze na další vlně pokroku AI.",
+      "pillars": [
+        {
+          "title": "Sešívání scén ve studiu ještě dnes",
+          "description": "Nemusíte čekat, až budoucí modely vyprávějí skvělý příběh. Architektura Blueprint společnosti SceneFlow, Reference Library a automatické spojování scén proměňují dnešní hraniční modely na soudržné kapitoly a filmy připravené pro vysílání."
+        },
+        {
+          "title": "Váš Continuity Vault je IP odolný vůči budoucnosti",
+          "description": "Modely jsou objektivy fotoaparátů; vaše scénáře, postavy, skříně a scény ve vašem Continuity Vault jsou vaší trvalou IP. Vybudujte si svou sérii a publikum hned teď – jak modely postupují od umělé inteligence k Superinteligenci (SI), vaše stávající obsazení se automaticky upgraduje na nejnovější enginy."
+        },
+        {
+          "title": "Více výpočetního výkonu, protože náklady na token klesají",
+          "description": "Vzhledem k tomu, že se globální výpočetní objemy rozšiřují a náklady na tokeny modelu klesají, SceneFlow automaticky předává tuto efektivitu aktivním členům jako více generační energie na kredit při obnovách a balíčcích Add-On. Přihlaste se k odběru ještě dnes a jeďte každým skokem vpřed."
+        }
+      ]
     }
   },
   "valueProp": {
@@ -1774,13 +1731,13 @@
     "titleAccent": "v akci",
     "subtitle": "Každá ukázka začíná krátkým trailerem. Hlavní verze v plné délce – kompletní produkce zahrnující fáze od návrhu (blueprint) a předběžné vizualizace (pre-vis) až po finální střih – se promítá v promítacím sále.",
     "subtitleTagline": "Dlouhometrážní produkce. Nikoli krátké klipy.",
-    "screeningRoomInstruction": "Posuďte tuto produkci tak, jak by to udělal recenzent – postupně, milník po milníku. Začněte u série, poté přejděte k Blueprint, následně ke scénáři v rámci AR Analysis a nakonec ke screeningu.",
+    "screeningRoomInstruction": "Nejprve otevřete Screening Room a zažijte produkci tak, jak by to udělal recenzent – přepínejte mezi Pre-Vis, Klipy, Scény, Kapitoly, Master a Promo – a poté si prohlédněte Series Room, Blueprint Room a Production Stage níže.",
     "trailerLabel": "Trailer",
     "watchLongform": "Podívejte se na rozsáhlý materiál",
-    "seriesDoor": "Seriál",
-    "blueprintDoor": "Blueprint",
-    "scriptArDoor": "Analýza pohledávek",
-    "screeningDoor": "Screening",
+    "seriesDoor": "Series Room",
+    "blueprintDoor": "Blueprint Room",
+    "scriptArDoor": "Production Stage",
+    "screeningDoor": "Screening Room",
     "screeningRoomGroup": "Screening Room",
     "previsDoor": "Previzualizace",
     "roughDoor": "Hrubý střih",
@@ -2305,23 +2262,73 @@
     "closePopup": "Zavřít vyskakovací okno"
   },
   "pricing": {
-    "badge": "Jednoduché ceny",
+    "badge": "Cena členství ve studiu a používání",
     "title": "Začněte s Explorer – 9 $",
-    "subtitle": "Otestujte kompletní proces hned teď – vstup stojí pouhých 9 dolarů a vše proběhne hladce a bez zbytečných překážek.",
-    "explorerHighlight": "Nejrychlejší způsob, jak poznat kompletní studio SceneFlow – od konceptu až po Screening Room.",
+    "subtitle": "Začněte svůj první film ještě dnes za 9 $ – přeměňte svůj nápad na strukturovaný Blueprint, obsaďte své postavy a prohlédněte si svou první scénu. Poté si předplaťte, abyste si ponechali svůj trezor kontinuity a po dokončení výroby přidávejte kredity.",
+    "explorerHighlight": "Nevyžadují se žádné technické filmařské dovednosti – vytvořeno pro každodenní vypravěče příběhů, nezávislé tvůrce jednotlivých kapitol, televizní kanály a hybridní filmová studia.",
     "trustBadges": [
       "Bezpečné platby prostřednictvím Whop",
       "9 $ za Explorer na vyzkoušení studia",
-      "Platnost měsíčních kreditů končí na konci období.",
+      "Aktivní členství si zachovává službu Continuity Vault",
       "Zrušit můžete kdykoli"
     ],
     "valueAnchor": {
-      "traditionalCost": "Více než 2 000 USD",
-      "traditionalLabel": "Tradiční pre-vizualizace",
+      "traditionalCost": "5 000 – 50 000 USD+",
+      "traditionalLabel": "Tradiční příprava a výroba",
       "vs": "vs.",
-      "sceneFlowCost": "49–149 USD",
-      "sceneFlowLabel": "SceneFlow měsíčně",
-      "saveBadge": "Ušetřete více než 90 % na projekt"
+      "sceneFlowCost": "19–599 $/měsíc + doplňky",
+      "sceneFlowLabel": "SceneFlow Studio & Continuit Vault",
+      "saveBadge": "Ušetřete 90 %+ na výrobu"
+    },
+    "filmmakerPerspectives": {
+      "heading": "One Studio Pipeline. Vytvořeno pro každého vypravěče a filmaře.",
+      "subheading": "K vyjádření své vize nepotřebujete filmovou školu ani technické dovednosti. Ať už poprvé oživujete osobní příběh, vydáváte sérii kapitolu po kapitole, propagujete finančníky nebo provozujete hybridní natáčení, váš plán se přizpůsobí tomu, jak tvoříte.",
+      "recommendedPathLabel": "Doporučená cesta:",
+      "cards": [
+        {
+          "id": "hobbyist",
+          "badge": "Není potřeba žádný filmový zážitek • 19 $/měsíc",
+          "title": "Vypravěči a kreativní vizionáři",
+          "description": "Máte příběh, koncept knihy nebo rodinnou historii, kterou chcete vidět na obrazovce? Popište svou vizi prostými slovy a vytvářejte vyjádřené animace před Visem a selektivní videoklipy – a přitom své postavy, šatní skříně a sestavy ponechejte uložené ve vašem trezoru Continuity Vault.",
+          "recommendedPlan": "Hobbyista (19 $ měsíčně)"
+        },
+        {
+          "id": "chapter",
+          "badge": "Noví a nezávislí tvůrci • 49 $ měsíčně",
+          "title": "Strategie publikace",
+          "description": "Přeskočte nákladovou a časovou bariéru vykreslení 90minutové funkce předem. Publikujte svůj příběh v 5–15minutových scénách nebo epizodických kapitolách, abyste mohli spravovat svůj měsíční výpočetní rozpočet a přitom neustále rozšiřovat své publikum.",
+          "recommendedPlan": "Startér (49 $/měsíc)"
+        },
+        {
+          "id": "series",
+          "badge": "Zpeněžené kanály • 149 $/měsíc",
+          "title": "Kontinuita postav a nastavení pro sérii",
+          "description": "Publikum odebírá kanály, když se spojí se známými postavami a světy. Váš Continuity Vault uchovává obsazené tváře, oblečení, vlastní hlasové klony a umístění v každé epizodě, takže můžete trvale růst na YouTube, TikTok a Reels.",
+          "recommendedPlan": "Pro (149 $ měsíčně)"
+        },
+        {
+          "id": "hybrid",
+          "badge": "Zkušení a hybridní filmaři • 149–599 USD/měsíc",
+          "title": "Balíčky financování výroby a hybridní focení",
+          "description": "Exportujte standardní skripty (PDF, FDX, Fountain) spárované s Pre-Vis Animatic a Promo Trailer, abyste si zajistili financování investorů – nebo nahrajte živě natočené scény a kombinujte je se záběry 4K AI za zlomek fyzických výrobních nákladů.",
+          "recommendedPlan": "Pro / Studio + doplňky"
+        }
+      ]
+    },
+    "membershipModel": {
+      "badge": "Předvídatelný základ + flexibilní výpočet",
+      "title": "Začněte svůj projekt ještě dnes. Měřítko s doplňky, jak vyrábíte.",
+      "description": "SceneFlow odděluje opakující se hostování ve studiu a Continuity Vault od produkčních výpočtů – takže vaše postavy a svět zůstanou po celý rok uzamčeny a můžete si doplnit kredity, kdykoli budete připraveni dokončit kapitolu nebo funkci.",
+      "pillars": [
+        {
+          "title": "1. Základní členství si zachovává váš trezor kontinuity",
+          "description": "Aktivní měsíční plán (19–599 $/měsíc) zachovává přístup do vašeho studia, odkazy Screening Room a aktivní trezor kontinuity – zachovává vaše opakující se obsazené tváře, šatníky, vlastní hlasové klony, umístění a bible seriálu v průběhu sezón a navíc měsíční základní kredity."
+        },
+        {
+          "title": "2. Dokončete jakýkoli projekt na vyžádání pomocí 12měsíčních doplňkových balíčků",
+          "description": "Jakmile se váš příběh rozběhne, aktivní měsíční členové si mohou kdykoli zakoupit doplňkové kreditní balíčky v hodnotě 25, 100 nebo 250 USD a dokončit tak kapitolu, řadu epizod nebo hybridní celovečerní natáčení. Balíčky doplňků trvají 12 měsíců, zatímco vaše členství zůstává aktivní."
+        }
+      ]
     },
     "teamCta": {
       "title": "Interní tým, nebo instituce?",
@@ -2336,7 +2343,7 @@
     "byok": {
       "title": "Použití vlastního klíče",
       "badge": "Plány Pro a Studio",
-      "description": "Váš API klíč umožňuje generování referenčních podkladů, statických snímků a videoklipů. SceneFlow si za tyto úlohy účtuje 20% poplatek za orchestraci. S rostoucím objemem využití platformy mohou být sazby za hostovanou službu SceneFlow nižší než u osobního API účtu.",
+      "description": "Připojte své vlastní klíče Google Vertex AI nebo Kling API k plánům Pro & Studio pro přímou fakturaci poskytovatele (s 20% poplatkem za orchestraci platformy) – nebo použijte hostované kredity SceneFlow a využijte naše objemově zlevněné modelové sazby.",
       "savingsHighlight": "20% poplatek za orchestraci",
       "benefits": [
         {
@@ -2363,22 +2370,26 @@
       "note": "Poplatek ve výši 20 % představuje poplatek za orchestraci v rámci SceneFlow. Poskytovatel účtuje poplatky za využívání služeb na váš účet. Generování obsahu hostované přímo v SceneFlow může vyjít levněji než použití vlastního klíče."
     },
     "creditTopUps": {
-      "title": "Potřebujete více kreditů?",
-      "subtitle": "Dokupujte si balíčky v hodnotě 25, 100 nebo 250 USD tak často, jak potřebujete. Platnost každého balíčku je 12 měsíců.",
+      "title": "Předplatitel Pay-As-You-Produce Add-On Packs",
+      "subtitle": "Exkluzivně pro aktivní měsíční členy. Kupujte doplňky za 25, 100 nebo 250 $ tak často, jak potřebujete. Jedno balení vydrží 12 měsíců.",
       "packs": [
         {
           "label": "Doplňková položka za 25 $",
-          "description": "2 000 kreditů. Nakupujte tak často, jak potřebujete."
+          "credits": "2000 kreditů",
+          "description": "2 000 kreditů (0,0125 $/kr) – ideální pro dokončení 5–15minutové kapitoly nebo promo upoutávky."
         },
         {
           "label": "Doplněk za 100 USD",
-          "description": "9 000 kreditů. Nakupujte tak často, jak potřebujete."
+          "credits": "9 000 kreditů",
+          "description": "9 000 kreditů (0,0111 $/kr) – ideální pro série sérií s více kapitolami nebo balíčky přednášek."
         },
         {
           "label": "Doplněk za 250 USD",
-          "description": "25 000 kreditů. Nakupujte tak často, jak potřebujete."
+          "credits": "25 000 kreditů",
+          "description": "25 000 kreditů (0,0100 $/kr) – vytvořeno pro hybridní produkce v hodnotě 500–5 000 $ a hrané tituly."
         }
       ],
+      "subscriberNote": "Vyžaduje aktivní měsíční členství (Hobbyist, Starter, Pro nebo Studio) k nákupu a udržení úložiště Continuity Vault.",
       "creditsUnit": "titulky"
     },
     "calculator": {
@@ -2428,13 +2439,13 @@
       "minSuffix": "min."
     },
     "tierGrid": {
-      "productionTestFlight": "Výrobní zkušební let",
+      "productionTestFlight": "30denní zkušební let ve studiu",
       "getStarted": "Začít",
       "startTestFlight": "Zahájit zkušební let",
       "loading": "Načítání...",
       "mostPopular": "Nejoblíbenější",
       "creditsPerMonth": "Kredity/měsíc",
-      "storage": "Skladování",
+      "storage": "Vault kontinuity",
       "perMonth": "/month"
     },
     "trust": {
@@ -2444,13 +2455,13 @@
     },
     "plans": {
       "explorer": {
-        "name": "Explorer – Demo",
-        "description": "Demo – jednorázový nákup pro vyzkoušení kompletní produkce",
+        "name": "Explorer — Spusťte svůj první film",
+        "description": "Proměňte svůj nápad ve strukturovaný Blueprint, obsaďte své postavy a prohlédněte si svou první vyjádřenou scénu – poté se přihlaste a po dokončení filmu přidejte titulky.",
         "features": [
-          "Jednorázový nákup",
+          "Jednorázový nákup (30denní zkušební let Studia)",
           "750 kreditů (platnost vyprší 90 dní po zakoupení)",
-          "5 GB úložiště (30 dní)",
-          "Plný přístup k platformě",
+          "5 GB zkušebního úložiště (30 dní – přihlaste se k zachování trezoru)",
+          "Plný přístup ke studiu + export produkčního skriptu (PDF, FDX, Fountain)",
           "Export do MP4 (jakékoli rozlišení)",
           "AI komentář (více než 70 jazyků)"
         ]
@@ -2458,51 +2469,62 @@
       "subscriptions": [
         {
           "id": "starter",
-          "name": "Starter — Sandbox",
-          "description": "Sandbox – pro zkoušení nápadů před skutečným vystoupením",
+          "name": "Hobbyista — vypravěč a trezor",
+          "description": "Vypravěči a kreativní vizionáři – vyjádřete svou vizi s nulovými potřebami technických filmařských dovedností a mezi natáčením udržujte svůj trezor kontinuity aktivní",
           "features": [
-            "Plný přístup k platformě",
-            "4 500 kreditů měsíčně v ceně",
+            "Členství ve službě Active Studio a zachování služby Continuity Vault",
+            "1 500 kreditů/měsíc v ceně",
             "Nevyužité měsíční kredity na konci období propadají.",
-            "25 GB aktivního úložiště",
-            "Export do MP4 (jakékoli rozlišení)",
-            "AI komentář (více než 70 jazyků)",
-            "E-mailová podpora"
+            "10 GB Active Continuity Vault (uchovává obsazení, skříně a soupravy)",
+            "Odemyká 12měsíční kreditní balíčky pro předplatitele",
+            "Ideální pro osobní vize, rodinné příběhy a pre-Vis animaci",
+            "Náhled a export produkčního skriptu (PDF, FDX, Fountain)",
+            "Export MP4 a hlasový záznam AI (70+ jazyků)"
           ]
         },
         {
           "id": "pro",
-          "name": "Profesionál – YouTuber",
-          "description": "YouTuber – pravidelné epizody a videa na kanálu",
+          "name": "Starter — Chapter & Pre-Vis",
+          "description": "The Publish Chapter Strategy — na 5–15 minut vydávání epizodických kapitol a tradiční filmaři vytvářejí balíčky financování produkce",
           "features": [
-            "Vše z tarifu Starter a navíc:",
-            "V ceně je zahrnuto 15 000 kreditů měsíčně.",
+            "Vše v Hobbyist a navíc:",
+            "4 500 kreditů/měsíc v ceně (3x Hobbyist compute)",
             "Nevyužité měsíční kredity na konci období propadají.",
-            "100 GB aktivního úložiště",
-            "Přístup ke kvalitě Veo 3.1 (4K)",
-            "Systém pro zajištění konzistence postav",
-            "Klonování hlasu",
-            "BYOK (Vlastní klíč / Bring Your Own Key)",
-            "3 týmová sedadla",
-            "Prioritní podpora"
+            "25 GB Active Continuity Vault pro kontinuitu postav a nastavení",
+            "Vytvořeno pro 5–15 minutové vydání kapitol a balíčky financování Pre-Vis",
+            "Nahrajte živé akční scény a kombinujte je s klipy AI v aplikaci Mixer",
+            "1 vlastní hlasový klon a dabing ve více než 70 jazycích",
+            "E-mailová podpora"
           ]
         },
         {
           "id": "studio",
-          "name": "Studio — Nezávislý filmař",
-          "description": "Nezávislý filmař — nezávislé filmy a seriály",
+          "name": "Pro — Series & Hybrid",
+          "description": "Monetized Series & Hybrid Filmmaker – pro sociální kanály s opakujícími se postavami a zkušenými filmaři kombinující živou akci s produkcí AI ve 4K",
           "features": [
-            "Vše z verze Pro a navíc:",
-            "V ceně je zahrnuto 75 000 kreditů měsíčně",
+            "Vše ve Starteru a navíc:",
+            "15 000 kreditů/měsíc v ceně",
             "Nevyužité měsíční kredity na konci období propadají.",
-            "500 GB aktivního úložiště",
-            "Prioritní fronta pro Veo 3.1 4K",
-            "Neomezená konzistence postav",
-            "Export produktů pod vlastní značkou odběratele (white-label)",
-            "Přístup k API",
-            "10 míst pro tým",
-            "Vyhrazený manažer pro správu klienta",
-            "SLA pro podniky k dispozici na vyžádání"
+            "100 GB Active Continuity Vault + Character Consistency Engine",
+            "Přístup k Veo 3.1 Quality (4K) a hybridní živá akce + pracovní postup AI",
+            "5 vlastních hlasových klonů pro opakující se seriálové obsazení",
+            "BYOK (Bring Your Own Key) pro přímou fakturaci poskytovatele",
+            "3 týmová sedadla a prioritní podpora"
+          ]
+        },
+        {
+          "id": "studio",
+          "name": "Studio — Produkční dům",
+          "description": "Production House & Feature Slate — 500–5 000 dolarů plné produkce pro zkušené filmaře, agentury a studia s více sériemi",
+          "features": [
+            "Vše v Pro a navíc:",
+            "75 000 kreditů/měsíc v ceně (nejnižší sazba za kredit)",
+            "Nevyužité měsíční kredity vyprší na konci období",
+            "500 GB Active Continuity Vault + Neomezená konzistence znaků",
+            "Veo 3.1 4K Priority Queue a 25 vlastních hlasových klonů",
+            "Bílý štítek Screening Room a exporty + API a BYOK přístup",
+            "10 týmových míst a dedikovaný account manager",
+            "Enterprise SLA k dispozici na vyžádání"
           ]
         }
       ]

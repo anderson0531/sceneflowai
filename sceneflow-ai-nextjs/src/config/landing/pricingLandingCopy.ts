@@ -25,6 +25,7 @@ export const PRICING_LANDING_COPY = {
     heading: 'One Studio Pipeline. Built for Every Storyteller & Filmmaker.',
     subheading:
       'You do not need film school or technical skills to express your vision. Whether you are bringing a personal story to life for the first time, publishing a series chapter by chapter, pitching financiers, or running a hybrid shoot, your plan scales with how you create.',
+    recommendedPathLabel: 'Recommended path:',
     cards: [
       {
         id: 'hobbyist',

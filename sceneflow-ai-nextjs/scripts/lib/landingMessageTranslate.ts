@@ -171,6 +171,7 @@ const STRUCTURAL_LEAVES = new Set([
 ])
 
 export function shouldSkipTranslation(path: string, value: string): boolean {
+  if (path === 'keyFeatures.subtitle') return true
   const leaf = path.split('.').pop() ?? ''
   if (STRUCTURAL_LEAVES.has(leaf)) return true
   if (leaf.endsWith('Href') || leaf === 'href') return true
@@ -200,7 +201,11 @@ export function extractStaleLandingFlat(
     // stale even when the text is no longer identical to today's English.
     const englishChanged =
       previousFlat != null && previousFlat[path] !== undefined && previousFlat[path] !== value
-    if (current === undefined || current === value || englishChanged) stale[path] = value
+    const untouchedSinceBaseline =
+      previousFlat != null && previousFlat[path] === value && current !== undefined
+    if (current === undefined || englishChanged || (!untouchedSinceBaseline && current === value)) {
+      stale[path] = value
+    }
   }
   return stale
 }
@@ -281,36 +286,146 @@ async function translateBatchLibreTranslate(texts: string[], target: string): Pr
   return results
 }
 
+let anyNetworkSuccess = false
+
+async function translateSingleGoogleGtx(text: string, target: string): Promise<string> {
+  if (!text.trim()) return text
+  const endpoints = [
+    `https://translate.googleapis.com/translate_a/single?client=gtx&sl=en&tl=${encodeURIComponent(target)}&dt=t`,
+    `https://translate.googleapis.com/translate_a/single?client=at&sl=en&tl=${encodeURIComponent(target)}&dt=t`,
+    `https://clients5.google.com/translate_a/t?client=dict-chrome-ex&sl=en&tl=${encodeURIComponent(target)}`,
+  ]
+  const body = new URLSearchParams({ q: text }).toString()
+  let delay = 1200
+  for (let attempt = 0; attempt < 6; attempt++) {
+    const endpoint = endpoints[attempt % endpoints.length]
+    let res: Response
+    try {
+      res = await fetch(endpoint, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded;charset=utf-8',
+          'User-Agent': 'Mozilla/5.0',
+        },
+        body,
+        signal: AbortSignal.timeout(10000),
+      })
+      anyNetworkSuccess = true
+    } catch (err) {
+      if (!anyNetworkSuccess || attempt === 5) throw err
+      await new Promise((r) => setTimeout(r, delay))
+      delay = Math.min(delay * 2, 10000)
+      continue
+    }
+    if (res.status === 429) {
+      await new Promise((r) => setTimeout(r, delay))
+      delay = Math.min(delay * 2, 10000)
+      continue
+    }
+    if (!res.ok) {
+      if (attempt < 5) {
+        await new Promise((r) => setTimeout(r, 500))
+        continue
+      }
+      throw new Error(`GTX HTTP ${res.status}`)
+    }
+    const payload = (await res.json()) as unknown
+    if (Array.isArray(payload)) {
+      if (typeof payload[0] === 'string') {
+        return payload[0]
+      }
+      if (Array.isArray(payload[0])) {
+        if (typeof payload[0][0] === 'string' && payload[0].length === 1) {
+          return payload[0][0]
+        }
+        return (payload[0] as Array<unknown>)
+          .map((part) => (Array.isArray(part) && typeof part[0] === 'string' ? part[0] : ''))
+          .join('')
+      }
+    }
+    throw new Error('Unexpected GTX payload')
+  }
+  throw new Error('GTX single HTTP 429')
+}
+
+const GTX_BATCH_DELIM = '\n[[999888]]\n'
+const GTX_BATCH_SPLIT_RE = /\s*(?:\[\s*\[\s*999888\s*\]\s*\]|【\s*【\s*999888\s*】\s*】|\[\s*999888\s*\])\s*/
+
+async function translateJoinedGoogleGtx(texts: string[], target: string): Promise<string[]> {
+  if (texts.length === 1) {
+    return [await translateSingleGoogleGtx(texts[0], target)]
+  }
+  const joined = texts.join(GTX_BATCH_DELIM)
+  const translatedJoined = await translateSingleGoogleGtx(joined, target)
+  const parts = translatedJoined.split(GTX_BATCH_SPLIT_RE)
+  if (parts.length === texts.length) {
+    return parts.map((p) => p.trim())
+  }
+  // If delimiter count mismatched, split in half recursively
+  if (texts.length > 2) {
+    const mid = Math.ceil(texts.length / 2)
+    const left = await translateJoinedGoogleGtx(texts.slice(0, mid), target)
+    await new Promise((r) => setTimeout(r, 150))
+    const right = await translateJoinedGoogleGtx(texts.slice(mid), target)
+    return [...left, ...right]
+  }
+  const out: string[] = []
+  for (const t of texts) {
+    out.push(await translateSingleGoogleGtx(t, target))
+    await new Promise((r) => setTimeout(r, 150))
+  }
+  return out
+}
+
 async function translateBatchDeepTranslator(texts: string[], target: string): Promise<string[]> {
-  const { spawnSync } = await import('child_process')
-  const { dirname, join } = await import('path')
-  const { fileURLToPath } = await import('url')
-  const scriptDir = dirname(fileURLToPath(import.meta.url))
-  const helper = join(scriptDir, 'deepTranslateBatch.py')
+  const tl = toGoogleTarget(target)
   const protectedEntries = texts.map((t) => protectGlossary(t))
-  const payload = JSON.stringify({
-    target: toGoogleTarget(target),
-    texts: protectedEntries.map((e) => e.protectedText),
-  })
+  const results = new Array<string>(texts.length)
 
-  const result = spawnSync('python3', [helper], {
-    input: payload,
-    encoding: 'utf8',
-    maxBuffer: 50 * 1024 * 1024,
-  })
+  const MAX_ITEMS = 35
+  const MAX_CHARS = 4000
+  const batches: Array<Array<{ index: number; text: string }>> = []
+  let current: Array<{ index: number; text: string }> = []
+  let size = 0
 
-  if (result.status !== 0) {
-    throw new Error(result.stderr?.trim() || 'deep-translator batch failed')
+  for (let i = 0; i < protectedEntries.length; i++) {
+    const text = protectedEntries[i].protectedText
+    if (!text.trim()) {
+      results[i] = texts[i]
+      continue
+    }
+    if (current.length > 0 && (current.length >= MAX_ITEMS || size + text.length + 14 > MAX_CHARS)) {
+      batches.push(current)
+      current = []
+      size = 0
+    }
+    current.push({ index: i, text })
+    size += text.length + 14
+  }
+  if (current.length > 0) batches.push(current)
+
+  for (const batch of batches) {
+    try {
+      const translated = await translateJoinedGoogleGtx(
+        batch.map((b) => b.text),
+        tl
+      )
+      for (let j = 0; j < batch.length; j++) {
+        const idx = batch[j].index
+        const entry = protectedEntries[idx]
+        results[idx] = restoreGlossary(translated[j] || texts[idx], entry.map, entry)
+      }
+      await new Promise((r) => setTimeout(r, 200))
+    } catch (err) {
+      const msg = (err as Error).message || String(err)
+      if (msg.includes('fetch failed') || msg.includes('ENOTFOUND')) {
+        throw err
+      }
+      throw err
+    }
   }
 
-  const parsed = JSON.parse(result.stdout) as { translations?: string[] }
-  if (!parsed.translations || parsed.translations.length !== texts.length) {
-    throw new Error('deep-translator returned unexpected batch size')
-  }
-
-  return texts.map((original, i) =>
-    restoreGlossary(parsed.translations![i] ?? original, protectedEntries[i].map, protectedEntries[i])
-  )
+  return results
 }
 
 async function translateBatchMyMemory(texts: string[], target: string): Promise<string[]> {
@@ -407,7 +522,7 @@ export async function translateFlatMessages(
   flat: Record<string, string>,
   target: string,
   provider: TranslateProvider = 'auto',
-  chunkSize = 50
+  chunkSize = 150
 ): Promise<Record<string, string>> {
   const entries = Object.entries(flat).filter(([path, value]) => !shouldSkipTranslation(path, value))
   const uniqueValues = [...new Set(entries.map(([, v]) => v))]
@@ -424,7 +539,7 @@ export async function translateFlatMessages(
     })
     const resolved = resolveProvider(provider, target)
     if (resolved !== 'mymemory' && resolved !== 'libretranslate') {
-      await new Promise((r) => setTimeout(r, 400))
+      await new Promise((r) => setTimeout(r, resolved === 'vertex' ? 50 : 400))
     }
   }
 

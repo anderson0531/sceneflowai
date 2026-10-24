@@ -239,10 +239,10 @@
     "syncedAt": "2026-08-02T05:23:49.220Z"
   },
   "landingFill": {
-    "provider": "vertex",
+    "provider": "deep-translator",
     "scope": "fill-english",
-    "batchSize": null,
-    "batchNumber": null,
-    "syncedAt": "2026-10-14T07:00:52.976Z"
+    "batchSize": 35,
+    "batchNumber": 2,
+    "syncedAt": "2026-10-24T12:01:00.687Z"
   }
 }

@@ -257,53 +257,54 @@
     "exitFullscreenOverview": "Jáde kúrò ní ìwòran ojú-ìbò kíkún",
     "watchLongformLabel": "Wo èyí tí ó gùn",
     "screenshotLabel": "Àwòrán ojú-iboju",
-    "landingUiLanguagesLabel": "Ṣe agbejade ati fi ohun kun un ni ede mẹrinlelogoji. A le lo oju-iwe yii ni awọn ede mọkandinlogoji wọnyi:",
+    "landingUiLanguagesLabel": "Ṣe agbejade ati gbasilẹ ni awọn ede 44. Ni wiwo ile isise ni kikun ati aaye yii wa ninu 39 wọnyi:",
     "rooms": [
       {
         "id": "series-desk",
         "label": "SFAISERIES_ÀKÓKÒ_YÀRÁ",
-        "promise": "Series Room ni ibi ti akoko (season) kan ti maa n bẹrẹ. Awọn ohun kikọ ati itan kanna ni yoo wa ninu gbogbo apakan (episode) ti o ba fi kun un. Ka a, tẹtisi rẹ, ki o si ṣe itọsọna rẹ ki apakan kan to bẹrẹ ni Blueprint Room. Fiimu ti ko ni akoko le fo yara yii kọja.",
+        "headline": "Kọ Agbaye lẹẹkan. Ṣe agbejade awọn iṣẹlẹ lailai.",
+        "promise": "Dagbasoke akoko iṣẹlẹ-ọpọlọpọ pẹlu bibeli ẹda kan ti o pin. Simẹnti rẹ, awọn ipo, awọn okun itan, ati DNA wiwo gbe laifọwọyi sinu gbogbo iṣẹlẹ ti o yi soke. Ṣiṣe fiimu ti o wa ni imurasilẹ? Rekọja taara si Blueprint Room.",
         "features": [
           {
             "icon": "newSeries",
             "title": "Ẹ̀ka Tuntun",
-            "description": "Bẹ̀rẹ̀ níbí. Ṣàlàyé nípa eré tẹlifíṣọ̀nù tàbí fíìmù oní-pàrìpàrì (series) tí o ní lọ́kàn ní èdè tirẹ̀. Ẹ̀ka \"Clarify and Confirm\" yóò bá ọ ṣe àtúnyẹ̀wò èrò yẹn títí tí àkópọ̀ ìtàn náà yóò fi pé, lẹ́yìn náà, ẹ̀ka \"Generate Series\" yóò kọ ìpìlẹ̀ eré náà sílẹ̀. Eré tuntun yóò bẹ̀rẹ̀ pẹ̀lú àwọn abala márùn-ún, o sì lè fi àwọn mìíràn kún un.",
+            "description": "Ṣe idawọle jara rẹ tabi imọran ikanni ni ede itele. Isọdọtun AI ibaraenisepo n mu agbegbe rẹ pọ si ati ṣe ipilẹṣẹ ipilẹ akoko iṣẹlẹ-ọpọlọpọ-pipe pẹlu awọn arcs Idite nla ati awọn didenukole isele.",
             "screenshot": "Ṣe Àtòjọ Tuntun — ète, Ṣe àlàyé kí o sì fìdí rẹ̀ múlẹ̀, Ṣe àgbékalẹ̀ àtòjọ",
             "learnMore": {
               "items": [
                 {
                   "title": "Ète rẹ",
-                  "description": "Ṣàlàyé ohun tí eré oní-apá yìí jẹ́, títí kan ọ̀nà tí a gbà ṣe é, àwọn tí a ṣe é fún, àti irúfẹ́ ọ̀nà ìṣesán-àwòrán rẹ̀."
+                  "description": "Ṣe ipilẹ ile, ọna kika, awọn olugbo ibi-afẹde, ati ara aworan wiwo ni ede itele."
                 },
                 {
-                  "title": "Ṣe leralera",
-                  "description": "\"Clarify and Confirm\" (Ṣe Àlàyé kí o sì Fìdí rẹ̀ Múlẹ̀) máa ń ṣe àtúnṣe àkópọ̀ ìròyìn náà pẹ̀lú rẹ kí wọ́n tó dá ohunkóhun sílẹ̀."
+                  "title": "Isọdọtun ibaraẹnisọrọ",
+                  "description": "Ṣe alaye ati Jẹrisi didasilẹ Afoyemọ akoko pẹlu rẹ ṣaaju ipilẹṣẹ ohunkohun."
                 },
                 {
-                  "title": "Ìpìlẹ̀ ìwọ̀n",
-                  "description": "Generate Series kọ́ sáà tí o máa ṣe àtúnyẹ̀wò rẹ̀, èyí tí yóò bẹ̀rẹ̀ pẹ̀lú àwọn abala márùn-ún."
+                  "title": "Ipilẹ akoko",
+                  "description": "Ina Series kọ kan marun-isele akoko aaki ti o le faagun nigbakugba."
                 }
               ]
             }
           },
           {
             "icon": "seriesReview",
-            "title": "Ṣe àyẹ̀wò àkọ́kọ́ ẹ̀dà tí a gé",
-            "description": "Ka àkópọ̀ ìtàn náà, tàbí kí o tẹ bọtìnì láti gbọ́ ọ. Lẹ́yìn náà, ka àwọn abala ìtàn náà tàbí kí o gbọ́ wọn. Ìbáramu ló ń so àwọn apá ìtàn náà pọ̀, nígbà tí ìtẹ̀síwájú àìdáwọ́dúró sì ń mú kí àwọn òṣèré, àwọn ibi ìṣẹ̀lẹ̀, àwọn ohun èlò, àti àyíká tí àwọn abala náà ní lẹ́nu iṣẹ́ wà ní ìṣọ̀kan.",
+            "title": "Akoko Bible & Itesiwaju",
+            "description": "Ka tabi tẹtisi Akopọ akoko ti a sọ ati sileti isele. SceneFlow tilekun awọn okun itan rẹ, awọn profaili simẹnti, awọn ipo, ati awọn atilẹyin ibuwọlu sinu Reference Library ti o pin ti gbogbo iṣẹlẹ jogun.",
             "screenshot": "Àkópọ̀, Àwọn Orí, Ìdúróṣinṣin, Ìtẹ̀síwájú — Àwọn òṣèré, Àwọn ibi ìṣe, Àwọn ohun èlò, Àyíká ìṣe",
             "learnMore": {
               "items": [
                 {
                   "title": "Ka tàbí fetí sílẹ̀",
-                  "description": "A lè ka àkótán àti àwọn abala náà, tàbí kí a gbọ́ wọ́n nípasẹ̀ 'Listen'."
+                  "description": "Ṣe ayẹwo Akopọ akoko ati gbogbo Afoyemọ isele pẹlu itumọ ohun afetigbọ."
                 },
                 {
-                  "title": "Ìdúróṣinṣin",
-                  "description": "Àwọn ohun tó lẹ́wà, àwọn ìṣẹ̀lẹ̀ pàtàkì, àti àwọn apá pàtàkì nínú ìtàn máa ń bá àsìkò náà lọ."
+                  "title": "Itan aitasera",
+                  "description": "Aesthetics, awọn iṣẹlẹ idite bọtini, ati awọn okun itan wa ni titiipa ni gbogbo akoko."
                 },
                 {
-                  "title": "Ìtẹ̀síwájú",
-                  "description": "Àwọn òṣèré, àwọn ibi ìṣeré, àwọn ohun èlò, àti ètò ìṣeré náà gan-an ni a máa ń lò fún gbogbo abala eré náà."
+                  "title": "Pipin itesiwaju",
+                  "description": "Simẹnti, awọn ipo, awọn atilẹyin, ati awọn eto gbe lọ laifọwọyi sinu gbogbo iṣẹlẹ ti o ṣe."
                 }
               ]
             }
@@ -311,75 +312,75 @@
           {
             "icon": "seriesResonance",
             "title": "Ọ̀rọ̀-ìtọ́kasí fún ìbáramu pẹ̀lú àwọn olùgbọ́ SFAI",
-            "description": "Ṣiṣe Audience Resonance nigba ti o ba fẹ ni oye nipa akoko naa. Ṣe ayewo awọn ami ati itupalẹ naa. Lo imọran ti a le fi si iṣe ti o ba fẹ bẹẹ nikan; ko si ohun ti yoo yipada ninu jara naa titi ti iwọ yoo fi ṣe bẹẹ.",
+            "description": "Ṣe idanwo arc akoko rẹ si ibi-afẹde ibi-afẹde rẹ ṣaaju kikọ iwe afọwọkọ kan. Ṣe ayẹwo awọn iṣiro isele-nipasẹ-isele ati ki o lo awọn ilọsiwaju itan ti o ni atilẹyin data pẹlu titẹ ọkan-nikan nigbati o ba gba pẹlu akọsilẹ naa.",
             "screenshot": "Àyẹ̀wò Audience Resonance, lẹ́yìn náà àwọn òye tó ṣeé lò, tí a kò tíì lò",
             "learnMore": {
               "items": [
                 {
-                  "title": "Ohun tí a kà",
-                  "description": "Àwọn àbájáde àti ìtúpalẹ̀ fi hàn ohun tí ó máa ń wọ àwọn olùwò tí o tọ́ka sí lọ́kàn."
+                  "title": "Ifimaaki agbegbe",
+                  "description": "Awọn ikun ati itupalẹ igbekale ṣafihan bii akoko rẹ ṣe n gbe pẹlu awọn olugbo ibi-afẹde rẹ."
                 },
                 {
-                  "title": "Ti a le yan",
-                  "description": "Imọ̀ tó ṣeé fi sílò máa ń yí ọ̀wọ́ náà padà kìkì nígbà tí o bá fi í sílò."
+                  "title": "Aṣẹ oludari",
+                  "description": "Awọn oye Actionable ṣe imudojuiwọn jara rẹ nikan nigbati o yan lati lo wọn."
                 }
               ]
             }
           },
           {
             "icon": "seriesDirector",
-            "title": "Olùdarí Ẹ̀ka-eré",
-            "description": "Ṣe amọna gbogbo ọna-iṣẹlẹ naa pẹlu ọrọ tirẹ, boya nipa sisọ tabi kikọ ọ. Iwọ ni yoo yan iyipada ati ohun ti a o dojukọ, iwọ yoo si gba a wọle. Imọran le ṣe iranlọwọ, awọn apakan itan ti ko si ni ibatan si eyi yoo si wa bi wọn ṣe wa tẹlẹ.",
+            "title": "The Series Oludari",
+            "description": "Ṣe atunṣe gbogbo akoko nipasẹ ohun tabi ọrọ. Yi ohun orin pada, gbe awọn ere soke, tabi tun ṣe arc kikọ kan kọja gbogbo awọn iṣẹlẹ ni ẹẹkan lakoko ti o jẹ ki iyoku laini itan rẹ wa ni mimule.",
             "screenshot": "Oludari jara — itọsọna, idojukọ, gbigba",
             "learnMore": {
               "items": [
                 {
-                  "title": "Àwọn ọ̀rọ̀ rẹ",
-                  "description": "Sọ tàbí tẹ àtúnṣe náà jáde, kí o sì lè yàn láti fi mọ́ ìtàn, àwọn ohun-ìṣe nínú ìtàn, àkóónú abala, ìṣesí tàbí ojú-ìṣẹ̀lẹ̀ nìkan."
+                  "title": "Ìtọ́sọ́nà èdè pẹ̀lẹ́",
+                  "description": "Sọ tabi tẹ akọsilẹ rẹ ati idite ibi-afẹde, awọn ohun kikọ, awọn arcs isele, ohun orin, tabi eto."
                 },
                 {
-                  "title": "O gba a",
-                  "description": "Ko si ohun ti yoo yipada titi iwọ o fi gba a, awọn apakan itan ti ko si ni ibatan si ara wọn yoo si wa bi wọn ṣe wa."
+                  "title": "Awọn imudojuiwọn iṣẹ abẹ",
+                  "description": "Ko si ohun ti o yipada titi ti o fi gba atunyẹwo naa, ati awọn okun itan ti ko ni ibatan duro ni aibikita."
                 },
                 {
-                  "title": "Ìmọ̀ràn",
-                  "description": "Awọn imọran le ṣe iranlọwọ, sibẹsibẹ iwọ ni yoo yan ohun ti iwọ yoo mu duro."
+                  "title": "Awọn iṣeduro itọnisọna",
+                  "description": "Waye awọn ilọsiwaju itan ti o ni imọran AI tabi darí gbogbo yiyan iṣẹda funrararẹ."
                 }
               ]
             }
           },
           {
             "icon": "directEpisode",
-            "title": "Ṣe amọna iṣẹlẹ yii",
-            "description": "Yan abala kan ki o si dari rẹ̀ fun wakati yẹn nikan. Mu ki awọn nkan le koko tabi ki o jinlẹ si i ninu itan naa, lẹhinna ṣe imuse rẹ̀. Awọn abala iyokù yoo wa bi wọn ṣe wa tẹlẹ.",
+            "title": "Episode-Ipele Itọsọna",
+            "description": "Sun-un sinu iṣẹlẹ kọọkan lati tun ṣe idite rẹ, pacing, tabi kio ni ipinya-laisi iparun iyoku ti sileti akoko rẹ.",
             "screenshot": "Awọn apakan — Dari apakan yii, awọn apakan iyokù ko yipada",
             "learnMore": {
               "items": [
                 {
-                  "title": "Ìṣẹ̀lẹ̀ kan",
-                  "description": "Eyi n lo iyipada naa fun iṣẹlẹ yẹn nikan."
+                  "title": "Ya sọtọ rewrites",
+                  "description": "Awọn ayipada taara si ilana isele kan ṣoṣo ati lu laisi iyipada awọn iṣẹlẹ adugbo."
                 },
                 {
-                  "title": "Àkókò náà wà níbẹ̀",
-                  "description": "A fi àwọn apá yòókù sílẹ̀ bí wọ́n ṣe wà."
+                  "title": "Iduroṣinṣin akoko",
+                  "description": "Awọn overarching akoko bibeli ati ti o ku isele sileti duro ni titiipa."
                 }
               ]
             }
           },
           {
             "icon": "startEpisode",
-            "title": "Bẹ̀rẹ̀ abala náà",
-            "description": "Nígbà tí abala kan bá ti ṣetán, bẹ̀rẹ̀ iṣẹ́ rẹ̀. Àkọsílẹ̀ ìlànà, àkópọ̀ ìtàn, àti àwọn kókó pàtàkì ìtàn náà yóò bá a lọ sínú Blueprint Room. A ti mọ àwọn òṣèré àti àyíká ìtàn náà tẹ́lẹ̀.",
+            "title": "Ifilọlẹ isele Ọkan-Ọkan",
+            "description": "Nigbati ilana isele kan ba de ami naa, ṣe ifilọlẹ taara sinu Blueprint Room pẹlu arosọ rẹ, awọn lilu itan, simẹnti, ati agbaye ti a ti firanṣẹ tẹlẹ.",
             "screenshot": "Bẹ̀rẹ̀ iṣẹ́ — àkọsílẹ̀ ìlànà àti àwọn òṣèré ti wà nílẹ̀ tẹ́lẹ̀ fún ètò náà.",
             "learnMore": {
               "items": [
                 {
-                  "title": "Bẹ̀rẹ̀ iṣẹ́-ànfààní",
-                  "description": "Start Project ṣí abala yẹn nínú Blueprint Room."
+                  "title": "Ifiweranṣẹ lẹsẹkẹsẹ",
+                  "description": "Ṣe ifilọlẹ iṣẹlẹ eyikeyi taara sinu Blueprint Room pẹlu titẹ ẹyọkan."
                 },
                 {
-                  "title": "Ti a ti mọ̀ tẹ́lẹ̀",
-                  "description": "Ìlànà gbogbogbò, àkótán ìtàn, àwọn kókó pàtàkì, àti àwọn òṣèré wà pẹ̀lú rẹ̀."
+                  "title": "DNA ti a ti firanṣẹ tẹlẹ",
+                  "description": "Ila isele, Afoyemọ, itan lilu, Simẹnti, ati awọn ipo rin laifọwọyi."
                 }
               ]
             }
@@ -389,43 +390,44 @@
       {
         "id": "blueprint-board",
         "label": "SFAIBLUEPRINT_ORUKO_YARA",
-        "promise": "Blueprint Room ni ibi ti o ti n ṣe atunṣe pipe si itan naa ki o to kọ iwe-afọwọkọ fun fiimu tabi eto ti yoo gba iṣẹju 90. Bẹrẹ lati ori iṣẹlẹ kan ninu jara tabi lati inu iṣẹ tuntun. Ṣeto bi itan naa yoo ṣe lọ ati awọn oṣere ti yoo kopa ninu rẹ nibi, ki Production Stage ma ba ni lati tun wọn ṣe lati ibẹrẹ.",
+        "headline": "Tii itan naa ati iwo naa ṣaaju ṣiṣe awọn fireemu kan ṣoṣo.",
+        "promise": "Boya o n ṣe ifilọlẹ iṣẹlẹ kan lati Series Room tabi bẹrẹ ẹya ti o duro, Blueprint Room ni ibi ti DNA ẹda rẹ ti wa ni titiipa pipe.",
         "features": [
           {
             "icon": "startBlueprint",
             "title": "Bẹ̀rẹ̀ Blueprint",
-            "description": "Bẹ̀rẹ̀ láti inú ìṣẹ̀lẹ̀ kan nínú eré oní-pàrí-pàrí (series), tàbí kí o bẹ̀rẹ̀ iṣẹ́ tuntun. Ìṣẹ̀lẹ̀ eré oní-pàrí-pàrí máa ń wá pẹ̀lú ìlànà rẹ̀, àkópọ̀ ìtàn rẹ̀, àti àwọn kókó pàtàkì nínú rẹ̀. Iṣẹ́ tuntun máa ń bẹ̀rẹ̀ nígbà tí o bá ṣàlàyé ète iṣẹ́ náà, tí o lo iṣẹ́ \"Validate & Enhance with AI\", tí o sì yan \"Generate Blueprint\".",
+            "description": "Mu iṣẹlẹ kan wa lati inu jara rẹ pẹlu itla ati simẹnti ti kojọpọ tẹlẹ, tabi gbe ero fiimu tuntun kan lati ibere ki o jẹ ki AI ṣe agbekalẹ itọju ipilẹ.",
             "screenshot": "A ti mọ apakan ninu jara naa tẹlẹ, tabi Bẹrẹ Ise-agbese Rẹ — idi rẹ, Ṣe ayẹwo ati mu u dara si pẹlu AI, Ṣẹda Blueprint",
             "learnMore": {
               "items": [
                 {
-                  "title": "Apá nínú eré tẹ́levíṣọ̀n",
-                  "description": "Wọ́n máa ń bẹ̀rẹ̀ ìṣẹ̀lẹ̀ kan nínú eré oní-pàrìsì pẹ̀lú ìlànà, àkópọ̀ ìtàn, àti àwọn kókó pàtàkì tí wọ́n ti pèsè sílẹ̀ tẹ́lẹ̀."
+                  "title": "Lati Series Room",
+                  "description": "Awọn iṣẹlẹ jara de pẹlu ìla wọn, Afoyemọ, lu, ati simẹnti tẹlẹ somọ."
                 },
                 {
-                  "title": "Iṣẹ́ tuntun",
-                  "description": "\"Start Your Project\" gba ète iṣẹ́ náà, ó ṣe àtúnyẹ̀wò àti ìmúláradá rẹ̀ pẹ̀lú AI, lẹ́yìn náà ó ṣẹ̀dá Blueprint."
+                  "title": "Standalone ise agbese",
+                  "description": "Pitch imọran fiimu tuntun kan, sọ di mimọ pẹlu afọwọsi AI, ati ṣe agbekalẹ itọju pipe."
                 }
               ]
             }
           },
           {
             "icon": "treatment",
-            "title": "Ṣe amọna awọn ilu naa",
-            "description": "Ṣí taabu \"Beats\" kí o sì fetí sí àkọsílẹ̀ àwọn ìpín ìtàn (beat sheet) náà. Ṣe àtúnṣe tó péye sí àwọn ìpín wọ̀nyí níbí, nítorí pé àwọn ló ń darí bí a ṣe ń kọ ìwé eré náà. Níbí nìkan ni àwọn ìpín wọ̀nyí wà. Production Stage máa ń sọ ìpín kọ̀ọ̀kan di orí kan nínú ìtàn náà.",
+            "title": "The Lu dì",
+            "description": "Ṣeto ọpa ẹhin ti fiimu rẹ. Ka tabi tẹtisi iwe lilu itan rẹ ki o si tun pacing naa dara nibi—gbogbo lilu ti o tiipa ni Blueprint Room n ṣe ipin ipin kan ninu Production Stage.",
             "screenshot": "Taabu Beats, pẹlu Listen",
             "learnMore": {
               "items": [
                 {
-                  "title": "Ìwé àkọsílẹ̀ ìṣẹ̀lẹ̀",
-                  "description": "Àwọn ìlù wà níbí nìkan."
+                  "title": "Ẹyìn itan",
+                  "description": "Lu ti wa ni kikọ ati titiipa ni Blueprint Room ṣaaju ki iran iwe afọwọkọ to bẹrẹ."
                 },
                 {
-                  "title": "Ṣíṣe àgbékalẹ̀ ìwé-ìtàn",
-                  "description": "Àwọn 'beat' náà ló ń darí ìṣẹ̀dá ìwé-ìtàn (script build), nítorí náà, a máa ń mú wọn péye dáadáa kí ìpele Production Stage tó dé."
+                  "title": "Pacing akọkọ",
+                  "description": "Imudara dì lilu nibi ṣe idaniloju imuṣere ori iboju pẹlu eto iyalẹnu to muna."
                 },
                 {
-                  "title": "Àwọn Orí",
+                  "title": "Lu-si-ipin aworan agbaye",
                   "description": "Production Stage sọ ìlù kọ̀ọ̀kan di orí ìtàn."
                 }
               ]
@@ -433,22 +435,22 @@
           },
           {
             "icon": "castLocations",
-            "title": "Ṣe amọna awọn oṣere ati awọn ibi ti a ti n ya aworan",
-            "description": "Ṣí apá 'Characters' kí o sì ṣètò àwọn òṣèré. Ṣí 'Setting' lábẹ́ abala 'Story' kí o sì ṣètò àwọn ibi ìṣẹ̀lẹ̀ pẹ̀lú wọn. Àwọn òṣèré máa ń ní ipa lórí bí a ṣe ń kọ ìwé eré náà, nítorí náà, ó yẹ kí a ṣètò àwọn méjèèjì kí Production Stage tó ní láti tún ìwé eré náà ṣe.",
+            "title": "Simẹnti & World Design",
+            "description": "Ṣetumo awọn ohun kikọ rẹ, awọn aṣọ ipamọ, ati awọn ipo akọkọ ṣaaju ipilẹṣẹ imuṣere ori iboju — ni idaniloju pe a kọ iwe afọwọkọ ni ayika simẹnti gangan rẹ ati awọn eto lati oju-iwe akọkọ.",
             "screenshot": "Taabu àwọn ohun-ìtàn, lẹ́yìn náà Setting nínú ìtàn náà",
             "learnMore": {
               "items": [
                 {
-                  "title": "Àwọn òṣèré",
-                  "description": "Apa 'Characters' duro fun awọn oṣere, awọn oṣere wọnyi si ni ipa lori bi a ṣe n kọ iwe itan naa."
+                  "title": "Awọn profaili kikọ",
+                  "description": "Dari awọn profaili simẹnti rẹ ni iwaju ki ọrọ sisọ ati idinamọ ibaamu ohun kikọ kọọkan."
                 },
                 {
-                  "title": "Àwọn ibi",
-                  "description": "Àwọn ibi ni ó jẹ́ ibi tí ìtàn náà ti wáyé lórí taabu ìtàn náà."
+                  "title": "Aye & awọn ipo",
+                  "description": "Ṣeto awọn eto akọkọ lori taabu Itan lati daduro gbogbo agbegbe agbegbe."
                 },
                 {
-                  "title": "Ṣáájú ìwé ìtàn eré náà",
-                  "description": "Fifiranṣẹ awọn mejeeji si ibi yii ṣe idiwọ fun atunṣe nla ti a nilo lati ṣe si iwe-aṣẹ (script) ninu Production Stage."
+                  "title": "Odo akosile refactoring",
+                  "description": "Titiipa simẹnti ati awọn ipo ṣaaju ipilẹṣẹ iwe afọwọkọ yọkuro awọn atunko iye owo lori Production Stage."
                 }
               ]
             }
@@ -456,21 +458,21 @@
           {
             "icon": "blueprintDirector",
             "title": "Oludari Blueprint",
-            "description": "Oludari yoo gba iyipada naa gẹgẹ bi o ṣe sọ ọ tabi kọ ọ. Jẹ ki atunṣe naa da lori awọn ipele itan (beats), awọn ohun kikọ, tabi itan funra rẹ, lẹhinna wo bi atunṣe naa yoo ṣe ri. Ko si ohun ti yoo yipada titi iwọ o fi fidi rẹ mulẹ.",
+            "description": "Sọ tabi tẹ awọn akọsilẹ itan rẹ lati ṣe atunyẹwo lilu, awọn ohun kikọ, tabi awọn alaye agbaye. Ṣe awotẹlẹ atunyẹwo iwọntunwọnsi ẹgbẹ-ẹgbẹ-ko si ohun ti o yipada ninu itọju rẹ titi ti o fi fọwọsi gige naa.",
             "screenshot": "Olùdarí — ìtọ́sọ́nà, ìfojúsùn, àyẹ̀wò-tẹ́lẹ̀, lo àtúnṣe",
             "learnMore": {
               "items": [
                 {
-                  "title": "Àwọn ọ̀rọ̀ rẹ",
-                  "description": "Sọ iyipada naa tabi tẹ ẹ sinu ẹrọ, ki o si dojukọ ọ lori awọn ipele itan (beats), awọn ohun kikọ, tabi itan naa funra rẹ."
+                  "title": "Awọn akọsilẹ ìfọkànsí",
+                  "description": "Sọ tabi tẹ itọsọna rẹ ki o dojukọ atunyẹwo lori Lu, Awọn ohun kikọ, tabi Itan."
                 },
                 {
-                  "title": "Àyẹ̀wò-tẹ́lẹ̀",
-                  "description": "Ṣíṣe àtúnṣe tó wà ní ìwọ̀ntúnwọ̀nsì máa ń fi ìyípadà hàn ṣáájú kí o tó mú un lò."
+                  "title": "Awotẹlẹ ẹgbẹ-si-ẹgbẹ",
+                  "description": "Ṣe atunyẹwo atunyẹwo iwọntunwọnsi ṣaaju ṣiṣe eyikeyi awọn ayipada si Blueprint rẹ."
                 },
                 {
-                  "title": "O fi í sí",
-                  "description": "Ko si ohun ti yoo yipada titi iwọ o fi lo atunṣe naa."
+                  "title": "O di titiipa mu",
+                  "description": "Ko si ohunkan ninu itọju rẹ ti o yipada titi iwọ o fi lo atunyẹwo naa ni gbangba."
                 }
               ]
             }
@@ -478,35 +480,35 @@
           {
             "icon": "blueprintResonance",
             "title": "Ọ̀rọ̀-ìtọ́kasí fún ìbáramu pẹ̀lú àwọn olùgbọ́ SFAI",
-            "description": "Ṣe ìpamọ́ àwọn olùgbọ́ tàbí àwọn tí a fojú sùn, lẹ́yìn náà ṣe àtúnyẹ̀wò. Wàá rí àwọn àmì àti àwọn ìgbàmọ̀ràn náà. Kò sí ohunkóhun nínú àwòrán ìṣètò (blueprint) tí yóò yí padà títí tí o fi máa lo ìgbàmọ̀ràn kan nínú Blueprint Director.",
+            "description": "Ṣe iṣiro itọju rẹ lodi si aṣa ati profaili ti awọn eniyan ibi-afẹde rẹ. Mu awọn ela pacing igbekale ni kutukutu ki o lo awọn iṣeduro ifọkansi ni Oludari Blueprint.",
             "screenshot": "Audience Resonance — àwùjọ tí a ti fipamọ́, àwọn àmì, àti àwọn àbá tí a kò tíì lò",
             "learnMore": {
               "items": [
                 {
-                  "title": "Ohun tí a kà",
-                  "description": "Fipamọ àwọn olùwò-n-wò náà, lẹ́yìn náà ṣe àtúnyẹ̀wò, kí o sì ka àwọn àmì àti àwọn ìgbàmọ̀ràn náà."
+                  "title": "Pre-akosile afọwọsi",
+                  "description": "Ṣe itupalẹ itọju rẹ si awọn olugbo ibi-afẹde rẹ lati wo awọn ikun ẹka ati awọn akọsilẹ itan."
                 },
                 {
-                  "title": "Ti a le yan",
-                  "description": "Ìgbà tí o bá lo àbá náà nínú Blueprint Director nìkan ni yóò fi yí àwòrán ìpìlẹ̀ (blueprint) náà padà."
+                  "title": "Ohun elo yiyan",
+                  "description": "Awọn iṣeduro ṣe atunṣe Blueprint rẹ nikan nigbati o yan lati lo wọn."
                 }
               ]
             }
           },
           {
             "icon": "goToProduction",
-            "title": "Lọ sí Production Stage",
-            "description": "Lọ sí Production Stage nígbà tí a bá ti ṣètò ìtàn, àwọn kókó pàtàkì nínú rẹ̀, àti àwọn òṣèré. Láti inú pátákó yìí ni a ó ti kọ ìwé ìtàn eré (script) tí yóò gba ìṣẹ́jú 90. Kò pọn dandan láti tún ìtàn náà kọ ní Production Stage.",
+            "title": "Greenlight to Production",
+            "description": "Nigbati itọju naa, dì lilu, ati simẹnti ba wa ni titiipa, tẹ siwaju si Production Stage. SceneFlow ṣe akojọpọ iwe afọwọkọ oni-pupọ ni kikun taara lati ọdọ Blueprint ti o fọwọsi.",
             "screenshot": "Lọ sí Production Stage — a ti ṣètò ìtàn, àwọn ìpele pàtàkì, àti àwọn òṣèré náà.",
             "learnMore": {
               "items": [
                 {
-                  "title": "Fifunni lọwọ-si-ọwọ",
-                  "description": "Lọ sí Production Stage láti ṣí ìwé àṣẹ (script) láti inú àwòrán ìpìlẹ̀ (blueprint) yìí."
+                  "title": "Akopọ laisiyonu",
+                  "description": "Lilọ si Production Stage ṣe akojọpọ iwe afọwọkọ ni kikun taara lati ọdọ Blueprint ti o fọwọsi."
                 },
                 {
-                  "title": "Ti ṣeto tẹlẹ",
-                  "description": "A ti ṣe amojuto itan naa, awọn iṣẹlẹ pataki rẹ, ati awọn oṣere ti yoo kopa ninu rẹ."
+                  "title": "Titiipa ipilẹ",
+                  "description": "Itan itan rẹ, eto lilu, ati simẹnti de ti ṣetan fun iṣẹlẹ ati itọsọna titu."
                 }
               ]
             }
@@ -516,215 +518,109 @@
       {
         "id": "production-stage",
         "label": "SFAIPRODUCTION_ÀKÓKÒ_ÌṢERÉ",
-        "promise": "Eyi ni ipele ti ero tabi apẹrẹ ti a ti fidi rẹ mulẹ fi di aworan gidi. Ṣakoso bi o ṣe n lo owo pẹlu eto to peye. Mu ki gbogbo apakan aworan naa dara julọ, lẹhinna ṣeto wọn ni tẹle-tẹle — itọsọna, ohun, orin, asopọ to tọ, ati awọn aworan aimi — ki o si ṣe ayẹwo aworan afọwọya ti n gbe (animatic) ki o to na owo lori ṣiṣe fidio gidi. Ṣe agbejade awọn apakan fidio naa, dapọ wọn, ṣeto wọn ni awọn ede oriṣiriṣi, ki o si fi apakan, ori, ẹda akọkọ, tabi fidio ipolowo naa ranṣẹ.",
-        "spend": {
-          "label": "Ṣàkóso Ináwó",
-          "features": [
-            {
-              "icon": "byok",
-              "title": "Mu Kọ́kọ́rọ́ Tirẹ Wá",
-              "description": "So awọn kọ́ọ̀dù (keys) tiwọ́n fún àwọn olùpèsè àwòrán àti fídíò pọ̀ mọ́ ètò rẹ. Ìṣẹ̀dá yóò máa lọ lórí àkọọ́lẹ̀ rẹ, ní ìbámu pẹ̀lú owó tí ó wà fún ọ, nígbà tí ilé-iṣẹ́ tó ń ṣe amọ̀nà iṣẹ́ náà — àwọn olùrànlọ́wọ́ (agents), ètò ìtẹ̀síwájú iṣẹ́ (continuity), Mixer, àti Screening Room — yóò sì máa bá a nìṣó láti wà ní ipò rẹ̀.",
-              "screenshot": "Awọn bọtini BYOK",
-              "learnMore": {
-                "items": [
-                  {
-                    "title": "Awọn kọkọrọ rẹ",
-                    "description": "So àwọn kọ́ọ̀dù (keys) àwọn olùpèsè àwòrán àti fídíò pọ̀ mọ́ra kí ètò ìṣẹ̀dá lè máa ṣiṣẹ́ lábé àkọọ́lẹ̀ rẹ, pẹ̀lú àwọn iye owó tí ó bá ọ mu."
-                  },
-                  {
-                    "title": "Ilé-iṣẹ́ ìgbóhùn-sáfẹ́fẹ́ kan náà",
-                    "description": "Awọn aṣoju, itesiwaju, Mixer, ati Screening Room wa ni ipo wọn."
-                  }
-                ]
-              }
-            },
-            {
-              "icon": "budget",
-              "title": "Olùṣètò Ìgbéjáde",
-              "description": "Ṣe ipinnu lori iye igba ti a o tun ṣatunṣe kọọkan ninu awọn aworan ti a n ya (shots) ki o to bẹrẹ si ni nawo. Awọn ipinnu wọnyi yoo wa ni ipilẹ fun ipele aworan (scene), ori iwe tabi apakan iṣẹ (chapter), ati gbogbo iṣẹ naa lapapọ (master); bẹẹ si ni ọjọ ti a bẹrẹ yoo ṣe iranlọwọ lati ṣeto akoko iṣẹ titi de ọjọ ti a o pari rẹ.",
-              "screenshot": "Olùṣètò Ìgbéjáde",
-              "learnMore": {
-                "items": [
-                  {
-                    "title": "Àwọn ibi-afẹ́dẹ̀ tí a ti yìnbọn sí",
-                    "description": "Ṣeto awọn ẹya oriṣiriṣi ti aworan ti o duro ati ti fidio kukuru fun igba kọọkan ti a ya aworan, ki o si ṣajọ wọn pọ sinu iṣẹlẹ, ori, ati ẹya ikẹhin gbogbogbo."
-                  },
-                  {
-                    "title": "Eto pẹlu ọjọ́",
-                    "description": "Ọjọ́ ìbẹ̀rẹ̀ àti àwọn ọjọ́ iṣẹ́ máa ń ṣẹ̀dá ètò àkókò kan tí ó ní àwọn kirediti tí ń kó jọ pọ̀."
-                  },
-                  {
-                    "title": "Tunto lati ori awọn eeyan gangan",
-                    "description": "Àwọn ìṣẹ̀lẹ̀ tí a ti parí lè yí àwọn àfojúsùn padà kúrò níbi iye tí wọ́n ná ní ti gidi."
-                  },
-                  {
-                    "title": "Ipò fóònù",
-                    "description": "Wo iyara kika, iye ti a lo, ati ọjọ ti a o pari rẹ lori foonu rẹ, lakoko ti ṣiṣe atunṣe yoo wa lori kọmputa tabi tabulẹti."
-                  }
-                ]
-              }
-            }
-          ]
-        },
+        "headline": "Lati iwe afọwọkọ si titunto si, gbogbo ninu yara kan.",
+        "promise": "Blueprint ti wa ni titiipa. Simẹnti rẹ jẹ simẹnti. Bayi, tẹsiwaju si Production Stage. Gbogbo ipin, iwoye, ati iyaworan ni a ṣeto sinu iṣan-iṣẹ laini kan. O darí ète; awọn aṣoju oye ṣiṣẹ iran naa.",
         "groups": [
           {
             "id": "script",
-            "label": "Ṣe àtúnṣe sí ìwé-ìtòlẹ́sẹẹsẹ náà láti mú kí ó ṣiṣẹ́ dáadáa sí i.",
+            "label": "Taara & Iṣakoso",
+            "headline": "Sọ ede ti fiimu, kii ṣe sintasi ti awọn ibere.",
+            "description": "Maṣe padanu akoko titẹ awọn koko-ọrọ akọmọ. Production Stage loye itọsọna adayeba, ni lilo iran rẹ kọja gbogbo ipele tabi isalẹ si iyaworan kan pato.",
             "features": [
               {
                 "icon": "scriptResonance",
-                "title": "Ọ̀rọ̀-ìtọ́kasí fún ìbáramu pẹ̀lú àwọn olùgbọ́ SFAI",
-                "description": "Audience Resonance ka gbogbo iwe ere naa ni ẹẹkan, ti o si n wo gbogbo awọn apakan rẹ pọ. O n ri awọn ami orin ati awọn akọsilẹ naa papọ, ko si si ohun ti a n tun kọ titi ti iwọ funra rẹ yoo fi yan lati ṣe bẹẹ.",
-                "screenshot": "Audience Resonance — àwọn àkọsílẹ̀ orin àti àwọn àkíyèsí fún gbogbo ìṣẹ̀lẹ̀, tí a kò tíì lò",
+                "title": "The Si nmu & shot Oludari",
+                "description": "Tẹ tabi sọ itọsọna rẹ ni ede mimọ. Sọ fun aṣoju ti o wa ninu fireemu, ibi ti kamẹra n gbe, ati kini lilu ẹdun jẹ. Oludari Shot laifọwọyi kọ awọn itọsi abẹlẹ eka fun awọn iduro ati awọn agekuru rẹ.",
+                "screenshot": "Iwoye & Oludari Shot — itọsọna ede mimọ fun awọn iduro ati awọn agekuru",
                 "learnMore": {
                   "items": [
                     {
-                      "title": "Gbogbo ìṣẹ̀lẹ̀ tí wọ́n jọ ṣe",
-                      "description": "Ó ṣeto orin fun gbogbo iwe-ere naa gẹgẹbi nkan kan, pẹlu awọn akiyesi lori awọn iṣẹlẹ ti wọn n ṣiṣẹ pọ."
+                      "title": "Ede lasan",
+                      "description": "Tẹ tabi sọ ẹni ti o wa ninu fireemu, nibiti kamẹra n gbe, ati kini lilu ẹdun jẹ."
                     },
                     {
-                      "title": "O yan",
-                      "description": "Wọn kò ní tún ohunkóhun kọ títí tí ìwọ yóò fi yan àwọn àkọsílẹ̀ tí o fẹ́ fi ṣiṣẹ́."
+                      "title": "Si nmu tabi shot",
+                      "description": "Waye iran rẹ kọja gbogbo ipele tabi isalẹ si ibọn kan pato."
+                    },
+                    {
+                      "title": "Iṣakojọpọ kiakia",
+                      "description": "Oludari Shot laifọwọyi kọ awọn itọsi abẹlẹ fun awọn iduro ati awọn agekuru rẹ."
                     }
                   ]
                 }
               },
               {
                 "icon": "castVisual",
-                "title": "Àwọn òṣèré, aṣọ, àti ohùn",
-                "description": "Ṣe àtòjọ àwọn òṣèré náà kí o tó bẹ̀rẹ̀ sí ní ya àwọn ìṣẹ̀lẹ̀ náà. Yan irú ẹni tí yóò kó ipa náà, aṣọ tí yóò wọ̀, àti irú ohùn tí yóò lò, kí gbogbo àwòrán tàbí fídíò tí o bá yà nígbà tó bá yá lè jẹ́ ti ẹni kan náà.",
-                "screenshot": "Ìwà, aṣọ, àti ohùn",
+                "title": "Ile-ikawe Ilọsiwaju",
+                "description": "Aitasera pipe kọja jara. Ṣe ipilẹṣẹ laifọwọyi tabi fi awọn aworan itọkasi fun simẹnti rẹ, awọn aṣọ ipamọ, awọn ipo, ati awọn atilẹyin pataki lati rii daju pe gbogbo ibọn ni ibaamu Blueprint.",
+                "screenshot": "Ile-ikawe Ilọsiwaju — simẹnti, awọn aṣọ ipamọ, awọn ipo, ati awọn atilẹyin pataki",
                 "learnMore": {
                   "items": [
                     {
-                      "title": "Ìwà àti aṣọ",
-                      "description": "Cast Agent n ṣe àpèjúwe irú-ẹni àti àwọn aṣọ tí yóò wọ̀."
+                      "title": "Aitasera jara",
+                      "description": "Jeki simẹnti, awọn aṣọ ipamọ, awọn ipo, ati awọn atilẹyin pataki ni iṣọkan kọja gbogbo ibọn."
                     },
                     {
-                      "title": "Ohùn",
-                      "description": "A máa ń pinnu ohùn tó bá ẹni tí wọ́n ń ṣe àpèjúwe rẹ̀ mu kí wọ́n tó ṣètò àwọn ìṣẹ̀lẹ̀ náà."
-                    },
-                    {
-                      "title": "Eni kan naa",
-                      "description": "Gbogbo àwòrán àti gbogbo àkọsílẹ̀ fídíò nílò títìpa yẹn."
+                      "title": "Ṣe ina tabi sọtọ",
+                      "description": "Ṣe ina awọn aworan itọkasi ni adaṣe tabi fi ọwọ fun tirẹ lati baamu Blueprint."
                     }
                   ]
                 }
               },
               {
                 "icon": "directShot",
-                "title": "Ìbọn tààrà",
-                "description": "Direct Shot máa ń gba ìtọ́ni fún yíyàwòrán nípasẹ̀ ọ̀rọ̀ tirẹ̀ gan-an, yálà nípa títẹ ẹ́ sínú ẹ̀rọ tàbí sísọ ọ́ lẹ́nu. Wàá wo bí ìtọ́ni náà ṣe rí ṣáájú kí o tó fipamọ́ ọ́, lẹ́yìn náà, àwọn ìtọ́ni fún yíyàwòrán (fún àwòrán tí kò dúró síbìkan tàbí fún fídíò) yóò sì ṣe àtúnṣe pọ̀.",
-                "screenshot": "Direct Shot — tẹ ọrọ tabi sọ ọ, wo awotẹlẹ, fipamọ",
+                "title": "Iṣọkan Audience Resonance",
+                "description": "Gba kika lori yara ṣaaju ṣiṣe. AI ṣe itupalẹ iwe afọwọkọ rẹ si awọn olugbo ibi-afẹde rẹ, n pese awọn oye iwoye-si-iran. Waye awọn itọnisọna ti a ṣe iṣeduro lẹsẹkẹsẹ, tabi gbekele ikun rẹ ki o foju wọn.",
+                "screenshot": "Iṣọkan Audience Resonance - awọn oye olugbo nipasẹ iwoye-ifihan",
                 "learnMore": {
                   "items": [
                     {
-                      "title": "Ìbọn tí a yàn",
-                      "description": "Àkọlé ìjíròrò náà ni Direct Shot · Scene N · Shot N."
+                      "title": "Awọn iwoye-oju-oju-oju",
+                      "description": "AI ṣe itupalẹ iwe afọwọkọ rẹ si awọn olugbo ibi-afẹde rẹ ṣaaju ṣiṣe."
                     },
                     {
-                      "title": "Tẹ́ ọ̀rọ̀ tàbí sọ ọ́ jáde",
-                      "description": "Kọ àkọsílẹ̀ náà tàbí kí o sọ ọ́ jáde, lẹ́yìn náà, wo bí ìtọ́ni náà ṣe rí ṣáájú kí o tó fipamọ́ ọ́."
-                    },
-                    {
-                      "title": "Àwọn ìtọ́ni méjèèjì",
-                      "description": "Fifipamọ́ máa ń ṣe àtúnṣe sí àpèjúwe fún àwòrán àti èyí fún fídíò ní àjọpọ̀."
-                    },
-                    {
-                      "title": "Lẹ́ẹ̀kan sí i lẹ́yìn àwọn àkópọ̀ fídíò",
-                      "description": "Ti aworan ti a ṣẹda ko ba tọ, ṣii Direct Shot ki o si tun ṣe itọsọna rẹ."
+                      "title": "Ipe rẹ",
+                      "description": "Waye awọn itọnisọna ti a ṣe iṣeduro lẹsẹkẹsẹ, tabi gbekele ikun rẹ ki o foju wọn."
                     }
                   ]
                 }
               },
               {
                 "icon": "audioAgent",
-                "title": "Awọn Ofin ati Ipò fun Aṣoju SFAIAUDIO",
-                "description": "Audio Agent n ṣeto awọn ọrọ sisọ, awọn ohun pataki, ati orin fun iṣẹlẹ naa. A le gbọ iṣẹlẹ naa ki a to lo agekuru naa.",
-                "screenshot": "Audio Agent — ìjiròrò, àwọn ohùn àfikún, àti orin",
+                "title": "Alakoso iṣelọpọ",
+                "description": "Ṣeto isuna ati iṣeto iṣeto kọja gbogbo ipele ati ipin nipa lilo awọn kirẹditi SceneFlow tabi awọn bọtini API BYOK tirẹ. Ṣeto ibi iduro ati agekuru awọn ibi-afẹde fun shot ṣaaju ki o to lo iṣiro.",
+                "screenshot": "Alakoso iṣelọpọ - isuna, iṣeto, ati awọn bọtini API BYOK",
                 "learnMore": {
                   "items": [
                     {
-                      "title": "Ọ̀rọ̀-ìbánisọ̀rọ̀ àti àwọn ipa",
-                      "description": "Ọ̀rọ̀ sísọ láàárín àwọn ènìyàn ló wà fún apá ìjíròrò, nígbà tí àwọn ohùn àfikún (sound effects) wà fún àwọn ìgbà tí a bá ya àwòrán tí ó ní àmì pàtó kan tí ó rọ̀ mọ́ wọn."
+                      "title": "Isuna ati iṣeto",
+                      "description": "Ṣeto isuna ati iṣeto iṣeto kọja gbogbo iṣẹlẹ ati ipin ṣaaju ṣiṣe."
                     },
                     {
-                      "title": "Orin",
-                      "description": "Orin n ṣe atilẹyin fun iṣẹlẹ naa pẹlu awọn ọrọ ti awọn oṣere n sọ."
-                    },
-                    {
-                      "title": "Ṣáájú ìgbìnlọ",
-                      "description": "Gbọ́ ohun tó ń lọ níbẹ̀ kí o tó ṣí Clips."
+                      "title": "Awọn kirediti tabi BYOK",
+                      "description": "Ṣiṣe iran ni lilo awọn kirẹditi SceneFlow tabi awọn bọtini API BYOK tirẹ."
                     }
                   ]
                 }
               },
               {
                 "icon": "continuity",
-                "title": "Ìtẹ̀síwájú",
-                "description": "Ṣe àwọn àpẹẹrẹ (references) tí ìṣẹ̀lẹ̀ yìí nílò nìkan nígbà tí ìṣẹ̀lẹ̀ náà bá ti ṣe tán. Àwọn ìṣẹ̀lẹ̀ tó ti ṣáájú yóò dúró bí o ṣe ti fi wọ́n sílẹ̀, kí o má baà tún fa àwọn àpẹẹrẹ tí wọ́n ti fọwọ́ sí tẹ́lẹ̀.",
-                "screenshot": "Ìtẹ̀síwájú — àwọn ìtọ́ka sí ìṣẹ̀lẹ̀ yìí nìkan",
+                "title": "Akosile iṣelọpọ",
+                "description": "Itumọ ti fun ibile ati AI filmmakers bakanna. Ṣe awotẹlẹ imuṣere ori iboju ti o mọ, ọna kika inu ile-iṣere ati okeere ni awọn ọna kika boṣewa ile-iṣẹ (PDF, FDX, Fountain). Lo SceneFlow bi yara iwe afọwọkọ ti o daduro — tabi so ere iboju rẹ pọ pẹlu Pre-Vis Animatic ati Promo Trailer si awọn oluṣowo owo ati igbeowo iṣẹ akanṣe to ni aabo.",
+                "screenshot": "Iwe afọwọkọ iṣelọpọ — awotẹlẹ inu-Syeed ati PDF, FDX, ati okeere Orisun",
                 "learnMore": {
                   "items": [
                     {
-                      "title": "Ìṣẹ̀lẹ̀ yìí nìkan",
-                      "description": "Ya àwọn òṣèré, àwọn ibi ìṣẹ̀lẹ̀, àti àwọn ohun èlò tí ìṣẹ̀lẹ̀ yìí nílò, kí o sì fi àwọn yòókù sílẹ̀."
+                      "title": "Ni-Syeed awotẹlẹ & okeere",
+                      "description": "Ṣe awotẹlẹ iwe afọwọkọ ti a ṣe akoonu ni ile-iṣere ati okeere ni PDF boṣewa ile-iṣẹ, Ipari Draft FDX, tabi ọna kika orisun."
                     },
                     {
-                      "title": "Láàárín àkókò gan-an",
-                      "description": "Ṣe wọn nígbà tí apá fíìmù náà bá ti ṣetán, kì í ṣe ní gbogbo wọn lẹ́ẹ̀kan fún gbogbo fíìmù náà."
+                      "title": "Fun ibile filmmakers",
+                      "description": "Lo SceneFlow gẹgẹbi iru ẹrọ iṣelọpọ iwe afọwọkọ ti oye laisi ṣiṣẹda fidio."
                     },
                     {
-                      "title": "Ti tiipa tẹlẹ",
-                      "description": "Iyipada ninu apakan kan ko ni yi awọn itọkasi ti awọn apakan ti tẹlẹ ti n lo pada."
-                    }
-                  ]
-                }
-              },
-              {
-                "icon": "stillsAgent",
-                "title": "Àdéhùn Aṣojú SFAISTILLS",
-                "description": "Stills Agent n ṣeto awọn aworan (shot frames) lati inu ilana ti a ti fọwọsi. Ilana ati ohun yoo wa bi o ti fi wọn silẹ, awọn agekuru (clips) yoo si wa nigbamii.",
-                "screenshot": "Stills Agent — àwọn fọ́ọ̀mù àwòrán",
-                "learnMore": {
-                  "items": [
-                    {
-                      "title": "Àwọn fọ́ọ̀mù fọ́tò",
-                      "description": "Ó máa ń ya àwòrán tí kò dúró sípò kan náà (still image) fún ìyàwòrán kọ̀ọ̀kan nínú ìṣẹ̀lẹ̀ náà."
-                    },
-                    {
-                      "title": "Ìtọ́sọ́nà náà dúró",
-                      "description": "Ṣíṣe àtúnṣe fọ́ọ̀mù kan máa ń sọ àwòrán di tuntun, ṣùgbọ́n wọn kò yí ìtọ́sọ́nà àti ohùn padà."
-                    },
-                    {
-                      "title": "Ṣáájú àwọn àkópọ̀ fídíò",
-                      "description": "Fọwọ́ sí àwọn àwòrán tí kò dúró sí ibìkan náà (stills) kí o tó ṣí Clips."
-                    }
-                  ]
-                }
-              },
-              {
-                "icon": "animatic",
-                "title": "Ọ̀rọ̀ tí ó jẹ mọ́ ìmọ̀ nípa ẹ̀dá alààyè",
-                "description": "Wo apá fíìmù náà nínú yàrá ìwòran (Screening Room) gẹ́gẹ́ bí \"animatic\"—ìyẹn ni àwọn àwòrán tí kò dúró sójú kan pẹ̀lú ọ̀rọ̀ sísọ, orin, àti àwọn àfikún ohùn tàbí àwòrán (effects). Pín-in fún àwọn ẹlòmíràn láti gba èrò wọn, kí o sì parí gbogbo apá fíìmù ní ọ̀nà yìí kí o tó bẹ̀rẹ̀ iṣẹ́ fíìmù gangan; èyí yóò dènà níní láti tún iṣẹ́ náà ṣe bí wọ́n bá yí ọ̀rọ̀ inú ìwé ìtàn fíìmù náà padà. Fún ọ̀pọ̀lọpọ̀ àwọn olùṣe fíìmù, \"animatic\" yìí gan-an ni iṣẹ́ tí ó ti parí, wọ́n sì lè yí i padà sí ọ̀nà ìtọ́jú fáìlì MP4.",
-                "screenshot": "Animatic Screening Room, pẹ̀lú àṣàyàn láti pín",
-                "learnMore": {
-                  "items": [
-                    {
-                      "title": "Àwòrán àti ohùn",
-                      "description": "Animatic naa n ṣafihan awọn aworan ti a ti fọwọsi, pẹlu awọn ọrọ sisọ, orin, ati awọn ipa ohun tabi wiwo."
-                    },
-                    {
-                      "title": "Pín",
-                      "description": "Fi ọna asopọ kan ranṣẹ ki awọn oluyẹwo le wo animatic naa ki wọn si fi awọn akiyesi silẹ lori aworan naa."
-                    },
-                    {
-                      "title": "Ṣáájú fídíò",
-                      "description": "Parí àwọn ìṣẹ̀lẹ̀ náà gẹ́gẹ́ bí àwọn àwòrán ìgbékalẹ̀ (animatics) kí o tó ṣẹ̀dá àwọn àkópọ̀ fídíò, kí àtúnṣe sí ìwé-ìtàn (script) má baà mú kí o tún iṣẹ́ fídíò náà ṣe láti ìbẹ̀rẹ̀."
-                    },
-                    {
-                      "title": "MP4 naa",
-                      "description": "Fun ọpọlọpọ awọn olupilẹṣẹ, animatic jẹ ọja ti o kẹhin, wọn si le yi i pada si ọna kika MP4."
+                      "title": "ipolowo & igbeowosile ise agbese",
+                      "description": "Ṣe akopọ iwe afọwọkọ rẹ pẹlu Pre-Vis Animatic ati Promo Trailers lati gbe ati gba igbeowo iṣẹ akanṣe."
                     }
                   ]
                 }
@@ -733,86 +629,78 @@
           },
           {
             "id": "video",
-            "label": "Fídíò",
+            "label": "Ṣẹda & Ayẹwo",
+            "headline": "Ṣe afihan gige ṣaaju ki o to lo iṣiro naa.",
+            "description": "Ma ko gboju le won bi a si nmu yoo mu. SceneFlow yasọtọ ohun afetigbọ ati iran ti o tun wa lati iyipada išipopada gbowolori, jẹ ki o ṣayẹwo ohun orin ti satunkọ akọkọ.",
             "features": [
               {
                 "icon": "videoAgent",
-                "title": "Awọn Ofin ati Ipò fun Aṣoju SFAIVIDEO",
-                "description": "Video Agent máa ń ṣẹ̀dá àwọn ẹ̀yà fídíò (clips) lórí taabu Clips. Wo ìṣẹ̀lẹ̀ tí a ti so pọ̀ ní Screening Room, tí apá kan nínú rẹ̀ bá sì ní àṣìṣe, tún un ṣe ní Direct Shot.",
-                "screenshot": "Video Agent, lẹ́yìn náà ìṣẹ̀lẹ̀ tí a so pọ̀",
+                "title": "Audio Agent naa",
+                "description": "Ṣe agbekalẹ ibaraẹnisọrọ, awọn ipa ohun, ati awọn nọmba orin ni igbakanna kọja awọn iyaworan 30 fun iṣẹlẹ kan. Simẹnti ohun laifọwọyi baramu awọn profaili kikọ tabi o le wa ni adani-aifwy.",
+                "screenshot": "Audio Agent — ijiroro nigbakanna, awọn ipa ohun, ati awọn nọmba orin",
                 "learnMore": {
                   "items": [
                     {
-                      "title": "Àwọn àkótán fídíò",
-                      "description": "Video Agent máa ń ṣẹ̀dá fídíò kékeré fún ìyàwòrán kọ̀ọ̀kan láti ara àwòrán tí a ti fọwọ́ sí."
+                      "title": "Ohun afetigbọ",
+                      "description": "Ṣe agbekalẹ ibaraẹnisọrọ, awọn ipa ohun, ati awọn nọmba orin ni igbakanna kọja awọn iyaworan 30 fun iṣẹlẹ kan."
                     },
                     {
-                      "title": "Àwòrán tí a fi ọ̀nà ìránṣe ṣe",
-                      "description": "Ṣe àtúnyẹ̀wò ìṣẹ̀lẹ̀ tí a so pọ̀ nínú Screening Room."
-                    },
-                    {
-                      "title": "Ṣe itọsọna rẹ lẹẹkan si",
-                      "description": "Ṣí Direct Shot, yálà nípa títẹ tàbí sísọ ọ́ jáde, nígbà tí àkọsílẹ̀ fídíò kan bá jẹ́ àṣìṣe."
+                      "title": "Awọn ohun kikọ",
+                      "description": "Simẹnti ohun laifọwọyi baramu awọn profaili kikọ tabi o le wa ni adani-aifwy."
                     }
                   ]
                 }
               },
               {
                 "icon": "mixer",
-                "title": "Ẹ̀rọ-aládàpọ̀",
-                "description": "Olùṣètò ohùn (Mixer) máa parí iṣẹ́ lórí ìṣẹ̀lẹ̀ náà nínú Production Stage. Ó máa fi àwọn àwòrán (shots) kún un tàbí kí ó yọ wọ́n kúrò, ó máa gé wọn, ó máa ṣètò ìwọ̀n ohùn, yóò sì ṣe àgbékalẹ̀ ìṣẹ̀lẹ̀ náà pẹ̀lú ohùn rẹ̀.",
-                "screenshot": "Ohun èlò àdàpọ̀ — fi kún, gé, ṣàtúnṣe ìwọ̀n, gbé lé lórí, fi àmì ìdánimọ̀ sí",
+                "title": "Stills Agent naa",
+                "description": "Ni kiakia ṣe ina awọn aworan bọtini fireemu ti o ṣe apejuwe itọsọna ibọn rẹ. Ṣe atunbi, ṣatunkọ, tabi gbejade awọn itọkasi tirẹ lati tii akopọ naa.",
+                "screenshot": "Stills Agent naa — akopọ fireemu bọtini ati awọn itọkasi",
                 "learnMore": {
                   "items": [
                     {
-                      "title": "Awọn ibọn",
-                      "description": "Fi àwọn àwòrán kọ̀ọ̀kan kún un tàbí kí o yọ wọ́n kúrò, kí o sì gé àwọn tí o bá dá dúró náà kúrú."
+                      "title": "Keyframe iran",
+                      "description": "Ni kiakia ṣe ina awọn aworan bọtini fireemu ti o ṣe apejuwe itọsọna ibọn rẹ."
                     },
                     {
-                      "title": "Ìjíròrò",
-                      "description": "Ṣeto ipele ohun ati iyara fun gbolohun ọrọ kọọkan ninu ibaraẹnisọrọ naa."
-                    },
-                    {
-                      "title": "Àwọn ọ̀nà",
-                      "description": "Ṣe iwọntunwọnsi laarin iṣafihan ọrọ, ijiroro, awọn ohun pataki, ati orin, pẹlu mimu ki orin rọra parẹ tabi tun bẹrẹ leralera."
-                    },
-                    {
-                      "title": "Àwọn ìpele tí a gbé lé ara wọn",
-                      "description": "Fi àwọn ọ̀rọ̀ sí orí ìṣẹ̀lẹ̀ náà."
-                    },
-                    {
-                      "title": "Àmì-ìdánimọ̀ inú àwòrán tàbí ìwé",
-                      "description": "Fi àmì ìdánimọ̀ tí ó jẹ́ ọ̀rọ̀ tàbí àwòrán kún un."
-                    },
-                    {
-                      "title": "Pèsè",
-                      "description": "Ṣe àgbékalẹ̀ ìṣẹ̀lẹ̀ náà pẹ̀lú ohùn rẹ̀, àti pé àgbékalẹ̀ yẹn gan-an ni Screening Room máa ń ṣe àfihàn rẹ̀."
+                      "title": "Titiipa akopọ",
+                      "description": "Tunṣe, ṣatunkọ, tabi gbejade awọn itọkasi tirẹ ṣaaju ṣiṣe si išipopada."
                     }
                   ]
                 }
               },
               {
                 "icon": "languageStreams",
-                "title": "Àwọn ẹ̀yà èdè",
-                "description": "Ẹ̀yà èdè mìíràn ti ìṣẹ̀lẹ̀ yìí ni èyí, kì í ṣe iṣẹ́ tuntun. Gemini TTS máa ń sọ ọ̀rọ̀ tí a fi rọ́pò èdè àtìlẹ̀bá (dubbing) ní èdè mẹ́rìndínláàádọ́ta; fún ìgbà kọ̀ọ̀kan tí a bá ya àwòrán (shot), o lè fi èdè tuntun rọ́pò ọ̀rọ̀ inú rẹ̀ tàbí kí o tún un ṣe, títí kan àwọn àkọlé tàbí àmì.",
-                "screenshot": "Ẹ̀dà èdè — Àtúnṣe ohùn (dubbing), mímú ohùn bá ìgbàlọ́wọ́ ètè (lip-sync), tàbí ṣíṣe é padà, pẹ̀lú àwọn àmì ìfitónilétí.",
+                "title": "Awọn Pre-Vis Animatic",
+                "description": "Wo oju iṣẹlẹ naa simi. Ṣe atunwo ere idaraya ni kikun—awọn iduro ti a hun, išipopada Ken Burns, ati ohun titii pa—ninu Screening Room. Ṣe ayẹwo pacing, pin fun esi, ati rii daju pe gige naa ṣiṣẹ ṣaaju ṣiṣe si fidio.",
+                "screenshot": "Pre-Vis Animatic - awọn iduro ti a hun, išipopada Ken Burns, ati ohun titiipa",
                 "learnMore": {
                   "items": [
                     {
-                      "title": "Àwọn èdè mẹ́rìndínláàádọ́ta",
-                      "description": "Gemini TTS n sọ ohun ti a ti tumọ si awọn ede 44."
+                      "title": "Apejọ animati",
+                      "description": "Ṣe atunwo awọn ibi iduro, Ken Burns išipopada, ati ohun titiipa ni Screening Room."
                     },
                     {
-                      "title": "Fún ìbọn kọ̀ọ̀kan",
-                      "description": "Lórí ìyàwòrán kọ̀ọ̀kan, yan 'Double' láti fi ohùn tí a ti túmọ̀ sí i lórí èyí tó wà níbẹ̀ tẹ́lẹ̀, 'Lip-sync' láti ṣe é ní ìbámu pẹ̀lú ìgbàlọ-ìbọ̀ ẹnu, tàbí 'Regenerate' láti ṣẹ̀dá fídíò tuntun láti inú gbólóhùn tí a ti túmọ̀ náà."
+                      "title": "Ṣiṣayẹwo ati pin",
+                      "description": "Ṣe ayẹwo pacing, pin fun esi, ati rii daju pe gige naa ṣiṣẹ ṣaaju ṣiṣe si fidio."
+                    }
+                  ]
+                }
+              },
+              {
+                "icon": "videoAgent",
+                "title": "Clips Agent naa",
+                "description": "Ni kete ti o ba fọwọsi Pre-Vis, Clips Agent yoo gbaṣẹ, ti n ṣe awọn agekuru iṣotitọ giga ti o faramọ awọn iduro ti a fọwọsi ati awọn itọkasi lilọsiwaju.",
+                "screenshot": "Clips Agent naa — awọn agekuru išipopada iṣotitọ giga lati awọn iduro ti a fọwọsi",
+                "learnMore": {
+                  "items": [
+                    {
+                      "title": "Lẹhin ifọwọsi Pre-Vis",
+                      "description": "Clips Agent n ṣe išipopada nikan lẹhin ti Pre-Vis animatic ti fọwọsi."
                     },
                     {
-                      "title": "Àwọn àmì",
-                      "description": "Ṣe àtúnṣe fọ́tò àmì kan tí ó ní ọ̀rọ̀ tí ó gbọ́dọ̀ yípadà."
-                    },
-                    {
-                      "title": "Àkókò",
-                      "description": "A máa ń ṣeto iyara fídíò náà fún ẹya èdè yẹn, nítorí pé iṣẹ́ ìtumọ̀ sábà máa ń gùn ju ti àtìlẹ̀bá lọ ní ìwọ̀n ìpín mẹ́wàá sí ọgbọ̀n nínú ọgọ́rùn-ún (10–30%)."
+                      "title": "Ti o muna lilẹmọ",
+                      "description": "Awọn agekuru išipopada ti o ni iṣootọ ga ni ibamu ni muna si awọn iduro ti a fọwọsi ati awọn itọkasi lilọsiwaju."
                     }
                   ]
                 }
@@ -821,30 +709,78 @@
           },
           {
             "id": "publish",
-            "label": "Tẹ́ jáde",
+            "label": "Ṣe atẹjade & Pinpin",
+            "headline": "Firanṣẹ oluwa, tabi ṣe agbegbe fun agbaye.",
+            "description": "Nigbati iṣẹlẹ naa ba ti ṣe, awọn ohun-ini ti wa ni iṣọkan. Pari ṣatunkọ naa, sọ ohun ti o wa ni agbegbe, ki o pin kaakiri taara si awọn olugbo rẹ.",
             "features": [
               {
                 "icon": "shipPackage",
-                "title": "Ṣe àkópọ̀ kí o sì ránṣẹ́",
-                "description": "Ṣe àkójọpọ̀ ìṣẹ̀lẹ̀ kan, orí kan, àkọsílẹ̀ tó péye (master), tàbí fídíò ìpolówó nígbà tí apá yẹn bá ti tán. Gbé e sórí YouTube, Facebook, tàbí TikTok, tàbí kí o ṣe àgbékalẹ̀ (download) rẹ̀ gẹ́gẹ́ bí MP4, kí o sì máa bá a lọ láti parí àwọn apá tó ṣẹ́kù.",
-                "screenshot": "Ṣe àkópọ̀ kí o sì fi ránṣẹ́ — ìṣẹ̀lẹ̀, orí, ẹ̀dà àkọ́kọ́, ìpolówó; YouTube, Facebook, TikTok, MP4",
+                "title": "Alapọpo naa",
+                "description": "Itumọ ti inu, olootu iwoye ojulowo. Ge awọn agekuru gige, ṣatunṣe awọn rampu iyara, ṣafikun awọn agbekọja ọrọ, ati lo awọn ami omi lai lọ kuro ni ile-iṣere naa.",
+                "screenshot": "Mixer — gige awọn agekuru, awọn rampu iyara, awọn agbekọja ọrọ, ati awọn ami omi",
                 "learnMore": {
                   "items": [
                     {
-                      "title": "Àwọn ege",
-                      "description": "Fi apá kan nínú eré, orí kan, àkọsílẹ̀ àkọ́kọ́ (master), tàbí fíìmù ìpolówó ránṣẹ́."
+                      "title": "-Itumọ ti ni nmu olootu",
+                      "description": "Ge awọn agekuru ati ṣatunṣe awọn rampu iyara taara inu ile isise naa."
                     },
                     {
-                      "title": "Àwọn ọ̀nà ìṣàn èdè",
-                      "description": "Ẹ̀yà èdè kọ̀ọ̀kan lè wà pẹ̀lú àpò ọjà náà."
+                      "title": "Ipari fọwọkan",
+                      "description": "Ṣafikun awọn agbekọja ọrọ ati lo awọn ami omi laisi gbigbejade si olootu ita."
+                    }
+                  ]
+                }
+              },
+              {
+                "icon": "languageStreams",
+                "title": "Awọn ṣiṣan (Ede pupọ)",
+                "description": "Faagun arọwọto agbaye rẹ kọja awọn ede 44 lẹsẹkẹsẹ. Laifọwọyi ṣe agbejade awọn ṣiṣan ede omiiran nipasẹ didimu ohun afetigbọ, mimuuṣiṣẹpọ gbigbe ète, tabi atunbi awọn agekuru ifọrọwerọ agbegbe taara laarin iṣẹlẹ naa.",
+                "screenshot": "Awọn ṣiṣan (Ede pupọ) - ohun afetigbọ ati awọn agekuru ibaraẹnisọrọ agbegbe",
+                "learnMore": {
+                  "items": [
+                    {
+                      "title": "agbaye arọwọto",
+                      "description": "Laifọwọyi ṣe ina awọn ṣiṣan ede omiiran kọja awọn ede 44 taara laarin iṣẹlẹ naa."
                     },
                     {
-                      "title": "Àwọn ibi tí a ń lọ",
-                      "description": "Ṣe àtẹ̀jáde rẹ̀ sí YouTube, Facebook, tàbí TikTok, tàbí kí o ṣe àgbékalẹ̀ (download) fáìlì MP4 náà."
+                      "title": "Dub, ète-ìsiṣẹpọ, tabi atunbi",
+                      "description": "Ṣe agbegbe titu kọọkan nipasẹ didimu ohun afetigbọ, mimuuṣiṣẹpọ gbigbe ète, tabi atunda awọn agekuru ibaraẹnisọrọ agbegbe."
+                    }
+                  ]
+                }
+              },
+              {
+                "icon": "promoTrailers",
+                "title": "Promo & Tirela",
+                "description": "Ge awọn tirela promo ti o ṣetan fun awujọ ni eyikeyi akoko lakoko iṣelọpọ. Ṣe ina awọn ẹya pupọ ti ede iṣapeye fun awọn ọna kika petele tabi inaro.",
+                "screenshot": "Igbega & Awọn olutọpa - petele-ede pupọ ati awọn tirela inaro",
+                "learnMore": {
+                  "items": [
+                    {
+                      "title": "Social-setan tirela",
+                      "description": "Ge awọn tirela promo ni aaye eyikeyi lakoko iṣelọpọ."
                     },
                     {
-                      "title": "Tẹ̀síwájú láti máa kọ́",
-                      "description": "Fi apá tí ó ti parí ránṣẹ́, kí o sì máa bá a nìṣó láti kọ́ àwọn ìyókù."
+                      "title": "Awọn ọna kika ede pupọ",
+                      "description": "Ṣe ina awọn ẹya pupọ ti ede iṣapeye fun awọn ọna kika petele tabi inaro."
+                    }
+                  ]
+                }
+              },
+              {
+                "icon": "shipPackage",
+                "title": "Taara Publishing",
+                "description": "Ṣe okeere MP4 oluwa ti o kẹhin, tabi jẹ ki SceneFlow ṣe ipilẹṣẹ awọn eekanna atanpako ati awọn apejuwe lati ṣe atẹjade awọn iwoye, awọn ipin, ati awọn ipolowo taara si YouTube, TikTok, ati Facebook.",
+                "screenshot": "Titẹjade Taara - MP4 okeere ati titẹjade taara si YouTube, TikTok, ati Facebook",
+                "learnMore": {
+                  "items": [
+                    {
+                      "title": "Titunto si MP4 tabi taara awujo",
+                      "description": "Ṣe okeere MP4 titunto si tabi ṣe atẹjade awọn iwoye, awọn ipin, ati awọn igbega taara si YouTube, TikTok, ati Facebook."
+                    },
+                    {
+                      "title": "Awọn metadata ti ipilẹṣẹ laifọwọyi",
+                      "description": "Jẹ ki SceneFlow ṣe ipilẹṣẹ awọn eekanna atanpako ati awọn apejuwe fun gbogbo idasilẹ."
                     }
                   ]
                 }
@@ -856,48 +792,49 @@
       {
         "id": "screening-room",
         "label": "Ọ̀rọ̀ nípa yàrá ìṣàyẹ̀wò SFAI",
-        "promise": "Yàrá ìwòran (screening room) ni ibi tí a ti máa ń wo, ṣàyẹ̀wò, àti tú iṣẹ́ tí a ti parí síta. Ẹ̀rọ kan ṣoṣo ló máa ń gbé gbogbo nǹkan wọ̀nyí: àwòrán àkọ́kọ́ (Pre-Vis), àwọn ìṣẹ̀lẹ̀ (scenes), àwọn abala (chapters), ẹ̀dà àkọ́kọ́ tó péye (master), fíìmù ìpolówó (promo), àti àwọn ẹ̀dà èdè ọ̀tọ̀ọ̀tọ̀; èyí sì ń rí i dájú pé ohùn tí a fi sí i (dub) bá èyí tí oníṣẹ́ ohùn (Mixer) ṣe mu gágá. Pín ọ̀nà-ìsopọ̀ (link) kan ṣoṣo fún wíwo fíìmù náà àti fún kíkọ àwọn àkíyèsí nípa rẹ̀. Gbé ìṣẹ̀lẹ̀ tó gùn tó ìṣẹ́jú 3 sí 5, abala tó gùn tó ìṣẹ́jú 8 sí 12, ẹ̀dà tó péye (master), tàbí fíìmù ìpolówó jáde nígbà tí apá yẹn bá ti tán, kí o sì máa bá iṣẹ́ tó kù lọ.",
+        "headline": "Ṣe iboju gige naa, ṣajọpọ ẹgbẹ rẹ, ki o ṣe afihan ni kariaye.",
+        "promise": "Rẹ ikọkọ itage ati finishing suite. Wo ere idaraya Pre-Vis, awọn iwoye kọọkan, awọn ipin, awọn igbega, ati awọn ṣiṣan ede pupọ ninu ẹrọ orin iṣọkan kan. Pin ọna asopọ kan fun awọn akọsilẹ onipinnu akoko-ki o si gbe oju iṣẹlẹ iṣẹju 3–5, ipin iṣẹju 8–12 kan, ipolowo kan, tabi oluwa lakoko ti iṣelọpọ iyokù tẹsiwaju.",
         "features": [
           {
             "icon": "screeningPlayer",
-            "title": "Eléré kan",
-            "description": "Yí padà láàárín Pre-Vis, àwọn ìṣẹ̀lẹ̀, àwọn abala, ẹ̀dà àkọ́kọ́ (master), àti ìpolówó. Yan ètò èdè kan kí o sì gbọ́ ẹ̀dà yẹn — yálà ó jẹ́ èyí tí wọ́n ti ṣe àtúnṣe ohùn rẹ̀ (dubbed), èyí tí wọ́n ti mú kí ohùn bá ìgblọ̀-ẹnu mu (lip-synced), tàbí èyí tí wọ́n ti tún ṣe ní ìpele-ní-ìpele. Ẹ̀dà tí ẹrọ ìṣàfihàn náà ń mú jáde jẹ́ èyí kan náà tí Ẹrọ Àpapọ̀-ohùn-àti-àwòrán (Mixer) ti pèsè sílẹ̀.",
+            "title": "Ọkan Iṣọkan Player",
+            "description": "Yipada lainidi laarin awọn ohun idanilaraya Pre-Vis, awọn iwoye, awọn ipin, awọn tirela, ati oluwa ikẹhin rẹ. Yipada Awọn ṣiṣan Ede lori fifo si idanwo ti a gbasilẹ, mimuṣiṣẹpọ ete, tabi awọn isọdi atunbi titu — nigbagbogbo ni titiipa si gige gangan lati Alapọpọ.",
             "screenshot": "Ẹ̀rọ-ìṣàfihàn Screening Room",
             "learnMore": {
               "items": [
                 {
-                  "title": "Ojú kan",
-                  "description": "Yi pada laarin Pre-Vis, awọn iṣẹlẹ, awọn ori, ẹya akọkọ, ati ohun igbega."
+                  "title": "Gbogbo awọn ami-ami ni wiwo kan",
+                  "description": "Yipada lainidi laarin Pre-Vis, awọn iwoye, awọn ipin, awọn igbega, ati oluwa ikẹhin."
                 },
                 {
-                  "title": "Ètò Ẹ̀kọ́ Èdè",
-                  "description": "Yan ẹya kan ki o si gbọ bi wọn ṣe ṣe e ni ilopo, bi wọn ṣe mu ki ohun ba gbigbọn ètè mu, tabi bi wọn ṣe tun un ṣe ni apakan kọọkan."
+                  "title": "Iyipada ede ifiwe",
+                  "description": "Ṣiṣayẹwo ṣiṣan Ede eyikeyi — ti a gbasilẹ, ti muṣiṣẹpọ ete, tabi titu-ti ṣe atunbi — lori fo."
                 },
                 {
-                  "title": "Irú gígé kan náà",
-                  "description": "Ẹ̀rọ ìṣàfihàn náà ni àtòpọ̀ tí Mixer ṣe."
+                  "title": "Titiipa fireemu si Alapọpọ",
+                  "description": "Gbogbo ṣiṣan n ṣe atunṣe deede ati akoko ti a ṣe ni Mixer."
                 }
               ]
             }
           },
           {
             "icon": "screeningCollab",
-            "title": "Ṣe ifowosowopo lori gige naa",
-            "description": "Fi ọna-asopọ kan ranṣẹ. Awọn ti n ṣe ayẹwo yoo wo fidio naa gẹgẹ bi o ṣe ri gan-an, wọn yoo si fi awọn akiyesi silẹ lori aworan naa. O ko ni nilo lati fi faili ti ko tii pari ranṣẹ nipasẹ imeeli lati gba ero wọn. Ifiranṣẹ kikọ yoo sọ fun ọ, o si le ka a lori foonu rẹ.",
+            "title": "Ifowosowopo-Deede",
+            "description": "Duro gbigbejade awọn gige inira si imeeli. Pin ọna asopọ iboju ikọkọ kan nibiti awọn alabaṣiṣẹpọ ati awọn oludokoowo n wo ni akoko gidi ati ju awọn akọsilẹ silẹ taara lori aworan — pẹlu awọn iwifunni lẹsẹkẹsẹ ti a firanṣẹ taara si foonu rẹ.",
             "screenshot": "Àtúnyẹ̀wò tí a pín",
             "learnMore": {
               "items": [
                 {
-                  "title": "Ọna asopọ kan",
-                  "description": "Awọn oluyẹwo máa ń wo fíìmù náà bí ó ṣe ń ṣiṣẹ́ gan-an, wọn a sì kọ àwọn àkíyèsí sí ara àwòrán náà."
+                  "title": "Awọn ọna asopọ iboju ikọkọ",
+                  "description": "Awọn oluyẹwo wo ṣiṣiṣẹsẹhin ni kikun ati fi awọn akọsilẹ akoko ti o ni aami silẹ lori aworan naa."
                 },
                 {
-                  "title": "Ko si ẹya alakọbẹrẹ ti a fi imeeli ranṣẹ",
-                  "description": "O ko ni fi faili ti ko tii pari ranṣẹ nipasẹ imeeli lati gba awọn ero tabi esi."
+                  "title": "Ko si awọn okeere faili ti o ni inira",
+                  "description": "Gba awọn esi onipindoje ni aye kan laisi fifiranṣẹ awọn faili fidio ti o wuwo."
                 },
                 {
-                  "title": "Àwọn àkọsílẹ̀ lórí fóònù",
-                  "description": "Ifiranṣẹ ti a kọ yoo sọ fun ọ, o si le ka a lori foonu rẹ, nigba ti 'studio' naa wa lori kọmputa tabili tabi tabulẹti."
+                  "title": "Lẹsẹkẹsẹ mobile titaniji",
+                  "description": "Awọn akọsilẹ oluyẹwo tuntun sọ ọ leti lẹsẹkẹsẹ lori foonu rẹ lakoko ti o ṣe itọsọna lori tabili tabili."
                 }
               ]
             }
@@ -911,6 +848,7 @@
     "description": "Sọ awọn ero rẹ di awọn fidio ti o ni didara giga pẹlu eto ṣiṣe iṣẹ laifọwọyi ti o n lo imọ-ẹrọ AI."
   },
   "nav": {
+    "overview": "Akopọ",
     "plansPricing": "Àwọn Ètò àti Iye Owó",
     "productionExamples": "Àwọn àpẹẹrẹ",
     "keyFeatures": "Àwọn Ẹ̀yà Ara / Àwọn Ànímọ́",
@@ -937,9 +875,9 @@
     "pricing": "Ètò iye owó"
   },
   "hero": {
-    "eyebrow": "Ṣíṣe fíìmù àti àwọn eré onípele nípasẹ̀ ètò àìní-àfọwọ́-kàn",
+    "eyebrow": "Ṣiṣe fiimu ti ijọba olominira fun awọn onkọwe itan, awọn olupilẹṣẹ jara & awọn ile iṣere",
     "headline": "Láti ìbẹ̀rẹ̀ pẹ̀lú ìtànṣán àkọ́kọ́ títí dé ipò ògbógi tí ó péye.",
-    "subheadline": "SceneFlow jẹ́ ọ̀nà iṣẹ́ kan tí a ń darí. Ìwọ ló ń darí ìtàn náà, àwọn òṣèré, àti ìṣesí tàbí ìmọ̀lára iṣẹ́ náà. Ó máa ń ṣẹ̀dá Blueprint, ó ń mú kí ìtẹ̀síwájú wà láìjẹ́ kí nǹkan dàrú, ó ń ṣe àfihàn gbogbo àwòrán ìgbékalẹ̀ (animatic) náà, ó sì ń ṣajọpọ̀ iṣẹ́ tó parí — láìnílò àwọn ìgbìyànjú àkọ́kọ́ tàbí títò àwọn àkànṣe fídíò lọ́tọ̀ọ̀tọ̀ lórí laini-akókò (timeline).",
+    "subheadline": "Ti o ba le foju inu wo itan kan, o le ṣe itọsọna fiimu kan — ko si ṣiṣe fiimu imọ-ẹrọ tabi awọn ọgbọn ti o nilo. Ṣe apejuwe iran rẹ ni awọn ọrọ lojoojumọ, ati SceneFlow ṣe agbero Blueprint, kikọ ohun kikọ silẹ ati eto itesiwaju, ṣe ere ni kikun, o si di ọga ti o pari.",
     "ctaPrimaryLaunch": "Launch Studio ($9)",
     "ctaSupportingLine": "Ile-iṣẹ kan ṣoṣo ti o ni ohun gbogbo ti o nilo lati ṣẹda, gbejade, ati pin awọn itan rẹ. Gba ẹya akọkọ (master) ti iṣẹ rẹ ki o si fi ranṣẹ si ibikibi — tabi gbe awọn ẹya gigun ati awọn apakan itan rẹ sita lori {longForm}, ki o si polowo awọn fidio ifihan (trailers) lori {shorts}.",
     "ctaNetworkInvite": "Awọn iṣẹ akanṣe ti o tayọ le beere lati darapọ mọ nẹtiwọọki SceneFlow, eyiti a n wọle si nipasẹ ifipe nikan.",
@@ -948,20 +886,20 @@
     "ctaToolStack": "Wo bí ó ṣe ń rọ́pò àwọn irin-iṣẹ́ rẹ.",
     "chips": [
       {
-        "label": "Láti Èrò sí Ẹ̀yà",
-        "detail": "Ṣe àgbékalẹ̀ àwọn èrò rẹ kí wọ́n sì di ìwé ìtàn-eré tí yóò gba ìṣẹ́jú 90 nínú yàrá ìṣètò (Blueprint Room). Ṣe àlàyé àwọn ohun kikọ, ọ̀nà ìgbékalẹ̀ iṣẹ́-ọnà, àti àwọn ìpele pàtàkì nínú ìtàn náà; lẹ́yìn náà, jẹ́ kí àyẹ̀wò láti ọ̀dọ̀ Audience Resonance ṣe àtúnṣe tó péye sí ìtàn rẹ kí o tó bẹ̀rẹ̀ sí ní ya àwòrán rẹ̀."
+        "label": "Lati Idea to akosile & Chapter",
+        "detail": "Yi ero-ede ti o han gbangba pada si awọn ipin ti a ti ṣeto tabi ere iboju iṣẹju 90 ni Blueprint Room. Ṣetumo awọn ohun kikọ, aworan, ati awọn lilu, lẹhinna jẹ ki Audience Resonance ṣe atunṣe itan rẹ daradara ṣaaju ki o to iyaworan."
       },
       {
-        "label": "Fi ète ṣe ìtọ́sọ́nà, kì í ṣe nípasẹ̀ àwọn ìtọ́ni lásán",
-        "detail": "Sọ èdè iṣẹ́ fíìmù pẹ̀lú àwọn olùrànlọ́wọ́ ọlọ́gbọ́n tí wọ́n lóye ìtọ́sọ́nà rẹ. Reference Library máa ń fi àwọn òṣèré, aṣọ, àti ibi tí wọ́n ti ń ya fíìmù tí o ti yàn sílẹ̀ dájú, kí gbogbo nǹkan lè máa lọ déédé láìsí àyípadà."
+        "label": "Ko si Awọn ọgbọn ṣiṣe Fiimu Ti beere fun",
+        "detail": "Ṣe afihan iran rẹ ni awọn ọrọ lojoojumọ — Oludari AI rẹ n ṣakoso ọna kika iboju, awọn igun kamẹra, ina, ati awọn itọsi lakoko ti Ile-ikawe Ilọsiwaju tiipa simẹnti rẹ, awọn aṣọ ipamọ, ati awọn ipo."
       },
       {
-        "label": "Ìgbé-jáde tí àwọn aṣojú ń darí",
-        "detail": "Ṣe iyara ilana ṣiṣẹda naa ni igba marun-un (5X) pẹlu awọn eto ọlọgbọn ti n ṣeto awọn iṣẹlẹ ti o ni awọn aworan 30 lẹhin-iṣẹlẹ. Ṣe atunṣe ati idagbasoke rẹ ni ọfẹ lakoko ti o wa ni ipele ibẹrẹ, lẹhinna gbe iṣẹ ikẹhin rẹ jade pẹlu didara aworan ti o ga julọ ti o si lẹwa gidigidi."
+        "label": "Asoju-Driven si nmu Arn",
+        "detail": "Mu iṣelọpọ 5X pọ si pẹlu awọn aṣoju amọja ti o ṣe agbejade ibaraẹnisọrọ, orin, iduro, ati awọn agekuru ni afiwe ati aranpo awọn iwoye 30-shot laifọwọyi. Awotẹlẹ ni Pre-Vis akọkọ, lẹhinna ṣe ni Hi-Res."
       },
       {
         "label": "Ṣe àyẹ̀wò, Ṣiṣẹ́ pọ̀, Fi ránṣẹ́",
-        "detail": "Ṣe àjọpín bí iṣẹ́ ṣe ń lọ ní gbogbo ìpele pàtàkì—láti ìpele 'audio animatics' títí dé èyí tí ó ti parí pátápátá—nínú Screening Room. Pín wọn gẹ́gẹ́ bí fíìmù kúkúrú tàbí fíìmù gígùn ní onírúurú èdè láti lè dé ọ̀dọ̀ àwọn ènìyàn káàkiri àgbáyé."
+        "detail": "Pin ilọsiwaju ni gbogbo awọn iṣẹlẹ pataki-lati awọn ohun idanilaraya ohun si oluwa ti o kẹhin — ni Screening Room. Ṣe atẹjade ni awọn ipin episodic tabi awọn ẹya kikun kọja awọn ede 70+."
       }
     ],
     "pipelineSteps": [
@@ -1000,7 +938,7 @@
   "twoModes": {
     "eyebrow": "Ìdènà tí a ń mú kúrò",
     "title": "Ọ̀nà-iṣẹ́ kan. Kì í ṣe àkójọpọ̀ àwọn irin-iṣẹ́.",
-    "subtitle": "SceneFlow replaces single-clip generators and a pile of separate docs, editors, and re-renders. Build the series or the 90-minute master, then publish a scene or a chapter when you are ready to earn.",
+    "subtitle": "Awọn igbesẹ agekuru, awọn fireemu bọtini, alaye ohun, ati orin ti a lo lati gbe ni awọn irinṣẹ lọtọ. SceneFlow n ṣe iṣọkan gbogbo iṣelọpọ sinu opo gigun ti epo kan — nitorinaa o le kọ jara iṣẹlẹ-ọpọlọpọ tabi oluwa iṣẹju 90 kan, ati ṣe atẹjade awọn iwoye ti o pari tabi awọn ipin bi o ṣe nlọ.",
     "comingSoon": "Yóò dé láìpẹ́",
     "comparison": {
       "id": "comparison",
@@ -1009,19 +947,19 @@
     "cta": "Launch Studio ($9)"
   },
   "directControl": {
-    "eyebrow": "Àkóso tí o ní",
-    "title": "Ṣe amọna itan naa. Jẹ ki awọn aṣoju pese itọsọna tabi iwuri.",
-    "subtitle": "O n ṣakoso bi a ṣe n ya aworan tabi fidio naa pẹlu ede ti o rọrun lati loye. Ilana yiya aworan yii n ṣalaye iru aworan ti a nilo (boya aworan ti ko n gbe tabi fidio kukuru). Awọn ami fun orin ati ọrọ alaye gbọdọ ba ilu orin naa mu. Wo aworan afọwọya ti a ṣe ni ọna ti o n gbe (animatic), ṣe atunṣe ti o ba jẹ pe apakan kan ko tọ, ki o to bẹrẹ si ni nawo lori ṣiṣe fidio gidi naa.",
+    "eyebrow": "Ko si iṣẹ ṣiṣe fiimu ti o nilo",
+    "title": "Ṣe afihan iran rẹ. Awọn atukọ AI rẹ n ṣakoso iṣẹ naa.",
+    "subtitle": "Boya o jẹ itan-akọọlẹ akoko akọkọ tabi oludari ti o ni iriri, ṣapejuwe ohun ti o ṣẹlẹ ni awọn ọrọ itele. Awọn aṣoju amọja ṣe itọju sinima, itọsi, awọn ifẹnukonu orin, ijiroro, ati aranpo ibi aladaaṣe—ki o le wo ẹkunrẹrẹ ẹkunrẹrẹ ni akọkọ, ṣe lilu eyikeyi lilu lori aṣẹ, ati lẹhinna lo awọn kirẹditi lori išipopada.",
     "comparison": {
       "id": "direction",
-      "caption": "Àkíyèsí láti ọ̀dọ̀ olùdarí, ìtọ́ni fún àkókò fídíò, àti orin pẹ̀lú ọ̀rọ̀-ìtàntàn tí wọ́n wà ní ìbámu pẹ̀lú ìlù kan náà."
+      "caption": "Ìtọ́sọ́nà ìtàn èdè pẹ̀tẹ́lẹ̀ tí a ṣàkópọ̀ láìfọwọ́ṣe sínú fíìmù, orin, àti ìtumọ̀."
     },
     "cta": "Launch Studio ($9)"
   },
   "publishCut": {
     "eyebrow": "Apá tí o tẹ̀ jáde",
     "title": "Gbe e lọ si ibikibi. Lo Premiere lori SceneFlow nigba ti o ba ti ni i.",
-    "subtitle": "Download a master and ship it yourself, or publish finished scenes and chapters to {longForm} and cut trailers for {shorts} — without waiting on the whole cut. Before anything hits the public feed, run drafts or your final master through the Screening Room. Standout projects can apply for the invite-only SceneFlow Network; it is a curated accelerator, not an open storefront.",
+    "subtitle": "Ṣe okeere titunto si ki o pin kaakiri nibikibi, tabi ṣe atẹjade awọn iwoye ti o pari ati awọn ipin taara si {longForm} pẹlu awọn tirela inaro ge fun {shorts} - aworan, orin, ati alaye ti wa tẹlẹ ninu gige. Ṣe ayẹwo gbogbo iwe kikọ ninu Screening Room ṣaaju itusilẹ, ki o si kan si Nẹtiwọọki SceneFlow ti ifiwepe-nikan fun isare olugbo ti agbateru.",
     "comparison": {
       "id": "publish",
       "caption": "A finished scene or chapter, and the 90-minute master, from one studio."
@@ -1034,6 +972,25 @@
     "badges": {
       "googleCloud": "Google Cloud",
       "vertexAi": "Vertex AI"
+    },
+    "wave": {
+      "eyebrow": "Gigun AI → Superintelligence Wave",
+      "headline": "Awọn iṣelọpọ Didara Didara Loni. Aifọwọyi Awoṣe iṣagbega Ọla.",
+      "subheadline": "Ni ọdun to kọja, iran fidio fo lati ge asopọ “AI slop” si sinima ojulowo. Ni idapọ pẹlu itan-akọọlẹ eleto ti SceneFlow ati aranpo iwoye adaṣe adaṣe, o le gbe awọn iṣelọpọ ipele ile-iṣere loni-nigbati gbogbo ihuwasi ati agbaye ti o kọ n gùn laifọwọyi igbi ti ilọsiwaju AI atẹle.",
+      "pillars": [
+        {
+          "title": "Sitẹrio-Ite Si nmu Arnrun Loni",
+          "description": "O ko ni lati duro fun awọn awoṣe iwaju lati sọ itan nla kan. SceneFlow's Blueprint faaji, Reference Library, ati aranpo iwoye aladaaṣe yipada awọn awoṣe aala ode oni si iṣọkan, awọn ipin ati awọn fiimu ti o ṣetan igbohunsafefe."
+        },
+        {
+          "title": "Ile ifinkan Ilọsiwaju Rẹ Jẹ Imudaniloju Ọjọ iwaju IP",
+          "description": "Awọn awoṣe jẹ awọn lẹnsi kamẹra; awọn iwe afọwọkọ rẹ, awọn ohun kikọ, awọn aṣọ ipamọ, ati awọn eto inu ifinkan Ilọsiwaju rẹ jẹ IP rẹ ti o yẹ. Kọ jara rẹ ati awọn olugbo ni bayi-gẹgẹbi awọn awoṣe ti nlọ siwaju lati AI si Superintelligence (SI), simẹnti ti o wa tẹlẹ ṣe awọn iṣagbega laifọwọyi si awọn ẹrọ tuntun."
+        },
+        {
+          "title": "Agbara Iṣiro diẹ sii bi Awọn idiyele Tokini Isubu",
+          "description": "Bi iṣiro agbaye ti n gbooro ati awọn idiyele ami ami awoṣe ti lọ silẹ, SceneFlow laifọwọyi n kọja awọn iṣẹ ṣiṣe wọnyẹn si awọn ọmọ ẹgbẹ ti nṣiṣe lọwọ bi agbara iran diẹ sii fun kirẹditi lori awọn isọdọtun ati awọn akopọ Fikun-un. Alabapin loni ki o si gùn gbogbo fifo siwaju."
+        }
+      ]
     }
   },
   "valueProp": {
@@ -1774,13 +1731,13 @@
     "titleAccent": "níbi iṣẹ́",
     "subtitle": "Àpẹẹrẹ kọ̀ọ̀kan máa ń bẹ̀rẹ̀ pẹ̀lú fídíò ìpolówó kúkúrú kan. Ẹ̀dà àkọ́kọ́ tó kún rẹ́rẹ́ — ìyẹn iṣẹ́ tó péye láti ìpele ètò àkọ́kọ́ (blueprint) àti ìpele àwòrán àkọ́kọ́ (pre-visualization) títí dé ìpele ìparí — ni a ó máa wo ní yàrá ìṣàfihàn (screening room).",
     "subtitleTagline": "Àwọn iṣẹ́ tó gùn. Kì í ṣe àwọn àkópọ̀ kúkúrú.",
-    "screeningRoomInstruction": "Ṣe àtúnyẹ̀wò iṣẹ́ yìí gẹ́gẹ́ bí olùtúnyẹ̀wò ṣe máa ń ṣe é — ní ìgbésẹ̀ kan lẹ́yìn èkejì. Bẹ̀rẹ̀ pẹ̀lú 'Series', tẹ̀le e pẹ̀lú 'Blueprint', lẹ́yìn náà ni ìwé ìtàn (script) tó wà nínú 'AR Analysis', kí o sì parí rẹ̀ ní 'Screening'.",
+    "screeningRoomInstruction": "Ṣii Screening Room ni akọkọ lati ni iriri iṣelọpọ ni ọna ti aṣayẹwo yoo ṣe yipada kọja Pre-Vis, Awọn agekuru, Awọn iṣẹlẹ, Awọn ipin, Titunto, ati Promo — lẹhinna ṣayẹwo Series Room, Blueprint Room, ati Production Stage labẹ.",
     "trailerLabel": "Kẹkẹ́-ẹrù",
     "watchLongform": "Wo èyí tí ó gùn",
-    "seriesDoor": "Ẹ̀ka",
-    "blueprintDoor": "Àkókò Ètò SFAI",
-    "scriptArDoor": "Àyẹ̀wò Àwọn Owó tí a ń Retí Gbà (AR Analysis)",
-    "screeningDoor": "Ṣíṣe àyẹ̀wò",
+    "seriesDoor": "Series Room",
+    "blueprintDoor": "Blueprint Room",
+    "scriptArDoor": "Production Stage",
+    "screeningDoor": "Screening Room",
     "screeningRoomGroup": "Ọ̀rọ̀ nípa yàrá ìṣàyẹ̀wò SFAI",
     "previsDoor": "Àwòrán Àkọ́kọ́",
     "roughDoor": "Àtúnṣe Àkọ́kọ́",
@@ -2305,23 +2262,73 @@
     "closePopup": "Pa fèrésé kékeré náà"
   },
   "pricing": {
-    "badge": "Iye owo ti o rọrun",
+    "badge": "Ọmọ ẹgbẹ Studio & Ifowoleri Lilo",
     "title": "Bẹ̀rẹ̀ pẹ̀lú Explorer — $9",
-    "subtitle": "Dán gbogbo ilana iṣẹ́ náà wò báyìí pẹ̀lú owó ìbẹ̀rẹ̀ tí kò ní ìdènà kankan, èyí tí ó jẹ́ $9.",
-    "explorerHighlight": "Ọ̀nà tó yára jùlọ láti ní ìrírí gbogbo ètò ilé-iṣẹ́ SceneFlow — láti ìgbà tí wọ́n ti ní èrò títí dé Screening Room.",
+    "subtitle": "Bẹrẹ fiimu akọkọ rẹ loni fun $9-yi ero rẹ pada si Blueprint ti a ti ṣeto, sọ awọn ohun kikọ rẹ, ki o ṣe awotẹlẹ ipele akọkọ rẹ. Lẹhinna ṣe alabapin lati mu ifinkan Ilọsiwaju rẹ duro ati ṣafikun awọn kirẹditi bi o ṣe pari iṣelọpọ rẹ.",
+    "explorerHighlight": "Ko si awọn ọgbọn ṣiṣe fiimu ti imọ-ẹrọ ti o nilo — ti a ṣe fun awọn onkọwe itan lojoojumọ, awọn olupilẹṣẹ indie ipin-nipasẹ-ipin, awọn ikanni jara, ati awọn ile iṣere fiimu arabara.",
     "trustBadges": [
       "Awọn sisanwo to ni aabo nipasẹ Whop",
       "$9 Explorer lati gbiyanju yara iṣẹ-ọnà naa",
-      "Awọn kirediti oṣooṣu ma n pari ni opin akoko naa.",
+      "Ti nṣiṣe lọwọ ẹgbẹ da duro ifinkan Itẹsiwaju",
       "Fagile nígbàkígbà"
     ],
     "valueAnchor": {
-      "traditionalCost": "Ju $2,000 lọ",
-      "traditionalLabel": "Àwòrán àkọ́kọ́lọ́lẹ̀ ti ìgbàanì",
+      "traditionalCost": "$5,000–$50,000+",
+      "traditionalLabel": "Ibile ami-vis & gbóògì",
       "vs": "lodi si",
-      "sceneFlowCost": "$49–$149",
-      "sceneFlowLabel": "SceneFlow ti oṣooṣu",
-      "saveBadge": "Fi owo ti o ju 90% pamọ fun iṣẹ akanṣe kọọkan"
+      "sceneFlowCost": "$19–$599 fun osu + Fikun-un",
+      "sceneFlowLabel": "SceneFlow Studio & Ifinkan Ilọsiwaju",
+      "saveBadge": "Fipamọ 90%+ fun iṣelọpọ"
+    },
+    "filmmakerPerspectives": {
+      "heading": "Ọkan Studio Pipeline. Itumọ ti fun Gbogbo Storyteller & Filmmaker.",
+      "subheading": "O ko nilo ile-iwe fiimu tabi awọn ọgbọn imọ-ẹrọ lati ṣafihan iran rẹ. Boya o n mu itan-akọọlẹ ti ara ẹni wa si igbesi aye fun igba akọkọ, titẹjade ipin lẹsẹsẹ nipasẹ ipin, awọn oluṣowo owo, tabi ṣiṣe iyaworan arabara, awọn iwọn ero rẹ pẹlu bii o ṣe ṣẹda.",
+      "recommendedPathLabel": "Ọna ti a ṣeduro:",
+      "cards": [
+        {
+          "id": "hobbyist",
+          "badge": "Ko si Iriri Fiimu Nilo • $19 fun osu kan",
+          "title": "Storytellers & Creative Visionaries",
+          "description": "Ṣe itan kan, imọran iwe, tabi itan idile ti o fẹ lati rii loju iboju? Ṣe apejuwe iran rẹ ni awọn ọrọ itọsi lati ṣẹda awọn ohun idanilaraya Pre-Vis ati awọn agekuru fidio yiyan—lakoko ti o tọju awọn ohun kikọ rẹ, awọn aṣọ ipamọ, ati awọn eto ti o fipamọ sinu Ile ifipamọ Ilọsiwaju rẹ.",
+          "recommendedPlan": "Aṣebiakọ ($19 fun osu kan)"
+        },
+        {
+          "id": "chapter",
+          "badge": "Titun & Awọn olupilẹṣẹ Indie • $49 fun oṣu kan",
+          "title": "The Publish Chapter nwon.Mirza",
+          "description": "Rekọja idiyele ati idena akoko ti ṣiṣe ẹya iṣẹju 90 ni iwaju. Ṣe atẹjade itan rẹ ni awọn oju iṣẹlẹ iṣẹju 5–15 tabi awọn ipin ipin lati ṣakoso isuna iṣiro oṣooṣu rẹ lakoko ti o n dagba awọn olugbo rẹ ni imurasilẹ.",
+          "recommendedPlan": "Ibẹrẹ ($ 49 / osu)"
+        },
+        {
+          "id": "series",
+          "badge": "Awọn ikanni Monetized • $149/moi",
+          "title": "Ohun kikọ ati Eto Ilọsiwaju fun Series",
+          "description": "Awọn olugbo ṣe alabapin si awọn ikanni nigbati wọn sopọ pẹlu awọn ohun kikọ ti o faramọ ati awọn agbaye. Ile ifinkan Ilọsiwaju rẹ ṣe itọju awọn oju simẹnti, awọn aṣọ, awọn ere ibeji ohun aṣa, ati awọn ipo ni gbogbo iṣẹlẹ ki o le dagba ni iduroṣinṣin lori YouTube, TikTok, ati Awọn Reels.",
+          "recommendedPlan": "Pro ($149 fun osu kan)"
+        },
+        {
+          "id": "hybrid",
+          "badge": "Ti o ni iriri & Awọn oṣere Fiimu arabara • $149–$599 fun osu kan",
+          "title": "Awọn idii igbeowosile iṣelọpọ & Awọn iyaworan arabara",
+          "description": "Awọn iwe afọwọkọ ti ile-iṣẹ okeere okeere (PDF, FDX, Fountain) ni idapọ pẹlu Pre-Vis Animatic ati Promo Trailer lati ni aabo igbeowo oludokoowo — tabi gbejade awọn iwoye ti o ya fiimu ki o da wọn pọ pẹlu awọn iyaworan 4K AI ni ida kan ti awọn idiyele iṣelọpọ ti ara.",
+          "recommendedPlan": "Pro / Studio + Fikun-un"
+        }
+      ]
+    },
+    "membershipModel": {
+      "badge": "Ipilẹ asọtẹlẹ + Oniṣiro rọ",
+      "title": "Bẹrẹ Ise agbese Rẹ Loni. Iwọn Pẹlu Awọn Fikun-un bi O Ṣe Ṣejade.",
+      "description": "SceneFlow ya sọtọ ile-iṣere loorekoore & Ilọsiwaju ifinkan alejo gbigba lati inu iṣiro iṣelọpọ ti nwaye — nitorinaa awọn ohun kikọ rẹ ati agbaye wa ni titiipa ni gbogbo ọdun, ati pe o le gbe awọn kirẹditi soke nigbakugba ti o ba ṣetan lati pari ipin kan tabi ẹya.",
+      "pillars": [
+        {
+          "title": "1. Ipilẹ omo egbe da duro rẹ itesiwaju ifinkan",
+          "description": "Eto oṣooṣu ti nṣiṣe lọwọ ($ 19 – $ 599/mo) ṣe itọju iraye si ile-iṣere rẹ, awọn ọna asopọ Screening Room, ati Ile-iṣẹ Ilọsiwaju Ilọsiwaju - titọju awọn oju simẹnti loorekoore rẹ, awọn aṣọ ipamọ, awọn ere ibeji ohun aṣa, awọn ipo, ati Awọn Bibeli Jara kọja awọn akoko, pẹlu awọn kirẹditi ipilẹ oṣooṣu."
+        },
+        {
+          "title": "2. Pari Eyikeyi Ise agbese lori Ibeere pẹlu Awọn akopọ Fikun-Oṣu 12",
+          "description": "Ni kete ti itan rẹ ba wa ni išipopada, awọn ọmọ ẹgbẹ oṣooṣu ti nṣiṣe lọwọ le ra $25, $100, tabi $250 Awọn akopọ kirẹditi Fikun-un nigbakugba lati pari ipin kan, akoko iṣẹlẹ-ọpọlọpọ, tabi titu ẹya arabara. Awọn akopọ-Fikun-un ni oṣu 12 to kọja lakoko ti ẹgbẹ rẹ wa lọwọ."
+        }
+      ]
     },
     "teamCta": {
       "title": "Ẹgbẹ́ ti inú ilé tàbí ilé-iṣẹ́?",
@@ -2336,7 +2343,7 @@
     "byok": {
       "title": "Mu Kọ́kọ́rọ́ Tirẹ Wá",
       "badge": "Awọn Eto Pro ati Studio",
-      "description": "Bọtini API rẹ le ṣiṣẹ lori ṣiṣẹda awọn aworan itọkasi, awọn aworan aimi, ati awọn agekuru fidio. SceneFlow n gba owo iṣakoso ti o jẹ 20% lori awọn iṣẹ wọnyi. Awọn idiyele fun iṣẹ SceneFlow le dinku ju ti akọọlẹ API ti ara ẹni lọ bi iye iṣẹ lori pẹpẹ naa ṣe n pọ si.",
+      "description": "So Google Vertex AI tabi awọn bọtini API Kling ti tirẹ sori awọn ero Pro & Studio fun ìdíyelé olupese taara (pẹlu 20% ọya orchestration Syeed) —tabi lo awọn kirẹditi ti SceneFlow ti gbalejo lati lo anfani awọn oṣuwọn awoṣe ẹdinwo iwọn didun wa.",
       "savingsHighlight": "Owo iṣeto orin ti o jẹ 20%",
       "benefits": [
         {
@@ -2363,22 +2370,26 @@
       "note": "Owo ti o jẹ ida ogún ninu ọgọrun (20%) jẹ idiyele fun iṣakoso eto SceneFlow. Ile-iṣẹ ti n pese iṣẹ naa yoo fi idiyele lilo naa kun akọọlẹ rẹ. Lilo eto ti SceneFlow n gbalejo lati ṣe iṣẹ le din owo ju lilo bọtini (key) ti ara ẹni lọ."
     },
     "creditTopUps": {
-      "title": "Ṣé o nílò àfikún àwọn kírédítì?",
-      "subtitle": "Ra awọn afikun ti $25, $100, tabi $250 ni igba kọọkan ti o ba nilo wọn. Àpò kọọkan máa ń wà fún oṣù méjìlá.",
+      "title": "Alabapin Pay-Bi-O-Produce Fi-On Packs",
+      "subtitle": "Iyasọtọ fun awọn ọmọ ẹgbẹ oṣooṣu ti nṣiṣe lọwọ. Ra $25, $100, tabi $250 awọn afikun ni igbagbogbo bi o ṣe nilo. Pack kọọkan jẹ oṣu 12.",
       "packs": [
         {
           "label": "Àfikún $25",
-          "description": "Kirediti 2,000. Ra a ni igba ti o ba nilo rẹ."
+          "credits": "2.000 kirediti",
+          "description": "Awọn kirẹditi 2,000 ($ 0.0125/cr) - o dara fun ipari ipin 5–15 iṣẹju tabi Promo Trailer."
         },
         {
           "label": "Àfikún $100",
-          "description": "Àwọn kirediti 9,000. Ra wọ́n nígbàkigbà tí o bá nílò wọn."
+          "credits": "9.000 kirediti",
+          "description": "9,000 kirediti ($0.0111/cr) - apẹrẹ fun olona-ipin jara ti nwaye tabi Pre-Vis ipolowo jo."
         },
         {
           "label": "Àfikún $250",
-          "description": "Àwọn kirediti 25,000. Ra wọ́n nígbàkigbà tí o bá nílò wọn."
+          "credits": "25.000 kirediti",
+          "description": "Awọn kirẹditi 25,000 ($ 0.0100/cr) - ti a ṣe fun $500–$5,000 awọn iṣelọpọ arabara ati awọn sileti ẹya."
         }
       ],
+      "subscriberNote": "Nilo ọmọ ẹgbẹ oṣooṣu ti nṣiṣe lọwọ (Hobbyist, Starter, Pro, tabi Studio) lati ra ati idaduro ibi ipamọ ifinkan Ilọsiwaju.",
       "creditsUnit": "Àwọn tó kópa"
     },
     "calculator": {
@@ -2428,13 +2439,13 @@
       "minSuffix": "iṣẹ́jú"
     },
     "tierGrid": {
-      "productionTestFlight": "Ìrìn-àjò Òfuurufú fún Àyẹ̀wò Ọjà Tí A Ṣẹ̀ṣẹ̀ Ṣe",
+      "productionTestFlight": "30-Day Studio igbeyewo ofurufu",
       "getStarted": "Bẹ̀rẹ̀",
       "startTestFlight": "Bẹ̀rẹ̀ Ìfò-ìdánwò",
       "loading": "Ó ń gbé ètò wọlé...",
       "mostPopular": "Èyí tí ó gbajúmọ̀ jùlọ",
       "creditsPerMonth": "Àwọn kirediti/oṣù",
-      "storage": "Ibi-ipamọ",
+      "storage": "Ifinkan itesiwaju",
       "perMonth": "/month"
     },
     "trust": {
@@ -2444,13 +2455,13 @@
     },
     "plans": {
       "explorer": {
-        "name": "Explorer — Àpẹẹrẹ",
-        "description": "Àyẹ̀wò — ríra lẹ́ẹ̀kan láti dán ọjà tí ó péye wò",
+        "name": "Explorer - Bẹrẹ Fiimu akọkọ rẹ",
+        "description": "Yi ero rẹ pada si Blueprint ti a ti ṣeto, sọ awọn ohun kikọ rẹ, ki o ṣe awotẹlẹ ipele ohun akọkọ rẹ — lẹhinna ṣe alabapin ati ṣafikun awọn kirẹditi bi o ṣe pari fiimu rẹ.",
         "features": [
-          "Rira lẹ́ẹ̀kan ṣoṣo",
+          "Rira-akoko kan (Ọkọ ofurufu Idanwo Studio ọjọ 30)",
           "Àwọn kirediti 750 (wọn yóò parí lẹ́yìn ọjọ́ 90 láti ìgbà tí a ti rà wọ́n)",
-          "Ààyè ìpamọ́ 5 GB (ọjọ́ 30)",
-          "Ààyè sí gbogbo apá pètẹpètè náà",
+          "Ibi ipamọ idanwo 5 GB (ọjọ 30 - ṣe alabapin si ifinkan idaduro)",
+          "Wiwọle ile-iṣere ni kikun + okeere Iwe afọwọkọ iṣelọpọ (PDF, FDX, Orisun)",
           "Fi ranṣẹ jade gẹgẹbi MP4 (iwọn didara eyikeyi)",
           "Ohùn AI (àwọn èdè tó lé ní 70)"
         ]
@@ -2458,51 +2469,62 @@
       "subscriptions": [
         {
           "id": "starter",
-          "name": "Ìpele Àkọ́bẹ̀rẹ̀ — Agbègbè Ìdánwò",
-          "description": "Sandbox — fún dídán àwọn èrò wò kí wọ́n tó ṣe ìfihàn gidi",
+          "name": "Hobbyist - Storyteller & ifinkan",
+          "description": "Awọn onkọwe itan & Awọn Oniran Ẹlẹda - ṣafihan iran rẹ pẹlu awọn ọgbọn ṣiṣe fiimu imọ-ẹrọ ti o nilo, ati jẹ ki Ile ifinkan Ilọsiwaju rẹ ṣiṣẹ laarin awọn abereyo",
           "features": [
-            "Ààyè sí gbogbo apá pètẹpètè náà",
-            "Awọn kirediti 4,500 fun oṣu kan wa ninu rẹ",
+            "Omo ile isise ti nṣiṣe lọwọ & idaduro ifinkan Ilọsiwaju",
+            "1,500 kirediti / osù to wa",
             "Awọn kirediti oṣooṣu ti a ko lo yoo pari ni opin akoko naa.",
-            "Ààyè ìpamọ́ 25 GB tí a ń lò",
-            "Fi ranṣẹ jade gẹgẹbi MP4 (iwọn didara eyikeyi)",
-            "Ohùn AI (àwọn èdè tó lé ní 70)",
-            "Ìtìlẹ́yìn nípasẹ̀ ìfìwéránṣẹ́-eléèlítróníìkì"
+            "10 GB Ifinkan Ilọsiwaju Ilọsiwaju (simẹnti da duro, awọn aṣọ ipamọ ati awọn eto)",
+            "Ṣii 12-osu Alabapin Fikun-lori awọn akopọ kirẹditi",
+            "Apẹrẹ fun awọn iran ti ara ẹni, awọn itan idile & Pre-Vis animmatics",
+            "Awotẹlẹ Iwe afọwọkọ iṣelọpọ & okeere (PDF, FDX, Orisun)",
+            "MP4 okeere ati ohun AI (awọn ede 70+)"
           ]
         },
         {
           "id": "pro",
-          "name": "Oníṣẹ́-ọ̀jọ̀gbọ́n — YouTuber",
-          "description": "Olùṣe fídíò lórí YouTube — àwọn apá tí ń tẹ̀síwájú àti àwọn fídíò ikanni",
+          "name": "Starter - Chapter & Pre-Vis",
+          "description": "Ilana Abala Atẹjade - fun awọn idasilẹ ipin ipin ti iṣẹju 5–15 ati awọn oluṣe fiimu ibile ti n kọ Awọn idii Iṣowo Igbejade iṣelọpọ",
           "features": [
-            "Gbogbo ohun tó wà nínú ètò Starter, pẹ̀lú:",
-            "Awọn kirediti 15,000 fun oṣu kan wa ninu rẹ",
+            "Ohun gbogbo ni Hobbyist, pẹlu:",
+            "Awọn kirẹditi 4,500 fun oṣu kan pẹlu (iṣiro 3x Hobbyist)",
             "Awọn kirediti oṣooṣu ti a ko lo yoo pari ni opin akoko naa.",
-            "Ààyè ìpamọ́ 100 GB tí ń ṣiṣẹ́",
-            "Àǹfàní láti lo Veo 3.1 pẹ̀lú àwòrán tó dára gan-an (4K)",
-            "Ètò Ìmúnídánilójú Ìdúróṣinṣin Àwọn Ohun-ìwà",
-            "Ṣíṣe àwòkọ ohùn",
-            "BYOK (Mu Kọ́ọ̀kì Tirẹ Wá)",
-            "Àwọn àpóró ìjókòó mẹ́ta fún ẹgbẹ́",
-            "Àtìlẹ́yìn pàtàkì"
+            "25 GB Ifinkan Ilọsiwaju Ilọsiwaju fun ihuwasi & eto itesiwaju",
+            "Ti a ṣe fun awọn idasilẹ ipin iṣẹju 5–15 & awọn idii igbeowosile Pre-Vis",
+            "Ṣe ikojọpọ awọn iwoye iṣe-aye & darapọ pẹlu awọn agekuru AI ni Mixer",
+            "1 oniye ohun aṣa & 70+ atunkọ ede",
+            "Imeeli support"
           ]
         },
         {
           "id": "studio",
-          "name": "Ile-iṣẹ́ — Olùṣe Fídíò Oníwọ̀n-ara-ẹni",
-          "description": "Olùṣe fíìmù oníwọ̀n-ara-ẹni — àwọn fíìmù àti eré oní-pàtánì tí a ṣe ní ọ̀nà ti ara-ẹni",
+          "name": "Pro - jara & arabara",
+          "description": "Monetized Series & Arabara Filmmaker - fun awọn ikanni awujọ pẹlu awọn ohun kikọ loorekoore ati awọn oṣere fiimu ti o ni iriri ti o dapọ iṣẹ-aye pẹlu iṣelọpọ 4K AI",
           "features": [
-            "Gbogbo ohun tó wà nínú Pro, pẹ̀lú:",
-            "Awọn kirediti 75,000 fun oṣu kan wa ninu rẹ",
+            "Ohun gbogbo ni Starter, pẹlu:",
+            "15.000 kirediti / osù to wa",
             "Awọn kirediti oṣooṣu ti a ko lo yoo pari ni opin akoko naa.",
-            "Ààyè ìpamọ́ 500 GB tí ó wà ní lílò",
-            "Àtòjọ Àkọ́kọ́-láti-ṣe ti Veo 3.1 4K",
-            "Ìdúróṣinṣin Àkọsílẹ̀ Láìlópin",
-            "Àwọn ọjà tí a gbé jáde láìsí àmì-ìdánimọ̀ olùṣe",
-            "Àǹfààní láti lo API",
-            "Ààyè ìjóko mẹ́wàá fún ẹgbẹ́",
-            "Olùtọ́jú àkọọ́lẹ̀ tí a yà sọ́tọ̀ fún iṣẹ́ náà",
-            "Àdéhùn ìpele iṣẹ́ (SLA) fún àwọn ilé-iṣẹ́ ńlá wà ní ìbéèrè."
+            "100 GB Ifinkan Ilọsiwaju Ilọsiwaju + Ohun kikọ Aitasera Engine",
+            "Veo 3.1 Didara (4K) iraye si & iṣẹ-ṣiṣe arabara + AI bisesenlo",
+            "Awọn ere ibeji ohun aṣa 5 fun simẹnti jara loorekoore",
+            "BYOK (Mu Bọtini Tirẹ Mu) fun ìdíyelé olupese taara",
+            "Awọn ijoko ẹgbẹ 3 & Atilẹyin akọkọ"
+          ]
+        },
+        {
+          "id": "studio",
+          "name": "Studio - Production House",
+          "description": "Ile iṣelọpọ & Slate Ẹya - opo gigun ti iṣelọpọ $ 500- $ 5,000 fun awọn oṣere fiimu ti o ni iriri, awọn ile-iṣẹ, ati awọn ile-iṣere jara lọpọlọpọ",
+          "features": [
+            "Ohun gbogbo ni Pro, pẹlu:",
+            "Awọn kirẹditi 75,000 fun oṣu kan pẹlu (oṣuwọn kirẹditi-kere ti o kere julọ)",
+            "Awọn kirẹditi oṣooṣu ti a ko lo dopin ni opin akoko",
+            "500 GB Ti nṣiṣe lọwọ Ilọsiwaju ifinkan + Unlimited kikọ aitasera",
+            "Veo 3.1 4K Priority Queue & awọn ere ibeji ohun aṣa 25",
+            "Aami-funfun Screening Room & awọn okeere + API & wiwọle BYOK",
+            "Awọn ijoko ẹgbẹ 10 & Oluṣakoso akọọlẹ iyasọtọ",
+            "SLA Enterprise wa lori ìbéèrè"
           ]
         }
       ]

@@ -257,53 +257,54 @@
     "exitFullscreenOverview": "Kilépés a teljes képernyős módból",
     "watchLongformLabel": "Nézze meg a hosszabb lélegzetvételű anyagot",
     "screenshotLabel": "Képernyőkép",
-    "landingUiLanguagesLabel": "Gyártás és szinkronizálás 44 nyelven. Ez az oldal az alábbi 39 nyelven érhető el:",
+    "landingUiLanguagesLabel": "Készítsen és szinkronizáljon 44 nyelven. A teljes stúdió felület és ez az oldal a következő 39-ben érhető el:",
     "rooms": [
       {
         "id": "series-desk",
         "label": "SFAISERIES_HELYISÉG_MEGNEVEZÉS",
-        "promise": "Az Series Room az a hely, ahol az évad kezdődik. Ugyanazok a szereplők és ugyanaz a történet jelenik meg minden egyes hozzáadott epizódban. Olvasd át, hallgasd meg és rendezd meg az anyagot, mielőtt az epizód megnyílna az Blueprint Room-ben. Az évad nélküli filmek esetében ez a helyiség kihagyható.",
+        "headline": "Építs egyszer univerzumot. Készítsen epizódokat örökké.",
+        "promise": "Fejlessz több epizódból álló évadot egyetlen megosztott kreatív bibliával. A szereplők, a helyszínek, a történetszálak és a vizuális DNS automatikusan bekerülnek minden epizódba, amelyet felpörgetsz. Önálló filmet készíteni? Ugrás közvetlenül a Blueprint Room-re.",
         "features": [
           {
             "icon": "newSeries",
             "title": "Új sorozat",
-            "description": "Kezdd itt! Írd le saját szavaiddal a tervezett sorozatot. A „Tisztázás és megerősítés” (Clarify and Confirm) lépés során közösen finomítjuk az elképzelést, amíg el nem készül a szinopszis, a „Sorozat generálása” (Generate Series) funkció pedig megírja az alapanyagot. Az új sorozat öt epizóddal indul, de továbbiakat is hozzáadhatsz.",
+            "description": "Mutassa be sorozatát vagy csatornakoncepcióját egyszerű nyelven. Az interaktív mesterséges intelligencia finomítása kiélesíti a feltevést, és több epizódból álló évad alapvonalat hoz létre – átfogó cselekményívekkel és epizódlebontásokkal kiegészítve.",
             "screenshot": "Új sorozat létrehozása – szándék, tisztázás és megerősítés, sorozat generálása",
             "learnMore": {
               "items": [
                 {
                   "title": "Az Ön szándéka",
-                  "description": "Ismertesd a sorozatot, kitérve a formátumra, a célközönségre és a vizuális stílusra."
+                  "description": "Tisztázza az előfeltételt, a formátumot, a célközönséget és a vizuális művészeti stílust egyszerű nyelven."
                 },
                 {
-                  "title": "Ismétel",
-                  "description": "A „Tisztázás és megerősítés” lépés során Önnel közösen finomítjuk a szinopszist, még mielőtt bármi is elkészülne."
+                  "title": "Interaktív finomítás",
+                  "description": "A Clarify and Confirm funkció élesíti Önnel az évad összefoglalóját, mielőtt bármit generálna."
                 },
                 {
-                  "title": "Kiindulási alap",
-                  "description": "A Generate Series megírja az évadot, amelyet értékelni fogsz; ez öt epizóddal indul."
+                  "title": "Szezon alapvonal",
+                  "description": "A Generate Series egy öt epizódból álló évadívet épít fel, amelyet bármikor bővíthet."
                 }
               ]
             }
           },
           {
             "icon": "seriesReview",
-            "title": "Tekintse át az első vágatot.",
-            "description": "Olvassa el az összefoglalót, vagy nyomja meg a „Meghallgatás” gombot. Ezután olvassa el vagy hallgassa meg az epizódokat. A következetesség fogja össze a cselekményszálakat, a folytonosság pedig az epizódok közös szereplőgárdáját, helyszíneit, kellékeit és környezetét tartja egységes keretben.",
+            "title": "Biblia és folytonosság",
+            "description": "Olvassa el vagy hallgassa meg a narrált évadáttekintést és az epizódtáblázatot. A SceneFlow egy megosztott Reference Library-be zárja történetszálait, szereplői profiljait, helyszíneit és aláírási kellékeit, amelyet minden epizód örököl.",
             "screenshot": "Áttekintés, epizódok, következetesség, folytonosság – szereplőgárda, helyszínek, kellékek, díszletek",
             "learnMore": {
               "items": [
                 {
                   "title": "Olvassa vagy hallgassa meg",
-                  "description": "Az áttekintés és az epizódok elolvashatók, vagy a „Hallgatás” funkcióval meghallgathatók."
+                  "description": "Tekintse meg az évad áttekintését és minden epizód szinopszisát a beépített audio narrációval."
                 },
                 {
-                  "title": "Következetesség",
-                  "description": "Az esztétika, a kulcsfontosságú események és a cselekményszálak az évadhoz kötődnek."
+                  "title": "A történet következetessége",
+                  "description": "Az esztétika, a kulcsfontosságú cselekményesemények és a narratív szálak az egész évad során zárva maradnak."
                 },
                 {
-                  "title": "Folytonosság",
-                  "description": "A szereplőgárda, a helyszínek, a kellékek és a díszletek minden epizódban ugyanazok."
+                  "title": "Megosztott folytonosság",
+                  "description": "A szereplők, a helyszínek, a kellékek és a beállítások automatikusan bekerülnek minden epizódba, amelyet készítesz."
                 }
               ]
             }
@@ -311,75 +312,75 @@
           {
             "icon": "seriesResonance",
             "title": "Audience Resonance",
-            "description": "Futtassa az Audience Resonance funkciót, ha képet szeretne kapni az évadról. Tekintse át az értékeket és az elemzést. Csak akkor alkalmazzon gyakorlatban hasznosítható felismerést, ha úgy dönt; amíg ezt nem teszi meg, a sorozatban semmi sem változik.",
+            "description": "Mielőtt egyetlen szkriptet írna, tesztelje a szezon ívét a megcélzott demográfiai adatokkal. Tekintse át epizódonkénti rezonancia pontszámokat, és alkalmazza az adatokkal alátámasztott történetfejlesztéseket egyetlen kattintással – csak akkor, ha egyetért a megjegyzéssel.",
             "screenshot": "Audience Resonance-elemzés, majd hasznosítható felismerések (alkalmazás nélkül)",
             "learnMore": {
               "items": [
                 {
-                  "title": "Az olvasmány",
-                  "description": "A pontszámok és az elemzés megmutatják, mi talál célba az Ön által megjelölt közönségnél."
+                  "title": "Demográfiai pontozás",
+                  "description": "A pontszámok és a strukturális elemzés megmutatja, hogyan éri el szezonja célközönségét."
                 },
                 {
-                  "title": "Választható",
-                  "description": "Egy hasznosítható felismerés csak akkor változtatja meg a sorozatot, ha alkalmazod."
+                  "title": "Az igazgató kiváltsága",
+                  "description": "Az Actionable Insights csak akkor frissíti a sorozatot, ha úgy dönt, hogy alkalmazza őket."
                 }
               ]
             }
           },
           {
             "icon": "seriesDirector",
-            "title": "Sorozatrendező",
-            "description": "Irányítsd az egész sorozatot saját szavaiddal – akár szóban, akár írásban. Te választod ki a változást és a fókuszt, és te fogadod el azokat. Egy javaslat segíthet, miközben a történetvonal egyéb részei változatlanok maradnak.",
+            "title": "A sorozat igazgatója",
+            "description": "Alakítsa át az egész évadot hanggal vagy szöveggel. Változtasd meg a hangnemet, emeld fel a tétet, vagy dolgozz át egy karakterívet egyszerre az összes epizódon, miközben a történet többi részét érintetlenül hagyod.",
             "screenshot": "Sorozatrendező – rendezés, fókusz, elfogadás",
             "learnMore": {
               "items": [
                 {
-                  "title": "A szavaid",
-                  "description": "Mondd ki vagy gépeld be a módosítást, és igény szerint korlátozd azt a cselekményre, a szereplőkre, az epizód tartalmára, a hangvételre vagy a helyszínre."
+                  "title": "Egyszerű nyelvű irány",
+                  "description": "Mondja ki vagy írja be a jegyzetét, és célozza meg a cselekményt, a karaktereket, az epizódíveket, a hangot vagy a beállítást."
                 },
                 {
-                  "title": "Elfogadod",
-                  "description": "Semmi sem változik, amíg el nem fogadod, a történetvonal egymástól független részei pedig változatlanok maradnak."
+                  "title": "Sebészeti frissítések",
+                  "description": "Semmi sem változik, amíg el nem fogadja a revíziót, és a nem kapcsolódó történetszálak érintetlenek maradnak."
                 },
                 {
-                  "title": "Egy ajánlás",
-                  "description": "Az ajánlások hasznosak lehetnek, de továbbra is te döntöd el, mit tartasz meg."
+                  "title": "Irányított ajánlások",
+                  "description": "Alkalmazza a mesterséges intelligencia által javasolt történetfejlesztéseket, vagy maga irányítson minden kreatív döntést."
                 }
               ]
             }
           },
           {
             "icon": "directEpisode",
-            "title": "Rendezd meg ezt az epizódot",
-            "description": "Nyiss meg egy epizódot, és rendezd meg önállóan azt az egy órát. Növeld a tétet vagy mélyítsd el a történetet, majd alkalmazd a változtatást. A többi epizód változatlan marad.",
+            "title": "Epizód szintű irány",
+            "description": "Nagyítson rá bármelyik epizódra, hogy átdolgozza annak cselekményét, ütemét vagy elszigetelten – anélkül, hogy destabilizálná az évad hátralévő részét.",
             "screenshot": "Epizódok — Ennek az epizódnak a rendezése, a többi epizód változatlan",
             "learnMore": {
               "items": [
                 {
-                  "title": "Egy epizód",
-                  "description": "Ez a közvetlen művelet csak az adott epizódra alkalmazza a módosítást."
+                  "title": "Izolált újraírások",
+                  "description": "Közvetlen változtatások egyetlen epizód körvonalában és ütemében a szomszédos epizódok megváltoztatása nélkül."
                 },
                 {
-                  "title": "Az évszak megmarad",
-                  "description": "A többi epizód változatlan marad."
+                  "title": "Szezon integritása",
+                  "description": "Az évad átfogó bibliája és a fennmaradó epizódok zárva maradnak."
                 }
               ]
             }
           },
           {
             "icon": "startEpisode",
-            "title": "Az epizód elindítása",
-            "description": "Amikor egy epizód elkészül, indítsd el a hozzá tartozó projektet. A vázlat, a szinopszis és a cselekménypontok (beats) ezzel együtt kerülnek az Blueprint Room-be. A szereplőgárda és a világ már ismert.",
+            "title": "Epizód indítása egy kattintással",
+            "description": "Amikor egy epizód körvonala eléri a célt, indítsa el egyenesen a Blueprint Room-be a szinopszissal, a történet ütemeivel, a szereposztással és a világgal.",
             "screenshot": "Projekt indítása – a vázlat és a szereplőgárda már megvan az epizódhoz",
             "learnMore": {
               "items": [
                 {
-                  "title": "Projekt indítása",
-                  "description": "A Start Project megnyitja az adott epizódot az Blueprint Room-ben."
+                  "title": "Azonnali átadás",
+                  "description": "Indítsa el bármelyik epizódot közvetlenül a Blueprint Room-ben egyetlen kattintással."
                 },
                 {
-                  "title": "Már ismert",
-                  "description": "Hozzátartozik a vázlat, a szinopszis, a történeti csomópontok és a szereplőgárda."
+                  "title": "Előhuzalozott DNS",
+                  "description": "Az epizód vázlata, szinopszisa, a történet ütemei, a szereplők és a helyszínek automatikusan utaznak."
                 }
               ]
             }
@@ -389,43 +390,44 @@
       {
         "id": "blueprint-board",
         "label": "Blueprint Room",
-        "promise": "A Blueprint Room az a hely, ahol a 90 perces forgatókönyv megírása előtt tökéletesítheted a történetet. Kiindulhatsz egy sorozatepizódból vagy egy új projektből is. Itt határozd meg a történet főbb fordulatait és a szereplőgárdát, hogy a Production Stage szakaszában már ne kelljen azokat újraépíteni.",
+        "headline": "Zárja le a történetet és a megjelenést, mielőtt egyetlen képkocka megjelenik.",
+        "promise": "Akár egy epizódot indít el a Series Room-ből, akár önálló funkciót indít el, a Blueprint Room az, ahol a kreatív DNS bezárkózik. Tökéletesítse az ütemtáblázatot, a szereposztást, a helyszíneket és a vizuális stílust – így az Production Stage az első lépésben elkészíti a megfelelő forgatókönyvet.",
         "features": [
           {
             "icon": "startBlueprint",
             "title": "Indítsa el az Blueprint-et",
-            "description": "Indulj ki egy sorozatepizódból, vagy kezdj új projektet. A sorozatepizód már tartalmazza a vázlatot, a szinopszist és a cselekménypontokat. Az új projekt akkor kezdődik, amikor megadod a szándékot, használod az „Ellenőrzés és fejlesztés MI-vel” (Validate & Enhance with AI) funkciót, és kiválasztod az Blueprint generálását.",
+            "description": "Hozz be egy epizódot a sorozatodból annak körvonalaival és előtöltött szereposztásával, vagy készíts egy vadonatúj filmkoncepciót a semmiből, és hagyd, hogy a mesterséges intelligencia strukturálja az alapkezelést.",
             "screenshot": "Sorozatepizód már ismert, vagy Projekt indítása – szándék, Ellenőrzés és fejlesztés MI-vel, Blueprint generálása",
             "learnMore": {
               "items": [
                 {
-                  "title": "Sorozatepizód",
-                  "description": "Egy sorozatepizód már a vázlatával, szinopszisával és a cselekménypontjaival együtt indul."
+                  "title": "Innen: Series Room",
+                  "description": "A sorozatepizódok vázlatukkal, szinopszisukkal, ütemükkel és szereposztásukkal már csatolva érkeznek."
                 },
                 {
-                  "title": "Új projekt",
-                  "description": "A „Start Your Project” (Projekt indítása) funkció rögzíti a szándékot, majd mesterséges intelligencia segítségével érvényesíti és továbbfejleszti azt, végül pedig létrehozza az Blueprint-et."
+                  "title": "Önálló projekt",
+                  "description": "Hozz létre egy új filmkoncepciót, finomítsd az MI-validációval, és készíts egy teljes kezelést."
                 }
               ]
             }
           },
           {
             "icon": "treatment",
-            "title": "Irányítsd az ütemeket",
-            "description": "Nyisd meg a „Beats” (Ütemek) lapot, és hallgasd meg az ütemtervet. Itt optimalizáld az ütemeket, mivel ezek határozzák meg a forgatókönyv felépítését. Az ütemek kizárólag itt léteznek. Az Production Stage minden egyes ütemet fejezetté alakít.",
+            "title": "A Beat Sheet",
+            "description": "Strukturálja a film gerincét. Olvassa el vagy hallgassa meg a narratív ütemtáblázatát, és itt finomhangolja az ütemet – minden Blueprint Room-be zárt ütem egy fejezetet vezet a Production Stage-ben.",
             "screenshot": "Beats lap, a „Hallgatás” (Listen) funkcióval",
             "learnMore": {
               "items": [
                 {
-                  "title": "Egy cselekményvázlat",
-                  "description": "Az ütemek csak itt léteznek."
+                  "title": "Narratív gerinc",
+                  "description": "Az ütemek szerzője és zárolása a Blueprint Room-ben történik a szkriptgenerálás megkezdése előtt."
                 },
                 {
-                  "title": "Szkriptalapú összeállítás",
-                  "description": "A „beatek” vezérlik a szkript összeállítását, ezért az Production Stage előtt optimalizálják őket."
+                  "title": "Első lépésben",
+                  "description": "A beat sheet itt optimalizálása biztosítja, hogy a forgatókönyv feszes drámai szerkezettel készüljön."
                 },
                 {
-                  "title": "Fejezetek",
+                  "title": "Ütésről fejezetre leképezés",
                   "description": "Az Production Stage minden egyes ütemet fejezetté alakít."
                 }
               ]
@@ -433,44 +435,44 @@
           },
           {
             "icon": "castLocations",
-            "title": "Irányítsd a szereplőgárdát és a helyszíneket",
-            "description": "Nyisd meg a Characters (Szereplők) panelt, és állítsd be a szereplőgárdát. Nyisd meg a Setting (Helyszín) panelt a Story (Történet) fülön, és állítsd be a helyszíneket. A szereplőgárda befolyásolja a szkript felépítését, ezért mindkettőt még azelőtt kell beállítani, hogy az Production Stage átalakítaná a szkriptet.",
+            "title": "Cast & World Design",
+            "description": "Határozza meg karaktereit, ruhásszekrényét és elsődleges helyszíneit a forgatókönyv elkészítése előtt – ügyeljen arra, hogy a forgatókönyv az első oldaltól kezdve a pontos szereposztás és beállítások köré legyen írva.",
             "screenshot": "Karakterek lap, majd a történet helyszíne",
             "learnMore": {
               "items": [
                 {
-                  "title": "Szereplőgárda",
-                  "description": "A „Karakterek” (Characters) lap a szereplőgárdát tartalmazza, a szereplőgárda pedig hatással van a forgatókönyv felépítésére."
+                  "title": "Karakterprofilok",
+                  "description": "Irányítsa szereplői profiljait előre, hogy a párbeszéd és a blokkolás illeszkedjen minden karakterhez."
                 },
                 {
-                  "title": "Helyszínek",
-                  "description": "A helyszínek alkotják a történet hátterét a Történet (Story) lapon."
+                  "title": "Világ és helyszínek",
+                  "description": "Adja meg az elsődleges beállításokat a Sztori lapon, hogy rögzítse minden jelenet környezetét."
                 },
                 {
-                  "title": "A forgatókönyv előtt",
-                  "description": "Mindkettő ide irányítása elkerülhetővé teszi az Production Stage jelentős szkript-átalakítását."
+                  "title": "Nulla script refaktoring",
+                  "description": "A szereposztás és a helyszínek zárolása a szkript létrehozása előtt kiküszöböli a költséges átírásokat a Production Stage-en."
                 }
               ]
             }
           },
           {
             "icon": "blueprintDirector",
-            "title": "Blueprint igazgató",
-            "description": "A Director a saját szavaiddal – akár szóban, akár írásban – megfogalmazott módosítási igényeket fogadja. A szerkesztés során összpontosíthatsz a történeti egységekre (beats), a karakterekre vagy magára a történetre, majd megtekintheted a módosítás előnézetét. Semmi sem változik, amíg nem alkalmazod a módosítást.",
+            "title": "A Blueprint igazgatója",
+            "description": "Beszéljen vagy gépelje be a történet jegyzeteit, hogy módosítsa a ritmusokat, a karaktereket vagy a világ részleteit. Tekintse meg a kiegyensúlyozott felülvizsgálat előnézetét egymás mellett – semmi sem változik a kezelésben, amíg nem hagyja jóvá a vágást.",
             "screenshot": "Blueprint-igazgató – irány, fókusz, előnézet, módosítás alkalmazása",
             "learnMore": {
               "items": [
                 {
-                  "title": "A szavaid",
-                  "description": "Mondd ki vagy gépeld be a változtatást, és összpontosíts a történeti szakaszokra (beats), a karakterekre vagy magára a történetre."
+                  "title": "Célzott jegyzetek",
+                  "description": "Mondja ki vagy írja be az irányt, és összpontosítsa a változatot az ütemekre, a karakterekre vagy a történetre."
                 },
                 {
-                  "title": "Előnézet",
-                  "description": "A kiegyensúlyozott módosítás létrehozása megjeleníti a változást, mielőtt alkalmazná azt."
+                  "title": "Egymás melletti előnézet",
+                  "description": "Tekintse át a kiegyensúlyozott változatot, mielőtt bármilyen változtatást végrehajtana az Blueprint-en."
                 },
                 {
-                  "title": "Felviszed",
-                  "description": "Semmi sem változik, amíg nem alkalmazza a módosítást."
+                  "title": "Tartod a zárat",
+                  "description": "A kezelésben semmi sem változik, amíg kifejezetten nem alkalmazza a felülvizsgálatot."
                 }
               ]
             }
@@ -478,35 +480,35 @@
           {
             "icon": "blueprintResonance",
             "title": "Audience Resonance",
-            "description": "Mentse el a célközönséget, majd végezze el az elemzést. Megjelennek a pontszámok és a javaslatok. A tervben (blueprint) semmi sem változik, amíg nem alkalmaz egy javaslatot az Blueprint Directorban.",
+            "description": "Értékelje kezelését célközönsége kulturális és demográfiai profiljához. Korán észlelje a strukturális ingerlési hiányosságokat, és alkalmazzon célzott ajánlásokat a Blueprint igazgatóban.",
             "screenshot": "Audience Resonance — mentett célközönség, pontszámok, alkalmazatlan javaslatok",
             "learnMore": {
               "items": [
                 {
-                  "title": "Az olvasmány",
-                  "description": "Mentse el a célközönséget, majd végezze el az elemzést, és tekintse át a pontszámokat és a javaslatokat."
+                  "title": "Előzetes ellenőrzés",
+                  "description": "Elemezze a kezelést a célközönségéhez képest, hogy megtekinthesse a kategóriapontszámokat és a történetjegyzeteket."
                 },
                 {
-                  "title": "Választható",
-                  "description": "Egy javaslat csak akkor módosítja a tervet, ha alkalmazza azt az Blueprint Directorban."
+                  "title": "Szelektív alkalmazás",
+                  "description": "Az ajánlások csak akkor módosítják az Blueprint-et, ha úgy dönt, hogy alkalmazza őket."
                 }
               ]
             }
           },
           {
             "icon": "goToProduction",
-            "title": "Ugrás ide: Production Stage",
-            "description": "Lépj át az Production Stage felületre, miután a történet, a cselekménypontok és a szereplőgárda már véglegesítve vannak. A 90 perces forgatókönyv ezen a táblán alapul; a történetet nem kell újra felépíteni az Production Stage-ben.",
+            "title": "Greenlight a termeléshez",
+            "description": "Amikor a kezelés, az ütési lap és a gipsz rögzítve van, lépjen a Production Stage-re. A SceneFlow a teljes, több fejezetből álló szkriptet közvetlenül a jóváhagyott Blueprint-ből fordítja le.",
             "screenshot": "Ugrás az Production Stage-re – a történetvonal, a cselekménypontok és a szereplőgárda már adott.",
             "learnMore": {
               "items": [
                 {
-                  "title": "Az átadás",
-                  "description": "Az Production Stage megnyitása megnyitja a szkriptet ebből a tervrajzból."
+                  "title": "Zökkenőmentes összeállítás",
+                  "description": "Az Production Stage-re lépve a teljes szkriptet közvetlenül a jóváhagyott Blueprint-ből fordítja le."
                 },
                 {
-                  "title": "Már beállítva",
-                  "description": "A történetvezetés, a cselekmény főbb pontjai és a szereplőgárda rendezése már megtörtént."
+                  "title": "Zárt alapozás",
+                  "description": "A sztorid, az ütemszerkezeted és a szereplőgárda készen érkeznek a jelenetre és a felvételi rendezésre."
                 }
               ]
             }
@@ -516,215 +518,109 @@
       {
         "id": "production-stage",
         "label": "Production Stage",
-        "promise": "Ebben a fázisban válik a véglegesített tervből tényleges mozgókép. Tartsa kézben a költségeket saját szabályrendszer és terv alapján. Optimalizálják közösen az egyes jeleneteket, majd építsék fel őket sorrendben – rendezés, hang, zene, folyamatosság és állóképek –, és még a videós gyártás megkezdése előtt tekintsék át az animatikot. Állítsák elő és keverjék a klipeket, készítsék el a nyelvi változatokat, majd véglegesítsék és adják át a jelenetet, a fejezetet, a mesterpéldányt vagy a promóciós anyagot.",
-        "spend": {
-          "label": "Kiadások ellenőrzése",
-          "features": [
-            {
-              "icon": "byok",
-              "title": "Saját kulcs használata",
-              "description": "Csatlakoztassa saját kép- és videószolgáltatói kulcsait. A generálás az Ön fiókjában és az Ön díjszabása szerint zajlik, miközben a vezérelt stúdió – az ágensek, a folyamatosság, a Mixer és a vetítőszoba – továbbra is rendelkezésre áll.",
-              "screenshot": "BYOK kulcsok",
-              "learnMore": {
-                "items": [
-                  {
-                    "title": "A kulcsaid",
-                    "description": "Csatlakoztassa a kép- és videószolgáltatók kulcsait, hogy a generálás az Ön fiókján keresztül, az Ön díjszabása szerint történjen."
-                  },
-                  {
-                    "title": "Ugyanaz a stúdió",
-                    "description": "Az ügynökök, a folytonosság, a Mixer és az Screening Room változatlanok maradnak."
-                  }
-                ]
-              }
-            },
-            {
-              "icon": "budget",
-              "title": "Termeléstervező",
-              "description": "Még a költségek felmerülése előtt határozd meg a felvételenkénti állókép- és videórészlet-változatok számát. Ezek a célértékek a jelenet, a fejezet és a teljes anyag szintjén is összesítődnek, a kezdő dátum alapján pedig összeállítható az ütemterv a befejezés napjáig.",
-              "screenshot": "Termeléstervező",
-              "learnMore": {
-                "items": [
-                  {
-                    "title": "Meglőtt célpontok",
-                    "description": "Állítsa be a felvételenkénti állókép- és klipverziókat, majd összesítse azokat jelenet-, fejezet- és mester szinten."
-                  },
-                  {
-                    "title": "Dátummal ellátott ütemterv",
-                    "description": "A kezdő dátum és a munkanapok halmozódó krediteket tartalmazó ütemtervet alkotnak."
-                  },
-                  {
-                    "title": "Visszaállítás a tényleges adatok alapján",
-                    "description": "A befejezett jeleneteknél a célkitűzések visszaállíthatók a tényleges költségek alapján."
-                  },
-                  {
-                    "title": "Telefon állapota",
-                    "description": "Kövesd nyomon az olvasási tempót, a ráfordított időt és a befejezés dátumát a telefonodon, miközben a szerkesztés asztali gépen vagy táblagépen történik."
-                  }
-                ]
-              }
-            }
-          ]
-        },
+        "headline": "A forgatókönyvtől a mesterig, mindez egy szobában.",
+        "promise": "A Blueprint zárolva van. Szereposztásod megvan. Most lépjen a Production Stage-re. Minden fejezet, jelenet és felvétel lineáris munkafolyamatba szerveződik. Te irányítod a szándékot; intelligens ügynökök hajtják végre a generációt.",
         "groups": [
           {
             "id": "script",
-            "label": "Optimalizáld a szkriptet",
+            "label": "Közvetlen és vezérlés",
+            "headline": "A film nyelvét beszéld, ne a felszólítások szintaxisát.",
+            "description": "Ne pazarolja az idejét zárójeles kulcsszavak beírásával. A Production Stage megérti a természetes irányt, és az egész jelenetre vagy az adott felvételre alkalmazza az Ön látásmódját.",
             "features": [
               {
                 "icon": "scriptResonance",
-                "title": "Audience Resonance",
-                "description": "Az Audience Resonance egyszerre olvassa be a teljes forgatókönyvet, minden jelenetet egymással összhangban. Egyszerre látod a pontszámokat és a jegyzeteket, és semmi sem íródik át, amíg te magad nem döntesz így.",
-                "screenshot": "Audience Resonance — partitúrák és jegyzetek az összes jelenethez, alkalmazatlanul",
+                "title": "A jelenet és felvétel rendezője",
+                "description": "Írja be vagy mondja ki az irányt közérthető nyelven. Mondja el az ügynöknek, hogy ki van a keretben, hol mozog a kamera, és mi az érzelmi ütem. A Shot Director automatikusan megírja az állóképek és klipek összetett mögöttes promptjait.",
+                "screenshot": "The Scene & Shot Director – egyszerű nyelvű rendezés állóképekhez és klipekhez",
                 "learnMore": {
                   "items": [
                     {
-                      "title": "Minden közös jelenet",
-                      "description": "Egységes műként zenésíti meg a forgatókönyvet, a jelenetekhez kapcsolódó megjegyzésekkel kiegészítve."
+                      "title": "Egyszerű nyelv",
+                      "description": "Írja be vagy beszélje meg, hogy ki van a keretben, hol mozog a kamera, és mi az érzelmi ütem."
                     },
                     {
-                      "title": "Te választasz",
-                      "description": "Semmi sem íródik át, amíg ki nem választod, mely észrevételek alapján cselekszel."
+                      "title": "Jelenet vagy felvétel",
+                      "description": "Alkalmazza látásmódját az egész jelenetre vagy lefelé az adott felvételre."
+                    },
+                    {
+                      "title": "Gyors összeállítás",
+                      "description": "A Shot Director automatikusan megírja az állóképek és klipek mögöttes promptokat."
                     }
                   ]
                 }
               },
               {
                 "icon": "castVisual",
-                "title": "Szereplőgárda, jelmezek és hang",
-                "description": "Határozd meg a szereplőket a jelenetek kidolgozása előtt. Rögzítsd a karaktert, a ruházatot és a hangot, hogy minden későbbi állókép és videórészlet ugyanazt a személyt jelenítse meg.",
-                "screenshot": "Karakter, jelmez és hang",
+                "title": "A Continuity Library",
+                "description": "Abszolút következetesség a sorozatban. Automatikusan generálhat vagy manuálisan hozzárendelhet referenciaképeket szereplőihez, ruhásszekrényeihez, helyszíneihez és alapvető kellékeihez, hogy minden felvétel megfeleljen a Blueprint-nek.",
+                "screenshot": "A Continuity Library – szereplők, ruhásszekrények, helyszínek és alapvető kellékek",
                 "learnMore": {
                   "items": [
                     {
-                      "title": "Karakter és jelmez",
-                      "description": "Az Cast Agent megrajzolja a karaktert és a ruházati összeállításokat."
+                      "title": "Sorozat konzisztencia",
+                      "description": "Tartsa egységesen a szereplőket, a ruhásszekrényeket, a helyszíneket és az alapvető kellékeket minden felvételen."
                     },
                     {
-                      "title": "Hang",
-                      "description": "A karakter hangját még a jelenetek felépítése előtt határozzák meg."
-                    },
-                    {
-                      "title": "Ugyanaz a személy",
-                      "description": "Minden állókép és minden videórészlet igényli azt a zárolást."
+                      "title": "Generáljon vagy rendeljen hozzá",
+                      "description": "Automatikusan generáljon referencia képeket, vagy manuálisan rendelje hozzá sajátjait, hogy megfeleljen a Blueprint-nek."
                     }
                   ]
                 }
               },
               {
                 "icon": "directShot",
-                "title": "Közvetlen lövés",
-                "description": "A Direct Shot a saját szavaiddal – begépelve vagy diktálva – rögzíti a felvétel elképzelését. Megtekintheted az irányt és elmentheted azt, ekkor pedig a képhez és a videókliphez tartozó utasítások (promptok) egyszerre frissülnek.",
-                "screenshot": "Direct Shot – gépelés vagy diktálás, előnézet, mentés",
+                "title": "Audience Resonance integráció",
+                "description": "Renderelés előtt olvassa el a szobát. Az AI elemzi a forgatókönyvet a célközönséghez képest, és jelenetről jelenetre betekintést nyújt. Azonnal alkalmazza a javasolt útmutatásokat, vagy bízzon megérzéseiben, és hagyja figyelmen kívül azokat.",
+                "screenshot": "Audience Resonance integráció – jelenetről jelenetre közönségbetekintés",
                 "learnMore": {
                   "items": [
                     {
-                      "title": "Megnevezett lövés",
-                      "description": "A párbeszéd címe: Közvetlen beállítás · N. jelenet · N. beállítás."
+                      "title": "Jelenetről jelenetre vonatkozó betekintés",
+                      "description": "Az AI a megjelenítés előtt elemzi a szkriptet a célközönséghez képest."
                     },
                     {
-                      "title": "Gépeljen vagy diktáljon",
-                      "description": "Írja meg vagy diktálja be a jegyzetet, majd mentés előtt tekintse meg az utasítás előnézetét."
-                    },
-                    {
-                      "title": "Mindkét feladat",
-                      "description": "A mentés egyszerre frissíti az állóképhez és a videokliphez tartozó promptot."
-                    },
-                    {
-                      "title": "Ismét a klipek után",
-                      "description": "Ha a generált beállítás nem megfelelő, nyissa meg a Direct Shotot, és állítsa be újra."
+                      "title": "Az Ön hívása",
+                      "description": "Azonnal alkalmazza a javasolt útmutatásokat, vagy bízzon megérzéseiben, és hagyja figyelmen kívül azokat."
                     }
                   ]
                 }
               },
               {
                 "icon": "audioAgent",
-                "title": "SFAIAUDIO_ÜGYNÖK_FELTÉTEL",
-                "description": "Az Audio Agent összeállítja a jelenet párbeszédeit, hangeffektusait és zenéjét. A jelenet már a klip felhasználása előtt meghallgatható.",
-                "screenshot": "Audio Agent — párbeszéd, hangeffektek és zene",
+                "title": "Gyártástervező",
+                "description": "A SceneFlow kreditek vagy saját BYOK API kulcsai segítségével minden jelenetre és fejezetre vonatkozóan létrehozhatja a költségvetést és az ütemezést. Állítson le, és vágjon ki célokat lövésenként, mielőtt elkölti a számítást.",
+                "screenshot": "Termeléstervező – költségvetés, ütemezés és BYOK API kulcsok",
                 "learnMore": {
                   "items": [
                     {
-                      "title": "Párbeszéd és hangeffektusok",
-                      "description": "A párbeszéd a beszédre korlátozódik, a hangeffektusok pedig olyan beállításokhoz tartoznak, amelyekhez egyértelmű jelzés kapcsolódik."
+                      "title": "Költségvetés és ütemterv",
+                      "description": "A renderelés előtt minden jelenetben és fejezetben hozza létre a költségvetést és az ütemezést."
                     },
                     {
-                      "title": "Zene",
-                      "description": "A zene a párbeszéddel együtt viszi a jelenetet."
-                    },
-                    {
-                      "title": "A mozgás előtt",
-                      "description": "Hallgasd meg a jelenetet, mielőtt megnyitnád a Clipset."
+                      "title": "Kredit vagy BYOK",
+                      "description": "Futtasson generálást SceneFlow kreditekkel vagy saját BYOK API kulcsaival."
                     }
                   ]
                 }
               },
               {
                 "icon": "continuity",
-                "title": "Folytonosság",
-                "description": "Csak az adott jelenethez szükséges referenciákat generáld, miután a jelenet elkészült. A korábbi jelenetek változatlanok maradnak (ahogyan rögzítetted őket), így nem kell újra létrehoznod a már jóváhagyott referenciákat.",
-                "screenshot": "Folytonosság – kizárólag az adott jelenet utalásai",
+                "title": "Gyártási forgatókönyv",
+                "description": "A hagyományos és a mesterséges intelligencia filmesek számára egyaránt készült. Tekintse meg a tiszta, formázott forgatókönyv előnézetét a stúdióban, és exportálja az ipari szabványos formátumokba (PDF, FDX, Fountain). Használja a SceneFlow-et önálló forgatókönyv-szobaként – vagy párosítsa forgatókönyvét egy Pre-Vis Animatic-mel és Promo Trailer-rel, hogy bemutassa a finanszírozókat és biztosítsa a projektfinanszírozást.",
+                "screenshot": "Gyári szkript – platformon belüli előnézet és PDF, FDX és Fountain export",
                 "learnMore": {
                   "items": [
                     {
-                      "title": "Csak ez a jelenet",
-                      "description": "Rajzold meg a jelenethez szükséges szereplőket, helyszíneket és kellékeket, a többieket pedig hagyd békén."
+                      "title": "Platformon belüli előnézet és exportálás",
+                      "description": "Tekintse meg a formázott szkript előnézetét a stúdióban, és exportálja az iparági szabványnak megfelelő PDF, Final Draft FDX vagy Fountain formátumba."
                     },
                     {
-                      "title": "Épp időben",
-                      "description": "Akkor generáld őket, amikor a jelenet elkészült, ne pedig kötegelve, az egész filmre vonatkozóan."
+                      "title": "Hagyományos filmeseknek",
+                      "description": "Használja a SceneFlow-et intelligens szkriptgyártási platformként videó generálása nélkül."
                     },
                     {
-                      "title": "Már lezárva",
-                      "description": "Egy jelenet módosítása nem írja át azokat a hivatkozásokat, amelyeket a korábbi jelenetek már használnak."
-                    }
-                  ]
-                }
-              },
-              {
-                "icon": "stillsAgent",
-                "title": "SFAISTILLS_ÜGYNÖK_KIFEJEZÉS",
-                "description": "Az Stills Agent a jóváhagyott koncepció alapján állítja össze a beállításokat. A koncepció és a hanganyag változatlan marad, a videoklipek pedig egy későbbi szakaszban kerülnek a helyükre.",
-                "screenshot": "Stills Agent — beállításkockák",
-                "learnMore": {
-                  "items": [
-                    {
-                      "title": "Beállított képkockák",
-                      "description": "Kirajzolja az állóképet a jelenet minden egyes beállításához."
-                    },
-                    {
-                      "title": "Iránytartó merevítők",
-                      "description": "Egy képkocka újragenerálása frissíti a képet, az irány és a hang pedig változatlan marad."
-                    },
-                    {
-                      "title": "A klipek előtt",
-                      "description": "Hagyd jóvá az állóképeket, mielőtt megnyitnád a Clipset."
-                    }
-                  ]
-                }
-              },
-              {
-                "icon": "animatic",
-                "title": "SFAI animációs szak",
-                "description": "Tekintsd meg a jelenetet animatik formájában – állóképekkel, párbeszéddel, kísérőzenével és hangeffektusokkal – a vetítőteremben. Oszd meg másokkal véleményezés céljából, és a videós fázis előtt minden jelenetet így véglegesíts, hogy egy esetleges forgatókönyv-módosítás ne tegye szükségessé a klipek újbóli összeállítását. Sok alkotó számára az animatik jelenti a kész művet, amely MP4 formátumba is renderelhető.",
-                "screenshot": "Screening Room animatik, megosztási lehetőséggel",
-                "learnMore": {
-                  "items": [
-                    {
-                      "title": "Kép és hang",
-                      "description": "Az animatik a jóváhagyott állóképeket játssza le párbeszéddel, kísérőzenével és hangeffektusokkal."
-                    },
-                    {
-                      "title": "Megosztás",
-                      "description": "Küldj egyetlen linket, amelyen keresztül a véleményezők megnézhetik az animatikot, és megjegyzéseket fűzhetnek a képhez."
-                    },
-                    {
-                      "title": "Videó előtt",
-                      "description": "A klipek generálása előtt készítsd el a jeleneteket animatik formájában, így egy esetleges forgatókönyv-módosítás miatt nem kell újra elkészíteni a videót."
-                    },
-                    {
-                      "title": "Az MP4",
-                      "description": "Számos alkotó számára az animatik jelenti a végterméket, amely MP4 formátumba renderelhető."
+                      "title": "Bemutató és projektfinanszírozás",
+                      "description": "Csomagolja be forgatókönyvét egy Pre-Vis Animatic-mel és promóciós előzetesekkel a bemutatóhoz és projektfinanszírozás megszerzéséhez."
                     }
                   ]
                 }
@@ -733,86 +629,78 @@
           },
           {
             "id": "video",
-            "label": "Videó",
+            "label": "Generálás és auditálás",
+            "headline": "Bizonyítsa be a vágást, mielőtt elkölti a számítást.",
+            "description": "Ne találgasd, hogyan fog játszani egy jelenet. A SceneFlow elválasztja a hang- és állóképgenerálást a költséges mozgásmegjelenítéstől, lehetővé téve, hogy először ellenőrizze a szerkesztés ritmusát.",
             "features": [
               {
                 "icon": "videoAgent",
-                "title": "SFAIVIDEO_ÜGYNÖK_FELTÉTELEK",
-                "description": "Az Video Agent létrehozza a felvételrészleteket a Clips (Részletek) lapon. Tekintse meg az összeállított jelenetet az Screening Room-ben, és ha valamelyik felvétel nem megfelelő, rendezze újra a Direct Shot (Felvétel rendezése) funkcióval.",
-                "screenshot": "Video Agent, majd az összeillesztett jelenet",
+                "title": "A Audio Agent",
+                "description": "Párbeszédeket, hangeffektusokat és zenei felvételeket készíthet egyidejűleg jelenetenként akár 30 felvételben. A leadott hangok automatikusan illeszkednek a karakterprofilokhoz, vagy egyedileg hangolhatók.",
+                "screenshot": "A Audio Agent – párhuzamos párbeszédek, hangeffektusok és zenei kotta",
                 "learnMore": {
                   "items": [
                     {
-                      "title": "Felvett snittek",
-                      "description": "Az Video Agent a jóváhagyott állókép alapján hozza létre az egyes beállításokhoz tartozó klipet."
+                      "title": "Egyidejű hang",
+                      "description": "Párbeszédeket, hangeffektusokat és zenei felvételeket készíthet egyidejűleg jelenetenként akár 30 felvételben."
                     },
                     {
-                      "title": "Hímzett jelenet",
-                      "description": "Tekintse át az Screening Room-ben összeállított jelenetet."
-                    },
-                    {
-                      "title": "Rendezd meg újra",
-                      "description": "Nyisson Direct Shotot – gépelve vagy diktálva –, ha egy klip hibás."
+                      "title": "Karakter hangok",
+                      "description": "A leadott hangok automatikusan illeszkednek a karakterprofilokhoz, vagy egyedileg hangolhatók."
                     }
                   ]
                 }
               },
               {
                 "icon": "mixer",
-                "title": "Keverőgép",
-                "description": "A Mixer véglegesíti a jelenetet az Production Stage környezetben. Itt válogathatja ki vagy hagyhatja ki a beállításokat (shotokat), végezheti el azok vágását és a hangkiegyenlítést, valamint renderelheti a jelenetet a hanganyaggal együtt.",
-                "screenshot": "Keverő — hozzáadás, vágás, kiegyensúlyozás, ráhelyezés, vízjel",
+                "title": "A Stills Agent",
+                "description": "Gyorsan generálja a kulcsképkockákat, amelyek illusztrálják a felvételi irányt. A kompozíció zárolásához generálja újra, szerkessze vagy töltse fel saját referenciáit.",
+                "screenshot": "A Stills Agent — kulcsképkocka-összetétel és hivatkozások",
                 "learnMore": {
                   "items": [
                     {
-                      "title": "Felvételek",
-                      "description": "Vedd be vagy hagyd ki az egyes felvételeket, és vágd méretre azokat, amelyek megmaradnak."
+                      "title": "Kulcsképkocka generálása",
+                      "description": "Gyorsan generálja a kulcsképkockákat, amelyek illusztrálják a felvételi irányt."
                     },
                     {
-                      "title": "Párbeszéd",
-                      "description": "Állítsa be a hangerőt és a sebességet minden egyes párbeszédsornál."
-                    },
-                    {
-                      "title": "Sínek",
-                      "description": "Hangold össze a narrációt, a párbeszédeket, a hangeffekteket és a zenét, beleértve a zene fokozatos halkítását és ismétlését is."
-                    },
-                    {
-                      "title": "Átfedések",
-                      "description": "Helyezz el szöveges fedvényeket a jeleneten."
-                    },
-                    {
-                      "title": "Vízjel",
-                      "description": "Adjon hozzá szöveges vagy képi vízjelet."
-                    },
-                    {
-                      "title": "Renderelés",
-                      "description": "Rendereld ki a jelenetet a hangjával együtt, és az Screening Room ezt a renderelt anyagot játssza le."
+                      "title": "Zárja le a kompozíciót",
+                      "description": "Generálja újra, szerkessze vagy töltse fel saját referenciáit, mielőtt elkötelezi magát a mozgás mellett."
                     }
                   ]
                 }
               },
               {
                 "icon": "languageStreams",
-                "title": "Nyelvi változatok",
-                "description": "Ez a jelenet egy nyelvi változat, nem pedig új produkció. A Gemini TTS 44 nyelven szólaltatja meg a szinkront, és minden egyes beállításnál szinkronizálhatod a szöveget vagy újragenerálhatod a klipet – beleértve a feliratokat és táblákat is.",
-                "screenshot": "Nyelvi változat – szinkronhang, szájmozgás-szinkron vagy újragenerálás, beleértve a feliratokat és táblákat is",
+                "title": "A Pre-Vis Animatic",
+                "description": "Nézze meg, ahogy lélegzik a jelenet. Tekintse meg a teljesen összeállított animációt – varrott állóképek, Ken Burns mozgása és zárolt hanganyag – a Screening Room-ben. Ellenőrizd az ütemet, oszd meg visszajelzésért, és győződjön meg arról, hogy a vágás működik, mielőtt elkötelezi magát a videózásban.",
+                "screenshot": "A Pre-Vis Animatic – varrott állóképek, Ken Burns mozgás és zárolt hang",
                 "learnMore": {
                   "items": [
                     {
-                      "title": "Negyvennégy nyelv",
-                      "description": "A Gemini TTS 44 nyelven szólaltatja meg a szinkront."
+                      "title": "Összeszerelt animatikus",
+                      "description": "Tekintse át az összefűzött állóképeket, Ken Burns mozgását és a zárolt hangot a Screening Room-ben."
                     },
                     {
-                      "title": "Adagonként",
-                      "description": "Az egyes felvételeknél válaszd a „Double” (szinkronhang rájátszása), a „Lip-sync” (szájmozgáshoz igazítás) vagy a „Regenerate” (új klip létrehozása a lefordított szövegből) lehetőséget."
+                      "title": "Auditálás és megosztás",
+                      "description": "Ellenőrizd az ütemet, oszd meg visszajelzésért, és győződjön meg arról, hogy a vágás működik, mielőtt elkötelezi magát a videózásban."
+                    }
+                  ]
+                }
+              },
+              {
+                "icon": "videoAgent",
+                "title": "A Clips Agent",
+                "description": "A Pre-Vis jóváhagyása után a Clips Agent átveszi az irányítást, és olyan nagy hűségű mozgóképeket készít, amelyek szigorúan megfelelnek az Ön jóváhagyott állóképeinek és folytonossági hivatkozásainak.",
+                "screenshot": "A Clips Agent – nagy hűségű mozgóképek jóváhagyott állóképekből",
+                "learnMore": {
+                  "items": [
+                    {
+                      "title": "Pre-Vis jóváhagyás után",
+                      "description": "A Clips Agent csak a Pre-Vis animáció jóváhagyása után jelenít meg mozgást."
                     },
                     {
-                      "title": "Feliratozás",
-                      "description": "Generáld újra a táblát ábrázoló képet, ha a képen olyan szöveg szerepel, amelyet módosítani kell."
-                    },
-                    {
-                      "title": "Időzítés",
-                      "description": "Az adott nyelvi változatnál módosítják a videó sebességét, mivel a fordítás gyakran 10–30%-kal hosszabb az eredetinél."
+                      "title": "Szigorú betartás",
+                      "description": "A nagy pontosságú mozgó klipek szigorúan betartják a jóváhagyott állóképeket és a folytonossági hivatkozásokat."
                     }
                   ]
                 }
@@ -821,30 +709,78 @@
           },
           {
             "id": "publish",
-            "label": "Közzététel",
+            "label": "Közzététel és terjesztés",
+            "headline": "Küldje el a mestert, vagy lokalizálja a világ számára.",
+            "description": "Amikor a jelenet elkészül, az eszközök már egységesek. Fejezze be a szerkesztést, lokalizálja a hanganyagot, és terjessze közvetlenül a közönségnek.",
             "features": [
               {
                 "icon": "shipPackage",
-                "title": "Csomagolás és szállítás",
-                "description": "Amint elkészült egy jelenet, egy fejezet, a végleges anyag vagy egy promó, állítsd össze a kész videót. Tedd közzé YouTube-on, Facebookon vagy TikTokon, esetleg töltsd le MP4 formátumban, és folytasd a munka többi részének elkészítését.",
-                "screenshot": "Csomagolás és továbbítás – jelenet, fejezet, master, promó; YouTube, Facebook, TikTok, MP4",
+                "title": "A Mixer",
+                "description": "Beépített, intuitív jelenetszerkesztő. Vágja le a klipeket, állítsa be a sebességrámpákat, adjon hozzá szöveges rátéteket és alkalmazzon vízjeleket anélkül, hogy elhagyná a stúdiót.",
+                "screenshot": "A Keverő – klipek, sebességrámpák, szöveges rátétek és vízjelek",
                 "learnMore": {
                   "items": [
                     {
-                      "title": "Darabok",
-                      "description": "Küldj el egy jelenetet, egy fejezetet, a mesterpéldányt vagy egy promót."
+                      "title": "Beépített jelenetszerkesztő",
+                      "description": "Vágja le a klipeket és állítsa be a sebességrámpákat közvetlenül a stúdióban."
                     },
                     {
-                      "title": "Nyelvi tagozatok",
-                      "description": "Minden nyelvi változat mellékelhető a csomaghoz."
+                      "title": "Utolsó simítások",
+                      "description": "Szövegfedvények hozzáadása és vízjelek alkalmazása külső szerkesztőbe való exportálás nélkül."
+                    }
+                  ]
+                }
+              },
+              {
+                "icon": "languageStreams",
+                "title": "Streamek (többnyelvű)",
+                "description": "Azonnal bővítse globális elérhetőségét 44 nyelven. Automatikusan generáljon alternatív nyelvi adatfolyamokat a hang átmásolásával, az ajakmozgások szinkronizálásával vagy a lokalizált párbeszédklipek közvetlenül a jeleneten belüli regenerálásával.",
+                "screenshot": "Streams (többnyelvű) – szinkronizált hang- és lokalizált párbeszédes klipek",
+                "learnMore": {
+                  "items": [
+                    {
+                      "title": "Globális elérés",
+                      "description": "Automatikusan generáljon alternatív nyelvi adatfolyamokat 44 nyelven közvetlenül a jeleneten belül."
                     },
                     {
-                      "title": "Úti célok",
-                      "description": "Tedd közzé YouTube-on, Facebookon vagy TikTokon, vagy töltsd le MP4 formátumban."
+                      "title": "Szinkronizálás, ajakszinkronizálás vagy regenerálás",
+                      "description": "Lokalizáljon minden felvételt hang átmásolásával, ajakmozgások szinkronizálásával vagy lokalizált párbeszéd klipek regenerálásával."
+                    }
+                  ]
+                }
+              },
+              {
+                "icon": "promoTrailers",
+                "title": "Promóció és pótkocsik",
+                "description": "Vágja le a közösségi használatra kész promóciós előzeteseket a gyártás során bármikor. Többnyelvű változatok létrehozása vízszintes vagy függőleges formátumokra optimalizálva.",
+                "screenshot": "Promo & Trailers – többnyelvű vízszintes és függőleges pótkocsik",
+                "learnMore": {
+                  "items": [
+                    {
+                      "title": "Közösségi használatra kész előzetesek",
+                      "description": "Vágja le a promóciós pótkocsikat a gyártás során bármikor."
                     },
                     {
-                      "title": "Építs tovább",
-                      "description": "Szállítsd le a kész részt, a többit pedig építsd tovább."
+                      "title": "Többnyelvű formátumok",
+                      "description": "Többnyelvű változatok létrehozása vízszintes vagy függőleges formátumokra optimalizálva."
+                    }
+                  ]
+                }
+              },
+              {
+                "icon": "shipPackage",
+                "title": "Közvetlen Publishing",
+                "description": "Exportálja a végső fő MP4-et, vagy hagyja, hogy a SceneFlow automatikusan generáljon bélyegképeket és leírásokat, hogy jeleneteket, fejezeteket és promóciókat tegyen közzé közvetlenül a YouTube-on, a TikTokon és a Facebookon.",
+                "screenshot": "Közvetlen közzététel – MP4 exportálás és közvetlen közzététel a YouTube-ra, a TikTok-ra és a Facebookra",
+                "learnMore": {
+                  "items": [
+                    {
+                      "title": "Master MP4 vagy közvetlen közösségi",
+                      "description": "Exportálja a végső fő MP4-et, vagy tegye közzé a jeleneteket, fejezeteket és promóciókat közvetlenül a YouTube-ra, a TikTokra és a Facebookra."
+                    },
+                    {
+                      "title": "Automatikusan generált metaadatok",
+                      "description": "Engedje meg, hogy a SceneFlow automatikusan generáljon bélyegképeket és leírásokat minden kiadáshoz."
                     }
                   ]
                 }
@@ -856,48 +792,49 @@
       {
         "id": "screening-room",
         "label": "Screening Room",
-        "promise": "A vetítőterem (Screening Room) az a hely, ahol a kész vágatot megtekintik, véleményezik és kiadják. Egyetlen lejátszó kezeli az elővizualizációt (Pre-Vis), a jeleneteket, a fejezeteket, a mesterpéldányt, a promót és az egyes nyelvi sávokat, így a szinkronizált változat ugyanaz a vágat, amelyet a hangkeverő (Mixer) renderelt. Ossz meg egyetlen linket a lejátszáshoz és a képi anyaggal kapcsolatos megjegyzésekhez. Tedd közzé a 3–5 perces jelenetet, a 8–12 perces fejezetet, a mesterpéldányt vagy a promót, amint az adott rész elkészült, miközben a többin tovább dolgozol.",
+        "headline": "Vizsgálja meg a vágást, állítsa össze csapatát, és premierje világszerte.",
+        "promise": "Saját színház és befejező lakosztály. Nézze meg a Pre-Vis animációs, egyedi jeleneteket, fejezeteket, promóciókat és többnyelvű streameket egy egységes lejátszóban. Oszd meg egyetlen linket az időbélyegzett érdekelt felek feljegyzéseihez – és küldj el egy 3–5 perces jelenetet, egy 8–12 perces fejezetet, egy promóciót vagy a mestert, amíg a produkció folytatódik.",
         "features": [
           {
             "icon": "screeningPlayer",
-            "title": "Egyjátékos",
-            "description": "Váltson az elővizualizáció (Pre-Vis), a jelenetek, a fejezetek, a mesterpéldány és a promóciós anyag között. Válasszon ki egy nyelvi sávot, és hallgassa meg az adott változatot – legyen szó szinkronról, szájmozgáshoz igazított szinkronról vagy snittenként újragenerált anyagról. A lejátszó ugyanazt a vágást mutatja, amelyet a Mixer renderelt.",
+            "title": "Egy egységes játékos",
+            "description": "Zökkenőmentesen válthat a Pre-Vis animációk, jelenetek, fejezetek, előzetesek és a végső mester között. Menet közben váltson a nyelvi adatfolyamok között a meghallgatáson szinkronizált, szájszinkronizált vagy felvételekkel újragenerált lokalizációkra – mindig a Mixer pontos vágásához rögzítve.",
             "screenshot": "Screening Room lejátszó",
             "learnMore": {
               "items": [
                 {
-                  "title": "Egy felület",
-                  "description": "Váltás az elővizualizáció, a jelenetek, a fejezetek, a mesterpéldány és a promóció között."
+                  "title": "Minden mérföldkő egy nézetben",
+                  "description": "Könnyedén válthat a Pre-Vis, jelenetek, fejezetek, promóciók és a végső mester között."
                 },
                 {
-                  "title": "Nyelvi tagozat",
-                  "description": "Válassz ki egy verziót, és hallgasd meg duplázott, szinkronizált vagy jelenetenként újragenerált változatban."
+                  "title": "Élő nyelvváltás",
+                  "description": "Hallgasson meg bármilyen nyelvi adatfolyamot – szinkronizált, szájszinkronizált vagy felvételekkel újragenerált – menet közben."
                 },
                 {
-                  "title": "Ugyanolyan szabás",
-                  "description": "A lejátszó az a vágás, amelyet a Mixer renderelt."
+                  "title": "Keretre rögzítve a Mixerhez",
+                  "description": "Minden adatfolyam pontosan a Mixerben megjelenített szerkesztést és időzítést játssza le."
                 }
               ]
             }
           },
           {
             "icon": "screeningCollab",
-            "title": "Dolgozzanak együtt a vágáson",
-            "description": "Ossz meg egyetlen linket. A véleményezők valós lejátszás mellett tekinthetik meg az anyagot, és közvetlenül a képre fűzhetnek megjegyzéseket. Nem kell nyersfájlt exportálnod és e-mailben küldened a visszajelzések begyűjtéséhez; a rendszer értesít az írásos megjegyzésről, amelyet akár a telefonodon is elolvashatsz.",
+            "title": "Keretpontos együttműködés",
+            "description": "Hagyja abba a durva vágások e-mailbe történő exportálását. Oszd meg a privát szűrési linket, ahol az együttműködők és a befektetők valós időben nézhetik az eseményeket, és közvetlenül a képre írhatnak jegyzeteket – az azonnali értesítéseket közvetlenül a telefonra küldik.",
             "screenshot": "Megosztott vélemény",
             "learnMore": {
               "items": [
                 {
-                  "title": "Egy hivatkozás",
-                  "description": "A véleményezők valós idejű lejátszással tekintik meg az anyagot, és megjegyzéseket fűznek a képhez."
+                  "title": "Privát szűrési linkek",
+                  "description": "A véleményezők teljes felbontású lejátszást néznek, és időbélyegzett megjegyzéseket hagynak a képen."
                 },
                 {
-                  "title": "Nincs e-mailes nyersvágat",
-                  "description": "Nem exportálsz nyers fájlt e-mailbe visszajelzések gyűjtése céljából."
+                  "title": "Nincs durva fájlexportálás",
+                  "description": "Gyűjtse össze az érdekelt felek visszajelzéseit egy helyen anélkül, hogy súlyos videofájlokat küldene postán."
                 },
                 {
-                  "title": "Telefonos jegyzetek",
-                  "description": "Egy írásos üzenet értesít, amelyet a telefonodon olvashatsz el, miközben a stúdiófelület asztali gépen vagy táblagépen marad."
+                  "title": "Azonnali mobil riasztások",
+                  "description": "Az új véleményezői megjegyzések azonnal értesítik Önt a telefonján, miközben az asztalon irányít."
                 }
               ]
             }
@@ -911,6 +848,7 @@
     "description": "Alakítsa ötleteit professzionális videókká mesterséges intelligencián alapuló munkafolyamat-automatizálással."
   },
   "nav": {
+    "overview": "Áttekintés",
     "plansPricing": "Tervek és árképzés",
     "productionExamples": "Példák",
     "keyFeatures": "Felhasználhatóság",
@@ -937,9 +875,9 @@
     "pricing": "Árazás"
   },
   "hero": {
-    "eyebrow": "Automatizált filmkészítés filmek és sorozatok számára",
+    "eyebrow": "Demokratizált filmkészítés történetmesélők, sorozatkészítők és stúdiók számára",
     "headline": "Az első szikrától a kész remekműig.",
-    "subheadline": "Az SceneFlow egyetlen, irányított munkafolyamat. Ön határozza meg a történetet, a szereplőgárdát és a hangvételt. A rendszer felépíti az Blueprint-et, biztosítja a folyamatosságot, lejátssza a teljes animatikot, és összeállítja a végleges anyagot – mindezt próbálkozó promptolás vagy egymáshoz nem kapcsolódó klipekből álló idővonal nélkül.",
+    "subheadline": "Ha el tudsz képzelni egy történetet, akkor rendezhetsz egy filmet – nincs szükség technikai filmkészítésre vagy felszólító készségekre. Írja le elképzelését hétköznapi szavakkal, és a SceneFlow felépíti a Blueprint-et, lezárja a karakterek és a beállítások folytonosságát, lejátssza a teljes animációt, és összevarrja a kész mestert.",
     "ctaPrimaryLaunch": "Launch Studio (9 $)",
     "ctaSupportingLine": "Egyetlen, mindenre kiterjedő stúdió történeteid kidolgozásához, exportálásához és terjesztéséhez. Töltsd le a mesterpéldányt, és küldd el bárhová – vagy tedd közzé a teljes hosszúságú változatokat és fejezeteket az {longForm}-on, az előzeteseket pedig népszerűsítsd az {shorts}-en.",
     "ctaNetworkInvite": "A kiemelkedő projektek jelentkezhetnek a kizárólag meghívásos alapon működő SceneFlow hálózatba.",
@@ -948,20 +886,20 @@
     "ctaToolStack": "Nézze meg, hogyan váltja ki a jelenlegi eszközkészletét.",
     "chips": [
       {
-        "label": "A koncepciótól a funkcióig",
-        "detail": "Fejleszd ötleteidet 90 perces forgatókönyvekké a Blueprint Room segítségével. Határozd meg a karaktereket, a látványvilágot és a történet főbb fordulópontjait, majd a forgatás előtt finomhangold a történetet a Audience Resonance elemzésével."
+        "label": "Az ötlettől a forgatókönyvig és a fejezetig",
+        "detail": "Alakítsa át egy egyszerű nyelvű ötletet strukturált fejezetekké vagy 90 perces forgatókönyvvé a Blueprint Room-ben. Határozza meg a karaktereket, a művészetet és az ütemeket, majd hagyja, hogy a Audience Resonance finomhangolja a történetet, mielőtt forgatná."
       },
       {
-        "label": "Irányíts szándékkal, ne utasításokkal",
-        "detail": "Beszélj a film nyelvén olyan intelligens asszisztensekkel, amelyek értik az utasításaidat. A Reference Library rögzíti az egyedi szereplőgárdát, a jelmezeket és a forgatási helyszíneket, biztosítva ezzel a tökéletes folytonosságot."
+        "label": "Nincs szükség filmkészítési készségekre",
+        "detail": "Fejezd ki elképzeléseidet hétköznapi szavakkal – az AI Director kezeli a forgatókönyvírási formátumot, a kameraállásokat, a világítást és az utasításokat, míg a Continuity Library zárolja a szereplőket, a ruhásszekrényt és a helyszíneket."
       },
       {
-        "label": "Ágensvezérelt termelés",
-        "detail": "Ötszörösére gyorsíthatod a generálást azokkal az intelligens ágensekkel, amelyek a háttérben építik fel a 30 beállításból álló jeleneteket. Kísérletezz szabadon vázlat módban, majd tedd közzé végleges elképzelésedet lenyűgöző, nagy felbontású minőségben."
+        "label": "Ügynökvezérelt jelenetfűzés",
+        "detail": "Gyorsítsa fel ötszörösére a gyártást speciális ügynökökkel, amelyek párhuzamosan generálnak párbeszédet, zenét, állóképeket és klipeket, és automatikusan összefűznek 30 felvételes jelenetet. Először tekintse meg az előnézetet Pre-Vis-ben, majd jelenítse meg nagy felbontásban."
       },
       {
         "label": "Szűrés, együttműködés, kiadás",
-        "detail": "Ossza meg a haladást minden mérföldkőnél – az audio-animatikusoktól egészen a végleges mesterpéldányig – az Screening Room felületén. Terjessze rövid- vagy nagyjátékfilmként, több nyelven, hogy globális közönséget érhessen el."
+        "detail": "Ossza meg előrehaladását minden mérföldkőnél – a hangos animációtól a végső mesterig – a Screening Room-ben. Tegye közzé epizódszerű fejezetekben vagy teljes funkciókban több mint 70 nyelven."
       }
     ],
     "pipelineSteps": [
@@ -1000,7 +938,7 @@
   "twoModes": {
     "eyebrow": "Az általunk megszüntetett súrlódás",
     "title": "Egyetlen folyamat. Nem eszközök halmaza.",
-    "subtitle": "SceneFlow replaces single-clip generators and a pile of separate docs, editors, and re-renders. Build the series or the 90-minute master, then publish a scene or a chapter when you are ready to earn.",
+    "subtitle": "A klippromptok, a kulcskockák, a hangos narráció és a zene külön eszközökben éltek. A SceneFlow a teljes produkciót egyetlen folyamatba egyesíti – így több epizódból álló sorozatot vagy 90 perces mastert készíthet, és menet közben közzéteheti a kész jeleneteket vagy fejezeteket.",
     "comingSoon": "Hamarosan érkezik",
     "comparison": {
       "id": "comparison",
@@ -1009,19 +947,19 @@
     "cta": "Launch Studio (9 $)"
   },
   "directControl": {
-    "eyebrow": "Az irányítás, amelyet megtartasz",
-    "title": "Irányítsd a történetet. Bízd a promptolást az ágensekre.",
-    "subtitle": "Egyszerű nyelvezettel adod meg a beállítás utasításait. A rendezői utasítás határozza meg a képkocka és a videoklip generálásához szükséges promptot. A zenei beszúrások és a narráció pontosan a ritmusra illeszkednek. Nézd meg az animatikot, módosítsd a beállítást, ha nem megfelelő, és csak ezután költs a mozgóképes megvalósításra.",
+    "eyebrow": "Műszaki filmkészítés nem szükséges",
+    "title": "Fejezd ki elképzelésedet. A mesterséges intelligencia csapata kezeli a hajót.",
+    "subtitle": "Akár először mesél, akár tapasztalt rendező, egyszerűen írja le, mi történik. Speciális ügynökök kezelik az operatőrt, a felszólításokat, a zenei jelzéseket, a párbeszédet és az automatizált jelenetek összeillesztését – így először megtekintheti a teljes animációt, parancsra finomíthat minden ütemet, és csak azután költhet kreditet mozgásra.",
     "comparison": {
       "id": "direction",
-      "caption": "Rendezői utasítás, utasítás a videórészlethez, valamint zene és narráció ugyanarra az ütemre."
+      "caption": "Az egyszerű nyelvű történetvezetés automatikusan összeállítva filmművészetté, zenébe és narrációba."
     },
     "cta": "Launch Studio (9 $)"
   },
   "publishCut": {
     "eyebrow": "A közzétett vágat",
     "title": "Exportálás bárhová. Használd az Premiere-et az SceneFlow-en, amint megszerezted.",
-    "subtitle": "Download a master and ship it yourself, or publish finished scenes and chapters to {longForm} and cut trailers for {shorts} — without waiting on the whole cut. Before anything hits the public feed, run drafts or your final master through the Screening Room. Standout projects can apply for the invite-only SceneFlow Network; it is a curated accelerator, not an open storefront.",
+    "subtitle": "Exportáljon egy mestert, és terjessze bárhová, vagy tegye közzé a kész jeleneteket és fejezeteket közvetlenül az {longForm}-ben a {shorts}-hez vágott függőleges előzetesekkel – a kép, a zene és a narráció már a vágásban. A Screening Room minden vázlatát tesztelje a megjelenés előtt, és jelentkezzen a csak meghívásos SceneFlow hálózatnál finanszírozott közönséggyorsítás érdekében.",
     "comparison": {
       "id": "publish",
       "caption": "A finished scene or chapter, and the 90-minute master, from one studio."
@@ -1034,6 +972,25 @@
     "badges": {
       "googleCloud": "Google Cloud",
       "vertexAi": "Vertex AI"
+    },
+    "wave": {
+      "eyebrow": "Ride the AI → Superintelligence Wave",
+      "headline": "Kiváló minőségű gyártás ma. Automatikus modellfrissítések holnap.",
+      "subheadline": "Az elmúlt évben a videogeneráció a szétkapcsolt \"AI-szilárdságból\" a valósághű mozi felé ugrott. A SceneFlow strukturált történetmesélésével és automatizált jelenetek összefűzésével kombinálva már ma stúdióminőségű produkciókat küldhetsz – miközben minden általad felépített karakter és világ automatikusan meglovagolja a mesterséges intelligencia fejlődésének következő hullámát.",
+      "pillars": [
+        {
+          "title": "Stúdió szintű jelenetek összefűzése ma",
+          "description": "Nem kell arra várnia, hogy a jövőbeli modellek elmeséljenek egy nagyszerű történetet. A SceneFlow Blueprint architektúrája, a Reference Library és az automatizált jelenetek összeillesztése a mai határmodelleket összefüggő, adásra kész fejezetekké és filmekké varázsolja."
+        },
+        {
+          "title": "A Continuity Vault jövőbiztos IP",
+          "description": "A modellek kameralencsék; szkriptjei, karakterei, szekrényei és készletei a Continuity Vaultban az Ön állandó IP-címe. Építsd fel sorozatodat és közönségedet most – ahogy a modellek az AI-ról a szuperintelligencia (SI) felé haladnak, a meglévő szereplők automatikusan a legújabb motorokra frissülnek."
+        },
+        {
+          "title": "Több számítási teljesítmény, ahogy a token költségek csökkennek",
+          "description": "A globális számítások bővülésével és a modell token költségeinek csökkenésével a SceneFlow ezeket a hatékonysági előnyöket automatikusan átadja az aktív tagoknak, mivel a megújítások és a kiegészítő csomagok jóváírásonként több termelési teljesítményt kapnak. Iratkozzon fel még ma, és tegyen meg minden lépést előre."
+        }
+      ]
     }
   },
   "valueProp": {
@@ -1774,13 +1731,13 @@
     "titleAccent": "akcióban",
     "subtitle": "Minden példa egy rövid előzetessel kezdődik. A teljes hosszúságú mesterpéldány – amely a teljes gyártási folyamatot felöleli a koncepciótervtől és az elővizualizációtól kezdve egészen a végső vágásig – a vetítőteremben tekinthető meg.",
     "subtitleTagline": "Hosszú lélegzetvételű produkciók. Nem rövid részletek.",
-    "screeningRoomInstruction": "Vizsgálja át ezt a produkciót úgy, ahogyan azt egy bíráló tenné: mérföldkövenként haladva. Kezdje a sorozattal (Series), majd folytassa az Blueprint-mel, utána az AR-elemzés (AR Analysis) részét képező forgatókönyvvel, végül pedig zárja a folyamatot a vetítéssel (Screening).",
+    "screeningRoomInstruction": "Először nyissa meg a Screening Room-et, hogy megtapasztalhassa a produkciót úgy, ahogyan egy lektor – váltson a Pre-Vis, Klipek, Jelenetek, Fejezetek, Master és Promo között –, majd ellenőrizze az alatta lévő Series Room, Blueprint Room és Production Stage elemeket.",
     "trailerLabel": "Előzetes",
     "watchLongform": "Nézze meg a hosszabb lélegzetvételű anyagot",
-    "seriesDoor": "Sorozat",
-    "blueprintDoor": "SFAI-tervrajz-kifejezés",
-    "scriptArDoor": "Vevőkövetelés-elemzés",
-    "screeningDoor": "Szűrés",
+    "seriesDoor": "Series Room",
+    "blueprintDoor": "Blueprint Room",
+    "scriptArDoor": "Production Stage",
+    "screeningDoor": "Screening Room",
     "screeningRoomGroup": "Screening Room",
     "previsDoor": "Elővizualizáció",
     "roughDoor": "Durva vágat",
@@ -2305,23 +2262,73 @@
     "closePopup": "Felugró ablak bezárása"
   },
   "pricing": {
-    "badge": "Egyszerű árazás",
+    "badge": "Studio tagság és használati díjak",
     "title": "Kezdje az Explorer kóddal – 9 $",
-    "subtitle": "Tesztelje a teljes folyamatot most, mindössze 9 dolláros, egyszerű belépési lehetőséggel.",
-    "explorerHighlight": "A leggyorsabb módja a teljes SceneFlow stúdió megtapasztalásának – a koncepciótól egészen az Screening Room-ig.",
+    "subtitle": "Kezdje el első filmjét még ma 9 dollárért – alakítsa át ötletét strukturált Blueprintmé, alakítsa ki karaktereit, és tekintse meg az első jelenetet. Ezután iratkozzon fel a Continuity Vault megőrzéséhez, és adjon hozzá krediteket a gyártás befejezésekor.",
+    "explorerHighlight": "Nincs szükség technikai filmkészítési készségekre – mindennapi történetmesélők, fejezetről fejezetre szóló független alkotók, sorozatcsatornák és hibrid filmstúdiók számára készült.",
     "trustBadges": [
       "Biztonságos fizetés az Whop-en keresztül",
       "9 dolláros Explorer a stúdió kipróbálásához",
-      "A havi kreditek az időszak végén lejárnak.",
+      "Az aktív tagság megtartja a Continuity Vault szolgáltatást",
       "Bármikor lemondható"
     ],
     "valueAnchor": {
-      "traditionalCost": "2000 dollár felett",
-      "traditionalLabel": "Hagyományos elővizualizáció",
+      "traditionalCost": "5000–50 000+ USD",
+      "traditionalLabel": "Hagyományos előkép és gyártás",
       "vs": "ellen",
-      "sceneFlowCost": "49–149 dollár",
-      "sceneFlowLabel": "SceneFlow havi",
-      "saveBadge": "Projektenként több mint 90%-ot takaríthat meg"
+      "sceneFlowCost": "19–599 USD/hó + kiegészítők",
+      "sceneFlowLabel": "SceneFlow Studio & Continuity Vault",
+      "saveBadge": "90%+ megtakarítás gyártásonként"
+    },
+    "filmmakerPerspectives": {
+      "heading": "One Studio Pipeline. Minden mesemondó és filmkészítő számára készült.",
+      "subheading": "Nincs szüksége filmiskolára vagy technikai ismeretekre ahhoz, hogy elképzeléseit kifejezze. Akár először kelt életre egy személyes történetet, akár fejezetről fejezetre publikál egy sorozatot, akár finanszírozókat hoz létre, akár egy hibrid forgatást hajt végre, a terve az alkotás módjához igazodik.",
+      "recommendedPathLabel": "Ajánlott útvonal:",
+      "cards": [
+        {
+          "id": "hobbyist",
+          "badge": "Nincs szükség filmes tapasztalatra • 19 USD/hó",
+          "title": "Mesemondók és kreatív látnokok",
+          "description": "Van olyan története, könyvkoncepciója vagy családtörténete, amelyet szeretne a képernyőn látni? Egyszerű szavakkal írja le elképzelését, hogy megszólaltatott Pre-Vis animációkat és szelektív videoklipeket készítsen – miközben a karaktereket, a ruhásszekrényeket és a készleteket a Continuity Vaultban menti.",
+          "recommendedPlan": "Hobbi ($19/hó)"
+        },
+        {
+          "id": "chapter",
+          "badge": "Új és független alkotók • 49 USD/hó",
+          "title": "A fejezet közzétételi stratégiája",
+          "description": "Kerülje el a 90 perces funkció előzetes megjelenítésének költség- és időkorlátját. Tegye közzé történetét 5–15 perces jelenetekben vagy epizódfejezetekben, hogy kezelje havi számítási költségkeretét, miközben folyamatosan növeli a közönségét.",
+          "recommendedPlan": "Kezdő (49 USD/hó)"
+        },
+        {
+          "id": "series",
+          "badge": "Bevételszerző csatornák • 149 USD/hó",
+          "title": "A sorozat karakter- és beállítási folytonossága",
+          "description": "A közönség akkor iratkoz fel csatornákra, ha ismerős karakterekkel és világokkal találkozik. A Continuity Vault minden epizódban megőrzi a szereplők arcait, ruháit, egyéni hangklónjait és helyszíneit, így fenntarthatóan fejlődhet a YouTube-on, a TikTokon és a Reels-en.",
+          "recommendedPlan": "Pro (149 USD/hó)"
+        },
+        {
+          "id": "hybrid",
+          "badge": "Tapasztalt és hibrid filmesek • 149–599 USD/hó",
+          "title": "Gyártási finanszírozási csomagok és hibrid felvételek",
+          "description": "Exportáljon szabványos szkripteket (PDF, FDX, Fountain) Pre-Vis Animatic-mel és Promo Trailerrel a befektetői finanszírozás biztosítása érdekében – vagy töltsön fel élőben filmezett jeleneteket, és keverje össze őket 4K AI-felvételekkel a fizikai gyártási költségek töredékéért.",
+          "recommendedPlan": "Pro / Studio + kiegészítők"
+        }
+      ]
+    },
+    "membershipModel": {
+      "badge": "Megjósolható alap + rugalmas számítás",
+      "title": "Kezdje el projektjét még ma. Méretezzen bővítményekkel gyártás közben.",
+      "description": "A SceneFlow elválasztja az ismétlődő stúdió- és Continuity Vault tárhelyszolgáltatást a sorozatgyártási számításoktól – így a karakterek és a világ egész évben zárva maradnak, és bármikor feltölthet krediteket, amikor készen áll egy fejezet vagy funkció befejezésére.",
+      "pillars": [
+        {
+          "title": "1. Az alaptagság megtartja a folytonossági tárolót",
+          "description": "Aktív havi előfizetés (19–599 USD/hó) fenntartja a stúdióhoz való hozzáférést, a Screening Room linkeket és az Active Continuity Vaultot – megőrzi az ismétlődő szereplőket, ruhásszekrényeket, egyéni hangklónokat, helyszíneket és sorozatbibliákat az évszakokon át, valamint a havi alapkrediteket."
+        },
+        {
+          "title": "2. Igény szerint fejezze be a projekteket 12 hónapos kiegészítő csomagokkal",
+          "description": "Amint a történet mozgásba lendült, az aktív havi tagok 25, 100 vagy 250 dolláros kiegészítő hitelcsomagokat vásárolhatnak bármikor, hogy befejezhessenek egy fejezetet, több epizódból álló szezont vagy hibrid filmforgatást. A kiegészítő csomagok 12 hónapig tartanak, amíg a tagságod aktív marad."
+        }
+      ]
     },
     "teamCta": {
       "title": "Belső csapat vagy intézmény?",
@@ -2336,7 +2343,7 @@
     "byok": {
       "title": "Saját kulcs használata",
       "badge": "Pro és Studio csomagok",
-      "description": "Az API-kulcsod segítségével referencia-, állókép- és klipgenerálási feladatok futtathatók. Az SceneFlow 20%-os koordinációs díjat számít fel ezekért a feladatokért. A platform forgalmának növekedésével a hosztolt SceneFlow szolgáltatás díjai alacsonyabbak lehetnek, mint a személyes API-fiók esetében.",
+      "description": "Csatlakoztassa saját Google Vertex AI vagy Kling API-kulcsait a Pro & Studio csomagokhoz a közvetlen szolgáltatói számlázáshoz (20%-os platformhangszerelési díjjal), vagy használja a SceneFlow által tárolt jóváírásokat, hogy kihasználhassa mennyiségi kedvezményes modelldíjainkat.",
       "savingsHighlight": "20%-os hangszerelési díj",
       "benefits": [
         {
@@ -2363,22 +2370,26 @@
       "note": "A 20%-os díj egy SceneFlow-es vezénylési (orchestration) költség. A szolgáltató az Ön számlájára terheli a használati díjat. A SceneFlow által biztosított generálás olcsóbb lehet, mint a saját kulcs használata."
     },
     "creditTopUps": {
-      "title": "További kreditekre van szükséged?",
-      "subtitle": "Vásároljon 25, 100 vagy 250 dolláros kiegészítő csomagokat tetszőleges gyakorisággal. Minden csomag 12 hónapig érvényes.",
+      "title": "Kiegészítő csomagok az előfizetők termelése után fizetendők",
+      "subtitle": "Kizárólag aktív havi tagok számára. Vásároljon 25, 100 vagy 250 dolláros kiegészítőket, ahányszor csak szüksége van rá. Minden csomag 12 hónapig tart.",
       "packs": [
         {
           "label": "25 dolláros kiegészítő",
-          "description": "2000 kredit. Vásárolj olyan gyakran, ahányszor csak szükséged van rá."
+          "credits": "2000 kredit",
+          "description": "2000 kredit (0,0125 USD/kr) – ideális egy 5–15 perces fejezet vagy promóciós előzetes befejezéséhez."
         },
         {
           "label": "100 dolláros kiegészítő",
-          "description": "9000 kredit. Vásárold meg, ahányszor csak szükséged van rá."
+          "credits": "9000 kredit",
+          "description": "9000 kredit (0,0111 USD/kr) – ideális többfejezetes sorozatokhoz vagy Pre-Vis pitch csomagokhoz."
         },
         {
           "label": "250 dolláros kiegészítő",
-          "description": "25 000 kredit. Vásárolj olyan gyakran, ahányszor csak szükséged van rá."
+          "credits": "25.000 kredit",
+          "description": "25 000 kredit (0,0100 USD/kr) – 500–5000 USD közötti hibrid produkciókhoz és kiemelt táblákhoz készült."
         }
       ],
+      "subscriberNote": "A Continuity Vault tárhely megvásárlásához és megtartásához aktív havi tagság szükséges (Hobbyist, Starter, Pro vagy Studio).",
       "creditsUnit": "stáblista"
     },
     "calculator": {
@@ -2428,13 +2439,13 @@
       "minSuffix": "perc"
     },
     "tierGrid": {
-      "productionTestFlight": "Sorozatgyártás utáni berepülés",
+      "productionTestFlight": "30 napos stúdió tesztrepülés",
       "getStarted": "Kezdés",
       "startTestFlight": "Tesztrepülés indítása",
       "loading": "Betöltés...",
       "mostPopular": "Legnépszerűbb",
       "creditsPerMonth": "Kredit/hó",
-      "storage": "Tárolás",
+      "storage": "Continuity Vault",
       "perMonth": "/month"
     },
     "trust": {
@@ -2444,13 +2455,13 @@
     },
     "plans": {
       "explorer": {
-        "name": "Explorer – Bemutató",
-        "description": "Demó – egyszeri vásárlás egy teljes produkció kipróbálásához",
+        "name": "Explorer — Indítsa el első filmjét",
+        "description": "Változtassa ötletét strukturált Blueprintmé, alakítsa ki karaktereit, és tekintse meg az első megszólaltatott jelenetet – majd iratkozzon fel, és adjon hozzá krediteket a film befejezésekor.",
         "features": [
-          "Egyszeri vásárlás",
+          "Egyszeri vásárlás (30 napos stúdió tesztrepülés)",
           "750 kredit (a vásárlástól számított 90 napon belül jár le)",
-          "5 GB tárhely (30 nap)",
-          "Teljes körű hozzáférés a platformhoz",
+          "5 GB próbatárhely (30 nap – előfizet, hogy megőrizze a trezort)",
+          "Teljes stúdió hozzáférés + Production Script export (PDF, FDX, Fountain)",
           "MP4-exportálás (bármilyen felbontás)",
           "MI-alapú narráció (több mint 70 nyelven)"
         ]
@@ -2458,51 +2469,62 @@
       "subscriptions": [
         {
           "id": "starter",
-          "name": "Kezdő – Homokozó",
-          "description": "Homokozó – ötletek kipróbálására az éles bemutató előtt",
+          "name": "Hobbi – Storyteller & Vault",
+          "description": "Mesélők és kreatív látnokok – fejezze ki elképzeléseit technikai filmkészítési ismeretek nélkül, és tartsa aktívan a Continuity Vaultot a forgatások között",
           "features": [
-            "Teljes körű hozzáférés a platformhoz",
-            "Havi 4500 kreditet tartalmaz",
+            "Aktív Studio tagság és Continuity Vault megőrzése",
+            "1500 kredit/hó",
             "A fel nem használt havi kreditek az időszak végén lejárnak.",
-            "25 GB aktív tárhely",
-            "MP4-exportálás (bármilyen felbontás)",
-            "MI-alapú narráció (több mint 70 nyelven)",
-            "E-mail-alapú ügyfélszolgálat"
+            "10 GB Active Continuity Vault (megőrzi a kazettát, a szekrényeket és a készleteket)",
+            "Feloldja a 12 hónapos előfizetői kiegészítő hitelcsomagokat",
+            "Ideális személyes látomásokhoz, családi történetekhez és a Látás előtti animációhoz",
+            "Gyári szkript előnézete és exportálása (PDF, FDX, Fountain)",
+            "MP4-export és AI-hangosítás (70+ nyelv)"
           ]
         },
         {
           "id": "pro",
-          "name": "Pro – YouTuber",
-          "description": "YouTuber – visszatérő epizódok és csatornavideók",
+          "name": "Indító — fejezet és előkép",
+          "description": "A Fejezet közzétételi stratégiája – 5–15 perces epizódos fejezetkiadások és a hagyományos filmesek gyártási finanszírozási csomagjait",
           "features": [
-            "Minden, ami a Starter csomagban benne van, plusz:",
-            "Havi 15 000 kreditet tartalmaz",
+            "Minden a Hobbyistben, plusz:",
+            "4500 kredit/hó (3x hobbiszámítás)",
             "A fel nem használt havi kreditek az időszak végén lejárnak.",
-            "100 GB aktív tárhely",
-            "Hozzáférés a Veo 3.1 minőséghez (4K)",
-            "Karakterkonzisztencia-motor",
-            "Hangklónozás",
-            "BYOK (Saját kulcs használata)",
-            "3 csapatszék",
-            "Elsőbbségi támogatás"
+            "25 GB Active Continuity Vault a karakter- és beállítási folytonossághoz",
+            "5–15 perces fejezetkiadásokhoz és Pre-Vis finanszírozási csomagokhoz készült",
+            "Tölts fel élőszereplős jeleneteket, és kombináld AI-klipekkel a Mixerben",
+            "1 egyéni hangklón és több mint 70 nyelv szinkronizálása",
+            "E-mailes támogatás"
           ]
         },
         {
           "id": "studio",
-          "name": "Stúdió – Független filmes",
-          "description": "Független filmes – független filmek és sorozatok",
+          "name": "Pro – sorozat és hibrid",
+          "description": "Bevételszerző sorozatok és hibridfilmkészítők – közösségi csatornák számára visszatérő karakterekkel és tapasztalt filmesekkel, akik az élőszereplést ötvözik a 4K AI-produkcióval",
           "features": [
-            "Minden, ami a Pro csomagban benne van, plusz:",
-            "Havi 75 000 kreditet tartalmaz",
+            "Minden a Starterben, plusz:",
+            "15 000 kredit/hó",
             "A fel nem használt havi kreditek az időszak végén lejárnak.",
-            "500 GB aktív tárhely",
-            "Veo 3.1 4K prioritásos sor",
-            "Korlátlan karakterkonzisztencia",
-            "White-label export",
-            "API-hozzáférés",
-            "10 csapathely",
-            "Kijelölt ügyfélkapcsolati menedzser",
-            "Vállalati szintű SLA kérésre elérhető"
+            "100 GB Active Continuity Vault + karakterkonzisztencia motor",
+            "Veo 3.1 Quality (4K) hozzáférés és hibrid élőszereplős + AI munkafolyamat",
+            "5 egyedi hangklón az ismétlődő sorozatok leadásához",
+            "BYOK (hozzon saját kulcsot) a közvetlen szolgáltatói számlázáshoz",
+            "3 csapatülés és elsőbbségi támogatás"
+          ]
+        },
+        {
+          "id": "studio",
+          "name": "Stúdió — Produkciós Ház",
+          "description": "Production House & Feature Slate – 500–5000 dollár értékű teljes gyártási csatorna tapasztalt filmesek, ügynökségek és többsorozatú stúdiók számára",
+          "features": [
+            "Minden Proban, plusz:",
+            "75 000 kredit/hó (a legalacsonyabb kreditdíj)",
+            "A fel nem használt havi jóváírások az időszak végén lejárnak",
+            "500 GB Active Continuity Vault + korlátlan karakterkonzisztencia",
+            "Veo 3.1 4K Priority Queue és 25 egyéni hangklón",
+            "Fehér címkével ellátott Screening Room és exportok + API és BYOK hozzáférés",
+            "10 csapatülés és dedikált fiókkezelő",
+            "Vállalati SLA kérésre elérhető"
           ]
         }
       ]

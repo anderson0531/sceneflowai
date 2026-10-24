@@ -164,7 +164,7 @@ export function PricingCredits() {
                   </div>
                   <div className="pt-3 border-t border-slate-800/80 flex flex-col gap-1">
                     <span className="text-[11px] uppercase tracking-wider text-gray-500">
-                      Recommended path:
+                      {perspectives.recommendedPathLabel ?? 'Recommended path:'}
                     </span>
                     <span className="text-sm font-semibold text-emerald-400">
                       {card.recommendedPlan}

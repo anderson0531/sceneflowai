@@ -257,53 +257,54 @@
     "exitFullscreenOverview": "Lumabas sa fullscreen",
     "watchLongformLabel": "Panoorin ang mahabang bersyon",
     "screenshotLabel": "Screenshot",
-    "landingUiLanguagesLabel": "Gumagawa at naglalagay ng dubbing sa 44 na wika. Ang site na ito ay available sa 39 na wikang ito:",
+    "landingUiLanguagesLabel": "Gumawa at mag-dub sa 44 na wika. Ang buong interface ng studio at ang site na ito ay magagamit sa 39 na ito:",
     "rooms": [
       {
         "id": "series-desk",
         "label": "Series Room",
-        "promise": "Dito sa Series Room nagsisimula ang isang season. Ang mga karakter at kuwentong ito ay magpapatuloy sa bawat episode na iyong idaragdag. Basahin, pakinggan, at idirehe ito bago pa man magsimula ang isang episode sa Blueprint Room. Maaaring laktawan ang room na ito kung ang pelikula ay walang season.",
+        "headline": "Gumawa ng uniberso minsan. Gumawa ng mga episode magpakailanman.",
+        "promise": "Bumuo ng isang multi-episode season na may isang nakabahaging creative bible. Ang iyong cast, mga lokasyon, mga thread ng kuwento, at visual na DNA ay awtomatikong dinadala sa bawat episode na iyong iikot. Gumagawa ng isang standalone na pelikula? Lumaktaw nang diretso sa Blueprint Room.",
         "features": [
           {
             "icon": "newSeries",
             "title": "Bagong Serye",
-            "description": "Magsimula rito. Ilarawan sa sarili mong mga salita ang seryeng nais mong gawin. Sa pamamagitan ng \"Clarify and Confirm,\" paulit-ulit na pinipino ang iyong konsepto hanggang sa mabuo ang synopsis, at isinusulat naman ng \"Generate Series\" ang pangunahing balangkas nito. Nagsisimula ang isang bagong serye sa limang episode, at maaari kang magdagdag ng higit pa.",
+            "description": "I-pitch ang iyong serye o konsepto ng channel sa simpleng wika. Pinatalas ng interactive AI refinement ang iyong premise at bumubuo ng multi-episode season baseline—kumpleto sa mga overarching plot arc at episode breakdown.",
             "screenshot": "Gumawa ng Bagong Serye — intensyon, Paglilinaw at Pagkumpirma, Pagbuo ng Serye",
             "learnMore": {
               "items": [
                 {
                   "title": "Ang iyong layunin",
-                  "description": "Ipaliwanag kung ano ang serye, kabilang ang format, target na manonood, at istilo ng sining."
+                  "description": "I-pitch ang premise, format, target audience, at visual art style sa simpleng wika."
                 },
                 {
-                  "title": "Ulitin",
-                  "description": "Nililinaw at kinukumpirma ng \"Clarify and Confirm\" ang buod kasama ka bago pa man may mabuo o magawa."
+                  "title": "Interactive na pagpipino",
+                  "description": "Linawin at Kumpirmahin ang talaan ng season synopsis sa iyo bago gumawa ng anuman."
                 },
                 {
-                  "title": "Batayan",
-                  "description": "Bubuo ang Generate Series ng season na iyong susuriin, na magsisimula sa limang episode."
+                  "title": "Baseline ng season",
+                  "description": "Bumuo ang Generate Series ng five-episode season arc na maaari mong palawakin anumang oras."
                 }
               ]
             }
           },
           {
             "icon": "seriesReview",
-            "title": "Suriin ang unang bersyon",
-            "description": "Basahin ang pangkalahatang-ideya o pindutin ang \"Makinig.\" Pagkatapos, basahin ang mga episode o pakinggan ang mga ito. Pinagbubuklod ng pagkakapare-pareho (consistency) ang mga bahagi ng kuwento, habang pinag-uugnay naman ng pagpapatuloy (continuity) ang mga tauhan, lokasyon, props, at tagpuang ibinabahagi ng mga nasabing episode.",
+            "title": "Season Bible at Continuity",
+            "description": "Basahin o pakinggan ang isinalaysay na pangkalahatang-ideya ng season at episode slate. Nila-lock ng SceneFlow ang iyong mga thread ng kuwento, mga profile ng cast, mga lokasyon, at mga props ng lagda sa isang nakabahaging Reference Library na namamana ng bawat episode.",
             "screenshot": "Pangkalahatang-ideya, Mga Episode, Pagkakapare-pareho, Pagpapatuloy — Mga Tauhan, Mga Lokasyon, Mga Props, Mga Tagpuan",
             "learnMore": {
               "items": [
                 {
                   "title": "Magbasa o makinig",
-                  "description": "Maaaring basahin ang pangkalahatang-ideya at mga episode, o kaya ay pakinggan gamit ang Listen."
+                  "description": "I-audit ang pangkalahatang-ideya ng season at ang bawat buod ng episode na may built-in na audio narration."
                 },
                 {
-                  "title": "Pagiging pare-pareho",
-                  "description": "Ang estetika, mahahalagang pangyayari, at mga daloy ng kuwento ay nananatili sa season."
+                  "title": "Consistent ng kwento",
+                  "description": "Ang mga estetika, pangunahing kaganapan sa plot, at mga narrative thread ay mananatiling naka-lock sa buong season."
                 },
                 {
-                  "title": "Pagpapatuloy",
-                  "description": "Ang mga tauhan, lokasyon, props, at tagpuan ay pare-pareho sa bawat episode."
+                  "title": "Nakabahaging pagpapatuloy",
+                  "description": "Awtomatikong dinadala ang cast, lokasyon, props, at setting sa bawat episode na gagawin mo."
                 }
               ]
             }
@@ -311,75 +312,75 @@
           {
             "icon": "seriesResonance",
             "title": "Audience Resonance",
-            "description": "Patakbuhin ang Audience Resonance kapag nais mong suriin ang estado ng season. Rebyuhin ang mga score at ang pagsusuri. Magpatupad lamang ng Actionable Insight kung nais mo, at walang magbabago sa serye hangga't hindi mo ito ginagawa.",
+            "description": "Subukan ang iyong season arc laban sa iyong target na demograpiko bago magsulat ng isang script. Suriin ang mga marka ng resonance ng bawat episode at ilapat ang mga pagpapabuti ng kuwentong naka-back sa data sa isang pag-click—lamang kapag sumasang-ayon ka sa tala.",
             "screenshot": "Pagsusuri ng Audience Resonance, kasunod ang mga Actionable Insight na hindi pa naipapatupad",
             "learnMore": {
               "items": [
                 {
-                  "title": "Ang babasahin",
-                  "description": "Ipinapakita ng mga marka at pagsusuri kung ano ang tumatatak sa audience na iyong tinukoy."
+                  "title": "Demograpikong pagmamarka",
+                  "description": "Ang mga marka at pagsusuri sa istruktura ay nagpapakita kung paano dumarating ang iyong season sa iyong target na madla."
                 },
                 {
-                  "title": "Opsyonal",
-                  "description": "Ang isang insight na maaaring isagawa ay magpapabago lamang sa serye kapag inilapat mo ito."
+                  "title": "Prerogative ng direktor",
+                  "description": "Ina-update lang ng Actionable Insights ang iyong serye kapag pinili mong ilapat ang mga ito."
                 }
               ]
             }
           },
           {
             "icon": "seriesDirector",
-            "title": "Direktor ng Serye",
-            "description": "Ikaw ang magtakda ng takbo ng buong serye gamit ang sarili mong mga salita, pasalita man o nakasulat. Ikaw ang pipili ng pagbabago at ng pagtutuunan ng pansin, at ikaw ang tatanggap nito. Makatutulong ang isang rekomendasyon, habang nananatili naman sa dati ang mga bahagi ng kuwentong walang kaugnayan dito.",
+            "title": "Ang Direktor ng Serye",
+            "description": "Hugis muli ang buong season sa pamamagitan ng boses o text. Baguhin ang tono, taasan ang mga stake, o muling gawin ang isang character arc sa lahat ng episode nang sabay-sabay habang pinananatiling buo ang natitirang bahagi ng iyong storyline.",
             "screenshot": "Direktor ng Serye — direksyon, pokus, pagtanggap",
             "learnMore": {
               "items": [
                 {
-                  "title": "Ang iyong mga salita",
-                  "description": "Banggitin o i-type ang pagbabago, at kung nais ay limitahan ito sa plot, mga tauhan, nilalaman ng episode, tono, o tagpuan."
+                  "title": "Direksyon sa simpleng wika",
+                  "description": "Sabihin o i-type ang iyong tala at target na plot, mga character, mga episode ng arc, tono, o setting."
                 },
                 {
-                  "title": "Tinatanggap mo ito",
-                  "description": "Walang nagbabago hangga't hindi mo ito tinatanggap, at nananatili sa dati nilang kalagayan ang mga bahagi ng kuwento na walang kaugnayan dito."
+                  "title": "Mga update sa kirurhiko",
+                  "description": "Walang magbabago hanggang sa tanggapin mo ang rebisyon, at ang mga hindi nauugnay na thread ng kuwento ay mananatiling hindi nagalaw."
                 },
                 {
-                  "title": "Isang rekomendasyon",
-                  "description": "Makakatulong ang mga rekomendasyon, at ikaw pa rin ang pipili kung ano ang pananatilihin."
+                  "title": "Mga may gabay na rekomendasyon",
+                  "description": "Ilapat ang mga pagpapahusay sa kwentong iminungkahi ng AI o ikaw mismo ang magmaneho sa bawat malikhaing pagpipilian."
                 }
               ]
             }
           },
           {
             "icon": "directEpisode",
-            "title": "Idirek ang episode na ito",
-            "description": "Pumili ng isang episode at idirehe ang oras na iyon. Palakihin ang tensyon o palalimin ang kuwento, at saka ito ilapat. Mananatili naman sa dati ang ibang mga episode.",
+            "title": "Direksyon sa Antas ng Episode",
+            "description": "Mag-zoom in sa anumang indibidwal na episode upang muling ayusin ang plot, pacing, o hook nito nang nakahiwalay—nang hindi nade-destabilize ang natitirang bahagi ng iyong season slate.",
             "screenshot": "Mga Episode — Idirek ang episode na ito, hindi babaguhin ang ibang mga episode",
             "learnMore": {
               "items": [
                 {
-                  "title": "Isang episode",
-                  "description": "Ang \"Direct this episode\" ay naglalapat ng pagbabago sa partikular na episode na iyon lamang."
+                  "title": "Isolated rewrites",
+                  "description": "Mga direktang pagbabago sa outline at beats ng isang episode nang hindi binabago ang mga kalapit na episode."
                 },
                 {
-                  "title": "Nananatili ang panahon.",
-                  "description": "Ang iba pang mga episode ay iniwan kung ano ang mga ito."
+                  "title": "Integridad ng season",
+                  "description": "Mananatiling naka-lock ang pangkalahatang season na bibliya at ang natitirang talaan ng episode."
                 }
               ]
             }
           },
           {
             "icon": "startEpisode",
-            "title": "Simulan ang episode",
-            "description": "Kapag handa na ang isang episode, simulan ang proyekto nito. Isasama rito ang outline, synopsis, at mga beat patungo sa Blueprint Room. Kilala na ang mga tauhan at ang mundo ng kuwento.",
+            "title": "One-Click Episode Launch",
+            "description": "Kapag ang outline ng isang episode ay umabot sa marka, ilunsad ito nang diretso sa Blueprint Room kasama ang synopsis, story beats, cast, at mundo na naka-wire na.",
             "screenshot": "Simulan ang Proyekto — nasa episode na ang balangkas at mga tauhan",
             "learnMore": {
               "items": [
                 {
-                  "title": "Simulan ang Proyekto",
-                  "description": "Binubuksan ng Start Project ang episode na iyon sa Blueprint Room."
+                  "title": "Instant handoff",
+                  "description": "Direktang ilunsad ang anumang episode sa Blueprint Room sa isang pag-click."
                 },
                 {
-                  "title": "Alam na",
-                  "description": "Kasama nito ang balangkas, ang buod, ang mga pangunahing yugto ng kuwento, at ang mga tauhan."
+                  "title": "Pre-wired na DNA",
+                  "description": "Awtomatikong naglalakbay ang outline ng episode, synopsis, mga beats ng kuwento, cast, at mga lokasyon."
                 }
               ]
             }
@@ -389,43 +390,44 @@
       {
         "id": "blueprint-board",
         "label": "Blueprint Room",
-        "promise": "Dito sa Blueprint Room pinapaganda at inaayos nang husto ang takbo ng kuwento bago isulat ang 90-minutong script. Maaaring magsimula sa isang episode ng serye o sa isang bagong proyekto. Dito na rin dapat ayusin ang daloy ng mga eksena (beats) at ang mga tauhan, upang hindi na kailanganin pang baguhin o buuin itong muli sa yugto ng Production Stage.",
+        "headline": "I-lock ang kuwento at ang hitsura bago mag-render ang isang frame.",
+        "promise": "Maglulunsad ka man ng episode mula sa Series Room o magsisimula ng standalone na feature, ang Blueprint Room ay kung saan nagla-lock ang iyong creative DNA. Gampanan ang beat sheet, cast, lokasyon, at visual na istilo dito—kaya ang Production Stage ay bumuo ng tamang script sa unang pass.",
         "features": [
           {
             "icon": "startBlueprint",
             "title": "Simulan ang Blueprint",
-            "description": "Magsimula sa isang episode ng serye, o kaya ay magsimula ng bagong proyekto. Ang episode ng serye ay may kasamang outline, synopsis, at mga beat. Nagsisimula ang isang bagong proyekto kapag inilarawan mo ang layunin, ginamit ang Validate & Enhance with AI, at pinili ang Generate Blueprint.",
+            "description": "Magdala ng episode mula sa iyong slate ng serye kasama ang outline nito at na-pre-load ang cast, o maglagay ng bagong-bagong konsepto ng pelikula mula sa simula at hayaan ang AI na buuin ang foundational treatment.",
             "screenshot": "Kilala na ang episode ng serye, o Simulan ang Iyong Proyekto — layunin, I-validate at Pagbutihin gamit ang AI, Bumuo ng Blueprint",
             "learnMore": {
               "items": [
                 {
-                  "title": "Episode ng serye",
-                  "description": "Nagsisimula ang isang episode ng serye nang nakalakip na ang outline, synopsis, at mga beat nito."
+                  "title": "Mula sa Series Room",
+                  "description": "Dumarating ang mga serye ng episode na may nakalakip na outline, synopsis, beats, at cast."
                 },
                 {
-                  "title": "Bagong proyekto",
-                  "description": "Kinukuha ng \"Start Your Project\" ang layunin, pagkatapos ay isinasagawa ang pag-validate at pagpapahusay gamit ang AI, at kasunod nito ay ang pag-generate ng Blueprint."
+                  "title": "Standalone na proyekto",
+                  "description": "Mag-pitch ng bagong konsepto ng pelikula, pinuhin ito gamit ang pagpapatunay ng AI, at bumuo ng kumpletong paggamot."
                 }
               ]
             }
           },
           {
             "icon": "treatment",
-            "title": "Gabayan ang mga beat",
-            "description": "Buksan ang Beats tab at pakinggan ang beat sheet. I-optimize ang mga beat dito, dahil ang mga ito ang nagtatakda sa pagbuo ng script. Dito lamang matatagpuan ang mga beat. Ginagawang chapter ng Production Stage ang bawat beat.",
+            "title": "Ang Beat Sheet",
+            "description": "Istraktura ang gulugod ng iyong pelikula. Basahin o pakinggan ang iyong narrative beat sheet at i-fine-tune ang pacing dito—bawat beat na iki-lock mo sa Blueprint Room ay nagdadala ng isang kabanata sa Production Stage.",
             "screenshot": "Tab na Beats, kasama ang Listen",
             "learnMore": {
               "items": [
                 {
-                  "title": "Isang beat sheet",
-                  "description": "Dito lang umiiral ang mga beat."
+                  "title": "Narrative spine",
+                  "description": "Ang mga beats ay isinulat at naka-lock sa Blueprint Room bago magsimula ang pagbuo ng script."
                 },
                 {
-                  "title": "Pagbuo ng script",
-                  "description": "Ang mga beat ang nagpapatakbo sa pagbuo ng script, kaya ino-optimize ang mga ito bago ang Production Stage."
+                  "title": "Pacing muna",
+                  "description": "Ang pag-optimize ng beat sheet dito ay nagsisiguro na ang screenplay ay bubuo nang may masikip na dramatikong istraktura."
                 },
                 {
-                  "title": "Mga Kabanata",
+                  "title": "Beat-to-chapter mapping",
                   "description": "Ginagawang kabanata ng Production Stage ang bawat yugto."
                 }
               ]
@@ -433,44 +435,44 @@
           },
           {
             "icon": "castLocations",
-            "title": "Idirekta ang mga tauhan at mga lokasyon",
-            "description": "Buksan ang Characters at i-direk ang cast. Buksan ang Setting sa Story tab at i-direk ang mga lokasyon kasabay nito. Nakakaapekto ang cast sa pagbuo ng script, kaya itinatakda ang mga ito bago pa man kailanganing baguhin (refactor) ng Production Stage ang script.",
+            "title": "Cast at World Design",
+            "description": "Tukuyin ang iyong mga character, wardrobe, at pangunahing lokasyon bago mabuo ang screenplay—tiyaking nakasulat ang script sa paligid ng iyong eksaktong cast at mga setting mula sa unang pahina.",
             "screenshot": "Tab na Characters, pagkatapos ay Setting sa Story",
             "learnMore": {
               "items": [
                 {
-                  "title": "Mga Tauhan",
-                  "description": "Ang tab na Characters ay tumutukoy sa cast, at ang cast ay nakaiimpluwensya sa pagbuo ng script."
+                  "title": "Mga profile ng character",
+                  "description": "Idirekta ang iyong mga profile sa cast sa harap upang tumugma ang diyalogo at pagharang sa bawat karakter."
                 },
                 {
-                  "title": "Mga Lokasyon",
-                  "description": "Ang mga lokasyon ang nagsisilbing tagpuan sa tab na Story."
+                  "title": "Mundo at lokasyon",
+                  "description": "Magtatag ng mga pangunahing setting sa tab na Kwento upang maiangkla ang kapaligiran ng bawat eksena."
                 },
                 {
-                  "title": "Bago ang iskrip",
-                  "description": "Ang pagdidirekta sa pareho rito ay nakaiiwas sa malawakang refactoring ng script sa Production Stage."
+                  "title": "Zero script refactoring",
+                  "description": "Ang pag-lock ng cast at mga lokasyon bago ang pagbuo ng script ay nag-aalis ng magastos na muling pagsulat sa Production Stage."
                 }
               ]
             }
           },
           {
             "icon": "blueprintDirector",
-            "title": "Direktor ng Blueprint",
-            "description": "Tinatanggap ng Director ang pagbabago gamit ang sarili mong mga salita, pasalita man o nakasulat. Ituon ang pag-edit sa mga beat, karakter, o kuwento, at pagkatapos ay tingnan ang preview ng rebisyon. Walang mababago hangga't hindi mo ito inilalapat.",
+            "title": "Ang Blueprint Director",
+            "description": "Sabihin o i-type ang iyong mga tala ng kuwento upang baguhin ang mga beats, character, o mga detalye ng mundo. I-preview ang isang balanseng rebisyon nang magkatabi—walang magbabago sa iyong paggamot hanggang sa aprubahan mo ang pagputol.",
             "screenshot": "Blueprint Direktor — direksyon, pokus, paunang-tingin, Ilapat ang rebisyon",
             "learnMore": {
               "items": [
                 {
-                  "title": "Ang iyong mga salita",
-                  "description": "Banggitin o i-type ang pagbabago, at ituon ito sa mga beat, tauhan, o kuwento."
+                  "title": "Mga naka-target na tala",
+                  "description": "Sabihin o i-type ang iyong direksyon at ituon ang rebisyon sa Beats, Characters, o Story."
                 },
                 {
-                  "title": "Paunang-tingin",
-                  "description": "Ipinapakita ng pagbuo ng balanseng rebisyon ang pagbabago bago mo ito ilapat."
+                  "title": "Magkatabing preview",
+                  "description": "Suriin ang isang balanseng rebisyon bago gumawa ng anumang mga pagbabago sa iyong Blueprint."
                 },
                 {
-                  "title": "Ipinapahid mo ito",
-                  "description": "Walang magbabago hangga't hindi mo ipinapatupad ang rebisyon."
+                  "title": "Hawak mo ang lock",
+                  "description": "Walang magbabago sa iyong paggamot hanggang sa tahasan mong ilapat ang rebisyon."
                 }
               ]
             }
@@ -478,35 +480,35 @@
           {
             "icon": "blueprintResonance",
             "title": "Audience Resonance",
-            "description": "I-save ang audience, pagkatapos ay mag-Analyze. Makikita mo ang mga score at ang mga rekomendasyon. Walang magbabago sa blueprint hangga't hindi ka naglalapat ng rekomendasyon sa Blueprint Director.",
+            "description": "Markahan ang iyong paggamot laban sa kultural at demograpikong profile ng iyong target na madla. Maagang mahuli ang mga structural pacing gaps at ilapat ang mga naka-target na rekomendasyon sa Blueprint Director.",
             "screenshot": "Audience Resonance — naka-save na audience, mga score, mga rekomendasyong hindi pa naipapatupad",
             "learnMore": {
               "items": [
                 {
-                  "title": "Ang babasahin",
-                  "description": "I-save ang audience, pagkatapos ay magsagawa ng pagsusuri, at basahin ang mga score at rekomendasyon."
+                  "title": "Pre-script validation",
+                  "description": "Suriin ang iyong paggamot laban sa iyong target na madla upang makita ang mga marka ng kategorya at tala ng kuwento."
                 },
                 {
-                  "title": "Opsyonal",
-                  "description": "Binabago lamang ng isang rekomendasyon ang blueprint kapag inilapat mo ito sa Blueprint Director."
+                  "title": "Pinipiling aplikasyon",
+                  "description": "Binabago lamang ng mga rekomendasyon ang iyong Blueprint kapag pinili mong ilapat ang mga ito."
                 }
               ]
             }
           },
           {
             "icon": "goToProduction",
-            "title": "Punta sa Production Stage",
-            "description": "Pumunta sa Production Stage kapag nakahanda na ang storyline, ang mga beat, at ang cast. Ang 90-minutong script ay bubuuin batay sa board na ito. Hindi na kailangang buuin muli ang storyline sa Production Stage.",
+            "title": "Greenlight sa Produksyon",
+            "description": "Kapag na-lock ang treatment, beat sheet, at cast, tumungo sa Production Stage. Kino-compile ng SceneFlow ang iyong buong multi-chapter na script nang direkta mula sa iyong naaprubahang Blueprint.",
             "screenshot": "Punta sa Production Stage — nakatakda na ang storyline, mga beat, at cast.",
             "learnMore": {
               "items": [
                 {
-                  "title": "Ang paglilipat",
-                  "description": "Ang pagpunta sa Production Stage ay nagbubukas ng script mula sa blueprint na ito."
+                  "title": "Walang putol na compilation",
+                  "description": "Ang pagpasok sa Production Stage ay nagtitipon ng buong script nang direkta mula sa iyong naaprubahang Blueprint."
                 },
                 {
-                  "title": "Nakaset na",
-                  "description": "Ang takbo ng kuwento, ang mga mahahalagang bahagi nito, at ang mga tauhan ay naidirehe na."
+                  "title": "Naka-lock na pundasyon",
+                  "description": "Ang iyong storyline, beat structure, at cast ay dumating na handa para sa direksyon ng eksena at shot."
                 }
               ]
             }
@@ -516,215 +518,109 @@
       {
         "id": "production-stage",
         "label": "Production Stage",
-        "promise": "Sa yugtong ito, ang pinal na plano ay nagiging aktwal na palabas. Kontrolin ang gastusin gamit ang sarili mong mga pamamaraan at plano. I-optimize ang bawat eksena nang sabay-sabay, pagkatapos ay buuin ang bawat isa ayon sa pagkakasunod-sunod—direksyon, audio, musika, continuity, at mga still—at suriin ang animatic bago gumastos para sa video. I-generate ang mga clip, i-mix ang mga ito, gumawa ng mga bersyon sa iba't ibang wika, at ipadala ang eksena, kabanata, master copy, o promo.",
-        "spend": {
-          "label": "Kontrolin ang Paggastos",
-          "features": [
-            {
-              "icon": "byok",
-              "title": "Dalhin ang Sariling Susi",
-              "description": "Ikonekta ang sarili mong mga key para sa provider ng imahe at video. Tatakbo ang proseso ng pag-generate gamit ang iyong account at sa iyong mga rate, habang nananatili naman ang guided studio — kabilang ang mga agent, continuity, Mixer, at Screening Room.",
-              "screenshot": "Mga BYOK key",
-              "learnMore": {
-                "items": [
-                  {
-                    "title": "Ang iyong mga susi",
-                    "description": "Ikonekta ang mga key ng provider ng imahe at video upang tumakbo ang proseso ng pagbuo gamit ang iyong account at sa iyong mga rate."
-                  },
-                  {
-                    "title": "Parehong studio",
-                    "description": "Mananatili sa kanilang pwesto ang mga agent, continuity, ang Mixer, at ang Screening Room."
-                  }
-                ]
-              }
-            },
-            {
-              "icon": "budget",
-              "title": "Tagaplano ng Produksyon",
-              "description": "Magtakda ng bilang ng mga rebisyon para sa bawat shot bago ka gumastos. Ang mga target na ito ay isinasama sa antas ng eksena, kabanata, at master file, at ang petsa ng pagsisimula ang bumubuo sa iskedyul kasabay ng petsa ng pagtatapos.",
-              "screenshot": "Tagaplano ng Produksyon",
-              "learnMore": {
-                "items": [
-                  {
-                    "title": "Mga tinamaang target",
-                    "description": "Itakda ang mga bersyon ng still at clip para sa bawat shot, at pagsama-samahin ang mga ito patungo sa scene, chapter, at master."
-                  },
-                  {
-                    "title": "Nakapetsang iskedyul",
-                    "description": "Ang petsa ng pagsisimula at mga araw ng pagtatrabaho ay bumubuo ng iskedyul na may mga naipong kredito."
-                  },
-                  {
-                    "title": "I-reset batay sa mga aktwal na datos",
-                    "description": "Maaaring i-reset ng mga natapos na eksena ang mga target batay sa aktwal na halaga ng mga ito."
-                  },
-                  {
-                    "title": "Katayuan ng telepono",
-                    "description": "Tingnan ang bilis ng pagbabasa, nagastos, at petsa ng pagtatapos sa iyong telepono, habang ang pag-e-edit ay ginagawa sa desktop o tablet."
-                  }
-                ]
-              }
-            }
-          ]
-        },
+        "headline": "Mula sa script hanggang master, lahat sa isang silid.",
+        "promise": "Ang Blueprint ay naka-lock. Cast ang iyong cast. Ngayon, pumunta sa Production Stage. Ang bawat kabanata, eksena, at kuha ay nakaayos sa isang linear na daloy ng trabaho. Itinuro mo ang layunin; intelligent agents execute the generation.",
         "groups": [
           {
             "id": "script",
-            "label": "I-optimize ang script",
+            "label": "Direkta at Kontrol",
+            "headline": "Sabihin ang wika ng pelikula, hindi ang syntax ng mga senyas.",
+            "description": "Huwag mag-aksaya ng oras sa pag-type ng mga naka-bracket na keyword. Nauunawaan ng Production Stage ang natural na direksyon, na inilalapat ang iyong paningin sa buong eksena o pababa sa partikular na kuha.",
             "features": [
               {
                 "icon": "scriptResonance",
-                "title": "Audience Resonance",
-                "description": "Binabasa ng Audience Resonance ang buong iskrip nang sabay-sabay, kung saan ang bawat eksena ay magkakaakma. Makikita mo nang magkasama ang mga score at mga tala, at walang anumang bahagi ang muling isusulat hangga't hindi mo ito pinipili.",
-                "screenshot": "Audience Resonance — mga iskor at tala sa bawat eksena, hindi pa naipapatupad",
+                "title": "Ang Direktor ng Scene at Shot",
+                "description": "I-type o sabihin ang iyong direksyon sa simpleng wika. Sabihin sa ahente kung sino ang nasa frame, kung saan gumagalaw ang camera, at kung ano ang emotional beat. Awtomatikong isinusulat ng Shot Director ang kumplikadong pinagbabatayan na mga senyas para sa iyong mga still at clip.",
+                "screenshot": "The Scene & Shot Director — direksyon sa simpleng wika para sa mga still at clip",
                 "learnMore": {
                   "items": [
                     {
-                      "title": "Bawat eksenang magkasama",
-                      "description": "Nilalapatan nito ng musika ang iskrip bilang isang buong piyesa, kalakip ang mga tala tungkol sa mga eksenang magkakasabay na isinasagawa."
+                      "title": "Payak na wika",
+                      "description": "I-type o sabihin kung sino ang nasa frame, kung saan gumagalaw ang camera, at kung ano ang emotional beat."
                     },
                     {
-                      "title": "Ikaw ang pumili",
-                      "description": "Walang anumang isinusulat muli hangga't hindi ka pumipili kung aling mga tala ang pagbabatayan ng iyong pagkilos."
+                      "title": "Eksena o pagbaril",
+                      "description": "Ilapat ang iyong paningin sa buong eksena o pababa sa partikular na kuha."
+                    },
+                    {
+                      "title": "Maagap na compilation",
+                      "description": "Awtomatikong isinusulat ng Shot Director ang pinagbabatayan na mga senyas para sa iyong mga still at clip."
                     }
                   ]
                 }
               },
               {
                 "icon": "castVisual",
-                "title": "Mga tauhan, kasuotan, at boses",
-                "description": "Tukuyin muna ang mga tauhan bago simulan ang mga eksena. Siguraduhin ang hitsura ng karakter, ang kasuotan, at ang boses, upang sa bawat susunod na larawan at video clip ay iisang tao pa rin ang makikita.",
-                "screenshot": "Tauhan, kasuotan, at boses",
+                "title": "Ang Continuity Library",
+                "description": "Ganap na pagkakapare-pareho sa buong serye. Awtomatikong bumuo o manu-manong magtalaga ng mga reference na larawan para sa iyong cast, wardrobe, lokasyon, at mahahalagang props upang matiyak na ang bawat kuha ay tumutugma sa Blueprint.",
+                "screenshot": "Ang Continuity Library — cast, wardrobe, lokasyon, at mahahalagang props",
                 "learnMore": {
                   "items": [
                     {
-                      "title": "Tauhan at kasuotan",
-                      "description": "Iguguhit ng Cast Agent ang karakter at ang mga kasuotan nito."
+                      "title": "Consistent ng serye",
+                      "description": "Panatilihing pinagsama ang cast, wardrobe, lokasyon, at mahahalagang props sa bawat kuha."
                     },
                     {
-                      "title": "Boses",
-                      "description": "Itinatakda ang boses ng karakter bago buuin ang mga eksena."
-                    },
-                    {
-                      "title": "Parehong tao",
-                      "description": "Ang bawat still at bawat clip ay nangangailangan ng lock na iyon."
+                      "title": "Bumuo o magtalaga",
+                      "description": "Awtomatikong bumuo ng mga reference na larawan o manu-manong italaga ang iyong sarili upang tumugma sa Blueprint."
                     }
                   ]
                 }
               },
               {
                 "icon": "directShot",
-                "title": "Direktang tira",
-                "description": "Kinukuha ng Direct Shot ang shot gamit ang sarili mong mga salita—sa pamamagitan man ng pag-type o pagbigkas. Maaari mong i-preview at i-save ang direksyon, at sabay na mag-a-update ang mga prompt para sa still image at clip.",
-                "screenshot": "Direct Shot — mag-type o magdikta, i-preview, i-save",
+                "title": "Pagsasama ng Audience Resonance",
+                "description": "Magbasa sa kwarto bago ka mag-render. Sinusuri ng AI ang iyong script laban sa iyong target na audience, na nagbibigay ng mga insight sa bawat eksena. Ilapat agad ang mga inirerekomendang direksyon, o magtiwala sa iyong bituka at huwag pansinin ang mga ito.",
+                "screenshot": "Audience Resonance Integration — mga insight ng audience sa bawat eksena",
                 "learnMore": {
                   "items": [
                     {
-                      "title": "Partikular na tira",
-                      "description": "Ang diyalogo ay pinamagatang Direct Shot · Scene N · Shot N."
+                      "title": "Mga insight sa bawat eksena",
+                      "description": "Sinusuri ng AI ang iyong script laban sa iyong target na audience bago ka mag-render."
                     },
                     {
-                      "title": "I-type o idikta",
-                      "description": "Isulat o diktahan ang tala, pagkatapos ay tingnan muna ang direksyon bago ito i-save."
-                    },
-                    {
-                      "title": "Parehong mga prompt",
-                      "description": "Ang pag-save ay sabay na nag-a-update sa still prompt at clip prompt."
-                    },
-                    {
-                      "title": "Pagkatapos ng mga clip, muli",
-                      "description": "Kung mali ang nabuong shot, buksan ang Direct Shot at itama ito muli."
+                      "title": "Ang tawag mo",
+                      "description": "Ilapat agad ang mga inirerekomendang direksyon, o magtiwala sa iyong bituka at huwag pansinin ang mga ito."
                     }
                   ]
                 }
               },
               {
                 "icon": "audioAgent",
-                "title": "Audio Agent",
-                "description": "Binubuo ng Audio Agent ang diyalogo, mga sound effect, at musika ng eksena. Maririnig ang eksena bago maubos ang clip.",
-                "screenshot": "Audio Agent — diyalogo, mga sound effect, at musika",
+                "title": "Plano ng Produksyon",
+                "description": "Itakda ang pagbuo ng badyet at iskedyul sa bawat eksena at kabanata gamit ang mga kredito ng SceneFlow o sarili mong BYOK API key. Itakda ang tahimik at i-clip ang mga target sa bawat shot bago ka gumastos ng compute.",
+                "screenshot": "Production Planner — badyet, iskedyul, at BYOK API key",
                 "learnMore": {
                   "items": [
                     {
-                      "title": "Diyalogo at mga epekto",
-                      "description": "Ang dialogue ay nakatuon sa pagsasalita, samantalang ang mga sound effect ay para sa mga shot na may tiyak na cue."
+                      "title": "Badyet at iskedyul",
+                      "description": "Itakda ang pagbuo ng badyet at iskedyul sa bawat eksena at kabanata bago ka mag-render."
                     },
                     {
-                      "title": "Musika",
-                      "description": "Dinadala ng musika ang eksena kasabay ng diyalogo."
-                    },
-                    {
-                      "title": "Bago ang paggalaw",
-                      "description": "Pakinggan ang eksena bago mo buksan ang Clips."
+                      "title": "Mga kredito o BYOK",
+                      "description": "Patakbuhin ang pagbuo gamit ang SceneFlow credits o sarili mong BYOK API keys."
                     }
                   ]
                 }
               },
               {
                 "icon": "continuity",
-                "title": "Pagpapatuloy",
-                "description": "Gumawa lamang ng mga reference na kailangan ng eksenang ito kapag handa na ang eksena. Mananatili sa dati nilang estado ang mga naunang eksena dahil naka-lock na ang mga ito, kaya hindi mo na kailangang iguhit muli ang mga reference na aprubado na.",
-                "screenshot": "Pagpapatuloy — mga sanggunian ng eksenang ito lamang",
+                "title": "Iskrip ng Produksyon",
+                "description": "Binuo para sa tradisyonal at AI na mga gumagawa ng pelikula. I-preview ang malinis at na-format na screenplay sa studio at i-export sa mga format na pamantayan sa industriya (PDF, FDX, Fountain). Gamitin ang SceneFlow bilang isang standalone na script room—o ipares ang iyong screenplay sa Pre-Vis Animatic at Promo Trailer para mag-pitch ng mga financier at secure ang pagpopondo ng proyekto.",
+                "screenshot": "Production Script — in-platform na preview at PDF, FDX, at Fountain export",
                 "learnMore": {
                   "items": [
                     {
-                      "title": "Ang eksenang ito lamang",
-                      "description": "Iguhit ang mga tauhan, lokasyon, at props na kailangan ng eksenang ito, at huwag nang galawin ang iba."
+                      "title": "In-platform na preview at export",
+                      "description": "I-preview ang na-format na script sa studio at i-export sa industry-standard na PDF, Final Draft FDX, o Fountain na format."
                     },
                     {
-                      "title": "Tamang-tama sa oras",
-                      "description": "I-generate ang mga ito kapag handa na ang eksena, hindi nang sabay-sabay para sa buong pelikula."
+                      "title": "Para sa mga tradisyunal na gumagawa ng pelikula",
+                      "description": "Gamitin ang SceneFlow bilang isang matalinong platform ng paggawa ng script nang hindi gumagawa ng video."
                     },
                     {
-                      "title": "Naka-lock na",
-                      "description": "Ang pagbabago sa isang eksena ay hindi nagbabago sa mga reperensiyang ginagamit na ng mga naunang eksena."
-                    }
-                  ]
-                }
-              },
-              {
-                "icon": "stillsAgent",
-                "title": "Stills Agent",
-                "description": "Binubuo ng Stills Agent ang mga shot frame batay sa naaprubahang direksyon. Mananatili ang direksyon at audio sa estado kung paano mo sila iniwan, at susunod na lamang ang mga clip.",
-                "screenshot": "Stills Agent — mga frame ng kuha",
-                "learnMore": {
-                  "items": [
-                    {
-                      "title": "Mga frame ng kuha",
-                      "description": "Iginuguhit nito ang still para sa bawat shot sa eksena."
-                    },
-                    {
-                      "title": "Mananatili ang direksyon",
-                      "description": "Ang muling pagbuo ng frame ay nag-a-update sa imahe, habang nananatiling hindi nagbabago ang direksyon at audio."
-                    },
-                    {
-                      "title": "Bago ang mga clip",
-                      "description": "Aprubahan ang mga still bago mo buksan ang Clips."
-                    }
-                  ]
-                }
-              },
-              {
-                "icon": "animatic",
-                "title": "Animatic",
-                "description": "Panoorin ang eksena sa Screening Room bilang isang animatic—mga still image na may kasamang dialogue, musika, at mga effect. Ibahagi ito upang makakuha ng feedback, at tapusin ang bawat eksena sa ganitong paraan bago simulan ang mismong video production; sa ganitong paraan, hindi na kakailanganing ulitin ang paggawa ng mga clip sakaling magkaroon ng pagbabago sa script. Para sa maraming creator, ang animatic na mismo ang itinuturing na tapos na obra, at maaari itong i-render bilang MP4.",
-                "screenshot": "Animatic para sa Screening Room, kasama ang share",
-                "learnMore": {
-                  "items": [
-                    {
-                      "title": "Larawan at tunog",
-                      "description": "Ipinapalabas ng animatic ang mga inaprubahang still kasama ang diyalogo, musika, at mga sound effect."
-                    },
-                    {
-                      "title": "Ibahagi",
-                      "description": "Magpadala ng isang link para mapanood ng mga reviewer ang animatic at makapag-iwan sila ng mga tala sa larawan."
-                    },
-                    {
-                      "title": "Bago ang video",
-                      "description": "Tapusin muna ang mga eksena bilang mga animatic bago gumawa ng mga clip, upang hindi na kailangang ulitin ang pag-render ng video sakaling magkaroon ng pagbabago sa script."
-                    },
-                    {
-                      "title": "Ang MP4",
-                      "description": "Para sa maraming creator, ang animatic ang mismong huling produkto, at maaari itong i-render bilang MP4."
+                      "title": "Pagpopondo ng pitch at proyekto",
+                      "description": "I-package ang iyong script ng Pre-Vis Animatic at Promo Trailer para i-pitch at makakuha ng pagpopondo ng proyekto."
                     }
                   ]
                 }
@@ -733,86 +629,78 @@
           },
           {
             "id": "video",
-            "label": "Video",
+            "label": "Bumuo at Pag-audit",
+            "headline": "Patunayan ang hiwa bago mo gastusin ang pagkalkula.",
+            "description": "Huwag hulaan kung paano gaganap ang isang eksena. Pinaghihiwalay ng SceneFlow ang audio at still generation mula sa mamahaling motion rendering, na hinahayaan kang i-audit muna ang ritmo ng pag-edit.",
             "features": [
               {
                 "icon": "videoAgent",
-                "title": "Video Agent",
-                "description": "Gumagawa ang Video Agent ng mga shot clip sa Clips tab. Panoorin ang pinagdugtong-dugtong na eksena sa Screening Room, at kung may mali sa isang shot, idirekta itong muli sa Direct Shot.",
-                "screenshot": "Video Agent, kasunod ang pinagdugtong na eksena",
+                "title": "Ang Audio Agent",
+                "description": "Bumuo ng dialogue, sound effects, at mga marka ng musika nang sabay-sabay sa hanggang 30 shot bawat eksena. Awtomatikong tumutugma ang mga boses ng cast sa mga profile ng character o maaaring custom-tuned.",
+                "screenshot": "Ang Audio Agent — sabay-sabay na diyalogo, sound effects, at mga marka ng musika",
                 "learnMore": {
                   "items": [
                     {
-                      "title": "Mga nakunan na clip",
-                      "description": "Gumagawa ang Video Agent ng clip para sa bawat shot mula sa inaprubahang still."
+                      "title": "Kasabay na audio",
+                      "description": "Bumuo ng dialogue, sound effects, at mga marka ng musika nang sabay-sabay sa hanggang 30 shot bawat eksena."
                     },
                     {
-                      "title": "Pinagtagpi-tagping eksena",
-                      "description": "Suriin ang eksenang pinagdugtong-dugtong sa Screening Room."
-                    },
-                    {
-                      "title": "Idirekta itong muli",
-                      "description": "Magbukas ng Direct Shot—sa pamamagitan ng pag-type o pag-dictate—kapag mali ang isang clip."
+                      "title": "Mga boses ng character",
+                      "description": "Awtomatikong tumutugma ang mga boses ng cast sa mga profile ng character o maaaring custom-tuned."
                     }
                   ]
                 }
               },
               {
                 "icon": "mixer",
-                "title": "Mixer",
-                "description": "Tinatapos ng Mixer ang eksena sa loob ng Production Stage. Isama o alisin ang mga shot, i-trim ang mga ito, balansehin ang tunog, at i-render ang eksena kasama ang audio nito.",
-                "screenshot": "Mixer — isama, putulin, balansehin, ipatong, watermark",
+                "title": "Ang Stills Agent",
+                "description": "Mabilis na buuin ang mga keyframe na larawan na naglalarawan ng direksyon ng iyong pagbaril. Buuin muli, i-edit, o i-upload ang iyong sariling mga sanggunian upang i-lock ang komposisyon.",
+                "screenshot": "Ang Stills Agent — komposisyon at mga sanggunian ng keyframe",
                 "learnMore": {
                   "items": [
                     {
-                      "title": "Mga shot",
-                      "description": "Isama o alisin ang mga indibidwal na kuha, at paikliin ang mga natira."
+                      "title": "Pagbuo ng keyframe",
+                      "description": "Mabilis na buuin ang mga keyframe na larawan na naglalarawan ng direksyon ng iyong pagbaril."
                     },
                     {
-                      "title": "Diyalogo",
-                      "description": "Itakda ang lakas ng tunog at bilis para sa bawat linya ng diyalogo."
-                    },
-                    {
-                      "title": "Mga riles",
-                      "description": "Balansihin ang pagsasalaysay, diyalogo, mga sound effect, at musika, kabilang ang pag-fade at pag-loop ng musika."
-                    },
-                    {
-                      "title": "Mga Overlay",
-                      "description": "Maglagay ng mga text overlay sa eksena."
-                    },
-                    {
-                      "title": "Watermark",
-                      "description": "Magdagdag ng watermark na teksto o imahe."
-                    },
-                    {
-                      "title": "Magbigay",
-                      "description": "I-render ang eksena kasama ang audio nito, at ang render na iyon ang ipinapatugtog ng Screening Room."
+                      "title": "I-lock ang komposisyon",
+                      "description": "Buuin muli, i-edit, o i-upload ang iyong sariling mga sanggunian bago gumawa ng paggalaw."
                     }
                   ]
                 }
               },
               {
                 "icon": "languageStreams",
-                "title": "Mga bersyon sa iba't ibang wika",
-                "description": "Ang eksenang ito ay isang bersyon sa ibang wika, hindi isang bagong produksyon. Binibigkas ng Gemini TTS ang dub sa 44 na wika, at sa bawat shot ay maaari mong i-dub ang linya o muling buuin ang clip, kabilang na ang mga nakasulat na karatula.",
-                "screenshot": "Bersyong pangwika — Dubbing, Lip-sync, o Regenerate, kabilang ang mga karatula",
+                "title": "Ang Pre-Vis Animatic",
+                "description": "Panoorin ang eksenang huminga. Suriin ang isang ganap na naka-assemble na animatic—mga naka-stitch na still, Ken Burns motion, at naka-lock na audio—sa Screening Room. I-audit ang pacing, ibahagi para sa feedback, at tiyaking gagana ang cut bago mag-commit sa video.",
+                "screenshot": "Ang Pre-Vis Animatic — mga stitched still, Ken Burns motion, at naka-lock na audio",
                 "learnMore": {
                   "items": [
                     {
-                      "title": "Apatnapu't apat na wika",
-                      "description": "Binibigkas ng Gemini TTS ang dub sa 44 na wika."
+                      "title": "Pinagsama-samang animatiko",
+                      "description": "Suriin ang mga stitched still, Ken Burns motion, at naka-lock na audio sa Screening Room."
                     },
                     {
-                      "title": "Bawat shot",
-                      "description": "Sa bawat shot, piliin ang Double upang ipatong ang dubbed na boses, Lip-sync upang isagawa ito, o Regenerate upang bumuo ng bagong clip mula sa isinaling linya."
+                      "title": "I-audit at ibahagi",
+                      "description": "I-audit ang pacing, ibahagi para sa feedback, at tiyaking gagana ang cut bago mag-commit sa video."
+                    }
+                  ]
+                }
+              },
+              {
+                "icon": "videoAgent",
+                "title": "Ang Clips Agent",
+                "description": "Kapag naaprubahan na ang Pre-Vis, papalitan ng Clips Agent, na nagre-render ng mga high-fidelity motion clip na mahigpit na sumusunod sa iyong mga naaprubahang still at continuity reference.",
+                "screenshot": "Ang Clips Agent — high-fidelity motion clips mula sa mga aprubadong still",
+                "learnMore": {
+                  "items": [
+                    {
+                      "title": "Pagkatapos ng pag-apruba ng Pre-Vis",
+                      "description": "Ang Clips Agent ay gumagawa lamang ng paggalaw pagkatapos maaprubahan ang Pre-Vis animatic."
                     },
                     {
-                      "title": "Mga karatula",
-                      "description": "Gumawa muli ng kuha ng karatula kung ang larawan ay may tekstong kailangang baguhin."
-                    },
-                    {
-                      "title": "Tamang panahon",
-                      "description": "Ang bilis ng video ay itinatakda para sa bersyong iyon ng wika, dahil ang salin ay kadalasang 10–30% na mas mahaba kaysa sa orihinal na bersyon."
+                      "title": "Mahigpit na pagsunod",
+                      "description": "Ang mga high-fidelity na motion clip ay mahigpit na sumusunod sa iyong mga naaprubahang still at continuity reference."
                     }
                   ]
                 }
@@ -821,30 +709,78 @@
           },
           {
             "id": "publish",
-            "label": "I-publish",
+            "label": "I-publish at Ipamahagi",
+            "headline": "Ipadala ang master, o i-localize para sa mundo.",
+            "description": "Kapag tapos na ang eksena, pinag-isa na ang mga asset. Tapusin ang pag-edit, i-localize ang audio, at direktang ipamahagi sa iyong audience.",
             "features": [
               {
                 "icon": "shipPackage",
-                "title": "I-package at ipadala",
-                "description": "Ihanda at buuin ang isang eksena, kabanata, master copy, o promo kapag tapos na ito. I-publish ito sa YouTube, Facebook, o TikTok, o kaya ay i-download ang MP4, at ipagpatuloy ang pagbuo sa iba pang bahagi.",
-                "screenshot": "Ihanda at ipadala — eksena, kabanata, master, promo; YouTube, Facebook, TikTok, MP4",
+                "title": "Ang Mixer",
+                "description": "Isang built-in, intuitive na editor ng eksena. I-trim ang mga clip, ayusin ang mga speed ramp, magdagdag ng mga overlay ng text, at maglapat ng mga watermark nang hindi umaalis sa studio.",
+                "screenshot": "Ang Mixer — trim clip, speed ramp, text overlay, at watermark",
                 "learnMore": {
                   "items": [
                     {
-                      "title": "Mga piraso",
-                      "description": "Ipadala ang isang eksena, kabanata, master copy, o promo."
+                      "title": "Built-in na editor ng eksena",
+                      "description": "Putulin ang mga clip at ayusin ang mga speed ramp nang direkta sa loob ng studio."
                     },
                     {
-                      "title": "Mga daloy ng wika",
-                      "description": "Maaaring isama ang bawat bersyon ng wika sa pakete."
+                      "title": "Mga pangwakas na pagpindot",
+                      "description": "Magdagdag ng mga overlay ng teksto at maglapat ng mga watermark nang hindi nag-e-export sa isang panlabas na editor."
+                    }
+                  ]
+                }
+              },
+              {
+                "icon": "languageStreams",
+                "title": "Mga Stream (Multi-Language)",
+                "description": "Palawakin ang iyong pandaigdigang abot sa 44 na wika kaagad. Awtomatikong bumuo ng mga kahaliling stream ng wika sa pamamagitan ng pag-dubbing ng audio, pag-sync ng paggalaw ng labi, o muling pagbuo ng mga localized na dialogue clip nang direkta sa loob ng eksena.",
+                "screenshot": "Mga Stream (Multi-Language) — binansagang audio at mga localized na dialogue clip",
+                "learnMore": {
+                  "items": [
+                    {
+                      "title": "Global abot",
+                      "description": "Awtomatikong bumuo ng mga kahaliling stream ng wika sa 44 na wika nang direkta sa loob ng eksena."
                     },
                     {
-                      "title": "Mga Destinasyon",
-                      "description": "I-publish sa YouTube, Facebook, o TikTok, o i-download ang MP4."
+                      "title": "Dub, lip-sync, o regenerate",
+                      "description": "I-localize ang bawat kuha sa pamamagitan ng pag-dubbing ng audio, pag-sync ng paggalaw ng labi, o muling pagbuo ng mga localized na dialogue clip."
+                    }
+                  ]
+                }
+              },
+              {
+                "icon": "promoTrailers",
+                "title": "Promo at Mga Trailer",
+                "description": "Gupitin ang mga trailer ng promo na handa sa lipunan anumang oras sa panahon ng produksyon. Bumuo ng mga multi-language na bersyon na na-optimize para sa pahalang o patayong mga format.",
+                "screenshot": "Promo at Trailer — multi-language horizontal at vertical trailer",
+                "learnMore": {
+                  "items": [
+                    {
+                      "title": "Mga trailer na handa sa lipunan",
+                      "description": "Gupitin ang mga trailer ng promo sa anumang oras sa panahon ng produksyon."
                     },
                     {
-                      "title": "Patuloy na magtayo",
-                      "description": "Ipadala ang bahaging tapos na at ipagpatuloy ang pagbuo sa natitirang bahagi."
+                      "title": "Mga format na maraming wika",
+                      "description": "Bumuo ng mga multi-language na bersyon na na-optimize para sa pahalang o patayong mga format."
+                    }
+                  ]
+                }
+              },
+              {
+                "icon": "shipPackage",
+                "title": "Direktang Paglalathala",
+                "description": "I-export ang panghuling master MP4, o hayaan ang SceneFlow na awtomatikong bumuo ng mga thumbnail at paglalarawan para direktang mag-publish ng mga eksena, kabanata, at promo sa YouTube, TikTok, at Facebook.",
+                "screenshot": "Direktang Pag-publish — Pag-export ng MP4 at direktang pag-publish sa YouTube, TikTok, at Facebook",
+                "learnMore": {
+                  "items": [
+                    {
+                      "title": "Master MP4 o direktang panlipunan",
+                      "description": "I-export ang panghuling master MP4 o direktang mag-publish ng mga eksena, kabanata, at promo sa YouTube, TikTok, at Facebook."
+                    },
+                    {
+                      "title": "Awtomatikong nabuong metadata",
+                      "description": "Hayaan ang SceneFlow na awtomatikong bumuo ng mga thumbnail at paglalarawan para sa bawat release."
                     }
                   ]
                 }
@@ -856,48 +792,49 @@
       {
         "id": "screening-room",
         "label": "Termino para sa Screening Room ng SFAI",
-        "promise": "Sa Screening Room pinapanood, sinusuri, at inilalabas ang tapos na cut. Isang player lang ang naglalaman ng Pre-Vis, mga eksena, mga kabanata, master, promo, at bawat Language Stream, kaya ang dub ay tumutugma sa mismong cut na ni-render ng Mixer. Magbahagi ng iisang link para sa playback at paglalagay ng mga tala tungkol sa video. I-publish ang 3–5 minutong eksena, 8–12 minutong kabanata, master, o promo kapag handa na ang mga ito, habang patuloy na binubuo ang iba pang bahagi.",
+        "headline": "I-screen ang cut, i-rally ang iyong team, at i-premiere sa buong mundo.",
+        "promise": "Ang iyong pribadong teatro at finishing suite. Panoorin ang Pre-Vis animmatic, indibidwal na mga eksena, kabanata, promo, at multi-language stream sa isang pinag-isang player. Magbahagi ng isang link para sa timestamped na mga tala ng stakeholder—at magpadala ng 3-5 minutong eksena, 8-12 minutong kabanata, promo, o master habang nagpapatuloy ang natitirang bahagi ng produksyon.",
         "features": [
           {
             "icon": "screeningPlayer",
-            "title": "Isang manlalaro",
-            "description": "Lumipat-lipat sa pagitan ng Pre-Vis, mga eksena, mga kabanata, master, at promo. Pumili ng Language Stream at pakinggan ang bersyong iyon — maaaring naka-dub, naka-lip-sync, o muling binuo nang shot-by-shot. Ang player ay nagpapakita ng eksaktong cut na ni-render ng Mixer.",
+            "title": "Isang Pinag-isang Manlalaro",
+            "description": "Mag-toggle nang walang putol sa pagitan ng Pre-Vis animatics, mga eksena, mga kabanata, mga trailer, at ang iyong huling master. Lumipat ng Mga Stream ng Wika sa mabilisang pag-audition sa mga dubbed, lip-sync, o shot-regenerated na localization—laging naka-lock sa eksaktong cut mula sa Mixer.",
             "screenshot": "Player ng Screening Room",
             "learnMore": {
               "items": [
                 {
-                  "title": "Isang ibabaw",
-                  "description": "Lumipat-lipat sa pagitan ng Pre-Vis, mga eksena, mga kabanata, master, at promo."
+                  "title": "Bawat milestone sa isang view",
+                  "description": "Lumipat nang walang kahirap-hirap sa Pre-Vis, mga eksena, mga kabanata, mga promo, at ang panghuling master."
                 },
                 {
-                  "title": "Daloy ng Wika",
-                  "description": "Pumili ng bersyon at pakinggan itong naka-dub, naka-lip-sync, o muling binuo nang shot-by-shot."
+                  "title": "Live na paglipat ng wika",
+                  "description": "Mag-audition sa anumang Language Stream—na-dub, lip-sync, o shot-regenerated—sa mabilisang."
                 },
                 {
-                  "title": "Parehong gupit",
-                  "description": "Ang player ay ang cut na ni-render ng Mixer."
+                  "title": "Naka-frame na naka-lock sa Mixer",
+                  "description": "Ang bawat stream ay nagpe-play ng eksaktong pag-edit at timing na nai-render sa Mixer."
                 }
               ]
             }
           },
           {
             "icon": "screeningCollab",
-            "title": "Magtulungan sa pag-edit",
-            "description": "Magbahagi ng isang link. Mapapanood ito ng mga reviewer gamit ang real playback at makakapag-iwan sila ng mga tala sa mismong video. Hindi mo na kailangang mag-export ng rough file at ipadala ito sa email para makakuha ng feedback. Makakatanggap ka ng abiso kapag may nag-iwan ng tala, at mababasa mo ito sa iyong telepono.",
+            "title": "Frame-Accurate Collaboration",
+            "description": "Ihinto ang pag-export ng mga magaspang na pagbawas sa email. Magbahagi ng pribadong link sa screening kung saan ang mga collaborator at mamumuhunan ay nanonood nang real time at direktang nag-drop ng mga tala sa larawan—na may mga instant na notification na ipinadala diretso sa iyong telepono.",
             "screenshot": "Ibinahaging pagsusuri",
             "learnMore": {
               "items": [
                 {
-                  "title": "Isang link",
-                  "description": "Pinapanood ito ng mga tagasuri gamit ang real playback at naglalagay sila ng mga tala sa mismong imahe."
+                  "title": "Mga link sa pribadong screening",
+                  "description": "Ang mga reviewer ay nanonood ng full-resolution na pag-playback at nag-iiwan ng timestamped na mga tala sa larawan."
                 },
                 {
-                  "title": "Walang rough cut na ipapadala sa email",
-                  "description": "Hindi ka nag-e-export ng rough file sa email upang mangalap ng feedback."
+                  "title": "Walang rough-cut na pag-export ng file",
+                  "description": "Mangolekta ng feedback ng stakeholder sa isang lugar nang hindi nagpapadala ng mabibigat na video file."
                 },
                 {
-                  "title": "Mga tala sa telepono",
-                  "description": "Aabisuhan ka ng isang nakasulat na mensahe na mababasa mo sa iyong telepono, habang nananatili ang studio sa desktop o tablet."
+                  "title": "Mga instant na alerto sa mobile",
+                  "description": "Inaabisuhan ka kaagad ng mga bagong tala ng tagasuri sa iyong telepono habang nagdidirekta ka sa desktop."
                 }
               ]
             }
@@ -911,6 +848,7 @@
     "description": "Gawing mga propesyonal na video ang iyong mga ideya gamit ang workflow automation na pinapagana ng AI."
   },
   "nav": {
+    "overview": "Pangkalahatang-ideya",
     "plansPricing": "Mga Plano at Pagpepresyo",
     "productionExamples": "Mga halimbawa",
     "keyFeatures": "Mga Tampok",
@@ -937,9 +875,9 @@
     "pricing": "Pagpepresyo"
   },
   "hero": {
-    "eyebrow": "Awtomatikong paggawa ng pelikula at serye",
+    "eyebrow": "Democratized filmmaking para sa mga storyteller, series creator, at studio",
     "headline": "Mula sa unang kislap hanggang sa ganap na obra maestra.",
-    "subheadline": "Ang SceneFlow ay isang sistematikong daloy ng trabaho na may gabay. Ikaw ang nagdidirekta sa kuwento, sa mga tauhan, at sa tono. Binubuo nito ang Blueprint, pinapanatili ang pagkakaugnay-ugnay ng mga eksena, ipinapalabas ang buong animatic, at pinagsasama-sama ang master copy — nang hindi na kailangan ng mga pagsubok sa prompt o timeline na binubuo ng mga hiwa-hiwalay na clip.",
+    "subheadline": "Kung maiisip mo ang isang kuwento, maaari kang magdirek ng isang pelikula—walang kinakailangang teknikal na paggawa ng pelikula o mga kasanayan sa pag-udyok. Ilarawan ang iyong pananaw sa pang-araw-araw na mga salita, at bubuo ng SceneFlow ang Blueprint, ikinakandado ang karakter at pagpapatuloy ng pagtatakda, pinapatugtog ang buong animatic, at tinatahi ang natapos na master.",
     "ctaPrimaryLaunch": "Launch Studio ($9)",
     "ctaSupportingLine": "Ang all-in-one studio para sa pagbuo, pag-export, at pamamahagi ng iyong mga kuwento. Mag-download ng master copy at ipadala ito kahit saan — o kaya ay mag-publish ng mga long-form cut at chapter sa {longForm}, at i-promote ang mga trailer sa {shorts}.",
     "ctaNetworkInvite": "Maaaring mag-apply ang mga natatanging proyekto para sa SceneFlow Network na eksklusibo para sa mga inanyayahan.",
@@ -948,20 +886,20 @@
     "ctaToolStack": "Tingnan kung paano nito pinapalitan ang iyong tool stack.",
     "chips": [
       {
-        "label": "Mula Konsepto Hanggang Tampok na Katangian",
-        "detail": "Palawigin ang mga ideya at gawin itong mga script na may habang 90 minuto sa Blueprint Room. Tukuyin ang mga karakter, sining, at mga yugto ng kuwento (beats), at hayaang pinuhin ng pagsusuri ng Audience Resonance ang iyong kuwento bago ka mag-shoot."
+        "label": "Mula sa Ideya hanggang sa Iskrip at Kabanata",
+        "detail": "Gawing mga structured na kabanata ang isang simpleng ideya sa wika o isang 90 minutong screenplay sa Blueprint Room. Tukuyin ang mga character, sining, at beats, pagkatapos ay hayaan ang Audience Resonance na ayusin ang iyong kuwento bago ka mag-shoot."
       },
       {
-        "label": "Magbigay ng direktang instruksyon nang may malinaw na layunin, hindi sa pamamagitan ng mga prompt.",
-        "detail": "Gamitin ang wika ng pelikula katuwang ang mga matalinong assistant na nakakaunawa sa iyong direksyon. Pinapanatili ng Reference Library ang iyong mga napiling cast, wardrobe, at lokasyon upang matiyak ang ganap na continuity."
+        "label": "Walang Mga Kasanayan sa Paggawa ng Pelikula Kinakailangan",
+        "detail": "Ipahayag ang iyong pananaw sa pang-araw-araw na mga salita—ang iyong AI Director ang humahawak sa format ng screenwriting, anggulo ng camera, pag-iilaw, at mga prompt habang ni-lock ng Continuity Library ang iyong cast, wardrobe, at mga lokasyon."
       },
       {
-        "label": "Produksyong Pinatatakbo ng mga Ahente",
-        "detail": "Pabilisin nang limang beses ang proseso ng pagbuo gamit ang mga intelligent agent na lumilikha ng mga eksenang binubuo ng 30 shot sa background. Malayang mag-eksperimento sa draft mode, at pagkatapos ay ilathala ang iyong pinal na likha sa napakalinaw na Hi-Res."
+        "label": "Pagtahi ng Eksena na Hinihimok ng Ahente",
+        "detail": "Pabilisin ang produksyon ng 5X gamit ang mga dalubhasang ahente na bumubuo ng diyalogo, musika, mga still, at mga clip nang magkatulad at awtomatikong nagtatahi ng 30-shot na mga eksena. I-preview muna sa Pre-Vis, pagkatapos ay i-render sa Hi-Res."
       },
       {
         "label": "Suriin, Makipagtulungan, Ilabas",
-        "detail": "Ibahagi ang progreso sa bawat yugto—mula sa audio animatics hanggang sa final master—sa Screening Room. Ipamahagi ang mga ito bilang short film o feature film sa iba't ibang wika upang maabot ang mga manonood sa buong mundo."
+        "detail": "Ibahagi ang pag-unlad sa bawat milestone—mula sa voiced animatics hanggang sa final master—sa Screening Room. I-publish sa mga episodic na kabanata o buong feature sa 70+ wika."
       }
     ],
     "pipelineSteps": [
@@ -1000,7 +938,7 @@
   "twoModes": {
     "eyebrow": "Ang sagabal na inaalis namin",
     "title": "Isang pipeline. Hindi isang tumpok ng mga tool.",
-    "subtitle": "SceneFlow replaces single-clip generators and a pile of separate docs, editors, and re-renders. Build the series or the 90-minute master, then publish a scene or a chapter when you are ready to earn.",
+    "subtitle": "Mga clip prompt, keyframe, pagsasalaysay ng boses, at musika na ginamit upang mabuhay sa magkahiwalay na mga tool. Pinagsasama-sama ng SceneFlow ang buong produksyon sa isang pipeline—para makabuo ka ng multi-episode series o 90 minutong master, at mag-publish ng mga natapos na eksena o kabanata habang nagpapatuloy ka.",
     "comingSoon": "Malapit na",
     "comparison": {
       "id": "comparison",
@@ -1009,19 +947,19 @@
     "cta": "Launch Studio ($9)"
   },
   "directControl": {
-    "eyebrow": "Ang kontrol na hawak mo",
-    "title": "Gabayan ang kuwento. Hayaan ang mga agent na magbigay ng mga prompt.",
-    "subtitle": "Ididirekta mo ang shot gamit ang simpleng pananalita. Nakasaad sa direksyon ng shot ang mga detalye para sa still image at clip prompt. Nakatapat sa beat ang mga cue ng musika at ang pagsasalaysay. Panoorin ang animatic, baguhin ang shot kung hindi ito tama, at saka ka pa lamang gumastos para sa motion.",
+    "eyebrow": "Walang kinakailangang teknikal na paggawa ng pelikula",
+    "title": "Ipahayag ang iyong paningin. Ang iyong AI crew ang humahawak sa craft.",
+    "subtitle": "Kung ikaw ay isang unang beses na storyteller o isang bihasang direktor, ilarawan lamang kung ano ang nangyayari sa mga simpleng salita. Pinangangasiwaan ng mga dalubhasang ahente ang cinematography, pag-prompt, mga music cue, diyalogo, at automated na scene stitching—upang mapanood mo muna ang buong animatic, pinuhin ang anumang beat on command, at pagkatapos lamang ay gumastos ng mga credit sa paggalaw.",
     "comparison": {
       "id": "direction",
-      "caption": "Isang paalala mula sa direktor, isang hudyat para sa clip, at musika at pagsasalaysay na sabay sa iisang beat."
+      "caption": "Awtomatikong pinagsama-sama ang direksyon ng kwento sa simpleng wika sa cinematography, musika, at pagsasalaysay."
     },
     "cta": "Launch Studio ($9)"
   },
   "publishCut": {
     "eyebrow": "Ang bersyong ilalathala mo",
     "title": "Mag-export kahit saan. Gamitin ang Premiere sa SceneFlow kapag nakuha mo na ito.",
-    "subtitle": "Download a master and ship it yourself, or publish finished scenes and chapters to {longForm} and cut trailers for {shorts} — without waiting on the whole cut. Before anything hits the public feed, run drafts or your final master through the Screening Room. Standout projects can apply for the invite-only SceneFlow Network; it is a curated accelerator, not an open storefront.",
+    "subtitle": "Mag-export ng master at ipamahagi kahit saan, o direktang mag-publish ng mga natapos na eksena at kabanata sa {longForm} na may mga patayong trailer na pinutol para sa {shorts} — larawan, musika, at pagsasalaysay na nasa cut na. Suriin ang bawat draft sa Screening Room bago i-release, at mag-apply sa SceneFlow Network na imbitado lang para sa pinondohan na acceleration ng audience.",
     "comparison": {
       "id": "publish",
       "caption": "A finished scene or chapter, and the 90-minute master, from one studio."
@@ -1034,6 +972,25 @@
     "badges": {
       "googleCloud": "Google Cloud",
       "vertexAi": "Vertex AI"
+    },
+    "wave": {
+      "eyebrow": "Sumakay sa AI → Superintelligence Wave",
+      "headline": "Mga De-kalidad na Produksyon Ngayon. Mga Awtomatikong Pag-upgrade ng Modelo Bukas.",
+      "subheadline": "Sa nakaraang taon, ang pagbuo ng video ay lumipat mula sa nakadiskonektang \"AI slop\" patungo sa makatotohanang sinehan. Kasama ang structured storytelling at automated scene stitching ng SceneFlow, maaari kang magpadala ng mga studio-grade production ngayon—habang ang bawat karakter at mundo na binuo mo ay awtomatikong sumasakay sa susunod na wave ng AI advancement.",
+      "pillars": [
+        {
+          "title": "Studio-Grade Scene Stitching Ngayon",
+          "description": "Hindi mo kailangang maghintay para sa mga modelo sa hinaharap na magsabi ng isang mahusay na kuwento. Ang arkitektura ng Blueprint ng SceneFlow, Reference Library, at awtomatikong pagtahi ng eksena ay ginagawang magkakaugnay, mga kabanata at pelikula ang mga frontier na modelo ngayon."
+        },
+        {
+          "title": "Ang Iyong Continuity Vault ay Future-Proof IP",
+          "description": "Ang mga modelo ay mga lente ng camera; ang iyong mga script, character, wardrobe, at set sa iyong Continuity Vault ay ang iyong permanenteng IP. Buuin ang iyong serye at audience ngayon—habang sumusulong ang mga modelo mula sa AI patungo sa Superintelligence (SI), awtomatikong nag-a-upgrade ang iyong kasalukuyang cast sa mga pinakabagong engine."
+        },
+        {
+          "title": "Higit pang Compute Power habang Bumababa ang Mga Gastos ng Token",
+          "description": "Habang lumalawak ang global compute at bumababa ang mga gastos sa token ng modelo, awtomatikong ipinapasa ng SceneFlow ang mga kahusayang iyon sa mga aktibong miyembro bilang mas maraming generation power sa bawat credit sa mga renewal at Add-On pack. Mag-subscribe ngayon at sumakay sa bawat paglukso."
+        }
+      ]
     }
   },
   "valueProp": {
@@ -1774,13 +1731,13 @@
     "titleAccent": "kumikilos",
     "subtitle": "Nagsisimula ang bawat halimbawa sa isang maikling trailer. Ang longform master — isang kumpletong produksyon mula sa Blueprint, sa pamamagitan ng Pre-Vis, hanggang sa final cut — ay ipinapalabas sa Screening Room.",
     "subtitleTagline": "Mga produksyong mahahaba ang durasyon. Hindi mga clip.",
-    "screeningRoomInstruction": "Suriin ang produksyong ito sa paraang ginagawa ng isang tagasuri — isa-isang yugto o milestone. Magsimula sa Series, susunod ang Blueprint, pagkatapos ay ang script sa AR Analysis, at tapusin sa Screening.",
+    "screeningRoomInstruction": "Buksan muna ang Screening Room para maranasan ang produksyon sa paraang gagawin ng isang reviewer — lumipat sa Pre-Vis, Clips, Scenes, Chapters, Master, at Promo — pagkatapos ay suriin ang Series Room, Blueprint Room, at Production Stage sa ilalim.",
     "trailerLabel": "Trailer",
     "watchLongform": "Panoorin ang mahabang bersyon",
-    "seriesDoor": "Serye",
-    "blueprintDoor": "Blueprint",
-    "scriptArDoor": "Pagsusuri ng Accounts Receivable",
-    "screeningDoor": "Pagsusuri",
+    "seriesDoor": "Series Room",
+    "blueprintDoor": "Blueprint Room",
+    "scriptArDoor": "Production Stage",
+    "screeningDoor": "Screening Room",
     "screeningRoomGroup": "Termino para sa Screening Room ng SFAI",
     "previsDoor": "Pre-biswalisasyon",
     "roughDoor": "Paunang Paghiwa",
@@ -2305,23 +2262,73 @@
     "closePopup": "Isara ang popup"
   },
   "pricing": {
-    "badge": "Simpleng Presyo",
+    "badge": "Studio Membership at Pagpepresyo sa Paggamit",
     "title": "Magsimula sa Explorer — $9",
-    "subtitle": "Subukan na ngayon ang kumpletong proseso sa pamamagitan ng madali at abot-kayang $9 na entry.",
-    "explorerHighlight": "Ang pinakamabilis na paraan upang maranasan ang kumpletong SceneFlow studio — mula sa konsepto hanggang sa Screening Room.",
+    "subtitle": "Simulan ang iyong unang pelikula ngayon sa halagang $9—gawing isang structured na Blueprint ang iyong ideya, i-cast ang iyong mga character, at i-preview ang iyong unang eksena. Pagkatapos ay mag-subscribe upang mapanatili ang iyong Continuity Vault at magdagdag ng mga credit habang tinatapos mo ang iyong produksyon.",
+    "explorerHighlight": "Walang kinakailangang teknikal na mga kasanayan sa paggawa ng pelikula—na ginawa para sa pang-araw-araw na mga storyteller, mga indie creator ng chapter-by-chapter, mga channel ng serye, at mga hybrid na studio ng pelikula.",
     "trustBadges": [
       "Ligtas na pagbabayad gamit ang Whop",
       "$9 Explorer para subukan ang studio",
-      "Mag-e-expire ang mga buwanang credit sa pagtatapos ng panahon.",
+      "Ang aktibong membership ay nagpapanatili ng Continuity Vault",
       "Maaaring kanselahin anumang oras"
     ],
     "valueAnchor": {
-      "traditionalCost": "Mahigit $2,000",
-      "traditionalLabel": "Tradisyonal na pre-visualization",
+      "traditionalCost": "$5,000–$50,000+",
+      "traditionalLabel": "Tradisyunal na pre-vis at produksyon",
       "vs": "laban sa",
-      "sceneFlowCost": "$49–149",
-      "sceneFlowLabel": "Buwanang SceneFlow",
-      "saveBadge": "Makatipid ng mahigit 90% bawat proyekto"
+      "sceneFlowCost": "$19–$599/buwan + Mga Add-On",
+      "sceneFlowLabel": "SceneFlow Studio at Continuity Vault",
+      "saveBadge": "Makatipid ng 90%+ sa bawat produksyon"
+    },
+    "filmmakerPerspectives": {
+      "heading": "Isang Studio Pipeline. Binuo para sa Bawat Storyteller at Filmmaker.",
+      "subheading": "Hindi mo kailangan ng paaralan ng pelikula o mga teknikal na kasanayan upang ipahayag ang iyong pananaw. Binibigyang-buhay mo man ang isang personal na kuwento sa unang pagkakataon, nag-publish ng isang serye na kabanata sa bawat kabanata, nagpi-pitch ng mga financier, o nagpapatakbo ng hybrid shoot, ang iyong plano ay sumasailalim sa kung paano ka gumagawa.",
+      "recommendedPathLabel": "Inirerekomendang landas:",
+      "cards": [
+        {
+          "id": "hobbyist",
+          "badge": "Walang Kailangan ng Karanasan sa Pelikula • $19/buwan",
+          "title": "Mga Storyteller at Creative Visionaries",
+          "description": "May kwento, konsepto ng libro, o family history na gusto mong makita sa screen? Ilarawan ang iyong pananaw sa mga simpleng salita upang lumikha ng mga tinig na Pre-Vis animatics at mga piling video clip—habang pinapanatili ang iyong mga character, wardrobe, at set sa iyong Continuity Vault.",
+          "recommendedPlan": "Hobbyist ($19/buwan)"
+        },
+        {
+          "id": "chapter",
+          "badge": "Mga Bagong Creator at Indie • $49/buwan",
+          "title": "Ang Diskarte sa I-publish ang Kabanata",
+          "description": "Laktawan ang hadlang sa gastos at oras ng pag-render ng 90 minutong feature nang maaga. I-publish ang iyong kwento sa loob ng 5–15 minutong mga eksena o episodic na kabanata upang pamahalaan ang iyong buwanang pagkalkula ng badyet habang patuloy na pinapalaki ang iyong audience.",
+          "recommendedPlan": "Starter ($49/buwan)"
+        },
+        {
+          "id": "series",
+          "badge": "Mga Pinagkakakitaang Channel • $149/buwan",
+          "title": "Character at Setting Continuity para sa Serye",
+          "description": "Nagsu-subscribe ang mga audience sa mga channel kapag kumonekta sila sa mga pamilyar na character at mundo. Ang iyong Continuity Vault ay nagpapanatili ng mga cast face, outfit, custom na voice clone, at lokasyon sa bawat episode para patuloy kang lumago sa YouTube, TikTok, at Reels.",
+          "recommendedPlan": "Pro ($149/buwan)"
+        },
+        {
+          "id": "hybrid",
+          "badge": "Mga Sanay at Hybrid Filmmakers • $149–$599/buwan",
+          "title": "Mga Pakete ng Pagpopondo sa Produksyon at Mga Hybrid Shoots",
+          "description": "I-export ang mga script na pamantayan sa industriya (PDF, FDX, Fountain) na ipinares sa Pre-Vis Animatic at Promo Trailer para ma-secure ang pagpopondo ng mamumuhunan—o mag-upload ng mga live-film na eksena at ihalo ang mga ito sa 4K AI na mga kuha sa isang fraction ng pisikal na gastos sa produksyon.",
+          "recommendedPlan": "Pro / Studio + Mga Add-On"
+        }
+      ]
+    },
+    "membershipModel": {
+      "badge": "Predictable Base + Flexible Compute",
+      "title": "Simulan ang Iyong Proyekto Ngayon. I-scale Gamit ang Mga Add-On habang Gumagawa Ka.",
+      "description": "Pinaghihiwalay ng SceneFlow ang umuulit na pagho-host ng studio at Continuity Vault mula sa burst production compute—para manatiling naka-lock ang iyong mga character at mundo sa buong taon, at maaari kang mag-top up ng mga credit kapag handa ka nang tapusin ang isang chapter o feature.",
+      "pillars": [
+        {
+          "title": "1. Pinapanatili ng Base Membership ang Iyong Continuity Vault",
+          "description": "Pinapanatili ng aktibong buwanang plano ($19–$599/buwan) ang iyong access sa studio, mga link sa Screening Room, at Active Continuity Vault—pinapanatili ang iyong mga umuulit na cast face, wardrobe, custom na voice clone, lokasyon, at Series Bible sa mga season, at buwanang base credits."
+        },
+        {
+          "title": "2. Tapusin ang Anumang Project on Demand gamit ang 12-Buwan na Add-On Pack",
+          "description": "Kapag gumagalaw na ang iyong kwento, ang mga aktibong buwanang miyembro ay makakabili ng $25, $100, o $250 na Add-On na mga credit pack anumang oras upang makumpleto ang isang kabanata, multi-episode season, o hybrid na feature shoot. Ang mga Add-On pack ay huling 12 buwan habang nananatiling aktibo ang iyong membership."
+        }
+      ]
     },
     "teamCta": {
       "title": "In-house na team o institusyon?",
@@ -2336,7 +2343,7 @@
     "byok": {
       "title": "Dalhin ang Sariling Susi",
       "badge": "Mga Planong Pro at Studio",
-      "description": "Maaaring gamitin ang iyong API key para sa pag-generate ng mga reference, still, at clip. Naniningil ang SceneFlow ng 20% orchestration fee para sa mga gawaing ito. Maaaring mas mababa ang mga rate ng hosted SceneFlow kumpara sa personal na API account habang lumalaki ang volume sa platform.",
+      "description": "Ikonekta ang iyong sariling Google Vertex AI o Kling API key sa mga Pro & Studio plan para sa direktang pagsingil ng provider (na may 20% na bayad sa pag-orkestra sa platform)—o gamitin ang mga naka-host na credit ng SceneFlow upang samantalahin ang aming mga rate ng modelo na may diskwento sa dami.",
       "savingsHighlight": "20% bayad sa orkestrasyon",
       "benefits": [
         {
@@ -2363,22 +2370,26 @@
       "note": "Ang 20% na bayad ay singil para sa orchestration ng SceneFlow. Ipinapadala ng provider ang mga singil sa paggamit sa iyong account. Maaaring mas mura ang generation na naka-host sa SceneFlow kaysa sa paggamit ng sariling key."
     },
     "creditTopUps": {
-      "title": "Kailangan mo ba ng karagdagang credits?",
-      "subtitle": "Bumili ng mga add-on na nagkakahalaga ng $25, $100, o $250 ayon sa iyong pangangailangan. Ang bawat pack ay tumatagal nang 12 buwan.",
+      "title": "Subscriber Pay-As-You-Produce Add-On Pack",
+      "subtitle": "Eksklusibo para sa mga aktibong buwanang miyembro. Bumili ng $25, $100, o $250 na mga add-on nang madalas hangga't kailangan mo. Ang bawat pakete ay tumatagal ng 12 buwan.",
       "packs": [
         {
           "label": "Karagdagang $25",
-          "description": "2,000 credits. Bumili ayon sa iyong pangangailangan."
+          "credits": "2,000 credits",
+          "description": "2,000 credits ($0.0125/cr) — perpekto para sa pagtatapos ng 5–15 min na kabanata o Promo Trailer."
         },
         {
           "label": "Karagdagang $100",
-          "description": "9,000 credits. Bumili nang madalas ayon sa iyong pangangailangan."
+          "credits": "9,000 credits",
+          "description": "9,000 credits ($0.0111/cr) — perpekto para sa mga multi-chapter series burst o Pre-Vis pitch package."
         },
         {
           "label": "Karagdagang $250",
-          "description": "25,000 credits. Bumili nang madalas ayon sa iyong pangangailangan."
+          "credits": "25,000 credits",
+          "description": "25,000 credits ($0.0100/cr) — binuo para sa $500–$5,000 hybrid productions at feature slate."
         }
       ],
+      "subscriberNote": "Nangangailangan ng aktibong buwanang membership (Hobbyist, Starter, Pro, o Studio) para bumili at mapanatili ang storage ng Continuity Vault.",
       "creditsUnit": "mga kinilala"
     },
     "calculator": {
@@ -2428,13 +2439,13 @@
       "minSuffix": "min"
     },
     "tierGrid": {
-      "productionTestFlight": "Paglipad na Pagsubok sa Produksyon",
+      "productionTestFlight": "30-araw na Studio Test Flight",
       "getStarted": "Magsimula",
       "startTestFlight": "Simulan ang Test Flight",
       "loading": "Naglo-load...",
       "mostPopular": "Pinakasikat",
       "creditsPerMonth": "Mga credit/buwan",
-      "storage": "Imbakan",
+      "storage": "Continuity Vault",
       "perMonth": "/month"
     },
     "trust": {
@@ -2444,13 +2455,13 @@
     },
     "plans": {
       "explorer": {
-        "name": "Explorer — Demo",
-        "description": "Demo — isang beses na pagbili upang subukan ang isang kumpletong produksyon",
+        "name": "Explorer — Simulan ang Iyong Unang Pelikula",
+        "description": "Gawing isang structured na Blueprint ang iyong ideya, i-cast ang iyong mga character, at i-preview ang iyong unang voiced scene—pagkatapos ay mag-subscribe at magdagdag ng mga credit habang tinatapos mo ang iyong pelikula.",
         "features": [
-          "Isahang pagbili",
+          "Isang beses na pagbili (30-araw na Studio Test Flight)",
           "750 credits (mag-e-expire 90 araw pagkatapos mabili)",
-          "5 GB na storage (30 araw)",
-          "Ganap na access sa platform",
+          "5 GB na trial na storage (30 araw — mag-subscribe para mapanatili ang vault)",
+          "Full studio access + Production Script export (PDF, FDX, Fountain)",
           "Pag-export bilang MP4 (anumang resolution)",
           "AI voiceover (higit sa 70 wika)"
         ]
@@ -2458,51 +2469,62 @@
       "subscriptions": [
         {
           "id": "starter",
-          "name": "Panimula — Sandbox",
-          "description": "Sandbox — para sa pagsubok ng mga ideya bago ang aktwal na palabas",
+          "name": "Hobbyist — Storyteller at Vault",
+          "description": "Mga Storyteller at Creative Visionaries — ipahayag ang iyong pananaw nang walang kinakailangang teknikal na kasanayan sa paggawa ng pelikula, at panatilihing aktibo ang iyong Continuity Vault sa pagitan ng mga shoot",
           "features": [
-            "Ganap na access sa platform",
-            "Kasama ang 4,500 credits bawat buwan",
+            "Pagpapanatili ng Active Studio Membership at Continuity Vault",
+            "Kasama ang 1,500 credits/buwan",
             "Ang mga hindi nagamit na buwanang credit ay mawawalan ng bisa sa pagtatapos ng panahon.",
-            "25 GB na aktibong storage",
-            "Pag-export bilang MP4 (anumang resolution)",
-            "AI voiceover (higit sa 70 wika)",
-            "Suporta sa pamamagitan ng email"
+            "10 GB Active Continuity Vault (nagpapanatili ng cast, wardrobe at set)",
+            "Nagbubukas ng 12-buwang Subscriber Add-On credit pack",
+            "Tamang-tama para sa mga personal na pangitain, kwento ng pamilya, at Pre-Vis animatics",
+            "Pag-preview at pag-export ng Production Script (PDF, FDX, Fountain)",
+            "Pag-export ng MP4 at voiceover ng AI (70+ wika)"
           ]
         },
         {
           "id": "pro",
-          "name": "Propesyonal na YouTuber",
-          "description": "YouTuber — mga paulit-ulit na episode at mga video sa channel",
+          "name": "Panimula — Kabanata at Pre-Vis",
+          "description": "Ang Diskarte sa I-publish ang Kabanata — para sa 5–15 min na mga episodic na paglabas ng kabanata at mga tradisyunal na gumagawa ng pelikula na gumagawa ng Mga Pakete ng Pagpopondo sa Produksyon",
           "features": [
-            "Lahat ng nasa Starter, pati na rin ang:",
-            "Kasama ang 15,000 credits bawat buwan",
+            "Lahat sa Hobbyist, plus:",
+            "4,500 credits/buwan kasama (3x Hobbyist compute)",
             "Ang mga hindi nagamit na buwanang credit ay mawawalan ng bisa sa pagtatapos ng panahon.",
-            "100 GB na aktibong storage",
-            "Access sa Veo 3.1 Quality (4K)",
-            "Sistema para sa Pagpapanatili ng Pagkakapare-pareho ng Karakter",
-            "Pagkopya ng boses",
-            "BYOK (Gamitin ang Sarili Mong Susi)",
-            "3 upuan para sa team",
-            "Prayoridad na suporta"
+            "25 GB Active Continuity Vault para sa character at setting ng continuity",
+            "Binuo para sa 5–15 min na paglabas ng kabanata at mga pakete ng pagpopondo ng Pre-Vis",
+            "Mag-upload ng mga live-action na eksena at pagsamahin sa mga AI clip sa Mixer",
+            "1 custom na voice clone at 70+ language dubbing",
+            "Suporta sa email"
           ]
         },
         {
           "id": "studio",
-          "name": "Studio — Independenteng Filmmaker",
-          "description": "Indie Filmmaker — mga independent na pelikula at serye",
+          "name": "Pro — Serye at Hybrid",
+          "description": "Pinagkakitaang Serye at Hybrid Filmmaker — para sa mga social channel na may mga umuulit na character at may karanasang filmmaker na pinagsasama ang live-action sa 4K AI production",
           "features": [
-            "Lahat ng nasa Pro, pati na rin ang:",
-            "Kasama ang 75,000 credits bawat buwan",
+            "Lahat sa Starter, plus:",
+            "Kasama ang 15,000 credits/buwan",
             "Ang mga hindi nagamit na buwanang credit ay mawawalan ng bisa sa pagtatapos ng panahon.",
-            "500 GB na aktibong storage",
-            "Veo 3.1 4K Priority Queue",
-            "Walang-limitasyong Pagpapanatili ng Konsistensi ng Karakter",
-            "Mga produktong white-label na iniluluwas",
-            "Access sa API",
-            "10 upuan para sa koponan",
-            "Nakatalagang account manager",
-            "Available ang Enterprise SLA sa kahilingan."
+            "100 GB Active Continuity Vault + Character Consistency Engine",
+            "Veo 3.1 Quality (4K) access at hybrid live-action + AI workflow",
+            "5 custom na voice clone para sa umuulit na serye ng cast",
+            "BYOK (Dalhin ang Iyong Sariling Susi) para sa direktang pagsingil ng provider",
+            "3 upuan ng koponan at Priyoridad na suporta"
+          ]
+        },
+        {
+          "id": "studio",
+          "name": "Studio — Production House",
+          "description": "Production House at Feature Slate — isang $500–$5,000 full-production pipeline para sa mga may karanasang filmmaker, ahensya, at multi-series na studio",
+          "features": [
+            "Lahat sa Pro, plus:",
+            "75,000 credits/buwan kasama (pinakamababang per-credit rate)",
+            "Ang mga hindi nagamit na buwanang kredito ay mag-e-expire sa pagtatapos ng panahon",
+            "500 GB Active Continuity Vault + Walang limitasyong Pagkakatugma ng Character",
+            "Veo 3.1 4K Priority Queue at 25 custom na voice clone",
+            "White-label Screening Room at mga pag-export + API at BYOK access",
+            "10 upuan ng koponan at Dedicated account manager",
+            "Available ang Enterprise SLA kapag hiniling"
           ]
         }
       ]

@@ -257,53 +257,54 @@
     "exitFullscreenOverview": "Vollbildmodus beenden",
     "watchLongformLabel": "Schau dir den ausführlichen Beitrag an",
     "screenshotLabel": "Bildschirmfoto",
-    "landingUiLanguagesLabel": "Produktion und Synchronisation in 44 Sprachen. Diese Website ist in diesen 39 Sprachen verfügbar:",
+    "landingUiLanguagesLabel": "Produzieren und synchronisieren Sie in 44 Sprachen. Die vollständige Studio-Schnittstelle und diese Website sind in diesen 39 Versionen verfügbar:",
     "rooms": [
       {
         "id": "series-desk",
         "label": "SFAISERIES_RAUMBEZEICHNUNG",
-        "promise": "Im Series Room beginnt eine Staffel. Dieselben Charaktere und dieselbe Geschichte werden in jede weitere Episode übernommen. Lies, höre und inszeniere die Inhalte, bevor eine Episode im Blueprint Room geöffnet wird. Ein Film ohne Staffel kann diesen Raum überspringen.",
+        "headline": "Baue einmal ein Universum. Produziere Episoden für immer.",
+        "promise": "Entwickeln Sie eine Staffel mit mehreren Episoden und einer gemeinsamen kreativen Bibel. Ihre Besetzung, Drehorte, Story-Threads und Ihre visuelle DNA werden automatisch in jede Episode übernommen, die Sie starten. Einen eigenständigen Film produzieren? Springen Sie direkt zum Blueprint Room.",
         "features": [
           {
             "icon": "newSeries",
             "title": "Neue Serie",
-            "description": "Beginnen Sie hier. Beschreiben Sie die geplante Serie in Ihren eigenen Worten. Die Funktion „Klären und Bestätigen“ verfeinert dieses Vorhaben gemeinsam mit Ihnen, bis die Synopsis steht, und „Serie erstellen“ verfasst die Grundlage. Eine neue Serie startet mit fünf Episoden; weitere können Sie jederzeit hinzufügen.",
+            "description": "Pitchen Sie Ihr Serien- oder Kanalkonzept im Klartext. Die interaktive KI-Verfeinerung schärft Ihre Prämisse und generiert eine Basislinie für mehrere Episoden – komplett mit übergreifenden Handlungssträngen und Episodenaufschlüsselungen.",
             "screenshot": "Neue Serie erstellen — Absicht, Klären und Bestätigen, Serie generieren",
             "learnMore": {
               "items": [
                 {
                   "title": "Ihre Absicht",
-                  "description": "Beschreibe, worum es sich bei der Serie handelt, einschließlich Format, Zielgruppe und Zeichenstil."
+                  "description": "Präsentieren Sie die Prämisse, das Format, die Zielgruppe und den visuellen Kunststil in einfacher Sprache."
                 },
                 {
-                  "title": "Iterieren",
-                  "description": "„Clarify and Confirm“ verfeinert gemeinsam mit Ihnen die Synopsis, bevor Inhalte generiert werden."
+                  "title": "Interaktive Verfeinerung",
+                  "description": "„Clarify and Confirm“ präzisiert mit Ihnen die Zusammenfassung der Saison, bevor etwas generiert wird."
                 },
                 {
-                  "title": "Basislinie",
-                  "description": "Generate Series schreibt die Staffel, die Sie rezensieren werden; sie beginnt mit fünf Episoden."
+                  "title": "Saison-Grundlinie",
+                  "description": "Generate Series erstellt einen Staffelbogen mit fünf Episoden, den Sie jederzeit erweitern können."
                 }
               ]
             }
           },
           {
             "icon": "seriesReview",
-            "title": "Den ersten Schnitt sichten",
-            "description": "Lesen Sie die Übersicht oder wählen Sie die Audio-Wiedergabe. Lesen oder hören Sie anschließend die Episoden. Die inhaltliche Konsistenz verbindet die Handlungsstränge, während die Kontinuität Besetzung, Schauplätze, Requisiten und das Setting zusammenhält, die diesen Episoden gemeinsam sind.",
+            "title": "Staffelbibel & Kontinuität",
+            "description": "Lesen oder hören Sie sich die kommentierte Staffelübersicht und Episodenliste an. SceneFlow sperrt Ihre Story-Threads, Besetzungsprofile, Drehorte und Signatur-Requisiten in einem gemeinsamen Reference Library, das jede Episode erbt.",
             "screenshot": "Übersicht, Episoden, Konsistenz, Kontinuität – Besetzung, Drehorte, Requisiten, Schauplätze",
             "learnMore": {
               "items": [
                 {
                   "title": "Lesen oder anhören",
-                  "description": "Die Übersicht und die Episoden können gelesen oder über die „Anhören“-Funktion angehört werden."
+                  "description": "Hören Sie sich die Staffelübersicht und jede Episodenzusammenfassung mit integriertem Audiokommentar an."
                 },
                 {
-                  "title": "Konsistenz",
-                  "description": "Ästhetik, Schlüsselereignisse und Handlungsstränge bleiben der Staffel erhalten."
+                  "title": "Konsistenz der Geschichte",
+                  "description": "Ästhetik, wichtige Handlungsereignisse und Erzählstränge bleiben über die gesamte Staffel hinweg erhalten."
                 },
                 {
-                  "title": "Kontinuität",
-                  "description": "Besetzung, Drehorte, Requisiten und Schauplätze sind in jeder Folge dieselben."
+                  "title": "Gemeinsame Kontinuität",
+                  "description": "Besetzung, Drehorte, Requisiten und Einstellungen werden automatisch in jede von Ihnen produzierte Episode übernommen."
                 }
               ]
             }
@@ -311,75 +312,75 @@
           {
             "icon": "seriesResonance",
             "title": "SFAIAUDIENCE_RESONANZBEGRIFF",
-            "description": "Führen Sie Audience Resonance aus, wenn Sie eine Einschätzung zur Saison wünschen. Prüfen Sie die Werte und die Analyse. Setzen Sie eine handlungsrelevante Erkenntnis nur dann um, wenn Sie dies möchten; an der Serie ändert sich nichts, solange Sie dies nicht tun.",
+            "description": "Testen Sie Ihren Staffelbogen anhand Ihrer Zielgruppe, bevor Sie ein einziges Drehbuch schreiben. Überprüfen Sie die Resonanzwerte Episode für Episode und wenden Sie datengestützte Story-Verbesserungen mit einem Klick an – nur wenn Sie mit dem Hinweis einverstanden sind.",
             "screenshot": "Analyse von Audience Resonance, gefolgt von umsetzbaren Erkenntnissen (nicht angewendet)",
             "learnMore": {
               "items": [
                 {
-                  "title": "Die Lektüre",
-                  "description": "Bewertungen und Analysen zeigen, was bei der von Ihnen benannten Zielgruppe ankommt."
+                  "title": "Demografische Bewertung",
+                  "description": "Ergebnisse und Strukturanalysen zeigen, wie Ihre Saison bei Ihrer Zielgruppe ankommt."
                 },
                 {
-                  "title": "Optional",
-                  "description": "Eine handlungsrelevante Erkenntnis verändert die Serie erst, wenn man sie anwendet."
+                  "title": "Vorrecht des Direktors",
+                  "description": "Actionable Insights aktualisieren Ihre Serie nur, wenn Sie sie anwenden möchten."
                 }
               ]
             }
           },
           {
             "icon": "seriesDirector",
-            "title": "Serienregisseur",
-            "description": "Steuere die gesamte Serie mit deinen eigenen Worten – ob gesprochen oder geschrieben. Du wählst die Veränderung und den Schwerpunkt aus und nimmst sie an. Eine Empfehlung kann dabei helfen, während unbeteiligte Teile der Handlung unverändert bleiben.",
+            "title": "Der Serienregisseur",
+            "description": "Gestalten Sie die gesamte Saison per Stimme oder Text neu. Ändern Sie den Ton, erhöhen Sie den Einsatz oder überarbeiten Sie einen Charakterbogen über alle Episoden gleichzeitig, während der Rest Ihrer Handlung intakt bleibt.",
             "screenshot": "Serienregisseur — Regie, Fokus, akzeptieren",
             "learnMore": {
               "items": [
                 {
-                  "title": "Deine Worte",
-                  "description": "Sprechen oder tippen Sie die Änderung ein und beschränken Sie sie optional auf Handlung, Charaktere, Episodeninhalt, Tonalität oder Schauplatz."
+                  "title": "Klartext-Anleitung",
+                  "description": "Sprechen oder tippen Sie Ihre Notiz und zielen Sie auf Handlung, Charaktere, Episodenbögen, Ton oder Setting ab."
                 },
                 {
-                  "title": "Sie akzeptieren es.",
-                  "description": "Nichts ändert sich, bis du es akzeptierst, und unzusammenhängende Teile der Handlung bleiben unverändert."
+                  "title": "Chirurgische Updates",
+                  "description": "Es ändert sich nichts, bis Sie die Überarbeitung akzeptieren, und nicht verwandte Story-Threads bleiben unberührt."
                 },
                 {
-                  "title": "Eine Empfehlung",
-                  "description": "Empfehlungen können hilfreich sein, und Sie entscheiden dennoch, was Sie behalten."
+                  "title": "Geführte Empfehlungen",
+                  "description": "Wenden Sie von der KI vorgeschlagene Story-Verbesserungen an oder steuern Sie jede kreative Entscheidung selbst."
                 }
               ]
             }
           },
           {
             "icon": "directEpisode",
-            "title": "Führe bei dieser Episode Regie.",
-            "description": "Öffne eine Episode und führe bei dieser einen Stunde eigenständig Regie. Erhöhe den Einsatz oder vertiefe die Geschichte und setze dies dann um. Die anderen Episoden bleiben unverändert.",
+            "title": "Regie auf Episodenebene",
+            "description": "Zoomen Sie in eine einzelne Episode, um deren Handlung, Tempo oder Hook einzeln zu überarbeiten – ohne den Rest Ihrer Staffel zu destabilisieren.",
             "screenshot": "Episoden — Diese Episode inszenieren, andere Episoden unverändert lassen",
             "learnMore": {
               "items": [
                 {
-                  "title": "Eine Episode",
-                  "description": "„Direct this episode“ wendet die Änderung nur auf diese Episode an."
+                  "title": "Vereinzelte Umschreibungen",
+                  "description": "Direkte Änderungen an den Umrissen und Takten einer einzelnen Episode, ohne benachbarte Episoden zu verändern."
                 },
                 {
-                  "title": "Die Saison bleibt",
-                  "description": "Die anderen Episoden bleiben unverändert."
+                  "title": "Saisonintegrität",
+                  "description": "Die übergreifende Staffelbibel und die Liste der verbleibenden Episoden bleiben unter Verschluss."
                 }
               ]
             }
           },
           {
             "icon": "startEpisode",
-            "title": "Starte die Episode",
-            "description": "Sobald eine Episode fertig ist, starten Sie das dazugehörige Projekt. Outline, Synopsis und Beats wandern damit in den Blueprint Room. Besetzung und Welt sind bereits bekannt.",
+            "title": "Episodenstart mit einem Klick",
+            "description": "Wenn die Gliederung einer Episode ins Schwarze trifft, starten Sie sie direkt im Blueprint Room, wobei die Inhaltsangabe, die Handlungsstränge, die Besetzung und die Welt bereits festgelegt sind.",
             "screenshot": "Projekt starten – Gliederung und Besetzung sind bereits für die Episode hinterlegt.",
             "learnMore": {
               "items": [
                 {
-                  "title": "Projekt starten",
-                  "description": "„Start Project“ öffnet diese Episode im Blueprint Room."
+                  "title": "Sofortige Übergabe",
+                  "description": "Starten Sie jede Episode mit einem einzigen Klick direkt im Blueprint Room."
                 },
                 {
-                  "title": "Bereits bekannt",
-                  "description": "Dazu gehören der Entwurf, die Synopsis, die dramaturgischen Eckpunkte und die Besetzung."
+                  "title": "Vorverdrahtete DNA",
+                  "description": "Der Episodenüberblick, die Inhaltsangabe, die Handlungsstränge, die Besetzung und die Drehorte werden automatisch übertragen."
                 }
               ]
             }
@@ -389,43 +390,44 @@
       {
         "id": "blueprint-board",
         "label": "SFAIBLUEPRINT_RAUMBEZEICHNUNG",
-        "promise": "Im Blueprint Room perfektionieren Sie die Handlung, bevor das 90-minütige Drehbuch entsteht. Gehen Sie von einer Serienepisode oder einem neuen Projekt aus. Legen Sie hier die dramaturgischen Eckpunkte (Beats) und die Besetzung fest, damit diese im Production Stage nicht neu erstellt werden müssen.",
+        "headline": "Sperren Sie die Story und den Look, bevor ein einzelner Frame gerendert wird.",
+        "promise": "Ganz gleich, ob Sie eine Episode über Series Room starten oder ein eigenständiges Feature starten, in Blueprint Room kommt Ihre kreative DNA zum Einsatz. Perfektionieren Sie hier das Beatsheet, die Besetzung, die Drehorte und den visuellen Stil – damit Production Stage beim ersten Durchgang das richtige Drehbuch erstellt.",
         "features": [
           {
             "icon": "startBlueprint",
             "title": "Starten Sie den Blueprint",
-            "description": "Gehen Sie von einer Serienepisode aus oder starten Sie ein neues Projekt. Eine Serienepisode umfasst bereits Outline, Synopsis und Beats. Ein neues Projekt beginnt, indem Sie die Zielsetzung beschreiben, die Funktion „Validieren & Optimieren mit KI“ nutzen und „Blueprint generieren“ auswählen.",
+            "description": "Bringen Sie eine Episode aus Ihrer Serienliste mit vorinstalliertem Umriss und vorinstallierter Besetzung ein oder entwerfen Sie ein brandneues Filmkonzept von Grund auf und lassen Sie die KI die grundlegende Behandlung strukturieren.",
             "screenshot": "Serienepisode bereits bekannt oder Projekt starten – Absicht, Validierung & KI-Optimierung, Blueprint generieren",
             "learnMore": {
               "items": [
                 {
-                  "title": "Serienfolge",
-                  "description": "Eine Serienepisode beginnt mit bereits vorliegendem Outline, Synopsis und Beats."
+                  "title": "Von Series Room",
+                  "description": "Serienepisoden werden bereits mit Gliederung, Inhaltsangabe, Beats und Besetzung geliefert."
                 },
                 {
-                  "title": "Neues Projekt",
-                  "description": "„Start Your Project“ erfasst die Absicht, validiert und erweitert sie mithilfe von KI und generiert anschließend den Blueprint."
+                  "title": "Eigenständiges Projekt",
+                  "description": "Stellen Sie ein neues Filmkonzept vor, verfeinern Sie es mit KI-Validierung und erstellen Sie eine vollständige Behandlung."
                 }
               ]
             }
           },
           {
             "icon": "treatment",
-            "title": "Lenke die Beats",
-            "description": "Öffnen Sie den Reiter „Beats“ und hören Sie sich die Beat-Liste an. Optimieren Sie die Beats hier, da sie den Aufbau des Skripts steuern. Beats existieren nur an dieser Stelle. Production Stage wandelt jeden Beat in ein Kapitel um.",
+            "title": "Das Beatsheet",
+            "description": "Strukturieren Sie das Rückgrat Ihres Films. Lesen oder hören Sie sich Ihr narratives Beatsheet an und optimieren Sie hier das Tempo – jeder Beat, den Sie im Blueprint Room festlegen, steuert ein Kapitel im Production Stage.",
             "screenshot": "Beats-Tab mit „Anhören“",
             "learnMore": {
               "items": [
                 {
-                  "title": "Ein Beat Sheet",
-                  "description": "Beats existieren nur hier."
+                  "title": "Erzählrücken",
+                  "description": "Beats werden erstellt und im Blueprint Room gesperrt, bevor mit der Skriptgenerierung begonnen wird."
                 },
                 {
-                  "title": "Skript-Build",
-                  "description": "Die Beats steuern die Skript-Erstellung und werden daher vor Production Stage optimiert."
+                  "title": "Zuerst Tempo machen",
+                  "description": "Durch die Optimierung des Beatsheets wird sichergestellt, dass das Drehbuch eine straffe dramatische Struktur erhält."
                 },
                 {
-                  "title": "Kapitel",
+                  "title": "Beat-zu-Kapitel-Zuordnung",
                   "description": "Production Stage macht aus jedem Beat ein Kapitel."
                 }
               ]
@@ -433,44 +435,44 @@
           },
           {
             "icon": "castLocations",
-            "title": "Die Besetzung und die Drehorte koordinieren",
-            "description": "Öffnen Sie „Characters“ und legen Sie die Besetzung fest. Öffnen Sie im Reiter „Story“ den Bereich „Setting“ und bestimmen Sie dort die Schauplätze. Da die Besetzung den Aufbau des Skripts beeinflusst, werden beide Aspekte festgelegt, bevor Production Stage das Skript neu strukturieren müsste.",
+            "title": "Besetzung & Weltdesign",
+            "description": "Definieren Sie Ihre Charaktere, Ihre Garderobe und Ihre Hauptdrehorte, bevor das Drehbuch erstellt wird – und stellen Sie sicher, dass das Drehbuch ab Seite eins genau auf Ihre Besetzung und Einstellungen abgestimmt ist.",
             "screenshot": "Tab „Charaktere“, dann „Schauplatz“ unter „Geschichte“",
             "learnMore": {
               "items": [
                 {
-                  "title": "Besetzung",
-                  "description": "Der Reiter „Charaktere“ umfasst die Besetzung, und diese Besetzung beeinflusst den Aufbau des Skripts."
+                  "title": "Charakterprofile",
+                  "description": "Richten Sie Ihre Besetzungsprofile nach vorne aus, sodass Dialog und Blockierung zu jedem Charakter passen."
                 },
                 {
-                  "title": "Standorte",
-                  "description": "Orte bilden den Schauplatz auf dem Tab „Geschichte“."
+                  "title": "Welt & Orte",
+                  "description": "Legen Sie auf der Registerkarte „Story“ primäre Einstellungen fest, um die Umgebung jeder Szene zu verankern."
                 },
                 {
-                  "title": "Vor dem Skript",
-                  "description": "Die Zusammenführung beider Abläufe an dieser Stelle vermeidet eine umfangreiche Überarbeitung des Skripts in Production Stage."
+                  "title": "Kein Skript-Refactoring",
+                  "description": "Durch das Sperren von Besetzung und Standorten vor der Skriptgenerierung entfallen kostspielige Umschreibungen im Production Stage."
                 }
               ]
             }
           },
           {
             "icon": "blueprintDirector",
-            "title": "Direktor Blueprint",
-            "description": "Der Director übernimmt die Änderung in Ihren eigenen Worten – ob gesprochen oder getippt. Konzentrieren Sie die Bearbeitung auf Beats, Charaktere oder die Handlung und sehen Sie sich dann eine Vorschau der Überarbeitung an. Es wird nichts geändert, bis Sie die Änderung anwenden.",
+            "title": "Der Blueprint-Direktor",
+            "description": "Sprechen oder tippen Sie Ihre Story-Notizen, um Takte, Charaktere oder Weltdetails zu überarbeiten. Sehen Sie sich eine ausgewogene Revision nebeneinander in der Vorschau an – an Ihrer Behandlung ändert sich nichts, bis Sie den Schnitt genehmigen.",
             "screenshot": "Blueprint-Direktor – Ausrichtung, Fokus, Vorschau, Revision anwenden",
             "learnMore": {
               "items": [
                 {
-                  "title": "Deine Worte",
-                  "description": "Sprich oder tippe die Änderung ein und konzentriere dich dabei auf Beats, Charaktere oder die Geschichte."
+                  "title": "Gezielte Notizen",
+                  "description": "Sprechen oder tippen Sie Ihre Anweisungen und konzentrieren Sie sich bei der Überarbeitung auf Beats, Charaktere oder Story."
                 },
                 {
-                  "title": "Vorschau",
-                  "description": "„Ausgeglichene Überarbeitung generieren“ zeigt die Änderung an, bevor Sie sie anwenden."
+                  "title": "Vorschau nebeneinander",
+                  "description": "Überprüfen Sie eine ausgewogene Überarbeitung, bevor Sie Änderungen an Ihrem Blueprint vornehmen."
                 },
                 {
-                  "title": "Sie tragen es auf.",
-                  "description": "Es ändert sich nichts, bis Sie die Überarbeitung anwenden."
+                  "title": "Du hältst das Schloss",
+                  "description": "An Ihrer Behandlung ändert sich nichts, bis Sie die Überarbeitung explizit anwenden."
                 }
               ]
             }
@@ -478,35 +480,35 @@
           {
             "icon": "blueprintResonance",
             "title": "SFAIAUDIENCE_RESONANZBEGRIFF",
-            "description": "Speichern Sie die Zielgruppe und führen Sie dann eine Analyse durch. Sie sehen die Scores und die Empfehlungen. Am Blueprint ändert sich nichts, bis Sie eine Empfehlung im Blueprint Director anwenden.",
+            "description": "Bewerten Sie Ihre Behandlung anhand des kulturellen und demografischen Profils Ihrer Zielgruppe. Erkennen Sie frühzeitig strukturelle Lücken und setzen Sie gezielte Empfehlungen im Blueprint Director um.",
             "screenshot": "Audience Resonance — gespeicherte Zielgruppe, Scores, nicht angewendete Empfehlungen",
             "learnMore": {
               "items": [
                 {
-                  "title": "Die Lektüre",
-                  "description": "Speichern Sie die Zielgruppe, führen Sie dann die Analyse durch und lesen Sie die Bewertungen sowie Empfehlungen."
+                  "title": "Validierung vor dem Skript",
+                  "description": "Analysieren Sie Ihre Behandlung im Vergleich zu Ihrer Zielgruppe, um Kategoriebewertungen und Story-Notizen anzuzeigen."
                 },
                 {
-                  "title": "Optional",
-                  "description": "Eine Empfehlung ändert den Blueprint nur, wenn Sie sie in Blueprint Director anwenden."
+                  "title": "Selektive Anwendung",
+                  "description": "Empfehlungen ändern Ihren Blueprint nur, wenn Sie sich für deren Anwendung entscheiden."
                 }
               ]
             }
           },
           {
             "icon": "goToProduction",
-            "title": "Zu Production Stage wechseln",
-            "description": "Wechseln Sie zu Production Stage, sobald die Handlung, die Beats und die Besetzung feststehen. Das 90-minütige Drehbuch wird auf der Grundlage dieses Boards erstellt. Die Handlung muss in Production Stage nicht neu aufgebaut werden.",
+            "title": "Grünes Licht für die Produktion",
+            "description": "Wenn Behandlung, Schlagblatt und Gips gesperrt sind, betreten Sie den Production Stage. SceneFlow kompiliert Ihr vollständiges Skript mit mehreren Kapiteln direkt aus Ihrem genehmigten Blueprint.",
             "screenshot": "Zu Production Stage wechseln – Handlung, Beats und Besetzung stehen bereits fest.",
             "learnMore": {
               "items": [
                 {
-                  "title": "Die Übergabe",
-                  "description": "Der Aufruf von Production Stage öffnet das Skript aus dieser Vorlage."
+                  "title": "Nahtlose Zusammenstellung",
+                  "description": "Wenn Sie Production Stage aufrufen, wird das vollständige Skript direkt aus Ihrem genehmigten Blueprint kompiliert."
                 },
                 {
-                  "title": "Bereits eingestellt",
-                  "description": "Die Handlung, die dramaturgischen Eckpunkte und die Besetzung sind bereits inszeniert."
+                  "title": "Gesperrtes Fundament",
+                  "description": "Ihre Handlung, Taktstruktur und Besetzung liegen bereit für die Szenen- und Drehrichtung."
                 }
               ]
             }
@@ -516,215 +518,109 @@
       {
         "id": "production-stage",
         "label": "Production Stage",
-        "promise": "In dieser Phase wird der finale Entwurf zum fertigen Bild. Steuern Sie die Ausgaben gezielt und planvoll. Optimieren Sie gemeinsam jede Szene und setzen Sie diese dann Schritt für Schritt um – von Regie, Audio, Musik und Continuity bis hin zu Standbildern – und prüfen Sie das Animatics, bevor Sie in die Videoproduktion investieren. Erstellen und mischen Sie die Clips, produzieren Sie Sprachversionen und liefern Sie die Szene, das Kapitel, das Master oder den Promo-Spot aus.",
-        "spend": {
-          "label": "Ausgaben kontrollieren",
-          "features": [
-            {
-              "icon": "byok",
-              "title": "Bring Your Own Key",
-              "description": "Verbinden Sie Ihre eigenen Zugangsdaten für Bild- und Videoanbieter. Die Generierung erfolgt über Ihr Konto und zu Ihren Konditionen, während das geführte Studio – mit Agents, Continuity, dem Mixer und dem Screening-Bereich – erhalten bleibt.",
-              "screenshot": "BYOK-Schlüssel",
-              "learnMore": {
-                "items": [
-                  {
-                    "title": "Ihre Schlüssel",
-                    "description": "Verbinden Sie die API-Schlüssel der Bild- und Videoanbieter, damit die Generierung über Ihr Konto und zu Ihren Konditionen erfolgt."
-                  },
-                  {
-                    "title": "Dasselbe Studio",
-                    "description": "Agents, Continuity, der Mixer und Screening Room bleiben bestehen."
-                  }
-                ]
-              }
-            },
-            {
-              "icon": "budget",
-              "title": "Produktionsplaner",
-              "description": "Legen Sie die Anzahl der Iterationen für Standbilder und Clips pro Einstellung fest, bevor Sie das Budget einsetzen. Diese Zielvorgaben werden auf Szenen-, Kapitel- und Master-Ebene zusammengeführt; ausgehend von einem Startdatum ergibt sich so der Zeitplan bis zum Abschluss.",
-              "screenshot": "Produktionsplaner",
-              "learnMore": {
-                "items": [
-                  {
-                    "title": "Beschossene Ziele",
-                    "description": "Legen Sie Iterationen für Standbilder und Clips pro Einstellung fest und fassen Sie diese auf der Ebene von Szene, Kapitel und Master zusammen."
-                  },
-                  {
-                    "title": "Datierter Zeitplan",
-                    "description": "Ein Startdatum und Arbeitstage bilden einen Zeitplan mit kumulativen Credits."
-                  },
-                  {
-                    "title": "Auf Ist-Werte zurücksetzen",
-                    "description": "Bei abgeschlossenen Szenen können die Zielvorgaben auf die tatsächlichen Kosten zurückgesetzt werden."
-                  },
-                  {
-                    "title": "Telefonstatus",
-                    "description": "Lesegeschwindigkeit, Ausgaben und voraussichtliches Abschlussdatum lassen sich auf dem Smartphone ablesen, während die Bearbeitung auf dem Desktop oder Tablet erfolgt."
-                  }
-                ]
-              }
-            }
-          ]
-        },
+        "headline": "Vom Drehbuch bis zum Master, alles in einem Raum.",
+        "promise": "Der Blueprint ist gesperrt. Ihre Besetzung ist besetzt. Betreten Sie nun den Production Stage. Jedes Kapitel, jede Szene und jede Einstellung ist in einem linearen Workflow organisiert. Sie steuern die Absicht; Intelligente Agenten führen die Generierung aus.",
         "groups": [
           {
             "id": "script",
-            "label": "Optimieren Sie das Skript.",
+            "label": "Direkt und kontrolliert",
+            "headline": "Sprechen Sie die Sprache des Films, nicht die Syntax von Aufforderungen.",
+            "description": "Verschwenden Sie keine Zeit mit der Eingabe von Schlüsselwörtern in Klammern. Der Production Stage versteht die natürliche Richtung und wendet Ihre Sicht auf die gesamte Szene oder auf eine bestimmte Aufnahme an.",
             "features": [
               {
                 "icon": "scriptResonance",
-                "title": "SFAIAUDIENCE_RESONANZBEGRIFF",
-                "description": "Audience Resonance liest das gesamte Skript auf einmal – jede Szene im Zusammenspiel. Sie sehen die Partituren und die Notizen gemeinsam, und nichts wird umgeschrieben, bevor Sie sich dazu entscheiden.",
-                "screenshot": "Audience Resonance — Partituren und Notizen für alle Szenen, nicht angewendet",
+                "title": "Der Szenen- und Aufnahmeregisseur",
+                "description": "Geben Sie Ihre Anweisungen im Klartext ein oder sprechen Sie sie aus. Sagen Sie dem Agenten, wer sich im Bild befindet, wohin sich die Kamera bewegt und wie der emotionale Rhythmus ist. Der Shot Director schreibt automatisch die komplexen zugrunde liegenden Eingabeaufforderungen für Ihre Standbilder und Clips.",
+                "screenshot": "Der Scene & Shot Director – klare Regie für Standbilder und Clips",
                 "learnMore": {
                   "items": [
                     {
-                      "title": "Jede gemeinsame Szene",
-                      "description": "Es vertont das Skript als ein zusammenhängendes Werk, wobei die Szenen musikalisch aufeinander abgestimmt sind."
+                      "title": "Einfache Sprache",
+                      "description": "Geben Sie ein oder sprechen Sie, wer sich im Bild befindet, wohin sich die Kamera bewegt und wie der emotionale Rhythmus ist."
                     },
                     {
-                      "title": "Sie haben die Wahl",
-                      "description": "Nichts wird umgeschrieben, bis Sie entscheiden, welche Anmerkungen Sie umsetzen."
+                      "title": "Szene oder Aufnahme",
+                      "description": "Wenden Sie Ihre Sicht auf die gesamte Szene oder auf eine bestimmte Aufnahme an."
+                    },
+                    {
+                      "title": "Prompte Zusammenstellung",
+                      "description": "Der Shot Director schreibt automatisch die zugrunde liegenden Eingabeaufforderungen für Ihre Standbilder und Clips."
                     }
                   ]
                 }
               },
               {
                 "icon": "castVisual",
-                "title": "Besetzung, Kostüme und Stimme",
-                "description": "Legen Sie die Besetzung fest, bevor Sie die Szenen gestalten. Legen Sie Figur, Garderobe und Stimme verbindlich fest, damit jedes spätere Standbild und jeder Clip dieselbe Person zeigen.",
-                "screenshot": "Figur, Kostüm und Stimme",
+                "title": "Die Kontinuitätsbibliothek",
+                "description": "Absolute Konsistenz über die gesamte Serie hinweg. Erstellen Sie automatisch Referenzbilder für Ihre Besetzung, Garderobe, Drehorte und wichtige Requisiten oder weisen Sie sie manuell zu, um sicherzustellen, dass jede Aufnahme den Blueprint entspricht.",
+                "screenshot": "Die Continuity Library – Besetzung, Garderobe, Drehorte und wichtige Requisiten",
                 "learnMore": {
                   "items": [
                     {
-                      "title": "Figur und Garderobe",
-                      "description": "Cast Agent entwirft die Figur und die Kostüm-Looks."
+                      "title": "Serienkonsistenz",
+                      "description": "Sorgen Sie dafür, dass Besetzung, Garderobe, Drehorte und wichtige Requisiten bei jeder Aufnahme einheitlich sind."
                     },
                     {
-                      "title": "Stimme",
-                      "description": "Die Stimme wird für die Figur festgelegt, bevor die Szenen aufgebaut werden."
-                    },
-                    {
-                      "title": "Dieselbe Person",
-                      "description": "Jedes Standbild und jeder Clip verlangt nach dieser Sperre."
+                      "title": "Generieren oder zuweisen",
+                      "description": "Generieren Sie automatisch Referenzbilder oder weisen Sie manuell Ihre eigenen zu, damit diese mit dem Blueprint übereinstimmen."
                     }
                   ]
                 }
               },
               {
                 "icon": "directShot",
-                "title": "Direktschuss",
-                "description": "Mit „Direct Shot“ erstellen Sie die Aufnahme in Ihren eigenen Worten – entweder getippt oder diktiert. Sie sehen eine Vorschau der Regieanweisung und speichern diese; daraufhin werden sowohl der Prompt für das Standbild als auch der für den Videoclip aktualisiert.",
-                "screenshot": "Direct Shot — tippen oder diktieren, Vorschau, speichern",
+                "title": "Audience Resonance-Integration",
+                "description": "Machen Sie sich vor dem Rendern einen Überblick über den Raum. KI analysiert Ihr Drehbuch anhand Ihrer Zielgruppe und liefert Einblicke in jede Szene. Wenden Sie die empfohlenen Anweisungen sofort an oder vertrauen Sie Ihrem Bauchgefühl und ignorieren Sie sie.",
+                "screenshot": "Audience Resonance-Integration – Szene-für-Szene-Zuschauereinblicke",
                 "learnMore": {
                   "items": [
                     {
-                      "title": "Angesagter Stoß",
-                      "description": "Der Dialog trägt den Titel Direct Shot · Szene N · Einstellung N."
+                      "title": "Einblicke von Szene zu Szene",
+                      "description": "KI analysiert Ihr Skript vor dem Rendern anhand Ihrer Zielgruppe."
                     },
                     {
-                      "title": "Tippen oder diktieren",
-                      "description": "Schreiben oder diktieren Sie die Notiz und sehen Sie sich dann eine Vorschau der Anweisung an, bevor Sie sie speichern."
-                    },
-                    {
-                      "title": "Beide Prompts",
-                      "description": "Durch das Speichern werden der Prompt für das Standbild und der Prompt für den Clip gemeinsam aktualisiert."
-                    },
-                    {
-                      "title": "Wieder auf der Jagd nach Clips",
-                      "description": "Wenn eine generierte Aufnahme fehlerhaft ist, öffnen Sie Direct Shot und richten Sie sie neu aus."
+                      "title": "Ihr Anruf",
+                      "description": "Wenden Sie die empfohlenen Anweisungen sofort an oder vertrauen Sie Ihrem Bauchgefühl und ignorieren Sie sie."
                     }
                   ]
                 }
               },
               {
                 "icon": "audioAgent",
-                "title": "Audio Agent",
-                "description": "Audio Agent erstellt den Dialog, die Soundeffekte und die Musik der Szene. Die Szene ist hörbar, bevor ein Clip verbraucht wird.",
-                "screenshot": "Audio Agent — Dialog, Effekte und Musik",
+                "title": "Produktionsplaner",
+                "description": "Legen Sie mithilfe von SceneFlow-Credits oder Ihren eigenen BYOK-API-Schlüsseln das Budget und die Zeitplanerstellung für jede Szene und jedes Kapitel fest. Legen Sie Stand- und Clipziele pro Aufnahme fest, bevor Sie Rechenaufwand aufwenden.",
+                "screenshot": "Produktionsplaner – Budget, Zeitplan und BYOK-API-Schlüssel",
                 "learnMore": {
                   "items": [
                     {
-                      "title": "Dialog und Effekte",
-                      "description": "Dialog beschränkt sich auf das gesprochene Wort, während Soundeffekte für Einstellungen mit einem spezifischen Einsatzpunkt vorgesehen sind."
+                      "title": "Budget und Zeitplan",
+                      "description": "Legen Sie vor dem Rendern das Budget und die Zeitplanerstellung für jede Szene und jedes Kapitel fest."
                     },
                     {
-                      "title": "Musik",
-                      "description": "Die Musik trägt die Szene gemeinsam mit dem Dialog."
-                    },
-                    {
-                      "title": "Vor der Bewegung",
-                      "description": "Hör dir die Szene an, bevor du Clips öffnest."
+                      "title": "Credits oder BYOK",
+                      "description": "Führen Sie die Generierung mit SceneFlow-Credits oder Ihren eigenen BYOK-API-Schlüsseln aus."
                     }
                   ]
                 }
               },
               {
                 "icon": "continuity",
-                "title": "Kontinuität",
-                "description": "Generieren Sie nur die für die jeweilige Szene erforderlichen Referenzen, sobald die Szene fertiggestellt ist. Frühere Szenen bleiben in ihrem fixierten Zustand erhalten, sodass Sie keine bereits freigegebenen Referenzen neu erstellen müssen.",
-                "screenshot": "Kontinuität – nur Bezüge dieser Szene",
+                "title": "Produktionsskript",
+                "description": "Entwickelt für traditionelle und KI-Filmemacher gleichermaßen. Sehen Sie sich im Studio eine Vorschau eines sauberen, formatierten Drehbuchs an und exportieren Sie es in branchenübliche Formate (PDF, FDX, Fountain). Nutzen Sie SceneFlow als eigenständigen Drehbuchraum – oder kombinieren Sie Ihr Drehbuch mit einem Pre-Vis Animatic und Promo-Trailer, um Geldgeber zu werben und Projektfinanzierung zu sichern.",
+                "screenshot": "Produktionsskript – plattforminterne Vorschau und PDF-, FDX- und Fountain-Export",
                 "learnMore": {
                   "items": [
                     {
-                      "title": "Nur diese Szene",
-                      "description": "Zeichne die Besetzung, die Schauplätze und die Requisiten, die diese Szene benötigt, und lass die anderen außen vor."
+                      "title": "Plattforminterne Vorschau und Export",
+                      "description": "Sehen Sie sich das formatierte Skript im Studio in der Vorschau an und exportieren Sie es im branchenüblichen PDF-, Final Draft FDX- oder Fountain-Format."
                     },
                     {
-                      "title": "Gerade noch rechtzeitig",
-                      "description": "Generieren Sie sie, wenn die Szene fertig ist – nicht als Stapelverarbeitung für den gesamten Film."
+                      "title": "Für traditionelle Filmemacher",
+                      "description": "Nutzen Sie SceneFlow als intelligente Skriptproduktionsplattform, ohne Videos zu generieren."
                     },
                     {
-                      "title": "Bereits gesperrt",
-                      "description": "Eine Änderung in einer Szene aktualisiert nicht die Referenzen, die von früheren Szenen bereits verwendet werden."
-                    }
-                  ]
-                }
-              },
-              {
-                "icon": "stillsAgent",
-                "title": "SFAISTILLS_AGENTENLAUFZEIT",
-                "description": "Stills Agent erstellt die Einzelbilder (Shot Frames) auf der Grundlage der freigegebenen Regieanweisung. Regie und Audio bleiben unverändert, und die Clips folgen zu einem späteren Zeitpunkt.",
-                "screenshot": "Stills Agent — Einzelbilder",
-                "learnMore": {
-                  "items": [
-                    {
-                      "title": "Einstellungsrahmen",
-                      "description": "Es zeichnet das Standbild für jede Einstellung der Szene."
-                    },
-                    {
-                      "title": "Richtungsstreben",
-                      "description": "Durch das Neu-Generieren eines Frames wird das Bild aktualisiert, während Richtung und Audio unverändert bleiben."
-                    },
-                    {
-                      "title": "Vor den Clips",
-                      "description": "Gib die Standbilder frei, bevor du Clips öffnest."
-                    }
-                  ]
-                }
-              },
-              {
-                "icon": "animatic",
-                "title": "Animatic",
-                "description": "Betrachten Sie die Szene im Screening Room als Animatic – bestehend aus Standbildern, Dialogen, Filmmusik und Effekten. Teilen Sie es, um Feedback einzuholen, und stellen Sie jede Szene auf diese Weise fertig, bevor die eigentliche Videoproduktion beginnt; so müssen die Clips bei einer Skriptänderung nicht erneut bearbeitet werden. Für viele Kreative ist das Animatic bereits das fertige Werk, das sich als MP4-Datei rendern lässt.",
-                "screenshot": "Screening Room-Animatic, mit Freigabe",
-                "learnMore": {
-                  "items": [
-                    {
-                      "title": "Bild und Ton",
-                      "description": "Das Animatik spielt die freigegebenen Standbilder mit Dialogen, Filmmusik und Effekten ab."
-                    },
-                    {
-                      "title": "Teilen",
-                      "description": "Senden Sie einen Link, damit die Prüfer das Animatic ansehen und Anmerkungen direkt im Bild hinterlassen können."
-                    },
-                    {
-                      "title": "Vor dem Video",
-                      "description": "Fertigstellen Sie die Szenen als Animatics, bevor Sie Clips generieren, damit eine Änderung am Skript nicht die erneute Videoproduktion erforderlich macht."
-                    },
-                    {
-                      "title": "Die MP4",
-                      "description": "Für viele Kreative ist das Animatik das Endprodukt, und es kann als MP4 gerendert werden."
+                      "title": "Pitch- und Projektfinanzierung",
+                      "description": "Verpacken Sie Ihr Drehbuch mit einem Pre-Vis Animatic und Promo-Trailern, um Projektfinanzierung zu bewerben und zu akquirieren."
                     }
                   ]
                 }
@@ -733,86 +629,78 @@
           },
           {
             "id": "video",
-            "label": "Video",
+            "label": "Generieren und prüfen",
+            "headline": "Beweisen Sie den Schnitt, bevor Sie die Berechnung durchführen.",
+            "description": "Raten Sie nicht, wie eine Szene ablaufen wird. SceneFlow trennt die Audio- und Standbilderzeugung vom teuren Bewegungsrendering, sodass Sie zuerst den Rhythmus der Bearbeitung prüfen können.",
             "features": [
               {
                 "icon": "videoAgent",
-                "title": "Video Agent",
-                "description": "Video Agent generiert die Shot-Clips auf dem Tab „Clips“. Betrachten Sie die zusammengesetzte Szene im Screening Room; sollte eine Einstellung fehlerhaft sein, führen Sie sie unter „Direct Shot“ erneut aus.",
-                "screenshot": "Video Agent, gefolgt von der zusammengefügten Szene",
+                "title": "Der Audio Agent",
+                "description": "Generieren Sie gleichzeitig Dialoge, Soundeffekte und Musiknoten für bis zu 30 Aufnahmen pro Szene. Die Besetzungsstimmen passen sich automatisch den Charakterprofilen an oder können individuell angepasst werden.",
+                "screenshot": "Das Audio Agent – gleichzeitige Dialoge, Soundeffekte und Musikpartituren",
                 "learnMore": {
                   "items": [
                     {
-                      "title": "Aufgenommene Clips",
-                      "description": "Video Agent generiert den Clip für jede Einstellung aus dem freigegebenen Standbild."
+                      "title": "Gleichzeitiges Audio",
+                      "description": "Generieren Sie gleichzeitig Dialoge, Soundeffekte und Musiknoten für bis zu 30 Aufnahmen pro Szene."
                     },
                     {
-                      "title": "Gestickte Szene",
-                      "description": "Überprüfen Sie die im Screening Room zusammengefügte Szene."
-                    },
-                    {
-                      "title": "Führe es erneut Regie",
-                      "description": "Öffnen Sie einen „Direct Shot“ (getippt oder diktiert), wenn ein Clip fehlerhaft ist."
+                      "title": "Charakterstimmen",
+                      "description": "Die Besetzungsstimmen passen sich automatisch den Charakterprofilen an oder können individuell angepasst werden."
                     }
                   ]
                 }
               },
               {
                 "icon": "mixer",
-                "title": "Mixer",
-                "description": "Der Mixer stellt die Szene in Production Stage fertig. Fügen Sie Einstellungen hinzu oder entfernen Sie sie, schneiden Sie diese zurecht, gleichen Sie den Ton ab und rendern Sie die Szene samt Audio.",
-                "screenshot": "Mixer — einbinden, zuschneiden, ausbalancieren, überlagern, Wasserzeichen",
+                "title": "Der Stills Agent",
+                "description": "Erstellen Sie schnell die Keyframe-Bilder, die Ihre Aufnahmerichtung veranschaulichen. Generieren, bearbeiten oder laden Sie Ihre eigenen Referenzen neu, um die Komposition zu sperren.",
+                "screenshot": "Das Stills Agent – Keyframe-Zusammensetzung und Referenzen",
                 "learnMore": {
                   "items": [
                     {
-                      "title": "Shots",
-                      "description": "Fügen Sie einzelne Aufnahmen hinzu oder entfernen Sie sie, und kürzen Sie die verbleibenden."
+                      "title": "Keyframe-Generierung",
+                      "description": "Erstellen Sie schnell die Keyframe-Bilder, die Ihre Aufnahmerichtung veranschaulichen."
                     },
                     {
-                      "title": "Dialog",
-                      "description": "Legen Sie Lautstärke und Geschwindigkeit für jede Dialogzeile fest."
-                    },
-                    {
-                      "title": "Spuren",
-                      "description": "Stimmen Sie Erzählung, Dialoge, Soundeffekte und Musik aufeinander ab, einschließlich Musik-Fades und -Loops."
-                    },
-                    {
-                      "title": "Overlays",
-                      "description": "Platziere Text-Overlays auf der Szene."
-                    },
-                    {
-                      "title": "Wasserzeichen",
-                      "description": "Fügen Sie ein Text- oder Bildwasserzeichen hinzu."
-                    },
-                    {
-                      "title": "Rendern",
-                      "description": "Rendern Sie die Szene mitsamt ihrem Audio; genau dieses Rendering wird von Screening Room abgespielt."
+                      "title": "Sperren Sie die Komposition",
+                      "description": "Erstellen, bearbeiten oder laden Sie Ihre eigenen Referenzen neu, bevor Sie sich für einen Antrag entscheiden."
                     }
                   ]
                 }
               },
               {
                 "icon": "languageStreams",
-                "title": "Sprachversionen",
-                "description": "Bei dieser Szene handelt es sich um eine Sprachversion, nicht um eine Neuproduktion. Gemini TTS übernimmt die Synchronisation in 44 Sprachen; für jede Einstellung lässt sich die Textzeile synchronisieren oder der Clip – einschließlich Beschilderungen – neu generieren.",
-                "screenshot": "Sprachversion – Synchronisation, Lippensynchronisation oder Neuproduktion, einschließlich Beschilderung",
+                "title": "Das Pre-Vis Animatic",
+                "description": "Beobachten Sie, wie die Szene atmet. Sehen Sie sich eine vollständig zusammengestellte Animation – zusammengefügte Standbilder, Ken Burns-Bewegung und gesperrtes Audio – im Screening Room an. Überprüfen Sie das Tempo, geben Sie es weiter, um Feedback zu erhalten, und stellen Sie sicher, dass der Schnitt funktioniert, bevor Sie sich für das Video entscheiden.",
+                "screenshot": "Das Pre-Vis Animatic – zusammengefügte Standbilder, Ken Burns-Bewegung und gesperrter Ton",
                 "learnMore": {
                   "items": [
                     {
-                      "title": "Vierundvierzig Sprachen",
-                      "description": "Gemini TTS spricht die Synchronisation in 44 Sprachen."
+                      "title": "Zusammengebaute Animation",
+                      "description": "Überprüfen Sie zusammengefügte Standbilder, Ken Burns-Bewegungen und gesperrte Audiodaten im Screening Room."
                     },
                     {
-                      "title": "Pro Shot",
-                      "description": "Wählen Sie für jede Einstellung „Double“, um die synchronisierte Stimme darüberzulegen, „Lip-sync“, um sie auszuführen, oder „Regenerate“, um aus der übersetzten Zeile einen neuen Clip zu erstellen."
+                      "title": "Prüfen und teilen",
+                      "description": "Überprüfen Sie das Tempo, geben Sie es weiter, um Feedback zu erhalten, und stellen Sie sicher, dass der Schnitt funktioniert, bevor Sie sich für das Video entscheiden."
+                    }
+                  ]
+                }
+              },
+              {
+                "icon": "videoAgent",
+                "title": "Der Clips Agent",
+                "description": "Sobald das Pre-Vis genehmigt ist, übernimmt Clips Agent die Wiedergabe von High-Fidelity-Bewegungsclips, die sich strikt an Ihre genehmigten Standbilder und Kontinuitätsreferenzen halten.",
+                "screenshot": "Das Clips Agent – High-Fidelity-Bewegungsclips aus genehmigten Standbildern",
+                "learnMore": {
+                  "items": [
+                    {
+                      "title": "Nach Pre-Vis-Genehmigung",
+                      "description": "Clips Agent rendert Bewegungen erst, nachdem die Pre-Vis-Animation genehmigt wurde."
                     },
                     {
-                      "title": "Beschilderung",
-                      "description": "Erstellen Sie die Aufnahme eines Schildes neu, wenn das Bild Text enthält, der geändert werden muss."
-                    },
-                    {
-                      "title": "Timing",
-                      "description": "Bei dieser Sprachversion wird die Videogeschwindigkeit angepasst, da eine Übersetzung oft 10–30 % länger ist als die Master-Version."
+                      "title": "Strikte Einhaltung",
+                      "description": "High-Fidelity-Motion-Clips halten sich strikt an Ihre genehmigten Standbilder und Kontinuitätsreferenzen."
                     }
                   ]
                 }
@@ -821,30 +709,78 @@
           },
           {
             "id": "publish",
-            "label": "Veröffentlichen",
+            "label": "Veröffentlichen und verteilen",
+            "headline": "Versenden Sie den Master oder lokalisieren Sie ihn für die ganze Welt.",
+            "description": "Wenn die Szene fertig ist, sind die Assets bereits vereinheitlicht. Beenden Sie die Bearbeitung, lokalisieren Sie den Ton und verteilen Sie ihn direkt an Ihr Publikum.",
             "features": [
               {
                 "icon": "shipPackage",
-                "title": "Verpacken und versenden",
-                "description": "Erstelle ein Paket aus einer Szene, einem Kapitel, dem Master oder einem Promo-Video, sobald dieser Teil fertig ist. Veröffentliche es auf YouTube, Facebook oder TikTok – oder lade die MP4-Datei herunter – und arbeite weiter am Rest.",
-                "screenshot": "Paketieren und Ausliefern – Szene, Kapitel, Master, Promo; YouTube, Facebook, TikTok, MP4",
+                "title": "Der Mixer",
+                "description": "Ein integrierter, intuitiver Szeneneditor. Schneiden Sie Clips, passen Sie Geschwindigkeitsrampen an, fügen Sie Textüberlagerungen hinzu und wenden Sie Wasserzeichen an, ohne das Studio zu verlassen.",
+                "screenshot": "Der Mixer – Trimmen von Clips, Geschwindigkeitsrampen, Textüberlagerungen und Wasserzeichen",
                 "learnMore": {
                   "items": [
                     {
-                      "title": "Stücke",
-                      "description": "Liefern Sie eine Szene, ein Kapitel, das Master oder einen Promo-Clip aus."
+                      "title": "Integrierter Szeneneditor",
+                      "description": "Trimmen Sie Clips und passen Sie Geschwindigkeitsrampen direkt im Studio an."
                     },
                     {
-                      "title": "Sprachzweige",
-                      "description": "Jede Sprachversion kann im Paket mitgeliefert werden."
+                      "title": "Der letzte Schliff",
+                      "description": "Fügen Sie Textüberlagerungen hinzu und wenden Sie Wasserzeichen an, ohne in einen externen Editor zu exportieren."
+                    }
+                  ]
+                }
+              },
+              {
+                "icon": "languageStreams",
+                "title": "Streams (mehrsprachig)",
+                "description": "Erweitern Sie Ihre globale Reichweite sofort auf 44 Sprachen. Generieren Sie automatisch alternative Sprachstreams, indem Sie Audio überspielen, Lippenbewegungen synchronisieren oder lokalisierte Dialogclips direkt in der Szene neu generieren.",
+                "screenshot": "Streams (mehrsprachig) – synchronisierte Audio- und lokalisierte Dialogclips",
+                "learnMore": {
+                  "items": [
+                    {
+                      "title": "Globale Reichweite",
+                      "description": "Generieren Sie automatisch alternative Sprachstreams in 44 Sprachen direkt in der Szene."
                     },
                     {
-                      "title": "Reiseziele",
-                      "description": "Veröffentliche es auf YouTube, Facebook oder TikTok oder lade die MP4-Datei herunter."
+                      "title": "Synchronisieren, lippensynchronisieren oder regenerieren",
+                      "description": "Lokalisieren Sie jede Aufnahme, indem Sie Audio überspielen, Lippenbewegungen synchronisieren oder lokalisierte Dialogclips neu generieren."
+                    }
+                  ]
+                }
+              },
+              {
+                "icon": "promoTrailers",
+                "title": "Promo & Trailer",
+                "description": "Schneiden Sie jederzeit während der Produktion Social-Ready-Promotrailer. Generieren Sie mehrsprachige Versionen, die für horizontale oder vertikale Formate optimiert sind.",
+                "screenshot": "Promo & Trailer – mehrsprachige horizontale und vertikale Trailer",
+                "learnMore": {
+                  "items": [
+                    {
+                      "title": "Social-ready-Trailer",
+                      "description": "Schneiden Sie Werbetrailer zu jedem Zeitpunkt während der Produktion."
                     },
                     {
-                      "title": "Baut weiter",
-                      "description": "Liefern Sie den Teil aus, der fertig ist, und bauen Sie am Rest weiter."
+                      "title": "Mehrsprachige Formate",
+                      "description": "Generieren Sie mehrsprachige Versionen, die für horizontale oder vertikale Formate optimiert sind."
+                    }
+                  ]
+                }
+              },
+              {
+                "icon": "shipPackage",
+                "title": "Direktveröffentlichung",
+                "description": "Exportieren Sie das endgültige Master-MP4 oder lassen Sie SceneFlow automatisch Miniaturansichten und Beschreibungen generieren, um Szenen, Kapitel und Promos direkt auf YouTube, TikTok und Facebook zu veröffentlichen.",
+                "screenshot": "Direktveröffentlichung – MP4-Export und direkte Veröffentlichung auf YouTube, TikTok und Facebook",
+                "learnMore": {
+                  "items": [
+                    {
+                      "title": "Master MP4 oder Direct Social",
+                      "description": "Exportieren Sie das endgültige Master-MP4 oder veröffentlichen Sie Szenen, Kapitel und Promos direkt auf YouTube, TikTok und Facebook."
+                    },
+                    {
+                      "title": "Automatisch generierte Metadaten",
+                      "description": "Lassen Sie SceneFlow automatisch Miniaturansichten und Beschreibungen für jede Veröffentlichung generieren."
                     }
                   ]
                 }
@@ -856,48 +792,49 @@
       {
         "id": "screening-room",
         "label": "Screening Room",
-        "promise": "Im Screening Room wird der fertige Schnitt angesehen, geprüft und freigegeben. Ein einziger Player vereint Pre-Vis, Szenen, Kapitel, das Master, den Promo-Clip sowie alle Sprachversionen, sodass die Synchronfassung exakt dem Schnitt entspricht, den der Tonmischer gerendert hat. Teilen Sie einen einzigen Link für die Wiedergabe und für Anmerkungen zum Bild. Veröffentlichen Sie eine 3–5-minütige Szene, ein 8–12-minütiges Kapitel, das Master oder einen Promo-Clip, sobald der jeweilige Teil fertiggestellt ist, während Sie gleichzeitig am restlichen Material weiterarbeiten.",
+        "headline": "Schauen Sie sich den Schnitt an, stellen Sie Ihr Team zusammen und führen Sie ihn weltweit aus.",
+        "promise": "Ihr privater Theater- und Abschlussbereich. Sehen Sie sich Pre-Vis-Animationen, einzelne Szenen, Kapitel, Promos und mehrsprachige Streams in einem einheitlichen Player an. Teilen Sie einen einzigen Link für zeitgestempelte Stakeholder-Notizen – und versenden Sie eine 3–5-minütige Szene, ein 8–12-minütiges Kapitel, eine Promo oder den Master, während der Rest der Produktion weiterläuft.",
         "features": [
           {
             "icon": "screeningPlayer",
-            "title": "Ein Spieler",
-            "description": "Wechseln Sie zwischen Pre-Vis, Szenen, Kapiteln, Master und Promo. Wählen Sie einen Sprach-Stream aus und hören Sie die entsprechende Version – ob nachsynchronisiert, lippensynchron angepasst oder Einstellung für Einstellung neu generiert. Der Player zeigt denselben Schnitt, den der Mixer gerendert hat.",
+            "title": "Ein vereinter Spieler",
+            "description": "Wechseln Sie nahtlos zwischen Pre-Vis-Animationen, Szenen, Kapiteln, Trailern und Ihrem endgültigen Master. Schalten Sie Sprachstreams im Handumdrehen um, um synchronisierte, lippensynchrone oder durch Aufnahmen regenerierte Lokalisierungen anzuhören – immer an den genauen Schnitt aus dem Mixer gebunden.",
             "screenshot": "Screening Room-Player",
             "learnMore": {
               "items": [
                 {
-                  "title": "Eine Oberfläche",
-                  "description": "Wechseln Sie zwischen Pre-Vis, Szenen, Kapiteln, dem Master und Promo."
+                  "title": "Jeder Meilenstein auf einen Blick",
+                  "description": "Wechseln Sie mühelos zwischen Pre-Vis, Szenen, Kapiteln, Promos und dem endgültigen Master."
                 },
                 {
-                  "title": "Sprachzweig",
-                  "description": "Wählen Sie eine Version aus und hören Sie sie sich als Double, lippensynchronisiert oder Einstellung für Einstellung neu generiert an."
+                  "title": "Live-Sprachumschaltung",
+                  "description": "Hören Sie sich jeden Sprachstream – synchronisiert, lippensynchron oder schussregeneriert – im Handumdrehen an."
                 },
                 {
-                  "title": "Gleicher Schnitt",
-                  "description": "Der Player zeigt den Schnitt, den der Mixer gerendert hat."
+                  "title": "Mit Frame-Lock am Mixer befestigt",
+                  "description": "Jeder Stream spielt den genauen Schnitt und das Timing ab, die im Mixer gerendert wurden."
                 }
               ]
             }
           },
           {
             "icon": "screeningCollab",
-            "title": "Gemeinsam am Schnitt arbeiten",
-            "description": "Teilen Sie einen einzigen Link. Prüfer sehen sich das Video mit echter Wiedergabe an und hinterlassen Anmerkungen direkt im Bild. Sie müssen keine Rohdatei per E-Mail versenden, um Feedback einzuholen. Sie werden über schriftliche Anmerkungen benachrichtigt und können diese direkt auf Ihrem Smartphone lesen.",
+            "title": "Framegenaue Zusammenarbeit",
+            "description": "Hören Sie auf, Rohschnitte per E-Mail zu exportieren. Teilen Sie einen privaten Screening-Link, über den Mitarbeiter und Investoren in Echtzeit zuschauen und Notizen direkt auf dem Bild hinterlassen können – mit sofortigen Benachrichtigungen, die direkt an Ihr Telefon gesendet werden.",
             "screenshot": "Geteilte Rezension",
             "learnMore": {
               "items": [
                 {
-                  "title": "Ein Link",
-                  "description": "Prüfer sehen sich das Material bei echter Wiedergabegeschwindigkeit an und hinterlassen Anmerkungen im Bild."
+                  "title": "Private Screening-Links",
+                  "description": "Rezensenten sehen sich die Wiedergabe in voller Auflösung an und hinterlassen zeitgestempelte Notizen zum Bild."
                 },
                 {
-                  "title": "Kein Rohschnitt per E-Mail",
-                  "description": "Sie exportieren keine Rohdatei per E-Mail, um Feedback einzuholen."
+                  "title": "Keine groben Dateiexporte",
+                  "description": "Sammeln Sie Stakeholder-Feedback an einem Ort, ohne umfangreiche Videodateien zu versenden."
                 },
                 {
-                  "title": "Telefonnotizen",
-                  "description": "Eine schriftliche Mitteilung benachrichtigt Sie, und Sie können sie auf Ihrem Smartphone lesen, während das Studio auf dem Desktop oder Tablet verbleibt."
+                  "title": "Sofortige mobile Benachrichtigungen",
+                  "description": "Über neue Notizen von Rezensenten werden Sie sofort auf Ihrem Telefon benachrichtigt, während Sie auf dem Desktop weiterleiten."
                 }
               ]
             }
@@ -911,6 +848,7 @@
     "description": "Verwandeln Sie Ihre Ideen in professionelle Videos – mit KI-gestützter Workflow-Automatisierung."
   },
   "nav": {
+    "overview": "Übersicht",
     "plansPricing": "PLÄNE UND PREISE",
     "productionExamples": "Beispiele",
     "keyFeatures": "Funktionen",
@@ -937,9 +875,9 @@
     "pricing": "Preise"
   },
   "hero": {
-    "eyebrow": "Automatisierte Filmproduktion für Filme und Serien",
+    "eyebrow": "Demokratisiertes Filmemachen für Geschichtenerzähler, Serienschöpfer und Studios",
     "headline": "Vom ersten Funken bis zum fertigen Master.",
-    "subheadline": "SceneFlow ist ein geführter Produktionsablauf. Sie steuern die Geschichte, die Besetzung und den Tonfall. Das System erstellt die Blueprint, wahrt die Kontinuität, spielt das vollständige Animatik ab und setzt den Master-Film zusammen – ganz ohne zeitraubende Prompt-Experimente oder eine Timeline voller loser Clips.",
+    "subheadline": "Wenn Sie sich eine Geschichte vorstellen können, können Sie bei einem Film Regie führen – dafür sind keine technischen Fähigkeiten im Bereich Filmemachen oder Regiekenntnisse erforderlich. Beschreiben Sie Ihre Vision in alltäglichen Worten, und SceneFlow erstellt das Blueprint, sperrt Charakter und Einstellungskontinuität, spielt die vollständige Animation ab und stickt den fertigen Master.",
     "ctaPrimaryLaunch": "Launch Studio (9 $)",
     "ctaSupportingLine": "Das All-in-One-Studio, um Ihre Geschichten zu erstellen, zu exportieren und zu verbreiten. Laden Sie ein Master herunter und versenden Sie es an einen beliebigen Ort – oder veröffentlichen Sie Langfassungen und Kapitel auf {longForm} und bewerben Sie Trailer auf {shorts}.",
     "ctaNetworkInvite": "Herausragende Projekte können sich für das nur auf Einladung zugängliche SceneFlow-Netzwerk bewerben.",
@@ -948,20 +886,20 @@
     "ctaToolStack": "Sehen Sie, wie es Ihren Tool-Stack ersetzt.",
     "chips": [
       {
-        "label": "Vom Konzept zur Funktion",
-        "detail": "Entwickeln Sie Ideen im Blueprint Room zu 90-minütigen Drehbüchern. Definieren Sie Charaktere, visuelle Gestaltung und dramaturgische Wendepunkte, und lassen Sie anschließend die Audience Resonance-Analyse Ihre Geschichte verfeinern, bevor Sie mit dem Dreh beginnen."
+        "label": "Von der Idee zum Drehbuch und Kapitel",
+        "detail": "Verwandeln Sie eine einfache Idee in strukturierte Kapitel oder ein 90-minütiges Drehbuch im Blueprint Room. Definieren Sie Charaktere, Grafiken und Beats und lassen Sie Audience Resonance Ihre Geschichte vor dem Dreh verfeinern."
       },
       {
-        "label": "Steuern durch Absicht, nicht durch Prompts",
-        "detail": "Sprechen Sie die Sprache des Films mit intelligenten Assistenten, die Ihre Regieanweisungen verstehen. Die Reference Library fixiert Ihre individuellen Besetzungen, Kostüme und Drehorte für absolute Kontinuität."
+        "label": "Keine filmischen Fähigkeiten erforderlich",
+        "detail": "Drücken Sie Ihre Vision in alltäglichen Worten aus – Ihr KI-Direktor kümmert sich um Drehbuchformat, Kamerawinkel, Beleuchtung und Ansagen, während die Kontinuitätsbibliothek Ihre Besetzung, Garderobe und Drehorte sperrt."
       },
       {
-        "label": "Agentenbasierte Produktion",
-        "detail": "Beschleunigen Sie die Generierung um das Fünffache mit intelligenten Agenten, die im Hintergrund Szenen aus 30 Aufnahmen erstellen. Experimentieren Sie frei im Entwurfsmodus und veröffentlichen Sie anschließend Ihre finale Vision in beeindruckender Hochauflösung."
+        "label": "Agentengesteuertes Szenen-Stitching",
+        "detail": "Beschleunigen Sie die Produktion um das Fünffache mit spezialisierten Agenten, die Dialoge, Musik, Standbilder und Clips parallel generieren und 30-Aufnahmen-Szenen automatisch zusammenfügen. Zuerst Vorschau in Pre-Vis, dann Rendern in Hi-Res."
       },
       {
         "label": "Prüfen, zusammenarbeiten, ausliefern",
-        "detail": "Teilen Sie Fortschritte bei jedem Meilenstein – vom Audio-Animatic bis zum finalen Master – im Screening Room. Veröffentlichen Sie die Inhalte als Kurz- oder Langfilme in mehreren Sprachen, um eine weltweite Reichweite zu erzielen."
+        "detail": "Teilen Sie den Fortschritt bei jedem Meilenstein – von der Sprachanimation bis zum endgültigen Master – im Screening Room. Veröffentlichen Sie in episodischen Kapiteln oder vollständigen Features in über 70 Sprachen."
       }
     ],
     "pipelineSteps": [
@@ -1000,7 +938,7 @@
   "twoModes": {
     "eyebrow": "Die Reibung, die wir beseitigen",
     "title": "Eine Pipeline. Kein Tool-Stack.",
-    "subtitle": "SceneFlow replaces single-clip generators and a pile of separate docs, editors, and re-renders. Build the series or the 90-minute master, then publish a scene or a chapter when you are ready to earn.",
+    "subtitle": "Clip-Eingabeaufforderungen, Keyframes, Sprachkommentare und Musik waren früher in separaten Tools untergebracht. SceneFlow vereint die gesamte Produktion in einer Pipeline – so können Sie eine Serie mit mehreren Episoden oder einen 90-minütigen Master erstellen und fertige Szenen oder Kapitel veröffentlichen, während Sie fortfahren.",
     "comingSoon": "Demnächst",
     "comparison": {
       "id": "comparison",
@@ -1009,19 +947,19 @@
     "cta": "Launch Studio (9 $)"
   },
   "directControl": {
-    "eyebrow": "Die Kontrolle, die Sie behalten",
-    "title": "Lenken Sie die Geschichte. Überlassen Sie das Prompting den Agenten.",
-    "subtitle": "Du gibst die Regieanweisungen für die Einstellung in einfacher Sprache vor. Die Regieanweisung bestimmt den Prompt für das Standbild oder den Videoclip. Musikeinsätze und Sprechertext sind exakt auf den Takt abgestimmt. Prüfe das Animatic, korrigiere gegebenenfalls die Einstellung und investiere erst dann in die Animation.",
+    "eyebrow": "Keine technische Filmerstellung erforderlich",
+    "title": "Bringen Sie Ihre Vision zum Ausdruck. Ihre KI-Crew kümmert sich um das Schiff.",
+    "subtitle": "Egal, ob Sie zum ersten Mal Geschichten erzählen oder ein erfahrener Regisseur sind, beschreiben Sie einfach in einfachen Worten, was passiert. Spezialisierte Agenten kümmern sich um die Kinematographie, die Ansagen, die musikalischen Hinweise, die Dialoge und das automatische Zusammenfügen von Szenen – Sie können sich also zuerst die gesamte Animation ansehen, auf Befehl jeden Takt verfeinern und erst dann Credits für die Bewegung ausgeben.",
     "comparison": {
       "id": "direction",
-      "caption": "Eine Regieanweisung, eine Vorgabe für den Clip sowie Musik und Sprechertext auf demselben Takt."
+      "caption": "Klartext-Story-Regie, automatisch in Kinematographie, Musik und Erzählung integriert."
     },
     "cta": "Launch Studio (9 $)"
   },
   "publishCut": {
     "eyebrow": "Der Schnitt, den Sie veröffentlichen",
     "title": "Exportieren Sie überallhin. Premiere auf SceneFlow, sobald Sie es sich verdient haben.",
-    "subtitle": "Download a master and ship it yourself, or publish finished scenes and chapters to {longForm} and cut trailers for {shorts} — without waiting on the whole cut. Before anything hits the public feed, run drafts or your final master through the Screening Room. Standout projects can apply for the invite-only SceneFlow Network; it is a curated accelerator, not an open storefront.",
+    "subtitle": "Exportieren Sie einen Master und verteilen Sie ihn überall oder veröffentlichen Sie fertige Szenen und Kapitel direkt auf {longForm} mit für {shorts} geschnittenen vertikalen Trailern – Bild, Musik und Kommentar sind bereits im Schnitt enthalten. Überprüfen Sie jeden Entwurf im Screening Room vor der Veröffentlichung und bewerben Sie sich beim SceneFlow-Netzwerk, das nur auf Einladung zugänglich ist, um eine geförderte Zielgruppenbeschleunigung zu erhalten.",
     "comparison": {
       "id": "publish",
       "caption": "A finished scene or chapter, and the 90-minute master, from one studio."
@@ -1034,6 +972,25 @@
     "badges": {
       "googleCloud": "Google Cloud",
       "vertexAi": "Vertex AI"
+    },
+    "wave": {
+      "eyebrow": "Reiten Sie auf der KI → Superintelligenzwelle",
+      "headline": "Hochwertige Produktionen heute. Automatische Modell-Upgrades morgen.",
+      "subheadline": "Im vergangenen Jahr hat die Videoproduktion einen Sprung vom unzusammenhängenden „KI-Slop“ zum realistischen Kino gemacht. In Kombination mit dem strukturierten Storytelling und der automatisierten Szenenzusammenführung von SceneFlow können Sie heute Produktionen in Studioqualität liefern – während jeder Charakter und jede Welt, die Sie erstellen, automatisch auf der nächsten Welle des KI-Fortschritts reitet.",
+      "pillars": [
+        {
+          "title": "Szenennähen in Studioqualität heute",
+          "description": "Sie müssen nicht auf zukünftige Modelle warten, um eine großartige Geschichte zu erzählen. Die Blueprint-Architektur von SceneFlow, Reference Library und das automatische Zusammenfügen von Szenen verwandeln die heutigen Grenzmodelle in zusammenhängende, sendebereite Kapitel und Filme."
+        },
+        {
+          "title": "Ihr Continuity Vault ist zukunftssicheres IP",
+          "description": "Modelle sind Kameraobjektive; Ihre Drehbücher, Charaktere, Garderoben und Sets in Ihrem Continuity Vault sind Ihre permanente IP. Bauen Sie jetzt Ihre Serie und Ihr Publikum auf – wenn sich die Modelle von der KI zur Superintelligenz (SI) weiterentwickeln, wird Ihre bestehende Besetzung automatisch auf die neuesten Engines aktualisiert."
+        },
+        {
+          "title": "Mehr Rechenleistung bei sinkenden Token-Kosten",
+          "description": "Wenn die weltweite Rechenleistung zunimmt und die Modell-Token-Kosten sinken, gibt SceneFlow diese Effizienzsteigerungen automatisch an aktive Mitglieder weiter, und zwar als mehr Erzeugungsleistung pro Gutschrift bei Verlängerungen und Add-On-Paketen. Abonnieren Sie noch heute und machen Sie jeden Schritt vorwärts."
+        }
+      ]
     }
   },
   "valueProp": {
@@ -1774,13 +1731,13 @@
     "titleAccent": "im Einsatz",
     "subtitle": "Jedes Beispiel beginnt mit einem kurzen Trailer. Das Langformat-Master – eine komplette Produktion, die von der Blueprint über die Pre-Vis bis hin zum Final Cut reicht – wird im Screening Room abgespielt.",
     "subtitleTagline": "Langformatige Produktionen. Keine Clips.",
-    "screeningRoomInstruction": "Überprüfen Sie diese Produktion so, wie es ein Prüfer tun würde – Meilenstein für Meilenstein. Beginnen Sie mit der Serie, fahren Sie mit Blueprint und dem Skript in der AR-Analyse fort und schließen Sie mit dem Screening ab.",
+    "screeningRoomInstruction": "Öffnen Sie zuerst Screening Room, um die Produktion so zu erleben, wie es ein Rezensent tun würde – wechseln Sie zwischen Pre-Vis, Clips, Szenen, Kapiteln, Master und Promo – und sehen Sie sich dann darunter Series Room, Blueprint Room und Production Stage an.",
     "trailerLabel": "Trailer",
     "watchLongform": "Schau dir den ausführlichen Beitrag an",
-    "seriesDoor": "Serie",
-    "blueprintDoor": "Blueprint",
-    "scriptArDoor": "Analyse der Forderungen aus Lieferungen und Leistungen",
-    "screeningDoor": "Screening",
+    "seriesDoor": "Series Room",
+    "blueprintDoor": "Blueprint Room",
+    "scriptArDoor": "Production Stage",
+    "screeningDoor": "Screening Room",
     "screeningRoomGroup": "Screening Room",
     "previsDoor": "Pre-Vis",
     "roughDoor": "Rohschnitt",
@@ -2305,23 +2262,73 @@
     "closePopup": "Popup schließen"
   },
   "pricing": {
-    "badge": "Einfache Preisgestaltung",
+    "badge": "Preise für Studio-Mitgliedschaft und Nutzung",
     "title": "Starten Sie mit Explorer — 9 $",
-    "subtitle": "Testen Sie jetzt die gesamte Pipeline mit einem unkomplizierten Einstieg für 9 $.",
-    "explorerHighlight": "Der schnellste Weg, das komplette SceneFlow-Studio zu erleben – vom Konzept bis zum Screening Room.",
+    "subtitle": "Starten Sie noch heute Ihren ersten Film für 9 $ – verwandeln Sie Ihre Idee in einen strukturierten Blueprint, besetzen Sie Ihre Charaktere und sehen Sie sich Ihre erste Szene in der Vorschau an. Dann abonnieren Sie, um Ihren Continuity Vault zu behalten und Credits hinzuzufügen, wenn Sie Ihre Produktion abgeschlossen haben.",
+    "explorerHighlight": "Es sind keine technischen Kenntnisse im Bereich Filmemachen erforderlich – entwickelt für alltägliche Geschichtenerzähler, Kapitel-für-Kapitel-Indie-Schöpfer, Serienkanäle und Hybrid-Filmstudios.",
     "trustBadges": [
       "Sichere Zahlungen über Whop",
       "9 $ Explorer, um das Studio auszuprobieren",
-      "Monatliche Guthaben verfallen am Ende des Zeitraums.",
+      "Bei einer aktiven Mitgliedschaft bleibt Continuity Vault erhalten",
       "Jederzeit kündbar"
     ],
     "valueAnchor": {
-      "traditionalCost": "Über 2.000 $",
-      "traditionalLabel": "Traditionelle Pre-Viz",
+      "traditionalCost": "5.000–50.000 US-Dollar+",
+      "traditionalLabel": "Traditionelle Vorabvisualisierung und Produktion",
       "vs": "gegen",
-      "sceneFlowCost": "49–149 $",
-      "sceneFlowLabel": "SceneFlow monatlich",
-      "saveBadge": "Sparen Sie mehr als 90 % pro Projekt"
+      "sceneFlowCost": "19–599 $/Monat + Add-Ons",
+      "sceneFlowLabel": "SceneFlow Studio & Kontinuitäts-Tresor",
+      "saveBadge": "Sparen Sie über 90 % pro Produktion"
+    },
+    "filmmakerPerspectives": {
+      "heading": "Eine Studio-Pipeline. Gebaut für jeden Geschichtenerzähler und Filmemacher.",
+      "subheading": "Sie benötigen weder eine Filmschule noch technische Kenntnisse, um Ihre Vision zum Ausdruck zu bringen. Egal, ob Sie eine persönliche Geschichte zum ersten Mal zum Leben erwecken, eine Serie Kapitel für Kapitel veröffentlichen, Finanziers ansprechen oder ein Hybrid-Shooting durchführen, Ihr Plan passt sich an die Art und Weise an, wie Sie kreieren.",
+      "recommendedPathLabel": "Empfohlener Pfad:",
+      "cards": [
+        {
+          "id": "hobbyist",
+          "badge": "Keine Filmerfahrung erforderlich • 19 $/Monat",
+          "title": "Geschichtenerzähler und kreative Visionäre",
+          "description": "Haben Sie eine Geschichte, ein Buchkonzept oder eine Familiengeschichte, die Sie auf der Leinwand sehen möchten? Beschreiben Sie Ihre Vision in einfachen Worten, um vertonte Pre-Vis-Animationen und ausgewählte Videoclips zu erstellen – während Sie Ihre Charaktere, Garderoben und Sets in Ihrem Continuity Vault speichern.",
+          "recommendedPlan": "Bastler (19 $/Monat)"
+        },
+        {
+          "id": "chapter",
+          "badge": "Neue und Indie-Ersteller • 49 $/Monat",
+          "title": "Die Strategie zum Veröffentlichen von Kapiteln",
+          "description": "Überspringen Sie die Kosten- und Zeithürde, die mit der Bereitstellung eines 90-minütigen Beitrags im Voraus verbunden ist. Veröffentlichen Sie Ihre Geschichte in 5–15-minütigen Szenen oder episodischen Kapiteln, um Ihr monatliches Rechenbudget zu verwalten und gleichzeitig Ihr Publikum stetig zu vergrößern.",
+          "recommendedPlan": "Starter (49 $/Monat)"
+        },
+        {
+          "id": "series",
+          "badge": "Monetarisierte Kanäle • 149 $/Monat",
+          "title": "Charakter- und Setting-Kontinuität für Serien",
+          "description": "Zuschauer abonnieren Kanäle, wenn sie mit vertrauten Charakteren und Welten in Kontakt treten. Ihr Continuity Vault bewahrt die Gesichter, Outfits, benutzerdefinierten Sprachklone und Drehorte der Darsteller in jeder Episode auf, sodass Sie auf YouTube, TikTok und Reels nachhaltig wachsen können.",
+          "recommendedPlan": "Pro (149 $/Monat)"
+        },
+        {
+          "id": "hybrid",
+          "badge": "Erfahrene und hybride Filmemacher • 149–599 $/Monat",
+          "title": "Produktionsfinanzierungspakete und Hybriddrehs",
+          "description": "Exportieren Sie branchenübliche Skripte (PDF, FDX, Fountain) gepaart mit einem Pre-Vis Animatic und einem Promo-Trailer, um die Finanzierung durch Investoren zu sichern – oder laden Sie live gefilmte Szenen hoch und mischen Sie sie mit 4K-KI-Aufnahmen zu einem Bruchteil der physischen Produktionskosten.",
+          "recommendedPlan": "Pro / Studio + Add-Ons"
+        }
+      ]
+    },
+    "membershipModel": {
+      "badge": "Vorhersehbare Basis + flexible Datenverarbeitung",
+      "title": "Starten Sie noch heute Ihr Projekt. Skalieren Sie während der Produktion mit Add-Ons.",
+      "description": "SceneFlow trennt wiederkehrendes Studio- und Continuity Vault-Hosting von Burst-Produktions-Rechnern – so bleiben Ihre Charaktere und Ihre Welt das ganze Jahr über verschlossen und Sie können Credits aufladen, wann immer Sie bereit sind, ein Kapitel oder eine Funktion fertigzustellen.",
+      "pillars": [
+        {
+          "title": "1. Durch die Basismitgliedschaft bleibt Ihr Kontinuitäts-Tresor erhalten",
+          "description": "Ein aktiver Monatsplan (19–599 US-Dollar/Monat) behält Ihren Studiozugang, Screening Room-Links und Active Continuity Vault bei – Ihre wiederkehrenden Besetzungsgesichter, Garderoben, benutzerdefinierten Stimmklone, Standorte und Serienbibeln über die Staffeln hinweg sowie monatliche Basisguthaben bleiben erhalten."
+        },
+        {
+          "title": "2. Schließen Sie jedes Projekt auf Abruf mit 12-monatigen Add-On-Paketen ab",
+          "description": "Sobald Ihre Geschichte in Bewegung ist, können aktive monatliche Mitglieder jederzeit Add-On-Credit-Pakete im Wert von 25, 100 oder 250 US-Dollar erwerben, um ein Kapitel, eine Staffel mit mehreren Episoden oder einen Hybriddreh zu vervollständigen. Add-On-Pakete sind 12 Monate gültig, während Ihre Mitgliedschaft aktiv bleibt."
+        }
+      ]
     },
     "teamCta": {
       "title": "Internes Team oder Institution?",
@@ -2336,7 +2343,7 @@
     "byok": {
       "title": "Bring Your Own Key",
       "badge": "Pro- und Studio-Tarife",
-      "description": "Mit Ihrem API-Schlüssel lassen sich Referenz-, Standbild- und Clip-Generierungen durchführen. SceneFlow berechnet für diese Aufträge eine Orchestrierungsgebühr von 20 %. Mit zunehmendem Plattformvolumen können die Tarife für gehostete SceneFlow-Dienste niedriger ausfallen als bei einem persönlichen API-Konto.",
+      "description": "Verbinden Sie Ihre eigenen Google Vertex AI- oder Kling-API-Schlüssel mit Pro- und Studio-Plänen für eine direkte Abrechnung mit dem Anbieter (mit einer Plattform-Orchestrierungsgebühr von 20 %) – oder nutzen Sie die gehosteten Credits von SceneFlow, um von unseren volumenrabattierten Modelltarifen zu profitieren.",
       "savingsHighlight": "20 % Orchestrierungsgebühr",
       "benefits": [
         {
@@ -2363,22 +2370,26 @@
       "note": "Bei der Gebühr von 20 % handelt es sich um eine Orchestrierungsgebühr von SceneFlow. Der Anbieter stellt die Nutzung Ihrem Konto in Rechnung. Die Generierung über SceneFlow kann kostengünstiger sein als die Verwendung eines eigenen Schlüssels."
     },
     "creditTopUps": {
-      "title": "Brauchen Sie mehr Credits?",
-      "subtitle": "Erwerben Sie Add-ons im Wert von 25 $, 100 $ oder 250 $ so oft, wie Sie möchten. Jedes Paket ist 12 Monate lang gültig.",
+      "title": "Pay-As-You-Produce-Add-On-Pakete für Abonnenten",
+      "subtitle": "Exklusiv für aktive Monatsmitglieder. Kaufen Sie Add-ons im Wert von 25 $, 100 $ oder 250 $, so oft Sie benötigen. Jede Packung reicht für 12 Monate.",
       "packs": [
         {
           "label": "25-$-Zusatzoption",
-          "description": "2.000 Credits. Kaufen Sie so oft, wie Sie möchten."
+          "credits": "2.000 Credits",
+          "description": "2.000 Credits (0,0125 $/Cr) – ideal zum Abschließen eines 5–15-minütigen Kapitels oder Promo-Trailers."
         },
         {
           "label": "100-$-Zusatzoption",
-          "description": "9.000 Credits. Kaufen Sie so oft, wie Sie möchten."
+          "credits": "9.000 Credits",
+          "description": "9.000 Credits (0,0111 $/Cr.) – ideal für Mehrkapitel-Serien-Bursts oder Pre-Vis-Pitch-Pakete."
         },
         {
           "label": "250-$-Zusatzoption",
-          "description": "25.000 Credits. Kaufen Sie so oft, wie Sie möchten."
+          "credits": "25.000 Credits",
+          "description": "25.000 Credits (0,0100 $/Cr) – konzipiert für Hybridproduktionen und Spielfilme im Wert von 500–5.000 $."
         }
       ],
+      "subscriberNote": "Erfordert eine aktive monatliche Mitgliedschaft (Hobbyist, Starter, Pro oder Studio), um Continuity Vault-Speicher zu erwerben und zu behalten.",
       "creditsUnit": "Mitwirkende"
     },
     "calculator": {
@@ -2428,13 +2439,13 @@
       "minSuffix": "Min."
     },
     "tierGrid": {
-      "productionTestFlight": "Produktions-Testflug",
+      "productionTestFlight": "30-tägiger Studio-Testflug",
       "getStarted": "Loslegen",
       "startTestFlight": "Testflug starten",
       "loading": "Wird geladen...",
       "mostPopular": "Am beliebtesten",
       "creditsPerMonth": "Credits/Monat",
-      "storage": "Lagerung",
+      "storage": "Kontinuitätsgewölbe",
       "perMonth": "/month"
     },
     "trust": {
@@ -2444,13 +2455,13 @@
     },
     "plans": {
       "explorer": {
-        "name": "Explorer — Demo",
-        "description": "Demo – Einmalkauf zum Ausprobieren einer vollständigen Produktion",
+        "name": "Explorer – Starten Sie Ihren ersten Film",
+        "description": "Verwandeln Sie Ihre Idee in ein strukturiertes Blueprint, besetzen Sie Ihre Charaktere und sehen Sie sich Ihre erste gesprochene Szene in der Vorschau an – abonnieren Sie dann und fügen Sie Credits hinzu, wenn Sie Ihren Film fertig haben.",
         "features": [
-          "Einmaliger Kauf",
+          "Einmaliger Kauf (30-tägiger Studio-Testflug)",
           "750 Credits (verfallen 90 Tage nach dem Kauf)",
-          "5 GB Speicherplatz (30 Tage)",
-          "Voller Plattformzugriff",
+          "5 GB Testspeicher (30 Tage – Abonnieren, um den Tresor aufzubewahren)",
+          "Vollständiger Studiozugriff + Export von Produktionsskripten (PDF, FDX, Fountain)",
           "MP4-Export (beliebige Auflösung)",
           "KI-Voiceover (über 70 Sprachen)"
         ]
@@ -2458,51 +2469,62 @@
       "subscriptions": [
         {
           "id": "starter",
-          "name": "Starter – Sandbox",
-          "description": "Sandbox – zum Ausprobieren von Ideen vor einer echten Show",
+          "name": "Hobbyist – Geschichtenerzähler und Tresor",
+          "description": "Geschichtenerzähler und kreative Visionäre – drücken Sie Ihre Vision aus, ohne dass technische Kenntnisse im Bereich Filmemachen erforderlich sind, und halten Sie Ihren Kontinuitätsspeicher zwischen den Dreharbeiten aktiv",
           "features": [
-            "Voller Plattformzugriff",
-            "4.500 Credits/Monat inklusive",
+            "Aktive Studio-Mitgliedschaft und Aufbewahrung im Continuity Vault",
+            "1.500 Credits/Monat inklusive",
             "Nicht genutzte monatliche Guthaben verfallen am Ende des Zeitraums.",
-            "25 GB aktiver Speicher",
-            "MP4-Export (beliebige Auflösung)",
-            "KI-Voiceover (über 70 Sprachen)",
-            "E-Mail-Support"
+            "10 GB Active Continuity Vault (behält Besetzung, Garderoben und Sets)",
+            "Schaltet 12-monatige Abonnenten-Add-On-Guthabenpakete frei",
+            "Ideal für persönliche Visionen, Familiengeschichten und Pre-Vis-Animationen",
+            "Vorschau und Export des Produktionsskripts (PDF, FDX, Fountain)",
+            "MP4-Export und KI-Voiceover (über 70 Sprachen)"
           ]
         },
         {
           "id": "pro",
-          "name": "Profi-YouTuber",
-          "description": "YouTuber – wiederkehrende Episoden und Kanalvideos",
+          "name": "Starter – Kapitel & Pre-Vis",
+          "description": "Die Veröffentlichungskapitelstrategie – für 5–15-minütige episodische Kapitelveröffentlichungen und den Aufbau von Produktionsfinanzierungspaketen für traditionelle Filmemacher",
           "features": [
-            "Alles aus dem Starter-Paket, plus:",
-            "15.000 Credits/Monat inklusive",
+            "Alles in Hobbyist, plus:",
+            "4.500 Credits/Monat inklusive (3x Hobbyist-Rechner)",
             "Nicht genutzte monatliche Guthaben verfallen am Ende des Zeitraums.",
-            "100 GB aktiver Speicher",
-            "Zugang zur Veo 3.1-Qualität (4K)",
-            "Engine für Charakterkonsistenz",
-            "Stimmklonung",
-            "BYOK (Bring Your Own Key)",
-            "3 Team-Sitze",
-            "Bevorzugter Support"
+            "25 GB Active Continuity Vault für Charakter- und Setting-Kontinuität",
+            "Konzipiert für 5–15-minütige Kapitelveröffentlichungen und Pre-Vis-Finanzierungspakete",
+            "Laden Sie Live-Action-Szenen hoch und kombinieren Sie sie mit KI-Clips in Mixer",
+            "1 benutzerdefinierter Sprachklon und Synchronisation in über 70 Sprachen",
+            "E-Mail-Support"
           ]
         },
         {
           "id": "studio",
-          "name": "Studio — Indie-Filmemacher",
-          "description": "Indie-Filmemacher — Independent-Filme und -Serien",
+          "name": "Pro – Serie und Hybrid",
+          "description": "Monetarisierte Serien und Hybrid-Filmemacher – für soziale Kanäle mit wiederkehrenden Charakteren und erfahrenen Filmemachern, die Live-Action mit 4K-KI-Produktion verbinden",
           "features": [
-            "Alles aus Pro, plus:",
-            "75.000 Credits/Monat inklusive",
+            "Alles im Starter, plus:",
+            "15.000 Credits/Monat inklusive",
             "Nicht genutzte monatliche Guthaben verfallen am Ende des Zeitraums.",
-            "500 GB aktiver Speicher",
-            "Veo 3.1 4K-Prioritätswarteschlange",
-            "Unbegrenzte Charakterkonsistenz",
-            "White-Label-Exporte",
-            "API-Zugriff",
-            "10 Team-Plätze",
-            "Fester Kundenbetreuer",
-            "Enterprise-SLA auf Anfrage erhältlich"
+            "100 GB Active Continuity Vault + Character Consistency Engine",
+            "Zugriff auf Veo 3.1-Qualität (4K) und hybrider Live-Action- und KI-Workflow",
+            "5 benutzerdefinierte Sprachklone für wiederkehrende Serienbesetzungen",
+            "BYOK (Bring Your Own Key) für die direkte Abrechnung mit dem Anbieter",
+            "3 Teamplätze und vorrangiger Support"
+          ]
+        },
+        {
+          "id": "studio",
+          "name": "Studio – Produktionshaus",
+          "description": "Production House & Feature Slate – eine vollständige Produktionspipeline im Wert von 500–5.000 US-Dollar für erfahrene Filmemacher, Agenturen und Studios mit mehreren Serien",
+          "features": [
+            "Alles in Pro, plus:",
+            "75.000 Credits/Monat inklusive (niedrigster Zinssatz pro Credit)",
+            "Ungenutzte monatliche Guthaben verfallen am Ende des Zeitraums",
+            "500 GB Active Continuity Vault + Unbegrenzte Zeichenkonsistenz",
+            "Veo 3.1 4K-Prioritätswarteschlange und 25 benutzerdefinierte Sprachklone",
+            "White-Label-Screening Room & Exporte + API & BYOK-Zugriff",
+            "10 Teamplätze und dedizierter Account Manager",
+            "Enterprise SLA auf Anfrage verfügbar"
           ]
         }
       ]

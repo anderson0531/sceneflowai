@@ -42,8 +42,8 @@ const __dirname = dirname(fileURLToPath(import.meta.url))
 const ROOT = join(__dirname, '..')
 const MESSAGES_DIR = join(ROOT, 'messages')
 
-config({ path: join(ROOT, '.env.local') })
 config({ path: join(ROOT, '.env.vercel.local') })
+config({ path: join(ROOT, '.env.local'), override: true })
 
 async function syncLocale(
   en: Record<string, unknown>,
@@ -182,7 +182,8 @@ async function fillLocale(
 
   // Small batches keep the translation model from rewriting one string with
   // facts taken from a neighboring string.
-  const translatedFlat = await translateFlatMessages(stale, locale, provider, 8)
+  const chunkSize = provider === 'deep-translator' ? 350 : 8
+  const translatedFlat = await translateFlatMessages(stale, locale, provider, chunkSize)
   return applyTierA(locale, en, applyFill(en, existing, translatedFlat))
 }
 
@@ -314,15 +315,19 @@ async function main() {
 
   const reviewedMeta: Record<string, { tier: string; mt: boolean; scope: string }> = {}
   const failedLocales: string[] = []
+  let networkUnreachable = false
+  let targetIndex = 0
+  const concurrency = provider === 'deep-translator' ? 2 : 1
 
-  for (const locale of targets) {
+  async function processLocale(locale: string) {
+    if (networkUnreachable) return
     const localePath = join(MESSAGES_DIR, `${locale}.json`)
     if (skipExisting && existsSync(localePath)) {
       const existing = JSON.parse(readFileSync(localePath, 'utf8')) as Record<string, unknown>
       if (isLocaleSynced(existing, syncScope)) {
         console.log(`\n=== ${locale} ===`)
         console.log(`  Skipped (${syncScope} already synced)`)
-        continue
+        return
       }
     }
 
@@ -346,14 +351,30 @@ async function main() {
       console.log(`Wrote messages/${locale}.json (landing namespaces synced)`)
     } catch (err) {
       failedLocales.push(locale)
-      console.error(`  Failed for ${locale} (left unchanged): ${(err as Error).message}`)
+      const msg = (err as Error).message || String(err)
+      console.error(`  Failed for ${locale} (left unchanged): ${msg}`)
+      if (msg.includes('fetch failed') || msg.includes('ENOTFOUND')) {
+        console.error('  Network unreachable — aborting remaining locales.')
+        networkUnreachable = true
+        return
+      }
     }
 
-    if (localeDelayMs > 0) {
-      console.log(`  Cooling down ${localeDelayMs}ms before next locale...`)
+    if (localeDelayMs > 0 && !networkUnreachable) {
       await new Promise((r) => setTimeout(r, localeDelayMs))
     }
   }
+
+  async function worker() {
+    while (targetIndex < targets.length && !networkUnreachable) {
+      const locale = targets[targetIndex++]
+      await processLocale(locale)
+    }
+  }
+
+  await Promise.all(
+    Array.from({ length: Math.min(concurrency, targets.length) }, () => worker())
+  )
 
   const reviewedPath = join(MESSAGES_DIR, '_reviewed.json')
   const existingReviewed = existsSync(reviewedPath)

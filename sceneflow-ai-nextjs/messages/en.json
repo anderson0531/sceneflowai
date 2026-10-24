@@ -257,7 +257,7 @@
     "exitFullscreenOverview": "Exit fullscreen",
     "watchLongformLabel": "Watch the longform",
     "screenshotLabel": "Screenshot",
-    "landingUiLanguagesLabel": "Produce and dub in 44 languages. This site is available in these 39:",
+    "landingUiLanguagesLabel": "Produce and dub in 44 languages. Full studio interface and this site are available in these 39:",
     "rooms": [
       {
         "id": "series-desk",
@@ -734,17 +734,17 @@
               {
                 "icon": "languageStreams",
                 "title": "Streams (Multi-Language)",
-                "description": "Expand your global reach instantly. Automatically generate alternate language streams by dubbing audio or regenerating localized dialogue clips directly within the scene.",
+                "description": "Expand your global reach across 44 languages instantly. Automatically generate alternate language streams by dubbing audio, syncing lip movement, or regenerating localized dialogue clips directly within the scene.",
                 "screenshot": "Streams (Multi-Language) — dubbed audio and localized dialogue clips",
                 "learnMore": {
                   "items": [
                     {
                       "title": "Global reach",
-                      "description": "Automatically generate alternate language streams directly within the scene."
+                      "description": "Automatically generate alternate language streams across 44 languages directly within the scene."
                     },
                     {
-                      "title": "Dub or regenerate",
-                      "description": "Localize each scene by dubbing audio or regenerating localized dialogue clips."
+                      "title": "Dub, lip-sync, or regenerate",
+                      "description": "Localize each shot by dubbing audio, syncing lip movement, or regenerating localized dialogue clips."
                     }
                   ]
                 }
@@ -2283,6 +2283,7 @@
     "filmmakerPerspectives": {
       "heading": "One Studio Pipeline. Built for Every Storyteller & Filmmaker.",
       "subheading": "You do not need film school or technical skills to express your vision. Whether you are bringing a personal story to life for the first time, publishing a series chapter by chapter, pitching financiers, or running a hybrid shoot, your plan scales with how you create.",
+      "recommendedPathLabel": "Recommended path:",
       "cards": [
         {
           "id": "hobbyist",

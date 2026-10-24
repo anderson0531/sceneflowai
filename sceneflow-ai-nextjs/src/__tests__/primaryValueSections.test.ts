@@ -21,12 +21,12 @@ const ROOT = join(process.cwd())
 
 describe('primary value sections', () => {
   it('keeps direction and publish copy next to friction', () => {
-    expect(DIRECT_CONTROL_COPY.eyebrow).toBe('The control you keep')
-    expect(DIRECT_CONTROL_COPY.title).toBe('Direct the story. Let agents do the prompting.')
-    expect(DIRECT_CONTROL_COPY.subtitle).toContain('only then spend on motion')
-    expect(DIRECT_CONTROL_COPY.subtitle).toContain('clip prompt')
-    expect(DIRECT_CONTROL_COPY.subtitle).toContain('Music cues')
-    expect(DIRECT_CONTROL_COPY.subtitle).toContain('narration')
+    expect(DIRECT_CONTROL_COPY.eyebrow).toBe('No technical filmmaking required')
+    expect(DIRECT_CONTROL_COPY.title).toBe('Express your vision. Your AI crew handles the craft.')
+    expect(DIRECT_CONTROL_COPY.subtitle).toContain('only then spend credits on motion')
+    expect(DIRECT_CONTROL_COPY.subtitle).toContain('prompting')
+    expect(DIRECT_CONTROL_COPY.subtitle).toContain('music cues')
+    expect(DIRECT_CONTROL_COPY.subtitle).toContain('dialogue')
     expect(PUBLISH_CUT_COPY.subtitle).toContain('picture, music, and narration')
     expect(DIRECT_CONTROL_COPY.cta).toBe('Launch Studio ($9)')
     expect(PUBLISH_CUT_COPY.eyebrow).toBe('The cut you publish')

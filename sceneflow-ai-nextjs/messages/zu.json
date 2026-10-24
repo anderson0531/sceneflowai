@@ -257,53 +257,54 @@
     "exitFullscreenOverview": "Phuma esikrinini esigcwele",
     "watchLongformLabel": "Buka uhlelo olude",
     "screenshotLabel": "Isithombe-skrini",
-    "landingUiLanguagesLabel": "Kukhiqizwa futhi kufakwa amazwi ngolimi lwangempela (dubbing) ngezilimi ezingama-44. Le ngosi itholakala ngalezi zilimi ezingama-39:",
+    "landingUiLanguagesLabel": "Khiqiza futhi uhubhe ngezilimi ezingama-44. Isixhumi esibonakalayo esigcwele se-studio kanye nale sayithi kuyatholakala kulawa angama-39:",
     "rooms": [
       {
         "id": "series-desk",
         "label": "SFAISERIES_IsikhathiSegumbi",
-        "promise": "I-Series Room yindawo lapho kuqala khona isizini. Abalingiswa abafanayo nendaba efanayo kuqhubeka kuwo wonke iziqephu ozengezayo. Yifunde, uyilalele, futhi uyiqondise ngaphambi kokuba isiqephu sivuleke ku-Blueprint Room. Ifilimu engenayo isizini ingayeqa le ndawo.",
+        "headline": "Yakha indawo yonke kanye. Khiqiza iziqephu unaphakade.",
+        "promise": "Yakha isizini yeziqephu eziningi ngebhayibheli elilodwa lobuciko elabiwe. Abalingisi bakho, izindawo, uchungechunge lwezindaba, kanye ne-DNA ebonakalayo kungena ngokuzenzakalelayo kuso sonke isiqephu osiphenyayo. Ukukhiqiza ifilimu ezimele? Yeqela uqonde ku-Blueprint Room.",
         "features": [
           {
             "icon": "newSeries",
             "title": "Uchungechunge Olusha",
-            "description": "Qala lapha. Chaza uchungechunge oluhlosile ngamazwi akho. Isici esithi \"Clarify and Confirm\" (Cacisa futhi Uqinisekise) sisebenza nawe kulowo mbono kuze kube yilapho isifinyezo sesilungile, bese isici esithi \"Generate Series\" (Dala Uchungechunge) sibhala uhlaka oluyisisekelo. Uchungechunge olusha luqala ngeziqephu ezinhlanu, futhi ungangeza ezinye.",
+            "description": "Faka uchungechunge lwakho noma umqondo wesiteshi ngolimi olulula. Ukuthuthukiswa kwe-Interactive AI kucija isisekelo sakho futhi kukhiqize isizini eyisisekelo yeziqephu eziningi—eziphelele ngama-arcs wesakhiwo esikhulu kanye nokuhlukaniswa kweziqephu.",
             "screenshot": "Dala Uchungechunge Olusha — inhloso, Cacisa futhi Uqinisekise, Khiqiza Uchungechunge",
             "learnMore": {
               "items": [
                 {
                   "title": "Inhloso yakho",
-                  "description": "Chaza ukuthi lolu chungechunge luyini, kubandakanya uhlobo lwalo, izethameli, kanye nesitayela sobuciko."
+                  "description": "Faka isisekelo, ifomethi, izethameli eziqondiwe, nesitayela sobuciko obubonakalayo ngolimi olulula."
                 },
                 {
-                  "title": "Phinda",
-                  "description": "Isici esithi \"Clarify and Confirm\" sicwengisisa isifinyezo kanye nawe ngaphambi kokuba kukhiqizwe noma yini."
+                  "title": "Ukucwenga okusebenzisanayo",
+                  "description": "Cacisa futhi Qinisekisa kucija i-synopsis yesizini nawe ngaphambi kokuthi kwenziwe noma yini."
                 },
                 {
-                  "title": "Isisekelo",
-                  "description": "I-Generate Series ibhala isizini ozoyibuyekeza, eqala ngeziqephu ezinhlanu."
+                  "title": "Isisekelo sesizini",
+                  "description": "I-Generate Series yakha i-arc yesizini yeziqephu ezinhlanu ongayikhulisa noma nini."
                 }
               ]
             }
           },
           {
             "icon": "seriesReview",
-            "title": "Bukeza uhlaka lokuqala",
-            "description": "Funda isifinyezo, noma ucindezele inkinobho ethi \"Lalela\". Bese ufunda iziqephu, noma uzilalele. Ukungaguquguquki kuyawahlanganisa amagatsha endaba, kanti ukuqhubeka okuhlelekile kugcina abalingisi, izindawo, izinto ezisetshenziswayo, kanye nezimo ezabiwa yilezo ziqephu.",
+            "title": "Isizini Bible & Ukuqhubeka",
+            "description": "Funda noma ulalele ukubuka konke kwesizini elandiwe nesilayidi sesiqephu. I-SceneFlow ikhiya uchungechunge lwendaba yakho, amaphrofayli abalingisi, izindawo, nezixhaso zesiginesha zibe i-Reference Library eyabelwe sonke isiqephu esiyifa.",
             "screenshot": "Uhlu Oluphelele, Iziqephu, Ukungaguquguquki, Ukuqhubeka — Abalingisi, Izindawo, Izinto Zokusetshenziswa, Izimo",
             "learnMore": {
               "items": [
                 {
                   "title": "Funda noma ulalele",
-                  "description": "Isifinyezo neziqephu kungafundwa, noma kulalelwe kusetshenziswa inketho ethi \"Lalela\"."
+                  "description": "Hlola uhlolojikelele lwesizini kanye nawo wonke ama-synopsis wesiqephu ngokulandisa okwakhelwe ngaphakathi komsindo."
                 },
                 {
-                  "title": "Ukungaguquguquki",
-                  "description": "Isitayela sokubukeka, izigameko ezibalulekile, kanye nemicu yendaba kuhambisana nenkathi."
+                  "title": "Ukungaguquguquki kwendaba",
+                  "description": "Ubuhle, imicimbi ebalulekile yesakhiwo, nemicu yokulandisa kuhlala kukhiyiwe isizini yonke."
                 },
                 {
-                  "title": "Ukuqhubeka",
-                  "description": "Abalingisi, izindawo, izinto ezisetshenziswayo kanye nezimo yilezo ezifanayo ezisetshenziswa kuzo zonke iziqephu."
+                  "title": "Ukuqhubeka okwabiwe",
+                  "description": "Abalingisi, izindawo, ama-prop, nezilungiselelo kungena ngokuzenzakalelayo kuso sonke isiqephu osikhiqizayo."
                 }
               ]
             }
@@ -311,17 +312,17 @@
           {
             "icon": "seriesResonance",
             "title": "Igama elichaza ukuhambisana nemizwa yezithameli",
-            "description": "Sebenzisa i-Audience Resonance uma ufuna ukuthola ulwazi mayelana nesizini. Hlola amaphuzu kanye nokuhlaziywa kwawo. Sebenzisa ulwazi olungaguqulwa lube yisenzo (Actionable Insight) kuphela uma ukhetha ukwenza njalo; akukho okuzoshintsha ochungechungeni kuze kube yilapho wenza lokho.",
+            "description": "Hlola i-arc yesizini yakho usebenzisa i-demographic oyiqondisile ngaphambi kokubhala iskripthi esisodwa. Buyekeza izikolo ze-resonance zesiqephu ngesiqephu futhi usebenzise ukuthuthukiswa kwezindaba ezisekelwa idatha ngokuchofoza okukodwa—kuphela uma uvumelana nenothi.",
             "screenshot": "Ukuhlaziywa kwe-Audience Resonance, kulandelwe imininingwane engasetshenziswa (Actionable Insights), engakasetshenziswa.",
             "learnMore": {
               "items": [
                 {
-                  "title": "Ukufunda",
-                  "description": "Izikolo nokuhlaziya kukhombisa lokho okusebenzayo kubantu obakhombile."
+                  "title": "Amaphuzu ezibalo zabantu",
+                  "description": "Izikolo nokuhlaziywa kwesakhiwo kuveza ukuthi isizini yakho ifika kanjani nezithameli ozihlosile."
                 },
                 {
-                  "title": "Ongakukhetha",
-                  "description": "Ulwazi olungasetshenziswa luyalushintsha uchungechunge kuphela uma ulusebenzisa."
+                  "title": "Ilungelo lomqondisi",
+                  "description": "I-Actionable Insights ibuyekeza uchungechunge lwakho kuphela uma ukhetha ukulisebenzisa."
                 }
               ]
             }
@@ -329,57 +330,57 @@
           {
             "icon": "seriesDirector",
             "title": "Umqondisi Wochungechunge",
-            "description": "Qondisa uchungechunge lonke ngamazwi akho, kungaba ngawomlomo noma abhalwe phansi. Ukhetha ushintsho kanye nokugxila, bese ukwamukela lokho. Isiphakamiso singaba usizo, kanti izingxenye zendaba ezingahlobene zihlala zinjalo.",
+            "description": "Hlela kabusha isizini yonke ngezwi noma ngombhalo. Shintsha ithoni, phakamisa izikhonkwane, noma ulungise kabusha i-arc yomlingiswa kuzo zonke iziqephu ngesikhathi esisodwa ngenkathi ugcina lonke umugqa wendaba unjalo.",
             "screenshot": "Umqondisi Wochungechunge — ukuqondisa, ukugxila, ukwamukela",
             "learnMore": {
               "items": [
                 {
-                  "title": "Amazwi akho",
-                  "description": "Khuluma noma uthayiphe ushintsho, futhi uma uthanda, uluqondise kuphela endabeni, kubalingiswa, kokuqukethwe yisiqephu, emoyeni wendaba, noma endaweni eyenzeka kuyo."
+                  "title": "Isiqondiso solimi olulula",
+                  "description": "Khuluma noma thayipha inothi lakho bese ukhomba isakhiwo, abalingisi, ama-arcs esiqephu, ithoni, noma isilungiselelo."
                 },
                 {
-                  "title": "Uyakwamukela",
-                  "description": "Akukho lutho olushintshayo kuze kube yilapho ukwamukela, kanti izingxenye zendaba ezingahlobene zihlala zinjalo."
+                  "title": "Izibuyekezo zokuhlinzwa",
+                  "description": "Akukho okushintshayo uze wamukele isibuyekezo, futhi imicu yezindaba ezingahlobene zihlala zingathintwa."
                 },
                 {
-                  "title": "Isincomo",
-                  "description": "Izincomo zingasiza, kanti usengakwazi ukuzikhethela ukuthi yini ofuna ukuyigcina."
+                  "title": "Izincomo eziqondisiwe",
+                  "description": "Sebenzisa ukuthuthukiswa kwendaba ephakanyisiwe ye-AI noma uqondise ngokwakho konke ukukhetha kobuciko."
                 }
               ]
             }
           },
           {
             "icon": "directEpisode",
-            "title": "Qondisa lesi sigaba",
-            "description": "Vula isiqephu bese uqondisa lelo hora kuphela. Khulisa izinga lobunzima noma ujulise indaba, bese ukusebenzisa lokho. Ezinye iziqephu zihlala zinjengoba zinjalo.",
+            "title": "Ukuqondisa Kwezinga Lesiqephu",
+            "description": "Sondeza kunoma isiphi isiqephu ngasinye ukuze ulungise kabusha isiqephu saso, ukunyakazisa, noma ukusondeza yedwa—ngaphandle kokuphazamisa sonke isileyiti sakho sesizini.",
             "screenshot": "Iziqephu — Qondisa lesi siqephu, ezinye iziqephu zihlala zinjengoba zinjalo",
             "learnMore": {
               "items": [
                 {
-                  "title": "Isiqephu esisodwa",
-                  "description": "Lokhu kusebenzisa ushintsho kuleso siqephu kuphela."
+                  "title": "Izodwa ibhala kabusha",
+                  "description": "Izinguquko eziqondile kuhlaka lwesiqephu esisodwa namabhithi ngaphandle kokushintsha iziqephu ezingomakhelwane."
                 },
                 {
-                  "title": "Isizini iyaqhubeka",
-                  "description": "Ezinye iziqephu zishiywe njengoba zinjalo."
+                  "title": "Ubuqotho besizini",
+                  "description": "Ibhayibheli lesizini enkulu kanye nesilayidi sesiqephu esisele kuhlala kukhiyiwe."
                 }
               ]
             }
           },
           {
             "icon": "startEpisode",
-            "title": "Qala isiqephu",
-            "description": "Uma isiqephu sesikulungele, qala iphrojekthi yaso. Uhlaka, isifinyezo, kanye nezigaba ezibalulekile (beats) kuhamba nakho kuya ku-Blueprint Room. Abalingisi kanye nomhlaba wendaba sekuyaziwa kakade.",
+            "title": "Ukwethulwa kwesiqephu sokuchofoza okukodwa",
+            "description": "Uma uhlaka lwesiqephu lufika kuqophelo, luqalise ngqo ku-Blueprint Room nama-synopsis, amabhithi ezindaba, abalingisi, nomhlaba osevele uxhumeke kuwo.",
             "screenshot": "Qala iphrojekthi — uhlaka kanye nabalingisi sebekhona esiqeshini",
             "learnMore": {
               "items": [
                 {
-                  "title": "Qala iphrojekthi",
-                  "description": "I-Start Project ivula leso siqephu ku-Blueprint Room."
+                  "title": "I-handoff esheshayo",
+                  "description": "Yethula noma yisiphi isiqephu ngqo ku-Blueprint Room ngokuchofoza okukodwa."
                 },
                 {
-                  "title": "Sekwaziwa kakade",
-                  "description": "Uhla oluyisisekelo, isifinyezo, izigaba ezibalulekile kanye nabalingisi kuhamba nakho."
+                  "title": "I-DNA efakwe ngaphambili",
+                  "description": "Uhlaka lwesiqephu, amazwibela, amabhithi ezindaba, abalingisi, nezindawo zihamba ngokuzenzakalelayo."
                 }
               ]
             }
@@ -389,43 +390,44 @@
       {
         "id": "blueprint-board",
         "label": "SFAIBLUEPRINT_IGAMA_LE_GUMBI",
-        "promise": "I-Blueprint Room yindawo lapho ucwengisisa khona indaba ngaphambi kokubhala umbhalo wemidlalo (script) wemizuzu engama-90. Qala ngesiqephu sochungechunge noma ngephrojekthi entsha. Hlela izigaba zendaba kanye nabalingisi lapha, ukuze i-Production Stage ingadingi ukuphinde ikwakhe konke lokho kusukela ekuqaleni.",
+        "headline": "Khiya indaba nokubukeka ngaphambi kokuthi kukhishwe uhlaka olulodwa.",
+        "promise": "Kungakhathaliseki ukuthi wethula isiqephu esivela ku-Series Room noma uqala isici esizimele, i-Blueprint Room yilapho i-DNA yakho yokudala ivaleleka khona. Iphelele kahle ishidi elibhithiyo, umlingisi, izindawo, nesitayela sokubukwayo lapha—ukuze i-Production Stage yakhe iskripthi esifanele ekudluleni kokuqala.",
         "features": [
           {
             "icon": "startBlueprint",
             "title": "Qala i-Blueprint",
-            "description": "Qala ngesiqephu sochungechunge, noma uqale iphrojekthi entsha. Isiqephu sochungechunge sifika sihlanganise uhlaka, isifinyezo, kanye nezigaba ezibalulekile (beats). Iphrojekthi entsha iqala lapho uchaza inhloso, usebenzisa isici esithi \"Validate & Enhance with AI,\" bese ukhetha inketho ethi \"Generate Blueprint.\"",
+            "description": "Letha isiqephu esisuka kusilayidi sakho sochungechunge esinohlaka lwaso futhi silayishwe kusengaphambili, noma veza umqondo wefilimu omusha sha kusukela ekuqaleni futhi uvumele i-AI ihlele ukwelashwa okuyisisekelo.",
             "screenshot": "Isiqephu sochungechunge sesiyaziwa, noma Qala Iphrojekthi Yakho — inhloso, Qinisekisa futhi Uthuthukise nge-AI, Khiqiza i-Blueprint",
             "learnMore": {
               "items": [
                 {
-                  "title": "Isiqephu sochungechunge",
-                  "description": "Isiqephu sochungechunge siqala ngohlaka lwaso, isifinyezo, kanye nezigaba ezibalulekile zendaba (beats) okusuke sekunanyathiselwe kakade."
+                  "title": "Kusuka ku-Series Room",
+                  "description": "Iziqephu zochungechunge zifika nohlaka lwazo, ama-synopsis, amabhithi, nabalingisi sekuvele kunamathiselwe."
                 },
                 {
-                  "title": "Iphrojekthi entsha",
-                  "description": "Isici esithi \"Start Your Project\" sithatha inhloso, bese siyiqinisekisa futhi siyithuthukise kusetshenziswa i-AI, bese sikhiqiza i-Blueprint."
+                  "title": "Iphrojekthi ezimele",
+                  "description": "Faka umqondo omusha wefilimu, uwulungise ngokuqinisekiswa kwe-AI, futhi ukhiqize ukwelashwa okuphelele."
                 }
               ]
             }
           },
           {
             "icon": "treatment",
-            "title": "Qondisa isigqi",
-            "description": "Vula ithebhu ethi \"Beats\" bese ulalela uhlu lwezigaba (beat sheet). Lungiselela kahle lezi zigaba lapha, ngoba yizo eziqondisa ukwakhiwa kombhalo. Lezi zigaba zitholakala lapha kuphela. I-Production Stage iguqula isigaba ngasinye sibe yisahluko.",
+            "title": "I-Beat Sheet",
+            "description": "Yakha umgogodla wefilimu yakho. Funda noma lalela ishidi lakho lebhithi elilandisayo futhi ulungise ukuhambahamba lapha—zonke izigqi ozikhiyelayo ku-Blueprint Room zishayela isahluko ku-Production Stage.",
             "screenshot": "Ithebhu ethi Beats, enenketho ethi Lalela",
             "learnMore": {
               "items": [
                 {
-                  "title": "Uhlu olulodwa lwezigaba zendaba",
-                  "description": "Imigqi ikhona lapha kuphela."
+                  "title": "Umgogodla olandisayo",
+                  "description": "Amabhithi agunyaziwe futhi akhiywa ku-Blueprint Room ngaphambi kokuthi kuqale ukukhiqizwa kombhalo."
                 },
                 {
-                  "title": "Ukwakhiwa kombhalo wohlelo",
-                  "description": "Ama-beat yiwona aqhuba ukwakhiwa kombhalo, ngakho-ke athuthukiswa ngaphambi kwe-Production Stage."
+                  "title": "Ukuhamba phambili",
+                  "description": "Ukulungiselela ishidi lebhithi lapha kuqinisekisa ukuthi umdlalo-skrini wakha ngesakhiwo esiqinile."
                 },
                 {
-                  "title": "Izahluko",
+                  "title": "Imephu ye-beat-to-chapter",
                   "description": "I-Production Stage iguqula isigqi ngasinye sibe yisahluko."
                 }
               ]
@@ -433,22 +435,22 @@
           },
           {
             "icon": "castLocations",
-            "title": "Qondisa abalingisi nezindawo zokuqopha",
-            "description": "Vula isigaba esithi Characters bese uhlela abalingisi. Vula isigaba esithi Setting kuthebhu ethi Story bese uhlela izindawo ezihambisana nabo. Abalingisi banomthelela ekwakhiweni kombhalo (script), ngakho kokubili kumiswa ngaphambi kokuba i-Production Stage idinge ukulungisa kabusha umbhalo.",
+            "title": "I-Cast & World Design",
+            "description": "Chaza abalingiswa bakho, ikhabethe lakho, nezindawo eziyinhloko ngaphambi kokuthi kukhiqizwe umdlalo-skrini—uqinisekisa ukuthi umbhalo ubhalwe eduze kwabalingisi bakho kanye nezilungiselelo ezivela ekhasini lokuqala.",
             "screenshot": "Ithebhu yezinhlamvu, bese kuba yindawo yesigameko endabeni",
             "learnMore": {
               "items": [
                 {
-                  "title": "Abadlali",
-                  "description": "Ithebhu ethi 'Characters' imele abalingisi, futhi labo balingisi banomthelela ekwakhiweni kombhalo womdlalo."
+                  "title": "Amaphrofayili abalingiswa",
+                  "description": "Qondisa amaphrofayili akho ngaphambili ukuze inkhulumomphendvulwano nokuvinjwa kufane nomlingiswa ngamunye."
                 },
                 {
-                  "title": "Izindawo",
-                  "description": "Izindawo yizo ezakha isimo sendaba kuthebhu ethi Story."
+                  "title": "Umhlaba nezindawo",
+                  "description": "Misa izilungiselelo eziyinhloko kuthebhu yeNdaba ukuze uqinise indawo yazo zonke izigcawu."
                 },
                 {
-                  "title": "Ngaphambi kombhalo",
-                  "description": "Ukuqondisa kokubili lapha kugwema ukwenziwa kabusha okukhulu kombhalo (script) ku-Production Stage."
+                  "title": "Ukwenza kabusha umbhalo onguziro",
+                  "description": "Ukukhiya abalingisi nezindawo ngaphambi kokukhiqizwa kombhalo kuqeda ukubhalwa kabusha okubizayo ku-Production Stage."
                 }
               ]
             }
@@ -456,21 +458,21 @@
           {
             "icon": "blueprintDirector",
             "title": "Umqondisi we-Blueprint",
-            "description": "Umqondisi wamukela ushintsho ngamagama akho, kungaba ngawomlomo noma abhalwe phansi. Gxilisa ukulungisa kwakho ezigabeni (beats), kubalingiswa, noma endabeni, bese ubuka kuqala izinguquko. Akukho okushintshayo kuze kube yilapho ususebenzisa lezo zinguquko.",
+            "description": "Khuluma noma thayipha amanothi akho endaba ukuze ubuyekeze amabhithi, abalingisi, noma imininingwane yomhlaba. Buka kuqala ukubuyekezwa okunokulinganisela ngakunye—akukho okushintshile ekwelashweni kwakho kuze kube yilapho ugunyaza ukusikwa.",
             "screenshot": "Umqondisi — ukuqondisa, ukugxila, ukubuka kuqala, ukusebenzisa izinguquko",
             "learnMore": {
               "items": [
                 {
-                  "title": "Amazwi akho",
-                  "description": "Khuluma noma uthayiphe ushintsho, bese ugxila ezigabeni (beats), kubalingiswa, noma endabeni."
+                  "title": "Amanothi ahlosiwe",
+                  "description": "Khuluma noma thayipha isiqondiso sakho futhi ugxilise isibuyekezo kokuthi Beats, Izinhlamvu, noma Indaba."
                 },
                 {
-                  "title": "Ukubuka kuqala",
-                  "description": "Ukukhiqiza ukulungiswa okulinganiselayo kukhombisa ushintsho ngaphambi kokuba ulusebenzise."
+                  "title": "Ukubuka kuqala kwezinhlangothi",
+                  "description": "Buyekeza isibuyekezo esilinganiselwe ngaphambi kokwenza noma yiziphi izinguquko ku-Blueprint yakho."
                 },
                 {
-                  "title": "Uyisifaka",
-                  "description": "Akukho okushintshayo kuze kube yilapho usebenzisa izinguquko."
+                  "title": "Ubambe ingidi",
+                  "description": "Akukho lutho ekwelashweni kwakho olushintshayo uze usebenzise isibuyekezo ngokusobala."
                 }
               ]
             }
@@ -478,35 +480,35 @@
           {
             "icon": "blueprintResonance",
             "title": "Igama elichaza ukuhambisana nemizwa yezithameli",
-            "description": "Londoloza izethameli, bese wenza ukuhlaziya. Uzobona amaphuzu kanye nezincomo. Akukho okushintshayo ohlelweni oluyisisekelo (blueprint) kuze kube yilapho usebenzisa isincomo ku-Blueprint Director.",
+            "description": "Thola impatho yakho uqhathanise nephrofayili yamasiko nezithameli zakho ezihlosiwe. Bamba izikhala zokuhamba kwesakhiwo kusenesikhathi futhi usebenzise izincomo eziqondiwe kuMqondisi we-Blueprint.",
             "screenshot": "Audience Resonance — izethameli ezilondoloziwe, amaphuzu, izincomo ezingasetshenziswanga",
             "learnMore": {
               "items": [
                 {
-                  "title": "Ukufunda",
-                  "description": "Londoloza izethameli, bese uhlaziya, ufunde amaphuzu nezincomo."
+                  "title": "Ukuqinisekiswa kwangaphambili kweskripthi",
+                  "description": "Hlaziya indlela ophatha ngayo izithameli zakho ukuze ubone izikolo zesigaba namanothi endaba."
                 },
                 {
-                  "title": "Ongakukhetha",
-                  "description": "Isincomo sishintsha uhlaka kuphela uma usisebenzisa ku-Blueprint Director."
+                  "title": "Isicelo esikhethiwe",
+                  "description": "Izincomo zishintsha kuphela i-Blueprint yakho uma ukhetha ukuzisebenzisa."
                 }
               ]
             }
           },
           {
             "icon": "goToProduction",
-            "title": "Iya ku-Production Stage",
-            "description": "Yiya ku-Production Stage uma uhlaka lwendaba, izigaba zayo, kanye nabalingisi sebekhethiwe. Umbhalo womdlalo wemizuzu engu-90 wakhiwa kusukela kuleli bhodi. Akudingeki ukuthi uhlaka lwendaba luphinde lwakhiwe kabusha ku-Production Stage.",
+            "title": "I-Greenlight to Production",
+            "description": "Uma ukwelapha, ishidi lebhithi, nokulingisi kukhiyiwe, ngena ku-Production Stage. I-SceneFlow ihlanganisa iskripthi sakho esigcwele izahluko eziningi ngokuqondile sisuka ku-Blueprint yakho egunyaziwe.",
             "screenshot": "Iya ku-Production Stage — uhlaka lwendaba, izigaba zayo, kanye nabalingisi sekumisiwe kakade.",
             "learnMore": {
               "items": [
                 {
-                  "title": "Ukudluliselwa",
-                  "description": "Iya ku-Production Stage ukuze uvule umbhalo ovela kulo mdwebo oyisisekelo."
+                  "title": "Ukuhlanganiswa okungenamthungo",
+                  "description": "Ukunyathela ku-Production Stage kuhlanganisa umbhalo ogcwele ngokuqondile kusuka ku-Blueprint yakho egunyaziwe."
                 },
                 {
-                  "title": "Sekumisiwe kakade",
-                  "description": "Indaba, izigaba zayo, kanye nabadlali sebekuqondisiwe kakade."
+                  "title": "Isisekelo esikhiyiwe",
+                  "description": "Umugqa wendaba, ukwakheka kwebhithi, nabalingisi bafika sebelungele indawo kanye nendawo yokudutshulwa."
                 }
               ]
             }
@@ -516,215 +518,109 @@
       {
         "id": "production-stage",
         "label": "Isigaba Sokukhiqiza se-SFAI",
-        "promise": "Lesi yisigaba lapho uhlaka oluvunyiwe luphenduka khona umkhiqizo wokugcina obonakalayo. Lawula izindleko ngokusebenzisa izindlela zakho zokulawula kanye nohlelo olucacile. Thuthukisa isigcawu ngasinye ngokubambisana, bese wakha isigcawu ngasinye ngokulandelana — ukuqondisa, umsindo, umculo, ukuhambisana kwezenzo, kanye nezithombe ezimile — futhi uhlole uhlaka olugqwayizayo (animatic) ngaphambi kokuba uqale ukusebenzisa imali ekukhiqizeni ividiyo. Khiqiza iziqeshana, uzihlanganise, udale izinhlobo ngezilimi ezahlukene, bese uthumela isigcawu, isahluko, ifayela eliyinhloko (master), noma ividiyo yokukhangisa.",
-        "spend": {
-          "label": "Lawula izindleko",
-          "features": [
-            {
-              "icon": "byok",
-              "title": "Letha Ukhiye Wakho",
-              "description": "Xhuma okhiye bakho bomhlinzeki wezithombe namavidiyo. Ukukhiqizwa kwenziwa kusetshenziswa i-akhawunti yakho nangamanani akho, kuyilapho isitudiyo esiqondiswayo — okuhlanganisa ama-ejenti, ukuqhubeka kokulandelana (continuity), i-Mixer, kanye ne-Screening Room — sihlala sikhona.",
-              "screenshot": "Izikhiye ze-BYOK",
-              "learnMore": {
-                "items": [
-                  {
-                    "title": "Izikhiye zakho",
-                    "description": "Xhuma okhiye babahlinzeki bezithombe namavidiyo ukuze inqubo yokukhiqiza isebenze nge-akhawunti yakho, ngamanani akho."
-                  },
-                  {
-                    "title": "Isitudiyo esifanayo",
-                    "description": "Ama-ejenti, ukuqhubeka, i-Mixer, kanye ne-Screening Room kuhlala ezindaweni zako."
-                  }
-                ]
-              }
-            },
-            {
-              "icon": "budget",
-              "title": "Umhleli Wokukhiqiza",
-              "description": "Misa inani lezinguqulo ezivunyelwe esithombeni ngasinye ngaphambi kokuba uqale ukusebenzisa izimali. Lezi zinhloso zihlanganiswa ukuze zakhe isithombe esikhulu esihlanganisa isigcawu, isahluko, kanye nomsebenzi wonke, kanti usuku lokuqala lwakha uhlelo olubonisa nosuku lokuqeda.",
-              "screenshot": "Umhleli Wokukhiqiza",
-              "learnMore": {
-                "items": [
-                  {
-                    "title": "Izinhloso ezidutshuliwe",
-                    "description": "Setha izinhlobo ezahlukene zezithombe ezimile kanye neziqeshana zevidiyo ngesibhamu ngasinye, bese uzihlanganisa ndawonye ezingeni lesigcawu, isahluko, kanye nomkhiqizo wokugcina."
-                  },
-                  {
-                    "title": "Uhlelo olune-dethi",
-                    "description": "Usuku lokuqala nezinsuku zokusebenza kwakha uhlelo olunamakhredithi aqongelelekayo."
-                  },
-                  {
-                    "title": "Setha kabusha ngokusekelwe kumanani angempela",
-                    "description": "Izigcawu eziqediwe zingasetha kabusha izinhloso ngokususelwa ezindlekweni zangempela."
-                  },
-                  {
-                    "title": "Isimo sefoni",
-                    "description": "Bheka isivinini, izindleko, kanye nosuku lokuqeda ocingweni lwakho, kuyilapho ukuhlela kwenziwa kukhompyutha noma kuthebhulethi."
-                  }
-                ]
-              }
-            }
-          ]
-        },
+        "headline": "Kusukela kuskripthi kuye kokuyinhloko, konke kugumbi elilodwa.",
+        "promise": "I-Blueprint ikhiyiwe. Abalingisi bakho bayalingwa. Manje, ngena ku-Production Stage. Isahluko ngasinye, isigcawu, kanye nokudubula kuhlelwe kwaba ukuhamba komsebenzi okulandelanayo. Uqondisa inhloso; ama-intelligent agents akhipha isizukulwane.",
         "groups": [
           {
             "id": "script",
-            "label": "Thuthukisa iskripthi",
+            "label": "Okuqondile nokulawula",
+            "headline": "Khuluma ulimi lwefilimu, hhayi i-syntax yokwaziswa.",
+            "description": "Ungachithi isikhathi ngokubhala amagama angukhiye akubakaki. I-Production Stage iqonda isiqondiso semvelo, isebenzisa umbono wakho kuso sonke isigcawu noma phansi kuya esifanekisweni esithile.",
             "features": [
               {
                 "icon": "scriptResonance",
-                "title": "Igama elichaza ukuhambisana nemizwa yezithameli",
-                "description": "I-Audience Resonance ifunda umbhalo wonke ngesikhathi esisodwa, zonke izigcawu zihlangene. Uyazibona izikolo namanothi ndawonye, futhi akukho okubhalwa kabusha kuze kube yilapho ukukhetha khona.",
-                "screenshot": "Audience Resonance — amaphuzu namanothi kuzo zonke izigcawu, angasetshenzisiwe",
+                "title": "I-Scene & Shot Director",
+                "description": "Thayipha noma khuluma isiqondiso sakho ngolimi olulula. Tshela i-ejenti ukuthi ubani osefreyimeni, lapho ikhamera ihamba khona, nokuthi kuyini ukushaya kwemizwa. I-Shot Director ibhala ngokuzenzakalelayo imiyalo eyisisekelo yezithombe ezimile neziqeshana zakho.",
+                "screenshot": "I-Scene & Shot Director — isiqondiso solimi olulula lwezithombe ezimile neziqeshana",
                 "learnMore": {
                   "items": [
                     {
-                      "title": "Zonke izigcawu ndawonye",
-                      "description": "Ihlela umbhalo njengento eyodwa, ihambisana namanothi mayelana nezigcawu ezisebenza ngokubambisana."
+                      "title": "Ulimi olulula",
+                      "description": "Thayipha noma khuluma ukuthi ubani osefreyimu, lapho ikhamera inyakaza, nokuthi kuyini isigqi semizwa."
                     },
                     {
-                      "title": "Uyazikhethela",
-                      "description": "Akukho lutho olubhalwa kabusha kuze kube yilapho ukhetha ukuthi yimaphi amanothi ozowasebenzisa."
+                      "title": "Isigcawu noma isibhamu",
+                      "description": "Sebenzisa umbono wakho kuso sonke isigcawu noma phansi kusithombe esithile."
+                    },
+                    {
+                      "title": "Ukuhlanganisa ngokushesha",
+                      "description": "I-Shot Director ibhala ngokuzenzakalelayo imiyalo engezansi yezithombe zakho ezimile neziqeshana."
                     }
                   ]
                 }
               },
               {
                 "icon": "castVisual",
-                "title": "Abadlali, izingubo, kanye nezwi",
-                "description": "Qinisekisa ukuthi ubabeka kanjani abalingisi ngaphambi kokuqala izigcawu. Misa uhlobo lomlingisi, izingubo zakhe, kanye nezwi lakhe, ukuze zonke izithombe namavidiyo alandelayo kudingeke kube ngumuntu ofanayo.",
-                "screenshot": "Uhlamvu, izingubo, kanye nezwi",
+                "title": "I-Continuity Library",
+                "description": "Ukungaguquguquki okuphelele kulo lonke uchungechunge. Khiqiza ngokuzenzakalelayo noma yabela mathupha izithombe eziyisethenjwa zobalingisi bakho, amawodilophu, izindawo, nezinsiza ezibalulekile ukuze uqinisekise ukuthi ishothi ngayinye ifana ne-Blueprint.",
+                "screenshot": "I-Continuity Library - i-cast, i-wardrobes, izindawo, nezinsiza ezibalulekile",
                 "learnMore": {
                   "items": [
                     {
-                      "title": "Umlingiswa nezingubo",
-                      "description": "I-Cast Agent idweba umlingiswa kanye nokubukeka kwezingubo zakhe."
+                      "title": "Ukuvumelana kochungechunge",
+                      "description": "Gcina abalingisi, amawodilophu, izindawo, nezinsiza ezibalulekile kuhlangene kukho konke ukushutha."
                     },
                     {
-                      "title": "Izwi",
-                      "description": "Izwi linqunyelwa umlingiswa ngaphambi kokuba kwakhiwe izigcawu."
-                    },
-                    {
-                      "title": "Umuntu ofanayo",
-                      "description": "Yonke isithombe esinganyakazi nayo yonke i-clip idinga leyo khiya."
+                      "title": "Khiqiza noma yabela",
+                      "description": "Khiqiza ngokuzenzakalelayo izithombe eziyisethenjwa noma yabela ngokwakho eyakho ukuze ifane ne-Blueprint."
                     }
                   ]
                 }
               },
               {
                 "icon": "directShot",
-                "title": "Ukudubula okuqondile",
-                "description": "I-Direct Shot ithatha umyalo ngokusebenzisa amazwi akho, kungaba ngokuthayipha noma ngokukhuluma. Uyabuka kuqala ukuthi uqondise kuphi bese uyakugcina, khona-ke imiyalelo yezithombe neyeziqeshana zevidiyo ibuyekezwa ngesikhathi esisodwa.",
-                "screenshot": "Direct Shot — thayipha noma usho amazwi, bheka kuqala, gcina",
+                "title": "Audience Resonance Ukuhlanganiswa",
+                "description": "Funda ekamelweni ngaphambi kokuthi unikeze. I-AI ihlaziya umbhalo wakho iqhathanisa nezithameli oziqondise, ikunikeze imininingwane yesigcawu nesigcawu. Sebenzisa izikhombisi-ndlela ezinconyiwe ngokushesha, noma wethembe amathumbu akho futhi ungazinaki.",
+                "screenshot": "Ukuhlanganiswa kwe-Audience Resonance — imininingwane yezethameli yesigcawu",
                 "learnMore": {
                   "items": [
                     {
-                      "title": "Ukudubula okuqondiswe endaweni ethile",
-                      "description": "Ingxoxo inesihloko esithi Direct Shot · Scene N · Shot N."
+                      "title": "Imininingwane yesehlakalo ngesigameko",
+                      "description": "I-AI ihlaziya umbhalo wakho ngokumelene nezithameli oziqondise ngaphambi kokuthi unikeze."
                     },
                     {
-                      "title": "Thayipha noma usho",
-                      "description": "Bhala inothi noma ulisho ngomlomo, bese ubheka kuqala indlela ngaphambi kokuba uyigcine."
-                    },
-                    {
-                      "title": "Zombili izikhuthazo",
-                      "description": "Ukulondoloza kubuyekeza umyalo wesithombe kanye nomyalo wevidiyo ndawonye."
-                    },
-                    {
-                      "title": "Futhi ngemva kweziqeshana",
-                      "description": "Uma umzila odaliwe ungalungile, vula i-Direct Shot bese uwuqondisa kabusha."
+                      "title": "Ucingo lwakho",
+                      "description": "Sebenzisa izikhombisi-ndlela ezinconyiwe ngokushesha, noma wethembe amathumbu akho futhi ungazinaki."
                     }
                   ]
                 }
               },
               {
                 "icon": "audioAgent",
-                "title": "Audio Agent",
-                "description": "I-Audio Agent yakha izingxoxo, imiphumela yomsindo, kanye nomculo wesigcawu. Lesi sigcawu singezwakala ngaphambi kokuba kusetshenziswe ucezu lwevidiyo (clip).",
-                "screenshot": "Audio Agent — izingxoxo, imiphumela yomsindo, nomculo",
+                "title": "Umhleli Wokukhiqiza",
+                "description": "Sungula isabelomali kanye nokukhiqizwa kweshejuli kuso sonke isigcawu nesahluko usebenzisa amakhredithi e-SceneFlow noma okhiye bakho be-BYOK API. Misa okuqondisiwe bese unamathisela ishothi ngayinye ngaphambi kokuthi uchithe ikhompuyutha.",
+                "screenshot": "Umhleli Wokukhiqiza — ibhajethi, ishejuli, nokhiye be-BYOK API",
                 "learnMore": {
                   "items": [
                     {
-                      "title": "Ingxoxo nemiphumela",
-                      "description": "Ingxoxo igxila enkulumweni, kanti imiphumela yemisindo yenzelwe izigcawu ezinesiginali ecacile."
+                      "title": "Isabelomali nohlelo",
+                      "description": "Sungula ibhajethi bese uhlela ukukhiqiza kuzo zonke izigcawu nesahluko ngaphambi kokuthi unikeze."
                     },
                     {
-                      "title": "Umculo",
-                      "description": "Umculo uqhuba isigcawu kanye nezingxoxo."
-                    },
-                    {
-                      "title": "Ngaphambi kokunyakaza",
-                      "description": "Lalela isigcawu ngaphambi kokuba uvule i-Clips."
+                      "title": "Amakhredithi noma i-BYOK",
+                      "description": "Qalisa ukukhiqiza usebenzisa amakhredithi e-SceneFlow noma okhiye bakho be-BYOK API."
                     }
                   ]
                 }
               },
               {
                 "icon": "continuity",
-                "title": "Ukuqhubeka",
-                "description": "Khiqiza kuphela izinkomba ezidingwa yilesi sigcawu uma sesikulungele. Izigcawu ezedlule zihlala zinjengoba uzikhiye, ngakho awuphindi udwebe izinkomba esezivunyiwe kakade.",
-                "screenshot": "Ukuqhubeka — izinkomba zalesi sigcawu kuphela",
+                "title": "Iskripthi Sokukhiqiza",
+                "description": "Yakhelwe abenzi befilimu bendabuko kanye ne-AI ngokufanayo. Buka kuqala isikrini esihlanzekile, esifomethiwe ku-studio futhi uthumele ngamafomethi asezingeni lomkhakha (PDF, FDX, Fountain). Sebenzisa i-SceneFlow njengegumbi lombhalo elizimele—noma bhanqa isikrini sakho nge-Pre-Vis SFAIMATICTERM kanye ne-Trailer Yephromo ukuze uveze abezimali futhi uvikele uxhaso lwephrojekthi.",
+                "screenshot": "Isikripthi Sokukhiqiza — ukuhlola kuqala kwenkundla kanye ne-PDF, i-FDX, kanye nokuthunyelwa kwe-Fountain",
                 "learnMore": {
                   "items": [
                     {
-                      "title": "Lesi sigcawu kuphela",
-                      "description": "Dweba abalingisi, izindawo, kanye nezinto ezisetshenziswayo ezidingwa yilesi sigcawu, bese ushiya ezinye njengoba zinjalo."
+                      "title": "Ukuhlola kuqala kwenkundla nokuthekelisa",
+                      "description": "Buka kuqala umbhalo ofomethiwe esitudiyo futhi uthumele nge-PDF esezingeni lomkhakha, i-Final Draft FDX, noma ifomethi ye-Fountain."
                     },
                     {
-                      "title": "Ngesikhathi esifanele",
-                      "description": "Zikhiqize uma isigcawu sesikulungele, hhayi njengeqoqo lefilimu yonke."
+                      "title": "Kwabenzi bamafilimu bendabuko",
+                      "description": "Sebenzisa i-SceneFlow njengenkundla yokukhiqiza iskripthi ehlakaniphile ngaphandle kokukhiqiza ividiyo."
                     },
                     {
-                      "title": "Sekukhiyiwe kakade",
-                      "description": "Ushintsho kwisigcawu esisodwa aluzishintshi izinkomba ezisetshenziswa yizigcawu ezedlule."
-                    }
-                  ]
-                }
-              },
-              {
-                "icon": "stillsAgent",
-                "title": "Isikhathi Senkontileka Yejenti",
-                "description": "I-Stills Agent yakha ozimele bezithombe ngokusekelwe ekuqondiseni okuvunyiwe. Ukuqondisa nomsindo kuhlala kunjengoba ukushiyile, kanti iziqeshana ziza kamuva.",
-                "screenshot": "Stills Agent — ozimele besithombe",
-                "learnMore": {
-                  "items": [
-                    {
-                      "title": "Ozimele bezithombe",
-                      "description": "Ikhiqiza isithombe esinganyakazi sawo wonke umfanekiso oqoshiwe kulesi sigcawu."
-                    },
-                    {
-                      "title": "Isiqondiso sihlala sinjalo",
-                      "description": "Ukukhiqiza kabusha uhlaka kubuyekeza isithombe, kanti ukuqondisa nomsindo kuhlala kungashintshile."
-                    },
-                    {
-                      "title": "Ngaphambi kweziqeshana",
-                      "description": "Vumela izithombe ezimile ngaphambi kokuba uvule i-Clips."
-                    }
-                  ]
-                }
-              },
-              {
-                "icon": "animatic",
-                "title": "Igama elihlobene nokugqwayiza kwe-SFAI",
-                "description": "Buka isigcawu egumbini lokubuka (Screening Room) njenge-animatic—okungukuthi izithombe ezimile ezihambisana nezingxoxo, umculo, nemiphumela yomsindo nokubonwayo. Yabelana ngaso ukuze uthole imibono, futhi uqedele sonke isigcawu ngale ndlela ngaphambi kokwenza ividiyo yokugcina; ngale ndlela, izinguquko embhalweni ngeke ziphoqe ukuthi uphinde wenze lezo zingxenye. Kubadali abaningi, i-animatic iwumsebenzi oqediwe, futhi ingaguqulwa ibe yifayela le-MP4.",
-                "screenshot": "I-animatic ye-Screening Room, enenketho yokwabelana",
-                "learnMore": {
-                  "items": [
-                    {
-                      "title": "Isithombe nomsindo",
-                      "description": "I-animatic idlala izithombe ezimile ezigunyaziwe kanye nezingxoxo, umculo, nemisindo."
-                    },
-                    {
-                      "title": "Yabelana",
-                      "description": "Thumela isixhumanisi esisodwa ukuze abahloli babuke i-animatic bese beshiya amanothi esithombeni."
-                    },
-                    {
-                      "title": "Ngaphambi kwevidiyo",
-                      "description": "Qeda izigcawu njengama-animatic ngaphambi kokukhiqiza iziqeshana, ukuze ushintsho kumbhalo lungadingi ukuthi uphinde wenze ividiyo."
-                    },
-                    {
-                      "title": "I-MP4",
-                      "description": "Kubadali abaningi, i-animatic iwumkhiqizo wokugcina, futhi ingaguqulwa ibe yifayela le-MP4."
+                      "title": "Ukuxhaswa kwe-pitch & project",
+                      "description": "Phakamisa iskripthi sakho nge-Pre-Vis Animatic kanye nama-Trailer ephromo ukuze uveze futhi uthole uxhaso lwephrojekthi."
                     }
                   ]
                 }
@@ -733,86 +629,78 @@
           },
           {
             "id": "video",
-            "label": "Ividiyo",
+            "label": "Khiqiza futhi Ucwaninge",
+            "headline": "Qinisekisa ukusika ngaphambi kokuchitha ikhompuyutha.",
+            "description": "Ungaqageli ukuthi isigcawu sizodlala kanjani. I-SceneFlow ihlukanisa isizukulwane somsindo nesinyakazayo ekunikezeni okunyakazayo okubizayo, ikuvumela ukuthi uhlole isigqi sokuhlela kuqala.",
             "features": [
               {
                 "icon": "videoAgent",
-                "title": "Imigomo ye-ejenti ye-SFAIVIDEO",
-                "description": "I-Video Agent ikhiqiza iziqeshana zokudutshulwa (shot clips) kuthebhu ethi Clips. Buka isigcawu esihlanganisiwe ku-Screening Room, futhi uma kukhona ukudutshulwa okungalungile, kuqondise kabusha kusigaba esithi Direct Shot.",
-                "screenshot": "Video Agent, bese kuba yisigcawu esihlanganisiwe",
+                "title": "I-Audio Agent",
+                "description": "Khiqiza inkhulumomphendvulwano, imithelela yomsindo, kanye nezikolo zomculo kanyekanye kuze kube amashothi angama-30 esigcawini ngasinye. Amazwi okusakaza afanelana ngokuzenzakalelayo namaphrofayela omlingiswa noma angacushwa ngendlela oyifisayo.",
+                "screenshot": "I-Audio Agent — ingxoxo ngesikhathi esisodwa, imithelela yomsindo, nezikolo zomculo",
                 "learnMore": {
                   "items": [
                     {
-                      "title": "Iziqeshana eziqoshiwe",
-                      "description": "I-Video Agent ikhiqiza isiqeshana sokuqoshwa ngakunye kusukela esithombeni esigunyaziwe."
+                      "title": "Umsindo ofanayo",
+                      "description": "Khiqiza inkhulumomphendvulwano, imithelela yomsindo, kanye nezikolo zomculo kanyekanye kuze kube amashothi angama-30 esigcawini ngasinye."
                     },
                     {
-                      "title": "Isigcawu esithungiwe",
-                      "description": "Bukeza isigcawu esihlanganiswe ku-Screening Room."
-                    },
-                    {
-                      "title": "Yiqondise futhi",
-                      "description": "Vula i-Direct Shot, uyibhale noma uyisho ngomlomo, uma i-clip ingalungile."
+                      "title": "Amazwi abalingiswa",
+                      "description": "Amazwi okusakaza afanelana ngokuzenzakalelayo namaphrofayela omlingiswa noma angacushwa ngendlela oyifisayo."
                     }
                   ]
                 }
               },
               {
                 "icon": "mixer",
-                "title": "Umshini wokuxuba",
-                "description": "Umxube (Mixer) uqedela isigcawu ngaphakathi ku-Production Stage. Faka noma ususe izithombe (shots), uzinqume, ulinganisele umsindo, bese ukhiqiza isigcawu kanye nomsindo waso.",
-                "screenshot": "Isihlanganisi — faka, nciphisa, linganisa, beka phezu kwesinye, uphawu lokuvikela",
+                "title": "I-Stills Agent",
+                "description": "Khiqiza ngokushesha izithombe zozimele ongukhiye ezibonisa indlela oshutha kuyo. Khiqiza kabusha, hlela, noma layisha izithenjwa zakho ukuze ukhiye ukwakheka.",
+                "screenshot": "I-Stills Agent — ukwakheka kozimele ongukhiye nezinkomba",
                 "learnMore": {
                   "items": [
                     {
-                      "title": "Izibhamu / Imijovo / Amashothi",
-                      "description": "Faka noma ususe izigcawu ezithile, bese unciphisa lezo ozigcinayo."
+                      "title": "Ukwakhiwa kozimele ongukhiye",
+                      "description": "Khiqiza ngokushesha izithombe zozimele ongukhiye ezibonisa indlela oshutha kuyo."
                     },
                     {
-                      "title": "Ingxoxo",
-                      "description": "Setha ivolumu nesivinini emgqeni ngamunye wengxoxo."
-                    },
-                    {
-                      "title": "Amathrekhi",
-                      "description": "Linganisela ukulandisa, izingxoxo, imisindo ekhethekile, kanye nomculo, kubandakanywa ukuncishiswa kancane kancane kwevolumu yomculo nokuphindaphindwa kwawo."
-                    },
-                    {
-                      "title": "Izendlalelo ezingaphezulu",
-                      "description": "Beka imibhalo engaphezulu kwesigcawu."
-                    },
-                    {
-                      "title": "Uphawu lwamanzi",
-                      "description": "Engeza uphawu olubonakalayo lombhalo noma lwesithombe."
-                    },
-                    {
-                      "title": "Nikeza",
-                      "description": "Khiqiza isigcawu kanye nomsindo waso, bese kuba yilelo feyili elikhiqiziwe elidlalwa yi-Screening Room."
+                      "title": "Khiya ukwakheka",
+                      "description": "Khiqiza kabusha, hlela, noma layisha izithenjwa zakho ngaphambi kokuthi uzibophezele ekunyakazeni."
                     }
                   ]
                 }
               },
               {
                 "icon": "languageStreams",
-                "title": "Izinhlobo zezilimi",
-                "description": "Lesi sigcawu siwuhlobo olwenziwe ngolunye ulimi, hhayi umkhiqizo omusha. I-Gemini TTS ikhiqiza amazwi okuhumusha (dubbing) ngezilimi ezingu-44, futhi esigabeni ngasinye sevidiyo ungakwazi ukufaka amazwi ahunyushiwe noma ukukhiqiza kabusha isiqeshana, kuhlanganise nemibhalo noma izimpawu ezikuwo.",
-                "screenshot": "Inguqulo yolimi — Ukufaka izwi elisha (dubbing), ukuvumelanisa ukunyakaza kwezindebe (lip-sync), noma ukudala kabusha, kubandakanya nezimpawu",
+                "title": "I-Pre-Vis Animatic",
+                "description": "Buka isimo siphefumula. Buyekeza i-animatic ehlanganiswe ngokugcwele—izithombe ezinganyakazi ezithungiwe, ukunyakaza kwe-Ken Burns, nomsindo okhiyiwe—ku-Screening Room. Hlola ukuhamba, wabelane ukuze uthole impendulo, futhi uqinisekise ukuthi ukusika kuyasebenza ngaphambi kokuzibophezela kuvidiyo.",
+                "screenshot": "I-Pre-Vis Animatic — ithungiwe izilinganiso, ukunyakaza kuka-Ken Burns, nomsindo okhiyiwe",
                 "learnMore": {
                   "items": [
                     {
-                      "title": "Izilimi ezingamashumi amane nane",
-                      "description": "I-Gemini TTS ikhuluma okuqoshiwe ngezilimi ezingama-44."
+                      "title": "I-animatic ehlanganisiwe",
+                      "description": "Buyekeza okumile okuthungiwe, ukunyakaza kwe-Ken Burns, nomsindo okhiyiwe kokuthi Screening Room."
                     },
                     {
-                      "title": "Ngokudubula ngakunye",
-                      "description": "Kusigaba ngasinye sokuqoshwa, khetha u-Double ukuze ufake izwi elihunyushiwe phezu kwelokuqala, u-Lip-sync ukuze ulinganise ukunyakaza kwezindebe, noma u-Regenerate ukuze udale isiqeshana esisha usebenzisa umusho ohunyushiwe."
+                      "title": "Acwaninge futhi wabelane",
+                      "description": "Hlola ukuhamba, wabelane ukuze uthole impendulo, futhi uqinisekise ukuthi ukusika kuyasebenza ngaphambi kokuzibophezela kuvidiyo."
+                    }
+                  ]
+                }
+              },
+              {
+                "icon": "videoAgent",
+                "title": "I-Clips Agent",
+                "description": "Uma i-Pre-Vis isigunyaziwe, i-Clips Agent ithatha izintambo, inikezela ngeziqeshana ezinyakazayo ezinamathela ngokuqinile kumareferensi akho agunyaziwe nokuqhubeka.",
+                "screenshot": "I-Clips Agent — iziqeshana ezinyakazayo ezithembekile ezisuka emifanekisweni emile egunyaziwe",
+                "learnMore": {
+                  "items": [
+                    {
+                      "title": "Ngemuva kokugunyazwa kwe-Pre-Vis",
+                      "description": "I-Clips Agent yenza ukunyakaza kuphela ngemva kokuvunywa kwe-animatic ye-Pre-Vis."
                     },
                     {
-                      "title": "Izimpawu",
-                      "description": "Phinda uthathe isithombe sesibonakaliso uma isithombe sinoMbhalo okumele ushintshwe."
-                    },
-                    {
-                      "title": "Isikhathi",
-                      "description": "Isivinini sevidiyo silondolozwa kulowo mqulu wolimi, ngoba ukuhumusha kuvame ukuba kude ngamaphesenti ayi-10 kuya kwangama-30 kunenguqulo yokuqala."
+                      "title": "Ukubambelela ngokuqinile",
+                      "description": "Iziqeshana ezinyakazayo ezithembeke kakhulu zinamathela ngokuqinile kumareferensi akho agunyaziwe kanye nezithenjwa zokuqhubeka."
                     }
                   ]
                 }
@@ -821,30 +709,78 @@
           },
           {
             "id": "publish",
-            "label": "Shicilela",
+            "label": "Shicilela futhi Usabalalise",
+            "headline": "Thumela okuyinhloko, noma wenze okwasendaweni emhlabeni jikelele.",
+            "description": "Uma isigameko senziwe, izimpahla sezivele zihlanganisiwe. Qedela ukuhlela, wenze umsindo ube owasendaweni, futhi usabalalise ngqo kuzithameli zakho.",
             "features": [
               {
                 "icon": "shipPackage",
-                "title": "Pakisha bese uthumela",
-                "description": "Lungisa isigcawu, isahluko, inguqulo yokugcina, noma ividiyo yokukhangisa uma leyo ngxenye isilungile. Yishicilele ku-YouTube, ku-Facebook, noma ku-TikTok, noma ulande ifayela le-MP4, bese uqhubeka nokwakha ezinye izingxenye.",
-                "screenshot": "Pakisha futhi uthumele — isigcawu, isahluko, ikhophi eyinhloko, iphromoshini; YouTube, Facebook, TikTok, MP4",
+                "title": "Umdidiyeli",
+                "description": "Umhleli wesiqephu esakhelwe ngaphakathi, esinembile. Nquma iziqeshana, lungisa amarempu esivinini, engeza izimbondela zombhalo, futhi usebenzise ama-watermark ngaphandle kokuphuma esitudiyo.",
+                "screenshot": "I-Mixer — nquma iziqeshana, amarampu esivinini, izimbondela zombhalo, nama-watermark",
                 "learnMore": {
                   "items": [
                     {
-                      "title": "Izingcezu",
-                      "description": "Thumela isigcawu, isahluko, ifayela eliyinhloko (master), noma isikhangiso."
+                      "title": "Umhleli wesigcawu esakhelwe ngaphakathi",
+                      "description": "Sika iziqeshana futhi ulungise amarempu esivinini ngqo ngaphakathi kwestudiyo."
                     },
                     {
-                      "title": "Imikhakha yezilimi",
-                      "description": "Uhlobo ngalunye lolimi lungathunyelwa kanye nephakethe."
+                      "title": "Ukuqeda ukuthinta",
+                      "description": "Engeza izimbondela zombhalo futhi usebenzise ama-watermark ngaphandle kokuthekelisa kumhleli wangaphandle."
+                    }
+                  ]
+                }
+              },
+              {
+                "icon": "languageStreams",
+                "title": "Ukusakaza (Izilimi Eziningi)",
+                "description": "Nweba ukufinyelela kwakho emhlabeni jikelele ngezilimi ezingu-44 ngokushesha. Khiqiza ngokuzenzakalelayo okunye ukusakazwa kolimi ngokubiza umsindo, ukuvumelanisa ukunyakaza kwezindebe, noma ukukhiqiza kabusha iziqeshana zengxoxo zendawo ngokuqondile endaweni yesehlakalo.",
+                "screenshot": "Ukusakaza (Izilimi Eziningi) — iziqeshana zezingxoxo ezilalelwayo ezibizwa ngokuthi zendawo",
+                "learnMore": {
+                  "items": [
+                    {
+                      "title": "Ukufinyelela emhlabeni jikelele",
+                      "description": "Dala ngokuzenzakalelayo okunye ukusakazwa kolimi ngezilimi ezingu-44 ngokuqondile endaweni yesehlakalo."
                     },
                     {
-                      "title": "Izindawo okuyiwa kuzo",
-                      "description": "Shicilela ku-YouTube, ku-Facebook, noma ku-TikTok, noma ulande i-MP4."
+                      "title": "I-Dub, i-lip-sync, noma yenza kabusha",
+                      "description": "Yenza kube okwasendaweni ishothi ngayinye ngokuqopha umsindo, ukuvumelanisa ukunyakaza kwezindebe, noma ukukhiqiza kabusha iziqeshana zengxoxo zendawo."
+                    }
+                  ]
+                }
+              },
+              {
+                "icon": "promoTrailers",
+                "title": "Iphromo nama-trailer",
+                "description": "Sika ama-trailer ephromo alungele umphakathi nganoma yisiphi isikhathi ngesikhathi sokukhiqiza. Khiqiza izinguqulo zezilimi eziningi ezilungiselelwe amafomethi avundlile noma aqondile.",
+                "screenshot": "Iphromo nama-trailer — ama-trailer ezilimi eziningi avundlile name mpo",
+                "learnMore": {
+                  "items": [
+                    {
+                      "title": "Ama-trailer alungele umphakathi",
+                      "description": "Sika ama-trailer ephromo nganoma yisiphi isikhathi ngesikhathi sokukhiqiza."
                     },
                     {
-                      "title": "Qhubeka nokwakha",
-                      "description": "Thumela ingxenye esiqediwe bese uqhubeka nokwakha okunye."
+                      "title": "Amafomethi ezilimi eziningi",
+                      "description": "Khiqiza izinguqulo zezilimi eziningi ezilungiselelwe amafomethi avundlile noma aqondile."
+                    }
+                  ]
+                }
+              },
+              {
+                "icon": "shipPackage",
+                "title": "Ukushicilela Okuqondile",
+                "description": "Khipha i-MP4 eyinhloko yokugcina, noma vumela i-SceneFlow izenzele izithonjana nezincazelo ukuze ishicilele izigcawu, izahluko, namaphromo ku-YouTube, TikTok, naku-Facebook.",
+                "screenshot": "Ukushicilela Okuqondile - Khipha i-MP4 kanye nokushicilela okuqondile ku-YouTube, TikTok, naku-Facebook",
+                "learnMore": {
+                  "items": [
+                    {
+                      "title": "I-MP4 eyi-MP4 noma yezenhlalo eqondile",
+                      "description": "Thekelisa i-MP4 eyinhloko yokugcina noma ushicilele izigcawu, izahluko, namaphromo ngqo ku-YouTube, TikTok, naku-Facebook."
+                    },
+                    {
+                      "title": "Imethadatha ekhiqizwa ngokuzenzakalela",
+                      "description": "Vumela i-SceneFlow ikhiqize ngokuzenzakalela izithonjana nezincazelo zakho konke ukukhishwa."
                     }
                   ]
                 }
@@ -856,48 +792,49 @@
       {
         "id": "screening-room",
         "label": "Igama Legumbi Lokuhlola le-SFAI",
-        "promise": "Igumbi lokubukela (screening room) yindawo lapho inguqulo yokugcina yevidiyo ibukwa, ihlolwa, futhi ikhishwa khona. Uhlelo olulodwa lokudlala (player) luqukethe i-Pre-Vis, izigcawu, izahluko, ifayela eliyinhloko (master), i-promo, kanye nohlelo ngalunye lolimi, ukuze inguqulo enomsindo ohunyushiwe (dub) ifane ncamashi nenguqulo ekhiqizwe ngumuntu ohlanganisa imisindo (Mixer). Yabelana ngesixhumanisi esisodwa sokudlala nokufaka imibono ngesithombe. Shicilela isigcawu esithatha imizuzu engu-3–5, isahluko esithatha imizuzu engu-8–12, ifayela eliyinhloko, noma i-promo uma leyo ngxenye isilungile, bese uqhubeka nokusebenza kwezinye izingxenye.",
+        "headline": "Sika isikrini, hlanganisa iqembu lakho, futhi ubonise okokuqala emhlabeni jikelele.",
+        "promise": "Ithiyetha yakho yangasese kanye ne-fining suite. Buka i-Pre-Vis animatic, izigcawu ezingazodwana, izahluko, amaphromo, nokusakaza kwezilimi eziningi kumdlali oyedwa ohlangene. Yabelana ngesixhumanisi esisodwa samanothi ababambiqhaza anesitembu sesikhathi—bese uthumela isigcawu samaminithi angu-3–5, isahluko semizuzu engu-8–12, iphromo, noma okuyinhloko kuyilapho ukukhiqizwa kusaqhubeka.",
         "features": [
           {
             "icon": "screeningPlayer",
-            "title": "Umdlali oyedwa",
-            "description": "Shintsha phakathi kwe-Pre-Vis, izigcawu, izahluko, inguqulo eyinhloko (master), kanye nevidiyo yokukhangisa (promo). Khetha uhlelo lolimi ukuze uzwe leyo nguqulo — kungaba nge-dubbing, ukuvumelanisa izindebe (lip-sync), noma ukwenziwa kabusha kwesithombe ngasinye. Isidlali sikhombisa uhlobo olufanayo olukhiqizwe yi-Mixer.",
+            "title": "Umdlali Ohlanganisiwe Oyedwa",
+            "description": "Guqula kalula phakathi kwe-Pre-Vis animatics, izigcawu, izahluko, ama-trailer, nenkosi yakho yokugcina. Shintsha Ukusakazwa Kolimi ngokuphazima kweso kuya ekuhloleni okubizwa ngokuthi, okuvunyelaniswe ngezindebe, noma okwasendaweni okuvuselelwe kabusha—kuhlale kukhiyelwe kusikwa esisuka ku-Mixer.",
             "screenshot": "Isidlali segumbi lokuhlola i-SFAI",
             "learnMore": {
               "items": [
                 {
-                  "title": "Ubuso obubodwa",
-                  "description": "Shintsha phakathi kwe-Pre-Vis, izigcawu, izahluko, inguqulo eyinhloko (master), kanye ne-promo."
+                  "title": "Yonke ingqophamlando ekubukeni okukodwa",
+                  "description": "Shintsha kalula phakathi kwe-Pre-Vis, izigcawu, izahluko, ama-promo, kanye nenkosi yokugcina."
                 },
                 {
-                  "title": "Umthelela Wolimi",
-                  "description": "Khetha uhlobo oluthile bese uluzwa luphindwe kabili, luvumelaniswe nokunyakaza kwezindebe, noma lukhiqizwe kabusha isithombe ngasinye."
+                  "title": "Ukushintsha ulimi bukhoma",
+                  "description": "Hlola noma yikuphi Ukusakaza Kolimi—okubizwa ngokuthi, okuvunyelaniswe ngezindebe, noma okuvuselelwe kabusha—ngokuphazima kweso."
                 },
                 {
-                  "title": "Ukusikwa okufanayo",
-                  "description": "Isidlali yingxenye eqoshiwe eyenziwe yi-Mixer."
+                  "title": "Uzimele-ukhiyelwe ku-Mixer",
+                  "description": "Ukusakaza ngakunye kudlala ukuhlela kanye nesikhathi esinikezwa ku-Mixer."
                 }
               ]
             }
           },
           {
             "icon": "screeningCollab",
-            "title": "Sebenzisanani ekusikeni",
-            "description": "Yabelana ngesixhumanisi esisodwa. Abahlaziyi bayabuka njengoba ividiyo idlala ngempela futhi bashiye imibono esithombeni. Awudingi ukuthumela ifayela elingakaqedwa nge-imeyili ukuze uthole imibono. Uthola isaziso ngomyalezo obhalwe phansi, futhi ungawufunda ocingweni lwakho.",
+            "title": "Ukusebenzisana Okunembe Kohlaka",
+            "description": "Misa ukuthumela ama-imeyili ukusikeka okungalungile. Yabelana ngesixhumanisi sokuhlola esiyimfihlo lapho abahlanganyeli nabatshalizimali bebuka khona ngesikhathi sangempela bese uphonsa amanothi ngokuqondile esithombeni—ngezaziso ezisheshayo ezithunyelwa ngokuqondile ocingweni lwakho.",
             "screenshot": "Ukubuyekeza okwabelwana ngakho",
             "learnMore": {
               "items": [
                 {
-                  "title": "Isixhumanisi esisodwa",
-                  "description": "Abahloli babuka okuqoshiwe njengoba kudlala ngempela bese beshiya amanothi esithombeni."
+                  "title": "Izixhumanisi zokuhlola okuyimfihlo",
+                  "description": "Ababuyekezi babuka ukudlalwa kokulungiswa okugcwele futhi bashiye amanothi anesitembu sesikhathi esithombeni."
                 },
                 {
-                  "title": "Akukho nguqulo yokuqala ethunyelwe nge-imeyili",
-                  "description": "Awuthumeli ifayela elingakaqedwa nge-imeyili ukuze uthole imibono."
+                  "title": "Akukho ukuthunyelwa kwefayela elisikwe kabi",
+                  "description": "Qoqa impendulo yababambiqhaza endaweni eyodwa ngaphandle kokuposa amafayela evidiyo asindayo."
                 },
                 {
-                  "title": "Amanothi ocingo",
-                  "description": "Uthola isaziso esibhaliwe ongasifunda ocingweni lwakho, kuyilapho i-studio ihlala kukhompyutha yedeskithophu noma kuthebhulethi."
+                  "title": "Izaziso zeselula ezisheshayo",
+                  "description": "Amanothi ombuyekezi amasha akwazisa ngokushesha ocingweni lwakho ngenkathi uqondisa kudeskithophu."
                 }
               ]
             }
@@ -911,6 +848,7 @@
     "description": "Guqula imibono yakho ibe amavidiyo asezingeni eliphezulu usebenzisa uhlelo oluzenzakalelayo lokusebenza olusekelwe kubuchwepheshe be-AI."
   },
   "nav": {
+    "overview": "Uhlolojikelele",
     "plansPricing": "Izinhlelo namanani",
     "productionExamples": "Izibonelo",
     "keyFeatures": "Izici",
@@ -937,9 +875,9 @@
     "pricing": "Amanani"
   },
   "hero": {
-    "eyebrow": "Ukukhiqizwa kwamafilimu nochungechunge okwenziwa ngobuchwepheshe obuzisebenzelayo",
+    "eyebrow": "Ukwenza ifilimu yedemokhrasi yabaxoxi bezindaba, abadali bochungechunge nezitudiyo",
     "headline": "Kusukela enhlansi yokuqala kuya emsebenzini ophelele wobungcweti.",
-    "subheadline": "I-SceneFlow iyindlela eyodwa ehleliwe yokusebenza. Uqondisa indaba, abalingisi, kanye nomoya womsebenzi. Yakha i-Blueprint, igcine ukulandelana okufanele, idlale i-animatic ephelele, futhi ihlanganise umkhiqizo wokugcina — ngaphandle kokuzama izinto ngokungahleliwe noma ukusebenzisa uhlu lweziqeshana ezingahlelekile.",
+    "subheadline": "Uma ukwazi ukubona ngeso lengqondo indaba, ungaqondisa ifilimu—akudingeki ukwenza ifilimu yobuchwepheshe noma amakhono okwazisa. Chaza umbono wakho ngamagama ansuku zonke, futhi i-SceneFlow yakha i-Blueprint, ivala uhlamvu nokuqhubeka kwesilungiselelo, idlala i-animatic ephelele, futhi ithunga okuyinhloko okuqediwe.",
     "ctaPrimaryLaunch": "I-Launch Studio ($9)",
     "ctaSupportingLine": "Isitudiyo esihlanganisa konke okudingekayo ukuze udale, ukhiphe, futhi usabalalise izindaba zakho. Landa ifayela eliyinhloko (master) bese ulihambisa noma kuphi — noma ushicilele izingxenye ezinde nezahluko ku-{longForm}, futhi ukhangise ngama-trailer ku-{shorts}.",
     "ctaNetworkInvite": "Amaphrojekthi avelele angafaka isicelo sokujoyina inethiwekhi ye-SceneFlow, evulekele labo abamenyiwe kuphela.",
@@ -948,20 +886,20 @@
     "ctaToolStack": "Bona indlela okuthatha ngayo indawo yeqoqo lakho lamathuluzi.",
     "chips": [
       {
-        "label": "Kusukela emcabangweni kuya esicini",
-        "detail": "Thuthukisa imibono ibe yimibhalo yesikrini ethatha imizuzu engama-90 ngaphakathi ku-Blueprint Room. Chaza abalingiswa, ubuciko, kanye nezigaba ezibalulekile zendaba (beats), bese uvumela ukuhlaziywa kwe-Audience Resonance ukuthi kucwengisise indaba yakho ngaphambi kokuba uqale ukuyiqopha."
+        "label": "Ukusuka ku-Idea kuya ku-Script & Chapter",
+        "detail": "Guqula umqondo wolimi olulula ube izahluko ezihlelekile noma umdlalo wesikrini wemizuzu engama-90 ku-Blueprint Room. Chaza abalingisi, ubuciko, namabhithi, bese uvumela i-Audience Resonance ilungise kahle indaba yakho ngaphambi kokuthi ushuthe."
       },
       {
-        "label": "Qondisa ngokuqondile nangenhloso, hhayi ngezikhumbuzo.",
-        "detail": "Khuluma ulimi lwefilimu usebenzisa izinsiza ezihlakaniphile eziqonda indlela ofuna izinto zenziwe ngayo. I-Reference Library iqinisekisa ukuthi abalingisi, izingubo, kanye nezindawo ozikhethele zona kuhlala kungashintshi ukuze kube nokuhambisana okuphelele."
+        "label": "Awekho Amakhono Okwenza Amafilimu Adingekayo",
+        "detail": "Veza umbono wakho ngamagama ansuku zonke—Umqondisi wakho we-AI uphatha ifomethi yokubhala isikrini, ama-engeli ekhamera, ukukhanya, nokwaziswa kuyilapho Ilabhulali Eqhubekayo ikhiya abalingisi bakho, ikhabethe lakho, nezindawo."
       },
       {
-        "label": "Ukukhiqiza okuqhutshwa ngama-ejenti",
-        "detail": "Sheshisa inqubo yokudala izikhathi ezi-5 ngokusebenzisa izinhlelo ezihlakaniphile ezakha izigcawu ezinokubukeka okuhlukene okungu-30 ngemuva. Lungisa futhi uthuthukise umsebenzi wakho ngokukhululeka esigabeni sokuhlola, bese ushicilela umbono wakho wokugcina ngekhwalithi ephezulu kakhulu nemangalisayo."
+        "label": "Ukuthunga Kwesigcawu Esiqhutshwa Yi-agent",
+        "detail": "Sheshisa ukukhiqizwa kwe-5X ngama-ejenti akhethekile akhiqiza inkhulumomphendvulwano, umculo, izithombe ezimile, neziqeshana ngokuhambisana futhi uthunge izigcawu zeshothi engu-30 ngokuzenzakalelayo. Buka kuqala ku-Pre-Vis kuqala, bese unikezela nge-Hi-Res."
       },
       {
         "label": "Hlola, Sebenzisana, Khipha",
-        "detail": "Yabelana ngenqubekelaphambili esigabeni ngasinye esibalulekile—kusukela kuma-audio animatic kuya kumkhiqizo wokugcina—ku-Screening Room. Kusabalalise njengamafilimu amafushane noma amafilimu agcwele ngezilimi eziningi ukuze kufinyelelwe ezilalelini zomhlaba wonke."
+        "detail": "Yabelana ngenqubekelaphambili kuwo wonke umlando—kusuka kokupopayi ngezwi ukuya kumpetha wokugcina—ku-Screening Room. Shicilela ngezahluko zesiqephu noma izici ezigcwele ngezilimi ezingu-70+."
       }
     ],
     "pipelineSteps": [
@@ -1000,7 +938,7 @@
   "twoModes": {
     "eyebrow": "Izithiyo esiziqedayo",
     "title": "Uhlelo olulodwa lokugeleza komsebenzi. Hhayi inqwaba yamathuluzi.",
-    "subtitle": "SceneFlow replaces single-clip generators and a pile of separate docs, editors, and re-renders. Build the series or the 90-minute master, then publish a scene or a chapter when you are ready to earn.",
+    "subtitle": "Ukwaziswa kwesiqeshana, ozimele abangukhiye, ukulandisa kwezwi, nomculo okusetshenziselwa ukuhlala ngamathuluzi ahlukene. I-SceneFlow ihlanganisa wonke umkhiqizo ube yiphayiphi eyodwa—ukuze ukwazi ukwakha uchungechunge lweziqephu eziningi noma okuyinhloko okuthatha imizuzu engu-90, futhi ushicilele izigcawu noma izahluko eziqediwe njengoba uhamba.",
     "comingSoon": "Kuyeza maduze",
     "comparison": {
       "id": "comparison",
@@ -1009,19 +947,19 @@
     "cta": "I-Launch Studio ($9)"
   },
   "directControl": {
-    "eyebrow": "Ukulawula okugcinayo",
-    "title": "Qondisa indaba. Vumela ama-ejenti enze umsebenzi wokunikeza izinkomba.",
-    "subtitle": "Uqondisa isithombe noma ividiyo usebenzisa ulimi olulula. Imiyalelo yokuqondisa ichaza ukuthi isithombe esinganyakazi noma isiqeshana sevidiyo kufanele sibe njani. Izimpawu zomculo nokulandisa kuhambisana nesigqi. Buka uhlaka oluyisisekelo (i-animatic), ulungise isithombe uma kukhona okungalungile, bese kuthi kuphela lapho-ke usebenzise imali ekwenzeni izinto zinyakaze.",
+    "eyebrow": "Akukho ukwenza ifilimu yobuchwepheshe edingekayo",
+    "title": "Veza umbono wakho. Iqembu lakho le-AI liphethe umsebenzi wezandla.",
+    "subtitle": "Kungakhathaliseki ukuthi ungumxoxi wezindaba okokuqala noma umqondisi onolwazi, chaza nje okwenzekayo ngamagama alula. Abenzeli abakhethekile baphatha i-cinematography, ukwaziswa, izinkomba zomculo, inkhulumomphendvulwano, kanye nokuthungwa kwesigcawu okuzenzakalelayo—ukuze ukwazi ukubuka i-animatic egcwele kuqala, wenze ngcono noma isiphi isigqi lapho uyala, bese kuphela uchitha amakhredithi ekunyakazeni.",
     "comparison": {
       "id": "direction",
-      "caption": "Umyalelo womqondisi, isikhumbuzi sokuqala ividiyo, kanye nomculo nokulandisa okuhambisana nesigqi esifanayo."
+      "caption": "Isiqondiso sendaba yolimi olulula sihlanganiswe ngokuzenzakalela sibe yi-cinematography, umculo, nokulandisa."
     },
     "cta": "I-Launch Studio ($9)"
   },
   "publishCut": {
     "eyebrow": "Ingxenye oyishicilelayo",
     "title": "Khiphela noma kuphi. Sebenzisa i-Premiere ku-SceneFlow uma usuyitholile.",
-    "subtitle": "Download a master and ship it yourself, or publish finished scenes and chapters to {longForm} and cut trailers for {shorts} — without waiting on the whole cut. Before anything hits the public feed, run drafts or your final master through the Screening Room. Standout projects can apply for the invite-only SceneFlow Network; it is a curated accelerator, not an open storefront.",
+    "subtitle": "Khipha okuyinhloko futhi usabalalise noma yikuphi, noma shicilela izigcawu eziqediwe nezahluko ngokuqondile ku-{longForm} enama-trailer aqondile asikwe okuthi {shorts} — isithombe, umculo, nokulandisa osekukusikiwe kakade. Bheka konke okusalungiswa ku-Screening Room ngaphambi kokukhishwa, futhi usebenzise Inethiwekhi ye-SceneFlow yezimemo kuphela ukuze kusheshiswe izithameli ezixhaswa ngemali.",
     "comparison": {
       "id": "publish",
       "caption": "A finished scene or chapter, and the 90-minute master, from one studio."
@@ -1034,6 +972,25 @@
     "badges": {
       "googleCloud": "Imigomo ye-Google Cloud ye-SFAI",
       "vertexAi": "Vertex AI"
+    },
+    "wave": {
+      "eyebrow": "Gibela i-AI → Superintelligence Wave",
+      "headline": "Imikhiqizo Esezingeni Eliphezulu Namuhla. Ukuthuthukiswa Kwemodeli Okuzenzakalelayo Kusasa.",
+      "subheadline": "Onyakeni odlule, ukukhiqizwa kwevidiyo kweqe kusukela ku-\"AI slop\" enqanyuliwe kuya kusinema yangempela. Kuhlanganiswe nokuxoxwa kwezindaba okuhleliwe kwe-SceneFlow kanye nokuthungwa kwesigcawu okuzenzakalelayo, ungathumela imikhiqizo yebanga lesitudiyo namuhla-kuyilapho wonke umlingiswa nomhlaba owakhayo ugibela ngokuzenzakalelayo igagasi elilandelayo lokuthuthuka kwe-AI.",
+      "pillars": [
+        {
+          "title": "Ukuthunga Indawo Ye-Studio-Grade Namuhla",
+          "description": "Akumele ulinde amamodeli wesikhathi esizayo ukuze axoxe indaba enhle. Isakhiwo se-SceneFlow sika-Blueprint, Reference Library, kanye nokuthungwa kwesigcawu okuzenzakalelayo kuguqula amamodeli wanamuhla abe yizahluko namafilimu ahlangene, alungele ukusakaza."
+        },
+        {
+          "title": "I-Vault Yakho Eqhubekayo I-IP Yobufakazi Besikhathi esizayo",
+          "description": "Amamodeli amalensi ekhamera; imibhalo yakho, izinhlamvu, izingubo zokugqoka, namasethi ku-Continuity Vault yakho kuyi-IP yakho yaphakade. Yakha uchungechunge lwakho nezithameli manje—njengoba amamodeli athuthuka esuka ku-AI aye ku-Superintelligence (SI), abalingisi bakho abakhona bathuthukela ezinjinini ezintsha ngokuzenzakalelayo."
+        },
+        {
+          "title": "Bala Amandla Angeziwe Njengezindleko Zethokheni Ziwa",
+          "description": "Njengoba ikhompuyutha yomhlaba wonke ikhula futhi nezindleko zamathokheni emodeli ziyehla, i-SceneFlow idlulisela ngokuzenzakalelayo lokho kuphumelela kumalungu asebenzayo njengamandla okukhiqiza engeziwe ngekhredithi ngayinye ekuvuselelweni kanye namaphekhi e-Add-On. Bhalisa namuhla futhi ugibele njalo uye phambili."
+        }
+      ]
     }
   },
   "valueProp": {
@@ -1774,13 +1731,13 @@
     "titleAccent": "Ekusebenzeni",
     "subtitle": "Isibonelo ngasinye siqala ngesiqeshana esifushane sokubuka kuqala (trailer). Uhlobo oluphelele lomsebenzi — okuyimikhiqizo ephelele kusukela esigabeni sokuhlela nokuklama (blueprint) kuya esigabeni sokubona ngeso lengqondo kusengaphambili (pre-vis) kuze kufike enguqulweni yokugcina — ludlalwa egumbini lokubukela.",
     "subtitleTagline": "Imisebenzi emide. Hhayi iziqeshana.",
-    "screeningRoomInstruction": "Hlola lo msebenzi ngendlela umhloli angawuhlola ngayo — isigaba ngasinye ngokulandelana kwaso. Qala nge-Series, bese kuba yi-Blueprint, kulandele umbhalo (script) ku-AR Analysis, bese uqeda nge-Screening.",
+    "screeningRoomInstruction": "Vula i-Screening Room kuqala ukuze ujabulele ukukhiqizwa ngendlela umbuyekezi angenza ngayo — ashintshele ku-Pre-Vis, Iziqeshana, Izigcawu, Izahluko, Okuyinhloko, Nephromo — bese uhlola i-Series Room, Blueprint Room, kanye ne-Production Stage ngaphansi.",
     "trailerLabel": "I-trailer",
     "watchLongform": "Buka uhlelo olude",
-    "seriesDoor": "Uchungechunge",
-    "blueprintDoor": "Isikhathi Sohlelo Oluyisisekelo lwe-SFAI",
-    "scriptArDoor": "Ukuhlaziywa kwe-AR",
-    "screeningDoor": "Ukuhlolwa",
+    "seriesDoor": "Series Room",
+    "blueprintDoor": "Blueprint Room",
+    "scriptArDoor": "Production Stage",
+    "screeningDoor": "Screening Room",
     "screeningRoomGroup": "Igama Legumbi Lokuhlola le-SFAI",
     "previsDoor": "Ukubuka kuqala",
     "roughDoor": "Uhlelo lokuqala olungakapholishwa",
@@ -2305,23 +2262,73 @@
     "closePopup": "Vala iwindi elivelayo"
   },
   "pricing": {
-    "badge": "Amanani Alula",
+    "badge": "Ubulungu Besitudiyo Nezintengo Zokusetshenziswa",
     "title": "Qala nge-Explorer — $9",
-    "subtitle": "Hlola uhlelo oluphelele manje ngenkokhelo yokungena engu-$9 engenazinkinga.",
-    "explorerHighlight": "Indlela esheshayo yokuzwa isitudiyo esiphelele se-SceneFlow — kusukela emcabangweni kuya e-Screening Room.",
+    "subtitle": "Qala ifilimu yakho yokuqala namuhla ngo-$9—guqula umbono wakho wenze i-Blueprint ehlelekile, usakaze abalingisi bakho, futhi uhlole kuqala isigcawu sakho sokuqala. Bese ubhalisa ukuze ugcine i-Continuity Vault yakho futhi wengeze amakhredithi njengoba uqeda ukukhiqiza kwakho.",
+    "explorerHighlight": "Awekho amakhono obuchwepheshe okwenza ifilimu adingekayo—akhelwe ababalisi bezindaba bansuku zonke, abadali be-indie isahluko ngesahluko, iziteshi zochungechunge, nezitudiyo zamafilimu ayingxube.",
     "trustBadges": [
       "Izinkokhelo eziphephile nge-Whop",
       "$9 Explorer ukuze uzame isitudiyo",
-      "Amakhredithi anyanga zonke aphelelwa yisikhathi ekupheleni kwesikhathi esibekiwe.",
+      "Ubulungu obusebenzayo bugcina i-Continuity Vault",
       "Khansela noma nini"
     ],
     "valueAnchor": {
-      "traditionalCost": "Ngaphezu kuka-$2,000",
-      "traditionalLabel": "Ukubona kusengaphambili ngendlela evamile",
+      "traditionalCost": "$5,000–$50,000+",
+      "traditionalLabel": "Ukubuka kwangaphambilini nokukhiqiza kwendabuko",
       "vs": "vs.",
-      "sceneFlowCost": "$49–149",
-      "sceneFlowLabel": "SceneFlow yanyanga zonke",
-      "saveBadge": "Yonga u-90% noma ngaphezulu kuphrojekthi ngayinye"
+      "sceneFlowCost": "$19–$599/ngenyanga + Izengezo",
+      "sceneFlowLabel": "SceneFlow Studio & Continuity Vault",
+      "saveBadge": "Yonga u-90%+ ngokukhiqiza ngakunye"
+    },
+    "filmmakerPerspectives": {
+      "heading": "Ipayipi elilodwa leStudio. Yakhelwe Wonke Umxoxi Wezindaba & Umenzi Wefilimu.",
+      "subheading": "Awudingi isikole samafilimu noma amakhono obuchwepheshe ukuze uveze umbono wakho. Kungakhathaliseki ukuthi wenza indaba yomuntu siqu iphile okokuqala ngqa, ushicilela uchungechunge lwesahluko ngesahluko, uphakamisa abaxhasi bezimali, noma uqhuba ukudubula okuxubile, uhlelo lwakho lulinganisa indlela odala ngayo.",
+      "recommendedPathLabel": "Indlela enconyiwe:",
+      "cards": [
+        {
+          "id": "hobbyist",
+          "badge": "Asikho Isipiliyoni Sefilimu Esidingekayo • $19/mo",
+          "title": "Abaxoxi bezindaba & Ababonisi Abaqanjiwe",
+          "description": "Unendaba, umqondo wencwadi, noma umlando womndeni ofuna ukuwubona esikrinini? Chaza umbono wakho ngamagama alula ukuze udale izithombe ze-Pre-Vis ezinezwi neziqeshana zevidiyo ezikhethiwe—ngenkathi ugcina abalingiswa bakho, amawodrophu, namasethi kugcinwe ku-Continuity Vault yakho.",
+          "recommendedPlan": "Umuntu wokuzilibazisa ($19/mo)"
+        },
+        {
+          "id": "chapter",
+          "badge": "Abadali Abasha Ne-Indie • $49/mo",
+          "title": "Isu Lokushicilela Isahluko",
+          "description": "Yeqa izindleko nesithiyo sesikhathi sokunikeza isici esiyimizuzu engama-90 ngaphambili. Shicilela indaba yakho ezigcawini zemizuzu engu-5–15 noma izahluko zesiqephu ukuze uphathe ibhajethi yakho yokubala yenyanga kuyilapho ukhulisa izithameli zakho kancane kancane.",
+          "recommendedPlan": "Isiqalisi ($49/mo)"
+        },
+        {
+          "id": "series",
+          "badge": "Iziteshi zokwenza imali • $149/mo",
+          "title": "Umlingiswa kanye Nokusetha Ukuqhubeka kochungechunge",
+          "description": "Izithameli zibhalisela iziteshi uma zixhumana nabalingiswa abajwayelekile kanye nomhlaba. I-Continuity Vault yakho ilondoloza ubuso babalingisi, izingubo, ama-clone wezwi ngokwezifiso, nezindawo kuzo zonke iziqephu ukuze ukhule ngokuqhubekayo ku-YouTube, i-TikTok, ne-Reels.",
+          "recommendedPlan": "I-Pro ($149/mo)"
+        },
+        {
+          "id": "hybrid",
+          "badge": "Abenzi bamafilimu Abanolwazi Nabaxubile • $149–$599/mo",
+          "title": "Amaphakheji Okuxhaswa Kwezimali Zokukhiqiza & Ukudutshulwa Okuxubile",
+          "description": "Khipha izikripthi ezisezingeni lomkhakha (PDF, FDX, Fountain) ezibhangqwe ne-Pre-Vis Animatic kanye ne-Trailer ye-Promo ukuze uvikele uxhaso lwabatshalizimali—noma ulayishe izigcawu eziqoshwe bukhoma futhi uzihlanganise nezithombe ze-4K AI ngengxenyana yezindleko zokukhiqiza ezibonakalayo.",
+          "recommendedPlan": "I-Pro / Studio + Izengezo"
+        }
+      ]
+    },
+    "membershipModel": {
+      "badge": "I-Predictable Base + Flexible Compute",
+      "title": "Qala Iphrojekthi Yakho Namuhla. Linganisa Ngezengezo Njengoba Ukhiqiza.",
+      "description": "I-SceneFlow ihlukanisa ukusingathwa kwe-studio esiqhubekayo nokubamba i-Continuity Vault kusukela kukhompyutha yokukhiqiza eqhumayo—ukuze abalingiswa bakho nomhlaba wonke kuhlale kukhiyiwe unyaka wonke, futhi ungakwazi ukugcwalisa amakhredithi noma nini lapho ulungele ukuqeda isahluko noma isici.",
+      "pillars": [
+        {
+          "title": "1. Ubulungu Basesisekelo Bugcina I-Vault Yakho Eqhubekayo",
+          "description": "Uhlelo olusebenzayo lwanyanga zonke ($19–$599/mo) lugcina ukufinyelela kwesitudiyo sakho, izixhumanisi ze-Screening Room, kanye ne-Active Continuity Vault—ilondoloza ubuso bakho abalingisi abaphindelelayo, amawodrophu, ama-clone ezwi angokwezifiso, izindawo, nama-Series Bibles kuzo zonke izinkathi zonyaka, kanye namakhredithi ayisisekelo anyanga zonke."
+        },
+        {
+          "title": "2. Qeda Noma Iyiphi Iphrojekthi Efunwa Ngayo Ngamaphekhi Okwengeza Wezinyanga Eziyi-12",
+          "description": "Uma indaba yakho inyakaza, amalungu asebenzayo anyanga zonke angathenga u-$25, $100, noma amaphakethe esikweletu e-Add-On angu-$250 noma nini ukuze aqedele isahluko, isizini yeziqephu eziningi, noma ukushutha kwesici esiyingxubevange. Amaphekhi ezengezo ezinyangeni ezingu-12 ezedlule kuyilapho ubulungu bakho busasebenza."
+        }
+      ]
     },
     "teamCta": {
       "title": "Ithimba langaphakathi noma isikhungo?",
@@ -2336,7 +2343,7 @@
     "byok": {
       "title": "Letha Ukhiye Wakho",
       "badge": "Izinhlelo ze-Pro ne-Studio",
-      "description": "Ukhiye wakho we-API ungenza imisebenzi yokukhiqiza izinto ezisekelwe kwisibonelo (reference), izithombe ezimile (stills), kanye nama-clip. I-SceneFlow ikhokhisa imali engu-20% yokulawula nokuhlanganisa leyo misebenzi (orchestration fee). Amanani e-SceneFlow ephethwe yinkampani (hosted) angaba ngaphansi kunalawo e-akhawunti ye-API yomuntu siqu njengoba umthamo wokusetshenziswa kwenkundla ukhula.",
+      "description": "Xhuma okhiye bakho be-Google Vertex AI noma i-Kling API ezinhlelweni ze-Pro & Studio ukuze uthole inkokhiso eqondile yabahlinzeki (ngemali engu-20% yenkundla ye-orchestration)—noma sebenzisa amakhredithi asongwayo e-SceneFlow ukuze usebenzise izilinganiso zethu zemodeli ehlisiwe.",
       "savingsHighlight": "Imali engu-20% yokuhlela umculo",
       "benefits": [
         {
@@ -2363,22 +2370,26 @@
       "note": "Imali engu-20% iyinkokhelo yokulawulwa kwenqubo (orchestration) ye-SceneFlow. Umhlinzeki ukhokhisa i-akhawunti yakho ngokusekelwe ekusetshenzisweni kwensizakalo. Ukukhiqiza okwenziwa ngaphansi kohlelo lwe-SceneFlow kungabiza kancane kunokusebenzisa ukhiye wakho siqu."
     },
     "creditTopUps": {
-      "title": "Udinga amakhredithi engeziwe?",
-      "subtitle": "Thenga izengezo ezingu-$25, $100, noma ezingu-$250 kaningi ngendlela oyidinga ngayo. Iphakethe ngalinye lihlala izinyanga ezingu-12.",
+      "title": "Obhalisile Khokha-Njengoba-Ukhiqiza Amaphakethe Okwengeza",
+      "subtitle": "Ikhethekile emalungwini anyanga zonke asebenzayo. Thenga $25, $100, noma $250 izengezo kaningi uma udinga. Iphakethe ngalinye lihlala izinyanga eziyi-12.",
       "packs": [
         {
           "label": "Isengezo sika-$25",
-          "description": "Amakhredithi angu-2 000. Thenga kaningi ngendlela oyidinga ngayo."
+          "credits": "2,000 amakhredithi",
+          "description": "2,000 amakhredithi ($0.0125/cr) — alungele ukuqedela isahluko semizuzu engu-5–15 noma i-Trailer Yephromo."
         },
         {
           "label": "Isengezo sika-$100",
-          "description": "Amakhredithi angu-9 000. Thenga kaningi ngendlela oyidinga ngayo."
+          "credits": "9,000 amakhredithi",
+          "description": "9,000 amakhredithi ($0.0111/cr) — ilungele ukuqhuma kochungechunge lwezahluko eziningi noma amaphakheji we-Pre-Vis pitch."
         },
         {
           "label": "Isengezo sika-$250",
-          "description": "Amakhredithi angu-25,000. Thenga kaningi ngendlela oyidinga ngayo."
+          "credits": "25,000 amakhredithi",
+          "description": "Amakhredithi angu-25,000 ($0.0100/cr) - akhelwe u-$500–$5,000 wemikhiqizo eyingxube nama-slate wesici."
         }
       ],
+      "subscriberNote": "Idinga ubulungu obusebenzayo banyanga zonke (I-Hobbyist, Starter, Pro, noma Isitudiyo) ukuze kuthengwe futhi kugcinwe isitoreji se-Continuity Vault.",
       "creditsUnit": "Ababambe iqhaza"
     },
     "calculator": {
@@ -2428,13 +2439,13 @@
       "minSuffix": "imizuzu"
     },
     "tierGrid": {
-      "productionTestFlight": "Indiza Yokuhlola Ngemuva Kokukhiqizwa",
+      "productionTestFlight": "Indiza Yokuhlola Isitudiyo Yezinsuku Ezingu-30",
       "getStarted": "Qala",
       "startTestFlight": "Qala Indiza Yokuhlola",
       "loading": "Iyalayisha...",
       "mostPopular": "Okuthandwa kakhulu",
       "creditsPerMonth": "Amakhredithi/ngenyanga",
-      "storage": "Indawo yokugcina",
+      "storage": "I-Continuity Vault",
       "perMonth": "/month"
     },
     "trust": {
@@ -2444,13 +2455,13 @@
     },
     "plans": {
       "explorer": {
-        "name": "Explorer — I-Demo",
-        "description": "Idemo — ukuthenga kanye ukuze uzame umkhiqizo ophelele",
+        "name": "I-Explorer — Qala Ifilimu Yakho Yokuqala",
+        "description": "Guqula umbono wakho wenze i-Blueprint ehlelekile, usakaze abalingisi bakho, futhi ubuke kuqala isigcawu sakho sokuqala—bese ubhalisa futhi wengeza amakhredithi njengoba uqeda ifilimu yakho.",
         "features": [
-          "Ukuthenga kanye",
+          "Ukuthenga ngesikhathi esisodwa (Indiza Yokuhlola Isitudiyo yezinsuku ezingama-30)",
           "Amakhredithi angu-750 (aphelelwa yisikhathi ezinsukwini ezingu-90 ngemva kokuthengwa)",
-          "Isikhala sokugcina esingu-5 GB (izinsuku ezingama-30)",
-          "Ukufinyelela okugcwele enkundleni",
+          "Isitoreji sesilingo esingu-5 GB (izinsuku ezingu-30 — bhalisa ukuze ugcine i-vault)",
+          "Ukufinyelela okugcwele kwesitudiyo + Ukuthekelisa Kwesikripthi Sokukhiqiza (PDF, FDX, Fountain)",
           "Ukukhipha ifayela le-MP4 (noma yiluphi uhlobo lwekhwalithi yesithombe)",
           "Ukuqoshwa kwezwi nge-AI (izilimi ezingaphezu kuka-70)"
         ]
@@ -2458,51 +2469,62 @@
       "subscriptions": [
         {
           "id": "starter",
-          "name": "Isiqalo — Indawo Yokuhlola",
-          "description": "Indawo yokuhlola — yokuzama imibono ngaphambi kombukiso wangempela",
+          "name": "I-Hobbyist - Umxoxi Wezindaba & Vault",
+          "description": "Abaxoxi bezindaba Nabanombono Wobuciko — veza umbono wakho ngaphandle kwamakhono adingekayo okwenza ifilimu, futhi ugcine i-Continuity Vault yakho isebenza phakathi kwamahlumela",
           "features": [
-            "Ukufinyelela okugcwele enkundleni",
-            "Kufakwe amakhredithi angu-4 500 ngenyanga",
+            "Ukugcinwa kweVault ye-Active Studio & Continuity Vault",
+            "1,500 amakhredithi/ngenyanga afakiwe",
             "Amakhredithi anyanga zonke angasetshenziswanga aphelelwa yisikhathi ekupheleni kwesikhathi esibekiwe.",
-            "Isitoreji esisebenzayo esingu-25 GB",
-            "Ukukhipha ifayela le-MP4 (noma yiluphi uhlobo lwekhwalithi yesithombe)",
-            "Ukuqoshwa kwezwi nge-AI (izilimi ezingaphezu kuka-70)",
-            "Ukusekelwa nge-imeyili"
+            "10 GB Active Continuity Vault (igcina abalingisi, amawodrobhu namasethi)",
+            "Ivula amaphekhi ekhredithi Wokungeza Obhalisile Wezinyanga eziyi-12",
+            "Ilungele imibono yomuntu siqu, izindaba zomndeni nama-animatics we-Pre-Vis",
+            "Ukubuka kuqala Kwesikripthi Sokukhiqiza & ukuthekelisa (PDF, FDX, Fountain)",
+            "Ukuthekelisa kwe-MP4 nezwi le-AI (izilimi ezingama-70+)"
           ]
         },
         {
           "id": "pro",
-          "name": "Uchwepheshe — YouTuber",
-          "description": "Umdali wokuqukethwe ku-YouTube — iziqephu eziphindaphindekayo namavidiyo esiteshi",
+          "name": "Umqali — Isahluko & Pre-Vis",
+          "description": "I-Publish Chapter Strategy — ukukhishwa kwesahluko sesiqephu semizuzu emi-5–15 kanye nabenzi bamafilimu bendabuko bakha Amaphakheji Okuxhasa Ngezimali Zokukhiqiza",
           "features": [
-            "Konke okukuhlelo lwe-Starter, kanye nalokhu:",
-            "Kufakwe amakhredithi angu-15 000 ngenyanga",
+            "Konke ku-Hobbyist, kanye:",
+            "4,500 amakhredithi/ngenyanga afakiwe (3x Hobbyist compute)",
             "Amakhredithi anyanga zonke angasetshenziswanga aphelelwa yisikhathi ekupheleni kwesikhathi esibekiwe.",
-            "Isitoreji esisebenzayo esingu-100 GB",
-            "Ukufinyelela kwikhwalithi ye-Veo 3.1 (4K)",
-            "Uhlelo Lokuqinisekisa Ukungaguquguquki Komlingiswa",
-            "Ukukopisha izwi",
-            "BYOK (Letha Ukhiye Wakho)",
-            "Izihlalo ezintathu zethimba",
-            "Ukusekelwa okubekwe phambili"
+            "25 GB Active Continuity Vault yohlamvu nokuqhubeka kwesethingi",
+            "Kwakhelwe ukukhishwa kwesahluko semizuzu engu-5–15 namaphakheji oxhaso lwe-Pre-Vis",
+            "Layisha izigcawu ezibukhoma futhi uhlanganise neziqeshana ze-AI ku-Mixer",
+            "I-clone yezwi e-1 yangokwezifiso kanye nokukopishwa kolimi okungu-70+",
+            "Usekelo lwe-imeyili"
           ]
         },
         {
           "id": "studio",
-          "name": "Isitudiyo — Umenzi wamaFilimu Ozimele",
-          "description": "Umenzi wamafilimu ozimele — amafilimu nochungechunge oluzimele",
+          "name": "I-Pro — Series & Hybrid",
+          "description": "I-Monetized Series & Hybrid Filmmaker - yeziteshi zomphakathi ezinabalingiswa abaphindaphindayo nabenzi bamafilimu abanokuhlangenwe nakho abahlanganisa isenzo esibukhoma nokukhiqizwa kwe-4K AI",
           "features": [
-            "Konke okukwi-Pro, kanye nalokhu:",
-            "Kufakwe amakhredithi angu-75 000 ngenyanga",
+            "Konke ku-Starter, kanye:",
+            "15,000 amakhredithi/ngenyanga afakiwe",
             "Amakhredithi anyanga zonke angasetshenziswanga aphelelwa yisikhathi ekupheleni kwesikhathi esibekiwe.",
-            "Isitoreji esisebenzayo esingu-500 GB",
-            "Umugqa Wokubeka Phambili we-Veo 3.1 4K",
-            "Ukungaguquguquki Komlingiswa Okungenamkhawulo",
-            "Ukuthunyelwa kwempahla ngaphandle kophawu lomkhiqizi",
-            "Ukufinyelela ku-API",
-            "Izihlalo eziyi-10 zethimba",
-            "Umphathi we-akhawunti ozinikele",
-            "Isivumelwano sezinga lenkonzo (SLA) samabhizinisi amakhulu siyatholakala uma siceliwe."
+            "I-Vault Esebenzayo engu-100 GB + Injini Engaguquguquki Izinhlamvu",
+            "Ukufinyelela kwe-Veo 3.1 Ikhwalithi (4K) & i-hybrid live-action + ukuhamba komsebenzi kwe-AI",
+            "Ama-clones angu-5 wezwi wangokwezifiso ochungechungeni oluqhubekayo",
+            "I-BYOK (Letha Owakho Ukhiye) ukuze uthole inkokhiso eqondile yomhlinzeki",
+            "Izihlalo zeqembu ezi-3 nokusekelwa Okubalulekile"
+          ]
+        },
+        {
+          "id": "studio",
+          "name": "Studio - Production House",
+          "description": "I-Production House & Feature Slate — ipayipi lokukhiqiza eligcwele elingu-$500–$5,000 labenzi bamafilimu abanolwazi, ama-ejensi, nezitudiyo zochungechunge oluningi",
+          "features": [
+            "Konke ku-Pro, kanye:",
+            "75,000 amakhredithi/ngenyanga afakiwe (izinga eliphansi kakhulu lesikweletu ngasinye)",
+            "Amakhredithi anyanga zonke angasetshenzisiwe aphelelwa yisikhathi ekupheleni kwesikhathi",
+            "500 GB Active Continuity Vault + Ukungaguquguquki Kwezinhlamvu Ezingenamkhawulo",
+            "I-Veo 3.1 4K Okubalulekile Umugqa & nama-clone wezwi angu-25 angokwezifiso",
+            "Ilebula elimhlophe Screening Room & okuthunyelwa ngaphandle + ne-API nokufinyelela kwe-BYOK",
+            "Izihlalo zeqembu eziyi-10 kanye nomphathi we-akhawunti ezinikezele",
+            "I-Enterprise SLA iyatholakala ngesicelo"
           ]
         }
       ]

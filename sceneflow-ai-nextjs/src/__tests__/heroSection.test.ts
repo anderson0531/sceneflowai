@@ -11,10 +11,10 @@ const ROOT = join(process.cwd())
 describe('hero section copy and UI', () => {
   it('leads with a finished master rather than multi-scene framing', () => {
     expect(HERO_COPY.headline).toBe('From first spark to finished master.')
-    expect(HERO_COPY.subheadline).toContain('holds continuity')
+    expect(HERO_COPY.subheadline).toContain('locks character and setting continuity')
     expect(HERO_COPY.subheadline).not.toContain('multi-scene')
     expect(HERO_COPY.subheadline).not.toContain('ProRes')
-    expect(HERO_COPY.eyebrow).toBe('Automated filmmaking for films and series')
+    expect(HERO_COPY.eyebrow).toBe('Democratized filmmaking for storytellers, series creators & studios')
     expect(HERO_COPY.ctaPrimaryLaunch).toBe('Launch Studio ($9)')
     expect(HERO_COPY.ctaSecondary).toBe('Explore the pipeline')
     expect(HERO_VALUE_CHIPS).toHaveLength(4)
@@ -49,9 +49,9 @@ describe('hero section copy and UI', () => {
     }
     expect(hero.chips).toHaveLength(4)
     expect(hero.chips.map((chip) => chip.label)).toEqual([
-      'From Concept to Feature',
-      'Direct With Intent, Not Prompts',
-      'Agent-Driven Production',
+      'From Idea to Script & Chapter',
+      'No Filmmaking Skills Required',
+      'Agent-Driven Scene Stitching',
       'Screen, Collaborate, Ship',
     ])
     expect(hero.pipelineSteps).toEqual([...HERO_PIPELINE_STEPS])

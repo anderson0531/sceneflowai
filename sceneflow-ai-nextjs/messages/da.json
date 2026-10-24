@@ -257,53 +257,54 @@
     "exitFullscreenOverview": "Afslut fuldskærm",
     "watchLongformLabel": "Se det længere indslag",
     "screenshotLabel": "Skærmbillede",
-    "landingUiLanguagesLabel": "Producer og dub på 44 sprog. Dette websted er tilgængeligt på disse 39:",
+    "landingUiLanguagesLabel": "Producer og dub på 44 sprog. Fuld studiegrænseflade og dette websted er tilgængelige i disse 39:",
     "rooms": [
       {
         "id": "series-desk",
         "label": "SFAISERIES_RUMBETEGNELSE",
-        "promise": "Series Room er stedet, hvor en sæson begynder. De samme karakterer og den samme historie går igen i hvert afsnit, du tilføjer. Læs det, lyt til det, og instruér det, før et afsnit åbnes i Blueprint Room. En film uden sæson kan springe dette rum over.",
+        "headline": "Byg et univers én gang. Producer episoder for evigt.",
+        "promise": "Udvikl en sæson med flere episoder med én fælles kreativ bibel. Dine rollebesætninger, lokationer, historietråde og visuelle DNA overføres automatisk til hver episode, du spinner op. Producerer du en selvstændig film? Spring direkte til Blueprint Room.",
         "features": [
           {
             "icon": "newSeries",
             "title": "Ny serie",
-            "description": "Start her. Beskriv den serie, du har i tankerne, med dine egne ord. Funktionen \"Afklar og bekræft\" arbejder videre med din idé sammen med dig, indtil synopsis er klar, og \"Generer serie\" skriver grundlaget. En ny serie starter med fem episoder, og du kan tilføje flere.",
+            "description": "Pitch din serie eller kanalkoncept i almindeligt sprog. Interaktiv AI-forfining skærper din præmis og genererer en sæsonbaseline i flere afsnit – komplet med overordnede plotbuer og episodeopdelinger.",
             "screenshot": "Opret ny serie — hensigt, afklar og bekræft, generer serie",
             "learnMore": {
               "items": [
                 {
                   "title": "Din hensigt",
-                  "description": "Beskriv, hvad serien er, herunder format, målgruppe og kunstnerisk stil."
+                  "description": "Pitch præmissen, formatet, målgruppen og billedkunststilen i almindeligt sprog."
                 },
                 {
-                  "title": "Iterér",
-                  "description": "\"Clarify and Confirm\" finjusterer synopsis sammen med dig, før noget genereres."
+                  "title": "Interaktiv raffinement",
+                  "description": "Clarify and Confirm skærper sæsonsynopsis med dig, før noget genereres."
                 },
                 {
-                  "title": "Baseline",
-                  "description": "Generate Series skriver den sæson, du skal anmelde, og den starter med fem episoder."
+                  "title": "Sæsonens baseline",
+                  "description": "Generate Series bygger en sæsonbue med fem afsnit, som du kan udvide når som helst."
                 }
               ]
             }
           },
           {
             "icon": "seriesReview",
-            "title": "Gennemgå den første klipning",
-            "description": "Læs overblikket, eller tryk på \"Lyt\". Læs derefter episoderne, eller lyt til dem. Sammenhæng binder historiens tråde sammen, mens kontinuitet holder styr på de medvirkende, lokationer, rekvisitter og miljøer, som episoderne har til fælles.",
+            "title": "Sæsonbibel & kontinuitet",
+            "description": "Læs eller lyt til den fortalte sæsonoversigt og afsnitsoversigt. SceneFlow låser dine historietråde, rollebesætningsprofiler, lokationer og signaturrekvisitter i en delt Reference Library, som hver episode arver.",
             "screenshot": "Oversigt, Episoder, Konsistens, Kontinuitet – Medvirkende, Lokationer, Rekvisitter, Scener",
             "learnMore": {
               "items": [
                 {
                   "title": "Læs eller lyt",
-                  "description": "Oversigt og episoder kan læses eller høres ved hjælp af Lyt-funktionen."
+                  "description": "Gennemgå sæsonoversigten og synopsis af hver episode med indbygget lydfortælling."
                 },
                 {
-                  "title": "Konsistens",
-                  "description": "Æstetik, centrale begivenheder og handlingsspor følger sæsonen."
+                  "title": "Historiekonsistens",
+                  "description": "Æstetik, vigtige plotbegivenheder og narrative tråde forbliver låst gennem hele sæsonen."
                 },
                 {
-                  "title": "Kontinuitet",
-                  "description": "Medvirkende, lokationer, rekvisitter og kulisser er de samme i hvert afsnit."
+                  "title": "Fælles kontinuitet",
+                  "description": "Medvirkende, lokationer, rekvisitter og indstillinger overføres automatisk til hver episode, du producerer."
                 }
               ]
             }
@@ -311,75 +312,75 @@
           {
             "icon": "seriesResonance",
             "title": "SFAIAUDIENCE_RESONANSTERM",
-            "description": "Kør Audience Resonance, når du vil have en vurdering af sæsonen. Gennemgå scorerne og analysen. Implementér kun en handlingsorienteret indsigt, hvis du ønsker det; intet i serien ændrer sig, før du gør det.",
+            "description": "Test din sæson-bue i forhold til din måldemografi, før du skriver et enkelt manuskript. Gennemgå episode-for-episode resonansresultater og anvend dataunderstøttede historieforbedringer med et enkelt klik - kun når du er enig i noten.",
             "screenshot": "Analyse af Audience Resonance, efterfulgt af handlingsorienteret indsigt (ikke implementeret)",
             "learnMore": {
               "items": [
                 {
-                  "title": "Læsningen",
-                  "description": "Scores og analyser viser, hvad der slår igennem hos den målgruppe, du har angivet."
+                  "title": "Demografisk scoring",
+                  "description": "Resultater og strukturelle analyser afslører, hvordan din sæson lander hos din målgruppe."
                 },
                 {
-                  "title": "Valgfri",
-                  "description": "En handlingsorienteret indsigt ændrer kun serien, når du anvender den."
+                  "title": "Direktørens prærogativ",
+                  "description": "Actionable Insights opdaterer kun din serie, når du vælger at anvende dem."
                 }
               ]
             }
           },
           {
             "icon": "seriesDirector",
-            "title": "Serieinstruktør",
-            "description": "Styr hele forløbet med dine egne ord – hvad enten de er talte eller skrevne. Du vælger ændringen og fokuspunktet, og du accepterer det. En anbefaling kan være en hjælp, og de dele af historien, der ikke har nogen sammenhæng med dette, forbliver uændrede.",
+            "title": "Seriedirektøren",
+            "description": "Omform hele sæsonen med stemme eller tekst. Skift tonen, hæv indsatsen, eller bearbejde en karakterbue på tværs af alle episoder på én gang, mens du holder resten af ​​din historie intakt.",
             "screenshot": "Serieinstruktør — instruktion, fokus, accept",
             "learnMore": {
               "items": [
                 {
-                  "title": "Dine ord",
-                  "description": "Sig eller skriv ændringen, og begræns den eventuelt til handling, karakterer, episodeindhold, tone eller rammer."
+                  "title": "Klarsproget retning",
+                  "description": "Tal eller skriv din note og målplot, karakterer, episodebuer, tone eller indstilling."
                 },
                 {
-                  "title": "Du accepterer det",
-                  "description": "Intet ændrer sig, før du accepterer det, og urelaterede dele af historien forbliver uændrede."
+                  "title": "Kirurgiske opdateringer",
+                  "description": "Intet ændrer sig, før du accepterer revisionen, og urelaterede historietråde forbliver uberørte."
                 },
                 {
-                  "title": "En anbefaling",
-                  "description": "Anbefalinger kan være en hjælp, og du vælger stadig selv, hvad du vil beholde."
+                  "title": "Vejledte anbefalinger",
+                  "description": "Anvend AI-foreslåede historieforbedringer eller styr selv ethvert kreativt valg."
                 }
               ]
             }
           },
           {
             "icon": "directEpisode",
-            "title": "Instruér dette afsnit",
-            "description": "Åbn et afsnit, og instruér den time på egen hånd. Skru op for indsatsen eller uddyb historien, og implementér det derefter. De øvrige afsnit forbliver, som de er.",
+            "title": "Instruktion på afsnitsniveau",
+            "description": "Zoom ind på ethvert individuelt afsnit for at omarbejde dets plot, tempo eller hook isoleret – uden at destabilisere resten af din sæsonoverflade.",
             "screenshot": "Afsnit — Instruér dette afsnit, øvrige afsnit uændrede",
             "learnMore": {
               "items": [
                 {
-                  "title": "Ét afsnit",
-                  "description": "Denne indstilling anvender kun ændringen på det pågældende afsnit."
+                  "title": "Isolerede omskrivninger",
+                  "description": "Direkte ændringer til en enkelt episodes omrids og beats uden at ændre tilstødende episoder."
                 },
                 {
-                  "title": "Sæsonen består",
-                  "description": "De øvrige episoder forbliver, som de er."
+                  "title": "Sæsonintegritet",
+                  "description": "Den overordnede sæsonbibel og den resterende episode forbliver låst."
                 }
               ]
             }
           },
           {
             "icon": "startEpisode",
-            "title": "Start episoden",
-            "description": "Når en episode er klar, skal projektet igangsættes. Outline, synopsis og beats følger med ind i Blueprint Room. Rollebesætningen og universet er allerede kendt.",
+            "title": "Lancering af episode med et enkelt klik",
+            "description": "Når en episodes omrids rammer målet, skal du starte den direkte ind i Blueprint Room med dens synopsis, historiebeats, rollebesætning og verden, der allerede er tilsluttet.",
             "screenshot": "Start projekt – disposition og medvirkende er allerede tilknyttet episoden",
             "learnMore": {
               "items": [
                 {
-                  "title": "Start projekt",
-                  "description": "Start Project åbner den episode i Blueprint Room."
+                  "title": "Øjeblikkelig aflevering",
+                  "description": "Start enhver episode direkte i Blueprint Room med et enkelt klik."
                 },
                 {
-                  "title": "Allerede kendt",
-                  "description": "Oplægget, synopsis, de dramatiske hovedpunkter og rollebesætningen følger med."
+                  "title": "Forkablet DNA",
+                  "description": "Afsnittets disposition, synopsis, historiebeats, rollebesætning og lokationer rejser automatisk."
                 }
               ]
             }
@@ -389,43 +390,44 @@
       {
         "id": "blueprint-board",
         "label": "SFAIBLUEPRINT_RUMBETEGNELSE",
-        "promise": "Det er her, du finpudser historien, før arbejdet med manuskriptet på 90 minutter går i gang. Tag udgangspunkt i en episode fra en serie eller et nyt projekt. Styr de enkelte handlingspunkter og castet her, så Production Stage ikke behøver at opbygge dem forfra.",
+        "headline": "Lås historien og udseendet, før et enkelt billede gengives.",
+        "promise": "Uanset om du lancerer en episode fra Series Room eller starter en selvstændig funktion, er Blueprint Room, hvor dit kreative DNA låser sig ind. Perfektgør beat-arket, rollebesætningen, lokationerne og den visuelle stil her – så Production Stage bygger det rigtige script på det første gennemløb.",
         "features": [
           {
             "icon": "startBlueprint",
             "title": "Start Blueprint",
-            "description": "Tag udgangspunkt i en serieepisode, eller start et nyt projekt. En serieepisode leveres med sit outline, sin synopsis og sine narrative hovedpunkter (beats). Et nyt projekt starter, når du beskriver formålet, benytter funktionen til validering og optimering med AI og vælger at generere en SFAI-blueprint.",
+            "description": "Bring et afsnit fra din serie med dens omrids og cast forudindlæst, eller pitch et helt nyt filmkoncept fra bunden, og lad AI strukturere den grundlæggende behandling.",
             "screenshot": "Serieafsnit allerede kendt, eller Start dit projekt – hensigt, Valider og optimer med AI, Generer Blueprint",
             "learnMore": {
               "items": [
                 {
-                  "title": "Serieafsnit",
-                  "description": "Et serieafsnit starter med, at dets disposition, synopsis og dramatiske hovedpunkter allerede foreligger."
+                  "title": "Fra Series Room",
+                  "description": "Seriens episoder ankommer med deres omrids, synopsis, beats og rollebesætning allerede vedhæftet."
                 },
                 {
-                  "title": "Nyt projekt",
-                  "description": "\"Start Your Project\" tager udgangspunkt i hensigten, validerer og beriger den derefter med AI og genererer så Blueprint."
+                  "title": "Et selvstændigt projekt",
+                  "description": "Pitch et nyt filmkoncept, forfin det med AI-validering og generer en komplet behandling."
                 }
               ]
             }
           },
           {
             "icon": "treatment",
-            "title": "Styr rytmerne",
-            "description": "Åbn fanen \"Beats\", og lyt til beat-oversigten. Optimer beatsene her, da de styrer opbygningen af manuskriptet. Beats findes kun her. Production Stage omdanner hvert beat til et kapitel.",
+            "title": "The Beat Sheet",
+            "description": "Strukturer rygraden af din film. Læs eller lyt til dit fortællende beatark, og finjuster tempoet her – hvert beat, du låser i Blueprint Room, driver et kapitel i Production Stage.",
             "screenshot": "Beats-fanen med Lyt",
             "learnMore": {
               "items": [
                 {
-                  "title": "Én beat-oversigt",
-                  "description": "Beats findes kun her."
+                  "title": "Narrativ rygrad",
+                  "description": "Beats forfattes og låses i Blueprint Room, før scriptgenerering begynder."
                 },
                 {
-                  "title": "Script-build",
-                  "description": "Beatsene driver opbygningen af scriptet, så de optimeres før Production Stage."
+                  "title": "Pacing først",
+                  "description": "Optimering af beat-arket her sikrer, at manuskriptet bygger med stram dramatisk struktur."
                 },
                 {
-                  "title": "Kapitler",
+                  "title": "Slag-til-kapitel kortlægning",
                   "description": "Production Stage forvandler hvert beat til et kapitel."
                 }
               ]
@@ -433,44 +435,44 @@
           },
           {
             "icon": "castLocations",
-            "title": "Instruér skuespillerne og styr lokationerne",
-            "description": "Åbn Characters, og instruér rollebesætningen. Åbn Setting under fanen Story, og instruér lokationerne i forbindelse med dem. Rollebesætningen påvirker opbygningen af manuskriptet, så begge dele skal være fastlagt, før Production Stage skal omstrukturere manuskriptet.",
+            "title": "Cast & World Design",
+            "description": "Definer dine karakterer, garderobe og primære placeringer, før manuskriptet genereres - sørg for, at manuskriptet er skrevet omkring din nøjagtige rollebesætning og dine indstillinger fra side et.",
             "screenshot": "Fanen Figurer, derefter Ramme i Historie",
             "learnMore": {
               "items": [
                 {
-                  "title": "Medvirkende",
-                  "description": "Fanen \"Characters\" repræsenterer rollebesætningen, og rollebesætningen påvirker opbygningen af manuskriptet."
+                  "title": "Karakter profiler",
+                  "description": "Ret dine rollebesætningsprofiler frem, så dialog og blokering matcher hver karakter."
                 },
                 {
-                  "title": "Lokationer",
-                  "description": "Lokationer udgør rammen på fanen Historie."
+                  "title": "Verden og lokationer",
+                  "description": "Etabler primære indstillinger på fanen Historie for at forankre hver scenes miljø."
                 },
                 {
-                  "title": "Før manuskriptet",
-                  "description": "Ved at dirigere begge dele hertil undgår man en omfattende omskrivning af scriptet i Production Stage."
+                  "title": "Nul script refaktorering",
+                  "description": "Låsning af cast og lokationer før scriptgenerering eliminerer dyre omskrivninger på Production Stage."
                 }
               ]
             }
           },
           {
             "icon": "blueprintDirector",
-            "title": "Direktør for Blueprint",
-            "description": "Instruktøren modtager ændringen med dine egne ord – enten talt eller skrevet. Ret fokus mod beats, karakterer eller historie, og få derefter vist en forhåndsvisning af rettelsen. Der sker ingen ændringer, før du godkender dem.",
+            "title": "Blueprint-direktøren",
+            "description": "Tal eller skriv dine historienoter for at revidere beats, karakterer eller verdensdetaljer. Se en afbalanceret revision side om side – intet ændrer sig i din behandling, før du godkender klipningen.",
             "screenshot": "Blueprint-direktør – retning, fokus, forhåndsvisning, anvend revision",
             "learnMore": {
               "items": [
                 {
-                  "title": "Dine ord",
-                  "description": "Sig eller skriv ændringen, og fokuser den på beats, karakterer eller historie."
+                  "title": "Målrettede noter",
+                  "description": "Tal eller skriv din retning, og fokuser revisionen på beats, karakterer eller historie."
                 },
                 {
-                  "title": "Forhåndsvisning",
-                  "description": "Generering af en balanceret revision viser ændringen, før du anvender den."
+                  "title": "Side om side forhåndsvisning",
+                  "description": "Gennemgå en afbalanceret revision, før du foretager ændringer i din Blueprint."
                 },
                 {
-                  "title": "Du påfører det",
-                  "description": "Intet ændrer sig, før du anvender rettelsen."
+                  "title": "Du holder låsen",
+                  "description": "Intet i din behandling ændrer sig, før du eksplicit anvender revisionen."
                 }
               ]
             }
@@ -478,35 +480,35 @@
           {
             "icon": "blueprintResonance",
             "title": "SFAIAUDIENCE_RESONANSTERM",
-            "description": "Gem målgruppen, og vælg derefter Analysér. Du får vist scorerne og anbefalingerne. Intet i planen ændres, før du anvender en anbefaling i Blueprint Director.",
+            "description": "Score din behandling mod din målgruppes kulturelle og demografiske profil. Fang strukturelle pacegab tidligt og anvend målrettede anbefalinger i Blueprint-direktøren.",
             "screenshot": "Audience Resonance — gemt målgruppe, scorer, anbefalinger ikke anvendt",
             "learnMore": {
               "items": [
                 {
-                  "title": "Læsningen",
-                  "description": "Gem målgruppen, vælg derefter Analysér, og læs scorerne og anbefalingerne."
+                  "title": "Pre-script validering",
+                  "description": "Analyser din behandling i forhold til din målgruppe for at se kategoriresultater og historienoter."
                 },
                 {
-                  "title": "Valgfri",
-                  "description": "En anbefaling ændrer kun blueprintet, når du anvender den i Blueprint Director."
+                  "title": "Selektiv anvendelse",
+                  "description": "Anbefalinger ændrer kun din Blueprint, når du vælger at anvende dem."
                 }
               ]
             }
           },
           {
             "icon": "goToProduction",
-            "title": "Gå til Production Stage",
-            "description": "Gå til Production Stage, når handlingen, de enkelte scener (beats) og rollebesætningen er fastlagt. Manuskriptet på 90 minutter opbygges med udgangspunkt i denne tavle. Handlingen behøver ikke at blive opbygget forfra i Production Stage.",
+            "title": "Grønt lys til produktion",
+            "description": "Når behandlingen, slaglagnet og gipset er låst, skal du træde ind på Production Stage. SceneFlow kompilerer dit fulde multi-kapitel script direkte fra din godkendte Blueprint.",
             "screenshot": "Gå til Production Stage – handling, dramatiske hovedpunkter og rollebesætning er allerede fastlagt.",
             "learnMore": {
               "items": [
                 {
-                  "title": "Overdragelsen",
-                  "description": "Ved at gå til Production Stage åbnes scriptet fra dette blueprint."
+                  "title": "Sømløs kompilering",
+                  "description": "Når du træder ind på Production Stage, kompileres det fulde script direkte fra din godkendte Blueprint."
                 },
                 {
-                  "title": "Allerede indstillet",
-                  "description": "Handlingsforløbet, de dramatiske højdepunkter og rollebesætningen er allerede instrueret."
+                  "title": "Låst fundament",
+                  "description": "Din historie, beatstruktur og rollebesætning er klar til scene- og skudregi."
                 }
               ]
             }
@@ -516,215 +518,109 @@
       {
         "id": "production-stage",
         "label": "Production Stage",
-        "promise": "Her bliver den fastlagte plan til det færdige billede. Styr udgifterne ved hjælp af dine egne styringsværktøjer og en plan. Optimer hver scene i fællesskab, opbyg derefter scenerne i rækkefølge – instruktion, lyd, musik, kontinuitet og stillbilleder – og gennemgå animaticen, før du bruger penge på selve videoarbejdet. Generer klippene, mix dem, lav sprogversioner, og færdiggør scenen, kapitlet, masteren eller promoen.",
-        "spend": {
-          "label": "Styr udgifterne",
-          "features": [
-            {
-              "icon": "byok",
-              "title": "Medbring din egen nøgle",
-              "description": "Forbind dine egne nøgler til billed- og videoudbydere. Genereringen kører på din konto og til dine takster, mens det guidede studie – agenter, kontinuitet, Mixer og Screening Room – forbliver intakt.",
-              "screenshot": "BYOK-nøgler",
-              "learnMore": {
-                "items": [
-                  {
-                    "title": "Dine nøgler",
-                    "description": "Forbind nøgler til billed- og videoudbydere, så genereringen kører på din konto og til dine priser."
-                  },
-                  {
-                    "title": "Samme studie",
-                    "description": "Agenter, kontinuitet, mixeren og Screening Room forbliver uændrede."
-                  }
-                ]
-              }
-            },
-            {
-              "icon": "budget",
-              "title": "Produktionsplanlægger",
-              "description": "Fastlæg antallet af iterationer for stillbilleder og klip pr. optagelse, før du bruger af budgettet. Disse mål summeres op på scene-, kapitel- og masterniveau, og en startdato danner grundlag for en tidsplan, der også omfatter slutdatoen.",
-              "screenshot": "Produktionsplanlægger",
-              "learnMore": {
-                "items": [
-                  {
-                    "title": "Beskudte skiver",
-                    "description": "Angiv iterationer for stillbilleder og klip pr. optagelse, og opsaml dem på scene-, kapitel- og masterniveau."
-                  },
-                  {
-                    "title": "Dateret tidsplan",
-                    "description": "En startdato og arbejdsdage danner en tidsplan med akkumulerede kreditter."
-                  },
-                  {
-                    "title": "Nulstil ud fra faktiske værdier",
-                    "description": "Færdiggjorte scener kan nulstille målene til de faktiske omkostninger."
-                  },
-                  {
-                    "title": "Telefonstatus",
-                    "description": "Aflæs tempo, forbrug og slutdato på din telefon, mens redigering foregår på en stationær computer eller tablet."
-                  }
-                ]
-              }
-            }
-          ]
-        },
+        "headline": "Fra manuskript til master, alt i ét rum.",
+        "promise": "Blueprint er låst. Din rollebesætning er castet. Gå nu ind på Production Stage. Hvert kapitel, scene og skud er organiseret i en lineær arbejdsgang. Du styrer hensigten; intelligente agenter udfører generationen.",
         "groups": [
           {
             "id": "script",
-            "label": "Optimer scriptet",
+            "label": "Direkte & kontrol",
+            "headline": "Tal filmens sprog, ikke syntaksen af prompter.",
+            "description": "Spild ikke tid på at skrive søgeord i parentes. Production Stage forstår naturlig retning og anvender dit syn på tværs af hele scenen eller ned til det specifikke skud.",
             "features": [
               {
                 "icon": "scriptResonance",
-                "title": "SFAIAUDIENCE_RESONANSTERM",
-                "description": "Audience Resonance læser hele manuskriptet på én gang – alle scenerne samlet. Du ser partiturerne og noterne samtidig, og intet omskrives, før du vælger det.",
-                "screenshot": "Audience Resonance — partiturer og noter på tværs af alle scener, ikke anvendt",
+                "title": "Scene & Shot-instruktøren",
+                "description": "Indtast eller tal din retning i almindeligt sprog. Fortæl agenten, hvem der er i billedet, hvor kameraet bevæger sig, og hvad det følelsesmæssige beat er. Shot Director skriver automatisk de komplekse underliggende meddelelser til dine stillbilleder og klip.",
+                "screenshot": "The Scene & Shot Director — instruktion i almindeligt sprog til stillbilleder og klip",
                 "learnMore": {
                   "items": [
                     {
-                      "title": "Alle scener sammen",
-                      "description": "Det behandler manuskriptet som en samlet helhed med noter til scenerne i sammenhæng."
+                      "title": "Klart sprog",
+                      "description": "Skriv eller tal, hvem der er i billedet, hvor kameraet bevæger sig, og hvad det følelsesmæssige beat er."
                     },
                     {
-                      "title": "Du vælger",
-                      "description": "Intet bliver omskrevet, før du vælger, hvilke noter du vil handle ud fra."
+                      "title": "Scene eller skud",
+                      "description": "Anvend dit syn på tværs af hele scenen eller ned til det specifikke skud."
+                    },
+                    {
+                      "title": "Hurtig kompilering",
+                      "description": "Shot Director skriver automatisk de underliggende meddelelser til dine stillbilleder og klip."
                     }
                   ]
                 }
               },
               {
                 "icon": "castVisual",
-                "title": "Rollebesætning, kostumer og stemme",
-                "description": "Fastlæg persongalleriet, før du går i gang med scenerne. Lås karakteren, påklædningen og stemmen fast, så ethvert efterfølgende stillbillede og klip tager udgangspunkt i den samme person.",
-                "screenshot": "Karakter, kostume og stemme",
+                "title": "Kontinuitetsbiblioteket",
+                "description": "Absolut konsistens på tværs af serien. Generer eller tildel automatisk referencebilleder til dine medvirkende, garderober, placeringer og vigtige rekvisitter for at sikre, at hvert skud matcher Blueprint.",
+                "screenshot": "Kontinuitetsbiblioteket - rollebesætning, garderobeskabe, lokationer og væsentlige rekvisitter",
                 "learnMore": {
                   "items": [
                     {
-                      "title": "Karakter og garderobe",
-                      "description": "Cast Agent tegner karakteren og kostume-lookene."
+                      "title": "Seriekonsistens",
+                      "description": "Hold rollebesætning, garderobeskabe, placeringer og væsentlige rekvisitter samlet på tværs af hvert skud."
                     },
                     {
-                      "title": "Stemme",
-                      "description": "Stemmen fastlægges for karakteren, før scenerne opbygges."
-                    },
-                    {
-                      "title": "Samme person",
-                      "description": "Hvert enkelt stillbillede og hvert klip kræver den lås."
+                      "title": "Generer eller tildel",
+                      "description": "Generer automatisk referencebilleder eller tildel dine egne manuelt for at matche Blueprint."
                     }
                   ]
                 }
               },
               {
                 "icon": "directShot",
-                "title": "Direkte skud",
-                "description": "Direct Shot opretter optagelsen ud fra dine egne ord – enten indtastet eller dikteret. Du får vist et eksempel på retningen og gemmer den, hvorefter både prompten til stillbilledet og prompten til videoklippet opdateres samtidigt.",
-                "screenshot": "Direct Shot – skriv eller diktér, få vist eksempel, gem",
+                "title": "Audience Resonance Integration",
+                "description": "Læs om rummet, før du gengiver. AI analyserer dit manuskript i forhold til din målgruppe og giver scene-for-scene indsigt. Anvend anbefalede anvisninger med det samme, eller stol på din mavefornemmelse og ignorer dem.",
+                "screenshot": "Audience Resonance Integration — scene-for-scene publikumsindsigt",
                 "learnMore": {
                   "items": [
                     {
-                      "title": "Meldt stød",
-                      "description": "Dialogen har titlen Direct Shot · Scene N · Shot N."
+                      "title": "Scene-for-scene indsigt",
+                      "description": "AI analyserer dit script i forhold til din målgruppe, før du gengiver."
                     },
                     {
-                      "title": "Skriv eller diktér",
-                      "description": "Skriv eller diktér noten, og få derefter vist et eksempel på anvisningen, før du gemmer."
-                    },
-                    {
-                      "title": "Begge prompts",
-                      "description": "Ved lagring opdateres prompten for stillbilledet og prompten for klippet samtidigt."
-                    },
-                    {
-                      "title": "På jagt efter klip igen",
-                      "description": "Hvis et genereret skud er forkert, skal du åbne Direct Shot og dirigere det igen."
+                      "title": "Dit opkald",
+                      "description": "Anvend anbefalede anvisninger med det samme, eller stol på din mavefornemmelse og ignorer dem."
                     }
                   ]
                 }
               },
               {
                 "icon": "audioAgent",
-                "title": "Audio Agent",
-                "description": "Audio Agent sammensætter scenens dialog, lydeffekter og musik. Scenen kan høres, før et klip bruges.",
-                "screenshot": "Audio Agent — dialog, effekter og musik",
+                "title": "Produktionsplanlægger",
+                "description": "Etabler budget og tidsplangenerering på tværs af hver scene og kapitel ved hjælp af SceneFlow-kreditter eller dine egne BYOK API-nøgler. Indstil still- og klip-mål pr. skud, før du bruger beregning.",
+                "screenshot": "Produktionsplanlægger — budget, tidsplan og BYOK API nøgler",
                 "learnMore": {
                   "items": [
                     {
-                      "title": "Dialog og effekter",
-                      "description": "Dialog begrænses til tale, og lydeffekter anvendes til indstillinger med et tydeligt signal."
+                      "title": "Budget og tidsplan",
+                      "description": "Etabler budget og tidsplangenerering på tværs af hver scene og kapitel, før du gengiver."
                     },
                     {
-                      "title": "Musik",
-                      "description": "Musikken bærer scenen sammen med dialogen."
-                    },
-                    {
-                      "title": "Før bevægelse",
-                      "description": "Hør scenen, før du åbner Clips."
+                      "title": "Credits eller BYOK",
+                      "description": "Kør generation ved hjælp af SceneFlow-kreditter eller dine egne BYOK API-nøgler."
                     }
                   ]
                 }
               },
               {
                 "icon": "continuity",
-                "title": "Kontinuitet",
-                "description": "Generér kun de referencer, som denne scene kræver, når scenen er klar. Tidligere scener forbliver, som du har låst dem, så du ikke skal genskabe referencer, der allerede er godkendt.",
-                "screenshot": "Kontinuitet – kun referencer fra denne scene",
+                "title": "Produktionsmanuskript",
+                "description": "Bygget til både traditionelle filmskabere og kunstig intelligens. Forhåndsvis et rent, formateret manuskript i studiet, og eksporter i industristandardformater (PDF, FDX, Fountain). Brug SceneFlow som et selvstændigt manuskriptrum – eller sæt dit manuskript sammen med en Pre-Vis Animatic og Promo Trailer for at pitche finansfolk og sikre projektfinansiering.",
+                "screenshot": "Produktionsscript — preview i platformen og PDF-, FDX- og Fountain-eksport",
                 "learnMore": {
                   "items": [
                     {
-                      "title": "Kun denne scene",
-                      "description": "Tegn de medvirkende, lokationerne og rekvisitterne, som denne scene kræver, og lad de øvrige være."
+                      "title": "In-platform preview og eksport",
+                      "description": "Se forhåndsvisning af det formaterede script i studiet, og eksporter i industristandard PDF, Final Draft FDX eller Fountain-format."
                     },
                     {
-                      "title": "Lige i tide",
-                      "description": "Generér dem, når scenen er klar, ikke som et samlet parti for hele filmen."
+                      "title": "For traditionelle filmskabere",
+                      "description": "Brug SceneFlow som en intelligent scriptproduktionsplatform uden at generere video."
                     },
                     {
-                      "title": "Allerede låst",
-                      "description": "En ændring i én scene opdaterer ikke de referencer, som tidligere scener allerede benytter."
-                    }
-                  ]
-                }
-              },
-              {
-                "icon": "stillsAgent",
-                "title": "Stills Agent",
-                "description": "Stills Agent genererer billedrammerne ud fra den godkendte instruktion. Instruktion og lyd forbliver, som du efterlod dem, og klippene tilføjes senere.",
-                "screenshot": "Stills Agent — billedrammer",
-                "learnMore": {
-                  "items": [
-                    {
-                      "title": "Billedrammer",
-                      "description": "Det tegner stillbilledet for hvert klip i scenen."
-                    },
-                    {
-                      "title": "Retningsafstivere",
-                      "description": "Ved regenerering af en ramme opdateres billedet, mens retning og lyd forbliver uændrede."
-                    },
-                    {
-                      "title": "Før klip",
-                      "description": "Godkend stillbillederne, før du åbner Clips."
-                    }
-                  ]
-                }
-              },
-              {
-                "icon": "animatic",
-                "title": "Animatic",
-                "description": "Se scenen i Screening Room som en animatic – altså stillbilleder kombineret med dialog, musik og lydeffekter. Del den for at få feedback, og færdiggør hver scene på denne måde, før selve videoproduktionen påbegyndes; på den måde undgår du at skulle bearbejde klippene igen, hvis der sker ændringer i manuskriptet. For mange skabere er animaticen det endelige værk, og den kan eksporteres som en MP4-fil.",
-                "screenshot": "Screening Room-animatic, med deling",
-                "learnMore": {
-                  "items": [
-                    {
-                      "title": "Billede og lyd",
-                      "description": "Animaticen afspiller de godkendte stillbilleder med dialog, underlægningsmusik og lydeffekter."
-                    },
-                    {
-                      "title": "Del",
-                      "description": "Send ét link, så anmelderne kan se animaticen og tilføje noter til billedet."
-                    },
-                    {
-                      "title": "Før video",
-                      "description": "Færdiggør scenerne som animatics, før du genererer klip, så en ændring i manuskriptet ikke kræver, at videoen genereres på ny."
-                    },
-                    {
-                      "title": "MP4-filen",
-                      "description": "For mange skabere er animaticen slutproduktet, og den kan renderes til en MP4-fil."
+                      "title": "Pitch & projektfinansiering",
+                      "description": "Pak dit manuskript med en Pre-Vis Animatic og Promo Trailere for at pitche og erhverve projektfinansiering."
                     }
                   ]
                 }
@@ -733,86 +629,78 @@
           },
           {
             "id": "video",
-            "label": "Video",
+            "label": "Generer & Revision",
+            "headline": "Bevis snittet, før du bruger beregningen.",
+            "description": "Gæt ikke, hvordan en scene vil spille. SceneFlow adskiller generering af lyd og stillbilleder fra dyr bevægelsesgengivelse, så du først kan kontrollere rytmen i redigeringen.",
             "features": [
               {
                 "icon": "videoAgent",
-                "title": "Video Agent",
-                "description": "Video Agent genererer optagelsesklippene på fanen Clips. Se den sammensatte scene i Screening Room, og hvis en optagelse er forkert, skal du instruere den igen i Direct Shot.",
-                "screenshot": "Video Agent, derefter den sammensatte scene",
+                "title": "Audio Agent",
+                "description": "Generer dialog, lydeffekter og noder samtidigt på tværs af op til 30 billeder pr. scene. Cast-stemmer matcher automatisk karakterprofiler eller kan tilpasses.",
+                "screenshot": "Audio Agent — samtidig dialog, lydeffekter og noder",
                 "learnMore": {
                   "items": [
                     {
-                      "title": "Optagede klip",
-                      "description": "Video Agent genererer klippet for hvert optagelsesbillede ud fra det godkendte stillbillede."
+                      "title": "Samtidig lyd",
+                      "description": "Generer dialog, lydeffekter og musikpartiturer samtidigt på tværs af op til 30 billeder pr. scene."
                     },
                     {
-                      "title": "Sammensyet motiv",
-                      "description": "Gennemgå scenen, der er sammensat i Screening Room."
-                    },
-                    {
-                      "title": "Instruér det igen",
-                      "description": "Opret en Direct Shot – enten skrevet eller dikteret – når et klip er forkert."
+                      "title": "Karakterstemmer",
+                      "description": "Cast-stemmer matcher automatisk karakterprofiler eller kan tilpasses."
                     }
                   ]
                 }
               },
               {
                 "icon": "mixer",
-                "title": "Mixer",
-                "description": "Mixeren færdiggør scenen i Production Stage. Medtag eller udelad indstillinger, beskær dem, afbalancér lyden, og rendér scenen inklusive lyd.",
-                "screenshot": "Mixer — inkludér, beskær, afbalancér, overlay, vandmærke",
+                "title": "Stills Agent",
+                "description": "Generer hurtigt keyframe-billederne, der illustrerer din skudretning. Gendan, rediger eller upload dine egne referencer for at låse kompositionen.",
+                "screenshot": "Stills Agent — keyframe-sammensætning og referencer",
                 "learnMore": {
                   "items": [
                     {
-                      "title": "Shots",
-                      "description": "Medtag eller fjern enkelte klip, og beskær dem, der bliver tilbage."
+                      "title": "Keyframe generation",
+                      "description": "Generer hurtigt keyframe-billederne, der illustrerer din skudretning."
                     },
                     {
-                      "title": "Dialog",
-                      "description": "Indstil lydstyrke og hastighed for hver replik."
-                    },
-                    {
-                      "title": "Spor",
-                      "description": "Afbalancér fortællerstemme, dialog, lydeffekter og musik, herunder fade og loop af musikken."
-                    },
-                    {
-                      "title": "Overlays",
-                      "description": "Placer tekst-overlays på scenen."
-                    },
-                    {
-                      "title": "Vandmærke",
-                      "description": "Tilføj et vandmærke med tekst eller billede."
-                    },
-                    {
-                      "title": "Gengive",
-                      "description": "Render scenen inklusive dens lyd, og det er denne rendering, som Screening Room afspiller."
+                      "title": "Lås sammensætningen",
+                      "description": "Gendan, rediger eller upload dine egne referencer, før du forpligter dig til bevægelse."
                     }
                   ]
                 }
               },
               {
                 "icon": "languageStreams",
-                "title": "Sprogversioner",
-                "description": "Der er tale om en sprogversion af denne scene, ikke en nyproduktion. Gemini TTS leverer dubbingen på 44 sprog, og for hvert klip kan du dubbe replikken eller generere klippet på ny – inklusive skiltning.",
-                "screenshot": "Sprogversion — Dubbing, læbesynkronisering eller regenerering, inklusive skiltning",
+                "title": "Pre-Vis Animatic",
+                "description": "Se scenen trække vejret. Gennemgå en fuldt samlet animatisk – sammensyede stillbilleder, Ken Burns-bevægelse og låst lyd – i Screening Room. Overvåg tempoet, del for at få feedback, og sørg for, at klipningen fungerer, før du forpligter dig til video.",
+                "screenshot": "Pre-Vis Animatic — sammensyede stillbilleder, Ken Burns-bevægelse og låst lyd",
                 "learnMore": {
                   "items": [
                     {
-                      "title": "Fireogtyve sprog",
-                      "description": "Gemini TTS leverer dubbingen på 44 sprog."
+                      "title": "Samlet animatisk",
+                      "description": "Gennemgå sammensatte stillbilleder, Ken Burns-bevægelse og låst lyd i Screening Room."
                     },
                     {
-                      "title": "Pr. shot",
-                      "description": "Vælg \"Double\" for hvert klip for at lægge den dubbede stemme ovenpå, \"Lip-sync\" for at udføre dubbingen, eller \"Regenerate\" for at oprette et nyt klip ud fra den oversatte replik."
+                      "title": "Revision og del",
+                      "description": "Overvåg tempoet, del for at få feedback, og sørg for, at klipningen fungerer, før du forpligter dig til video."
+                    }
+                  ]
+                }
+              },
+              {
+                "icon": "videoAgent",
+                "title": "Clips Agent",
+                "description": "Når Pre-Vis er godkendt, tager Clips Agent over, og gengiver high-fidelity bevægelsesklip, der nøje overholder dine godkendte stillbilleder og kontinuitetsreferencer.",
+                "screenshot": "Clips Agent — high-fidelity bevægelsesklip fra godkendte stillbilleder",
+                "learnMore": {
+                  "items": [
+                    {
+                      "title": "Efter Pre-Vis godkendelse",
+                      "description": "Clips Agent gengiver kun bevægelse, efter at Pre-Vis-animationen er godkendt."
                     },
                     {
-                      "title": "Skiltning",
-                      "description": "Generér et billede af skiltningen på ny, hvis billedet indeholder tekst, der skal ændres."
-                    },
-                    {
-                      "title": "Timing",
-                      "description": "Videohastigheden gemmes for den pågældende sprogversion, da en oversættelse ofte er 10–30 % længere end masterversionen."
+                      "title": "Streng overholdelse",
+                      "description": "High-fidelity bevægelsesklip overholder strengt dine godkendte stillbilleder og kontinuitetsreferencer."
                     }
                   ]
                 }
@@ -821,30 +709,78 @@
           },
           {
             "id": "publish",
-            "label": "Udgiv",
+            "label": "Udgiv og distribuer",
+            "headline": "Send skibsføreren, eller lokaliser for verden.",
+            "description": "Når scenen er færdig, er aktiverne allerede samlet. Afslut redigeringen, lokaliser lyden og distribuer direkte til dit publikum.",
             "features": [
               {
                 "icon": "shipPackage",
-                "title": "Pak og send",
-                "description": "Saml en scene, et kapitel, masteren eller en promo, når den del er klar. Udgiv den på YouTube, Facebook eller TikTok – eller download MP4-filen – og fortsæt med at arbejde på resten.",
-                "screenshot": "Pak og lever — scene, kapitel, master, promo; YouTube, Facebook, TikTok, MP4",
+                "title": "Mixeren",
+                "description": "En indbygget, intuitiv sceneeditor. Trim klip, juster hastighedsramper, tilføj tekstoverlejringer og påfør vandmærker uden at forlade studiet.",
+                "screenshot": "Mixeren — trim klip, fartramper, tekstoverlejringer og vandmærker",
                 "learnMore": {
                   "items": [
                     {
-                      "title": "Stykker",
-                      "description": "Send en scene, et kapitel, masteren eller en promo."
+                      "title": "Indbygget scene editor",
+                      "description": "Trim klip og juster hastighedsramper direkte inde i studiet."
                     },
                     {
-                      "title": "Sprogspor",
-                      "description": "Hver sprogversion kan leveres sammen med pakken."
+                      "title": "Efterbehandling",
+                      "description": "Tilføj tekstoverlejringer og anvend vandmærker uden at eksportere til en ekstern editor."
+                    }
+                  ]
+                }
+              },
+              {
+                "icon": "languageStreams",
+                "title": "Streams (flersproget)",
+                "description": "Udvid din globale rækkevidde på tværs af 44 sprog med det samme. Generer automatisk alternative sprogstreams ved at dubbe lyd, synkronisere læbebevægelser eller genskabe lokaliserede dialogklip direkte i scenen.",
+                "screenshot": "Streams (Multi-Language) — dubbet lyd og lokaliserede dialogklip",
+                "learnMore": {
+                  "items": [
+                    {
+                      "title": "Global rækkevidde",
+                      "description": "Generer automatisk alternative sprogstreams på tværs af 44 sprog direkte i scenen."
                     },
                     {
-                      "title": "Destinationer",
-                      "description": "Udgiv på YouTube, Facebook eller TikTok, eller download MP4-filen."
+                      "title": "Dub, lip-sync eller regenerer",
+                      "description": "Lokaliser hvert skud ved at dubbe lyd, synkronisere læbebevægelser eller genskabe lokaliserede dialogklip."
+                    }
+                  ]
+                }
+              },
+              {
+                "icon": "promoTrailers",
+                "title": "Kampagne & trailere",
+                "description": "Klip socialt-klare promo-trailere til enhver tid under produktionen. Generer flersprogede versioner optimeret til vandrette eller lodrette formater.",
+                "screenshot": "Promo og trailere — flersprogede horisontale og vertikale trailere",
+                "learnMore": {
+                  "items": [
+                    {
+                      "title": "Socialt parate trailere",
+                      "description": "Klip promo-trailere på et hvilket som helst tidspunkt under produktionen."
                     },
                     {
-                      "title": "Bliv ved med at bygge",
-                      "description": "Send den del, der er færdig, og fortsæt med at bygge resten."
+                      "title": "Flersprogede formater",
+                      "description": "Generer flersprogede versioner optimeret til vandrette eller lodrette formater."
+                    }
+                  ]
+                }
+              },
+              {
+                "icon": "shipPackage",
+                "title": "Direkte udgivelse",
+                "description": "Eksporter den endelige master MP4, eller lad SceneFlow autogenerere miniaturebilleder og beskrivelser for at udgive scener, kapitler og kampagner direkte på YouTube, TikTok og Facebook.",
+                "screenshot": "Direkte udgivelse — MP4-eksport og direkte udgivelse til YouTube, TikTok og Facebook",
+                "learnMore": {
+                  "items": [
+                    {
+                      "title": "Master MP4 eller direkte social",
+                      "description": "Eksporter den endelige master MP4, eller udgiv scener, kapitler og kampagner direkte til YouTube, TikTok og Facebook."
+                    },
+                    {
+                      "title": "Automatisk genereret metadata",
+                      "description": "Lad SceneFlow automatisk generere thumbnails og beskrivelser for hver udgivelse."
                     }
                   ]
                 }
@@ -856,48 +792,49 @@
       {
         "id": "screening-room",
         "label": "Screening Room",
-        "promise": "I Screening Room kan den færdige klipning ses, gennemgås og frigives. Én afspiller rummer alt – fra pre-vis, scener, kapitler, master og promo til de enkelte sprogspor – så dubbingen er baseret på præcis den klipning, lydmixeren har renderet. Del ét link til både afspilning og billedkommentarer. Udgiv en scene på 3–5 minutter, et kapitel på 8–12 minutter, masteren eller en promo, så snart den pågældende del er klar, mens arbejdet med resten fortsætter.",
+        "headline": "Screen cuttet, samle dit hold, og få premiere globalt.",
+        "promise": "Dit private teater og afsluttende suite. Se Pre-Vis animation, individuelle scener, kapitler, kampagner og flersprogede streams i én samlet afspiller. Del et enkelt link til tidsstemplede interessentnoter – og send en 3-5 minutters scene, et 8-12 minutters kapitel, en promo eller masteren, mens resten af ​​produktionen fortsætter.",
         "features": [
           {
             "icon": "screeningPlayer",
-            "title": "Én spiller",
-            "description": "Skift mellem pre-vis, scener, kapitler, master og promo. Vælg en sprogstrøm, og hør den pågældende version – dubbet, læbesynkroniseret eller genskabt klip for klip. Afspilleren viser det samme klip, som Mixer-modulet har renderet.",
+            "title": "En samlet spiller",
+            "description": "Skift problemfrit mellem Pre-Vis-animationer, scener, kapitler, trailere og din endelige mester. Skift sprogstreams i farten for at prøve eftersynkroniserede, lip-synkroniserede eller shot-regenererede lokaliseringer - altid låst til det nøjagtige klip fra mixeren.",
             "screenshot": "Screening Room-afspiller",
             "learnMore": {
               "items": [
                 {
-                  "title": "Én overflade",
-                  "description": "Skift mellem Pre-Vis, scener, kapitler, masteren og promoen."
+                  "title": "Hver milepæl i én visning",
+                  "description": "Skift ubesværet mellem Pre-Vis, scener, kapitler, promoer og den endelige master."
                 },
                 {
-                  "title": "Sprogspor",
-                  "description": "Vælg en version, og hør den dubleret, læbesynkroniseret eller genskabt klip for klip."
+                  "title": "Live sprogskift",
+                  "description": "Prøv en hvilken som helst sprogstream – dubbet, læbesynkroniseret eller skudgenskabt – på farten."
                 },
                 {
-                  "title": "Samme snit",
-                  "description": "Afspilleren er det klip, som mixeren renderede."
+                  "title": "Rammelåst til mixeren",
+                  "description": "Hver stream afspiller den nøjagtige redigering og timing gengivet i mixeren."
                 }
               ]
             }
           },
           {
             "icon": "screeningCollab",
-            "title": "Samarbejd om klipningen",
-            "description": "Del ét link. Anmeldere ser videoen med rigtig afspilning og tilføjer noter direkte på billedet. Du behøver ikke at eksportere en råfil til en e-mail for at indsamle feedback. Du får besked om nye noter og kan læse dem på din telefon.",
+            "title": "Rammepræcis samarbejde",
+            "description": "Stop med at eksportere grove udskæringer til e-mail. Del et privat screeningslink, hvor samarbejdspartnere og investorer ser med i realtid og anbringer noter direkte på billedet – med øjeblikkelige meddelelser sendt direkte til din telefon.",
             "screenshot": "Delt anmeldelse",
             "learnMore": {
               "items": [
                 {
-                  "title": "Ét link",
-                  "description": "Anmeldere ser materialet med reel afspilning og tilføjer noter direkte på billedet."
+                  "title": "Private screeningslinks",
+                  "description": "Anmeldere ser afspilning i fuld opløsning og efterlader tidsstemplede noter på billedet."
                 },
                 {
-                  "title": "Ingen grovklip via e-mail",
-                  "description": "Du eksporterer ikke en rå fil til en e-mail for at indhente feedback."
+                  "title": "Ingen grove fileksporter",
+                  "description": "Saml feedback fra interessenter ét sted uden at sende tunge videofiler."
                 },
                 {
-                  "title": "Telefonnotater",
-                  "description": "En skriftlig besked giver dig besked, og du kan læse den på din telefon, mens studiet bliver liggende på en stationær computer eller tablet."
+                  "title": "Øjeblikkelige mobiladvarsler",
+                  "description": "Nye anmeldernoter giver dig besked med det samme på din telefon, mens du dirigerer på skrivebordet."
                 }
               ]
             }
@@ -911,6 +848,7 @@
     "description": "Forvandl dine idéer til professionelle videoer med AI-drevet workflow-automatisering"
   },
   "nav": {
+    "overview": "Oversigt",
     "plansPricing": "Planer og priser",
     "productionExamples": "Eksempler",
     "keyFeatures": "Funktioner",
@@ -937,9 +875,9 @@
     "pricing": "Priser"
   },
   "hero": {
-    "eyebrow": "Automatiseret filmproduktion til film og serier",
+    "eyebrow": "Demokratiseret filmskabelse for historiefortællere, serieskabere og studier",
     "headline": "Fra den første gnist til det færdige mesterværk.",
-    "subheadline": "SceneFlow er en styret proces. Du instruerer historien, castet og tonen. Den opbygger Blueprint, sikrer kontinuitet, afspiller hele animaticen og samler master-versionen – uden prøve-prompts eller en tidslinje med løse klip.",
+    "subheadline": "Hvis du kan forestille dig en historie, kan du instruere en film – der kræves ingen teknisk filmskabelse eller tilskyndelsesfærdigheder. Beskriv din vision med hverdagsord, og SceneFlow bygger Blueprint, låser karakter og indstillingskontinuitet, spiller hele animationen og syr den færdige mester.",
     "ctaPrimaryLaunch": "Launch Studio (9 $)",
     "ctaSupportingLine": "Et alt-i-ét-studie til at skabe, eksportere og distribuere dine historier. Hent en master og send den hvorhen du vil – eller udgiv længere klip og kapitler til {longForm}, og promover trailere på {shorts}.",
     "ctaNetworkInvite": "Fremragende projekter kan ansøge om optagelse i netværket SceneFlow, der kun er tilgængeligt ved invitation.",
@@ -948,20 +886,20 @@
     "ctaToolStack": "Se, hvordan det erstatter din værktøjspakke",
     "chips": [
       {
-        "label": "Fra koncept til funktion",
-        "detail": "Udbyg idéer til 90-minutters manuskripter i Blueprint Room. Definer karakterer, det visuelle udtryk og narrative nøglepunkter, og lad derefter en Audience Resonance-analyse finjustere historien, før I går i gang med optagelserne."
+        "label": "Fra idé til manuskript & kapitel",
+        "detail": "Gør en idé i almindeligt sprog om til strukturerede kapitler eller et 90-minutters manuskript i Blueprint Room. Definer karakterer, kunst og beats, og lad derefter Audience Resonance finjustere din historie, før du optager."
       },
       {
-        "label": "Styr med intention, ikke prompts",
-        "detail": "Tal filmens sprog med intelligente assistenter, der forstår din instruktion. Reference Library fastlåser dine specifikke skuespillere, kostumer og lokationer, så der er fuldstændig kontinuitet."
+        "label": "Ingen filmskabende færdigheder påkrævet",
+        "detail": "Udtryk din vision med hverdagsord – din AI-direktør håndterer manuskriptformat, kameravinkler, belysning og prompter, mens Continuity Library låser din rollebesætning, garderobe og lokationer."
       },
       {
-        "label": "Agentstyret produktion",
-        "detail": "Sæt skub i genereringen – op til 5 gange hurtigere – med intelligente agenter, der opbygger scener med 30 optagelser i baggrunden. Eksperimentér frit i udkast-tilstand, og udgiv derefter din endelige vision i imponerende høj opløsning."
+        "label": "Agentdrevet scenesyning",
+        "detail": "Accelerer produktionen 5X med specialiserede agenter, der genererer dialog, musik, stillbilleder og klip parallelt og sammensætter 30-shot-scener automatisk. Forhåndsvisning i Pre-Vis først, og gengiv derefter i Hi-Res."
       },
       {
         "label": "Screen, samarbejd, lever",
-        "detail": "Del fremskridt ved hver milepæl – fra audio-animatics til den endelige master – i Screening Room. Distribuer som kortfilm eller spillefilm på flere sprog for at opnå global rækkevidde."
+        "detail": "Del fremskridt ved hver milepæl – fra stemmet animatik til den endelige mester – i Screening Room. Udgiv i episodiske kapitler eller fulde funktioner på tværs af 70+ sprog."
       }
     ],
     "pipelineSteps": [
@@ -1000,7 +938,7 @@
   "twoModes": {
     "eyebrow": "Den friktion, vi fjerner",
     "title": "Én pipeline. Ikke en stak værktøjer.",
-    "subtitle": "SceneFlow replaces single-clip generators and a pile of separate docs, editors, and re-renders. Build the series or the 90-minute master, then publish a scene or a chapter when you are ready to earn.",
+    "subtitle": "Klipprompter, keyframes, stemmefortælling og musik plejede at leve i separate værktøjer. SceneFlow samler hele produktionen i én pipeline – så du kan bygge en serie med flere afsnit eller en 90-minutters master og udgive færdige scener eller kapitler, mens du går.",
     "comingSoon": "Kommer snart",
     "comparison": {
       "id": "comparison",
@@ -1009,19 +947,19 @@
     "cta": "Launch Studio (9 $)"
   },
   "directControl": {
-    "eyebrow": "Den kontrol, du beholder",
-    "title": "Styr historien. Lad agenterne stå for promptingen.",
-    "subtitle": "Du instruerer billedet i et klart og enkelt sprog. Instruktionen danner grundlag for prompts til både stillbilleder og videoklip. Musik og speak lægges præcist i takt med rytmen. Se animaticen igennem, ret billedet til, hvis det ikke fungerer, og brug først derefter ressourcer på bevægelse.",
+    "eyebrow": "Ingen teknisk filmproduktion påkrævet",
+    "title": "Udtryk din vision. Dit AI-hold klarer håndværket.",
+    "subtitle": "Uanset om du er en førstegangshistoriefortæller eller en erfaren instruktør, så beskriv blot hvad der sker med rene ord. Specialiserede agenter håndterer kinematografi, prompting, musiksignaler, dialog og automatiseret scenesyning - så du kan se den fulde animation først, forfine ethvert beat på kommando og først derefter bruge kreditter på bevægelse.",
     "comparison": {
       "id": "direction",
-      "caption": "En instruktørbemærkning, en anvisning til et klip samt musik og speak på samme takt."
+      "caption": "Historieretning i almindeligt sprog kompileret automatisk i film, musik og fortælling."
     },
     "cta": "Launch Studio (9 $)"
   },
   "publishCut": {
     "eyebrow": "Den version, du udgiver",
     "title": "Eksportér hvor som helst. Premiere på SceneFlow, når du har gjort dig fortjent til det.",
-    "subtitle": "Download a master and ship it yourself, or publish finished scenes and chapters to {longForm} and cut trailers for {shorts} — without waiting on the whole cut. Before anything hits the public feed, run drafts or your final master through the Screening Room. Standout projects can apply for the invite-only SceneFlow Network; it is a curated accelerator, not an open storefront.",
+    "subtitle": "Eksporter en master og distribuer hvor som helst, eller udgiv færdige scener og kapitler direkte til {longForm} med lodrette trailere skåret til {shorts} — billede, musik og fortælling allerede i klippet. Undersøg hvert udkast i Screening Room inden udgivelsen, og ansøg til SceneFlow-netværket, der kun er for invitationer, for finansieret publikumsacceleration.",
     "comparison": {
       "id": "publish",
       "caption": "A finished scene or chapter, and the 90-minute master, from one studio."
@@ -1034,6 +972,25 @@
     "badges": {
       "googleCloud": "Google Cloud",
       "vertexAi": "Vertex AI"
+    },
+    "wave": {
+      "eyebrow": "Kør på AI → Superintelligence Wave",
+      "headline": "Højkvalitetsproduktioner i dag. Automatiske modelopgraderinger i morgen.",
+      "subheadline": "I det seneste år sprang videogenerationen fra afbrudt \"AI-slop\" til realistisk biograf. Kombineret med SceneFlows strukturerede historiefortælling og automatiserede scene-sammensætning kan du sende produktioner i studiekvalitet i dag – mens hver karakter og verden, du bygger, automatisk kører på den næste bølge af AI-fremskridt.",
+      "pillars": [
+        {
+          "title": "Scenesyning i studieklasse i dag",
+          "description": "Du behøver ikke vente på fremtidige modeller for at fortælle en fantastisk historie. SceneFlows Blueprint-arkitektur, Reference Library og automatiserede scenestikninger forvandler nutidens grænsemodeller til sammenhængende, broadcast-klare kapitler og film."
+        },
+        {
+          "title": "Din Continuity Vault er fremtidssikret IP",
+          "description": "Modeller er kameralinser; dine scripts, karakterer, garderober og sæt i din Continuity Vault er din permanente IP. Byg din serie og dit publikum nu – efterhånden som modellerne går fra AI til Superintelligence (SI), opgraderer din eksisterende rollebesætning automatisk til de nyeste motorer."
+        },
+        {
+          "title": "Mere regnekraft, efterhånden som token-omkostningerne falder",
+          "description": "Efterhånden som global beregning udvides, og modeltoken-omkostningerne falder, overfører SceneFlow automatisk disse effektivitetsgevinster til aktive medlemmer som mere generationskraft pr. kredit ved fornyelser og tilføjelsespakker. Tilmeld dig i dag, og tag ethvert spring fremad."
+        }
+      ]
     }
   },
   "valueProp": {
@@ -1774,13 +1731,13 @@
     "titleAccent": "i aktion",
     "subtitle": "Hvert eksempel indledes med en kort trailer. Masterversionen i fuld længde – en komplet produktion, der spænder fra konceptuelt oplæg og prævisualisering til den endelige klipning – vises i screeningslokalet.",
     "subtitleTagline": "Produktioner i fuld længde. Ikke klip.",
-    "screeningRoomInstruction": "Gennemgå denne produktion, som en anmelder ville gøre det – én milepæl ad gangen. Start med Series, derefter Blueprint, så manuskriptet i AR Analysis, og slut af med Screening.",
+    "screeningRoomInstruction": "Åbn Screening Room først for at opleve produktionen, som en anmelder ville – skifte mellem Pre-Vis, Clips, Scenes, Chapters, Master og Promo – inspicér derefter Series Room, Blueprint Room og Production Stage nedenunder.",
     "trailerLabel": "Trailer",
     "watchLongform": "Se det længere indslag",
-    "seriesDoor": "Serie",
-    "blueprintDoor": "Blueprint",
-    "scriptArDoor": "Analyse af debitorer",
-    "screeningDoor": "Screening",
+    "seriesDoor": "Series Room",
+    "blueprintDoor": "Blueprint Room",
+    "scriptArDoor": "Production Stage",
+    "screeningDoor": "Screening Room",
     "screeningRoomGroup": "Screening Room",
     "previsDoor": "Forvisualisering",
     "roughDoor": "Grovklip",
@@ -2305,23 +2262,73 @@
     "closePopup": "Luk pop-up"
   },
   "pricing": {
-    "badge": "Enkel prissætning",
+    "badge": "Studiemedlemskab og brugspriser",
     "title": "Start med Explorer — 9 $",
-    "subtitle": "Test hele pipelinen nu med en enkel og gnidningsfri adgang til 9 $.",
-    "explorerHighlight": "Den hurtigste måde at opleve det komplette SceneFlow-studie på – fra koncept til Screening Room.",
+    "subtitle": "Start din første film i dag for 9 USD – forvandl din idé til en struktureret Blueprint, cast dine karakterer, og se en forhåndsvisning af din første scene. Så abonner for at beholde din Continuity Vault og tilføj kreditter, når du afslutter din produktion.",
+    "explorerHighlight": "Der kræves ingen tekniske filmfærdigheder – bygget til hverdagshistoriefortællere, indieskabere kapitel for kapitel, seriekanaler og hybride filmstudier.",
     "trustBadges": [
       "Sikre betalinger via Whop",
       "$9 Explorer for at prøve studiet",
-      "Månedlige kreditter udløber ved periodens afslutning.",
+      "Aktivt medlemskab bevarer Continuity Vault",
       "Opsig når som helst"
     ],
     "valueAnchor": {
-      "traditionalCost": "Over 2.000 $",
-      "traditionalLabel": "Traditionel prævisualisering",
+      "traditionalCost": "$5.000–$50.000+",
+      "traditionalLabel": "Traditionel pre-vis & produktion",
       "vs": "mod",
-      "sceneFlowCost": "49-149 $",
-      "sceneFlowLabel": "SceneFlow månedlig",
-      "saveBadge": "Spar over 90 % pr. projekt"
+      "sceneFlowCost": "$19-$599/md + tilføjelser",
+      "sceneFlowLabel": "SceneFlow Studio & Continuity Vault",
+      "saveBadge": "Spar 90%+ pr produktion"
+    },
+    "filmmakerPerspectives": {
+      "heading": "One Studio Pipeline. Bygget til enhver historiefortæller og filmskaber.",
+      "subheading": "Du behøver ikke filmskole eller tekniske færdigheder for at udtrykke din vision. Uanset om du bringer en personlig historie til live for første gang, udgiver en serie kapitel for kapitel, pitcherer finansfolk eller kører et hybrid-shoot, skaler din plan med, hvordan du skaber.",
+      "recommendedPathLabel": "Anbefalet sti:",
+      "cards": [
+        {
+          "id": "hobbyist",
+          "badge": "Ingen filmerfaring nødvendig • 19 USD/md",
+          "title": "Fortællere og kreative visionærer",
+          "description": "Har du en historie, bogkoncept eller familiehistorie, du gerne vil se på skærmen? Beskriv din vision med almindelige ord for at skabe stemmede Pre-Vis-animationer og selektive videoklip – mens du holder dine figurer, garderober og sæt gemt i din Continuity Vault.",
+          "recommendedPlan": "Hobbyist ($19/md)"
+        },
+        {
+          "id": "chapter",
+          "badge": "Nye og indie-skabere • 49 USD/md",
+          "title": "Udgiv kapitel-strategien",
+          "description": "Spring over omkostnings- og tidsbarrieren ved at gengive en 90-minutters funktion på forhånd. Udgiv din historie i 5-15 minutters scener eller episodiske kapitler for at administrere dit månedlige beregningsbudget, mens du støt vokser dit publikum.",
+          "recommendedPlan": "Starter ($49/md)"
+        },
+        {
+          "id": "series",
+          "badge": "Indtægtsgenererede kanaler • 149 USD/md",
+          "title": "Karakter og indstilling af kontinuitet for serier",
+          "description": "Publikum abonnerer på kanaler, når de forbinder med velkendte karakterer og verdener. Din Continuity Vault bevarer medvirkende ansigter, outfits, tilpassede stemmekloner og lokationer på tværs af hver episode, så du kan vokse bæredygtigt på YouTube, TikTok og Reels.",
+          "recommendedPlan": "Pro ($149/md)"
+        },
+        {
+          "id": "hybrid",
+          "badge": "Erfarne og hybridfilmskabere • $149–$599/md",
+          "title": "Produktionsfinansieringspakker og hybridoptagelser",
+          "description": "Eksporter industristandard-scripts (PDF, FDX, Fountain) parret med en Pre-Vis Animatic og Promo Trailer for at sikre investorfinansiering – eller upload livefilmede scener og bland dem med 4K AI-optagelser til en brøkdel af de fysiske produktionsomkostninger.",
+          "recommendedPlan": "Pro / Studio + tilføjelser"
+        }
+      ]
+    },
+    "membershipModel": {
+      "badge": "Forudsigelig base + fleksibel beregning",
+      "title": "Start dit projekt i dag. Skaler med tilføjelser, mens du producerer.",
+      "description": "SceneFlow adskiller tilbagevendende studie- og Continuity Vault-hosting fra burst-produktionscomputere – så dine karakterer og verden forbliver låst året rundt, og du kan fylde kreditter op, når du er klar til at afslutte et kapitel eller en feature.",
+      "pillars": [
+        {
+          "title": "1. Basismedlemskab bevarer din kontinuitetsboks",
+          "description": "En aktiv månedlig plan ($19-$599/md) bevarer din studieadgang, Screening Room-links og Active Continuity Vault – bevarer dine tilbagevendende rollebesætninger, garderober, tilpassede stemmekloner, lokationer og seriebibler på tværs af sæsoner, plus månedlige basiskreditter."
+        },
+        {
+          "title": "2. Afslut ethvert projekt efter behov med 12-måneders tilføjelsespakker",
+          "description": "Når din historie er i bevægelse, kan aktive månedlige medlemmer købe $25, $100 eller $250 Add-On kreditpakker når som helst for at fuldføre et kapitel, en sæson med flere episoder eller en hybrid feature-optagelse. Tilføjelsespakker varer 12 måneder, mens dit medlemskab forbliver aktivt."
+        }
+      ]
     },
     "teamCta": {
       "title": "Internt team eller institution?",
@@ -2336,7 +2343,7 @@
     "byok": {
       "title": "Medbring din egen nøgle",
       "badge": "Pro- og Studio-abonnementer",
-      "description": "Din API-nøgle kan bruges til generering af referencer, stillbilleder og klip. SceneFlow opkræver et orkestreringsgebyr på 20 % for disse opgaver. Priserne for en hostet SceneFlow-løsning kan være lavere end for en personlig API-konto, i takt med at platformens volumen vokser.",
+      "description": "Tilslut dine egne Google Vertex AI- eller Kling API-nøgler på Pro- og Studio-abonnementer til direkte udbyderfakturering (med et 20 % platformsorkestreringsgebyr) – eller brug SceneFlows hostede kreditter til at drage fordel af vores mængderabattede modelpriser.",
       "savingsHighlight": "20 % orkestreringsgebyr",
       "benefits": [
         {
@@ -2363,22 +2370,26 @@
       "note": "Gebyret på 20 % er et SceneFlow-orkestreringsgebyr. Udbyderen fakturerer forbruget til din konto. Generering hostet af SceneFlow kan være billigere end at medbringe en personlig nøgle."
     },
     "creditTopUps": {
-      "title": "Har du brug for flere credits?",
-      "subtitle": "Køb tilkøbspakker til $25, $100 eller $250, så ofte du har brug for det. Hver pakke gælder i 12 måneder.",
+      "title": "Subscriber Pay-As-You-Produce Add-On Packs",
+      "subtitle": "Eksklusivt for aktive månedlige medlemmer. Køb $25, $100 eller $250 add-ons, så ofte du har brug for det. Hver pakke varer 12 måneder.",
       "packs": [
         {
           "label": "Tilføjelse til 25 $",
-          "description": "2.000 credits. Køb, så ofte du har brug for det."
+          "credits": "2.000 kreditter",
+          "description": "2.000 kreditter ($0,0125/cr) - ideel til at afslutte et 5-15 min kapitel eller en kampagnetrailer."
         },
         {
           "label": "Tilføjelse til 100 $",
-          "description": "9.000 credits. Køb, så ofte du har brug for det."
+          "credits": "9.000 kreditter",
+          "description": "9.000 kreditter ($0,0111/cr) — ideel til serier med flere kapitler eller Pre-Vis-pitch-pakker."
         },
         {
           "label": "Tilføjelse til 250 $",
-          "description": "25.000 credits. Køb, så ofte du har brug for det."
+          "credits": "25.000 kreditter",
+          "description": "25.000 kreditter ($0,0100/cr) - bygget til $500-$5.000 hybridproduktioner og feature tavler."
         }
       ],
+      "subscriberNote": "Kræver et aktivt månedligt medlemskab (hobbyist, begynder, pro eller studie) for at købe og beholde Continuity Vault-lagerplads.",
       "creditsUnit": "medvirkende"
     },
     "calculator": {
@@ -2428,13 +2439,13 @@
       "minSuffix": "min"
     },
     "tierGrid": {
-      "productionTestFlight": "Produktionstestflyvning",
+      "productionTestFlight": "30-dages studietestflyvning",
       "getStarted": "Kom i gang",
       "startTestFlight": "Start testflyvning",
       "loading": "Indlæser...",
       "mostPopular": "Mest populære",
       "creditsPerMonth": "Kreditter/md.",
-      "storage": "Opbevaring",
+      "storage": "Kontinuitetshvælving",
       "perMonth": "/month"
     },
     "trust": {
@@ -2444,13 +2455,13 @@
     },
     "plans": {
       "explorer": {
-        "name": "Explorer — Demo",
-        "description": "Demo – engangskøb for at afprøve en komplet produktion",
+        "name": "Explorer — Start din første film",
+        "description": "Gør din idé om til en struktureret Blueprint, cast dine karakterer, og se en forhåndsvisning af din første stemte scene – abonner derefter og tilføj kreditering, når du er færdig med din film.",
         "features": [
-          "Engangskøb",
+          "Engangskøb (30-dages Studio Test Flight)",
           "750 credits (udløber 90 dage efter køb)",
-          "5 GB lagerplads (30 dage)",
-          "Fuld adgang til platformen",
+          "5 GB prøvelagerplads (30 dage – abonner for at beholde vault)",
+          "Fuld studieadgang + produktionsscripteksport (PDF, FDX, Fountain)",
           "MP4-eksport (enhver opløsning)",
           "AI-voiceover (70+ sprog)"
         ]
@@ -2458,51 +2469,62 @@
       "subscriptions": [
         {
           "id": "starter",
-          "name": "Starter — Sandbox",
-          "description": "Sandbox – til at afprøve idéer før et rigtigt show",
+          "name": "Hobbyist - Fortæller & Vault",
+          "description": "Historiefortællere og kreative visionærer – udtryk din vision uden at kræve tekniske filmfærdigheder, og hold din Continuity Vault aktiv mellem optagelserne",
           "features": [
-            "Fuld adgang til platformen",
-            "4.500 credits/måned inkluderet",
+            "Active Studio-medlemskab og fastholdelse af kontinuitetsboks",
+            "1.500 kreditter/måned inkluderet",
             "Ubrugte månedlige kreditter udløber ved periodens afslutning.",
-            "25 GB aktiv lagring",
-            "MP4-eksport (enhver opløsning)",
-            "AI-voiceover (70+ sprog)",
-            "E-mail-support"
+            "10 GB Active Continuity Vault (beholder rollebesætning, garderobeskabe og sæt)",
+            "Låser op for 12-måneders abonnent-tillægskreditpakker",
+            "Ideel til personlige visioner, familiehistorier og Pre-Vis-animationer",
+            "Preview og eksport af produktionsscript (PDF, FDX, Fountain)",
+            "MP4 eksport & AI voiceover (70+ sprog)"
           ]
         },
         {
           "id": "pro",
-          "name": "Professionel YouTuber",
-          "description": "YouTuber – tilbagevendende episoder og kanalvideoer",
+          "name": "Starter — Kapitel & Pre-Vis",
+          "description": "The Publish Chapter Strategy - for 5-15 min episodiske kapiteludgivelser og traditionelle filmskabere, der bygger produktionsfinansieringspakker",
           "features": [
-            "Alt i Starter samt:",
-            "15.000 credits/måned inkluderet",
+            "Alt i Hobbyist, plus:",
+            "4.500 kreditter/måned inkluderet (3x Hobbyist-beregning)",
             "Ubrugte månedlige kreditter udløber ved periodens afslutning.",
-            "100 GB aktiv lagring",
-            "Adgang til Veo 3.1-kvalitet (4K)",
-            "Motor til sikring af karakterkonsistens",
-            "Stemmekloning",
-            "SFAIBYOK-begrebet (Bring Your Own Key)",
-            "3 holdpladser",
-            "Prioriteret support"
+            "25 GB Active Continuity Vault for karakter- og indstillingskontinuitet",
+            "Bygget til 5-15 minutters kapiteludgivelser og Pre-Vis-finansieringspakker",
+            "Upload live-action-scener og kombiner med AI-klip i Mixer",
+            "1 tilpasset stemmeklon & 70+ sprog dubbing",
+            "E-mail support"
           ]
         },
         {
           "id": "studio",
-          "name": "Studie — Uafhængig filmskaber",
-          "description": "Indie-filmskaber — uafhængige film og serier",
+          "name": "Pro — Series & Hybrid",
+          "description": "Monetized Series & Hybrid Filmmaker — til sociale kanaler med tilbagevendende karakterer og erfarne filmskabere, der blander live-action med 4K AI-produktion",
           "features": [
-            "Alt i Pro samt:",
-            "75.000 credits/måned inkluderet",
+            "Alt i Starter, plus:",
+            "15.000 kreditter/måned inkluderet",
             "Ubrugte månedlige kreditter udløber ved periodens afslutning.",
-            "500 GB aktiv lagring",
-            "Veo 3.1 4K-prioritetskø",
-            "Ubegrænset karakterkonsistens",
-            "Eksport af white-label-produkter",
-            "API-adgang",
-            "10 pladser til teamet",
-            "Dedikeret kundeansvarlig",
-            "Enterprise-SLA kan fås på forespørgsel"
+            "100 GB Active Continuity Vault + Character Consistency Engine",
+            "Veo 3.1 Quality (4K) adgang & hybrid live-action + AI workflow",
+            "5 brugerdefinerede stemmekloner til tilbagevendende serier",
+            "BYOK (Bring Your Own Key) til direkte udbyderfakturering",
+            "3 holdpladser & Priority support"
+          ]
+        },
+        {
+          "id": "studio",
+          "name": "Studie — Produktionshus",
+          "description": "Production House & Feature Slate - en $500-$5.000 fuldproduktionspipeline for erfarne filmskabere, bureauer og multiseriestudier",
+          "features": [
+            "Alt i Pro, plus:",
+            "75.000 kreditter/måned inkluderet (laveste sats pr. kredit)",
+            "Ubrugte månedlige kreditter udløber ved periodens udgang",
+            "500 GB Active Continuity Vault + ubegrænset tegnkonsistens",
+            "Veo 3.1 4K Priority Queue & 25 brugerdefinerede stemmekloner",
+            "White-label Screening Room & eksport + API & BYOK adgang",
+            "10 holdpladser & Dedikeret kontoansvarlig",
+            "Enterprise SLA tilgængelig på anmodning"
           ]
         }
       ]
