@@ -90,6 +90,17 @@ function formatSmpteTimecode(secs: number, fps = 24): string {
   return `${mm.toString().padStart(2, '0')}:${ss.toString().padStart(2, '0')}:${ff.toString().padStart(2, '0')}`
 }
 
+const PLAYER_WIDTH_MIN = 320
+const PLAYER_WIDTH_MAX = 1100
+const PLAYER_WIDTH_DEFAULT = 480
+const PLAYER_WIDTH_STORAGE_KEY = 'sceneflow-mixer-player-width-px'
+const PLAYER_SIZE_PRESETS = [
+  { label: 'S', width: 380, title: 'Small 16:9 player (380×214)' },
+  { label: 'M', width: 480, title: 'Medium 16:9 player (480×270 — Default)' },
+  { label: 'L', width: 640, title: 'Large 16:9 player (640×360)' },
+  { label: 'XL', width: 860, title: 'Extra-large 16:9 player (860×484)' },
+] as const
+
 function animaticKeyframeUrl(segment: SceneSegment): string | null {
   const ext = segment as SceneSegment & { keyframeUrl?: string | null; thumbnailUrl?: string | null }
   const u =
@@ -232,6 +243,62 @@ export function ScenePreviewPlayer({
   const [currentSegmentIndex, setCurrentSegmentIndex] = useState(0)
   const [isVideoFrozen, setIsVideoFrozen] = useState(false)
   const [isFullscreen, setIsFullscreen] = useState(false)
+  const [playerWidthPx, setPlayerWidthPx] = useState<number>(PLAYER_WIDTH_DEFAULT)
+  const [isResizingPlayer, setIsResizingPlayer] = useState(false)
+
+  useEffect(() => {
+    try {
+      const saved = window.localStorage.getItem(PLAYER_WIDTH_STORAGE_KEY)
+      if (saved) {
+        const parsed = Number(saved)
+        if (Number.isFinite(parsed) && parsed >= PLAYER_WIDTH_MIN && parsed <= PLAYER_WIDTH_MAX) {
+          setPlayerWidthPx(Math.round(parsed))
+        }
+      }
+    } catch {
+      // Ignore localStorage access errors
+    }
+  }, [])
+
+  const updatePlayerWidth = useCallback((nextWidth: number) => {
+    const clamped = Math.max(PLAYER_WIDTH_MIN, Math.min(PLAYER_WIDTH_MAX, Math.round(nextWidth)))
+    setPlayerWidthPx(clamped)
+    try {
+      window.localStorage.setItem(PLAYER_WIDTH_STORAGE_KEY, String(clamped))
+    } catch {
+      // Ignore localStorage write errors
+    }
+  }, [])
+
+  const handleResizeDragStart = useCallback(
+    (e: React.MouseEvent) => {
+      e.preventDefault()
+      e.stopPropagation()
+      const startX = e.clientX
+      const startY = e.clientY
+      const startWidth = containerRef.current?.getBoundingClientRect().width ?? playerWidthPx
+      setIsResizingPlayer(true)
+
+      const handleMouseMove = (moveEvent: MouseEvent) => {
+        // Since container is centered (mx-auto), horizontal drag from right edge scales 2x,
+        // or use max of deltaX and deltaY * (16/9) for natural diagonal corner dragging
+        const deltaX = (moveEvent.clientX - startX) * 1.5
+        const deltaY = (moveEvent.clientY - startY) * (16 / 9)
+        const delta = Math.abs(deltaX) >= Math.abs(deltaY) ? deltaX : deltaY
+        updatePlayerWidth(startWidth + delta)
+      }
+
+      const handleMouseUp = () => {
+        setIsResizingPlayer(false)
+        document.removeEventListener('mousemove', handleMouseMove)
+        document.removeEventListener('mouseup', handleMouseUp)
+      }
+
+      document.addEventListener('mousemove', handleMouseMove)
+      document.addEventListener('mouseup', handleMouseUp)
+    },
+    [playerWidthPx, updatePlayerWidth]
+  )
   const onPlaybackCompleteRef = useRef(onPlaybackComplete)
   onPlaybackCompleteRef.current = onPlaybackComplete
   const isLoopingRef = useRef(isLooping)
@@ -1149,32 +1216,54 @@ export function ScenePreviewPlayer({
     loadedVideoUrlRef.current = null // Force reload
   }
   
-  // Toggle fullscreen mode
+  // Toggle fullscreen mode — supports both native browser Fullscreen API and in-workflow fullscreen overlay
+  // so clicking Fullscreen inside an already-fullscreen workflow never exits the workflow fullscreen.
   const toggleFullscreen = useCallback(async () => {
     if (!containerRef.current) return
-    
-    try {
+
+    if (!isFullscreen) {
+      setIsFullscreen(true)
       if (!document.fullscreenElement) {
-        await containerRef.current.requestFullscreen()
-        setIsFullscreen(true)
-      } else {
-        await document.exitFullscreen()
-        setIsFullscreen(false)
+        try {
+          await containerRef.current.requestFullscreen()
+        } catch {
+          // Fallback to fixed inset-0 overlay fullscreen already enabled via isFullscreen state
+        }
       }
-    } catch (err) {
-      console.warn('Fullscreen error:', err)
+    } else {
+      setIsFullscreen(false)
+      if (document.fullscreenElement === containerRef.current) {
+        try {
+          await document.exitFullscreen()
+        } catch {
+          // Ignore exitFullscreen error
+        }
+      }
     }
-  }, [])
-  
-  // Listen for fullscreen changes (e.g., user presses Esc)
+  }, [isFullscreen])
+
+  // Listen for browser fullscreen changes & Escape key when in overlay fullscreen
   useEffect(() => {
     const handleFullscreenChange = () => {
-      setIsFullscreen(!!document.fullscreenElement)
+      if (document.fullscreenElement === containerRef.current) {
+        setIsFullscreen(true)
+      } else if (!document.fullscreenElement) {
+        setIsFullscreen(false)
+      }
     }
-    
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && isFullscreen) {
+        setIsFullscreen(false)
+      }
+    }
+
     document.addEventListener('fullscreenchange', handleFullscreenChange)
-    return () => document.removeEventListener('fullscreenchange', handleFullscreenChange)
-  }, [])
+    window.addEventListener('keydown', handleKeyDown)
+    return () => {
+      document.removeEventListener('fullscreenchange', handleFullscreenChange)
+      window.removeEventListener('keydown', handleKeyDown)
+    }
+  }, [isFullscreen])
   
   const shotJoinVisual = (() => {
     if (playbackKind === 'image-sequence') return null
@@ -1433,17 +1522,25 @@ export function ScenePreviewPlayer({
         } else if (e.key === 'g' || e.key === 'G') {
           e.preventDefault()
           setShowSafeGuides((prev) => !prev)
+        } else if (e.key === 'f' || e.key === 'F') {
+          e.preventDefault()
+          void toggleFullscreen()
         }
       }}
+      style={
+        !fillScreen && !isFullscreen
+          ? { maxWidth: `${playerWidthPx}px`, width: '100%' }
+          : undefined
+      }
       className={`bg-zinc-950 overflow-hidden outline-none focus-visible:ring-1 focus-visible:ring-cyan-500/40 ${
         fillScreen
           ? 'flex h-full w-full flex-col rounded-none border-0'
           : isFullscreen
-            ? 'flex flex-col w-full h-full rounded-lg border border-zinc-800/90 shadow-xl'
-            : 'w-full max-w-[420px] sm:max-w-[464px] xl:max-w-[512px] mx-auto rounded-lg border border-zinc-800/90 shadow-xl'
+            ? 'fixed inset-0 z-[100] flex flex-col w-screen h-screen bg-black border-0 rounded-none shadow-2xl'
+            : 'w-full mx-auto rounded-lg border border-zinc-800/90 shadow-xl transition-[max-width] duration-75'
       }`}
     >
-      {/* Video Display Area — true 16:9 (aspect-video) sized via container max-width so Shot Sequence & Stitch Strip fit in workflow fullscreen; expands on Fullscreen */}
+      {/* Video Display Area — true 16:9 (aspect-video) sized via user-adjustable playerWidthPx; expands on Fullscreen */}
       <div className={`relative bg-black flex items-center justify-center overflow-hidden ${
         fillScreen || isFullscreen
           ? 'min-h-0 flex-1 w-full'
@@ -1590,26 +1687,56 @@ export function ScenePreviewPlayer({
               </Badge>
             )}
           </div>
-          <div className="hidden sm:flex items-center gap-1.5 pointer-events-auto">
+          <div className="flex items-center gap-1.5 pointer-events-auto">
+            {isResizingPlayer && (
+              <Badge
+                variant="outline"
+                className="bg-cyan-950/90 backdrop-blur-md border-cyan-400/60 text-cyan-200 text-[10px] font-mono px-2 py-0.5"
+              >
+                {playerWidthPx}×{Math.round((playerWidthPx * 9) / 16)} (16:9)
+              </Badge>
+            )}
             {isLooping && (
-              <Badge variant="outline" className="bg-emerald-950/80 backdrop-blur-md border-emerald-500/40 text-emerald-300 text-[10px] uppercase tracking-wider px-2 py-0.5">
+              <Badge variant="outline" className="hidden sm:inline-flex bg-emerald-950/80 backdrop-blur-md border-emerald-500/40 text-emerald-300 text-[10px] uppercase tracking-wider px-2 py-0.5">
                 Loop
               </Badge>
             )}
             <Badge
               variant="outline"
-              className="bg-zinc-950/85 backdrop-blur-md border-zinc-700/80 text-zinc-300 text-[10px] font-medium px-2 py-0.5"
+              className="hidden sm:inline-flex bg-zinc-950/85 backdrop-blur-md border-zinc-700/80 text-zinc-300 text-[10px] font-medium px-2 py-0.5"
               title={`Audio Level: ${stereoMeterState.lufsReadout} • Target: ${stereoMeterState.technicalTarget}`}
             >
               {stereoMeterState.friendlyLabel}
             </Badge>
             <Badge
               variant="outline"
-              className="bg-zinc-950/80 backdrop-blur-md border-zinc-800 text-zinc-400 text-[10px] font-medium px-2 py-0.5"
+              className="hidden md:inline-flex bg-zinc-950/80 backdrop-blur-md border-zinc-800 text-zinc-400 text-[10px] font-medium px-2 py-0.5"
               title="Standard HD preview • 24 FPS cinematic frame rate • Rec.709 color profile"
             >
               Standard HD
             </Badge>
+            {/* Top-Right Fullscreen Button — always visible on the video frame */}
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation()
+                void toggleFullscreen()
+              }}
+              title={isFullscreen ? 'Exit Fullscreen [F or Esc]' : 'Fullscreen video player [F]'}
+              className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-zinc-950/90 hover:bg-cyan-500/25 border border-zinc-700 hover:border-cyan-400/60 text-zinc-200 hover:text-white text-[10px] font-medium transition-colors shadow-sm"
+            >
+              {isFullscreen ? (
+                <>
+                  <Minimize2 className="w-3.5 h-3.5 text-cyan-300" />
+                  <span>Exit</span>
+                </>
+              ) : (
+                <>
+                  <Maximize2 className="w-3.5 h-3.5 text-cyan-300" />
+                  <span className="hidden sm:inline">Fullscreen</span>
+                </>
+              )}
+            </button>
           </div>
         </div>
         )}
@@ -1814,182 +1941,273 @@ export function ScenePreviewPlayer({
             )}
           </div>
         </button>
+
+        {/* Bottom-Right Corner Drag Handle to Resize 16:9 Player Window */}
+        {!fillScreen && !isFullscreen && (
+          <div
+            onMouseDown={handleResizeDragStart}
+            onDoubleClick={(e) => {
+              e.stopPropagation()
+              updatePlayerWidth(PLAYER_WIDTH_DEFAULT)
+            }}
+            title="Drag corner to resize 16:9 video window • Double-click to reset to default size"
+            className="absolute bottom-1.5 right-1.5 z-30 w-6 h-6 rounded bg-zinc-950/85 hover:bg-cyan-500/25 border border-zinc-700/90 hover:border-cyan-400/60 flex items-center justify-center cursor-nwse-resize text-zinc-400 hover:text-cyan-200 transition-colors shadow-md"
+          >
+            <svg className="w-3.5 h-3.5" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.5">
+              <path d="M10 3L3 10M10 6.5L6.5 10M10 10L10 10.01" strokeLinecap="round" />
+            </svg>
+          </div>
+        )}
       </div>
       
-      {/* Controls Bar — hidden in parent fullscreen so only the hover play button remains */}
+      {/* Controls Bar — 2-row compact layout so Scrubber, Window Size Controls, and Fullscreen are always visible at any player size */}
       {!fillScreen && (
-      <div className="px-3 py-1.5 bg-zinc-950 border-t border-zinc-800/90 flex items-center gap-2 sm:gap-2.5">
-        {/* Skip Prev Shot */}
-        <button
-          onClick={() => skipToBeat('prev')}
-          disabled={activeSegmentIndex === 0}
-          title="Previous shot"
-          className="p-1.5 rounded-md hover:bg-zinc-800 text-zinc-400 hover:text-white transition-colors disabled:opacity-30"
-        >
-          <SkipBack className="w-3.5 h-3.5" />
-        </button>
-
-        {/* Fine Step Back (-0.25s) */}
-        <button
-          onClick={() => stepBySeconds(-0.25)}
-          disabled={currentTime <= 0}
-          title="Step back 6 frames (-0.25s) [←]"
-          className="hidden sm:inline-flex p-1.5 rounded-md hover:bg-zinc-800 text-zinc-400 hover:text-white transition-colors disabled:opacity-30"
-        >
-          <ChevronLeft className="w-3.5 h-3.5" />
-        </button>
-        
-        {/* Play/Pause */}
-        <button
-          onClick={handlePlayPause}
-          title={isPlaying ? 'Pause [Space]' : 'Play [Space]'}
-          className="p-2 rounded-md bg-cyan-500 hover:bg-cyan-400 text-zinc-950 font-semibold transition-colors shadow-sm"
-        >
-          {isPlaying ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4 ml-0.5" />}
-        </button>
-
-        {/* Fine Step Forward (+0.25s) */}
-        <button
-          onClick={() => stepBySeconds(0.25)}
-          disabled={currentTime >= scrubberTotalDuration}
-          title="Step forward 6 frames (+0.25s) [→]"
-          className="hidden sm:inline-flex p-1.5 rounded-md hover:bg-zinc-800 text-zinc-400 hover:text-white transition-colors disabled:opacity-30"
-        >
-          <ChevronRight className="w-3.5 h-3.5" />
-        </button>
-        
-        {/* Skip Next Shot */}
-        <button
-          onClick={() => skipToBeat('next')}
-          disabled={activeSegmentIndex === segments.length - 1}
-          title="Next shot"
-          className="p-1.5 rounded-md hover:bg-zinc-800 text-zinc-400 hover:text-white transition-colors disabled:opacity-30"
-        >
-          <SkipForward className="w-3.5 h-3.5" />
-        </button>
-        
-        <span className="text-[11px] text-zinc-300 font-mono tabular-nums min-w-[42px]">
-          {formatTime(currentTime)}
-        </span>
-        
-        {/* Progress Bar with Shot Boundary Markers */}
-        <div 
-          className="flex-1 h-2 bg-zinc-800 rounded-full cursor-pointer relative group"
-          onClick={(e) => {
-            const rect = e.currentTarget.getBoundingClientRect()
-            const percent = ((e.clientX - rect.left) / rect.width) * 100
-            handleSeek(percent)
-          }}
-        >
+      <div className="px-3 py-2 bg-zinc-950 border-t border-zinc-800/90 flex flex-col gap-1.5">
+        {/* Row 1: Full-Width Timeline Scrubber & Timecode */}
+        <div className="flex items-center gap-2">
+          <span className="text-[11px] text-zinc-300 font-mono tabular-nums min-w-[36px]">
+            {formatTime(currentTime)}
+          </span>
+          
+          {/* Progress Bar with Shot Boundary Markers */}
           <div 
-            className="h-full bg-gradient-to-r from-cyan-500 to-indigo-500 rounded-full transition-all"
-            style={{ width: `${progressPercent}%` }}
-          />
-          {shotBoundaryPercents.map((mark) => (
-            <div
-              key={mark.shotNum}
-              className="absolute top-0 bottom-0 w-0.5 bg-zinc-950/90 z-10 pointer-events-none"
-              style={{ left: `${mark.pct}%` }}
-              title={`Shot #${mark.shotNum}`}
+            className="flex-1 h-2 bg-zinc-800 rounded-full cursor-pointer relative group"
+            onClick={(e) => {
+              const rect = e.currentTarget.getBoundingClientRect()
+              const percent = ((e.clientX - rect.left) / rect.width) * 100
+              handleSeek(percent)
+            }}
+          >
+            <div 
+              className="h-full bg-gradient-to-r from-cyan-500 to-indigo-500 rounded-full transition-all"
+              style={{ width: `${progressPercent}%` }}
             />
-          ))}
-          <div 
-            className="absolute top-1/2 -translate-y-1/2 w-3 h-3 bg-white border border-cyan-500 rounded-full shadow-lg opacity-0 group-hover:opacity-100 transition-opacity z-20"
-            style={{ left: `calc(${progressPercent}% - 6px)` }}
-          />
-        </div>
-        
-        <span className="text-[11px] text-zinc-400 font-mono tabular-nums min-w-[42px] text-right">
-          {formatTime(scrubberTotalDuration)}
-        </span>
-
-        <div className="h-4 w-px bg-zinc-800 mx-0.5 hidden sm:block" />
-
-        {/* Loop Toggle */}
-        <button
-          type="button"
-          onClick={() => setIsLooping((prev) => !prev)}
-          title={isLooping ? 'Disable loop playback [L]' : 'Loop scene playback [L]'}
-          className={`p-1.5 rounded-md transition-colors ${
-            isLooping
-              ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40'
-              : 'hover:bg-zinc-800 text-zinc-400 hover:text-white'
-          }`}
-        >
-          <Repeat className="w-3.5 h-3.5" />
-        </button>
-
-        {/* Safe Guides Toggle */}
-        <button
-          type="button"
-          onClick={() => setShowSafeGuides((prev) => !prev)}
-          title={showSafeGuides ? 'Hide broadcast safe guides [G]' : 'Show broadcast safe guides (Action 90% / Title 80%) [G]'}
-          className={`p-1.5 rounded-md transition-colors ${
-            showSafeGuides
-              ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/40'
-              : 'hover:bg-zinc-800 text-zinc-400 hover:text-white'
-          }`}
-        >
-          <Crosshair className="w-3.5 h-3.5" />
-        </button>
-        
-        {/* Mute Button */}
-        <button
-          onClick={onToggleMute}
-          title={isMuted ? 'Unmute monitor [M]' : 'Mute monitor [M]'}
-          className={`p-1.5 rounded-md transition-colors ${
-            isMuted
-              ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40'
-              : 'hover:bg-zinc-800 text-zinc-400 hover:text-white'
-          }`}
-        >
-          {isMuted ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
-        </button>
-
-        {/* Stereo L/R Audio Level Meter */}
-        <div
-          className="hidden md:flex items-center gap-1.5 px-2 py-1 rounded bg-zinc-900/90 border border-zinc-800/80"
-          title={`Audio Level Meter • Live: ${stereoMeterState.lufsReadout} • Target: ${stereoMeterState.technicalTarget}`}
-        >
-          <div className="flex flex-col gap-0.5 w-14">
-            <div className="h-1 w-full bg-zinc-800 rounded-full overflow-hidden">
+            {shotBoundaryPercents.map((mark) => (
               <div
-                className="h-full rounded-full transition-all duration-75"
-                style={{
-                  width: `${stereoMeterState.leftPct}%`,
-                  background:
-                    stereoMeterState.leftPct > 88
-                      ? 'linear-gradient(90deg, #10b981 0%, #f59e0b 75%, #ef4444 100%)'
-                      : 'linear-gradient(90deg, #10b981 0%, #34d399 70%, #f59e0b 100%)',
-                }}
+                key={mark.shotNum}
+                className="absolute top-0 bottom-0 w-0.5 bg-zinc-950/90 z-10 pointer-events-none"
+                style={{ left: `${mark.pct}%` }}
+                title={`Shot #${mark.shotNum}`}
               />
-            </div>
-            <div className="h-1 w-full bg-zinc-800 rounded-full overflow-hidden">
-              <div
-                className="h-full rounded-full transition-all duration-75"
-                style={{
-                  width: `${stereoMeterState.rightPct}%`,
-                  background:
-                    stereoMeterState.rightPct > 88
-                      ? 'linear-gradient(90deg, #10b981 0%, #f59e0b 75%, #ef4444 100%)'
-                      : 'linear-gradient(90deg, #10b981 0%, #34d399 70%, #f59e0b 100%)',
-                }}
-              />
-            </div>
+            ))}
+            <div 
+              className="absolute top-1/2 -translate-y-1/2 w-3 h-3 bg-white border border-cyan-500 rounded-full shadow-lg opacity-0 group-hover:opacity-100 transition-opacity z-20"
+              style={{ left: `calc(${progressPercent}% - 6px)` }}
+            />
           </div>
-          <span className="text-[9px] font-medium text-zinc-300 min-w-[56px] text-right">
-            {stereoMeterState.friendlyLabel}
+          
+          <span className="text-[11px] text-zinc-400 font-mono tabular-nums min-w-[36px] text-right">
+            {formatTime(scrubberTotalDuration)}
           </span>
         </div>
-        
-        {/* Fullscreen Button */}
-        <button
-          onClick={toggleFullscreen}
-          className="p-1.5 rounded-md hover:bg-zinc-800 text-zinc-400 hover:text-white transition-colors"
-          title={isFullscreen ? 'Exit Fullscreen' : 'Enter Fullscreen'}
-        >
-          {isFullscreen ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
-        </button>
+
+        {/* Row 2: Transport Controls (Left) + Audio, Resize & Fullscreen Controls (Right) */}
+        <div className="flex items-center justify-between gap-1.5 flex-wrap">
+          <div className="flex items-center gap-1">
+            {/* Skip Prev Shot */}
+            <button
+              type="button"
+              onClick={() => skipToBeat('prev')}
+              disabled={activeSegmentIndex === 0}
+              title="Previous shot"
+              className="p-1.5 rounded-md hover:bg-zinc-800 text-zinc-400 hover:text-white transition-colors disabled:opacity-30"
+            >
+              <SkipBack className="w-3.5 h-3.5" />
+            </button>
+
+            {/* Fine Step Back (-0.25s) */}
+            <button
+              type="button"
+              onClick={() => stepBySeconds(-0.25)}
+              disabled={currentTime <= 0}
+              title="Step back 6 frames (-0.25s) [←]"
+              className="p-1.5 rounded-md hover:bg-zinc-800 text-zinc-400 hover:text-white transition-colors disabled:opacity-30"
+            >
+              <ChevronLeft className="w-3.5 h-3.5" />
+            </button>
+            
+            {/* Play/Pause */}
+            <button
+              type="button"
+              onClick={handlePlayPause}
+              title={isPlaying ? 'Pause [Space]' : 'Play [Space]'}
+              className="p-1.5 px-2.5 rounded-md bg-cyan-500 hover:bg-cyan-400 text-zinc-950 font-semibold transition-colors shadow-sm"
+            >
+              {isPlaying ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4 ml-0.5" />}
+            </button>
+
+            {/* Fine Step Forward (+0.25s) */}
+            <button
+              type="button"
+              onClick={() => stepBySeconds(0.25)}
+              disabled={currentTime >= scrubberTotalDuration}
+              title="Step forward 6 frames (+0.25s) [→]"
+              className="p-1.5 rounded-md hover:bg-zinc-800 text-zinc-400 hover:text-white transition-colors disabled:opacity-30"
+            >
+              <ChevronRight className="w-3.5 h-3.5" />
+            </button>
+            
+            {/* Skip Next Shot */}
+            <button
+              type="button"
+              onClick={() => skipToBeat('next')}
+              disabled={activeSegmentIndex === segments.length - 1}
+              title="Next shot"
+              className="p-1.5 rounded-md hover:bg-zinc-800 text-zinc-400 hover:text-white transition-colors disabled:opacity-30"
+            >
+              <SkipForward className="w-3.5 h-3.5" />
+            </button>
+          </div>
+
+          <div className="flex items-center gap-1 sm:gap-1.5 ml-auto">
+            {/* Loop Toggle */}
+            <button
+              type="button"
+              onClick={() => setIsLooping((prev) => !prev)}
+              title={isLooping ? 'Disable loop playback [L]' : 'Loop scene playback [L]'}
+              className={`p-1.5 rounded-md transition-colors ${
+                isLooping
+                  ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40'
+                  : 'hover:bg-zinc-800 text-zinc-400 hover:text-white'
+              }`}
+            >
+              <Repeat className="w-3.5 h-3.5" />
+            </button>
+
+            {/* Safe Guides Toggle */}
+            <button
+              type="button"
+              onClick={() => setShowSafeGuides((prev) => !prev)}
+              title={showSafeGuides ? 'Hide safe area guides [G]' : 'Show safe area guides (Action 90% / Title 80%) [G]'}
+              className={`p-1.5 rounded-md transition-colors ${
+                showSafeGuides
+                  ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/40'
+                  : 'hover:bg-zinc-800 text-zinc-400 hover:text-white'
+              }`}
+            >
+              <Crosshair className="w-3.5 h-3.5" />
+            </button>
+            
+            {/* Mute Button */}
+            <button
+              type="button"
+              onClick={onToggleMute}
+              title={isMuted ? 'Unmute audio [M]' : 'Mute audio [M]'}
+              className={`p-1.5 rounded-md transition-colors ${
+                isMuted
+                  ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40'
+                  : 'hover:bg-zinc-800 text-zinc-400 hover:text-white'
+              }`}
+            >
+              {isMuted ? <VolumeX className="w-3.5 h-3.5" /> : <Volume2 className="w-3.5 h-3.5" />}
+            </button>
+
+            {/* Stereo L/R Audio Level Meter */}
+            <div
+              className="hidden sm:flex items-center gap-1.5 px-2 py-1 rounded bg-zinc-900/90 border border-zinc-800/80"
+              title={`Audio Level Meter • Live: ${stereoMeterState.lufsReadout} • Target: ${stereoMeterState.technicalTarget}`}
+            >
+              <div className="flex flex-col gap-0.5 w-10">
+                <div className="h-1 w-full bg-zinc-800 rounded-full overflow-hidden">
+                  <div
+                    className="h-full rounded-full transition-all duration-75"
+                    style={{
+                      width: `${stereoMeterState.leftPct}%`,
+                      background:
+                        stereoMeterState.leftPct > 88
+                          ? 'linear-gradient(90deg, #10b981 0%, #f59e0b 75%, #ef4444 100%)'
+                          : 'linear-gradient(90deg, #10b981 0%, #34d399 70%, #f59e0b 100%)',
+                    }}
+                  />
+                </div>
+                <div className="h-1 w-full bg-zinc-800 rounded-full overflow-hidden">
+                  <div
+                    className="h-full rounded-full transition-all duration-75"
+                    style={{
+                      width: `${stereoMeterState.rightPct}%`,
+                      background:
+                        stereoMeterState.rightPct > 88
+                          ? 'linear-gradient(90deg, #10b981 0%, #f59e0b 75%, #ef4444 100%)'
+                          : 'linear-gradient(90deg, #10b981 0%, #34d399 70%, #f59e0b 100%)',
+                    }}
+                  />
+                </div>
+              </div>
+              <span className="text-[9px] font-medium text-zinc-300">
+                {stereoMeterState.friendlyLabel}
+              </span>
+            </div>
+
+            {/* 16:9 Window Size Control (Presets S / M / L / XL + Stepper) */}
+            {!isFullscreen && (
+              <div
+                className="inline-flex items-center gap-0.5 px-1 py-0.5 rounded-md bg-zinc-900 border border-zinc-800"
+                title="Adjust 16:9 video player window size (or drag the bottom-right corner of the video)"
+              >
+                <button
+                  type="button"
+                  onClick={() => updatePlayerWidth(playerWidthPx - 60)}
+                  disabled={playerWidthPx <= PLAYER_WIDTH_MIN}
+                  title="Make video player window smaller"
+                  className="px-1 py-0.5 rounded text-[10px] font-mono text-zinc-400 hover:text-white hover:bg-zinc-800 disabled:opacity-30"
+                >
+                  −
+                </button>
+                {PLAYER_SIZE_PRESETS.map((preset) => {
+                  const isActivePreset = Math.abs(playerWidthPx - preset.width) < 35
+                  return (
+                    <button
+                      key={preset.label}
+                      type="button"
+                      onClick={() => updatePlayerWidth(preset.width)}
+                      title={preset.title}
+                      className={`px-1.5 py-0.5 rounded text-[9px] font-semibold transition-colors ${
+                        isActivePreset
+                          ? 'bg-cyan-500/25 text-cyan-200 border border-cyan-500/40'
+                          : 'text-zinc-400 hover:text-white hover:bg-zinc-800'
+                      }`}
+                    >
+                      {preset.label}
+                    </button>
+                  )
+                })}
+                <button
+                  type="button"
+                  onClick={() => updatePlayerWidth(playerWidthPx + 60)}
+                  disabled={playerWidthPx >= PLAYER_WIDTH_MAX}
+                  title="Make video player window larger"
+                  className="px-1 py-0.5 rounded text-[10px] font-mono text-zinc-400 hover:text-white hover:bg-zinc-800 disabled:opacity-30"
+                >
+                  +
+                </button>
+              </div>
+            )}
+
+            {/* Fullscreen Button — always visible */}
+            <button
+              type="button"
+              onClick={() => void toggleFullscreen()}
+              className={`inline-flex items-center gap-1 px-2 py-1 rounded-md border text-[10px] font-medium transition-colors shrink-0 ${
+                isFullscreen
+                  ? 'bg-cyan-500/20 border-cyan-400/50 text-cyan-200 hover:bg-cyan-500/30'
+                  : 'bg-zinc-900 hover:bg-zinc-800 border-zinc-700 text-zinc-200 hover:text-white'
+              }`}
+              title={isFullscreen ? 'Exit Fullscreen [F or Esc]' : 'Enter Fullscreen [F]'}
+            >
+              {isFullscreen ? (
+                <>
+                  <Minimize2 className="w-3.5 h-3.5 text-cyan-300" />
+                  <span>Exit</span>
+                </>
+              ) : (
+                <>
+                  <Maximize2 className="w-3.5 h-3.5 text-cyan-300" />
+                  <span>Full</span>
+                </>
+              )}
+            </button>
+          </div>
+        </div>
       </div>
       )}
       
