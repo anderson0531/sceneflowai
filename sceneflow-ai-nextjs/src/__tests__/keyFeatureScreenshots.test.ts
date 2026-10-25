@@ -18,7 +18,11 @@ import {
   PRODUCTION_PLANNER_SCREENSHOT_WEBP,
   PRODUCTION_SCRIPT_SCREENSHOT_WEBP,
   PROMO_TRAILERS_SCREENSHOT_WEBP,
+  SCENE_AUDIO_MUSIC_SCREENSHOT_WEBP,
+  SCENE_CLIPS_WORKBENCH_SCREENSHOT_WEBP,
   SCENE_DIRECTOR_SCREENSHOT_WEBP,
+  SCENE_STILLS_WORKBENCH_SCREENSHOT_WEBP,
+  SCENE_WORKFLOW_SCREENSHOT_WEBP,
   SCREENING_COLLAB_SCREENSHOT_WEBP,
   SCREENING_PLAYER_SCREENSHOT_WEBP,
   SCRIPT_RESONANCE_SCREENSHOT_WEBP,
@@ -106,6 +110,12 @@ describe('key feature screenshots', () => {
     expect(keyFeatureScreenshotSrc(getKeyFeatureScreenshot('directShot')!)).toBe(
       SCENE_DIRECTOR_SCREENSHOT_WEBP
     )
+    expect(getKeyFeatureScreenshot('sceneWorkflow')).toEqual({
+      imageUrl: SCENE_WORKFLOW_SCREENSHOT_WEBP,
+    })
+    expect(keyFeatureScreenshotSrc(getKeyFeatureScreenshot('sceneWorkflow')!)).toBe(
+      SCENE_WORKFLOW_SCREENSHOT_WEBP
+    )
     expect(getKeyFeatureScreenshot('continuity')).toEqual({
       imageUrl: CONTINUITY_LIBRARY_SCREENSHOT_WEBP,
     })
@@ -136,11 +146,23 @@ describe('key feature screenshots', () => {
     expect(keyFeatureScreenshotSrc(getKeyFeatureScreenshot('audioAgent')!)).toBe(
       AUDIO_AGENT_SCREENSHOT_WEBP
     )
+    expect(getKeyFeatureScreenshot('musicScore')).toEqual({
+      imageUrl: SCENE_AUDIO_MUSIC_SCREENSHOT_WEBP,
+    })
+    expect(keyFeatureScreenshotSrc(getKeyFeatureScreenshot('musicScore')!)).toBe(
+      SCENE_AUDIO_MUSIC_SCREENSHOT_WEBP
+    )
     expect(getKeyFeatureScreenshot('stillsAgent')).toEqual({
       imageUrl: STILLS_AGENT_SCREENSHOT_WEBP,
     })
     expect(keyFeatureScreenshotSrc(getKeyFeatureScreenshot('stillsAgent')!)).toBe(
       STILLS_AGENT_SCREENSHOT_WEBP
+    )
+    expect(getKeyFeatureScreenshot('stillsWorkbench')).toEqual({
+      imageUrl: SCENE_STILLS_WORKBENCH_SCREENSHOT_WEBP,
+    })
+    expect(keyFeatureScreenshotSrc(getKeyFeatureScreenshot('stillsWorkbench')!)).toBe(
+      SCENE_STILLS_WORKBENCH_SCREENSHOT_WEBP
     )
     expect(getKeyFeatureScreenshot('animatic')).toEqual({
       imageUrl: PRE_VIS_ANIMATIC_SCREENSHOT_WEBP,
@@ -153,6 +175,12 @@ describe('key feature screenshots', () => {
     })
     expect(keyFeatureScreenshotSrc(getKeyFeatureScreenshot('videoAgent')!)).toBe(
       CLIPS_AGENT_SCREENSHOT_WEBP
+    )
+    expect(getKeyFeatureScreenshot('clipsWorkbench')).toEqual({
+      imageUrl: SCENE_CLIPS_WORKBENCH_SCREENSHOT_WEBP,
+    })
+    expect(keyFeatureScreenshotSrc(getKeyFeatureScreenshot('clipsWorkbench')!)).toBe(
+      SCENE_CLIPS_WORKBENCH_SCREENSHOT_WEBP
     )
     expect(getKeyFeatureScreenshot('mixer')).toEqual({
       imageUrl: PRODUCTION_MIXER_SCREENSHOT_WEBP,
@@ -288,14 +316,18 @@ describe('key feature screenshots', () => {
       BLUEPRINT_RESONANCE_SCREENSHOT_WEBP,
       GO_TO_PRODUCTION_SCREENSHOT_WEBP,
       SCENE_DIRECTOR_SCREENSHOT_WEBP,
+      SCENE_WORKFLOW_SCREENSHOT_WEBP,
       CONTINUITY_LIBRARY_SCREENSHOT_WEBP,
       SCRIPT_RESONANCE_SCREENSHOT_WEBP,
       PRODUCTION_PLANNER_SCREENSHOT_WEBP,
       PRODUCTION_SCRIPT_SCREENSHOT_WEBP,
       AUDIO_AGENT_SCREENSHOT_WEBP,
+      SCENE_AUDIO_MUSIC_SCREENSHOT_WEBP,
       STILLS_AGENT_SCREENSHOT_WEBP,
+      SCENE_STILLS_WORKBENCH_SCREENSHOT_WEBP,
       PRE_VIS_ANIMATIC_SCREENSHOT_WEBP,
       CLIPS_AGENT_SCREENSHOT_WEBP,
+      SCENE_CLIPS_WORKBENCH_SCREENSHOT_WEBP,
       PRODUCTION_MIXER_SCREENSHOT_WEBP,
       STREAMS_MULTILANGUAGE_SCREENSHOT_WEBP,
       PROMO_TRAILERS_SCREENSHOT_WEBP,

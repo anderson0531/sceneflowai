@@ -131,6 +131,10 @@ const SCREENSHOT_FRAMING_PRESETS: Array<{
     preset: { width: 5120, height: 3389, contentWidthFraction: 0.56, anchorY: 0.88 },
   },
   {
+    match: 'scene-workflow.webp',
+    preset: { width: 5120, height: 3389, contentWidthFraction: 0.94, anchorY: -0.92 },
+  },
+  {
     match: 'continuity-library.webp',
     preset: { width: 5120, height: 2805, contentWidthFraction: 0.48, anchorY: 0.85 },
   },
@@ -151,8 +155,16 @@ const SCREENSHOT_FRAMING_PRESETS: Array<{
     preset: { width: 5120, height: 2805, contentWidthFraction: 0.48, anchorY: 0.35 },
   },
   {
+    match: 'scene-audio-music.webp',
+    preset: { width: 5120, height: 3200, contentWidthFraction: 0.94, anchorY: -0.92 },
+  },
+  {
     match: 'stills-agent.webp',
     preset: { width: 5120, height: 2805, contentWidthFraction: 0.48, anchorY: 0.25 },
+  },
+  {
+    match: 'scene-stills-workbench.webp',
+    preset: { width: 5120, height: 3200, contentWidthFraction: 0.94, anchorY: -0.92 },
   },
   {
     match: 'pre-vis-animatic.webp',
@@ -169,17 +181,21 @@ const SCREENSHOT_FRAMING_PRESETS: Array<{
     preset: { width: 5120, height: 2805, contentWidthFraction: 0.48, anchorY: 0.25 },
   },
   {
+    match: 'scene-clips-workbench.webp',
+    preset: { width: 5120, height: 3200, contentWidthFraction: 0.94, anchorY: -0.92 },
+  },
+  {
     match: 'production-mixer.webp',
-    preset: { width: 5120, height: 4896, contentWidthFraction: 0.92, anchorY: -0.88 },
+    preset: { width: 5120, height: 4896, contentWidthFraction: 0.94, anchorY: -0.92 },
   },
   {
     match: 'streams-multilanguage.webp',
     preset: {
       width: 5120,
-      height: 2902,
-      contentWidthFraction: 0.68,
-      anchorX: 1,
-      anchorY: -1,
+      height: 3400,
+      contentWidthFraction: 0.94,
+      anchorX: 0,
+      anchorY: -0.92,
     },
   },
   {

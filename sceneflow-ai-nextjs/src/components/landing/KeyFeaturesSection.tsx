@@ -70,8 +70,30 @@ type FeaturePane = {
 }
 
 /** Mobile flex order: each row, then the open detail. Desktop resets with lg:order-none. */
-const FEATURE_ROW_ORDER = ['order-1', 'order-3', 'order-5', 'order-7', 'order-9', 'order-11']
-const FEATURE_DETAIL_ORDER = ['order-2', 'order-4', 'order-6', 'order-8', 'order-10', 'order-12']
+const FEATURE_ROW_ORDER = [
+  'order-1',
+  'order-3',
+  'order-5',
+  'order-7',
+  'order-9',
+  'order-11',
+  'order-[13]',
+  'order-[15]',
+  'order-[17]',
+  'order-[19]',
+]
+const FEATURE_DETAIL_ORDER = [
+  'order-2',
+  'order-4',
+  'order-6',
+  'order-8',
+  'order-10',
+  'order-12',
+  'order-[14]',
+  'order-[16]',
+  'order-[18]',
+  'order-[20]',
+]
 const FEATURE_ROW_START = [
   'lg:row-start-1',
   'lg:row-start-2',
@@ -79,6 +101,10 @@ const FEATURE_ROW_START = [
   'lg:row-start-4',
   'lg:row-start-5',
   'lg:row-start-6',
+  'lg:row-start-7',
+  'lg:row-start-8',
+  'lg:row-start-9',
+  'lg:row-start-10',
 ]
 
 const ROOM_GRADIENTS: Record<string, string> = {
@@ -581,7 +607,7 @@ export default function KeyFeaturesSection() {
             })}
             <div
               className={cn(
-                'lg:col-start-2 lg:row-span-6 lg:row-start-1 lg:order-none',
+                'lg:col-start-2 lg:row-span-10 lg:row-start-1 lg:order-none',
                 FEATURE_DETAIL_ORDER[visibleFeatures.findIndex((feature) => feature.icon === selected.icon)]
               )}
             >

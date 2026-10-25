@@ -267,120 +267,140 @@
         "features": [
           {
             "icon": "newSeries",
-            "title": "Uchungechunge Olusha",
-            "description": "Faka uchungechunge lwakho noma umqondo wesiteshi ngolimi olulula. Ukuthuthukiswa kwe-Interactive AI kucija isisekelo sakho futhi kukhiqize isizini eyisisekelo yeziqephu eziningi—eziphelele ngama-arcs wesakhiwo esikhulu kanye nokuhlukaniswa kweziqephu.",
-            "screenshot": "Dala Uchungechunge Olusha — inhloso, Cacisa futhi Uqinisekise, Khiqiza Uchungechunge",
+            "title": "New Series",
+            "description": "Pitch your series, anthology, or episodic channel concept in plain language. Interactive AI refinement sharpens your premise, target audience, and visual tone before generating a complete multi-episode season baseline—complete with overarching plot arcs, recurring character hooks, and episode-by-episode breakdowns.",
+            "screenshot": "Create New Series — intent, Clarify and Confirm, Generate Series",
             "learnMore": {
               "items": [
                 {
-                  "title": "Inhloso yakho",
-                  "description": "Faka isisekelo, ifomethi, izethameli eziqondiwe, nesitayela sobuciko obubonakalayo ngolimi olulula."
+                  "title": "Plain-language series pitch",
+                  "description": "Pitch the premise, episode format, target demographic, and visual art style in plain language."
                 },
                 {
-                  "title": "Ukucwenga okusebenzisanayo",
-                  "description": "Cacisa futhi Qinisekisa kucija i-synopsis yesizini nawe ngaphambi kokuthi kwenziwe noma yini."
+                  "title": "Interactive Clarify & Confirm",
+                  "description": "Clarify and Confirm sharpens the season synopsis, tone, and thematic pillars with you before anything is generated."
                 },
                 {
-                  "title": "Isisekelo sesizini",
-                  "description": "I-Generate Series yakha i-arc yesizini yeziqephu ezinhlanu ongayikhulisa noma nini."
+                  "title": "Multi-episode season baseline",
+                  "description": "Generate Series builds a structured five-episode season arc with individual synopses and story hooks that you can expand anytime."
+                },
+                {
+                  "title": "World & genre calibration",
+                  "description": "Lock visual aesthetics, era settings, and recurring narrative motifs up front so every episode shares the same creative DNA."
                 }
               ]
             }
           },
           {
             "icon": "seriesReview",
-            "title": "Isizini Bible & Ukuqhubeka",
-            "description": "Funda noma ulalele ukubuka konke kwesizini elandiwe nesilayidi sesiqephu. I-SceneFlow ikhiya uchungechunge lwendaba yakho, amaphrofayli abalingisi, izindawo, nezixhaso zesiginesha zibe i-Reference Library eyabelwe sonke isiqephu esiyifa.",
-            "screenshot": "Uhlu Oluphelele, Iziqephu, Ukungaguquguquki, Ukuqhubeka — Abalingisi, Izindawo, Izinto Zokusetshenziswa, Izimo",
+            "title": "Season Bible & Continuity",
+            "description": "Read or listen to the narrated season overview and episode slate. SceneFlow locks your story threads, cast profiles, recurring locations, and signature props into a shared Reference Library that every episode inherits automatically—eliminating continuity drift across multi-part storytelling.",
+            "screenshot": "Overview Listen, Episodes Listen, Consistency, Continuity — Cast, Locations, Props, Settings",
             "learnMore": {
               "items": [
                 {
-                  "title": "Funda noma ulalele",
-                  "description": "Hlola uhlolojikelele lwesizini kanye nawo wonke ama-synopsis wesiqephu ngokulandisa okwakhelwe ngaphakathi komsindo."
+                  "title": "Narrated season & episode audit",
+                  "description": "Audit the overarching season overview and every individual episode synopsis with built-in studio audio narration."
                 },
                 {
-                  "title": "Ukungaguquguquki kwendaba",
-                  "description": "Ubuhle, imicimbi ebalulekile yesakhiwo, nemicu yokulandisa kuhlala kukhiyiwe isizini yonke."
+                  "title": "Cross-episode story consistency",
+                  "description": "Visual aesthetics, canonical plot events, and character relationship threads stay locked across the entire season."
                 },
                 {
-                  "title": "Ukuqhubeka okwabiwe",
-                  "description": "Abalingisi, izindawo, ama-prop, nezilungiselelo kungena ngokuzenzakalelayo kuso sonke isiqephu osikhiqizayo."
+                  "title": "Shared Reference Library inheritance",
+                  "description": "Cast portraits, voice profiles, wardrobes, locations, and signature props carry automatically into every episode you produce."
+                },
+                {
+                  "title": "Centralized canon management",
+                  "description": "Update a character look, location plate, or prop once in the Series Bible to propagate the change to future episodes."
                 }
               ]
             }
           },
           {
             "icon": "seriesResonance",
-            "title": "Igama elichaza ukuhambisana nemizwa yezithameli",
-            "description": "Hlola i-arc yesizini yakho usebenzisa i-demographic oyiqondisile ngaphambi kokubhala iskripthi esisodwa. Buyekeza izikolo ze-resonance zesiqephu ngesiqephu futhi usebenzise ukuthuthukiswa kwezindaba ezisekelwa idatha ngokuchofoza okukodwa—kuphela uma uvumelana nenothi.",
-            "screenshot": "Ukuhlaziywa kwe-Audience Resonance, kulandelwe imininingwane engasetshenziswa (Actionable Insights), engakasetshenziswa.",
+            "title": "Audience Resonance",
+            "description": "Test your season arc against your target demographic before writing a single script. Review episode-by-episode resonance scores, binge-retention curves, and structural critiques, then apply data-backed story improvements with one click—only when you agree with the note.",
+            "screenshot": "Audience Resonance analysis, then Actionable Insights, unapplied",
             "learnMore": {
               "items": [
                 {
-                  "title": "Amaphuzu ezibalo zabantu",
-                  "description": "Izikolo nokuhlaziywa kwesakhiwo kuveza ukuthi isizini yakho ifika kanjani nezithameli ozihlosile."
+                  "title": "Demographic & retention scoring",
+                  "description": "Multi-axis scores and structural analysis reveal how your season arc and episode cliffhangers land with your target audience."
                 },
                 {
-                  "title": "Ilungelo lomqondisi",
-                  "description": "I-Actionable Insights ibuyekeza uchungechunge lwakho kuphela uma ukhetha ukulisebenzisa."
+                  "title": "Episode-by-episode diagnostics",
+                  "description": "Spot mid-season pacing dips, character underutilization, or tonal drift across the full episode slate before scripting."
+                },
+                {
+                  "title": "Director's prerogative",
+                  "description": "Actionable Insights update your series bible and episode outlines only when you explicitly choose to apply them."
                 }
               ]
             }
           },
           {
             "icon": "seriesDirector",
-            "title": "Umqondisi Wochungechunge",
-            "description": "Hlela kabusha isizini yonke ngezwi noma ngombhalo. Shintsha ithoni, phakamisa izikhonkwane, noma ulungise kabusha i-arc yomlingiswa kuzo zonke iziqephu ngesikhathi esisodwa ngenkathi ugcina lonke umugqa wendaba unjalo.",
-            "screenshot": "Umqondisi Wochungechunge — ukuqondisa, ukugxila, ukwamukela",
+            "title": "The Series Director",
+            "description": "Reshape the entire season by voice or text. Shift the dramatic tone, raise the stakes, introduce a new antagonist, or rework a character arc across all episodes at once while keeping the rest of your storyline and continuity bible intact.",
+            "screenshot": "Series Director — direction, focus, accept",
             "learnMore": {
               "items": [
                 {
-                  "title": "Isiqondiso solimi olulula",
-                  "description": "Khuluma noma thayipha inothi lakho bese ukhomba isakhiwo, abalingisi, ama-arcs esiqephu, ithoni, noma isilungiselelo."
+                  "title": "Plain-language season direction",
+                  "description": "Speak or type your creative note and target overarching plot, characters, episode arcs, tone, or world setting."
                 },
                 {
-                  "title": "Izibuyekezo zokuhlinzwa",
-                  "description": "Akukho okushintshayo uze wamukele isibuyekezo, futhi imicu yezindaba ezingahlobene zihlala zingathintwa."
+                  "title": "Surgical multi-episode updates",
+                  "description": "Nothing changes until you accept the previewed revision, and unrelated story threads stay completely untouched."
                 },
                 {
-                  "title": "Izincomo eziqondisiwe",
-                  "description": "Sebenzisa ukuthuthukiswa kwendaba ephakanyisiwe ye-AI noma uqondise ngokwakho konke ukukhetha kobuciko."
+                  "title": "Guided AI recommendations",
+                  "description": "Apply one-click story improvements surfaced by Audience Resonance or steer every creative choice yourself."
                 }
               ]
             }
           },
           {
             "icon": "directEpisode",
-            "title": "Ukuqondisa Kwezinga Lesiqephu",
-            "description": "Sondeza kunoma isiphi isiqephu ngasinye ukuze ulungise kabusha isiqephu saso, ukunyakazisa, noma ukusondeza yedwa—ngaphandle kokuphazamisa sonke isileyiti sakho sesizini.",
-            "screenshot": "Iziqephu — Qondisa lesi siqephu, ezinye iziqephu zihlala zinjengoba zinjalo",
+            "title": "Episode-Level Direction",
+            "description": "Zoom into any individual episode to rework its plot outline, act structure, pacing, or cold-open hook in isolation—without destabilizing neighboring episodes or mutating the rest of your season slate.",
+            "screenshot": "Episodes — Direct this episode, other episodes unchanged",
             "learnMore": {
               "items": [
                 {
-                  "title": "Izodwa ibhala kabusha",
-                  "description": "Izinguquko eziqondile kuhlaka lwesiqephu esisodwa namabhithi ngaphandle kokushintsha iziqephu ezingomakhelwane."
+                  "title": "Isolated episode rewrites",
+                  "description": "Direct changes to a single episode's synopsis, act beats, and character focus without altering neighboring episodes."
                 },
                 {
-                  "title": "Ubuqotho besizini",
-                  "description": "Ibhayibheli lesizini enkulu kanye nesilayidi sesiqephu esisele kuhlala kukhiyiwe."
+                  "title": "Locked season integrity",
+                  "description": "The overarching season bible, shared cast continuity, and remaining episode slate stay locked while you iterate."
+                },
+                {
+                  "title": "Pre-launch beat polishing",
+                  "description": "Refine individual episode hooks and cliffhangers until the episode is ready to launch into the Blueprint Room."
                 }
               ]
             }
           },
           {
             "icon": "startEpisode",
-            "title": "Ukwethulwa kwesiqephu sokuchofoza okukodwa",
-            "description": "Uma uhlaka lwesiqephu lufika kuqophelo, luqalise ngqo ku-Blueprint Room nama-synopsis, amabhithi ezindaba, abalingisi, nomhlaba osevele uxhumeke kuwo.",
-            "screenshot": "Qala iphrojekthi — uhlaka kanye nabalingisi sebekhona esiqeshini",
+            "title": "One-Click Episode Launch",
+            "description": "When an episode's outline hits the mark, launch it straight into the Blueprint Room with a single click—bringing its synopsis, narrative beats, recurring cast, voice profiles, locations, and visual style automatically wired in.",
+            "screenshot": "Start Project — outline and cast already on the episode",
             "learnMore": {
               "items": [
                 {
-                  "title": "I-handoff esheshayo",
-                  "description": "Yethula noma yisiphi isiqephu ngqo ku-Blueprint Room ngokuchofoza okukodwa."
+                  "title": "Instant Blueprint handoff",
+                  "description": "Launch any approved episode directly into the Blueprint Room with a single click to begin detailed beat and script work."
                 },
                 {
-                  "title": "I-DNA efakwe ngaphambili",
-                  "description": "Uhlaka lwesiqephu, amazwibela, amabhithi ezindaba, abalingisi, nezindawo zihamba ngokuzenzakalelayo."
+                  "title": "Pre-wired creative DNA",
+                  "description": "The episode outline, synopsis, story beats, cast profiles, wardrobes, and locations travel automatically with zero re-entry."
+                },
+                {
+                  "title": "Parallel episode production",
+                  "description": "Spin up multiple episodes from the same season slate as independent projects that share the same canonical series assets."
                 }
               ]
             }
@@ -395,120 +415,136 @@
         "features": [
           {
             "icon": "startBlueprint",
-            "title": "Qala i-Blueprint",
-            "description": "Letha isiqephu esisuka kusilayidi sakho sochungechunge esinohlaka lwaso futhi silayishwe kusengaphambili, noma veza umqondo wefilimu omusha sha kusukela ekuqaleni futhi uvumele i-AI ihlele ukwelashwa okuyisisekelo.",
-            "screenshot": "Isiqephu sochungechunge sesiyaziwa, noma Qala Iphrojekthi Yakho — inhloso, Qinisekisa futhi Uthuthukise nge-AI, Khiqiza i-Blueprint",
+            "title": "Start the Blueprint",
+            "description": "Bring in an episode from your series slate with its outline, cast, and world pre-loaded, or pitch a brand-new standalone film concept from scratch and let AI validate, enhance, and structure the foundational treatment.",
+            "screenshot": "Series episode already known, or Start Your Project — intent, Validate & Enhance with AI, Generate Blueprint",
             "learnMore": {
               "items": [
                 {
-                  "title": "Kusuka ku-Series Room",
-                  "description": "Iziqephu zochungechunge zifika nohlaka lwazo, ama-synopsis, amabhithi, nabalingisi sekuvele kunamathiselwe."
+                  "title": "Seamless from Series Room",
+                  "description": "Series episodes arrive with their outline, synopsis, story beats, recurring cast, and locations already attached."
                 },
                 {
-                  "title": "Iphrojekthi ezimele",
-                  "description": "Faka umqondo omusha wefilimu, uwulungise ngokuqinisekiswa kwe-AI, futhi ukhiqize ukwelashwa okuphelele."
+                  "title": "Standalone film or short",
+                  "description": "Pitch a new film concept in plain language, refine it with AI validation, and generate a complete film treatment."
+                },
+                {
+                  "title": "Narrated treatment overview",
+                  "description": "Read or listen to the narrated logline, synopsis, and creative reasoning to verify the story foundation immediately."
                 }
               ]
             }
           },
           {
             "icon": "treatment",
-            "title": "I-Beat Sheet",
-            "description": "Yakha umgogodla wefilimu yakho. Funda noma lalela ishidi lakho lebhithi elilandisayo futhi ulungise ukuhambahamba lapha—zonke izigqi ozikhiyelayo ku-Blueprint Room zishayela isahluko ku-Production Stage.",
-            "screenshot": "Ithebhu ethi Beats, enenketho ethi Lalela",
+            "title": "The Beat Sheet",
+            "description": "Structure the dramatic spine of your film before dialogue is written. Read or listen to your narrative beat sheet, reorder acts, and fine-tune scene pacing here—every beat you lock in the Blueprint Room drives a dedicated chapter in the Production Stage.",
+            "screenshot": "Beats tab, with Listen",
             "learnMore": {
               "items": [
                 {
-                  "title": "Umgogodla olandisayo",
-                  "description": "Amabhithi agunyaziwe futhi akhiywa ku-Blueprint Room ngaphambi kokuthi kuqale ukukhiqizwa kombhalo."
+                  "title": "Narrative spine",
+                  "description": "Beats are authored and locked in the Blueprint Room before script generation begins."
                 },
                 {
-                  "title": "Ukuhamba phambili",
-                  "description": "Ukulungiselela ishidi lebhithi lapha kuqinisekisa ukuthi umdlalo-skrini wakha ngesakhiwo esiqinile."
+                  "title": "Pacing & structural discipline",
+                  "description": "Optimizing the beat sheet here ensures the multi-scene screenplay builds with tight dramatic structure and clear turning points."
                 },
                 {
-                  "title": "Imephu ye-beat-to-chapter",
-                  "description": "I-Production Stage iguqula isigqi ngasinye sibe yisahluko."
+                  "title": "Beat-to-chapter mapping",
+                  "description": "Production Stage turns each beat into a chapter."
+                },
+                {
+                  "title": "Narrated beat audition",
+                  "description": "Listen to the beat sheet read aloud to feel the rhythm and momentum of the story before compiling the script."
                 }
               ]
             }
           },
           {
             "icon": "castLocations",
-            "title": "I-Cast & World Design",
-            "description": "Chaza abalingiswa bakho, ikhabethe lakho, nezindawo eziyinhloko ngaphambi kokuthi kukhiqizwe umdlalo-skrini—uqinisekisa ukuthi umbhalo ubhalwe eduze kwabalingisi bakho kanye nezilungiselelo ezivela ekhasini lokuqala.",
-            "screenshot": "Ithebhu yezinhlamvu, bese kuba yindawo yesigameko endabeni",
+            "title": "Cast & World Design",
+            "description": "Define your characters, vocal identities, period wardrobes, and primary locations before the screenplay is generated—ensuring the script is written around your exact cast, blocking environments, and visual atmosphere from page one.",
+            "screenshot": "Characters tab, then Setting on Story",
             "learnMore": {
               "items": [
                 {
-                  "title": "Amaphrofayili abalingiswa",
-                  "description": "Qondisa amaphrofayili akho ngaphambili ukuze inkhulumomphendvulwano nokuvinjwa kufane nomlingiswa ngamunye."
+                  "title": "Rich character profiles",
+                  "description": "Direct your cast profiles, backstories, and physical attributes up front so dialogue and blocking match each character."
                 },
                 {
-                  "title": "Umhlaba nezindawo",
-                  "description": "Misa izilungiselelo eziyinhloko kuthebhu yeNdaba ukuze uqinise indawo yazo zonke izigcawu."
+                  "title": "World, era & locations",
+                  "description": "Establish primary settings, lighting palettes, and cinematic style on the Story tab to anchor every scene's environment."
                 },
                 {
-                  "title": "Ukwenza kabusha umbhalo onguziro",
-                  "description": "Ukukhiya abalingisi nezindawo ngaphambi kokukhiqizwa kombhalo kuqeda ukubhalwa kabusha okubizayo ku-Production Stage."
+                  "title": "Zero script refactoring",
+                  "description": "Locking cast and locations before script generation eliminates costly rewrites and continuity mismatches on the Production Stage."
                 }
               ]
             }
           },
           {
             "icon": "blueprintDirector",
-            "title": "Umqondisi we-Blueprint",
-            "description": "Khuluma noma thayipha amanothi akho endaba ukuze ubuyekeze amabhithi, abalingisi, noma imininingwane yomhlaba. Buka kuqala ukubuyekezwa okunokulinganisela ngakunye—akukho okushintshile ekwelashweni kwakho kuze kube yilapho ugunyaza ukusikwa.",
-            "screenshot": "Umqondisi — ukuqondisa, ukugxila, ukubuka kuqala, ukusebenzisa izinguquko",
+            "title": "The Blueprint Director",
+            "description": "Speak or type your story notes to revise beats, character motivations, or world details without prompt engineering. Preview a balanced revision side-by-side with creative reasoning—nothing changes in your treatment until you approve the cut.",
+            "screenshot": "Blueprint Director — direction, focus, preview, Apply revision",
             "learnMore": {
               "items": [
                 {
-                  "title": "Amanothi ahlosiwe",
-                  "description": "Khuluma noma thayipha isiqondiso sakho futhi ugxilise isibuyekezo kokuthi Beats, Izinhlamvu, noma Indaba."
+                  "title": "Targeted voice or text notes",
+                  "description": "Speak or type your direction and focus the revision surgically on Beats, Characters, or Story."
                 },
                 {
-                  "title": "Ukubuka kuqala kwezinhlangothi",
-                  "description": "Buyekeza isibuyekezo esilinganiselwe ngaphambi kokwenza noma yiziphi izinguquko ku-Blueprint yakho."
+                  "title": "Side-by-side revision preview",
+                  "description": "Review a balanced revision and its underlying story reasoning before committing any changes to your Blueprint."
                 },
                 {
-                  "title": "Ubambe ingidi",
-                  "description": "Akukho lutho ekwelashweni kwakho olushintshayo uze usebenzise isibuyekezo ngokusobala."
+                  "title": "You hold the creative lock",
+                  "description": "Nothing in your treatment, beat sheet, or character roster changes until you explicitly apply the revision."
                 }
               ]
             }
           },
           {
             "icon": "blueprintResonance",
-            "title": "Igama elichaza ukuhambisana nemizwa yezithameli",
-            "description": "Thola impatho yakho uqhathanise nephrofayili yamasiko nezithameli zakho ezihlosiwe. Bamba izikhala zokuhamba kwesakhiwo kusenesikhathi futhi usebenzise izincomo eziqondiwe kuMqondisi we-Blueprint.",
-            "screenshot": "Audience Resonance — izethameli ezilondoloziwe, amaphuzu, izincomo ezingasetshenziswanga",
+            "title": "Audience Resonance",
+            "description": "Score your treatment against your target audience's cultural, genre, and demographic profile before generating the script. Catch structural pacing gaps or weak character stakes early and apply targeted recommendations in the Blueprint Director.",
+            "screenshot": "Audience Resonance — saved audience, scores, recommendations unapplied",
             "learnMore": {
               "items": [
                 {
-                  "title": "Ukuqinisekiswa kwangaphambili kweskripthi",
-                  "description": "Hlaziya indlela ophatha ngayo izithameli zakho ukuze ubone izikolo zesigaba namanothi endaba."
+                  "title": "Pre-script audience validation",
+                  "description": "Analyze your treatment against your saved target audience to inspect category scores, strengths, and story risks."
                 },
                 {
-                  "title": "Isicelo esikhethiwe",
-                  "description": "Izincomo zishintsha kuphela i-Blueprint yakho uma ukhetha ukuzisebenzisa."
+                  "title": "Actionable story remedies",
+                  "description": "Each insight pairs a structural diagnosis with a concrete rewrite recommendation tailored to your beat sheet and cast."
+                },
+                {
+                  "title": "Selective one-click application",
+                  "description": "Recommendations only modify your Blueprint when you choose to apply them in the Blueprint Director."
                 }
               ]
             }
           },
           {
             "icon": "goToProduction",
-            "title": "I-Greenlight to Production",
-            "description": "Uma ukwelapha, ishidi lebhithi, nokulingisi kukhiyiwe, ngena ku-Production Stage. I-SceneFlow ihlanganisa iskripthi sakho esigcwele izahluko eziningi ngokuqondile sisuka ku-Blueprint yakho egunyaziwe.",
-            "screenshot": "Iya ku-Production Stage — uhlaka lwendaba, izigaba zayo, kanye nabalingisi sekumisiwe kakade.",
+            "title": "Greenlight to Production",
+            "description": "When the treatment, beat sheet, and cast are locked, step onto the Production Stage. SceneFlow compiles your full multi-chapter screenplay directly from your approved Blueprint—mapping every beat into a production chapter with cast and continuity pre-wired.",
+            "screenshot": "Go to Production Stage — storyline, beats, and cast already set",
             "learnMore": {
               "items": [
                 {
-                  "title": "Ukuhlanganiswa okungenamthungo",
-                  "description": "Ukunyathela ku-Production Stage kuhlanganisa umbhalo ogcwele ngokuqondile kusuka ku-Blueprint yakho egunyaziwe."
+                  "title": "Seamless script compilation",
+                  "description": "Stepping onto the Production Stage compiles the full multi-scene screenplay directly from your approved Blueprint."
                 },
                 {
-                  "title": "Isisekelo esikhiyiwe",
-                  "description": "Umugqa wendaba, ukwakheka kwebhithi, nabalingisi bafika sebelungele indawo kanye nendawo yokudutshulwa."
+                  "title": "Locked continuity foundation",
+                  "description": "Your storyline, beat-to-chapter structure, cast profiles, and locations arrive ready for scene and shot direction."
+                },
+                {
+                  "title": "Shareable Blueprint review",
+                  "description": "Share the locked Blueprint with co-creators or executive stakeholders for sign-off before commencing production."
                 }
               ]
             }
@@ -522,105 +558,151 @@
         "promise": "I-Blueprint ikhiyiwe. Abalingisi bakho bayalingwa. Manje, ngena ku-Production Stage. Isahluko ngasinye, isigcawu, kanye nokudubula kuhlelwe kwaba ukuhamba komsebenzi okulandelanayo. Uqondisa inhloso; ama-intelligent agents akhipha isizukulwane.",
         "groups": [
           {
-            "id": "script",
+            "id": "direct-control",
             "label": "Okuqondile nokulawula",
             "headline": "Khuluma ulimi lwefilimu, hhayi i-syntax yokwaziswa.",
             "description": "Ungachithi isikhathi ngokubhala amagama angukhiye akubakaki. I-Production Stage iqonda isiqondiso semvelo, isebenzisa umbono wakho kuso sonke isigcawu noma phansi kuya esifanekisweni esithile.",
             "features": [
               {
-                "icon": "scriptResonance",
-                "title": "I-Scene & Shot Director",
-                "description": "Thayipha noma khuluma isiqondiso sakho ngolimi olulula. Tshela i-ejenti ukuthi ubani osefreyimeni, lapho ikhamera ihamba khona, nokuthi kuyini ukushaya kwemizwa. I-Shot Director ibhala ngokuzenzakalelayo imiyalo eyisisekelo yezithombe ezimile neziqeshana zakho.",
-                "screenshot": "I-Scene & Shot Director — isiqondiso solimi olulula lwezithombe ezimile neziqeshana",
+                "icon": "sceneWorkflow",
+                "title": "Scene Production Workflow (Fullscreen)",
+                "description": "Open the dedicated Fullscreen Scene Production Studio to direct every stage of a scene from one unified 8-tab command bar (`Direction · Audio · Music · Continuity · Stills · Clips · Mixer · Streams`). Reorder shots in the left-hand Shot Rail with live readiness badges, inspect the 16:9 Still & Clip Stage alongside structured camera, blocking, emotion, and lighting cards, and track end-to-end scene completion without losing context.",
+                "screenshot": "Scene Production Workflow (Fullscreen) — 8-tab linear studio, sortable Shot Rail, and structured Shot Direction Workbench",
                 "learnMore": {
                   "items": [
                     {
-                      "title": "Ulimi olulula",
-                      "description": "Thayipha noma khuluma ukuthi ubani osefreyimu, lapho ikhamera inyakaza, nokuthi kuyini isigqi semizwa."
+                      "title": "8-tab fullscreen linear studio",
+                      "description": "Move seamlessly across Direction, Audio, Music, Continuity, Stills, Clips, Mixer, and Streams inside a distraction-free fullscreen workspace."
                     },
                     {
-                      "title": "Isigcawu noma isibhamu",
-                      "description": "Sebenzisa umbono wakho kuso sonke isigcawu noma phansi kusithombe esithile."
+                      "title": "Sortable Shot Rail & live badges",
+                      "description": "Drag to reorder shots in the left-hand rail while tracking real-time badges for Action, Dialogue, Narration, SFX, Music, Signage, Final 4K stills, and clips In the Can."
                     },
                     {
-                      "title": "Ukuhlanganisa ngokushesha",
-                      "description": "I-Shot Director ibhala ngokuzenzakalelayo imiyalo engezansi yezithombe zakho ezimile neziqeshana."
-                    }
-                  ]
-                }
-              },
-              {
-                "icon": "castVisual",
-                "title": "I-Continuity Library",
-                "description": "Ukungaguquguquki okuphelele kulo lonke uchungechunge. Khiqiza ngokuzenzakalelayo noma yabela mathupha izithombe eziyisethenjwa zobalingisi bakho, amawodilophu, izindawo, nezinsiza ezibalulekile ukuze uqinisekise ukuthi ishothi ngayinye ifana ne-Blueprint.",
-                "screenshot": "I-Continuity Library - i-cast, i-wardrobes, izindawo, nezinsiza ezibalulekile",
-                "learnMore": {
-                  "items": [
-                    {
-                      "title": "Ukuvumelana kochungechunge",
-                      "description": "Gcina abalingisi, amawodilophu, izindawo, nezinsiza ezibalulekile kuhlangene kukho konke ukushutha."
+                      "title": "Structured Shot Direction Workbench",
+                      "description": "Inspect the 16:9 Still & Clip Stage beside structured cards for spoken beats, camera lens and motion, talent blocking and gaze, lighting, locked continuity refs, and compiled prompts."
                     },
                     {
-                      "title": "Khiqiza noma yabela",
-                      "description": "Khiqiza ngokuzenzakalelayo izithombe eziyisethenjwa noma yabela ngokwakho eyakho ukuze ifane ne-Blueprint."
+                      "title": "End-to-end scene pipeline telemetry",
+                      "description": "Monitor readiness across direction, voice and score, keyframes, multi-take clips, broadcast mixing, and localized streams before publishing."
                     }
                   ]
                 }
               },
               {
                 "icon": "directShot",
-                "title": "Audience Resonance Ukuhlanganiswa",
-                "description": "Funda ekamelweni ngaphambi kokuthi unikeze. I-AI ihlaziya umbhalo wakho iqhathanisa nezithameli oziqondise, ikunikeze imininingwane yesigcawu nesigcawu. Sebenzisa izikhombisi-ndlela ezinconyiwe ngokushesha, noma wethembe amathumbu akho futhi ungazinaki.",
-                "screenshot": "Ukuhlanganiswa kwe-Audience Resonance — imininingwane yezethameli yesigcawu",
+                "title": "The Scene & Shot Director",
+                "description": "Type or speak your direction in plain language. Tell the agent who is in the frame, where the camera moves, and what the emotional beat is. The Shot Director automatically writes the complex underlying prompts for your stills and clips while syncing camera lens, focal length, talent blocking, and lighting across the scene.",
+                "screenshot": "The Scene & Shot Director — plain-language direction for stills and clips",
                 "learnMore": {
                   "items": [
                     {
-                      "title": "Imininingwane yesehlakalo ngesigameko",
-                      "description": "I-AI ihlaziya umbhalo wakho ngokumelene nezithameli oziqondise ngaphambi kokuthi unikeze."
+                      "title": "Plain-language film direction",
+                      "description": "Type or speak who is in the frame, where the camera moves, and what the emotional beat is without writing bracketed prompt syntax."
                     },
                     {
-                      "title": "Ucingo lwakho",
-                      "description": "Sebenzisa izikhombisi-ndlela ezinconyiwe ngokushesha, noma wethembe amathumbu akho futhi ungazinaki."
-                    }
-                  ]
-                }
-              },
-              {
-                "icon": "audioAgent",
-                "title": "Umhleli Wokukhiqiza",
-                "description": "Sungula isabelomali kanye nokukhiqizwa kweshejuli kuso sonke isigcawu nesahluko usebenzisa amakhredithi e-SceneFlow noma okhiye bakho be-BYOK API. Misa okuqondisiwe bese unamathisela ishothi ngayinye ngaphambi kokuthi uchithe ikhompuyutha.",
-                "screenshot": "Umhleli Wokukhiqiza — ibhajethi, ishejuli, nokhiye be-BYOK API",
-                "learnMore": {
-                  "items": [
-                    {
-                      "title": "Isabelomali nohlelo",
-                      "description": "Sungula ibhajethi bese uhlela ukukhiqiza kuzo zonke izigcawu nesahluko ngaphambi kokuthi unikeze."
+                      "title": "Scene-wide or per-shot precision",
+                      "description": "Apply atmospheric direction across the entire scene or drill down into an individual shot's framing, lens, blocking, and lighting."
                     },
                     {
-                      "title": "Amakhredithi noma i-BYOK",
-                      "description": "Qalisa ukukhiqiza usebenzisa amakhredithi e-SceneFlow noma okhiye bakho be-BYOK API."
+                      "title": "Automatic prompt compilation",
+                      "description": "The Shot Director automatically writes and syncs the underlying keyframe and motion prompts for your stills and clips."
+                    },
+                    {
+                      "title": "Intelligent Assistant Director (IAD)",
+                      "description": "Request surgical revisions to camera angles, character posture, or scene tension in plain language while keeping unrelated beats untouched."
                     }
                   ]
                 }
               },
               {
                 "icon": "continuity",
-                "title": "Iskripthi Sokukhiqiza",
-                "description": "Yakhelwe abenzi befilimu bendabuko kanye ne-AI ngokufanayo. Buka kuqala isikrini esihlanzekile, esifomethiwe ku-studio futhi uthumele ngamafomethi asezingeni lomkhakha (PDF, FDX, Fountain). Sebenzisa i-SceneFlow njengegumbi lombhalo elizimele—noma bhanqa isikrini sakho nge-Pre-Vis SFAIMATICTERM kanye ne-Trailer Yephromo ukuze uveze abezimali futhi uvikele uxhaso lwephrojekthi.",
-                "screenshot": "Isikripthi Sokukhiqiza — ukuhlola kuqala kwenkundla kanye ne-PDF, i-FDX, kanye nokuthunyelwa kwe-Fountain",
+                "title": "The Continuity Library",
+                "description": "Absolute visual and vocal consistency across your entire film or series. Automatically generate or manually assign locked reference portraits, multi-angle turnaround sheets, scene-specific wardrobes, locations, and essential props—ensuring every shot matches the Blueprint without character drift.",
+                "screenshot": "The Continuity Library — cast, wardrobes, locations, and essential props",
                 "learnMore": {
                   "items": [
                     {
-                      "title": "Ukuhlola kuqala kwenkundla nokuthekelisa",
-                      "description": "Buka kuqala umbhalo ofomethiwe esitudiyo futhi uthumele nge-PDF esezingeni lomkhakha, i-Final Draft FDX, noma ifomethi ye-Fountain."
+                      "title": "Cast identity & turnaround locks",
+                      "description": "Anchor every character with diptych portraits, turnaround sheets, and locked voice profiles across every shot and episode."
                     },
                     {
-                      "title": "Kwabenzi bamafilimu bendabuko",
-                      "description": "Sebenzisa i-SceneFlow njengenkundla yokukhiqiza iskripthi ehlakaniphile ngaphandle kokukhiqiza ividiyo."
+                      "title": "Scene-specific wardrobes & props",
+                      "description": "Assign period or scene-specific wardrobes and essential hero props per shot so costumes and hand-held items stay unified."
                     },
                     {
-                      "title": "Ukuxhaswa kwe-pitch & project",
-                      "description": "Phakamisa iskripthi sakho nge-Pre-Vis Animatic kanye nama-Trailer ephromo ukuze uveze futhi uthole uxhaso lwephrojekthi."
+                      "title": "Generate, upload, or surgically edit",
+                      "description": "Automatically generate reference images, upload custom studio plates, or refine details with the Intelligent Assistant Director."
+                    },
+                    {
+                      "title": "Continuity readiness gate",
+                      "description": "Verify that all cast, wardrobe, location, and prop anchors are locked in the Continuity tab before generating scene keyframes."
+                    }
+                  ]
+                }
+              },
+              {
+                "icon": "scriptResonance",
+                "title": "Audience Resonance Integration",
+                "description": "Get a read on the room before you render. AI analyzes your script against your target audience, providing scene-by-scene insights, pacing diagnostics, and dialogue tension scores. Apply recommended directions instantly, or trust your gut and ignore them.",
+                "screenshot": "Audience Resonance Integration — scene-by-scene audience insights",
+                "learnMore": {
+                  "items": [
+                    {
+                      "title": "Scene-by-scene audience insights",
+                      "description": "AI analyzes your script against your target audience before you render to surface pacing, tension, and engagement scores."
+                    },
+                    {
+                      "title": "Narrated critique & recommendations",
+                      "description": "Listen to the narrated analysis and inspect targeted scene-level rewrite recommendations backed by demographic reasoning."
+                    },
+                    {
+                      "title": "Your creative call",
+                      "description": "Apply recommended directions instantly with one click, or trust your gut and ignore them."
+                    }
+                  ]
+                }
+              },
+              {
+                "icon": "budget",
+                "title": "Production Planner",
+                "description": "Establish the budget and schedule generation across every scene and chapter using SceneFlow credits or your own BYOK API keys. Set still and clip targets per shot, toggle between Draft and Final resolution tiers, and forecast compute spend before you render.",
+                "screenshot": "Production Planner — budget, schedule, and BYOK API keys",
+                "learnMore": {
+                  "items": [
+                    {
+                      "title": "Budget and schedule forecasting",
+                      "description": "Establish the budget and schedule generation across every scene and chapter with transparent per-shot credit estimates before you render."
+                    },
+                    {
+                      "title": "SceneFlow credits or BYOK keys",
+                      "description": "Run generation using included SceneFlow credits or connect your own Vertex AI, OpenAI, and ElevenLabs BYOK API keys."
+                    },
+                    {
+                      "title": "Draft-to-Final tier scheduling",
+                      "description": "Schedule rapid Draft passes for animatic pre-visualization and reserve Final 4K still and FHD video compute for locked cuts."
+                    }
+                  ]
+                }
+              },
+              {
+                "icon": "productionScript",
+                "title": "Production Script",
+                "description": "Built for traditional and AI filmmakers alike. Preview a clean, formatted screenplay in-studio and export in industry-standard formats (PDF, FDX, Fountain). Use SceneFlow as a standalone script room—or pair your screenplay with a Pre-Vis Animatic and Promo Trailer to pitch financiers and secure project funding.",
+                "screenshot": "Production Script — in-platform preview and PDF, FDX, and Fountain export",
+                "learnMore": {
+                  "items": [
+                    {
+                      "title": "In-platform preview & export",
+                      "description": "Preview the formatted script in the studio and export in industry-standard PDF, Final Draft FDX, or Fountain format."
+                    },
+                    {
+                      "title": "For traditional filmmakers",
+                      "description": "Use SceneFlow as an intelligent script production platform without generating video."
+                    },
+                    {
+                      "title": "Pitch & project funding",
+                      "description": "Package your script with a Pre-Vis Animatic and Promo Trailers to pitch and acquire project funding."
                     }
                   ]
                 }
@@ -628,79 +710,173 @@
             ]
           },
           {
-            "id": "video",
+            "id": "generate-audit",
             "label": "Khiqiza futhi Ucwaninge",
             "headline": "Qinisekisa ukusika ngaphambi kokuchitha ikhompuyutha.",
             "description": "Ungaqageli ukuthi isigcawu sizodlala kanjani. I-SceneFlow ihlukanisa isizukulwane somsindo nesinyakazayo ekunikezeni okunyakazayo okubizayo, ikuvumela ukuthi uhlole isigqi sokuhlela kuqala.",
             "features": [
               {
+                "icon": "audioAgent",
+                "title": "The Audio Agent",
+                "description": "Generate expressive character dialogue, narrator voiceover, action sound effects, and musical scores concurrently across up to 30 shots per scene. Cast voices automatically match character profiles from your Continuity Library or can be custom-tuned per beat.",
+                "screenshot": "The Audio Agent — concurrent dialogue, sound effects, and music scores",
+                "learnMore": {
+                  "items": [
+                    {
+                      "title": "Concurrent multi-track audio",
+                      "description": "Generate dialogue, narration, sound effects, and music scores concurrently across up to 30 shots per scene."
+                    },
+                    {
+                      "title": "Locked character voice casting",
+                      "description": "Cast voices automatically match character profiles from your Reference Library or can be custom-tuned for timbre and cadence."
+                    },
+                    {
+                      "title": "Batch scene or single-shot runs",
+                      "description": "Run the Audio Agent across the entire scene in one pass or regenerate individual dialogue and SFX beats on demand."
+                    }
+                  ]
+                }
+              },
+              {
+                "icon": "musicScore",
+                "title": "Dialogue, SFX & Musical Score Workbench",
+                "description": "Open the Fullscreen `Audio` and `Music` tabs to direct every sonic layer of your scene. Shape vocal performances with emotional delivery tags (`[obsessive, muttered]`) and Hi-Fi Studio quality, extract embedded audio directly from video clips, dial in SFX duration presets (`Auto`, `Short 3s`, `Medium 8s`, `Long 15s`), and compose multi-shot Lyria musical score cues with custom intro fades.",
+                "screenshot": "Dialogue, SFX & Musical Score Workbench — Fullscreen Audio & Music tabs with score cues, voice casting, and SFX duration presets",
+                "learnMore": {
+                  "items": [
+                    {
+                      "title": "Multi-shot musical score cues",
+                      "description": "Compose custom Lyria musical score cues that span specific shot ranges with configurable intro fades and auto-ducking metadata."
+                    },
+                    {
+                      "title": "Performance Director & delivery tags",
+                      "description": "Direct spoken dialogue with bracketed emotional delivery tags, Hi-Fi Studio synthesis, and per-shot voice casting."
+                    },
+                    {
+                      "title": "Precision SFX duration presets",
+                      "description": "Time action sound effects to your shot choreography using Auto, Short 3s, Medium 8s, or Long 15s duration presets."
+                    },
+                    {
+                      "title": "Extract audio from video clips",
+                      "description": "Pull embedded audio directly from generated motion clips to preserve native on-camera speech or ambient foley."
+                    }
+                  ]
+                }
+              },
+              {
+                "icon": "stillsAgent",
+                "title": "The Stills Agent",
+                "description": "Rapidly batch-generate the high-resolution keyframe images that illustrate your shot direction across the scene. Regenerate, edit, or upload your own references to lock the composition, lighting, and character blocking before committing to video.",
+                "screenshot": "The Stills Agent — keyframe composition and references",
+                "learnMore": {
+                  "items": [
+                    {
+                      "title": "Batch keyframe generation",
+                      "description": "Rapidly generate the keyframe images that illustrate your shot direction across every shot in the scene."
+                    },
+                    {
+                      "title": "Automatic continuity anchoring",
+                      "description": "Every generated frame incorporates your locked cast portraits, scene wardrobes, locations, and hero props automatically."
+                    },
+                    {
+                      "title": "Lock composition before motion",
+                      "description": "Regenerate, edit, or upload your own references before committing compute to full motion video rendering."
+                    }
+                  ]
+                }
+              },
+              {
+                "icon": "stillsWorkbench",
+                "title": "Fullscreen Stills & Keyframe Studio",
+                "description": "Step into the Fullscreen `Stills` workbench for precision keyframe control. Pair Start and End keyframes for Frame-to-Video (`F2V`) motion bridging, switch between `Draft` and `Final 4K` resolution or `Standard` and `Creative` synthesis modes, customize Pre-Vis Ken Burns camera motion, and perform surgical plain-language frame edits with the Intelligent Assistant Director (`IAD`).",
+                "screenshot": "Fullscreen Stills & Keyframe Studio — F2V Start & End keyframe pairing, Final 4K controls, and surgical IAD editing",
+                "learnMore": {
+                  "items": [
+                    {
+                      "title": "Frame-to-Video (F2V) Start & End pairing",
+                      "description": "Pair a locked Start Frame and End Frame Target on any shot to anchor exact camera movement and subject blocking during video generation."
+                    },
+                    {
+                      "title": "Surgical IAD keyframe editing",
+                      "description": "Edit specific props, chalkboard text, wardrobe details, or lighting in plain language while keeping the rest of the keyframe locked."
+                    },
+                    {
+                      "title": "Draft vs Final 4K & Creative modes",
+                      "description": "Toggle between rapid Draft previews and Final 4K resolution, plus Standard or Creative synthesis modes per shot."
+                    },
+                    {
+                      "title": "Pre-Vis Ken Burns motion framing",
+                      "description": "Customize zoom and pan trajectories on every still so your Pre-Vis Animatic previews intentional camera motion."
+                    }
+                  ]
+                }
+              },
+              {
+                "icon": "animatic",
+                "title": "The Pre-Vis Animatic",
+                "description": "Watch the scene breathe. Review a fully assembled animatic—stitched stills, Ken Burns motion, and locked audio—in the Screening Room. Audit the pacing, share for feedback, and ensure the cut works before committing to video.",
+                "screenshot": "The Pre-Vis Animatic — stitched stills, Ken Burns motion, and locked audio",
+                "learnMore": {
+                  "items": [
+                    {
+                      "title": "Assembled multi-track animatic",
+                      "description": "Review stitched stills, Ken Burns motion, and locked dialogue, SFX, and musical score in the Screening Room."
+                    },
+                    {
+                      "title": "Prove pacing before video spend",
+                      "description": "Audit the dramatic rhythm, spot timing gaps, and refine shot lengths while iterations cost pennies instead of full video compute."
+                    },
+                    {
+                      "title": "Share for stakeholder sign-off",
+                      "description": "Audit the pacing, share for feedback, and ensure the cut works before committing to video."
+                    }
+                  ]
+                }
+              },
+              {
                 "icon": "videoAgent",
-                "title": "I-Audio Agent",
-                "description": "Khiqiza inkhulumomphendvulwano, imithelela yomsindo, kanye nezikolo zomculo kanyekanye kuze kube amashothi angama-30 esigcawini ngasinye. Amazwi okusakaza afanelana ngokuzenzakalelayo namaphrofayela omlingiswa noma angacushwa ngendlela oyifisayo.",
-                "screenshot": "I-Audio Agent — ingxoxo ngesikhathi esisodwa, imithelela yomsindo, nezikolo zomculo",
+                "title": "The Clips Agent",
+                "description": "Once the Pre-Vis is approved, the Clips Agent takes over, rendering high-fidelity motion clips that adhere strictly to your approved stills, Frame-to-Video start and end anchors, and continuity references—backed by automated safety pre-flight checks.",
+                "screenshot": "The Clips Agent — high-fidelity motion clips from approved stills",
                 "learnMore": {
                   "items": [
                     {
-                      "title": "Umsindo ofanayo",
-                      "description": "Khiqiza inkhulumomphendvulwano, imithelela yomsindo, kanye nezikolo zomculo kanyekanye kuze kube amashothi angama-30 esigcawini ngasinye."
+                      "title": "Triggered after Pre-Vis approval",
+                      "description": "The Clips Agent renders motion only after the Pre-Vis animatic and shot timings are approved."
                     },
                     {
-                      "title": "Amazwi abalingiswa",
-                      "description": "Amazwi okusakaza afanelana ngokuzenzakalelayo namaphrofayela omlingiswa noma angacushwa ngendlela oyifisayo."
+                      "title": "Strict keyframe & F2V adherence",
+                      "description": "High-fidelity motion clips adhere strictly to your approved Start and End stills and continuity references."
+                    },
+                    {
+                      "title": "Automated safety pre-flight",
+                      "description": "Pre-flight prompt sanitation prevents false-positive safety rejections on dramatic action beats so clips render reliably."
                     }
                   ]
                 }
               },
               {
-                "icon": "mixer",
-                "title": "I-Stills Agent",
-                "description": "Khiqiza ngokushesha izithombe zozimele ongukhiye ezibonisa indlela oshutha kuyo. Khiqiza kabusha, hlela, noma layisha izithenjwa zakho ukuze ukhiye ukwakheka.",
-                "screenshot": "I-Stills Agent — ukwakheka kozimele ongukhiye nezinkomba",
+                "icon": "clipsWorkbench",
+                "title": "Multi-Take Clips & Retake Studio",
+                "description": "Direct and curate every motion render inside the Fullscreen `Clips` studio. Audition unlimited takes in the non-destructive Multi-Take Vault (`Take 1 / Take 2 / Take 3`), filter your shot rail by `In the Can` readiness, trigger targeted IAD Smart Retakes, and manage per-stream localized video takes for dialogue and signage shots.",
+                "screenshot": "Multi-Take Clips & Retake Studio — non-destructive Take 1/2/3 vault, IAD Smart Retake, and localized stream takes",
                 "learnMore": {
                   "items": [
                     {
-                      "title": "Ukwakhiwa kozimele ongukhiye",
-                      "description": "Khiqiza ngokushesha izithombe zozimele ongukhiye ezibonisa indlela oshutha kuyo."
+                      "title": "Non-destructive Multi-Take Vault",
+                      "description": "Every motion render is preserved in the shot vault so you can compare Take 1, Take 2, and Take 3 and promote your favorite take live."
                     },
                     {
-                      "title": "Khiya ukwakheka",
-                      "description": "Khiqiza kabusha, hlela, noma layisha izithenjwa zakho ngaphambi kokuthi uzibophezele ekunyakazeni."
-                    }
-                  ]
-                }
-              },
-              {
-                "icon": "languageStreams",
-                "title": "I-Pre-Vis Animatic",
-                "description": "Buka isimo siphefumula. Buyekeza i-animatic ehlanganiswe ngokugcwele—izithombe ezinganyakazi ezithungiwe, ukunyakaza kwe-Ken Burns, nomsindo okhiyiwe—ku-Screening Room. Hlola ukuhamba, wabelane ukuze uthole impendulo, futhi uqinisekise ukuthi ukusika kuyasebenza ngaphambi kokuzibophezela kuvidiyo.",
-                "screenshot": "I-Pre-Vis Animatic — ithungiwe izilinganiso, ukunyakaza kuka-Ken Burns, nomsindo okhiyiwe",
-                "learnMore": {
-                  "items": [
-                    {
-                      "title": "I-animatic ehlanganisiwe",
-                      "description": "Buyekeza okumile okuthungiwe, ukunyakaza kwe-Ken Burns, nomsindo okhiyiwe kokuthi Screening Room."
+                      "title": "IAD Smart Retake & Direct Video",
+                      "description": "Refine camera motion, subject physics, or facial performance with the Intelligent Assistant Director and Direct Video pre-flight controls."
                     },
                     {
-                      "title": "Acwaninge futhi wabelane",
-                      "description": "Hlola ukuhamba, wabelane ukuze uthole impendulo, futhi uqinisekise ukuthi ukusika kuyasebenza ngaphambi kokuzibophezela kuvidiyo."
-                    }
-                  ]
-                }
-              },
-              {
-                "icon": "videoAgent",
-                "title": "I-Clips Agent",
-                "description": "Uma i-Pre-Vis isigunyaziwe, i-Clips Agent ithatha izintambo, inikezela ngeziqeshana ezinyakazayo ezinamathela ngokuqinile kumareferensi akho agunyaziwe nokuqhubeka.",
-                "screenshot": "I-Clips Agent — iziqeshana ezinyakazayo ezithembekile ezisuka emifanekisweni emile egunyaziwe",
-                "learnMore": {
-                  "items": [
-                    {
-                      "title": "Ngemuva kokugunyazwa kwe-Pre-Vis",
-                      "description": "I-Clips Agent yenza ukunyakaza kuphela ngemva kokuvunywa kwe-animatic ye-Pre-Vis."
+                      "title": "Per-stream localized shot takes",
+                      "description": "Switch between your English Master take and regenerated localized clips for spoken dialogue and in-scene signage per language stream."
                     },
                     {
-                      "title": "Ukubambelela ngokuqinile",
-                      "description": "Iziqeshana ezinyakazayo ezithembeke kakhulu zinamathela ngokuqinile kumareferensi akho agunyaziwe kanye nezithenjwa zokuqhubeka."
+                      "title": "Dialogue-free stem readiness",
+                      "description": "Extract embedded clip audio into a dialogue-free SFX and ambience stem so localized dubs retain original foley and room tone."
                     }
                   ]
                 }
@@ -708,79 +884,111 @@
             ]
           },
           {
-            "id": "publish",
+            "id": "publish-distribute",
             "label": "Shicilela futhi Usabalalise",
             "headline": "Thumela okuyinhloko, noma wenze okwasendaweni emhlabeni jikelele.",
             "description": "Uma isigameko senziwe, izimpahla sezivele zihlanganisiwe. Qedela ukuhlela, wenze umsindo ube owasendaweni, futhi usabalalise ngqo kuzithameli zakho.",
             "features": [
               {
-                "icon": "shipPackage",
-                "title": "Umdidiyeli",
-                "description": "Umhleli wesiqephu esakhelwe ngaphakathi, esinembile. Nquma iziqeshana, lungisa amarempu esivinini, engeza izimbondela zombhalo, futhi usebenzise ama-watermark ngaphandle kokuphuma esitudiyo.",
-                "screenshot": "I-Mixer — nquma iziqeshana, amarampu esivinini, izimbondela zombhalo, nama-watermark",
+                "icon": "mixer",
+                "title": "The Mixer",
+                "description": "A commercial-grade broadcast scene editor and stitching console built directly into the studio. Preview your cut on a 16:9 Broadcast Reference Monitor paired with a real-time Stereo VU / Peak Meter (`-60` to `0 dBFS`, `-14 LUFS` target), inspect cut points with a side-by-side Match-Cut Continuity Loupe, shape J-Cut and L-Cut audio overlaps (`-0.3s` / `+0.3s`), choose dynamic Optical Hold Modes (`103% Ken Burns Push` or `Ping-Pong Tail`), mix across a 6-lane timeline (`V1 Video`, `A0 Stem`, `A1 Dialogue`, `A2 VO`, `A3 SFX`, `A4 Score`) with `-8 dB` Auto-Ducking, apply 1-click watermark crops and text overlays, and cloud-render EBU R128 (`-14 LUFS`) masters.",
+                "screenshot": "The Mixer — Broadcast Reference Monitor, Stereo VU Meter, Match-Cut Continuity Loupe, J/L-Cut overlaps, 6-lane timeline with -8 dB Auto-Ducking, and EBU R128 loudness",
                 "learnMore": {
                   "items": [
                     {
-                      "title": "Umhleli wesigcawu esakhelwe ngaphakathi",
-                      "description": "Sika iziqeshana futhi ulungise amarempu esivinini ngqo ngaphakathi kwestudiyo."
+                      "title": "Broadcast Reference Monitor & Stereo VU / LUFS Meter",
+                      "description": "Preview your stitched sequence on a 16:9 reference monitor beside a real-time stereo peak and loudness meter calibrated to -14.0 LUFS web and -24.0 LKFS broadcast targets."
                     },
                     {
-                      "title": "Ukuqeda ukuthinta",
-                      "description": "Engeza izimbondela zombhalo futhi usebenzise ama-watermark ngaphandle kokuthekelisa kumhleli wangaphandle."
+                      "title": "Match-Cut Continuity Loupe & J/L-Cut audio overlaps",
+                      "description": "Hover any transition pill to compare the Out-Frame of Shot N against the In-Frame of Shot N+1 side by side while dialing in -0.3s J-cut lead-ins and +0.3s L-cut audio tails."
+                    },
+                    {
+                      "title": "6-lane timeline with -8 dB Auto-Ducking envelope",
+                      "description": "Mix V1 Video, A0 Dialogue-Free Stem, A1 Dialogue, A2 Narration, A3 SFX, and A4 Score with a visual gain-reduction curve that automatically ducks music -8 dB under speech."
+                    },
+                    {
+                      "title": "Optical Hold Modes & elastic dub alignment",
+                      "description": "Replace static freeze-frames with a 103% Ken Burns Push Zoom or Ping-Pong Tail Loop and slow video clips down to 67% speed so longer dubbed dialogue fits naturally."
+                    },
+                    {
+                      "title": "1-click watermark crop, text overlays & EBU R128 export",
+                      "description": "Apply preset edge crops to remove third-party watermarks, burn in lower-thirds or subtitles, and cloud-render stitched MP4 masters with EBU R128 loudness normalization."
                     }
                   ]
                 }
               },
               {
                 "icon": "languageStreams",
-                "title": "Ukusakaza (Izilimi Eziningi)",
-                "description": "Nweba ukufinyelela kwakho emhlabeni jikelele ngezilimi ezingu-44 ngokushesha. Khiqiza ngokuzenzakalelayo okunye ukusakazwa kolimi ngokubiza umsindo, ukuvumelanisa ukunyakaza kwezindebe, noma ukukhiqiza kabusha iziqeshana zengxoxo zendawo ngokuqondile endaweni yesehlakalo.",
-                "screenshot": "Ukusakaza (Izilimi Eziningi) — iziqeshana zezingxoxo ezilalelwayo ezibizwa ngokuthi zendawo",
+                "title": "Streams (Multi-Language)",
+                "description": "Expand your global reach across 44 languages from one master timeline. Selectively regenerate only the specific shots containing spoken dialogue or in-scene text signage while retaining unselected master shots at zero extra credit cost. Extract embedded video audio and strip spoken dialogue (`htdemucs` neural stem separation) so generated SFX and music carry into every dub, and automatically align longer translated dialogue using elastic video slow-down (slowing a `10s` clip up to `15s` at `67%` speed), hybrid optical holds, or pitch-preserved audio tempo matching—while directing in a localized Studio UI.",
+                "screenshot": "Streams (Multi-Language) — Selective shot regeneration vs retained master shots, dialogue-free stem extraction, and elastic slow-video dub alignment",
                 "learnMore": {
                   "items": [
                     {
-                      "title": "Ukufinyelela emhlabeni jikelele",
-                      "description": "Dala ngokuzenzakalelayo okunye ukusakazwa kolimi ngezilimi ezingu-44 ngokuqondile endaweni yesehlakalo."
+                      "title": "Selective shot regeneration & retained master clips",
+                      "description": "Select only the shots with spoken dialogue or in-scene signage to regenerate in your target language while unselected action shots automatically retain the master video clip."
                     },
                     {
-                      "title": "I-Dub, i-lip-sync, noma yenza kabusha",
-                      "description": "Yenza kube okwasendaweni ishothi ngayinye ngokuqopha umsindo, ukuvumelanisa ukunyakaza kwezindebe, noma ukukhiqiza kabusha iziqeshana zengxoxo zendawo."
+                      "title": "Dialogue-free stem extraction (keep generated SFX & music)",
+                      "description": "Neural stem separation extracts embedded video audio and removes spoken English dialogue while preserving generated foley, room ambience, and music for clean MP3 dubbing."
+                    },
+                    {
+                      "title": "Elastic video slow-down & multi-method dub alignment",
+                      "description": "Align longer translated dialogue by slowing a 10s video clip up to 15s (down to 67% speed), pairing an 80% slow-down with a 103% zoom hold, or fitting dub audio tempo up to 1.25x."
+                    },
+                    {
+                      "title": "Regenerated dialogue & signage clips across 44 languages",
+                      "description": "Regenerate localized dialogue takes and in-scene signage clips directly within the scene across 44 languages so visuals, stencils, and speech match every audience."
+                    },
+                    {
+                      "title": "Localized Studio UI",
+                      "description": "Direct and produce in your native interface across English, Spanish, Portuguese, Hindi, Simplified Chinese, and Arabic."
                     }
                   ]
                 }
               },
               {
                 "icon": "promoTrailers",
-                "title": "Iphromo nama-trailer",
-                "description": "Sika ama-trailer ephromo alungele umphakathi nganoma yisiphi isikhathi ngesikhathi sokukhiqiza. Khiqiza izinguqulo zezilimi eziningi ezilungiselelwe amafomethi avundlile noma aqondile.",
-                "screenshot": "Iphromo nama-trailer — ama-trailer ezilimi eziningi avundlile name mpo",
+                "title": "Promo & Trailers",
+                "description": "Cut high-converting theatrical teasers, episodic recaps, and social-ready promo trailers at any time during production. Pull hero takes from your scene vault, reframe for horizontal (`16:9`) or vertical (`9:16`) feeds, and generate multi-language versions with localized title cards and voiceover hooks.",
+                "screenshot": "Promo & Trailers — multi-language horizontal and vertical trailers",
                 "learnMore": {
                   "items": [
                     {
-                      "title": "Ama-trailer alungele umphakathi",
-                      "description": "Sika ama-trailer ephromo nganoma yisiphi isikhathi ngesikhathi sokukhiqiza."
+                      "title": "Social-ready trailers at any stage",
+                      "description": "Cut promo trailers, theatrical teasers, and episodic recaps at any point during production."
                     },
                     {
-                      "title": "Amafomethi ezilimi eziningi",
-                      "description": "Khiqiza izinguqulo zezilimi eziningi ezilungiselelwe amafomethi avundlile noma aqondile."
+                      "title": "Horizontal & vertical social formats",
+                      "description": "Generate multi-language versions optimized for horizontal 16:9 YouTube feeds or vertical 9:16 Shorts, Reels, and TikTok."
+                    },
+                    {
+                      "title": "Localized hooks & title cards",
+                      "description": "Render localized trailer streams with translated voiceover hooks, burned-in captions, and market-specific title cards."
                     }
                   ]
                 }
               },
               {
                 "icon": "shipPackage",
-                "title": "Ukushicilela Okuqondile",
-                "description": "Khipha i-MP4 eyinhloko yokugcina, noma vumela i-SceneFlow izenzele izithonjana nezincazelo ukuze ishicilele izigcawu, izahluko, namaphromo ku-YouTube, TikTok, naku-Facebook.",
-                "screenshot": "Ukushicilela Okuqondile - Khipha i-MP4 kanye nokushicilela okuqondile ku-YouTube, TikTok, naku-Facebook",
+                "title": "Direct Publishing",
+                "description": "Export the final EBU R128-normalized master MP4 in 1080p or 4K, download complete production stems, or let SceneFlow auto-generate high-CTR thumbnails, localized titles, chapter markers, and descriptions to publish scenes, chapters, and promos directly to YouTube, TikTok, and Facebook.",
+                "screenshot": "Direct Publishing — MP4 export and direct publishing to YouTube, TikTok, and Facebook",
                 "learnMore": {
                   "items": [
                     {
-                      "title": "I-MP4 eyi-MP4 noma yezenhlalo eqondile",
-                      "description": "Thekelisa i-MP4 eyinhloko yokugcina noma ushicilele izigcawu, izahluko, namaphromo ngqo ku-YouTube, TikTok, naku-Facebook."
+                      "title": "Master MP4 or direct social publishing",
+                      "description": "Export the final master MP4 or publish scenes, chapters, and promos directly to YouTube, TikTok, and Facebook."
                     },
                     {
-                      "title": "Imethadatha ekhiqizwa ngokuzenzakalela",
-                      "description": "Vumela i-SceneFlow ikhiqize ngokuzenzakalela izithonjana nezincazelo zakho konke ukukhishwa."
+                      "title": "Auto-generated thumbnails & metadata",
+                      "description": "Let SceneFlow auto-generate high-contrast thumbnails, localized titles, descriptions, tags, and chapter markers for every release."
+                    },
+                    {
+                      "title": "Archival stems & screenplay bundle",
+                      "description": "Download stitched video masters, isolated dialogue and SFX stems, subtitle files, and formatted screenplays in one production package."
                     }
                   ]
                 }
@@ -797,44 +1005,52 @@
         "features": [
           {
             "icon": "screeningPlayer",
-            "title": "Umdlali Ohlanganisiwe Oyedwa",
-            "description": "Guqula kalula phakathi kwe-Pre-Vis animatics, izigcawu, izahluko, ama-trailer, nenkosi yakho yokugcina. Shintsha Ukusakazwa Kolimi ngokuphazima kweso kuya ekuhloleni okubizwa ngokuthi, okuvunyelaniswe ngezindebe, noma okwasendaweni okuvuselelwe kabusha—kuhlale kukhiyelwe kusikwa esisuka ku-Mixer.",
-            "screenshot": "Isidlali segumbi lokuhlola i-SFAI",
+            "title": "One Unified Player",
+            "description": "Toggle seamlessly between Pre-Vis animatics, stitched scenes, multi-scene chapters, promo trailers, and your final master. Switch Language Streams on the fly to audition dubbed audio, dialogue-free stem mixes, and regenerated dialogue or signage clips—always frame-locked to the exact cut from the Mixer.",
+            "screenshot": "Screening Room player",
             "learnMore": {
               "items": [
                 {
-                  "title": "Yonke ingqophamlando ekubukeni okukodwa",
-                  "description": "Shintsha kalula phakathi kwe-Pre-Vis, izigcawu, izahluko, ama-promo, kanye nenkosi yokugcina."
+                  "title": "Every milestone in one theatre",
+                  "description": "Switch effortlessly among Pre-Vis animatics, individual scenes, chapters, promos, and the final master."
                 },
                 {
-                  "title": "Ukushintsha ulimi bukhoma",
-                  "description": "Hlola noma yikuphi Ukusakaza Kolimi—okubizwa ngokuthi, okuvunyelaniswe ngezindebe, noma okuvuselelwe kabusha—ngokuphazima kweso."
+                  "title": "Live language stream auditioning",
+                  "description": "Audition any Language Stream—dubbed audio, lip-sync, or regenerated dialogue and signage clips—on the fly without reloading the timeline."
                 },
                 {
-                  "title": "Uzimele-ukhiyelwe ku-Mixer",
-                  "description": "Ukusakaza ngakunye kudlala ukuhlela kanye nesikhathi esinikezwa ku-Mixer."
+                  "title": "Frame-locked to the Broadcast Mixer",
+                  "description": "Every stream plays the exact stitch transitions, J/L-cut overlaps, auto-ducking curves, and loudness normalization rendered in the Mixer."
+                },
+                {
+                  "title": "Incremental episodic shipping",
+                  "description": "Ship a finished 3–5 minute scene, an 8–12 minute chapter, or a social promo immediately while downstream chapters continue rendering."
                 }
               ]
             }
           },
           {
             "icon": "screeningCollab",
-            "title": "Ukusebenzisana Okunembe Kohlaka",
-            "description": "Misa ukuthumela ama-imeyili ukusikeka okungalungile. Yabelana ngesixhumanisi sokuhlola esiyimfihlo lapho abahlanganyeli nabatshalizimali bebuka khona ngesikhathi sangempela bese uphonsa amanothi ngokuqondile esithombeni—ngezaziso ezisheshayo ezithunyelwa ngokuqondile ocingweni lwakho.",
-            "screenshot": "Ukubuyekeza okwabelwana ngakho",
+            "title": "Frame-Accurate Collaboration",
+            "description": "Stop exporting rough cuts to email. Share a private screening link where collaborators, sound editors, localization leads, and investors watch full-resolution playback in real time and drop timestamped notes directly on the picture—with instant notifications sent straight to your phone.",
+            "screenshot": "Shared review",
             "learnMore": {
               "items": [
                 {
-                  "title": "Izixhumanisi zokuhlola okuyimfihlo",
-                  "description": "Ababuyekezi babuka ukudlalwa kokulungiswa okugcwele futhi bashiye amanothi anesitembu sesikhathi esithombeni."
+                  "title": "Private stakeholder screening links",
+                  "description": "Reviewers watch full-resolution playback across any language stream and leave frame-accurate timestamped notes on the picture."
                 },
                 {
-                  "title": "Akukho ukuthunyelwa kwefayela elisikwe kabi",
-                  "description": "Qoqa impendulo yababambiqhaza endaweni eyodwa ngaphandle kokuposa amafayela evidiyo asindayo."
+                  "title": "Zero rough-cut file exports",
+                  "description": "Collect creative, legal, and localization feedback in one centralized review thread without uploading or mailing heavy video files."
                 },
                 {
-                  "title": "Izaziso zeselula ezisheshayo",
-                  "description": "Amanothi ombuyekezi amasha akwazisa ngokushesha ocingweni lwakho ngenkathi uqondisa kudeskithophu."
+                  "title": "Instant mobile notifications",
+                  "description": "New reviewer notes notify you immediately on your phone so you can approve or dispatch revisions while directing on desktop."
+                },
+                {
+                  "title": "Direct link back to the Shot Rail",
+                  "description": "Jump from any timestamped screening comment straight to the corresponding scene and shot in the Production Stage to execute the note."
                 }
               ]
             }

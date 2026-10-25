@@ -267,44 +267,52 @@
         "features": [
           {
             "icon": "newSeries",
-            "title": "Loạt phim mới",
-            "description": "Trình bày khái niệm chuỗi hoặc kênh của bạn bằng ngôn ngữ đơn giản. Tinh chỉnh AI tương tác sẽ làm sắc nét tiền đề của bạn và tạo ra đường cơ sở của phần nhiều tập—hoàn chỉnh với các cốt truyện tổng thể và phân tích các tập.",
-            "screenshot": "Tạo chuỗi mới — xác định ý định, làm rõ và xác nhận, tạo chuỗi",
+            "title": "New Series",
+            "description": "Pitch your series, anthology, or episodic channel concept in plain language. Interactive AI refinement sharpens your premise, target audience, and visual tone before generating a complete multi-episode season baseline—complete with overarching plot arcs, recurring character hooks, and episode-by-episode breakdowns.",
+            "screenshot": "Create New Series — intent, Clarify and Confirm, Generate Series",
             "learnMore": {
               "items": [
                 {
-                  "title": "Ý định của bạn",
-                  "description": "Trình bày tiền đề, định dạng, đối tượng mục tiêu và phong cách nghệ thuật thị giác bằng ngôn ngữ đơn giản."
+                  "title": "Plain-language series pitch",
+                  "description": "Pitch the premise, episode format, target demographic, and visual art style in plain language."
                 },
                 {
-                  "title": "Tinh chỉnh tương tác",
-                  "description": "Làm rõ và Xác nhận giúp bạn hiểu rõ hơn bản tóm tắt về phần trước khi tạo bất kỳ nội dung nào."
+                  "title": "Interactive Clarify & Confirm",
+                  "description": "Clarify and Confirm sharpens the season synopsis, tone, and thematic pillars with you before anything is generated."
                 },
                 {
-                  "title": "Đường cơ sở của mùa giải",
-                  "description": "Tạo chuỗi xây dựng phần theo mùa gồm năm tập mà bạn có thể mở rộng bất cứ lúc nào."
+                  "title": "Multi-episode season baseline",
+                  "description": "Generate Series builds a structured five-episode season arc with individual synopses and story hooks that you can expand anytime."
+                },
+                {
+                  "title": "World & genre calibration",
+                  "description": "Lock visual aesthetics, era settings, and recurring narrative motifs up front so every episode shares the same creative DNA."
                 }
               ]
             }
           },
           {
             "icon": "seriesReview",
-            "title": "Kinh thánh theo mùa & sự liên tục",
-            "description": "Đọc hoặc nghe phần tường thuật tổng quan và phần giới thiệu tập. SceneFlow khóa chuỗi câu chuyện, hồ sơ truyền hình, vị trí và đạo cụ chữ ký của bạn vào Reference Library được chia sẻ mà mỗi tập đều kế thừa.",
-            "screenshot": "Tổng quan, Các tập phim, Tính nhất quán, Tính liên tục — Dàn diễn viên, Địa điểm, Đạo cụ, Bối cảnh",
+            "title": "Season Bible & Continuity",
+            "description": "Read or listen to the narrated season overview and episode slate. SceneFlow locks your story threads, cast profiles, recurring locations, and signature props into a shared Reference Library that every episode inherits automatically—eliminating continuity drift across multi-part storytelling.",
+            "screenshot": "Overview Listen, Episodes Listen, Consistency, Continuity — Cast, Locations, Props, Settings",
             "learnMore": {
               "items": [
                 {
-                  "title": "Đọc hoặc nghe",
-                  "description": "Kiểm tra tổng quan về phần và tóm tắt từng tập bằng tường thuật âm thanh tích hợp."
+                  "title": "Narrated season & episode audit",
+                  "description": "Audit the overarching season overview and every individual episode synopsis with built-in studio audio narration."
                 },
                 {
-                  "title": "Tính nhất quán của câu chuyện",
-                  "description": "Tính thẩm mỹ, các sự kiện cốt truyện quan trọng và chủ đề tường thuật vẫn được giữ nguyên trong suốt mùa giải."
+                  "title": "Cross-episode story consistency",
+                  "description": "Visual aesthetics, canonical plot events, and character relationship threads stay locked across the entire season."
                 },
                 {
-                  "title": "Tính liên tục được chia sẻ",
-                  "description": "Diễn viên, địa điểm, đạo cụ và cài đặt sẽ tự động được đưa vào mỗi tập bạn sản xuất."
+                  "title": "Shared Reference Library inheritance",
+                  "description": "Cast portraits, voice profiles, wardrobes, locations, and signature props carry automatically into every episode you produce."
+                },
+                {
+                  "title": "Centralized canon management",
+                  "description": "Update a character look, location plate, or prop once in the Series Bible to propagate the change to future episodes."
                 }
               ]
             }
@@ -312,75 +320,87 @@
           {
             "icon": "seriesResonance",
             "title": "Audience Resonance",
-            "description": "Kiểm tra phần mùa của bạn dựa trên nhóm nhân khẩu học mục tiêu trước khi viết một tập lệnh. Xem lại điểm cộng hưởng theo từng tập và áp dụng các cải tiến cho câu chuyện dựa trên dữ liệu chỉ bằng một cú nhấp chuột—chỉ khi bạn đồng ý với ghi chú.",
-            "screenshot": "Phân tích Audience Resonance, tiếp theo là các thông tin chi tiết có thể hành động (Actionable Insights) – chưa được áp dụng.",
+            "description": "Test your season arc against your target demographic before writing a single script. Review episode-by-episode resonance scores, binge-retention curves, and structural critiques, then apply data-backed story improvements with one click—only when you agree with the note.",
+            "screenshot": "Audience Resonance analysis, then Actionable Insights, unapplied",
             "learnMore": {
               "items": [
                 {
-                  "title": "Tính điểm nhân khẩu học",
-                  "description": "Điểm số và phân tích cấu trúc cho biết mùa của bạn tiếp cận đối tượng mục tiêu như thế nào."
+                  "title": "Demographic & retention scoring",
+                  "description": "Multi-axis scores and structural analysis reveal how your season arc and episode cliffhangers land with your target audience."
                 },
                 {
-                  "title": "Đặc quyền của giám đốc",
-                  "description": "Thông tin chi tiết hữu ích chỉ cập nhật chuỗi của bạn khi bạn chọn áp dụng chúng."
+                  "title": "Episode-by-episode diagnostics",
+                  "description": "Spot mid-season pacing dips, character underutilization, or tonal drift across the full episode slate before scripting."
+                },
+                {
+                  "title": "Director's prerogative",
+                  "description": "Actionable Insights update your series bible and episode outlines only when you explicitly choose to apply them."
                 }
               ]
             }
           },
           {
             "icon": "seriesDirector",
-            "title": "Đạo diễn loạt phim",
-            "description": "Định hình lại toàn bộ mùa bằng giọng nói hoặc văn bản. Thay đổi giọng điệu, nâng cao mức độ đặt cược hoặc làm lại cốt truyện của nhân vật trong tất cả các tập cùng một lúc trong khi vẫn giữ nguyên phần còn lại của cốt truyện.",
-            "screenshot": "Đạo diễn loạt phim — định hướng, trọng tâm, chấp nhận",
+            "title": "The Series Director",
+            "description": "Reshape the entire season by voice or text. Shift the dramatic tone, raise the stakes, introduce a new antagonist, or rework a character arc across all episodes at once while keeping the rest of your storyline and continuity bible intact.",
+            "screenshot": "Series Director — direction, focus, accept",
             "learnMore": {
               "items": [
                 {
-                  "title": "Hướng ngôn ngữ đơn giản",
-                  "description": "Nói hoặc nhập ghi chú của bạn và nhắm mục tiêu cốt truyện, nhân vật, cung tập, giai điệu hoặc bối cảnh."
+                  "title": "Plain-language season direction",
+                  "description": "Speak or type your creative note and target overarching plot, characters, episode arcs, tone, or world setting."
                 },
                 {
-                  "title": "Cập nhật phẫu thuật",
-                  "description": "Không có gì thay đổi cho đến khi bạn chấp nhận bản sửa đổi và các chủ đề câu chuyện không liên quan vẫn được giữ nguyên."
+                  "title": "Surgical multi-episode updates",
+                  "description": "Nothing changes until you accept the previewed revision, and unrelated story threads stay completely untouched."
                 },
                 {
-                  "title": "Đề xuất có hướng dẫn",
-                  "description": "Áp dụng các cải tiến cho câu chuyện do AI đề xuất hoặc tự mình chỉ đạo mọi lựa chọn sáng tạo."
+                  "title": "Guided AI recommendations",
+                  "description": "Apply one-click story improvements surfaced by Audience Resonance or steer every creative choice yourself."
                 }
               ]
             }
           },
           {
             "icon": "directEpisode",
-            "title": "Hướng cấp tập",
-            "description": "Phóng to bất kỳ tập riêng lẻ nào để điều chỉnh lại cốt truyện, nhịp độ hoặc nội dung riêng biệt—mà không làm mất ổn định phần còn lại của phần của bạn.",
-            "screenshot": "Các tập — Đạo diễn tập này, các tập khác giữ nguyên",
+            "title": "Episode-Level Direction",
+            "description": "Zoom into any individual episode to rework its plot outline, act structure, pacing, or cold-open hook in isolation—without destabilizing neighboring episodes or mutating the rest of your season slate.",
+            "screenshot": "Episodes — Direct this episode, other episodes unchanged",
             "learnMore": {
               "items": [
                 {
-                  "title": "Viết lại riêng biệt",
-                  "description": "Thay đổi trực tiếp nội dung và nhịp điệu của một tập mà không làm thay đổi các tập lân cận."
+                  "title": "Isolated episode rewrites",
+                  "description": "Direct changes to a single episode's synopsis, act beats, and character focus without altering neighboring episodes."
                 },
                 {
-                  "title": "Tính toàn vẹn của mùa",
-                  "description": "Kinh thánh tổng quát của mùa và tập còn lại vẫn bị khóa."
+                  "title": "Locked season integrity",
+                  "description": "The overarching season bible, shared cast continuity, and remaining episode slate stay locked while you iterate."
+                },
+                {
+                  "title": "Pre-launch beat polishing",
+                  "description": "Refine individual episode hooks and cliffhangers until the episode is ready to launch into the Blueprint Room."
                 }
               ]
             }
           },
           {
             "icon": "startEpisode",
-            "title": "Khởi chạy tập bằng một cú nhấp chuột",
-            "description": "Khi dàn ý của một tập đã đạt đến mục tiêu, hãy đưa thẳng tập đó vào Blueprint Room với bản tóm tắt, nhịp câu chuyện, dàn diễn viên và thế giới đã được kết nối sẵn.",
-            "screenshot": "Bắt đầu dự án — dàn ý và danh sách diễn viên đã có sẵn trong tập phim",
+            "title": "One-Click Episode Launch",
+            "description": "When an episode's outline hits the mark, launch it straight into the Blueprint Room with a single click—bringing its synopsis, narrative beats, recurring cast, voice profiles, locations, and visual style automatically wired in.",
+            "screenshot": "Start Project — outline and cast already on the episode",
             "learnMore": {
               "items": [
                 {
-                  "title": "Bàn giao ngay lập tức",
-                  "description": "Khởi chạy bất kỳ tập nào trực tiếp vào Blueprint Room chỉ bằng một cú nhấp chuột."
+                  "title": "Instant Blueprint handoff",
+                  "description": "Launch any approved episode directly into the Blueprint Room with a single click to begin detailed beat and script work."
                 },
                 {
-                  "title": "DNA nối sẵn",
-                  "description": "Phác thảo tập, tóm tắt, nhịp câu chuyện, dàn diễn viên và địa điểm sẽ tự động di chuyển."
+                  "title": "Pre-wired creative DNA",
+                  "description": "The episode outline, synopsis, story beats, cast profiles, wardrobes, and locations travel automatically with zero re-entry."
+                },
+                {
+                  "title": "Parallel episode production",
+                  "description": "Spin up multiple episodes from the same season slate as independent projects that share the same canonical series assets."
                 }
               ]
             }
@@ -395,84 +415,92 @@
         "features": [
           {
             "icon": "startBlueprint",
-            "title": "Bắt đầu Blueprint",
-            "description": "Đưa vào một tập từ danh sách loạt phim của bạn với dàn ý và dàn diễn viên được tải sẵn hoặc đưa ra một ý tưởng phim hoàn toàn mới từ đầu và để AI sắp xếp cách xử lý nền tảng.",
-            "screenshot": "Đã biết tập phim trong series, hoặc Bắt đầu dự án — xác định ý định, Xác thực & Cải thiện bằng AI, Tạo Blueprint",
+            "title": "Start the Blueprint",
+            "description": "Bring in an episode from your series slate with its outline, cast, and world pre-loaded, or pitch a brand-new standalone film concept from scratch and let AI validate, enhance, and structure the foundational treatment.",
+            "screenshot": "Series episode already known, or Start Your Project — intent, Validate & Enhance with AI, Generate Blueprint",
             "learnMore": {
               "items": [
                 {
-                  "title": "Từ Series Room",
-                  "description": "Các tập của loạt phim đều có dàn ý, tóm tắt, nhịp điệu và dàn diễn viên đã được đính kèm."
+                  "title": "Seamless from Series Room",
+                  "description": "Series episodes arrive with their outline, synopsis, story beats, recurring cast, and locations already attached."
                 },
                 {
-                  "title": "Dự án độc lập",
-                  "description": "Đưa ra ý tưởng phim mới, tinh chỉnh nó bằng xác thực AI và tạo ra phương pháp xử lý hoàn chỉnh."
+                  "title": "Standalone film or short",
+                  "description": "Pitch a new film concept in plain language, refine it with AI validation, and generate a complete film treatment."
+                },
+                {
+                  "title": "Narrated treatment overview",
+                  "description": "Read or listen to the narrated logline, synopsis, and creative reasoning to verify the story foundation immediately."
                 }
               ]
             }
           },
           {
             "icon": "treatment",
-            "title": "Bản beat",
-            "description": "Cấu trúc cốt lõi của bộ phim của bạn. Đọc hoặc nghe bản beat tường thuật của bạn và tinh chỉnh nhịp độ tại đây—mỗi nhịp bạn khóa trong Blueprint Room sẽ thúc đẩy một chương trong SFAIPRODION_STAGETERM.",
-            "screenshot": "Tab Beats, cùng mục Nghe",
+            "title": "The Beat Sheet",
+            "description": "Structure the dramatic spine of your film before dialogue is written. Read or listen to your narrative beat sheet, reorder acts, and fine-tune scene pacing here—every beat you lock in the Blueprint Room drives a dedicated chapter in the Production Stage.",
+            "screenshot": "Beats tab, with Listen",
             "learnMore": {
               "items": [
                 {
-                  "title": "Cột sống kể chuyện",
-                  "description": "Các nhịp được tạo và khóa trong Blueprint Room trước khi bắt đầu tạo tập lệnh."
+                  "title": "Narrative spine",
+                  "description": "Beats are authored and locked in the Blueprint Room before script generation begins."
                 },
                 {
-                  "title": "Nhịp độ đầu tiên",
-                  "description": "Việc tối ưu hóa bảng nhịp ở đây đảm bảo xây dựng kịch bản với cấu trúc kịch tính chặt chẽ."
+                  "title": "Pacing & structural discipline",
+                  "description": "Optimizing the beat sheet here ensures the multi-scene screenplay builds with tight dramatic structure and clear turning points."
                 },
                 {
-                  "title": "Ánh xạ theo từng chương",
-                  "description": "Production Stage biến mỗi nhịp điệu thành một chương."
+                  "title": "Beat-to-chapter mapping",
+                  "description": "Production Stage turns each beat into a chapter."
+                },
+                {
+                  "title": "Narrated beat audition",
+                  "description": "Listen to the beat sheet read aloud to feel the rhythm and momentum of the story before compiling the script."
                 }
               ]
             }
           },
           {
             "icon": "castLocations",
-            "title": "Thiết kế diễn viên & thế giới",
-            "description": "Xác định nhân vật, tủ quần áo và địa điểm chính của bạn trước khi tạo kịch bản—đảm bảo kịch bản được viết xoay quanh dàn diễn viên và cài đặt chính xác của bạn từ trang một.",
-            "screenshot": "Tab Nhân vật, sau đó là mục Bối cảnh trong phần Cốt truyện.",
+            "title": "Cast & World Design",
+            "description": "Define your characters, vocal identities, period wardrobes, and primary locations before the screenplay is generated—ensuring the script is written around your exact cast, blocking environments, and visual atmosphere from page one.",
+            "screenshot": "Characters tab, then Setting on Story",
             "learnMore": {
               "items": [
                 {
-                  "title": "Hồ sơ nhân vật",
-                  "description": "Hướng hồ sơ diễn viên của bạn lên phía trước để lời thoại và cách chặn phù hợp với từng nhân vật."
+                  "title": "Rich character profiles",
+                  "description": "Direct your cast profiles, backstories, and physical attributes up front so dialogue and blocking match each character."
                 },
                 {
-                  "title": "Thế giới & địa điểm",
-                  "description": "Thiết lập cài đặt chính trên tab Câu chuyện để cố định môi trường của mọi cảnh."
+                  "title": "World, era & locations",
+                  "description": "Establish primary settings, lighting palettes, and cinematic style on the Story tab to anchor every scene's environment."
                 },
                 {
-                  "title": "Tái cấu trúc tập lệnh bằng không",
-                  "description": "Khóa diễn viên và vị trí trước khi tạo tập lệnh giúp loại bỏ việc viết lại tốn kém trên SFAIPRODION_STAGETERM."
+                  "title": "Zero script refactoring",
+                  "description": "Locking cast and locations before script generation eliminates costly rewrites and continuity mismatches on the Production Stage."
                 }
               ]
             }
           },
           {
             "icon": "blueprintDirector",
-            "title": "Giám đốc Blueprint",
-            "description": "Nói hoặc nhập ghi chú câu chuyện của bạn để sửa lại nhịp điệu, nhân vật hoặc chi tiết thế giới. Xem trước bản sửa đổi cân bằng cạnh nhau—không có gì thay đổi trong cách xử lý của bạn cho đến khi bạn chấp thuận việc cắt giảm.",
-            "screenshot": "Giám đốc Blueprint — định hướng, trọng tâm, xem trước, Áp dụng bản sửa đổi",
+            "title": "The Blueprint Director",
+            "description": "Speak or type your story notes to revise beats, character motivations, or world details without prompt engineering. Preview a balanced revision side-by-side with creative reasoning—nothing changes in your treatment until you approve the cut.",
+            "screenshot": "Blueprint Director — direction, focus, preview, Apply revision",
             "learnMore": {
               "items": [
                 {
-                  "title": "Ghi chú được nhắm mục tiêu",
-                  "description": "Nói hoặc nhập hướng dẫn của bạn và tập trung sửa đổi vào Nhịp điệu, Nhân vật hoặc Câu chuyện."
+                  "title": "Targeted voice or text notes",
+                  "description": "Speak or type your direction and focus the revision surgically on Beats, Characters, or Story."
                 },
                 {
-                  "title": "Xem trước song song",
-                  "description": "Xem lại bản sửa đổi cân bằng trước khi thực hiện bất kỳ thay đổi nào đối với Blueprint của bạn."
+                  "title": "Side-by-side revision preview",
+                  "description": "Review a balanced revision and its underlying story reasoning before committing any changes to your Blueprint."
                 },
                 {
-                  "title": "Bạn giữ ổ khóa",
-                  "description": "Không có gì thay đổi trong cách điều trị của bạn cho đến khi bạn áp dụng bản sửa đổi một cách rõ ràng."
+                  "title": "You hold the creative lock",
+                  "description": "Nothing in your treatment, beat sheet, or character roster changes until you explicitly apply the revision."
                 }
               ]
             }
@@ -480,35 +508,43 @@
           {
             "icon": "blueprintResonance",
             "title": "Audience Resonance",
-            "description": "Cho điểm cách điều trị của bạn dựa trên hồ sơ văn hóa và nhân khẩu học của đối tượng mục tiêu. Hãy sớm nắm bắt những khoảng trống về nhịp độ mang tính cấu trúc và áp dụng các đề xuất có mục tiêu trong Giám đốc Blueprint.",
-            "screenshot": "Audience Resonance — đối tượng đã lưu, điểm số, các đề xuất chưa được áp dụng",
+            "description": "Score your treatment against your target audience's cultural, genre, and demographic profile before generating the script. Catch structural pacing gaps or weak character stakes early and apply targeted recommendations in the Blueprint Director.",
+            "screenshot": "Audience Resonance — saved audience, scores, recommendations unapplied",
             "learnMore": {
               "items": [
                 {
-                  "title": "Xác thực trước tập lệnh",
-                  "description": "Phân tích cách xử lý của bạn đối với đối tượng mục tiêu để xem điểm danh mục và ghi chú câu chuyện."
+                  "title": "Pre-script audience validation",
+                  "description": "Analyze your treatment against your saved target audience to inspect category scores, strengths, and story risks."
                 },
                 {
-                  "title": "Ứng dụng có chọn lọc",
-                  "description": "Các đề xuất chỉ sửa đổi Blueprint của bạn khi bạn chọn áp dụng chúng."
+                  "title": "Actionable story remedies",
+                  "description": "Each insight pairs a structural diagnosis with a concrete rewrite recommendation tailored to your beat sheet and cast."
+                },
+                {
+                  "title": "Selective one-click application",
+                  "description": "Recommendations only modify your Blueprint when you choose to apply them in the Blueprint Director."
                 }
               ]
             }
           },
           {
             "icon": "goToProduction",
-            "title": "Bật đèn xanh cho sản xuất",
-            "description": "Khi quá trình xử lý, khuôn đánh và bột bó đã bị khóa, hãy bước lên SFAIPRODION_STAGETERM. SceneFlow biên dịch tập lệnh nhiều chương đầy đủ của bạn trực tiếp từ Blueprint đã được phê duyệt của bạn.",
-            "screenshot": "Chuyển sang Production Stage — cốt truyện, các điểm nhấn chính và dàn diễn viên đã được ấn định.",
+            "title": "Greenlight to Production",
+            "description": "When the treatment, beat sheet, and cast are locked, step onto the Production Stage. SceneFlow compiles your full multi-chapter screenplay directly from your approved Blueprint—mapping every beat into a production chapter with cast and continuity pre-wired.",
+            "screenshot": "Go to Production Stage — storyline, beats, and cast already set",
             "learnMore": {
               "items": [
                 {
-                  "title": "Biên soạn liền mạch",
-                  "description": "Bước lên SFAIPRODION_STAGETERM sẽ biên dịch toàn bộ tập lệnh trực tiếp từ Blueprint đã được phê duyệt của bạn."
+                  "title": "Seamless script compilation",
+                  "description": "Stepping onto the Production Stage compiles the full multi-scene screenplay directly from your approved Blueprint."
                 },
                 {
-                  "title": "Nền móng bị khóa",
-                  "description": "Cốt truyện, cấu trúc nhịp điệu và dàn diễn viên của bạn đã sẵn sàng cho cảnh quay và chỉ đạo quay."
+                  "title": "Locked continuity foundation",
+                  "description": "Your storyline, beat-to-chapter structure, cast profiles, and locations arrive ready for scene and shot direction."
+                },
+                {
+                  "title": "Shareable Blueprint review",
+                  "description": "Share the locked Blueprint with co-creators or executive stakeholders for sign-off before commencing production."
                 }
               ]
             }
@@ -522,105 +558,151 @@
         "promise": "Blueprint đã bị khóa. Dàn diễn viên của bạn đã được chọn. Bây giờ, hãy bước lên SFAIPRODION_STAGETERM. Mỗi chương, cảnh và cảnh quay được tổ chức thành một quy trình làm việc tuyến tính. Bạn chỉ đạo ý định; tác nhân thông minh thực hiện thế hệ.",
         "groups": [
           {
-            "id": "script",
+            "id": "direct-control",
             "label": "Trực tiếp & Kiểm soát",
             "headline": "Nói ngôn ngữ của phim chứ không phải cú pháp của lời nhắc.",
             "description": "Đừng lãng phí thời gian gõ các từ khóa trong ngoặc. SFAIPRODION_STAGETERM hiểu hướng tự nhiên, áp dụng tầm nhìn của bạn trên toàn bộ khung cảnh hoặc cho từng cảnh quay cụ thể.",
             "features": [
               {
-                "icon": "scriptResonance",
-                "title": "Đạo diễn Cảnh quay",
-                "description": "Nhập hoặc nói hướng dẫn của bạn bằng ngôn ngữ đơn giản. Cho người đại diện biết ai đang ở trong khung hình, camera di chuyển ở đâu và nhịp điệu cảm xúc là gì. Giám đốc cảnh quay tự động viết các lời nhắc cơ bản phức tạp cho ảnh tĩnh và clip của bạn.",
-                "screenshot": "The Scene & Shot Director — chỉ đạo bằng ngôn ngữ đơn giản cho ảnh tĩnh và clip",
+                "icon": "sceneWorkflow",
+                "title": "Scene Production Workflow (Fullscreen)",
+                "description": "Open the dedicated Fullscreen Scene Production Studio to direct every stage of a scene from one unified 8-tab command bar (`Direction · Audio · Music · Continuity · Stills · Clips · Mixer · Streams`). Reorder shots in the left-hand Shot Rail with live readiness badges, inspect the 16:9 Still & Clip Stage alongside structured camera, blocking, emotion, and lighting cards, and track end-to-end scene completion without losing context.",
+                "screenshot": "Scene Production Workflow (Fullscreen) — 8-tab linear studio, sortable Shot Rail, and structured Shot Direction Workbench",
                 "learnMore": {
                   "items": [
                     {
-                      "title": "Ngôn ngữ đơn giản",
-                      "description": "Nhập hoặc nói ai đang ở trong khung hình, vị trí camera di chuyển và nhịp điệu cảm xúc là gì."
+                      "title": "8-tab fullscreen linear studio",
+                      "description": "Move seamlessly across Direction, Audio, Music, Continuity, Stills, Clips, Mixer, and Streams inside a distraction-free fullscreen workspace."
                     },
                     {
-                      "title": "Cảnh hoặc cảnh quay",
-                      "description": "Áp dụng tầm nhìn của bạn trên toàn bộ khung cảnh hoặc cho từng cảnh quay cụ thể."
+                      "title": "Sortable Shot Rail & live badges",
+                      "description": "Drag to reorder shots in the left-hand rail while tracking real-time badges for Action, Dialogue, Narration, SFX, Music, Signage, Final 4K stills, and clips In the Can."
                     },
                     {
-                      "title": "Biên soạn nhanh chóng",
-                      "description": "Giám đốc Cảnh quay tự động viết các lời nhắc cơ bản cho ảnh tĩnh và clip của bạn."
-                    }
-                  ]
-                }
-              },
-              {
-                "icon": "castVisual",
-                "title": "Thư viện liên tục",
-                "description": "Tính nhất quán tuyệt đối trong suốt bộ truyện. Tự động tạo hoặc gán hình ảnh tham chiếu theo cách thủ công cho dàn diễn viên, tủ quần áo, địa điểm và đạo cụ thiết yếu của bạn để đảm bảo mọi cảnh quay đều khớp với Blueprint.",
-                "screenshot": "Thư viện liên tục - dàn diễn viên, tủ quần áo, địa điểm và đạo cụ thiết yếu",
-                "learnMore": {
-                  "items": [
-                    {
-                      "title": "Tính nhất quán của chuỗi",
-                      "description": "Giữ dàn diễn viên, tủ quần áo, địa điểm và các đạo cụ thiết yếu được thống nhất trong mỗi cảnh quay."
+                      "title": "Structured Shot Direction Workbench",
+                      "description": "Inspect the 16:9 Still & Clip Stage beside structured cards for spoken beats, camera lens and motion, talent blocking and gaze, lighting, locked continuity refs, and compiled prompts."
                     },
                     {
-                      "title": "Tạo hoặc gán",
-                      "description": "Tự động tạo hình ảnh tham chiếu hoặc gán hình ảnh của riêng bạn theo cách thủ công để khớp với Blueprint."
+                      "title": "End-to-end scene pipeline telemetry",
+                      "description": "Monitor readiness across direction, voice and score, keyframes, multi-take clips, broadcast mixing, and localized streams before publishing."
                     }
                   ]
                 }
               },
               {
                 "icon": "directShot",
-                "title": "Tích hợp Audience Resonance",
-                "description": "Đọc thông tin về phòng trước khi bạn kết xuất. AI phân tích kịch bản của bạn dựa trên đối tượng mục tiêu, cung cấp thông tin chi tiết theo từng cảnh. Áp dụng các hướng dẫn được đề xuất ngay lập tức hoặc tin vào trực giác của bạn và bỏ qua chúng.",
-                "screenshot": "Tích hợp Audience Resonance — thông tin chi tiết về khán giả theo từng cảnh",
+                "title": "The Scene & Shot Director",
+                "description": "Type or speak your direction in plain language. Tell the agent who is in the frame, where the camera moves, and what the emotional beat is. The Shot Director automatically writes the complex underlying prompts for your stills and clips while syncing camera lens, focal length, talent blocking, and lighting across the scene.",
+                "screenshot": "The Scene & Shot Director — plain-language direction for stills and clips",
                 "learnMore": {
                   "items": [
                     {
-                      "title": "Thông tin chi tiết theo từng cảnh",
-                      "description": "AI phân tích tập lệnh của bạn dựa trên đối tượng mục tiêu trước khi bạn kết xuất."
+                      "title": "Plain-language film direction",
+                      "description": "Type or speak who is in the frame, where the camera moves, and what the emotional beat is without writing bracketed prompt syntax."
                     },
                     {
-                      "title": "Cuộc gọi của bạn",
-                      "description": "Áp dụng các hướng dẫn được đề xuất ngay lập tức hoặc tin vào trực giác của bạn và bỏ qua chúng."
-                    }
-                  ]
-                }
-              },
-              {
-                "icon": "audioAgent",
-                "title": "Người lập kế hoạch sản xuất",
-                "description": "Thiết lập việc tạo ngân sách và lịch trình cho mọi cảnh và chương bằng cách sử dụng tín dụng SceneFlow hoặc khóa API BYOK của riêng bạn. Đặt mục tiêu tĩnh và cắt cho mỗi lần chụp trước khi bạn sử dụng tính toán.",
-                "screenshot": "Công cụ lập kế hoạch sản xuất - ngân sách, lịch trình và khóa API BYOK",
-                "learnMore": {
-                  "items": [
-                    {
-                      "title": "Ngân sách và lịch trình",
-                      "description": "Thiết lập ngân sách và lịch trình tạo cho mỗi cảnh và chương trước khi bạn kết xuất."
+                      "title": "Scene-wide or per-shot precision",
+                      "description": "Apply atmospheric direction across the entire scene or drill down into an individual shot's framing, lens, blocking, and lighting."
                     },
                     {
-                      "title": "Tín dụng hoặc BYOK",
-                      "description": "Chạy quá trình tạo bằng cách sử dụng tín dụng SceneFlow hoặc khóa API BYOK của riêng bạn."
+                      "title": "Automatic prompt compilation",
+                      "description": "The Shot Director automatically writes and syncs the underlying keyframe and motion prompts for your stills and clips."
+                    },
+                    {
+                      "title": "Intelligent Assistant Director (IAD)",
+                      "description": "Request surgical revisions to camera angles, character posture, or scene tension in plain language while keeping unrelated beats untouched."
                     }
                   ]
                 }
               },
               {
                 "icon": "continuity",
-                "title": "Kịch bản sản xuất",
-                "description": "Được xây dựng cho cả các nhà làm phim truyền thống và AI. Xem trước kịch bản rõ ràng, được định dạng trong studio và xuất ở định dạng tiêu chuẩn ngành (PDF, FDX, Fountain). Sử dụng SceneFlow làm phòng viết kịch bản độc lập—hoặc ghép nối kịch bản của bạn với Pre-Vis Animatic và Đoạn giới thiệu quảng cáo để thuyết phục các nhà tài trợ và đảm bảo nguồn tài trợ cho dự án.",
-                "screenshot": "Tập lệnh sản xuất - xem trước trong nền tảng và xuất PDF, FDX và Fountain",
+                "title": "The Continuity Library",
+                "description": "Absolute visual and vocal consistency across your entire film or series. Automatically generate or manually assign locked reference portraits, multi-angle turnaround sheets, scene-specific wardrobes, locations, and essential props—ensuring every shot matches the Blueprint without character drift.",
+                "screenshot": "The Continuity Library — cast, wardrobes, locations, and essential props",
                 "learnMore": {
                   "items": [
                     {
-                      "title": "Xem trước và xuất trong nền tảng",
-                      "description": "Xem trước tập lệnh được định dạng trong studio và xuất ở định dạng PDF, Bản nháp cuối cùng hoặc Fountain tiêu chuẩn ngành."
+                      "title": "Cast identity & turnaround locks",
+                      "description": "Anchor every character with diptych portraits, turnaround sheets, and locked voice profiles across every shot and episode."
                     },
                     {
-                      "title": "Đối với các nhà làm phim truyền thống",
-                      "description": "Sử dụng SceneFlow làm nền tảng sản xuất tập lệnh thông minh mà không cần tạo video."
+                      "title": "Scene-specific wardrobes & props",
+                      "description": "Assign period or scene-specific wardrobes and essential hero props per shot so costumes and hand-held items stay unified."
                     },
                     {
-                      "title": "Quảng cáo chiêu hàng & tài trợ dự án",
-                      "description": "Đóng gói tập lệnh của bạn với Animatic Pre-Vis và Đoạn giới thiệu quảng cáo để giới thiệu và nhận tài trợ cho dự án."
+                      "title": "Generate, upload, or surgically edit",
+                      "description": "Automatically generate reference images, upload custom studio plates, or refine details with the Intelligent Assistant Director."
+                    },
+                    {
+                      "title": "Continuity readiness gate",
+                      "description": "Verify that all cast, wardrobe, location, and prop anchors are locked in the Continuity tab before generating scene keyframes."
+                    }
+                  ]
+                }
+              },
+              {
+                "icon": "scriptResonance",
+                "title": "Audience Resonance Integration",
+                "description": "Get a read on the room before you render. AI analyzes your script against your target audience, providing scene-by-scene insights, pacing diagnostics, and dialogue tension scores. Apply recommended directions instantly, or trust your gut and ignore them.",
+                "screenshot": "Audience Resonance Integration — scene-by-scene audience insights",
+                "learnMore": {
+                  "items": [
+                    {
+                      "title": "Scene-by-scene audience insights",
+                      "description": "AI analyzes your script against your target audience before you render to surface pacing, tension, and engagement scores."
+                    },
+                    {
+                      "title": "Narrated critique & recommendations",
+                      "description": "Listen to the narrated analysis and inspect targeted scene-level rewrite recommendations backed by demographic reasoning."
+                    },
+                    {
+                      "title": "Your creative call",
+                      "description": "Apply recommended directions instantly with one click, or trust your gut and ignore them."
+                    }
+                  ]
+                }
+              },
+              {
+                "icon": "budget",
+                "title": "Production Planner",
+                "description": "Establish the budget and schedule generation across every scene and chapter using SceneFlow credits or your own BYOK API keys. Set still and clip targets per shot, toggle between Draft and Final resolution tiers, and forecast compute spend before you render.",
+                "screenshot": "Production Planner — budget, schedule, and BYOK API keys",
+                "learnMore": {
+                  "items": [
+                    {
+                      "title": "Budget and schedule forecasting",
+                      "description": "Establish the budget and schedule generation across every scene and chapter with transparent per-shot credit estimates before you render."
+                    },
+                    {
+                      "title": "SceneFlow credits or BYOK keys",
+                      "description": "Run generation using included SceneFlow credits or connect your own Vertex AI, OpenAI, and ElevenLabs BYOK API keys."
+                    },
+                    {
+                      "title": "Draft-to-Final tier scheduling",
+                      "description": "Schedule rapid Draft passes for animatic pre-visualization and reserve Final 4K still and FHD video compute for locked cuts."
+                    }
+                  ]
+                }
+              },
+              {
+                "icon": "productionScript",
+                "title": "Production Script",
+                "description": "Built for traditional and AI filmmakers alike. Preview a clean, formatted screenplay in-studio and export in industry-standard formats (PDF, FDX, Fountain). Use SceneFlow as a standalone script room—or pair your screenplay with a Pre-Vis Animatic and Promo Trailer to pitch financiers and secure project funding.",
+                "screenshot": "Production Script — in-platform preview and PDF, FDX, and Fountain export",
+                "learnMore": {
+                  "items": [
+                    {
+                      "title": "In-platform preview & export",
+                      "description": "Preview the formatted script in the studio and export in industry-standard PDF, Final Draft FDX, or Fountain format."
+                    },
+                    {
+                      "title": "For traditional filmmakers",
+                      "description": "Use SceneFlow as an intelligent script production platform without generating video."
+                    },
+                    {
+                      "title": "Pitch & project funding",
+                      "description": "Package your script with a Pre-Vis Animatic and Promo Trailers to pitch and acquire project funding."
                     }
                   ]
                 }
@@ -628,79 +710,173 @@
             ]
           },
           {
-            "id": "video",
+            "id": "generate-audit",
             "label": "Tạo & Kiểm tra",
             "headline": "Chứng minh việc cắt giảm trước khi bạn thực hiện tính toán.",
             "description": "Đừng đoán xem một cảnh sẽ diễn ra như thế nào. SceneFlow tách âm thanh và tạo ảnh tĩnh khỏi kết xuất chuyển động đắt tiền, cho phép bạn kiểm tra nhịp điệu của bản chỉnh sửa trước.",
             "features": [
               {
+                "icon": "audioAgent",
+                "title": "The Audio Agent",
+                "description": "Generate expressive character dialogue, narrator voiceover, action sound effects, and musical scores concurrently across up to 30 shots per scene. Cast voices automatically match character profiles from your Continuity Library or can be custom-tuned per beat.",
+                "screenshot": "The Audio Agent — concurrent dialogue, sound effects, and music scores",
+                "learnMore": {
+                  "items": [
+                    {
+                      "title": "Concurrent multi-track audio",
+                      "description": "Generate dialogue, narration, sound effects, and music scores concurrently across up to 30 shots per scene."
+                    },
+                    {
+                      "title": "Locked character voice casting",
+                      "description": "Cast voices automatically match character profiles from your Reference Library or can be custom-tuned for timbre and cadence."
+                    },
+                    {
+                      "title": "Batch scene or single-shot runs",
+                      "description": "Run the Audio Agent across the entire scene in one pass or regenerate individual dialogue and SFX beats on demand."
+                    }
+                  ]
+                }
+              },
+              {
+                "icon": "musicScore",
+                "title": "Dialogue, SFX & Musical Score Workbench",
+                "description": "Open the Fullscreen `Audio` and `Music` tabs to direct every sonic layer of your scene. Shape vocal performances with emotional delivery tags (`[obsessive, muttered]`) and Hi-Fi Studio quality, extract embedded audio directly from video clips, dial in SFX duration presets (`Auto`, `Short 3s`, `Medium 8s`, `Long 15s`), and compose multi-shot Lyria musical score cues with custom intro fades.",
+                "screenshot": "Dialogue, SFX & Musical Score Workbench — Fullscreen Audio & Music tabs with score cues, voice casting, and SFX duration presets",
+                "learnMore": {
+                  "items": [
+                    {
+                      "title": "Multi-shot musical score cues",
+                      "description": "Compose custom Lyria musical score cues that span specific shot ranges with configurable intro fades and auto-ducking metadata."
+                    },
+                    {
+                      "title": "Performance Director & delivery tags",
+                      "description": "Direct spoken dialogue with bracketed emotional delivery tags, Hi-Fi Studio synthesis, and per-shot voice casting."
+                    },
+                    {
+                      "title": "Precision SFX duration presets",
+                      "description": "Time action sound effects to your shot choreography using Auto, Short 3s, Medium 8s, or Long 15s duration presets."
+                    },
+                    {
+                      "title": "Extract audio from video clips",
+                      "description": "Pull embedded audio directly from generated motion clips to preserve native on-camera speech or ambient foley."
+                    }
+                  ]
+                }
+              },
+              {
+                "icon": "stillsAgent",
+                "title": "The Stills Agent",
+                "description": "Rapidly batch-generate the high-resolution keyframe images that illustrate your shot direction across the scene. Regenerate, edit, or upload your own references to lock the composition, lighting, and character blocking before committing to video.",
+                "screenshot": "The Stills Agent — keyframe composition and references",
+                "learnMore": {
+                  "items": [
+                    {
+                      "title": "Batch keyframe generation",
+                      "description": "Rapidly generate the keyframe images that illustrate your shot direction across every shot in the scene."
+                    },
+                    {
+                      "title": "Automatic continuity anchoring",
+                      "description": "Every generated frame incorporates your locked cast portraits, scene wardrobes, locations, and hero props automatically."
+                    },
+                    {
+                      "title": "Lock composition before motion",
+                      "description": "Regenerate, edit, or upload your own references before committing compute to full motion video rendering."
+                    }
+                  ]
+                }
+              },
+              {
+                "icon": "stillsWorkbench",
+                "title": "Fullscreen Stills & Keyframe Studio",
+                "description": "Step into the Fullscreen `Stills` workbench for precision keyframe control. Pair Start and End keyframes for Frame-to-Video (`F2V`) motion bridging, switch between `Draft` and `Final 4K` resolution or `Standard` and `Creative` synthesis modes, customize Pre-Vis Ken Burns camera motion, and perform surgical plain-language frame edits with the Intelligent Assistant Director (`IAD`).",
+                "screenshot": "Fullscreen Stills & Keyframe Studio — F2V Start & End keyframe pairing, Final 4K controls, and surgical IAD editing",
+                "learnMore": {
+                  "items": [
+                    {
+                      "title": "Frame-to-Video (F2V) Start & End pairing",
+                      "description": "Pair a locked Start Frame and End Frame Target on any shot to anchor exact camera movement and subject blocking during video generation."
+                    },
+                    {
+                      "title": "Surgical IAD keyframe editing",
+                      "description": "Edit specific props, chalkboard text, wardrobe details, or lighting in plain language while keeping the rest of the keyframe locked."
+                    },
+                    {
+                      "title": "Draft vs Final 4K & Creative modes",
+                      "description": "Toggle between rapid Draft previews and Final 4K resolution, plus Standard or Creative synthesis modes per shot."
+                    },
+                    {
+                      "title": "Pre-Vis Ken Burns motion framing",
+                      "description": "Customize zoom and pan trajectories on every still so your Pre-Vis Animatic previews intentional camera motion."
+                    }
+                  ]
+                }
+              },
+              {
+                "icon": "animatic",
+                "title": "The Pre-Vis Animatic",
+                "description": "Watch the scene breathe. Review a fully assembled animatic—stitched stills, Ken Burns motion, and locked audio—in the Screening Room. Audit the pacing, share for feedback, and ensure the cut works before committing to video.",
+                "screenshot": "The Pre-Vis Animatic — stitched stills, Ken Burns motion, and locked audio",
+                "learnMore": {
+                  "items": [
+                    {
+                      "title": "Assembled multi-track animatic",
+                      "description": "Review stitched stills, Ken Burns motion, and locked dialogue, SFX, and musical score in the Screening Room."
+                    },
+                    {
+                      "title": "Prove pacing before video spend",
+                      "description": "Audit the dramatic rhythm, spot timing gaps, and refine shot lengths while iterations cost pennies instead of full video compute."
+                    },
+                    {
+                      "title": "Share for stakeholder sign-off",
+                      "description": "Audit the pacing, share for feedback, and ensure the cut works before committing to video."
+                    }
+                  ]
+                }
+              },
+              {
                 "icon": "videoAgent",
-                "title": "Audio Agent",
-                "description": "Tạo đồng thời đoạn hội thoại, hiệu ứng âm thanh và bản nhạc trong tối đa 30 cảnh quay mỗi cảnh. Giọng nói truyền tự động khớp với hồ sơ nhân vật hoặc có thể được điều chỉnh tùy chỉnh.",
-                "screenshot": "Audio Agent — hội thoại đồng thời, hiệu ứng âm thanh và điểm âm nhạc",
+                "title": "The Clips Agent",
+                "description": "Once the Pre-Vis is approved, the Clips Agent takes over, rendering high-fidelity motion clips that adhere strictly to your approved stills, Frame-to-Video start and end anchors, and continuity references—backed by automated safety pre-flight checks.",
+                "screenshot": "The Clips Agent — high-fidelity motion clips from approved stills",
                 "learnMore": {
                   "items": [
                     {
-                      "title": "Âm thanh đồng thời",
-                      "description": "Tạo đồng thời đoạn hội thoại, hiệu ứng âm thanh và bản nhạc trong tối đa 30 cảnh quay mỗi cảnh."
+                      "title": "Triggered after Pre-Vis approval",
+                      "description": "The Clips Agent renders motion only after the Pre-Vis animatic and shot timings are approved."
                     },
                     {
-                      "title": "Giọng nói nhân vật",
-                      "description": "Giọng nói truyền tự động khớp với hồ sơ nhân vật hoặc có thể được điều chỉnh tùy chỉnh."
+                      "title": "Strict keyframe & F2V adherence",
+                      "description": "High-fidelity motion clips adhere strictly to your approved Start and End stills and continuity references."
+                    },
+                    {
+                      "title": "Automated safety pre-flight",
+                      "description": "Pre-flight prompt sanitation prevents false-positive safety rejections on dramatic action beats so clips render reliably."
                     }
                   ]
                 }
               },
               {
-                "icon": "mixer",
-                "title": "Stills Agent",
-                "description": "Tạo nhanh các hình ảnh khung hình chính minh họa hướng quay của bạn. Tạo lại, chỉnh sửa hoặc tải lên các tài liệu tham khảo của riêng bạn để khóa bố cục.",
-                "screenshot": "Stills Agent - thành phần và tham chiếu khung hình chính",
+                "icon": "clipsWorkbench",
+                "title": "Multi-Take Clips & Retake Studio",
+                "description": "Direct and curate every motion render inside the Fullscreen `Clips` studio. Audition unlimited takes in the non-destructive Multi-Take Vault (`Take 1 / Take 2 / Take 3`), filter your shot rail by `In the Can` readiness, trigger targeted IAD Smart Retakes, and manage per-stream localized video takes for dialogue and signage shots.",
+                "screenshot": "Multi-Take Clips & Retake Studio — non-destructive Take 1/2/3 vault, IAD Smart Retake, and localized stream takes",
                 "learnMore": {
                   "items": [
                     {
-                      "title": "Tạo khung hình chính",
-                      "description": "Tạo nhanh các hình ảnh khung hình chính minh họa hướng quay của bạn."
+                      "title": "Non-destructive Multi-Take Vault",
+                      "description": "Every motion render is preserved in the shot vault so you can compare Take 1, Take 2, and Take 3 and promote your favorite take live."
                     },
                     {
-                      "title": "Khóa bố cục",
-                      "description": "Tạo lại, chỉnh sửa hoặc tải lên các tài liệu tham khảo của riêng bạn trước khi bắt đầu chuyển động."
-                    }
-                  ]
-                }
-              },
-              {
-                "icon": "languageStreams",
-                "title": "ĐIỀU KHOẢN Animatic trước Vis",
-                "description": "Xem cảnh thở. Xem lại hoạt ảnh đã được lắp ráp hoàn chỉnh—các ảnh tĩnh được khâu, chuyển động của Ken Burns và âm thanh bị khóa—trong Screening Room. Kiểm tra nhịp độ, chia sẻ để nhận phản hồi và đảm bảo quá trình cắt có hiệu quả trước khi chuyển sang video.",
-                "screenshot": "Pre-Vis Animatic — các ảnh tĩnh được ghép, chuyển động của Ken Burns và âm thanh bị khóa",
-                "learnMore": {
-                  "items": [
-                    {
-                      "title": "hoạt hình lắp ráp",
-                      "description": "Xem lại các ảnh tĩnh đã ghép, chuyển động của Ken Burns và âm thanh bị khóa trong Screening Room."
+                      "title": "IAD Smart Retake & Direct Video",
+                      "description": "Refine camera motion, subject physics, or facial performance with the Intelligent Assistant Director and Direct Video pre-flight controls."
                     },
                     {
-                      "title": "Kiểm toán và chia sẻ",
-                      "description": "Kiểm tra nhịp độ, chia sẻ để nhận phản hồi và đảm bảo quá trình cắt có hiệu quả trước khi chuyển sang video."
-                    }
-                  ]
-                }
-              },
-              {
-                "icon": "videoAgent",
-                "title": "Clips Agent",
-                "description": "Sau khi Pre-Vis được phê duyệt, Clips Agent sẽ tiếp quản, hiển thị các clip chuyển động có độ trung thực cao tuân thủ nghiêm ngặt các ảnh tĩnh và tham chiếu liên tục đã được phê duyệt của bạn.",
-                "screenshot": "Clips Agent — clip chuyển động có độ trung thực cao từ ảnh tĩnh đã được phê duyệt",
-                "learnMore": {
-                  "items": [
-                    {
-                      "title": "Sau khi phê duyệt Pre-Vis",
-                      "description": "Clips Agent chỉ hiển thị chuyển động sau khi hoạt ảnh Pre-Vis được phê duyệt."
+                      "title": "Per-stream localized shot takes",
+                      "description": "Switch between your English Master take and regenerated localized clips for spoken dialogue and in-scene signage per language stream."
                     },
                     {
-                      "title": "Tuân thủ nghiêm ngặt",
-                      "description": "Các clip chuyển động có độ trung thực cao tuân thủ nghiêm ngặt các ảnh tĩnh và tham chiếu liên tục đã được phê duyệt của bạn."
+                      "title": "Dialogue-free stem readiness",
+                      "description": "Extract embedded clip audio into a dialogue-free SFX and ambience stem so localized dubs retain original foley and room tone."
                     }
                   ]
                 }
@@ -708,79 +884,111 @@
             ]
           },
           {
-            "id": "publish",
+            "id": "publish-distribute",
             "label": "Xuất bản & Phân phối",
             "headline": "Vận chuyển chủ hoặc bản địa hóa cho thế giới.",
             "description": "Khi cảnh quay hoàn thành, tài sản đã được thống nhất. Hoàn tất chỉnh sửa, bản địa hóa âm thanh và phân phối trực tiếp đến khán giả của bạn.",
             "features": [
               {
-                "icon": "shipPackage",
-                "title": "Máy trộn",
-                "description": "Trình chỉnh sửa cảnh trực quan, tích hợp sẵn. Cắt bớt clip, điều chỉnh tốc độ, thêm lớp phủ văn bản và áp dụng hình mờ mà không cần rời khỏi studio.",
-                "screenshot": "Trình trộn - cắt clip, tăng tốc, lớp phủ văn bản và hình mờ",
+                "icon": "mixer",
+                "title": "The Mixer",
+                "description": "A commercial-grade broadcast scene editor and stitching console built directly into the studio. Preview your cut on a 16:9 Broadcast Reference Monitor paired with a real-time Stereo VU / Peak Meter (`-60` to `0 dBFS`, `-14 LUFS` target), inspect cut points with a side-by-side Match-Cut Continuity Loupe, shape J-Cut and L-Cut audio overlaps (`-0.3s` / `+0.3s`), choose dynamic Optical Hold Modes (`103% Ken Burns Push` or `Ping-Pong Tail`), mix across a 6-lane timeline (`V1 Video`, `A0 Stem`, `A1 Dialogue`, `A2 VO`, `A3 SFX`, `A4 Score`) with `-8 dB` Auto-Ducking, apply 1-click watermark crops and text overlays, and cloud-render EBU R128 (`-14 LUFS`) masters.",
+                "screenshot": "The Mixer — Broadcast Reference Monitor, Stereo VU Meter, Match-Cut Continuity Loupe, J/L-Cut overlaps, 6-lane timeline with -8 dB Auto-Ducking, and EBU R128 loudness",
                 "learnMore": {
                   "items": [
                     {
-                      "title": "Trình chỉnh sửa cảnh tích hợp",
-                      "description": "Cắt clip và điều chỉnh tốc độ ngay trong studio."
+                      "title": "Broadcast Reference Monitor & Stereo VU / LUFS Meter",
+                      "description": "Preview your stitched sequence on a 16:9 reference monitor beside a real-time stereo peak and loudness meter calibrated to -14.0 LUFS web and -24.0 LKFS broadcast targets."
                     },
                     {
-                      "title": "hoàn thiện chạm",
-                      "description": "Thêm lớp phủ văn bản và áp dụng hình mờ mà không cần xuất sang trình chỉnh sửa bên ngoài."
+                      "title": "Match-Cut Continuity Loupe & J/L-Cut audio overlaps",
+                      "description": "Hover any transition pill to compare the Out-Frame of Shot N against the In-Frame of Shot N+1 side by side while dialing in -0.3s J-cut lead-ins and +0.3s L-cut audio tails."
+                    },
+                    {
+                      "title": "6-lane timeline with -8 dB Auto-Ducking envelope",
+                      "description": "Mix V1 Video, A0 Dialogue-Free Stem, A1 Dialogue, A2 Narration, A3 SFX, and A4 Score with a visual gain-reduction curve that automatically ducks music -8 dB under speech."
+                    },
+                    {
+                      "title": "Optical Hold Modes & elastic dub alignment",
+                      "description": "Replace static freeze-frames with a 103% Ken Burns Push Zoom or Ping-Pong Tail Loop and slow video clips down to 67% speed so longer dubbed dialogue fits naturally."
+                    },
+                    {
+                      "title": "1-click watermark crop, text overlays & EBU R128 export",
+                      "description": "Apply preset edge crops to remove third-party watermarks, burn in lower-thirds or subtitles, and cloud-render stitched MP4 masters with EBU R128 loudness normalization."
                     }
                   ]
                 }
               },
               {
                 "icon": "languageStreams",
-                "title": "Luồng (Đa ngôn ngữ)",
-                "description": "Mở rộng phạm vi tiếp cận toàn cầu của bạn qua 44 ngôn ngữ ngay lập tức. Tự động tạo các luồng ngôn ngữ thay thế bằng cách lồng âm thanh, đồng bộ hóa chuyển động môi hoặc tạo lại các đoạn hội thoại đã bản địa hóa ngay trong cảnh.",
-                "screenshot": "Luồng (Đa ngôn ngữ) - các clip hội thoại được bản địa hóa và âm thanh được lồng tiếng",
+                "title": "Streams (Multi-Language)",
+                "description": "Expand your global reach across 44 languages from one master timeline. Selectively regenerate only the specific shots containing spoken dialogue or in-scene text signage while retaining unselected master shots at zero extra credit cost. Extract embedded video audio and strip spoken dialogue (`htdemucs` neural stem separation) so generated SFX and music carry into every dub, and automatically align longer translated dialogue using elastic video slow-down (slowing a `10s` clip up to `15s` at `67%` speed), hybrid optical holds, or pitch-preserved audio tempo matching—while directing in a localized Studio UI.",
+                "screenshot": "Streams (Multi-Language) — Selective shot regeneration vs retained master shots, dialogue-free stem extraction, and elastic slow-video dub alignment",
                 "learnMore": {
                   "items": [
                     {
-                      "title": "Phạm vi tiếp cận toàn cầu",
-                      "description": "Tự động tạo luồng ngôn ngữ thay thế trên 44 ngôn ngữ ngay trong cảnh."
+                      "title": "Selective shot regeneration & retained master clips",
+                      "description": "Select only the shots with spoken dialogue or in-scene signage to regenerate in your target language while unselected action shots automatically retain the master video clip."
                     },
                     {
-                      "title": "Lồng tiếng, hát nhép hoặc tái tạo",
-                      "description": "Bản địa hóa từng cảnh quay bằng cách lồng âm thanh, đồng bộ chuyển động môi hoặc tạo lại các đoạn hội thoại đã bản địa hóa."
+                      "title": "Dialogue-free stem extraction (keep generated SFX & music)",
+                      "description": "Neural stem separation extracts embedded video audio and removes spoken English dialogue while preserving generated foley, room ambience, and music for clean MP3 dubbing."
+                    },
+                    {
+                      "title": "Elastic video slow-down & multi-method dub alignment",
+                      "description": "Align longer translated dialogue by slowing a 10s video clip up to 15s (down to 67% speed), pairing an 80% slow-down with a 103% zoom hold, or fitting dub audio tempo up to 1.25x."
+                    },
+                    {
+                      "title": "Regenerated dialogue & signage clips across 44 languages",
+                      "description": "Regenerate localized dialogue takes and in-scene signage clips directly within the scene across 44 languages so visuals, stencils, and speech match every audience."
+                    },
+                    {
+                      "title": "Localized Studio UI",
+                      "description": "Direct and produce in your native interface across English, Spanish, Portuguese, Hindi, Simplified Chinese, and Arabic."
                     }
                   ]
                 }
               },
               {
                 "icon": "promoTrailers",
-                "title": "Khuyến mãi & Đoạn giới thiệu",
-                "description": "Cắt đoạn giới thiệu quảng cáo sẵn sàng trên mạng xã hội bất cứ lúc nào trong quá trình sản xuất. Tạo các phiên bản đa ngôn ngữ được tối ưu hóa cho các định dạng ngang hoặc dọc.",
-                "screenshot": "Quảng cáo & Đoạn giới thiệu — đoạn giới thiệu ngang và dọc đa ngôn ngữ",
+                "title": "Promo & Trailers",
+                "description": "Cut high-converting theatrical teasers, episodic recaps, and social-ready promo trailers at any time during production. Pull hero takes from your scene vault, reframe for horizontal (`16:9`) or vertical (`9:16`) feeds, and generate multi-language versions with localized title cards and voiceover hooks.",
+                "screenshot": "Promo & Trailers — multi-language horizontal and vertical trailers",
                 "learnMore": {
                   "items": [
                     {
-                      "title": "Đoạn giới thiệu sẵn sàng cho xã hội",
-                      "description": "Cắt đoạn giới thiệu quảng cáo tại bất kỳ thời điểm nào trong quá trình sản xuất."
+                      "title": "Social-ready trailers at any stage",
+                      "description": "Cut promo trailers, theatrical teasers, and episodic recaps at any point during production."
                     },
                     {
-                      "title": "Định dạng đa ngôn ngữ",
-                      "description": "Tạo các phiên bản đa ngôn ngữ được tối ưu hóa cho các định dạng ngang hoặc dọc."
+                      "title": "Horizontal & vertical social formats",
+                      "description": "Generate multi-language versions optimized for horizontal 16:9 YouTube feeds or vertical 9:16 Shorts, Reels, and TikTok."
+                    },
+                    {
+                      "title": "Localized hooks & title cards",
+                      "description": "Render localized trailer streams with translated voiceover hooks, burned-in captions, and market-specific title cards."
                     }
                   ]
                 }
               },
               {
                 "icon": "shipPackage",
-                "title": "Xuất bản trực tiếp",
-                "description": "Xuất MP4 chính cuối cùng hoặc để SceneFlow tự động tạo hình thu nhỏ và mô tả để xuất bản các cảnh, chương và quảng cáo trực tiếp lên YouTube, TikTok và Facebook.",
-                "screenshot": "Xuất bản trực tiếp - Xuất MP4 và xuất bản trực tiếp lên YouTube, TikTok và Facebook",
+                "title": "Direct Publishing",
+                "description": "Export the final EBU R128-normalized master MP4 in 1080p or 4K, download complete production stems, or let SceneFlow auto-generate high-CTR thumbnails, localized titles, chapter markers, and descriptions to publish scenes, chapters, and promos directly to YouTube, TikTok, and Facebook.",
+                "screenshot": "Direct Publishing — MP4 export and direct publishing to YouTube, TikTok, and Facebook",
                 "learnMore": {
                   "items": [
                     {
-                      "title": "Master MP4 hoặc mạng xã hội trực tiếp",
-                      "description": "Xuất bản MP4 chính cuối cùng hoặc xuất bản các cảnh, chương và quảng cáo trực tiếp lên YouTube, TikTok và Facebook."
+                      "title": "Master MP4 or direct social publishing",
+                      "description": "Export the final master MP4 or publish scenes, chapters, and promos directly to YouTube, TikTok, and Facebook."
                     },
                     {
-                      "title": "Siêu dữ liệu được tạo tự động",
-                      "description": "Cho phép SceneFlow tự động tạo hình thu nhỏ và mô tả cho mỗi bản phát hành."
+                      "title": "Auto-generated thumbnails & metadata",
+                      "description": "Let SceneFlow auto-generate high-contrast thumbnails, localized titles, descriptions, tags, and chapter markers for every release."
+                    },
+                    {
+                      "title": "Archival stems & screenplay bundle",
+                      "description": "Download stitched video masters, isolated dialogue and SFX stems, subtitle files, and formatted screenplays in one production package."
                     }
                   ]
                 }
@@ -797,44 +1005,52 @@
         "features": [
           {
             "icon": "screeningPlayer",
-            "title": "Một người chơi hợp nhất",
-            "description": "Chuyển đổi liền mạch giữa hoạt ảnh Pre-Vis, cảnh, chương, đoạn giới thiệu và bản gốc cuối cùng của bạn. Chuyển đổi luồng ngôn ngữ một cách nhanh chóng để thử giọng bản địa hóa lồng tiếng, hát nhép hoặc tái tạo cảnh quay—luôn khóa theo đoạn cắt chính xác từ Bộ trộn.",
-            "screenshot": "Trình phát Screening Room",
+            "title": "One Unified Player",
+            "description": "Toggle seamlessly between Pre-Vis animatics, stitched scenes, multi-scene chapters, promo trailers, and your final master. Switch Language Streams on the fly to audition dubbed audio, dialogue-free stem mixes, and regenerated dialogue or signage clips—always frame-locked to the exact cut from the Mixer.",
+            "screenshot": "Screening Room player",
             "learnMore": {
               "items": [
                 {
-                  "title": "Mỗi cột mốc trong một chế độ xem",
-                  "description": "Chuyển đổi dễ dàng giữa Pre-Vis, cảnh, chương, quảng cáo và bản chính cuối cùng."
+                  "title": "Every milestone in one theatre",
+                  "description": "Switch effortlessly among Pre-Vis animatics, individual scenes, chapters, promos, and the final master."
                 },
                 {
-                  "title": "Chuyển đổi ngôn ngữ trực tiếp",
-                  "description": "Thử giọng bất kỳ Luồng ngôn ngữ nào—được lồng tiếng, hát nhép hoặc được tái tạo bằng cảnh quay—một cách nhanh chóng."
+                  "title": "Live language stream auditioning",
+                  "description": "Audition any Language Stream—dubbed audio, lip-sync, or regenerated dialogue and signage clips—on the fly without reloading the timeline."
                 },
                 {
-                  "title": "Khóa khung vào máy trộn",
-                  "description": "Mỗi luồng phát bản chỉnh sửa và thời gian chính xác được hiển thị trong Trình trộn."
+                  "title": "Frame-locked to the Broadcast Mixer",
+                  "description": "Every stream plays the exact stitch transitions, J/L-cut overlaps, auto-ducking curves, and loudness normalization rendered in the Mixer."
+                },
+                {
+                  "title": "Incremental episodic shipping",
+                  "description": "Ship a finished 3–5 minute scene, an 8–12 minute chapter, or a social promo immediately while downstream chapters continue rendering."
                 }
               ]
             }
           },
           {
             "icon": "screeningCollab",
-            "title": "Hợp tác chính xác theo khung",
-            "description": "Dừng xuất các bản cắt thô sang email. Chia sẻ liên kết sàng lọc riêng tư nơi các cộng tác viên và nhà đầu tư xem trong thời gian thực và ghi chú trực tiếp lên ảnh—với các thông báo tức thì được gửi thẳng đến điện thoại của bạn.",
-            "screenshot": "Đánh giá được chia sẻ",
+            "title": "Frame-Accurate Collaboration",
+            "description": "Stop exporting rough cuts to email. Share a private screening link where collaborators, sound editors, localization leads, and investors watch full-resolution playback in real time and drop timestamped notes directly on the picture—with instant notifications sent straight to your phone.",
+            "screenshot": "Shared review",
             "learnMore": {
               "items": [
                 {
-                  "title": "Liên kết sàng lọc riêng tư",
-                  "description": "Người đánh giá xem phát lại ở độ phân giải đầy đủ và để lại ghi chú có dấu thời gian trên ảnh."
+                  "title": "Private stakeholder screening links",
+                  "description": "Reviewers watch full-resolution playback across any language stream and leave frame-accurate timestamped notes on the picture."
                 },
                 {
-                  "title": "Không xuất tập tin thô",
-                  "description": "Thu thập phản hồi của các bên liên quan ở một nơi mà không cần gửi các tệp video nặng."
+                  "title": "Zero rough-cut file exports",
+                  "description": "Collect creative, legal, and localization feedback in one centralized review thread without uploading or mailing heavy video files."
                 },
                 {
-                  "title": "Cảnh báo tức thì trên thiết bị di động",
-                  "description": "Ghi chú của người đánh giá mới sẽ thông báo cho bạn ngay lập tức trên điện thoại trong khi bạn trực tiếp trên máy tính để bàn."
+                  "title": "Instant mobile notifications",
+                  "description": "New reviewer notes notify you immediately on your phone so you can approve or dispatch revisions while directing on desktop."
+                },
+                {
+                  "title": "Direct link back to the Shot Rail",
+                  "description": "Jump from any timestamped screening comment straight to the corresponding scene and shot in the Production Stage to execute the note."
                 }
               ]
             }

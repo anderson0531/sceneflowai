@@ -267,44 +267,52 @@
         "features": [
           {
             "icon": "newSeries",
-            "title": "Nová série",
-            "description": "Představte svůj koncept seriálu nebo kanálu srozumitelným jazykem. Interaktivní vylepšování umělé inteligence zdokonalí váš předpoklad a vytvoří základ pro více epizod – doplněný o zastřešující dějové oblouky a rozdělení epizod.",
-            "screenshot": "Vytvořit novou řadu — záměr, upřesnění a potvrzení, vygenerování řady",
+            "title": "New Series",
+            "description": "Pitch your series, anthology, or episodic channel concept in plain language. Interactive AI refinement sharpens your premise, target audience, and visual tone before generating a complete multi-episode season baseline—complete with overarching plot arcs, recurring character hooks, and episode-by-episode breakdowns.",
+            "screenshot": "Create New Series — intent, Clarify and Confirm, Generate Series",
             "learnMore": {
               "items": [
                 {
-                  "title": "Váš záměr",
-                  "description": "Představte premisu, formát, cílové publikum a styl vizuálního umění srozumitelným jazykem."
+                  "title": "Plain-language series pitch",
+                  "description": "Pitch the premise, episode format, target demographic, and visual art style in plain language."
                 },
                 {
-                  "title": "Interaktivní vylepšení",
-                  "description": "Clarify and Confirm s vámi vyostřuje přehled sezóny ještě předtím, než se něco vytvoří."
+                  "title": "Interactive Clarify & Confirm",
+                  "description": "Clarify and Confirm sharpens the season synopsis, tone, and thematic pillars with you before anything is generated."
                 },
                 {
-                  "title": "Základní linie sezóny",
-                  "description": "Generate Series vytváří pětiepizodový oblouk, který můžete kdykoli rozšířit."
+                  "title": "Multi-episode season baseline",
+                  "description": "Generate Series builds a structured five-episode season arc with individual synopses and story hooks that you can expand anytime."
+                },
+                {
+                  "title": "World & genre calibration",
+                  "description": "Lock visual aesthetics, era settings, and recurring narrative motifs up front so every episode shares the same creative DNA."
                 }
               ]
             }
           },
           {
             "icon": "seriesReview",
-            "title": "Sezónní Bible a kontinuita",
-            "description": "Přečtěte si nebo si poslechněte vyprávěný přehled sezóny a tabulku epizod. SceneFlow uzamkne vaše vlákna příběhu, profily obsazení, umístění a podpisové rekvizity do sdílené knihovny Reference Library, kterou zdědí každá epizoda.",
-            "screenshot": "Přehled, epizody, konzistence, kontinuita – obsazení, lokace, rekvizity, prostředí",
+            "title": "Season Bible & Continuity",
+            "description": "Read or listen to the narrated season overview and episode slate. SceneFlow locks your story threads, cast profiles, recurring locations, and signature props into a shared Reference Library that every episode inherits automatically—eliminating continuity drift across multi-part storytelling.",
+            "screenshot": "Overview Listen, Episodes Listen, Consistency, Continuity — Cast, Locations, Props, Settings",
             "learnMore": {
               "items": [
                 {
-                  "title": "Čtěte nebo poslouchejte",
-                  "description": "Prohlédněte si přehled sezóny a synopse každé epizody s vestavěným zvukovým vyprávěním."
+                  "title": "Narrated season & episode audit",
+                  "description": "Audit the overarching season overview and every individual episode synopsis with built-in studio audio narration."
                 },
                 {
-                  "title": "Konzistence příběhu",
-                  "description": "Estetika, klíčové dějové události a nitky vyprávění zůstávají po celou sezónu uzamčeny."
+                  "title": "Cross-episode story consistency",
+                  "description": "Visual aesthetics, canonical plot events, and character relationship threads stay locked across the entire season."
                 },
                 {
-                  "title": "Sdílená kontinuita",
-                  "description": "Obsazení, umístění, rekvizity a nastavení se automaticky promítnou do každé epizody, kterou vytvoříte."
+                  "title": "Shared Reference Library inheritance",
+                  "description": "Cast portraits, voice profiles, wardrobes, locations, and signature props carry automatically into every episode you produce."
+                },
+                {
+                  "title": "Centralized canon management",
+                  "description": "Update a character look, location plate, or prop once in the Series Bible to propagate the change to future episodes."
                 }
               ]
             }
@@ -312,75 +320,87 @@
           {
             "icon": "seriesResonance",
             "title": "Audience Resonance",
-            "description": "Před napsáním jediného scénáře otestujte svůj sezónní oblouk v porovnání s cílovou demografickou skupinou. Prohlédněte si skóre rezonance epizod po epizodě a aplikujte vylepšení příběhu podložená daty jediným kliknutím – pouze když souhlasíte s poznámkou.",
-            "screenshot": "Analýza Audience Resonance a následně prakticky využitelné poznatky (bez aplikace)",
+            "description": "Test your season arc against your target demographic before writing a single script. Review episode-by-episode resonance scores, binge-retention curves, and structural critiques, then apply data-backed story improvements with one click—only when you agree with the note.",
+            "screenshot": "Audience Resonance analysis, then Actionable Insights, unapplied",
             "learnMore": {
               "items": [
                 {
-                  "title": "Demografické hodnocení",
-                  "description": "Skóre a strukturální analýza odhalují, jak vaše sezóna přistane vaší cílové skupině."
+                  "title": "Demographic & retention scoring",
+                  "description": "Multi-axis scores and structural analysis reveal how your season arc and episode cliffhangers land with your target audience."
                 },
                 {
-                  "title": "Výsadní právo ředitele",
-                  "description": "Actionable Insights aktualizují vaši sérii pouze tehdy, když se rozhodnete je použít."
+                  "title": "Episode-by-episode diagnostics",
+                  "description": "Spot mid-season pacing dips, character underutilization, or tonal drift across the full episode slate before scripting."
+                },
+                {
+                  "title": "Director's prerogative",
+                  "description": "Actionable Insights update your series bible and episode outlines only when you explicitly choose to apply them."
                 }
               ]
             }
           },
           {
             "icon": "seriesDirector",
-            "title": "Ředitel seriálu",
-            "description": "Přetvářejte celou sezónu hlasem nebo textem. Změňte tón, zvyšte sázky nebo přepracujte oblouk postavy ve všech epizodách najednou, zatímco zbytek vašeho příběhu zůstane nedotčený.",
-            "screenshot": "Režisér seriálu — režie, zaměření, přijetí",
+            "title": "The Series Director",
+            "description": "Reshape the entire season by voice or text. Shift the dramatic tone, raise the stakes, introduce a new antagonist, or rework a character arc across all episodes at once while keeping the rest of your storyline and continuity bible intact.",
+            "screenshot": "Series Director — direction, focus, accept",
             "learnMore": {
               "items": [
                 {
-                  "title": "Směr prostého jazyka",
-                  "description": "Vyslovte nebo napište svou poznámku a cílový děj, postavy, oblouky epizody, tón nebo nastavení."
+                  "title": "Plain-language season direction",
+                  "description": "Speak or type your creative note and target overarching plot, characters, episode arcs, tone, or world setting."
                 },
                 {
-                  "title": "Chirurgické aktualizace",
-                  "description": "Dokud revizi nepřijmete, nic se nezmění a nesouvisející vlákna příběhu zůstanou nedotčena."
+                  "title": "Surgical multi-episode updates",
+                  "description": "Nothing changes until you accept the previewed revision, and unrelated story threads stay completely untouched."
                 },
                 {
-                  "title": "Řízená doporučení",
-                  "description": "Použijte vylepšení příběhu navržená umělou inteligencí nebo řiďte každou kreativní volbu sami."
+                  "title": "Guided AI recommendations",
+                  "description": "Apply one-click story improvements surfaced by Audience Resonance or steer every creative choice yourself."
                 }
               ]
             }
           },
           {
             "icon": "directEpisode",
-            "title": "Směr na úrovni epizody",
-            "description": "Přibližte si libovolnou jednotlivou epizodu a přepracujte její děj, tempo nebo háček v izolaci – aniž byste destabilizovali zbytek vaší série.",
-            "screenshot": "Epizody — Režírovat tuto epizodu, ostatní epizody beze změny",
+            "title": "Episode-Level Direction",
+            "description": "Zoom into any individual episode to rework its plot outline, act structure, pacing, or cold-open hook in isolation—without destabilizing neighboring episodes or mutating the rest of your season slate.",
+            "screenshot": "Episodes — Direct this episode, other episodes unchanged",
             "learnMore": {
               "items": [
                 {
-                  "title": "Izolované přepisy",
-                  "description": "Přímé změny obrysu a rytmů jedné epizody beze změny sousedních epizod."
+                  "title": "Isolated episode rewrites",
+                  "description": "Direct changes to a single episode's synopsis, act beats, and character focus without altering neighboring episodes."
                 },
                 {
-                  "title": "Sezónní integrita",
-                  "description": "Zastřešující bible sezóny a zbývající břidlice epizod zůstanou uzamčeny."
+                  "title": "Locked season integrity",
+                  "description": "The overarching season bible, shared cast continuity, and remaining episode slate stay locked while you iterate."
+                },
+                {
+                  "title": "Pre-launch beat polishing",
+                  "description": "Refine individual episode hooks and cliffhangers until the episode is ready to launch into the Blueprint Room."
                 }
               ]
             }
           },
           {
             "icon": "startEpisode",
-            "title": "Spuštění epizody jedním kliknutím",
-            "description": "Když obrys epizody narazí na značku, spusťte ji přímo do Blueprint Room s již zapojeným shrnutím, rytmy příběhu, obsazením a světem.",
-            "screenshot": "Zahájit projekt – osnova a obsazení jsou již u epizody",
+            "title": "One-Click Episode Launch",
+            "description": "When an episode's outline hits the mark, launch it straight into the Blueprint Room with a single click—bringing its synopsis, narrative beats, recurring cast, voice profiles, locations, and visual style automatically wired in.",
+            "screenshot": "Start Project — outline and cast already on the episode",
             "learnMore": {
               "items": [
                 {
-                  "title": "Okamžité předání",
-                  "description": "Spusťte jakoukoli epizodu přímo do Blueprint Room jediným kliknutím."
+                  "title": "Instant Blueprint handoff",
+                  "description": "Launch any approved episode directly into the Blueprint Room with a single click to begin detailed beat and script work."
                 },
                 {
-                  "title": "Předem zapojená DNA",
-                  "description": "Nástin epizody, synopse, rytmy příběhu, obsazení a lokace putují automaticky."
+                  "title": "Pre-wired creative DNA",
+                  "description": "The episode outline, synopsis, story beats, cast profiles, wardrobes, and locations travel automatically with zero re-entry."
+                },
+                {
+                  "title": "Parallel episode production",
+                  "description": "Spin up multiple episodes from the same season slate as independent projects that share the same canonical series assets."
                 }
               ]
             }
@@ -395,84 +415,92 @@
         "features": [
           {
             "icon": "startBlueprint",
-            "title": "Spusťte Blueprint",
-            "description": "Přineste epizodu z vaší série s předem nahraným obrysem a obsazením nebo navrhněte zcela nový filmový koncept od začátku a nechte AI strukturovat základní zpracování.",
-            "screenshot": "Epizoda seriálu je již známa, nebo Zahajte svůj projekt – záměr, ověření a vylepšení pomocí AI, vygenerování Blueprint",
+            "title": "Start the Blueprint",
+            "description": "Bring in an episode from your series slate with its outline, cast, and world pre-loaded, or pitch a brand-new standalone film concept from scratch and let AI validate, enhance, and structure the foundational treatment.",
+            "screenshot": "Series episode already known, or Start Your Project — intent, Validate & Enhance with AI, Generate Blueprint",
             "learnMore": {
               "items": [
                 {
-                  "title": "Od Series Room",
-                  "description": "Epizody seriálu přicházejí s již připojenými osnovami, synopsemi, rytmy a obsazením."
+                  "title": "Seamless from Series Room",
+                  "description": "Series episodes arrive with their outline, synopsis, story beats, recurring cast, and locations already attached."
                 },
                 {
-                  "title": "Samostatný projekt",
-                  "description": "Navrhněte nový filmový koncept, vylepšete jej pomocí ověřování AI a vytvořte kompletní zpracování."
+                  "title": "Standalone film or short",
+                  "description": "Pitch a new film concept in plain language, refine it with AI validation, and generate a complete film treatment."
+                },
+                {
+                  "title": "Narrated treatment overview",
+                  "description": "Read or listen to the narrated logline, synopsis, and creative reasoning to verify the story foundation immediately."
                 }
               ]
             }
           },
           {
             "icon": "treatment",
-            "title": "Beat Sheet",
-            "description": "Uspořádejte hřbet svého filmu. Přečtěte si nebo poslouchejte svůj vyprávěcí rytmus a dolaďte zde tempo – každý úder, který uzamknete v Blueprint Room, vytváří kapitolu v Production Stage.",
-            "screenshot": "Karta Beats s možností Poslech",
+            "title": "The Beat Sheet",
+            "description": "Structure the dramatic spine of your film before dialogue is written. Read or listen to your narrative beat sheet, reorder acts, and fine-tune scene pacing here—every beat you lock in the Blueprint Room drives a dedicated chapter in the Production Stage.",
+            "screenshot": "Beats tab, with Listen",
             "learnMore": {
               "items": [
                 {
-                  "title": "Narativní páteř",
-                  "description": "Beats jsou vytvořeny a uzamčeny v Blueprint Room před začátkem generování skriptů."
+                  "title": "Narrative spine",
+                  "description": "Beats are authored and locked in the Blueprint Room before script generation begins."
                 },
                 {
-                  "title": "Sledování jako první",
-                  "description": "Optimalizace beatového listu zajišťuje, že scénář bude mít pevnou dramatickou strukturu."
+                  "title": "Pacing & structural discipline",
+                  "description": "Optimizing the beat sheet here ensures the multi-scene screenplay builds with tight dramatic structure and clear turning points."
                 },
                 {
-                  "title": "Mapování mezi jednotlivými kapitolami",
-                  "description": "Production Stage mění každý dílčí krok v kapitolu."
+                  "title": "Beat-to-chapter mapping",
+                  "description": "Production Stage turns each beat into a chapter."
+                },
+                {
+                  "title": "Narrated beat audition",
+                  "description": "Listen to the beat sheet read aloud to feel the rhythm and momentum of the story before compiling the script."
                 }
               ]
             }
           },
           {
             "icon": "castLocations",
-            "title": "Obsazení a světový design",
-            "description": "Před vytvořením scénáře si definujte své postavy, šatník a primární lokace – zajistěte, aby byl scénář napsán přesně podle vašeho obsazení a nastavení z první stránky.",
-            "screenshot": "Karta Postavy, poté Nastavení příběhu",
+            "title": "Cast & World Design",
+            "description": "Define your characters, vocal identities, period wardrobes, and primary locations before the screenplay is generated—ensuring the script is written around your exact cast, blocking environments, and visual atmosphere from page one.",
+            "screenshot": "Characters tab, then Setting on Story",
             "learnMore": {
               "items": [
                 {
-                  "title": "Profily postav",
-                  "description": "Nasměrujte své profily obsazení dopředu, aby dialogy a blokování odpovídaly každé postavě."
+                  "title": "Rich character profiles",
+                  "description": "Direct your cast profiles, backstories, and physical attributes up front so dialogue and blocking match each character."
                 },
                 {
-                  "title": "Svět a místa",
-                  "description": "Vytvořte primární nastavení na kartě Příběh pro ukotvení prostředí každé scény."
+                  "title": "World, era & locations",
+                  "description": "Establish primary settings, lighting palettes, and cinematic style on the Story tab to anchor every scene's environment."
                 },
                 {
-                  "title": "Nulové refaktorování skriptů",
-                  "description": "Uzamčení obsazení a umístění před vygenerováním skriptu eliminuje nákladné přepisování na Production Stage."
+                  "title": "Zero script refactoring",
+                  "description": "Locking cast and locations before script generation eliminates costly rewrites and continuity mismatches on the Production Stage."
                 }
               ]
             }
           },
           {
             "icon": "blueprintDirector",
-            "title": "Ředitel Blueprint",
-            "description": "Vyslovte nebo zadejte své poznámky k příběhu, abyste mohli upravit rytmy, postavy nebo detaily světa. Náhled vyvážené revize vedle sebe – dokud řez neschválíte, na vaší léčbě se nic nezmění.",
-            "screenshot": "Blueprint Director – směr, zaměření, náhled, Použít revizi",
+            "title": "The Blueprint Director",
+            "description": "Speak or type your story notes to revise beats, character motivations, or world details without prompt engineering. Preview a balanced revision side-by-side with creative reasoning—nothing changes in your treatment until you approve the cut.",
+            "screenshot": "Blueprint Director — direction, focus, preview, Apply revision",
             "learnMore": {
               "items": [
                 {
-                  "title": "Cílené poznámky",
-                  "description": "Vyslovte nebo napište svůj směr a zaměřte revizi na Beats, postavy nebo příběh."
+                  "title": "Targeted voice or text notes",
+                  "description": "Speak or type your direction and focus the revision surgically on Beats, Characters, or Story."
                 },
                 {
-                  "title": "Náhled vedle sebe",
-                  "description": "Před provedením jakýchkoli změn ve vašem Blueprint zkontrolujte vyváženou revizi."
+                  "title": "Side-by-side revision preview",
+                  "description": "Review a balanced revision and its underlying story reasoning before committing any changes to your Blueprint."
                 },
                 {
-                  "title": "Držíš zámek",
-                  "description": "Nic ve vaší léčbě se nezmění, dokud výslovně nepoužijete revizi."
+                  "title": "You hold the creative lock",
+                  "description": "Nothing in your treatment, beat sheet, or character roster changes until you explicitly apply the revision."
                 }
               ]
             }
@@ -480,35 +508,43 @@
           {
             "icon": "blueprintResonance",
             "title": "Audience Resonance",
-            "description": "Ohodnoťte svou léčbu podle kulturního a demografického profilu cílového publika. Zachyťte včas strukturální mezery v tempu a aplikujte cílená doporučení v řediteli Blueprint.",
-            "screenshot": "Audience Resonance — uložené publikum, skóre, neaplikovaná doporučení",
+            "description": "Score your treatment against your target audience's cultural, genre, and demographic profile before generating the script. Catch structural pacing gaps or weak character stakes early and apply targeted recommendations in the Blueprint Director.",
+            "screenshot": "Audience Resonance — saved audience, scores, recommendations unapplied",
             "learnMore": {
               "items": [
                 {
-                  "title": "Ověření předběžných skriptů",
-                  "description": "Analyzujte své zacházení s cílovým publikem, abyste viděli skóre kategorií a poznámky k příběhu."
+                  "title": "Pre-script audience validation",
+                  "description": "Analyze your treatment against your saved target audience to inspect category scores, strengths, and story risks."
                 },
                 {
-                  "title": "Selektivní aplikace",
-                  "description": "Doporučení upraví váš Blueprint pouze tehdy, když se rozhodnete je použít."
+                  "title": "Actionable story remedies",
+                  "description": "Each insight pairs a structural diagnosis with a concrete rewrite recommendation tailored to your beat sheet and cast."
+                },
+                {
+                  "title": "Selective one-click application",
+                  "description": "Recommendations only modify your Blueprint when you choose to apply them in the Blueprint Director."
                 }
               ]
             }
           },
           {
             "icon": "goToProduction",
-            "title": "Zelená pro výrobu",
-            "description": "Když jsou ošetření, beat list a obsazení uzamčeny, přejděte na Production Stage. SceneFlow zkompiluje váš úplný vícekapitolový skript přímo z vašeho schváleného Blueprint.",
-            "screenshot": "Přejděte na Production Stage – dějová linka, klíčové momenty a obsazení jsou již stanoveny.",
+            "title": "Greenlight to Production",
+            "description": "When the treatment, beat sheet, and cast are locked, step onto the Production Stage. SceneFlow compiles your full multi-chapter screenplay directly from your approved Blueprint—mapping every beat into a production chapter with cast and continuity pre-wired.",
+            "screenshot": "Go to Production Stage — storyline, beats, and cast already set",
             "learnMore": {
               "items": [
                 {
-                  "title": "Bezproblémová kompilace",
-                  "description": "Vstupem do Production Stage se zkompiluje celý skript přímo z vašeho schváleného Blueprint."
+                  "title": "Seamless script compilation",
+                  "description": "Stepping onto the Production Stage compiles the full multi-scene screenplay directly from your approved Blueprint."
                 },
                 {
-                  "title": "Uzamčený základ",
-                  "description": "Váš příběh, struktura rytmu a obsazení jsou připraveni pro režii scény a záběru."
+                  "title": "Locked continuity foundation",
+                  "description": "Your storyline, beat-to-chapter structure, cast profiles, and locations arrive ready for scene and shot direction."
+                },
+                {
+                  "title": "Shareable Blueprint review",
+                  "description": "Share the locked Blueprint with co-creators or executive stakeholders for sign-off before commencing production."
                 }
               ]
             }
@@ -522,105 +558,151 @@
         "promise": "Blueprint je uzamčen. Vaše obsazení je obsazeno. Nyní přejděte na Production Stage. Každá kapitola, scéna a záběr jsou uspořádány do lineárního pracovního postupu. Vy řídíte záměr; inteligentní agenti provádějí generování.",
         "groups": [
           {
-            "id": "script",
+            "id": "direct-control",
             "label": "Přímé a ovládání",
             "headline": "Mluvte jazykem filmu, ne syntaxí výzev.",
             "description": "Neztrácejte čas psaním klíčových slov v závorkách. Production Stage rozumí přirozenému směru a aplikuje vaši vizi na celou scénu nebo až na konkrétní záběr.",
             "features": [
               {
-                "icon": "scriptResonance",
-                "title": "Režisér scény a záběru",
-                "description": "Napište nebo vyslovte svůj směr srozumitelným jazykem. Řekněte agentovi, kdo je v záběru, kde se pohybuje kamera a jaký je emocionální rytmus. Shot Director automaticky zapisuje komplexní základní výzvy pro vaše fotografie a klipy.",
-                "screenshot": "The Scene & Shot Director — režie fotografií a klipů v jednoduchém jazyce",
+                "icon": "sceneWorkflow",
+                "title": "Scene Production Workflow (Fullscreen)",
+                "description": "Open the dedicated Fullscreen Scene Production Studio to direct every stage of a scene from one unified 8-tab command bar (`Direction · Audio · Music · Continuity · Stills · Clips · Mixer · Streams`). Reorder shots in the left-hand Shot Rail with live readiness badges, inspect the 16:9 Still & Clip Stage alongside structured camera, blocking, emotion, and lighting cards, and track end-to-end scene completion without losing context.",
+                "screenshot": "Scene Production Workflow (Fullscreen) — 8-tab linear studio, sortable Shot Rail, and structured Shot Direction Workbench",
                 "learnMore": {
                   "items": [
                     {
-                      "title": "Obyčejný jazyk",
-                      "description": "Napište nebo mluvte, kdo je v záběru, kde se pohybuje kamera a jaký je emocionální rytmus."
+                      "title": "8-tab fullscreen linear studio",
+                      "description": "Move seamlessly across Direction, Audio, Music, Continuity, Stills, Clips, Mixer, and Streams inside a distraction-free fullscreen workspace."
                     },
                     {
-                      "title": "Scéna nebo záběr",
-                      "description": "Aplikujte svou vizi na celou scénu nebo dolů na konkrétní záběr."
+                      "title": "Sortable Shot Rail & live badges",
+                      "description": "Drag to reorder shots in the left-hand rail while tracking real-time badges for Action, Dialogue, Narration, SFX, Music, Signage, Final 4K stills, and clips In the Can."
                     },
                     {
-                      "title": "Rychlá kompilace",
-                      "description": "Shot Director automaticky zapisuje základní výzvy pro vaše fotografie a klipy."
-                    }
-                  ]
-                }
-              },
-              {
-                "icon": "castVisual",
-                "title": "Knihovna kontinuity",
-                "description": "Naprostá konzistence napříč sérií. Automaticky vygenerujte nebo ručně přiřaďte referenční obrázky pro své obsazení, šatníky, místa a základní rekvizity, abyste zajistili, že každý záběr bude odpovídat Blueprint.",
-                "screenshot": "Knihovna kontinuity – obsazení, skříně, lokace a základní rekvizity",
-                "learnMore": {
-                  "items": [
-                    {
-                      "title": "Konzistence série",
-                      "description": "Udržujte obsazení, skříně, lokace a základní rekvizity sjednocené v každém záběru."
+                      "title": "Structured Shot Direction Workbench",
+                      "description": "Inspect the 16:9 Still & Clip Stage beside structured cards for spoken beats, camera lens and motion, talent blocking and gaze, lighting, locked continuity refs, and compiled prompts."
                     },
                     {
-                      "title": "Vygenerovat nebo přiřadit",
-                      "description": "Automaticky generujte referenční obrázky nebo ručně přiřaďte své vlastní, aby odpovídaly Blueprint."
+                      "title": "End-to-end scene pipeline telemetry",
+                      "description": "Monitor readiness across direction, voice and score, keyframes, multi-take clips, broadcast mixing, and localized streams before publishing."
                     }
                   ]
                 }
               },
               {
                 "icon": "directShot",
-                "title": "Integrace Audience Resonance",
-                "description": "Než začnete renderovat, přečtěte si místnost. Umělá inteligence analyzuje váš scénář proti vašemu cílovému publiku a poskytuje informace o jednotlivých scénách. Okamžitě použijte doporučené pokyny nebo důvěřujte svému nitru a ignorujte je.",
-                "screenshot": "Audience Resonance Integrace — statistiky publika podle jednotlivých scén",
+                "title": "The Scene & Shot Director",
+                "description": "Type or speak your direction in plain language. Tell the agent who is in the frame, where the camera moves, and what the emotional beat is. The Shot Director automatically writes the complex underlying prompts for your stills and clips while syncing camera lens, focal length, talent blocking, and lighting across the scene.",
+                "screenshot": "The Scene & Shot Director — plain-language direction for stills and clips",
                 "learnMore": {
                   "items": [
                     {
-                      "title": "Přehled jednotlivých scén",
-                      "description": "Umělá inteligence analyzuje váš skript proti cílovému publiku před vykreslením."
+                      "title": "Plain-language film direction",
+                      "description": "Type or speak who is in the frame, where the camera moves, and what the emotional beat is without writing bracketed prompt syntax."
                     },
                     {
-                      "title": "Váš hovor",
-                      "description": "Okamžitě použijte doporučené pokyny nebo důvěřujte svému nitru a ignorujte je."
-                    }
-                  ]
-                }
-              },
-              {
-                "icon": "audioAgent",
-                "title": "Plánovač výroby",
-                "description": "Vytvořte rozpočet a generování plánu pro každou scénu a kapitolu pomocí kreditů SceneFlow nebo vlastních klíčů API BYOK. Před výpočtem nastavte statické a ořezové cíle na snímek.",
-                "screenshot": "Plánovač výroby — rozpočet, plán a klíče API BYOK",
-                "learnMore": {
-                  "items": [
-                    {
-                      "title": "Rozpočet a harmonogram",
-                      "description": "Stanovte rozpočet a generování plánu pro každou scénu a kapitolu před vykreslením."
+                      "title": "Scene-wide or per-shot precision",
+                      "description": "Apply atmospheric direction across the entire scene or drill down into an individual shot's framing, lens, blocking, and lighting."
                     },
                     {
-                      "title": "Kredity nebo BYOK",
-                      "description": "Spusťte generování pomocí kreditů SceneFlow nebo vlastních klíčů API BYOK."
+                      "title": "Automatic prompt compilation",
+                      "description": "The Shot Director automatically writes and syncs the underlying keyframe and motion prompts for your stills and clips."
+                    },
+                    {
+                      "title": "Intelligent Assistant Director (IAD)",
+                      "description": "Request surgical revisions to camera angles, character posture, or scene tension in plain language while keeping unrelated beats untouched."
                     }
                   ]
                 }
               },
               {
                 "icon": "continuity",
-                "title": "Produkční skript",
-                "description": "Vytvořeno pro tradiční i AI filmaře. Náhled čistého, formátovaného scénáře ve studiu a export do standardních průmyslových formátů (PDF, FDX, Fountain). Použijte SceneFlow jako samostatnou scénárnu – nebo spárujte svůj scénář s Pre-Vis Animatic a Promo Trailer, abyste nabízeli finančníky a zajistili financování projektu.",
-                "screenshot": "Produkční skript — náhled na platformě a export do PDF, FDX a Fountain",
+                "title": "The Continuity Library",
+                "description": "Absolute visual and vocal consistency across your entire film or series. Automatically generate or manually assign locked reference portraits, multi-angle turnaround sheets, scene-specific wardrobes, locations, and essential props—ensuring every shot matches the Blueprint without character drift.",
+                "screenshot": "The Continuity Library — cast, wardrobes, locations, and essential props",
                 "learnMore": {
                   "items": [
                     {
-                      "title": "Náhled a export na platformě",
-                      "description": "Náhled naformátovaného skriptu ve studiu a export do standardního formátu PDF, Final Draft FDX nebo Fountain."
+                      "title": "Cast identity & turnaround locks",
+                      "description": "Anchor every character with diptych portraits, turnaround sheets, and locked voice profiles across every shot and episode."
                     },
                     {
-                      "title": "Pro tradiční filmaře",
-                      "description": "Použijte SceneFlow jako inteligentní platformu pro tvorbu skriptů bez generování videa."
+                      "title": "Scene-specific wardrobes & props",
+                      "description": "Assign period or scene-specific wardrobes and essential hero props per shot so costumes and hand-held items stay unified."
                     },
                     {
-                      "title": "Financování prezentací a projektů",
-                      "description": "Zabalte svůj scénář s Pre-Vis Animatic a Promo Trailery, abyste mohli navrhnout a získat financování projektu."
+                      "title": "Generate, upload, or surgically edit",
+                      "description": "Automatically generate reference images, upload custom studio plates, or refine details with the Intelligent Assistant Director."
+                    },
+                    {
+                      "title": "Continuity readiness gate",
+                      "description": "Verify that all cast, wardrobe, location, and prop anchors are locked in the Continuity tab before generating scene keyframes."
+                    }
+                  ]
+                }
+              },
+              {
+                "icon": "scriptResonance",
+                "title": "Audience Resonance Integration",
+                "description": "Get a read on the room before you render. AI analyzes your script against your target audience, providing scene-by-scene insights, pacing diagnostics, and dialogue tension scores. Apply recommended directions instantly, or trust your gut and ignore them.",
+                "screenshot": "Audience Resonance Integration — scene-by-scene audience insights",
+                "learnMore": {
+                  "items": [
+                    {
+                      "title": "Scene-by-scene audience insights",
+                      "description": "AI analyzes your script against your target audience before you render to surface pacing, tension, and engagement scores."
+                    },
+                    {
+                      "title": "Narrated critique & recommendations",
+                      "description": "Listen to the narrated analysis and inspect targeted scene-level rewrite recommendations backed by demographic reasoning."
+                    },
+                    {
+                      "title": "Your creative call",
+                      "description": "Apply recommended directions instantly with one click, or trust your gut and ignore them."
+                    }
+                  ]
+                }
+              },
+              {
+                "icon": "budget",
+                "title": "Production Planner",
+                "description": "Establish the budget and schedule generation across every scene and chapter using SceneFlow credits or your own BYOK API keys. Set still and clip targets per shot, toggle between Draft and Final resolution tiers, and forecast compute spend before you render.",
+                "screenshot": "Production Planner — budget, schedule, and BYOK API keys",
+                "learnMore": {
+                  "items": [
+                    {
+                      "title": "Budget and schedule forecasting",
+                      "description": "Establish the budget and schedule generation across every scene and chapter with transparent per-shot credit estimates before you render."
+                    },
+                    {
+                      "title": "SceneFlow credits or BYOK keys",
+                      "description": "Run generation using included SceneFlow credits or connect your own Vertex AI, OpenAI, and ElevenLabs BYOK API keys."
+                    },
+                    {
+                      "title": "Draft-to-Final tier scheduling",
+                      "description": "Schedule rapid Draft passes for animatic pre-visualization and reserve Final 4K still and FHD video compute for locked cuts."
+                    }
+                  ]
+                }
+              },
+              {
+                "icon": "productionScript",
+                "title": "Production Script",
+                "description": "Built for traditional and AI filmmakers alike. Preview a clean, formatted screenplay in-studio and export in industry-standard formats (PDF, FDX, Fountain). Use SceneFlow as a standalone script room—or pair your screenplay with a Pre-Vis Animatic and Promo Trailer to pitch financiers and secure project funding.",
+                "screenshot": "Production Script — in-platform preview and PDF, FDX, and Fountain export",
+                "learnMore": {
+                  "items": [
+                    {
+                      "title": "In-platform preview & export",
+                      "description": "Preview the formatted script in the studio and export in industry-standard PDF, Final Draft FDX, or Fountain format."
+                    },
+                    {
+                      "title": "For traditional filmmakers",
+                      "description": "Use SceneFlow as an intelligent script production platform without generating video."
+                    },
+                    {
+                      "title": "Pitch & project funding",
+                      "description": "Package your script with a Pre-Vis Animatic and Promo Trailers to pitch and acquire project funding."
                     }
                   ]
                 }
@@ -628,79 +710,173 @@
             ]
           },
           {
-            "id": "video",
+            "id": "generate-audit",
             "label": "Generovat a auditovat",
             "headline": "Než utratíte výpočet, prokažte střih.",
             "description": "Nehádejte, jak se bude scéna hrát. SceneFlow odděluje zvuk a generování statického obrazu od drahého vykreslování pohybu, což vám umožňuje nejprve auditovat rytmus úprav.",
             "features": [
               {
+                "icon": "audioAgent",
+                "title": "The Audio Agent",
+                "description": "Generate expressive character dialogue, narrator voiceover, action sound effects, and musical scores concurrently across up to 30 shots per scene. Cast voices automatically match character profiles from your Continuity Library or can be custom-tuned per beat.",
+                "screenshot": "The Audio Agent — concurrent dialogue, sound effects, and music scores",
+                "learnMore": {
+                  "items": [
+                    {
+                      "title": "Concurrent multi-track audio",
+                      "description": "Generate dialogue, narration, sound effects, and music scores concurrently across up to 30 shots per scene."
+                    },
+                    {
+                      "title": "Locked character voice casting",
+                      "description": "Cast voices automatically match character profiles from your Reference Library or can be custom-tuned for timbre and cadence."
+                    },
+                    {
+                      "title": "Batch scene or single-shot runs",
+                      "description": "Run the Audio Agent across the entire scene in one pass or regenerate individual dialogue and SFX beats on demand."
+                    }
+                  ]
+                }
+              },
+              {
+                "icon": "musicScore",
+                "title": "Dialogue, SFX & Musical Score Workbench",
+                "description": "Open the Fullscreen `Audio` and `Music` tabs to direct every sonic layer of your scene. Shape vocal performances with emotional delivery tags (`[obsessive, muttered]`) and Hi-Fi Studio quality, extract embedded audio directly from video clips, dial in SFX duration presets (`Auto`, `Short 3s`, `Medium 8s`, `Long 15s`), and compose multi-shot Lyria musical score cues with custom intro fades.",
+                "screenshot": "Dialogue, SFX & Musical Score Workbench — Fullscreen Audio & Music tabs with score cues, voice casting, and SFX duration presets",
+                "learnMore": {
+                  "items": [
+                    {
+                      "title": "Multi-shot musical score cues",
+                      "description": "Compose custom Lyria musical score cues that span specific shot ranges with configurable intro fades and auto-ducking metadata."
+                    },
+                    {
+                      "title": "Performance Director & delivery tags",
+                      "description": "Direct spoken dialogue with bracketed emotional delivery tags, Hi-Fi Studio synthesis, and per-shot voice casting."
+                    },
+                    {
+                      "title": "Precision SFX duration presets",
+                      "description": "Time action sound effects to your shot choreography using Auto, Short 3s, Medium 8s, or Long 15s duration presets."
+                    },
+                    {
+                      "title": "Extract audio from video clips",
+                      "description": "Pull embedded audio directly from generated motion clips to preserve native on-camera speech or ambient foley."
+                    }
+                  ]
+                }
+              },
+              {
+                "icon": "stillsAgent",
+                "title": "The Stills Agent",
+                "description": "Rapidly batch-generate the high-resolution keyframe images that illustrate your shot direction across the scene. Regenerate, edit, or upload your own references to lock the composition, lighting, and character blocking before committing to video.",
+                "screenshot": "The Stills Agent — keyframe composition and references",
+                "learnMore": {
+                  "items": [
+                    {
+                      "title": "Batch keyframe generation",
+                      "description": "Rapidly generate the keyframe images that illustrate your shot direction across every shot in the scene."
+                    },
+                    {
+                      "title": "Automatic continuity anchoring",
+                      "description": "Every generated frame incorporates your locked cast portraits, scene wardrobes, locations, and hero props automatically."
+                    },
+                    {
+                      "title": "Lock composition before motion",
+                      "description": "Regenerate, edit, or upload your own references before committing compute to full motion video rendering."
+                    }
+                  ]
+                }
+              },
+              {
+                "icon": "stillsWorkbench",
+                "title": "Fullscreen Stills & Keyframe Studio",
+                "description": "Step into the Fullscreen `Stills` workbench for precision keyframe control. Pair Start and End keyframes for Frame-to-Video (`F2V`) motion bridging, switch between `Draft` and `Final 4K` resolution or `Standard` and `Creative` synthesis modes, customize Pre-Vis Ken Burns camera motion, and perform surgical plain-language frame edits with the Intelligent Assistant Director (`IAD`).",
+                "screenshot": "Fullscreen Stills & Keyframe Studio — F2V Start & End keyframe pairing, Final 4K controls, and surgical IAD editing",
+                "learnMore": {
+                  "items": [
+                    {
+                      "title": "Frame-to-Video (F2V) Start & End pairing",
+                      "description": "Pair a locked Start Frame and End Frame Target on any shot to anchor exact camera movement and subject blocking during video generation."
+                    },
+                    {
+                      "title": "Surgical IAD keyframe editing",
+                      "description": "Edit specific props, chalkboard text, wardrobe details, or lighting in plain language while keeping the rest of the keyframe locked."
+                    },
+                    {
+                      "title": "Draft vs Final 4K & Creative modes",
+                      "description": "Toggle between rapid Draft previews and Final 4K resolution, plus Standard or Creative synthesis modes per shot."
+                    },
+                    {
+                      "title": "Pre-Vis Ken Burns motion framing",
+                      "description": "Customize zoom and pan trajectories on every still so your Pre-Vis Animatic previews intentional camera motion."
+                    }
+                  ]
+                }
+              },
+              {
+                "icon": "animatic",
+                "title": "The Pre-Vis Animatic",
+                "description": "Watch the scene breathe. Review a fully assembled animatic—stitched stills, Ken Burns motion, and locked audio—in the Screening Room. Audit the pacing, share for feedback, and ensure the cut works before committing to video.",
+                "screenshot": "The Pre-Vis Animatic — stitched stills, Ken Burns motion, and locked audio",
+                "learnMore": {
+                  "items": [
+                    {
+                      "title": "Assembled multi-track animatic",
+                      "description": "Review stitched stills, Ken Burns motion, and locked dialogue, SFX, and musical score in the Screening Room."
+                    },
+                    {
+                      "title": "Prove pacing before video spend",
+                      "description": "Audit the dramatic rhythm, spot timing gaps, and refine shot lengths while iterations cost pennies instead of full video compute."
+                    },
+                    {
+                      "title": "Share for stakeholder sign-off",
+                      "description": "Audit the pacing, share for feedback, and ensure the cut works before committing to video."
+                    }
+                  ]
+                }
+              },
+              {
                 "icon": "videoAgent",
-                "title": "Audio Agent",
-                "description": "Vytvářejte dialogy, zvukové efekty a hudební partitury současně v až 30 záběrech na scénu. Odesílané hlasy automaticky odpovídají profilům postav nebo je lze přizpůsobit.",
-                "screenshot": "Audio Agent — souběžné dialogy, zvukové efekty a hudební partitury",
+                "title": "The Clips Agent",
+                "description": "Once the Pre-Vis is approved, the Clips Agent takes over, rendering high-fidelity motion clips that adhere strictly to your approved stills, Frame-to-Video start and end anchors, and continuity references—backed by automated safety pre-flight checks.",
+                "screenshot": "The Clips Agent — high-fidelity motion clips from approved stills",
                 "learnMore": {
                   "items": [
                     {
-                      "title": "Souběžný zvuk",
-                      "description": "Vytvářejte dialogy, zvukové efekty a hudební partitury současně v až 30 záběrech na scénu."
+                      "title": "Triggered after Pre-Vis approval",
+                      "description": "The Clips Agent renders motion only after the Pre-Vis animatic and shot timings are approved."
                     },
                     {
-                      "title": "Charakterové hlasy",
-                      "description": "Odesílané hlasy automaticky odpovídají profilům postav nebo je lze přizpůsobit."
+                      "title": "Strict keyframe & F2V adherence",
+                      "description": "High-fidelity motion clips adhere strictly to your approved Start and End stills and continuity references."
+                    },
+                    {
+                      "title": "Automated safety pre-flight",
+                      "description": "Pre-flight prompt sanitation prevents false-positive safety rejections on dramatic action beats so clips render reliably."
                     }
                   ]
                 }
               },
               {
-                "icon": "mixer",
-                "title": "Stills Agent",
-                "description": "Rychle generujte snímky klíčových snímků, které ilustrují směr vašeho záběru. Obnovte, upravte nebo nahrajte své vlastní reference a uzamkněte kompozici.",
-                "screenshot": "Stills Agent — kompozice klíčových snímků a reference",
+                "icon": "clipsWorkbench",
+                "title": "Multi-Take Clips & Retake Studio",
+                "description": "Direct and curate every motion render inside the Fullscreen `Clips` studio. Audition unlimited takes in the non-destructive Multi-Take Vault (`Take 1 / Take 2 / Take 3`), filter your shot rail by `In the Can` readiness, trigger targeted IAD Smart Retakes, and manage per-stream localized video takes for dialogue and signage shots.",
+                "screenshot": "Multi-Take Clips & Retake Studio — non-destructive Take 1/2/3 vault, IAD Smart Retake, and localized stream takes",
                 "learnMore": {
                   "items": [
                     {
-                      "title": "Generování klíčových snímků",
-                      "description": "Rychle generujte snímky klíčových snímků, které ilustrují směr vašeho záběru."
+                      "title": "Non-destructive Multi-Take Vault",
+                      "description": "Every motion render is preserved in the shot vault so you can compare Take 1, Take 2, and Take 3 and promote your favorite take live."
                     },
                     {
-                      "title": "Zamkněte kompozici",
-                      "description": "Obnovte, upravte nebo nahrajte své vlastní reference, než se pustíte do pohybu."
-                    }
-                  ]
-                }
-              },
-              {
-                "icon": "languageStreams",
-                "title": "Pre-Vis Animatic",
-                "description": "Sledujte, jak scéna dýchá. Prohlédněte si plně sestavený animák – sešívané fotografie, pohyb Kena Burnse a zamčený zvuk – v Screening Room. Zkontrolujte tempo, sdílejte pro zpětnou vazbu a ujistěte se, že střih funguje, než se pustíte do videa.",
-                "screenshot": "Pre-Vis Animatic – sešívané fotografie, pohyb Kena Burnse a uzamčený zvuk",
-                "learnMore": {
-                  "items": [
-                    {
-                      "title": "Složené animace",
-                      "description": "Prohlédněte si sešívané fotografie, pohyb Kena Burnse a uzamčený zvuk v Screening Room."
+                      "title": "IAD Smart Retake & Direct Video",
+                      "description": "Refine camera motion, subject physics, or facial performance with the Intelligent Assistant Director and Direct Video pre-flight controls."
                     },
                     {
-                      "title": "Auditovat a sdílet",
-                      "description": "Zkontrolujte tempo, sdílejte pro zpětnou vazbu a ujistěte se, že střih funguje, než se pustíte do videa."
-                    }
-                  ]
-                }
-              },
-              {
-                "icon": "videoAgent",
-                "title": "Clips Agent",
-                "description": "Jakmile je Pre-Vis schválen, Clips Agent převezme řízení a vykresluje vysoce věrné pohyblivé klipy, které přísně dodržují vaše schválené statické snímky a reference kontinuity.",
-                "screenshot": "Clips Agent — vysoce věrné pohyblivé klipy ze schválených fotografií",
-                "learnMore": {
-                  "items": [
-                    {
-                      "title": "Po schválení Pre-Vis",
-                      "description": "Clips Agent vykreslí pohyb až po schválení animace Pre-Vis."
+                      "title": "Per-stream localized shot takes",
+                      "description": "Switch between your English Master take and regenerated localized clips for spoken dialogue and in-scene signage per language stream."
                     },
                     {
-                      "title": "Přísné dodržování",
-                      "description": "Vysoce věrné pohyblivé klipy přísně dodržují vaše schválené fotografie a reference kontinuity."
+                      "title": "Dialogue-free stem readiness",
+                      "description": "Extract embedded clip audio into a dialogue-free SFX and ambience stem so localized dubs retain original foley and room tone."
                     }
                   ]
                 }
@@ -708,79 +884,111 @@
             ]
           },
           {
-            "id": "publish",
+            "id": "publish-distribute",
             "label": "Publikovat a distribuovat",
             "headline": "Odešlete master nebo lokalizujte do celého světa.",
             "description": "Když je scéna hotová, aktiva jsou již sjednocena. Dokončete úpravy, lokalizujte zvuk a distribuujte přímo svému publiku.",
             "features": [
               {
-                "icon": "shipPackage",
-                "title": "Mixér",
-                "description": "Vestavěný intuitivní editor scén. Ořízněte klipy, upravte rychlostní rampy, přidejte textové překryvy a použijte vodoznaky, aniž byste opustili studio.",
-                "screenshot": "Mixer — ořízněte klipy, rychlostní rampy, textové překryvy a vodoznaky",
+                "icon": "mixer",
+                "title": "The Mixer",
+                "description": "A commercial-grade broadcast scene editor and stitching console built directly into the studio. Preview your cut on a 16:9 Broadcast Reference Monitor paired with a real-time Stereo VU / Peak Meter (`-60` to `0 dBFS`, `-14 LUFS` target), inspect cut points with a side-by-side Match-Cut Continuity Loupe, shape J-Cut and L-Cut audio overlaps (`-0.3s` / `+0.3s`), choose dynamic Optical Hold Modes (`103% Ken Burns Push` or `Ping-Pong Tail`), mix across a 6-lane timeline (`V1 Video`, `A0 Stem`, `A1 Dialogue`, `A2 VO`, `A3 SFX`, `A4 Score`) with `-8 dB` Auto-Ducking, apply 1-click watermark crops and text overlays, and cloud-render EBU R128 (`-14 LUFS`) masters.",
+                "screenshot": "The Mixer — Broadcast Reference Monitor, Stereo VU Meter, Match-Cut Continuity Loupe, J/L-Cut overlaps, 6-lane timeline with -8 dB Auto-Ducking, and EBU R128 loudness",
                 "learnMore": {
                   "items": [
                     {
-                      "title": "Vestavěný editor scén",
-                      "description": "Ořízněte klipy a upravte rychlostní rampy přímo ve studiu."
+                      "title": "Broadcast Reference Monitor & Stereo VU / LUFS Meter",
+                      "description": "Preview your stitched sequence on a 16:9 reference monitor beside a real-time stereo peak and loudness meter calibrated to -14.0 LUFS web and -24.0 LKFS broadcast targets."
                     },
                     {
-                      "title": "Dokončovací úpravy",
-                      "description": "Přidejte textové překryvy a použijte vodoznaky bez exportu do externího editoru."
+                      "title": "Match-Cut Continuity Loupe & J/L-Cut audio overlaps",
+                      "description": "Hover any transition pill to compare the Out-Frame of Shot N against the In-Frame of Shot N+1 side by side while dialing in -0.3s J-cut lead-ins and +0.3s L-cut audio tails."
+                    },
+                    {
+                      "title": "6-lane timeline with -8 dB Auto-Ducking envelope",
+                      "description": "Mix V1 Video, A0 Dialogue-Free Stem, A1 Dialogue, A2 Narration, A3 SFX, and A4 Score with a visual gain-reduction curve that automatically ducks music -8 dB under speech."
+                    },
+                    {
+                      "title": "Optical Hold Modes & elastic dub alignment",
+                      "description": "Replace static freeze-frames with a 103% Ken Burns Push Zoom or Ping-Pong Tail Loop and slow video clips down to 67% speed so longer dubbed dialogue fits naturally."
+                    },
+                    {
+                      "title": "1-click watermark crop, text overlays & EBU R128 export",
+                      "description": "Apply preset edge crops to remove third-party watermarks, burn in lower-thirds or subtitles, and cloud-render stitched MP4 masters with EBU R128 loudness normalization."
                     }
                   ]
                 }
               },
               {
                 "icon": "languageStreams",
-                "title": "Streamy (vícejazyčné)",
-                "description": "Okamžitě rozšiřte svůj globální dosah ve 44 jazycích. Automaticky generujte proudy v alternativním jazyce pomocí dabingu zvuku, synchronizace pohybu rtů nebo regenerace lokalizovaných dialogových klipů přímo ve scéně.",
-                "screenshot": "Streams (Multi-Language) — dabovaný zvuk a lokalizované dialogy",
+                "title": "Streams (Multi-Language)",
+                "description": "Expand your global reach across 44 languages from one master timeline. Selectively regenerate only the specific shots containing spoken dialogue or in-scene text signage while retaining unselected master shots at zero extra credit cost. Extract embedded video audio and strip spoken dialogue (`htdemucs` neural stem separation) so generated SFX and music carry into every dub, and automatically align longer translated dialogue using elastic video slow-down (slowing a `10s` clip up to `15s` at `67%` speed), hybrid optical holds, or pitch-preserved audio tempo matching—while directing in a localized Studio UI.",
+                "screenshot": "Streams (Multi-Language) — Selective shot regeneration vs retained master shots, dialogue-free stem extraction, and elastic slow-video dub alignment",
                 "learnMore": {
                   "items": [
                     {
-                      "title": "Globální dosah",
-                      "description": "Automaticky generujte proudy alternativních jazyků ve 44 jazycích přímo na scéně."
+                      "title": "Selective shot regeneration & retained master clips",
+                      "description": "Select only the shots with spoken dialogue or in-scene signage to regenerate in your target language while unselected action shots automatically retain the master video clip."
                     },
                     {
-                      "title": "Dub, synchronizace rtů nebo regenerace",
-                      "description": "Lokalizujte každý záběr pomocí dabingu zvuku, synchronizace pohybu rtů nebo regenerace lokalizovaných dialogových klipů."
+                      "title": "Dialogue-free stem extraction (keep generated SFX & music)",
+                      "description": "Neural stem separation extracts embedded video audio and removes spoken English dialogue while preserving generated foley, room ambience, and music for clean MP3 dubbing."
+                    },
+                    {
+                      "title": "Elastic video slow-down & multi-method dub alignment",
+                      "description": "Align longer translated dialogue by slowing a 10s video clip up to 15s (down to 67% speed), pairing an 80% slow-down with a 103% zoom hold, or fitting dub audio tempo up to 1.25x."
+                    },
+                    {
+                      "title": "Regenerated dialogue & signage clips across 44 languages",
+                      "description": "Regenerate localized dialogue takes and in-scene signage clips directly within the scene across 44 languages so visuals, stencils, and speech match every audience."
+                    },
+                    {
+                      "title": "Localized Studio UI",
+                      "description": "Direct and produce in your native interface across English, Spanish, Portuguese, Hindi, Simplified Chinese, and Arabic."
                     }
                   ]
                 }
               },
               {
                 "icon": "promoTrailers",
-                "title": "Promo akce a přívěsy",
-                "description": "Střihejte si promo upoutávky připravené na sociální sítě kdykoli během výroby. Vytvářejte vícejazyčné verze optimalizované pro horizontální nebo vertikální formáty.",
-                "screenshot": "Promo & Trailers — vícejazyčné horizontální a vertikální přívěsy",
+                "title": "Promo & Trailers",
+                "description": "Cut high-converting theatrical teasers, episodic recaps, and social-ready promo trailers at any time during production. Pull hero takes from your scene vault, reframe for horizontal (`16:9`) or vertical (`9:16`) feeds, and generate multi-language versions with localized title cards and voiceover hooks.",
+                "screenshot": "Promo & Trailers — multi-language horizontal and vertical trailers",
                 "learnMore": {
                   "items": [
                     {
-                      "title": "Upoutávky připravené na sociální sítě",
-                      "description": "Odřízněte propagační přívěsy kdykoli během výroby."
+                      "title": "Social-ready trailers at any stage",
+                      "description": "Cut promo trailers, theatrical teasers, and episodic recaps at any point during production."
                     },
                     {
-                      "title": "Vícejazyčné formáty",
-                      "description": "Vytvářejte vícejazyčné verze optimalizované pro horizontální nebo vertikální formáty."
+                      "title": "Horizontal & vertical social formats",
+                      "description": "Generate multi-language versions optimized for horizontal 16:9 YouTube feeds or vertical 9:16 Shorts, Reels, and TikTok."
+                    },
+                    {
+                      "title": "Localized hooks & title cards",
+                      "description": "Render localized trailer streams with translated voiceover hooks, burned-in captions, and market-specific title cards."
                     }
                   ]
                 }
               },
               {
                 "icon": "shipPackage",
-                "title": "Přímé publikování",
-                "description": "Exportujte finální předlohu MP4 nebo nechte SceneFlow automaticky generovat miniatury a popisy a publikovat scény, kapitoly a promo přímo na YouTube, TikTok a Facebook.",
-                "screenshot": "Přímé publikování — export MP4 a přímé publikování na YouTube, TikTok a Facebook",
+                "title": "Direct Publishing",
+                "description": "Export the final EBU R128-normalized master MP4 in 1080p or 4K, download complete production stems, or let SceneFlow auto-generate high-CTR thumbnails, localized titles, chapter markers, and descriptions to publish scenes, chapters, and promos directly to YouTube, TikTok, and Facebook.",
+                "screenshot": "Direct Publishing — MP4 export and direct publishing to YouTube, TikTok, and Facebook",
                 "learnMore": {
                   "items": [
                     {
-                      "title": "Master MP4 nebo přímé sociální",
-                      "description": "Exportujte finální předlohu MP4 nebo publikujte scény, kapitoly a promo přímo na YouTube, TikTok a Facebook."
+                      "title": "Master MP4 or direct social publishing",
+                      "description": "Export the final master MP4 or publish scenes, chapters, and promos directly to YouTube, TikTok, and Facebook."
                     },
                     {
-                      "title": "Automaticky generovaná metadata",
-                      "description": "Nechte SceneFlow automaticky generovat miniatury a popisy pro každé vydání."
+                      "title": "Auto-generated thumbnails & metadata",
+                      "description": "Let SceneFlow auto-generate high-contrast thumbnails, localized titles, descriptions, tags, and chapter markers for every release."
+                    },
+                    {
+                      "title": "Archival stems & screenplay bundle",
+                      "description": "Download stitched video masters, isolated dialogue and SFX stems, subtitle files, and formatted screenplays in one production package."
                     }
                   ]
                 }
@@ -797,44 +1005,52 @@
         "features": [
           {
             "icon": "screeningPlayer",
-            "title": "Jeden sjednocený přehrávač",
-            "description": "Plynule přepínejte mezi animacemi před Visem, scénami, kapitolami, upoutávkami a vaším finálním předlohou. Přepínejte jazykové proudy za běhu do lokalizací s dabováním, synchronizací rtů nebo záběrem – vždy zamčené na přesný střih z Mixeru.",
-            "screenshot": "Přehrávač Screening Room",
+            "title": "One Unified Player",
+            "description": "Toggle seamlessly between Pre-Vis animatics, stitched scenes, multi-scene chapters, promo trailers, and your final master. Switch Language Streams on the fly to audition dubbed audio, dialogue-free stem mixes, and regenerated dialogue or signage clips—always frame-locked to the exact cut from the Mixer.",
+            "screenshot": "Screening Room player",
             "learnMore": {
               "items": [
                 {
-                  "title": "Každý milník v jednom pohledu",
-                  "description": "Přepínejte bez námahy mezi Pre-Vis, scénami, kapitolami, promo akcemi a finální předlohou."
+                  "title": "Every milestone in one theatre",
+                  "description": "Switch effortlessly among Pre-Vis animatics, individual scenes, chapters, promos, and the final master."
                 },
                 {
-                  "title": "Živé přepínání jazyků",
-                  "description": "Vyzkoušejte jakýkoli jazykový proud – dabovaný, synchronizovaný přes rty nebo regenerovaný záběrem – za běhu."
+                  "title": "Live language stream auditioning",
+                  "description": "Audition any Language Stream—dubbed audio, lip-sync, or regenerated dialogue and signage clips—on the fly without reloading the timeline."
                 },
                 {
-                  "title": "Rámově uzamčen k mixéru",
-                  "description": "Každý stream přehrává přesné úpravy a načasování vykreslené v Mixeru."
+                  "title": "Frame-locked to the Broadcast Mixer",
+                  "description": "Every stream plays the exact stitch transitions, J/L-cut overlaps, auto-ducking curves, and loudness normalization rendered in the Mixer."
+                },
+                {
+                  "title": "Incremental episodic shipping",
+                  "description": "Ship a finished 3–5 minute scene, an 8–12 minute chapter, or a social promo immediately while downstream chapters continue rendering."
                 }
               ]
             }
           },
           {
             "icon": "screeningCollab",
-            "title": "Rámově přesná spolupráce",
-            "description": "Přestaňte exportovat hrubé řezy do e-mailu. Sdílejte soukromý odkaz na promítání, kde spolupracovníci a investoři sledují v reálném čase a zapisují poznámky přímo do obrazu – s okamžitými upozorněními zaslanými přímo do vašeho telefonu.",
-            "screenshot": "Sdílená recenze",
+            "title": "Frame-Accurate Collaboration",
+            "description": "Stop exporting rough cuts to email. Share a private screening link where collaborators, sound editors, localization leads, and investors watch full-resolution playback in real time and drop timestamped notes directly on the picture—with instant notifications sent straight to your phone.",
+            "screenshot": "Shared review",
             "learnMore": {
               "items": [
                 {
-                  "title": "Odkazy na soukromé promítání",
-                  "description": "Recenzenti sledují přehrávání v plném rozlišení a zanechávají na obrázku poznámky s časovým razítkem."
+                  "title": "Private stakeholder screening links",
+                  "description": "Reviewers watch full-resolution playback across any language stream and leave frame-accurate timestamped notes on the picture."
                 },
                 {
-                  "title": "Žádné exporty souborů s hrubým řezem",
-                  "description": "Sbírejte zpětnou vazbu od zúčastněných stran na jednom místě, aniž byste museli posílat těžké video soubory."
+                  "title": "Zero rough-cut file exports",
+                  "description": "Collect creative, legal, and localization feedback in one centralized review thread without uploading or mailing heavy video files."
                 },
                 {
-                  "title": "Okamžitá mobilní upozornění",
-                  "description": "Nové poznámky recenzenta vás okamžitě upozorní na váš telefon, zatímco budete přímo na ploše."
+                  "title": "Instant mobile notifications",
+                  "description": "New reviewer notes notify you immediately on your phone so you can approve or dispatch revisions while directing on desktop."
+                },
+                {
+                  "title": "Direct link back to the Shot Rail",
+                  "description": "Jump from any timestamped screening comment straight to the corresponding scene and shot in the Production Stage to execute the note."
                 }
               ]
             }

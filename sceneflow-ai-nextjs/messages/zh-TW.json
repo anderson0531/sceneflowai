@@ -267,44 +267,52 @@
         "features": [
           {
             "icon": "newSeries",
-            "title": "全新系列",
-            "description": "用簡單易懂的語言推銷您的系列或頻道概念。互動式 AI 改進可增強您的前提並產生多集季節基線 - 包括總體情節弧線和劇集細分。",
-            "screenshot": "建立新系列 — 意圖、釐清與確認、產生系列",
+            "title": "New Series",
+            "description": "Pitch your series, anthology, or episodic channel concept in plain language. Interactive AI refinement sharpens your premise, target audience, and visual tone before generating a complete multi-episode season baseline—complete with overarching plot arcs, recurring character hooks, and episode-by-episode breakdowns.",
+            "screenshot": "Create New Series — intent, Clarify and Confirm, Generate Series",
             "learnMore": {
               "items": [
                 {
-                  "title": "您的意圖",
-                  "description": "用簡單易懂的語言介紹前提、格式、目標受眾和視覺藝術風格。"
+                  "title": "Plain-language series pitch",
+                  "description": "Pitch the premise, episode format, target demographic, and visual art style in plain language."
                 },
                 {
-                  "title": "互動細化",
-                  "description": "在產生任何內容之前，「澄清」和「確認」會與您一起完善季節摘要。"
+                  "title": "Interactive Clarify & Confirm",
+                  "description": "Clarify and Confirm sharpens the season synopsis, tone, and thematic pillars with you before anything is generated."
                 },
                 {
-                  "title": "賽季基線",
-                  "description": "生成系列建立了一個五集的季節弧，您可以隨時擴展。"
+                  "title": "Multi-episode season baseline",
+                  "description": "Generate Series builds a structured five-episode season arc with individual synopses and story hooks that you can expand anytime."
+                },
+                {
+                  "title": "World & genre calibration",
+                  "description": "Lock visual aesthetics, era settings, and recurring narrative motifs up front so every episode shares the same creative DNA."
                 }
               ]
             }
           },
           {
             "icon": "seriesReview",
-            "title": "季節聖經與連續性",
-            "description": "閱讀或聆聽解說的季節概述和劇集列表。 SceneFlow 將您的故事線索、演員簡介、位置和簽名道具鎖定到每個劇集都會繼承的共享 Reference Library 中。",
-            "screenshot": "概覽、各集內容、一致性與連貫性 —— 演員陣容、拍攝地點、道具、場景設定",
+            "title": "Season Bible & Continuity",
+            "description": "Read or listen to the narrated season overview and episode slate. SceneFlow locks your story threads, cast profiles, recurring locations, and signature props into a shared Reference Library that every episode inherits automatically—eliminating continuity drift across multi-part storytelling.",
+            "screenshot": "Overview Listen, Episodes Listen, Consistency, Continuity — Cast, Locations, Props, Settings",
             "learnMore": {
               "items": [
                 {
-                  "title": "閱讀或聆聽",
-                  "description": "使用內建音訊旁白審核季節概述和每集概要。"
+                  "title": "Narrated season & episode audit",
+                  "description": "Audit the overarching season overview and every individual episode synopsis with built-in studio audio narration."
                 },
                 {
-                  "title": "故事的一致性",
-                  "description": "美學、關鍵情節事件和敘事線索在整個季節中都保持鎖定。"
+                  "title": "Cross-episode story consistency",
+                  "description": "Visual aesthetics, canonical plot events, and character relationship threads stay locked across the entire season."
                 },
                 {
-                  "title": "共享連續性",
-                  "description": "演員、地點、道具和設定會自動融入您製作的每一集中。"
+                  "title": "Shared Reference Library inheritance",
+                  "description": "Cast portraits, voice profiles, wardrobes, locations, and signature props carry automatically into every episode you produce."
+                },
+                {
+                  "title": "Centralized canon management",
+                  "description": "Update a character look, location plate, or prop once in the Series Bible to propagate the change to future episodes."
                 }
               ]
             }
@@ -312,75 +320,87 @@
           {
             "icon": "seriesResonance",
             "title": "Audience Resonance",
-            "description": "在編寫單一腳本之前，請根據目標人群測試您的季節弧。只有當您同意註釋時，才能查看逐集共鳴分數並一鍵應用資料支援的故事改進。",
-            "screenshot": "Audience Resonance 分析，隨後為可付諸行動的洞察（未套用）",
+            "description": "Test your season arc against your target demographic before writing a single script. Review episode-by-episode resonance scores, binge-retention curves, and structural critiques, then apply data-backed story improvements with one click—only when you agree with the note.",
+            "screenshot": "Audience Resonance analysis, then Actionable Insights, unapplied",
             "learnMore": {
               "items": [
                 {
-                  "title": "人口統計評分",
-                  "description": "分數和結構分析揭示了您的季節如何吸引目標受眾。"
+                  "title": "Demographic & retention scoring",
+                  "description": "Multi-axis scores and structural analysis reveal how your season arc and episode cliffhangers land with your target audience."
                 },
                 {
-                  "title": "董事特權",
-                  "description": "只有當您選擇應用程式時，可行的見解才會更新您的系列。"
+                  "title": "Episode-by-episode diagnostics",
+                  "description": "Spot mid-season pacing dips, character underutilization, or tonal drift across the full episode slate before scripting."
+                },
+                {
+                  "title": "Director's prerogative",
+                  "description": "Actionable Insights update your series bible and episode outlines only when you explicitly choose to apply them."
                 }
               ]
             }
           },
           {
             "icon": "seriesDirector",
-            "title": "系列總監",
-            "description": "透過語音或文字重塑整個賽季。改變基調，提高賭注，或在所有劇集中同時修改角色弧線，同時保持故事情節的其餘部分完好無損。",
-            "screenshot": "系列導演 —— 方向、焦點、接納",
+            "title": "The Series Director",
+            "description": "Reshape the entire season by voice or text. Shift the dramatic tone, raise the stakes, introduce a new antagonist, or rework a character arc across all episodes at once while keeping the rest of your storyline and continuity bible intact.",
+            "screenshot": "Series Director — direction, focus, accept",
             "learnMore": {
               "items": [
                 {
-                  "title": "通俗語言指導",
-                  "description": "說出或輸入您的筆記和目標情節、人物、情節弧線、語氣或背景。"
+                  "title": "Plain-language season direction",
+                  "description": "Speak or type your creative note and target overarching plot, characters, episode arcs, tone, or world setting."
                 },
                 {
-                  "title": "手術更新",
-                  "description": "在您接受修訂之前，任何內容都不會發生變化，且不相關的故事線索保持不變。"
+                  "title": "Surgical multi-episode updates",
+                  "description": "Nothing changes until you accept the previewed revision, and unrelated story threads stay completely untouched."
                 },
                 {
-                  "title": "指導性建議",
-                  "description": "應用人工智慧建議的故事改進或親自指導每一個創意選擇。"
+                  "title": "Guided AI recommendations",
+                  "description": "Apply one-click story improvements surfaced by Audience Resonance or steer every creative choice yourself."
                 }
               ]
             }
           },
           {
             "icon": "directEpisode",
-            "title": "劇集級方向",
-            "description": "放大任何單一劇集，單獨修改其情節、節奏或掛鉤，而不會破壞本季其餘部分的穩定性。",
-            "screenshot": "集數 — 執導本集，其餘集數不變",
+            "title": "Episode-Level Direction",
+            "description": "Zoom into any individual episode to rework its plot outline, act structure, pacing, or cold-open hook in isolation—without destabilizing neighboring episodes or mutating the rest of your season slate.",
+            "screenshot": "Episodes — Direct this episode, other episodes unchanged",
             "learnMore": {
               "items": [
                 {
-                  "title": "隔離重寫",
-                  "description": "直接更改單一劇集的輪廓和節拍，而不改變相鄰劇集。"
+                  "title": "Isolated episode rewrites",
+                  "description": "Direct changes to a single episode's synopsis, act beats, and character focus without altering neighboring episodes."
                 },
                 {
-                  "title": "季節誠信",
-                  "description": "整個季節的聖經和剩餘的劇集石板保持鎖定。"
+                  "title": "Locked season integrity",
+                  "description": "The overarching season bible, shared cast continuity, and remaining episode slate stay locked while you iterate."
+                },
+                {
+                  "title": "Pre-launch beat polishing",
+                  "description": "Refine individual episode hooks and cliffhangers until the episode is ready to launch into the Blueprint Room."
                 }
               ]
             }
           },
           {
             "icon": "startEpisode",
-            "title": "一鍵式劇集啟動",
-            "description": "当一集的大纲达到目标时，将其直接启动到 Blueprint Room，其中的概要、故事情节、演员阵容和世界观都已连接。",
-            "screenshot": "啟動專案 —— 該集的大綱與演員陣容已就緒",
+            "title": "One-Click Episode Launch",
+            "description": "When an episode's outline hits the mark, launch it straight into the Blueprint Room with a single click—bringing its synopsis, narrative beats, recurring cast, voice profiles, locations, and visual style automatically wired in.",
+            "screenshot": "Start Project — outline and cast already on the episode",
             "learnMore": {
               "items": [
                 {
-                  "title": "即時切換",
-                  "description": "只需單擊即可將任何劇集直接啟動到 Blueprint Room。"
+                  "title": "Instant Blueprint handoff",
+                  "description": "Launch any approved episode directly into the Blueprint Room with a single click to begin detailed beat and script work."
                 },
                 {
-                  "title": "預連接DNA",
-                  "description": "劇集大綱、劇情簡介、故事節奏、演員陣容和地點會自動移動。"
+                  "title": "Pre-wired creative DNA",
+                  "description": "The episode outline, synopsis, story beats, cast profiles, wardrobes, and locations travel automatically with zero re-entry."
+                },
+                {
+                  "title": "Parallel episode production",
+                  "description": "Spin up multiple episodes from the same season slate as independent projects that share the same canonical series assets."
                 }
               ]
             }
@@ -395,84 +415,92 @@
         "features": [
           {
             "icon": "startBlueprint",
-            "title": "啟動 Blueprint",
-            "description": "从您的剧集中引入一集，并预先加载其大纲和演员表，或者从头开始推出全新的电影概念，并让人工智能构建基础处理。",
-            "screenshot": "系列集數已知，或開始您的專案 — 設定意圖、利用 AI 驗證與增強、生成 Blueprint",
+            "title": "Start the Blueprint",
+            "description": "Bring in an episode from your series slate with its outline, cast, and world pre-loaded, or pitch a brand-new standalone film concept from scratch and let AI validate, enhance, and structure the foundational treatment.",
+            "screenshot": "Series episode already known, or Start Your Project — intent, Validate & Enhance with AI, Generate Blueprint",
             "learnMore": {
               "items": [
                 {
-                  "title": "来自 Series Room",
-                  "description": "系列影集的大綱、劇情簡介、節拍和演員陣容均已附上。"
+                  "title": "Seamless from Series Room",
+                  "description": "Series episodes arrive with their outline, synopsis, story beats, recurring cast, and locations already attached."
                 },
                 {
-                  "title": "獨立專案",
-                  "description": "提出新的電影概念，透過人工智慧驗證來完善，並產生完整的處理方案。"
+                  "title": "Standalone film or short",
+                  "description": "Pitch a new film concept in plain language, refine it with AI validation, and generate a complete film treatment."
+                },
+                {
+                  "title": "Narrated treatment overview",
+                  "description": "Read or listen to the narrated logline, synopsis, and creative reasoning to verify the story foundation immediately."
                 }
               ]
             }
           },
           {
             "icon": "treatment",
-            "title": "節拍表",
-            "description": "建構電影的脊柱。阅读或聆听您的叙述节拍表并在此处微调节奏 - 您在 Blueprint Room 中锁定的每个节拍都会驱动 Production Stage 中的一个章节。",
-            "screenshot": "包含「聆聽」功能的 Beats 標籤頁",
+            "title": "The Beat Sheet",
+            "description": "Structure the dramatic spine of your film before dialogue is written. Read or listen to your narrative beat sheet, reorder acts, and fine-tune scene pacing here—every beat you lock in the Blueprint Room drives a dedicated chapter in the Production Stage.",
+            "screenshot": "Beats tab, with Listen",
             "learnMore": {
               "items": [
                 {
-                  "title": "敘事脊柱",
-                  "description": "在腳本產生開始之前，節拍將被創作並鎖定在 Blueprint Room 中。"
+                  "title": "Narrative spine",
+                  "description": "Beats are authored and locked in the Blueprint Room before script generation begins."
                 },
                 {
-                  "title": "先起搏",
-                  "description": "在此優化節拍表可確保劇本具有緊湊的戲劇結構。"
+                  "title": "Pacing & structural discipline",
+                  "description": "Optimizing the beat sheet here ensures the multi-scene screenplay builds with tight dramatic structure and clear turning points."
                 },
                 {
-                  "title": "節拍到章節映射",
-                  "description": "Production Stage 將每一個節拍轉化為一個篇章。"
+                  "title": "Beat-to-chapter mapping",
+                  "description": "Production Stage turns each beat into a chapter."
+                },
+                {
+                  "title": "Narrated beat audition",
+                  "description": "Listen to the beat sheet read aloud to feel the rhythm and momentum of the story before compiling the script."
                 }
               ]
             }
           },
           {
             "icon": "castLocations",
-            "title": "演員表和世界設計",
-            "description": "在生成劇本之前定義您的角色、服裝和主要地點，確保劇本是圍繞第一頁的準確演員陣容和設定編寫的。",
-            "screenshot": "「角色」分頁，接著是「故事」中的「設定」",
+            "title": "Cast & World Design",
+            "description": "Define your characters, vocal identities, period wardrobes, and primary locations before the screenplay is generated—ensuring the script is written around your exact cast, blocking environments, and visual atmosphere from page one.",
+            "screenshot": "Characters tab, then Setting on Story",
             "learnMore": {
               "items": [
                 {
-                  "title": "人物簡介",
-                  "description": "預先指導您的演員簡介，以便對話和阻止與每個角色相匹配。"
+                  "title": "Rich character profiles",
+                  "description": "Direct your cast profiles, backstories, and physical attributes up front so dialogue and blocking match each character."
                 },
                 {
-                  "title": "世界和地點",
-                  "description": "在「故事」標籤上建立主要設定以錨定每個場景的環境。"
+                  "title": "World, era & locations",
+                  "description": "Establish primary settings, lighting palettes, and cinematic style on the Story tab to anchor every scene's environment."
                 },
                 {
-                  "title": "零腳本重構",
-                  "description": "在腳本生成之前鎖定演員表和位置可以消除 SFAIProduction_STAGETERM 上昂貴的重寫。"
+                  "title": "Zero script refactoring",
+                  "description": "Locking cast and locations before script generation eliminates costly rewrites and continuity mismatches on the Production Stage."
                 }
               ]
             }
           },
           {
             "icon": "blueprintDirector",
-            "title": "Blueprint 總監",
-            "description": "說出或輸入故事筆記來修改節拍、角色或世界細節。並排預覽平衡的修訂版 — 在您批准剪輯之前，您的治療不會發生任何變化。",
-            "screenshot": "Blueprint 指導者 —— 方向、焦點、預覽、套用修訂",
+            "title": "The Blueprint Director",
+            "description": "Speak or type your story notes to revise beats, character motivations, or world details without prompt engineering. Preview a balanced revision side-by-side with creative reasoning—nothing changes in your treatment until you approve the cut.",
+            "screenshot": "Blueprint Director — direction, focus, preview, Apply revision",
             "learnMore": {
               "items": [
                 {
-                  "title": "有針對性的筆記",
-                  "description": "說出或輸入您的方向，並將複習重點放在節拍、角色或故事上。"
+                  "title": "Targeted voice or text notes",
+                  "description": "Speak or type your direction and focus the revision surgically on Beats, Characters, or Story."
                 },
                 {
-                  "title": "並排預覽",
-                  "description": "在對 Blueprint 進行任何更改之前，請先查看平衡的修訂版。"
+                  "title": "Side-by-side revision preview",
+                  "description": "Review a balanced revision and its underlying story reasoning before committing any changes to your Blueprint."
                 },
                 {
-                  "title": "你握著鎖",
-                  "description": "在您明確應用修訂之前，您的治療不會發生任何變化。"
+                  "title": "You hold the creative lock",
+                  "description": "Nothing in your treatment, beat sheet, or character roster changes until you explicitly apply the revision."
                 }
               ]
             }
@@ -480,35 +508,43 @@
           {
             "icon": "blueprintResonance",
             "title": "Audience Resonance",
-            "description": "根據目標受眾的文化和人口特徵對您的治療進行評分。儘早發現結構性節奏差距並應用 Blueprint Director 中的有針對性的建議。",
-            "screenshot": "Audience Resonance — 已儲存的受眾、評分、未套用的建議",
+            "description": "Score your treatment against your target audience's cultural, genre, and demographic profile before generating the script. Catch structural pacing gaps or weak character stakes early and apply targeted recommendations in the Blueprint Director.",
+            "screenshot": "Audience Resonance — saved audience, scores, recommendations unapplied",
             "learnMore": {
               "items": [
                 {
-                  "title": "預先腳本驗證",
-                  "description": "針對目標受眾分析您的處理方式，以查看類別分數和故事註釋。"
+                  "title": "Pre-script audience validation",
+                  "description": "Analyze your treatment against your saved target audience to inspect category scores, strengths, and story risks."
                 },
                 {
-                  "title": "選擇性申請",
-                  "description": "當您選擇套用建議時，僅會修改您的 Blueprint。"
+                  "title": "Actionable story remedies",
+                  "description": "Each insight pairs a structural diagnosis with a concrete rewrite recommendation tailored to your beat sheet and cast."
+                },
+                {
+                  "title": "Selective one-click application",
+                  "description": "Recommendations only modify your Blueprint when you choose to apply them in the Blueprint Director."
                 }
               ]
             }
           },
           {
             "icon": "goToProduction",
-            "title": "批准生產",
-            "description": "當治療、節拍表和石膏被鎖定時，進入 SFAIProduction_STAGETERM。 SceneFlow 直接根據您核准的 Blueprint 編譯完整的多章節腳本。",
-            "screenshot": "前往 Production Stage —— 劇情大綱、敘事節奏與演員陣容皆已定案。",
+            "title": "Greenlight to Production",
+            "description": "When the treatment, beat sheet, and cast are locked, step onto the Production Stage. SceneFlow compiles your full multi-chapter screenplay directly from your approved Blueprint—mapping every beat into a production chapter with cast and continuity pre-wired.",
+            "screenshot": "Go to Production Stage — storyline, beats, and cast already set",
             "learnMore": {
               "items": [
                 {
-                  "title": "無縫編譯",
-                  "description": "進入 Production Stage 會直接從您核准的 Blueprint 編譯完整腳本。"
+                  "title": "Seamless script compilation",
+                  "description": "Stepping onto the Production Stage compiles the full multi-scene screenplay directly from your approved Blueprint."
                 },
                 {
-                  "title": "鎖定基礎",
-                  "description": "您的故事情節、節奏結構和演員陣容已準備好進行場景和拍攝指導。"
+                  "title": "Locked continuity foundation",
+                  "description": "Your storyline, beat-to-chapter structure, cast profiles, and locations arrive ready for scene and shot direction."
+                },
+                {
+                  "title": "Shareable Blueprint review",
+                  "description": "Share the locked Blueprint with co-creators or executive stakeholders for sign-off before commencing production."
                 }
               ]
             }
@@ -522,105 +558,151 @@
         "promise": "Blueprint 已鎖定。你的演員陣容已選好。現在，進入 SFAIProduction_STAGETERM。每個章節、場景和鏡頭都被組織成線性工作流程。你引導意圖；智慧代理執行生成。",
         "groups": [
           {
-            "id": "script",
+            "id": "direct-control",
             "label": "直接與控制",
             "headline": "說電影的語言，而不是提示的語法。",
             "description": "不要浪費時間輸入括號內的關鍵字。 SFAIProduction_STAGETERM 了解自然方向，將您的視野應用於整個場景或特定鏡頭。",
             "features": [
               {
-                "icon": "scriptResonance",
-                "title": "場景及鏡頭導演",
-                "description": "用簡單的語言輸入或說出您的指示。告訴工作人員誰在畫面中、攝影機移動到哪裡以及情緒節拍是什麼。鏡頭導演會自動為您的劇照和剪輯編寫複雜的底層提示。",
-                "screenshot": "場景與鏡頭導演 — 劇照與剪輯的通俗語言指導",
+                "icon": "sceneWorkflow",
+                "title": "Scene Production Workflow (Fullscreen)",
+                "description": "Open the dedicated Fullscreen Scene Production Studio to direct every stage of a scene from one unified 8-tab command bar (`Direction · Audio · Music · Continuity · Stills · Clips · Mixer · Streams`). Reorder shots in the left-hand Shot Rail with live readiness badges, inspect the 16:9 Still & Clip Stage alongside structured camera, blocking, emotion, and lighting cards, and track end-to-end scene completion without losing context.",
+                "screenshot": "Scene Production Workflow (Fullscreen) — 8-tab linear studio, sortable Shot Rail, and structured Shot Direction Workbench",
                 "learnMore": {
                   "items": [
                     {
-                      "title": "語言通俗易懂",
-                      "description": "輸入或說出畫面中的人物、攝影機移動的位置、情感節拍。"
+                      "title": "8-tab fullscreen linear studio",
+                      "description": "Move seamlessly across Direction, Audio, Music, Continuity, Stills, Clips, Mixer, and Streams inside a distraction-free fullscreen workspace."
                     },
                     {
-                      "title": "場景或鏡頭",
-                      "description": "將您的視野應用於整個場景或具體鏡頭。"
+                      "title": "Sortable Shot Rail & live badges",
+                      "description": "Drag to reorder shots in the left-hand rail while tracking real-time badges for Action, Dialogue, Narration, SFX, Music, Signage, Final 4K stills, and clips In the Can."
                     },
                     {
-                      "title": "提示編譯",
-                      "description": "鏡頭導演會自動為您的劇照和剪輯編寫基本提示。"
-                    }
-                  ]
-                }
-              },
-              {
-                "icon": "castVisual",
-                "title": "連續性庫",
-                "description": "整個系列的絕對一致性。自動產生或手動分配演員、服裝、地點和基本道具的參考影像，以確保每個鏡頭都符合 Blueprint。",
-                "screenshot": "連續性圖書館－演員陣容、服裝、地點和基本道具",
-                "learnMore": {
-                  "items": [
-                    {
-                      "title": "系列一致性",
-                      "description": "在每個鏡頭中保持演員、服裝、地點和基本道具的統一。"
+                      "title": "Structured Shot Direction Workbench",
+                      "description": "Inspect the 16:9 Still & Clip Stage beside structured cards for spoken beats, camera lens and motion, talent blocking and gaze, lighting, locked continuity refs, and compiled prompts."
                     },
                     {
-                      "title": "產生或分配",
-                      "description": "自動產生參考影像或手動指派您自己的影像以符合 Blueprint。"
+                      "title": "End-to-end scene pipeline telemetry",
+                      "description": "Monitor readiness across direction, voice and score, keyframes, multi-take clips, broadcast mixing, and localized streams before publishing."
                     }
                   ]
                 }
               },
               {
                 "icon": "directShot",
-                "title": "Audience Resonance 集成",
-                "description": "在渲染之前先了解房間。人工智慧根據目標受眾分析您的劇本，提供逐場景的見解。立即應用建議的方向，或相信你的直覺並忽略它們。",
-                "screenshot": "Audience Resonance 整合 — 逐場景觀眾洞察",
+                "title": "The Scene & Shot Director",
+                "description": "Type or speak your direction in plain language. Tell the agent who is in the frame, where the camera moves, and what the emotional beat is. The Shot Director automatically writes the complex underlying prompts for your stills and clips while syncing camera lens, focal length, talent blocking, and lighting across the scene.",
+                "screenshot": "The Scene & Shot Director — plain-language direction for stills and clips",
                 "learnMore": {
                   "items": [
                     {
-                      "title": "逐個場景的洞察",
-                      "description": "在渲染之前，人工智慧會根據目標受眾分析您的腳本。"
+                      "title": "Plain-language film direction",
+                      "description": "Type or speak who is in the frame, where the camera moves, and what the emotional beat is without writing bracketed prompt syntax."
                     },
                     {
-                      "title": "你的電話",
-                      "description": "立即應用建議的方向，或相信你的直覺並忽略它們。"
-                    }
-                  ]
-                }
-              },
-              {
-                "icon": "audioAgent",
-                "title": "生產計劃員",
-                "description": "使用 SceneFlow 積分或您自己的 BYOK API 金鑰建立每個場景和章節的預算和時間表產生。在花費計算之前設定每個鏡頭的靜止和剪輯目標。",
-                "screenshot": "生產計劃者 — 預算、計劃和 BYOK API 金鑰",
-                "learnMore": {
-                  "items": [
-                    {
-                      "title": "預算和時間表",
-                      "description": "在渲染之前，確定每個場景和章節的預算和計劃生成。"
+                      "title": "Scene-wide or per-shot precision",
+                      "description": "Apply atmospheric direction across the entire scene or drill down into an individual shot's framing, lens, blocking, and lighting."
                     },
                     {
-                      "title": "學分或 BYOK",
-                      "description": "使用 SceneFlow 積分或您自己的 BYOK API 金鑰運行產生。"
+                      "title": "Automatic prompt compilation",
+                      "description": "The Shot Director automatically writes and syncs the underlying keyframe and motion prompts for your stills and clips."
+                    },
+                    {
+                      "title": "Intelligent Assistant Director (IAD)",
+                      "description": "Request surgical revisions to camera angles, character posture, or scene tension in plain language while keeping unrelated beats untouched."
                     }
                   ]
                 }
               },
               {
                 "icon": "continuity",
-                "title": "製作腳本",
-                "description": "專為傳統和人工智慧電影製作人打造。在工作室中預覽乾淨、格式化的劇本並以行業標準格式（PDF、FDX、Fountain）匯出。使用 SceneFlow 作為獨立的腳本室，或將您的劇本與預覽版 Animatic 和宣傳預告片配對，以向金融家推銷並確保專案資金。",
-                "screenshot": "製作腳本 — 平台內預覽和 PDF、FDX 和 Fountain 匯出",
+                "title": "The Continuity Library",
+                "description": "Absolute visual and vocal consistency across your entire film or series. Automatically generate or manually assign locked reference portraits, multi-angle turnaround sheets, scene-specific wardrobes, locations, and essential props—ensuring every shot matches the Blueprint without character drift.",
+                "screenshot": "The Continuity Library — cast, wardrobes, locations, and essential props",
                 "learnMore": {
                   "items": [
                     {
-                      "title": "平台內預覽和導出",
-                      "description": "在工作室中預覽格式化腳本並以行業標準 PDF、Final Draft FDX 或 Fountain 格式匯出。"
+                      "title": "Cast identity & turnaround locks",
+                      "description": "Anchor every character with diptych portraits, turnaround sheets, and locked voice profiles across every shot and episode."
                     },
                     {
-                      "title": "對於傳統電影人來說",
-                      "description": "使用SceneFlow作為智慧腳本製作平台，無需產生影片。"
+                      "title": "Scene-specific wardrobes & props",
+                      "description": "Assign period or scene-specific wardrobes and essential hero props per shot so costumes and hand-held items stay unified."
                     },
                     {
-                      "title": "推廣和專案資金",
-                      "description": "將您的腳本與預覽版 Animatic 和促銷預告片打包在一起，以推銷並獲得專案資金。"
+                      "title": "Generate, upload, or surgically edit",
+                      "description": "Automatically generate reference images, upload custom studio plates, or refine details with the Intelligent Assistant Director."
+                    },
+                    {
+                      "title": "Continuity readiness gate",
+                      "description": "Verify that all cast, wardrobe, location, and prop anchors are locked in the Continuity tab before generating scene keyframes."
+                    }
+                  ]
+                }
+              },
+              {
+                "icon": "scriptResonance",
+                "title": "Audience Resonance Integration",
+                "description": "Get a read on the room before you render. AI analyzes your script against your target audience, providing scene-by-scene insights, pacing diagnostics, and dialogue tension scores. Apply recommended directions instantly, or trust your gut and ignore them.",
+                "screenshot": "Audience Resonance Integration — scene-by-scene audience insights",
+                "learnMore": {
+                  "items": [
+                    {
+                      "title": "Scene-by-scene audience insights",
+                      "description": "AI analyzes your script against your target audience before you render to surface pacing, tension, and engagement scores."
+                    },
+                    {
+                      "title": "Narrated critique & recommendations",
+                      "description": "Listen to the narrated analysis and inspect targeted scene-level rewrite recommendations backed by demographic reasoning."
+                    },
+                    {
+                      "title": "Your creative call",
+                      "description": "Apply recommended directions instantly with one click, or trust your gut and ignore them."
+                    }
+                  ]
+                }
+              },
+              {
+                "icon": "budget",
+                "title": "Production Planner",
+                "description": "Establish the budget and schedule generation across every scene and chapter using SceneFlow credits or your own BYOK API keys. Set still and clip targets per shot, toggle between Draft and Final resolution tiers, and forecast compute spend before you render.",
+                "screenshot": "Production Planner — budget, schedule, and BYOK API keys",
+                "learnMore": {
+                  "items": [
+                    {
+                      "title": "Budget and schedule forecasting",
+                      "description": "Establish the budget and schedule generation across every scene and chapter with transparent per-shot credit estimates before you render."
+                    },
+                    {
+                      "title": "SceneFlow credits or BYOK keys",
+                      "description": "Run generation using included SceneFlow credits or connect your own Vertex AI, OpenAI, and ElevenLabs BYOK API keys."
+                    },
+                    {
+                      "title": "Draft-to-Final tier scheduling",
+                      "description": "Schedule rapid Draft passes for animatic pre-visualization and reserve Final 4K still and FHD video compute for locked cuts."
+                    }
+                  ]
+                }
+              },
+              {
+                "icon": "productionScript",
+                "title": "Production Script",
+                "description": "Built for traditional and AI filmmakers alike. Preview a clean, formatted screenplay in-studio and export in industry-standard formats (PDF, FDX, Fountain). Use SceneFlow as a standalone script room—or pair your screenplay with a Pre-Vis Animatic and Promo Trailer to pitch financiers and secure project funding.",
+                "screenshot": "Production Script — in-platform preview and PDF, FDX, and Fountain export",
+                "learnMore": {
+                  "items": [
+                    {
+                      "title": "In-platform preview & export",
+                      "description": "Preview the formatted script in the studio and export in industry-standard PDF, Final Draft FDX, or Fountain format."
+                    },
+                    {
+                      "title": "For traditional filmmakers",
+                      "description": "Use SceneFlow as an intelligent script production platform without generating video."
+                    },
+                    {
+                      "title": "Pitch & project funding",
+                      "description": "Package your script with a Pre-Vis Animatic and Promo Trailers to pitch and acquire project funding."
                     }
                   ]
                 }
@@ -628,79 +710,173 @@
             ]
           },
           {
-            "id": "video",
+            "id": "generate-audit",
             "label": "生成和審核",
             "headline": "在使用計算之前證明削減。",
             "description": "不要猜測場景將如何播放。 SceneFlow 將音訊和靜態生成與昂貴的動作渲染分開，讓您先審核編輯的節奏。",
             "features": [
               {
+                "icon": "audioAgent",
+                "title": "The Audio Agent",
+                "description": "Generate expressive character dialogue, narrator voiceover, action sound effects, and musical scores concurrently across up to 30 shots per scene. Cast voices automatically match character profiles from your Continuity Library or can be custom-tuned per beat.",
+                "screenshot": "The Audio Agent — concurrent dialogue, sound effects, and music scores",
+                "learnMore": {
+                  "items": [
+                    {
+                      "title": "Concurrent multi-track audio",
+                      "description": "Generate dialogue, narration, sound effects, and music scores concurrently across up to 30 shots per scene."
+                    },
+                    {
+                      "title": "Locked character voice casting",
+                      "description": "Cast voices automatically match character profiles from your Reference Library or can be custom-tuned for timbre and cadence."
+                    },
+                    {
+                      "title": "Batch scene or single-shot runs",
+                      "description": "Run the Audio Agent across the entire scene in one pass or regenerate individual dialogue and SFX beats on demand."
+                    }
+                  ]
+                }
+              },
+              {
+                "icon": "musicScore",
+                "title": "Dialogue, SFX & Musical Score Workbench",
+                "description": "Open the Fullscreen `Audio` and `Music` tabs to direct every sonic layer of your scene. Shape vocal performances with emotional delivery tags (`[obsessive, muttered]`) and Hi-Fi Studio quality, extract embedded audio directly from video clips, dial in SFX duration presets (`Auto`, `Short 3s`, `Medium 8s`, `Long 15s`), and compose multi-shot Lyria musical score cues with custom intro fades.",
+                "screenshot": "Dialogue, SFX & Musical Score Workbench — Fullscreen Audio & Music tabs with score cues, voice casting, and SFX duration presets",
+                "learnMore": {
+                  "items": [
+                    {
+                      "title": "Multi-shot musical score cues",
+                      "description": "Compose custom Lyria musical score cues that span specific shot ranges with configurable intro fades and auto-ducking metadata."
+                    },
+                    {
+                      "title": "Performance Director & delivery tags",
+                      "description": "Direct spoken dialogue with bracketed emotional delivery tags, Hi-Fi Studio synthesis, and per-shot voice casting."
+                    },
+                    {
+                      "title": "Precision SFX duration presets",
+                      "description": "Time action sound effects to your shot choreography using Auto, Short 3s, Medium 8s, or Long 15s duration presets."
+                    },
+                    {
+                      "title": "Extract audio from video clips",
+                      "description": "Pull embedded audio directly from generated motion clips to preserve native on-camera speech or ambient foley."
+                    }
+                  ]
+                }
+              },
+              {
+                "icon": "stillsAgent",
+                "title": "The Stills Agent",
+                "description": "Rapidly batch-generate the high-resolution keyframe images that illustrate your shot direction across the scene. Regenerate, edit, or upload your own references to lock the composition, lighting, and character blocking before committing to video.",
+                "screenshot": "The Stills Agent — keyframe composition and references",
+                "learnMore": {
+                  "items": [
+                    {
+                      "title": "Batch keyframe generation",
+                      "description": "Rapidly generate the keyframe images that illustrate your shot direction across every shot in the scene."
+                    },
+                    {
+                      "title": "Automatic continuity anchoring",
+                      "description": "Every generated frame incorporates your locked cast portraits, scene wardrobes, locations, and hero props automatically."
+                    },
+                    {
+                      "title": "Lock composition before motion",
+                      "description": "Regenerate, edit, or upload your own references before committing compute to full motion video rendering."
+                    }
+                  ]
+                }
+              },
+              {
+                "icon": "stillsWorkbench",
+                "title": "Fullscreen Stills & Keyframe Studio",
+                "description": "Step into the Fullscreen `Stills` workbench for precision keyframe control. Pair Start and End keyframes for Frame-to-Video (`F2V`) motion bridging, switch between `Draft` and `Final 4K` resolution or `Standard` and `Creative` synthesis modes, customize Pre-Vis Ken Burns camera motion, and perform surgical plain-language frame edits with the Intelligent Assistant Director (`IAD`).",
+                "screenshot": "Fullscreen Stills & Keyframe Studio — F2V Start & End keyframe pairing, Final 4K controls, and surgical IAD editing",
+                "learnMore": {
+                  "items": [
+                    {
+                      "title": "Frame-to-Video (F2V) Start & End pairing",
+                      "description": "Pair a locked Start Frame and End Frame Target on any shot to anchor exact camera movement and subject blocking during video generation."
+                    },
+                    {
+                      "title": "Surgical IAD keyframe editing",
+                      "description": "Edit specific props, chalkboard text, wardrobe details, or lighting in plain language while keeping the rest of the keyframe locked."
+                    },
+                    {
+                      "title": "Draft vs Final 4K & Creative modes",
+                      "description": "Toggle between rapid Draft previews and Final 4K resolution, plus Standard or Creative synthesis modes per shot."
+                    },
+                    {
+                      "title": "Pre-Vis Ken Burns motion framing",
+                      "description": "Customize zoom and pan trajectories on every still so your Pre-Vis Animatic previews intentional camera motion."
+                    }
+                  ]
+                }
+              },
+              {
+                "icon": "animatic",
+                "title": "The Pre-Vis Animatic",
+                "description": "Watch the scene breathe. Review a fully assembled animatic—stitched stills, Ken Burns motion, and locked audio—in the Screening Room. Audit the pacing, share for feedback, and ensure the cut works before committing to video.",
+                "screenshot": "The Pre-Vis Animatic — stitched stills, Ken Burns motion, and locked audio",
+                "learnMore": {
+                  "items": [
+                    {
+                      "title": "Assembled multi-track animatic",
+                      "description": "Review stitched stills, Ken Burns motion, and locked dialogue, SFX, and musical score in the Screening Room."
+                    },
+                    {
+                      "title": "Prove pacing before video spend",
+                      "description": "Audit the dramatic rhythm, spot timing gaps, and refine shot lengths while iterations cost pennies instead of full video compute."
+                    },
+                    {
+                      "title": "Share for stakeholder sign-off",
+                      "description": "Audit the pacing, share for feedback, and ensure the cut works before committing to video."
+                    }
+                  ]
+                }
+              },
+              {
                 "icon": "videoAgent",
-                "title": "Audio Agent",
-                "description": "每個場景最多可產生 30 個鏡頭的對話、音效和樂譜。演員的聲音會自動匹配角色配置文件，或者可以進行自訂調整。",
-                "screenshot": "Audio Agent — 並發對話、音效與樂譜",
+                "title": "The Clips Agent",
+                "description": "Once the Pre-Vis is approved, the Clips Agent takes over, rendering high-fidelity motion clips that adhere strictly to your approved stills, Frame-to-Video start and end anchors, and continuity references—backed by automated safety pre-flight checks.",
+                "screenshot": "The Clips Agent — high-fidelity motion clips from approved stills",
                 "learnMore": {
                   "items": [
                     {
-                      "title": "並發音訊",
-                      "description": "每個場景最多可產生 30 個鏡頭的對話、音效和樂譜。"
+                      "title": "Triggered after Pre-Vis approval",
+                      "description": "The Clips Agent renders motion only after the Pre-Vis animatic and shot timings are approved."
                     },
                     {
-                      "title": "角色聲音",
-                      "description": "演員的聲音會自動匹配角色配置文件，或者可以進行自訂調整。"
+                      "title": "Strict keyframe & F2V adherence",
+                      "description": "High-fidelity motion clips adhere strictly to your approved Start and End stills and continuity references."
+                    },
+                    {
+                      "title": "Automated safety pre-flight",
+                      "description": "Pre-flight prompt sanitation prevents false-positive safety rejections on dramatic action beats so clips render reliably."
                     }
                   ]
                 }
               },
               {
-                "icon": "mixer",
-                "title": "Stills Agent",
-                "description": "快速產生說明您的拍攝方向的關鍵影格影像。重新產生、編輯或上傳您自己的參考以鎖定構圖。",
-                "screenshot": "Stills Agent — 關鍵影格合成與參考",
+                "icon": "clipsWorkbench",
+                "title": "Multi-Take Clips & Retake Studio",
+                "description": "Direct and curate every motion render inside the Fullscreen `Clips` studio. Audition unlimited takes in the non-destructive Multi-Take Vault (`Take 1 / Take 2 / Take 3`), filter your shot rail by `In the Can` readiness, trigger targeted IAD Smart Retakes, and manage per-stream localized video takes for dialogue and signage shots.",
+                "screenshot": "Multi-Take Clips & Retake Studio — non-destructive Take 1/2/3 vault, IAD Smart Retake, and localized stream takes",
                 "learnMore": {
                   "items": [
                     {
-                      "title": "關鍵影格生成",
-                      "description": "快速產生說明您的拍攝方向的關鍵影格影像。"
+                      "title": "Non-destructive Multi-Take Vault",
+                      "description": "Every motion render is preserved in the shot vault so you can compare Take 1, Take 2, and Take 3 and promote your favorite take live."
                     },
                     {
-                      "title": "鎖定構圖",
-                      "description": "在採取行動之前重新產生、編輯或上傳您自己的參考資料。"
-                    }
-                  ]
-                }
-              },
-              {
-                "icon": "languageStreams",
-                "title": "預視 SFAIAANIMTICTERM",
-                "description": "觀看現場呼吸。在 Screening Room 中查看完整組裝的動畫 — 縫合的劇照、Ken Burns 動作和鎖定的音訊。在投入影片之前審核節奏、分享回饋並確保剪輯有效。",
-                "screenshot": "Pre-Vis Animatic — 拼接靜態影像、Ken Burns 動作和鎖定音頻",
-                "learnMore": {
-                  "items": [
-                    {
-                      "title": "組裝動畫",
-                      "description": "在 Screening Room 中查看拼接的劇照、Ken Burns 動作和鎖定的音訊。"
+                      "title": "IAD Smart Retake & Direct Video",
+                      "description": "Refine camera motion, subject physics, or facial performance with the Intelligent Assistant Director and Direct Video pre-flight controls."
                     },
                     {
-                      "title": "審核與分享",
-                      "description": "在投入影片之前審核節奏、分享回饋並確保剪輯有效。"
-                    }
-                  ]
-                }
-              },
-              {
-                "icon": "videoAgent",
-                "title": "Clips Agent",
-                "description": "一旦預覽獲得批准，Clips Agent 就會接管，渲染嚴格遵守您批准的靜態影像和連續性參考的高保真運動剪輯。",
-                "screenshot": "Clips Agent — 來自核准的靜態影像的高保真運動剪輯",
-                "learnMore": {
-                  "items": [
-                    {
-                      "title": "預會見批准後",
-                      "description": "僅在預覽動畫獲得批准後，Clips Agent 才會渲染動作。"
+                      "title": "Per-stream localized shot takes",
+                      "description": "Switch between your English Master take and regenerated localized clips for spoken dialogue and in-scene signage per language stream."
                     },
                     {
-                      "title": "嚴格遵守",
-                      "description": "高保真動作剪輯嚴格遵守您批准的劇照和連續性參考。"
+                      "title": "Dialogue-free stem readiness",
+                      "description": "Extract embedded clip audio into a dialogue-free SFX and ambience stem so localized dubs retain original foley and room tone."
                     }
                   ]
                 }
@@ -708,79 +884,111 @@
             ]
           },
           {
-            "id": "publish",
+            "id": "publish-distribute",
             "label": "發布和分發",
             "headline": "運送母版，或為世界進行本地化。",
             "description": "當場景完成後，資產就已經統一了。完成編輯、在地化音訊並直接分發給觀眾。",
             "features": [
               {
-                "icon": "shipPackage",
-                "title": "混音器",
-                "description": "內建、直覺的場景編輯器。無需離開工作室即可修剪剪輯、調整速度斜坡、添加文字疊加以及應用浮水印。",
-                "screenshot": "混合器 — 修剪剪輯、速度斜坡、文字疊加和浮水印",
+                "icon": "mixer",
+                "title": "The Mixer",
+                "description": "A commercial-grade broadcast scene editor and stitching console built directly into the studio. Preview your cut on a 16:9 Broadcast Reference Monitor paired with a real-time Stereo VU / Peak Meter (`-60` to `0 dBFS`, `-14 LUFS` target), inspect cut points with a side-by-side Match-Cut Continuity Loupe, shape J-Cut and L-Cut audio overlaps (`-0.3s` / `+0.3s`), choose dynamic Optical Hold Modes (`103% Ken Burns Push` or `Ping-Pong Tail`), mix across a 6-lane timeline (`V1 Video`, `A0 Stem`, `A1 Dialogue`, `A2 VO`, `A3 SFX`, `A4 Score`) with `-8 dB` Auto-Ducking, apply 1-click watermark crops and text overlays, and cloud-render EBU R128 (`-14 LUFS`) masters.",
+                "screenshot": "The Mixer — Broadcast Reference Monitor, Stereo VU Meter, Match-Cut Continuity Loupe, J/L-Cut overlaps, 6-lane timeline with -8 dB Auto-Ducking, and EBU R128 loudness",
                 "learnMore": {
                   "items": [
                     {
-                      "title": "內建場景編輯器",
-                      "description": "直接在工作室內修剪剪輯並調整速度坡道。"
+                      "title": "Broadcast Reference Monitor & Stereo VU / LUFS Meter",
+                      "description": "Preview your stitched sequence on a 16:9 reference monitor beside a real-time stereo peak and loudness meter calibrated to -14.0 LUFS web and -24.0 LKFS broadcast targets."
                     },
                     {
-                      "title": "收尾工作",
-                      "description": "新增文字疊加並套用浮水印，無需匯出到外部編輯器。"
+                      "title": "Match-Cut Continuity Loupe & J/L-Cut audio overlaps",
+                      "description": "Hover any transition pill to compare the Out-Frame of Shot N against the In-Frame of Shot N+1 side by side while dialing in -0.3s J-cut lead-ins and +0.3s L-cut audio tails."
+                    },
+                    {
+                      "title": "6-lane timeline with -8 dB Auto-Ducking envelope",
+                      "description": "Mix V1 Video, A0 Dialogue-Free Stem, A1 Dialogue, A2 Narration, A3 SFX, and A4 Score with a visual gain-reduction curve that automatically ducks music -8 dB under speech."
+                    },
+                    {
+                      "title": "Optical Hold Modes & elastic dub alignment",
+                      "description": "Replace static freeze-frames with a 103% Ken Burns Push Zoom or Ping-Pong Tail Loop and slow video clips down to 67% speed so longer dubbed dialogue fits naturally."
+                    },
+                    {
+                      "title": "1-click watermark crop, text overlays & EBU R128 export",
+                      "description": "Apply preset edge crops to remove third-party watermarks, burn in lower-thirds or subtitles, and cloud-render stitched MP4 masters with EBU R128 loudness normalization."
                     }
                   ]
                 }
               },
               {
                 "icon": "languageStreams",
-                "title": "流（多語言）",
-                "description": "立即將您的全球影響力擴展到 44 種語言。透過配音、同步嘴唇動作或直接在場景中重新產生在地化對話剪輯，自動產生備用語言流。",
-                "screenshot": "串流（多語言）－配音音訊和本地化對話剪輯",
+                "title": "Streams (Multi-Language)",
+                "description": "Expand your global reach across 44 languages from one master timeline. Selectively regenerate only the specific shots containing spoken dialogue or in-scene text signage while retaining unselected master shots at zero extra credit cost. Extract embedded video audio and strip spoken dialogue (`htdemucs` neural stem separation) so generated SFX and music carry into every dub, and automatically align longer translated dialogue using elastic video slow-down (slowing a `10s` clip up to `15s` at `67%` speed), hybrid optical holds, or pitch-preserved audio tempo matching—while directing in a localized Studio UI.",
+                "screenshot": "Streams (Multi-Language) — Selective shot regeneration vs retained master shots, dialogue-free stem extraction, and elastic slow-video dub alignment",
                 "learnMore": {
                   "items": [
                     {
-                      "title": "全球影響力",
-                      "description": "直接在場景內自動產生跨 44 種語言的替代語言流。"
+                      "title": "Selective shot regeneration & retained master clips",
+                      "description": "Select only the shots with spoken dialogue or in-scene signage to regenerate in your target language while unselected action shots automatically retain the master video clip."
                     },
                     {
-                      "title": "配音、口型同步或重新生成",
-                      "description": "透過配音、同步嘴唇動作或重新生成本地化對話剪輯來本地化每個鏡頭。"
+                      "title": "Dialogue-free stem extraction (keep generated SFX & music)",
+                      "description": "Neural stem separation extracts embedded video audio and removes spoken English dialogue while preserving generated foley, room ambience, and music for clean MP3 dubbing."
+                    },
+                    {
+                      "title": "Elastic video slow-down & multi-method dub alignment",
+                      "description": "Align longer translated dialogue by slowing a 10s video clip up to 15s (down to 67% speed), pairing an 80% slow-down with a 103% zoom hold, or fitting dub audio tempo up to 1.25x."
+                    },
+                    {
+                      "title": "Regenerated dialogue & signage clips across 44 languages",
+                      "description": "Regenerate localized dialogue takes and in-scene signage clips directly within the scene across 44 languages so visuals, stencils, and speech match every audience."
+                    },
+                    {
+                      "title": "Localized Studio UI",
+                      "description": "Direct and produce in your native interface across English, Spanish, Portuguese, Hindi, Simplified Chinese, and Arabic."
                     }
                   ]
                 }
               },
               {
                 "icon": "promoTrailers",
-                "title": "宣傳影片和預告片",
-                "description": "製作過程中隨時剪輯適合社群的宣傳預告片。產生針對水平或垂直格式最佳化的多語言版本。",
-                "screenshot": "促銷與預告片 — 多國語言程度與垂直預告片",
+                "title": "Promo & Trailers",
+                "description": "Cut high-converting theatrical teasers, episodic recaps, and social-ready promo trailers at any time during production. Pull hero takes from your scene vault, reframe for horizontal (`16:9`) or vertical (`9:16`) feeds, and generate multi-language versions with localized title cards and voiceover hooks.",
+                "screenshot": "Promo & Trailers — multi-language horizontal and vertical trailers",
                 "learnMore": {
                   "items": [
                     {
-                      "title": "社群預告片",
-                      "description": "在製作過程中隨時剪下宣傳預告片。"
+                      "title": "Social-ready trailers at any stage",
+                      "description": "Cut promo trailers, theatrical teasers, and episodic recaps at any point during production."
                     },
                     {
-                      "title": "多語言格式",
-                      "description": "產生針對水平或垂直格式最佳化的多語言版本。"
+                      "title": "Horizontal & vertical social formats",
+                      "description": "Generate multi-language versions optimized for horizontal 16:9 YouTube feeds or vertical 9:16 Shorts, Reels, and TikTok."
+                    },
+                    {
+                      "title": "Localized hooks & title cards",
+                      "description": "Render localized trailer streams with translated voiceover hooks, burned-in captions, and market-specific title cards."
                     }
                   ]
                 }
               },
               {
                 "icon": "shipPackage",
-                "title": "直接出版",
-                "description": "匯出最終的母帶 MP4，或讓 SceneFlow 自動產生縮圖和描述，將場景、章節和宣傳片直接發佈到 YouTube、TikTok 和 Facebook。",
-                "screenshot": "直接發布 — MP4 匯出並直接發佈到 YouTube、TikTok 和 Facebook",
+                "title": "Direct Publishing",
+                "description": "Export the final EBU R128-normalized master MP4 in 1080p or 4K, download complete production stems, or let SceneFlow auto-generate high-CTR thumbnails, localized titles, chapter markers, and descriptions to publish scenes, chapters, and promos directly to YouTube, TikTok, and Facebook.",
+                "screenshot": "Direct Publishing — MP4 export and direct publishing to YouTube, TikTok, and Facebook",
                 "learnMore": {
                   "items": [
                     {
-                      "title": "Master MP4 或直接社交",
-                      "description": "匯出最終的母帶 MP4 或將場景、章節和宣傳片直接發佈到 YouTube、TikTok 和 Facebook。"
+                      "title": "Master MP4 or direct social publishing",
+                      "description": "Export the final master MP4 or publish scenes, chapters, and promos directly to YouTube, TikTok, and Facebook."
                     },
                     {
-                      "title": "自動產生的元數據",
-                      "description": "讓 SceneFlow 自動產生每個版本的縮圖和描述。"
+                      "title": "Auto-generated thumbnails & metadata",
+                      "description": "Let SceneFlow auto-generate high-contrast thumbnails, localized titles, descriptions, tags, and chapter markers for every release."
+                    },
+                    {
+                      "title": "Archival stems & screenplay bundle",
+                      "description": "Download stitched video masters, isolated dialogue and SFX stems, subtitle files, and formatted screenplays in one production package."
                     }
                   ]
                 }
@@ -797,44 +1005,52 @@
         "features": [
           {
             "icon": "screeningPlayer",
-            "title": "一個統一的播放器",
-            "description": "在預覽動畫、場景、章節、預告片和最終母版之間無縫切換。即時切換語言串流以試聽配音、口型同步或鏡頭重新生成的本地化，始終鎖定到混音器的精確剪輯。",
-            "screenshot": "Screening Room 播放器",
+            "title": "One Unified Player",
+            "description": "Toggle seamlessly between Pre-Vis animatics, stitched scenes, multi-scene chapters, promo trailers, and your final master. Switch Language Streams on the fly to audition dubbed audio, dialogue-free stem mixes, and regenerated dialogue or signage clips—always frame-locked to the exact cut from the Mixer.",
+            "screenshot": "Screening Room player",
             "learnMore": {
               "items": [
                 {
-                  "title": "每個里程碑盡在一個視圖中",
-                  "description": "在預覽版、場景、章節、宣傳影片和最終母版之間輕鬆切換。"
+                  "title": "Every milestone in one theatre",
+                  "description": "Switch effortlessly among Pre-Vis animatics, individual scenes, chapters, promos, and the final master."
                 },
                 {
-                  "title": "即時語言切換",
-                  "description": "即時試聽任何語言串流（配音、口型同步或鏡頭重新生成）。"
+                  "title": "Live language stream auditioning",
+                  "description": "Audition any Language Stream—dubbed audio, lip-sync, or regenerated dialogue and signage clips—on the fly without reloading the timeline."
                 },
                 {
-                  "title": "框架鎖定到混音器",
-                  "description": "每個串流都會播放混音器中渲染的精確編輯和計時。"
+                  "title": "Frame-locked to the Broadcast Mixer",
+                  "description": "Every stream plays the exact stitch transitions, J/L-cut overlaps, auto-ducking curves, and loudness normalization rendered in the Mixer."
+                },
+                {
+                  "title": "Incremental episodic shipping",
+                  "description": "Ship a finished 3–5 minute scene, an 8–12 minute chapter, or a social promo immediately while downstream chapters continue rendering."
                 }
               ]
             }
           },
           {
             "icon": "screeningCollab",
-            "title": "幀精確協作",
-            "description": "停止將粗剪匯出到電子郵件。共享私人放映鏈接，合作者和投資者可以即時觀看並直接在圖片上添加註釋，並將即時通知直接發送到您的手機。",
-            "screenshot": "共用評論",
+            "title": "Frame-Accurate Collaboration",
+            "description": "Stop exporting rough cuts to email. Share a private screening link where collaborators, sound editors, localization leads, and investors watch full-resolution playback in real time and drop timestamped notes directly on the picture—with instant notifications sent straight to your phone.",
+            "screenshot": "Shared review",
             "learnMore": {
               "items": [
                 {
-                  "title": "私人放映連結",
-                  "description": "審閱者觀看全解析度回放並在圖片上留下帶有時間戳的註釋。"
+                  "title": "Private stakeholder screening links",
+                  "description": "Reviewers watch full-resolution playback across any language stream and leave frame-accurate timestamped notes on the picture."
                 },
                 {
-                  "title": "沒有粗剪文件匯出",
-                  "description": "在一個地方收集利害關係人的回饋，無需郵寄大量影片檔案。"
+                  "title": "Zero rough-cut file exports",
+                  "description": "Collect creative, legal, and localization feedback in one centralized review thread without uploading or mailing heavy video files."
                 },
                 {
-                  "title": "即時移動警報",
-                  "description": "當您在桌面上直接操作時，新的審閱者註釋會立即在手機上通知您。"
+                  "title": "Instant mobile notifications",
+                  "description": "New reviewer notes notify you immediately on your phone so you can approve or dispatch revisions while directing on desktop."
+                },
+                {
+                  "title": "Direct link back to the Shot Rail",
+                  "description": "Jump from any timestamped screening comment straight to the corresponding scene and shot in the Production Stage to execute the note."
                 }
               ]
             }

@@ -74,6 +74,9 @@ export const GO_TO_PRODUCTION_SCREENSHOT_WEBP =
 export const SCENE_DIRECTOR_SCREENSHOT_WEBP =
   '/landing/key-features/screenshots/scene-director.webp'
 
+export const SCENE_WORKFLOW_SCREENSHOT_WEBP =
+  '/landing/key-features/screenshots/scene-workflow.webp'
+
 export const CONTINUITY_LIBRARY_SCREENSHOT_WEBP =
   '/landing/key-features/screenshots/continuity-library.webp'
 
@@ -89,14 +92,23 @@ export const PRODUCTION_SCRIPT_SCREENSHOT_WEBP =
 export const AUDIO_AGENT_SCREENSHOT_WEBP =
   '/landing/key-features/screenshots/audio-agent.webp'
 
+export const SCENE_AUDIO_MUSIC_SCREENSHOT_WEBP =
+  '/landing/key-features/screenshots/scene-audio-music.webp'
+
 export const STILLS_AGENT_SCREENSHOT_WEBP =
   '/landing/key-features/screenshots/stills-agent.webp'
+
+export const SCENE_STILLS_WORKBENCH_SCREENSHOT_WEBP =
+  '/landing/key-features/screenshots/scene-stills-workbench.webp'
 
 export const PRE_VIS_ANIMATIC_SCREENSHOT_WEBP =
   '/landing/key-features/screenshots/pre-vis-animatic.webp'
 
 export const CLIPS_AGENT_SCREENSHOT_WEBP =
   '/landing/key-features/screenshots/clips-agent.webp'
+
+export const SCENE_CLIPS_WORKBENCH_SCREENSHOT_WEBP =
+  '/landing/key-features/screenshots/scene-clips-workbench.webp'
 
 export const PRODUCTION_MIXER_SCREENSHOT_WEBP =
   '/landing/key-features/screenshots/production-mixer.webp'
@@ -135,14 +147,18 @@ const KEY_FEATURE_SCREENSHOTS: Record<string, KeyFeatureScreenshot> = {
   blueprintResonance: { imageUrl: BLUEPRINT_RESONANCE_SCREENSHOT_WEBP },
   goToProduction: { imageUrl: GO_TO_PRODUCTION_SCREENSHOT_WEBP },
   directShot: { imageUrl: SCENE_DIRECTOR_SCREENSHOT_WEBP },
+  sceneWorkflow: { imageUrl: SCENE_WORKFLOW_SCREENSHOT_WEBP },
   continuity: { imageUrl: CONTINUITY_LIBRARY_SCREENSHOT_WEBP },
   scriptResonance: { imageUrl: SCRIPT_RESONANCE_SCREENSHOT_WEBP },
   budget: { imageUrl: PRODUCTION_PLANNER_SCREENSHOT_WEBP },
   productionScript: { imageUrl: PRODUCTION_SCRIPT_SCREENSHOT_WEBP },
   audioAgent: { imageUrl: AUDIO_AGENT_SCREENSHOT_WEBP },
+  musicScore: { imageUrl: SCENE_AUDIO_MUSIC_SCREENSHOT_WEBP },
   stillsAgent: { imageUrl: STILLS_AGENT_SCREENSHOT_WEBP },
+  stillsWorkbench: { imageUrl: SCENE_STILLS_WORKBENCH_SCREENSHOT_WEBP },
   animatic: { imageUrl: PRE_VIS_ANIMATIC_SCREENSHOT_WEBP },
   videoAgent: { imageUrl: CLIPS_AGENT_SCREENSHOT_WEBP },
+  clipsWorkbench: { imageUrl: SCENE_CLIPS_WORKBENCH_SCREENSHOT_WEBP },
   mixer: { imageUrl: PRODUCTION_MIXER_SCREENSHOT_WEBP },
   languageStreams: { imageUrl: STREAMS_MULTILANGUAGE_SCREENSHOT_WEBP },
   promoTrailers: { imageUrl: PROMO_TRAILERS_SCREENSHOT_WEBP },

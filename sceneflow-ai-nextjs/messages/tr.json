@@ -267,44 +267,52 @@
         "features": [
           {
             "icon": "newSeries",
-            "title": "Yeni Seri",
-            "description": "Dizi veya kanal konseptinizi sade bir dille anlatın. Etkileşimli yapay zeka iyileştirmesi, önermenizi keskinleştirir ve çok bölümlü bir sezon temeli oluşturur; kapsayıcı olay örgüsü ve bölüm dökümleriyle tamamlanır.",
-            "screenshot": "Yeni Seri Oluştur — niyet, Netleştir ve Onayla, Seri Oluştur",
+            "title": "New Series",
+            "description": "Pitch your series, anthology, or episodic channel concept in plain language. Interactive AI refinement sharpens your premise, target audience, and visual tone before generating a complete multi-episode season baseline—complete with overarching plot arcs, recurring character hooks, and episode-by-episode breakdowns.",
+            "screenshot": "Create New Series — intent, Clarify and Confirm, Generate Series",
             "learnMore": {
               "items": [
                 {
-                  "title": "Niyetiniz",
-                  "description": "Konuyu, formatı, hedef kitleyi ve görsel sanat tarzını sade bir dille anlatın."
+                  "title": "Plain-language series pitch",
+                  "description": "Pitch the premise, episode format, target demographic, and visual art style in plain language."
                 },
                 {
-                  "title": "Etkileşimli iyileştirme",
-                  "description": "Netleştir ve Onayla, herhangi bir şey oluşturulmadan önce sezon özetini sizinle birlikte netleştirir."
+                  "title": "Interactive Clarify & Confirm",
+                  "description": "Clarify and Confirm sharpens the season synopsis, tone, and thematic pillars with you before anything is generated."
                 },
                 {
-                  "title": "Sezon temel çizgisi",
-                  "description": "Generate Series, istediğiniz zaman genişletebileceğiniz beş bölümlük bir sezon dizisi oluşturur."
+                  "title": "Multi-episode season baseline",
+                  "description": "Generate Series builds a structured five-episode season arc with individual synopses and story hooks that you can expand anytime."
+                },
+                {
+                  "title": "World & genre calibration",
+                  "description": "Lock visual aesthetics, era settings, and recurring narrative motifs up front so every episode shares the same creative DNA."
                 }
               ]
             }
           },
           {
             "icon": "seriesReview",
-            "title": "Sezon İncili ve Süreklilik",
-            "description": "Anlatılan sezona genel bakışı ve bölüm listesini okuyun veya dinleyin. SceneFlow hikaye dizilerinizi, yayın profillerinizi, konumlarınızı ve imza aksesuarlarınızı her bölümün devraldığı paylaşılan bir Reference Library'e kilitler.",
-            "screenshot": "Genel Bakış, Bölümler, Tutarlılık, Devamlılık — Oyuncu Kadrosu, Mekânlar, Aksesuarlar, Ortamlar",
+            "title": "Season Bible & Continuity",
+            "description": "Read or listen to the narrated season overview and episode slate. SceneFlow locks your story threads, cast profiles, recurring locations, and signature props into a shared Reference Library that every episode inherits automatically—eliminating continuity drift across multi-part storytelling.",
+            "screenshot": "Overview Listen, Episodes Listen, Consistency, Continuity — Cast, Locations, Props, Settings",
             "learnMore": {
               "items": [
                 {
-                  "title": "Oku veya dinle",
-                  "description": "Yerleşik sesli anlatımla sezona genel bakışı ve her bölümün özetini denetleyin."
+                  "title": "Narrated season & episode audit",
+                  "description": "Audit the overarching season overview and every individual episode synopsis with built-in studio audio narration."
                 },
                 {
-                  "title": "Hikaye tutarlılığı",
-                  "description": "Estetik, önemli olay örgüsü ve anlatı konuları tüm sezon boyunca kilitli kalıyor."
+                  "title": "Cross-episode story consistency",
+                  "description": "Visual aesthetics, canonical plot events, and character relationship threads stay locked across the entire season."
                 },
                 {
-                  "title": "Paylaşılan süreklilik",
-                  "description": "Oyuncular, konumlar, aksesuarlar ve ayarlar, ürettiğiniz her bölüme otomatik olarak taşınır."
+                  "title": "Shared Reference Library inheritance",
+                  "description": "Cast portraits, voice profiles, wardrobes, locations, and signature props carry automatically into every episode you produce."
+                },
+                {
+                  "title": "Centralized canon management",
+                  "description": "Update a character look, location plate, or prop once in the Series Bible to propagate the change to future episodes."
                 }
               ]
             }
@@ -312,75 +320,87 @@
           {
             "icon": "seriesResonance",
             "title": "Audience Resonance",
-            "description": "Tek bir senaryo yazmadan önce sezon akışınızı hedef demografinize göre test edin. Bölüm bazında rezonans puanlarını inceleyin ve tek tıklamayla veri destekli hikaye iyileştirmelerini uygulayın; yalnızca notu kabul ettiğinizde.",
-            "screenshot": "Audience Resonance analizi ve ardından uygulanmamış eyleme geçirilebilir içgörüler",
+            "description": "Test your season arc against your target demographic before writing a single script. Review episode-by-episode resonance scores, binge-retention curves, and structural critiques, then apply data-backed story improvements with one click—only when you agree with the note.",
+            "screenshot": "Audience Resonance analysis, then Actionable Insights, unapplied",
             "learnMore": {
               "items": [
                 {
-                  "title": "Demografik puanlama",
-                  "description": "Puanlar ve yapısal analiz, sezonunuzun hedef kitlenize nasıl ulaştığını ortaya çıkarır."
+                  "title": "Demographic & retention scoring",
+                  "description": "Multi-axis scores and structural analysis reveal how your season arc and episode cliffhangers land with your target audience."
                 },
                 {
-                  "title": "Yönetmenin ayrıcalığı",
-                  "description": "Actionable Insights serinizi yalnızca uygulamayı seçtiğinizde günceller."
+                  "title": "Episode-by-episode diagnostics",
+                  "description": "Spot mid-season pacing dips, character underutilization, or tonal drift across the full episode slate before scripting."
+                },
+                {
+                  "title": "Director's prerogative",
+                  "description": "Actionable Insights update your series bible and episode outlines only when you explicitly choose to apply them."
                 }
               ]
             }
           },
           {
             "icon": "seriesDirector",
-            "title": "Dizi Yönetmeni",
-            "description": "Tüm sezonu sesli veya yazılı olarak yeniden şekillendirin. Hikayenizin geri kalanını olduğu gibi korurken aynı anda tüm bölümlerde tonu değiştirin, riskleri artırın veya karakter akışını yeniden düzenleyin.",
-            "screenshot": "Dizi Yönetmeni — yönetim, odak, kabul",
+            "title": "The Series Director",
+            "description": "Reshape the entire season by voice or text. Shift the dramatic tone, raise the stakes, introduce a new antagonist, or rework a character arc across all episodes at once while keeping the rest of your storyline and continuity bible intact.",
+            "screenshot": "Series Director — direction, focus, accept",
             "learnMore": {
               "items": [
                 {
-                  "title": "Sade dilli yön",
-                  "description": "Notunuzu konuşun veya yazın ve olay örgüsünü, karakterlerini, bölüm yaylarını, tonunu veya ayarını hedefleyin."
+                  "title": "Plain-language season direction",
+                  "description": "Speak or type your creative note and target overarching plot, characters, episode arcs, tone, or world setting."
                 },
                 {
-                  "title": "Cerrahi güncellemeler",
-                  "description": "Siz düzeltmeyi kabul edene kadar hiçbir şey değişmez ve alakasız hikaye konularına dokunulmaz."
+                  "title": "Surgical multi-episode updates",
+                  "description": "Nothing changes until you accept the previewed revision, and unrelated story threads stay completely untouched."
                 },
                 {
-                  "title": "Rehberli öneriler",
-                  "description": "Yapay zekanın önerdiği hikaye iyileştirmelerini uygulayın veya her yaratıcı seçimi kendiniz yönlendirin."
+                  "title": "Guided AI recommendations",
+                  "description": "Apply one-click story improvements surfaced by Audience Resonance or steer every creative choice yourself."
                 }
               ]
             }
           },
           {
             "icon": "directEpisode",
-            "title": "Bölüm Düzeyinde Yön",
-            "description": "Sezon listenizin geri kalanını istikrarsızlaştırmadan, olay örgüsünü, ilerleme hızını veya tek başına kancayı yeniden düzenlemek için herhangi bir bölümü yakınlaştırın.",
-            "screenshot": "Bölümler — Bu bölümü yönet; diğer bölümler değişmeden kalsın",
+            "title": "Episode-Level Direction",
+            "description": "Zoom into any individual episode to rework its plot outline, act structure, pacing, or cold-open hook in isolation—without destabilizing neighboring episodes or mutating the rest of your season slate.",
+            "screenshot": "Episodes — Direct this episode, other episodes unchanged",
             "learnMore": {
               "items": [
                 {
-                  "title": "Yalıtılmış yeniden yazmalar",
-                  "description": "Komşu bölümleri değiştirmeden tek bir bölümün ana hatlarında ve ritimlerinde doğrudan değişiklik yapın."
+                  "title": "Isolated episode rewrites",
+                  "description": "Direct changes to a single episode's synopsis, act beats, and character focus without altering neighboring episodes."
                 },
                 {
-                  "title": "Sezon bütünlüğü",
-                  "description": "Kapsamlı sezon İncil'i ve kalan bölüm listesi kilitli kalıyor."
+                  "title": "Locked season integrity",
+                  "description": "The overarching season bible, shared cast continuity, and remaining episode slate stay locked while you iterate."
+                },
+                {
+                  "title": "Pre-launch beat polishing",
+                  "description": "Refine individual episode hooks and cliffhangers until the episode is ready to launch into the Blueprint Room."
                 }
               ]
             }
           },
           {
             "icon": "startEpisode",
-            "title": "Tek Tıkla Bölüm Başlatma",
-            "description": "Bir bölümün taslağı hedefine ulaştığında, onu özeti, hikaye akışı, oyuncu kadrosu ve zaten bağlanmış dünyası ile doğrudan Blueprint Room'e gönderin.",
-            "screenshot": "Projeyi Başlat — taslak ve oyuncu kadrosu halihazırda bölümde mevcut",
+            "title": "One-Click Episode Launch",
+            "description": "When an episode's outline hits the mark, launch it straight into the Blueprint Room with a single click—bringing its synopsis, narrative beats, recurring cast, voice profiles, locations, and visual style automatically wired in.",
+            "screenshot": "Start Project — outline and cast already on the episode",
             "learnMore": {
               "items": [
                 {
-                  "title": "Anında aktarım",
-                  "description": "Tek bir tıklamayla herhangi bir bölümü doğrudan Blueprint Room'de başlatın."
+                  "title": "Instant Blueprint handoff",
+                  "description": "Launch any approved episode directly into the Blueprint Room with a single click to begin detailed beat and script work."
                 },
                 {
-                  "title": "Önceden kablolu DNA",
-                  "description": "Bölümün taslağı, özeti, hikaye akışı, oyuncular ve mekanlar otomatik olarak hareket eder."
+                  "title": "Pre-wired creative DNA",
+                  "description": "The episode outline, synopsis, story beats, cast profiles, wardrobes, and locations travel automatically with zero re-entry."
+                },
+                {
+                  "title": "Parallel episode production",
+                  "description": "Spin up multiple episodes from the same season slate as independent projects that share the same canonical series assets."
                 }
               ]
             }
@@ -395,84 +415,92 @@
         "features": [
           {
             "icon": "startBlueprint",
-            "title": "Blueprint'i başlatın",
-            "description": "Dizi listenizden, taslağı ve oyuncu kadrosu önceden yüklenmiş bir bölüm ekleyin veya yepyeni bir film konseptini sıfırdan anlatın ve yapay zekanın temel işleyişi yapılandırmasına izin verin.",
-            "screenshot": "Dizi bölümü halihazırda belli veya Projenizi Başlatın — niyet, Yapay Zeka ile Doğrulama ve Geliştirme, Blueprint Oluşturma",
+            "title": "Start the Blueprint",
+            "description": "Bring in an episode from your series slate with its outline, cast, and world pre-loaded, or pitch a brand-new standalone film concept from scratch and let AI validate, enhance, and structure the foundational treatment.",
+            "screenshot": "Series episode already known, or Start Your Project — intent, Validate & Enhance with AI, Generate Blueprint",
             "learnMore": {
               "items": [
                 {
-                  "title": "Series Room'den",
-                  "description": "Dizi bölümleri taslakları, özetleri, ritimleri ve oyuncu kadrosuyla birlikte önceden eklenmiş olarak gelir."
+                  "title": "Seamless from Series Room",
+                  "description": "Series episodes arrive with their outline, synopsis, story beats, recurring cast, and locations already attached."
                 },
                 {
-                  "title": "Bağımsız proje",
-                  "description": "Yeni bir film konsepti tanıtın, yapay zeka doğrulamasıyla geliştirin ve eksiksiz bir değerlendirme oluşturun."
+                  "title": "Standalone film or short",
+                  "description": "Pitch a new film concept in plain language, refine it with AI validation, and generate a complete film treatment."
+                },
+                {
+                  "title": "Narrated treatment overview",
+                  "description": "Read or listen to the narrated logline, synopsis, and creative reasoning to verify the story foundation immediately."
                 }
               ]
             }
           },
           {
             "icon": "treatment",
-            "title": "Beat Sayfası",
-            "description": "Filminizin omurgasını yapılandırın. Anlatımlı vuruş sayfanızı okuyun veya dinleyin ve ilerleme hızına burada ince ayar yapın; Blueprint Room'de kilitlediğiniz her vuruş, SFAIPRODÜKSİYON_STAGETERM'de bir bölümü yönlendirir.",
-            "screenshot": "Dinle özellikli Beats sekmesi",
+            "title": "The Beat Sheet",
+            "description": "Structure the dramatic spine of your film before dialogue is written. Read or listen to your narrative beat sheet, reorder acts, and fine-tune scene pacing here—every beat you lock in the Blueprint Room drives a dedicated chapter in the Production Stage.",
+            "screenshot": "Beats tab, with Listen",
             "learnMore": {
               "items": [
                 {
-                  "title": "Anlatı omurgası",
-                  "description": "Vuruşlar, komut dosyası oluşturma başlamadan önce Blueprint Room'de yazılır ve kilitlenir."
+                  "title": "Narrative spine",
+                  "description": "Beats are authored and locked in the Blueprint Room before script generation begins."
                 },
                 {
-                  "title": "Önce ilerleme hızı",
-                  "description": "Burada vuruş sayfasını optimize etmek, senaryonun sıkı dramatik bir yapıya sahip olmasını sağlar."
+                  "title": "Pacing & structural discipline",
+                  "description": "Optimizing the beat sheet here ensures the multi-scene screenplay builds with tight dramatic structure and clear turning points."
                 },
                 {
-                  "title": "Vuruştan bölüme eşleme",
-                  "description": "Production Stage, her bir ritmi bir bölüme dönüştürür."
+                  "title": "Beat-to-chapter mapping",
+                  "description": "Production Stage turns each beat into a chapter."
+                },
+                {
+                  "title": "Narrated beat audition",
+                  "description": "Listen to the beat sheet read aloud to feel the rhythm and momentum of the story before compiling the script."
                 }
               ]
             }
           },
           {
             "icon": "castLocations",
-            "title": "Oyuncular ve Dünya Tasarımı",
-            "description": "Senaryo oluşturulmadan önce karakterlerinizi, gardırobunuzu ve birincil konumlarınızı tanımlayın; böylece senaryonun, birinci sayfadan itibaren tam olarak sizin kadronuza ve ayarlara göre yazıldığından emin olun.",
-            "screenshot": "Karakterler sekmesi, ardından Hikâye kısmında Mekân",
+            "title": "Cast & World Design",
+            "description": "Define your characters, vocal identities, period wardrobes, and primary locations before the screenplay is generated—ensuring the script is written around your exact cast, blocking environments, and visual atmosphere from page one.",
+            "screenshot": "Characters tab, then Setting on Story",
             "learnMore": {
               "items": [
                 {
-                  "title": "Karakter profilleri",
-                  "description": "Oyuncu profillerinizi ön plana yönlendirin, böylece diyalog ve engelleme her karakterle eşleşsin."
+                  "title": "Rich character profiles",
+                  "description": "Direct your cast profiles, backstories, and physical attributes up front so dialogue and blocking match each character."
                 },
                 {
-                  "title": "Dünya ve konumlar",
-                  "description": "Her sahnenin ortamını sabitlemek için Hikaye sekmesinde birincil ayarları oluşturun."
+                  "title": "World, era & locations",
+                  "description": "Establish primary settings, lighting palettes, and cinematic style on the Story tab to anchor every scene's environment."
                 },
                 {
-                  "title": "Sıfır komut dosyası yeniden düzenleme",
-                  "description": "Komut dosyası oluşturulmadan önce cast ve konumların kilitlenmesi, SFAIPRODÜKSİYON_STAGETERM'deki maliyetli yeniden yazma işlemlerini ortadan kaldırır."
+                  "title": "Zero script refactoring",
+                  "description": "Locking cast and locations before script generation eliminates costly rewrites and continuity mismatches on the Production Stage."
                 }
               ]
             }
           },
           {
             "icon": "blueprintDirector",
-            "title": "Blueprint Direktörü",
-            "description": "Vuruşları, karakterleri veya dünya ayrıntılarını gözden geçirmek için hikaye notlarınızı konuşun veya yazın. Dengeli bir revizyonu yan yana önizleyin; siz kesimi onaylayana kadar tedavinizde hiçbir değişiklik olmaz.",
-            "screenshot": "Blueprint Direktör — yön, odak, önizleme, revizyonu uygula",
+            "title": "The Blueprint Director",
+            "description": "Speak or type your story notes to revise beats, character motivations, or world details without prompt engineering. Preview a balanced revision side-by-side with creative reasoning—nothing changes in your treatment until you approve the cut.",
+            "screenshot": "Blueprint Director — direction, focus, preview, Apply revision",
             "learnMore": {
               "items": [
                 {
-                  "title": "Hedeflenen notlar",
-                  "description": "Yönünüzü söyleyin veya yazın ve revizyonu Ritimlere, Karakterlere veya Hikayeye odaklayın."
+                  "title": "Targeted voice or text notes",
+                  "description": "Speak or type your direction and focus the revision surgically on Beats, Characters, or Story."
                 },
                 {
-                  "title": "Yan yana önizleme",
-                  "description": "Blueprint'inizde herhangi bir değişiklik yapmadan önce dengeli bir revizyonu inceleyin."
+                  "title": "Side-by-side revision preview",
+                  "description": "Review a balanced revision and its underlying story reasoning before committing any changes to your Blueprint."
                 },
                 {
-                  "title": "Kilidi sen tut",
-                  "description": "Siz revizyonu açıkça uygulayana kadar tedavinizde hiçbir şey değişmez."
+                  "title": "You hold the creative lock",
+                  "description": "Nothing in your treatment, beat sheet, or character roster changes until you explicitly apply the revision."
                 }
               ]
             }
@@ -480,35 +508,43 @@
           {
             "icon": "blueprintResonance",
             "title": "Audience Resonance",
-            "description": "Tedavinizi hedef kitlenizin kültürel ve demografik profiline göre puanlayın. Yapısal ilerleme hızı boşluklarını erkenden yakalayın ve Blueprint Direktöründeki hedeflenen önerileri uygulayın.",
-            "screenshot": "Audience Resonance — kaydedilmiş kitle, puanlar, uygulanmamış öneriler",
+            "description": "Score your treatment against your target audience's cultural, genre, and demographic profile before generating the script. Catch structural pacing gaps or weak character stakes early and apply targeted recommendations in the Blueprint Director.",
+            "screenshot": "Audience Resonance — saved audience, scores, recommendations unapplied",
             "learnMore": {
               "items": [
                 {
-                  "title": "Komut dosyası öncesi doğrulama",
-                  "description": "Kategori puanlarını ve hikaye notlarını görmek için tedavinizi hedef kitlenize göre analiz edin."
+                  "title": "Pre-script audience validation",
+                  "description": "Analyze your treatment against your saved target audience to inspect category scores, strengths, and story risks."
                 },
                 {
-                  "title": "Seçici uygulama",
-                  "description": "Öneriler yalnızca uygulamayı seçtiğinizde Blueprint'inizi değiştirir."
+                  "title": "Actionable story remedies",
+                  "description": "Each insight pairs a structural diagnosis with a concrete rewrite recommendation tailored to your beat sheet and cast."
+                },
+                {
+                  "title": "Selective one-click application",
+                  "description": "Recommendations only modify your Blueprint when you choose to apply them in the Blueprint Director."
                 }
               ]
             }
           },
           {
             "icon": "goToProduction",
-            "title": "Üretime Yeşil Işık",
-            "description": "Tedavi, atış sayfası ve alçı kilitlendiğinde SFAIPRODÜKSİYON_STAGETERM'e çıkın. SceneFlow, çok bölümlü komut dosyanızın tamamını doğrudan onaylanmış Blueprint'inizden derler.",
-            "screenshot": "Production Stage'e gidin — hikâye akışı, olay örgüsü aşamaları ve oyuncu kadrosu halihazırda belirlenmiş durumda.",
+            "title": "Greenlight to Production",
+            "description": "When the treatment, beat sheet, and cast are locked, step onto the Production Stage. SceneFlow compiles your full multi-chapter screenplay directly from your approved Blueprint—mapping every beat into a production chapter with cast and continuity pre-wired.",
+            "screenshot": "Go to Production Stage — storyline, beats, and cast already set",
             "learnMore": {
               "items": [
                 {
-                  "title": "Kusursuz derleme",
-                  "description": "SFAIPRODÜKSİYON_STAGETERM'e adım attığınızda, komut dosyasının tamamı doğrudan onaylanmış Blueprint'inizden derlenir."
+                  "title": "Seamless script compilation",
+                  "description": "Stepping onto the Production Stage compiles the full multi-scene screenplay directly from your approved Blueprint."
                 },
                 {
-                  "title": "Kilitli temel",
-                  "description": "Hikayeniz, ritim yapınız ve oyuncu kadrosu, sahne ve çekim yönetimi için hazır olarak gelir."
+                  "title": "Locked continuity foundation",
+                  "description": "Your storyline, beat-to-chapter structure, cast profiles, and locations arrive ready for scene and shot direction."
+                },
+                {
+                  "title": "Shareable Blueprint review",
+                  "description": "Share the locked Blueprint with co-creators or executive stakeholders for sign-off before commencing production."
                 }
               ]
             }
@@ -522,105 +558,151 @@
         "promise": "Blueprint kilitli. Oyuncu kadrosu belirlendi. Şimdi SFAIPRODÜKSİYON_STAGETERM'e adım atın. Her bölüm, sahne ve çekim doğrusal bir iş akışı halinde düzenlenmiştir. Niyeti yönlendiriyorsunuz; akıllı ajanlar nesli yürütür.",
         "groups": [
           {
-            "id": "script",
+            "id": "direct-control",
             "label": "Doğrudan ve Kontrol",
             "headline": "İstemlerin sözdizimini değil, filmin dilini konuşun.",
             "description": "Parantez içindeki anahtar kelimeleri yazarak zaman kaybetmeyin. SFAIPRODÜKSİYON_STAGETERM doğal yönü anlayarak görüşünüzü tüm sahneye veya belirli bir çekime uygular.",
             "features": [
               {
-                "icon": "scriptResonance",
-                "title": "Sahne ve Çekim Yönetmeni",
-                "description": "Yönünüzü sade bir dille yazın veya konuşun. Temsilciye karede kimin olduğunu, kameranın nerede hareket ettiğini ve duygusal ritmin ne olduğunu anlatın. Çekim Direktörü, durağan fotoğraflarınız ve klipleriniz için temeldeki karmaşık istemleri otomatik olarak yazar.",
-                "screenshot": "Sahne ve Çekim Yönetmeni — fotoğraflar ve klipler için sade dilli yönlendirme",
+                "icon": "sceneWorkflow",
+                "title": "Scene Production Workflow (Fullscreen)",
+                "description": "Open the dedicated Fullscreen Scene Production Studio to direct every stage of a scene from one unified 8-tab command bar (`Direction · Audio · Music · Continuity · Stills · Clips · Mixer · Streams`). Reorder shots in the left-hand Shot Rail with live readiness badges, inspect the 16:9 Still & Clip Stage alongside structured camera, blocking, emotion, and lighting cards, and track end-to-end scene completion without losing context.",
+                "screenshot": "Scene Production Workflow (Fullscreen) — 8-tab linear studio, sortable Shot Rail, and structured Shot Direction Workbench",
                 "learnMore": {
                   "items": [
                     {
-                      "title": "Sade dil",
-                      "description": "Çerçevede kimin olduğunu, kameranın nerede hareket ettiğini ve duygusal ritmin ne olduğunu yazın veya konuşun."
+                      "title": "8-tab fullscreen linear studio",
+                      "description": "Move seamlessly across Direction, Audio, Music, Continuity, Stills, Clips, Mixer, and Streams inside a distraction-free fullscreen workspace."
                     },
                     {
-                      "title": "Sahne veya çekim",
-                      "description": "Görüşünüzü tüm sahneye veya belirli bir çekime uygulayın."
+                      "title": "Sortable Shot Rail & live badges",
+                      "description": "Drag to reorder shots in the left-hand rail while tracking real-time badges for Action, Dialogue, Narration, SFX, Music, Signage, Final 4K stills, and clips In the Can."
                     },
                     {
-                      "title": "Hızlı derleme",
-                      "description": "Çekim Direktörü, durağan fotoğraflarınız ve klipleriniz için temel istemleri otomatik olarak yazar."
-                    }
-                  ]
-                }
-              },
-              {
-                "icon": "castVisual",
-                "title": "Süreklilik Kütüphanesi",
-                "description": "Seri boyunca mutlak tutarlılık. Her çekimin Blueprint ile eşleştiğinden emin olmak için oyuncu kadrosu, gardıroplar, konumlar ve temel aksesuarlar için referans görüntüleri otomatik olarak oluşturun veya manuel olarak atayın.",
-                "screenshot": "Süreklilik Kitaplığı - oyuncular, gardıroplar, mekanlar ve temel aksesuarlar",
-                "learnMore": {
-                  "items": [
-                    {
-                      "title": "Seri tutarlılığı",
-                      "description": "Oyuncu kadrosunu, gardıropları, yerleri ve temel aksesuarları her çekimde bir arada tutun."
+                      "title": "Structured Shot Direction Workbench",
+                      "description": "Inspect the 16:9 Still & Clip Stage beside structured cards for spoken beats, camera lens and motion, talent blocking and gaze, lighting, locked continuity refs, and compiled prompts."
                     },
                     {
-                      "title": "Oluşturun veya atayın",
-                      "description": "Referans görsellerini otomatik olarak oluşturun veya Blueprint ile eşleşecek şekilde kendinizinkini manuel olarak atayın."
+                      "title": "End-to-end scene pipeline telemetry",
+                      "description": "Monitor readiness across direction, voice and score, keyframes, multi-take clips, broadcast mixing, and localized streams before publishing."
                     }
                   ]
                 }
               },
               {
                 "icon": "directShot",
-                "title": "Audience Resonance Entegrasyon",
-                "description": "Render yapmadan önce odayı okuyun. Yapay zeka, senaryonuzu hedef kitlenize göre analiz ederek sahne bazında bilgiler sağlar. Önerilen talimatları anında uygulayın veya içgüdülerinize güvenin ve onları görmezden gelin.",
-                "screenshot": "Audience Resonance Entegrasyon — sahne bazında izleyici bilgileri",
+                "title": "The Scene & Shot Director",
+                "description": "Type or speak your direction in plain language. Tell the agent who is in the frame, where the camera moves, and what the emotional beat is. The Shot Director automatically writes the complex underlying prompts for your stills and clips while syncing camera lens, focal length, talent blocking, and lighting across the scene.",
+                "screenshot": "The Scene & Shot Director — plain-language direction for stills and clips",
                 "learnMore": {
                   "items": [
                     {
-                      "title": "Sahne bazında içgörüler",
-                      "description": "Yapay zeka, oluşturmadan önce senaryonuzu hedef kitlenize göre analiz eder."
+                      "title": "Plain-language film direction",
+                      "description": "Type or speak who is in the frame, where the camera moves, and what the emotional beat is without writing bracketed prompt syntax."
                     },
                     {
-                      "title": "Aramanız",
-                      "description": "Önerilen talimatları anında uygulayın veya içgüdülerinize güvenin ve onları görmezden gelin."
-                    }
-                  ]
-                }
-              },
-              {
-                "icon": "audioAgent",
-                "title": "Üretim Planlayıcısı",
-                "description": "SceneFlow kredilerini veya kendi BYOK API anahtarlarınızı kullanarak her sahne ve bölümde bütçe ve program oluşturmayı oluşturun. Hesaplama harcamadan önce çekim başına sabit ve klip hedefleri belirleyin.",
-                "screenshot": "Üretim Planlayıcı — bütçe, zamanlama ve BYOK API anahtarları",
-                "learnMore": {
-                  "items": [
-                    {
-                      "title": "Bütçe ve program",
-                      "description": "Oluşturmadan önce her sahne ve bölüm için bütçeyi belirleyin ve oluşturmayı planlayın."
+                      "title": "Scene-wide or per-shot precision",
+                      "description": "Apply atmospheric direction across the entire scene or drill down into an individual shot's framing, lens, blocking, and lighting."
                     },
                     {
-                      "title": "Krediler veya BYOK",
-                      "description": "Oluşturmayı SceneFlow kredilerini veya kendi BYOK API anahtarlarınızı kullanarak çalıştırın."
+                      "title": "Automatic prompt compilation",
+                      "description": "The Shot Director automatically writes and syncs the underlying keyframe and motion prompts for your stills and clips."
+                    },
+                    {
+                      "title": "Intelligent Assistant Director (IAD)",
+                      "description": "Request surgical revisions to camera angles, character posture, or scene tension in plain language while keeping unrelated beats untouched."
                     }
                   ]
                 }
               },
               {
                 "icon": "continuity",
-                "title": "Prodüksiyon Senaryosu",
-                "description": "Hem geleneksel hem de yapay zeka film yapımcıları için tasarlandı. Temiz, formatlanmış bir senaryoyu stüdyoda önizleyin ve endüstri standardı formatlarda (PDF, FDX, Fountain) dışa aktarın. SceneFlow'i bağımsız bir senaryo odası olarak kullanın veya finansörlere tanıtım yapmak ve proje finansmanını güvence altına almak için senaryonuzu Ön-Vis Animatic ve Promosyon Fragmanı ile eşleştirin.",
-                "screenshot": "Üretim Komut Dosyası — platform içi önizleme ve PDF, FDX ve Fountain dışa aktarımı",
+                "title": "The Continuity Library",
+                "description": "Absolute visual and vocal consistency across your entire film or series. Automatically generate or manually assign locked reference portraits, multi-angle turnaround sheets, scene-specific wardrobes, locations, and essential props—ensuring every shot matches the Blueprint without character drift.",
+                "screenshot": "The Continuity Library — cast, wardrobes, locations, and essential props",
                 "learnMore": {
                   "items": [
                     {
-                      "title": "Platform içi önizleme ve dışa aktarma",
-                      "description": "Biçimlendirilmiş komut dosyasını stüdyoda önizleyin ve endüstri standardı PDF, Final Draft FDX veya Fountain formatında dışa aktarın."
+                      "title": "Cast identity & turnaround locks",
+                      "description": "Anchor every character with diptych portraits, turnaround sheets, and locked voice profiles across every shot and episode."
                     },
                     {
-                      "title": "Geleneksel film yapımcıları için",
-                      "description": "SceneFlow'i video oluşturmadan akıllı bir senaryo üretim platformu olarak kullanın."
+                      "title": "Scene-specific wardrobes & props",
+                      "description": "Assign period or scene-specific wardrobes and essential hero props per shot so costumes and hand-held items stay unified."
                     },
                     {
-                      "title": "Satış konuşması ve proje finansmanı",
-                      "description": "Senaryonuzu Pre-Vis Animatic ve Promosyon Fragmanları ile paketleyerek proje finansmanını sağlayın ve satın alın."
+                      "title": "Generate, upload, or surgically edit",
+                      "description": "Automatically generate reference images, upload custom studio plates, or refine details with the Intelligent Assistant Director."
+                    },
+                    {
+                      "title": "Continuity readiness gate",
+                      "description": "Verify that all cast, wardrobe, location, and prop anchors are locked in the Continuity tab before generating scene keyframes."
+                    }
+                  ]
+                }
+              },
+              {
+                "icon": "scriptResonance",
+                "title": "Audience Resonance Integration",
+                "description": "Get a read on the room before you render. AI analyzes your script against your target audience, providing scene-by-scene insights, pacing diagnostics, and dialogue tension scores. Apply recommended directions instantly, or trust your gut and ignore them.",
+                "screenshot": "Audience Resonance Integration — scene-by-scene audience insights",
+                "learnMore": {
+                  "items": [
+                    {
+                      "title": "Scene-by-scene audience insights",
+                      "description": "AI analyzes your script against your target audience before you render to surface pacing, tension, and engagement scores."
+                    },
+                    {
+                      "title": "Narrated critique & recommendations",
+                      "description": "Listen to the narrated analysis and inspect targeted scene-level rewrite recommendations backed by demographic reasoning."
+                    },
+                    {
+                      "title": "Your creative call",
+                      "description": "Apply recommended directions instantly with one click, or trust your gut and ignore them."
+                    }
+                  ]
+                }
+              },
+              {
+                "icon": "budget",
+                "title": "Production Planner",
+                "description": "Establish the budget and schedule generation across every scene and chapter using SceneFlow credits or your own BYOK API keys. Set still and clip targets per shot, toggle between Draft and Final resolution tiers, and forecast compute spend before you render.",
+                "screenshot": "Production Planner — budget, schedule, and BYOK API keys",
+                "learnMore": {
+                  "items": [
+                    {
+                      "title": "Budget and schedule forecasting",
+                      "description": "Establish the budget and schedule generation across every scene and chapter with transparent per-shot credit estimates before you render."
+                    },
+                    {
+                      "title": "SceneFlow credits or BYOK keys",
+                      "description": "Run generation using included SceneFlow credits or connect your own Vertex AI, OpenAI, and ElevenLabs BYOK API keys."
+                    },
+                    {
+                      "title": "Draft-to-Final tier scheduling",
+                      "description": "Schedule rapid Draft passes for animatic pre-visualization and reserve Final 4K still and FHD video compute for locked cuts."
+                    }
+                  ]
+                }
+              },
+              {
+                "icon": "productionScript",
+                "title": "Production Script",
+                "description": "Built for traditional and AI filmmakers alike. Preview a clean, formatted screenplay in-studio and export in industry-standard formats (PDF, FDX, Fountain). Use SceneFlow as a standalone script room—or pair your screenplay with a Pre-Vis Animatic and Promo Trailer to pitch financiers and secure project funding.",
+                "screenshot": "Production Script — in-platform preview and PDF, FDX, and Fountain export",
+                "learnMore": {
+                  "items": [
+                    {
+                      "title": "In-platform preview & export",
+                      "description": "Preview the formatted script in the studio and export in industry-standard PDF, Final Draft FDX, or Fountain format."
+                    },
+                    {
+                      "title": "For traditional filmmakers",
+                      "description": "Use SceneFlow as an intelligent script production platform without generating video."
+                    },
+                    {
+                      "title": "Pitch & project funding",
+                      "description": "Package your script with a Pre-Vis Animatic and Promo Trailers to pitch and acquire project funding."
                     }
                   ]
                 }
@@ -628,79 +710,173 @@
             ]
           },
           {
-            "id": "video",
+            "id": "generate-audit",
             "label": "Oluştur ve Denetle",
             "headline": "Hesaplamayı harcamadan önce kesimi kanıtlayın.",
             "description": "Bir sahnenin nasıl oynayacağını tahmin etmeyin. SceneFlow, ses ve hareketsiz oluşturmayı pahalı hareket işlemeden ayırarak ilk önce düzenlemenin ritmini denetlemenize olanak tanır.",
             "features": [
               {
+                "icon": "audioAgent",
+                "title": "The Audio Agent",
+                "description": "Generate expressive character dialogue, narrator voiceover, action sound effects, and musical scores concurrently across up to 30 shots per scene. Cast voices automatically match character profiles from your Continuity Library or can be custom-tuned per beat.",
+                "screenshot": "The Audio Agent — concurrent dialogue, sound effects, and music scores",
+                "learnMore": {
+                  "items": [
+                    {
+                      "title": "Concurrent multi-track audio",
+                      "description": "Generate dialogue, narration, sound effects, and music scores concurrently across up to 30 shots per scene."
+                    },
+                    {
+                      "title": "Locked character voice casting",
+                      "description": "Cast voices automatically match character profiles from your Reference Library or can be custom-tuned for timbre and cadence."
+                    },
+                    {
+                      "title": "Batch scene or single-shot runs",
+                      "description": "Run the Audio Agent across the entire scene in one pass or regenerate individual dialogue and SFX beats on demand."
+                    }
+                  ]
+                }
+              },
+              {
+                "icon": "musicScore",
+                "title": "Dialogue, SFX & Musical Score Workbench",
+                "description": "Open the Fullscreen `Audio` and `Music` tabs to direct every sonic layer of your scene. Shape vocal performances with emotional delivery tags (`[obsessive, muttered]`) and Hi-Fi Studio quality, extract embedded audio directly from video clips, dial in SFX duration presets (`Auto`, `Short 3s`, `Medium 8s`, `Long 15s`), and compose multi-shot Lyria musical score cues with custom intro fades.",
+                "screenshot": "Dialogue, SFX & Musical Score Workbench — Fullscreen Audio & Music tabs with score cues, voice casting, and SFX duration presets",
+                "learnMore": {
+                  "items": [
+                    {
+                      "title": "Multi-shot musical score cues",
+                      "description": "Compose custom Lyria musical score cues that span specific shot ranges with configurable intro fades and auto-ducking metadata."
+                    },
+                    {
+                      "title": "Performance Director & delivery tags",
+                      "description": "Direct spoken dialogue with bracketed emotional delivery tags, Hi-Fi Studio synthesis, and per-shot voice casting."
+                    },
+                    {
+                      "title": "Precision SFX duration presets",
+                      "description": "Time action sound effects to your shot choreography using Auto, Short 3s, Medium 8s, or Long 15s duration presets."
+                    },
+                    {
+                      "title": "Extract audio from video clips",
+                      "description": "Pull embedded audio directly from generated motion clips to preserve native on-camera speech or ambient foley."
+                    }
+                  ]
+                }
+              },
+              {
+                "icon": "stillsAgent",
+                "title": "The Stills Agent",
+                "description": "Rapidly batch-generate the high-resolution keyframe images that illustrate your shot direction across the scene. Regenerate, edit, or upload your own references to lock the composition, lighting, and character blocking before committing to video.",
+                "screenshot": "The Stills Agent — keyframe composition and references",
+                "learnMore": {
+                  "items": [
+                    {
+                      "title": "Batch keyframe generation",
+                      "description": "Rapidly generate the keyframe images that illustrate your shot direction across every shot in the scene."
+                    },
+                    {
+                      "title": "Automatic continuity anchoring",
+                      "description": "Every generated frame incorporates your locked cast portraits, scene wardrobes, locations, and hero props automatically."
+                    },
+                    {
+                      "title": "Lock composition before motion",
+                      "description": "Regenerate, edit, or upload your own references before committing compute to full motion video rendering."
+                    }
+                  ]
+                }
+              },
+              {
+                "icon": "stillsWorkbench",
+                "title": "Fullscreen Stills & Keyframe Studio",
+                "description": "Step into the Fullscreen `Stills` workbench for precision keyframe control. Pair Start and End keyframes for Frame-to-Video (`F2V`) motion bridging, switch between `Draft` and `Final 4K` resolution or `Standard` and `Creative` synthesis modes, customize Pre-Vis Ken Burns camera motion, and perform surgical plain-language frame edits with the Intelligent Assistant Director (`IAD`).",
+                "screenshot": "Fullscreen Stills & Keyframe Studio — F2V Start & End keyframe pairing, Final 4K controls, and surgical IAD editing",
+                "learnMore": {
+                  "items": [
+                    {
+                      "title": "Frame-to-Video (F2V) Start & End pairing",
+                      "description": "Pair a locked Start Frame and End Frame Target on any shot to anchor exact camera movement and subject blocking during video generation."
+                    },
+                    {
+                      "title": "Surgical IAD keyframe editing",
+                      "description": "Edit specific props, chalkboard text, wardrobe details, or lighting in plain language while keeping the rest of the keyframe locked."
+                    },
+                    {
+                      "title": "Draft vs Final 4K & Creative modes",
+                      "description": "Toggle between rapid Draft previews and Final 4K resolution, plus Standard or Creative synthesis modes per shot."
+                    },
+                    {
+                      "title": "Pre-Vis Ken Burns motion framing",
+                      "description": "Customize zoom and pan trajectories on every still so your Pre-Vis Animatic previews intentional camera motion."
+                    }
+                  ]
+                }
+              },
+              {
+                "icon": "animatic",
+                "title": "The Pre-Vis Animatic",
+                "description": "Watch the scene breathe. Review a fully assembled animatic—stitched stills, Ken Burns motion, and locked audio—in the Screening Room. Audit the pacing, share for feedback, and ensure the cut works before committing to video.",
+                "screenshot": "The Pre-Vis Animatic — stitched stills, Ken Burns motion, and locked audio",
+                "learnMore": {
+                  "items": [
+                    {
+                      "title": "Assembled multi-track animatic",
+                      "description": "Review stitched stills, Ken Burns motion, and locked dialogue, SFX, and musical score in the Screening Room."
+                    },
+                    {
+                      "title": "Prove pacing before video spend",
+                      "description": "Audit the dramatic rhythm, spot timing gaps, and refine shot lengths while iterations cost pennies instead of full video compute."
+                    },
+                    {
+                      "title": "Share for stakeholder sign-off",
+                      "description": "Audit the pacing, share for feedback, and ensure the cut works before committing to video."
+                    }
+                  ]
+                }
+              },
+              {
                 "icon": "videoAgent",
-                "title": "Audio Agent",
-                "description": "Sahne başına 30'a kadar çekimde eşzamanlı olarak diyalog, ses efektleri ve müzik notaları oluşturun. Oyuncular sesleri otomatik olarak karakter profilleriyle eşleşir veya özel olarak ayarlanabilir.",
-                "screenshot": "Audio Agent — eşzamanlı diyalog, ses efektleri ve müzik notaları",
+                "title": "The Clips Agent",
+                "description": "Once the Pre-Vis is approved, the Clips Agent takes over, rendering high-fidelity motion clips that adhere strictly to your approved stills, Frame-to-Video start and end anchors, and continuity references—backed by automated safety pre-flight checks.",
+                "screenshot": "The Clips Agent — high-fidelity motion clips from approved stills",
                 "learnMore": {
                   "items": [
                     {
-                      "title": "Eşzamanlı ses",
-                      "description": "Sahne başına 30'a kadar çekimde eşzamanlı olarak diyalog, ses efektleri ve müzik notaları oluşturun."
+                      "title": "Triggered after Pre-Vis approval",
+                      "description": "The Clips Agent renders motion only after the Pre-Vis animatic and shot timings are approved."
                     },
                     {
-                      "title": "Karakter sesleri",
-                      "description": "Oyuncular sesleri otomatik olarak karakter profilleriyle eşleşir veya özel olarak ayarlanabilir."
+                      "title": "Strict keyframe & F2V adherence",
+                      "description": "High-fidelity motion clips adhere strictly to your approved Start and End stills and continuity references."
+                    },
+                    {
+                      "title": "Automated safety pre-flight",
+                      "description": "Pre-flight prompt sanitation prevents false-positive safety rejections on dramatic action beats so clips render reliably."
                     }
                   ]
                 }
               },
               {
-                "icon": "mixer",
-                "title": "Stills Agent",
-                "description": "Çekim yönünüzü gösteren ana kare görüntülerini hızla oluşturun. Kompozisyonu kilitlemek için kendi referanslarınızı yeniden oluşturun, düzenleyin veya yükleyin.",
-                "screenshot": "Stills Agent — ana kare kompozisyonu ve referanslar",
+                "icon": "clipsWorkbench",
+                "title": "Multi-Take Clips & Retake Studio",
+                "description": "Direct and curate every motion render inside the Fullscreen `Clips` studio. Audition unlimited takes in the non-destructive Multi-Take Vault (`Take 1 / Take 2 / Take 3`), filter your shot rail by `In the Can` readiness, trigger targeted IAD Smart Retakes, and manage per-stream localized video takes for dialogue and signage shots.",
+                "screenshot": "Multi-Take Clips & Retake Studio — non-destructive Take 1/2/3 vault, IAD Smart Retake, and localized stream takes",
                 "learnMore": {
                   "items": [
                     {
-                      "title": "Anahtar kare oluşturma",
-                      "description": "Çekim yönünüzü gösteren ana kare görüntülerini hızla oluşturun."
+                      "title": "Non-destructive Multi-Take Vault",
+                      "description": "Every motion render is preserved in the shot vault so you can compare Take 1, Take 2, and Take 3 and promote your favorite take live."
                     },
                     {
-                      "title": "Kompozisyonu kilitle",
-                      "description": "Harekete geçmeden önce kendi referanslarınızı yeniden oluşturun, düzenleyin veya yükleyin."
-                    }
-                  ]
-                }
-              },
-              {
-                "icon": "languageStreams",
-                "title": "Ön Vis Animatic",
-                "description": "Sahnenin nefes almasını izleyin. Screening Room'de tamamen bir araya getirilmiş animasyonu (birleştirilmiş sabit görüntüler, Ken Burns hareketi ve kilitli ses) inceleyin. İlerleme hızını denetleyin, geri bildirim için paylaşın ve videoya başlamadan önce kesimin çalıştığından emin olun.",
-                "screenshot": "Pre-Vis Animatic — birleştirilmiş sabit görüntüler, Ken Burns hareketi ve kilitli ses",
-                "learnMore": {
-                  "items": [
-                    {
-                      "title": "Birleştirilmiş animasyon",
-                      "description": "Screening Room'de birleştirilmiş sabit görüntüleri, Ken Burns hareketini ve kilitli sesi inceleyin."
+                      "title": "IAD Smart Retake & Direct Video",
+                      "description": "Refine camera motion, subject physics, or facial performance with the Intelligent Assistant Director and Direct Video pre-flight controls."
                     },
                     {
-                      "title": "Denetle ve paylaş",
-                      "description": "İlerleme hızını denetleyin, geri bildirim için paylaşın ve videoya başlamadan önce kesimin çalıştığından emin olun."
-                    }
-                  ]
-                }
-              },
-              {
-                "icon": "videoAgent",
-                "title": "Clips Agent",
-                "description": "Pre-Vis onaylandıktan sonra Clips Agent görevi devralır ve onaylanmış sabit görüntülerinize ve süreklilik referanslarınıza sıkı sıkıya bağlı kalan yüksek kaliteli hareket klipleri oluşturur.",
-                "screenshot": "Clips Agent — onaylanmış fotoğraflardan yüksek kaliteli hareket klipleri",
-                "learnMore": {
-                  "items": [
-                    {
-                      "title": "Ön Vis onayından sonra",
-                      "description": "Clips Agent, hareketi yalnızca Vis Öncesi animasyon onaylandıktan sonra işler."
+                      "title": "Per-stream localized shot takes",
+                      "description": "Switch between your English Master take and regenerated localized clips for spoken dialogue and in-scene signage per language stream."
                     },
                     {
-                      "title": "Sıkı bağlılık",
-                      "description": "Yüksek kaliteli hareket klipleri, onaylanmış sabit görüntülerinize ve süreklilik referanslarınıza sıkı sıkıya bağlıdır."
+                      "title": "Dialogue-free stem readiness",
+                      "description": "Extract embedded clip audio into a dialogue-free SFX and ambience stem so localized dubs retain original foley and room tone."
                     }
                   ]
                 }
@@ -708,79 +884,111 @@
             ]
           },
           {
-            "id": "publish",
+            "id": "publish-distribute",
             "label": "Yayınla ve Dağıt",
             "headline": "Master'ı gönderin veya dünya için yerelleştirin.",
             "description": "Sahne tamamlandığında varlıklar zaten birleştirilmiştir. Düzenlemeyi tamamlayın, sesi yerelleştirin ve doğrudan hedef kitlenize dağıtın.",
             "features": [
               {
-                "icon": "shipPackage",
-                "title": "Mikser",
-                "description": "Yerleşik, sezgisel bir sahne düzenleyici. Stüdyodan çıkmadan klipleri kesin, hız artışlarını ayarlayın, metin katmanları ekleyin ve filigranlar uygulayın.",
-                "screenshot": "Mikser — klipleri, hız rampalarını, metin katmanlarını ve filigranları kırpın",
+                "icon": "mixer",
+                "title": "The Mixer",
+                "description": "A commercial-grade broadcast scene editor and stitching console built directly into the studio. Preview your cut on a 16:9 Broadcast Reference Monitor paired with a real-time Stereo VU / Peak Meter (`-60` to `0 dBFS`, `-14 LUFS` target), inspect cut points with a side-by-side Match-Cut Continuity Loupe, shape J-Cut and L-Cut audio overlaps (`-0.3s` / `+0.3s`), choose dynamic Optical Hold Modes (`103% Ken Burns Push` or `Ping-Pong Tail`), mix across a 6-lane timeline (`V1 Video`, `A0 Stem`, `A1 Dialogue`, `A2 VO`, `A3 SFX`, `A4 Score`) with `-8 dB` Auto-Ducking, apply 1-click watermark crops and text overlays, and cloud-render EBU R128 (`-14 LUFS`) masters.",
+                "screenshot": "The Mixer — Broadcast Reference Monitor, Stereo VU Meter, Match-Cut Continuity Loupe, J/L-Cut overlaps, 6-lane timeline with -8 dB Auto-Ducking, and EBU R128 loudness",
                 "learnMore": {
                   "items": [
                     {
-                      "title": "Dahili sahne düzenleyici",
-                      "description": "Klipleri kesin ve hız artışlarını doğrudan stüdyonun içinde ayarlayın."
+                      "title": "Broadcast Reference Monitor & Stereo VU / LUFS Meter",
+                      "description": "Preview your stitched sequence on a 16:9 reference monitor beside a real-time stereo peak and loudness meter calibrated to -14.0 LUFS web and -24.0 LKFS broadcast targets."
                     },
                     {
-                      "title": "Son rötuşlar",
-                      "description": "Harici bir düzenleyiciye aktarmadan metin katmanları ekleyin ve filigranlar uygulayın."
+                      "title": "Match-Cut Continuity Loupe & J/L-Cut audio overlaps",
+                      "description": "Hover any transition pill to compare the Out-Frame of Shot N against the In-Frame of Shot N+1 side by side while dialing in -0.3s J-cut lead-ins and +0.3s L-cut audio tails."
+                    },
+                    {
+                      "title": "6-lane timeline with -8 dB Auto-Ducking envelope",
+                      "description": "Mix V1 Video, A0 Dialogue-Free Stem, A1 Dialogue, A2 Narration, A3 SFX, and A4 Score with a visual gain-reduction curve that automatically ducks music -8 dB under speech."
+                    },
+                    {
+                      "title": "Optical Hold Modes & elastic dub alignment",
+                      "description": "Replace static freeze-frames with a 103% Ken Burns Push Zoom or Ping-Pong Tail Loop and slow video clips down to 67% speed so longer dubbed dialogue fits naturally."
+                    },
+                    {
+                      "title": "1-click watermark crop, text overlays & EBU R128 export",
+                      "description": "Apply preset edge crops to remove third-party watermarks, burn in lower-thirds or subtitles, and cloud-render stitched MP4 masters with EBU R128 loudness normalization."
                     }
                   ]
                 }
               },
               {
                 "icon": "languageStreams",
-                "title": "Akışlar (Çoklu Dil)",
-                "description": "Küresel erişiminizi anında 44 dile genişletin. Sesi kopyalayarak, dudak hareketlerini senkronize ederek veya yerelleştirilmiş diyalog kliplerini doğrudan sahne içinde yeniden oluşturarak otomatik olarak alternatif dil akışları oluşturun.",
-                "screenshot": "Akışlar (Çoklu Dil) — dublajlı ses ve yerelleştirilmiş diyalog klipleri",
+                "title": "Streams (Multi-Language)",
+                "description": "Expand your global reach across 44 languages from one master timeline. Selectively regenerate only the specific shots containing spoken dialogue or in-scene text signage while retaining unselected master shots at zero extra credit cost. Extract embedded video audio and strip spoken dialogue (`htdemucs` neural stem separation) so generated SFX and music carry into every dub, and automatically align longer translated dialogue using elastic video slow-down (slowing a `10s` clip up to `15s` at `67%` speed), hybrid optical holds, or pitch-preserved audio tempo matching—while directing in a localized Studio UI.",
+                "screenshot": "Streams (Multi-Language) — Selective shot regeneration vs retained master shots, dialogue-free stem extraction, and elastic slow-video dub alignment",
                 "learnMore": {
                   "items": [
                     {
-                      "title": "Küresel erişim",
-                      "description": "Doğrudan sahne içinde 44 dilde otomatik olarak alternatif dil akışları oluşturun."
+                      "title": "Selective shot regeneration & retained master clips",
+                      "description": "Select only the shots with spoken dialogue or in-scene signage to regenerate in your target language while unselected action shots automatically retain the master video clip."
                     },
                     {
-                      "title": "Dublaj yapın, dudak senkronizasyonu yapın veya yeniden oluşturun",
-                      "description": "Sesi kopyalayarak, dudak hareketlerini senkronize ederek veya yerelleştirilmiş diyalog kliplerini yeniden oluşturarak her çekimi yerelleştirin."
+                      "title": "Dialogue-free stem extraction (keep generated SFX & music)",
+                      "description": "Neural stem separation extracts embedded video audio and removes spoken English dialogue while preserving generated foley, room ambience, and music for clean MP3 dubbing."
+                    },
+                    {
+                      "title": "Elastic video slow-down & multi-method dub alignment",
+                      "description": "Align longer translated dialogue by slowing a 10s video clip up to 15s (down to 67% speed), pairing an 80% slow-down with a 103% zoom hold, or fitting dub audio tempo up to 1.25x."
+                    },
+                    {
+                      "title": "Regenerated dialogue & signage clips across 44 languages",
+                      "description": "Regenerate localized dialogue takes and in-scene signage clips directly within the scene across 44 languages so visuals, stencils, and speech match every audience."
+                    },
+                    {
+                      "title": "Localized Studio UI",
+                      "description": "Direct and produce in your native interface across English, Spanish, Portuguese, Hindi, Simplified Chinese, and Arabic."
                     }
                   ]
                 }
               },
               {
                 "icon": "promoTrailers",
-                "title": "Promosyon ve Fragmanlar",
-                "description": "Üretim sırasında istediğiniz zaman sosyal kullanıma hazır tanıtım fragmanlarını kesin. Yatay veya dikey formatlar için optimize edilmiş çok dilli sürümler oluşturun.",
-                "screenshot": "Promosyon ve Fragmanlar — çok dilli yatay ve dikey fragmanlar",
+                "title": "Promo & Trailers",
+                "description": "Cut high-converting theatrical teasers, episodic recaps, and social-ready promo trailers at any time during production. Pull hero takes from your scene vault, reframe for horizontal (`16:9`) or vertical (`9:16`) feeds, and generate multi-language versions with localized title cards and voiceover hooks.",
+                "screenshot": "Promo & Trailers — multi-language horizontal and vertical trailers",
                 "learnMore": {
                   "items": [
                     {
-                      "title": "Sosyal kullanıma hazır römorklar",
-                      "description": "Promosyon römorklarını üretimin herhangi bir noktasında kesin."
+                      "title": "Social-ready trailers at any stage",
+                      "description": "Cut promo trailers, theatrical teasers, and episodic recaps at any point during production."
                     },
                     {
-                      "title": "Çok dilli formatlar",
-                      "description": "Yatay veya dikey formatlar için optimize edilmiş çok dilli sürümler oluşturun."
+                      "title": "Horizontal & vertical social formats",
+                      "description": "Generate multi-language versions optimized for horizontal 16:9 YouTube feeds or vertical 9:16 Shorts, Reels, and TikTok."
+                    },
+                    {
+                      "title": "Localized hooks & title cards",
+                      "description": "Render localized trailer streams with translated voiceover hooks, burned-in captions, and market-specific title cards."
                     }
                   ]
                 }
               },
               {
                 "icon": "shipPackage",
-                "title": "Doğrudan Yayıncılık",
-                "description": "Son ana MP4'ü dışa aktarın veya SceneFlow'in sahneleri, bölümleri ve tanıtımları doğrudan YouTube, TikTok ve Facebook'ta yayınlamak için küçük resimleri ve açıklamaları otomatik olarak oluşturmasına izin verin.",
-                "screenshot": "Doğrudan Yayınlama — MP4 aktarımı ve YouTube, TikTok ve Facebook'a doğrudan yayınlama",
+                "title": "Direct Publishing",
+                "description": "Export the final EBU R128-normalized master MP4 in 1080p or 4K, download complete production stems, or let SceneFlow auto-generate high-CTR thumbnails, localized titles, chapter markers, and descriptions to publish scenes, chapters, and promos directly to YouTube, TikTok, and Facebook.",
+                "screenshot": "Direct Publishing — MP4 export and direct publishing to YouTube, TikTok, and Facebook",
                 "learnMore": {
                   "items": [
                     {
-                      "title": "Master MP4 veya doğrudan sosyal",
-                      "description": "Son ana MP4'ü dışa aktarın veya sahneleri, bölümleri ve tanıtımları doğrudan YouTube, TikTok ve Facebook'ta yayınlayın."
+                      "title": "Master MP4 or direct social publishing",
+                      "description": "Export the final master MP4 or publish scenes, chapters, and promos directly to YouTube, TikTok, and Facebook."
                     },
                     {
-                      "title": "Otomatik oluşturulan meta veriler",
-                      "description": "SceneFlow'in her sürüm için küçük resimleri ve açıklamaları otomatik olarak oluşturmasına izin verin."
+                      "title": "Auto-generated thumbnails & metadata",
+                      "description": "Let SceneFlow auto-generate high-contrast thumbnails, localized titles, descriptions, tags, and chapter markers for every release."
+                    },
+                    {
+                      "title": "Archival stems & screenplay bundle",
+                      "description": "Download stitched video masters, isolated dialogue and SFX stems, subtitle files, and formatted screenplays in one production package."
                     }
                   ]
                 }
@@ -797,44 +1005,52 @@
         "features": [
           {
             "icon": "screeningPlayer",
-            "title": "Tek Birleşik Oyuncu",
-            "description": "Ön-Vis animasyonları, sahneler, bölümler, fragmanlar ve son ustanız arasında sorunsuz bir şekilde geçiş yapın. Dil Akışlarını anında dublajlı, dudak senkronizasyonlu veya çekimle yeniden oluşturulmuş yerelleştirmelere dönüştürün; her zaman Mixer'ın tam kesimine kilitleyin.",
-            "screenshot": "Screening Room oynatıcısı",
+            "title": "One Unified Player",
+            "description": "Toggle seamlessly between Pre-Vis animatics, stitched scenes, multi-scene chapters, promo trailers, and your final master. Switch Language Streams on the fly to audition dubbed audio, dialogue-free stem mixes, and regenerated dialogue or signage clips—always frame-locked to the exact cut from the Mixer.",
+            "screenshot": "Screening Room player",
             "learnMore": {
               "items": [
                 {
-                  "title": "Her dönüm noktası tek bir görünümde",
-                  "description": "Ön-Vis'ler, sahneler, bölümler, tanıtımlar ve son ana sürüm arasında zahmetsizce geçiş yapın."
+                  "title": "Every milestone in one theatre",
+                  "description": "Switch effortlessly among Pre-Vis animatics, individual scenes, chapters, promos, and the final master."
                 },
                 {
-                  "title": "Canlı dil değiştirme",
-                  "description": "Dublajlı, dudak senkronizasyonlu veya çekimle yeniden oluşturulmuş herhangi bir Dil Akışını anında dinleyin."
+                  "title": "Live language stream auditioning",
+                  "description": "Audition any Language Stream—dubbed audio, lip-sync, or regenerated dialogue and signage clips—on the fly without reloading the timeline."
                 },
                 {
-                  "title": "Miksere Çerçeve Kilitli",
-                  "description": "Her akış, Mixer'da oluşturulan düzenlemeyi ve zamanlamayı tam olarak oynatır."
+                  "title": "Frame-locked to the Broadcast Mixer",
+                  "description": "Every stream plays the exact stitch transitions, J/L-cut overlaps, auto-ducking curves, and loudness normalization rendered in the Mixer."
+                },
+                {
+                  "title": "Incremental episodic shipping",
+                  "description": "Ship a finished 3–5 minute scene, an 8–12 minute chapter, or a social promo immediately while downstream chapters continue rendering."
                 }
               ]
             }
           },
           {
             "icon": "screeningCollab",
-            "title": "Çerçeve Doğruluğunda İşbirliği",
-            "description": "Kaba taslakları e-postaya aktarmayı bırakın. Ortak çalışanların ve yatırımcıların gerçek zamanlı olarak izlediği ve doğrudan telefonunuza gönderilen anında bildirimlerle doğrudan resmin üzerine notlar bıraktığı özel bir gösterim bağlantısı paylaşın.",
-            "screenshot": "Paylaşılan inceleme",
+            "title": "Frame-Accurate Collaboration",
+            "description": "Stop exporting rough cuts to email. Share a private screening link where collaborators, sound editors, localization leads, and investors watch full-resolution playback in real time and drop timestamped notes directly on the picture—with instant notifications sent straight to your phone.",
+            "screenshot": "Shared review",
             "learnMore": {
               "items": [
                 {
-                  "title": "Özel tarama bağlantıları",
-                  "description": "Gözden geçirenler tam çözünürlüklü oynatmayı izler ve resmin üzerine zaman damgalı notlar bırakır."
+                  "title": "Private stakeholder screening links",
+                  "description": "Reviewers watch full-resolution playback across any language stream and leave frame-accurate timestamped notes on the picture."
                 },
                 {
-                  "title": "Kaba dosya aktarımı yok",
-                  "description": "Ağır video dosyaları göndermeden paydaşların geri bildirimlerini tek bir yerde toplayın."
+                  "title": "Zero rough-cut file exports",
+                  "description": "Collect creative, legal, and localization feedback in one centralized review thread without uploading or mailing heavy video files."
                 },
                 {
-                  "title": "Anlık mobil uyarılar",
-                  "description": "Yeni inceleme notları, siz masaüstünde yönlendirirken sizi anında telefonunuzdan bilgilendirir."
+                  "title": "Instant mobile notifications",
+                  "description": "New reviewer notes notify you immediately on your phone so you can approve or dispatch revisions while directing on desktop."
+                },
+                {
+                  "title": "Direct link back to the Shot Rail",
+                  "description": "Jump from any timestamped screening comment straight to the corresponding scene and shot in the Production Stage to execute the note."
                 }
               ]
             }

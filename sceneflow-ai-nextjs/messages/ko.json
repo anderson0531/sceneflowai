@@ -267,44 +267,52 @@
         "features": [
           {
             "icon": "newSeries",
-            "title": "새로운 시리즈",
-            "description": "시리즈나 채널 개념을 일반 언어로 소개하세요. 대화형 AI 개선을 통해 전제가 더욱 명확해지고 전체적인 줄거리와 에피소드 분류가 포함된 다중 에피소드 시즌 기준선이 생성됩니다.",
-            "screenshot": "새 시리즈 생성 — 의도, 명확화 및 확인, 시리즈 생성",
+            "title": "New Series",
+            "description": "Pitch your series, anthology, or episodic channel concept in plain language. Interactive AI refinement sharpens your premise, target audience, and visual tone before generating a complete multi-episode season baseline—complete with overarching plot arcs, recurring character hooks, and episode-by-episode breakdowns.",
+            "screenshot": "Create New Series — intent, Clarify and Confirm, Generate Series",
             "learnMore": {
               "items": [
                 {
-                  "title": "당신의 의도",
-                  "description": "전제, 형식, 대상 청중 및 시각 예술 스타일을 일반 언어로 소개합니다."
+                  "title": "Plain-language series pitch",
+                  "description": "Pitch the premise, episode format, target demographic, and visual art style in plain language."
                 },
                 {
-                  "title": "대화형 개선",
-                  "description": "명확화 및 확인은 어떤 것이 생성되기 전에 시즌 개요를 선명하게 만듭니다."
+                  "title": "Interactive Clarify & Confirm",
+                  "description": "Clarify and Confirm sharpens the season synopsis, tone, and thematic pillars with you before anything is generated."
                 },
                 {
-                  "title": "시즌 기준",
-                  "description": "시리즈 생성은 언제든지 확장할 수 있는 5개 에피소드로 구성된 시즌 아크를 구축합니다."
+                  "title": "Multi-episode season baseline",
+                  "description": "Generate Series builds a structured five-episode season arc with individual synopses and story hooks that you can expand anytime."
+                },
+                {
+                  "title": "World & genre calibration",
+                  "description": "Lock visual aesthetics, era settings, and recurring narrative motifs up front so every episode shares the same creative DNA."
                 }
               ]
             }
           },
           {
             "icon": "seriesReview",
-            "title": "시즌 바이블 & 연속성",
-            "description": "해설이 포함된 시즌 개요와 에피소드 슬레이트를 읽거나 들어보세요. SceneFlow은 스토리 스레드, 출연자 프로필, 위치 및 서명 소품을 모든 에피소드가 상속하는 공유 Reference Library에 고정합니다.",
-            "screenshot": "개요, 에피소드, 일관성 및 연속성 — 출연진, 촬영지, 소품, 배경",
+            "title": "Season Bible & Continuity",
+            "description": "Read or listen to the narrated season overview and episode slate. SceneFlow locks your story threads, cast profiles, recurring locations, and signature props into a shared Reference Library that every episode inherits automatically—eliminating continuity drift across multi-part storytelling.",
+            "screenshot": "Overview Listen, Episodes Listen, Consistency, Continuity — Cast, Locations, Props, Settings",
             "learnMore": {
               "items": [
                 {
-                  "title": "읽거나 듣기",
-                  "description": "내장된 오디오 내레이션을 통해 시즌 개요와 모든 에피소드 개요를 살펴보세요."
+                  "title": "Narrated season & episode audit",
+                  "description": "Audit the overarching season overview and every individual episode synopsis with built-in studio audio narration."
                 },
                 {
-                  "title": "스토리 일관성",
-                  "description": "미학, 주요 줄거리 이벤트, 내러티브 스레드는 시즌 전체에 걸쳐 고정되어 있습니다."
+                  "title": "Cross-episode story consistency",
+                  "description": "Visual aesthetics, canonical plot events, and character relationship threads stay locked across the entire season."
                 },
                 {
-                  "title": "연속성 공유",
-                  "description": "출연진, 장소, 소품, 설정은 제작하는 모든 에피소드에 자동으로 적용됩니다."
+                  "title": "Shared Reference Library inheritance",
+                  "description": "Cast portraits, voice profiles, wardrobes, locations, and signature props carry automatically into every episode you produce."
+                },
+                {
+                  "title": "Centralized canon management",
+                  "description": "Update a character look, location plate, or prop once in the Series Bible to propagate the change to future episodes."
                 }
               ]
             }
@@ -312,75 +320,87 @@
           {
             "icon": "seriesResonance",
             "title": "Audience Resonance",
-            "description": "단일 스크립트를 작성하기 전에 대상 인구통계를 기준으로 시즌 구성을 테스트하세요. 에피소드별 공명 점수를 검토하고 메모에 동의하는 경우에만 클릭 한 번으로 데이터 기반 스토리 개선 사항을 적용할 수 있습니다.",
-            "screenshot": "Audience Resonance 분석 및 실행 가능한 인사이트 도출 (미적용)",
+            "description": "Test your season arc against your target demographic before writing a single script. Review episode-by-episode resonance scores, binge-retention curves, and structural critiques, then apply data-backed story improvements with one click—only when you agree with the note.",
+            "screenshot": "Audience Resonance analysis, then Actionable Insights, unapplied",
             "learnMore": {
               "items": [
                 {
-                  "title": "인구통계학적 점수",
-                  "description": "점수와 구조적 분석을 통해 시즌이 타겟 고객에게 어떻게 전달되는지 알 수 있습니다."
+                  "title": "Demographic & retention scoring",
+                  "description": "Multi-axis scores and structural analysis reveal how your season arc and episode cliffhangers land with your target audience."
                 },
                 {
-                  "title": "이사의 특권",
-                  "description": "Actionable Insights는 귀하가 적용하기로 선택한 경우에만 시리즈를 업데이트합니다."
+                  "title": "Episode-by-episode diagnostics",
+                  "description": "Spot mid-season pacing dips, character underutilization, or tonal drift across the full episode slate before scripting."
+                },
+                {
+                  "title": "Director's prerogative",
+                  "description": "Actionable Insights update your series bible and episode outlines only when you explicitly choose to apply them."
                 }
               ]
             }
           },
           {
             "icon": "seriesDirector",
-            "title": "시리즈 디렉터",
-            "description": "음성이나 문자로 전체 시즌을 재구성해 보세요. 스토리라인의 나머지 부분은 그대로 유지하면서 톤을 바꾸고, 위험을 높이며, 모든 에피소드에 걸쳐 캐릭터 아크를 한 번에 재작업하세요.",
-            "screenshot": "시리즈 디렉터 — 방향, 초점, 수용",
+            "title": "The Series Director",
+            "description": "Reshape the entire season by voice or text. Shift the dramatic tone, raise the stakes, introduce a new antagonist, or rework a character arc across all episodes at once while keeping the rest of your storyline and continuity bible intact.",
+            "screenshot": "Series Director — direction, focus, accept",
             "learnMore": {
               "items": [
                 {
-                  "title": "일반 언어 방향",
-                  "description": "메모와 대상 플롯, 캐릭터, 에피소드 호, 어조 또는 설정을 말하거나 입력하세요."
+                  "title": "Plain-language season direction",
+                  "description": "Speak or type your creative note and target overarching plot, characters, episode arcs, tone, or world setting."
                 },
                 {
-                  "title": "외과적 업데이트",
-                  "description": "수정본을 수락할 때까지 아무 것도 변경되지 않으며 관련 없는 스토리 스레드는 그대로 유지됩니다."
+                  "title": "Surgical multi-episode updates",
+                  "description": "Nothing changes until you accept the previewed revision, and unrelated story threads stay completely untouched."
                 },
                 {
-                  "title": "가이드 추천",
-                  "description": "AI가 제안한 스토리 개선 사항을 적용하거나 모든 창의적인 선택을 직접 조정하세요."
+                  "title": "Guided AI recommendations",
+                  "description": "Apply one-click story improvements surfaced by Audience Resonance or steer every creative choice yourself."
                 }
               ]
             }
           },
           {
             "icon": "directEpisode",
-            "title": "에피소드 수준 방향",
-            "description": "시즌 슬레이트의 나머지 부분을 불안정하게 하지 않으면서 개별 에피소드를 확대하여 플롯, 속도 또는 후크를 개별적으로 재작업할 수 있습니다.",
-            "screenshot": "에피소드 — 이 에피소드 연출, 다른 에피소드는 변경 없음",
+            "title": "Episode-Level Direction",
+            "description": "Zoom into any individual episode to rework its plot outline, act structure, pacing, or cold-open hook in isolation—without destabilizing neighboring episodes or mutating the rest of your season slate.",
+            "screenshot": "Episodes — Direct this episode, other episodes unchanged",
             "learnMore": {
               "items": [
                 {
-                  "title": "격리된 재작성",
-                  "description": "인접한 에피소드를 변경하지 않고 단일 에피소드의 개요와 비트를 직접 변경합니다."
+                  "title": "Isolated episode rewrites",
+                  "description": "Direct changes to a single episode's synopsis, act beats, and character focus without altering neighboring episodes."
                 },
                 {
-                  "title": "시즌 무결성",
-                  "description": "가장 중요한 시즌 성경과 나머지 에피소드 슬레이트는 잠겨 있습니다."
+                  "title": "Locked season integrity",
+                  "description": "The overarching season bible, shared cast continuity, and remaining episode slate stay locked while you iterate."
+                },
+                {
+                  "title": "Pre-launch beat polishing",
+                  "description": "Refine individual episode hooks and cliffhangers until the episode is ready to launch into the Blueprint Room."
                 }
               ]
             }
           },
           {
             "icon": "startEpisode",
-            "title": "원클릭 에피소드 출시",
-            "description": "에피소드의 개요가 목표에 도달하면 개요, 스토리 비트, 출연진 및 이미 연결된 세계를 Blueprint Room으로 바로 실행하세요.",
-            "screenshot": "프로젝트 시작 — 에피소드에 개요 및 출연진 이미 포함됨",
+            "title": "One-Click Episode Launch",
+            "description": "When an episode's outline hits the mark, launch it straight into the Blueprint Room with a single click—bringing its synopsis, narrative beats, recurring cast, voice profiles, locations, and visual style automatically wired in.",
+            "screenshot": "Start Project — outline and cast already on the episode",
             "learnMore": {
               "items": [
                 {
-                  "title": "즉각적인 핸드오프",
-                  "description": "한 번의 클릭으로 에피소드를 Blueprint Room으로 직접 실행하세요."
+                  "title": "Instant Blueprint handoff",
+                  "description": "Launch any approved episode directly into the Blueprint Room with a single click to begin detailed beat and script work."
                 },
                 {
-                  "title": "사전 배선된 DNA",
-                  "description": "에피소드 개요, 개요, 스토리 비트, 출연진 및 위치가 자동으로 이동됩니다."
+                  "title": "Pre-wired creative DNA",
+                  "description": "The episode outline, synopsis, story beats, cast profiles, wardrobes, and locations travel automatically with zero re-entry."
+                },
+                {
+                  "title": "Parallel episode production",
+                  "description": "Spin up multiple episodes from the same season slate as independent projects that share the same canonical series assets."
                 }
               ]
             }
@@ -395,84 +415,92 @@
         "features": [
           {
             "icon": "startBlueprint",
-            "title": "Blueprint을 시작하십시오.",
-            "description": "개요와 출연진이 미리 로드된 시리즈 슬레이트에서 에피소드를 가져오거나, 완전히 새로운 영화 컨셉을 처음부터 제시하고 AI가 기본 처리를 구조화하도록 하세요.",
-            "screenshot": "이미 알려진 시리즈 에피소드 또는 프로젝트 시작 — 의도 파악, AI를 활용한 검증 및 고도화, Blueprint 생성",
+            "title": "Start the Blueprint",
+            "description": "Bring in an episode from your series slate with its outline, cast, and world pre-loaded, or pitch a brand-new standalone film concept from scratch and let AI validate, enhance, and structure the foundational treatment.",
+            "screenshot": "Series episode already known, or Start Your Project — intent, Validate & Enhance with AI, Generate Blueprint",
             "learnMore": {
               "items": [
                 {
-                  "title": "Series Room에서",
-                  "description": "시리즈 에피소드는 개요, 개요, 비트, 출연진이 이미 첨부된 상태로 도착합니다."
+                  "title": "Seamless from Series Room",
+                  "description": "Series episodes arrive with their outline, synopsis, story beats, recurring cast, and locations already attached."
                 },
                 {
-                  "title": "독립형 프로젝트",
-                  "description": "새로운 영화 컨셉을 제시하고, AI 검증을 통해 이를 개선하고, 완벽한 처리 방법을 생성하세요."
+                  "title": "Standalone film or short",
+                  "description": "Pitch a new film concept in plain language, refine it with AI validation, and generate a complete film treatment."
+                },
+                {
+                  "title": "Narrated treatment overview",
+                  "description": "Read or listen to the narrated logline, synopsis, and creative reasoning to verify the story foundation immediately."
                 }
               ]
             }
           },
           {
             "icon": "treatment",
-            "title": "비트 시트",
-            "description": "영화의 척추를 구성하십시오. 서술형 비트 시트를 읽거나 듣고 여기에서 속도를 미세 조정하세요. Blueprint Room에 고정한 모든 비트는 Production Stage의 한 장을 주도합니다.",
-            "screenshot": "'Listen'이 포함된 Beats 탭",
+            "title": "The Beat Sheet",
+            "description": "Structure the dramatic spine of your film before dialogue is written. Read or listen to your narrative beat sheet, reorder acts, and fine-tune scene pacing here—every beat you lock in the Blueprint Room drives a dedicated chapter in the Production Stage.",
+            "screenshot": "Beats tab, with Listen",
             "learnMore": {
               "items": [
                 {
-                  "title": "내러티브 척추",
-                  "description": "비트는 스크립트 생성이 시작되기 전에 Blueprint Room에서 작성되고 잠깁니다."
+                  "title": "Narrative spine",
+                  "description": "Beats are authored and locked in the Blueprint Room before script generation begins."
                 },
                 {
-                  "title": "속도 우선",
-                  "description": "여기에서 비트 시트를 최적화하면 각본이 탄탄하고 드라마틱한 구조로 구축될 수 있습니다."
+                  "title": "Pacing & structural discipline",
+                  "description": "Optimizing the beat sheet here ensures the multi-scene screenplay builds with tight dramatic structure and clear turning points."
                 },
                 {
-                  "title": "비트-챕터 매핑",
-                  "description": "Production Stage은 각 비트를 하나의 챕터로 변환합니다."
+                  "title": "Beat-to-chapter mapping",
+                  "description": "Production Stage turns each beat into a chapter."
+                },
+                {
+                  "title": "Narrated beat audition",
+                  "description": "Listen to the beat sheet read aloud to feel the rhythm and momentum of the story before compiling the script."
                 }
               ]
             }
           },
           {
             "icon": "castLocations",
-            "title": "출연진 및 월드 디자인",
-            "description": "각본이 생성되기 전에 캐릭터, 의상, 기본 위치를 정의하고 첫 번째 페이지의 정확한 출연진과 설정을 중심으로 대본이 작성되었는지 확인하세요.",
-            "screenshot": "'캐릭터' 탭, 그리고 '스토리'의 '배경'",
+            "title": "Cast & World Design",
+            "description": "Define your characters, vocal identities, period wardrobes, and primary locations before the screenplay is generated—ensuring the script is written around your exact cast, blocking environments, and visual atmosphere from page one.",
+            "screenshot": "Characters tab, then Setting on Story",
             "learnMore": {
               "items": [
                 {
-                  "title": "캐릭터 프로필",
-                  "description": "대사와 차단이 각 캐릭터와 일치하도록 캐스트 프로필을 전면에 지시하세요."
+                  "title": "Rich character profiles",
+                  "description": "Direct your cast profiles, backstories, and physical attributes up front so dialogue and blocking match each character."
                 },
                 {
-                  "title": "세계 및 위치",
-                  "description": "모든 장면의 환경을 고정하려면 스토리 탭에서 기본 설정을 지정하세요."
+                  "title": "World, era & locations",
+                  "description": "Establish primary settings, lighting palettes, and cinematic style on the Story tab to anchor every scene's environment."
                 },
                 {
-                  "title": "제로 스크립트 리팩토링",
-                  "description": "스크립트 생성 전에 캐스트 및 위치를 잠그면 Production Stage에서 비용이 많이 드는 재작성을 제거합니다."
+                  "title": "Zero script refactoring",
+                  "description": "Locking cast and locations before script generation eliminates costly rewrites and continuity mismatches on the Production Stage."
                 }
               ]
             }
           },
           {
             "icon": "blueprintDirector",
-            "title": "Blueprint 이사",
-            "description": "스토리 노트를 말하거나 입력하여 비트, 캐릭터 또는 세계 세부 정보를 수정하세요. 균형 잡힌 개정판을 나란히 미리 보세요. 컷을 승인할 때까지 치료에 아무런 변화도 없습니다.",
-            "screenshot": "Blueprint 디렉터 — 방향, 초점, 미리보기, 수정 사항 적용",
+            "title": "The Blueprint Director",
+            "description": "Speak or type your story notes to revise beats, character motivations, or world details without prompt engineering. Preview a balanced revision side-by-side with creative reasoning—nothing changes in your treatment until you approve the cut.",
+            "screenshot": "Blueprint Director — direction, focus, preview, Apply revision",
             "learnMore": {
               "items": [
                 {
-                  "title": "타겟 노트",
-                  "description": "방향을 말하거나 입력하고 비트, 캐릭터 또는 스토리에 개정 내용을 집중하세요."
+                  "title": "Targeted voice or text notes",
+                  "description": "Speak or type your direction and focus the revision surgically on Beats, Characters, or Story."
                 },
                 {
-                  "title": "나란히 있는 미리보기",
-                  "description": "Blueprint에 변경 사항을 적용하기 전에 균형 잡힌 개정을 검토하세요."
+                  "title": "Side-by-side revision preview",
+                  "description": "Review a balanced revision and its underlying story reasoning before committing any changes to your Blueprint."
                 },
                 {
-                  "title": "자물쇠는 당신이 쥐고 있어요",
-                  "description": "귀하가 명시적으로 개정판을 적용할 때까지 귀하의 치료에는 아무런 변화가 없습니다."
+                  "title": "You hold the creative lock",
+                  "description": "Nothing in your treatment, beat sheet, or character roster changes until you explicitly apply the revision."
                 }
               ]
             }
@@ -480,35 +508,43 @@
           {
             "icon": "blueprintResonance",
             "title": "Audience Resonance",
-            "description": "대상 고객의 문화 및 인구통계학적 프로필을 기준으로 치료 점수를 매기십시오. Blueprint Director에서 구조적 간격 격차를 조기에 파악하고 목표 권장 사항을 적용하세요.",
-            "screenshot": "Audience Resonance — 저장된 오디언스, 점수, 미적용 권장 사항",
+            "description": "Score your treatment against your target audience's cultural, genre, and demographic profile before generating the script. Catch structural pacing gaps or weak character stakes early and apply targeted recommendations in the Blueprint Director.",
+            "screenshot": "Audience Resonance — saved audience, scores, recommendations unapplied",
             "learnMore": {
               "items": [
                 {
-                  "title": "사전 스크립트 검증",
-                  "description": "카테고리 점수와 스토리 노트를 보려면 대상 고객을 기준으로 치료를 분석하세요."
+                  "title": "Pre-script audience validation",
+                  "description": "Analyze your treatment against your saved target audience to inspect category scores, strengths, and story risks."
                 },
                 {
-                  "title": "선택적 적용",
-                  "description": "권장 사항은 적용하기로 선택한 경우에만 Blueprint을 수정합니다."
+                  "title": "Actionable story remedies",
+                  "description": "Each insight pairs a structural diagnosis with a concrete rewrite recommendation tailored to your beat sheet and cast."
+                },
+                {
+                  "title": "Selective one-click application",
+                  "description": "Recommendations only modify your Blueprint when you choose to apply them in the Blueprint Director."
                 }
               ]
             }
           },
           {
             "icon": "goToProduction",
-            "title": "생산에 대한 승인",
-            "description": "트리트먼트, 비트 시트, 캐스트가 잠기면 Production Stage으로 이동하세요. SceneFlow은 승인된 Blueprint에서 직접 전체 다중 장 스크립트를 컴파일합니다.",
-            "screenshot": "Production Stage으로 이동 — 스토리라인, 비트, 출연진 확정됨",
+            "title": "Greenlight to Production",
+            "description": "When the treatment, beat sheet, and cast are locked, step onto the Production Stage. SceneFlow compiles your full multi-chapter screenplay directly from your approved Blueprint—mapping every beat into a production chapter with cast and continuity pre-wired.",
+            "screenshot": "Go to Production Stage — storyline, beats, and cast already set",
             "learnMore": {
               "items": [
                 {
-                  "title": "원활한 편집",
-                  "description": "Production Stage으로 이동하면 승인된 Blueprint에서 직접 전체 스크립트가 컴파일됩니다."
+                  "title": "Seamless script compilation",
+                  "description": "Stepping onto the Production Stage compiles the full multi-scene screenplay directly from your approved Blueprint."
                 },
                 {
-                  "title": "잠긴 기초",
-                  "description": "스토리라인, 비트 구조, 출연진이 장면과 장면 연출에 맞춰 도착합니다."
+                  "title": "Locked continuity foundation",
+                  "description": "Your storyline, beat-to-chapter structure, cast profiles, and locations arrive ready for scene and shot direction."
+                },
+                {
+                  "title": "Shareable Blueprint review",
+                  "description": "Share the locked Blueprint with co-creators or executive stakeholders for sign-off before commencing production."
                 }
               ]
             }
@@ -522,105 +558,151 @@
         "promise": "Blueprint이 잠겨 있습니다. 캐스팅이 완료되었습니다. 이제 Production Stage으로 이동하세요. 모든 챕터, 장면 및 샷은 선형 워크플로우로 구성됩니다. 당신은 의도를 지시합니다. 지능형 에이전트가 생성을 실행합니다.",
         "groups": [
           {
-            "id": "script",
+            "id": "direct-control",
             "label": "직접 및 제어",
             "headline": "프롬프트의 구문이 아닌 영화의 언어를 말하세요.",
             "description": "괄호로 묶인 키워드를 입력하는 데 시간을 낭비하지 마세요. Production Stage은 자연스러운 방향을 이해하여 전체 장면에 걸쳐 또는 특정 장면에 비전을 적용합니다.",
             "features": [
               {
-                "icon": "scriptResonance",
-                "title": "장면 및 샷 디렉터",
-                "description": "일반 언어로 방향을 입력하거나 말하세요. 프레임 안에 누가 있는지, 카메라가 어디로 움직이는지, 감정적인 비트가 무엇인지 에이전트에게 알려주세요. Shot Director는 스틸과 클립에 대한 복잡한 기본 프롬프트를 자동으로 작성합니다.",
-                "screenshot": "Scene & Shot Director — 스틸 및 클립을 위한 일반 언어 방향",
+                "icon": "sceneWorkflow",
+                "title": "Scene Production Workflow (Fullscreen)",
+                "description": "Open the dedicated Fullscreen Scene Production Studio to direct every stage of a scene from one unified 8-tab command bar (`Direction · Audio · Music · Continuity · Stills · Clips · Mixer · Streams`). Reorder shots in the left-hand Shot Rail with live readiness badges, inspect the 16:9 Still & Clip Stage alongside structured camera, blocking, emotion, and lighting cards, and track end-to-end scene completion without losing context.",
+                "screenshot": "Scene Production Workflow (Fullscreen) — 8-tab linear studio, sortable Shot Rail, and structured Shot Direction Workbench",
                 "learnMore": {
                   "items": [
                     {
-                      "title": "일반 언어",
-                      "description": "프레임 안에 누가 있는지, 카메라가 어디로 움직이는지, 감정적인 비트가 무엇인지 입력하거나 말해보세요."
+                      "title": "8-tab fullscreen linear studio",
+                      "description": "Move seamlessly across Direction, Audio, Music, Continuity, Stills, Clips, Mixer, and Streams inside a distraction-free fullscreen workspace."
                     },
                     {
-                      "title": "장면 또는 샷",
-                      "description": "전체 장면에 걸쳐 또는 특정 장면에 비전을 적용하십시오."
+                      "title": "Sortable Shot Rail & live badges",
+                      "description": "Drag to reorder shots in the left-hand rail while tracking real-time badges for Action, Dialogue, Narration, SFX, Music, Signage, Final 4K stills, and clips In the Can."
                     },
                     {
-                      "title": "프롬프트 컴파일",
-                      "description": "Shot Director는 스틸과 클립에 대한 기본 프롬프트를 자동으로 작성합니다."
-                    }
-                  ]
-                }
-              },
-              {
-                "icon": "castVisual",
-                "title": "연속성 라이브러리",
-                "description": "시리즈 전반에 걸친 절대적인 일관성. 모든 장면이 Blueprint과 일치하도록 출연진, 의상, 위치 및 필수 소품에 대한 참조 이미지를 자동으로 생성하거나 수동으로 할당합니다.",
-                "screenshot": "연속성 라이브러리 — 출연진, 의상, 위치 및 필수 소품",
-                "learnMore": {
-                  "items": [
-                    {
-                      "title": "시리즈 일관성",
-                      "description": "출연진, 의상, 위치, 필수 소품을 모든 장면에서 통일되게 유지하세요."
+                      "title": "Structured Shot Direction Workbench",
+                      "description": "Inspect the 16:9 Still & Clip Stage beside structured cards for spoken beats, camera lens and motion, talent blocking and gaze, lighting, locked continuity refs, and compiled prompts."
                     },
                     {
-                      "title": "생성 또는 할당",
-                      "description": "Blueprint과 일치하도록 참조 이미지를 자동으로 생성하거나 수동으로 자신의 이미지를 할당합니다."
+                      "title": "End-to-end scene pipeline telemetry",
+                      "description": "Monitor readiness across direction, voice and score, keyframes, multi-take clips, broadcast mixing, and localized streams before publishing."
                     }
                   ]
                 }
               },
               {
                 "icon": "directShot",
-                "title": "Audience Resonance 통합",
-                "description": "렌더링하기 전에 방을 읽어보십시오. AI는 타겟 청중을 기준으로 스크립트를 분석하여 장면별 통찰력을 제공합니다. 권장 지침을 즉시 적용하거나 직감을 믿고 무시하세요.",
-                "screenshot": "Audience Resonance 통합 — 장면별 청중 통찰력",
+                "title": "The Scene & Shot Director",
+                "description": "Type or speak your direction in plain language. Tell the agent who is in the frame, where the camera moves, and what the emotional beat is. The Shot Director automatically writes the complex underlying prompts for your stills and clips while syncing camera lens, focal length, talent blocking, and lighting across the scene.",
+                "screenshot": "The Scene & Shot Director — plain-language direction for stills and clips",
                 "learnMore": {
                   "items": [
                     {
-                      "title": "장면별 통찰력",
-                      "description": "AI는 렌더링하기 전에 대상 고객을 기준으로 스크립트를 분석합니다."
+                      "title": "Plain-language film direction",
+                      "description": "Type or speak who is in the frame, where the camera moves, and what the emotional beat is without writing bracketed prompt syntax."
                     },
                     {
-                      "title": "당신의 전화",
-                      "description": "권장 지침을 즉시 적용하거나 직감을 믿고 무시하세요."
-                    }
-                  ]
-                }
-              },
-              {
-                "icon": "audioAgent",
-                "title": "생산 기획자",
-                "description": "SceneFlow 크레딧 또는 자체 BYOK API 키를 사용하여 모든 장면과 장에 걸쳐 예산 및 일정 생성을 설정하세요. 컴퓨팅을 소비하기 전에 샷당 스틸 및 클립 대상을 설정하십시오.",
-                "screenshot": "생산 계획자 — 예산, 일정 및 BYOK API 키",
-                "learnMore": {
-                  "items": [
-                    {
-                      "title": "예산 및 일정",
-                      "description": "렌더링하기 전에 모든 장면과 챕터에 걸쳐 예산과 일정 생성을 설정하세요."
+                      "title": "Scene-wide or per-shot precision",
+                      "description": "Apply atmospheric direction across the entire scene or drill down into an individual shot's framing, lens, blocking, and lighting."
                     },
                     {
-                      "title": "크레딧 또는 BYOK",
-                      "description": "SceneFlow 크레딧 또는 자체 BYOK API 키를 사용하여 생성을 실행하세요."
+                      "title": "Automatic prompt compilation",
+                      "description": "The Shot Director automatically writes and syncs the underlying keyframe and motion prompts for your stills and clips."
+                    },
+                    {
+                      "title": "Intelligent Assistant Director (IAD)",
+                      "description": "Request surgical revisions to camera angles, character posture, or scene tension in plain language while keeping unrelated beats untouched."
                     }
                   ]
                 }
               },
               {
                 "icon": "continuity",
-                "title": "제작 스크립트",
-                "description": "기존 영화 제작자와 AI 영화 제작자 모두를 위해 제작되었습니다. 깨끗하고 형식화된 각본을 스튜디오에서 미리 보고 업계 표준 형식(PDF, FDX, Fountain)으로 내보낼 수 있습니다. SceneFlow을 독립형 대본실로 사용하거나 시나리오를 Pre-Vis Animatic 및 프로모션 예고편과 결합하여 금융 담당자를 소개하고 프로젝트 자금을 확보하세요.",
-                "screenshot": "제작 스크립트 — 플랫폼 내 미리보기 및 PDF, FDX 및 Fountain 내보내기",
+                "title": "The Continuity Library",
+                "description": "Absolute visual and vocal consistency across your entire film or series. Automatically generate or manually assign locked reference portraits, multi-angle turnaround sheets, scene-specific wardrobes, locations, and essential props—ensuring every shot matches the Blueprint without character drift.",
+                "screenshot": "The Continuity Library — cast, wardrobes, locations, and essential props",
                 "learnMore": {
                   "items": [
                     {
-                      "title": "플랫폼 내 미리보기 및 내보내기",
-                      "description": "서식이 지정된 스크립트를 스튜디오에서 미리 보고 업계 표준 PDF, Final Draft FDX 또는 Fountain 형식으로 내보낼 수 있습니다."
+                      "title": "Cast identity & turnaround locks",
+                      "description": "Anchor every character with diptych portraits, turnaround sheets, and locked voice profiles across every shot and episode."
                     },
                     {
-                      "title": "전통적인 영화 제작자를 위한",
-                      "description": "영상을 생성하지 않고도 지능형 스크립트 제작 플랫폼으로 SceneFlow을 사용해보세요."
+                      "title": "Scene-specific wardrobes & props",
+                      "description": "Assign period or scene-specific wardrobes and essential hero props per shot so costumes and hand-held items stay unified."
                     },
                     {
-                      "title": "피치 및 프로젝트 자금 조달",
-                      "description": "Pre-Vis Animatic 및 프로모션 예고편으로 스크립트를 패키징하여 프로젝트 자금을 홍보하고 확보하세요."
+                      "title": "Generate, upload, or surgically edit",
+                      "description": "Automatically generate reference images, upload custom studio plates, or refine details with the Intelligent Assistant Director."
+                    },
+                    {
+                      "title": "Continuity readiness gate",
+                      "description": "Verify that all cast, wardrobe, location, and prop anchors are locked in the Continuity tab before generating scene keyframes."
+                    }
+                  ]
+                }
+              },
+              {
+                "icon": "scriptResonance",
+                "title": "Audience Resonance Integration",
+                "description": "Get a read on the room before you render. AI analyzes your script against your target audience, providing scene-by-scene insights, pacing diagnostics, and dialogue tension scores. Apply recommended directions instantly, or trust your gut and ignore them.",
+                "screenshot": "Audience Resonance Integration — scene-by-scene audience insights",
+                "learnMore": {
+                  "items": [
+                    {
+                      "title": "Scene-by-scene audience insights",
+                      "description": "AI analyzes your script against your target audience before you render to surface pacing, tension, and engagement scores."
+                    },
+                    {
+                      "title": "Narrated critique & recommendations",
+                      "description": "Listen to the narrated analysis and inspect targeted scene-level rewrite recommendations backed by demographic reasoning."
+                    },
+                    {
+                      "title": "Your creative call",
+                      "description": "Apply recommended directions instantly with one click, or trust your gut and ignore them."
+                    }
+                  ]
+                }
+              },
+              {
+                "icon": "budget",
+                "title": "Production Planner",
+                "description": "Establish the budget and schedule generation across every scene and chapter using SceneFlow credits or your own BYOK API keys. Set still and clip targets per shot, toggle between Draft and Final resolution tiers, and forecast compute spend before you render.",
+                "screenshot": "Production Planner — budget, schedule, and BYOK API keys",
+                "learnMore": {
+                  "items": [
+                    {
+                      "title": "Budget and schedule forecasting",
+                      "description": "Establish the budget and schedule generation across every scene and chapter with transparent per-shot credit estimates before you render."
+                    },
+                    {
+                      "title": "SceneFlow credits or BYOK keys",
+                      "description": "Run generation using included SceneFlow credits or connect your own Vertex AI, OpenAI, and ElevenLabs BYOK API keys."
+                    },
+                    {
+                      "title": "Draft-to-Final tier scheduling",
+                      "description": "Schedule rapid Draft passes for animatic pre-visualization and reserve Final 4K still and FHD video compute for locked cuts."
+                    }
+                  ]
+                }
+              },
+              {
+                "icon": "productionScript",
+                "title": "Production Script",
+                "description": "Built for traditional and AI filmmakers alike. Preview a clean, formatted screenplay in-studio and export in industry-standard formats (PDF, FDX, Fountain). Use SceneFlow as a standalone script room—or pair your screenplay with a Pre-Vis Animatic and Promo Trailer to pitch financiers and secure project funding.",
+                "screenshot": "Production Script — in-platform preview and PDF, FDX, and Fountain export",
+                "learnMore": {
+                  "items": [
+                    {
+                      "title": "In-platform preview & export",
+                      "description": "Preview the formatted script in the studio and export in industry-standard PDF, Final Draft FDX, or Fountain format."
+                    },
+                    {
+                      "title": "For traditional filmmakers",
+                      "description": "Use SceneFlow as an intelligent script production platform without generating video."
+                    },
+                    {
+                      "title": "Pitch & project funding",
+                      "description": "Package your script with a Pre-Vis Animatic and Promo Trailers to pitch and acquire project funding."
                     }
                   ]
                 }
@@ -628,79 +710,173 @@
             ]
           },
           {
-            "id": "video",
+            "id": "generate-audit",
             "label": "생성 및 감사",
             "headline": "컴퓨팅을 소비하기 전에 컷을 증명하십시오.",
             "description": "장면이 어떻게 재생될지 추측하지 마십시오. SceneFlow은 비용이 많이 드는 모션 렌더링에서 오디오와 스틸 생성을 분리하여 편집의 리듬을 먼저 감사할 수 있도록 해줍니다.",
             "features": [
               {
+                "icon": "audioAgent",
+                "title": "The Audio Agent",
+                "description": "Generate expressive character dialogue, narrator voiceover, action sound effects, and musical scores concurrently across up to 30 shots per scene. Cast voices automatically match character profiles from your Continuity Library or can be custom-tuned per beat.",
+                "screenshot": "The Audio Agent — concurrent dialogue, sound effects, and music scores",
+                "learnMore": {
+                  "items": [
+                    {
+                      "title": "Concurrent multi-track audio",
+                      "description": "Generate dialogue, narration, sound effects, and music scores concurrently across up to 30 shots per scene."
+                    },
+                    {
+                      "title": "Locked character voice casting",
+                      "description": "Cast voices automatically match character profiles from your Reference Library or can be custom-tuned for timbre and cadence."
+                    },
+                    {
+                      "title": "Batch scene or single-shot runs",
+                      "description": "Run the Audio Agent across the entire scene in one pass or regenerate individual dialogue and SFX beats on demand."
+                    }
+                  ]
+                }
+              },
+              {
+                "icon": "musicScore",
+                "title": "Dialogue, SFX & Musical Score Workbench",
+                "description": "Open the Fullscreen `Audio` and `Music` tabs to direct every sonic layer of your scene. Shape vocal performances with emotional delivery tags (`[obsessive, muttered]`) and Hi-Fi Studio quality, extract embedded audio directly from video clips, dial in SFX duration presets (`Auto`, `Short 3s`, `Medium 8s`, `Long 15s`), and compose multi-shot Lyria musical score cues with custom intro fades.",
+                "screenshot": "Dialogue, SFX & Musical Score Workbench — Fullscreen Audio & Music tabs with score cues, voice casting, and SFX duration presets",
+                "learnMore": {
+                  "items": [
+                    {
+                      "title": "Multi-shot musical score cues",
+                      "description": "Compose custom Lyria musical score cues that span specific shot ranges with configurable intro fades and auto-ducking metadata."
+                    },
+                    {
+                      "title": "Performance Director & delivery tags",
+                      "description": "Direct spoken dialogue with bracketed emotional delivery tags, Hi-Fi Studio synthesis, and per-shot voice casting."
+                    },
+                    {
+                      "title": "Precision SFX duration presets",
+                      "description": "Time action sound effects to your shot choreography using Auto, Short 3s, Medium 8s, or Long 15s duration presets."
+                    },
+                    {
+                      "title": "Extract audio from video clips",
+                      "description": "Pull embedded audio directly from generated motion clips to preserve native on-camera speech or ambient foley."
+                    }
+                  ]
+                }
+              },
+              {
+                "icon": "stillsAgent",
+                "title": "The Stills Agent",
+                "description": "Rapidly batch-generate the high-resolution keyframe images that illustrate your shot direction across the scene. Regenerate, edit, or upload your own references to lock the composition, lighting, and character blocking before committing to video.",
+                "screenshot": "The Stills Agent — keyframe composition and references",
+                "learnMore": {
+                  "items": [
+                    {
+                      "title": "Batch keyframe generation",
+                      "description": "Rapidly generate the keyframe images that illustrate your shot direction across every shot in the scene."
+                    },
+                    {
+                      "title": "Automatic continuity anchoring",
+                      "description": "Every generated frame incorporates your locked cast portraits, scene wardrobes, locations, and hero props automatically."
+                    },
+                    {
+                      "title": "Lock composition before motion",
+                      "description": "Regenerate, edit, or upload your own references before committing compute to full motion video rendering."
+                    }
+                  ]
+                }
+              },
+              {
+                "icon": "stillsWorkbench",
+                "title": "Fullscreen Stills & Keyframe Studio",
+                "description": "Step into the Fullscreen `Stills` workbench for precision keyframe control. Pair Start and End keyframes for Frame-to-Video (`F2V`) motion bridging, switch between `Draft` and `Final 4K` resolution or `Standard` and `Creative` synthesis modes, customize Pre-Vis Ken Burns camera motion, and perform surgical plain-language frame edits with the Intelligent Assistant Director (`IAD`).",
+                "screenshot": "Fullscreen Stills & Keyframe Studio — F2V Start & End keyframe pairing, Final 4K controls, and surgical IAD editing",
+                "learnMore": {
+                  "items": [
+                    {
+                      "title": "Frame-to-Video (F2V) Start & End pairing",
+                      "description": "Pair a locked Start Frame and End Frame Target on any shot to anchor exact camera movement and subject blocking during video generation."
+                    },
+                    {
+                      "title": "Surgical IAD keyframe editing",
+                      "description": "Edit specific props, chalkboard text, wardrobe details, or lighting in plain language while keeping the rest of the keyframe locked."
+                    },
+                    {
+                      "title": "Draft vs Final 4K & Creative modes",
+                      "description": "Toggle between rapid Draft previews and Final 4K resolution, plus Standard or Creative synthesis modes per shot."
+                    },
+                    {
+                      "title": "Pre-Vis Ken Burns motion framing",
+                      "description": "Customize zoom and pan trajectories on every still so your Pre-Vis Animatic previews intentional camera motion."
+                    }
+                  ]
+                }
+              },
+              {
+                "icon": "animatic",
+                "title": "The Pre-Vis Animatic",
+                "description": "Watch the scene breathe. Review a fully assembled animatic—stitched stills, Ken Burns motion, and locked audio—in the Screening Room. Audit the pacing, share for feedback, and ensure the cut works before committing to video.",
+                "screenshot": "The Pre-Vis Animatic — stitched stills, Ken Burns motion, and locked audio",
+                "learnMore": {
+                  "items": [
+                    {
+                      "title": "Assembled multi-track animatic",
+                      "description": "Review stitched stills, Ken Burns motion, and locked dialogue, SFX, and musical score in the Screening Room."
+                    },
+                    {
+                      "title": "Prove pacing before video spend",
+                      "description": "Audit the dramatic rhythm, spot timing gaps, and refine shot lengths while iterations cost pennies instead of full video compute."
+                    },
+                    {
+                      "title": "Share for stakeholder sign-off",
+                      "description": "Audit the pacing, share for feedback, and ensure the cut works before committing to video."
+                    }
+                  ]
+                }
+              },
+              {
                 "icon": "videoAgent",
-                "title": "Audio Agent",
-                "description": "장면당 최대 30개의 샷에 걸쳐 대화, 음향 효과 및 악보를 동시에 생성합니다. 전송 음성은 자동으로 캐릭터 프로필과 일치하거나 사용자 정의할 수 있습니다.",
-                "screenshot": "Audio Agent — 동시 대화, 음향 효과 및 악보",
+                "title": "The Clips Agent",
+                "description": "Once the Pre-Vis is approved, the Clips Agent takes over, rendering high-fidelity motion clips that adhere strictly to your approved stills, Frame-to-Video start and end anchors, and continuity references—backed by automated safety pre-flight checks.",
+                "screenshot": "The Clips Agent — high-fidelity motion clips from approved stills",
                 "learnMore": {
                   "items": [
                     {
-                      "title": "동시 오디오",
-                      "description": "장면당 최대 30개의 샷에 걸쳐 대화, 음향 효과 및 악보를 동시에 생성합니다."
+                      "title": "Triggered after Pre-Vis approval",
+                      "description": "The Clips Agent renders motion only after the Pre-Vis animatic and shot timings are approved."
                     },
                     {
-                      "title": "캐릭터 목소리",
-                      "description": "전송 음성은 자동으로 캐릭터 프로필과 일치하거나 사용자 정의할 수 있습니다."
+                      "title": "Strict keyframe & F2V adherence",
+                      "description": "High-fidelity motion clips adhere strictly to your approved Start and End stills and continuity references."
+                    },
+                    {
+                      "title": "Automated safety pre-flight",
+                      "description": "Pre-flight prompt sanitation prevents false-positive safety rejections on dramatic action beats so clips render reliably."
                     }
                   ]
                 }
               },
               {
-                "icon": "mixer",
-                "title": "Stills Agent",
-                "description": "촬영 방향을 나타내는 키프레임 이미지를 빠르게 생성하세요. 자신만의 참조를 재생성, 편집 또는 업로드하여 작품을 잠그세요.",
-                "screenshot": "Stills Agent — 키프레임 구성 및 참조",
+                "icon": "clipsWorkbench",
+                "title": "Multi-Take Clips & Retake Studio",
+                "description": "Direct and curate every motion render inside the Fullscreen `Clips` studio. Audition unlimited takes in the non-destructive Multi-Take Vault (`Take 1 / Take 2 / Take 3`), filter your shot rail by `In the Can` readiness, trigger targeted IAD Smart Retakes, and manage per-stream localized video takes for dialogue and signage shots.",
+                "screenshot": "Multi-Take Clips & Retake Studio — non-destructive Take 1/2/3 vault, IAD Smart Retake, and localized stream takes",
                 "learnMore": {
                   "items": [
                     {
-                      "title": "키프레임 생성",
-                      "description": "촬영 방향을 나타내는 키프레임 이미지를 빠르게 생성하세요."
+                      "title": "Non-destructive Multi-Take Vault",
+                      "description": "Every motion render is preserved in the shot vault so you can compare Take 1, Take 2, and Take 3 and promote your favorite take live."
                     },
                     {
-                      "title": "컴포지션 잠금",
-                      "description": "모션을 적용하기 전에 자신의 참조를 재생성, 편집 또는 업로드하세요."
-                    }
-                  ]
-                }
-              },
-              {
-                "icon": "languageStreams",
-                "title": "Pre-Vis Animatic",
-                "description": "숨 쉬는 장면을 지켜보세요. Screening Room에서 완전히 조립된 애니메이션(스티칭된 스틸, Ken Burns 모션, 잠긴 오디오)을 검토하세요. 비디오를 시작하기 전에 속도를 감사하고, 피드백을 공유하고, 컷이 제대로 작동하는지 확인하세요.",
-                "screenshot": "Pre-Vis Animatic — 스티치된 스틸, Ken Burns 모션 및 잠긴 오디오",
-                "learnMore": {
-                  "items": [
-                    {
-                      "title": "조립된 애니메틱",
-                      "description": "Screening Room에서 스티치된 스틸, Ken Burns 모션 및 잠긴 오디오를 검토하세요."
+                      "title": "IAD Smart Retake & Direct Video",
+                      "description": "Refine camera motion, subject physics, or facial performance with the Intelligent Assistant Director and Direct Video pre-flight controls."
                     },
                     {
-                      "title": "감사 및 공유",
-                      "description": "속도를 감사하고, 피드백을 공유하고, 비디오를 시작하기 전에 컷이 제대로 작동하는지 확인하세요."
-                    }
-                  ]
-                }
-              },
-              {
-                "icon": "videoAgent",
-                "title": "Clips Agent",
-                "description": "Pre-Vis가 승인되면 Clips Agent이 인계받아 승인된 스틸 및 연속성 참조를 엄격하게 준수하는 고화질 모션 클립을 렌더링합니다.",
-                "screenshot": "Clips Agent — 승인된 스틸의 고화질 모션 클립",
-                "learnMore": {
-                  "items": [
-                    {
-                      "title": "Pre-Vis 승인 후",
-                      "description": "Clips Agent은 Pre-Vis 애니메이션이 승인된 후에만 모션을 렌더링합니다."
+                      "title": "Per-stream localized shot takes",
+                      "description": "Switch between your English Master take and regenerated localized clips for spoken dialogue and in-scene signage per language stream."
                     },
                     {
-                      "title": "엄격한 준수",
-                      "description": "고화질 모션 클립은 승인된 스틸 및 연속성 참조를 엄격하게 준수합니다."
+                      "title": "Dialogue-free stem readiness",
+                      "description": "Extract embedded clip audio into a dialogue-free SFX and ambience stem so localized dubs retain original foley and room tone."
                     }
                   ]
                 }
@@ -708,79 +884,111 @@
             ]
           },
           {
-            "id": "publish",
+            "id": "publish-distribute",
             "label": "게시 및 배포",
             "headline": "마스터를 배송하거나 전 세계에 맞게 현지화하세요.",
             "description": "장면이 완료되면 자산이 이미 통합되었습니다. 편집을 완료하고 오디오를 현지화한 후 청중에게 직접 배포하세요.",
             "features": [
               {
-                "icon": "shipPackage",
-                "title": "믹서",
-                "description": "내장된 직관적인 장면 편집기. 스튜디오를 떠나지 않고도 클립을 다듬고, 속도 램프를 조정하고, 텍스트 오버레이를 추가하고, 워터마크를 적용할 수 있습니다.",
-                "screenshot": "믹서 — 클립, 속도 램프, 텍스트 오버레이 및 워터마크 다듬기",
+                "icon": "mixer",
+                "title": "The Mixer",
+                "description": "A commercial-grade broadcast scene editor and stitching console built directly into the studio. Preview your cut on a 16:9 Broadcast Reference Monitor paired with a real-time Stereo VU / Peak Meter (`-60` to `0 dBFS`, `-14 LUFS` target), inspect cut points with a side-by-side Match-Cut Continuity Loupe, shape J-Cut and L-Cut audio overlaps (`-0.3s` / `+0.3s`), choose dynamic Optical Hold Modes (`103% Ken Burns Push` or `Ping-Pong Tail`), mix across a 6-lane timeline (`V1 Video`, `A0 Stem`, `A1 Dialogue`, `A2 VO`, `A3 SFX`, `A4 Score`) with `-8 dB` Auto-Ducking, apply 1-click watermark crops and text overlays, and cloud-render EBU R128 (`-14 LUFS`) masters.",
+                "screenshot": "The Mixer — Broadcast Reference Monitor, Stereo VU Meter, Match-Cut Continuity Loupe, J/L-Cut overlaps, 6-lane timeline with -8 dB Auto-Ducking, and EBU R128 loudness",
                 "learnMore": {
                   "items": [
                     {
-                      "title": "내장 장면 편집기",
-                      "description": "스튜디오 내에서 직접 클립을 다듬고 속도 램프를 조정할 수 있습니다."
+                      "title": "Broadcast Reference Monitor & Stereo VU / LUFS Meter",
+                      "description": "Preview your stitched sequence on a 16:9 reference monitor beside a real-time stereo peak and loudness meter calibrated to -14.0 LUFS web and -24.0 LKFS broadcast targets."
                     },
                     {
-                      "title": "마무리 작업",
-                      "description": "외부 편집기로 내보내지 않고도 텍스트 오버레이를 추가하고 워터마크를 적용할 수 있습니다."
+                      "title": "Match-Cut Continuity Loupe & J/L-Cut audio overlaps",
+                      "description": "Hover any transition pill to compare the Out-Frame of Shot N against the In-Frame of Shot N+1 side by side while dialing in -0.3s J-cut lead-ins and +0.3s L-cut audio tails."
+                    },
+                    {
+                      "title": "6-lane timeline with -8 dB Auto-Ducking envelope",
+                      "description": "Mix V1 Video, A0 Dialogue-Free Stem, A1 Dialogue, A2 Narration, A3 SFX, and A4 Score with a visual gain-reduction curve that automatically ducks music -8 dB under speech."
+                    },
+                    {
+                      "title": "Optical Hold Modes & elastic dub alignment",
+                      "description": "Replace static freeze-frames with a 103% Ken Burns Push Zoom or Ping-Pong Tail Loop and slow video clips down to 67% speed so longer dubbed dialogue fits naturally."
+                    },
+                    {
+                      "title": "1-click watermark crop, text overlays & EBU R128 export",
+                      "description": "Apply preset edge crops to remove third-party watermarks, burn in lower-thirds or subtitles, and cloud-render stitched MP4 masters with EBU R128 loudness normalization."
                     }
                   ]
                 }
               },
               {
                 "icon": "languageStreams",
-                "title": "스트림(다국어)",
-                "description": "44개 언어로 즉시 글로벌 도달 범위를 확장하세요. 오디오 더빙, 입술 움직임 동기화 또는 장면 내에서 직접 현지화된 대화 클립 재생성을 통해 대체 언어 스트림을 자동으로 생성합니다.",
-                "screenshot": "스트림(다국어) — 더빙된 오디오 및 현지화된 대화 클립",
+                "title": "Streams (Multi-Language)",
+                "description": "Expand your global reach across 44 languages from one master timeline. Selectively regenerate only the specific shots containing spoken dialogue or in-scene text signage while retaining unselected master shots at zero extra credit cost. Extract embedded video audio and strip spoken dialogue (`htdemucs` neural stem separation) so generated SFX and music carry into every dub, and automatically align longer translated dialogue using elastic video slow-down (slowing a `10s` clip up to `15s` at `67%` speed), hybrid optical holds, or pitch-preserved audio tempo matching—while directing in a localized Studio UI.",
+                "screenshot": "Streams (Multi-Language) — Selective shot regeneration vs retained master shots, dialogue-free stem extraction, and elastic slow-video dub alignment",
                 "learnMore": {
                   "items": [
                     {
-                      "title": "글로벌 도달 범위",
-                      "description": "장면 내에서 직접 44개 언어에 대한 대체 언어 스트림을 자동으로 생성합니다."
+                      "title": "Selective shot regeneration & retained master clips",
+                      "description": "Select only the shots with spoken dialogue or in-scene signage to regenerate in your target language while unselected action shots automatically retain the master video clip."
                     },
                     {
-                      "title": "더빙, 립싱크 또는 재생성",
-                      "description": "오디오를 더빙하고, 입술 움직임을 동기화하고, 현지화된 대화 클립을 재생성하여 각 장면을 현지화합니다."
+                      "title": "Dialogue-free stem extraction (keep generated SFX & music)",
+                      "description": "Neural stem separation extracts embedded video audio and removes spoken English dialogue while preserving generated foley, room ambience, and music for clean MP3 dubbing."
+                    },
+                    {
+                      "title": "Elastic video slow-down & multi-method dub alignment",
+                      "description": "Align longer translated dialogue by slowing a 10s video clip up to 15s (down to 67% speed), pairing an 80% slow-down with a 103% zoom hold, or fitting dub audio tempo up to 1.25x."
+                    },
+                    {
+                      "title": "Regenerated dialogue & signage clips across 44 languages",
+                      "description": "Regenerate localized dialogue takes and in-scene signage clips directly within the scene across 44 languages so visuals, stencils, and speech match every audience."
+                    },
+                    {
+                      "title": "Localized Studio UI",
+                      "description": "Direct and produce in your native interface across English, Spanish, Portuguese, Hindi, Simplified Chinese, and Arabic."
                     }
                   ]
                 }
               },
               {
                 "icon": "promoTrailers",
-                "title": "프로모션 및 예고편",
-                "description": "제작 중 언제든지 소셜용 프로모션 예고편을 잘라보세요. 가로 또는 세로 형식에 최적화된 다중 언어 버전을 생성합니다.",
-                "screenshot": "프로모션 및 예고편 — 다국어 수평 및 수직 예고편",
+                "title": "Promo & Trailers",
+                "description": "Cut high-converting theatrical teasers, episodic recaps, and social-ready promo trailers at any time during production. Pull hero takes from your scene vault, reframe for horizontal (`16:9`) or vertical (`9:16`) feeds, and generate multi-language versions with localized title cards and voiceover hooks.",
+                "screenshot": "Promo & Trailers — multi-language horizontal and vertical trailers",
                 "learnMore": {
                   "items": [
                     {
-                      "title": "소셜용 예고편",
-                      "description": "제작 중 언제든지 프로모션 예고편을 잘라낼 수 있습니다."
+                      "title": "Social-ready trailers at any stage",
+                      "description": "Cut promo trailers, theatrical teasers, and episodic recaps at any point during production."
                     },
                     {
-                      "title": "다중 언어 형식",
-                      "description": "가로 또는 세로 형식에 최적화된 다중 언어 버전을 생성합니다."
+                      "title": "Horizontal & vertical social formats",
+                      "description": "Generate multi-language versions optimized for horizontal 16:9 YouTube feeds or vertical 9:16 Shorts, Reels, and TikTok."
+                    },
+                    {
+                      "title": "Localized hooks & title cards",
+                      "description": "Render localized trailer streams with translated voiceover hooks, burned-in captions, and market-specific title cards."
                     }
                   ]
                 }
               },
               {
                 "icon": "shipPackage",
-                "title": "직접 출판",
-                "description": "최종 마스터 MP4를 내보내거나 SceneFlow이 썸네일과 설명을 자동 생성하여 장면, 챕터 및 프로모션을 YouTube, TikTok 및 Facebook에 직접 게시하도록 하세요.",
-                "screenshot": "직접 게시 — MP4 내보내기 및 YouTube, TikTok 및 Facebook에 직접 게시",
+                "title": "Direct Publishing",
+                "description": "Export the final EBU R128-normalized master MP4 in 1080p or 4K, download complete production stems, or let SceneFlow auto-generate high-CTR thumbnails, localized titles, chapter markers, and descriptions to publish scenes, chapters, and promos directly to YouTube, TikTok, and Facebook.",
+                "screenshot": "Direct Publishing — MP4 export and direct publishing to YouTube, TikTok, and Facebook",
                 "learnMore": {
                   "items": [
                     {
-                      "title": "MP4 마스터 또는 직접 소셜",
-                      "description": "최종 마스터 MP4를 내보내거나 장면, 챕터 및 프로모션을 YouTube, TikTok 및 Facebook에 직접 게시하세요."
+                      "title": "Master MP4 or direct social publishing",
+                      "description": "Export the final master MP4 or publish scenes, chapters, and promos directly to YouTube, TikTok, and Facebook."
                     },
                     {
-                      "title": "자동 생성된 메타데이터",
-                      "description": "SceneFlow이 모든 릴리스에 대한 썸네일과 설명을 자동 생성하도록 하세요."
+                      "title": "Auto-generated thumbnails & metadata",
+                      "description": "Let SceneFlow auto-generate high-contrast thumbnails, localized titles, descriptions, tags, and chapter markers for every release."
+                    },
+                    {
+                      "title": "Archival stems & screenplay bundle",
+                      "description": "Download stitched video masters, isolated dialogue and SFX stems, subtitle files, and formatted screenplays in one production package."
                     }
                   ]
                 }
@@ -797,44 +1005,52 @@
         "features": [
           {
             "icon": "screeningPlayer",
-            "title": "하나의 통합 플레이어",
-            "description": "Pre-Vis 애니메이션, 장면, 챕터, 예고편 및 최종 마스터 사이를 원활하게 전환하세요. 언어 스트림을 더빙, 립싱크 또는 샷 재생성 현지화 오디션으로 즉시 전환하세요. 항상 믹서의 정확한 컷에 고정됩니다.",
-            "screenshot": "Screening Room 플레이어",
+            "title": "One Unified Player",
+            "description": "Toggle seamlessly between Pre-Vis animatics, stitched scenes, multi-scene chapters, promo trailers, and your final master. Switch Language Streams on the fly to audition dubbed audio, dialogue-free stem mixes, and regenerated dialogue or signage clips—always frame-locked to the exact cut from the Mixer.",
+            "screenshot": "Screening Room player",
             "learnMore": {
               "items": [
                 {
-                  "title": "하나의 보기에서 모든 이정표",
-                  "description": "Pre-Vis, 장면, 챕터, 프로모션 및 최종 마스터 간에 쉽게 전환하세요."
+                  "title": "Every milestone in one theatre",
+                  "description": "Switch effortlessly among Pre-Vis animatics, individual scenes, chapters, promos, and the final master."
                 },
                 {
-                  "title": "실시간 언어 전환",
-                  "description": "더빙, 립싱크, 샷 재생성 등 모든 언어 스트림을 즉석에서 오디션해 보세요."
+                  "title": "Live language stream auditioning",
+                  "description": "Audition any Language Stream—dubbed audio, lip-sync, or regenerated dialogue and signage clips—on the fly without reloading the timeline."
                 },
                 {
-                  "title": "믹서에 프레임 고정됨",
-                  "description": "모든 스트림은 믹서에서 렌더링된 정확한 편집 내용과 타이밍을 재생합니다."
+                  "title": "Frame-locked to the Broadcast Mixer",
+                  "description": "Every stream plays the exact stitch transitions, J/L-cut overlaps, auto-ducking curves, and loudness normalization rendered in the Mixer."
+                },
+                {
+                  "title": "Incremental episodic shipping",
+                  "description": "Ship a finished 3–5 minute scene, an 8–12 minute chapter, or a social promo immediately while downstream chapters continue rendering."
                 }
               ]
             }
           },
           {
             "icon": "screeningCollab",
-            "title": "프레임 단위의 정확한 협업",
-            "description": "러프 컷을 이메일로 내보내는 것을 중지하세요. 공동 작업자와 투자자가 실시간으로 시청하고 사진에 직접 메모를 남길 수 있는 비공개 심사 링크를 공유하세요. 즉시 알림이 휴대폰으로 바로 전송됩니다.",
-            "screenshot": "공유된 리뷰",
+            "title": "Frame-Accurate Collaboration",
+            "description": "Stop exporting rough cuts to email. Share a private screening link where collaborators, sound editors, localization leads, and investors watch full-resolution playback in real time and drop timestamped notes directly on the picture—with instant notifications sent straight to your phone.",
+            "screenshot": "Shared review",
             "learnMore": {
               "items": [
                 {
-                  "title": "비공개 심사 링크",
-                  "description": "검토자는 전체 해상도 재생을 보고 사진에 타임스탬프가 표시된 메모를 남깁니다."
+                  "title": "Private stakeholder screening links",
+                  "description": "Reviewers watch full-resolution playback across any language stream and leave frame-accurate timestamped notes on the picture."
                 },
                 {
-                  "title": "대략적인 파일 내보내기 없음",
-                  "description": "무거운 비디오 파일을 메일로 보내지 않고도 이해관계자 피드백을 한곳에서 수집할 수 있습니다."
+                  "title": "Zero rough-cut file exports",
+                  "description": "Collect creative, legal, and localization feedback in one centralized review thread without uploading or mailing heavy video files."
                 },
                 {
-                  "title": "즉각적인 모바일 알림",
-                  "description": "새로운 리뷰어 노트는 데스크톱에서 직접 작업하는 동안 휴대폰으로 즉시 알려줍니다."
+                  "title": "Instant mobile notifications",
+                  "description": "New reviewer notes notify you immediately on your phone so you can approve or dispatch revisions while directing on desktop."
+                },
+                {
+                  "title": "Direct link back to the Shot Rail",
+                  "description": "Jump from any timestamped screening comment straight to the corresponding scene and shot in the Production Stage to execute the note."
                 }
               ]
             }

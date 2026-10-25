@@ -17,9 +17,9 @@ export const PUBLISH_CUT_COPY = {
       },
       {
         badge: 'Production Streams · 70+ Languages',
-        title: 'Dubbed audio + regenerated dialogue & signage clips',
+        title: 'Selective shot regeneration, stem dubbing & elastic video alignment',
         description:
-          'Go beyond subtitles: generate alternate language streams with voice-cloned dubbing, lip-sync, and shot-regenerated dialogue and in-scene signage clips.',
+          'Go beyond subtitles: regenerate only dialogue and in-scene signage shots while retaining unselected master shots, strip spoken dialogue from video audio stems to preserve generated SFX and music, and align longer dubbed lines by slowing video clips up to 1.5x.',
       },
     ],
   },

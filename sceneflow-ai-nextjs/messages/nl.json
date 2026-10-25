@@ -267,120 +267,140 @@
         "features": [
           {
             "icon": "newSeries",
-            "title": "Nieuwe serie",
-            "description": "Pitch je serie- of zenderconcept in begrijpelijke taal. Interactieve AI-verfijning scherpt je uitgangspunt aan en genereert een seizoensbasislijn met meerdere afleveringen, compleet met overkoepelende plotbogen en afleveringsonderbrekingen.",
-            "screenshot": "Nieuwe reeks aanmaken — intentie, verduidelijken en bevestigen, reeks genereren",
+            "title": "New Series",
+            "description": "Pitch your series, anthology, or episodic channel concept in plain language. Interactive AI refinement sharpens your premise, target audience, and visual tone before generating a complete multi-episode season baseline—complete with overarching plot arcs, recurring character hooks, and episode-by-episode breakdowns.",
+            "screenshot": "Create New Series — intent, Clarify and Confirm, Generate Series",
             "learnMore": {
               "items": [
                 {
-                  "title": "Uw intentie",
-                  "description": "Pitch het uitgangspunt, het format, de doelgroep en de visuele kunststijl in duidelijke taal."
+                  "title": "Plain-language series pitch",
+                  "description": "Pitch the premise, episode format, target demographic, and visual art style in plain language."
                 },
                 {
-                  "title": "Interactieve verfijning",
-                  "description": "Clarify and Confirm scherpt samen met u de seizoenssynopsis aan voordat er iets wordt gegenereerd."
+                  "title": "Interactive Clarify & Confirm",
+                  "description": "Clarify and Confirm sharpens the season synopsis, tone, and thematic pillars with you before anything is generated."
                 },
                 {
-                  "title": "Seizoensbasislijn",
-                  "description": "Generate Series bouwt een seizoensboog van vijf afleveringen op die je op elk moment kunt uitbreiden."
+                  "title": "Multi-episode season baseline",
+                  "description": "Generate Series builds a structured five-episode season arc with individual synopses and story hooks that you can expand anytime."
+                },
+                {
+                  "title": "World & genre calibration",
+                  "description": "Lock visual aesthetics, era settings, and recurring narrative motifs up front so every episode shares the same creative DNA."
                 }
               ]
             }
           },
           {
             "icon": "seriesReview",
-            "title": "Seizoensbijbel & Continuïteit",
-            "description": "Lees of luister naar het verteld seizoensoverzicht en de afleveringslijst. SceneFlow vergrendelt uw verhaallijnen, castprofielen, locaties en kenmerkende rekwisieten in een gedeelde Reference Library die elke aflevering overneemt.",
-            "screenshot": "Overzicht, Afleveringen, Consistentie, Continuïteit — Cast, Locaties, Rekwisieten, Decors",
+            "title": "Season Bible & Continuity",
+            "description": "Read or listen to the narrated season overview and episode slate. SceneFlow locks your story threads, cast profiles, recurring locations, and signature props into a shared Reference Library that every episode inherits automatically—eliminating continuity drift across multi-part storytelling.",
+            "screenshot": "Overview Listen, Episodes Listen, Consistency, Continuity — Cast, Locations, Props, Settings",
             "learnMore": {
               "items": [
                 {
-                  "title": "Lees of luister",
-                  "description": "Bekijk het seizoensoverzicht en de synopsis van elke aflevering met ingebouwde gesproken tekst."
+                  "title": "Narrated season & episode audit",
+                  "description": "Audit the overarching season overview and every individual episode synopsis with built-in studio audio narration."
                 },
                 {
-                  "title": "Consistentie van het verhaal",
-                  "description": "Esthetiek, belangrijke plotgebeurtenissen en verhaallijnen blijven het hele seizoen op slot."
+                  "title": "Cross-episode story consistency",
+                  "description": "Visual aesthetics, canonical plot events, and character relationship threads stay locked across the entire season."
                 },
                 {
-                  "title": "Gedeelde continuïteit",
-                  "description": "Cast, locaties, rekwisieten en instellingen worden automatisch meegenomen in elke aflevering die je produceert."
+                  "title": "Shared Reference Library inheritance",
+                  "description": "Cast portraits, voice profiles, wardrobes, locations, and signature props carry automatically into every episode you produce."
+                },
+                {
+                  "title": "Centralized canon management",
+                  "description": "Update a character look, location plate, or prop once in the Series Bible to propagate the change to future episodes."
                 }
               ]
             }
           },
           {
             "icon": "seriesResonance",
-            "title": "SFAIAUDIENCE_RESONANTIETERM",
-            "description": "Test uw seizoensboog met uw doelgroep voordat u een enkel script schrijft. Bekijk de resonantiescores per aflevering en pas met één klik op gegevens gebaseerde verhaalverbeteringen toe, alleen als u het eens bent met de opmerking.",
-            "screenshot": "Analyse van Audience Resonance, gevolgd door bruikbare inzichten (niet toegepast)",
+            "title": "Audience Resonance",
+            "description": "Test your season arc against your target demographic before writing a single script. Review episode-by-episode resonance scores, binge-retention curves, and structural critiques, then apply data-backed story improvements with one click—only when you agree with the note.",
+            "screenshot": "Audience Resonance analysis, then Actionable Insights, unapplied",
             "learnMore": {
               "items": [
                 {
-                  "title": "Demografische score",
-                  "description": "Scores en structurele analyses laten zien hoe uw seizoen bij uw doelgroep terechtkomt."
+                  "title": "Demographic & retention scoring",
+                  "description": "Multi-axis scores and structural analysis reveal how your season arc and episode cliffhangers land with your target audience."
                 },
                 {
-                  "title": "Voorrecht van de directeur",
-                  "description": "Actionable Insights werkt uw reeksen alleen bij als u ervoor kiest ze toe te passen."
+                  "title": "Episode-by-episode diagnostics",
+                  "description": "Spot mid-season pacing dips, character underutilization, or tonal drift across the full episode slate before scripting."
+                },
+                {
+                  "title": "Director's prerogative",
+                  "description": "Actionable Insights update your series bible and episode outlines only when you explicitly choose to apply them."
                 }
               ]
             }
           },
           {
             "icon": "seriesDirector",
-            "title": "De regisseur van de serie",
-            "description": "Geef het hele seizoen opnieuw vorm via spraak of tekst. Verander de toon, verhoog de inzet of herwerk een karakterboog voor alle afleveringen tegelijk, terwijl de rest van je verhaallijn intact blijft.",
-            "screenshot": "Serieregisseur — regie, focus, accepteren",
+            "title": "The Series Director",
+            "description": "Reshape the entire season by voice or text. Shift the dramatic tone, raise the stakes, introduce a new antagonist, or rework a character arc across all episodes at once while keeping the rest of your storyline and continuity bible intact.",
+            "screenshot": "Series Director — direction, focus, accept",
             "learnMore": {
               "items": [
                 {
-                  "title": "Richting in duidelijke taal",
-                  "description": "Spreek of typ uw notitie en doelplot, personages, afleveringsbogen, toon of setting."
+                  "title": "Plain-language season direction",
+                  "description": "Speak or type your creative note and target overarching plot, characters, episode arcs, tone, or world setting."
                 },
                 {
-                  "title": "Chirurgische updates",
-                  "description": "Er verandert niets totdat u de herziening accepteert, en niet-gerelateerde verhaallijnen blijven onaangeroerd."
+                  "title": "Surgical multi-episode updates",
+                  "description": "Nothing changes until you accept the previewed revision, and unrelated story threads stay completely untouched."
                 },
                 {
-                  "title": "Begeleide aanbevelingen",
-                  "description": "Pas door AI voorgestelde verhaalverbeteringen toe of stuur zelf elke creatieve keuze."
+                  "title": "Guided AI recommendations",
+                  "description": "Apply one-click story improvements surfaced by Audience Resonance or steer every creative choice yourself."
                 }
               ]
             }
           },
           {
             "icon": "directEpisode",
-            "title": "Richting op afleveringsniveau",
-            "description": "Zoom in op een afzonderlijke aflevering om de plot, het tempo ervan te herwerken of er een geïsoleerde aflevering van te maken, zonder de rest van je seizoensschema te destabiliseren.",
-            "screenshot": "Afleveringen — Regisseer deze aflevering, overige afleveringen ongewijzigd",
+            "title": "Episode-Level Direction",
+            "description": "Zoom into any individual episode to rework its plot outline, act structure, pacing, or cold-open hook in isolation—without destabilizing neighboring episodes or mutating the rest of your season slate.",
+            "screenshot": "Episodes — Direct this episode, other episodes unchanged",
             "learnMore": {
               "items": [
                 {
-                  "title": "Geïsoleerde herschrijvingen",
-                  "description": "Directe wijzigingen in de omtrek en beats van een enkele aflevering zonder aangrenzende afleveringen te wijzigen."
+                  "title": "Isolated episode rewrites",
+                  "description": "Direct changes to a single episode's synopsis, act beats, and character focus without altering neighboring episodes."
                 },
                 {
-                  "title": "Seizoensintegriteit",
-                  "description": "De overkoepelende seizoensbijbel en de resterende afleveringslijst blijven vergrendeld."
+                  "title": "Locked season integrity",
+                  "description": "The overarching season bible, shared cast continuity, and remaining episode slate stay locked while you iterate."
+                },
+                {
+                  "title": "Pre-launch beat polishing",
+                  "description": "Refine individual episode hooks and cliffhangers until the episode is ready to launch into the Blueprint Room."
                 }
               ]
             }
           },
           {
             "icon": "startEpisode",
-            "title": "Aflevering met één klik starten",
-            "description": "Wanneer de opzet van een aflevering klopt, kun je deze rechtstreeks in de Blueprint Room lanceren, met de synopsis, verhaalbeats, cast en wereld al ingebed.",
-            "screenshot": "Project starten — opzet en cast voor de aflevering liggen al klaar",
+            "title": "One-Click Episode Launch",
+            "description": "When an episode's outline hits the mark, launch it straight into the Blueprint Room with a single click—bringing its synopsis, narrative beats, recurring cast, voice profiles, locations, and visual style automatically wired in.",
+            "screenshot": "Start Project — outline and cast already on the episode",
             "learnMore": {
               "items": [
                 {
-                  "title": "Onmiddellijke overdracht",
-                  "description": "Start elke aflevering met één klik rechtstreeks in de Blueprint Room."
+                  "title": "Instant Blueprint handoff",
+                  "description": "Launch any approved episode directly into the Blueprint Room with a single click to begin detailed beat and script work."
                 },
                 {
-                  "title": "Voorbedraad DNA",
-                  "description": "Het overzicht van de aflevering, de synopsis, de verhaalbeats, de cast en de locaties reizen automatisch mee."
+                  "title": "Pre-wired creative DNA",
+                  "description": "The episode outline, synopsis, story beats, cast profiles, wardrobes, and locations travel automatically with zero re-entry."
+                },
+                {
+                  "title": "Parallel episode production",
+                  "description": "Spin up multiple episodes from the same season slate as independent projects that share the same canonical series assets."
                 }
               ]
             }
@@ -395,120 +415,136 @@
         "features": [
           {
             "icon": "startBlueprint",
-            "title": "Start de Blueprint",
-            "description": "Haal een aflevering uit je reeks in huis met de contouren en cast vooraf geladen, of pitch een gloednieuw filmconcept helemaal opnieuw en laat AI de fundamentele behandeling structureren.",
-            "screenshot": "Aflevering van de serie al bekend, of Start uw project — intentie, Valideren & Verrijken met AI, Blueprint genereren",
+            "title": "Start the Blueprint",
+            "description": "Bring in an episode from your series slate with its outline, cast, and world pre-loaded, or pitch a brand-new standalone film concept from scratch and let AI validate, enhance, and structure the foundational treatment.",
+            "screenshot": "Series episode already known, or Start Your Project — intent, Validate & Enhance with AI, Generate Blueprint",
             "learnMore": {
               "items": [
                 {
-                  "title": "Van Series Room",
-                  "description": "Serie-afleveringen arriveren met hun schets, synopsis, beats en cast al bijgevoegd."
+                  "title": "Seamless from Series Room",
+                  "description": "Series episodes arrive with their outline, synopsis, story beats, recurring cast, and locations already attached."
                 },
                 {
-                  "title": "Op zichzelf staand project",
-                  "description": "Pitch een nieuw filmconcept, verfijn het met AI-validatie en genereer een complete behandeling."
+                  "title": "Standalone film or short",
+                  "description": "Pitch a new film concept in plain language, refine it with AI validation, and generate a complete film treatment."
+                },
+                {
+                  "title": "Narrated treatment overview",
+                  "description": "Read or listen to the narrated logline, synopsis, and creative reasoning to verify the story foundation immediately."
                 }
               ]
             }
           },
           {
             "icon": "treatment",
-            "title": "Het Beatsheet",
-            "description": "Structureer de ruggengraat van uw film. Lees of luister naar uw verhalende beatsheet en verfijn hier het tempo: elke tel die u vastlegt in de Blueprint Room drijft een hoofdstuk aan in de Production Stage.",
-            "screenshot": "Beats-tabblad, met Luisteren",
+            "title": "The Beat Sheet",
+            "description": "Structure the dramatic spine of your film before dialogue is written. Read or listen to your narrative beat sheet, reorder acts, and fine-tune scene pacing here—every beat you lock in the Blueprint Room drives a dedicated chapter in the Production Stage.",
+            "screenshot": "Beats tab, with Listen",
             "learnMore": {
               "items": [
                 {
-                  "title": "Verhalende wervelkolom",
-                  "description": "Beats worden geschreven en vergrendeld in de Blueprint Room voordat het genereren van scripts begint."
+                  "title": "Narrative spine",
+                  "description": "Beats are authored and locked in the Blueprint Room before script generation begins."
                 },
                 {
-                  "title": "Eerst tempo maken",
-                  "description": "Door de beatsheet hier te optimaliseren, wordt het scenario opgebouwd met een strakke dramatische structuur."
+                  "title": "Pacing & structural discipline",
+                  "description": "Optimizing the beat sheet here ensures the multi-scene screenplay builds with tight dramatic structure and clear turning points."
                 },
                 {
-                  "title": "Beat-naar-hoofdstuk mapping",
-                  "description": "Production Stage verandert elke beat in een hoofdstuk."
+                  "title": "Beat-to-chapter mapping",
+                  "description": "Production Stage turns each beat into a chapter."
+                },
+                {
+                  "title": "Narrated beat audition",
+                  "description": "Listen to the beat sheet read aloud to feel the rhythm and momentum of the story before compiling the script."
                 }
               ]
             }
           },
           {
             "icon": "castLocations",
-            "title": "Cast & Wereldontwerp",
-            "description": "Definieer uw personages, garderobe en primaire locaties voordat het scenario wordt gegenereerd. Zorg ervoor dat het script vanaf pagina één rond uw exacte cast en instellingen wordt geschreven.",
-            "screenshot": "Tabblad Personages, vervolgens Locatie bij Verhaal",
+            "title": "Cast & World Design",
+            "description": "Define your characters, vocal identities, period wardrobes, and primary locations before the screenplay is generated—ensuring the script is written around your exact cast, blocking environments, and visual atmosphere from page one.",
+            "screenshot": "Characters tab, then Setting on Story",
             "learnMore": {
               "items": [
                 {
-                  "title": "Karakterprofielen",
-                  "description": "Richt je castprofielen naar voren, zodat dialoog en blokkering bij elk personage passen."
+                  "title": "Rich character profiles",
+                  "description": "Direct your cast profiles, backstories, and physical attributes up front so dialogue and blocking match each character."
                 },
                 {
-                  "title": "Wereld & locaties",
-                  "description": "Bepaal de primaire instellingen op het tabblad Verhaal om de omgeving van elke scène te verankeren."
+                  "title": "World, era & locations",
+                  "description": "Establish primary settings, lighting palettes, and cinematic style on the Story tab to anchor every scene's environment."
                 },
                 {
-                  "title": "Geen scriptrefactoring",
-                  "description": "Door de cast en locaties te vergrendelen voordat het script wordt gegenereerd, worden kostbare herschrijvingen op de Production Stage geëlimineerd."
+                  "title": "Zero script refactoring",
+                  "description": "Locking cast and locations before script generation eliminates costly rewrites and continuity mismatches on the Production Stage."
                 }
               ]
             }
           },
           {
             "icon": "blueprintDirector",
-            "title": "De Blueprint-directeur",
-            "description": "Spreek of typ uw verhaalnotities om beats, personages of werelddetails te herzien. Bekijk een voorproefje van een uitgebalanceerde revisie naast elkaar: er verandert niets aan uw behandeling totdat u de snit goedkeurt.",
-            "screenshot": "Blueprint-directeur — richting, focus, voorbeeldweergave, revisie toepassen",
+            "title": "The Blueprint Director",
+            "description": "Speak or type your story notes to revise beats, character motivations, or world details without prompt engineering. Preview a balanced revision side-by-side with creative reasoning—nothing changes in your treatment until you approve the cut.",
+            "screenshot": "Blueprint Director — direction, focus, preview, Apply revision",
             "learnMore": {
               "items": [
                 {
-                  "title": "Gerichte opmerkingen",
-                  "description": "Spreek of typ uw richting en concentreer de herziening op Beats, Characters of Story."
+                  "title": "Targeted voice or text notes",
+                  "description": "Speak or type your direction and focus the revision surgically on Beats, Characters, or Story."
                 },
                 {
-                  "title": "Voorbeeld naast elkaar",
-                  "description": "Controleer een evenwichtige revisie voordat u wijzigingen doorvoert in uw Blueprint."
+                  "title": "Side-by-side revision preview",
+                  "description": "Review a balanced revision and its underlying story reasoning before committing any changes to your Blueprint."
                 },
                 {
-                  "title": "Jij houdt het slot vast",
-                  "description": "Er verandert niets aan uw behandeling totdat u de herziening expliciet toepast."
+                  "title": "You hold the creative lock",
+                  "description": "Nothing in your treatment, beat sheet, or character roster changes until you explicitly apply the revision."
                 }
               ]
             }
           },
           {
             "icon": "blueprintResonance",
-            "title": "SFAIAUDIENCE_RESONANTIETERM",
-            "description": "Scoor uw behandeling op basis van het culturele en demografische profiel van uw doelgroep. Ontdek vroegtijdig structurele hiaten in het tempo en pas gerichte aanbevelingen toe in de Blueprint Director.",
-            "screenshot": "Audience Resonance — opgeslagen doelgroep, scores, aanbevelingen niet toegepast",
+            "title": "Audience Resonance",
+            "description": "Score your treatment against your target audience's cultural, genre, and demographic profile before generating the script. Catch structural pacing gaps or weak character stakes early and apply targeted recommendations in the Blueprint Director.",
+            "screenshot": "Audience Resonance — saved audience, scores, recommendations unapplied",
             "learnMore": {
               "items": [
                 {
-                  "title": "Validatie vooraf",
-                  "description": "Analyseer uw behandeling ten opzichte van uw doelgroep om categoriescores en verhaalnotities te bekijken."
+                  "title": "Pre-script audience validation",
+                  "description": "Analyze your treatment against your saved target audience to inspect category scores, strengths, and story risks."
                 },
                 {
-                  "title": "Selectieve toepassing",
-                  "description": "Aanbevelingen wijzigen uw Blueprint alleen wanneer u ervoor kiest deze toe te passen."
+                  "title": "Actionable story remedies",
+                  "description": "Each insight pairs a structural diagnosis with a concrete rewrite recommendation tailored to your beat sheet and cast."
+                },
+                {
+                  "title": "Selective one-click application",
+                  "description": "Recommendations only modify your Blueprint when you choose to apply them in the Blueprint Director."
                 }
               ]
             }
           },
           {
             "icon": "goToProduction",
-            "title": "Groen licht voor productie",
-            "description": "Wanneer de behandeling, het beatsheet en de cast zijn vergrendeld, stapt u op de Production Stage. SceneFlow stelt uw volledige script met meerdere hoofdstukken rechtstreeks samen vanuit uw goedgekeurde Blueprint.",
-            "screenshot": "Ga naar Production Stage — verhaallijn, verhaalmomenten en cast staan al vast.",
+            "title": "Greenlight to Production",
+            "description": "When the treatment, beat sheet, and cast are locked, step onto the Production Stage. SceneFlow compiles your full multi-chapter screenplay directly from your approved Blueprint—mapping every beat into a production chapter with cast and continuity pre-wired.",
+            "screenshot": "Go to Production Stage — storyline, beats, and cast already set",
             "learnMore": {
               "items": [
                 {
-                  "title": "Naadloze compilatie",
-                  "description": "Als u op de Production Stage stapt, wordt het volledige script rechtstreeks vanuit uw goedgekeurde Blueprint samengesteld."
+                  "title": "Seamless script compilation",
+                  "description": "Stepping onto the Production Stage compiles the full multi-scene screenplay directly from your approved Blueprint."
                 },
                 {
-                  "title": "Vergrendelde fundering",
-                  "description": "Je verhaallijn, beatstructuur en cast zijn klaar voor scène- en opnamerichting."
+                  "title": "Locked continuity foundation",
+                  "description": "Your storyline, beat-to-chapter structure, cast profiles, and locations arrive ready for scene and shot direction."
+                },
+                {
+                  "title": "Shareable Blueprint review",
+                  "description": "Share the locked Blueprint with co-creators or executive stakeholders for sign-off before commencing production."
                 }
               ]
             }
@@ -522,105 +558,151 @@
         "promise": "De Blueprint is vergrendeld. Je cast is gecast. Ga nu naar de Production Stage. Elk hoofdstuk, elke scène en elke opname is georganiseerd in een lineaire workflow. Jij stuurt de intentie; intelligente agenten voeren de generatie uit.",
         "groups": [
           {
-            "id": "script",
+            "id": "direct-control",
             "label": "Direct & Controle",
             "headline": "Spreek de taal van de film, niet de syntaxis van aanwijzingen.",
             "description": "Verspil geen tijd met het typen van trefwoorden tussen haakjes. De Production Stage begrijpt de natuurlijke richting en past uw visie toe op de hele scène of tot op het specifieke shot.",
             "features": [
               {
-                "icon": "scriptResonance",
-                "title": "De Scene & Shot-regisseur",
-                "description": "Typ of spreek uw aanwijzingen in gewone taal uit. Vertel de agent wie er in beeld is, waar de camera beweegt en wat de emotionele beat is. De Shot Director schrijft automatisch de complexe onderliggende aanwijzingen voor uw foto's en clips.",
-                "screenshot": "De Scene & Shot Director – regie in duidelijke taal voor foto's en clips",
+                "icon": "sceneWorkflow",
+                "title": "Scene Production Workflow (Fullscreen)",
+                "description": "Open the dedicated Fullscreen Scene Production Studio to direct every stage of a scene from one unified 8-tab command bar (`Direction · Audio · Music · Continuity · Stills · Clips · Mixer · Streams`). Reorder shots in the left-hand Shot Rail with live readiness badges, inspect the 16:9 Still & Clip Stage alongside structured camera, blocking, emotion, and lighting cards, and track end-to-end scene completion without losing context.",
+                "screenshot": "Scene Production Workflow (Fullscreen) — 8-tab linear studio, sortable Shot Rail, and structured Shot Direction Workbench",
                 "learnMore": {
                   "items": [
                     {
-                      "title": "Duidelijke taal",
-                      "description": "Typ of spreek wie er in beeld is, waar de camera beweegt en wat de emotionele beat is."
+                      "title": "8-tab fullscreen linear studio",
+                      "description": "Move seamlessly across Direction, Audio, Music, Continuity, Stills, Clips, Mixer, and Streams inside a distraction-free fullscreen workspace."
                     },
                     {
-                      "title": "Scène of opname",
-                      "description": "Pas uw visie toe op de hele scène of tot op de specifieke opname."
+                      "title": "Sortable Shot Rail & live badges",
+                      "description": "Drag to reorder shots in the left-hand rail while tracking real-time badges for Action, Dialogue, Narration, SFX, Music, Signage, Final 4K stills, and clips In the Can."
                     },
                     {
-                      "title": "Snelle compilatie",
-                      "description": "De Shot Director schrijft automatisch de onderliggende aanwijzingen voor uw foto's en clips."
-                    }
-                  ]
-                }
-              },
-              {
-                "icon": "castVisual",
-                "title": "De continuïteitsbibliotheek",
-                "description": "Absolute consistentie in de hele serie. Genereer automatisch of wijs handmatig referentiebeelden toe voor uw cast, garderobe, locaties en essentiële rekwisieten om ervoor te zorgen dat elk shot overeenkomt met de Blueprint.",
-                "screenshot": "De Continuity Library — cast, kasten, locaties en essentiële rekwisieten",
-                "learnMore": {
-                  "items": [
-                    {
-                      "title": "Serieconsistentie",
-                      "description": "Zorg ervoor dat de cast, kasten, locaties en essentiële rekwisieten bij elke opname uniform zijn."
+                      "title": "Structured Shot Direction Workbench",
+                      "description": "Inspect the 16:9 Still & Clip Stage beside structured cards for spoken beats, camera lens and motion, talent blocking and gaze, lighting, locked continuity refs, and compiled prompts."
                     },
                     {
-                      "title": "Genereren of toewijzen",
-                      "description": "Genereer automatisch referentieafbeeldingen of wijs uw eigen afbeeldingen handmatig toe, zodat deze overeenkomen met de Blueprint."
+                      "title": "End-to-end scene pipeline telemetry",
+                      "description": "Monitor readiness across direction, voice and score, keyframes, multi-take clips, broadcast mixing, and localized streams before publishing."
                     }
                   ]
                 }
               },
               {
                 "icon": "directShot",
-                "title": "Audience Resonance Integratie",
-                "description": "Lees de kamer voordat u rendert. AI analyseert uw script ten opzichte van uw doelgroep en biedt inzichten per scène. Pas de aanbevolen aanwijzingen onmiddellijk toe, of vertrouw op uw gevoel en negeer ze.",
-                "screenshot": "Audience Resonance Integratie – doelgroepinzichten per scène",
+                "title": "The Scene & Shot Director",
+                "description": "Type or speak your direction in plain language. Tell the agent who is in the frame, where the camera moves, and what the emotional beat is. The Shot Director automatically writes the complex underlying prompts for your stills and clips while syncing camera lens, focal length, talent blocking, and lighting across the scene.",
+                "screenshot": "The Scene & Shot Director — plain-language direction for stills and clips",
                 "learnMore": {
                   "items": [
                     {
-                      "title": "Inzichten per scène",
-                      "description": "AI analyseert uw script ten opzichte van uw doelgroep voordat u het rendert."
+                      "title": "Plain-language film direction",
+                      "description": "Type or speak who is in the frame, where the camera moves, and what the emotional beat is without writing bracketed prompt syntax."
                     },
                     {
-                      "title": "Jouw telefoontje",
-                      "description": "Pas de aanbevolen aanwijzingen onmiddellijk toe, of vertrouw op uw gevoel en negeer ze."
-                    }
-                  ]
-                }
-              },
-              {
-                "icon": "audioAgent",
-                "title": "Productieplanner",
-                "description": "Bepaal het budget en de planning voor elke scène en elk hoofdstuk met behulp van SceneFlow-credits of uw eigen BYOK API-sleutels. Stel stilstaande en clipdoelen per opname in voordat u rekenkracht besteedt.",
-                "screenshot": "Productieplanner — budget, planning en BYOK API-sleutels",
-                "learnMore": {
-                  "items": [
-                    {
-                      "title": "Begroting en planning",
-                      "description": "Bepaal het budget en de planning voor elke scène en elk hoofdstuk voordat u gaat renderen."
+                      "title": "Scene-wide or per-shot precision",
+                      "description": "Apply atmospheric direction across the entire scene or drill down into an individual shot's framing, lens, blocking, and lighting."
                     },
                     {
-                      "title": "Credits of BYOK",
-                      "description": "Voer de generatie uit met behulp van SceneFlow-credits of uw eigen BYOK API-sleutels."
+                      "title": "Automatic prompt compilation",
+                      "description": "The Shot Director automatically writes and syncs the underlying keyframe and motion prompts for your stills and clips."
+                    },
+                    {
+                      "title": "Intelligent Assistant Director (IAD)",
+                      "description": "Request surgical revisions to camera angles, character posture, or scene tension in plain language while keeping unrelated beats untouched."
                     }
                   ]
                 }
               },
               {
                 "icon": "continuity",
-                "title": "Productiescript",
-                "description": "Gebouwd voor zowel traditionele als AI-filmmakers. Bekijk een voorbeeld van een schoon, opgemaakt scenario in de studio en exporteer het in industriestandaardformaten (PDF, FDX, Fountain). Gebruik SceneFlow als een zelfstandige scriptkamer, of koppel uw scenario aan een Pre-Vis Animatic en promotrailer om financiers te pitchen en projectfinanciering veilig te stellen.",
-                "screenshot": "Productiescript — preview op het platform en PDF-, FDX- en Fountain-export",
+                "title": "The Continuity Library",
+                "description": "Absolute visual and vocal consistency across your entire film or series. Automatically generate or manually assign locked reference portraits, multi-angle turnaround sheets, scene-specific wardrobes, locations, and essential props—ensuring every shot matches the Blueprint without character drift.",
+                "screenshot": "The Continuity Library — cast, wardrobes, locations, and essential props",
                 "learnMore": {
                   "items": [
                     {
-                      "title": "Preview en export op het platform",
-                      "description": "Bekijk een voorbeeld van het opgemaakte script in de studio en exporteer het in industriestandaard PDF-, Final Draft FDX- of Fountain-formaat."
+                      "title": "Cast identity & turnaround locks",
+                      "description": "Anchor every character with diptych portraits, turnaround sheets, and locked voice profiles across every shot and episode."
                     },
                     {
-                      "title": "Voor traditionele filmmakers",
-                      "description": "Gebruik SceneFlow als intelligent scriptproductieplatform zonder video te genereren."
+                      "title": "Scene-specific wardrobes & props",
+                      "description": "Assign period or scene-specific wardrobes and essential hero props per shot so costumes and hand-held items stay unified."
                     },
                     {
-                      "title": "Pitch- en projectfinanciering",
-                      "description": "Verpak uw script met een Pre-Vis Animatic en promotrailers om projectfinanciering te pitchen en te verwerven."
+                      "title": "Generate, upload, or surgically edit",
+                      "description": "Automatically generate reference images, upload custom studio plates, or refine details with the Intelligent Assistant Director."
+                    },
+                    {
+                      "title": "Continuity readiness gate",
+                      "description": "Verify that all cast, wardrobe, location, and prop anchors are locked in the Continuity tab before generating scene keyframes."
+                    }
+                  ]
+                }
+              },
+              {
+                "icon": "scriptResonance",
+                "title": "Audience Resonance Integration",
+                "description": "Get a read on the room before you render. AI analyzes your script against your target audience, providing scene-by-scene insights, pacing diagnostics, and dialogue tension scores. Apply recommended directions instantly, or trust your gut and ignore them.",
+                "screenshot": "Audience Resonance Integration — scene-by-scene audience insights",
+                "learnMore": {
+                  "items": [
+                    {
+                      "title": "Scene-by-scene audience insights",
+                      "description": "AI analyzes your script against your target audience before you render to surface pacing, tension, and engagement scores."
+                    },
+                    {
+                      "title": "Narrated critique & recommendations",
+                      "description": "Listen to the narrated analysis and inspect targeted scene-level rewrite recommendations backed by demographic reasoning."
+                    },
+                    {
+                      "title": "Your creative call",
+                      "description": "Apply recommended directions instantly with one click, or trust your gut and ignore them."
+                    }
+                  ]
+                }
+              },
+              {
+                "icon": "budget",
+                "title": "Production Planner",
+                "description": "Establish the budget and schedule generation across every scene and chapter using SceneFlow credits or your own BYOK API keys. Set still and clip targets per shot, toggle between Draft and Final resolution tiers, and forecast compute spend before you render.",
+                "screenshot": "Production Planner — budget, schedule, and BYOK API keys",
+                "learnMore": {
+                  "items": [
+                    {
+                      "title": "Budget and schedule forecasting",
+                      "description": "Establish the budget and schedule generation across every scene and chapter with transparent per-shot credit estimates before you render."
+                    },
+                    {
+                      "title": "SceneFlow credits or BYOK keys",
+                      "description": "Run generation using included SceneFlow credits or connect your own Vertex AI, OpenAI, and ElevenLabs BYOK API keys."
+                    },
+                    {
+                      "title": "Draft-to-Final tier scheduling",
+                      "description": "Schedule rapid Draft passes for animatic pre-visualization and reserve Final 4K still and FHD video compute for locked cuts."
+                    }
+                  ]
+                }
+              },
+              {
+                "icon": "productionScript",
+                "title": "Production Script",
+                "description": "Built for traditional and AI filmmakers alike. Preview a clean, formatted screenplay in-studio and export in industry-standard formats (PDF, FDX, Fountain). Use SceneFlow as a standalone script room—or pair your screenplay with a Pre-Vis Animatic and Promo Trailer to pitch financiers and secure project funding.",
+                "screenshot": "Production Script — in-platform preview and PDF, FDX, and Fountain export",
+                "learnMore": {
+                  "items": [
+                    {
+                      "title": "In-platform preview & export",
+                      "description": "Preview the formatted script in the studio and export in industry-standard PDF, Final Draft FDX, or Fountain format."
+                    },
+                    {
+                      "title": "For traditional filmmakers",
+                      "description": "Use SceneFlow as an intelligent script production platform without generating video."
+                    },
+                    {
+                      "title": "Pitch & project funding",
+                      "description": "Package your script with a Pre-Vis Animatic and Promo Trailers to pitch and acquire project funding."
                     }
                   ]
                 }
@@ -628,79 +710,173 @@
             ]
           },
           {
-            "id": "video",
+            "id": "generate-audit",
             "label": "Genereer en controleer",
             "headline": "Bewijs de snit voordat u de rekenkracht besteedt.",
             "description": "Raad niet hoe een scène zal spelen. SceneFlow scheidt het genereren van audio en stilstaande beelden van dure bewegingsweergave, zodat u eerst het ritme van de bewerking kunt controleren.",
             "features": [
               {
+                "icon": "audioAgent",
+                "title": "The Audio Agent",
+                "description": "Generate expressive character dialogue, narrator voiceover, action sound effects, and musical scores concurrently across up to 30 shots per scene. Cast voices automatically match character profiles from your Continuity Library or can be custom-tuned per beat.",
+                "screenshot": "The Audio Agent — concurrent dialogue, sound effects, and music scores",
+                "learnMore": {
+                  "items": [
+                    {
+                      "title": "Concurrent multi-track audio",
+                      "description": "Generate dialogue, narration, sound effects, and music scores concurrently across up to 30 shots per scene."
+                    },
+                    {
+                      "title": "Locked character voice casting",
+                      "description": "Cast voices automatically match character profiles from your Reference Library or can be custom-tuned for timbre and cadence."
+                    },
+                    {
+                      "title": "Batch scene or single-shot runs",
+                      "description": "Run the Audio Agent across the entire scene in one pass or regenerate individual dialogue and SFX beats on demand."
+                    }
+                  ]
+                }
+              },
+              {
+                "icon": "musicScore",
+                "title": "Dialogue, SFX & Musical Score Workbench",
+                "description": "Open the Fullscreen `Audio` and `Music` tabs to direct every sonic layer of your scene. Shape vocal performances with emotional delivery tags (`[obsessive, muttered]`) and Hi-Fi Studio quality, extract embedded audio directly from video clips, dial in SFX duration presets (`Auto`, `Short 3s`, `Medium 8s`, `Long 15s`), and compose multi-shot Lyria musical score cues with custom intro fades.",
+                "screenshot": "Dialogue, SFX & Musical Score Workbench — Fullscreen Audio & Music tabs with score cues, voice casting, and SFX duration presets",
+                "learnMore": {
+                  "items": [
+                    {
+                      "title": "Multi-shot musical score cues",
+                      "description": "Compose custom Lyria musical score cues that span specific shot ranges with configurable intro fades and auto-ducking metadata."
+                    },
+                    {
+                      "title": "Performance Director & delivery tags",
+                      "description": "Direct spoken dialogue with bracketed emotional delivery tags, Hi-Fi Studio synthesis, and per-shot voice casting."
+                    },
+                    {
+                      "title": "Precision SFX duration presets",
+                      "description": "Time action sound effects to your shot choreography using Auto, Short 3s, Medium 8s, or Long 15s duration presets."
+                    },
+                    {
+                      "title": "Extract audio from video clips",
+                      "description": "Pull embedded audio directly from generated motion clips to preserve native on-camera speech or ambient foley."
+                    }
+                  ]
+                }
+              },
+              {
+                "icon": "stillsAgent",
+                "title": "The Stills Agent",
+                "description": "Rapidly batch-generate the high-resolution keyframe images that illustrate your shot direction across the scene. Regenerate, edit, or upload your own references to lock the composition, lighting, and character blocking before committing to video.",
+                "screenshot": "The Stills Agent — keyframe composition and references",
+                "learnMore": {
+                  "items": [
+                    {
+                      "title": "Batch keyframe generation",
+                      "description": "Rapidly generate the keyframe images that illustrate your shot direction across every shot in the scene."
+                    },
+                    {
+                      "title": "Automatic continuity anchoring",
+                      "description": "Every generated frame incorporates your locked cast portraits, scene wardrobes, locations, and hero props automatically."
+                    },
+                    {
+                      "title": "Lock composition before motion",
+                      "description": "Regenerate, edit, or upload your own references before committing compute to full motion video rendering."
+                    }
+                  ]
+                }
+              },
+              {
+                "icon": "stillsWorkbench",
+                "title": "Fullscreen Stills & Keyframe Studio",
+                "description": "Step into the Fullscreen `Stills` workbench for precision keyframe control. Pair Start and End keyframes for Frame-to-Video (`F2V`) motion bridging, switch between `Draft` and `Final 4K` resolution or `Standard` and `Creative` synthesis modes, customize Pre-Vis Ken Burns camera motion, and perform surgical plain-language frame edits with the Intelligent Assistant Director (`IAD`).",
+                "screenshot": "Fullscreen Stills & Keyframe Studio — F2V Start & End keyframe pairing, Final 4K controls, and surgical IAD editing",
+                "learnMore": {
+                  "items": [
+                    {
+                      "title": "Frame-to-Video (F2V) Start & End pairing",
+                      "description": "Pair a locked Start Frame and End Frame Target on any shot to anchor exact camera movement and subject blocking during video generation."
+                    },
+                    {
+                      "title": "Surgical IAD keyframe editing",
+                      "description": "Edit specific props, chalkboard text, wardrobe details, or lighting in plain language while keeping the rest of the keyframe locked."
+                    },
+                    {
+                      "title": "Draft vs Final 4K & Creative modes",
+                      "description": "Toggle between rapid Draft previews and Final 4K resolution, plus Standard or Creative synthesis modes per shot."
+                    },
+                    {
+                      "title": "Pre-Vis Ken Burns motion framing",
+                      "description": "Customize zoom and pan trajectories on every still so your Pre-Vis Animatic previews intentional camera motion."
+                    }
+                  ]
+                }
+              },
+              {
+                "icon": "animatic",
+                "title": "The Pre-Vis Animatic",
+                "description": "Watch the scene breathe. Review a fully assembled animatic—stitched stills, Ken Burns motion, and locked audio—in the Screening Room. Audit the pacing, share for feedback, and ensure the cut works before committing to video.",
+                "screenshot": "The Pre-Vis Animatic — stitched stills, Ken Burns motion, and locked audio",
+                "learnMore": {
+                  "items": [
+                    {
+                      "title": "Assembled multi-track animatic",
+                      "description": "Review stitched stills, Ken Burns motion, and locked dialogue, SFX, and musical score in the Screening Room."
+                    },
+                    {
+                      "title": "Prove pacing before video spend",
+                      "description": "Audit the dramatic rhythm, spot timing gaps, and refine shot lengths while iterations cost pennies instead of full video compute."
+                    },
+                    {
+                      "title": "Share for stakeholder sign-off",
+                      "description": "Audit the pacing, share for feedback, and ensure the cut works before committing to video."
+                    }
+                  ]
+                }
+              },
+              {
                 "icon": "videoAgent",
-                "title": "De Audio Agent",
-                "description": "Genereer tegelijkertijd dialoog, geluidseffecten en muziekscores voor maximaal 30 opnamen per scène. Caststemmen komen automatisch overeen met karakterprofielen of kunnen op maat worden afgestemd.",
-                "screenshot": "De SFAIAUDIO_AGENTERM — gelijktijdige dialoog, geluidseffecten en muziekpartituren",
+                "title": "The Clips Agent",
+                "description": "Once the Pre-Vis is approved, the Clips Agent takes over, rendering high-fidelity motion clips that adhere strictly to your approved stills, Frame-to-Video start and end anchors, and continuity references—backed by automated safety pre-flight checks.",
+                "screenshot": "The Clips Agent — high-fidelity motion clips from approved stills",
                 "learnMore": {
                   "items": [
                     {
-                      "title": "Gelijktijdige audio",
-                      "description": "Genereer tegelijkertijd dialoog, geluidseffecten en muziekscores voor maximaal 30 opnamen per scène."
+                      "title": "Triggered after Pre-Vis approval",
+                      "description": "The Clips Agent renders motion only after the Pre-Vis animatic and shot timings are approved."
                     },
                     {
-                      "title": "Karakterstemmen",
-                      "description": "Caststemmen komen automatisch overeen met karakterprofielen of kunnen op maat worden afgestemd."
+                      "title": "Strict keyframe & F2V adherence",
+                      "description": "High-fidelity motion clips adhere strictly to your approved Start and End stills and continuity references."
+                    },
+                    {
+                      "title": "Automated safety pre-flight",
+                      "description": "Pre-flight prompt sanitation prevents false-positive safety rejections on dramatic action beats so clips render reliably."
                     }
                   ]
                 }
               },
               {
-                "icon": "mixer",
-                "title": "De SFAISTILLS_AGENTERM",
-                "description": "Genereer snel de keyframe-afbeeldingen die de richting van uw opname illustreren. Genereer, bewerk of upload uw eigen referenties om de compositie te vergrendelen.",
-                "screenshot": "De SFAISTILLS_AGENTERM — sleutelframecompositie en referenties",
+                "icon": "clipsWorkbench",
+                "title": "Multi-Take Clips & Retake Studio",
+                "description": "Direct and curate every motion render inside the Fullscreen `Clips` studio. Audition unlimited takes in the non-destructive Multi-Take Vault (`Take 1 / Take 2 / Take 3`), filter your shot rail by `In the Can` readiness, trigger targeted IAD Smart Retakes, and manage per-stream localized video takes for dialogue and signage shots.",
+                "screenshot": "Multi-Take Clips & Retake Studio — non-destructive Take 1/2/3 vault, IAD Smart Retake, and localized stream takes",
                 "learnMore": {
                   "items": [
                     {
-                      "title": "Keyframe genereren",
-                      "description": "Genereer snel de keyframe-afbeeldingen die de richting van uw opname illustreren."
+                      "title": "Non-destructive Multi-Take Vault",
+                      "description": "Every motion render is preserved in the shot vault so you can compare Take 1, Take 2, and Take 3 and promote your favorite take live."
                     },
                     {
-                      "title": "Vergrendel de compositie",
-                      "description": "Genereer, bewerk of upload uw eigen referenties voordat u tot actie overgaat."
-                    }
-                  ]
-                }
-              },
-              {
-                "icon": "languageStreams",
-                "title": "De Pre-Vis Animatic",
-                "description": "Kijk hoe de scène ademt. Bekijk een volledig samengestelde animatie (samengevoegde foto's, Ken Burns-bewegingen en vergrendelde audio) in de Screening Room. Controleer het tempo, deel het voor feedback en zorg ervoor dat de opname werkt voordat je video gaat maken.",
-                "screenshot": "De Pre-Vis Animatic — samengevoegde foto's, Ken Burns-bewegingen en vergrendelde audio",
-                "learnMore": {
-                  "items": [
-                    {
-                      "title": "Animatie samengesteld",
-                      "description": "Bekijk samengevoegde foto's, Ken Burns-bewegingen en vergrendelde audio in de Screening Room."
+                      "title": "IAD Smart Retake & Direct Video",
+                      "description": "Refine camera motion, subject physics, or facial performance with the Intelligent Assistant Director and Direct Video pre-flight controls."
                     },
                     {
-                      "title": "Controleren en delen",
-                      "description": "Controleer het tempo, deel het voor feedback en zorg ervoor dat de opname werkt voordat je video gaat maken."
-                    }
-                  ]
-                }
-              },
-              {
-                "icon": "videoAgent",
-                "title": "De SFAICLIPS_AGENTERM",
-                "description": "Zodra de Pre-Vis is goedgekeurd, neemt de Clips Agent het over, waardoor hifi-bewegingsclips worden weergegeven die strikt voldoen aan uw goedgekeurde foto's en continuïteitsreferenties.",
-                "screenshot": "De SFAICLIPS_AGENTERM — hifi-bewegingsfragmenten van goedgekeurde foto's",
-                "learnMore": {
-                  "items": [
-                    {
-                      "title": "Na goedkeuring vooraf",
-                      "description": "De SFAICLIPS_AGENTERM geeft pas beweging weer nadat de Pre-Vis-animatie is goedgekeurd."
+                      "title": "Per-stream localized shot takes",
+                      "description": "Switch between your English Master take and regenerated localized clips for spoken dialogue and in-scene signage per language stream."
                     },
                     {
-                      "title": "Strikte naleving",
-                      "description": "High-fidelity-bewegingsclips voldoen strikt aan uw goedgekeurde foto's en continuïteitsreferenties."
+                      "title": "Dialogue-free stem readiness",
+                      "description": "Extract embedded clip audio into a dialogue-free SFX and ambience stem so localized dubs retain original foley and room tone."
                     }
                   ]
                 }
@@ -708,79 +884,111 @@
             ]
           },
           {
-            "id": "publish",
+            "id": "publish-distribute",
             "label": "Publiceren en distribueren",
             "headline": "Verzend de master of lokaliseer voor de hele wereld.",
             "description": "Wanneer de scène klaar is, zijn de activa al verenigd. Voltooi de bewerking, lokaliseer de audio en distribueer deze rechtstreeks naar uw publiek.",
             "features": [
               {
-                "icon": "shipPackage",
-                "title": "De Mixer",
-                "description": "Een ingebouwde, intuïtieve scène-editor. Knip clips bij, pas snelheidsdrempels aan, voeg tekstoverlays toe en pas watermerken toe zonder de studio te verlaten.",
-                "screenshot": "De Mixer - trim clips, snelheidsdrempels, tekstoverlays en watermerken",
+                "icon": "mixer",
+                "title": "The Mixer",
+                "description": "A commercial-grade broadcast scene editor and stitching console built directly into the studio. Preview your cut on a 16:9 Broadcast Reference Monitor paired with a real-time Stereo VU / Peak Meter (`-60` to `0 dBFS`, `-14 LUFS` target), inspect cut points with a side-by-side Match-Cut Continuity Loupe, shape J-Cut and L-Cut audio overlaps (`-0.3s` / `+0.3s`), choose dynamic Optical Hold Modes (`103% Ken Burns Push` or `Ping-Pong Tail`), mix across a 6-lane timeline (`V1 Video`, `A0 Stem`, `A1 Dialogue`, `A2 VO`, `A3 SFX`, `A4 Score`) with `-8 dB` Auto-Ducking, apply 1-click watermark crops and text overlays, and cloud-render EBU R128 (`-14 LUFS`) masters.",
+                "screenshot": "The Mixer — Broadcast Reference Monitor, Stereo VU Meter, Match-Cut Continuity Loupe, J/L-Cut overlaps, 6-lane timeline with -8 dB Auto-Ducking, and EBU R128 loudness",
                 "learnMore": {
                   "items": [
                     {
-                      "title": "Ingebouwde scène-editor",
-                      "description": "Trim clips en pas snelheidsdrempels direct in de studio aan."
+                      "title": "Broadcast Reference Monitor & Stereo VU / LUFS Meter",
+                      "description": "Preview your stitched sequence on a 16:9 reference monitor beside a real-time stereo peak and loudness meter calibrated to -14.0 LUFS web and -24.0 LKFS broadcast targets."
                     },
                     {
-                      "title": "Afwerking",
-                      "description": "Voeg tekstoverlays toe en pas watermerken toe zonder te exporteren naar een externe editor."
+                      "title": "Match-Cut Continuity Loupe & J/L-Cut audio overlaps",
+                      "description": "Hover any transition pill to compare the Out-Frame of Shot N against the In-Frame of Shot N+1 side by side while dialing in -0.3s J-cut lead-ins and +0.3s L-cut audio tails."
+                    },
+                    {
+                      "title": "6-lane timeline with -8 dB Auto-Ducking envelope",
+                      "description": "Mix V1 Video, A0 Dialogue-Free Stem, A1 Dialogue, A2 Narration, A3 SFX, and A4 Score with a visual gain-reduction curve that automatically ducks music -8 dB under speech."
+                    },
+                    {
+                      "title": "Optical Hold Modes & elastic dub alignment",
+                      "description": "Replace static freeze-frames with a 103% Ken Burns Push Zoom or Ping-Pong Tail Loop and slow video clips down to 67% speed so longer dubbed dialogue fits naturally."
+                    },
+                    {
+                      "title": "1-click watermark crop, text overlays & EBU R128 export",
+                      "description": "Apply preset edge crops to remove third-party watermarks, burn in lower-thirds or subtitles, and cloud-render stitched MP4 masters with EBU R128 loudness normalization."
                     }
                   ]
                 }
               },
               {
                 "icon": "languageStreams",
-                "title": "Streams (meertalig)",
-                "description": "Breid uw wereldwijde bereik direct uit in 44 talen. Genereer automatisch alternatieve taalstreams door audio te kopiëren, lipbewegingen te synchroniseren of gelokaliseerde dialoogfragmenten direct binnen de scène opnieuw te genereren.",
-                "screenshot": "Streams (meertalig) — nagesynchroniseerde audio en gelokaliseerde dialoogfragmenten",
+                "title": "Streams (Multi-Language)",
+                "description": "Expand your global reach across 44 languages from one master timeline. Selectively regenerate only the specific shots containing spoken dialogue or in-scene text signage while retaining unselected master shots at zero extra credit cost. Extract embedded video audio and strip spoken dialogue (`htdemucs` neural stem separation) so generated SFX and music carry into every dub, and automatically align longer translated dialogue using elastic video slow-down (slowing a `10s` clip up to `15s` at `67%` speed), hybrid optical holds, or pitch-preserved audio tempo matching—while directing in a localized Studio UI.",
+                "screenshot": "Streams (Multi-Language) — Selective shot regeneration vs retained master shots, dialogue-free stem extraction, and elastic slow-video dub alignment",
                 "learnMore": {
                   "items": [
                     {
-                      "title": "Wereldwijd bereik",
-                      "description": "Genereer automatisch alternatieve taalstreams in 44 talen, rechtstreeks binnen de scène."
+                      "title": "Selective shot regeneration & retained master clips",
+                      "description": "Select only the shots with spoken dialogue or in-scene signage to regenerate in your target language while unselected action shots automatically retain the master video clip."
                     },
                     {
-                      "title": "Dubben, lipsynchroniseren of regenereren",
-                      "description": "Lokaliseer elke opname door audio te kopiëren, lipbewegingen te synchroniseren of gelokaliseerde dialoogfragmenten opnieuw te genereren."
+                      "title": "Dialogue-free stem extraction (keep generated SFX & music)",
+                      "description": "Neural stem separation extracts embedded video audio and removes spoken English dialogue while preserving generated foley, room ambience, and music for clean MP3 dubbing."
+                    },
+                    {
+                      "title": "Elastic video slow-down & multi-method dub alignment",
+                      "description": "Align longer translated dialogue by slowing a 10s video clip up to 15s (down to 67% speed), pairing an 80% slow-down with a 103% zoom hold, or fitting dub audio tempo up to 1.25x."
+                    },
+                    {
+                      "title": "Regenerated dialogue & signage clips across 44 languages",
+                      "description": "Regenerate localized dialogue takes and in-scene signage clips directly within the scene across 44 languages so visuals, stencils, and speech match every audience."
+                    },
+                    {
+                      "title": "Localized Studio UI",
+                      "description": "Direct and produce in your native interface across English, Spanish, Portuguese, Hindi, Simplified Chinese, and Arabic."
                     }
                   ]
                 }
               },
               {
                 "icon": "promoTrailers",
-                "title": "Promo en aanhangwagens",
-                "description": "Maak op elk moment tijdens de productie social-ready promotrailers. Genereer meertalige versies die zijn geoptimaliseerd voor horizontale of verticale formaten.",
-                "screenshot": "Promo & Trailers — meertalige horizontale en verticale trailers",
+                "title": "Promo & Trailers",
+                "description": "Cut high-converting theatrical teasers, episodic recaps, and social-ready promo trailers at any time during production. Pull hero takes from your scene vault, reframe for horizontal (`16:9`) or vertical (`9:16`) feeds, and generate multi-language versions with localized title cards and voiceover hooks.",
+                "screenshot": "Promo & Trailers — multi-language horizontal and vertical trailers",
                 "learnMore": {
                   "items": [
                     {
-                      "title": "Trailers die geschikt zijn voor sociale media",
-                      "description": "Knip promotrailers op elk moment tijdens de productie."
+                      "title": "Social-ready trailers at any stage",
+                      "description": "Cut promo trailers, theatrical teasers, and episodic recaps at any point during production."
                     },
                     {
-                      "title": "Meertalige formaten",
-                      "description": "Genereer meertalige versies die zijn geoptimaliseerd voor horizontale of verticale formaten."
+                      "title": "Horizontal & vertical social formats",
+                      "description": "Generate multi-language versions optimized for horizontal 16:9 YouTube feeds or vertical 9:16 Shorts, Reels, and TikTok."
+                    },
+                    {
+                      "title": "Localized hooks & title cards",
+                      "description": "Render localized trailer streams with translated voiceover hooks, burned-in captions, and market-specific title cards."
                     }
                   ]
                 }
               },
               {
                 "icon": "shipPackage",
-                "title": "Directe publicatie",
-                "description": "Exporteer de uiteindelijke master MP4, of laat SceneFlow automatisch thumbnails en beschrijvingen genereren om scènes, hoofdstukken en promo's rechtstreeks op YouTube, TikTok en Facebook te publiceren.",
-                "screenshot": "Direct publiceren – MP4-export en directe publicatie naar YouTube, TikTok en Facebook",
+                "title": "Direct Publishing",
+                "description": "Export the final EBU R128-normalized master MP4 in 1080p or 4K, download complete production stems, or let SceneFlow auto-generate high-CTR thumbnails, localized titles, chapter markers, and descriptions to publish scenes, chapters, and promos directly to YouTube, TikTok, and Facebook.",
+                "screenshot": "Direct Publishing — MP4 export and direct publishing to YouTube, TikTok, and Facebook",
                 "learnMore": {
                   "items": [
                     {
-                      "title": "Beheers MP4 of direct sociaal",
-                      "description": "Exporteer de uiteindelijke master-MP4 of publiceer scènes, hoofdstukken en promo's rechtstreeks op YouTube, TikTok en Facebook."
+                      "title": "Master MP4 or direct social publishing",
+                      "description": "Export the final master MP4 or publish scenes, chapters, and promos directly to YouTube, TikTok, and Facebook."
                     },
                     {
-                      "title": "Automatisch gegenereerde metagegevens",
-                      "description": "Laat SceneFlow automatisch thumbnails en beschrijvingen genereren voor elke release."
+                      "title": "Auto-generated thumbnails & metadata",
+                      "description": "Let SceneFlow auto-generate high-contrast thumbnails, localized titles, descriptions, tags, and chapter markers for every release."
+                    },
+                    {
+                      "title": "Archival stems & screenplay bundle",
+                      "description": "Download stitched video masters, isolated dialogue and SFX stems, subtitle files, and formatted screenplays in one production package."
                     }
                   ]
                 }
@@ -797,44 +1005,52 @@
         "features": [
           {
             "icon": "screeningPlayer",
-            "title": "Eén verenigde speler",
-            "description": "Schakel naadloos tussen Pre-Vis-animaties, scènes, hoofdstukken, trailers en je uiteindelijke master. Schakel direct tussen taalstreams en luister naar nagesynchroniseerde, lip-gesynchroniseerde of shot-geregenereerde lokalisaties, altijd vergrendeld op de exacte versie van de Mixer.",
-            "screenshot": "Screening Room-speler",
+            "title": "One Unified Player",
+            "description": "Toggle seamlessly between Pre-Vis animatics, stitched scenes, multi-scene chapters, promo trailers, and your final master. Switch Language Streams on the fly to audition dubbed audio, dialogue-free stem mixes, and regenerated dialogue or signage clips—always frame-locked to the exact cut from the Mixer.",
+            "screenshot": "Screening Room player",
             "learnMore": {
               "items": [
                 {
-                  "title": "Elke mijlpaal in één weergave",
-                  "description": "Schakel moeiteloos tussen Pre-Vis, scènes, hoofdstukken, promo's en de uiteindelijke master."
+                  "title": "Every milestone in one theatre",
+                  "description": "Switch effortlessly among Pre-Vis animatics, individual scenes, chapters, promos, and the final master."
                 },
                 {
-                  "title": "Live taalwisseling",
-                  "description": "Beluister direct elke taalstream (nagesynchroniseerd, lipgesynchroniseerd of shot-geregenereerd)."
+                  "title": "Live language stream auditioning",
+                  "description": "Audition any Language Stream—dubbed audio, lip-sync, or regenerated dialogue and signage clips—on the fly without reloading the timeline."
                 },
                 {
-                  "title": "Frame-locked aan de mixer",
-                  "description": "Elke stream speelt de exacte bewerking en timing af die in de Mixer wordt weergegeven."
+                  "title": "Frame-locked to the Broadcast Mixer",
+                  "description": "Every stream plays the exact stitch transitions, J/L-cut overlaps, auto-ducking curves, and loudness normalization rendered in the Mixer."
+                },
+                {
+                  "title": "Incremental episodic shipping",
+                  "description": "Ship a finished 3–5 minute scene, an 8–12 minute chapter, or a social promo immediately while downstream chapters continue rendering."
                 }
               ]
             }
           },
           {
             "icon": "screeningCollab",
-            "title": "Frame-nauwkeurige samenwerking",
-            "description": "Stop met het exporteren van ruwe versies naar e-mail. Deel een privéscreeningslink waar medewerkers en investeerders in realtime meekijken en notities rechtstreeks op de foto plaatsen, waarbij onmiddellijke meldingen rechtstreeks naar uw telefoon worden verzonden.",
-            "screenshot": "Gedeelde recensie",
+            "title": "Frame-Accurate Collaboration",
+            "description": "Stop exporting rough cuts to email. Share a private screening link where collaborators, sound editors, localization leads, and investors watch full-resolution playback in real time and drop timestamped notes directly on the picture—with instant notifications sent straight to your phone.",
+            "screenshot": "Shared review",
             "learnMore": {
               "items": [
                 {
-                  "title": "Links voor privéscreening",
-                  "description": "Recensenten bekijken de weergave in volledige resolutie en laten tijdstempels achter op de foto."
+                  "title": "Private stakeholder screening links",
+                  "description": "Reviewers watch full-resolution playback across any language stream and leave frame-accurate timestamped notes on the picture."
                 },
                 {
-                  "title": "Geen ruwe bestandsexport",
-                  "description": "Verzamel feedback van belanghebbenden op één plek zonder zware videobestanden te versturen."
+                  "title": "Zero rough-cut file exports",
+                  "description": "Collect creative, legal, and localization feedback in one centralized review thread without uploading or mailing heavy video files."
                 },
                 {
-                  "title": "Directe mobiele waarschuwingen",
-                  "description": "Nieuwe recensentennotities stellen u onmiddellijk op uw telefoon op de hoogte terwijl u op uw desktop regisseert."
+                  "title": "Instant mobile notifications",
+                  "description": "New reviewer notes notify you immediately on your phone so you can approve or dispatch revisions while directing on desktop."
+                },
+                {
+                  "title": "Direct link back to the Shot Rail",
+                  "description": "Jump from any timestamped screening comment straight to the corresponding scene and shot in the Production Stage to execute the note."
                 }
               ]
             }

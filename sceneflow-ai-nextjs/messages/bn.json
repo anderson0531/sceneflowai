@@ -267,44 +267,52 @@
         "features": [
           {
             "icon": "newSeries",
-            "title": "নতুন সিরিজ",
-            "description": "আপনার সিরিজ বা চ্যানেল ধারণাকে সরল ভাষায় পিচ করুন। ইন্টারেক্টিভ AI পরিমার্জন আপনার ভিত্তিকে তীক্ষ্ণ করে এবং একটি বহু-পর্বের সিজন বেসলাইন তৈরি করে—অতিরিক্ত প্লট আর্কস এবং এপিসোড ব্রেকডাউন সহ সম্পূর্ণ।",
-            "screenshot": "নতুন সিরিজ তৈরি করুন — উদ্দেশ্য, স্পষ্টীকরণ ও নিশ্চিতকরণ, সিরিজ তৈরি",
+            "title": "New Series",
+            "description": "Pitch your series, anthology, or episodic channel concept in plain language. Interactive AI refinement sharpens your premise, target audience, and visual tone before generating a complete multi-episode season baseline—complete with overarching plot arcs, recurring character hooks, and episode-by-episode breakdowns.",
+            "screenshot": "Create New Series — intent, Clarify and Confirm, Generate Series",
             "learnMore": {
               "items": [
                 {
-                  "title": "আপনার উদ্দেশ্য",
-                  "description": "সরল ভাষায় ভিত্তি, বিন্যাস, লক্ষ্য দর্শক এবং ভিজ্যুয়াল শিল্প শৈলী পিচ করুন।"
+                  "title": "Plain-language series pitch",
+                  "description": "Pitch the premise, episode format, target demographic, and visual art style in plain language."
                 },
                 {
-                  "title": "ইন্টারেক্টিভ পরিশোধন",
-                  "description": "স্পষ্ট করুন এবং নিশ্চিত করুন কিছু তৈরি হওয়ার আগে আপনার সাথে ঋতু সংক্ষিপ্তসার তীক্ষ্ণ করে।"
+                  "title": "Interactive Clarify & Confirm",
+                  "description": "Clarify and Confirm sharpens the season synopsis, tone, and thematic pillars with you before anything is generated."
                 },
                 {
-                  "title": "ঋতু বেসলাইন",
-                  "description": "জেনারেট সিরিজ একটি পাঁচ-পর্বের সিজন আর্ক তৈরি করে যা আপনি যেকোনো সময় প্রসারিত করতে পারেন।"
+                  "title": "Multi-episode season baseline",
+                  "description": "Generate Series builds a structured five-episode season arc with individual synopses and story hooks that you can expand anytime."
+                },
+                {
+                  "title": "World & genre calibration",
+                  "description": "Lock visual aesthetics, era settings, and recurring narrative motifs up front so every episode shares the same creative DNA."
                 }
               ]
             }
           },
           {
             "icon": "seriesReview",
-            "title": "ঋতু বাইবেল এবং ধারাবাহিকতা",
-            "description": "বর্ণিত সিজনের ওভারভিউ এবং পর্বের স্লেট পড়ুন বা শুনুন। SceneFlow আপনার গল্পের থ্রেড, কাস্ট প্রোফাইল, অবস্থান, এবং স্বাক্ষর প্রপসকে একটি ভাগ করা Reference Library-এ লক করে যা প্রতিটি পর্বের উত্তরাধিকারসূত্রে পাওয়া যায়।",
-            "screenshot": "সারসংক্ষেপ ও শোনা, পর্বসমূহ ও শোনা, সামঞ্জস্য ও ধারাবাহিকতা — কুশীলব, চিত্রস্থান, প্রপস ও পটভূমি",
+            "title": "Season Bible & Continuity",
+            "description": "Read or listen to the narrated season overview and episode slate. SceneFlow locks your story threads, cast profiles, recurring locations, and signature props into a shared Reference Library that every episode inherits automatically—eliminating continuity drift across multi-part storytelling.",
+            "screenshot": "Overview Listen, Episodes Listen, Consistency, Continuity — Cast, Locations, Props, Settings",
             "learnMore": {
               "items": [
                 {
-                  "title": "পড়ুন বা শুনুন",
-                  "description": "অন্তর্নির্মিত অডিও বর্ণনা সহ ঋতু ওভারভিউ এবং প্রতিটি পর্বের সংক্ষিপ্তসার অডিট করুন।"
+                  "title": "Narrated season & episode audit",
+                  "description": "Audit the overarching season overview and every individual episode synopsis with built-in studio audio narration."
                 },
                 {
-                  "title": "গল্পের ধারাবাহিকতা",
-                  "description": "নান্দনিকতা, মূল প্লট ইভেন্ট এবং বর্ণনামূলক থ্রেডগুলি পুরো সিজন জুড়ে লক থাকে।"
+                  "title": "Cross-episode story consistency",
+                  "description": "Visual aesthetics, canonical plot events, and character relationship threads stay locked across the entire season."
                 },
                 {
-                  "title": "ভাগ করা ধারাবাহিকতা",
-                  "description": "কাস্ট, অবস্থান, প্রপস এবং সেটিংস আপনার তৈরি প্রতিটি পর্বে স্বয়ংক্রিয়ভাবে বহন করে।"
+                  "title": "Shared Reference Library inheritance",
+                  "description": "Cast portraits, voice profiles, wardrobes, locations, and signature props carry automatically into every episode you produce."
+                },
+                {
+                  "title": "Centralized canon management",
+                  "description": "Update a character look, location plate, or prop once in the Series Bible to propagate the change to future episodes."
                 }
               ]
             }
@@ -312,75 +320,87 @@
           {
             "icon": "seriesResonance",
             "title": "Audience Resonance",
-            "description": "একটি একক স্ক্রিপ্ট লেখার আগে আপনার লক্ষ্য জনসংখ্যার বিরুদ্ধে আপনার সিজন আর্ক পরীক্ষা করুন। এপিসোড-বাই-এপিসোড রেজোন্যান্স স্কোর পর্যালোচনা করুন এবং এক ক্লিকে ডেটা-ব্যাকড গল্পের উন্নতি প্রয়োগ করুন- শুধুমাত্র আপনি যখন নোটের সাথে সম্মত হন।",
-            "screenshot": "Audience Resonance বিশ্লেষণ এবং তৎসংশ্লিষ্ট কার্যকর অন্তর্দৃষ্টি (যা এখনও প্রয়োগ করা হয়নি)",
+            "description": "Test your season arc against your target demographic before writing a single script. Review episode-by-episode resonance scores, binge-retention curves, and structural critiques, then apply data-backed story improvements with one click—only when you agree with the note.",
+            "screenshot": "Audience Resonance analysis, then Actionable Insights, unapplied",
             "learnMore": {
               "items": [
                 {
-                  "title": "ডেমোগ্রাফিক স্কোরিং",
-                  "description": "স্কোর এবং স্ট্রাকচারাল অ্যানালাইসিস প্রকাশ করে যে কিভাবে আপনার সিজন আপনার টার্গেট দর্শকদের সাথে ল্যান্ড করে।"
+                  "title": "Demographic & retention scoring",
+                  "description": "Multi-axis scores and structural analysis reveal how your season arc and episode cliffhangers land with your target audience."
                 },
                 {
-                  "title": "পরিচালকের বিশেষাধিকার",
-                  "description": "অ্যাকশনেবল ইনসাইট শুধুমাত্র আপনার সিরিজ আপডেট করে যখন আপনি সেগুলি প্রয়োগ করতে চান।"
+                  "title": "Episode-by-episode diagnostics",
+                  "description": "Spot mid-season pacing dips, character underutilization, or tonal drift across the full episode slate before scripting."
+                },
+                {
+                  "title": "Director's prerogative",
+                  "description": "Actionable Insights update your series bible and episode outlines only when you explicitly choose to apply them."
                 }
               ]
             }
           },
           {
             "icon": "seriesDirector",
-            "title": "সিরিজের পরিচালক",
-            "description": "ভয়েস বা টেক্সট দ্বারা সমগ্র ঋতু পুনরায় আকার. আপনার গল্পের বাকি অংশ অক্ষুণ্ণ রেখে টোন পরিবর্তন করুন, বাজি বাড়ান বা সমস্ত পর্বে একবারে একটি চরিত্রের আর্ক তৈরি করুন।",
-            "screenshot": "সিরিজ পরিচালক — নির্দেশনা, মনোযোগ, গ্রহণ",
+            "title": "The Series Director",
+            "description": "Reshape the entire season by voice or text. Shift the dramatic tone, raise the stakes, introduce a new antagonist, or rework a character arc across all episodes at once while keeping the rest of your storyline and continuity bible intact.",
+            "screenshot": "Series Director — direction, focus, accept",
             "learnMore": {
               "items": [
                 {
-                  "title": "সরল-ভাষা দিক",
-                  "description": "আপনার নোট এবং লক্ষ্য প্লট, অক্ষর, পর্বের আর্কস, টোন বা সেটিং বলুন বা টাইপ করুন।"
+                  "title": "Plain-language season direction",
+                  "description": "Speak or type your creative note and target overarching plot, characters, episode arcs, tone, or world setting."
                 },
                 {
-                  "title": "অস্ত্রোপচার আপডেট",
-                  "description": "আপনি রিভিশন গ্রহণ না করা পর্যন্ত কিছুই পরিবর্তন হবে না, এবং অসংলগ্ন গল্পের থ্রেডগুলি স্পর্শ করা যাবে না।"
+                  "title": "Surgical multi-episode updates",
+                  "description": "Nothing changes until you accept the previewed revision, and unrelated story threads stay completely untouched."
                 },
                 {
-                  "title": "নির্দেশিত সুপারিশ",
-                  "description": "AI-প্রস্তাবিত গল্পের উন্নতিগুলি প্রয়োগ করুন বা প্রতিটি সৃজনশীল পছন্দ নিজেই পরিচালনা করুন৷"
+                  "title": "Guided AI recommendations",
+                  "description": "Apply one-click story improvements surfaced by Audience Resonance or steer every creative choice yourself."
                 }
               ]
             }
           },
           {
             "icon": "directEpisode",
-            "title": "পর্ব-স্তরের দিকনির্দেশনা",
-            "description": "আপনার সিজন স্লেটের বাকি অংশকে অস্থিতিশীল না করেই এর প্লট, পেসিং বা হুক ইন আইসোলেশনে পুনরায় কাজ করতে যেকোনো পৃথক পর্বে জুম করুন।",
-            "screenshot": "পর্বসমূহ — এই পর্বটি পরিচালনা করুন, অন্য পর্বগুলো অপরিবর্তিত থাকবে",
+            "title": "Episode-Level Direction",
+            "description": "Zoom into any individual episode to rework its plot outline, act structure, pacing, or cold-open hook in isolation—without destabilizing neighboring episodes or mutating the rest of your season slate.",
+            "screenshot": "Episodes — Direct this episode, other episodes unchanged",
             "learnMore": {
               "items": [
                 {
-                  "title": "বিচ্ছিন্ন পুনর্লিখন",
-                  "description": "প্রতিবেশী এপিসোড পরিবর্তন না করেই একটি একক পর্বের রূপরেখা এবং বিটগুলিতে সরাসরি পরিবর্তন।"
+                  "title": "Isolated episode rewrites",
+                  "description": "Direct changes to a single episode's synopsis, act beats, and character focus without altering neighboring episodes."
                 },
                 {
-                  "title": "ঋতু অখণ্ডতা",
-                  "description": "ওভারআর্চিং সিজন বাইবেল এবং বাকি পর্বের স্লেট লক করা আছে।"
+                  "title": "Locked season integrity",
+                  "description": "The overarching season bible, shared cast continuity, and remaining episode slate stay locked while you iterate."
+                },
+                {
+                  "title": "Pre-launch beat polishing",
+                  "description": "Refine individual episode hooks and cliffhangers until the episode is ready to launch into the Blueprint Room."
                 }
               ]
             }
           },
           {
             "icon": "startEpisode",
-            "title": "এক-ক্লিক পর্ব লঞ্চ",
-            "description": "যখন একটি পর্বের রূপরেখা চিহ্নে পৌঁছে যায়, তখন এটিকে সরাসরি Blueprint Room-এ লঞ্চ করুন এর সারসংক্ষেপ, গল্পের বীট, কাস্ট, এবং ইতিমধ্যেই যুক্ত বিশ্ব।",
-            "screenshot": "প্রজেক্ট শুরু করুন — আউটলাইন এবং কুশীলবদের তালিকা ইতিমধ্যেই এপিসোডে রয়েছে।",
+            "title": "One-Click Episode Launch",
+            "description": "When an episode's outline hits the mark, launch it straight into the Blueprint Room with a single click—bringing its synopsis, narrative beats, recurring cast, voice profiles, locations, and visual style automatically wired in.",
+            "screenshot": "Start Project — outline and cast already on the episode",
             "learnMore": {
               "items": [
                 {
-                  "title": "তাত্ক্ষণিক হ্যান্ডঅফ",
-                  "description": "একটি একক ক্লিকে সরাসরি Blueprint Room-এ যেকোনো পর্ব চালু করুন৷"
+                  "title": "Instant Blueprint handoff",
+                  "description": "Launch any approved episode directly into the Blueprint Room with a single click to begin detailed beat and script work."
                 },
                 {
-                  "title": "প্রি-ওয়্যার্ড ডিএনএ",
-                  "description": "পর্বের রূপরেখা, সারসংক্ষেপ, গল্পের বীট, কাস্ট এবং অবস্থানগুলি স্বয়ংক্রিয়ভাবে ভ্রমণ করে।"
+                  "title": "Pre-wired creative DNA",
+                  "description": "The episode outline, synopsis, story beats, cast profiles, wardrobes, and locations travel automatically with zero re-entry."
+                },
+                {
+                  "title": "Parallel episode production",
+                  "description": "Spin up multiple episodes from the same season slate as independent projects that share the same canonical series assets."
                 }
               ]
             }
@@ -395,84 +415,92 @@
         "features": [
           {
             "icon": "startBlueprint",
-            "title": "Blueprint শুরু করুন",
-            "description": "আপনার সিরিজ স্লেট থেকে একটি এপিসোড আনুন এর রূপরেখা এবং কাস্ট প্রি-লোডেড, অথবা স্ক্র্যাচ থেকে একটি একেবারে নতুন ফিল্ম কনসেপ্ট পিচ করুন এবং AI কে মৌলিক চিকিত্সা গঠন করতে দিন।",
-            "screenshot": "সিরিজের পর্বটি আগে থেকেই জানা থাকলে অথবা আপনার প্রজেক্ট শুরু করুন — উদ্দেশ্য নির্ধারণ, AI-এর মাধ্যমে যাচাই ও উন্নত করা এবং Blueprint তৈরি করা।",
+            "title": "Start the Blueprint",
+            "description": "Bring in an episode from your series slate with its outline, cast, and world pre-loaded, or pitch a brand-new standalone film concept from scratch and let AI validate, enhance, and structure the foundational treatment.",
+            "screenshot": "Series episode already known, or Start Your Project — intent, Validate & Enhance with AI, Generate Blueprint",
             "learnMore": {
               "items": [
                 {
-                  "title": "Series Room থেকে",
-                  "description": "সিরিজ পর্বগুলি তাদের রূপরেখা, সংক্ষিপ্ত বিবরণ, বীট এবং কাস্ট ইতিমধ্যেই সংযুক্ত করে আসে।"
+                  "title": "Seamless from Series Room",
+                  "description": "Series episodes arrive with their outline, synopsis, story beats, recurring cast, and locations already attached."
                 },
                 {
-                  "title": "স্বতন্ত্র প্রকল্প",
-                  "description": "একটি নতুন ফিল্ম কনসেপ্ট পিচ করুন, এটিকে এআই ভ্যালিডেশন দিয়ে পরিমার্জিত করুন এবং একটি সম্পূর্ণ ট্রিটমেন্ট তৈরি করুন।"
+                  "title": "Standalone film or short",
+                  "description": "Pitch a new film concept in plain language, refine it with AI validation, and generate a complete film treatment."
+                },
+                {
+                  "title": "Narrated treatment overview",
+                  "description": "Read or listen to the narrated logline, synopsis, and creative reasoning to verify the story foundation immediately."
                 }
               ]
             }
           },
           {
             "icon": "treatment",
-            "title": "বীট শীট",
-            "description": "আপনার ফিল্মের মেরুদণ্ড গঠন করুন। আপনার ন্যারেটিভ বিট শীট পড়ুন বা শুনুন এবং এখানে পেসিংকে সূক্ষ্ম-টিউন করুন—আপনার প্রতিটি বীট Blueprint Room-এ লক করে Production Stage-এর একটি অধ্যায় চালায়৷",
-            "screenshot": "'লিসেন' (Listen) সহ 'বিটস' (Beats) ট্যাব",
+            "title": "The Beat Sheet",
+            "description": "Structure the dramatic spine of your film before dialogue is written. Read or listen to your narrative beat sheet, reorder acts, and fine-tune scene pacing here—every beat you lock in the Blueprint Room drives a dedicated chapter in the Production Stage.",
+            "screenshot": "Beats tab, with Listen",
             "learnMore": {
               "items": [
                 {
-                  "title": "আখ্যান মেরুদণ্ড",
-                  "description": "স্ক্রিপ্ট জেনারেশন শুরু হওয়ার আগে Blueprint Room-এ বিট রচিত এবং লক করা হয়।"
+                  "title": "Narrative spine",
+                  "description": "Beats are authored and locked in the Blueprint Room before script generation begins."
                 },
                 {
-                  "title": "প্রথমে পেসিং",
-                  "description": "এখানে বীট শীট অপ্টিমাইজ করা নিশ্চিত করে যে চিত্রনাট্য আঁটসাঁট নাটকীয় কাঠামোর সাথে তৈরি হয়।"
+                  "title": "Pacing & structural discipline",
+                  "description": "Optimizing the beat sheet here ensures the multi-scene screenplay builds with tight dramatic structure and clear turning points."
                 },
                 {
-                  "title": "বিট টু চ্যাপ্টার ম্যাপিং",
-                  "description": "Production Stage প্রতিটি ছন্দকে একটি অধ্যায়ে রূপান্তর করে।"
+                  "title": "Beat-to-chapter mapping",
+                  "description": "Production Stage turns each beat into a chapter."
+                },
+                {
+                  "title": "Narrated beat audition",
+                  "description": "Listen to the beat sheet read aloud to feel the rhythm and momentum of the story before compiling the script."
                 }
               ]
             }
           },
           {
             "icon": "castLocations",
-            "title": "কাস্ট এবং ওয়ার্ল্ড ডিজাইন",
-            "description": "চিত্রনাট্য তৈরি হওয়ার আগে আপনার চরিত্র, পোশাক এবং প্রাথমিক অবস্থানগুলি সংজ্ঞায়িত করুন - নিশ্চিত করুন যে স্ক্রিপ্টটি আপনার সঠিক কাস্ট এবং প্রথম পৃষ্ঠা থেকে সেটিংসের চারপাশে লেখা হয়েছে।",
-            "screenshot": "'Characters' ট্যাব, এরপর 'Story'-তে 'Setting'",
+            "title": "Cast & World Design",
+            "description": "Define your characters, vocal identities, period wardrobes, and primary locations before the screenplay is generated—ensuring the script is written around your exact cast, blocking environments, and visual atmosphere from page one.",
+            "screenshot": "Characters tab, then Setting on Story",
             "learnMore": {
               "items": [
                 {
-                  "title": "চরিত্রের প্রোফাইল",
-                  "description": "আপনার কাস্ট প্রোফাইলগুলিকে সামনের দিকে নির্দেশ করুন যাতে সংলাপ এবং ব্লকিং প্রতিটি অক্ষরের সাথে মেলে।"
+                  "title": "Rich character profiles",
+                  "description": "Direct your cast profiles, backstories, and physical attributes up front so dialogue and blocking match each character."
                 },
                 {
-                  "title": "বিশ্ব এবং অবস্থান",
-                  "description": "প্রতিটি দৃশ্যের পরিবেশ নোঙ্গর করতে গল্প ট্যাবে প্রাথমিক সেটিংস স্থাপন করুন।"
+                  "title": "World, era & locations",
+                  "description": "Establish primary settings, lighting palettes, and cinematic style on the Story tab to anchor every scene's environment."
                 },
                 {
-                  "title": "জিরো স্ক্রিপ্ট রিফ্যাক্টরিং",
-                  "description": "স্ক্রিপ্ট তৈরির আগে কাস্ট এবং অবস্থানগুলি লক করা Production Stage-এ ব্যয়বহুল পুনর্লিখনগুলিকে সরিয়ে দেয়৷"
+                  "title": "Zero script refactoring",
+                  "description": "Locking cast and locations before script generation eliminates costly rewrites and continuity mismatches on the Production Stage."
                 }
               ]
             }
           },
           {
             "icon": "blueprintDirector",
-            "title": "Blueprint পরিচালক",
-            "description": "বীট, অক্ষর বা বিশ্বের বিবরণ সংশোধন করতে আপনার গল্পের নোটগুলি বলুন বা টাইপ করুন। পাশাপাশি একটি সুষম রিভিশনের পূর্বরূপ দেখুন—আপনি কাট অনুমোদন না করা পর্যন্ত আপনার চিকিৎসায় কোনো পরিবর্তন হবে না।",
-            "screenshot": "Blueprint পরিচালক — নির্দেশনা, ফোকাস, পূর্বরূপ, সংশোধন প্রয়োগ",
+            "title": "The Blueprint Director",
+            "description": "Speak or type your story notes to revise beats, character motivations, or world details without prompt engineering. Preview a balanced revision side-by-side with creative reasoning—nothing changes in your treatment until you approve the cut.",
+            "screenshot": "Blueprint Director — direction, focus, preview, Apply revision",
             "learnMore": {
               "items": [
                 {
-                  "title": "লক্ষ্যযুক্ত নোট",
-                  "description": "কথা বলুন বা আপনার দিকনির্দেশনা টাইপ করুন এবং বিটস, চরিত্র বা গল্পের পুনর্বিবেচনা ফোকাস করুন।"
+                  "title": "Targeted voice or text notes",
+                  "description": "Speak or type your direction and focus the revision surgically on Beats, Characters, or Story."
                 },
                 {
-                  "title": "পাশাপাশি প্রিভিউ",
-                  "description": "আপনার Blueprint-এ কোনো পরিবর্তন করার আগে একটি সুষম সংশোধন পর্যালোচনা করুন।"
+                  "title": "Side-by-side revision preview",
+                  "description": "Review a balanced revision and its underlying story reasoning before committing any changes to your Blueprint."
                 },
                 {
-                  "title": "তুমি তালা ধরে রাখো",
-                  "description": "আপনি স্পষ্টভাবে সংশোধন প্রয়োগ না করা পর্যন্ত আপনার চিকিত্সার কিছুই পরিবর্তন হবে না।"
+                  "title": "You hold the creative lock",
+                  "description": "Nothing in your treatment, beat sheet, or character roster changes until you explicitly apply the revision."
                 }
               ]
             }
@@ -480,35 +508,43 @@
           {
             "icon": "blueprintResonance",
             "title": "Audience Resonance",
-            "description": "আপনার লক্ষ্য দর্শকদের সাংস্কৃতিক এবং জনসংখ্যার প্রোফাইলের বিরুদ্ধে আপনার চিকিত্সা স্কোর. স্ট্রাকচারাল পেসিং ফাঁকগুলি তাড়াতাড়ি ধরুন এবং Blueprint ডিরেক্টরে লক্ষ্যযুক্ত সুপারিশগুলি প্রয়োগ করুন৷",
-            "screenshot": "Audience Resonance — সংরক্ষিত অডিয়েন্স, স্কোর, সুপারিশসমূহ যা প্রয়োগ করা হয়নি",
+            "description": "Score your treatment against your target audience's cultural, genre, and demographic profile before generating the script. Catch structural pacing gaps or weak character stakes early and apply targeted recommendations in the Blueprint Director.",
+            "screenshot": "Audience Resonance — saved audience, scores, recommendations unapplied",
             "learnMore": {
               "items": [
                 {
-                  "title": "প্রাক-স্ক্রিপ্ট বৈধতা",
-                  "description": "বিভাগ স্কোর এবং গল্প নোট দেখতে আপনার লক্ষ্য দর্শকদের বিরুদ্ধে আপনার চিকিত্সা বিশ্লেষণ করুন."
+                  "title": "Pre-script audience validation",
+                  "description": "Analyze your treatment against your saved target audience to inspect category scores, strengths, and story risks."
                 },
                 {
-                  "title": "নির্বাচনী আবেদন",
-                  "description": "সুপারিশগুলি শুধুমাত্র আপনার Blueprint সংশোধন করে যখন আপনি সেগুলি প্রয়োগ করতে চান৷"
+                  "title": "Actionable story remedies",
+                  "description": "Each insight pairs a structural diagnosis with a concrete rewrite recommendation tailored to your beat sheet and cast."
+                },
+                {
+                  "title": "Selective one-click application",
+                  "description": "Recommendations only modify your Blueprint when you choose to apply them in the Blueprint Director."
                 }
               ]
             }
           },
           {
             "icon": "goToProduction",
-            "title": "উত্পাদনের জন্য সবুজ আলো",
-            "description": "যখন চিকিত্সা, বীট শীট, এবং কাস্ট লক করা হয়, তখন Production Stage-এ যান৷ SceneFlow আপনার অনুমোদিত Blueprint থেকে সরাসরি আপনার সম্পূর্ণ বহু-অধ্যায়ের স্ক্রিপ্ট কম্পাইল করে।",
-            "screenshot": "Production Stage-এ যান — কাহিনি, কাহিনির মূল পর্যায় (beats) এবং কুশীলব ইতিমধ্যেই নির্ধারিত।",
+            "title": "Greenlight to Production",
+            "description": "When the treatment, beat sheet, and cast are locked, step onto the Production Stage. SceneFlow compiles your full multi-chapter screenplay directly from your approved Blueprint—mapping every beat into a production chapter with cast and continuity pre-wired.",
+            "screenshot": "Go to Production Stage — storyline, beats, and cast already set",
             "learnMore": {
               "items": [
                 {
-                  "title": "বিরামহীন সংকলন",
-                  "description": "Production Stage-এ পা রাখা সরাসরি আপনার অনুমোদিত Blueprint থেকে সম্পূর্ণ স্ক্রিপ্ট কম্পাইল করে৷"
+                  "title": "Seamless script compilation",
+                  "description": "Stepping onto the Production Stage compiles the full multi-scene screenplay directly from your approved Blueprint."
                 },
                 {
-                  "title": "তালাবদ্ধ ভিত্তি",
-                  "description": "আপনার স্টোরিলাইন, বিট স্ট্রাকচার এবং কাস্ট দৃশ্য এবং শট ডিরেকশনের জন্য প্রস্তুত।"
+                  "title": "Locked continuity foundation",
+                  "description": "Your storyline, beat-to-chapter structure, cast profiles, and locations arrive ready for scene and shot direction."
+                },
+                {
+                  "title": "Shareable Blueprint review",
+                  "description": "Share the locked Blueprint with co-creators or executive stakeholders for sign-off before commencing production."
                 }
               ]
             }
@@ -522,105 +558,151 @@
         "promise": "Blueprint লক করা আছে। আপনার কাস্ট করা হয়. এখন, Production Stage-এ পা বাড়ান৷ প্রতিটি অধ্যায়, দৃশ্য এবং শট একটি লিনিয়ার ওয়ার্কফ্লোতে সংগঠিত হয়। আপনি অভিপ্রায় নির্দেশ; বুদ্ধিমান এজেন্টরা প্রজন্মকে কার্যকর করে।",
         "groups": [
           {
-            "id": "script",
+            "id": "direct-control",
             "label": "প্রত্যক্ষ ও নিয়ন্ত্রণ",
             "headline": "ফিল্মের ভাষায় কথা বলুন, প্রম্পটের সিনট্যাক্স নয়।",
             "description": "বন্ধনীযুক্ত কীওয়ার্ড টাইপ করে সময় নষ্ট করবেন না। Production Stage প্রাকৃতিক দিক বোঝে, পুরো দৃশ্য জুড়ে বা নির্দিষ্ট শটে আপনার দৃষ্টি প্রয়োগ করে।",
             "features": [
               {
-                "icon": "scriptResonance",
-                "title": "দৃশ্য ও শট পরিচালক",
-                "description": "আপনার দিকনির্দেশনা টাইপ করুন বা সরল ভাষায় বলুন। এজেন্টকে বলুন কে ফ্রেমে আছে, ক্যামেরা কোথায় চলে যায় এবং মানসিক বীট কি। শট ডিরেক্টর স্বয়ংক্রিয়ভাবে আপনার স্টিল এবং ক্লিপগুলির জন্য জটিল অন্তর্নিহিত প্রম্পটগুলি লেখেন।",
-                "screenshot": "দৃশ্য ও শট পরিচালক — স্থিরচিত্র এবং ক্লিপগুলির জন্য সরল-ভাষার দিকনির্দেশ",
+                "icon": "sceneWorkflow",
+                "title": "Scene Production Workflow (Fullscreen)",
+                "description": "Open the dedicated Fullscreen Scene Production Studio to direct every stage of a scene from one unified 8-tab command bar (`Direction · Audio · Music · Continuity · Stills · Clips · Mixer · Streams`). Reorder shots in the left-hand Shot Rail with live readiness badges, inspect the 16:9 Still & Clip Stage alongside structured camera, blocking, emotion, and lighting cards, and track end-to-end scene completion without losing context.",
+                "screenshot": "Scene Production Workflow (Fullscreen) — 8-tab linear studio, sortable Shot Rail, and structured Shot Direction Workbench",
                 "learnMore": {
                   "items": [
                     {
-                      "title": "সরল ভাষা",
-                      "description": "ফ্রেমে কে আছে, ক্যামেরা কোথায় চলে, এবং আবেগী বীট কি তা টাইপ করুন বা বলুন।"
+                      "title": "8-tab fullscreen linear studio",
+                      "description": "Move seamlessly across Direction, Audio, Music, Continuity, Stills, Clips, Mixer, and Streams inside a distraction-free fullscreen workspace."
                     },
                     {
-                      "title": "দৃশ্য বা শট",
-                      "description": "পুরো দৃশ্য জুড়ে বা নির্দিষ্ট শটে আপনার দৃষ্টি প্রয়োগ করুন।"
+                      "title": "Sortable Shot Rail & live badges",
+                      "description": "Drag to reorder shots in the left-hand rail while tracking real-time badges for Action, Dialogue, Narration, SFX, Music, Signage, Final 4K stills, and clips In the Can."
                     },
                     {
-                      "title": "প্রম্পট সংকলন",
-                      "description": "শট ডিরেক্টর স্বয়ংক্রিয়ভাবে আপনার স্টিল এবং ক্লিপগুলির জন্য অন্তর্নিহিত প্রম্পটগুলি লেখেন৷"
-                    }
-                  ]
-                }
-              },
-              {
-                "icon": "castVisual",
-                "title": "কন্টিনিউটি লাইব্রেরি",
-                "description": "সিরিজ জুড়ে পরম ধারাবাহিকতা। প্রতিটি শট Blueprint এর সাথে মেলে তা নিশ্চিত করতে স্বয়ংক্রিয়ভাবে আপনার কাস্ট, ওয়ারড্রোব, অবস্থান এবং প্রয়োজনীয় প্রপসের জন্য রেফারেন্স চিত্রগুলি তৈরি করুন বা ম্যানুয়ালি বরাদ্দ করুন৷",
-                "screenshot": "কন্টিনিউটি লাইব্রেরি — কাস্ট, ওয়ারড্রব, অবস্থান এবং প্রয়োজনীয় প্রপস",
-                "learnMore": {
-                  "items": [
-                    {
-                      "title": "সিরিজের ধারাবাহিকতা",
-                      "description": "প্রতিটি শট জুড়ে কাস্ট, ওয়ারড্রোব, অবস্থান এবং প্রয়োজনীয় প্রপস রাখুন।"
+                      "title": "Structured Shot Direction Workbench",
+                      "description": "Inspect the 16:9 Still & Clip Stage beside structured cards for spoken beats, camera lens and motion, talent blocking and gaze, lighting, locked continuity refs, and compiled prompts."
                     },
                     {
-                      "title": "জেনারেট বা বরাদ্দ করুন",
-                      "description": "স্বয়ংক্রিয়ভাবে রেফারেন্স চিত্র তৈরি করুন বা Blueprint-এর সাথে মেলে আপনার নিজের বরাদ্দ করুন৷"
+                      "title": "End-to-end scene pipeline telemetry",
+                      "description": "Monitor readiness across direction, voice and score, keyframes, multi-take clips, broadcast mixing, and localized streams before publishing."
                     }
                   ]
                 }
               },
               {
                 "icon": "directShot",
-                "title": "Audience Resonance ইন্টিগ্রেশন",
-                "description": "আপনি রেন্ডার করার আগে রুমে একটি পড়া পান. AI আপনার টার্গেট দর্শকদের বিরুদ্ধে আপনার স্ক্রিপ্ট বিশ্লেষণ করে, দৃশ্য-দর-দৃশ্য অন্তর্দৃষ্টি প্রদান করে। অবিলম্বে প্রস্তাবিত নির্দেশাবলী প্রয়োগ করুন, অথবা আপনার অন্ত্রে বিশ্বাস করুন এবং তাদের উপেক্ষা করুন।",
-                "screenshot": "Audience Resonance ইন্টিগ্রেশন — দৃশ্য-দর্শন দর্শক অন্তর্দৃষ্টি",
+                "title": "The Scene & Shot Director",
+                "description": "Type or speak your direction in plain language. Tell the agent who is in the frame, where the camera moves, and what the emotional beat is. The Shot Director automatically writes the complex underlying prompts for your stills and clips while syncing camera lens, focal length, talent blocking, and lighting across the scene.",
+                "screenshot": "The Scene & Shot Director — plain-language direction for stills and clips",
                 "learnMore": {
                   "items": [
                     {
-                      "title": "দৃশ্য দ্বারা দৃশ্য অন্তর্দৃষ্টি",
-                      "description": "আপনি রেন্ডার করার আগে AI আপনার টার্গেট শ্রোতাদের বিরুদ্ধে আপনার স্ক্রিপ্ট বিশ্লেষণ করে।"
+                      "title": "Plain-language film direction",
+                      "description": "Type or speak who is in the frame, where the camera moves, and what the emotional beat is without writing bracketed prompt syntax."
                     },
                     {
-                      "title": "তোমার ডাক",
-                      "description": "অবিলম্বে প্রস্তাবিত নির্দেশাবলী প্রয়োগ করুন, অথবা আপনার অন্ত্রে বিশ্বাস করুন এবং তাদের উপেক্ষা করুন।"
-                    }
-                  ]
-                }
-              },
-              {
-                "icon": "audioAgent",
-                "title": "উৎপাদন পরিকল্পনাকারী",
-                "description": "SceneFlow ক্রেডিট বা আপনার নিজস্ব BYOK API কী ব্যবহার করে প্রতিটি দৃশ্য এবং অধ্যায় জুড়ে বাজেট এবং শিডিউল জেনারেশন স্থাপন করুন। আপনি গণনা ব্যয় করার আগে স্থির সেট করুন এবং প্রতি শটে লক্ষ্য ক্লিপ করুন।",
-                "screenshot": "উত্পাদন পরিকল্পনাকারী — বাজেট, সময়সূচী, এবং BYOK API কী",
-                "learnMore": {
-                  "items": [
-                    {
-                      "title": "বাজেট এবং সময়সূচী",
-                      "description": "আপনি রেন্ডার করার আগে প্রতিটি দৃশ্য এবং অধ্যায় জুড়ে বাজেট এবং শিডিউল জেনারেশন স্থাপন করুন।"
+                      "title": "Scene-wide or per-shot precision",
+                      "description": "Apply atmospheric direction across the entire scene or drill down into an individual shot's framing, lens, blocking, and lighting."
                     },
                     {
-                      "title": "ক্রেডিট বা BYOK",
-                      "description": "SceneFlow ক্রেডিট বা আপনার নিজস্ব BYOK API কী ব্যবহার করে প্রজন্ম চালান।"
+                      "title": "Automatic prompt compilation",
+                      "description": "The Shot Director automatically writes and syncs the underlying keyframe and motion prompts for your stills and clips."
+                    },
+                    {
+                      "title": "Intelligent Assistant Director (IAD)",
+                      "description": "Request surgical revisions to camera angles, character posture, or scene tension in plain language while keeping unrelated beats untouched."
                     }
                   ]
                 }
               },
               {
                 "icon": "continuity",
-                "title": "উৎপাদন স্ক্রিপ্ট",
-                "description": "ঐতিহ্যগত এবং এআই চলচ্চিত্র নির্মাতাদের জন্য একইভাবে নির্মিত। স্টুডিও-তে একটি পরিষ্কার, বিন্যাসিত চিত্রনাট্যের পূর্বরূপ দেখুন এবং শিল্প-মান বিন্যাসে (পিডিএফ, এফডিএক্স, ফাউন্টেন) রপ্তানি করুন। SceneFlow কে একটি স্বতন্ত্র স্ক্রিপ্ট রুম হিসাবে ব্যবহার করুন—অথবা আপনার স্ক্রিনপ্লেকে একটি প্রি-ভিস Animatic এবং প্রোমো ট্রেলারের সাথে পেয়ার করুন যাতে ফিনান্সারদের পিচ করতে এবং প্রকল্পের অর্থায়ন সুরক্ষিত করতে পারেন৷",
-                "screenshot": "প্রোডাকশন স্ক্রিপ্ট — ইন-প্ল্যাটফর্ম প্রিভিউ এবং PDF, FDX, এবং ফাউন্টেন এক্সপোর্ট",
+                "title": "The Continuity Library",
+                "description": "Absolute visual and vocal consistency across your entire film or series. Automatically generate or manually assign locked reference portraits, multi-angle turnaround sheets, scene-specific wardrobes, locations, and essential props—ensuring every shot matches the Blueprint without character drift.",
+                "screenshot": "The Continuity Library — cast, wardrobes, locations, and essential props",
                 "learnMore": {
                   "items": [
                     {
-                      "title": "ইন-প্ল্যাটফর্ম প্রিভিউ এবং এক্সপোর্ট",
-                      "description": "স্টুডিওতে ফর্ম্যাট করা স্ক্রিপ্টের পূর্বরূপ দেখুন এবং ইন্ডাস্ট্রি-স্ট্যান্ডার্ড PDF, ফাইনাল ড্রাফ্ট FDX, বা ফাউন্টেন ফর্ম্যাটে রপ্তানি করুন।"
+                      "title": "Cast identity & turnaround locks",
+                      "description": "Anchor every character with diptych portraits, turnaround sheets, and locked voice profiles across every shot and episode."
                     },
                     {
-                      "title": "ঐতিহ্যবাহী চলচ্চিত্র নির্মাতাদের জন্য",
-                      "description": "ভিডিও তৈরি না করে একটি বুদ্ধিমান স্ক্রিপ্ট উত্পাদন প্ল্যাটফর্ম হিসাবে SceneFlow ব্যবহার করুন৷"
+                      "title": "Scene-specific wardrobes & props",
+                      "description": "Assign period or scene-specific wardrobes and essential hero props per shot so costumes and hand-held items stay unified."
                     },
                     {
-                      "title": "পিচ এবং প্রকল্প তহবিল",
-                      "description": "একটি প্রি-ভিস Animatic এবং প্রোমো ট্রেলারগুলির সাথে আপনার স্ক্রিপ্টকে প্যাকেজ করুন এবং প্রকল্পের অর্থায়ন অর্জন করুন৷"
+                      "title": "Generate, upload, or surgically edit",
+                      "description": "Automatically generate reference images, upload custom studio plates, or refine details with the Intelligent Assistant Director."
+                    },
+                    {
+                      "title": "Continuity readiness gate",
+                      "description": "Verify that all cast, wardrobe, location, and prop anchors are locked in the Continuity tab before generating scene keyframes."
+                    }
+                  ]
+                }
+              },
+              {
+                "icon": "scriptResonance",
+                "title": "Audience Resonance Integration",
+                "description": "Get a read on the room before you render. AI analyzes your script against your target audience, providing scene-by-scene insights, pacing diagnostics, and dialogue tension scores. Apply recommended directions instantly, or trust your gut and ignore them.",
+                "screenshot": "Audience Resonance Integration — scene-by-scene audience insights",
+                "learnMore": {
+                  "items": [
+                    {
+                      "title": "Scene-by-scene audience insights",
+                      "description": "AI analyzes your script against your target audience before you render to surface pacing, tension, and engagement scores."
+                    },
+                    {
+                      "title": "Narrated critique & recommendations",
+                      "description": "Listen to the narrated analysis and inspect targeted scene-level rewrite recommendations backed by demographic reasoning."
+                    },
+                    {
+                      "title": "Your creative call",
+                      "description": "Apply recommended directions instantly with one click, or trust your gut and ignore them."
+                    }
+                  ]
+                }
+              },
+              {
+                "icon": "budget",
+                "title": "Production Planner",
+                "description": "Establish the budget and schedule generation across every scene and chapter using SceneFlow credits or your own BYOK API keys. Set still and clip targets per shot, toggle between Draft and Final resolution tiers, and forecast compute spend before you render.",
+                "screenshot": "Production Planner — budget, schedule, and BYOK API keys",
+                "learnMore": {
+                  "items": [
+                    {
+                      "title": "Budget and schedule forecasting",
+                      "description": "Establish the budget and schedule generation across every scene and chapter with transparent per-shot credit estimates before you render."
+                    },
+                    {
+                      "title": "SceneFlow credits or BYOK keys",
+                      "description": "Run generation using included SceneFlow credits or connect your own Vertex AI, OpenAI, and ElevenLabs BYOK API keys."
+                    },
+                    {
+                      "title": "Draft-to-Final tier scheduling",
+                      "description": "Schedule rapid Draft passes for animatic pre-visualization and reserve Final 4K still and FHD video compute for locked cuts."
+                    }
+                  ]
+                }
+              },
+              {
+                "icon": "productionScript",
+                "title": "Production Script",
+                "description": "Built for traditional and AI filmmakers alike. Preview a clean, formatted screenplay in-studio and export in industry-standard formats (PDF, FDX, Fountain). Use SceneFlow as a standalone script room—or pair your screenplay with a Pre-Vis Animatic and Promo Trailer to pitch financiers and secure project funding.",
+                "screenshot": "Production Script — in-platform preview and PDF, FDX, and Fountain export",
+                "learnMore": {
+                  "items": [
+                    {
+                      "title": "In-platform preview & export",
+                      "description": "Preview the formatted script in the studio and export in industry-standard PDF, Final Draft FDX, or Fountain format."
+                    },
+                    {
+                      "title": "For traditional filmmakers",
+                      "description": "Use SceneFlow as an intelligent script production platform without generating video."
+                    },
+                    {
+                      "title": "Pitch & project funding",
+                      "description": "Package your script with a Pre-Vis Animatic and Promo Trailers to pitch and acquire project funding."
                     }
                   ]
                 }
@@ -628,79 +710,173 @@
             ]
           },
           {
-            "id": "video",
+            "id": "generate-audit",
             "label": "জেনারেট এবং অডিট",
             "headline": "আপনি গণনা খরচ আগে কাটা প্রমাণ.",
             "description": "একটি দৃশ্য কিভাবে খেলা হবে অনুমান করবেন না. SceneFlow অডিও এবং স্থির প্রজন্মকে ব্যয়বহুল মোশন রেন্ডারিং থেকে আলাদা করে, আপনাকে প্রথমে সম্পাদনার ছন্দ অডিট করতে দেয়৷",
             "features": [
               {
+                "icon": "audioAgent",
+                "title": "The Audio Agent",
+                "description": "Generate expressive character dialogue, narrator voiceover, action sound effects, and musical scores concurrently across up to 30 shots per scene. Cast voices automatically match character profiles from your Continuity Library or can be custom-tuned per beat.",
+                "screenshot": "The Audio Agent — concurrent dialogue, sound effects, and music scores",
+                "learnMore": {
+                  "items": [
+                    {
+                      "title": "Concurrent multi-track audio",
+                      "description": "Generate dialogue, narration, sound effects, and music scores concurrently across up to 30 shots per scene."
+                    },
+                    {
+                      "title": "Locked character voice casting",
+                      "description": "Cast voices automatically match character profiles from your Reference Library or can be custom-tuned for timbre and cadence."
+                    },
+                    {
+                      "title": "Batch scene or single-shot runs",
+                      "description": "Run the Audio Agent across the entire scene in one pass or regenerate individual dialogue and SFX beats on demand."
+                    }
+                  ]
+                }
+              },
+              {
+                "icon": "musicScore",
+                "title": "Dialogue, SFX & Musical Score Workbench",
+                "description": "Open the Fullscreen `Audio` and `Music` tabs to direct every sonic layer of your scene. Shape vocal performances with emotional delivery tags (`[obsessive, muttered]`) and Hi-Fi Studio quality, extract embedded audio directly from video clips, dial in SFX duration presets (`Auto`, `Short 3s`, `Medium 8s`, `Long 15s`), and compose multi-shot Lyria musical score cues with custom intro fades.",
+                "screenshot": "Dialogue, SFX & Musical Score Workbench — Fullscreen Audio & Music tabs with score cues, voice casting, and SFX duration presets",
+                "learnMore": {
+                  "items": [
+                    {
+                      "title": "Multi-shot musical score cues",
+                      "description": "Compose custom Lyria musical score cues that span specific shot ranges with configurable intro fades and auto-ducking metadata."
+                    },
+                    {
+                      "title": "Performance Director & delivery tags",
+                      "description": "Direct spoken dialogue with bracketed emotional delivery tags, Hi-Fi Studio synthesis, and per-shot voice casting."
+                    },
+                    {
+                      "title": "Precision SFX duration presets",
+                      "description": "Time action sound effects to your shot choreography using Auto, Short 3s, Medium 8s, or Long 15s duration presets."
+                    },
+                    {
+                      "title": "Extract audio from video clips",
+                      "description": "Pull embedded audio directly from generated motion clips to preserve native on-camera speech or ambient foley."
+                    }
+                  ]
+                }
+              },
+              {
+                "icon": "stillsAgent",
+                "title": "The Stills Agent",
+                "description": "Rapidly batch-generate the high-resolution keyframe images that illustrate your shot direction across the scene. Regenerate, edit, or upload your own references to lock the composition, lighting, and character blocking before committing to video.",
+                "screenshot": "The Stills Agent — keyframe composition and references",
+                "learnMore": {
+                  "items": [
+                    {
+                      "title": "Batch keyframe generation",
+                      "description": "Rapidly generate the keyframe images that illustrate your shot direction across every shot in the scene."
+                    },
+                    {
+                      "title": "Automatic continuity anchoring",
+                      "description": "Every generated frame incorporates your locked cast portraits, scene wardrobes, locations, and hero props automatically."
+                    },
+                    {
+                      "title": "Lock composition before motion",
+                      "description": "Regenerate, edit, or upload your own references before committing compute to full motion video rendering."
+                    }
+                  ]
+                }
+              },
+              {
+                "icon": "stillsWorkbench",
+                "title": "Fullscreen Stills & Keyframe Studio",
+                "description": "Step into the Fullscreen `Stills` workbench for precision keyframe control. Pair Start and End keyframes for Frame-to-Video (`F2V`) motion bridging, switch between `Draft` and `Final 4K` resolution or `Standard` and `Creative` synthesis modes, customize Pre-Vis Ken Burns camera motion, and perform surgical plain-language frame edits with the Intelligent Assistant Director (`IAD`).",
+                "screenshot": "Fullscreen Stills & Keyframe Studio — F2V Start & End keyframe pairing, Final 4K controls, and surgical IAD editing",
+                "learnMore": {
+                  "items": [
+                    {
+                      "title": "Frame-to-Video (F2V) Start & End pairing",
+                      "description": "Pair a locked Start Frame and End Frame Target on any shot to anchor exact camera movement and subject blocking during video generation."
+                    },
+                    {
+                      "title": "Surgical IAD keyframe editing",
+                      "description": "Edit specific props, chalkboard text, wardrobe details, or lighting in plain language while keeping the rest of the keyframe locked."
+                    },
+                    {
+                      "title": "Draft vs Final 4K & Creative modes",
+                      "description": "Toggle between rapid Draft previews and Final 4K resolution, plus Standard or Creative synthesis modes per shot."
+                    },
+                    {
+                      "title": "Pre-Vis Ken Burns motion framing",
+                      "description": "Customize zoom and pan trajectories on every still so your Pre-Vis Animatic previews intentional camera motion."
+                    }
+                  ]
+                }
+              },
+              {
+                "icon": "animatic",
+                "title": "The Pre-Vis Animatic",
+                "description": "Watch the scene breathe. Review a fully assembled animatic—stitched stills, Ken Burns motion, and locked audio—in the Screening Room. Audit the pacing, share for feedback, and ensure the cut works before committing to video.",
+                "screenshot": "The Pre-Vis Animatic — stitched stills, Ken Burns motion, and locked audio",
+                "learnMore": {
+                  "items": [
+                    {
+                      "title": "Assembled multi-track animatic",
+                      "description": "Review stitched stills, Ken Burns motion, and locked dialogue, SFX, and musical score in the Screening Room."
+                    },
+                    {
+                      "title": "Prove pacing before video spend",
+                      "description": "Audit the dramatic rhythm, spot timing gaps, and refine shot lengths while iterations cost pennies instead of full video compute."
+                    },
+                    {
+                      "title": "Share for stakeholder sign-off",
+                      "description": "Audit the pacing, share for feedback, and ensure the cut works before committing to video."
+                    }
+                  ]
+                }
+              },
+              {
                 "icon": "videoAgent",
-                "title": "SFAIAAUDIO_AGENTTERM",
-                "description": "প্রতি দৃশ্যে 30টি শট পর্যন্ত একযোগে সংলাপ, সাউন্ড এফেক্ট এবং মিউজিক স্কোর তৈরি করুন। কাস্ট ভয়েস স্বয়ংক্রিয়ভাবে অক্ষর প্রোফাইলের সাথে মেলে বা কাস্টম-টিউন করা যেতে পারে।",
-                "screenshot": "SFAIAAUDIO_AGENTTERM — সমসাময়িক সংলাপ, সাউন্ড এফেক্ট এবং মিউজিক স্কোর",
+                "title": "The Clips Agent",
+                "description": "Once the Pre-Vis is approved, the Clips Agent takes over, rendering high-fidelity motion clips that adhere strictly to your approved stills, Frame-to-Video start and end anchors, and continuity references—backed by automated safety pre-flight checks.",
+                "screenshot": "The Clips Agent — high-fidelity motion clips from approved stills",
                 "learnMore": {
                   "items": [
                     {
-                      "title": "সমসাময়িক অডিও",
-                      "description": "প্রতি দৃশ্যে 30টি শট পর্যন্ত একযোগে সংলাপ, সাউন্ড এফেক্ট এবং মিউজিক স্কোর তৈরি করুন।"
+                      "title": "Triggered after Pre-Vis approval",
+                      "description": "The Clips Agent renders motion only after the Pre-Vis animatic and shot timings are approved."
                     },
                     {
-                      "title": "চরিত্রের কণ্ঠস্বর",
-                      "description": "কাস্ট ভয়েস স্বয়ংক্রিয়ভাবে অক্ষর প্রোফাইলের সাথে মেলে বা কাস্টম-টিউন করা যেতে পারে।"
+                      "title": "Strict keyframe & F2V adherence",
+                      "description": "High-fidelity motion clips adhere strictly to your approved Start and End stills and continuity references."
+                    },
+                    {
+                      "title": "Automated safety pre-flight",
+                      "description": "Pre-flight prompt sanitation prevents false-positive safety rejections on dramatic action beats so clips render reliably."
                     }
                   ]
                 }
               },
               {
-                "icon": "mixer",
-                "title": "Stills Agent",
-                "description": "আপনার শটের দিক নির্দেশ করে এমন কীফ্রেম চিত্রগুলি দ্রুত তৈরি করুন। রচনাটি লক করতে আপনার নিজের রেফারেন্সগুলি পুনরুত্থিত করুন, সম্পাদনা করুন বা আপলোড করুন৷",
-                "screenshot": "Stills Agent — কীফ্রেম রচনা এবং রেফারেন্স",
+                "icon": "clipsWorkbench",
+                "title": "Multi-Take Clips & Retake Studio",
+                "description": "Direct and curate every motion render inside the Fullscreen `Clips` studio. Audition unlimited takes in the non-destructive Multi-Take Vault (`Take 1 / Take 2 / Take 3`), filter your shot rail by `In the Can` readiness, trigger targeted IAD Smart Retakes, and manage per-stream localized video takes for dialogue and signage shots.",
+                "screenshot": "Multi-Take Clips & Retake Studio — non-destructive Take 1/2/3 vault, IAD Smart Retake, and localized stream takes",
                 "learnMore": {
                   "items": [
                     {
-                      "title": "কীফ্রেম প্রজন্ম",
-                      "description": "আপনার শটের দিক নির্দেশ করে এমন কীফ্রেম চিত্রগুলি দ্রুত তৈরি করুন।"
+                      "title": "Non-destructive Multi-Take Vault",
+                      "description": "Every motion render is preserved in the shot vault so you can compare Take 1, Take 2, and Take 3 and promote your favorite take live."
                     },
                     {
-                      "title": "রচনাটি লক করুন",
-                      "description": "গতিতে প্রতিশ্রুতিবদ্ধ হওয়ার আগে আপনার নিজের রেফারেন্সগুলি পুনরুত্থিত করুন, সম্পাদনা করুন বা আপলোড করুন।"
-                    }
-                  ]
-                }
-              },
-              {
-                "icon": "languageStreams",
-                "title": "প্রাক-ভিস Animatic",
-                "description": "দম ফেলার দৃশ্য দেখুন। Screening Room-এ সম্পূর্ণরূপে একত্রিত অ্যানিমেটিক—সেলাই করা স্টিল, কেন বার্নস মোশন, এবং লক করা অডিও পর্যালোচনা করুন। পেসিং অডিট করুন, প্রতিক্রিয়ার জন্য ভাগ করুন এবং ভিডিওতে প্রতিশ্রুতি দেওয়ার আগে কাটটি কাজ করে তা নিশ্চিত করুন।",
-                "screenshot": "প্রি-ভিস স্ফিয়ানিম্যাটিকটার্ম — সেলাই করা স্টিল, কেন বার্নস মোশন এবং লক করা অডিও",
-                "learnMore": {
-                  "items": [
-                    {
-                      "title": "অ্যানিম্যাটিক একত্রিত",
-                      "description": "Screening Room-এ সেলাই করা স্টিল, কেন বার্নস মোশন এবং লক করা অডিও পর্যালোচনা করুন।"
+                      "title": "IAD Smart Retake & Direct Video",
+                      "description": "Refine camera motion, subject physics, or facial performance with the Intelligent Assistant Director and Direct Video pre-flight controls."
                     },
                     {
-                      "title": "অডিট এবং শেয়ার করুন",
-                      "description": "পেসিং অডিট করুন, প্রতিক্রিয়ার জন্য ভাগ করুন এবং ভিডিওতে প্রতিশ্রুতি দেওয়ার আগে কাটটি কাজ করে তা নিশ্চিত করুন।"
-                    }
-                  ]
-                }
-              },
-              {
-                "icon": "videoAgent",
-                "title": "Clips Agent",
-                "description": "একবার প্রি-ভিস অনুমোদিত হলে, Clips Agent ভার গ্রহণ করে, উচ্চ-বিশ্বস্ত গতি ক্লিপগুলি রেন্ডার করে যা আপনার অনুমোদিত স্থিরচিত্র এবং ধারাবাহিকতা উল্লেখগুলিকে কঠোরভাবে মেনে চলে।",
-                "screenshot": "Clips Agent — অনুমোদিত স্থিরচিত্র থেকে উচ্চ-বিশ্বস্ত গতি ক্লিপ",
-                "learnMore": {
-                  "items": [
-                    {
-                      "title": "প্রি-ভিস অনুমোদনের পর",
-                      "description": "Clips Agent প্রি-ভিস অ্যানিমেটিক অনুমোদিত হওয়ার পরেই গতি রেন্ডার করে।"
+                      "title": "Per-stream localized shot takes",
+                      "description": "Switch between your English Master take and regenerated localized clips for spoken dialogue and in-scene signage per language stream."
                     },
                     {
-                      "title": "কঠোর আনুগত্য",
-                      "description": "হাই-ফিডেলিটি মোশন ক্লিপগুলি আপনার অনুমোদিত স্টিল এবং ধারাবাহিকতা উল্লেখগুলিকে কঠোরভাবে মেনে চলে।"
+                      "title": "Dialogue-free stem readiness",
+                      "description": "Extract embedded clip audio into a dialogue-free SFX and ambience stem so localized dubs retain original foley and room tone."
                     }
                   ]
                 }
@@ -708,79 +884,111 @@
             ]
           },
           {
-            "id": "publish",
+            "id": "publish-distribute",
             "label": "প্রকাশ এবং বিতরণ",
             "headline": "মাস্টার জাহাজ, বা বিশ্বের জন্য স্থানীয়করণ.",
             "description": "দৃশ্যটি সম্পন্ন হলে, সম্পদগুলি ইতিমধ্যেই একত্রিত হয়েছে। সম্পাদনা শেষ করুন, অডিও স্থানীয়করণ করুন এবং সরাসরি আপনার দর্শকদের কাছে বিতরণ করুন।",
             "features": [
               {
-                "icon": "shipPackage",
-                "title": "মিক্সার",
-                "description": "একটি অন্তর্নির্মিত, স্বজ্ঞাত দৃশ্য সম্পাদক। ক্লিপ ট্রিম করুন, স্পিড র‌্যাম্প অ্যাডজাস্ট করুন, টেক্সট ওভারলে যোগ করুন এবং স্টুডিও ছাড়াই ওয়াটারমার্ক প্রয়োগ করুন।",
-                "screenshot": "মিক্সার — ট্রিম ক্লিপ, স্পিড র‌্যাম্প, টেক্সট ওভারলে এবং ওয়াটারমার্ক",
+                "icon": "mixer",
+                "title": "The Mixer",
+                "description": "A commercial-grade broadcast scene editor and stitching console built directly into the studio. Preview your cut on a 16:9 Broadcast Reference Monitor paired with a real-time Stereo VU / Peak Meter (`-60` to `0 dBFS`, `-14 LUFS` target), inspect cut points with a side-by-side Match-Cut Continuity Loupe, shape J-Cut and L-Cut audio overlaps (`-0.3s` / `+0.3s`), choose dynamic Optical Hold Modes (`103% Ken Burns Push` or `Ping-Pong Tail`), mix across a 6-lane timeline (`V1 Video`, `A0 Stem`, `A1 Dialogue`, `A2 VO`, `A3 SFX`, `A4 Score`) with `-8 dB` Auto-Ducking, apply 1-click watermark crops and text overlays, and cloud-render EBU R128 (`-14 LUFS`) masters.",
+                "screenshot": "The Mixer — Broadcast Reference Monitor, Stereo VU Meter, Match-Cut Continuity Loupe, J/L-Cut overlaps, 6-lane timeline with -8 dB Auto-Ducking, and EBU R128 loudness",
                 "learnMore": {
                   "items": [
                     {
-                      "title": "অন্তর্নির্মিত দৃশ্য সম্পাদক",
-                      "description": "ক্লিপগুলি ট্রিম করুন এবং স্টুডিওর ভিতরে সরাসরি গতির র‌্যাম্পগুলি সামঞ্জস্য করুন।"
+                      "title": "Broadcast Reference Monitor & Stereo VU / LUFS Meter",
+                      "description": "Preview your stitched sequence on a 16:9 reference monitor beside a real-time stereo peak and loudness meter calibrated to -14.0 LUFS web and -24.0 LKFS broadcast targets."
                     },
                     {
-                      "title": "সমাপ্তি স্পর্শ",
-                      "description": "টেক্সট ওভারলে যোগ করুন এবং বহিরাগত সম্পাদকে রপ্তানি না করে ওয়াটারমার্ক প্রয়োগ করুন।"
+                      "title": "Match-Cut Continuity Loupe & J/L-Cut audio overlaps",
+                      "description": "Hover any transition pill to compare the Out-Frame of Shot N against the In-Frame of Shot N+1 side by side while dialing in -0.3s J-cut lead-ins and +0.3s L-cut audio tails."
+                    },
+                    {
+                      "title": "6-lane timeline with -8 dB Auto-Ducking envelope",
+                      "description": "Mix V1 Video, A0 Dialogue-Free Stem, A1 Dialogue, A2 Narration, A3 SFX, and A4 Score with a visual gain-reduction curve that automatically ducks music -8 dB under speech."
+                    },
+                    {
+                      "title": "Optical Hold Modes & elastic dub alignment",
+                      "description": "Replace static freeze-frames with a 103% Ken Burns Push Zoom or Ping-Pong Tail Loop and slow video clips down to 67% speed so longer dubbed dialogue fits naturally."
+                    },
+                    {
+                      "title": "1-click watermark crop, text overlays & EBU R128 export",
+                      "description": "Apply preset edge crops to remove third-party watermarks, burn in lower-thirds or subtitles, and cloud-render stitched MP4 masters with EBU R128 loudness normalization."
                     }
                   ]
                 }
               },
               {
                 "icon": "languageStreams",
-                "title": "স্ট্রীম (মাল্টি-ভাষা)",
-                "description": "অবিলম্বে 44টি ভাষায় আপনার বিশ্বব্যাপী নাগাল প্রসারিত করুন। স্বয়ংক্রিয়ভাবে অডিও ডাবিং করে, ঠোঁট মুভমেন্ট সিঙ্ক করে বা দৃশ্যের মধ্যে সরাসরি স্থানীয় সংলাপ ক্লিপগুলি পুনরুত্থিত করে বিকল্প ভাষা স্ট্রীম তৈরি করুন৷",
-                "screenshot": "স্ট্রীম (মাল্টি-ভাষা) — ডাব করা অডিও এবং স্থানীয় সংলাপ ক্লিপ",
+                "title": "Streams (Multi-Language)",
+                "description": "Expand your global reach across 44 languages from one master timeline. Selectively regenerate only the specific shots containing spoken dialogue or in-scene text signage while retaining unselected master shots at zero extra credit cost. Extract embedded video audio and strip spoken dialogue (`htdemucs` neural stem separation) so generated SFX and music carry into every dub, and automatically align longer translated dialogue using elastic video slow-down (slowing a `10s` clip up to `15s` at `67%` speed), hybrid optical holds, or pitch-preserved audio tempo matching—while directing in a localized Studio UI.",
+                "screenshot": "Streams (Multi-Language) — Selective shot regeneration vs retained master shots, dialogue-free stem extraction, and elastic slow-video dub alignment",
                 "learnMore": {
                   "items": [
                     {
-                      "title": "বিশ্বব্যাপী নাগাল",
-                      "description": "দৃশ্যের মধ্যে সরাসরি 44টি ভাষা জুড়ে স্বয়ংক্রিয়ভাবে বিকল্প ভাষার স্ট্রিম তৈরি করুন।"
+                      "title": "Selective shot regeneration & retained master clips",
+                      "description": "Select only the shots with spoken dialogue or in-scene signage to regenerate in your target language while unselected action shots automatically retain the master video clip."
                     },
                     {
-                      "title": "ডাব, ঠোঁট-সিঙ্ক বা পুনর্জন্ম",
-                      "description": "অডিও ডাব করে, ঠোঁটের নড়াচড়া সিঙ্ক করে বা স্থানীয় সংলাপ ক্লিপগুলি পুনরুত্থিত করে প্রতিটি শট স্থানীয়করণ করুন।"
+                      "title": "Dialogue-free stem extraction (keep generated SFX & music)",
+                      "description": "Neural stem separation extracts embedded video audio and removes spoken English dialogue while preserving generated foley, room ambience, and music for clean MP3 dubbing."
+                    },
+                    {
+                      "title": "Elastic video slow-down & multi-method dub alignment",
+                      "description": "Align longer translated dialogue by slowing a 10s video clip up to 15s (down to 67% speed), pairing an 80% slow-down with a 103% zoom hold, or fitting dub audio tempo up to 1.25x."
+                    },
+                    {
+                      "title": "Regenerated dialogue & signage clips across 44 languages",
+                      "description": "Regenerate localized dialogue takes and in-scene signage clips directly within the scene across 44 languages so visuals, stencils, and speech match every audience."
+                    },
+                    {
+                      "title": "Localized Studio UI",
+                      "description": "Direct and produce in your native interface across English, Spanish, Portuguese, Hindi, Simplified Chinese, and Arabic."
                     }
                   ]
                 }
               },
               {
                 "icon": "promoTrailers",
-                "title": "প্রচার এবং ট্রেলার",
-                "description": "উত্পাদনের সময় যে কোনো সময় সামাজিক-প্রস্তুত প্রচার ট্রেলার কাটুন। অনুভূমিক বা উল্লম্ব বিন্যাসের জন্য অপ্টিমাইজ করা বহু-ভাষা সংস্করণ তৈরি করুন।",
-                "screenshot": "প্রচার এবং ট্রেলারগুলি — বহু-ভাষা অনুভূমিক এবং উল্লম্ব ট্রেলার৷",
+                "title": "Promo & Trailers",
+                "description": "Cut high-converting theatrical teasers, episodic recaps, and social-ready promo trailers at any time during production. Pull hero takes from your scene vault, reframe for horizontal (`16:9`) or vertical (`9:16`) feeds, and generate multi-language versions with localized title cards and voiceover hooks.",
+                "screenshot": "Promo & Trailers — multi-language horizontal and vertical trailers",
                 "learnMore": {
                   "items": [
                     {
-                      "title": "সামাজিক-প্রস্তুত ট্রেলার",
-                      "description": "প্রোডাকশন চলাকালীন যেকোনো সময়ে প্রচার ট্রেলার কাটুন।"
+                      "title": "Social-ready trailers at any stage",
+                      "description": "Cut promo trailers, theatrical teasers, and episodic recaps at any point during production."
                     },
                     {
-                      "title": "বহু-ভাষা বিন্যাস",
-                      "description": "অনুভূমিক বা উল্লম্ব বিন্যাসের জন্য অপ্টিমাইজ করা বহু-ভাষা সংস্করণ তৈরি করুন।"
+                      "title": "Horizontal & vertical social formats",
+                      "description": "Generate multi-language versions optimized for horizontal 16:9 YouTube feeds or vertical 9:16 Shorts, Reels, and TikTok."
+                    },
+                    {
+                      "title": "Localized hooks & title cards",
+                      "description": "Render localized trailer streams with translated voiceover hooks, burned-in captions, and market-specific title cards."
                     }
                   ]
                 }
               },
               {
                 "icon": "shipPackage",
-                "title": "সরাসরি প্রকাশনা",
-                "description": "চূড়ান্ত মাস্টার MP4 রপ্তানি করুন, অথবা সরাসরি YouTube, TikTok, এবং Facebook-এ দৃশ্য, অধ্যায় এবং প্রচার প্রকাশ করতে SceneFlow-কে থাম্বনেল এবং বিবরণ স্বয়ংক্রিয়ভাবে তৈরি করতে দিন।",
-                "screenshot": "সরাসরি প্রকাশনা — MP4 রপ্তানি এবং YouTube, TikTok এবং Facebook-এ সরাসরি প্রকাশনা",
+                "title": "Direct Publishing",
+                "description": "Export the final EBU R128-normalized master MP4 in 1080p or 4K, download complete production stems, or let SceneFlow auto-generate high-CTR thumbnails, localized titles, chapter markers, and descriptions to publish scenes, chapters, and promos directly to YouTube, TikTok, and Facebook.",
+                "screenshot": "Direct Publishing — MP4 export and direct publishing to YouTube, TikTok, and Facebook",
                 "learnMore": {
                   "items": [
                     {
-                      "title": "মাস্টার MP4 বা সরাসরি সামাজিক",
-                      "description": "চূড়ান্ত মাস্টার MP4 রপ্তানি করুন বা সরাসরি YouTube, TikTok এবং Facebook-এ দৃশ্য, অধ্যায় এবং প্রচার প্রকাশ করুন।"
+                      "title": "Master MP4 or direct social publishing",
+                      "description": "Export the final master MP4 or publish scenes, chapters, and promos directly to YouTube, TikTok, and Facebook."
                     },
                     {
-                      "title": "স্বয়ংক্রিয়ভাবে তৈরি মেটাডেটা",
-                      "description": "SceneFlow-কে প্রতি প্রকাশের জন্য থাম্বনেল এবং বিবরণ স্বয়ংক্রিয়ভাবে তৈরি করতে দিন।"
+                      "title": "Auto-generated thumbnails & metadata",
+                      "description": "Let SceneFlow auto-generate high-contrast thumbnails, localized titles, descriptions, tags, and chapter markers for every release."
+                    },
+                    {
+                      "title": "Archival stems & screenplay bundle",
+                      "description": "Download stitched video masters, isolated dialogue and SFX stems, subtitle files, and formatted screenplays in one production package."
                     }
                   ]
                 }
@@ -797,44 +1005,52 @@
         "features": [
           {
             "icon": "screeningPlayer",
-            "title": "ওয়ান ইউনিফাইড প্লেয়ার",
-            "description": "প্রি-ভিস অ্যানিমেটিক্স, দৃশ্য, অধ্যায়, ট্রেলার এবং আপনার চূড়ান্ত মাস্টারের মধ্যে নির্বিঘ্নে টগল করুন। ডাব করা, ঠোঁট-সিঙ্ক করা, বা শট-পুনরুত্থিত স্থানীয়করণের জন্য উড়ে এসে ভাষা স্ট্রিমগুলি পরিবর্তন করুন—মিক্সার থেকে সর্বদা সঠিক কাটে লক করা থাকে।",
-            "screenshot": "Screening Room প্লেয়ার",
+            "title": "One Unified Player",
+            "description": "Toggle seamlessly between Pre-Vis animatics, stitched scenes, multi-scene chapters, promo trailers, and your final master. Switch Language Streams on the fly to audition dubbed audio, dialogue-free stem mixes, and regenerated dialogue or signage clips—always frame-locked to the exact cut from the Mixer.",
+            "screenshot": "Screening Room player",
             "learnMore": {
               "items": [
                 {
-                  "title": "এক দৃশ্যে প্রতিটি মাইলফলক",
-                  "description": "প্রি-ভিস, দৃশ্য, অধ্যায়, প্রচার এবং চূড়ান্ত মাস্টারের মধ্যে অনায়াসে পরিবর্তন করুন।"
+                  "title": "Every milestone in one theatre",
+                  "description": "Switch effortlessly among Pre-Vis animatics, individual scenes, chapters, promos, and the final master."
                 },
                 {
-                  "title": "লাইভ ভাষা স্যুইচিং",
-                  "description": "যেকোন ভাষা স্ট্রীমের অডিশন করুন—ডাব করা, ঠোঁট-সিঙ্ক করা, বা শট-পুনরুত্থিত—উড়লে।"
+                  "title": "Live language stream auditioning",
+                  "description": "Audition any Language Stream—dubbed audio, lip-sync, or regenerated dialogue and signage clips—on the fly without reloading the timeline."
                 },
                 {
-                  "title": "মিক্সারে ফ্রেম-লক করা হয়েছে",
-                  "description": "প্রতিটি স্ট্রীম মিক্সারে রেন্ডার করা সঠিক সম্পাদনা এবং সময় বাজায়।"
+                  "title": "Frame-locked to the Broadcast Mixer",
+                  "description": "Every stream plays the exact stitch transitions, J/L-cut overlaps, auto-ducking curves, and loudness normalization rendered in the Mixer."
+                },
+                {
+                  "title": "Incremental episodic shipping",
+                  "description": "Ship a finished 3–5 minute scene, an 8–12 minute chapter, or a social promo immediately while downstream chapters continue rendering."
                 }
               ]
             }
           },
           {
             "icon": "screeningCollab",
-            "title": "ফ্রেম-সঠিক সহযোগিতা",
-            "description": "ইমেলে রুক্ষ কাট রপ্তানি বন্ধ করুন। একটি ব্যক্তিগত স্ক্রীনিং লিঙ্ক শেয়ার করুন যেখানে সহযোগীরা এবং বিনিয়োগকারীরা রিয়েল টাইমে দেখেন এবং সরাসরি আপনার ফোনে তাত্ক্ষণিক বিজ্ঞপ্তি পাঠানোর সাথে ছবিতে নোটগুলি ফেলেন৷",
-            "screenshot": "শেয়ার করা পর্যালোচনা",
+            "title": "Frame-Accurate Collaboration",
+            "description": "Stop exporting rough cuts to email. Share a private screening link where collaborators, sound editors, localization leads, and investors watch full-resolution playback in real time and drop timestamped notes directly on the picture—with instant notifications sent straight to your phone.",
+            "screenshot": "Shared review",
             "learnMore": {
               "items": [
                 {
-                  "title": "ব্যক্তিগত স্ক্রীনিং লিঙ্ক",
-                  "description": "সমালোচকরা পূর্ণ-রেজোলিউশন প্লেব্যাক দেখেন এবং ছবির উপর টাইমস্ট্যাম্পযুক্ত নোটগুলি রেখে যান৷"
+                  "title": "Private stakeholder screening links",
+                  "description": "Reviewers watch full-resolution playback across any language stream and leave frame-accurate timestamped notes on the picture."
                 },
                 {
-                  "title": "কোন রুক্ষ-কাট ফাইল রপ্তানি",
-                  "description": "ভারী ভিডিও ফাইল মেইল না করে এক জায়গায় স্টেকহোল্ডারদের মতামত সংগ্রহ করুন।"
+                  "title": "Zero rough-cut file exports",
+                  "description": "Collect creative, legal, and localization feedback in one centralized review thread without uploading or mailing heavy video files."
                 },
                 {
-                  "title": "তাত্ক্ষণিক মোবাইল সতর্কতা",
-                  "description": "আপনি ডেস্কটপে নির্দেশিত হওয়ার সময় নতুন পর্যালোচক নোটগুলি আপনার ফোনে অবিলম্বে আপনাকে অবহিত করে।"
+                  "title": "Instant mobile notifications",
+                  "description": "New reviewer notes notify you immediately on your phone so you can approve or dispatch revisions while directing on desktop."
+                },
+                {
+                  "title": "Direct link back to the Shot Rail",
+                  "description": "Jump from any timestamped screening comment straight to the corresponding scene and shot in the Production Stage to execute the note."
                 }
               ]
             }

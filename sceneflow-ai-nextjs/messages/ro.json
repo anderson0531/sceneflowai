@@ -267,44 +267,52 @@
         "features": [
           {
             "icon": "newSeries",
-            "title": "Serie nouă",
-            "description": "Prezentați-vă serialul sau conceptul de canal într-un limbaj simplu. Rafinamentul interactiv AI vă clarifică premisele și generează o linie de bază pentru sezonul cu mai multe episoade — completă cu arcuri generale ale intrigii și defalcări ale episoadelor.",
-            "screenshot": "Creare serie nouă — intenție, Clarificare și confirmare, Generare serie",
+            "title": "New Series",
+            "description": "Pitch your series, anthology, or episodic channel concept in plain language. Interactive AI refinement sharpens your premise, target audience, and visual tone before generating a complete multi-episode season baseline—complete with overarching plot arcs, recurring character hooks, and episode-by-episode breakdowns.",
+            "screenshot": "Create New Series — intent, Clarify and Confirm, Generate Series",
             "learnMore": {
               "items": [
                 {
-                  "title": "Intenția dumneavoastră",
-                  "description": "Prezentați premisa, formatul, publicul țintă și stilul de artă vizuală într-un limbaj simplu."
+                  "title": "Plain-language series pitch",
+                  "description": "Pitch the premise, episode format, target demographic, and visual art style in plain language."
                 },
                 {
-                  "title": "Rafinament interactiv",
-                  "description": "Clarify and Confirm clarifică rezumatul sezonului cu tine înainte de a genera ceva."
+                  "title": "Interactive Clarify & Confirm",
+                  "description": "Clarify and Confirm sharpens the season synopsis, tone, and thematic pillars with you before anything is generated."
                 },
                 {
-                  "title": "Linia de bază a sezonului",
-                  "description": "Generate Series construiește un arc de sezon de cinci episoade pe care îl poți extinde oricând."
+                  "title": "Multi-episode season baseline",
+                  "description": "Generate Series builds a structured five-episode season arc with individual synopses and story hooks that you can expand anytime."
+                },
+                {
+                  "title": "World & genre calibration",
+                  "description": "Lock visual aesthetics, era settings, and recurring narrative motifs up front so every episode shares the same creative DNA."
                 }
               ]
             }
           },
           {
             "icon": "seriesReview",
-            "title": "Sezonul Bibliei și Continuitatea",
-            "description": "Citiți sau ascultați prezentarea generală a sezonului și lista episoadelor. SceneFlow blochează firele de poveste, profilurile de distribuție, locațiile și elementele de recuzită pentru semnături într-un Reference Library partajat pe care fiecare episod îl moștenește.",
-            "screenshot": "Prezentare generală, episoade, coerență, continuitate — distribuție, locații, recuzită, decoruri",
+            "title": "Season Bible & Continuity",
+            "description": "Read or listen to the narrated season overview and episode slate. SceneFlow locks your story threads, cast profiles, recurring locations, and signature props into a shared Reference Library that every episode inherits automatically—eliminating continuity drift across multi-part storytelling.",
+            "screenshot": "Overview Listen, Episodes Listen, Consistency, Continuity — Cast, Locations, Props, Settings",
             "learnMore": {
               "items": [
                 {
-                  "title": "Citește sau ascultă",
-                  "description": "Auditează prezentarea generală a sezonului și rezumatul fiecărui episod cu narațiune audio încorporată."
+                  "title": "Narrated season & episode audit",
+                  "description": "Audit the overarching season overview and every individual episode synopsis with built-in studio audio narration."
                 },
                 {
-                  "title": "Consecvența poveștii",
-                  "description": "Estetica, evenimentele cheie ale intrigii și firele narative rămân blocate pe tot parcursul sezonului."
+                  "title": "Cross-episode story consistency",
+                  "description": "Visual aesthetics, canonical plot events, and character relationship threads stay locked across the entire season."
                 },
                 {
-                  "title": "Continuitate comună",
-                  "description": "Distribuția, locațiile, recuzita și setările sunt incluse automat în fiecare episod pe care îl produceți."
+                  "title": "Shared Reference Library inheritance",
+                  "description": "Cast portraits, voice profiles, wardrobes, locations, and signature props carry automatically into every episode you produce."
+                },
+                {
+                  "title": "Centralized canon management",
+                  "description": "Update a character look, location plate, or prop once in the Series Bible to propagate the change to future episodes."
                 }
               ]
             }
@@ -312,75 +320,87 @@
           {
             "icon": "seriesResonance",
             "title": "Audience Resonance",
-            "description": "Testează-ți arcul sezonier în raport cu demografia țintă înainte de a scrie un singur scenariu. Examinați scorurile de rezonanță episod cu episod și aplicați îmbunătățiri ale poveștii bazate pe date cu un singur clic - numai atunci când sunteți de acord cu nota.",
-            "screenshot": "Analiza Audience Resonance, urmată de perspective acționabile neaplicate",
+            "description": "Test your season arc against your target demographic before writing a single script. Review episode-by-episode resonance scores, binge-retention curves, and structural critiques, then apply data-backed story improvements with one click—only when you agree with the note.",
+            "screenshot": "Audience Resonance analysis, then Actionable Insights, unapplied",
             "learnMore": {
               "items": [
                 {
-                  "title": "Scor demografic",
-                  "description": "Scorurile și analiza structurală dezvăluie modul în care sezonul tău ajunge la publicul țintă."
+                  "title": "Demographic & retention scoring",
+                  "description": "Multi-axis scores and structural analysis reveal how your season arc and episode cliffhangers land with your target audience."
                 },
                 {
-                  "title": "Prerogativa directorului",
-                  "description": "Perspectivele acționabile vă actualizează seria numai atunci când alegeți să le aplicați."
+                  "title": "Episode-by-episode diagnostics",
+                  "description": "Spot mid-season pacing dips, character underutilization, or tonal drift across the full episode slate before scripting."
+                },
+                {
+                  "title": "Director's prerogative",
+                  "description": "Actionable Insights update your series bible and episode outlines only when you explicitly choose to apply them."
                 }
               ]
             }
           },
           {
             "icon": "seriesDirector",
-            "title": "Directorul de serie",
-            "description": "Modificați întregul sezon prin voce sau text. Schimbați tonul, ridicați miza sau refaceți un arc de caracter în toate episoadele simultan, păstrând restul poveștii intact.",
-            "screenshot": "Regizor de serie — regie, focalizare, acceptare",
+            "title": "The Series Director",
+            "description": "Reshape the entire season by voice or text. Shift the dramatic tone, raise the stakes, introduce a new antagonist, or rework a character arc across all episodes at once while keeping the rest of your storyline and continuity bible intact.",
+            "screenshot": "Series Director — direction, focus, accept",
             "learnMore": {
               "items": [
                 {
-                  "title": "Direcție în limbaj simplu",
-                  "description": "Rostiți sau introduceți nota și țintă intriga, personajele, arcurile de episoade, tonul sau setarea."
+                  "title": "Plain-language season direction",
+                  "description": "Speak or type your creative note and target overarching plot, characters, episode arcs, tone, or world setting."
                 },
                 {
-                  "title": "Actualizări chirurgicale",
-                  "description": "Nimic nu se schimbă până când nu acceptați revizuirea, iar firele de povești care nu au legătură rămân neatinse."
+                  "title": "Surgical multi-episode updates",
+                  "description": "Nothing changes until you accept the previewed revision, and unrelated story threads stay completely untouched."
                 },
                 {
-                  "title": "Recomandări ghidate",
-                  "description": "Aplicați îmbunătățirile sugerate de AI sau conduceți singur fiecare alegere creativă."
+                  "title": "Guided AI recommendations",
+                  "description": "Apply one-click story improvements surfaced by Audience Resonance or steer every creative choice yourself."
                 }
               ]
             }
           },
           {
             "icon": "directEpisode",
-            "title": "Regia la nivel de episod",
-            "description": "Măriți orice episod individual pentru a-și reelabora intriga, ritmul sau agățarea în mod izolat, fără a destabiliza restul listei sezonului.",
-            "screenshot": "Episoade — Regizează acest episod; celelalte episoade rămân neschimbate",
+            "title": "Episode-Level Direction",
+            "description": "Zoom into any individual episode to rework its plot outline, act structure, pacing, or cold-open hook in isolation—without destabilizing neighboring episodes or mutating the rest of your season slate.",
+            "screenshot": "Episodes — Direct this episode, other episodes unchanged",
             "learnMore": {
               "items": [
                 {
-                  "title": "Rescrieri izolate",
-                  "description": "Modificări directe ale conturului și ale unui singur episod, fără a modifica episoadele învecinate."
+                  "title": "Isolated episode rewrites",
+                  "description": "Direct changes to a single episode's synopsis, act beats, and character focus without altering neighboring episodes."
                 },
                 {
-                  "title": "Integritatea sezonului",
-                  "description": "Biblia generală a sezonului și lista episoadelor rămase rămân blocate."
+                  "title": "Locked season integrity",
+                  "description": "The overarching season bible, shared cast continuity, and remaining episode slate stay locked while you iterate."
+                },
+                {
+                  "title": "Pre-launch beat polishing",
+                  "description": "Refine individual episode hooks and cliffhangers until the episode is ready to launch into the Blueprint Room."
                 }
               ]
             }
           },
           {
             "icon": "startEpisode",
-            "title": "Lansarea episodului cu un singur clic",
-            "description": "Când schița unui episod atinge obiectivul, lansați-l direct în Blueprint Room cu sinopsisul, ritmurile poveștii, distribuția și lumea deja conectate.",
-            "screenshot": "Începe proiectul — schița și distribuția sunt deja incluse în episod",
+            "title": "One-Click Episode Launch",
+            "description": "When an episode's outline hits the mark, launch it straight into the Blueprint Room with a single click—bringing its synopsis, narrative beats, recurring cast, voice profiles, locations, and visual style automatically wired in.",
+            "screenshot": "Start Project — outline and cast already on the episode",
             "learnMore": {
               "items": [
                 {
-                  "title": "Predare instantanee",
-                  "description": "Lansați orice episod direct în Blueprint Room cu un singur clic."
+                  "title": "Instant Blueprint handoff",
+                  "description": "Launch any approved episode directly into the Blueprint Room with a single click to begin detailed beat and script work."
                 },
                 {
-                  "title": "ADN precablat",
-                  "description": "Schița episodului, sinopsis, ritmurile poveștii, distribuția și locațiile călătoresc automat."
+                  "title": "Pre-wired creative DNA",
+                  "description": "The episode outline, synopsis, story beats, cast profiles, wardrobes, and locations travel automatically with zero re-entry."
+                },
+                {
+                  "title": "Parallel episode production",
+                  "description": "Spin up multiple episodes from the same season slate as independent projects that share the same canonical series assets."
                 }
               ]
             }
@@ -395,18 +415,22 @@
         "features": [
           {
             "icon": "startBlueprint",
-            "title": "Inițiază Blueprint",
-            "description": "Introduceți un episod din serialul dvs. cu conturul și distribuția preîncărcate sau prezentați un concept de film nou-nouț de la zero și lăsați AI să structureze tratamentul de bază.",
-            "screenshot": "Episodul din serie este deja cunoscut sau Începe-ți proiectul — intenție, Validează și îmbunătățește cu AI, Generează Blueprint",
+            "title": "Start the Blueprint",
+            "description": "Bring in an episode from your series slate with its outline, cast, and world pre-loaded, or pitch a brand-new standalone film concept from scratch and let AI validate, enhance, and structure the foundational treatment.",
+            "screenshot": "Series episode already known, or Start Your Project — intent, Validate & Enhance with AI, Generate Blueprint",
             "learnMore": {
               "items": [
                 {
-                  "title": "De la Series Room",
-                  "description": "Episoadele din seria sosesc cu schița, sinopsisul, ritmurile și distribuția deja atașate."
+                  "title": "Seamless from Series Room",
+                  "description": "Series episodes arrive with their outline, synopsis, story beats, recurring cast, and locations already attached."
                 },
                 {
-                  "title": "Proiect independent",
-                  "description": "Prezentați un nou concept de film, perfecționați-l cu validarea AI și generați un tratament complet."
+                  "title": "Standalone film or short",
+                  "description": "Pitch a new film concept in plain language, refine it with AI validation, and generate a complete film treatment."
+                },
+                {
+                  "title": "Narrated treatment overview",
+                  "description": "Read or listen to the narrated logline, synopsis, and creative reasoning to verify the story foundation immediately."
                 }
               ]
             }
@@ -414,65 +438,69 @@
           {
             "icon": "treatment",
             "title": "The Beat Sheet",
-            "description": "Structurați coloana vertebrală a filmului dvs. Citiți sau ascultați ritmul narativ și ajustați ritmul aici — fiecare ritm pe care îl blocați în Blueprint Room conduce la un capitol din Production Stage.",
-            "screenshot": "Tabul Beats, cu secțiunea Ascultă",
+            "description": "Structure the dramatic spine of your film before dialogue is written. Read or listen to your narrative beat sheet, reorder acts, and fine-tune scene pacing here—every beat you lock in the Blueprint Room drives a dedicated chapter in the Production Stage.",
+            "screenshot": "Beats tab, with Listen",
             "learnMore": {
               "items": [
                 {
-                  "title": "Columna vertebrală narativă",
-                  "description": "Beat-urile sunt create și blocate în Blueprint Room înainte de a începe generarea scriptului."
+                  "title": "Narrative spine",
+                  "description": "Beats are authored and locked in the Blueprint Room before script generation begins."
                 },
                 {
-                  "title": "Mai întâi ritmul",
-                  "description": "Optimizarea beat sheet-ului aici asigură că scenariul are o structură dramatică strânsă."
+                  "title": "Pacing & structural discipline",
+                  "description": "Optimizing the beat sheet here ensures the multi-scene screenplay builds with tight dramatic structure and clear turning points."
                 },
                 {
-                  "title": "Maparea ritm-la-capitol",
-                  "description": "Production Stage transformă fiecare moment-cheie într-un capitol."
+                  "title": "Beat-to-chapter mapping",
+                  "description": "Production Stage turns each beat into a chapter."
+                },
+                {
+                  "title": "Narrated beat audition",
+                  "description": "Listen to the beat sheet read aloud to feel the rhythm and momentum of the story before compiling the script."
                 }
               ]
             }
           },
           {
             "icon": "castLocations",
-            "title": "Distribuție și design mondial",
-            "description": "Definiți-vă personajele, garderoba și locațiile principale înainte ca scenariul să fie generat - asigurându-vă că scenariul este scris în jurul distribuției și setărilor dvs. exacte de la prima pagină.",
-            "screenshot": "Tabul Personaje, apoi Cadrul acțiunii",
+            "title": "Cast & World Design",
+            "description": "Define your characters, vocal identities, period wardrobes, and primary locations before the screenplay is generated—ensuring the script is written around your exact cast, blocking environments, and visual atmosphere from page one.",
+            "screenshot": "Characters tab, then Setting on Story",
             "learnMore": {
               "items": [
                 {
-                  "title": "Profilurile personajelor",
-                  "description": "Dirijați-vă profilurile de distribuție în față, astfel încât dialogul și blocarea să se potrivească cu fiecare personaj."
+                  "title": "Rich character profiles",
+                  "description": "Direct your cast profiles, backstories, and physical attributes up front so dialogue and blocking match each character."
                 },
                 {
-                  "title": "Lumea și locațiile",
-                  "description": "Stabiliți setările principale în fila Povestea pentru a ancora mediul fiecărei scene."
+                  "title": "World, era & locations",
+                  "description": "Establish primary settings, lighting palettes, and cinematic style on the Story tab to anchor every scene's environment."
                 },
                 {
-                  "title": "Refactorizare de script zero",
-                  "description": "Blocarea distribuției și a locațiilor înainte de generarea scenariului elimină rescrierile costisitoare pe Production Stage."
+                  "title": "Zero script refactoring",
+                  "description": "Locking cast and locations before script generation eliminates costly rewrites and continuity mismatches on the Production Stage."
                 }
               ]
             }
           },
           {
             "icon": "blueprintDirector",
-            "title": "Directorul Blueprint",
-            "description": "Rostiți sau introduceți notele de poveste pentru a revizui ritmurile, personajele sau detaliile lumii. Previzualizați o revizuire echilibrată una lângă alta - nimic nu se schimbă în tratamentul dumneavoastră până când nu aprobați tăierea.",
-            "screenshot": "Director Blueprint — direcție, focalizare, previzualizare, Aplicare revizuire",
+            "title": "The Blueprint Director",
+            "description": "Speak or type your story notes to revise beats, character motivations, or world details without prompt engineering. Preview a balanced revision side-by-side with creative reasoning—nothing changes in your treatment until you approve the cut.",
+            "screenshot": "Blueprint Director — direction, focus, preview, Apply revision",
             "learnMore": {
               "items": [
                 {
-                  "title": "Note vizate",
-                  "description": "Spuneți sau introduceți direcția și concentrați revizuirea pe Beats, Characters sau Story."
+                  "title": "Targeted voice or text notes",
+                  "description": "Speak or type your direction and focus the revision surgically on Beats, Characters, or Story."
                 },
                 {
-                  "title": "Previzualizare alăturată",
-                  "description": "Examinați o revizuire echilibrată înainte de a efectua orice modificare a Blueprint."
+                  "title": "Side-by-side revision preview",
+                  "description": "Review a balanced revision and its underlying story reasoning before committing any changes to your Blueprint."
                 },
                 {
-                  "title": "Țineți încuietoarea",
-                  "description": "Nimic din tratamentul dumneavoastră nu se schimbă până când nu aplicați în mod explicit revizuirea."
+                  "title": "You hold the creative lock",
+                  "description": "Nothing in your treatment, beat sheet, or character roster changes until you explicitly apply the revision."
                 }
               ]
             }
@@ -480,35 +508,43 @@
           {
             "icon": "blueprintResonance",
             "title": "Audience Resonance",
-            "description": "Punctați tratamentul în raport cu profilul cultural și demografic al publicului țintă. Descoperiți din timp decalajele structurale de ritm și aplicați recomandări direcționate în directorul Blueprint.",
-            "screenshot": "Audience Resonance — audiență salvată, scoruri, recomandări neaplicate",
+            "description": "Score your treatment against your target audience's cultural, genre, and demographic profile before generating the script. Catch structural pacing gaps or weak character stakes early and apply targeted recommendations in the Blueprint Director.",
+            "screenshot": "Audience Resonance — saved audience, scores, recommendations unapplied",
             "learnMore": {
               "items": [
                 {
-                  "title": "Validare pre-script",
-                  "description": "Analizați-vă tratamentul față de publicul țintă pentru a vedea scorurile categoriei și notele de poveste."
+                  "title": "Pre-script audience validation",
+                  "description": "Analyze your treatment against your saved target audience to inspect category scores, strengths, and story risks."
                 },
                 {
-                  "title": "Aplicație selectivă",
-                  "description": "Recomandările vă modifică Blueprint numai atunci când alegeți să le aplicați."
+                  "title": "Actionable story remedies",
+                  "description": "Each insight pairs a structural diagnosis with a concrete rewrite recommendation tailored to your beat sheet and cast."
+                },
+                {
+                  "title": "Selective one-click application",
+                  "description": "Recommendations only modify your Blueprint when you choose to apply them in the Blueprint Director."
                 }
               ]
             }
           },
           {
             "icon": "goToProduction",
-            "title": "Undă verde la producție",
-            "description": "Când tratamentul, foaia și ghipsul sunt blocate, pășiți pe Production Stage. SceneFlow compilează scriptul complet cu mai multe capitole direct din Blueprint aprobat.",
-            "screenshot": "Mergi la Production Stage — intriga, momentele cheie și distribuția sunt deja stabilite.",
+            "title": "Greenlight to Production",
+            "description": "When the treatment, beat sheet, and cast are locked, step onto the Production Stage. SceneFlow compiles your full multi-chapter screenplay directly from your approved Blueprint—mapping every beat into a production chapter with cast and continuity pre-wired.",
+            "screenshot": "Go to Production Stage — storyline, beats, and cast already set",
             "learnMore": {
               "items": [
                 {
-                  "title": "Compilare fără întreruperi",
-                  "description": "Intrarea în Production Stage compilează scriptul complet direct din Blueprint aprobat de dvs."
+                  "title": "Seamless script compilation",
+                  "description": "Stepping onto the Production Stage compiles the full multi-scene screenplay directly from your approved Blueprint."
                 },
                 {
-                  "title": "Fundație blocată",
-                  "description": "Povestea, structura ritmului și distribuția dvs. sunt pregătite pentru regia scenei și a filmării."
+                  "title": "Locked continuity foundation",
+                  "description": "Your storyline, beat-to-chapter structure, cast profiles, and locations arrive ready for scene and shot direction."
+                },
+                {
+                  "title": "Shareable Blueprint review",
+                  "description": "Share the locked Blueprint with co-creators or executive stakeholders for sign-off before commencing production."
                 }
               ]
             }
@@ -522,105 +558,151 @@
         "promise": "Blueprint este blocat. Distribuția ta este turnată. Acum, pășiți pe Production Stage. Fiecare capitol, scenă și fotografie este organizat într-un flux de lucru liniar. Tu direcționezi intenția; agenți inteligenți execută generația.",
         "groups": [
           {
-            "id": "script",
+            "id": "direct-control",
             "label": "Direct & Control",
             "headline": "Vorbiți limbajul filmului, nu sintaxa prompturilor.",
             "description": "Nu pierdeți timpul tastând cuvinte cheie între paranteze. Production Stage înțelege direcția naturală, aplicând viziunea pe întreaga scenă sau până la fotografia specifică.",
             "features": [
               {
-                "icon": "scriptResonance",
-                "title": "Regizorul de scenă și filmare",
-                "description": "Tastați sau rostiți indicația dvs. într-un limbaj simplu. Spune-i agentului cine se află în cadru, unde se mișcă camera și care este ritmul emoțional. Directorul de fotografiere scrie automat solicitările complexe subiacente pentru fotografiile și clipurile dvs.",
-                "screenshot": "The Scene & Shot Director — direcție în limbaj simplu pentru fotografii și clipuri",
+                "icon": "sceneWorkflow",
+                "title": "Scene Production Workflow (Fullscreen)",
+                "description": "Open the dedicated Fullscreen Scene Production Studio to direct every stage of a scene from one unified 8-tab command bar (`Direction · Audio · Music · Continuity · Stills · Clips · Mixer · Streams`). Reorder shots in the left-hand Shot Rail with live readiness badges, inspect the 16:9 Still & Clip Stage alongside structured camera, blocking, emotion, and lighting cards, and track end-to-end scene completion without losing context.",
+                "screenshot": "Scene Production Workflow (Fullscreen) — 8-tab linear studio, sortable Shot Rail, and structured Shot Direction Workbench",
                 "learnMore": {
                   "items": [
                     {
-                      "title": "Limbajul simplu",
-                      "description": "Tastați sau vorbiți cine este în cadru, unde se mișcă camera și care este ritmul emoțional."
+                      "title": "8-tab fullscreen linear studio",
+                      "description": "Move seamlessly across Direction, Audio, Music, Continuity, Stills, Clips, Mixer, and Streams inside a distraction-free fullscreen workspace."
                     },
                     {
-                      "title": "Scena sau filmat",
-                      "description": "Aplică-ți viziunea pe întreaga scenă sau până la fotografia specifică."
+                      "title": "Sortable Shot Rail & live badges",
+                      "description": "Drag to reorder shots in the left-hand rail while tracking real-time badges for Action, Dialogue, Narration, SFX, Music, Signage, Final 4K stills, and clips In the Can."
                     },
                     {
-                      "title": "Compilare promptă",
-                      "description": "Directorul de fotografiere scrie automat solicitările de bază pentru fotografiile și clipurile dvs."
-                    }
-                  ]
-                }
-              },
-              {
-                "icon": "castVisual",
-                "title": "Biblioteca de continuitate",
-                "description": "Consecvență absolută în întreaga serie. Generați automat sau atribuiți manual imagini de referință pentru distribuția, garderoba, locațiile și elementele de recuzită esențiale pentru a vă asigura că fiecare fotografie se potrivește cu Blueprint.",
-                "screenshot": "Biblioteca Continuity - distribuție, garderobe, locații și recuzită esențială",
-                "learnMore": {
-                  "items": [
-                    {
-                      "title": "Consistența seriei",
-                      "description": "Păstrați distribuția, garderoba, locațiile și elementele de recuzită esențiale unificate în fiecare fotografie."
+                      "title": "Structured Shot Direction Workbench",
+                      "description": "Inspect the 16:9 Still & Clip Stage beside structured cards for spoken beats, camera lens and motion, talent blocking and gaze, lighting, locked continuity refs, and compiled prompts."
                     },
                     {
-                      "title": "Generați sau atribuiți",
-                      "description": "Generați automat imagini de referință sau atribuiți-le manual pentru a se potrivi cu Blueprint."
+                      "title": "End-to-end scene pipeline telemetry",
+                      "description": "Monitor readiness across direction, voice and score, keyframes, multi-take clips, broadcast mixing, and localized streams before publishing."
                     }
                   ]
                 }
               },
               {
                 "icon": "directShot",
-                "title": "Audience Resonance Integrare",
-                "description": "Citiți despre cameră înainte de a reda. AI analizează scenariul dvs. în raport cu publicul țintă, oferind informații scenă cu scenă. Aplică instantaneu instrucțiunile recomandate sau ai încredere în instinctul tău și ignoră-le.",
-                "screenshot": "Integrare Audience Resonance — informații despre public scenă cu scenă",
+                "title": "The Scene & Shot Director",
+                "description": "Type or speak your direction in plain language. Tell the agent who is in the frame, where the camera moves, and what the emotional beat is. The Shot Director automatically writes the complex underlying prompts for your stills and clips while syncing camera lens, focal length, talent blocking, and lighting across the scene.",
+                "screenshot": "The Scene & Shot Director — plain-language direction for stills and clips",
                 "learnMore": {
                   "items": [
                     {
-                      "title": "Perspective scenă cu scenă",
-                      "description": "AI vă analizează scriptul în raport cu publicul țintă înainte de a vă randa."
+                      "title": "Plain-language film direction",
+                      "description": "Type or speak who is in the frame, where the camera moves, and what the emotional beat is without writing bracketed prompt syntax."
                     },
                     {
-                      "title": "Apelul tău",
-                      "description": "Aplică instantaneu instrucțiunile recomandate sau ai încredere în instinctul tău și ignoră-le."
-                    }
-                  ]
-                }
-              },
-              {
-                "icon": "audioAgent",
-                "title": "Planificator de productie",
-                "description": "Stabiliți bugetul și generarea programului pentru fiecare scenă și capitol folosind creditele SceneFlow sau propriile chei API BYOK. Setați ținte statice și decupați pentru fiecare fotografie înainte de a cheltui calculul.",
-                "screenshot": "Planificator de producție — buget, program și chei API BYOK",
-                "learnMore": {
-                  "items": [
-                    {
-                      "title": "Bugetul și programul",
-                      "description": "Stabiliți bugetul și generarea programului pentru fiecare scenă și capitol înainte de a randa."
+                      "title": "Scene-wide or per-shot precision",
+                      "description": "Apply atmospheric direction across the entire scene or drill down into an individual shot's framing, lens, blocking, and lighting."
                     },
                     {
-                      "title": "Credite sau BYOK",
-                      "description": "Rulați generarea utilizând credite SceneFlow sau propriile chei API BYOK."
+                      "title": "Automatic prompt compilation",
+                      "description": "The Shot Director automatically writes and syncs the underlying keyframe and motion prompts for your stills and clips."
+                    },
+                    {
+                      "title": "Intelligent Assistant Director (IAD)",
+                      "description": "Request surgical revisions to camera angles, character posture, or scene tension in plain language while keeping unrelated beats untouched."
                     }
                   ]
                 }
               },
               {
                 "icon": "continuity",
-                "title": "Scenariul de producție",
-                "description": "Creat pentru cineaști tradiționali și AI deopotrivă. Previzualizați un scenariu curat și formatat în studio și exportați în formate standard din industrie (PDF, FDX, Fountain). Folosiți SceneFlow ca o sală de scenarii de sine stătătoare — sau asociați scenariul cu un Animatic Pre-Vis și un Trailer promoțional pentru a prezenta finanțatori și a asigura finanțarea proiectelor.",
-                "screenshot": "Script de producție — previzualizare în platformă și export PDF, FDX și Fountain",
+                "title": "The Continuity Library",
+                "description": "Absolute visual and vocal consistency across your entire film or series. Automatically generate or manually assign locked reference portraits, multi-angle turnaround sheets, scene-specific wardrobes, locations, and essential props—ensuring every shot matches the Blueprint without character drift.",
+                "screenshot": "The Continuity Library — cast, wardrobes, locations, and essential props",
                 "learnMore": {
                   "items": [
                     {
-                      "title": "Previzualizare și export în platformă",
-                      "description": "Previzualizați scriptul formatat în studio și exportați în format PDF standard, Final Draft FDX sau Fountain."
+                      "title": "Cast identity & turnaround locks",
+                      "description": "Anchor every character with diptych portraits, turnaround sheets, and locked voice profiles across every shot and episode."
                     },
                     {
-                      "title": "Pentru regizorii tradiționali",
-                      "description": "Utilizați SceneFlow ca platformă inteligentă de producție de scripturi fără a genera videoclipuri."
+                      "title": "Scene-specific wardrobes & props",
+                      "description": "Assign period or scene-specific wardrobes and essential hero props per shot so costumes and hand-held items stay unified."
                     },
                     {
-                      "title": "Finanțare pentru pitch și proiecte",
-                      "description": "Împachetați scenariul cu un Animatic Pre-Vis și Trailere promoționale pentru a prezenta și a obține finanțare pentru proiecte."
+                      "title": "Generate, upload, or surgically edit",
+                      "description": "Automatically generate reference images, upload custom studio plates, or refine details with the Intelligent Assistant Director."
+                    },
+                    {
+                      "title": "Continuity readiness gate",
+                      "description": "Verify that all cast, wardrobe, location, and prop anchors are locked in the Continuity tab before generating scene keyframes."
+                    }
+                  ]
+                }
+              },
+              {
+                "icon": "scriptResonance",
+                "title": "Audience Resonance Integration",
+                "description": "Get a read on the room before you render. AI analyzes your script against your target audience, providing scene-by-scene insights, pacing diagnostics, and dialogue tension scores. Apply recommended directions instantly, or trust your gut and ignore them.",
+                "screenshot": "Audience Resonance Integration — scene-by-scene audience insights",
+                "learnMore": {
+                  "items": [
+                    {
+                      "title": "Scene-by-scene audience insights",
+                      "description": "AI analyzes your script against your target audience before you render to surface pacing, tension, and engagement scores."
+                    },
+                    {
+                      "title": "Narrated critique & recommendations",
+                      "description": "Listen to the narrated analysis and inspect targeted scene-level rewrite recommendations backed by demographic reasoning."
+                    },
+                    {
+                      "title": "Your creative call",
+                      "description": "Apply recommended directions instantly with one click, or trust your gut and ignore them."
+                    }
+                  ]
+                }
+              },
+              {
+                "icon": "budget",
+                "title": "Production Planner",
+                "description": "Establish the budget and schedule generation across every scene and chapter using SceneFlow credits or your own BYOK API keys. Set still and clip targets per shot, toggle between Draft and Final resolution tiers, and forecast compute spend before you render.",
+                "screenshot": "Production Planner — budget, schedule, and BYOK API keys",
+                "learnMore": {
+                  "items": [
+                    {
+                      "title": "Budget and schedule forecasting",
+                      "description": "Establish the budget and schedule generation across every scene and chapter with transparent per-shot credit estimates before you render."
+                    },
+                    {
+                      "title": "SceneFlow credits or BYOK keys",
+                      "description": "Run generation using included SceneFlow credits or connect your own Vertex AI, OpenAI, and ElevenLabs BYOK API keys."
+                    },
+                    {
+                      "title": "Draft-to-Final tier scheduling",
+                      "description": "Schedule rapid Draft passes for animatic pre-visualization and reserve Final 4K still and FHD video compute for locked cuts."
+                    }
+                  ]
+                }
+              },
+              {
+                "icon": "productionScript",
+                "title": "Production Script",
+                "description": "Built for traditional and AI filmmakers alike. Preview a clean, formatted screenplay in-studio and export in industry-standard formats (PDF, FDX, Fountain). Use SceneFlow as a standalone script room—or pair your screenplay with a Pre-Vis Animatic and Promo Trailer to pitch financiers and secure project funding.",
+                "screenshot": "Production Script — in-platform preview and PDF, FDX, and Fountain export",
+                "learnMore": {
+                  "items": [
+                    {
+                      "title": "In-platform preview & export",
+                      "description": "Preview the formatted script in the studio and export in industry-standard PDF, Final Draft FDX, or Fountain format."
+                    },
+                    {
+                      "title": "For traditional filmmakers",
+                      "description": "Use SceneFlow as an intelligent script production platform without generating video."
+                    },
+                    {
+                      "title": "Pitch & project funding",
+                      "description": "Package your script with a Pre-Vis Animatic and Promo Trailers to pitch and acquire project funding."
                     }
                   ]
                 }
@@ -628,79 +710,173 @@
             ]
           },
           {
-            "id": "video",
+            "id": "generate-audit",
             "label": "Generați și auditați",
             "headline": "Demonstrați tăierea înainte de a cheltui calculul.",
             "description": "Nu ghici cum va juca o scenă. SceneFlow separă sunetul și generația de statii de redarea costisitoare a mișcării, permițându-vă să auditați mai întâi ritmul editării.",
             "features": [
               {
+                "icon": "audioAgent",
+                "title": "The Audio Agent",
+                "description": "Generate expressive character dialogue, narrator voiceover, action sound effects, and musical scores concurrently across up to 30 shots per scene. Cast voices automatically match character profiles from your Continuity Library or can be custom-tuned per beat.",
+                "screenshot": "The Audio Agent — concurrent dialogue, sound effects, and music scores",
+                "learnMore": {
+                  "items": [
+                    {
+                      "title": "Concurrent multi-track audio",
+                      "description": "Generate dialogue, narration, sound effects, and music scores concurrently across up to 30 shots per scene."
+                    },
+                    {
+                      "title": "Locked character voice casting",
+                      "description": "Cast voices automatically match character profiles from your Reference Library or can be custom-tuned for timbre and cadence."
+                    },
+                    {
+                      "title": "Batch scene or single-shot runs",
+                      "description": "Run the Audio Agent across the entire scene in one pass or regenerate individual dialogue and SFX beats on demand."
+                    }
+                  ]
+                }
+              },
+              {
+                "icon": "musicScore",
+                "title": "Dialogue, SFX & Musical Score Workbench",
+                "description": "Open the Fullscreen `Audio` and `Music` tabs to direct every sonic layer of your scene. Shape vocal performances with emotional delivery tags (`[obsessive, muttered]`) and Hi-Fi Studio quality, extract embedded audio directly from video clips, dial in SFX duration presets (`Auto`, `Short 3s`, `Medium 8s`, `Long 15s`), and compose multi-shot Lyria musical score cues with custom intro fades.",
+                "screenshot": "Dialogue, SFX & Musical Score Workbench — Fullscreen Audio & Music tabs with score cues, voice casting, and SFX duration presets",
+                "learnMore": {
+                  "items": [
+                    {
+                      "title": "Multi-shot musical score cues",
+                      "description": "Compose custom Lyria musical score cues that span specific shot ranges with configurable intro fades and auto-ducking metadata."
+                    },
+                    {
+                      "title": "Performance Director & delivery tags",
+                      "description": "Direct spoken dialogue with bracketed emotional delivery tags, Hi-Fi Studio synthesis, and per-shot voice casting."
+                    },
+                    {
+                      "title": "Precision SFX duration presets",
+                      "description": "Time action sound effects to your shot choreography using Auto, Short 3s, Medium 8s, or Long 15s duration presets."
+                    },
+                    {
+                      "title": "Extract audio from video clips",
+                      "description": "Pull embedded audio directly from generated motion clips to preserve native on-camera speech or ambient foley."
+                    }
+                  ]
+                }
+              },
+              {
+                "icon": "stillsAgent",
+                "title": "The Stills Agent",
+                "description": "Rapidly batch-generate the high-resolution keyframe images that illustrate your shot direction across the scene. Regenerate, edit, or upload your own references to lock the composition, lighting, and character blocking before committing to video.",
+                "screenshot": "The Stills Agent — keyframe composition and references",
+                "learnMore": {
+                  "items": [
+                    {
+                      "title": "Batch keyframe generation",
+                      "description": "Rapidly generate the keyframe images that illustrate your shot direction across every shot in the scene."
+                    },
+                    {
+                      "title": "Automatic continuity anchoring",
+                      "description": "Every generated frame incorporates your locked cast portraits, scene wardrobes, locations, and hero props automatically."
+                    },
+                    {
+                      "title": "Lock composition before motion",
+                      "description": "Regenerate, edit, or upload your own references before committing compute to full motion video rendering."
+                    }
+                  ]
+                }
+              },
+              {
+                "icon": "stillsWorkbench",
+                "title": "Fullscreen Stills & Keyframe Studio",
+                "description": "Step into the Fullscreen `Stills` workbench for precision keyframe control. Pair Start and End keyframes for Frame-to-Video (`F2V`) motion bridging, switch between `Draft` and `Final 4K` resolution or `Standard` and `Creative` synthesis modes, customize Pre-Vis Ken Burns camera motion, and perform surgical plain-language frame edits with the Intelligent Assistant Director (`IAD`).",
+                "screenshot": "Fullscreen Stills & Keyframe Studio — F2V Start & End keyframe pairing, Final 4K controls, and surgical IAD editing",
+                "learnMore": {
+                  "items": [
+                    {
+                      "title": "Frame-to-Video (F2V) Start & End pairing",
+                      "description": "Pair a locked Start Frame and End Frame Target on any shot to anchor exact camera movement and subject blocking during video generation."
+                    },
+                    {
+                      "title": "Surgical IAD keyframe editing",
+                      "description": "Edit specific props, chalkboard text, wardrobe details, or lighting in plain language while keeping the rest of the keyframe locked."
+                    },
+                    {
+                      "title": "Draft vs Final 4K & Creative modes",
+                      "description": "Toggle between rapid Draft previews and Final 4K resolution, plus Standard or Creative synthesis modes per shot."
+                    },
+                    {
+                      "title": "Pre-Vis Ken Burns motion framing",
+                      "description": "Customize zoom and pan trajectories on every still so your Pre-Vis Animatic previews intentional camera motion."
+                    }
+                  ]
+                }
+              },
+              {
+                "icon": "animatic",
+                "title": "The Pre-Vis Animatic",
+                "description": "Watch the scene breathe. Review a fully assembled animatic—stitched stills, Ken Burns motion, and locked audio—in the Screening Room. Audit the pacing, share for feedback, and ensure the cut works before committing to video.",
+                "screenshot": "The Pre-Vis Animatic — stitched stills, Ken Burns motion, and locked audio",
+                "learnMore": {
+                  "items": [
+                    {
+                      "title": "Assembled multi-track animatic",
+                      "description": "Review stitched stills, Ken Burns motion, and locked dialogue, SFX, and musical score in the Screening Room."
+                    },
+                    {
+                      "title": "Prove pacing before video spend",
+                      "description": "Audit the dramatic rhythm, spot timing gaps, and refine shot lengths while iterations cost pennies instead of full video compute."
+                    },
+                    {
+                      "title": "Share for stakeholder sign-off",
+                      "description": "Audit the pacing, share for feedback, and ensure the cut works before committing to video."
+                    }
+                  ]
+                }
+              },
+              {
                 "icon": "videoAgent",
-                "title": "Audio Agent",
-                "description": "Generați dialoguri, efecte sonore și partituri muzicale concomitent pe până la 30 de fotografii pe scenă. Vocile difuzate se potrivesc automat cu profilurile personajelor sau pot fi personalizate.",
-                "screenshot": "Audio Agent — dialoguri simultane, efecte sonore și partituri muzicale",
+                "title": "The Clips Agent",
+                "description": "Once the Pre-Vis is approved, the Clips Agent takes over, rendering high-fidelity motion clips that adhere strictly to your approved stills, Frame-to-Video start and end anchors, and continuity references—backed by automated safety pre-flight checks.",
+                "screenshot": "The Clips Agent — high-fidelity motion clips from approved stills",
                 "learnMore": {
                   "items": [
                     {
-                      "title": "Audio concomitent",
-                      "description": "Generați dialoguri, efecte sonore și partituri muzicale concomitent pe până la 30 de fotografii pe scenă."
+                      "title": "Triggered after Pre-Vis approval",
+                      "description": "The Clips Agent renders motion only after the Pre-Vis animatic and shot timings are approved."
                     },
                     {
-                      "title": "Vocile personajelor",
-                      "description": "Vocile difuzate se potrivesc automat cu profilurile personajelor sau pot fi personalizate."
+                      "title": "Strict keyframe & F2V adherence",
+                      "description": "High-fidelity motion clips adhere strictly to your approved Start and End stills and continuity references."
+                    },
+                    {
+                      "title": "Automated safety pre-flight",
+                      "description": "Pre-flight prompt sanitation prevents false-positive safety rejections on dramatic action beats so clips render reliably."
                     }
                   ]
                 }
               },
               {
-                "icon": "mixer",
-                "title": "Stills Agent",
-                "description": "Generați rapid imaginile cadru-cheie care ilustrează direcția fotografiei. Regenerați, editați sau încărcați propriile referințe pentru a bloca compoziția.",
-                "screenshot": "Stills Agent — compoziția și referințele cadrelor cheie",
+                "icon": "clipsWorkbench",
+                "title": "Multi-Take Clips & Retake Studio",
+                "description": "Direct and curate every motion render inside the Fullscreen `Clips` studio. Audition unlimited takes in the non-destructive Multi-Take Vault (`Take 1 / Take 2 / Take 3`), filter your shot rail by `In the Can` readiness, trigger targeted IAD Smart Retakes, and manage per-stream localized video takes for dialogue and signage shots.",
+                "screenshot": "Multi-Take Clips & Retake Studio — non-destructive Take 1/2/3 vault, IAD Smart Retake, and localized stream takes",
                 "learnMore": {
                   "items": [
                     {
-                      "title": "Generarea de cadre cheie",
-                      "description": "Generați rapid imaginile cadru-cheie care ilustrează direcția fotografiei."
+                      "title": "Non-destructive Multi-Take Vault",
+                      "description": "Every motion render is preserved in the shot vault so you can compare Take 1, Take 2, and Take 3 and promote your favorite take live."
                     },
                     {
-                      "title": "Blocați compoziția",
-                      "description": "Regenerați, editați sau încărcați propriile referințe înainte de a vă angaja în mișcare."
-                    }
-                  ]
-                }
-              },
-              {
-                "icon": "languageStreams",
-                "title": "Pre-Vis Animatic",
-                "description": "Privește scena cum respiră. Examinați o animație complet asamblată - fotografii cusute, mișcare Ken Burns și sunet blocat - în Screening Room. Auditează ritmul, distribuie pentru feedback și asigură-te că tăierea funcționează înainte de a te angaja în videoclip.",
-                "screenshot": "Pre-Vis Animatic — fotografii cusute, mișcare Ken Burns și sunet blocat",
-                "learnMore": {
-                  "items": [
-                    {
-                      "title": "Animatic asamblat",
-                      "description": "Examinați fotografiile cusute, mișcarea lui Ken Burns și sunetul blocat în Screening Room."
+                      "title": "IAD Smart Retake & Direct Video",
+                      "description": "Refine camera motion, subject physics, or facial performance with the Intelligent Assistant Director and Direct Video pre-flight controls."
                     },
                     {
-                      "title": "Auditează și distribuie",
-                      "description": "Auditează ritmul, distribuie pentru feedback și asigură-te că tăierea funcționează înainte de a te angaja în videoclip."
-                    }
-                  ]
-                }
-              },
-              {
-                "icon": "videoAgent",
-                "title": "Clips Agent",
-                "description": "Odată ce Pre-Vis este aprobat, Clips Agent preia controlul, redând clipuri de mișcare de înaltă fidelitate care respectă strict imaginile și referințele de continuitate aprobate.",
-                "screenshot": "Clips Agent — clipuri de mișcare de înaltă fidelitate din fotografii aprobate",
-                "learnMore": {
-                  "items": [
-                    {
-                      "title": "După aprobarea Pre-Vis",
-                      "description": "Clips Agent redă mișcarea numai după ce animaticul Pre-Vis este aprobat."
+                      "title": "Per-stream localized shot takes",
+                      "description": "Switch between your English Master take and regenerated localized clips for spoken dialogue and in-scene signage per language stream."
                     },
                     {
-                      "title": "Aderenta stricta",
-                      "description": "Clipurile de mișcare de înaltă fidelitate respectă strict fotografiile aprobate și referințele de continuitate."
+                      "title": "Dialogue-free stem readiness",
+                      "description": "Extract embedded clip audio into a dialogue-free SFX and ambience stem so localized dubs retain original foley and room tone."
                     }
                   ]
                 }
@@ -708,79 +884,111 @@
             ]
           },
           {
-            "id": "publish",
+            "id": "publish-distribute",
             "label": "Publicați și distribuiți",
             "headline": "Expediați comandantul sau localizați pentru întreaga lume.",
             "description": "Când scena este terminată, activele sunt deja unificate. Finalizați editarea, localizați conținutul audio și distribuiți-l direct către publicul dvs.",
             "features": [
               {
-                "icon": "shipPackage",
-                "title": "Mixerul",
-                "description": "Un editor de scene intuitiv, încorporat. Tăiați clipurile, reglați rampele de viteză, adăugați suprapuneri de text și aplicați filigrane fără a părăsi studioul.",
-                "screenshot": "Mixerul — tăiați clipuri, rampe de viteză, suprapuneri de text și filigrane",
+                "icon": "mixer",
+                "title": "The Mixer",
+                "description": "A commercial-grade broadcast scene editor and stitching console built directly into the studio. Preview your cut on a 16:9 Broadcast Reference Monitor paired with a real-time Stereo VU / Peak Meter (`-60` to `0 dBFS`, `-14 LUFS` target), inspect cut points with a side-by-side Match-Cut Continuity Loupe, shape J-Cut and L-Cut audio overlaps (`-0.3s` / `+0.3s`), choose dynamic Optical Hold Modes (`103% Ken Burns Push` or `Ping-Pong Tail`), mix across a 6-lane timeline (`V1 Video`, `A0 Stem`, `A1 Dialogue`, `A2 VO`, `A3 SFX`, `A4 Score`) with `-8 dB` Auto-Ducking, apply 1-click watermark crops and text overlays, and cloud-render EBU R128 (`-14 LUFS`) masters.",
+                "screenshot": "The Mixer — Broadcast Reference Monitor, Stereo VU Meter, Match-Cut Continuity Loupe, J/L-Cut overlaps, 6-lane timeline with -8 dB Auto-Ducking, and EBU R128 loudness",
                 "learnMore": {
                   "items": [
                     {
-                      "title": "Editor de scene încorporat",
-                      "description": "Tăiați clipurile și reglați rampele de viteză direct în studio."
+                      "title": "Broadcast Reference Monitor & Stereo VU / LUFS Meter",
+                      "description": "Preview your stitched sequence on a 16:9 reference monitor beside a real-time stereo peak and loudness meter calibrated to -14.0 LUFS web and -24.0 LKFS broadcast targets."
                     },
                     {
-                      "title": "Finisaje",
-                      "description": "Adăugați suprapuneri de text și aplicați filigrane fără a exporta într-un editor extern."
+                      "title": "Match-Cut Continuity Loupe & J/L-Cut audio overlaps",
+                      "description": "Hover any transition pill to compare the Out-Frame of Shot N against the In-Frame of Shot N+1 side by side while dialing in -0.3s J-cut lead-ins and +0.3s L-cut audio tails."
+                    },
+                    {
+                      "title": "6-lane timeline with -8 dB Auto-Ducking envelope",
+                      "description": "Mix V1 Video, A0 Dialogue-Free Stem, A1 Dialogue, A2 Narration, A3 SFX, and A4 Score with a visual gain-reduction curve that automatically ducks music -8 dB under speech."
+                    },
+                    {
+                      "title": "Optical Hold Modes & elastic dub alignment",
+                      "description": "Replace static freeze-frames with a 103% Ken Burns Push Zoom or Ping-Pong Tail Loop and slow video clips down to 67% speed so longer dubbed dialogue fits naturally."
+                    },
+                    {
+                      "title": "1-click watermark crop, text overlays & EBU R128 export",
+                      "description": "Apply preset edge crops to remove third-party watermarks, burn in lower-thirds or subtitles, and cloud-render stitched MP4 masters with EBU R128 loudness normalization."
                     }
                   ]
                 }
               },
               {
                 "icon": "languageStreams",
-                "title": "Fluxuri (multi-limbi)",
-                "description": "Extindeți-vă instantaneu acoperirea globală în 44 de limbi. Generați automat fluxuri de limbi alternative prin dublarea sunetului, sincronizarea mișcării buzelor sau regenerarea clipurilor de dialog localizate direct în scenă.",
-                "screenshot": "Fluxuri (Multi-Language) — audio dublat și clipuri de dialog localizate",
+                "title": "Streams (Multi-Language)",
+                "description": "Expand your global reach across 44 languages from one master timeline. Selectively regenerate only the specific shots containing spoken dialogue or in-scene text signage while retaining unselected master shots at zero extra credit cost. Extract embedded video audio and strip spoken dialogue (`htdemucs` neural stem separation) so generated SFX and music carry into every dub, and automatically align longer translated dialogue using elastic video slow-down (slowing a `10s` clip up to `15s` at `67%` speed), hybrid optical holds, or pitch-preserved audio tempo matching—while directing in a localized Studio UI.",
+                "screenshot": "Streams (Multi-Language) — Selective shot regeneration vs retained master shots, dialogue-free stem extraction, and elastic slow-video dub alignment",
                 "learnMore": {
                   "items": [
                     {
-                      "title": "Acoperire globală",
-                      "description": "Generați automat fluxuri de limbi alternative în 44 de limbi direct în scenă."
+                      "title": "Selective shot regeneration & retained master clips",
+                      "description": "Select only the shots with spoken dialogue or in-scene signage to regenerate in your target language while unselected action shots automatically retain the master video clip."
                     },
                     {
-                      "title": "Dub, sincronizare buzelor sau regenerare",
-                      "description": "Localizați fiecare fotografie prin dublarea sunetului, sincronizarea mișcării buzelor sau regenerarea clipurilor de dialog localizate."
+                      "title": "Dialogue-free stem extraction (keep generated SFX & music)",
+                      "description": "Neural stem separation extracts embedded video audio and removes spoken English dialogue while preserving generated foley, room ambience, and music for clean MP3 dubbing."
+                    },
+                    {
+                      "title": "Elastic video slow-down & multi-method dub alignment",
+                      "description": "Align longer translated dialogue by slowing a 10s video clip up to 15s (down to 67% speed), pairing an 80% slow-down with a 103% zoom hold, or fitting dub audio tempo up to 1.25x."
+                    },
+                    {
+                      "title": "Regenerated dialogue & signage clips across 44 languages",
+                      "description": "Regenerate localized dialogue takes and in-scene signage clips directly within the scene across 44 languages so visuals, stencils, and speech match every audience."
+                    },
+                    {
+                      "title": "Localized Studio UI",
+                      "description": "Direct and produce in your native interface across English, Spanish, Portuguese, Hindi, Simplified Chinese, and Arabic."
                     }
                   ]
                 }
               },
               {
                 "icon": "promoTrailers",
-                "title": "Promoție și Trailere",
-                "description": "Tăiați remorci promoționale pregătite pentru socializare în orice moment în timpul producției. Generați versiuni în mai multe limbi optimizate pentru formate orizontale sau verticale.",
-                "screenshot": "Promoții și remorci — remorci orizontale și verticale în mai multe limbi",
+                "title": "Promo & Trailers",
+                "description": "Cut high-converting theatrical teasers, episodic recaps, and social-ready promo trailers at any time during production. Pull hero takes from your scene vault, reframe for horizontal (`16:9`) or vertical (`9:16`) feeds, and generate multi-language versions with localized title cards and voiceover hooks.",
+                "screenshot": "Promo & Trailers — multi-language horizontal and vertical trailers",
                 "learnMore": {
                   "items": [
                     {
-                      "title": "Trailere pregătite pentru socializare",
-                      "description": "Tăiați remorci promoționale în orice moment în timpul producției."
+                      "title": "Social-ready trailers at any stage",
+                      "description": "Cut promo trailers, theatrical teasers, and episodic recaps at any point during production."
                     },
                     {
-                      "title": "Formate în mai multe limbi",
-                      "description": "Generați versiuni în mai multe limbi optimizate pentru formate orizontale sau verticale."
+                      "title": "Horizontal & vertical social formats",
+                      "description": "Generate multi-language versions optimized for horizontal 16:9 YouTube feeds or vertical 9:16 Shorts, Reels, and TikTok."
+                    },
+                    {
+                      "title": "Localized hooks & title cards",
+                      "description": "Render localized trailer streams with translated voiceover hooks, burned-in captions, and market-specific title cards."
                     }
                   ]
                 }
               },
               {
                 "icon": "shipPackage",
-                "title": "Publicare directă",
-                "description": "Exportați MP4 master final sau lăsați SceneFlow să genereze automat miniaturi și descrieri pentru a publica scene, capitole și promoții direct pe YouTube, TikTok și Facebook.",
-                "screenshot": "Publicare directă — Export MP4 și publicare directă pe YouTube, TikTok și Facebook",
+                "title": "Direct Publishing",
+                "description": "Export the final EBU R128-normalized master MP4 in 1080p or 4K, download complete production stems, or let SceneFlow auto-generate high-CTR thumbnails, localized titles, chapter markers, and descriptions to publish scenes, chapters, and promos directly to YouTube, TikTok, and Facebook.",
+                "screenshot": "Direct Publishing — MP4 export and direct publishing to YouTube, TikTok, and Facebook",
                 "learnMore": {
                   "items": [
                     {
-                      "title": "Master MP4 sau direct social",
-                      "description": "Exportați MP4 master final sau publicați scene, capitole și promoții direct pe YouTube, TikTok și Facebook."
+                      "title": "Master MP4 or direct social publishing",
+                      "description": "Export the final master MP4 or publish scenes, chapters, and promos directly to YouTube, TikTok, and Facebook."
                     },
                     {
-                      "title": "Metadate generate automat",
-                      "description": "Lăsați SceneFlow să genereze automat miniaturi și descrieri pentru fiecare lansare."
+                      "title": "Auto-generated thumbnails & metadata",
+                      "description": "Let SceneFlow auto-generate high-contrast thumbnails, localized titles, descriptions, tags, and chapter markers for every release."
+                    },
+                    {
+                      "title": "Archival stems & screenplay bundle",
+                      "description": "Download stitched video masters, isolated dialogue and SFX stems, subtitle files, and formatted screenplays in one production package."
                     }
                   ]
                 }
@@ -797,44 +1005,52 @@
         "features": [
           {
             "icon": "screeningPlayer",
-            "title": "Un jucător unificat",
-            "description": "Comutați fără probleme între animațiile Pre-Vis, scene, capitole, trailere și masterul final. Comutați fluxurile de limbă din mers la audiție la localizări dublate, sincronizate pe buze sau regenerate prin captură — întotdeauna blocat la tăierea exactă din Mixer.",
-            "screenshot": "Player Screening Room",
+            "title": "One Unified Player",
+            "description": "Toggle seamlessly between Pre-Vis animatics, stitched scenes, multi-scene chapters, promo trailers, and your final master. Switch Language Streams on the fly to audition dubbed audio, dialogue-free stem mixes, and regenerated dialogue or signage clips—always frame-locked to the exact cut from the Mixer.",
+            "screenshot": "Screening Room player",
             "learnMore": {
               "items": [
                 {
-                  "title": "Fiecare etapă într-o singură vedere",
-                  "description": "Comutați fără efort între Pre-Vis, scene, capitole, promoții și masterul final."
+                  "title": "Every milestone in one theatre",
+                  "description": "Switch effortlessly among Pre-Vis animatics, individual scenes, chapters, promos, and the final master."
                 },
                 {
-                  "title": "Schimbarea de limbă live",
-                  "description": "Ascultați orice flux de limbă — dublat, sincronizat cu buze sau regenerat prin captură — din mers."
+                  "title": "Live language stream auditioning",
+                  "description": "Audition any Language Stream—dubbed audio, lip-sync, or regenerated dialogue and signage clips—on the fly without reloading the timeline."
                 },
                 {
-                  "title": "Cadru blocat pe mixer",
-                  "description": "Fiecare flux redă editarea exactă și sincronizarea redate în Mixer."
+                  "title": "Frame-locked to the Broadcast Mixer",
+                  "description": "Every stream plays the exact stitch transitions, J/L-cut overlaps, auto-ducking curves, and loudness normalization rendered in the Mixer."
+                },
+                {
+                  "title": "Incremental episodic shipping",
+                  "description": "Ship a finished 3–5 minute scene, an 8–12 minute chapter, or a social promo immediately while downstream chapters continue rendering."
                 }
               ]
             }
           },
           {
             "icon": "screeningCollab",
-            "title": "Colaborare precisă la cadru",
-            "description": "Opriți exportul brutelor către e-mail. Partajați un link de screening privat unde colaboratorii și investitorii urmăresc în timp real și plasează note direct pe imagine, cu notificări instantanee trimise direct pe telefon.",
-            "screenshot": "Recenzie distribuită",
+            "title": "Frame-Accurate Collaboration",
+            "description": "Stop exporting rough cuts to email. Share a private screening link where collaborators, sound editors, localization leads, and investors watch full-resolution playback in real time and drop timestamped notes directly on the picture—with instant notifications sent straight to your phone.",
+            "screenshot": "Shared review",
             "learnMore": {
               "items": [
                 {
-                  "title": "Link-uri de screening private",
-                  "description": "Evaluatorii urmăresc redarea la rezoluție completă și lasă note marcate de timp pe imagine."
+                  "title": "Private stakeholder screening links",
+                  "description": "Reviewers watch full-resolution playback across any language stream and leave frame-accurate timestamped notes on the picture."
                 },
                 {
-                  "title": "Fără exporturi de fișiere brute",
-                  "description": "Colectați feedback-ul părților interesate într-un singur loc, fără a trimite fișiere video grele."
+                  "title": "Zero rough-cut file exports",
+                  "description": "Collect creative, legal, and localization feedback in one centralized review thread without uploading or mailing heavy video files."
                 },
                 {
-                  "title": "Alerte mobile instantanee",
-                  "description": "Noile note ale recenzentului vă anunță imediat pe telefon în timp ce direcționați pe desktop."
+                  "title": "Instant mobile notifications",
+                  "description": "New reviewer notes notify you immediately on your phone so you can approve or dispatch revisions while directing on desktop."
+                },
+                {
+                  "title": "Direct link back to the Shot Rail",
+                  "description": "Jump from any timestamped screening comment straight to the corresponding scene and shot in the Production Stage to execute the note."
                 }
               ]
             }

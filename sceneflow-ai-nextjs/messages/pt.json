@@ -267,44 +267,52 @@
         "features": [
           {
             "icon": "newSeries",
-            "title": "Nova série",
-            "description": "Apresente o conceito de sua série ou canal em linguagem simples. O refinamento interativo da IA ​​aprimora sua premissa e gera uma linha de base da temporada com vários episódios, completa com arcos de enredo abrangentes e detalhamentos de episódios.",
-            "screenshot": "Criar nova série — intenção, Esclarecer e Confirmar, Gerar série",
+            "title": "New Series",
+            "description": "Pitch your series, anthology, or episodic channel concept in plain language. Interactive AI refinement sharpens your premise, target audience, and visual tone before generating a complete multi-episode season baseline—complete with overarching plot arcs, recurring character hooks, and episode-by-episode breakdowns.",
+            "screenshot": "Create New Series — intent, Clarify and Confirm, Generate Series",
             "learnMore": {
               "items": [
                 {
-                  "title": "Sua intenção",
-                  "description": "Apresente a premissa, o formato, o público-alvo e o estilo de arte visual em linguagem simples."
+                  "title": "Plain-language series pitch",
+                  "description": "Pitch the premise, episode format, target demographic, and visual art style in plain language."
                 },
                 {
-                  "title": "Refinamento interativo",
-                  "description": "Esclarecer e confirmar aprimora a sinopse da temporada com você antes que qualquer coisa seja gerada."
+                  "title": "Interactive Clarify & Confirm",
+                  "description": "Clarify and Confirm sharpens the season synopsis, tone, and thematic pillars with you before anything is generated."
                 },
                 {
-                  "title": "Linha de base da temporada",
-                  "description": "Generate Series constrói um arco de temporada de cinco episódios que você pode expandir a qualquer momento."
+                  "title": "Multi-episode season baseline",
+                  "description": "Generate Series builds a structured five-episode season arc with individual synopses and story hooks that you can expand anytime."
+                },
+                {
+                  "title": "World & genre calibration",
+                  "description": "Lock visual aesthetics, era settings, and recurring narrative motifs up front so every episode shares the same creative DNA."
                 }
               ]
             }
           },
           {
             "icon": "seriesReview",
-            "title": "Bíblia da Temporada e Continuidade",
-            "description": "Leia ou ouça a visão geral narrada da temporada e a lista de episódios. SceneFlow bloqueia seus tópicos de história, perfis de elenco, locais e acessórios de assinatura em um Reference Library compartilhado que cada episódio herda.",
-            "screenshot": "Visão geral, Episódios, Consistência, Continuidade — Elenco, Locações, Adereços, Cenários",
+            "title": "Season Bible & Continuity",
+            "description": "Read or listen to the narrated season overview and episode slate. SceneFlow locks your story threads, cast profiles, recurring locations, and signature props into a shared Reference Library that every episode inherits automatically—eliminating continuity drift across multi-part storytelling.",
+            "screenshot": "Overview Listen, Episodes Listen, Consistency, Continuity — Cast, Locations, Props, Settings",
             "learnMore": {
               "items": [
                 {
-                  "title": "Leia ou ouça",
-                  "description": "Audite a visão geral da temporada e a sinopse de cada episódio com narração de áudio integrada."
+                  "title": "Narrated season & episode audit",
+                  "description": "Audit the overarching season overview and every individual episode synopsis with built-in studio audio narration."
                 },
                 {
-                  "title": "Consistência da história",
-                  "description": "A estética, os principais eventos da trama e os fios narrativos permanecem bloqueados durante toda a temporada."
+                  "title": "Cross-episode story consistency",
+                  "description": "Visual aesthetics, canonical plot events, and character relationship threads stay locked across the entire season."
                 },
                 {
-                  "title": "Continuidade compartilhada",
-                  "description": "Elenco, locações, adereços e configurações são transferidos automaticamente para cada episódio que você produz."
+                  "title": "Shared Reference Library inheritance",
+                  "description": "Cast portraits, voice profiles, wardrobes, locations, and signature props carry automatically into every episode you produce."
+                },
+                {
+                  "title": "Centralized canon management",
+                  "description": "Update a character look, location plate, or prop once in the Series Bible to propagate the change to future episodes."
                 }
               ]
             }
@@ -312,75 +320,87 @@
           {
             "icon": "seriesResonance",
             "title": "Audience Resonance",
-            "description": "Teste o arco da temporada em relação ao seu público-alvo antes de escrever um único roteiro. Revise as pontuações de ressonância episódio por episódio e aplique melhorias na história baseadas em dados com um clique – somente quando você concordar com a nota.",
-            "screenshot": "Análise Audience Resonance, seguida de insights acionáveis não aplicados",
+            "description": "Test your season arc against your target demographic before writing a single script. Review episode-by-episode resonance scores, binge-retention curves, and structural critiques, then apply data-backed story improvements with one click—only when you agree with the note.",
+            "screenshot": "Audience Resonance analysis, then Actionable Insights, unapplied",
             "learnMore": {
               "items": [
                 {
-                  "title": "Pontuação demográfica",
-                  "description": "As pontuações e a análise estrutural revelam como sua temporada atinge seu público-alvo."
+                  "title": "Demographic & retention scoring",
+                  "description": "Multi-axis scores and structural analysis reveal how your season arc and episode cliffhangers land with your target audience."
                 },
                 {
-                  "title": "Prerrogativa do diretor",
-                  "description": "Actionable Insights atualizam sua série somente quando você decide aplicá-los."
+                  "title": "Episode-by-episode diagnostics",
+                  "description": "Spot mid-season pacing dips, character underutilization, or tonal drift across the full episode slate before scripting."
+                },
+                {
+                  "title": "Director's prerogative",
+                  "description": "Actionable Insights update your series bible and episode outlines only when you explicitly choose to apply them."
                 }
               ]
             }
           },
           {
             "icon": "seriesDirector",
-            "title": "O diretor da série",
-            "description": "Remodele toda a temporada por voz ou texto. Mude o tom, aumente as apostas ou refaça o arco de um personagem em todos os episódios de uma vez, mantendo o resto do enredo intacto.",
-            "screenshot": "Diretor de Série — direção, foco, aceitar",
+            "title": "The Series Director",
+            "description": "Reshape the entire season by voice or text. Shift the dramatic tone, raise the stakes, introduce a new antagonist, or rework a character arc across all episodes at once while keeping the rest of your storyline and continuity bible intact.",
+            "screenshot": "Series Director — direction, focus, accept",
             "learnMore": {
               "items": [
                 {
-                  "title": "Direção em linguagem simples",
-                  "description": "Fale ou digite sua nota e alvo do enredo, personagens, arcos de episódios, tom ou cenário."
+                  "title": "Plain-language season direction",
+                  "description": "Speak or type your creative note and target overarching plot, characters, episode arcs, tone, or world setting."
                 },
                 {
-                  "title": "Atualizações cirúrgicas",
-                  "description": "Nada muda até que você aceite a revisão, e os tópicos da história não relacionados permanecem intactos."
+                  "title": "Surgical multi-episode updates",
+                  "description": "Nothing changes until you accept the previewed revision, and unrelated story threads stay completely untouched."
                 },
                 {
-                  "title": "Recomendações guiadas",
-                  "description": "Aplique melhorias de história sugeridas pela IA ou controle você mesmo cada escolha criativa."
+                  "title": "Guided AI recommendations",
+                  "description": "Apply one-click story improvements surfaced by Audience Resonance or steer every creative choice yourself."
                 }
               ]
             }
           },
           {
             "icon": "directEpisode",
-            "title": "Direção em nível de episódio",
-            "description": "Amplie qualquer episódio individual para retrabalhar seu enredo, ritmo ou gancho isoladamente - sem desestabilizar o resto da temporada.",
-            "screenshot": "Episódios — Dirigir este episódio; outros episódios inalterados",
+            "title": "Episode-Level Direction",
+            "description": "Zoom into any individual episode to rework its plot outline, act structure, pacing, or cold-open hook in isolation—without destabilizing neighboring episodes or mutating the rest of your season slate.",
+            "screenshot": "Episodes — Direct this episode, other episodes unchanged",
             "learnMore": {
               "items": [
                 {
-                  "title": "Reescritas isoladas",
-                  "description": "Alterações diretas no contorno e nas batidas de um único episódio sem alterar os episódios vizinhos."
+                  "title": "Isolated episode rewrites",
+                  "description": "Direct changes to a single episode's synopsis, act beats, and character focus without altering neighboring episodes."
                 },
                 {
-                  "title": "Integridade da temporada",
-                  "description": "A Bíblia da temporada abrangente e a lista de episódios restantes permanecem bloqueadas."
+                  "title": "Locked season integrity",
+                  "description": "The overarching season bible, shared cast continuity, and remaining episode slate stay locked while you iterate."
+                },
+                {
+                  "title": "Pre-launch beat polishing",
+                  "description": "Refine individual episode hooks and cliffhangers until the episode is ready to launch into the Blueprint Room."
                 }
               ]
             }
           },
           {
             "icon": "startEpisode",
-            "title": "Lançamento de episódio com um clique",
-            "description": "Quando o esboço de um episódio atingir o alvo, lance-o diretamente no Blueprint Room com sua sinopse, ritmos da história, elenco e mundo já conectados.",
-            "screenshot": "Iniciar projeto — roteiro preliminar e elenco já definidos para o episódio",
+            "title": "One-Click Episode Launch",
+            "description": "When an episode's outline hits the mark, launch it straight into the Blueprint Room with a single click—bringing its synopsis, narrative beats, recurring cast, voice profiles, locations, and visual style automatically wired in.",
+            "screenshot": "Start Project — outline and cast already on the episode",
             "learnMore": {
               "items": [
                 {
-                  "title": "Transferência instantânea",
-                  "description": "Inicie qualquer episódio diretamente no Blueprint Room com um único clique."
+                  "title": "Instant Blueprint handoff",
+                  "description": "Launch any approved episode directly into the Blueprint Room with a single click to begin detailed beat and script work."
                 },
                 {
-                  "title": "DNA pré-conectado",
-                  "description": "O esboço do episódio, a sinopse, o ritmo da história, o elenco e os locais viajam automaticamente."
+                  "title": "Pre-wired creative DNA",
+                  "description": "The episode outline, synopsis, story beats, cast profiles, wardrobes, and locations travel automatically with zero re-entry."
+                },
+                {
+                  "title": "Parallel episode production",
+                  "description": "Spin up multiple episodes from the same season slate as independent projects that share the same canonical series assets."
                 }
               ]
             }
@@ -395,84 +415,92 @@
         "features": [
           {
             "icon": "startBlueprint",
-            "title": "Inicie o Blueprint",
-            "description": "Traga um episódio de sua série com esboço e elenco pré-carregados ou lance um conceito de filme totalmente novo do zero e deixe a IA estruturar o tratamento fundamental.",
-            "screenshot": "Episódio da série já conhecido, ou Inicie seu projeto — intenção, Valide e aprimore com IA, Gere o Blueprint",
+            "title": "Start the Blueprint",
+            "description": "Bring in an episode from your series slate with its outline, cast, and world pre-loaded, or pitch a brand-new standalone film concept from scratch and let AI validate, enhance, and structure the foundational treatment.",
+            "screenshot": "Series episode already known, or Start Your Project — intent, Validate & Enhance with AI, Generate Blueprint",
             "learnMore": {
               "items": [
                 {
-                  "title": "De Series Room",
-                  "description": "Os episódios da série chegam com esboço, sinopse, batidas e elenco já anexados."
+                  "title": "Seamless from Series Room",
+                  "description": "Series episodes arrive with their outline, synopsis, story beats, recurring cast, and locations already attached."
                 },
                 {
-                  "title": "Projeto independente",
-                  "description": "Apresente um novo conceito de filme, refine-o com validação de IA e gere um tratamento completo."
+                  "title": "Standalone film or short",
+                  "description": "Pitch a new film concept in plain language, refine it with AI validation, and generate a complete film treatment."
+                },
+                {
+                  "title": "Narrated treatment overview",
+                  "description": "Read or listen to the narrated logline, synopsis, and creative reasoning to verify the story foundation immediately."
                 }
               ]
             }
           },
           {
             "icon": "treatment",
-            "title": "A folha de batida",
-            "description": "Estruture a espinha dorsal do seu filme. Leia ou ouça sua planilha de batidas narrativa e ajuste o ritmo aqui – cada batida que você trava no Blueprint Room gera um capítulo no Production Stage.",
-            "screenshot": "Aba Beats, com Ouvir",
+            "title": "The Beat Sheet",
+            "description": "Structure the dramatic spine of your film before dialogue is written. Read or listen to your narrative beat sheet, reorder acts, and fine-tune scene pacing here—every beat you lock in the Blueprint Room drives a dedicated chapter in the Production Stage.",
+            "screenshot": "Beats tab, with Listen",
             "learnMore": {
               "items": [
                 {
-                  "title": "Espinha narrativa",
-                  "description": "As batidas são criadas e bloqueadas no Blueprint Room antes do início da geração do script."
+                  "title": "Narrative spine",
+                  "description": "Beats are authored and locked in the Blueprint Room before script generation begins."
                 },
                 {
-                  "title": "Andando primeiro",
-                  "description": "Otimizar a planilha de ritmos aqui garante que o roteiro seja construído com uma estrutura dramática rígida."
+                  "title": "Pacing & structural discipline",
+                  "description": "Optimizing the beat sheet here ensures the multi-scene screenplay builds with tight dramatic structure and clear turning points."
                 },
                 {
-                  "title": "Mapeamento de batida para capítulo",
-                  "description": "Production Stage transforma cada batida em um capítulo."
+                  "title": "Beat-to-chapter mapping",
+                  "description": "Production Stage turns each beat into a chapter."
+                },
+                {
+                  "title": "Narrated beat audition",
+                  "description": "Listen to the beat sheet read aloud to feel the rhythm and momentum of the story before compiling the script."
                 }
               ]
             }
           },
           {
             "icon": "castLocations",
-            "title": "Elenco e design mundial",
-            "description": "Defina seus personagens, guarda-roupa e locais principais antes que o roteiro seja gerado – garantindo que o roteiro seja escrito com base no elenco e nas configurações exatas desde a primeira página.",
-            "screenshot": "Aba Personagens e, em seguida, Cenário da História",
+            "title": "Cast & World Design",
+            "description": "Define your characters, vocal identities, period wardrobes, and primary locations before the screenplay is generated—ensuring the script is written around your exact cast, blocking environments, and visual atmosphere from page one.",
+            "screenshot": "Characters tab, then Setting on Story",
             "learnMore": {
               "items": [
                 {
-                  "title": "Perfis de personagens",
-                  "description": "Direcione seus perfis de elenco antecipadamente para que o diálogo e o bloqueio correspondam a cada personagem."
+                  "title": "Rich character profiles",
+                  "description": "Direct your cast profiles, backstories, and physical attributes up front so dialogue and blocking match each character."
                 },
                 {
-                  "title": "Mundo e locais",
-                  "description": "Estabeleça configurações primárias na guia História para ancorar o ambiente de cada cena."
+                  "title": "World, era & locations",
+                  "description": "Establish primary settings, lighting palettes, and cinematic style on the Story tab to anchor every scene's environment."
                 },
                 {
-                  "title": "Refatoração zero de script",
-                  "description": "O bloqueio de elenco e locais antes da geração do script elimina reescritas dispendiosas no Production Stage."
+                  "title": "Zero script refactoring",
+                  "description": "Locking cast and locations before script generation eliminates costly rewrites and continuity mismatches on the Production Stage."
                 }
               ]
             }
           },
           {
             "icon": "blueprintDirector",
-            "title": "O Diretor do Blueprint",
-            "description": "Fale ou digite suas anotações da história para revisar batidas, personagens ou detalhes do mundo. Visualize uma revisão equilibrada lado a lado – nada muda em seu tratamento até que você aprove o corte.",
-            "screenshot": "Blueprint Diretor — direção, foco, pré-visualização, Aplicar revisão",
+            "title": "The Blueprint Director",
+            "description": "Speak or type your story notes to revise beats, character motivations, or world details without prompt engineering. Preview a balanced revision side-by-side with creative reasoning—nothing changes in your treatment until you approve the cut.",
+            "screenshot": "Blueprint Director — direction, focus, preview, Apply revision",
             "learnMore": {
               "items": [
                 {
-                  "title": "Notas direcionadas",
-                  "description": "Fale ou digite sua direção e concentre a revisão em batidas, personagens ou história."
+                  "title": "Targeted voice or text notes",
+                  "description": "Speak or type your direction and focus the revision surgically on Beats, Characters, or Story."
                 },
                 {
-                  "title": "Visualização lado a lado",
-                  "description": "Revise uma revisão balanceada antes de confirmar qualquer alteração em seu Blueprint."
+                  "title": "Side-by-side revision preview",
+                  "description": "Review a balanced revision and its underlying story reasoning before committing any changes to your Blueprint."
                 },
                 {
-                  "title": "Você segura a fechadura",
-                  "description": "Nada no seu tratamento muda até que você aplique explicitamente a revisão."
+                  "title": "You hold the creative lock",
+                  "description": "Nothing in your treatment, beat sheet, or character roster changes until you explicitly apply the revision."
                 }
               ]
             }
@@ -480,35 +508,43 @@
           {
             "icon": "blueprintResonance",
             "title": "Audience Resonance",
-            "description": "Pontue o seu tratamento em relação ao perfil cultural e demográfico do seu público-alvo. Identifique antecipadamente as lacunas de ritmo estrutural e aplique recomendações direcionadas no Blueprint Director.",
-            "screenshot": "Audience Resonance — público salvo, pontuações, recomendações não aplicadas",
+            "description": "Score your treatment against your target audience's cultural, genre, and demographic profile before generating the script. Catch structural pacing gaps or weak character stakes early and apply targeted recommendations in the Blueprint Director.",
+            "screenshot": "Audience Resonance — saved audience, scores, recommendations unapplied",
             "learnMore": {
               "items": [
                 {
-                  "title": "Validação de pré-script",
-                  "description": "Analise seu tratamento em relação ao seu público-alvo para ver as pontuações das categorias e notas da história."
+                  "title": "Pre-script audience validation",
+                  "description": "Analyze your treatment against your saved target audience to inspect category scores, strengths, and story risks."
                 },
                 {
-                  "title": "Aplicação seletiva",
-                  "description": "As recomendações apenas modificam seu Blueprint quando você decide aplicá-las."
+                  "title": "Actionable story remedies",
+                  "description": "Each insight pairs a structural diagnosis with a concrete rewrite recommendation tailored to your beat sheet and cast."
+                },
+                {
+                  "title": "Selective one-click application",
+                  "description": "Recommendations only modify your Blueprint when you choose to apply them in the Blueprint Director."
                 }
               ]
             }
           },
           {
             "icon": "goToProduction",
-            "title": "Luz verde para produção",
-            "description": "Quando o tratamento, a planilha de batimentos e o elenco estiverem bloqueados, entre no Production Stage. SceneFlow compila seu script completo de vários capítulos diretamente de seu Blueprint aprovado.",
-            "screenshot": "Vá para Production Stage — enredo, momentos-chave e elenco já definidos.",
+            "title": "Greenlight to Production",
+            "description": "When the treatment, beat sheet, and cast are locked, step onto the Production Stage. SceneFlow compiles your full multi-chapter screenplay directly from your approved Blueprint—mapping every beat into a production chapter with cast and continuity pre-wired.",
+            "screenshot": "Go to Production Stage — storyline, beats, and cast already set",
             "learnMore": {
               "items": [
                 {
-                  "title": "Compilação perfeita",
-                  "description": "Entrar no Production Stage compila o script completo diretamente do Blueprint aprovado."
+                  "title": "Seamless script compilation",
+                  "description": "Stepping onto the Production Stage compiles the full multi-scene screenplay directly from your approved Blueprint."
                 },
                 {
-                  "title": "Fundação bloqueada",
-                  "description": "Seu enredo, estrutura de batida e elenco chegam prontos para cena e direção de filmagem."
+                  "title": "Locked continuity foundation",
+                  "description": "Your storyline, beat-to-chapter structure, cast profiles, and locations arrive ready for scene and shot direction."
+                },
+                {
+                  "title": "Shareable Blueprint review",
+                  "description": "Share the locked Blueprint with co-creators or executive stakeholders for sign-off before commencing production."
                 }
               ]
             }
@@ -522,105 +558,151 @@
         "promise": "O Blueprint está bloqueado. Seu elenco está lançado. Agora, entre no Production Stage. Cada capítulo, cena e cena são organizados em um fluxo de trabalho linear. Você direciona a intenção; agentes inteligentes executam a geração.",
         "groups": [
           {
-            "id": "script",
+            "id": "direct-control",
             "label": "Direto e Controle",
             "headline": "Fale a linguagem do filme, não a sintaxe das instruções.",
             "description": "Não perca tempo digitando palavras-chave entre colchetes. O Production Stage entende a direção natural, aplicando sua visão em toda a cena ou até a cena específica.",
             "features": [
               {
-                "icon": "scriptResonance",
-                "title": "O diretor de cena e filmagem",
-                "description": "Digite ou fale sua direção em linguagem simples. Diga ao agente quem está no quadro, onde a câmera se move e qual é o ritmo emocional. O Shot Director grava automaticamente os complexos prompts subjacentes para suas fotos e clipes.",
-                "screenshot": "The Scene & Shot Director – direção em linguagem simples para fotos e clipes",
+                "icon": "sceneWorkflow",
+                "title": "Fluxo de Produção de Cena (Tela Cheia)",
+                "description": "Abra o Estúdio de Produção de Cena em tela cheia para dirigir cada etapa a partir de uma barra linear de 8 abas (Direction · Audio · Music · Continuity · Stills · Clips · Mixer · Streams). Reordene planos no trilho esquerdo com indicadores de prontidão ao vivo, inspecione o palco 16:9 ao lado de cartões estruturados de câmera, marcação, emoção e iluminação e acompanhe a conclusão da cena de ponta a ponta.",
+                "screenshot": "Scene Production Workflow (Fullscreen) — 8-tab linear studio, sortable Shot Rail, and structured Shot Direction Workbench",
                 "learnMore": {
                   "items": [
                     {
-                      "title": "Linguagem simples",
-                      "description": "Digite ou fale quem está no quadro, onde a câmera se move e qual é a batida emocional."
+                      "title": "8-tab fullscreen linear studio",
+                      "description": "Move seamlessly across Direction, Audio, Music, Continuity, Stills, Clips, Mixer, and Streams inside a distraction-free fullscreen workspace."
                     },
                     {
-                      "title": "Cena ou tiro",
-                      "description": "Aplique sua visão em toda a cena ou até a cena específica."
+                      "title": "Sortable Shot Rail & live badges",
+                      "description": "Drag to reorder shots in the left-hand rail while tracking real-time badges for Action, Dialogue, Narration, SFX, Music, Signage, Final 4K stills, and clips In the Can."
                     },
                     {
-                      "title": "Compilação imediata",
-                      "description": "O Shot Director grava automaticamente os prompts subjacentes para suas fotos e clipes."
-                    }
-                  ]
-                }
-              },
-              {
-                "icon": "castVisual",
-                "title": "A Biblioteca de Continuidade",
-                "description": "Consistência absoluta em toda a série. Gere automaticamente ou atribua manualmente imagens de referência para seu elenco, guarda-roupas, locações e acessórios essenciais para garantir que cada cena corresponda ao Blueprint.",
-                "screenshot": "A Biblioteca de Continuidade – elenco, guarda-roupas, locações e adereços essenciais",
-                "learnMore": {
-                  "items": [
-                    {
-                      "title": "Consistência da série",
-                      "description": "Mantenha o elenco, os guarda-roupas, os locais e os adereços essenciais unificados em cada cena."
+                      "title": "Structured Shot Direction Workbench",
+                      "description": "Inspect the 16:9 Still & Clip Stage beside structured cards for spoken beats, camera lens and motion, talent blocking and gaze, lighting, locked continuity refs, and compiled prompts."
                     },
                     {
-                      "title": "Gerar ou atribuir",
-                      "description": "Gere automaticamente imagens de referência ou atribua manualmente as suas próprias para corresponder ao Blueprint."
+                      "title": "End-to-end scene pipeline telemetry",
+                      "description": "Monitor readiness across direction, voice and score, keyframes, multi-take clips, broadcast mixing, and localized streams before publishing."
                     }
                   ]
                 }
               },
               {
                 "icon": "directShot",
-                "title": "Integração Audience Resonance",
-                "description": "Faça uma leitura da sala antes de renderizar. A IA analisa seu roteiro em relação ao seu público-alvo, fornecendo insights cena por cena. Aplique as instruções recomendadas instantaneamente ou confie em seu instinto e ignore-as.",
-                "screenshot": "Integração Audience Resonance – insights do público cena por cena",
+                "title": "The Scene & Shot Director",
+                "description": "Type or speak your direction in plain language. Tell the agent who is in the frame, where the camera moves, and what the emotional beat is. The Shot Director automatically writes the complex underlying prompts for your stills and clips while syncing camera lens, focal length, talent blocking, and lighting across the scene.",
+                "screenshot": "The Scene & Shot Director — plain-language direction for stills and clips",
                 "learnMore": {
                   "items": [
                     {
-                      "title": "Insights cena por cena",
-                      "description": "A IA analisa seu script em relação ao seu público-alvo antes de renderizá-lo."
+                      "title": "Plain-language film direction",
+                      "description": "Type or speak who is in the frame, where the camera moves, and what the emotional beat is without writing bracketed prompt syntax."
                     },
                     {
-                      "title": "Sua chamada",
-                      "description": "Aplique as instruções recomendadas instantaneamente ou confie em seu instinto e ignore-as."
-                    }
-                  ]
-                }
-              },
-              {
-                "icon": "audioAgent",
-                "title": "Planejador de Produção",
-                "description": "Estabeleça a geração de orçamento e cronograma em cada cena e capítulo usando créditos SceneFlow ou suas próprias chaves de API BYOK. Defina alvos estáticos e de recorte por foto antes de gastar o cálculo.",
-                "screenshot": "Planejador de produção — orçamento, cronograma e chaves de API BYOK",
-                "learnMore": {
-                  "items": [
-                    {
-                      "title": "Orçamento e cronograma",
-                      "description": "Estabeleça o orçamento e a geração do cronograma em cada cena e capítulo antes de renderizar."
+                      "title": "Scene-wide or per-shot precision",
+                      "description": "Apply atmospheric direction across the entire scene or drill down into an individual shot's framing, lens, blocking, and lighting."
                     },
                     {
-                      "title": "Créditos ou BYOK",
-                      "description": "Execute a geração usando créditos SceneFlow ou suas próprias chaves de API BYOK."
+                      "title": "Automatic prompt compilation",
+                      "description": "The Shot Director automatically writes and syncs the underlying keyframe and motion prompts for your stills and clips."
+                    },
+                    {
+                      "title": "Intelligent Assistant Director (IAD)",
+                      "description": "Request surgical revisions to camera angles, character posture, or scene tension in plain language while keeping unrelated beats untouched."
                     }
                   ]
                 }
               },
               {
                 "icon": "continuity",
-                "title": "Roteiro de Produção",
-                "description": "Criado para cineastas tradicionais e de IA. Visualize um roteiro limpo e formatado no estúdio e exporte em formatos padrão da indústria (PDF, FDX, Fountain). Use SceneFlow como uma sala de roteiro independente - ou combine seu roteiro com um Animatic pré-visualização e um trailer promocional para apresentar financiadores e garantir o financiamento do projeto.",
-                "screenshot": "Script de produção — visualização na plataforma e exportação de PDF, FDX e Fountain",
+                "title": "The Continuity Library",
+                "description": "Absolute visual and vocal consistency across your entire film or series. Automatically generate or manually assign locked reference portraits, multi-angle turnaround sheets, scene-specific wardrobes, locations, and essential props—ensuring every shot matches the Blueprint without character drift.",
+                "screenshot": "The Continuity Library — cast, wardrobes, locations, and essential props",
                 "learnMore": {
                   "items": [
                     {
-                      "title": "Visualização e exportação na plataforma",
-                      "description": "Visualize o script formatado no estúdio e exporte em formato PDF padrão da indústria, Final Draft FDX ou Fountain."
+                      "title": "Cast identity & turnaround locks",
+                      "description": "Anchor every character with diptych portraits, turnaround sheets, and locked voice profiles across every shot and episode."
                     },
                     {
-                      "title": "Para cineastas tradicionais",
-                      "description": "Use SceneFlow como uma plataforma inteligente de produção de roteiros sem gerar vídeo."
+                      "title": "Scene-specific wardrobes & props",
+                      "description": "Assign period or scene-specific wardrobes and essential hero props per shot so costumes and hand-held items stay unified."
                     },
                     {
-                      "title": "Argumento e financiamento do projeto",
-                      "description": "Embale seu roteiro com um Animatic pré-visualização e trailers promocionais para apresentar e adquirir financiamento para o projeto."
+                      "title": "Generate, upload, or surgically edit",
+                      "description": "Automatically generate reference images, upload custom studio plates, or refine details with the Intelligent Assistant Director."
+                    },
+                    {
+                      "title": "Continuity readiness gate",
+                      "description": "Verify that all cast, wardrobe, location, and prop anchors are locked in the Continuity tab before generating scene keyframes."
+                    }
+                  ]
+                }
+              },
+              {
+                "icon": "scriptResonance",
+                "title": "Audience Resonance Integration",
+                "description": "Get a read on the room before you render. AI analyzes your script against your target audience, providing scene-by-scene insights, pacing diagnostics, and dialogue tension scores. Apply recommended directions instantly, or trust your gut and ignore them.",
+                "screenshot": "Audience Resonance Integration — scene-by-scene audience insights",
+                "learnMore": {
+                  "items": [
+                    {
+                      "title": "Scene-by-scene audience insights",
+                      "description": "AI analyzes your script against your target audience before you render to surface pacing, tension, and engagement scores."
+                    },
+                    {
+                      "title": "Narrated critique & recommendations",
+                      "description": "Listen to the narrated analysis and inspect targeted scene-level rewrite recommendations backed by demographic reasoning."
+                    },
+                    {
+                      "title": "Your creative call",
+                      "description": "Apply recommended directions instantly with one click, or trust your gut and ignore them."
+                    }
+                  ]
+                }
+              },
+              {
+                "icon": "budget",
+                "title": "Production Planner",
+                "description": "Establish the budget and schedule generation across every scene and chapter using SceneFlow credits or your own BYOK API keys. Set still and clip targets per shot, toggle between Draft and Final resolution tiers, and forecast compute spend before you render.",
+                "screenshot": "Production Planner — budget, schedule, and BYOK API keys",
+                "learnMore": {
+                  "items": [
+                    {
+                      "title": "Budget and schedule forecasting",
+                      "description": "Establish the budget and schedule generation across every scene and chapter with transparent per-shot credit estimates before you render."
+                    },
+                    {
+                      "title": "SceneFlow credits or BYOK keys",
+                      "description": "Run generation using included SceneFlow credits or connect your own Vertex AI, OpenAI, and ElevenLabs BYOK API keys."
+                    },
+                    {
+                      "title": "Draft-to-Final tier scheduling",
+                      "description": "Schedule rapid Draft passes for animatic pre-visualization and reserve Final 4K still and FHD video compute for locked cuts."
+                    }
+                  ]
+                }
+              },
+              {
+                "icon": "productionScript",
+                "title": "Production Script",
+                "description": "Built for traditional and AI filmmakers alike. Preview a clean, formatted screenplay in-studio and export in industry-standard formats (PDF, FDX, Fountain). Use SceneFlow as a standalone script room—or pair your screenplay with a Pre-Vis Animatic and Promo Trailer to pitch financiers and secure project funding.",
+                "screenshot": "Production Script — in-platform preview and PDF, FDX, and Fountain export",
+                "learnMore": {
+                  "items": [
+                    {
+                      "title": "In-platform preview & export",
+                      "description": "Preview the formatted script in the studio and export in industry-standard PDF, Final Draft FDX, or Fountain format."
+                    },
+                    {
+                      "title": "For traditional filmmakers",
+                      "description": "Use SceneFlow as an intelligent script production platform without generating video."
+                    },
+                    {
+                      "title": "Pitch & project funding",
+                      "description": "Package your script with a Pre-Vis Animatic and Promo Trailers to pitch and acquire project funding."
                     }
                   ]
                 }
@@ -628,79 +710,173 @@
             ]
           },
           {
-            "id": "video",
+            "id": "generate-audit",
             "label": "Gerar e auditar",
             "headline": "Prove o corte antes de gastar o cálculo.",
             "description": "Não adivinhe como uma cena será reproduzida. SceneFlow separa a geração de áudio e imagem estática da cara renderização de movimento, permitindo que você audite primeiro o ritmo da edição.",
             "features": [
               {
+                "icon": "audioAgent",
+                "title": "The Audio Agent",
+                "description": "Generate expressive character dialogue, narrator voiceover, action sound effects, and musical scores concurrently across up to 30 shots per scene. Cast voices automatically match character profiles from your Continuity Library or can be custom-tuned per beat.",
+                "screenshot": "The Audio Agent — concurrent dialogue, sound effects, and music scores",
+                "learnMore": {
+                  "items": [
+                    {
+                      "title": "Concurrent multi-track audio",
+                      "description": "Generate dialogue, narration, sound effects, and music scores concurrently across up to 30 shots per scene."
+                    },
+                    {
+                      "title": "Locked character voice casting",
+                      "description": "Cast voices automatically match character profiles from your Reference Library or can be custom-tuned for timbre and cadence."
+                    },
+                    {
+                      "title": "Batch scene or single-shot runs",
+                      "description": "Run the Audio Agent across the entire scene in one pass or regenerate individual dialogue and SFX beats on demand."
+                    }
+                  ]
+                }
+              },
+              {
+                "icon": "musicScore",
+                "title": "Bancada de Diálogo, SFX e Trilha Musical",
+                "description": "Abra as abas Audio e Music em tela cheia para dirigir cada camada sonora da cena. Modele interpretações vocais com tags de entrega emocional e qualidade Hi-Fi Studio, extraia áudio embutido de clipes de vídeo, ajuste predefinições de duração de SFX (Auto, 3s, 8s, 15s) e componha deixas musicais Lyria para múltiplos planos com fade de entrada.",
+                "screenshot": "Dialogue, SFX & Musical Score Workbench — Fullscreen Audio & Music tabs with score cues, voice casting, and SFX duration presets",
+                "learnMore": {
+                  "items": [
+                    {
+                      "title": "Multi-shot musical score cues",
+                      "description": "Compose custom Lyria musical score cues that span specific shot ranges with configurable intro fades and auto-ducking metadata."
+                    },
+                    {
+                      "title": "Performance Director & delivery tags",
+                      "description": "Direct spoken dialogue with bracketed emotional delivery tags, Hi-Fi Studio synthesis, and per-shot voice casting."
+                    },
+                    {
+                      "title": "Precision SFX duration presets",
+                      "description": "Time action sound effects to your shot choreography using Auto, Short 3s, Medium 8s, or Long 15s duration presets."
+                    },
+                    {
+                      "title": "Extract audio from video clips",
+                      "description": "Pull embedded audio directly from generated motion clips to preserve native on-camera speech or ambient foley."
+                    }
+                  ]
+                }
+              },
+              {
+                "icon": "stillsAgent",
+                "title": "The Stills Agent",
+                "description": "Rapidly batch-generate the high-resolution keyframe images that illustrate your shot direction across the scene. Regenerate, edit, or upload your own references to lock the composition, lighting, and character blocking before committing to video.",
+                "screenshot": "The Stills Agent — keyframe composition and references",
+                "learnMore": {
+                  "items": [
+                    {
+                      "title": "Batch keyframe generation",
+                      "description": "Rapidly generate the keyframe images that illustrate your shot direction across every shot in the scene."
+                    },
+                    {
+                      "title": "Automatic continuity anchoring",
+                      "description": "Every generated frame incorporates your locked cast portraits, scene wardrobes, locations, and hero props automatically."
+                    },
+                    {
+                      "title": "Lock composition before motion",
+                      "description": "Regenerate, edit, or upload your own references before committing compute to full motion video rendering."
+                    }
+                  ]
+                }
+              },
+              {
+                "icon": "stillsWorkbench",
+                "title": "Estúdio de Stills e Keyframes em Tela Cheia",
+                "description": "Acesse a bancada Stills em tela cheia para parear quadros inicial e final Frame-to-Video (F2V), alternar entre resolução Draft e Final 4K ou modos Standard e Creative, personalizar o movimento Ken Burns do Pre-Vis e aplicar edições cirúrgicas em linguagem simples com o Diretor Assistente Inteligente (IAD).",
+                "screenshot": "Fullscreen Stills & Keyframe Studio — F2V Start & End keyframe pairing, Final 4K controls, and surgical IAD editing",
+                "learnMore": {
+                  "items": [
+                    {
+                      "title": "Frame-to-Video (F2V) Start & End pairing",
+                      "description": "Pair a locked Start Frame and End Frame Target on any shot to anchor exact camera movement and subject blocking during video generation."
+                    },
+                    {
+                      "title": "Surgical IAD keyframe editing",
+                      "description": "Edit specific props, chalkboard text, wardrobe details, or lighting in plain language while keeping the rest of the keyframe locked."
+                    },
+                    {
+                      "title": "Draft vs Final 4K & Creative modes",
+                      "description": "Toggle between rapid Draft previews and Final 4K resolution, plus Standard or Creative synthesis modes per shot."
+                    },
+                    {
+                      "title": "Pre-Vis Ken Burns motion framing",
+                      "description": "Customize zoom and pan trajectories on every still so your Pre-Vis Animatic previews intentional camera motion."
+                    }
+                  ]
+                }
+              },
+              {
+                "icon": "animatic",
+                "title": "The Pre-Vis Animatic",
+                "description": "Watch the scene breathe. Review a fully assembled animatic—stitched stills, Ken Burns motion, and locked audio—in the Screening Room. Audit the pacing, share for feedback, and ensure the cut works before committing to video.",
+                "screenshot": "The Pre-Vis Animatic — stitched stills, Ken Burns motion, and locked audio",
+                "learnMore": {
+                  "items": [
+                    {
+                      "title": "Assembled multi-track animatic",
+                      "description": "Review stitched stills, Ken Burns motion, and locked dialogue, SFX, and musical score in the Screening Room."
+                    },
+                    {
+                      "title": "Prove pacing before video spend",
+                      "description": "Audit the dramatic rhythm, spot timing gaps, and refine shot lengths while iterations cost pennies instead of full video compute."
+                    },
+                    {
+                      "title": "Share for stakeholder sign-off",
+                      "description": "Audit the pacing, share for feedback, and ensure the cut works before committing to video."
+                    }
+                  ]
+                }
+              },
+              {
                 "icon": "videoAgent",
-                "title": "O Audio Agent",
-                "description": "Gere diálogos, efeitos sonoros e partituras musicais simultaneamente em até 30 tomadas por cena. As vozes transmitidas correspondem automaticamente aos perfis dos personagens ou podem ser ajustadas de forma personalizada.",
-                "screenshot": "O Audio Agent — diálogo simultâneo, efeitos sonoros e partituras musicais",
+                "title": "The Clips Agent",
+                "description": "Once the Pre-Vis is approved, the Clips Agent takes over, rendering high-fidelity motion clips that adhere strictly to your approved stills, Frame-to-Video start and end anchors, and continuity references—backed by automated safety pre-flight checks.",
+                "screenshot": "The Clips Agent — high-fidelity motion clips from approved stills",
                 "learnMore": {
                   "items": [
                     {
-                      "title": "Áudio simultâneo",
-                      "description": "Gere diálogos, efeitos sonoros e partituras musicais simultaneamente em até 30 tomadas por cena."
+                      "title": "Triggered after Pre-Vis approval",
+                      "description": "The Clips Agent renders motion only after the Pre-Vis animatic and shot timings are approved."
                     },
                     {
-                      "title": "Vozes dos personagens",
-                      "description": "As vozes transmitidas correspondem automaticamente aos perfis dos personagens ou podem ser ajustadas de forma personalizada."
+                      "title": "Strict keyframe & F2V adherence",
+                      "description": "High-fidelity motion clips adhere strictly to your approved Start and End stills and continuity references."
+                    },
+                    {
+                      "title": "Automated safety pre-flight",
+                      "description": "Pre-flight prompt sanitation prevents false-positive safety rejections on dramatic action beats so clips render reliably."
                     }
                   ]
                 }
               },
               {
-                "icon": "mixer",
-                "title": "O Stills Agent",
-                "description": "Gere rapidamente as imagens de quadro-chave que ilustram a direção da foto. Regenere, edite ou carregue suas próprias referências para bloquear a composição.",
-                "screenshot": "O Stills Agent — composição e referências de quadros-chave",
+                "icon": "clipsWorkbench",
+                "title": "Estúdio de Clipes Multi-Take e Retakes",
+                "description": "Dirija e selecione cada render de movimento no estúdio Clips em tela cheia. Ouça e compare takes ilimitados no cofre não destrutivo (Take 1 / Take 2 / Take 3), filtre planos pelo status In the Can, acione Smart Retakes com o IAD e gerencie takes localizados por stream de idioma para diálogos e placas.",
+                "screenshot": "Multi-Take Clips & Retake Studio — non-destructive Take 1/2/3 vault, IAD Smart Retake, and localized stream takes",
                 "learnMore": {
                   "items": [
                     {
-                      "title": "Geração de quadro-chave",
-                      "description": "Gere rapidamente as imagens de quadro-chave que ilustram a direção da foto."
+                      "title": "Non-destructive Multi-Take Vault",
+                      "description": "Every motion render is preserved in the shot vault so you can compare Take 1, Take 2, and Take 3 and promote your favorite take live."
                     },
                     {
-                      "title": "Bloqueie a composição",
-                      "description": "Regenere, edite ou carregue suas próprias referências antes de iniciar a ação."
-                    }
-                  ]
-                }
-              },
-              {
-                "icon": "languageStreams",
-                "title": "O TERMO Pré-Vis SFAIANIMATIC",
-                "description": "Observe a cena respirar. Revise um animatic totalmente montado – fotos costuradas, movimento de Ken Burns e áudio bloqueado – no Screening Room. Audite o ritmo, compartilhe comentários e garanta que o corte funcione antes de enviar o vídeo.",
-                "screenshot": "The Pre-Vis Animatic – fotos costuradas, movimento de Ken Burns e áudio bloqueado",
-                "learnMore": {
-                  "items": [
-                    {
-                      "title": "Animado montado",
-                      "description": "Revise fotos costuradas, movimento de Ken Burns e áudio bloqueado em Screening Room."
+                      "title": "IAD Smart Retake & Direct Video",
+                      "description": "Refine camera motion, subject physics, or facial performance with the Intelligent Assistant Director and Direct Video pre-flight controls."
                     },
                     {
-                      "title": "Auditar e compartilhar",
-                      "description": "Audite o ritmo, compartilhe comentários e garanta que o corte funcione antes de enviar o vídeo."
-                    }
-                  ]
-                }
-              },
-              {
-                "icon": "videoAgent",
-                "title": "O Clips Agent",
-                "description": "Assim que o Pre-Vis for aprovado, o Clips Agent assume o controle, renderizando clipes de movimento de alta fidelidade que aderem estritamente às suas imagens estáticas aprovadas e referências de continuidade.",
-                "screenshot": "O Clips Agent — clipes de movimento de alta fidelidade de fotos aprovadas",
-                "learnMore": {
-                  "items": [
-                    {
-                      "title": "Após aprovação Pré-Vis",
-                      "description": "O Clips Agent renderiza o movimento somente depois que a animação Pré-Vis é aprovada."
+                      "title": "Per-stream localized shot takes",
+                      "description": "Switch between your English Master take and regenerated localized clips for spoken dialogue and in-scene signage per language stream."
                     },
                     {
-                      "title": "Adesão estrita",
-                      "description": "Os clipes de movimento de alta fidelidade aderem estritamente às suas imagens estáticas aprovadas e às referências de continuidade."
+                      "title": "Dialogue-free stem readiness",
+                      "description": "Extract embedded clip audio into a dialogue-free SFX and ambience stem so localized dubs retain original foley and room tone."
                     }
                   ]
                 }
@@ -708,83 +884,111 @@
             ]
           },
           {
-            "id": "publish",
+            "id": "publish-distribute",
             "label": "Publicar e distribuir",
             "headline": "Envie o master ou localize para o mundo.",
             "description": "Quando a cena termina, os ativos já estão unificados. Conclua a edição, localize o áudio, os diálogos na cena e os clipes de sinalização e distribua diretamente para o seu público.",
             "features": [
               {
-                "icon": "shipPackage",
-                "title": "O misturador",
-                "description": "Um editor de cena intuitivo e integrado. Corte clipes, ajuste rampas de velocidade, adicione sobreposições de texto e aplique marcas d'água sem sair do estúdio.",
-                "screenshot": "O Mixer – corte clipes, rampas de velocidade, sobreposições de texto e marcas d'água",
+                "icon": "mixer",
+                "title": "O Mixer (Console Broadcast)",
+                "description": "Um editor de cenas e console de costura de padrão broadcast integrado ao estúdio. Visualize seu corte em um Monitor de Referência 16:9 com medidor estéreo VU / Peak em tempo real (-14 LUFS), inspecione cortes com a Lupa de Continuidade Match-Cut, ajuste sobreposições J-Cut e L-Cut (-0.3s / +0.3s), escolha modos de retenção óptica (Push 103% Ken Burns ou Ping-Pong Tail), mixe em 6 faixas (V1, A0 Stem, A1 Diálogo, A2 VO, A3 SFX, A4 Trilha) com Auto-Ducking de -8 dB e renderize masters EBU R128 na nuvem.",
+                "screenshot": "The Mixer — Broadcast Reference Monitor, Stereo VU Meter, Match-Cut Continuity Loupe, J/L-Cut overlaps, 6-lane timeline with -8 dB Auto-Ducking, and EBU R128 loudness",
                 "learnMore": {
                   "items": [
                     {
-                      "title": "Editor de cena integrado",
-                      "description": "Corte clipes e ajuste rampas de velocidade diretamente dentro do estúdio."
+                      "title": "Broadcast Reference Monitor & Stereo VU / LUFS Meter",
+                      "description": "Preview your stitched sequence on a 16:9 reference monitor beside a real-time stereo peak and loudness meter calibrated to -14.0 LUFS web and -24.0 LKFS broadcast targets."
                     },
                     {
-                      "title": "Toques finais",
-                      "description": "Adicione sobreposições de texto e aplique marcas d'água sem exportar para um editor externo."
+                      "title": "Match-Cut Continuity Loupe & J/L-Cut audio overlaps",
+                      "description": "Hover any transition pill to compare the Out-Frame of Shot N against the In-Frame of Shot N+1 side by side while dialing in -0.3s J-cut lead-ins and +0.3s L-cut audio tails."
+                    },
+                    {
+                      "title": "6-lane timeline with -8 dB Auto-Ducking envelope",
+                      "description": "Mix V1 Video, A0 Dialogue-Free Stem, A1 Dialogue, A2 Narration, A3 SFX, and A4 Score with a visual gain-reduction curve that automatically ducks music -8 dB under speech."
+                    },
+                    {
+                      "title": "Optical Hold Modes & elastic dub alignment",
+                      "description": "Replace static freeze-frames with a 103% Ken Burns Push Zoom or Ping-Pong Tail Loop and slow video clips down to 67% speed so longer dubbed dialogue fits naturally."
+                    },
+                    {
+                      "title": "1-click watermark crop, text overlays & EBU R128 export",
+                      "description": "Apply preset edge crops to remove third-party watermarks, burn in lower-thirds or subtitles, and cloud-render stitched MP4 masters with EBU R128 loudness normalization."
                     }
                   ]
                 }
               },
               {
                 "icon": "languageStreams",
-                "title": "Streams (multilíngue)",
-                "description": "Expanda seu alcance global em 44 idiomas a partir de uma linha do tempo mestre. Gere automaticamente fluxos de idiomas alternativos com áudio dublado, sincronização labial e diálogos multilíngues regenerados e clipes de sinalização na cena, enquanto dirige em uma UI de Studio localizada.",
-                "screenshot": "Streams (multilíngue) — áudio dublado, diálogos regenerados e clipes de sinalização",
+                "title": "Streams (Multi-Idiomas)",
+                "description": "Expanda seu alcance global em 44 idiomas a partir de uma linha do tempo mestre. Regenere seletivamente apenas os planos com diálogo falado ou sinalização em cena enquanto mantém os planos mestres não selecionados sem custo extra de créditos. Extraia o áudio do vídeo e remova o diálogo falado (htdemucs) preservando SFX e música gerados para dublagem MP3 limpa, e alinhe falas traduzidas mais longas desacelerando o clipe de vídeo (de 10s para até 15s a 67% da velocidade).",
+                "screenshot": "Streams (Multi-Language) — Selective shot regeneration vs retained master shots, dialogue-free stem extraction, and elastic slow-video dub alignment",
                 "learnMore": {
                   "items": [
                     {
-                      "title": "Áudio dublado e sincronização labial",
-                      "description": "Gere automaticamente fluxos de idiomas alternativos em 44 idiomas com áudio dublado expressivo e movimento labial sincronizado."
+                      "title": "Selective shot regeneration & retained master clips",
+                      "description": "Select only the shots with spoken dialogue or in-scene signage to regenerate in your target language while unselected action shots automatically retain the master video clip."
                     },
                     {
-                      "title": "Diálogos regenerados e clipes de sinalização",
-                      "description": "Regenere tomadas de diálogo localizadas e clipes de sinalização na cena diretamente na cena para que o visual e a fala correspondam a cada público."
+                      "title": "Dialogue-free stem extraction (keep generated SFX & music)",
+                      "description": "Neural stem separation extracts embedded video audio and removes spoken English dialogue while preserving generated foley, room ambience, and music for clean MP3 dubbing."
                     },
                     {
-                      "title": "UI localizada do Studio",
-                      "description": "Direcione e produza em sua interface nativa em inglês, espanhol, português, hindi, chinês simplificado e árabe."
+                      "title": "Elastic video slow-down & multi-method dub alignment",
+                      "description": "Align longer translated dialogue by slowing a 10s video clip up to 15s (down to 67% speed), pairing an 80% slow-down with a 103% zoom hold, or fitting dub audio tempo up to 1.25x."
+                    },
+                    {
+                      "title": "Regenerated dialogue & signage clips across 44 languages",
+                      "description": "Regenerate localized dialogue takes and in-scene signage clips directly within the scene across 44 languages so visuals, stencils, and speech match every audience."
+                    },
+                    {
+                      "title": "Localized Studio UI",
+                      "description": "Direct and produce in your native interface across English, Spanish, Portuguese, Hindi, Simplified Chinese, and Arabic."
                     }
                   ]
                 }
               },
               {
                 "icon": "promoTrailers",
-                "title": "Promoção e trailers",
-                "description": "Corte trailers promocionais prontos para redes sociais a qualquer momento durante a produção. Gere versões multilíngues otimizadas para formatos horizontais ou verticais.",
-                "screenshot": "Promo & Trailers – trailers horizontais e verticais em vários idiomas",
+                "title": "Promo & Trailers",
+                "description": "Cut high-converting theatrical teasers, episodic recaps, and social-ready promo trailers at any time during production. Pull hero takes from your scene vault, reframe for horizontal (`16:9`) or vertical (`9:16`) feeds, and generate multi-language versions with localized title cards and voiceover hooks.",
+                "screenshot": "Promo & Trailers — multi-language horizontal and vertical trailers",
                 "learnMore": {
                   "items": [
                     {
-                      "title": "Trailers sociais",
-                      "description": "Corte trailers promocionais a qualquer momento durante a produção."
+                      "title": "Social-ready trailers at any stage",
+                      "description": "Cut promo trailers, theatrical teasers, and episodic recaps at any point during production."
                     },
                     {
-                      "title": "Formatos multilíngues",
-                      "description": "Gere versões multilíngues otimizadas para formatos horizontais ou verticais."
+                      "title": "Horizontal & vertical social formats",
+                      "description": "Generate multi-language versions optimized for horizontal 16:9 YouTube feeds or vertical 9:16 Shorts, Reels, and TikTok."
+                    },
+                    {
+                      "title": "Localized hooks & title cards",
+                      "description": "Render localized trailer streams with translated voiceover hooks, burned-in captions, and market-specific title cards."
                     }
                   ]
                 }
               },
               {
                 "icon": "shipPackage",
-                "title": "Publicação Direta",
-                "description": "Exporte o MP4 master final ou deixe o SceneFlow gerar automaticamente miniaturas e descrições para publicar cenas, capítulos e promoções diretamente no YouTube, TikTok e Facebook.",
-                "screenshot": "Publicação direta – exportação de MP4 e publicação direta no YouTube, TikTok e Facebook",
+                "title": "Direct Publishing",
+                "description": "Export the final EBU R128-normalized master MP4 in 1080p or 4K, download complete production stems, or let SceneFlow auto-generate high-CTR thumbnails, localized titles, chapter markers, and descriptions to publish scenes, chapters, and promos directly to YouTube, TikTok, and Facebook.",
+                "screenshot": "Direct Publishing — MP4 export and direct publishing to YouTube, TikTok, and Facebook",
                 "learnMore": {
                   "items": [
                     {
-                      "title": "Master MP4 ou social direto",
-                      "description": "Exporte o MP4 master final ou publique cenas, capítulos e promoções diretamente no YouTube, TikTok e Facebook."
+                      "title": "Master MP4 or direct social publishing",
+                      "description": "Export the final master MP4 or publish scenes, chapters, and promos directly to YouTube, TikTok, and Facebook."
                     },
                     {
-                      "title": "Metadados gerados automaticamente",
-                      "description": "Deixe o SceneFlow gerar automaticamente miniaturas e descrições para cada lançamento."
+                      "title": "Auto-generated thumbnails & metadata",
+                      "description": "Let SceneFlow auto-generate high-contrast thumbnails, localized titles, descriptions, tags, and chapter markers for every release."
+                    },
+                    {
+                      "title": "Archival stems & screenplay bundle",
+                      "description": "Download stitched video masters, isolated dialogue and SFX stems, subtitle files, and formatted screenplays in one production package."
                     }
                   ]
                 }
@@ -801,44 +1005,52 @@
         "features": [
           {
             "icon": "screeningPlayer",
-            "title": "Um jogador unificado",
-            "description": "Alterne perfeitamente entre animações pré-visuais, cenas, capítulos, trailers e seu master final. Alterne os fluxos de idioma rapidamente para ouvir áudio dublado e diálogos regenerados ou clipes de sinalização - sempre bloqueados no corte exato do Mixer.",
-            "screenshot": "Reprodutor da Sala de Exibição SFAI",
+            "title": "One Unified Player",
+            "description": "Toggle seamlessly between Pre-Vis animatics, stitched scenes, multi-scene chapters, promo trailers, and your final master. Switch Language Streams on the fly to audition dubbed audio, dialogue-free stem mixes, and regenerated dialogue or signage clips—always frame-locked to the exact cut from the Mixer.",
+            "screenshot": "Screening Room player",
             "learnMore": {
               "items": [
                 {
-                  "title": "Cada marco em uma visualização",
-                  "description": "Alterne facilmente entre Pré-Vis, cenas, capítulos, promoções e o master final."
+                  "title": "Every milestone in one theatre",
+                  "description": "Switch effortlessly among Pre-Vis animatics, individual scenes, chapters, promos, and the final master."
                 },
                 {
-                  "title": "Troca de idioma ao vivo",
-                  "description": "Ouça qualquer fluxo de idioma – áudio dublado, sincronização labial ou diálogo regenerado e clipes de sinalização – instantaneamente."
+                  "title": "Live language stream auditioning",
+                  "description": "Audition any Language Stream—dubbed audio, lip-sync, or regenerated dialogue and signage clips—on the fly without reloading the timeline."
                 },
                 {
-                  "title": "Frame-locked para o Mixer",
-                  "description": "Cada stream reproduz a edição e o tempo exatos renderizados no Mixer."
+                  "title": "Frame-locked to the Broadcast Mixer",
+                  "description": "Every stream plays the exact stitch transitions, J/L-cut overlaps, auto-ducking curves, and loudness normalization rendered in the Mixer."
+                },
+                {
+                  "title": "Incremental episodic shipping",
+                  "description": "Ship a finished 3–5 minute scene, an 8–12 minute chapter, or a social promo immediately while downstream chapters continue rendering."
                 }
               ]
             }
           },
           {
             "icon": "screeningCollab",
-            "title": "Colaboração com precisão de quadro",
-            "description": "Pare de exportar esboços para e-mail. Compartilhe um link de exibição privado onde colaboradores e investidores assistem em tempo real e fazem anotações diretamente na imagem, com notificações instantâneas enviadas diretamente para o seu telefone.",
-            "screenshot": "Avaliação compartilhada",
+            "title": "Frame-Accurate Collaboration",
+            "description": "Stop exporting rough cuts to email. Share a private screening link where collaborators, sound editors, localization leads, and investors watch full-resolution playback in real time and drop timestamped notes directly on the picture—with instant notifications sent straight to your phone.",
+            "screenshot": "Shared review",
             "learnMore": {
               "items": [
                 {
-                  "title": "Links de triagem privada",
-                  "description": "Os revisores assistem à reprodução em resolução total e deixam notas com carimbo de data e hora na imagem."
+                  "title": "Private stakeholder screening links",
+                  "description": "Reviewers watch full-resolution playback across any language stream and leave frame-accurate timestamped notes on the picture."
                 },
                 {
-                  "title": "Sem exportações de arquivos brutos",
-                  "description": "Colete feedback das partes interessadas em um só lugar, sem enviar arquivos de vídeo pesados."
+                  "title": "Zero rough-cut file exports",
+                  "description": "Collect creative, legal, and localization feedback in one centralized review thread without uploading or mailing heavy video files."
                 },
                 {
-                  "title": "Alertas móveis instantâneos",
-                  "description": "Novas notas do revisor notificam você imediatamente em seu telefone enquanto você direciona para o desktop."
+                  "title": "Instant mobile notifications",
+                  "description": "New reviewer notes notify you immediately on your phone so you can approve or dispatch revisions while directing on desktop."
+                },
+                {
+                  "title": "Direct link back to the Shot Rail",
+                  "description": "Jump from any timestamped screening comment straight to the corresponding scene and shot in the Production Stage to execute the note."
                 }
               ]
             }
