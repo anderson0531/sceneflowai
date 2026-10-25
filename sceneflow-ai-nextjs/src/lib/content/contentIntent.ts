@@ -320,28 +320,31 @@ export function getIntentPromptBlocks(
     default:
       return {
         personaLabel: formatLabel(format),
-        optimizationBlock: `STORYTELLING OPTIMIZATION (PRIMARY GOAL):
-- Prioritize narrative coherence, emotional resonance, dramatic structure
-- Make bold creative decisions: combine characters, elevate subplots, shift focus
-- Emphasize elements that strengthen themes and character arcs
-- Optimize for maximum storytelling impact`,
-        characterBlock: `CRITICAL — CHARACTER ARCS ARE MANDATORY:
+        optimizationBlock: `STORYTELLING & ENTERTAINMENT OPTIMIZATION (PRIMARY GOAL):
+- Prioritize magnetic audience engagement, dramatic irony, emotional stakes, and relentless narrative momentum
+- Make bold creative decisions: sharpen interpersonal friction, raise the personal cost of failure, and subvert predictable genre beats
+- Enforce CAUSAL BEAT PROGRESSION ("THEREFORE / BUT" storytelling, never episodic "AND THEN" filler): every beat must be triggered by the consequence or complication of the beat before it
+- Give every beat a concrete visual centerpiece, an active conflict/obstacle, and a clear value shift (power, trust, danger, or truth changes by the end of the beat)
+- Optimize for maximum entertainment value, cinematic spectacle, and emotional payoff`,
+        characterBlock: `CRITICAL — MULTIDIMENSIONAL CHARACTERS & ARCS ARE MANDATORY:
 - Generate 3-5 detailed character_descriptions (protagonist + supporting characters)
-- Each character MUST have complete attributes and psychological depth
+- Each character MUST have complete visual attributes and rich psychological depth
 - **CHARACTER NAMES MUST BE CULTURALLY AUTHENTIC AND ORIGINAL** — avoid stock AI names (Elara, Vance, Lyra, Kael, Thorne, etc.)
 - **EVERY CHARACTER MUST HAVE**: externalGoal, internalNeed, fatalFlaw, arcStartingState, arcShift, arcEndingState
-- Each character needs a distinct voice, want/need/flaw, and clear relationship to the protagonist — not interchangeable archetypes
-- Generate 3-5 detailed scene_descriptions (key locations)
-- Character arcs must show CLEAR TRANSFORMATION`,
+- **WANT vs. NEED COLLISION**: The character's visible externalGoal must actively collide with their deeper internalNeed, forcing hard choices under pressure
+- **PLAYABLE CONTRADICTION & DISTINCT VOICE**: Give each character a specific behavioral contradiction, tactical style, and vocal cadence in their description — never write interchangeable archetypes or passive exposition-deliverers
+- **INTERPERSONAL FRICTION**: Supporting characters must have their own agendas that challenge, complicate, or foil the protagonist
+- Generate 3-5 detailed scene_descriptions (key locations with cinematic atmosphere and interactive props)
+- Character arcs must show EARNED, VISIBLE TRANSFORMATION driven by story pressure`,
         schemaFieldSemantics: `SCHEMA FIELD SEMANTICS (fiction):
-- protagonist → Main character with goal and flaw
-- antagonist → Primary opposing force or conflict
-- character_descriptions → Full character arcs with transformation`,
+- protagonist → Main character with active goal, playable contradiction, and internal flaw
+- antagonist → Primary opposing force or personified conflict with a compelling counter-agenda
+- character_descriptions → Full character arcs with transformation, friction, and distinct voice`,
         antiFictionalizationRule: '',
-        step1Thinking: `- Who is the protagonist and why?
-- What 2-4 major creative decisions did you make?
-- What makes this treatment compelling?
-- How can the user adjust the input for different results?`,
+        step1Thinking: `- Who is the protagonist, what makes them immediately magnetic/entertaining, and how does their external want collide with their internal need?
+- What is the central dramatic hook, and how does each act escalate the stakes through "THEREFORE / BUT" causal turns?
+- What 2-4 bold creative decisions elevate this story above predictable genre tropes?
+- How can the user adjust the input for different emphasis?`,
       }
   }
 }

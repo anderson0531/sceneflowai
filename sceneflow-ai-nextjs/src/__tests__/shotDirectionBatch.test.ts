@@ -196,6 +196,67 @@ describe('shot direction batches', () => {
     })
     expect(getSceneBeats(forced.scenes[0])[1].beatDirection?.frozenMoment).toBe('rewrite the lock')
   })
+
+  it('passes full sceneContext and shot sequence outline into every Shot Director chunk and surfaces Shot Direction Agent in Direction workbench', async () => {
+    const scene = {
+      heading: 'INT. ARCHIVE VAULT - NIGHT',
+      sceneDirection: {
+        sceneDescription: 'Cold subterranean vault lined with brass filing cabinets.',
+        scene: {
+          location: 'Subterranean Archive Vault',
+          atmosphere: 'Claustrophobic and damp',
+          sceneArc: 'Routine audit escalates into a standoff over the missing ledger',
+        },
+        camera: {
+          coveragePhilosophy: 'Start wide on the table axis, tighten to single close-ups on the lie',
+        },
+        movements: [
+          {
+            id: 'mov_1',
+            index: 1,
+            title: 'The Audit Begins',
+            turn: 'Piper spots the torn page',
+            emotionalEndState: 'Suspicion',
+          },
+        ],
+      },
+      beats: [
+        beat('s1', 0, { movementId: 'mov_1' }),
+        beat('s2', 1, { movementId: 'mov_1' }),
+      ],
+    }
+
+    let capturedSceneContext: any = null
+    await runShotDirectionChunks({
+      scene,
+      chunkSize: 1,
+      concurrency: 1,
+      direct: async (request) => {
+        capturedSceneContext = request.sceneContext
+        return {
+          usedAI: true,
+          patches: request.beats.map((entry) => ({
+            beatIndex: entry.beatIndex,
+            beatId: entry.beat.beatId,
+            patch: { frozenMoment: `${entry.beat.beatId} directed` },
+          })),
+        }
+      },
+    })
+
+    expect(capturedSceneContext).toBeDefined()
+    expect(capturedSceneContext.heading).toBe('INT. ARCHIVE VAULT - NIGHT')
+    expect(capturedSceneContext.location).toBe('Subterranean Archive Vault')
+    expect(capturedSceneContext.atmosphere).toBe('Claustrophobic and damp')
+    expect(capturedSceneContext.coveragePhilosophy).toContain('Start wide on the table axis')
+    expect(capturedSceneContext.movements).toHaveLength(1)
+    expect(capturedSceneContext.beatOutline).toHaveLength(2)
+
+    const workbenchSource = read('src/components/vision/scene-production/SceneDirectionWorkbench.tsx')
+    expect(workbenchSource).toContain('Shot Direction Agent')
+    expect(workbenchSource).toContain('onRunShotDirector')
+    expect(workbenchSource).toContain('shots directed')
+  })
 })
 
 async function viWaitUntil(predicate: () => boolean): Promise<void> {

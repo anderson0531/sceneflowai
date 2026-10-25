@@ -6719,11 +6719,12 @@ function SceneCard({
                       {activeStep && projectId && onScriptChange && sceneBeatsForTabs.length > 0 && (
                         <button
                           type="button"
-                          disabled={isExpressAudioRunning || !!isExpressRunning}
+                          disabled={isExpressAudioRunning || !!isExpressRunning || shotDirectionRunning}
                           onClick={(e) => {
                             e.stopPropagation()
                             void runShotDirectionAgent()
                           }}
+                          title="Direct all shots in this scene for cohesive shot flow, blocking, and still/clip prompts"
                           className={`${sceneToolbarControl} font-medium border border-teal-500/60 text-teal-200 hover:bg-teal-900/30`}
                         >
                           {shotDirectionProgress ? (
@@ -6736,7 +6737,7 @@ function SceneCard({
                           ) : (
                             <>
                               <Clapperboard className="w-3.5 h-3.5" />
-                              <span className="hidden xl:inline">Shot Direction Agent</span>
+                              <span className="hidden sm:inline">Shot Direction Agent</span>
                             </>
                           )}
                         </button>
@@ -7118,6 +7119,14 @@ function SceneCard({
                       locationReferences={locationReferences}
                       objectReferences={objectReferences}
                       projectId={projectId}
+                      onRunShotDirector={
+                        projectId && onScriptChange && sceneBeatsForTabs.length > 0
+                          ? () => void runShotDirectionAgent()
+                          : undefined
+                      }
+                      shotDirectorProgress={shotDirectionProgress}
+                      shotDirectorRunning={shotDirectionRunning}
+                      disabledShotDirector={isExpressAudioRunning || !!isExpressRunning}
                     />
                   </TabsContent>
                   )}

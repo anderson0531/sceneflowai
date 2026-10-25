@@ -2,9 +2,13 @@ import { NextRequest } from 'next/server'
 import Project from '../../../../models/Project'
 import { sequelize } from '../../../../config/database'
 import {
+  applyBeatsToScene,
+  getSceneBeats,
   migrateProjectBeatDirection,
   migrateProjectBeatSetContext,
 } from '@/lib/script/beatMigration'
+import { syncBeatStillPromptToDirection } from '@/lib/storyboard/syncBeatStillPrompt'
+import { refreshProductionSegmentVideoPrompts } from '@/lib/scene/syncBeatVideoPrompt'
 import {
   attachSceneDirectionsToScript,
   mergeSceneDirectionsOntoFresh,
@@ -124,6 +128,38 @@ export async function POST(request: NextRequest) {
           }
         } catch (scErr) {
           console.warn('[Scene Direction Pass] Beat set-context cleanup failed:', scErr)
+        }
+
+        try {
+          const currentScenes = readScenesFromVisionMetadata(metadata)
+          const syncedScenes = currentScenes.map((sceneRow, idx) => {
+            if (!sceneRow || typeof sceneRow !== 'object') return sceneRow
+            const beats = getSceneBeats(sceneRow as Record<string, unknown>)
+            if (beats.length === 0) return sceneRow
+            const syncedBeats = beats.map((beat) =>
+              beat.beatDirection
+                ? syncBeatStillPromptToDirection(beat, { sceneIndex: idx })
+                : beat
+            )
+            let updatedScene = applyBeatsToScene(
+              sceneRow as Record<string, unknown>,
+              syncedBeats
+            )
+            if (Array.isArray(updatedScene.segments) && updatedScene.segments.length > 0) {
+              const refreshedSegments = refreshProductionSegmentVideoPrompts(
+                updatedScene.segments as any[],
+                updatedScene,
+                { allBeats: true }
+              )
+              if (refreshedSegments) {
+                updatedScene = { ...updatedScene, segments: refreshedSegments }
+              }
+            }
+            return updatedScene
+          })
+          metadata = writeScenesIntoVisionMetadata(metadata, syncedScenes)
+        } catch (syncErr) {
+          console.warn('[Scene Direction Pass] Prompt sync after direction failed:', syncErr)
         }
 
         await fresh.update({ metadata })

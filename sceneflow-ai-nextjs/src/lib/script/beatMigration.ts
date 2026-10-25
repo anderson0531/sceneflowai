@@ -2194,9 +2194,10 @@ export function migrateProjectBeatDirection(metadata: unknown): MigrateBeatsResu
     if (priorBeats.length === 0) continue
 
     const withArc = ensureSceneMovements(scene, priorBeats)
+    const coveredBeats = applyDirectionCoverageToBeats(withArc.scene, withArc.beats)
     const backfilled = backfillBeatDirectionsOnScene({
       ...withArc.scene,
-      beats: withArc.beats,
+      beats: coveredBeats,
     })
     if (backfilled.length === 0) continue
 

@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useMemo, useState } from 'react'
-import { ChevronDown, ChevronRight } from 'lucide-react'
+import { ChevronDown, ChevronRight, Clapperboard, Loader2 } from 'lucide-react'
 import { BeatDirectionEditor } from '@/components/vision/BeatDirectionEditor'
 import type { DirectionCharacter, DirectionLocation, DirectionObject } from '@/components/vision/BeatDirectionEditor'
 import type { ProjectLookbook } from '@/lib/intelligence/project-lookbook-fallback'
@@ -32,6 +32,10 @@ interface SceneDirectionWorkbenchProps {
   locationReferences?: DirectionLocation[]
   objectReferences?: DirectionObject[]
   projectId?: string
+  onRunShotDirector?: () => void
+  shotDirectorProgress?: { done: number; total: number } | null
+  shotDirectorRunning?: boolean
+  disabledShotDirector?: boolean
 }
 
 function joinParts(parts: Array<string | undefined | null>): string {
@@ -63,6 +67,10 @@ export function SceneDirectionWorkbench({
   locationReferences,
   objectReferences,
   projectId,
+  onRunShotDirector,
+  shotDirectorProgress,
+  shotDirectorRunning,
+  disabledShotDirector,
 }: SceneDirectionWorkbenchProps) {
   const [descriptionOpen, setDescriptionOpen] = useState(false)
   const sceneDir = scene.sceneDirection as DetailedSceneDirection | undefined
@@ -104,6 +112,11 @@ export function SceneDirectionWorkbench({
     [beats, promoShots, sceneIdx]
   )
 
+  const readyShotCount = useMemo(
+    () => items.filter((item) => item.status === 'ready').length,
+    [items]
+  )
+
   const beatNumber =
     selected &&
     (typeof selected.sequenceIndex === 'number'
@@ -112,22 +125,62 @@ export function SceneDirectionWorkbench({
 
   return (
     <div className="space-y-3">
-      {(description || sceneDir) && (
+      {(description || sceneDir || onRunShotDirector) && (
         <div className="rounded-lg border border-slate-700/50 bg-slate-950/40">
-          <button
-            type="button"
-            className="flex w-full items-center gap-1.5 px-3 py-2 text-left text-[10px] font-semibold uppercase tracking-[0.14em] text-cyan-400/80"
-            onClick={() => setDescriptionOpen((open) => !open)}
-            aria-expanded={descriptionOpen}
-          >
-            {descriptionOpen ? (
-              <ChevronDown className="h-3.5 w-3.5" />
+          <div className="flex flex-wrap items-center justify-between gap-2 px-3 py-2">
+            {(description || sceneDir) ? (
+              <button
+                type="button"
+                className="flex items-center gap-1.5 text-left text-[10px] font-semibold uppercase tracking-[0.14em] text-cyan-400/80"
+                onClick={() => setDescriptionOpen((open) => !open)}
+                aria-expanded={descriptionOpen}
+              >
+                {descriptionOpen ? (
+                  <ChevronDown className="h-3.5 w-3.5" />
+                ) : (
+                  <ChevronRight className="h-3.5 w-3.5" />
+                )}
+                {descriptionOpen ? 'Scene description' : 'Show scene description'}
+              </button>
             ) : (
-              <ChevronRight className="h-3.5 w-3.5" />
+              <span className="text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-400">
+                Scene shot flow
+              </span>
             )}
-            {descriptionOpen ? 'Scene description' : 'Show scene description'}
-          </button>
-          {descriptionOpen && (
+            {beats.length > 0 && (
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="text-[11px] text-slate-400 tabular-nums">
+                  {readyShotCount}/{beats.length} shots directed
+                </span>
+                {onRunShotDirector && (
+                  <button
+                    type="button"
+                    disabled={disabledShotDirector || shotDirectorRunning}
+                    onClick={onRunShotDirector}
+                    title="Direct all shots in this scene for cohesive shot flow, camera progression, blocking, and still/clip prompts"
+                    className="inline-flex h-7 items-center gap-1.5 rounded-md border border-teal-500/60 bg-teal-500/15 px-2.5 text-xs font-medium text-teal-200 transition-colors hover:bg-teal-500/25 hover:text-white disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    {shotDirectorProgress || shotDirectorRunning ? (
+                      <>
+                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                        <span>
+                          {shotDirectorProgress
+                            ? `Directing Shots ${shotDirectorProgress.done}/${shotDirectorProgress.total}`
+                            : 'Directing Shots...'}
+                        </span>
+                      </>
+                    ) : (
+                      <>
+                        <Clapperboard className="h-3.5 w-3.5" />
+                        <span>Shot Direction Agent</span>
+                      </>
+                    )}
+                  </button>
+                )}
+              </div>
+            )}
+          </div>
+          {descriptionOpen && (description || sceneDir) && (
           <div className="space-y-2 px-3 pb-3">
           {description && (
             <p className="text-sm leading-relaxed text-slate-200">{description}</p>

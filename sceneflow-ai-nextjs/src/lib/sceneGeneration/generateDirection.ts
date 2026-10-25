@@ -374,7 +374,10 @@ ${arc.block}
 DIRECT THE ARC, NOT THE AVERAGE (MANDATORY):
 - "sceneDescription" MUST be exactly ${arc.movementCount} sentence(s) — ONE per movement, in movement order, each describing that movement's change in plain language.
 - "camera.coveragePhilosophy" is how this scene is covered, in director language. Do not fill "camera.shots" with one scale per beat. A scale list is optional and sparse; omit it rather than recycling Wide / Medium / Close-Up.
-- "beatCoverage" MUST contain exactly one object per beat in the arc above, in beat order. Each object says why that image exists (coveragePurpose), how the camera behaves (lensEnergy), and who or what is where (spatialRelationship). shotType is optional free text — leave it out when a scale would be arbitrary.
+- "beatCoverage" MUST contain exactly one object per beat in the arc above, in beat order. Design a cohesive, entertaining, professional shot flow across the scene:
+  • Maintain 180-degree camera axis and consistent screen-left / screen-right character geography within each movement so cuts match seamlessly.
+  • Progress shot scales naturally across each movement (establish geography → medium/OTS interaction → close-up or insert on emotional turns); shotType is optional free text — leave it out when a scale would be arbitrary.
+  • For each beat, specify why that image exists (coveragePurpose), how the camera behaves (lensEnergy), who or what is where (spatialRelationship), cameraAngle, concrete beat-specific blocking (screen-left/right, weight, hands), gaze (eyeline target), emotion (specific facial/physical tell per visible character), frozenMoment (one settled photographic instant), and lightingAccent.
 - Never condense, shorten, or paraphrase quoted dialogue. A spoken line that runs long continues across later beats. Do not cut words to fit a clip.
 - "talent.keyActions" MUST contain one entry per movement (${arc.movementCount} total), in movement order, naming the physical action that carries that movement.
 - "talent.blocking" MUST describe how positions CHANGE from the first movement to the last, not one static arrangement.
@@ -431,7 +434,13 @@ Generate comprehensive technical direction suitable for professional film produc
       "coveragePurpose": "why this beat is its own image",
       "lensEnergy": "how the camera behaves on this beat",
       "spatialRelationship": "who and what is where in the frame",
-      "shotType": "optional free-text scale; omit when a scale would be arbitrary"
+      "shotType": "optional free-text scale; omit when a scale would be arbitrary",
+      "cameraAngle": "beat-specific angle, e.g., 'Eye-Level', 'Low Angle', 'Over-the-Shoulder'",
+      "blocking": "concrete physical staging and posture for this specific beat (screen-left/right, weight, hands)",
+      "gaze": "exact eyeline target for visible characters in this beat",
+      "emotion": "specific facial and physical tell for each visible character in this beat",
+      "frozenMoment": "one settled photographic instant capturing the opening composition of this beat",
+      "lightingAccent": "beat-specific light or shadow accent on the subject"
     }
   ],
   "lighting": {
@@ -537,6 +546,14 @@ function normalizeBeatCoverage(raw: unknown, beatCount: number) {
         lensEnergy: text('lensEnergy'),
         spatialRelationship: text('spatialRelationship'),
         shotType: text('shotType'),
+        cameraAngle: text('cameraAngle'),
+        cameraMovement: text('cameraMovement') ?? text('lensEnergy'),
+        blocking: text('blocking'),
+        gaze: text('gaze'),
+        emotion: text('emotion'),
+        frozenMoment: text('frozenMoment'),
+        lightingAccent: text('lightingAccent'),
+        propInteraction: text('propInteraction'),
       }
     })
   return rows.length > 0 ? rows : undefined

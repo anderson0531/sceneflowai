@@ -169,13 +169,22 @@ export interface DetailedSceneDirection {
   beatCoverage?: BeatCoverageDirection[]
 }
 
-/** Why a beat exists as an image, and how the camera relates to it. */
+/** Why a beat exists as an image, and how the camera and actors are directed in it. */
 export interface BeatCoverageDirection {
   coveragePurpose?: string
   lensEnergy?: string
   spatialRelationship?: string
   /** Optional free-text scale. Omit rather than inventing Wide/Medium/Close-Up. */
   shotType?: string
+  cameraAngle?: string
+  cameraMovement?: string
+  blocking?: string
+  gaze?: string
+  emotion?: string
+  frozenMoment?: string
+  lightingAccent?: string
+  propInteraction?: string
+  transition?: 'CUT' | 'CONTINUE' | 'DISSOLVE' | 'FADE' | 'MATCH_CUT'
 }
 
 // ============================================================================

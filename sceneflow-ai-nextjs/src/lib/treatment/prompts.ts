@@ -95,13 +95,13 @@ const TREATMENT_SCHEMA_TEMPLATE = `SCHEMA - GENERATE IN THIS EXACT ORDER:
       "build": "Body type, physique, movement style",
       "defaultWardrobe": "Primary outfit/attire appropriate to role, setting, AND cultural background",
       "wardrobeAccessories": "Consistent accessories worn throughout",
-      "description": "Brief character context for story (role in narrative)",
-      "externalGoal": "REQUIRED: What they visibly pursue",
-      "internalNeed": "REQUIRED: What they emotionally need",
-      "fatalFlaw": "REQUIRED: Weakness creating obstacles",
-      "arcStartingState": "REQUIRED: Who they are at start",
-      "arcShift": "REQUIRED: What forces change",
-      "arcEndingState": "REQUIRED: Who they become"
+      "description": "Role in narrative + playable behavioral contradiction, vocal cadence, and dynamic with other characters",
+      "externalGoal": "REQUIRED: What they visibly and actively pursue",
+      "internalNeed": "REQUIRED: Deeper emotional truth that collides with their externalGoal",
+      "fatalFlaw": "REQUIRED: Playable weakness/blind spot creating active obstacles",
+      "arcStartingState": "REQUIRED: Who they are at start (beliefs, defenses, status)",
+      "arcShift": "REQUIRED: Crucible moment that forces change",
+      "arcEndingState": "REQUIRED: Who they become (transformed state)"
     }
   ],
   
@@ -109,9 +109,9 @@ const TREATMENT_SCHEMA_TEMPLATE = `SCHEMA - GENERATE IN THIS EXACT ORDER:
     {
       "name": "Location Name",
       "type": "INT | EXT",
-      "location": "Specific place, size, layout",
-      "atmosphere": "Lighting, time of day, weather, mood",
-      "furniture_props": "Key objects, furniture, decorations"
+      "location": "Specific place, size, layout, and staging zones",
+      "atmosphere": "Lighting, time of day, weather, mood, and sensory texture",
+      "furniture_props": "Key interactive objects, furniture, and visual anchors"
     }
   ],
 
@@ -126,12 +126,12 @@ const TREATMENT_SCHEMA_TEMPLATE = `SCHEMA - GENERATE IN THIS EXACT ORDER:
   ],
   
   "themes": ["Theme 1", "Theme 2"],
-  "opening_hook": "string",
+  "opening_hook": "Immediate visual and dramatic hook that grabs the audience in the opening moments",
   "cta": "__CTA_VALUE__",
   "learning_objectives": __LEARNING_VALUE__,
   "beats": [
-    { "title": "Beat title", "intent": "Narrative/dramatic purpose (fiction) OR clarifying/illustrative purpose (non-fiction)", "synopsis": "≤150 words beat summary", "minutes": 3.5 },
-    { "title": "Next beat title", "intent": "Its own distinct purpose", "synopsis": "≤150 words beat summary", "minutes": 1.75 },
+    { "title": "Beat title", "intent": "Narrative/dramatic purpose + value shift (fiction) OR clarifying/illustrative purpose (non-fiction)", "synopsis": "≤150 words: state the entering conflict/hook, the concrete visual action on screen, and the THEREFORE/BUT turn that propels into the next beat", "minutes": 3.5 },
+    { "title": "Next beat title", "intent": "Its own distinct purpose escalated by the prior beat", "synopsis": "≤150 words: causal consequence/complication, vivid on-screen action, and closing turn/hook", "minutes": 1.75 },
     { "title": "…continue until the whole story is covered", "intent": "…", "synopsis": "…", "minutes": 4 }
   ],
   "visual_style": "string",
@@ -172,7 +172,9 @@ OUTPUT RULES - CRITICAL:
 
 7. "protagonist" and "antagonist" MUST be plain JSON strings (one string each). Do NOT use nested objects here — put name, goal, and flaw inside the string sentences if needed.
 
-8. Assign each beat the number of minutes the story/illustration genuinely needs. Beat "minutes" should reflect real pacing — do not invent uniform values.`
+8. Assign each beat the number of minutes the story/illustration genuinely needs. Beat "minutes" should reflect real pacing — do not invent uniform values.
+
+9. **BEAT SHEET CRAFT ("THEREFORE / BUT" RULE)**: Never write a flat, episodic "and then" list of events. Every beat in "beats" MUST be causally linked to the beat before and after it ("Because of X, THEREFORE Y happens; BUT complication Z forces a new choice"). Each beat's "synopsis" must establish: (a) entering friction/objective, (b) concrete visual action on screen, and (c) the dramatic turn or value shift at the end of the beat.`
 
 /**
  * Default length posture.
@@ -391,12 +393,13 @@ QUALITY ESSENTIALS (User specified: Genre=${g}, Tone=${t}, Audience=${a}, Intent
 
   return `
 QUALITY ESSENTIALS (User specified: Genre=${g}, Tone=${t}, Audience=${a}):
-- Clear protagonist goal and internal flaw
-- Three-act structure with midpoint reversal
-- Culturally authentic character names
-- Logline with compelling hook/twist
-- Consistent ${t} tone throughout
-- Resonate with ${a} audience concerns
+- Magnetic protagonist with an active externalGoal colliding with a deeper internalNeed and playable fatalFlaw
+- Multidimensional supporting cast with distinct voices, contradictions, and interpersonal friction (never passive exposition)
+- Causal "THEREFORE / BUT" beat progression (never episodic "and then" summaries) with a clear midpoint reversal and low-point crucible
+- Every beat synopsis includes an entering conflict, concrete visual on-screen action, and an ending value shift
+- Culturally authentic, original character names
+- Logline with an irresistible hook, dramatic irony, or unexpected twist
+- Consistent ${t} tone and high entertainment value for ${a} audience
 `
 }
 
@@ -438,7 +441,7 @@ QUALITY GATE CHECKLIST - MUST PASS ALL ITEMS
 This treatment will be scored. To achieve 80+ on first generation, ENSURE:
 
 AXIS 1: CONCEPT ORIGINALITY (25% of score)
-[ ] HOOK/TWIST: Logline MUST contain an unexpected element or compelling twist
+[ ] HOOK/TWIST: Logline MUST contain an unexpected element, dramatic irony, or compelling twist
     BAD: "A man goes on a journey to find himself"
     GOOD: "A burned-out detective discovers his missing daughter was erased from all records—including his own memory"
 [ ] AVOID CLICHÉS: Do NOT use these tired tropes without subversion:
@@ -446,25 +449,27 @@ AXIS 1: CONCEPT ORIGINALITY (25% of score)
     - Love at first sight (unless complicated)  
     - Mentor dies to motivate hero (unless meaningful)
     - It was all a dream/simulation reveal
-[ ] UNIQUE ANGLE: Setting or premise must have a distinctive element
+[ ] UNIQUE ANGLE: Setting or premise must have a distinctive, entertaining engine
 
-AXIS 2: CHARACTER DEPTH (25% of score)
-[ ] PROTAGONIST GOAL: State clearly what they want (external, tangible)
+AXIS 2: CHARACTER DEPTH & INTERPERSONAL FRICTION (25% of score)
+[ ] PROTAGONIST GOAL vs. NEED: State clearly what they visibly pursue (externalGoal) and how it collides with their emotional need (internalNeed)
     EXAMPLE: "The protagonist must expose the cover-up before the election closes the investigation window"
-[ ] PROTAGONIST FLAW: State their internal weakness that creates obstacles
+[ ] PROTAGONIST FLAW & CONTRADICTION: State their internal weakness and playable behavioral contradiction that creates active obstacles
     EXAMPLE: "Their refusal to trust allies leaves them isolated when evidence surfaces"
-[ ] ANTAGONIST DEFINED: Name or describe the opposing force
+[ ] ANTAGONIST & FOILS: Name or describe the opposing force with a believable counter-agenda, plus supporting characters who challenge rather than serve as passive sounding boards
     EXAMPLE: "A city official whose career depends on burying the truth"
 [ ] THE "GHOST": Include past trauma or secret that haunts the protagonist
     EXAMPLE: "Haunted by a case they failed to solve years ago"
     This is CRITICAL for ${targetAudience} resonance.
 
-AXIS 3: PACING & STRUCTURE (20% of score)
+AXIS 3: PACING, STRUCTURE & CAUSAL BEATS (20% of score)
 [ ] THREE ACTS: Treatment MUST have clear Setup, Confrontation, Resolution
+[ ] CAUSAL BEAT PROGRESSION ("THEREFORE / BUT"): Every beat must be triggered by a consequence ("THEREFORE") or complication ("BUT") of the prior beat — never an episodic "and then" list
+[ ] VISUAL SET-PIECES & TURNS: Each beat synopsis must describe concrete visual on-screen action and end on a clear shift in power, trust, danger, or revelation
 [ ] INCITING INCIDENT: In first 25% of story, something disrupts ordinary world
     EXAMPLE: "When a cryptic letter arrives revealing [secret]..."
-[ ] MIDPOINT TURN: Include a revelation or reversal at the story's midpoint
-[ ] LOW POINT/ALL IS LOST: Before the climax, protagonist hits rock bottom
+[ ] MIDPOINT TURN: Include a major revelation or reversal at the story's midpoint that raises the cost of failure
+[ ] LOW POINT/ALL IS LOST: Before the climax, protagonist hits rock bottom where their old strategy fails
 
 AXIS 4: GENRE FIDELITY (15% of score) - ${genre.toUpperCase()}
 [ ] ESSENTIAL CONVENTIONS: ${genreConventions}
@@ -480,11 +485,12 @@ AXIS 5: COMMERCIAL VIABILITY (15% of score) - ${targetAudience.toUpperCase()}
 PRE-GENERATION SELF-CHECK
 =============================================================================
 Before outputting, verify:
-1. Can you state the protagonist's GOAL in one sentence? → If no, add it
-2. Can you state the protagonist's FLAW in one sentence? → If no, add it
+1. Can you state the protagonist's GOAL and colliding NEED in one sentence? → If no, add it
+2. Can you state the protagonist's FLAW and behavioral contradiction? → If no, add it
 3. Is there a clear "When [event] happens, [protagonist] must..." structure? → If no, fix it
-4. Does the logline have a HOOK that makes you want to know more? → If no, add a twist
-5. Are character names culturally authentic to their ethnicity? → If not, fix them
+4. Does every beat connect via THEREFORE / BUT with a visual turn instead of "and then"? → If no, rewrite the beats
+5. Does the logline have a HOOK that makes you want to know more? → If no, add a twist
+6. Are character names culturally authentic to their ethnicity? → If not, fix them
 =============================================================================
 `
 }

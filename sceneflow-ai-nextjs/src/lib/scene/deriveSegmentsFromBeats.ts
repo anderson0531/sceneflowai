@@ -19,7 +19,10 @@ import {
 } from '@/lib/script/beatMigration'
 import { collectDraftStoryboardFrameWarnings } from '@/lib/storyboard/storyboardQuality'
 import { actionFramingFromStoredPrompt } from '@/lib/imagen/structuredStillPrompt'
+import { composeBeatActionFraming } from '@/lib/intelligence/beat-sequence-planner-fallback'
+import { compileBeatVideoPromptFromDirection } from '@/lib/scene/beatVideoPromptCompiler'
 import type { SceneBeat } from '@/lib/script/segmentTypes'
+import type { DetailedSceneDirection } from '@/types/scene-direction'
 import type { SceneSegment } from '@/components/vision/scene-production/types'
 import type { VideoGenerationMethod } from '@/components/vision/scene-production/types'
 import { resolveLiveTake, unionRowsById } from '@/lib/storyboard/mediaVersions'
@@ -107,6 +110,7 @@ function beatToSegment(
     veoTimelineContinuation?: boolean
     videoChain?: SceneSegment['videoChain']
     transitionType?: SceneSegment['transitionType']
+    sceneDirection?: DetailedSceneDirection | null
   } = {}
 ): { segment: SceneSegment; duration: number } {
   const fullSpoken = beat.line ?? ''
@@ -177,11 +181,18 @@ function beatToSegment(
     },
     startFramePrompt:
       actionFramingFromStoredPrompt(beat.storyboardImagePrompt) ||
+      composeBeatActionFraming(beat) ||
       beat.actionDescription ||
       spokenText,
     endFramePrompt:
       actionFramingFromStoredPrompt(beat.storyboardEndImagePrompt) || buildEndFramePrompt(beat),
-    generatedPrompt: buildVideoPrompt(beat, spokenText),
+    generatedPrompt:
+      beat.beatDirection || opts.sceneDirection
+        ? compileBeatVideoPromptFromDirection(beat, opts.sceneDirection, {
+            ...(opts.spokenExcerpt ? { excerpt: opts.spokenExcerpt } : {}),
+            continuesSameLine: opts.veoTimelineContinuation ?? false,
+          }).prompt
+        : buildVideoPrompt(beat, spokenText),
     action: beat.actionDescription ?? '',
     beatId: beat.beatId,
     veoTimelineContinuation: opts.veoTimelineContinuation ?? false,
@@ -199,6 +210,10 @@ function appendSegmentsFromBeat(
   scene: Record<string, unknown>,
   language: string
 ): { startTime: number; sequenceIndex: number } {
+  const sceneDirection =
+    scene.sceneDirection && typeof scene.sceneDirection === 'object'
+      ? (scene.sceneDirection as DetailedSceneDirection)
+      : null
   const spokenText = beat.line ?? ''
   const parts =
     beat.kind !== 'action' && spokenText.trim()
@@ -237,6 +252,7 @@ function appendSegmentsFromBeat(
           : beat.beatDirection?.transition === 'CONTINUE'
             ? 'CONTINUE'
             : 'CUT',
+        sceneDirection,
       })
       segments.push(segment)
       nextStart += duration
@@ -255,6 +271,7 @@ function appendSegmentsFromBeat(
 
   const { segment, duration } = beatToSegment(beat, sequenceIndex, startTime, {
     duration: durationOverride,
+    sceneDirection,
   })
   segments.push(segment)
   return { startTime: startTime + duration, sequenceIndex: sequenceIndex + 1 }

@@ -321,14 +321,14 @@ function buildCompactBeatDirectionPromptBlock(includeProps: boolean): string {
 Every beat MUST include a "beatDirection" object with the fields below and NO others. Richer direction is added by a later pass — extra fields here cost the scene budget.
 
 • "castInFrame": array of the character names visible on camera in THIS beat, exactly as spelled in the scene's character list. It is the only thing that decides who appears. Use [] for a frame with no people in it. Never list NARRATOR.
-• "shotType": named shot for this beat, 1–4 words (e.g., "Wide Shot", "Medium Close-Up", "Insert Shot", "Over-the-Shoulder", "Two-Shot").
-• "frozenMoment": ONE settled instant (e.g., "Piper halts Gideon mid-lean, journal pressed to his sternum, her jaw set."). Noun-first, concrete, one composition — pose plus what is readable on the face/body. Repeat quoted on-screen words and what a photograph or prop depicts; do not replace them with a vague label such as "production credits." It is a photograph, not a video: no temporal verbs ("pulses", "walks toward"). Do not write empty stillness ("standing motionless") without the face and body that make the hold readable.
+• "shotType": named shot for this beat, 1–4 words (e.g., "Wide Shot", "Medium Two-Shot", "Over-the-Shoulder", "Medium Close-Up", "Close-Up", "Extreme Close-Up", "Insert Shot"). Progress shot scales intentionally across each movement (establish geography → medium/OTS interaction → close-up or insert on the emotional turn); avoid repeating the same shotType on consecutive beats unless holding for a deliberate dramatic beat.
+• "frozenMoment": ONE settled instant (e.g., "Piper screen-left halts Gideon mid-lean, journal pressed to his sternum, her jaw set and eyes locked on his."). Noun-first, concrete, one composition — pack screen-left/right placement, body weight/posture, readable facial expression, and eyeline target into this sentence. Repeat quoted on-screen words and what a photograph or prop depicts; do not replace them with a vague label such as "production credits." It is a photograph, not a video: no temporal verbs ("pulses", "walks toward"). Do not write empty stillness ("standing motionless") without the face and body that make the hold readable.
 • "transition": how this beat cuts into the NEXT beat. One of: "CUT", "CONTINUE", "DISSOLVE", "FADE", "MATCH_CUT". Default is "CUT".${propFields}
 
 Rules:
 • Do NOT put dialogue content in beatDirection fields.
 • Do NOT emit ${excluded} on beats — the direction pass supplies them.
-• frozenMoment must be visually distinct from the adjacent beats' frozenMoment.
+• frozenMoment must be visually distinct from the adjacent beats' frozenMoment and maintain 180-degree screen geography.
 • ${buildPolicySafePhrasingRules({ compact: true })}`
 }
 

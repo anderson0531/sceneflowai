@@ -19,6 +19,7 @@ import {
   getSceneBeats,
   normalizeBeatDirection,
 } from '@/lib/script/beatMigration'
+import { getSceneMovements } from '@/lib/script/sceneMovements'
 import type {
   BeatDirection,
   BeatDirectionSource,
@@ -112,6 +113,21 @@ export interface StillDirectorBeatInput {
   nextMoment?: string
 }
 
+export interface StillDirectorSceneContext {
+  heading?: string
+  sceneDescription?: string
+  coveragePhilosophy?: string
+  cameraAngle?: string
+  cameraMovement?: string
+  lightingSummary?: string
+  location?: string
+  atmosphere?: string
+  talentBlocking?: string
+  emotionalBeat?: string
+  movements?: Array<{ index: number; summary: string; beatStart: number; beatEnd: number }>
+  beatOutline?: Array<{ beatIndex: number; kind: string; summary: string; shotType?: string }>
+}
+
 export interface DirectBeatStillRequest {
   mode: StillDirectorMode
   beats: StillDirectorBeatInput[]
@@ -120,6 +136,8 @@ export interface DirectBeatStillRequest {
   overlay?: StillDirectorOverlay
   /** Rewrite Action/Framing to Google Gemini Image content-policy phrasing. */
   policyCompliance?: boolean
+  /** Scene-level direction and movement arc so shot batches maintain cohesive flow. */
+  sceneContext?: StillDirectorSceneContext
 }
 
 export interface ApplyStillDirectorPatchOptions {
@@ -332,6 +350,97 @@ export function applyPolicyComplianceToPatch(patch: StillDirectorPatch): StillDi
   return next
 }
 
+export function buildStillDirectorSceneContext(
+  scene: Record<string, unknown> | null | undefined,
+  beatsInput?: SceneBeat[]
+): StillDirectorSceneContext | undefined {
+  if (!scene || typeof scene !== 'object') return undefined
+  const rawHeading = scene.heading
+  const heading =
+    typeof rawHeading === 'string'
+      ? rawHeading.trim()
+      : rawHeading && typeof rawHeading === 'object' && typeof (rawHeading as any).text === 'string'
+        ? String((rawHeading as any).text).trim()
+        : undefined
+  const dir =
+    scene.sceneDirection && typeof scene.sceneDirection === 'object'
+      ? (scene.sceneDirection as Record<string, any>)
+      : undefined
+  const sceneDescription =
+    trimOrUndef(dir?.sceneDescription) ??
+    trimOrUndef(typeof scene.visualDescription === 'string' ? scene.visualDescription : undefined) ??
+    trimOrUndef(typeof scene.action === 'string' ? scene.action : undefined)
+  const coveragePhilosophy = trimOrUndef(dir?.camera?.coveragePhilosophy)
+  const cameraAngle = trimOrUndef(dir?.camera?.angle)
+  const cameraMovement = trimOrUndef(dir?.camera?.movement)
+  const lightingSummary = [
+    trimOrUndef(dir?.lighting?.overallMood),
+    trimOrUndef(dir?.lighting?.timeOfDay),
+    trimOrUndef(dir?.lighting?.keyLight),
+    trimOrUndef(dir?.lighting?.colorTemperature),
+  ]
+    .filter(Boolean)
+    .join('; ')
+  const location = trimOrUndef(dir?.scene?.location)
+  const atmosphere = trimOrUndef(dir?.scene?.atmosphere)
+  const talentBlocking = trimOrUndef(dir?.talent?.blocking)
+  const emotionalBeat = trimOrUndef(dir?.talent?.emotionalBeat)
+  const beats = beatsInput ?? getSceneBeats(scene)
+  const rawMovements = beats.length > 0 ? getSceneMovements(scene, beats) : []
+  const movements =
+    rawMovements.length > 0
+      ? rawMovements.map((m) => ({
+          index: m.index,
+          summary: m.summary,
+          beatStart: m.beatStart,
+          beatEnd: m.beatEnd,
+        }))
+      : undefined
+  const beatOutline =
+    beats.length > 0
+      ? beats.map((b, idx) => ({
+          beatIndex: idx,
+          kind: b.kind,
+          shotType: b.beatDirection?.shotType,
+          summary: (
+            b.kind === 'action'
+              ? b.actionDescription || b.beatDirection?.frozenMoment || ''
+              : `${b.character || 'SPEAKER'}: ${b.line || ''}`
+          )
+            .replace(/\s+/g, ' ')
+            .trim()
+            .slice(0, 140),
+        }))
+      : undefined
+
+  if (
+    !heading &&
+    !sceneDescription &&
+    !coveragePhilosophy &&
+    !location &&
+    !lightingSummary &&
+    !talentBlocking &&
+    !movements
+  ) {
+    return undefined
+  }
+
+  return {
+    ...(heading ? { heading } : {}),
+    ...(sceneDescription ? { sceneDescription } : {}),
+    ...(coveragePhilosophy ? { coveragePhilosophy } : {}),
+    ...(cameraAngle ? { cameraAngle } : {}),
+    ...(cameraMovement ? { cameraMovement } : {}),
+    ...(lightingSummary ? { lightingSummary } : {}),
+    ...(location ? { location } : {}),
+    ...(atmosphere ? { atmosphere } : {}),
+    ...(talentBlocking ? { talentBlocking } : {}),
+    ...(emotionalBeat ? { emotionalBeat } : {}),
+    ...(movements ? { movements } : {}),
+    ...(beatOutline ? { beatOutline } : {}),
+  }
+}
+
 export function previewActionFramingFromPatch(
   beat: SceneBeat,
   patch: StillDirectorPatch
@@ -359,6 +468,7 @@ HARD RULES:
 8. Do NOT write style, lighting essays, exclusions, F2V, start-frame, or appearance of library refs — code owns those.
 9. Include audioCue only for a distinct sound the score cannot carry (a slam, a mechanism, a creature, a specific device). Omit audioCue when music should carry the shot, and never use it for generic ambience. Include cameraMovement and transition only when the user note or the current beat calls for them. transition must be one of CUT, CONTINUE, DISSOLVE, FADE, MATCH_CUT. Omit a field to leave it unchanged.
 10. ${buildPolicySafePhrasingRules()}
+11. SCENE SHOT FLOW & CONTINUITY: When SCENE DIRECTION & SHOT FLOW CONTEXT is provided, honor the scene's coverage philosophy, movement turns, and 180-degree camera axis. Maintain consistent screen-left / screen-right character geography and eyeline match across consecutive beats, and vary shot scales purposefully across each movement (establish geography → medium/OTS interaction → close-up or insert on emotional turns) so the sequence cuts together smoothly.
 
 Output JSON only:
 {
@@ -436,6 +546,44 @@ export function buildStillDirectorUserPrompt(request: DirectBeatStillRequest): s
     parts.push('USER NOTES (authoritative for framing; do not replace the story beat):')
     parts.push(notes)
     parts.push('')
+  }
+
+  if (request.sceneContext) {
+    const ctx = request.sceneContext
+    const ctxLines: string[] = []
+    if (ctx.heading) ctxLines.push(`Heading: ${ctx.heading}`)
+    if (ctx.location) ctxLines.push(`Location: ${ctx.location}`)
+    if (ctx.atmosphere) ctxLines.push(`Atmosphere: ${ctx.atmosphere}`)
+    if (ctx.sceneDescription) ctxLines.push(`Scene arc: ${ctx.sceneDescription}`)
+    if (ctx.coveragePhilosophy) ctxLines.push(`Coverage philosophy: ${ctx.coveragePhilosophy}`)
+    if (ctx.cameraAngle || ctx.cameraMovement) {
+      ctxLines.push(
+        `Default camera: ${[ctx.cameraAngle, ctx.cameraMovement].filter(Boolean).join(', ')}`
+      )
+    }
+    if (ctx.lightingSummary) ctxLines.push(`Lighting: ${ctx.lightingSummary}`)
+    if (ctx.talentBlocking) ctxLines.push(`Scene blocking arc: ${ctx.talentBlocking}`)
+    if (ctx.emotionalBeat) ctxLines.push(`Emotional arc: ${ctx.emotionalBeat}`)
+    if (ctx.movements && ctx.movements.length > 0) {
+      ctxLines.push('Movements:')
+      for (const m of ctx.movements) {
+        ctxLines.push(
+          `  Movement ${m.index + 1} (beats ${m.beatStart}–${m.beatEnd}): ${m.summary}`
+        )
+      }
+    }
+    if (ctx.beatOutline && ctx.beatOutline.length > 1) {
+      ctxLines.push('Full scene shot sequence (maintain 180-degree axis and shot scale progression across these):')
+      for (const item of ctx.beatOutline) {
+        const scale = item.shotType ? ` [${item.shotType}]` : ''
+        ctxLines.push(`  Beat ${item.beatIndex} (${item.kind})${scale}: ${item.summary}`)
+      }
+    }
+    if (ctxLines.length > 0) {
+      parts.push('SCENE DIRECTION & SHOT FLOW CONTEXT:')
+      parts.push(ctxLines.join('\n'))
+      parts.push('')
+    }
   }
 
   parts.push('BEATS:')

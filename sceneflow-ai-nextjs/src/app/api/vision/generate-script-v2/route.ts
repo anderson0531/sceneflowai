@@ -1083,6 +1083,12 @@ SCENE ARC → BEATS (PLAN BEFORE YOU WRITE):
 • Inside a movement, consecutive beats must ADVANCE it: change what the audience knows, who holds power, or what is physically happening. Do not write several beats that restate the same instant from different angles.
 • Across a movement boundary the story must visibly turn — that turn is why the boundary is there.
 
+CINEMATIC SCENE & SHOT FLOW (MANDATORY):
+• Enter Late, Leave Early: cut into the scene when action or interpersonal friction is already in motion; cut out on a visual turn, emotional button, or unresolved hook that propels into the next scene.
+• Shot Scale Progression: vary shot scales purposefully across each movement (e.g., open a movement with Establishing / Wide or Medium Two-Shot to anchor spatial geography, progress into Over-the-Shoulder / Medium Close-Up for tactical exchanges, and reserve Close-Up / Extreme Close-Up / Insert Shot for emotional turns, reveals, and silent reactions).
+• 180-Degree Axis & Eyeline Continuity: establish consistent screen-left and screen-right character positions within each movement so shot-to-shot cuts feel like a single directed film.
+• Entertaining Subtext & Physical Business: never reduce a scene to static talking heads; pair spoken exchanges with tactile prop interactions, spatial shifts, and silent reaction beats that reveal what characters are hiding.
+
 SCORING THE SCENE ("musicCues" — OPTIONAL, WRITE ONLY WHERE MUSIC EARNS ITS PLACE):
 • A cue is a contiguous run of beats that plays under score, with "beatStart"/"beatEnd" as 0-based INCLUSIVE indices into beats[]. Cues must not overlap. Each cue covers at most ${MAX_BEATS_PER_MUSIC_CUE} beats. At most ${MAX_MUSIC_CUES} cues per scene.
 • A scored passage longer than ${MAX_BEATS_PER_MUSIC_CUE} beats is several back-to-back cues, not one long cue. Each of those cues has its own "intent" and "description", so the score can move with the emotion inside the passage — beats 0–2, then 3–5, then 6–8, then 9, never one cue from 0 through 9.

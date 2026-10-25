@@ -280,6 +280,14 @@ interface CoverageRow {
   lensEnergy?: string
   spatialRelationship?: string
   shotType?: string
+  cameraAngle?: string
+  cameraMovement?: string
+  blocking?: string
+  gaze?: string
+  emotion?: string
+  frozenMoment?: string
+  lightingAccent?: string
+  propInteraction?: string
 }
 
 /**
@@ -287,7 +295,8 @@ interface CoverageRow {
  *
  * Derived and earlier direction camera fields are replaced so a recycled scale
  * does not survive a new pass. User-authored beat direction is left alone.
- * A coverage row with no shotType clears a previous scale instead of keeping it.
+ * A coverage row with no shotType clears a recycled derived scale while keeping
+ * LLM/director-authored scales.
  */
 export function applyDirectionCoverageToBeats(
   scene: Record<string, unknown>,
@@ -308,19 +317,54 @@ export function applyDirectionCoverageToBeats(
     const energy = row.lensEnergy?.trim()
     const space = row.spatialRelationship?.trim()
     const shot = row.shotType?.trim()
-    if (!purpose && !energy && !space && !shot) return beat
+    const angle = row.cameraAngle?.trim()
+    const movement = row.cameraMovement?.trim()
+    const blocking = row.blocking?.trim()
+    const gaze = row.gaze?.trim()
+    const emotion = row.emotion?.trim()
+    const frozenMoment = row.frozenMoment?.trim()
+    const lightingAccent = row.lightingAccent?.trim()
+    const propInteraction = row.propInteraction?.trim()
+    if (
+      !purpose &&
+      !energy &&
+      !space &&
+      !shot &&
+      !angle &&
+      !movement &&
+      !blocking &&
+      !gaze &&
+      !emotion &&
+      !frozenMoment &&
+      !lightingAccent &&
+      !propInteraction
+    ) {
+      return beat
+    }
 
     const next: BeatDirection = { ...(existing ?? {}) }
     if (purpose) next.coveragePurpose = purpose
     if (energy) {
       next.lensEnergy = energy
-      next.cameraMovement = energy
+      next.cameraMovement = movement || energy
+    } else if (movement) {
+      next.cameraMovement = movement
     }
     if (space) next.spatialRelationship = space
+    if (angle) next.cameraAngle = angle
+    if (blocking) next.blocking = blocking
+    if (gaze) next.gaze = gaze
+    if (emotion) next.emotion = emotion
+    if (frozenMoment) next.frozenMoment = frozenMoment
+    if (lightingAccent) next.lightingAccent = lightingAccent
+    if (propInteraction) next.propInteraction = propInteraction
     if (shot) next.shotType = shot
-    else delete next.shotType
+    else if (!existing?.generatedBy || existing.generatedBy === 'derived') delete next.shotType
     if (!next.generatedBy || next.generatedBy === 'derived') next.generatedBy = 'derived'
-    next.updatedAt = new Date().toISOString()
+    next.updatedAt =
+      existing?.updatedAt && !directionFieldsChanged(existing, next)
+        ? existing.updatedAt
+        : new Date().toISOString()
     return { ...beat, beatDirection: next }
   })
 }

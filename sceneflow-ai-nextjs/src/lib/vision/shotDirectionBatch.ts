@@ -1,6 +1,7 @@
 import { composeBeatActionFraming, STILL_DIRECTOR_BEAT_CHUNK } from '@/lib/intelligence/beat-sequence-planner-fallback'
 import type { BeatSequenceReferenceCatalog } from '@/lib/intelligence/beat-sequence-planner-fallback'
 import {
+  buildStillDirectorSceneContext,
   shouldSkipStillDirectorAuto,
   type DirectBeatStillRequest,
   type StillDirectorPatch,
@@ -143,6 +144,7 @@ export async function runShotDirectionChunks(args: {
   const targets = shotDirectionTargets(args.scene, { force: args.force })
   const chunks = chunkShotDirectionTargets(targets, args.chunkSize)
   const beats = getSceneBeats(args.scene)
+  const sceneContext = buildStillDirectorSceneContext(args.scene, beats)
   const concurrency = Math.max(1, args.concurrency ?? getShotDirectionTextConcurrency())
   const collected: Array<{ beatIndex: number; beatId?: string; patch: StillDirectorPatch }> = []
   let failed = 0
@@ -152,6 +154,7 @@ export async function runShotDirectionChunks(args: {
     const request: DirectBeatStillRequest = {
       mode: 'optimize',
       catalog: args.catalog,
+      ...(sceneContext ? { sceneContext } : {}),
       beats: chunk.map(({ beat, beatIndex }) => ({
         beatIndex,
         beat,

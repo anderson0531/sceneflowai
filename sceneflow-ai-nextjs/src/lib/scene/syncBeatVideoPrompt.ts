@@ -116,6 +116,6 @@ export function refreshProductionSegmentVideoPrompts<T extends SegmentPromptRow>
   options?: SyncBeatVideoPromptOptions
 ): T[] | null {
   const beats = getSceneBeats(scene)
-  if (!beats.some(beatDirectionOwnsVideoPrompt)) return null
+  if (!options?.allBeats && !beats.some(beatDirectionOwnsVideoPrompt)) return null
   return refreshSegmentList(segments, beats, scene, options)
 }

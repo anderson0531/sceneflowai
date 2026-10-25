@@ -5,6 +5,7 @@ import Project from '../../../../models/Project'
 import { sequelize } from '../../../../config/database'
 import { composeBeatActionFraming } from '@/lib/intelligence/beat-sequence-planner-fallback'
 import {
+  buildStillDirectorSceneContext,
   mergeDirectOverlaysIntoPatch,
   parseStillDirectorPatch,
   previewActionFramingFromPatch,
@@ -128,6 +129,10 @@ export async function POST(req: NextRequest) {
         : [],
     }
 
+    const sceneContext = buildStillDirectorSceneContext(
+      scene as Record<string, unknown>,
+      beats
+    )
     let result
     try {
       result = await directBeatStills({
@@ -144,6 +149,7 @@ export async function POST(req: NextRequest) {
         userDirection,
         overlay,
         policyCompliance,
+        ...(sceneContext ? { sceneContext } : {}),
       })
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : String(error)

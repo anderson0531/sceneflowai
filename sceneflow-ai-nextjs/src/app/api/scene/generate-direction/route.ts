@@ -3,7 +3,9 @@ import Project from '../../../../models/Project'
 import { sequelize } from '../../../../config/database'
 import { generateSceneDirection } from '@/lib/sceneGeneration/generateDirection'
 import { mergeSceneForDirection } from '@/lib/sceneGeneration/mergeSceneForDirection'
-import { ensureSceneBeats } from '@/lib/script/beatMigration'
+import { applyBeatsToScene, ensureSceneBeats, getSceneBeats } from '@/lib/script/beatMigration'
+import { syncBeatStillPromptToDirection } from '@/lib/storyboard/syncBeatStillPrompt'
+import { refreshProductionSegmentVideoPrompts } from '@/lib/scene/syncBeatVideoPrompt'
 
 export const maxDuration = 300
 export const runtime = 'nodejs'
@@ -103,11 +105,28 @@ export async function POST(req: NextRequest) {
       )
     }
 
-    const updatedScenes = scriptScenes.map((s: any, idx: number) =>
-      idx === sceneIndex
-        ? ensureSceneBeats({ ...s, sceneDirection } as Record<string, unknown>)
-        : s
-    )
+    const updatedScenes = scriptScenes.map((s: any, idx: number) => {
+      if (idx !== sceneIndex) return s
+      const ensured = ensureSceneBeats({ ...s, sceneDirection } as Record<string, unknown>)
+      const beats = getSceneBeats(ensured)
+      const syncedBeats = beats.map((beat) =>
+        beat.beatDirection
+          ? syncBeatStillPromptToDirection(beat, { sceneIndex: idx })
+          : beat
+      )
+      let nextScene = applyBeatsToScene(ensured, syncedBeats)
+      if (Array.isArray(nextScene.segments) && nextScene.segments.length > 0) {
+        const refreshedSegments = refreshProductionSegmentVideoPrompts(
+          nextScene.segments as any[],
+          nextScene,
+          { allBeats: true }
+        )
+        if (refreshedSegments) {
+          nextScene = { ...nextScene, segments: refreshedSegments }
+        }
+      }
+      return nextScene
+    })
 
     const updatedScript = script.script
       ? { ...script, script: { ...script.script, scenes: updatedScenes } }
