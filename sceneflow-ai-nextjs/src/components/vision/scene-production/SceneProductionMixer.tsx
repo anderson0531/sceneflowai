@@ -372,9 +372,9 @@ type RenderStatus = 'idle' | 'preparing' | 'rendering' | 'complete' | 'error'
 type ActiveRenderMode = 'local' | 'server' | 'headless'
 
 const RESOLUTION_TRIGGER_LABELS: Record<'720p' | '1080p' | '4K', string> = {
-  '720p': '720 (HD)',
-  '1080p': '1080 (FHD)',
-  '4K': '4K (UHD)',
+  '720p': '720p (Standard HD)',
+  '1080p': '1080p (Full HD)',
+  '4K': '4K (Ultra HD)',
 }
 
 interface SceneProductionMixerProps {
@@ -850,13 +850,16 @@ function AudioTrackRow({
 
           {/* Auto-Ducking (-8 dB under Dialogue / Narration) for Music & SFX */}
           {(type === 'music' || type === 'sfx') && (
-            <div className="flex items-center justify-between gap-2 px-2.5 py-1.5 rounded bg-zinc-950/70 border border-zinc-800/80">
+            <div
+              className="flex items-center justify-between gap-2 px-2.5 py-1.5 rounded bg-zinc-950/70 border border-zinc-800/80"
+              title="Auto-Ducking (-8 dB sidechain gain reduction under A1 Dialogue & A2 Narration speech)"
+            >
               <div className="flex items-center gap-2 min-w-0">
                 <span className="text-[10px] font-semibold uppercase tracking-wider text-emerald-300">
-                  Auto-Duck (-8 dB)
+                  Auto-Lower During Speech
                 </span>
                 <span className="text-[10px] text-zinc-500 truncate">
-                  Sidechain gain reduction under A1/A2 speech
+                  Gently lowers volume while someone is speaking
                 </span>
               </div>
               <Switch
@@ -2035,18 +2038,18 @@ function BeatTrimRangeEditor({
           disabled={disabled || source <= minGap + 0.5}
           onClick={() => setIn(Math.min(trim.outSec - minGap, 0.5))}
           className="px-2 py-0.5 rounded text-[10px] font-mono bg-zinc-900 border border-zinc-700/80 text-zinc-300 hover:text-white hover:border-amber-500/40 disabled:opacity-40"
-          title="Trim 0.5s off the start of the clip"
+          title="Trim 0.5s off the start (head) of the clip"
         >
-          Trim 0.5s Head
+          Trim 0.5s Start
         </button>
         <button
           type="button"
           disabled={disabled || source <= minGap + 0.5}
           onClick={() => setOut(Math.max(trim.inSec + minGap, source - 0.5))}
           className="px-2 py-0.5 rounded text-[10px] font-mono bg-zinc-900 border border-zinc-700/80 text-zinc-300 hover:text-white hover:border-amber-500/40 disabled:opacity-40"
-          title="Trim 0.5s off the end of the clip"
+          title="Trim 0.5s off the end (tail) of the clip"
         >
-          Trim 0.5s Tail
+          Trim 0.5s End
         </button>
         <button
           type="button"
@@ -2492,16 +2495,19 @@ function SegmentAudioControls({
                       <div className="flex items-center gap-1 shrink-0">
                         {seg.stemSeparation?.backgroundStemUrl ? (
                           <span
-                            className="px-1.5 py-0.5 rounded bg-emerald-500/15 border border-emerald-500/40 text-emerald-200 text-[9px] font-mono"
-                            title="Original speech removed — generated SFX, music, and ambience stem is retained for dubbing"
+                            className="px-1.5 py-0.5 rounded bg-emerald-500/15 border border-emerald-500/40 text-emerald-200 text-[9px] font-medium"
+                            title="Demucs stem separation complete: original speech removed — SFX, music, and ambience stem is retained for dubbing"
                           >
-                            ✓ Stem Ready (No Dialogue)
+                            ✓ Background Only
                           </span>
                         ) : extractingStemIds[seg.segmentId] ||
                           seg.stemSeparation?.status === 'processing' ? (
-                          <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-amber-500/15 border border-amber-500/40 text-amber-200 text-[9px] font-mono">
+                          <span
+                            className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-amber-500/15 border border-amber-500/40 text-amber-200 text-[9px] font-medium"
+                            title="Extracting dialogue-free background stem (Demucs stem separation)"
+                          >
                             <Loader2 className="w-2.5 h-2.5 animate-spin" />
-                            <span>Extracting Stem…</span>
+                            <span>Removing Voice…</span>
                           </span>
                         ) : onExtractSegmentStem ? (
                           <button
@@ -2509,9 +2515,9 @@ function SegmentAudioControls({
                             disabled={disabled}
                             onClick={() => onExtractSegmentStem(seg)}
                             className="px-1.5 py-0.5 rounded bg-purple-500/15 border border-purple-500/40 text-purple-200 hover:bg-purple-500/25 text-[9px] font-medium transition-colors"
-                            title="Extract video audio and remove spoken dialogue while retaining generated SFX, ambience, and music"
+                            title="Demucs stem separation: extract video audio and remove spoken dialogue while retaining generated SFX, ambience, and music"
                           >
-                            Remove Dialogue (Keep SFX/Music)
+                            Keep Background Sounds Only
                           </button>
                         ) : null}
                       </div>
@@ -2520,8 +2526,8 @@ function SegmentAudioControls({
 
                   {/* Pacing Hold & Auto Pause Row */}
                   <div className="flex items-center justify-between gap-2 pl-11 text-[10px]">
-                    <div className="flex items-center gap-1.5" title="Add manual freeze-frame tail hold after this shot for dramatic pacing or L-cuts">
-                      <span className="text-zinc-500 uppercase tracking-wider">Tail Hold:</span>
+                    <div className="flex items-center gap-1.5" title="Tail Hold: add extra pause at the end of this shot for dramatic pacing or audio overlap (L-cuts)">
+                      <span className="text-zinc-500 uppercase tracking-wider">Extra Pause:</span>
                       <button
                         type="button"
                         disabled={disabled || manualHold <= 0}
@@ -2556,12 +2562,12 @@ function SegmentAudioControls({
                   {/* Hold Motion Style (Freeze vs. Ken Burns Push vs. Ping-Pong Tail) */}
                   <div className="flex flex-wrap items-center justify-between gap-2 pl-11 text-[10px]">
                     <div className="flex items-center gap-1">
-                      <span className="text-zinc-500 uppercase tracking-wider mr-0.5">Hold Mode:</span>
+                      <span className="text-zinc-500 uppercase tracking-wider mr-0.5">Hold Style:</span>
                       {(
                         [
-                          ['freeze', 'Freeze'],
-                          ['push', 'Push 103%'],
-                          ['pingpong', 'Ping-Pong'],
+                          ['freeze', 'Still Frame'],
+                          ['push', 'Slow Zoom'],
+                          ['pingpong', 'Subtle Motion'],
                         ] as const
                       ).map(([modeVal, modeLabel]) => {
                         const activeMode = (config.holdStyle || 'freeze') === modeVal
@@ -2572,17 +2578,17 @@ function SegmentAudioControls({
                             disabled={disabled}
                             onClick={() => updateSegmentHoldStyle(seg.segmentId, modeVal)}
                             className={cn(
-                              'px-1.5 py-0.5 rounded font-mono border transition-colors',
+                              'px-1.5 py-0.5 rounded font-medium border transition-colors',
                               activeMode
                                 ? 'bg-amber-500/20 border-amber-500/50 text-amber-200'
                                 : 'bg-zinc-900 border-zinc-800 text-zinc-400 hover:text-zinc-200'
                             )}
                             title={
                               modeVal === 'push'
-                                ? 'Subtle 103% slow zoom during extended dialogue/manual hold'
+                                ? '103% Ken Burns Push: subtle slow zoom during extended dialogue/manual hold'
                                 : modeVal === 'pingpong'
-                                  ? 'Micro-motion ping-pong during extended hold so the frame never looks static'
-                                  : 'Standard static last-frame freeze during extended hold'
+                                  ? 'Ping-Pong Tail: micro-motion loop during extended hold so the frame never looks static'
+                                  : 'Freeze Frame: standard static last-frame freeze during extended hold'
                             }
                           >
                             {modeLabel}
@@ -2594,8 +2600,8 @@ function SegmentAudioControls({
                     {/* J-Cut & L-Cut Audio Overlap Offsets */}
                     <div className="flex items-center gap-2">
                       {i > 0 && (
-                        <div className="flex items-center gap-1" title="J-Cut: start this shot's dialogue/ambience before the visual cut">
-                          <span className="text-zinc-500 uppercase tracking-wider">J-Cut:</span>
+                        <div className="flex items-center gap-1" title="J-Cut (Audio Lead-In): start this shot's dialogue/ambience before the visual cut">
+                          <span className="text-zinc-500 uppercase tracking-wider">Early Audio:</span>
                           {[0, 0.3, 0.6].map((val) => {
                             const activeJ = Math.abs((config.audioLeadInSec ?? 0) - val) < 0.05
                             return (
@@ -2604,6 +2610,7 @@ function SegmentAudioControls({
                                 type="button"
                                 disabled={disabled}
                                 onClick={() => updateSegmentLeadIn(seg.segmentId, val)}
+                                title={val === 0 ? 'No J-Cut audio lead-in (0s)' : `J-Cut (-${val.toFixed(1)}s): start audio ${val.toFixed(1)}s before visual cut`}
                                 className={cn(
                                   'px-1.5 py-0.5 rounded font-mono border transition-colors',
                                   activeJ
@@ -2618,8 +2625,8 @@ function SegmentAudioControls({
                         </div>
                       )}
                       {i < segments.length - 1 && (
-                        <div className="flex items-center gap-1" title="L-Cut: trail this shot's audio under the next shot">
-                          <span className="text-zinc-500 uppercase tracking-wider">L-Cut:</span>
+                        <div className="flex items-center gap-1" title="L-Cut (Audio Tail-Out): let this shot's audio continue softly under the next shot">
+                          <span className="text-zinc-500 uppercase tracking-wider">Trailing Audio:</span>
                           {[0, 0.3, 0.6].map((val) => {
                             const activeL = Math.abs((config.audioTailOutSec ?? 0) - val) < 0.05
                             return (
@@ -2628,6 +2635,7 @@ function SegmentAudioControls({
                                 type="button"
                                 disabled={disabled}
                                 onClick={() => updateSegmentTailOut(seg.segmentId, val)}
+                                title={val === 0 ? 'No L-Cut audio trail (0s)' : `L-Cut (+${val.toFixed(1)}s): let audio trail ${val.toFixed(1)}s into next shot`}
                                 className={cn(
                                   'px-1.5 py-0.5 rounded font-mono border transition-colors',
                                   activeL
@@ -5239,23 +5247,26 @@ export function SceneProductionMixer({
 
   return (
     <div className="bg-zinc-950 rounded-xl border border-zinc-800 shadow-2xl overflow-hidden">
-      {/* Commercial NLE Console Header */}
-      <div className="px-4 sm:px-5 py-3.5 bg-zinc-900/95 border-b border-zinc-800 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+      {/* Scene Mixer Header */}
+      <div className="px-4 py-2.5 bg-zinc-900/95 border-b border-zinc-800 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2.5">
         <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-lg bg-cyan-500/10 border border-cyan-500/25 flex items-center justify-center">
+          <div className="w-8 h-8 rounded-lg bg-cyan-500/10 border border-cyan-500/25 flex items-center justify-center">
             <Film className="w-4 h-4 text-cyan-400" />
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <h3 className="!text-base !leading-normal !mb-0 font-semibold tracking-tight text-zinc-100">
-                Scene Finishing &amp; Stitch Console
+              <h3 className="!text-sm sm:!text-base !leading-normal !mb-0 font-semibold tracking-tight text-zinc-100">
+                Scene Mixer &amp; Video Stitcher
               </h3>
               <span className="hidden md:inline-flex items-center px-1.5 py-0.5 rounded bg-zinc-800 border border-zinc-700 text-[9px] font-mono uppercase tracking-wider text-zinc-300">
                 SCENE {sceneNumber} • {previewSegments.length} {previewSegments.length === 1 ? 'SHOT' : 'SHOTS'} • {formatTimeWithMs(timelineDuration)}
               </span>
             </div>
-            <p className="text-xs text-zinc-400">
-              Trim clips, switch takes, set shot transitions, balance multi-track stems, and render broadcast MP4 masters.
+            <p
+              className="text-xs text-zinc-400"
+              title="Non-linear scene finishing console: H.264 MP4 / AAC master export with EBU R128 loudness normalization"
+            >
+              Trim shots, switch takes, choose transitions, balance audio tracks, and export MP4 video.
             </p>
           </div>
         </div>
@@ -5287,7 +5298,7 @@ export function SceneProductionMixer({
       </div>
 
       {/* Technical Timing & Stream Status Bar */}
-      <div className="px-4 sm:px-5 py-2 border-b border-zinc-800/80 bg-zinc-950/90 flex flex-wrap items-center justify-between gap-2 text-xs">
+      <div className="px-4 py-1.5 border-b border-zinc-800/80 bg-zinc-950/90 flex flex-wrap items-center justify-between gap-2 text-xs">
         <div className="flex flex-wrap items-center gap-2">
           <span className="inline-flex items-center gap-1.5 rounded border border-cyan-500/30 bg-cyan-500/10 px-2 py-0.5 text-[11px] font-medium text-cyan-200">
             Timing baseline: English — other languages follow this timeline
@@ -5302,24 +5313,24 @@ export function SceneProductionMixer({
           )}
         </div>
         <div className="hidden sm:flex items-center gap-3 text-[10px] font-mono text-zinc-500">
-          <span>VIDEO {formatTimeWithMs(videoTotalDuration)}</span>
+          <span title="Total stitched video shot duration">VIDEO {formatTimeWithMs(videoTotalDuration)}</span>
           <span>•</span>
-          <span>AUDIO {formatTimeWithMs(maxAudioDuration)}</span>
+          <span title="Total audio track duration">AUDIO {formatTimeWithMs(maxAudioDuration)}</span>
           <span>•</span>
-          <span className="text-zinc-300">MASTER {formatTimeWithMs(timelineDuration)}</span>
+          <span className="text-zinc-300" title="Combined scene runtime">TOTAL {formatTimeWithMs(timelineDuration)}</span>
         </div>
       </div>
       
       {/* Main Content */}
-      <div className="p-4 sm:p-5">
+      <div className="p-3 sm:p-4">
         {hasRenderablePreview ? (
-          <div className={`grid gap-4 sm:gap-5 transition-all duration-300 ${
+          <div className={`grid gap-3.5 sm:gap-4 transition-all duration-300 ${
             theaterMode 
               ? 'grid-cols-1' 
               : 'grid-cols-1 lg:grid-cols-[1fr,460px] xl:grid-cols-[1fr,500px]'
           }`}>
             {/* Left Column: Video Preview + Shot Stitch Strip + Sequence Timeline */}
-            <div className="space-y-3.5 min-w-0">
+            <div className="space-y-2.5 min-w-0">
               <ScenePreviewPlayer
                 segments={previewSegments}
                 playbackKind={previewPlaybackKind}
@@ -5360,15 +5371,15 @@ export function SceneProductionMixer({
 
               {/* Visual Shot Sequence & Stitch Strip */}
               {mixerBeatRows.length > 0 && (
-                <div className="bg-zinc-900/90 border border-zinc-800 rounded-lg p-3 space-y-2.5">
+                <div className="bg-zinc-900/90 border border-zinc-800 rounded-lg p-2.5 space-y-2">
                   <div className="flex flex-wrap items-center justify-between gap-2">
                     <div className="flex items-center gap-2">
                       <Layers className="w-3.5 h-3.5 text-cyan-400" />
                       <span className="text-[11px] font-semibold uppercase tracking-wider text-zinc-200">
                         Shot Sequence &amp; Stitch Strip
                       </span>
-                      <span className="text-[10px] font-mono text-zinc-500">
-                        Click shot to seek &amp; trim • Click join pill to cycle Cut / Dissolve / Fade
+                      <span className="text-[10px] text-zinc-500">
+                        Click a shot to jump &amp; trim • Click transition between shots to switch Cut / Dissolve / Fade
                       </span>
                     </div>
                     <div className="flex items-center gap-1.5 flex-wrap">
@@ -5595,20 +5606,20 @@ export function SceneProductionMixer({
                                 disabled={isRendering || !onSegmentsChange}
                                 onClick={() => handleCycleShotJoin(seg.segmentId)}
                                 className={cn(
-                                  'px-1.5 py-1 rounded text-[8px] font-mono font-bold uppercase tracking-wider border transition-colors',
+                                  'px-1.5 py-1 rounded text-[8px] font-semibold uppercase tracking-wider border transition-colors',
                                   joinToNext === 'dissolve'
                                     ? 'bg-purple-950/90 border-purple-500/50 text-purple-200 hover:bg-purple-900'
                                     : joinToNext === 'fade'
                                       ? 'bg-amber-950/90 border-amber-500/50 text-amber-200 hover:bg-amber-900'
                                       : 'bg-zinc-900 border-zinc-700 text-zinc-400 hover:text-zinc-200 hover:border-zinc-500'
                                 )}
-                                title={`Transition from Shot #${shotNum} into Shot #${shotNum + 1}: ${joinToNext.toUpperCase()} (click to cycle Cut / Dissolve / Fade)`}
+                                title={`Transition from Shot #${shotNum} into Shot #${shotNum + 1}: ${joinToNext.toUpperCase()} (click to cycle Cut / Dissolve / Fade to Black)`}
                               >
                                 {joinToNext === 'dissolve'
-                                  ? 'DSL'
+                                  ? 'Dissolve'
                                   : joinToNext === 'fade'
-                                    ? 'FADE'
-                                    : 'CUT'}
+                                    ? 'Fade'
+                                    : 'Cut'}
                               </button>
                               <button
                                 type="button"
@@ -5616,14 +5627,14 @@ export function SceneProductionMixer({
                                   setInspectedBoundaryIndex((prev) => (prev === idx ? null : idx))
                                 }
                                 className={cn(
-                                  'px-1.5 py-0.5 rounded text-[8px] font-mono border transition-colors',
+                                  'px-1.5 py-0.5 rounded text-[8px] font-medium border transition-colors',
                                   inspectedBoundaryIndex === idx
                                     ? 'bg-cyan-500/25 border-cyan-400 text-cyan-200'
                                     : 'bg-zinc-950 border-zinc-800 text-zinc-500 hover:text-cyan-300 hover:border-cyan-500/40'
                                 )}
-                                title={`Match-Cut Continuity Inspector: Compare Out-Frame of Shot #${shotNum} vs. In-Frame of Shot #${shotNum + 1}`}
+                                title={`Match-Cut Continuity Inspector: Compare end frame of Shot #${shotNum} vs. start frame of Shot #${shotNum + 1}`}
                               >
-                                ≟ Cut
+                                Compare
                               </button>
                             </div>
                           )}
@@ -5674,28 +5685,29 @@ export function SceneProductionMixer({
                             <div className="flex items-center gap-2">
                               <Badge
                                 variant="outline"
-                                className="bg-cyan-500/15 border-cyan-500/40 text-cyan-200 text-[10px] font-mono uppercase"
+                                className="bg-cyan-500/15 border-cyan-500/40 text-cyan-200 text-[10px] font-semibold uppercase"
+                                title="Match-Cut Continuity Inspector — side-by-side outgoing tail frame vs. incoming head frame"
                               >
-                                Match-Cut Continuity Inspector
+                                Transition Frame Preview
                               </Badge>
-                              <span className="text-xs font-mono text-zinc-300">
-                                Shot #{outShotNum} Out-Frame → Shot #{inShotNum} In-Frame
+                              <span className="text-xs text-zinc-300">
+                                End of Shot #{outShotNum} → Start of Shot #{inShotNum}
                               </span>
                             </div>
                             <div className="flex items-center gap-1.5">
                               <button
                                 type="button"
                                 onClick={() => handleTimelineSeek(Math.max(0, cutTimelineSec - 1.5))}
-                                className="px-2 py-1 rounded text-[10px] font-mono font-semibold bg-cyan-500/20 border border-cyan-500/40 text-cyan-200 hover:bg-cyan-500/30 transition-colors"
-                                title="Seek main monitor 1.5s before this cut to audition continuity"
+                                className="px-2 py-1 rounded text-[10px] font-semibold bg-cyan-500/20 border border-cyan-500/40 text-cyan-200 hover:bg-cyan-500/30 transition-colors"
+                                title="Seek main player 1.5s before this cut to preview the transition (-1.5s pre-roll)"
                               >
-                                ▶ Audition Cut (-1.5s Pre-Roll)
+                                ▶ Preview Transition
                               </button>
                               <button
                                 type="button"
                                 onClick={() => setInspectedBoundaryIndex(null)}
                                 className="p-1 rounded text-zinc-400 hover:text-white hover:bg-zinc-800"
-                                title="Close Match-Cut Inspector"
+                                title="Close Transition Frame Preview"
                               >
                                 <X className="w-3.5 h-3.5" />
                               </button>
@@ -5705,12 +5717,15 @@ export function SceneProductionMixer({
                           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                             {/* Outgoing Shot N Out-Frame */}
                             <div className="rounded border border-zinc-800 bg-zinc-900/70 p-2 space-y-1.5">
-                              <div className="flex items-center justify-between text-[10px] font-mono">
-                                <span className="text-amber-300 font-semibold">
-                                  OUTGOING • SHOT #{outShotNum} OUT-FRAME
+                              <div className="flex items-center justify-between text-[10px]">
+                                <span
+                                  className="text-amber-300 font-semibold"
+                                  title="Outgoing frame at the end of this shot (Out-Frame)"
+                                >
+                                  End of Shot #{outShotNum}
                                 </span>
-                                <span className="text-zinc-400">
-                                  OUT {outTrim.outSec.toFixed(2)}s / {outSourceDur.toFixed(2)}s
+                                <span className="text-zinc-400 font-mono">
+                                  End {outTrim.outSec.toFixed(2)}s / {outSourceDur.toFixed(2)}s
                                 </span>
                               </div>
                               <div className="relative aspect-video rounded bg-black overflow-hidden border border-zinc-800">
@@ -5736,8 +5751,8 @@ export function SceneProductionMixer({
                                 )}
                               </div>
                               <div className="flex items-center justify-between gap-1 pt-0.5">
-                                <span className="text-[9px] font-mono text-zinc-500 uppercase">
-                                  Nudge Out-Point:
+                                <span className="text-[9px] text-zinc-500 uppercase" title="Fine-tune the outgoing end point (Out-Point)">
+                                  Adjust End Time:
                                 </span>
                                 <div className="flex items-center gap-1">
                                   <button
@@ -5774,12 +5789,15 @@ export function SceneProductionMixer({
 
                             {/* Incoming Shot N+1 In-Frame */}
                             <div className="rounded border border-zinc-800 bg-zinc-900/70 p-2 space-y-1.5">
-                              <div className="flex items-center justify-between text-[10px] font-mono">
-                                <span className="text-cyan-300 font-semibold">
-                                  INCOMING • SHOT #{inShotNum} IN-FRAME
+                              <div className="flex items-center justify-between text-[10px]">
+                                <span
+                                  className="text-cyan-300 font-semibold"
+                                  title="Incoming frame at the start of the next shot (In-Frame)"
+                                >
+                                  Start of Shot #{inShotNum}
                                 </span>
-                                <span className="text-zinc-400">
-                                  IN {inTrim.inSec.toFixed(2)}s / {inSourceDur.toFixed(2)}s
+                                <span className="text-zinc-400 font-mono">
+                                  Start {inTrim.inSec.toFixed(2)}s / {inSourceDur.toFixed(2)}s
                                 </span>
                               </div>
                               <div className="relative aspect-video rounded bg-black overflow-hidden border border-zinc-800">
@@ -5805,8 +5823,8 @@ export function SceneProductionMixer({
                                 )}
                               </div>
                               <div className="flex items-center justify-between gap-1 pt-0.5">
-                                <span className="text-[9px] font-mono text-zinc-500 uppercase">
-                                  Nudge In-Point:
+                                <span className="text-[9px] text-zinc-500 uppercase" title="Fine-tune the incoming start point (In-Point)">
+                                  Adjust Start Time:
                                 </span>
                                 <div className="flex items-center gap-1">
                                   <button
@@ -5843,9 +5861,9 @@ export function SceneProductionMixer({
                           </div>
 
                           {/* Boundary Transition & J/L-Cut Quick Controls */}
-                          <div className="flex flex-wrap items-center justify-between gap-2 pt-1 text-[10px] font-mono">
+                          <div className="flex flex-wrap items-center justify-between gap-2 pt-1 text-[10px]">
                             <div className="flex items-center gap-1.5">
-                              <span className="text-zinc-500 uppercase">Join Mode:</span>
+                              <span className="text-zinc-500 uppercase">Transition:</span>
                               {(['cut', 'dissolve', 'fade'] as const).map((jMode) => (
                                 <button
                                   key={jMode}
@@ -5853,18 +5871,20 @@ export function SceneProductionMixer({
                                   disabled={isRendering || !onSegmentsChange}
                                   onClick={() => handleShotJoinChange(outSeg.segmentId, jMode)}
                                   className={cn(
-                                    'px-2 py-0.5 rounded uppercase border transition-colors',
+                                    'px-2 py-0.5 rounded capitalize border transition-colors',
                                     joinVal === jMode
                                       ? 'bg-violet-500/20 border-violet-400 text-violet-200'
                                       : 'bg-zinc-900 border-zinc-800 text-zinc-400 hover:text-white'
                                   )}
                                 >
-                                  {jMode}
+                                  {jMode === 'fade' ? 'Fade to Black' : jMode}
                                 </button>
                               ))}
                             </div>
                             <div className="flex items-center gap-1.5">
-                              <span className="text-zinc-500 uppercase">Audio Split Edit:</span>
+                              <span className="text-zinc-500 uppercase" title="Split audio edit (J-Cut / L-Cut)">
+                                Audio Overlap:
+                              </span>
                               <button
                                 type="button"
                                 onClick={() =>
@@ -5877,6 +5897,7 @@ export function SceneProductionMixer({
                                     },
                                   }))
                                 }
+                                title="J-Cut (-0.4s): start the next shot's audio 0.4s before the visual cut"
                                 className={cn(
                                   'px-2 py-0.5 rounded border transition-colors',
                                   (inAudioCfg.audioLeadInSec ?? 0) > 0
@@ -5884,7 +5905,7 @@ export function SceneProductionMixer({
                                     : 'bg-zinc-900 border-zinc-800 text-zinc-400 hover:text-white'
                                 )}
                               >
-                                J-Cut (-0.4s)
+                                Early Audio (-0.4s)
                               </button>
                               <button
                                 type="button"
@@ -5898,6 +5919,7 @@ export function SceneProductionMixer({
                                     },
                                   }))
                                 }
+                                title="L-Cut (+0.4s): let this shot's audio trail 0.4s into the next shot"
                                 className={cn(
                                   'px-2 py-0.5 rounded border transition-colors',
                                   (outAudioCfg.audioTailOutSec ?? 0) > 0
@@ -5905,7 +5927,7 @@ export function SceneProductionMixer({
                                     : 'bg-zinc-900 border-zinc-800 text-zinc-400 hover:text-white'
                                 )}
                               >
-                                L-Cut (+0.4s)
+                                Trailing Audio (+0.4s)
                               </button>
                             </div>
                           </div>
@@ -5995,15 +6017,16 @@ export function SceneProductionMixer({
               {/* Inspector Workspace Filter Tabs */}
               <div className="flex items-center gap-1 p-1 bg-zinc-900 border border-zinc-800 rounded-lg">
                 {([
-                  ['all', 'All Controls'],
-                  ['shots', 'Shots & Stitch'],
-                  ['audio', 'Audio Stems'],
-                  ['graphics', 'Graphics & Dub'],
-                ] as const).map(([tabKey, tabLabel]) => (
+                  ['all', 'All Controls', 'Show all mixer panels'],
+                  ['shots', 'Shots & Cuts', 'Shot selection, trimming, and transitions'],
+                  ['audio', 'Audio Tracks', 'Dialogue, narration, sound effects, and music stems'],
+                  ['graphics', 'Text & Languages', 'Text overlays, watermarks, and dubbed language versions'],
+                ] as const).map(([tabKey, tabLabel, tabTooltip]) => (
                   <button
                     key={tabKey}
                     type="button"
                     onClick={() => setInspectorTab(tabKey)}
+                    title={tabTooltip}
                     className={cn(
                       'flex-1 py-1.5 px-2 rounded-md text-[11px] font-medium transition-colors text-center',
                       inspectorTab === tabKey
@@ -6943,9 +6966,12 @@ export function SceneProductionMixer({
                     )}
                   </div>
                   <div className="px-3 pb-3 pt-2 space-y-2 border-t border-zinc-800">
-                    <div className="flex items-center justify-between">
+                    <div
+                      className="flex items-center justify-between"
+                      title="Preserve generated ambience, SFX, and music from the original Veo video clip while muting original spoken dialogue"
+                    >
                       <div className="text-[11px] text-zinc-400">
-                        Preserve Veo ambience for dubbed renders
+                        Keep Scene Background Sounds
                       </div>
                       <Switch
                         checked={preserveBackgroundStem}
@@ -6954,9 +6980,12 @@ export function SceneProductionMixer({
                       />
                     </div>
                     {preserveBackgroundStem && (
-                      <div className="flex items-center justify-between">
+                      <div
+                        className="flex items-center justify-between"
+                        title="Keep original spoken dialogue stem from the master video clip"
+                      >
                         <div className="text-[11px] text-zinc-500">
-                          Keep original speech stem
+                          Keep Original Spoken Voice
                         </div>
                         <Switch
                           checked={includeSpeechStem}
@@ -6968,13 +6997,14 @@ export function SceneProductionMixer({
                     {preserveBackgroundStem && productionTarget.language !== 'en' && nonEnglishBeatsMissingBackgroundStem > 0 && (
                       <div className="space-y-1.5 rounded-md bg-amber-500/10 border border-amber-500/30 p-2">
                         <p className="text-[11px] text-amber-200/90 leading-snug">
-                          {nonEnglishBeatsMissingBackgroundStem} master shot{nonEnglishBeatsMissingBackgroundStem > 1 ? 's are' : ' is'} missing dialogue-free stems. Extract audio &amp; remove spoken dialogue so generated SFX, music, and ambience play cleanly under your {languageLabel} dub.
+                          {nonEnglishBeatsMissingBackgroundStem} shot{nonEnglishBeatsMissingBackgroundStem > 1 ? 's still have' : ' still has'} original English speech in the video clip. Remove the original voice so background sounds and music play cleanly under your {languageLabel} dub.
                         </p>
                         {onSegmentsChange && (
                           <button
                             type="button"
                             disabled={isRendering || isExtractingAllStems}
                             onClick={() => void handleExtractAllMissingStems()}
+                            title="Run Demucs stem separation on shots to isolate background SFX/music and remove original speech"
                             className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded text-[10px] font-semibold bg-amber-500/20 border border-amber-400/50 text-amber-100 hover:bg-amber-500/30 transition-colors disabled:opacity-50"
                           >
                             {isExtractingAllStems ? (
@@ -6984,8 +7014,8 @@ export function SceneProductionMixer({
                             )}
                             <span>
                               {isExtractingAllStems
-                                ? 'Extracting Dialogue-Free Stems…'
-                                : `Extract Audio & Remove Dialogue (${nonEnglishBeatsMissingBackgroundStem})`}
+                                ? 'Removing Original Voice…'
+                                : `Keep Background Sounds Only (${nonEnglishBeatsMissingBackgroundStem})`}
                             </span>
                           </button>
                         )}
@@ -7200,16 +7230,19 @@ export function SceneProductionMixer({
                 onValueChange={(value) => setResolution(value as '720p' | '1080p' | '4K')}
                 disabled={isRendering}
               >
-                <SelectTrigger className="w-[180px] h-9 shrink-0 bg-zinc-950 border-zinc-700 [&>span]:text-left">
+                <SelectTrigger
+                  className="w-[172px] h-9 shrink-0 bg-zinc-950 border-zinc-700 [&>span]:text-left text-xs"
+                  title="Output video resolution (720p: 1280×720 HD • 1080p: 1920×1080 Full HD • 4K: 3840×2160 Ultra HD)"
+                >
                   <SelectValue placeholder="Res">
                     {RESOLUTION_TRIGGER_LABELS[resolution]}
                   </SelectValue>
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="720p">720 (HD)</SelectItem>
-                  <SelectItem value="1080p">1080 (FHD)</SelectItem>
+                  <SelectItem value="720p" title="1280×720 Standard HD">720p (Standard HD)</SelectItem>
+                  <SelectItem value="1080p" title="1920×1080 Full HD">1080p (Full HD)</SelectItem>
                   <SelectItem value="2K" disabled>2K (coming soon)</SelectItem>
-                  <SelectItem value="4K">4K (UHD)</SelectItem>
+                  <SelectItem value="4K" title="3840×2160 Ultra HD">4K (Ultra HD)</SelectItem>
                 </SelectContent>
               </Select>
 
@@ -7218,39 +7251,52 @@ export function SceneProductionMixer({
                 onValueChange={(value) => setEncodeQuality(value as 'delivery' | 'draft')}
                 disabled={isRendering}
               >
-                <SelectTrigger className="w-[148px] h-9 shrink-0 bg-zinc-950 border-zinc-700 [&>span]:text-left">
+                <SelectTrigger
+                  className="w-[156px] h-9 shrink-0 bg-zinc-950 border-zinc-700 [&>span]:text-left text-xs"
+                  title="Video Encoding Quality Preset (High Quality: full-bitrate H.264 MP4 master • Fast Draft: quicker H.264 MP4 preview encode)"
+                >
                   <SelectValue placeholder="Quality">
-                    {encodeQuality === 'draft' ? 'Draft' : 'Delivery'}
+                    {encodeQuality === 'draft' ? 'Quality: Fast Draft' : 'Quality: High'}
                   </SelectValue>
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="delivery">Delivery</SelectItem>
-                  <SelectItem value="draft">Draft</SelectItem>
+                  <SelectItem value="delivery" title="Delivery preset — full-bitrate H.264 MP4 master encode">
+                    High Quality (Best for Sharing)
+                  </SelectItem>
+                  <SelectItem value="draft" title="Draft preset — faster H.264 MP4 encode for quick review">
+                    Fast Draft (Quick Preview)
+                  </SelectItem>
                 </SelectContent>
               </Select>
 
-              {/* Loudness Normalization Target (EBU R128 / -14 LUFS) */}
+              {/* Volume / Loudness Leveling Target (EBU R128 / -14 LUFS) */}
               <Select
                 value={loudnessTarget}
                 onValueChange={(value) => setLoudnessTarget(value as MixerLoudnessTarget)}
                 disabled={isRendering}
               >
                 <SelectTrigger
-                  className="w-[158px] h-9 shrink-0 bg-zinc-950 border-zinc-700 [&>span]:text-left font-mono text-xs"
-                  title="Master Loudness Normalization Target (FFmpeg loudnorm / EBU R128)"
+                  className="w-[176px] h-9 shrink-0 bg-zinc-950 border-zinc-700 [&>span]:text-left text-xs"
+                  title="Automatic Volume Leveling — Web & Social: -14 LUFS (YouTube/TikTok/Streaming) • TV & Cinema: -24 LKFS (EBU R128 Broadcast) • Original Mix: Unnormalized raw levels"
                 >
-                  <SelectValue placeholder="Loudness">
+                  <SelectValue placeholder="Volume Level">
                     {loudnessTarget === 'broadcast-24lkfs'
-                      ? '-24 LKFS (TV)'
+                      ? 'Volume: TV & Cinema'
                       : loudnessTarget === 'web-14lufs'
-                        ? '-14 LUFS (Web)'
-                        : 'Loudness: Off'}
+                        ? 'Volume: Web & Social'
+                        : 'Volume: Original Mix'}
                   </SelectValue>
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="web-14lufs">-14 LUFS (Web / Streaming)</SelectItem>
-                  <SelectItem value="broadcast-24lkfs">-24 LKFS (EBU R128 Broadcast)</SelectItem>
-                  <SelectItem value="off">Off (Unnormalized Raw Mix)</SelectItem>
+                  <SelectItem value="web-14lufs" title="-14 LUFS loudness normalization (EBU R128 web & streaming standard)">
+                    Web &amp; Social (Standard Volume)
+                  </SelectItem>
+                  <SelectItem value="broadcast-24lkfs" title="-24 LKFS loudness normalization (EBU R128 broadcast TV & theatrical standard)">
+                    TV &amp; Cinema (Wide Dynamic Range)
+                  </SelectItem>
+                  <SelectItem value="off" title="Unnormalized raw mix — no automatic LUFS loudness normalization">
+                    Original Mix (No Auto-Leveling)
+                  </SelectItem>
                 </SelectContent>
               </Select>
 
@@ -7302,15 +7348,15 @@ export function SceneProductionMixer({
               <div className="flex items-center gap-4 flex-wrap">
                 {selectedRenderMode === 'local' && (
                   <>
-                    <div className="flex items-center gap-1">
+                    <div
+                      className="flex items-center gap-1"
+                      title="Browser WebM encode (up to 1080p)"
+                    >
                       <Zap className="w-3 h-3 text-yellow-400" />
-                      <span className="text-yellow-300">Fast (WebM):</span>
+                      <span className="text-yellow-300">Quick Browser Video:</span>
                       <span>
-                        Browser WebM • Up to 1080p (matches Output; 4K requires Final or Pro Cloud) • May vary vs preview on slower devices
+                        Fast in-browser export up to 1080p • Best for quick previews
                       </span>
-                    </div>
-                    <div className="flex items-center gap-1 text-zinc-400">
-                      <span>Best for: Fast drafts; use Broadcast (MP4) for delivery-grade export</span>
                     </div>
                     {watermarkConfig.enabled && (
                       <div className="flex items-center gap-1 text-emerald-400">
@@ -7322,13 +7368,13 @@ export function SceneProductionMixer({
                 )}
                 {selectedRenderMode === 'server' && (
                   <>
-                    <div className="flex items-center gap-1">
+                    <div
+                      className="flex items-center gap-1"
+                      title="Cloud FFmpeg render: H.264 MP4 video + AAC audio with EBU R128 loudness normalization"
+                    >
                       <Video className="w-3 h-3 text-cyan-400" />
-                      <span className="text-cyan-300">Final Render (FFmpeg):</span>
-                      <span>Cloud MP4 (H.264) at Output resolution ({resolution})</span>
-                    </div>
-                    <div className="flex items-center gap-1 text-zinc-400">
-                      <span>Best for: Final delivery and consistent results</span>
+                      <span className="text-cyan-300">Standard MP4 Video:</span>
+                      <span>Universal MP4 video at {resolution} • Ready for sharing and publishing</span>
                     </div>
                     {watermarkConfig.enabled && (
                       <div className="flex items-center gap-1 text-emerald-400">
@@ -7340,13 +7386,13 @@ export function SceneProductionMixer({
                 )}
                 {selectedRenderMode === 'headless' && (
                   <>
-                    <div className="flex items-center gap-1">
+                    <div
+                      className="flex items-center gap-1"
+                      title="Cloud headless browser render (Puppeteer WebM) for frame-accurate animated overlays"
+                    >
                       <Monitor className="w-3 h-3 text-blue-400" />
-                      <span className="text-blue-300">Pro Cloud (Puppeteer):</span>
-                      <span>Headless WebM at Output resolution ({resolution}) • Frame-accurate overlays and watermarks when enabled</span>
-                    </div>
-                    <div className="flex items-center gap-1 text-zinc-400">
-                      <span>Best for: Deterministic output across machines (Pro plan)</span>
+                      <span className="text-blue-300">Animated Overlays Export:</span>
+                      <span>Cloud render at {resolution} with animated text overlays and watermarks</span>
                     </div>
                     {watermarkConfig.enabled && (
                       <div className="flex items-center gap-1 text-emerald-400">
@@ -7357,10 +7403,15 @@ export function SceneProductionMixer({
                   </>
                 )}
                 {selectedRenderMode === 'auto' && (
-                  <div className="flex items-center gap-1.5 font-mono text-[11px]">
+                  <div
+                    className="flex items-center gap-1.5 text-[11px]"
+                    title="Master Cloud Export: FFmpeg H.264 MP4 video + AAC audio with EBU R128 loudness normalization (-14 LUFS Web / -24 LKFS Broadcast)"
+                  >
                     <Sparkles className="w-3.5 h-3.5 text-cyan-400" />
-                    <span className="text-zinc-300 uppercase tracking-wider font-semibold">Master Cloud Export (H.264 MP4):</span>
-                    <span>Renders a frame-accurate cloud MP4 in the background at {resolution} ({encodeQuality === 'draft' ? 'Draft' : 'Delivery'})</span>
+                    <span className="text-zinc-300 font-semibold">Standard Video Export (MP4):</span>
+                    <span>
+                      Combines your shots, transitions, and audio in the background at {resolution} ({encodeQuality === 'draft' ? 'Fast Draft' : 'High Quality'})
+                    </span>
                   </div>
                 )}
               </div>

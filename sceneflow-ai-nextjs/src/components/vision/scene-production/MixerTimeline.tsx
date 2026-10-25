@@ -70,7 +70,8 @@ export interface TimelineNarrationInfo {
 
 const DIALOGUE_TRACK_VISUAL = {
   code: 'A1',
-  label: 'Dlg',
+  label: 'Voice',
+  tooltip: 'Track A1: Character Dialogue',
   icon: MessageSquare,
   color: '#3b82f6',
   bgColor: 'rgba(59, 130, 246, 0.22)',
@@ -78,7 +79,8 @@ const DIALOGUE_TRACK_VISUAL = {
 
 const NARRATION_TRACK_VISUAL = {
   code: 'A2',
-  label: 'VO',
+  label: 'Narr.',
+  tooltip: 'Track A2: Voiceover Narration (VO)',
   icon: Mic2,
   color: '#a855f7',
   bgColor: 'rgba(168, 85, 247, 0.22)',
@@ -87,6 +89,7 @@ const NARRATION_TRACK_VISUAL = {
 const SFX_TRACK_VISUAL = {
   code: 'A3',
   label: 'SFX',
+  tooltip: 'Track A3: Sound Effects (SFX)',
   icon: Sparkles,
   color: '#f59e0b',
   bgColor: 'rgba(245, 158, 11, 0.22)',
@@ -94,7 +97,8 @@ const SFX_TRACK_VISUAL = {
 
 const MUSIC_TRACK_VISUAL = {
   code: 'A4',
-  label: 'Score',
+  label: 'Music',
+  tooltip: 'Track A4: Background Music & Score Cues',
   icon: Music,
   color: '#10b981',
   bgColor: 'rgba(16, 185, 129, 0.20)',
@@ -103,12 +107,13 @@ const MUSIC_TRACK_VISUAL = {
 const TEXT_TRACK_VISUAL = {
   code: 'FX1',
   label: 'Text',
+  tooltip: 'Track FX1: On-Screen Text Overlays & Captions',
   icon: Type,
   color: '#ec4899',
   bgColor: 'rgba(236, 72, 153, 0.22)',
 }
 
-const TRACK_HEADER_WIDTH = 64
+const TRACK_HEADER_WIDTH = 72
 
 interface MixerTimelineProps {
   videoTotalDuration: number
@@ -486,25 +491,28 @@ export const MixerTimeline: React.FC<MixerTimelineProps> = ({
     <div
       className={`bg-zinc-950/90 rounded-lg border border-zinc-800/90 overflow-hidden shadow-inner ${className}`}
     >
-      {/* NLE Timeline Header Bar */}
+      {/* Scene Timeline Header Bar */}
       <div className="px-3 py-2 bg-zinc-900/80 border-b border-zinc-800/80 flex flex-wrap items-center justify-between gap-2">
         <div className="flex items-center gap-3 flex-wrap">
-          <div className="flex items-center gap-1.5">
+          <div className="flex items-center gap-1.5" title="Multi-track non-linear editor (NLE) sequence timeline">
             <span className="inline-block w-2 h-2 rounded-full bg-red-500 animate-pulse" />
             <span className="text-[11px] font-semibold uppercase tracking-wider text-zinc-200">
-              NLE Sequence
+              Scene Tracks
             </span>
           </div>
-          <div className="flex items-center gap-2 text-[11px] font-mono tabular-nums bg-zinc-950/80 border border-zinc-800 px-2 py-0.5 rounded">
-            <span className="text-red-400 font-semibold">{formatSmpte(currentPlaybackTime)}</span>
+          <div
+            className="flex items-center gap-2 text-[11px] font-mono tabular-nums bg-zinc-950/80 border border-zinc-800 px-2 py-0.5 rounded"
+            title={`Playhead SMPTE Timecode (24 fps): ${formatSmpte(currentPlaybackTime)} • V1 Video: ${formatTime(videoTotalDuration)} • Master Duration: ${formatTime(totalDuration)}`}
+          >
+            <span className="text-red-400 font-semibold">{formatTime(currentPlaybackTime)}</span>
             <span className="text-zinc-600">|</span>
-            <span className="text-zinc-400">V1: {formatTime(videoTotalDuration)}</span>
+            <span className="text-zinc-400">Video: {formatTime(videoTotalDuration)}</span>
             <span className="text-zinc-600">|</span>
-            <span className="text-cyan-300">Master: {formatTime(totalDuration)}</span>
+            <span className="text-cyan-300">Total: {formatTime(totalDuration)}</span>
           </div>
           {onSeekTime && (
             <span className="hidden xl:inline text-[10px] text-zinc-500">
-              Click or drag ruler to scrub playhead • Click shot block to inspect
+              Click or drag ruler to jump to any moment • Click a shot to edit
             </span>
           )}
         </div>
@@ -605,9 +613,10 @@ export const MixerTimeline: React.FC<MixerTimelineProps> = ({
             <div
               className="sticky left-0 z-20 shrink-0 flex items-center gap-1 px-2 bg-zinc-950 border-r border-zinc-800/90"
               style={{ width: `${TRACK_HEADER_WIDTH}px` }}
+              title="Track V1: Video Shots & Transitions"
             >
               <Film className="w-3 h-3 text-cyan-400 shrink-0" />
-              <span className="text-[10px] font-mono font-semibold text-cyan-300">V1</span>
+              <span className="text-[10px] font-semibold text-cyan-300">Video</span>
             </div>
             <div
               className="flex-1 h-full relative min-w-0"
@@ -677,21 +686,33 @@ export const MixerTimeline: React.FC<MixerTimelineProps> = ({
                           {pos.duration.toFixed(1)}s
                         </span>
                         {(pos.audioLeadInSec > 0.05 || pos.audioTailOutSec > 0.05) && (
-                          <span className="text-[7px] font-mono px-1 rounded bg-cyan-950/90 text-cyan-300 border border-cyan-500/40 shrink-0">
-                            {pos.audioLeadInSec > 0.05 ? `J-${pos.audioLeadInSec.toFixed(1)}s` : ''}
+                          <span
+                            className="text-[7px] font-mono px-1 rounded bg-cyan-950/90 text-cyan-300 border border-cyan-500/40 shrink-0"
+                            title={`Audio Split Edit — ${pos.audioLeadInSec > 0.05 ? `J-Cut (-${pos.audioLeadInSec.toFixed(1)}s early audio)` : ''} ${pos.audioTailOutSec > 0.05 ? `L-Cut (+${pos.audioTailOutSec.toFixed(1)}s trailing audio)` : ''}`}
+                          >
+                            {pos.audioLeadInSec > 0.05 ? `-${pos.audioLeadInSec.toFixed(1)}s` : ''}
                             {pos.audioLeadInSec > 0.05 && pos.audioTailOutSec > 0.05 ? ' ' : ''}
-                            {pos.audioTailOutSec > 0.05 ? `L+${pos.audioTailOutSec.toFixed(1)}s` : ''}
+                            {pos.audioTailOutSec > 0.05 ? `+${pos.audioTailOutSec.toFixed(1)}s` : ''}
                           </span>
                         )}
                       </div>
                       <div className="flex items-center gap-1 z-10">
                         {pos.holdSec > 0.15 && (
-                          <span className="text-[7px] font-mono px-1 rounded bg-amber-950/90 text-amber-300 border border-amber-500/40 shrink-0 uppercase">
+                          <span
+                            className="text-[7px] font-medium px-1 rounded bg-amber-950/90 text-amber-300 border border-amber-500/40 shrink-0"
+                            title={
+                              pos.holdStyle === 'push'
+                                ? '103% Ken Burns Push Hold (Slow Zoom)'
+                                : pos.holdStyle === 'pingpong'
+                                  ? 'Ping-Pong Micro-Motion Hold'
+                                  : 'Freeze Frame Hold (Static Last Frame)'
+                            }
+                          >
                             {pos.holdStyle === 'push'
-                              ? 'PUSH 103%'
+                              ? 'Zoom'
                               : pos.holdStyle === 'pingpong'
-                                ? 'PING-PONG'
-                                : 'FREEZE'}
+                                ? 'Motion'
+                                : 'Hold'}
                           </span>
                         )}
                         {pos.isTrimmed && (
@@ -715,8 +736,8 @@ export const MixerTimeline: React.FC<MixerTimelineProps> = ({
                             e.stopPropagation()
                             onCycleShotJoin?.(pos.segment.segmentId)
                           }}
-                          title={`Transition Shot #${idx + 1} → #${idx + 2}: ${joinEffect.toUpperCase()} (click to cycle)`}
-                          className={`px-1 py-0.5 rounded text-[7px] font-mono uppercase tracking-tighter border transition-colors ${
+                          title={`Transition Shot #${idx + 1} → #${idx + 2}: ${joinEffect.toUpperCase()} (click to switch Cut / Dissolve / Fade)`}
+                          className={`px-1 py-0.5 rounded text-[7px] font-semibold uppercase tracking-tighter border transition-colors ${
                             joinEffect === 'dissolve'
                               ? 'bg-violet-950/95 border-violet-400/70 text-violet-200'
                               : joinEffect === 'fade'
@@ -724,7 +745,7 @@ export const MixerTimeline: React.FC<MixerTimelineProps> = ({
                                 : 'bg-zinc-900/90 border-zinc-700 text-zinc-400 hover:text-white'
                           }`}
                         >
-                          {joinEffect === 'dissolve' ? 'DSL' : joinEffect === 'fade' ? 'FADE' : 'CUT'}
+                          {joinEffect === 'dissolve' ? 'Mix' : joinEffect === 'fade' ? 'Fade' : 'Cut'}
                         </button>
                         {onInspectShotBoundary && (
                           <button
@@ -753,13 +774,14 @@ export const MixerTimeline: React.FC<MixerTimelineProps> = ({
               <div
                 className="sticky left-0 z-20 shrink-0 flex items-center gap-1 px-2 bg-zinc-950 border-r border-zinc-800/90 h-full"
                 style={{ width: `${TRACK_HEADER_WIDTH}px` }}
+                title={DIALOGUE_TRACK_VISUAL.tooltip}
               >
                 <MessageSquare
                   className="w-3 h-3 shrink-0"
                   style={{ color: DIALOGUE_TRACK_VISUAL.color }}
                 />
-                <span className="text-[10px] font-mono text-blue-300">
-                  {DIALOGUE_TRACK_VISUAL.code}
+                <span className="text-[10px] font-medium text-blue-300">
+                  {DIALOGUE_TRACK_VISUAL.label}
                 </span>
               </div>
               <div className="flex-1 h-full relative min-w-0">
@@ -802,13 +824,14 @@ export const MixerTimeline: React.FC<MixerTimelineProps> = ({
               <div
                 className="sticky left-0 z-20 shrink-0 flex items-center gap-1 px-2 bg-zinc-950 border-r border-zinc-800/90 h-full"
                 style={{ width: `${TRACK_HEADER_WIDTH}px` }}
+                title={NARRATION_TRACK_VISUAL.tooltip}
               >
                 <Mic2
                   className="w-3 h-3 shrink-0"
                   style={{ color: NARRATION_TRACK_VISUAL.color }}
                 />
-                <span className="text-[10px] font-mono text-purple-300">
-                  {NARRATION_TRACK_VISUAL.code}
+                <span className="text-[10px] font-medium text-purple-300">
+                  {NARRATION_TRACK_VISUAL.label}
                 </span>
               </div>
               <div className="flex-1 h-full relative min-w-0">
@@ -837,22 +860,23 @@ export const MixerTimeline: React.FC<MixerTimelineProps> = ({
               <div
                 className="sticky left-0 z-20 shrink-0 flex items-center justify-between px-2 bg-zinc-950 border-r border-zinc-800/90 h-full"
                 style={{ width: `${TRACK_HEADER_WIDTH}px` }}
+                title={SFX_TRACK_VISUAL.tooltip}
               >
                 <div className="flex items-center gap-1">
                   <Sparkles
                     className="w-3 h-3 shrink-0"
                     style={{ color: SFX_TRACK_VISUAL.color }}
                   />
-                  <span className="text-[10px] font-mono text-amber-300">
-                    {SFX_TRACK_VISUAL.code}
+                  <span className="text-[10px] font-medium text-amber-300">
+                    {SFX_TRACK_VISUAL.label}
                   </span>
                 </div>
                 {sfxAutoDuck && (
                   <span
-                    className="text-[7px] font-mono px-1 rounded bg-amber-950/90 text-amber-300 border border-amber-500/40"
-                    title="Auto-Duck (-8 dB under dialogue/narration) active"
+                    className="text-[7px] font-medium px-1 rounded bg-amber-950/90 text-amber-300 border border-amber-500/40"
+                    title="Auto-Lower During Speech active (Auto-Duck -8 dB under dialogue/narration)"
                   >
-                    DUCK
+                    Auto
                   </span>
                 )}
               </div>
@@ -907,22 +931,23 @@ export const MixerTimeline: React.FC<MixerTimelineProps> = ({
               <div
                 className="sticky left-0 z-20 shrink-0 flex items-center justify-between px-2 bg-zinc-950 border-r border-zinc-800/90 h-full"
                 style={{ width: `${TRACK_HEADER_WIDTH}px` }}
+                title={MUSIC_TRACK_VISUAL.tooltip}
               >
                 <div className="flex items-center gap-1">
                   <Music
                     className="w-3 h-3 shrink-0"
                     style={{ color: MUSIC_TRACK_VISUAL.color }}
                   />
-                  <span className="text-[10px] font-mono text-emerald-300">
-                    {MUSIC_TRACK_VISUAL.code}
+                  <span className="text-[10px] font-medium text-emerald-300">
+                    {MUSIC_TRACK_VISUAL.label}
                   </span>
                 </div>
                 {musicAutoDuck && (
                   <span
-                    className="text-[7px] font-mono px-1 rounded bg-emerald-950/90 text-emerald-300 border border-emerald-500/40"
-                    title="Auto-Duck (-8 dB under dialogue/narration) active"
+                    className="text-[7px] font-medium px-1 rounded bg-emerald-950/90 text-emerald-300 border border-emerald-500/40"
+                    title="Auto-Lower During Speech active (Auto-Duck -8 dB under dialogue/narration)"
                   >
-                    DUCK
+                    Auto
                   </span>
                 )}
               </div>
@@ -982,17 +1007,18 @@ export const MixerTimeline: React.FC<MixerTimelineProps> = ({
             <div
               className="sticky left-0 z-20 shrink-0 flex items-center gap-1 px-2 bg-zinc-950 border-r border-zinc-800/90 h-full"
               style={{ width: `${TRACK_HEADER_WIDTH}px` }}
+              title={TEXT_TRACK_VISUAL.tooltip}
             >
               <Type
                 className="w-3 h-3 shrink-0"
                 style={{ color: textOverlays.length > 0 ? TEXT_TRACK_VISUAL.color : '#52525b' }}
               />
               <span
-                className={`text-[10px] font-mono ${
+                className={`text-[10px] font-medium ${
                   textOverlays.length > 0 ? 'text-pink-300' : 'text-zinc-600'
                 }`}
               >
-                {TEXT_TRACK_VISUAL.code}
+                {TEXT_TRACK_VISUAL.label}
               </span>
             </div>
             <div className="flex-1 h-full relative min-w-0">
@@ -1039,12 +1065,12 @@ export const MixerTimeline: React.FC<MixerTimelineProps> = ({
 
       {/* Legend Footer */}
       <div className="px-3 py-2 border-t border-zinc-800/80 bg-zinc-900/50 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-[9px] text-zinc-400">
-        <div className="flex items-center gap-1">
+        <div className="flex items-center gap-1" title="Track V1: Video Shot">
           <div
             className="w-3 h-2 rounded-sm"
             style={{ backgroundColor: 'rgba(6, 182, 212, 0.25)', borderLeft: '2px solid #06b6d4' }}
           />
-          <span>V1 Shot</span>
+          <span>Video Shot</span>
         </div>
         <div className="flex items-center gap-1">
           <div
@@ -1053,7 +1079,7 @@ export const MixerTimeline: React.FC<MixerTimelineProps> = ({
           />
           <span>Uploaded</span>
         </div>
-        <div className="flex items-center gap-1">
+        <div className="flex items-center gap-1" title="Extended hold/pause tail (Still Frame, 103% Ken Burns Slow Zoom, or Ping-Pong Motion)">
           <div
             className="w-3 h-2 rounded-sm border border-dashed border-amber-400/60"
             style={{
@@ -1061,14 +1087,14 @@ export const MixerTimeline: React.FC<MixerTimelineProps> = ({
                 'repeating-linear-gradient(45deg, rgba(245,158,11,0.2), rgba(245,158,11,0.2) 2px, transparent 2px, transparent 4px)',
             }}
           />
-          <span>Hold / Freeze Tail</span>
+          <span>Extended Pause / Hold</span>
         </div>
-        <div className="flex items-center gap-1">
+        <div className="flex items-center gap-1" title="Shot transition join (Cut, Dissolve, or Fade to Black)">
           <ArrowRightLeft className="w-2.5 h-2.5 text-violet-400" />
-          <span>Join (Cut/DSL/Fade)</span>
+          <span>Transition (Cut / Dissolve / Fade)</span>
         </div>
         {dialogueClips.length > 0 && (
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-1" title="Track A1: Character Dialogue">
             <div
               className="w-3 h-2 rounded-sm"
               style={{
@@ -1076,11 +1102,11 @@ export const MixerTimeline: React.FC<MixerTimelineProps> = ({
                 borderLeft: `2px solid ${DIALOGUE_TRACK_VISUAL.color}`,
               }}
             />
-            <span>A1 Dialogue</span>
+            <span>Dialogue</span>
           </div>
         )}
         {musicClips.length > 0 && (
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-1" title="Track A4: Music & Score Cues">
             <div
               className="w-3 h-2 rounded-sm"
               style={{
@@ -1088,7 +1114,7 @@ export const MixerTimeline: React.FC<MixerTimelineProps> = ({
                 borderLeft: `2px solid ${MUSIC_TRACK_VISUAL.color}`,
               }}
             />
-            <span>A4 Score</span>
+            <span>Music</span>
           </div>
         )}
         <div className="flex items-center gap-1">

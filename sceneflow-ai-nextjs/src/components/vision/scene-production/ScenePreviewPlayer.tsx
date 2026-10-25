@@ -1274,7 +1274,8 @@ export function ScenePreviewPlayer({
       return {
         holdStyle,
         transform: `scale(${scale.toFixed(4)})`,
-        label: 'Hold: Push 103%',
+        label: 'Hold: Slow Zoom',
+        technicalLabel: '103% Ken Burns Push Hold',
       }
     }
     if (holdStyle === 'pingpong') {
@@ -1284,10 +1285,16 @@ export function ScenePreviewPlayer({
       return {
         holdStyle,
         transform: `scale(${scale.toFixed(4)}) translateX(${shiftX.toFixed(2)}%)`,
-        label: 'Hold: Ping-Pong',
+        label: 'Hold: Subtle Motion',
+        technicalLabel: 'Ping-Pong Micro-Motion Hold',
       }
     }
-    return { holdStyle: 'freeze' as ShotHoldStyle, transform: undefined, label: 'Hold: Freeze' }
+    return {
+      holdStyle: 'freeze' as ShotHoldStyle,
+      transform: undefined,
+      label: 'Hold: Still Frame',
+      technicalLabel: 'Static Last-Frame Freeze Hold',
+    }
   }, [
     currentSegment.segment,
     segmentAudioConfigs,
@@ -1308,8 +1315,28 @@ export function ScenePreviewPlayer({
         : loudnessTarget === 'web-14lufs'
           ? '-14.0 LUFS'
           : 'UNNORM'
+    const friendlyLabel = isMuted
+      ? 'Muted'
+      : loudnessTarget === 'broadcast-24lkfs'
+        ? 'TV Volume'
+        : loudnessTarget === 'web-14lufs'
+          ? 'Web Volume'
+          : 'Original Mix'
+    const technicalTarget =
+      loudnessTarget === 'broadcast-24lkfs'
+        ? '-24.0 LKFS (EBU R128 Broadcast)'
+        : loudnessTarget === 'web-14lufs'
+          ? '-14.0 LUFS (EBU R128 Web/Streaming)'
+          : 'Unnormalized Raw Mix'
     if (isMuted || !isPlaying) {
-      return { leftPct: 4, rightPct: 4, lufsReadout: isMuted ? 'MUTED' : targetLabel, isDucking: false }
+      return {
+        leftPct: 4,
+        rightPct: 4,
+        lufsReadout: isMuted ? 'MUTED' : targetLabel,
+        friendlyLabel,
+        technicalTarget,
+        isDucking: false,
+      }
     }
     let energy = 0
     const narrStart = getSegmentStartTime(audioTracks.narration.startSegment)
@@ -1366,7 +1393,7 @@ export function ScenePreviewPlayer({
     const unit = loudnessTarget === 'broadcast-24lkfs' ? 'LKFS' : 'LUFS'
     const lufsReadout = energy > 0.05 ? `${(baseLufs + liveDelta).toFixed(1)} ${unit}` : `-∞ ${unit}`
 
-    return { leftPct, rightPct, lufsReadout, isDucking }
+    return { leftPct, rightPct, lufsReadout, friendlyLabel, technicalTarget, isDucking }
   }, [
     loudnessTarget,
     isMuted,
@@ -1414,9 +1441,11 @@ export function ScenePreviewPlayer({
           : `rounded-lg border border-zinc-800/90 shadow-xl ${isFullscreen ? 'flex flex-col' : ''}`
       }`}
     >
-      {/* Video Display Area */}
-      <div className={`relative bg-black flex items-center justify-center ${
-        fillScreen || isFullscreen ? 'min-h-0 flex-1' : 'aspect-video'
+      {/* Video Display Area — compact default monitor height so Shot Sequence & Stitch Strip fit in workflow fullscreen; expands on Fullscreen */}
+      <div className={`relative bg-black flex items-center justify-center overflow-hidden ${
+        fillScreen || isFullscreen
+          ? 'min-h-0 flex-1'
+          : 'aspect-video max-h-[210px] sm:max-h-[240px] xl:max-h-[268px] w-full mx-auto'
       }`}>
         {currentSegment.segment?.activeAssetUrl ? (
           playbackKind === 'image-sequence' ? (
@@ -1522,8 +1551,12 @@ export function ScenePreviewPlayer({
               <Clock className="w-3 h-3 mr-1.5 text-cyan-400" />
               {formatSmpteTimecode(currentTime)} <span className="text-zinc-500 mx-1">/</span> {formatSmpteTimecode(scrubberTotalDuration)}
             </Badge>
-            <Badge variant="outline" className="bg-zinc-950/85 backdrop-blur-md border-cyan-500/40 text-cyan-200 text-[11px] font-mono tabular-nums px-2 py-0.5 shadow-sm">
-              Seg {activeSegmentIndex + 1}/{segments.length}
+            <Badge
+              variant="outline"
+              className="bg-zinc-950/85 backdrop-blur-md border-cyan-500/40 text-cyan-200 text-[11px] font-mono tabular-nums px-2 py-0.5 shadow-sm pointer-events-auto"
+              title={`Playing Shot ${activeSegmentIndex + 1} of ${segments.length}`}
+            >
+              Shot {activeSegmentIndex + 1}/{segments.length}
             </Badge>
             {currentSegment.segment && getTrimForSegment(currentSegment.segment).isTrimmed && (
               <Badge variant="outline" className="bg-amber-950/80 backdrop-blur-md border-amber-500/40 text-amber-300 text-[10px] uppercase tracking-wider px-2 py-0.5">
@@ -1536,28 +1569,44 @@ export function ScenePreviewPlayer({
               </Badge>
             )}
             {isVideoFrozen && (
-              <Badge variant="outline" className="bg-amber-500/20 backdrop-blur-md border-amber-500/50 text-amber-300 text-[11px] animate-pulse">
+              <Badge
+                variant="outline"
+                className="bg-amber-500/20 backdrop-blur-md border-amber-500/50 text-amber-300 text-[11px] animate-pulse pointer-events-auto"
+                title={activeHoldVisual.technicalLabel || activeHoldVisual.label}
+              >
                 <Pause className="w-3 h-3 mr-1" />
                 {activeHoldVisual.label}
               </Badge>
             )}
             {stereoMeterState.isDucking && (
-              <Badge variant="outline" className="bg-emerald-950/85 backdrop-blur-md border-emerald-500/40 text-emerald-300 text-[10px] font-mono uppercase tracking-wider px-2 py-0.5">
-                DUCK -8dB
+              <Badge
+                variant="outline"
+                className="bg-emerald-950/85 backdrop-blur-md border-emerald-500/40 text-emerald-300 text-[10px] font-medium px-2 py-0.5 pointer-events-auto"
+                title="Auto-Ducking active: lowers background music & sound effects by -8 dB during speech (sidechain gain reduction)"
+              >
+                Auto-Lower Music
               </Badge>
             )}
           </div>
-          <div className="hidden sm:flex items-center gap-1.5">
+          <div className="hidden sm:flex items-center gap-1.5 pointer-events-auto">
             {isLooping && (
               <Badge variant="outline" className="bg-emerald-950/80 backdrop-blur-md border-emerald-500/40 text-emerald-300 text-[10px] uppercase tracking-wider px-2 py-0.5">
                 Loop
               </Badge>
             )}
-            <Badge variant="outline" className="bg-zinc-950/85 backdrop-blur-md border-zinc-700/80 text-zinc-300 text-[10px] font-mono tabular-nums px-2 py-0.5">
-              {stereoMeterState.lufsReadout}
+            <Badge
+              variant="outline"
+              className="bg-zinc-950/85 backdrop-blur-md border-zinc-700/80 text-zinc-300 text-[10px] font-medium px-2 py-0.5"
+              title={`Audio Level: ${stereoMeterState.lufsReadout} • Target: ${stereoMeterState.technicalTarget}`}
+            >
+              {stereoMeterState.friendlyLabel}
             </Badge>
-            <Badge variant="outline" className="bg-zinc-950/80 backdrop-blur-md border-zinc-800 text-zinc-400 text-[10px] font-mono uppercase tracking-wider px-2 py-0.5">
-              24 FPS • REC.709
+            <Badge
+              variant="outline"
+              className="bg-zinc-950/80 backdrop-blur-md border-zinc-800 text-zinc-400 text-[10px] font-medium px-2 py-0.5"
+              title="Standard HD preview • 24 FPS cinematic frame rate • Rec.709 color profile"
+            >
+              Standard HD
             </Badge>
           </div>
         </div>
@@ -1767,7 +1816,7 @@ export function ScenePreviewPlayer({
       
       {/* Controls Bar — hidden in parent fullscreen so only the hover play button remains */}
       {!fillScreen && (
-      <div className="px-3 py-2.5 bg-zinc-950 border-t border-zinc-800/90 flex items-center gap-2 sm:gap-2.5">
+      <div className="px-3 py-1.5 bg-zinc-950 border-t border-zinc-800/90 flex items-center gap-2 sm:gap-2.5">
         {/* Skip Prev Shot */}
         <button
           onClick={() => skipToBeat('prev')}
@@ -1895,10 +1944,10 @@ export function ScenePreviewPlayer({
           {isMuted ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
         </button>
 
-        {/* Stereo L/R Peak & EBU R128 / LUFS VU Meter */}
+        {/* Stereo L/R Audio Level Meter */}
         <div
           className="hidden md:flex items-center gap-1.5 px-2 py-1 rounded bg-zinc-900/90 border border-zinc-800/80"
-          title={`Master Bus Loudness Meter (${stereoMeterState.lufsReadout})`}
+          title={`Audio Level Meter • Live: ${stereoMeterState.lufsReadout} • Target: ${stereoMeterState.technicalTarget}`}
         >
           <div className="flex flex-col gap-0.5 w-14">
             <div className="h-1 w-full bg-zinc-800 rounded-full overflow-hidden">
@@ -1926,8 +1975,8 @@ export function ScenePreviewPlayer({
               />
             </div>
           </div>
-          <span className="text-[9px] font-mono tabular-nums text-zinc-400 min-w-[54px] text-right">
-            {stereoMeterState.lufsReadout}
+          <span className="text-[9px] font-medium text-zinc-300 min-w-[56px] text-right">
+            {stereoMeterState.friendlyLabel}
           </span>
         </div>
         
