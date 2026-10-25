@@ -168,5 +168,16 @@ export function pendingPolishRecommendations(
 ): PolishRecommendation[] {
   if (!analysis?.recommendations?.length) return []
   const applied = new Set(analysis.appliedRecommendationIds || [])
-  return analysis.recommendations.filter((rec) => rec.text.trim().length > 0 && !applied.has(rec.id))
+  return analysis.recommendations
+    .map((rec, idx): PolishRecommendation | null => {
+      if (typeof rec === 'string') {
+        const trimmed = rec.trim()
+        return trimmed
+          ? { id: `polish-rec-${idx}`, text: trimmed, priority: 'medium', category: 'pacing' }
+          : null
+      }
+      if (!rec || typeof rec.text !== 'string' || !rec.text.trim()) return null
+      return rec
+    })
+    .filter((rec): rec is PolishRecommendation => rec !== null && !applied.has(rec.id))
 }

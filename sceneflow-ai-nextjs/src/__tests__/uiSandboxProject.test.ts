@@ -11,6 +11,7 @@ import {
   runShotDirectionChunks,
   shotDirectionCatalogFromPhase,
 } from '@/lib/vision/shotDirectionBatch'
+import { pendingPolishRecommendations } from '@/lib/script/scenePolish/formatPolishBeats'
 
 const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
 
@@ -47,6 +48,11 @@ describe('uiSandboxProject', () => {
         expect(beat.endFrameImageUrl).toMatch(/^data:image\/svg\+xml;utf8,/)
         expect(beat.storyboardImagePrompt.length).toBeGreaterThan(40)
         expect(beat.videoPrompt.length).toBeGreaterThan(40)
+      }
+      if ((scene as any).polishAnalysis) {
+        const recs = pendingPolishRecommendations((scene as any).polishAnalysis)
+        expect(recs.length).toBeGreaterThan(0)
+        expect(typeof recs[0]?.text).toBe('string')
       }
     }
 

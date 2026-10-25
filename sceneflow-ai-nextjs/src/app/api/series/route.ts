@@ -75,8 +75,15 @@ export async function GET(request: NextRequest) {
       const resolvedUser = await resolveUser(userIdParam)
       resolvedUserId = resolvedUser.id
     } catch (err) {
-      console.error(`[${timestamp}] [GET /api/series] Failed to resolve user:`, err)
-      return NextResponse.json({ success: false, error: 'User not found' }, { status: 404 })
+      console.error(`[${timestamp}] [GET /api/series] Failed to resolve user (returning empty series fallback):`, err)
+      return NextResponse.json({
+        success: true,
+        series: [],
+        page: 1,
+        pageSize: 20,
+        total: 0,
+        databaseUnavailable: true,
+      })
     }
     
     const page = Math.max(1, Number(searchParams.get('page') || '1'))

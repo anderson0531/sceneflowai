@@ -2623,13 +2623,19 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         // Safety check: ensure segments array exists
         if (productionData.segments && Array.isArray(productionData.segments)) {
           productionData.segments.forEach((seg, i) => {
-            if (seg.activeAssetUrl?.startsWith('data:')) {
+            if (
+              seg.activeAssetUrl?.startsWith('data:') &&
+              !seg.activeAssetUrl.startsWith('data:image/svg+xml')
+            ) {
               console.error(`[SceneProduction] ERROR: Segment ${i} has base64 activeAssetUrl!`)
             }
             // Safety check: ensure takes array exists
             if (seg.takes && Array.isArray(seg.takes)) {
               seg.takes.forEach((take, j) => {
-                if (take.assetUrl?.startsWith('data:')) {
+                if (
+                  take.assetUrl?.startsWith('data:') &&
+                  !take.assetUrl.startsWith('data:image/svg+xml')
+                ) {
                   console.error(`[SceneProduction] ERROR: Segment ${i} take ${j} has base64 assetUrl!`)
                 }
               })

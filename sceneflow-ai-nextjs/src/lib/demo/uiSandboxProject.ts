@@ -663,8 +663,17 @@ function buildDemoScenes() {
         ],
       },
       polishAnalysis: {
+        score: 91,
+        notes: 'Strong neo-noir dialogue rhythm and clear visual staging across the oak examination table.',
+        analyzedAt: '2026-10-25T00:00:00.000Z',
         recommendations: [
-          'Tighten Marcus’s opening line cadence to contrast with the ticking pocket watch.',
+          {
+            id: 'polish-demo-s1-1',
+            text: 'Tighten Marcus’s opening line cadence to contrast with the ticking pocket watch.',
+            priority: 'medium',
+            category: 'dialogue',
+            reason: 'Sharpens the rhythmic interplay between the pocket watch SFX and Marcus’s entrance.',
+          },
         ],
       },
     },

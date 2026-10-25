@@ -76,9 +76,25 @@ export async function GET(req: NextRequest) {
     })
   } catch (error) {
     console.error('[Subscription Status API] Error:', error)
-    return NextResponse.json(
-      { success: false, error: 'Failed to fetch subscription status' },
-      { status: 500 }
-    )
+    return NextResponse.json({
+      success: true,
+      subscription: {
+        tier: null,
+        status: 'unavailable',
+        startDate: null,
+        endDate: null,
+        monthlyCredits: 0,
+        creditsExpiresAt: null,
+      },
+      credits: {
+        subscription_credits: 0,
+        subscription_expires_at: null,
+        addon_credits: 0,
+        total_credits: 0,
+        pack_expires_at: null,
+      },
+      one_time_tiers_purchased: [],
+      databaseUnavailable: true,
+    })
   }
 }

@@ -155,9 +155,18 @@ export function InstructionsPanel({
 
   const polishRecs = useMemo(
     () =>
-      (polishAnalysis?.recommendations ?? []).filter(
-        (rec) => rec.text.trim().length > 0 && !appliedRecommendationIds.includes(rec.id || '')
-      ),
+      (polishAnalysis?.recommendations ?? [])
+        .map((rec, idx) =>
+          typeof rec === 'string'
+            ? { id: `polish-${idx}`, text: rec, priority: 'medium' as const, category: 'pacing' as const }
+            : rec
+        )
+        .filter(
+          (rec) =>
+            typeof rec?.text === 'string' &&
+            rec.text.trim().length > 0 &&
+            !appliedRecommendationIds.includes(rec.id || '')
+        ),
     [polishAnalysis?.recommendations, appliedRecommendationIds]
   )
 
