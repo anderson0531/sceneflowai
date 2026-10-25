@@ -54,14 +54,16 @@ export async function GET(request: NextRequest) {
     }
 
     if (isDatabaseUnavailableError(error)) {
-      return NextResponse.json(
-        {
-          error: 'Database temporarily unavailable',
-          code: 'DATABASE_UNAVAILABLE',
-          details: error.message,
-        },
-        { status: 503 }
-      )
+      return NextResponse.json({
+        subscription_credits: 0,
+        subscription_expires_at: null,
+        addon_credits: 0,
+        total_credits: 0,
+        subscription_credits_monthly: 0,
+        subscription_plan: 'Offline Sandbox',
+        subscription_expires: null,
+        databaseUnavailable: true,
+      })
     }
 
     return NextResponse.json(

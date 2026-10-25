@@ -53,6 +53,8 @@ describe('uiSandboxProject', () => {
         const recs = pendingPolishRecommendations((scene as any).polishAnalysis)
         expect(recs.length).toBeGreaterThan(0)
         expect(typeof recs[0]?.text).toBe('string')
+        expect(Array.isArray(recs[0]?.beatIndices)).toBe(true)
+        expect(recs[0]?.beatIndices.map((n) => n)).toEqual([2, 4])
       }
     }
 

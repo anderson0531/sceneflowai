@@ -2,7 +2,7 @@
 
 import { recommendationId } from '@/lib/script/audienceResonance/highImpact'
 import { pendingPolishRecommendations } from '@/lib/script/scenePolish/formatPolishBeats'
-import type { ScenePolishAnalysis } from '@/lib/script/scenePolish/types'
+import { POLISH_CATEGORIES, type PolishCategory, type ScenePolishAnalysis } from '@/lib/script/scenePolish/types'
 import { coerceDialogueLineText } from '@/lib/script/segmentScript'
 import { Button } from '@/components/ui/Button'
 import {
@@ -347,7 +347,7 @@ export function SceneRecommendationsDialog({
                               {rec.text}
                             </span>
                             <div className="flex items-center gap-1.5 mt-1.5 flex-wrap">
-                              {rec.beatIndices.map((n) => (
+                              {(Array.isArray(rec.beatIndices) ? rec.beatIndices : []).map((n) => (
                                 <span
                                   key={`${recId}-beat-${n}`}
                                   className="inline-flex items-center text-[9px] font-semibold px-1.5 py-0.5 rounded uppercase tracking-wider bg-emerald-500/20 text-emerald-200 border border-emerald-500/30"
@@ -366,9 +366,13 @@ export function SceneRecommendationsDialog({
                               >
                                 {rec.priority}
                               </span>
-                              <span className="inline-flex items-center text-[9px] font-medium px-1.5 py-0.5 rounded bg-gray-700/50 text-gray-400 border border-gray-600/30">
-                                {t(`polishCategory.${rec.category}`)}
-                              </span>
+                              {rec.category && (
+                                <span className="inline-flex items-center text-[9px] font-medium px-1.5 py-0.5 rounded bg-gray-700/50 text-gray-400 border border-gray-600/30">
+                                  {(POLISH_CATEGORIES as readonly string[]).includes(rec.category)
+                                    ? t(`polishCategory.${rec.category as PolishCategory}`)
+                                    : rec.category}
+                                </span>
+                              )}
                             </div>
                             {rec.reason && <p className="text-[11px] text-gray-500 mt-1.5">{rec.reason}</p>}
                           </div>

@@ -1,6 +1,12 @@
 import { beatContentFingerprint, getSceneBeats } from '@/lib/script/beatMigration'
 import type { SceneBeat } from '@/lib/script/segmentTypes'
-import type { PolishRecommendation, PolishSceneInput, ScenePolishAnalysis } from './types'
+import {
+  POLISH_CATEGORIES,
+  type PolishCategory,
+  type PolishRecommendation,
+  type PolishSceneInput,
+  type ScenePolishAnalysis,
+} from './types'
 
 export function polishAnalyzedAtMs(
   analysis: { analyzedAt?: string } | null | undefined
@@ -173,11 +179,24 @@ export function pendingPolishRecommendations(
       if (typeof rec === 'string') {
         const trimmed = rec.trim()
         return trimmed
-          ? { id: `polish-rec-${idx}`, text: trimmed, priority: 'medium', category: 'pacing' }
+          ? {
+              id: `polish-rec-${idx}`,
+              text: trimmed,
+              priority: 'medium',
+              category: 'action_order',
+              beatIndices: [],
+            }
           : null
       }
       if (!rec || typeof rec.text !== 'string' || !rec.text.trim()) return null
-      return rec
+      const validCategory = (POLISH_CATEGORIES as readonly string[]).includes(rec.category)
+        ? (rec.category as PolishCategory)
+        : 'action_order'
+      return {
+        ...rec,
+        category: validCategory,
+        beatIndices: Array.isArray(rec.beatIndices) ? rec.beatIndices : [],
+      }
     })
     .filter((rec): rec is PolishRecommendation => rec !== null && !applied.has(rec.id))
 }
