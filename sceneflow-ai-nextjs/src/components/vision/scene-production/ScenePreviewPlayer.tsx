@@ -1438,14 +1438,16 @@ export function ScenePreviewPlayer({
       className={`bg-zinc-950 overflow-hidden outline-none focus-visible:ring-1 focus-visible:ring-cyan-500/40 ${
         fillScreen
           ? 'flex h-full w-full flex-col rounded-none border-0'
-          : `rounded-lg border border-zinc-800/90 shadow-xl ${isFullscreen ? 'flex flex-col' : ''}`
+          : isFullscreen
+            ? 'flex flex-col w-full h-full rounded-lg border border-zinc-800/90 shadow-xl'
+            : 'w-full max-w-[420px] sm:max-w-[464px] xl:max-w-[512px] mx-auto rounded-lg border border-zinc-800/90 shadow-xl'
       }`}
     >
-      {/* Video Display Area — compact default monitor height so Shot Sequence & Stitch Strip fit in workflow fullscreen; expands on Fullscreen */}
+      {/* Video Display Area — true 16:9 (aspect-video) sized via container max-width so Shot Sequence & Stitch Strip fit in workflow fullscreen; expands on Fullscreen */}
       <div className={`relative bg-black flex items-center justify-center overflow-hidden ${
         fillScreen || isFullscreen
-          ? 'min-h-0 flex-1'
-          : 'aspect-video max-h-[210px] sm:max-h-[240px] xl:max-h-[268px] w-full mx-auto'
+          ? 'min-h-0 flex-1 w-full'
+          : 'aspect-video w-full'
       }`}>
         {currentSegment.segment?.activeAssetUrl ? (
           playbackKind === 'image-sequence' ? (
