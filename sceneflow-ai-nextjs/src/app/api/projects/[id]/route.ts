@@ -36,6 +36,7 @@ import {
   isUnconfirmedScriptShrink,
   scenesAfterUnconfirmedShrinkGuard,
 } from '@/lib/script/scriptShrinkGuard'
+import { getUiSandboxProject, isDemoProjectId } from '@/lib/demo/uiSandboxProject'
 
 // Increase timeout for large project updates
 export const maxDuration = 60 // 60 seconds timeout
@@ -71,6 +72,20 @@ export async function GET(
         { error: 'Invalid project ID format' },
         { status: 400 }
       )
+    }
+
+    if (isDemoProjectId(id)) {
+      const demoProject = getUiSandboxProject()
+      const response = NextResponse.json({
+        success: true,
+        project: demoProject,
+        demoMode: true,
+      })
+      response.headers.set('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0, private')
+      response.headers.set('Pragma', 'no-cache')
+      response.headers.set('Expires', '0')
+      response.headers.set('X-Content-Type-Options', 'nosniff')
+      return response
     }
 
     const project = await loadProjectForRead(id, { includeProduction })
@@ -195,6 +210,16 @@ export async function PUT(
       body.metadata.visionPhase.characters.forEach((char: any, idx: number) => {
         console.log(`[Projects PUT] Character ${idx + 1}: ${char.name}, hasReferenceImage: ${!!char.referenceImage}`)
       })
+    }
+
+    if (isDemoProjectId(id)) {
+      return NextResponse.json(
+        compactProjectPutAck({
+          staleScriptWriteBlocked: false,
+          scriptUpdatedAt:
+            body?.metadata?.visionPhase?.scriptUpdatedAt || new Date().toISOString(),
+        })
+      )
     }
 
     let project!: Project
@@ -620,6 +645,16 @@ export async function PATCH(
         { error: 'Invalid project ID format' },
         { status: 400 }
       )
+    }
+
+    if (isDemoProjectId(id)) {
+      return NextResponse.json({
+        success: true,
+        message: 'Audio updated atomically (UI Sandbox)',
+        sceneIndex: body?.atomicAudioUpdate?.sceneIndex,
+        audioType: body?.atomicAudioUpdate?.audioType,
+        sfxIndex: body?.atomicAudioUpdate?.sfxIndex,
+      })
     }
     
     const project = await Project.findByPk(id)

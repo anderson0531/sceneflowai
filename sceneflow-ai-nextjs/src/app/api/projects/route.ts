@@ -7,6 +7,11 @@ import { SubscriptionService } from '../../../services/SubscriptionService'
 import { resolveUserId } from '@/lib/userHelper'
 import { normalizeWorkflowStep } from '@/constants/workflowSteps'
 import { slimProjectResponseMetadata } from '@/lib/projects/slimProjectPutPayload'
+import {
+  getUiSandboxProject,
+  getUiSandboxProjectSummary,
+  isDemoProjectId,
+} from '@/lib/demo/uiSandboxProject'
 
 export const dynamic = 'force-dynamic'
 export const revalidate = 0
@@ -42,6 +47,15 @@ export async function GET(request: NextRequest) {
     
     if (id) {
       console.log(`[${timestamp}] [GET /api/projects] Fetching single project by id:`, id)
+      if (isDemoProjectId(id)) {
+        const response = NextResponse.json({
+          success: true,
+          project: getUiSandboxProject(),
+          demoMode: true,
+        })
+        response.headers.set('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0')
+        return response
+      }
       const p: any = await Project.findByPk(id)
       if (!p) {
         console.log(`[${timestamp}] [GET /api/projects] Project not found:`, id)
@@ -75,13 +89,27 @@ export async function GET(request: NextRequest) {
       resolvedUserId = await resolveUserId(userIdParam)
       console.log(`[${timestamp}] [GET /api/projects] Resolved userId: ${userIdParam} -> ${resolvedUserId}`)
     } catch (err) {
-      console.error(`[${timestamp}] [GET /api/projects] Failed to resolve user:`, err)
-      return NextResponse.json({ success: false, error: 'User not found' }, { status: 404 })
+      console.error(`[${timestamp}] [GET /api/projects] Failed to resolve user (serving UI Sandbox fallback):`, err)
+      return NextResponse.json({
+        success: true,
+        projects: [getUiSandboxProjectSummary()],
+        page: 1,
+        pageSize: 20,
+        total: 1,
+        demoFallback: true,
+      })
     }
 
     if (!resolvedUserId) {
       console.error(`[${timestamp}] [GET /api/projects] resolveUserId returned empty id for: ${userIdParam}`)
-      return NextResponse.json({ success: false, error: 'User has no id' }, { status: 500 })
+      return NextResponse.json({
+        success: true,
+        projects: [getUiSandboxProjectSummary()],
+        page: 1,
+        pageSize: 20,
+        total: 1,
+        demoFallback: true,
+      })
     }
 
     console.log(`[${timestamp}] [GET /api/projects] Fetching projects for userId:`, resolvedUserId)
@@ -131,8 +159,20 @@ export async function GET(request: NextRequest) {
       metadata: isSummary ? (p.metadata || {}) : slimProjectResponseMetadata(p.metadata || {})
     }))
 
-    console.log(`[${timestamp}] [GET /api/projects] Sending response with ${projects.length} projects`)
-    const response = NextResponse.json({ success: true, projects, page, pageSize, total: count })
+    const demoSummary = getUiSandboxProjectSummary()
+    const projectsWithDemo =
+      page === 1 && !projects.some((p: any) => isDemoProjectId(p.id))
+        ? [demoSummary, ...projects]
+        : projects
+
+    console.log(`[${timestamp}] [GET /api/projects] Sending response with ${projectsWithDemo.length} projects`)
+    const response = NextResponse.json({
+      success: true,
+      projects: projectsWithDemo,
+      page,
+      pageSize,
+      total: count + (projectsWithDemo.length - projects.length),
+    })
     response.headers.set('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0')
     response.headers.set('Pragma', 'no-cache')
     response.headers.set('Expires', '0')
@@ -145,6 +185,26 @@ export async function GET(request: NextRequest) {
       message: error instanceof Error ? error.message : String(error),
       stack: error instanceof Error ? error.stack : undefined
     })
+    const { searchParams } = new URL(request.url)
+    const requestedId = searchParams.get('id')
+    if (requestedId && isDemoProjectId(requestedId)) {
+      return NextResponse.json({
+        success: true,
+        project: getUiSandboxProject(),
+        demoMode: true,
+      })
+    }
+    if (!requestedId) {
+      return NextResponse.json({
+        success: true,
+        projects: [getUiSandboxProjectSummary()],
+        page: 1,
+        pageSize: 20,
+        total: 1,
+        demoFallback: true,
+        databaseWarning: error instanceof Error ? error.message : 'Database temporarily unavailable',
+      })
+    }
     return NextResponse.json({ 
       success: false, 
       error: error instanceof Error ? error.message : 'Unknown error',
@@ -232,6 +292,22 @@ export async function PUT(request: NextRequest) {
     const body = await request.json()
     const { id, metadata, title, description, status, currentStep, step_progress } = body || {}
     if (!id) return NextResponse.json({ success: false, error: 'id is required' }, { status: 400 })
+
+    if (isDemoProjectId(id)) {
+      const demo = getUiSandboxProject()
+      return NextResponse.json({
+        success: true,
+        project: {
+          ...demo,
+          ...(typeof title === 'string' ? { title } : {}),
+          ...(typeof description === 'string' ? { description } : {}),
+          ...(status ? { status } : {}),
+          ...(currentStep ? { currentStep } : {}),
+          ...(metadata !== undefined ? { metadata } : {}),
+        },
+        demoMode: true,
+      })
+    }
 
     const updateData: any = {}
     if (typeof title === 'string') updateData.title = title

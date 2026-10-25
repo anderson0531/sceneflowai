@@ -7,6 +7,7 @@ import { findSceneById, getVisionScriptScenes } from '@/lib/script/resolveSceneB
 import { appendSceneRender } from '@/lib/projects/appendSceneRender'
 import { mergeSceneProductionData } from '@/lib/storyboard/mergeProductionMedia'
 import type { ProductionStream } from '@/components/vision/scene-production/types'
+import { getUiSandboxProject, isDemoProjectId } from '@/lib/demo/uiSandboxProject'
 
 // Increase timeout for production updates
 export const maxDuration = 30
@@ -25,6 +26,18 @@ export async function GET(
     const { id } = await params
     if (!id || !UUID_REGEX.test(id)) {
       return NextResponse.json({ error: 'Invalid project ID format' }, { status: 400 })
+    }
+
+    if (isDemoProjectId(id)) {
+      const demoProduction = getUiSandboxProject().metadata?.visionPhase?.production || { scenes: {} }
+      const response = NextResponse.json({
+        success: true,
+        projectId: id,
+        production: demoProduction,
+        demoMode: true,
+      })
+      response.headers.set('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0, private')
+      return response
     }
 
     await sequelize.authenticate()
@@ -72,6 +85,17 @@ export async function PATCH(
         { error: 'Missing required field: sceneId' },
         { status: 400 }
       )
+    }
+
+    if (isDemoProjectId(id)) {
+      return NextResponse.json({
+        success: true,
+        projectId: id,
+        sceneId,
+        streamId: appendStream?.id,
+        updatedAt: new Date().toISOString(),
+        demoMode: true,
+      })
     }
 
     if (appendStream) {

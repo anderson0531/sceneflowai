@@ -16,6 +16,7 @@ import {
 } from '@/components/blueprint/ScriptImportDialog'
 import { useSession } from 'next-auth/react'
 import { useEnhancedStore } from '@/store/enhancedStore'
+import { DEMO_PROJECT_ID, getUiSandboxProjectSummary } from '@/lib/demo/uiSandboxProject'
 
 export const dynamic = 'force-dynamic'
 
@@ -31,12 +32,19 @@ function EmptyState({ hasProjects, searchQuery, onReset }: { hasProjects: boolea
         <p className="text-gray-600 dark:text-gray-400 mb-6">
           Create your first project to get started
         </p>
-        <Link href="/dashboard/studio/new-project">
-          <Button className="bg-sf-primary text-white hover:bg-sf-accent">
-            <Plus className="w-4 h-4 mr-2" />
-            Create First Project
-          </Button>
-        </Link>
+        <div className="flex flex-wrap items-center justify-center gap-3">
+          <Link href={`/dashboard/workflow/vision/${DEMO_PROJECT_ID}`}>
+            <Button variant="outline" className="border-cyan-500/40 text-cyan-400 hover:bg-cyan-500/10">
+              Open UI Sandbox Project
+            </Button>
+          </Link>
+          <Link href="/dashboard/studio/new-project">
+            <Button className="bg-sf-primary text-white hover:bg-sf-accent">
+              <Plus className="w-4 h-4 mr-2" />
+              Create First Project
+            </Button>
+          </Link>
+        </div>
       </div>
     )
   }
@@ -222,10 +230,10 @@ export default function ProjectsPage() {
       const res = await fetch(apiUrl)
       const data = await res.json()
       
-      if (data.success) {
-        const projectsList = data.projects || []
+      if (data.success && Array.isArray(data.projects) && data.projects.length > 0) {
+        const projectsList = data.projects
         setProjects(projectsList)
-        setTotalCount(data.total || 0)
+        setTotalCount(data.total || projectsList.length)
         
         // Auto-select most recently updated project if none selected or selected project not found
         if (projectsList.length > 0) {
@@ -238,9 +246,22 @@ export default function ProjectsPage() {
             setSelectedProjectId(sorted[0].id)
           }
         }
+      } else {
+        const fallbackList = [getUiSandboxProjectSummary()]
+        setProjects(fallbackList)
+        setTotalCount(1)
+        if (!selectedProjectId) {
+          setSelectedProjectId(DEMO_PROJECT_ID)
+        }
       }
     } catch (error) {
-      console.error('Failed to load projects:', error)
+      console.error('Failed to load projects, falling back to UI Sandbox project:', error)
+      const fallbackList = [getUiSandboxProjectSummary()]
+      setProjects(fallbackList)
+      setTotalCount(1)
+      if (!selectedProjectId) {
+        setSelectedProjectId(DEMO_PROJECT_ID)
+      }
     } finally {
       setLoading(false)
     }
@@ -452,6 +473,14 @@ export default function ProjectsPage() {
         stickyTop={0}
         primaryActions={
           <div className="flex items-center gap-2">
+            <Link href={`/dashboard/workflow/vision/${DEMO_PROJECT_ID}`}>
+              <Button
+                variant="outline"
+                className="flex items-center gap-2 border-cyan-500/40 text-cyan-400 hover:bg-cyan-500/10"
+              >
+                UI Sandbox Demo
+              </Button>
+            </Link>
             <Button
               variant="outline"
               onClick={() => setShowScriptImportDialog(true)}

@@ -17801,6 +17801,16 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
               Back to Projects
             </Button>
             <Button
+              variant="outline"
+              size="sm"
+              onClick={() =>
+                router.push('/dashboard/workflow/vision/00000000-0000-4000-8000-000000000001')
+              }
+              className="border-cyan-500/40 bg-cyan-500/10 text-cyan-200 hover:bg-cyan-500/20"
+            >
+              Open UI Sandbox Project
+            </Button>
+            <Button
               size="sm"
               onClick={() => void loadProject()}
               className="bg-cyan-600 hover:bg-cyan-500 text-white"

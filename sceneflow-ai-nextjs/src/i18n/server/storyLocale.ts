@@ -1,5 +1,6 @@
 import { DEFAULT_LOCALE, isLocale } from '@/i18n/locale'
 import { buildProperNounGlossary } from '@/lib/prompts/localeDirective'
+import { isDemoProjectId } from '@/lib/demo/uiSandboxProject'
 
 /**
  * Server-side resolution of the language AI content should be authored in.
@@ -48,7 +49,7 @@ export async function resolveStoryLocale(
     source = 'explicit'
   }
 
-  if (projectId && !projectId.startsWith('new-project')) {
+  if (projectId && !projectId.startsWith('new-project') && !isDemoProjectId(projectId)) {
     try {
       const { default: Project } = await import('@/models/Project')
       const project = await Project.findByPk(projectId)
@@ -133,7 +134,7 @@ export async function resolveExistingContentStoryLocale(
     return { storyLocale: explicit, properNouns, source: 'explicit' }
   }
 
-  if (projectId && !projectId.startsWith('new-project')) {
+  if (projectId && !projectId.startsWith('new-project') && !isDemoProjectId(projectId)) {
     try {
       const { default: Project } = await import('@/models/Project')
       const { readContentEntityI18n } = await import('@/i18n/content/entityI18n')

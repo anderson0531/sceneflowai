@@ -16,6 +16,11 @@ import {
   runShotDirectionChunks,
   shotDirectionCatalogFromPhase,
 } from '@/lib/vision/shotDirectionBatch'
+import {
+  directSandboxBeatStillsFallback,
+  getUiSandboxProject,
+  isDemoProjectId,
+} from '@/lib/demo/uiSandboxProject'
 
 export const runtime = 'nodejs'
 export const maxDuration = 300
@@ -29,11 +34,6 @@ export const maxDuration = 300
  */
 export async function POST(req: NextRequest) {
   try {
-    const session = await getServerSession(authOptions)
-    if (!session?.user?.id) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
-
     const body = (await req.json()) as Record<string, unknown>
     const projectId = typeof body.projectId === 'string' ? body.projectId : ''
     const sceneIndex = typeof body.sceneIndex === 'number' ? body.sceneIndex : -1
@@ -45,13 +45,22 @@ export async function POST(req: NextRequest) {
       )
     }
 
-    try {
-      await sequelize.authenticate()
-    } catch {
-      // Project lookup still attempted; some environments lazy-connect.
+    const demoMode = isDemoProjectId(projectId)
+    if (!demoMode) {
+      const session = await getServerSession(authOptions)
+      if (!session?.user?.id) {
+        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+      }
+      try {
+        await sequelize.authenticate()
+      } catch {
+        // Project lookup still attempted; some environments lazy-connect.
+      }
     }
 
-    const project = await Project.findByPk(projectId)
+    const project = demoMode
+      ? (getUiSandboxProject() as unknown as { metadata?: Record<string, any> })
+      : await Project.findByPk(projectId)
     if (!project) {
       return NextResponse.json({ error: 'Project not found' }, { status: 404 })
     }
@@ -69,10 +78,24 @@ export async function POST(req: NextRequest) {
       concurrency: getShotDirectionTextConcurrency(),
       force,
       signal: req.signal,
-      direct: (request) => directBeatStills(request),
+      direct: async (request) => {
+        try {
+          return await directBeatStills(request)
+        } catch (err) {
+          if (demoMode) {
+            return directSandboxBeatStillsFallback(request as any)
+          }
+          throw err
+        }
+      },
     })
 
-    const fresh = await Project.findByPk(projectId)
+    const fresh = demoMode
+      ? (getUiSandboxProject() as unknown as {
+          metadata?: Record<string, any>
+          update?: (values: Record<string, unknown>) => Promise<unknown>
+        })
+      : await Project.findByPk(projectId)
     if (!fresh) {
       return NextResponse.json({ error: 'Project not found after shot direction' }, { status: 404 })
     }
@@ -121,7 +144,7 @@ export async function POST(req: NextRequest) {
       force,
     })
 
-    if (applied.optimized > 0) {
+    if (!demoMode && applied.optimized > 0 && typeof fresh.update === 'function') {
       await fresh.update({
         metadata: writeScenesIntoVisionMetadata(fresh.metadata, applied.scenes),
       })
