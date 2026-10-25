@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import {
   DEMO_PROJECT_ID,
+  SANDBOX_CREDITS,
   directSandboxBeatStillsFallback,
   getUiSandboxProject,
   getUiSandboxProjectSummary,
@@ -100,7 +101,10 @@ describe('uiSandboxProject', () => {
     expect(updatedBeat4?.beatDirection?.generatedBy).toBe('director')
   })
 
-  it('builds a valid project summary for dashboard list fallback', () => {
+  it('builds a valid project summary for dashboard list fallback and includes 1M sandbox credits', () => {
+    const project = getUiSandboxProject()
+    expect(SANDBOX_CREDITS).toBe(1_000_000)
+    expect(project.metadata.credits).toBe(1_000_000)
     const summary = getUiSandboxProjectSummary()
     expect(summary.id).toBe(DEMO_PROJECT_ID)
     expect(summary.metadata.thumbnailUrl).toMatch(/^data:image\/svg\+xml;utf8,/)

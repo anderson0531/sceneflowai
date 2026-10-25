@@ -8,6 +8,7 @@
  */
 
 export const DEMO_PROJECT_ID = '00000000-0000-4000-8000-000000000001'
+export const SANDBOX_CREDITS = 1_000_000
 
 export function isDemoProjectId(id?: string | null): boolean {
   if (!id) return false
@@ -1534,6 +1535,8 @@ export function getUiSandboxProject() {
     completedSteps: ['ideation', 'blueprint'],
     metadata: {
       isDemoSandbox: true,
+      credits: SANDBOX_CREDITS,
+      creditBalance: SANDBOX_CREDITS,
       genre: 'Thriller / Mystery',
       format: 'Short Film',
       duration: 180,

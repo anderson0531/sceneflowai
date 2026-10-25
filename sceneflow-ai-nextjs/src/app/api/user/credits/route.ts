@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { CreditService, ensureWhopMigrationRan } from '@/services/CreditService'
 import { isDatabaseUnavailableError } from '@/lib/database/connectionDiagnostics'
+import { SANDBOX_CREDITS } from '@/lib/demo/uiSandboxProject'
 
 export const dynamic = 'force-dynamic'
 
@@ -55,20 +56,26 @@ export async function GET(request: NextRequest) {
 
     if (isDatabaseUnavailableError(error)) {
       return NextResponse.json({
-        subscription_credits: 0,
+        subscription_credits: SANDBOX_CREDITS,
         subscription_expires_at: null,
         addon_credits: 0,
-        total_credits: 0,
-        subscription_credits_monthly: 0,
-        subscription_plan: 'Offline Sandbox',
+        total_credits: SANDBOX_CREDITS,
+        subscription_credits_monthly: SANDBOX_CREDITS,
+        subscription_plan: 'UI Sandbox (1M Credits)',
         subscription_expires: null,
         databaseUnavailable: true,
       })
     }
 
-    return NextResponse.json(
-      { error: 'Failed to fetch credits', details: error.message },
-      { status: 500 }
-    )
+    return NextResponse.json({
+      subscription_credits: SANDBOX_CREDITS,
+      subscription_expires_at: null,
+      addon_credits: 0,
+      total_credits: SANDBOX_CREDITS,
+      subscription_credits_monthly: SANDBOX_CREDITS,
+      subscription_plan: 'UI Sandbox (1M Credits)',
+      subscription_expires: null,
+      databaseUnavailable: true,
+    })
   }
 }

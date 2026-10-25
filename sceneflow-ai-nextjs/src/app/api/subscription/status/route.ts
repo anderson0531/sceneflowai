@@ -5,6 +5,7 @@ import { AuthService } from '../../../../services/AuthService'
 import { SubscriptionService } from '../../../../services/SubscriptionService'
 import { CreditService } from '../../../../services/CreditService'
 import { resolveUser } from '@/lib/userHelper'
+import { SANDBOX_CREDITS } from '@/lib/demo/uiSandboxProject'
 
 /**
  * GET /api/subscription/status
@@ -79,18 +80,32 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({
       success: true,
       subscription: {
-        tier: null,
-        status: 'unavailable',
-        startDate: null,
+        tier: {
+          id: 'sandbox-studio',
+          name: 'studio',
+          display_name: 'UI Sandbox Studio',
+          monthly_price_usd: 0,
+          annual_price_usd: 0,
+          included_credits_monthly: SANDBOX_CREDITS,
+          storage_gb: 100,
+          max_resolution: '4K',
+          ai_model_access: 'all',
+          byok_access: true,
+          processing_priority: 'high',
+          collaboration_seats: 10,
+          features: {},
+        },
+        status: 'active',
+        startDate: new Date().toISOString(),
         endDate: null,
-        monthlyCredits: 0,
+        monthlyCredits: SANDBOX_CREDITS,
         creditsExpiresAt: null,
       },
       credits: {
-        subscription_credits: 0,
+        subscription_credits: SANDBOX_CREDITS,
         subscription_expires_at: null,
         addon_credits: 0,
-        total_credits: 0,
+        total_credits: SANDBOX_CREDITS,
         pack_expires_at: null,
       },
       one_time_tiers_purchased: [],
