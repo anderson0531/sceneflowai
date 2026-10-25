@@ -164,6 +164,7 @@ import {
 import {
   composeLanguageClipPrompt,
   englishSpokenLine,
+  extractPromptSignageText,
   preferStoredSpokenTranslation,
 } from '@/lib/scene/languageClipPrompt'
 import { translateGuideDialogueLine } from '@/lib/scene/translateGuideDialogue'
@@ -1712,6 +1713,18 @@ export function DirectorConsoleRoot({
       const queueItem = getQueueItem(segment.segmentId)
       const sourcePrompt =
         segment.userEditedPrompt || segment.generatedPrompt || queueItem?.config.prompt || ''
+      const signageSourceText = extractPromptSignageText(sourcePrompt)
+      const customSignageOverride =
+        productionData?.mixerSettingsByLanguage?.[language]?.languageShotConfigs?.[segment.segmentId]
+          ?.signageText?.trim() || ''
+      let signageTranslatedText = customSignageOverride || undefined
+      if (!signageTranslatedText && signageSourceText && signageSourceText !== englishLine.trim()) {
+        try {
+          signageTranslatedText = await translateGuideDialogueLine(signageSourceText, language)
+        } catch {
+          // Non-fatal: continue with spoken line translation if signage auto-translate fails
+        }
+      }
       const composed = composeLanguageClipPrompt({
         sourcePrompt,
         guidePrompt: queueItem?.config.guidePrompt,
@@ -1719,6 +1732,8 @@ export function DirectorConsoleRoot({
         kind: beat?.kind,
         englishLine,
         translatedLine: translated,
+        signageSourceText,
+        signageTranslatedText,
       })
       const config = queueItem?.config
       const startFrameUrl =
@@ -1754,6 +1769,7 @@ export function DirectorConsoleRoot({
     sceneImageUrl,
     onGenerate,
     sceneId,
+    productionData?.mixerSettingsByLanguage,
   ])
 
   const videoClips = useMemo<BeatVideoClip[]>(
@@ -1845,6 +1861,7 @@ export function DirectorConsoleRoot({
         onGenerateLanguageVersion={(segment) => {
           void handleGenerateLanguageVersion(segment)
         }}
+        generatingLanguageClipId={languageClipBusyId}
         isGeneratingAudio={isGeneratingAudio}
         productionTarget={productionTarget}
         onProductionTargetChange={setProductionTarget}

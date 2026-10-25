@@ -94,6 +94,27 @@ export function buildLanguageClipPrompt(
   return `${who} speaks with natural lip sync: "${spoken}". ${source}`
 }
 
+/**
+ * Extract visible signage, billboard, storefront, screen, or title copy from a shot prompt
+ * (ignoring spoken lip-sync quotes).
+ */
+export function extractPromptSignageText(sourcePrompt?: string | null): string | undefined {
+  const source = sourcePrompt?.trim() || ''
+  if (!source) return undefined
+  const stripped = source.replace(/speaks with natural lip sync:\s*"[^"]*"/gi, '')
+  const explicitSignage = stripped.match(
+    /(?:sign|signage|billboard|banner|storefront|neon|screen|display|headline|poster|label|plaque|marquee|card|text|reads?|reading|titled?)\s*(?:that\s+says|reading|with\s+text|:)?\s*"([^"]+)"/i
+  )
+  if (explicitSignage?.[1]?.trim()) {
+    return explicitSignage[1].trim()
+  }
+  const anyQuoted = stripped.match(/"([^"]+)"/)
+  if (anyQuoted?.[1]?.trim()) {
+    return anyQuoted[1].trim()
+  }
+  return undefined
+}
+
 export function composeLanguageClipPrompt(args: {
   sourcePrompt?: string | null
   guidePrompt?: string | null
@@ -101,26 +122,39 @@ export function composeLanguageClipPrompt(args: {
   kind?: string | null
   englishLine?: string | null
   translatedLine?: string | null
+  signageSourceText?: string | null
+  signageTranslatedText?: string | null
 }): { prompt: string; guidePrompt?: string } {
   const source = args.sourcePrompt?.trim() || ''
   const english = args.englishLine?.trim() || ''
   const translated = args.translatedLine?.trim() || ''
+  const signageOrig = args.signageSourceText?.trim() || ''
+  const signageTrans = args.signageTranslatedText?.trim() || ''
   let guide = args.guidePrompt?.trim() || ''
   if (english && translated && guide.includes(english)) {
     guide = guide.split(english).join(translated)
+  }
+  if (signageOrig && signageTrans && guide.includes(signageOrig)) {
+    guide = guide.split(signageOrig).join(signageTrans)
   }
   const kind = args.kind || 'dialogue'
   if (kind === 'narration' && translated && !guide.includes(translated)) {
     guide = guide ? `${guide} Narration: "${quotedSpokenLine(translated)}".` : `Narration: "${quotedSpokenLine(translated)}".`
   }
   const speakInPicture = kind !== 'action' && kind !== 'narration' && kind !== 'title' && !!translated
+  let prompt =
+    kind === 'title' && translated
+      ? replacePromoOnScreenText(source, english, translated)
+      : speakInPicture
+        ? buildLanguageClipPrompt(source, translated, args.character)
+        : source
+
+  if (signageTrans && kind !== 'title') {
+    prompt = replacePromoOnScreenText(prompt, signageOrig, signageTrans)
+  }
+
   return {
-    prompt:
-      kind === 'title' && translated
-        ? replacePromoOnScreenText(source, english, translated)
-        : speakInPicture
-          ? buildLanguageClipPrompt(source, translated, args.character)
-          : source,
+    prompt,
     ...(guide ? { guidePrompt: guide } : {}),
   }
 }

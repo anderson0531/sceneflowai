@@ -14,6 +14,7 @@ import {
 import {
   buildLanguageClipPrompt,
   composeLanguageClipPrompt,
+  extractPromptSignageText,
   preferStoredSpokenTranslation,
   replacePromoOnScreenText,
 } from '@/lib/scene/languageClipPrompt'
@@ -157,6 +158,23 @@ describe('language clip prompts', () => {
       'Slow fade over water. On-screen text: "La Corriente".'
     )
     expect(replacePromoOnScreenText(source, 'The Current', 'La Corriente')).not.toContain('lip sync')
+  })
+
+  it('extracts signage text from shot prompts and localizes signage in regenerated shots', () => {
+    const promptWithSignage =
+      'Medium tracking shot of a rainy alley with a glowing neon sign reading "OPEN 24 HOURS" above the door.'
+    expect(extractPromptSignageText(promptWithSignage)).toBe('OPEN 24 HOURS')
+
+    const localized = composeLanguageClipPrompt({
+      sourcePrompt: promptWithSignage,
+      kind: 'action',
+      englishLine: '',
+      translatedLine: '',
+      signageSourceText: 'OPEN 24 HOURS',
+      signageTranslatedText: 'ABIERTO 24 HORAS',
+    })
+    expect(localized.prompt).toContain('"ABIERTO 24 HORAS"')
+    expect(localized.prompt).not.toContain('"OPEN 24 HOURS"')
   })
 
   it('leaves narration and action pictures in English and translates the guide line', () => {

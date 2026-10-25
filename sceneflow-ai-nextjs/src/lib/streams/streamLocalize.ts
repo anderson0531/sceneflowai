@@ -11,10 +11,12 @@ import type {
 } from '@/components/vision/scene-production/types'
 import { getNextProductionStreamVersion } from '@/components/vision/scene-production/defaults'
 import { resolveSegmentEmbedAudioForRender } from '@/lib/scene/segmentAudioPreview'
+import { resolveLanguageClipPlayback } from '@/lib/scene/languageClipVersions'
 import {
   languageShotVideoUrl,
   resolveLanguageShotMethod,
   resolveShotVideoPlaybackRate,
+  videoWallDurationSec,
 } from '@/lib/scene/languageShotLocalize'
 import { getMixerSettingsForLanguage } from '@/lib/scene/mixerSettings'
 import type { CreateSceneRenderJobRequest } from '@/lib/video/renderTypes'
@@ -97,34 +99,49 @@ export function buildSceneDubRenderRequest({
     }
   )
 
+  let cursor = 0
   const segmentData = segments.map((seg) => {
-    const embedAudio = resolveSegmentEmbedAudioForRender(
-      { includeAudio: true, volume: 1 },
-      masterSegmentVolume,
-      {
-        useStemDubbingPolicy,
-        includeSpeechStem,
-        hasBackgroundStem: !!seg.stemSeparation?.backgroundStemUrl,
-      }
-    )
-    const dur = segmentDurationSec(seg)
     const method = resolveLanguageShotMethod({
       config: mixerSettings?.languageShotConfigs?.[seg.segmentId],
       klingLipsyncEnabled: mixerSettings?.klingLipsyncEnabled,
       legacyLocalizeLipsync,
     })
+    const isLocalizedRegenClip =
+      method === 'regenerate' && !resolveLanguageClipPlayback(seg, language).usingMaster
+    const segAudioCfg = mixerSettings?.segmentAudioConfigs?.[seg.segmentId]
+    const embedAudio = resolveSegmentEmbedAudioForRender(
+      {
+        includeAudio: segAudioCfg?.includeAudio ?? true,
+        volume: segAudioCfg?.volume ?? 1,
+      },
+      masterSegmentVolume,
+      {
+        useStemDubbingPolicy: useStemDubbingPolicy && !isLocalizedRegenClip,
+        includeSpeechStem,
+        hasBackgroundStem: !!seg.stemSeparation?.backgroundStemUrl,
+      }
+    )
+    const dur = segmentDurationSec(seg)
     const videoRate = resolveShotVideoPlaybackRate(mixerSettings?.languageShotConfigs?.[seg.segmentId])
+    const wallDur = videoWallDurationSec(dur, videoRate)
+    const pauseDuration = Math.max(0, segAudioCfg?.postSegmentPause ?? 0)
+    const startTime = cursor
+    const endTime = startTime + wallDur + pauseDuration
+    cursor = endTime
     return {
       segmentId: seg.segmentId,
       sequenceIndex: seg.sequenceIndex,
       videoUrl:
         languageShotVideoUrl(seg, language, method, lipsyncedVideoBySegment) || seg.activeAssetUrl!,
-      startTime: seg.startTime ?? 0,
-      endTime: (seg.startTime ?? 0) + dur,
+      startTime,
+      endTime,
       playbackRate: videoRate,
       audioSource: embedAudio.audioSource,
       audioVolume: embedAudio.audioVolume,
-      pauseDuration: 0,
+      pauseDuration,
+      holdStyle: segAudioCfg?.holdStyle || 'freeze',
+      audioLeadInSec: segAudioCfg?.audioLeadInSec,
+      audioTailOutSec: segAudioCfg?.audioTailOutSec,
     }
   })
 
@@ -138,7 +155,7 @@ export function buildSceneDubRenderRequest({
   if (audioTracksV2.dialogue.length > 0) {
     audioTracksPayload.dialogue = audioTracksV2.dialogue
       .filter((d) => d.url)
-      .map((d, i) => ({
+      .map((d) => ({
         url: d.url!,
         startTime: d.startTime,
         duration: d.duration,
@@ -147,7 +164,7 @@ export function buildSceneDubRenderRequest({
       }))
   }
 
-  if (!useStemDubbingPolicy && audioTracksV2.sfx.length > 0) {
+  if (audioTracksV2.sfx.length > 0) {
     audioTracksPayload.sfx = audioTracksV2.sfx
       .filter((s) => s.url)
       .map((s) => ({
@@ -171,13 +188,33 @@ export function buildSceneDubRenderRequest({
 
   if (useStemDubbingPolicy) {
     const stemClips = segments
-      .filter((seg) => !!seg.stemSeparation?.backgroundStemUrl)
-      .map((seg) => ({
-        url: seg.stemSeparation!.backgroundStemUrl!,
-        startTime: seg.startTime ?? 0,
-        duration: segmentDurationSec(seg),
-        volume: 1,
-      }))
+      .filter((seg) => {
+        const method = resolveLanguageShotMethod({
+          config: mixerSettings?.languageShotConfigs?.[seg.segmentId],
+          klingLipsyncEnabled: mixerSettings?.klingLipsyncEnabled,
+          legacyLocalizeLipsync,
+        })
+        const isLocalizedRegenClip =
+          method === 'regenerate' && !resolveLanguageClipPlayback(seg, language).usingMaster
+        const segAudioCfg = mixerSettings?.segmentAudioConfigs?.[seg.segmentId]
+        return (
+          !isLocalizedRegenClip &&
+          (segAudioCfg?.includeAudio ?? true) &&
+          !!seg.stemSeparation?.backgroundStemUrl
+        )
+      })
+      .map((seg) => {
+        const renderedSeg = segmentData.find((s) => s.segmentId === seg.segmentId)
+        const segAudioCfg = mixerSettings?.segmentAudioConfigs?.[seg.segmentId]
+        return {
+          url: seg.stemSeparation!.backgroundStemUrl!,
+          startTime: renderedSeg?.startTime ?? seg.startTime ?? 0,
+          duration: renderedSeg
+            ? Math.max(0, renderedSeg.endTime - renderedSeg.startTime)
+            : segmentDurationSec(seg),
+          volume: Math.min(1, Math.max(0, (segAudioCfg?.volume ?? 1) * masterSegmentVolume)),
+        }
+      })
     if (stemClips.length > 0) {
       audioTracksPayload.sfx = [...(audioTracksPayload.sfx || []), ...stemClips]
     }

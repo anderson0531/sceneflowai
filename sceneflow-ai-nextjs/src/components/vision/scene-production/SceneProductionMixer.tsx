@@ -112,13 +112,23 @@ import {
 } from '@/components/ui/select'
 import { Progress } from '@/components/ui/progress'
 import { GroupedLanguageSelector } from '@/components/vision/GroupedLanguageSelector'
-import { resolveLanguageClipPlayback, streamLanguageLabel } from '@/lib/scene/languageClipVersions'
 import {
+  listLanguageClipVersionOptions,
+  resolveLanguageClipPlayback,
+  streamLanguageLabel,
+  withSelectedLanguageClip,
+} from '@/lib/scene/languageClipVersions'
+import {
+  AUTO_SLOW_VIDEO_MIN_RATE,
+  HYBRID_SLOW_VIDEO_MIN_RATE,
+  computeDubAudioSpeedForVideo,
+  computeSlowVideoRateForDub,
   presentSegmentForShotMethod,
   resolveLanguageShotMethod,
   resolveShotVideoPlaybackRate,
   videoWallDurationSec,
 } from '@/lib/scene/languageShotLocalize'
+import { extractPromptSignageText } from '@/lib/scene/languageClipPrompt'
 import { cn, forceDownload } from '@/lib/utils'
 import { SUPPORTED_LANGUAGES, FLAG_EMOJIS } from '@/constants/languages'
 import {
@@ -423,6 +433,8 @@ interface SceneProductionMixerProps {
   onScriptChange?: (script: any) => void
   /** Generate a language clip for one shot from the translated line. */
   onGenerateLanguageVersion?: (segment: SceneSegment) => void
+  /** Segment ID currently generating a language clip version */
+  generatingLanguageClipId?: string | null
 }
 
 // ============================================================================
@@ -977,7 +989,7 @@ function AudioTrackRow({
           {scoreMode && scorePanel}
 
           {/* Individual Dialogue Line Controls */}
-          {type === 'dialogue' && dialogueClips && dialogueClips.length > 1 && dialogueClipConfigs && onDialogueClipConfigChange && (
+          {type === 'dialogue' && dialogueClips && dialogueClips.length > 0 && dialogueClipConfigs && onDialogueClipConfigChange && (
             <DialogueLineControls
               dialogueClips={dialogueClips}
               clipConfigs={dialogueClipConfigs}
@@ -1289,6 +1301,15 @@ function SegmentBeatVideoControls({
   onTrimChange,
   onResetTrim,
   onPreviewBeat,
+  generatingLanguageClipId,
+  onSelectLanguageTake,
+  dubAudioBySegmentId = {},
+  onAutoAlignShotVideoSpeed,
+  onAutoAlignShotAudioSpeed,
+  onAutoAlignAllShots,
+  onBatchRegenerateShots,
+  onSelectDialogueSignageShots,
+  onRetainAllMasterShots,
 }: {
   rows: MixerBeatRow[]
   onBeatIncludeChange: (segmentId: string, included: boolean) => void
@@ -1310,6 +1331,15 @@ function SegmentBeatVideoControls({
   onTrimChange?: (segmentId: string, inSec: number, outSec: number) => void
   onResetTrim?: (segmentId: string) => void
   onPreviewBeat?: (segmentId: string) => void
+  generatingLanguageClipId?: string | null
+  onSelectLanguageTake?: (segmentId: string, clipId: string) => void
+  dubAudioBySegmentId?: Record<string, { naturalSec: number; effectiveSec: number; clipIds: string[] }>
+  onAutoAlignShotVideoSpeed?: (segmentId: string) => void
+  onAutoAlignShotAudioSpeed?: (segmentId: string) => void
+  onAutoAlignAllShots?: (mode: 'slow-video' | 'hybrid' | 'audio-speed' | 'reset') => void
+  onBatchRegenerateShots?: () => void
+  onSelectDialogueSignageShots?: () => void
+  onRetainAllMasterShots?: () => void
 }) {
   const [expandedTrimSegmentId, setExpandedTrimSegmentId] = useState<string | null>(null)
 
@@ -1318,6 +1348,18 @@ function SegmentBeatVideoControls({
   const togglable = rows.filter((row) => row.segment)
   const allIncluded = togglable.length > 0 && togglable.every((row) => isMixerBeatIncluded(row.segment!))
   const excludedCount = rows.filter((row) => !row.segment || !isMixerBeatIncluded(row.segment)).length
+
+  const methodCounts = togglable.reduce(
+    (acc, row) => {
+      const m = resolveLanguageShotMethod({
+        config: shotConfigs[row.segment!.segmentId],
+        klingLipsyncEnabled: legacyLipsync,
+      })
+      acc[m] += 1
+      return acc
+    },
+    { double: 0, lipsync: 0, regenerate: 0 }
+  )
 
   const toggleSegment = (segmentId: string) => {
     const seg = rows.find((row) => row.segment?.segmentId === segmentId)?.segment
@@ -1392,11 +1434,107 @@ function SegmentBeatVideoControls({
             )}
           </div>
           {languageActive && (
-            <p className="text-[11px] text-amber-200/90 leading-relaxed">
-              {languageLabel || 'This language'} is often 10–30% longer than the English master.
-              Double overlays the dubbed voice, Lip-sync performs it on the picture, and Regenerate
-              builds a new clip from the translated line. Video speed applies to this language only.
-            </p>
+            <div className="rounded-md bg-zinc-950/90 border border-violet-500/30 p-2.5 space-y-2">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <div className="flex items-center gap-1.5 flex-wrap">
+                  <Languages className="w-3.5 h-3.5 text-violet-400 shrink-0" />
+                  <span className="text-[10px] font-semibold uppercase tracking-wider text-violet-200">
+                    {languageLabel || 'Language'} Stream Shot Planner
+                  </span>
+                  <span className="text-[10px] font-mono text-zinc-400">
+                    Retained Master: {methodCounts.double} · Lip-Sync: {methodCounts.lipsync} · Regenerate: {methodCounts.regenerate}
+                  </span>
+                </div>
+                <div className="flex items-center gap-1 flex-wrap">
+                  {onSelectDialogueSignageShots && (
+                    <button
+                      type="button"
+                      disabled={disabled}
+                      onClick={onSelectDialogueSignageShots}
+                      className="px-2 py-0.5 rounded text-[10px] font-medium bg-violet-500/20 border border-violet-500/40 text-violet-200 hover:bg-violet-500/30 transition-colors"
+                      title="Mark shots with dialogue or visible signage for Regenerate while retaining all other master shots"
+                    >
+                      Select Dialogue &amp; Signage Shots
+                    </button>
+                  )}
+                  {onRetainAllMasterShots && (
+                    <button
+                      type="button"
+                      disabled={disabled}
+                      onClick={onRetainAllMasterShots}
+                      className="px-2 py-0.5 rounded text-[10px] font-medium bg-zinc-900 border border-zinc-700 text-zinc-300 hover:text-white transition-colors"
+                      title="Retain all master shots and dub audio over them"
+                    >
+                      Retain All Master
+                    </button>
+                  )}
+                  {methodCounts.regenerate > 0 && onBatchRegenerateShots && (
+                    <button
+                      type="button"
+                      disabled={disabled || !!generatingLanguageClipId}
+                      onClick={onBatchRegenerateShots}
+                      className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-semibold bg-emerald-500/20 border border-emerald-500/40 text-emerald-200 hover:bg-emerald-500/30 transition-colors disabled:opacity-50"
+                      title="Regenerate selected shots in the target language while retaining unselected shots"
+                    >
+                      {generatingLanguageClipId ? (
+                        <Loader2 className="w-2.5 h-2.5 animate-spin" />
+                      ) : (
+                        <RefreshCw className="w-2.5 h-2.5" />
+                      )}
+                      <span>Regenerate Selected ({methodCounts.regenerate})</span>
+                    </button>
+                  )}
+                </div>
+              </div>
+              <p className="text-[11px] text-amber-200/90 leading-relaxed">
+                {languageLabel || 'This language'} is often 10–30% longer than the English master.
+                Double retains the master shot and overlays dubbed audio, Lip-sync performs it on the picture, and Regenerate
+                builds a localized clip (dialogue &amp; signage) while unselected shots reuse the master stream.
+              </p>
+              {onAutoAlignAllShots && (
+                <div className="flex flex-wrap items-center gap-1 pt-1 border-t border-zinc-800/80">
+                  <span className="text-[9px] font-semibold uppercase tracking-wider text-zinc-400 mr-1">
+                    Align Dub Duration:
+                  </span>
+                  <button
+                    type="button"
+                    disabled={disabled}
+                    onClick={() => onAutoAlignAllShots('slow-video')}
+                    className="px-2 py-0.5 rounded text-[10px] font-medium bg-cyan-500/15 border border-cyan-500/40 text-cyan-200 hover:bg-cyan-500/25 transition-colors"
+                    title="Slow each shot down to 67%–100% speed (e.g. stretching a 10s clip up to 15s) to match dubbed dialogue duration"
+                  >
+                    Slow Videos to Fit Dub (≤1.5× / 15s)
+                  </button>
+                  <button
+                    type="button"
+                    disabled={disabled}
+                    onClick={() => onAutoAlignAllShots('hybrid')}
+                    className="px-2 py-0.5 rounded text-[10px] font-medium bg-amber-500/15 border border-amber-500/40 text-amber-200 hover:bg-amber-500/25 transition-colors"
+                    title="Slow video to at most 80% speed (1.25×) and use a 103% Ken Burns Push Hold for any remaining tail"
+                  >
+                    Hybrid (Slow 80% + Push Hold)
+                  </button>
+                  <button
+                    type="button"
+                    disabled={disabled}
+                    onClick={() => onAutoAlignAllShots('audio-speed')}
+                    className="px-2 py-0.5 rounded text-[10px] font-medium bg-blue-500/15 border border-blue-500/40 text-blue-200 hover:bg-blue-500/25 transition-colors"
+                    title="Speed up dubbed dialogue audio (up to 1.25×) so it fits inside the natural video clip length"
+                  >
+                    Fit Dub Audio Speed (≤1.25×)
+                  </button>
+                  <button
+                    type="button"
+                    disabled={disabled}
+                    onClick={() => onAutoAlignAllShots('reset')}
+                    className="px-1.5 py-0.5 rounded text-[10px] font-mono text-zinc-400 hover:text-zinc-200 bg-zinc-900 border border-zinc-800"
+                    title="Reset all shot video speeds and dialogue speeds to 100%"
+                  >
+                    Reset 1.0×
+                  </button>
+                </div>
+              )}
+            </div>
           )}
           {rows.map((row, i) => {
             const seg = row.segment
@@ -1415,6 +1553,27 @@ function SegmentBeatVideoControls({
                 })
               : 'double'
             const videoRate = resolveShotVideoPlaybackRate(seg ? shotConfigs[seg.segmentId] : undefined)
+            const langPlayback =
+              languageActive && seg && languageCode
+                ? resolveLanguageClipPlayback(seg, languageCode)
+                : null
+            const langTakeOptions =
+              languageActive && seg && languageCode
+                ? listLanguageClipVersionOptions(seg.languageVersions?.[languageCode])
+                : []
+            const currentLangOption = langTakeOptions.find((o) => o.isCurrent)
+            const dubInfo = seg ? dubAudioBySegmentId[seg.segmentId] : undefined
+            const playableSec = trimWindow?.playableSec ?? 0
+            const stretchedVideoSec = videoWallDurationSec(playableSec, videoRate)
+            const promptSignage = seg
+              ? extractPromptSignageText(seg.userEditedPrompt || seg.generatedPrompt)
+              : undefined
+            const hasShotDialogue =
+              !!seg &&
+              ((seg.dialogueLineIds?.length ?? 0) > 0 ||
+                (seg.dialogueLines?.length ?? 0) > 0 ||
+                (dubInfo?.clipIds.length ?? 0) > 0)
+            const isGeneratingThisShot = !!seg && generatingLanguageClipId === seg.segmentId
             return (
               <div
                 key={row.beatId}
@@ -1460,6 +1619,54 @@ function SegmentBeatVideoControls({
                       {trimWindow.playableSec.toFixed(1)}s
                     </span>
                   ) : null}
+
+                  {/* Stream Source Status Badge when mixing a non-English stream */}
+                  {languageActive && seg && included && (
+                    <span
+                      className={cn(
+                        'px-1.5 py-0.2 rounded text-[9px] font-mono font-semibold uppercase border',
+                        method === 'double'
+                          ? 'bg-cyan-500/10 border-cyan-500/30 text-cyan-300'
+                          : method === 'lipsync'
+                            ? 'bg-amber-500/15 border-amber-500/40 text-amber-200'
+                            : langPlayback && !langPlayback.usingMaster
+                              ? 'bg-emerald-500/20 border-emerald-500/40 text-emerald-200'
+                              : 'bg-violet-500/20 border-violet-500/40 text-violet-200'
+                      )}
+                      title={
+                        method === 'double'
+                          ? 'Retaining original master clip and dubbing audio'
+                          : method === 'lipsync'
+                            ? 'Retaining master clip with Kling lip-sync applied on render'
+                            : langPlayback && !langPlayback.usingMaster
+                              ? `Using localized ${languageCode?.toUpperCase()} regenerated video clip`
+                              : 'Marked for localized regeneration — click Regenerate to build clip'
+                      }
+                    >
+                      {method === 'double'
+                        ? 'Retained Master (Dub)'
+                        : method === 'lipsync'
+                          ? 'Master + Lip-Sync'
+                          : langPlayback && !langPlayback.usingMaster
+                            ? `Localized (${languageCode?.toUpperCase()} ${currentLangOption?.label ?? 'v1'})`
+                            : 'Needs Regen'}
+                    </span>
+                  )}
+
+                  {/* Content hints (Dialogue / Signage) */}
+                  {languageActive && seg && hasShotDialogue && (
+                    <span className="px-1.5 py-0.2 rounded bg-blue-500/10 border border-blue-500/30 text-[9px] font-mono text-blue-300">
+                      Dialogue
+                    </span>
+                  )}
+                  {languageActive && seg && promptSignage && (
+                    <span
+                      className="px-1.5 py-0.2 rounded bg-amber-500/10 border border-amber-500/30 text-[9px] font-mono text-amber-300 truncate max-w-[140px]"
+                      title={`Detected on-screen signage in prompt: "${promptSignage}"`}
+                    >
+                      Signage: &ldquo;{promptSignage}&rdquo;
+                    </span>
+                  )}
 
                   {/* Take Switcher pills when multiple takes exist */}
                   {seg && playableTakes.length > 1 && onTakeSelect && (
@@ -1531,35 +1738,155 @@ function SegmentBeatVideoControls({
                 )}
                 {languageActive && seg && (
                   <div className="space-y-2 pl-11">
-                    <div className="flex flex-wrap gap-1">
-                      {([
-                        ['double', 'Double'],
-                        ['lipsync', 'Lip-sync'],
-                        ['regenerate', 'Regenerate'],
-                      ] as const).map(([value, label]) => (
-                        <button
-                          key={value}
-                          type="button"
-                          disabled={disabled}
-                          onClick={() => {
-                            const alreadyRegenerate = method === 'regenerate'
-                            onShotConfigChange?.(seg.segmentId, { method: value })
-                            if (value !== 'regenerate' || !languageCode) return
-                            const playback = resolveLanguageClipPlayback(seg, languageCode)
-                            if (playback.usingMaster || alreadyRegenerate) onRegenerateShot?.(seg)
-                          }}
-                          className={cn(
-                            'px-2 py-0.5 rounded text-[10px] border transition-colors',
-                            method === value
-                              ? 'bg-violet-600/40 border-violet-400/50 text-violet-100'
-                              : 'bg-zinc-900 border-zinc-700 text-zinc-400 hover:text-zinc-200'
-                          )}
-                        >
-                          {label}
-                        </button>
-                      ))}
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <div className="flex flex-wrap items-center gap-1">
+                        {([
+                          ['double', 'Double'],
+                          ['lipsync', 'Lip-sync'],
+                          ['regenerate', 'Regenerate'],
+                        ] as const).map(([value, label]) => (
+                          <button
+                            key={value}
+                            type="button"
+                            disabled={disabled}
+                            onClick={() => {
+                              const alreadyRegenerate = method === 'regenerate'
+                              onShotConfigChange?.(seg.segmentId, { method: value })
+                              if (value !== 'regenerate' || !languageCode) return
+                              const playback = resolveLanguageClipPlayback(seg, languageCode)
+                              if (playback.usingMaster || alreadyRegenerate) onRegenerateShot?.(seg)
+                            }}
+                            className={cn(
+                              'px-2 py-0.5 rounded text-[10px] border transition-colors',
+                              method === value
+                                ? 'bg-violet-600/40 border-violet-400/50 text-violet-100'
+                                : 'bg-zinc-900 border-zinc-700 text-zinc-400 hover:text-zinc-200'
+                            )}
+                          >
+                            {label}
+                          </button>
+                        ))}
+
+                        {/* Regenerate action + Localized Language Take Switcher */}
+                        {method === 'regenerate' && (
+                          <>
+                            <button
+                              type="button"
+                              disabled={disabled || isGeneratingThisShot}
+                              onClick={() => onRegenerateShot?.(seg)}
+                              className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-medium bg-emerald-500/20 border border-emerald-500/40 text-emerald-200 hover:bg-emerald-500/30 transition-colors disabled:opacity-50"
+                              title="Generate or re-generate a localized clip for this shot in the selected language"
+                            >
+                              {isGeneratingThisShot ? (
+                                <Loader2 className="w-2.5 h-2.5 animate-spin" />
+                              ) : (
+                                <RefreshCw className="w-2.5 h-2.5" />
+                              )}
+                              <span>
+                                {langPlayback && !langPlayback.usingMaster ? 'Regen New Take' : 'Generate Localized Clip'}
+                              </span>
+                            </button>
+
+                            {langTakeOptions.length > 0 && onSelectLanguageTake && (
+                              <div className="inline-flex items-center gap-0.5 bg-zinc-900 border border-zinc-800 rounded px-1 py-0.5">
+                                <span className="text-[9px] text-zinc-500 font-mono mr-0.5">
+                                  {languageCode?.toUpperCase()}:
+                                </span>
+                                {langTakeOptions.map((opt) => (
+                                  <button
+                                    key={opt.id}
+                                    type="button"
+                                    disabled={disabled}
+                                    onClick={() => onSelectLanguageTake(seg.segmentId, opt.id)}
+                                    className={cn(
+                                      'px-1.5 py-0.2 rounded text-[9px] font-mono font-semibold transition-colors',
+                                      opt.isCurrent
+                                        ? 'bg-emerald-500/25 text-emerald-200 border border-emerald-500/40'
+                                        : 'text-zinc-400 hover:text-zinc-200'
+                                    )}
+                                    title={`Switch to localized take ${opt.label}`}
+                                  >
+                                    {opt.label}
+                                  </button>
+                                ))}
+                              </div>
+                            )}
+                          </>
+                        )}
+                      </div>
+
+                      {/* Video vs. Dub Duration Comparison & Quick Align Buttons */}
+                      <div className="flex items-center gap-1.5 flex-wrap text-[10px] font-mono">
+                        <span className="text-zinc-400">
+                          Clip: {playableSec.toFixed(1)}s
+                          {Math.abs(videoRate - 1) > 0.01 ? (
+                            <span className="text-cyan-300">
+                              {' '}→ {stretchedVideoSec.toFixed(1)}s @ {Math.round(videoRate * 100)}%
+                            </span>
+                          ) : null}
+                        </span>
+                        {dubInfo && dubInfo.effectiveSec > 0 && (
+                          <>
+                            <span className="text-zinc-600">|</span>
+                            <span
+                              className={cn(
+                                dubInfo.effectiveSec > stretchedVideoSec + 0.15
+                                  ? 'text-amber-300 font-semibold'
+                                  : 'text-emerald-300'
+                              )}
+                            >
+                              Dub: {dubInfo.effectiveSec.toFixed(1)}s
+                            </span>
+                            {onAutoAlignShotVideoSpeed && (
+                              <button
+                                type="button"
+                                disabled={disabled}
+                                onClick={() => onAutoAlignShotVideoSpeed(seg.segmentId)}
+                                className="px-1.5 py-0.2 rounded bg-cyan-500/15 border border-cyan-500/40 text-cyan-200 hover:bg-cyan-500/25 font-sans text-[9px]"
+                                title="Slow this shot's video (down to 67% / 1.5× duration) to match its dubbed dialogue"
+                              >
+                                Slow Video to Fit
+                              </button>
+                            )}
+                            {onAutoAlignShotAudioSpeed && (
+                              <button
+                                type="button"
+                                disabled={disabled}
+                                onClick={() => onAutoAlignShotAudioSpeed(seg.segmentId)}
+                                className="px-1.5 py-0.2 rounded bg-blue-500/15 border border-blue-500/40 text-blue-200 hover:bg-blue-500/25 font-sans text-[9px]"
+                                title="Speed up this shot's dubbed dialogue (up to 1.25×) to fit the video clip"
+                              >
+                                Fit Audio Speed
+                              </button>
+                            )}
+                          </>
+                        )}
+                      </div>
                     </div>
-                    <div className="flex items-center gap-2">
+
+                    {/* Signage / On-Screen Text Override when Regenerate is selected */}
+                    {method === 'regenerate' && (
+                      <div className="flex items-center gap-2">
+                        <span className="text-[10px] text-zinc-500 w-16 shrink-0">Signage</span>
+                        <Input
+                          value={shotConfigs[seg.segmentId]?.signageText ?? ''}
+                          onChange={(e) =>
+                            onShotConfigChange?.(seg.segmentId, {
+                              signageText: e.target.value,
+                            })
+                          }
+                          disabled={disabled}
+                          placeholder={
+                            promptSignage
+                              ? `Detected "${promptSignage}" — enter translated ${languageLabel || ''} signage (or leave blank to auto-translate)`
+                              : `Optional translated on-screen signage / text for ${languageLabel || 'this language'} video regen`
+                          }
+                          className="h-6 text-[11px] bg-zinc-900/90 border-zinc-800 text-zinc-200 placeholder:text-zinc-600"
+                        />
+                      </div>
+                    )}
+
+                    <div className="flex items-center gap-2 flex-wrap">
                       <span className="text-[10px] text-zinc-500 w-16 shrink-0">Video speed</span>
                       <Slider
                         value={[Math.round(videoRate * 100)]}
@@ -1570,13 +1897,44 @@ function SegmentBeatVideoControls({
                         }
                         min={50}
                         max={150}
-                        step={5}
-                        className="flex-1"
+                        step={1}
+                        className="flex-1 min-w-[120px]"
                         disabled={disabled}
                       />
                       <span className="text-[10px] text-zinc-400 w-10 text-right tabular-nums">
                         {Math.round(videoRate * 100)}%
                       </span>
+                      <div className="flex items-center gap-0.5">
+                        {([
+                          [0.67, '67% (1.5×)'],
+                          [0.75, '75%'],
+                          [0.85, '85%'],
+                          [1.0, '100%'],
+                        ] as const).map(([presetRate, presetLabel]) => {
+                          const isPresetActive = Math.abs(videoRate - presetRate) < 0.02
+                          return (
+                            <button
+                              key={presetRate}
+                              type="button"
+                              disabled={disabled}
+                              onClick={() =>
+                                onShotConfigChange?.(seg.segmentId, {
+                                  videoPlaybackRate: presetRate,
+                                })
+                              }
+                              className={cn(
+                                'px-1.5 py-0.2 rounded text-[9px] font-mono border transition-colors',
+                                isPresetActive
+                                  ? 'bg-cyan-500/20 border-cyan-500/50 text-cyan-200'
+                                  : 'bg-zinc-900 border-zinc-800 text-zinc-500 hover:text-zinc-300'
+                              )}
+                              title={`Set shot video playback rate to ${presetLabel}`}
+                            >
+                              {presetLabel}
+                            </button>
+                          )
+                        })}
+                      </div>
                     </div>
                   </div>
                 )}
@@ -1946,6 +2304,10 @@ function SegmentAudioControls({
   onToggleCollapse,
   getPlaybackSegmentDuration,
   audioTracks,
+  languageActive = false,
+  preserveBackgroundStem = true,
+  extractingStemIds = {},
+  onExtractSegmentStem,
 }: {
   segments: SceneSegment[]
   segmentConfigs: Record<string, SegmentAudioConfig>
@@ -1957,6 +2319,10 @@ function SegmentAudioControls({
   onToggleCollapse?: () => void
   getPlaybackSegmentDuration: (segment: SceneSegment) => number
   audioTracks?: MixerAudioTracks
+  languageActive?: boolean
+  preserveBackgroundStem?: boolean
+  extractingStemIds?: Record<string, boolean>
+  onExtractSegmentStem?: (segment: SceneSegment) => void
 }) {
   const allMuted = segments.length > 0 && segments.every(
     (seg) => !(segmentConfigs[seg.segmentId]?.includeAudio ?? true)
@@ -2119,6 +2485,36 @@ function SegmentAudioControls({
                       </>
                     ) : (
                       <span className="flex-1 text-xs text-zinc-500 italic">Embedded Audio Muted</span>
+                    )}
+
+                    {/* Dialogue Removal / Background Stem Extraction Badge & Action */}
+                    {languageActive && preserveBackgroundStem && (
+                      <div className="flex items-center gap-1 shrink-0">
+                        {seg.stemSeparation?.backgroundStemUrl ? (
+                          <span
+                            className="px-1.5 py-0.5 rounded bg-emerald-500/15 border border-emerald-500/40 text-emerald-200 text-[9px] font-mono"
+                            title="Original speech removed — generated SFX, music, and ambience stem is retained for dubbing"
+                          >
+                            ✓ Stem Ready (No Dialogue)
+                          </span>
+                        ) : extractingStemIds[seg.segmentId] ||
+                          seg.stemSeparation?.status === 'processing' ? (
+                          <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-amber-500/15 border border-amber-500/40 text-amber-200 text-[9px] font-mono">
+                            <Loader2 className="w-2.5 h-2.5 animate-spin" />
+                            <span>Extracting Stem…</span>
+                          </span>
+                        ) : onExtractSegmentStem ? (
+                          <button
+                            type="button"
+                            disabled={disabled}
+                            onClick={() => onExtractSegmentStem(seg)}
+                            className="px-1.5 py-0.5 rounded bg-purple-500/15 border border-purple-500/40 text-purple-200 hover:bg-purple-500/25 text-[9px] font-medium transition-colors"
+                            title="Extract video audio and remove spoken dialogue while retaining generated SFX, ambience, and music"
+                          >
+                            Remove Dialogue (Keep SFX/Music)
+                          </button>
+                        ) : null}
+                      </div>
                     )}
                   </div>
 
@@ -2392,6 +2788,7 @@ export function SceneProductionMixer({
   script,
   onScriptChange,
   onGenerateLanguageVersion,
+  generatingLanguageClipId,
 }: SceneProductionMixerProps) {
   const selectedLanguage = productionTarget.language
   const isEnglish = selectedLanguage === 'en'
@@ -2654,6 +3051,385 @@ export function SceneProductionMixer({
       toast.success('Switched active shot take')
     },
     [segments, onSegmentsChange]
+  )
+
+  const handleSelectLanguageTake = useCallback(
+    (segmentId: string, clipId: string) => {
+      if (isEnglish) return
+      onSegmentsChange?.(
+        segments.map((seg) =>
+          seg.segmentId === segmentId
+            ? withSelectedLanguageClip(seg, selectedLanguage, clipId)
+            : seg
+        )
+      )
+      toast.success(`Switched active ${selectedLanguage.toUpperCase()} take`)
+    },
+    [isEnglish, selectedLanguage, segments, onSegmentsChange]
+  )
+
+  const dubAudioBySegmentId = useMemo(() => {
+    const map: Record<string, { naturalSec: number; effectiveSec: number; clipIds: string[] }> = {}
+    mixerBeatSegments.forEach((seg) => {
+      const assigned = getClipsAssignedToSegment(
+        seg,
+        resolvedDialogueClips,
+        segments,
+        narrationPrefix,
+        mixerAudioSceneStub
+      )
+      if (assigned.length === 0) {
+        map[seg.segmentId] = { naturalSec: 0, effectiveSec: 0, clipIds: [] }
+        return
+      }
+      const gaps = Math.max(0, assigned.length - 1) * MIXER_DIALOGUE_INTRA_GAP_SEC
+      let naturalSec = gaps
+      let effectiveSec = gaps
+      const clipIds: string[] = []
+      assigned.forEach((clip) => {
+        const dur = probedDurations[clip.id] ?? clip.duration ?? 3
+        const rate = getDialoguePlaybackRate(clip.id)
+        naturalSec += dur
+        effectiveSec += dur / rate
+        clipIds.push(clip.id)
+      })
+      map[seg.segmentId] = { naturalSec, effectiveSec, clipIds }
+    })
+    return map
+  }, [
+    mixerBeatSegments,
+    resolvedDialogueClips,
+    segments,
+    narrationPrefix,
+    mixerAudioSceneStub,
+    probedDurations,
+    getDialoguePlaybackRate,
+  ])
+
+  const handleSelectDialogueSignageShots = useCallback(() => {
+    if (isEnglish) return
+    let regenMarked = 0
+    setLanguageShotConfigs((prev) => {
+      const next = { ...prev }
+      mixerBeatSegments.forEach((seg) => {
+        const hasDialogue =
+          (seg.dialogueLineIds?.length ?? 0) > 0 ||
+          (seg.dialogueLines?.length ?? 0) > 0 ||
+          (dubAudioBySegmentId[seg.segmentId]?.clipIds.length ?? 0) > 0
+        const detectedSignage = extractPromptSignageText(
+          seg.userEditedPrompt || seg.generatedPrompt
+        )
+        const shouldRegen = hasDialogue || !!detectedSignage
+        if (shouldRegen) regenMarked += 1
+        next[seg.segmentId] = {
+          ...next[seg.segmentId],
+          method: shouldRegen ? 'regenerate' : 'double',
+        }
+      })
+      return next
+    })
+    toast.success(
+      regenMarked > 0
+        ? `Marked ${regenMarked} dialogue/signage shot${regenMarked > 1 ? 's' : ''} for Regenerate; unselected shots retain Master`
+        : 'No dialogue or signage detected — all shots retained on Master'
+    )
+  }, [isEnglish, mixerBeatSegments, dubAudioBySegmentId])
+
+  const handleRetainAllMasterShots = useCallback(() => {
+    if (isEnglish) return
+    setLanguageShotConfigs((prev) => {
+      const next = { ...prev }
+      mixerBeatSegments.forEach((seg) => {
+        next[seg.segmentId] = {
+          ...next[seg.segmentId],
+          method: 'double',
+        }
+      })
+      return next
+    })
+    toast.success('All shots set to Retain Master (Dub)')
+  }, [isEnglish, mixerBeatSegments])
+
+  const handleBatchRegenerateShots = useCallback(async () => {
+    if (isEnglish || !onGenerateLanguageVersion) return
+    const regenTargets = mixerBeatSegments.filter(
+      (seg) =>
+        isMixerBeatIncluded(seg) &&
+        resolveLanguageShotMethod({
+          config: languageShotConfigs[seg.segmentId],
+          klingLipsyncEnabled,
+        }) === 'regenerate'
+    )
+    if (regenTargets.length === 0) {
+      toast.info('Mark at least one shot as Regenerate first')
+      return
+    }
+    toast.info(
+      `Regenerating ${regenTargets.length} selected shot${regenTargets.length > 1 ? 's' : ''} in ${selectedLanguage.toUpperCase()} while retaining unselected master shots…`
+    )
+    for (const seg of regenTargets) {
+      await Promise.resolve(onGenerateLanguageVersion(seg))
+    }
+  }, [
+    isEnglish,
+    onGenerateLanguageVersion,
+    mixerBeatSegments,
+    languageShotConfigs,
+    klingLipsyncEnabled,
+    selectedLanguage,
+  ])
+
+  const handleAutoAlignShotVideoSpeed = useCallback(
+    (segmentId: string) => {
+      if (isEnglish) return
+      const seg = mixerBeatSegments.find((s) => s.segmentId === segmentId)
+      if (!seg) return
+      const sourceDur = resolveSegmentSourceDurationSec(seg, measuredSegmentDurations[segmentId])
+      const playableSec = resolveVideoTrimWindow(seg, sourceDur).playableSec
+      const dubSec = dubAudioBySegmentId[segmentId]?.effectiveSec ?? 0
+      const { videoPlaybackRate, stretchedVideoSec } = computeSlowVideoRateForDub(
+        playableSec,
+        dubSec,
+        AUTO_SLOW_VIDEO_MIN_RATE
+      )
+      setLanguageShotConfigs((prev) => ({
+        ...prev,
+        [segmentId]: {
+          ...prev[segmentId],
+          videoPlaybackRate,
+        },
+      }))
+      toast.success(
+        `Shot video speed set to ${Math.round(videoPlaybackRate * 100)}% (${playableSec.toFixed(1)}s → ${stretchedVideoSec.toFixed(1)}s)`
+      )
+    },
+    [isEnglish, mixerBeatSegments, measuredSegmentDurations, dubAudioBySegmentId]
+  )
+
+  const handleAutoAlignShotAudioSpeed = useCallback(
+    (segmentId: string) => {
+      const seg = mixerBeatSegments.find((s) => s.segmentId === segmentId)
+      if (!seg) return
+      const sourceDur = resolveSegmentSourceDurationSec(seg, measuredSegmentDurations[segmentId])
+      const playableSec = resolveVideoTrimWindow(seg, sourceDur).playableSec
+      const dubInfo = dubAudioBySegmentId[segmentId]
+      if (!dubInfo || dubInfo.clipIds.length === 0) return
+      const { audioPlaybackRate } = computeDubAudioSpeedForVideo(
+        playableSec,
+        dubInfo.naturalSec,
+        1.25
+      )
+      setDialogueClipConfigs((prev) => {
+        const next = { ...prev }
+        dubInfo.clipIds.forEach((clipId) => {
+          next[clipId] = {
+            ...(next[clipId] || { volume: 1, enabled: true }),
+            playbackRate: audioPlaybackRate,
+          }
+        })
+        return next
+      })
+      toast.success(
+        `Dub dialogue speed set to ${Math.round(audioPlaybackRate * 100)}% to fit ${playableSec.toFixed(1)}s clip`
+      )
+    },
+    [mixerBeatSegments, measuredSegmentDurations, dubAudioBySegmentId]
+  )
+
+  const handleAutoAlignAllShots = useCallback(
+    (mode: 'slow-video' | 'hybrid' | 'audio-speed' | 'reset') => {
+      if (mode === 'reset') {
+        setLanguageShotConfigs((prev) => {
+          const next = { ...prev }
+          mixerBeatSegments.forEach((seg) => {
+            next[seg.segmentId] = { ...next[seg.segmentId], videoPlaybackRate: 1 }
+          })
+          return next
+        })
+        setDialogueClipConfigs((prev) => {
+          const next = { ...prev }
+          Object.keys(next).forEach((key) => {
+            next[key] = { ...next[key], playbackRate: 1 }
+          })
+          return next
+        })
+        toast.success('Reset all shot video and dialogue speeds to 100%')
+        return
+      }
+
+      if (mode === 'slow-video' || mode === 'hybrid') {
+        const minRate =
+          mode === 'slow-video' ? AUTO_SLOW_VIDEO_MIN_RATE : HYBRID_SLOW_VIDEO_MIN_RATE
+        setLanguageShotConfigs((prev) => {
+          const next = { ...prev }
+          mixerBeatSegments.forEach((seg) => {
+            const sourceDur = resolveSegmentSourceDurationSec(
+              seg,
+              measuredSegmentDurations[seg.segmentId]
+            )
+            const playableSec = resolveVideoTrimWindow(seg, sourceDur).playableSec
+            const dubSec = dubAudioBySegmentId[seg.segmentId]?.effectiveSec ?? 0
+            const { videoPlaybackRate } = computeSlowVideoRateForDub(
+              playableSec,
+              dubSec,
+              minRate
+            )
+            next[seg.segmentId] = {
+              ...next[seg.segmentId],
+              videoPlaybackRate,
+            }
+          })
+          return next
+        })
+        if (mode === 'hybrid') {
+          setSegmentAudioConfigs((prev) => {
+            const next = { ...prev }
+            mixerBeatSegments.forEach((seg) => {
+              const current = next[seg.segmentId] || { includeAudio: true, volume: 1.0 }
+              next[seg.segmentId] = { ...current, holdStyle: 'push' }
+            })
+            return next
+          })
+          toast.success('Applied Hybrid Dub Alignment (slow video down to 80% + 103% Push Hold)')
+        } else {
+          toast.success(
+            'Slowed shot videos (down to 67% / up to 1.5× duration) to match dubbed dialogue'
+          )
+        }
+        return
+      }
+
+      if (mode === 'audio-speed') {
+        setLanguageShotConfigs((prev) => {
+          const next = { ...prev }
+          mixerBeatSegments.forEach((seg) => {
+            next[seg.segmentId] = { ...next[seg.segmentId], videoPlaybackRate: 1 }
+          })
+          return next
+        })
+        setDialogueClipConfigs((prev) => {
+          const next = { ...prev }
+          mixerBeatSegments.forEach((seg) => {
+            const sourceDur = resolveSegmentSourceDurationSec(
+              seg,
+              measuredSegmentDurations[seg.segmentId]
+            )
+            const playableSec = resolveVideoTrimWindow(seg, sourceDur).playableSec
+            const dubInfo = dubAudioBySegmentId[seg.segmentId]
+            if (!dubInfo || dubInfo.clipIds.length === 0) return
+            const { audioPlaybackRate } = computeDubAudioSpeedForVideo(
+              playableSec,
+              dubInfo.naturalSec,
+              1.25
+            )
+            dubInfo.clipIds.forEach((clipId) => {
+              next[clipId] = {
+                ...(next[clipId] || { volume: 1, enabled: true }),
+                playbackRate: audioPlaybackRate,
+              }
+            })
+          })
+          return next
+        })
+        toast.success('Adjusted dubbed dialogue speeds (up to 1.25×) to fit shot video durations')
+      }
+    },
+    [mixerBeatSegments, measuredSegmentDurations, dubAudioBySegmentId]
+  )
+
+  const [extractingStemIds, setExtractingStemIds] = useState<Record<string, boolean>>({})
+  const [isExtractingAllStems, setIsExtractingAllStems] = useState(false)
+  const segmentsRef = useRef(segments)
+  segmentsRef.current = segments
+
+  const handleExtractSegmentStem = useCallback(
+    async (segment: SceneSegment) => {
+      const sourceVideoUrl = segment.activeAssetUrl
+      if (!sourceVideoUrl) {
+        toast.error('Shot has no video URL to extract audio from')
+        return
+      }
+      setExtractingStemIds((prev) => ({ ...prev, [segment.segmentId]: true }))
+      try {
+        const res = await fetch('/api/audio/stems', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            projectId,
+            sceneId,
+            segmentId: segment.segmentId,
+            sourceVideoUrl,
+          }),
+        })
+        const data = await res.json()
+        if (!res.ok || !data?.success) {
+          throw new Error(data?.error || 'Failed to start stem separation')
+        }
+
+        let finalStatus = data.status as 'processing' | 'complete' | 'failed'
+        let backgroundStemUrl = data.backgroundStemUrl as string | undefined
+        let speechStemUrl = data.speechStemUrl as string | undefined
+        const jobId = data.jobId as string | undefined
+
+        if (finalStatus === 'processing' && jobId) {
+          for (let attempt = 0; attempt < 24; attempt++) {
+            await new Promise((r) => setTimeout(r, 3000))
+            const pollRes = await fetch(
+              `/api/audio/stems?jobId=${encodeURIComponent(jobId)}&projectId=${encodeURIComponent(
+                projectId
+              )}&sceneId=${encodeURIComponent(sceneId)}&segmentId=${encodeURIComponent(
+                segment.segmentId
+              )}`
+            )
+            const pollData = await pollRes.json()
+            if (pollData?.status === 'complete') {
+              finalStatus = 'complete'
+              backgroundStemUrl = pollData.backgroundStemUrl
+              speechStemUrl = pollData.speechStemUrl
+              break
+            }
+            if (pollData?.status === 'failed') {
+              throw new Error(pollData?.error || 'Stem separation failed')
+            }
+          }
+        }
+
+        if (finalStatus === 'complete' && backgroundStemUrl) {
+          onSegmentsChange?.(
+            segmentsRef.current.map((s) =>
+              s.segmentId === segment.segmentId
+                ? {
+                    ...s,
+                    stemSeparation: {
+                      status: 'complete',
+                      backgroundStemUrl,
+                      speechStemUrl,
+                      jobId,
+                      provider: 'demucs',
+                      updatedAt: new Date().toISOString(),
+                    },
+                  }
+                : s
+            )
+          )
+          toast.success('Extracted dialogue-free SFX/music stem for shot')
+        } else {
+          toast.info('Stem extraction queued in background')
+        }
+      } catch (err) {
+        console.error('[SceneProductionMixer] Stem separation error:', err)
+        toast.error(
+          `Stem extraction failed: ${err instanceof Error ? err.message : 'Unknown error'}`
+        )
+      } finally {
+        setExtractingStemIds((prev) => {
+          const next = { ...prev }
+          delete next[segment.segmentId]
+          return next
+        })
+      }
+    },
+    [projectId, sceneId, onSegmentsChange]
   )
 
   const [externalSeekRequest, setExternalSeekRequest] = useState<{
@@ -3654,8 +4430,36 @@ export function SceneProductionMixer({
 
   const nonEnglishBeatsMissingBackgroundStem = useMemo(() => {
     if (productionTarget.language === 'en') return 0
-    return previewSegments.filter((seg) => !seg.stemSeparation?.backgroundStemUrl).length
-  }, [previewSegments, productionTarget.language])
+    return previewSegments.filter((seg) => {
+      const isLocalizedRegen =
+        shotMethodFor(seg.segmentId) === 'regenerate' &&
+        !resolveLanguageClipPlayback(seg, productionTarget.language).usingMaster
+      if (isLocalizedRegen) return false
+      return !seg.stemSeparation?.backgroundStemUrl
+    }).length
+  }, [previewSegments, productionTarget.language, shotMethodFor])
+
+  const handleExtractAllMissingStems = useCallback(async () => {
+    if (productionTarget.language === 'en') return
+    const missing = previewSegments.filter((seg) => {
+      const isLocalizedRegen =
+        shotMethodFor(seg.segmentId) === 'regenerate' &&
+        !resolveLanguageClipPlayback(seg, productionTarget.language).usingMaster
+      return !isLocalizedRegen && !seg.stemSeparation?.backgroundStemUrl
+    })
+    if (missing.length === 0) return
+    setIsExtractingAllStems(true)
+    try {
+      toast.info(
+        `Extracting audio & removing original dialogue for ${missing.length} shot${missing.length > 1 ? 's' : ''}…`
+      )
+      for (const seg of missing) {
+        await handleExtractSegmentStem(seg)
+      }
+    } finally {
+      setIsExtractingAllStems(false)
+    }
+  }, [productionTarget.language, previewSegments, shotMethodFor, handleExtractSegmentStem])
 
   const previewPlaybackKind: 'video' | 'image-sequence' = 'video'
 
@@ -3910,8 +4714,12 @@ export function SceneProductionMixer({
       const segmentData = serverRenderSegments.map((seg, index) => {
         const audioConfig = segmentAudioConfigs[seg.segmentId] || { includeAudio: true, volume: 1.0, postSegmentPause: 0 }
         const hasBackgroundStem = !!seg.stemSeparation?.backgroundStemUrl
+        const isLocalizedRegenClip =
+          !isEnglish &&
+          shotMethodFor(seg.segmentId) === 'regenerate' &&
+          !resolveLanguageClipPlayback(seg, selectedLanguage).usingMaster
         const embedAudio = resolveSegmentEmbedAudioForRender(audioConfig, masterSegmentVolume, {
-          useStemDubbingPolicy,
+          useStemDubbingPolicy: useStemDubbingPolicy && !isLocalizedRegenClip,
           includeSpeechStem,
           hasBackgroundStem,
         })
@@ -3922,6 +4730,11 @@ export function SceneProductionMixer({
         const trimWin = resolveVideoTrimWindow(seg, sourceDur)
         const videoRate = shotVideoRateFor(seg.segmentId)
         const videoWall = videoWallDurationSec(trimWin.playableSec, videoRate)
+        const pauseDuration = audioTracks?.dialogue?.enabled
+          ? Math.max(0, getPlaybackSegmentDuration(seg) - videoWall)
+          : 0.0
+        const segStartTime = shotStartTimesBySegmentId[seg.segmentId] ?? seg.startTime ?? 0
+        const segEndTime = segStartTime + videoWall + pauseDuration
         const previous = index > 0 ? serverRenderSegments[index - 1] : undefined
         const join = renderTransitionFromPreviousShot(
           previous,
@@ -3931,13 +4744,11 @@ export function SceneProductionMixer({
           segmentId: seg.segmentId,
           sequenceIndex: seg.sequenceIndex,
           videoUrl: lipsyncedVideoBySegment[seg.segmentId] || seg.activeAssetUrl!,
-          startTime: seg.startTime,
-          endTime: seg.endTime,
+          startTime: segStartTime,
+          endTime: segEndTime,
           audioSource: embedAudio.audioSource,
           audioVolume: embedAudio.audioVolume,
-          pauseDuration: audioTracks?.dialogue?.enabled
-            ? Math.max(0, getPlaybackSegmentDuration(seg) - videoWall)
-            : 0.0,
+          pauseDuration,
           holdStyle: audioConfig.holdStyle || 'freeze',
           audioLeadInSec: audioConfig.audioLeadInSec,
           audioTailOutSec: audioConfig.audioTailOutSec,
@@ -4009,21 +4820,38 @@ export function SceneProductionMixer({
         }))
       }
 
-      if (useStemDubbingPolicy && audioTracks.sfx.enabled) {
+      if (useStemDubbingPolicy) {
         const stemClips = serverRenderSegments
           .filter((seg) => {
             const audioConfig = segmentAudioConfigs[seg.segmentId]
+            const isLocalizedRegenClip =
+              !isEnglish &&
+              shotMethodFor(seg.segmentId) === 'regenerate' &&
+              !resolveLanguageClipPlayback(seg, selectedLanguage).usingMaster
             return (
+              !isLocalizedRegenClip &&
               isBeatEmbedAudioIncluded(audioConfig) &&
               !!seg.stemSeparation?.backgroundStemUrl
             )
           })
-          .map(seg => ({
-            url: seg.stemSeparation!.backgroundStemUrl!,
-            startTime: seg.startTime,
-            duration: Math.max(0, seg.endTime - seg.startTime),
-            volume: 1.0,
-          }))
+          .map((seg) => {
+            const audioConfig = segmentAudioConfigs[seg.segmentId]
+            const sourceDur = resolveSegmentSourceDurationSec(
+              seg,
+              measuredSegmentDurations[seg.segmentId]
+            )
+            const trimWin = resolveVideoTrimWindow(seg, sourceDur)
+            const videoRate = shotVideoRateFor(seg.segmentId)
+            const videoWall = videoWallDurationSec(trimWin.playableSec, videoRate)
+            const startTime = shotStartTimesBySegmentId[seg.segmentId] ?? seg.startTime ?? 0
+            return {
+              url: seg.stemSeparation!.backgroundStemUrl!,
+              startTime,
+              duration: Math.max(0.5, videoWall),
+              volume: (audioConfig?.volume ?? 1.0) * masterSegmentVolume,
+              playbackRate: videoRate !== 1 ? videoRate : undefined,
+            }
+          })
         if (stemClips.length > 0) {
           audioTracksPayload.sfx = [...(audioTracksPayload.sfx || []), ...stemClips]
         }
@@ -4044,7 +4872,7 @@ export function SceneProductionMixer({
             includeNarration: audioTracks.narration.enabled,
             includeDialogue: audioTracks.dialogue.enabled,
             includeMusic: audioTracks.music.enabled,
-            includeSfx: audioTracks.sfx.enabled,
+            includeSfx: audioTracks.sfx.enabled || (audioTracksPayload.sfx?.length ?? 0) > 0,
             includeSegmentAudio: anySegmentEmbedAudioIncluded(
               serverRenderSegments,
               segmentAudioConfigs,
@@ -4513,6 +5341,8 @@ export function SceneProductionMixer({
                 onPlaybackTimeChange={handlePlaybackTimeChange}
                 externalSeekRequest={externalSeekRequest}
                 loudnessTarget={loudnessTarget}
+                useStemDubbingPolicy={!isEnglish && preserveBackgroundStem}
+                includeSpeechStem={includeSpeechStem}
                 textOverlays={displayOverlays}
                 watermarkConfig={displayWatermarkConfig}
                 onEditOverlay={(overlay) => {
@@ -4667,11 +5497,39 @@ export function SceneProductionMixer({
                                 <span className="text-zinc-200 font-semibold">
                                   {playDur > 0 ? `${playDur.toFixed(1)}s` : '—'}
                                 </span>
-                                {trimWin?.isTrimmed && (
-                                  <span className="px-1 rounded bg-amber-500/30 border border-amber-400/50 text-amber-200 text-[8px] uppercase">
-                                    Trim
-                                  </span>
-                                )}
+                                <div className="flex items-center gap-0.5">
+                                  {!isEnglish && seg && included && (() => {
+                                    const m = shotMethodFor(seg.segmentId)
+                                    const lp = resolveLanguageClipPlayback(seg, selectedLanguage)
+                                    return (
+                                      <span
+                                        className={cn(
+                                          'px-1 rounded text-[7px] uppercase border',
+                                          m === 'double'
+                                            ? 'bg-cyan-500/30 border-cyan-400/50 text-cyan-100'
+                                            : m === 'lipsync'
+                                              ? 'bg-amber-500/30 border-amber-400/50 text-amber-100'
+                                              : !lp.usingMaster
+                                                ? 'bg-emerald-500/30 border-emerald-400/50 text-emerald-100'
+                                                : 'bg-violet-500/30 border-violet-400/50 text-violet-100'
+                                        )}
+                                      >
+                                        {m === 'double'
+                                          ? 'MASTER'
+                                          : m === 'lipsync'
+                                            ? 'LIP-SYNC'
+                                            : !lp.usingMaster
+                                              ? `${selectedLanguage.toUpperCase()}`
+                                              : 'REGEN'}
+                                      </span>
+                                    )
+                                  })()}
+                                  {trimWin?.isTrimmed && (
+                                    <span className="px-1 rounded bg-amber-500/30 border border-amber-400/50 text-amber-200 text-[8px] uppercase">
+                                      Trim
+                                    </span>
+                                  )}
+                                </div>
                               </div>
                             </div>
 
@@ -5960,6 +6818,15 @@ export function SceneProductionMixer({
                     }))
                   }
                   onRegenerateShot={onGenerateLanguageVersion}
+                  generatingLanguageClipId={generatingLanguageClipId}
+                  onSelectLanguageTake={handleSelectLanguageTake}
+                  dubAudioBySegmentId={dubAudioBySegmentId}
+                  onAutoAlignShotVideoSpeed={handleAutoAlignShotVideoSpeed}
+                  onAutoAlignShotAudioSpeed={handleAutoAlignShotAudioSpeed}
+                  onAutoAlignAllShots={handleAutoAlignAllShots}
+                  onBatchRegenerateShots={onGenerateLanguageVersion ? handleBatchRegenerateShots : undefined}
+                  onSelectDialogueSignageShots={handleSelectDialogueSignageShots}
+                  onRetainAllMasterShots={handleRetainAllMasterShots}
                 />
               )}
 
@@ -6000,6 +6867,10 @@ export function SceneProductionMixer({
                 onToggleCollapse={() => toggleSection('segmentAudio')}
                 getPlaybackSegmentDuration={getPlaybackSegmentDuration}
                 audioTracks={audioTracks}
+                languageActive={!isEnglish}
+                preserveBackgroundStem={preserveBackgroundStem}
+                extractingStemIds={extractingStemIds}
+                onExtractSegmentStem={onSegmentsChange ? handleExtractSegmentStem : undefined}
               />
               </div>
               
@@ -6095,9 +6966,30 @@ export function SceneProductionMixer({
                       </div>
                     )}
                     {preserveBackgroundStem && productionTarget.language !== 'en' && nonEnglishBeatsMissingBackgroundStem > 0 && (
-                      <p className="text-[11px] text-amber-300/90">
-                        {nonEnglishBeatsMissingBackgroundStem} segment{nonEnglishBeatsMissingBackgroundStem > 1 ? 's are' : ' is'} missing background stems. Falling back to original segment audio for those clips.
-                      </p>
+                      <div className="space-y-1.5 rounded-md bg-amber-500/10 border border-amber-500/30 p-2">
+                        <p className="text-[11px] text-amber-200/90 leading-snug">
+                          {nonEnglishBeatsMissingBackgroundStem} master shot{nonEnglishBeatsMissingBackgroundStem > 1 ? 's are' : ' is'} missing dialogue-free stems. Extract audio &amp; remove spoken dialogue so generated SFX, music, and ambience play cleanly under your {languageLabel} dub.
+                        </p>
+                        {onSegmentsChange && (
+                          <button
+                            type="button"
+                            disabled={isRendering || isExtractingAllStems}
+                            onClick={() => void handleExtractAllMissingStems()}
+                            className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded text-[10px] font-semibold bg-amber-500/20 border border-amber-400/50 text-amber-100 hover:bg-amber-500/30 transition-colors disabled:opacity-50"
+                          >
+                            {isExtractingAllStems ? (
+                              <Loader2 className="w-3 h-3 animate-spin" />
+                            ) : (
+                              <Sparkles className="w-3 h-3 text-amber-300" />
+                            )}
+                            <span>
+                              {isExtractingAllStems
+                                ? 'Extracting Dialogue-Free Stems…'
+                                : `Extract Audio & Remove Dialogue (${nonEnglishBeatsMissingBackgroundStem})`}
+                            </span>
+                          </button>
+                        )}
+                      </div>
                     )}
                   </div>
                 </div>

@@ -1744,6 +1744,8 @@ export interface MixerLanguageShotConfig {
   method?: LanguageShotMethod
   /** Picture speed for this language only. 0.5–1.5. Absent means 1. */
   videoPlaybackRate?: number
+  /** Optional localized signage / on-screen text override when regenerating this shot. */
+  signageText?: string
 }
 
 /** Per-dialogue-line control in the Production Mixer (not timeline AudioClipConfig) */

@@ -141,6 +141,8 @@ export function ScenePreviewPlayer({
   fillScreen = false,
   externalSeekRequest = null,
   loudnessTarget = 'web-14lufs',
+  useStemDubbingPolicy = false,
+  includeSpeechStem = false,
 }: {
   segments: SceneSegment[]
   audioTracks: MixerAudioTracks
@@ -205,13 +207,19 @@ export function ScenePreviewPlayer({
   externalSeekRequest?: { time: number; seq: number } | null
   /** Master loudness normalization target for VU / LUFS metering */
   loudnessTarget?: MixerLoudnessTarget
+  /** When true, replace master embedded speech with extracted dialogue-free background stem */
+  useStemDubbingPolicy?: boolean
+  /** When true, retain the original speech stem alongside dubbed dialogue */
+  includeSpeechStem?: boolean
 }) {
   const containerRef = useRef<HTMLDivElement>(null)
   const videoRef = useRef<HTMLVideoElement>(null)
   const dissolveVideoRef = useRef<HTMLVideoElement>(null)
   const narrationRef = useRef<HTMLAudioElement>(null)
+  const backgroundStemRef = useRef<HTMLAudioElement>(null)
   const musicRefsById = useRef<Map<string, HTMLAudioElement | null>>(new Map())
   const dialogueRefsById = useRef<Map<string, HTMLAudioElement | null>>(new Map())
+  const sfxRefsById = useRef<Map<string, HTMLAudioElement | null>>(new Map())
   
   const [isPlaying, setIsPlaying] = useState(false)
   const [currentTime, setCurrentTime] = useState(0)
@@ -733,15 +741,120 @@ export function ScenePreviewPlayer({
     } else {
       dialogueRefsById.current.forEach(el => el?.pause())
     }
-  }, [isPlaying, currentTime, audioTracks, currentAudioUrls, dialogueClipConfigs, isMuted, getSegmentStartTime, musicFileDuration, segments, getPlaybackSegmentDuration])
+
+    // Discrete SFX sync — apply auto-ducking (-8 dB) when speech is active
+    const sfxDuckFactor = audioTracks.sfx.autoDuck && isSpeechActiveNow ? 0.398 : 1
+    if (audioTracks.sfx.enabled && currentAudioUrls.sfx.length > 0) {
+      const sfxBaseOffset = audioTracks.sfx.startOffset ?? 0
+      currentAudioUrls.sfx.forEach((sfxClip, idx) => {
+        const sfxKey = `__sfx_${idx}`
+        const audioEl = sfxRefsById.current.get(sfxKey)
+        if (!audioEl || !sfxClip.audioUrl) return
+        const sfxStart = sfxBaseOffset + (sfxClip.startTime ?? 0)
+        const sfxDur = sfxClip.duration ?? 3
+        const sfxEnd = sfxStart + sfxDur
+        audioEl.volume = isMuted ? 0 : Math.max(0, Math.min(1, audioTracks.sfx.volume * sfxDuckFactor))
+        if (isPlaying && currentTime >= sfxStart && currentTime < sfxEnd) {
+          const expectedSfxTime = Math.max(0, currentTime - sfxStart)
+          if (Math.abs(audioEl.currentTime - expectedSfxTime) > 0.85) {
+            audioEl.currentTime = expectedSfxTime
+          }
+          if (audioEl.paused) {
+            audioEl.play().catch(() => {})
+          }
+        } else if (!audioEl.paused) {
+          audioEl.pause()
+        }
+      })
+    } else {
+      sfxRefsById.current.forEach((el) => el?.pause())
+    }
+
+    // Dialogue-free background stem sync for dubbed streams (replaces raw video speech)
+    const activeSeg = segments[currentSegmentIndex]
+    const activeStemUrl = activeSeg?.stemSeparation?.backgroundStemUrl
+    const stemMatchesActiveVideo =
+      !!activeStemUrl &&
+      (!activeSeg?.stemSeparation?.sourceAudioUrl ||
+        activeSeg.stemSeparation.sourceAudioUrl === activeSeg.activeAssetUrl)
+    const shouldPlayCleanStem =
+      playbackKind !== 'image-sequence' &&
+      useStemDubbingPolicy &&
+      !includeSpeechStem &&
+      stemMatchesActiveVideo
+    const stemEl = backgroundStemRef.current
+    if (stemEl && shouldPlayCleanStem && activeSeg && activeStemUrl) {
+      if (stemEl.getAttribute('data-stem-src') !== activeStemUrl) {
+        stemEl.setAttribute('data-stem-src', activeStemUrl)
+        stemEl.src = activeStemUrl
+        stemEl.load()
+      }
+      const cfg = segmentAudioConfigs[activeSeg.segmentId]
+      const { muted: stemMuted, volume: stemVol } = resolveBeatPreviewVolume(
+        cfg,
+        masterSegmentVolume,
+        isMuted
+      )
+      const videoRate = getVideoPlaybackRate?.(activeSeg.segmentId) ?? 1
+      if (Math.abs(stemEl.playbackRate - videoRate) > 0.01) {
+        stemEl.playbackRate = videoRate
+      }
+      stemEl.volume = stemMuted ? 0 : stemVol
+      if (isPlaying && !isVideoFrozen && !stemMuted && stemVol > 0) {
+        const videoEl = videoRef.current
+        const targetStemTime = videoEl ? videoEl.currentTime : 0
+        if (Math.abs(stemEl.currentTime - targetStemTime) > 0.85) {
+          stemEl.currentTime = targetStemTime
+        }
+        if (stemEl.paused) {
+          stemEl.play().catch(() => {})
+        }
+      } else if (!stemEl.paused) {
+        stemEl.pause()
+      }
+    } else if (stemEl && !stemEl.paused) {
+      stemEl.pause()
+    }
+  }, [
+    isPlaying,
+    currentTime,
+    audioTracks,
+    currentAudioUrls,
+    dialogueClipConfigs,
+    isMuted,
+    getSegmentStartTime,
+    musicFileDuration,
+    segments,
+    getPlaybackSegmentDuration,
+    currentSegmentIndex,
+    playbackKind,
+    useStemDubbingPolicy,
+    includeSpeechStem,
+    segmentAudioConfigs,
+    masterSegmentVolume,
+    getVideoPlaybackRate,
+    isVideoFrozen,
+  ])
 
   // Sync embedded beat video audio volume with Beat Audio panel sliders
   useEffect(() => {
     if (playbackKind === 'image-sequence') return
     const video = videoRef.current
     if (!video) return
-    const segId = segments[currentSegmentIndex]?.segmentId
+    const activeSeg = segments[currentSegmentIndex]
+    const segId = activeSeg?.segmentId
     const cfg = segId ? segmentAudioConfigs[segId] : undefined
+    const hasCleanStem =
+      !!activeSeg?.stemSeparation?.backgroundStemUrl &&
+      (!activeSeg?.stemSeparation?.sourceAudioUrl ||
+        activeSeg.stemSeparation.sourceAudioUrl === activeSeg.activeAssetUrl)
+    const replaceWithCleanStem =
+      useStemDubbingPolicy && !includeSpeechStem && hasCleanStem
+    if (replaceWithCleanStem) {
+      video.muted = true
+      video.volume = 0
+      return
+    }
     const { muted, volume } = resolveBeatPreviewVolume(cfg, masterSegmentVolume, isMuted)
     video.muted = muted
     video.volume = volume
@@ -752,6 +865,8 @@ export function ScenePreviewPlayer({
     segmentAudioConfigs,
     masterSegmentVolume,
     isMuted,
+    useStemDubbingPolicy,
+    includeSpeechStem,
   ])
   
   // Load new segment video when segment index changes
@@ -837,6 +952,10 @@ export function ScenePreviewPlayer({
         narrationRef.current.pause()
         narrationRef.current.src = ''
       }
+      if (backgroundStemRef.current) {
+        backgroundStemRef.current.pause()
+        backgroundStemRef.current.src = ''
+      }
       musicRefsById.current.forEach(el => {
         if (el) {
           el.pause()
@@ -851,6 +970,13 @@ export function ScenePreviewPlayer({
         }
       })
       dialogueRefsById.current.clear()
+      sfxRefsById.current.forEach(el => {
+        if (el) {
+          el.pause()
+          el.src = ''
+        }
+      })
+      sfxRefsById.current.clear()
       
       // Clear loaded URL ref
       loadedVideoUrlRef.current = null
@@ -880,8 +1006,10 @@ export function ScenePreviewPlayer({
     if (isPlaying) {
       video.pause()
       narrationRef.current?.pause()
+      backgroundStemRef.current?.pause()
       musicRefsById.current.forEach(el => el?.pause())
       dialogueRefsById.current.forEach(el => el?.pause())
+      sfxRefsById.current.forEach(el => el?.pause())
       if (audioTimerRef.current) {
         cancelAnimationFrame(audioTimerRef.current as unknown as number)
         audioTimerRef.current = null
@@ -1818,6 +1946,7 @@ export function ScenePreviewPlayer({
       {currentAudioUrls.narration && (
         <audio ref={narrationRef} src={currentAudioUrls.narration} preload="auto" />
       )}
+      <audio ref={backgroundStemRef} preload="auto" />
       {(currentAudioUrls.musicClips ?? []).map((clip) => (
         <audio
           key={clip.id}
@@ -1839,6 +1968,22 @@ export function ScenePreviewPlayer({
             ref={el => {
               if (el) dialogueRefsById.current.set(clipKey, el)
               else dialogueRefsById.current.delete(clipKey)
+            }}
+            src={clip.audioUrl}
+            preload="auto"
+          />
+        )
+      })}
+      {/* Discrete SFX audio elements */}
+      {currentAudioUrls.sfx.map((clip, idx) => {
+        if (!clip?.audioUrl) return null
+        const sfxKey = `__sfx_${idx}`
+        return (
+          <audio
+            key={sfxKey}
+            ref={el => {
+              if (el) sfxRefsById.current.set(sfxKey, el)
+              else sfxRefsById.current.delete(sfxKey)
             }}
             src={clip.audioUrl}
             preload="auto"
