@@ -104,6 +104,19 @@ def build_atempo_filter_chain(rate: float) -> str:
     return ",".join(parts)
 
 
+def build_loudnorm_filter(
+    target_i: float = -14.0,
+    true_peak: float = -1.5,
+    lra: float = 11.0,
+) -> str:
+    """
+    Build an EBU R128 / ITU-R BS.1770 loudness normalization filter fragment
+    for 45m-60m episodic assembly so Veo, Kling, and TTS audio share uniform
+    broadcast loudness (-14 LUFS default for streaming platforms).
+    """
+    return f"loudnorm=I={target_i:.1f}:TP={true_peak:.1f}:LRA={lra:.1f}"
+
+
 # Font mapping for text overlays (maps UI font names to system font names)
 FONT_MAP = {
     'Montserrat': 'Montserrat',

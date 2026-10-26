@@ -22,6 +22,10 @@ import {
 import { toCharacterPromptAlias } from '@/lib/character/characterPromptAlias'
 import type { SceneBeat, SceneMusicCue } from '@/lib/script/segmentTypes'
 import { formatMusicCueSteer } from '@/lib/script/sceneMusicCues'
+import {
+  compileSceneStateContinuityClause,
+  type CumulativeSceneStateAtBeat,
+} from '@/lib/scene/sceneStateLedger'
 import type {
   DetailedSceneDirection,
   SceneSegmentPromptBundleEntry,
@@ -59,6 +63,8 @@ export interface CompileBeatVideoPromptOptions {
   previousBeat?: SceneBeat | null
   /** True when this clip continues a split spoken line. */
   continuesSameLine?: boolean
+  /** Optional cumulative scene state ledger entry for multi-shot wardrobe/lighting carryover. */
+  sceneState?: CumulativeSceneStateAtBeat | null
 }
 
 function normalizeLine(text: string): string {
@@ -283,8 +289,9 @@ function incomingContinuityClause(options?: CompileBeatVideoPromptOptions): stri
   if (options?.continuesSameLine) {
     return 'Continues the same spoken line and eyeline from the previous shot without resetting blocking'
   }
+  const ledgerClause = compileSceneStateContinuityClause(options?.sceneState)
   const prev = options?.previousBeat
-  if (!prev) return ''
+  if (!prev) return ledgerClause
   const parts: string[] = []
   const prevShot = prev.beatDirection?.shotType?.trim()
   if (prevShot) parts.push(`Incoming continuity from ${prevShot}`)
@@ -296,6 +303,7 @@ function incomingContinuityClause(options?: CompileBeatVideoPromptOptions): stri
     ? prev.beatDirection.keyProps.map((name) => name.trim()).filter(Boolean)
     : []
   if (prevProps.length) parts.push(`props remain: ${prevProps.join(', ')}`)
+  if (ledgerClause) parts.push(ledgerClause)
   return parts.join('. ')
 }
 

@@ -16,8 +16,12 @@ import {
   Crosshair,
   ChevronLeft,
   ChevronRight,
+  Activity,
+  Download,
 } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
+import { computeEpisodeProductionTelemetry } from '@/lib/production/episodeTelemetryHud'
+import { buildFcpxmlDocument } from '@/lib/export/fcpxmlExport'
 import {
   computeClipAudioTime,
   loopingDrift,
@@ -236,6 +240,7 @@ export function ScenePreviewPlayer({
   const [currentTime, setCurrentTime] = useState(0)
   const [isLooping, setIsLooping] = useState(false)
   const [showSafeGuides, setShowSafeGuides] = useState(false)
+  const [showTelemetryHud, setShowTelemetryHud] = useState(false)
 
   useEffect(() => {
     onPlaybackTimeChange?.(currentTime)
@@ -1497,6 +1502,126 @@ export function ScenePreviewPlayer({
     masterSegmentVolume,
   ])
 
+  const productionTelemetry = useMemo(() => {
+    const samples = segments.map((seg) => {
+      const trim = getTrimForSegment(seg)
+      const editedDur = getPlaybackSegmentDuration(seg)
+      return {
+        segmentId: seg.segmentId,
+        beatId: seg.beatId,
+        assetType: seg.assetType,
+        generationMethod: seg.generationMethod,
+        sourceDurationSec: trim.sourceDuration,
+        editedDurationSec: editedDur,
+        isTrimmed: trim.isTrimmed,
+        hasStartFrame: Boolean(seg.references?.startFrameUrl),
+        hasVeoChainRef: Boolean(
+          seg.takes?.some((t) => Boolean(t.veoVideoRef)) || seg.veoTimelineContinuation
+        ),
+        referenceCount:
+          (seg.references?.characterIds?.length ?? 0) +
+          (seg.references?.startFrameUrl ? 1 : 0),
+        shotJoin: seg.shotJoin,
+      }
+    })
+    return computeEpisodeProductionTelemetry(samples, activeSegmentIndex)
+  }, [segments, activeSegmentIndex, getTrimForSegment, getPlaybackSegmentDuration])
+
+  const handleExportFcpxml = useCallback(() => {
+    const videoClips = segments
+      .filter((s) => Boolean(s.activeAssetUrl))
+      .map((seg, idx) => {
+        const trim = getTrimForSegment(seg)
+        const editedDur = getPlaybackSegmentDuration(seg)
+        const altUrls = (seg.takes ?? [])
+          .map((t) => t.assetUrl || t.videoUrl)
+          .filter((u): u is string => Boolean(u && u !== seg.activeAssetUrl))
+        return {
+          segmentId: seg.segmentId,
+          name: `Shot_${String(idx + 1).padStart(3, '0')}`,
+          assetUrl: seg.activeAssetUrl!,
+          assetType: (seg.assetType === 'image' ? 'image' : 'video') as 'video' | 'image',
+          sourceDurationSec: trim.sourceDuration,
+          trimInSec: trim.trimIn,
+          timelineDurationSec: editedDur,
+          alternateTakeUrls: altUrls,
+          beatId: seg.beatId,
+        }
+      })
+    if (videoClips.length === 0) return
+
+    const audioClips: Array<{
+      id: string
+      name: string
+      url: string
+      type: 'dialogue' | 'narration' | 'sfx' | 'music'
+      startTimeSec: number
+      durationSec: number
+    }> = []
+
+    if (currentAudioUrls.narration) {
+      audioClips.push({
+        id: 'narration-main',
+        name: 'Narration Stem',
+        url: currentAudioUrls.narration,
+        type: 'narration',
+        startTimeSec: 0,
+        durationSec: Math.max(4, scrubberTotalDuration),
+      })
+    }
+    currentAudioUrls.dialogue.forEach((d, idx) => {
+      if (!d?.audioUrl) return
+      audioClips.push({
+        id: d.id || `dialogue-${idx + 1}`,
+        name: d.character ? `${d.character} Dialogue` : `Dialogue ${idx + 1}`,
+        url: d.audioUrl,
+        type: 'dialogue',
+        startTimeSec: d.startTime ?? idx * 4,
+        durationSec: d.duration ?? 4,
+      })
+    })
+    currentAudioUrls.sfx.forEach((s, idx) => {
+      if (!s?.audioUrl) return
+      audioClips.push({
+        id: `sfx-${idx + 1}`,
+        name: `SFX ${idx + 1}`,
+        url: s.audioUrl,
+        type: 'sfx',
+        startTimeSec: s.startTime ?? 0,
+        durationSec: s.duration ?? 4,
+      })
+    })
+    ;(currentAudioUrls.musicClips ?? []).forEach((m, idx) => {
+      if (!m?.url) return
+      audioClips.push({
+        id: m.id || `music-${idx + 1}`,
+        name: `Score Cue ${idx + 1}`,
+        url: m.url,
+        type: 'music',
+        startTimeSec: m.startTime ?? 0,
+        durationSec: m.duration ?? 15,
+      })
+    })
+
+    const xml = buildFcpxmlDocument({
+      projectTitle: 'SceneFlow Production Timeline',
+      resolution: '1080p',
+      fps: 24,
+      videoClips,
+      audioClips,
+    })
+
+    const blob = new Blob([xml], { type: 'application/xml;charset=utf-8' })
+    const url = URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = url
+    link.download = 'sceneflow-timeline.fcpxml'
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+    URL.revokeObjectURL(url)
+  }, [segments, getTrimForSegment, getPlaybackSegmentDuration, currentAudioUrls, scrubberTotalDuration])
+
   return (
     <div 
       ref={containerRef}
@@ -1522,6 +1647,9 @@ export function ScenePreviewPlayer({
         } else if (e.key === 'g' || e.key === 'G') {
           e.preventDefault()
           setShowSafeGuides((prev) => !prev)
+        } else if (e.key === 't' || e.key === 'T') {
+          e.preventDefault()
+          setShowTelemetryHud((prev) => !prev)
         } else if (e.key === 'f' || e.key === 'F') {
           e.preventDefault()
           void toggleFullscreen()
@@ -1639,6 +1767,38 @@ export function ScenePreviewPlayer({
             {/* Center Crosshair */}
             <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-5 h-px bg-white/35" />
             <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 h-5 w-px bg-white/35" />
+          </div>
+        )}
+
+        {/* Production Telemetry & Unit Economics HUD (Investor / Pipeline Proof Overlay) */}
+        {showTelemetryHud && !fillScreen && productionTelemetry.activeCut && (
+          <div className="absolute bottom-3 left-3 z-20 pointer-events-none max-w-[380px] rounded-lg border border-cyan-500/40 bg-zinc-950/90 backdrop-blur-md px-3 py-2 shadow-xl">
+            <div className="flex items-center justify-between gap-3 mb-1">
+              <span className="text-[9px] font-mono uppercase tracking-wider text-cyan-400 font-semibold">
+                Pipeline Telemetry HUD • {productionTelemetry.activeCut.beatIdLabel}
+              </span>
+              <span className="text-[9px] font-mono px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                {productionTelemetry.activeCut.methodBadge} • Continuity {productionTelemetry.rollup.continuityCoveragePct}%
+              </span>
+            </div>
+            <div className="grid grid-cols-2 gap-x-3 gap-y-0.5 text-[10px] font-mono text-zinc-300">
+              <div>
+                <span className="text-zinc-500">Cut Pacing:</span>{' '}
+                <span className="text-white">{productionTelemetry.activeCut.editedCutDurationSec}s</span>{' '}
+                <span className="text-zinc-500">/ {productionTelemetry.activeCut.rawTakeDurationSec}s raw</span>
+              </div>
+              <div>
+                <span className="text-zinc-500">Cut Cost:</span>{' '}
+                <span className="text-emerald-300">${productionTelemetry.activeCut.estimatedCutComputeUsd.toFixed(2)}</span>{' '}
+                <span className="text-zinc-500">vs ${productionTelemetry.activeCut.traditionalShotEquivalentUsd}</span>
+              </div>
+              <div className="col-span-2 text-zinc-400 truncate">
+                <span className="text-zinc-500">Anchor:</span> {productionTelemetry.activeCut.continuitySourceLabel}
+              </div>
+              <div className="col-span-2 pt-0.5 mt-0.5 border-t border-zinc-800 text-[9px] text-cyan-200/90">
+                45m Episode Est: ~${productionTelemetry.rollup.projected45MinPreVisUsd} Pre-Vis • ~${productionTelemetry.rollup.projected45MinMotionUsd} Full Motion ({productionTelemetry.rollup.costSavingsMultiplierLabel})
+              </div>
+            </div>
           </div>
         )}
 
@@ -2086,6 +2246,31 @@ export function ScenePreviewPlayer({
               }`}
             >
               <Crosshair className="w-3.5 h-3.5" />
+            </button>
+
+            {/* Pipeline Telemetry HUD Toggle */}
+            <button
+              type="button"
+              onClick={() => setShowTelemetryHud((prev) => !prev)}
+              title={showTelemetryHud ? 'Hide Pipeline Telemetry & Unit Economics HUD [T]' : 'Show Pipeline Telemetry & Unit Economics HUD [T]'}
+              className={`p-1.5 rounded-md transition-colors ${
+                showTelemetryHud
+                  ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/40'
+                  : 'hover:bg-zinc-800 text-zinc-400 hover:text-white'
+              }`}
+            >
+              <Activity className="w-3.5 h-3.5" />
+            </button>
+
+            {/* 1-Click NLE (.fcpxml) Timeline Export */}
+            <button
+              type="button"
+              onClick={handleExportFcpxml}
+              title="Export non-destructive FCPXML v1.10 timeline (DaVinci Resolve / Final Cut Pro / Premiere Pro) with multi-lane audio stems & alternate takes"
+              className="hidden md:inline-flex items-center gap-1 px-1.5 py-1 rounded-md bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 hover:border-cyan-500/40 text-zinc-300 hover:text-cyan-200 text-[9px] font-mono transition-colors"
+            >
+              <Download className="w-3 h-3 text-cyan-400" />
+              <span>FCPXML</span>
             </button>
             
             {/* Mute Button */}
