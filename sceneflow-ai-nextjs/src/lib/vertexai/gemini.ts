@@ -124,7 +124,7 @@ export async function generateText(
   prompt: string,
   options: TextGenerationOptions = {}
 ): Promise<TextGenerationResult> {
-  const callerModel = (options.model || getGeminiTextModel('pro')).trim()
+  const callerModel = (options.model || getGeminiTextModel('flash')).trim()
   const model = normalizeGeminiTextModel(callerModel)
   const requestedModel = (options as InternalTextGenerationOptions)._requestedModel || callerModel
 
@@ -180,13 +180,13 @@ async function generateTextWithModel(
   // 2. CONSTRUCT CLEAN THINKING CONFIG
   const isThinkingModel = model.includes('gemini-3') || model.includes('gemini-2.5');
   const isMinimal = options.thinkingLevel === 'minimal' || options.thinkingBudget === 0;
-  const thinking_config: any = { include_thoughts: !isMinimal };
+  const thinking_config: any = { include_thoughts: false };
 
   if (isThinkingModel) {
     if (isGemini3) {
       if (!isMinimal) {
         const validLevels = ['LOW', 'MEDIUM', 'HIGH'];
-        const level = (options.thinkingLevel || 'MEDIUM').toUpperCase();
+        const level = (options.thinkingLevel || 'LOW').toUpperCase();
         thinking_config.thinking_level = validLevels.includes(level) ? level : 'LOW';
       }
     } else {
@@ -299,7 +299,7 @@ export async function streamText(
 
   // 1. RESOLVE MODEL & DYNAMIC LOCATION
   const model = normalizeGeminiTextModel(
-    (options.model || getGeminiTextModel('pro')).trim()
+    (options.model || getGeminiTextModel('flash')).trim()
   );
   const isGemini3 = model.includes('gemini-3');
   const isPreview = model.includes('preview');
@@ -318,13 +318,13 @@ export async function streamText(
   // 2. CONSTRUCT CLEAN THINKING CONFIG
   const isThinkingModel = model.includes('gemini-3') || model.includes('gemini-2.5');
   const isMinimal = options.thinkingLevel === 'minimal' || options.thinkingBudget === 0;
-  const thinking_config: any = { include_thoughts: !isMinimal };
+  const thinking_config: any = { include_thoughts: false };
 
   if (isThinkingModel) {
     if (isGemini3) {
       if (!isMinimal) {
         const validLevels = ['LOW', 'MEDIUM', 'HIGH'];
-        const level = (options.thinkingLevel || 'MEDIUM').toUpperCase();
+        const level = (options.thinkingLevel || 'LOW').toUpperCase();
         thinking_config.thinking_level = validLevels.includes(level) ? level : 'LOW';
       }
     } else {

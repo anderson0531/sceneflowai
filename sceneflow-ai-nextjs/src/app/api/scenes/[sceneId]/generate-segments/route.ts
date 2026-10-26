@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { generateText } from '@/lib/vertexai/gemini'
+import { getGeminiProductModel } from '@/lib/config/modelConfig'
 import { safeParseJsonFromText } from '@/lib/safeJson'
 import {
   validateAndRepairTimelineDialogueCoverage,
@@ -1744,7 +1745,7 @@ async function callGeminiForIntelligentSegmentation(prompt: string): Promise<Int
   console.log(`[Scene Segmentation] Calling Vertex AI Gemini...`)
   
   const result = await generateText(prompt, {
-    model: 'gemini-3.1-pro-preview',
+    model: getGeminiProductModel('script'),
     temperature: 0.7,
     maxOutputTokens: 32768, // Increased for complex segmentation responses
     responseMimeType: 'application/json',
@@ -2100,7 +2101,7 @@ Return ONLY valid JSON array. No markdown code blocks, no explanatory text.
  */
 async function callGeminiForSegmentDirections(prompt: string): Promise<any[]> {
   const result = await generateText(prompt, {
-    model: 'gemini-3.1-pro-preview',
+    model: getGeminiProductModel('script'),
     temperature: 0.5, // Lower temperature for more consistent structure
     // Long scenes: many segments × long keyframe strings — 8k often truncates mid-string (invalid JSON)
     maxOutputTokens: 32768,
@@ -2443,7 +2444,7 @@ Return ONLY valid JSON array. No markdown, no explanation.
  */
 async function callGeminiForPromptsFromDirections(prompt: string): Promise<IntelligentSegment[]> {
   const result = await generateText(prompt, {
-    model: 'gemini-3.1-pro-preview',
+    model: getGeminiProductModel('script'),
     temperature: 0.7,
     maxOutputTokens: 32768,
     responseMimeType: 'application/json',

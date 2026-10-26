@@ -14,6 +14,7 @@ import {
 } from '../../types/scene-direction'
 import { generateSceneContentHash } from '../../lib/utils/contentHash'
 import { generateText } from '@/lib/vertexai/gemini'
+import { getGeminiProductModel } from '@/lib/config/modelConfig'
 import { getSceneBeats } from '@/lib/script/beatMigration'
 import { getSceneMovements } from '@/lib/script/sceneMovements'
 import type { SceneDirectionResult } from './types'
@@ -36,14 +37,16 @@ async function callGemini(
   prompt: string,
   sceneIndex?: number
 ): Promise<{ text: string; finishReason?: string }> {
+  const requestedModel = getGeminiProductModel('script')
   const result = await generateText(prompt, {
-    model: 'gemini-3.1-pro-preview',
+    model: requestedModel,
     temperature: 0.7,
     topP: 0.95,
     maxOutputTokens: 12000,
     responseMimeType: 'application/json',
+    thinkingLevel: 'low',
   })
-  if (result.modelId && result.modelId !== 'gemini-3.1-pro-preview') {
+  if (result.modelId && result.modelId !== requestedModel) {
     console.log(
       `[generateSceneDirection] Used fallback model ${result.modelId} for scene`,
       sceneIndex

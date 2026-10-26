@@ -248,4 +248,34 @@ describe('runtime sources do not hardcode gemini-3.0-flash', () => {
     }
     expect(offenders).toEqual([])
   })
+
+  it('has no hardcoded gemini-3.1-pro-preview literals outside modelConfig and defaults gemini.ts to Flash', () => {
+    const roots = [
+      path.join(process.cwd(), 'src/app'),
+      path.join(process.cwd(), 'src/lib'),
+      path.join(process.cwd(), 'src/services'),
+    ]
+    const offenders: string[] = []
+    for (const root of roots) {
+      for (const file of walkTsFiles(root)) {
+        if (file.endsWith('modelConfig.ts')) continue
+        const source = readFileSync(file, 'utf8')
+        if (
+          source.includes("'gemini-3.1-pro-preview'") ||
+          source.includes('"gemini-3.1-pro-preview"')
+        ) {
+          offenders.push(path.relative(process.cwd(), file))
+        }
+      }
+    }
+    expect(offenders).toEqual([])
+
+    const geminiClient = readFileSync(
+      path.join(process.cwd(), 'src/lib/vertexai/gemini.ts'),
+      'utf8'
+    )
+    expect(geminiClient).not.toContain("getGeminiTextModel('pro')")
+    expect(geminiClient).toContain("getGeminiTextModel('flash')")
+    expect(geminiClient).toContain('include_thoughts: false')
+  })
 })

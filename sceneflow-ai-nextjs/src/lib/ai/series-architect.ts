@@ -1,4 +1,5 @@
 import { generateText } from '@/lib/vertexai/gemini';
+import { getGeminiProductModel } from '@/lib/config/modelConfig';
 
 const SERIES_ARCHITECT_SYSTEM_PROMPT = `
 Role: You are a Senior Showrunner for a major streaming network.
@@ -25,8 +26,8 @@ export async function generateSeriesBible(concept: any) {
   prompt = prompt.replace('{title}', concept.title);
 
   const response = await generateText(prompt, {
-    model: 'gemini-3.1-pro-preview',
-    thinkingLevel: 'high',
+    model: getGeminiProductModel('series'),
+    thinkingLevel: 'medium',
   });
 
   // Basic parsing, assuming generateText returns a stringified JSON
