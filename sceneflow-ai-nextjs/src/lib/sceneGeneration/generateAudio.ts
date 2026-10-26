@@ -450,60 +450,76 @@ export async function generateSceneAudio(
   }
   }
 
-  if (parallelMode) {
-    await Promise.all([runLegacyNarration(), runDialogueAudio()])
-  } else {
-    await runLegacyNarration()
-    await runDialogueAudio()
-  }
-
   // 3. Music
-  if (includeMusic && scene?.music && !scene.musicAudio) {
-    const music = await generateMusicForScene(scene, projectId, sceneIndex, baseUrl, authCookie)
-    if (music) {
-      assets.push({
-        audioType: 'music',
-        audioUrl: music.url,
-        durationSeconds: music.fileDuration ?? null,
-        requestedDurationSeconds: music.requestedDuration,
-      })
-      counts.music += 1
+  const runMusic = async () => {
+    if (includeMusic && scene?.music && !scene.musicAudio) {
+      const music = await generateMusicForScene(scene, projectId, sceneIndex, baseUrl, authCookie)
+      if (music) {
+        assets.push({
+          audioType: 'music',
+          audioUrl: music.url,
+          durationSeconds: music.fileDuration ?? null,
+          requestedDurationSeconds: music.requestedDuration,
+        })
+        counts.music += 1
+      }
     }
   }
 
   // 4. SFX (per-cue)
-  if (includeSFX && Array.isArray(scene?.sfx) && scene.sfx.length > 0) {
-    const existing = Array.isArray(params.existingSfxAudio)
-      ? params.existingSfxAudio
-      : Array.isArray(scene.sfxAudio)
-      ? (scene.sfxAudio as string[])
-      : []
-    const beats = getSceneBeats(scene)
-    for (let sfxIdx = 0; sfxIdx < scene.sfx.length; sfxIdx++) {
-      if (existing[sfxIdx]) continue
-      const cue = scene.sfx[sfxIdx] as { sourceBeatId?: string } | undefined
-      const sourceBeatId = typeof cue === 'object' && cue ? cue.sourceBeatId : undefined
-      const sourceBeat = sourceBeatId
-        ? beats.find((beat) => beat.beatId === sourceBeatId)
-        : undefined
-      if (!sourceBeat || !beatRequiresDistinctSfx(sourceBeat)) continue
-      const sfxUrl = await generateSfxForCue(
-        scene,
-        projectId,
-        sceneIndex,
-        sfxIdx,
-        baseUrl,
-        authCookie
-      )
-      if (sfxUrl) {
-        assets.push({
-          audioType: 'sfx',
-          sfxIndex: sfxIdx,
-          audioUrl: sfxUrl,
+  const runSfx = async () => {
+    if (includeSFX && Array.isArray(scene?.sfx) && scene.sfx.length > 0) {
+      const existing = Array.isArray(params.existingSfxAudio)
+        ? params.existingSfxAudio
+        : Array.isArray(scene.sfxAudio)
+        ? (scene.sfxAudio as string[])
+        : []
+      const beats = getSceneBeats(scene)
+      const sfxTasks: Array<{ id: number; execute: () => Promise<void> }> = []
+      for (let sfxIdx = 0; sfxIdx < scene.sfx.length; sfxIdx++) {
+        if (existing[sfxIdx]) continue
+        const cue = scene.sfx[sfxIdx] as { sourceBeatId?: string } | undefined
+        const sourceBeatId = typeof cue === 'object' && cue ? cue.sourceBeatId : undefined
+        const sourceBeat = sourceBeatId
+          ? beats.find((beat) => beat.beatId === sourceBeatId)
+          : undefined
+        if (!sourceBeat || !beatRequiresDistinctSfx(sourceBeat)) continue
+        const targetIdx = sfxIdx
+        sfxTasks.push({
+          id: targetIdx,
+          execute: async () => {
+            const sfxUrl = await generateSfxForCue(
+              scene,
+              projectId,
+              sceneIndex,
+              targetIdx,
+              baseUrl,
+              authCookie
+            )
+            if (sfxUrl) {
+              assets.push({
+                audioType: 'sfx',
+                sfxIndex: targetIdx,
+                audioUrl: sfxUrl,
+              })
+              counts.sfx += 1
+            }
+          },
         })
-        counts.sfx += 1
+      }
+      if (sfxTasks.length > 0) {
+        await processWithConcurrency(sfxTasks, 4, undefined, false)
       }
     }
+  }
+
+  if (parallelMode) {
+    await Promise.all([runLegacyNarration(), runDialogueAudio(), runMusic(), runSfx()])
+  } else {
+    await runLegacyNarration()
+    await runDialogueAudio()
+    await runMusic()
+    await runSfx()
   }
 
   return { assets, counts, failures: failures.length > 0 ? failures : undefined }

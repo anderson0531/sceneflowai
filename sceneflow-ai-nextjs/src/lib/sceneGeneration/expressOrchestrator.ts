@@ -107,6 +107,7 @@ import {
 import { directBeatStills } from '../intelligence/beat-still-director'
 import {
   expectsUnstatedCast,
+  hasCompleteAuthoredBeatDirection,
   plateNamesFromSelection,
   rewriteThinStillBeat,
 } from '../intelligence/shotDirectionPreflight'
@@ -1016,7 +1017,7 @@ async function ensureDirectedBeatBeforeStill(
   const { scene, sceneNumber } = ctx
   const beats = getSceneBeats(scene)
   const beat = beats[beatIdx]
-  if (!beat || beat.beatDirection?.generatedBy === 'user') return
+  if (!beat || hasCompleteAuthoredBeatDirection(beat)) return
 
   const visionPhase = project?.metadata?.visionPhase || {}
   const references = visionPhase.references || {}
@@ -1638,17 +1639,20 @@ export async function planSceneBeatKeyframes(
       : activeEntries
 
     // A stored prompt whose direction fingerprint still matches describes the
-    // beat as it stands, so it is replayed instead of re-planned. Only scoped
-    // runs reuse: an unscoped pass is asking for the scene to be re-planned.
-    const toPlan = selectedKeys
-      ? inScope.filter(({ beat }) => !storedPromptMatchesDirection(beat))
-      : inScope
+    // beat as it stands, so it is replayed instead of re-planned. Beats that
+    // already carry complete authored direction from the Shot Direction Agent
+    // also reuse their composed direction rather than firing a redundant
+    // scene-wide planner LLM pass.
+    const canReuseBeatDirection = (beat: SceneBeat): boolean =>
+      selectedKeys
+        ? storedPromptMatchesDirection(beat) || hasCompleteAuthoredBeatDirection(beat)
+        : !options.regenerate && hasCompleteAuthoredBeatDirection(beat)
 
-    if (selectedKeys) {
-      for (const { beat, beatIndex } of inScope) {
-        if (storedPromptMatchesDirection(beat)) {
-          beatPlansByIndex.set(beatIndex, reusedBeatPlan(beat, beatIndex))
-        }
+    const toPlan = inScope.filter(({ beat }) => !canReuseBeatDirection(beat))
+
+    for (const { beat, beatIndex } of inScope) {
+      if (canReuseBeatDirection(beat)) {
+        beatPlansByIndex.set(beatIndex, reusedBeatPlan(beat, beatIndex))
       }
     }
 

@@ -3,6 +3,7 @@ import { VIDEO_CREDITS } from '@/lib/credits/creditCosts'
 import type { SfxDurationOverride } from '@/lib/elevenlabs/sfxDuration'
 import { resolveSfxDuration } from '@/lib/elevenlabs/sfxDuration'
 import { resolveExpressVeoSfxItems } from '@/lib/sfx/resolveExpressVeoSfxItems'
+import { CONCURRENCY_DEFAULTS, processWithConcurrency } from '@/lib/utils/concurrent-processor'
 
 export interface DispatchExpressVeoSfxResult {
   success: number
@@ -40,36 +41,40 @@ export async function dispatchExpressElevenLabsSfx(params: {
   const toastId = toast.loading(
     `ElevenLabs sound effects: starting ${resolved.items.length} shot${resolved.items.length === 1 ? '' : 's'}...`
   )
-  for (const item of resolved.items) {
-    params.onItemStart?.(item.beatId)
-    try {
-      const response = await fetch('/api/tts/elevenlabs/sound-effects', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          projectId: params.projectId,
-          sfxId: item.sfxId,
-          sfxIndex: item.sfxIndex,
-          text: item.text,
-          durationSeconds,
-        }),
-      })
-      if (!response.ok) {
-        const payload = await response.json().catch(() => null)
-        throw new Error(payload?.error || `Sound effect failed (HTTP ${response.status})`)
+  const tasks = resolved.items.map((item) => ({
+    id: item.beatId,
+    execute: async () => {
+      params.onItemStart?.(item.beatId)
+      try {
+        const response = await fetch('/api/tts/elevenlabs/sound-effects', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            projectId: params.projectId,
+            sfxId: item.sfxId,
+            sfxIndex: item.sfxIndex,
+            text: item.text,
+            durationSeconds,
+          }),
+        })
+        if (!response.ok) {
+          const payload = await response.json().catch(() => null)
+          throw new Error(payload?.error || `Sound effect failed (HTTP ${response.status})`)
+        }
+        const data = await response.json()
+        if (!data?.url) throw new Error('Sound effect response missing audio URL')
+        await params.onItemDone?.({ beatId: item.beatId, sfxIndex: item.sfxIndex, url: data.url })
+        success++
+        toast.loading(`ElevenLabs sound effects: ${success}/${resolved.items.length} complete`, {
+          id: toastId,
+        })
+      } catch (error) {
+        failed++
+        params.onItemError?.(item.beatId, (error as Error)?.message || 'Sound effect failed')
       }
-      const data = await response.json()
-      if (!data?.url) throw new Error('Sound effect response missing audio URL')
-      await params.onItemDone?.({ beatId: item.beatId, sfxIndex: item.sfxIndex, url: data.url })
-      success++
-      toast.loading(`ElevenLabs sound effects: ${success}/${resolved.items.length} complete`, {
-        id: toastId,
-      })
-    } catch (error) {
-      failed++
-      params.onItemError?.(item.beatId, (error as Error)?.message || 'Sound effect failed')
-    }
-  }
+    },
+  }))
+  await processWithConcurrency(tasks, CONCURRENCY_DEFAULTS.AUDIO_GENERATION, undefined, false)
   if (success > 0 && failed === 0) {
     toast.success(`ElevenLabs sound effects complete (${success}).`, { id: toastId })
   } else if (failed > 0) {

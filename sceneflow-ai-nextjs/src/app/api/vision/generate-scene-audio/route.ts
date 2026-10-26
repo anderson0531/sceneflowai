@@ -518,8 +518,8 @@ export async function POST(req: NextRequest) {
     // Step 8: Charge credits when fresh paid TTS synthesis ran (skip cached hits and free Edge fallback)
     if (!cached && usedProvider !== 'edge') {
       try {
-        const proj = await Project.findByPk(projectId, { attributes: ['user_id'] })
-        const ownerUserId = proj?.user_id ? String(proj.user_id) : null
+        const meta = await getCachedProjectAudioMeta(projectId)
+        const ownerUserId = meta?.userId ?? null
         if (ownerUserId) {
           const baseAudioCredits =
             usedProvider === 'elevenlabs'
@@ -703,16 +703,67 @@ async function lookupCharacterEdgeVoice(
   )
 }
 
+const PROJECT_AUDIO_META_TTL_MS = 30_000
+const projectAudioMetaCache = new Map<
+  string,
+  { userId: string | null; characters: unknown[]; expiresAt: number }
+>()
+const projectAudioMetaInFlight = new Map<
+  string,
+  Promise<{ userId: string | null; characters: unknown[] } | null>
+>()
+
+async function getCachedProjectAudioMeta(
+  projectId: string
+): Promise<{ userId: string | null; characters: unknown[] } | null> {
+  const now = Date.now()
+  const cached = projectAudioMetaCache.get(projectId)
+  if (cached && now < cached.expiresAt) {
+    return { userId: cached.userId, characters: cached.characters }
+  }
+  const existing = projectAudioMetaInFlight.get(projectId)
+  if (existing) return existing
+
+  const fetchPromise = (async () => {
+    try {
+      await sequelize.authenticate()
+      const project = await Project.findByPk(projectId, {
+        attributes: ['user_id', 'metadata'],
+      })
+      if (!project) return null
+      const userId = project.user_id ? String(project.user_id) : null
+      const rawChars = project.metadata?.visionPhase?.characters
+      const characters = Array.isArray(rawChars) ? rawChars : []
+      if (projectAudioMetaCache.size >= 50) {
+        const oldest = projectAudioMetaCache.keys().next().value
+        if (oldest) projectAudioMetaCache.delete(oldest)
+      }
+      projectAudioMetaCache.set(projectId, {
+        userId,
+        characters,
+        expiresAt: Date.now() + PROJECT_AUDIO_META_TTL_MS,
+      })
+      return { userId, characters }
+    } catch {
+      return null
+    } finally {
+      projectAudioMetaInFlight.delete(projectId)
+    }
+  })()
+
+  projectAudioMetaInFlight.set(projectId, fetchPromise)
+  return fetchPromise
+}
+
 async function findVisionCharacter(
   projectId: string,
   characterId?: string,
   characterName?: string
 ): Promise<Record<string, unknown> | undefined> {
   try {
-    await sequelize.authenticate()
-    const project = await Project.findByPk(projectId)
-    const characters = project?.metadata?.visionPhase?.characters
-    if (!Array.isArray(characters)) return undefined
+    const meta = await getCachedProjectAudioMeta(projectId)
+    const characters = meta?.characters
+    if (!Array.isArray(characters) || characters.length === 0) return undefined
 
     const char = matchCharacterRecord(characters, { characterId, characterName })
     return char as Record<string, unknown> | undefined

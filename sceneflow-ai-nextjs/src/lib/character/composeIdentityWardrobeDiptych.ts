@@ -221,6 +221,12 @@ export type CroppableIdentityReference = {
   proIdentityCrop?: 'cropped' | 'already-tight' | 'skipped'
 }
 
+const MAX_IDENTITY_PRO_CROP_CACHE = 80
+const identityProCropCache = new Map<
+  string,
+  { base64Image: string; mimeType: string; proIdentityCrop: 'cropped' | 'already-tight' }
+>()
+
 /**
  * Crop IDENTITY-named plates to a face CU before Pro attach.
  * Wardrobe / prop / location slots pass through. Call from stills routes
@@ -230,6 +236,18 @@ async function cropOneIdentityReferenceForPro<T extends CroppableIdentityReferen
   ref: T
 ): Promise<T> {
   if (!isIdentityReferencePartName(ref.name)) return ref
+  const cacheKey = !ref.base64Image && ref.imageUrl ? ref.imageUrl.trim() : ''
+  if (cacheKey) {
+    const cached = identityProCropCache.get(cacheKey)
+    if (cached) {
+      return {
+        ...ref,
+        base64Image: cached.base64Image,
+        mimeType: cached.mimeType,
+        proIdentityCrop: cached.proIdentityCrop,
+      }
+    }
+  }
   try {
     let base64Data = ref.base64Image
     let mimeType = ref.mimeType || 'image/jpeg'
@@ -245,9 +263,21 @@ async function cropOneIdentityReferenceForPro<T extends CroppableIdentityReferen
       console.log(
         `[Identity CU] Cropped identity plate to 1:1 CU (reason=${cropped.reason}, name=${ref.name})`
       )
+      const croppedBase64 = cropped.buffer.toString('base64')
+      if (cacheKey) {
+        if (identityProCropCache.size >= MAX_IDENTITY_PRO_CROP_CACHE) {
+          const oldest = identityProCropCache.keys().next().value
+          if (oldest) identityProCropCache.delete(oldest)
+        }
+        identityProCropCache.set(cacheKey, {
+          base64Image: croppedBase64,
+          mimeType: 'image/jpeg',
+          proIdentityCrop: 'cropped',
+        })
+      }
       return {
         ...ref,
-        base64Image: cropped.buffer.toString('base64'),
+        base64Image: croppedBase64,
         mimeType: 'image/jpeg',
         proIdentityCrop: 'cropped',
       }
@@ -255,6 +285,17 @@ async function cropOneIdentityReferenceForPro<T extends CroppableIdentityReferen
     console.log(
       `[Identity CU] Identity plate already tight (${cropped.width}x${cropped.height}, reason=already-tight, name=${ref.name})`
     )
+    if (cacheKey) {
+      if (identityProCropCache.size >= MAX_IDENTITY_PRO_CROP_CACHE) {
+        const oldest = identityProCropCache.keys().next().value
+        if (oldest) identityProCropCache.delete(oldest)
+      }
+      identityProCropCache.set(cacheKey, {
+        base64Image: base64Data,
+        mimeType,
+        proIdentityCrop: 'already-tight',
+      })
+    }
     return {
       ...(ref.base64Image ? ref : { ...ref, base64Image: base64Data, mimeType }),
       proIdentityCrop: 'already-tight',

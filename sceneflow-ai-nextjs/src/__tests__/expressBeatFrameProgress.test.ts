@@ -113,8 +113,8 @@ describe('expressBeatFrameProgress', () => {
     expect(countCompletedFrames(updated)).toBe(1)
   })
 
-  it('defaults ETA concurrency to two image jobs', () => {
-    expect(EXPRESS_IMAGE_ETA_CONCURRENCY_DEFAULT).toBe(2)
+  it('defaults ETA concurrency to four image jobs', () => {
+    expect(EXPRESS_IMAGE_ETA_CONCURRENCY_DEFAULT).toBe(4)
   })
 
   it('estimateRemainingSec uses image-phase rate after first completion', () => {

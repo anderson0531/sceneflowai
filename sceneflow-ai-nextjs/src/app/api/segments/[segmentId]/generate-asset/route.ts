@@ -355,8 +355,11 @@ export async function POST(
           !shouldReplaceClientVideoReferences(beat, referenceImages)
         if (!knownAndKept) {
           if (!beat || !sceneForRefs || !projectForRefs) {
-            await sequelize.authenticate()
-            projectForRefs = await Project.findByPk(projectId)
+            if (!projectForRefs) {
+              await sequelize.authenticate()
+              projectForRefs = await Project.findByPk(projectId)
+              cachedProject = projectForRefs
+            }
             const scenesForRefs = getVisionScriptScenes(
               projectForRefs?.metadata?.visionPhase as Record<string, unknown> | undefined
             )
@@ -559,8 +562,11 @@ export async function POST(
 
       if (resolvedVideoProvider === 'kling' && beatId && projectId) {
         try {
-          await sequelize.authenticate()
-          const projectForElements = await Project.findByPk(projectId)
+          if (!cachedProject) {
+            await sequelize.authenticate()
+            cachedProject = await Project.findByPk(projectId)
+          }
+          const projectForElements = cachedProject
           const scenesForElements = getVisionScriptScenes(
             projectForElements?.metadata?.visionPhase as Record<string, unknown> | undefined
           )

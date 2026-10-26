@@ -43,14 +43,14 @@ export interface ExpressTrafficCopOptions {
 
 const EXPRESS_LANES: ExpressLane[] = ['text', 'image', 'audio']
 
-/** Default image in-flight cap — two identity-ref jobs, fail-fast isolated. */
-export const DEFAULT_EXPRESS_IMAGE_CONCURRENCY = 2
+/** Default image in-flight cap — four concurrent still jobs, fail-fast isolated. */
+export const DEFAULT_EXPRESS_IMAGE_CONCURRENCY = 4
 
 /**
- * Draft beats share the same two-wide cap as pro identity-ref frames.
- * Wider than 2 stacked 429s; Frame Agent pins the pool to this default.
+ * Draft beats share the same four-wide cap as pro identity-ref frames.
+ * Frame Agent pins the pool to this default.
  */
-export const DEFAULT_EXPRESS_FLASH_IMAGE_CONCURRENCY = 2
+export const DEFAULT_EXPRESS_FLASH_IMAGE_CONCURRENCY = 4
 
 /** Default TTS in-flight cap for Express Audio / Storyboard Express audio lane. */
 export const DEFAULT_EXPRESS_AUDIO_CONCURRENCY = 8
@@ -59,14 +59,11 @@ export const DEFAULT_EXPRESS_AUDIO_CONCURRENCY = 8
  * Minimum gap between image-lane dispatches.
  *
  * Concurrency caps how many calls are open at once; they say nothing about how
- * close together the calls start. Three scenes each opening their flash beats
- * at the same instant is a nine-request spike inside one second, and a Vertex
- * 429 is shared-pool contention, which a spike is the most efficient way to
- * provoke. Staggering the starts turns the same nine calls into a ramp without
- * lowering the cap, so a run is slower by roughly spacing x beats and no more.
+ * close together the calls start. Staggering the starts turns simultaneous
+ * calls into a smooth ramp without lowering the cap.
  * Set 0 to disable.
  */
-export const DEFAULT_EXPRESS_IMAGE_MIN_SPACING_MS = 300
+export const DEFAULT_EXPRESS_IMAGE_MIN_SPACING_MS = 150
 
 function parsePositiveInt(value: string | undefined, fallback: number): number {
   const n = Number(value ?? fallback)

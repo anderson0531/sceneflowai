@@ -110,12 +110,12 @@ describe('acquireVertexDispatchSlot', () => {
     vi.restoreAllMocks()
   })
 
-  it('defaults to 2000ms for images and 5000ms for video, and 0 disables the lane', () => {
+  it('defaults to 500ms for images and 1500ms for video, and 0 disables the lane', () => {
     delete process.env.VERTEX_IMAGE_DISPATCH_INTERVAL_MS
     delete process.env.VERTEX_VIDEO_DISPATCH_INTERVAL_MS
     delete process.env.VERTEX_DISPATCH_MAX_WAIT_MS
-    expect(getVertexDispatchIntervalMs('image')).toBe(2_000)
-    expect(getVertexDispatchIntervalMs('video')).toBe(5_000)
+    expect(getVertexDispatchIntervalMs('image')).toBe(500)
+    expect(getVertexDispatchIntervalMs('video')).toBe(1_500)
     expect(getVertexDispatchMaxWaitMs()).toBe(20_000)
 
     process.env.VERTEX_IMAGE_DISPATCH_INTERVAL_MS = '0'
@@ -391,6 +391,7 @@ describe('acquireImageGenerationLease', () => {
   })
 
   it('keeps a long holder in the cap by heartbeating past the original ttl', async () => {
+    process.env.VERTEX_IMAGE_MAX_CONCURRENCY = '2'
     const first = await acquireImageGenerationLease({ maxWaitMs: 20_000 })
     await vi.advanceTimersByTimeAsync(DEFAULT_IMAGE_LEASE_TTL_MS)
 
@@ -419,6 +420,7 @@ describe('acquireImageGenerationLease', () => {
   })
 
   it('leaves the slot occupied after a self-timeout abandon', async () => {
+    process.env.VERTEX_IMAGE_MAX_CONCURRENCY = '2'
     const timedOut = await acquireImageGenerationLease({ maxWaitMs: 20_000 })
     await timedOut('abandon')
 

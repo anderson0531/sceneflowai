@@ -65,7 +65,10 @@ export function plateNamesFromVideoRefs(
 ): string[] {
   const names = new Set<string>()
   for (const ref of refs) {
-    for (const candidate of [ref.characterName, ref.propName, ref.locationName]) {
+    // Location plates are bound via the scene/location setting block rather than
+    // actor/prop action framing; requiring locationName in action framing forced
+    // a redundant LLM rewrite on every clip with a location reference.
+    for (const candidate of [ref.characterName, ref.propName]) {
       const name = candidate?.trim()
       if (name && name.length >= 3) names.add(name)
     }
@@ -73,10 +76,24 @@ export function plateNamesFromVideoRefs(
   return [...names]
 }
 
+export function hasCompleteAuthoredBeatDirection(beat: SceneBeat | null | undefined): boolean {
+  const dir = beat?.beatDirection
+  if (!dir) return false
+  if (dir.generatedBy === 'user') return true
+  if (dir.generatedBy !== 'director' && dir.generatedBy !== 'llm') return false
+  return Boolean(
+    dir.shotType?.trim() &&
+      dir.frozenMoment?.trim() &&
+      dir.blocking?.trim() &&
+      Array.isArray(dir.castInFrame)
+  )
+}
+
 function stillCheck(
   beat: SceneBeat,
   check: ShotDirectionRewriteCheck
 ): boolean {
+  if (hasCompleteAuthoredBeatDirection(beat)) return false
   const composed = check.composedText ?? composeBeatActionFraming(beat)
   return shotNeedsDirectionRewrite(beat, { ...check, composedText: composed })
 }
@@ -128,6 +145,9 @@ export async function rewriteThinClipPrompt(args: {
   musicCue?: SceneMusicCue
   catalog?: { characterNames: string[]; propNames: string[]; locationNames: string[] }
 }): Promise<{ beat: SceneBeat; prompt: string }> {
+  if (hasCompleteAuthoredBeatDirection(args.beat)) {
+    return { beat: args.beat, prompt: args.prompt }
+  }
   let beat = await rewriteThinStillBeat({
     beat: args.beat,
     beats: args.beats,

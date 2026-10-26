@@ -16,9 +16,9 @@ function parsePositiveInt(value: string | undefined, fallback: number): number {
 
 /**
  * Hard cap for Frame Agent stills. The pool pins initial = max to this so
- * AIMD cannot widen past two in-flight Vertex jobs.
+ * up to four stills render concurrently across a 20-30 shot scene.
  */
-export const FRAME_AGENT_STILL_CONCURRENCY = 2
+export const FRAME_AGENT_STILL_CONCURRENCY = 4
 
 /** Runtime beat concurrency for Scene Express, aligned with the image lane. */
 export const DEFAULT_SCENE_EXPRESS_BEAT_CONCURRENCY = FRAME_AGENT_STILL_CONCURRENCY

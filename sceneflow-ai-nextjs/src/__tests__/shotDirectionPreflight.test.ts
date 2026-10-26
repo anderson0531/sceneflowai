@@ -5,6 +5,10 @@ import {
   shotNeedsDirectionRewrite,
   STILL_DIRECTOR_BEAT_CHUNK,
 } from '@/lib/intelligence/beat-sequence-planner-fallback'
+import {
+  hasCompleteAuthoredBeatDirection,
+  plateNamesFromVideoRefs,
+} from '@/lib/intelligence/shotDirectionPreflight'
 import type { SceneBeat } from '@/lib/script/segmentTypes'
 
 function readSource(relativePath: string): string {
@@ -88,5 +92,43 @@ describe('shotNeedsDirectionRewrite', () => {
     expect(orchestrator).toContain('ensureDirectedBeatBeforeStill')
     const route = readSource('src/app/api/segments/[segmentId]/generate-asset/route.ts')
     expect(route).toContain('rewriteThinClipPrompt')
+  })
+
+  it('skips redundant preflight LLM rewrites when Shot Direction Agent direction is complete', () => {
+    expect(
+      hasCompleteAuthoredBeatDirection(
+        beat({
+          beatDirection: {
+            generatedBy: 'director',
+            shotType: 'Medium Shot',
+            frozenMoment: 'Gideon sets the brick on the table.',
+            blocking: 'Gideon stands at the center table.',
+            castInFrame: ['Gideon'],
+          },
+        })
+      )
+    ).toBe(true)
+
+    expect(
+      hasCompleteAuthoredBeatDirection(
+        beat({
+          beatDirection: {
+            generatedBy: 'planner',
+            shotType: 'Medium Shot',
+            frozenMoment: 'Gideon sets the brick on the table.',
+            blocking: 'Gideon stands at the center table.',
+            castInFrame: ['Gideon'],
+          },
+        })
+      )
+    ).toBe(false)
+  })
+
+  it('excludes locationName from plateNamesFromVideoRefs so location plates do not force clip rewrites', () => {
+    expect(
+      plateNamesFromVideoRefs([
+        { characterName: 'Gideon', propName: 'Brass Key', locationName: 'Subterranean Vault' },
+      ])
+    ).toEqual(['Gideon', 'Brass Key'])
   })
 })

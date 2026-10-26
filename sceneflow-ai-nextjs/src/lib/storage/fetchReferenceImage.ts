@@ -13,6 +13,45 @@ export interface FetchReferenceImageResult {
 /** Blob/GCS/HTTP downloads must not hold a generate-image slot until the function is killed. */
 export const REFERENCE_IMAGE_FETCH_TIMEOUT_MS = 20_000
 
+const MAX_REF_IMAGE_CACHE_ENTRIES = 120
+const REF_IMAGE_CACHE_TTL_MS = 10 * 60 * 1000
+
+interface CachedReferenceImage {
+  result: FetchReferenceImageResult
+  expiresAt: number
+}
+
+const referenceImageCache = new Map<string, CachedReferenceImage>()
+const inFlightReferenceFetches = new Map<string, Promise<FetchReferenceImageResult>>()
+
+export function clearReferenceImageCache(): void {
+  referenceImageCache.clear()
+  inFlightReferenceFetches.clear()
+}
+
+function getCachedReferenceImage(url: string): FetchReferenceImageResult | null {
+  const entry = referenceImageCache.get(url)
+  if (!entry) return null
+  if (Date.now() > entry.expiresAt) {
+    referenceImageCache.delete(url)
+    return null
+  }
+  referenceImageCache.delete(url)
+  referenceImageCache.set(url, entry)
+  return entry.result
+}
+
+function setCachedReferenceImage(url: string, result: FetchReferenceImageResult): void {
+  if (referenceImageCache.size >= MAX_REF_IMAGE_CACHE_ENTRIES) {
+    const oldestKey = referenceImageCache.keys().next().value
+    if (oldestKey) referenceImageCache.delete(oldestKey)
+  }
+  referenceImageCache.set(url, {
+    result,
+    expiresAt: Date.now() + REF_IMAGE_CACHE_TTL_MS,
+  })
+}
+
 async function withTimeout<T>(promise: Promise<T>, timeoutMs: number): Promise<T> {
   let timeoutId: ReturnType<typeof setTimeout> | undefined
   try {
@@ -211,9 +250,23 @@ export async function fetchReferenceImageAsBase64(
   const dataUrl = parseDataUrl(trimmed)
   if (dataUrl) return dataUrl
 
+  const cacheKey = `${trimmed}::${Boolean(process.env.BLOB_READ_WRITE_TOKEN?.trim())}`
+  const cached = getCachedReferenceImage(cacheKey)
+  if (cached) return cached
+
+  const existingInFlight = inFlightReferenceFetches.get(cacheKey)
+  if (existingInFlight) {
+    try {
+      return await existingInFlight
+    } catch (error) {
+      const reason = error instanceof Error ? error.message : String(error)
+      throw formatDownloadError(trimmed, options.label, reason.replace(/^Failed to download reference [^:]+: /, ''))
+    }
+  }
+
   const timeoutMs = options.timeoutMs ?? REFERENCE_IMAGE_FETCH_TIMEOUT_MS
 
-  try {
+  const fetchPromise = (async (): Promise<FetchReferenceImageResult> => {
     let buffer: Buffer
     let mimeType: string
 
@@ -247,8 +300,18 @@ export async function fetchReferenceImageAsBase64(
       base64: buffer.toString('base64'),
       mimeType,
     }
+  })()
+
+  inFlightReferenceFetches.set(cacheKey, fetchPromise)
+
+  try {
+    const resolved = await fetchPromise
+    setCachedReferenceImage(cacheKey, resolved)
+    return resolved
   } catch (error) {
     const reason = error instanceof Error ? error.message : String(error)
     throw formatDownloadError(trimmed, options.label, reason)
+  } finally {
+    inFlightReferenceFetches.delete(cacheKey)
   }
 }

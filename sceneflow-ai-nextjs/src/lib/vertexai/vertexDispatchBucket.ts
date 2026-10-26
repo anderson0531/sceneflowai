@@ -53,8 +53,8 @@ export interface AcquireVertexDispatchOptions {
 }
 
 const DEFAULT_INTERVAL_MS: Record<VertexDispatchLane, number> = {
-  image: 2_000,
-  video: 5_000,
+  image: 500,
+  video: 1_500,
 }
 
 const INTERVAL_ENV: Record<VertexDispatchLane, string> = {

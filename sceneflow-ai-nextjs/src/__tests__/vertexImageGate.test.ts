@@ -33,9 +33,9 @@ describe('vertexImageGate', () => {
     delete process.env.VERTEX_IMAGE_MAX_CONCURRENCY
   })
 
-  it('caps concurrent generations at two by default', () => {
-    expect(DEFAULT_VERTEX_IMAGE_MAX_CONCURRENCY).toBe(2)
-    expect(getVertexImageMaxConcurrency()).toBe(2)
+  it('caps concurrent generations at four by default', () => {
+    expect(DEFAULT_VERTEX_IMAGE_MAX_CONCURRENCY).toBe(4)
+    expect(getVertexImageMaxConcurrency()).toBe(4)
   })
 
   it('matches the Express flash image lane so a single run never queues', async () => {
@@ -46,6 +46,7 @@ describe('vertexImageGate', () => {
   })
 
   it('admits two at a time and holds the rest', async () => {
+    process.env.VERTEX_IMAGE_MAX_CONCURRENCY = '2'
     const gates = [deferred(), deferred(), deferred(), deferred()]
     let started = 0
 
@@ -96,6 +97,7 @@ describe('vertexImageGate', () => {
   })
 
   it('releases slots in FIFO order so a waiting frame is not starved', async () => {
+    process.env.VERTEX_IMAGE_MAX_CONCURRENCY = '2'
     const gates = [deferred(), deferred(), deferred(), deferred(), deferred()]
     const order: number[] = []
 
@@ -131,6 +133,7 @@ describe('vertexImageGate', () => {
   })
 
   it('hands a freed slot to a waiter even when the holder throws', async () => {
+    process.env.VERTEX_IMAGE_MAX_CONCURRENCY = '2'
     const first = deferred()
     let secondRan = false
 
@@ -214,6 +217,7 @@ describe('vertexImageGate', () => {
   })
 
   it('starts one replacement when the first holder finishes and one more when the second finishes', async () => {
+    process.env.VERTEX_IMAGE_MAX_CONCURRENCY = '2'
     const gates = Array.from({ length: 6 }, () => deferred())
     const started: number[] = []
     let active = 0
@@ -264,6 +268,7 @@ describe('vertexImageGate', () => {
   })
 
   it('scene-image admission is a sibling lock at the same cap', async () => {
+    process.env.VERTEX_IMAGE_MAX_CONCURRENCY = '2'
     const gates = [deferred(), deferred(), deferred()]
     let started = 0
     const runs = gates.map((g) =>
@@ -286,6 +291,7 @@ describe('vertexImageGate', () => {
   })
 
   it('holds a fail-fast slot for the full attempt so a third caller waits', async () => {
+    process.env.VERTEX_IMAGE_MAX_CONCURRENCY = '2'
     const inner = deferred()
     let nestedStarted = 0
     let waiterStarted = false

@@ -109,11 +109,33 @@ export async function overlayLocationScaleOnBuffer(
     .toBuffer()
 }
 
+const MAX_LOCATION_SCALE_OVERLAY_CACHE = 60
+const locationScaleOverlayCache = new Map<string, string>()
+
 async function overlayLocationScaleOnOneReference<T extends OverlayableLocationReference>(
   ref: T
 ): Promise<T> {
   if (!isLocationReferencePartName(ref.name, ref.role, ref.locationName)) return ref
   try {
+    const scale = extractLocationCanonicalScale(
+      ref.locationDescription,
+      ref.locationName || ref.name,
+      ref.canonicalScale
+    )
+    const cacheKey =
+      !ref.base64Image && ref.imageUrl
+        ? `${ref.imageUrl.trim()}::${scale.doorHeightFt}:${scale.ceilingHeightFt}`
+        : ''
+    if (cacheKey) {
+      const cachedBase64 = locationScaleOverlayCache.get(cacheKey)
+      if (cachedBase64) {
+        return {
+          ...ref,
+          base64Image: cachedBase64,
+          mimeType: 'image/jpeg',
+        }
+      }
+    }
     let base64Data = ref.base64Image
     if (!base64Data && ref.imageUrl) {
       const downloaded = await fetchReferenceImageAsBase64(ref.imageUrl, { label: ref.name })
@@ -121,19 +143,22 @@ async function overlayLocationScaleOnOneReference<T extends OverlayableLocationR
     }
     if (!base64Data) return ref
     if (base64Data.includes(',')) base64Data = base64Data.split(',')[1] || base64Data
-    const scale = extractLocationCanonicalScale(
-      ref.locationDescription,
-      ref.locationName || ref.name,
-      ref.canonicalScale
-    )
     const overlaid = await overlayLocationScaleOnBuffer(Buffer.from(base64Data, 'base64'), scale)
+    const overlaidBase64 = overlaid.toString('base64')
+    if (cacheKey) {
+      if (locationScaleOverlayCache.size >= MAX_LOCATION_SCALE_OVERLAY_CACHE) {
+        const oldest = locationScaleOverlayCache.keys().next().value
+        if (oldest) locationScaleOverlayCache.delete(oldest)
+      }
+      locationScaleOverlayCache.set(cacheKey, overlaidBase64)
+    }
     console.log(
       `[Location scale] Overlayed margin ticks on ${ref.name || ref.locationName || 'location'} ` +
         `(door=${scale.doorHeightFt}ft ceiling=${scale.ceilingHeightFt}ft)`
     )
     return {
       ...ref,
-      base64Image: overlaid.toString('base64'),
+      base64Image: overlaidBase64,
       mimeType: 'image/jpeg',
     }
   } catch (error) {
