@@ -12,6 +12,7 @@ import { VideoLanguageControl } from '@/components/landing/VideoLanguagePicker'
 import {
   getKeyFeatureScreenshot,
   keyFeatureScreenshotSrc,
+  type KeyFeatureScreenshotVariant,
 } from '@/config/landing/keyFeatureScreenshots'
 import { LANDING_TRANSLATE_LANGUAGES } from '@/config/landingTranslateLanguages'
 import { standaloneDemoKey } from '@/config/landing/keyFeatureChapterMap'
@@ -259,7 +260,7 @@ function FeatureLearnMore({
                   text={item.description}
                 />
               ))}
-              {feature.icon === 'languageStreams' ? (
+              {feature.icon === 'languageStreams' || feature.icon === 'multilanguageUi' ? (
                 <LandingUiLanguagesBlock label={landingUiLanguagesLabel} />
               ) : null}
             </div>
@@ -281,6 +282,7 @@ function FeatureDetail({
   landingUiLanguagesLabel,
   videoSoonLabel,
   screenshotSrc,
+  screenshotVariants,
   enterFullscreenLabel,
   exitFullscreenLabel,
 }: {
@@ -294,6 +296,7 @@ function FeatureDetail({
   landingUiLanguagesLabel: string
   videoSoonLabel: string
   screenshotSrc: string
+  screenshotVariants?: readonly KeyFeatureScreenshotVariant[]
   enterFullscreenLabel: string
   exitFullscreenLabel: string
 }) {
@@ -333,6 +336,7 @@ function FeatureDetail({
       {screenshotSrc ? (
         <FeatureScreenshotFrame
           src={screenshotSrc}
+          variants={screenshotVariants}
           label={feature.title}
           enterFullscreenLabel={enterFullscreenLabel}
           exitFullscreenLabel={exitFullscreenLabel}
@@ -617,6 +621,7 @@ export default function KeyFeaturesSection() {
                 expanded={expandedFeature === selected.icon}
                 onToggle={toggleSelectedLearnMore}
                 screenshotSrc={screenshot ? keyFeatureScreenshotSrc(screenshot) : ''}
+                screenshotVariants={screenshot?.variants}
                 enterFullscreenLabel={t('enterFullscreenOverview')}
                 exitFullscreenLabel={t('exitFullscreenOverview')}
                 {...detailLabels}

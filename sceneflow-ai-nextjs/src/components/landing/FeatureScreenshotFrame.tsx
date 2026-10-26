@@ -45,11 +45,18 @@ function exitNativeVideoFullscreen(video: HTMLVideoElement) {
   if (element.webkitDisplayingFullscreen) element.webkitExitFullscreen?.()
 }
 
+export type FeatureScreenshotVariant = {
+  id: string
+  label: string
+  imageUrl: string
+}
+
 export type FeatureScreenshotFrameProps = {
   src: string
   label: string
   enterFullscreenLabel: string
   exitFullscreenLabel: string
+  variants?: readonly FeatureScreenshotVariant[]
 }
 
 type ScreenshotFramingPreset = {
@@ -78,27 +85,27 @@ const SCREENSHOT_FRAMING_PRESETS: Array<{
   },
   {
     match: 'series-review.webp',
-    preset: { width: 5120, height: 5648, contentWidthFraction: 0.58, anchorY: 0.94 },
+    preset: { width: 5120, height: 2880, contentWidthFraction: 0.94, anchorY: 0 },
   },
   {
     match: 'series-resonance.webp',
-    preset: { width: 5120, height: 6008, contentWidthFraction: 0.55, anchorY: 0.94 },
+    preset: { width: 5120, height: 2880, contentWidthFraction: 0.94, anchorY: 0 },
   },
   {
     match: 'series-director.webp',
-    preset: { width: 5120, height: 2805, contentWidthFraction: 0.48, anchorY: 0.35 },
+    preset: { width: 5120, height: 2880, contentWidthFraction: 0.94, anchorY: 0 },
   },
   {
     match: 'episode-director.webp',
-    preset: { width: 5120, height: 4407, contentWidthFraction: 0.58, anchorY: 0.55 },
+    preset: { width: 5120, height: 2880, contentWidthFraction: 0.94, anchorY: 0 },
   },
   {
     match: 'series-start-project.webp',
-    preset: { width: 1534, height: 2425, contentWidthFraction: 0.95, anchorY: 0.95 },
+    preset: { width: 5120, height: 2880, contentWidthFraction: 0.94, anchorY: 0 },
   },
   {
     match: 'start-blueprint.webp',
-    preset: { width: 5120, height: 2804, contentWidthFraction: 0.48, anchorY: 0.85 },
+    preset: { width: 5120, height: 2880, contentWidthFraction: 0.94, anchorY: 0 },
   },
   {
     match: 'blueprint-beats.webp',
@@ -110,7 +117,7 @@ const SCREENSHOT_FRAMING_PRESETS: Array<{
   },
   {
     match: 'blueprint-director.webp',
-    preset: { width: 5120, height: 2805, contentWidthFraction: 0.48, anchorY: 0.85 },
+    preset: { width: 5120, height: 2880, contentWidthFraction: 0.94, anchorY: 0 },
   },
   {
     match: 'blueprint-resonance.webp',
@@ -124,106 +131,110 @@ const SCREENSHOT_FRAMING_PRESETS: Array<{
   },
   {
     match: 'blueprint-production-stage.webp',
-    preset: { width: 5120, height: 3088, contentWidthFraction: 0.62, anchorY: 0.85 },
+    preset: { width: 5120, height: 2936, contentWidthFraction: 0.94, anchorY: -0.92 },
   },
   {
     match: 'scene-director.webp',
-    preset: { width: 5120, height: 3389, contentWidthFraction: 0.56, anchorY: 0.88 },
+    preset: { width: 5120, height: 2936, contentWidthFraction: 0.94, anchorY: -0.92 },
   },
   {
     match: 'scene-workflow.webp',
-    preset: { width: 5120, height: 3389, contentWidthFraction: 0.94, anchorY: -0.92 },
+    preset: { width: 5120, height: 2856, contentWidthFraction: 0.94, anchorY: -0.92 },
   },
   {
     match: 'continuity-library.webp',
-    preset: { width: 5120, height: 2805, contentWidthFraction: 0.48, anchorY: 0.85 },
+    preset: { width: 5120, height: 2936, contentWidthFraction: 0.94, anchorY: -0.92 },
   },
   {
     match: 'script-resonance.webp',
-    preset: { width: 5120, height: 2804, contentWidthFraction: 0.48, anchorY: 0.85 },
+    preset: { width: 5120, height: 2936, contentWidthFraction: 0.94, anchorY: -0.92 },
   },
   {
     match: 'production-planner.webp',
-    preset: { width: 5120, height: 4487, contentWidthFraction: 0.42, anchorY: 0.92 },
+    preset: { width: 5120, height: 2936, contentWidthFraction: 0.94, anchorY: -0.92 },
   },
   {
     match: 'production-script.webp',
-    preset: { width: 5120, height: 2804, contentWidthFraction: 0.56, anchorY: 0.85 },
+    preset: { width: 5120, height: 2936, contentWidthFraction: 0.94, anchorY: -0.92 },
   },
   {
     match: 'audio-agent.webp',
-    preset: { width: 5120, height: 2805, contentWidthFraction: 0.48, anchorY: 0.35 },
+    preset: { width: 5120, height: 2936, contentWidthFraction: 0.94, anchorY: -0.92 },
   },
   {
     match: 'scene-audio-music.webp',
-    preset: { width: 5120, height: 3200, contentWidthFraction: 0.94, anchorY: -0.92 },
+    preset: { width: 5120, height: 2656, contentWidthFraction: 0.94, anchorY: -0.92 },
   },
   {
     match: 'stills-agent.webp',
-    preset: { width: 5120, height: 2805, contentWidthFraction: 0.48, anchorY: 0.25 },
+    preset: { width: 5120, height: 2936, contentWidthFraction: 0.94, anchorY: -0.92 },
   },
   {
     match: 'scene-stills-workbench.webp',
-    preset: { width: 5120, height: 3200, contentWidthFraction: 0.94, anchorY: -0.92 },
+    preset: { width: 5120, height: 2656, contentWidthFraction: 0.94, anchorY: -0.92 },
   },
   {
     match: 'pre-vis-animatic.webp',
     preset: {
       width: 5120,
-      height: 2805,
-      contentWidthFraction: 0.68,
-      anchorX: -1,
-      anchorY: -0.5,
-    },
-  },
-  {
-    match: 'clips-agent.webp',
-    preset: { width: 5120, height: 2805, contentWidthFraction: 0.48, anchorY: 0.25 },
-  },
-  {
-    match: 'scene-clips-workbench.webp',
-    preset: { width: 5120, height: 3200, contentWidthFraction: 0.94, anchorY: -0.92 },
-  },
-  {
-    match: 'production-mixer.webp',
-    preset: { width: 5120, height: 4896, contentWidthFraction: 0.94, anchorY: -0.92 },
-  },
-  {
-    match: 'streams-multilanguage.webp',
-    preset: {
-      width: 5120,
-      height: 3400,
+      height: 2936,
       contentWidthFraction: 0.94,
       anchorX: 0,
       anchorY: -0.92,
     },
   },
   {
+    match: 'clips-agent.webp',
+    preset: { width: 5120, height: 2936, contentWidthFraction: 0.94, anchorY: -0.92 },
+  },
+  {
+    match: 'scene-clips-workbench.webp',
+    preset: { width: 5120, height: 2656, contentWidthFraction: 0.94, anchorY: -0.92 },
+  },
+  {
+    match: 'production-mixer.webp',
+    preset: { width: 5120, height: 2996, contentWidthFraction: 0.94, anchorY: -0.92 },
+  },
+  {
+    match: 'streams-multilanguage.webp',
+    preset: {
+      width: 5120,
+      height: 2856,
+      contentWidthFraction: 0.94,
+      anchorX: 0,
+      anchorY: -0.92,
+    },
+  },
+  {
+    match: 'multilanguage-ui-',
+    preset: { width: 5120, height: 2936, contentWidthFraction: 0.94, anchorY: 0 },
+  },
+  {
     match: 'promo-trailers.webp',
-    preset: { width: 5120, height: 5148, contentWidthFraction: 0.45, anchorY: 0.92 },
+    preset: { width: 5120, height: 2936, contentWidthFraction: 0.94, anchorY: -0.92 },
   },
   {
     match: 'direct-publishing.webp',
-    preset: { width: 5120, height: 2805, contentWidthFraction: 0.48, anchorY: 0.5 },
+    preset: { width: 5120, height: 2936, contentWidthFraction: 0.94, anchorY: -0.92 },
   },
   {
     match: 'screening-player.webp',
     preset: {
       width: 5120,
-      height: 2805,
-      contentWidthFraction: 0.72,
-      anchorX: -1,
-      anchorY: 0.5,
+      height: 2880,
+      contentWidthFraction: 0.94,
+      anchorX: 0,
+      anchorY: 0,
     },
   },
   {
     match: 'screening-collab.webp',
     preset: {
-      width: 5100,
-      height: 2536,
-      contentWidthFraction: 0.78,
-      anchorX: -1,
-      anchorY: 0.5,
+      width: 5120,
+      height: 2880,
+      contentWidthFraction: 0.94,
+      anchorX: 0,
+      anchorY: 0,
     },
   },
 ]
@@ -321,8 +332,22 @@ export function FeatureScreenshotFrame({
   label,
   enterFullscreenLabel,
   exitFullscreenLabel,
+  variants,
 }: FeatureScreenshotFrameProps) {
-  const preset = useMemo(() => getFramingPreset(src), [src])
+  const [activeVariantId, setActiveVariantId] = useState<string>(
+    variants?.[0]?.id ?? ''
+  )
+
+  useEffect(() => {
+    setActiveVariantId(variants?.[0]?.id ?? '')
+  }, [src, variants])
+
+  const activeVariant = useMemo(
+    () => variants?.find((v) => v.id === activeVariantId) ?? variants?.[0],
+    [variants, activeVariantId]
+  )
+  const effectiveSrc = activeVariant?.imageUrl || src
+  const preset = useMemo(() => getFramingPreset(effectiveSrc), [effectiveSrc])
   const frameRef = useRef<HTMLDivElement>(null)
   const viewportRef = useRef<HTMLDivElement>(null)
   const videoRef = useRef<HTMLVideoElement>(null)
@@ -382,7 +407,7 @@ export function FeatureScreenshotFrame({
   const pinchDistanceRef = useRef<number | null>(null)
   const activePointersRef = useRef<Map<number, { x: number; y: number }>>(new Map())
 
-  const image = isImageScreenshot(src)
+  const image = isImageScreenshot(effectiveSrc)
 
   const { baseWidth, baseHeight } = useMemo(
     () =>
@@ -490,7 +515,7 @@ export function FeatureScreenshotFrame({
 
   // Reset to preset dimensions and readable framing whenever screenshot src changes
   useEffect(() => {
-    const nextPreset = getFramingPreset(src)
+    const nextPreset = getFramingPreset(effectiveSrc)
     setNaturalSize({ width: nextPreset.width, height: nextPreset.height })
     const viewport = viewportRef.current
     const cw = viewport?.clientWidth || containerSize.width || 880
@@ -511,7 +536,7 @@ export function FeatureScreenshotFrame({
     })
     setViewMode('readable')
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [src])
+  }, [effectiveSrc])
 
   // Track viewport size changes (window resize, fullscreen toggle)
   useEffect(() => {
@@ -852,9 +877,9 @@ export function FeatureScreenshotFrame({
         >
           {image ? (
             <img
-              key={src}
-              src={src}
-              alt={label}
+              key={effectiveSrc}
+              src={effectiveSrc}
+              alt={activeVariant ? `${label} — ${activeVariant.label}` : label}
               draggable={false}
               className={mediaClass}
               onLoad={(event) => {
@@ -870,7 +895,7 @@ export function FeatureScreenshotFrame({
             />
           ) : (
             <video
-              key={src}
+              key={effectiveSrc}
               ref={videoRef}
               className={mediaClass}
               autoPlay
@@ -892,11 +917,46 @@ export function FeatureScreenshotFrame({
               onPlaying={(event) => holdStill(event.currentTarget)}
               onContextMenu={(event) => event.preventDefault()}
             >
-              <source src={`${src}#t=0.1`} type="video/webm" />
+              <source src={`${effectiveSrc}#t=0.1`} type="video/webm" />
             </video>
           )}
         </div>
       </div>
+
+      {/* Interactive Language / Variant Switcher Bar (when screenshot has variants) */}
+      {variants && variants.length > 1 ? (
+        <div
+          onClick={(event) => event.stopPropagation()}
+          className="absolute inset-x-3 top-3 z-30 flex justify-center pointer-events-none"
+        >
+          <div
+            role="tablist"
+            aria-label={`${label} language variants`}
+            className="pointer-events-auto inline-flex flex-wrap items-center gap-1 rounded-full border border-indigo-400/35 bg-slate-950/90 p-1 text-xs shadow-[0_10px_30px_rgba(0,0,0,0.75)] backdrop-blur-xl"
+          >
+            {variants.map((variant) => {
+              const isSelected = variant.id === (activeVariant?.id ?? variants[0].id)
+              return (
+                <button
+                  key={variant.id}
+                  type="button"
+                  role="tab"
+                  aria-selected={isSelected}
+                  onClick={() => setActiveVariantId(variant.id)}
+                  className={cn(
+                    'rounded-full px-3 py-1 text-xs font-semibold transition-all',
+                    isSelected
+                      ? 'bg-indigo-600 text-white shadow-sm ring-1 ring-indigo-400/60'
+                      : 'text-slate-300 hover:bg-white/10 hover:text-white'
+                  )}
+                >
+                  {variant.label}
+                </button>
+              )
+            })}
+          </div>
+        </div>
+      ) : null}
 
       {/* Top-Left Studio Viewport Telemetry Pill */}
       <div className="pointer-events-none absolute left-3 top-3 z-20 hidden items-center gap-1.5 rounded-full border border-white/15 bg-slate-950/75 px-3 py-1.5 text-[11px] font-medium text-slate-300 shadow-lg backdrop-blur-md sm:flex">
@@ -942,7 +1002,7 @@ export function FeatureScreenshotFrame({
           >
             {image ? (
               <img
-                src={src}
+                src={effectiveSrc}
                 alt=""
                 aria-hidden="true"
                 draggable={false}

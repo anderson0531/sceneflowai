@@ -892,29 +892,29 @@
               {
                 "icon": "mixer",
                 "title": "The Mixer",
-                "description": "A commercial-grade broadcast scene editor and stitching console built directly into the studio. Preview your cut on a 16:9 Broadcast Reference Monitor paired with a real-time Stereo VU / Peak Meter (`-60` to `0 dBFS`, `-14 LUFS` target), inspect cut points with a side-by-side Match-Cut Continuity Loupe, shape J-Cut and L-Cut audio overlaps (`-0.3s` / `+0.3s`), choose dynamic Optical Hold Modes (`103% Ken Burns Push` or `Ping-Pong Tail`), mix across a 6-lane timeline (`V1 Video`, `A0 Stem`, `A1 Dialogue`, `A2 VO`, `A3 SFX`, `A4 Score`) with `-8 dB` Auto-Ducking, apply 1-click watermark crops and text overlays, and cloud-render EBU R128 (`-14 LUFS`) masters.",
-                "screenshot": "The Mixer — Broadcast Reference Monitor, Stereo VU Meter, Match-Cut Continuity Loupe, J/L-Cut overlaps, 6-lane timeline with -8 dB Auto-Ducking, and EBU R128 loudness",
+                "description": "An intuitive, non-technical scene editor and stitching console built directly into the studio. Preview your cut on a compact, user-resizable 16:9 video monitor (`S / M / L / XL`, `- / +` steppers, drag-resize handle, and `Fullscreen`) so the entire Shot Sequence & Stitch Strip and 6-Track Timeline (`Video`, `Clip Audio`, `Dialogue`, `Narration`, `Sound Effects`, `Music`) fit cleanly on one screen without scrolling. Inspect transitions with the side-by-side Cut Preview, shape `Audio Lead-In (-0.3s)` and `Audio Trail-Out (+0.3s)` overlaps, choose `Slow Zoom Hold` or `Loop End` tail motion, enable `Auto-lower music under speech`, and export `Standard MP4 Video` (`1080p Full HD` or `4K`) normalized to `Volume: Web & Social` (`-14 LUFS`) or `Broadcast TV` (`-24 LKFS`).",
+                "screenshot": "The Mixer — Compact 16:9 resizable monitor, side-by-side Cut Preview, Shot Sequence & Stitch Strip, 6-track timeline with Auto-Lower Music Under Speech, and intuitive export presets",
                 "learnMore": {
                   "items": [
                     {
-                      "title": "Broadcast Reference Monitor & Stereo VU / LUFS Meter",
-                      "description": "Preview your stitched sequence on a 16:9 reference monitor beside a real-time stereo peak and loudness meter calibrated to -14.0 LUFS web and -24.0 LKFS broadcast targets."
+                      "title": "Compact 16:9 resizable player & single-screen layout",
+                      "description": "Resize the 16:9 monitor with S / M / L / XL presets, - / + buttons, or the corner drag handle—or pop into Fullscreen—while keeping the Shot Sequence & Stitch Strip and 6-track timeline visible without scrolling."
                     },
                     {
-                      "title": "Match-Cut Continuity Loupe & J/L-Cut audio overlaps",
-                      "description": "Hover any transition pill to compare the Out-Frame of Shot N against the In-Frame of Shot N+1 side by side while dialing in -0.3s J-cut lead-ins and +0.3s L-cut audio tails."
+                      "title": "Side-by-side Cut Preview & Audio Lead-In / Trail-Out",
+                      "description": "Hover any transition pill to compare the end of Shot N against the start of Shot N+1 side by side while dialing in -0.3s Audio Lead-Ins (J-cuts) and +0.3s Audio Trail-Outs (L-cuts)."
                     },
                     {
-                      "title": "6-lane timeline with -8 dB Auto-Ducking envelope",
-                      "description": "Mix V1 Video, A0 Dialogue-Free Stem, A1 Dialogue, A2 Narration, A3 SFX, and A4 Score with a visual gain-reduction curve that automatically ducks music -8 dB under speech."
+                      "title": "6-track timeline with Auto-Lower Music Under Speech",
+                      "description": "Mix Video, Clip Audio (background SFX & room tone with spoken speech removed), Dialogue, Narration, Sound Effects, and Music with automatic -8 dB music ducking under speech."
                     },
                     {
-                      "title": "Optical Hold Modes & elastic dub alignment",
-                      "description": "Replace static freeze-frames with a 103% Ken Burns Push Zoom or Ping-Pong Tail Loop and slow video clips down to 67% speed so longer dubbed dialogue fits naturally."
+                      "title": "Slow Zoom Hold, Loop End & longer dubbed dialogue fit",
+                      "description": "Replace static freeze-frames with a Slow Zoom Hold or Loop End and smoothly slow video clips so longer translated dialogue fits naturally."
                     },
                     {
-                      "title": "1-click watermark crop, text overlays & EBU R128 export",
-                      "description": "Apply preset edge crops to remove third-party watermarks, burn in lower-thirds or subtitles, and cloud-render stitched MP4 masters with EBU R128 loudness normalization."
+                      "title": "Intuitive export presets with broadcast specs in tooltips",
+                      "description": "Choose clear presets like Volume: Web & Social (-14 LUFS), Broadcast TV (-24 LKFS), and 1080p Full HD Standard MP4 (H.264 / AAC) with full technical specifications available on hover."
                     }
                   ]
                 }
@@ -945,6 +945,32 @@
                     {
                       "title": "Localized Studio UI",
                       "description": "Direct and produce in your native interface across English, Spanish, Portuguese, Hindi, Simplified Chinese, and Arabic."
+                    }
+                  ]
+                }
+              },
+              {
+                "icon": "multilanguageUi",
+                "title": "Multilanguage Studio UI",
+                "description": "Direct, write, and produce in your team's native language across the entire SceneFlow AI Studio. Switch the studio interface on the fly between English, Español (`ES`), Português (`PT`), 中文 (简体) (`ZH`), हिन्दी (`HI`), and العربية (`AR`)—localizing every room, direction control, camera & lighting inspector, continuity library, and timeline while collaborating seamlessly across global production teams.",
+                "screenshot": "Multilanguage Studio UI — Interactive localized studio workspaces in Español (ES), Português (PT), 中文 (简体), and हिन्दी (HI)",
+                "learnMore": {
+                  "items": [
+                    {
+                      "title": "Native studio workspace across 6 Tier-A interface languages",
+                      "description": "Switch the entire SceneFlow Studio UI—Series Studio, Blueprint Room, Production Stage, and Screening Room—between English, Spanish, Portuguese, Simplified Chinese, Hindi, and Arabic."
+                    },
+                    {
+                      "title": "Localized direction, camera, blocking & continuity controls",
+                      "description": "Every tab, shot rail, camera lens selector, continuity lock, and mixer control renders natively in your selected language so global directors and editors work at full speed."
+                    },
+                    {
+                      "title": "Cross-border team collaboration on one shared project",
+                      "description": "A showrunner in Los Angeles, an editor in Madrid, a VFX lead in São Paulo, and a sound designer in Mumbai or Shanghai can each work on the same project in their preferred UI language."
+                    },
+                    {
+                      "title": "Paired with 75+ landing & 44+ dubbing stream languages",
+                      "description": "Combine a native localized Studio UI with 44-language neural voice dubbing and lip-sync streams to produce and distribute globally from day one."
                     }
                   ]
                 }

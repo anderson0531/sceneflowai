@@ -128,9 +128,28 @@ export const SCREENING_PLAYER_SCREENSHOT_WEBP =
 export const SCREENING_COLLAB_SCREENSHOT_WEBP =
   '/landing/key-features/screenshots/screening-collab.webp'
 
+export const MULTILANGUAGE_UI_ES_SCREENSHOT_WEBP =
+  '/landing/key-features/screenshots/multilanguage-ui-es.webp'
+
+export const MULTILANGUAGE_UI_PT_SCREENSHOT_WEBP =
+  '/landing/key-features/screenshots/multilanguage-ui-pt.webp'
+
+export const MULTILANGUAGE_UI_ZH_SCREENSHOT_WEBP =
+  '/landing/key-features/screenshots/multilanguage-ui-zh.webp'
+
+export const MULTILANGUAGE_UI_HI_SCREENSHOT_WEBP =
+  '/landing/key-features/screenshots/multilanguage-ui-hi.webp'
+
+export type KeyFeatureScreenshotVariant = {
+  id: string
+  label: string
+  imageUrl: string
+}
+
 export type KeyFeatureScreenshot = {
   webmUrl?: string
   imageUrl?: string
+  variants?: readonly KeyFeatureScreenshotVariant[]
 }
 
 const KEY_FEATURE_SCREENSHOTS: Record<string, KeyFeatureScreenshot> = {
@@ -161,6 +180,15 @@ const KEY_FEATURE_SCREENSHOTS: Record<string, KeyFeatureScreenshot> = {
   clipsWorkbench: { imageUrl: SCENE_CLIPS_WORKBENCH_SCREENSHOT_WEBP },
   mixer: { imageUrl: PRODUCTION_MIXER_SCREENSHOT_WEBP },
   languageStreams: { imageUrl: STREAMS_MULTILANGUAGE_SCREENSHOT_WEBP },
+  multilanguageUi: {
+    imageUrl: MULTILANGUAGE_UI_ES_SCREENSHOT_WEBP,
+    variants: [
+      { id: 'es', label: 'Español (ES)', imageUrl: MULTILANGUAGE_UI_ES_SCREENSHOT_WEBP },
+      { id: 'pt', label: 'Português (PT)', imageUrl: MULTILANGUAGE_UI_PT_SCREENSHOT_WEBP },
+      { id: 'zh-CN', label: '中文 (简体)', imageUrl: MULTILANGUAGE_UI_ZH_SCREENSHOT_WEBP },
+      { id: 'hi', label: 'हिन्दी (HI)', imageUrl: MULTILANGUAGE_UI_HI_SCREENSHOT_WEBP },
+    ],
+  },
   promoTrailers: { imageUrl: PROMO_TRAILERS_SCREENSHOT_WEBP },
   shipPackage: { imageUrl: DIRECT_PUBLISHING_SCREENSHOT_WEBP },
   screeningPlayer: { imageUrl: SCREENING_PLAYER_SCREENSHOT_WEBP },

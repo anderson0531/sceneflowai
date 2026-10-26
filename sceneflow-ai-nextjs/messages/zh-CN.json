@@ -950,6 +950,32 @@
                 }
               },
               {
+                "icon": "multilanguageUi",
+                "title": "多语言工作室界面 (Multilanguage UI)",
+                "description": "使用团队母语在 SceneFlow AI 全流程工作室中编剧、执导与制片。支持在中文 (简体) (`ZH`)、Español (`ES`)、Português (`PT`)、हिन्दी (`HI`)、العربية (`AR`) 与英语之间一键切换界面语言，全面本地化剧集室、蓝图室、制片工作台与放映厅的所有核心工具。",
+                "screenshot": "多语言工作室界面 — 支持西语 (ES)、葡语 (PT)、简体中文 (ZH) 与印地语 (HI) 原生界面实时预览切换",
+                "learnMore": {
+                  "items": [
+                    {
+                      "title": "Native studio workspace across 6 Tier-A interface languages",
+                      "description": "Switch the entire SceneFlow Studio UI—Series Studio, Blueprint Room, Production Stage, and Screening Room—between English, Spanish, Portuguese, Simplified Chinese, Hindi, and Arabic."
+                    },
+                    {
+                      "title": "Localized direction, camera, blocking & continuity controls",
+                      "description": "Every tab, shot rail, camera lens selector, continuity lock, and mixer control renders natively in your selected language so global directors and editors work at full speed."
+                    },
+                    {
+                      "title": "Cross-border team collaboration on one shared project",
+                      "description": "A showrunner in Los Angeles, an editor in Madrid, a VFX lead in São Paulo, and a sound designer in Mumbai or Shanghai can each work on the same project in their preferred UI language."
+                    },
+                    {
+                      "title": "Paired with 75+ landing & 44+ dubbing stream languages",
+                      "description": "Combine a native localized Studio UI with 44-language neural voice dubbing and lip-sync streams to produce and distribute globally from day one."
+                    }
+                  ]
+                }
+              },
+              {
                 "icon": "promoTrailers",
                 "title": "Promo & Trailers",
                 "description": "Cut high-converting theatrical teasers, episodic recaps, and social-ready promo trailers at any time during production. Pull hero takes from your scene vault, reframe for horizontal (`16:9`) or vertical (`9:16`) feeds, and generate multi-language versions with localized title cards and voiceover hooks.",
