@@ -11,6 +11,7 @@
 import { storedStillDirectionKeyMatches } from '@/lib/script/beatDirectionFingerprint'
 import type { BeatDirection } from '@/lib/script/segmentTypes'
 import {
+  BEAT_ACTION_START_STILL_SLOT,
   BEAT_END_STILL_SLOT,
   BEAT_START_STILL_SLOT,
   CUSTOM_FRAME_STILL_SLOT,
@@ -35,6 +36,7 @@ const DIALOGUE_STORYBOARD_PROMPT_KEYS = ['storyboardImagePrompt'] as const
  * a stale prompt keep a current key, which then reads as up to date forever.
  */
 const BEAT_STORYBOARD_PROMPT_KEYS = [
+  'storyboardStartImagePrompt',
   'storyboardEndImagePrompt',
 ] as const
 
@@ -184,12 +186,17 @@ function mergeBeatMedia(canonBeat: any, incomingBeat: any): any {
 
   const merged = { ...incomingBeat }
   mergeStillSlot(merged, incomingBeat, canonBeat, BEAT_START_STILL_SLOT)
+  mergeStillSlot(merged, incomingBeat, canonBeat, BEAT_ACTION_START_STILL_SLOT)
   mergeStillSlot(merged, incomingBeat, canonBeat, BEAT_END_STILL_SLOT)
   mergeMediaFields(
     merged,
     incomingBeat,
     canonBeat,
-    ['storyboardImageGcsPath', 'storyboardEndImageGcsPath'],
+    [
+      'storyboardImageGcsPath',
+      'storyboardStartImageGcsPath',
+      'storyboardEndImageGcsPath',
+    ],
     BEAT_STORYBOARD_PROMPT_KEYS
   )
 
@@ -201,6 +208,11 @@ function mergeBeatMedia(canonBeat: any, incomingBeat: any): any {
       delete merged.storyboardImageReferenceStatus
       delete merged.storyboardImageReferenceReason
       delete merged.storyboardImageTier
+    }
+    if (!isUsableMediaUrl(incomingBeat.storyboardStartImageUrl)) {
+      delete merged.storyboardStartImageUrl
+      delete merged.storyboardStartImageVersionId
+      delete merged.storyboardStartImageTier
     }
     if (!isUsableMediaUrl(incomingBeat.storyboardEndImageUrl)) {
       delete merged.storyboardEndImageUrl

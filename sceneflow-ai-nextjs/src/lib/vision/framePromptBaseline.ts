@@ -89,6 +89,13 @@ export function isVisualEndFrameDelta(endFramePrompt?: string | null): boolean {
   return true
 }
 
+export interface PreVisStartFrameEditArgs {
+  shotStillPrompt?: string | null
+  startFramePrompt?: string | null
+  customPrompt?: string | null
+  fallbackActionPrompt?: string | null
+}
+
 export interface PreVisEndFrameEditArgs {
   startFramePrompt?: string | null
   endFramePrompt?: string | null
@@ -97,10 +104,49 @@ export interface PreVisEndFrameEditArgs {
   durationSeconds?: number
 }
 
+const START_FRAME_CONTINUITY_PREAMBLE =
+  'Edit the reference shot still to illustrate the starting action of the shot (t=0s, the exact moment before the shot movement unfolds). ' +
+  'Position the subject and camera at their initial opening pose and staging. ' +
+  'DO NOT hallucinate new objects, DO NOT change the background or location architecture, and DO NOT alter character core appearance, wardrobe, or lighting. ' +
+  'Maintain absolute physics and visual continuity with consistent lighting and location.'
+
 const END_FRAME_CONTINUITY_PREAMBLE =
-  'Edit the start frame image to reflect movement that aligns with the beat action. ' +
+  'Edit the start frame image to reflect movement that aligns with the beat action and illustrates the ending action of the shot. ' +
   'DO NOT hallucinate new objects, DO NOT change the background, and DO NOT alter character core appearance. ' +
-  'Maintain absolute physics and visual continuity.'
+  'Maintain absolute physics and visual continuity with consistent lighting and location.'
+
+/**
+ * Directed-edit instruction for anchoring a shot's Start Frame (t=0s) to the Pre-Vis Shot Still.
+ * Stages the opening pose/camera position before the beat's action unfolds while preserving
+ * consistent lighting, location, and character identity.
+ */
+export function buildPreVisStartFrameEditInstruction(
+  args: PreVisStartFrameEditArgs
+): string {
+  const custom = normalize(args.customPrompt)
+  if (custom) {
+    return `${START_FRAME_CONTINUITY_PREAMBLE}\n\nStarting action direction (t=0s): ${custom}`
+  }
+
+  const startDelta = normalize(args.startFramePrompt)
+  const stillVisual =
+    normalize(args.shotStillPrompt) ||
+    stripDialoguePrompt(normalize(args.fallbackActionPrompt))
+
+  if (startDelta && stillVisual && startDelta !== stillVisual) {
+    return `${START_FRAME_CONTINUITY_PREAMBLE}\n\nShot context: ${stillVisual}\n\nStarting action direction (t=0s): ${startDelta}`
+  }
+
+  if (startDelta) {
+    return `${START_FRAME_CONTINUITY_PREAMBLE}\n\nStarting action direction (t=0s): ${startDelta}`
+  }
+
+  if (stillVisual) {
+    return `${START_FRAME_CONTINUITY_PREAMBLE}\n\nStage the initial opening pose and camera framing (t=0s) for: ${stillVisual}`
+  }
+
+  return `${START_FRAME_CONTINUITY_PREAMBLE}\n\nStage the initial opening pose and camera framing at the start of the shot (t=0s) while preserving consistent lighting and location.`
+}
 
 /**
  * Minimal directed-edit instruction for Pre-Vis anchored end frames.

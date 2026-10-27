@@ -229,11 +229,22 @@ export interface SceneBeat {
   storyboardImageReferenceStatus?: StoryboardReferenceStatus
   /** One sentence from the adherence check, shown when the status is not a pass. */
   storyboardImageReferenceReason?: string
+  /** Optional F2V start frame illustrating the starting action of the shot (t=0s). */
+  storyboardStartImageUrl?: string
+  storyboardStartImagePrompt?: string
+  storyboardStartImageGcsPath?: string
+  storyboardStartImageTier?: 'draft' | 'final'
+  storyboardStartImageError?: string
+  storyboardStartImageVersions?: import('@/lib/storyboard/mediaVersions').MediaVersion[]
+  storyboardStartImageVersionId?: string
   /** Optional end frame for in-beat motion and FTV interpolation. */
   storyboardEndImageUrl?: string
   storyboardEndImagePrompt?: string
   storyboardEndImageGcsPath?: string
   storyboardEndImageTier?: 'draft' | 'final'
+  storyboardEndImageError?: string
+  storyboardEndImageVersions?: import('@/lib/storyboard/mediaVersions').MediaVersion[]
+  storyboardEndImageVersionId?: string
   audioUrl?: string
   durationSeconds?: number
   needsSplit?: boolean

@@ -157,9 +157,14 @@ export function PreVisFramePromptDialog({
   }, [open, initialContext, defaultModelTier])
 
   const compiledActionFraming = useMemo(() => {
-    if (initialContext?.beat) return composeBeatActionFraming(initialContext.beat)
+    if (initialContext?.beat) {
+      if (slot?.frameRole === 'action-start' || slot?.frameRole === 'end') {
+        return initialContext.seedPrompt?.trim() || composeBeatActionFraming(initialContext.beat)
+      }
+      return composeBeatActionFraming(initialContext.beat)
+    }
     return initialContext?.seedPrompt?.trim() || ''
-  }, [initialContext])
+  }, [initialContext, slot?.frameRole])
 
   const handleSuggestRevisions = async () => {
     if (!projectId || !slot?.beatId) {

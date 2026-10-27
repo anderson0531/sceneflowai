@@ -19,6 +19,7 @@ import {
   applyBeatStoryboardImageToScene,
   applyExpressStoryboardImageToScene,
   applyExpressStoryboardImageErrorToScene,
+  clearBeatStoryboardStartImageFromScene,
 } from '@/lib/script/beatMigration'
 import type { SceneBeat } from '@/lib/script/segmentTypes'
 import { beatStillDirectionFingerprint } from '@/lib/script/beatDirectionFingerprint'
@@ -930,5 +931,50 @@ describe('applyBeatStoryboardImageToScene', () => {
     expect(beat.storyboardImageTier).toBe('draft')
     expect(beat.storyboardImageVersionId).toBe(draftId)
     expect(restored.imageUrl).toBe('https://example.com/draft.jpg')
+  })
+
+  it('stores and clears Start Frame (frameRole: action-start) independently of Shot Still and End Frame', () => {
+    const scene = {
+      imageUrl: 'https://example.com/shot-still.jpg',
+      beats: [
+        {
+          beatId: 'bt_0',
+          sequenceIndex: 0,
+          kind: 'action',
+          actionDescription: 'Gideon reaches across the desk.',
+          storyboardImageUrl: 'https://example.com/shot-still.jpg',
+          storyboardImagePrompt: 'Representative shot still',
+          storyboardEndImageUrl: 'https://example.com/end-frame.jpg',
+          storyboardEndImagePrompt: 'Ending pose at t = T',
+        },
+      ],
+    }
+
+    const withStartFrame = applyBeatStoryboardImageToScene(
+      scene,
+      0,
+      'https://example.com/action-start.jpg',
+      {
+        frameRole: 'action-start',
+        imageTier: 'final',
+        imagePrompt: 'Starting pose at t = 0s before reaching across the desk',
+      }
+    )
+
+    const beat = getSceneBeats(withStartFrame)[0]
+    expect(beat.storyboardImageUrl).toBe('https://example.com/shot-still.jpg')
+    expect(beat.storyboardStartImageUrl).toBe('https://example.com/action-start.jpg')
+    expect(beat.storyboardStartImagePrompt).toBe(
+      'Starting pose at t = 0s before reaching across the desk'
+    )
+    expect(beat.storyboardStartImageTier).toBe('final')
+    expect(beat.storyboardEndImageUrl).toBe('https://example.com/end-frame.jpg')
+
+    const clearedStart = clearBeatStoryboardStartImageFromScene(withStartFrame, 0)
+    const afterClear = getSceneBeats(clearedStart)[0]
+    expect(afterClear.storyboardStartImageUrl).toBeUndefined()
+    expect(afterClear.storyboardStartImagePrompt).toBeUndefined()
+    expect(afterClear.storyboardImageUrl).toBe('https://example.com/shot-still.jpg')
+    expect(afterClear.storyboardEndImageUrl).toBe('https://example.com/end-frame.jpg')
   })
 })

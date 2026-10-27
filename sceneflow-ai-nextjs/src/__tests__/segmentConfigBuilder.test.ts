@@ -162,6 +162,32 @@ describe('resolveF2VFrameUrls', () => {
       endFrameUrl: 'https://example.com/beat-end.jpg',
     })
   })
+
+  it('prioritizes dedicated storyboardStartImageUrl (Start Frame) over storyboardImageUrl (Shot Still) for F2V', () => {
+    const segment = makeSegment({
+      startFrameUrl: undefined,
+      endFrameUrl: undefined,
+      references: { characterIds: [], sceneRefIds: [], objectRefIds: [] },
+    })
+    const sceneWithThreeFrames = {
+      beats: [
+        {
+          beatId: BEAT_ID,
+          kind: 'action',
+          storyboardImageUrl: 'https://example.com/shot-still.jpg',
+          storyboardStartImageUrl: 'https://example.com/action-start-frame.jpg',
+          storyboardEndImageUrl: 'https://example.com/action-end-frame.jpg',
+        },
+      ],
+    }
+    expect(resolveEffectiveStartFrameUrl(segment, sceneWithThreeFrames)).toBe(
+      'https://example.com/action-start-frame.jpg'
+    )
+    expect(resolveF2VFrameUrls(segment, sceneWithThreeFrames)).toEqual({
+      startFrameUrl: 'https://example.com/action-start-frame.jpg',
+      endFrameUrl: 'https://example.com/action-end-frame.jpg',
+    })
+  })
 })
 
 describe('applyEndFrameUrlToProductionSegments', () => {

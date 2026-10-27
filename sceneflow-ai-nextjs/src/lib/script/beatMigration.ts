@@ -34,6 +34,7 @@ import {
 import { beatStillImageStamp } from '@/lib/script/beatDirectionFingerprint'
 import {
   assignStillUrl,
+  BEAT_ACTION_START_STILL_SLOT,
   BEAT_END_STILL_SLOT,
   BEAT_START_STILL_SLOT,
   DIALOGUE_STILL_SLOT,
@@ -313,6 +314,13 @@ const PERSISTED_BEAT_MEDIA_KEYS = [
   'storyboardImageError',
   'storyboardImageVersions',
   'storyboardImageVersionId',
+  'storyboardStartImageUrl',
+  'storyboardStartImageGcsPath',
+  'storyboardStartImagePrompt',
+  'storyboardStartImageTier',
+  'storyboardStartImageError',
+  'storyboardStartImageVersions',
+  'storyboardStartImageVersionId',
   'storyboardEndImageUrl',
   'storyboardEndImageGcsPath',
   'storyboardEndImagePrompt',
@@ -1378,7 +1386,7 @@ export interface BeatStoryboardImageExtras {
   imagePrompt?: string
   imageGcsPath?: string
   imageTier?: 'draft' | 'final'
-  frameRole?: 'start' | 'end'
+  frameRole?: 'start' | 'action-start' | 'end'
   source?: MediaVersionSource
   restoreVersionId?: string
   /** Pass, drift, or miss from the adherence check. Null clears a previous band. */
@@ -1433,6 +1441,32 @@ export function applyBeatStoryboardImageToScene(
 
   const frameRole = extras?.frameRole ?? 'start'
   const source = extras?.source ?? 'generate'
+
+  if (frameRole === 'action-start') {
+    const stamped = assignStillUrl(
+      beats[beatIndex] as unknown as Record<string, unknown>,
+      BEAT_ACTION_START_STILL_SLOT,
+      imageUrl,
+      stillAssignOptions(extras)
+    )
+    const actionStartTier = tierForAssignedStill(
+      stamped,
+      BEAT_ACTION_START_STILL_SLOT,
+      extras
+    )
+    beats[beatIndex] = {
+      ...stamped,
+      storyboardStartImageError: undefined,
+      ...(actionStartTier ? { storyboardStartImageTier: actionStartTier } : {}),
+      ...(extras?.imageGcsPath
+        ? { storyboardStartImageGcsPath: extras.imageGcsPath }
+        : {}),
+      ...(extras?.imagePrompt
+        ? { storyboardStartImagePrompt: extras.imagePrompt }
+        : {}),
+    } as SceneBeat
+    return applyBeatsToScene(scene, beats)
+  }
 
   if (frameRole === 'end') {
     const stamped = assignStillUrl(
@@ -1502,6 +1536,27 @@ export function applyBeatStoryboardImageToScene(
   return updated
 }
 
+/** Remove the optional F2V start frame (t=0s action start) from a beat. */
+export function clearBeatStoryboardStartImageFromScene(
+  scene: Record<string, unknown>,
+  beatIndex: number
+): Record<string, unknown> {
+  const beats = getSceneBeats(scene)
+  if (!beats[beatIndex]) return scene
+
+  const {
+    storyboardStartImageUrl,
+    storyboardStartImagePrompt,
+    storyboardStartImageGcsPath,
+    storyboardStartImageTier,
+    storyboardStartImageError,
+    ...rest
+  } = beats[beatIndex]
+  beats[beatIndex] = rest as SceneBeat
+
+  return applyBeatsToScene(scene, beats)
+}
+
 /** Remove the optional end frame from a beat. */
 export function clearBeatStoryboardEndImageFromScene(
   scene: Record<string, unknown>,
@@ -1549,7 +1604,7 @@ export function applyExpressStoryboardImageToScene(
     imageTier?: 'draft' | 'final'
     imagePrompt?: string
     imageGcsPath?: string
-    frameRole?: 'start' | 'end'
+    frameRole?: 'start' | 'action-start' | 'end'
     referenceStatus?: StoryboardReferenceStatus | null
     referenceReason?: string | null
   }
@@ -1606,7 +1661,7 @@ export function applyExpressStoryboardImageErrorToScene(
   params: {
     error: string
     beatIndex?: number
-    frameRole?: 'start' | 'end'
+    frameRole?: 'start' | 'action-start' | 'end'
   }
 ): Record<string, unknown> {
   const { error, beatIndex, frameRole = 'start' } = params
@@ -1616,7 +1671,9 @@ export function applyExpressStoryboardImageErrorToScene(
   beats[beatIndex] =
     frameRole === 'end'
       ? { ...beats[beatIndex], storyboardEndImageError: error }
-      : { ...beats[beatIndex], storyboardImageError: error }
+      : frameRole === 'action-start'
+        ? { ...beats[beatIndex], storyboardStartImageError: error }
+        : { ...beats[beatIndex], storyboardImageError: error }
   return applyBeatsToScene(scene, beats)
 }
 
@@ -1718,6 +1775,10 @@ function clearBeatStoryboardFrames(beat: SceneBeat): SceneBeat {
   delete next.storyboardImageTier
   delete next.storyboardImageReferenceStatus
   delete next.storyboardImageReferenceReason
+  delete next.storyboardStartImageUrl
+  delete next.storyboardStartImageGcsPath
+  delete next.storyboardStartImagePrompt
+  delete next.storyboardStartImageTier
   delete next.storyboardEndImageUrl
   delete next.storyboardEndImageGcsPath
   delete next.storyboardEndImagePrompt
@@ -1947,6 +2008,7 @@ export function migrateSceneBeatsToStartFrameOnly(
   let changed = false
   const nextBeats = beats.map((beat) => {
     const startUrl = pickStoryboardString(beat.storyboardImageUrl)
+    const actionStartUrl = pickStoryboardString(beat.storyboardStartImageUrl)
     const endUrl = pickStoryboardString(beat.storyboardEndImageUrl)
     const hasEndFields =
       !!endUrl ||
@@ -1956,8 +2018,8 @@ export function migrateSceneBeatsToStartFrameOnly(
 
     if (!hasEndFields) return beat
 
-    // Preserve valid, distinct End Frames when Start Frame is also present (F2V support)
-    if (startUrl && endUrl && endUrl !== startUrl) {
+    // Preserve valid, distinct End Frames when Shot Still or Start Frame is also present (F2V support)
+    if ((startUrl || actionStartUrl) && endUrl && endUrl !== startUrl) {
       return beat
     }
 

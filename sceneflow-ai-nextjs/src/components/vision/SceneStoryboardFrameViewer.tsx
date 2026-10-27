@@ -42,7 +42,7 @@ import {
   type StoryboardFrameSlot,
 } from '@/lib/storyboard/types'
 import { getSceneBeats } from '@/lib/script/beatMigration'
-import { buildEndFramePrompt } from '@/lib/scene/deriveSegmentsFromBeats'
+import { buildEndFramePrompt, buildStartFramePrompt } from '@/lib/scene/deriveSegmentsFromBeats'
 import {
   composeBeatActionFraming,
   composePersistedBeatStillPrompt,
@@ -124,7 +124,7 @@ const frameTypeTooltips: Record<FrameTypeFilter, string> = {
 
 type EditingFrame =
   | { kind: 'establishing'; sceneIndex: number; imageUrl: string }
-  | { kind: 'beat'; sceneIndex: number; beatId: string; frameRole?: 'start' | 'end'; imageUrl: string }
+  | { kind: 'beat'; sceneIndex: number; beatId: string; frameRole?: 'start' | 'action-start' | 'end'; imageUrl: string }
   | { kind: 'dialogue'; sceneIndex: number; dialogueIndex: number; imageUrl: string }
   | { kind: 'custom'; sceneIndex: number; customFrameId: string; imageUrl: string }
 
@@ -153,17 +153,19 @@ export interface SceneStoryboardFrameViewerProps {
   onGenerateScene?: (prompt: string) => Promise<void>
   onGenerateDialogueFrame?: (dialogueIndex: number) => Promise<void>
   onGenerateBeatFrame?: (beatId: string) => Promise<void>
+  onGenerateBeatStartFrame?: (beatId: string) => Promise<void>
   onGenerateBeatEndFrame?: (beatId: string) => Promise<void>
   onGenerateBeatFrames?: (beatId: string) => Promise<void>
   onUsePrevEndFrameAsStart?: (beatId: string) => Promise<void>
+  onDeleteBeatStartFrame?: (beatId: string) => Promise<void>
   onDeleteBeatEndFrame?: (beatId: string) => Promise<void>
   onDirectFrame?: (slot: StoryboardFrameSlot) => void
   onDirectorFrame?: (slot: StoryboardFrameSlot) => void
   onUploadDialogueFrame?: (dialogueIndex: number, file: File) => void
-  onUploadBeatFrame?: (beatId: string, file: File, frameRole?: 'start' | 'end') => void
+  onUploadBeatFrame?: (beatId: string, file: File, frameRole?: 'start' | 'action-start' | 'end') => void
   onUploadScene?: (file: File) => void
   onSaveEditedScene?: (imageUrl: string) => void
-  onSaveEditedBeatFrame?: (beatId: string, imageUrl: string, frameRole?: 'start' | 'end') => void
+  onSaveEditedBeatFrame?: (beatId: string, imageUrl: string, frameRole?: 'start' | 'action-start' | 'end') => void
   onRestoreStillVersion?: (slot: StoryboardFrameSlot, versionId: string) => void
   onSaveBeatKenBurns?: (beatId: string, settings: BeatKenBurnsSettings) => void
   onSaveEditedDialogueFrame?: (dialogueIndex: number, imageUrl: string) => void
@@ -207,13 +209,15 @@ interface StoryboardSlotHandlers {
   onGenerate: (prompt: string) => Promise<void>
   onGenerateDialogueFrame?: (dialogueIndex: number) => Promise<void>
   onGenerateBeatFrame?: (beatId: string) => Promise<void>
+  onGenerateBeatStartFrame?: (beatId: string) => Promise<void>
   onGenerateBeatEndFrame?: (beatId: string) => Promise<void>
   onGenerateBeatFrames?: (beatId: string) => Promise<void>
+  onDeleteBeatStartFrame?: (beatId: string) => Promise<void>
   onDeleteBeatEndFrame?: (beatId: string) => Promise<void>
   onDirectFrame?: (slot: StoryboardFrameSlot) => void
   onDirectorFrame?: (slot: StoryboardFrameSlot) => void
   onUploadDialogueFrame?: (dialogueIndex: number, file: File) => void
-  onUploadBeatFrame?: (beatId: string, file: File, frameRole?: 'start' | 'end') => void
+  onUploadBeatFrame?: (beatId: string, file: File, frameRole?: 'start' | 'action-start' | 'end') => void
   onEditFrame?: (frame: EditingFrame) => void
   onRestoreStillVersion?: (slot: StoryboardFrameSlot, versionId: string) => void
   onUpload?: (file: File) => void
@@ -251,8 +255,10 @@ function buildStoryboardSlotFrameProps(
     onGenerate,
     onGenerateDialogueFrame,
     onGenerateBeatFrame,
+    onGenerateBeatStartFrame,
     onGenerateBeatEndFrame,
     onGenerateBeatFrames,
+    onDeleteBeatStartFrame,
     onDeleteBeatEndFrame,
     onDirectFrame,
     onDirectorFrame,
@@ -268,7 +274,10 @@ function buildStoryboardSlotFrameProps(
     generateBlockedReason,
   } = handlers
 
-  const useExpressGenerate = !!routeGenerateToExpress && slot.frameRole !== 'end'
+  const useExpressGenerate =
+    !!routeGenerateToExpress &&
+    slot.frameRole !== 'end' &&
+    slot.frameRole !== 'action-start'
 
   if (slot.kind === 'custom') {
     const genKey = storyboardGeneratingSlotKey(sceneIndex, slot)
@@ -313,7 +322,13 @@ function buildStoryboardSlotFrameProps(
 
   const dialogueIdx = slot.dialogueIndex
   const beatId = slot.beatId
+  const isActionStartFrame = slot.frameRole === 'action-start'
   const isEndFrame = slot.frameRole === 'end'
+  const effectiveBeatRole: 'start' | 'action-start' | 'end' = isActionStartFrame
+    ? 'action-start'
+    : isEndFrame
+      ? 'end'
+      : 'start'
   // Any beat-backed slot is a beat frame, dialogue included. The old action/
   // narration gate sent spoken beats down handleGenerateDialogueFrameImage,
   // which froze the page and skipped the Express dock Regen already uses.
@@ -323,7 +338,11 @@ function buildStoryboardSlotFrameProps(
   const isGeneratingBeatFrame =
     useBeatFrame &&
     (generatingDialogueFrames.has(
-      isEndFrame ? `${sceneIndex}-beat-${beatId}-end` : `${sceneIndex}-beat-${beatId}`
+      isActionStartFrame
+        ? `${sceneIndex}-beat-${beatId}-start`
+        : isEndFrame
+          ? `${sceneIndex}-beat-${beatId}-end`
+          : `${sceneIndex}-beat-${beatId}`
     ) ||
       generatingDialogueFrames.has(`${sceneIndex}-beat-${beatId}-frames`) ||
       isDirectGenerating)
@@ -353,6 +372,14 @@ function buildStoryboardSlotFrameProps(
     imageError: slot.ownImageUrl ? undefined : slot.imageError,
     promptChanged,
     onGenerate: () => {
+      if (isActionStartFrame && useBeatFrame && beatId) {
+        if (onGenerateBeatStartFrame) {
+          void onGenerateBeatStartFrame(beatId)
+        } else if (onGenerateBeatFrames) {
+          void onGenerateBeatFrames(beatId)
+        }
+        return
+      }
       if (isEndFrame && useBeatFrame && beatId) {
         if (onGenerateBeatEndFrame) {
           void onGenerateBeatEndFrame(beatId)
@@ -378,7 +405,7 @@ function buildStoryboardSlotFrameProps(
       onDirectorFrame && useBeatFrame ? () => onDirectorFrame(slot) : undefined,
     onUpload: (file) => {
       if (useBeatFrame && onUploadBeatFrame && beatId) {
-        onUploadBeatFrame(beatId, file, isEndFrame ? 'end' : 'start')
+        onUploadBeatFrame(beatId, file, effectiveBeatRole)
       } else if (isLegacyEstablishingOnly) {
         onUpload?.(file)
       } else if (typeof dialogueIdx === 'number') {
@@ -393,7 +420,7 @@ function buildStoryboardSlotFrameProps(
                 kind: 'beat',
                 sceneIndex,
                 beatId,
-                frameRole: isEndFrame ? 'end' : 'start',
+                frameRole: effectiveBeatRole,
                 imageUrl: url,
               })
             } else if (isLegacyEstablishingOnly && onEditFrame) {
@@ -404,13 +431,24 @@ function buildStoryboardSlotFrameProps(
           }
         : undefined,
     onDelete:
-      isEndFrame && slot.ownImageUrl && onDeleteBeatEndFrame && beatId
+      isActionStartFrame && slot.ownImageUrl && onDeleteBeatStartFrame && beatId
         ? () => {
-            if (!window.confirm('Clear the End Frame for this shot?')) return
-            void onDeleteBeatEndFrame(beatId)
+            if (!window.confirm('Clear the Start Frame for this shot?')) return
+            void onDeleteBeatStartFrame(beatId)
           }
-        : undefined,
-    generateLabel: useExpressGenerate ? 'Stills Agent' : isEndFrame ? 'Generate End Frame' : undefined,
+        : isEndFrame && slot.ownImageUrl && onDeleteBeatEndFrame && beatId
+          ? () => {
+              if (!window.confirm('Clear the End Frame for this shot?')) return
+              void onDeleteBeatEndFrame(beatId)
+            }
+          : undefined,
+    generateLabel: useExpressGenerate
+      ? 'Stills Agent'
+      : isActionStartFrame
+        ? 'Generate Start Frame'
+        : isEndFrame
+          ? 'Generate End Frame'
+          : undefined,
     useExpressGenerateIcon: useExpressGenerate,
     imageVersions: slot.imageVersions,
     imageVersionId: slot.imageVersionId,
@@ -491,9 +529,11 @@ export function SceneStoryboardFrameViewer({
   onGenerateScene,
   onGenerateDialogueFrame,
   onGenerateBeatFrame,
+  onGenerateBeatStartFrame,
   onGenerateBeatEndFrame,
   onGenerateBeatFrames,
   onUsePrevEndFrameAsStart,
+  onDeleteBeatStartFrame,
   onDeleteBeatEndFrame,
   onDirectFrame,
   onDirectorFrame,
@@ -528,7 +568,7 @@ export function SceneStoryboardFrameViewer({
   const tStillPolicy = useTranslations('production.direction.stillPolicy')
   const [collapsed, setCollapsed] = useState(false)
   const [selectedFrameKey, setSelectedFrameKey] = useState<string | null>(null)
-  const [activeBeatFrameRole, setActiveBeatFrameRole] = useState<'start' | 'end'>('start')
+  const [activeBeatFrameRole, setActiveBeatFrameRole] = useState<'start' | 'action-start' | 'end'>('start')
   const [frameAttention, setFrameAttention] = useState<FrameAttentionFilter>('all')
   const [frameType, setFrameType] = useState<FrameTypeFilter>('all')
   const [generatingDialogueFrames, setGeneratingDialogueFrames] = useState<Set<string>>(new Set())
@@ -647,7 +687,9 @@ export function SceneStoryboardFrameViewer({
     if (activeBeatIndex <= 0) return undefined
     const prev = sceneBeats[activeBeatIndex - 1]
     const prevEndOrStartUrl =
-      prev?.storyboardEndImageUrl?.trim() || prev?.storyboardImageUrl?.trim()
+      prev?.storyboardEndImageUrl?.trim() ||
+      prev?.storyboardStartImageUrl?.trim() ||
+      prev?.storyboardImageUrl?.trim()
     if (!prev || !prevEndOrStartUrl) return undefined
     return {
       beat: prev,
@@ -657,6 +699,39 @@ export function SceneStoryboardFrameViewer({
       hasOwnEndFrame: !!prev.storyboardEndImageUrl?.trim(),
     }
   }, [activeBeatIndex, sceneBeats])
+
+  const actionStartSlotForActiveBeat = useMemo<StoryboardFrameSlot | null>(() => {
+    if (!previewSlot?.beatId) return null
+    const fromAll = allFrameSlots.find(
+      (slot) => slot.beatId === previewSlot.beatId && slot.frameRole === 'action-start'
+    )
+    if (fromAll) {
+      const fallbackPrompt =
+        fromAll.storyboardImagePrompt?.trim() ||
+        (activeBeat ? buildStartFramePrompt(activeBeat) : '')
+      return {
+        ...fromAll,
+        storyboardImagePrompt: fallbackPrompt || fromAll.storyboardImagePrompt,
+      }
+    }
+    if (!activeBeat) return null
+    const ownStart = activeBeat.storyboardStartImageUrl?.trim() || undefined
+    return {
+      ...previewSlot,
+      key: beatFrameSlotKey(previewSlot.beatId, 'action-start'),
+      label: `${previewSlot.label} (Start)`,
+      frameRole: 'action-start',
+      ownImageUrl: ownStart,
+      displayImageUrl: ownStart,
+      isPlaceholder: false,
+      isMissing: !ownStart,
+      storyboardImagePrompt:
+        activeBeat.storyboardStartImagePrompt?.trim() || buildStartFramePrompt(activeBeat),
+      imageError: activeBeat.storyboardStartImageError,
+      imageVersions: activeBeat.storyboardStartImageVersions,
+      imageVersionId: activeBeat.storyboardStartImageVersionId,
+    }
+  }, [previewSlot, allFrameSlots, activeBeat])
 
   const endSlotForActiveBeat = useMemo<StoryboardFrameSlot | null>(() => {
     if (!previewSlot?.beatId) return null
@@ -693,11 +768,14 @@ export function SceneStoryboardFrameViewer({
 
   const activeDisplaySlot = useMemo<StoryboardFrameSlot | null>(() => {
     if (!previewSlot) return null
+    if (previewSlot.beatId && activeBeatFrameRole === 'action-start' && actionStartSlotForActiveBeat) {
+      return actionStartSlotForActiveBeat
+    }
     if (previewSlot.beatId && activeBeatFrameRole === 'end' && endSlotForActiveBeat) {
       return endSlotForActiveBeat
     }
     return previewSlot
-  }, [previewSlot, activeBeatFrameRole, endSlotForActiveBeat])
+  }, [previewSlot, activeBeatFrameRole, actionStartSlotForActiveBeat, endSlotForActiveBeat])
 
   const previewBeatKenBurns = useMemo(() => {
     if (!previewSlot?.beatId) return undefined
@@ -713,6 +791,9 @@ export function SceneStoryboardFrameViewer({
     if (slotToInspect.beatId) {
       const beat = sceneBeats.find((entry) => entry.beatId === slotToInspect.beatId)
       if (beat) {
+        if (slotToInspect.frameRole === 'action-start') {
+          return (beat.storyboardStartImagePrompt?.trim() || buildStartFramePrompt(beat)).trim()
+        }
         if (slotToInspect.frameRole === 'end') {
           return (beat.storyboardEndImagePrompt?.trim() || buildEndFramePrompt(beat)).trim()
         }
@@ -951,6 +1032,13 @@ export function SceneStoryboardFrameViewer({
             await wrapGenerate(key, () => onGenerateBeatFrame(beatId))
           }
         : undefined,
+      onGenerateBeatStartFrame: onGenerateBeatStartFrame
+        ? async (beatId) => {
+            if (blockedByReferences()) return
+            const key = `${sceneIndex}-beat-${beatId}-start`
+            await wrapGenerate(key, () => onGenerateBeatStartFrame(beatId))
+          }
+        : undefined,
       onGenerateBeatEndFrame: onGenerateBeatEndFrame
         ? async (beatId) => {
             if (blockedByReferences()) return
@@ -965,6 +1053,7 @@ export function SceneStoryboardFrameViewer({
             await wrapGenerate(key, () => onGenerateBeatFrames(beatId))
           }
         : undefined,
+      onDeleteBeatStartFrame,
       onDeleteBeatEndFrame,
       onDirectFrame: onDirectFrame
         ? (slot) => {
@@ -1018,8 +1107,10 @@ export function SceneStoryboardFrameViewer({
       onGenerateScene,
       onGenerateDialogueFrame,
       onGenerateBeatFrame,
+      onGenerateBeatStartFrame,
       onGenerateBeatEndFrame,
       onGenerateBeatFrames,
+      onDeleteBeatStartFrame,
       onDeleteBeatEndFrame,
       onDirectFrame,
       onDirectorFrame,
@@ -1408,7 +1499,7 @@ export function SceneStoryboardFrameViewer({
                               ? 'bg-indigo-600/80 text-white shadow-sm'
                               : 'text-slate-300 hover:text-white hover:bg-slate-700/50'
                           )}
-                          title="Opening action frame (t = 0s) for this shot"
+                          title="Pre-Vis Shot Still illustrating the representative action of the shot"
                         >
                           <span
                             className={cn(
@@ -1418,6 +1509,25 @@ export function SceneStoryboardFrameViewer({
                                 : previewSlot.displayImageUrl
                                   ? 'bg-amber-400'
                                   : 'bg-slate-500'
+                            )}
+                          />
+                          Shot Still
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setActiveBeatFrameRole('action-start')}
+                          className={cn(
+                            'inline-flex items-center gap-1.5 rounded px-2.5 py-1 text-xs font-medium transition-colors',
+                            activeBeatFrameRole === 'action-start'
+                              ? 'bg-indigo-600/80 text-white shadow-sm'
+                              : 'text-slate-300 hover:text-white hover:bg-slate-700/50'
+                          )}
+                          title="Starting action frame (t = 0s) directed to illustrate the opening staging and pose of the shot with consistent lighting and location"
+                        >
+                          <span
+                            className={cn(
+                              'h-1.5 w-1.5 rounded-full',
+                              actionStartSlotForActiveBeat?.ownImageUrl ? 'bg-emerald-400' : 'bg-slate-500'
                             )}
                           />
                           Start Frame
@@ -1431,7 +1541,7 @@ export function SceneStoryboardFrameViewer({
                               ? 'bg-indigo-600/80 text-white shadow-sm'
                               : 'text-slate-300 hover:text-white hover:bg-slate-700/50'
                           )}
-                          title="Concluding action frame (t = T) anchored to the Start Frame for Frame-to-Video (F2V)"
+                          title="Ending action frame (t = T) directed to illustrate the concluding staging and pose of the shot with consistent lighting and location"
                         >
                           <span
                             className={cn(
@@ -1456,7 +1566,7 @@ export function SceneStoryboardFrameViewer({
                                 : `Copy Shot ${prevBeatForContinuity.beatNumber}'s frame as this shot's Start Frame for continuity`
                             }
                             onClick={() => {
-                              setActiveBeatFrameRole('start')
+                              setActiveBeatFrameRole('action-start')
                               void onUsePrevEndFrameAsStart(previewSlot.beatId!)
                             }}
                           >
@@ -1465,7 +1575,7 @@ export function SceneStoryboardFrameViewer({
                             {prevBeatForContinuity.hasOwnEndFrame ? 'End' : 'Frame'} as Start
                           </Button>
                         )}
-                        {(onGenerateBeatFrames || onGenerateBeatEndFrame) && (
+                        {(onGenerateBeatFrames || onGenerateBeatStartFrame || onGenerateBeatEndFrame) && (
                           <Button
                             type="button"
                             variant="outline"
@@ -1476,15 +1586,21 @@ export function SceneStoryboardFrameViewer({
                                 `${sceneIndex}-beat-${previewSlot.beatId}-frames`
                               ) ||
                               generatingDialogueFrames.has(
+                                `${sceneIndex}-beat-${previewSlot.beatId}-start`
+                              ) ||
+                              generatingDialogueFrames.has(
                                 `${sceneIndex}-beat-${previewSlot.beatId}-end`
                               )
                             }
                             className="h-7 text-[11px] border-indigo-500/50 text-indigo-200 bg-indigo-500/15 hover:bg-indigo-500/25"
-                            title="Expertly generate the Start Frame and End Frame of action for Frame-to-Video (F2V)"
+                            title="Expertly generate the Start Frame (t = 0s starting action) and End Frame (t = T ending action) with consistent lighting and location for Frame-to-Video (F2V)"
                             onClick={() => {
                               if (blockedByReferences()) return
                               const bId = previewSlot.beatId!
                               if (onGenerateBeatFrames) {
+                                if (activeBeatFrameRole === 'start') {
+                                  setActiveBeatFrameRole('action-start')
+                                }
                                 void slotHandlers.onGenerateBeatFrames?.(bId)
                               } else if (onGenerateBeatEndFrame) {
                                 setActiveBeatFrameRole('end')
@@ -1496,13 +1612,17 @@ export function SceneStoryboardFrameViewer({
                               `${sceneIndex}-beat-${previewSlot.beatId}-frames`
                             ) ||
                             generatingDialogueFrames.has(
+                              `${sceneIndex}-beat-${previewSlot.beatId}-start`
+                            ) ||
+                            generatingDialogueFrames.has(
                               `${sceneIndex}-beat-${previewSlot.beatId}-end`
                             ) ? (
                               <>
                                 <Loader className="w-3 h-3 mr-1 animate-spin" />
                                 Generating Frames…
                               </>
-                            ) : previewSlot.ownImageUrl && endSlotForActiveBeat?.ownImageUrl ? (
+                            ) : actionStartSlotForActiveBeat?.ownImageUrl &&
+                              endSlotForActiveBeat?.ownImageUrl ? (
                               <>
                                 <Sparkles className="w-3 h-3 mr-1" />
                                 Regen Frames
@@ -1535,9 +1655,11 @@ export function SceneStoryboardFrameViewer({
                           expandable
                           className="w-full"
                           directorTitle={
-                            activeDisplaySlot.frameRole === 'end'
-                              ? 'Direct End Frame'
-                              : 'Direct Shot'
+                            activeDisplaySlot.frameRole === 'action-start'
+                              ? 'Direct Start Frame'
+                              : activeDisplaySlot.frameRole === 'end'
+                                ? 'Direct End Frame'
+                                : 'Direct Shot'
                           }
                         />
                       ) : (
@@ -1560,6 +1682,11 @@ export function SceneStoryboardFrameViewer({
                         {activeDisplaySlot.beatNumber != null && (
                           <span className="shrink-0 text-[10px] px-1.5 py-0.5 rounded-full bg-slate-700/50 text-slate-300 border border-slate-600/40 font-medium tabular-nums">
                             Shot {activeDisplaySlot.beatNumber}
+                          </span>
+                        )}
+                        {activeDisplaySlot.frameRole === 'action-start' && (
+                          <span className="shrink-0 text-[10px] px-1.5 py-0.5 rounded bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 font-medium">
+                            Start Frame
                           </span>
                         )}
                         {activeDisplaySlot.frameRole === 'end' && (

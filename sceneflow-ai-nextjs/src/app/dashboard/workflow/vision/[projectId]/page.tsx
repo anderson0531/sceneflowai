@@ -76,6 +76,7 @@ import {
   applyEstablishingImageToScene,
   applyExpressStoryboardImageErrorToScene,
   applyExpressStoryboardImageToScene,
+  clearBeatStoryboardStartImageFromScene,
   ensureSceneBeats,
   getSceneBeats,
   isBeatExcluded,
@@ -2888,7 +2889,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       sceneIndex: number,
       beatIndex: number,
       imageUrl: string,
-      frameRole: 'start' | 'end' = 'start'
+      frameRole: 'start' | 'action-start' | 'end' = 'start'
     ) => {
       const scenes = scriptRef.current?.script?.scenes
       if (!Array.isArray(scenes) || !scenes[sceneIndex]) return
@@ -2901,7 +2902,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       if (beat?.beatId) {
         if (frameRole === 'end') {
           syncBeatEndFrameToProduction(sceneId, beat.beatId, imageUrl)
-        } else {
+        } else if (frameRole === 'action-start' || !beat.storyboardStartImageUrl?.trim()) {
           syncBeatStartFrameToProduction(sceneId, beat.beatId, imageUrl)
         }
       }
@@ -2929,7 +2930,8 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         applyBeatStoryboardImageToScene(
           updatedScenes[sceneIdx],
           rawBeatIdx,
-          newUrl
+          newUrl,
+          { frameRole: 'action-start', source: 'edit' }
         )
       )
 
@@ -12771,6 +12773,41 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     await handleGenerateBeatFrameImage(sceneIdx, beatId, referenceSelection)
   }
 
+  /** Action Start Frame (t=0s) regen, on the same scoped Express run. */
+  const handleGenerateBeatStartFrameImage = async (sceneIdx: number, beatId: string) => {
+    if (expressRunningRef.current || isExpressRunning) {
+      try { const { toast } = require('sonner'); toast.info('A scene generation is already running') } catch {}
+      return
+    }
+
+    const scene = script?.script?.scenes?.[sceneIdx]
+    if (!scene) {
+      try { const { toast } = require('sonner'); toast.error('Scene not found') } catch {}
+      return
+    }
+
+    const rawBeatIdx = resolveRawBeatIndex(scene, { beatId })
+    const beat = rawBeatIdx === undefined ? undefined : getSceneBeats(scene)[rawBeatIdx]
+    if (!beat) {
+      try { const { toast } = require('sonner'); toast.error('Shot not found') } catch {}
+      return
+    }
+
+    if (blockedByMissingSceneReferences(sceneIdx, beat)) return
+
+    await handleExpressSceneGenerate(sceneIdx, 'en', {
+      scope: 'selected',
+      includeEndFrames: false,
+      selectedFrameKeys: [beatFrameSlotKey(beatId, 'action-start')],
+      quality: frameGenerationQuality,
+      generationMode: frameGenerationMode,
+    })
+  }
+
+  const handleRequestGenerateBeatStartFrame = async (sceneIdx: number, beatId: string) => {
+    await handleGenerateBeatStartFrameImage(sceneIdx, beatId)
+  }
+
   /** End-frame regen, on the same scoped Express run as the start frame. */
   const handleGenerateBeatEndFrameImage = async (sceneIdx: number, beatId: string) => {
     if (expressRunningRef.current || isExpressRunning) {
@@ -12793,10 +12830,10 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
 
     if (blockedByMissingSceneReferences(sceneIdx, beat)) return
 
-    // Express interpolates the end frame from the start frame, so there has to
+    // Express interpolates the end frame from the start frame (or shot still fallback), so there has to
     // be one to interpolate from.
-    if (!beat.storyboardImageUrl?.trim()) {
-      try { const { toast } = require('sonner'); toast.error('Generate the start frame first') } catch {}
+    if (!beat.storyboardStartImageUrl?.trim() && !beat.storyboardImageUrl?.trim()) {
+      try { const { toast } = require('sonner'); toast.error('Generate the start frame or shot still first') } catch {}
       return
     }
 
@@ -12814,8 +12851,8 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
   }
 
   /**
-   * Generate both Start Frame and End Frame of action for a shot (or just the End Frame
-   * if the Start Frame already exists and the End Frame is missing).
+   * Generate both Start Frame (t=0s) and End Frame (t=T) of action for a shot,
+   * preserving the Pre-Vis Shot Still (`storyboardImageUrl`).
    */
   const handleRequestGenerateBeatFrames = async (sceneIdx: number, beatId: string) => {
     if (expressRunningRef.current || isExpressRunning) {
@@ -12838,18 +12875,21 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
 
     if (blockedByMissingSceneReferences(sceneIdx, beat)) return
 
-    const hasStart = Boolean(beat.storyboardImageUrl?.trim())
+    const hasActionStart = Boolean(beat.storyboardStartImageUrl?.trim())
+    const anchorStartUrl =
+      beat.storyboardStartImageUrl?.trim() || beat.storyboardImageUrl?.trim()
     const hasEnd = Boolean(
       beat.storyboardEndImageUrl?.trim() &&
-        beat.storyboardEndImageUrl.trim() !== beat.storyboardImageUrl?.trim()
+        beat.storyboardEndImageUrl.trim() !== anchorStartUrl
     )
 
-    // If start frame exists and end frame does not, keep the start frame and generate the end frame.
-    // Otherwise (neither exists, or both exist and user clicked "Regen Frames"), generate both start + end.
+    // If a dedicated Start Frame (t=0s) already exists and End Frame does not, keep Start Frame and generate End Frame.
+    // Otherwise (neither exists, or only Shot Still exists, or both exist and user clicked "Regen Frames"),
+    // generate both the dedicated Start Frame (t=0s) and End Frame (t=T) without overwriting the Shot Still.
     const selectedFrameKeys =
-      hasStart && !hasEnd
+      hasActionStart && !hasEnd
         ? [beatFrameSlotKey(beatId, 'end')]
-        : [beatFrameSlotKey(beatId, 'start'), beatFrameSlotKey(beatId, 'end')]
+        : [beatFrameSlotKey(beatId, 'action-start'), beatFrameSlotKey(beatId, 'end')]
 
     await handleExpressSceneGenerate(sceneIdx, 'en', {
       scope: 'selected',
@@ -12861,8 +12901,8 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
   }
 
   /**
-   * Cross-shot continuity: copy the previous shot's End Frame (or Start Frame fallback)
-   * into the current shot's Start Frame.
+   * Cross-shot continuity: copy the previous shot's End Frame (or Start Frame / Shot Still fallback)
+   * into the current shot's dedicated Start Frame (`storyboardStartImageUrl`), preserving the Shot Still.
    */
   const handleUsePrevEndFrameAsStart = async (sceneIdx: number, beatId: string) => {
     if (!script?.script?.scenes) return
@@ -12878,7 +12918,9 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     const beats = getSceneBeats(scene)
     const prevBeat = beats[rawBeatIdx - 1]
     const prevUrl =
-      prevBeat?.storyboardEndImageUrl?.trim() || prevBeat?.storyboardImageUrl?.trim()
+      prevBeat?.storyboardEndImageUrl?.trim() ||
+      prevBeat?.storyboardStartImageUrl?.trim() ||
+      prevBeat?.storyboardImageUrl?.trim()
     if (!prevUrl) {
       try { const { toast } = require('sonner'); toast.error('Previous shot has no frame to copy') } catch {}
       return
@@ -12888,7 +12930,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       idx === sceneIdx
         ? stampPreVisContentHash(
             applyBeatStoryboardImageToScene(s, rawBeatIdx, prevUrl, {
-              frameRole: 'start',
+              frameRole: 'action-start',
               source: 'edit',
             })
           )
@@ -12911,6 +12953,52 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     } catch (err) {
       console.error('[handleUsePrevEndFrameAsStart] Failed to save:', err)
       try { const { toast } = require('sonner'); toast.error('Failed to update start frame') } catch {}
+    }
+  }
+
+  const handleDeleteBeatStartFrame = async (sceneIdx: number, beatId: string) => {
+    if (!script?.script?.scenes) return
+    const scene = script.script.scenes[sceneIdx]
+    const rawBeatIdx = scene ? resolveRawBeatIndex(scene, { beatId }) : undefined
+    if (rawBeatIdx === undefined) return
+
+    const updatedScenes = script.script.scenes.map((s: any, idx: number) => {
+      if (idx !== sceneIdx) return s
+      return stampPreVisContentHash(clearBeatStoryboardStartImageFromScene(s, rawBeatIdx))
+    })
+
+    setScript((prev: any) => ({
+      ...prev,
+      script: { ...prev?.script, scenes: updatedScenes },
+    }))
+
+    try {
+      await persistVisionScriptScenes(updatedScenes, 'handleDeleteBeatStartFrame')
+      const sceneId = scene.id || scene.sceneId || `scene-${sceneIdx}`
+      const beat = getSceneBeats(scene)[rawBeatIdx]
+      const fallbackStillUrl = beat?.storyboardImageUrl?.trim() || null
+      applySceneProductionUpdate(sceneId, (current) => {
+        if (!current?.segments?.length) return current
+        return {
+          ...current,
+          segments: current.segments.map((seg) =>
+            seg.beatId === beatId
+              ? {
+                  ...seg,
+                  startFrameUrl: fallbackStillUrl,
+                  references: {
+                    ...seg.references,
+                    startFrameUrl: fallbackStillUrl,
+                  },
+                }
+              : seg
+          ),
+        }
+      })
+      try { const { toast } = require('sonner'); toast.success('Start frame removed') } catch {}
+    } catch (err) {
+      console.error('[handleDeleteBeatStartFrame] Failed to save:', err)
+      try { const { toast } = require('sonner'); toast.error('Failed to remove start frame') } catch {}
     }
   }
 
@@ -13203,8 +13291,8 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         payload.frameType = 'beat'
         payload.beatId = slot.beatId
         payload.beatIndex = rawBeatIdx
-        if (slot.frameRole === 'end') {
-          payload.frameRole = 'end'
+        if (slot.frameRole === 'end' || slot.frameRole === 'action-start') {
+          payload.frameRole = slot.frameRole
         }
         let workingScene = scene as Record<string, unknown>
         if (options.beatReferenceSelection) {
@@ -13214,59 +13302,71 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
             options.beatReferenceSelection
           )
         }
-        try {
-          const rewriteResponse = await fetch('/api/scene/direct-beat-still', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              projectId,
-              sceneIndex,
-              beatId: slot.beatId,
-              mode: options.userDirection?.trim() ? 'rewrite' : 'optimize',
-              userDirection: options.userDirection,
-              visualSetup: options.visualSetup,
-              talentDirection: options.talentDirection,
-            }),
-          })
-          const rewriteData = await rewriteResponse.json()
-          if (rewriteResponse.ok && rewriteData.patch) {
-            const saved = await persistStillDirectorPatch(
-              sceneIndex,
-              slot.beatId,
-              rewriteData.patch as StillDirectorPatch,
-              workingScene
+        if (slot.frameRole !== 'action-start' && slot.frameRole !== 'end') {
+          try {
+            const rewriteResponse = await fetch('/api/scene/direct-beat-still', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                projectId,
+                sceneIndex,
+                beatId: slot.beatId,
+                mode: options.userDirection?.trim() ? 'rewrite' : 'optimize',
+                userDirection: options.userDirection,
+                visualSetup: options.visualSetup,
+                talentDirection: options.talentDirection,
+              }),
+            })
+            const rewriteData = await rewriteResponse.json()
+            if (rewriteResponse.ok && rewriteData.patch) {
+              const saved = await persistStillDirectorPatch(
+                sceneIndex,
+                slot.beatId,
+                rewriteData.patch as StillDirectorPatch,
+                workingScene
+              )
+              if (!saved) {
+                finishDirectFrameRun({ status: 'error', error: 'Failed to save directed still' })
+                return
+              }
+            } else if (options.beatReferenceSelection) {
+              const latestScript = scriptRef.current || script
+              const updatedScenes = [...(latestScript.script.scenes || [])]
+              updatedScenes[sceneIndex] = workingScene
+              const nextScript = {
+                ...latestScript,
+                script: { ...latestScript.script, scenes: updatedScenes },
+              }
+              scriptRef.current = nextScript
+              setScript(nextScript)
+            }
+          } catch (rewriteError) {
+            console.warn(
+              '[Direct Frame] Still rewrite failed, generating from composed direction:',
+              rewriteError
             )
-            if (!saved) {
-              finishDirectFrameRun({ status: 'error', error: 'Failed to save directed still' })
-              return
+            if (options.beatReferenceSelection) {
+              const latestScript = scriptRef.current || script
+              const updatedScenes = [...(latestScript.script.scenes || [])]
+              updatedScenes[sceneIndex] = workingScene
+              const nextScript = {
+                ...latestScript,
+                script: { ...latestScript.script, scenes: updatedScenes },
+              }
+              scriptRef.current = nextScript
+              setScript(nextScript)
             }
-          } else if (options.beatReferenceSelection) {
-            const latestScript = scriptRef.current || script
-            const updatedScenes = [...(latestScript.script.scenes || [])]
-            updatedScenes[sceneIndex] = workingScene
-            const nextScript = {
-              ...latestScript,
-              script: { ...latestScript.script, scenes: updatedScenes },
-            }
-            scriptRef.current = nextScript
-            setScript(nextScript)
           }
-        } catch (rewriteError) {
-          console.warn(
-            '[Direct Frame] Still rewrite failed, generating from composed direction:',
-            rewriteError
-          )
-          if (options.beatReferenceSelection) {
-            const latestScript = scriptRef.current || script
-            const updatedScenes = [...(latestScript.script.scenes || [])]
-            updatedScenes[sceneIndex] = workingScene
-            const nextScript = {
-              ...latestScript,
-              script: { ...latestScript.script, scenes: updatedScenes },
-            }
-            scriptRef.current = nextScript
-            setScript(nextScript)
+        } else if (options.beatReferenceSelection) {
+          const latestScript = scriptRef.current || script
+          const updatedScenes = [...(latestScript.script.scenes || [])]
+          updatedScenes[sceneIndex] = workingScene
+          const nextScript = {
+            ...latestScript,
+            script: { ...latestScript.script, scenes: updatedScenes },
           }
+          scriptRef.current = nextScript
+          setScript(nextScript)
         }
       } else if (slot.kind === 'custom' && slot.customFrameId) {
         payload.frameType = 'custom'
@@ -13320,7 +13420,12 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
             payload.beatIndex as number,
             data.imageUrl,
             {
-              frameRole: slot.frameRole === 'end' ? 'end' : 'start',
+              frameRole:
+                slot.frameRole === 'end'
+                  ? 'end'
+                  : slot.frameRole === 'action-start'
+                    ? 'action-start'
+                    : 'start',
               imagePrompt: data.prompt || '',
               referenceStatus: data.referenceStatus,
               referenceReason: data.referenceReason,
@@ -13377,7 +13482,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           `scene-${sceneIndex}`
         if (slot.frameRole === 'end') {
           syncBeatEndFrameToProduction(sceneId, payload.beatId, data.imageUrl)
-        } else {
+        } else if (slot.frameRole === 'action-start' || !beat?.storyboardStartImageUrl?.trim()) {
           syncBeatStartFrameToProduction(sceneId, payload.beatId, data.imageUrl)
         }
       }
@@ -13517,7 +13622,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     sceneIndex: number,
     beatId: string,
     file: File,
-    frameRole: 'start' | 'end' = 'start'
+    frameRole: 'start' | 'action-start' | 'end' = 'start'
   ) => {
     if (!script?.script?.scenes) return
 
@@ -13546,14 +13651,17 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       const saved = await persistVisionScriptScenes(updatedScenes, 'handleUploadBeatFrame')
       if (saved) {
         const sceneId = scene.id || scene.sceneId || `scene-${sceneIndex}`
+        const beat = getSceneBeats(scene)[rawBeatIdx]
         if (frameRole === 'end') {
           syncBeatEndFrameToProduction(sceneId, beatId, uploadedUrl)
-        } else {
+        } else if (frameRole === 'action-start' || !beat?.storyboardStartImageUrl?.trim()) {
           syncBeatStartFrameToProduction(sceneId, beatId, uploadedUrl)
         }
         try {
           const { toast } = require('sonner')
-          toast.success(`${frameRole === 'end' ? 'End' : 'Start'} frame uploaded`)
+          toast.success(
+            `${frameRole === 'end' ? 'End frame' : frameRole === 'action-start' ? 'Start frame' : 'Shot still'} uploaded`
+          )
         } catch {}
       } else {
         try { const { toast } = require('sonner'); toast.error('Failed to save shot frame') } catch {}
@@ -13571,7 +13679,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     sceneIndex: number,
     beatId: string,
     newImageUrl: string,
-    frameRole: 'start' | 'end' = 'start'
+    frameRole: 'start' | 'action-start' | 'end' = 'start'
   ) => {
     if (!script?.script?.scenes) return
 
@@ -13599,14 +13707,17 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     try {
       await persistVisionScriptScenes(updatedScenes, 'handleSaveEditedBeatFrame')
       const sceneId = scene.id || scene.sceneId || `scene-${sceneIndex}`
+      const beat = getSceneBeats(scene)[rawBeatIdx]
       if (frameRole === 'end') {
         syncBeatEndFrameToProduction(sceneId, beatId, newImageUrl)
-      } else {
+      } else if (frameRole === 'action-start' || !beat?.storyboardStartImageUrl?.trim()) {
         syncBeatStartFrameToProduction(sceneId, beatId, newImageUrl)
       }
       try {
         const { toast } = require('sonner')
-        toast.success(`${frameRole === 'end' ? 'End' : 'Start'} frame updated`)
+        toast.success(
+          `${frameRole === 'end' ? 'End frame' : frameRole === 'action-start' ? 'Start frame' : 'Shot still'} updated`
+        )
       } catch {}
     } catch (saveError) {
       console.error('[handleSaveEditedBeatFrame] Failed to save:', saveError)
@@ -13638,7 +13749,12 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       if (rawBeatIdx === undefined) return
       updated = applyBeatStoryboardImageToScene(scene, rawBeatIdx, '', {
         restoreVersionId: versionId,
-        frameRole: slot.frameRole === 'end' ? 'end' : 'start',
+        frameRole:
+          slot.frameRole === 'end'
+            ? 'end'
+            : slot.frameRole === 'action-start'
+              ? 'action-start'
+              : 'start',
         source: 'restore',
       })
     } else if (typeof slot.dialogueIndex === 'number') {
@@ -13672,12 +13788,17 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         const restoredUrl =
           slot.frameRole === 'end'
             ? beatRow?.storyboardEndImageUrl
-            : beatRow?.storyboardImageUrl
+            : slot.frameRole === 'action-start'
+              ? beatRow?.storyboardStartImageUrl
+              : beatRow?.storyboardImageUrl
         if (restoredUrl) {
           const sceneId = scene.id || scene.sceneId || `scene-${sceneIndex}`
           if (slot.frameRole === 'end') {
             syncBeatEndFrameToProduction(sceneId, slot.beatId, restoredUrl)
-          } else {
+          } else if (
+            slot.frameRole === 'action-start' ||
+            !beatRow?.storyboardStartImageUrl?.trim()
+          ) {
             syncBeatStartFrameToProduction(sceneId, slot.beatId, restoredUrl)
           }
         }
@@ -15971,7 +16092,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         imageTier?: 'draft' | 'final'
         imagePrompt?: string
         gcsPath?: string
-        frameRole?: 'start' | 'end'
+        frameRole?: 'start' | 'action-start' | 'end'
         referenceStatus?: 'pass' | 'drift' | 'miss'
         referenceReason?: string | null
       }
@@ -16002,7 +16123,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     (
       sceneIndex: number,
       error: string,
-      params?: { beatIndex?: number; frameRole?: 'start' | 'end' }
+      params?: { beatIndex?: number; frameRole?: 'start' | 'action-start' | 'end' }
     ) => {
       if (typeof params?.beatIndex !== 'number') return
       setScript((prev: any) => {
@@ -16674,7 +16795,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
 
       const updateOverlayBeatFrame = (
         beatIndex: number,
-        frameRole: 'start' | 'end',
+        frameRole: 'start' | 'action-start' | 'end',
         status: ExpressBeatFrameStatus,
         error?: string
       ) => {
@@ -18531,9 +18652,11 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                 onVideoRunCancelReady={handleVideoRunCancelReady}
                 onSceneRenderQueued={handleSceneRenderQueued}
                 onGenerateBeatFrame={handleRequestGenerateBeatFrame}
+                onGenerateBeatStartFrame={handleRequestGenerateBeatStartFrame}
                 onGenerateBeatEndFrame={handleRequestGenerateBeatEndFrame}
                 onGenerateBeatFrames={handleRequestGenerateBeatFrames}
                 onUsePrevEndFrameAsStart={handleUsePrevEndFrameAsStart}
+                onDeleteBeatStartFrame={handleDeleteBeatStartFrame}
                 onDeleteBeatEndFrame={handleDeleteBeatEndFrame}
                 onGenerateDialogueFrame={handleGenerateDialogueFrameImage}
                 onUploadBeatFrame={handleUploadBeatFrame}

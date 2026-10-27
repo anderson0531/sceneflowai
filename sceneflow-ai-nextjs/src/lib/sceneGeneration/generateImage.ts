@@ -63,8 +63,8 @@ export interface GenerateSceneImageParams {
   objectReferences?: Array<Record<string, unknown>>
   /** Id of scene.storyboardFrames entry when frameType is 'custom'. */
   customFrameId?: string
-  /** Beat frame role: start (default) or end (motion/FTV pair). */
-  frameRole?: 'start' | 'end'
+  /** Beat frame role: start (Pre-Vis still), action-start (F2V t=0s start frame), or end (F2V t=T end frame). */
+  frameRole?: 'start' | 'action-start' | 'end'
   /** Start frame URL when generating an end frame (image conditioning). */
   startFrameUrl?: string
   /** In-memory scene from Express orchestrator (merged over DB scene at sceneIndex). */

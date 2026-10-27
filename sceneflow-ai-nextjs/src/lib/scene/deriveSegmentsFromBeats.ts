@@ -46,6 +46,63 @@ function shortenVisualPrompt(text: string, maxLen = 160): string {
   return `${trimmed.slice(0, maxLen).trim()}…`
 }
 
+/**
+ * Build a directed prompt for the F2V Start Frame (t=0s):
+ * illustrates the starting action, opening staging, and initial pose at the beginning
+ * of the shot (before the beat's movement unfolds), with consistent lighting and location.
+ */
+export function buildStartFramePrompt(beat: SceneBeat): string {
+  const d = beat.beatDirection
+  const startCues: string[] = []
+
+  const baseAction =
+    actionFramingFromStoredPrompt(beat.storyboardImagePrompt) ||
+    (beat.kind === 'action' ? beat.actionDescription?.trim() : undefined) ||
+    beat.line?.replace(/\[[^\]]*\]/g, '').trim()
+
+  if (d?.shotType?.trim() || d?.cameraAngle?.trim()) {
+    const cam = [d.shotType?.trim(), d.cameraAngle?.trim()].filter(Boolean).join(', ')
+    if (cam) startCues.push(`Opening framing (${cam})`)
+  }
+  if (d?.cameraMovement?.trim() && d.cameraMovement.trim().toLowerCase() !== 'static') {
+    startCues.push(`Camera positioned at initial starting point before ${d.cameraMovement.trim()}`)
+  }
+  if (d?.blocking?.trim()) {
+    startCues.push(`Initial opening posture and staging at the start of action: ${d.blocking.trim()}`)
+  } else if (baseAction) {
+    startCues.push(`Starting action state (t=0s) at the onset of: ${shortenVisualPrompt(baseAction)}`)
+  }
+  if (d?.propInteraction?.trim()) {
+    startCues.push(`Initial prop position before interaction completes: ${d.propInteraction.trim()}`)
+  }
+  if (d?.emotion?.trim() || d?.gaze?.trim()) {
+    const expr = [
+      d.emotion?.trim() ? `initial ${d.emotion.trim()} expression` : '',
+      d.gaze?.trim() ? `gaze directed ${d.gaze.trim()}` : '',
+    ]
+      .filter(Boolean)
+      .join(', ')
+    if (expr) startCues.push(expr)
+  }
+  if (d?.lightingAccent?.trim()) {
+    startCues.push(`Consistent lighting and location (${d.lightingAccent.trim()})`)
+  } else {
+    startCues.push('Maintain consistent lighting, shadows, and location architecture')
+  }
+
+  if (startCues.length > 0) {
+    return startCues.join('. ')
+  }
+
+  if (beat.kind === 'action') {
+    return `Starting action state (t=0s): subject positioned at opening stance just as action begins (${beat.actionDescription ?? 'initial staging'}), with consistent lighting and location`
+  }
+  if (beat.kind === 'narration') {
+    return `Opening frame state (t=0s) establishing the initial composition before movement begins, with consistent lighting and location`
+  }
+  return `Starting action state (t=0s): subject poised at opening speaking posture and expression before delivering line, with consistent lighting and location`
+}
+
 export function buildEndFramePrompt(beat: SceneBeat): string {
   const d = beat.beatDirection
   const endCues: string[] = []
@@ -72,27 +129,33 @@ export function buildEndFramePrompt(beat: SceneBeat): string {
   }
 
   if (endCues.length > 0) {
+    if (d?.lightingAccent?.trim()) {
+      endCues.push(`Consistent lighting and location (${d.lightingAccent.trim()})`)
+    } else {
+      endCues.push('Maintain consistent lighting and location')
+    }
     return endCues.join('. ')
   }
 
   const startVisual =
+    actionFramingFromStoredPrompt(beat.storyboardStartImagePrompt) ||
     actionFramingFromStoredPrompt(beat.storyboardImagePrompt) ||
     (beat.kind === 'action' ? beat.actionDescription?.trim() : undefined) ||
     beat.line?.replace(/\[[^\]]*\]/g, '').trim()
 
   if (beat.kind === 'action') {
     if (startVisual) {
-      return `Concluding pose and spatial progression at end of action while preserving set and character identity: ${shortenVisualPrompt(startVisual)}`
+      return `Concluding pose and spatial progression at end of action while preserving consistent lighting, location, and character identity: ${shortenVisualPrompt(startVisual)}`
     }
-    return `Motion completion: ${beat.actionDescription ?? 'subtle camera movement and completed action pose'}`
+    return `Motion completion: ${beat.actionDescription ?? 'subtle camera movement and completed action pose'}, with consistent lighting and location`
   }
   if (beat.kind === 'narration') {
     if (startVisual) {
-      return `Concluding frame progression while preserving composition: ${shortenVisualPrompt(startVisual)}`
+      return `Concluding frame progression while preserving composition, lighting, and location: ${shortenVisualPrompt(startVisual)}`
     }
-    return `Visual progression matching narration mood; concluding environmental state`
+    return `Visual progression matching narration mood; concluding environmental state with consistent lighting and location`
   }
-  return `Subject settles into concluding reaction pose and expression after speaking; weight shifted slightly with natural follow-through`
+  return `Subject settles into concluding reaction pose and expression after speaking; weight shifted slightly with natural follow-through, maintaining consistent lighting and location`
 }
 
 function beatDirectionSummary(beat: SceneBeat): string {
@@ -156,7 +219,10 @@ function beatToSegment(
 
   const generationMethod: VideoGenerationMethod = opts.generationMethod ?? 'REF'
 
-  const preVisStartUrl = beat.storyboardImageUrl?.trim() || undefined
+  const preVisStartUrl =
+    beat.storyboardStartImageUrl?.trim() ||
+    beat.storyboardImageUrl?.trim() ||
+    undefined
   const preVisEndUrl = beat.storyboardEndImageUrl?.trim() || undefined
   const fullyAnchored = !!(preVisStartUrl && preVisEndUrl)
 
@@ -208,6 +274,7 @@ function beatToSegment(
       objectRefIds: [],
     },
     startFramePrompt:
+      actionFramingFromStoredPrompt(beat.storyboardStartImagePrompt) ||
       actionFramingFromStoredPrompt(beat.storyboardImagePrompt) ||
       composeBeatActionFraming(beat) ||
       beat.actionDescription ||

@@ -118,12 +118,13 @@ import {
 import {
   resolveStoryboardGeneration,
   beatFrameNeedsGeneration,
+  beatActionStartFrameNeedsGeneration,
   beatEndFrameNeedsGeneration,
   dialogueFrameNeedsGeneration,
   type StoryboardQuality,
 } from '../storyboard/storyboardQuality'
 import { isStoryboardNoCharacterScene } from '../script/sceneClassification'
-import { buildEndFramePrompt } from '../scene/deriveSegmentsFromBeats'
+import { buildEndFramePrompt, buildStartFramePrompt } from '../scene/deriveSegmentsFromBeats'
 import { ensureLanguageStreamTranslations } from '../storyboard/playerTranslations.server'
 
 const EXPRESS_SKIP_LIKENESS = { skipLikenessValidation: true }
@@ -202,6 +203,12 @@ function isBeatStartSlotSelected(beat: SceneBeat, selectedKeys: Set<string> | nu
   if (!selectedKeys) return true
   if (!beat.beatId) return false
   return selectedKeys.has(beatFrameSlotKey(beat.beatId, 'start'))
+}
+
+function isBeatActionStartSlotSelected(beat: SceneBeat, selectedKeys: Set<string> | null): boolean {
+  if (!selectedKeys) return true
+  if (!beat.beatId) return false
+  return selectedKeys.has(beatFrameSlotKey(beat.beatId, 'action-start'))
 }
 
 function isBeatEndSlotSelected(beat: SceneBeat, selectedKeys: Set<string> | null): boolean {
@@ -719,7 +726,7 @@ async function emitOrphanBeatFailures(
   ctx: SceneRunContext,
   beatIndices: number[],
   pool: AdaptiveBeatPoolResult,
-  frameRole: 'start' | 'end',
+  frameRole: 'start' | 'action-start' | 'end',
   rateLimitedFailures: ExpressRateLimitedFailure[],
   onBeatFailed?: (beatIdx: number) => void
 ): Promise<string | undefined> {
@@ -753,7 +760,7 @@ function emitImageFailure(
   ctx: SceneRunContext,
   err: unknown,
   beatIndex?: number,
-  frameRole: 'start' | 'end' = 'start'
+  frameRole: 'start' | 'action-start' | 'end' = 'start'
 ): { error: string; persisted: Promise<void> } {
   const { sceneIndex, sceneNumber, scene } = ctx
   const error = formatExpressImageErrorForUser(err)
@@ -973,9 +980,16 @@ function sceneNeedsBeatImages(scene: any, options: ExpressOptions): boolean {
       return true
     }
     if (
+      (options.includeEndFrames || selectedKeys) &&
+      isBeatActionStartSlotSelected(beat, selectedKeys) &&
+      beatActionStartFrameNeedsGeneration(beat, genCtx)
+    ) {
+      return true
+    }
+    if (
       options.includeEndFrames &&
       isBeatEndSlotSelected(beat, selectedKeys) &&
-      beat.storyboardImageUrl?.trim() &&
+      (beat.storyboardStartImageUrl?.trim() || beat.storyboardImageUrl?.trim()) &&
       beatEndFrameNeedsGeneration(beat, genCtx)
     ) {
       return true
@@ -1000,7 +1014,7 @@ function stillGenerationFields(options: ExpressOptions): Record<string, unknown>
 function logImageLaneAdmission(
   trafficCop: ExpressTrafficCop,
   beatIdx: number,
-  frameRole: 'start' | 'end'
+  frameRole: 'start' | 'action-start' | 'end'
 ): void {
   const snap = trafficCop.getSnapshot().image
   console.log(
@@ -1180,6 +1194,196 @@ async function generateSingleBeatImage(
   return { imageUrl: result.imageUrl }
 }
 
+async function generateSingleBeatActionStartImage(
+  ctx: SceneRunContext,
+  options: ExpressOptions,
+  project: any,
+  baseUrl: string,
+  authCookie: string | undefined,
+  emit: ExpressEmit,
+  trafficCop: ExpressTrafficCop,
+  beatIdx: number,
+  artStyle: string
+): Promise<{ imageUrl: string }> {
+  if (ctx.signal?.aborted) {
+    throw createFrameAgentCancelledError()
+  }
+  const { sceneIndex, sceneNumber, scene } = ctx
+  const imageParams = getExpressImageParams(options)
+  const sceneExcludesCharacters = isStoryboardNoCharacterScene(scene, sceneNumber)
+  const beats = getSceneBeats(scene)
+  const beat = beats[beatIdx]
+  if (!beat) return { imageUrl: '' }
+
+  const startPrompt = buildStartFramePrompt(beat)
+  const verifiedBeatRefs = resolveExpressBeatReferences({
+    beat,
+    scene,
+    sceneIndex,
+    beatIdx,
+    sceneNumber,
+    project,
+    promptText: startPrompt,
+  })
+  if (verifiedBeatRefs?.selection && !verifiedBeatRefs.fromSavedSelection) {
+    persistBeatReferenceSelection(scene, beatIdx, verifiedBeatRefs.selection)
+  }
+  const characterPolicy = resolveBeatCharacterPolicy({
+    sceneExcludesCharacters,
+    beat,
+    promptText: startPrompt,
+    project,
+    beatIdx,
+    sceneNumber,
+  })
+  const beatRefPayload = buildExpressBeatRefPayload(verifiedBeatRefs?.api ?? null, characterPolicy)
+  const shotStillUrl = beat.storyboardImageUrl?.trim() || undefined
+
+  const result = await trafficCop.runInLane('image', () => {
+    logImageLaneAdmission(trafficCop, beatIdx, 'action-start')
+    safeEmit(emit, {
+      type: 'frame-start',
+      sceneIndex,
+      sceneNumber,
+      beatIndex: beatIdx,
+      frameRole: 'action-start',
+    })
+    return generateSceneImage({
+      projectId: options.projectId,
+      sceneIndex,
+      baseUrl,
+      authCookie,
+      quality: imageParams.quality,
+      storyboardQuality: imageParams.storyboardQuality,
+      artStyle,
+      frameType: 'beat',
+      frameRole: 'action-start',
+      ...(shotStillUrl ? { startFrameUrl: shotStillUrl } : {}),
+      beatIndex: beatIdx,
+      ...(beat?.beatId ? { beatId: beat.beatId } : {}),
+      sceneOverride: scene,
+      ...beatRefPayload,
+      customPrompt: startPrompt,
+      useAIPrompt: false,
+      modelTier: imageParams.modelTier,
+      animaticDraft: imageParams.animaticDraft,
+      skipLikenessValidation: imageParams.skipLikenessValidation,
+      ...stillGenerationFields(options),
+      ...(ctx.lookbook ? { lookbook: ctx.lookbook } : {}),
+      ...(ctx.signal ? { signal: ctx.signal } : {}),
+    })
+  })
+
+  await persistBeatActionStartFrame(scene, beatIdx, result, imageParams.storyboardQuality)
+  safeEmit(emit, {
+    type: 'phase-done',
+    sceneIndex,
+    sceneNumber,
+    phase: 'image',
+    ok: true,
+    imageUrl: result.imageUrl,
+    beatIndex: beatIdx,
+    frameRole: 'action-start',
+    imageTier: imageParams.storyboardQuality,
+    imagePrompt: result.imagePrompt ?? undefined,
+    gcsPath: result.gcsPath ?? undefined,
+  })
+  console.log(
+    `[expressOrchestrator] Beat ${beatIdx + 1} scene ${sceneNumber} action-start frame — ${imageParams.storyboardQuality}`
+  )
+  return { imageUrl: result.imageUrl }
+}
+
+async function runSupplementalActionStartFrames(
+  ctx: SceneRunContext,
+  options: ExpressOptions,
+  project: any,
+  baseUrl: string,
+  authCookie: string | undefined,
+  emit: ExpressEmit,
+  trafficCop: ExpressTrafficCop,
+  beats: SceneBeat[],
+  artStyle: string,
+  genCtx: ReturnType<typeof getBeatGenerationContext>,
+  failedStartBeatIndices: Set<number>,
+  rateLimitedFailures: ExpressRateLimitedFailure[]
+): Promise<{ hadFailure: boolean; lastError?: string; lastImageUrl?: string }> {
+  const { scene, sceneIndex, sceneNumber } = ctx
+  const selectedKeys = getSelectedFrameKeySet(options)
+  const hasExplicitActionStartSelection =
+    !!selectedKeys && Array.from(selectedKeys).some((k) => k.endsWith('-start'))
+  if (!options.includeEndFrames && !hasExplicitActionStartSelection) {
+    return { hadFailure: false, lastImageUrl: scene.imageUrl }
+  }
+
+  const startBeatsToGenerate: number[] = []
+  for (let beatIdx = 0; beatIdx < beats.length; beatIdx++) {
+    if (failedStartBeatIndices.has(beatIdx)) continue
+    const beat = beats[beatIdx]
+    if (isBeatExcluded(beat)) continue
+    if (!isBeatActionStartSlotSelected(beat, selectedKeys)) continue
+    if (!beatActionStartFrameNeedsGeneration(beat, genCtx)) continue
+    startBeatsToGenerate.push(beatIdx)
+  }
+
+  if (startBeatsToGenerate.length === 0) {
+    return { hadFailure: false, lastImageUrl: scene.imageUrl }
+  }
+
+  let lastImageUrl = scene.imageUrl as string | undefined
+  let lastError: string | undefined
+  let hadFailure = false
+
+  const pool = await runAdaptiveBeatPool(
+    startBeatsToGenerate,
+    async (beatIdx) => {
+      const result = await generateSingleBeatActionStartImage(
+        ctx,
+        options,
+        project,
+        baseUrl,
+        authCookie,
+        emit,
+        trafficCop,
+        beatIdx,
+        artStyle
+      )
+      lastImageUrl = result.imageUrl
+    },
+    buildAdaptiveBeatPoolOptions(emit, options, ctx.signal, (beatIdx, err) => {
+      hadFailure = true
+      const failure = emitImageFailure(emit, ctx, err, beatIdx, 'action-start')
+      lastError = failure.error
+      if (isExpressImageRateLimitError(err)) {
+        recordRateLimitedFailure(rateLimitedFailures, {
+          sceneIndex,
+          sceneNumber,
+          phase: 'image',
+          beatIndex: beatIdx,
+          frameRole: 'action-start',
+          error: failure.error,
+        })
+      }
+      return failure.persisted
+    })
+  )
+
+  const orphanError = await emitOrphanBeatFailures(
+    emit,
+    ctx,
+    startBeatsToGenerate,
+    pool,
+    'action-start',
+    rateLimitedFailures
+  )
+  if (orphanError) {
+    hadFailure = true
+    lastError = orphanError
+  }
+
+  return { hadFailure, lastError, lastImageUrl }
+}
+
 async function generateSingleBeatEndImage(
   ctx: SceneRunContext,
   options: ExpressOptions,
@@ -1306,7 +1510,9 @@ async function runSupplementalEndFrames(
     const beat = beats[beatIdx]
     if (isBeatExcluded(beat)) continue
     if (!isBeatEndSlotSelected(beat, selectedKeys)) continue
-    if (!beat.storyboardImageUrl?.trim()) continue
+    const anchorUrl =
+      beat.storyboardStartImageUrl?.trim() || beat.storyboardImageUrl?.trim()
+    if (!anchorUrl) continue
     if (!beatEndFrameNeedsGeneration(beat, genCtx)) continue
     endBeatsToGenerate.push(beatIdx)
   }
@@ -1322,7 +1528,10 @@ async function runSupplementalEndFrames(
   const pool = await runAdaptiveBeatPool(
     endBeatsToGenerate,
     async (beatIdx) => {
-      const startUrl = getSceneBeats(scene)[beatIdx]?.storyboardImageUrl?.trim()
+      const currentBeat = getSceneBeats(scene)[beatIdx]
+      const startUrl =
+        currentBeat?.storyboardStartImageUrl?.trim() ||
+        currentBeat?.storyboardImageUrl?.trim()
       if (!startUrl) {
         throw new Error(`Missing start frame URL for beat ${beatIdx + 1}`)
       }
@@ -1456,6 +1665,21 @@ async function runBeatImages(
     }
   }
 
+  const actionStartResult = await runSupplementalActionStartFrames(
+    ctx,
+    options,
+    project,
+    baseUrl,
+    authCookie,
+    emit,
+    trafficCop,
+    getSceneBeats(scene),
+    artStyle,
+    genCtx,
+    failedStartBeatIndices,
+    rateLimitedFailures
+  )
+
   const endResult = await runSupplementalEndFrames(
     ctx,
     options,
@@ -1472,9 +1696,12 @@ async function runBeatImages(
   )
 
   return {
-    hadFailure: hadFailure || endResult.hadFailure,
-    lastError: endResult.lastError ?? lastError,
-    lastImageUrl: endResult.lastImageUrl ?? lastImageUrl,
+    hadFailure:
+      hadFailure || actionStartResult.hadFailure || endResult.hadFailure,
+    lastError:
+      endResult.lastError ?? actionStartResult.lastError ?? lastError,
+    lastImageUrl:
+      endResult.lastImageUrl ?? actionStartResult.lastImageUrl ?? lastImageUrl,
   }
 }
 
@@ -1532,16 +1759,54 @@ function writeBeatFrameErrorToScene(
   scene: any,
   beatIndex: number,
   error: string,
-  frameRole: 'start' | 'end' = 'start'
+  frameRole: 'start' | 'action-start' | 'end' = 'start'
 ): void {
   const beats = getSceneBeats(scene)
   if (!beats[beatIndex]) return
   beats[beatIndex] =
     frameRole === 'end'
       ? { ...beats[beatIndex], storyboardEndImageError: error }
-      : { ...beats[beatIndex], storyboardImageError: error }
+      : frameRole === 'action-start'
+        ? { ...beats[beatIndex], storyboardStartImageError: error }
+        : { ...beats[beatIndex], storyboardImageError: error }
   const updated = applyBeatsToScene(scene, beats)
   Object.assign(scene, updated)
+}
+
+function writeBeatActionStartFrameToScene(
+  scene: any,
+  beatIndex: number,
+  result: { imageUrl: string; gcsPath?: string | null; imagePrompt?: string | null },
+  tier: StoryboardQuality
+): void {
+  const updated = applyBeatStoryboardImageToScene(scene, beatIndex, result.imageUrl, {
+    frameRole: 'action-start',
+    imagePrompt: result.imagePrompt ?? undefined,
+    imageGcsPath: result.gcsPath ?? undefined,
+    imageTier: tier,
+    source: 'express',
+  })
+  Object.assign(scene, updated)
+}
+
+async function persistBeatActionStartFrame(
+  scene: any,
+  beatIndex: number,
+  result: { imageUrl: string; gcsPath?: string | null; imagePrompt?: string | null },
+  tier: StoryboardQuality
+): Promise<void> {
+  const previous = beatPersistChains.get(scene) ?? Promise.resolve()
+  let release!: () => void
+  const gate = new Promise<void>((resolve) => {
+    release = resolve
+  })
+  beatPersistChains.set(scene, previous.then(() => gate))
+  await previous
+  try {
+    writeBeatActionStartFrameToScene(scene, beatIndex, result, tier)
+  } finally {
+    release()
+  }
 }
 
 function writeBeatEndFrameToScene(
@@ -1634,6 +1899,7 @@ export async function planSceneBeatKeyframes(
       ? activeEntries.filter(
           ({ beat }) =>
             isBeatStartSlotSelected(beat, selectedKeys) ||
+            isBeatActionStartSlotSelected(beat, selectedKeys) ||
             isBeatEndSlotSelected(beat, selectedKeys)
         )
       : activeEntries

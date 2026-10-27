@@ -15,6 +15,7 @@ import { resolveBeatFrameGenerationContext } from '@/lib/vision/beatFrameGenerat
 import { resolveWardrobeIdForCharacterInScene } from '@/lib/character/characterReferenceAssembly'
 import { actionFramingFromStoredPrompt } from '@/lib/imagen/structuredStillPrompt'
 import { storedPromptMatchesDirection } from '@/lib/intelligence/beat-sequence-planner-fallback'
+import { buildEndFramePrompt, buildStartFramePrompt } from '@/lib/scene/deriveSegmentsFromBeats'
 
 export interface PreVisFramePromptContext {
   frameLabel: string
@@ -211,16 +212,25 @@ export function resolvePreVisFramePromptContext(args: {
       // A regen seeded from a prompt composed before the current direction just
       // reproduces the frame the user is trying to change.
       const storedSeedIsCurrent = storedPromptMatchesDirection(beat)
+      const seedPrompt =
+        slot.frameRole === 'action-start'
+          ? actionFramingFromStoredPrompt(slot.storyboardImagePrompt) ||
+            actionFramingFromStoredPrompt(beat.storyboardStartImagePrompt) ||
+            buildStartFramePrompt(beat)
+          : slot.frameRole === 'end'
+            ? actionFramingFromStoredPrompt(slot.storyboardImagePrompt) ||
+              actionFramingFromStoredPrompt(beat.storyboardEndImagePrompt) ||
+              buildEndFramePrompt(beat)
+            : (storedSeedIsCurrent &&
+                (actionFramingFromStoredPrompt(slot.storyboardImagePrompt) ||
+                  actionFramingFromStoredPrompt(beat.storyboardImagePrompt))) ||
+              beat.beatDirection?.frozenMoment?.trim() ||
+              beat.actionDescription ||
+              beat.line ||
+              ''
       return {
         frameLabel: slot.label,
-        seedPrompt:
-          (storedSeedIsCurrent &&
-            (actionFramingFromStoredPrompt(slot.storyboardImagePrompt) ||
-              actionFramingFromStoredPrompt(beat.storyboardImagePrompt))) ||
-          beat.beatDirection?.frozenMoment?.trim() ||
-          beat.actionDescription ||
-          beat.line ||
-          '',
+        seedPrompt,
         visualSetup: beatVisualSetup,
         talentDirection: beatTalentDirection,
         artStyle,

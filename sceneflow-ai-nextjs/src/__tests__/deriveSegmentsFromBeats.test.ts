@@ -5,6 +5,8 @@ import {
   mergeDerivedSegmentsWithExisting,
   needsProductionDerive,
   productionDeriveAttemptKey,
+  buildStartFramePrompt,
+  buildEndFramePrompt,
 } from '@/lib/scene/deriveSegmentsFromBeats'
 import type { SceneBeat } from '@/lib/script/segmentTypes'
 
@@ -543,5 +545,25 @@ describe('needsProductionDerive', () => {
     const derived = deriveSegmentsFromBeats(scene, { existingSegments: [stored[0], upload] })
     expect(derived.segments.map((segment) => segment.beatId)).toEqual(['bt_1', 'bt_6'])
     expect(derived.segments[1].activeAssetUrl).toBe('https://cdn.example/upload.mp4')
+  })
+
+  it('buildStartFramePrompt and buildEndFramePrompt direct starting and ending action with consistent lighting and location', () => {
+    const beat: SceneBeat = {
+      beatId: 'bt_action_1',
+      sequenceIndex: 0,
+      kind: 'action',
+      actionDescription: 'Marcus turns from the rain-streaked window toward the desk.',
+      beatDirection: {
+        shotType: 'Medium Shot',
+        blocking: 'Marcus pivots from window to desk',
+        frozenMoment: 'Marcus mid-turn toward the desk',
+      },
+    }
+    const startPrompt = buildStartFramePrompt(beat)
+    const endPrompt = buildEndFramePrompt(beat)
+    expect(startPrompt).toMatch(/Initial opening posture and staging at the start of action/i)
+    expect(startPrompt).toMatch(/consistent lighting, shadows, and location/i)
+    expect(endPrompt).toMatch(/Concluding action state/i)
+    expect(endPrompt).toMatch(/consistent lighting and location/i)
   })
 })

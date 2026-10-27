@@ -3,6 +3,7 @@ import {
   resolveQuickFrameActionPrompt,
   resolveAdvancedFramePromptBaseline,
   shouldInitializeFramePromptState,
+  buildPreVisStartFrameEditInstruction,
   buildPreVisEndFrameEditInstruction,
   isVisualEndFrameDelta,
 } from '@/lib/vision/framePromptBaseline'
@@ -93,6 +94,17 @@ describe('framePromptBaseline', () => {
     })
     expect(instruction).toContain('Nebula lines coalescing')
     expect(instruction).not.toContain('ignored when custom')
+  })
+
+  it('buildPreVisStartFrameEditInstruction directs the t = 0s starting action with consistent lighting and location', () => {
+    const instruction = buildPreVisStartFrameEditInstruction({
+      shotStillPrompt: 'Elara stands at the console, hand raised to press the red switch.',
+      startFramePrompt: 'Elara stands poised before raising her hand toward the console.',
+    })
+    expect(instruction).toContain('starting action of the shot (t=0s')
+    expect(instruction).toContain('consistent lighting and location')
+    expect(instruction).toContain('Starting action direction (t=0s):')
+    expect(instruction).toContain('poised before raising her hand')
   })
 
   it('initializes dialog state only when opening or context changes', () => {

@@ -106,15 +106,44 @@ export function beatFrameNeedsGeneration(
   return !url
 }
 
+/** Whether a beat F2V action-start frame (t=0s) should be generated for the current Express pass. */
+export function beatActionStartFrameNeedsGeneration(
+  beat: Pick<
+    SceneBeat,
+    'storyboardStartImageUrl' | 'storyboardStartImageTier'
+  >,
+  ctx: BeatFrameGenerationContext
+): boolean {
+  const startUrl = beat.storyboardStartImageUrl?.trim()
+  const effectiveTier = resolveEffectiveStoryboardTier(beat.storyboardStartImageTier)
+
+  if (ctx.missingOnly) {
+    return !startUrl
+  }
+
+  if (ctx.regenerate) return true
+
+  if (ctx.finalizeOnly) {
+    if (!startUrl) return true
+    return effectiveTier !== 'final'
+  }
+
+  return !startUrl
+}
+
 /** Whether a beat end frame should be generated for the current Express pass. */
 export function beatEndFrameNeedsGeneration(
   beat: Pick<
     SceneBeat,
-    'storyboardImageUrl' | 'storyboardEndImageUrl' | 'storyboardEndImageTier'
+    | 'storyboardImageUrl'
+    | 'storyboardStartImageUrl'
+    | 'storyboardEndImageUrl'
+    | 'storyboardEndImageTier'
   >,
   ctx: BeatFrameGenerationContext
 ): boolean {
-  const startUrl = beat.storyboardImageUrl?.trim()
+  const startUrl =
+    beat.storyboardStartImageUrl?.trim() || beat.storyboardImageUrl?.trim()
   if (!startUrl) return false
 
   const endUrl = beat.storyboardEndImageUrl?.trim()

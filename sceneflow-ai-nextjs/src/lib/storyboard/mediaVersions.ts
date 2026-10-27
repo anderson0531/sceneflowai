@@ -34,6 +34,12 @@ export const BEAT_START_STILL_SLOT: StillSlotSpec = {
   versionIdKey: 'storyboardImageVersionId',
 }
 
+export const BEAT_ACTION_START_STILL_SLOT: StillSlotSpec = {
+  urlKey: 'storyboardStartImageUrl',
+  versionsKey: 'storyboardStartImageVersions',
+  versionIdKey: 'storyboardStartImageVersionId',
+}
+
 export const BEAT_END_STILL_SLOT: StillSlotSpec = {
   urlKey: 'storyboardEndImageUrl',
   versionsKey: 'storyboardEndImageVersions',

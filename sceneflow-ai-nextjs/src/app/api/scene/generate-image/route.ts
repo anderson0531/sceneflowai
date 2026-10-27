@@ -190,8 +190,11 @@ import {
 import { usesFlashDraftTier } from '@/lib/sceneGeneration/animaticImageModel'
 import { getArtStyleNegativeTerms, getArtStylePromptSuffix } from '@/lib/vision/artStyle'
 import { editImageWithGeminiStudio } from '@/lib/gemini/geminiStudioImageClient'
-import { buildEndFramePrompt } from '@/lib/scene/deriveSegmentsFromBeats'
-import { buildPreVisEndFrameEditInstruction } from '@/lib/vision/framePromptBaseline'
+import { buildEndFramePrompt, buildStartFramePrompt } from '@/lib/scene/deriveSegmentsFromBeats'
+import {
+  buildPreVisEndFrameEditInstruction,
+  buildPreVisStartFrameEditInstruction,
+} from '@/lib/vision/framePromptBaseline'
 import { buildSceneStagingText } from '@/lib/vision/frameGenerationContext'
 import {
   buildBeatArcContext,
@@ -864,6 +867,83 @@ async function postGenerateImage(req: NextRequest) {
           )
         }
 
+        if (frameRole === 'action-start') {
+          const beats = getSceneBeats(resolvedScene as Record<string, unknown>)
+          const beat = beats[effectiveBeatIndex]
+          if (!beat) {
+            return NextResponse.json(
+              { success: false, error: 'Beat not found for start frame generation' },
+              { status: 400 }
+            )
+          }
+          const resolvedStillUrl =
+            (typeof startFrameUrl === 'string' && startFrameUrl.trim()) ||
+            beat.storyboardImageUrl?.trim()
+
+          if (resolvedStillUrl) {
+            const startPrompt =
+              (typeof customPrompt === 'string' && customPrompt.trim()) ||
+              buildStartFramePrompt(beat)
+            const durationSeconds =
+              typeof beat.durationSeconds === 'number' && beat.durationSeconds > 0
+                ? beat.durationSeconds
+                : DEFAULT_VEO_CLIP_DURATION
+            const shotStillPrompt =
+              actionFramingFromStoredPrompt(beat.storyboardImagePrompt) ||
+              beat.storyboardImagePrompt?.trim() ||
+              beat.actionDescription?.trim() ||
+              startPrompt
+            const instruction = buildPreVisStartFrameEditInstruction({
+              shotStillPrompt,
+              startFramePrompt: startPrompt,
+              customPrompt: typeof customPrompt === 'string' ? customPrompt : undefined,
+            })
+
+            const editResult = await editImageWithGeminiStudio({
+              sourceImage: resolvedStillUrl,
+              instruction,
+              aspectRatio: '16:9',
+              imageSize: '1K',
+              editIntent: 'keyframeEnd',
+              segmentDurationSeconds: durationSeconds,
+              negativePrompt: mergeBeatFrameNegativePrompt(),
+            })
+
+            const imageUrl = await uploadImageToBlob(
+              editResult.imageBase64,
+              `projects/${projectId}/scenes/${sceneIndex}/beats/${beat.beatId || effectiveBeatIndex}-start-${Date.now()}.png`
+            )
+
+            try {
+              await quoteAndCharge({
+                userId: userId!,
+                projectId: projectId || null,
+                quoteInput: {
+                  kind: 'still',
+                  imageCount: 1,
+                  floorCredits: IMAGE_CREDITS.FRAME_GENERATION,
+                },
+                meta: { label: 'beat_start_frame', sceneIndex, beatIndex: effectiveBeatIndex },
+              })
+            } catch (chargeError: unknown) {
+              console.error('[Scene Image] Failed to charge start-frame credits:', chargeError)
+            }
+
+            return NextResponse.json({
+              success: true,
+              imageUrl,
+              prompt: instruction,
+              frameType: 'beat',
+              frameRole: 'action-start',
+              beatIndex: effectiveBeatIndex,
+              model: 'vertex-gemini',
+              provider: 'vertex-gemini',
+              storage: 'vercel-blob',
+              creditsCharged: IMAGE_CREDITS.FRAME_GENERATION,
+            })
+          }
+        }
+
         if (frameRole === 'end') {
           const beats = getSceneBeats(resolvedScene as Record<string, unknown>)
           const beat = beats[effectiveBeatIndex]
@@ -875,6 +955,7 @@ async function postGenerateImage(req: NextRequest) {
           }
           const resolvedStartUrl =
             (typeof startFrameUrl === 'string' && startFrameUrl.trim()) ||
+            beat.storyboardStartImageUrl?.trim() ||
             beat.storyboardImageUrl?.trim()
           if (!resolvedStartUrl) {
             return NextResponse.json(
@@ -891,6 +972,7 @@ async function postGenerateImage(req: NextRequest) {
               ? beat.durationSeconds
               : DEFAULT_VEO_CLIP_DURATION
           const startPromptForEnd =
+            beat.storyboardStartImagePrompt?.trim() ||
             actionFramingFromStoredPrompt(beat.storyboardImagePrompt) ||
             beat.storyboardImagePrompt?.trim() ||
             beat.actionDescription?.trim() ||
@@ -3547,9 +3629,10 @@ async function postGenerateImage(req: NextRequest) {
       creditsCharged: CREDIT_COST,
       creditsBalance: newBalance,
       prompt: promptForResponse,
-      frameType: isDialogueFrame ? 'dialogue' : isCustomFrame ? 'custom' : 'establishing',
+      frameType: isDialogueFrame ? 'dialogue' : isCustomFrame ? 'custom' : isBeatFrame ? 'beat' : 'establishing',
       ...(isDialogueFrame ? { dialogueIndex } : {}),
       ...(isCustomFrame ? { customFrameId } : {}),
+      ...(isBeatFrame ? { beatIndex: effectiveBeatIndex, frameRole: frameRole || 'start' } : {}),
     }
 
     console.log('[Scene Image] Generation succeeded', {

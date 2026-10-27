@@ -143,8 +143,8 @@ export interface ExpressPhaseEvent {
   dialogueIndex?: number
   /** Beat index when generating a beat storyboard frame. */
   beatIndex?: number
-  /** Beat frame role when phase === 'image' (start default, end for FTV pair). */
-  frameRole?: 'start' | 'end'
+  /** Beat frame role when phase === 'image' (start default, action-start for t=0s start frame, end for FTV end frame). */
+  frameRole?: 'start' | 'action-start' | 'end'
   /** draft | final tier for storyboardImageTier on the frame. */
   imageTier?: 'draft' | 'final'
   imagePrompt?: string | null
@@ -174,7 +174,7 @@ export interface ExpressRateLimitedFailure {
   phase: 'image' | 'audio'
   beatIndex?: number
   dialogueIndex?: number
-  frameRole?: 'start' | 'end'
+  frameRole?: 'start' | 'action-start' | 'end'
   error?: string
 }
 
@@ -187,14 +187,14 @@ export type ExpressFrameNode =
         sceneIndex: number
         beatIndex?: number
         dialogueIndex?: number
-        frameRole?: 'start' | 'end'
+        frameRole?: 'start' | 'action-start' | 'end'
         prompt?: string
       }
     }
 
 export function expressFrameNodeKey(
   sceneIndex: number,
-  opts: { beatIndex?: number; dialogueIndex?: number; frameRole?: 'start' | 'end' }
+  opts: { beatIndex?: number; dialogueIndex?: number; frameRole?: 'start' | 'action-start' | 'end' }
 ): string {
   if (typeof opts.beatIndex === 'number') {
     return `scene:${sceneIndex}:beat:${opts.beatIndex}:${opts.frameRole ?? 'start'}`
@@ -216,7 +216,7 @@ export type ExpressEvent =
       sceneIndex: number
       sceneNumber: number
       beatIndex: number
-      frameRole?: 'start' | 'end'
+      frameRole?: 'start' | 'action-start' | 'end'
     }
   | ExpressPhaseEvent
   | {

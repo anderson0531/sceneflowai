@@ -7,6 +7,7 @@ import {
   type StoryboardFrameSlot,
 } from '@/lib/storyboard/types'
 import {
+  beatActionStartFrameNeedsGeneration,
   beatEndFrameNeedsGeneration,
   beatFrameNeedsGeneration,
   type BeatFrameGenerationContext,
@@ -18,7 +19,7 @@ export interface ExpressBeatFrameItem {
   key: string
   label: string
   beatIndex: number
-  frameRole: 'start' | 'end'
+  frameRole: 'start' | 'action-start' | 'end'
   status: ExpressBeatFrameStatus
   error?: string
 }
@@ -74,7 +75,12 @@ export interface BuildExpressBeatFrameItemsOptions {
 
 function slotToItem(slot: StoryboardFrameSlot): ExpressBeatFrameItem {
   const n = slot.beatNumber ?? (slot.beatIndex ?? 0) + 1
-  const roleSuffix = slot.frameRole === 'end' ? ' (End)' : ''
+  const roleSuffix =
+    slot.frameRole === 'end'
+      ? ' (End)'
+      : slot.frameRole === 'action-start'
+        ? ' (Start)'
+        : ''
   return {
     key: slot.key,
     label: `Shot ${n}${roleSuffix}`,
@@ -100,11 +106,15 @@ export function buildExpressBeatFrameItems(
   scene: Record<string, unknown>,
   options: BuildExpressBeatFrameItemsOptions = {}
 ): ExpressBeatFrameItem[] {
+  const hasSupplementalSelected = Boolean(
+    options.includeEndFrames ||
+      options.selectedFrameKeys?.some((k) => k.endsWith('-start') || k.endsWith('-end'))
+  )
   const allSlots = filterStoryboardSlotsForExpressChecklist(
     enumerateStoryboardFrameSlots(scene, undefined, {
-      startFramesOnly: !options.includeEndFrames,
+      startFramesOnly: !hasSupplementalSelected,
     }),
-    { includeEndFrames: options.includeEndFrames }
+    { includeEndFrames: hasSupplementalSelected }
   )
 
   if (options.selectedFrameKeys?.length) {
@@ -119,6 +129,9 @@ export function buildExpressBeatFrameItems(
     .filter((slot) => {
       const beat = slot.beatIndex != null ? beats[slot.beatIndex] : undefined
       if (!beat) return false
+      if (slot.frameRole === 'action-start') {
+        return beatActionStartFrameNeedsGeneration(beat, genCtx)
+      }
       if (slot.frameRole === 'end') {
         return beatEndFrameNeedsGeneration(beat, genCtx)
       }
@@ -131,7 +144,7 @@ export function buildExpressBeatFrameItems(
 export function slotKeyFromBeat(
   scene: Record<string, unknown> | null | undefined,
   beatIndex: number,
-  frameRole: 'start' | 'end' = 'start'
+  frameRole: 'start' | 'action-start' | 'end' = 'start'
 ): string {
   const beats = getSceneBeats(scene)
   const beat = beats[beatIndex]

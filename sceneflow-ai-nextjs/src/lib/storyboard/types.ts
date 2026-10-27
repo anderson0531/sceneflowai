@@ -21,6 +21,7 @@ import { generateAliases, toCanonicalName } from '@/lib/character/canonical'
 import { resolveStandaloneNarrationUrl } from '@/lib/script/narration'
 import { isValidStoryboardMediaUrl } from '@/lib/storyboard/mergeSceneMedia'
 import {
+  BEAT_ACTION_START_STILL_SLOT,
   BEAT_END_STILL_SLOT,
   BEAT_START_STILL_SLOT,
   CUSTOM_FRAME_STILL_SLOT,
@@ -210,8 +211,8 @@ export interface StoryboardFrameSlot {
   key: string
   label: string
   kind: 'action' | 'dialogue' | 'narration' | 'custom'
-  /** start = primary beat frame; end = optional motion/FTV end frame */
-  frameRole?: 'start' | 'end'
+  /** start = Pre-Vis shot still; action-start = F2V starting action frame (t=0s); end = F2V ending action frame (t=T) */
+  frameRole?: 'start' | 'action-start' | 'end'
   beatId?: string
   /** Index into scene.beats[] for beat-first frame generation */
   beatIndex?: number
@@ -250,9 +251,11 @@ export interface StoryboardFrameSlot {
  */
 export function beatFrameSlotKey(
   beatId: string,
-  frameRole: 'start' | 'end' = 'start'
+  frameRole: 'start' | 'action-start' | 'end' = 'start'
 ): string {
-  return frameRole === 'end' ? `${beatId}-end` : beatId
+  if (frameRole === 'action-start') return `${beatId}-start`
+  if (frameRole === 'end') return `${beatId}-end`
+  return beatId
 }
 
 /**
@@ -269,9 +272,13 @@ export function storyboardGeneratingSlotKey(
     return `custom-${sceneIndex}-${slot.customFrameId}`
   }
   if (slot.beatId) {
-    return slot.frameRole === 'end'
-      ? `${sceneIndex}-beat-${slot.beatId}-end`
-      : `${sceneIndex}-beat-${slot.beatId}`
+    if (slot.frameRole === 'action-start') {
+      return `${sceneIndex}-beat-${slot.beatId}-start`
+    }
+    if (slot.frameRole === 'end') {
+      return `${sceneIndex}-beat-${slot.beatId}-end`
+    }
+    return `${sceneIndex}-beat-${slot.beatId}`
   }
   if (typeof slot.dialogueIndex === 'number') return `${sceneIndex}-${slot.dialogueIndex}`
   return `${sceneIndex}-establishing`
@@ -313,6 +320,21 @@ function getRawBeatStoryboardUrl(
   )
 }
 
+function getRawBeatStoryboardStartUrl(
+  scene: Record<string, unknown>,
+  beat: SceneBeat
+): string | undefined {
+  const rawBeats = Array.isArray(scene.beats) ? (scene.beats as SceneBeat[]) : []
+  const raw =
+    (beat.beatId && rawBeats.find((b) => b.beatId === beat.beatId)) ||
+    rawBeats[beat.sequenceIndex ?? -1]
+  return resolveDesignatedStillUrl(
+    raw?.storyboardStartImageUrl,
+    raw?.storyboardStartImageVersionId,
+    raw?.storyboardStartImageVersions
+  )
+}
+
 function getRawBeatStoryboardEndUrl(
   scene: Record<string, unknown>,
   beat: SceneBeat
@@ -350,7 +372,7 @@ function buildBeatFrameSlot(
   beat: SceneBeat,
   beatIndex: number,
   scene: Record<string, unknown>,
-  frameRole: 'start' | 'end',
+  frameRole: 'start' | 'action-start' | 'end',
   opts: {
     ownImageUrl?: string
     displayImageUrl?: string
@@ -367,16 +389,30 @@ function buildBeatFrameSlot(
         ? 'Narrator'
         : String(beat.character || 'Dialogue')
 
-  const roleSuffix = frameRole === 'end' ? ' (End)' : ''
+  const roleSuffix =
+    frameRole === 'action-start'
+      ? ' (Start)'
+      : frameRole === 'end'
+        ? ' (End)'
+        : ''
   const ownImageUrl = opts.ownImageUrl
   const displayImageUrl = opts.displayImageUrl
-  const slotSpec = frameRole === 'end' ? BEAT_END_STILL_SLOT : BEAT_START_STILL_SLOT
+  const slotSpec =
+    frameRole === 'action-start'
+      ? BEAT_ACTION_START_STILL_SLOT
+      : frameRole === 'end'
+        ? BEAT_END_STILL_SLOT
+        : BEAT_START_STILL_SLOT
   const imageVersions = stillVersionsOnRow(
     beat as unknown as Record<string, unknown>,
     slotSpec
   )
   const imageVersionId =
-    frameRole === 'end' ? beat.storyboardEndImageVersionId : beat.storyboardImageVersionId
+    frameRole === 'action-start'
+      ? beat.storyboardStartImageVersionId
+      : frameRole === 'end'
+        ? beat.storyboardEndImageVersionId
+        : beat.storyboardImageVersionId
 
   return {
     key: beatFrameSlotKey(beat.beatId, frameRole),
@@ -394,18 +430,29 @@ function buildBeatFrameSlot(
       url: ownImageUrl,
       versionId: imageVersionId,
       versions: imageVersions,
-      beatTier: frameRole === 'end' ? beat.storyboardEndImageTier : beat.storyboardImageTier,
+      beatTier:
+        frameRole === 'action-start'
+          ? beat.storyboardStartImageTier
+          : frameRole === 'end'
+            ? beat.storyboardEndImageTier
+            : beat.storyboardImageTier,
     }),
     isPlaceholder: !ownImageUrl && !!displayImageUrl,
     isMissing: !ownImageUrl && !displayImageUrl,
     imageError:
-      frameRole === 'end'
-        ? beat.storyboardEndImageError
-        : beat.storyboardImageError,
+      frameRole === 'action-start'
+        ? beat.storyboardStartImageError
+        : frameRole === 'end'
+          ? beat.storyboardEndImageError
+          : beat.storyboardImageError,
     referenceStatus: frameRole === 'start' ? beat.storyboardImageReferenceStatus : undefined,
     beatRole: beat.beatRole,
     storyboardImagePrompt:
-      frameRole === 'end' ? beat.storyboardEndImagePrompt : beat.storyboardImagePrompt,
+      frameRole === 'action-start'
+        ? beat.storyboardStartImagePrompt
+        : frameRole === 'end'
+          ? beat.storyboardEndImagePrompt
+          : beat.storyboardImagePrompt,
     allowTypography: beat.beatRole === 'title_reveal' || beat.beatRole === 'credit',
     imageVersions,
     imageVersionId,
@@ -497,6 +544,14 @@ export function enumerateStoryboardFrameSlots(
       )
 
       if (!startFramesOnly) {
+        const actionStartOwnImageUrl = getRawBeatStoryboardStartUrl(scene, beat)
+        slots.push(
+          buildBeatFrameSlot(beat, beatIndex, scene, 'action-start', {
+            ownImageUrl: actionStartOwnImageUrl,
+            displayImageUrl: actionStartOwnImageUrl,
+            dialogueIndex,
+          })
+        )
         const endOwnImageUrl = getRawBeatStoryboardEndUrl(scene, beat)
         slots.push(
           buildBeatFrameSlot(beat, beatIndex, scene, 'end', {
@@ -643,7 +698,9 @@ export function filterStoryboardSlotsForExpressChecklist(
   options: { includeEndFrames?: boolean } = {}
 ): StoryboardFrameSlot[] {
   return slots.filter((slot) => {
-    if (slot.frameRole === 'end' && !options.includeEndFrames) return false
+    if ((slot.frameRole === 'action-start' || slot.frameRole === 'end') && !options.includeEndFrames) {
+      return false
+    }
     return true
   })
 }
@@ -1521,7 +1578,9 @@ export function buildBeatFirstPlaybackTimeline(
     startFramesOnly: preVisAnimatic,
   })
   const startSlotByBeatId = new Map(
-    slots.filter((slot) => slot.beatId && slot.frameRole !== 'end').map((slot) => [slot.beatId!, slot])
+    slots
+      .filter((slot) => slot.beatId && slot.frameRole !== 'action-start' && slot.frameRole !== 'end')
+      .map((slot) => [slot.beatId!, slot])
   )
   const endSlotByBeatId = new Map(
     slots.filter((slot) => slot.beatId && slot.frameRole === 'end').map((slot) => [slot.beatId!, slot])
