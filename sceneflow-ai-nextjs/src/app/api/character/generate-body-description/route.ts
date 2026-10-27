@@ -62,6 +62,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       success: true,
       appearanceDescription: appearance.appearanceDescription,
+      ...(appearance.height ? { height: appearance.height } : {}),
     })
   } catch (error) {
     console.error('[Generate Body] Error:', error)

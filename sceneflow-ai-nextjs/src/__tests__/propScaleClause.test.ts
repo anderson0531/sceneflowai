@@ -1,5 +1,11 @@
 import { describe, expect, it } from 'vitest'
-import { extractPropScalePhrase, propScaleClause, PROP_SCALE_GENERIC, PROP_SCALE_FURNITURE } from '@/lib/imagen/propScaleClause'
+import {
+  extractPropScalePhrase,
+  formatPropScaleDescriptor,
+  propScaleClause,
+  PROP_SCALE_GENERIC,
+  PROP_SCALE_FURNITURE,
+} from '@/lib/imagen/propScaleClause'
 import { buildSceneImagePropLabel } from '@/lib/imagen/sceneImageReferenceLabels'
 import { buildObjectReferencePrompt } from '@/lib/vision/referenceExpressPrompts'
 import { readFileSync } from 'fs'
@@ -11,6 +17,19 @@ describe('propScaleClause', () => {
     expect(clause).toContain('12-inch')
     expect(clause).toMatch(/do not enlarge to fill the frame/)
     expect(extractPropScalePhrase('A 12-inch metal canister', 'Canister')).toBe('12-inch')
+  })
+
+  it('prefers explicit dimensions field when provided', () => {
+    expect(extractPropScalePhrase('Brushed steel canister', 'Canister', '12-inch tall × 4-inch diameter')).toBe(
+      '12-inch tall × 4-inch diameter'
+    )
+    const descriptor = formatPropScaleDescriptor(
+      'Brushed steel canister',
+      'Canister',
+      '12-inch tall × 4-inch diameter'
+    )
+    expect(descriptor).toContain('12-inch tall × 4-inch diameter')
+    expect(descriptor).toContain('maintain proportionate size relative to characters and hands')
   })
 
   it('quotes handheld when that is the only scale cue', () => {

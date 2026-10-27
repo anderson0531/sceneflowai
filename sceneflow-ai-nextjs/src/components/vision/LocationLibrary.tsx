@@ -213,6 +213,11 @@ interface LocationLibraryProps {
   onPendingKindAgentRunConsumed?: () => void
   /** Object-library names used to strip beat props from version image prompts. */
   catalogPropNames?: string[]
+  focusTarget?: {
+    locationId?: string
+    versionId?: string
+    nonce?: number
+  } | null
 }
 
 /**
@@ -406,6 +411,7 @@ export function LocationLibrary({
   pendingKindAgentRun = null,
   onPendingKindAgentRunConsumed,
   catalogPropNames: catalogPropNamesProp = [],
+  focusTarget = null,
 }: LocationLibraryProps) {
   const t = useTranslations('production.direction.locationLibrary')
   const [expandedLocationId, setExpandedLocationId] = useState<string | null>(null)
@@ -437,6 +443,21 @@ export function LocationLibrary({
     const el = document.getElementById(`location-version-${focusedVersionId}`)
     el?.scrollIntoView({ block: 'nearest' })
   }, [focusedVersionId, expandedLocationId])
+
+  useEffect(() => {
+    if (!focusTarget?.locationId) return
+    setExpandedLocationId(focusTarget.locationId)
+    setFocusedVersionId(focusTarget.versionId ?? null)
+    setTimeout(() => {
+      const targetId = focusTarget.versionId
+        ? `location-version-${focusTarget.versionId}`
+        : `location-card-${focusTarget.locationId}`
+      document.getElementById(targetId)?.scrollIntoView({
+        behavior: 'smooth',
+        block: 'nearest',
+      })
+    }, 60)
+  }, [focusTarget?.locationId, focusTarget?.versionId, focusTarget?.nonce])
 
   const extractedLocations = useMemo(
     () => extractHeadingLocationsFromScenes(scenes),
@@ -607,8 +628,34 @@ export function LocationLibrary({
       if (!nextDescription) {
         throw new Error('Location description response was empty.')
       }
+      const nextCeiling =
+        typeof body.ceilingHeightFt === 'number' && Number.isFinite(body.ceilingHeightFt)
+          ? body.ceilingHeightFt
+          : location.canonicalScale?.ceilingHeightFt
+      const nextDoor =
+        typeof body.doorHeightFt === 'number' && Number.isFinite(body.doorHeightFt)
+          ? body.doorHeightFt
+          : location.canonicalScale?.doorHeightFt
+      const nextFixtures =
+        typeof body.fixtureHeights === 'string' && body.fixtureHeights.trim()
+          ? body.fixtureHeights.trim()
+          : location.canonicalScale?.fixtureHeights
       const updated = mergedLocations.map((loc) =>
-        loc.id === location.id ? { ...loc, description: nextDescription } : loc
+        loc.id === location.id
+          ? {
+              ...loc,
+              description: nextDescription,
+              ...(nextCeiling || nextDoor || nextFixtures
+                ? {
+                    canonicalScale: {
+                      ceilingHeightFt: nextCeiling || 10,
+                      doorHeightFt: nextDoor || 7,
+                      ...(nextFixtures ? { fixtureHeights: nextFixtures } : {}),
+                    },
+                  }
+                : {}),
+            }
+          : loc
       )
       await onUpdateLocations(updated)
       setDescriptionDirectorText('')
@@ -845,6 +892,7 @@ export function LocationLibrary({
             return (
               <div
                 key={loc.id}
+                id={`location-card-${loc.id}`}
                 className="rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 overflow-hidden group"
               >
                 {/* Header - always visible */}
@@ -1084,6 +1132,97 @@ export function LocationLibrary({
                             {loc.description || 'Direct a description, or Recommend from the screenplay'}
                           </p>
                         )}
+                      </div>
+
+                      {/* Proportional Scale & Mounted Fixture Heights */}
+                      <div
+                        className="pt-2 border-t border-slate-700/60 space-y-1.5"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <span className="text-[11px] font-medium text-slate-300 block">
+                          Proportional Scale &amp; Fixture Heights
+                        </span>
+                        <div className="grid grid-cols-2 gap-2">
+                          <label className="flex items-center justify-between gap-1 text-[10px] text-slate-400">
+                            <span>Ceiling (ft)</span>
+                            <input
+                              type="number"
+                              min={4}
+                              max={200}
+                              defaultValue={loc.canonicalScale?.ceilingHeightFt ?? ''}
+                              placeholder="11"
+                              onBlur={(e) => {
+                                const raw = e.currentTarget.value.trim()
+                                const parsed = raw ? Number(raw) : undefined
+                                const current = loc.canonicalScale?.ceilingHeightFt
+                                if (parsed === current || (!parsed && !current)) return
+                                const nextScale = {
+                                  ceilingHeightFt: parsed || 10,
+                                  doorHeightFt: loc.canonicalScale?.doorHeightFt || 7,
+                                  ...(loc.canonicalScale?.fixtureHeights
+                                    ? { fixtureHeights: loc.canonicalScale.fixtureHeights }
+                                    : {}),
+                                }
+                                void onUpdateLocations(
+                                  mergedLocations.map((item) =>
+                                    item.id === loc.id ? { ...item, canonicalScale: nextScale } : item
+                                  )
+                                )
+                              }}
+                              className="w-16 px-1.5 py-0.5 text-xs rounded border border-slate-700 bg-slate-900 text-slate-100"
+                            />
+                          </label>
+                          <label className="flex items-center justify-between gap-1 text-[10px] text-slate-400">
+                            <span>Door (ft)</span>
+                            <input
+                              type="number"
+                              min={4}
+                              max={40}
+                              defaultValue={loc.canonicalScale?.doorHeightFt ?? ''}
+                              placeholder="7"
+                              onBlur={(e) => {
+                                const raw = e.currentTarget.value.trim()
+                                const parsed = raw ? Number(raw) : undefined
+                                const current = loc.canonicalScale?.doorHeightFt
+                                if (parsed === current || (!parsed && !current)) return
+                                const nextScale = {
+                                  ceilingHeightFt: loc.canonicalScale?.ceilingHeightFt || 10,
+                                  doorHeightFt: parsed || 7,
+                                  ...(loc.canonicalScale?.fixtureHeights
+                                    ? { fixtureHeights: loc.canonicalScale.fixtureHeights }
+                                    : {}),
+                                }
+                                void onUpdateLocations(
+                                  mergedLocations.map((item) =>
+                                    item.id === loc.id ? { ...item, canonicalScale: nextScale } : item
+                                  )
+                                )
+                              }}
+                              className="w-16 px-1.5 py-0.5 text-xs rounded border border-slate-700 bg-slate-900 text-slate-100"
+                            />
+                          </label>
+                        </div>
+                        <input
+                          type="text"
+                          defaultValue={loc.canonicalScale?.fixtureHeights ?? ''}
+                          placeholder="e.g. chalkboard mounted at a height of 6-foot"
+                          onBlur={(e) => {
+                            const nextFixtures = e.currentTarget.value.trim()
+                            const current = loc.canonicalScale?.fixtureHeights ?? ''
+                            if (nextFixtures === current) return
+                            const nextScale = {
+                              ceilingHeightFt: loc.canonicalScale?.ceilingHeightFt || 10,
+                              doorHeightFt: loc.canonicalScale?.doorHeightFt || 7,
+                              ...(nextFixtures ? { fixtureHeights: nextFixtures } : {}),
+                            }
+                            void onUpdateLocations(
+                              mergedLocations.map((item) =>
+                                item.id === loc.id ? { ...item, canonicalScale: nextScale } : item
+                              )
+                            )
+                          }}
+                          className="w-full px-2 py-1 text-xs rounded border border-slate-700 bg-slate-900 text-slate-100 placeholder:text-slate-500"
+                        />
                       </div>
 
                       {!splitLayout && locationImagePanel}

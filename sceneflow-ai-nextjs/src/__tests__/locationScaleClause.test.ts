@@ -2,6 +2,8 @@ import { describe, expect, it } from 'vitest'
 import {
   DEFAULT_LOCATION_CANONICAL_SCALE,
   extractLocationCanonicalScale,
+  extractMountedFixtureHeights,
+  formatLocationScaleDescriptor,
   locationScaleClause,
 } from '@/lib/imagen/locationScaleClause'
 
@@ -31,8 +33,21 @@ describe('locationScaleClause', () => {
     const scale = extractLocationCanonicalScale('7ft door', 'Vault', {
       doorHeightFt: 9,
       ceilingHeightFt: 14,
+      fixtureHeights: 'chalkboard mounted at a height of 6-foot',
     })
     expect(scale.doorHeightFt).toBe(9)
     expect(scale.ceilingHeightFt).toBe(14)
+    expect(scale.fixtureHeights).toBe('chalkboard mounted at a height of 6-foot')
+  })
+
+  it('extracts mounted fixture heights and formats a proportional scale descriptor', () => {
+    const desc =
+      'A rail tunnel with an 11-foot ceiling, chalkboard mounted at a height of 6-foot, and an 8-foot iron door.'
+    expect(extractMountedFixtureHeights(desc)).toContain('chalkboard mounted at a height of 6-foot')
+    const descriptor = formatLocationScaleDescriptor(desc)
+    expect(descriptor).toContain('11-foot ceiling')
+    expect(descriptor).toContain('8-foot door')
+    expect(descriptor).toContain('chalkboard mounted at a height of 6-foot')
+    expect(descriptor).toContain('maintain proportionate size with characters')
   })
 })

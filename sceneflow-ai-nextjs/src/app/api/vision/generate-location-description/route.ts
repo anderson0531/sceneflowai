@@ -55,6 +55,15 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       success: true,
       description: description.description,
+      ...(typeof description.ceilingHeightFt === 'number'
+        ? { ceilingHeightFt: description.ceilingHeightFt }
+        : {}),
+      ...(typeof description.doorHeightFt === 'number'
+        ? { doorHeightFt: description.doorHeightFt }
+        : {}),
+      ...(description.fixtureHeights
+        ? { fixtureHeights: description.fixtureHeights }
+        : {}),
     })
   } catch (error) {
     console.error('[Generate Location Description] Error:', error)

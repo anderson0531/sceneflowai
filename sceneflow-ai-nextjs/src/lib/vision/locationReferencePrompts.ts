@@ -17,7 +17,10 @@ import {
   isMediumCoverageLocationShot,
   resolveStillShotClass,
 } from '@/lib/imagen/stillFramingNormalize'
-import { locationScaleClause } from '@/lib/imagen/locationScaleClause'
+import {
+  locationScaleClause,
+  type LocationCanonicalScale,
+} from '@/lib/imagen/locationScaleClause'
 import { isMountedSetFixtureCatalogName, extractMountedSetFixturePhrases } from '@/lib/vision/mountedSetFixtures'
 import {
   formatLocationResidentInstrumentDirective,
@@ -166,11 +169,16 @@ export function buildLocationConsumptionInstruction(options?: {
   emptyCast?: boolean
   locationDescription?: string | null
   locationName?: string | null
+  canonicalScale?: Partial<LocationCanonicalScale> | null
   /** Library prop names attached to this frame, if any. */
   propNames?: string[] | null
 }): string {
   const token = options?.promptToken?.trim()
-  const scaleLock = locationScaleClause(options?.locationDescription, options?.locationName)
+  const scaleLock = locationScaleClause(
+    options?.locationDescription,
+    options?.locationName,
+    options?.canonicalScale
+  )
   const withScale = (instruction: string) => `${instruction} ${scaleLock}`
   const instrument = closeUpLocationInstrument(options)
   if (instrument) {
@@ -449,6 +457,7 @@ export function buildLocationReferencePromptLine(
     actionFraming?: string | null
     emptyCast?: boolean
     locationDescription?: string | null
+    canonicalScale?: Partial<LocationCanonicalScale> | null
     propNames?: string[] | null
   }
 ): string {
@@ -461,6 +470,7 @@ export function buildLocationReferencePromptLine(
     emptyCast: options?.emptyCast,
     locationName,
     locationDescription: options?.locationDescription,
+    canonicalScale: options?.canonicalScale,
     propNames: options?.propNames,
   })}${suffix}`
 }

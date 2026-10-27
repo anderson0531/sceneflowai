@@ -33,7 +33,7 @@ import { EditSegmentDialog } from './scene-production/EditSegmentDialog'
 import { ResetSegmentsConfirmDialog } from './scene-production/ResetSegmentsConfirmDialog'
 import { SegmentList } from './scene-production/SegmentList'
 import type { ScriptSegment } from '@/lib/script/segmentTypes'
-import type { LocationReference } from '@/types/visionReferences'
+import type { LocationReference, VisualReference } from '@/types/visionReferences'
 import {
   resolveSfxDuration,
   type SfxDurationOverride,
@@ -141,10 +141,16 @@ import {
 } from '@/lib/script/deriveSfxFromSceneContent'
 import { SceneMusicCuePanel } from '@/components/vision/SceneMusicCuePanel'
 import { BeatPerformanceDirectorControl } from '@/components/vision/BeatPerformanceDirectorDialog'
-import { SceneReferencesPanel } from '@/components/vision/SceneReferencesPanel'
+import {
+  SceneReferencesPanel,
+  type JitRequirementUpdatePayload,
+} from '@/components/vision/SceneReferencesPanel'
 import { directedBeatOptionsFromScene } from '@/components/vision/DirectedLocationVersionDialog'
 import type { DirectedLocationVersionInput } from '@/lib/vision/locationScriptSync'
-import type { ReferenceLibraryTab } from '@/components/vision/ReferenceLibraryDialog'
+import type {
+  ReferenceLibraryDeepLink,
+  ReferenceLibraryTab,
+} from '@/components/vision/ReferenceLibraryDialog'
 import {
   resolveSceneRequiredReferences,
   type SceneReferenceOverrides,
@@ -205,7 +211,10 @@ import { ProductionBudgetManager } from '@/components/credits/ProductionBudgetMa
 import { getProjectCreditsBudget } from '@/lib/credits/projectBudgetShared'
 import type { DirectShotRequest, DirectShotTarget } from '@/lib/vision/directShotTarget'
 import { isPromoCinematicScene } from '@/lib/publish/buildPromoScene'
-import { syncSceneReferenceSelections } from '@/lib/vision/saveBeatDirection'
+import {
+  syncSceneDirectionToContinuityCatalog,
+  syncSceneReferenceSelections,
+} from '@/lib/vision/saveBeatDirection'
 import { shotsForDirectionAgent } from '@/lib/vision/shotDirectionAgent'
 import {
   isAbortError,
@@ -468,10 +477,17 @@ interface ScriptPanelProps {
     options?: { itemKeys?: string[] }
   ) => void | Promise<unknown>
   isExpressGeneratingReferences?: boolean
-  onOpenReferenceLibrary?: (tab?: ReferenceLibraryTab) => void
+  onOpenReferenceLibrary?: (target?: ReferenceLibraryTab | ReferenceLibraryDeepLink) => void
   onAddDirectedLocationVersion?: (
     payload: DirectedLocationVersionInput & { locationId: string }
   ) => void | Promise<void>
+  onUpdateRequirementInline?: (
+    payload: JitRequirementUpdatePayload
+  ) => void | Promise<void>
+  onSyncContinuityCatalog?: (payload: {
+    locationReferences?: LocationReference[]
+    objectReferences?: VisualReference[]
+  }) => void | Promise<void>
   // Take management
   onSelectTake?: (sceneId: string, segmentId: string, takeId: string, assetUrl: string) => void
   onDeleteTake?: (sceneId: string, segmentId: string, takeId: string) => void
@@ -918,7 +934,7 @@ function SortableSceneCard({ id, onAddScene, onDeleteScene, onEditScene, onGener
 }
 
 // Film context fix deployed v3 - 2025-02-20 with default projectTitle
-export function ScriptPanel({ script, onScriptChange, onAudioSlotSaved, isGenerating, onExpandScene, onExpandAllScenes, onGenerateSceneImage, characters = [], projectId, projectMetadata = null, visualStyle, projectAspectRatio = '16:9', validationWarnings = {}, validationInfo = {}, onDismissValidationWarning, onPlayAudio, onGenerateSceneAudio, onGenerateLanguageStream, isGeneratingAudio, productionReadiness = undefined, onPlayScript, onOpenScreeningRoom, onAddScene, onDeleteScene, onReorderScenes, directorScore, audienceScore, onGenerateReviews, isGeneratingReviews, onCancelReviews, onShowReviews, onOpenReferences, onOpenPromo, onOpenPublishing, publishingBlockerCount, onShowTreatmentReview, onRefactorFoundation, onEditScene, onEditSceneWithRecommendations, onPolishScene, polishingSceneIndex = null, revealPolishSceneIndex = null, onTogglePolishRecommendation, onUpdateSceneAudio, onDeleteSceneAudio, onEnhanceSceneContext, onGenerateSceneScore, generatingScoreFor, getScoreColorClass, hasBYOK = false, onOpenBYOK, generatingDirectionFor, onGenerateAllCharacters, sceneProductionData = {}, sceneProductionReferences = {}, onInitializeSceneProduction, onSegmentPromptChange, onSegmentKeyframeChange, onSegmentDialogueAssignmentChange, onSegmentGenerate, onSegmentUpload, onSegmentAnimaticSettingsChange, onRenderedSceneUrlChange, onProductionDataChange, onResetSegments, onAddSegment, onAddFullSegment, onDeleteSegment, onSegmentResize, onReorderSegments, onAudioClipChange, onCleanupStaleAudioUrl, onAddEstablishingShot, onEstablishingShotStyleChange, onBackdropVideoGenerated, onGenerateEndFrame, onEndFrameGenerated, sceneAudioTracks = {}, bookmarkedScene, onBookmarkScene, onJumpToBookmark, showDashboard = false, onToggleDashboard, onOpenAssets, isGeneratingKeyframe = false, generatingKeyframeSceneNumber = null, selectedSceneIndex = null, onSelectSceneIndex, productionProgressSlot, onAddToReferenceLibrary, openScriptEditorWithInstruction = null, onClearScriptEditorInstruction, onMarkWorkflowComplete, onDismissStaleWarning, onSyncPreVisToScript, sceneReferences = [], objectReferences = [], locationReferences = [], onExpressSceneReferences, isExpressGeneratingReferences = false, onOpenReferenceLibrary, onAddDirectedLocationVersion, onSelectTake, onDeleteTake, onGenerateSegmentFrames, onEditFrame, onUploadFrame, generatingFrameForSegment = null, generatingFramePhase = null, projectTitle = '', projectLogline = '', projectDuration, seriesInfo = null, storedTranslations, onSaveTranslations, onAnalyzeScene, analyzingSceneIndex = null, onResyncAudioTiming, resyncingAudioSceneIndex = null, recentlyUpdatedSceneIndex = null, focusedSceneIndex = null, onJumpToImpactScene, onToggleAudienceRecommendation, onRegenerateScript, isRegeneratingScript = false, onModerationReport, onAudioRunReport, onVideoRunReport, onVideoRunCancelReady, onSceneRenderQueued, onApproveStoryboard, approvingStoryboardFor = null, onReorderBeats, onGenerateBeatFrame, onGenerateBeatEndFrame, onGenerateDialogueFrame, onUploadBeatFrame, onUploadDialogueFrame, onSaveEditedBeatFrame, onRestoreStillVersion, onSaveBeatKenBurns, onSetScreeningPoster, onSaveEditedDialogueFrame, onSaveEditedCustomFrame, onSaveEditedStoryboardScene, onDirectFrame, onDirectorFrame, generatingDirectSlotKey = null, onAddStoryboardFrame, onDeleteStoryboardFrame, onGenerateCustomFrame, onUploadCustomFrame, onUploadStoryboardScene, onExpressSceneGenerate, frameGenerationQuality = 'draft', onFrameGenerationQualityChange, frameGenerationMode = 'standard', onFrameGenerationModeChange, videoGenerationQuality = 'draft', onVideoGenerationQualityChange, videoGenerationMode = 'standard', onVideoGenerationModeChange, expressStatus, expressGateBlocked = false, onExpressGateBlocked, isExpressRunning = false, narrationVoice, pendingSpeakerAssign = null, onPendingSpeakerAssignHandled, pendingSceneReferencesIndex = null, onPendingSceneReferencesHandled, pendingDirectShot = null, onPendingDirectShotHandled, onOpenDirectShot, projectStreams = [] }: ScriptPanelProps) {
+export function ScriptPanel({ script, onScriptChange, onAudioSlotSaved, isGenerating, onExpandScene, onExpandAllScenes, onGenerateSceneImage, characters = [], projectId, projectMetadata = null, visualStyle, projectAspectRatio = '16:9', validationWarnings = {}, validationInfo = {}, onDismissValidationWarning, onPlayAudio, onGenerateSceneAudio, onGenerateLanguageStream, isGeneratingAudio, productionReadiness = undefined, onPlayScript, onOpenScreeningRoom, onAddScene, onDeleteScene, onReorderScenes, directorScore, audienceScore, onGenerateReviews, isGeneratingReviews, onCancelReviews, onShowReviews, onOpenReferences, onOpenPromo, onOpenPublishing, publishingBlockerCount, onShowTreatmentReview, onRefactorFoundation, onEditScene, onEditSceneWithRecommendations, onPolishScene, polishingSceneIndex = null, revealPolishSceneIndex = null, onTogglePolishRecommendation, onUpdateSceneAudio, onDeleteSceneAudio, onEnhanceSceneContext, onGenerateSceneScore, generatingScoreFor, getScoreColorClass, hasBYOK = false, onOpenBYOK, generatingDirectionFor, onGenerateAllCharacters, sceneProductionData = {}, sceneProductionReferences = {}, onInitializeSceneProduction, onSegmentPromptChange, onSegmentKeyframeChange, onSegmentDialogueAssignmentChange, onSegmentGenerate, onSegmentUpload, onSegmentAnimaticSettingsChange, onRenderedSceneUrlChange, onProductionDataChange, onResetSegments, onAddSegment, onAddFullSegment, onDeleteSegment, onSegmentResize, onReorderSegments, onAudioClipChange, onCleanupStaleAudioUrl, onAddEstablishingShot, onEstablishingShotStyleChange, onBackdropVideoGenerated, onGenerateEndFrame, onEndFrameGenerated, sceneAudioTracks = {}, bookmarkedScene, onBookmarkScene, onJumpToBookmark, showDashboard = false, onToggleDashboard, onOpenAssets, isGeneratingKeyframe = false, generatingKeyframeSceneNumber = null, selectedSceneIndex = null, onSelectSceneIndex, productionProgressSlot, onAddToReferenceLibrary, openScriptEditorWithInstruction = null, onClearScriptEditorInstruction, onMarkWorkflowComplete, onDismissStaleWarning, onSyncPreVisToScript, sceneReferences = [], objectReferences = [], locationReferences = [], onExpressSceneReferences, isExpressGeneratingReferences = false, onOpenReferenceLibrary, onAddDirectedLocationVersion, onUpdateRequirementInline, onSyncContinuityCatalog, onSelectTake, onDeleteTake, onGenerateSegmentFrames, onEditFrame, onUploadFrame, generatingFrameForSegment = null, generatingFramePhase = null, projectTitle = '', projectLogline = '', projectDuration, seriesInfo = null, storedTranslations, onSaveTranslations, onAnalyzeScene, analyzingSceneIndex = null, onResyncAudioTiming, resyncingAudioSceneIndex = null, recentlyUpdatedSceneIndex = null, focusedSceneIndex = null, onJumpToImpactScene, onToggleAudienceRecommendation, onRegenerateScript, isRegeneratingScript = false, onModerationReport, onAudioRunReport, onVideoRunReport, onVideoRunCancelReady, onSceneRenderQueued, onApproveStoryboard, approvingStoryboardFor = null, onReorderBeats, onGenerateBeatFrame, onGenerateBeatEndFrame, onGenerateDialogueFrame, onUploadBeatFrame, onUploadDialogueFrame, onSaveEditedBeatFrame, onRestoreStillVersion, onSaveBeatKenBurns, onSetScreeningPoster, onSaveEditedDialogueFrame, onSaveEditedCustomFrame, onSaveEditedStoryboardScene, onDirectFrame, onDirectorFrame, generatingDirectSlotKey = null, onAddStoryboardFrame, onDeleteStoryboardFrame, onGenerateCustomFrame, onUploadCustomFrame, onUploadStoryboardScene, onExpressSceneGenerate, frameGenerationQuality = 'draft', onFrameGenerationQualityChange, frameGenerationMode = 'standard', onFrameGenerationModeChange, videoGenerationQuality = 'draft', onVideoGenerationQualityChange, videoGenerationMode = 'standard', onVideoGenerationModeChange, expressStatus, expressGateBlocked = false, onExpressGateBlocked, isExpressRunning = false, narrationVoice, pendingSpeakerAssign = null, onPendingSpeakerAssignHandled, pendingSceneReferencesIndex = null, onPendingSceneReferencesHandled, pendingDirectShot = null, onPendingDirectShotHandled, onOpenDirectShot, projectStreams = [] }: ScriptPanelProps) {
 
   const tStudio = useTranslations('production.studio')
   const tCommon = useTranslations('common')
@@ -3574,6 +3590,8 @@ export function ScriptPanel({ script, onScriptChange, onAudioSlotSaved, isGenera
                       isExpressGeneratingReferences={isExpressGeneratingReferences}
                       onOpenReferenceLibrary={onOpenReferenceLibrary}
                       onAddDirectedLocationVersion={onAddDirectedLocationVersion}
+                      onUpdateRequirementInline={onUpdateRequirementInline}
+                      onSyncContinuityCatalog={onSyncContinuityCatalog}
                       getPlaybackOffsetForScene={getPlaybackOffsetForScene}
                       handlePlaybackOffsetChange={handlePlaybackOffsetChange}
                       getSuggestedOffsetForScene={getSuggestedOffsetForScene}
@@ -4231,10 +4249,17 @@ interface SceneCardProps {
     options?: { itemKeys?: string[] }
   ) => void | Promise<unknown>
   isExpressGeneratingReferences?: boolean
-  onOpenReferenceLibrary?: (tab?: ReferenceLibraryTab) => void
+  onOpenReferenceLibrary?: (target?: ReferenceLibraryTab | ReferenceLibraryDeepLink) => void
   onAddDirectedLocationVersion?: (
     payload: DirectedLocationVersionInput & { locationId: string }
   ) => void | Promise<void>
+  onUpdateRequirementInline?: (
+    payload: JitRequirementUpdatePayload
+  ) => void | Promise<void>
+  onSyncContinuityCatalog?: (payload: {
+    locationReferences?: LocationReference[]
+    objectReferences?: VisualReference[]
+  }) => void | Promise<void>
   // Language playback offset for translated audio alignment
   getPlaybackOffsetForScene?: (sceneId: string, language: string) => number
   handlePlaybackOffsetChange?: (sceneId: string, sceneIdx: number, language: string, offset: number) => void
@@ -4478,6 +4503,8 @@ function SceneCard({
   isExpressGeneratingReferences = false,
   onOpenReferenceLibrary,
   onAddDirectedLocationVersion,
+  onUpdateRequirementInline,
+  onSyncContinuityCatalog,
   getPlaybackOffsetForScene,
   handlePlaybackOffsetChange,
   getSuggestedOffsetForScene,
@@ -4984,23 +5011,38 @@ function SceneCard({
     }
   }, [projectId, onScriptChange, script, scenes, scene, sceneIdx])
 
-  const handleSyncSceneReferences = useCallback(() => {
+  const handleSyncSceneReferences = useCallback(async () => {
     if (!onScriptChange || !script || !Array.isArray(scenes)) return
     setSyncingSceneReferences(true)
     try {
-      const updatedScenes = syncSceneReferenceSelections({
+      const synced = syncSceneDirectionToContinuityCatalog({
         scenes,
         sceneIdx,
         characters: characters ?? [],
-        locationReferences: locationReferences ?? [],
-        objectReferences: objectReferences ?? [],
+        locationReferences: (locationReferences ?? []) as LocationReference[],
+        objectReferences: (objectReferences ?? []) as VisualReference[],
       })
-      onScriptChange({ ...script, script: { ...script.script, scenes: updatedScenes } })
+      if ((synced.locationsChanged || synced.objectsChanged) && onSyncContinuityCatalog) {
+        await onSyncContinuityCatalog({
+          ...(synced.locationsChanged ? { locationReferences: synced.locationReferences } : {}),
+          ...(synced.objectsChanged ? { objectReferences: synced.objectReferences } : {}),
+        })
+      }
+      onScriptChange({ ...script, script: { ...script.script, scenes: synced.scenes } })
       toast.success('Continuity references now follow this scene’s direction.')
     } finally {
       setSyncingSceneReferences(false)
     }
-  }, [onScriptChange, script, scenes, sceneIdx, characters, locationReferences, objectReferences])
+  }, [
+    onScriptChange,
+    script,
+    scenes,
+    sceneIdx,
+    characters,
+    locationReferences,
+    objectReferences,
+    onSyncContinuityCatalog,
+  ])
 
   const handleSceneReferenceOverridesChange = useCallback(
     (next: SceneReferenceOverrides) => {
@@ -7166,6 +7208,7 @@ function SceneCard({
                       }
                       isExpressRunning={isExpressGeneratingReferences}
                       onOpenReferenceLibrary={onOpenReferenceLibrary}
+                      onUpdateRequirementInline={onUpdateRequirementInline}
                       characters={characters}
                       locationReferences={locationReferences}
                       objectReferences={objectReferences}

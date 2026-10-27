@@ -23,13 +23,16 @@ import { useMemo, useState } from 'react'
 import { useTranslations } from 'next-intl'
 import {
   AlertTriangle,
+  Check,
   Download,
+  ExternalLink,
   Image as ImageIcon,
   Library,
   Loader,
   MapPin,
   Maximize2,
   Package,
+  Pencil,
   Plus,
   RotateCcw,
   Shirt,
@@ -41,7 +44,10 @@ import { toast } from 'sonner'
 import { saveImageFile } from '@/lib/download/saveFile'
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
-import type { ReferenceLibraryTab } from '@/components/vision/ReferenceLibraryDialog'
+import type {
+  ReferenceLibraryDeepLink,
+  ReferenceLibraryTab,
+} from '@/components/vision/ReferenceLibraryDialog'
 import {
   estimateReferenceExpress,
   formatReferenceExpressEstimate,
@@ -70,6 +76,72 @@ import {
 } from './DirectedLocationVersionDialog'
 import type { DirectedLocationVersionInput } from '@/lib/vision/locationScriptSync'
 
+export type JitRequirementUpdatePayload =
+  | {
+      kind: 'cast'
+      characterId: string
+      appearanceDescription?: string
+      height?: string
+    }
+  | {
+      kind: 'wardrobe'
+      characterId: string
+      wardrobeId: string
+      description: string
+      accessories?: string
+      appearanceNotes?: string
+    }
+  | {
+      kind: 'location'
+      locationId: string
+      description: string
+      ceilingHeightFt?: number
+      doorHeightFt?: number
+      fixtureHeights?: string
+    }
+  | {
+      kind: 'location-version'
+      locationId: string
+      versionId: string
+      stateNotes: string
+    }
+  | {
+      kind: 'prop'
+      objectId: string
+      description: string
+      dimensions?: string
+    }
+
+export function buildDeepLinkForRequirement(
+  requirement: SceneReferenceRequirement
+): ReferenceLibraryDeepLink {
+  const nonce = Date.now()
+  if (requirement.kind === 'cast') {
+    return { tab: 'cast', characterId: requirement.id, nonce }
+  }
+  if (requirement.kind === 'wardrobe') {
+    return {
+      tab: 'cast',
+      characterId: requirement.characterId,
+      wardrobeId: requirement.id,
+      nonce,
+    }
+  }
+  if (requirement.kind === 'location') {
+    const parsed = parseLocationVersionRequirementId(requirement.id)
+    if (parsed) {
+      return {
+        tab: 'locations',
+        locationId: parsed.locationId,
+        versionId: parsed.versionId,
+        nonce,
+      }
+    }
+    return { tab: 'locations', locationId: requirement.id, nonce }
+  }
+  return { tab: 'object', objectId: requirement.id, nonce }
+}
+
 export interface SceneReferencesPanelProps {
   sceneNumber: number
   /** Already resolved by the caller, which owns the matchers and the overrides. */
@@ -82,7 +154,9 @@ export interface SceneReferencesPanelProps {
    */
   onExpressReferences?: (options?: { itemKeys?: string[] }) => void | Promise<unknown>
   isExpressRunning?: boolean
-  onOpenReferenceLibrary?: (tab?: ReferenceLibraryTab) => void
+  onOpenReferenceLibrary?: (target?: ReferenceLibraryTab | ReferenceLibraryDeepLink) => void
+  /** Inline JIT builder callback to save description/scale edits without leaving the scene pipeline. */
+  onUpdateRequirementInline?: (payload: JitRequirementUpdatePayload) => void | Promise<void>
   /** The full library, so a reference the matchers missed can be added by hand. */
   characters?: SceneRequirementCharacter[]
   locationReferences?: SceneRequirementLocation[]
@@ -174,6 +248,7 @@ export function SceneReferencesPanel({
   onExpressReferences,
   isExpressRunning = false,
   onOpenReferenceLibrary,
+  onUpdateRequirementInline,
   characters = [],
   locationReferences = [],
   objectReferences = [],
@@ -191,6 +266,13 @@ export function SceneReferencesPanel({
   const [expanded, setExpanded] = useState<{ url: string; name: string } | null>(null)
   const [directedOpen, setDirectedOpen] = useState(false)
   const [directedSubmitting, setDirectedSubmitting] = useState(false)
+  const [editingKey, setEditingKey] = useState<string | null>(null)
+  const [jitDescription, setJitDescription] = useState('')
+  const [jitSecondary, setJitSecondary] = useState('')
+  const [jitTertiary, setJitTertiary] = useState('')
+  const [jitCeilingFt, setJitCeilingFt] = useState('')
+  const [jitDoorFt, setJitDoorFt] = useState('')
+  const [jitSaving, setJitSaving] = useState(false)
 
   const pending = useMemo(
     () =>
@@ -376,6 +458,169 @@ export function SceneReferencesPanel({
   const drawnCount = requirements.filter((requirement) => hasImage(requirement.imageUrl)).length
   const busy = isExpressRunning
 
+  const resolveScaleBadge = (requirement: SceneReferenceRequirement): string | null => {
+    if (requirement.kind === 'cast') {
+      const char = characters.find(
+        (c) =>
+          String(c?.id ?? '').toLowerCase() === requirement.id.toLowerCase() ||
+          String(c?.name ?? '').trim().toLowerCase() === requirement.id.toLowerCase()
+      )
+      return typeof char?.height === 'string' && char.height.trim() ? char.height.trim() : null
+    }
+    if (requirement.kind === 'location' && !isLocationVersionRequirementId(requirement.id)) {
+      const loc = locationReferences.find((l) => l.id === requirement.id)
+      const parts: string[] = []
+      if (loc?.canonicalScale?.ceilingHeightFt) {
+        parts.push(`${loc.canonicalScale.ceilingHeightFt}ft ceiling`)
+      }
+      if (loc?.canonicalScale?.doorHeightFt) {
+        parts.push(`${loc.canonicalScale.doorHeightFt}ft door`)
+      }
+      if (loc?.canonicalScale?.fixtureHeights?.trim()) {
+        parts.push(loc.canonicalScale.fixtureHeights.trim())
+      }
+      return parts.length > 0 ? parts.join(' · ') : null
+    }
+    if (requirement.kind === 'prop') {
+      const prop = objectReferences.find((o) => o.id === requirement.id)
+      return typeof prop?.dimensions === 'string' && prop.dimensions.trim()
+        ? prop.dimensions.trim()
+        : null
+    }
+    return null
+  }
+
+  const openJitEditor = (requirement: SceneReferenceRequirement) => {
+    const key = requirementKey(requirement)
+    if (editingKey === key) {
+      setEditingKey(null)
+      return
+    }
+    setEditingKey(key)
+    setJitDescription('')
+    setJitSecondary('')
+    setJitTertiary('')
+    setJitCeilingFt('')
+    setJitDoorFt('')
+
+    if (requirement.kind === 'cast') {
+      const char = characters.find(
+        (c) =>
+          String(c?.id ?? '').toLowerCase() === requirement.id.toLowerCase() ||
+          String(c?.name ?? '').trim().toLowerCase() === requirement.id.toLowerCase()
+      )
+      setJitDescription(
+        typeof char?.appearanceDescription === 'string' ? char.appearanceDescription : ''
+      )
+      setJitSecondary(typeof char?.height === 'string' ? char.height : '')
+      return
+    }
+    if (requirement.kind === 'wardrobe') {
+      const char = characters.find(
+        (c) =>
+          String(c?.id ?? '').toLowerCase() === String(requirement.characterId ?? '').toLowerCase() ||
+          String(c?.name ?? '').trim().toLowerCase() ===
+            String(requirement.characterId ?? '').toLowerCase()
+      )
+      const wardrobe = (Array.isArray(char?.wardrobes) ? char!.wardrobes : []).find(
+        (w) => String(w?.id ?? '') === requirement.id
+      )
+      setJitDescription(typeof wardrobe?.description === 'string' ? wardrobe.description : '')
+      setJitSecondary(typeof wardrobe?.accessories === 'string' ? wardrobe.accessories : '')
+      setJitTertiary(typeof wardrobe?.appearanceNotes === 'string' ? wardrobe.appearanceNotes : '')
+      return
+    }
+    if (requirement.kind === 'location') {
+      const parsed = parseLocationVersionRequirementId(requirement.id)
+      if (parsed) {
+        const loc = locationReferences.find((l) => l.id === parsed.locationId)
+        const version = loc?.versions?.find((v) => v.id === parsed.versionId)
+        setJitDescription(version?.stateNotes ?? '')
+      } else {
+        const loc = locationReferences.find((l) => l.id === requirement.id)
+        setJitDescription(loc?.description ?? '')
+        setJitCeilingFt(
+          loc?.canonicalScale?.ceilingHeightFt ? String(loc.canonicalScale.ceilingHeightFt) : ''
+        )
+        setJitDoorFt(
+          loc?.canonicalScale?.doorHeightFt ? String(loc.canonicalScale.doorHeightFt) : ''
+        )
+        setJitSecondary(loc?.canonicalScale?.fixtureHeights ?? '')
+      }
+      return
+    }
+    if (requirement.kind === 'prop') {
+      const prop = objectReferences.find((o) => o.id === requirement.id)
+      setJitDescription(prop?.description ?? '')
+      setJitSecondary(prop?.dimensions ?? '')
+    }
+  }
+
+  const handleSaveJit = async (
+    requirement: SceneReferenceRequirement,
+    andUpdateStill: boolean
+  ) => {
+    const key = requirementKey(requirement)
+    setJitSaving(true)
+    try {
+      if (onUpdateRequirementInline) {
+        if (requirement.kind === 'cast') {
+          await onUpdateRequirementInline({
+            kind: 'cast',
+            characterId: requirement.id,
+            appearanceDescription: jitDescription.trim() || undefined,
+            height: jitSecondary.trim() || undefined,
+          })
+        } else if (requirement.kind === 'wardrobe' && requirement.characterId) {
+          await onUpdateRequirementInline({
+            kind: 'wardrobe',
+            characterId: requirement.characterId,
+            wardrobeId: requirement.id,
+            description: jitDescription.trim(),
+            accessories: jitSecondary.trim() || undefined,
+            appearanceNotes: jitTertiary.trim() || undefined,
+          })
+        } else if (requirement.kind === 'location') {
+          const parsed = parseLocationVersionRequirementId(requirement.id)
+          if (parsed) {
+            await onUpdateRequirementInline({
+              kind: 'location-version',
+              locationId: parsed.locationId,
+              versionId: parsed.versionId,
+              stateNotes: jitDescription.trim(),
+            })
+          } else {
+            await onUpdateRequirementInline({
+              kind: 'location',
+              locationId: requirement.id,
+              description: jitDescription.trim(),
+              ceilingHeightFt: jitCeilingFt.trim() ? Number(jitCeilingFt.trim()) : undefined,
+              doorHeightFt: jitDoorFt.trim() ? Number(jitDoorFt.trim()) : undefined,
+              fixtureHeights: jitSecondary.trim() || undefined,
+            })
+          }
+        } else if (requirement.kind === 'prop') {
+          await onUpdateRequirementInline({
+            kind: 'prop',
+            objectId: requirement.id,
+            description: jitDescription.trim(),
+            dimensions: jitSecondary.trim() || undefined,
+          })
+        }
+      }
+      setEditingKey(null)
+      if (andUpdateStill && onExpressReferences) {
+        await onExpressReferences({ itemKeys: [key] })
+      } else {
+        toast.success('Continuity reference details saved')
+      }
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Failed to save reference details')
+    } finally {
+      setJitSaving(false)
+    }
+  }
+
   const renderRow = (
     requirement: SceneReferenceRequirement,
     options?: { nested?: boolean; displayName?: string; variant?: 'wardrobe' | 'base' | 'version' }
@@ -385,129 +630,384 @@ export function SceneReferencesPanel({
     const needsDraw = !drawn || requirement.stale === true
     const expressKind = expressKindForRequirement(requirement.kind)
     const displayName = options?.displayName ?? requirement.name
-    const genLabel = drawn ? 'Regen' : 'Gen'
+    const genLabel = drawn ? 'Update' : 'Gen'
+    const scaleBadge = resolveScaleBadge(requirement)
+    const isJitOpen = editingKey === key
+    const isLocVersion =
+      requirement.kind === 'location' && isLocationVersionRequirementId(requirement.id)
 
     return (
       <div
         key={key}
-        className={`flex items-center gap-2.5 p-2 rounded-md bg-white/70 dark:bg-gray-900/40 border border-cyan-200/70 dark:border-cyan-800/60 ${
+        className={`rounded-md bg-white/70 dark:bg-gray-900/40 border border-cyan-200/70 dark:border-cyan-800/60 ${
           options?.nested ? 'ml-6' : ''
         }`}
       >
-        <ReferenceThumb
-          requirement={requirement}
-          displayName={displayName}
-          onExpand={
-            drawn
-              ? () => setExpanded({ url: requirement.imageUrl!.trim(), name: displayName })
-              : undefined
-          }
-        />
+        <div className="flex items-center gap-2.5 p-2">
+          <ReferenceThumb
+            requirement={requirement}
+            displayName={displayName}
+            onExpand={
+              drawn
+                ? () => setExpanded({ url: requirement.imageUrl!.trim(), name: displayName })
+                : undefined
+            }
+          />
 
-        <div className="min-w-0 flex-1">
-          <div className="flex items-center gap-1.5 flex-wrap">
-            <span className="text-xs font-medium text-gray-900 dark:text-gray-100 truncate">
-              {displayName}
-            </span>
-            {options?.variant && (
-              <span className="text-[10px] px-1.5 py-0.5 rounded bg-cyan-500/15 text-cyan-800 dark:text-cyan-300">
-                {options.variant}
+          <div className="min-w-0 flex-1">
+            <div className="flex items-center gap-1.5 flex-wrap">
+              <span className="text-xs font-medium text-gray-900 dark:text-gray-100 truncate">
+                {displayName}
               </span>
-            )}
-            <span
-              className="text-[10px] px-1.5 py-0.5 rounded bg-gray-500/15 text-gray-600 dark:text-gray-400"
-              title={SOURCE_HINT[requirement.source]}
-            >
-              {SOURCE_LABEL[requirement.source]}
-            </span>
-            {requirement.stale && (
+              {options?.variant && (
+                <span className="text-[10px] px-1.5 py-0.5 rounded bg-cyan-500/15 text-cyan-800 dark:text-cyan-300">
+                  {options.variant}
+                </span>
+              )}
               <span
-                className="text-[10px] px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-700 dark:text-amber-400 flex items-center gap-1"
-                title="The script changed after this image was drawn — redraw it to match."
+                className="text-[10px] px-1.5 py-0.5 rounded bg-gray-500/15 text-gray-600 dark:text-gray-400"
+                title={SOURCE_HINT[requirement.source]}
               >
-                <AlertTriangle className="w-2.5 h-2.5" />
-                outdated
+                {SOURCE_LABEL[requirement.source]}
               </span>
-            )}
+              {scaleBadge && (
+                <span
+                  className="text-[10px] px-1.5 py-0.5 rounded bg-indigo-500/15 text-indigo-700 dark:text-indigo-300 truncate max-w-[220px]"
+                  title={`Scale anchor: ${scaleBadge}`}
+                >
+                  {scaleBadge}
+                </span>
+              )}
+              {requirement.stale && (
+                <span
+                  className="text-[10px] px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-700 dark:text-amber-400 flex items-center gap-1"
+                  title="The script changed after this image was drawn — redraw it to match."
+                >
+                  <AlertTriangle className="w-2.5 h-2.5" />
+                  outdated
+                </span>
+              )}
+            </div>
+            <div className="text-[10px] text-gray-500 dark:text-gray-400 mt-0.5">
+              {!needsDraw ? 'Reference ready' : drawn ? 'Needs a new still' : 'Not drawn yet'}
+              {requirement.usedInBeats?.length ? ` · ${formatBeatList(requirement.usedInBeats)}` : ''}
+              {requirement.alsoUsedInScenes?.length
+                ? ` · also needed by ${requirement.alsoUsedInScenes.length === 1 ? 'scene' : 'scenes'} ${formatSceneList(requirement.alsoUsedInScenes)}`
+                : ''}
+            </div>
           </div>
-          <div className="text-[10px] text-gray-500 dark:text-gray-400 mt-0.5">
-            {!needsDraw ? 'Reference ready' : drawn ? 'Needs a new still' : 'Not drawn yet'}
-            {requirement.usedInBeats?.length ? ` · ${formatBeatList(requirement.usedInBeats)}` : ''}
-            {requirement.alsoUsedInScenes?.length
-              ? ` · also needed by ${requirement.alsoUsedInScenes.length === 1 ? 'scene' : 'scenes'} ${formatSceneList(requirement.alsoUsedInScenes)}`
-              : ''}
+
+          <div className="flex items-center gap-1 shrink-0">
+            {onUpdateRequirementInline && (
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation()
+                  openJitEditor(requirement)
+                }}
+                className={`p-1 rounded hover:bg-cyan-200/60 dark:hover:bg-cyan-800/60 ${
+                  isJitOpen
+                    ? 'text-cyan-700 dark:text-cyan-300 bg-cyan-200/60 dark:bg-cyan-800/60'
+                    : 'text-gray-500 hover:text-gray-800 dark:hover:text-gray-200'
+                }`}
+                title="Edit description & scale in-place (JIT Reference Builder)"
+                aria-label={`Edit ${displayName}`}
+              >
+                <Pencil className="w-3.5 h-3.5" />
+              </button>
+            )}
+            {onOpenReferenceLibrary && (
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation()
+                  onOpenReferenceLibrary(buildDeepLinkForRequirement(requirement))
+                }}
+                className="p-1 rounded hover:bg-cyan-200/60 dark:hover:bg-cyan-800/60 text-gray-500 hover:text-gray-800 dark:hover:text-gray-200"
+                title="Open this item directly in the Continuity Library"
+                aria-label={`Open ${displayName} in Continuity Library`}
+              >
+                <ExternalLink className="w-3.5 h-3.5" />
+              </button>
+            )}
+            {drawn && (
+              <>
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    void saveImageFile({
+                      url: requirement.imageUrl!.trim(),
+                      sceneNumber,
+                      label: `continuity-${displayName}`,
+                    })
+                      .then((saved) => {
+                        if (saved) toast.success('Reference image saved')
+                      })
+                      .catch(() => toast.error('Failed to download reference image'))
+                  }}
+                  className="p-1 rounded hover:bg-cyan-200/60 dark:hover:bg-cyan-800/60 text-gray-500 hover:text-gray-800 dark:hover:text-gray-200"
+                  title="Download image"
+                  aria-label={`Download ${displayName}`}
+                >
+                  <Download className="w-3.5 h-3.5" />
+                </button>
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    setExpanded({ url: requirement.imageUrl!.trim(), name: displayName })
+                  }}
+                  className="p-1 rounded hover:bg-cyan-200/60 dark:hover:bg-cyan-800/60 text-gray-500 hover:text-gray-800 dark:hover:text-gray-200"
+                  title="Expand image"
+                  aria-label={`Expand ${displayName}`}
+                >
+                  <Maximize2 className="w-3.5 h-3.5" />
+                </button>
+              </>
+            )}
+            {expressKind && onExpressReferences && (
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation()
+                  void onExpressReferences({ itemKeys: [key] })
+                }}
+                disabled={busy || lockingDirection || !canGenerate}
+                className="text-[11px] px-2 py-1 bg-cyan-600 hover:bg-cyan-700 text-white rounded disabled:opacity-50"
+                title={
+                  drawn
+                    ? `Update this reference still (${formatReferenceExpressEstimate(estimateReferenceExpress([{ kind: expressKind }]))}). Use the pencil icon to adjust description/scale first, or open in Continuity Library.`
+                    : `Draw just this reference (${formatReferenceExpressEstimate(estimateReferenceExpress([{ kind: expressKind }]))})`
+                }
+              >
+                {genLabel}
+              </button>
+            )}
+            {onOverridesChange && (
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation()
+                  removeRequirement(key)
+                }}
+                className="p-1 rounded hover:bg-cyan-200/60 dark:hover:bg-cyan-800/60 text-gray-500 hover:text-gray-800 dark:hover:text-gray-200"
+                title="This scene does not use it — stop waiting on it"
+              >
+                <X className="w-3.5 h-3.5" />
+              </button>
+            )}
           </div>
         </div>
 
-        <div className="flex items-center gap-1 shrink-0">
-          {drawn && (
-            <>
+        {isJitOpen && (
+          <div
+            className="px-3 pb-3 pt-2 border-t border-cyan-200/60 dark:border-cyan-800/60 bg-cyan-50/40 dark:bg-slate-950/50 space-y-2"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between gap-2">
+              <span className="text-[11px] font-semibold text-cyan-900 dark:text-cyan-200">
+                JIT Reference Builder — {displayName}
+              </span>
+              {onOpenReferenceLibrary && (
+                <button
+                  type="button"
+                  onClick={() =>
+                    onOpenReferenceLibrary(buildDeepLinkForRequirement(requirement))
+                  }
+                  className="text-[10px] text-cyan-700 dark:text-cyan-300 hover:underline inline-flex items-center gap-1"
+                >
+                  Open in Continuity Library
+                  <ExternalLink className="w-3 h-3" />
+                </button>
+              )}
+            </div>
+
+            {requirement.kind === 'cast' && (
+              <div className="space-y-1.5">
+                <label className="block text-[10px] text-gray-600 dark:text-gray-400">
+                  Body / Appearance Description
+                  <textarea
+                    rows={2}
+                    value={jitDescription}
+                    onChange={(e) => setJitDescription(e.target.value)}
+                    placeholder="Facial structure, age, build, hair..."
+                    className="mt-0.5 w-full px-2 py-1 text-xs rounded border border-cyan-300 dark:border-cyan-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100"
+                  />
+                </label>
+                <label className="block text-[10px] text-gray-600 dark:text-gray-400">
+                  Standing Height (Proportional Scale)
+                  <input
+                    type="text"
+                    value={jitSecondary}
+                    onChange={(e) => setJitSecondary(e.target.value)}
+                    placeholder='e.g. 6-foot tall, 5&apos;9"'
+                    className="mt-0.5 w-full px-2 py-1 text-xs rounded border border-cyan-300 dark:border-cyan-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100"
+                  />
+                </label>
+              </div>
+            )}
+
+            {requirement.kind === 'wardrobe' && (
+              <div className="space-y-1.5">
+                <label className="block text-[10px] text-gray-600 dark:text-gray-400">
+                  Outfit Description
+                  <textarea
+                    rows={2}
+                    value={jitDescription}
+                    onChange={(e) => setJitDescription(e.target.value)}
+                    placeholder="Garments, colors, materials, footwear..."
+                    className="mt-0.5 w-full px-2 py-1 text-xs rounded border border-cyan-300 dark:border-cyan-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100"
+                  />
+                </label>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  <label className="block text-[10px] text-gray-600 dark:text-gray-400">
+                    Accessories
+                    <input
+                      type="text"
+                      value={jitSecondary}
+                      onChange={(e) => setJitSecondary(e.target.value)}
+                      placeholder="Glasses, watch, belt..."
+                      className="mt-0.5 w-full px-2 py-1 text-xs rounded border border-cyan-300 dark:border-cyan-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100"
+                    />
+                  </label>
+                  <label className="block text-[10px] text-gray-600 dark:text-gray-400">
+                    Scene Appearance (Hair / Makeup / Wear)
+                    <input
+                      type="text"
+                      value={jitTertiary}
+                      onChange={(e) => setJitTertiary(e.target.value)}
+                      placeholder="Coal dust on brow, damp hair..."
+                      className="mt-0.5 w-full px-2 py-1 text-xs rounded border border-cyan-300 dark:border-cyan-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100"
+                    />
+                  </label>
+                </div>
+              </div>
+            )}
+
+            {requirement.kind === 'location' && !isLocVersion && (
+              <div className="space-y-1.5">
+                <label className="block text-[10px] text-gray-600 dark:text-gray-400">
+                  Location Description
+                  <textarea
+                    rows={2}
+                    value={jitDescription}
+                    onChange={(e) => setJitDescription(e.target.value)}
+                    placeholder="Architecture, materials, fixed set pieces, lighting..."
+                    className="mt-0.5 w-full px-2 py-1 text-xs rounded border border-cyan-300 dark:border-cyan-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100"
+                  />
+                </label>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                  <label className="block text-[10px] text-gray-600 dark:text-gray-400">
+                    Ceiling (ft)
+                    <input
+                      type="number"
+                      min={4}
+                      max={200}
+                      value={jitCeilingFt}
+                      onChange={(e) => setJitCeilingFt(e.target.value)}
+                      placeholder="11"
+                      className="mt-0.5 w-full px-2 py-1 text-xs rounded border border-cyan-300 dark:border-cyan-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100"
+                    />
+                  </label>
+                  <label className="block text-[10px] text-gray-600 dark:text-gray-400">
+                    Door (ft)
+                    <input
+                      type="number"
+                      min={4}
+                      max={40}
+                      value={jitDoorFt}
+                      onChange={(e) => setJitDoorFt(e.target.value)}
+                      placeholder="7"
+                      className="mt-0.5 w-full px-2 py-1 text-xs rounded border border-cyan-300 dark:border-cyan-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100"
+                    />
+                  </label>
+                  <label className="block text-[10px] text-gray-600 dark:text-gray-400 col-span-2">
+                    Mounted Fixture Heights
+                    <input
+                      type="text"
+                      value={jitSecondary}
+                      onChange={(e) => setJitSecondary(e.target.value)}
+                      placeholder="e.g. chalkboard mounted at a height of 6-foot"
+                      className="mt-0.5 w-full px-2 py-1 text-xs rounded border border-cyan-300 dark:border-cyan-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100"
+                    />
+                  </label>
+                </div>
+              </div>
+            )}
+
+            {requirement.kind === 'location' && isLocVersion && (
+              <div className="space-y-1.5">
+                <label className="block text-[10px] text-gray-600 dark:text-gray-400">
+                  Setting Change / State Notes
+                  <textarea
+                    rows={2}
+                    value={jitDescription}
+                    onChange={(e) => setJitDescription(e.target.value)}
+                    placeholder="What changed in the set (e.g. door blown open, chalk slash across board)..."
+                    className="mt-0.5 w-full px-2 py-1 text-xs rounded border border-cyan-300 dark:border-cyan-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100"
+                  />
+                </label>
+              </div>
+            )}
+
+            {requirement.kind === 'prop' && (
+              <div className="space-y-1.5">
+                <label className="block text-[10px] text-gray-600 dark:text-gray-400">
+                  Prop Description
+                  <textarea
+                    rows={2}
+                    value={jitDescription}
+                    onChange={(e) => setJitDescription(e.target.value)}
+                    placeholder="Materials, silhouette, surface details..."
+                    className="mt-0.5 w-full px-2 py-1 text-xs rounded border border-cyan-300 dark:border-cyan-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100"
+                  />
+                </label>
+                <label className="block text-[10px] text-gray-600 dark:text-gray-400">
+                  Dimensions / Scale (Proportional Continuity)
+                  <input
+                    type="text"
+                    value={jitSecondary}
+                    onChange={(e) => setJitSecondary(e.target.value)}
+                    placeholder="e.g. 8-inch brass canister, handheld"
+                    className="mt-0.5 w-full px-2 py-1 text-xs rounded border border-cyan-300 dark:border-cyan-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100"
+                  />
+                </label>
+              </div>
+            )}
+
+            <div className="flex items-center justify-end gap-2 pt-1">
               <button
                 type="button"
-                onClick={(e) => {
-                  e.stopPropagation()
-                  void saveImageFile({
-                    url: requirement.imageUrl!.trim(),
-                    sceneNumber,
-                    label: `continuity-${displayName}`,
-                  })
-                    .then((saved) => {
-                      if (saved) toast.success('Reference image saved')
-                    })
-                    .catch(() => toast.error('Failed to download reference image'))
-                }}
-                className="p-1 rounded hover:bg-cyan-200/60 dark:hover:bg-cyan-800/60 text-gray-500 hover:text-gray-800 dark:hover:text-gray-200"
-                title="Download image"
-                aria-label={`Download ${displayName}`}
+                onClick={() => setEditingKey(null)}
+                disabled={jitSaving}
+                className="text-[11px] px-2.5 py-1 rounded border border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800"
               >
-                <Download className="w-3.5 h-3.5" />
+                Cancel
               </button>
               <button
                 type="button"
-                onClick={(e) => {
-                  e.stopPropagation()
-                  setExpanded({ url: requirement.imageUrl!.trim(), name: displayName })
-                }}
-                className="p-1 rounded hover:bg-cyan-200/60 dark:hover:bg-cyan-800/60 text-gray-500 hover:text-gray-800 dark:hover:text-gray-200"
-                title="Expand image"
-                aria-label={`Expand ${displayName}`}
+                onClick={() => void handleSaveJit(requirement, false)}
+                disabled={jitSaving}
+                className="text-[11px] px-2.5 py-1 rounded border border-cyan-500 text-cyan-800 dark:text-cyan-200 hover:bg-cyan-500/10 inline-flex items-center gap-1"
               >
-                <Maximize2 className="w-3.5 h-3.5" />
+                <Check className="w-3 h-3" />
+                Save
               </button>
-            </>
-          )}
-          {expressKind && onExpressReferences && (
-            <button
-              type="button"
-              onClick={(e) => {
-                e.stopPropagation()
-                void onExpressReferences({ itemKeys: [key] })
-              }}
-              disabled={busy || lockingDirection || !canGenerate}
-              className="text-[11px] px-2 py-1 bg-cyan-600 hover:bg-cyan-700 text-white rounded disabled:opacity-50"
-              title={
-                drawn
-                  ? `Redraw this reference with the default prompt (${formatReferenceExpressEstimate(estimateReferenceExpress([{ kind: expressKind }]))}). Customise in the Reference Library.`
-                  : `Draw just this reference (${formatReferenceExpressEstimate(estimateReferenceExpress([{ kind: expressKind }]))})`
-              }
-            >
-              {genLabel}
-            </button>
-          )}
-          {onOverridesChange && (
-            <button
-              type="button"
-              onClick={(e) => {
-                e.stopPropagation()
-                removeRequirement(key)
-              }}
-              className="p-1 rounded hover:bg-cyan-200/60 dark:hover:bg-cyan-800/60 text-gray-500 hover:text-gray-800 dark:hover:text-gray-200"
-              title="This scene does not use it — stop waiting on it"
-            >
-              <X className="w-3.5 h-3.5" />
-            </button>
-          )}
-        </div>
+              {expressKind && onExpressReferences && (
+                <button
+                  type="button"
+                  onClick={() => void handleSaveJit(requirement, true)}
+                  disabled={jitSaving || busy || lockingDirection || !canGenerate}
+                  className="text-[11px] px-2.5 py-1 rounded bg-cyan-600 hover:bg-cyan-700 text-white disabled:opacity-50 inline-flex items-center gap-1"
+                >
+                  <Sparkles className="w-3 h-3" />
+                  Save &amp; {genLabel}
+                </button>
+              )}
+            </div>
+          </div>
+        )}
       </div>
     )
   }

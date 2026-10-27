@@ -14,13 +14,13 @@
 import { isFaceCloseUpShot, isInsertOrExtremeCloseUp } from '@/lib/imagen/stillFramingNormalize'
 
 export const COMBINED_CHARACTER_REFERENCE_INSTRUCTION =
-  'CHARACTER REFERENCE: same person — match face, hair, and likeness from the face close-up and the standing figure in this photo; match head-to-toe outfit, fabric, fit, and footwear. Do not copy the character-card layout into the scene.'
+  'CHARACTER REFERENCE: same person — this reference card combines a full-body standing figure with a face close-up of the same person. Match exact facial bone structure, features, skin tone, hair, and likeness from the face close-up (do not drift into a generic or celebrity face) and match head-to-toe outfit, fabric, fit, and footwear from the standing figure. Render one unbroken camera frame and do not copy the character-card layout or headshot overlay into the scene.'
 
 export const COMBINED_CHARACTER_INSERT_INSTRUCTION =
   'CHARACTER REFERENCE: same person — match the visible skin, fabric, and likeness of the specified limb or hand; do not pull a full body into the frame.'
 
 export const COMBINED_CHARACTER_FACE_CLOSE_UP_INSTRUCTION =
-  'CHARACTER REFERENCE: same person — match face, hair, and likeness from the face close-up in this photo. Do not copy a standing figure or the character-card layout into the scene. Outfit is garments at the collar and shoulders only.'
+  'CHARACTER REFERENCE: same person — match exact facial bone structure, features, skin tone, hair, and likeness from the face close-up in this photo (do not drift into a generic or celebrity face). Do not copy a standing figure, character-card layout, or headshot overlay into the scene. Outfit is garments at the collar and shoulders only.'
 
 /** @deprecated Combined character refs no longer use panel routing. */
 export const WARDROBE_DIPTYCH_CONSUMPTION_INSTRUCTION = COMBINED_CHARACTER_REFERENCE_INSTRUCTION
@@ -45,13 +45,13 @@ export function buildCombinedCharacterConsumptionLine(
   }
   if (isFaceCloseUpShot(shotType)) {
     return (
-      `${characterName} (${personPart}): same person — match face, hair, and likeness from the face close-up; ` +
-      `do not copy a standing figure or character-card layout — garments at the collar and shoulders only, on ${personPart} only.`
+      `${characterName} (${personPart}): same person — match exact facial bone structure, features, hair, and likeness from the face close-up (never substitute a generic or celebrity face); ` +
+      `do not copy a standing figure, character-card layout, or headshot overlay — garments at the collar and shoulders only, on ${personPart} only.`
     )
   }
   return (
-    `${characterName} (${personPart}): same person — match face, hair, and likeness from the face close-up and the standing figure; ` +
-    `match head-to-toe outfit, fabric, fit, and footwear — outfit applies to ${personPart} only. Do not copy the character-card layout into the scene.`
+    `${characterName} (${personPart}): same person — match exact facial bone structure, features, hair, and likeness from the face close-up (never substitute a generic or celebrity face) and the standing figure; ` +
+    `match head-to-toe outfit, fabric, fit, and footwear — outfit applies to ${personPart} only. Do not copy the character-card layout or headshot overlay into the scene.`
   )
 }
 

@@ -13,56 +13,57 @@ import {
 import { buildObjectReferencePrompt } from '@/lib/vision/referenceExpressPrompts'
 
 describe('objectReferencePrompts', () => {
-  it('leads with purpose, isolation, and a scale ruler as the only extra', () => {
+  it('leads with purpose, isolation, and explicit real-world scale without a backdrop ruler', () => {
     expect(OBJECT_REFERENCE_PURPOSE).toBe(
       'Create the image to be used as a reference image for consistency across image and video generations.'
     )
     expect(OBJECT_REFERENCE_ISOLATION).toMatch(/isolated subject only/i)
     expect(OBJECT_REFERENCE_ISOLATION).toMatch(/do not add people, hands, tables/i)
     expect(OBJECT_REFERENCE_ISOLATION).toMatch(/not a scene/i)
-    expect(OBJECT_REFERENCE_SCALE_RULER).toMatch(/ruler or height\/width/i)
-    expect(OBJECT_REFERENCE_SCALE_RULER).toMatch(/beside the object/i)
-    expect(OBJECT_REFERENCE_SCALE_RULER).toMatch(/never engrave, print, paint, or draw measurements/i)
-    expect(OBJECT_REFERENCE_SCALE_RULER).toMatch(/on the object itself/i)
-    expect(OBJECT_REFERENCE_SCALE_RULER).toMatch(/nothing else/i)
-    expect(OBJECT_REFERENCE_SCALE_RULER).not.toMatch(/marks on the object are allowed/i)
+    expect(OBJECT_REFERENCE_SCALE_RULER).toMatch(/do not draw or place any ruler/i)
     expect(OBJECT_REFERENCE_GENERATION_INSTRUCTION).toContain(OBJECT_REFERENCE_PURPOSE)
     expect(OBJECT_REFERENCE_GENERATION_INSTRUCTION).toContain(OBJECT_REFERENCE_REAL_WORLD_SCALE)
+    expect(OBJECT_REFERENCE_GENERATION_INSTRUCTION).not.toMatch(/Place a simple ruler/i)
   })
 
-  it('appends the block to a bare object description without duplicating it', () => {
+  it('appends the block to a bare object description without duplicating it and strips legacy ruler text', () => {
     const first = withObjectReferenceInstruction('12-inch metal sample canister, handheld')
     expect(first.startsWith('12-inch metal sample canister, handheld')).toBe(true)
     expect(first).toContain(OBJECT_REFERENCE_PURPOSE)
     expect(first).toContain(OBJECT_REFERENCE_ISOLATION)
-    expect(first).toContain(OBJECT_REFERENCE_SCALE_RULER)
+    expect(first).not.toMatch(/Place a simple ruler/i)
     expect(first).toMatch(/true real-world scale/i)
 
     const second = withObjectReferenceInstruction(first)
     expect(second).toBe(first)
 
     const legacy = withObjectReferenceInstruction(
-      '12-inch bar. A simple ruler or height/width marks on the object are allowed so real-world size stays measurable.'
+      '12-inch bar. Place a simple ruler or height/width scale beside the object, on the backdrop, so real-world size stays measurable. Never engrave, print, paint, or draw measurements, tick marks, or inch/cm labels on the object itself. Nothing else.'
     )
     expect(legacy).not.toContain('Place a simple ruler')
   })
 
-  it('buildObjectReferencePrompt no longer uses product-hero staging copy', () => {
+  it('buildObjectReferencePrompt no longer uses product-hero staging copy and includes dimensions when set', () => {
     const prompt = buildObjectReferencePrompt({
       id: 'obj-1',
       type: 'object',
       name: 'Canister',
-      description: '12-inch metal sample canister, handheld',
+      description: 'metal sample canister, handheld',
+      dimensions: '12 inches long',
     })
     expect(prompt).toContain(OBJECT_REFERENCE_PURPOSE)
+    expect(prompt).toContain('12 inches long')
     expect(prompt).toMatch(/true real-world scale/i)
     expect(prompt).not.toMatch(/hero prop|museum quality|professional product photography/i)
   })
 
-  it('negative prompt bars people, hands holding the object, and set furniture', () => {
+  it('negative prompt bars people, hands holding the object, rulers, and set furniture', () => {
     expect(OBJECT_REFERENCE_NEGATIVE_PROMPT).toMatch(/people/)
     expect(OBJECT_REFERENCE_NEGATIVE_PROMPT).toMatch(/hands holding the object/)
     expect(OBJECT_REFERENCE_NEGATIVE_PROMPT).toMatch(/tables used as a set/)
+    expect(OBJECT_REFERENCE_NEGATIVE_PROMPT).toMatch(/ruler/)
+    expect(OBJECT_REFERENCE_NEGATIVE_PROMPT).toMatch(/measuring tape/)
+    expect(OBJECT_REFERENCE_NEGATIVE_PROMPT).toMatch(/scale bar/)
     expect(OBJECT_REFERENCE_NEGATIVE_PROMPT).toMatch(/measurements on the object/)
     expect(OBJECT_REFERENCE_NEGATIVE_PROMPT).toMatch(/tick marks on the object/)
     expect(OBJECT_REFERENCE_NEGATIVE_PROMPT).toMatch(/engraved scale on the object/)

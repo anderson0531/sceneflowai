@@ -139,9 +139,14 @@ import {
   resolveCharacterReferencePair,
 } from '@/lib/character/characterReferenceAssembly'
 import {
+  consolidateBeatCharacterRefsIntoPipBadges,
   cropIdentityReferenceImagesForPro,
-  expandLeftoverDiptychSheetsIntoDualSlots,
 } from '@/lib/character/composeIdentityWardrobeDiptych'
+import {
+  persistCombinedCharacterRefUrl,
+  uploadCombinedCharacterRef,
+  wardrobeExpectedFingerprint,
+} from '@/lib/character/combinedCharacterRef'
 import { overlayLocationScaleOnReferenceImages } from '@/lib/vision/locationScaleOverlay'
 import {
   buildCombinedCharacterConsumptionLine,
@@ -644,7 +649,7 @@ async function postGenerateImage(req: NextRequest) {
       lookbook: passedLookbook,
       generationMode = 'default',
       includeWardrobeReferenceImages = true,
-      includeWardrobeDiptych = false,
+      includeWardrobeDiptych = true,
       fromDialog = false,
       negativePrompt,
       thinkingLevel,
@@ -1683,14 +1688,14 @@ async function postGenerateImage(req: NextRequest) {
         }
       }
       
-      // Identity + wardrobe references — discrete slots, never a PiP badge card.
+      // Identity + wardrobe references — prefer single-slot composite card (wardrobe + inset headshot)
       const refPair = resolveCharacterReferencePair({
         character: char,
         scene: sceneData as Record<string, unknown>,
         sceneIndex,
         characterWardrobes: effectiveCharacterWardrobes,
         includeWardrobeReferenceImages,
-        includeWardrobeDiptych: includeWardrobeDiptych === true,
+        includeWardrobeDiptych: includeWardrobeDiptych !== false,
       })
       const hasWardrobeDiptych = refPair.hasWardrobeDiptych
       const wardrobeDiptychUrl = refPair.wardrobeDiptychUrl
@@ -1870,6 +1875,7 @@ async function postGenerateImage(req: NextRequest) {
         hairAnchor,
         hairStyle: char.hairStyle,
         hairColor: char.hairColor,
+        height: char.height,
         defaultWardrobe: hasWardrobeReference ? undefined : effectiveWardrobe,
         wardrobeAccessories: hasWardrobeReference ? undefined : effectiveAccessories,
         wardrobeDescription: hasCostumeReference ? undefined : effectiveWardrobe,
@@ -1880,6 +1886,7 @@ async function postGenerateImage(req: NextRequest) {
         isStoredPip,
         characterId: charId,
         wardrobeId: refPair.resolvedWardrobe?.id,
+        resolvedWardrobe: refPair.resolvedWardrobe,
         subjectOrdinal,
         linkingDescription,
         promptToken,
@@ -1903,8 +1910,32 @@ async function postGenerateImage(req: NextRequest) {
       }
     })
 
-    if (isBeatFrame) {
-      characterReferences = await expandLeftoverDiptychSheetsIntoDualSlots(characterReferences)
+    if (isBeatFrame && includeWardrobeDiptych !== false) {
+      characterReferences = await consolidateBeatCharacterRefsIntoPipBadges(characterReferences, {
+        persistCombined: async ({ ref, composite }) => {
+          const r = ref as any
+          if (!projectId || !r.characterId || !r.wardrobeId) return null
+          const uploadedUrl = await uploadCombinedCharacterRef({
+            composite,
+            projectId: String(projectId),
+            characterId: String(r.characterId),
+            wardrobeId: String(r.wardrobeId),
+          })
+          if (!uploadedUrl) return null
+          if (r.resolvedWardrobe) {
+            await persistCombinedCharacterRefUrl({
+              projectId: String(projectId),
+              characterId: String(r.characterId),
+              wardrobeId: String(r.wardrobeId),
+              combinedCharacterRefUrl: uploadedUrl,
+              expectedFingerprint: wardrobeExpectedFingerprint(r.resolvedWardrobe),
+            }).catch((err) =>
+              console.warn('[Scene Image] Failed to persist combinedCharacterRefUrl:', err)
+            )
+          }
+          return uploadedUrl
+        },
+      })
       for (const ref of characterReferences) {
         if (ref.identityReferenceId || ref.wardrobeReferenceId || ref.diptychReferenceId) {
           console.log(
@@ -2110,9 +2141,11 @@ async function postGenerateImage(req: NextRequest) {
         wardrobeAccessories: ref.wardrobeAccessories,
         hairDescription: ref.hairAnchor ?? ref.hairDescription,
         gender: ref.gender ?? undefined,
-        hasReferenceImage: !!ref.identityReferenceId || !!ref.wardrobeReferenceId,
-        referenceIndex: ref.identityReferenceId ?? ref.wardrobeReferenceId,
-        identityReferenceIndex: ref.identityReferenceId,
+        hasReferenceImage:
+          !!ref.diptychReferenceId || !!ref.identityReferenceId || !!ref.wardrobeReferenceId,
+        referenceIndex:
+          ref.diptychReferenceId ?? ref.identityReferenceId ?? ref.wardrobeReferenceId,
+        identityReferenceIndex: ref.diptychReferenceId ?? ref.identityReferenceId,
         wardrobeReferenceIndex: ref.wardrobeReferenceId,
         hasDualReferences: !!ref.hasDualReferences,
         hasCostumeReference: !!ref.hasCostumeReference,
@@ -2165,10 +2198,13 @@ async function postGenerateImage(req: NextRequest) {
       // We'll update this count later, but for the prompt, we just let it know how many are available
       const totalAvailableRefImages =
         characterReferences.filter(
-          (r: any) => r.identityReferenceId || r.wardrobeReferenceId
+          (r: any) => r.diptychReferenceId || r.identityReferenceId || r.wardrobeReferenceId
         ).reduce(
           (sum: number, r: any) =>
-            sum + (r.identityReferenceId ? 1 : 0) + (r.wardrobeReferenceId ? 1 : 0),
+            sum +
+            (r.diptychReferenceId
+              ? 1
+              : (r.identityReferenceId ? 1 : 0) + (r.wardrobeReferenceId ? 1 : 0)),
           0
         ) +
         propsWithTokens.filter((o) => o.hasReferenceImage).length +
@@ -2607,6 +2643,7 @@ async function postGenerateImage(req: NextRequest) {
         name: obj.name || 'prop',
         importance: obj.importance,
         description: typeof obj.description === 'string' ? obj.description : undefined,
+        dimensions: typeof obj.dimensions === 'string' ? obj.dimensions : undefined,
         promptToken: typeof obj.promptToken === 'string' ? obj.promptToken : undefined,
       }))
     
@@ -2991,6 +3028,7 @@ async function postGenerateImage(req: NextRequest) {
               actionFraming: locationShotOptions.actionFraming,
               emptyCast: locationShotOptions.emptyCast,
               locationDescription: cappedLocationReference.description,
+              canonicalScale: cappedLocationReference.canonicalScale,
             })} Use token ${locationToken} in the scene prompt. Environment: "${locationName}". Match lighting to the scene prompt Style section.\n\n`
           }
 

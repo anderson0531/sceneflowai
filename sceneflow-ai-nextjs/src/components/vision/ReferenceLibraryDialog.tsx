@@ -12,10 +12,21 @@ import {
 
 export type ReferenceLibraryTab = 'cast' | 'locations' | 'object'
 
+export interface ReferenceLibraryDeepLink {
+  tab: ReferenceLibraryTab
+  characterId?: string
+  wardrobeId?: string
+  locationId?: string
+  versionId?: string
+  objectId?: string
+  nonce?: number
+}
+
 export interface ReferenceLibraryDialogProps extends VisionReferencesSidebarProps {
   open: boolean
   onOpenChange: (open: boolean) => void
   initialTab?: ReferenceLibraryTab
+  deepLink?: ReferenceLibraryDeepLink | null
   topContent?: React.ReactNode
 }
 
@@ -23,6 +34,7 @@ export function ReferenceLibraryDialog({
   open,
   onOpenChange,
   initialTab,
+  deepLink,
   topContent,
   ...sidebarProps
 }: ReferenceLibraryDialogProps) {
@@ -35,6 +47,7 @@ export function ReferenceLibraryDialog({
             {...sidebarProps}
             layout="dialog"
             initialTab={initialTab}
+            deepLink={deepLink}
           />
         </div>
       </DialogContent>

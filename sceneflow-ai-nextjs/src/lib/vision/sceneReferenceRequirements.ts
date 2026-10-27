@@ -80,6 +80,8 @@ export type SceneRequirementCharacter = {
   id?: string
   name?: string
   type?: string
+  height?: string
+  appearanceDescription?: string
   referenceImage?: string
   referenceImageUrl?: string
   wardrobes?: Array<Record<string, unknown>>
@@ -98,6 +100,11 @@ export type SceneRequirementLocation = {
   imageUrl?: string
   description?: string
   sceneNumbers?: number[]
+  canonicalScale?: {
+    ceilingHeightFt?: number
+    doorHeightFt?: number
+    fixtureHeights?: string
+  }
   versions?: Array<{
     id: string
     name?: string
@@ -113,6 +120,7 @@ export type SceneRequirementObject = {
   id: string
   name?: string
   description?: string
+  dimensions?: string
   imageUrl?: string
   category?: string
   importance?: string

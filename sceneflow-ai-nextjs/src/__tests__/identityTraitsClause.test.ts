@@ -4,6 +4,7 @@ import {
   IDENTITY_TRAITS_WORD_CAP,
   buildIdentityEscalationBlock,
   buildIdentityTraitsClause,
+  extractCharacterHeightPhrase,
 } from '@/lib/imagen/identityTraitsClause'
 import {
   formatPairedIdentityLandmarkLine,
@@ -134,6 +135,17 @@ describe('buildIdentityTraitsClause', () => {
   it('returns nothing when there is no description and no hair field', () => {
     expect(buildIdentityTraitsClause({ visionDescription: '' })).toBeUndefined()
     expect(buildIdentityTraitsClause({ appearanceDescription: 'He is tall and moves quickly.' })).toBeUndefined()
+  })
+
+  it('extracts and normalizes standing height in feet for proportional scale', () => {
+    expect(extractCharacterHeightPhrase('6\'2"', undefined)).toBe('6-foot-2 tall')
+    expect(extractCharacterHeightPhrase('6ft', undefined)).toBe('6-foot tall')
+    expect(
+      buildIdentityTraitsClause({
+        visionDescription: GIDEON_VISION,
+        height: '6-foot-2 tall',
+      })
+    ).toContain('6-foot-2 tall')
   })
 })
 

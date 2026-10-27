@@ -16,14 +16,16 @@ export type BodyDirectorRequest = {
 
 export type BodyDirectorResult = {
   appearanceDescription: string
+  height?: string
 }
 
 const RESPONSE_SCHEMA = `{
-  "appearanceDescription": "1-2 sentences of standing physical identity for an image prompt: age band, ethnicity, build, face, standing hair and eyes. No clothing, accessories, makeup, injuries, plot, emotion, or performance."
+  "appearanceDescription": "1-2 sentences of standing physical identity for an image prompt: age band, ethnicity, standing height in feet (e.g. 6-foot tall or 5'8\\" tall), build, face, standing hair and eyes. No clothing, accessories, makeup, injuries, plot, emotion, or performance.",
+  "height": "6-foot tall"
 }`
 
 const SHARED_RULES = `INCLUDE:
-- Age band, ethnicity, build/stature, face, standing hair, eye color
+- Age band, ethnicity, standing height in feet (e.g. "6-foot tall" or "5'8\\" tall" so architectural scale stays proportionate across shots), build/stature, face, standing hair, eye color
 - Specific visual identity that stays stable across scenes
 
 EXCLUDE:
@@ -136,5 +138,10 @@ export function parseBodyDirectorResponse(raw: string): BodyDirectorResult {
   if (!appearanceDescription) {
     throw new Error('Invalid body description structure')
   }
-  return { appearanceDescription }
+  const height =
+    typeof parsed.height === 'string' && parsed.height.trim() ? parsed.height.trim() : undefined
+  return {
+    appearanceDescription,
+    ...(height ? { height } : {}),
+  }
 }

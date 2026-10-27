@@ -129,7 +129,7 @@ describe('buildInterleavedReferencePairCaptions', () => {
     expect(caption.name).not.toContain('framed photograph')
   })
 
-  it('does not face-crop a combined character plate', () => {
+  it('does not face-crop a combined character plate and includes composite face close-up instructions', () => {
     const [caption] = buildInterleavedReferencePairCaptions(
       [
         {
@@ -138,13 +138,25 @@ describe('buildInterleavedReferencePairCaptions', () => {
           role: 'identity',
           refRole: 'wardrobe-diptych',
           characterName: 'Piper Hayes',
+          characterHeight: '5-foot-7 tall',
           subjectOrdinal: 1,
         },
       ],
-      [{ name: 'Piper Hayes', promptToken: 'person [1]', subjectOrdinal: 1 }]
+      [
+        {
+          name: 'Piper Hayes',
+          promptToken: 'person [1]',
+          subjectOrdinal: 1,
+          height: '5-foot-7 tall',
+          wardrobeDescription: 'charcoal wool overcoat',
+        },
+      ]
     )
 
     expect(caption.name).toMatch(/^The next image is the identity and wardrobe of person \[1\]\./)
+    expect(caption.name).toContain('5-foot-7 tall')
+    expect(caption.name).toContain('face close-up')
+    expect(caption.name).toContain('Do not copy the character-card layout or headshot overlay')
     expect(isIdentityReferencePartName(caption.name)).toBe(false)
   })
 })

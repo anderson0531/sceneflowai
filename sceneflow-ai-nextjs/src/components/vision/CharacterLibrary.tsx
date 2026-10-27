@@ -264,6 +264,11 @@ export interface CharacterLibraryProps {
   getLatestCharacters?: () => any[];
   pendingKindAgentRun?: ReferenceExpressKind | null;
   onPendingKindAgentRunConsumed?: () => void;
+  focusTarget?: {
+    characterId?: string;
+    wardrobeId?: string;
+    nonce?: number;
+  } | null;
 }
 
 // Wardrobe item in collection with scene-aware tracking
@@ -529,6 +534,8 @@ interface CharacterCardProps {
   splitLayout?: boolean;
   /** Designed voices still assigned to other characters. Kept when the library is full. */
   retainVoiceIds?: string[];
+  focusWardrobeId?: string;
+  focusNonce?: number;
 }
 
 export function CharacterLibrary({
@@ -568,6 +575,7 @@ export function CharacterLibrary({
   getLatestCharacters,
   pendingKindAgentRun = null,
   onPendingKindAgentRunConsumed,
+  focusTarget = null,
 }: CharacterLibraryProps) {
   const effectiveVoiceProvider =
     voiceAssignmentProvider ?? ttsProvider ?? "elevenlabs";
@@ -619,6 +627,41 @@ export function CharacterLibrary({
       prev && ids.includes(prev) ? prev : ids[0],
     );
   }, [layout, castCharacters]);
+
+  const resolvedFocusCharId = useMemo(() => {
+    if (!focusTarget) return null;
+    const rawId = focusTarget.characterId?.trim();
+    if (rawId) {
+      const idx = castCharacters.findIndex(
+        (c, i) =>
+          getCharacterId(c, i) === rawId ||
+          String(c.id ?? "").toLowerCase() === rawId.toLowerCase() ||
+          String(c.name ?? "").trim().toLowerCase() === rawId.toLowerCase(),
+      );
+      if (idx >= 0) return getCharacterId(castCharacters[idx], idx);
+    }
+    if (focusTarget.wardrobeId) {
+      const idx = castCharacters.findIndex((c) =>
+        Array.isArray(c.wardrobes) &&
+        c.wardrobes.some((w: CharacterWardrobe) => w.id === focusTarget.wardrobeId),
+      );
+      if (idx >= 0) return getCharacterId(castCharacters[idx], idx);
+    }
+    return null;
+  }, [focusTarget, castCharacters]);
+
+  useEffect(() => {
+    if (!resolvedFocusCharId) return;
+    setActiveCharacterId(resolvedFocusCharId);
+    setSelectedChar(resolvedFocusCharId);
+    if (layout !== "dialog") {
+      setTimeout(() => {
+        document
+          .getElementById(`character-card-${resolvedFocusCharId}`)
+          ?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+      }, 60);
+    }
+  }, [resolvedFocusCharId, focusTarget?.nonce, layout]);
 
   const [selectedChar, setSelectedChar] = useState<string | null>(null);
   const orphanCharacters = useOrphanCharacters(scenes, characters);
@@ -884,6 +927,12 @@ export function CharacterLibrary({
         projectId={projectId}
         forceExpanded={cardOptions?.forceExpanded}
         splitLayout={cardOptions?.splitLayout}
+        focusWardrobeId={
+          resolvedFocusCharId === charId ? focusTarget?.wardrobeId : undefined
+        }
+        focusNonce={
+          resolvedFocusCharId === charId ? (focusTarget?.nonce ?? 1) : undefined
+        }
         retainVoiceIds={castCharacters.flatMap((other, otherIdx) => {
           const otherId = getCharacterId(other, otherIdx);
           const voiceId = other.voiceConfig?.voiceId;
@@ -1485,6 +1534,8 @@ const CharacterCard = ({
   forceExpanded = false,
   splitLayout = false,
   retainVoiceIds = [],
+  focusWardrobeId,
+  focusNonce,
 }: CharacterCardProps) => {
   const [imageError, setImageError] = useState(false); // Track if image failed to load
 
@@ -1505,6 +1556,23 @@ const CharacterCard = ({
   type CharacterWorkflowTab = "identity" | "voice" | "wardrobe";
   const [activeTab, setActiveTab] = useState<CharacterWorkflowTab>("identity");
   const [focusedWardrobeId, setFocusedWardrobeId] = useState<string | null>(null);
+  const [heightText, setHeightText] = useState<string>(character.height || "");
+
+  useEffect(() => {
+    setHeightText(character.height || "");
+  }, [character.height]);
+
+  useEffect(() => {
+    if (!focusNonce) return;
+    setIsCollapsed(false);
+    if (focusWardrobeId) {
+      setActiveTab("wardrobe");
+      setFocusedWardrobeId(focusWardrobeId);
+    } else {
+      setActiveTab("identity");
+      setFocusedWardrobeId(null);
+    }
+  }, [focusNonce, focusWardrobeId]);
   const [editingWardrobe, setEditingWardrobe] = useState(false);
   const [editingWardrobeId, setEditingWardrobeId] = useState<string | null>(
     null,
@@ -2225,6 +2293,9 @@ const CharacterCard = ({
       }
 
       await onUpdateAppearance(characterId, nextDescription);
+      if (typeof body.height === "string" && body.height.trim() && onUpdateCharacterAttributes) {
+        onUpdateCharacterAttributes(characterId, { height: body.height.trim() });
+      }
       setBodyDirectorText("");
       setEditingBodyDescription(false);
       toast.success(
@@ -3231,6 +3302,7 @@ const CharacterCard = ({
   if (isCollapsed && !forceExpanded) {
     return (
       <div
+        id={`character-card-${characterId}`}
         ref={setNodeRef}
         style={draggableStyle}
         className="bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600 transition-all overflow-hidden"
@@ -3490,6 +3562,7 @@ const CharacterCard = ({
 
   return (
     <div
+      id={`character-card-${characterId}`}
       ref={setNodeRef}
       style={draggableStyle}
       className="relative bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600 transition-all overflow-hidden flex flex-col"
@@ -3904,6 +3977,45 @@ const CharacterCard = ({
                   )}
                   <p className="mt-1 text-[10px] text-gray-500">
                     Controls how this character is depicted in generated frames and video.
+                  </p>
+                </div>
+
+                {/* Standing Height - proportional scale anchor */}
+                <div className="pt-2 border-t border-gray-200 dark:border-gray-700">
+                  <div className="flex items-center justify-between gap-2 mb-1">
+                    <span className="text-xs font-medium text-gray-600 dark:text-gray-400">
+                      Standing Height (Scale)
+                    </span>
+                    {onUpdateCharacterAttributes ? (
+                      <input
+                        type="text"
+                        value={heightText}
+                        onChange={(e) => setHeightText(e.target.value)}
+                        onBlur={() => {
+                          const next = heightText.trim();
+                          if (next !== (character.height || "")) {
+                            onUpdateCharacterAttributes(characterId, {
+                              height: next || undefined,
+                            });
+                          }
+                        }}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") {
+                            e.currentTarget.blur();
+                          }
+                        }}
+                        onClick={(e) => e.stopPropagation()}
+                        placeholder='e.g. 6-foot tall, 5&apos;8"'
+                        className="w-40 px-2 py-0.5 text-xs rounded border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
+                      />
+                    ) : (
+                      <span className="text-xs text-gray-500">
+                        {character.height || "Not set"}
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-[10px] text-gray-500">
+                    Locks character-to-set proportions (e.g. 6-foot tall vs 11-foot ceiling).
                   </p>
                 </div>
 

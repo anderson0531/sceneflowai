@@ -10,6 +10,8 @@ import {
   type SceneReferenceRequirement,
 } from '@/lib/vision/sceneReferenceRequirements'
 import { locationVersionRequirementId } from '@/lib/vision/locationVersionResolve'
+import { buildDeepLinkForRequirement } from '@/components/vision/SceneReferencesPanel'
+import { syncSceneDirectionToContinuityCatalog } from '@/lib/vision/saveBeatDirection'
 
 const PIPER = {
   id: 'char-piper',
@@ -802,5 +804,119 @@ describe('empty and malformed input', () => {
     })
 
     expect(byKind(requirements, 'prop')).toHaveLength(0)
+  })
+})
+
+describe('buildDeepLinkForRequirement and syncSceneDirectionToContinuityCatalog', () => {
+  it('builds deep-link payloads for Cast, Wardrobe, Location, Location Version, and Prop rows', () => {
+    expect(
+      buildDeepLinkForRequirement({
+        kind: 'cast',
+        id: 'char-piper',
+        name: 'PIPER',
+        source: 'beat-plan',
+      })
+    ).toEqual(expect.objectContaining({ tab: 'cast', characterId: 'char-piper' }))
+
+    expect(
+      buildDeepLinkForRequirement({
+        kind: 'wardrobe',
+        id: 'wd-piper-gala',
+        name: 'Gala dress',
+        characterId: 'char-piper',
+        source: 'beat-plan',
+      })
+    ).toEqual(
+      expect.objectContaining({
+        tab: 'cast',
+        characterId: 'char-piper',
+        wardrobeId: 'wd-piper-gala',
+      })
+    )
+
+    const verReqId = locationVersionRequirementId('loc-tunnel', 'ver-collapse')
+    expect(
+      buildDeepLinkForRequirement({
+        kind: 'location',
+        id: verReqId,
+        name: 'SERVICE TUNNEL — Collapsed ceiling',
+        source: 'beat-plan',
+      })
+    ).toEqual(
+      expect.objectContaining({
+        tab: 'locations',
+        locationId: 'loc-tunnel',
+        versionId: 'ver-collapse',
+      })
+    )
+
+    expect(
+      buildDeepLinkForRequirement({
+        kind: 'prop',
+        id: 'obj-lantern',
+        name: 'brass lantern',
+        source: 'beat-plan',
+      })
+    ).toEqual(expect.objectContaining({ tab: 'object', objectId: 'obj-lantern' }))
+  })
+
+  it('syncs setting-change location versions, scale anchors, and missing directed keyProps from scene/shot direction', () => {
+    const baseLocation = {
+      id: 'loc-rail',
+      location: 'RAIL TUNNEL',
+      locationDisplay: 'INT. RAIL TUNNEL - NIGHT',
+      description: 'Vaulted brick rail tunnel.',
+      imageUrl: 'https://example.com/rail.png',
+      sourceSceneIndex: 0,
+      sourceSceneHeading: 'INT. RAIL TUNNEL - NIGHT',
+      pinnedAt: '2026-01-01T00:00:00.000Z',
+      sceneNumbers: [1],
+      versions: [],
+    }
+    const scene = {
+      heading: 'INT. RAIL TUNNEL - NIGHT',
+      sceneNumber: 1,
+      sceneDirection: {
+        scene: {
+          locationDescription:
+            'A rail tunnel with an 11-foot ceiling, chalkboard mounted at a height of 6-foot.',
+          keyProps: ['12-inch sample canister'],
+        },
+      },
+      beats: [
+        {
+          beatId: 'b0',
+          kind: 'action',
+          actionDescription: 'PIPER enters carrying the 12-inch sample canister.',
+        },
+        {
+          beatId: 'b1',
+          kind: 'action',
+          actionDescription: 'The heavy iron door slams shut behind her.',
+          beatDirection: {
+            frozenMoment: 'The heavy iron door is slammed shut and locked.',
+            keyProps: ['12-inch sample canister'],
+          },
+        },
+      ],
+    }
+
+    const synced = syncSceneDirectionToContinuityCatalog({
+      scenes: [scene],
+      sceneIdx: 0,
+      characters: [PIPER],
+      locationReferences: [baseLocation],
+      objectReferences: [],
+    })
+
+    expect(synced.locationsChanged).toBe(true)
+    expect(synced.objectsChanged).toBe(true)
+    expect(synced.locationReferences[0].canonicalScale?.ceilingHeightFt).toBe(11)
+    expect(synced.locationReferences[0].canonicalScale?.fixtureHeights).toContain(
+      'chalkboard mounted at a height of 6-foot'
+    )
+    expect(synced.locationReferences[0].versions?.length).toBeGreaterThan(0)
+    expect(synced.objectReferences[0].name).toBe('12-inch sample canister')
+    expect(synced.objectReferences[0].dimensions).toBe('12-inch')
   })
 })

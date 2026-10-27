@@ -134,7 +134,8 @@ Each extra you return MUST:
 
 For each object, provide:
 - name: Short, specific VISUAL name that does NOT include character names, location names, or possessives (e.g. "1893 Water-Damaged Leather Journal", "Brass Faraday Energy Core", "Rugged Military Laptop"). NEVER use forms like "Marcus's Vintage Pocket Watch" or "Arthur Pendelton's 1893 Journal" — ownership is stored separately, not in the prompt-facing name. If an existing/tagged name already covers the object, copy that name exactly.
-- description: Detailed visual description for image generation (materials, colors, style, era, condition). MUST include real-world scale: handheld vs set-piece, and inches when the script names a size (e.g. "12-inch metal canister, handheld").
+- description: Detailed visual description for image generation (materials, colors, style, era, condition). MUST include real-world scale: handheld vs set-piece, and explicit inches/feet measurements (e.g. "12-inch metal canister, 4-inch diameter, handheld").
+- dimensions: Concise explicit size/proportion phrase to pair with the reference image (e.g. "12 inches long, handheld" or "6-foot tall freestanding cabinet")
 - category: One of: prop, vehicle, set-piece, costume, technology, other
 - importance: One of: critical (plot device that drives the story), important (handled in 2+ beats), background (atmosphere only - AVOID these unless essential)
 - sceneNumbers: Array of scene numbers where it appears
@@ -146,6 +147,7 @@ Respond with valid JSON only:
     {
       "name": "string",
       "description": "string",
+      "dimensions": "string",
       "category": "prop|vehicle|set-piece|costume|technology|other",
       "importance": "critical|important|background",
       "sceneNumbers": [1, 2, 3],
@@ -171,6 +173,7 @@ Respond with valid JSON only:
         id: `suggestion-${Date.now()}-${index}`,
         name: s.name,
         description: s.description,
+        dimensions: typeof s.dimensions === 'string' && s.dimensions.trim() ? s.dimensions.trim() : undefined,
         category: s.category as ObjectCategory,
         importance: s.importance as ObjectImportance,
         suggestedPrompt: buildObjectPrompt(s.name, s.category, s.description),

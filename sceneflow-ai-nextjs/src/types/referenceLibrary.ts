@@ -10,6 +10,14 @@ export type ReferenceLinkAddedBy = 'auto' | 'user' | 'series'
 /** Kind-specific fields stored in reference_assets.attributes JSONB */
 export interface ReferenceAssetAttributes {
   appearance?: string
+  height?: string
+  dimensions?: string
+  canonicalScale?: {
+    figureHeightFt?: number
+    doorHeightFt?: number
+    ceilingHeightFt?: number
+    fixtureHeights?: string
+  }
   voiceId?: string
   voiceLabel?: string
   lockedPromptTokens?: string[]

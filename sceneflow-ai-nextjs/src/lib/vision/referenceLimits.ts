@@ -5,6 +5,7 @@ import {
 } from '@/lib/character/characterReferenceAssembly'
 import { buildLocationReferenceLabel } from '@/lib/vision/locationReferencePrompts'
 import { isFurnitureProp, propScaleClause } from '@/lib/imagen/propScaleClause'
+import type { LocationCanonicalScale } from '@/lib/imagen/locationScaleClause'
 import { isFaceCloseUpShot, resolveStillShotClass } from '@/lib/imagen/stillFramingNormalize'
 
 export const MAX_VERTEX_GEMINI_REFERENCE_IMAGES = 8
@@ -102,12 +103,18 @@ export interface PrioritizedReferenceImage {
   promptToken?: string
   /** Library description; used to lock prop scale on the image label. */
   propDescription?: string
+  /** Explicit physical dimensions for the prop (e.g. "12 inches long, handheld"). */
+  propDimensions?: string
   /** Location description; used to lock door/ceiling scale on the send-time overlay. */
   locationDescription?: string
+  /** Explicit canonical architectural scale for the location. */
+  canonicalScale?: Partial<LocationCanonicalScale>
   /** True when this plate is a post-change location version, not the intact base. */
   currentSetState?: boolean
   /** Person token index the scene prompt uses for this character. */
   subjectOrdinal?: number
+  /** Character height phrase (e.g. "6-foot tall"). */
+  characterHeight?: string
 }
 
 /**
@@ -321,7 +328,7 @@ function applySendIndexLabel(
           ref.promptToken,
           ref.propDescription
         )
-      : `Prop reference ${sendIndex}: ${ref.propName}: ${propScaleClause(ref.propDescription, ref.propName)}`
+      : `Prop reference ${sendIndex}: ${ref.propName}: ${propScaleClause(ref.propDescription, ref.propName, ref.propDimensions)}`
   }
   if (ref.locationName) {
     return labelOptions?.buildLocationLabel
@@ -540,16 +547,26 @@ export function buildCharacterReferenceEntries(
 }
 
 export function buildPropReferenceMappingLines(
-  props: Array<{ propName?: string; sendIndex?: number; promptToken?: string }>
+  props: Array<{
+    propName?: string
+    sendIndex?: number
+    promptToken?: string
+    propDescription?: string
+    propDimensions?: string
+  }>
 ): string {
   const valid = props.filter((p) => p.propName && p.sendIndex)
   if (!valid.length) return ''
   const lines = valid
     .map((p) => {
       const token = p.promptToken || `prop [${p.sendIndex}]`
+      const scaleClause =
+        p.propDimensions?.trim() || p.propDescription?.trim()
+          ? ` ${propScaleClause(p.propDescription, p.propName, p.propDimensions)}`
+          : ''
       return (
         `- PROP REFERENCE (Ref Image [${p.sendIndex}] = ${token}): ${p.propName} — ` +
-        `match shape, material, color, and design of ${token}.`
+        `match shape, material, color, and design of ${token}.${scaleClause}`
       )
     })
     .join('\n')
@@ -563,6 +580,7 @@ export function buildPropReferenceEntries(
     importance?: string
     promptToken?: string
     description?: string
+    dimensions?: string
   }>,
   startIndex: number
 ): PrioritizedReferenceImage[] {
@@ -580,6 +598,7 @@ export function buildPropReferenceEntries(
       propName: obj.name,
       promptToken: obj.promptToken,
       propDescription: obj.description,
+      propDimensions: obj.dimensions,
     })
   }
 
@@ -594,6 +613,7 @@ export function buildLocationReferenceEntry(
     description?: string
     promptToken?: string
     boundVersionId?: string | null
+    canonicalScale?: Partial<LocationCanonicalScale>
   } | null | undefined,
   startIndex: number
 ): PrioritizedReferenceImage | null {
@@ -607,6 +627,7 @@ export function buildLocationReferenceEntry(
     provisionalIndex: refImageIndex,
     locationName,
     locationDescription: location.description,
+    canonicalScale: location.canonicalScale,
     promptToken: location.promptToken,
     currentSetState: Boolean(location.boundVersionId?.trim()),
   }

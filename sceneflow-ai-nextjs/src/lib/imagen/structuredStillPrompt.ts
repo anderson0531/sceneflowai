@@ -36,7 +36,12 @@ import {
   formatExclusionParagraph,
   recoverLeakedActionFromExclusions,
 } from '@/lib/scene/castPerformanceFraming'
-import { propScaleClause } from '@/lib/imagen/propScaleClause'
+import { propScaleClause, formatPropScaleDescriptor } from '@/lib/imagen/propScaleClause'
+import {
+  formatLocationScaleDescriptor,
+  locationScaleClause,
+  type LocationCanonicalScale,
+} from '@/lib/imagen/locationScaleClause'
 import { LOCATION_VERSION_CONSUMPTION_SUFFIX } from '@/lib/vision/locationReferencePrompts'
 import { extractMountedSetFixturePhrases } from '@/lib/vision/mountedSetFixtures'
 import {
@@ -188,10 +193,35 @@ export function formatPairedIdentityLandmarkLine(ref: StillPromptBoundRef): stri
   if (ref.kind !== 'person' || !ref.identityTraits?.trim()) return undefined
   const named = ref.name?.trim() ? `${ref.token} (${ref.name})` : ref.token
   let line = `${named} ${PAIRED_IDENTITY_LANDMARK_PREFIX} — ${ref.identityTraits.trim()}`
+  if (ref.isComposite) {
+    line +=
+      '. Extract exact facial bone structure from the face close-up and outfit from the full-body standing figure; do not render the character-card layout or headshot overlay'
+  }
   if (ref.wardrobeClause?.trim()) {
     line += `. Garments at the collar and shoulders: ${ref.wardrobeClause.trim()}`
   }
   return line
+}
+
+export function formatProportionalScaleTaskLine(refs: StillPromptBoundRef[]): string | undefined {
+  const parts: string[] = []
+  for (const ref of refs) {
+    if (ref.kind === 'location' && (ref.description?.trim() || ref.canonicalScale)) {
+      const scaleDesc = formatLocationScaleDescriptor(
+        ref.description,
+        ref.name,
+        ref.canonicalScale
+      )
+      const label = ref.name?.trim() ? `${ref.token} (${ref.name})` : ref.token
+      parts.push(`${label}: ${scaleDesc}`)
+    } else if (ref.kind === 'prop' && ref.dimensions?.trim()) {
+      const scaleDesc = formatPropScaleDescriptor(ref.description, ref.name, ref.dimensions)
+      const label = ref.name?.trim() ? `${ref.token} (${ref.name})` : ref.token
+      parts.push(`${label}: ${scaleDesc}`)
+    }
+  }
+  if (parts.length === 0) return undefined
+  return `Proportional scale lock: maintain true spatial proportions between environment, fixtures, props, and standing characters (${parts.join('; ')}) — do not shrink ceiling or doors relative to characters.`
 }
 
 export function formatPairedIdentityLandmarkLines(refs: StillPromptBoundRef[]): string[] {
@@ -347,6 +377,10 @@ export function stillTaskLines(
     if (refs.some((ref) => ref.kind === 'location' && ref.currentSetState)) {
       lines.push(LOCATION_VERSION_CONSUMPTION_SUFFIX)
     }
+    const proportionalScaleLine = formatProportionalScaleTaskLine(refs)
+    if (proportionalScaleLine) {
+      lines.push(proportionalScaleLine)
+    }
     if (
       options?.includeAttachedIdentityTraits &&
       pairedOccupancy &&
@@ -485,8 +519,12 @@ export interface StillPromptBoundRef {
   roleLabel: string
   /** Short observable traits, stated here and nowhere else in the prompt. */
   identityTraits?: string
-  /** Library description; used to lock prop scale in the legend. */
+  /** Library description; used to lock prop/location scale in the legend. */
   description?: string
+  /** Explicit physical dimensions for props (e.g., "12 inches tall x 4 inches wide"). */
+  dimensions?: string
+  /** Canonical scale overrides for locations (door/ceiling/fixture heights). */
+  canonicalScale?: Partial<LocationCanonicalScale>
   /** Wardrobe/fabric/fit clause, folded into the same person line. */
   wardrobeClause?: string
   /** 1-based send index of the identity portrait or identity+wardrobe composite. */
@@ -611,6 +649,7 @@ const STILL_BOILERPLATE_PREFIXES = [
   /^location \[\d+\](?: \([^)]+\))? is the place in the location image/i,
   /^person \[\d+\](?: \([^)]+\))? must match the IDENTITY plate/i,
   /^Garments at the collar and shoulders:/i,
+  /^Proportional scale lock:/i,
   /^The .+ in this frame is the unit mounted on location \[\d+\]/i,
 ]
 
@@ -1242,9 +1281,13 @@ export function formatStillReferencesLegend(
     }
     const named = ref.name?.trim() ? `${ref.token} (${ref.name})` : ref.token
     if (ref.kind === 'prop') {
-      return `${named} is the object in the prop image of ${ref.token}. ${propScaleClause(ref.description, ref.name)}`
+      return `${named} is the object in the prop image of ${ref.token}. ${propScaleClause(ref.description, ref.name, ref.dimensions)}`
     }
-    return `${named} is the place in the location image of ${ref.token}.`
+    const baseLocationLine = `${named} is the place in the location image of ${ref.token}.`
+    if (ref.description?.trim() || ref.canonicalScale) {
+      return `${baseLocationLine} ${locationScaleClause(ref.description, ref.name, ref.canonicalScale)}`
+    }
+    return baseLocationLine
   })
   return `${STILL_SECTION_REFERENCES}\nUse the images above.\n${lines.join('\n')}`
 }
@@ -1384,6 +1427,9 @@ export function stillRefsFromAttachedImages(args: {
     role?: string
     promptToken?: string
     propDescription?: string
+    propDimensions?: string
+    locationDescription?: string
+    canonicalScale?: Partial<LocationCanonicalScale>
     currentSetState?: boolean
   }>
   characterReferences: Array<{
@@ -1394,6 +1440,7 @@ export function stillRefsFromAttachedImages(args: {
     visionDescription?: string | null
     hairStyle?: string
     hairColor?: string
+    height?: string | null
     wardrobeDescription?: string | null
     defaultWardrobe?: string | null
   }>
@@ -1465,6 +1512,7 @@ export function stillRefsFromAttachedImages(args: {
               visionDescription: char?.visionDescription,
               hairStyle: char?.hairStyle,
               hairColor: char?.hairColor,
+              height: char?.height,
               wordCap: args.identityTraitsWordCap,
             })
           : undefined,
@@ -1492,6 +1540,7 @@ export function stillRefsFromAttachedImages(args: {
         name: entry.propName,
         roleLabel: 'library prop',
         description: entry.propDescription,
+        dimensions: entry.propDimensions,
       })
       continue
     }
@@ -1506,6 +1555,8 @@ export function stillRefsFromAttachedImages(args: {
             : (entry.promptToken as string),
         name: entry.locationName || 'Location',
         roleLabel: 'library location',
+        description: entry.locationDescription,
+        canonicalScale: entry.canonicalScale,
         currentSetState: entry.currentSetState,
       })
     }

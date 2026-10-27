@@ -198,12 +198,73 @@ function extractFacialHair(text: string): string | undefined {
   return extractTraitPhrase(text, FACIAL_HAIR_NOUNS, FACIAL_HAIR_MODIFIERS)
 }
 
+const HEIGHT_FEET_INCHES =
+  /\b([4-7])(?!\.\d)\s*(?:[- ]*(?:ft|feet|foot)|['’])(?:[- ]*(\d{1,2})\s*(?:[- ]*(?:in|inches?)|["”])?)?(?:\s+tall\b)?(?!\d)/i
+const HEIGHT_DECIMAL_FEET =
+  /\b([4-7](?:\.\d+)?)\s*[- ]?(?:ft|feet|foot)(?:\s+tall)?\b/i
+const HEIGHT_CM = /\b(1[4-9]\d|2[01]\d)\s*cm(?:\s+tall)?\b/i
+
+export function extractCharacterHeightPhrase(
+  characterOrHeight?:
+    | string
+    | null
+    | {
+        height?: string | null
+        appearanceDescription?: string | null
+        visionDescription?: string | null
+      },
+  fallbackDescription?: string | null
+): string | undefined {
+  const character =
+    typeof characterOrHeight === 'string' || characterOrHeight == null
+      ? {
+          height: characterOrHeight ?? undefined,
+          appearanceDescription: fallbackDescription ?? undefined,
+        }
+      : characterOrHeight
+
+  const explicit = character.height?.trim()
+  if (explicit) {
+    const numOnly = explicit.match(/^([4-7](?:\.\d+)?)$/)
+    if (numOnly) return `${numOnly[1]}-foot tall`
+    const fi = explicit.match(HEIGHT_FEET_INCHES)
+    if (fi) {
+      return fi[2] ? `${fi[1]}-foot-${fi[2]} tall` : `${fi[1]}-foot tall`
+    }
+    const dec = explicit.match(HEIGHT_DECIMAL_FEET)
+    if (dec) {
+      return `${dec[1]}-foot tall`
+    }
+    return /\btall\b/i.test(explicit) ? explicit : `${explicit} tall`
+  }
+
+  const text = [character.appearanceDescription, character.visionDescription]
+    .filter(Boolean)
+    .join(' ')
+    .trim()
+  if (!text) return undefined
+
+  const fiMatch = text.match(HEIGHT_FEET_INCHES)
+  if (fiMatch) {
+    return fiMatch[2] ? `${fiMatch[1]}-foot-${fiMatch[2]} tall` : `${fiMatch[1]}-foot tall`
+  }
+  const decMatch = text.match(HEIGHT_DECIMAL_FEET)
+  if (decMatch) {
+    return `${decMatch[1]}-foot tall`
+  }
+  const cmMatch = text.match(HEIGHT_CM)
+  if (cmMatch) {
+    return `${cmMatch[1]}cm tall`
+  }
+  return undefined
+}
+
 function countWords(value: string): number {
   return value.split(/\s+/).filter(Boolean).length
 }
 
 /**
- * Heritage, skin, hair, facial hair, age — in that order, because that is the
+ * Heritage, skin, hair, facial hair, age, height — in that order, because that is the
  * order a mismatch is noticed in, and the cap drops whatever no longer fits.
  * Heritage leads because it is what the validator rejects frames over.
  */
@@ -212,11 +273,13 @@ export function buildIdentityTraitsClause(character: {
   visionDescription?: string | null
   hairStyle?: string
   hairColor?: string
+  height?: string | null
   wordCap?: number
 }): string | undefined {
   const text = (character.visionDescription || character.appearanceDescription || '').trim()
   const hasStructuredHair = Boolean(character.hairStyle?.trim())
-  if (!text && !hasStructuredHair) return undefined
+  const hasExplicitHeight = Boolean(character.height?.trim())
+  if (!text && !hasStructuredHair && !hasExplicitHeight) return undefined
 
   const candidates = [
     extractEthnicity(character.visionDescription),
@@ -224,6 +287,7 @@ export function buildIdentityTraitsClause(character: {
     extractHair(text, character),
     extractFacialHair(text),
     extractAge(text),
+    extractCharacterHeightPhrase(character),
   ]
 
   const cap = character.wordCap ?? IDENTITY_TRAITS_WORD_CAP

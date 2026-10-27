@@ -132,6 +132,11 @@ export interface VisionReferencesSidebarProps extends Omit<
   onUpdateReferenceImage?: (type: 'scene' | 'object', referenceId: string, newImageUrl: string) => void
   /** Persist a directed object generation prompt without generating. */
   onSaveObjectPrompt?: (referenceId: string, prompt: string) => void | Promise<void>
+  /** Update object metadata (description, dimensions, name, etc.) */
+  onUpdateObjectReference?: (
+    referenceId: string,
+    patch: Partial<VisualReference>
+  ) => void | Promise<void>
   /** Callback to edit a character's reference image */
   onEditCharacterImage?: (characterId: string, imageUrl: string) => void
   /** Show production readiness progress section */
@@ -195,6 +200,16 @@ export interface VisionReferencesSidebarProps extends Omit<
   layout?: 'sidebar' | 'dialog'
   /** Open directly to a reference sub-tab */
   initialTab?: 'cast' | 'object' | 'locations'
+  /** Deep-link directly to a specific Cast, Wardrobe, Location, Version, or Prop item */
+  deepLink?: {
+    tab: 'cast' | 'object' | 'locations'
+    characterId?: string
+    wardrobeId?: string
+    locationId?: string
+    versionId?: string
+    objectId?: string
+    nonce?: number
+  } | null
 }
 
 interface ReferenceSectionProps {
@@ -233,6 +248,11 @@ interface DraggableReferenceCardProps {
   /** Open prompt dialog for object reference regeneration (Objects tab) */
   onOpenObjectPromptDialog?: (reference: VisualReference) => void
   onOpenObjectDirector?: (reference: VisualReference) => void
+  onUpdateObjectReference?: (
+    referenceId: string,
+    patch: Partial<VisualReference>
+  ) => void | Promise<void>
+  isFocused?: boolean
   /** 50/50 image | controls layout for Reference Library dialog */
   splitLayout?: boolean
 }
@@ -249,6 +269,8 @@ function DraggableReferenceCard({
   onImageUploaded,
   onOpenObjectPromptDialog,
   onOpenObjectDirector,
+  onUpdateObjectReference,
+  isFocused = false,
   splitLayout = false,
 }: DraggableReferenceCardProps) {
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
@@ -586,6 +608,35 @@ function DraggableReferenceCard({
           {reference.description ? (
             <div className="text-xs text-gray-500 dark:text-gray-400 line-clamp-2 mt-0.5">{reference.description}</div>
           ) : null}
+          {isObjectCard ? (
+            <div
+              className="mt-2 pt-1.5 border-t border-slate-800/70 space-y-1"
+              onPointerDown={(e) => e.stopPropagation()}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <label className="text-[10px] font-medium text-slate-400 block">
+                Dimensions / Scale (Proportional Continuity)
+              </label>
+              <input
+                type="text"
+                defaultValue={reference.dimensions ?? ''}
+                placeholder="e.g. 8-inch brass canister, handheld"
+                onBlur={(e) => {
+                  const next = e.currentTarget.value.trim()
+                  if (next === (reference.dimensions ?? '')) return
+                  void onUpdateObjectReference?.(reference.id, {
+                    dimensions: next || undefined,
+                  })
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.currentTarget.blur()
+                  }
+                }}
+                className="w-full px-2 py-1 text-xs rounded border border-slate-700 bg-slate-900 text-slate-100 placeholder:text-slate-500"
+              />
+            </div>
+          ) : null}
           {isObjectCard && beatCount && beatCount > 0 ? (
             <div className="mt-1 flex items-center gap-1.5 text-[10px]">
               <span className="px-1.5 py-0.5 rounded bg-slate-500/20 text-slate-400">
@@ -710,6 +761,7 @@ function DraggableReferenceCard({
   return (
     <>
       <div
+        id={`object-reference-${reference.id}`}
         ref={setNodeRef}
         style={{
           transform: transform ? CSS.Translate.toString(transform) : undefined,
@@ -718,7 +770,9 @@ function DraggableReferenceCard({
         }}
         {...listeners}
         {...attributes}
-        className="flex flex-col p-3 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg shadow-sm group w-full"
+        className={`flex flex-col p-3 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg shadow-sm group w-full ${
+          isFocused ? 'ring-2 ring-amber-400/80' : ''
+        }`}
       >
         {splitLayout ? (
           <ReferenceSplitPane image={imagePanel} controls={detailsPanel} />
@@ -1284,6 +1338,7 @@ export function VisionReferencesSidebar(props: VisionReferencesSidebarProps) {
     objectDuplicateIgnores,
     onUpdateReferenceImage,
     onSaveObjectPrompt,
+    onUpdateObjectReference,
     onEditCharacterImage,
     allScenes = [],
     duplicateCastCount = 0,
@@ -1319,6 +1374,7 @@ export function VisionReferencesSidebar(props: VisionReferencesSidebarProps) {
     hideTitle = false,
     layout = 'sidebar',
     initialTab,
+    deepLink = null,
   } = props
 
   const splitLayout = layout === 'dialog'
@@ -1601,12 +1657,43 @@ export function VisionReferencesSidebar(props: VisionReferencesSidebarProps) {
   const [pendingKindAgentRun, setPendingKindAgentRun] = useState<ReferenceExpressKind | null>(
     null
   )
+  const [focusedObjectId, setFocusedObjectId] = useState<string | null>(null)
 
   useEffect(() => {
     if (initialTab) {
       setActiveReferenceTab(initialTab)
     }
   }, [initialTab])
+
+  useEffect(() => {
+    if (!deepLink) return
+    setActiveReferenceTab(deepLink.tab)
+    if (deepLink.tab === 'locations') {
+      setLocationQuery('')
+      setLocationSceneFilter('all')
+    }
+    if (deepLink.tab === 'object') {
+      setObjectQuery('')
+      setObjectSceneFilter('all')
+      if (deepLink.objectId) {
+        setFocusedObjectId(deepLink.objectId)
+        setTimeout(() => {
+          document.getElementById(`object-reference-${deepLink.objectId}`)?.scrollIntoView({
+            behavior: 'smooth',
+            block: 'nearest',
+          })
+        }, 60)
+      }
+    }
+  }, [
+    deepLink?.tab,
+    deepLink?.characterId,
+    deepLink?.wardrobeId,
+    deepLink?.locationId,
+    deepLink?.versionId,
+    deepLink?.objectId,
+    deepLink?.nonce,
+  ])
 
   const consumePendingKindAgentRun = useCallback(() => {
     setPendingKindAgentRun(null)
@@ -1915,6 +2002,15 @@ export function VisionReferencesSidebar(props: VisionReferencesSidebarProps) {
               getLatestCharacters={getLatestCharacters}
               pendingKindAgentRun={pendingKindAgentRun}
               onPendingKindAgentRunConsumed={consumePendingKindAgentRun}
+              focusTarget={
+                deepLink?.tab === 'cast'
+                  ? {
+                      characterId: deepLink.characterId,
+                      wardrobeId: deepLink.wardrobeId,
+                      nonce: deepLink.nonce ?? 1,
+                    }
+                  : null
+              }
             />
             </>
           )}
@@ -1963,6 +2059,15 @@ export function VisionReferencesSidebar(props: VisionReferencesSidebarProps) {
               pendingKindAgentRun={pendingKindAgentRun}
               onPendingKindAgentRunConsumed={consumePendingKindAgentRun}
               catalogPropNames={objectReferences.map((o) => o.name).filter(Boolean)}
+              focusTarget={
+                deepLink?.tab === 'locations'
+                  ? {
+                      locationId: deepLink.locationId,
+                      versionId: deepLink.versionId,
+                      nonce: deepLink.nonce ?? 1,
+                    }
+                  : null
+              }
             />
             )}
             </>
@@ -2067,6 +2172,8 @@ export function VisionReferencesSidebar(props: VisionReferencesSidebarProps) {
                     splitLayout={splitLayout}
                     onOpenObjectPromptDialog={(ref) => setObjectRegenerateTarget(ref)}
                     onOpenObjectDirector={(ref) => setObjectDirectorTarget(ref)}
+                    onUpdateObjectReference={onUpdateObjectReference}
+                    isFocused={focusedObjectId === reference.id}
                     onImageUploaded={(refId, refType, imageUrl) => {
                       if (onUpdateReferenceImage) {
                         onUpdateReferenceImage(refType, refId, imageUrl)

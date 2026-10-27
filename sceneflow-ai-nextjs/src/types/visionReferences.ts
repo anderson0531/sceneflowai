@@ -25,6 +25,8 @@ export interface VisualReference {
   category?: ObjectCategory
   /** Importance level for production (objects only) */
   importance?: ObjectImportance
+  /** Explicit physical dimensions / real-world scale (e.g., "12-inch tall handheld canister", "6-foot wide workbench at 3-foot height") */
+  dimensions?: string
   /** The prompt used to generate the reference image */
   generationPrompt?: string
   /** URL of the source reference image used for generation (if any) */
@@ -58,6 +60,8 @@ export interface ObjectSuggestion {
   description: string
   category: ObjectCategory
   importance: ObjectImportance
+  /** Explicit physical dimensions / scale */
+  dimensions?: string
   suggestedPrompt: string
   /** Scene numbers where this object appears */
   sceneNumbers: number[]
@@ -135,6 +139,8 @@ export interface LocationReference {
     figureHeightFt?: number
     doorHeightFt?: number
     ceilingHeightFt?: number
+    /** Mounted fixture heights & spatial proportions (e.g. "chalkboard mounted at a height of 6-foot") */
+    fixtureHeights?: string
   }
   /** Scene numbers (1-based) where this location appears */
   sceneNumbers?: number[]

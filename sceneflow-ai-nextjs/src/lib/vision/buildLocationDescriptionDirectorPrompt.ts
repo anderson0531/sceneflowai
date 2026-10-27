@@ -23,14 +23,21 @@ export type LocationDescriptionDirectorRequest = {
 
 export type LocationDescriptionDirectorResult = {
   description: string
+  ceilingHeightFt?: number
+  doorHeightFt?: number
+  fixtureHeights?: string
 }
 
 const RESPONSE_SCHEMA = `{
-  "description": "2-4 sentences of standing place identity for an establishing still: architecture, materials, light, era, and atmosphere. No plot, performance, or a different location."
+  "description": "2-4 sentences of standing place identity for an establishing still: architecture, materials, explicit proportional scale in feet (e.g. 11-foot ceiling, 7-foot door, chalkboard mounted at a height of 6-foot), light, era, and atmosphere. No plot, performance, or a different location.",
+  "ceilingHeightFt": 11,
+  "doorHeightFt": 7,
+  "fixtureHeights": "chalkboard mounted at a height of 6-foot"
 }`
 
 const SHARED_RULES = `INCLUDE:
 - Architecture, materials, scale, light, time of day, and era
+- Explicit proportional scale in feet inside the description so character height stays proportionate across shots (e.g., "11-foot ceiling", "7-foot doorway", and mounted fixture heights such as "chalkboard mounted at a height of 6-foot" or "control panel mounted at 5-foot height")
 - Standing place details that stay true across scenes in this location
 
 EXCLUDE:
@@ -167,5 +174,22 @@ export function parseLocationDescriptionDirectorResponse(
   if (!description) {
     throw new Error('Invalid location description structure')
   }
-  return { description }
+  const ceilingHeightFt =
+    typeof parsed.ceilingHeightFt === 'number' && Number.isFinite(parsed.ceilingHeightFt)
+      ? parsed.ceilingHeightFt
+      : undefined
+  const doorHeightFt =
+    typeof parsed.doorHeightFt === 'number' && Number.isFinite(parsed.doorHeightFt)
+      ? parsed.doorHeightFt
+      : undefined
+  const fixtureHeights =
+    typeof parsed.fixtureHeights === 'string' && parsed.fixtureHeights.trim()
+      ? parsed.fixtureHeights.trim()
+      : undefined
+  return {
+    description,
+    ...(ceilingHeightFt != null ? { ceilingHeightFt } : {}),
+    ...(doorHeightFt != null ? { doorHeightFt } : {}),
+    ...(fixtureHeights ? { fixtureHeights } : {}),
+  }
 }

@@ -107,7 +107,7 @@ describe('resolveBeatVideoReferences', () => {
     expect(resolved.refs.length).toBeLessThanOrEqual(8)
   })
 
-  it('keeps the identity image when a wardrobe sheet is also stored', () => {
+  it('uses the single-slot composite card when combinedCharacterRefUrl is stored', () => {
     const beat: SceneBeat = {
       beatId: 'beat-sheet',
       sequenceIndex: 0,
@@ -120,6 +120,7 @@ describe('resolveBeatVideoReferences', () => {
       projectCharacters: [
         {
           ...characters[0],
+          height: '5-foot-8 tall',
           wardrobes: [
             {
               id: 'w-sheet',
@@ -134,8 +135,13 @@ describe('resolveBeatVideoReferences', () => {
       objectReferences: objects,
     })
 
-    expect(resolved.urlList).toContain('https://blob.example/elara.jpg')
-    expect(resolved.urlList).not.toContain('https://blob.example/elara-sheet.jpg')
+    expect(resolved.urlList).toContain('https://blob.example/elara-sheet.jpg')
+    expect(resolved.urlList).not.toContain('https://blob.example/elara.jpg')
+    const compositeRef = resolved.labeledRefs.find((r) => r.url === 'https://blob.example/elara-sheet.jpg')
+    expect(compositeRef?.name).toContain('The next image is the identity and wardrobe of person [1].')
+    expect(compositeRef?.name).toContain('face close-up')
+    expect(compositeRef?.name).toContain('5-foot-8 tall')
+    expect(compositeRef?.name).toContain('do not render the character-card layout or headshot overlay')
   })
 
   it('sends the user reference selection instead of whoever the prose names', () => {

@@ -20,16 +20,25 @@ const FURNITURE_PATTERN =
 
 export function isFurnitureProp(
   description?: string | null,
-  name?: string | null
+  name?: string | null,
+  dimensions?: string | null
 ): boolean {
-  const text = [description, name].filter(Boolean).join(' ')
+  const text = [dimensions, description, name].filter(Boolean).join(' ')
   return FURNITURE_PATTERN.test(text)
 }
 
 export function extractPropScalePhrase(
   description?: string | null,
-  name?: string | null
+  name?: string | null,
+  dimensions?: string | null
 ): string | null {
+  const explicit = dimensions?.trim()
+  if (explicit) {
+    if (HANDHELD_PATTERN.test(explicit) && isFurnitureProp(description, name)) {
+      return null
+    }
+    return explicit
+  }
   const text = [description, name].filter(Boolean).join(' ')
   if (!text.trim()) return null
   const sized = text.match(SIZE_PATTERN) || text.match(QUOTED_INCH_PATTERN)
@@ -49,13 +58,45 @@ export function extractPropScalePhrase(
   return null
 }
 
+/**
+ * Concise explicit scale descriptor for prop captions & reference bindings
+ * (e.g., "12-inch size relative to character", "handheld real-world scale").
+ */
+export function formatPropScaleDescriptor(
+  description?: string | null,
+  name?: string | null,
+  dimensions?: string | null
+): string {
+  const explicit = dimensions?.trim()
+  if (explicit) {
+    if (isFurnitureProp(description, name, dimensions)) {
+      return `${explicit} set-piece scale, maintain proportionate size relative to room and characters`
+    }
+    return `${explicit} real-world scale, maintain proportionate size relative to characters and hands`
+  }
+  const phrase = extractPropScalePhrase(description, name)
+  if (isFurnitureProp(description, name)) {
+    return phrase && phrase !== 'handheld'
+      ? `${phrase} set-piece scale, maintain proportionate size relative to room and characters`
+      : 'set-piece scale, maintain proportionate size relative to room and characters'
+  }
+  if (phrase && phrase !== 'handheld') {
+    return `${phrase} size, maintain proportionate size relative to characters and hands`
+  }
+  return 'handheld real-world scale, maintain proportionate size relative to characters and hands'
+}
+
 /** Legend / image-label clause. Always emitted for props so fill-the-frame stills do not dominate. */
 export function propScaleClause(
   description?: string | null,
-  name?: string | null
+  name?: string | null,
+  dimensions?: string | null
 ): string {
-  const phrase = extractPropScalePhrase(description, name)
-  if (isFurnitureProp(description, name)) {
+  const phrase = extractPropScalePhrase(description, name, dimensions)
+  if (isFurnitureProp(description, name, dimensions)) {
+    if (dimensions?.trim()) {
+      return `match appearance from the still; keep the described ${dimensions.trim()} furniture / set-piece scale relative to the character; do not enlarge to fill the frame`
+    }
     return PROP_SCALE_FURNITURE
   }
   if (phrase && phrase !== 'handheld') {

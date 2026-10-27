@@ -12,8 +12,13 @@ import { isPictureProp, PICTURE_PROP_OBJECT_DESCRIPTOR } from '@/lib/imagen/pict
 import { formatWardrobeLegendClause } from '@/lib/imagen/structuredStillPrompt'
 import { toCharacterPromptAlias } from '@/lib/character/characterPromptAlias'
 import { formatNextImageCaption } from '@/lib/vision/referenceImageBinding'
+import {
+  formatLocationScaleDescriptor,
+  type LocationCanonicalScale,
+} from '@/lib/imagen/locationScaleClause'
+import { extractPropScalePhrase, formatPropScaleDescriptor } from '@/lib/imagen/propScaleClause'
 
-export const PAIR_DESCRIPTOR_WORD_CAP = 18
+export const PAIR_DESCRIPTOR_WORD_CAP = 34
 
 export type InterleavedReferencePairRole =
   | 'IDENTITY'
@@ -30,6 +35,7 @@ export interface InterleavedPairCharacter {
   visionDescription?: string | null
   hairStyle?: string
   hairColor?: string
+  height?: string | null
   wardrobeDescription?: string | null
   defaultWardrobe?: string | null
   appearance?: string | null
@@ -46,6 +52,9 @@ export interface InterleavedPairPlate {
   locationName?: string
   promptToken?: string
   propDescription?: string
+  propDimensions?: string
+  locationDescription?: string
+  canonicalScale?: Partial<LocationCanonicalScale>
   subjectOrdinal?: number
 }
 
@@ -54,9 +63,14 @@ const SCALE_ESSAY_PATTERN =
 
 export function clipPairDescriptor(
   text: string,
-  wordCap: number = PAIR_DESCRIPTOR_WORD_CAP
+  wordCap: number = 18
 ): string {
-  const first = text.replace(/\s+/g, ' ').trim().split(/[.!?]/)[0]?.trim() || ''
+  const first =
+    text
+      .replace(/\s+/g, ' ')
+      .trim()
+      .split(/(?<=[a-zA-Z0-9)"'])\s*[.!?](?:\s+|$)/)[0]
+      ?.trim() || ''
   if (!first) return ''
   return first.split(/\s+/).filter(Boolean).slice(0, wordCap).join(' ')
 }
@@ -79,7 +93,7 @@ export function formatInterleavedReferencePair(args: {
   return formatNextImageCaption({
     role,
     token: args.token,
-    descriptor: clipPairDescriptor(args.descriptor),
+    descriptor: clipPairDescriptor(args.descriptor, PAIR_DESCRIPTOR_WORD_CAP),
   })
 }
 
@@ -137,10 +151,27 @@ function identityDescriptor(
     visionDescription: character?.visionDescription,
     hairStyle: character?.hairStyle,
     hairColor: character?.hairColor,
+    height: character?.height,
   })
   return traits
     ? `Facial reference for ${characterName}: ${traits}`
     : `Facial reference for ${characterName}.`
+}
+
+function characterCompositeDescriptor(
+  characterName: string,
+  character: InterleavedPairCharacter | undefined
+): string {
+  const traits = buildIdentityTraitsClause({
+    appearanceDescription: character?.appearanceDescription || character?.appearance,
+    visionDescription: character?.visionDescription,
+    hairStyle: character?.hairStyle,
+    hairColor: character?.hairColor,
+    height: character?.height,
+    wordCap: 10,
+  })
+  const detail = traits ? `: ${traits}` : ''
+  return `Use face close-up for exact facial identity and full-body standing figure for wardrobe of ${characterName}${detail}; Do not copy the character-card layout or headshot overlay`
 }
 
 function wardrobeDescriptor(character: InterleavedPairCharacter | undefined): string {
@@ -150,23 +181,52 @@ function wardrobeDescriptor(character: InterleavedPairCharacter | undefined): st
   return clause ? `Outfit reference: ${clause}` : 'Outfit reference: full-body wardrobe'
 }
 
-function objectDescriptor(propName: string, description?: string | null): string {
+function objectDescriptor(
+  propName: string,
+  description?: string | null,
+  dimensions?: string | null
+): string {
   if (isPictureProp(propName, description)) return PICTURE_PROP_OBJECT_DESCRIPTOR
-  const usable =
-    description && !SCALE_ESSAY_PATTERN.test(description)
-      ? clipPairDescriptor(description)
-      : ''
-  return usable ? `Object reference: ${usable}` : `Object reference: ${propName}`
+  const cleanDescription =
+    description && !SCALE_ESSAY_PATTERN.test(description) ? description : null
+  const usable = cleanDescription ? clipPairDescriptor(cleanDescription, 14) : ''
+  const hasExplicitScale = Boolean(
+    dimensions?.trim() || extractPropScalePhrase(cleanDescription, propName, dimensions)
+  )
+  const scale = hasExplicitScale
+    ? formatPropScaleDescriptor(cleanDescription, propName, dimensions)
+    : ''
+  const base = usable ? `Object reference: ${usable}` : `Object reference: ${propName}`
+  if (scale && !base.toLowerCase().includes(scale.toLowerCase())) {
+    return `${base} (${scale})`
+  }
+  return base
 }
 
-function environmentDescriptor(locationName: string, description?: string | null): string {
-  const usable =
-    description && !SCALE_ESSAY_PATTERN.test(description)
-      ? clipPairDescriptor(description)
-      : ''
-  return usable
+function environmentDescriptor(
+  locationName: string,
+  description?: string | null,
+  canonicalScale?: Partial<LocationCanonicalScale> | null
+): string {
+  const cleanDescription =
+    description && !SCALE_ESSAY_PATTERN.test(description) ? description : null
+  const usable = cleanDescription ? clipPairDescriptor(cleanDescription, 12) : ''
+  const hasExplicitScale = Boolean(
+    cleanDescription ||
+      canonicalScale?.ceilingHeightFt ||
+      canonicalScale?.doorHeightFt ||
+      canonicalScale?.fixtureHeights
+  )
+  const scale = hasExplicitScale
+    ? formatLocationScaleDescriptor(cleanDescription, locationName, canonicalScale)
+    : ''
+  const base = usable
     ? `Environment reference: ${usable}`
     : `Environment reference: ${locationName}`
+  if (scale && !base.toLowerCase().includes(scale.toLowerCase())) {
+    return `${base} (${scale})`
+  }
+  return base
 }
 
 function plateRole(plate: InterleavedPairPlate): InterleavedReferencePairRole | null {
@@ -225,7 +285,7 @@ export function buildInterleavedReferencePairCaptions(
         role === 'WARDROBE'
           ? wardrobeDescriptor(character)
           : role === 'CHARACTER'
-            ? `Face and full-body wardrobe of ${characterName}.`
+            ? characterCompositeDescriptor(characterName, character)
             : identityDescriptor(characterName, character)
       return {
         imageUrl: plate.imageUrl,
@@ -243,7 +303,7 @@ export function buildInterleavedReferencePairCaptions(
         name: formatInterleavedReferencePair({
           role,
           token,
-          descriptor: objectDescriptor(propName, plate.propDescription),
+          descriptor: objectDescriptor(propName, plate.propDescription, plate.propDimensions),
         }),
       }
     }
@@ -257,7 +317,11 @@ export function buildInterleavedReferencePairCaptions(
       name: formatInterleavedReferencePair({
         role,
         token,
-        descriptor: environmentDescriptor(locationName),
+        descriptor: environmentDescriptor(
+          locationName,
+          plate.locationDescription,
+          plate.canonicalScale
+        ),
       }),
     }
   })
@@ -271,8 +335,12 @@ export function applyInterleavedPairCaptionsToNamedImages(
   images: Array<{ imageUrl: string; name: string }>,
   lookup?: {
     characters?: InterleavedPairCharacter[]
-    objects?: Array<{ name: string; description?: string }>
-    locations?: Array<{ name: string; description?: string }>
+    objects?: Array<{ name: string; description?: string; dimensions?: string }>
+    locations?: Array<{
+      name: string
+      description?: string
+      canonicalScale?: Partial<LocationCanonicalScale>
+    }>
   }
 ): Array<{ imageUrl: string; name: string }> {
   const characters = lookup?.characters ?? []
@@ -302,7 +370,10 @@ export function applyInterleavedPairCaptionsToNamedImages(
               : undefined,
       propName: role === 'PROP' ? object?.name || image.name.replace(/^prop:\s*/i, '').trim() : undefined,
       propDescription: object?.description,
+      propDimensions: object?.dimensions,
       locationName: role === 'LOCATION' ? location?.name || undefined : undefined,
+      locationDescription: location?.description,
+      canonicalScale: location?.canonicalScale,
       role: role === 'LOCATION' ? 'location' : undefined,
     }
   })

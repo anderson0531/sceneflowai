@@ -17,5 +17,8 @@ export function buildCharacterReferencePrompt(character: {
 
 export function buildObjectReferencePrompt(ref: VisualReference): string {
   const base = ref.generationPrompt?.trim() || ref.description?.trim() || ref.name
-  return withObjectReferenceInstruction(base)
+  const dims = ref.dimensions?.trim()
+  const withDims =
+    dims && !base.toLowerCase().includes(dims.toLowerCase()) ? `${base} (${dims})` : base
+  return withObjectReferenceInstruction(withDims)
 }

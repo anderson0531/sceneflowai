@@ -414,7 +414,12 @@ import {
   sceneHasScreenplayBody,
 } from '@/lib/vision/sceneScriptReadiness'
 import { sanitizeReturnTo } from '@/lib/navigation/sanitizeReturnTo'
-import { ReferenceLibraryDialog, type ReferenceLibraryTab } from '@/components/vision/ReferenceLibraryDialog'
+import {
+  ReferenceLibraryDialog,
+  type ReferenceLibraryDeepLink,
+  type ReferenceLibraryTab,
+} from '@/components/vision/ReferenceLibraryDialog'
+import type { JitRequirementUpdatePayload } from '@/components/vision/SceneReferencesPanel'
 import type { AutoAddedObject } from '@/components/vision/ObjectSuggestionPanel'
 import {
   PublishingLibraryDialog,
@@ -839,10 +844,21 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
   // Reference Library dialog
   const [referenceLibraryOpen, setReferenceLibraryOpen] = useState(false)
   const [referenceLibraryInitialTab, setReferenceLibraryInitialTab] = useState<ReferenceLibraryTab | undefined>()
-  const openReferenceLibrary = useCallback((tab?: ReferenceLibraryTab) => {
-    setReferenceLibraryInitialTab(tab)
-    setReferenceLibraryOpen(true)
-  }, [])
+  const [referenceLibraryDeepLink, setReferenceLibraryDeepLink] =
+    useState<ReferenceLibraryDeepLink | null>(null)
+  const openReferenceLibrary = useCallback(
+    (target?: ReferenceLibraryTab | ReferenceLibraryDeepLink) => {
+      if (target && typeof target === 'object') {
+        setReferenceLibraryInitialTab(target.tab)
+        setReferenceLibraryDeepLink({ ...target, nonce: target.nonce ?? Date.now() })
+      } else {
+        setReferenceLibraryInitialTab(target)
+        setReferenceLibraryDeepLink(null)
+      }
+      setReferenceLibraryOpen(true)
+    },
+    []
+  )
 
   // Publishing Library dialog
   const [publishingLibraryOpen, setPublishingLibraryOpen] = useState(false)
@@ -3060,6 +3076,31 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       } catch (error) {
         console.error('[handleSaveObjectPrompt]', error)
         toast.error('Failed to save prop prompt')
+      }
+    },
+    [persistObjectLibrary]
+  )
+
+  const handleUpdateObjectReference = useCallback(
+    async (referenceId: string, patch: Partial<VisualReference>) => {
+      const updatedObjectRefs = updateObjectReferenceInList(
+        objectReferencesRef.current,
+        referenceId,
+        { ...patch, updatedAt: new Date().toISOString() }
+      )
+      objectReferencesRef.current = updatedObjectRefs
+      setObjectReferences(updatedObjectRefs)
+      try {
+        const response = await persistObjectLibrary(updatedObjectRefs, {
+          objectDuplicateIgnores: objectDuplicateIgnoresRef.current,
+          debugLabel: 'handleUpdateObjectReference',
+        })
+        if (!response.ok) {
+          toast.error('Failed to save prop update')
+        }
+      } catch (error) {
+        console.error('[handleUpdateObjectReference]', error)
+        toast.error('Failed to save prop update')
       }
     },
     [persistObjectLibrary]
@@ -11916,6 +11957,83 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     await handleGenerateLocationVersion(nextLoc, version)
   }
 
+  const handleUpdateRequirementInline = async (payload: JitRequirementUpdatePayload) => {
+    if (payload.kind === 'cast') {
+      if (payload.appearanceDescription !== undefined) {
+        await handleUpdateCharacterAppearance(payload.characterId, payload.appearanceDescription)
+      }
+      if (payload.height !== undefined) {
+        await handleUpdateCharacterAttributes(payload.characterId, { height: payload.height })
+      }
+      return
+    }
+    if (payload.kind === 'wardrobe') {
+      await handleUpdateCharacterWardrobe(payload.characterId, {
+        action: 'update',
+        wardrobeId: payload.wardrobeId,
+        defaultWardrobe: payload.description,
+        wardrobeAccessories: payload.accessories,
+        needsImageRegen: true,
+      })
+      return
+    }
+    if (payload.kind === 'location') {
+      const latest = locationReferencesRef.current
+      const updated = latest.map((loc) =>
+        loc.id === payload.locationId
+          ? {
+              ...loc,
+              ...(payload.description !== undefined ? { description: payload.description } : {}),
+              ...(payload.canonicalScale ? { canonicalScale: payload.canonicalScale } : {}),
+            }
+          : loc
+      )
+      await handleUpdateLocationReferences(updated)
+      return
+    }
+    if (payload.kind === 'location-version') {
+      const latest = locationReferencesRef.current
+      const updated = latest.map((loc) =>
+        loc.id === payload.locationId
+          ? patchLocationVersion(loc, payload.versionId, {
+              stateNotes: payload.stateNotes,
+              needsImageRegen: true,
+            })
+          : loc
+      )
+      await handleUpdateLocationReferences(updated)
+      return
+    }
+    if (payload.kind === 'prop') {
+      await handleUpdateObjectReference(payload.objectId, {
+        ...(payload.description !== undefined ? { description: payload.description } : {}),
+        ...(payload.dimensions !== undefined ? { dimensions: payload.dimensions } : {}),
+      })
+    }
+  }
+
+  const handleSyncContinuityCatalog = async (payload: {
+    locationReferences?: LocationReference[]
+    objectReferences?: VisualReference[]
+  }) => {
+    if (payload.locationReferences) {
+      locationReferencesRef.current = payload.locationReferences
+      setLocationReferences(payload.locationReferences)
+    }
+    if (payload.objectReferences) {
+      objectReferencesRef.current = payload.objectReferences
+      setObjectReferences(payload.objectReferences)
+    }
+    try {
+      await persistObjectLibrary(objectReferencesRef.current, {
+        objectDuplicateIgnores: objectDuplicateIgnoresRef.current,
+        debugLabel: 'handleSyncContinuityCatalog',
+      })
+    } catch (error) {
+      console.error('[handleSyncContinuityCatalog] Failed to persist:', error)
+    }
+  }
+
   const handleUploadLocationVersionImage = async (
     locationId: string,
     versionId: string,
@@ -18101,6 +18219,8 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                 isExpressGeneratingReferences={isExpressGeneratingReferences}
                 onOpenReferenceLibrary={openReferenceLibrary}
                 onAddDirectedLocationVersion={handleAddDirectedLocationVersion}
+                onUpdateRequirementInline={handleUpdateRequirementInline}
+                onSyncContinuityCatalog={handleSyncContinuityCatalog}
                 showDashboard={showDashboard}
                 onToggleDashboard={() => setShowDashboard(!showDashboard)}
                 isGeneratingKeyframe={isGeneratingKeyframe}
@@ -18231,9 +18351,13 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         open={referenceLibraryOpen}
         onOpenChange={(open) => {
           setReferenceLibraryOpen(open)
-          if (!open) setReferenceLibraryInitialTab(undefined)
+          if (!open) {
+            setReferenceLibraryInitialTab(undefined)
+            setReferenceLibraryDeepLink(null)
+          }
         }}
         initialTab={referenceLibraryInitialTab}
+        deepLink={referenceLibraryDeepLink}
         duplicateCastCount={duplicateCastCount}
         onMergeDuplicateCast={() => {
           const duplicates = findPotentialDuplicates(characters)
@@ -18284,6 +18408,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         onDeleteAllObjectReferences={handleDeleteAllObjectReferences}
         onUpdateReferenceImage={handleUpdateReferenceImage}
         onSaveObjectPrompt={handleSaveObjectPrompt}
+        onUpdateObjectReference={handleUpdateObjectReference}
         onEditCharacterImage={handleEditCharacterImage}
         onApplyEnhancedReference={handleApplyEnhancedReference}
         scenes={script?.script?.scenes || []}
