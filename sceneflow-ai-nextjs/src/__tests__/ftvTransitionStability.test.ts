@@ -20,4 +20,11 @@ describe('appendFtvTransitionStabilityTokens', () => {
     expect(out).toContain('Ensure lighting and shadows remain static.')
     expect(out).toContain('Smooth facial muscle transitions; prioritize natural lip movement.')
   })
+
+  it('appends 2-keyframe start-to-end interpolation tokens even on segment 0 when hasEndFrame is true', () => {
+    const out = appendFtvTransitionStabilityTokens(basePrompt, 'FTV', 0, { hasEndFrame: true })
+    expect(out).toContain(
+      'Transition smoothly from the start frame composition and pose to the end frame state while maintaining character identity, wardrobe, and environment consistency.'
+    )
+  })
 })

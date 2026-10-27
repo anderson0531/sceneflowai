@@ -4,6 +4,7 @@ import {
   estimateVideoAgentCredits,
   parseVideoGenerationMode,
   parseVideoGenerationQuality,
+  parseVideoSourceMethod,
   resolveVideoGeneration,
   SCENEFLOW_VIDEO_KLING_MODEL,
 } from '@/lib/video/videoGenerationPolicy'
@@ -28,10 +29,11 @@ const baseConfig: VideoGenerationConfig = {
 }
 
 describe('resolveVideoGeneration', () => {
-  it('maps Draft + Standard to Vertex fast 720p', () => {
+  it('maps Draft + Standard to Vertex fast 720p with default reference sourceMethod', () => {
     expect(resolveVideoGeneration({ quality: 'draft', mode: 'standard' })).toEqual({
       quality: 'draft',
       mode: 'standard',
+      sourceMethod: 'reference',
       videoProvider: 'vertex',
       qualityTier: 'fast',
       resolution: '720p',
@@ -40,10 +42,11 @@ describe('resolveVideoGeneration', () => {
     })
   })
 
-  it('maps Final + Standard to Vertex premium 1080p', () => {
+  it('maps Final + Standard to Vertex premium 1080p with default reference sourceMethod', () => {
     expect(resolveVideoGeneration({ quality: 'final', mode: 'standard' })).toEqual({
       quality: 'final',
       mode: 'standard',
+      sourceMethod: 'reference',
       videoProvider: 'vertex',
       qualityTier: 'premium',
       resolution: '1080p',
@@ -52,10 +55,22 @@ describe('resolveVideoGeneration', () => {
     })
   })
 
-  it('maps Draft + Creative to Kling std 720p', () => {
+  it('allows Standard mode to opt into Frame (F2V) sourceMethod', () => {
+    expect(
+      resolveVideoGeneration({ quality: 'draft', mode: 'standard', sourceMethod: 'frame' })
+    ).toMatchObject({
+      quality: 'draft',
+      mode: 'standard',
+      sourceMethod: 'frame',
+      videoProvider: 'vertex',
+    })
+  })
+
+  it('maps Draft + Creative to Kling std 720p and forces frame sourceMethod', () => {
     expect(resolveVideoGeneration({ quality: 'draft', mode: 'creative' })).toEqual({
       quality: 'draft',
       mode: 'creative',
+      sourceMethod: 'frame',
       videoProvider: 'kling',
       klingModel: SCENEFLOW_VIDEO_KLING_MODEL,
       klingQuality: 'std',
@@ -65,10 +80,11 @@ describe('resolveVideoGeneration', () => {
     })
   })
 
-  it('maps Final + Creative to Kling pro 1080p', () => {
+  it('maps Final + Creative to Kling pro 1080p and forces frame sourceMethod', () => {
     expect(resolveVideoGeneration({ quality: 'final', mode: 'creative' })).toEqual({
       quality: 'final',
       mode: 'creative',
+      sourceMethod: 'frame',
       videoProvider: 'kling',
       klingModel: SCENEFLOW_VIDEO_KLING_MODEL,
       klingQuality: 'pro',
@@ -133,12 +149,15 @@ describe('estimateVideoAgentCredits', () => {
 })
 
 describe('parse helpers', () => {
-  it('accepts draft/final and standard/creative only', () => {
+  it('accepts draft/final, standard/creative, and reference/frame only', () => {
     expect(parseVideoGenerationQuality('draft')).toBe('draft')
     expect(parseVideoGenerationQuality('final')).toBe('final')
     expect(parseVideoGenerationQuality('max')).toBeUndefined()
     expect(parseVideoGenerationMode('standard')).toBe('standard')
     expect(parseVideoGenerationMode('creative')).toBe('creative')
     expect(parseVideoGenerationMode('safety')).toBeUndefined()
+    expect(parseVideoSourceMethod('reference')).toBe('reference')
+    expect(parseVideoSourceMethod('frame')).toBe('frame')
+    expect(parseVideoSourceMethod('auto')).toBeUndefined()
   })
 })

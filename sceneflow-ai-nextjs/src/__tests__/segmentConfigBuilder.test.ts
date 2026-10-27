@@ -1,11 +1,13 @@
 import { describe, expect, it } from 'vitest'
 import type { SceneSegment } from '@/components/vision/scene-production/types'
 import {
+  applyEndFrameUrlToProductionSegments,
   applyStartFrameUrlToProductionSegments,
   buildDraftVideoGenerationConfig,
   detectRecommendedMethod,
   f2vStartFromPreviousEnd,
   resolveEffectiveStartFrameUrl,
+  resolveExpressGenerationMethod,
   resolveF2VFrameUrls,
   resolveSegmentFrameUrls,
   shouldAttachBeatStartFrame,
@@ -137,6 +139,54 @@ describe('resolveF2VFrameUrls', () => {
     const previousEnd = 'https://example.com/previous-end.jpg'
     expect(f2vStartFromPreviousEnd(previousEnd)).toBe(previousEnd)
     expect(f2vStartFromPreviousEnd('  ')).toBeNull()
+  })
+
+  it('resolves beat storyboardImageUrl and distinct storyboardEndImageUrl for 2-keyframe F2V', () => {
+    const segment = makeSegment({
+      startFrameUrl: undefined,
+      endFrameUrl: undefined,
+      references: { characterIds: [], sceneRefIds: [], objectRefIds: [] },
+    })
+    const sceneWithBeatPair = {
+      beats: [
+        {
+          beatId: BEAT_ID,
+          kind: 'action',
+          storyboardImageUrl: 'https://example.com/beat-start.jpg',
+          storyboardEndImageUrl: 'https://example.com/beat-end.jpg',
+        },
+      ],
+    }
+    expect(resolveF2VFrameUrls(segment, sceneWithBeatPair)).toEqual({
+      startFrameUrl: 'https://example.com/beat-start.jpg',
+      endFrameUrl: 'https://example.com/beat-end.jpg',
+    })
+  })
+})
+
+describe('applyEndFrameUrlToProductionSegments', () => {
+  it('updates endFrameUrl on all segments matching beatId', () => {
+    const segments = [
+      makeSegment({ segmentId: 'seg_a' }),
+      makeSegment({ segmentId: 'seg_other', beatId: 'other-beat' }),
+    ]
+    const updated = applyEndFrameUrlToProductionSegments(
+      segments,
+      BEAT_ID,
+      'https://example.com/end-new.jpg'
+    )
+    expect(updated[0].endFrameUrl).toBe('https://example.com/end-new.jpg')
+    expect(updated[0].references?.endFrameUrl).toBe('https://example.com/end-new.jpg')
+    expect(updated[1].endFrameUrl).toBeUndefined()
+  })
+})
+
+describe('resolveExpressGenerationMethod', () => {
+  it('respects preferredSourceMethod reference vs frame', () => {
+    expect(resolveExpressGenerationMethod(true, true, true, 'reference')).toBe('REF')
+    expect(resolveExpressGenerationMethod(true, true, true, 'frame')).toBe('FTV')
+    expect(resolveExpressGenerationMethod(true, true, false, 'frame')).toBe('I2V')
+    expect(resolveExpressGenerationMethod(false, true, true)).toBe('FTV')
   })
 })
 

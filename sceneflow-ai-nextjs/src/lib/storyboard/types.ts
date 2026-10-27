@@ -263,12 +263,16 @@ export function beatFrameSlotKey(
  */
 export function storyboardGeneratingSlotKey(
   sceneIndex: number,
-  slot: Pick<StoryboardFrameSlot, 'kind' | 'beatId' | 'dialogueIndex' | 'customFrameId'>
+  slot: Pick<StoryboardFrameSlot, 'kind' | 'beatId' | 'dialogueIndex' | 'customFrameId' | 'frameRole'>
 ): string {
   if (slot.kind === 'custom' && slot.customFrameId) {
     return `custom-${sceneIndex}-${slot.customFrameId}`
   }
-  if (slot.beatId) return `${sceneIndex}-beat-${slot.beatId}`
+  if (slot.beatId) {
+    return slot.frameRole === 'end'
+      ? `${sceneIndex}-beat-${slot.beatId}-end`
+      : `${sceneIndex}-beat-${slot.beatId}`
+  }
   if (typeof slot.dialogueIndex === 'number') return `${sceneIndex}-${slot.dialogueIndex}`
   return `${sceneIndex}-establishing`
 }

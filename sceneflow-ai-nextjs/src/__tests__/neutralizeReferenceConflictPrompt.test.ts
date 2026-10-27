@@ -40,4 +40,15 @@ describe('neutralizeReferenceConflictPrompt', () => {
     expect(neutral.toLowerCase()).toContain('weary')
     expect(neutral.toLowerCase()).toContain('tension')
   })
+
+  it('strips inline wardrobe clauses and eye-color descriptions that conflict with reference plates', () => {
+    const raw =
+      'Marcus, wearing a tailored charcoal suit and crimson silk tie, steps into the doorway with piercing blue eyes and pauses.'
+    const neutral = neutralizeReferenceConflictPrompt(raw)
+
+    expect(neutral.toLowerCase()).not.toContain('charcoal suit')
+    expect(neutral.toLowerCase()).not.toContain('crimson silk tie')
+    expect(neutral.toLowerCase()).not.toContain('blue eyes')
+    expect(neutral).toContain('steps into the doorway')
+  })
 })

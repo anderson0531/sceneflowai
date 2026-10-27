@@ -39,6 +39,23 @@ const PRONOUN_BODY_PATTERN =
   /\b(Her|His)\s+(eyes|hands|face|temple|temples|arm|arms|body|hair|skin|cheek|cheeks|forehead|lips)\b/gi
 
 /**
+ * Static inline wardrobe/costume clauses in prose that often conflict with
+ * the attached character/wardrobe reference plate (e.g. ", wearing a tattered coat,").
+ */
+const INLINE_WARDROBE_CLAUSE_PATTERNS: RegExp[] = [
+  /,\s*(?:wearing|dressed in|clad in|outfitted in)\s+[^,.;!?]+(?=[,.;!?])/gi,
+  /\b(?:wearing|dressed in|clad in|outfitted in)\s+(?:a|an|his|her|their|the)\s+[^,.;!?]+,\s*/gi,
+]
+
+/**
+ * Static inline eye/hair color re-descriptions that conflict with identity reference plates.
+ */
+const INLINE_FACIAL_TRAIT_PATTERNS: RegExp[] = [
+  /,\s*with\s+(?:piercing\s+|bright\s+|dark\s+|deep\s+|pale\s+)?(?:blue|green|brown|hazel|amber|gray|grey)\s+eyes(?:\s+and\s+[^,.;!?]+?\s+hair)?(?=[,.;!?])/gi,
+  /\bwith\s+(?:piercing\s+|bright\s+|dark\s+|deep\s+|pale\s+)?(?:blue|green|brown|hazel|amber|gray|grey)\s+eyes(?:\s+and\s+[^,.;!?]+?\s+hair)?\b/gi,
+]
+
+/**
  * Neutralize scene prompt text before Omni REF assembly.
  * Idempotent-friendly; safe to run on already-softened text.
  */
@@ -52,11 +69,24 @@ export function neutralizeReferenceConflictPrompt(scenePrompt: string): string {
     text = text.replace(regex, replacement)
   }
 
+  for (const pattern of INLINE_WARDROBE_CLAUSE_PATTERNS) {
+    text = text.replace(pattern, '')
+  }
+
+  for (const pattern of INLINE_FACIAL_TRAIT_PATTERNS) {
+    text = text.replace(pattern, '')
+  }
+
   text = text.replace(POSSESSIVE_NAME_PATTERN, "the subject's")
   text = text.replace(PRONOUN_BODY_PATTERN, (_, _pronoun, bodyPart) => {
     const part = typeof bodyPart === 'string' ? bodyPart.toLowerCase() : 'body'
     return `The subject's ${part}`
   })
 
-  return text.replace(/\s{2,}/g, ' ').trim()
+  return text
+    .replace(/\s+,/g, ',')
+    .replace(/,\s*,/g, ',')
+    .replace(/\s+\./g, '.')
+    .replace(/\s{2,}/g, ' ')
+    .trim()
 }

@@ -603,20 +603,22 @@ export function useVideoQueue(
             : config.endFrameUrl?.trim()
               ? config.endFrameUrl
               : undefined
-          if (f2vFrames && (!startUrl || !endUrl)) {
-            const frameError = 'Generate start and end frames for frame-to-video first.'
-            toast.error(frameError)
-            failed++
-            setFailedCount(failed)
-            markItem(item.segmentId, 'error', frameError)
-            continue
-          }
-          if (batchMethod === 'FTV') {
-            batchMethod = 'I2V'
+          if (batchMethod === 'FTV' && (!startUrl || !endUrl)) {
+            if (startUrl && !endUrl) {
+              // Graceful downgrade to single-frame I2V when only start frame is available
+              batchMethod = 'I2V'
+            } else {
+              const frameError = 'Generate start and end frames for frame-to-video first.'
+              toast.error(frameError)
+              failed++
+              setFailedCount(failed)
+              markItem(item.segmentId, 'error', frameError)
+              continue
+            }
           }
 
           const genType: 'T2V' | 'I2V' =
-            batchMethod === 'I2V' || batchMethod === 'EXT'
+            batchMethod === 'I2V' || batchMethod === 'FTV' || batchMethod === 'EXT'
               ? 'I2V'
               : 'T2V'
 

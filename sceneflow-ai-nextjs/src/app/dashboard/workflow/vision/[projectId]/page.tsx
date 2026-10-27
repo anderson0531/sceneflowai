@@ -103,6 +103,7 @@ import {
 import type {
   VideoGenerationMode,
   VideoGenerationQuality,
+  VideoSourceMethod,
 } from '@/lib/video/videoGenerationPolicy'
 import { resolveVideoGeneration } from '@/lib/video/videoGenerationPolicy'
 import { enableScreeningPlayerDiagnostics } from '@/lib/storyboard/screeningPlayerDiagnostics'
@@ -128,6 +129,7 @@ import {
 } from '@/lib/vision/mountedSetFixtures'
 import { resolveParentLocationAnchor } from '@/lib/vision/locationFamily'
 import {
+  applyEndFrameUrlToProductionSegments,
   applyStartFrameUrlToProductionSegments,
   resolveEffectiveStartFrameUrl,
   shouldAttachBeatStartFrame,
@@ -900,6 +902,8 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
   const [videoGenerationQuality, setVideoGenerationQuality] = useState<VideoGenerationQuality>('draft')
   /** Session default: Standard (Google Veo) or Creative (Kling). Not persisted. */
   const [videoGenerationMode, setVideoGenerationMode] = useState<VideoGenerationMode>('standard')
+  /** Session default source method: Reference (Continuity Library) or Frame (F2V start+end frames). Not persisted. */
+  const [videoSourceMethod, setVideoSourceMethod] = useState<VideoSourceMethod>('reference')
   // Series/Episode context for subtitle display
   const [seriesInfo, setSeriesInfo] = useState<{
     seriesTitle: string
@@ -2861,6 +2865,24 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     [applySceneProductionUpdate]
   )
 
+  const syncBeatEndFrameToProduction = useCallback(
+    (sceneId: string, beatId: string, newUrl: string) => {
+      if (!beatId?.trim() || !newUrl?.trim()) return
+      applySceneProductionUpdate(sceneId, (current) => {
+        if (!current?.segments?.length) return current
+        return {
+          ...current,
+          segments: applyEndFrameUrlToProductionSegments(
+            current.segments,
+            beatId,
+            newUrl
+          ),
+        }
+      })
+    },
+    [applySceneProductionUpdate]
+  )
+
   const syncExpressBeatImageToProduction = useCallback(
     (
       sceneIndex: number,
@@ -2868,7 +2890,6 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       imageUrl: string,
       frameRole: 'start' | 'end' = 'start'
     ) => {
-      if (frameRole !== 'start') return
       const scenes = scriptRef.current?.script?.scenes
       if (!Array.isArray(scenes) || !scenes[sceneIndex]) return
       const sceneRec = scenes[sceneIndex] as Record<string, unknown>
@@ -2878,10 +2899,14 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         (typeof sceneRec.sceneId === 'string' && sceneRec.sceneId) ||
         `scene-${sceneIndex}`
       if (beat?.beatId) {
-        syncBeatStartFrameToProduction(sceneId, beat.beatId, imageUrl)
+        if (frameRole === 'end') {
+          syncBeatEndFrameToProduction(sceneId, beat.beatId, imageUrl)
+        } else {
+          syncBeatStartFrameToProduction(sceneId, beat.beatId, imageUrl)
+        }
       }
     },
-    [syncBeatStartFrameToProduction]
+    [syncBeatStartFrameToProduction, syncBeatEndFrameToProduction]
   )
 
   const syncProductionStartFrameToScript = useCallback(
@@ -2917,6 +2942,44 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       }
 
       await persistVisionScriptScenes(updatedScenes, 'syncProductionStartFrameToScript')
+    },
+    [persistVisionScriptScenes]
+  )
+
+  const syncProductionEndFrameToScript = useCallback(
+    async (sceneId: string, beatId: string, newUrl: string) => {
+      if (!beatId?.trim() || !newUrl?.trim()) return
+
+      const scenes = scriptRef.current?.script?.scenes
+      if (!Array.isArray(scenes)) return
+
+      const sceneIdx = scenes.findIndex(
+        (s: any, i: number) => (s.id || s.sceneId || `scene-${i}`) === sceneId
+      )
+      if (sceneIdx < 0) return
+
+      const rawBeatIdx = resolveRawBeatIndex(scenes[sceneIdx], { beatId })
+      if (rawBeatIdx === undefined) return
+
+      const updatedScenes = [...scenes]
+      updatedScenes[sceneIdx] = stampPreVisContentHash(
+        applyBeatStoryboardImageToScene(
+          updatedScenes[sceneIdx],
+          rawBeatIdx,
+          newUrl,
+          { frameRole: 'end', source: 'edit' }
+        )
+      )
+
+      const currentScript = scriptRef.current
+      if (currentScript?.script) {
+        setScript({
+          ...currentScript,
+          script: { ...currentScript.script, scenes: updatedScenes },
+        })
+      }
+
+      await persistVisionScriptScenes(updatedScenes, 'syncProductionEndFrameToScript')
     },
     [persistVisionScriptScenes]
   )
@@ -3656,17 +3719,19 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       
       applySceneProductionUpdate(sceneId, () => updatedData)
 
-      if (frameType === 'start') {
-        const beatId = updatedSegments.find((s) => s.segmentId === segmentId)?.beatId
-        if (beatId) {
+      const beatId = updatedSegments.find((s) => s.segmentId === segmentId)?.beatId
+      if (beatId) {
+        if (frameType === 'start') {
           void syncProductionStartFrameToScript(sceneId, beatId, newFrameUrl)
+        } else if (frameType === 'end') {
+          void syncProductionEndFrameToScript(sceneId, beatId, newFrameUrl)
         }
       }
 
       toast.success(`${frameType === 'start' ? 'Start' : 'End'} frame updated`)
       console.log(`[VisionPage] ${frameType} frame edited for segment:`, segmentId)
     },
-    [sceneProductionState, applySceneProductionUpdate, syncProductionStartFrameToScript]
+    [sceneProductionState, applySceneProductionUpdate, syncProductionStartFrameToScript, syncProductionEndFrameToScript]
   )
   const handleUploadFrame = useCallback(
     async (sceneId: string, segmentId: string, frameType: 'start' | 'end', file: File) => {
@@ -4030,6 +4095,13 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         ) {
           void syncProductionStartFrameToScript(sceneId, segment.beatId, data.startFrameUrl)
         }
+        if (
+          segment.beatId &&
+          (frameType === 'end' || frameType === 'both') &&
+          data.endFrameUrl
+        ) {
+          void syncProductionEndFrameToScript(sceneId, segment.beatId, data.endFrameUrl)
+        }
 
         toast.success(`Frame${frameType === 'both' ? 's' : ''} generated successfully`)
         return {
@@ -4057,7 +4129,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         setGeneratingFramePhase(null)
       }
     },
-    [script?.script?.scenes, sceneProductionState, characters, objectReferences, locationReferences, applySceneProductionUpdate, lockedAspectRatio, syncProductionStartFrameToScript, frameGenerationQuality, frameGenerationMode, tStillPolicy]
+    [script?.script?.scenes, sceneProductionState, characters, objectReferences, locationReferences, applySceneProductionUpdate, lockedAspectRatio, syncProductionStartFrameToScript, syncProductionEndFrameToScript, frameGenerationQuality, frameGenerationMode, tStillPolicy]
   )
 
   const handleInitializeSceneProduction = useCallback(
@@ -4624,11 +4696,9 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           options?.generationMethod ||
           (autoExtContinuation ? 'EXT' : undefined) ||
           mode
-        const effectiveGenerationMethod =
-          rawGenerationMethod === 'FTV' ? 'I2V' : rawGenerationMethod
 
         const attachStart = shouldAttachBeatStartFrame({
-          mode: effectiveGenerationMethod,
+          mode: rawGenerationMethod === 'FTV' ? 'I2V' : rawGenerationMethod,
           useBeatFrameAsStart: options?.useBeatFrameAsStart,
         })
         const resolvedStartFrameUrl = attachStart
@@ -4638,11 +4708,31 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
             (segment.sequenceIndex === 0 && sceneImageUrlForApi ? sceneImageUrlForApi : undefined)
           : options?.startFrameUrl?.trim() || undefined
 
+        const beatForEnd =
+          segment.beatId && visionScene
+            ? getSceneBeats(visionScene as Record<string, unknown>).find(
+                (b) => b.beatId === segment.beatId
+              )
+            : undefined
+        const beatDistinctEndUrl =
+          beatForEnd?.storyboardEndImageUrl?.trim() &&
+          beatForEnd.storyboardEndImageUrl.trim() !== resolvedStartFrameUrl
+            ? beatForEnd.storyboardEndImageUrl.trim()
+            : undefined
+
         const resolvedEndFrameUrl =
           options?.endFrameUrl?.trim() ||
           segment.endFrameUrl ||
           segment.references?.endFrameUrl ||
+          beatDistinctEndUrl ||
           undefined
+
+        const effectiveGenerationMethod =
+          rawGenerationMethod === 'FTV'
+            ? resolvedStartFrameUrl && resolvedEndFrameUrl
+              ? 'FTV'
+              : 'I2V'
+            : rawGenerationMethod
 
         const normalizedReferenceImages = normalizeReferenceImages(
           options?.referenceImages,
@@ -12723,6 +12813,159 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     await handleGenerateBeatEndFrameImage(sceneIdx, beatId)
   }
 
+  /**
+   * Generate both Start Frame and End Frame of action for a shot (or just the End Frame
+   * if the Start Frame already exists and the End Frame is missing).
+   */
+  const handleRequestGenerateBeatFrames = async (sceneIdx: number, beatId: string) => {
+    if (expressRunningRef.current || isExpressRunning) {
+      try { const { toast } = require('sonner'); toast.info('A scene generation is already running') } catch {}
+      return
+    }
+
+    const scene = script?.script?.scenes?.[sceneIdx]
+    if (!scene) {
+      try { const { toast } = require('sonner'); toast.error('Scene not found') } catch {}
+      return
+    }
+
+    const rawBeatIdx = resolveRawBeatIndex(scene, { beatId })
+    const beat = rawBeatIdx === undefined ? undefined : getSceneBeats(scene)[rawBeatIdx]
+    if (!beat) {
+      try { const { toast } = require('sonner'); toast.error('Shot not found') } catch {}
+      return
+    }
+
+    if (blockedByMissingSceneReferences(sceneIdx, beat)) return
+
+    const hasStart = Boolean(beat.storyboardImageUrl?.trim())
+    const hasEnd = Boolean(
+      beat.storyboardEndImageUrl?.trim() &&
+        beat.storyboardEndImageUrl.trim() !== beat.storyboardImageUrl?.trim()
+    )
+
+    // If start frame exists and end frame does not, keep the start frame and generate the end frame.
+    // Otherwise (neither exists, or both exist and user clicked "Regen Frames"), generate both start + end.
+    const selectedFrameKeys =
+      hasStart && !hasEnd
+        ? [beatFrameSlotKey(beatId, 'end')]
+        : [beatFrameSlotKey(beatId, 'start'), beatFrameSlotKey(beatId, 'end')]
+
+    await handleExpressSceneGenerate(sceneIdx, 'en', {
+      scope: 'selected',
+      includeEndFrames: true,
+      selectedFrameKeys,
+      quality: frameGenerationQuality,
+      generationMode: frameGenerationMode,
+    })
+  }
+
+  /**
+   * Cross-shot continuity: copy the previous shot's End Frame (or Start Frame fallback)
+   * into the current shot's Start Frame.
+   */
+  const handleUsePrevEndFrameAsStart = async (sceneIdx: number, beatId: string) => {
+    if (!script?.script?.scenes) return
+    const scene = script.script.scenes[sceneIdx]
+    if (!scene) return
+
+    const rawBeatIdx = resolveRawBeatIndex(scene, { beatId })
+    if (rawBeatIdx === undefined || rawBeatIdx <= 0) {
+      try { const { toast } = require('sonner'); toast.error('No previous shot available') } catch {}
+      return
+    }
+
+    const beats = getSceneBeats(scene)
+    const prevBeat = beats[rawBeatIdx - 1]
+    const prevUrl =
+      prevBeat?.storyboardEndImageUrl?.trim() || prevBeat?.storyboardImageUrl?.trim()
+    if (!prevUrl) {
+      try { const { toast } = require('sonner'); toast.error('Previous shot has no frame to copy') } catch {}
+      return
+    }
+
+    const updatedScenes = script.script.scenes.map((s: any, idx: number) =>
+      idx === sceneIdx
+        ? stampPreVisContentHash(
+            applyBeatStoryboardImageToScene(s, rawBeatIdx, prevUrl, {
+              frameRole: 'start',
+              source: 'edit',
+            })
+          )
+        : s
+    )
+
+    setScript((prev: any) => ({
+      ...prev,
+      script: { ...prev?.script, scenes: updatedScenes },
+    }))
+
+    try {
+      await persistVisionScriptScenes(updatedScenes, 'handleUsePrevEndFrameAsStart')
+      const sceneId = scene.id || scene.sceneId || `scene-${sceneIdx}`
+      syncBeatStartFrameToProduction(sceneId, beatId, prevUrl)
+      try {
+        const { toast } = require('sonner')
+        toast.success(`Set Shot ${rawBeatIdx + 1} Start Frame from Shot ${rawBeatIdx} End Frame`)
+      } catch {}
+    } catch (err) {
+      console.error('[handleUsePrevEndFrameAsStart] Failed to save:', err)
+      try { const { toast } = require('sonner'); toast.error('Failed to update start frame') } catch {}
+    }
+  }
+
+  const handleDeleteBeatEndFrame = async (sceneIdx: number, beatId: string) => {
+    if (!script?.script?.scenes) return
+    const scene = script.script.scenes[sceneIdx]
+    const rawBeatIdx = scene ? resolveRawBeatIndex(scene, { beatId }) : undefined
+    if (rawBeatIdx === undefined) return
+
+    const updatedScenes = script.script.scenes.map((s: any, idx: number) => {
+      if (idx !== sceneIdx || !Array.isArray(s.beats)) return s
+      const beats = [...s.beats]
+      const currentBeat = beats[rawBeatIdx]
+      if (!currentBeat) return s
+      const nextBeat = { ...currentBeat }
+      delete nextBeat.storyboardEndImageUrl
+      delete nextBeat.storyboardEndImagePrompt
+      delete nextBeat.storyboardEndImageError
+      beats[rawBeatIdx] = nextBeat
+      return stampPreVisContentHash({ ...s, beats })
+    })
+
+    setScript((prev: any) => ({
+      ...prev,
+      script: { ...prev?.script, scenes: updatedScenes },
+    }))
+
+    try {
+      await persistVisionScriptScenes(updatedScenes, 'handleDeleteBeatEndFrame')
+      const sceneId = scene.id || scene.sceneId || `scene-${sceneIdx}`
+      applySceneProductionUpdate(sceneId, (current) => {
+        if (!current?.segments?.length) return current
+        return {
+          ...current,
+          segments: current.segments.map((seg) =>
+            seg.beatId === beatId
+              ? {
+                  ...seg,
+                  endFrameUrl: null,
+                  references: {
+                    ...seg.references,
+                    endFrameUrl: null,
+                  },
+                }
+              : seg
+          ),
+        }
+      })
+      try { const { toast } = require('sonner'); toast.success('End frame removed') } catch {}
+    } catch (err) {
+      console.error('[handleDeleteBeatEndFrame] Failed to save:', err)
+      try { const { toast } = require('sonner'); toast.error('Failed to remove end frame') } catch {}
+    }
+  }
+
   const persistStillDirectorPatch = async (
     sceneIndex: number,
     beatId: string,
@@ -12960,6 +13203,9 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         payload.frameType = 'beat'
         payload.beatId = slot.beatId
         payload.beatIndex = rawBeatIdx
+        if (slot.frameRole === 'end') {
+          payload.frameRole = 'end'
+        }
         let workingScene = scene as Record<string, unknown>
         if (options.beatReferenceSelection) {
           workingScene = applyBeatReferenceSelectionToScene(
@@ -13074,6 +13320,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
             payload.beatIndex as number,
             data.imageUrl,
             {
+              frameRole: slot.frameRole === 'end' ? 'end' : 'start',
               imagePrompt: data.prompt || '',
               referenceStatus: data.referenceStatus,
               referenceReason: data.referenceReason,
@@ -13128,7 +13375,11 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           (scene.id as string) ||
           (scene.sceneId as string) ||
           `scene-${sceneIndex}`
-        syncBeatStartFrameToProduction(sceneId, payload.beatId, data.imageUrl)
+        if (slot.frameRole === 'end') {
+          syncBeatEndFrameToProduction(sceneId, payload.beatId, data.imageUrl)
+        } else {
+          syncBeatStartFrameToProduction(sceneId, payload.beatId, data.imageUrl)
+        }
       }
       const directReferenceNotice = frameReferenceNotice(data.referenceStatus, data.referenceReason)
       if (directReferenceNotice?.level === 'error') toast.error(directReferenceNotice.message)
@@ -13262,7 +13513,12 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     }
   }
 
-  const handleUploadBeatFrame = async (sceneIndex: number, beatId: string, file: File) => {
+  const handleUploadBeatFrame = async (
+    sceneIndex: number,
+    beatId: string,
+    file: File,
+    frameRole: 'start' | 'end' = 'start'
+  ) => {
     if (!script?.script?.scenes) return
 
     const scene = script.script.scenes[sceneIndex]
@@ -13276,7 +13532,10 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       const uploadedUrl = await uploadAssetViaAPI(file, projectId)
       const updatedScenes = script.script.scenes.map((s: any, idx: number) => {
         if (idx !== sceneIndex) return s
-        return applyBeatStoryboardImageToScene(s, rawBeatIdx, uploadedUrl, { source: 'upload' })
+        return applyBeatStoryboardImageToScene(s, rawBeatIdx, uploadedUrl, {
+          frameRole,
+          source: 'upload',
+        })
       })
 
       setScript((prev: any) => ({
@@ -13287,8 +13546,15 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       const saved = await persistVisionScriptScenes(updatedScenes, 'handleUploadBeatFrame')
       if (saved) {
         const sceneId = scene.id || scene.sceneId || `scene-${sceneIndex}`
-        syncBeatStartFrameToProduction(sceneId, beatId, uploadedUrl)
-        try { const { toast } = require('sonner'); toast.success('Shot frame uploaded') } catch {}
+        if (frameRole === 'end') {
+          syncBeatEndFrameToProduction(sceneId, beatId, uploadedUrl)
+        } else {
+          syncBeatStartFrameToProduction(sceneId, beatId, uploadedUrl)
+        }
+        try {
+          const { toast } = require('sonner')
+          toast.success(`${frameRole === 'end' ? 'End' : 'Start'} frame uploaded`)
+        } catch {}
       } else {
         try { const { toast } = require('sonner'); toast.error('Failed to save shot frame') } catch {}
       }
@@ -13304,7 +13570,8 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
   const handleSaveEditedBeatFrame = async (
     sceneIndex: number,
     beatId: string,
-    newImageUrl: string
+    newImageUrl: string,
+    frameRole: 'start' | 'end' = 'start'
   ) => {
     if (!script?.script?.scenes) return
 
@@ -13316,7 +13583,12 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     }
 
     const updatedScenes = script.script.scenes.map((s: any, idx: number) =>
-      idx === sceneIndex ? applyBeatStoryboardImageToScene(s, rawBeatIdx, newImageUrl, { source: 'edit' }) : s
+      idx === sceneIndex
+        ? applyBeatStoryboardImageToScene(s, rawBeatIdx, newImageUrl, {
+            frameRole,
+            source: 'edit',
+          })
+        : s
     )
 
     setScript((prev: any) => ({
@@ -13327,8 +13599,15 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     try {
       await persistVisionScriptScenes(updatedScenes, 'handleSaveEditedBeatFrame')
       const sceneId = scene.id || scene.sceneId || `scene-${sceneIndex}`
-      syncBeatStartFrameToProduction(sceneId, beatId, newImageUrl)
-      try { const { toast } = require('sonner'); toast.success('Shot frame updated') } catch {}
+      if (frameRole === 'end') {
+        syncBeatEndFrameToProduction(sceneId, beatId, newImageUrl)
+      } else {
+        syncBeatStartFrameToProduction(sceneId, beatId, newImageUrl)
+      }
+      try {
+        const { toast } = require('sonner')
+        toast.success(`${frameRole === 'end' ? 'End' : 'Start'} frame updated`)
+      } catch {}
     } catch (saveError) {
       console.error('[handleSaveEditedBeatFrame] Failed to save:', saveError)
       try { const { toast } = require('sonner'); toast.error('Failed to save edited shot frame') } catch {}
@@ -13384,15 +13663,23 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
 
     try {
       await persistVisionScriptScenes(updatedScenes, 'handleRestoreStillVersion')
-      if (slot.beatId && slot.frameRole !== 'end') {
+      if (slot.beatId) {
         const rawBeatIdx = resolveRawBeatIndex(updated, { beatId: slot.beatId })
-        const restoredUrl =
+        const beatRow =
           typeof rawBeatIdx === 'number'
-            ? getSceneBeats(updated)[rawBeatIdx]?.storyboardImageUrl
+            ? getSceneBeats(updated)[rawBeatIdx]
             : undefined
+        const restoredUrl =
+          slot.frameRole === 'end'
+            ? beatRow?.storyboardEndImageUrl
+            : beatRow?.storyboardImageUrl
         if (restoredUrl) {
           const sceneId = scene.id || scene.sceneId || `scene-${sceneIndex}`
-          syncBeatStartFrameToProduction(sceneId, slot.beatId, restoredUrl)
+          if (slot.frameRole === 'end') {
+            syncBeatEndFrameToProduction(sceneId, slot.beatId, restoredUrl)
+          } else {
+            syncBeatStartFrameToProduction(sceneId, slot.beatId, restoredUrl)
+          }
         }
       }
       try { const { toast } = require('sonner'); toast.success('Restored previous still') } catch {}
@@ -18244,6 +18531,10 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                 onVideoRunCancelReady={handleVideoRunCancelReady}
                 onSceneRenderQueued={handleSceneRenderQueued}
                 onGenerateBeatFrame={handleRequestGenerateBeatFrame}
+                onGenerateBeatEndFrame={handleRequestGenerateBeatEndFrame}
+                onGenerateBeatFrames={handleRequestGenerateBeatFrames}
+                onUsePrevEndFrameAsStart={handleUsePrevEndFrameAsStart}
+                onDeleteBeatEndFrame={handleDeleteBeatEndFrame}
                 onGenerateDialogueFrame={handleGenerateDialogueFrameImage}
                 onUploadBeatFrame={handleUploadBeatFrame}
                 onUploadDialogueFrame={handleUploadDialogueFrame}
@@ -18275,6 +18566,8 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                 onVideoGenerationQualityChange={setVideoGenerationQuality}
                 videoGenerationMode={videoGenerationMode}
                 onVideoGenerationModeChange={setVideoGenerationMode}
+                videoSourceMethod={videoSourceMethod}
+                onVideoSourceMethodChange={setVideoSourceMethod}
                 expressStatus={expressStatus}
                 expressGateBlocked={!expressGate.allowed && !expressGate.blockedOnlyByReferences}
                 onExpressGateBlocked={() => {

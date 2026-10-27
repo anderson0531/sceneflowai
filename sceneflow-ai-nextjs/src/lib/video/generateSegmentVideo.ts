@@ -402,7 +402,7 @@ export async function generateSegmentVideoCore(
     frameRate: frameRate ?? 24,
     thinkingLevel,
     omniMultiShot: isStandardOmni ? omniMultiShot : undefined,
-    preferOmni: isStandardOmni,
+    preferOmni: isStandardOmni && !(method === 'FTV' && startFrameUrl && endFrameUrl),
     negativePrompt,
     personGeneration: isImageBasedMethod ? 'allow_adult' : 'allow_all',
     quality: effectiveQualityTier,
@@ -486,6 +486,7 @@ export async function generateSegmentVideoCore(
     method,
     referenceImages,
     segmentIndex,
+    hasEndFrame: Boolean(method === 'FTV' && endFrameUrl),
     audioContext,
   })
   referenceFallbackPrompt = built.referenceFallbackPrompt

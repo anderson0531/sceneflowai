@@ -673,8 +673,8 @@ describe('migrateSceneBeatsToStartFrameOnly', () => {
     expect(beats[0].storyboardEndImageTier).toBeUndefined()
   })
 
-  it('strips end fields when start already exists', () => {
-    const scene = {
+  it('preserves distinct end fields when start and end frames differ, and strips duplicate end fields', () => {
+    const sceneWithDistinctEnd = {
       beats: [
         {
           beatId: 'bt_1',
@@ -684,14 +684,26 @@ describe('migrateSceneBeatsToStartFrameOnly', () => {
           line: 'Hello',
           storyboardImageUrl: 'https://example.com/start.jpg',
           storyboardEndImageUrl: 'https://example.com/end.jpg',
+          storyboardEndImagePrompt: 'Alice lowers the glass.',
+        },
+        {
+          beatId: 'bt_2',
+          sequenceIndex: 1,
+          kind: 'action',
+          actionDescription: 'Static beat',
+          storyboardImageUrl: 'https://example.com/same.jpg',
+          storyboardEndImageUrl: 'https://example.com/same.jpg',
         },
       ],
     }
 
-    const migrated = migrateSceneBeatsToStartFrameOnly(scene)
+    const migrated = migrateSceneBeatsToStartFrameOnly(sceneWithDistinctEnd)
     const beats = (migrated.beats as Array<Record<string, unknown>>) ?? []
     expect(beats[0].storyboardImageUrl).toBe('https://example.com/start.jpg')
-    expect(beats[0].storyboardEndImageUrl).toBeUndefined()
+    expect(beats[0].storyboardEndImageUrl).toBe('https://example.com/end.jpg')
+    expect(beats[0].storyboardEndImagePrompt).toBe('Alice lowers the glass.')
+    expect(beats[1].storyboardImageUrl).toBe('https://example.com/same.jpg')
+    expect(beats[1].storyboardEndImageUrl).toBeUndefined()
   })
 
   it('migrateProjectBeatsToStartFrameOnly is idempotent', () => {

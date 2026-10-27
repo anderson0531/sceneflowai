@@ -165,3 +165,27 @@ export function buildMinimalFtvPerformPrompt(
 
   return extractSpeaksQuotedPerformCue(narrowedFallbackText)
 }
+
+/**
+ * Compile an FTV (Frame-to-Video) transition prompt that preserves BOTH
+ * physical transition motion (camera movement, blocking, prop interaction, `End on:` state)
+ * AND any spoken dialogue cue, while stripping static environment/character/wardrobe blocks
+ * that are already locked into the Start and End keyframe pixels.
+ */
+export function compileFtvTransitionPrompt(raw: string): string {
+  if (!raw?.trim()) return ''
+  let narrowed = narrowPromptForFtvFrameLock(raw)
+  // Drop static space/lens/coverage setup clauses that duplicate keyframe pixels
+  narrowed = narrowed
+    .replace(/\b(?:Coverage|Lens|Space):\s*[^.!?]+[.!?]\s*/gi, '')
+    .trim()
+
+  const performCue = extractSpeaksQuotedPerformCue(raw)
+  if (!narrowed) {
+    return performCue ?? ''
+  }
+  if (performCue && !narrowed.includes(performCue) && !/\bspeaks,\s*"/i.test(narrowed)) {
+    return normalizeVeoSuspiciousPunctuation(`${narrowed} ${performCue}`.trim())
+  }
+  return normalizeVeoSuspiciousPunctuation(narrowed)
+}

@@ -121,7 +121,7 @@ function sanitizeFTVPrompt(prompt: string): string {
  * Start/end images encode blocking and pose; when dialogue exists, only the perform cue
  * (`Name speaks, "..."`) is sent. Silent beats get a one-line motion hint plus optional camera metadata.
  */
-function generateFTVMotionPrompt(segment: SceneSegment, skipAnchoringPhrase?: boolean): string {
+export function generateFTVMotionPrompt(segment: SceneSegment, skipAnchoringPhrase?: boolean): string {
   let basePrompt = ''
 
   if (segment.userInstruction && segment.userInstruction.trim()) {
@@ -144,25 +144,26 @@ function generateFTVMotionPrompt(segment: SceneSegment, skipAnchoringPhrase?: bo
   }
 
   basePrompt = narrowPromptForFtvFrameLock(basePrompt)
-
-  const dialogueOnly = buildMinimalFtvPerformPrompt(segment, basePrompt)
-  if (dialogueOnly) {
-    console.log('[FTV Prompt] Dialogue-only perform cue (blocking omitted; frames carry poses)')
-    return dialogueOnly
-  }
-
-  if (!basePrompt.trim()) {
-    basePrompt = 'Subtle natural motion and expression between the two keyframes.'
-  }
-
   basePrompt = sanitizeFTVPrompt(basePrompt)
 
   const cameraMovement = segment.cameraMovement || ''
   if (cameraMovement && cameraMovement.toLowerCase() !== 'static') {
     const isConflicting = /pull|back|out|away|retreat|reveal/i.test(cameraMovement)
     if (!isConflicting && !basePrompt.toLowerCase().includes('camera')) {
-      basePrompt = `Camera ${cameraMovement}. ${basePrompt}`
+      basePrompt = `Camera ${cameraMovement}. ${basePrompt}`.trim()
     }
+  }
+
+  const dialogueOnly = buildMinimalFtvPerformPrompt(segment, basePrompt)
+  if (dialogueOnly) {
+    if (basePrompt && !basePrompt.includes(dialogueOnly) && !/\bspeaks,\s*"/i.test(basePrompt)) {
+      return `${basePrompt} ${dialogueOnly}`.trim()
+    }
+    return basePrompt || dialogueOnly
+  }
+
+  if (!basePrompt.trim()) {
+    basePrompt = 'Subtle natural motion and expression between the two keyframes.'
   }
 
   const hasTransitionLanguage = /\b(interpolat|transition|between.*frame|start.*end\s*frame|end\s*keyframe|final\s*frame|smoothly\s*(interpolate|transition)|match.*end)\b/i.test(
@@ -493,12 +494,37 @@ export function applyStartFrameUrlToProductionSegments(
   })
 }
 
-/** Live beat start frame reconciled with production segment overrides. */
+/** Apply a beat-level end frame URL to all production segments for that beat. */
+export function applyEndFrameUrlToProductionSegments(
+  segments: SceneSegment[],
+  beatId: string,
+  newUrl: string,
+  source: MediaVersionSource = 'generate'
+): SceneSegment[] {
+  const trimmed = newUrl.trim()
+  if (!trimmed || !beatId.trim()) return segments
+
+  return segments.map((seg) => {
+    if (seg.beatId !== beatId) return seg
+    return stampProductionFrameUrl(seg, 'end', trimmed, source)
+  })
+}
+
+/** Live beat start/end frames reconciled with production segment overrides and source method. */
 export function resolveExpressGenerationMethod(
   hasRefs: boolean,
-  hasStartFrame: boolean
-): 'REF' | 'I2V' {
-  return hasRefs ? 'REF' : hasStartFrame ? 'I2V' : 'I2V'
+  hasStartFrame: boolean,
+  hasEndFrame = false,
+  preferredSourceMethod?: 'reference' | 'frame'
+): 'REF' | 'I2V' | 'FTV' {
+  if (preferredSourceMethod === 'frame') {
+    if (hasStartFrame && hasEndFrame) return 'FTV'
+    return 'I2V'
+  }
+  if (preferredSourceMethod === 'reference') {
+    return hasRefs ? 'REF' : hasStartFrame && hasEndFrame ? 'FTV' : 'I2V'
+  }
+  return hasRefs ? 'REF' : hasStartFrame && hasEndFrame ? 'FTV' : hasStartFrame ? 'I2V' : 'I2V'
 }
 
 /** Live beat start frame reconciled with production segment overrides. */
@@ -546,8 +572,9 @@ export function resolveEffectiveStartFrameUrl(
 }
 
 /**
- * Frames sent to frame-to-video. The beat still illustrates the beat and is
- * not a clip start or end frame, even when a segment URL was copied from it.
+ * Frames sent to frame-to-video. A single beat still copied into both slots is
+ * not a start+end keyframe pair, whereas a beat with a distinct `storyboardEndImageUrl`
+ * (or segment with a distinct `endFrameUrl`) provides true start+end F2V keyframes.
  */
 export function resolveF2VFrameUrls(
   segment: SceneSegment,
@@ -555,10 +582,33 @@ export function resolveF2VFrameUrls(
 ): { startFrameUrl: string | null; endFrameUrl: string | null } {
   const beatId = segment.beatId?.trim()
   let beatStill: string | null = null
+  let beatEndStill: string | null = null
   if (beatId && scene) {
     const beat = getSceneBeats(scene).find((row) => row.beatId === beatId)
     beatStill = beat?.storyboardImageUrl?.trim() || null
+    beatEndStill = beat?.storyboardEndImageUrl?.trim() || null
   }
+  const rawStart =
+    segment.startFrameUrl?.trim() ||
+    segment.references?.startFrameUrl?.trim() ||
+    beatStill ||
+    null
+  const rawEnd =
+    segment.endFrameUrl?.trim() ||
+    segment.references?.endFrameUrl?.trim() ||
+    beatEndStill ||
+    null
+
+  const distinctEnd =
+    rawEnd && (!beatStill || rawEnd !== beatStill) ? rawEnd : null
+
+  if (distinctEnd && rawStart) {
+    return {
+      startFrameUrl: rawStart,
+      endFrameUrl: distinctEnd,
+    }
+  }
+
   const dedicated = (url?: string | null) => {
     const trimmed = url?.trim() || null
     if (!trimmed || (beatStill && trimmed === beatStill)) return null
@@ -576,15 +626,25 @@ export function f2vStartFromPreviousEnd(previousEndUrl?: string | null): string 
   return trimmed || null
 }
 
-/** Resolved URLs passed to Veo (segment fields + first-segment scene master frame). */
+/** Resolved URLs passed to Veo (segment fields + beat end frame + first-segment scene master frame). */
 export function resolveSegmentFrameUrls(
   segment: SceneSegment,
   sceneImageUrl?: string,
   scene?: Record<string, unknown> | null
 ) {
   const startFrameUrl = resolveEffectiveStartFrameUrl(segment, scene, sceneImageUrl)
+  let beatEndUrl: string | null = null
+  const beatId = segment.beatId?.trim()
+  if (beatId && scene) {
+    const beat = getSceneBeats(scene).find((b) => b.beatId === beatId)
+    const candidateEnd = beat?.storyboardEndImageUrl?.trim() || null
+    const candidateStart = beat?.storyboardImageUrl?.trim() || null
+    if (candidateEnd && candidateEnd !== candidateStart) {
+      beatEndUrl = candidateEnd
+    }
+  }
   const endFrameUrl =
-    segment.endFrameUrl || segment.references?.endFrameUrl || null
+    segment.endFrameUrl || segment.references?.endFrameUrl || beatEndUrl || null
   return { startFrameUrl, endFrameUrl }
 }
 

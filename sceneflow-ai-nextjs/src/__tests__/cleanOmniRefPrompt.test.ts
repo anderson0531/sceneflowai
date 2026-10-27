@@ -38,6 +38,21 @@ describe('cleanOmniRefScenePrompt', () => {
     expect(cleaned.toLowerCase()).toMatch(/interrogation room|dolly/)
     expect(cleaned.length).toBeLessThan(BLOATED_SCENE.length / 2)
   })
+
+  it('preserves structured director clauses (Camera, Blocking, Props, End on, occupancy) while stripping Coverage/Lens/Space setup prefixes', () => {
+    const directed =
+      'Coverage: Medium Close-Up. Lens: 50mm anamorphic. Space: Dimly lit archive room with steel shelves. Elara turns slowly toward the console. She reaches toward the glowing terminal. Camera: Slow push-in from medium to close-up. Blocking: Crosses from left to center desk. Props: Places the brass key on the glass tray. End on: Elara holding the key still. Strictly no extra background characters, crowds, or passersby.'
+    const cleaned = cleanOmniRefScenePrompt(directed)
+
+    expect(cleaned).not.toContain('Coverage:')
+    expect(cleaned).not.toContain('Lens:')
+    expect(cleaned).not.toContain('Space:')
+    expect(cleaned).toContain('Camera: Slow push-in from medium to close-up.')
+    expect(cleaned).toContain('Blocking: Crosses from left to center desk.')
+    expect(cleaned).toContain('Props: Places the brass key on the glass tray.')
+    expect(cleaned).toContain('End on: Elara holding the key still.')
+    expect(cleaned).toContain('Strictly no extra background characters')
+  })
 })
 
 describe('sanitizeOmniRefGuide', () => {

@@ -17,9 +17,8 @@ import { veoRefsToPrioritized } from '@/lib/video/normalizeReferenceImages'
 import { appendFtvTransitionStabilityTokens } from '@/lib/vision/ftvTransitionStability'
 import {
   FTV_MINIMAL_NATIVE_AUDIO_HINT,
-  narrowPromptForFtvFrameLock,
+  compileFtvTransitionPrompt,
   neutralizeFtvGuidePrompt,
-  extractSpeaksQuotedPerformCue,
   normalizeVeoSuspiciousPunctuation,
 } from '@/lib/vision/ftvPromptNormalize'
 import type { VideoGenerationMethod } from '@/lib/vision/intelligentMethodSelection'
@@ -42,6 +41,8 @@ export interface BuildSegmentEnhancedPromptInput {
   method: VideoGenerationMethod
   referenceImages?: SegmentReferenceImage[]
   segmentIndex?: number
+  /** True when both startFrame and a distinct endFrame are supplied for FTV interpolation */
+  hasEndFrame?: boolean
   audioContext?: {
     hasNarration?: boolean
     narrationText?: string
@@ -66,6 +67,7 @@ export function buildSegmentEnhancedPrompt(
     method,
     referenceImages,
     segmentIndex = 0,
+    hasEndFrame = false,
     audioContext,
   } = input
 
@@ -85,7 +87,7 @@ export function buildSegmentEnhancedPrompt(
 
   let enhancedPrompt =
     method === 'FTV'
-      ? extractSpeaksQuotedPerformCue(prompt) ?? narrowPromptForFtvFrameLock(prompt)
+      ? compileFtvTransitionPrompt(prompt)
       : prompt
   if (method === 'FTV' && !enhancedPrompt.trim()) {
     enhancedPrompt = 'Natural motion and expression between the two keyframes.'
@@ -148,7 +150,8 @@ export function buildSegmentEnhancedPrompt(
   enhancedPrompt = appendFtvTransitionStabilityTokens(
     method === 'FTV' ? normalizeVeoSuspiciousPunctuation(enhancedPrompt) : enhancedPrompt,
     method,
-    segmentIndex
+    segmentIndex,
+    { hasEndFrame }
   )
 
   return { enhancedPrompt, referenceFallbackPrompt }

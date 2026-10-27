@@ -68,4 +68,20 @@ describe('buildSegmentEnhancedPrompt', () => {
     expect(enhancedPrompt).toContain('[Audio-Visual Sync Context]')
     expect(enhancedPrompt).toContain('tense')
   })
+
+  it('preserves camera/blocking motion alongside spoken dialogue in FTV mode and appends 2-keyframe interpolation tokens when hasEndFrame is true', () => {
+    const { enhancedPrompt } = buildSegmentEnhancedPrompt({
+      prompt:
+        'Coverage: Close-Up. Elara turns from the window and sets the folder on the desk. Camera: Slow dolly in. Elara speaks, "Read the last page."',
+      method: 'FTV',
+      hasEndFrame: true,
+    })
+    expect(enhancedPrompt).not.toContain('Coverage:')
+    expect(enhancedPrompt).toContain('Elara turns from the window and sets the folder on the desk.')
+    expect(enhancedPrompt).toContain('Camera: Slow dolly in.')
+    expect(enhancedPrompt).toContain('Elara speaks, "Read the last page."')
+    expect(enhancedPrompt).toContain(
+      'Transition smoothly from the start frame composition and pose to the end frame state'
+    )
+  })
 })

@@ -1933,7 +1933,11 @@ export function migrateProjectToBeats(metadata: unknown): MigrateBeatsResult {
   return { metadata: cloned, migratedSceneCount, changed }
 }
 
-/** Promote legacy end frames to start when missing; strip all storyboardEndImage* fields. */
+/**
+ * Promote legacy end frames to start when start is missing; preserve distinct
+ * end frames (`storyboardEndImageUrl !== storyboardImageUrl`) for F2V interpolation,
+ * and strip duplicate or orphan storyboardEndImage* fields.
+ */
 export function migrateSceneBeatsToStartFrameOnly(
   scene: Record<string, unknown>
 ): Record<string, unknown> {
@@ -1951,6 +1955,11 @@ export function migrateSceneBeatsToStartFrameOnly(
       beat.storyboardEndImageTier != null
 
     if (!hasEndFields) return beat
+
+    // Preserve valid, distinct End Frames when Start Frame is also present (F2V support)
+    if (startUrl && endUrl && endUrl !== startUrl) {
+      return beat
+    }
 
     changed = true
     const {

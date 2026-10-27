@@ -15,12 +15,14 @@ import { OMNI_MODEL_ID, quoteGenerationCredits } from '@/lib/credits/quoteGenera
 
 export type VideoGenerationQuality = 'draft' | 'final'
 export type VideoGenerationMode = 'standard' | 'creative'
+export type VideoSourceMethod = 'reference' | 'frame'
 
 export const SCENEFLOW_VIDEO_KLING_MODEL = 'kling-v3-omni' as const
 
 export interface VideoGenerationParams {
   quality: VideoGenerationQuality
   mode: VideoGenerationMode
+  sourceMethod: VideoSourceMethod
   videoProvider: 'vertex' | 'kling'
   klingModel?: typeof SCENEFLOW_VIDEO_KLING_MODEL
   klingQuality?: 'std' | 'pro'
@@ -40,17 +42,31 @@ export function parseVideoGenerationMode(value: unknown): VideoGenerationMode | 
   return undefined
 }
 
+export function parseVideoSourceMethod(value: unknown): VideoSourceMethod | undefined {
+  if (value === 'reference' || value === 'frame') return value
+  return undefined
+}
+
 export function resolveVideoGeneration(opts?: {
   quality?: VideoGenerationQuality | null
   mode?: VideoGenerationMode | null
+  sourceMethod?: VideoSourceMethod | null
 }): VideoGenerationParams {
   const quality: VideoGenerationQuality = opts?.quality === 'final' ? 'final' : 'draft'
   const mode: VideoGenerationMode = opts?.mode === 'creative' ? 'creative' : 'standard'
+  // Creative (Kling) requires F2V (frame); Standard defaults to 'reference' unless 'frame' is chosen.
+  const sourceMethod: VideoSourceMethod =
+    mode === 'creative'
+      ? 'frame'
+      : opts?.sourceMethod === 'frame'
+        ? 'frame'
+        : 'reference'
 
   if (mode === 'creative') {
     return {
       quality,
       mode,
+      sourceMethod,
       videoProvider: 'kling',
       klingModel: SCENEFLOW_VIDEO_KLING_MODEL,
       klingQuality: quality === 'final' ? 'pro' : 'std',
@@ -63,6 +79,7 @@ export function resolveVideoGeneration(opts?: {
   return {
     quality,
     mode,
+    sourceMethod,
     videoProvider: 'vertex',
     qualityTier: quality === 'final' ? 'premium' : 'fast',
     resolution: quality === 'final' ? '1080p' : '720p',

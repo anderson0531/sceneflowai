@@ -83,7 +83,12 @@ import { DirectionDialog } from './DirectionDialog'
 import { cn } from '@/lib/utils'
 import { ImageEditModal } from '@/components/vision/ImageEditModal'
 import { shouldInitializeDirectorDialogState } from '@/lib/vision/directorDialogState'
-import { resolveEffectiveStartFrameUrl } from '@/lib/vision/segmentConfigBuilder'
+import {
+  generateFTVMotionPrompt,
+  resolveEffectiveStartFrameUrl,
+  resolveF2VFrameUrls,
+  resolveSegmentFrameUrls,
+} from '@/lib/vision/segmentConfigBuilder'
 import {
   applySpokenDurationMargin,
   estimateSpokenDurationSeconds,
@@ -116,7 +121,9 @@ import {
   resolveVideoGeneration,
   type VideoGenerationMode,
   type VideoGenerationQuality,
+  type VideoSourceMethod,
 } from '@/lib/video/videoGenerationPolicy'
+import { VideoSourceMethodToggle } from '@/components/vision/StoryboardGenerationModeToggle'
 
 type AggregatorDisabledReason =
   | 'ok'
@@ -214,6 +221,7 @@ interface DirectorDialogProps {
   /** Session default from the Footage toolbar. Seeds Take when provided. */
   videoGenerationQuality?: VideoGenerationQuality
   videoGenerationMode?: VideoGenerationMode
+  videoSourceMethod?: VideoSourceMethod
   /** Retry this shot's start still using the Frames tab Standard | Creative mode. */
   onRegenerateStill?: () => void
   /** Scroll the visual prompt into view when the dialog opens. */
@@ -232,7 +240,7 @@ const modeToMethod: Record<string, VideoGenerationMethod> = {
 const methodToMode: Record<VideoGenerationMethod, string> = {
   'T2V': 'TEXT_TO_VIDEO',
   'I2V': 'IMAGE_TO_VIDEO',
-  'FTV': 'IMAGE_TO_VIDEO',
+  'FTV': 'FRAME_TO_VIDEO',
   'EXT': 'EXTEND',
   'REF': 'REFERENCE_IMAGES',
   'CIN': 'CINEMATIC',
@@ -276,6 +284,7 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
   variant = 'standard',
   videoGenerationQuality,
   videoGenerationMode,
+  videoSourceMethod,
   onRegenerateStill,
   focusPrompt = false,
 }) => {
@@ -530,6 +539,23 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
       ),
     [segment, scene, sceneImageUrl]
   )
+
+  const effectiveEndFrameUrl = useMemo(() => {
+    const sceneRecord = scene as Record<string, unknown> | undefined
+    const f2v = resolveF2VFrameUrls(segment, sceneRecord)
+    const segFrames = resolveSegmentFrameUrls(segment, sceneImageUrl, sceneRecord)
+    const candidate =
+      f2v.endFrameUrl ||
+      segFrames.endFrameUrl ||
+      savedConfig?.endFrameUrl?.trim() ||
+      segment.endFrameUrl?.trim() ||
+      segment.references?.endFrameUrl?.trim() ||
+      null
+    if (candidate && candidate !== effectiveStartFrameUrl) {
+      return candidate
+    }
+    return null
+  }, [segment, scene, sceneImageUrl, savedConfig?.endFrameUrl, effectiveStartFrameUrl])
   
   // Intelligent prompt modification handler
   const handleModifyPrompt = useCallback(async () => {
@@ -753,17 +779,35 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
     const policy = resolveVideoGeneration({
       quality: videoGenerationQuality,
       mode: nextTakeMode,
+      sourceMethod: videoSourceMethod,
     })
+    const preferFrameMode =
+      nextTakeMode === 'creative' ||
+      policy.sourceMethod === 'frame' ||
+      savedConfig?.mode === 'FTV' ||
+      savedConfig?.mode === 'I2V'
     const initialMode = isContinuation
       ? 'EXTEND'
-      : nextTakeMode === 'standard'
-        ? 'REFERENCE_IMAGES'
-        : uiModeForMethod(autoConfig.mode)
+      : preferFrameMode
+        ? effectiveEndFrameUrl
+          ? 'FRAME_TO_VIDEO'
+          : 'IMAGE_TO_VIDEO'
+        : nextTakeMode === 'standard'
+          ? 'REFERENCE_IMAGES'
+          : uiModeForMethod(autoConfig.mode)
 
     setMode(initialMode)
-    setPrompt(autoConfig.prompt)
-    setMotionPrompt(autoConfig.motionPrompt)
-    setVisualPrompt(autoConfig.visualPrompt)
+    const initialPrompt =
+      preferFrameMode && effectiveEndFrameUrl && !segment.userEditedPrompt?.trim()
+        ? generateFTVMotionPrompt(segment)
+        : autoConfig.prompt
+    setPrompt(initialPrompt)
+    setMotionPrompt(initialPrompt)
+    setVisualPrompt(
+      preferFrameMode && effectiveEndFrameUrl && !segment.userEditedPrompt?.trim()
+        ? initialPrompt
+        : autoConfig.visualPrompt
+    )
     setNegativePrompt(autoConfig.negativePrompt)
     setAspectRatio(lockedVideoAspect)
     const normalizedResolution = (autoConfig.resolution || '720p').toLowerCase() as
@@ -827,7 +871,8 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
     )
     setSelectedPreset(savedConfig?.preset ?? autoConfig.preset)
     setUseBeatFrameAsStart(
-      savedConfig?.useBeatFrameAsStart ?? autoConfig.useBeatFrameAsStart ?? false
+      preferFrameMode ||
+        (savedConfig?.useBeatFrameAsStart ?? autoConfig.useBeatFrameAsStart ?? false)
     )
     setApiPromptPreview('')
   }, [
@@ -841,22 +886,39 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
     settingsUserEdited,
     videoGenerationQuality,
     videoGenerationMode,
+    videoSourceMethod,
+    effectiveEndFrameUrl,
   ])
 
   const resolveStandardEffectiveMethod = useCallback(
     (uiMode: string): VideoGenerationMethod => {
       const mapped = modeToMethod[uiMode]
-      if (mapped === 'FTV') return 'I2V'
+      if (mapped === 'FTV') {
+        return effectiveStartFrameUrl && effectiveEndFrameUrl ? 'FTV' : 'I2V'
+      }
+      if (mapped === 'I2V' && effectiveStartFrameUrl && effectiveEndFrameUrl) {
+        return 'FTV'
+      }
       if (
         takeMode === 'standard' &&
         uiMode === 'REFERENCE_IMAGES' &&
         referenceImages.length === 0
       ) {
-        return useBeatFrameAsStart ? 'I2V' : 'T2V'
+        return useBeatFrameAsStart
+          ? effectiveStartFrameUrl && effectiveEndFrameUrl
+            ? 'FTV'
+            : 'I2V'
+          : 'T2V'
       }
       return mapped
     },
-    [takeMode, referenceImages.length, useBeatFrameAsStart]
+    [
+      takeMode,
+      referenceImages.length,
+      useBeatFrameAsStart,
+      effectiveStartFrameUrl,
+      effectiveEndFrameUrl,
+    ]
   )
 
   const markSettingsEdited = useCallback(() => {
@@ -868,7 +930,10 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
     const attachStart =
       useBeatFrameAsStart || method === 'I2V' || method === 'FTV' || method === 'EXT'
     const startFrameUrl = attachStart ? effectiveStartFrameUrl || undefined : undefined
-    const endFrameUrl = segment.endFrameUrl || segment.references?.endFrameUrl || undefined
+    const endFrameUrl =
+      method === 'FTV' || method === 'I2V'
+        ? effectiveEndFrameUrl || undefined
+        : undefined
     const refPayload =
       method === 'REF'
         ? referenceImages.map((ref) => ({
@@ -972,7 +1037,10 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
     optimizedSettingsReason:
       takeMode === 'standard' && optimizedSettingsReason ? optimizedSettingsReason : undefined,
     useBeatFrameAsStart:
-      useBeatFrameAsStart || mode === 'IMAGE_TO_VIDEO' || mode === 'EXTEND',
+      useBeatFrameAsStart ||
+      mode === 'IMAGE_TO_VIDEO' ||
+      mode === 'FRAME_TO_VIDEO' ||
+      mode === 'EXTEND',
   })
 
   const generateButtonLabel = t('generateVideo')
@@ -1139,8 +1207,13 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
   const handleSave = () => {
     const effectiveMethod = resolveStandardEffectiveMethod(mode)
     const attachStart =
-      useBeatFrameAsStart || effectiveMethod === 'I2V' || effectiveMethod === 'EXT'
+      useBeatFrameAsStart ||
+      effectiveMethod === 'I2V' ||
+      effectiveMethod === 'FTV' ||
+      effectiveMethod === 'EXT'
     const resolvedStartFrameUrl = attachStart ? effectiveStartFrameUrl : null
+    const resolvedEndFrameUrl =
+      effectiveMethod === 'FTV' ? effectiveEndFrameUrl : null
     
     const savedConfig = appendAdvancedConfig({
       mode: effectiveMethod,
@@ -1153,13 +1226,13 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
       resolution,
       duration: mode === 'EXTEND' ? 10 : duration,
       startFrameUrl: resolvedStartFrameUrl,
-      endFrameUrl: null,
+      endFrameUrl: resolvedEndFrameUrl,
       sourceVideoUrl: autoConfig.sourceVideoUrl,
       approvalStatus: 'auto-ready',
       confidence: autoConfig.confidence,
       qualityTier: qualityTier,
       referenceImages:
-        effectiveMethod === 'REF' || (takeMode === 'standard' && referenceImages.length > 0)
+        effectiveMethod === 'REF'
           ? refsToConfig(referenceImages)
           : undefined,
     })
@@ -1170,8 +1243,13 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
   const handleGenerate = () => {
     const effectiveMethod = resolveStandardEffectiveMethod(mode)
     const attachStart =
-      useBeatFrameAsStart || effectiveMethod === 'I2V' || effectiveMethod === 'EXT'
+      useBeatFrameAsStart ||
+      effectiveMethod === 'I2V' ||
+      effectiveMethod === 'FTV' ||
+      effectiveMethod === 'EXT'
     const resolvedStartFrameUrl = attachStart ? effectiveStartFrameUrl : null
+    const resolvedEndFrameUrl =
+      effectiveMethod === 'FTV' ? effectiveEndFrameUrl : null
     
     const savedConfig = appendAdvancedConfig({
       mode: effectiveMethod,
@@ -1184,13 +1262,13 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
       resolution,
       duration: mode === 'EXTEND' ? 10 : duration,
       startFrameUrl: resolvedStartFrameUrl,
-      endFrameUrl: null,
+      endFrameUrl: resolvedEndFrameUrl,
       sourceVideoUrl: autoConfig.sourceVideoUrl,
       approvalStatus: 'auto-ready',
       confidence: autoConfig.confidence,
       qualityTier: qualityTier,
       referenceImages:
-        effectiveMethod === 'REF' || (takeMode === 'standard' && referenceImages.length > 0)
+        effectiveMethod === 'REF'
           ? refsToConfig(referenceImages)
           : undefined,
     })
@@ -1244,8 +1322,36 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
   }
 
   const isStandardTake = takeMode === 'standard'
-  const showIngredientsPanel =
-    isStandardTake ? mode !== 'EXTEND' : mode === 'REFERENCE_IMAGES'
+  const showIngredientsPanel = mode === 'REFERENCE_IMAGES'
+  const currentSourceMethod: VideoSourceMethod =
+    takeMode === 'creative' || mode === 'IMAGE_TO_VIDEO' || mode === 'FRAME_TO_VIDEO'
+      ? 'frame'
+      : 'reference'
+
+  const handleDialogSourceMethodChange = useCallback(
+    (nextSource: VideoSourceMethod) => {
+      markSettingsEdited()
+      if (nextSource === 'frame') {
+        setUseBeatFrameAsStart(true)
+        setMode(effectiveEndFrameUrl ? 'FRAME_TO_VIDEO' : 'IMAGE_TO_VIDEO')
+        if (effectiveEndFrameUrl && !segment.userEditedPrompt?.trim()) {
+          const ftvPrompt = generateFTVMotionPrompt(segment)
+          setVisualPrompt(ftvPrompt)
+          setMotionPrompt(ftvPrompt)
+          setPrompt(ftvPrompt)
+        }
+      } else {
+        setUseBeatFrameAsStart(false)
+        setMode('REFERENCE_IMAGES')
+        if (!segment.userEditedPrompt?.trim()) {
+          setVisualPrompt(autoConfig.visualPrompt)
+          setMotionPrompt(autoConfig.motionPrompt)
+          setPrompt(autoConfig.prompt)
+        }
+      }
+    },
+    [markSettingsEdited, effectiveEndFrameUrl, segment, autoConfig]
+  )
 
   return (
     <>
@@ -1262,31 +1368,43 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
             {t('description')}
           </DialogDescription>
           <div className="flex flex-col gap-2 pt-2">
-            <div className="flex rounded-lg border border-slate-700 p-1 w-fit">
-              <button
-                type="button"
-                onClick={() => handleTakeModeChange('standard')}
-                className={cn(
-                  'px-3 py-1.5 text-xs font-medium rounded-md transition-colors',
-                  takeMode === 'standard'
-                    ? 'bg-indigo-600 text-white'
-                    : 'text-slate-400 hover:text-white'
-                )}
-              >
-                {t('takeStandard')}
-              </button>
-              <button
-                type="button"
-                onClick={() => handleTakeModeChange('creative')}
-                className={cn(
-                  'px-3 py-1.5 text-xs font-medium rounded-md transition-colors',
-                  takeMode === 'creative'
-                    ? 'bg-indigo-600 text-white'
-                    : 'text-slate-400 hover:text-white'
-                )}
-              >
-                {t('takeCreative')}
-              </button>
+            <div className="flex flex-wrap items-center gap-2">
+              <div className="flex rounded-lg border border-slate-700 p-1 w-fit">
+                <button
+                  type="button"
+                  onClick={() => handleTakeModeChange('standard')}
+                  className={cn(
+                    'px-3 py-1.5 text-xs font-medium rounded-md transition-colors',
+                    takeMode === 'standard'
+                      ? 'bg-indigo-600 text-white'
+                      : 'text-slate-400 hover:text-white'
+                  )}
+                >
+                  {t('takeStandard')}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleTakeModeChange('creative')}
+                  className={cn(
+                    'px-3 py-1.5 text-xs font-medium rounded-md transition-colors',
+                    takeMode === 'creative'
+                      ? 'bg-indigo-600 text-white'
+                      : 'text-slate-400 hover:text-white'
+                  )}
+                >
+                  {t('takeCreative')}
+                </button>
+              </div>
+              {mode !== 'EXTEND' && (
+                <VideoSourceMethodToggle
+                  value={currentSourceMethod}
+                  onChange={handleDialogSourceMethodChange}
+                  referenceLabel="Reference"
+                  frameLabel="Frame (F2V)"
+                  referenceDisabled={takeMode === 'creative'}
+                  ariaLabel="Clip source method"
+                />
+              )}
             </div>
             <p className="text-[11px] text-slate-500">{t('takeModeHint')}</p>
           </div>
@@ -1708,26 +1826,71 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
                 <p className="text-xs text-slate-500">Extension clips are fixed at 10s and use the same auto-extend route as dialogue splits.</p>
               </div>
             ) : (startFrameUrl || sceneImageUrl) ? (
-              <div className="p-4 w-full space-y-2">
-                <div className="aspect-video w-full bg-slate-900 rounded-lg overflow-hidden border border-slate-700 relative">
-                  <img 
-                    src={startFrameUrl || sceneImageUrl} 
-                    alt="Reference Frame"
-                    className="w-full h-full object-cover" 
-                  />
-                  <Badge className="absolute top-2 left-2 bg-slate-800">Reference Image</Badge>
+              <div className="p-4 w-full space-y-3">
+                <div
+                  className={cn(
+                    'grid gap-3',
+                    effectiveEndFrameUrl ? 'grid-cols-1 md:grid-cols-2' : 'grid-cols-1'
+                  )}
+                >
+                  <div className="space-y-1.5">
+                    <div className="aspect-video w-full bg-slate-900 rounded-lg overflow-hidden border border-slate-700 relative">
+                      <img
+                        src={startFrameUrl || sceneImageUrl}
+                        alt="Start Action Frame"
+                        className="w-full h-full object-cover"
+                      />
+                      <Badge className="absolute top-2 left-2 bg-slate-800/90 text-xs">
+                        Start Frame (t = 0s)
+                      </Badge>
+                    </div>
+                    {onSaveEditedKeyframe && startFrameUrl && (
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="outline"
+                        className="w-full text-[10px] h-7 border-purple-500/40 text-purple-200 hover:bg-purple-950/40"
+                        onClick={() => setKeyframeEdit({ frameType: 'start', url: startFrameUrl })}
+                      >
+                        <Wand2 className="w-3 h-3 mr-1" />
+                        AI edit start frame
+                      </Button>
+                    )}
+                  </div>
+
+                  {effectiveEndFrameUrl && (
+                    <div className="space-y-1.5">
+                      <div className="aspect-video w-full bg-slate-900 rounded-lg overflow-hidden border border-indigo-500/50 relative">
+                        <img
+                          src={effectiveEndFrameUrl}
+                          alt="End Action Frame"
+                          className="w-full h-full object-cover"
+                        />
+                        <Badge className="absolute top-2 left-2 bg-indigo-900/90 text-indigo-200 text-xs">
+                          End Frame (t = T)
+                        </Badge>
+                      </div>
+                      {onSaveEditedKeyframe && (
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="outline"
+                          className="w-full text-[10px] h-7 border-indigo-500/40 text-indigo-200 hover:bg-indigo-950/40"
+                          onClick={() =>
+                            setKeyframeEdit({ frameType: 'end', url: effectiveEndFrameUrl })
+                          }
+                        >
+                          <Wand2 className="w-3 h-3 mr-1" />
+                          AI edit end frame
+                        </Button>
+                      )}
+                    </div>
+                  )}
                 </div>
-                {onSaveEditedKeyframe && startFrameUrl && (
-                  <Button
-                    type="button"
-                    size="sm"
-                    variant="outline"
-                    className="w-full text-[10px] h-7 border-purple-500/40 text-purple-200 hover:bg-purple-950/40"
-                    onClick={() => setKeyframeEdit({ frameType: 'start', url: startFrameUrl })}
-                  >
-                    <Wand2 className="w-3 h-3 mr-1" />
-                    AI edit start frame
-                  </Button>
+                {!effectiveEndFrameUrl && (
+                  <p className="text-[11px] text-slate-400">
+                    Tip: Generate an End Frame on the Shot Still (`Generate Frames`) to enable 2-keyframe Frame-to-Video (F2V) interpolation.
+                  </p>
                 )}
                 {onRegenerateStill && (
                   <div className="space-y-2">

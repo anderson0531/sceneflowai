@@ -890,8 +890,14 @@ async function postGenerateImage(req: NextRequest) {
             typeof beat.durationSeconds === 'number' && beat.durationSeconds > 0
               ? beat.durationSeconds
               : DEFAULT_VEO_CLIP_DURATION
+          const startPromptForEnd =
+            actionFramingFromStoredPrompt(beat.storyboardImagePrompt) ||
+            beat.storyboardImagePrompt?.trim() ||
+            beat.actionDescription?.trim() ||
+            endPrompt
           const instruction = buildPreVisEndFrameEditInstruction({
-            startFramePrompt: beat.storyboardImagePrompt?.trim() || endPrompt,
+            startFramePrompt: startPromptForEnd,
+            endFramePrompt: endPrompt,
             durationSeconds,
           })
 

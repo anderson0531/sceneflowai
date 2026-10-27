@@ -47,6 +47,34 @@ function shortenVisualPrompt(text: string, maxLen = 160): string {
 }
 
 export function buildEndFramePrompt(beat: SceneBeat): string {
+  const d = beat.beatDirection
+  const endCues: string[] = []
+  if (d?.frozenMoment?.trim()) {
+    endCues.push(`Concluding action state: ${d.frozenMoment.trim()}`)
+  }
+  if (d?.blocking?.trim()) {
+    endCues.push(`Final blocking position: ${d.blocking.trim()}`)
+  }
+  if (d?.propInteraction?.trim()) {
+    endCues.push(`Completed prop state: ${d.propInteraction.trim()}`)
+  }
+  if (d?.cameraMovement?.trim() && d.cameraMovement.trim().toLowerCase() !== 'static') {
+    endCues.push(`Camera settles after ${d.cameraMovement.trim()}`)
+  }
+  if (d?.emotion?.trim() || d?.gaze?.trim()) {
+    const expr = [
+      d.emotion?.trim() ? `expression shifts to ${d.emotion.trim()}` : '',
+      d.gaze?.trim() ? `gaze directed ${d.gaze.trim()}` : '',
+    ]
+      .filter(Boolean)
+      .join(', ')
+    if (expr) endCues.push(expr)
+  }
+
+  if (endCues.length > 0) {
+    return endCues.join('. ')
+  }
+
   const startVisual =
     actionFramingFromStoredPrompt(beat.storyboardImagePrompt) ||
     (beat.kind === 'action' ? beat.actionDescription?.trim() : undefined) ||
@@ -54,17 +82,17 @@ export function buildEndFramePrompt(beat: SceneBeat): string {
 
   if (beat.kind === 'action') {
     if (startVisual) {
-      return `Subtle visual progression while preserving composition: ${shortenVisualPrompt(startVisual)}`
+      return `Concluding pose and spatial progression at end of action while preserving set and character identity: ${shortenVisualPrompt(startVisual)}`
     }
-    return `Motion completion: ${beat.actionDescription ?? 'subtle camera movement and action progress'}`
+    return `Motion completion: ${beat.actionDescription ?? 'subtle camera movement and completed action pose'}`
   }
   if (beat.kind === 'narration') {
     if (startVisual) {
-      return `Subtle environmental motion while preserving composition: ${shortenVisualPrompt(startVisual)}`
+      return `Concluding frame progression while preserving composition: ${shortenVisualPrompt(startVisual)}`
     }
-    return `Visual progression matching narration mood; subtle environmental motion`
+    return `Visual progression matching narration mood; concluding environmental state`
   }
-  return `Character completes speaking gesture; subtle expression and body motion`
+  return `Subject settles into concluding reaction pose and expression after speaking; weight shifted slightly with natural follow-through`
 }
 
 function beatDirectionSummary(beat: SceneBeat): string {

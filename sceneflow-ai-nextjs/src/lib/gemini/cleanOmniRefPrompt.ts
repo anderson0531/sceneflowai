@@ -93,9 +93,20 @@ function dedupeSimilarSegments(segments: string[]): string[] {
   return kept
 }
 
+/** Redundant static setup clauses already carried by reference plates. */
+const REDUNDANT_REF_META_CLAUSE_RE = /^(Coverage|Lens|Space):\s*/i
+
+/**
+ * Structured director & fidelity clauses emitted by `compileBeatVideoPromptFromDirection`.
+ * Preserving these prevents Omni REF from drifting off-script or losing camera/blocking/end-state direction.
+ */
+const STRUCTURED_DIRECTOR_CLAUSE_RE =
+  /^(Shot|Angle|Camera|Blocking|Emotion|Gaze|Props?|Prop interaction|End on|Delivery|Only these people|No people in frame|Only these objects|No spoken dialogue|The only spoken line|The only action is|Continues the same spoken line|Cut from the previous shot|Strictly no extra)\b/i
+
 /**
  * Reduce a stored segment prompt to a concise neutral scene for Omni REF.
- * Caps output to ~2 sentences.
+ * Caps freeform narrative prose to ~2 sentences while preserving structured
+ * director/fidelity clauses (Shot, Camera, Blocking, Prop interaction, End on, occupancy).
  */
 export function cleanOmniRefScenePrompt(prompt: string): string {
   if (!prompt?.trim()) return prompt
@@ -104,16 +115,28 @@ export function cleanOmniRefScenePrompt(prompt: string): string {
   const performance = performanceMatch?.[0].replace(/\s+/g, ' ').trim()
   const body = performanceMatch?.index != null ? prompt.slice(0, performanceMatch.index).trim() : prompt
 
-  let segments = splitPromptSegments(body || prompt)
+  const rawSegments = splitPromptSegments(body || prompt)
     .map(stripStyleTokens)
     .filter((s) => s.length > 0)
+    .filter((s) => !REDUNDANT_REF_META_CLAUSE_RE.test(s))
     .filter((s) => !isStyleOnlySegment(s))
     .filter((s) => !isMotionMoodSalad(s))
 
-  segments = dedupeSimilarSegments(segments)
+  const proseSegments: string[] = []
+  const directorClauses: string[] = []
+  for (const seg of rawSegments) {
+    if (STRUCTURED_DIRECTOR_CLAUSE_RE.test(seg)) {
+      directorClauses.push(seg)
+    } else {
+      proseSegments.push(seg)
+    }
+  }
 
-  const cleaned = segments
-    .slice(0, 2)
+  const dedupedProse = dedupeSimilarSegments(proseSegments).slice(0, 2)
+  const dedupedDirector = dedupeSimilarSegments(directorClauses).slice(0, 6)
+  const combined = [...dedupedProse, ...dedupedDirector]
+
+  const cleaned = combined
     .map((s) => (s.endsWith('.') ? s : `${s}.`))
     .join(' ')
     .replace(/\.\.+/g, '.')

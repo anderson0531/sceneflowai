@@ -16,11 +16,15 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import { Film, Loader, Zap } from 'lucide-react'
 import { StatusFilterBar } from '@/components/vision/StatusFilterBar'
 import { StoryboardQualityToggle } from './StoryboardQualityToggle'
-import { StoryboardGenerationModeToggle } from './StoryboardGenerationModeToggle'
+import {
+  StoryboardGenerationModeToggle,
+  VideoSourceMethodToggle,
+} from './StoryboardGenerationModeToggle'
 import {
   estimateVideoAgentCredits,
   type VideoGenerationMode,
   type VideoGenerationQuality,
+  type VideoSourceMethod,
 } from '@/lib/video/videoGenerationPolicy'
 import type { StillGenerationMode } from '@/lib/generation/stillPolicy'
 import {
@@ -60,6 +64,7 @@ export interface VideoAgentConfirmOptions {
   selectedSegmentIds: string[]
   quality: VideoGenerationQuality
   generationMode: VideoGenerationMode
+  sourceMethod?: VideoSourceMethod
 }
 
 export interface VideoAgentBeatOption {
@@ -83,6 +88,7 @@ interface VideoAgentConfirmDialogProps {
   onConfirm: (options: VideoAgentConfirmOptions) => void
   defaultQuality?: VideoGenerationQuality
   defaultGenerationMode?: VideoGenerationMode
+  defaultSourceMethod?: VideoSourceMethod
 }
 
 function clipFacts(beat: VideoAgentBeatOption): VideoClipFacts {
@@ -114,6 +120,7 @@ export function VideoAgentConfirmDialog({
   onConfirm,
   defaultQuality = 'draft',
   defaultGenerationMode = 'standard',
+  defaultSourceMethod = 'reference',
 }: VideoAgentConfirmDialogProps) {
   const t = useTranslations('production.videoAgent')
   const tCommon = useTranslations('common')
@@ -121,6 +128,10 @@ export function VideoAgentConfirmDialog({
   const [quality, setQuality] = useState<VideoGenerationQuality>(defaultQuality)
   const [generationMode, setGenerationMode] =
     useState<VideoGenerationMode>(defaultGenerationMode)
+  const [sourceMethod, setSourceMethod] =
+    useState<VideoSourceMethod>(
+      defaultGenerationMode === 'creative' ? 'frame' : defaultSourceMethod
+    )
   const [selectedSegmentIds, setSelectedSegmentIds] = useState<string[]>([])
   const [clipAttention, setClipAttention] = useState<VideoAttentionFilter>('all')
 
@@ -129,8 +140,14 @@ export function VideoAgentConfirmDialog({
     setScope('missing')
     setQuality(defaultQuality)
     setGenerationMode(defaultGenerationMode)
+    setSourceMethod(
+      defaultGenerationMode === 'creative' ? 'frame' : defaultSourceMethod
+    )
     setClipAttention('all')
-  }, [open, defaultQuality, defaultGenerationMode])
+  }, [open, defaultQuality, defaultGenerationMode, defaultSourceMethod])
+
+  const effectiveSourceMethod: VideoSourceMethod =
+    generationMode === 'creative' ? 'frame' : sourceMethod
 
   const checklistBeats = useMemo(
     () => beats.filter((beat) => beat.eligible),
@@ -208,7 +225,12 @@ export function VideoAgentConfirmDialog({
             </p>
             <StoryboardGenerationModeToggle
               value={generationMode}
-              onChange={(mode: StillGenerationMode) => setGenerationMode(mode)}
+              onChange={(mode: StillGenerationMode) => {
+                setGenerationMode(mode)
+                if (mode === 'creative') {
+                  setSourceMethod('frame')
+                }
+              }}
               standardLabel={t('modeStandard')}
               creativeLabel={t('modeCreative')}
               disabled={isRunning}
@@ -216,6 +238,26 @@ export function VideoAgentConfirmDialog({
             />
             <p className="text-[11px] text-teal-200/70 mt-2">
               {generationMode === 'creative' ? t('modeCreativeHint') : t('modeStandardHint')}
+            </p>
+          </div>
+
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-wide text-gray-400 mb-2">
+              Clip Source Method
+            </p>
+            <VideoSourceMethodToggle
+              value={effectiveSourceMethod}
+              onChange={setSourceMethod}
+              referenceLabel="Reference"
+              frameLabel="Frame (F2V)"
+              disabled={isRunning}
+              referenceDisabled={generationMode === 'creative'}
+              ariaLabel="Video clip source method"
+            />
+            <p className="text-[11px] text-indigo-200/70 mt-2">
+              {effectiveSourceMethod === 'frame'
+                ? 'Frame-to-Video (F2V): interpolates between each shot’s Start Frame and End Frame with the F2V transition prompt.'
+                : 'Reference-to-Video (Ingredients): sends Continuity Library reference plates with the optimized scene direction prompt.'}
             </p>
           </div>
 
@@ -398,6 +440,7 @@ export function VideoAgentConfirmDialog({
                 selectedSegmentIds,
                 quality,
                 generationMode,
+                sourceMethod: effectiveSourceMethod,
               })
             }
             disabled={isRunning || nothingSelected}

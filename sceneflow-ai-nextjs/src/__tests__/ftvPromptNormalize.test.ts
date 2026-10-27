@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import {
+  compileFtvTransitionPrompt,
   narrowPromptForFtvFrameLock,
   neutralizeFtvGuidePrompt,
   stripFtvSegmentBeatLines,
@@ -39,5 +40,18 @@ describe('ftvPromptNormalize', () => {
     const g = `SARAH CHEN speaks the following line: 'Hello there.'`
     expect(neutralizeFtvGuidePrompt(g)).toMatch(/deliver with natural lip sync/i)
     expect(neutralizeFtvGuidePrompt(g).toUpperCase()).not.toContain('SARAH CHEN SPEAKS')
+  })
+
+  it('compileFtvTransitionPrompt preserves both physical transition motion and spoken dialogue while stripping Coverage/Lens/Space setup', () => {
+    const raw = `Coverage: Medium Shot. Lens: 35mm. Space: Broadcast studio. Sarah physically leans into the microphone and taps her pen once. Camera: Slow push-in. End on: Sarah holding the pen still. Sarah speaks, "We know what happened."`
+    const compiled = compileFtvTransitionPrompt(raw)
+
+    expect(compiled).not.toContain('Coverage:')
+    expect(compiled).not.toContain('Lens:')
+    expect(compiled).not.toContain('Space:')
+    expect(compiled).toContain('Sarah physically leans into the microphone')
+    expect(compiled).toContain('Camera: Slow push-in.')
+    expect(compiled).toContain('End on: Sarah holding the pen still.')
+    expect(compiled).toContain('Sarah speaks, "We know what happened."')
   })
 })

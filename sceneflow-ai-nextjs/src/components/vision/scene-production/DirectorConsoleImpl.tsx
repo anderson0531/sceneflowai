@@ -117,7 +117,10 @@ const ProductionStreamsPanel = dynamic(
 import { ProductionSectionHeader } from './ProductionSectionHeader'
 import { useTranslations } from 'next-intl'
 import { StoryboardQualityToggle } from '@/components/vision/StoryboardQualityToggle'
-import { StoryboardGenerationModeToggle } from '@/components/vision/StoryboardGenerationModeToggle'
+import {
+  StoryboardGenerationModeToggle,
+  VideoSourceMethodToggle,
+} from '@/components/vision/StoryboardGenerationModeToggle'
 import {
   VideoAgentConfirmDialog,
   type VideoAgentConfirmOptions,
@@ -128,6 +131,7 @@ import {
   resolveVideoGeneration,
   type VideoGenerationMode,
   type VideoGenerationQuality,
+  type VideoSourceMethod,
 } from '@/lib/video/videoGenerationPolicy'
 import {
   SCENEFLOW_ENGINE_ID,
@@ -171,7 +175,14 @@ import { translateGuideDialogueLine } from '@/lib/scene/translateGuideDialogue'
 import { mergeStreamSelectorLanguages } from '@/lib/streams/projectStreams'
 import { BeatVideoGallery, type BeatVideoClip } from './BeatVideoGallery'
 import type { SegmentGuideContext } from '@/lib/vision/segmentConfigBuilder'
-import { resolveEffectiveStartFrameUrl, resolveExpressGenerationMethod, STANDARD_TAKE_DURATION_SECONDS } from '@/lib/vision/segmentConfigBuilder'
+import {
+  generateFTVMotionPrompt,
+  resolveEffectiveStartFrameUrl,
+  resolveExpressGenerationMethod,
+  resolveF2VFrameUrls,
+  resolveSegmentFrameUrls,
+  STANDARD_TAKE_DURATION_SECONDS,
+} from '@/lib/vision/segmentConfigBuilder'
 import { CONCURRENCY_DEFAULTS } from '@/lib/utils/concurrent-processor'
 
 function getAspectRatioTailwindClass(ratio: BlueprintAspectRatio): string {
@@ -319,6 +330,8 @@ export interface DirectorConsoleProps {
   onVideoGenerationQualityChange?: (quality: VideoGenerationQuality) => void
   videoGenerationMode?: VideoGenerationMode
   onVideoGenerationModeChange?: (mode: VideoGenerationMode) => void
+  videoSourceMethod?: VideoSourceMethod
+  onVideoSourceMethodChange?: (method: VideoSourceMethod) => void
   /** Jump the parent workflow strip to Pre-Vis. */
   onOpenPreVis?: () => void
   /** Open Screening Room Video for this scene. */
@@ -403,6 +416,8 @@ export function DirectorConsoleRoot({
   onVideoGenerationQualityChange,
   videoGenerationMode = 'standard',
   onVideoGenerationModeChange,
+  videoSourceMethod,
+  onVideoSourceMethodChange,
   onOpenPreVis,
   onPlayScene,
   onDirectBeat,
@@ -511,6 +526,19 @@ export function DirectorConsoleRoot({
   // Selected segment for DirectorDialog
   const [selectedSegment, setSelectedSegment] = useState<SceneSegment | null>(null)
   const [videoAgentDialogOpen, setVideoAgentDialogOpen] = useState(false)
+  const [localVideoSourceMethod, setLocalVideoSourceMethod] =
+    useState<VideoSourceMethod>('reference')
+  const effectiveVideoSourceMethod: VideoSourceMethod =
+    videoGenerationMode === 'creative'
+      ? 'frame'
+      : (videoSourceMethod ?? localVideoSourceMethod)
+  const handleVideoSourceMethodChange = useCallback(
+    (next: VideoSourceMethod) => {
+      setLocalVideoSourceMethod(next)
+      onVideoSourceMethodChange?.(next)
+    },
+    [onVideoSourceMethodChange]
+  )
   const [dialogFocusPrompt, setDialogFocusPrompt] = useState(false)
   const dialogFocusPromptRef = React.useRef(false)
 
@@ -1044,33 +1072,72 @@ export function DirectorConsoleRoot({
     ]
   )
 
-  // Handle batch render — Video Agent queues segments with REF or I2V configs
+  // Handle batch render — Video Agent queues segments with REF, I2V, or FTV configs
   const segmentHasVideoAgentInputs = useCallback(
     (item: DirectorQueueItem, segment: SceneSegment | undefined) => {
       if (!segment) {
-        return { hasStartFrame: false, hasRefs: false, resolvedStart: '', eligible: false }
+        return {
+          hasStartFrame: false,
+          hasEndFrame: false,
+          hasRefs: false,
+          resolvedStart: '',
+          resolvedEnd: '',
+          eligible: false,
+        }
       }
       const cfg = item.config
-      const resolvedStart =
-        resolveEffectiveStartFrameUrl(
-          segment,
-          scene as Record<string, unknown> | undefined,
-          sceneImageUrl
-        ) ||
+      const sceneRecord = scene as Record<string, unknown> | undefined
+      const f2vFrames = resolveF2VFrameUrls(segment, sceneRecord)
+      const segFrames = resolveSegmentFrameUrls(segment, sceneImageUrl, sceneRecord)
+
+      let resolvedStart =
+        f2vFrames.startFrameUrl ||
+        resolveEffectiveStartFrameUrl(segment, sceneRecord, sceneImageUrl) ||
         (cfg.startFrameUrl && String(cfg.startFrameUrl).trim()) ||
         segment.startFrameUrl?.trim() ||
         segment.references?.startFrameUrl?.trim() ||
         ''
+
+      // Continuity fallback: if this shot has no start frame of its own, allow Shot N-1's end frame
+      if (!resolvedStart && segments.length > 1) {
+        const segIdx = segments.findIndex((s) => s.segmentId === segment.segmentId)
+        if (segIdx > 0) {
+          const prevSeg = segments[segIdx - 1]
+          const beats = getSceneBeats(sceneRecord ?? null)
+          const prevBeat = prevSeg?.beatId
+            ? beats.find((b) => b.beatId === prevSeg.beatId)
+            : beats[segIdx - 1]
+          resolvedStart =
+            prevBeat?.storyboardEndImageUrl?.trim() ||
+            prevSeg?.endFrameUrl?.trim() ||
+            prevSeg?.references?.endFrameUrl?.trim() ||
+            ''
+        }
+      }
+
+      const rawEnd =
+        f2vFrames.endFrameUrl ||
+        segFrames.endFrameUrl ||
+        (cfg.endFrameUrl && String(cfg.endFrameUrl).trim()) ||
+        segment.endFrameUrl?.trim() ||
+        segment.references?.endFrameUrl?.trim() ||
+        ''
+      const resolvedEnd =
+        rawEnd && rawEnd !== resolvedStart ? rawEnd : ''
+
       const hasStartFrame = !!resolvedStart
+      const hasEndFrame = !!resolvedEnd
       const hasRefs = (cfg.referenceImages?.length ?? 0) > 0 || cfg.mode === 'REF'
       return {
         hasStartFrame,
+        hasEndFrame,
         hasRefs,
         resolvedStart,
+        resolvedEnd,
         eligible: hasRefs || hasStartFrame,
       }
     },
-    [scene, sceneImageUrl]
+    [scene, sceneImageUrl, segments]
   )
 
   const videoAgentBeats = useMemo<VideoAgentBeatOption[]>(() => {
@@ -1123,10 +1190,16 @@ export function DirectorConsoleRoot({
       const policy = resolveVideoGeneration({
         quality: options.quality,
         mode: options.generationMode,
+        sourceMethod: options.sourceMethod ?? effectiveVideoSourceMethod,
       })
       const segment = segments.find((s) => s.segmentId === item.segmentId)
       const inputs = segmentHasVideoAgentInputs(item, segment)
-      const expressMethod = resolveExpressGenerationMethod(inputs.hasRefs, inputs.hasStartFrame)
+      const expressMethod = resolveExpressGenerationMethod(
+        inputs.hasRefs,
+        inputs.hasStartFrame,
+        inputs.hasEndFrame,
+        policy.sourceMethod
+      )
       const selection =
         policy.videoProvider === 'kling'
           ? ({
@@ -1135,14 +1208,33 @@ export function DirectorConsoleRoot({
             } as const)
           : ({ engineId: 'natural-dialogue' } as const)
       const duration = snapDurationForEngine(item.config.duration || 10, selection)
-      return applyVideoGenerationToConfig(item.config, policy, {
+      const baseNext = applyVideoGenerationToConfig(item.config, policy, {
         mode: expressMethod,
         expressMode: true,
         duration,
         resolution: policy.resolution,
       })
+      if (policy.sourceMethod === 'frame' || expressMethod === 'FTV' || expressMethod === 'I2V') {
+        const ftvPrompt =
+          expressMethod === 'FTV' && segment && !segment.userEditedPrompt?.trim()
+            ? generateFTVMotionPrompt(segment)
+            : baseNext.prompt
+        return {
+          ...baseNext,
+          mode: expressMethod,
+          startFrameUrl: inputs.resolvedStart || baseNext.startFrameUrl,
+          endFrameUrl:
+            expressMethod === 'FTV'
+              ? inputs.resolvedEnd || baseNext.endFrameUrl
+              : null,
+          useBeatFrameAsStart: true,
+          prompt: ftvPrompt,
+          motionPrompt: ftvPrompt,
+        }
+      }
+      return baseNext
     },
-    [segments, segmentHasVideoAgentInputs]
+    [segments, segmentHasVideoAgentInputs, effectiveVideoSourceMethod]
   )
 
   const handleVideoAgentConfirm = useCallback(
@@ -1969,7 +2061,12 @@ export function DirectorConsoleRoot({
               <StoryboardGenerationModeToggle
                 size="compact"
                 value={videoGenerationMode}
-                onChange={onVideoGenerationModeChange ?? (() => {})}
+                onChange={(nextMode) => {
+                  onVideoGenerationModeChange?.(nextMode)
+                  if (nextMode === 'creative') {
+                    handleVideoSourceMethodChange('frame')
+                  }
+                }}
                 standardLabel={tVideoAgent('modeStandard')}
                 creativeLabel={tVideoAgent('modeCreative')}
                 disabled={isRendering}
@@ -1978,6 +2075,27 @@ export function DirectorConsoleRoot({
             </span>
           </TooltipTrigger>
           <TooltipContent className="max-w-xs">{tVideoAgent('modeTooltip')}</TooltipContent>
+        </Tooltip>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <span className="inline-flex">
+              <VideoSourceMethodToggle
+                size="compact"
+                value={effectiveVideoSourceMethod}
+                onChange={handleVideoSourceMethodChange}
+                referenceLabel="Reference"
+                frameLabel="Frame"
+                disabled={isRendering}
+                referenceDisabled={videoGenerationMode === 'creative'}
+                ariaLabel="Video clip source method"
+              />
+            </span>
+          </TooltipTrigger>
+          <TooltipContent className="max-w-xs">
+            {effectiveVideoSourceMethod === 'frame'
+              ? 'Frame-to-Video (F2V): sends Start and End action frames with the F2V transition prompt.'
+              : 'Reference-to-Video (Ingredients): sends Continuity Library reference plates with optimized script direction.'}
+          </TooltipContent>
         </Tooltip>
       </div>
       {isRendering ? (
@@ -2067,7 +2185,14 @@ export function DirectorConsoleRoot({
             })
             return
           }
-          handleGenerateFromDialog(segment.segmentId, item.config)
+          const nextConfig = applyVideoAgentPolicyToItem(item, {
+            scope: 'selected',
+            selectedSegmentIds: [segment.segmentId],
+            quality: videoGenerationQuality,
+            generationMode: videoGenerationMode,
+            sourceMethod: effectiveVideoSourceMethod,
+          })
+          handleGenerateFromDialog(segment.segmentId, nextConfig)
         }}
         generatingClipId={isRendering ? currentSegmentId : null}
         onDirectVideo={(segment) => handleRequestTake(segment, false)}
@@ -2181,6 +2306,7 @@ export function DirectorConsoleRoot({
           sceneIndex={sceneIndex}
           videoGenerationQuality={videoGenerationQuality}
           videoGenerationMode={videoGenerationMode}
+          videoSourceMethod={effectiveVideoSourceMethod}
           focusPrompt={dialogFocusPrompt}
         />
       )}
@@ -2193,6 +2319,7 @@ export function DirectorConsoleRoot({
         onConfirm={handleVideoAgentConfirm}
         defaultQuality={videoGenerationQuality}
         defaultGenerationMode={videoGenerationMode}
+        defaultSourceMethod={effectiveVideoSourceMethod}
       />
 
       <RetakeConfirmDialog
