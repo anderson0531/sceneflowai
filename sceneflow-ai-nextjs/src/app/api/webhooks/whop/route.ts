@@ -1,14 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getWhopClient } from '@/lib/billing/whopClient'
 import {
+  ADDON_PACK_CATALOG,
+  getAddonPackFromWhopPlanId,
   getTierNameFromWhopPlanId,
   isOneTimeTier,
+  normalizeAddonPackId,
   normalizeTierName,
 } from '@/lib/billing/tierCatalog'
 import {
   isWebhookEventProcessed,
   markWebhookEventProcessed,
 } from '@/lib/billing/webhookIdempotency'
+import { verifyWebhookEventViaWhopApi } from '@/lib/billing/whopReconcile'
 import { SubscriptionService } from '@/services/SubscriptionService'
 
 export const runtime = 'nodejs'
@@ -23,6 +27,7 @@ interface WhopWebhookEvent {
 function extractMetadata(event: WhopWebhookEvent): {
   userId?: string
   tierName?: string
+  addonPack?: string
   applicationId?: string
 } {
   const data = event.data || {}
@@ -33,17 +38,24 @@ function extractMetadata(event: WhopWebhookEvent): {
 
   const userId =
     (metadata.user_id as string | undefined) ||
-    (metadata.userId as string | undefined)
+    (metadata.userId as string | undefined) ||
+    (metadata.sceneflow_user_id as string | undefined)
 
   const tierName =
     (metadata.tier_name as string | undefined) ||
-    (metadata.tierName as string | undefined)
+    (metadata.tierName as string | undefined) ||
+    (metadata.sceneflow_tier as string | undefined)
+
+  const addonPack =
+    (metadata.addon_pack as string | undefined) ||
+    (metadata.addonPack as string | undefined) ||
+    (metadata.sceneflow_addon_pack as string | undefined)
 
   const applicationId =
     (metadata.application_id as string | undefined) ||
     (metadata.applicationId as string | undefined)
 
-  return { userId, tierName, applicationId }
+  return { userId, tierName, addonPack, applicationId }
 }
 
 function extractBillingPeriodEnd(data: Record<string, unknown>): Date | undefined {
@@ -93,11 +105,20 @@ async function fulfillExplorerPurchase(userId: string): Promise<void> {
 
 async function processWhopEvent(event: WhopWebhookEvent): Promise<void> {
   const eventType = event.type
-  const { userId: metadataUserId, tierName: metadataTierName, applicationId } = extractMetadata(event)
+  const {
+    userId: metadataUserId,
+    tierName: metadataTierName,
+    addonPack: metadataAddonPack,
+    applicationId,
+  } = extractMetadata(event)
   const planId = extractPlanId(event)
   const resolvedTier =
     (metadataTierName ? normalizeTierName(metadataTierName) : null) ||
     (planId ? getTierNameFromWhopPlanId(planId) : null)
+  const normalizedMetaAddon = metadataAddonPack ? normalizeAddonPackId(metadataAddonPack) : null
+  const resolvedAddonPack =
+    (normalizedMetaAddon ? ADDON_PACK_CATALOG[normalizedMetaAddon] : null) ||
+    (planId ? getAddonPackFromWhopPlanId(planId) : null)
 
   const membershipId =
     typeof event.data?.id === 'string' ? event.data.id : undefined
@@ -108,6 +129,7 @@ async function processWhopEvent(event: WhopWebhookEvent): Promise<void> {
     eventId: event.id,
     userId: metadataUserId,
     tier: resolvedTier,
+    addonPack: resolvedAddonPack?.id || null,
     planId,
     applicationId,
   })
@@ -119,7 +141,13 @@ async function processWhopEvent(event: WhopWebhookEvent): Promise<void> {
         console.error('[Whop Webhook] Missing user_id in payment.succeeded')
         return
       }
-      if (resolvedTier && isOneTimeTier(resolvedTier)) {
+      if (resolvedAddonPack) {
+        await SubscriptionService.purchaseAddonCredits(
+          metadataUserId,
+          resolvedAddonPack.credits,
+          resolvedAddonPack.priceUsd
+        )
+      } else if (resolvedTier && isOneTimeTier(resolvedTier)) {
         await fulfillExplorerPurchase(metadataUserId)
       } else if (resolvedTier) {
         await SubscriptionService.activateSubscription(metadataUserId, resolvedTier, {
@@ -135,8 +163,16 @@ async function processWhopEvent(event: WhopWebhookEvent): Promise<void> {
     case 'membership.went_valid':
     case 'membership.activated':
     case 'membership_activated': {
-      if (!metadataUserId || !resolvedTier) {
-        console.error('[Whop Webhook] Missing user_id or tier in membership event')
+      if (!metadataUserId) {
+        console.error('[Whop Webhook] Missing user_id in membership event')
+        return
+      }
+      if (resolvedAddonPack) {
+        // Ignore or fulfill if payment.succeeded wasn't used; payment.succeeded handles add-ons
+        break
+      }
+      if (!resolvedTier) {
+        console.error('[Whop Webhook] Missing tier in membership event')
         return
       }
       if (isOneTimeTier(resolvedTier)) {
@@ -200,10 +236,21 @@ export async function POST(req: NextRequest) {
       process.env.NODE_ENV === 'development' ||
       process.env.DEMO_MODE === 'true'
     ) {
-      console.warn('[Whop Webhook] WHOP_WEBHOOK_SECRET not configured — skipping verification')
+      console.warn('[Whop Webhook] WHOP_WEBHOOK_SECRET not configured — skipping verification in dev/demo')
       event = JSON.parse(rawBody) as WhopWebhookEvent
     } else {
-      return NextResponse.json({ error: 'Webhook secret not configured' }, { status: 500 })
+      const parsed = JSON.parse(rawBody) as WhopWebhookEvent
+      const verification = await verifyWebhookEventViaWhopApi(parsed)
+      if (!verification.verified) {
+        return NextResponse.json(
+          { error: 'Webhook verification failed against Whop API' },
+          { status: 401 }
+        )
+      }
+      event = {
+        ...parsed,
+        data: verification.enrichedData || parsed.data,
+      }
     }
 
     if (!event?.id) {

@@ -39,34 +39,38 @@ export class AuthService {
    */
   static async register(data: RegisterData): Promise<AuthResult> {
     try {
-      console.log('🔍 Starting registration for:', data.email)
+      const normalizedEmail = data.email.trim().toLowerCase()
+      const baseUsername = (data.username || normalizedEmail.split('@')[0] || 'creator').trim()
+      console.log('🔍 Starting registration for:', normalizedEmail)
       
-      // Check if user already exists
-      const existingUser = await User.findOne({
-        where: {
-          [Op.or]: [
-            { email: data.email },
-            { username: data.username }
-          ]
-        }
+      // Check if email already exists
+      const existingByEmail = await User.findOne({
+        where: { email: normalizedEmail }
       })
 
-      if (existingUser) {
-        console.log('❌ User already exists:', existingUser.email)
+      if (existingByEmail) {
+        console.log('❌ User already exists:', existingByEmail.email)
         return {
           success: false,
-          error: existingUser.email === data.email 
-            ? 'Email already registered' 
-            : 'Username already taken'
+          error: 'Email already registered'
         }
+      }
+
+      // Ensure username is unique (auto-disambiguate if taken)
+      let finalUsername = baseUsername
+      const existingByUsername = await User.findOne({
+        where: { username: finalUsername }
+      })
+      if (existingByUsername) {
+        finalUsername = `${baseUsername.slice(0, 24)}_${Math.random().toString(36).slice(2, 6)}`
       }
 
       console.log('✅ No existing user found, creating new user...')
       
       // Create new user
       const user = await User.create({
-        email: data.email,
-        username: data.username,
+        email: normalizedEmail,
+        username: finalUsername,
         password_hash: '', // Will be set by the model
         first_name: data.first_name,
         last_name: data.last_name,
@@ -116,9 +120,10 @@ export class AuthService {
    */
   static async login(data: LoginData): Promise<AuthResult> {
     try {
+      const normalizedEmail = data.email.trim().toLowerCase()
       // Find user by email
       const user = await User.findOne({
-        where: { email: data.email }
+        where: { email: normalizedEmail }
       })
 
       if (!user || !user.is_active) {

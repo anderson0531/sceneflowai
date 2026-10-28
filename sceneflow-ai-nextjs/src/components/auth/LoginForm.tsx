@@ -9,9 +9,11 @@ import { motion } from 'framer-motion'
 import { Eye, EyeOff, Mail, Lock } from 'lucide-react'
 interface LoginFormProps {
   onSuccess: () => void
+  onSwitchToSignUp?: () => void
+  selectedTierLabel?: string | null
 }
 
-export function LoginForm({ onSuccess }: LoginFormProps) {
+export function LoginForm({ onSuccess, onSwitchToSignUp, selectedTierLabel }: LoginFormProps) {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
@@ -113,19 +115,33 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
             disabled={isLoading}
             className="w-full bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white py-3 text-lg font-semibold transition-all duration-200 transform hover:scale-105"
           >
-            {isLoading ? 'Signing In...' : 'Sign In'}
+            {isLoading
+              ? 'Signing In...'
+              : selectedTierLabel
+                ? `Sign In & Continue to ${selectedTierLabel}`
+                : 'Sign In'}
           </Button>
         </form>
 
         <div className="mt-6 text-center">
           <p className="text-gray-400">
             Don&apos;t have an account?{' '}
-            <Link
-              href="/#pricing"
-              className="text-blue-400 hover:text-blue-300 font-medium transition-colors"
-            >
-              See plans and get started
-            </Link>
+            {onSwitchToSignUp ? (
+              <button
+                type="button"
+                onClick={onSwitchToSignUp}
+                className="text-blue-400 hover:text-blue-300 font-medium transition-colors"
+              >
+                Create an account
+              </button>
+            ) : (
+              <Link
+                href="/login?mode=signup"
+                className="text-blue-400 hover:text-blue-300 font-medium transition-colors"
+              >
+                Create an account
+              </Link>
+            )}
           </p>
         </div>
 

@@ -1,9 +1,13 @@
 import {
+  ADDON_PACK_CATALOG,
   CHECKOUT_TIER_NAMES,
   getCheckoutReturnUrl,
+  getWhopAddonPlanId,
   getWhopPlanId,
   isWhopPaymentEnabled,
+  normalizeAddonPackId,
   normalizeTierName,
+  type AddonPackId,
   type BillingTierName,
 } from './tierCatalog'
 import { getWhopClient } from './whopClient'
@@ -12,13 +16,17 @@ import { SubscriptionService } from '@/services/SubscriptionService'
 export interface CheckoutSessionResult {
   sessionId: string
   planId: string
-  tierName: BillingTierName
+  tierName: BillingTierName | AddonPackId
   returnUrl: string
 }
 
 export function isValidCheckoutTier(tierName: string): tierName is BillingTierName {
   const normalized = normalizeTierName(tierName)
   return normalized !== null && CHECKOUT_TIER_NAMES.includes(normalized)
+}
+
+export function isValidAddonPack(packId: string): packId is AddonPackId {
+  return normalizeAddonPackId(packId) !== null
 }
 
 export async function createWhopCheckoutSession(
@@ -72,13 +80,74 @@ export async function createWhopCheckoutSession(
   }
 }
 
+export async function createWhopAddonCheckoutSession(
+  userId: string,
+  addonPackId: string,
+  userEmail?: string | null,
+  extraMetadata?: Record<string, string | undefined>
+): Promise<CheckoutSessionResult> {
+  const normalizedPack = normalizeAddonPackId(addonPackId)
+  if (!normalizedPack) {
+    throw new Error(`Invalid add-on pack: ${addonPackId}`)
+  }
+
+  const canPurchase = await SubscriptionService.canPurchaseAddonPack(userId)
+  if (!canPurchase) {
+    throw new Error(
+      'Subscriber Add-On Credit Packs require an active monthly subscription (Hobbyist, Starter, Pro, or Studio)'
+    )
+  }
+
+  const pack = ADDON_PACK_CATALOG[normalizedPack]
+  const planId = getWhopAddonPlanId(normalizedPack)
+  if (!planId) {
+    throw new Error(`Whop plan not configured for add-on pack: ${normalizedPack}`)
+  }
+
+  const client = getWhopClient()
+  const returnUrl = getCheckoutReturnUrl('success')
+
+  const checkoutConfig = await client.checkoutConfigurations.create({
+    plan_id: planId,
+    metadata: {
+      user_id: userId,
+      addon_pack: normalizedPack,
+      addon_credits: String(pack.credits),
+      addon_price_usd: String(pack.priceUsd),
+      user_email: userEmail || undefined,
+      ...extraMetadata,
+    },
+    redirect_url: returnUrl,
+    source_url: returnUrl,
+  })
+
+  const sessionPlanId = checkoutConfig.plan?.id || planId
+
+  return {
+    sessionId: checkoutConfig.id,
+    planId: sessionPlanId,
+    tierName: normalizedPack,
+    returnUrl,
+  }
+}
+
 export async function handleDemoCheckout(
   userId: string,
-  tierName: string
+  tierOrPackName: string
 ): Promise<{ success: true; redirectUrl: string }> {
-  const normalizedTier = normalizeTierName(tierName)
+  const normalizedPack = normalizeAddonPackId(tierOrPackName)
+  if (normalizedPack) {
+    const pack = ADDON_PACK_CATALOG[normalizedPack]
+    await SubscriptionService.purchaseAddonCredits(userId, pack.credits, pack.priceUsd)
+    return {
+      success: true,
+      redirectUrl: '/dashboard/settings/billing?checkout=success',
+    }
+  }
+
+  const normalizedTier = normalizeTierName(tierOrPackName)
   if (!normalizedTier) {
-    throw new Error(`Invalid tier: ${tierName}`)
+    throw new Error(`Invalid tier: ${tierOrPackName}`)
   }
 
   if (normalizedTier === 'explorer') {

@@ -205,7 +205,7 @@ export const TIER_CATALOG: Record<BillingTierName, TierDefinition> = {
       '3 team seats & Priority support',
     ],
     marketingLimitations: [],
-    whopProductSlug: 'pro-59-a0e5',
+    whopProductSlug: 'sceneflow-pro',
     popular: true,
   },
   studio: {
@@ -249,7 +249,7 @@ export const TIER_CATALOG: Record<BillingTierName, TierDefinition> = {
       'Enterprise SLA available on request',
     ],
     marketingLimitations: [],
-    whopProductSlug: 'studio-c6',
+    whopProductSlug: 'sceneflow-ai-studio',
   },
   enterprise: {
     name: 'enterprise',
@@ -413,17 +413,100 @@ export function getTierCredits(tierName: string): number {
   return TIER_CATALOG[tier].credits
 }
 
+/**
+ * Default live Whop plan IDs for SceneFlow AI Studio (biz_6WdfJpp97rWaLl).
+ * Environment variables take precedence when set.
+ */
+export const DEFAULT_WHOP_PLAN_IDS: Partial<Record<BillingTierName, string>> = {
+  explorer: 'plan_7LOYto3DUb7cF',
+  hobbyist: 'plan_vO77CPr7sbWwC',
+  starter: 'plan_CzGM3h0uz0Jor',
+  pro: 'plan_veKGLrFRtGhpS',
+  studio: 'plan_iuUQ4PBH2Lapz',
+}
+
+export type AddonPackId = 'addon_25' | 'addon_100' | 'addon_250'
+
+export interface AddonPackDefinition {
+  id: AddonPackId
+  displayName: string
+  priceUsd: number
+  credits: number
+  bonusLabel?: string
+  whopPlanEnvKey: string
+  defaultWhopPlanId: string
+  description: string
+}
+
+export const ADDON_PACK_CATALOG: Record<AddonPackId, AddonPackDefinition> = {
+  addon_25: {
+    id: 'addon_25',
+    displayName: '$25 Add-On Pack (2,000 Credits)',
+    priceUsd: 25,
+    credits: 2000,
+    whopPlanEnvKey: 'WHOP_PLAN_ADDON_25',
+    defaultWhopPlanId: 'plan_ammNF5J1Gj4Kp',
+    description: '2,000 credits ($0.0125/cr) — ideal for finishing a 5–15 min chapter or Promo Trailer.',
+  },
+  addon_100: {
+    id: 'addon_100',
+    displayName: '$100 Add-On Pack (9,000 Credits)',
+    priceUsd: 100,
+    credits: 9000,
+    bonusLabel: '+12.5% Bonus',
+    whopPlanEnvKey: 'WHOP_PLAN_ADDON_100',
+    defaultWhopPlanId: 'plan_gXQOT2JSqDaxX',
+    description: '9,000 credits ($0.0111/cr) — ideal for multi-chapter series bursts or Pre-Vis pitch packages.',
+  },
+  addon_250: {
+    id: 'addon_250',
+    displayName: '$250 Add-On Pack (25,000 Credits)',
+    priceUsd: 250,
+    credits: 25000,
+    bonusLabel: '+25% Bonus',
+    whopPlanEnvKey: 'WHOP_PLAN_ADDON_250',
+    defaultWhopPlanId: 'plan_SZVOqaDy0G0XT',
+    description: '25,000 credits ($0.0100/cr) — built for $500–$5,000 hybrid productions and feature slates.',
+  },
+}
+
+export function normalizeAddonPackId(packId: string): AddonPackId | null {
+  const normalized = packId.trim().toLowerCase()
+  if (normalized in ADDON_PACK_CATALOG) return normalized as AddonPackId
+  if (normalized === '25' || normalized === '$25') return 'addon_25'
+  if (normalized === '100' || normalized === '$100') return 'addon_100'
+  if (normalized === '250' || normalized === '$250') return 'addon_250'
+  return null
+}
+
+export function getWhopAddonPlanId(packId: string): string | undefined {
+  const normalized = normalizeAddonPackId(packId)
+  if (!normalized) return undefined
+  const pack = ADDON_PACK_CATALOG[normalized]
+  return process.env[pack.whopPlanEnvKey] || pack.defaultWhopPlanId
+}
+
+export function getAddonPackFromWhopPlanId(planId: string): AddonPackDefinition | null {
+  for (const pack of Object.values(ADDON_PACK_CATALOG)) {
+    const envPlanId = process.env[pack.whopPlanEnvKey]
+    if ((envPlanId && envPlanId === planId) || pack.defaultWhopPlanId === planId) {
+      return pack
+    }
+  }
+  return null
+}
+
 export function getWhopPlanId(tierName: string): string | undefined {
   const tier = normalizeTierName(tierName)
   if (!tier) return undefined
   const envKey = TIER_CATALOG[tier].whopPlanEnvKey
-  return process.env[envKey] || undefined
+  return process.env[envKey] || DEFAULT_WHOP_PLAN_IDS[tier] || undefined
 }
 
 export function getTierNameFromWhopPlanId(planId: string): BillingTierName | null {
   for (const tier of Object.values(TIER_CATALOG)) {
     const envPlanId = process.env[tier.whopPlanEnvKey]
-    if (envPlanId && envPlanId === planId) {
+    if ((envPlanId && envPlanId === planId) || DEFAULT_WHOP_PLAN_IDS[tier.name] === planId) {
       return tier.name
     }
   }

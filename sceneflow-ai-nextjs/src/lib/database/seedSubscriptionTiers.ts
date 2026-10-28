@@ -40,7 +40,8 @@ export async function seedSubscriptionTiers(): Promise<{
         })
 
         if (existingTier) {
-          console.log(`[Seed Tiers] ${tierData.display_name} tier already exists`)
+          await existingTier.update(tierData as any)
+          console.log(`[Seed Tiers] Synced ${tierData.display_name} tier`)
           existing.push(tierData.name)
           continue
         }

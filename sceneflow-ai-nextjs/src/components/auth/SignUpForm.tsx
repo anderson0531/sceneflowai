@@ -10,11 +10,18 @@ import { Eye, EyeOff, Mail, Lock, User, CheckCircle } from 'lucide-react'
 interface SignUpFormProps {
   onSuccess: () => void
   onSwitchToLogin: () => void
+  selectedTierLabel?: string | null
+  selectedTierSummary?: string | null
 }
 
-export function SignUpForm({ onSuccess, onSwitchToLogin }: SignUpFormProps) {
+export function SignUpForm({
+  onSuccess,
+  onSwitchToLogin,
+  selectedTierLabel,
+  selectedTierSummary,
+}: SignUpFormProps) {
   const [formData, setFormData] = useState({
-    username: '',
+    name: '',
     email: '',
     password: '',
     confirmPassword: '',
@@ -37,6 +44,12 @@ export function SignUpForm({ onSuccess, onSwitchToLogin }: SignUpFormProps) {
     setIsLoading(true)
     setError('')
 
+    if (formData.password.length < 8) {
+      setError('Password must be at least 8 characters');
+      setIsLoading(false);
+      return;
+    }
+
     if (formData.password !== formData.confirmPassword) {
       setError('Passwords do not match');
       setIsLoading(false);
@@ -44,10 +57,19 @@ export function SignUpForm({ onSuccess, onSwitchToLogin }: SignUpFormProps) {
     }
     
     if (!termsAccepted) {
-        setError('You must accept the terms and conditions');
-        setIsLoading(false);
-        return;
+      setError('You must accept the Terms of Service and Privacy Policy');
+      setIsLoading(false);
+      return;
     }
+
+    const trimmedName = formData.name.trim()
+    const nameParts = trimmedName.split(/\s+/).filter(Boolean)
+    const firstName = nameParts[0] || ''
+    const lastName = nameParts.length > 1 ? nameParts.slice(1).join(' ') : ''
+    const derivedUsername =
+      trimmedName.replace(/[^a-zA-Z0-9_-]/g, '').toLowerCase() ||
+      formData.email.trim().split('@')[0] ||
+      'creator'
 
     try {
       const res = await fetch('/api/auth/register', {
@@ -56,27 +78,30 @@ export function SignUpForm({ onSuccess, onSwitchToLogin }: SignUpFormProps) {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          username: formData.username,
-          email: formData.email,
+          name: trimmedName,
+          first_name: firstName,
+          last_name: lastName,
+          username: derivedUsername,
+          email: formData.email.trim(),
           password: formData.password,
         }),
       });
 
       if (!res.ok) {
-        const body = await res.json();
-        setError(body.error || 'Something went wrong');
+        const body = await res.json().catch(() => ({}));
+        setError(body.error || 'Could not create account. Please try again.');
         setIsLoading(false);
         return;
       }
 
       const signInResult = await signIn('credentials', {
-        email: formData.email,
+        email: formData.email.trim(),
         password: formData.password,
         redirect: false,
       });
 
       if (signInResult?.error) {
-        setError('Login failed after registration.');
+        setError('Account created, but automatic sign-in failed. Please sign in with your email and password.');
         setIsLoading(false);
       } else {
         await getSession();
@@ -99,11 +124,15 @@ export function SignUpForm({ onSuccess, onSwitchToLogin }: SignUpFormProps) {
     >
       <div className="bg-gray-900/50 backdrop-blur-md rounded-2xl p-8 border border-gray-800/50">
         <div className="text-center mb-8">
-          <h2 className="text-3xl font-bold text-white mb-2">Join SceneFlow Studio</h2>
-          <p className="text-gray-400">Create your account and start creating amazing videos</p>
+          <h2 className="text-3xl font-bold text-white mb-2">Create Studio Account</h2>
+          <p className="text-gray-400">
+            {selectedTierLabel
+              ? `Create your account to continue with ${selectedTierLabel}`
+              : 'Set up your SceneFlow AI Studio account in seconds'}
+          </p>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-6">
+        <form onSubmit={handleSubmit} className="space-y-5">
           {error && (
             <div className="bg-red-500/20 border border-red-500/50 rounded-lg p-3 text-red-400 text-sm">
               {error}
@@ -111,18 +140,18 @@ export function SignUpForm({ onSuccess, onSwitchToLogin }: SignUpFormProps) {
           )}
 
           <div className="space-y-2">
-            <label htmlFor="username" className="text-sm font-medium text-gray-300">
-              Username
+            <label htmlFor="name" className="text-sm font-medium text-gray-300">
+              Full Name or Studio Name
             </label>
             <div className="relative">
               <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
               <Input
-                id="username"
-                name="username"
+                id="name"
+                name="name"
                 type="text"
-                value={formData.username}
+                value={formData.name}
                 onChange={handleChange}
-                placeholder="Choose a username"
+                placeholder="e.g. Alex Rivera or Rivera Pictures"
                 className="pl-10 bg-gray-800/50 border-gray-700 text-white placeholder-gray-400 focus:border-blue-500"
                 required
               />
@@ -163,6 +192,7 @@ export function SignUpForm({ onSuccess, onSwitchToLogin }: SignUpFormProps) {
                 placeholder="Create a password (min. 8 characters)"
                 className="pl-10 pr-10 bg-gray-800/50 border-gray-700 text-white placeholder-gray-400 focus:border-blue-500"
                 required
+                minLength={8}
               />
               <button
                 type="button"
@@ -189,6 +219,7 @@ export function SignUpForm({ onSuccess, onSwitchToLogin }: SignUpFormProps) {
                 placeholder="Confirm your password"
                 className="pl-10 pr-10 bg-gray-800/50 border-gray-700 text-white placeholder-gray-400 focus:border-blue-500"
                 required
+                minLength={8}
               />
               <button
                 type="button"
@@ -225,7 +256,11 @@ export function SignUpForm({ onSuccess, onSwitchToLogin }: SignUpFormProps) {
             disabled={isLoading}
             className="w-full bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white py-3 text-lg font-semibold transition-all duration-200 transform hover:scale-105"
           >
-            {isLoading ? 'Creating Account...' : 'Create Account'}
+            {isLoading
+              ? 'Creating Account...'
+              : selectedTierLabel
+                ? `Create Account & Continue to ${selectedTierLabel}`
+                : 'Create Studio Account'}
           </Button>
         </form>
 
@@ -233,6 +268,7 @@ export function SignUpForm({ onSuccess, onSwitchToLogin }: SignUpFormProps) {
           <p className="text-gray-400">
             Already have an account?{' '}
             <button
+              type="button"
               onClick={onSwitchToLogin}
               className="text-blue-400 hover:text-blue-300 font-medium transition-colors"
             >
@@ -243,8 +279,18 @@ export function SignUpForm({ onSuccess, onSwitchToLogin }: SignUpFormProps) {
 
         <div className="mt-6 p-4 bg-green-500/10 border border-green-500/20 rounded-lg">
           <div className="flex items-center space-x-2 text-green-400 text-sm">
-            <CheckCircle className="w-5 h-5" />
-            <span><strong>Explorer Plan:</strong> Get 750 credits for $9 to start creating videos</span>
+            <CheckCircle className="w-5 h-5 shrink-0" />
+            <span>
+              {selectedTierSummary ? (
+                <>
+                  <strong>Selected Plan:</strong> {selectedTierSummary}
+                </>
+              ) : (
+                <>
+                  <strong>Explorer Pass ($9):</strong> Get 750 credits + 5 GB Vault Storage to start your first film
+                </>
+              )}
+            </span>
           </div>
         </div>
       </div>

@@ -6,6 +6,7 @@ import { SubscriptionService } from '../../../../services/SubscriptionService'
 import { CreditService } from '../../../../services/CreditService'
 import { resolveUser } from '@/lib/userHelper'
 import { SANDBOX_CREDITS } from '@/lib/demo/uiSandboxProject'
+import { reconcileWhopUserPayments } from '@/lib/billing/whopReconcile'
 
 /**
  * GET /api/subscription/status
@@ -38,9 +39,22 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
+    let user = await resolveUser(userId)
+
+    const shouldReconcile = req.nextUrl.searchParams.get('reconcile') === '1'
+    if (shouldReconcile) {
+      const reconciled = await reconcileWhopUserPayments({
+        id: user.id,
+        email: user.email,
+        whop_user_id: user.whop_user_id,
+      })
+      if (reconciled.fulfilledPayments.length > 0) {
+        user = await resolveUser(userId)
+      }
+    }
+
     const subscription = await SubscriptionService.getUserSubscription(userId)
     const credits = await CreditService.getCreditBreakdown(userId)
-    const user = await resolveUser(userId)
 
     return NextResponse.json({
       success: true,

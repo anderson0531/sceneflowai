@@ -1,9 +1,10 @@
 'use client'
 
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { X } from 'lucide-react'
 import { LoginForm } from './LoginForm'
+import { SignUpForm } from './SignUpForm'
 import { useAuthSuccessHandler } from '@/components/auth/useAuthSuccessHandler'
 
 interface AuthModalProps {
@@ -13,6 +14,12 @@ interface AuthModalProps {
 }
 
 export function AuthModal({ isOpen, onClose, initialMode = 'login' }: AuthModalProps) {
+  const [mode, setMode] = useState<'login' | 'signup'>(initialMode)
+
+  useEffect(() => {
+    setMode(initialMode)
+  }, [initialMode, isOpen])
+
   // Close modal on escape key
   useEffect(() => {
     const handleEscape = (e: KeyboardEvent) => {
@@ -32,14 +39,14 @@ export function AuthModal({ isOpen, onClose, initialMode = 'login' }: AuthModalP
     }
   }, [isOpen, onClose])
 
-  const onAuthSuccess = useAuthSuccessHandler('login')
+  const onAuthSuccess = useAuthSuccessHandler(mode)
 
   const handleSuccess = () => {
     onClose()
     onAuthSuccess()
   }
 
-  if (!isOpen || initialMode === 'signup') return null
+  if (!isOpen) return null
 
   return (
     <AnimatePresence>
@@ -67,13 +74,23 @@ export function AuthModal({ isOpen, onClose, initialMode = 'login' }: AuthModalP
           </button>
 
           <motion.div
-            key="login"
+            key={mode}
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: -20 }}
             transition={{ duration: 0.2 }}
           >
-            <LoginForm onSuccess={handleSuccess} />
+            {mode === 'signup' ? (
+              <SignUpForm
+                onSuccess={handleSuccess}
+                onSwitchToLogin={() => setMode('login')}
+              />
+            ) : (
+              <LoginForm
+                onSuccess={handleSuccess}
+                onSwitchToSignUp={() => setMode('signup')}
+              />
+            )}
           </motion.div>
         </motion.div>
       </motion.div>

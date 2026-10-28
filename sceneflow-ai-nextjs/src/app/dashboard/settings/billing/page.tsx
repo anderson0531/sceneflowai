@@ -15,9 +15,14 @@ import {
   mapSubscriptionStatus,
   type MappedSubscriptionData,
 } from '@/lib/billing/mapSubscriptionStatus'
-import { getCheckoutPlans, hasPurchasedExplorer } from '@/lib/billing/tierCatalog'
+import {
+  ADDON_PACK_CATALOG,
+  getCheckoutPlans,
+  hasPurchasedExplorer,
+} from '@/lib/billing/tierCatalog'
 
 const CHECKOUT_PLANS = getCheckoutPlans()
+const ADDON_PACKS = Object.values(ADDON_PACK_CATALOG)
 
 interface TierInfo {
   name: string
@@ -56,10 +61,11 @@ export default function BillingPage() {
   const activationPollStartedRef = useRef(false)
   const { loading: checkoutLoading, checkout, startCheckout, closeCheckout } = useWhopCheckout()
 
-  const fetchSubscriptionData = useCallback(async (): Promise<SubscriptionData | null> => {
+  const fetchSubscriptionData = useCallback(async (reconcile = false): Promise<SubscriptionData | null> => {
     try {
       setFetchError(null)
-      const subResponse = await fetch('/api/subscription/status')
+      const url = reconcile ? '/api/subscription/status?reconcile=1' : '/api/subscription/status'
+      const subResponse = await fetch(url)
       if (subResponse.ok) {
         const subData = await subResponse.json()
         const mapped = mapSubscriptionStatus(subData)
@@ -104,8 +110,10 @@ export default function BillingPage() {
       const baselineTier = baseline?.subscription?.tier?.name ?? null
 
       for (let attempt = 0; attempt < 20; attempt++) {
-        await new Promise((resolve) => setTimeout(resolve, 3000))
-        const latest = await fetchSubscriptionData()
+        if (attempt > 0) {
+          await new Promise((resolve) => setTimeout(resolve, 3000))
+        }
+        const latest = await fetchSubscriptionData(true)
         if (!latest) continue
 
         const creditsChanged = latest.credits.total > baselineCredits
@@ -132,9 +140,9 @@ export default function BillingPage() {
 
   const handleCheckoutComplete = useCallback(async () => {
     closeCheckout()
-    const baseline = await fetchSubscriptionData()
+    const baseline = subscription
     await pollForActivation(baseline)
-  }, [closeCheckout, fetchSubscriptionData, pollForActivation])
+  }, [closeCheckout, pollForActivation, subscription])
 
   useEffect(() => {
     if (session?.user) {
@@ -578,16 +586,44 @@ export default function BillingPage() {
                 </Button>
               </div>
 
-              <div className="flex items-center justify-between p-4 bg-gray-900/80 rounded-lg border border-gray-700/60">
+              <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 p-4 bg-gray-900/80 rounded-lg border border-gray-700/60">
                 <div>
                   <h4 className="text-white font-semibold">Purchase Add-on Credits ($25 / $100 / $250)</h4>
                   <p className="text-gray-400 text-sm">
                     Exclusive to active monthly members (Hobbyist, Starter, Pro, Studio). Each add-on pack lasts 12 months from purchase.
                   </p>
                 </div>
-                <Button variant="outline" className="border-gray-700/60 text-gray-200 hover:bg-gray-900/80 flex items-center gap-2" disabled>
-                  Coming Soon
-                </Button>
+                <div className="flex flex-wrap items-center gap-2">
+                  {ADDON_PACKS.map((pack) => {
+                    const hasActiveSub =
+                      subscription?.subscription?.status === 'active' &&
+                      Boolean(subscription?.subscription?.tier?.name && subscription.subscription.tier.name !== 'explorer')
+                    const isThisLoading = checkoutLoading === pack.id
+                    return (
+                      <Button
+                        key={pack.id}
+                        variant="outline"
+                        disabled={!hasActiveSub || Boolean(checkoutLoading)}
+                        onClick={() => startCheckout(pack.id)}
+                        className="border-purple-500/40 bg-purple-950/20 text-purple-100 hover:bg-purple-900/40 flex items-center gap-2 text-xs sm:text-sm"
+                        title={
+                          hasActiveSub
+                            ? pack.description
+                            : 'Activate a monthly membership (Hobbyist, Starter, Pro, or Studio) to unlock Add-On Credit Packs'
+                        }
+                      >
+                        {isThisLoading ? (
+                          <Loader className="w-3.5 h-3.5 animate-spin" />
+                        ) : (
+                          <Zap className="w-3.5 h-3.5 text-purple-400" />
+                        )}
+                        <span>
+                          ${pack.priceUsd} ({pack.credits.toLocaleString()} cr)
+                        </span>
+                      </Button>
+                    )
+                  })}
+                </div>
               </div>
 
               {subscription?.subscription?.status === 'active' && (

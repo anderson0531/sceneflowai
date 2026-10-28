@@ -2,6 +2,7 @@ import type { NextAuthOptions } from 'next-auth'
 import CredentialsProvider from 'next-auth/providers/credentials'
 import { isDemoMode, allowDemoFallback } from '@/lib/env'
 import { getAuthSecret } from '@/lib/auth/secret'
+import { AuthService } from '@/services/AuthService'
 
 export const authOptions: NextAuthOptions = {
   session: { 
@@ -33,7 +34,35 @@ export const authOptions: NextAuthOptions = {
       async authorize(credentials) {
         try {
           if (!credentials?.email || !credentials?.password) return null
-          // Build absolute base URL for server-side fetch
+
+          // Direct server-side authentication via AuthService (avoids internal HTTP loopback failures on Vercel)
+          if (!isDemoMode()) {
+            const directResult = await AuthService.login({
+              email: credentials.email,
+              password: credentials.password,
+            }).catch((err) => {
+              console.warn('[Auth] Direct AuthService.login error, falling back to API fetch:', err)
+              return null
+            })
+
+            if (directResult?.success && directResult.user) {
+              const user = directResult.user
+              const displayName =
+                [user.first_name, user.last_name].filter(Boolean).join(' ') ||
+                user.username ||
+                ''
+              return {
+                id: user.id.toString(),
+                email: user.email,
+                name: displayName,
+                first_name: user.first_name || null,
+                last_name: user.last_name || null,
+                username: user.username || null,
+              }
+            }
+          }
+
+          // Build absolute base URL for server-side fetch fallback
           const base = (
             process.env.NEXTAUTH_URL?.replace(/\/$/, '') ||
             process.env.NEXT_PUBLIC_API_URL?.replace(/\/$/, '') ||
