@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getWhopClient } from '@/lib/billing/whopClient'
+import { ensureWhopRuntimeConfig, getWhopClient } from '@/lib/billing/whopClient'
 import {
   ADDON_PACK_CATALOG,
   getAddonPackFromWhopPlanId,
@@ -223,6 +223,7 @@ async function processWhopEvent(event: WhopWebhookEvent): Promise<void> {
 
 export async function POST(req: NextRequest) {
   try {
+    await ensureWhopRuntimeConfig()
     const rawBody = await req.text()
     const headers = Object.fromEntries(req.headers.entries())
 

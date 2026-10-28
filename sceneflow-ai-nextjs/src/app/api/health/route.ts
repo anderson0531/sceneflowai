@@ -1,5 +1,7 @@
 import { NextResponse } from 'next/server'
 import { testConnection, getDatabaseConnectionInfo } from '@/config/database'
+import { ensureWhopRuntimeConfig } from '@/lib/billing/whopClient'
+import { isCheckoutConfigured } from '@/lib/billing/checkoutHelper'
 
 export async function GET() {
   const connInfo = getDatabaseConnectionInfo()
@@ -8,12 +10,14 @@ export async function GET() {
     
     // Test database connection
     await testConnection()
+    await ensureWhopRuntimeConfig()
     
     return NextResponse.json({
       status: 'healthy',
       database: 'connected',
       mode: connInfo.mode,
       envSource: connInfo.envSource,
+      whopConfigured: isCheckoutConfigured(),
       timestamp: new Date().toISOString()
     })
   } catch (error) {

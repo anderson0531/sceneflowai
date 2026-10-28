@@ -10,6 +10,7 @@ import {
   isValidCheckoutTier,
   shouldUseDemoCheckout,
 } from '@/lib/billing/checkoutHelper'
+import { ensureWhopRuntimeConfig } from '@/lib/billing/whopClient'
 import { CHECKOUT_TIER_NAMES, isWhopPaymentEnabled } from '@/lib/billing/tierCatalog'
 
 export const runtime = 'nodejs'
@@ -20,6 +21,8 @@ export async function POST(req: NextRequest) {
     if (!session?.user?.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
+
+    await ensureWhopRuntimeConfig()
 
     const body = await req.json()
     const rawTarget = (body?.addonPack || body?.tierName || body?.tier) as string | undefined

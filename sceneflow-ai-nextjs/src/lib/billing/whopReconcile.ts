@@ -1,4 +1,4 @@
-import { getWhopClient, getWhopCompanyId } from './whopClient'
+import { ensureWhopRuntimeConfig, getWhopClient, getWhopCompanyId } from './whopClient'
 import {
   ADDON_PACK_CATALOG,
   getAddonPackFromWhopPlanId,
@@ -64,6 +64,8 @@ export async function reconcileWhopUserPayments(
 ): Promise<{ fulfilledPayments: string[]; syncedMemberships: string[] }> {
   const fulfilledPayments: string[] = []
   const syncedMemberships: string[] = []
+
+  await ensureWhopRuntimeConfig()
 
   if (!isWhopPaymentEnabled() || !isCheckoutConfigured()) {
     return { fulfilledPayments, syncedMemberships }
@@ -164,6 +166,7 @@ export async function verifyWebhookEventViaWhopApi(event: {
   type: string
   data: Record<string, unknown>
 }): Promise<{ verified: boolean; enrichedData?: Record<string, unknown> }> {
+  await ensureWhopRuntimeConfig()
   if (!isCheckoutConfigured()) {
     return { verified: false }
   }

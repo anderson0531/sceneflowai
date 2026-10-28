@@ -107,7 +107,7 @@ export async function GET(req: NextRequest) {
           byok_access: true,
           processing_priority: 'high',
           collaboration_seats: 10,
-          features: {},
+          features: [],
         },
         status: 'active',
         startDate: new Date().toISOString(),

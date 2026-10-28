@@ -346,95 +346,93 @@ export default function BillingPage() {
       </motion.div>
 
       {/* Available Plans — Whop Checkout */}
-      {!isTestMode && (
-        <motion.div
-          id="checkout-plans"
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.05 }}
-        >
-          <Card className="bg-gray-800/60 border-gray-700/60 text-white">
-            <CardHeader>
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-sf-primary/20 rounded-lg flex items-center justify-center">
-                  <Crown className="w-5 h-5 text-sf-primary" />
-                </div>
-                <div>
-                  <CardTitle className="text-xl font-semibold">Choose a Plan</CardTitle>
-                  <CardDescription className="text-gray-400">
-                    Subscribe or purchase Explorer to unlock credits
-                  </CardDescription>
-                </div>
+      <motion.div
+        id="checkout-plans"
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5, delay: 0.05 }}
+      >
+        <Card className="bg-gray-800/60 border-gray-700/60 text-white">
+          <CardHeader>
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-sf-primary/20 rounded-lg flex items-center justify-center">
+                <Crown className="w-5 h-5 text-sf-primary" />
               </div>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
-                {CHECKOUT_PLANS.map((plan) => {
-                  const isCurrent = currentTierName === plan.name
-                  const isExplorerOwned = plan.name === 'explorer' && explorerPurchased
-                  const isLoading = checkoutLoading === plan.name
+              <div>
+                <CardTitle className="text-xl font-semibold">Choose a Plan</CardTitle>
+                <CardDescription className="text-gray-400">
+                  Subscribe or purchase Explorer to unlock credits
+                </CardDescription>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+              {CHECKOUT_PLANS.map((plan) => {
+                const isCurrent = !plan.isOneTime && currentTierName === plan.name
+                const isExplorerOwned = plan.name === 'explorer' && explorerPurchased
+                const isLoading = checkoutLoading === plan.name
 
-                  return (
-                    <div
-                      key={plan.name}
-                      className={`p-4 rounded-lg border-2 transition-all flex flex-col justify-between ${
-                        isCurrent || isExplorerOwned
-                          ? 'border-green-500/60 bg-green-900/20'
-                          : 'border-gray-700/60 bg-gray-900/80 hover:border-sf-primary/40'
-                      }`}
-                    >
-                      <div className="text-center mb-3">
-                        <div className="text-base font-bold text-white leading-snug">{plan.displayName}</div>
-                        <div className="text-2xl font-bold text-sf-primary mt-1">
-                          ${plan.price}
-                          <span className="text-sm text-gray-400">
-                            {plan.isOneTime ? ' once' : '/mo'}
-                          </span>
-                        </div>
-                        <div className="text-xs text-gray-400 mt-1">
-                          {plan.credits.toLocaleString()} credits{plan.isOneTime ? '' : '/mo'} • {plan.storageGb} GB Vault
-                        </div>
-                        {plan.isOneTime && (
-                          <div className="text-[10px] text-gray-500 mt-1">
-                            30-day Test Flight — subscribe to retain Continuity Vault & unlock Add-Ons
-                          </div>
-                        )}
+                return (
+                  <div
+                    key={plan.name}
+                    className={`p-4 rounded-lg border-2 transition-all flex flex-col justify-between ${
+                      isCurrent || isExplorerOwned
+                        ? 'border-green-500/60 bg-green-900/20'
+                        : 'border-gray-700/60 bg-gray-900/80 hover:border-sf-primary/40'
+                    }`}
+                  >
+                    <div className="text-center mb-3">
+                      <div className="text-base font-bold text-white leading-snug">{plan.displayName}</div>
+                      <div className="text-2xl font-bold text-sf-primary mt-1">
+                        ${plan.price}
+                        <span className="text-sm text-gray-400">
+                          {plan.isOneTime ? ' once' : '/mo'}
+                        </span>
                       </div>
-
-                      {isCurrent ? (
-                        <Button disabled className="w-full bg-green-600/20 text-green-400 border border-green-500/30">
-                          <CheckCircle className="w-4 h-4 mr-1" />
-                          Current
-                        </Button>
-                      ) : isExplorerOwned ? (
-                        <Button disabled className="w-full bg-green-600/20 text-green-400 border border-green-500/30">
-                          <CheckCircle className="w-4 h-4 mr-1" />
-                          Purchased
-                        </Button>
-                      ) : (
-                        <Button
-                          onClick={() => startCheckout(plan.name)}
-                          disabled={Boolean(checkoutLoading)}
-                          className="w-full bg-sf-primary hover:bg-sf-accent text-white"
-                        >
-                          {isLoading ? (
-                            <Loader className="w-4 h-4 animate-spin" />
-                          ) : plan.isOneTime ? (
-                            'Buy Explorer'
-                          ) : (
-                            <>Subscribe <ArrowRight className="w-3 h-3 ml-1" /></>
-                          )}
-                        </Button>
+                      <div className="text-xs text-gray-400 mt-1">
+                        {plan.credits.toLocaleString()} credits{plan.isOneTime ? '' : '/mo'} • {plan.storageGb} GB Vault
+                      </div>
+                      {plan.isOneTime && (
+                        <div className="text-[10px] text-gray-500 mt-1">
+                          30-day Test Flight — subscribe to retain Continuity Vault & unlock Add-Ons
+                        </div>
                       )}
                     </div>
-                  )
-                })}
-              </div>
-              <p className="text-xs text-gray-500 mt-4 text-center">{MOR_FOOTER_LINE}</p>
-            </CardContent>
-          </Card>
-        </motion.div>
-      )}
+
+                    {isCurrent ? (
+                      <Button disabled className="w-full bg-green-600/20 text-green-400 border border-green-500/30">
+                        <CheckCircle className="w-4 h-4 mr-1" />
+                        Current
+                      </Button>
+                    ) : isExplorerOwned ? (
+                      <Button disabled className="w-full bg-green-600/20 text-green-400 border border-green-500/30">
+                        <CheckCircle className="w-4 h-4 mr-1" />
+                        Purchased
+                      </Button>
+                    ) : (
+                      <Button
+                        onClick={() => startCheckout(plan.name)}
+                        disabled={Boolean(checkoutLoading)}
+                        className="w-full bg-sf-primary hover:bg-sf-accent text-white"
+                      >
+                        {isLoading ? (
+                          <Loader className="w-4 h-4 animate-spin" />
+                        ) : plan.isOneTime ? (
+                          'Buy Explorer'
+                        ) : (
+                          <>Subscribe <ArrowRight className="w-3 h-3 ml-1" /></>
+                        )}
+                      </Button>
+                    )}
+                  </div>
+                )
+              })}
+            </div>
+            <p className="text-xs text-gray-500 mt-4 text-center">{MOR_FOOTER_LINE}</p>
+          </CardContent>
+        </Card>
+      </motion.div>
 
       {/* Test Plan Switcher (Development/Testing) */}
       {isTestMode && testMode?.availableTiers && (
@@ -697,7 +695,8 @@ export default function BillingPage() {
                 <div className="p-4 bg-gray-900/80 rounded-lg border border-gray-700/60">
                   <div className="text-gray-400 text-sm mb-1">Features</div>
                   <div className="text-sm text-white">
-                    {subscription.subscription.tier.features?.length > 0 
+                    {Array.isArray(subscription.subscription.tier.features) &&
+                    subscription.subscription.tier.features.length > 0
                       ? subscription.subscription.tier.features.slice(0, 3).join(', ')
                       : 'Standard features'}
                   </div>

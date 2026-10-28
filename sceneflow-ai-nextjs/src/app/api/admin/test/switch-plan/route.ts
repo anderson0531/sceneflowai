@@ -18,6 +18,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { User, SubscriptionTier, sequelize } from '@/models';
 import { resolveUser } from '@/lib/userHelper';
+import { isAdminEmail } from '@/lib/adminUtils';
 import { ensureCreditLotsTable } from '@/lib/database/migrateCreditLots';
 import { assignBalances, loadUserLots, saveUserLots } from '@/lib/credits/creditLotStore';
 import { applyPackGrant, applySubscriptionGrant } from '@/lib/credits/creditLots';
@@ -51,17 +52,6 @@ async function getTestSession() {
 
 export async function POST(request: NextRequest) {
   try {
-    // Check if this feature is enabled (only in development or with test flag)
-    const isTestMode = process.env.ENABLE_TEST_PLAN_SWITCH === 'true' || 
-                       process.env.NODE_ENV === 'development';
-    
-    if (!isTestMode) {
-      return NextResponse.json(
-        { error: 'Test plan switching is disabled in production' },
-        { status: 403 }
-      );
-    }
-
     // Get authenticated user
     const session = await getTestSession()
 
@@ -69,6 +59,19 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         { error: 'Unauthorized - must be logged in' },
         { status: 401 }
+      );
+    }
+
+    // Check if this feature is enabled (only in development or for admins when test flag is set)
+    const testFlagEnabled = (process.env.ENABLE_TEST_PLAN_SWITCH || '').replace(/\\n/g, '').trim() === 'true';
+    const isTestMode =
+      process.env.NODE_ENV === 'development' ||
+      (testFlagEnabled && isAdminEmail(session.user.email));
+    
+    if (!isTestMode) {
+      return NextResponse.json(
+        { error: 'Test plan switching is disabled in production' },
+        { status: 403 }
       );
     }
 
@@ -233,17 +236,6 @@ export async function POST(request: NextRequest) {
  */
 export async function GET(request: NextRequest) {
   try {
-    // Check if this feature is enabled
-    const isTestMode = process.env.ENABLE_TEST_PLAN_SWITCH === 'true' || 
-                       process.env.NODE_ENV === 'development';
-    
-    if (!isTestMode) {
-      return NextResponse.json(
-        { error: 'Test plan switching is disabled in production' },
-        { status: 403 }
-      );
-    }
-
     // Get authenticated user
     const session = await getTestSession()
 
@@ -251,6 +243,19 @@ export async function GET(request: NextRequest) {
       return NextResponse.json(
         { error: 'Unauthorized - must be logged in' },
         { status: 401 }
+      );
+    }
+
+    // Check if this feature is enabled (only in development or for admins when test flag is set)
+    const testFlagEnabled = (process.env.ENABLE_TEST_PLAN_SWITCH || '').replace(/\\n/g, '').trim() === 'true';
+    const isTestMode =
+      process.env.NODE_ENV === 'development' ||
+      (testFlagEnabled && isAdminEmail(session.user.email));
+    
+    if (!isTestMode) {
+      return NextResponse.json(
+        { error: 'Test plan switching is disabled in production' },
+        { status: 403 }
       );
     }
 

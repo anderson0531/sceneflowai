@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect } from 'react'
+import { useEffect, useMemo } from 'react'
 import { WhopCheckoutEmbed } from '@whop/checkout/react'
 import { X, Loader } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
@@ -22,6 +22,11 @@ export function WhopCheckoutModal({
   onClose,
   onComplete,
 }: WhopCheckoutModalProps) {
+  const prefill = useMemo(
+    () => (userEmail ? { email: userEmail } : undefined),
+    [userEmail]
+  )
+
   useEffect(() => {
     if (!isOpen) return
     document.body.style.overflow = 'hidden'
@@ -49,10 +54,11 @@ export function WhopCheckoutModal({
         <div className="p-4 min-h-[480px]">
           {sessionId ? (
             <WhopCheckoutEmbed
+              key={sessionId}
               sessionId={sessionId}
               theme="dark"
               returnUrl={returnUrl}
-              prefill={userEmail ? { email: userEmail } : undefined}
+              prefill={prefill}
               onComplete={() => {
                 onComplete?.()
               }}

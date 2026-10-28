@@ -10,7 +10,7 @@ import {
   type AddonPackId,
   type BillingTierName,
 } from './tierCatalog'
-import { getWhopClient } from './whopClient'
+import { ensureWhopRuntimeConfig, getWhopClient, getWhopCompanyId } from './whopClient'
 import { SubscriptionService } from '@/services/SubscriptionService'
 
 export interface CheckoutSessionResult {
@@ -18,6 +18,25 @@ export interface CheckoutSessionResult {
   planId: string
   tierName: BillingTierName | AddonPackId
   returnUrl: string
+}
+
+function buildCleanMetadata(
+  raw: Record<string, string | undefined>
+): Record<string, string> {
+  const out: Record<string, string> = {}
+  for (const [k, v] of Object.entries(raw)) {
+    if (typeof v === 'string' && v.trim().length > 0) {
+      out[k] = v.trim()
+    }
+  }
+  return out
+}
+
+function resolveWhopApiRedirectUrl(returnUrl: string): string {
+  if (returnUrl.startsWith('https://')) {
+    return returnUrl
+  }
+  return 'https://www.sceneflowai.studio/dashboard/settings/billing?checkout=success'
 }
 
 export function isValidCheckoutTier(tierName: string): tierName is BillingTierName {
@@ -35,6 +54,8 @@ export async function createWhopCheckoutSession(
   userEmail?: string | null,
   extraMetadata?: Record<string, string | undefined>
 ): Promise<CheckoutSessionResult> {
+  await ensureWhopRuntimeConfig()
+
   const normalizedTier = normalizeTierName(tierName)
   if (!normalizedTier || !CHECKOUT_TIER_NAMES.includes(normalizedTier)) {
     throw new Error(`Invalid checkout tier: ${tierName}`)
@@ -57,17 +78,18 @@ export async function createWhopCheckoutSession(
 
   const client = getWhopClient()
   const returnUrl = getCheckoutReturnUrl('success')
+  const whopRedirectUrl = resolveWhopApiRedirectUrl(returnUrl)
 
   const checkoutConfig = await client.checkoutConfigurations.create({
     plan_id: planId,
-    metadata: {
+    metadata: buildCleanMetadata({
       user_id: userId,
       tier_name: normalizedTier,
       user_email: userEmail || undefined,
       ...extraMetadata,
-    },
-    redirect_url: returnUrl,
-    source_url: returnUrl,
+    }),
+    redirect_url: whopRedirectUrl,
+    source_url: whopRedirectUrl,
   })
 
   const sessionPlanId = checkoutConfig.plan?.id || planId
@@ -86,6 +108,8 @@ export async function createWhopAddonCheckoutSession(
   userEmail?: string | null,
   extraMetadata?: Record<string, string | undefined>
 ): Promise<CheckoutSessionResult> {
+  await ensureWhopRuntimeConfig()
+
   const normalizedPack = normalizeAddonPackId(addonPackId)
   if (!normalizedPack) {
     throw new Error(`Invalid add-on pack: ${addonPackId}`)
@@ -106,19 +130,20 @@ export async function createWhopAddonCheckoutSession(
 
   const client = getWhopClient()
   const returnUrl = getCheckoutReturnUrl('success')
+  const whopRedirectUrl = resolveWhopApiRedirectUrl(returnUrl)
 
   const checkoutConfig = await client.checkoutConfigurations.create({
     plan_id: planId,
-    metadata: {
+    metadata: buildCleanMetadata({
       user_id: userId,
       addon_pack: normalizedPack,
       addon_credits: String(pack.credits),
       addon_price_usd: String(pack.priceUsd),
       user_email: userEmail || undefined,
       ...extraMetadata,
-    },
-    redirect_url: returnUrl,
-    source_url: returnUrl,
+    }),
+    redirect_url: whopRedirectUrl,
+    source_url: whopRedirectUrl,
   })
 
   const sessionPlanId = checkoutConfig.plan?.id || planId
@@ -166,7 +191,9 @@ export async function handleDemoCheckout(
 
 export function isCheckoutConfigured(): boolean {
   if (!isWhopPaymentEnabled()) return false
-  return Boolean(process.env.WHOP_API_KEY && process.env.WHOP_COMPANY_ID)
+  const apiKey = (process.env.WHOP_API_KEY || '').replace(/\\n/g, '').trim()
+  const companyId = getWhopCompanyId()
+  return Boolean(apiKey && companyId)
 }
 
 /** Demo checkout only when Whop is not configured and demo/dev mode is explicitly enabled. */

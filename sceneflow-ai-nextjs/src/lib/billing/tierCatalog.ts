@@ -483,12 +483,13 @@ export function getWhopAddonPlanId(packId: string): string | undefined {
   const normalized = normalizeAddonPackId(packId)
   if (!normalized) return undefined
   const pack = ADDON_PACK_CATALOG[normalized]
-  return process.env[pack.whopPlanEnvKey] || pack.defaultWhopPlanId
+  const envVal = (process.env[pack.whopPlanEnvKey] || '').replace(/\\n/g, '').trim()
+  return envVal || pack.defaultWhopPlanId
 }
 
 export function getAddonPackFromWhopPlanId(planId: string): AddonPackDefinition | null {
   for (const pack of Object.values(ADDON_PACK_CATALOG)) {
-    const envPlanId = process.env[pack.whopPlanEnvKey]
+    const envPlanId = (process.env[pack.whopPlanEnvKey] || '').replace(/\\n/g, '').trim()
     if ((envPlanId && envPlanId === planId) || pack.defaultWhopPlanId === planId) {
       return pack
     }
@@ -500,12 +501,13 @@ export function getWhopPlanId(tierName: string): string | undefined {
   const tier = normalizeTierName(tierName)
   if (!tier) return undefined
   const envKey = TIER_CATALOG[tier].whopPlanEnvKey
-  return process.env[envKey] || DEFAULT_WHOP_PLAN_IDS[tier] || undefined
+  const envVal = (process.env[envKey] || '').replace(/\\n/g, '').trim()
+  return envVal || DEFAULT_WHOP_PLAN_IDS[tier] || undefined
 }
 
 export function getTierNameFromWhopPlanId(planId: string): BillingTierName | null {
   for (const tier of Object.values(TIER_CATALOG)) {
-    const envPlanId = process.env[tier.whopPlanEnvKey]
+    const envPlanId = (process.env[tier.whopPlanEnvKey] || '').replace(/\\n/g, '').trim()
     if ((envPlanId && envPlanId === planId) || DEFAULT_WHOP_PLAN_IDS[tier.name] === planId) {
       return tier.name
     }
@@ -520,16 +522,30 @@ export function isOneTimeTier(tierName: string): boolean {
 }
 
 export function getCheckoutReturnUrl(status: 'success' | 'cancel' = 'success'): string {
-  const base =
-    process.env.WHOP_CHECKOUT_RETURN_URL ||
-    `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/dashboard/settings/billing`
+  const isProd =
+    process.env.NODE_ENV === 'production' || process.env.VERCEL_ENV === 'production'
+  const defaultAppUrl = isProd ? 'https://www.sceneflowai.studio' : 'http://localhost:3000'
+  const rawReturnUrl = (process.env.WHOP_CHECKOUT_RETURN_URL || '').replace(/\\n/g, '').trim()
+  const rawAppUrl = (process.env.NEXT_PUBLIC_APP_URL || '').replace(/\\n/g, '').trim()
+
+  const validReturnUrl =
+    rawReturnUrl && !(isProd && rawReturnUrl.startsWith('http://localhost'))
+      ? rawReturnUrl
+      : ''
+  const validAppUrl =
+    rawAppUrl && !(isProd && rawAppUrl.startsWith('http://localhost'))
+      ? rawAppUrl
+      : defaultAppUrl
+
+  const base = validReturnUrl || `${validAppUrl}/dashboard/settings/billing`
   const separator = base.includes('?') ? '&' : '?'
   const checkoutParam = status === 'cancel' ? 'error' : status
   return `${base}${separator}checkout=${checkoutParam}`
 }
 
 export function isWhopPaymentEnabled(): boolean {
-  return (process.env.PAYMENT_PROVIDER || 'whop') === 'whop'
+  const provider = (process.env.PAYMENT_PROVIDER || 'whop').replace(/\\n/g, '').trim() || 'whop'
+  return provider === 'whop'
 }
 
 export function hasPurchasedExplorer(purchased: string[] | undefined | null): boolean {
