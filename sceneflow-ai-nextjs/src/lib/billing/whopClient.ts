@@ -1,5 +1,5 @@
 import Whop from '@whop/sdk'
-import { WHOP_COMPANY_ID } from './tierCatalog'
+import { DEFAULT_WHOP_COMPANY_ID } from './tierCatalog'
 
 let client: Whop | null = null
 let runtimeConfigLoaded = false
@@ -15,7 +15,7 @@ function sanitizeEnvValue(val: string | undefined): string {
 export async function ensureWhopRuntimeConfig(): Promise<void> {
   if (sanitizeEnvValue(process.env.WHOP_API_KEY)) {
     if (!sanitizeEnvValue(process.env.WHOP_COMPANY_ID)) {
-      process.env.WHOP_COMPANY_ID = WHOP_COMPANY_ID
+      process.env.WHOP_COMPANY_ID = DEFAULT_WHOP_COMPANY_ID
     }
     return
   }
@@ -37,7 +37,7 @@ export async function ensureWhopRuntimeConfig(): Promise<void> {
       }
     }
     if (!sanitizeEnvValue(process.env.WHOP_COMPANY_ID)) {
-      process.env.WHOP_COMPANY_ID = WHOP_COMPANY_ID
+      process.env.WHOP_COMPANY_ID = DEFAULT_WHOP_COMPANY_ID
     }
     runtimeConfigLoaded = true
   } catch (error) {
@@ -64,5 +64,5 @@ export function getWhopClient(): Whop {
 }
 
 export function getWhopCompanyId(): string {
-  return sanitizeEnvValue(process.env.WHOP_COMPANY_ID) || WHOP_COMPANY_ID
+  return sanitizeEnvValue(process.env.WHOP_COMPANY_ID) || DEFAULT_WHOP_COMPANY_ID
 }

@@ -414,9 +414,11 @@ export function getTierCredits(tierName: string): number {
 }
 
 /**
- * Default live Whop plan IDs for SceneFlow AI Studio (biz_6WdfJpp97rWaLl).
+ * Default live Whop company and plan IDs for SceneFlow AI Studio (biz_6WdfJpp97rWaLl).
  * Environment variables take precedence when set.
  */
+export const DEFAULT_WHOP_COMPANY_ID = 'biz_6WdfJpp97rWaLl'
+
 export const DEFAULT_WHOP_PLAN_IDS: Partial<Record<BillingTierName, string>> = {
   explorer: 'plan_7LOYto3DUb7cF',
   hobbyist: 'plan_vO77CPr7sbWwC',
