@@ -1,14 +1,14 @@
 'use client'
 
 import { useEffect, useMemo } from 'react'
-import { WhopCheckoutEmbed } from '@whop/checkout/react'
-import { X, Loader } from 'lucide-react'
+import { X, Loader, ExternalLink, ShieldCheck } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 
 interface WhopCheckoutModalProps {
   isOpen: boolean
   sessionId: string
   returnUrl: string
+  purchaseUrl?: string
   userEmail?: string | null
   onClose: () => void
   onComplete?: () => void
@@ -17,15 +17,19 @@ interface WhopCheckoutModalProps {
 export function WhopCheckoutModal({
   isOpen,
   sessionId,
-  returnUrl,
+  purchaseUrl,
   userEmail,
   onClose,
-  onComplete,
 }: WhopCheckoutModalProps) {
-  const prefill = useMemo(
-    () => (userEmail ? { email: userEmail } : undefined),
-    [userEmail]
-  )
+  const hostedCheckoutUrl = useMemo(() => {
+    if (purchaseUrl) return purchaseUrl
+    if (!sessionId) return ''
+    const url = new URL(`https://whop.com/checkout/${sessionId}/`)
+    if (userEmail && userEmail.trim()) {
+      url.searchParams.set('email', userEmail.trim())
+    }
+    return url.toString()
+  }, [purchaseUrl, sessionId, userEmail])
 
   useEffect(() => {
     if (!isOpen) return
@@ -34,6 +38,12 @@ export function WhopCheckoutModal({
       document.body.style.overflow = 'unset'
     }
   }, [isOpen])
+
+  useEffect(() => {
+    if (isOpen && hostedCheckoutUrl) {
+      window.location.assign(hostedCheckoutUrl)
+    }
+  }, [isOpen, hostedCheckoutUrl])
 
   if (!isOpen) return null
 
@@ -51,22 +61,30 @@ export function WhopCheckoutModal({
           </button>
         </div>
 
-        <div className="p-4 min-h-[480px]">
-          {sessionId ? (
-            <WhopCheckoutEmbed
-              key={sessionId}
-              sessionId={sessionId}
-              theme="dark"
-              returnUrl={returnUrl}
-              prefill={prefill}
-              onComplete={() => {
-                onComplete?.()
-              }}
-            />
+        <div className="p-6 flex flex-col items-center justify-center text-center gap-4 min-h-[280px]">
+          <div className="w-12 h-12 rounded-full bg-sf-primary/20 flex items-center justify-center">
+            <ShieldCheck className="w-6 h-6 text-sf-primary" />
+          </div>
+          <div className="space-y-2">
+            <h4 className="text-base font-semibold text-white">
+              Redirecting to Secure Whop Checkout…
+            </h4>
+            <p className="text-gray-400 text-sm max-w-sm">
+              You will be automatically returned to SceneFlow AI Studio as soon as your payment completes.
+            </p>
+          </div>
+          {hostedCheckoutUrl ? (
+            <Button
+              onClick={() => window.location.assign(hostedCheckoutUrl)}
+              className="w-full max-w-xs bg-sf-primary hover:bg-sf-accent text-white flex items-center justify-center gap-2"
+            >
+              <span>Continue to Secure Checkout</span>
+              <ExternalLink className="w-4 h-4" />
+            </Button>
           ) : (
-            <div className="flex flex-col items-center justify-center h-64 gap-3">
-              <Loader className="w-8 h-8 animate-spin text-sf-primary" />
-              <p className="text-gray-400 text-sm">Loading checkout...</p>
+            <div className="flex flex-col items-center justify-center gap-3">
+              <Loader className="w-6 h-6 animate-spin text-sf-primary" />
+              <p className="text-gray-400 text-sm">Preparing checkout session…</p>
             </div>
           )}
         </div>

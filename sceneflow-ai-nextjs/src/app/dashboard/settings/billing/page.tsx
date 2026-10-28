@@ -173,7 +173,7 @@ export default function BillingPage() {
     }
 
     if (checkoutStatus || checkoutTier) {
-      router.replace('/dashboard/settings/billing', { scroll: false })
+      window.history.replaceState(null, '', '/dashboard/settings/billing')
     }
   }, [session, startCheckout, router, pollForActivation, fetchSubscriptionData])
 
@@ -246,6 +246,7 @@ export default function BillingPage() {
         isOpen={Boolean(checkout)}
         sessionId={checkout?.sessionId || ''}
         returnUrl={checkout?.returnUrl || ''}
+        purchaseUrl={checkout?.purchaseUrl}
         userEmail={session?.user?.email}
         onClose={closeCheckout}
         onComplete={handleCheckoutComplete}

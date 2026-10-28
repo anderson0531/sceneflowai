@@ -8,6 +8,7 @@ import {
   isCheckoutConfigured,
   shouldUseDemoCheckout,
 } from '@/lib/billing/checkoutHelper'
+import { ensureWhopRuntimeConfig } from '@/lib/billing/whopClient'
 
 /** @deprecated Use POST /api/billing/checkout with tierName=explorer */
 export async function POST(req: NextRequest) {
@@ -16,6 +17,8 @@ export async function POST(req: NextRequest) {
     if (!session?.user?.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
+
+    await ensureWhopRuntimeConfig()
 
     const userId = session.user.id
     const userEmail = session.user.email
@@ -48,6 +51,8 @@ export async function POST(req: NextRequest) {
       planId: checkout.planId,
       tierName: checkout.tierName,
       returnUrl: checkout.returnUrl,
+      purchaseUrl: checkout.purchaseUrl,
+      redirectUrl: checkout.purchaseUrl,
     })
   } catch (error: any) {
     console.error('[Explorer Purchase] Error:', error)

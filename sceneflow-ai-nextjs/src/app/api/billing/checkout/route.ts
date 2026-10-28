@@ -52,6 +52,8 @@ export async function POST(req: NextRequest) {
         planId: addonCheckout.planId,
         tierName: addonCheckout.tierName,
         returnUrl: addonCheckout.returnUrl,
+        purchaseUrl: addonCheckout.purchaseUrl,
+        redirectUrl: addonCheckout.purchaseUrl,
       })
     }
 
@@ -90,6 +92,8 @@ export async function POST(req: NextRequest) {
       planId: checkout.planId,
       tierName: checkout.tierName,
       returnUrl: checkout.returnUrl,
+      purchaseUrl: checkout.purchaseUrl,
+      redirectUrl: checkout.purchaseUrl,
     })
   } catch (error: any) {
     console.error('[Billing Checkout] Error:', error)

@@ -18,6 +18,7 @@ export interface CheckoutSessionResult {
   planId: string
   tierName: BillingTierName | AddonPackId
   returnUrl: string
+  purchaseUrl: string
 }
 
 function buildCleanMetadata(
@@ -34,9 +35,29 @@ function buildCleanMetadata(
 
 function resolveWhopApiRedirectUrl(returnUrl: string): string {
   if (returnUrl.startsWith('https://')) {
-    return returnUrl
+    return returnUrl.replace(/^https:\/\/sceneflowai\.studio\b/, 'https://www.sceneflowai.studio')
   }
   return 'https://www.sceneflowai.studio/dashboard/settings/billing?checkout=success'
+}
+
+export function buildWhopPurchaseUrl(
+  rawPurchaseUrl: string | null | undefined,
+  sessionId: string,
+  userEmail?: string | null
+): string {
+  const base =
+    rawPurchaseUrl && rawPurchaseUrl.startsWith('https://')
+      ? rawPurchaseUrl
+      : `https://whop.com/checkout/${sessionId}/`
+  try {
+    const url = new URL(base)
+    if (userEmail && userEmail.trim()) {
+      url.searchParams.set('email', userEmail.trim())
+    }
+    return url.toString()
+  } catch {
+    return base
+  }
 }
 
 export function isValidCheckoutTier(tierName: string): tierName is BillingTierName {
@@ -93,12 +114,18 @@ export async function createWhopCheckoutSession(
   })
 
   const sessionPlanId = checkoutConfig.plan?.id || planId
+  const purchaseUrl = buildWhopPurchaseUrl(
+    checkoutConfig.purchase_url,
+    checkoutConfig.id,
+    userEmail
+  )
 
   return {
     sessionId: checkoutConfig.id,
     planId: sessionPlanId,
     tierName: normalizedTier,
     returnUrl,
+    purchaseUrl,
   }
 }
 
@@ -147,12 +174,18 @@ export async function createWhopAddonCheckoutSession(
   })
 
   const sessionPlanId = checkoutConfig.plan?.id || planId
+  const purchaseUrl = buildWhopPurchaseUrl(
+    checkoutConfig.purchase_url,
+    checkoutConfig.id,
+    userEmail
+  )
 
   return {
     sessionId: checkoutConfig.id,
     planId: sessionPlanId,
     tierName: normalizedPack,
     returnUrl,
+    purchaseUrl,
   }
 }
 

@@ -532,11 +532,11 @@ export function getCheckoutReturnUrl(status: 'success' | 'cancel' = 'success'): 
 
   const validReturnUrl =
     rawReturnUrl && !(isProd && rawReturnUrl.startsWith('http://localhost'))
-      ? rawReturnUrl
+      ? rawReturnUrl.replace(/^https:\/\/sceneflowai\.studio\b/, 'https://www.sceneflowai.studio')
       : ''
   const validAppUrl =
     rawAppUrl && !(isProd && rawAppUrl.startsWith('http://localhost'))
-      ? rawAppUrl
+      ? rawAppUrl.replace(/^https:\/\/sceneflowai\.studio\b/, 'https://www.sceneflowai.studio')
       : defaultAppUrl
 
   const base = validReturnUrl || `${validAppUrl}/dashboard/settings/billing`

@@ -7,6 +7,7 @@ export interface CheckoutSession {
   sessionId: string
   planId: string
   returnUrl: string
+  purchaseUrl?: string
 }
 
 export function useWhopCheckout() {
@@ -31,8 +32,9 @@ export function useWhopCheckout() {
         return
       }
 
-      if (data.redirectUrl) {
-        window.location.href = data.redirectUrl
+      const hostedUrl = data.purchaseUrl || data.redirectUrl
+      if (hostedUrl) {
+        window.location.assign(hostedUrl)
         return
       }
 
@@ -40,6 +42,7 @@ export function useWhopCheckout() {
         sessionId: data.sessionId,
         planId: data.planId,
         returnUrl: data.returnUrl,
+        purchaseUrl: data.purchaseUrl,
       })
     } catch (error) {
       console.error('[useWhopCheckout] Error:', error)

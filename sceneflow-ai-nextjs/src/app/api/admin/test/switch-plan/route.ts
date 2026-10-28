@@ -253,10 +253,7 @@ export async function GET(request: NextRequest) {
       (testFlagEnabled && isAdminEmail(session.user.email));
     
     if (!isTestMode) {
-      return NextResponse.json(
-        { error: 'Test plan switching is disabled in production' },
-        { status: 403 }
-      );
+      return NextResponse.json({ testModeEnabled: false });
     }
 
     const sessionUserId = session.user.id;

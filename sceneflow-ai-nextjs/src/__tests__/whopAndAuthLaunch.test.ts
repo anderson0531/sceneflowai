@@ -11,7 +11,11 @@ import {
   normalizeAddonPackId,
   TIER_CATALOG,
 } from '@/lib/billing/tierCatalog'
-import { isValidAddonPack, isValidCheckoutTier } from '@/lib/billing/checkoutHelper'
+import {
+  buildWhopPurchaseUrl,
+  isValidAddonPack,
+  isValidCheckoutTier,
+} from '@/lib/billing/checkoutHelper'
 
 vi.mock('@/lib/env', () => ({
   isDemoMode: vi.fn(() => false),
@@ -89,6 +93,20 @@ describe('Whop Catalog & Launch Tier Configuration', () => {
       expect(planId).toMatch(/^plan_/)
       expect(getAddonPackFromWhopPlanId(planId!)?.id).toBe(pack.id)
     }
+  })
+
+  it('builds Whop Checkout V2 purchase URLs with prefilled buyer email', () => {
+    const url = buildWhopPurchaseUrl(
+      'https://whop.com/checkout/ch_l2x9jlCatzeVEqR/',
+      'ch_l2x9jlCatzeVEqR',
+      'alex@sceneflowai.studio'
+    )
+    expect(url).toBe(
+      'https://whop.com/checkout/ch_l2x9jlCatzeVEqR/?email=alex%40sceneflowai.studio'
+    )
+
+    const fallbackUrl = buildWhopPurchaseUrl(null, 'ch_test123', null)
+    expect(fallbackUrl).toBe('https://whop.com/checkout/ch_test123/')
   })
 })
 
