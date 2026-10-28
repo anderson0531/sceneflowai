@@ -128,7 +128,50 @@ const retry = {
   backoffExponent: 1.6,
 }
 
+function cleanDbUrl(raw?: string | null): string | null {
+  if (!raw) return null
+  const cleaned = raw.replace(/\\n/g, '').trim()
+  return cleaned.length > 0 ? cleaned : null
+}
+
+function resolveDirectPostgresEnv(): { source: string; url: string } | null {
+  const candidates: Array<[string, string | undefined]> = [
+    ['DATABASE_URL_DIRECT', process.env.DATABASE_URL_DIRECT],
+    ['DATABASE_URL_UNPOOLED', process.env.DATABASE_URL_UNPOOLED],
+    ['POSTGRES_URL_NON_POOLING', process.env.POSTGRES_URL_NON_POOLING],
+    ['SUPABASE_DATABASE_URL', process.env.SUPABASE_DATABASE_URL],
+    ['POSTGRES_URL', process.env.POSTGRES_URL],
+    ['DATABASE_URL', process.env.DATABASE_URL],
+  ]
+
+  for (const [source, val] of candidates) {
+    const cleaned = cleanDbUrl(val)
+    if (cleaned && /^postgres(ql)?:\/\//i.test(cleaned)) {
+      return { source, url: cleaned }
+    }
+  }
+
+  const pgHost = cleanDbUrl(process.env.PGHOST_UNPOOLED || process.env.PGHOST)
+  const pgUser = cleanDbUrl(process.env.PGUSER)
+  const pgPass = cleanDbUrl(process.env.PGPASSWORD)
+  const pgDb = cleanDbUrl(process.env.PGDATABASE)
+  if (pgHost && pgUser && pgPass && pgDb) {
+    return {
+      source: 'PGHOST_UNPOOLED',
+      url: `postgresql://${encodeURIComponent(pgUser)}:${encodeURIComponent(pgPass)}@${pgHost}:5432/${encodeURIComponent(pgDb)}?sslmode=require`,
+    }
+  }
+
+  return null
+}
+
+const resolvedDirect = resolveDirectPostgresEnv()
+
 function useCloudSqlFromEnv(): boolean {
+  // Prefer direct Postgres URL (e.g. Neon Postgres on Vercel) unless FORCE_CLOUD_SQL=true
+  if (resolvedDirect && process.env.FORCE_CLOUD_SQL !== 'true') {
+    return false
+  }
   return Boolean(
     process.env.CLOUD_SQL_INSTANCE_CONNECTION_NAME?.trim() &&
       process.env.DB_USER?.trim() &&
@@ -139,24 +182,9 @@ function useCloudSqlFromEnv(): boolean {
 
 const cloudSqlEnabled = useCloudSqlFromEnv()
 
-const directEnvSource = cloudSqlEnabled
-  ? null
-  : process.env.DATABASE_URL_DIRECT
-    ? 'DATABASE_URL_DIRECT'
-    : process.env.POSTGRES_URL_NON_POOLING
-      ? 'POSTGRES_URL_NON_POOLING'
-      : process.env.SUPABASE_DATABASE_URL
-        ? 'SUPABASE_DATABASE_URL'
-        : process.env.DATABASE_URL
-          ? 'DATABASE_URL'
-          : null
+const directEnvSource = cloudSqlEnabled ? null : (resolvedDirect?.source ?? null)
 
-const rawConnectionString = cloudSqlEnabled
-  ? null
-  : process.env.DATABASE_URL_DIRECT ||
-    process.env.POSTGRES_URL_NON_POOLING ||
-    process.env.SUPABASE_DATABASE_URL ||
-    process.env.DATABASE_URL
+const rawConnectionString = cloudSqlEnabled ? null : (resolvedDirect?.url ?? null)
 
 if (!cloudSqlEnabled && (!rawConnectionString || !directEnvSource)) {
   throw new Error(

@@ -1,7 +1,8 @@
 import { NextResponse } from 'next/server'
-import { testConnection } from '@/config/database'
+import { testConnection, getDatabaseConnectionInfo } from '@/config/database'
 
 export async function GET() {
+  const connInfo = getDatabaseConnectionInfo()
   try {
     console.log('🔍 Health check called')
     
@@ -11,6 +12,8 @@ export async function GET() {
     return NextResponse.json({
       status: 'healthy',
       database: 'connected',
+      mode: connInfo.mode,
+      envSource: connInfo.envSource,
       timestamp: new Date().toISOString()
     })
   } catch (error) {
@@ -19,6 +22,8 @@ export async function GET() {
       {
         status: 'unhealthy',
         database: 'disconnected',
+        mode: connInfo.mode,
+        envSource: connInfo.envSource,
         error: error instanceof Error ? error.message : 'Unknown error',
         timestamp: new Date().toISOString()
       },
