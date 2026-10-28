@@ -13,8 +13,8 @@ export function FloatingNav() {
       { id: 'two-modes', label: t('twoModes'), icon: Layers },
       { id: 'direct-control', label: t('directControl'), icon: Bot },
       { id: 'publish-cut', label: t('publishCut'), icon: Share2 },
-      { id: 'key-features', label: t('keyFeatures'), icon: Sparkles },
       { id: 'production-examples', label: t('productionExamples'), icon: Clapperboard },
+      { id: 'key-features', label: t('keyFeatures'), icon: Sparkles },
       { id: 'pricing', label: t('pricing'), icon: DollarSign },
       { id: 'trust-safety', label: t('trustSafety'), icon: Shield },
     ],
@@ -23,10 +23,13 @@ export function FloatingNav() {
   const expandSection = useExpandLandingSection()
   const [activeSection, setActiveSection] = useState('')
   const [isVisible, setIsVisible] = useState(false)
+  const [scrollProgress, setScrollProgress] = useState(0)
 
   useEffect(() => {
     const handleScroll = () => {
       setIsVisible(window.scrollY > 600)
+      const totalHeight = document.documentElement.scrollHeight - window.innerHeight
+      setScrollProgress(totalHeight > 0 ? Math.min(1, Math.max(0, window.scrollY / totalHeight)) : 0)
 
       for (const section of sections) {
         const el = document.getElementById(section.id)
@@ -98,14 +101,7 @@ export function FloatingNav() {
                 originY: 0,
               }}
               animate={{
-                scaleY:
-                  typeof window !== 'undefined'
-                    ? Math.min(
-                        1,
-                        window.scrollY /
-                          (document.documentElement.scrollHeight - window.innerHeight)
-                      )
-                    : 0,
+                scaleY: scrollProgress,
               }}
               transition={{ duration: 0.1 }}
             />

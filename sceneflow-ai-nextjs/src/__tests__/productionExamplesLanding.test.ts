@@ -43,13 +43,13 @@ function readSource(relativePath: string): string {
 }
 
 describe('Production Examples landing section', () => {
-  it('renders on the landing page after Key Features', () => {
+  it('renders on the landing page before Key Features so long-form proof leads the deep dive', () => {
     const source = readSource('src/app/LandingPageClient.tsx')
 
     expect(source).toContain("import('@/components/landing/ProductionExamplesSection')")
     expect(source).not.toContain('<UseCasesSection />')
-    expect(source.indexOf('<KeyFeaturesSection />')).toBeLessThan(
-      source.indexOf('<ProductionExamplesSection />')
+    expect(source.indexOf('<ProductionExamplesSection />')).toBeLessThan(
+      source.indexOf('<KeyFeaturesSection />')
     )
     expect(source).not.toContain('<PipelinePillarsSection />')
 
@@ -58,7 +58,7 @@ describe('Production Examples landing section', () => {
       'src/app/components/Header.tsx',
     ]) {
       const nav = readSource(relativePath)
-      expect(nav.indexOf('key-features')).toBeLessThan(nav.indexOf('production-examples'))
+      expect(nav.indexOf('production-examples')).toBeLessThan(nav.indexOf('key-features'))
     }
   })
 
@@ -254,7 +254,18 @@ describe('Production Examples i18n contract', () => {
       expect(series.continuityLock.length).toBeGreaterThan(10)
       expect(series.unitLabel.length).toBeGreaterThan(5)
       expect(series.logline.length).toBeGreaterThan(20)
+      expect(series.seriesSynopsis.length).toBeGreaterThan(80)
       expect(series.storyline.length).toBeGreaterThan(40)
+      expect(series.cast.length).toBeGreaterThanOrEqual(4)
+      for (const member of series.cast) {
+        expect(member.name.length).toBeGreaterThan(2)
+        expect(member.role.length).toBeGreaterThan(4)
+        expect(member.descriptor.length).toBeGreaterThan(20)
+      }
+      expect(series.episode1Synopsis.title.length).toBeGreaterThan(5)
+      expect(series.episode1Synopsis.synopsis.length).toBeGreaterThan(60)
+      expect(series.episode1Synopsis.chapter1Title).toContain('Chapter 1')
+      expect(series.episode1Synopsis.chapter1Synopsis.length).toBeGreaterThan(40)
       expect(series.episodes.length).toBeGreaterThanOrEqual(5)
       for (const ep of series.episodes) {
         expect(ep.duration.length).toBeGreaterThan(2)
@@ -264,6 +275,9 @@ describe('Production Examples i18n contract', () => {
       expect(text).toContain('Art Style: ')
       expect(text).toContain('Duration: ')
       expect(text).toContain('Create Series input')
+      expect(text).toContain('Series Synopsis')
+      expect(text).toContain('Cast & Continuity Locks')
+      expect(text).toContain('Chapter 1')
       expect(text).toContain('Storyline')
       expect(text).toContain('1. ')
       expect(text).toContain('5. ')
@@ -431,6 +445,30 @@ describe('Production style CTAs', () => {
 
     expect(card).toContain('mt-4 w-full bg-gradient-to-r text-white')
     expect(card).not.toContain('md:group-hover:opacity-100')
+  })
+
+  it('frames the trailer in an unobstructed 16:9 header and uses interactive SeriesInputPanel tabs instead of nested scroll', () => {
+    const card = readSource('src/components/landing/ProductionStyleCard.tsx')
+    const panel = readSource('src/components/landing/SeriesInputPanel.tsx')
+    const stage = readSource('src/components/landing/PipelinePlaceholderStage.tsx')
+    const floatingCta = readSource('src/components/landing/FloatingCTA.tsx')
+    const heroBg = readSource('src/components/landing/HeroVideoBackground.tsx')
+    const primaryBackdrop = readSource('src/components/landing/PrimaryValueBackdrop.tsx')
+    const trailerPlayer = readSource('src/components/landing/TrailerPlayer.tsx')
+
+    expect(card).toContain('aspect-video w-full shrink-0 overflow-hidden')
+    expect(panel).not.toContain('overflow-y-auto')
+    expect(panel).toContain("id: 'bible'")
+    expect(panel).toContain("id: 'cast'")
+    expect(panel).toContain("id: 'episode1'")
+    expect(panel).toContain("id: 'season'")
+    expect(stage).toContain('showcaseCard?.solutionPillars')
+    expect(floatingCta).toContain("getSignupUrlForTier('explorer')")
+    expect(heroBg).toContain('IntersectionObserver')
+    expect(primaryBackdrop).toContain('IntersectionObserver')
+    expect(trailerPlayer).toContain('IntersectionObserver')
+    expect(enMessages.notify.heading).toContain('January 2027')
+    expect(enMessages.finalCta.subtitle).toContain('January 2027')
   })
 })
 

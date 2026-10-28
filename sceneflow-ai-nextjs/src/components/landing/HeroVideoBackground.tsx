@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, type RefObject } from 'react'
+import { useEffect, useState, type RefObject } from 'react'
 import {
   getHeroPublicVideoSources,
   HERO_PUBLIC_POSTER_FALLBACK,
@@ -35,20 +35,36 @@ export function HeroVideoBackground({
   onPlaying,
 }: HeroVideoBackgroundProps) {
   const prefersReducedMotion = useReducedMotion()
+  const [inViewport, setInViewport] = useState(true)
   const sources = getHeroPublicVideoSources(locale)
   const poster = sources.poster || HERO_PUBLIC_POSTER_FALLBACK
 
   useEffect(() => {
     const video = videoRef.current
+    if (!video || typeof IntersectionObserver === 'undefined') return
+    const observer = new IntersectionObserver(
+      (entries) => {
+        for (const entry of entries) {
+          setInViewport(entry.isIntersecting && entry.intersectionRatio >= 0.15)
+        }
+      },
+      { threshold: [0, 0.15, 0.5] }
+    )
+    observer.observe(video)
+    return () => observer.disconnect()
+  }, [locale, videoRef])
+
+  useEffect(() => {
+    const video = videoRef.current
     if (!video) return
 
-    if (prefersReducedMotion || !shouldPlay) {
+    if (prefersReducedMotion || !shouldPlay || !inViewport) {
       video.pause()
       return
     }
 
     void video.play().catch(() => {})
-  }, [locale, shouldPlay, prefersReducedMotion, videoRef])
+  }, [locale, shouldPlay, prefersReducedMotion, inViewport, videoRef])
 
   return (
     <video

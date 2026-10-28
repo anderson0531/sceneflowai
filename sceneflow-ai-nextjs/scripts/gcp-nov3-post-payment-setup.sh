@@ -42,7 +42,7 @@ echo ""
 # ------------------------------------------------------------------------------
 # 1. Verify Billing Account Status & Single-Project Consolidation
 # ------------------------------------------------------------------------------
-echo "=== [1/6] Checking Billing Account ${PRIMARY_BILLING} Status ==="
+echo "=== [1/7] Checking Billing Account ${PRIMARY_BILLING} Status ==="
 BILLING_OPEN=$(gcloud billing accounts describe "${PRIMARY_BILLING}" --format="value(open)" 2>/dev/null || echo "false")
 echo "Billing Account ${PRIMARY_BILLING} open status: ${BILLING_OPEN}"
 
@@ -65,7 +65,7 @@ echo ""
 # ------------------------------------------------------------------------------
 # 2. Verify Cloud SQL Cleanup & Restart sceneflow-db with Cost Guards
 # ------------------------------------------------------------------------------
-echo "=== [2/6] Verifying Cloud SQL Instances in ${PRIMARY_PROJECT} ==="
+echo "=== [2/7] Verifying Cloud SQL Instances in ${PRIMARY_PROJECT} ==="
 for DB in clearsight-db clearsight-db-v2; do
   if gcloud sql instances describe "${DB}" --project="${PRIMARY_PROJECT}" >/dev/null 2>&1; then
     echo "Deleting unused Cloud SQL instance ${DB}..."
@@ -93,7 +93,7 @@ echo ""
 # ------------------------------------------------------------------------------
 # 3. Set 7-Day Auto-Delete Lifecycle Rule on gs://sceneflow-render-jobs
 # ------------------------------------------------------------------------------
-echo "=== [3/6] Setting 7-Day Auto-Delete Lifecycle Rule on gs://${RENDER_JOBS_BUCKET} ==="
+echo "=== [3/7] Setting 7-Day Auto-Delete Lifecycle Rule on gs://${RENDER_JOBS_BUCKET} ==="
 TOKEN=$(gcloud auth print-access-token)
 LIFECYCLE_PAYLOAD='{"lifecycle":{"rule":[{"action":{"type":"Delete"},"condition":{"age":7}}]}}'
 
@@ -118,7 +118,7 @@ echo ""
 # ------------------------------------------------------------------------------
 # 4. Configure Cloud Billing Budget Alerts ($50, $100, $200, $250/mo)
 # ------------------------------------------------------------------------------
-echo "=== [4/6] Configuring Cloud Billing Budget Alerts on ${PRIMARY_BILLING} ==="
+echo "=== [4/7] Configuring Cloud Billing Budget Alerts on ${PRIMARY_BILLING} ==="
 gcloud services enable billingbudgets.googleapis.com --project="${PRIMARY_PROJECT}" 2>/dev/null || true
 
 EXISTING_BUDGETS=$(gcloud billing budgets list --billing-account="${PRIMARY_BILLING}" --format="value(displayName)" 2>/dev/null || true)
@@ -141,7 +141,7 @@ echo ""
 # ------------------------------------------------------------------------------
 # 5. Clean Up Unused GCP Projects (Optional Flag: --delete-unused-projects)
 # ------------------------------------------------------------------------------
-echo "=== [5/6] Checking Unused GCP Projects ==="
+echo "=== [5/7] Checking Unused GCP Projects ==="
 if [[ "${DELETE_UNUSED_PROJECTS}" == "true" ]]; then
   for UNUSED_PROJ in sceneflow-export gen-lang-client-0842101693; do
     echo "Deleting empty unused project ${UNUSED_PROJ}..."
@@ -153,9 +153,39 @@ fi
 echo ""
 
 # ------------------------------------------------------------------------------
-# 6. Verify IAM Alignment for Google for Startups $2K Credits Application
+# 6. Reestablish & Verify Core GCP Services (Vertex AI, GCS, Cloud Run, TTS)
 # ------------------------------------------------------------------------------
-echo "=== [6/6] Google for Startups Application Readiness Summary ==="
+echo "=== [6/7] Reestablishing & Verifying Core GCP Services in ${PRIMARY_PROJECT} ==="
+if [[ "${BILLING_OPEN}" == "True" || "${BILLING_OPEN}" == "true" ]]; then
+  echo "Ensuring required production APIs are enabled..."
+  gcloud services enable \
+    aiplatform.googleapis.com \
+    sqladmin.googleapis.com \
+    storage.googleapis.com \
+    run.googleapis.com \
+    texttospeech.googleapis.com \
+    translate.googleapis.com \
+    billingbudgets.googleapis.com \
+    --project="${PRIMARY_PROJECT}" || echo "⚠️ Service enablement warning; check billing propagation."
+fi
+
+echo "Verifying Cloud Storage buckets (${ASSETS_BUCKET}, ${RENDER_JOBS_BUCKET})..."
+for BUCKET in "${ASSETS_BUCKET}" "${RENDER_JOBS_BUCKET}" "${LEGACY_REFS_BUCKET}"; do
+  if gcloud storage buckets describe "gs://${BUCKET}" --project="${PRIMARY_PROJECT}" >/dev/null 2>&1; then
+    echo "✅ Bucket gs://${BUCKET} is accessible."
+  else
+    echo "⚠️ Bucket gs://${BUCKET} not reachable yet (check billing state)."
+  fi
+done
+
+echo "Verifying Cloud Run services in ${PRIMARY_PROJECT}..."
+gcloud run services list --project="${PRIMARY_PROJECT}" --format="table(SERVICE,REGION,URL,LAST_DEPLOYED_BY)" 2>/dev/null || true
+echo ""
+
+# ------------------------------------------------------------------------------
+# 7. Verify IAM Alignment for Google for Startups & NVIDIA Inception Readiness
+# ------------------------------------------------------------------------------
+echo "=== [7/7] Google for Startups & NVIDIA Inception Readiness Summary ==="
 echo "Project ID          : ${PRIMARY_PROJECT}"
 echo "Billing Account ID  : ${PRIMARY_BILLING} (USD)"
 echo "Project IAM Roles   :"
@@ -170,7 +200,12 @@ gcloud billing accounts get-iam-policy "${PRIMARY_BILLING}" \
   --format="table(bindings.role, bindings.members)"
 echo ""
 echo "=============================================================================="
-echo " Done! If you haven't accepted the Owner invite for brian@sceneflowai.studio"
-echo " yet, open: https://console.cloud.google.com/iam-admin/iam?project=${PRIMARY_PROJECT}"
-echo " and click 'Grant Access' -> brian@sceneflowai.studio -> Role: Owner."
+echo " Next Steps After Script Completion (Nov 3, 2026 Plan of Action):"
+echo "  1. Run Organization alignment: bash scripts/gcp-setup-organization.sh"
+echo "  2. Verify live flagship share links (/TheWhiteCityCurrent, /s/series/...)"
+echo "  3. Execute Phase 1 (Pre-Credit Budget ~$85-$120): Generate Series Bible,"
+echo "     Blueprint, AR, Pre-Vis & Chapter 1 Motion Master for all 4 examples"
+echo "     (The White City Current, Hart House, The Long Thought, Five Plates)."
+echo "  4. Submit Google for Startups, NVIDIA Inception & Seed Investor decks."
+echo "  5. Phase 2 (Post-Credit Unlock): Render Chapters 2-N & full Masters."
 echo "=============================================================================="

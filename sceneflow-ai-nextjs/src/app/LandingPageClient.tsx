@@ -49,8 +49,8 @@ export default function LandingPageClient() {
       <LandingSectionCollapseProvider>
         <FloatingNav />
 
-        <KeyFeaturesSection />
         <ProductionExamplesSection />
+        <KeyFeaturesSection />
         <PricingCredits />
         <InfrastructureSection />
         <TrustSafeguardSection />

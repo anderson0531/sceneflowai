@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { motion } from 'framer-motion'
-import { ArrowRight, Globe, Languages, Loader2, Maximize2, Pause, Play, Volume2, VolumeX } from 'lucide-react'
+import { ArrowRight, Clapperboard, Globe, Languages, Loader2, Maximize2, Pause, Play, Volume2, VolumeX } from 'lucide-react'
 import { useTranslations, useLocale } from 'next-intl'
 import { Button } from '@/components/ui/Button'
 import {
@@ -51,6 +51,7 @@ export function PrimaryValueBackdrop({
   const t = useTranslations(namespace)
   const tHero = useTranslations('hero')
   const tCommon = useTranslations('common')
+  const tShowcase = useTranslations('productionShowcase')
   const landingLocale = useLocale()
   const destinations = getDistributionDestinations(landingLocale)
   const comparison = t.raw('comparison') as ComparisonCopy
@@ -77,6 +78,7 @@ export function PrimaryValueBackdrop({
   const prefersReducedMotion = useReducedMotion()
   const videoRef = useRef<HTMLVideoElement>(null)
   const [isPlaying, setIsPlaying] = useState(!prefersReducedMotion)
+  const [inViewport, setInViewport] = useState(true)
   const [isMuted, setIsMuted] = useState(true)
   const [showUnmutePrompt, setShowUnmutePrompt] = useState(true)
   const [isTheaterOpen, setIsTheaterOpen] = useState(false)
@@ -86,9 +88,28 @@ export function PrimaryValueBackdrop({
     window.location.href = getSignupUrlForTier('explorer')
   }
 
+  const scrollToExamples = () => {
+    document.getElementById('production-examples')?.scrollIntoView({ behavior: 'smooth' })
+  }
+
   useEffect(() => {
     if (prefersReducedMotion) setIsPlaying(false)
   }, [prefersReducedMotion])
+
+  useEffect(() => {
+    const video = videoRef.current
+    if (!video || !hasVideo || typeof IntersectionObserver === 'undefined') return
+    const observer = new IntersectionObserver(
+      (entries) => {
+        for (const entry of entries) {
+          setInViewport(entry.isIntersecting && entry.intersectionRatio >= 0.2)
+        }
+      },
+      { threshold: [0, 0.2, 0.5] }
+    )
+    observer.observe(video)
+    return () => observer.disconnect()
+  }, [hasVideo, activeLocaleId])
 
   useEffect(() => {
     setActiveLocaleId(syncedLocaleId)
@@ -109,7 +130,7 @@ export function PrimaryValueBackdrop({
     const video = videoRef.current
     if (!video || !hasVideo) return
 
-    const shouldPlay = isPlaying && !isTheaterOpen && !prefersReducedMotion
+    const shouldPlay = isPlaying && inViewport && !isTheaterOpen && !prefersReducedMotion
     video.muted = isTheaterOpen ? true : isMuted
     if (!shouldPlay) {
       video.pause()
@@ -119,6 +140,7 @@ export function PrimaryValueBackdrop({
     void video.play().catch(() => {})
   }, [
     hasVideo,
+    inViewport,
     isMuted,
     isPlaying,
     isTheaterOpen,
@@ -184,7 +206,7 @@ export function PrimaryValueBackdrop({
     <>
       <section
         id={sectionId}
-        className="relative min-h-[80vh] scroll-mt-20 overflow-hidden bg-gray-950 text-white"
+        className="relative min-h-[64vh] scroll-mt-20 overflow-hidden bg-gray-950 text-white"
       >
         {hashAliases.map((aliasId) => (
           <span
@@ -304,7 +326,7 @@ export function PrimaryValueBackdrop({
           </div>
         )}
 
-        <div className="relative z-10 mx-auto flex min-h-[80vh] max-w-7xl flex-col justify-center px-4 py-24 sm:px-6 lg:px-8">
+        <div className="relative z-10 mx-auto flex min-h-[64vh] max-w-7xl flex-col justify-center px-4 py-16 sm:px-6 sm:py-20 lg:px-8">
           <motion.div
             className="text-center"
             initial={{ opacity: 0, y: 20 }}
@@ -369,7 +391,7 @@ export function PrimaryValueBackdrop({
           )}
 
           <motion.div
-            className="mt-10 flex justify-center"
+            className="mt-10 flex flex-wrap items-center justify-center gap-3"
             initial={{ opacity: 0, y: 12 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
@@ -382,6 +404,15 @@ export function PrimaryValueBackdrop({
             >
               {t('cta')}
               <ArrowRight className="ml-2 h-5 w-5" />
+            </Button>
+            <Button
+              size="lg"
+              variant="outline"
+              className="border-white/25 bg-black/45 text-white backdrop-blur-sm hover:border-cyan-400/50 hover:bg-black/65"
+              onClick={scrollToExamples}
+            >
+              <Clapperboard className="mr-2 h-4 w-4 text-cyan-400" />
+              {tShowcase('badge')}
             </Button>
           </motion.div>
         </div>

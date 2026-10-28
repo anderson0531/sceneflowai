@@ -2793,19 +2793,19 @@
     "collapseSection": "Hide section"
   },
   "notify": {
-    "heading": "Get launch news",
-    "description": "Leave your email and we’ll tell you when we announce. Nothing else.",
+    "heading": "Get January 2027 launch news",
+    "description": "Leave your email and we’ll notify you for the January 2027 public launch and new Screening Room releases. Nothing else.",
     "placeholder": "you@studio.com",
     "submit": "Notify me",
     "submitting": "Sending…",
     "successTitle": "Check your inbox.",
-    "successBody": "We sent a confirmation link. Click it to join the launch list. Nothing else.",
+    "successBody": "We sent a confirmation link. Click it to join the January 2027 launch list. Nothing else.",
     "errorEmpty": "Enter your email so we can reach you.",
     "errorInvalid": "That email doesn’t look right. Check it and try again.",
     "errorGeneric": "Something went wrong. Try again in a moment.",
-    "privacy": "We email a confirmation link first. One launch note after you confirm. No spam.",
+    "privacy": "We email a confirmation link first. One launch note for January 2027 after you confirm. No spam.",
     "confirmTitle": "You’re on the list.",
-    "confirmBody": "We’ll email you when we announce. Nothing else.",
+    "confirmBody": "We’ll email you when we launch in January 2027. Nothing else.",
     "confirmExpiredTitle": "That link expired.",
     "confirmExpiredBody": "Submit your email on the landing page again and we’ll send a new confirmation link.",
     "confirmInvalidTitle": "That link isn’t valid.",
@@ -2849,7 +2849,7 @@
   },
   "finalCta": {
     "title": "Built for the stories that have to hold.",
-    "subtitle": "Leave your email for launch news — or start directing now from the $9 Explorer plan.",
+    "subtitle": "Leave your email for January 2027 launch news — or start directing now from the $9 Explorer plan.",
     "cta": "Explore plans",
     "ctaSecondary": "See how it works",
     "ctaSecondaryHref": "#two-modes"

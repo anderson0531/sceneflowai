@@ -9,16 +9,20 @@ import { LEGAL_SUPPORT_EMAIL } from '@/config/legal/legalCopy'
 
 export function Footer() {
   const t = useTranslations('footer')
+  const tNav = useTranslations('nav')
+  const tFilmmakers = useTranslations('forFilmmakers')
   const locale = useLocale()
 
   const footerLinks = {
     product: [
+      { name: tNav('productionExamples'), href: '#production-examples' },
       { name: t('links.features'), href: '#key-features' },
+      { name: t('links.howItWorks'), href: '#two-modes' },
       { name: t('links.pricing'), href: '#pricing' },
-      { name: t('links.howItWorks'), href: '#key-features' },
     ],
     resources: [
-      { name: t('links.gettingStarted'), href: '#key-features' },
+      { name: t('links.gettingStarted'), href: '#two-modes' },
+      { name: tFilmmakers('badge'), href: '#for-filmmakers' },
       { name: t('links.pricing'), href: '#pricing' },
     ],
     legal: [

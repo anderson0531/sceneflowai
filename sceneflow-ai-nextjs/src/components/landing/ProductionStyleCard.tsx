@@ -171,26 +171,27 @@ export function ProductionStyleCard({
       viewport={{ once: true }}
       transition={{ duration: 0.5, delay: index * 0.1 }}
     >
-      <TrailerPlayer
-        mode="background"
-        webmSrc={media.trailerSrc}
-        mp4Src={media.trailerMp4Src}
-        label={trailerLabel}
-        enterFullscreenLabel={enterFullscreenLabel}
-        exitFullscreenLabel={exitFullscreenLabel}
-      />
-      <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/85 to-slate-950/45" />
-
-      <div className="pointer-events-none relative z-10 flex flex-1 flex-col p-4 sm:p-6">
+      <div className="relative aspect-video w-full shrink-0 overflow-hidden border-b border-white/10 bg-slate-950">
+        <TrailerPlayer
+          mode="background"
+          webmSrc={media.trailerSrc}
+          mp4Src={media.trailerMp4Src}
+          label={trailerLabel}
+          enterFullscreenLabel={enterFullscreenLabel}
+          exitFullscreenLabel={exitFullscreenLabel}
+        />
+        <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-slate-950/90 via-transparent to-black/35" />
         <div
-          className={`absolute top-4 right-4 flex items-center gap-1 rounded-full px-3 py-1 text-xs font-semibold ${style.badge}`}
+          className={`pointer-events-none absolute top-3 right-3 z-20 flex items-center gap-1 rounded-full px-3 py-1 text-xs font-semibold backdrop-blur-md ${style.badge}`}
         >
           <Sparkles className="h-3 w-3" />
           {card.badge}
         </div>
+      </div>
 
-        <div className="mb-4 flex items-start gap-4 pt-10 sm:pr-28">
-          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-gray-900/50">
+      <div className="pointer-events-none relative z-10 flex flex-1 flex-col bg-gradient-to-b from-slate-950/95 to-slate-950 p-4 sm:p-6">
+        <div className="mb-4 flex items-start gap-4">
+          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-gray-900/50 ring-1 ring-white/10">
             <Icon className={`h-6 w-6 ${style.accent}`} />
           </div>
           <div>

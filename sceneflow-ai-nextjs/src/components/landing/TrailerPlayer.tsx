@@ -36,12 +36,28 @@ export function TrailerPlayer({
   const prefersReducedMotion = useReducedMotion()
   const [theaterOpen, setTheaterOpen] = useState(false)
   const [isPlaying, setIsPlaying] = useState(mode === 'background')
+  const [inViewport, setInViewport] = useState(true)
   const [isMuted, setIsMuted] = useState(true)
   const [isFullscreen, setIsFullscreen] = useState(false)
   const webm = webmSrc?.trim() || ''
   const mp4 = mp4Src?.trim() || ''
   const hasVideo = Boolean(webm || mp4)
   const background = mode === 'background'
+
+  useEffect(() => {
+    const video = videoRef.current
+    if (!video || !hasVideo || typeof IntersectionObserver === 'undefined') return
+    const observer = new IntersectionObserver(
+      (entries) => {
+        for (const entry of entries) {
+          setInViewport(entry.isIntersecting && entry.intersectionRatio >= 0.15)
+        }
+      },
+      { threshold: [0, 0.15, 0.5] }
+    )
+    observer.observe(video)
+    return () => observer.disconnect()
+  }, [hasVideo, webm, mp4, mode])
 
   useEffect(() => {
     const video = videoRef.current
@@ -63,7 +79,7 @@ export function TrailerPlayer({
   useEffect(() => {
     const video = videoRef.current
     if (!video || !hasVideo) return
-    if ((prefersReducedMotion && !isFullscreen) || theaterOpen) {
+    if ((prefersReducedMotion && !isFullscreen) || theaterOpen || (!inViewport && !isFullscreen)) {
       video.pause()
       return
     }
@@ -71,7 +87,7 @@ export function TrailerPlayer({
       video.muted = isMuted
       void video.play().catch(() => {})
     }
-  }, [background, hasVideo, isFullscreen, isMuted, prefersReducedMotion, theaterOpen, webm, mp4])
+  }, [background, hasVideo, inViewport, isFullscreen, isMuted, prefersReducedMotion, theaterOpen, webm, mp4])
 
   useEffect(() => {
     if (!theaterOpen) return

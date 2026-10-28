@@ -3,7 +3,7 @@
 import { Button } from '@/components/ui/Button'
 import { trackCta } from '@/lib/analytics'
 import { motion } from 'framer-motion'
-import { Menu, X, User, LogOut, Shield, Sparkles, ChevronDown, LayoutDashboard, Clapperboard, ArrowRight, Compass } from 'lucide-react'
+import { Menu, X, User, LogOut, Shield, Sparkles, ChevronDown, LayoutDashboard, Clapperboard, ArrowRight, Compass, CreditCard } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { useSession, signOut } from 'next-auth/react'
 import {
@@ -20,6 +20,7 @@ import {
   getLoginUrlFromLegacySearch,
   navigateToDashboard,
 } from '@/lib/auth/postLoginRedirect'
+import { getSignupUrlForTier } from '@/lib/billing/checkoutIntent'
 import { LanguageSelector } from './LanguageSelector'
 import { SceneFlowStudioBrand } from '@/components/layout/SceneFlowStudioBrand'
 import { useTranslations } from 'next-intl'
@@ -38,7 +39,7 @@ export function Header() {
   const user = session?.user
 
   const loginUrl = getLoginUrl({ returnUrl: getDashboardUrl(), mode: 'login' })
-  const signupUrl = getLoginUrl({ mode: 'signup' })
+  const signupUrl = getSignupUrlForTier('explorer')
 
   // Scroll progress tracking
   useEffect(() => {
@@ -150,6 +151,14 @@ export function Header() {
               </button>
 
               <button
+                onClick={() => scrollToSection('production-examples')}
+                className="flex items-center gap-1.5 px-4 py-2 text-gray-300 hover:text-white transition-colors cursor-pointer font-medium rounded-lg hover:bg-slate-800/50"
+              >
+                <Clapperboard className="w-4 h-4 text-sf-primary" />
+                {t('productionExamples')}
+              </button>
+
+              <button
                 onClick={() => scrollToSection('key-features')}
                 className="flex items-center gap-1.5 px-4 py-2 text-gray-300 hover:text-white transition-colors cursor-pointer font-medium rounded-lg hover:bg-slate-800/50"
               >
@@ -158,18 +167,10 @@ export function Header() {
               </button>
 
               <button
-                onClick={() => scrollToSection('production-examples')}
-                className="flex items-center gap-1.5 px-4 py-2 text-gray-300 hover:text-white transition-colors cursor-pointer font-medium rounded-lg hover:bg-slate-800/50"
-              >
-                <Clapperboard className="w-4 h-4" />
-                {t('productionExamples')}
-              </button>
-
-              <button
                 onClick={() => scrollToSection('pricing')}
                 className="flex items-center gap-1.5 px-4 py-2 text-gray-300 hover:text-white transition-colors cursor-pointer font-medium rounded-lg hover:bg-slate-800/50"
               >
-                <Sparkles className="w-4 h-4 text-sf-primary" />
+                <CreditCard className="w-4 h-4 text-sf-primary" />
                 {t('plansPricing')}
               </button>
 
@@ -177,7 +178,7 @@ export function Header() {
                 onClick={() => scrollToSection('trust-safety')}
                 className="flex items-center gap-1.5 px-4 py-2 text-gray-300 hover:text-white transition-colors cursor-pointer font-medium rounded-lg hover:bg-slate-800/50"
               >
-                <Shield className="w-4 h-4" />
+                <Shield className="w-4 h-4 text-sf-primary" />
                 {t('trustSafety')}
               </button>
             </nav>
@@ -254,7 +255,7 @@ export function Header() {
             {/* Top Line - Logo, language globe, and menu button */}
             <div className="flex justify-between items-center h-16">
               <SceneFlowStudioBrand
-                href="/"
+                href={homeHref}
                 variant="landing"
                 nameClassName="text-white"
               />
@@ -280,20 +281,20 @@ export function Header() {
                     <Compass className="w-4 h-4 text-sf-primary" />
                     {t('overview')}
                   </button>
+                  <button onClick={() => scrollToSection('production-examples')} className="flex items-center gap-2 text-gray-300 hover:text-white hover:bg-slate-800/50 transition-colors cursor-pointer font-medium text-base text-left py-3 px-3 rounded-lg">
+                    <Clapperboard className="w-4 h-4 text-sf-primary" />
+                    {t('productionExamples')}
+                  </button>
                   <button onClick={() => scrollToSection('key-features')} className="flex items-center gap-2 text-gray-300 hover:text-white hover:bg-slate-800/50 transition-colors cursor-pointer font-medium text-base text-left py-3 px-3 rounded-lg">
                     <Sparkles className="w-4 h-4 text-sf-primary" />
                     {t('keyFeatures')}
                   </button>
-                  <button onClick={() => scrollToSection('production-examples')} className="flex items-center gap-2 text-gray-300 hover:text-white hover:bg-slate-800/50 transition-colors cursor-pointer font-medium text-base text-left py-3 px-3 rounded-lg">
-                    <Clapperboard className="w-4 h-4" />
-                    {t('productionExamples')}
-                  </button>
                   <button onClick={() => scrollToSection('pricing')} className="flex items-center gap-2 text-gray-300 hover:text-white hover:bg-slate-800/50 transition-colors cursor-pointer font-medium text-base text-left py-3 px-3 rounded-lg">
-                    <Sparkles className="w-4 h-4 text-sf-primary" />
+                    <CreditCard className="w-4 h-4 text-sf-primary" />
                     {t('plansPricing')}
                   </button>
                   <button onClick={() => scrollToSection('trust-safety')} className="flex items-center gap-2 text-gray-300 hover:text-white hover:bg-slate-800/50 transition-colors cursor-pointer font-medium text-base text-left py-3 px-3 rounded-lg">
-                    <Shield className="w-4 h-4" />
+                    <Shield className="w-4 h-4 text-sf-primary" />
                     {t('trustSafety')}
                   </button>
                   

@@ -25,7 +25,12 @@
 
 | Resource | URL |
 |----------|-----|
-| Platform walkthrough (10 clips) | https://sceneflowai.studio/#feature-pre-vis |
+| Long-Form Production Examples (4 Flagship Series) | https://sceneflowai.studio/#production-examples |
+| Flagship Drama — Screening Room (*The White City Current*) | https://sceneflowai.studio/TheWhiteCityCurrent |
+| Flagship Drama — Series Room Bible | https://sceneflowai.studio/s/series/cb7cc9e663a87a074e37c62636ef8c00 |
+| Flagship Drama — Blueprint Room | https://sceneflowai.studio/blueprint/share/5GDScu72NC7SWo1ioPMwzUxTg9KM2joz |
+| Flagship Drama — Production Stage (Audience Resonance) | https://sceneflowai.studio/share/script-resonance/_uHqaPHdsD0ZfdJoEwtnHBi4DiAJBW9s |
+| Platform walkthrough | https://sceneflowai.studio/#feature-pre-vis |
 | Trust & Safety (landing section) | https://sceneflowai.studio/#trust-safety |
 | Legal hub | https://sceneflowai.studio/legal |
 | Privacy Policy | https://sceneflowai.studio/privacy |
@@ -34,7 +39,8 @@
 | Refund Policy | https://sceneflowai.studio/refunds |
 | Contact Us | https://sceneflowai.studio/contact |
 
-Walkthrough manifest: [`public/demo/WALKTHROUGH_VIDEO_MANIFEST.md`](../public/demo/WALKTHROUGH_VIDEO_MANIFEST.md)
+Walkthrough manifest: [`public/demo/WALKTHROUGH_VIDEO_MANIFEST.md`](../public/demo/WALKTHROUGH_VIDEO_MANIFEST.md)  
+Production Examples & Nov 3 Rollout Plan: [`production-examples-landing.plan.md`](../production-examples-landing.plan.md)
 
 ---
 

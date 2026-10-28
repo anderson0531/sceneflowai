@@ -41,21 +41,21 @@ export const HERO_VALUE_CHIPS = [
 
 /** Launch-notification capture — shared by the hero and the final CTA. */
 export const NOTIFY_COPY = {
-  heading: 'Get launch news',
+  heading: 'Get January 2027 launch news',
   description:
-    'Leave your email and we\u2019ll tell you when we announce. Nothing else.',
+    'Leave your email and we\u2019ll notify you for the January 2027 public launch and new Screening Room releases. Nothing else.',
   placeholder: 'you@studio.com',
   submit: 'Notify me',
   submitting: 'Sending\u2026',
   successTitle: 'Check your inbox.',
   successBody:
-    'We sent a confirmation link. Click it to join the launch list. Nothing else.',
+    'We sent a confirmation link. Click it to join the January 2027 launch list. Nothing else.',
   errorEmpty: 'Enter your email so we can reach you.',
   errorInvalid: 'That email doesn\u2019t look right. Check it and try again.',
   errorGeneric: 'Something went wrong. Try again in a moment.',
-  privacy: 'We email a confirmation link first. One launch note after you confirm. No spam.',
+  privacy: 'We email a confirmation link first. One launch note for January 2027 after you confirm. No spam.',
   confirmTitle: 'You\u2019re on the list.',
-  confirmBody: 'We\u2019ll email you when we announce. Nothing else.',
+  confirmBody: 'We\u2019ll email you when we launch in January 2027. Nothing else.',
   confirmExpiredTitle: 'That link expired.',
   confirmExpiredBody:
     'Submit your email on the landing page again and we\u2019ll send a new confirmation link.',
@@ -242,7 +242,7 @@ export const SLOT_MACHINE_HEADER = {
 export const FINAL_CTA_COPY = {
   title: 'Built for the stories that have to hold.',
   subtitle:
-    'Leave your email for launch news — or start directing now from the $9 Explorer plan.',
+    'Leave your email for January 2027 launch news — or start directing now from the $9 Explorer plan.',
   cta: 'Explore plans',
   ctaSecondary: 'See how it works',
   ctaSecondaryHref: '#two-modes',

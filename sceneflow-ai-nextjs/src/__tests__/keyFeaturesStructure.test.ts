@@ -38,7 +38,9 @@ type Feature = {
 }
 
 function sentenceCount(text: string): number {
-  const withoutDecimals = text.replace(/\d+\.\d+/g, (match) => match.replace('.', ''))
+  const withoutDecimals = text
+    .replace(/\bH\.264\b/g, 'H264')
+    .replace(/\d+\.\d+/g, (match) => match.replace('.', ''))
   return withoutDecimals.split(/[.?!]/).filter((part) => part.trim()).length
 }
 
@@ -110,6 +112,7 @@ const EXPECTED_TITLES: Record<string, string[]> = {
     'Multi-Take Clips & Retake Studio',
     'The Mixer',
     'Streams (Multi-Language)',
+    'Multilanguage Studio UI',
     'Promo & Trailers',
     'Direct Publishing',
   ],
