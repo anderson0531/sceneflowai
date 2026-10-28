@@ -7,6 +7,7 @@ import { getLoginUrl } from '@/lib/auth/postLoginRedirect'
 import { LocaleBootstrap } from '@/components/i18n/LocaleBootstrap'
 import { AppMessagesProvider } from '@/components/i18n/AppMessagesProvider'
 import { UntranslatedStringOverlay } from '@/components/i18n/UntranslatedStringOverlay'
+import { SubscriptionAccessGate } from '@/components/auth/SubscriptionAccessGate'
 
 export default async function DashboardLayout({
   children,
@@ -27,7 +28,7 @@ export default async function DashboardLayout({
       <div className="max-w-full h-full min-h-0">
         <LocaleBootstrap />
         <UntranslatedStringOverlay />
-        {children}
+        <SubscriptionAccessGate>{children}</SubscriptionAccessGate>
       </div>
     </AppMessagesProvider>
   )

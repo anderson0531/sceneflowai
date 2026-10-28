@@ -25,11 +25,12 @@ import { applyPackGrant, applySubscriptionGrant } from '@/lib/credits/creditLots
 import { writeLedgerIntents } from '@/services/CreditService';
 
 // Valid tier names
-const VALID_TIERS = ['explorer', 'trial', 'hobbyist', 'starter', 'pro', 'studio', 'enterprise'] as const;
+const VALID_TIERS = ['none', 'explorer', 'trial', 'hobbyist', 'starter', 'pro', 'studio', 'enterprise'] as const;
 type TierName = typeof VALID_TIERS[number];
 
 // Credit amounts per tier
 const TIER_CREDITS: Record<TierName, number> = {
+  none: 0,
   explorer: 750,
   trial: 750,
   hobbyist: 1500,
@@ -62,15 +63,14 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Check if this feature is enabled (only in development or for admins when test flag is set)
-    const testFlagEnabled = (process.env.ENABLE_TEST_PLAN_SWITCH || '').replace(/\\n/g, '').trim() === 'true';
+    // Check if this feature is enabled (only in development or for admins)
     const isTestMode =
       process.env.NODE_ENV === 'development' ||
-      (testFlagEnabled && isAdminEmail(session.user.email));
+      isAdminEmail(session.user.email);
     
     if (!isTestMode) {
       return NextResponse.json(
-        { error: 'Test plan switching is disabled in production' },
+        { error: 'Test plan switching is restricted to admin accounts' },
         { status: 403 }
       );
     }
@@ -108,6 +108,42 @@ export async function POST(request: NextRequest) {
 
     console.log(`[Test Plan Switch] User ${userId} switching to ${tierName}`);
 
+    await ensureCreditLotsTable();
+
+    if (tierName === 'none') {
+      const resetResult = await sequelize.transaction(async (tx) => {
+        const user = await User.findByPk(userId, {
+          transaction: tx,
+          lock: tx.LOCK.UPDATE,
+        });
+        if (!user) throw new Error('User not found');
+        const prevTierId = user.subscription_tier_id;
+        user.subscription_tier_id = null as any;
+        user.subscription_status = null as any;
+        user.subscription_start_date = null as any;
+        user.subscription_end_date = null as any;
+        user.one_time_tiers_purchased = [];
+        user.credits = 0;
+        user.subscription_credits_monthly = 0;
+        user.addon_credits = 0;
+        await saveUserLots(userId, [], tx);
+        await user.save({ transaction: tx });
+        return {
+          userId,
+          previousTierId: prevTierId,
+          newTier: { id: 'none', name: 'none', display_name: 'No Active Plan' },
+          subscription: { status: null, startDate: null, endDate: null },
+          credits: { granted: 0, subscriptionCredits: 0, addonCredits: 0, totalCredits: 0 },
+        };
+      });
+
+      return NextResponse.json({
+        success: true,
+        message: 'Reset account to No Active Plan',
+        ...resetResult,
+      });
+    }
+
     // Find the subscription tier (map legacy trial → explorer)
     const lookupName = tierName === 'trial' ? 'explorer' : tierName
     let tier = await SubscriptionTier.findOne({
@@ -131,8 +167,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    await ensureCreditLotsTable();
-
     // Update user's subscription in a transaction
     const result = await sequelize.transaction(async (tx) => {
       const user = await User.findByPk(userId, { 
@@ -145,6 +179,7 @@ export async function POST(request: NextRequest) {
       }
 
       const prevTierId = user.subscription_tier_id;
+      const isPack = tierName === 'explorer' || tierName === 'trial';
 
       // Update subscription fields
       user.subscription_tier_id = tier.id;
@@ -156,13 +191,19 @@ export async function POST(request: NextRequest) {
       endDate.setDate(endDate.getDate() + 30);
       user.subscription_end_date = endDate;
 
+      if (isPack) {
+        const purchased = user.one_time_tiers_purchased || [];
+        if (!purchased.includes('explorer')) {
+          user.one_time_tiers_purchased = [...purchased, 'explorer'];
+        }
+      }
+
       // Optionally grant credits on the same shelf-life rules as production.
       let creditsGranted = 0;
       if (grantCredits) {
         creditsGranted = TIER_CREDITS[tierName] || Number(tier.included_credits_monthly) || 0;
         const now = new Date();
         const { lots } = await loadUserLots(user, now, tx);
-        const isPack = tierName === 'explorer' || tierName === 'trial';
         const granted = isPack
           ? applyPackGrant({
               lots,
@@ -246,11 +287,10 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Check if this feature is enabled (only in development or for admins when test flag is set)
-    const testFlagEnabled = (process.env.ENABLE_TEST_PLAN_SWITCH || '').replace(/\\n/g, '').trim() === 'true';
+    // Check if this feature is enabled (only in development or for admins)
     const isTestMode =
       process.env.NODE_ENV === 'development' ||
-      (testFlagEnabled && isAdminEmail(session.user.email));
+      isAdminEmail(session.user.email);
     
     if (!isTestMode) {
       return NextResponse.json({ testModeEnabled: false });

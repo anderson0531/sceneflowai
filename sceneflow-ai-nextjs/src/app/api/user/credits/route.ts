@@ -56,24 +56,24 @@ export async function GET(request: NextRequest) {
 
     if (isDatabaseUnavailableError(error)) {
       return NextResponse.json({
-        subscription_credits: SANDBOX_CREDITS,
+        subscription_credits: 0,
         subscription_expires_at: null,
         addon_credits: 0,
-        total_credits: SANDBOX_CREDITS,
-        subscription_credits_monthly: SANDBOX_CREDITS,
-        subscription_plan: 'UI Sandbox (1M Credits)',
+        total_credits: 0,
+        subscription_credits_monthly: 0,
+        subscription_plan: 'none',
         subscription_expires: null,
         databaseUnavailable: true,
       })
     }
 
     return NextResponse.json({
-      subscription_credits: SANDBOX_CREDITS,
+      subscription_credits: 0,
       subscription_expires_at: null,
       addon_credits: 0,
-      total_credits: SANDBOX_CREDITS,
-      subscription_credits_monthly: SANDBOX_CREDITS,
-      subscription_plan: 'UI Sandbox (1M Credits)',
+      total_credits: 0,
+      subscription_credits_monthly: 0,
+      subscription_plan: 'none',
       subscription_expires: null,
       databaseUnavailable: true,
     })

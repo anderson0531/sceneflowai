@@ -2,7 +2,13 @@
  * Admin utility functions
  */
 
-const DEFAULT_ADMIN_EMAILS = ['anderson0531@gmail.com', 'brian@sfai.studio']
+const DEFAULT_ADMIN_EMAILS = [
+  'anderson0531@gmail.com',
+  'andersoneric0531@gmail.com',
+  'brian@sfai.studio',
+  'brian@sceneflowai.studio',
+  'brian@sceneflowai.com',
+]
 
 /**
  * Check if an email is an admin email

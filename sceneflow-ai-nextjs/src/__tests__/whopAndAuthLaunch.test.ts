@@ -16,6 +16,11 @@ import {
   isValidAddonPack,
   isValidCheckoutTier,
 } from '@/lib/billing/checkoutHelper'
+import {
+  hasActiveSubscriptionAccess,
+  isSubscriptionExemptDashboardPath,
+} from '@/lib/billing/subscriptionAccess'
+import { getWelcomeCreditsOnSignup } from '@/lib/credits/welcomeCreditsConfig'
 
 vi.mock('@/lib/env', () => ({
   isDemoMode: vi.fn(() => false),
@@ -179,6 +184,60 @@ describe('POST /api/auth/register — Production Registration Flow', () => {
     expect(res.status).toBe(409)
     const json = await res.json()
     expect(json.error).toBe('Email already registered')
+  })
+})
+
+describe('Subscription Access Gate & Zero Free Credits Policy', () => {
+  it('defaults welcome credits on signup to 0 so a subscription is required', () => {
+    expect(getWelcomeCreditsOnSignup()).toBe(0)
+  })
+
+  it('requires an active subscription or purchased Explorer pass for studio access', () => {
+    expect(
+      hasActiveSubscriptionAccess({
+        subscriptionStatus: null,
+        tierName: null,
+        tierId: null,
+        oneTimeTiersPurchased: [],
+      })
+    ).toBe(false)
+
+    expect(
+      hasActiveSubscriptionAccess({
+        subscriptionStatus: 'cancelled',
+        tierName: 'pro',
+        tierId: 'tier-pro',
+        oneTimeTiersPurchased: [],
+      })
+    ).toBe(false)
+
+    expect(
+      hasActiveSubscriptionAccess({
+        subscriptionStatus: 'active',
+        tierName: 'pro',
+        tierId: 'tier-pro',
+        oneTimeTiersPurchased: [],
+      })
+    ).toBe(true)
+
+    expect(
+      hasActiveSubscriptionAccess({
+        subscriptionStatus: null,
+        tierName: null,
+        tierId: null,
+        oneTimeTiersPurchased: ['explorer'],
+      })
+    ).toBe(true)
+  })
+
+  it('exempts only billing, profile, and help routes when subscription is required', () => {
+    expect(isSubscriptionExemptDashboardPath('/dashboard/settings/billing')).toBe(true)
+    expect(isSubscriptionExemptDashboardPath('/dashboard/settings/profile')).toBe(true)
+    expect(isSubscriptionExemptDashboardPath('/dashboard/help')).toBe(true)
+    expect(isSubscriptionExemptDashboardPath('/dashboard')).toBe(false)
+    expect(isSubscriptionExemptDashboardPath('/dashboard/studio/new-project')).toBe(false)
+    expect(isSubscriptionExemptDashboardPath('/dashboard/series')).toBe(false)
+    expect(isSubscriptionExemptDashboardPath('/dashboard/workflow/vision/123')).toBe(false)
   })
 })
 

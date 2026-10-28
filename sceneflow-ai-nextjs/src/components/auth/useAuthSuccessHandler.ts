@@ -23,7 +23,11 @@ export function useAuthSuccessHandler(mode: 'login' | 'signup') {
         toast.success(
           `Welcome! ${welcomeCredits.toLocaleString()} free credits have been added to your account.`
         )
+        navigateAfterAuth(resolvePostLoginPath())
+        return
       }
+      navigateAfterAuth('/dashboard/settings/billing?reason=subscription_required')
+      return
     }
 
     navigateAfterAuth(resolvePostLoginPath())

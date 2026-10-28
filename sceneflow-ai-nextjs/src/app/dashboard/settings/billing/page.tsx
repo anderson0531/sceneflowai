@@ -20,6 +20,7 @@ import {
   getCheckoutPlans,
   hasPurchasedExplorer,
 } from '@/lib/billing/tierCatalog'
+import { hasActiveSubscriptionAccess } from '@/lib/billing/subscriptionAccess'
 
 const CHECKOUT_PLANS = getCheckoutPlans()
 const ADDON_PACKS = Object.values(ADDON_PACK_CATALOG)
@@ -57,6 +58,7 @@ export default function BillingPage() {
   const [switchingPlan, setSwitchingPlan] = useState<string | null>(null)
   const [activatingPlan, setActivatingPlan] = useState(false)
   const [activationTimedOut, setActivationTimedOut] = useState(false)
+  const [subscriptionRequiredNotice, setSubscriptionRequiredNotice] = useState(false)
   const checkoutStartedRef = useRef(false)
   const activationPollStartedRef = useRef(false)
   const { loading: checkoutLoading, checkout, startCheckout, closeCheckout } = useWhopCheckout()
@@ -156,6 +158,11 @@ export default function BillingPage() {
     const params = new URLSearchParams(window.location.search)
     const checkoutStatus = params.get('checkout')
     const checkoutTier = params.get('checkoutTier')
+    const reason = params.get('reason')
+
+    if (reason === 'subscription_required') {
+      setSubscriptionRequiredNotice(true)
+    }
 
     if (checkoutStatus === 'success' && !activationPollStartedRef.current) {
       activationPollStartedRef.current = true
@@ -172,7 +179,7 @@ export default function BillingPage() {
       startCheckout(checkoutTier)
     }
 
-    if (checkoutStatus || checkoutTier) {
+    if (checkoutStatus || checkoutTier || reason) {
       window.history.replaceState(null, '', '/dashboard/settings/billing')
     }
   }, [session, startCheckout, router, pollForActivation, fetchSubscriptionData])
@@ -219,9 +226,36 @@ export default function BillingPage() {
   const currentTierName = subscription?.subscription?.tier?.name || testMode?.currentSubscription?.tier?.name
   const isTestMode = Boolean(testMode?.testModeEnabled)
   const explorerPurchased = hasPurchasedExplorer(subscription?.oneTimeTiersPurchased)
+  const hasActiveAccess = hasActiveSubscriptionAccess({
+    subscriptionStatus: subscription?.subscription?.status ?? testMode?.currentSubscription?.status ?? null,
+    tierName: currentTierName ?? null,
+    tierId: subscription?.subscription?.tier?.id ?? testMode?.currentSubscription?.tier?.id ?? null,
+    oneTimeTiersPurchased: subscription?.oneTimeTiersPurchased ?? [],
+  })
 
   return (
     <div className="space-y-6">
+      {(!hasActiveAccess || subscriptionRequiredNotice) && !activatingPlan && (
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 rounded-xl border border-amber-500/40 bg-amber-950/30 text-amber-100">
+          <div className="flex items-start gap-3">
+            <AlertCircle className="w-5 h-5 text-amber-400 shrink-0 mt-0.5" />
+            <div className="text-sm">
+              <div className="font-semibold text-white">Active Subscription Required</div>
+              <p className="text-amber-200/90 mt-0.5">
+                A subscription or Explorer Pass is required to access SceneFlow AI Studio. Choose the $9 Explorer Pass or a monthly plan below to activate your workspace.
+              </p>
+            </div>
+          </div>
+          {hasActiveAccess && (
+            <Button
+              onClick={() => router.push('/dashboard')}
+              className="bg-sf-primary hover:bg-sf-accent text-white shrink-0"
+            >
+              Go to Studio <ArrowRight className="w-4 h-4 ml-1" />
+            </Button>
+          )}
+        </div>
+      )}
       {activatingPlan && (
         <div className="flex items-center gap-3 p-4 rounded-lg border border-blue-500/30 bg-blue-900/20 text-blue-100">
           <Loader className="w-5 h-5 animate-spin text-blue-400" />
@@ -276,7 +310,9 @@ export default function BillingPage() {
               <div className="bg-gradient-to-br from-purple-900/20 to-purple-800/10 p-5 rounded-xl border-2 border-purple-500/40">
                 <div className="text-center mb-4">
                   <div className="text-2xl font-bold text-purple-300 mb-1 capitalize">
-                    {subscription?.subscription?.tier?.display_name || testMode?.currentSubscription?.tier?.display_name || 'Free'}
+                    {subscription?.subscription?.tier?.display_name ||
+                      testMode?.currentSubscription?.tier?.display_name ||
+                      (explorerPurchased ? 'Explorer Pass' : 'No Active Plan')}
                   </div>
                   <div className="text-purple-200 text-sm">Active Plan</div>
                 </div>
@@ -284,16 +320,21 @@ export default function BillingPage() {
                   <div className="flex justify-between text-purple-100">
                     <span>Monthly Price:</span>
                     <span className="font-semibold">
-                      ${subscription?.subscription?.tier?.monthly_price_usd || 0}/mo
+                      {subscription?.subscription?.tier?.monthly_price_usd
+                        ? `$${subscription.subscription.tier.monthly_price_usd}/mo`
+                        : explorerPurchased
+                        ? '$9 one-time'
+                        : '$0/mo'}
                     </span>
                   </div>
                   <div className="flex justify-between text-purple-100">
                     <span>Status:</span>
                     <span className="font-semibold capitalize flex items-center gap-1">
-                      {subscription?.subscription?.status === 'active' && (
+                      {(subscription?.subscription?.status === 'active' || explorerPurchased) && (
                         <CheckCircle className="w-3 h-3 text-green-400" />
                       )}
-                      {subscription?.subscription?.status || 'Inactive'}
+                      {subscription?.subscription?.status ||
+                        (explorerPurchased ? 'Active (Explorer Pass)' : 'Subscription Required')}
                     </span>
                   </div>
                   <div className="flex justify-between text-purple-100">
@@ -532,14 +573,28 @@ export default function BillingPage() {
                 })}
               </div>
               
-              <div className="mt-4 p-3 bg-amber-900/20 rounded-lg border border-amber-500/20">
+              <div className="mt-4 p-3 bg-amber-900/20 rounded-lg border border-amber-500/20 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div className="flex items-start gap-2 text-amber-300 text-sm">
                   <AlertCircle className="w-4 h-4 mt-0.5 flex-shrink-0" />
                   <div>
-                    <strong>Test Mode:</strong> Plan switching is instant and grants test credits. 
-                    This feature is only available in development or when ENABLE_TEST_PLAN_SWITCH is enabled.
+                    <strong>Admin Test Mode:</strong> Plan switching is instant and grants test credits without charging a live card. You can also use promo code <code className="px-1.5 py-0.5 rounded bg-amber-950/60 text-amber-200 font-mono">sceneflowtest100</code> on Whop Checkout.
                   </div>
                 </div>
+                {hasActiveAccess && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    disabled={Boolean(switchingPlan)}
+                    onClick={() => handleSwitchPlan('none')}
+                    className="border-amber-500/40 text-amber-200 hover:bg-amber-900/40 shrink-0"
+                  >
+                    {switchingPlan === 'none' ? (
+                      <Loader className="w-4 h-4 animate-spin" />
+                    ) : (
+                      'Reset to No Plan'
+                    )}
+                  </Button>
+                )}
               </div>
             </CardContent>
           </Card>

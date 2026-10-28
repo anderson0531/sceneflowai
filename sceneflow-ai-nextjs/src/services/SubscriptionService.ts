@@ -3,6 +3,7 @@ import { Op } from 'sequelize'
 import { resolveUser } from '@/lib/userHelper'
 import {
   getTierCredits,
+  hasPurchasedExplorer,
   normalizeTierName,
   TIER_CATALOG,
 } from '@/lib/billing/tierCatalog'
@@ -526,15 +527,22 @@ export class SubscriptionService {
     currentProjects: number
     maxProjects: number | null
   }> {
-    const subscription = await this.getUserSubscription(userId)
-    const tier = subscription.tier
-    
-    if (!tier?.max_projects) {
-      return { canCreateProject: true, currentProjects: 0, maxProjects: null }
-    }
-    
     const resolvedUser = await resolveUser(userId)
     const userUuid = resolvedUser.id
+    const subscription = await this.getUserSubscription(userUuid)
+    const tier = subscription.tier
+    const hasActiveSub = subscription.status === 'active' && Boolean(tier)
+    const hasExplorer = hasPurchasedExplorer(resolvedUser.one_time_tiers_purchased)
+
+    if (!hasActiveSub && !hasExplorer) {
+      return { canCreateProject: false, currentProjects: 0, maxProjects: 0 }
+    }
+
+    const maxProjects = tier?.max_projects ?? (hasExplorer ? 1 : null)
+    if (!maxProjects) {
+      return { canCreateProject: true, currentProjects: 0, maxProjects: null }
+    }
+
     const currentProjects = await Project.count({ 
       where: { 
         user_id: userUuid, 
@@ -543,9 +551,9 @@ export class SubscriptionService {
     })
     
     return {
-      canCreateProject: currentProjects < tier.max_projects,
+      canCreateProject: currentProjects < maxProjects,
       currentProjects,
-      maxProjects: tier.max_projects
+      maxProjects
     }
   }
 
