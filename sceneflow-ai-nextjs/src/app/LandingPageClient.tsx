@@ -50,9 +50,9 @@ export default function LandingPageClient() {
       <ExitIntentPopup />
 
       <HeroSection />
+      <ProductionAgentSection />
       <TwoModesSection />
       <DirectControlSection />
-      <ProductionAgentSection />
       <PublishCutSection />
 
       <LandingSectionCollapseProvider>

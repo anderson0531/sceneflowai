@@ -10,9 +10,9 @@ export function FloatingNav() {
   const t = useTranslations('floatingNav')
   const sections = useMemo(
     () => [
+      { id: 'production-agent', label: 'Prod Agent', icon: Bot },
       { id: 'two-modes', label: t('twoModes'), icon: Layers },
       { id: 'direct-control', label: t('directControl'), icon: Sliders },
-      { id: 'production-agent', label: 'Prod Agent', icon: Bot },
       { id: 'publish-cut', label: t('publishCut'), icon: Share2 },
       { id: 'production-examples', label: t('productionExamples'), icon: Clapperboard },
       { id: 'key-features', label: t('keyFeatures'), icon: Sparkles },

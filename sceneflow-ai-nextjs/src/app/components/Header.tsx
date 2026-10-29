@@ -3,7 +3,7 @@
 import { Button } from '@/components/ui/Button'
 import { trackCta } from '@/lib/analytics'
 import { motion } from 'framer-motion'
-import { Menu, X, User, LogOut, Shield, Sparkles, ChevronDown, LayoutDashboard, Clapperboard, ArrowRight, Compass, CreditCard } from 'lucide-react'
+import { Menu, X, User, LogOut, Shield, Sparkles, ChevronDown, LayoutDashboard, Clapperboard, ArrowRight, Compass, CreditCard, Bot } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { useSession, signOut } from 'next-auth/react'
 import {
@@ -151,6 +151,14 @@ export function Header() {
               </button>
 
               <button
+                onClick={() => scrollToSection('production-agent')}
+                className="flex items-center gap-1.5 px-3.5 py-1.5 text-cyan-200 hover:text-white transition-colors cursor-pointer font-semibold rounded-lg bg-cyan-500/10 border border-cyan-500/30 hover:bg-cyan-500/20"
+              >
+                <Bot className="w-4 h-4 text-cyan-400" />
+                <span>Production Agent</span>
+              </button>
+
+              <button
                 onClick={() => scrollToSection('production-examples')}
                 className="flex items-center gap-1.5 px-4 py-2 text-gray-300 hover:text-white transition-colors cursor-pointer font-medium rounded-lg hover:bg-slate-800/50"
               >
@@ -280,6 +288,10 @@ export function Header() {
                   <button onClick={scrollToTop} className="flex items-center gap-2 text-gray-300 hover:text-white hover:bg-slate-800/50 transition-colors cursor-pointer font-medium text-base text-left py-3 px-3 rounded-lg">
                     <Compass className="w-4 h-4 text-sf-primary" />
                     {t('overview')}
+                  </button>
+                  <button onClick={() => scrollToSection('production-agent')} className="flex items-center gap-2 text-cyan-200 hover:text-white hover:bg-cyan-500/15 transition-colors cursor-pointer font-semibold text-base text-left py-3 px-3 rounded-lg border border-cyan-500/25 bg-cyan-500/10">
+                    <Bot className="w-4 h-4 text-cyan-400" />
+                    <span>Production Agent • Walk-Away Builder</span>
                   </button>
                   <button onClick={() => scrollToSection('production-examples')} className="flex items-center gap-2 text-gray-300 hover:text-white hover:bg-slate-800/50 transition-colors cursor-pointer font-medium text-base text-left py-3 px-3 rounded-lg">
                     <Clapperboard className="w-4 h-4 text-sf-primary" />

@@ -231,6 +231,20 @@ export function HeroSection() {
                 <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-cyan-300/90">
                   {t('eyebrow')}
                 </p>
+                <button
+                  type="button"
+                  onClick={() =>
+                    document
+                      .getElementById('production-agent')
+                      ?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+                  }
+                  className="inline-flex flex-wrap items-center justify-center gap-2 px-3.5 py-1.5 rounded-full bg-slate-950/75 hover:bg-slate-900/90 border border-cyan-400/40 text-xs font-semibold text-cyan-200 shadow-lg backdrop-blur-md transition-all"
+                >
+                  <Bot className="w-3.5 h-3.5 text-cyan-400 shrink-0" />
+                  <span>
+                    <strong className="text-white">NEW: Production Agent • Autonomous Studio Builder</strong> — Eliminate 300+ manual prompts. Start your build, walk away &amp; get notified when complete →
+                  </span>
+                </button>
               </motion.div>
 
               <motion.h1
