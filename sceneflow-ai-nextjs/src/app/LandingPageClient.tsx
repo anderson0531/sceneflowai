@@ -14,6 +14,10 @@ const ProductionExamplesSection = dynamic(
   { ssr: false }
 )
 const KeyFeaturesSection = dynamic(() => import('@/components/landing/KeyFeaturesSection'), { ssr: false })
+const StudioAcademySection = dynamic(
+  () => import('@/components/landing/StudioAcademySection'),
+  { ssr: false }
+)
 const PricingCredits = dynamic(() => import('@/components/landing/PricingCredits'), { ssr: false })
 const InfrastructureSection = dynamic(
   () => import('@/components/landing/InfrastructureSection'),
@@ -51,6 +55,7 @@ export default function LandingPageClient() {
 
         <ProductionExamplesSection />
         <KeyFeaturesSection />
+        <StudioAcademySection />
         <PricingCredits />
         <InfrastructureSection />
         <TrustSafeguardSection />

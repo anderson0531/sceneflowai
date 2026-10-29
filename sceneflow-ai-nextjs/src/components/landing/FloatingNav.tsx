@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { DollarSign, Sparkles, Clapperboard, Shield, Layers, Bot, Share2 } from 'lucide-react'
+import { DollarSign, Sparkles, Clapperboard, Shield, Layers, Bot, Share2, GraduationCap } from 'lucide-react'
 import { useTranslations } from 'next-intl'
 import { useExpandLandingSection } from '@/components/landing/LandingSectionCollapse'
 
@@ -15,6 +15,7 @@ export function FloatingNav() {
       { id: 'publish-cut', label: t('publishCut'), icon: Share2 },
       { id: 'production-examples', label: t('productionExamples'), icon: Clapperboard },
       { id: 'key-features', label: t('keyFeatures'), icon: Sparkles },
+      { id: 'studio-academy', label: 'Academy', icon: GraduationCap },
       { id: 'pricing', label: t('pricing'), icon: DollarSign },
       { id: 'trust-safety', label: t('trustSafety'), icon: Shield },
     ],
