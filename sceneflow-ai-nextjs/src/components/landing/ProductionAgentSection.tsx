@@ -18,11 +18,6 @@ import {
   ExternalLink,
   RefreshCw,
   Sliders,
-  XCircle,
-  Zap,
-  Maximize2,
-  X,
-  Briefcase,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
@@ -45,36 +40,36 @@ const DEMO_PRESETS: Record<
 > = {
   previs: {
     label: 'Pre-Vis Animatic Walk-Away',
-    badge: 'Fast Story Sign-Off',
+    badge: 'Fast Sign-Off',
     stages: ['Pre-Vis', 'Master'],
     directorTime: '35 min on Script',
-    agentTime: '~18 min Autonomous',
-    hoursSaved: 'Saves ~4.5 hrs',
-    promptsEliminated: '120+ manual prompts eliminated',
+    agentTime: '~25 min Autonomous',
+    hoursSaved: 'Saves ~6.5 hrs',
+    promptsEliminated: '180+ manual prompts eliminated',
     summary:
-      'Builds Shot Direction, Continuity Vault references, multi-character Dialogue/SFX/Music audio, and Keyframe Stills across all scenes, then sends you a Screening Room link.',
+      'Builds Shot Direction, Continuity Vault references, Dialogue/SFX/Music audio, and Keyframe Stills across all 27 scenes, then sends your Screening Room link.',
   },
   master: {
-    label: 'Full Master Film',
+    label: 'Full Master Film (27 Scenes)',
     badge: 'Most Popular',
     stages: ['Pre-Vis', 'Clips', 'Scenes', 'Master'],
     directorTime: '45 min on Script',
-    agentTime: '~1.5–2.5 hrs Autonomous',
-    hoursSaved: 'Saves ~14 hrs',
-    promptsEliminated: '300+ manual prompts eliminated',
+    agentTime: '~2–3 hrs Autonomous',
+    hoursSaved: 'Saves ~18.5 hrs',
+    promptsEliminated: '384+ manual prompts eliminated',
     summary:
-      'Walks through Pre-Vis, derives segments, renders motion video clips (auto-optimizing direction and switching to Creative Clips on policy blocks), mixes Scene MP4s, and assembles the Final Cut Master.',
+      'Builds Pre-Vis, renders 384 motion clips (auto-optimizing direction and switching to Creative Clips on policy blocks), mixes Scene MP4s, and assembles the Master.',
   },
   premiere: {
     label: 'Complete Premiere + Promo',
     badge: 'All 5 Stages',
     stages: ['Pre-Vis', 'Clips', 'Scenes', 'Master', 'Promo'],
     directorTime: '50 min on Script',
-    agentTime: '~2–3 hrs Autonomous',
-    hoursSaved: 'Saves ~18+ hrs',
-    promptsEliminated: '350+ manual prompts eliminated',
+    agentTime: '~2.5–3.5 hrs Autonomous',
+    hoursSaved: 'Saves ~22+ hrs',
+    promptsEliminated: '420+ manual prompts eliminated',
     summary:
-      'Produces the entire Master film plus an autonomous Theatrical Promo Trailer with voiceover narration, custom score, and a private /s/ Screening Room link.',
+      'Produces the entire 27-scene Master film plus an autonomous Theatrical Promo Trailer with voiceover narration, custom score, and a private /s/ Screening link.',
   },
 }
 
@@ -90,14 +85,14 @@ const STAGE_PILLS = [
     id: 'Clips',
     step: '2',
     title: 'Clips',
-    detail: 'Motion Video + Creative Policy Fallback',
+    detail: '384 Motion Clips + Creative Fallback',
     icon: Film,
   },
   {
     id: 'Scenes',
     step: '3',
     title: 'Scenes',
-    detail: 'Multitrack Scene MP4 Mixers',
+    detail: '27 Multitrack Scene MP4 Mixers',
     icon: Layers,
   },
   {
@@ -116,54 +111,38 @@ const STAGE_PILLS = [
   },
 ]
 
-const TRADITIONAL_VS_AGENT = [
+const HERO_FEATURES_AND_BENEFITS = [
   {
-    metric: 'Prompting Workload',
-    traditional: '300+ manual prompts typed & tuned one by one for every still, voice line, and video clip',
-    agent: '0 manual shot prompts — 1 launch orchestrates References, Audio, Stills, Clips, Master & Promo',
+    icon: Clock,
+    badge: 'Eliminate 300+ Manual Prompts',
+    title: '< 1 Hour on Script → Walk Away Free',
+    benefit:
+      'Skip typing 300+ individual still and video prompts across 27 scenes. Perfect your script in under an hour and reclaim your day for business or personal work.',
+    accent: 'border-cyan-500/35 from-cyan-950/35 text-cyan-300',
   },
   {
-    metric: 'Chair Time & Babysitting',
-    traditional: '14–25+ hours chained to your desk waiting on spinners and re-rolling broken frames',
-    agent: '< 1 hour perfecting your script — walk away to run your business or personal life while it builds',
+    icon: Layers,
+    badge: 'All 27 Scenes or By Chapter',
+    title: '5 End-to-End Production Stages',
+    benefit:
+      'Choose Pre-Vis, Clips, Scenes, Master, and Promo in one dialog. The Agent automatically builds references, voice/SFX audio, keyframes, motion clips, and trailers.',
+    accent: 'border-indigo-500/35 from-indigo-950/35 text-indigo-300',
   },
   {
-    metric: 'Failed Renders & Policy Blocks',
-    traditional: 'Production grinds to a halt whenever a dramatic shot hits a safety filter; manual rewrites required',
-    agent: 'Self-healing 3-step ladder: auto-optimizes shot direction, reruns failed shots, and switches persistent policy blocks to Creative Clips',
+    icon: ShieldCheck,
+    badge: 'Zero Stalled Renders',
+    title: 'Self-Healing + Creative Clips Fallback',
+    benefit:
+      'Automatically optimizes shot direction and reruns failed shots. When an intended dramatic shot still hits Google policy filters, it switches to Creative Clips automatically.',
+    accent: 'border-purple-500/35 from-purple-950/35 text-purple-300',
   },
   {
-    metric: 'Review & Delivery',
-    traditional: 'Downloading dozens of loose MP4 files and manually stitching audio in an external NLE',
-    agent: 'Instant notification with a private /s/ Screening Room link for mobile or desktop review',
-  },
-]
-
-const BUILDER_SCREENSHOT_CALLOUTS = [
-  {
-    num: '1',
-    title: 'Walk-Away Presets & 5 Deliverable Stages',
-    desc: 'Select Pre-Vis, Clips, Scenes, Master, and Promo individually or launch Full Master Film with 1 click.',
-  },
-  {
-    num: '2',
-    title: 'All Scenes, Chapter/Act, or Custom Scope',
-    desc: 'Build your entire screenplay at once, produce a single Act/Chapter, or target specific scenes.',
-  },
-  {
-    num: '3',
-    title: 'Self-Healing Direction & Creative Clips Guardrails',
-    desc: 'Auto-optimizes shot direction, reruns failed shots, and escalates persistent policy blocks to Creative Clips.',
-  },
-  {
-    num: '4',
-    title: 'Director Checkpoints',
-    desc: 'Run 100% hands-free or pause automatically after Pre-Vis or each scene for Director sign-off.',
-  },
-  {
-    num: '5',
-    title: 'Walk-Away Notifications & Screening Link',
-    desc: 'Choose your alert cadence and receive a direct /s/ Screening Room link when your build finishes.',
+    icon: PauseCircle,
+    badge: 'Full Director Control',
+    title: 'Checkpoints & /s/ Screening Links',
+    benefit:
+      'Run 100% hands-free or pause after Pre-Vis or each scene. Receive notifications at your chosen frequency with a direct /s/ Screening Room link for review.',
+    accent: 'border-emerald-500/35 from-emerald-950/35 text-emerald-300',
   },
 ]
 
@@ -173,245 +152,75 @@ export function ProductionAgentSection() {
     useState<DemoCheckpointId>('previs_checkpoint')
   const [notifyMode, setNotifyMode] = useState<DemoNotifyId>('checkpoints')
   const [scopeMode, setScopeMode] = useState<'all' | 'chapter'>('all')
-  const [lightboxOpen, setLightboxOpen] = useState(false)
 
   const current = DEMO_PRESETS[activePreset]
 
   return (
     <section
       id="production-agent"
-      className="relative py-20 md:py-28 bg-gradient-to-b from-gray-950 via-slate-950 to-gray-950 border-t border-cyan-500/20 overflow-hidden scroll-mt-20"
+      className="relative py-20 md:py-24 bg-gradient-to-b from-gray-950 via-slate-950 to-gray-950 border-t border-cyan-500/20 overflow-hidden scroll-mt-20"
     >
       {/* Ambient Background Glows */}
       <div className="pointer-events-none absolute inset-0">
-        <div className="absolute top-10 left-1/4 w-[560px] h-[560px] bg-cyan-500/10 rounded-full blur-3xl" />
-        <div className="absolute top-1/3 right-1/5 w-[520px] h-[520px] bg-purple-500/10 rounded-full blur-3xl" />
-        <div className="absolute bottom-10 left-1/3 w-[480px] h-[480px] bg-emerald-500/10 rounded-full blur-3xl" />
+        <div className="absolute top-10 left-1/4 w-[520px] h-[520px] bg-cyan-500/10 rounded-full blur-3xl" />
+        <div className="absolute bottom-10 right-1/4 w-[520px] h-[520px] bg-purple-500/10 rounded-full blur-3xl" />
       </div>
 
-      <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-14">
-        {/* Section Header: Market Differentiator & Anti-300-Prompts Pitch */}
+      <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-10">
+        {/* Hero-Summarized Header */}
         <div className="text-center max-w-4xl mx-auto">
-          <div className="inline-flex flex-wrap items-center justify-center gap-2 px-4 py-1.5 rounded-full bg-gradient-to-r from-cyan-500/15 via-purple-500/15 to-emerald-500/15 border border-cyan-400/40 text-cyan-200 text-xs font-bold uppercase tracking-wider mb-5 shadow-lg shadow-cyan-950/50">
+          <div className="inline-flex flex-wrap items-center justify-center gap-2 px-4 py-1.5 rounded-full bg-gradient-to-r from-cyan-500/15 via-purple-500/15 to-emerald-500/15 border border-cyan-400/40 text-cyan-200 text-xs font-bold uppercase tracking-wider mb-4 shadow-lg">
             <Bot className="w-4 h-4 text-cyan-400" />
             <span>Production Agent • Autonomous Studio Builder</span>
-            <span className="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 text-[10px]">
-              Major Market Differentiator
-            </span>
           </div>
 
-          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-white tracking-tight leading-tight mb-5">
-            Stop Babysitting <span className="line-through decoration-rose-500/80 text-slate-400">300+ Manual Prompts</span>.{' '}
+          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-white tracking-tight leading-tight mb-4">
+            Stop Prompting <span className="line-through decoration-rose-500/80 text-slate-400">300+ Shots</span> by Hand.{' '}
             <span className="bg-gradient-to-r from-cyan-400 via-purple-400 to-emerald-400 bg-clip-text text-transparent">
               Launch the Production Agent &amp; Walk Away.
             </span>
           </h2>
 
           <p className="text-base sm:text-lg text-slate-200 leading-relaxed max-w-3xl mx-auto">
-            Traditional AI filmmaking is unsustainable: generating one manual prompt at a time for every character reference, keyframe still, audio line, and motion clip requires{' '}
-            <strong className="text-white font-semibold">over 300 manual prompts</strong> and days of tedious chair time for a single production. With SceneFlow’s{' '}
-            <strong className="text-cyan-300 font-semibold">Production Agent • Autonomous Studio Builder</strong>, you spend under an hour perfecting your script, start the autonomous build, and get notified with a private{' '}
+            A typical 27-scene production (12–20 shots per scene) takes over 300 manual still and video prompts in traditional AI tools. With SceneFlow’s{' '}
+            <strong className="text-white font-semibold">Production Agent</strong>, you spend under an hour perfecting your script, start the build, and get notified with a private{' '}
             <code className="text-cyan-300 bg-slate-900 px-1.5 py-0.5 rounded text-sm">/s/</code>{' '}
-            Screening Room link when it’s complete—free to focus on your business, clients, or personal life.
+            Screening Room link when it’s complete—free to focus on your business or personal priorities.
           </p>
         </div>
 
-        {/* Stat Strip: Why 300+ Manual Prompts Is Obsolete */}
+        {/* 4 Hero Feature & Benefit Cards */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          <div className="rounded-2xl border border-rose-500/30 bg-gradient-to-br from-rose-950/30 via-slate-900/90 to-slate-950 p-5">
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-[11px] font-bold uppercase tracking-wider text-rose-300">
-                The Old AI Grind
-              </span>
-              <XCircle className="w-4 h-4 text-rose-400" />
-            </div>
-            <div className="text-2xl sm:text-3xl font-extrabold text-white">
-              300+ Prompts
-            </div>
-            <p className="text-xs text-slate-300 mt-1.5 leading-relaxed">
-              Manually prompting every still, voice clip, and motion take one by one is slow, error-prone, and exhausting.
-            </p>
-          </div>
-
-          <div className="rounded-2xl border border-cyan-500/35 bg-gradient-to-br from-cyan-950/35 via-slate-900/90 to-slate-950 p-5">
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-[11px] font-bold uppercase tracking-wider text-cyan-300">
-                Your Active Time
-              </span>
-              <Clock className="w-4 h-4 text-cyan-400" />
-            </div>
-            <div className="text-2xl sm:text-3xl font-extrabold text-white">
-              &lt; 1 Hour on Script
-            </div>
-            <p className="text-xs text-slate-300 mt-1.5 leading-relaxed">
-              Invest your creative energy where it matters—locking your story, dialogue, and 80+ Audience Resonance score.
-            </p>
-          </div>
-
-          <div className="rounded-2xl border border-purple-500/35 bg-gradient-to-br from-purple-950/35 via-slate-900/90 to-slate-950 p-5">
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-[11px] font-bold uppercase tracking-wider text-purple-300">
-                Self-Healing Pipeline
-              </span>
-              <ShieldCheck className="w-4 h-4 text-purple-400" />
-            </div>
-            <div className="text-2xl sm:text-3xl font-extrabold text-white">
-              0 Stalled Shots
-            </div>
-            <p className="text-xs text-slate-300 mt-1.5 leading-relaxed">
-              Auto-optimizes shot direction, reruns failed takes, and escalates persistent policy blocks to Creative Clips.
-            </p>
-          </div>
-
-          <div className="rounded-2xl border border-emerald-500/35 bg-gradient-to-br from-emerald-950/35 via-slate-900/90 to-slate-950 p-5">
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-[11px] font-bold uppercase tracking-wider text-emerald-300">
-                Reclaim Your Day
-              </span>
-              <Briefcase className="w-4 h-4 text-emerald-400" />
-            </div>
-            <div className="text-2xl sm:text-3xl font-extrabold text-white">
-              Walk Away Free
-            </div>
-            <p className="text-xs text-slate-300 mt-1.5 leading-relaxed">
-              Work on other business or personal priorities while the Agent builds and sends your Screening Room link.
-            </p>
-          </div>
-        </div>
-
-        {/* Hero Product Spotlight: Actual "Production Agent • Autonomous Studio Builder" Screenshot + Callouts */}
-        <div className="rounded-3xl border border-cyan-500/30 bg-gradient-to-b from-slate-900/95 via-slate-950 to-slate-900/95 p-6 sm:p-8 lg:p-10 shadow-2xl">
-          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-6 mb-8 border-b border-slate-800">
-            <div>
-              <div className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-cyan-300 mb-1.5">
-                <Zap className="w-4 h-4 text-cyan-400" />
-                <span>Inside the Virtual Production Soundstage</span>
-              </div>
-              <h3 className="text-2xl sm:text-3xl font-extrabold text-white">
-                Meet the <span className="text-cyan-300">Production Agent • Autonomous Studio Builder</span>
-              </h3>
-              <p className="text-sm text-slate-300 mt-1 max-w-3xl">
-                Configure your entire multi-scene or chapter build in 15 seconds: pick your stages, enable self-healing Creative Clips policy fallback, set Director Checkpoints, choose your notification frequency, and walk away.
-              </p>
-            </div>
-            <div className="flex items-center gap-3 shrink-0">
-              <button
-                type="button"
-                onClick={() => setLightboxOpen(true)}
-                title="Enlarge Production Agent • Autonomous Studio Builder screenshot"
-                className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-semibold border border-cyan-500/40 bg-cyan-500/10 text-cyan-200 hover:bg-cyan-500/20 transition-all"
-              >
-                <Maximize2 className="w-3.5 h-3.5" />
-                <span>Inspect Full Studio UI</span>
-              </button>
-              <Link
-                href="/dashboard"
-                className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold bg-gradient-to-r from-cyan-500 to-purple-600 hover:from-cyan-400 hover:to-purple-500 text-white shadow-lg transition-all"
-              >
-                <span>Try Production Agent</span>
-                <ArrowRight className="w-3.5 h-3.5" />
-              </Link>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
-            {/* Left/Center: Real Production Agent • Autonomous Studio Builder Screenshot (7 cols) */}
-            <div className="lg:col-span-7">
+          {HERO_FEATURES_AND_BENEFITS.map((item) => {
+            const Icon = item.icon
+            return (
               <div
-                onClick={() => setLightboxOpen(true)}
-                role="button"
-                tabIndex={0}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter' || e.key === ' ') setLightboxOpen(true)
-                }}
-                className="group relative rounded-2xl overflow-hidden border-2 border-cyan-500/40 bg-slate-950 shadow-[0_0_50px_-12px_rgba(34,211,238,0.3)] cursor-zoom-in"
+                key={item.title}
+                className={cn(
+                  'rounded-2xl border bg-gradient-to-br via-slate-900/90 to-slate-950 p-5 shadow-lg',
+                  item.accent
+                )}
               >
-                <img
-                  src="/images/landing/production-agent-builder.png"
-                  alt="Production Agent • Autonomous Studio Builder dialog inside SceneFlow Studio showing Walk-Away Presets, 5 Deliverable Stages, Creative Clips Policy Guardrails, Director Checkpoints, and Notification Frequency"
-                  className="w-full h-auto object-cover transition-transform duration-500 group-hover:scale-[1.015]"
-                />
-                <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-slate-950/95 via-slate-950/60 to-transparent px-4 py-3 flex items-center justify-between text-xs">
-                  <span className="font-semibold text-white flex items-center gap-2">
-                    <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-                    Production Agent • Autonomous Studio Builder (Live Studio View)
+                <div className="flex items-center justify-between gap-2 mb-2.5">
+                  <span className="text-[10px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-slate-950/70 border border-white/10">
+                    {item.badge}
                   </span>
-                  <span className="inline-flex items-center gap-1 text-cyan-300 font-semibold">
-                    <Maximize2 className="w-3.5 h-3.5" />
-                    Click to enlarge
-                  </span>
+                  <Icon className="w-4 h-4 shrink-0" />
                 </div>
+                <h3 className="text-base font-extrabold text-white mb-1.5">
+                  {item.title}
+                </h3>
+                <p className="text-xs text-slate-300 leading-relaxed">
+                  {item.benefit}
+                </p>
               </div>
-            </div>
-
-            {/* Right: 5 Numbered Architectural Callouts Matching the Dialog (5 cols) */}
-            <div className="lg:col-span-5 space-y-3">
-              <div className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-1">
-                5-Step Walk-Away Command Center
-              </div>
-              {BUILDER_SCREENSHOT_CALLOUTS.map((item) => (
-                <div
-                  key={item.num}
-                  className="rounded-xl border border-slate-800 bg-slate-950/85 p-3.5 flex items-start gap-3 hover:border-cyan-500/40 transition-colors"
-                >
-                  <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-cyan-500 to-purple-600 text-[11px] font-extrabold text-white shadow">
-                    {item.num}
-                  </span>
-                  <div>
-                    <h4 className="text-xs sm:text-sm font-bold text-white">
-                      {item.title}
-                    </h4>
-                    <p className="text-[11px] sm:text-xs text-slate-300 mt-0.5 leading-relaxed">
-                      {item.desc}
-                    </p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
+            )
+          })}
         </div>
 
-        {/* Comparison Table: Unsustainable Traditional AI Method vs. Production Agent */}
-        <div className="rounded-2xl border border-slate-800 bg-slate-900/80 overflow-hidden shadow-xl">
-          <div className="px-6 py-4 bg-slate-950/90 border-b border-slate-800 flex flex-wrap items-center justify-between gap-2">
-            <div>
-              <h3 className="text-base sm:text-lg font-bold text-white">
-                Why Manual Prompt-by-Prompt AI Production Is Obsolete
-              </h3>
-              <p className="text-xs text-slate-400">
-                A typical 8–12 scene short film requires 60+ keyframes, 80+ voice/SFX tracks, and 60+ video takes—over 300 manual prompts &amp; retries in legacy tools.
-              </p>
-            </div>
-            <span className="text-xs font-bold px-3 py-1 rounded-full bg-emerald-500/15 text-emerald-300 border border-emerald-500/30">
-              14–18+ Hours Saved Per Project
-            </span>
-          </div>
-
-          <div className="divide-y divide-slate-800/80">
-            {TRADITIONAL_VS_AGENT.map((row) => (
-              <div
-                key={row.metric}
-                className="grid grid-cols-1 md:grid-cols-12 gap-3 p-4 sm:px-6 items-center"
-              >
-                <div className="md:col-span-3 text-xs sm:text-sm font-bold text-white">
-                  {row.metric}
-                </div>
-                <div className="md:col-span-4 rounded-xl border border-rose-500/20 bg-rose-950/15 px-3.5 py-2.5 text-xs text-slate-300 flex items-start gap-2">
-                  <XCircle className="w-4 h-4 text-rose-400 shrink-0 mt-0.5" />
-                  <span>{row.traditional}</span>
-                </div>
-                <div className="md:col-span-5 rounded-xl border border-emerald-500/30 bg-emerald-950/20 px-3.5 py-2.5 text-xs text-emerald-100 font-medium flex items-start gap-2">
-                  <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
-                  <span>{row.agent}</span>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Interactive Production Builder Simulator + Live Output Monitor */}
+        {/* Two Illustrative Visual Cards: Builder Configuration (Left) + Autonomous Pipeline & Master Output (Right) */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-          {/* Left Column: Interactive Production Builder Controls (5 cols) */}
+          {/* Illustrative Image / Card 1: Production Agent • Studio Builder (5 cols) */}
           <div className="lg:col-span-5 rounded-2xl border border-slate-800 bg-slate-900/90 p-5 sm:p-6 shadow-2xl space-y-5">
             <div className="flex items-center justify-between border-b border-slate-800 pb-3">
               <div className="flex items-center gap-2.5">
@@ -420,10 +229,10 @@ export function ProductionAgentSection() {
                 </span>
                 <div>
                   <h3 className="text-sm font-bold text-white">
-                    Interactive Walk-Away Simulator
+                    Production Agent • Studio Builder
                   </h3>
                   <p className="text-[11px] text-slate-400">
-                    Test presets, checkpoints &amp; notifications
+                    Select scope, stages, checkpoints &amp; alerts
                   </p>
                 </div>
               </div>
@@ -432,7 +241,7 @@ export function ProductionAgentSection() {
               </span>
             </div>
 
-            {/* Scope Toggle: All Scenes vs Chapter */}
+            {/* Scope Toggle: All 27 Scenes vs Chapter */}
             <div>
               <p className="text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-2">
                 1. Select Scene or Chapter Scope
@@ -441,7 +250,7 @@ export function ProductionAgentSection() {
                 <button
                   type="button"
                   onClick={() => setScopeMode('all')}
-                  title="Build all scenes across the entire screenplay"
+                  title="Build all 27 scenes across the entire screenplay (384 total shots)"
                   className={cn(
                     'rounded-xl border px-3 py-2 text-left text-xs font-semibold transition-all',
                     scopeMode === 'all'
@@ -449,9 +258,9 @@ export function ProductionAgentSection() {
                       : 'border-slate-800 bg-slate-950/60 text-slate-400 hover:text-slate-200'
                   )}
                 >
-                  <div>🎬 All Project Scenes</div>
+                  <div>🎬 All 27 Scenes</div>
                   <div className="text-[10px] text-cyan-300/80 font-normal mt-0.5">
-                    Scenes 1–8 (Full Film)
+                    384 Shots (12–20 / scene)
                   </div>
                 </button>
                 <button
@@ -467,7 +276,7 @@ export function ProductionAgentSection() {
                 >
                   <div>📑 Chapter / Act Build</div>
                   <div className="text-[10px] text-cyan-300/80 font-normal mt-0.5">
-                    Chapter 1: Scenes 1–4
+                    Chapter 1: Scenes 1–7 (98 Shots)
                   </div>
                 </button>
               </div>
@@ -604,14 +413,18 @@ export function ProductionAgentSection() {
             </div>
           </div>
 
-          {/* Right Column: Live Autonomous Pipeline & Self-Healing Visualizer (7 cols) */}
+          {/* Illustrative Image / Card 2: Autonomous Execution Pipeline & Screening Room Output (7 cols) */}
           <div className="lg:col-span-7 space-y-4">
             <div className="rounded-2xl border border-slate-800 bg-slate-900/90 p-5 shadow-2xl space-y-5">
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <div className="flex items-center gap-2">
                   <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse" />
                   <span className="text-xs sm:text-sm font-bold text-white">
-                    Autonomous Execution Pipeline ({scopeMode === 'all' ? 'All 8 Scenes' : 'Chapter 1: Scenes 1–4'})
+                    Autonomous Execution Pipeline (
+                    {scopeMode === 'all'
+                      ? 'All 27 Scenes • 384 Shots'
+                      : 'Chapter 1: Scenes 1–7 • 98 Shots'}
+                    )
                   </span>
                 </div>
                 <span className="text-[11px] font-mono text-cyan-300 bg-cyan-500/10 border border-cyan-500/30 px-2.5 py-0.5 rounded-full">
@@ -725,12 +538,12 @@ export function ProductionAgentSection() {
                       AUTONOMOUS MASTER BUILD • 24 FPS
                     </span>
                     <span className="text-emerald-300 font-semibold">
-                      8/8 Scenes Ready
+                      {scopeMode === 'all' ? '27/27 Scenes Ready' : '7/7 Chapter Scenes Ready'}
                     </span>
                   </div>
                   <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-slate-950/95 via-slate-950/70 to-transparent px-3 py-2 flex items-center justify-between text-[10px]">
                     <span className="text-slate-200 font-medium">
-                      ✨ 14 Shots Optimized · 🛡 2 Creative Clips Rescued
+                      ✨ 42 Shots Optimized · 🛡 6 Creative Clips Rescued
                     </span>
                   </div>
                 </div>
@@ -748,7 +561,7 @@ export function ProductionAgentSection() {
                     🎬 Master Production Complete
                   </div>
                   <p className="text-[11px] text-slate-300 leading-snug">
-                    All {scopeMode === 'all' ? '8 scenes' : '4 chapter scenes'} finished while you were away. Open your Screening Room link to review:
+                    All {scopeMode === 'all' ? '27 scenes (384 shots)' : '7 chapter scenes (98 shots)'} finished while you were away. Open your Screening Room link to review:
                   </p>
                   <div className="rounded-lg bg-slate-950/90 border border-emerald-500/30 px-2.5 py-1.5 text-[11px] font-mono text-emerald-300 truncate">
                     sceneflowai.studio/s/master-cut-review
@@ -776,41 +589,6 @@ export function ProductionAgentSection() {
           </div>
         </div>
       </div>
-
-      {/* Full-Resolution Lightbox Modal for Production Agent • Autonomous Studio Builder */}
-      {lightboxOpen && (
-        <div
-          onClick={() => setLightboxOpen(false)}
-          className="fixed inset-0 z-50 bg-black/90 backdrop-blur-md flex items-center justify-center p-4 sm:p-8"
-        >
-          <div
-            onClick={(e) => e.stopPropagation()}
-            className="relative max-w-6xl w-full rounded-2xl border border-cyan-500/40 bg-slate-950 overflow-hidden shadow-2xl"
-          >
-            <div className="flex items-center justify-between px-4 py-3 border-b border-slate-800 bg-slate-900">
-              <div className="flex items-center gap-2 text-xs sm:text-sm font-bold text-white">
-                <Bot className="w-4 h-4 text-cyan-400" />
-                <span>Production Agent • Autonomous Studio Builder</span>
-              </div>
-              <button
-                type="button"
-                onClick={() => setLightboxOpen(false)}
-                className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-slate-800 text-slate-200 hover:text-white text-xs font-semibold"
-              >
-                <X className="w-4 h-4" />
-                <span>Close</span>
-              </button>
-            </div>
-            <div className="max-h-[82vh] overflow-auto p-2 bg-slate-950">
-              <img
-                src="/images/landing/production-agent-builder.png"
-                alt="Production Agent • Autonomous Studio Builder full resolution view"
-                className="w-full h-auto rounded-lg"
-              />
-            </div>
-          </div>
-        </div>
-      )}
     </section>
   )
 }

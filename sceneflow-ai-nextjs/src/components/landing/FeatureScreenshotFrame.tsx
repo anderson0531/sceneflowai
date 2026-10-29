@@ -237,6 +237,16 @@ const SCREENSHOT_FRAMING_PRESETS: Array<{
       anchorY: 0,
     },
   },
+  {
+    match: 'production-agent-builder',
+    preset: {
+      width: 1600,
+      height: 1160,
+      contentWidthFraction: 0.92,
+      anchorX: 0,
+      anchorY: 0.9,
+    },
+  },
 ]
 
 const DEFAULT_PRESET: ScreenshotFramingPreset = {
@@ -324,7 +334,7 @@ function holdStill(video: HTMLVideoElement) {
 }
 
 function isImageScreenshot(src: string): boolean {
-  return /\.(webp|png|jpe?g)(?:$|[?#])/i.test(src)
+  return /\.(webp|png|jpe?g|svg)(?:$|[?#])/i.test(src)
 }
 
 export function FeatureScreenshotFrame({
