@@ -14,6 +14,11 @@ type NotificationRow = {
   read: boolean
   created_at: string
   project_id?: string | null
+  metadata?: {
+    screeningUrl?: string
+    stage?: string
+    [key: string]: unknown
+  } | null
 }
 
 /**
@@ -108,6 +113,16 @@ export function NotificationCenter() {
                 >
                   <div className="font-medium text-white text-xs">{n.title}</div>
                   <div className="text-zinc-400 text-xs mt-0.5">{n.message}</div>
+                  {typeof n.metadata?.screeningUrl === 'string' && n.metadata.screeningUrl && (
+                    <a
+                      href={n.metadata.screeningUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="mt-1.5 inline-flex items-center gap-1 rounded-md bg-cyan-500/15 border border-cyan-500/40 px-2 py-0.5 text-[11px] font-semibold text-cyan-300 hover:bg-cyan-500/25 transition-colors"
+                    >
+                      🎬 Open Screening Room →
+                    </a>
+                  )}
                 </div>
               ))
             )}

@@ -33,7 +33,7 @@ export interface ScreenshotHotspot {
   label: string
   locationTag: string
   summary: string
-  proTip: string
+  proTip?: string
   creditNote?: string
   actionLabel?: string
   actionEvent?: string
@@ -627,12 +627,12 @@ export const JIT_CONTEXT_GUIDES: Record<JitContextId, JitContextGuide> = {
       {
         id: 'prod-step-4',
         stepNumber: 4,
-        title: 'Animate Hero Shots into Motion Video',
+        title: 'Animate Hero Shots or Launch Production Agent',
         description:
-          'Once your Animatic timing feels great, convert your key shots into full motion video clips.',
-        creditBadge: '80–150 cr / clip',
-        actionLabel: 'Generate Motion Video',
-        actionEvent: 'production:generate-video',
+          'Convert key shots into motion video manually, or launch the autonomous Production Agent to build Pre-Vis, Clips, Master, and Promo while you walk away.',
+        creditBadge: 'Walk-Away Mode',
+        actionLabel: 'Launch Production Agent',
+        actionEvent: 'sceneflow:open-production-builder',
       },
     ],
     creditGuardrail: {
@@ -642,6 +642,13 @@ export const JIT_CONTEXT_GUIDES: Record<JitContextId, JitContextGuide> = {
         'Always watch your film in the Screening Room as a voiced Keyframe Animatic first. Only animate video clips on shots that pass your Animatic check.',
     },
     troubleshooting: [
+      {
+        question: 'Can SceneFlow build all my scenes, clips, and master while I walk away?',
+        answer:
+          'Yes! Click "Production Agent" in the Virtual Production header to choose your scene scope (All Scenes, Chapter, or Custom), stages (Pre-Vis, Clips, Scenes, Master, Promo), Director Checkpoints, and notification frequency. It automatically optimizes shot direction and switches persistent policy blocks to Creative Clips.',
+        fixActionLabel: 'Open Production Agent',
+        fixActionEvent: 'sceneflow:open-production-builder',
+      },
       {
         question: 'Why does my character look slightly different in Scene 4?',
         answer:
@@ -1528,6 +1535,20 @@ export const HELP_KNOWLEDGE_ARTICLES: HelpKnowledgeArticle[] = [
       'Reaching 80/100+ before clicking "Start Production" prevents you from spending image and video credits on scenes that would later be cut.',
     ],
     proTip: 'Run Audience Resonance once after your initial treatment, click "Apply Recommended Fix", and re-analyze to confirm your 80+ score.',
+  },
+  {
+    id: 'kb-production-agent',
+    category: 'production',
+    title: 'Walk-Away Production Agent, Checkpoints & Creative Policy Fallback',
+    summary: 'How to perfect your script in under an hour and let the Production Agent autonomously build Pre-Vis, Clips, Master, and Promo.',
+    readTime: '4 min read',
+    tags: ['production agent', 'automation', 'walk away', 'creative clips', 'policy', 'checkpoints', 'screening room'],
+    bullets: [
+      'Open the Production Agent Builder to select All Scenes, a specific Act/Chapter, or Custom Scenes across 5 deliverable stages: Pre-Vis, Clips, Scenes, Master, and Promo.',
+      'During the Clips stage, if a dramatic shot triggers a standard content-policy filter, the agent automatically rewrites Shot Direction for safety compliance and reruns the shot. If it still blocks, it seamlessly switches that shot to Creative Clips (frame-anchored motion) so your batch never stalls.',
+      'Choose Fully Autonomous Walk-Away mode or set Director Checkpoints (Pause After Pre-Vis or Pause After Each Scene) and receive Screening Room review links in your Notification Center.',
+    ],
+    proTip: 'Use "Pause After Pre-Vis" on new scripts to review the full voiced animatic in the Screening Room before the agent spends motion video credits.',
   },
   {
     id: 'kb-continuity-lock',

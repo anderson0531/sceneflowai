@@ -329,7 +329,17 @@ import { Button, buttonVariants } from '@/components/ui/Button'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Share2, ArrowRight, ArrowLeft, Play, Volume2, Image as ImageIcon, Copy, Check, X, Settings, Info, ChevronDown, ChevronUp, ChevronRight, Eye, Sparkles, BarChart3, Save, Home, FolderOpen, Key, CreditCard, User, Bookmark, FileText, Coins, ExternalLink, CheckCircle2, Circle, Music, Video, Loader2, Clapperboard, Layers, Film } from 'lucide-react'
+import { Share2, ArrowRight, ArrowLeft, Play, Volume2, Image as ImageIcon, Copy, Check, X, Settings, Info, ChevronDown, ChevronUp, ChevronRight, Eye, Sparkles, BarChart3, Save, Home, FolderOpen, Key, CreditCard, User, Bookmark, FileText, Coins, ExternalLink, CheckCircle2, Circle, Music, Video, Loader2, Clapperboard, Layers, Film, Bot } from 'lucide-react'
+import { ProductionBuilderDialog } from '@/components/vision/ProductionBuilderDialog'
+import {
+  ProductionAgentDock,
+  type ProductionAgentDockState,
+} from '@/components/vision/ProductionAgentDock'
+import {
+  runProductionAgent,
+  type ProductionBuilderOptions,
+  type ProductionAgentShotDescriptor,
+} from '@/lib/production/runProductionAgent'
 import { useStore } from '@/store/useStore'
 import { resolveProjectArtStyle, resolveProjectAspectRatio, toVideoAspectRatio } from '@/lib/vision/artStyle'
 import {
@@ -18294,6 +18304,455 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     [characters]
   )
 
+  // Production Agent ("Production Builder") state & orchestrator
+  const [productionBuilderOpen, setProductionBuilderOpen] = useState(false)
+  const [productionAgentState, setProductionAgentState] =
+    useState<ProductionAgentDockState | null>(null)
+  const productionAgentAbortRef = useRef<AbortController | null>(null)
+  const productionCheckpointResolverRef = useRef<((approved: boolean) => void) | null>(
+    null
+  )
+
+  useEffect(() => {
+    const onOpenBuilderEvent = () => setProductionBuilderOpen(true)
+    window.addEventListener('sceneflow:open-production-builder', onOpenBuilderEvent)
+    return () =>
+      window.removeEventListener('sceneflow:open-production-builder', onOpenBuilderEvent)
+  }, [])
+
+  const handleStartProductionAgent = useCallback(
+    async (options: ProductionBuilderOptions) => {
+      if (!project?.id) {
+        toast.error('Save or load the project before starting the Production Agent.')
+        return
+      }
+      setProductionBuilderOpen(false)
+      void ensureBrowserNotificationPermission()
+
+      const abortController = new AbortController()
+      productionAgentAbortRef.current = abortController
+
+      const initialTelemetry = {
+        scenesCompleted: 0,
+        totalScenes: options.selectedSceneIndices.length,
+        stillsGenerated: 0,
+        audioTracksGenerated: 0,
+        clipsGenerated: 0,
+        shotsOptimized: 0,
+        failedShotsRerun: 0,
+        creativeFallbacksUsed: 0,
+        scenesRendered: 0,
+        errors: [] as string[],
+      }
+
+      setProductionAgentState({
+        visible: true,
+        running: true,
+        finished: false,
+        startedAt: Date.now(),
+        stage: options.stages[0] || 'previs',
+        subtitle: `Starting Production Agent across ${options.selectedSceneIndices.length} scene${options.selectedSceneIndices.length === 1 ? '' : 's'}…`,
+        progressPct: 4,
+        telemetry: initialTelemetry,
+        checkpointGate: null,
+      })
+
+      try {
+        const finalTelemetry = await runProductionAgent(options, {
+          projectId: project.id,
+          projectTitle: project.title || script?.title || 'Project',
+          signal: abortController.signal,
+          ensureSceneDirection: async (sceneIndex) => {
+            const currentScenes =
+              scriptRef.current?.script?.scenes ?? scriptRef.current?.scenes ?? []
+            const scene = currentScenes[sceneIndex]
+            if (!scene) return
+            const hasDir = Boolean(
+              scene?.sceneDirection &&
+                scene.sceneDirection.camera &&
+                scene.sceneDirection.scene
+            )
+            if (hasDir && options.missingOnly) return
+            const res = await fetch('/api/scene/generate-direction', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                projectId: project.id,
+                sceneIndex,
+                scene,
+              }),
+              signal: abortController.signal,
+            })
+            if (res.ok) {
+              const data = await res.json().catch(() => null)
+              if (data?.direction) {
+                const updatedScenes = [...currentScenes]
+                updatedScenes[sceneIndex] = {
+                  ...updatedScenes[sceneIndex],
+                  sceneDirection: data.direction,
+                }
+                const nextScript = scriptRef.current?.script
+                  ? {
+                      ...scriptRef.current,
+                      script: { ...scriptRef.current.script, scenes: updatedScenes },
+                    }
+                  : { ...scriptRef.current, scenes: updatedScenes }
+                await handleScriptChange(nextScript)
+              }
+            }
+          },
+          ensureSceneReferences: async (sceneIndex) => {
+            try {
+              await handleExpressSceneReferences(sceneIndex)
+            } catch {
+              // Non-fatal if references already exist
+            }
+          },
+          runSceneAudio: async (sceneIndex, { language: lang, missingOnly }) => {
+            const currentScenes =
+              scriptRef.current?.script?.scenes ?? scriptRef.current?.scenes ?? []
+            const scene = currentScenes[sceneIndex]
+            if (!scene) return 0
+            let generatedCount = 0
+
+            const hasNarration =
+              Boolean(scene?.narration) &&
+              (!missingOnly ||
+                !(
+                  scene?.narrationAudio?.[lang]?.url ||
+                  (lang === 'en' && scene?.narrationAudioUrl)
+                ))
+            if (hasNarration) {
+              try {
+                await handleGenerateSceneAudio(sceneIndex, 'narration', undefined, undefined, lang)
+                generatedCount += 1
+              } catch {}
+            }
+
+            const dialogue = Array.isArray(scene?.dialogue) ? scene.dialogue : []
+            const dialogueAudio = scene?.dialogueAudio?.[lang] || []
+            for (let dIdx = 0; dIdx < dialogue.length; dIdx++) {
+              if (abortController.signal.aborted) break
+              const existingUrl = dialogueAudio[dIdx]?.audioUrl
+              if (missingOnly && existingUrl) continue
+              const speaker = dialogue[dIdx]?.character
+              try {
+                await handleGenerateSceneAudio(sceneIndex, 'dialogue', speaker, dIdx, lang)
+                generatedCount += 1
+              } catch {}
+            }
+            return generatedCount
+          },
+          runSceneStills: async (
+            sceneIndex,
+            { language: lang, quality, includeEndFrames, missingOnly, generationMode }
+          ) => {
+            const currentScenes =
+              scriptRef.current?.script?.scenes ?? scriptRef.current?.scenes ?? []
+            const scene = currentScenes[sceneIndex]
+            if (!scene) return 0
+            const beats = getSceneBeats(scene)
+            await handleExpressSceneGenerate(sceneIndex, lang, {
+              scope: missingOnly ? 'missing' : 'selected',
+              includeEndFrames,
+              selectedFrameKeys: [],
+              quality,
+              generationMode: generationMode ?? 'standard',
+            })
+            return Math.max(1, beats.length)
+          },
+          ensureSceneSegments: async (sceneIndex) => {
+            const currentScenes =
+              scriptRef.current?.script?.scenes ?? scriptRef.current?.scenes ?? []
+            const scene = currentScenes[sceneIndex]
+            const sceneId = String(
+              scene?.id || scene?.sceneId || `scene-${sceneIndex}`
+            )
+            const beats = getSceneBeats(scene)
+            let segments = sceneProductionStateRef.current[sceneId]?.segments ?? []
+
+            if (segments.length === 0 && beats.length > 0) {
+              const firstBeatId = beats[0]?.beatId
+              if (firstBeatId) {
+                await ensurePromoShotSegment(sceneId, firstBeatId, 5)
+                segments = sceneProductionStateRef.current[sceneId]?.segments ?? []
+              }
+            }
+
+            return segments.map((seg: any, idx: number): ProductionAgentShotDescriptor => {
+              const beat = beats.find((b) => b.beatId === seg.beatId)
+              const startFrameUrl =
+                seg.startFrameUrl ||
+                seg.references?.startFrameUrl ||
+                beat?.storyboardImageUrl ||
+                scene?.imageUrl
+              const endFrameUrl =
+                seg.endFrameUrl ||
+                seg.references?.endFrameUrl ||
+                beat?.storyboardEndImageUrl
+              const hasClip = Boolean(
+                seg.activeAssetUrl ||
+                  seg.videoUrl ||
+                  (Array.isArray(seg.takes) &&
+                    seg.takes.some((t: any) => t?.assetUrl || t?.videoUrl))
+              )
+              return {
+                segmentId: seg.segmentId,
+                beatId: seg.beatId,
+                sequenceIndex: typeof seg.sequenceIndex === 'number' ? seg.sequenceIndex : idx,
+                label: seg.label || beat?.actionDescription || `Shot ${idx + 1}`,
+                durationSec: seg.duration || beat?.durationSeconds || 6,
+                hasClip,
+                hasStartFrame: Boolean(startFrameUrl),
+                hasEndFrame: Boolean(endFrameUrl),
+                startFrameUrl,
+                endFrameUrl,
+                policyBlocked: Boolean(seg.lastContentPolicyFailure),
+                directionOptimized: Boolean(beat?.beatDirection?.frozenMoment),
+              }
+            })
+          },
+          optimizeShotDirection: async ({ sceneIndex, beatId, policyCompliance }) => {
+            await optimizePromoSourceShot({
+              sceneIndex,
+              beatId,
+              policyBlocked: policyCompliance,
+            })
+          },
+          generateSegmentClip: async ({
+            sceneIndex,
+            segmentId,
+            mode,
+            quality,
+            sourceMethod,
+            startFrameUrl,
+            endFrameUrl,
+            durationSec,
+          }) => {
+            const currentScenes =
+              scriptRef.current?.script?.scenes ?? scriptRef.current?.scenes ?? []
+            const scene = currentScenes[sceneIndex]
+            const sceneId = String(
+              scene?.id || scene?.sceneId || `scene-${sceneIndex}`
+            )
+            const policy = resolveVideoGeneration({
+              quality,
+              mode,
+              sourceMethod,
+            })
+            const genMethod =
+              policy.sourceMethod === 'frame'
+                ? startFrameUrl && endFrameUrl
+                  ? 'FTV'
+                  : startFrameUrl
+                    ? 'I2V'
+                    : 'T2V'
+                : 'REF'
+            await handleSegmentGenerate(
+              sceneId,
+              segmentId,
+              genMethod === 'FTV' || genMethod === 'I2V' ? 'I2V' : 'T2V',
+              {
+                videoProvider: policy.videoProvider,
+                klingModel: policy.klingModel,
+                klingQuality: policy.klingQuality,
+                qualityTier: policy.qualityTier,
+                resolution: policy.resolution,
+                generationMethod: genMethod,
+                startFrameUrl,
+                endFrameUrl,
+                duration: durationSec,
+                allowPolicyFallback: mode === 'creative',
+              }
+            )
+          },
+          renderSceneMp4: async (sceneIndex) => {
+            const currentScenes =
+              scriptRef.current?.script?.scenes ?? scriptRef.current?.scenes ?? []
+            const scene = currentScenes[sceneIndex]
+            const sceneId = String(
+              scene?.id || scene?.sceneId || `scene-${sceneIndex}`
+            )
+            const prod = sceneProductionStateRef.current[sceneId]
+            return prod?.renderedSceneUrl || undefined
+          },
+          assembleMasterStream: async ({ language: lang, streamType }) => {
+            if (streamType === 'animatic') {
+              await handleGenProjectVideo(lang)
+              return exportedAnimaticUrl || undefined
+            }
+            const readyStream = projectStreams.find(
+              (s) => s.language === lang && s.mp4Url
+            )
+            return readyStream?.mp4Url || exportedAnimaticUrl || undefined
+          },
+          mintScreeningLink: async ({ stage, language: lang }) => {
+            const res = await fetch('/api/vision/create-share-link', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                projectId: project.id,
+                linkType: 'screening-room',
+                language: lang,
+                playbackMode: stage === 'promo' ? 'promo' : 'stream',
+                viewOnly: false,
+              }),
+            })
+            if (!res.ok) return undefined
+            const data = await res.json().catch(() => null)
+            return data?.shareUrl || undefined
+          },
+          runPromoStage: async ({ language: lang }) => {
+            const planRes = await fetch('/api/publish/promo/scene', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                projectId: project.id,
+                action: 'plan',
+                targetDurationSec: 60,
+                language: lang,
+                aspect: '16:9',
+              }),
+            })
+            if (!planRes.ok) return undefined
+            const planData = await planRes.json().catch(() => null)
+            const beatPlan = Array.isArray(planData?.beatPlan)
+              ? planData.beatPlan
+              : []
+            if (beatPlan.length > 0) {
+              await handleRunPromoAgent({
+                beatPlan,
+                targetDurationSec: 60,
+                language: lang,
+                aspectRatio: '16:9',
+              })
+            }
+            return undefined
+          },
+          onNotify: async (notification) => {
+            // 1. Persist to Notifications DB + Web Push
+            try {
+              await fetch('/api/notifications', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  projectId: project.id,
+                  type:
+                    notification.kind === 'run_completed'
+                      ? 'job_completed'
+                      : notification.kind === 'run_failed'
+                        ? 'job_failed'
+                        : 'job_progress',
+                  title: notification.title,
+                  message: notification.message,
+                  metadata: {
+                    screeningUrl: notification.screeningUrl,
+                    stage: notification.stage,
+                    sceneNumber: notification.sceneNumber,
+                  },
+                }),
+              })
+            } catch {}
+
+            // 2. Browser OS notification when tab is hidden
+            notifyIfHidden({
+              title: notification.title,
+              body: notification.message,
+              tag: `production-agent-${project.id}`,
+            })
+
+            // 3. In-app toast with direct Screening Room link
+            if (notification.screeningUrl) {
+              toast.success(notification.title, {
+                description: notification.message,
+                action: {
+                  label: 'Open Screening Room',
+                  onClick: () => {
+                    window.open(notification.screeningUrl, '_blank', 'noopener,noreferrer')
+                  },
+                },
+              })
+            } else {
+              toast.info(notification.title, {
+                description: notification.message,
+              })
+            }
+          },
+          onProgress: (update) => {
+            setProductionAgentState((prev) =>
+              prev
+                ? {
+                    ...prev,
+                    stage: update.stage,
+                    subtitle: update.subtitle,
+                    progressPct: update.progressPct,
+                    telemetry: update.telemetry,
+                  }
+                : prev
+            )
+          },
+          awaitCheckpoint: (gate) =>
+            new Promise<boolean>((resolve) => {
+              productionCheckpointResolverRef.current = resolve
+              setProductionAgentState((prev) =>
+                prev ? { ...prev, checkpointGate: gate } : prev
+              )
+            }),
+        })
+
+        setProductionAgentState((prev) =>
+          prev
+            ? {
+                ...prev,
+                running: false,
+                finished: true,
+                progressPct: 100,
+                checkpointGate: null,
+                subtitle:
+                  finalTelemetry.errors.length > 0
+                    ? `Completed with ${finalTelemetry.errors.length} note(s)`
+                    : `Production complete (${finalTelemetry.scenesCompleted} scenes built)`,
+                telemetry: finalTelemetry,
+              }
+            : prev
+        )
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : 'Production Agent stopped'
+        setProductionAgentState((prev) =>
+          prev
+            ? {
+                ...prev,
+                running: false,
+                finished: true,
+                checkpointGate: null,
+                subtitle: msg,
+                telemetry: {
+                  ...prev.telemetry,
+                  errors: [...prev.telemetry.errors, msg],
+                },
+              }
+            : prev
+        )
+      }
+    },
+    [
+      project?.id,
+      project?.title,
+      script?.title,
+      handleScriptChange,
+      handleExpressSceneReferences,
+      handleGenerateSceneAudio,
+      handleExpressSceneGenerate,
+      ensurePromoShotSegment,
+      optimizePromoSourceShot,
+      handleSegmentGenerate,
+      handleGenProjectVideo,
+      exportedAnimaticUrl,
+      projectStreams,
+      handleRunPromoAgent,
+    ]
+  )
+
   if (!mounted || !initialLoadComplete) {
     return (
       <VisionLoadingOverlay
@@ -18438,6 +18897,22 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         </div>
         
         <div className="flex items-center gap-2 shrink-0">
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => setProductionBuilderOpen(true)}
+            title="Open Production Agent — Build Pre-Vis, Clips, Scenes, Master & Screening Link autonomously"
+            className="h-9 rounded-full border-cyan-500/45 bg-gradient-to-r from-cyan-500/15 to-purple-500/15 text-cyan-200 hover:from-cyan-500/25 hover:to-purple-500/25 hover:border-cyan-400/70 font-semibold"
+          >
+            {productionAgentState?.running ? (
+              <Loader2 className="w-4 h-4 mr-1.5 text-cyan-300 animate-spin" />
+            ) : (
+              <Bot className="w-4 h-4 mr-1.5 text-cyan-300" />
+            )}
+            <span className="hidden sm:inline">Production Agent</span>
+            <span className="sm:hidden">Agent</span>
+          </Button>
           <Link href={`/dashboard/studio/${projectId}`} className="shrink-0">
             <Button
               variant="outline"
@@ -18556,6 +19031,8 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                 onOpenReferences={() => openReferenceLibrary('cast')}
                 onOpenPromo={openPromo}
                 onOpenPublishing={() => openPublishing()}
+                onOpenProductionBuilder={() => setProductionBuilderOpen(true)}
+                isProductionAgentRunning={Boolean(productionAgentState?.running)}
                 publishingBlockerCount={publishingReadiness.blockers.length}
                 directionReadiness={directionReadiness}
                 onUpdateAllDirections={handleUpdateAllDirections}
@@ -18943,6 +19420,18 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         }}
       />
       
+      <ProductionBuilderDialog
+        open={productionBuilderOpen}
+        onOpenChange={setProductionBuilderOpen}
+        scenes={script?.script?.scenes || []}
+        sceneProductionState={sceneProductionState}
+        language="en"
+        isRunning={Boolean(productionAgentState?.running)}
+        onStartProduction={(opts) => {
+          void handleStartProductionAgent(opts)
+        }}
+      />
+
       {/* Generation Progress Indicator */}
       <div suppressHydrationWarning>
         {isGenerating && (
@@ -19389,6 +19878,43 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       */}
       <AgentDockStack>
         <AgentRunStoreDocks />
+        {productionAgentState?.visible && (
+          <ProductionAgentDock
+            state={productionAgentState}
+            onApproveCheckpoint={() => {
+              const resolver = productionCheckpointResolverRef.current
+              productionCheckpointResolverRef.current = null
+              setProductionAgentState((prev) =>
+                prev ? { ...prev, checkpointGate: null } : prev
+              )
+              resolver?.(true)
+            }}
+            onStopCheckpoint={() => {
+              const resolver = productionCheckpointResolverRef.current
+              productionCheckpointResolverRef.current = null
+              setProductionAgentState((prev) =>
+                prev
+                  ? {
+                      ...prev,
+                      running: false,
+                      finished: true,
+                      checkpointGate: null,
+                      subtitle: 'Stopped at Director checkpoint',
+                    }
+                  : prev
+              )
+              resolver?.(false)
+            }}
+            onCancel={() => {
+              productionAgentAbortRef.current?.abort()
+              const resolver = productionCheckpointResolverRef.current
+              productionCheckpointResolverRef.current = null
+              resolver?.(false)
+            }}
+            onClose={() => setProductionAgentState(null)}
+            onOpenScreeningView={() => setProductionViewWithUrl('screening')}
+          />
+        )}
         <BackgroundJobDock
           job={scriptAnalysisJob.job}
           title="Audience Resonance analysis"

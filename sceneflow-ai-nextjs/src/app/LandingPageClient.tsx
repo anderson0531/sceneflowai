@@ -9,6 +9,10 @@ import { PublishCutSection } from '@/components/landing/PublishCutSection'
 import { LandingSectionCollapseProvider } from '@/components/landing/LandingSectionCollapse'
 import { PersistLandingLocale } from '@/components/i18n/PersistLandingLocale'
 
+const ProductionAgentSection = dynamic(
+  () => import('@/components/landing/ProductionAgentSection'),
+  { ssr: false }
+)
 const ProductionExamplesSection = dynamic(
   () => import('@/components/landing/ProductionExamplesSection'),
   { ssr: false }
@@ -48,6 +52,7 @@ export default function LandingPageClient() {
       <HeroSection />
       <TwoModesSection />
       <DirectControlSection />
+      <ProductionAgentSection />
       <PublishCutSection />
 
       <LandingSectionCollapseProvider>
