@@ -6,6 +6,7 @@ import { toast } from 'sonner'
 export interface CheckoutSession {
   sessionId: string
   planId: string
+  tierName: string
   returnUrl: string
   purchaseUrl?: string
 }
@@ -32,17 +33,17 @@ export function useWhopCheckout() {
         return
       }
 
-      const hostedUrl = data.purchaseUrl || data.redirectUrl
-      if (hostedUrl) {
-        window.location.assign(hostedUrl)
+      if (!data.sessionId && data.redirectUrl) {
+        window.location.assign(data.redirectUrl)
         return
       }
 
       setCheckout({
         sessionId: data.sessionId,
         planId: data.planId,
+        tierName: data.tierName || tierName,
         returnUrl: data.returnUrl,
-        purchaseUrl: data.purchaseUrl,
+        purchaseUrl: data.purchaseUrl || data.redirectUrl,
       })
     } catch (error) {
       console.error('[useWhopCheckout] Error:', error)

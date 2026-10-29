@@ -23,9 +23,22 @@ import { ensureCreditLotsTable } from '@/lib/database/migrateCreditLots';
 import { assignBalances, loadUserLots, saveUserLots } from '@/lib/credits/creditLotStore';
 import { applyPackGrant, applySubscriptionGrant } from '@/lib/credits/creditLots';
 import { writeLedgerIntents } from '@/services/CreditService';
+import { ADDON_PACK_CATALOG, normalizeAddonPackId } from '@/lib/billing/tierCatalog';
 
 // Valid tier names
-const VALID_TIERS = ['none', 'explorer', 'trial', 'hobbyist', 'starter', 'pro', 'studio', 'enterprise'] as const;
+const VALID_TIERS = [
+  'none',
+  'explorer',
+  'trial',
+  'hobbyist',
+  'starter',
+  'pro',
+  'studio',
+  'enterprise',
+  'addon_25',
+  'addon_100',
+  'addon_250',
+] as const;
 type TierName = typeof VALID_TIERS[number];
 
 // Credit amounts per tier
@@ -38,6 +51,9 @@ const TIER_CREDITS: Record<TierName, number> = {
   pro: 15000,
   studio: 75000,
   enterprise: 200000,
+  addon_25: 2000,
+  addon_100: 9000,
+  addon_250: 25000,
 };
 
 interface SwitchPlanRequest {
@@ -141,6 +157,60 @@ export async function POST(request: NextRequest) {
         success: true,
         message: 'Reset account to No Active Plan',
         ...resetResult,
+      });
+    }
+
+    const addonPackId = normalizeAddonPackId(tierName);
+    if (addonPackId) {
+      const pack = ADDON_PACK_CATALOG[addonPackId];
+      const addonResult = await sequelize.transaction(async (tx) => {
+        const user = await User.findByPk(userId, {
+          transaction: tx,
+          lock: tx.LOCK.UPDATE,
+        });
+        if (!user) throw new Error('User not found');
+
+        const now = new Date();
+        const { lots } = await loadUserLots(user, now, tx);
+        const granted = applyPackGrant({
+          lots,
+          source: 'addon',
+          credits: pack.credits,
+          now,
+          ref: `test_addon_${addonPackId}_${now.getTime()}`,
+          meta: { addon_pack: addonPackId, price_usd: pack.priceUsd, test_mode: true },
+        });
+        await saveUserLots(userId, granted.lots, tx);
+        assignBalances(user, granted.lots, now);
+        await writeLedgerIntents(userId, granted.intents, tx, `test_addon_${addonPackId}`);
+        await user.save({ transaction: tx });
+
+        return {
+          userId,
+          previousTierId: user.subscription_tier_id,
+          newTier: {
+            id: pack.id,
+            name: pack.id,
+            display_name: pack.displayName,
+          },
+          subscription: {
+            status: user.subscription_status,
+            startDate: user.subscription_start_date,
+            endDate: user.subscription_end_date,
+          },
+          credits: {
+            granted: pack.credits,
+            subscriptionCredits: Number(user.subscription_credits_monthly),
+            addonCredits: Number(user.addon_credits || 0),
+            totalCredits: Number(user.credits),
+          },
+        };
+      });
+
+      return NextResponse.json({
+        success: true,
+        message: `Added ${pack.credits.toLocaleString()} credits (${pack.displayName})`,
+        ...addonResult,
       });
     }
 
@@ -303,10 +373,23 @@ export async function GET(request: NextRequest) {
     const userId = resolvedUser.id;
 
     // Get available tiers
-    const tiers = await SubscriptionTier.findAll({
+    let tiers = await SubscriptionTier.findAll({
       where: { is_active: true },
       order: [['monthly_price_usd', 'ASC']],
     });
+
+    if (tiers.length < 5) {
+      try {
+        const { seedSubscriptionTiers } = await import('@/lib/database/seedSubscriptionTiers');
+        await seedSubscriptionTiers();
+        tiers = await SubscriptionTier.findAll({
+          where: { is_active: true },
+          order: [['monthly_price_usd', 'ASC']],
+        });
+      } catch (seedErr) {
+        console.warn('[Test Plan Switch] GET Auto-seed warning:', seedErr);
+      }
+    }
 
     // Get user's current subscription with tier included
     const user = await User.findByPk(userId, {

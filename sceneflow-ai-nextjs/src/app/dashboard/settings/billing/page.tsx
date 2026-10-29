@@ -21,6 +21,7 @@ import {
   hasPurchasedExplorer,
 } from '@/lib/billing/tierCatalog'
 import { hasActiveSubscriptionAccess } from '@/lib/billing/subscriptionAccess'
+import { isAdminEmail } from '@/lib/adminUtils'
 
 const CHECKOUT_PLANS = getCheckoutPlans()
 const ADDON_PACKS = Object.values(ADDON_PACK_CATALOG)
@@ -184,8 +185,8 @@ export default function BillingPage() {
     }
   }, [session, startCheckout, router, pollForActivation, fetchSubscriptionData])
 
-  const handleSwitchPlan = async (tierName: string) => {
-    if (switchingPlan) return
+  const handleSwitchPlan = async (tierName: string): Promise<boolean> => {
+    if (switchingPlan) return false
     
     setSwitchingPlan(tierName)
     try {
@@ -200,16 +201,30 @@ export default function BillingPage() {
       console.log('[Billing] Switch plan response:', response.status, data)
       
       if (response.ok && data.success) {
-        toast.success(`Switched to ${data.newTier.display_name} plan!`)
+        toast.success(data.message || `Switched to ${data.newTier.display_name} plan!`)
+        if (tierName !== 'none') {
+          setSubscriptionRequiredNotice(false)
+        }
         // Refresh subscription data
         await fetchSubscriptionData()
+        try {
+          const testResponse = await fetch('/api/admin/test/switch-plan')
+          if (testResponse.ok) {
+            setTestMode(await testResponse.json())
+          }
+        } catch {
+          // Ignore
+        }
+        return true
       } else {
         console.error('[Billing] Switch plan failed:', data)
         toast.error(data.details || data.error || 'Failed to switch plan')
+        return false
       }
     } catch (error) {
       console.error('[Billing] Switch plan error:', error)
       toast.error('Failed to switch plan')
+      return false
     } finally {
       setSwitchingPlan(null)
     }
@@ -224,7 +239,7 @@ export default function BillingPage() {
   }
 
   const currentTierName = subscription?.subscription?.tier?.name || testMode?.currentSubscription?.tier?.name
-  const isTestMode = Boolean(testMode?.testModeEnabled)
+  const isTestMode = Boolean(testMode?.testModeEnabled) || isAdminEmail(session?.user?.email)
   const explorerPurchased = hasPurchasedExplorer(subscription?.oneTimeTiersPurchased)
   const hasActiveAccess = hasActiveSubscriptionAccess({
     subscriptionStatus: subscription?.subscription?.status ?? testMode?.currentSubscription?.status ?? null,
@@ -279,9 +294,18 @@ export default function BillingPage() {
       <WhopCheckoutModal
         isOpen={Boolean(checkout)}
         sessionId={checkout?.sessionId || ''}
+        tierName={checkout?.tierName}
         returnUrl={checkout?.returnUrl || ''}
         purchaseUrl={checkout?.purchaseUrl}
         userEmail={session?.user?.email}
+        isTestMode={isTestMode}
+        isTestActivating={Boolean(switchingPlan)}
+        onTestActivate={async (selectedTier) => {
+          const ok = await handleSwitchPlan(selectedTier)
+          if (ok) {
+            closeCheckout()
+          }
+        }}
         onClose={closeCheckout}
         onComplete={handleCheckoutComplete}
       />
