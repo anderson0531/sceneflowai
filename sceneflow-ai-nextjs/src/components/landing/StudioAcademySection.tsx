@@ -3,16 +3,24 @@
 import React, { useState } from 'react'
 import { motion } from 'framer-motion'
 import {
-  GraduationCap,
-  Sparkles,
-  Compass,
-  Coins,
-  Zap,
-  CheckCircle2,
   ArrowRight,
-  PlayCircle,
+  Check,
+  CheckCircle2,
+  ChevronDown,
+  ChevronUp,
+  Clapperboard,
+  Coins,
+  Compass,
+  Copy,
+  Film,
+  GraduationCap,
   HelpCircle,
+  PlayCircle,
+  Sparkles,
+  Zap,
 } from 'lucide-react'
+import { useTranslations } from 'next-intl'
+import { Button } from '@/components/ui/Button'
 import { cn } from '@/lib/utils'
 import {
   JIT_CONTEXT_GUIDES,
@@ -21,6 +29,10 @@ import {
 } from '@/config/help/helpAcademyConfig'
 import { AnnotatedStudioScreenshot } from '@/components/help/AnnotatedStudioScreenshot'
 import { getSignupUrlForTier } from '@/lib/billing/checkoutIntent'
+import {
+  formatHeroVideoScript,
+  getHeroSectionScript,
+} from '@/config/landing/heroSectionScripts'
 
 export const STUDIO_ACADEMY_SECTION_ID = 'studio-academy'
 
@@ -51,14 +63,13 @@ const SHOWCASE_SCREENS: {
   },
 ]
 
-const SELLING_PILLARS = [
+const DETAIL_CARDS = [
   {
     icon: Compass,
     badge: 'Always 1 Keypress Away (?)',
     title: 'Context-Aware Just-In-Time (JIT) Coach',
     description:
       'Press ? on any screen to open an instant visual map of your active workspace, a 60-second checklist of what to do next, and 1-click buttons that trigger the exact studio action for you.',
-    accent: 'from-cyan-500/20 to-blue-600/10 border-cyan-500/30 text-cyan-300',
   },
   {
     icon: PlayCircle,
@@ -66,253 +77,413 @@ const SELLING_PILLARS = [
     title: '“Your First Film in 10 Minutes” Simulator',
     description:
       'Built for storytellers, authors, and showrunners with zero editing experience. Follow interactive Spotlight X-Ray callouts from a 1-sentence concept to a voiced, scored, and playable film.',
-    accent: 'from-purple-500/20 to-indigo-600/10 border-purple-500/30 text-purple-300',
   },
   {
     icon: Coins,
     badge: 'Save Up to 70% of Credits',
     title: 'Animatic-First Credit Guardrails',
     description:
-      'Every workspace includes real-time credit guardrails that teach you how to lock an 80+ Audience Resonance script and preview a voiced Keyframe Animatic before rendering motion video clips.',
-    accent: 'from-emerald-500/20 to-teal-600/10 border-emerald-500/30 text-emerald-300',
+      'Every workspace includes real-time credit guardrails that show how to lock an 80+ Audience Resonance script and preview a voiced Keyframe Animatic before rendering motion video clips.',
   },
-]
+  {
+    icon: GraduationCap,
+    badge: 'Included Free With Every Plan',
+    title: '4 Interactive Studio Courses Built In',
+    description:
+      'Master Blueprint & Audience Resonance, the Character & Setting Continuity Vault, Animatic-First Credit Guardrails, and Screening Room & 70+ Language Dubbing right inside the studio.',
+  },
+] as const
+
+const ANA_VIDEO_BLOCKS = [
+  {
+    block: 'Block 01 (0:00–0:10)',
+    title: 'The Just-In-Time Screen Map',
+    syncLine:
+      'ANA (on camera): "You don\'t need film school when the studio guides every step."',
+    narration:
+      'Press question mark on any screen to open a Just-In-Time visual map of the exact workspace you are in.',
+    visual:
+      'Medium shot of Ana (CHAR_ANA, olive field jacket over slate turtleneck) in the warm studio beside a translucent hologram showing glowing cyan numbered callout pins connected to storyboard frames and waveforms.',
+  },
+  {
+    block: 'Block 02 (0:10–0:20)',
+    title: '60-Second Checklist & Credit Guardrails',
+    narration:
+      'Follow a 60-second checklist with one-click studio actions, while built-in credit guardrails lock narration, music, and animatic frames before you spend on motion.',
+    visual:
+      'Close-medium shot across Ana and the floating glass panel as three checklist nodes light up from cyan to emerald green, locking the voiced animatic timeline before heavy video render.',
+  },
+  {
+    block: 'Block 03 (0:20–0:30)',
+    title: '“Your First Film in 10 Minutes” Simulator',
+    narration:
+      'Or launch the ten-minute interactive simulator — walking you from a one-sentence idea to a voiced, scored, and published master as you create.',
+    visual:
+      'Medium portrait of Ana smiling warmly to camera as the numbered training pins transition smoothly into a luminous playable widescreen master frame behind her.',
+  },
+] as const
 
 export function StudioAcademySection() {
+  const tShowcase = useTranslations('productionShowcase')
+  const [showDetail, setShowDetail] = useState(false)
+  const [showInteractiveMap, setShowInteractiveMap] = useState(false)
+  const [showAnaScript, setShowAnaScript] = useState(false)
+  const [copiedScript, setCopiedScript] = useState(false)
   const [selectedContextId, setSelectedContextId] =
     useState<JitContextId>('blueprint')
+
   const activeGuide =
     JIT_CONTEXT_GUIDES[selectedContextId] || JIT_CONTEXT_GUIDES.blueprint
   const signupUrl = getSignupUrlForTier('explorer')
+  const anaHeroScript = getHeroSectionScript('academy')
+
+  const scrollToCheckout = () => {
+    window.location.href = signupUrl
+  }
+
+  const scrollToExamples = () => {
+    document.getElementById('production-examples')?.scrollIntoView({ behavior: 'smooth' })
+  }
+
+  const handleCopyAnaScript = async () => {
+    try {
+      await navigator.clipboard.writeText(formatHeroVideoScript(anaHeroScript))
+      setCopiedScript(true)
+      setTimeout(() => setCopiedScript(false), 2000)
+    } catch {
+      // ignore clipboard errors
+    }
+  }
 
   return (
     <section
       id={STUDIO_ACADEMY_SECTION_ID}
-      className="relative py-20 sm:py-28 bg-gradient-to-b from-slate-950 via-slate-900/90 to-slate-950 border-t border-slate-800/80 scroll-mt-20 overflow-hidden"
+      className="relative min-h-[64vh] scroll-mt-20 overflow-hidden bg-gray-950 text-white"
     >
-      {/* Ambient Background Glows */}
-      <div className="pointer-events-none absolute top-16 left-1/4 w-96 h-96 bg-cyan-500/10 rounded-full blur-3xl" />
-      <div className="pointer-events-none absolute bottom-16 right-1/4 w-96 h-96 bg-purple-500/10 rounded-full blur-3xl" />
+      {/* Full-bleed Ana backdrop matching the Hero Sequence */}
+      <div className="absolute inset-0 overflow-hidden">
+        <img
+          src="/landing/primary-value/studio-academy.webp"
+          alt="Ana in the SceneFlow studio beside a translucent Just-In-Time (JIT) workspace map with numbered callout pins"
+          className="absolute inset-0 h-full w-full bg-black object-cover"
+          loading="lazy"
+        />
+        <div className="pointer-events-none absolute inset-0 z-[1] bg-black/45" />
+        <div className="pointer-events-none absolute inset-0 z-[1] bg-gradient-to-t from-black/85 via-black/35 to-black/45" />
+      </div>
 
-      <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Section Header & Selling Copy */}
+      <div className="relative z-10 mx-auto flex min-h-[64vh] max-w-7xl flex-col justify-center px-4 py-16 sm:px-6 sm:py-20 lg:px-8">
         <motion.div
-          initial={{ opacity: 0, y: 18 }}
+          className="text-center"
+          initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
-          transition={{ duration: 0.5 }}
-          className="text-center max-w-3xl mx-auto mb-12"
+          transition={{ duration: 0.6 }}
         >
-          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-cyan-500/10 border border-cyan-500/30 text-cyan-300 text-xs sm:text-sm font-semibold mb-4">
-            <GraduationCap className="w-4 h-4 text-cyan-400" />
-            <span>SceneFlow Studio Academy &amp; Just-In-Time Training</span>
-          </div>
-
-          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-white tracking-tight leading-tight">
-            Hollywood Studio Power.{' '}
-            <span className="bg-gradient-to-r from-cyan-400 via-sky-300 to-purple-400 bg-clip-text text-transparent">
-              Zero Film School Required.
-            </span>
-          </h2>
-
-          <p className="mt-4 text-base sm:text-lg text-slate-300 leading-relaxed">
-            Never stare at a blank timeline or burn credits guessing what a button
-            does. Every SceneFlow workspace includes an interactive{' '}
-            <strong className="text-white">Visual Screen Map</strong>, step-by-step{' '}
-            <strong className="text-white">Guided Tutorials</strong>, and a live{' '}
-            <strong className="text-cyan-300">Just-In-Time (JIT) Coach</strong> that
-            walks you from idea to finished master.
+          <p className="mb-4 text-xs font-semibold uppercase tracking-[0.2em] text-indigo-300">
+            SceneFlow Studio Academy &amp; Just-In-Time Training
           </p>
+          <h2 className="mx-auto max-w-4xl text-balance text-3xl font-bold text-white md:text-4xl lg:text-5xl">
+            Guided at every step. Master the studio as you create.
+          </h2>
+          <p className="mx-auto mt-5 max-w-3xl text-balance text-base text-gray-100 sm:text-lg">
+            Never stare at a blank timeline or burn credits guessing what comes next. Press <code className="rounded bg-white/10 px-1.5 py-0.5 text-sm text-cyan-300">?</code> on any screen for an instant Just-In-Time (JIT) Screen Map and a 60-second checklist with one-click studio actions—or follow interactive courses from your first concept to a published master.
+          </p>
+
+          <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
+            <button
+              type="button"
+              onClick={() => setShowDetail((prev) => !prev)}
+              aria-expanded={showDetail}
+              className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-slate-950/70 px-4 py-2 text-xs font-semibold text-cyan-200 backdrop-blur-md transition hover:border-cyan-400/50 hover:bg-slate-900 hover:text-white sm:text-sm"
+            >
+              <GraduationCap className="h-4 w-4 text-cyan-400" aria-hidden />
+              <span>{showDetail ? 'Hide detail' : 'Show more detail'}</span>
+              {showDetail ? (
+                <ChevronUp className="h-4 w-4 text-cyan-300" aria-hidden />
+              ) : (
+                <ChevronDown className="h-4 w-4 text-cyan-300" aria-hidden />
+              )}
+            </button>
+          </div>
         </motion.div>
 
-        {/* 3 Selling Pillars */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-5 mb-12">
-          {SELLING_PILLARS.map((pillar, idx) => {
-            const Icon = pillar.icon
-            return (
-              <motion.div
-                key={pillar.title}
-                initial={{ opacity: 0, y: 18 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.45, delay: idx * 0.08 }}
-                className={cn(
-                  'rounded-2xl border bg-gradient-to-br p-6 flex flex-col justify-between',
-                  pillar.accent
-                )}
-              >
-                <div>
-                  <div className="flex items-center justify-between gap-2 mb-4">
-                    <div className="w-10 h-10 rounded-xl bg-slate-950/70 border border-white/10 flex items-center justify-center">
-                      <Icon className="w-5 h-5" />
-                    </div>
-                    <span className="text-[11px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full bg-slate-950/70 border border-white/10">
-                      {pillar.badge}
-                    </span>
-                  </div>
-                  <h3 className="text-lg font-bold text-white mb-2">
-                    {pillar.title}
-                  </h3>
-                  <p className="text-xs sm:text-sm text-slate-300 leading-relaxed">
-                    {pillar.description}
-                  </p>
-                </div>
-              </motion.div>
-            )
-          })}
-        </div>
-
-        {/* Interactive Annotated Studio Screenshot Showcase */}
-        <div className="rounded-3xl bg-slate-900/90 border border-slate-800 p-4 sm:p-6 lg:p-8 shadow-2xl">
-          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-6 border-b border-slate-800">
-            <div>
-              <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-cyan-400 mb-1">
-                <Sparkles className="w-3.5 h-3.5" />
-                <span>Try the Live Just-In-Time (JIT) Visual Screen Map Below</span>
-              </div>
-              <h3 className="text-xl sm:text-2xl font-bold text-white">
-                Click Any Workspace &amp; Numbered Pin (1–4) to Inspect Studio Controls
+        {/* Collapsible Detail Cards + Interactive JIT Map + 30s Ana Video Script */}
+        {showDetail && (
+          <motion.div
+            className="mx-auto mt-8 w-full max-w-5xl rounded-2xl border border-white/15 bg-slate-950/80 p-5 backdrop-blur-md sm:p-6"
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.35 }}
+          >
+            <div className="mb-4 flex flex-col items-center gap-1.5 text-center">
+              <span className="inline-flex items-center gap-1.5 rounded-full border border-cyan-400/30 bg-cyan-500/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-wider text-cyan-300">
+                <GraduationCap className="h-3.5 w-3.5" aria-hidden />
+                Hollywood Studio Power · Zero Film School Required
+              </span>
+              <h3 className="text-base font-semibold text-white sm:text-lg">
+                Interactive Screen Maps, 60-Second Checklists, and Credit Guardrails Built Into Every Room
               </h3>
             </div>
 
-            {/* Workspace Screen Switcher Tabs */}
-            <div className="flex flex-wrap gap-2">
-              {SHOWCASE_SCREENS.map((screen) => {
-                const isSelected = screen.id === selectedContextId
-                const guide = JIT_CONTEXT_GUIDES[screen.id]
+            {/* 4 Detail Cards */}
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+              {DETAIL_CARDS.map((card) => {
+                const Icon = card.icon
                 return (
-                  <button
-                    key={screen.id}
-                    type="button"
-                    onClick={() => setSelectedContextId(screen.id)}
-                    title={`${screen.tabLabel} (${screen.stepBadge}) — ${guide?.subtitle || ''}`}
-                    className={cn(
-                      'px-3.5 py-2 rounded-xl text-xs font-bold transition-all border',
-                      isSelected
-                        ? 'bg-cyan-500 text-slate-950 border-cyan-400 shadow-lg shadow-cyan-500/20'
-                        : 'bg-slate-950/80 text-slate-300 border-slate-800 hover:border-slate-700 hover:text-white'
-                    )}
+                  <div
+                    key={card.title}
+                    className="rounded-xl border border-white/10 bg-slate-900/75 p-4 text-left"
                   >
-                    {screen.tabLabel}
-                  </button>
+                    <div className="mb-1.5 flex items-center gap-2">
+                      <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg border border-cyan-500/25 bg-cyan-500/10">
+                        <Icon className="h-3.5 w-3.5 text-cyan-400" aria-hidden />
+                      </div>
+                      <span className="text-[11px] font-semibold uppercase tracking-wider text-cyan-300/90">
+                        {card.badge}
+                      </span>
+                    </div>
+                    <p className="text-sm font-semibold text-white">{card.title}</p>
+                    <p className="mt-1 text-xs leading-relaxed text-gray-300 sm:text-sm">
+                      {card.description}
+                    </p>
+                  </div>
                 )
               })}
             </div>
-          </div>
 
-          {/* Main Interactive Grid: Left 8 Cols = Annotated Screenshot, Right 4 Cols = 60s JIT Checklist + Guardrail */}
-          <div className="mt-6 grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-            <div className="lg:col-span-8">
-              <AnnotatedStudioScreenshot
-                screenshotSrc={activeGuide.screenshotSrc}
-                screenshotAlt={activeGuide.screenshotAlt}
-                hotspots={activeGuide.hotspots}
-                onActionTriggered={() => {
-                  window.location.href = signupUrl
-                }}
-              />
+            {/* 4 Included Curriculum Pills */}
+            <div className="mt-4 flex flex-wrap items-center justify-center gap-2">
+              {INTERACTIVE_TUTORIALS.map((course) => (
+                <span
+                  key={course.id}
+                  className="inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-slate-900/80 px-3 py-1 text-xs font-medium text-slate-200"
+                >
+                  <CheckCircle2 className="h-3.5 w-3.5 text-cyan-400" />
+                  <span>{course.title}</span>
+                  <span className="text-slate-400">({course.totalDuration})</span>
+                </span>
+              ))}
             </div>
 
-            <div className="lg:col-span-4 space-y-4">
-              {/* Simulated JIT Coach Header Card */}
-              <div className="rounded-2xl bg-slate-950/90 border border-cyan-500/30 p-4">
-                <div className="flex items-center justify-between gap-2 mb-1.5">
-                  <span className="inline-flex items-center gap-1.5 text-[11px] font-bold text-cyan-300">
-                    <HelpCircle className="w-3.5 h-3.5 text-cyan-400" />
-                    JIT Coach: {activeGuide.shortTitle}
-                  </span>
-                  <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 font-bold">
-                    ● Auto-Detected
-                  </span>
+            {/* Expandable Live JIT Visual Screen Map & 30s Ana Video Script Controls */}
+            <div className="mt-5 border-t border-white/10 pt-4 space-y-4">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div className="flex flex-wrap items-center gap-4">
+                  <button
+                    type="button"
+                    onClick={() => setShowInteractiveMap((prev) => !prev)}
+                    aria-expanded={showInteractiveMap}
+                    className="inline-flex items-center gap-2 text-xs font-semibold text-cyan-300 transition hover:text-white sm:text-sm"
+                  >
+                    <Sparkles className="h-4 w-4 text-cyan-400" aria-hidden />
+                    <span>
+                      {showInteractiveMap
+                        ? 'Hide Live JIT Visual Screen Map'
+                        : 'Try Live JIT Visual Screen Map (Pins 1–4)'}
+                    </span>
+                    {showInteractiveMap ? (
+                      <ChevronUp className="h-3.5 w-3.5" aria-hidden />
+                    ) : (
+                      <ChevronDown className="h-3.5 w-3.5" aria-hidden />
+                    )}
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setShowAnaScript((prev) => !prev)}
+                    aria-expanded={showAnaScript}
+                    className="inline-flex items-center gap-2 text-xs font-semibold text-indigo-300 transition hover:text-white sm:text-sm"
+                  >
+                    <Film className="h-4 w-4 text-cyan-400" aria-hidden />
+                    <span>
+                      {showAnaScript
+                        ? 'Hide 30s Video Script (Ana)'
+                        : 'View 30s Video Script (Ana)'}
+                    </span>
+                    {showAnaScript ? (
+                      <ChevronUp className="h-3.5 w-3.5" aria-hidden />
+                    ) : (
+                      <ChevronDown className="h-3.5 w-3.5" aria-hidden />
+                    )}
+                  </button>
                 </div>
-                <p className="text-xs text-slate-300 leading-relaxed">
-                  {activeGuide.subtitle}
-                </p>
+
+                {showAnaScript && (
+                  <button
+                    type="button"
+                    onClick={handleCopyAnaScript}
+                    className="inline-flex items-center gap-1.5 rounded-lg border border-white/15 bg-slate-900 px-2.5 py-1 text-xs font-medium text-gray-200 transition hover:border-cyan-400/40 hover:text-white"
+                  >
+                    {copiedScript ? (
+                      <>
+                        <Check className="h-3.5 w-3.5 text-emerald-400" aria-hidden />
+                        <span>Copied</span>
+                      </>
+                    ) : (
+                      <>
+                        <Copy className="h-3.5 w-3.5 text-cyan-400" aria-hidden />
+                        <span>Copy script</span>
+                      </>
+                    )}
+                  </button>
+                )}
               </div>
 
-              {/* 60-Second Action Checklist Preview */}
-              <div className="rounded-2xl bg-slate-950/90 border border-slate-800 p-4">
-                <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-3 flex items-center gap-1.5">
-                  <Zap className="w-3.5 h-3.5 text-cyan-400" />
-                  <span>60-Second Guided Checklist</span>
-                </h4>
-                <div className="space-y-2.5">
-                  {activeGuide.quickSteps.map((step) => (
-                    <div
-                      key={step.id}
-                      className="p-3 rounded-xl bg-slate-900/90 border border-slate-800/90"
-                    >
-                      <div className="flex items-center justify-between gap-2 mb-1">
-                        <span className="text-xs font-bold text-white">
-                          {step.stepNumber}. {step.title}
-                        </span>
-                        {step.creditBadge && (
-                          <span className="text-[10px] px-2 py-0.5 rounded bg-emerald-500/15 text-emerald-300 font-semibold flex-shrink-0">
-                            {step.creditBadge}
+              {/* Interactive Annotated Studio Screenshot Showcase */}
+              {showInteractiveMap && (
+                <div className="rounded-2xl border border-slate-800 bg-slate-900/90 p-4 sm:p-5">
+                  <div className="flex flex-col justify-between gap-3 border-b border-slate-800 pb-4 lg:flex-row lg:items-center">
+                    <div>
+                      <p className="text-xs font-bold uppercase tracking-wider text-cyan-400">
+                        Live Just-In-Time (JIT) Visual Screen Map
+                      </p>
+                      <p className="text-sm font-semibold text-white">
+                        Click Any Workspace &amp; Numbered Pin (1–4) to Inspect Studio Controls
+                      </p>
+                    </div>
+                    <div className="flex flex-wrap gap-1.5">
+                      {SHOWCASE_SCREENS.map((screen) => {
+                        const isSelected = screen.id === selectedContextId
+                        const guide = JIT_CONTEXT_GUIDES[screen.id]
+                        return (
+                          <button
+                            key={screen.id}
+                            type="button"
+                            onClick={() => setSelectedContextId(screen.id)}
+                            title={`${screen.tabLabel} (${screen.stepBadge}) — ${guide?.subtitle || ''}`}
+                            className={cn(
+                              'rounded-lg border px-3 py-1.5 text-xs font-bold transition-all',
+                              isSelected
+                                ? 'border-cyan-400 bg-cyan-500 text-slate-950 shadow-lg shadow-cyan-500/20'
+                                : 'border-slate-800 bg-slate-950/80 text-slate-300 hover:border-slate-700 hover:text-white'
+                            )}
+                          >
+                            {screen.tabLabel}
+                          </button>
+                        )
+                      })}
+                    </div>
+                  </div>
+
+                  <div className="mt-4 grid grid-cols-1 items-start gap-5 lg:grid-cols-12">
+                    <div className="lg:col-span-8">
+                      <AnnotatedStudioScreenshot
+                        screenshotSrc={activeGuide.screenshotSrc}
+                        screenshotAlt={activeGuide.screenshotAlt}
+                        hotspots={activeGuide.hotspots}
+                        onActionTriggered={() => {
+                          window.location.href = signupUrl
+                        }}
+                      />
+                    </div>
+                    <div className="space-y-3 lg:col-span-4">
+                      <div className="rounded-xl border border-cyan-500/30 bg-slate-950/90 p-3.5">
+                        <div className="mb-1 flex items-center justify-between gap-2">
+                          <span className="inline-flex items-center gap-1.5 text-[11px] font-bold text-cyan-300">
+                            <HelpCircle className="h-3.5 w-3.5 text-cyan-400" />
+                            JIT Coach: {activeGuide.shortTitle}
                           </span>
-                        )}
+                          <span className="rounded-full border border-emerald-500/30 bg-emerald-500/15 px-2 py-0.5 text-[10px] font-bold text-emerald-300">
+                            ● Auto-Detected
+                          </span>
+                        </div>
+                        <p className="text-xs leading-relaxed text-slate-300">
+                          {activeGuide.subtitle}
+                        </p>
                       </div>
-                      <p className="text-[11px] text-slate-400 leading-relaxed">
-                        {step.description}
+
+                      <div className="rounded-xl border border-slate-800 bg-slate-950/90 p-3.5">
+                        <h4 className="mb-2.5 flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-slate-400">
+                          <Zap className="h-3.5 w-3.5 text-cyan-400" />
+                          <span>60-Second Guided Checklist</span>
+                        </h4>
+                        <div className="space-y-2">
+                          {activeGuide.quickSteps.map((step) => (
+                            <div
+                              key={step.id}
+                              className="rounded-lg border border-slate-800/90 bg-slate-900/90 p-2.5"
+                            >
+                              <div className="mb-0.5 flex items-center justify-between gap-2">
+                                <span className="text-xs font-bold text-white">
+                                  {step.stepNumber}. {step.title}
+                                </span>
+                                {step.creditBadge && (
+                                  <span className="shrink-0 rounded bg-emerald-500/15 px-1.5 py-0.5 text-[10px] font-semibold text-emerald-300">
+                                    {step.creditBadge}
+                                  </span>
+                                )}
+                              </div>
+                              <p className="text-[11px] leading-relaxed text-slate-400">
+                                {step.description}
+                              </p>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* 30s Ana Video Script Drawer */}
+              {showAnaScript && (
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+                  {ANA_VIDEO_BLOCKS.map((item) => (
+                    <div
+                      key={item.block}
+                      className="rounded-xl border border-white/10 bg-slate-950/85 p-3.5 text-left"
+                    >
+                      <p className="text-[11px] font-semibold uppercase tracking-wider text-indigo-300">
+                        {item.block}
+                      </p>
+                      <p className="mt-0.5 text-xs font-bold text-white">{item.title}</p>
+                      {'syncLine' in item && item.syncLine ? (
+                        <p className="mt-2 rounded-lg border border-cyan-500/20 bg-cyan-950/30 px-2.5 py-1.5 text-xs italic text-cyan-100">
+                          {item.syncLine}
+                        </p>
+                      ) : null}
+                      <p className="mt-2 text-xs leading-relaxed text-gray-200">
+                        <span className="font-semibold text-gray-400">VO: </span>
+                        {item.narration}
+                      </p>
+                      <p className="mt-1.5 text-[11px] leading-relaxed text-gray-400">
+                        <span className="font-semibold text-gray-500">Picture: </span>
+                        {item.visual}
                       </p>
                     </div>
                   ))}
                 </div>
-              </div>
-
-              {/* Credit Guardrail Box */}
-              <div className="rounded-2xl bg-emerald-950/25 border border-emerald-500/30 p-4">
-                <div className="flex items-center gap-1.5 text-xs font-bold text-emerald-300 mb-1">
-                  <Coins className="w-3.5 h-3.5" />
-                  <span>{activeGuide.creditGuardrail.title}</span>
-                </div>
-                <p className="text-[11px] text-slate-200 font-medium mb-1">
-                  {activeGuide.creditGuardrail.typicalCost}
-                </p>
-                <p className="text-[11px] text-emerald-200/80 leading-relaxed">
-                  {activeGuide.creditGuardrail.proSavingsRule}
-                </p>
-              </div>
+              )}
             </div>
-          </div>
+          </motion.div>
+        )}
 
-          {/* Included Curriculum Strip + Conversion CTAs */}
-          <div className="mt-8 pt-6 border-t border-slate-800 flex flex-col lg:flex-row lg:items-center justify-between gap-6">
-            <div>
-              <p className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">
-                4 Interactive Academy Courses Included Free With Every Plan:
-              </p>
-              <div className="flex flex-wrap gap-2">
-                {INTERACTIVE_TUTORIALS.map((course) => (
-                  <span
-                    key={course.id}
-                    className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-slate-950 text-slate-200 border border-slate-800"
-                  >
-                    <CheckCircle2 className="w-3.5 h-3.5 text-cyan-400" />
-                    <span>{course.title}</span>
-                    <span className="text-slate-500">({course.totalDuration})</span>
-                  </span>
-                ))}
-              </div>
-            </div>
-
-            <div className="flex flex-wrap items-center gap-3 flex-shrink-0">
-              <a
-                href={signupUrl}
-                className="inline-flex items-center gap-2 px-6 py-3 rounded-xl text-sm font-bold bg-gradient-to-r from-cyan-500 to-teal-400 hover:from-cyan-400 hover:to-teal-300 text-slate-950 shadow-lg shadow-cyan-500/20 transition-all"
-              >
-                <span>Start 10-Min Tutorial in Studio ($9)</span>
-                <ArrowRight className="w-4 h-4" />
-              </a>
-              <a
-                href="#pricing"
-                className="inline-flex items-center gap-2 px-5 py-3 rounded-xl text-sm font-semibold bg-slate-800 hover:bg-slate-700 text-white border border-slate-700 transition-colors"
-              >
-                <span>Compare Plans &amp; Credits</span>
-              </a>
-            </div>
-          </div>
-        </div>
+        <motion.div
+          className="mt-10 flex flex-wrap items-center justify-center gap-3"
+          initial={{ opacity: 0, y: 12 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.45 }}
+        >
+          <Button
+            size="lg"
+            className="bg-gradient-to-r from-indigo-600 via-purple-600 to-indigo-600 hover:opacity-90"
+            onClick={scrollToCheckout}
+          >
+            Launch Studio ($9)
+            <ArrowRight className="ml-2 h-5 w-5" />
+          </Button>
+          <Button
+            size="lg"
+            variant="outline"
+            className="border-white/25 bg-black/45 text-white backdrop-blur-sm hover:border-cyan-400/50 hover:bg-black/65"
+            onClick={scrollToExamples}
+          >
+            <Clapperboard className="mr-2 h-4 w-4 text-cyan-400" />
+            {tShowcase('badge')}
+          </Button>
+        </motion.div>
       </div>
     </section>
   )

@@ -312,6 +312,7 @@ describe('Production Examples i18n contract', () => {
     expect(pack).toContain('The control you keep')
     expect(pack).toContain('Production Agent • Autonomous Studio Builder')
     expect(pack).toContain('The cut you publish')
+    expect(pack).toContain('SceneFlow Studio Academy & Just-In-Time Training')
   })
 
   it('keeps card ids stable', () => {

@@ -11,7 +11,7 @@ export type HeroVideoBeat = {
 }
 
 export type HeroVideoScript = {
-  id: 'friction' | 'control' | 'agent' | 'cut'
+  id: 'friction' | 'control' | 'agent' | 'cut' | 'academy'
   eyebrow: string
   beats: readonly HeroVideoBeat[]
 }
@@ -137,6 +137,36 @@ export const HERO_SECTION_SCRIPTS: readonly HeroVideoScript[] = [
       },
     ],
   },
+  {
+    id: 'academy',
+    eyebrow: 'SceneFlow Studio Academy & Just-In-Time Training',
+    beats: [
+      {
+        label: 'The Just-In-Time screen map',
+        narration:
+          'You never stare at a blank workspace wondering what comes next. Press question mark on any screen and a Just-In-Time visual map highlights the exact controls for your active stage.',
+        picture:
+          'CHAR_ANA in the studio beside a translucent workspace map where four glowing cyan callout pins connect directly to the storyboard, narration waveform, and clip prompt controls.',
+        settle: 'The four numbered callout pins hold steady over the active workspace.',
+      },
+      {
+        label: 'The 60-second checklist and credit guardrails',
+        narration:
+          'A sixty-second guided checklist triggers the next studio action in one click, while real-time credit guardrails make sure you lock narration, music, and animatic frames before spending on motion.',
+        picture:
+          'A compact three-step checklist beside an emerald credit-guardrail badge warming from script resonance to a playable animatic.',
+        settle: 'The animatic preview locks green before heavy video render.',
+      },
+      {
+        label: 'Your first film in 10 minutes',
+        narration:
+          'Walk through four interactive Academy courses right inside the studio — from a one-sentence idea to a voiced, scored, and published master with zero film school required.',
+        picture:
+          'Ana smiles to camera as Spotlight X-Ray callouts step cleanly from Blueprint to Virtual Soundstage to the Screening Room.',
+        settle: 'Ana holds a warm, encouraging expression while the finished scene plays beside her.',
+      },
+    ],
+  },
 ]
 
 const SCRIPT_BY_ID: Record<HeroVideoScript['id'], HeroVideoScript> = {
@@ -144,6 +174,7 @@ const SCRIPT_BY_ID: Record<HeroVideoScript['id'], HeroVideoScript> = {
   control: HERO_SECTION_SCRIPTS[1],
   agent: HERO_SECTION_SCRIPTS[2],
   cut: HERO_SECTION_SCRIPTS[3],
+  academy: HERO_SECTION_SCRIPTS[4],
 }
 
 export function getHeroSectionScript(id: HeroVideoScript['id']): HeroVideoScript {

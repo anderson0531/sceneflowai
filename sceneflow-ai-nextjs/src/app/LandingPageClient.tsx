@@ -54,13 +54,13 @@ export default function LandingPageClient() {
       <DirectControlSection />
       <ProductionAgentSection />
       <PublishCutSection />
+      <StudioAcademySection />
 
       <LandingSectionCollapseProvider>
         <FloatingNav />
 
         <ProductionExamplesSection />
         <KeyFeaturesSection />
-        <StudioAcademySection />
         <PricingCredits />
         <InfrastructureSection />
         <TrustSafeguardSection />
