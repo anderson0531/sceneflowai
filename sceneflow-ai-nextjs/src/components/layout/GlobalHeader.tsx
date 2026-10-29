@@ -11,6 +11,7 @@ import { isPublicRoute } from '@/constants/publicRoutes'
 import { isSubscriptionExemptDashboardPath } from '@/lib/billing/subscriptionAccess'
 import { getDashboardUrl, getLoginUrl } from '@/lib/auth/postLoginRedirect'
 import { HeaderLocaleSwitcher } from '@/components/i18n/HeaderLocaleSwitcher'
+import { openJitHelp } from '@/components/help/JitHelpDrawer'
 import { useTranslations } from 'next-intl'
 
 declare global {
@@ -93,11 +94,18 @@ export function GlobalHeader() {
             >
               <User size={20} />
             </button>
-            {/* Help */}
+            {/* Help (Just-In-Time Contextual Coach + Studio Academy) */}
             <button
-              className="p-2 rounded-md text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800/60"
+              className="p-2 rounded-md text-gray-600 dark:text-gray-300 hover:text-cyan-500 dark:hover:text-cyan-400 hover:bg-gray-100 dark:hover:bg-gray-800/60 transition-colors"
               aria-label={t('help')}
-              onClick={() => (window.location.href = '/dashboard/help')}
+              title="Just-In-Time Help & Studio Academy (Shortcut: ?)"
+              onClick={() => {
+                if (pathname?.startsWith('/dashboard/help')) {
+                  openJitHelp({ tab: 'tutorial' })
+                } else {
+                  openJitHelp({ tab: 'jit' })
+                }
+              }}
             >
               <HelpCircle size={20} />
             </button>

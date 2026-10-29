@@ -1,0 +1,154 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 675" fill="none">
+  <defs>
+    <linearGradient id="bg2" x1="0" y1="0" x2="1200" y2="675" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#090D16"/>
+      <stop offset="100%" stop-color="#0F172A"/>
+    </linearGradient>
+    <linearGradient id="accent2" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#06B6D4"/>
+      <stop offset="100%" stop-color="#3B82F6"/>
+    </linearGradient>
+    <linearGradient id="veoGrad" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#8B5CF6"/>
+      <stop offset="100%" stop-color="#EC4899"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="1200" height="675" rx="16" fill="url(#bg2)" stroke="#1E293B" stroke-width="2"/>
+
+  <!-- Top Header -->
+  <rect x="0" y="0" width="1200" height="52" rx="16" fill="#0B1120"/>
+  <line x1="0" y1="52" x2="1200" y2="52" stroke="#1E293B" stroke-width="1.5"/>
+  <circle cx="26" cy="26" r="6" fill="#EF4444"/>
+  <circle cx="46" cy="26" r="6" fill="#F59E0B"/>
+  <circle cx="66" cy="26" r="6" fill="#10B981"/>
+  <rect x="96" y="14" width="230" height="24" rx="6" fill="#1E293B"/>
+  <text x="110" y="30" fill="#E2E8F0" font-family="system-ui, sans-serif" font-size="12" font-weight="700">Virtual Production • Scene 3 of 8</text>
+
+  <!-- Top Mode Tabs -->
+  <rect x="370" y="11" width="470" height="30" rx="8" fill="#111827" stroke="#334155"/>
+  <rect x="374" y="14" width="146" height="24" rx="6" fill="#1E293B"/>
+  <text x="392" y="30" fill="#94A3B8" font-family="system-ui, sans-serif" font-size="11" font-weight="600">Script &amp; Direction</text>
+  <rect x="524" y="14" width="156" height="24" rx="6" fill="url(#accent2)"/>
+  <text x="542" y="30" fill="#FFFFFF" font-family="system-ui, sans-serif" font-size="11" font-weight="700">Keyframes &amp; Video</text>
+  <rect x="684" y="14" width="152" height="24" rx="6" fill="#1E293B"/>
+  <text x="706" y="30" fill="#94A3B8" font-family="system-ui, sans-serif" font-size="11" font-weight="600">Screening Room</text>
+
+  <rect x="1020" y="11" width="156" height="30" rx="8" fill="#10B981"/>
+  <text x="1044" y="30" fill="#042F2E" font-family="system-ui, sans-serif" font-size="12" font-weight="800">Open Final Cut →</text>
+
+  <!-- Left Panel: Continuity Vault & Cast References -->
+  <rect x="18" y="68" width="290" height="588" rx="12" fill="#0B1120" stroke="#1E293B" stroke-width="1.5"/>
+  <text x="36" y="96" fill="#38BDF8" font-family="system-ui, sans-serif" font-size="11" font-weight="800" letter-spacing="0.8">CONTINUITY VAULT™ LOCKED</text>
+  <text x="36" y="114" fill="#94A3B8" font-family="system-ui, sans-serif" font-size="11">Identity &amp; Voice persist across all scenes</text>
+
+  <!-- Character Card 1 -->
+  <rect x="34" y="130" width="258" height="106" rx="10" fill="#111827" stroke="#06B6D4" stroke-width="1.2"/>
+  <circle cx="74" cy="176" r="28" fill="#1E293B" stroke="#06B6D4" stroke-width="2"/>
+  <circle cx="74" cy="168" r="10" fill="#38BDF8"/>
+  <path d="M54 196 Q74 180 94 196" stroke="#38BDF8" stroke-width="4" fill="none"/>
+  <text x="114" y="154" fill="#FFFFFF" font-family="system-ui, sans-serif" font-size="13" font-weight="700">Dr. Elena Vance</text>
+  <rect x="218" y="140" width="62" height="18" rx="9" fill="#10B981" fill-opacity="0.2"/>
+  <text x="228" y="152" fill="#6EE7B7" font-family="system-ui, sans-serif" font-size="9" font-weight="700">LOCKED</text>
+  <text x="114" y="174" fill="#94A3B8" font-family="system-ui, sans-serif" font-size="10.5">Wardrobe: Exo-Dive Suit MkIV</text>
+  <rect x="114" y="186" width="164" height="24" rx="6" fill="#1E293B"/>
+  <text x="124" y="202" fill="#67E8F9" font-family="system-ui, sans-serif" font-size="10" font-weight="600">🎙 Voice: Rachel (ElevenLabs)</text>
+
+  <!-- Character Card 2 -->
+  <rect x="34" y="248" width="258" height="106" rx="10" fill="#111827" stroke="#334155"/>
+  <circle cx="74" cy="294" r="28" fill="#1E293B" stroke="#8B5CF6" stroke-width="2"/>
+  <circle cx="74" cy="286" r="10" fill="#C4B5FD"/>
+  <path d="M54 314 Q74 298 94 314" stroke="#C4B5FD" stroke-width="4" fill="none"/>
+  <text x="114" y="272" fill="#FFFFFF" font-family="system-ui, sans-serif" font-size="13" font-weight="700">Commander Kaelen</text>
+  <rect x="218" y="258" width="62" height="18" rx="9" fill="#10B981" fill-opacity="0.2"/>
+  <text x="228" y="270" fill="#6EE7B7" font-family="system-ui, sans-serif" font-size="9" font-weight="700">LOCKED</text>
+  <text x="114" y="292" fill="#94A3B8" font-family="system-ui, sans-serif" font-size="10.5">Wardrobe: Bridge Uniform</text>
+  <rect x="114" y="304" width="164" height="24" rx="6" fill="#1E293B"/>
+  <text x="124" y="320" fill="#C4B5FD" font-family="system-ui, sans-serif" font-size="10" font-weight="600">🎙 Voice: Marcus (Deep Baritone)</text>
+
+  <!-- Location & Object Reference -->
+  <rect x="34" y="368" width="258" height="96" rx="10" fill="#111827" stroke="#334155"/>
+  <text x="50" y="392" fill="#F8FAFC" font-family="system-ui, sans-serif" font-size="12" font-weight="700">🏛 Location: Trench Sonar Bay</text>
+  <text x="50" y="412" fill="#94A3B8" font-family="system-ui, sans-serif" font-size="10.5">Anamorphic 35mm • Cyan bioluminescence</text>
+  <text x="50" y="432" fill="#94A3B8" font-family="system-ui, sans-serif" font-size="10.5">Key Prop: Holographic Sonar Sphere</text>
+  <text x="50" y="450" fill="#10B981" font-family="system-ui, sans-serif" font-size="10" font-weight="700">✓ Auto-injected into all Scene 3 prompts</text>
+
+  <!-- Generate All Audio Button -->
+  <rect x="34" y="480" width="258" height="42" rx="8" fill="#1E293B" stroke="#06B6D4"/>
+  <text x="64" y="506" fill="#67E8F9" font-family="system-ui, sans-serif" font-size="12" font-weight="700">🔊 Generate Scene Audio &amp; SFX</text>
+
+  <!-- Main Stage: Start & End Keyframes + Veo Video Render -->
+  <rect x="324" y="68" width="858" height="360" rx="12" fill="#111827" stroke="#1E293B" stroke-width="1.5"/>
+  <text x="348" y="98" fill="#FFFFFF" font-family="system-ui, sans-serif" font-size="14" font-weight="700">Scene 3 • Segment 2: "The Signal Locks On"</text>
+  <text x="348" y="116" fill="#94A3B8" font-family="system-ui, sans-serif" font-size="11">Camera: Slow push-in on Elena as the sonar sphere pulses crimson (Duration: 6.0s)</text>
+
+  <!-- Start Keyframe Box -->
+  <rect x="348" y="132" width="250" height="154" rx="10" fill="#090D16" stroke="#06B6D4" stroke-width="1.5"/>
+  <rect x="358" y="142" width="96" height="20" rx="4" fill="#06B6D4" fill-opacity="0.25"/>
+  <text x="366" y="156" fill="#67E8F9" font-family="system-ui, sans-serif" font-size="9.5" font-weight="700">START KEYFRAME</text>
+  <circle cx="473" cy="210" r="32" fill="#0EA5E9" fill-opacity="0.25" stroke="#38BDF8" stroke-width="1.5"/>
+  <text x="395" y="272" fill="#CBD5E1" font-family="system-ui, sans-serif" font-size="10.5">Imagen 3 • Character Ref Locked</text>
+
+  <!-- Arrow to End Keyframe -->
+  <text x="608" y="214" fill="#38BDF8" font-family="system-ui, sans-serif" font-size="18" font-weight="900">→</text>
+
+  <!-- End Keyframe Box -->
+  <rect x="632" y="132" width="250" height="154" rx="10" fill="#090D16" stroke="#38BDF8" stroke-width="1.5"/>
+  <rect x="642" y="142" width="88" height="20" rx="4" fill="#38BDF8" fill-opacity="0.25"/>
+  <text x="650" y="156" fill="#7DD3FC" font-family="system-ui, sans-serif" font-size="9.5" font-weight="700">END KEYFRAME</text>
+  <circle cx="757" cy="210" r="40" fill="#EF4444" fill-opacity="0.25" stroke="#F87171" stroke-width="1.5"/>
+  <text x="678" y="272" fill="#CBD5E1" font-family="system-ui, sans-serif" font-size="10.5">Close-up • Crimson Sonar Glow</text>
+
+  <!-- Veo 3.1 Video Take Panel -->
+  <rect x="902" y="132" width="258" height="154" rx="10" fill="#1E1B4B" stroke="#8B5CF6" stroke-width="1.5"/>
+  <rect x="914" y="142" width="110" height="20" rx="4" fill="url(#veoGrad)"/>
+  <text x="922" y="156" fill="#FFFFFF" font-family="system-ui, sans-serif" font-size="9.5" font-weight="700">VEO 3.1 MOTION</text>
+  <circle cx="1031" cy="204" r="24" fill="#8B5CF6" fill-opacity="0.4" stroke="#C4B5FD" stroke-width="2"/>
+  <polygon points="1026,194 1026,214 1042,204" fill="#FFFFFF"/>
+  <text x="936" y="252" fill="#E2E8F0" font-family="system-ui, sans-serif" font-size="11" font-weight="600">Take 2 Approved (1080p)</text>
+  <text x="942" y="270" fill="#C4B5FD" font-family="system-ui, sans-serif" font-size="10">Interpolated from Keyframes</text>
+
+  <!-- Action Toolbar inside Main Stage -->
+  <rect x="348" y="302" width="812" height="106" rx="10" fill="#0B1120" stroke="#1E293B"/>
+  <text x="368" y="328" fill="#94A3B8" font-family="system-ui, sans-serif" font-size="10.5" font-weight="700">AI DIRECTOR PROMPT (AUTO-BUILT FROM SCRIPT + CONTINUITY VAULT)</text>
+  <text x="368" y="350" fill="#E2E8F0" font-family="system-ui, sans-serif" font-size="11.5">"Cinematic medium close-up of Dr. Elena Vance in Exo-Dive Suit MkIV inside Trench Sonar Bay, crimson hologram..."</text>
+  <rect x="368" y="366" width="170" height="30" rx="6" fill="#06B6D4"/>
+  <text x="386" y="385" fill="#042F2E" font-family="system-ui, sans-serif" font-size="11" font-weight="800">🖼 Render Keyframes (15 cr)</text>
+  <rect x="550" y="366" width="190" height="30" rx="6" fill="url(#veoGrad)"/>
+  <text x="568" y="385" fill="#FFFFFF" font-family="system-ui, sans-serif" font-size="11" font-weight="700">🎬 Animate with Veo 3.1 (120 cr)</text>
+  <rect x="752" y="366" width="170" height="30" rx="6" fill="#1E293B" stroke="#475569"/>
+  <text x="772" y="385" fill="#E2E8F0" font-family="system-ui, sans-serif" font-size="11" font-weight="600">✨ Refine Prompt / Inpaint</text>
+
+  <!-- Bottom Multitrack Timeline (Video + Dialogue + SFX + Score) -->
+  <rect x="324" y="444" width="858" height="212" rx="12" fill="#0B1120" stroke="#1E293B" stroke-width="1.5"/>
+  <text x="348" y="472" fill="#F8FAFC" font-family="system-ui, sans-serif" font-size="13" font-weight="700">Multitrack Scene Timeline &amp; Audio Mixer</text>
+  <text x="980" y="472" fill="#38BDF8" font-family="system-ui, sans-serif" font-size="11" font-weight="600">00:00:14:08 / 00:00:32:00</text>
+
+  <!-- Track 1: Visual Segments -->
+  <text x="348" y="506" fill="#94A3B8" font-family="system-ui, sans-serif" font-size="10.5" font-weight="700">VIDEO / ANIMATIC</text>
+  <rect x="470" y="490" width="210" height="26" rx="5" fill="#0EA5E9" fill-opacity="0.25" stroke="#0EA5E9"/>
+  <text x="484" y="507" fill="#7DD3FC" font-family="system-ui, sans-serif" font-size="10" font-weight="700">Seg 1: Wide Sonar Bay (5.5s)</text>
+  <rect x="686" y="490" width="230" height="26" rx="5" fill="#8B5CF6" fill-opacity="0.35" stroke="#8B5CF6"/>
+  <text x="700" y="507" fill="#DDD6FE" font-family="system-ui, sans-serif" font-size="10" font-weight="700">Seg 2: Veo 3.1 Push-In (6.0s)</text>
+  <rect x="922" y="490" width="236" height="26" rx="5" fill="#0EA5E9" fill-opacity="0.25" stroke="#0EA5E9"/>
+  <text x="936" y="507" fill="#7DD3FC" font-family="system-ui, sans-serif" font-size="10" font-weight="700">Seg 3: Kaelen Reaction (4.5s)</text>
+
+  <!-- Track 2: Dialogue -->
+  <text x="348" y="544" fill="#94A3B8" font-family="system-ui, sans-serif" font-size="10.5" font-weight="700">DIALOGUE (TTS)</text>
+  <rect x="510" y="528" width="340" height="26" rx="5" fill="#10B981" fill-opacity="0.2" stroke="#10B981"/>
+  <text x="524" y="545" fill="#6EE7B7" font-family="system-ui, sans-serif" font-size="10" font-weight="600">ELENA: "It's not tectonic noise, Kaelen. Listen to the interval."</text>
+
+  <!-- Track 3: SFX -->
+  <text x="348" y="582" fill="#94A3B8" font-family="system-ui, sans-serif" font-size="10.5" font-weight="700">FOLEY &amp; SFX</text>
+  <rect x="670" y="566" width="260" height="26" rx="5" fill="#F59E0B" fill-opacity="0.2" stroke="#F59E0B"/>
+  <text x="684" y="583" fill="#FCD34D" font-family="system-ui, sans-serif" font-size="10" font-weight="600">🔊 44Hz Sub-Bass Sonar Ping + Hull Creak</text>
+
+  <!-- Track 4: Score -->
+  <text x="348" y="620" fill="#94A3B8" font-family="system-ui, sans-serif" font-size="10.5" font-weight="700">CINEMATIC SCORE</text>
+  <rect x="470" y="604" width="688" height="26" rx="5" fill="#EC4899" fill-opacity="0.18" stroke="#EC4899"/>
+  <text x="484" y="621" fill="#F9A8D4" font-family="system-ui, sans-serif" font-size="10" font-weight="600">🎵 Ambient Analog Synth Tension Pulse (Auto-Ducked Under Dialogue)</text>
+
+  <!-- Playhead Line -->
+  <line x1="760" y1="480" x2="760" y2="642" stroke="#EF4444" stroke-width="2"/>
+  <polygon points="754,480 766,480 760,490" fill="#EF4444"/>
+</svg>

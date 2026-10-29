@@ -1,0 +1,79 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 675" fill="none">
+  <defs>
+    <linearGradient id="bg5" x1="0" y1="0" x2="1200" y2="675" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#090D16"/>
+      <stop offset="100%" stop-color="#0F172A"/>
+    </linearGradient>
+    <linearGradient id="goldGrad" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#10B981"/>
+      <stop offset="100%" stop-color="#06B6D4"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="1200" height="675" rx="16" fill="url(#bg5)" stroke="#1E293B" stroke-width="2"/>
+
+  <!-- Header -->
+  <rect x="0" y="0" width="1200" height="52" rx="16" fill="#0B1120"/>
+  <line x1="0" y1="52" x2="1200" y2="52" stroke="#1E293B" stroke-width="1.5"/>
+  <circle cx="26" cy="26" r="6" fill="#EF4444"/>
+  <circle cx="46" cy="26" r="6" fill="#F59E0B"/>
+  <circle cx="66" cy="26" r="6" fill="#10B981"/>
+  <text x="96" y="31" fill="#F8FAFC" font-family="system-ui, sans-serif" font-size="13" font-weight="700">Studio Billing, Credits &amp; BYOK Cloud Keys</text>
+
+  <!-- Dual Credit Pool Banner -->
+  <rect x="28" y="72" width="1144" height="142" rx="14" fill="#0B1120" stroke="#10B981" stroke-width="1.5"/>
+  <text x="52" y="102" fill="#6EE7B7" font-family="system-ui, sans-serif" font-size="11" font-weight="800" letter-spacing="1">HOW SCENEFLOW CREDITS WORK (SUBSCRIPTION + TOP-UP VAULT)</text>
+  <text x="52" y="132" fill="#FFFFFF" font-family="system-ui, sans-serif" font-size="24" font-weight="900">75,000 Total Available Credits</text>
+  <text x="52" y="156" fill="#94A3B8" font-family="system-ui, sans-serif" font-size="12">Monthly subscription credits are automatically spent FIRST. Top-Up Add-On packs never expire while subscribed.</text>
+  <text x="52" y="186" fill="#38BDF8" font-family="system-ui, sans-serif" font-size="11.5" font-weight="700">✓ Typical Costs: Blueprint Treatment (25 cr) • Audience Resonance (20 cr) • Keyframe Image (10–15 cr) • Veo 3.1 Video (80–150 cr)</text>
+
+  <!-- 4 Plan Cards -->
+  <!-- Explorer -->
+  <rect x="28" y="234" width="270" height="240" rx="12" fill="#111827" stroke="#334155"/>
+  <text x="48" y="264" fill="#94A3B8" font-family="system-ui, sans-serif" font-size="11" font-weight="700">TRIAL SANDBOX</text>
+  <text x="48" y="294" fill="#FFFFFF" font-family="system-ui, sans-serif" font-size="22" font-weight="800">Explorer • $9</text>
+  <text x="48" y="316" fill="#38BDF8" font-family="system-ui, sans-serif" font-size="12" font-weight="700">750 One-Time Credits</text>
+  <text x="48" y="344" fill="#CBD5E1" font-family="system-ui, sans-serif" font-size="11">• Build 1st Story Blueprint</text>
+  <text x="48" y="364" fill="#CBD5E1" font-family="system-ui, sans-serif" font-size="11">• Audience Resonance 80+ Test</text>
+  <text x="48" y="384" fill="#CBD5E1" font-family="system-ui, sans-serif" font-size="11">• Animatic + Sample Veo Clips</text>
+  <text x="48" y="404" fill="#CBD5E1" font-family="system-ui, sans-serif" font-size="11">• 10 GB Continuity Vault</text>
+
+  <!-- Starter -->
+  <rect x="318" y="234" width="270" height="240" rx="12" fill="#111827" stroke="#06B6D4" stroke-width="1.5"/>
+  <text x="338" y="264" fill="#38BDF8" font-family="system-ui, sans-serif" font-size="11" font-weight="700">CHAPTER-BY-CHAPTER</text>
+  <text x="338" y="294" fill="#FFFFFF" font-family="system-ui, sans-serif" font-size="22" font-weight="800">Starter • $29/mo</text>
+  <text x="338" y="316" fill="#67E8F9" font-family="system-ui, sans-serif" font-size="12" font-weight="700">4,500 Credits / Month</text>
+  <text x="338" y="344" fill="#CBD5E1" font-family="system-ui, sans-serif" font-size="11">• 3 Active Studio Projects</text>
+  <text x="338" y="364" fill="#CBD5E1" font-family="system-ui, sans-serif" font-size="11">• Full Continuity Vault (100 GB)</text>
+  <text x="338" y="384" fill="#CBD5E1" font-family="system-ui, sans-serif" font-size="11">• 1080p MP4 Master Exports</text>
+  <text x="338" y="404" fill="#CBD5E1" font-family="system-ui, sans-serif" font-size="11">• Commercial Licensing</text>
+
+  <!-- Pro -->
+  <rect x="608" y="234" width="270" height="240" rx="12" fill="#1E1B4B" stroke="#8B5CF6" stroke-width="2"/>
+  <text x="628" y="264" fill="#C4B5FD" font-family="system-ui, sans-serif" font-size="11" font-weight="800">★ MOST POPULAR</text>
+  <text x="628" y="294" fill="#FFFFFF" font-family="system-ui, sans-serif" font-size="22" font-weight="800">Pro • $79/mo</text>
+  <text x="628" y="316" fill="#DDD6FE" font-family="system-ui, sans-serif" font-size="12" font-weight="700">15,000 Credits / Month</text>
+  <text x="628" y="344" fill="#E2E8F0" font-family="system-ui, sans-serif" font-size="11">• Unlimited Projects &amp; Series</text>
+  <text x="628" y="364" fill="#E2E8F0" font-family="system-ui, sans-serif" font-size="11">• 500 GB Continuity Vault</text>
+  <text x="628" y="384" fill="#E2E8F0" font-family="system-ui, sans-serif" font-size="11">• 4K Upscaling &amp; Voice Cloning</text>
+  <text x="628" y="404" fill="#E2E8F0" font-family="system-ui, sans-serif" font-size="11">• BYOK Cloud Key Integration</text>
+
+  <!-- Studio -->
+  <rect x="898" y="234" width="274" height="240" rx="12" fill="#111827" stroke="#10B981" stroke-width="1.5"/>
+  <text x="918" y="264" fill="#6EE7B7" font-family="system-ui, sans-serif" font-size="11" font-weight="700">PRODUCTION HOUSE</text>
+  <text x="918" y="294" fill="#FFFFFF" font-family="system-ui, sans-serif" font-size="22" font-weight="800">Studio • $249/mo</text>
+  <text x="918" y="316" fill="#6EE7B7" font-family="system-ui, sans-serif" font-size="12" font-weight="700">75,000 Credits / Month</text>
+  <text x="918" y="344" fill="#CBD5E1" font-family="system-ui, sans-serif" font-size="11">• 2,000 GB Vault + 5 Team Seats</text>
+  <text x="918" y="364" fill="#CBD5E1" font-family="system-ui, sans-serif" font-size="11">• Highest Priority Render Queue</text>
+  <text x="918" y="384" fill="#CBD5E1" font-family="system-ui, sans-serif" font-size="11">• Full BYOK + Custom Voices</text>
+  <text x="918" y="404" fill="#CBD5E1" font-family="system-ui, sans-serif" font-size="11">• Dedicated Studio Onboarding</text>
+
+  <!-- Bottom Row: BYOK Integration Banner -->
+  <rect x="28" y="494" width="1144" height="156" rx="14" fill="#111827" stroke="#334155" stroke-width="1.5"/>
+  <text x="52" y="526" fill="#C4B5FD" font-family="system-ui, sans-serif" font-size="11" font-weight="800" letter-spacing="0.8">HYBRID STUDIO ARCHITECTURE • BRING YOUR OWN KEY (BYOK)</text>
+  <text x="52" y="554" fill="#FFFFFF" font-family="system-ui, sans-serif" font-size="17" font-weight="700">Connect Your Own Google Cloud Vertex AI &amp; ElevenLabs Keys in Settings → Integrations</text>
+  <text x="52" y="580" fill="#94A3B8" font-family="system-ui, sans-serif" font-size="12">Pro and Studio subscribers can route heavy Veo 3.1 video renders or custom voice synthesis through their own cloud billing</text>
+  <text x="52" y="600" fill="#94A3B8" font-family="system-ui, sans-serif" font-size="12">while keeping SceneFlow's Continuity Vault, Audience Resonance, and Multitrack Timeline orchestration.</text>
+  <rect x="920" y="536" width="224" height="44" rx="10" fill="url(#goldGrad)"/>
+  <text x="946" y="563" fill="#042F2E" font-family="system-ui, sans-serif" font-size="12" font-weight="800">Configure BYOK Keys →</text>
+</svg>

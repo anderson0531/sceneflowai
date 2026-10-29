@@ -4,6 +4,7 @@ import { usePathname } from 'next/navigation';
 import { GlobalSidebarUnified } from '@/components/layout/GlobalSidebarUnified';
 import { MobileAppGate } from '@/components/layout/MobileAppGate';
 import { PageTranslateControl } from '@/components/i18n/PageTranslateControl';
+import { JitHelpDrawer } from '@/components/help/JitHelpDrawer';
 import { isPublicRoute } from '@/constants/publicRoutes';
 import { allowsGoogleTranslate } from '@/config/i18n/gtSurfaces';
 
@@ -45,6 +46,7 @@ export function ConditionalLayout({ children }: ConditionalLayoutProps) {
       <GlobalSidebarUnified>
         {children}
       </GlobalSidebarUnified>
+      <JitHelpDrawer />
     </MobileAppGate>
   );
 }

@@ -31,6 +31,7 @@ import {
 } from '@/config/nav/workflowGuideConfig'
 import { type WorkflowPhase } from '@/config/nav/sidebarConfig'
 import { STUDIO_DISPLAY_NAMES } from '@/constants/studioDisplayNames'
+import { openJitHelp } from '@/components/help/JitHelpDrawer'
 
 const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
   FileText,
@@ -234,6 +235,17 @@ export function WorkflowGuidePanel({
 
       {isOpen && (
         <div className={cn('space-y-2', !optionalHint && 'mt-2')}>
+          <button
+            type="button"
+            onClick={() => openJitHelp({ tab: 'jit' })}
+            className="w-full flex items-center justify-between gap-2 px-2.5 py-2 rounded-lg text-xs font-semibold bg-cyan-500/10 hover:bg-cyan-500/20 text-cyan-300 border border-cyan-500/30 transition-colors"
+          >
+            <span className="flex items-center gap-1.5 truncate">
+              <Sparkles className="w-3.5 h-3.5 text-cyan-400 flex-shrink-0" />
+              <span className="truncate">Visual Screen Map (JIT)</span>
+            </span>
+            <ChevronRight className="w-3.5 h-3.5 flex-shrink-0" />
+          </button>
           {groups.map((group) => (
             <WorkflowGroupSection
               key={group.id}

@@ -1,1001 +1,1089 @@
 'use client'
 
-import { useState } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
-import { 
-  HelpCircle, 
-  PlayCircle, 
-  Book, 
-  Lightbulb, 
-  Film, 
-  Scissors, 
-  Star,
-  ChevronDown,
-  ChevronRight,
-  Search,
-  Clock,
-  Home,
-  FolderOpen,
+import React, { useState, useEffect, useMemo } from 'react'
+import Link from 'next/link'
+import {
+  HelpCircle,
   Sparkles,
+  PlayCircle,
+  CheckCircle2,
+  Circle,
+  Search,
+  Zap,
+  Coins,
+  BookOpen,
+  Film,
+  Layers,
+  Building2,
+  Compass,
+  Calculator,
+  GraduationCap,
+  ChevronRight,
+  ChevronLeft,
+  Lightbulb,
+  AlertCircle,
+  ExternalLink,
+  Home,
   Settings,
   MessageCircle,
-  LayoutDashboard
 } from 'lucide-react'
-import Link from 'next/link'
 import { cn } from '@/lib/utils'
+import {
+  JIT_CONTEXT_GUIDES,
+  INTERACTIVE_TUTORIALS,
+  CREATOR_PLAYBOOKS,
+  CREDIT_ESTIMATOR_PRESETS,
+  HELP_KNOWLEDGE_ARTICLES,
+  calculateEstimatedCredits,
+  type JitContextId,
+} from '@/config/help/helpAcademyConfig'
+import { AnnotatedStudioScreenshot } from '@/components/help/AnnotatedStudioScreenshot'
+import {
+  openJitHelp,
+  ACADEMY_PROGRESS_STORAGE_KEY,
+} from '@/components/help/JitHelpDrawer'
 
-// =============================================================================
-// TYPES
-// =============================================================================
+type AcademyTab = 'tutorials' | 'screens' | 'playbooks' | 'calculator'
 
-interface VideoPlaceholder {
-  id: string
-  title: string
-  duration: string
-  description: string
+const PLAYBOOK_ICONS = {
+  BookOpen,
+  Film,
+  Layers,
+  Building2,
 }
-
-interface HelpArticle {
-  id: string
-  title: string
-  content: string
-  steps?: string[]
-  tips?: string[]
-  relatedVideoId?: string
-}
-
-interface HelpSection {
-  id: string
-  title: string
-  icon: React.ReactNode
-  description: string
-  articles: HelpArticle[]
-  videos: VideoPlaceholder[]
-}
-
-// =============================================================================
-// HELP CONTENT DATA
-// =============================================================================
-
-const helpSections: HelpSection[] = [
-  {
-    id: 'getting-started',
-    title: 'Getting Started',
-    icon: <Home className="w-5 h-5" />,
-    description: 'Learn the basics of SceneFlow Studio and get up and running quickly.',
-    articles: [
-      {
-        id: 'welcome',
-        title: 'Welcome to SceneFlow Studio',
-        content: 'SceneFlow Studio is an AI-powered video production platform that helps you create professional video content from concept to final cut. Our workflow guides you through five phases: Series Room, Blueprint Room, Production Stage, Final Cut, and Premiere.',
-        steps: [
-          'Start with your idea or concept in the Blueprint Room phase',
-          'Develop your script, characters, and visuals in Production',
-          'Assemble and polish your video in Final Cut',
-          'Share and publish in Premiere'
-        ],
-        tips: [
-          'Use Cue, your AI assistant, anytime by clicking the sparkle icon',
-          'Follow the Workflow Guide in the sidebar for step-by-step guidance',
-          'Your work auto-saves as you go'
-        ],
-        relatedVideoId: 'intro-overview'
-      },
-      {
-        id: 'quick-start',
-        title: 'Quick Start Guide',
-        content: 'Get your first project created in under 5 minutes.',
-        steps: [
-          'Click "New Project" from the Dashboard',
-          'Enter your video concept or idea',
-          'Click "Generate Blueprint" to create your film treatment',
-          'Review and refine using Audience Resonance',
-          'Click "Start Production" when ready'
-        ],
-        relatedVideoId: 'quick-start-video'
-      },
-      {
-        id: 'navigation',
-        title: 'Navigating the Interface',
-        content: 'Learn how to navigate SceneFlow Studio efficiently.',
-        steps: [
-          'Use the left sidebar for workflow navigation',
-          'The top bar shows your current project and credits',
-          'Access settings, help, and profile from the top right',
-          'Use keyboard shortcuts for faster workflow (Cmd/Ctrl+S to save)'
-        ],
-        tips: [
-          'Press ? to see all keyboard shortcuts',
-          'The sidebar collapses on smaller screens - click the menu icon to expand'
-        ]
-      }
-    ],
-    videos: [
-      {
-        id: 'intro-overview',
-        title: 'SceneFlow Studio Overview',
-        duration: '3:45',
-        description: 'A complete tour of SceneFlow Studio and what you can create.'
-      },
-      {
-        id: 'quick-start-video',
-        title: 'Your First Project in 5 Minutes',
-        duration: '5:00',
-        description: 'Follow along to create your first video project.'
-      }
-    ]
-  },
-  {
-    id: 'dashboard',
-    title: 'Dashboard',
-    icon: <LayoutDashboard className="w-5 h-5" />,
-    description: 'Your command center for managing projects and monitoring usage.',
-    articles: [
-      {
-        id: 'dashboard-overview',
-        title: 'Dashboard Overview',
-        content: 'The Dashboard is your home base in SceneFlow Studio. Here you can see your active projects, monitor credits, and quickly access key features.',
-        steps: [
-          'View your most recent projects in the Active Projects section',
-          'Monitor your credit balance in the Budget Health widget',
-          'Use Quick Actions to create new projects or access settings',
-          'Check your storage usage in the Storage widget'
-        ],
-        relatedVideoId: 'dashboard-tour'
-      },
-      {
-        id: 'cue-assistant',
-        title: 'Using Cue AI Assistant',
-        content: 'Cue is your AI-powered assistant that helps you throughout your workflow. Access Cue anytime by clicking the sparkle icon in the bottom right.',
-        tips: [
-          'Ask Cue for help with any feature',
-          'Cue provides context-aware suggestions based on your current page',
-          'Use Cue to brainstorm ideas or refine your content'
-        ],
-        relatedVideoId: 'cue-assistant-guide'
-      },
-      {
-        id: 'credits-management',
-        title: 'Understanding Credits',
-        content: 'Credits are used for AI-powered features like generating treatments, images, audio, and video.',
-        steps: [
-          'Check your balance in the top navigation or Dashboard',
-          'Purchase more credits from Dashboard → Buy Credits',
-          'View usage breakdown in Settings → Billing'
-        ],
-        tips: [
-          'Blueprint generation uses fewer credits than video generation',
-          'Optimize your script before generating video to save credits',
-          'Consider the Coffee Break plan for additional credits'
-        ]
-      }
-    ],
-    videos: [
-      {
-        id: 'dashboard-tour',
-        title: 'Dashboard Deep Dive',
-        duration: '4:30',
-        description: 'Explore every feature of the Dashboard.'
-      },
-      {
-        id: 'cue-assistant-guide',
-        title: 'Getting the Most from Cue',
-        duration: '6:00',
-        description: 'Tips and tricks for using the AI assistant effectively.'
-      }
-    ]
-  },
-  {
-    id: 'projects',
-    title: 'Projects',
-    icon: <FolderOpen className="w-5 h-5" />,
-    description: 'Manage, organize, and access all your video projects.',
-    articles: [
-      {
-        id: 'projects-overview',
-        title: 'Managing Your Projects',
-        content: 'The Projects page shows all your video projects with their current status and progress.',
-        steps: [
-          'Use the search bar to find projects by name',
-          'Filter projects by status or date',
-          'Switch between grid and list views',
-          'Click any project to continue working on it'
-        ],
-        relatedVideoId: 'projects-management'
-      },
-      {
-        id: 'project-status',
-        title: 'Understanding Project Status',
-        content: 'Each project shows its current phase and progress.',
-        tips: [
-          'Blueprint Room: Initial concept and treatment phase',
-          'Production: Active development of script and assets',
-          'Final Cut: Video assembly and editing',
-          'Premiere: Ready for sharing and publishing'
-        ]
-      },
-      {
-        id: 'delete-project',
-        title: 'Deleting Projects',
-        content: 'You can delete projects you no longer need.',
-        steps: [
-          'Click the menu icon (•••) on a project card',
-          'Select "Delete Project"',
-          'Confirm the deletion in the dialog'
-        ],
-        tips: [
-          'Deleted projects cannot be recovered',
-          'Consider exporting important content before deleting'
-        ]
-      }
-    ],
-    videos: [
-      {
-        id: 'projects-management',
-        title: 'Project Management Best Practices',
-        duration: '5:15',
-        description: 'Organize and manage multiple projects efficiently.'
-      }
-    ]
-  },
-  {
-    id: 'blueprint',
-    title: 'Blueprint Room Phase',
-    icon: <Lightbulb className="w-5 h-5" />,
-    description: 'Transform your ideas into professional film treatments.',
-    articles: [
-      {
-        id: 'blueprint-overview',
-        title: 'Blueprint Room Phase Overview',
-        content: 'The Blueprint Room phase is where your video journey begins. Enter your concept and let AI generate a complete film treatment including title, logline, story beats, characters, and more.',
-        steps: [
-          'Enter your video concept, idea, or topic',
-          'Click "Generate Blueprint" to create your treatment',
-          'Review the generated hero image, title, and logline',
-          'Explore Story Setup, Tone & Style, Beats, and Characters sections'
-        ],
-        relatedVideoId: 'blueprint-intro'
-      },
-      {
-        id: 'generating-treatment',
-        title: 'Generating Your Treatment',
-        content: 'The AI analyzes your concept and creates a comprehensive film treatment.',
-        steps: [
-          'Be specific in your concept description for better results',
-          'Include target audience, genre, or style preferences if known',
-          'The AI generates: Title, Logline, Synopsis, Characters, Beats, and Narrative Reasoning'
-        ],
-        tips: [
-          'Vague concepts will trigger inspiration suggestions',
-          'You can always reimagine or refine the generated treatment'
-        ],
-        relatedVideoId: 'treatment-generation'
-      },
-      {
-        id: 'audience-resonance',
-        title: 'Audience Resonance Analyzer',
-        content: 'Optimize your blueprint for your target audience using the Audience Resonance feature.',
-        steps: [
-          'Click "Analyze Resonance" in Blueprint Room',
-          'Select your target story type, audience, and theme',
-          'Review your score and recommendations',
-          'Apply quick fixes to improve your score',
-          'Target a score of 80+ before proceeding to Production'
-        ],
-        tips: [
-          'Limit yourself to 2-3 iterations to avoid over-optimization',
-          'Focus on the most impactful recommendations',
-          'Production has additional refinement tools'
-        ],
-        relatedVideoId: 'audience-resonance-guide'
-      },
-      {
-        id: 'editing-sections',
-        title: 'Editing Blueprint Sections',
-        content: 'Fine-tune each section of your treatment for the perfect story.',
-        steps: [
-          'Click any section to expand and edit',
-          'Use the edit icon to modify text directly',
-          'Apply AI-powered refinements with the refine button',
-          'Changes auto-save as you work'
-        ]
-      },
-      {
-        id: 'hero-image',
-        title: 'Hero Image Generation',
-        content: 'The hero image provides a visual representation of your story.',
-        steps: [
-          'A hero image is automatically generated with your treatment',
-          'Click "Regenerate" to create a new image',
-          'The image updates to reflect narrative changes'
-        ],
-        relatedVideoId: 'hero-image-tips'
-      },
-      {
-        id: 'audio-preview',
-        title: 'Audio Preview',
-        content: 'Experience your story with AI-generated narration.',
-        steps: [
-          'Click the play button to hear your treatment',
-          'Select different voice actors for narration',
-          'Choose from 13+ languages for multilingual preview',
-          'Use audio preview to catch flow and pacing issues'
-        ],
-        relatedVideoId: 'audio-preview-demo'
-      },
-      {
-        id: 'collaboration',
-        title: 'Collaboration & Export',
-        content: 'Share your blueprint with team members and stakeholders.',
-        steps: [
-          'Click "Share" to generate a collaboration link',
-          'Team members can view and comment on your treatment',
-          'Export to PDF, Doc, or PPTX for presentations',
-          'Use collaboration feedback to refine before Production'
-        ]
-      }
-    ],
-    videos: [
-      {
-        id: 'blueprint-intro',
-        title: 'Blueprint Room Phase Walkthrough',
-        duration: '8:00',
-        description: 'Complete guide to the Blueprint Room phase from concept to production-ready treatment.'
-      },
-      {
-        id: 'treatment-generation',
-        title: 'AI Treatment Generation Explained',
-        duration: '5:30',
-        description: 'Understanding how AI creates your film treatment.'
-      },
-      {
-        id: 'audience-resonance-guide',
-        title: 'Mastering Audience Resonance',
-        duration: '6:45',
-        description: 'Get the highest scores and best recommendations.'
-      },
-      {
-        id: 'hero-image-tips',
-        title: 'Hero Image Best Practices',
-        duration: '3:00',
-        description: 'Tips for getting the perfect hero image.'
-      },
-      {
-        id: 'audio-preview-demo',
-        title: 'Audio Preview & Voice Selection',
-        duration: '4:15',
-        description: 'Explore voice options and multilingual narration.'
-      }
-    ]
-  },
-  {
-    id: 'production',
-    title: 'Production Stage',
-    icon: <Film className="w-5 h-5" />,
-    description: 'Develop your script, characters, audio, and visuals.',
-    articles: [
-      {
-        id: 'production-overview',
-        title: 'Production Stage Overview',
-        content: 'Production Stage is where your blueprint comes to life. Develop your script scene by scene, create character visuals, assign voices, and generate scene frames.',
-        steps: [
-          'Start with script review and refinement',
-          'Create character images and assign voices',
-          'Generate scene references and key frames',
-          'Build audio with dialogue and sound effects',
-          'Preview in the Screening Room'
-        ],
-        relatedVideoId: 'production-intro'
-      },
-      {
-        id: 'script-editing',
-        title: 'Script Review & Editing',
-        content: 'Refine your script for maximum impact.',
-        steps: [
-          'Navigate scenes using the Scene Timeline at the top',
-          'Click any scene to view and edit its content',
-          'Use the Review Score to track script quality',
-          'Apply AI suggestions to improve dialogue and pacing',
-          'Aim for a target score of 85+ before proceeding'
-        ],
-        tips: [
-          'Use keyboard arrows to quickly navigate between scenes',
-          'Number keys 1-9 jump directly to specific scenes'
-        ],
-        relatedVideoId: 'script-editing-guide'
-      },
-      {
-        id: 'character-creation',
-        title: 'Creating Characters',
-        content: 'Bring your characters to life with AI-generated images and voices.',
-        steps: [
-          'Review auto-generated character descriptions',
-          'Click "Generate Image" to create character visuals',
-          'Use reference images for consistency',
-          'Assign voices from 400+ options',
-          'Create wardrobe variations for different scenes'
-        ],
-        tips: [
-          'Characters maintain consistency across all scenes',
-          'You can upload reference photos for more accurate generation'
-        ],
-        relatedVideoId: 'character-creation-demo'
-      },
-      {
-        id: 'voice-assignment',
-        title: 'Voice Assignment',
-        content: 'Choose the perfect voice for each character.',
-        steps: [
-          'Browse 400+ voices in the Voice Library',
-          'Filter by language, gender, age, and style',
-          'Preview voices before assigning',
-          'Assign different voices to different characters'
-        ],
-        tips: [
-          'The "Narrative & Story" category has voices optimized for video narration',
-          'Adam is our recommended default narrator voice'
-        ],
-        relatedVideoId: 'voice-selection-tips'
-      },
-      {
-        id: 'scene-direction',
-        title: 'Scene Direction',
-        content: 'Define the visual direction for each scene.',
-        steps: [
-          'Generate scene references to establish visual style',
-          'Adjust camera angles, lighting, and mood',
-          'Iterate on direction until satisfied',
-          'Direction informs the frame generation'
-        ],
-        relatedVideoId: 'scene-direction-guide'
-      },
-      {
-        id: 'frame-generation',
-        title: 'Generating Key Frames',
-        content: 'Create the visual frames for your scenes.',
-        steps: [
-          'Click "Generate Frames" for each scene',
-          'Review generated frames for quality',
-          'Regenerate individual frames as needed',
-          'Select best frames for the Screening Room'
-        ],
-        tips: [
-          'Higher quality settings use more credits',
-          'Start with draft quality for iteration'
-        ],
-        relatedVideoId: 'frame-generation-demo'
-      },
-      {
-        id: 'audio-production',
-        title: 'Audio Production',
-        content: 'Build the complete audio track for your video.',
-        steps: [
-          'Generate dialogue for each scene',
-          'Review and adjust audio timeline',
-          'Add sound effects (coming soon)',
-          'Create multilingual versions'
-        ],
-        relatedVideoId: 'audio-production-guide'
-      },
-      {
-        id: 'screening-room',
-        title: 'Screening Room Preview',
-        content: 'Preview your video with a complete animatic.',
-        steps: [
-          'Click "Screening Room" to open the preview',
-          'Watch your video with audio and frames',
-          'Note areas that need revision',
-          'Share the preview with collaborators',
-          'Create revision notes for refinement'
-        ],
-        relatedVideoId: 'screening-room-demo'
-      }
-    ],
-    videos: [
-      {
-        id: 'production-intro',
-        title: 'Production Stage Complete Guide',
-        duration: '12:00',
-        description: 'Everything you need to know about Production Stage.'
-      },
-      {
-        id: 'script-editing-guide',
-        title: 'Script Editing & Scoring',
-        duration: '7:30',
-        description: 'Master script refinement with AI assistance.'
-      },
-      {
-        id: 'character-creation-demo',
-        title: 'Character Creation Workshop',
-        duration: '8:45',
-        description: 'Create consistent, compelling character visuals.'
-      },
-      {
-        id: 'voice-selection-tips',
-        title: 'Choosing the Perfect Voice',
-        duration: '5:00',
-        description: 'Navigate the Voice Library like a pro.'
-      },
-      {
-        id: 'scene-direction-guide',
-        title: 'Scene Direction Masterclass',
-        duration: '6:30',
-        description: 'Define visual style and camera work.'
-      },
-      {
-        id: 'frame-generation-demo',
-        title: 'Frame Generation Tips',
-        duration: '5:45',
-        description: 'Generate high-quality scene frames efficiently.'
-      },
-      {
-        id: 'audio-production-guide',
-        title: 'Audio Production Walkthrough',
-        duration: '7:00',
-        description: 'Build professional audio tracks.'
-      },
-      {
-        id: 'screening-room-demo',
-        title: 'Screening Room Collaboration',
-        duration: '4:30',
-        description: 'Preview and share your work in progress.'
-      }
-    ]
-  },
-  {
-    id: 'final-cut',
-    title: 'Final Cut Phase',
-    icon: <Scissors className="w-5 h-5" />,
-    description: 'Assemble and polish your final video.',
-    articles: [
-      {
-        id: 'final-cut-overview',
-        title: 'Final Cut Phase Overview',
-        content: 'The Final Cut phase is where your scenes come together into a polished video. Assemble scenes, add transitions, fine-tune timing, and render your final video.',
-        tips: [
-          'This phase is currently in development',
-          'Expected features: Scene assembly, transitions, timing adjustments, rendering'
-        ]
-      },
-      {
-        id: 'coming-soon-assembly',
-        title: 'Video Assembly (Coming Soon)',
-        content: 'Arrange your scenes into a cohesive video timeline. Adjust scene order, add transitions, and control pacing.'
-      },
-      {
-        id: 'coming-soon-polish',
-        title: 'Video Polish (Coming Soon)',
-        content: 'Add finishing touches including titles, lower thirds, and end cards.'
-      },
-      {
-        id: 'coming-soon-render',
-        title: 'Rendering & Export (Coming Soon)',
-        content: 'Export your video in various formats and resolutions for different platforms.'
-      }
-    ],
-    videos: [
-      {
-        id: 'final-cut-preview',
-        title: 'Final Cut Preview (Coming Soon)',
-        duration: 'TBD',
-        description: 'Preview of upcoming Final Cut features.'
-      }
-    ]
-  },
-  {
-    id: 'premiere',
-    title: 'Premiere Phase',
-    icon: <Star className="w-5 h-5" />,
-    description: 'Share and publish your completed video.',
-    articles: [
-      {
-        id: 'premiere-overview',
-        title: 'Premiere Phase Overview',
-        content: 'The Premiere phase is the final step in your video journey. Share your completed video with the world through various platforms and formats.',
-        tips: [
-          'This phase is currently in development',
-          'Expected features: Social sharing, platform publishing, analytics'
-        ]
-      },
-      {
-        id: 'coming-soon-sharing',
-        title: 'Social Sharing (Coming Soon)',
-        content: 'Share your video directly to YouTube, social media platforms, and more.'
-      },
-      {
-        id: 'coming-soon-analytics',
-        title: 'Video Analytics (Coming Soon)',
-        content: 'Track views, engagement, and performance of your published videos.'
-      },
-      {
-        id: 'coming-soon-distribution',
-        title: 'Distribution Options (Coming Soon)',
-        content: 'Choose from various distribution channels and embed options.'
-      }
-    ],
-    videos: [
-      {
-        id: 'premiere-preview',
-        title: 'Premiere Preview (Coming Soon)',
-        duration: 'TBD',
-        description: 'Preview of upcoming Premiere features.'
-      }
-    ]
-  },
-  {
-    id: 'settings',
-    title: 'Settings & Account',
-    icon: <Settings className="w-5 h-5" />,
-    description: 'Manage your account, billing, and preferences.',
-    articles: [
-      {
-        id: 'profile-settings',
-        title: 'Profile Settings',
-        content: 'Manage your personal information and preferences.',
-        steps: [
-          'Access Settings from the top navigation',
-          'Update your name, email, and profile picture',
-          'Set your preferred theme (light/dark)',
-          'Configure notification preferences'
-        ]
-      },
-      {
-        id: 'billing',
-        title: 'Billing & Subscription',
-        content: 'Manage your subscription and payment methods.',
-        steps: [
-          'View your current plan and usage',
-          'Upgrade or change your subscription',
-          'View billing history and invoices',
-          'Update payment methods'
-        ]
-      },
-      {
-        id: 'byok',
-        title: 'Bring Your Own Keys (BYOK)',
-        content: 'Use your own API keys for AI services.',
-        steps: [
-          'Go to Settings → BYOK',
-          'Enter your API keys for supported services',
-          'Keys are encrypted and stored securely',
-          'BYOK usage doesn\'t consume SceneFlow credits'
-        ],
-        tips: [
-          'BYOK is available for advanced users',
-          'You are responsible for costs on your own keys'
-        ]
-      }
-    ],
-    videos: [
-      {
-        id: 'settings-tour',
-        title: 'Settings & Preferences Guide',
-        duration: '4:00',
-        description: 'Configure SceneFlow Studio to work your way.'
-      }
-    ]
-  }
-]
-
-// =============================================================================
-// COMPONENTS
-// =============================================================================
-
-function VideoCard({ video }: { video: VideoPlaceholder }) {
-  return (
-    <div className="group relative rounded-xl overflow-hidden bg-slate-800/50 border border-slate-700/50 hover:border-sf-primary/50 transition-all cursor-pointer">
-      {/* Thumbnail Placeholder */}
-      <div className="aspect-video bg-gradient-to-br from-slate-700 to-slate-800 flex items-center justify-center relative">
-        <div className="absolute inset-0 bg-sf-primary/10 opacity-0 group-hover:opacity-100 transition-opacity" />
-        <PlayCircle className="w-12 h-12 text-slate-500 group-hover:text-sf-primary transition-colors" />
-        <div className="absolute bottom-2 right-2 bg-black/80 text-white text-xs px-2 py-0.5 rounded">
-          {video.duration}
-        </div>
-      </div>
-      {/* Video Info */}
-      <div className="p-3">
-        <h4 className="font-medium text-sm text-slate-200 group-hover:text-sf-primary transition-colors">
-          {video.title}
-        </h4>
-        <p className="text-xs text-slate-400 mt-1 line-clamp-2">
-          {video.description}
-        </p>
-      </div>
-    </div>
-  )
-}
-
-function ArticleCard({ article, isExpanded, onToggle }: { 
-  article: HelpArticle
-  isExpanded: boolean
-  onToggle: () => void 
-}) {
-  return (
-    <div className="border border-slate-700/50 rounded-lg overflow-hidden hover:border-slate-600/50 transition-colors">
-      <button
-        onClick={onToggle}
-        className="w-full flex items-center justify-between p-4 text-left hover:bg-slate-800/30 transition-colors"
-      >
-        <div className="flex items-center gap-3">
-          <Book className="w-4 h-4 text-sf-primary flex-shrink-0" />
-          <span className="font-medium text-slate-200">{article.title}</span>
-        </div>
-        {isExpanded ? (
-          <ChevronDown className="w-4 h-4 text-slate-400" />
-        ) : (
-          <ChevronRight className="w-4 h-4 text-slate-400" />
-        )}
-      </button>
-      
-      <AnimatePresence>
-        {isExpanded && (
-          <motion.div
-            initial={{ height: 0, opacity: 0 }}
-            animate={{ height: 'auto', opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
-            transition={{ duration: 0.2 }}
-            className="overflow-hidden"
-          >
-            <div className="p-4 pt-0 space-y-4">
-              <p className="text-slate-300 text-sm leading-relaxed">
-                {article.content}
-              </p>
-              
-              {article.steps && article.steps.length > 0 && (
-                <div className="space-y-2">
-                  <h5 className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Steps</h5>
-                  <ol className="space-y-2">
-                    {article.steps.map((step, idx) => (
-                      <li key={idx} className="flex items-start gap-2 text-sm text-slate-300">
-                        <span className="flex-shrink-0 w-5 h-5 rounded-full bg-sf-primary/20 text-sf-primary text-xs flex items-center justify-center font-medium">
-                          {idx + 1}
-                        </span>
-                        {step}
-                      </li>
-                    ))}
-                  </ol>
-                </div>
-              )}
-              
-              {article.tips && article.tips.length > 0 && (
-                <div className="space-y-2">
-                  <h5 className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Tips</h5>
-                  <ul className="space-y-1.5">
-                    {article.tips.map((tip, idx) => (
-                      <li key={idx} className="flex items-start gap-2 text-sm text-slate-400">
-                        <Sparkles className="w-3 h-3 text-amber-400 flex-shrink-0 mt-0.5" />
-                        {tip}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-              
-              {article.relatedVideoId && (
-                <div className="flex items-center gap-2 pt-2 border-t border-slate-700/50">
-                  <PlayCircle className="w-4 h-4 text-sf-primary" />
-                  <span className="text-xs text-slate-400">Related video available</span>
-                </div>
-              )}
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </div>
-  )
-}
-
-function SectionNav({ sections, activeSection, onSectionChange }: {
-  sections: HelpSection[]
-  activeSection: string
-  onSectionChange: (id: string) => void
-}) {
-  return (
-    <nav className="space-y-1">
-      {sections.map(section => (
-        <button
-          key={section.id}
-          onClick={() => onSectionChange(section.id)}
-          className={cn(
-            'w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors text-left',
-            activeSection === section.id
-              ? 'bg-sf-primary/10 text-sf-primary border border-sf-primary/20'
-              : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
-          )}
-        >
-          <span className={cn(
-            'flex-shrink-0',
-            activeSection === section.id ? 'text-sf-primary' : 'text-slate-500'
-          )}>
-            {section.icon}
-          </span>
-          <span className="truncate">{section.title}</span>
-        </button>
-      ))}
-    </nav>
-  )
-}
-
-// =============================================================================
-// MAIN PAGE COMPONENT
-// =============================================================================
 
 export default function HelpPage() {
-  const [activeSection, setActiveSection] = useState('getting-started')
-  const [expandedArticles, setExpandedArticles] = useState<Set<string>>(new Set(['welcome']))
-  const [searchQuery, setSearchQuery] = useState('')
-  
-  const currentSection = helpSections.find(s => s.id === activeSection) || helpSections[0]
-  
-  const toggleArticle = (articleId: string) => {
-    setExpandedArticles(prev => {
-      const next = new Set(prev)
-      if (next.has(articleId)) {
-        next.delete(articleId)
-      } else {
-        next.add(articleId)
+  const [activeTab, setActiveTab] = useState<AcademyTab>('tutorials')
+  const [selectedTutorialId, setSelectedTutorialId] = useState<string>(
+    INTERACTIVE_TUTORIALS[0].id
+  )
+  const [activeStepIdx, setActiveStepIdx] = useState<number>(0)
+  const [selectedContextId, setSelectedContextId] =
+    useState<JitContextId>('blueprint')
+  const [completedStepIds, setCompletedStepIds] = useState<string[]>([])
+  const [searchQuery, setSearchQuery] = useState<string>('')
+
+  // Interactive Credit Calculator State
+  const [sceneCount, setSceneCount] = useState<number>(8)
+  const [keyframePairsPerScene, setKeyframePairsPerScene] = useState<number>(3)
+  const [veoClipsPerScene, setVeoClipsPerScene] = useState<number>(1)
+  const [languagesCount, setLanguagesCount] = useState<number>(2)
+
+  // Read initial `?tab=` query parameter + persisted tutorial progress
+  useEffect(() => {
+    try {
+      const params = new URLSearchParams(window.location.search)
+      const tabParam = params.get('tab') as AcademyTab | null
+      if (
+        tabParam &&
+        ['tutorials', 'screens', 'playbooks', 'calculator'].includes(tabParam)
+      ) {
+        setActiveTab(tabParam)
+      }
+      const saved = localStorage.getItem(ACADEMY_PROGRESS_STORAGE_KEY)
+      if (saved) {
+        const parsed = JSON.parse(saved)
+        if (Array.isArray(parsed)) setCompletedStepIds(parsed)
+      }
+    } catch {
+      // ignore
+    }
+
+    const handleProgressSync = () => {
+      try {
+        const saved = localStorage.getItem(ACADEMY_PROGRESS_STORAGE_KEY)
+        if (saved) {
+          const parsed = JSON.parse(saved)
+          if (Array.isArray(parsed)) setCompletedStepIds(parsed)
+        }
+      } catch {
+        // ignore
+      }
+    }
+    window.addEventListener('sceneflow:academy-progress-updated', handleProgressSync)
+    return () => {
+      window.removeEventListener(
+        'sceneflow:academy-progress-updated',
+        handleProgressSync
+      )
+    }
+  }, [])
+
+  const toggleStepCompleted = (stepId: string) => {
+    setCompletedStepIds((prev) => {
+      const next = prev.includes(stepId)
+        ? prev.filter((id) => id !== stepId)
+        : [...prev, stepId]
+      try {
+        localStorage.setItem(ACADEMY_PROGRESS_STORAGE_KEY, JSON.stringify(next))
+      } catch {
+        // ignore
       }
       return next
     })
   }
-  
-  // Filter articles based on search
-  const filteredArticles = searchQuery.trim()
-    ? currentSection.articles.filter(a => 
-        a.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        a.content.toLowerCase().includes(searchQuery.toLowerCase())
-      )
-    : currentSection.articles
-  
+
+  const totalAvailableSteps = useMemo(
+    () => INTERACTIVE_TUTORIALS.reduce((acc, c) => acc + c.steps.length, 0),
+    []
+  )
+
+  const activeTutorial =
+    INTERACTIVE_TUTORIALS.find((t) => t.id === selectedTutorialId) ||
+    INTERACTIVE_TUTORIALS[0]
+  const currentStep =
+    activeTutorial.steps[activeStepIdx] || activeTutorial.steps[0]
+  const activeGuide =
+    JIT_CONTEXT_GUIDES[selectedContextId] || JIT_CONTEXT_GUIDES.blueprint
+
+  const creditEstimate = useMemo(
+    () =>
+      calculateEstimatedCredits({
+        sceneCount,
+        keyframePairsPerScene,
+        veoClipsPerScene,
+        languagesCount,
+      }),
+    [sceneCount, keyframePairsPerScene, veoClipsPerScene, languagesCount]
+  )
+
+  const filteredArticles = useMemo(() => {
+    const q = searchQuery.trim().toLowerCase()
+    if (!q) return HELP_KNOWLEDGE_ARTICLES
+    return HELP_KNOWLEDGE_ARTICLES.filter(
+      (a) =>
+        a.title.toLowerCase().includes(q) ||
+        a.summary.toLowerCase().includes(q) ||
+        a.tags.some((t) => t.toLowerCase().includes(q)) ||
+        a.bullets.some((b) => b.toLowerCase().includes(q))
+    )
+  }, [searchQuery])
+
   return (
-    <div className="min-h-screen bg-sf-background text-sf-text-primary">
-      {/* Header */}
-      <div className="border-b border-sf-border bg-sf-surface/50">
-        <div className="max-w-7xl mx-auto px-6 py-8">
-          <div className="flex items-center gap-4 mb-4">
-            <div className="w-12 h-12 rounded-xl bg-sf-primary/20 flex items-center justify-center">
-              <HelpCircle className="w-6 h-6 text-sf-primary" />
-            </div>
+    <div className="min-h-screen bg-slate-950 text-slate-100">
+      {/* =================================================================== */}
+      {/* STUDIO ACADEMY HERO HEADER                                          */}
+      {/* =================================================================== */}
+      <div className="border-b border-slate-800 bg-gradient-to-b from-slate-900 via-slate-950 to-slate-950">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
             <div>
-              <h1 className="text-2xl font-bold">Help Center</h1>
-              <p className="text-sf-text-secondary">Learn how to use SceneFlow Studio effectively</p>
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-cyan-500/15 border border-cyan-500/30 text-cyan-300 text-xs font-bold mb-3">
+                <GraduationCap className="w-4 h-4" />
+                <span>SceneFlow Studio Academy &amp; Just-In-Time Training</span>
+              </div>
+              <h1 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-white tracking-tight">
+                Master AI Filmmaking in Minutes
+              </h1>
+              <p className="text-sm sm:text-base text-slate-400 mt-2 max-w-2xl">
+                Interactive visual screen maps, step-by-step guided simulations, and a
+                context-aware <strong className="text-slate-200">Just-In-Time (JIT) Coach</strong>{' '}
+                accessible from any studio screen via{' '}
+                <kbd className="px-1.5 py-0.5 rounded bg-slate-800 text-cyan-300 border border-slate-700 text-xs">
+                  ?
+                </kbd>
+                .
+              </p>
+            </div>
+
+            {/* Right Hero Card: Mastery Progress & Quick JIT Trigger */}
+            <div className="rounded-2xl bg-slate-900/90 border border-slate-800 p-4 sm:p-5 flex flex-col gap-3 min-w-[290px] sm:min-w-[340px]">
+              <div className="flex items-center justify-between gap-3">
+                <div>
+                  <span className="text-xs font-bold uppercase tracking-wider text-slate-400">
+                    Your Training Progress
+                  </span>
+                  <p className="text-lg font-extrabold text-white">
+                    {completedStepIds.length} of {totalAvailableSteps} Steps Mastered
+                  </p>
+                </div>
+                <span className="px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-500/15 text-emerald-300 border border-emerald-500/30">
+                  {Math.round(
+                    (completedStepIds.length / Math.max(1, totalAvailableSteps)) *
+                      100
+                  )}
+                  %
+                </span>
+              </div>
+
+              <div className="w-full h-2 rounded-full bg-slate-800 overflow-hidden">
+                <div
+                  className="h-full bg-gradient-to-r from-cyan-400 to-purple-500 transition-all duration-300"
+                  style={{
+                    width: `${Math.min(
+                      100,
+                      Math.round(
+                        (completedStepIds.length /
+                          Math.max(1, totalAvailableSteps)) *
+                          100
+                      )
+                    )}%`,
+                  }}
+                />
+              </div>
+
+              <div className="flex flex-wrap items-center gap-2 pt-1">
+                <button
+                  type="button"
+                  onClick={() => openJitHelp({ tab: 'jit' })}
+                  className="flex-1 inline-flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold bg-cyan-500 hover:bg-cyan-400 text-slate-950 transition-colors"
+                >
+                  <Sparkles className="w-3.5 h-3.5" />
+                  <span>Open JIT Coach Drawer</span>
+                </button>
+                <Link
+                  href="/dashboard/studio/new-project"
+                  className="inline-flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold bg-slate-800 hover:bg-slate-700 text-white border border-slate-700 transition-colors"
+                >
+                  <span>Start Film →</span>
+                </Link>
+              </div>
             </div>
           </div>
-          
-          {/* Search */}
-          <div className="relative max-w-md">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-            <input
-              type="text"
-              placeholder="Search help articles..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-10 pr-4 py-2.5 bg-slate-800/50 border border-slate-700 rounded-lg text-sm text-slate-200 placeholder:text-slate-500 focus:outline-none focus:border-sf-primary/50 focus:ring-1 focus:ring-sf-primary/20"
-            />
+
+          {/* Primary Navigation Bar */}
+          <div className="mt-8 flex flex-col sm:flex-row sm:items-center justify-between gap-4 pt-6 border-t border-slate-800/80">
+            <div className="flex flex-wrap items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setActiveTab('tutorials')}
+                className={cn(
+                  'inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all',
+                  activeTab === 'tutorials'
+                    ? 'bg-cyan-500 text-slate-950 shadow-lg shadow-cyan-500/20'
+                    : 'bg-slate-900 text-slate-300 hover:text-white border border-slate-800'
+                )}
+              >
+                <PlayCircle className="w-4 h-4" />
+                <span>1. Interactive Tutorials</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setActiveTab('screens')}
+                className={cn(
+                  'inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all',
+                  activeTab === 'screens'
+                    ? 'bg-cyan-500 text-slate-950 shadow-lg shadow-cyan-500/20'
+                    : 'bg-slate-900 text-slate-300 hover:text-white border border-slate-800'
+                )}
+              >
+                <Compass className="w-4 h-4" />
+                <span>2. Visual Screen Maps (JIT)</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setActiveTab('playbooks')}
+                className={cn(
+                  'inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all',
+                  activeTab === 'playbooks'
+                    ? 'bg-cyan-500 text-slate-950 shadow-lg shadow-cyan-500/20'
+                    : 'bg-slate-900 text-slate-300 hover:text-white border border-slate-800'
+                )}
+              >
+                <BookOpen className="w-4 h-4" />
+                <span>3. Creator Playbooks</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setActiveTab('calculator')}
+                className={cn(
+                  'inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all',
+                  activeTab === 'calculator'
+                    ? 'bg-cyan-500 text-slate-950 shadow-lg shadow-cyan-500/20'
+                    : 'bg-slate-900 text-slate-300 hover:text-white border border-slate-800'
+                )}
+              >
+                <Calculator className="w-4 h-4" />
+                <span>4. Credit Calculator &amp; FAQ</span>
+              </button>
+            </div>
+
+            {/* Instant Search Input */}
+            <div className="relative w-full sm:w-72">
+              <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => {
+                  setSearchQuery(e.target.value)
+                  if (e.target.value.trim() && activeTab !== 'calculator') {
+                    setActiveTab('calculator')
+                  }
+                }}
+                placeholder="Search any tool or topic..."
+                className="w-full pl-10 pr-4 py-2 rounded-xl bg-slate-900 border border-slate-800 text-xs sm:text-sm text-white placeholder:text-slate-500 focus:outline-none focus:border-cyan-500"
+              />
+            </div>
           </div>
         </div>
       </div>
-      
-      {/* Main Content */}
-      <div className="max-w-7xl mx-auto px-6 py-8">
-        <div className="flex gap-8">
-          {/* Sidebar Navigation */}
-          <aside className="w-64 flex-shrink-0">
-            <div className="sticky top-8">
-              <h2 className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-4">
-                Topics
-              </h2>
-              <SectionNav
-                sections={helpSections}
-                activeSection={activeSection}
-                onSectionChange={setActiveSection}
-              />
-              
-              {/* Quick Links */}
-              <div className="mt-8 pt-8 border-t border-slate-700/50">
-                <h2 className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-4">
-                  Quick Links
-                </h2>
-                <div className="space-y-2">
-                  <Link
-                    href="/dashboard"
-                    className="flex items-center gap-2 text-sm text-slate-400 hover:text-sf-primary transition-colors"
-                  >
-                    <Home className="w-4 h-4" />
-                    Back to Dashboard
-                  </Link>
-                  <Link
-                    href="/dashboard/settings"
-                    className="flex items-center gap-2 text-sm text-slate-400 hover:text-sf-primary transition-colors"
-                  >
-                    <Settings className="w-4 h-4" />
-                    Settings
-                  </Link>
-                  <a
-                    href="mailto:support@sceneflow.ai"
-                    className="flex items-center gap-2 text-sm text-slate-400 hover:text-sf-primary transition-colors"
-                  >
-                    <MessageCircle className="w-4 h-4" />
-                    Contact Support
-                  </a>
-                </div>
-              </div>
-            </div>
-          </aside>
-          
-          {/* Content Area */}
-          <main className="flex-1 min-w-0">
-            {/* Section Header */}
-            <div className="mb-8">
-              <div className="flex items-center gap-3 mb-2">
-                <span className="text-sf-primary">{currentSection.icon}</span>
-                <h2 className="text-xl font-semibold">{currentSection.title}</h2>
-              </div>
-              <p className="text-slate-400">{currentSection.description}</p>
-            </div>
-            
-            {/* Videos Section */}
-            {currentSection.videos.length > 0 && (
-              <div className="mb-8">
-                <h3 className="text-sm font-semibold text-slate-300 mb-4 flex items-center gap-2">
-                  <PlayCircle className="w-4 h-4 text-sf-primary" />
-                  Video Tutorials
-                </h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {currentSection.videos.map(video => (
-                    <VideoCard key={video.id} video={video} />
-                  ))}
-                </div>
-              </div>
-            )}
-            
-            {/* Articles Section */}
-            <div>
-              <h3 className="text-sm font-semibold text-slate-300 mb-4 flex items-center gap-2">
-                <Book className="w-4 h-4 text-sf-primary" />
-                Articles ({filteredArticles.length})
-              </h3>
-              
-              {filteredArticles.length === 0 ? (
-                <div className="text-center py-12 bg-slate-800/30 rounded-xl border border-slate-700/50">
-                  <Search className="w-12 h-12 text-slate-600 mx-auto mb-3" />
-                  <p className="text-slate-400">No articles found matching &quot;{searchQuery}&quot;</p>
+
+      {/* =================================================================== */}
+      {/* MAIN ACADEMY CONTENT AREA                                           */}
+      {/* =================================================================== */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* ================================================================= */}
+        {/* TAB 1: INTERACTIVE STEP-BY-STEP TUTORIALS                         */}
+        {/* ================================================================= */}
+        {activeTab === 'tutorials' && (
+          <div className="space-y-8">
+            {/* Course Selector Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+              {INTERACTIVE_TUTORIALS.map((course) => {
+                const isSelected = course.id === activeTutorial.id
+                const doneCount = course.steps.filter((s) =>
+                  completedStepIds.includes(s.id)
+                ).length
+                return (
                   <button
-                    onClick={() => setSearchQuery('')}
-                    className="mt-2 text-sf-primary text-sm hover:underline"
+                    key={course.id}
+                    type="button"
+                    onClick={() => {
+                      setSelectedTutorialId(course.id)
+                      setActiveStepIdx(0)
+                    }}
+                    className={cn(
+                      'p-4 rounded-2xl border text-left transition-all flex flex-col justify-between',
+                      isSelected
+                        ? 'bg-gradient-to-br from-cyan-950/70 via-slate-900 to-purple-950/50 border-cyan-400 shadow-lg shadow-cyan-950/40'
+                        : 'bg-slate-900/70 border-slate-800 hover:border-slate-700'
+                    )}
                   >
-                    Clear search
+                    <div>
+                      <div className="flex items-center justify-between gap-2 mb-2">
+                        <span className="text-[11px] font-bold uppercase px-2.5 py-0.5 rounded-full bg-slate-800 text-cyan-300 border border-slate-700">
+                          {course.level} • {course.totalDuration}
+                        </span>
+                        <span className="text-xs font-bold text-emerald-400">
+                          {doneCount}/{course.steps.length}
+                        </span>
+                      </div>
+                      <h3 className="text-base font-bold text-white mb-1">
+                        {course.title}
+                      </h3>
+                      <p className="text-xs text-slate-400 leading-relaxed">
+                        {course.subtitle}
+                      </p>
+                    </div>
+                    <div className="mt-4 pt-3 border-t border-slate-800/80 flex items-center justify-between text-xs font-semibold text-cyan-300">
+                      <span>{course.steps.length} Interactive Steps</span>
+                      <ChevronRight className="w-4 h-4" />
+                    </div>
                   </button>
-                </div>
-              ) : (
-                <div className="space-y-3">
-                  {filteredArticles.map(article => (
-                    <ArticleCard
-                      key={article.id}
-                      article={article}
-                      isExpanded={expandedArticles.has(article.id)}
-                      onToggle={() => toggleArticle(article.id)}
-                    />
-                  ))}
-                </div>
-              )}
+                )
+              })}
             </div>
-            
-            {/* Coming Soon Notice for placeholder sections */}
-            {(activeSection === 'final-cut' || activeSection === 'premiere') && (
-              <div className="mt-8 p-6 rounded-xl bg-amber-500/10 border border-amber-500/20">
-                <div className="flex items-start gap-3">
-                  <Clock className="w-5 h-5 text-amber-400 flex-shrink-0 mt-0.5" />
-                  <div>
-                    <h4 className="font-medium text-amber-300">Coming Soon</h4>
-                    <p className="text-sm text-amber-200/70 mt-1">
-                      This phase is currently in development. Documentation and tutorials will be added when the feature reaches 85% completion.
+
+            {/* Active Tutorial Interactive Simulator */}
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+              {/* Left Column: Course Stepper Rail */}
+              <div className="lg:col-span-4 rounded-2xl bg-slate-900/90 border border-slate-800 p-5 space-y-4">
+                <div>
+                  <span className="text-xs font-bold uppercase tracking-wider text-cyan-400">
+                    Active Course
+                  </span>
+                  <h2 className="text-lg font-bold text-white mt-0.5">
+                    {activeTutorial.title}
+                  </h2>
+                  <p className="text-xs text-slate-400 mt-1">
+                    {activeTutorial.outcome}
+                  </p>
+                </div>
+
+                <div className="space-y-2">
+                  {activeTutorial.steps.map((step, idx) => {
+                    const isCurrent = idx === activeStepIdx
+                    const isDone = completedStepIds.includes(step.id)
+                    return (
+                      <button
+                        key={step.id}
+                        type="button"
+                        onClick={() => setActiveStepIdx(idx)}
+                        className={cn(
+                          'w-full p-3 rounded-xl border text-left transition-all flex items-start gap-3',
+                          isCurrent
+                            ? 'bg-cyan-500/15 border-cyan-500/50 text-white'
+                            : 'bg-slate-950/60 border-slate-800/80 text-slate-400 hover:text-slate-200 hover:border-slate-700'
+                        )}
+                      >
+                        <span
+                          className={cn(
+                            'w-6 h-6 rounded-full text-xs font-bold flex items-center justify-center flex-shrink-0 mt-0.5',
+                            isDone
+                              ? 'bg-emerald-500 text-slate-950'
+                              : isCurrent
+                                ? 'bg-cyan-400 text-slate-950'
+                                : 'bg-slate-800 text-slate-400'
+                          )}
+                        >
+                          {isDone ? '✓' : step.stepNumber}
+                        </span>
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center justify-between gap-2">
+                            <span className="text-xs font-bold text-white truncate">
+                              {step.title}
+                            </span>
+                            <span className="text-[10px] text-slate-400 flex-shrink-0">
+                              {step.duration}
+                            </span>
+                          </div>
+                          <p className="text-[11px] text-slate-400 line-clamp-2 mt-0.5">
+                            {step.objective}
+                          </p>
+                        </div>
+                      </button>
+                    )
+                  })}
+                </div>
+              </div>
+
+              {/* Right Column: Interactive Screenshot + Instructions */}
+              <div className="lg:col-span-8 space-y-5">
+                <div className="rounded-2xl bg-slate-900/90 border border-slate-800 p-5 sm:p-6">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
+                    <div>
+                      <div className="flex items-center gap-2 text-xs font-bold text-cyan-400 mb-1">
+                        <span>
+                          STEP {currentStep.stepNumber} OF{' '}
+                          {activeTutorial.steps.length}
+                        </span>
+                        <span>•</span>
+                        <span>{currentStep.duration}</span>
+                      </div>
+                      <h3 className="text-xl font-extrabold text-white">
+                        {currentStep.title}
+                      </h3>
+                      <p className="text-xs sm:text-sm text-slate-300 mt-1">
+                        {currentStep.objective}
+                      </p>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={() => toggleStepCompleted(currentStep.id)}
+                      className={cn(
+                        'inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold border transition-all flex-shrink-0',
+                        completedStepIds.includes(currentStep.id)
+                          ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40'
+                          : 'bg-slate-800 hover:bg-slate-700 text-slate-200 border-slate-700'
+                      )}
+                    >
+                      {completedStepIds.includes(currentStep.id) ? (
+                        <>
+                          <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+                          <span>Completed</span>
+                        </>
+                      ) : (
+                        <>
+                          <Circle className="w-4 h-4" />
+                          <span>Mark Step Complete</span>
+                        </>
+                      )}
+                    </button>
+                  </div>
+
+                  {/* Annotated Screenshot Focused on This Step */}
+                  <AnnotatedStudioScreenshot
+                    screenshotSrc={currentStep.screenshotSrc}
+                    screenshotAlt={currentStep.title}
+                    hotspots={
+                      JIT_CONTEXT_GUIDES[currentStep.contextId]?.hotspots || []
+                    }
+                    initialHotspotNumber={currentStep.focusHotspotNumber}
+                  />
+
+                  {/* Actionable Step Instructions */}
+                  <div className="mt-6">
+                    <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-3">
+                      Step-by-Step Instructions
+                    </h4>
+                    <div className="grid grid-cols-1 gap-2.5">
+                      {currentStep.instructions.map((inst, idx) => (
+                        <div
+                          key={idx}
+                          className="flex items-start gap-3 p-3.5 rounded-xl bg-slate-950/80 border border-slate-800"
+                        >
+                          <span className="w-6 h-6 rounded-full bg-cyan-500/20 border border-cyan-500/40 text-cyan-300 text-xs font-bold flex items-center justify-center flex-shrink-0">
+                            {idx + 1}
+                          </span>
+                          <p className="text-xs sm:text-sm text-slate-200 leading-relaxed">
+                            {inst}
+                          </p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Key Takeaway Banner */}
+                  <div className="mt-5 rounded-xl bg-purple-500/10 border border-purple-500/30 p-4 flex items-start gap-3">
+                    <Lightbulb className="w-5 h-5 text-purple-300 flex-shrink-0 mt-0.5" />
+                    <p className="text-xs sm:text-sm text-purple-100 leading-relaxed">
+                      <strong className="text-purple-300">Key Director Takeaway: </strong>
+                      {currentStep.keyTakeaway}
                     </p>
+                  </div>
+
+                  {/* Bottom Step Navigation */}
+                  <div className="mt-6 pt-4 border-t border-slate-800 flex flex-wrap items-center justify-between gap-3">
+                    <button
+                      type="button"
+                      disabled={activeStepIdx === 0}
+                      onClick={() => setActiveStepIdx((i) => Math.max(0, i - 1))}
+                      className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold bg-slate-800 text-slate-200 hover:bg-slate-700 disabled:opacity-40"
+                    >
+                      <ChevronLeft className="w-4 h-4" />
+                      <span>Previous Step</span>
+                    </button>
+
+                    <div className="flex items-center gap-2">
+                      {currentStep.tryActionHref && (
+                        <Link
+                          href={currentStep.tryActionHref}
+                          className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold bg-slate-800 hover:bg-slate-700 text-cyan-300 border border-cyan-500/30"
+                        >
+                          <ExternalLink className="w-3.5 h-3.5" />
+                          <span>{currentStep.tryActionLabel}</span>
+                        </Link>
+                      )}
+
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (!completedStepIds.includes(currentStep.id)) {
+                            toggleStepCompleted(currentStep.id)
+                          }
+                          if (activeStepIdx < activeTutorial.steps.length - 1) {
+                            setActiveStepIdx((i) => i + 1)
+                          }
+                        }}
+                        className="inline-flex items-center gap-1.5 px-5 py-2 rounded-xl text-xs font-bold bg-cyan-500 hover:bg-cyan-400 text-slate-950 shadow-md"
+                      >
+                        <span>
+                          {activeStepIdx < activeTutorial.steps.length - 1
+                            ? 'Complete & Next Step'
+                            : 'Complete Course'}
+                        </span>
+                        <ChevronRight className="w-4 h-4" />
+                      </button>
+                    </div>
                   </div>
                 </div>
               </div>
-            )}
-          </main>
+            </div>
+          </div>
+        )}
+
+        {/* ================================================================= */}
+        {/* TAB 2: VISUAL SCREEN MAPS & JIT WORKSPACE EXPLORER                */}
+        {/* ================================================================= */}
+        {activeTab === 'screens' && (
+          <div className="space-y-6">
+            {/* Workspace Selector Bar */}
+            <div className="flex flex-wrap items-center gap-2">
+              {Object.values(JIT_CONTEXT_GUIDES).map((guide) => {
+                const isSelected = guide.id === selectedContextId
+                return (
+                  <button
+                    key={guide.id}
+                    type="button"
+                    onClick={() => setSelectedContextId(guide.id)}
+                    className={cn(
+                      'px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold border transition-all',
+                      isSelected
+                        ? 'bg-cyan-500/20 text-cyan-200 border-cyan-400 shadow-sm'
+                        : 'bg-slate-900 text-slate-400 border-slate-800 hover:text-white hover:border-slate-700'
+                    )}
+                  >
+                    {guide.shortTitle}
+                  </button>
+                )
+              })}
+            </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+              {/* Left 8 Columns: Annotated Visual Screenshot */}
+              <div className="lg:col-span-8 space-y-4">
+                <div className="rounded-2xl bg-slate-900/90 border border-slate-800 p-5">
+                  <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
+                    <div>
+                      <span className="text-xs font-bold text-cyan-400 uppercase tracking-wider">
+                        {activeGuide.badge}
+                      </span>
+                      <h2 className="text-xl font-extrabold text-white">
+                        {activeGuide.title}
+                      </h2>
+                    </div>
+                    <span className="text-xs px-3 py-1 rounded-full bg-slate-800 text-slate-300">
+                      ⏱ {activeGuide.estimatedTime}
+                    </span>
+                  </div>
+                  <p className="text-xs sm:text-sm text-slate-300 mb-4">
+                    {activeGuide.summary}
+                  </p>
+
+                  <AnnotatedStudioScreenshot
+                    screenshotSrc={activeGuide.screenshotSrc}
+                    screenshotAlt={activeGuide.screenshotAlt}
+                    hotspots={activeGuide.hotspots}
+                  />
+                </div>
+              </div>
+
+              {/* Right 4 Columns: 60s Action Checklist + Credit Guardrail + Q&A */}
+              <div className="lg:col-span-4 space-y-5">
+                <div className="rounded-2xl bg-slate-900/90 border border-slate-800 p-5">
+                  <h3 className="text-sm font-bold text-white flex items-center gap-2 mb-3">
+                    <Zap className="w-4 h-4 text-cyan-400" />
+                    <span>60-Second Action Checklist</span>
+                  </h3>
+                  <div className="space-y-3">
+                    {activeGuide.quickSteps.map((step) => (
+                      <div
+                        key={step.id}
+                        className="p-3 rounded-xl bg-slate-950/80 border border-slate-800"
+                      >
+                        <div className="flex items-center justify-between gap-2 mb-1">
+                          <span className="text-xs font-bold text-white">
+                            {step.stepNumber}. {step.title}
+                          </span>
+                          {step.creditBadge && (
+                            <span className="text-[10px] px-2 py-0.5 rounded bg-emerald-500/15 text-emerald-300 font-semibold">
+                              {step.creditBadge}
+                            </span>
+                          )}
+                        </div>
+                        <p className="text-xs text-slate-400 leading-relaxed">
+                          {step.description}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="rounded-2xl bg-emerald-950/30 border border-emerald-500/30 p-5">
+                  <div className="flex items-center gap-2 text-emerald-300 text-xs font-bold uppercase tracking-wider mb-1">
+                    <Coins className="w-4 h-4" />
+                    <span>{activeGuide.creditGuardrail.title}</span>
+                  </div>
+                  <p className="text-xs font-semibold text-white mb-1.5">
+                    {activeGuide.creditGuardrail.typicalCost}
+                  </p>
+                  <p className="text-xs text-emerald-200/80 leading-relaxed">
+                    {activeGuide.creditGuardrail.proSavingsRule}
+                  </p>
+                </div>
+
+                <div className="rounded-2xl bg-slate-900/90 border border-slate-800 p-5">
+                  <h3 className="text-sm font-bold text-white flex items-center gap-2 mb-3">
+                    <AlertCircle className="w-4 h-4 text-amber-400" />
+                    <span>Unstuck in 10 Seconds</span>
+                  </h3>
+                  <div className="space-y-3">
+                    {activeGuide.troubleshooting.map((t, i) => (
+                      <div
+                        key={i}
+                        className="p-3 rounded-xl bg-slate-950/80 border border-slate-800"
+                      >
+                        <p className="text-xs font-bold text-slate-100 mb-1">
+                          {t.question}
+                        </p>
+                        <p className="text-xs text-slate-400 leading-relaxed">
+                          {t.answer}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ================================================================= */}
+        {/* TAB 3: ROLE-BASED CREATOR PLAYBOOKS                               */}
+        {/* ================================================================= */}
+        {activeTab === 'playbooks' && (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {CREATOR_PLAYBOOKS.map((playbook) => {
+              const IconComp = PLAYBOOK_ICONS[playbook.iconName] || BookOpen
+              return (
+                <div
+                  key={playbook.id}
+                  className="rounded-2xl bg-slate-900/90 border border-slate-800 p-6 flex flex-col justify-between"
+                >
+                  <div>
+                    <div className="flex items-start justify-between gap-3 mb-4">
+                      <div className="flex items-center gap-3">
+                        <div className="w-11 h-11 rounded-xl bg-cyan-500/15 border border-cyan-500/30 flex items-center justify-center text-cyan-300">
+                          <IconComp className="w-5 h-5" />
+                        </div>
+                        <div>
+                          <h3 className="text-lg font-bold text-white">
+                            {playbook.persona}
+                          </h3>
+                          <span className="text-xs text-emerald-400 font-semibold">
+                            Recommended: {playbook.recommendedPlan}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <p className="text-xs sm:text-sm text-slate-300 italic mb-3">
+                      &ldquo;{playbook.tagline}&rdquo;
+                    </p>
+                    <p className="text-xs text-slate-400 mb-5 leading-relaxed">
+                      {playbook.workflowSummary}
+                    </p>
+
+                    <div className="space-y-3">
+                      {playbook.milestones.map((m, i) => (
+                        <div
+                          key={i}
+                          className="p-3.5 rounded-xl bg-slate-950/80 border border-slate-800"
+                        >
+                          <div className="flex items-center justify-between gap-2 mb-1">
+                            <span className="text-xs font-bold text-cyan-300">
+                              {m.phase}
+                            </span>
+                            <span className="text-[11px] text-emerald-300 font-medium">
+                              {m.creditTip}
+                            </span>
+                          </div>
+                          <p className="text-xs text-slate-300 leading-relaxed">
+                            {m.action}
+                          </p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="mt-6 pt-4 border-t border-slate-800 flex items-center justify-between gap-3">
+                    <Link
+                      href={playbook.recommendedPlanHref}
+                      className="text-xs font-bold text-cyan-400 hover:text-cyan-300 inline-flex items-center gap-1"
+                    >
+                      <span>View {playbook.recommendedPlan}</span>
+                      <ChevronRight className="w-3.5 h-3.5" />
+                    </Link>
+                    <Link
+                      href="/dashboard/studio/new-project"
+                      className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold bg-cyan-500 hover:bg-cyan-400 text-slate-950"
+                    >
+                      <span>Launch This Workflow</span>
+                      <ChevronRight className="w-3.5 h-3.5" />
+                    </Link>
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        )}
+
+        {/* ================================================================= */}
+        {/* TAB 4: INTERACTIVE CREDIT CALCULATOR & KNOWLEDGE BASE             */}
+        {/* ================================================================= */}
+        {activeTab === 'calculator' && (
+          <div className="space-y-10">
+            {/* Interactive Credit Calculator */}
+            <div className="rounded-2xl bg-slate-900/90 border border-slate-800 p-6">
+              <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
+                <div>
+                  <span className="text-xs font-bold uppercase tracking-wider text-cyan-400">
+                    Interactive Production Budgeter
+                  </span>
+                  <h2 className="text-xl font-extrabold text-white">
+                    Credit &amp; Plan Estimator
+                  </h2>
+                  <p className="text-xs sm:text-sm text-slate-400 mt-1">
+                    Select a project preset or adjust the sliders to compare{' '}
+                    <strong className="text-slate-200">Animatic Cut</strong> vs.{' '}
+                    <strong className="text-slate-200">Full Veo 3.1 Video Master</strong>.
+                  </p>
+                </div>
+
+                {/* Preset Buttons */}
+                <div className="flex flex-wrap gap-2">
+                  {CREDIT_ESTIMATOR_PRESETS.map((preset) => (
+                    <button
+                      key={preset.id}
+                      type="button"
+                      onClick={() => {
+                        setSceneCount(preset.sceneCount)
+                        setKeyframePairsPerScene(preset.keyframePairsPerScene)
+                        setVeoClipsPerScene(preset.veoClipsPerScene)
+                        setLanguagesCount(preset.languagesCount)
+                      }}
+                      className="px-3 py-1.5 rounded-xl text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition-colors"
+                    >
+                      {preset.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-center">
+                {/* Sliders */}
+                <div className="lg:col-span-7 space-y-4 bg-slate-950/70 border border-slate-800 rounded-xl p-5">
+                  <div>
+                    <div className="flex justify-between text-xs font-bold mb-1">
+                      <span className="text-slate-300">Number of Scenes</span>
+                      <span className="text-cyan-400">{sceneCount} scenes</span>
+                    </div>
+                    <input
+                      type="range"
+                      min={3}
+                      max={80}
+                      value={sceneCount}
+                      onChange={(e) => setSceneCount(Number(e.target.value))}
+                      className="w-full accent-cyan-400"
+                    />
+                  </div>
+
+                  <div>
+                    <div className="flex justify-between text-xs font-bold mb-1">
+                      <span className="text-slate-300">
+                        Start/End Keyframe Pairs per Scene (Imagen 3)
+                      </span>
+                      <span className="text-cyan-400">
+                        {keyframePairsPerScene} pairs ({keyframePairsPerScene * 2}{' '}
+                        frames/scene)
+                      </span>
+                    </div>
+                    <input
+                      type="range"
+                      min={1}
+                      max={6}
+                      value={keyframePairsPerScene}
+                      onChange={(e) =>
+                        setKeyframePairsPerScene(Number(e.target.value))
+                      }
+                      className="w-full accent-cyan-400"
+                    />
+                  </div>
+
+                  <div>
+                    <div className="flex justify-between text-xs font-bold mb-1">
+                      <span className="text-slate-300">
+                        Veo 3.1 Motion Clips per Scene
+                      </span>
+                      <span className="text-purple-400">
+                        {veoClipsPerScene} clips/scene
+                      </span>
+                    </div>
+                    <input
+                      type="range"
+                      min={0}
+                      max={5}
+                      value={veoClipsPerScene}
+                      onChange={(e) => setVeoClipsPerScene(Number(e.target.value))}
+                      className="w-full accent-purple-400"
+                    />
+                  </div>
+
+                  <div>
+                    <div className="flex justify-between text-xs font-bold mb-1">
+                      <span className="text-slate-300">
+                        Audio Languages (Original + Dubs)
+                      </span>
+                      <span className="text-emerald-400">
+                        {languagesCount}{' '}
+                        {languagesCount === 1 ? 'language' : 'languages'}
+                      </span>
+                    </div>
+                    <input
+                      type="range"
+                      min={1}
+                      max={13}
+                      value={languagesCount}
+                      onChange={(e) => setLanguagesCount(Number(e.target.value))}
+                      className="w-full accent-emerald-400"
+                    />
+                  </div>
+                </div>
+
+                {/* Output Summary Card */}
+                <div className="lg:col-span-5 rounded-xl bg-gradient-to-br from-slate-900 via-slate-950 to-cyan-950/40 border border-cyan-500/30 p-5 space-y-4">
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="p-3.5 rounded-xl bg-slate-900/90 border border-slate-800">
+                      <span className="text-[11px] font-bold uppercase text-cyan-400">
+                        Voiced Animatic Cut
+                      </span>
+                      <p className="text-2xl font-extrabold text-white mt-1">
+                        {creditEstimate.animaticTotal.toLocaleString()}{' '}
+                        <span className="text-xs font-normal text-slate-400">cr</span>
+                      </p>
+                      <p className="text-[11px] text-slate-400 mt-1">
+                        Blueprint + Vault + Keyframes + Full Voice/SFX/Score
+                      </p>
+                    </div>
+
+                    <div className="p-3.5 rounded-xl bg-purple-950/30 border border-purple-500/40">
+                      <span className="text-[11px] font-bold uppercase text-purple-300">
+                        With Veo 3.1 Video
+                      </span>
+                      <p className="text-2xl font-extrabold text-white mt-1">
+                        {creditEstimate.fullProductionTotal.toLocaleString()}{' '}
+                        <span className="text-xs font-normal text-slate-400">cr</span>
+                      </p>
+                      <p className="text-[11px] text-purple-200/80 mt-1">
+                        Includes {sceneCount * veoClipsPerScene} Veo 3.1 clips &amp;{' '}
+                        {languagesCount} language tracks
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="text-xs text-slate-300 space-y-1.5 pt-2 border-t border-slate-800">
+                    <div className="flex justify-between">
+                      <span>Blueprint + Audience Resonance:</span>
+                      <span className="font-semibold">
+                        {creditEstimate.blueprintAndResonance} cr
+                      </span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Continuity Vault References:</span>
+                      <span className="font-semibold">
+                        {creditEstimate.continuityRefs} cr
+                      </span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Imagen 3 Start/End Keyframes:</span>
+                      <span className="font-semibold">
+                        {creditEstimate.keyframesCost.toLocaleString()} cr
+                      </span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Dialogue, SFX &amp; Musical Score:</span>
+                      <span className="font-semibold">
+                        {creditEstimate.audioAndScoreCost.toLocaleString()} cr
+                      </span>
+                    </div>
+                    <div className="flex justify-between text-purple-300">
+                      <span>Veo 3.1 Motion Video Clips:</span>
+                      <span className="font-semibold">
+                        {creditEstimate.veoVideoCost.toLocaleString()} cr
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="pt-2 flex items-center justify-between gap-3">
+                    <div>
+                      <span className="text-[11px] text-slate-400 block">
+                        Best-Fit Tier:
+                      </span>
+                      <span className="text-xs font-bold text-emerald-400">
+                        {creditEstimate.recommendedTier}
+                      </span>
+                    </div>
+                    <Link
+                      href={creditEstimate.recommendedTierHref}
+                      className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold bg-emerald-500 hover:bg-emerald-400 text-slate-950 transition-colors"
+                    >
+                      <span>View Plan →</span>
+                    </Link>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Searchable Reference Library */}
+            <div>
+              <div className="flex items-center justify-between gap-4 mb-4">
+                <h3 className="text-lg font-bold text-white flex items-center gap-2">
+                  <BookOpen className="w-5 h-5 text-cyan-400" />
+                  <span>Studio Reference Guides ({filteredArticles.length})</span>
+                </h3>
+                {searchQuery && (
+                  <button
+                    type="button"
+                    onClick={() => setSearchQuery('')}
+                    className="text-xs text-cyan-400 hover:underline"
+                  >
+                    Clear search filter
+                  </button>
+                )}
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {filteredArticles.map((article) => (
+                  <div
+                    key={article.id}
+                    className="rounded-2xl bg-slate-900/80 border border-slate-800 p-5 flex flex-col justify-between"
+                  >
+                    <div>
+                      <div className="flex items-center justify-between gap-2 mb-2">
+                        <span className="text-[11px] font-bold uppercase px-2.5 py-0.5 rounded-full bg-cyan-500/15 text-cyan-300">
+                          {JIT_CONTEXT_GUIDES[article.category]?.shortTitle ||
+                            article.category}
+                        </span>
+                        <span className="text-xs text-slate-400">
+                          {article.readTime}
+                        </span>
+                      </div>
+                      <h4 className="text-base font-bold text-white mb-1.5">
+                        {article.title}
+                      </h4>
+                      <p className="text-xs text-slate-300 mb-3">
+                        {article.summary}
+                      </p>
+                      <ul className="space-y-1.5 mb-4">
+                        {article.bullets.map((bullet, idx) => (
+                          <li
+                            key={idx}
+                            className="text-xs text-slate-400 flex items-start gap-2"
+                          >
+                            <span className="text-cyan-400 mt-0.5">•</span>
+                            <span>{bullet}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+
+                    <div className="rounded-xl bg-emerald-500/10 border border-emerald-500/25 p-3 text-xs text-emerald-200">
+                      <strong className="text-emerald-300">Pro Tip: </strong>
+                      {article.proTip}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Bottom Quick Navigation Bar */}
+        <div className="mt-12 pt-6 border-t border-slate-800 flex flex-wrap items-center justify-between gap-4 text-xs text-slate-400">
+          <div className="flex flex-wrap items-center gap-4">
+            <Link
+              href="/dashboard"
+              className="inline-flex items-center gap-1.5 hover:text-cyan-300 transition-colors"
+            >
+              <Home className="w-4 h-4" />
+              <span>Back to Command Center</span>
+            </Link>
+            <Link
+              href="/dashboard/settings/billing"
+              className="inline-flex items-center gap-1.5 hover:text-cyan-300 transition-colors"
+            >
+              <Coins className="w-4 h-4" />
+              <span>Plans &amp; Credit Vault</span>
+            </Link>
+            <Link
+              href="/dashboard/settings/integrations"
+              className="inline-flex items-center gap-1.5 hover:text-cyan-300 transition-colors"
+            >
+              <Settings className="w-4 h-4" />
+              <span>BYOK Cloud Keys</span>
+            </Link>
+          </div>
+          <a
+            href="mailto:support@sceneflowai.studio"
+            className="inline-flex items-center gap-1.5 text-cyan-400 hover:text-cyan-300 font-semibold"
+          >
+            <MessageCircle className="w-4 h-4" />
+            <span>Need 1-on-1 Studio Onboarding? Contact Support</span>
+          </a>
         </div>
       </div>
     </div>
