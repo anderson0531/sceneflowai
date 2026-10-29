@@ -287,10 +287,10 @@ export function GlobalSidebarUnified({ children }: GlobalSidebarProps) {
   }, [config.phase, config.progressItems, currentProject?.metadata, progressData])
 
   return (
-    <div className="flex relative w-full h-[calc(100dvh-4rem)] overflow-hidden">
+    <div className="flex relative w-full min-h-[calc(100dvh-4rem)] lg:h-[calc(100dvh-4rem)] lg:overflow-hidden">
       <aside
         className={cn(
-          'shrink-0 border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-950/90 h-full min-h-0 z-30 relative overflow-hidden transition-[width] duration-200 ease-out',
+          'hidden lg:block shrink-0 border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-950/90 h-full min-h-0 z-30 relative overflow-hidden transition-[width] duration-200 ease-out',
           sidebarVisible ? 'w-64 border-r' : 'w-0 border-transparent'
         )}
         aria-hidden={!sidebarVisible}
@@ -495,7 +495,7 @@ export function GlobalSidebarUnified({ children }: GlobalSidebarProps) {
         <button
           type="button"
           onClick={() => persistSidebarVisibility(true)}
-          className="absolute left-2 top-3 z-[35] flex h-9 w-9 items-center justify-center rounded-lg border border-gray-200 bg-white text-gray-600 shadow-md transition-colors hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 dark:hover:bg-gray-800"
+          className="hidden lg:flex absolute left-2 top-3 z-[35] h-9 w-9 items-center justify-center rounded-lg border border-gray-200 bg-white text-gray-600 shadow-md transition-colors hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 dark:hover:bg-gray-800"
           aria-label={tNav('showSidebar')}
           title={tNav('showSidebarTitle')}
         >

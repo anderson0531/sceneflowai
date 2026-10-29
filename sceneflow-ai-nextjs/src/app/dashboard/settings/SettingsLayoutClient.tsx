@@ -58,12 +58,38 @@ export function SettingsLayoutClient({
         accent="product"
       />
 
+      {/* Compact horizontal tabs on mobile & tablet (< lg) */}
+      <nav
+        aria-label={t('shell.sectionsHeading')}
+        className="flex lg:hidden items-center gap-2 overflow-x-auto pb-3 mb-4 border-b border-gray-800/80"
+      >
+        {settingsNavItems.map((item) => {
+          const isActive = pathname === item.href
+          const Icon = item.icon
+
+          return (
+            <Link
+              key={item.key}
+              href={item.href}
+              className={`inline-flex items-center gap-1.5 shrink-0 rounded-full px-3.5 py-2 text-xs font-medium transition-colors ${
+                isActive
+                  ? 'bg-sf-primary text-white shadow'
+                  : 'bg-gray-800/70 text-gray-300 hover:bg-gray-800 hover:text-white'
+              }`}
+            >
+              <Icon className="h-3.5 w-3.5" />
+              <span>{t(`nav.${item.key}`)}</span>
+            </Link>
+          )
+        })}
+      </nav>
+
       <div className="flex flex-col gap-8 lg:flex-row">
         <motion.div
           initial={{ opacity: 0, x: -20 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ duration: 0.5, delay: 0.1 }}
-          className="lg:w-80 shrink-0"
+          className="hidden lg:block lg:w-80 shrink-0"
         >
           <div className="rounded-xl border border-gray-700/60 bg-gray-800/60 p-6 backdrop-blur-sm">
             <h2 className="mb-4 text-lg font-semibold text-white">{t('shell.sectionsHeading')}</h2>

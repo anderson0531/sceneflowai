@@ -1,9 +1,10 @@
 'use client'
 
 import { useCallback, useEffect, useMemo, useState } from 'react'
+import Link from 'next/link'
 import { signOut } from 'next-auth/react'
 import { useTranslations } from 'next-intl'
-import { Bell, CalendarDays, Loader2, LogOut, MessageSquare } from 'lucide-react'
+import { Bell, CalendarDays, CreditCard, Loader2, LogOut, MessageSquare } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { AppInstallCard } from '@/components/pwa/AppInstallCard'
 import type { CompanionPlanCard } from '@/lib/companion/planCard'
@@ -332,15 +333,24 @@ export function MobileCompanion() {
             </p>
           ) : null}
         </div>
-        <button
-          type="button"
-          onClick={() => void handleSignOut()}
-          className="inline-flex items-center gap-2 rounded-full px-3 py-2 text-xs text-slate-300"
-          aria-label={tNav('signOut')}
-        >
-          <LogOut className="h-4 w-4" />
-          {tNav('signOut')}
-        </button>
+        <div className="flex items-center gap-2">
+          <Link
+            href="/dashboard/settings/billing"
+            className="inline-flex items-center gap-1.5 rounded-full border border-slate-700 bg-slate-900 px-3 py-1.5 text-xs font-medium text-cyan-300 hover:bg-slate-800"
+          >
+            <CreditCard className="h-3.5 w-3.5" />
+            <span>Billing</span>
+          </Link>
+          <button
+            type="button"
+            onClick={() => void handleSignOut()}
+            className="inline-flex items-center gap-2 rounded-full px-3 py-2 text-xs text-slate-300"
+            aria-label={tNav('signOut')}
+          >
+            <LogOut className="h-4 w-4" />
+            {tNav('signOut')}
+          </button>
+        </div>
       </header>
 
       <main className="min-h-0 flex-1 overflow-y-auto px-4 py-4 pb-24">

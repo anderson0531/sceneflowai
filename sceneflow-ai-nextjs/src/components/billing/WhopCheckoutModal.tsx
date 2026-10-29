@@ -46,6 +46,7 @@ export function WhopCheckoutModal({
       return {
         key: addonId,
         title: pack.displayName,
+        shortTitle: pack.displayName,
         priceLabel: `$${pack.priceUsd} one-time`,
         creditsLabel: `${pack.credits.toLocaleString()} add-on credits (12-month validity)`,
       }
@@ -53,9 +54,11 @@ export function WhopCheckoutModal({
     const normalizedTier = normalizeTierName(tierName)
     if (normalizedTier) {
       const tier = TIER_CATALOG[normalizedTier]
+      const shortName = tier.displayName.split('—')[0].trim()
       return {
         key: normalizedTier,
-        title: `${tier.displayName} Plan`,
+        title: `${tier.displayName}`,
+        shortTitle: `${shortName} Plan`,
         priceLabel: tier.isOneTime ? `$${tier.priceUsd} one-time` : `$${tier.priceUsd}/month`,
         creditsLabel: `${tier.credits.toLocaleString()} credits${tier.isOneTime ? '' : '/month'} • ${tier.storageGb} GB Vault`,
       }
@@ -95,9 +98,9 @@ export function WhopCheckoutModal({
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
-      <div className="relative w-full max-w-lg bg-dark-card border border-dark-border rounded-2xl overflow-hidden shadow-2xl">
-        <div className="flex items-center justify-between p-4 border-b border-dark-border">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/80 backdrop-blur-sm">
+      <div className="relative w-full max-w-lg max-h-[90dvh] flex flex-col bg-dark-card border border-dark-border rounded-2xl overflow-hidden shadow-2xl">
+        <div className="flex items-center justify-between p-4 border-b border-dark-border shrink-0">
           <h3 className="text-lg font-semibold text-white">Complete Checkout</h3>
           <button
             onClick={onClose}
@@ -108,21 +111,21 @@ export function WhopCheckoutModal({
           </button>
         </div>
 
-        <div className="p-6 space-y-5">
+        <div className="p-4 sm:p-6 space-y-4 sm:space-y-5 overflow-y-auto flex-1">
           {planSummary && (
-            <div className="p-4 rounded-xl bg-gray-900/90 border border-gray-700/70 flex items-center justify-between gap-4">
-              <div>
-                <div className="text-base font-bold text-white">{planSummary.title}</div>
+            <div className="p-3.5 sm:p-4 rounded-xl bg-gray-900/90 border border-gray-700/70 flex items-center justify-between gap-3">
+              <div className="min-w-0">
+                <div className="text-sm sm:text-base font-bold text-white truncate">{planSummary.title}</div>
                 <div className="text-xs text-gray-400 mt-0.5">{planSummary.creditsLabel}</div>
               </div>
               <div className="text-right shrink-0">
-                <div className="text-lg font-bold text-sf-primary">{planSummary.priceLabel}</div>
+                <div className="text-base sm:text-lg font-bold text-sf-primary">{planSummary.priceLabel}</div>
               </div>
             </div>
           )}
 
           {isTestMode && onTestActivate && planSummary ? (
-            <div className="p-4 rounded-xl border-2 border-amber-500/40 bg-amber-950/25 space-y-3">
+            <div className="p-3.5 sm:p-4 rounded-xl border-2 border-amber-500/40 bg-amber-950/25 space-y-3">
               <div className="flex items-center gap-2 text-amber-300 font-semibold text-sm">
                 <Beaker className="w-4 h-4 text-amber-400 shrink-0" />
                 <span>Admin Test Mode — Instant Activation ($0)</span>
@@ -133,17 +136,17 @@ export function WhopCheckoutModal({
               <Button
                 onClick={() => onTestActivate(planSummary.key)}
                 disabled={isTestActivating}
-                className="w-full bg-amber-500 hover:bg-amber-400 text-black font-semibold flex items-center justify-center gap-2"
+                className="w-full bg-amber-500 hover:bg-amber-400 text-black font-semibold flex items-center justify-center gap-2 text-sm"
               >
                 {isTestActivating ? (
                   <>
-                    <Loader className="w-4 h-4 animate-spin" />
-                    <span>Activating {planSummary.title}…</span>
+                    <Loader className="w-4 h-4 animate-spin shrink-0" />
+                    <span>Activating {planSummary.shortTitle}…</span>
                   </>
                 ) : (
                   <>
-                    <CheckCircle className="w-4 h-4" />
-                    <span>Activate {planSummary.title} Instantly ($0 Test Mode)</span>
+                    <CheckCircle className="w-4 h-4 shrink-0" />
+                    <span>Activate {planSummary.shortTitle} ($0 Test)</span>
                   </>
                 )}
               </Button>
@@ -188,12 +191,12 @@ export function WhopCheckoutModal({
                 variant={isTestMode ? 'outline' : 'default'}
                 className={
                   isTestMode
-                    ? 'w-full border-gray-600 text-gray-200 hover:bg-gray-800 flex items-center justify-center gap-2'
-                    : 'w-full bg-sf-primary hover:bg-sf-accent text-white flex items-center justify-center gap-2'
+                    ? 'w-full border-gray-600 text-gray-200 hover:bg-gray-800 flex items-center justify-center gap-2 text-sm'
+                    : 'w-full bg-sf-primary hover:bg-sf-accent text-white flex items-center justify-center gap-2 text-sm'
                 }
               >
-                <span>{isTestMode ? 'Open Live Whop Checkout (whop.com)' : 'Continue to Secure Checkout'}</span>
-                <ExternalLink className="w-4 h-4" />
+                <span>{isTestMode ? 'Open Live Whop Checkout' : 'Continue to Checkout'}</span>
+                <ExternalLink className="w-4 h-4 shrink-0" />
               </Button>
             ) : (
               <div className="flex flex-col items-center justify-center gap-3 py-2">
@@ -204,7 +207,7 @@ export function WhopCheckoutModal({
           </div>
         </div>
 
-        <div className="p-4 border-t border-dark-border">
+        <div className="p-4 border-t border-dark-border shrink-0">
           <Button variant="outline" className="w-full border-dark-border" onClick={onClose}>
             Cancel
           </Button>

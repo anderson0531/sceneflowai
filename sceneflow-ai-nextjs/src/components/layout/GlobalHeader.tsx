@@ -8,6 +8,7 @@ import { Button } from '../../components/ui/Button'
 import { CreditsBadge } from '../../components/credits/CreditsBadge'
 import { SceneFlowStudioBrand } from '../../components/layout/SceneFlowStudioBrand'
 import { isPublicRoute } from '@/constants/publicRoutes'
+import { isSubscriptionExemptDashboardPath } from '@/lib/billing/subscriptionAccess'
 import { getDashboardUrl, getLoginUrl } from '@/lib/auth/postLoginRedirect'
 import { HeaderLocaleSwitcher } from '@/components/i18n/HeaderLocaleSwitcher'
 import { useTranslations } from 'next-intl'
@@ -51,9 +52,15 @@ export function GlobalHeader() {
     await signOut({ callbackUrl: '/' })
   }
 
+  const showOnMobile = isSubscriptionExemptDashboardPath(pathname)
+
   return (
     <>
-      <header className="sticky top-0 z-50 hidden w-full border-b border-gray-200 dark:border-gray-800 bg-white/80 dark:bg-gray-950/80 backdrop-blur sf-brand lg:flex">
+      <header
+        className={`sticky top-0 z-50 w-full border-b border-gray-200 dark:border-gray-800 bg-white/80 dark:bg-gray-950/80 backdrop-blur sf-brand ${
+          showOnMobile ? 'flex flex-col' : 'hidden lg:flex lg:flex-col'
+        }`}
+      >
         <div className="w-full px-4 lg:px-8 h-16 flex items-center justify-between gap-4">
           {/* Left: Logo + Mobile Menu */}
           <div className="flex items-center gap-3">

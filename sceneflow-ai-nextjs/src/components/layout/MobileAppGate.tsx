@@ -8,6 +8,8 @@ import { useIsDesktopOrTablet } from '@/hooks/useScreenSize'
 import { getLoginUrl } from '@/lib/auth/postLoginRedirect'
 import { MobileCompanion } from '@/components/mobile/MobileCompanion'
 import { AppInstallCard } from '@/components/pwa/AppInstallCard'
+import { isSubscriptionExemptDashboardPath } from '@/lib/billing/subscriptionAccess'
+import { SubscriptionAccessGate } from '@/components/auth/SubscriptionAccessGate'
 
 interface MobileAppGateProps {
   children: React.ReactNode
@@ -58,8 +60,19 @@ function PhoneSignIn() {
  * paint is a loader instead of the desktop workspace.
  */
 export function MobileAppGate({ children, translateControl }: MobileAppGateProps) {
+  const pathname = usePathname()
   const isDesktop = useIsDesktopOrTablet()
   const { status } = useSession()
+
+  // Always allow billing, settings, and help pages to render directly on mobile & tablet
+  if (isSubscriptionExemptDashboardPath(pathname)) {
+    return (
+      <>
+        {children}
+        {translateControl}
+      </>
+    )
+  }
 
   if (isDesktop === null || (isDesktop === false && status === 'loading')) {
     return <PhoneLoader />
@@ -78,5 +91,9 @@ export function MobileAppGate({ children, translateControl }: MobileAppGateProps
     return <PhoneSignIn />
   }
 
-  return <MobileCompanion />
+  return (
+    <SubscriptionAccessGate>
+      <MobileCompanion />
+    </SubscriptionAccessGate>
+  )
 }
