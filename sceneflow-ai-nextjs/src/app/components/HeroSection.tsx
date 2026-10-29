@@ -222,30 +222,14 @@ export function HeroSection() {
         <div className="relative z-10 flex min-h-[100dvh] flex-col justify-center px-4 pt-36 pb-16 lg:pt-40">
           <div className="container mx-auto">
             <div className="max-w-4xl mx-auto text-center">
-              <motion.div
-                className="flex flex-col items-center gap-3"
+              <motion.p
+                className="text-[11px] font-semibold uppercase tracking-[0.22em] text-cyan-300/90"
                 initial={{ opacity: 0, y: motionOffset ?? 12 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: motionDuration ?? 0.8, delay: prefersReducedMotion ? 0 : 0.1 }}
               >
-                <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-cyan-300/90">
-                  {t('eyebrow')}
-                </p>
-                <button
-                  type="button"
-                  onClick={() =>
-                    document
-                      .getElementById('production-agent')
-                      ?.scrollIntoView({ behavior: 'smooth', block: 'start' })
-                  }
-                  className="inline-flex flex-wrap items-center justify-center gap-2 px-3.5 py-1.5 rounded-full bg-slate-950/75 hover:bg-slate-900/90 border border-cyan-400/40 text-xs font-semibold text-cyan-200 shadow-lg backdrop-blur-md transition-all"
-                >
-                  <Bot className="w-3.5 h-3.5 text-cyan-400 shrink-0" />
-                  <span>
-                    <strong className="text-white">NEW: Production Agent • Autonomous Studio Builder</strong> — Eliminate 300+ manual prompts. Start your build, walk away &amp; get notified when complete →
-                  </span>
-                </button>
-              </motion.div>
+                {t('eyebrow')}
+              </motion.p>
 
               <motion.h1
                 className="mt-5 text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold tracking-tighter leading-tight bg-gradient-to-r from-white via-gray-300 to-gray-400 text-transparent bg-clip-text"

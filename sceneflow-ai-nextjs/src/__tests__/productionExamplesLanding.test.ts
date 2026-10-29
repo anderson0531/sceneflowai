@@ -310,6 +310,7 @@ describe('Production Examples i18n contract', () => {
     expect(pack).toContain('Hart House')
     expect(pack).toContain('The friction we remove')
     expect(pack).toContain('The control you keep')
+    expect(pack).toContain('Production Agent • Autonomous Studio Builder')
     expect(pack).toContain('The cut you publish')
   })
 

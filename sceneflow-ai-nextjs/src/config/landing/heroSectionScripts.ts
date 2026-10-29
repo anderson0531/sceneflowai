@@ -11,7 +11,7 @@ export type HeroVideoBeat = {
 }
 
 export type HeroVideoScript = {
-  id: 'friction' | 'control' | 'cut'
+  id: 'friction' | 'control' | 'agent' | 'cut'
   eyebrow: string
   beats: readonly HeroVideoBeat[]
 }
@@ -78,6 +78,36 @@ export const HERO_SECTION_SCRIPTS: readonly HeroVideoScript[] = [
     ],
   },
   {
+    id: 'agent',
+    eyebrow: 'Production Agent • Autonomous Studio Builder',
+    beats: [
+      {
+        label: 'The 300-shot wall',
+        narration:
+          'A twenty-seven scene production takes over three hundred manual still and clip prompts. With the Production Agent, you spend under an hour perfecting the script, then launch the build.',
+        picture:
+          'CHAR_ANA in the dark virtual production suite beside a curved display showing 27 scene cards, selecting Pre-Vis, Clips, Scenes, Master, and Promo in one click.',
+        settle: 'A single cyan-to-emerald progress bar ignites across all 27 scenes.',
+      },
+      {
+        label: 'The autonomous build and self-healing',
+        narration:
+          'The Agent walks every scene on its own — locking references, laying narration and music stems, generating stills, optimizing any failed clip prompt, and switching to Creative Clips when a dramatic shot hits policy filters.',
+        picture:
+          'Behind Ana, storyboard frames, narration waveforms, and motion clips populate in sequence while an amber retry pulse self-heals a flagged shot into green.',
+        settle: 'All 27 scene indicators hold steady emerald green while the studio runs hands-free.',
+      },
+      {
+        label: 'Walk away and review in the Screening Room',
+        narration:
+          'Set scene checkpoints or walk away completely. When the cut is finished, a notification arrives on your phone with a private Screening Room link ready for review.',
+        picture:
+          'Ana picks up her coffee mug and steps away from the desk as a calm notification chime lights up a private /s/ Screening Room preview on her phone.',
+        settle: 'Ana smiles to camera, coffee in hand, while the finished master plays behind her.',
+      },
+    ],
+  },
+  {
     id: 'cut',
     eyebrow: 'The cut you publish',
     beats: [
@@ -112,7 +142,8 @@ export const HERO_SECTION_SCRIPTS: readonly HeroVideoScript[] = [
 const SCRIPT_BY_ID: Record<HeroVideoScript['id'], HeroVideoScript> = {
   friction: HERO_SECTION_SCRIPTS[0],
   control: HERO_SECTION_SCRIPTS[1],
-  cut: HERO_SECTION_SCRIPTS[2],
+  agent: HERO_SECTION_SCRIPTS[2],
+  cut: HERO_SECTION_SCRIPTS[3],
 }
 
 export function getHeroSectionScript(id: HeroVideoScript['id']): HeroVideoScript {
