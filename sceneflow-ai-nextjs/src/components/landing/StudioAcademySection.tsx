@@ -36,7 +36,7 @@ const SHOWCASE_SCREENS: {
   },
   {
     id: 'production',
-    tabLabel: '2. Continuity Vault & Veo 3.1',
+    tabLabel: '2. Continuity Vault & Video Motion',
     stepBadge: 'Phase 2 • Virtual Soundstage',
   },
   {
@@ -73,7 +73,7 @@ const SELLING_PILLARS = [
     badge: 'Save Up to 70% of Credits',
     title: 'Animatic-First Credit Guardrails',
     description:
-      'Every workspace includes real-time credit guardrails that teach you how to lock an 80+ Audience Resonance script and preview a voiced Keyframe Animatic before rendering Veo 3.1 motion video.',
+      'Every workspace includes real-time credit guardrails that teach you how to lock an 80+ Audience Resonance script and preview a voiced Keyframe Animatic before rendering motion video clips.',
     accent: 'from-emerald-500/20 to-teal-600/10 border-emerald-500/30 text-emerald-300',
   },
 ]
@@ -179,11 +179,13 @@ export function StudioAcademySection() {
             <div className="flex flex-wrap gap-2">
               {SHOWCASE_SCREENS.map((screen) => {
                 const isSelected = screen.id === selectedContextId
+                const guide = JIT_CONTEXT_GUIDES[screen.id]
                 return (
                   <button
                     key={screen.id}
                     type="button"
                     onClick={() => setSelectedContextId(screen.id)}
+                    title={`${screen.tabLabel} (${screen.stepBadge}) — ${guide?.subtitle || ''}`}
                     className={cn(
                       'px-3.5 py-2 rounded-xl text-xs font-bold transition-all border',
                       isSelected

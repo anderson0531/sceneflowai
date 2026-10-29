@@ -590,6 +590,7 @@ export function JitHelpDrawer() {
                               setSelectedTutorialId(course.id)
                               setActiveTutorialStepIdx(0)
                             }}
+                            title={`${course.title} (${course.level} • ${course.totalDuration}) — ${course.subtitle}`}
                             className={cn(
                               'p-3 rounded-xl border text-left transition-all',
                               isSelected
@@ -605,7 +606,7 @@ export function JitHelpDrawer() {
                                 {doneCount}/{course.steps.length} done
                               </span>
                             </div>
-                            <p className="text-xs font-bold text-white line-clamp-1">
+                            <p className="text-xs font-bold text-white leading-snug">
                               {course.title}
                             </p>
                           </button>
@@ -790,7 +791,7 @@ export function JitHelpDrawer() {
                       type="text"
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
-                      placeholder="Search Continuity Vault, Veo 3.1, Audience Resonance, credits, dubbing..."
+                      placeholder="Search Continuity Vault, motion video, Audience Resonance, credits, dubbing..."
                       className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-slate-900 border border-slate-700 text-xs sm:text-sm text-white placeholder:text-slate-500 focus:outline-none focus:border-cyan-500"
                       autoFocus
                     />

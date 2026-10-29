@@ -129,7 +129,7 @@ export interface CreditEstimatorPreset {
   runtimeLabel: string
   sceneCount: number
   keyframePairsPerScene: number
-  veoClipsPerScene: number
+  videoClipsPerScene: number
   languagesCount: number
   description: string
 }
@@ -246,7 +246,7 @@ export const JIT_CONTEXT_GUIDES: Record<JitContextId, JitContextGuide> = {
         stepNumber: 3,
         title: 'Verify Your Credit & BYOK Setup',
         description:
-          'Check your available credits in Billing, or connect optional Google Vertex AI / ElevenLabs API keys in Integrations.',
+          'Check your available credits in Billing, or connect optional cloud API keys in Integrations.',
         actionLabel: 'Open Billing & Credits',
         actionHref: '/dashboard/settings/billing',
       },
@@ -268,7 +268,7 @@ export const JIT_CONTEXT_GUIDES: Record<JitContextId, JitContextGuide> = {
       {
         question: 'Why does the app ask for an active subscription on studio routes?',
         answer:
-          'SceneFlow provisions dedicated cloud GPU pipelines (Imagen 3, Veo 3.1, ElevenLabs) and Continuity Vault storage per subscriber. You can start with the $9 Explorer trial or any monthly plan.',
+          'SceneFlow provisions dedicated cloud GPU pipelines for image, video, and voice synthesis plus Continuity Vault storage per subscriber. You can start with the $9 Explorer trial or any monthly plan.',
         fixActionLabel: 'View Plans & Explorer ($9)',
         fixActionHref: '/dashboard/settings/billing',
       },
@@ -296,7 +296,7 @@ export const JIT_CONTEXT_GUIDES: Record<JitContextId, JitContextGuide> = {
         label: 'Shared Story Bible & Continuity Vault',
         locationTag: 'Top Series Banner',
         summary:
-          'Stores canonical character portraits, wardrobe descriptions, ElevenLabs voice assignments, and master locations for the entire season.',
+          'Stores canonical character portraits, wardrobe descriptions, neural voice assignments, and master locations for the entire season.',
         proTip: 'Lock your main cast portraits in the Series Bible before launching Episode 2 so every episode shares identical character DNA.',
       },
       {
@@ -500,7 +500,7 @@ export const JIT_CONTEXT_GUIDES: Record<JitContextId, JitContextGuide> = {
       title: 'The 80+ Greenlight Rule Saves 70% of Credits',
       typicalCost: '45–75 credits total to write, test, and greenlight a complete Blueprint',
       proSavingsRule:
-        'Fixing a weak Act II in the Blueprint Room costs 15 credits. Fixing it after rendering 20 Veo video clips costs 1,500+ credits.',
+        'Fixing a weak Act II in the Blueprint Room costs 15 credits. Fixing it after rendering 20 motion video clips costs 1,500+ credits.',
     },
     troubleshooting: [
       {
@@ -524,13 +524,13 @@ export const JIT_CONTEXT_GUIDES: Record<JitContextId, JitContextGuide> = {
     id: 'production',
     title: 'Virtual Production, Continuity Vault & Timeline',
     shortTitle: 'Virtual Production',
-    subtitle: 'Lock character faces & voices in the Continuity Vault, render start/end keyframes, and animate with Veo 3.1.',
+    subtitle: 'Lock character faces & voices in the Continuity Vault, render start/end keyframes, and animate motion video clips.',
     badge: 'Phase 2 • Production',
     estimatedTime: '5–15 mins',
     screenshotSrc: '/images/help/virtual-production-screenshot.svg',
-    screenshotAlt: 'Virtual Production workspace showing Continuity Vault on left, Start/End Keyframes and Veo 3.1 Motion in center, and Multitrack Audio Timeline at bottom',
+    screenshotAlt: 'Virtual Production workspace showing Continuity Vault on left, Start/End Keyframes and AI Video Motion in center, and Multitrack Audio Timeline at bottom',
     summary:
-      'Virtual Production is your digital soundstage. Lock your cast portraits, wardrobe, and voices on the left; generate reference-locked Start & End Keyframes in the center; mix Dialogue, SFX, and Score on the timeline; and animate hero shots with Veo 3.1.',
+      'Virtual Production is your digital soundstage. Lock your cast portraits, wardrobe, and voices on the left; generate reference-locked Start & End Keyframes in the center; mix Dialogue, SFX, and Score on the timeline; and animate hero shots into full motion video.',
     hotspots: [
       {
         id: 'prod-continuity-vault',
@@ -541,7 +541,7 @@ export const JIT_CONTEXT_GUIDES: Record<JitContextId, JitContextGuide> = {
         label: 'Continuity Vault™ (Cast, Wardrobe & Locations)',
         locationTag: 'Left Reference Panel',
         summary:
-          'Approve each character’s portrait, wardrobe, and ElevenLabs voice here FIRST. SceneFlow automatically injects these visual references into every scene frame.',
+          'Approve each character’s portrait, wardrobe, and neural voice here FIRST. SceneFlow automatically injects these visual references into every scene frame.',
         proTip: 'Never generate scene keyframes before locking your main character portraits—this is the secret to 100% facial consistency.',
         creditNote: '10–15 cr per portrait',
         actionLabel: 'Generate Cast Portraits',
@@ -553,22 +553,22 @@ export const JIT_CONTEXT_GUIDES: Record<JitContextId, JitContextGuide> = {
         x: 51,
         y: 31,
         spotlight: { left: 28.5, top: 19, width: 45.5, height: 24 },
-        label: 'Start & End Keyframe Pair (Imagen 3)',
+        label: 'Start & End Keyframe Pair',
         locationTag: 'Main Stage • Left & Center Frames',
         summary:
-          'Every shot segment begins with a high-resolution Start and End Keyframe. Use them for an instant Animatic storyboard, or feed both into Veo 3.1 for controlled camera motion.',
+          'Every shot segment begins with a high-resolution Start and End Keyframe. Use them for an instant Animatic storyboard, or feed both into the video engine for controlled camera motion.',
         proTip: 'Generating keyframes costs 8x less than video. Perfect your lighting and composition in keyframes before clicking Animate!',
         creditNote: '10–15 cr per frame',
         actionLabel: 'Open Scene Gallery',
         actionEvent: 'production:scene-gallery',
       },
       {
-        id: 'prod-veo-motion',
+        id: 'prod-video-motion',
         number: 3,
         x: 86,
         y: 31,
         spotlight: { left: 74.5, top: 19, width: 22, height: 24 },
-        label: 'Veo 3.1 Motion Interpolation',
+        label: 'AI Video Motion Interpolation',
         locationTag: 'Main Stage • Right Video Monitor',
         summary:
           'Transforms your approved Start/End keyframes into smooth 1080p/4K cinematic video with accurate physics and camera movement.',
@@ -586,7 +586,7 @@ export const JIT_CONTEXT_GUIDES: Record<JitContextId, JitContextGuide> = {
         label: 'Multitrack Audio & Visual Timeline',
         locationTag: 'Bottom Studio Dock',
         summary:
-          'Synchronizes visual segments with ElevenLabs Character Dialogue, Narration, Foley SFX, and auto-ducked Cinematic Music.',
+          'Synchronizes visual segments with Character Dialogue, Narration, Foley SFX, and auto-ducked Cinematic Music.',
         proTip: 'Generate Dialogue audio before finalizing video clip durations so every shot matches the spoken line length.',
         creditNote: '5–15 cr per scene audio',
         actionLabel: 'Generate Scene Audio',
@@ -599,7 +599,7 @@ export const JIT_CONTEXT_GUIDES: Record<JitContextId, JitContextGuide> = {
         stepNumber: 1,
         title: 'Lock Cast Portraits, Voices & Locations First',
         description:
-          'Generate and approve character portraits, ElevenLabs voices, and location references in the Reference Library.',
+          'Generate and approve character portraits, neural voices, and location references in the Reference Library.',
         creditBadge: '10–15 cr / ref',
         actionLabel: 'Generate Cast References',
         actionEvent: 'production:generate-characters',
@@ -627,11 +627,11 @@ export const JIT_CONTEXT_GUIDES: Record<JitContextId, JitContextGuide> = {
       {
         id: 'prod-step-4',
         stepNumber: 4,
-        title: 'Animate Hero Shots with Veo 3.1',
+        title: 'Animate Hero Shots into Motion Video',
         description:
           'Once your Animatic timing feels great, convert your key shots into full motion video clips.',
         creditBadge: '80–150 cr / clip',
-        actionLabel: 'Generate Veo Video',
+        actionLabel: 'Generate Motion Video',
         actionEvent: 'production:generate-video',
       },
     ],
@@ -639,7 +639,7 @@ export const JIT_CONTEXT_GUIDES: Record<JitContextId, JitContextGuide> = {
       title: 'The "Animatic First" Secret of Pro Directors',
       typicalCost: '~120 credits for an entire 6-scene Animatic vs. ~900 credits for full video',
       proSavingsRule:
-        'Always watch your film in the Screening Room as a voiced Keyframe Animatic first. Only click "Animate with Veo 3.1" on shots that pass your Animatic check.',
+        'Always watch your film in the Screening Room as a voiced Keyframe Animatic first. Only animate video clips on shots that pass your Animatic check.',
     },
     troubleshooting: [
       {
@@ -663,13 +663,13 @@ export const JIT_CONTEXT_GUIDES: Record<JitContextId, JitContextGuide> = {
     id: 'final-cut',
     title: 'Final Cut Assembly & Screening Room',
     shortTitle: 'Final Cut & Screening',
-    subtitle: 'Blend Animatic & Video streams, switch across 13+ dubbed languages, and share `/s/` review links.',
+    subtitle: 'Blend Animatic & Video streams, switch across 13+ dubbed languages, and share /s/ review links.',
     badge: 'Phase 3 • Final Cut',
     estimatedTime: '2–5 mins',
     screenshotSrc: '/images/help/final-cut-screening-screenshot.svg',
     screenshotAlt: 'Final Cut and Screening Room showing Master Video Player, 13+ Language Audio Switcher, and Reviewer Screening Link panel',
     summary:
-      'Final Cut & Screening Room is your post-production suite and private screening theater. Seamlessly mix Animatic keyframes and Veo 3.1 video clips, preview dubbed audio tracks in 13+ languages, and share a `/s/` link for timestamped feedback.',
+      'Final Cut & Screening Room is your post-production suite and private screening theater. Seamlessly mix Animatic keyframes and motion video clips, preview dubbed audio tracks in 13+ languages, and share a /s/ link for timestamped feedback.',
     hotspots: [
       {
         id: 'fc-stream-selector',
@@ -680,7 +680,7 @@ export const JIT_CONTEXT_GUIDES: Record<JitContextId, JitContextGuide> = {
         label: 'Master Video vs. Animatic Stream Toggle',
         locationTag: 'Top Center Toolbar',
         summary:
-          'Switch between your pure Animatic cut, full Video cut, or Hybrid Smart Assembly (which uses Veo video where rendered and smooth Ken Burns keyframes everywhere else).',
+          'Switch between your pure Animatic cut, full Video cut, or Hybrid Smart Assembly (which uses motion video where rendered and smooth Ken Burns keyframes everywhere else).',
         proTip: 'Hybrid Smart Assembly lets you export a complete, watchable film at any stage of production!',
         actionLabel: 'Preview Screening Room',
         actionEvent: 'screening-room:preview',
@@ -704,11 +704,11 @@ export const JIT_CONTEXT_GUIDES: Record<JitContextId, JitContextGuide> = {
         x: 83,
         y: 26,
         spotlight: { left: 68.5, top: 10, width: 29.5, height: 54 },
-        label: 'Private `/s/` Screening Link & Viewer Notes',
+        label: 'Private /s/ Screening Link & Viewer Notes',
         locationTag: 'Right Collaboration Panel',
         summary:
-          'Generate a password-optional `/s/` watch link for co-creators, clients, or test audiences. Viewers can leave time-coded notes without needing a SceneFlow account.',
-        proTip: 'Send an Animatic `/s/` link to clients for sign-off BEFORE spending credits on final 4K video renders.',
+          'Generate a password-optional /s/ watch link for co-creators, clients, or test audiences. Viewers can leave time-coded notes without needing a SceneFlow account.',
+        proTip: 'Send an Animatic /s/ link to clients for sign-off BEFORE spending credits on final 4K video renders.',
         actionLabel: 'Create Screening Link',
         actionEvent: 'screening-room:create-screening',
       },
@@ -740,7 +740,7 @@ export const JIT_CONTEXT_GUIDES: Record<JitContextId, JitContextGuide> = {
       {
         id: 'fc-step-2',
         stepNumber: 2,
-        title: 'Share a `/s/` Review Link for Feedback',
+        title: 'Share a /s/ Review Link for Feedback',
         description:
           'Generate a shareable screening link to collect timestamped notes from collaborators or clients.',
         creditBadge: '0 credits',
@@ -760,15 +760,15 @@ export const JIT_CONTEXT_GUIDES: Record<JitContextId, JitContextGuide> = {
     ],
     creditGuardrail: {
       title: 'Client Sign-Off Before Final Render',
-      typicalCost: 'Sharing `/s/` Screening Room links is 100% free (0 credits)',
+      typicalCost: 'Sharing /s/ Screening Room links is 100% free (0 credits)',
       proSavingsRule:
-        'Use free `/s/` screening links to get stakeholder approval on pacing and dialogue before running final 4K renders.',
+        'Use free /s/ screening links to get stakeholder approval on pacing and dialogue before running final 4K renders.',
     },
     troubleshooting: [
       {
         question: 'What happens if some scenes have video and others only have keyframes?',
         answer:
-          'Final Cut automatically plays Veo video clips for scenes that have them and uses smooth cinematic pan-and-zoom (Ken Burns) keyframes for the rest so your movie plays without gaps.',
+          'Final Cut automatically plays motion video clips for scenes that have them and uses smooth cinematic pan-and-zoom (Ken Burns) keyframes for the rest so your movie plays without gaps.',
       },
       {
         question: 'How do I adjust music volume so it doesn’t overpower dialogue?',
@@ -882,7 +882,7 @@ export const JIT_CONTEXT_GUIDES: Record<JitContextId, JitContextGuide> = {
     id: 'billing',
     title: 'Plans, Credit Vault & BYOK Cloud Keys',
     shortTitle: 'Credits & BYOK',
-    subtitle: 'Understand how Subscription + Top-Up credits work and how to connect your own Vertex AI / ElevenLabs keys.',
+    subtitle: 'Understand how Subscription + Top-Up credits work and how to connect your own cloud API keys.',
     badge: 'Studio Economics',
     estimatedTime: '2 mins',
     screenshotSrc: '/images/help/credits-byok-screenshot.svg',
@@ -912,7 +912,7 @@ export const JIT_CONTEXT_GUIDES: Record<JitContextId, JitContextGuide> = {
         locationTag: 'Left Plan Cards',
         summary:
           'Explorer ($9 one-time, 750 credits) lets you test the full pipeline on your first short. Starter ($29/mo, 4,500 credits) is built for chapter-by-chapter indie creators.',
-        proTip: '4,500 credits on Starter is enough for 2–3 full Animatic chapters plus 15–20 Veo 3.1 hero video clips every month.',
+        proTip: '4,500 credits on Starter is enough for 2–3 full Animatic chapters plus 15–20 hero motion video clips every month.',
       },
       {
         id: 'bill-pro-studio',
@@ -935,7 +935,7 @@ export const JIT_CONTEXT_GUIDES: Record<JitContextId, JitContextGuide> = {
         label: 'Bring Your Own Key (BYOK) Cloud Integration',
         locationTag: 'Bottom Hybrid Architecture Card',
         summary:
-          'Connect your own Google Cloud Vertex AI (Imagen 3 / Veo 3.1) and ElevenLabs API keys in Settings → Integrations for unlimited direct-billed studio rendering.',
+          'Connect your own cloud video, image, and voice API keys in Settings → Integrations for unlimited direct-billed studio rendering.',
         actionLabel: 'Configure BYOK Keys',
         actionHref: '/dashboard/settings/integrations',
       },
@@ -955,7 +955,7 @@ export const JIT_CONTEXT_GUIDES: Record<JitContextId, JitContextGuide> = {
         stepNumber: 2,
         title: 'Connect Optional BYOK Cloud Keys',
         description:
-          'Have Google Cloud credits or an ElevenLabs account? Plug your keys into Settings → Integrations.',
+          'Have your own cloud AI or voice synthesis accounts? Plug your keys into Settings → Integrations.',
         actionLabel: 'Open BYOK Integrations',
         actionHref: '/dashboard/settings/integrations',
       },
@@ -971,9 +971,9 @@ export const JIT_CONTEXT_GUIDES: Record<JitContextId, JitContextGuide> = {
     ],
     creditGuardrail: {
       title: 'Where Credits Go: Text (5%) vs. Images/Audio (20%) vs. Video (75%)',
-      typicalCost: 'Blueprint (25 cr) • Keyframe (10–15 cr) • Scene Audio (10 cr) • Veo 3.1 Video (80–150 cr)',
+      typicalCost: 'Blueprint (25 cr) • Keyframe (10–15 cr) • Scene Audio (10 cr) • Motion Video (80–150 cr)',
       proSavingsRule:
-        'Because Veo 3.1 video accounts for ~75% of credit usage, locking your Blueprint and Keyframes first stretches your credits 3x further.',
+        'Because motion video accounts for ~75% of credit usage, locking your Blueprint and Keyframes first stretches your credits 3x further.',
     },
     troubleshooting: [
       {
@@ -1074,7 +1074,7 @@ export const INTERACTIVE_TUTORIALS: InteractiveTutorialCourse[] = [
         instructions: [
           'Click "Start Production" to enter Virtual Production.',
           'Before generating scene frames, open the Reference Library / Continuity Vault on the left.',
-          'Generate and approve each main character’s portrait, wardrobe, and ElevenLabs voice.',
+          'Generate and approve each main character’s portrait, wardrobe, and neural voice.',
         ],
         keyTakeaway:
           'Once a character portrait is locked in the Continuity Vault, every scene keyframe automatically inherits their exact face and outfit.',
@@ -1092,7 +1092,7 @@ export const INTERACTIVE_TUTORIALS: InteractiveTutorialCourse[] = [
         objective: 'Create a playable storyboard film with dialogue, SFX, and score before rendering expensive video.',
         instructions: [
           'Click "Generate Scene Audio" to synthesize character dialogue, narration, SFX, and background music.',
-          'Render the Start & End Keyframes (Imagen 3) for each scene segment.',
+          'Render the Start & End Keyframes for each scene segment.',
           'Open the Screening Room tab to watch your complete voiced Animatic from start to finish!',
         ],
         keyTakeaway:
@@ -1103,19 +1103,19 @@ export const INTERACTIVE_TUTORIALS: InteractiveTutorialCourse[] = [
       {
         id: 'ff-5',
         stepNumber: 5,
-        title: 'Animate Hero Shots with Veo 3.1 & Export in Final Cut',
+        title: 'Animate Hero Shots into Motion Video & Export in Final Cut',
         duration: '2 mins',
         contextId: 'final-cut',
         screenshotSrc: '/images/help/final-cut-screening-screenshot.svg',
         focusHotspotNumber: 1,
-        objective: 'Upgrade key segments to full Veo 3.1 motion video and share or export your master.',
+        objective: 'Upgrade key segments to full motion video and share or export your master.',
         instructions: [
-          'Select your favorite keyframes in Virtual Production and click "Animate with Veo 3.1" to interpolate smooth cinematic motion.',
+          'Select your favorite keyframes in Virtual Production and click "Animate Video" to interpolate smooth cinematic motion.',
           'Advance to Final Cut & Screening Room to watch your hybrid or full-video master.',
           'Click "Share /s/ Review Link" to send a watch link to friends/clients, or "Export MP4 Master" to download.',
         ],
         keyTakeaway:
-          'Final Cut seamlessly blends Veo 3.1 video clips and Ken Burns keyframes so you can export a polished film at any budget.',
+          'Final Cut seamlessly blends motion video clips and Ken Burns keyframes so you can export a polished film at any budget.',
         tryActionLabel: 'Preview in Screening Room',
         tryActionEvent: 'screening-room:preview',
       },
@@ -1170,7 +1170,7 @@ export const INTERACTIVE_TUTORIALS: InteractiveTutorialCourse[] = [
       {
         id: 'cm-3',
         stepNumber: 3,
-        title: 'Use Start & End Keyframe Anchoring for Veo 3.1',
+        title: 'Use Start & End Keyframe Anchoring for Video Motion',
         duration: '2 mins',
         contextId: 'production',
         screenshotSrc: '/images/help/virtual-production-screenshot.svg',
@@ -1178,8 +1178,8 @@ export const INTERACTIVE_TUTORIALS: InteractiveTutorialCourse[] = [
         objective: 'Prevent character morphing during 6-second video motion clips.',
         instructions: [
           'Always inspect both the Start Keyframe and End Keyframe of a segment first.',
-          'When both keyframes feature your locked character reference, Veo 3.1 interpolates between two verified anchors.',
-          'Click "Animate with Veo 3.1" only after both keyframes look sharp.',
+          'When both keyframes feature your locked character reference, the video engine interpolates between two verified anchors.',
+          'Click "Animate Video" only after both keyframes look sharp.',
         ],
         keyTakeaway: 'Start + End keyframe anchoring constrains video motion so characters never drift mid-shot.',
         tryActionLabel: 'Open Keyframe Stage',
@@ -1209,7 +1209,7 @@ export const INTERACTIVE_TUTORIALS: InteractiveTutorialCourse[] = [
         instructions: [
           'Rewriting a scene in Blueprint costs ~15 credits.',
           'Rendering a scene’s keyframes + full voice/SFX audio costs ~35 credits.',
-          'Rendering 3 Veo 3.1 video takes for that same scene costs ~350 credits.',
+          'Rendering 3 motion video takes for that same scene costs ~350 credits.',
         ],
         keyTakeaway: 'Never test whether a scene "works" using video generation—test it in Blueprint and Animatic mode.',
         tryActionLabel: 'Open Blueprint Room',
@@ -1236,14 +1236,14 @@ export const INTERACTIVE_TUTORIALS: InteractiveTutorialCourse[] = [
       {
         id: 'af-3',
         stepNumber: 3,
-        title: 'Selectively Upgrade 30–50% "Money Shots" to Veo Video',
+        title: 'Selectively Upgrade 30–50% "Money Shots" to Motion Video',
         duration: '2 mins',
         contextId: 'final-cut',
         screenshotSrc: '/images/help/final-cut-screening-screenshot.svg',
         focusHotspotNumber: 1,
-        objective: 'Combine Veo 3.1 hero clips with Ken Burns keyframes in Final Cut.',
+        objective: 'Combine hero motion video clips with Ken Burns keyframes in Final Cut.',
         instructions: [
-          'Pick the most kinetic moments in each scene (e.g., the reveal, the action beat, the emotional close-up) and animate those with Veo 3.1.',
+          'Pick the most kinetic moments in each scene (e.g., the reveal, the action beat, the emotional close-up) and animate those into motion video.',
           'Leave dialogue reaction shots or establishing stills as high-res animated keyframes.',
           'Export the hybrid master in Final Cut for maximum visual impact at 30% of the credit cost.',
         ],
@@ -1274,7 +1274,7 @@ export const INTERACTIVE_TUTORIALS: InteractiveTutorialCourse[] = [
         objective: 'Create a shared Story Bible that feeds 10–40 episodes automatically.',
         instructions: [
           'Open Series Studio (`/dashboard/series`) and create a new Series.',
-          'Lock your canonical cast portraits, ElevenLabs voices, and master locations in the Series Bible.',
+          'Lock your canonical cast portraits, character voices, and master locations in the Series Bible.',
           'Generate Episode 1, 2, and 3 blueprints directly from the Episode Pipeline grid.',
         ],
         keyTakeaway: 'Every episode automatically inherits your Series Bible assets with zero duplicate setup.',
@@ -1325,7 +1325,7 @@ export const CREATOR_PLAYBOOKS: CreatorPlaybook[] = [
       },
       {
         phase: '2. Continuity Vault',
-        action: 'Approve your main characters’ faces and pick expressive ElevenLabs voices for each role.',
+        action: 'Approve your main characters’ faces and pick expressive neural voices for each role.',
         creditTip: '~40 credits locks a 3-person cast for your entire project.',
       },
       {
@@ -1343,7 +1343,7 @@ export const CREATOR_PLAYBOOKS: CreatorPlaybook[] = [
     recommendedPlanHref: '/dashboard/settings/billing',
     iconName: 'Film',
     workflowSummary:
-      'Use Series Studio to lock your world once, then produce each chapter using Hybrid Smart Assembly (Keyframes + Hero Veo Clips).',
+      'Use Series Studio to lock your world once, then produce each chapter using Hybrid Smart Assembly (Keyframes + Hero Motion Video Clips).',
     milestones: [
       {
         phase: '1. Series Bible Setup',
@@ -1351,8 +1351,8 @@ export const CREATOR_PLAYBOOKS: CreatorPlaybook[] = [
         creditTip: 'Shared Series Vault saves ~100 credits per subsequent chapter.',
       },
       {
-        phase: '2. Hybrid Keyframe + Veo Strategy',
-        action: 'Render keyframes for 100% of shots, then animate the top 40% emotional/action shots with Veo 3.1.',
+        phase: '2. Hybrid Keyframe + Motion Video Strategy',
+        action: 'Render keyframes for 100% of shots, then animate the top 40% emotional/action shots into motion video.',
         creditTip: 'Cuts per-chapter credit usage from ~2,200 cr down to ~850 cr.',
       },
       {
@@ -1370,7 +1370,7 @@ export const CREATOR_PLAYBOOKS: CreatorPlaybook[] = [
     recommendedPlanHref: '/dashboard/settings/billing',
     iconName: 'Layers',
     workflowSummary:
-      'High-velocity episodic production with 85+ Audience Resonance hooks, Veo 3.1 motion, and 13+ language dubbing.',
+      'High-velocity episodic production with 85+ Audience Resonance hooks, full motion video, and 13+ language dubbing.',
     milestones: [
       {
         phase: '1. Hook Optimization',
@@ -1379,7 +1379,7 @@ export const CREATOR_PLAYBOOKS: CreatorPlaybook[] = [
       },
       {
         phase: '2. Full Motion Production',
-        action: 'Batch-generate keyframes and Veo 3.1 clips across 8–10 scenes per episode.',
+        action: 'Batch-generate keyframes and motion video clips across 8–10 scenes per episode.',
         creditTip: '15,000 monthly credits supports 8–12 rich episodes per month.',
       },
       {
@@ -1397,7 +1397,7 @@ export const CREATOR_PLAYBOOKS: CreatorPlaybook[] = [
     recommendedPlanHref: '/dashboard/settings/billing',
     iconName: 'Building2',
     workflowSummary:
-      'Combine 75,000 included priority credits with your own Google Cloud Vertex AI & ElevenLabs keys and client `/s/` review rooms.',
+      'Combine 75,000 included priority credits with your own cloud video, image, and voice API keys and client `/s/` review rooms.',
     milestones: [
       {
         phase: '1. Client Pitch Animatics',
@@ -1406,8 +1406,8 @@ export const CREATOR_PLAYBOOKS: CreatorPlaybook[] = [
       },
       {
         phase: '2. BYOK Cloud Routing',
-        action: 'Connect corporate Vertex AI and ElevenLabs keys in Settings → Integrations for uncapped throughput.',
-        creditTip: 'Route heavy batch renders directly to your studio GCP commitment.',
+        action: 'Connect corporate cloud AI and voice keys in Settings → Integrations for uncapped throughput.',
+        creditTip: 'Route heavy batch renders directly to your studio cloud commitment.',
       },
       {
         phase: '3. 4K Master & Promo Package',
@@ -1429,7 +1429,7 @@ export const CREDIT_ESTIMATOR_PRESETS: CreditEstimatorPreset[] = [
     runtimeLabel: '~1.5 mins (5 scenes)',
     sceneCount: 5,
     keyframePairsPerScene: 2,
-    veoClipsPerScene: 1,
+    videoClipsPerScene: 1,
     languagesCount: 1,
     description: 'Ideal for testing a new story concept on the $9 Explorer trial or pitching a series pilot.',
   },
@@ -1439,9 +1439,9 @@ export const CREDIT_ESTIMATOR_PRESETS: CreditEstimatorPreset[] = [
     runtimeLabel: '~4 mins (8 scenes)',
     sceneCount: 8,
     keyframePairsPerScene: 3,
-    veoClipsPerScene: 1,
+    videoClipsPerScene: 1,
     languagesCount: 2,
-    description: 'The sweet spot for Starter ($29/mo) creators combining rich keyframes with hero Veo 3.1 motion shots.',
+    description: 'The sweet spot for Starter ($29/mo) creators combining rich keyframes with hero motion video shots.',
   },
   {
     id: 'cinema-episode',
@@ -1449,9 +1449,9 @@ export const CREDIT_ESTIMATOR_PRESETS: CreditEstimatorPreset[] = [
     runtimeLabel: '~8 mins (12 scenes)',
     sceneCount: 12,
     keyframePairsPerScene: 3,
-    veoClipsPerScene: 3,
+    videoClipsPerScene: 3,
     languagesCount: 4,
-    description: 'Designed for Pro ($79/mo) showrunners producing full Veo 3.1 motion episodes with 4-language dubbing.',
+    description: 'Designed for Pro ($79/mo) showrunners producing full motion video episodes with 4-language dubbing.',
   },
   {
     id: 'season-production',
@@ -1459,7 +1459,7 @@ export const CREDIT_ESTIMATOR_PRESETS: CreditEstimatorPreset[] = [
     runtimeLabel: '~60 mins total (80 scenes)',
     sceneCount: 80,
     keyframePairsPerScene: 3,
-    veoClipsPerScene: 2,
+    videoClipsPerScene: 2,
     languagesCount: 6,
     description: 'Full season production on Studio ($249/mo) with shared Series Bible continuity and global localization.',
   },
@@ -1468,19 +1468,19 @@ export const CREDIT_ESTIMATOR_PRESETS: CreditEstimatorPreset[] = [
 export function calculateEstimatedCredits(params: {
   sceneCount: number
   keyframePairsPerScene: number
-  veoClipsPerScene: number
+  videoClipsPerScene: number
   languagesCount: number
 }) {
   const blueprintAndResonance = 65 // Treatment (25) + Resonance (20) + Breakdown (20)
   const continuityRefs = 75 // ~5 character & location references
-  const keyframesCost = params.sceneCount * params.keyframePairsPerScene * 2 * 12 // 12 cr per Imagen 3 frame
+  const keyframesCost = params.sceneCount * params.keyframePairsPerScene * 2 * 12 // 12 cr per keyframe
   const audioAndScoreCost = params.sceneCount * 14 // Dialogue + SFX + Music per scene
-  const veoVideoCost = params.sceneCount * params.veoClipsPerScene * 110 // Avg 110 cr per Veo 3.1 clip
+  const videoMotionCost = params.sceneCount * params.videoClipsPerScene * 110 // Avg 110 cr per motion video clip
   const dubbingCost = Math.max(0, params.languagesCount - 1) * params.sceneCount * 4
   const exportCost = 25
 
   const animaticTotal = blueprintAndResonance + continuityRefs + keyframesCost + audioAndScoreCost
-  const fullProductionTotal = animaticTotal + veoVideoCost + dubbingCost + exportCost
+  const fullProductionTotal = animaticTotal + videoMotionCost + dubbingCost + exportCost
 
   let recommendedTier = 'Explorer ($9 Trial • 750 cr)'
   let recommendedTierHref = '/dashboard/settings/billing?checkoutTier=explorer'
@@ -1500,7 +1500,7 @@ export function calculateEstimatedCredits(params: {
     continuityRefs,
     keyframesCost,
     audioAndScoreCost,
-    veoVideoCost,
+    videoMotionCost,
     dubbingCost,
     exportCost,
     animaticTotal,
@@ -1535,37 +1535,37 @@ export const HELP_KNOWLEDGE_ARTICLES: HelpKnowledgeArticle[] = [
     title: 'Preventing Character Drift with the Continuity Vault™',
     summary: 'Step-by-step guide to locking faces, wardrobe outfits, voices, and recurring locations across every scene.',
     readTime: '4 min read',
-    tags: ['continuity', 'characters', 'wardrobe', 'locations', 'reference library', 'imagen'],
+    tags: ['continuity', 'characters', 'wardrobe', 'locations', 'reference library', 'keyframes'],
     bullets: [
       'Always generate and approve Character Portraits in the Reference Library BEFORE rendering scene keyframes.',
-      'When a character is tagged in a scene segment, SceneFlow automatically binds their canonical reference image and wardrobe notes into the Imagen 3 and Veo 3.1 prompt pipeline.',
+      'When a character is tagged in a scene segment, SceneFlow automatically binds their canonical reference image and wardrobe notes into the image and video prompt pipeline.',
       'For multi-episode shows, define recurring cast members in Series Studio so every episode inherits the same reference anchors.',
     ],
     proTip: 'Give characters a distinct silhouette and color signature (e.g., "crimson bomber jacket, silver cybernetic temple") for rock-solid frame-to-frame recall.',
   },
   {
-    id: 'kb-keyframes-vs-veo',
+    id: 'kb-keyframes-vs-video',
     category: 'production',
-    title: 'Start/End Keyframes vs. Veo 3.1 Motion Video',
-    summary: 'How to pair Imagen 3 start/end keyframes with Veo 3.1 video generation for controlled camera movement.',
+    title: 'Start/End Keyframes vs. AI Motion Video',
+    summary: 'How to pair start/end keyframes with AI video generation for controlled camera movement.',
     readTime: '4 min read',
-    tags: ['veo', 'video', 'keyframes', 'animatic', 'camera motion', 'production'],
+    tags: ['video', 'motion', 'keyframes', 'animatic', 'camera motion', 'production'],
     bullets: [
       'Every visual segment starts with a Start Keyframe and End Keyframe (~10–15 credits each).',
       'In Animatic mode, SceneFlow applies smooth Ken Burns camera motion across your keyframes synced to dialogue.',
-      'When you click "Animate with Veo 3.1" (~80–150 credits), Veo interpolates true 3D motion between your approved Start and End keyframes.',
+      'When you click "Animate Video" (~80–150 credits), the video engine interpolates true 3D motion between your approved Start and End keyframes.',
     ],
-    proTip: 'You can mix Veo 3.1 video clips and Ken Burns keyframes in the same scene! Animate your hero action shots and keep dialogue reactions as keyframes to save 60% of credits.',
+    proTip: 'You can mix motion video clips and Ken Burns keyframes in the same scene! Animate your hero action shots and keep dialogue reactions as keyframes to save 60% of credits.',
   },
   {
     id: 'kb-multitrack-audio',
     category: 'production',
     title: 'Multitrack Audio: Voices, Foley SFX, Music & 13+ Languages',
-    summary: 'How to cast ElevenLabs voices, layer atmospheric sound effects, and dub your film into 13+ languages.',
+    summary: 'How to cast expressive neural voices, layer atmospheric sound effects, and dub your film into 13+ languages.',
     readTime: '3 min read',
-    tags: ['audio', 'elevenlabs', 'voices', 'music', 'sfx', 'dubbing', 'languages', 'translation'],
+    tags: ['audio', 'voices', 'music', 'sfx', 'dubbing', 'languages', 'translation'],
     bullets: [
-      'Assign distinct ElevenLabs voices to each character in the Reference Library plus a dedicated Narrator voice.',
+      'Assign distinct character voices in the Reference Library plus a dedicated Narrator voice.',
       'Generate Dialogue first so segment durations automatically adapt to the spoken performance.',
       'In Final Cut / Screening Room, select additional language tracks to automatically translate and dub dialogue while keeping SFX and music intact.',
     ],
@@ -1591,11 +1591,11 @@ export const HELP_KNOWLEDGE_ARTICLES: HelpKnowledgeArticle[] = [
     title: 'Dual Credit Pools, Plans & Bring Your Own Key (BYOK)',
     summary: 'Everything you need to know about Monthly vs. Top-Up credits and connecting your own cloud API keys.',
     readTime: '3 min read',
-    tags: ['credits', 'billing', 'plans', 'byok', 'vertex ai', 'elevenlabs', 'top up'],
+    tags: ['credits', 'billing', 'plans', 'byok', 'cloud keys', 'top up'],
     bullets: [
       'Monthly subscription credits are always spent FIRST. Top-Up Add-On packs never expire as long as you have an active subscription.',
       'Explorer ($9 one-time) includes 750 credits; Starter ($29/mo) includes 4,500; Pro ($79/mo) includes 15,000; Studio ($249/mo) includes 75,000.',
-      'Pro and Studio subscribers can connect their own Google Cloud Vertex AI and ElevenLabs keys in Settings → Integrations.',
+      'Pro and Studio subscribers can connect their own cloud video, image, and voice API keys in Settings → Integrations.',
     ],
     proTip: 'If an upstream AI generation call ever errors out, SceneFlow automatically refunds the credits to your balance.',
   },

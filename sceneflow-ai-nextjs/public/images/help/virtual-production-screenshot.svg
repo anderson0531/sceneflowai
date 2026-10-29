@@ -52,7 +52,7 @@
   <text x="228" y="152" fill="#6EE7B7" font-family="system-ui, sans-serif" font-size="9" font-weight="700">LOCKED</text>
   <text x="114" y="174" fill="#94A3B8" font-family="system-ui, sans-serif" font-size="10.5">Wardrobe: Exo-Dive Suit MkIV</text>
   <rect x="114" y="186" width="164" height="24" rx="6" fill="#1E293B"/>
-  <text x="124" y="202" fill="#67E8F9" font-family="system-ui, sans-serif" font-size="10" font-weight="600">🎙 Voice: Rachel (ElevenLabs)</text>
+  <text x="124" y="202" fill="#67E8F9" font-family="system-ui, sans-serif" font-size="10" font-weight="600">🎙 Voice: Rachel (Studio Neural)</text>
 
   <!-- Character Card 2 -->
   <rect x="34" y="248" width="258" height="106" rx="10" fill="#111827" stroke="#334155"/>
@@ -87,7 +87,7 @@
   <rect x="358" y="142" width="96" height="20" rx="4" fill="#06B6D4" fill-opacity="0.25"/>
   <text x="366" y="156" fill="#67E8F9" font-family="system-ui, sans-serif" font-size="9.5" font-weight="700">START KEYFRAME</text>
   <circle cx="473" cy="210" r="32" fill="#0EA5E9" fill-opacity="0.25" stroke="#38BDF8" stroke-width="1.5"/>
-  <text x="395" y="272" fill="#CBD5E1" font-family="system-ui, sans-serif" font-size="10.5">Imagen 3 • Character Ref Locked</text>
+  <text x="395" y="272" fill="#CBD5E1" font-family="system-ui, sans-serif" font-size="10.5">AI Keyframe • Character Locked</text>
 
   <!-- Arrow to End Keyframe -->
   <text x="608" y="214" fill="#38BDF8" font-family="system-ui, sans-serif" font-size="18" font-weight="900">→</text>
@@ -99,10 +99,10 @@
   <circle cx="757" cy="210" r="40" fill="#EF4444" fill-opacity="0.25" stroke="#F87171" stroke-width="1.5"/>
   <text x="678" y="272" fill="#CBD5E1" font-family="system-ui, sans-serif" font-size="10.5">Close-up • Crimson Sonar Glow</text>
 
-  <!-- Veo 3.1 Video Take Panel -->
+  <!-- AI Motion Video Take Panel -->
   <rect x="902" y="132" width="258" height="154" rx="10" fill="#1E1B4B" stroke="#8B5CF6" stroke-width="1.5"/>
   <rect x="914" y="142" width="110" height="20" rx="4" fill="url(#veoGrad)"/>
-  <text x="922" y="156" fill="#FFFFFF" font-family="system-ui, sans-serif" font-size="9.5" font-weight="700">VEO 3.1 MOTION</text>
+  <text x="922" y="156" fill="#FFFFFF" font-family="system-ui, sans-serif" font-size="9.5" font-weight="700">AI VIDEO MOTION</text>
   <circle cx="1031" cy="204" r="24" fill="#8B5CF6" fill-opacity="0.4" stroke="#C4B5FD" stroke-width="2"/>
   <polygon points="1026,194 1026,214 1042,204" fill="#FFFFFF"/>
   <text x="936" y="252" fill="#E2E8F0" font-family="system-ui, sans-serif" font-size="11" font-weight="600">Take 2 Approved (1080p)</text>
@@ -115,7 +115,7 @@
   <rect x="368" y="366" width="170" height="30" rx="6" fill="#06B6D4"/>
   <text x="386" y="385" fill="#042F2E" font-family="system-ui, sans-serif" font-size="11" font-weight="800">🖼 Render Keyframes (15 cr)</text>
   <rect x="550" y="366" width="190" height="30" rx="6" fill="url(#veoGrad)"/>
-  <text x="568" y="385" fill="#FFFFFF" font-family="system-ui, sans-serif" font-size="11" font-weight="700">🎬 Animate with Veo 3.1 (120 cr)</text>
+  <text x="568" y="385" fill="#FFFFFF" font-family="system-ui, sans-serif" font-size="11" font-weight="700">🎬 Animate Video Clip (120 cr)</text>
   <rect x="752" y="366" width="170" height="30" rx="6" fill="#1E293B" stroke="#475569"/>
   <text x="772" y="385" fill="#E2E8F0" font-family="system-ui, sans-serif" font-size="11" font-weight="600">✨ Refine Prompt / Inpaint</text>
 
@@ -129,7 +129,7 @@
   <rect x="470" y="490" width="210" height="26" rx="5" fill="#0EA5E9" fill-opacity="0.25" stroke="#0EA5E9"/>
   <text x="484" y="507" fill="#7DD3FC" font-family="system-ui, sans-serif" font-size="10" font-weight="700">Seg 1: Wide Sonar Bay (5.5s)</text>
   <rect x="686" y="490" width="230" height="26" rx="5" fill="#8B5CF6" fill-opacity="0.35" stroke="#8B5CF6"/>
-  <text x="700" y="507" fill="#DDD6FE" font-family="system-ui, sans-serif" font-size="10" font-weight="700">Seg 2: Veo 3.1 Push-In (6.0s)</text>
+  <text x="700" y="507" fill="#DDD6FE" font-family="system-ui, sans-serif" font-size="10" font-weight="700">Seg 2: Motion Push-In (6.0s)</text>
   <rect x="922" y="490" width="236" height="26" rx="5" fill="#0EA5E9" fill-opacity="0.25" stroke="#0EA5E9"/>
   <text x="936" y="507" fill="#7DD3FC" font-family="system-ui, sans-serif" font-size="10" font-weight="700">Seg 3: Kaelen Reaction (4.5s)</text>
 

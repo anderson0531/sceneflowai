@@ -69,7 +69,7 @@
   <rect x="646" y="540" width="136" height="34" rx="8" fill="#1E1B4B" stroke="#8B5CF6"/>
   <text x="662" y="561" fill="#C4B5FD" font-family="system-ui, sans-serif" font-size="11.5" font-weight="700">+ 8 More Tracks</text>
 
-  <text x="46" y="604" fill="#94A3B8" font-family="system-ui, sans-serif" font-size="11">Per-Scene Stream Override: Mix high-res Animatic keyframes with Veo 3.1 hero video clips seamlessly in a single timeline.</text>
+  <text x="46" y="604" fill="#94A3B8" font-family="system-ui, sans-serif" font-size="11">Per-Scene Stream Override: Mix high-res Animatic keyframes with hero motion video clips seamlessly in a single timeline.</text>
   <text x="46" y="628" fill="#10B981" font-family="system-ui, sans-serif" font-size="11" font-weight="700">✓ Automatic loudness normalization (-14 LUFS) &amp; dialogue ducking applied on Master Export</text>
 
   <!-- Right Panel: Audience Screening Room & Reviewer Feedback -->

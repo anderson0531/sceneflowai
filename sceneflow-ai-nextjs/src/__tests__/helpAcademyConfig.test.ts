@@ -69,11 +69,11 @@ describe('helpAcademyConfig — Route-Aware JIT Help & Interactive Tutorials', (
     }
   })
 
-  it('calculates Animatic vs. Veo 3.1 credit budgets and recommends the matching tier', () => {
+  it('calculates Animatic vs. Motion Video credit budgets and recommends the matching tier', () => {
     const smallShort = calculateEstimatedCredits({
       sceneCount: 4,
       keyframePairsPerScene: 2,
-      veoClipsPerScene: 1,
+      videoClipsPerScene: 1,
       languagesCount: 1,
     })
     expect(smallShort.animaticTotal).toBeLessThan(smallShort.fullProductionTotal)
@@ -82,7 +82,7 @@ describe('helpAcademyConfig — Route-Aware JIT Help & Interactive Tutorials', (
     const proEpisode = calculateEstimatedCredits({
       sceneCount: 12,
       keyframePairsPerScene: 3,
-      veoClipsPerScene: 3,
+      videoClipsPerScene: 3,
       languagesCount: 4,
     })
     expect(proEpisode.fullProductionTotal).toBeGreaterThan(4500)
@@ -91,7 +91,7 @@ describe('helpAcademyConfig — Route-Aware JIT Help & Interactive Tutorials', (
     const studioSeason = calculateEstimatedCredits({
       sceneCount: 80,
       keyframePairsPerScene: 3,
-      veoClipsPerScene: 2,
+      videoClipsPerScene: 2,
       languagesCount: 6,
     })
     expect(studioSeason.fullProductionTotal).toBeGreaterThan(15000)

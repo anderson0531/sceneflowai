@@ -66,13 +66,16 @@ export function AnnotatedStudioScreenshot({
       {/* Top Screenshot Chrome Bar */}
       <div className="flex flex-wrap items-center justify-between gap-2 px-4 py-2.5 bg-slate-900/90 border-b border-slate-800">
         <div className="flex items-center gap-2">
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-cyan-500/15 text-cyan-300 border border-cyan-500/30">
+          <span
+            className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-cyan-500/15 text-cyan-300 border border-cyan-500/30"
+            title={`Interactive UI map with ${hotspots.length} clickable control hotspots`}
+          >
             <MapPin className="w-3 h-3" />
             Interactive UI Map ({hotspots.length} Hotspots)
           </span>
           {!compact && (
             <span className="text-xs text-slate-400 hidden sm:inline">
-              Click any numbered pin on the screen to inspect controls
+              Click any numbered pin or button below to inspect controls
             </span>
           )}
         </div>
@@ -99,10 +102,18 @@ export function AnnotatedStudioScreenshot({
               onClick={() => handleStep(-1)}
               className="p-1 text-slate-300 hover:text-white hover:bg-slate-700/60 transition-colors"
               aria-label="Previous hotspot"
+              title="Previous hotspot control"
             >
               <ChevronLeft className="w-4 h-4" />
             </button>
-            <span className="px-2 text-[11px] font-semibold text-slate-300">
+            <span
+              className="px-2 text-[11px] font-semibold text-slate-300"
+              title={
+                activeHotspot
+                  ? `Hotspot ${activeHotspot.number} of ${hotspots.length}: ${activeHotspot.label}`
+                  : undefined
+              }
+            >
               {activeHotspot ? `${activeHotspot.number}/${hotspots.length}` : '0/0'}
             </span>
             <button
@@ -110,6 +121,7 @@ export function AnnotatedStudioScreenshot({
               onClick={() => handleStep(1)}
               className="p-1 text-slate-300 hover:text-white hover:bg-slate-700/60 transition-colors"
               aria-label="Next hotspot"
+              title="Next hotspot control"
             >
               <ChevronRight className="w-4 h-4" />
             </button>
@@ -141,9 +153,10 @@ export function AnnotatedStudioScreenshot({
           />
         )}
 
-        {/* Numbered Hotspot Pins */}
+        {/* Numbered Hotspot Pins with Hover Tooltips */}
         {hotspots.map((hotspot) => {
           const isSelected = hotspot.number === activeNumber
+          const tooltipText = `${hotspot.number}. ${hotspot.label} (${hotspot.locationTag}) — ${hotspot.summary}`
           return (
             <button
               key={hotspot.id}
@@ -154,6 +167,7 @@ export function AnnotatedStudioScreenshot({
                 top: `${hotspot.y}%`,
               }}
               aria-label={`Inspect hotspot ${hotspot.number}: ${hotspot.label}`}
+              title={tooltipText}
               className={cn(
                 'group absolute -translate-x-1/2 -translate-y-1/2 z-20 flex items-center justify-center rounded-full font-extrabold transition-all duration-200 focus:outline-none',
                 compact ? 'w-7 h-7 text-xs' : 'w-8 h-8 text-xs sm:w-9 sm:h-9 sm:text-sm',
@@ -166,38 +180,56 @@ export function AnnotatedStudioScreenshot({
                 <span className="pointer-events-none absolute inset-0 rounded-full bg-cyan-400 animate-ping opacity-30" />
               )}
               <span className="relative">{hotspot.number}</span>
+
+              {/* Visual Floating Hover Tooltip on Pin */}
+              <span
+                role="tooltip"
+                className="pointer-events-none absolute bottom-full mb-2 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 group-focus-visible:opacity-100 transition-opacity duration-150 z-30 whitespace-nowrap rounded-lg bg-slate-950/95 border border-cyan-500/50 px-2.5 py-1 text-[11px] font-bold text-cyan-200 shadow-xl"
+              >
+                {hotspot.number}. {hotspot.label}
+              </span>
             </button>
           )
         })}
       </div>
 
-      {/* Hotspot Pill Selector Bar */}
-      <div className="flex flex-wrap items-center gap-1.5 px-4 py-2.5 bg-slate-900/80 border-t border-slate-800">
+      {/* Hotspot Selector Grid — Full Uncropped Labels + Tooltips */}
+      <div
+        className={cn(
+          'grid gap-2 px-4 py-3 bg-slate-900/80 border-t border-slate-800',
+          compact
+            ? 'grid-cols-1 sm:grid-cols-2'
+            : 'grid-cols-1 sm:grid-cols-2 xl:grid-cols-4'
+        )}
+      >
         {hotspots.map((hotspot) => {
           const isSelected = hotspot.number === activeNumber
+          const fullTooltip = `${hotspot.number}. ${hotspot.label} (${hotspot.locationTag}) — ${hotspot.summary}`
           return (
             <button
               key={hotspot.id}
               type="button"
               onClick={() => setActiveNumber(hotspot.number)}
+              title={fullTooltip}
+              aria-label={`${hotspot.number}. ${hotspot.label}`}
               className={cn(
-                'inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium transition-all',
+                'group relative flex items-center gap-2 px-3 py-2 rounded-xl text-left text-[11px] sm:text-xs font-semibold leading-snug transition-all',
                 isSelected
-                  ? 'bg-cyan-500/20 text-cyan-200 border border-cyan-500/40 shadow-sm'
-                  : 'bg-slate-800/60 text-slate-400 border border-transparent hover:text-slate-200 hover:bg-slate-800'
+                  ? 'bg-cyan-500/20 text-cyan-100 border border-cyan-500/50 shadow-sm'
+                  : 'bg-slate-800/60 text-slate-300 border border-slate-700/60 hover:text-white hover:bg-slate-800 hover:border-slate-600'
               )}
             >
               <span
                 className={cn(
-                  'w-4 h-4 rounded-full text-[10px] font-bold flex items-center justify-center',
+                  'w-5 h-5 rounded-full text-[11px] font-extrabold flex items-center justify-center flex-shrink-0 transition-colors',
                   isSelected
                     ? 'bg-cyan-400 text-slate-950'
-                    : 'bg-slate-700 text-slate-300'
+                    : 'bg-slate-700 text-slate-200 group-hover:bg-cyan-500/30 group-hover:text-cyan-200'
                 )}
               >
                 {hotspot.number}
               </span>
-              <span className="truncate max-w-[180px]">{hotspot.label}</span>
+              <span className="flex-1 break-words">{hotspot.label}</span>
             </button>
           )
         })}
@@ -215,11 +247,17 @@ export function AnnotatedStudioScreenshot({
                 <h4 className="text-sm sm:text-base font-bold text-white">
                   {activeHotspot.label}
                 </h4>
-                <span className="text-[11px] px-2 py-0.5 rounded bg-slate-800 text-slate-300 border border-slate-700">
+                <span
+                  className="text-[11px] px-2 py-0.5 rounded bg-slate-800 text-slate-300 border border-slate-700"
+                  title={`Screen location: ${activeHotspot.locationTag}`}
+                >
                   {activeHotspot.locationTag}
                 </span>
                 {activeHotspot.creditNote && (
-                  <span className="inline-flex items-center gap-1 text-[11px] px-2 py-0.5 rounded bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 font-medium">
+                  <span
+                    className="inline-flex items-center gap-1 text-[11px] px-2 py-0.5 rounded bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 font-medium"
+                    title={`Estimated credit usage: ${activeHotspot.creditNote}`}
+                  >
                     <Coins className="w-3 h-3" />
                     {activeHotspot.creditNote}
                   </span>
@@ -237,6 +275,7 @@ export function AnnotatedStudioScreenshot({
                   <Link
                     href={activeHotspot.actionHref}
                     onClick={() => onActionTriggered?.(activeHotspot)}
+                    title={`${activeHotspot.actionLabel} — ${activeHotspot.label}`}
                     className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-xs font-bold bg-cyan-500 hover:bg-cyan-400 text-slate-950 transition-colors shadow-sm"
                   >
                     <ExternalLink className="w-3.5 h-3.5" />
@@ -246,6 +285,7 @@ export function AnnotatedStudioScreenshot({
                   <button
                     type="button"
                     onClick={() => handleTriggerAction(activeHotspot)}
+                    title={`Trigger in studio: ${activeHotspot.actionLabel}`}
                     className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-xs font-bold bg-cyan-500 hover:bg-cyan-400 text-slate-950 transition-colors shadow-sm"
                   >
                     <Zap className="w-3.5 h-3.5" />

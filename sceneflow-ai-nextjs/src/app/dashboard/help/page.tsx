@@ -66,7 +66,7 @@ export default function HelpPage() {
   // Interactive Credit Calculator State
   const [sceneCount, setSceneCount] = useState<number>(8)
   const [keyframePairsPerScene, setKeyframePairsPerScene] = useState<number>(3)
-  const [veoClipsPerScene, setVeoClipsPerScene] = useState<number>(1)
+  const [videoClipsPerScene, setVideoClipsPerScene] = useState<number>(1)
   const [languagesCount, setLanguagesCount] = useState<number>(2)
 
   // Read initial `?tab=` query parameter + persisted tutorial progress
@@ -141,10 +141,10 @@ export default function HelpPage() {
       calculateEstimatedCredits({
         sceneCount,
         keyframePairsPerScene,
-        veoClipsPerScene,
+        videoClipsPerScene,
         languagesCount,
       }),
-    [sceneCount, keyframePairsPerScene, veoClipsPerScene, languagesCount]
+    [sceneCount, keyframePairsPerScene, videoClipsPerScene, languagesCount]
   )
 
   const filteredArticles = useMemo(() => {
@@ -402,6 +402,7 @@ export default function HelpPage() {
                         key={step.id}
                         type="button"
                         onClick={() => setActiveStepIdx(idx)}
+                        title={`Step ${step.stepNumber}: ${step.title} (${step.duration}) — ${step.objective}`}
                         className={cn(
                           'w-full p-3 rounded-xl border text-left transition-all flex items-start gap-3',
                           isCurrent
@@ -422,15 +423,15 @@ export default function HelpPage() {
                           {isDone ? '✓' : step.stepNumber}
                         </span>
                         <div className="min-w-0 flex-1">
-                          <div className="flex items-center justify-between gap-2">
-                            <span className="text-xs font-bold text-white truncate">
+                          <div className="flex items-start justify-between gap-2">
+                            <span className="text-xs font-bold text-white leading-snug">
                               {step.title}
                             </span>
                             <span className="text-[10px] text-slate-400 flex-shrink-0">
                               {step.duration}
                             </span>
                           </div>
-                          <p className="text-[11px] text-slate-400 line-clamp-2 mt-0.5">
+                          <p className="text-[11px] text-slate-400 leading-relaxed mt-0.5">
                             {step.objective}
                           </p>
                         </div>
@@ -800,7 +801,7 @@ export default function HelpPage() {
                   <p className="text-xs sm:text-sm text-slate-400 mt-1">
                     Select a project preset or adjust the sliders to compare{' '}
                     <strong className="text-slate-200">Animatic Cut</strong> vs.{' '}
-                    <strong className="text-slate-200">Full Veo 3.1 Video Master</strong>.
+                    <strong className="text-slate-200">Full Motion Video Master</strong>.
                   </p>
                 </div>
 
@@ -813,7 +814,7 @@ export default function HelpPage() {
                       onClick={() => {
                         setSceneCount(preset.sceneCount)
                         setKeyframePairsPerScene(preset.keyframePairsPerScene)
-                        setVeoClipsPerScene(preset.veoClipsPerScene)
+                        setVideoClipsPerScene(preset.videoClipsPerScene)
                         setLanguagesCount(preset.languagesCount)
                       }}
                       className="px-3 py-1.5 rounded-xl text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition-colors"
@@ -845,7 +846,7 @@ export default function HelpPage() {
                   <div>
                     <div className="flex justify-between text-xs font-bold mb-1">
                       <span className="text-slate-300">
-                        Start/End Keyframe Pairs per Scene (Imagen 3)
+                        Start/End Keyframe Pairs per Scene
                       </span>
                       <span className="text-cyan-400">
                         {keyframePairsPerScene} pairs ({keyframePairsPerScene * 2}{' '}
@@ -867,18 +868,18 @@ export default function HelpPage() {
                   <div>
                     <div className="flex justify-between text-xs font-bold mb-1">
                       <span className="text-slate-300">
-                        Veo 3.1 Motion Clips per Scene
+                        Motion Video Clips per Scene
                       </span>
                       <span className="text-purple-400">
-                        {veoClipsPerScene} clips/scene
+                        {videoClipsPerScene} clips/scene
                       </span>
                     </div>
                     <input
                       type="range"
                       min={0}
                       max={5}
-                      value={veoClipsPerScene}
-                      onChange={(e) => setVeoClipsPerScene(Number(e.target.value))}
+                      value={videoClipsPerScene}
+                      onChange={(e) => setVideoClipsPerScene(Number(e.target.value))}
                       className="w-full accent-purple-400"
                     />
                   </div>
@@ -922,14 +923,14 @@ export default function HelpPage() {
 
                     <div className="p-3.5 rounded-xl bg-purple-950/30 border border-purple-500/40">
                       <span className="text-[11px] font-bold uppercase text-purple-300">
-                        With Veo 3.1 Video
+                        With Motion Video
                       </span>
                       <p className="text-2xl font-extrabold text-white mt-1">
                         {creditEstimate.fullProductionTotal.toLocaleString()}{' '}
                         <span className="text-xs font-normal text-slate-400">cr</span>
                       </p>
                       <p className="text-[11px] text-purple-200/80 mt-1">
-                        Includes {sceneCount * veoClipsPerScene} Veo 3.1 clips &amp;{' '}
+                        Includes {sceneCount * videoClipsPerScene} motion clips &amp;{' '}
                         {languagesCount} language tracks
                       </p>
                     </div>
@@ -949,7 +950,7 @@ export default function HelpPage() {
                       </span>
                     </div>
                     <div className="flex justify-between">
-                      <span>Imagen 3 Start/End Keyframes:</span>
+                      <span>Start/End Keyframes:</span>
                       <span className="font-semibold">
                         {creditEstimate.keyframesCost.toLocaleString()} cr
                       </span>
@@ -961,9 +962,9 @@ export default function HelpPage() {
                       </span>
                     </div>
                     <div className="flex justify-between text-purple-300">
-                      <span>Veo 3.1 Motion Video Clips:</span>
+                      <span>AI Motion Video Clips:</span>
                       <span className="font-semibold">
-                        {creditEstimate.veoVideoCost.toLocaleString()} cr
+                        {creditEstimate.videoMotionCost.toLocaleString()} cr
                       </span>
                     </div>
                   </div>

@@ -25,7 +25,7 @@
   <text x="52" y="102" fill="#6EE7B7" font-family="system-ui, sans-serif" font-size="11" font-weight="800" letter-spacing="1">HOW SCENEFLOW CREDITS WORK (SUBSCRIPTION + TOP-UP VAULT)</text>
   <text x="52" y="132" fill="#FFFFFF" font-family="system-ui, sans-serif" font-size="24" font-weight="900">75,000 Total Available Credits</text>
   <text x="52" y="156" fill="#94A3B8" font-family="system-ui, sans-serif" font-size="12">Monthly subscription credits are automatically spent FIRST. Top-Up Add-On packs never expire while subscribed.</text>
-  <text x="52" y="186" fill="#38BDF8" font-family="system-ui, sans-serif" font-size="11.5" font-weight="700">✓ Typical Costs: Blueprint Treatment (25 cr) • Audience Resonance (20 cr) • Keyframe Image (10–15 cr) • Veo 3.1 Video (80–150 cr)</text>
+  <text x="52" y="186" fill="#38BDF8" font-family="system-ui, sans-serif" font-size="11.5" font-weight="700">✓ Typical Costs: Blueprint Treatment (25 cr) • Audience Resonance (20 cr) • Keyframe Image (10–15 cr) • Motion Video (80–150 cr)</text>
 
   <!-- 4 Plan Cards -->
   <!-- Explorer -->
@@ -35,7 +35,7 @@
   <text x="48" y="316" fill="#38BDF8" font-family="system-ui, sans-serif" font-size="12" font-weight="700">750 One-Time Credits</text>
   <text x="48" y="344" fill="#CBD5E1" font-family="system-ui, sans-serif" font-size="11">• Build 1st Story Blueprint</text>
   <text x="48" y="364" fill="#CBD5E1" font-family="system-ui, sans-serif" font-size="11">• Audience Resonance 80+ Test</text>
-  <text x="48" y="384" fill="#CBD5E1" font-family="system-ui, sans-serif" font-size="11">• Animatic + Sample Veo Clips</text>
+  <text x="48" y="384" fill="#CBD5E1" font-family="system-ui, sans-serif" font-size="11">• Animatic + Sample Video Clips</text>
   <text x="48" y="404" fill="#CBD5E1" font-family="system-ui, sans-serif" font-size="11">• 10 GB Continuity Vault</text>
 
   <!-- Starter -->
@@ -71,8 +71,8 @@
   <!-- Bottom Row: BYOK Integration Banner -->
   <rect x="28" y="494" width="1144" height="156" rx="14" fill="#111827" stroke="#334155" stroke-width="1.5"/>
   <text x="52" y="526" fill="#C4B5FD" font-family="system-ui, sans-serif" font-size="11" font-weight="800" letter-spacing="0.8">HYBRID STUDIO ARCHITECTURE • BRING YOUR OWN KEY (BYOK)</text>
-  <text x="52" y="554" fill="#FFFFFF" font-family="system-ui, sans-serif" font-size="17" font-weight="700">Connect Your Own Google Cloud Vertex AI &amp; ElevenLabs Keys in Settings → Integrations</text>
-  <text x="52" y="580" fill="#94A3B8" font-family="system-ui, sans-serif" font-size="12">Pro and Studio subscribers can route heavy Veo 3.1 video renders or custom voice synthesis through their own cloud billing</text>
+  <text x="52" y="554" fill="#FFFFFF" font-family="system-ui, sans-serif" font-size="17" font-weight="700">Connect Your Own Cloud Video, Image &amp; Voice API Keys in Settings → Integrations</text>
+  <text x="52" y="580" fill="#94A3B8" font-family="system-ui, sans-serif" font-size="12">Pro and Studio subscribers can route heavy video renders or custom voice synthesis through their own cloud billing</text>
   <text x="52" y="600" fill="#94A3B8" font-family="system-ui, sans-serif" font-size="12">while keeping SceneFlow's Continuity Vault, Audience Resonance, and Multitrack Timeline orchestration.</text>
   <rect x="920" y="536" width="224" height="44" rx="10" fill="url(#goldGrad)"/>
   <text x="946" y="563" fill="#042F2E" font-family="system-ui, sans-serif" font-size="12" font-weight="800">Configure BYOK Keys →</text>
