@@ -138,10 +138,224 @@ export function AnnotatedStudioScreenshot({
           draggable={false}
         />
 
+        {/* Embedded Live Video & Keyframe Media Overlays */}
+        {screenshotSrc.includes('final-cut-screening-screenshot') && (
+          <div
+            className="pointer-events-none absolute z-10 rounded-xl overflow-hidden border border-slate-700/90 bg-slate-950 shadow-inner"
+            style={{
+              left: '2%',
+              top: '10.37%',
+              width: '65%',
+              height: '60.74%',
+            }}
+          >
+            <video
+              autoPlay
+              loop
+              muted
+              playsInline
+              poster="/images/help/ancient-aliens-start.jpg"
+              className="w-full h-full object-cover"
+            >
+              <source
+                src="/images/help/ancient-aliens-preview.webm"
+                type="video/webm"
+              />
+              <source
+                src="https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Woman_searching_for_ancient_aliens_47af4566.mp4"
+                type="video/mp4"
+              />
+            </video>
+            {/* Top Cinema Letterbox Bar + Live Stream Pill */}
+            <div className="absolute inset-x-0 top-0 h-[9%] bg-slate-950/90 flex items-center justify-between px-3">
+              <span className="inline-flex items-center gap-1.5 text-[9px] sm:text-[10px] font-bold tracking-wider uppercase text-cyan-300">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                Master Video Stream • 24 FPS
+              </span>
+              <span className="text-[9px] sm:text-[10px] font-mono text-slate-400 hidden sm:inline">
+                00:00:08:14 / 00:02:15:00
+              </span>
+            </div>
+            {/* Burnt-In / Closed Caption Preview Overlay */}
+            <div className="absolute inset-x-0 bottom-[11%] flex justify-center px-4">
+              <div className="rounded-md bg-slate-950/85 border border-slate-700/60 px-3 py-1 text-[10px] sm:text-xs font-semibold text-white shadow-lg backdrop-blur-sm text-center">
+                &ldquo;Beneath forty miles of ice, the signal is answering.&rdquo;
+              </div>
+            </div>
+            {/* Bottom Cinema Letterbox Bar */}
+            <div className="absolute inset-x-0 bottom-0 h-[8.5%] bg-slate-950/90" />
+          </div>
+        )}
+
+        {screenshotSrc.includes('virtual-production-screenshot') && (
+          <>
+            {/* Continuity Vault Character Avatar Thumbnail */}
+            <div
+              className="pointer-events-none absolute z-10 rounded-full overflow-hidden border-2 border-cyan-400 shadow-md"
+              style={{
+                left: '3.83%',
+                top: '21.93%',
+                width: '4.67%',
+                height: '8.3%',
+              }}
+            >
+              <img
+                src="/images/help/ancient-aliens-start.jpg"
+                alt="Dr. Elena Vance locked character reference"
+                className="w-full h-full object-cover"
+              />
+            </div>
+
+            {/* Start Keyframe Monitor */}
+            <div
+              className="pointer-events-none absolute z-10 rounded-lg overflow-hidden border border-cyan-400/90 bg-slate-950"
+              style={{
+                left: '29%',
+                top: '19.56%',
+                width: '20.83%',
+                height: '22.81%',
+              }}
+            >
+              <img
+                src="/images/help/ancient-aliens-start.jpg"
+                alt="Start Keyframe"
+                className="w-full h-full object-cover"
+              />
+              <div className="absolute top-1.5 left-1.5 rounded bg-slate-950/85 border border-cyan-500/50 px-1.5 py-0.5 text-[8px] sm:text-[9px] font-extrabold text-cyan-300 tracking-wide">
+                START KEYFRAME
+              </div>
+              <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-slate-950/95 via-slate-950/70 to-transparent px-2 py-1 text-[8px] sm:text-[9.5px] font-medium text-slate-200 truncate">
+                AI Keyframe • Character Locked
+              </div>
+            </div>
+
+            {/* End Keyframe Monitor */}
+            <div
+              className="pointer-events-none absolute z-10 rounded-lg overflow-hidden border border-sky-400/90 bg-slate-950"
+              style={{
+                left: '52.67%',
+                top: '19.56%',
+                width: '20.83%',
+                height: '22.81%',
+              }}
+            >
+              <img
+                src="/images/help/ancient-aliens-end.jpg"
+                alt="End Keyframe"
+                className="w-full h-full object-cover"
+              />
+              <div className="absolute top-1.5 left-1.5 rounded bg-slate-950/85 border border-sky-400/50 px-1.5 py-0.5 text-[8px] sm:text-[9px] font-extrabold text-sky-300 tracking-wide">
+                END KEYFRAME
+              </div>
+              <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-slate-950/95 via-slate-950/70 to-transparent px-2 py-1 text-[8px] sm:text-[9.5px] font-medium text-slate-200 truncate">
+                Sub-Glacial Spire • Cyan Glow
+              </div>
+            </div>
+
+            {/* AI Video Motion Monitor (Live WebM Video) */}
+            <div
+              className="pointer-events-none absolute z-10 rounded-lg overflow-hidden border border-purple-500/90 bg-slate-950 shadow-lg"
+              style={{
+                left: '75.17%',
+                top: '19.56%',
+                width: '21.5%',
+                height: '22.81%',
+              }}
+            >
+              <video
+                autoPlay
+                loop
+                muted
+                playsInline
+                poster="/images/help/ancient-aliens-start.jpg"
+                className="w-full h-full object-cover"
+              >
+                <source
+                  src="/images/help/ancient-aliens-preview.webm"
+                  type="video/webm"
+                />
+                <source
+                  src="https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Woman_searching_for_ancient_aliens_47af4566.mp4"
+                  type="video/mp4"
+                />
+              </video>
+              <div className="absolute top-1.5 left-1.5 rounded bg-gradient-to-r from-purple-600 to-pink-600 px-1.5 py-0.5 text-[8px] sm:text-[9px] font-extrabold text-white tracking-wide shadow">
+                AI VIDEO MOTION
+              </div>
+              <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-slate-950/95 via-slate-950/75 to-transparent px-2 py-1 text-[8px] sm:text-[9.5px] font-semibold text-purple-200 truncate">
+                Take 2 Approved (1080p)
+              </div>
+            </div>
+          </>
+        )}
+
+        {screenshotSrc.includes('blueprint-room-screenshot') && (
+          <div
+            className="pointer-events-none absolute z-10 rounded-xl overflow-hidden border border-slate-700/80 bg-slate-950"
+            style={{
+              left: '21%',
+              top: '21.63%',
+              width: '48.33%',
+              height: '31.11%',
+            }}
+          >
+            <img
+              src="/images/help/ancient-aliens-hero.jpg"
+              alt="The Europa Frequency Hero Key Art"
+              className="w-full h-full object-cover opacity-65"
+            />
+            <div className="absolute inset-0 bg-gradient-to-r from-slate-950/90 via-slate-950/55 to-slate-950/30 flex flex-col justify-between p-3 sm:p-4">
+              <div>
+                <span className="inline-block rounded bg-cyan-500/25 border border-cyan-400/60 px-2 py-0.5 text-[8px] sm:text-[10px] font-bold text-cyan-300 tracking-wider">
+                  SCI-FI THRILLER
+                </span>
+                <h5 className="mt-1 text-xs sm:text-lg font-extrabold text-white tracking-tight drop-shadow">
+                  THE EUROPA FREQUENCY
+                </h5>
+                <p className="text-[9px] sm:text-xs italic text-slate-200 line-clamp-1">
+                  &ldquo;Beneath forty miles of ice, the ocean is speaking back in her father&apos;s voice.&rdquo;
+                </p>
+              </div>
+              <p className="text-[8px] sm:text-[10px] text-slate-300 truncate">
+                Protagonist: Dr. Elena Vance • Setting: Sub-glacial Trench Station • Tone: Tense, Atmospheric
+              </p>
+            </div>
+          </div>
+        )}
+
+        {screenshotSrc.includes('dashboard-command-screenshot') && (
+          <div
+            className="pointer-events-none absolute z-10 rounded-lg overflow-hidden border border-slate-700/80 bg-slate-950"
+            style={{
+              left: '22.33%',
+              top: '50.67%',
+              width: '33.83%',
+              height: '22.22%',
+            }}
+          >
+            <img
+              src="/images/help/ancient-aliens-hero.jpg"
+              alt="The Europa Frequency Project Card"
+              className="w-full h-full object-cover opacity-55"
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-slate-950/95 via-slate-950/60 to-slate-950/30 p-2.5 sm:p-3.5 flex flex-col justify-center">
+              <span className="text-[8px] sm:text-[10px] font-bold text-cyan-300 tracking-wider">
+                PHASE 2 • VIRTUAL PRODUCTION
+              </span>
+              <span className="text-xs sm:text-base font-extrabold text-white mt-0.5">
+                The Europa Frequency
+              </span>
+              <span className="text-[9px] sm:text-[11px] text-slate-300 mt-0.5 truncate">
+                Resonance: 86/100 • 8 Scenes • Continuity Locked
+              </span>
+            </div>
+          </div>
+        )}
+
         {/* Spotlight Highlight Box */}
         {spotlightEnabled && activeHotspot && (
           <div
-            className="pointer-events-none absolute rounded-xl border-2 border-cyan-400 transition-all duration-300 ease-out"
+            className="pointer-events-none absolute z-[15] rounded-xl border-2 border-cyan-400 transition-all duration-300 ease-out"
             style={{
               left: `${activeHotspot.spotlight.left}%`,
               top: `${activeHotspot.spotlight.top}%`,
