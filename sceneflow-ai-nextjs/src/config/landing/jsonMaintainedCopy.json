@@ -880,6 +880,28 @@
                     }
                   ]
                 }
+              },
+              {
+                "icon": "productionAgent",
+                "title": "The Production Agent",
+                "description": "Skip prompting 300+ shots by hand and let the autonomous studio builder produce all 27 scenes or a single chapter while you walk away. Select Pre-Vis, Clips, Scenes, Master, and Promo in one dialog, set Director Checkpoints and notification frequency, and let the Agent automatically optimize shot direction, rerun failed shots, escalate persistent policy blocks to Creative Clips, and deliver a private `/s/` Screening Room link.",
+                "screenshot": "The Production Agent — Autonomous Studio Builder across 27 scenes and 384 shots with Creative Clips policy fallback and walk-away Screening Room notifications",
+                "learnMore": {
+                  "items": [
+                    {
+                      "title": "5-stage walk-away orchestration",
+                      "description": "Select Pre-Vis, Clips, Scenes, Master, and Promo across all scenes or a single chapter to automate over 300 manual prompts in one run."
+                    },
+                    {
+                      "title": "Self-healing direction & Creative Clips fallback",
+                      "description": "Automatically optimizes shot direction, reruns failed takes, and switches persistent Google content-policy blocks to Creative Clips so your batch never stalls."
+                    },
+                    {
+                      "title": "Director Checkpoints & Screening Room alerts",
+                      "description": "Run 100% autonomously or pause after Pre-Vis or each scene and receive notifications with a direct `/s/` Screening Room review link."
+                    }
+                  ]
+                }
               }
             ]
           },

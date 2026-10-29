@@ -110,6 +110,9 @@ export const CLIPS_AGENT_SCREENSHOT_WEBP =
 export const SCENE_CLIPS_WORKBENCH_SCREENSHOT_WEBP =
   '/landing/key-features/screenshots/scene-clips-workbench.webp'
 
+export const PRODUCTION_AGENT_SCREENSHOT_WEBP =
+  '/landing/key-features/screenshots/production-agent.webp'
+
 export const PRODUCTION_MIXER_SCREENSHOT_WEBP =
   '/landing/key-features/screenshots/production-mixer.webp'
 
@@ -178,6 +181,7 @@ const KEY_FEATURE_SCREENSHOTS: Record<string, KeyFeatureScreenshot> = {
   animatic: { imageUrl: PRE_VIS_ANIMATIC_SCREENSHOT_WEBP },
   videoAgent: { imageUrl: CLIPS_AGENT_SCREENSHOT_WEBP },
   clipsWorkbench: { imageUrl: SCENE_CLIPS_WORKBENCH_SCREENSHOT_WEBP },
+  productionAgent: { imageUrl: PRODUCTION_AGENT_SCREENSHOT_WEBP },
   mixer: { imageUrl: PRODUCTION_MIXER_SCREENSHOT_WEBP },
   languageStreams: { imageUrl: STREAMS_MULTILANGUAGE_SCREENSHOT_WEBP },
   multilanguageUi: {

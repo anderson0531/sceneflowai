@@ -110,6 +110,7 @@ const EXPECTED_TITLES: Record<string, string[]> = {
     'The Pre-Vis Animatic',
     'The Clips Agent',
     'Multi-Take Clips & Retake Studio',
+    'The Production Agent',
     'The Mixer',
     'Streams (Multi-Language)',
     'Multilanguage Studio UI',

@@ -1,6 +1,7 @@
 import {
   ArrowRight,
   AudioLines,
+  Bot,
   Clapperboard,
   FileText,
   Film,
@@ -62,6 +63,7 @@ export const FEATURE_ICONS: Record<string, LucideIcon> = {
   animatic: MonitorPlay,
   videoAgent: Film,
   clipsWorkbench: Layers,
+  productionAgent: Bot,
   mixer: SlidersHorizontal,
   languageStreams: Languages,
   multilanguageUi: Globe,

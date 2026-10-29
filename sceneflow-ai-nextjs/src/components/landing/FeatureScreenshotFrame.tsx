@@ -192,6 +192,10 @@ const SCREENSHOT_FRAMING_PRESETS: Array<{
     preset: { width: 5120, height: 2656, contentWidthFraction: 0.94, anchorY: -0.92 },
   },
   {
+    match: 'production-agent.webp',
+    preset: { width: 5120, height: 2936, contentWidthFraction: 0.94, anchorY: -0.92 },
+  },
+  {
     match: 'production-mixer.webp',
     preset: { width: 5120, height: 2996, contentWidthFraction: 0.94, anchorY: -0.92 },
   },

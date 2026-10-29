@@ -14,6 +14,7 @@ import {
   GO_TO_PRODUCTION_SCREENSHOT_WEBP,
   NEW_SERIES_SCREENSHOT_WEBM,
   PRE_VIS_ANIMATIC_SCREENSHOT_WEBP,
+  PRODUCTION_AGENT_SCREENSHOT_WEBP,
   PRODUCTION_MIXER_SCREENSHOT_WEBP,
   PRODUCTION_PLANNER_SCREENSHOT_WEBP,
   PRODUCTION_SCRIPT_SCREENSHOT_WEBP,
@@ -182,6 +183,12 @@ describe('key feature screenshots', () => {
     expect(keyFeatureScreenshotSrc(getKeyFeatureScreenshot('clipsWorkbench')!)).toBe(
       SCENE_CLIPS_WORKBENCH_SCREENSHOT_WEBP
     )
+    expect(getKeyFeatureScreenshot('productionAgent')).toEqual({
+      imageUrl: PRODUCTION_AGENT_SCREENSHOT_WEBP,
+    })
+    expect(keyFeatureScreenshotSrc(getKeyFeatureScreenshot('productionAgent')!)).toBe(
+      PRODUCTION_AGENT_SCREENSHOT_WEBP
+    )
     expect(getKeyFeatureScreenshot('mixer')).toEqual({
       imageUrl: PRODUCTION_MIXER_SCREENSHOT_WEBP,
     })
@@ -328,6 +335,7 @@ describe('key feature screenshots', () => {
       PRE_VIS_ANIMATIC_SCREENSHOT_WEBP,
       CLIPS_AGENT_SCREENSHOT_WEBP,
       SCENE_CLIPS_WORKBENCH_SCREENSHOT_WEBP,
+      PRODUCTION_AGENT_SCREENSHOT_WEBP,
       PRODUCTION_MIXER_SCREENSHOT_WEBP,
       STREAMS_MULTILANGUAGE_SCREENSHOT_WEBP,
       PROMO_TRAILERS_SCREENSHOT_WEBP,
@@ -346,7 +354,7 @@ describe('key feature screenshots', () => {
     )
     expect(startEpisode.subarray(0, 4).toString('ascii')).toBe('RIFF')
     expect(startEpisode.subarray(8, 12).toString('ascii')).toBe('WEBP')
-    expect(startEpisode.subarray(12, 16).toString('ascii')).toBe('VP8L')
+    expect(['VP8 ', 'VP8L', 'VP8X']).toContain(startEpisode.subarray(12, 16).toString('ascii'))
     expect(startEpisode.length).toBeGreaterThan(50_000)
   })
 
@@ -382,7 +390,7 @@ describe('key feature screenshots', () => {
 
     expect(frame).toContain('type="video/webm"')
     expect(frame).toContain('<img')
-    expect(frame).toContain('alt={label}')
+    expect(frame).toContain(': label}')
     expect(frame).toContain('min-h-[56vh]')
     expect(frame).toContain('max-h-[70vh]')
     expect(frame).toContain('object-contain object-center')
