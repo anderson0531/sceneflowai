@@ -880,6 +880,28 @@
                     }
                   ]
                 }
+              },
+              {
+                "icon": "productionAgent",
+                "title": "制片智能体 (The Production Agent)",
+                "description": "无需手动编写 300 多个镜头提示词，让全自动工作室构建器在您离开时自动完成全部 27 个场景或单个章节的制作。在一个对话框中选择 Pre-Vis、视频片段、场景、成片母带和宣传片，设置导演检查点与通知频率，让智能体自动优化镜头调度、重跑失败镜头、将持续触发策略拦截的镜头切换至 Creative Clips，并向您发送私密 `/s/` Screening Room 审片链接。",
+                "screenshot": "制片智能体 — 跨 27 个场景与 384 个镜头的全自动工作室构建器，内置 Creative Clips 策略回退与离席 Screening Room 通知",
+                "learnMore": {
+                  "items": [
+                    {
+                      "title": "5 阶段离席全自动编排",
+                      "description": "跨全部场景或单个章节一键勾选 Pre-Vis、视频片段、场景、母带与宣传片，单次运行即可自动化替代 300 多次手动提示词输入。"
+                    },
+                    {
+                      "title": "自愈式镜头调度与 Creative Clips 回退",
+                      "description": "自动优化镜头调度并重跑失败镜头；若戏剧冲突镜头在改写后仍触发 Google 内容策略拦截，将自动切换至 Creative Clips，确保批量渲染永不卡顿。"
+                    },
+                    {
+                      "title": "导演检查点与 Screening Room 提醒",
+                      "description": "可 100% 无人值守运行，也可在 Pre-Vis 或每个场景完成后暂停，并附带直达 `/s/` Screening Room 的审片链接通知您。"
+                    }
+                  ]
+                }
               }
             ]
           },
@@ -1103,9 +1125,7 @@
     "goToDashboard": "转到仪表板",
     "userFallback": "用户",
     "searchLanguages": "搜索语言",
-    "noLanguagesFound": "找不到语言",
-    "workflow": "工作流程",
-    "platformWalkthrough": "平台导览"
+    "noLanguagesFound": "找不到语言"
   },
   "floatingNav": {
     "productionExamples": "示例",
@@ -1151,8 +1171,8 @@
       "生产",
       "SFAI放映室术语"
     ],
-    "languagePrompt": "选择英语、西班牙语、中文或阿拉伯语——同一流程，开拓新市场",
-    "multilangHint": "主打配音涵盖 4 种语言——完整管线在 Production Stage 环境下支持 70 多种语言。",
+    "languagePrompt": "选择英语、西班牙语、葡萄牙语、印地语、中文、阿拉伯语或泰语 — 同一流水线，开拓新市场",
+    "multilangHint": "首屏样片提供 7 种语言配音 — 完整流水线在 Production Stage 支持 70+ 种语言。",
     "playWithNarration": "带旁白播放",
     "tapToHear": "点击收听",
     "fullscreen": "全屏",
@@ -1174,6 +1194,18 @@
       "ar": {
         "label": "阿拉伯语",
         "nativeLabel": "العربية"
+      },
+      "pt": {
+        "label": "葡萄牙语",
+        "nativeLabel": "Português"
+      },
+      "hi": {
+        "label": "印地语",
+        "nativeLabel": "हिन्दी"
+      },
+      "th": {
+        "label": "泰语",
+        "nativeLabel": "ไทย"
       }
     },
     "soon": "很快",
@@ -1590,7 +1622,6 @@
           "description": "照片级真实感，电影感光效",
           "tagline": "高质量长篇现实主义作品",
           "marketingBody": "照片级写实风格能满足精品剧集与纪录片受众对主流质感的期待。通过在连贯的叙事节点间保持写实的角色与光影效果，确保剧集或纪录片系列从开篇到结局始终维持情感连贯性。",
-          "featured": true,
           "thumbnail": "https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Gemini_Generated_Image_w5y03bw5y03bw5y0.jpeg"
         },
         {
@@ -1598,7 +1629,6 @@
           "name": "电影级 3D / CGI",
           "displayTitle": "电影级 3D / CGI",
           "description": "渲染出的3D电影质感",
-          "featured": false,
           "thumbnail": "https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Gemini_Generated_Image_5qoasf5qoasf5qoa.jpeg"
         },
         {
@@ -1608,7 +1638,6 @@
           "description": "风格化3D动画长片",
           "tagline": "跨集的情感连贯性",
           "marketingBody": "柔和圆润的几何造型与富有表现力的角色设计营造出一种情感上的温暖感，能够让观众在整季内容中保持情感共鸣。这种风格非常适合动画剧集、合家欢长篇内容以及品牌叙事，尤其是在需要确保角色形象在各个情节节点保持连贯性的场景中。",
-          "featured": true,
           "thumbnail": "https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Gemini_Generated_Image_zi32rnzi32rnzi32.jpeg"
         },
         {
@@ -1618,7 +1647,6 @@
           "description": "赛璐珞风格动漫画风",
           "tagline": "连载式叙事弧线",
           "marketingBody": "动画风格的赛璐珞渲染（cel shading）在多集网络剧集及长篇叙事中能引发粉丝的深度共鸣。基于此类风格训练的生成式引擎能够产出线条清晰、构图规范的画面，是实现规模化系列制作的理想选择。",
-          "featured": true,
           "thumbnail": "https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Gemini_Generated_Image_qlf261qlf261qlf2.jpeg"
         },
         {
@@ -1628,7 +1656,6 @@
           "description": "手绘风格动画",
           "tagline": "工艺即奢华",
           "marketingBody": "这种风格直接呼应了“工艺即奢华”这一重要的创作潮流。水彩质感与绘画风格的背景构建出充满手工质感的叙事世界，其中那种自然的瑕疵感，在长篇系列作品中被赋予了精心构思的艺术意蕴。",
-          "featured": true,
           "thumbnail": "https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Gemini_Generated_Image_xojqsuxojqsuxojq.jpeg"
         },
         {
@@ -1637,7 +1664,6 @@
           "displayTitle": "漫画书",
           "description": "浓墨笔触，呈现图像小说风格",
           "tagline": "适用于多集连载叙事的粗犷笔触、半调纹理与波普艺术色彩。",
-          "featured": false,
           "thumbnail": "https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Gemini_Generated_Image_ezhp8cezhp8cezhp.jpeg"
         },
         {
@@ -1646,7 +1672,6 @@
           "displayTitle": "概念设计",
           "description": "电影级游戏/影视概念美术",
           "tagline": "具备氛围感且达到制作标准的影视预演关键帧。",
-          "featured": false,
           "thumbnail": "https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Gemini_Generated_Image_7z9qm7z9qm7z9qm7.jpeg"
         },
         {
@@ -1654,7 +1679,6 @@
           "name": "扁平矢量 / 动态图形",
           "displayTitle": "扁平矢量 / 动态图形",
           "description": "适用于解说视频的简洁矢量风格",
-          "featured": false,
           "thumbnail": "https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Gemini_Generated_Image_omdmt6omdmt6omdm.jpeg"
         },
         {
@@ -1662,7 +1686,6 @@
           "name": "分镜脚本 / 动态分镜",
           "displayTitle": "分镜脚本 / 动态分镜",
           "description": "粗略的灰度分镜画面",
-          "featured": false,
           "thumbnail": "https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Gemini_Generated_Image_7i1wus7i1wus7i1w.jpeg"
         },
         {
@@ -1671,7 +1694,6 @@
           "displayTitle": "数字艺术",
           "description": "现代数字插画",
           "tagline": "用于动画纪录片及系列解说短片的风格化插画。",
-          "featured": false,
           "thumbnail": "https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Gemini_Generated_Image_bmbpbibmbpbibmbp.jpeg"
         },
         {
@@ -1680,7 +1702,6 @@
           "displayTitle": "水彩画",
           "description": "柔和的水彩画",
           "tagline": "适用于回忆录、纪录片及沉思型长篇作品的柔和颜料渲染风格。",
-          "featured": false,
           "thumbnail": "https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Gemini_Generated_Image_7i1wus7i1wus7i1w.jpeg"
         },
         {
@@ -1689,7 +1710,6 @@
           "displayTitle": "草图 / 线稿",
           "description": "铅笔素描风格",
           "tagline": "针对从预演（pre-vis）到制作阶段的长篇叙事节点，呈现细腻的线条与铅笔质感。",
-          "featured": false,
           "thumbnail": "https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Gemini_Generated_Image_bmbpbibmbpbibmbp.jpeg"
         },
         {
@@ -1698,7 +1718,6 @@
           "displayTitle": "油画",
           "description": "古典油画",
           "tagline": "为纪实与历史题材长篇作品呈现古典笔触与浓郁色彩。",
-          "featured": false,
           "thumbnail": "https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Gemini_Generated_Image_7z9qm7z9qm7z9qm7.jpeg"
         }
       ]
@@ -1846,8 +1865,7 @@
           "连贯的剧集大纲——贯穿整季自动生成",
           "连贯性追踪——确保多集季度的内容衔接一致",
           "剧集与单集同步 —— 同步至 Blueprint Room 和 Production Stage"
-        ],
-        "optional": true
+        ]
       },
       {
         "id": "蓝图",
@@ -1864,8 +1882,7 @@
           "从构思到架构，仅需数分钟——涵盖故事梗概、关键节点、角色与基调。",
           "在 Production Stage 之前，针对 80+ 目标进行 Audience Resonance 评分",
           "协作者分享链接 —— 整合反馈并转化为指导性修订"
-        ],
-        "optional": false
+        ]
       },
       {
         "id": "生产",
@@ -1885,8 +1902,7 @@
           "片段、混音器与流 —— 无需离开 Production Stage 即可生成每个镜头。",
           "制作规划器——拍摄目标、带日期的日程安排及手机状态",
           "Screening Room — 场景预览、成片剪辑与合成、放映及 YouTube 发布"
-        ],
-        "optional": false
+        ]
       },
       {
         "id": "放映室",
@@ -1904,8 +1920,7 @@
           "组装预设 —— 全视频、混合模式，或针对各场景的自定义组合",
           "可分享的筛选评估 —— 包含评分与结构化反馈的 /s/ 链接",
           "YouTube 智能向导、短视频导出及分发组合包"
-        ],
-        "optional": false
+        ]
       }
     ]
   },
@@ -2182,19 +2197,16 @@
     "chapters": [
       {
         "id": "从这里开始",
-        "label": "从这里入手——规划、连贯性与受众契合度",
-        "defaultExpanded": false
+        "label": "从这里入手——规划、连贯性与受众契合度"
       },
       {
         "id": "制作与发布",
-        "label": "制作并发布 — 将片段发布至 Screening Room",
-        "defaultExpanded": false
+        "label": "制作并发布 — 将片段发布至 Screening Room"
       }
     ],
     "close": "关闭",
     "viewDetails": "查看详情",
     "beatFirst": {
-      "id": 15,
       "title": "以节拍为先的视频制作流程",
       "description": "在进行 F2V（视频生成）之前，先确认预演（pre-vis）的关键节点与镜头帧范围——从而减少因模型“幻觉”或视觉偏差导致的盲目重生成。建立从审核到最终成片的规范化流程。",
       "keyFeatures": [
@@ -2893,5 +2905,79 @@
     "mute": "静音",
     "unmute": "取消静音",
     "expandVideo": "展开视频"
+  },
+  "productionAgent": {
+    "eyebrow": "Production Agent • 全自动工作室构建器",
+    "title": "告别手动输入 300+ 个镜头提示词。启动构建，安心离席。",
+    "subtitle": "一部常规 27 场景作品（每场 12–20 个镜头）在传统 AI 工具中需要手动输入 300 多次静态帧与视频提示词。现在只需不到一小时打磨剧本，勾选 Pre-Vis、视频片段、场景、母带或宣传片，即可让制片智能体自动构建场景、自愈修复失败镜头，并在完成时通过私密 /s/ Screening Room 链接通知您。",
+    "showDetail": "展开更多详情",
+    "hideDetail": "收起详情",
+    "drawerBadge": "逐场全自动制片编排",
+    "drawerTitle": "不到一小时打磨剧本。数小时的手动提示词由一次全自动运行完全替代。",
+    "cards": [
+      {
+        "badge": "省去 300+ 次手动提示词",
+        "title": "剧本打磨 < 1 小时 → 解放全天时间",
+        "description": "告别跨 27 个场景（每场 12–20 个镜头）逐条输入 300 多个静态图与视频提示词。一小时内定稿剧本，把时间留给核心业务与生活。"
+      },
+      {
+        "badge": "全部 27 场或按章节生成",
+        "title": "5 大端到端制片阶段",
+        "description": "在同一个构建器中勾选 Pre-Vis、视频片段、场景、母带与宣传片。智能体将自动生成连续性参考图、对白/音效/配乐、关键帧、动态视频与预告片。"
+      },
+      {
+        "badge": "零卡顿渲染",
+        "title": "自愈重试 + Creative Clips 自动回退",
+        "description": "自动优化镜头调度并重跑失败镜头。当戏剧张力镜头在优化后仍触发 Google 策略过滤时，会自动切换至 Creative Clips 完成生成。"
+      },
+      {
+        "badge": "完整的导演控制权",
+        "title": "导演检查点与 /s/ 审片室链接",
+        "description": "可 100% 全自动运行，也可在 Pre-Vis 或每场戏后暂停审核。按您设定的频率接收包含 /s/ Screening Room 直达链接的通知。"
+      }
+    ],
+    "viewScript": "查看 Ana 视频脚本（30 秒演示）",
+    "hideScript": "收起 Ana 视频脚本（30 秒演示）",
+    "copyScript": "复制脚本",
+    "copied": "已复制",
+    "cta": "启动工作室 ($9)"
+  },
+  "studioAcademy": {
+    "eyebrow": "SceneFlow 工作室学院与即时 (JIT) 实训",
+    "title": "每一步都有引导。在创作中掌握整座工作室。",
+    "subtitle": "再也不必面对空白时间线发呆，也不会因为猜测下一步而白白消耗积分。在任意界面按下 ? 键，即可呼出即时 (JIT) 视觉界面地图与带有一键操作的 60 秒核对清单——或跟随交互式课程从一句话灵感直达发布级成片。",
+    "showDetail": "展开更多详情",
+    "hideDetail": "收起详情",
+    "drawerBadge": "好莱坞级制片实力 · 零影视学院门槛",
+    "drawerTitle": "每个工作间均内置交互式界面地图、60 秒核对清单与积分护栏",
+    "cards": [
+      {
+        "badge": "随时一键呼出 (?)",
+        "title": "上下文感知即时 (JIT) 教练",
+        "description": "在任意界面按下 ? 键，即可打开当前工作区的即时视觉地图、下一步操作的 60 秒清单，以及为您直接触发对应工作室操作的一键按钮。"
+      },
+      {
+        "badge": "4 门引导式交互课程",
+        "title": "“10 分钟完成你的第一部影片”模拟器",
+        "description": "专为零剪辑经验的创作者、作家与剧集统筹打造。跟随 Spotlight X-Ray 交互式标注，从一句话概念完成配音、配乐并生成可播放成片。"
+      },
+      {
+        "badge": "节省高达 70% 的积分",
+        "title": "故事板优先 (Animatic-First) 积分护栏",
+        "description": "每个工作区都内置实时积分护栏，指导您如何先锁定 80+ Audience Resonance 剧本并预览配音版关键帧故事板，然后再投入积分渲染动态视频。"
+      },
+      {
+        "badge": "所有套餐免费包含",
+        "title": "工作室内置 4 门交互式实训课程",
+        "description": "在工作室内直接掌握 Blueprint 与受众共鸣、角色与场景连续性资产库、故事板优先积分护栏，以及 Screening Room 与 70+ 语言配音流。"
+      }
+    ],
+    "tryLiveMap": "体验实时 JIT 视觉界面地图（标注 1–4）",
+    "hideLiveMap": "收起实时 JIT 视觉界面地图",
+    "viewScript": "查看 30 秒视频脚本 (Ana)",
+    "hideScript": "收起 30 秒视频脚本 (Ana)",
+    "copyScript": "复制脚本",
+    "copied": "已复制",
+    "cta": "启动工作室 ($9)"
   }
 }

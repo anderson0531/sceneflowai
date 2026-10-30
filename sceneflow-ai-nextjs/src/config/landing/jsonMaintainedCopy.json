@@ -1106,5 +1106,79 @@
         ]
       }
     ]
+  },
+  "productionAgent": {
+    "eyebrow": "Production Agent • Autonomous Studio Builder",
+    "title": "Stop prompting 300+ shots by hand. Start the build and walk away.",
+    "subtitle": "A typical 27-scene production (12–20 shots per scene) takes over 300 manual still and video prompts in traditional AI tools. Perfect your script in under an hour, select Pre-Vis, Clips, Scenes, Master, or Promo, and let the Production Agent build your scenes, self-heal failed shots, and notify you with a private /s/ Screening Room link when it is complete.",
+    "showDetail": "Show more detail",
+    "hideDetail": "Hide detail",
+    "drawerBadge": "Autonomous Scene-by-Scene Orchestration",
+    "drawerTitle": "Under an hour on your script. Hours of manual prompting replaced by one autonomous run.",
+    "cards": [
+      {
+        "badge": "Eliminate 300+ Manual Prompts",
+        "title": "< 1 Hour on Script → Walk Away Free",
+        "description": "Skip typing 300+ individual still and video prompts across 27 scenes (12–20 shots per scene). Perfect your script in under an hour and reclaim your day for business or personal priorities."
+      },
+      {
+        "badge": "All 27 Scenes or By Chapter",
+        "title": "5 End-to-End Production Stages",
+        "description": "Select Pre-Vis, Clips, Scenes, Master, and Promo in one builder. The Agent autonomously builds continuity references, dialogue/SFX/music audio, keyframes, motion clips, and trailers."
+      },
+      {
+        "badge": "Zero Stalled Renders",
+        "title": "Self-Healing + Creative Clips Fallback",
+        "description": "Automatically optimizes shot direction and reruns failed shots. When an intended dramatic shot still hits Google policy filters after optimization, it switches to Creative Clips automatically."
+      },
+      {
+        "badge": "Full Director Control",
+        "title": "Checkpoints & /s/ Screening Links",
+        "description": "Run 100% hands-free or pause after Pre-Vis or each scene. Receive notifications at your chosen frequency with a direct /s/ Screening Room link ready for review."
+      }
+    ],
+    "viewScript": "View Ana Video Script (30s Walkthrough)",
+    "hideScript": "Hide Ana Video Script (30s Walkthrough)",
+    "copyScript": "Copy script",
+    "copied": "Copied",
+    "cta": "Launch Studio ($9)"
+  },
+  "studioAcademy": {
+    "eyebrow": "SceneFlow Studio Academy & Just-In-Time Training",
+    "title": "Guided at every step. Master the studio as you create.",
+    "subtitle": "Never stare at a blank timeline or burn credits guessing what comes next. Press ? on any screen for an instant Just-In-Time (JIT) Screen Map and a 60-second checklist with one-click studio actions—or follow interactive courses from your first concept to a published master.",
+    "showDetail": "Show more detail",
+    "hideDetail": "Hide detail",
+    "drawerBadge": "Hollywood Studio Power · Zero Film School Required",
+    "drawerTitle": "Interactive Screen Maps, 60-Second Checklists, and Credit Guardrails Built Into Every Room",
+    "cards": [
+      {
+        "badge": "Always 1 Keypress Away (?)",
+        "title": "Context-Aware Just-In-Time (JIT) Coach",
+        "description": "Press ? on any screen to open an instant visual map of your active workspace, a 60-second checklist of what to do next, and 1-click buttons that trigger the exact studio action for you."
+      },
+      {
+        "badge": "4 Guided Interactive Courses",
+        "title": "“Your First Film in 10 Minutes” Simulator",
+        "description": "Built for storytellers, authors, and showrunners with zero editing experience. Follow interactive Spotlight X-Ray callouts from a 1-sentence concept to a voiced, scored, and playable film."
+      },
+      {
+        "badge": "Save Up to 70% of Credits",
+        "title": "Animatic-First Credit Guardrails",
+        "description": "Every workspace includes real-time credit guardrails that show how to lock an 80+ Audience Resonance script and preview a voiced Keyframe Animatic before rendering motion video clips."
+      },
+      {
+        "badge": "Included Free With Every Plan",
+        "title": "4 Interactive Studio Courses Built In",
+        "description": "Master Blueprint & Audience Resonance, the Character & Setting Continuity Vault, Animatic-First Credit Guardrails, and Screening Room & 70+ Language Dubbing right inside the studio."
+      }
+    ],
+    "tryLiveMap": "Try Live JIT Visual Screen Map (Pins 1–4)",
+    "hideLiveMap": "Hide Live JIT Visual Screen Map",
+    "viewScript": "View 30s Video Script (Ana)",
+    "hideScript": "Hide 30s Video Script (Ana)",
+    "copyScript": "Copy script",
+    "copied": "Copied",
+    "cta": "Launch Studio ($9)"
   }
 }

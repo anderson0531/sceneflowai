@@ -5,6 +5,7 @@ import {
   DEFAULT_HERO_VIDEO_LOCALE,
   HERO_PUBLIC_POSTER_FALLBACK,
   HERO_VIDEO_BLOB_PATHS,
+  HERO_VIDEO_LOCALE_ORDER,
   HERO_VIDEO_WEB_720P_PATHS,
   HERO_VIDEO_WEB_1080P_PATHS,
   HERO_VIDEO_WEB_WEBM_PATHS,
@@ -16,21 +17,23 @@ import {
   getHeroVideoLocalesAsVideoLocales,
   resolveHeroVideoLocale,
 } from '@/config/landing/heroVideoLocales'
-import { VIDEO_LOCALE_ORDER } from '@/config/landing/videoLocales'
 
 describe('Hero video locales', () => {
-  it('lists all four locale pills in display order', () => {
-    expect(HERO_VIDEO_LOCALES.map((locale) => locale.id)).toEqual(VIDEO_LOCALE_ORDER)
+  it('lists all seven global locale dubs in display order', () => {
+    expect(HERO_VIDEO_LOCALES.map((locale) => locale.id)).toEqual(HERO_VIDEO_LOCALE_ORDER)
   })
 
-  it('plays all four hero Blob masters', () => {
+  it('plays all seven hero Blob masters', () => {
     const available = getAvailableHeroVideoLocales().map((locale) => locale.id)
 
-    expect(available).toEqual(VIDEO_LOCALE_ORDER)
+    expect(available).toEqual(HERO_VIDEO_LOCALE_ORDER)
     expect(getDefaultHeroVideoSrc()).toContain('Hero%20Video%20(English).mp4')
     expect(getHeroVideoLocale('es')?.src).toContain('Hero%20Video%20(Spanish).mp4')
+    expect(getHeroVideoLocale('pt')?.src).toContain('Hero%20Video%20(Portuguese).mp4')
+    expect(getHeroVideoLocale('hi')?.src).toContain('Hero%20Video%20(Hindi).mp4')
     expect(getHeroVideoLocale('zh')?.src).toContain('Hero%20Video%20(Chinese).mp4')
     expect(getHeroVideoLocale('ar')?.src).toContain('Hero%20Video%20(Arabic).mp4')
+    expect(getHeroVideoLocale('th')?.src).toContain('Hero%20Video%20(Thai).mp4')
     expect(getHeroVideoLocale('ar')?.src).not.toContain('Arabic)%20.mp4')
     expect(getHeroVideoLocale(DEFAULT_HERO_VIDEO_LOCALE)?.available).toBe(true)
 
@@ -44,8 +47,11 @@ describe('Hero video locales', () => {
   it('reserves predictable Blob paths for hero dubs', () => {
     expect(HERO_VIDEO_BLOB_PATHS.en).toBe('Hero Video (English).mp4')
     expect(HERO_VIDEO_BLOB_PATHS.es).toBe('Hero Video (Spanish).mp4')
+    expect(HERO_VIDEO_BLOB_PATHS.pt).toBe('Hero Video (Portuguese).mp4')
+    expect(HERO_VIDEO_BLOB_PATHS.hi).toBe('Hero Video (Hindi).mp4')
     expect(HERO_VIDEO_BLOB_PATHS.zh).toBe('Hero Video (Chinese).mp4')
     expect(HERO_VIDEO_BLOB_PATHS.ar).toBe('Hero Video (Arabic).mp4')
+    expect(HERO_VIDEO_BLOB_PATHS.th).toBe('Hero Video (Thai).mp4')
   })
 
   it('reserves 720p, 1080p, and WebM web-encode paths from the live 4K masters', () => {
@@ -66,8 +72,8 @@ describe('Hero video locales', () => {
 
   it('maps hero locales into the shared video player model', () => {
     const locales = getHeroVideoLocalesAsVideoLocales()
-    expect(locales).toHaveLength(4)
-    for (const id of VIDEO_LOCALE_ORDER) {
+    expect(locales).toHaveLength(7)
+    for (const id of HERO_VIDEO_LOCALE_ORDER) {
       expect(locales.find((locale) => locale.id === id)?.available).toBe(true)
     }
   })
@@ -77,7 +83,13 @@ describe('public hero playback sources', () => {
   it('points every locale at same-origin WebM + MP4 paths and a localized poster', () => {
     for (const locale of HERO_VIDEO_LOCALES) {
       const sources = getHeroPublicVideoSources(locale.id)
-      const version = { en: '20261004', es: '20261005', zh: '20261012', ar: '20261012' }[locale.id]
+      const version = {
+        en: '20261004',
+        es: '20261005',
+        pt: '20261005',
+        zh: '20261012',
+        ar: '20261012',
+      }[locale.id]
       expect(sources.webmSrc).toBe(
         version ? `/videos/hero-${locale.id}.webm?v=${version}` : `/videos/hero-${locale.id}.webm`
       )
@@ -89,7 +101,7 @@ describe('public hero playback sources', () => {
     expect(HERO_PUBLIC_POSTER_FALLBACK).toBe('/images/hero-poster.webp')
   })
 
-  it('serves Chinese and Arabic hero files from public/videos, not Blob rewrites', () => {
+  it('serves all seven global hero files from public/videos, not Blob rewrites', () => {
     const config = readFileSync(join(process.cwd(), 'next.config.mjs'), 'utf8')
     const root = join(process.cwd(), 'public', 'videos')
     expect(config).toContain('outputFileTracingExcludes')
@@ -97,7 +109,7 @@ describe('public hero playback sources', () => {
     expect(config).not.toContain('blobHeroLocales')
     expect(config).not.toContain('sceneflow-hero-:locale.webm')
     expect(config).not.toContain('sceneflow-hero-:locale-1080p.mp4')
-    for (const locale of ['zh', 'ar'] as const) {
+    for (const locale of HERO_VIDEO_LOCALE_ORDER) {
       expect(existsSync(join(root, `hero-${locale}.webm`)), `hero-${locale}.webm`).toBe(true)
       expect(existsSync(join(root, `hero-${locale}.mp4`)), `hero-${locale}.mp4`).toBe(true)
     }
@@ -122,15 +134,20 @@ describe('public hero playback sources', () => {
 })
 
 describe('resolveHeroVideoLocale', () => {
-  it('maps Chinese UI locales to the zh dub', () => {
+  it('maps all seven global UI locales directly to their matching hero dub', () => {
+    expect(resolveHeroVideoLocale('en')).toBe('en')
+    expect(resolveHeroVideoLocale('es')).toBe('es')
+    expect(resolveHeroVideoLocale('pt')).toBe('pt')
+    expect(resolveHeroVideoLocale('hi')).toBe('hi')
     expect(resolveHeroVideoLocale('zh-CN')).toBe('zh')
     expect(resolveHeroVideoLocale('zh-TW')).toBe('zh')
+    expect(resolveHeroVideoLocale('ar')).toBe('ar')
+    expect(resolveHeroVideoLocale('th')).toBe('th')
   })
 
   it('falls back to the English dub for UI locales without a hero file', () => {
     expect(resolveHeroVideoLocale('fr')).toBe('en')
     expect(resolveHeroVideoLocale('ja')).toBe('en')
-    expect(resolveHeroVideoLocale('th')).toBe('en')
   })
 
   it('uses the page locale ahead of the browser language', () => {

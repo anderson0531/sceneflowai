@@ -20,11 +20,9 @@ import { useTranslations, useLocale } from 'next-intl'
 import {
   HERO_VIDEO_UNMUTE_DISMISSED_KEY,
   getHeroVideoLocale,
-  getHeroVideoLocalesAsVideoLocales,
   resolveHeroVideoLocale,
   type HeroVideoLocaleId,
 } from '@/config/landing/heroVideoLocales'
-import { VideoLanguageControl } from '@/components/landing/VideoLanguagePicker'
 import { HeroTheaterModal } from '@/components/landing/HeroTheaterModal'
 import { HeroVideoBackground } from '@/components/landing/HeroVideoBackground'
 import { NotifyCapture } from '@/components/landing/NotifyCapture'
@@ -61,7 +59,6 @@ export function HeroSection() {
   const [videoPreload, setVideoPreload] = useState<VideoPreloadValue>('metadata')
   const [isBuffering, setIsBuffering] = useState(true)
 
-  const heroLocales = getHeroVideoLocalesAsVideoLocales()
   const destinations = getDistributionDestinations(landingLocale)
   const motionOffset = prefersReducedMotion ? 0 : undefined
   const motionDuration = prefersReducedMotion ? 0 : undefined
@@ -222,14 +219,16 @@ export function HeroSection() {
         <div className="relative z-10 flex min-h-[100dvh] flex-col justify-center px-4 pt-36 pb-16 lg:pt-40">
           <div className="container mx-auto">
             <div className="max-w-4xl mx-auto text-center">
-              <motion.p
-                className="text-[11px] font-semibold uppercase tracking-[0.22em] text-cyan-300/90"
-                initial={{ opacity: 0, y: motionOffset ?? 12 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: motionDuration ?? 0.8, delay: prefersReducedMotion ? 0 : 0.1 }}
-              >
-                {t('eyebrow')}
-              </motion.p>
+              <div className="flex flex-col items-center gap-3">
+                <motion.p
+                  className="text-[11px] font-semibold uppercase tracking-[0.22em] text-cyan-300/90"
+                  initial={{ opacity: 0, y: motionOffset ?? 12 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: motionDuration ?? 0.8, delay: prefersReducedMotion ? 0 : 0.1 }}
+                >
+                  {t('eyebrow')}
+                </motion.p>
+              </div>
 
               <motion.h1
                 className="mt-5 text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold tracking-tighter leading-tight bg-gradient-to-r from-white via-gray-300 to-gray-400 text-transparent bg-clip-text"
@@ -328,16 +327,6 @@ export function HeroSection() {
         </div>
 
         <div className="absolute inset-x-0 top-16 z-20 flex items-center gap-1.5 bg-gradient-to-b from-black/80 to-transparent px-4 pt-3 pb-8 sm:gap-3 lg:top-20">
-          <VideoLanguageControl
-            locales={heroLocales}
-            activeLocaleId={activeLocale}
-            onSelect={(id) => selectLocale(id as HeroVideoLocaleId)}
-            soonLabel={t('soon')}
-            variant="inline"
-            align="start"
-            markAsHeroControl
-          />
-
           <div className="ms-auto flex items-center gap-1.5 sm:gap-2">
             {isMuted && !isBuffering && (
               showUnmutePrompt ? (

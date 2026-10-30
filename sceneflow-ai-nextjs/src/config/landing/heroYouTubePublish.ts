@@ -5,8 +5,11 @@
 
 import en from '../../../messages/en.json'
 import es from '../../../messages/es.json'
+import pt from '../../../messages/pt.json'
+import hi from '../../../messages/hi.json'
 import zh from '../../../messages/zh-CN.json'
 import ar from '../../../messages/ar.json'
+import th from '../../../messages/th.json'
 import { appendSceneFlowCta } from '@/lib/premiere/distributionMetadata'
 import { interpolateDestinations } from '@/lib/network/destinations'
 import {
@@ -90,6 +93,18 @@ const LANDING_COPY: Record<HeroVideoLocaleId, LandingYouTubeCopy> = {
     startProduction: 'INICIA TU PRODUCCIÓN',
     moreOnChannel: 'Más demos y producciones de ejemplo en nuestro canal',
   }),
+  pt: landingFromMessages(pt, 'pt', {
+    whatIs: 'O QUE É O SCENEFLOW?',
+    whySwitch: 'POR QUE OS CRIADORES MUDAM',
+    startProduction: 'COMECE SUA PRODUÇÃO',
+    moreOnChannel: 'Mais demos e produções de exemplo em nosso canal',
+  }),
+  hi: landingFromMessages(hi, 'hi', {
+    whatIs: 'SCENEFLOW क्या है?',
+    whySwitch: 'क्रिएटर्स क्यों स्विच करते हैं',
+    startProduction: 'अपना प्रोडक्शन शुरू करें',
+    moreOnChannel: 'हमारे चैनल पर और डेमो और उदाहरण प्रोडक्शन देखें',
+  }),
   zh: landingFromMessages(zh, 'zh', {
     whatIs: '什么是 SCENEFLOW？',
     whySwitch: '创作者为何选择 SceneFlow',
@@ -102,6 +117,12 @@ const LANDING_COPY: Record<HeroVideoLocaleId, LandingYouTubeCopy> = {
     startProduction: 'ابدأ إنتاجك',
     moreOnChannel: 'المزيد من العروض التوضيحية والإنتاجات على قناتنا',
   }),
+  th: landingFromMessages(th, 'th', {
+    whatIs: 'SCENEFLOW คืออะไร?',
+    whySwitch: 'ทำไมครีเอเตอร์ถึงเปลี่ยนมาใช้ SceneFlow',
+    startProduction: 'เริ่มต้นการผลิตของคุณ',
+    moreOnChannel: 'ชมตัวอย่างและผลงานเพิ่มเติมได้ในช่องของเรา',
+  }),
 }
 
 const BASE_TAGS = ['SceneFlow', 'SceneFlow Studio', 'AI video', 'video production', 'video studio']
@@ -109,15 +130,21 @@ const BASE_TAGS = ['SceneFlow', 'SceneFlow Studio', 'AI video', 'video productio
 const LOCALE_TAGS: Record<HeroVideoLocaleId, string[]> = {
   en: ['English'],
   es: ['Spanish', 'Español'],
+  pt: ['Portuguese', 'Português'],
+  hi: ['Hindi', 'हिन्दी'],
   zh: ['Chinese', '中文'],
   ar: ['Arabic', 'العربية'],
+  th: ['Thai', 'ภาษาไทย'],
 }
 
 const HASHTAGS: Record<HeroVideoLocaleId, string> = {
   en: '#SceneFlow #AIVideo #VideoProduction #YouTubeCreator #English',
   es: '#SceneFlow #AIVideo #VideoProduction #Creadores #Español',
+  pt: '#SceneFlow #AIVideo #VideoProduction #Criadores #Português',
+  hi: '#SceneFlow #AIVideo #VideoProduction #Hindi #क्रिएटर्स',
   zh: '#SceneFlow #AIVideo #VideoProduction #中文 #创作者',
   ar: '#SceneFlow #AIVideo #VideoProduction #العربية #صناع_المحتوى',
+  th: '#SceneFlow #AIVideo #VideoProduction #ภาษาไทย #ครีเอเตอร์',
 }
 
 export type HeroYouTubePublishBundle = {

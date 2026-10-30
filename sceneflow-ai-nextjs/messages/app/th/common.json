@@ -119,6 +119,76 @@
     "scenes": "{count, plural, =1 {# scene} other {# scenes}}",
     "episodes": "{count, plural, =1 {# episode} other {# episodes}}",
     "credits": "{count, plural, =1 {# credit} other {# credits}}",
-    "languages": "{count, plural, =1 {# language} other {# languages}}"
+    "languages": "{count, plural, =1 {# language} other {# languages}}",
+    "creditsShort": "{count} เครดิต"
+  },
+  "companion": {
+    "brand": "SceneFlow",
+    "signInTitle": "ลงชื่อเข้าใช้บนโทรศัพท์ของคุณ",
+    "signInBody": "ดูการแจ้งเตือน ข้อเสนอแนะจากลิงก์ที่แชร์ และแผนการผลิตของคุณได้ที่นี่ ส่วนการตัดต่อและแก้ไขยังคงทำบนเดสก์ท็อปหรือแท็บเล็ต",
+    "desktopOnly": "การตัดต่อและแก้ไขยังคงทำบนเดสก์ท็อปหรือแท็บเล็ต",
+    "creditsLabel": "ยอดเครดิตคงเหลือ",
+    "enableAlerts": "เปิดการแจ้งเตือนทางโทรศัพท์",
+    "alertsOn": "เปิดการแจ้งเตือนทางโทรศัพท์แล้ว",
+    "alertsHint": "รับการแจ้งเตือนเมื่อมีข้อเสนอแนะเข้ามาหรือเมื่อเรนเดอร์งานเสร็จสิ้น",
+    "tabs": {
+      "inbox": "กล่องข้อความ",
+      "feedback": "ข้อเสนอแนะ",
+      "plan": "แผนงาน"
+    },
+    "inbox": {
+      "empty": "ยังไม่มีการแจ้งเตือน",
+      "markAllRead": "ทำเครื่องหมายว่าอ่านทั้งหมดแล้ว",
+      "activeJobs": "กำลังดำเนินการ",
+      "noJobs": "ไม่มีงานที่กำลังรันอยู่",
+      "progress": "{progress}%"
+    },
+    "jobs": {
+      "scene_audio": "เสียงของฉาก",
+      "segment_frames": "ภาพนิ่งประจำช็อต",
+      "segment_video": "คลิปวิดีโอประจำช็อต",
+      "scene_render": "เรนเดอร์ฉาก",
+      "production_render": "เรนเดอร์งานผลิต",
+      "reference_library": "คลังภาพอ้างอิง",
+      "reference_express": "สร้างภาพอ้างอิงด่วน",
+      "kling_long_take": "ลองเทค (Long take)",
+      "script_analysis": "วิเคราะห์บท",
+      "scene_polish": "ขัดเกลาฉาก",
+      "blueprint_guided_revise": "ปรับปรุง Blueprint",
+      "queued": "อยู่ในคิว",
+      "processing": "กำลังประมวลผล"
+    },
+    "feedback": {
+      "empty": "ยังไม่มีข้อเสนอแนะจากลิงก์ที่แชร์",
+      "allProjects": "โปรเจกต์ทั้งหมด",
+      "filterLabel": "โปรเจกต์",
+      "blueprint": "Blueprint",
+      "screening": "Screening Room",
+      "resolve": "ทำเครื่องหมายว่าแก้ไขแล้ว",
+      "resolved": "แก้ไขแล้ว",
+      "open": "เปิดอยู่",
+      "inReview": "กำลังตรวจสอบ",
+      "score": "{score}/5"
+    },
+    "plan": {
+      "empty": "ยังไม่มีโปรเจกต์",
+      "noSchedule": "ยังไม่ได้บันทึกตารางเวลา",
+      "headline": "แผน: {amount} เครดิต - {date}",
+      "amountOnly": "แผน: {amount} เครดิต",
+      "used": "ใช้ไปแล้ว {amount} เครดิต",
+      "throughToday": "วางแผนไว้จนถึงวันนี้ {amount} เครดิต",
+      "scenes": "{finished} จาก {planned} ฉาก",
+      "ahead": "เร็วกว่าแผน",
+      "onPace": "ตามแผน",
+      "behind": "ช้ากว่าแผน",
+      "under": "ต่ำกว่างบ",
+      "onBudget": "ตามงบประมาณ",
+      "over": "เกินงบประมาณ",
+      "upcoming": "งานที่กำลังจะมาถึง",
+      "noUpcoming": "ไม่มีวันทำงานที่กำลังจะมาถึง",
+      "chapters": "สิ้นสุดบท (Chapter)",
+      "back": "โปรเจกต์ทั้งหมด",
+      "creditsOnDate": "{amount} เครดิต"
+    }
   }
 }

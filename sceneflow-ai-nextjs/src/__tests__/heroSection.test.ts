@@ -118,6 +118,8 @@ describe('hero section copy and UI', () => {
     expect(theater).toContain('getHeroPublicVideoSources')
     expect(theater).toContain('type="video/webm"')
     expect(theater).not.toContain('useAdaptiveVideoSource')
+    expect(theater).not.toContain('VideoLanguageControl')
+    expect(hero).not.toContain('VideoLanguageControl')
     expect(hero).toContain('enterPhoneVideoFullscreen')
     expect(hero).toContain('isPhoneViewport')
   })

@@ -3,10 +3,8 @@
 import { useEffect, useRef, useState, useCallback, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { X, Volume2, VolumeX, Pause, Play, Loader2 } from 'lucide-react'
-import { VideoLanguageControl } from '@/components/landing/VideoLanguagePicker'
 import {
   getHeroVideoLocale,
-  getHeroVideoLocalesAsVideoLocales,
   getHeroPublicVideoSources,
   HERO_PUBLIC_POSTER_FALLBACK,
   type HeroVideoLocaleId,
@@ -18,23 +16,20 @@ type HeroTheaterModalProps = {
   open: boolean
   onClose: () => void
   activeLocale: HeroVideoLocaleId
-  onSelectLocale: (id: HeroVideoLocaleId) => void
-  soonLabel: string
+  onSelectLocale?: (id: HeroVideoLocaleId) => void
+  soonLabel?: string
 }
 
 export function HeroTheaterModal({
   open,
   onClose,
   activeLocale,
-  onSelectLocale,
-  soonLabel,
 }: HeroTheaterModalProps) {
   const videoRef = useRef<HTMLVideoElement>(null)
   const [isPlaying, setIsPlaying] = useState(true)
   const [isMuted, setIsMuted] = useState(false)
   const [isBuffering, setIsBuffering] = useState(true)
   const activeEntry = getHeroVideoLocale(activeLocale)
-  const heroLocales = getHeroVideoLocalesAsVideoLocales()
   const playbackSources = useMemo(
     () => (activeEntry ? getHeroPublicVideoSources(activeLocale) : null),
     [activeEntry, activeLocale]
@@ -145,15 +140,6 @@ export function HeroTheaterModal({
                 <Loader2 className="h-12 w-12 animate-spin text-cyan-400/80" />
               </div>
             )}
-
-            <VideoLanguageControl
-              locales={heroLocales}
-              activeLocaleId={activeLocale}
-              onSelect={(id) => onSelectLocale(id as HeroVideoLocaleId)}
-              soonLabel={soonLabel}
-              variant="overlay"
-              align="start"
-            />
 
             <button
               type="button"

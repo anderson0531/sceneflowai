@@ -11,12 +11,15 @@ import {
   PRODUCTION_AGENT_MEDIA,
   PRODUCTION_AGENT_VIDEO_BLOB_PATHS,
   PUBLISH_CUT_VIDEO_BLOB_PATHS,
+  STUDIO_ACADEMY_MEDIA,
+  STUDIO_ACADEMY_VIDEO_BLOB_PATHS,
   directControlVideoBlobPath,
   getDirectControlVideoLocales,
   getPrimaryValueMedia,
   getPublishCutVideoLocales,
   productionAgentVideoBlobPath,
   publishCutVideoBlobPath,
+  studioAcademyVideoBlobPath,
 } from '@/config/landing/primaryValueMedia'
 import { VIDEO_LOCALE_ORDER } from '@/config/landing/videoLocales'
 import { twoModesVideoSources } from '@/config/landing/twoModesMedia'
@@ -95,6 +98,18 @@ describe('primary value sections', () => {
     expect(productionAgentVideoBlobPath('en')).toBe('Production Agent.mp4')
     for (const id of VIDEO_LOCALE_ORDER) {
       expect(PRODUCTION_AGENT_VIDEO_BLOB_PATHS[id]).toBe(productionAgentVideoBlobPath(id))
+    }
+    expect(STUDIO_ACADEMY_MEDIA).toEqual({
+      imageUrl: '',
+      posterUrl: '/landing/primary-value/studio-academy.webp',
+      webmUrl: '/landing/primary-value/studio-academy-en.webm?v=20261030',
+      mp4Url: '/landing/primary-value/studio-academy-en.mp4?v=20261030',
+    })
+    expect(getPrimaryValueMedia('academy')).toEqual(STUDIO_ACADEMY_MEDIA)
+    expect(getPrimaryValueMedia('studio-academy')).toEqual(STUDIO_ACADEMY_MEDIA)
+    expect(studioAcademyVideoBlobPath('en')).toBe('SceneFlow Studio Academy.mp4')
+    for (const id of VIDEO_LOCALE_ORDER) {
+      expect(STUDIO_ACADEMY_VIDEO_BLOB_PATHS[id]).toBe(studioAcademyVideoBlobPath(id))
     }
 
     const direct = readFileSync(join(ROOT, 'src/components/landing/DirectControlSection.tsx'), 'utf8')

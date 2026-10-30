@@ -38,36 +38,7 @@ import {
 
 export const PRODUCTION_AGENT_SECTION_ID = 'production-agent'
 
-const DETAIL_CARDS = [
-  {
-    icon: Clock,
-    badge: 'Eliminate 300+ Manual Prompts',
-    title: '< 1 Hour on Script → Walk Away Free',
-    description:
-      'Skip typing 300+ individual still and video prompts across 27 scenes (12–20 shots per scene). Perfect your script in under an hour and reclaim your day for business or personal priorities.',
-  },
-  {
-    icon: Layers,
-    badge: 'All 27 Scenes or By Chapter',
-    title: '5 End-to-End Production Stages',
-    description:
-      'Select Pre-Vis, Clips, Scenes, Master, and Promo in one builder. The Agent autonomously builds continuity references, dialogue/SFX/music audio, keyframes, motion clips, and trailers.',
-  },
-  {
-    icon: ShieldCheck,
-    badge: 'Zero Stalled Renders',
-    title: 'Self-Healing + Creative Clips Fallback',
-    description:
-      'Automatically optimizes shot direction and reruns failed shots. When an intended dramatic shot still hits Google policy filters after optimization, it switches to Creative Clips automatically.',
-  },
-  {
-    icon: PauseCircle,
-    badge: 'Full Director Control',
-    title: 'Checkpoints & /s/ Screening Links',
-    description:
-      'Run 100% hands-free or pause after Pre-Vis or each scene. Receive notifications at your chosen frequency with a direct /s/ Screening Room link ready for review.',
-  },
-] as const
+const DETAIL_CARD_ICONS = [Clock, Layers, ShieldCheck, PauseCircle] as const
 
 const ANA_VIDEO_BLOCKS = [
   {
@@ -99,9 +70,11 @@ const ANA_VIDEO_BLOCKS = [
 ] as const
 
 export function ProductionAgentSection() {
+  const t = useTranslations('productionAgent')
   const tHero = useTranslations('hero')
   const tCommon = useTranslations('common')
   const tShowcase = useTranslations('productionShowcase')
+  const detailCards = t.raw('cards') as Array<{ badge: string; title: string; description: string }>
   const [showDetail, setShowDetail] = useState(false)
   const [showAnaScript, setShowAnaScript] = useState(false)
   const [copiedScript, setCopiedScript] = useState(false)
@@ -348,13 +321,13 @@ export function ProductionAgentSection() {
           transition={{ duration: 0.6 }}
         >
           <p className="mb-4 text-xs font-semibold uppercase tracking-[0.2em] text-indigo-300">
-            Production Agent • Autonomous Studio Builder
+            {t('eyebrow')}
           </p>
           <h2 className="mx-auto max-w-4xl text-balance text-3xl font-bold text-white md:text-4xl lg:text-5xl">
-            Stop prompting 300+ shots by hand. Start the build and walk away.
+            {t('title')}
           </h2>
           <p className="mx-auto mt-5 max-w-3xl text-balance text-base text-gray-100 sm:text-lg">
-            A typical 27-scene production (12–20 shots per scene) takes over 300 manual still and video prompts in traditional AI tools. Perfect your script in under an hour, select Pre-Vis, Clips, Scenes, Master, or Promo, and let the Production Agent build your scenes, self-heal failed shots, and notify you with a private /s/ Screening Room link when it is complete.
+            {t('subtitle')}
           </p>
 
           {/* Toggle to reveal detailed description cards & Ana video script */}
@@ -366,7 +339,7 @@ export function ProductionAgentSection() {
               className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-slate-950/70 px-4 py-2 text-xs font-semibold text-cyan-200 backdrop-blur-md transition hover:border-cyan-400/50 hover:bg-slate-900 hover:text-white sm:text-sm"
             >
               <Bot className="h-4 w-4 text-cyan-400" aria-hidden />
-              <span>{showDetail ? 'Hide detail' : 'Show more detail'}</span>
+              <span>{showDetail ? t('hideDetail') : t('showDetail')}</span>
               {showDetail ? (
                 <ChevronUp className="h-4 w-4 text-cyan-300" aria-hidden />
               ) : (
@@ -387,16 +360,16 @@ export function ProductionAgentSection() {
             <div className="mb-4 flex flex-col items-center gap-1.5 text-center">
               <span className="inline-flex items-center gap-1.5 rounded-full border border-cyan-400/30 bg-cyan-500/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-wider text-cyan-300">
                 <Bot className="h-3.5 w-3.5" aria-hidden />
-                Autonomous Scene-by-Scene Orchestration
+                {t('drawerBadge')}
               </span>
               <h3 className="text-base font-semibold text-white sm:text-lg">
-                Under an hour on your script. Hours of manual prompting replaced by one autonomous run.
+                {t('drawerTitle')}
               </h3>
             </div>
 
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-              {DETAIL_CARDS.map((card) => {
-                const Icon = card.icon
+              {detailCards.map((card, index) => {
+                const Icon = DETAIL_CARD_ICONS[index] ?? Clock
                 return (
                   <div
                     key={card.title}
@@ -430,9 +403,7 @@ export function ProductionAgentSection() {
                 >
                   <Film className="h-4 w-4 text-cyan-400" aria-hidden />
                   <span>
-                    {showAnaScript
-                      ? 'Hide Ana Video Script (30s Walkthrough)'
-                      : 'View Ana Video Script (30s Walkthrough)'}
+                    {showAnaScript ? t('hideScript') : t('viewScript')}
                   </span>
                   {showAnaScript ? (
                     <ChevronUp className="h-3.5 w-3.5" aria-hidden />
@@ -450,12 +421,12 @@ export function ProductionAgentSection() {
                     {copiedScript ? (
                       <>
                         <Check className="h-3.5 w-3.5 text-emerald-400" aria-hidden />
-                        <span>Copied</span>
+                        <span>{t('copied')}</span>
                       </>
                     ) : (
                       <>
                         <Copy className="h-3.5 w-3.5 text-cyan-400" aria-hidden />
-                        <span>Copy script</span>
+                        <span>{t('copyScript')}</span>
                       </>
                     )}
                   </button>
@@ -506,7 +477,7 @@ export function ProductionAgentSection() {
             className="bg-gradient-to-r from-indigo-600 via-purple-600 to-indigo-600 hover:opacity-90"
             onClick={scrollToCheckout}
           >
-            Launch Studio ($9)
+            {t('cta')}
             <ArrowRight className="ml-2 h-5 w-5" />
           </Button>
           <Button

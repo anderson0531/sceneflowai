@@ -111,8 +111,10 @@ describe('landing locale copy', () => {
       'hero.ctaPrimaryLaunch',
       'keyFeatures.title',
       'forFilmmakers.heading',
+      'productionAgent.title',
+      'studioAcademy.title',
     ] as const
-    for (const code of ['es', 'pt', 'hi', 'zh-CN', 'ar']) {
+    for (const code of ['es', 'pt', 'hi', 'zh-CN', 'ar', 'th']) {
       const localeMessages = JSON.parse(readFileSync(join(ROOT, `${code}.json`), 'utf8')) as Record<
         string,
         unknown

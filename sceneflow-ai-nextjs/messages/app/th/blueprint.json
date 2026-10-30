@@ -86,7 +86,10 @@
     "modeFull": "การรักษาเต็มรูปแบบ",
     "modeBeats": "Beat‑by ‑ Beat",
     "generating": "กำลังสร้างคำบรรยาย",
-    "playing": "กำลังเล่นบทบรรยาย"
+    "playing": "กำลังเล่นบทบรรยาย",
+    "listen": "ฟังเสียงบรรยาย",
+    "blueprintListenHint": "ฟังโครงเรื่อง Blueprint นี้ด้วยเสียงผู้บรรยายที่คุณเลือก",
+    "reasoningListenHint": "ฟังเหตุผลเชิงการเล่าเรื่องของ AI ด้วยเสียงผู้บรรยายที่คุณเลือก"
   },
   "menu": {
     "reimagine": "จินตนาการใหม่ (Reimagine)"
@@ -161,7 +164,18 @@
     "internalNeed": "ความต้องการภายใน",
     "fatalFlaw": "ข้อบกพร่องร้ายแรง",
     "psychologicalDepth": "ความลึกทางจิตวิทยา (ไม่บังคับ)",
-    "customInstruction": "เพิ่มคำแนะนำในการปรับแต่งเฉพาะ..."
+    "customInstruction": "เพิ่มคำแนะนำในการปรับแต่งเฉพาะ...",
+    "scriptCraft": "ศาสตร์การเขียนบท",
+    "scriptCraftHint": "จุดเน้นสำหรับการสร้างบทภาพยนตร์ขนาดยาว — ไม่ใช่การจำกัดความยาว เลือกได้หลายข้อ",
+    "scriptCraftNotes": "บันทึกแนวทางการเขียนบท",
+    "scriptCraftNotesPlaceholder": "บันทึกเพิ่มเติม (ตัวละคร การกระทำ นัยซ่อนเร้น…)",
+    "scriptCraftPriorities": {
+      "characterDepth": "ความลึกของตัวละคร",
+      "actionClarity": "ความชัดเจนของการกระทำ",
+      "subtext": "นัยซ่อนเร้น (Subtext)",
+      "dialogueRichness": "ความคมคายของบทสนทนา",
+      "visualFirst": "เล่าด้วยภาพเป็นหลัก"
+    }
   },
   "refine": {
     "refiningTitle": "การกลั่น {section}",
@@ -227,7 +241,9 @@
     "startProduction": "ไปที่ Production Stage",
     "reAnalyzeOrRefine": "วิเคราะห์หรือปรับแต่ง Blueprint อีกครั้ง",
     "improveScoreOrStart": "ปรับปรุงคะแนนหรือไปที่ Production Stage",
-    "generating": "กำลังสร้าง Blueprint..."
+    "generating": "กำลังสร้าง Blueprint...",
+    "readyForProduction": "พร้อมเข้าสู่การผลิต",
+    "nextStepLabel": "ขั้นตอนถัดไป"
   },
   "sidePanel": {
     "tabs": {
@@ -254,7 +270,26 @@
       "notes": "หมายเหตุ: ",
       "synthesize": "เปลี่ยนข้อเสนอแนะเป็นคำแนะนำ",
       "synthesized": "คำแนะนำสังเคราะห์",
-      "openAssistant": "เปิด {assistant}"
+      "openAssistant": "เปิด {assistant}",
+      "exportTitle": "ส่งออก Blueprint",
+      "exportHint": "ดาวน์โหลดไฟล์ PDF, Fountain, Markdown หรือ JSON เพื่อนำไปใช้ในเครื่องมืออื่น",
+      "exportButton": "ดาวน์โหลด…",
+      "listenOnlyTitle": "ตัวอย่างสำหรับฟังและอ่านอย่างเดียว",
+      "reviewerLinkTitle": "ลิงก์สำหรับผู้ตรวจทาน",
+      "shareForFeedbackTitle": "แชร์เพื่อขอข้อเสนอแนะ",
+      "listenOnlyHint": "อ่านและฟังเสียงอย่างเดียว ไม่มีการให้คะแนน บันทึกย่อ หรือแชท และไม่มีวันหมดอายุ",
+      "reviewerLinkHint": "ลิงก์เดียวสำหรับผู้ตรวจทานทุกคน ส่งลิงก์นี้เพื่อให้ผู้ร่วมงานอ่าน ฟัง และแสดงความคิดเห็นได้",
+      "createLinkHint": "สร้างลิงก์ที่ผู้ตรวจทานเปิดดูได้ทันทีโดยไม่ต้องเข้าสู่ระบบ",
+      "listenOnlyCheckbox": "ตัวอย่างแบบฟังอย่างเดียว (ไม่รับข้อเสนอแนะ)",
+      "copyLink": "คัดลอกลิงก์",
+      "copied": "คัดลอกแล้ว!",
+      "createNewLink": "สร้างลิงก์ใหม่ (URL ใหม่)",
+      "creatingNewLink": "กำลังสร้างลิงก์ใหม่…",
+      "subTabs": {
+        "feedback": "ข้อเสนอแนะ",
+        "team": "ทีมงาน",
+        "messages": "ข้อความ"
+      }
     }
   },
   "audienceResonance": {
@@ -278,7 +313,10 @@
     "readyOptionalPolish": "Ready for production — optional polish below",
     "scoreBreakdownBalancedHint": "Impact shown per gap; the headline score uses balanced weighting so a full polish list does not crater a strong blueprint.",
     "optionalPolish": "Optional polish",
-    "polishBadge": "Polish"
+    "polishBadge": "Polish",
+    "selectGapForFix": "แก้ไขจุดอ่อนนี้: {gap}",
+    "fixSelectedWith": "แก้ไข {count} รายการที่เลือกด้วย {assistant}",
+    "rewriteInEnglish": "เขียนใหม่เป็นภาษาอังกฤษ"
   },
   "heroImage": {
     "uploading": "กำลังอัปโหลด...",
@@ -323,7 +361,31 @@
     "cancelIt": "ยกเลิกซะ",
     "generateBalanced": "สร้างการแก้ไขที่สมดุล",
     "reviseIntent": "แก้ไขเจตนา",
-    "applyRevision": "ใช้การแก้ไข"
+    "applyRevision": "ใช้การแก้ไข",
+    "addToInstructions": "+ เพิ่ม",
+    "addedToInstructions": "เพิ่มแล้ว",
+    "resonanceGap": "จุดอ่อน",
+    "whatShouldChangePlaceholder": "พิมพ์หรือพูดสั่งทิศทางที่ต้องการ — เช่น ให้ตัวละครอาจารย์แอบเป็นตัวร้ายลับๆ และปรับจังหวะองก์สองใหม่เพื่อให้ฉากหักหลังสะเทือนใจผู้ชมกลุ่มทริลเลอร์…",
+    "clarifyAndConfirm": "วิเคราะห์และยืนยันทิศทาง",
+    "clarifying": "กำลังวิเคราะห์…",
+    "proposedDirection": "ทิศทางที่เสนอ",
+    "directionReadyToConfirm": "ทิศทางนี้มีความชัดเจนเพียงพอที่จะยืนยันแล้ว",
+    "confirmDirection": "ยืนยันทิศทาง",
+    "directionConfirmed": "ยืนยันทิศทางแล้ว",
+    "reviseDirection": "ปรับแก้",
+    "startOver": "เริ่มใหม่",
+    "targetAudience": "กลุ่มผู้ชมเป้าหมาย",
+    "targetAudienceHint": "(ไม่บังคับ — วิเคราะห์และยืนยันเพื่อปรับ Blueprint ให้ตรงกลุ่มผู้ชม)",
+    "confirmTargetAudience": "ยืนยันกลุ่มผู้ชมเป้าหมาย",
+    "targetAudienceConfirmed": "ยืนยันกลุ่มผู้ชมเป้าหมายแล้ว",
+    "scopes": {
+      "all": "สมดุลทั้ง Blueprint",
+      "core": "ข้อมูลหลัก",
+      "story": "เนื้อเรื่อง",
+      "characters": "ความต่อเนื่อง",
+      "beats": "จังหวะเรื่อง (Beats)",
+      "tone": "โทนและสไตล์"
+    }
   },
   "reimagine": {
     "reimagineTitle": "Reimagine Blueprint",
@@ -340,7 +402,10 @@
     "targetAudience": "ກຸ່ມ​ເປົ້າ​ໝາຍ",
     "audienceHint": "(อธิบายเป็นคำพูดของท่านเอง)",
     "visualFoundation": "วิชวลฟาวน์เด",
-    "lockedAtBlueprint": "(ล็อคที่ Blueprint)"
+    "lockedAtBlueprint": "(ล็อคที่ Blueprint)",
+    "reimagining": "กำลังสร้างสรรค์ใหม่…",
+    "generateBlueprint": "สร้าง Blueprint",
+    "startDescription": "ล็อกเรื่องย่อ (Synopsis) จากนั้นสร้าง Blueprint จากเรื่องย่อนั้น"
   },
   "tour": {
     "stepCounter": "{current} ของ {total}",
@@ -458,5 +523,69 @@
       "collaborate-export": "ทำงานร่วมกันและส่งออก",
       "start-production": "ไปที่ Production Stage"
     }
+  },
+  "toolbar": {
+    "documentLabel": "โครงเรื่อง (Treatment)",
+    "rewriteInEnglish": "เขียนใหม่เป็นภาษาอังกฤษ"
+  },
+  "regenerate": {
+    "sectionTitle": "เริ่มต้นใหม่ทั้งหมด",
+    "sectionHint": "การสร้างใหม่จะแทนที่ Blueprint ทั้งหมด หากต้องการแก้ไขเฉพาะจุดให้ใช้ Blueprint Director แทน",
+    "confirmTitle": "สร้าง Blueprint ใหม่หรือไม่?",
+    "confirmDescription": "การดำเนินการนี้จะแทนที่ Blueprint ปัจจุบันของคุณด้วยโครงเรื่องใหม่ที่สร้างโดย AI การแก้ไขด้วยตนเอง คะแนน Audience Resonance และประวัติเวอร์ชันของ Blueprint นี้จะสูญหายและไม่สามารถย้อนกลับได้",
+    "cancel": "ยกเลิก",
+    "confirmAction": "ใช่ สร้างใหม่"
+  },
+  "export": {
+    "title": "ส่งออก Blueprint",
+    "description": "ดาวน์โหลดโครงเรื่องของคุณในรูปแบบที่รองรับเครื่องมือเขียนบทและงานโปรดักชันอื่นๆ",
+    "cancel": "ยกเลิก",
+    "download": "ดาวน์โหลด",
+    "savePdf": "บันทึกเป็น PDF",
+    "noVariant": "ไม่มี Blueprint ให้ส่งออก",
+    "pdfNotReady": "ตัวอย่างสำหรับส่งออกยังไม่พร้อม",
+    "pdfHint": "ใช้หน้าต่างสั่งพิมพ์ของเบราว์เซอร์และเลือก \"บันทึกเป็น PDF\" (Save as PDF)",
+    "exportFailed": "การส่งออกล้มเหลว",
+    "downloadSuccess": "ดาวน์โหลดในรูปแบบ {format} แล้ว",
+    "formats": {
+      "pdf": {
+        "label": "PDF",
+        "hint": "เลย์เอาต์คุณภาพระดับงานพิมพ์สำหรับแชร์หรือจัดเก็บถาวร"
+      },
+      "fountain": {
+        "label": "Fountain",
+        "hint": "รูปแบบข้อความมาตรฐานอุตสาหกรรมสำหรับ WriterDuet, Highland และ Slugline"
+      },
+      "markdown": {
+        "label": "Markdown",
+        "hint": "โครงร่างที่อ่านง่ายสำหรับ Google Docs, Notion หรือวิกิ"
+      },
+      "json": {
+        "label": "JSON",
+        "hint": "ข้อมูลสำรองเชิงโครงสร้างแบบเต็มของเวอร์ชัน Blueprint นี้"
+      }
+    }
+  },
+  "continuity": {
+    "subTabs": {
+      "all": "ทั้งหมด ({count})",
+      "cast": "นักแสดง ({count})",
+      "locations": "สถานที่ ({count})",
+      "props": "พร็อพ ({count})"
+    },
+    "castTitle": "นักแสดง",
+    "locationsTitle": "สถานที่",
+    "propsTitle": "พร็อพ",
+    "sharedSeriesBannerTitle": "คลังความต่อเนื่องของซีรีส์ที่ใช้ร่วมกัน",
+    "sharedSeriesBannerDesc": "นักแสดง สถานที่ และพร็อพจาก {series} ถูกแชร์ร่วมกับ Blueprint ของตอนนี้",
+    "sharedSeriesBannerGeneric": "แอสเซ็ตความต่อเนื่องจากคัมภีร์ซีรีส์ (Series Bible) ถูกแชร์ร่วมกับ Blueprint ของตอนนี้",
+    "openSeriesContinuity": "Series Room",
+    "seriesAssetBadge": "ความต่อเนื่องของซีรีส์",
+    "newEpisodeAssetBadge": "แอสเซ็ตประจำตอน",
+    "locationAtmosphere": "บรรยากาศและแสง",
+    "locationProps": "การจัดฉากและพร็อพ",
+    "propSignificance": "ความสำคัญต่อเนื้อเรื่อง",
+    "emptyLocations": "ยังไม่ได้กำหนดสถานที่ ใช้ {assistant} เพื่อสร้างสถานที่สำคัญสำหรับ Blueprint นี้",
+    "emptyProps": "ยังไม่ได้กำหนดพร็อพ ใช้ {assistant} เพื่อสร้างพร็อพสำคัญสำหรับ Blueprint นี้"
   }
 }

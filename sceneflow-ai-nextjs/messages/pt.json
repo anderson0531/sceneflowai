@@ -880,6 +880,28 @@
                     }
                   ]
                 }
+              },
+              {
+                "icon": "productionAgent",
+                "title": "O Agente de Produção",
+                "description": "Evite digitar mais de 300 prompts manualmente e deixe o construtor autônomo do estúdio produzir todas as 27 cenas ou um único capítulo enquanto você se afasta. Selecione Pre-Vis, Clipes, Cenas, Master e Promo em uma única janela, defina Checkpoints do Diretor e a frequência de notificações, e deixe o Agente otimizar a direção de planos, reexecutar tomadas com falha, alternar bloqueios de política para Creative Clips e entregar um link privado `/s/` da Screening Room.",
+                "screenshot": "O Agente de Produção — Construtor Autônomo de Estúdio em 27 cenas e 384 planos com fallback Creative Clips e notificações da Screening Room",
+                "learnMore": {
+                  "items": [
+                    {
+                      "title": "Orquestração autônoma em 5 etapas",
+                      "description": "Selecione Pre-Vis, Clipes, Cenas, Master e Promo em todas as cenas ou em um capítulo para automatizar mais de 300 prompts manuais em uma única execução."
+                    },
+                    {
+                      "title": "Direção autorreparável e fallback Creative Clips",
+                      "description": "Otimiza automaticamente a direção dos planos, reexecuta tomadas com falha e alterna bloqueios persistentes de política de conteúdo do Google para Creative Clips para que seu lote nunca trave."
+                    },
+                    {
+                      "title": "Checkpoints do Diretor e alertas da Screening Room",
+                      "description": "Execute de forma 100% autônoma ou pause após o Pre-Vis ou cada cena e receba notificações com um link direto `/s/` para revisão na Screening Room."
+                    }
+                  ]
+                }
               }
             ]
           },
@@ -1103,9 +1125,7 @@
     "goToDashboard": "Ir para o Painel",
     "userFallback": "Utilizador",
     "searchLanguages": "Procurar idiomas",
-    "noLanguagesFound": "Nenhum idioma encontrado",
-    "workflow": "O fluxo de trabalho",
-    "platformWalkthrough": "Tour da plataforma"
+    "noLanguagesFound": "Nenhum idioma encontrado"
   },
   "floatingNav": {
     "productionExamples": "Exemplos",
@@ -1151,8 +1171,8 @@
       "Produção",
       "Screening Room"
     ],
-    "languagePrompt": "Escolha inglês, espanhol, chinês ou árabe — o mesmo fluxo, novos mercados.",
-    "multilangHint": "Dublagens principais em 4 idiomas — o pipeline completo suporta mais de 70 em Production Stage.",
+    "languagePrompt": "Escolha inglês, espanhol, português, hindi, chinês, árabe ou tailandês — o mesmo pipeline, novos mercados",
+    "multilangHint": "Dublagens principais em 7 idiomas — o pipeline completo suporta mais de 70 no Production Stage.",
     "playWithNarration": "Reproduzir com narração",
     "tapToHear": "Toque para ouvir",
     "fullscreen": "Tela cheia",
@@ -1174,6 +1194,18 @@
       "ar": {
         "label": "Árabe",
         "nativeLabel": "العربية"
+      },
+      "pt": {
+        "label": "Português",
+        "nativeLabel": "Português"
+      },
+      "hi": {
+        "label": "Hindi",
+        "nativeLabel": "हिन्दी"
+      },
+      "th": {
+        "label": "Tailandês",
+        "nativeLabel": "ไทย"
       }
     },
     "soon": "Em breve",
@@ -1590,7 +1622,6 @@
           "description": "Iluminação fotorrealista e cinematográfica",
           "tagline": "Realismo de prestígio em formato longo",
           "marketingBody": "O fotorrealismo proporciona o apelo popular esperado pelo público de séries de prestígio e documentários. Padronize personagens e iluminação realistas ao longo das sequências narrativas, garantindo que dramas episódicos e séries documentais mantenham a continuidade emocional do início ao fim.",
-          "featured": true,
           "thumbnail": "https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Gemini_Generated_Image_w5y03bw5y03bw5y0.jpeg"
         },
         {
@@ -1598,7 +1629,6 @@
           "name": "3D / CGI cinematográfico",
           "displayTitle": "3D / CGI cinematográfico",
           "description": "Visual de longa-metragem em 3D renderizado",
-          "featured": false,
           "thumbnail": "https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Gemini_Generated_Image_5qoasf5qoasf5qoa.jpeg"
         },
         {
@@ -1608,7 +1638,6 @@
           "description": "Longa-metragem de animação 3D estilizado",
           "tagline": "Continuidade emocional entre episódios",
           "marketingBody": "Geometria suave e arredondada e um design de personagens expressivo criam um calor emocional que mantém o interesse do público ao longo de toda a temporada. É a escolha ideal para séries de animação, produções de longa duração para a família e narrativas de marca em que a consistência dos personagens é fundamental em cada momento da história.",
-          "featured": true,
           "thumbnail": "https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Gemini_Generated_Image_zi32rnzi32rnzi32.jpeg"
         },
         {
@@ -1618,7 +1647,6 @@
           "description": "Estilo de anime com sombreamento cel-shading",
           "tagline": "Arcos narrativos serializados",
           "marketingBody": "O sombreamento estilo *cel shading* típico de animes gera um forte engajamento dos fãs em webséries de múltiplos episódios e arcos narrativos extensos. Motores generativos treinados nesse estilo produzem traços nítidos e enquadramentos previsíveis — características ideais para a produção seriada em larga escala.",
-          "featured": true,
           "thumbnail": "https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Gemini_Generated_Image_qlf261qlf261qlf2.jpeg"
         },
         {
@@ -1628,7 +1656,6 @@
           "description": "Animação desenhada à mão com estilo pictórico",
           "tagline": "O artesanato como luxo",
           "marketingBody": "Este estilo conecta-se diretamente a um importante movimento criativo que prioriza o \"artesanato como luxo\". Texturas de aquarela e fundos com estética pictórica constroem mundos episódicos de caráter artesanal, nos quais a imperfeição orgânica é percebida como uma escolha artística deliberada ao longo de uma série de longa duração.",
-          "featured": true,
           "thumbnail": "https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Gemini_Generated_Image_xojqsuxojqsuxojq.jpeg"
         },
         {
@@ -1637,7 +1664,6 @@
           "displayTitle": "História em quadrinhos",
           "description": "Traço marcante, visual de graphic novel",
           "tagline": "Traços marcantes, textura de meio-tom e cores estilo pop art para narrativas seriadas de múltiplos episódios.",
-          "featured": false,
           "thumbnail": "https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Gemini_Generated_Image_ezhp8cezhp8cezhp.jpeg"
         },
         {
@@ -1646,7 +1672,6 @@
           "displayTitle": "Arte conceitual",
           "description": "Arte conceitual cinematográfica de jogo ou filme",
           "tagline": "Keyframes de pré-visualização para filmes e séries, com iluminação atmosférica e pronta para a produção.",
-          "featured": false,
           "thumbnail": "https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Gemini_Generated_Image_7z9qm7z9qm7z9qm7.jpeg"
         },
         {
@@ -1654,7 +1679,6 @@
           "name": "Vetor Flat / Motion Graphics",
           "displayTitle": "Vetor Flat / Motion Graphics",
           "description": "Visual vetorial limpo para vídeos explicativos",
-          "featured": false,
           "thumbnail": "https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Gemini_Generated_Image_omdmt6omdmt6omdm.jpeg"
         },
         {
@@ -1662,7 +1686,6 @@
           "name": "Storyboard / Animatic",
           "displayTitle": "Storyboard / Animatic",
           "description": "Quadros de storyboard preliminares em tons de cinza",
-          "featured": false,
           "thumbnail": "https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Gemini_Generated_Image_7i1wus7i1wus7i1w.jpeg"
         },
         {
@@ -1671,7 +1694,6 @@
           "displayTitle": "Arte Digital",
           "description": "Ilustração digital moderna",
           "tagline": "Ilustração estilizada para documentário em animação e série episódica de vídeos explicativos.",
-          "featured": false,
           "thumbnail": "https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Gemini_Generated_Image_bmbpbibmbpbibmbp.jpeg"
         },
         {
@@ -1680,7 +1702,6 @@
           "displayTitle": "Aquarela",
           "description": "Pintura em aquarela de tons suaves",
           "tagline": "Lavagens suaves de pigmento para memórias, documentários e narrativas longas e contemplativas.",
-          "featured": false,
           "thumbnail": "https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Gemini_Generated_Image_7i1wus7i1wus7i1w.jpeg"
         },
         {
@@ -1689,7 +1710,6 @@
           "displayTitle": "Esboço / Arte-final",
           "description": "Estilo de esboço a lápis",
           "tagline": "Traço detalhado e textura de lápis para sequências de longa duração, abrangendo desde a pré-visualização até a produção.",
-          "featured": false,
           "thumbnail": "https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Gemini_Generated_Image_bmbpbibmbpbibmbp.jpeg"
         },
         {
@@ -1698,7 +1718,6 @@
           "displayTitle": "Pintura a óleo",
           "description": "Pintura a óleo clássica",
           "tagline": "Pinceladas clássicas e pigmentação rica para documentários e narrativas históricas de fôlego.",
-          "featured": false,
           "thumbnail": "https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Gemini_Generated_Image_7z9qm7z9qm7z9qm7.jpeg"
         }
       ]
@@ -1846,8 +1865,7 @@
           "Esboços de episódios coesos — gerados automaticamente ao longo da temporada",
           "Monitoramento de continuidade — alinhamento de temporadas com múltiplos episódios",
           "Sincronização de série para episódio — para Blueprint Room e Production Stage"
-        ],
-        "optional": true
+        ]
       },
       {
         "id": "projeto",
@@ -1864,8 +1882,7 @@
           "Do conceito à estrutura em minutos — logline, batidas, personagens e tom",
           "Pontuação de Audience Resonance com alvo de 80+ antes de Production Stage",
           "Links de compartilhamento para colaboradores — síntese de feedback para revisão guiada"
-        ],
-        "optional": false
+        ]
       },
       {
         "id": "produção",
@@ -1885,8 +1902,7 @@
           "Clipes, Mixer e Streams — gere cada tomada sem sair do Production Stage",
           "Planejador de Produção — metas de filmagem, cronograma com datas e status do telefone",
           "Screening Room — pré-visualização de cenas, montagem do master, exibições e publicação no YouTube"
-        ],
-        "optional": false
+        ]
       },
       {
         "id": "sala de exibição",
@@ -1904,8 +1920,7 @@
           "Predefinições de montagem — Apenas vídeo, Híbrido ou combinação personalizada por cena",
           "Avaliações compartilháveis — links /s/ com pontuação e feedback estruturado",
           "Especialista em YouTube, exportações de vídeos curtos e pacotes de distribuição"
-        ],
-        "optional": false
+        ]
       }
     ]
   },
@@ -2182,19 +2197,16 @@
     "chapters": [
       {
         "id": "comece-aqui",
-        "label": "Comece por aqui — planejamento, continuidade e adequação ao público",
-        "defaultExpanded": false
+        "label": "Comece por aqui — planejamento, continuidade e adequação ao público"
       },
       {
         "id": "produzir e publicar",
-        "label": "Produzir e publicar — Clipes para Screening Room",
-        "defaultExpanded": false
+        "label": "Produzir e publicar — Clipes para Screening Room"
       }
     ],
     "close": "Fechar",
     "viewDetails": "Ver detalhes",
     "beatFirst": {
-      "id": 15,
       "title": "Fluxo de produção de vídeo centrado na batida",
       "description": "Aprove as etapas de pré-visualização e os quadros-chave antes da fase F2V — isso reduz regenerações feitas às cegas devido a alucinações e desvios visuais. Um fluxo estruturado, da revisão ao clipe final.",
       "keyFeatures": [
@@ -2893,5 +2905,79 @@
     "mute": "Mudo",
     "unmute": "Ativar som",
     "expandVideo": "Expandir vídeo"
+  },
+  "productionAgent": {
+    "eyebrow": "Agente de Produção • Construtor Autônomo de Estúdio",
+    "title": "Pare de criar mais de 300 prompts à mão. Inicie a produção e afaste-se.",
+    "subtitle": "Uma produção típica de 27 cenas (12–20 planos por cena) exige mais de 300 prompts manuais de imagem e vídeo nas ferramentas tradicionais de IA. Aperfeiçoe seu roteiro em menos de uma hora, selecione Pre-Vis, Clipes, Cenas, Master ou Promo e deixe o Agente de Produção construir suas cenas, recuperar planos com falha e notificá-lo com um link privado /s/ da Screening Room quando estiver pronto.",
+    "showDetail": "Mostrar mais detalhes",
+    "hideDetail": "Ocultar detalhes",
+    "drawerBadge": "Orquestração Autônoma Cena a Cena",
+    "drawerTitle": "Menos de uma hora no roteiro. Horas de prompts manuais substituídas por uma execução autônoma.",
+    "cards": [
+      {
+        "badge": "Elimine 300+ prompts manuais",
+        "title": "< 1 hora no roteiro → Tempo livre de volta",
+        "description": "Evite digitar mais de 300 prompts individuais de imagem e vídeo em 27 cenas (12–20 planos por cena). Aperfeiçoe seu roteiro em menos de uma hora e recupere seu dia."
+      },
+      {
+        "badge": "Todas as 27 cenas ou por capítulo",
+        "title": "5 etapas completas de produção",
+        "description": "Selecione Pre-Vis, Clipes, Cenas, Master e Promo em um só construtor. O Agente gera referências de continuidade, áudio de diálogo/SFX/música, keyframes, clipes em movimento e trailers."
+      },
+      {
+        "badge": "Zero renderizações travadas",
+        "title": "Autorrecuperação + Fallback Creative Clips",
+        "description": "Otimiza automaticamente a direção dos planos e reexecuta tomadas com falha. Quando um plano dramático ainda atinge filtros de política do Google após a otimização, alterna para Creative Clips automaticamente."
+      },
+      {
+        "badge": "Controle total do diretor",
+        "title": "Checkpoints e links /s/ de Screening",
+        "description": "Execute 100% sem intervenção ou pause após o Pre-Vis ou cada cena. Receba notificações na frequência escolhida com um link direto /s/ da Screening Room pronto para revisão."
+      }
+    ],
+    "viewScript": "Ver roteiro do vídeo da Ana (30s)",
+    "hideScript": "Ocultar roteiro do vídeo da Ana (30s)",
+    "copyScript": "Copiar roteiro",
+    "copied": "Copiado",
+    "cta": "Iniciar Estúdio ($9)"
+  },
+  "studioAcademy": {
+    "eyebrow": "SceneFlow Studio Academy e Treinamento Just-In-Time",
+    "title": "Guiado em cada etapa. Domine o estúdio enquanto cria.",
+    "subtitle": "Nunca fique encarando uma linha do tempo em branco nem gaste créditos tentando adivinhar o próximo passo. Pressione ? em qualquer tela para abrir um Mapa Visual Just-In-Time (JIT) instantâneo e um checklist de 60 segundos com ações em um clique — ou siga cursos interativos do primeiro conceito ao master publicado.",
+    "showDetail": "Mostrar mais detalhes",
+    "hideDetail": "Ocultar detalhes",
+    "drawerBadge": "Poder de Estúdio de Hollywood · Sem Escola de Cinema",
+    "drawerTitle": "Mapas de tela interativos, checklists de 60 segundos e proteção de créditos integrados em cada sala",
+    "cards": [
+      {
+        "badge": "Sempre a 1 tecla de distância (?)",
+        "title": "Coach Contextual Just-In-Time (JIT)",
+        "description": "Pressione ? em qualquer tela para abrir um mapa visual instantâneo do seu espaço de trabalho ativo, um checklist de 60 segundos do que fazer a seguir e botões de 1 clique que acionam a ação exata no estúdio."
+      },
+      {
+        "badge": "4 cursos interativos guiados",
+        "title": "Simulador “Seu Primeiro Filme em 10 Minutos”",
+        "description": "Criado para contadores de histórias, autores e showrunners sem experiência em edição. Siga destaques interativos Spotlight X-Ray de uma ideia de 1 frase até um filme dublado, musicado e pronto para assistir."
+      },
+      {
+        "badge": "Economize até 70% dos créditos",
+        "title": "Proteção de créditos com Animatic Primeiro",
+        "description": "Cada sala inclui proteções de créditos em tempo real que mostram como validar um roteiro com 80+ de Audience Resonance e pré-visualizar um Animatic com vozes antes de renderizar clipes de vídeo."
+      },
+      {
+        "badge": "Incluído grátis em todos os planos",
+        "title": "4 cursos interativos integrados ao estúdio",
+        "description": "Domine Blueprint e Audience Resonance, o Cofre de Continuidade de Personagens e Cenários, Proteção de Créditos Animatic e Screening Room com dublagem em mais de 70 idiomas dentro do estúdio."
+      }
+    ],
+    "tryLiveMap": "Testar Mapa Visual JIT ao Vivo (Pinos 1–4)",
+    "hideLiveMap": "Ocultar Mapa Visual JIT ao Vivo",
+    "viewScript": "Ver roteiro de vídeo de 30s (Ana)",
+    "hideScript": "Ocultar roteiro de vídeo de 30s (Ana)",
+    "copyScript": "Copiar roteiro",
+    "copied": "Copiado",
+    "cta": "Iniciar Estúdio ($9)"
   }
 }

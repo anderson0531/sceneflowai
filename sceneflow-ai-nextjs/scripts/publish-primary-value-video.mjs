@@ -38,6 +38,10 @@ const SLOTS = {
   publish: {
     blobPath: 'gemini_generated_video_de9e365a.mp4',
   },
+  'studio-academy-en': {
+    blobPath: 'SceneFlow Studio Academy.mp4',
+    posterSlot: 'studio-academy',
+  },
 }
 
 function parseArgs(argv) {

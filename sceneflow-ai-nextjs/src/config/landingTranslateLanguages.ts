@@ -9,9 +9,9 @@ export type LandingTranslateLanguage = {
 
 /**
  * Single source of truth for UI locales the platform ships in the Landing Page
- * and Studio UI language selectors: English + the Top 5 global language markets
+ * and Studio UI language selectors: English + the Top 6 global language markets
  * aligned with Google AI compatibility (Spanish, Portuguese, Hindi, Simplified
- * Chinese, and Arabic).
+ * Chinese, Arabic, and Thai).
  *
  * Production output (dubbing, lip-sync, and regenerated dialogue & signage clips)
  * supports 70+ languages via `src/constants/languages.ts`.
@@ -23,6 +23,7 @@ export const LANDING_TRANSLATE_LANGUAGES: LandingTranslateLanguage[] = [
   { code: 'hi', name: 'हिन्दी', englishName: 'Hindi', region: 'Asia Pacific' },
   { code: 'zh-CN', name: '中文 (简体)', englishName: 'Simplified Chinese', region: 'Asia Pacific' },
   { code: 'ar', name: 'العربية', englishName: 'Arabic', region: 'Middle East & Africa' },
+  { code: 'th', name: 'ภาษาไทย', englishName: 'Thai', region: 'Asia Pacific' },
 ]
 
 /**
@@ -51,7 +52,6 @@ export const ALL_PLATFORM_LANGUAGES: LandingTranslateLanguage[] = [
   { code: 'ja', name: '日本語', englishName: 'Japanese', region: 'Asia Pacific' },
   { code: 'ko', name: '한국어', englishName: 'Korean', region: 'Asia Pacific' },
   { code: 'bn', name: 'বাংলা', englishName: 'Bengali', region: 'Asia Pacific' },
-  { code: 'th', name: 'ภาษาไทย', englishName: 'Thai', region: 'Asia Pacific' },
   { code: 'vi', name: 'Tiếng Việt', englishName: 'Vietnamese', region: 'Asia Pacific' },
   { code: 'id', name: 'Bahasa Indonesia', englishName: 'Indonesian', region: 'Asia Pacific' },
   { code: 'ms', name: 'Bahasa Melayu', englishName: 'Malay', region: 'Asia Pacific' },

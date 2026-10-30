@@ -18,6 +18,7 @@ const ILLUSTRATION_BASE = '/landing/primary-value'
 const DIRECTION_POSTER = `${ILLUSTRATION_BASE}/direction.webp`
 const PRODUCTION_AGENT_POSTER = `${ILLUSTRATION_BASE}/production-agent.webp`
 const PUBLISH_POSTER = `${ILLUSTRATION_BASE}/publish.webp`
+const STUDIO_ACADEMY_POSTER = `${ILLUSTRATION_BASE}/studio-academy.webp`
 
 const EMPTY_MEDIA: TwoModesMediaEntry = {
   imageUrl: '',
@@ -161,9 +162,33 @@ export const PRODUCTION_AGENT_MEDIA: TwoModesMediaEntry = {
   mp4Url: `${ILLUSTRATION_BASE}/production-agent-en.mp4?v=${PRODUCTION_AGENT_EN_VERSION}`,
 }
 
+/** Blob master for the SceneFlow Studio Academy hero walkthrough. */
+export const STUDIO_ACADEMY_VIDEO_BLOB_PATHS: Record<VideoLocaleId, string> = {
+  en: 'SceneFlow Studio Academy.mp4',
+  es: 'SceneFlow Studio Academy (Spanish).mp4',
+  zh: `SceneFlow Studio Academy (${LOCALE_FILENAME_LABELS.zh}).mp4`,
+  ar: `SceneFlow Studio Academy (${LOCALE_FILENAME_LABELS.ar}).mp4`,
+}
+
+export function studioAcademyVideoBlobPath(locale: VideoLocaleId): string {
+  return STUDIO_ACADEMY_VIDEO_BLOB_PATHS[locale]
+}
+
+const STUDIO_ACADEMY_EN_VERSION = '20261030'
+
+export const STUDIO_ACADEMY_MEDIA: TwoModesMediaEntry = {
+  imageUrl: '',
+  posterUrl: STUDIO_ACADEMY_POSTER,
+  webmUrl: `${ILLUSTRATION_BASE}/studio-academy-en.webm?v=${STUDIO_ACADEMY_EN_VERSION}`,
+  mp4Url: `${ILLUSTRATION_BASE}/studio-academy-en.mp4?v=${STUDIO_ACADEMY_EN_VERSION}`,
+}
+
 export function getPrimaryValueMedia(id: string): TwoModesMediaEntry {
   if (id === 'agent' || id === 'production-agent') {
     return PRODUCTION_AGENT_MEDIA
+  }
+  if (id === 'academy' || id === 'studio-academy') {
+    return STUDIO_ACADEMY_MEDIA
   }
   if ((PRIMARY_VALUE_MEDIA_IDS as readonly string[]).includes(id)) {
     return PRIMARY_VALUE_MEDIA[id as PrimaryValueMediaId]

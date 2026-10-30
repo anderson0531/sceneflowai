@@ -78,8 +78,16 @@ describe('matchAcceptLanguage', () => {
 })
 
 describe('language registry', () => {
-  it('ships English plus the top 5 Google AI language markets', () => {
-    expect(PLATFORM_LANGUAGES.map((l) => l.code)).toEqual(['en', 'es', 'pt', 'hi', 'zh-CN', 'ar'])
+  it('ships English plus the top 6 Google AI language markets', () => {
+    expect(PLATFORM_LANGUAGES.map((l) => l.code)).toEqual([
+      'en',
+      'es',
+      'pt',
+      'hi',
+      'zh-CN',
+      'ar',
+      'th',
+    ])
   })
 
   it('gives every language an endonym and an English exonym', () => {

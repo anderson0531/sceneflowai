@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState } from 'react'
+import React, { useCallback, useEffect, useRef, useState } from 'react'
 import { motion } from 'framer-motion'
 import {
   ArrowRight,
@@ -15,12 +15,24 @@ import {
   Film,
   GraduationCap,
   HelpCircle,
+  Loader2,
+  Maximize2,
+  Pause,
+  Play,
   PlayCircle,
   Sparkles,
+  Volume2,
+  VolumeX,
   Zap,
 } from 'lucide-react'
 import { useTranslations } from 'next-intl'
 import { Button } from '@/components/ui/Button'
+import {
+  openTwoModesOnPhoneOrTheater,
+  TwoModesTheaterModal,
+} from '@/components/landing/TwoModesTheaterModal'
+import { STUDIO_ACADEMY_MEDIA } from '@/config/landing/primaryValueMedia'
+import { useReducedMotion } from '@/hooks/useReducedMotion'
 import { cn } from '@/lib/utils'
 import {
   JIT_CONTEXT_GUIDES,
@@ -63,36 +75,7 @@ const SHOWCASE_SCREENS: {
   },
 ]
 
-const DETAIL_CARDS = [
-  {
-    icon: Compass,
-    badge: 'Always 1 Keypress Away (?)',
-    title: 'Context-Aware Just-In-Time (JIT) Coach',
-    description:
-      'Press ? on any screen to open an instant visual map of your active workspace, a 60-second checklist of what to do next, and 1-click buttons that trigger the exact studio action for you.',
-  },
-  {
-    icon: PlayCircle,
-    badge: '4 Guided Interactive Courses',
-    title: '“Your First Film in 10 Minutes” Simulator',
-    description:
-      'Built for storytellers, authors, and showrunners with zero editing experience. Follow interactive Spotlight X-Ray callouts from a 1-sentence concept to a voiced, scored, and playable film.',
-  },
-  {
-    icon: Coins,
-    badge: 'Save Up to 70% of Credits',
-    title: 'Animatic-First Credit Guardrails',
-    description:
-      'Every workspace includes real-time credit guardrails that show how to lock an 80+ Audience Resonance script and preview a voiced Keyframe Animatic before rendering motion video clips.',
-  },
-  {
-    icon: GraduationCap,
-    badge: 'Included Free With Every Plan',
-    title: '4 Interactive Studio Courses Built In',
-    description:
-      'Master Blueprint & Audience Resonance, the Character & Setting Continuity Vault, Animatic-First Credit Guardrails, and Screening Room & 70+ Language Dubbing right inside the studio.',
-  },
-] as const
+const DETAIL_CARD_ICONS = [Compass, PlayCircle, Coins, GraduationCap] as const
 
 const ANA_VIDEO_BLOCKS = [
   {
@@ -124,7 +107,11 @@ const ANA_VIDEO_BLOCKS = [
 ] as const
 
 export function StudioAcademySection() {
+  const t = useTranslations('studioAcademy')
+  const tHero = useTranslations('hero')
+  const tCommon = useTranslations('common')
   const tShowcase = useTranslations('productionShowcase')
+  const detailCards = t.raw('cards') as Array<{ badge: string; title: string; description: string }>
   const [showDetail, setShowDetail] = useState(false)
   const [showInteractiveMap, setShowInteractiveMap] = useState(false)
   const [showAnaScript, setShowAnaScript] = useState(false)
@@ -132,10 +119,115 @@ export function StudioAcademySection() {
   const [selectedContextId, setSelectedContextId] =
     useState<JitContextId>('blueprint')
 
+  const media = STUDIO_ACADEMY_MEDIA
+  const hasVideo = Boolean(media.webmUrl || media.mp4Url)
+  const prefersReducedMotion = useReducedMotion()
+  const videoRef = useRef<HTMLVideoElement>(null)
+  const [isPlaying, setIsPlaying] = useState(!prefersReducedMotion)
+  const [inViewport, setInViewport] = useState(true)
+  const [isMuted, setIsMuted] = useState(true)
+  const [showUnmutePrompt, setShowUnmutePrompt] = useState(true)
+  const [isTheaterOpen, setIsTheaterOpen] = useState(false)
+  const [isBuffering, setIsBuffering] = useState(hasVideo)
+
   const activeGuide =
     JIT_CONTEXT_GUIDES[selectedContextId] || JIT_CONTEXT_GUIDES.blueprint
   const signupUrl = getSignupUrlForTier('explorer')
   const anaHeroScript = getHeroSectionScript('academy')
+
+  useEffect(() => {
+    if (prefersReducedMotion) setIsPlaying(false)
+  }, [prefersReducedMotion])
+
+  useEffect(() => {
+    const video = videoRef.current
+    if (!video || !hasVideo || typeof IntersectionObserver === 'undefined') return
+    const observer = new IntersectionObserver(
+      (entries) => {
+        for (const entry of entries) {
+          setInViewport(entry.isIntersecting && entry.intersectionRatio >= 0.2)
+        }
+      },
+      { threshold: [0, 0.2, 0.5] }
+    )
+    observer.observe(video)
+    return () => observer.disconnect()
+  }, [hasVideo])
+
+  useEffect(() => {
+    const video = videoRef.current
+    if (!video || !hasVideo) return
+
+    const shouldPlay = isPlaying && inViewport && !isTheaterOpen && !prefersReducedMotion
+    video.muted = isTheaterOpen ? true : isMuted
+    if (!shouldPlay) {
+      video.pause()
+      return
+    }
+
+    void video.play().catch(() => {})
+  }, [
+    hasVideo,
+    inViewport,
+    isMuted,
+    isPlaying,
+    isTheaterOpen,
+    prefersReducedMotion,
+    media.mp4Url,
+    media.webmUrl,
+  ])
+
+  const unmuteWithSound = useCallback(() => {
+    const video = videoRef.current
+    if (video) {
+      video.muted = false
+      void video.play().catch(() => {})
+    }
+    setIsMuted(false)
+    setIsPlaying(true)
+    setShowUnmutePrompt(false)
+  }, [])
+
+  const togglePlay = () => {
+    const video = videoRef.current
+    if (!video) return
+
+    if (!video.paused) {
+      video.pause()
+      setIsPlaying(false)
+      return
+    }
+
+    void video.play().catch(() => {})
+    setIsPlaying(true)
+  }
+
+  const toggleMute = () => {
+    const video = videoRef.current
+    if (!video) return
+    const nextMuted = !isMuted
+    video.muted = nextMuted
+    setIsMuted(nextMuted)
+    if (!nextMuted) setShowUnmutePrompt(false)
+  }
+
+  const openTheater = useCallback(() => {
+    const openedNative = openTwoModesOnPhoneOrTheater(videoRef.current, () => setIsTheaterOpen(true))
+    if (openedNative) {
+      setIsMuted(false)
+      setShowUnmutePrompt(false)
+    }
+  }, [])
+
+  const closeTheater = useCallback(() => {
+    setIsTheaterOpen(false)
+    const video = videoRef.current
+    if (!video) return
+    video.muted = isMuted
+    if (isPlaying && !prefersReducedMotion) {
+      void video.play().catch(() => {})
+    }
+  }, [isMuted, isPlaying, prefersReducedMotion])
 
   const scrollToCheckout = () => {
     window.location.href = signupUrl
@@ -155,22 +247,113 @@ export function StudioAcademySection() {
     }
   }
 
+  const videoCaption =
+    'Ana in the SceneFlow studio beside a translucent Just-In-Time (JIT) workspace map with numbered callout pins'
+
   return (
-    <section
-      id={STUDIO_ACADEMY_SECTION_ID}
-      className="relative min-h-[64vh] scroll-mt-20 overflow-hidden bg-gray-950 text-white"
-    >
-      {/* Full-bleed Ana backdrop matching the Hero Sequence */}
-      <div className="absolute inset-0 overflow-hidden">
-        <img
-          src="/landing/primary-value/studio-academy.webp"
-          alt="Ana in the SceneFlow studio beside a translucent Just-In-Time (JIT) workspace map with numbered callout pins"
-          className="absolute inset-0 h-full w-full bg-black object-cover"
-          loading="lazy"
-        />
-        <div className="pointer-events-none absolute inset-0 z-[1] bg-black/45" />
-        <div className="pointer-events-none absolute inset-0 z-[1] bg-gradient-to-t from-black/85 via-black/35 to-black/45" />
-      </div>
+    <>
+      <section
+        id={STUDIO_ACADEMY_SECTION_ID}
+        className="relative min-h-[64vh] scroll-mt-20 overflow-hidden bg-gray-950 text-white"
+      >
+        {/* Full-bleed Ana video backdrop matching the Hero Sequence */}
+        {hasVideo ? (
+          <div className="absolute inset-0 overflow-hidden">
+            <video
+              ref={videoRef}
+              className="absolute inset-0 h-full w-full bg-black object-cover"
+              autoPlay={!prefersReducedMotion}
+              loop
+              muted={isMuted || isTheaterOpen}
+              playsInline
+              preload={prefersReducedMotion ? 'none' : 'metadata'}
+              poster={media.posterUrl || undefined}
+              aria-label={videoCaption}
+              onPlay={() => setIsPlaying(true)}
+              onPause={() => {
+                if (!isTheaterOpen) setIsPlaying(false)
+              }}
+              onWaiting={() => setIsBuffering(true)}
+              onCanPlay={() => {
+                setIsBuffering(false)
+                if (isPlaying && !isTheaterOpen && !prefersReducedMotion) {
+                  void videoRef.current?.play().catch(() => {})
+                }
+              }}
+              onPlaying={() => setIsBuffering(false)}
+            >
+              {media.webmUrl ? <source src={media.webmUrl} type="video/webm" /> : null}
+              {media.mp4Url ? <source src={media.mp4Url} type="video/mp4" /> : null}
+            </video>
+            <div className="pointer-events-none absolute inset-0 z-[1] bg-black/40" />
+            <div className="pointer-events-none absolute inset-0 z-[1] bg-gradient-to-t from-black/80 via-black/25 to-black/35" />
+          </div>
+        ) : null}
+
+        {hasVideo && isBuffering && !prefersReducedMotion && (
+          <div
+            className="pointer-events-none absolute inset-0 z-[2] flex items-center justify-center bg-black/20"
+            aria-hidden
+          >
+            <Loader2 className="h-10 w-10 animate-spin text-cyan-400/80" />
+          </div>
+        )}
+
+        {hasVideo && (
+          <div className="absolute inset-x-0 top-0 z-20 flex items-center gap-1.5 bg-gradient-to-b from-black/80 to-transparent px-4 pt-3 pb-8 sm:gap-2">
+            <div className="ms-auto flex items-center gap-1.5 sm:gap-2">
+              {isMuted && !isBuffering && (
+                showUnmutePrompt ? (
+                  <button
+                    type="button"
+                    onClick={unmuteWithSound}
+                    aria-label={tHero('playWithNarration')}
+                    className="flex h-8 w-8 shrink-0 items-center justify-center gap-1.5 rounded-full border border-cyan-400/40 bg-black/70 text-xs font-semibold text-white shadow-lg shadow-cyan-500/20 transition-colors hover:border-cyan-400/60 hover:bg-black/85 sm:h-auto sm:w-auto sm:px-2 sm:py-1 sm:text-sm"
+                  >
+                    <Volume2 className="h-4 w-4 shrink-0 text-cyan-400" aria-hidden />
+                    <span className="hidden whitespace-nowrap sm:inline">{tHero('playWithNarration')}</span>
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={unmuteWithSound}
+                    aria-label={tHero('tapToHear')}
+                    className="flex h-8 w-8 shrink-0 items-center justify-center gap-1.5 rounded-full border border-white/20 bg-black/60 text-xs font-medium text-gray-200 transition-colors hover:border-cyan-400/40 hover:text-white sm:h-auto sm:w-auto sm:px-2 sm:py-1"
+                  >
+                    <VolumeX className="h-4 w-4 shrink-0 text-cyan-400" aria-hidden />
+                    <span className="hidden whitespace-nowrap sm:inline">{tHero('tapToHear')}</span>
+                  </button>
+                )
+              )}
+
+              <button
+                type="button"
+                onClick={togglePlay}
+                className="flex h-8 w-8 shrink-0 items-center justify-center text-white transition hover:text-cyan-400"
+                aria-label={isPlaying ? tHero('pauseBackgroundVideo') : tHero('playBackgroundVideo')}
+              >
+                {isPlaying ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
+              </button>
+              <button
+                type="button"
+                onClick={toggleMute}
+                className="flex h-8 w-8 shrink-0 items-center justify-center text-white transition hover:text-cyan-400"
+                aria-label={isMuted ? tCommon('unmute') : tCommon('mute')}
+              >
+                {isMuted ? <VolumeX className="h-4 w-4" /> : <Volume2 className="h-4 w-4" />}
+              </button>
+              <button
+                type="button"
+                onClick={openTheater}
+                className="flex h-8 w-8 shrink-0 items-center justify-center gap-1.5 rounded-lg border border-white/15 bg-black/50 text-xs font-medium text-gray-200 transition-colors hover:border-cyan-400/40 hover:text-white sm:h-auto sm:w-auto sm:px-2 sm:py-1"
+                aria-label={tHero('fullscreen')}
+              >
+                <Maximize2 className="h-3.5 w-3.5 shrink-0" aria-hidden />
+                <span className="hidden whitespace-nowrap sm:inline">{tHero('fullscreen')}</span>
+              </button>
+            </div>
+          </div>
+        )}
 
       <div className="relative z-10 mx-auto flex min-h-[64vh] max-w-7xl flex-col justify-center px-4 py-16 sm:px-6 sm:py-20 lg:px-8">
         <motion.div
@@ -181,13 +364,13 @@ export function StudioAcademySection() {
           transition={{ duration: 0.6 }}
         >
           <p className="mb-4 text-xs font-semibold uppercase tracking-[0.2em] text-indigo-300">
-            SceneFlow Studio Academy &amp; Just-In-Time Training
+            {t('eyebrow')}
           </p>
           <h2 className="mx-auto max-w-4xl text-balance text-3xl font-bold text-white md:text-4xl lg:text-5xl">
-            Guided at every step. Master the studio as you create.
+            {t('title')}
           </h2>
           <p className="mx-auto mt-5 max-w-3xl text-balance text-base text-gray-100 sm:text-lg">
-            Never stare at a blank timeline or burn credits guessing what comes next. Press <code className="rounded bg-white/10 px-1.5 py-0.5 text-sm text-cyan-300">?</code> on any screen for an instant Just-In-Time (JIT) Screen Map and a 60-second checklist with one-click studio actions—or follow interactive courses from your first concept to a published master.
+            {t('subtitle')}
           </p>
 
           <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
@@ -198,7 +381,7 @@ export function StudioAcademySection() {
               className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-slate-950/70 px-4 py-2 text-xs font-semibold text-cyan-200 backdrop-blur-md transition hover:border-cyan-400/50 hover:bg-slate-900 hover:text-white sm:text-sm"
             >
               <GraduationCap className="h-4 w-4 text-cyan-400" aria-hidden />
-              <span>{showDetail ? 'Hide detail' : 'Show more detail'}</span>
+              <span>{showDetail ? t('hideDetail') : t('showDetail')}</span>
               {showDetail ? (
                 <ChevronUp className="h-4 w-4 text-cyan-300" aria-hidden />
               ) : (
@@ -219,17 +402,17 @@ export function StudioAcademySection() {
             <div className="mb-4 flex flex-col items-center gap-1.5 text-center">
               <span className="inline-flex items-center gap-1.5 rounded-full border border-cyan-400/30 bg-cyan-500/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-wider text-cyan-300">
                 <GraduationCap className="h-3.5 w-3.5" aria-hidden />
-                Hollywood Studio Power · Zero Film School Required
+                {t('drawerBadge')}
               </span>
               <h3 className="text-base font-semibold text-white sm:text-lg">
-                Interactive Screen Maps, 60-Second Checklists, and Credit Guardrails Built Into Every Room
+                {t('drawerTitle')}
               </h3>
             </div>
 
             {/* 4 Detail Cards */}
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-              {DETAIL_CARDS.map((card) => {
-                const Icon = card.icon
+              {detailCards.map((card, index) => {
+                const Icon = DETAIL_CARD_ICONS[index] ?? Compass
                 return (
                   <div
                     key={card.title}
@@ -278,9 +461,7 @@ export function StudioAcademySection() {
                   >
                     <Sparkles className="h-4 w-4 text-cyan-400" aria-hidden />
                     <span>
-                      {showInteractiveMap
-                        ? 'Hide Live JIT Visual Screen Map'
-                        : 'Try Live JIT Visual Screen Map (Pins 1–4)'}
+                      {showInteractiveMap ? t('hideLiveMap') : t('tryLiveMap')}
                     </span>
                     {showInteractiveMap ? (
                       <ChevronUp className="h-3.5 w-3.5" aria-hidden />
@@ -297,9 +478,7 @@ export function StudioAcademySection() {
                   >
                     <Film className="h-4 w-4 text-cyan-400" aria-hidden />
                     <span>
-                      {showAnaScript
-                        ? 'Hide 30s Video Script (Ana)'
-                        : 'View 30s Video Script (Ana)'}
+                      {showAnaScript ? t('hideScript') : t('viewScript')}
                     </span>
                     {showAnaScript ? (
                       <ChevronUp className="h-3.5 w-3.5" aria-hidden />
@@ -318,12 +497,12 @@ export function StudioAcademySection() {
                     {copiedScript ? (
                       <>
                         <Check className="h-3.5 w-3.5 text-emerald-400" aria-hidden />
-                        <span>Copied</span>
+                        <span>{t('copied')}</span>
                       </>
                     ) : (
                       <>
                         <Copy className="h-3.5 w-3.5 text-cyan-400" aria-hidden />
-                        <span>Copy script</span>
+                        <span>{t('copyScript')}</span>
                       </>
                     )}
                   </button>
@@ -471,7 +650,7 @@ export function StudioAcademySection() {
             className="bg-gradient-to-r from-indigo-600 via-purple-600 to-indigo-600 hover:opacity-90"
             onClick={scrollToCheckout}
           >
-            Launch Studio ($9)
+            {t('cta')}
             <ArrowRight className="ml-2 h-5 w-5" />
           </Button>
           <Button
@@ -485,7 +664,22 @@ export function StudioAcademySection() {
           </Button>
         </motion.div>
       </div>
-    </section>
+      </section>
+
+      {hasVideo && (
+        <TwoModesTheaterModal
+          open={isTheaterOpen}
+          onClose={closeTheater}
+          media={media}
+          caption={videoCaption}
+          pauseLabel={tCommon('pause')}
+          playLabel={tCommon('play')}
+          muteLabel={tCommon('mute')}
+          unmuteLabel={tCommon('unmute')}
+          soonLabel={tHero('soon')}
+        />
+      )}
+    </>
   )
 }
 

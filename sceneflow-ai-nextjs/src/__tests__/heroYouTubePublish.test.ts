@@ -5,11 +5,11 @@ import {
   getHeroYouTubePublishBundleByLocale,
   truncateYouTubeTitle,
 } from '@/config/landing/heroYouTubePublish'
-import { VIDEO_LOCALE_ORDER } from '@/config/landing/videoLocales'
+import { HERO_VIDEO_LOCALE_ORDER } from '@/config/landing/heroVideoLocales'
 
 describe('Hero YouTube publish metadata', () => {
-  it('defines bundles for all four hero locales', () => {
-    expect(HERO_YOUTUBE_PUBLISH_BUNDLES.map((bundle) => bundle.locale)).toEqual(VIDEO_LOCALE_ORDER)
+  it('defines bundles for all seven hero locales', () => {
+    expect(HERO_YOUTUBE_PUBLISH_BUNDLES.map((bundle) => bundle.locale)).toEqual(HERO_VIDEO_LOCALE_ORDER)
   })
 
   it('keeps titles within YouTube limit and uses SceneFlow prefix', () => {

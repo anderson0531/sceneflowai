@@ -3,8 +3,6 @@
  * Append #t=0.1 to skip black first frame when supported.
  */
 
-import type { VideoLocale } from '@/config/landing/videoLocales'
-import { landingLocaleToVideoLocale } from '@/config/landing/videoLocales'
 import {
   heroHlsFallbackMp4Object,
   heroHlsManifestObject,
@@ -14,7 +12,17 @@ import {
   type HeroNetworkContext,
 } from '@/lib/landing/heroPlaybackPolicy'
 
-export type HeroVideoLocaleId = 'en' | 'es' | 'zh' | 'ar'
+export type HeroVideoLocaleId = 'en' | 'es' | 'pt' | 'hi' | 'zh' | 'ar' | 'th'
+
+export const HERO_VIDEO_LOCALE_ORDER: HeroVideoLocaleId[] = [
+  'en',
+  'es',
+  'pt',
+  'hi',
+  'zh',
+  'ar',
+  'th',
+]
 
 export type HeroVideoLocale = {
   id: HeroVideoLocaleId
@@ -81,32 +89,44 @@ export function getHeroVideoFallbackMp4Url(locale: HeroVideoLocaleId): string | 
 export const HERO_VIDEO_BLOB_PATHS: Record<HeroVideoLocaleId, string> = {
   en: 'Hero Video (English).mp4',
   es: 'Hero Video (Spanish).mp4',
+  pt: 'Hero Video (Portuguese).mp4',
+  hi: 'Hero Video (Hindi).mp4',
   zh: 'Hero Video (Chinese).mp4',
   ar: 'Hero Video (Arabic).mp4',
+  th: 'Hero Video (Thai).mp4',
 }
 
 /** 720p +faststart web encodes from the current 4K masters (encode-hero-web-mp4). */
 export const HERO_VIDEO_WEB_720P_PATHS: Record<HeroVideoLocaleId, string> = {
   en: 'landing/hero/sceneflow-hero-en-720p.mp4',
   es: 'landing/hero/sceneflow-hero-es-720p.mp4',
+  pt: 'landing/hero/sceneflow-hero-pt-720p.mp4',
+  hi: 'landing/hero/sceneflow-hero-hi-720p.mp4',
   zh: 'landing/hero/sceneflow-hero-zh-720p.mp4',
   ar: 'landing/hero/sceneflow-hero-ar-720p.mp4',
+  th: 'landing/hero/sceneflow-hero-th-720p.mp4',
 }
 
 /** Optional 1080p web encodes for desktop / theater. */
 export const HERO_VIDEO_WEB_1080P_PATHS: Record<HeroVideoLocaleId, string> = {
   en: 'landing/hero/sceneflow-hero-en-1080p.mp4',
   es: 'landing/hero/sceneflow-hero-es-1080p.mp4',
+  pt: 'landing/hero/sceneflow-hero-pt-1080p.mp4',
+  hi: 'landing/hero/sceneflow-hero-hi-1080p.mp4',
   zh: 'landing/hero/sceneflow-hero-zh-1080p.mp4',
   ar: 'landing/hero/sceneflow-hero-ar-1080p.mp4',
+  th: 'landing/hero/sceneflow-hero-th-1080p.mp4',
 }
 
 /** 1080p VP9 encodes from the live 4K masters (not the watermarked MP4s). */
 export const HERO_VIDEO_WEB_WEBM_PATHS: Record<HeroVideoLocaleId, string> = {
   en: 'landing/hero/sceneflow-hero-en.webm',
   es: 'landing/hero/sceneflow-hero-es.webm',
+  pt: 'landing/hero/sceneflow-hero-pt.webm',
+  hi: 'landing/hero/sceneflow-hero-hi.webm',
   zh: 'landing/hero/sceneflow-hero-zh.webm',
   ar: 'landing/hero/sceneflow-hero-ar.webm',
+  th: 'landing/hero/sceneflow-hero-th.webm',
 }
 
 function heroSrc(path: string): string {
@@ -125,6 +145,7 @@ export const HERO_PUBLIC_POSTER_FALLBACK = '/images/hero-poster.webp'
 const HERO_PUBLIC_MEDIA_VERSION: Partial<Record<HeroVideoLocaleId, string>> = {
   en: '20261004',
   es: '20261005',
+  pt: '20261005',
   zh: '20261012',
   ar: '20261012',
 }
@@ -163,8 +184,11 @@ export function getHeroPublicVideoSources(locale: HeroVideoLocaleId): HeroPublic
 const HERO_VIDEO_LABELS: Record<HeroVideoLocaleId, { label: string; nativeLabel: string }> = {
   en: { label: 'English', nativeLabel: 'English' },
   es: { label: 'Spanish', nativeLabel: 'Español' },
+  pt: { label: 'Portuguese', nativeLabel: 'Português' },
+  hi: { label: 'Hindi', nativeLabel: 'हिन्दी' },
   zh: { label: 'Chinese', nativeLabel: '中文' },
   ar: { label: 'Arabic', nativeLabel: 'العربية' },
+  th: { label: 'Thai', nativeLabel: 'ไทย' },
 }
 
 /** Locales with a produced Blob master. Others render as disabled "Soon" pills. */
@@ -181,6 +205,16 @@ const PRODUCED_HERO_VIDEOS: Partial<
     poster: getHeroVideoPosterUrl('es'),
     hlsSrc: getHeroVideoHlsUrl('es'),
   },
+  pt: {
+    src: heroSrc(HERO_VIDEO_BLOB_PATHS.pt),
+    poster: getHeroVideoPosterUrl('pt'),
+    hlsSrc: getHeroVideoHlsUrl('pt'),
+  },
+  hi: {
+    src: heroSrc(HERO_VIDEO_BLOB_PATHS.hi),
+    poster: getHeroVideoPosterUrl('hi'),
+    hlsSrc: getHeroVideoHlsUrl('hi'),
+  },
   zh: {
     src: heroSrc(HERO_VIDEO_BLOB_PATHS.zh),
     poster: getHeroVideoPosterUrl('zh'),
@@ -190,6 +224,11 @@ const PRODUCED_HERO_VIDEOS: Partial<
     src: heroSrc(HERO_VIDEO_BLOB_PATHS.ar),
     poster: getHeroVideoPosterUrl('ar'),
     hlsSrc: getHeroVideoHlsUrl('ar'),
+  },
+  th: {
+    src: heroSrc(HERO_VIDEO_BLOB_PATHS.th),
+    poster: getHeroVideoPosterUrl('th'),
+    hlsSrc: getHeroVideoHlsUrl('th'),
   },
 }
 
@@ -216,10 +255,10 @@ export const HERO_VIDEO_LOCALES: HeroVideoLocale[] = (
 })
 
 export const HERO_VIDEO_MULTILANG_HINT =
-  'Hero dubs in 4 languages — full pipeline supports 70+ in Production Stage.'
+  'Hero dubs in 7 languages — full pipeline supports 70+ in Production Stage.'
 
 export const HERO_VIDEO_LANGUAGE_PROMPT =
-  'Choose English, Spanish, Chinese, or Arabic — same pipeline, new markets'
+  'Choose English, Spanish, Portuguese, Hindi, Chinese, Arabic, or Thai — same pipeline, new markets'
 
 export const HERO_VIDEO_LOCALE_STORAGE_KEY = 'sf-hero-video-locale'
 
@@ -230,8 +269,15 @@ export function getHeroVideoLocale(id: HeroVideoLocaleId): HeroVideoLocale | und
   return HERO_VIDEO_LOCALES.find((l) => l.id === id)
 }
 
+export type HeroPlayerVideoLocale = {
+  id: HeroVideoLocaleId
+  src: string
+  poster?: string
+  available: boolean
+}
+
 /** Map hero locale config into the shared video player model. */
-export function getHeroVideoLocalesAsVideoLocales(): VideoLocale[] {
+export function getHeroVideoLocalesAsVideoLocales(): HeroPlayerVideoLocale[] {
   return HERO_VIDEO_LOCALES.map(({ id, src, hlsSrc, poster, available }) => ({
     id,
     src: hlsSrc ?? src,
@@ -306,8 +352,11 @@ export function getSuggestedHeroLocaleFromBrowser(): HeroVideoLocaleId | null {
   const map: Record<string, HeroVideoLocaleId> = {
     en: 'en',
     es: 'es',
+    pt: 'pt',
+    hi: 'hi',
     zh: 'zh',
     ar: 'ar',
+    th: 'th',
   }
 
   for (const lang of candidates) {
@@ -319,14 +368,26 @@ export function getSuggestedHeroLocaleFromBrowser(): HeroVideoLocaleId | null {
   return null
 }
 
+/** Map landing UI locale to the matching hero video locale. */
+export function landingLocaleToHeroVideoLocale(landingLocale: string): HeroVideoLocaleId {
+  const cleaned = landingLocale.trim().toLowerCase()
+  if (cleaned.startsWith('zh')) return 'zh'
+  const base = cleaned.split('-')[0] as HeroVideoLocaleId
+  if (HERO_VIDEO_LOCALE_ORDER.includes(base)) {
+    return base
+  }
+  return DEFAULT_HERO_VIDEO_LOCALE
+}
+
 /**
  * Video dub for the hero player. Prefers the page locale (next-intl). Browser
  * language is only used when that context is missing.
  */
 export function resolveHeroVideoLocale(landingLocale?: string | null): HeroVideoLocaleId {
   if (landingLocale) {
-    const mapped = landingLocaleToVideoLocale(landingLocale)
+    const mapped = landingLocaleToHeroVideoLocale(landingLocale)
     if (getHeroVideoLocale(mapped)?.available) return mapped
+    return DEFAULT_HERO_VIDEO_LOCALE
   }
 
   return getSuggestedHeroLocaleFromBrowser() ?? DEFAULT_HERO_VIDEO_LOCALE
