@@ -22,13 +22,13 @@ import {
   Volume2,
   VolumeX,
 } from 'lucide-react'
-import { useTranslations } from 'next-intl'
+import { useLocale, useTranslations } from 'next-intl'
 import { Button } from '@/components/ui/Button'
 import {
   openTwoModesOnPhoneOrTheater,
   TwoModesTheaterModal,
 } from '@/components/landing/TwoModesTheaterModal'
-import { PRODUCTION_AGENT_MEDIA } from '@/config/landing/primaryValueMedia'
+import { getPrimaryValueMedia } from '@/config/landing/primaryValueMedia'
 import { useReducedMotion } from '@/hooks/useReducedMotion'
 import { getSignupUrlForTier } from '@/lib/billing/checkoutIntent'
 import {
@@ -92,7 +92,8 @@ export function ProductionAgentSection() {
   const [showAnaScript, setShowAnaScript] = useState(false)
   const [copiedScript, setCopiedScript] = useState(false)
 
-  const media = PRODUCTION_AGENT_MEDIA
+  const landingLocale = useLocale()
+  const media = getPrimaryValueMedia('agent', landingLocale)
   const hasVideo = Boolean(media.webmUrl || media.mp4Url)
   const prefersReducedMotion = useReducedMotion()
   const videoRef = useRef<HTMLVideoElement>(null)
@@ -230,6 +231,7 @@ export function ProductionAgentSection() {
         {hasVideo ? (
           <div className="absolute inset-0 overflow-hidden">
             <video
+              key={landingLocale}
               ref={videoRef}
               className="absolute inset-0 h-full w-full bg-black object-cover"
               autoPlay={!prefersReducedMotion}

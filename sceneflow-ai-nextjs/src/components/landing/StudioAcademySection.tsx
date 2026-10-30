@@ -25,13 +25,13 @@ import {
   VolumeX,
   Zap,
 } from 'lucide-react'
-import { useTranslations } from 'next-intl'
+import { useLocale, useTranslations } from 'next-intl'
 import { Button } from '@/components/ui/Button'
 import {
   openTwoModesOnPhoneOrTheater,
   TwoModesTheaterModal,
 } from '@/components/landing/TwoModesTheaterModal'
-import { STUDIO_ACADEMY_MEDIA } from '@/config/landing/primaryValueMedia'
+import { getPrimaryValueMedia } from '@/config/landing/primaryValueMedia'
 import { useReducedMotion } from '@/hooks/useReducedMotion'
 import { cn } from '@/lib/utils'
 import {
@@ -163,7 +163,8 @@ export function StudioAcademySection() {
   const [selectedContextId, setSelectedContextId] =
     useState<JitContextId>('blueprint')
 
-  const media = STUDIO_ACADEMY_MEDIA
+  const landingLocale = useLocale()
+  const media = getPrimaryValueMedia('academy', landingLocale)
   const hasVideo = Boolean(media.webmUrl || media.mp4Url)
   const prefersReducedMotion = useReducedMotion()
   const videoRef = useRef<HTMLVideoElement>(null)
@@ -304,6 +305,7 @@ export function StudioAcademySection() {
         {hasVideo ? (
           <div className="absolute inset-0 overflow-hidden">
             <video
+              key={landingLocale}
               ref={videoRef}
               className="absolute inset-0 h-full w-full bg-black object-cover"
               autoPlay={!prefersReducedMotion}

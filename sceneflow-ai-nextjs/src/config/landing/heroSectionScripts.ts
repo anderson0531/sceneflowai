@@ -177,6 +177,242 @@ const SCRIPT_BY_ID: Record<HeroVideoScript['id'], HeroVideoScript> = {
   academy: HERO_SECTION_SCRIPTS[4],
 }
 
+export type HeroDubLocaleId = 'en' | 'es' | 'pt' | 'hi' | 'zh' | 'ar' | 'th'
+
+export const HERO_DUB_LOCALE_IDS: readonly HeroDubLocaleId[] = [
+  'en',
+  'es',
+  'pt',
+  'hi',
+  'zh',
+  'ar',
+  'th',
+] as const
+
+/**
+ * Canonical voice profile for CHAR_ANA (Ana, 32, warm, confident, composed creative director).
+ * Uses Sarah/Bella (EXAVITQu4vr4xnSDxMaL) on ElevenLabs v3 multilingual and Gemini Kore fallback.
+ */
+export const ANA_CHARACTER_VOICE = {
+  characterId: 'CHAR_ANA',
+  name: 'Ana',
+  elevenLabsVoiceId: 'EXAVITQu4vr4xnSDxMaL',
+  elevenLabsModelId: 'eleven_v3',
+  geminiVoiceId: 'gemini-Kore',
+  directorNotes:
+    'Ana, 32-year-old warm, confident, calm female creative director and studio mentor; steady cinematic pacing.',
+} as const
+
+/**
+ * Translated 3-beat narration scripts for each of the 5 hero sequence sections.
+ * Brand terms (SceneFlow, Production Agent, Creative Clips, Screening Room, Just-In-Time, Academy)
+ * remain intact across locales per dubbing rules.
+ */
+export const HERO_SECTION_DUB_BEATS: Record<
+  HeroVideoScript['id'],
+  Record<HeroDubLocaleId, readonly [string, string, string]>
+> = {
+  friction: {
+    en: [
+      HERO_SECTION_SCRIPTS[0].beats[0].narration,
+      HERO_SECTION_SCRIPTS[0].beats[1].narration,
+      HERO_SECTION_SCRIPTS[0].beats[2].narration,
+    ],
+    es: [
+      'Prompts en una pestaña. Música en otra. Narración grabada aparte y arrastrada a una línea de tiempo que no conoce la escena.',
+      'SceneFlow es un solo flujo. La serie o el máster de 90 minutos se crea en el mismo estudio que escribe el prompt, pone la música y alinea la voz.',
+      'Cuando una escena o capítulo está listo, publicas ese corte. No reconstruyes el prompt, la música ni la voz desde cero.',
+    ],
+    pt: [
+      'Prompts em uma aba. Música em outra. Narração gravada à parte e levada para uma timeline que não conhece a cena.',
+      'O SceneFlow é um único pipeline. A série ou o master de 90 minutos nasce no mesmo estúdio que cria o prompt, a música e a narração no ritmo.',
+      'Quando uma cena ou capítulo fica pronto, você publica esse corte, sem recriar prompt, trilha e voz do zero.',
+    ],
+    hi: [
+      'एक टैब में क्लिप प्रॉम्प्ट। दूसरे में संगीत। कहीं और रिकॉर्ड किया नैरेशन, ऐसी टाइमलाइन पर जो सीन को जानती ही नहीं।',
+      'SceneFlow एक ही पाइपलाइन है। सीरीज़ या 90 मिनट का मास्टर उसी स्टूडियो में बनता है जो प्रॉम्प्ट, संगीत और नैरेशन को बीट पर रखता है।',
+      'जब सीन या अध्याय तैयार हो, आप वही कट पब्लिश करते हैं। प्रॉम्प्ट, संगीत और आवाज़ को शून्य से दोबारा नहीं बनाते।',
+    ],
+    zh: [
+      '一个标签页写提示词，另一个找音乐，旁白又在别处录制，最后拖进一条根本不懂剧情的时间线。',
+      'SceneFlow 是一条完整流水线。无论是剧集还是 90 分钟母带，都在同一工作室里完成提示词编写、配乐铺设与旁白卡点。',
+      '当一场戏或一个章节就绪，直接发布成片，无需从零重建提示词、配乐与人声。',
+    ],
+    ar: [
+      'أوامر المشاهد في نافذة، والموسيقى في أخرى، والسرد يُسجَّل منفصلاً ثم يُسحب إلى خط زمني لا يعرف المشهد.',
+      'SceneFlow خط إنتاج واحد. المسلسل أو الماستر ذو 90 دقيقة يُبنى في الاستوديو نفسه الذي يكتب الأمر ويضع الموسيقى ويضبط السرد.',
+      'وعندما يجهز مشهد أو فصل، تنشر تلك النسخة فوراً دون إعادة بناء الأوامر أو الموسيقى أو الصوت.',
+    ],
+    th: [
+      'เขียนพรอมต์ในแท็บหนึ่ง ทำเพลงอีกแท็บ อัดเสียงบรรยายที่อื่น แล้วลากใส่ไทม์ไลน์ที่ไม่เข้าใจซีน',
+      'SceneFlow คือไปป์ไลน์เดียว ทั้งซีรีส์หรือมาสเตอร์ 90 นาทีสร้างในสตูดิโอเดียวที่เขียนพรอมต์ วางเพลง และล็อกเสียงตรงจังหวะ',
+      'เมื่อซีนหรือบทพร้อม คุณเผยแพร่คัตนั้นทันที โดยไม่ต้องสร้างพรอมต์ ดนตรี และเสียงใหม่ตั้งแต่ต้น',
+    ],
+  },
+  control: {
+    en: [
+      HERO_SECTION_SCRIPTS[1].beats[0].narration,
+      HERO_SECTION_SCRIPTS[1].beats[1].narration,
+      HERO_SECTION_SCRIPTS[1].beats[2].narration,
+    ],
+    es: [
+      'Diriges la toma en lenguaje natural: quién está en cuadro, dónde se ubica y cuál es el momento.',
+      'La dirección de toma escribe el prompt de imagen y video. No vuelves a teclear la escena en un generador.',
+      'Música y narración van al pulso. Las escuchas en el animatic, ajustas la toma y solo entonces inviertes en movimiento.',
+    ],
+    pt: [
+      'Você dirige o plano em linguagem simples: quem está no quadro, onde fica e qual é o momento.',
+      'A direção de cena escreve o prompt da imagem e do clipe. Você não redigita a cena em outro gerador.',
+      'Música e narração entram no ritmo. Você ouve no animatic, ajusta o plano e só então investe em movimento.',
+    ],
+    hi: [
+      'आप सरल भाषा में शॉट निर्देशित करते हैं — फ्रेम में कौन है, कहाँ खड़ा है, और पल क्या है।',
+      'शॉट डायरेक्शन खुद स्टिल और क्लिप प्रॉम्प्ट लिखता है। आपको जनरेटर में शॉट दोबारा टाइप नहीं करना पड़ता।',
+      'संगीत और नैरेशन बीट पर बैठते हैं। एनिमैटिक में सुनें, ज़रूरत हो तो शॉट बदलें, और तभी मोशन पर खर्च करें।',
+    ],
+    zh: [
+      '你用自然语言导演镜头：画面里有谁、站在哪里、此刻发生什么。',
+      '镜头指令会自动生成剧照与视频提示词，无需在生成器里反复重新输入。',
+      '配乐与旁白精准卡在节拍上。先在动态分镜里试听修改，确认无误后再为视频渲染投入积分。',
+    ],
+    ar: [
+      'تُخرج اللقطة بلغة بسيطة: من في الإطار، أين يقف، وما هي اللحظة.',
+      'توجيه اللقطة يكتب أمر الصورة والفيديو تلقائياً دون إعادة كتابته في مولد آخر.',
+      'الموسيقى والسرد على الإيقاع. تسمعهما في الأنيماتيك وتعدّل اللقطة، ثم تنفق على الحركة فقط.',
+    ],
+    th: [
+      'คุณกำกับช็อตด้วยภาษาธรรมดา ใครอยู่ในเฟรม ยืนตรงไหน และโมเมนต์คืออะไร',
+      'คำสั่งกำกับช็อตเขียนพรอมต์ภาพนิ่งและวิดีโอให้อัตโนมัติ ไม่ต้องพิมพ์ซ้ำในเครื่องมืออื่น',
+      'คิวเพลงและเสียงบรรยายลงจังหวะพอดี ฟังในแอนิเมติก แก้ช็อตให้ถูกใจ แล้วค่อยใช้เครดิตสร้างวิดีโอ',
+    ],
+  },
+  agent: {
+    en: [
+      HERO_SECTION_SCRIPTS[2].beats[0].narration,
+      HERO_SECTION_SCRIPTS[2].beats[1].narration,
+      HERO_SECTION_SCRIPTS[2].beats[2].narration,
+    ],
+    es: [
+      '27 escenas exigen más de 300 prompts manuales. Con Production Agent, afinas el guion en menos de una hora y lanzas todo.',
+      'El Agente recorre cada escena: fija referencias, coloca voz y música, genera cuadros, optimiza prompts y usa Creative Clips ante filtros.',
+      'Define controles o aléjate. Al terminar el corte, llega a tu móvil un enlace privado al Screening Room listo para revisar.',
+    ],
+    pt: [
+      '27 cenas exigem mais de 300 prompts manuais. Com o Production Agent, você refina o roteiro em menos de uma hora e inicia tudo.',
+      'O Agente percorre cada cena: trava referências, aplica voz e música, gera quadros, otimiza prompts e usa Creative Clips se necessário.',
+      'Defina checkpoints ou afaste-se. Quando o corte termina, chega ao seu celular um link privado da Screening Room.',
+    ],
+    hi: [
+      '27 सीन में 300 से ज़्यादा मैनुअल प्रॉम्प्ट लगते हैं। Production Agent के साथ एक घंटे से कम में स्क्रिप्ट निखारें और बिल्ड शुरू करें।',
+      'एजेंट हर सीन खुद बनाता है — रेफरेंस लॉक करता है, नैरेशन व संगीत लगाता है, स्टिल्स बनाता है और पॉलिसी फ़िल्टर पर Creative Clips चुनता है।',
+      'चेकपॉइंट सेट करें या काम छोड़ दें। कट तैयार होते ही फ़ोन पर निजी Screening Room लिंक आ जाता है।',
+    ],
+    zh: [
+      '27 场戏通常要 300 多个手动提示词。有了 Production Agent，不到一小时打磨剧本即可一键启动构建。',
+      '智能体自动完成每场戏：锁定参考、铺设旁白配乐、生成剧照、优化提示词，并在受限时切换 Creative Clips。',
+      '可设检查点或完全放手。成片完成后，手机会收到专属 Screening Room 审片链接通知。',
+    ],
+    ar: [
+      'إنتاج 27 مشهداً يتطلب أكثر من 300 أمر يدوي. مع Production Agent تُتقن النص في أقل من ساعة وتطلق البناء.',
+      'يمر الوكيل على كل مشهد: يثبّت المراجع، يضع السرد والموسيقى، يولّد الصور، ويتحول إلى Creative Clips عند قيود السياسات.',
+      'ضع نقاط مراجعة أو اتركه يعمل. وعند اكتمال المونتاج يصلك إشعار برابط خاص إلى Screening Room.',
+    ],
+    th: [
+      'งาน 27 ซีนต้องใช้พรอมต์กว่า 300 รายการ ด้วย Production Agent คุณขัดเกลาบทไม่ถึงชั่วโมงแล้วกดเริ่มสร้างได้ทันที',
+      'เอเจนต์จัดการทุกซีนอัตโนมัติ ล็อกภาพอ้างอิง วางเสียงและดนตรี สร้างภาพนิ่ง และสลับใช้ Creative Clips เมื่อติดตัวกรอง',
+      'ตั้งจุดตรวจเช็กหรือปล่อยระบบทำงานจนจบ เมื่อเสร็จแล้ว ลิงก์ Screening Room ส่วนตัวจะแจ้งเตือนเข้ามือถือทันที',
+    ],
+  },
+  cut: {
+    en: [
+      HERO_SECTION_SCRIPTS[3].beats[0].narration,
+      HERO_SECTION_SCRIPTS[3].beats[1].narration,
+      HERO_SECTION_SCRIPTS[3].beats[2].narration,
+    ],
+    es: [
+      'La escena que exportas ya incluye imagen, música y narración. El prompt se escribió con la toma, no se pegó después.',
+      'Descarga el máster y envíalo tú mismo, o publica una escena o capítulo mientras el corte largo sigue en marcha.',
+      'Antes de salir al público, míralo en el Screening Room. La red, si te la ganas, es una invitación, no un estante abierto.',
+    ],
+    pt: [
+      'A cena exportada já traz imagem, música e narração. O prompt foi escrito junto com o plano, não colado depois.',
+      'Baixe o master e publique por conta própria, ou lance uma cena ou capítulo enquanto o corte longo segue em produção.',
+      'Antes de ir ao público, assista na Screening Room. A rede, quando conquistada, é um convite — não uma prateleira aberta.',
+    ],
+    hi: [
+      'एक्सपोर्ट किए गए सीन में तस्वीर, संगीत और नैरेशन साथ होते हैं। क्लिप प्रॉम्प्ट शॉट के साथ लिखा गया था, बाद में पेस्ट नहीं हुआ।',
+      'मास्टर डाउनलोड कर खुद भेजें, या लंबा कट बनते समय ही कोई तैयार सीन या अध्याय पब्लिश कर दें।',
+      'पब्लिक फ़ीड से पहले इसे Screening Room में देखें। यह नेटवर्क कोई खुला शेल्फ़ नहीं, गुणवत्ता से मिला निमंत्रण है।',
+    ],
+    zh: [
+      '导出的每一场戏都自带画面、配乐与旁白。视频提示词与镜头同步生成，而非事后拼贴。',
+      '你可以下载母带自主发行，也能在长片制作途中先行发布已完成的单场戏或章节。',
+      '公开发布前，先在 Screening Room 审片。展映网络凭品质受邀加入，而非随意上架的货架。',
+    ],
+    ar: [
+      'المشهد الذي تصدّره يحمل الصورة والموسيقى والسرد معاً، إذ كُتب أمر اللقطة مع المشهد نفسه.',
+      'حمّل الماستر وانشره بنفسك، أو انشر مشهداً أو فصلاً مكتملاً بينما يتواصل العمل على النسخة الطويلة.',
+      'وقبل النشر العام، شاهده في Screening Room. فالشبكة دعوة تُكتسب بالجودة وليست رفاً مفتوحاً.',
+    ],
+    th: [
+      'ซีนที่ส่งออกมีครบทั้งภาพ ดนตรี และเสียงบรรยาย พรอมต์ถูกเขียนพร้อมช็อต ไม่ใช่แปะทีหลัง',
+      'ดาวน์โหลดมาสเตอร์ไปเผยแพร่เอง หรือปล่อยซีนและบทที่เสร็จก่อนระหว่างรอคัตเต็มก็ได้',
+      'ก่อนออกสู่สาธารณะ รับชมใน Screening Room เครือข่ายของเราคือคำเชิญจากคุณภาพงาน ไม่ใช่ชั้นวางเปิดทั่วไป',
+    ],
+  },
+  academy: {
+    en: [
+      HERO_SECTION_SCRIPTS[4].beats[0].narration,
+      HERO_SECTION_SCRIPTS[4].beats[1].narration,
+      HERO_SECTION_SCRIPTS[4].beats[2].narration,
+    ],
+    es: [
+      'Nunca miras una pantalla vacía sin saber qué sigue. Pulsa interrogación y el mapa Just-In-Time resaltará los controles de tu etapa.',
+      'Una lista de 60 segundos activa el siguiente paso en un clic, y los protectores de créditos fijan voz, música y animatic antes del video.',
+      'Recorre cuatro cursos interactivos de Academy en el estudio: de una idea en una frase a un máster completo, sin escuela de cine.',
+    ],
+    pt: [
+      'Você nunca encara uma tela vazia sem saber o próximo passo. Pressione interrogação e o mapa Just-In-Time destacará os controles da etapa.',
+      'Um checklist de 60 segundos aciona o próximo passo em um clique, garantindo travar voz, música e animatic antes de gastar com vídeo.',
+      'Explore quatro cursos interativos da Academy no estúdio — de uma ideia em uma frase a um master completo, sem escola de cinema.',
+    ],
+    hi: [
+      'आप कभी खाली स्क्रीन देखकर उलझते नहीं। प्रश्नचिह्न दबाएँ और Just-In-Time मैप आपके चरण के सटीक कंट्रोल्स दिखा देगा।',
+      '60 सेकंड की चेकलिस्ट एक क्लिक में अगला कदम चलाती है, और क्रेडिट गार्डरेल्स मोशन से पहले नैरेशन, संगीत व एनिमैटिक लॉक कराते हैं।',
+      'स्टूडियो में चार इंटरैक्टिव Academy कोर्सेज़ पूरे करें — एक वाक्य के विचार से तैयार मास्टर तक, बिना फ़िल्म स्कूल के।',
+    ],
+    zh: [
+      '你永远不会面对空白界面不知所措。按下问号键，Just-In-Time 视觉地图就会高亮当前阶段的精确控件。',
+      '60 秒引导清单支持一键执行下一步，积分护栏则确保在渲染视频前先锁定旁白、配乐与动态分镜。',
+      '在工作室内体验四门互动 Academy 课程——无需电影学院背景，也能从一句话灵感做出完整成片。',
+    ],
+    ar: [
+      'لن تقف أمام شاشة فارغة متسائلاً عما يلي. اضغط علامة الاستفهام لتُبرز خريطة Just-In-Time عناصر التحكم لمرحلتك.',
+      'قائمة في 60 ثانية تطلق الخطوة التالية بنقرة، وتضمن حواجز الرصيد تثبيت السرد والموسيقى والأنيماتيك قبل الفيديو.',
+      'خُض أربع دورات Academy تفاعلية داخل الاستوديو — من فكرة في جملة إلى ماستر كامل دون دراسة سينما.',
+    ],
+    th: [
+      'ไม่ต้องจ้องหน้าจอว่างเปล่าโดยไม่รู้ขั้นตอนต่อไป กดเครื่องหมายคำถาม แล้วแผนที่ Just-In-Time จะชี้ปุ่มควบคุมทันที',
+      'เช็กลิสต์ 60 วินาทีสั่งงานถัดไปในคลิกเดียว พร้อมระบบดูแลเครดิตให้ล็อกเสียง ดนตรี และแอนิเมติกก่อนสร้างวิดีโอ',
+      'เรียนรู้สี่คอร์สโต้ตอบของ Academy ในสตูดิโอ จากไอเดียประโยคเดียวสู่มาสเตอร์สมบูรณ์แบบ โดยไม่ต้องจบโรงเรียนภาพยนตร์',
+    ],
+  },
+}
+
+export function getHeroSectionDubBeats(
+  id: HeroVideoScript['id'],
+  locale: HeroDubLocaleId
+): readonly [string, string, string] {
+  return HERO_SECTION_DUB_BEATS[id][locale] ?? HERO_SECTION_DUB_BEATS[id].en
+}
+
+export function getHeroSectionDubNarration(
+  id: HeroVideoScript['id'],
+  locale: HeroDubLocaleId
+): string {
+  return getHeroSectionDubBeats(id, locale).join(' ')
+}
+
 export function getHeroSectionScript(id: HeroVideoScript['id']): HeroVideoScript {
   return SCRIPT_BY_ID[id]
 }

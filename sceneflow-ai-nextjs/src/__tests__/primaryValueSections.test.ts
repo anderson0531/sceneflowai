@@ -1,9 +1,15 @@
-import { readFileSync } from 'fs'
+import { existsSync, readFileSync } from 'fs'
 import { join } from 'path'
 import { describe, it, expect } from 'vitest'
 import enMessages from '../../messages/en.json'
 import { DIRECT_CONTROL_COPY } from '@/config/landing/directControlCopy'
 import { PUBLISH_CUT_COPY } from '@/config/landing/publishCutCopy'
+import {
+  ANA_CHARACTER_VOICE,
+  HERO_DUB_LOCALE_IDS,
+  HERO_SECTION_DUB_BEATS,
+  getHeroSectionDubNarration,
+} from '@/config/landing/heroSectionScripts'
 import {
   DIRECT_CONTROL_VIDEO_BLOB_PATHS,
   PRIMARY_VALUE_MEDIA,
@@ -121,7 +127,9 @@ describe('primary value sections', () => {
 
     const locales = getDirectControlVideoLocales()
     expect(locales.map((locale) => locale.id)).toEqual([...VIDEO_LOCALE_ORDER])
-    expect(locales.filter((locale) => locale.available).map((locale) => locale.id)).toEqual(['en'])
+    expect(locales.filter((locale) => locale.available).map((locale) => locale.id)).toEqual([
+      ...VIDEO_LOCALE_ORDER,
+    ])
     for (const id of VIDEO_LOCALE_ORDER) {
       expect(DIRECT_CONTROL_VIDEO_BLOB_PATHS[id]).toBe(directControlVideoBlobPath(id))
     }
@@ -144,7 +152,7 @@ describe('primary value sections', () => {
     const publishLocales = getPublishCutVideoLocales()
     expect(publishLocales.map((locale) => locale.id)).toEqual([...VIDEO_LOCALE_ORDER])
     expect(publishLocales.filter((locale) => locale.available).map((locale) => locale.id)).toEqual([
-      'en',
+      ...VIDEO_LOCALE_ORDER,
     ])
     for (const id of VIDEO_LOCALE_ORDER) {
       expect(PUBLISH_CUT_VIDEO_BLOB_PATHS[id]).toBe(publishCutVideoBlobPath(id))
@@ -164,5 +172,43 @@ describe('primary value sections', () => {
     expect(publishCutVideoBlobPath('es')).toBe('The Cut (Spanish).mp4')
     expect(publishCutVideoBlobPath('zh')).toBe('The Cut (Chinese).mp4')
     expect(publishCutVideoBlobPath('ar')).toBe('The Cut (Arabic).mp4')
+
+    for (const loc of ['es', 'pt', 'hi', 'zh-CN', 'ar', 'th'] as const) {
+      const code = loc === 'zh-CN' ? 'zh' : loc
+      expect(getPrimaryValueMedia('direction', loc).webmUrl).toBe(
+        `/landing/primary-value/direction-${code}.webm?v=20261030`
+      )
+      expect(getPrimaryValueMedia('agent', loc).webmUrl).toBe(
+        `/landing/primary-value/production-agent-${code}.webm?v=20261030`
+      )
+      expect(getPrimaryValueMedia('publish', loc).webmUrl).toBe(
+        `/landing/primary-value/publish-${code}.webm?v=20261030`
+      )
+      expect(getPrimaryValueMedia('academy', loc).webmUrl).toBe(
+        `/landing/primary-value/studio-academy-${code}.webm?v=20261030`
+      )
+    }
+
+    expect(ANA_CHARACTER_VOICE.characterId).toBe('CHAR_ANA')
+    expect(ANA_CHARACTER_VOICE.elevenLabsVoiceId).toBe('EXAVITQu4vr4xnSDxMaL')
+    for (const sectionId of ['friction', 'control', 'agent', 'cut', 'academy'] as const) {
+      for (const locale of HERO_DUB_LOCALE_IDS) {
+        expect(HERO_SECTION_DUB_BEATS[sectionId][locale]).toHaveLength(3)
+        expect(getHeroSectionDubNarration(sectionId, locale).length).toBeGreaterThan(20)
+      }
+    }
+
+    for (const locale of HERO_DUB_LOCALE_IDS) {
+      expect(existsSync(join(ROOT, `public/landing/two-modes/friction-${locale}.mp4`))).toBe(true)
+      expect(existsSync(join(ROOT, `public/landing/two-modes/friction-${locale}.webm`))).toBe(true)
+      for (const slot of ['direction', 'production-agent', 'publish', 'studio-academy'] as const) {
+        expect(existsSync(join(ROOT, `public/landing/primary-value/${slot}-${locale}.mp4`))).toBe(
+          true
+        )
+        expect(existsSync(join(ROOT, `public/landing/primary-value/${slot}-${locale}.webm`))).toBe(
+          true
+        )
+      }
+    }
   })
 })

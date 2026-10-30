@@ -44,7 +44,7 @@ export function PrimaryValueBackdrop({
   sectionId: string
   namespace: PrimaryValueNamespace
   hashAliases?: readonly string[]
-  getMedia: (id: string) => TwoModesMediaEntry
+  getMedia: (id: string, locale?: string) => TwoModesMediaEntry
   /** When set, the section plays a dubbed clip and shows the hero language control. */
   videoLocales?: TwoModesVideoLocale[]
 }) {
@@ -64,7 +64,7 @@ export function PrimaryValueBackdrop({
   const activeLocale = videoLocales?.find(
     (locale) => locale.id === activeLocaleId && locale.available
   )
-  const fallbackMedia = getMedia(comparison.id)
+  const fallbackMedia = getMedia(comparison.id, landingLocale)
   const media: TwoModesMediaEntry = activeLocale
     ? {
         imageUrl: '',
@@ -220,7 +220,7 @@ export function PrimaryValueBackdrop({
         {hasVideo ? (
           <div className="absolute inset-0 overflow-hidden">
             <video
-              key={videoLocales ? activeLocaleId : 'single'}
+              key={videoLocales ? activeLocaleId : landingLocale}
               ref={videoRef}
               className="absolute inset-0 h-full w-full bg-black object-cover"
               autoPlay={!prefersReducedMotion}

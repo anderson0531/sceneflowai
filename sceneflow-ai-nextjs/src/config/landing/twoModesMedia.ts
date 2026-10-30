@@ -4,6 +4,11 @@
  */
 
 import {
+  HERO_VIDEO_LOCALE_ORDER,
+  landingLocaleToHeroVideoLocale,
+  type HeroVideoLocaleId,
+} from '@/config/landing/heroVideoLocales'
+import {
   videoUrl,
   VIDEO_LOCALE_ORDER,
   type VideoLocale,
@@ -60,33 +65,79 @@ export function twoModesVideoBlobPath(locale: VideoLocaleId): string {
   return TWO_MODES_VIDEO_BLOB_PATHS[locale]
 }
 
-/** The friction section ships one English cut. */
-const PRODUCED_LOCALES = new Set<VideoLocaleId>(['en'])
+/** The friction section ships English plus 6 dubbed locales. */
+const PRODUCED_LOCALES = new Set<VideoLocaleId>(['en', 'es', 'zh', 'ar'])
 
 /** Cache-bust when the English cut is replaced at the same path. */
 const FRICTION_EN_VERSION = '20261012'
+const FRICTION_DUB_VERSION = '20261030'
+
+export const TWO_MODES_DUB_MEDIA: Record<HeroVideoLocaleId, TwoModesMediaEntry> = {
+  en: {
+    imageUrl: '',
+    posterUrl: ENGLISH_POSTER,
+    webmUrl: `/landing/two-modes/friction-en.webm?v=${FRICTION_EN_VERSION}`,
+    mp4Url: `/landing/two-modes/friction-en.mp4?v=${FRICTION_EN_VERSION}`,
+  },
+  es: {
+    imageUrl: '',
+    posterUrl: ENGLISH_POSTER,
+    webmUrl: `/landing/two-modes/friction-es.webm?v=${FRICTION_DUB_VERSION}`,
+    mp4Url: `/landing/two-modes/friction-es.mp4?v=${FRICTION_DUB_VERSION}`,
+  },
+  pt: {
+    imageUrl: '',
+    posterUrl: ENGLISH_POSTER,
+    webmUrl: `/landing/two-modes/friction-pt.webm?v=${FRICTION_DUB_VERSION}`,
+    mp4Url: `/landing/two-modes/friction-pt.mp4?v=${FRICTION_DUB_VERSION}`,
+  },
+  hi: {
+    imageUrl: '',
+    posterUrl: ENGLISH_POSTER,
+    webmUrl: `/landing/two-modes/friction-hi.webm?v=${FRICTION_DUB_VERSION}`,
+    mp4Url: `/landing/two-modes/friction-hi.mp4?v=${FRICTION_DUB_VERSION}`,
+  },
+  zh: {
+    imageUrl: '',
+    posterUrl: ENGLISH_POSTER,
+    webmUrl: `/landing/two-modes/friction-zh.webm?v=${FRICTION_DUB_VERSION}`,
+    mp4Url: `/landing/two-modes/friction-zh.mp4?v=${FRICTION_DUB_VERSION}`,
+  },
+  ar: {
+    imageUrl: '',
+    posterUrl: ENGLISH_POSTER,
+    webmUrl: `/landing/two-modes/friction-ar.webm?v=${FRICTION_DUB_VERSION}`,
+    mp4Url: `/landing/two-modes/friction-ar.mp4?v=${FRICTION_DUB_VERSION}`,
+  },
+  th: {
+    imageUrl: '',
+    posterUrl: ENGLISH_POSTER,
+    webmUrl: `/landing/two-modes/friction-th.webm?v=${FRICTION_DUB_VERSION}`,
+    mp4Url: `/landing/two-modes/friction-th.mp4?v=${FRICTION_DUB_VERSION}`,
+  },
+}
 
 /**
- * Encodes shipped with the app. English is the only cut the section plays.
+ * Encodes shipped with the app.
  */
 const LOCAL_ENCODED_MEDIA: Partial<
   Record<VideoLocaleId, { webmUrl: string; mp4Url: string }>
 > = {
   en: {
-    webmUrl: `/landing/two-modes/friction-en.webm?v=${FRICTION_EN_VERSION}`,
-    mp4Url: `/landing/two-modes/friction-en.mp4?v=${FRICTION_EN_VERSION}`,
+    webmUrl: TWO_MODES_DUB_MEDIA.en.webmUrl,
+    mp4Url: TWO_MODES_DUB_MEDIA.en.mp4Url,
   },
   es: {
-    webmUrl: '/landing/two-modes/friction-es.webm',
-    mp4Url: '/landing/two-modes/friction-es.mp4',
+    webmUrl: TWO_MODES_DUB_MEDIA.es.webmUrl,
+    mp4Url: TWO_MODES_DUB_MEDIA.es.mp4Url,
   },
   zh: {
-    webmUrl: '/landing/two-modes/friction-zh.webm',
-    mp4Url: '/landing/two-modes/friction-zh.mp4',
+    webmUrl: TWO_MODES_DUB_MEDIA.zh.webmUrl,
+    mp4Url: TWO_MODES_DUB_MEDIA.zh.mp4Url,
   },
   ar: {
-    webmUrl: '/landing/two-modes/friction-ar.webm',
-    mp4Url: '/landing/two-modes/friction-ar.mp4',
+    webmUrl: TWO_MODES_DUB_MEDIA.ar.webmUrl,
+    mp4Url: TWO_MODES_DUB_MEDIA.ar.mp4Url,
   },
 }
 
@@ -95,7 +146,7 @@ function localeMedia(id: VideoLocaleId): TwoModesMediaEntry {
   const local = LOCAL_ENCODED_MEDIA[id]
   return {
     ...EMPTY_MEDIA,
-    posterUrl: id === 'en' ? ENGLISH_POSTER : '',
+    posterUrl: ENGLISH_POSTER,
     webmUrl: local?.webmUrl ?? '',
     mp4Url: local?.mp4Url ?? videoUrl(TWO_MODES_VIDEO_BLOB_PATHS[id]),
   }
@@ -105,11 +156,25 @@ export const TWO_MODES_MEDIA: Record<TwoModesMediaId, TwoModesMediaEntry> = {
   comparison: localeMedia('en'),
 }
 
-export function getTwoModesMedia(id: string): TwoModesMediaEntry {
+export function getTwoModesMedia(id: string, locale?: string): TwoModesMediaEntry {
   if ((TWO_MODES_MEDIA_IDS as readonly string[]).includes(id)) {
+    if (locale) {
+      const resolved = landingLocaleToHeroVideoLocale(locale)
+      return TWO_MODES_DUB_MEDIA[resolved] ?? TWO_MODES_MEDIA[id as TwoModesMediaId]
+    }
     return TWO_MODES_MEDIA[id as TwoModesMediaId]
   }
   return EMPTY_MEDIA
+}
+
+export function getTwoModesDubLocales(): Array<
+  TwoModesMediaEntry & { id: HeroVideoLocaleId; available: boolean }
+> {
+  return HERO_VIDEO_LOCALE_ORDER.map((id) => ({
+    id,
+    ...TWO_MODES_DUB_MEDIA[id],
+    available: true,
+  }))
 }
 
 export function getTwoModesVideoLocales(): TwoModesVideoLocale[] {
