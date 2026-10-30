@@ -539,7 +539,7 @@ export default function KeyFeaturesSection() {
               aria-controls="key-features-detail-list"
               className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-slate-900/80 px-4 py-2 text-xs font-semibold text-cyan-200 transition hover:border-cyan-400/40 hover:bg-slate-800 hover:text-white sm:text-sm"
             >
-              <span>Features List</span>
+              <span>{t.has('featuresListLabel') ? t('featuresListLabel') : 'Features List'}</span>
               {showFeaturesList ? (
                 <ChevronUp className="h-4 w-4 text-cyan-300" aria-hidden />
               ) : (

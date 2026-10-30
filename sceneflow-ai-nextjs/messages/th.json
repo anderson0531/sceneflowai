@@ -17,7 +17,7 @@
     "pillars": [
       {
         "id": "series",
-        "tabLabel": "Series Room",
+        "tabLabel": "SFAISERIES_ข้อกำหนดห้องพัก",
         "number": "01 ",
         "title": "การสร้าง Series Room",
         "header": "สร้างจักรวาลไม่ใช่คลิป",
@@ -244,6 +244,7 @@
     "badge": "คุณสมบัติที่โดดเด่น",
     "title": "จากแนวคิดสู่ต้นแบบสมบูรณ์",
     "subtitle": "Series Room → Blueprint Room → Production Stage → Screening Room.",
+    "featuresListLabel": "รายการคุณสมบัติ",
     "learnMoreLabel": "ศึกษาเพิ่มเติม",
     "showLessLabel": "แสดงน้อยลง",
     "videoComingSoon": "ฟีเจอร์เร็ว ๆ นี้",
@@ -261,58 +262,58 @@
     "rooms": [
       {
         "id": "series-desk",
-        "label": "Series Room",
+        "label": "SFAISERIES_ข้อกำหนดห้องพัก",
         "headline": "สร้างจักรวาลครั้งเดียว ผลิตตอนตลอดไป",
         "promise": "พัฒนาซีซันที่มีหลายตอนด้วยคัมภีร์ไบเบิลที่สร้างสรรค์ร่วมกันเพียงเล่มเดียว นักแสดง สถานที่ เรื่องราว และ DNA ภาพของคุณจะถูกนำเสนอโดยอัตโนมัติในทุกตอนที่คุณเปิดดู ผลิตหนังเดี่ยวเหรอ? ข้ามตรงไปที่ Blueprint Room",
         "features": [
           {
             "icon": "newSeries",
-            "title": "New Series",
-            "description": "Pitch your series, anthology, or episodic channel concept in plain language. Interactive AI refinement sharpens your premise, target audience, and visual tone before generating a complete multi-episode season baseline—complete with overarching plot arcs, recurring character hooks, and episode-by-episode breakdowns.",
-            "screenshot": "Create New Series — intent, Clarify and Confirm, Generate Series",
+            "title": "ซีรีย์ใหม่",
+            "description": "นำเสนอซีรีส์ กวีนิพนธ์ หรือแนวคิดของช่องที่เป็นตอนๆ ในภาษาธรรมดา การปรับแต่ง AI แบบโต้ตอบทำให้สถานที่ กลุ่มเป้าหมาย และโทนภาพของคุณคมชัดขึ้น ก่อนที่จะสร้างพื้นฐานซีซันแบบหลายตอนที่สมบูรณ์ พร้อมด้วยส่วนโค้งของโครงเรื่องที่ครอบคลุม การเกี่ยวของตัวละครที่เกิดซ้ำ และการแจกแจงรายละเอียดทีละตอน",
+            "screenshot": "สร้างซีรีส์ใหม่ — ความตั้งใจ ชี้แจงและยืนยัน สร้างซีรีส์",
             "learnMore": {
               "items": [
                 {
-                  "title": "Plain-language series pitch",
-                  "description": "Pitch the premise, episode format, target demographic, and visual art style in plain language."
+                  "title": "การเสนอขายซีรีส์ภาษาธรรมดา",
+                  "description": "นำเสนอสถานที่ตั้ง รูปแบบตอน ข้อมูลประชากรเป้าหมาย และสไตล์ทัศนศิลป์ในภาษาธรรมดา"
                 },
                 {
-                  "title": "Interactive Clarify & Confirm",
-                  "description": "Clarify and Confirm sharpens the season synopsis, tone, and thematic pillars with you before anything is generated."
+                  "title": "โต้ตอบชี้แจงและยืนยัน",
+                  "description": "ชี้แจงและยืนยัน ทำให้บทสรุป โทนเสียง และสาระสำคัญของซีซันคมชัดขึ้นกับคุณก่อนที่จะมีการสร้างอะไรขึ้นมา"
                 },
                 {
-                  "title": "Multi-episode season baseline",
-                  "description": "Generate Series builds a structured five-episode season arc with individual synopses and story hooks that you can expand anytime."
+                  "title": "ข้อมูลพื้นฐานของซีซั่นหลายตอน",
+                  "description": "Generate Series สร้างเนื้อหาซีซันที่มีโครงสร้างห้าตอนพร้อมเรื่องย่อและเรื่องราวที่เกี่ยวข้องที่คุณสามารถขยายได้ตลอดเวลา"
                 },
                 {
-                  "title": "World & genre calibration",
-                  "description": "Lock visual aesthetics, era settings, and recurring narrative motifs up front so every episode shares the same creative DNA."
+                  "title": "การสอบเทียบโลกและประเภท",
+                  "description": "ล็อคความสวยงามของภาพ การตั้งค่ายุคสมัย และลวดลายการเล่าเรื่องที่เกิดขึ้นซ้ำๆ ไว้ด้านหน้า เพื่อให้ทุกตอนมี DNA ที่สร้างสรรค์เหมือนกัน"
                 }
               ]
             }
           },
           {
             "icon": "seriesReview",
-            "title": "Season Bible & Continuity",
-            "description": "Read or listen to the narrated season overview and episode slate. SceneFlow locks your story threads, cast profiles, recurring locations, and signature props into a shared Reference Library that every episode inherits automatically—eliminating continuity drift across multi-part storytelling.",
-            "screenshot": "Overview Listen, Episodes Listen, Consistency, Continuity — Cast, Locations, Props, Settings",
+            "title": "ซีซั่นพระคัมภีร์และความต่อเนื่อง",
+            "description": "อ่านหรือฟังภาพรวมซีซันที่บรรยายและกระดานชนวนตอน SceneFlow ล็อคหัวข้อเรื่องราว โปรไฟล์นักแสดง สถานที่ที่เกิดซ้ำ และอุปกรณ์ประกอบฉากที่เป็นเอกลักษณ์ของคุณไว้ใน Reference Library ที่ใช้ร่วมกัน ซึ่งทุกตอนจะสืบทอดโดยอัตโนมัติ ขจัดความต่อเนื่องในการเล่าเรื่องที่มีหลายส่วน",
+            "screenshot": "การฟังภาพรวม การฟังตอนต่างๆ ความสม่ำเสมอ ความต่อเนื่อง — นักแสดง สถานที่ อุปกรณ์ประกอบฉาก การตั้งค่า",
             "learnMore": {
               "items": [
                 {
-                  "title": "Narrated season & episode audit",
-                  "description": "Audit the overarching season overview and every individual episode synopsis with built-in studio audio narration."
+                  "title": "ฤดูกาลที่บรรยายและการตรวจสอบตอน",
+                  "description": "ตรวจสอบภาพรวมซีซันโดยรวมและบทสรุปแต่ละตอนพร้อมคำบรรยายเสียงในสตูดิโอ"
                 },
                 {
-                  "title": "Cross-episode story consistency",
-                  "description": "Visual aesthetics, canonical plot events, and character relationship threads stay locked across the entire season."
+                  "title": "ความสอดคล้องของเรื่องราวข้ามตอน",
+                  "description": "ความสวยงามของภาพ เหตุการณ์โครงเรื่องตามรูปแบบบัญญัติ และความสัมพันธ์ของตัวละครจะถูกล็อคไว้ตลอดทั้งฤดูกาล"
                 },
                 {
-                  "title": "Shared Reference Library inheritance",
-                  "description": "Cast portraits, voice profiles, wardrobes, locations, and signature props carry automatically into every episode you produce."
+                  "title": "การสืบทอด Reference Library ที่แชร์",
+                  "description": "ภาพนักแสดง โปรไฟล์เสียง ตู้เสื้อผ้า สถานที่ และอุปกรณ์ประกอบฉากที่เป็นเอกลักษณ์จะถูกใส่เข้าไปในทุกตอนที่คุณสร้างโดยอัตโนมัติ"
                 },
                 {
-                  "title": "Centralized canon management",
-                  "description": "Update a character look, location plate, or prop once in the Series Bible to propagate the change to future episodes."
+                  "title": "การจัดการแคนนอนแบบรวมศูนย์",
+                  "description": "อัปเดตรูปลักษณ์ตัวละคร ป้ายสถานที่ หรืออุปกรณ์ประกอบฉากหนึ่งครั้งใน Series Bible เพื่อเผยแพร่การเปลี่ยนแปลงไปยังตอนต่อๆ ไป"
                 }
               ]
             }
@@ -320,87 +321,87 @@
           {
             "icon": "seriesResonance",
             "title": "Audience Resonance",
-            "description": "Test your season arc against your target demographic before writing a single script. Review episode-by-episode resonance scores, binge-retention curves, and structural critiques, then apply data-backed story improvements with one click—only when you agree with the note.",
-            "screenshot": "Audience Resonance analysis, then Actionable Insights, unapplied",
+            "description": "ทดสอบส่วนโค้งของฤดูกาลกับกลุ่มประชากรเป้าหมายของคุณก่อนที่จะเขียนสคริปต์เดี่ยว ตรวจสอบคะแนนการสะท้อนของตอนทีละตอน เส้นโค้งการรักษาผู้ชมจำนวนมาก และการวิจารณ์เชิงโครงสร้าง จากนั้นใช้การปรับปรุงเรื่องราวที่ได้รับการสนับสนุนจากข้อมูลด้วยการคลิกเพียงครั้งเดียว เฉพาะเมื่อคุณเห็นด้วยกับบันทึกย่อเท่านั้น",
+            "screenshot": "การวิเคราะห์ Audience Resonance จากนั้นจึงนำข้อมูลเชิงลึกที่นำไปใช้ได้จริง ไม่ได้นำไปใช้",
             "learnMore": {
               "items": [
                 {
-                  "title": "Demographic & retention scoring",
-                  "description": "Multi-axis scores and structural analysis reveal how your season arc and episode cliffhangers land with your target audience."
+                  "title": "การให้คะแนนด้านประชากรศาสตร์และการรักษาผู้ใช้",
+                  "description": "คะแนนแบบหลายแกนและการวิเคราะห์เชิงโครงสร้างเผยให้เห็นว่าส่วนโค้งของฤดูกาลและตอนที่น่าตื่นเต้นของคุณเข้ากับผู้ชมเป้าหมายของคุณอย่างไร"
                 },
                 {
-                  "title": "Episode-by-episode diagnostics",
-                  "description": "Spot mid-season pacing dips, character underutilization, or tonal drift across the full episode slate before scripting."
+                  "title": "การวินิจฉัยทีละตอน",
+                  "description": "สังเกตจังหวะที่ลดลงในช่วงกลางฤดูกาล การใช้งานตัวละครน้อยเกินไป หรือการเลื่อนระดับวรรณยุกต์ไปตลอดทั้งตอนก่อนที่จะเริ่มเขียนสคริปต์"
                 },
                 {
-                  "title": "Director's prerogative",
-                  "description": "Actionable Insights update your series bible and episode outlines only when you explicitly choose to apply them."
+                  "title": "สิทธิพิเศษของผู้อำนวยการ",
+                  "description": "Actionable Insights จะอัปเดตพระคัมภีร์ซีรีส์และโครงร่างตอนของคุณเฉพาะเมื่อคุณเลือกที่จะนำไปใช้อย่างชัดเจนเท่านั้น"
                 }
               ]
             }
           },
           {
             "icon": "seriesDirector",
-            "title": "The Series Director",
-            "description": "Reshape the entire season by voice or text. Shift the dramatic tone, raise the stakes, introduce a new antagonist, or rework a character arc across all episodes at once while keeping the rest of your storyline and continuity bible intact.",
-            "screenshot": "Series Director — direction, focus, accept",
+            "title": "ผู้กำกับซีรีส์",
+            "description": "ปรับรูปร่างทั้งฤดูกาลด้วยเสียงหรือข้อความ เปลี่ยนโทนดราม่า เพิ่มเดิมพัน แนะนำตัวละครตัวร้ายหน้าใหม่ หรือปรับปรุงส่วนโค้งของตัวละครในทุกตอนพร้อมกันโดยที่ยังคงรักษาเนื้อเรื่องและความต่อเนื่องของพระคัมภีร์ไว้เหมือนเดิม",
+            "screenshot": "ผู้กำกับซีรีส์ — ทิศทาง มุ่งเน้น ยอมรับ",
             "learnMore": {
               "items": [
                 {
-                  "title": "Plain-language season direction",
-                  "description": "Speak or type your creative note and target overarching plot, characters, episode arcs, tone, or world setting."
+                  "title": "ทิศทางฤดูกาลภาษาธรรมดา",
+                  "description": "พูดหรือพิมพ์บันทึกเชิงสร้างสรรค์ของคุณและกำหนดเป้าหมายโครงเรื่อง ตัวละคร เนื้อเรื่องของตอน โทน หรือฉากโลก"
                 },
                 {
-                  "title": "Surgical multi-episode updates",
-                  "description": "Nothing changes until you accept the previewed revision, and unrelated story threads stay completely untouched."
+                  "title": "การอัปเดตหลายตอนของการผ่าตัด",
+                  "description": "ไม่มีการเปลี่ยนแปลงใดๆ จนกว่าคุณจะยอมรับการแก้ไขที่แสดงตัวอย่าง และชุดข้อความเรื่องราวที่ไม่เกี่ยวข้องจะไม่ถูกแตะต้องโดยสมบูรณ์"
                 },
                 {
-                  "title": "Guided AI recommendations",
-                  "description": "Apply one-click story improvements surfaced by Audience Resonance or steer every creative choice yourself."
+                  "title": "คำแนะนำ AI ที่แนะนำ",
+                  "description": "ใช้การปรับปรุงเรื่องราวในคลิกเดียวโดย Audience Resonance หรือเลือกทุกตัวเลือกที่สร้างสรรค์ด้วยตัวคุณเอง"
                 }
               ]
             }
           },
           {
             "icon": "directEpisode",
-            "title": "Episode-Level Direction",
-            "description": "Zoom into any individual episode to rework its plot outline, act structure, pacing, or cold-open hook in isolation—without destabilizing neighboring episodes or mutating the rest of your season slate.",
-            "screenshot": "Episodes — Direct this episode, other episodes unchanged",
+            "title": "ทิศทางระดับตอน",
+            "description": "ซูมเข้าไปที่แต่ละตอนเพื่อแก้ไขโครงร่างโครงเรื่อง โครงสร้างการแสดง จังหวะ หรือท่อนฮุคที่เปิดกว้างแบบแยกออกจากกัน โดยไม่ทำให้ตอนข้างเคียงไม่เสถียรหรือเปลี่ยนแปลงส่วนที่เหลือของรายการซีซั่นของคุณ",
+            "screenshot": "ตอนต่างๆ — กำกับตอนนี้ ส่วนตอนอื่นๆ ไม่มีการเปลี่ยนแปลง",
             "learnMore": {
               "items": [
                 {
-                  "title": "Isolated episode rewrites",
-                  "description": "Direct changes to a single episode's synopsis, act beats, and character focus without altering neighboring episodes."
+                  "title": "ตอนที่แยกออกมาเขียนใหม่",
+                  "description": "การเปลี่ยนแปลงโดยตรงต่อบทสรุปของตอนเดียว จังหวะการแสดง และการมุ่งเน้นของตัวละครโดยไม่ต้องเปลี่ยนตอนข้างเคียง"
                 },
                 {
-                  "title": "Locked season integrity",
-                  "description": "The overarching season bible, shared cast continuity, and remaining episode slate stay locked while you iterate."
+                  "title": "ล็อคความสมบูรณ์ของฤดูกาล",
+                  "description": "พระคัมภีร์ซีซันที่ครอบคลุม ความต่อเนื่องของนักแสดงที่แชร์ และแถบสเลทของตอนที่เหลือจะยังคงล็อคอยู่ในขณะที่คุณทำซ้ำ"
                 },
                 {
-                  "title": "Pre-launch beat polishing",
-                  "description": "Refine individual episode hooks and cliffhangers until the episode is ready to launch into the Blueprint Room."
+                  "title": "การขัดจังหวะก่อนเปิดตัว",
+                  "description": "ปรับแต่งท่อนฮุคและเรื่องน่าตื่นเต้นในแต่ละตอนจนกว่าตอนพร้อมที่จะเปิดตัวใน Blueprint Room"
                 }
               ]
             }
           },
           {
             "icon": "startEpisode",
-            "title": "One-Click Episode Launch",
-            "description": "When an episode's outline hits the mark, launch it straight into the Blueprint Room with a single click—bringing its synopsis, narrative beats, recurring cast, voice profiles, locations, and visual style automatically wired in.",
-            "screenshot": "Start Project — outline and cast already on the episode",
+            "title": "การเปิดตัวตอนในคลิกเดียว",
+            "description": "เมื่อโครงร่างของตอนตรงจุด ให้เปิดตอนโดยตรงไปยัง Blueprint Room ด้วยการคลิกเพียงครั้งเดียว จะนำเรื่องย่อ จังหวะการเล่าเรื่อง นักแสดงซ้ำ โปรไฟล์เสียง สถานที่ และสไตล์ภาพมาเชื่อมต่อโดยอัตโนมัติ",
+            "screenshot": "เริ่มโปรเจ็กต์ — ร่างโครงร่างและนักแสดงในตอนนี้",
             "learnMore": {
               "items": [
                 {
-                  "title": "Instant Blueprint handoff",
-                  "description": "Launch any approved episode directly into the Blueprint Room with a single click to begin detailed beat and script work."
+                  "title": "แฮนด์ออฟ SFAIBLUEPRINTERM ทันที",
+                  "description": "เปิดตัวตอนที่ได้รับการอนุมัติโดยตรงใน Blueprint Room ด้วยการคลิกเพียงครั้งเดียวเพื่อเริ่มการทำงานจังหวะและสคริปต์โดยละเอียด"
                 },
                 {
-                  "title": "Pre-wired creative DNA",
-                  "description": "The episode outline, synopsis, story beats, cast profiles, wardrobes, and locations travel automatically with zero re-entry."
+                  "title": "DNA สร้างสรรค์แบบมีสายล่วงหน้า",
+                  "description": "โครงร่างของตอน เรื่องย่อ จังหวะของเรื่อง โปรไฟล์นักแสดง ตู้เสื้อผ้า และสถานที่เดินทางโดยอัตโนมัติโดยไม่มีการกลับเข้ามาใหม่"
                 },
                 {
-                  "title": "Parallel episode production",
-                  "description": "Spin up multiple episodes from the same season slate as independent projects that share the same canonical series assets."
+                  "title": "การผลิตตอนแบบขนาน",
+                  "description": "รวบรวมหลายตอนจากรายการซีซันเดียวกันเป็นโปรเจ็กต์อิสระที่ใช้เนื้อหาซีรีส์ Canonical เดียวกัน"
                 }
               ]
             }
@@ -415,92 +416,92 @@
         "features": [
           {
             "icon": "startBlueprint",
-            "title": "Start the Blueprint",
-            "description": "Bring in an episode from your series slate with its outline, cast, and world pre-loaded, or pitch a brand-new standalone film concept from scratch and let AI validate, enhance, and structure the foundational treatment.",
-            "screenshot": "Series episode already known, or Start Your Project — intent, Validate & Enhance with AI, Generate Blueprint",
+            "title": "เริ่ม Blueprint",
+            "description": "นำตอนจากรายการซีรีส์ของคุณเข้ามาด้วยโครงร่าง นักแสดง และโลกที่โหลดไว้ล่วงหน้า หรือนำเสนอแนวคิดภาพยนตร์เดี่ยวใหม่ล่าสุดตั้งแต่เริ่มต้น และปล่อยให้ AI ตรวจสอบ ปรับปรุง และจัดโครงสร้างการรักษาขั้นพื้นฐาน",
+            "screenshot": "ทราบตอนของซีรีส์แล้ว หรือเริ่มโครงการของคุณ - ความตั้งใจ ตรวจสอบและปรับปรุงด้วย AI สร้าง Blueprint",
             "learnMore": {
               "items": [
                 {
-                  "title": "Seamless from Series Room",
-                  "description": "Series episodes arrive with their outline, synopsis, story beats, recurring cast, and locations already attached."
+                  "title": "ไร้รอยต่อจาก Series Room",
+                  "description": "ซีรีส์ตอนต่างๆ มาพร้อมกับโครงร่าง เรื่องย่อ จังหวะของเรื่อง นักแสดงประจำ และสถานที่ที่แนบมาแล้ว"
                 },
                 {
-                  "title": "Standalone film or short",
-                  "description": "Pitch a new film concept in plain language, refine it with AI validation, and generate a complete film treatment."
+                  "title": "หนังเดี่ยวหรือหนังสั้น",
+                  "description": "เสนอแนวคิดภาพยนตร์ใหม่ในภาษาธรรมดา ปรับแต่งด้วยการตรวจสอบความถูกต้องของ AI และสร้างกระบวนการสร้างภาพยนตร์ที่สมบูรณ์"
                 },
                 {
-                  "title": "Narrated treatment overview",
-                  "description": "Read or listen to the narrated logline, synopsis, and creative reasoning to verify the story foundation immediately."
+                  "title": "บรรยายสรุปการรักษา",
+                  "description": "อ่านหรือฟังโครงเรื่องที่บรรยาย เรื่องย่อ และการใช้เหตุผลเชิงสร้างสรรค์เพื่อตรวจสอบรากฐานของเรื่องราวทันที"
                 }
               ]
             }
           },
           {
             "icon": "treatment",
-            "title": "The Beat Sheet",
-            "description": "Structure the dramatic spine of your film before dialogue is written. Read or listen to your narrative beat sheet, reorder acts, and fine-tune scene pacing here—every beat you lock in the Blueprint Room drives a dedicated chapter in the Production Stage.",
-            "screenshot": "Beats tab, with Listen",
+            "title": "แผ่นตี",
+            "description": "จัดโครงสร้างส่วนสำคัญของภาพยนตร์ของคุณก่อนที่จะเขียนบทสนทนา อ่านหรือฟังบีทชีทบรรยายของคุณ จัดลำดับการแสดงใหม่ และปรับแต่งจังหวะของฉากที่นี่ ทุกจังหวะที่คุณล็อคไว้ใน Blueprint Room จะขับเคลื่อนบทเฉพาะใน Production Stage",
+            "screenshot": "แท็บ Beats พร้อมด้วย Listen",
             "learnMore": {
               "items": [
                 {
-                  "title": "Narrative spine",
-                  "description": "Beats are authored and locked in the Blueprint Room before script generation begins."
+                  "title": "กระดูกสันหลังเล่าเรื่อง",
+                  "description": "บีทถูกเขียนและล็อคไว้ใน Blueprint Room ก่อนการสร้างสคริปต์จะเริ่มขึ้น"
                 },
                 {
-                  "title": "Pacing & structural discipline",
-                  "description": "Optimizing the beat sheet here ensures the multi-scene screenplay builds with tight dramatic structure and clear turning points."
+                  "title": "การเว้นจังหวะและวินัยเชิงโครงสร้าง",
+                  "description": "การเพิ่มประสิทธิภาพบีทชีทที่นี่ทำให้มั่นใจได้ว่าบทภาพยนตร์หลายฉากจะสร้างด้วยโครงสร้างดราม่าที่แน่นหนาและจุดเปลี่ยนที่ชัดเจน"
                 },
                 {
-                  "title": "Beat-to-chapter mapping",
-                  "description": "Production Stage turns each beat into a chapter."
+                  "title": "การทำแผนที่แบบตีต่อบท",
+                  "description": "Production Stage เปลี่ยนแต่ละจังหวะให้เป็นบทเดียว"
                 },
                 {
-                  "title": "Narrated beat audition",
-                  "description": "Listen to the beat sheet read aloud to feel the rhythm and momentum of the story before compiling the script."
+                  "title": "ออดิชั่นจังหวะบรรยาย",
+                  "description": "ฟังบีทชีทที่อ่านออกเสียงเพื่อให้รู้สึกถึงจังหวะและโมเมนตัมของเรื่องก่อนที่จะเรียบเรียงสคริปต์"
                 }
               ]
             }
           },
           {
             "icon": "castLocations",
-            "title": "Cast & World Design",
-            "description": "Define your characters, vocal identities, period wardrobes, and primary locations before the screenplay is generated—ensuring the script is written around your exact cast, blocking environments, and visual atmosphere from page one.",
-            "screenshot": "Characters tab, then Setting on Story",
+            "title": "นักแสดงและการออกแบบโลก",
+            "description": "กำหนดตัวละคร ตัวตนของเสียงร้อง ตู้เสื้อผ้าย้อนยุค และสถานที่หลักก่อนที่จะสร้างบทภาพยนตร์ เพื่อให้มั่นใจว่าสคริปต์ถูกเขียนขึ้นตามนักแสดง สภาพแวดล้อมที่ปิดกั้น และบรรยากาศภาพจากหน้าแรก",
+            "screenshot": "แท็บตัวละคร จากนั้นเลือกการตั้งค่าในเรื่องราว",
             "learnMore": {
               "items": [
                 {
-                  "title": "Rich character profiles",
-                  "description": "Direct your cast profiles, backstories, and physical attributes up front so dialogue and blocking match each character."
+                  "title": "โปรไฟล์ตัวละครที่หลากหลาย",
+                  "description": "กำกับโปรไฟล์นักแสดง เรื่องราวเบื้องหลัง และคุณลักษณะทางกายภาพของคุณไว้ด้านหน้า เพื่อให้บทสนทนาและการบล็อกตรงกันกับตัวละครแต่ละตัว"
                 },
                 {
-                  "title": "World, era & locations",
-                  "description": "Establish primary settings, lighting palettes, and cinematic style on the Story tab to anchor every scene's environment."
+                  "title": "โลก ยุคสมัย และสถานที่",
+                  "description": "กำหนดการตั้งค่าหลัก จานสีแสง และสไตล์ภาพยนตร์บนแท็บเรื่องราวเพื่อยึดสภาพแวดล้อมของทุกฉาก"
                 },
                 {
-                  "title": "Zero script refactoring",
-                  "description": "Locking cast and locations before script generation eliminates costly rewrites and continuity mismatches on the Production Stage."
+                  "title": "การปรับโครงสร้างสคริปต์เป็นศูนย์",
+                  "description": "การล็อกนักแสดงและตำแหน่งก่อนการสร้างสคริปต์ช่วยลดค่าใช้จ่ายในการเขียนซ้ำและความต่อเนื่องที่ไม่ตรงกันใน Production Stage"
                 }
               ]
             }
           },
           {
             "icon": "blueprintDirector",
-            "title": "The Blueprint Director",
-            "description": "Speak or type your story notes to revise beats, character motivations, or world details without prompt engineering. Preview a balanced revision side-by-side with creative reasoning—nothing changes in your treatment until you approve the cut.",
-            "screenshot": "Blueprint Director — direction, focus, preview, Apply revision",
+            "title": "ผู้อำนวยการ SFAIBLUEPRINTERM",
+            "description": "พูดหรือพิมพ์บันทึกเรื่องราวของคุณเพื่อแก้ไขจังหวะ แรงจูงใจของตัวละคร หรือรายละเอียดโลกโดยไม่ต้องออกแบบให้ยุ่งยาก ดูตัวอย่างการแก้ไขที่สมดุลเคียงข้างกันพร้อมการให้เหตุผลที่สร้างสรรค์ การรักษาของคุณจะไม่มีอะไรเปลี่ยนแปลงจนกว่าคุณจะอนุมัติการตัด",
+            "screenshot": "Blueprint Director — ทิศทาง, โฟกัส, ดูตัวอย่าง, ใช้การแก้ไข",
             "learnMore": {
               "items": [
                 {
-                  "title": "Targeted voice or text notes",
-                  "description": "Speak or type your direction and focus the revision surgically on Beats, Characters, or Story."
+                  "title": "บันทึกเสียงหรือข้อความที่กำหนดเป้าหมาย",
+                  "description": "พูดหรือพิมพ์ทิศทางของคุณและเน้นการแก้ไขไปที่จังหวะ ตัวละคร หรือเรื่องราว"
                 },
                 {
-                  "title": "Side-by-side revision preview",
-                  "description": "Review a balanced revision and its underlying story reasoning before committing any changes to your Blueprint."
+                  "title": "ดูตัวอย่างการแก้ไขแบบเคียงข้างกัน",
+                  "description": "ตรวจสอบการแก้ไขที่สมดุลและการให้เหตุผลของเรื่องราวก่อนที่จะทำการเปลี่ยนแปลงใดๆ กับ Blueprint ของคุณ"
                 },
                 {
-                  "title": "You hold the creative lock",
-                  "description": "Nothing in your treatment, beat sheet, or character roster changes until you explicitly apply the revision."
+                  "title": "คุณถือล็อคสร้างสรรค์",
+                  "description": "ไม่มีสิ่งใดในการรักษา บีทชีท หรือรายชื่อตัวละครของคุณเปลี่ยนแปลงจนกว่าคุณจะใช้การแก้ไขอย่างชัดเจน"
                 }
               ]
             }
@@ -508,43 +509,43 @@
           {
             "icon": "blueprintResonance",
             "title": "Audience Resonance",
-            "description": "Score your treatment against your target audience's cultural, genre, and demographic profile before generating the script. Catch structural pacing gaps or weak character stakes early and apply targeted recommendations in the Blueprint Director.",
-            "screenshot": "Audience Resonance — saved audience, scores, recommendations unapplied",
+            "description": "ให้คะแนนการปฏิบัติต่อโปรไฟล์วัฒนธรรม ประเภท และข้อมูลประชากรของกลุ่มเป้าหมายของคุณก่อนที่จะสร้างสคริปต์ จับช่องว่างการกำหนดจังหวะเชิงโครงสร้างหรือการเดิมพันอักขระที่อ่อนแอตั้งแต่เนิ่นๆ และใช้คำแนะนำที่ตรงเป้าหมายใน Blueprint Director",
+            "screenshot": "Audience Resonance — ผู้ชมที่บันทึกไว้ คะแนน คำแนะนำที่ยังไม่ได้ใช้",
             "learnMore": {
               "items": [
                 {
-                  "title": "Pre-script audience validation",
-                  "description": "Analyze your treatment against your saved target audience to inspect category scores, strengths, and story risks."
+                  "title": "การตรวจสอบผู้ชมก่อนสคริปต์",
+                  "description": "วิเคราะห์การรักษาของคุณกับกลุ่มเป้าหมายที่บันทึกไว้เพื่อตรวจสอบคะแนนหมวดหมู่ จุดแข็ง และความเสี่ยงของเรื่องราว"
                 },
                 {
-                  "title": "Actionable story remedies",
-                  "description": "Each insight pairs a structural diagnosis with a concrete rewrite recommendation tailored to your beat sheet and cast."
+                  "title": "การเยียวยาเรื่องราวที่ดำเนินการได้",
+                  "description": "ข้อมูลเชิงลึกแต่ละรายการจะจับคู่การวินิจฉัยเชิงโครงสร้างกับคำแนะนำการเขียนซ้ำที่เป็นรูปธรรมซึ่งปรับให้เหมาะกับบีทชีทและนักแสดงของคุณ"
                 },
                 {
-                  "title": "Selective one-click application",
-                  "description": "Recommendations only modify your Blueprint when you choose to apply them in the Blueprint Director."
+                  "title": "แอปพลิเคชั่นแบบคลิกเดียวที่เลือกสรร",
+                  "description": "คำแนะนำจะแก้ไข Blueprint ของคุณเฉพาะเมื่อคุณเลือกที่จะนำไปใช้ใน Blueprint Director"
                 }
               ]
             }
           },
           {
             "icon": "goToProduction",
-            "title": "Greenlight to Production",
-            "description": "When the treatment, beat sheet, and cast are locked, step onto the Production Stage. SceneFlow compiles your full multi-chapter screenplay directly from your approved Blueprint—mapping every beat into a production chapter with cast and continuity pre-wired.",
-            "screenshot": "Go to Production Stage — storyline, beats, and cast already set",
+            "title": "ไฟเขียวสู่การผลิต",
+            "description": "เมื่อทรีตเมนต์ บีทชีต และเฝือกล็อคแล้ว ให้ก้าวเข้าสู่ Production Stage SceneFlow รวบรวมบทภาพยนตร์หลายบทเต็มรูปแบบของคุณโดยตรงจาก Blueprint ที่ได้รับอนุมัติของคุณ โดยเชื่อมโยงทุกจังหวะให้เป็นบทการผลิตที่มีนักแสดงและความต่อเนื่องแบบเชื่อมต่อล่วงหน้า",
+            "screenshot": "ไปที่ Production Stage — โครงเรื่อง จังหวะ และนักแสดงได้ตั้งค่าไว้แล้ว",
             "learnMore": {
               "items": [
                 {
-                  "title": "Seamless script compilation",
-                  "description": "Stepping onto the Production Stage compiles the full multi-scene screenplay directly from your approved Blueprint."
+                  "title": "การรวบรวมสคริปต์ที่ไร้รอยต่อ",
+                  "description": "การก้าวเข้าสู่ Production Stage เป็นการรวบรวมบทภาพยนตร์หลายฉากเต็มรูปแบบโดยตรงจาก Blueprint ที่ได้รับอนุมัติของคุณ"
                 },
                 {
-                  "title": "Locked continuity foundation",
-                  "description": "Your storyline, beat-to-chapter structure, cast profiles, and locations arrive ready for scene and shot direction."
+                  "title": "ล็อครากฐานความต่อเนื่อง",
+                  "description": "โครงเรื่อง โครงสร้างจังหวะต่อบท โปรไฟล์นักแสดง และสถานที่ของคุณพร้อมสำหรับฉากและทิศทางการถ่ายทำ"
                 },
                 {
-                  "title": "Shareable Blueprint review",
-                  "description": "Share the locked Blueprint with co-creators or executive stakeholders for sign-off before commencing production."
+                  "title": "รีวิว SFAIBLUEPRINTERM ที่แชร์ได้",
+                  "description": "แบ่งปัน Blueprint ที่ล็อคไว้กับผู้สร้างร่วมหรือผู้มีส่วนได้ส่วนเสียระดับผู้บริหารเพื่อลงนามก่อนเริ่มการผลิต"
                 }
               ]
             }
@@ -565,144 +566,144 @@
             "features": [
               {
                 "icon": "sceneWorkflow",
-                "title": "Scene Production Workflow (Fullscreen)",
-                "description": "Open the dedicated Fullscreen Scene Production Studio to direct every stage of a scene from one unified 8-tab command bar (`Direction · Audio · Music · Continuity · Stills · Clips · Mixer · Streams`). Reorder shots in the left-hand Shot Rail with live readiness badges, inspect the 16:9 Still & Clip Stage alongside structured camera, blocking, emotion, and lighting cards, and track end-to-end scene completion without losing context.",
-                "screenshot": "Scene Production Workflow (Fullscreen) — 8-tab linear studio, sortable Shot Rail, and structured Shot Direction Workbench",
+                "title": "ขั้นตอนการผลิตฉาก (เต็มหน้าจอ)",
+                "description": "เปิดสตูดิโอผลิตฉากแบบเต็มหน้าจอโดยเฉพาะเพื่อควบคุมทุกขั้นตอนของฉากจากแถบคำสั่ง 8 แท็บที่รวมเป็นหนึ่งเดียว (`ทิศทาง · เสียง · ดนตรี · ความต่อเนื่อง · ภาพนิ่ง · คลิป · มิกเซอร์ · สตรีม`) จัดลำดับช็อตใหม่ใน Shot Rail ทางซ้ายมือด้วยป้ายความพร้อมแบบเรียลไทม์ ตรวจสอบภาพนิ่งและคลิปสเตจ 16:9 ควบคู่ไปกับกล้องที่มีโครงสร้าง การ์ดการบล็อก อารมณ์ และการจัดแสง และติดตามความสมบูรณ์ของฉากตั้งแต่ต้นจนจบโดยไม่สูญเสียบริบท",
+                "screenshot": "เวิร์กโฟลว์การผลิตฉาก (เต็มหน้าจอ) — สตูดิโอเชิงเส้น 8 แท็บ, Shot Rail ที่จัดเรียงได้ และโต๊ะทำงานทิศทางช็อตที่มีโครงสร้าง",
                 "learnMore": {
                   "items": [
                     {
-                      "title": "8-tab fullscreen linear studio",
-                      "description": "Move seamlessly across Direction, Audio, Music, Continuity, Stills, Clips, Mixer, and Streams inside a distraction-free fullscreen workspace."
+                      "title": "สตูดิโอเชิงเส้นแบบเต็มหน้าจอ 8 แท็บ",
+                      "description": "เลื่อนไปตามทิศทาง เสียง เพลง ความต่อเนื่อง ภาพนิ่ง คลิป มิกเซอร์ และสตรีมได้อย่างราบรื่นภายในพื้นที่ทำงานแบบเต็มหน้าจอที่ปราศจากสิ่งรบกวน"
                     },
                     {
-                      "title": "Sortable Shot Rail & live badges",
-                      "description": "Drag to reorder shots in the left-hand rail while tracking real-time badges for Action, Dialogue, Narration, SFX, Music, Signage, Final 4K stills, and clips In the Can."
+                      "title": "Shot Rail ที่จัดเรียงได้และป้ายสด",
+                      "description": "ลากเพื่อเรียงลำดับภาพในรางด้านซ้ายมือพร้อมติดตามป้ายแบบเรียลไทม์สำหรับแอ็คชั่น บทสนทนา การบรรยาย SFX เพลง ป้ายโฆษณา ภาพนิ่ง 4K สุดท้าย และคลิปในกระป๋อง"
                     },
                     {
-                      "title": "Structured Shot Direction Workbench",
-                      "description": "Inspect the 16:9 Still & Clip Stage beside structured cards for spoken beats, camera lens and motion, talent blocking and gaze, lighting, locked continuity refs, and compiled prompts."
+                      "title": "โต๊ะทำงานทิศทางการยิงที่มีโครงสร้าง",
+                      "description": "ตรวจสอบภาพนิ่งและคลิปสเตจ 16:9 ข้างการ์ดที่มีโครงสร้างสำหรับจังหวะการพูด เลนส์กล้องและการเคลื่อนไหว การบล็อกและการจ้องมองผู้มีความสามารถ การจัดแสง การอ้างอิงความต่อเนื่องที่ล็อคไว้ และพร้อมท์ที่รวบรวมไว้"
                     },
                     {
-                      "title": "End-to-end scene pipeline telemetry",
-                      "description": "Monitor readiness across direction, voice and score, keyframes, multi-take clips, broadcast mixing, and localized streams before publishing."
+                      "title": "การวัดและส่งข้อมูลทางไกลไปป์ไลน์แบบ end-to-end",
+                      "description": "ตรวจสอบความพร้อมของทิศทาง เสียงและคะแนน คีย์เฟรม คลิปหลายเทค การมิกซ์การออกอากาศ และสตรีมที่แปลเป็นภาษาท้องถิ่นก่อนเผยแพร่"
                     }
                   ]
                 }
               },
               {
                 "icon": "directShot",
-                "title": "The Scene & Shot Director",
-                "description": "Type or speak your direction in plain language. Tell the agent who is in the frame, where the camera moves, and what the emotional beat is. The Shot Director automatically writes the complex underlying prompts for your stills and clips while syncing camera lens, focal length, talent blocking, and lighting across the scene.",
-                "screenshot": "The Scene & Shot Director — plain-language direction for stills and clips",
+                "title": "ผู้กำกับฉากและช็อต",
+                "description": "พิมพ์หรือพูดทิศทางของคุณเป็นภาษาธรรมดา บอกเจ้าหน้าที่ว่าใครอยู่ในเฟรม ตำแหน่งที่กล้องเคลื่อนที่ และจังหวะทางอารมณ์คืออะไร Shot Director จะเขียนคำสั่งพื้นฐานที่ซับซ้อนสำหรับภาพนิ่งและคลิปของคุณโดยอัตโนมัติ ในขณะที่ซิงค์เลนส์กล้อง ทางยาวโฟกัส การปิดกั้นความสามารถพิเศษ และการจัดแสงทั่วทั้งฉาก",
+                "screenshot": "The Scene & Shot Director — การกำกับภาพนิ่งและคลิปในภาษาธรรมดา",
                 "learnMore": {
                   "items": [
                     {
-                      "title": "Plain-language film direction",
-                      "description": "Type or speak who is in the frame, where the camera moves, and what the emotional beat is without writing bracketed prompt syntax."
+                      "title": "ทิศทางภาพยนตร์ภาษาธรรมดา",
+                      "description": "พิมพ์หรือพูดว่าใครอยู่ในเฟรม ตำแหน่งที่กล้องเคลื่อนที่ และจังหวะทางอารมณ์คืออะไรโดยไม่ต้องเขียนไวยากรณ์พรอมต์ในวงเล็บ"
                     },
                     {
-                      "title": "Scene-wide or per-shot precision",
-                      "description": "Apply atmospheric direction across the entire scene or drill down into an individual shot's framing, lens, blocking, and lighting."
+                      "title": "ความแม่นยำทั้งฉากหรือต่อช็อต",
+                      "description": "ใช้ทิศทางของบรรยากาศทั่วทั้งฉากหรือเจาะลึกลงไปในการจัดเฟรม เลนส์ การบัง และการจัดแสงของแต่ละช็อต"
                     },
                     {
-                      "title": "Automatic prompt compilation",
-                      "description": "The Shot Director automatically writes and syncs the underlying keyframe and motion prompts for your stills and clips."
+                      "title": "การรวบรวมพร้อมท์อัตโนมัติ",
+                      "description": "Shot Director จะเขียนและซิงค์คีย์เฟรมพื้นฐานและข้อความแจ้งการเคลื่อนไหวสำหรับภาพนิ่งและคลิปของคุณโดยอัตโนมัติ"
                     },
                     {
                       "title": "Intelligent Assistant Director (IAD)",
-                      "description": "Request surgical revisions to camera angles, character posture, or scene tension in plain language while keeping unrelated beats untouched."
+                      "description": "ขอให้มีการแก้ไขมุมกล้อง ท่าทางของตัวละคร หรือความตึงเครียดของฉากโดยใช้ภาษาธรรมดา โดยไม่แตะต้องจังหวะที่ไม่เกี่ยวข้อง"
                     }
                   ]
                 }
               },
               {
                 "icon": "continuity",
-                "title": "The Continuity Library",
-                "description": "Absolute visual and vocal consistency across your entire film or series. Automatically generate or manually assign locked reference portraits, multi-angle turnaround sheets, scene-specific wardrobes, locations, and essential props—ensuring every shot matches the Blueprint without character drift.",
-                "screenshot": "The Continuity Library — cast, wardrobes, locations, and essential props",
+                "title": "Continuity Library",
+                "description": "ความสอดคล้องของภาพและเสียงที่สมบูรณ์แบบในภาพยนตร์หรือซีรีส์ทั้งหมดของคุณ สร้างหรือกำหนดรูปภาพอ้างอิงที่ล็อคไว้ เอกสารการเปลี่ยนแปลงหลายมุม ตู้เสื้อผ้าเฉพาะฉาก สถานที่ และอุปกรณ์ประกอบฉากที่จำเป็นโดยอัตโนมัติ รับรองว่าทุกช็อตจะตรงกับ Blueprint โดยไม่ทำให้ตัวละครเลื่อนลอย",
+                "screenshot": "Continuity Library — นักแสดง ตู้เสื้อผ้า สถานที่ และอุปกรณ์ประกอบฉากที่จำเป็น",
                 "learnMore": {
                   "items": [
                     {
-                      "title": "Cast identity & turnaround locks",
-                      "description": "Anchor every character with diptych portraits, turnaround sheets, and locked voice profiles across every shot and episode."
+                      "title": "การแสดงตัวตนและการล็อคการตอบสนอง",
+                      "description": "ยึดตัวละครทุกตัวด้วยภาพบุคคล แผนการดำเนินการ และโปรไฟล์เสียงที่ล็อคไว้ในทุกช็อตและตอน"
                     },
                     {
-                      "title": "Scene-specific wardrobes & props",
-                      "description": "Assign period or scene-specific wardrobes and essential hero props per shot so costumes and hand-held items stay unified."
+                      "title": "ตู้เสื้อผ้าและอุปกรณ์ประกอบฉากเฉพาะฉาก",
+                      "description": "กำหนดตู้เสื้อผ้าเฉพาะช่วงเวลาหรือฉากและอุปกรณ์ประกอบฉากฮีโร่ที่จำเป็นต่อช็อต เพื่อให้เครื่องแต่งกายและสิ่งของพกพาเป็นอันหนึ่งอันเดียวกัน"
                     },
                     {
-                      "title": "Generate, upload, or surgically edit",
-                      "description": "Automatically generate reference images, upload custom studio plates, or refine details with the Intelligent Assistant Director."
+                      "title": "สร้าง อัปโหลด หรือแก้ไขแบบผ่าตัด",
+                      "description": "สร้างภาพอ้างอิงโดยอัตโนมัติ อัปโหลดเพลตสตูดิโอแบบกำหนดเอง หรือปรับแต่งรายละเอียดด้วย Intelligent Assistant Director"
                     },
                     {
-                      "title": "Continuity readiness gate",
-                      "description": "Verify that all cast, wardrobe, location, and prop anchors are locked in the Continuity tab before generating scene keyframes."
+                      "title": "ประตูความพร้อมต่อเนื่อง",
+                      "description": "ตรวจสอบว่านักแสดง ตู้เสื้อผ้า ตำแหน่ง และจุดยึดเสาทั้งหมดถูกล็อคไว้ในแท็บความต่อเนื่อง ก่อนที่จะสร้างคีย์เฟรมของฉาก"
                     }
                   ]
                 }
               },
               {
                 "icon": "scriptResonance",
-                "title": "Audience Resonance Integration",
-                "description": "Get a read on the room before you render. AI analyzes your script against your target audience, providing scene-by-scene insights, pacing diagnostics, and dialogue tension scores. Apply recommended directions instantly, or trust your gut and ignore them.",
-                "screenshot": "Audience Resonance Integration — scene-by-scene audience insights",
+                "title": "บูรณาการ Audience Resonance",
+                "description": "อ่านหนังสือในห้องก่อนที่จะเรนเดอร์ AI วิเคราะห์สคริปต์ของคุณกับผู้ชมเป้าหมายของคุณ โดยให้ข้อมูลเชิงลึกทีละฉาก การวินิจฉัยจังหวะ และคะแนนความตึงเครียดของบทสนทนา ใช้คำแนะนำที่แนะนำทันที หรือเชื่อสัญชาตญาณของคุณและเพิกเฉยต่อคำแนะนำเหล่านั้น",
+                "screenshot": "การบูรณาการ Audience Resonance — ข้อมูลเชิงลึกของผู้ชมแบบฉากต่อฉาก",
                 "learnMore": {
                   "items": [
                     {
-                      "title": "Scene-by-scene audience insights",
-                      "description": "AI analyzes your script against your target audience before you render to surface pacing, tension, and engagement scores."
+                      "title": "ข้อมูลเชิงลึกของผู้ชมแบบฉากต่อฉาก",
+                      "description": "AI วิเคราะห์สคริปต์ของคุณกับกลุ่มเป้าหมายของคุณก่อนที่คุณจะเรนเดอร์เพื่อแสดงคะแนนจังหวะ ความตึงเครียด และการมีส่วนร่วม"
                     },
                     {
-                      "title": "Narrated critique & recommendations",
-                      "description": "Listen to the narrated analysis and inspect targeted scene-level rewrite recommendations backed by demographic reasoning."
+                      "title": "บรรยายวิจารณ์และแนะนำ",
+                      "description": "ฟังการวิเคราะห์แบบบรรยายและตรวจสอบคำแนะนำการเขียนซ้ำระดับฉากเป้าหมายซึ่งสนับสนุนโดยเหตุผลทางประชากรศาสตร์"
                     },
                     {
-                      "title": "Your creative call",
-                      "description": "Apply recommended directions instantly with one click, or trust your gut and ignore them."
+                      "title": "การโทรที่สร้างสรรค์ของคุณ",
+                      "description": "ใช้คำแนะนำที่แนะนำทันทีในคลิกเดียว หรือเชื่อสัญชาตญาณของคุณและเพิกเฉยต่อคำแนะนำเหล่านั้น"
                     }
                   ]
                 }
               },
               {
                 "icon": "budget",
-                "title": "Production Planner",
-                "description": "Establish the budget and schedule generation across every scene and chapter using SceneFlow credits or your own BYOK API keys. Set still and clip targets per shot, toggle between Draft and Final resolution tiers, and forecast compute spend before you render.",
-                "screenshot": "Production Planner — budget, schedule, and BYOK API keys",
+                "title": "ผู้วางแผนการผลิต",
+                "description": "กำหนดงบประมาณและการสร้างกำหนดการในทุกฉากและบทโดยใช้เครดิต SceneFlow หรือคีย์ BYOK API ของคุณเอง ตั้งค่าภาพนิ่งและคลิปเป้าหมายต่อช็อต สลับระหว่างระดับแบบร่างและความละเอียดขั้นสุดท้าย และคาดการณ์การใช้จ่ายในการประมวลผลก่อนที่คุณจะเรนเดอร์",
+                "screenshot": "ผู้วางแผนการผลิต — งบประมาณ กำหนดการ และคีย์ BYOK API",
                 "learnMore": {
                   "items": [
                     {
-                      "title": "Budget and schedule forecasting",
-                      "description": "Establish the budget and schedule generation across every scene and chapter with transparent per-shot credit estimates before you render."
+                      "title": "การคาดการณ์งบประมาณและกำหนดการ",
+                      "description": "กำหนดงบประมาณและการสร้างกำหนดการในทุกฉากและบทด้วยการประมาณการเครดิตต่อช็อตที่โปร่งใสก่อนที่คุณจะเรนเดอร์"
                     },
                     {
-                      "title": "SceneFlow credits or BYOK keys",
-                      "description": "Run generation using included SceneFlow credits or connect your own Vertex AI, OpenAI, and ElevenLabs BYOK API keys."
+                      "title": "เครดิต SceneFlow หรือคีย์ BYOK",
+                      "description": "เรียกใช้การสร้างโดยใช้เครดิต SceneFlow ที่รวมอยู่หรือเชื่อมต่อคีย์ Vertex AI, OpenAI และ ElevenLabs BYOK API ของคุณเอง"
                     },
                     {
-                      "title": "Draft-to-Final tier scheduling",
-                      "description": "Schedule rapid Draft passes for animatic pre-visualization and reserve Final 4K still and FHD video compute for locked cuts."
+                      "title": "การจัดกำหนดการระดับแบบร่างถึงขั้นสุดท้าย",
+                      "description": "กำหนดเวลาการส่ง Draft อย่างรวดเร็วสำหรับการแสดงภาพล่วงหน้าแบบแอนิเมชัน และสำรองภาพนิ่ง 4K สุดท้ายและการประมวลผลวิดีโอ FHD สำหรับการตัดที่ล็อคไว้"
                     }
                   ]
                 }
               },
               {
                 "icon": "productionScript",
-                "title": "Production Script",
-                "description": "Built for traditional and AI filmmakers alike. Preview a clean, formatted screenplay in-studio and export in industry-standard formats (PDF, FDX, Fountain). Use SceneFlow as a standalone script room—or pair your screenplay with a Pre-Vis Animatic and Promo Trailer to pitch financiers and secure project funding.",
-                "screenshot": "Production Script — in-platform preview and PDF, FDX, and Fountain export",
+                "title": "สคริปต์การผลิต",
+                "description": "สร้างขึ้นสำหรับผู้สร้างภาพยนตร์แบบดั้งเดิมและ AI ดูตัวอย่างบทภาพยนตร์ที่มีรูปแบบสะอาดตาในสตูดิโอ และส่งออกในรูปแบบมาตรฐานอุตสาหกรรม (PDF, FDX, Fountain) ใช้ SceneFlow เป็นห้องสคริปต์แบบสแตนด์อโลน หรือจับคู่บทภาพยนตร์ของคุณกับ Pre-Vis Animatic และ Promo Trailer เพื่อเสนอชื่อนักการเงินและจัดหาเงินทุนสำหรับโครงการ",
+                "screenshot": "สคริปต์การผลิต — การแสดงตัวอย่างในแพลตฟอร์มและการส่งออก PDF, FDX และ Fountain",
                 "learnMore": {
                   "items": [
                     {
-                      "title": "In-platform preview & export",
-                      "description": "Preview the formatted script in the studio and export in industry-standard PDF, Final Draft FDX, or Fountain format."
+                      "title": "ดูตัวอย่างและส่งออกในแพลตฟอร์ม",
+                      "description": "ดูตัวอย่างสคริปต์ที่จัดรูปแบบในสตูดิโอและส่งออกในรูปแบบ PDF มาตรฐานอุตสาหกรรม Final Draft FDX หรือรูปแบบ Fountain"
                     },
                     {
-                      "title": "For traditional filmmakers",
-                      "description": "Use SceneFlow as an intelligent script production platform without generating video."
+                      "title": "สำหรับผู้สร้างภาพยนตร์แบบดั้งเดิม",
+                      "description": "ใช้ SceneFlow เป็นแพลตฟอร์มการผลิตสคริปต์อัจฉริยะโดยไม่ต้องสร้างวิดีโอ"
                     },
                     {
-                      "title": "Pitch & project funding",
-                      "description": "Package your script with a Pre-Vis Animatic and Promo Trailers to pitch and acquire project funding."
+                      "title": "เงินทุนเสนอขายและโครงการ",
+                      "description": "รวมสคริปต์ของคุณด้วย Pre-Vis Animatic และ Promo Trailers เพื่อนำเสนอและรับเงินทุนสำหรับโครงการ"
                     }
                   ]
                 }
@@ -717,166 +718,166 @@
             "features": [
               {
                 "icon": "audioAgent",
-                "title": "The Audio Agent",
-                "description": "Generate expressive character dialogue, narrator voiceover, action sound effects, and musical scores concurrently across up to 30 shots per scene. Cast voices automatically match character profiles from your Continuity Library or can be custom-tuned per beat.",
-                "screenshot": "The Audio Agent — concurrent dialogue, sound effects, and music scores",
+                "title": "Audio Agent",
+                "description": "สร้างบทสนทนาของตัวละครที่แสดงออก การพากย์เสียงของผู้บรรยาย เอฟเฟกต์เสียงแอ็คชั่น และดนตรีประกอบพร้อมกันสูงสุด 30 ช็อตต่อฉาก เสียงพากย์จะจับคู่โปรไฟล์ตัวละครจาก Continuity Library ของคุณโดยอัตโนมัติหรือปรับแต่งตามจังหวะได้",
+                "screenshot": "Audio Agent — บทสนทนา เอฟเฟกต์เสียง และโน้ตเพลงที่เกิดขึ้นพร้อมกัน",
                 "learnMore": {
                   "items": [
                     {
-                      "title": "Concurrent multi-track audio",
-                      "description": "Generate dialogue, narration, sound effects, and music scores concurrently across up to 30 shots per scene."
+                      "title": "เสียงหลายแทร็กพร้อมกัน",
+                      "description": "สร้างบทสนทนา การบรรยาย เอฟเฟกต์เสียง และโน้ตเพลงพร้อมกันสูงสุด 30 ช็อตต่อฉาก"
                     },
                     {
-                      "title": "Locked character voice casting",
-                      "description": "Cast voices automatically match character profiles from your Reference Library or can be custom-tuned for timbre and cadence."
+                      "title": "การพากย์เสียงตัวละครที่ถูกล็อค",
+                      "description": "เสียงพากย์จะจับคู่โปรไฟล์ตัวละครจาก Reference Library ของคุณโดยอัตโนมัติ หรือปรับแต่งเสียงและจังหวะได้"
                     },
                     {
-                      "title": "Batch scene or single-shot runs",
-                      "description": "Run the Audio Agent across the entire scene in one pass or regenerate individual dialogue and SFX beats on demand."
+                      "title": "ฉากเป็นชุดหรือการวิ่งนัดเดียว",
+                      "description": "เรียกใช้ Audio Agent ทั่วทั้งฉากในครั้งเดียว หรือสร้างบทสนทนาแต่ละรายการใหม่และจังหวะ SFX ตามความต้องการ"
                     }
                   ]
                 }
               },
               {
                 "icon": "musicScore",
-                "title": "Dialogue, SFX & Musical Score Workbench",
-                "description": "Open the Fullscreen `Audio` and `Music` tabs to direct every sonic layer of your scene. Shape vocal performances with emotional delivery tags (`[obsessive, muttered]`) and Hi-Fi Studio quality, extract embedded audio directly from video clips, dial in SFX duration presets (`Auto`, `Short 3s`, `Medium 8s`, `Long 15s`), and compose multi-shot Lyria musical score cues with custom intro fades.",
-                "screenshot": "Dialogue, SFX & Musical Score Workbench — Fullscreen Audio & Music tabs with score cues, voice casting, and SFX duration presets",
+                "title": "บทสนทนา, SFX และโต๊ะดนตรีประกอบ",
+                "description": "เปิดแท็บ \"เสียง\" และ \"เพลง\" แบบเต็มหน้าจอเพื่อกำหนดทิศทางทุกเลเยอร์เสียงในฉากของคุณ ปรับแต่งการแสดงเสียงร้องด้วยแท็กการแสดงอารมณ์ (`[ครอบงำ พึมพำ]`) และคุณภาพ Hi-Fi Studio แยกเสียงที่ฝังไว้โดยตรงจากคลิปวิดีโอ หมุนการตั้งค่าระยะเวลา SFX ที่ตั้งไว้ล่วงหน้า (`อัตโนมัติ`, `สั้น 3 วินาที`, `ปานกลาง 8 วินาที`, `ยาว 15 วินาที`) และแต่งเพลง Lyria หลายช็อตพร้อมตัวชี้นำดนตรีอินโทรแบบกำหนดเอง",
+                "screenshot": "บทสนทนา, SFX และโต๊ะดนตรีประกอบ - แท็บเสียงและเพลงแบบเต็มหน้าจอพร้อมตัวชี้คะแนน การพากย์เสียง และการตั้งค่าระยะเวลา SFX ล่วงหน้า",
                 "learnMore": {
                   "items": [
                     {
-                      "title": "Multi-shot musical score cues",
-                      "description": "Compose custom Lyria musical score cues that span specific shot ranges with configurable intro fades and auto-ducking metadata."
+                      "title": "ตัวชี้นำดนตรีหลายช็อต",
+                      "description": "เขียนคิวดนตรี Lyria แบบกำหนดเองซึ่งครอบคลุมช่วงช็อตเฉพาะพร้อมเฟดอินโทรที่กำหนดค่าได้และข้อมูลเมตาที่ซ่อนอัตโนมัติ"
                     },
                     {
-                      "title": "Performance Director & delivery tags",
-                      "description": "Direct spoken dialogue with bracketed emotional delivery tags, Hi-Fi Studio synthesis, and per-shot voice casting."
+                      "title": "ผู้อำนวยการฝ่ายประสิทธิภาพและแท็กการจัดส่ง",
+                      "description": "บทสนทนาโดยตรงพร้อมแท็กการแสดงอารมณ์แบบวงเล็บ การสังเคราะห์ Hi-Fi Studio และการหล่อเสียงต่อช็อต"
                     },
                     {
-                      "title": "Precision SFX duration presets",
-                      "description": "Time action sound effects to your shot choreography using Auto, Short 3s, Medium 8s, or Long 15s duration presets."
+                      "title": "การตั้งค่าระยะเวลา SFX ที่แม่นยำ",
+                      "description": "เอฟเฟ็กต์เสียงการเคลื่อนไหวตามเวลาให้กับท่าเต้นช็อตของคุณโดยใช้การตั้งค่าระยะเวลาอัตโนมัติ, สั้น 3 วินาที, ปานกลาง 8 วินาที หรือ 15 วินาที"
                     },
                     {
-                      "title": "Extract audio from video clips",
-                      "description": "Pull embedded audio directly from generated motion clips to preserve native on-camera speech or ambient foley."
+                      "title": "แยกเสียงจากคลิปวิดีโอ",
+                      "description": "ดึงเสียงที่ฝังไว้โดยตรงจากคลิปภาพเคลื่อนไหวที่สร้างขึ้นเพื่อรักษาเสียงพูดในกล้องหรือโฟลีย์โดยรอบ"
                     }
                   ]
                 }
               },
               {
                 "icon": "stillsAgent",
-                "title": "The Stills Agent",
-                "description": "Rapidly batch-generate the high-resolution keyframe images that illustrate your shot direction across the scene. Regenerate, edit, or upload your own references to lock the composition, lighting, and character blocking before committing to video.",
-                "screenshot": "The Stills Agent — keyframe composition and references",
+                "title": "Stills Agent",
+                "description": "สร้างภาพคีย์เฟรมที่มีความละเอียดสูงอย่างรวดเร็วเป็นชุดซึ่งแสดงทิศทางการยิงของคุณทั่วทั้งฉาก สร้างใหม่ แก้ไข หรืออัปโหลดข้อมูลอ้างอิงของคุณเองเพื่อล็อคองค์ประกอบ แสง และการบล็อกตัวละครก่อนที่จะเริ่มเล่นวิดีโอ",
+                "screenshot": "Stills Agent — องค์ประกอบคีย์เฟรมและการอ้างอิง",
                 "learnMore": {
                   "items": [
                     {
-                      "title": "Batch keyframe generation",
-                      "description": "Rapidly generate the keyframe images that illustrate your shot direction across every shot in the scene."
+                      "title": "การสร้างคีย์เฟรมเป็นชุด",
+                      "description": "สร้างภาพคีย์เฟรมอย่างรวดเร็วซึ่งแสดงทิศทางการยิงของคุณในทุกช็อตในฉาก"
                     },
                     {
-                      "title": "Automatic continuity anchoring",
-                      "description": "Every generated frame incorporates your locked cast portraits, scene wardrobes, locations, and hero props automatically."
+                      "title": "การยึดความต่อเนื่องอัตโนมัติ",
+                      "description": "ทุกเฟรมที่สร้างขึ้นจะรวมเอาภาพตัวละครที่ล็อคไว้ ตู้เสื้อผ้าของฉาก สถานที่ และอุปกรณ์ประกอบฉากของฮีโร่โดยอัตโนมัติ"
                     },
                     {
-                      "title": "Lock composition before motion",
-                      "description": "Regenerate, edit, or upload your own references before committing compute to full motion video rendering."
+                      "title": "ล็อคองค์ประกอบก่อนการเคลื่อนไหว",
+                      "description": "สร้างใหม่ แก้ไข หรืออัปโหลดข้อมูลอ้างอิงของคุณเองก่อนที่จะประมวลผลการเรนเดอร์วิดีโอแบบเคลื่อนไหวเต็มรูปแบบ"
                     }
                   ]
                 }
               },
               {
                 "icon": "stillsWorkbench",
-                "title": "Fullscreen Stills & Keyframe Studio",
-                "description": "Step into the Fullscreen `Stills` workbench for precision keyframe control. Pair Start and End keyframes for Frame-to-Video (`F2V`) motion bridging, switch between `Draft` and `Final 4K` resolution or `Standard` and `Creative` synthesis modes, customize Pre-Vis Ken Burns camera motion, and perform surgical plain-language frame edits with the Intelligent Assistant Director (`IAD`).",
-                "screenshot": "Fullscreen Stills & Keyframe Studio — F2V Start & End keyframe pairing, Final 4K controls, and surgical IAD editing",
+                "title": "ภาพนิ่งเต็มหน้าจอและสตูดิโอคีย์เฟรม",
+                "description": "ก้าวเข้าสู่เวิร์กเบนช์ 'ภาพนิ่ง' แบบเต็มหน้าจอเพื่อการควบคุมคีย์เฟรมที่แม่นยำ จับคู่คีย์เฟรมเริ่มต้นและสิ้นสุดสำหรับการเชื่อมโยงการเคลื่อนไหวแบบเฟรมสู่วิดีโอ (`F2V`) สลับระหว่างความละเอียด `Draft` และ `Final 4K` หรือโหมดการสังเคราะห์ 'มาตรฐาน' และ 'สร้างสรรค์' ปรับแต่งการเคลื่อนไหวของกล้อง Pre-Vis Ken Burns และดำเนินการแก้ไขเฟรมด้วยภาษาธรรมดาแบบผ่าตัดด้วย Intelligent Assistant Director (`IAD`)",
+                "screenshot": "สตูดิโอภาพนิ่งและคีย์เฟรมแบบเต็มหน้าจอ - การจับคู่คีย์เฟรมเริ่มต้นและสิ้นสุด F2V การควบคุม 4K สุดท้าย และการแก้ไข IAD แบบผ่าตัด",
                 "learnMore": {
                   "items": [
                     {
-                      "title": "Frame-to-Video (F2V) Start & End pairing",
-                      "description": "Pair a locked Start Frame and End Frame Target on any shot to anchor exact camera movement and subject blocking during video generation."
+                      "title": "การจับคู่เริ่มต้นและสิ้นสุดแบบเฟรมต่อวิดีโอ (F2V)",
+                      "description": "จับคู่เฟรมเริ่มต้นและเป้าหมายเฟรมสุดท้ายที่ล็อคไว้กับช็อตใดๆ เพื่อยึดการเคลื่อนไหวของกล้องและการบล็อกวัตถุอย่างแม่นยำระหว่างการสร้างวิดีโอ"
                     },
                     {
-                      "title": "Surgical IAD keyframe editing",
-                      "description": "Edit specific props, chalkboard text, wardrobe details, or lighting in plain language while keeping the rest of the keyframe locked."
+                      "title": "การแก้ไขคีย์เฟรม IAD แบบผ่าตัด",
+                      "description": "แก้ไขอุปกรณ์ประกอบฉาก ข้อความบนกระดานดำ รายละเอียดตู้เสื้อผ้า หรือการจัดแสงในภาษาธรรมดาโดยยังคงล็อกคีย์เฟรมที่เหลือไว้"
                     },
                     {
-                      "title": "Draft vs Final 4K & Creative modes",
-                      "description": "Toggle between rapid Draft previews and Final 4K resolution, plus Standard or Creative synthesis modes per shot."
+                      "title": "โหมดร่างและโหมดสุดท้าย 4K และสร้างสรรค์",
+                      "description": "สลับระหว่างการแสดงตัวอย่างแบบร่างอย่างรวดเร็วและความละเอียด 4K สุดท้าย รวมถึงโหมดการสังเคราะห์มาตรฐานหรือแบบสร้างสรรค์ต่อช็อต"
                     },
                     {
-                      "title": "Pre-Vis Ken Burns motion framing",
-                      "description": "Customize zoom and pan trajectories on every still so your Pre-Vis Animatic previews intentional camera motion."
+                      "title": "กรอบการเคลื่อนไหวของ Pre-Vis Ken Burns",
+                      "description": "ปรับแต่งวิถีการซูมและการแพนในทุกภาพนิ่ง เพื่อให้ Pre-Vis Animatic ของคุณแสดงตัวอย่างการเคลื่อนไหวของกล้องโดยตั้งใจ"
                     }
                   ]
                 }
               },
               {
                 "icon": "animatic",
-                "title": "The Pre-Vis Animatic",
-                "description": "Watch the scene breathe. Review a fully assembled animatic—stitched stills, Ken Burns motion, and locked audio—in the Screening Room. Audit the pacing, share for feedback, and ensure the cut works before committing to video.",
-                "screenshot": "The Pre-Vis Animatic — stitched stills, Ken Burns motion, and locked audio",
+                "title": "Pre-Vis Animatic",
+                "description": "ดูฉากการหายใจ ตรวจสอบแอนิเมชั่นที่ประกอบอย่างสมบูรณ์—ภาพนิ่งที่เย็บติด การเคลื่อนไหวของ Ken Burns และเสียงที่ล็อค—ใน Screening Room ตรวจสอบจังหวะ แบ่งปันความคิดเห็น และตรวจสอบให้แน่ใจว่าการตัดต่อได้ผลก่อนที่จะเริ่มใช้งานวิดีโอ",
+                "screenshot": "Pre-Vis Animatic — ภาพนิ่งที่ต่อกัน การเคลื่อนไหวของ Ken Burns และเสียงที่ล็อคไว้",
                 "learnMore": {
                   "items": [
                     {
-                      "title": "Assembled multi-track animatic",
-                      "description": "Review stitched stills, Ken Burns motion, and locked dialogue, SFX, and musical score in the Screening Room."
+                      "title": "แอนิเมชั่นแบบหลายแทร็กที่ประกอบขึ้น",
+                      "description": "ตรวจสอบภาพนิ่งที่ต่อกัน การเคลื่อนไหวของ Ken Burns และบทสนทนาที่ล็อคไว้ SFX และโน้ตเพลงใน Screening Room"
                     },
                     {
-                      "title": "Prove pacing before video spend",
-                      "description": "Audit the dramatic rhythm, spot timing gaps, and refine shot lengths while iterations cost pennies instead of full video compute."
+                      "title": "พิสูจน์จังหวะก่อนใช้จ่ายวิดีโอ",
+                      "description": "ตรวจสอบจังหวะที่น่าทึ่ง มองเห็นช่องว่างของจังหวะเวลา และปรับแต่งความยาวของช็อต ในขณะที่การวนซ้ำมีค่าใช้จ่ายเพียงเล็กน้อย แทนที่จะต้องประมวลผลวิดีโอเต็มรูปแบบ"
                     },
                     {
-                      "title": "Share for stakeholder sign-off",
-                      "description": "Audit the pacing, share for feedback, and ensure the cut works before committing to video."
+                      "title": "แบ่งปันเพื่อการลงนามของผู้มีส่วนได้ส่วนเสีย",
+                      "description": "ตรวจสอบจังหวะ แบ่งปันความคิดเห็น และตรวจสอบให้แน่ใจว่าการตัดต่อได้ผลก่อนที่จะเริ่มใช้งานวิดีโอ"
                     }
                   ]
                 }
               },
               {
                 "icon": "videoAgent",
-                "title": "The Clips Agent",
-                "description": "Once the Pre-Vis is approved, the Clips Agent takes over, rendering high-fidelity motion clips that adhere strictly to your approved stills, Frame-to-Video start and end anchors, and continuity references—backed by automated safety pre-flight checks.",
-                "screenshot": "The Clips Agent — high-fidelity motion clips from approved stills",
+                "title": "Clips Agent",
+                "description": "เมื่อ Pre-Vis ได้รับการอนุมัติ Clips Agent จะเข้ามาแทนที่ โดยเรนเดอร์คลิปภาพเคลื่อนไหวที่มีความเที่ยงตรงสูงซึ่งยึดติดกับภาพนิ่งที่ได้รับอนุมัติของคุณอย่างเคร่งครัด จุดยึดเริ่มต้นและจุดสิ้นสุดแบบเฟรมต่อวิดีโอ และการอ้างอิงความต่อเนื่อง—สนับสนุนโดยการตรวจสอบความปลอดภัยอัตโนมัติก่อนการบิน",
+                "screenshot": "Clips Agent — คลิปภาพเคลื่อนไหวความเที่ยงตรงสูงจากภาพนิ่งที่ได้รับอนุมัติ",
                 "learnMore": {
                   "items": [
                     {
-                      "title": "Triggered after Pre-Vis approval",
-                      "description": "The Clips Agent renders motion only after the Pre-Vis animatic and shot timings are approved."
+                      "title": "เกิดขึ้นหลังจากการอนุมัติ Pre-Vis",
+                      "description": "Clips Agent เรนเดอร์การเคลื่อนไหวหลังจากอนุมัติภาพเคลื่อนไหว Pre-Vis และการกำหนดเวลาช็อตแล้วเท่านั้น"
                     },
                     {
-                      "title": "Strict keyframe & F2V adherence",
-                      "description": "High-fidelity motion clips adhere strictly to your approved Start and End stills and continuity references."
+                      "title": "คีย์เฟรมที่เข้มงวดและการยึดมั่น F2V",
+                      "description": "คลิปภาพเคลื่อนไหวที่มีความเที่ยงตรงสูงจะยึดตามภาพนิ่งเริ่มต้นและสิ้นสุดและการอ้างอิงความต่อเนื่องที่ได้รับอนุมัติของคุณอย่างเคร่งครัด"
                     },
                     {
-                      "title": "Automated safety pre-flight",
-                      "description": "Pre-flight prompt sanitation prevents false-positive safety rejections on dramatic action beats so clips render reliably."
+                      "title": "ระบบความปลอดภัยอัตโนมัติก่อนการบิน",
+                      "description": "สุขอนามัยพร้อมท์ก่อนการบินจะป้องกันการปฏิเสธด้านความปลอดภัยที่ผิดพลาดในจังหวะแอ็กชั่นที่น่าทึ่ง ดังนั้นคลิปจึงแสดงผลได้อย่างน่าเชื่อถือ"
                     }
                   ]
                 }
               },
               {
                 "icon": "clipsWorkbench",
-                "title": "Multi-Take Clips & Retake Studio",
-                "description": "Direct and curate every motion render inside the Fullscreen `Clips` studio. Audition unlimited takes in the non-destructive Multi-Take Vault (`Take 1 / Take 2 / Take 3`), filter your shot rail by `In the Can` readiness, trigger targeted IAD Smart Retakes, and manage per-stream localized video takes for dialogue and signage shots.",
-                "screenshot": "Multi-Take Clips & Retake Studio — non-destructive Take 1/2/3 vault, IAD Smart Retake, and localized stream takes",
+                "title": "สตูดิโอคลิปหลายเทคและการถ่ายซ่อม",
+                "description": "กำกับและดูแลจัดการทุกการเคลื่อนไหวการเรนเดอร์ภายในสตูดิโอ `คลิป` แบบเต็มหน้าจอ การออดิชั่นไม่จำกัดใช้เวลาใน Multi-Take Vault แบบไม่ทำลาย (`Take 1 / Take 2 / Take 3`) กรองรางช็อตของคุณตามความพร้อม 'In the Can' ทริกเกอร์ IAD Smart Retakes เป้าหมาย และจัดการวิดีโอที่แปลต่อสตรีมสำหรับบทสนทนาและช็อตป้าย",
+                "screenshot": "Multi-Take Clips & Retake Studio — Take 1/2/3 vault แบบไม่ทำลาย, IAD Smart Retake และสตรีมที่แปลเป็นภาษาท้องถิ่น",
                 "learnMore": {
                   "items": [
                     {
-                      "title": "Non-destructive Multi-Take Vault",
-                      "description": "Every motion render is preserved in the shot vault so you can compare Take 1, Take 2, and Take 3 and promote your favorite take live."
+                      "title": "Multi-Take Vault แบบไม่ทำลาย",
+                      "description": "ทุกการเรนเดอร์ภาพเคลื่อนไหวจะถูกเก็บรักษาไว้ใน Shot Vault เพื่อให้คุณสามารถเปรียบเทียบ Take 1, Take 2 และ Take 3 และโปรโมต Take Live ที่คุณชื่นชอบได้"
                     },
                     {
-                      "title": "IAD Smart Retake & Direct Video",
-                      "description": "Refine camera motion, subject physics, or facial performance with the Intelligent Assistant Director and Direct Video pre-flight controls."
+                      "title": "IAD Smart Retake & วิดีโอโดยตรง",
+                      "description": "ปรับแต่งการเคลื่อนไหวของกล้อง ฟิสิกส์ของวัตถุ หรือการแสดงใบหน้าด้วย Intelligent Assistant Director และการควบคุมวิดีโอโดยตรงก่อนการบิน"
                     },
                     {
-                      "title": "Per-stream localized shot takes",
-                      "description": "Switch between your English Master take and regenerated localized clips for spoken dialogue and in-scene signage per language stream."
+                      "title": "ช็อตที่แปลเป็นภาษาท้องถิ่นต่อสตรีม",
+                      "description": "สลับระหว่างคลิปที่อาจารย์สอนภาษาอังกฤษของคุณถ่ายกับคลิปที่แปลเป็นภาษาท้องถิ่นใหม่สำหรับบทสนทนาพูดและป้ายในฉากตามสตรีมภาษา"
                     },
                     {
-                      "title": "Dialogue-free stem readiness",
-                      "description": "Extract embedded clip audio into a dialogue-free SFX and ambience stem so localized dubs retain original foley and room tone."
+                      "title": "ความพร้อมของก้านที่ปราศจากบทสนทนา",
+                      "description": "แยกเสียงคลิปที่ฝังอยู่ใน SFX และก้านบรรยากาศที่ปราศจากบทสนทนา เพื่อให้เสียงพากย์ที่แปลเป็นภาษาท้องถิ่นยังคงโฟลีย์ดั้งเดิมและโทนเสียงของห้อง"
                     }
                   ]
                 }
@@ -913,7 +914,7 @@
             "features": [
               {
                 "icon": "mixer",
-                "title": "The Mixer",
+                "title": "มิกเซอร์",
                 "description": "A commercial-grade broadcast scene editor and stitching console built directly into the studio. Preview your cut on a 16:9 Broadcast Reference Monitor paired with a real-time Stereo VU / Peak Meter (`-60` to `0 dBFS`, `-14 LUFS` target), inspect cut points with a side-by-side Match-Cut Continuity Loupe, shape J-Cut and L-Cut audio overlaps (`-0.3s` / `+0.3s`), choose dynamic Optical Hold Modes (`103% Ken Burns Push` or `Ping-Pong Tail`), mix across a 6-lane timeline (`V1 Video`, `A0 Stem`, `A1 Dialogue`, `A2 VO`, `A3 SFX`, `A4 Score`) with `-8 dB` Auto-Ducking, apply 1-click watermark crops and text overlays, and cloud-render EBU R128 (`-14 LUFS`) masters.",
                 "screenshot": "The Mixer — Broadcast Reference Monitor, Stereo VU Meter, Match-Cut Continuity Loupe, J/L-Cut overlaps, 6-lane timeline with -8 dB Auto-Ducking, and EBU R128 loudness",
                 "learnMore": {
@@ -943,100 +944,100 @@
               },
               {
                 "icon": "languageStreams",
-                "title": "Streams (Multi-Language)",
-                "description": "Expand your global reach across 44 languages from one master timeline. Selectively regenerate only the specific shots containing spoken dialogue or in-scene text signage while retaining unselected master shots at zero extra credit cost. Extract embedded video audio and strip spoken dialogue (`htdemucs` neural stem separation) so generated SFX and music carry into every dub, and automatically align longer translated dialogue using elastic video slow-down (slowing a `10s` clip up to `15s` at `67%` speed), hybrid optical holds, or pitch-preserved audio tempo matching—while directing in a localized Studio UI.",
-                "screenshot": "Streams (Multi-Language) — Selective shot regeneration vs retained master shots, dialogue-free stem extraction, and elastic slow-video dub alignment",
+                "title": "สตรีม (หลายภาษา)",
+                "description": "ขยายการเข้าถึงทั่วโลกของคุณใน 44 ภาษาจากไทม์ไลน์หลักเดียว คัดเลือกสร้างเฉพาะช็อตเฉพาะที่มีบทสนทนาพูดหรือป้ายข้อความในฉาก โดยที่ยังคงรักษาช็อตหลักที่ไม่ได้เลือกไว้โดยไม่มีค่าใช้จ่ายเครดิตเพิ่มเติมเป็นศูนย์ แยกเสียงวิดีโอที่ฝังไว้และตัดบทสนทนาที่พูด (`htdemucs` การแยกก้านประสาท) เพื่อสร้าง SFX และเพลงที่ใส่เข้าไปในทุกพากย์ และจัดบทสนทนาที่แปลให้ยาวขึ้นโดยอัตโนมัติโดยใช้การชะลอความเร็วของวิดีโอแบบยืดหยุ่น (ทำให้คลิป `10 วินาที` ช้าลงเป็น `15s` ที่ความเร็ว `67%`), การถือแสงแบบไฮบริด หรือการจับคู่จังหวะเสียงที่รักษาระดับเสียงไว้ - ในขณะที่กำกับใน Studio UI ที่แปลเป็นภาษาท้องถิ่น",
+                "screenshot": "สตรีม (หลายภาษา) — การสร้างช็อตแบบเลือกช็อตเทียบกับช็อตหลักที่เก็บไว้ การแยกลำต้นแบบไร้บทสนทนา และการจัดตำแหน่งพากย์วิดีโอช้าที่ยืดหยุ่น",
                 "learnMore": {
                   "items": [
                     {
-                      "title": "Selective shot regeneration & retained master clips",
-                      "description": "Select only the shots with spoken dialogue or in-scene signage to regenerate in your target language while unselected action shots automatically retain the master video clip."
+                      "title": "การสร้างช็อตแบบเลือกและคลิปหลักที่เก็บไว้",
+                      "description": "เลือกเฉพาะช็อตที่มีบทสนทนาพูดหรือป้ายในฉากเพื่อสร้างใหม่ในภาษาเป้าหมายของคุณ ในขณะที่ช็อตแอ็คชั่นที่ไม่ได้เลือกจะเก็บคลิปวิดีโอหลักไว้โดยอัตโนมัติ"
                     },
                     {
-                      "title": "Dialogue-free stem extraction (keep generated SFX & music)",
-                      "description": "Neural stem separation extracts embedded video audio and removes spoken English dialogue while preserving generated foley, room ambience, and music for clean MP3 dubbing."
+                      "title": "การสกัดก้านแบบไร้บทสนทนา (สร้าง SFX และเพลงไว้ต่อไป)",
+                      "description": "การแยกก้านประสาทจะแยกเสียงวิดีโอที่ฝังไว้และลบบทสนทนาภาษาอังกฤษออก ในขณะที่ยังคงรักษาโฟลีย์ที่สร้างขึ้น บรรยากาศในห้อง และเสียงเพลงเพื่อการพากย์ MP3 ที่สะอาดตา"
                     },
                     {
-                      "title": "Elastic video slow-down & multi-method dub alignment",
-                      "description": "Align longer translated dialogue by slowing a 10s video clip up to 15s (down to 67% speed), pairing an 80% slow-down with a 103% zoom hold, or fitting dub audio tempo up to 1.25x."
+                      "title": "การชะลอตัวของวิดีโอแบบยืดหยุ่นและการจัดตำแหน่งพากย์แบบหลายวิธี",
+                      "description": "ปรับบทสนทนาที่แปลให้ยาวขึ้นโดยการทำให้คลิปวิดีโอความยาว 10 วินาทีช้าลงสูงสุด 15 วินาที (ความเร็วลดลงเหลือ 67%) จับคู่การชะลอตัวลง 80% กับการค้างการซูม 103% หรือปรับจังหวะเสียงพากย์ให้เหมาะสมสูงสุด 1.25 เท่า"
                     },
                     {
-                      "title": "Regenerated dialogue & signage clips across 44 languages",
-                      "description": "Regenerate localized dialogue takes and in-scene signage clips directly within the scene across 44 languages so visuals, stencils, and speech match every audience."
+                      "title": "คลิปบทสนทนาและป้ายที่สร้างขึ้นใหม่ใน 44 ภาษา",
+                      "description": "สร้างบทสนทนาที่แปลเป็นภาษาท้องถิ่นและคลิปป้ายในฉากได้โดยตรงภายในฉากใน 44 ภาษา ดังนั้นภาพ สเตนซิล และคำพูดจึงเข้ากันกับผู้ชมทุกคน"
                     },
                     {
-                      "title": "Localized Studio UI",
-                      "description": "Direct and produce in your native interface across English, Spanish, Portuguese, Hindi, Simplified Chinese, and Arabic."
+                      "title": "UI สตูดิโอที่แปลเป็นภาษาท้องถิ่น",
+                      "description": "กำกับและผลิตในอินเทอร์เฟซดั้งเดิมของคุณ ทั้งภาษาอังกฤษ สเปน โปรตุเกส ฮินดี จีนตัวย่อ และอารบิก"
                     }
                   ]
                 }
               },
               {
                 "icon": "multilanguageUi",
-                "title": "Multilanguage Studio UI",
-                "description": "Direct, write, and produce in your team's native language across the entire SceneFlow AI Studio. Switch the studio interface on the fly between English, Español (`ES`), Português (`PT`), 中文 (简体) (`ZH`), हिन्दी (`HI`), and العربية (`AR`)—localizing every room, direction control, camera & lighting inspector, continuity library, and timeline while collaborating seamlessly across global production teams.",
-                "screenshot": "Multilanguage Studio UI — Interactive localized studio workspaces in Español (ES), Português (PT), 中文 (简体), and हिन्दी (HI)",
+                "title": "UI สตูดิโอหลายภาษา",
+                "description": "กำกับ เขียน และผลิตในภาษาแม่ของทีมของคุณทั่วทั้ง SceneFlow AI Studio สลับอินเทอร์เฟซสตูดิโอได้ทันทีระหว่างภาษาอังกฤษ, Español (`ES`), Português (`PT`), 中文 (简体) (`ZH`), हिन्दी (`HI`) และ العربية (`AR`)—แปลทุกห้อง การควบคุมทิศทาง ตัวตรวจสอบกล้องและแสง ไลบรารีความต่อเนื่อง และไทม์ไลน์ในขณะที่ทำงานร่วมกันอย่างราบรื่นในทีมผลิตทั่วโลก",
+                "screenshot": "UI สตูดิโอหลายภาษา - พื้นที่ทำงานสตูดิโอที่แปลเป็นภาษาท้องถิ่นแบบโต้ตอบในEspañol (ES), Português (PT), 中文 (简体) และ हिन्दी (HI)",
                 "learnMore": {
                   "items": [
                     {
-                      "title": "Native studio workspace across 6 Tier-A interface languages",
-                      "description": "Switch the entire SceneFlow Studio UI—Series Studio, Blueprint Room, Production Stage, and Screening Room—between English, Spanish, Portuguese, Simplified Chinese, Hindi, and Arabic."
+                      "title": "พื้นที่ทำงานสตูดิโอเนทิฟในภาษาอินเทอร์เฟซ Tier-A 6 ภาษา",
+                      "description": "สลับ SceneFlow Studio UI ทั้งหมด ได้แก่ Series Studio, Blueprint Room, Production Stage และ Screening Room ระหว่างภาษาอังกฤษ สเปน โปรตุเกส จีนตัวย่อ ฮินดี และอารบิก"
                     },
                     {
-                      "title": "Localized direction, camera, blocking & continuity controls",
-                      "description": "Every tab, shot rail, camera lens selector, continuity lock, and mixer control renders natively in your selected language so global directors and editors work at full speed."
+                      "title": "ทิศทาง กล้อง การบล็อก และการควบคุมความต่อเนื่องที่แปลเป็นภาษาท้องถิ่น",
+                      "description": "ทุกแท็บ รางช็อต ตัวเลือกเลนส์กล้อง การล็อคความต่อเนื่อง และการควบคุมมิกเซอร์จะเรนเดอร์ในภาษาที่คุณเลือก ดังนั้นผู้กำกับและบรรณาธิการระดับโลกจึงทำงานด้วยความเร็วสูงสุด"
                     },
                     {
-                      "title": "Cross-border team collaboration on one shared project",
-                      "description": "A showrunner in Los Angeles, an editor in Madrid, a VFX lead in São Paulo, and a sound designer in Mumbai or Shanghai can each work on the same project in their preferred UI language."
+                      "title": "การทำงานร่วมกันเป็นทีมข้ามพรมแดนในโครงการที่ใช้ร่วมกันเพียงโครงการเดียว",
+                      "description": "นักวิ่งโชว์ในลอสแอนเจลิส บรรณาธิการในมาดริด หัวหน้า VFX ในเซาเปาโล และนักออกแบบเสียงในมุมไบหรือเซี่ยงไฮ้ แต่ละคนสามารถทำงานในโครงการเดียวกันในภาษา UI ที่พวกเขาต้องการได้"
                     },
                     {
-                      "title": "Paired with 75+ landing & 44+ dubbing stream languages",
-                      "description": "Combine a native localized Studio UI with 44-language neural voice dubbing and lip-sync streams to produce and distribute globally from day one."
+                      "title": "จับคู่กับภาษาสตรีมมากกว่า 75 ภาษาและภาษาสตรีมพากย์มากกว่า 44 ภาษา",
+                      "description": "รวม Studio UI ที่แปลเป็นภาษาท้องถิ่นเข้ากับการพากย์เสียงแบบนิวรัล 44 ภาษาและการสตรีมลิปซิงค์เพื่อผลิตและจัดจำหน่ายทั่วโลกตั้งแต่วันแรก"
                     }
                   ]
                 }
               },
               {
                 "icon": "promoTrailers",
-                "title": "Promo & Trailers",
-                "description": "Cut high-converting theatrical teasers, episodic recaps, and social-ready promo trailers at any time during production. Pull hero takes from your scene vault, reframe for horizontal (`16:9`) or vertical (`9:16`) feeds, and generate multi-language versions with localized title cards and voiceover hooks.",
-                "screenshot": "Promo & Trailers — multi-language horizontal and vertical trailers",
+                "title": "โปรโมชั่นและตัวอย่าง",
+                "description": "ตัดทีเซอร์ละครที่มีคอนเวอร์ชันสูง บทสรุปเป็นตอน และตัวอย่างการโปรโมตที่พร้อมลงโซเชียลได้ตลอดเวลาในระหว่างการผลิต ดึงฮีโร่มาจากห้องนิรภัยของคุณ จัดเฟรมใหม่สำหรับฟีดแนวนอน (`16:9`) หรือแนวตั้ง (`9:16`) และสร้างเวอร์ชันหลายภาษาด้วยการ์ดไตเติ้ลที่แปลเป็นภาษาท้องถิ่นและตะขอพากย์เสียง",
+                "screenshot": "โปรโมชั่นและตัวอย่าง — ตัวอย่างแนวนอนและแนวตั้งหลายภาษา",
                 "learnMore": {
                   "items": [
                     {
-                      "title": "Social-ready trailers at any stage",
-                      "description": "Cut promo trailers, theatrical teasers, and episodic recaps at any point during production."
+                      "title": "ตัวอย่างที่พร้อมเข้าสังคมในทุกขั้นตอน",
+                      "description": "ตัดตัวอย่างการโปรโมต ทีเซอร์ละคร และสรุปเป็นตอนได้ทุกเมื่อในระหว่างการผลิต"
                     },
                     {
-                      "title": "Horizontal & vertical social formats",
-                      "description": "Generate multi-language versions optimized for horizontal 16:9 YouTube feeds or vertical 9:16 Shorts, Reels, and TikTok."
+                      "title": "รูปแบบทางสังคมแนวนอนและแนวตั้ง",
+                      "description": "สร้างเวอร์ชันหลายภาษาที่ปรับให้เหมาะสมสำหรับฟีด YouTube แนวนอน 16:9 หรือวิดีโอสั้น คลิปม้วน และ TikTok แนวตั้ง 9:16"
                     },
                     {
-                      "title": "Localized hooks & title cards",
-                      "description": "Render localized trailer streams with translated voiceover hooks, burned-in captions, and market-specific title cards."
+                      "title": "ตะขอและการ์ดไตเติ้ลที่แปลเป็นภาษาท้องถิ่น",
+                      "description": "เรนเดอร์สตรีมตัวอย่างที่แปลเป็นภาษาท้องถิ่นพร้อมท่อนพากย์เสียงที่แปลแล้ว คำบรรยายแบบฝัง และการ์ดไตเติ้ลเฉพาะตลาด"
                     }
                   ]
                 }
               },
               {
                 "icon": "shipPackage",
-                "title": "Direct Publishing",
-                "description": "Export the final EBU R128-normalized master MP4 in 1080p or 4K, download complete production stems, or let SceneFlow auto-generate high-CTR thumbnails, localized titles, chapter markers, and descriptions to publish scenes, chapters, and promos directly to YouTube, TikTok, and Facebook.",
-                "screenshot": "Direct Publishing — MP4 export and direct publishing to YouTube, TikTok, and Facebook",
+                "title": "การเผยแพร่โดยตรง",
+                "description": "ส่งออก MP4 ต้นแบบที่ทำให้เป็นมาตรฐานของ EBU R128 สุดท้ายใน 1080p หรือ 4K ดาวน์โหลดขั้นตอนการผลิตที่สมบูรณ์ หรือปล่อยให้ SceneFlow สร้างภาพขนาดย่อที่มี CTR สูงโดยอัตโนมัติ ชื่อที่แปลเป็นภาษาท้องถิ่น เครื่องหมายของบท และคำอธิบายเพื่อเผยแพร่ฉาก บท และโปรโมชันโดยตรงไปยัง YouTube, TikTok และ Facebook",
+                "screenshot": "การเผยแพร่โดยตรง — ส่งออก MP4 และการเผยแพร่โดยตรงไปยัง YouTube, TikTok และ Facebook",
                 "learnMore": {
                   "items": [
                     {
-                      "title": "Master MP4 or direct social publishing",
-                      "description": "Export the final master MP4 or publish scenes, chapters, and promos directly to YouTube, TikTok, and Facebook."
+                      "title": "Master MP4 หรือการเผยแพร่ทางสังคมโดยตรง",
+                      "description": "ส่งออก MP4 หลักขั้นสุดท้ายหรือเผยแพร่ฉาก บท และโปรโมชันไปยัง YouTube, TikTok และ Facebook โดยตรง"
                     },
                     {
-                      "title": "Auto-generated thumbnails & metadata",
-                      "description": "Let SceneFlow auto-generate high-contrast thumbnails, localized titles, descriptions, tags, and chapter markers for every release."
+                      "title": "ภาพขนาดย่อและข้อมูลเมตาที่สร้างขึ้นอัตโนมัติ",
+                      "description": "ให้ SceneFlow สร้างภาพขนาดย่อที่มีคอนทราสต์สูง ชื่อที่แปลแล้ว คำอธิบาย แท็ก และเครื่องหมายบอกบทสำหรับทุกๆ การเผยแพร่โดยอัตโนมัติ"
                     },
                     {
-                      "title": "Archival stems & screenplay bundle",
-                      "description": "Download stitched video masters, isolated dialogue and SFX stems, subtitle files, and formatted screenplays in one production package."
+                      "title": "กลุ่มเอกสารสำคัญและชุดบทภาพยนตร์",
+                      "description": "ดาวน์โหลดวิดีโอต้นแบบที่ต่อกัน บทสนทนาแบบแยกและสเต็ม SFX ไฟล์คำบรรยาย และบทภาพยนตร์ที่จัดรูปแบบไว้ในแพ็คเกจการผลิตเดียว"
                     }
                   ]
                 }
@@ -1053,52 +1054,52 @@
         "features": [
           {
             "icon": "screeningPlayer",
-            "title": "One Unified Player",
-            "description": "Toggle seamlessly between Pre-Vis animatics, stitched scenes, multi-scene chapters, promo trailers, and your final master. Switch Language Streams on the fly to audition dubbed audio, dialogue-free stem mixes, and regenerated dialogue or signage clips—always frame-locked to the exact cut from the Mixer.",
-            "screenshot": "Screening Room player",
+            "title": "ผู้เล่นหนึ่งเดียว",
+            "description": "สลับระหว่างแอนิเมชั่น Pre-Vis, ฉากต่อเนื่อง, บทที่มีหลายฉาก, ตัวอย่างการโปรโมต และปรมาจารย์คนสุดท้ายของคุณได้อย่างราบรื่น สลับการสตรีมภาษาได้ทันทีไปใช้เสียงพากย์ออดิชั่น มิกซ์เพลงที่ไม่มีบทสนทนา และคลิปบทสนทนาหรือป้ายที่สร้างขึ้นใหม่—ล็อคเฟรมไว้เสมอเพื่อตัดจากมิกเซอร์อย่างแน่นอน",
+            "screenshot": "ผู้เล่น Screening Room",
             "learnMore": {
               "items": [
                 {
-                  "title": "Every milestone in one theatre",
-                  "description": "Switch effortlessly among Pre-Vis animatics, individual scenes, chapters, promos, and the final master."
+                  "title": "ทุกเหตุการณ์สำคัญในโรงละครเดียว",
+                  "description": "สลับระหว่างภาพเคลื่อนไหว Pre-Vis แต่ละฉาก บท โปรโมชั่น และต้นแบบสุดท้ายได้อย่างง่ายดาย"
                 },
                 {
-                  "title": "Live language stream auditioning",
-                  "description": "Audition any Language Stream—dubbed audio, lip-sync, or regenerated dialogue and signage clips—on the fly without reloading the timeline."
+                  "title": "การคัดเลือกสตรีมภาษาสด",
+                  "description": "ออดิชั่นสตรีมภาษาใดๆ ไม่ว่าจะเป็นเสียงพากย์ ลิปซิงค์ หรือคลิปบทสนทนาและป้ายที่สร้างขึ้นใหม่ ได้ทันทีโดยไม่ต้องโหลดไทม์ไลน์ซ้ำ"
                 },
                 {
-                  "title": "Frame-locked to the Broadcast Mixer",
-                  "description": "Every stream plays the exact stitch transitions, J/L-cut overlaps, auto-ducking curves, and loudness normalization rendered in the Mixer."
+                  "title": "ล็อคเฟรมไว้ที่ Broadcast Mixer",
+                  "description": "ทุกสตรีมจะเล่นการเปลี่ยนตะเข็บที่แน่นอน การซ้อนทับของ J/L-cut เส้นโค้งที่โค้งงออัตโนมัติ และการปรับมาตรฐานความดังที่เรนเดอร์ในมิกเซอร์"
                 },
                 {
-                  "title": "Incremental episodic shipping",
-                  "description": "Ship a finished 3–5 minute scene, an 8–12 minute chapter, or a social promo immediately while downstream chapters continue rendering."
+                  "title": "การจัดส่งแบบตอนที่เพิ่มขึ้น",
+                  "description": "จัดส่งฉากที่เสร็จสิ้นแล้วความยาว 3–5 นาที บทที่มีความยาว 8–12 นาที หรือการโปรโมตทางโซเชียลทันทีในขณะที่บทต่อเนื่องยังคงเรนเดอร์ต่อไป"
                 }
               ]
             }
           },
           {
             "icon": "screeningCollab",
-            "title": "Frame-Accurate Collaboration",
-            "description": "Stop exporting rough cuts to email. Share a private screening link where collaborators, sound editors, localization leads, and investors watch full-resolution playback in real time and drop timestamped notes directly on the picture—with instant notifications sent straight to your phone.",
-            "screenshot": "Shared review",
+            "title": "การทำงานร่วมกันแบบเฟรมที่แม่นยำ",
+            "description": "หยุดส่งออกการตัดหยาบไปยังอีเมล แชร์ลิงก์การคัดกรองส่วนตัวที่ผู้ทำงานร่วมกัน ผู้แก้ไขเสียง ผู้นำด้านการแปล และนักลงทุนรับชมการเล่นที่มีความละเอียดสูงแบบเรียลไทม์ และส่งบันทึกการประทับเวลาลงบนรูปภาพโดยตรง พร้อมการแจ้งเตือนทันทีที่ส่งตรงไปยังโทรศัพท์ของคุณ",
+            "screenshot": "แชร์รีวิว",
             "learnMore": {
               "items": [
                 {
-                  "title": "Private stakeholder screening links",
-                  "description": "Reviewers watch full-resolution playback across any language stream and leave frame-accurate timestamped notes on the picture."
+                  "title": "ลิงค์คัดกรองผู้มีส่วนได้ส่วนเสียภาคเอกชน",
+                  "description": "ผู้ตรวจสอบรับชมการเล่นที่มีความละเอียดเต็มในทุกสตรีมภาษา และฝากบันทึกการประทับเวลาที่แม่นยำของเฟรมไว้บนรูปภาพ"
                 },
                 {
-                  "title": "Zero rough-cut file exports",
-                  "description": "Collect creative, legal, and localization feedback in one centralized review thread without uploading or mailing heavy video files."
+                  "title": "ส่งออกไฟล์แบบหยาบเป็นศูนย์",
+                  "description": "รวบรวมความคิดเห็นเชิงสร้างสรรค์ กฎหมาย และการแปลเป็นภาษาท้องถิ่นในชุดตรวจสอบแบบรวมศูนย์เพียงชุดเดียว โดยไม่ต้องอัปโหลดหรือส่งไฟล์วิดีโอจำนวนมากทางไปรษณีย์"
                 },
                 {
-                  "title": "Instant mobile notifications",
-                  "description": "New reviewer notes notify you immediately on your phone so you can approve or dispatch revisions while directing on desktop."
+                  "title": "การแจ้งเตือนทางมือถือทันที",
+                  "description": "บันทึกของผู้ตรวจสอบใหม่จะแจ้งให้คุณทราบทันทีบนโทรศัพท์ของคุณ เพื่อให้คุณสามารถอนุมัติหรือส่งการแก้ไขในขณะที่ควบคุมบนเดสก์ท็อป"
                 },
                 {
-                  "title": "Direct link back to the Shot Rail",
-                  "description": "Jump from any timestamped screening comment straight to the corresponding scene and shot in the Production Stage to execute the note."
+                  "title": "ลิงค์ตรงกลับไปยัง Shot Rail",
+                  "description": "ข้ามจากความคิดเห็นในการคัดกรองที่มีการประทับเวลาโดยตรงไปยังฉากที่เกี่ยวข้องและถ่ายทำใน Production Stage เพื่อดำเนินการบันทึก"
                 }
               ]
             }
@@ -1106,6 +1107,272 @@
         ]
       }
     ]
+  },
+  "productionAgent": {
+    "eyebrow": "Production Agent • ระบบสร้างสตูดิโออัตโนมัติ",
+    "title": "หยุดพิมพ์พรอมต์เองกว่า 300 ช็อต กดเริ่มสร้างแล้ววางมือได้เลย",
+    "subtitle": "งานผลิตขนาด 27 ฉากทั่วไป (12–20 ช็อตต่อฉาก) ต้องพิมพ์พรอมต์ภาพนิ่งและวิดีโอด้วยมือกว่า 300 ครั้งในเครื่องมือ AI แบบเดิม ขัดเกลาบทของคุณให้สมบูรณ์ในเวลาไม่ถึงชั่วโมง เลือก Pre-Vis, คลิป, ฉาก, มาสเตอร์ หรือโปรโม แล้วปล่อยให้ Production Agent สร้างฉาก แก้ไขช็อตที่ล้มเหลวอัตโนมัติ และแจ้งเตือนคุณพร้อมลิงก์ส่วนตัว /s/ Screening Room เมื่อเสร็จสมบูรณ์",
+    "showDetail": "แสดงรายละเอียดเพิ่มเติม",
+    "hideDetail": "ซ่อนรายละเอียด",
+    "drawerBadge": "ระบบจัดการการผลิตอัตโนมัติทีละฉาก",
+    "drawerTitle": "ใช้เวลากับบทไม่ถึงชั่วโมง แทนที่การพิมพ์พรอมต์หลายชั่วโมงด้วยการรันอัตโนมัติเพียงครั้งเดียว",
+    "cards": [
+      {
+        "badge": "ลดการพิมพ์พรอมต์เองกว่า 300 ครั้ง",
+        "title": "ใช้เวลากับบท < 1 ชั่วโมง → มีเวลาอิสระเต็มวัน",
+        "description": "ไม่ต้องพิมพ์พรอมต์ภาพนิ่งและวิดีโอทีละช็อตกว่า 300 ครั้งใน 27 ฉาก (12–20 ช็อตต่อฉาก) ขัดเกลาบทให้เสร็จในเวลาไม่ถึงชั่วโมง แล้วนำเวลาของคุณกลับคืนมา"
+      },
+      {
+        "badge": "ครบทั้ง 27 ฉาก หรือเลือกตามบท",
+        "title": "ครบ 5 ขั้นตอนการผลิตตั้งแต่ต้นจนจบ",
+        "description": "เลือก Pre-Vis, คลิป, ฉาก, มาสเตอร์ และโปรโมได้ในตัวสร้างเดียว เอเจนต์จะสร้างภาพอ้างอิงความต่อเนื่อง เสียงพูด/SFX/ดนตรี คีย์เฟรม คลิปวิดีโอ และตัวอย่างภาพยนตร์ให้อัตโนมัติ"
+      },
+      {
+        "badge": "งานเรนเดอร์ไม่สะดุด",
+        "title": "แก้ไขตัวเองอัตโนมัติ + ระบบสำรอง Creative Clips",
+        "description": "ปรับปรุงคำสั่งกำกับช็อตและรันช็อตที่ล้มเหลวใหม่อัตโนมัติ และเมื่อช็อตดราม่ายังคงติดตัวกรองนโยบายของ Google หลังปรับคำสั่งแล้ว ระบบจะสลับไปใช้ Creative Clips ทันที"
+      },
+      {
+        "badge": "ผู้กำกับควบคุมได้เต็มที่",
+        "title": "จุดตรวจสอบและลิงก์ตรวจงาน /s/",
+        "description": "ปล่อยรันอัตโนมัติ 100% หรือหยุดพักหลังจบ Pre-Vis หรือหลังแต่ละฉาก รับการแจ้งเตือนตามความถี่ที่คุณเลือกพร้อมลิงก์ตรง /s/ Screening Room สำหรับตรวจทาน"
+      }
+    ],
+    "viewScript": "ดูสคริปต์วิดีโอของ Ana (ความยาว 30 วินาที)",
+    "hideScript": "ซ่อนสคริปต์วิดีโอของ Ana (ความยาว 30 วินาที)",
+    "copyScript": "คัดลอกสคริปต์",
+    "copied": "คัดลอกแล้ว",
+    "voLabel": "โว:",
+    "pictureLabel": "รูปภาพ:",
+    "scriptBlocks": [
+      {
+        "block": "บล็อก 01 (0:00–0:10)",
+        "title": "กำแพง 300 นัดและการยิงในคลิกเดียว",
+        "syncLine": "ANA (บนกล้อง): \"เมื่อก่อนการถ่ายภาพสามร้อยภาพหมายถึงการแจ้งด้วยตนเองสามร้อยภาพ ไม่ใช่อีกต่อไป\"",
+        "narration": "ใช้เวลาไม่ถึงหนึ่งชั่วโมงในการปรับแต่งสคริปต์ของคุณให้สมบูรณ์แบบใน 27 ฉาก จากนั้นเปิดใช้งาน Production Agent ได้ในคลิกเดียว",
+        "visual": "ภาพขนาดกลางของ Ana (CHAR_ANA เสื้อแจ็กเก็ตสนามมะกอกเหนือคอเต่าหินชนวน) ในชุดการผลิตเสมือนจริงที่มืดมิด เธอแตะปุ่มควบคุมการยิงสีฟ้าเดียว ข้างหลังเธอ ตารางสตอรี่บอร์ด 27 ฉากและแถบความคืบหน้าสีฟ้าถึงมรกตจะจุดประกายไปทั่วจอแสดงผลผนังโค้ง"
+      },
+      {
+        "block": "บล็อก 02 (0:10–0:20)",
+        "title": "การสร้างอัตโนมัติ การรักษาตนเอง และคลิปสร้างสรรค์ทางเลือก",
+        "narration": "เจ้าหน้าที่เดินไปทุกฉาก — ล็อคการอ้างอิง วางคำบรรยายและคิวเพลง เพิ่มประสิทธิภาพข้อความแจ้งเตือนของคลิปที่ล้มเหลว และสลับไปใช้คลิปสร้างสรรค์เมื่อช็อตกระทบตัวกรองนโยบาย",
+        "visual": "ผ่าน Ana เหนือไหล่ไปทางจอแสดงผลผนังโค้ง โดยมีกรอบสตอรี่บอร์ด รูปคลื่นเสียง และตัวอย่างการเคลื่อนไหวปรากฏอยู่ในช่องฉาก 27 ฉาก แผ่นกระเบื้องหนึ่งจะกะพริบเป็นจังหวะสั้น ๆ ของสีเหลืองอำพัน (ลองนโยบายใหม่) เขียนมุมกล้องใหม่ และเปลี่ยนเป็นสีเขียวมรกตที่ทึบ"
+      },
+      {
+        "block": "บล็อก 03 (0:20–0:30 น.)",
+        "title": "เดินออกไปและแจ้งเตือน Screening Room",
+        "narration": "ตั้งจุดตรวจที่เกิดเหตุหรือเดินออกไปโดยสิ้นเชิง เมื่อ Pre-Vis หรือ Master Cut ของคุณพร้อม การแจ้งเตือนจะส่งลิงก์ Screening Room ส่วนตัวของคุณเพื่อตรวจสอบ",
+        "visual": "Ana หยิบแก้วกาแฟเซรามิกของเธอขึ้นมาขณะที่ส่วนจัดแสดงบนผนังทำสีมรกต 100% โทรศัพท์ของเธอสว่างขึ้นพร้อมการแจ้งเตือน /s/Screening Room ส่วนตัว เธอยิ้มอย่างอบอุ่นให้กล้องขณะที่ปรมาจารย์ที่เสร็จแล้วเล่นอยู่ข้างหลังเธอ"
+      }
+    ],
+    "cta": "เปิดสตูดิโอ ($9)"
+  },
+  "studioAcademy": {
+    "eyebrow": "SceneFlow Studio Academy และการฝึกอบรมแบบ Just-In-Time",
+    "title": "มีคำแนะนำทุกขั้นตอน เชี่ยวชาญสตูดิโอไปพร้อมกับสร้างผลงาน",
+    "subtitle": "ไม่ต้องนั่งจ้องไทม์ไลน์ว่างเปล่าหรือเสียเครดิตเดาขั้นตอนถัดไป กดปุ่ม ? บนหน้าจอใดก็ได้เพื่อเปิดแผนผังหน้าจอ Just-In-Time (JIT) ทันที พร้อมเช็กลิสต์ 60 วินาทีและปุ่มสั่งงานในคลิกเดียว—หรือเรียนคอร์สอินเทอร์แอคทีฟตั้งแต่ไอเดียแรกจนถึงมาสเตอร์พร้อมเผยแพร่",
+    "showDetail": "แสดงรายละเอียดเพิ่มเติม",
+    "hideDetail": "ซ่อนรายละเอียด",
+    "drawerBadge": "ขุมพลังสตูดิโอฮอลลีวูด · ไม่ต้องจบภาพยนตร์",
+    "drawerTitle": "แผนผังหน้าจออินเทอร์แอคทีฟ เช็กลิสต์ 60 วินาที และระบบคุ้มครองเครดิตในทุกห้องทำงาน",
+    "cards": [
+      {
+        "badge": "เรียกดูได้ทันทีด้วยปุ่มเดียว (?)",
+        "title": "โค้ชอัจฉริยะ Just-In-Time (JIT) ตามบริบทหน้าจอ",
+        "description": "กด ? บนหน้าจอใดก็ได้เพื่อเปิดแผนผังภาพของพื้นที่ทำงานปัจจุบัน เช็กลิสต์ 60 วินาทีว่าต้องทำอะไรต่อ และปุ่มคลิกเดียวที่เรียกคำสั่งในสตูดิโอให้คุณทันที"
+      },
+      {
+        "badge": "4 คอร์สอินเทอร์แอคทีฟพร้อมคำแนะนำ",
+        "title": "ซิมูเลเตอร์ “ภาพยนตร์เรื่องแรกของคุณใน 10 นาที”",
+        "description": "ออกแบบมาสำหรับนักเล่าเรื่อง นักเขียน และโชว์รันเนอร์ที่ไม่มีพื้นฐานการตัดต่อ ทำตามจุดชี้แนะ Spotlight X-Ray ตั้งแต่ไอเดีย 1 ประโยคไปจนถึงภาพยนตร์ที่มีเสียงพากย์ ดนตรีประกอบ และเปิดชมได้จริง"
+      },
+      {
+        "badge": "ประหยัดเครดิตได้สูงสุดถึง 70%",
+        "title": "ระบบคุ้มครองเครดิตด้วย Animatic-First",
+        "description": "ทุกพื้นที่ทำงานมีคำแนะนำประหยัดเครดิตแบบเรียลไทม์ แสดงวิธีล็อกบทที่ได้คะแนน Audience Resonance 80+ และตรวจทาน Keyframe Animatic พร้อมเสียงพากย์ก่อนจ่ายเครดิตเรนเดอร์วิดีโอเคลื่อนไหว"
+      },
+      {
+        "badge": "รวมอยู่ในทุกแพ็กเกจฟรี",
+        "title": "4 คอร์สสตูดิโออินเทอร์แอคทีฟในตัว",
+        "description": "เรียนรู้ Blueprint & Audience Resonance, คลังความต่อเนื่องของตัวละครและฉาก, ระบบคุ้มครองเครดิต Animatic-First และ Screening Room พร้อมการพากย์เสียงกว่า 70 ภาษาได้โดยตรงในสตูดิโอ"
+      }
+    ],
+    "courses": [
+      {
+        "id": "first-film-10m",
+        "title": "ภาพยนตร์เรื่องแรกของคุณใน 10 นาที",
+        "totalDuration": "10 นาที"
+      },
+      {
+        "id": "continuity-mastery",
+        "title": "ตัวละครและการเรียนรู้ความต่อเนื่องของโลก",
+        "totalDuration": "6 นาที"
+      },
+      {
+        "id": "animatic-first-savings",
+        "title": "SFAANIMATICTERM-การสร้างภาพยนตร์ครั้งแรก (ประหยัด 70% ของเครดิต)",
+        "totalDuration": "5 นาที"
+      },
+      {
+        "id": "series-and-global-dubbing",
+        "title": "ซีรีส์หลายตอนและเผยแพร่ทั่วโลกมากกว่า 13 ภาษา",
+        "totalDuration": "6 นาที"
+      }
+    ],
+    "jitMap": {
+      "eyebrow": "แผนที่หน้าจอภาพสดทันเวลา (JIT)",
+      "title": "คลิกพื้นที่ทำงานและพินที่มีหมายเลข (1–4) เพื่อตรวจสอบการควบคุมสตูดิโอ",
+      "coachPrefix": "โค้ชจิต:",
+      "autoDetected": "● ตรวจพบอัตโนมัติ",
+      "checklistTitle": "รายการตรวจสอบแนะนำ 60 วินาที",
+      "screens": {
+        "blueprint": {
+          "tabLabel": "1. Blueprint & เสียงสะท้อน 80+",
+          "stepBadge": "ระยะที่ 1 • เรื่องราวและไฟเขียว",
+          "shortTitle": "Blueprint Room",
+          "subtitle": "เปลี่ยนแนวคิดดิบของคุณให้กลายเป็นการใช้ฟิล์มสะท้อนแสง 80+ Resonance ก่อนที่จะใช้เครดิตการผลิต",
+          "quickSteps": [
+            {
+              "number": "1",
+              "title": "สร้างการรักษาภาพยนตร์ของคุณ",
+              "description": "ใส่คอนเซ็ปต์เรื่องราวหรือสคริปต์ของคุณ และสร้างการรักษาภาพยนตร์ 3 องก์ที่สมบูรณ์พร้อมภาพศิลป์หลักฮีโร่",
+              "creditBadge": "~25 หน่วยกิต"
+            },
+            {
+              "number": "2",
+              "title": "เรียกใช้การวิเคราะห์ Audience Resonance™",
+              "description": "ประเมินเรื่องราวของคุณเทียบกับกลุ่มประชากรเป้าหมายของคุณผ่านแกนการเล่าเรื่อง 5 แกน และระบุจังหวะที่อ่อนแอ",
+              "creditBadge": "~20 หน่วยกิต"
+            },
+            {
+              "number": "3",
+              "title": "ใช้การแก้ไข 1 คลิกเพื่อให้ได้คะแนน 80+",
+              "description": "ใช้คำแนะนำของแพทย์สคริปต์ AI จนกว่าคะแนนเสียงสะท้อนของคุณจะถึง 80/100 หรือสูงกว่า",
+              "creditBadge": "~15 หน่วยกิต"
+            },
+            {
+              "number": "4",
+              "title": "ไฟเขียวสู่การผลิตเสมือนจริง",
+              "description": "ล็อค Blueprint และสร้างบทภาพยนตร์ทีละฉาก รายชื่อนักแสดง และรายละเอียดภาพ",
+              "creditBadge": "~30 หน่วยกิต"
+            }
+          ]
+        },
+        "production": {
+          "tabLabel": "2. ห้องนิรภัยต่อเนื่องและภาพเคลื่อนไหว",
+          "stepBadge": "ระยะที่ 2 • เวทีเสียงเสมือนจริง",
+          "shortTitle": "การผลิตเสมือนจริง",
+          "subtitle": "ล็อคใบหน้าและเสียงของตัวละครใน Continuity Vault เรนเดอร์คีย์เฟรมเริ่มต้น/สิ้นสุด และทำให้คลิปวิดีโอเคลื่อนไหวเคลื่อนไหว",
+          "quickSteps": [
+            {
+              "number": "1",
+              "title": "ล็อคภาพบุคคล เสียง และสถานที่ก่อน",
+              "description": "สร้างและอนุมัติภาพตัวละคร เสียงประสาท และการอ้างอิงตำแหน่งใน Reference Library",
+              "creditBadge": "10–15 cr / อ้างอิง"
+            },
+            {
+              "number": "2",
+              "title": "สังเคราะห์บทสนทนา SFX และโน้ตดนตรี",
+              "description": "กำหนดเสียงให้กับตัวละครแต่ละตัวและสร้างบทสนทนาและบรรยากาศของฉากเพื่อล็อคไทม์ไลน์ของคุณ",
+              "creditBadge": "5–15 cr / ฉาก"
+            },
+            {
+              "number": "3",
+              "title": "แสดงผลคีย์เฟรมเริ่มต้น/สิ้นสุด & ดูตัวอย่าง Animatic",
+              "description": "สร้างคีย์เฟรมที่ล็อกการอ้างอิงสำหรับแต่ละส่วนและดูภาพยนตร์ทั้งเรื่องใน Screening Room ในรูปแบบ Animatic",
+              "creditBadge": "10–15 cr / เฟรม"
+            },
+            {
+              "number": "4",
+              "title": "สร้างภาพเคลื่อนไหว Hero Shots หรือเปิดตัวตัวแทนการผลิต",
+              "description": "แปลงช็อตสำคัญให้เป็นวิดีโอเคลื่อนไหวด้วยตนเอง หรือเปิดตัว Production Agent อัตโนมัติเพื่อสร้าง Pre-Vis, Clips, Master และ Promo ในขณะที่คุณเดินจากไป",
+              "creditBadge": "โหมดเดินออกไป"
+            }
+          ]
+        },
+        "series": {
+          "tabLabel": "3. ซีรีส์เรื่องพระคัมภีร์",
+          "stepBadge": "ความต่อเนื่องหลายตอน",
+          "shortTitle": "ซีรีส์สตูดิโอ",
+          "subtitle": "สร้างการแสดงหลายตอนหรือการดัดแปลงทีละบทด้วยคลังนักแสดงและที่ตั้งที่ใช้ร่วมกันเพียงแห่งเดียว",
+          "quickSteps": [
+            {
+              "number": "1",
+              "title": "สร้างหรือเลือกพระคัมภีร์ชุดของคุณ",
+              "description": "ป้อนบันทึกซีรีส์ ประเภท และจำนวนตอนเป้าหมายของคุณเพื่อสร้างเรื่องราวที่มีหลายตอนและนักแสดงที่แชร์",
+              "creditBadge": "~30 หน่วยกิต"
+            },
+            {
+              "number": "2",
+              "title": "ล็อคตัวละครและสถานที่ที่เกิดซ้ำ",
+              "description": "อนุมัติภาพอ้างอิงและการมอบหมายเสียงใน Series Bible เพื่อให้ทุกตอนสืบทอดโดยอัตโนมัติ",
+              "creditBadge": "10–15 cr / แนวตั้ง"
+            },
+            {
+              "number": "3",
+              "title": "เปิดตัวตอนที่ 1 ใน Blueprint Room",
+              "description": "คลิก \"เปิดตัวตอน Blueprint\" ในตอนที่ 1 เพื่อปรับแต่งการแสดง 3 องก์ และเริ่มการผลิตเสมือนจริง"
+            }
+          ]
+        },
+        "final-cut": {
+          "tabLabel": "4. Final Cut และ 13+ ภาษา",
+          "stepBadge": "ระยะที่ 3–4 • การคัดกรองและการพากย์",
+          "shortTitle": "Final Cut และการคัดกรอง",
+          "subtitle": "ผสมผสาน Animatic และสตรีมวิดีโอ สลับภาษาพากย์มากกว่า 13 ภาษา และแชร์ลิงก์ /s/ รีวิว",
+          "quickSteps": [
+            {
+              "number": "1",
+              "title": "รับชมแบบเต็มหน้าจอใน Screening Room",
+              "description": "เล่นฉากที่ประกอบกันของคุณแบบต่อเนื่องกันด้วยการเปลี่ยนภาพ บทสนทนา SFX และคะแนนที่ซ่อนอัตโนมัติ",
+              "creditBadge": "0 หน่วยกิต"
+            },
+            {
+              "number": "2",
+              "title": "แบ่งปันลิงก์ /s/ รีวิวเพื่อรับคำติชม",
+              "description": "สร้างลิงก์คัดกรองที่แชร์ได้เพื่อรวบรวมบันทึกประทับเวลาจากผู้ทำงานร่วมกันหรือลูกค้า",
+              "creditBadge": "0 หน่วยกิต"
+            },
+            {
+              "number": "3",
+              "title": "ส่งออก MP4 Master & Dubs หลายภาษา",
+              "description": "เรนเดอร์ MP4 ต้นแบบ 1080p/4K สุดท้ายของคุณและสตรีมเสียง/คำบรรยายเสริมที่แปลเป็นภาษาท้องถิ่น",
+              "creditBadge": "เรนเดอร์ 20–50 cr"
+            }
+          ]
+        }
+      }
+    },
+    "tryLiveMap": "ลองใช้แผนผังหน้าจอ JIT แบบโต้ตอบ (พิน 1–4)",
+    "hideLiveMap": "ซ่อนแผนผังหน้าจอ JIT แบบโต้ตอบ",
+    "viewScript": "ดูสคริปต์วิดีโอ 30 วินาที (Ana)",
+    "hideScript": "ซ่อนสคริปต์วิดีโอ 30 วินาที (Ana)",
+    "copyScript": "คัดลอกสคริปต์",
+    "copied": "คัดลอกแล้ว",
+    "voLabel": "โว:",
+    "pictureLabel": "รูปภาพ:",
+    "scriptBlocks": [
+      {
+        "block": "บล็อก 01 (0:00–0:10)",
+        "title": "แผนที่หน้าจอจัสตินอินไทม์",
+        "syncLine": "ANA (หน้ากล้อง): \"คุณไม่จำเป็นต้องมีโรงเรียนสอนภาพยนตร์เมื่อสตูดิโอคอยแนะนำทุกขั้นตอน\"",
+        "narration": "กดเครื่องหมายคำถามบนหน้าจอใดก็ได้เพื่อเปิดแผนที่ภาพ Just-In-Time ของพื้นที่ทำงานที่คุณอยู่",
+        "visual": "ภาพถ่ายขนาดกลางของ Ana (CHAR_ANA เสื้อแจ็กเก็ตสนามมะกอกเหนือคอเต่าหินชนวน) ในสตูดิโอที่อบอุ่น ข้างโฮโลแกรมโปร่งแสงที่แสดงหมุดคำบรรยายภาพที่มีหมายเลขสีฟ้าเรืองแสงซึ่งเชื่อมต่อกับกรอบสตอรี่บอร์ดและรูปคลื่น"
+      },
+      {
+        "block": "บล็อก 02 (0:10–0:20)",
+        "title": "รายการตรวจสอบ 60 วินาทีและรั้วเครดิต",
+        "narration": "ทำตามรายการตรวจสอบ 60 วินาทีด้วยแอคชั่นในสตูดิโอในคลิกเดียว ขณะที่รางเครดิตในตัวจะล็อคการบรรยาย เพลง และเฟรมภาพเคลื่อนไหวก่อนที่คุณจะเคลื่อนไหว",
+        "visual": "ถ่ายในระยะใกล้ปานกลางทั่ว Ana และแผงกระจกที่ลอยอยู่ ขณะที่จุดตรวจสอบสามรายการสว่างขึ้นจากสีฟ้าไปจนถึงสีเขียวมรกต เพื่อล็อคไทม์ไลน์เสียงพากย์ก่อนที่จะเรนเดอร์วิดีโอจำนวนมาก"
+      },
+      {
+        "block": "บล็อก 03 (0:20–0:30 น.)",
+        "title": "เครื่องจำลอง \"ภาพยนตร์เรื่องแรกของคุณใน 10 นาที\"",
+        "narration": "หรือเปิดตัวโปรแกรมจำลองแบบอินเทอร์แอกทีฟความยาว 10 นาที โดยนำคุณจากแนวคิดหนึ่งประโยคไปสู่ผู้เชี่ยวชาญที่พากย์เสียง ให้คะแนน และเผยแพร่ในขณะที่คุณสร้างสรรค์",
+        "visual": "ภาพขนาดกลางของ Ana ยิ้มอย่างอบอุ่นให้กับกล้อง ขณะที่หมุดฝึกซ้อมที่มีหมายเลขเปลี่ยนอย่างราบรื่นเป็นเฟรมหลักไวด์สกรีนที่ส่องสว่างที่สามารถเล่นได้ด้านหลังเธอ"
+      }
+    ],
+    "cta": "เปิดสตูดิโอ ($9)"
   },
   "metadata": {
     "title": "SceneFlow Studio - สร้างวิดีโอด้วย AI",
@@ -1125,18 +1392,26 @@
     "goToDashboard": "ไปที่แดชบอร์ด",
     "userFallback": "ผู้ใช้",
     "searchLanguages": "ค้นหาภาษา...",
-    "noLanguagesFound": "ไม่พบภาษา"
+    "noLanguagesFound": "ไม่พบภาษา",
+    "workflow": "เวิร์กโฟลว์",
+    "platformWalkthrough": "ทัวร์แพลตฟอร์ม"
   },
   "floatingNav": {
     "productionExamples": "ตัวอย่าง",
     "twoModes": "Director กับ Go",
     "directControl": "โดยตรง",
+    "productionAgent": "สร้าง",
     "publishCut": "เผยแพร่",
+    "studioAcademy": "สถาบันการศึกษา",
     "keyFeatures": "คุณสมบัติที่โดดเด่น",
     "audienceResonance": "Audience Resonance",
     "preVisEngine": "เครื่องยนต์พรีวิส",
     "trustSafety": "ความไว้วางใจและความปลอดภัย",
-    "pricing": "ราคา"
+    "pricing": "ราคา",
+    "useCases": "กรณีการใช้งาน",
+    "platformWalkthrough": "ทัวร์แพลตฟอร์ม",
+    "platform": "แพลตฟอร์ม",
+    "pipeline": "ไปป์ไลน์"
   },
   "hero": {
     "eyebrow": "การสร้างภาพยนตร์ที่เป็นประชาธิปไตยสำหรับนักเล่าเรื่อง ผู้สร้างซีรีส์ และสตูดิโอ",
@@ -1167,12 +1442,12 @@
       }
     ],
     "pipelineSteps": [
-      "Blueprint",
+      "SFAIBLUEPRINTERM",
       "การผลิต",
       "เงื่อนไขการใช้ห้องฉายภาพยนตร์ SFAI"
     ],
-    "languagePrompt": "เลือกภาษาอังกฤษ สเปน โปรตุเกส ฮินดี จีน อาหรับ หรือไทย — ไปป์ไลน์เดียวกัน เปิดสู่ตลาดใหม่",
-    "multilangHint": "วิดีโอเปิดตัวพากย์เสียง 7 ภาษา — ไปป์ไลน์เต็มรูปแบบรองรับกว่า 70 ภาษาใน Production Stage",
+    "languagePrompt": "ฟัง Hero ในภาษาของคุณ — ไปป์ไลน์เดียวกัน ตลาดใหม่",
+    "multilangHint": "Hero พากย์ 7 ภาษา — ไปป์ไลน์เต็มรูปแบบรองรับ 70+ ภาษาใน Production Stage",
     "playWithNarration": "เล่นกับการบรรยาย",
     "tapToHear": "แตะเพื่อฟัง",
     "fullscreen": "เต็มหน้าจอ",
@@ -1187,14 +1462,6 @@
         "label": "สเปน",
         "nativeLabel": "Español"
       },
-      "zh": {
-        "label": "จีน",
-        "nativeLabel": "中文"
-      },
-      "ar": {
-        "label": "ภาษาอาหรับ",
-        "nativeLabel": "العربية"
-      },
       "pt": {
         "label": "โปรตุเกส",
         "nativeLabel": "Português"
@@ -1202,6 +1469,14 @@
       "hi": {
         "label": "ฮินดี",
         "nativeLabel": "हिन्दी"
+      },
+      "zh": {
+        "label": "จีน",
+        "nativeLabel": "中文"
+      },
+      "ar": {
+        "label": "ภาษาอาหรับ",
+        "nativeLabel": "العربية"
       },
       "th": {
         "label": "ไทย",
@@ -1236,11 +1511,6 @@
     "eyebrow": "ฉบับตัดต่อที่คุณเผยแพร่",
     "title": "ส่งออกได้ทุกที่ พร้อมรับสิทธิ์ Premiere บน SceneFlow เมื่อคุณทำผลงานได้ตามเกณฑ์",
     "subtitle": "ส่งออกต้นฉบับและแจกจ่ายได้ทุกที่ หรือเผยแพร่ฉากและบทที่เสร็จแล้วโดยตรงไปยัง {longForm} ด้วยตัวอย่างแนวตั้งที่ตัดสำหรับ {shorts} รูปภาพ เพลง และคำบรรยายในการตัดแล้ว ตรวจสอบฉบับร่างทุกรายการใน Screening Room ก่อนเผยแพร่ และสมัครเข้าร่วมเครือข่าย SceneFlow ที่ได้รับเชิญเท่านั้นเพื่อรับทุนสนับสนุนการเร่งจำนวนผู้ชม",
-    "comparison": {
-      "id": "publish",
-      "caption": "A finished scene or chapter, and the 90-minute master, from one studio."
-    },
-    "cta": "เปิดสตูดิโอ ($9)",
     "localizationCallout": {
       "badge": "การผลิตระดับสากลและอินเทอร์เฟซภาษาแม่",
       "title": "การปรับให้เข้ากับท้องถิ่น 2 ระดับ: กำกับด้วยภาษาของคุณ ส่งออกในภาษาของผู้ชม",
@@ -1256,7 +1526,12 @@
           "description": "ก้าวข้ามแค่ซับไตเติล: เลือกสร้างใหม่เฉพาะช็อตที่มีบทพูดหรือป้ายข้อความในฉากโดยคงช็อตมาสเตอร์อื่นๆ ไว้ แยกเสียงพูดออกจากสเต็มเสียงวิดีโอเพื่อคงเอฟเฟกต์เสียงและดนตรีประกอบเดิม และปรับความยาววิดีโอให้เข้ากับบทพากย์ที่ยาวขึ้นได้สูงสุด 1.5 เท่า"
         }
       ]
-    }
+    },
+    "comparison": {
+      "id": "publish",
+      "caption": "A finished scene or chapter, and the 90-minute master, from one studio."
+    },
+    "cta": "เปิดสตูดิโอ ($9)"
   },
   "infrastructure": {
     "title": "โครงสร้างพื้นฐานและความปลอดภัยระดับองค์กร",
@@ -1502,7 +1777,7 @@
           "เกณฑ์จำกัดระดับความรุนแรงที่ปรับแต่งมาเพื่อการผลิตคอนเทนต์ภาพยนตร์",
           "ชิ้นงานสร้างสรรค์ของคุณจะไม่ถูกนำไปใช้ในการฝึกฝนโมเดลที่ใช้ร่วมกัน"
         ],
-        "badge": "Vertex Responsible AI"
+        "badge": "AI ที่รับผิดชอบของ Vertex"
       },
       {
         "id": "ราวกันอันตรายส่วนต่อขยาย",
@@ -1622,6 +1897,7 @@
           "description": "แสงเงาแบบสมจริงดั่งภาพถ่ายและมีอารมณ์แบบภาพยนตร์",
           "tagline": "งานเขียนแนวสมจริงขนาดยาวที่เปี่ยมด้วยคุณภาพและคุณค่า",
           "marketingBody": "งานภาพที่สมจริงดั่งภาพถ่ายช่วยสร้างเสน่ห์ดึงดูดผู้ชมในวงกว้าง ซึ่งเป็นสิ่งที่ผู้ชมรายการโทรทัศน์คุณภาพสูงและสารคดีคาดหวัง การกำหนดรูปแบบตัวละครและแสงให้มีความสมจริงและสอดคล้องกันตลอดทุกช่วงของเรื่องราว จะช่วยให้ละครซีรีส์และสารคดีชุดสามารถรักษาความต่อเนื่องทางอารมณ์ไว้ได้ตั้งแต่ต้นจนจบ",
+          "featured": true,
           "thumbnail": "https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Gemini_Generated_Image_w5y03bw5y03bw5y0.jpeg"
         },
         {
@@ -1629,6 +1905,7 @@
           "name": "งานภาพ 3D / CGI สไตล์ภาพยนตร์",
           "displayTitle": "งานภาพ 3D / CGI สไตล์ภาพยนตร์",
           "description": "ภาพเรนเดอร์ 3 มิติในสไตล์ภาพยนตร์",
+          "featured": false,
           "thumbnail": "https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Gemini_Generated_Image_5qoasf5qoasf5qoa.jpeg"
         },
         {
@@ -1638,6 +1915,7 @@
           "description": "ภาพยนตร์แอนิเมชัน 3 มิติที่มีสไตล์เฉพาะตัว",
           "tagline": "ความต่อเนื่องทางอารมณ์ระหว่างตอน",
           "marketingBody": "รูปทรงที่โค้งมนนุ่มนวลและการออกแบบตัวละครที่ถ่ายทอดอารมณ์ได้อย่างชัดเจนช่วยสร้างความรู้สึกอบอุ่นใจ ซึ่งช่วยดึงดูดผู้ชมให้ติดตามเรื่องราวได้ตลอดทั้งซีซัน เหมาะอย่างยิ่งสำหรับซีรีส์แอนิเมชัน ผลงานความยาวต่อเนื่องสำหรับครอบครัว และการเล่าเรื่องเพื่อสร้างภาพลักษณ์แบรนด์ ที่ซึ่งความคงเส้นคงวาของตัวละครในทุกช่วงจังหวะของเรื่องราวถือเป็นสิ่งสำคัญ",
+          "featured": true,
           "thumbnail": "https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Gemini_Generated_Image_zi32rnzi32rnzi32.jpeg"
         },
         {
@@ -1647,6 +1925,7 @@
           "description": "สไตล์อนิเมะแบบเซลเชด (Cel-shaded)",
           "tagline": "โครงสร้างการเล่าเรื่องแบบต่อเนื่อง",
           "marketingBody": "การลงสีแบบ Cel shading ในสไตล์อนิเมะช่วยสร้างความผูกพันอย่างลึกซึ้งกับกลุ่มแฟนคลับ ทั้งในซีรีส์ออนไลน์แบบหลายตอนและเรื่องราวที่มีโครงสร้างเนื้อหาแบบยาว ระบบ Generative AI ที่ผ่านการฝึกฝนด้วยรูปแบบภาพนี้สามารถสร้างสรรค์ลายเส้นที่คมชัดและการจัดวางองค์ประกอบภาพที่คาดการณ์ผลลัพธ์ได้แม่นยำ ซึ่งถือเป็นคุณสมบัติที่เหมาะสมอย่างยิ่งสำหรับการผลิตคอนเทนต์แบบต่อเนื่องในปริมาณมาก",
+          "featured": true,
           "thumbnail": "https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Gemini_Generated_Image_qlf261qlf261qlf2.jpeg"
         },
         {
@@ -1656,6 +1935,7 @@
           "description": "แอนิเมชันวาดมือที่มีลักษณะคล้ายภาพวาด",
           "tagline": "งานฝีมือในฐานะความหรูหรา",
           "marketingBody": "สไตล์นี้สะท้อนถึงกระแสความคิดสร้างสรรค์ที่สำคัญซึ่งยกย่องให้ \"งานฝีมือคือความหรูหรา\" โดยการใช้พื้นผิวแบบสีน้ำและฉากหลังที่ดูเหมือนภาพวาดช่วยสร้างสรรค์โลกในแต่ละตอนขึ้นมาด้วยมือ ซึ่งความไม่สมบูรณ์แบบอย่างเป็นธรรมชาตินั้นถูกถ่ายทอดออกมาเป็นงานศิลปะที่ผ่านการคิดมาอย่างตั้งใจตลอดทั้งซีรีส์",
+          "featured": true,
           "thumbnail": "https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Gemini_Generated_Image_xojqsuxojqsuxojq.jpeg"
         },
         {
@@ -1664,6 +1944,7 @@
           "displayTitle": "หนังสือการ์ตูน",
           "description": "เส้นหมึกคมเข้ม สไตล์นิยายภาพ",
           "tagline": "ลายเส้นหมึกคมชัด พื้นผิวแบบฮาล์ฟโทน และสีสันสไตล์ป๊อปอาร์ต สำหรับการเล่าเรื่องแบบต่อเนื่องหลายตอน",
+          "featured": false,
           "thumbnail": "https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Gemini_Generated_Image_ezhp8cezhp8cezhp.jpeg"
         },
         {
@@ -1672,13 +1953,15 @@
           "displayTitle": "ภาพคอนเซปต์อาร์ต",
           "description": "ภาพคอนเซปต์อาร์ตสำหรับเกมหรือภาพยนตร์ในสไตล์ภาพยนตร์",
           "tagline": "ภาพ Keyframe สำหรับงาน Pre-visualization ของภาพยนตร์และซีรีส์ ที่มีการจัดแสงสร้างอารมณ์และพร้อมสำหรับการนำไปใช้ในขั้นตอนการผลิตจริง",
+          "featured": false,
           "thumbnail": "https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Gemini_Generated_Image_7z9qm7z9qm7z9qm7.jpeg"
         },
         {
           "id": "ศิลปะดิจิทัล",
-          "name": "Flat Vector / Motion Graphics",
-          "displayTitle": "Flat Vector / Motion Graphics",
+          "name": "เวกเตอร์แบบแบน/กราฟิกเคลื่อนไหว",
+          "displayTitle": "เวกเตอร์แบบแบน/กราฟิกเคลื่อนไหว",
           "description": "สไตล์เวกเตอร์ที่ดูสะอาดตาสำหรับวิดีโออธิบายข้อมูล",
+          "featured": false,
           "thumbnail": "https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Gemini_Generated_Image_omdmt6omdmt6omdm.jpeg"
         },
         {
@@ -1686,6 +1969,7 @@
           "name": "สตอรี่บอร์ด / Animatic",
           "displayTitle": "สตอรี่บอร์ด / Animatic",
           "description": "ภาพร่างสตอรี่บอร์ดแบบขาวดำ",
+          "featured": false,
           "thumbnail": "https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Gemini_Generated_Image_7i1wus7i1wus7i1w.jpeg"
         },
         {
@@ -1694,6 +1978,7 @@
           "displayTitle": "ศิลปะดิจิทัล",
           "description": "ภาพประกอบดิจิทัลสไตล์โมเดิร์น",
           "tagline": "ภาพประกอบที่มีสไตล์เฉพาะตัวสำหรับสารคดีแอนิเมชันและซีรีส์แอนิเมชันแนวอธิบายข้อมูล",
+          "featured": false,
           "thumbnail": "https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Gemini_Generated_Image_bmbpbibmbpbibmbp.jpeg"
         },
         {
@@ -1702,6 +1987,7 @@
           "displayTitle": "สีน้ำ",
           "description": "ภาพวาดสีน้ำโทนละมุน",
           "tagline": "การไล้สีโทนละมุนสำหรับงานเขียนบันทึกความทรงจำ สารคดี และบทความขนาดยาวที่ชวนให้ขบคิดไตร่ตรอง",
+          "featured": false,
           "thumbnail": "https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Gemini_Generated_Image_7i1wus7i1wus7i1w.jpeg"
         },
         {
@@ -1710,6 +1996,7 @@
           "displayTitle": "ภาพร่าง / ภาพลายเส้น",
           "description": "สไตล์ภาพสเก็ตช์ด้วยดินสอ",
           "tagline": "งานเส้นที่เก็บรายละเอียดและพื้นผิวแบบดินสอ สำหรับการสร้างภาพจำลองเบื้องต้น (pre-vis) ไปจนถึงขั้นตอนการผลิตจริงในส่วนเนื้อหาหลักที่มีความยาวต่อเนื่อง",
+          "featured": false,
           "thumbnail": "https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Gemini_Generated_Image_bmbpbibmbpbibmbp.jpeg"
         },
         {
@@ -1718,6 +2005,7 @@
           "displayTitle": "ภาพวาดสีน้ำมัน",
           "description": "จิตรกรรมสีน้ำมันแบบคลาสสิก",
           "tagline": "ฝีแปรงสไตล์คลาสสิกและสีสันที่เข้มข้น สำหรับงานสารคดีและงานเล่าเรื่องเชิงประวัติศาสตร์ที่มีเนื้อหาเจาะลึก",
+          "featured": false,
           "thumbnail": "https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Gemini_Generated_Image_7z9qm7z9qm7z9qm7.jpeg"
         }
       ]
@@ -1852,7 +2140,7 @@
     "phases": [
       {
         "id": "ซีรีส์",
-        "stepLabel": "Series Room",
+        "stepLabel": "SFAISERIES_ข้อกำหนดห้องพัก",
         "subtitle": "ความต่อเนื่องของเนื้อหาข้ามตอน",
         "description": "กำหนดรายละเอียดจักรวาลของคุณเพียงครั้งเดียว แล้วสร้างสรรค์โครงเรื่องที่ต่อเนื่องและสอดคล้องกันตลอดหลายตอน การใช้ Reference Library ร่วมกันจะช่วยรักษาความสม่ำเสมอของตัวละครและโทนเรื่องให้เป็นไปในทิศทางเดียวกันตลอดทั้งซีซัน",
         "keySteps": [
@@ -1865,7 +2153,8 @@
           "โครงเรื่องแต่ละตอนที่สอดคล้องต่อเนื่องกัน — สร้างขึ้นโดยอัตโนมัติสำหรับทั้งซีซัน",
           "การติดตามความต่อเนื่อง — การประสานความสอดคล้องของซีซันที่มีหลายตอน",
           "การซิงค์ข้อมูลจากซีรีส์ไปยังตอน — ลงใน Blueprint Room และ Production Stage"
-        ]
+        ],
+        "optional": true
       },
       {
         "id": "พิมพ์เขียว",
@@ -1882,7 +2171,8 @@
           "เปลี่ยนคอนเซปต์เป็นโครงเรื่องได้ในเวลาไม่กี่นาที — ทั้ง Logline, จังหวะเรื่อง (Beats), ตัวละคร และโทนของเรื่อง",
           "การให้คะแนน Audience Resonance โดยมีเป้าหมายที่ 80+ ก่อนถึงขั้นตอน Production Stage",
           "ลิงก์สำหรับผู้ร่วมงาน — การรวบรวมและวิเคราะห์ความคิดเห็นเพื่อนำไปสู่การปรับปรุงแก้ไขตามคำแนะนำ"
-        ]
+        ],
+        "optional": false
       },
       {
         "id": "การผลิต",
@@ -1902,7 +2192,8 @@
           "Clips, Mixer และ Streams — สร้างแต่ละช็อตได้โดยไม่ต้องออกจาก Production Stage",
           "ผู้วางแผนการผลิต — เป้าหมายการถ่ายทำ ตารางเวลาที่ระบุวันที่ และสถานะของโทรศัพท์",
           "Screening Room — การดูตัวอย่างฉาก การประกอบไฟล์ต้นฉบับ (Master Assembly) การฉายผลงาน และการเผยแพร่บน YouTube"
-        ]
+        ],
+        "optional": false
       },
       {
         "id": "ห้องฉายภาพยนตร์",
@@ -1920,7 +2211,8 @@
           "ค่าพรีเซ็ตสำหรับการประกอบ — วิดีโอล้วน (All Video), แบบผสม (Hybrid) หรือการผสมแบบกำหนดเองสำหรับแต่ละฉาก",
           "แบบประเมินที่แชร์ได้ — ลิงก์ /s/ พร้อมระบบให้คะแนนและข้อเสนอแนะที่มีโครงสร้างชัดเจน",
           "เครื่องมือช่วยจัดการ YouTube, การส่งออกวิดีโอสั้น และชุดตัวเลือกการเผยแพร่"
-        ]
+        ],
+        "optional": false
       }
     ]
   },
@@ -2020,6 +2312,361 @@
     "finalDoor": "ฉบับสมบูรณ์",
     "enterFullscreen": "เข้าสู่โหมดเต็มหน้าจอ",
     "exitFullscreen": "ออกจากโหมดเต็มหน้าจอ",
+    "showDetail": "แสดงรายละเอียดเพิ่มเติม",
+    "hideDetail": "ซ่อนรายละเอียด",
+    "featuredPlayer": "ผู้เล่นเด่น",
+    "openPlayer": "เปิดเครื่องเล่น",
+    "featureModes": [
+      "ก่อนเข้ารับการตรวจ",
+      "คลิป",
+      "ฉาก",
+      "บท",
+      "อาจารย์",
+      "โปรโมชั่น"
+    ],
+    "seriesPanel": {
+      "headerLabel": "ซีรีส์พระคัมภีร์และตอนที่ 1",
+      "bibleTab": "ซีรีส์พระคัมภีร์",
+      "castTab": "ล็อคแคสต์",
+      "episode1Tab": "Ep. 1 & ช. 1",
+      "seasonTab": "ฤดูกาล",
+      "formatLabel": "รูปแบบ",
+      "durationLabel": "ระยะเวลา",
+      "artStyleLabel": "สไตล์ศิลปะ",
+      "continuityLockLabel": "ล็อคความต่อเนื่อง",
+      "loglineLabel": "ล็อกไลน์",
+      "synopsisLabel": "เรื่องย่อซีรีส์และพระคัมภีร์ภาพ",
+      "lockedCastHeading": "ล็อค Cast & Principal Continuity",
+      "inputs": {
+        "drama": {
+          "showTitle": "กระแสน้ำไวท์ซิตี้",
+          "format": "ซีรีส์ Prestige 6 ตอน · ตอนที่ 1 นักบิน (8 บท)",
+          "genre": "ระทึกขวัญโครงสร้างพื้นฐาน Sci-Fi",
+          "artStyle": "ภาพเสมือนจริงแบบอะนามอร์ฟิก · ทังสเตน, หินชนวนต่ำกว่าศูนย์ และแสงเหนี่ยวนำสีม่วงอมเขียว",
+          "duration": "ซีรีส์ 265 นาที (6 × 42–48 นาที) · ตอนที่ 1: 42.5 นาที",
+          "continuityLock": "Gideon Croft, Piper Hayes, Julian Ward และ Dr. Clara Vance-Croft · ชุดใต้ดินและริมทะเลสาบ 4 ชุด · Manifold & Cipher ของ Clara ในปี 1893",
+          "unitLabel": "ตอนที่ 1 จังหวะเรื่องราว / บท (8)",
+          "artLock": "ล็อคความสมจริงแบบอะนามอร์ฟิกในทุกจังหวะ: เสื้อสม็อคนักเก็บเอกสารของกิเดียน ครอฟท์, เสื้อโค๊ตที่เปื้อนหิมะของไพเพอร์ เฮย์ส, อุปกรณ์ยุทธวิธีขององค์กรของจูเลียน วอร์ด, ท่อร่วมเหนี่ยวนำของคลาราในปี 1893 ที่ได้รับการบูรณะใหม่ และความก้าวหน้าจากอุโมงค์ขนส่งสินค้าในปี 1906 ไปจนถึงเปลแช่แข็ง Two-Mile Crib",
+          "logline": "เมื่อนักข่าวที่น่าอับอายเจาะบังเกอร์ใต้ดินของนักเก็บเอกสารโครงสร้างพื้นฐานที่แยกออกไปเพื่อเปิดใช้งานสิ่งประดิษฐ์พลังงานบรรยากาศในปี 1893 ทั้งคู่จะต้องเอาชีวิตรอดจากทีมโจมตีชั้นยอดที่นำโดยเจ้าหน้าที่ความเสี่ยงขององค์กรที่สังหารภรรยาของเขา ซึ่งนำไปสู่ทางเลือกระหว่างการรักษาตนเองและการปลดปล่อยมนุษยชาติจากความขาดแคลนเทียม",
+          "seriesSynopsis": "The White City Current มีเรื่องราวเกิดขึ้นภายใต้เขตมิดเวสต์ของอเมริกาที่ได้รับผลกระทบจากสภาพอากาศ โดยที่กลุ่มบริษัทสาธารณูปโภค Vane-Calhoun Energy ก่อเหตุให้เกิดไฟฟ้าดับในฤดูหนาวเพื่อดึงเอาสัมปทานของเทศบาล The White City Current มีเนื้อหาความยาว 6 ตอนความยาว 45 นาที อดีตนักเก็บเอกสารประจำเทศบาล กิเดียน ครอฟต์ และนักข่าวสืบสวนสอบสวนที่ถูกขึ้นบัญชีดำ ไพเพอร์ เฮย์ส ค้นพบเครือข่ายการชักนำให้เกิดการสั่นพ้องของนิทรรศการ Columbian Exposition ที่ถูกระงับในปี 1893 ซึ่งออกแบบโดยดร. คลารา แวนซ์-ครอฟต์ ภรรยาผู้ล่วงลับของกิเดียน ตลอดทั้งซีซั่นที่ 1 การจุดไฟให้กับเปลใน Chicago Two-Mile Crib ในตอนที่ 1 ก่อให้เกิดสงครามที่มีเดิมพันสูงในทางเดินโครงสร้างพื้นฐานใต้ดินอันเก่าแก่ จากสถานีย่อยเหมืองเกลือในดีทรอยต์ ไปจนถึงหลุมล้อที่เลิกใช้งานแล้วในไนแอการา ซึ่งก่อให้เกิดการปลดปล่อยเครือข่ายสาธารณะต่อผู้อำนวยการฝ่ายควบคุมความเสี่ยงอาวุโส จูเลียน วอร์ด",
+          "cast": [
+            {
+              "name": "กิเดียน ครอฟท์",
+              "role": "ตัวเอก · แผ่นอักขระที่ถูกล็อค",
+              "descriptor": "อดีตนักเก็บเอกสารโครงสร้างพื้นฐานเทศบาล (54) เสื้อคลุมขนสัตว์ถ่านที่ผุกร่อน แว่นตากรอบลวด เคราเกลือและพริกไทย มือของช่างเขียนแบบผิวด้าน สว่างไสวด้วยทังสเตน 3200K อันอบอุ่นตัดกับหินชนวนอุโมงค์เย็น"
+            },
+            {
+              "name": "ไพเพอร์ เฮย์ส",
+              "role": "ร่วม-นำ·แผ่นอักขระที่ถูกล็อค",
+              "descriptor": "ผู้สื่อข่าวด้านพลังงานสืบสวนที่ถูกขึ้นบัญชีดำ (31) เสื้อคลุมพาร์กามะกอกปัดหิมะ กระเป๋าผ้าใบพร้อมไดรฟ์เข้ารหัสและกระบอกรหัสทองเหลือง ความเข้มของจลน์ที่คมชัดภายใต้การหกรั่วไหลจากการเหนี่ยวนำสีม่วงอมเป็ด"
+            },
+            {
+              "name": "จูเลียน วอร์ด",
+              "role": "ปรปักษ์หลัก · แผ่นอักขระที่ถูกล็อค",
+              "descriptor": "ผู้อำนวยการอาวุโสฝ่ายความเสี่ยงองค์กร Vane-Calhoun Energy (46) เสื้อคลุมยุทธวิธีสีดำด้านสั่งตัด, อุปกรณ์นำกระดูก, ความสงบในการผ่าตัด; ล้อมรอบด้วยแสงสถาบันที่มีคอนทราสต์สูงที่ผ่านการฆ่าเชื้อ"
+            },
+            {
+              "name": "ดร.คลารา แวนซ์-ครอฟต์",
+              "role": "Archival & Memory Anchor · แผ่นอักขระที่ถูกล็อค",
+              "descriptor": "นักฟิสิกส์เรโซแนนซ์ตอนปลาย (48) เสื้อกาวน์แล็บชนวน แท่นสอบเทียบรอยทองแดงปี 1893 แผ่นย้อนแสงสีเหลืองอำพันอุ่น และภาพสะท้อนแผนผังโฮโลแกรม"
+            }
+          ],
+          "episode1Synopsis": {
+            "episodeLabel": "ตอนที่ 1 เรื่องย่อ · นักบินที่มีความยาว (8 บท)",
+            "title": "ตอนที่ 1: พิธีสารฟาราเดย์",
+            "duration": "42.5 นาที (8 บท · บทที่ 1 บทพิสูจน์สด: 6 นาที)",
+            "logline": "นักเก็บเอกสารในอุโมงค์ที่โศกเศร้าและนักข่าวที่ถูกตามล่าได้จุดไฟท่อส่งพลังงานไร้สายในปี 1893 ใต้ชิคาโกที่กลายเป็นน้ำแข็ง และต่อสู้ผ่านอุโมงค์ใต้ทะเลสาบความยาว 2 ไมล์เพื่อถ่ายทอดความจริง",
+            "synopsis": "ระหว่างกระแสน้ำวนขั้วโลกร้ายแรงที่ออกแบบโดย Vane-Calhoun Energy เพื่อทำให้วอร์ดทางใต้ของชิคาโกต้องล้มละลาย Piper Hayes ฝ่าฝืนบังเกอร์อุโมงค์ขนส่งสินค้าในปี 1906 ของ Gideon Croft ด้วยคีย์การเข้ารหัสที่หายไปสำหรับท่อร่วมเหนี่ยวนำด้วยคลื่นความถี่ 1893 ของ Clara ภรรยาของเขาที่ถูกฆาตกรรม การตื่นขึ้นของรถต้นแบบเป็นการแจ้งเตือนหน่วยฆ่าเชื้อของ Julian Ward โดยบังคับให้ Gideon และ Piper ที่ได้รับบาดเจ็บต้องออกจากที่ซ่อนและผ่านประตูระบายไอน้ำ สถานีส่งไปรษณีย์แบบนิวแมติกของ Adams Street และอุโมงค์ทางเข้าย่อยทะเลสาบที่พังทลายลงในช่วงทศวรรษปี 1890 เพื่อเชื่อมต่อท่อร่วมต่างๆ กับเปล Two-Mile Crib นอกชายฝั่ง",
+            "chapter1Title": "บทที่ 1 (จังหวะที่ 1): ความโดดเดี่ยวใต้ดิน",
+            "chapter1Duration": "6 นาที · บทพิสูจน์บทเริ่มต้น",
+            "chapter1Synopsis": "ความสูงสี่สิบฟุตใต้จุดเยือกแข็งของชิคาโก เสียงเพลงของกิเดียน ครอฟต์ที่ปกคลุมไปด้วยชอล์กอยู่ใต้กระแสน้ำในเขตเทศบาลที่ถูกขโมย ขณะที่วิทยุกระจายเสียงนับจำนวนผู้เสียชีวิตจากไฟดับฝั่งทิศใต้ ไพเพอร์ เฮย์สเลี่ยงสายไฟรอบนอกของเขาที่ถือรหัสทองเหลืองของคลาราและคำสั่งปลดภาระของเวเน-คาลฮูน บีบให้กิเดี้ยนต้องเผชิญหน้ากับข้อพิสูจน์ที่ว่าการตายของคลาราเป็นการลอบสังหารองค์กร"
+          },
+          "episodes": [
+            {
+              "number": "1",
+              "title": "การแยกใต้ดิน",
+              "duration": "6 นาที",
+              "synopsis": "สร้างการแยกตัวป้องกันของ Gideon ในอุโมงค์ขนส่งสินค้าในชิคาโกในปี 1906 ความหลงใหลในการหาเหตุผลเข้าข้างตนเองของการฆาตกรรมของ Clara ว่าเป็นความล้มเหลวส่วนบุคคล ในขณะที่กระแสน้ำวนขั้วโลกของ Vane-Calhoun แช่แข็งฝั่งทิศใต้ และการบุกรุกที่ก่อกวนของ Piper Hayes ด้วยรหัสเข้ารหัสตัวสุดท้ายของ Clara"
+            },
+            {
+              "number": "2",
+              "title": "ปลดล็อคพิธีสารฟาราเดย์",
+              "duration": "5.5 นาที",
+              "synopsis": "แสดงความขัดแย้งทางอุดมการณ์ที่รุนแรงในขณะที่ Piper เผชิญหน้ากับ Gideon ด้วยการปิดระบบ Vane-Calhoun ภายในและคำวิงวอนที่เขียนด้วยลายมือของ Clara ซึ่งทำลายความเห็นถากถางดูถูกของเขาและบังคับให้เขาป้อนลำดับการจัดตำแหน่งที่ปลุกต้นแบบการเหนี่ยวนำด้วยคลื่นแม่เหล็กไฟฟ้าในคลื่นแม่เหล็กไฟฟ้าสีม่วง"
+            },
+            {
+              "number": "3",
+              "title": "การตอบโต้แบบต่อต้านคลอสโทรโฟบิก",
+              "duration": "5.5 นาที",
+              "synopsis": "ทีมฆ่าเชื้อทางยุทธวิธีของ Julian Ward ระเบิดข้อหาละเมิดเข้าไปในห้องนิรภัย เมื่อไพเพอร์นำเศษกระสุนมาปกป้องกิเดี้ยน เขาก็เอาชนะสัญชาตญาณของเขาในการผนึกตัวเองไว้เพียงลำพัง โดยนำทางเธอผ่านท่อระบายน้ำที่ถูกลืม และลวกผู้รับเหมาของวอร์ดด้วยทางเลี่ยงไอน้ำอุตสาหกรรม"
+            },
+            {
+              "number": "4",
+              "title": "รอยประสานและสถานีย่อย",
+              "duration": "4.5 นาที",
+              "synopsis": "กิเดียนต้องซ่อนตัวอยู่ในสถานีคัดแยกจดหมายแบบนิวแมติกที่ถูกทิ้งร้างใต้ถนนอดัมส์ โดยเย็บแผลของไพเพอร์ด้วยจังหวะบีบอัดอย่างใกล้ชิด ซึ่งผูกมัดมรดกของคลาราเข้ากับภารกิจของไพเพอร์ และตอกย้ำความมุ่งมั่นของกิเดียนในการต่อสู้"
+            },
+            {
+              "number": "5",
+              "title": "การละเมิดปล่องท่าเรือ",
+              "duration": "4.5 นาที",
+              "synopsis": "กิเดียนและไพเพอร์ถูกต้อนจนมุมโดยขอบพื้นผิวของวอร์ดและมีประจุเทอร์ไมต์ตามกำหนดเวลา ดำเนินการพัฒนาทางยุทธวิธีที่พึ่งพาอาศัยกัน โดยคณะลูกขุนสวมชุดถังรับการสั่นสะเทือนที่มีแรงดันในท่อส่งลมแบบนิวแมติกเพื่อเป่าปล่องระบายอากาศออกสู่ริมทะเลสาบที่กลายเป็นน้ำแข็ง"
+            },
+            {
+              "number": "6",
+              "title": "ทราเวิร์สย่อยลาคัสทริน",
+              "duration": "5 นาที",
+              "synopsis": "เมื่อต้องเผชิญกับก้อนน้ำแข็งที่ปั่นป่วนระยะทาง 2 ไมล์เพื่อไปถึงเปลนอกชายฝั่ง Two-Mile Crib กิเดียนนำไพเพอร์ผ่านกาลักน้ำอิฐอิฐที่เต็มไปด้วยน้ำท่วมครึ่งหนึ่งในช่วงปี 1890 ใต้ทะเลสาบน้ำแข็ง—ต่อสู้กับอุณหภูมิที่ลดลง น้ำแข็งที่เพิ่มมากขึ้น และโครงสร้างพังทลายเพื่อดึงเธอขึ้นเพลาไอดี"
+            },
+            {
+              "number": "7",
+              "title": "ยืนอยู่บนโครงสำหรับตั้งสิ่งของ",
+              "duration": "5.5 นาที",
+              "synopsis": "บนโครงสำหรับตั้งสิ่งของที่มีพายุพัดแรงของเปล วอร์ดเข้ามุมพวกเขาด้วยรีเลย์ไฟฟ้าแรงสูงแบบผกผัน และเสนอภูมิคุ้มกันใต้ดินให้กับกิเดียนและเงินทุนสำหรับห้องปฏิบัติการสำหรับท่อร่วมต่างๆ ของคลารา กิเดี้ยนปฏิเสธทางเลือกร่วมของบริษัทและการเดินสายด่วนกับประตูระบายน้ำไฮดรอลิกแบบวิคตอเรียนเพื่อกำหนดเส้นทางการชาร์จย้อนกลับของวอร์ดกลับผ่านแอคชูเอเตอร์"
+            },
+            {
+              "number": "8",
+              "title": "การส่งและการแก้ไขกริดฮาร์มอนิก",
+              "duration": "6 นาที",
+              "synopsis": "Piper เชื่อมต่อเข้ากับอัปลิงค์ไมโครเวฟเพื่อเผยแพร่อาชญากรรมของ Vane-Calhoun ไปยังสำนักข่าวอิสระ ในขณะที่ Gideon จับคู่ความหลากหลายของ Clara กับอาร์เรย์ระดับภูมิภาค โดยปล่อยการส่งผ่านฮาร์โมนิกแบบเรโซแนนซ์ที่คืนความร้อนและแสงสว่างทั่วชิคาโก ก่อนที่ Gideon จะเผาข้อมูลประจำตัวของเขาในยามเช้า"
+            }
+          ]
+        },
+        "animation": {
+          "showTitle": "ฮาร์ท เฮาส์",
+          "format": "แอนิเมชั่นซิทคอม · ซีซั่น 5 ตอน",
+          "genre": "ตลกครอบครัวหลายรุ่น",
+          "artStyle": "แอนิเมชั่นแฟลตเซล 2 มิติ · โครงร่างหมึกหนา และพาเล็ตชานเมืองอันอบอุ่น",
+          "duration": "ซีซั่น 110 นาที (5 × 22 นาที) · ตอนที่ 1: 22 นาที",
+          "continuityLock": "แผ่นอักขระครอบครัวที่ถูกล็อค 5 แผ่น · บ้าน Millwick และระเบียงด้านข้าง · Drift สไตล์ Zero",
+          "unitLabel": "ซีซั่น 1 ตอน (5)",
+          "artLock": "สไตล์แฟลตเซลที่ล็อคไว้หนึ่งสไตล์สำหรับทั้งซีซั่น: โครงร่างหมึกหนา สีสันชานเมืองที่อบอุ่น และการออกแบบตัวละครที่เหมือนกันในทุกตอน แพลตฟอร์มสามารถถือได้หลายสไตล์ ชุดนี้ไม่สลับครับ",
+          "logline": "ใน Millwick ครอบครัว Harts เปลี่ยนการทะเลาะกันในครอบครัวให้เป็นเรื่องตลกประจำสัปดาห์ และเรื่องตลกให้เป็นเหตุผลที่พวกเขายังคงอาศัยอยู่ใต้หลังคาเดียวกัน",
+          "seriesSynopsis": "Hart House ตั้งอยู่ในเมือง Millwick ซึ่งหมกมุ่นอยู่กับกฎหมายพลเมือง เป็นซิทคอมแอนิเมชั่นครอบครัว 2 มิติความยาว 22 นาทีความยาว 5 ตอน ที่สร้างขึ้นเพื่อพิสูจน์ว่าไม่มีการเปลี่ยนแปลงนอกโมเดลตลอดทั้งฤดูกาลที่ออกอากาศ เสมียนเทศบาลรูธ ฮาร์ตและช่างเปลี่ยนกะกลางคืน เอลลิส ฮาร์ต อยู่ร่วมกันในบ้านช่างฝีมือที่คับแคบร่วมกับกัปตันโต้วาทีวัย 16 ปี จูน, มิโล นักสะสมข้อเท็จจริงวัย 9 ขวบ และนานา อิเนซ แม่ของรูธ ซึ่งระเบียงด้านข้างแบบ \"ชั่วคราว\" ได้กลายมาเป็นศูนย์กลางทางอารมณ์ของบ้านอย่างเงียบๆ ทุกตอนเปลี่ยนเรื่องปวดหัวเล็กๆ น้อยๆ ของเทศบาลให้กลายเป็นละครตลกที่ดำเนินเรื่องอย่างรวดเร็ว ในขณะเดียวกันก็รักษาน้ำหนักบรรทัดที่เท่ากัน พาเลทเฉดสีเซลโทนอุ่น และแผ่นตัวละครหลายมุมที่ล็อคไว้ตั้งแต่ตอนที่ 1 จนถึงการโหวตครัวเรือนของตอนที่ 5",
+          "cast": [
+            {
+              "name": "รูธ ฮาร์ต",
+              "role": "Matriarch · ล็อคแผ่นอักขระ 2D",
+              "descriptor": "เสมียนเทศบาลมิลวิค (42) เสื้อคาร์ดิแกนถักดินเผา แว่นตารูปกระดองเต่า ปฏิทินติดผนังรหัสสี จังหวะเสียงร้องที่ไร้อารมณ์และส่วนโค้งของคิ้วที่สื่ออารมณ์"
+            },
+            {
+              "name": "เอลลิส ฮาร์ต",
+              "role": "พระสังฆราช · แผ่นอักขระ 2 มิติที่ถูกล็อค",
+              "descriptor": "ช่างรถโดยสารเทศบาลกะกลางคืน (44) ชุดคลุมของกองทัพเรือ กระติกน้ำร้อน นักประดิษฐ์โรงรถผู้มองโลกในแง่ดีที่แก้ปัญหางานบ้าน 5 นาทีด้วยอุปกรณ์หนัก 40 ปอนด์"
+            },
+            {
+              "name": "จูน ฮาร์ท",
+              "role": "ลูกสาว · ล็อคแผ่นอักขระ 2D",
+              "descriptor": "กัปตันโต้วาทีโรงเรียนมัธยมปลาย (16) เสื้อฮู้ดสีมัสตาร์ดทับกระโปรงจับจีบ มีป้ายเมืองอยู่ในมือ ปฏิบัติต่อกฎโต๊ะอาหารเย็นทุกข้อเหมือนเป็นข้อโต้แย้งด้วยวาจาของศาลฎีกา"
+            },
+            {
+              "name": "ไมโล ฮาร์ท",
+              "role": "ลูกชาย·ล็อคแผ่นอักขระ 2D",
+              "descriptor": "นักเอกสารประจำครัวเรือนและผู้ชื่นชอบการสร้างฉลาก (9) เสื้อรักบี้ลายทาง เสื้อผูกสูง ปืนป้ายอุตสาหกรรม นำเสนอความจริงอันแสนสาหัสในจังหวะตลกขบขัน"
+            },
+            {
+              "name": "นาน่า อิเนซ",
+              "role": "คุณยาย · ล็อคแผ่นอักขระ 2D",
+              "descriptor": "อธิปไตยและช่างเย็บผ้าเกษียณอายุ (71) ผ้าคลุมไหล่สีครามปัก, มวยเงิน, บัลลังก์หวาย; จดจำทุกความแปรปรวนของการแบ่งเขตบนบล็อกตั้งแต่ปี 1984"
+            }
+          ],
+          "episode1Synopsis": {
+            "episodeLabel": "ตอนที่ 1 เรื่องย่อ · ซีซั่น Premiere (4 บท)",
+            "title": "ตอนที่ 1: กฎการเรียงลำดับ",
+            "duration": "22 นาที (4 บท · บทที่ 1 บทพิสูจน์สด: 5.5 นาที)",
+            "logline": "อาณัติการรีไซเคิลในเมืองทั้ง 12 หมวดหมู่เป็นแรงบันดาลใจให้เอลลิสสร้างสายพานลำเลียงสำหรับคัดแยกในโรงรถแบบใช้มอเตอร์ ซึ่งบังเอิญจัดประเภทข้าวของที่ระเบียงของนานา อิเนซเป็นส่วนเกินของเทศบาล",
+            "synopsis": "เมื่อมิลวิคประกาศใช้กฎหมาย 412 ซึ่งกำหนดให้มีถังขยะริมขอบถนนรหัสสีสิบสองใบภายในเช้าวันพฤหัสบดี รูธต้องการให้ปฏิบัติตามอย่างเงียบๆ เพื่อที่เพื่อนร่วมงานของเธอที่ศาลาว่าการจะนินทาไม่ได้ จูนร่างข้อท้าทายตามรัฐธรรมนูญสำหรับไมโครโฟนของสภา และเอลลิสสร้างเครื่องคัดแยกแบบใช้รอกในโรงรถ เครื่องจักรเอาชนะขวดแก้วได้ก่อนที่จะกลืนกล่องเก็บของของครอบครัวที่ไม่มีฉลากไปจนหมด และถึงจุดสุดยอดในการเผชิญหน้าในห้องนั่งเล่นเมื่อไมโลพิมพ์แท็กที่เขียนว่า \"Nana's Temporary Porch Things\" และครอบครัวต้องยอมรับว่าไม่มีใครรู้ว่า \"ชั่วคราว\" หมายถึงอะไร",
+            "chapter1Title": "บทที่ 1 (Cold Open & Act I): สิบสองถังภายในวันพฤหัสบดี",
+            "chapter1Duration": "5.5 นาที · การพิสูจน์บทเริ่มต้น",
+            "chapter1Synopsis": "เวลา 6:15 น. ในห้องครัวฮาร์ตที่ถูกล็อก รูธเปิดเผยแผนภูมิการเรียงลำดับสิบสองหมวดหมู่ของเมือง ขณะที่เอลลิสกลับจากกะกลางคืนพร้อมกับมอเตอร์ประตูรถบัสที่ได้รับการกู้คืน ไมโลเริ่มติดป้ายกำกับเฟอร์นิเจอร์ในครัวเรือนและนานา อิเนซประกาศว่าระเบียงด้านข้างได้รับการยกเว้นจากเขตอำนาจศาลของเทศบาลในการถ่ายภาพปฏิกิริยาเซลล์แบนแบบตัดอย่างรวดเร็ว"
+          },
+          "episodes": [
+            {
+              "number": "1",
+              "title": "กฎการเรียงลำดับ",
+              "duration": "22 นาที",
+              "synopsis": "Millwick ออกคำสั่งรีไซเคิลใหม่โดยแบ่งออกเป็น 12 ประเภท เอลลิสสร้างเครื่องคัดแยกในโรงรถ มันใช้งานได้กับขวดแล้วก็หายนะบนกล่องที่ไม่มีป้ายกำกับของครอบครัว จูนต้องการท้าทายกฎในที่ประชุมของเมือง Ruth ต้องการให้ขอบถนนดูเป็นไปตามข้อกำหนดภายในวันพฤหัสบดี เรื่องราวดำเนินไปเมื่อไมโลติดป้ายกล่องหนึ่งว่า \"สิ่งของในระเบียงของนานา\" และไม่มีใครสามารถตกลงได้ว่าป้ายนั้นหมายถึงอะไร"
+            },
+            {
+              "number": "2",
+              "title": "สภาพอากาศขบวนพาเหรด",
+              "duration": "22 นาที",
+              "synopsis": "พยากรณ์ฝนสำหรับวัน Millwick มิถุนายนต้องการยกเลิกป้ายชมรมโต้วาทีของเธอ ไมโลต้องการบันทึกสายฟ้า นานา อิเนซปฏิเสธที่จะโบกมือให้เพื่อนบ้านที่เธอหลีกเลี่ยงตั้งแต่เกิดข้อพิพาทเรื่องรั้ว รูธยังคงต้องวางบล็อกไว้ใต้ผ้าใบกันน้ำ เรื่องตลกคือผ้าใบกันน้ำ ประเด็นก็คือใครจะเป็นผู้ตัดสินใจว่าจะมีการเฉลิมฉลองเกิดขึ้น"
+            },
+            {
+              "number": "3",
+              "title": "อาหารเช้ากะกลางคืน",
+              "duration": "22 นาที",
+              "synopsis": "เอลลิสกลับถึงบ้านตอนรุ่งสางและทำอาหารให้กับคนที่กำลังจะจากไปแล้ว มิถุนายนมีการแข่งขัน ไมโลมีทัศนศึกษา รูธมีเคาน์เตอร์กะ ห้องครัวเป็นเวลาหนึ่งชั่วโมงสำหรับทั้งครอบครัว และไข่เป็นเพียงบทสนทนาเดียวที่เหมาะสม แพนเค้กที่ถูกเผากลายเป็นประเด็นถกเถียงเรื่องการสร้างบ้านในตอนเช้า"
+            },
+            {
+              "number": "4",
+              "title": "กุญแจสำรอง",
+              "duration": "22 นาที",
+              "synopsis": "มีคนเติมชามแมวในตอนเช้าที่เอลลิสหลับเกินเวลา ครอบครัวฮาร์ตสืบสวนและค้นหากุญแจที่พวกเขาซ่อนอยู่ใต้อิฐเมื่อหลายปีก่อน เพื่อนบ้านที่พวกเขาเรียกว่ามีจมูกยาวกำลังปกปิดช่องว่างยามรุ่งสาง นานา อิเนซ ต้องตัดสินใจว่าจะเอากุญแจคืนหรือยอมรับว่าการบล็อกช่วยได้"
+            },
+            {
+              "number": "5",
+              "title": "โหวตระเบียง",
+              "duration": "22 นาที",
+              "synopsis": "นานา อิเนซ ประกาศว่าเธอทำระเบียง “ชั่วคราว” เสร็จแล้ว และจะย้ายไปอยู่ที่เมืองของพี่สาวเธอ พวกฮาร์ตส์เรียกการลงคะแนนเสียงในครัวเรือน การสร้างระเบียงขึ้นใหม่ในขณะที่ห้องจริงของเธอหมายความว่าโปรเจ็กต์โรงรถของเอลลิสต้องหยุดลง การย้ายมุมอ่านหนังสือของเดือนมิถุนายน และมิลวิคต้องยอมรับการเปลี่ยนแปลงที่เพิกเฉย ซีซั่นนี้มาถึงแล้ว หนังตลกจะไม่เกี่ยวกับสัปดาห์ที่วุ่นวายอีกต่อไป อยู่ที่ว่าใครจะได้อยู่"
+            }
+          ]
+        },
+        "documentary": {
+          "showTitle": "คิดนาน",
+          "format": "สารคดีประวัติศาสตร์ · ซีรีส์ 5 ตอน",
+          "genre": "ประวัติศาสตร์โลกของวิทยาศาสตร์และเทคโนโลยี",
+          "artStyle": "ความสมจริงของการเก็บถาวรในยุคสมัย (1950s 16mm Grain → 1980s CRT → Modern 4K)",
+          "duration": "ซีรีส์ 200 นาที (5 × 40 นาที) · ตอนที่ 1: 40 นาที",
+          "continuityLock": "พยานที่เกิดซ้ำ 2 คน (ดร. อามิรา ฮัสซัน และเคนจิ ซาโต) · 12 เมืองทั่วโลก · รั้วกั้นระยะเวลาที่เข้มงวด",
+          "unitLabel": "สารคดีตอน (5)",
+          "artLock": "ความถูกต้องของงวดเป็นกฎของภาพ ห้องทดลองในปี 1956 มีตู้เสื้อผ้าโบราณ เนื้อฟิล์ม และเครื่องของปีนั้น ไม่มีจอแบน ไม่มีโทรศัพท์ บทปัจจุบันดูเหมือนตอนนี้ พยานสองคนคนเดียวกันคือ ดร.อามิรา ฮัสซัน และเคนจิ ซาโต มีใบหน้าที่เหมือนกันในทุกยุคสมัยที่พวกเขาปรากฏตัว",
+          "logline": "สารคดีห้าตอนติดตามความฉลาด ทั้งที่สร้างขึ้น ยืมมา และยังคงสร้างไม่เสร็จ ตั้งแต่เครื่องจักรที่มีประโยชน์เครื่องแรกไปจนถึงคำถามเกี่ยวกับระบบที่ชาญฉลาดกว่าผู้สร้าง",
+          "seriesSynopsis": "The Long Thought ครอบคลุมระยะเวลาเจ็ดสิบปีและสิบสองเมืองในห้าทวีป โดยเป็นซีรีส์สารคดีความยาว 200 นาทีความยาว 5 ตอน ซึ่งติดตามความพยายามของมนุษยชาติในการให้เหตุผลจากภายนอก ตั้งแต่ห้องถ่ายทอดในปี 1956 ในแมนเชสเตอร์และโตเกียว ไปจนถึงโครงสร้างพื้นฐานแบบจำลองรากฐานร่วมสมัย และขอบฟ้าการกำกับดูแลของสติปัญญาขั้นสูง ยึดหลักโดยพยานหน้ากล้องที่เกิดซ้ำ ดร. Amira Hassan (ไคโร/ลอนดอน) และ Kenji Sato (โอซาก้า/โตเกียว) Guardrails รูปแบบทางประวัติศาสตร์ของ SceneFlow ล็อคเลนส์ ตู้เสื้อผ้า และรูปทรงของห้องตามยุคสมัยที่แท้จริงต่อทศวรรษ ในขณะที่สานต่อส่วนตัดขวางเอกสารสำคัญที่ซิงค์กับการถอดเสียง แผนผัง และคำบรรยายหลายภาษาโดยอัตโนมัติ",
+          "cast": [
+            {
+              "name": "ดร.อามีรา ฮัสซัน",
+              "role": "พยานหลัก · ตัวตนที่ถูกล็อคไว้หลายยุคสมัย",
+              "descriptor": "นักตรรกศาสตร์คณิตศาสตร์และนักวิชาการกำกับดูแล AI ปรากฏในเอกสารสำคัญไคโร/ปารีสในช่วงทศวรรษ 1980 (อายุ 28 ปี) และแผ่นสัมภาษณ์ 4K ลอนดอนในปัจจุบัน (อายุ 64 ปี) พร้อมโครงสร้างใบหน้าที่ล็อคไว้และจังหวะเสียงร้อง"
+            },
+            {
+              "name": "เคนจิ ซาโต้",
+              "role": "พยานร่วมนำ · อัตลักษณ์ที่ถูกล็อคไว้หลายยุคสมัย",
+              "descriptor": "วิศวกรควบคุมอุตสาหกรรมและเซมิคอนดักเตอร์ ติดตามตั้งแต่พื้นการผลิตที่โอซาก้า/โซลในปี 1980 ไปจนถึงคลังข้อมูลหุ่นยนต์โตเกียวร่วมสมัยที่มีการแสดงออกแบบไมโครและลิปซิงค์ที่เป็นธรรมชาติ"
+            },
+            {
+              "name": "The Chronicler (ผู้บรรยาย)",
+              "role": "สารคดี Voice-of-God · ล็อคประสาท 4 ภาษา",
+              "descriptor": "ผู้บรรยายสารคดีที่ไร้ความรู้สึกและวัดผลได้ขับเคลื่อน B-roll ที่เก็บถาวรตามเวลาการถอดเสียงและเสียงมิกซ์ที่แปลเป็นภาษาท้องถิ่นเป็นภาษาอังกฤษ สเปน จีน และอารบิก"
+            },
+            {
+              "name": "ห้องทดลองประวัติศาสตร์และวงดนตรีภาคสนาม",
+              "role": "นักแสดงที่ออกกฎหมายใหม่ตามระยะเวลาที่กำหนด (พ.ศ. 2499–ปัจจุบัน)",
+              "descriptor": "พ.ศ. 2499 ผู้บุกเบิกด้านคอมพิวเตอร์ในแมนเชสเตอร์และโตเกียว พ.ศ. 2532 โรงพยาบาลไนโรบีบันทึกนักวิเคราะห์ และผู้ปฏิบัติงานในปัจจุบันในกรุงมะนิลา อักกรา และรอตเตอร์ดัม ซึ่งถูกกรองโดยเข้มงวดกับยุคสมัยสมัยใหม่"
+            }
+          ],
+          "episode1Synopsis": {
+            "episodeLabel": "ตอนที่ 1 เรื่องย่อ · ซีรีส์ Premiere (5 บท)",
+            "title": "ตอนที่ 1: ห้องที่มีสวิตช์ (2493-2511)",
+            "duration": "40 นาที (5 บท · บทที่ 1 บทพิสูจน์สด: 6 นาที)",
+            "logline": "ในยุคหลังสงครามที่แมนเชสเตอร์ พรินซ์ตัน และโตเกียว นักคณิตศาสตร์และวิศวกรวิ่งผลัดจำนวนหนึ่งได้จัดห้องขนาดเท่าโรงยิมเพื่อทดสอบว่าเครื่องจักรสามารถยึดกฎและเปลี่ยนความคิดได้หรือไม่",
+            "synopsis": "ตอนที่ 1 จำลองการกำเนิดทางกายภาพและเชิงปรัชญาของสติปัญญาของเครื่องจักรระหว่างปี 1950 ถึง 1968 ดร. Amira Hassan และ Kenji Sato ย้ายมาระหว่างการสร้าง Ferranti Mark 1 ของแมนเชสเตอร์ ในระดับเอกสารสำคัญ 16 มม. ห้องถ่ายทอด ETL Mark III ของโตเกียว และการศึกษาภาคฤดูร้อนของ Dartmouth ในปี 1956 ดร. Amira Hassan และ Kenji Sato ตรวจสอบสิ่งประดิษฐ์ที่ที่ปรึกษาของพวกเขาทิ้งไว้เบื้องหลัง ซึ่งแสดงให้เห็นว่านักวิจัยในยุคแรกเข้าใจผิดเกี่ยวกับตรรกะที่เป็นทางการสำหรับสามัญสำนึกของมนุษย์ ทว่าได้วางสถาปัตยกรรมสวิตชิ่งที่ยังคงควบคุมการประมวลผลสมัยใหม่",
+            "chapter1Title": "บทที่ 1: รีเลย์ที่จำได้ (แมนเชสเตอร์และโตเกียว, 1956)",
+            "chapter1Duration": "6 นาที · บทพิสูจน์บทเริ่มต้น",
+            "chapter1Synopsis": "วิศวกรในเสื้อกั๊กขนสัตว์ถ่ายทำในเกรนขนาด 16 มม. ปี 1956 ที่ถูกล็อค โดยปราศจากสิ่งประดิษฐ์สมัยใหม่ ติดตามรอยเลื่อนบนรีเลย์แม่เหล็กไฟฟ้าที่ส่งเสียงดังในแมนเชสเตอร์และโตเกียว ตัดกับแผ่นสัมภาษณ์ความคมชัดระดับ 4K ในปัจจุบันของ Amira Hassan และ Kenji Sato ถือเทปเจาะรู 5 รูดั้งเดิม โดยปิดด้วยสวิตช์สลับตัวเดียวที่เปิดทิ้งไว้ตลอดทั้งคืน"
+          },
+          "episodes": [
+            {
+              "number": "1",
+              "title": "ห้องที่มีสวิตช์",
+              "duration": "40 นาที",
+              "synopsis": "ห้องทดลองในช่วงกลางศตวรรษในแมนเชสเตอร์ พรินซ์ตัน และโตเกียว นักวิจัยที่แต่งกายย้อนยุคยืนอยู่เหนือเครื่องจักรที่ทำสิ่งที่ชาญฉลาดในห้องที่มีเสียงดัง ครูของอามีราในเทปสัมภาษณ์ช่วงหลัง บรรยายถึงความหวังโดยไม่ต้องใช้วัตถุชิ้นเดียวจากอนาคต ลุงของเคนจิดูแลโรงงานที่มีขนาดเท่าตู้เสื้อผ้า บทจบลงที่สวิตช์ซ้ายในตำแหน่งเปิดข้ามคืน"
+            },
+            {
+              "number": "2",
+              "title": "เครื่องจักรที่มีประโยชน์",
+              "duration": "40 นาที",
+              "synopsis": "ช่วงปี 1980 และ 1990 ระบบผู้เชี่ยวชาญในห้องบันทึกของโรงพยาบาลไนโรบี แผนกชิปในกรุงโซล สำนักงานแปลในปารีส อาคารผู้โดยสารสีเบจ ไฟ CRT เสื้อผ้า และรถยนต์แห่งทศวรรษนั้น Amira ในวัยหนุ่ม กำลังดูรายการแนะนำการวินิจฉัยที่แพทย์อาวุโสปฏิเสธ เคนจิมองเห็นเส้นหยุดเพราะเซ็นเซอร์เชื่อใจตัวเอง มีประโยชน์และทะเลาะกับคนข้างๆแล้ว"
+            },
+            {
+              "number": "3",
+              "title": "การมาถึงของประชาชน",
+              "duration": "40 นาที",
+              "synopsis": "ปี 2010 ห้องข่าวในลากอส ห้องเรียนในเซาเปาโล ห้องครัวในเบอร์ลินที่มีโทรศัพท์ตอบคำถามที่เด็กถามออกมาดังๆ โมเดลได้ออกจากแล็บแล้ว ตอนนี้ Amira เป็นคนที่นักข่าวโทรมา โรงงานของเคนจิติดประกาศว่ากะกลางคืนจะ \"ปรึกษาระบบ\" บทนี้ถืออยู่บนใบหน้าที่อ่านหน้าจอ ไม่ใช่บนหน้าจอ"
+            },
+            {
+              "number": "4",
+              "title": "การเร่งความเร็ว",
+              "duration": "40 นาที",
+              "synopsis": "วันหนึ่งสามเมือง พยาบาลในกรุงมะนิลา นักแต่งเพลงในเมืองอักกรา นักวางแผนท่าเรือในเมืองรอตเตอร์ดัม แต่ละคนใช้ระบบที่จบประโยคที่ตนเองเริ่มไว้ ผู้บรรยายจะนับสิ่งที่เร่งและผู้ที่ไม่ได้อยู่ในห้องเมื่อมีการกำหนดเงื่อนไข อามิราและเคนจิที่มีอายุมากกว่า เปรียบเทียบประกาศที่ประตูของพวกเขา รูปภาพมีความร่วมสมัย: การแต่งกายในปัจจุบัน ถนนในปัจจุบัน แสงในปัจจุบัน"
+            },
+            {
+              "number": "5",
+              "title": "คำถามข้างหน้า",
+              "duration": "40 นาที",
+              "synopsis": "ขอบฟ้าเหนือสติปัญญา เล่าเป็นคำถามมากกว่าคำทำนาย Amira และ Kenji นั่งอยู่ในเอกสารสำคัญอันเงียบสงบ ทั้งเอกสาร ภาพถ่าย และเครื่องจักรที่ไม่ได้แกล้งทำเป็นบุคคล พวกเขาถามว่าระบบที่ฉลาดกว่าผู้สร้างจะเป็นหนี้พยาบาล นักแต่งเพลง ผู้วางแผนท่าเรือ และผู้คนที่ไม่เคยสัมผัสสวิตช์เลย ซีรีส์ไม่ตอบ.. มันทิ้งภาระผูกพันไว้ในห้อง"
+            }
+          ]
+        },
+        "training": {
+          "showTitle": "ห้าจาน",
+          "format": "ชุดการเรียนการสอน · หลักสูตร 5 โมดูล",
+          "genre": "หลักสูตรการทำอาหารภาคปฏิบัติ",
+          "artStyle": "สตูดิโอแสงธรรมชาติ · ครอบคลุมเหนือศีรษะและม้านั่งที่สะอาด",
+          "duration": "หลักสูตร 75 นาที (5 × 15 นาที) · โมดูล 1: 15 นาที",
+          "continuityLock": "ผู้สอนที่ล็อคไว้ 1 คน (เชฟไลลา เมนซาห์) · พ่อครัวฝึกหัดตามรุ่น 2 คน · ครัวครูฮาร์เบอร์สตรีท 1 คน · จานก้าวหน้า 5 อัน",
+          "unitLabel": "โมดูลหลักสูตร (5)",
+          "artLock": "เชฟที่ถูกล็อคคนหนึ่ง เชฟไลลา เมนซาห์ หน้าเหมือนกัน เสื้อโค้ตสีขาวเหมือนกัน ผมเกรียนเหมือนกัน ในครัวสอนอยู่ที่ถนนฮาร์เบอร์สตรีทเดียวกัน — กระเบื้องแบบเดียวกัน หม้อแบบเดียวกัน หน้าต่างแบบเดียวกัน — ตั้งแต่น้ำซุปไปจนถึงของหวาน",
+          "logline": "เชฟหนึ่งคน ครัวหนึ่งมื้อ อาหารห้ามื้อ แต่ละจานจะสอนมือว่าจานถัดไปต้องใช้อะไร",
+          "seriesSynopsis": "Five Plates ได้รับการออกแบบให้เป็นหลักสูตรการเรียนการสอนหลายโมดูลระดับองค์กร โดยจะติดตามเชฟ Lila Mensah ในบทเรียนความยาว 15 นาที 5 บท (รวมทั้งหมด 75 นาที) ภายในห้องครัวครู Harbor Street ที่ล็อกไว้ ต่างจากเครื่องอ่านสไลด์รูปประจำตัวที่ไม่สามารถสาธิตงานฝีมือทางกายภาพได้ SceneFlow จะล็อคใบหน้าของเชฟ Mensah เสื้อคลุมกระดุมสองแถว ที่ใส่มีด และกระเบื้องเซรามิกสีเขียวบนผนังทั่วจังหวะการสอนระดับกลางของ A-Cam การสาธิตแบบตั้งโต๊ะเหนือศีรษะของ B-Cam 90° และการเคี่ยวแบบมาโคร/การตรวจสอบเศษขนมปังของ C-Cam—สร้างความสามารถในการทำอาหารที่สะสมตั้งแต่น้ำซุปใสพื้นฐานไปจนถึงบริการเสิร์ฟอาหารห้าจาน",
+          "cast": [
+            {
+              "name": "เชฟไลลา เมนซาห์",
+              "role": "ผู้สอนหลัก · ตัวตนที่ถูกล็อคและตู้เสื้อผ้า",
+              "descriptor": "หัวหน้าพ่อครัว-อาจารย์ผู้สอน (38) เสื้อโค้ตเชฟกระดุมสองแถวสีขาวกรอบ ผ้ากันเปื้อนหินชนวน ผมเกรียนปิดตา รักษารูปทรงใบหน้า ความต่อเนื่องของมือ และอำนาจการสอนที่สงบเหมือนกันในทั้ง 5 โมดูล"
+            },
+            {
+              "name": "มาร์คัส โคล",
+              "role": "Apprentice Cohort Cook · แผ่นอักขระที่ถูกล็อค",
+              "descriptor": "นักศึกษาวิชาทำอาหารปีแรก (26) เสื้อแจ็กเก็ตฝึกหัดกองทัพเรือที่ Bench #2; ดำเนินการตรวจสอบเทคนิคสด การปรับความร้อน และการวินิจฉัยการแก้ไขปัญหา"
+            },
+            {
+              "name": "ปรียา แนร์",
+              "role": "Apprentice Cohort Cook · แผ่นอักขระที่ถูกล็อค",
+              "descriptor": "นักศึกษาวิชาทำอาหารปีแรก (24) เสื้อแจ็กเก็ตฝึกหัดถ่านที่ Bench #3; สาธิตการปรับเทียบเครื่องปรุงรส การตรวจสอบแป้งโด และการชุบสไตล์ครอบครัว"
+            },
+            {
+              "name": "ครัวครูฮาร์เบอร์สตรีท",
+              "role": "ชุดสตูดิโอแบบล็อค · อุปกรณ์การสอนกล้อง 3 ตัว",
+              "descriptor": "สตูดิโออิฐอุตสาหกรรมและกระเบื้องสีเขียวสว่างไสวในเวลากลางวันพร้อมเกาะเหล็กขัดเงา หม้อต้มทองแดงหนัก และกราฟิกคำบรรยายเสริมที่ซิงค์ระหว่าง A-Cam, B-Cam เหนือศีรษะ 90° และ Macro C-Cam"
+            }
+          ],
+          "episode1Synopsis": {
+            "episodeLabel": "ตอนที่ 1 (โมดูล 1) เรื่องย่อ · พื้นฐานหลักสูตร (3 บท)",
+            "title": "โมดูล 1: น้ำซุป — การสกัด ความใส และการควบคุมความร้อน",
+            "duration": "15 นาที (3 บท · บทที่ 1 บทพิสูจน์สด: 5 นาที)",
+            "logline": "เชฟไลลา เมนซาห์สอนการจัดการความร้อน อะโรเมติกส์ และวินัยในการปรุงโดยใช้น้ำซุปผสมรองพื้นที่ใสดุจคริสตัลซึ่งขับเคลื่อนหลักสูตรที่เหลือ",
+            "synopsis": "ในโมดูลที่ 1 เชฟ Lila Mensah ได้สร้างโต๊ะทำงานที่ Harbour Street และสอนทักษะพื้นฐานของหลักสูตร เช่น การเปลี่ยนน้ำเย็น กระดูกย่างหรือรากผัก และอะโรเมติกส์ให้เป็นน้ำซุปใสที่มีโครงสร้าง โครงสร้างการสอนแบ่งออกเป็นสามบท ได้แก่ (1) Cold Start & Knife Mise en Place, (2) Convection Simmer & Skim และ (3) การสอบเทียบเกลือและการตรวจสอบความชัดเจนในระยะสุดท้าย ผู้เรียนจะเชี่ยวชาญในการควบคุมความร้อนก่อนสัมผัสแป้งหรือโปรตีนย่างในโมดูลต่อๆ ไป",
+            "chapter1Title": "บทที่ 1: น้ำเย็น กระดูกที่สะอาด และการเคี่ยวครั้งแรก",
+            "chapter1Duration": "5 นาที · บทพิสูจน์บทเริ่มต้น",
+            "chapter1Synopsis": "เปิดที่ A-Cam ในครัว Harbor Street ที่มีแสงสว่างเพียงพอ เชฟ Lila Mensah แนะนำหลักสูตรแบบห้าจาน สลับไปที่ B-Cam เหนือศีรษะที่ล็อคไว้ 90° เพื่อสาธิตการตัด mirepoix ที่สม่ำเสมอและการแช่น้ำเย็น และนำหม้อสต๊อกไปสู่ฟองการพาความร้อนแบบขี้เกียจครั้งแรกร่วมกับเด็กฝึกงาน Marcus และ Priya"
+          },
+          "episodes": [
+            {
+              "number": "1",
+              "title": "น้ำซุป",
+              "duration": "15 นาที",
+              "synopsis": "ไลล่าเริ่มต้นด้วยน้ำซุปใส: มีด กระดูกหรือผัก ความร้อน และความอดทน เธอแสดงการเคี่ยว หางนม และจังหวะที่เกลือเข้าไป ห้องครัว เสื้อคลุม และใบหน้าของเธอถูกจัดวางเป็นฉากที่ล็อคไว้ เช็คเป็นช้อนเต็มรสชาติไม่ขุ่น"
+            },
+            {
+              "number": "2",
+              "title": "ขนมปัง",
+              "duration": "15 นาที",
+              "synopsis": "ม้านั่งตัวเดียวกัน พ่อครัวคนเดียวกัน แป้ง เวลา และความรู้สึกของขนมปังที่พิสูจน์แล้ว Lila เชื่อมโยงบทเรียนของน้ำซุปเกี่ยวกับความอดทนกับการรอคอยที่แป้งต้องการ นักเรียนปั้น ให้คะแนน และอบขนม เช็คเป็นเศษที่เปิดอยู่ ไม่เหนียวเหนอะหนะ และระบุว่าจะเปลี่ยนอะไรบ้างในครั้งต่อไป"
+            },
+            {
+              "number": "3",
+              "title": "ผักหลัก",
+              "duration": "15 นาที",
+              "synopsis": "ถาดใส่ผักใบเขียวและธัญพืชที่ต้องเลี้ยงทั้งชั้นเรียน ไม่ใช่กล้องถ่ายรูป ไลล่าโชว์ซอสที่สร้างจากน้ำซุป เครื่องปรุงรสสำหรับกลุ่ม และวิธีการรักษาสีในผัก เช็คเป็นจานที่เหมือนกันในชามแรกและชามสุดท้าย"
+            },
+            {
+              "number": "4",
+              "title": "ฉลองย่าง",
+              "duration": "15 นาที",
+              "synopsis": "จานกลางสำหรับค่ำคืนที่สำคัญ: ย่าง พัก และเครื่องเคียงที่ใช้ขนมปังของเมื่อวาน ไลล่ารักษาจุดเดิมและเสียงเดียวกันในขณะที่เดิมพันบนจานสูงขึ้น เช็คกำลังแกะสลักไว้บนโต๊ะ ไม่ใช่ฮีโร่ช็อตเดียว"
+            },
+            {
+              "number": "5",
+              "title": "ความหวานครั้งสุดท้าย",
+              "duration": "15 นาที",
+              "synopsis": "ของหวานที่ต้องควบคุมความร้อนของโมดูลที่ 1 ระยะเวลาของโมดูลที่ 2 และตาปรุงรสของโมดูลที่ 3 จากนั้นชั้นเรียนจะจัดจานทั้งห้าใบเป็นมื้อเดียว ไลล่าเดินผ่านโดยสวมเสื้อคลุมตัวเดียวกันในครัวเดียวกัน หลักสูตรเปลี่ยนจากบทเรียนเป็นการบริการ"
+            }
+          ]
+        }
+      }
+    },
     "explorerHandoff": "ลิงก์เหล่านี้คือผลงานที่เสร็จสมบูรณ์แล้ว ส่วน Explorer คือพื้นที่สำหรับให้คุณสร้างผลงานของตนเอง",
     "languagesBanner": "ตัวอย่างสาธารณะมีให้บริการใน 4 ภาษา ได้แก่ อังกฤษ สเปน จีน และอาหรับ",
     "workflowLabel": "โซลูชัน",
@@ -2181,7 +2828,7 @@
             "solution": "Blueprint, Audience Resonance และ Screening Room ครอบคลุมกระบวนการทำงานของโมดูล ตั้งแต่ขั้นตอนโครงร่าง (outline) ไปจนถึง Pre-Vis, การตัดต่อเบื้องต้น (rough cut), การสร้างฉาก และผลงานที่เสร็จสมบูรณ์"
           }
         ],
-        "screeningRoomPreview": "Five Plates — Screening Room"
+        "screeningRoomPreview": "ห้าจาน — Screening Room"
       }
     ]
   },
@@ -2197,16 +2844,19 @@
     "chapters": [
       {
         "id": "เริ่มต้นที่นี่",
-        "label": "เริ่มต้นที่จุดนี้ — การวางแผน ความต่อเนื่อง และความเหมาะสมกับกลุ่มเป้าหมาย"
+        "label": "เริ่มต้นที่จุดนี้ — การวางแผน ความต่อเนื่อง และความเหมาะสมกับกลุ่มเป้าหมาย",
+        "defaultExpanded": false
       },
       {
         "id": "ผลิตและเผยแพร่",
-        "label": "ผลิตและเผยแพร่ — คลิปไปยัง Screening Room"
+        "label": "ผลิตและเผยแพร่ — คลิปไปยัง Screening Room",
+        "defaultExpanded": false
       }
     ],
     "close": "ปิด",
     "viewDetails": "ดูรายละเอียด",
     "beatFirst": {
+      "id": 15,
       "title": "กระบวนการผลิตวิดีโอที่ยึดจังหวะเพลงเป็นหลัก",
       "description": "อนุมัติลำดับภาพ Pre-vis และกำหนดช่วงเฟรม (frame range) ให้เรียบร้อยก่อนเริ่มกระบวนการ F2V เพื่อลดการสร้างภาพใหม่โดยไร้ทิศทางอันเกิดจากอาการ Hallucination หรือภาพที่หลุดจากแนวทางที่วางไว้ (Visual Drift) ทั้งนี้ เพื่อให้มีขั้นตอนการทำงานที่เป็นระบบและชัดเจน ตั้งแต่การตรวจสอบชิ้นงานไปจนถึงการได้คลิปวิดีโอฉบับสมบูรณ์",
       "keyFeatures": [
@@ -2397,7 +3047,7 @@
         "label": "การส่งมอบผ่านระบบคลาวด์"
       },
       {
-        "value": "Imagen 4",
+        "value": "ภาพที่ 4",
         "label": "การสร้างภาพ"
       },
       {
@@ -2503,7 +3153,7 @@
       }
     ],
     "workflow": {
-      "title": "Reference Library → Pre-Vis → Motion Video → ProRes 4K master",
+      "title": "Reference Library → พรีวิส → โมชั่นวิดีโอ → ProRes 4K มาสเตอร์",
       "steps": [
         "สร้างคลังข้อมูลอ้างอิง (Reference Library) ซึ่งประกอบด้วยตัวละคร สถานที่ และอุปกรณ์ประกอบฉากที่กำหนดรูปแบบไว้ตามสไตล์งานศิลป์ของโปรเจกต์คุณ",
         "สร้างภาพ Pre-Vis (beat frames) สำหรับแต่ละฉากโดยใส่บทพูด เสียงประกอบ (SFX) และดนตรี พร้อมทั้งปรับแก้ทิศทางงานในห้องฉายภาพ (Screening Room) ได้ด้วยต้นทุนต่ำ",
@@ -2681,7 +3331,7 @@
       "imageGeneration": "การสร้างภาพ",
       "videoGeneration": "การสร้างวิดีโอ",
       "voiceover": "พากย์เสียง",
-      "byokTag": "(BYOK)",
+      "byokTag": "(ไฟบายค์เทอม)",
       "totalEstimate": "ประมาณการทั้งหมด",
       "withTopUps": "พร้อมการเติมเงิน",
       "creditSavings": "การประหยัดเครดิต SceneFlow",
@@ -2809,7 +3459,7 @@
   "notify": {
     "heading": "รับข่าวสารการเปิดตัว",
     "description": "ฝากอีเมลไว้ แล้วเราจะแจ้งให้ทราบเมื่อมีการประกาศ ไม่มีการส่งอย่างอื่นให้กวนใจ",
-    "placeholder": "you@studio.com",
+    "placeholder": "คุณ@studio.com",
     "submit": "แจ้งเตือนฉัน",
     "submitting": "กำลังส่ง...",
     "successTitle": "ตรวจสอบกล่องข้อความของคุณ",
@@ -2833,7 +3483,7 @@
     "closedNote": "ใบสมัครจะได้รับการพิจารณาโดยบรรณาธิการ การส่งใบสมัครไม่ได้หมายความว่าภาพยนตร์ของคุณจะถูกเผยแพร่ลงในแคตตาล็อก",
     "fields": {
       "email": "อีเมล",
-      "emailPlaceholder": "you@studio.com",
+      "emailPlaceholder": "คุณ@studio.com",
       "name": "ชื่อของคุณ",
       "namePlaceholder": "ชื่อผู้กำกับหรือผู้อำนวยการสร้าง",
       "title": "ชื่อตอนนำร่องหรือภาพยนตร์",
@@ -2905,79 +3555,5 @@
     "mute": "ปิดเสียง",
     "unmute": "เปิดเสียง",
     "expandVideo": "ขยายวิดีโอ"
-  },
-  "productionAgent": {
-    "eyebrow": "Production Agent • ระบบสร้างสตูดิโออัตโนมัติ",
-    "title": "หยุดพิมพ์พรอมต์เองกว่า 300 ช็อต กดเริ่มสร้างแล้ววางมือได้เลย",
-    "subtitle": "งานผลิตขนาด 27 ฉากทั่วไป (12–20 ช็อตต่อฉาก) ต้องพิมพ์พรอมต์ภาพนิ่งและวิดีโอด้วยมือกว่า 300 ครั้งในเครื่องมือ AI แบบเดิม ขัดเกลาบทของคุณให้สมบูรณ์ในเวลาไม่ถึงชั่วโมง เลือก Pre-Vis, คลิป, ฉาก, มาสเตอร์ หรือโปรโม แล้วปล่อยให้ Production Agent สร้างฉาก แก้ไขช็อตที่ล้มเหลวอัตโนมัติ และแจ้งเตือนคุณพร้อมลิงก์ส่วนตัว /s/ Screening Room เมื่อเสร็จสมบูรณ์",
-    "showDetail": "แสดงรายละเอียดเพิ่มเติม",
-    "hideDetail": "ซ่อนรายละเอียด",
-    "drawerBadge": "ระบบจัดการการผลิตอัตโนมัติทีละฉาก",
-    "drawerTitle": "ใช้เวลากับบทไม่ถึงชั่วโมง แทนที่การพิมพ์พรอมต์หลายชั่วโมงด้วยการรันอัตโนมัติเพียงครั้งเดียว",
-    "cards": [
-      {
-        "badge": "ลดการพิมพ์พรอมต์เองกว่า 300 ครั้ง",
-        "title": "ใช้เวลากับบท < 1 ชั่วโมง → มีเวลาอิสระเต็มวัน",
-        "description": "ไม่ต้องพิมพ์พรอมต์ภาพนิ่งและวิดีโอทีละช็อตกว่า 300 ครั้งใน 27 ฉาก (12–20 ช็อตต่อฉาก) ขัดเกลาบทให้เสร็จในเวลาไม่ถึงชั่วโมง แล้วนำเวลาของคุณกลับคืนมา"
-      },
-      {
-        "badge": "ครบทั้ง 27 ฉาก หรือเลือกตามบท",
-        "title": "ครบ 5 ขั้นตอนการผลิตตั้งแต่ต้นจนจบ",
-        "description": "เลือก Pre-Vis, คลิป, ฉาก, มาสเตอร์ และโปรโมได้ในตัวสร้างเดียว เอเจนต์จะสร้างภาพอ้างอิงความต่อเนื่อง เสียงพูด/SFX/ดนตรี คีย์เฟรม คลิปวิดีโอ และตัวอย่างภาพยนตร์ให้อัตโนมัติ"
-      },
-      {
-        "badge": "งานเรนเดอร์ไม่สะดุด",
-        "title": "แก้ไขตัวเองอัตโนมัติ + ระบบสำรอง Creative Clips",
-        "description": "ปรับปรุงคำสั่งกำกับช็อตและรันช็อตที่ล้มเหลวใหม่อัตโนมัติ และเมื่อช็อตดราม่ายังคงติดตัวกรองนโยบายของ Google หลังปรับคำสั่งแล้ว ระบบจะสลับไปใช้ Creative Clips ทันที"
-      },
-      {
-        "badge": "ผู้กำกับควบคุมได้เต็มที่",
-        "title": "จุดตรวจสอบและลิงก์ตรวจงาน /s/",
-        "description": "ปล่อยรันอัตโนมัติ 100% หรือหยุดพักหลังจบ Pre-Vis หรือหลังแต่ละฉาก รับการแจ้งเตือนตามความถี่ที่คุณเลือกพร้อมลิงก์ตรง /s/ Screening Room สำหรับตรวจทาน"
-      }
-    ],
-    "viewScript": "ดูสคริปต์วิดีโอของ Ana (ความยาว 30 วินาที)",
-    "hideScript": "ซ่อนสคริปต์วิดีโอของ Ana (ความยาว 30 วินาที)",
-    "copyScript": "คัดลอกสคริปต์",
-    "copied": "คัดลอกแล้ว",
-    "cta": "เปิดสตูดิโอ ($9)"
-  },
-  "studioAcademy": {
-    "eyebrow": "SceneFlow Studio Academy และการฝึกอบรมแบบ Just-In-Time",
-    "title": "มีคำแนะนำทุกขั้นตอน เชี่ยวชาญสตูดิโอไปพร้อมกับสร้างผลงาน",
-    "subtitle": "ไม่ต้องนั่งจ้องไทม์ไลน์ว่างเปล่าหรือเสียเครดิตเดาขั้นตอนถัดไป กดปุ่ม ? บนหน้าจอใดก็ได้เพื่อเปิดแผนผังหน้าจอ Just-In-Time (JIT) ทันที พร้อมเช็กลิสต์ 60 วินาทีและปุ่มสั่งงานในคลิกเดียว—หรือเรียนคอร์สอินเทอร์แอคทีฟตั้งแต่ไอเดียแรกจนถึงมาสเตอร์พร้อมเผยแพร่",
-    "showDetail": "แสดงรายละเอียดเพิ่มเติม",
-    "hideDetail": "ซ่อนรายละเอียด",
-    "drawerBadge": "ขุมพลังสตูดิโอฮอลลีวูด · ไม่ต้องจบภาพยนตร์",
-    "drawerTitle": "แผนผังหน้าจออินเทอร์แอคทีฟ เช็กลิสต์ 60 วินาที และระบบคุ้มครองเครดิตในทุกห้องทำงาน",
-    "cards": [
-      {
-        "badge": "เรียกดูได้ทันทีด้วยปุ่มเดียว (?)",
-        "title": "โค้ชอัจฉริยะ Just-In-Time (JIT) ตามบริบทหน้าจอ",
-        "description": "กด ? บนหน้าจอใดก็ได้เพื่อเปิดแผนผังภาพของพื้นที่ทำงานปัจจุบัน เช็กลิสต์ 60 วินาทีว่าต้องทำอะไรต่อ และปุ่มคลิกเดียวที่เรียกคำสั่งในสตูดิโอให้คุณทันที"
-      },
-      {
-        "badge": "4 คอร์สอินเทอร์แอคทีฟพร้อมคำแนะนำ",
-        "title": "ซิมูเลเตอร์ “ภาพยนตร์เรื่องแรกของคุณใน 10 นาที”",
-        "description": "ออกแบบมาสำหรับนักเล่าเรื่อง นักเขียน และโชว์รันเนอร์ที่ไม่มีพื้นฐานการตัดต่อ ทำตามจุดชี้แนะ Spotlight X-Ray ตั้งแต่ไอเดีย 1 ประโยคไปจนถึงภาพยนตร์ที่มีเสียงพากย์ ดนตรีประกอบ และเปิดชมได้จริง"
-      },
-      {
-        "badge": "ประหยัดเครดิตได้สูงสุดถึง 70%",
-        "title": "ระบบคุ้มครองเครดิตด้วย Animatic-First",
-        "description": "ทุกพื้นที่ทำงานมีคำแนะนำประหยัดเครดิตแบบเรียลไทม์ แสดงวิธีล็อกบทที่ได้คะแนน Audience Resonance 80+ และตรวจทาน Keyframe Animatic พร้อมเสียงพากย์ก่อนจ่ายเครดิตเรนเดอร์วิดีโอเคลื่อนไหว"
-      },
-      {
-        "badge": "รวมอยู่ในทุกแพ็กเกจฟรี",
-        "title": "4 คอร์สสตูดิโออินเทอร์แอคทีฟในตัว",
-        "description": "เรียนรู้ Blueprint & Audience Resonance, คลังความต่อเนื่องของตัวละครและฉาก, ระบบคุ้มครองเครดิต Animatic-First และ Screening Room พร้อมการพากย์เสียงกว่า 70 ภาษาได้โดยตรงในสตูดิโอ"
-      }
-    ],
-    "tryLiveMap": "ลองใช้แผนผังหน้าจอ JIT แบบโต้ตอบ (พิน 1–4)",
-    "hideLiveMap": "ซ่อนแผนผังหน้าจอ JIT แบบโต้ตอบ",
-    "viewScript": "ดูสคริปต์วิดีโอ 30 วินาที (Ana)",
-    "hideScript": "ซ่อนสคริปต์วิดีโอ 30 วินาที (Ana)",
-    "copyScript": "คัดลอกสคริปต์",
-    "copied": "คัดลอกแล้ว",
-    "cta": "เปิดสตูดิโอ ($9)"
   }
 }

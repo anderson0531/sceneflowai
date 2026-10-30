@@ -244,6 +244,7 @@
     "badge": "الميزات الرئيسية",
     "title": "من الفكرة إلى النسخة النهائية.",
     "subtitle": "Series Room ← Blueprint Room ← Production Stage ← Screening Room.",
+    "featuresListLabel": "قائمة الميزات",
     "learnMoreLabel": "اعرف المزيد",
     "showLessLabel": "عرض أقل",
     "videoComingSoon": "عرض توضيحي للميزة قريباً",
@@ -267,52 +268,52 @@
         "features": [
           {
             "icon": "newSeries",
-            "title": "New Series",
-            "description": "Pitch your series, anthology, or episodic channel concept in plain language. Interactive AI refinement sharpens your premise, target audience, and visual tone before generating a complete multi-episode season baseline—complete with overarching plot arcs, recurring character hooks, and episode-by-episode breakdowns.",
-            "screenshot": "Create New Series — intent, Clarify and Confirm, Generate Series",
+            "title": "سلسلة جديدة",
+            "description": "اعرض سلسلتك أو مختاراتك أو مفهوم القناة العرضية بلغة واضحة. يعمل تحسين الذكاء الاصطناعي التفاعلي على تحسين فرضيتك وجمهورك المستهدف ونغمتك المرئية قبل إنشاء خط أساسي كامل للموسم متعدد الحلقات - مكتمل بأقواس الحبكة الشاملة وربطات الشخصيات المتكررة وتفاصيل كل حلقة على حدة.",
+            "screenshot": "إنشاء سلسلة جديدة - النية والتوضيح والتأكيد وإنشاء السلسلة",
             "learnMore": {
               "items": [
                 {
-                  "title": "Plain-language series pitch",
-                  "description": "Pitch the premise, episode format, target demographic, and visual art style in plain language."
+                  "title": "الملعب سلسلة لغة عادي",
+                  "description": "قم بعرض المقدمة وتنسيق الحلقة والهدف الديموغرافي وأسلوب الفن البصري بلغة واضحة."
                 },
                 {
-                  "title": "Interactive Clarify & Confirm",
-                  "description": "Clarify and Confirm sharpens the season synopsis, tone, and thematic pillars with you before anything is generated."
+                  "title": "توضيح وتأكيد تفاعلي",
+                  "description": "يعمل Clarify and Confirm على تحسين ملخص الموسم والنغمة والركائز الموضوعية معك قبل إنشاء أي شيء."
                 },
                 {
-                  "title": "Multi-episode season baseline",
-                  "description": "Generate Series builds a structured five-episode season arc with individual synopses and story hooks that you can expand anytime."
+                  "title": "خط الأساس للموسم متعدد الحلقات",
+                  "description": "ينشئ Generate Series قوسًا موسميًا منظمًا مكونًا من خمس حلقات مع ملخصات فردية وخطافات قصة يمكنك توسيعها في أي وقت."
                 },
                 {
-                  "title": "World & genre calibration",
-                  "description": "Lock visual aesthetics, era settings, and recurring narrative motifs up front so every episode shares the same creative DNA."
+                  "title": "معايرة العالم والنوع",
+                  "description": "قم بتأمين الجماليات المرئية وإعدادات العصر والزخارف السردية المتكررة مقدمًا بحيث تشترك كل حلقة في نفس الحمض النووي الإبداعي."
                 }
               ]
             }
           },
           {
             "icon": "seriesReview",
-            "title": "Season Bible & Continuity",
-            "description": "Read or listen to the narrated season overview and episode slate. SceneFlow locks your story threads, cast profiles, recurring locations, and signature props into a shared Reference Library that every episode inherits automatically—eliminating continuity drift across multi-part storytelling.",
-            "screenshot": "Overview Listen, Episodes Listen, Consistency, Continuity — Cast, Locations, Props, Settings",
+            "title": "موسم الكتاب المقدس والاستمرارية",
+            "description": "اقرأ أو استمع إلى نظرة عامة على الموسم المروي وقائمة الحلقات. يقوم SceneFlow بتأمين سلاسل قصتك وملفاتك الشخصية والمواقع المتكررة ودعائم التوقيع في Reference Library مشترك ترثه كل حلقة تلقائيًا، مما يلغي الانجراف المستمر عبر رواية القصص متعددة الأجزاء.",
+            "screenshot": "نظرة عامة على الاستماع، والاستماع إلى الحلقات، والاتساق، والاستمرارية - طاقم التمثيل، والمواقع، والدعائم، والإعدادات",
             "learnMore": {
               "items": [
                 {
-                  "title": "Narrated season & episode audit",
-                  "description": "Audit the overarching season overview and every individual episode synopsis with built-in studio audio narration."
+                  "title": "تدقيق الموسم والحلقة المروية",
+                  "description": "قم بمراجعة النظرة العامة الشاملة للموسم وملخص كل حلقة على حدة باستخدام السرد الصوتي المدمج في الاستوديو."
                 },
                 {
-                  "title": "Cross-episode story consistency",
-                  "description": "Visual aesthetics, canonical plot events, and character relationship threads stay locked across the entire season."
+                  "title": "اتساق القصة عبر الحلقات",
+                  "description": "تظل الجماليات المرئية وأحداث الحبكة الأساسية وخيوط العلاقات بين الشخصيات مغلقة طوال الموسم بأكمله."
                 },
                 {
-                  "title": "Shared Reference Library inheritance",
-                  "description": "Cast portraits, voice profiles, wardrobes, locations, and signature props carry automatically into every episode you produce."
+                  "title": "مشاركة Reference Library الميراث",
+                  "description": "يتم نقل صور الممثلين والملفات الصوتية وخزائن الملابس والمواقع والدعائم المميزة تلقائيًا إلى كل حلقة تنتجها."
                 },
                 {
-                  "title": "Centralized canon management",
-                  "description": "Update a character look, location plate, or prop once in the Series Bible to propagate the change to future episodes."
+                  "title": "إدارة الكنسي المركزية",
+                  "description": "قم بتحديث مظهر الشخصية أو لوحة الموقع أو الدعامة مرة واحدة في سلسلة الكتاب المقدس لنشر التغيير في الحلقات المستقبلية."
                 }
               ]
             }
@@ -320,87 +321,87 @@
           {
             "icon": "seriesResonance",
             "title": "Audience Resonance",
-            "description": "Test your season arc against your target demographic before writing a single script. Review episode-by-episode resonance scores, binge-retention curves, and structural critiques, then apply data-backed story improvements with one click—only when you agree with the note.",
-            "screenshot": "Audience Resonance analysis, then Actionable Insights, unapplied",
+            "description": "اختبر قوس الموسم الخاص بك مقابل المجموعة السكانية المستهدفة قبل كتابة نص واحد. قم بمراجعة نتائج الرنين لكل حلقة على حدة، ومنحنيات الاحتفاظ بنهم، والانتقادات الهيكلية، ثم قم بتطبيق تحسينات القصة المدعومة بالبيانات بنقرة واحدة - فقط عندما توافق على الملاحظة.",
+            "screenshot": "تحليل Audience Resonance، ثم الرؤى القابلة للتنفيذ، غير مطبقة",
             "learnMore": {
               "items": [
                 {
-                  "title": "Demographic & retention scoring",
-                  "description": "Multi-axis scores and structural analysis reveal how your season arc and episode cliffhangers land with your target audience."
+                  "title": "التسجيل الديموغرافي والاحتفاظ",
+                  "description": "تكشف النتائج متعددة المحاور والتحليل الهيكلي كيف تصل أحداث الموسم والحلقات المشوقة إلى جمهورك المستهدف."
                 },
                 {
-                  "title": "Episode-by-episode diagnostics",
-                  "description": "Spot mid-season pacing dips, character underutilization, or tonal drift across the full episode slate before scripting."
+                  "title": "تشخيص كل حلقة على حدة",
+                  "description": "اكتشف الانخفاضات في وتيرة منتصف الموسم، أو قلة استخدام الشخصية، أو الانجراف اللوني عبر قائمة الحلقة الكاملة قبل البرمجة النصية."
                 },
                 {
-                  "title": "Director's prerogative",
-                  "description": "Actionable Insights update your series bible and episode outlines only when you explicitly choose to apply them."
+                  "title": "من صلاحيات المدير",
+                  "description": "تعمل الرؤى القابلة للتنفيذ على تحديث الكتاب المقدس لسلسلتك ومخططات الحلقات فقط عندما تختار تطبيقها بشكل صريح."
                 }
               ]
             }
           },
           {
             "icon": "seriesDirector",
-            "title": "The Series Director",
-            "description": "Reshape the entire season by voice or text. Shift the dramatic tone, raise the stakes, introduce a new antagonist, or rework a character arc across all episodes at once while keeping the rest of your storyline and continuity bible intact.",
-            "screenshot": "Series Director — direction, focus, accept",
+            "title": "مدير المسلسل",
+            "description": "إعادة تشكيل الموسم بأكمله عن طريق الصوت أو النص. قم بتغيير النغمة الدرامية، أو رفع المخاطر، أو تقديم خصم جديد، أو إعادة صياغة قوس الشخصية عبر جميع الحلقات مرة واحدة مع الحفاظ على بقية القصة والاستمرارية الكتابية سليمة.",
+            "screenshot": "مدير المسلسل – التوجيه، التركيز، القبول",
             "learnMore": {
               "items": [
                 {
-                  "title": "Plain-language season direction",
-                  "description": "Speak or type your creative note and target overarching plot, characters, episode arcs, tone, or world setting."
+                  "title": "اتجاه الموسم باللغة العادية",
+                  "description": "تحدث أو اكتب ملاحظتك الإبداعية واستهدف الحبكة الشاملة أو الشخصيات أو أقواس الحلقات أو النغمة أو الإعداد العالمي."
                 },
                 {
-                  "title": "Surgical multi-episode updates",
-                  "description": "Nothing changes until you accept the previewed revision, and unrelated story threads stay completely untouched."
+                  "title": "تحديثات جراحية متعددة الحلقات",
+                  "description": "لن يتغير أي شيء حتى تقبل المراجعة التي تمت معاينتها، وتظل سلاسل القصة غير ذات الصلة دون تغيير تمامًا."
                 },
                 {
-                  "title": "Guided AI recommendations",
-                  "description": "Apply one-click story improvements surfaced by Audience Resonance or steer every creative choice yourself."
+                  "title": "توصيات الذكاء الاصطناعي الموجهة",
+                  "description": "قم بتطبيق تحسينات القصة بنقرة واحدة التي ظهرت بواسطة Audience Resonance أو قم بتوجيه كل خيار إبداعي بنفسك."
                 }
               ]
             }
           },
           {
             "icon": "directEpisode",
-            "title": "Episode-Level Direction",
-            "description": "Zoom into any individual episode to rework its plot outline, act structure, pacing, or cold-open hook in isolation—without destabilizing neighboring episodes or mutating the rest of your season slate.",
-            "screenshot": "Episodes — Direct this episode, other episodes unchanged",
+            "title": "اتجاه مستوى الحلقة",
+            "description": "قم بتكبير أي حلقة فردية لإعادة صياغة الخطوط العريضة للحبكة أو بنية التمثيل أو الإيقاع أو الخطاف المفتوح بشكل منفصل - دون زعزعة استقرار الحلقات المجاورة أو تغيير بقية قائمة الموسم.",
+            "screenshot": "الحلقات - اخرج هذه الحلقة، والحلقات الأخرى دون تغيير",
             "learnMore": {
               "items": [
                 {
-                  "title": "Isolated episode rewrites",
-                  "description": "Direct changes to a single episode's synopsis, act beats, and character focus without altering neighboring episodes."
+                  "title": "إعادة كتابة الحلقة المعزولة",
+                  "description": "تغييرات مباشرة على ملخص حلقة واحدة، وإيقاع التمثيل، وتركيز الشخصية دون تغيير الحلقات المجاورة."
                 },
                 {
-                  "title": "Locked season integrity",
-                  "description": "The overarching season bible, shared cast continuity, and remaining episode slate stay locked while you iterate."
+                  "title": "سلامة الموسم المقفل",
+                  "description": "يظل الكتاب المقدس للموسم الشامل، واستمرارية طاقم التمثيل المشترك، وقائمة الحلقات المتبقية مغلقة أثناء التكرار."
                 },
                 {
-                  "title": "Pre-launch beat polishing",
-                  "description": "Refine individual episode hooks and cliffhangers until the episode is ready to launch into the Blueprint Room."
+                  "title": "تلميع قبل الإطلاق",
+                  "description": "قم بتحسين الروابط والمقاطع الجذابة للحلقة الفردية حتى تصبح الحلقة جاهزة للانطلاق في Blueprint Room."
                 }
               ]
             }
           },
           {
             "icon": "startEpisode",
-            "title": "One-Click Episode Launch",
-            "description": "When an episode's outline hits the mark, launch it straight into the Blueprint Room with a single click—bringing its synopsis, narrative beats, recurring cast, voice profiles, locations, and visual style automatically wired in.",
-            "screenshot": "Start Project — outline and cast already on the episode",
+            "title": "إطلاق الحلقة بنقرة واحدة",
+            "description": "عندما يصل مخطط الحلقة إلى الهدف، قم بتشغيله مباشرة في Blueprint Room بنقرة واحدة - حيث يتم توصيل ملخصها وإيقاعات السرد وطاقم التمثيل المتكرر وملفات التعريف الصوتية والمواقع والأسلوب المرئي تلقائيًا.",
+            "screenshot": "ابدأ المشروع - قم بتخطيط الحلقة وإلقاءها بالفعل",
             "learnMore": {
               "items": [
                 {
-                  "title": "Instant Blueprint handoff",
-                  "description": "Launch any approved episode directly into the Blueprint Room with a single click to begin detailed beat and script work."
+                  "title": "التسليم الفوري لـ Blueprint",
+                  "description": "قم بتشغيل أي حلقة تمت الموافقة عليها مباشرةً في Blueprint Room بنقرة واحدة لبدء العمل التفصيلي للإيقاع والنص."
                 },
                 {
-                  "title": "Pre-wired creative DNA",
-                  "description": "The episode outline, synopsis, story beats, cast profiles, wardrobes, and locations travel automatically with zero re-entry."
+                  "title": "الحمض النووي الإبداعي المُجهز مسبقًا",
+                  "description": "يسافر مخطط الحلقة، والملخص، وإيقاعات القصة، وملفات تعريف الممثلين، وخزائن الملابس، والمواقع تلقائيًا بدون إعادة إدخال."
                 },
                 {
-                  "title": "Parallel episode production",
-                  "description": "Spin up multiple episodes from the same season slate as independent projects that share the same canonical series assets."
+                  "title": "إنتاج الحلقة الموازية",
+                  "description": "قم بتدوير حلقات متعددة من قائمة الموسم نفسه كمشاريع مستقلة تشترك في نفس أصول السلسلة الأساسية."
                 }
               ]
             }
@@ -415,92 +416,92 @@
         "features": [
           {
             "icon": "startBlueprint",
-            "title": "Start the Blueprint",
-            "description": "Bring in an episode from your series slate with its outline, cast, and world pre-loaded, or pitch a brand-new standalone film concept from scratch and let AI validate, enhance, and structure the foundational treatment.",
-            "screenshot": "Series episode already known, or Start Your Project — intent, Validate & Enhance with AI, Generate Blueprint",
+            "title": "بدء تشغيل Blueprint",
+            "description": "أحضر حلقة من قائمة مسلسلاتك مع الخطوط العريضة والممثلين والعالم الذي تم تحميله مسبقًا، أو قم بعرض مفهوم فيلم مستقل جديد تمامًا من الصفر ودع الذكاء الاصطناعي يتحقق من صحة المعالجة الأساسية ويعززها ويبنيها.",
+            "screenshot": "حلقة المسلسل معروفة بالفعل، أو ابدأ مشروعك — النية والتحقق والتحسين باستخدام الذكاء الاصطناعي وإنشاء Blueprint",
             "learnMore": {
               "items": [
                 {
-                  "title": "Seamless from Series Room",
-                  "description": "Series episodes arrive with their outline, synopsis, story beats, recurring cast, and locations already attached."
+                  "title": "سلس من Series Room",
+                  "description": "تصل حلقات المسلسل مع مخططها وملخصها وإيقاعات القصة والممثلين المتكررين والمواقع المرفقة بالفعل."
                 },
                 {
-                  "title": "Standalone film or short",
-                  "description": "Pitch a new film concept in plain language, refine it with AI validation, and generate a complete film treatment."
+                  "title": "فيلم مستقل أو قصير",
+                  "description": "قم بعرض مفهوم فيلم جديد بلغة واضحة، وقم بتحسينه من خلال التحقق من صحة الذكاء الاصطناعي، وإنشاء معالجة كاملة للفيلم."
                 },
                 {
-                  "title": "Narrated treatment overview",
-                  "description": "Read or listen to the narrated logline, synopsis, and creative reasoning to verify the story foundation immediately."
+                  "title": "نظرة عامة على العلاج المروي",
+                  "description": "اقرأ أو استمع إلى السطر المروي والملخص والتفكير الإبداعي للتحقق من أساس القصة على الفور."
                 }
               ]
             }
           },
           {
             "icon": "treatment",
-            "title": "The Beat Sheet",
-            "description": "Structure the dramatic spine of your film before dialogue is written. Read or listen to your narrative beat sheet, reorder acts, and fine-tune scene pacing here—every beat you lock in the Blueprint Room drives a dedicated chapter in the Production Stage.",
-            "screenshot": "Beats tab, with Listen",
+            "title": "ورقة الضرب",
+            "description": "قم ببناء العمود الفقري الدرامي لفيلمك قبل كتابة الحوار. اقرأ أو استمع إلى ورقة الإيقاع السردية الخاصة بك، وأعد ترتيب الأعمال، واضبط سرعة المشهد هنا — كل إيقاع تقفله في Blueprint Room يقود فصلًا مخصصًا في Production Stage.",
+            "screenshot": "علامة التبويب Beats، مع الاستماع",
             "learnMore": {
               "items": [
                 {
-                  "title": "Narrative spine",
-                  "description": "Beats are authored and locked in the Blueprint Room before script generation begins."
+                  "title": "العمود الفقري الروائي",
+                  "description": "يتم تأليف الإيقاعات وتأمينها في Blueprint Room قبل بدء إنشاء البرنامج النصي."
                 },
                 {
-                  "title": "Pacing & structural discipline",
-                  "description": "Optimizing the beat sheet here ensures the multi-scene screenplay builds with tight dramatic structure and clear turning points."
+                  "title": "السرعة والانضباط الهيكلي",
+                  "description": "يضمن تحسين ورقة الإيقاع هنا بناء السيناريو متعدد المشاهد ببنية درامية محكمة ونقاط تحول واضحة."
                 },
                 {
-                  "title": "Beat-to-chapter mapping",
-                  "description": "Production Stage turns each beat into a chapter."
+                  "title": "رسم الخرائط من فوز إلى فصل",
+                  "description": "Production Stage يحول كل إيقاع إلى فصل."
                 },
                 {
-                  "title": "Narrated beat audition",
-                  "description": "Listen to the beat sheet read aloud to feel the rhythm and momentum of the story before compiling the script."
+                  "title": "رواه فوز الاختبار",
+                  "description": "استمع إلى قراءة ورقة الإيقاع بصوت عالٍ لتشعر بإيقاع القصة وزخمها قبل تجميع النص."
                 }
               ]
             }
           },
           {
             "icon": "castLocations",
-            "title": "Cast & World Design",
-            "description": "Define your characters, vocal identities, period wardrobes, and primary locations before the screenplay is generated—ensuring the script is written around your exact cast, blocking environments, and visual atmosphere from page one.",
-            "screenshot": "Characters tab, then Setting on Story",
+            "title": "طاقم الممثلين والتصميم العالمي",
+            "description": "حدد شخصياتك وهوياتك الصوتية وخزائن ملابسك القديمة والمواقع الأساسية قبل إنشاء السيناريو - مع التأكد من كتابة السيناريو حول طاقم الممثلين المحددين والبيئات المحظورة والجو المرئي من الصفحة الأولى.",
+            "screenshot": "علامة التبويب \"الأحرف\"، ثم \"الإعداد على القصة\".",
             "learnMore": {
               "items": [
                 {
-                  "title": "Rich character profiles",
-                  "description": "Direct your cast profiles, backstories, and physical attributes up front so dialogue and blocking match each character."
+                  "title": "ملامح شخصية غنية",
+                  "description": "قم بتوجيه ملفات تعريف الممثلين والقصص الدرامية والسمات الجسدية مقدمًا حتى يتطابق الحوار والحظر مع كل شخصية."
                 },
                 {
-                  "title": "World, era & locations",
-                  "description": "Establish primary settings, lighting palettes, and cinematic style on the Story tab to anchor every scene's environment."
+                  "title": "العالم والعصر والمواقع",
+                  "description": "قم بإنشاء الإعدادات الأساسية ولوحات الإضاءة والنمط السينمائي في علامة التبويب \"القصة\" لترسيخ بيئة كل مشهد."
                 },
                 {
-                  "title": "Zero script refactoring",
-                  "description": "Locking cast and locations before script generation eliminates costly rewrites and continuity mismatches on the Production Stage."
+                  "title": "إعادة هيكلة البرنامج النصي صفر",
+                  "description": "يؤدي قفل طاقم الممثلين والمواقع قبل إنشاء البرنامج النصي إلى التخلص من عمليات إعادة الكتابة المكلفة وعدم تطابق الاستمرارية على Production Stage."
                 }
               ]
             }
           },
           {
             "icon": "blueprintDirector",
-            "title": "The Blueprint Director",
-            "description": "Speak or type your story notes to revise beats, character motivations, or world details without prompt engineering. Preview a balanced revision side-by-side with creative reasoning—nothing changes in your treatment until you approve the cut.",
-            "screenshot": "Blueprint Director — direction, focus, preview, Apply revision",
+            "title": "مدير Blueprint",
+            "description": "تحدث أو اكتب ملاحظات قصتك لمراجعة الإيقاعات أو دوافع الشخصية أو تفاصيل العالم دون الحاجة إلى هندسة سريعة. قم بمعاينة المراجعة المتوازنة جنبًا إلى جنب مع التفكير الإبداعي - لن يتغير شيء في علاجك حتى توافق على الخفض.",
+            "screenshot": "Blueprint Director - التوجيه، التركيز، المعاينة، تطبيق المراجعة",
             "learnMore": {
               "items": [
                 {
-                  "title": "Targeted voice or text notes",
-                  "description": "Speak or type your direction and focus the revision surgically on Beats, Characters, or Story."
+                  "title": "الملاحظات الصوتية أو النصية المستهدفة",
+                  "description": "تحدث أو اكتب اتجاهك وركز المراجعة جراحيًا على الإيقاعات أو الشخصيات أو القصة."
                 },
                 {
-                  "title": "Side-by-side revision preview",
-                  "description": "Review a balanced revision and its underlying story reasoning before committing any changes to your Blueprint."
+                  "title": "معاينة المراجعة جنبًا إلى جنب",
+                  "description": "قم بمراجعة المراجعة المتوازنة والأسباب الكامنة وراء القصة قبل إجراء أي تغييرات على Blueprint الخاص بك."
                 },
                 {
-                  "title": "You hold the creative lock",
-                  "description": "Nothing in your treatment, beat sheet, or character roster changes until you explicitly apply the revision."
+                  "title": "أنت تحمل القفل الإبداعي",
+                  "description": "لن يتغير أي شيء في المعالجة أو ورقة الإيقاع أو قائمة الشخصيات حتى تقوم بتطبيق المراجعة بشكل صريح."
                 }
               ]
             }
@@ -508,43 +509,43 @@
           {
             "icon": "blueprintResonance",
             "title": "Audience Resonance",
-            "description": "Score your treatment against your target audience's cultural, genre, and demographic profile before generating the script. Catch structural pacing gaps or weak character stakes early and apply targeted recommendations in the Blueprint Director.",
-            "screenshot": "Audience Resonance — saved audience, scores, recommendations unapplied",
+            "description": "سجل معاملتك وفقًا للملف الثقافي والنوعي والديموغرافي لجمهورك المستهدف قبل إنشاء البرنامج النصي. اكتشف الفجوات الهيكلية في السرعة أو المخاطر الشخصية الضعيفة مبكرًا وقم بتطبيق التوصيات المستهدفة في مدير Blueprint.",
+            "screenshot": "Audience Resonance — الجمهور المحفوظ، والنتائج، والتوصيات غير مطبقة",
             "learnMore": {
               "items": [
                 {
-                  "title": "Pre-script audience validation",
-                  "description": "Analyze your treatment against your saved target audience to inspect category scores, strengths, and story risks."
+                  "title": "التحقق من صحة الجمهور قبل النص",
+                  "description": "قم بتحليل تعاملك مع جمهورك المستهدف المحفوظ لتفحص نتائج الفئات ونقاط القوة ومخاطر القصة."
                 },
                 {
-                  "title": "Actionable story remedies",
-                  "description": "Each insight pairs a structural diagnosis with a concrete rewrite recommendation tailored to your beat sheet and cast."
+                  "title": "العلاجات قصة قابلة للتنفيذ",
+                  "description": "تجمع كل رؤية بين التشخيص الهيكلي وتوصية إعادة الكتابة الملموسة المصممة خصيصًا لورقة الإيقاع الخاصة بك والممثلين."
                 },
                 {
-                  "title": "Selective one-click application",
-                  "description": "Recommendations only modify your Blueprint when you choose to apply them in the Blueprint Director."
+                  "title": "تطبيق انتقائي بنقرة واحدة",
+                  "description": "تقوم التوصيات فقط بتعديل Blueprint الخاص بك عندما تختار تطبيقها في مدير Blueprint."
                 }
               ]
             }
           },
           {
             "icon": "goToProduction",
-            "title": "Greenlight to Production",
-            "description": "When the treatment, beat sheet, and cast are locked, step onto the Production Stage. SceneFlow compiles your full multi-chapter screenplay directly from your approved Blueprint—mapping every beat into a production chapter with cast and continuity pre-wired.",
-            "screenshot": "Go to Production Stage — storyline, beats, and cast already set",
+            "title": "الضوء الأخضر للإنتاج",
+            "description": "عندما يتم قفل العلاج وورقة الضرب والصب، انتقل إلى Production Stage. يقوم SceneFlow بتجميع السيناريو الكامل متعدد الفصول الخاص بك مباشرة من Blueprint المعتمد - حيث يقوم بتعيين كل إيقاع في فصل إنتاج مع طاقم التمثيل والاستمرارية مسبقًا.",
+            "screenshot": "انتقل إلى Production Stage - تم تعيين القصة والإيقاعات وطاقم الممثلين بالفعل",
             "learnMore": {
               "items": [
                 {
-                  "title": "Seamless script compilation",
-                  "description": "Stepping onto the Production Stage compiles the full multi-scene screenplay directly from your approved Blueprint."
+                  "title": "تجميع السيناريو سلس",
+                  "description": "يؤدي الدخول إلى Production Stage إلى تجميع السيناريو الكامل متعدد المشاهد مباشرة من Blueprint المعتمد لديك."
                 },
                 {
-                  "title": "Locked continuity foundation",
-                  "description": "Your storyline, beat-to-chapter structure, cast profiles, and locations arrive ready for scene and shot direction."
+                  "title": "أساس الاستمرارية مغلق",
+                  "description": "تصل قصتك، وبنيتك من إيقاع إلى فصل، وملفات تعريف الممثلين، والمواقع جاهزة للمشهد واتجاه اللقطة."
                 },
                 {
-                  "title": "Shareable Blueprint review",
-                  "description": "Share the locked Blueprint with co-creators or executive stakeholders for sign-off before commencing production."
+                  "title": "مراجعة Blueprint القابلة للمشاركة",
+                  "description": "قم بمشاركة Blueprint المقفل مع المبدعين المشاركين أو أصحاب المصلحة التنفيذيين لتسجيل الخروج قبل بدء الإنتاج."
                 }
               ]
             }
@@ -567,142 +568,142 @@
                 "icon": "sceneWorkflow",
                 "title": "سير عمل إنتاج المشهد (ملء الشاشة)",
                 "description": "افتح استوديو إنتاج المشهد بملء الشاشة لتوجيه كل مرحلة من شريط أوامر خطي موحد يضم 8 علامات تبويب (Direction · Audio · Music · Continuity · Stills · Clips · Mixer · Streams). أعد ترتيب اللقطات بالسحب والإفلات مع شارات الجاهزية المباشرة، وافحص مسرح العرض 16:9 بجانب بطاقات الكاميرا والحركة والإضاءة ومراجع الاستمرارية.",
-                "screenshot": "Scene Production Workflow (Fullscreen) — 8-tab linear studio, sortable Shot Rail, and structured Shot Direction Workbench",
+                "screenshot": "سير عمل إنتاج المشهد (ملء الشاشة) - استوديو خطي مكون من 8 علامات تبويب، وسكة تصوير قابلة للفرز، ومنضدة عمل منظمة لاتجاه اللقطة",
                 "learnMore": {
                   "items": [
                     {
-                      "title": "8-tab fullscreen linear studio",
-                      "description": "Move seamlessly across Direction, Audio, Music, Continuity, Stills, Clips, Mixer, and Streams inside a distraction-free fullscreen workspace."
+                      "title": "استوديو خطي بملء الشاشة مكون من 8 علامات تبويب",
+                      "description": "تحرك بسلاسة عبر الاتجاه، والصوت، والموسيقى، والاستمرارية، واللقطات، والمقاطع، والمزج، والتدفقات داخل مساحة عمل بملء الشاشة خالية من التشتيت."
                     },
                     {
-                      "title": "Sortable Shot Rail & live badges",
-                      "description": "Drag to reorder shots in the left-hand rail while tracking real-time badges for Action, Dialogue, Narration, SFX, Music, Signage, Final 4K stills, and clips In the Can."
+                      "title": "طلقات قابلة للفرز وشارات حية",
+                      "description": "اسحب لإعادة ترتيب اللقطات في الشريط الأيسر أثناء تتبع الشارات في الوقت الفعلي للحركة والحوار والسرد والمؤثرات الصوتية والموسيقى واللافتات واللقطات الثابتة بدقة 4K النهائية والمقاطع في العلبة."
                     },
                     {
-                      "title": "Structured Shot Direction Workbench",
-                      "description": "Inspect the 16:9 Still & Clip Stage beside structured cards for spoken beats, camera lens and motion, talent blocking and gaze, lighting, locked continuity refs, and compiled prompts."
+                      "title": "منضدة عمل منظمة لاتجاه اللقطة",
+                      "description": "قم بفحص منصة اللقطات الثابتة والمقطع بنسبة 16:9 بجانب البطاقات المنظمة للإيقاعات المنطوقة، وعدسة الكاميرا والحركة، وحجب الموهبة والنظرة، والإضاءة، ومراجع الاستمرارية المقفلة، والمطالبات المجمعة."
                     },
                     {
-                      "title": "End-to-end scene pipeline telemetry",
-                      "description": "Monitor readiness across direction, voice and score, keyframes, multi-take clips, broadcast mixing, and localized streams before publishing."
+                      "title": "القياس عن بعد لخط أنابيب المشهد من نهاية إلى نهاية",
+                      "description": "راقب الاستعداد عبر الاتجاه والصوت والنتيجة والإطارات الرئيسية ومقاطع اللقطات المتعددة ومزج البث والتدفقات المحلية قبل النشر."
                     }
                   ]
                 }
               },
               {
                 "icon": "directShot",
-                "title": "The Scene & Shot Director",
-                "description": "Type or speak your direction in plain language. Tell the agent who is in the frame, where the camera moves, and what the emotional beat is. The Shot Director automatically writes the complex underlying prompts for your stills and clips while syncing camera lens, focal length, talent blocking, and lighting across the scene.",
-                "screenshot": "The Scene & Shot Director — plain-language direction for stills and clips",
+                "title": "مخرج المشهد والتصوير",
+                "description": "اكتب أو تحدث عن اتجاهك بلغة واضحة. أخبر العميل الموجود في الصورة، وأين تتحرك الكاميرا، وما هو الإيقاع العاطفي. يقوم Shot Director تلقائيًا بكتابة المطالبات الأساسية المعقدة للصور الثابتة والمقاطع الخاصة بك أثناء مزامنة عدسة الكاميرا، والبعد البؤري، وحجب المواهب، والإضاءة عبر المشهد.",
+                "screenshot": "The Scene & Shot Director — توجيه باللغة البسيطة للصور الثابتة والمقاطع",
                 "learnMore": {
                   "items": [
                     {
-                      "title": "Plain-language film direction",
-                      "description": "Type or speak who is in the frame, where the camera moves, and what the emotional beat is without writing bracketed prompt syntax."
+                      "title": "اتجاه الفيلم بلغة بسيطة",
+                      "description": "اكتب أو تحدث عن الشخص الموجود في الإطار، وأين تتحرك الكاميرا، وما هي الإيقاع العاطفي دون كتابة تركيب جملة سريع بين قوسين."
                     },
                     {
-                      "title": "Scene-wide or per-shot precision",
-                      "description": "Apply atmospheric direction across the entire scene or drill down into an individual shot's framing, lens, blocking, and lighting."
+                      "title": "الدقة على مستوى المشهد أو لكل لقطة",
+                      "description": "قم بتطبيق الاتجاه الجوي عبر المشهد بأكمله أو انتقل لأسفل إلى إطار اللقطة الفردية والعدسة والحجب والإضاءة."
                     },
                     {
-                      "title": "Automatic prompt compilation",
-                      "description": "The Shot Director automatically writes and syncs the underlying keyframe and motion prompts for your stills and clips."
+                      "title": "التجميع الفوري التلقائي",
+                      "description": "يقوم Shot Director تلقائيًا بكتابة ومزامنة الإطار الرئيسي الأساسي ومطالبات الحركة للصور الثابتة والمقاطع الخاصة بك."
                     },
                     {
                       "title": "Intelligent Assistant Director (IAD)",
-                      "description": "Request surgical revisions to camera angles, character posture, or scene tension in plain language while keeping unrelated beats untouched."
+                      "description": "اطلب مراجعات جراحية لزوايا الكاميرا أو وضعية الشخصية أو توتر المشهد بلغة واضحة مع الحفاظ على الإيقاعات غير المرتبطة دون تغيير."
                     }
                   ]
                 }
               },
               {
                 "icon": "continuity",
-                "title": "The Continuity Library",
-                "description": "Absolute visual and vocal consistency across your entire film or series. Automatically generate or manually assign locked reference portraits, multi-angle turnaround sheets, scene-specific wardrobes, locations, and essential props—ensuring every shot matches the Blueprint without character drift.",
-                "screenshot": "The Continuity Library — cast, wardrobes, locations, and essential props",
+                "title": "Continuity Library",
+                "description": "الاتساق البصري والصوتي المطلق عبر الفيلم أو المسلسل بأكمله. قم تلقائيًا بإنشاء صور مرجعية مقفلة أو تعيينها يدويًا، وأوراق تحويل متعددة الزوايا، وخزائن ملابس خاصة بالمشهد، ومواقع، والدعائم الأساسية - مما يضمن تطابق كل لقطة مع Blueprint دون انحراف الشخصية.",
+                "screenshot": "Continuity Library — طاقم العمل، وخزائن الملابس، والمواقع، والدعائم الأساسية",
                 "learnMore": {
                   "items": [
                     {
-                      "title": "Cast identity & turnaround locks",
-                      "description": "Anchor every character with diptych portraits, turnaround sheets, and locked voice profiles across every shot and episode."
+                      "title": "يلقي الهوية وأقفال التحول",
+                      "description": "قم بتثبيت كل شخصية باستخدام صور ثنائية، وأوراق تحويل، وملفات تعريف صوتية مقفلة عبر كل لقطة وحلقة."
                     },
                     {
-                      "title": "Scene-specific wardrobes & props",
-                      "description": "Assign period or scene-specific wardrobes and essential hero props per shot so costumes and hand-held items stay unified."
+                      "title": "خزائن ودعائم خاصة بالمشهد",
+                      "description": "قم بتعيين خزانات ملابس خاصة بفترة أو مشهد معين ودعائم البطل الأساسية لكل لقطة حتى تظل الأزياء والعناصر المحمولة موحدة."
                     },
                     {
-                      "title": "Generate, upload, or surgically edit",
-                      "description": "Automatically generate reference images, upload custom studio plates, or refine details with the Intelligent Assistant Director."
+                      "title": "إنشاء أو تحميل أو تحرير جراحيا",
+                      "description": "يمكنك إنشاء صور مرجعية تلقائيًا، أو تحميل لوحات الاستوديو المخصصة، أو تحسين التفاصيل باستخدام Intelligent Assistant Director."
                     },
                     {
-                      "title": "Continuity readiness gate",
-                      "description": "Verify that all cast, wardrobe, location, and prop anchors are locked in the Continuity tab before generating scene keyframes."
+                      "title": "بوابة جاهزية الاستمرارية",
+                      "description": "تأكد من قفل كل طاقم التمثيل وخزانة الملابس والموقع وأدوات التثبيت في علامة تبويب الاستمرارية قبل إنشاء الإطارات الرئيسية للمشهد."
                     }
                   ]
                 }
               },
               {
                 "icon": "scriptResonance",
-                "title": "Audience Resonance Integration",
-                "description": "Get a read on the room before you render. AI analyzes your script against your target audience, providing scene-by-scene insights, pacing diagnostics, and dialogue tension scores. Apply recommended directions instantly, or trust your gut and ignore them.",
-                "screenshot": "Audience Resonance Integration — scene-by-scene audience insights",
+                "title": "Audience Resonance التكامل",
+                "description": "احصل على قراءة في الغرفة قبل تقديمها. يقوم الذكاء الاصطناعي بتحليل النص الخاص بك مقابل جمهورك المستهدف، مما يوفر رؤى مشهدًا تلو الآخر، وتشخيصات السرعة، ودرجات التوتر في الحوار. قم بتطبيق التوجيهات الموصى بها على الفور، أو ثق بحدسك وتجاهلها.",
+                "screenshot": "Audience Resonance التكامل — رؤى الجمهور مشهدًا تلو الآخر",
                 "learnMore": {
                   "items": [
                     {
-                      "title": "Scene-by-scene audience insights",
-                      "description": "AI analyzes your script against your target audience before you render to surface pacing, tension, and engagement scores."
+                      "title": "رؤى الجمهور مشهدًا تلو الآخر",
+                      "description": "يقوم الذكاء الاصطناعي بتحليل النص الخاص بك مقابل جمهورك المستهدف قبل عرض نتائج السرعة والتوتر والمشاركة على السطح."
                     },
                     {
-                      "title": "Narrated critique & recommendations",
-                      "description": "Listen to the narrated analysis and inspect targeted scene-level rewrite recommendations backed by demographic reasoning."
+                      "title": "انتقادات وتوصيات موثقة",
+                      "description": "استمع إلى التحليل المروي وافحص توصيات إعادة الكتابة المستهدفة على مستوى المشهد والمدعومة بالتفكير الديموغرافي."
                     },
                     {
-                      "title": "Your creative call",
-                      "description": "Apply recommended directions instantly with one click, or trust your gut and ignore them."
+                      "title": "مكالمتك الإبداعية",
+                      "description": "قم بتطبيق التوجيهات الموصى بها على الفور بنقرة واحدة، أو ثق بحدسك وتجاهلها."
                     }
                   ]
                 }
               },
               {
                 "icon": "budget",
-                "title": "Production Planner",
-                "description": "Establish the budget and schedule generation across every scene and chapter using SceneFlow credits or your own BYOK API keys. Set still and clip targets per shot, toggle between Draft and Final resolution tiers, and forecast compute spend before you render.",
-                "screenshot": "Production Planner — budget, schedule, and BYOK API keys",
+                "title": "مخطط الإنتاج",
+                "description": "قم بإنشاء الميزانية والجدول الزمني عبر كل مشهد وفصل باستخدام أرصدة SceneFlow أو مفاتيح BYOK API الخاصة بك. قم بتعيين أهداف ثابتة ومقطع لكل لقطة، وقم بالتبديل بين مستويات المسودة والدقة النهائية، وتوقع إنفاق الحوسبة قبل العرض.",
+                "screenshot": "مخطط الإنتاج - الميزانية والجدول الزمني ومفاتيح واجهة برمجة تطبيقات BYOK",
                 "learnMore": {
                   "items": [
                     {
-                      "title": "Budget and schedule forecasting",
-                      "description": "Establish the budget and schedule generation across every scene and chapter with transparent per-shot credit estimates before you render."
+                      "title": "التنبؤ بالميزانية والجدول الزمني",
+                      "description": "قم بإنشاء الميزانية والجدول الزمني عبر كل مشهد وفصل باستخدام تقديرات ائتمانية شفافة لكل لقطة قبل العرض."
                     },
                     {
-                      "title": "SceneFlow credits or BYOK keys",
-                      "description": "Run generation using included SceneFlow credits or connect your own Vertex AI, OpenAI, and ElevenLabs BYOK API keys."
+                      "title": "أرصدة SceneFlow أو مفاتيح BYOK",
+                      "description": "قم بتشغيل الإنشاء باستخدام أرصدة SceneFlow المضمنة أو قم بتوصيل مفاتيح Vertex AI وOpenAI وElevenLabs BYOK API الخاصة بك."
                     },
                     {
-                      "title": "Draft-to-Final tier scheduling",
-                      "description": "Schedule rapid Draft passes for animatic pre-visualization and reserve Final 4K still and FHD video compute for locked cuts."
+                      "title": "جدولة المستوى من المسودة إلى النهائي",
+                      "description": "قم بجدولة تمريرات مسودة سريعة للتصور المسبق المتحرك واحتفظ بحساب Final 4K الثابت وحساب الفيديو FHD للتقطيعات المقفلة."
                     }
                   ]
                 }
               },
               {
                 "icon": "productionScript",
-                "title": "Production Script",
-                "description": "Built for traditional and AI filmmakers alike. Preview a clean, formatted screenplay in-studio and export in industry-standard formats (PDF, FDX, Fountain). Use SceneFlow as a standalone script room—or pair your screenplay with a Pre-Vis Animatic and Promo Trailer to pitch financiers and secure project funding.",
-                "screenshot": "Production Script — in-platform preview and PDF, FDX, and Fountain export",
+                "title": "سيناريو الإنتاج",
+                "description": "صُمم خصيصًا لصانعي الأفلام التقليديين وصانعي الأفلام الذين يعتمدون على الذكاء الاصطناعي على حدٍ سواء. قم بمعاينة سيناريو واضح ومنسق في الاستوديو وقم بتصديره بتنسيقات متوافقة مع معايير الصناعة (PDF، FDX، Fountain). استخدم SceneFlow كغرفة نصوص مستقلة - أو قم بإقران السيناريو الخاص بك مع Pre-Vis Animatic وPromo Trailer لعرض الممولين وتأمين تمويل المشروع.",
+                "screenshot": "نص الإنتاج — معاينة داخل النظام الأساسي وتصدير ملفات PDF وFDX وFountain",
                 "learnMore": {
                   "items": [
                     {
-                      "title": "In-platform preview & export",
-                      "description": "Preview the formatted script in the studio and export in industry-standard PDF, Final Draft FDX, or Fountain format."
+                      "title": "المعاينة والتصدير داخل النظام الأساسي",
+                      "description": "قم بمعاينة البرنامج النصي المنسق في الاستوديو وقم بالتصدير بتنسيق PDF أو Final Draft FDX أو Fountain المتوافق مع معايير الصناعة."
                     },
                     {
-                      "title": "For traditional filmmakers",
-                      "description": "Use SceneFlow as an intelligent script production platform without generating video."
+                      "title": "لصانعي الأفلام التقليدية",
+                      "description": "استخدم SceneFlow كمنصة ذكية لإنتاج البرامج النصية دون إنشاء فيديو."
                     },
                     {
-                      "title": "Pitch & project funding",
-                      "description": "Package your script with a Pre-Vis Animatic and Promo Trailers to pitch and acquire project funding."
+                      "title": "الملعب وتمويل المشروع",
+                      "description": "قم بتعبئة النص الخاص بك باستخدام Pre-Vis Animatic والمقطورات الترويجية لعرض تمويل المشروع والحصول عليه."
                     }
                   ]
                 }
@@ -717,22 +718,22 @@
             "features": [
               {
                 "icon": "audioAgent",
-                "title": "The Audio Agent",
-                "description": "Generate expressive character dialogue, narrator voiceover, action sound effects, and musical scores concurrently across up to 30 shots per scene. Cast voices automatically match character profiles from your Continuity Library or can be custom-tuned per beat.",
-                "screenshot": "The Audio Agent — concurrent dialogue, sound effects, and music scores",
+                "title": "Audio Agent",
+                "description": "أنشئ حوارًا معبرًا للشخصيات وتعليقًا صوتيًا للراوي ومؤثرات صوتية ومقاطع موسيقية بشكل متزامن عبر ما يصل إلى 30 لقطة لكل مشهد. تتطابق الأصوات المدلى بها تلقائيًا مع ملفات تعريف الشخصيات من Continuity Library أو يمكن ضبطها بشكل مخصص لكل إيقاع.",
+                "screenshot": "Audio Agent — الحوار المتزامن والمؤثرات الصوتية والنتائج الموسيقية",
                 "learnMore": {
                   "items": [
                     {
-                      "title": "Concurrent multi-track audio",
-                      "description": "Generate dialogue, narration, sound effects, and music scores concurrently across up to 30 shots per scene."
+                      "title": "الصوت المتزامن متعدد المسارات",
+                      "description": "قم بإنشاء الحوار والسرد والمؤثرات الصوتية والنتائج الموسيقية بشكل متزامن عبر ما يصل إلى 30 لقطة لكل مشهد."
                     },
                     {
-                      "title": "Locked character voice casting",
-                      "description": "Cast voices automatically match character profiles from your Reference Library or can be custom-tuned for timbre and cadence."
+                      "title": "قفل صوت الشخصية",
+                      "description": "تتطابق الأصوات المدلى بها تلقائيًا مع ملفات تعريف الشخصيات من Reference Library أو يمكن ضبطها خصيصًا لتناسب الجرس والإيقاع."
                     },
                     {
-                      "title": "Batch scene or single-shot runs",
-                      "description": "Run the Audio Agent across the entire scene in one pass or regenerate individual dialogue and SFX beats on demand."
+                      "title": "مشهد دفعة واحدة أو تشغيل طلقة واحدة",
+                      "description": "قم بتشغيل Audio Agent عبر المشهد بأكمله بتمريرة واحدة أو قم بإعادة إنشاء الحوار الفردي وإيقاعات المؤثرات الصوتية عند الطلب."
                     }
                   ]
                 }
@@ -741,46 +742,46 @@
                 "icon": "musicScore",
                 "title": "منصة الحوار والمؤثرات الصوتية والموسيقى التصويرية",
                 "description": "افتح علامتي التبويب Audio وMusic بملء الشاشة لتوجيه كل طبقة صوتية في مشهدك. اضبط الأداء الصوتي بوسوم الانفعال وجودة Hi-Fi Studio، واستخرج الصوت المدمج من مقاطع الفيديو، وحدد مدد المؤثرات الصوتية (Auto و3s و8s و15s)، وألّف مقاطع موسيقية من Lyria تمتد عبر عدة لقطات.",
-                "screenshot": "Dialogue, SFX & Musical Score Workbench — Fullscreen Audio & Music tabs with score cues, voice casting, and SFX duration presets",
+                "screenshot": "الحوار والمؤثرات الصوتية والنتيجة الموسيقية - علامات تبويب الصوت والموسيقى بملء الشاشة مع إشارات النتيجة والإرسال الصوتي والإعدادات المسبقة لمدة المؤثرات الصوتية",
                 "learnMore": {
                   "items": [
                     {
-                      "title": "Multi-shot musical score cues",
-                      "description": "Compose custom Lyria musical score cues that span specific shot ranges with configurable intro fades and auto-ducking metadata."
+                      "title": "إشارات موسيقية متعددة الطلقات",
+                      "description": "أنشئ إشارات موسيقية مخصصة لـ Lyria تغطي نطاقات تصوير محددة مع تلاشي المقدمة القابلة للتكوين والبيانات التعريفية التلقائية."
                     },
                     {
-                      "title": "Performance Director & delivery tags",
-                      "description": "Direct spoken dialogue with bracketed emotional delivery tags, Hi-Fi Studio synthesis, and per-shot voice casting."
+                      "title": "مدير الأداء وعلامات التسليم",
+                      "description": "حوار منطوق مباشر مع علامات التسليم العاطفي بين قوسين، وتوليف Hi-Fi Studio، والتمثيل الصوتي لكل لقطة."
                     },
                     {
-                      "title": "Precision SFX duration presets",
-                      "description": "Time action sound effects to your shot choreography using Auto, Short 3s, Medium 8s, or Long 15s duration presets."
+                      "title": "إعدادات مسبقة لمدة SFX دقيقة",
+                      "description": "تأثيرات صوتية لحركة الوقت في تصميم الرقصات الخاصة بك باستخدام الإعدادات المسبقة للمدة التلقائية أو القصيرة 3 ثوانٍ أو المتوسطة 8 ثوانٍ أو الطويلة 15 ثانية."
                     },
                     {
-                      "title": "Extract audio from video clips",
-                      "description": "Pull embedded audio directly from generated motion clips to preserve native on-camera speech or ambient foley."
+                      "title": "استخراج الصوت من مقاطع الفيديو",
+                      "description": "اسحب الصوت المضمن مباشرة من مقاطع الحركة التي تم إنشاؤها للحفاظ على الكلام الأصلي الموجود على الكاميرا أو الصوت المحيط."
                     }
                   ]
                 }
               },
               {
                 "icon": "stillsAgent",
-                "title": "The Stills Agent",
-                "description": "Rapidly batch-generate the high-resolution keyframe images that illustrate your shot direction across the scene. Regenerate, edit, or upload your own references to lock the composition, lighting, and character blocking before committing to video.",
-                "screenshot": "The Stills Agent — keyframe composition and references",
+                "title": "Stills Agent",
+                "description": "قم بإنشاء صور الإطار الرئيسي عالية الدقة بسرعة والتي توضح اتجاه اللقطة عبر المشهد. قم بتجديد المراجع الخاصة بك أو تحريرها أو تحميلها لقفل التكوين والإضاءة وحظر الأحرف قبل الالتزام بالفيديو.",
+                "screenshot": "Stills Agent — تكوين الإطار الرئيسي والمراجع",
                 "learnMore": {
                   "items": [
                     {
-                      "title": "Batch keyframe generation",
-                      "description": "Rapidly generate the keyframe images that illustrate your shot direction across every shot in the scene."
+                      "title": "دفعة توليد الإطار الرئيسي",
+                      "description": "قم بإنشاء صور الإطار الرئيسي بسرعة والتي توضح اتجاه اللقطة عبر كل لقطة في المشهد."
                     },
                     {
-                      "title": "Automatic continuity anchoring",
-                      "description": "Every generated frame incorporates your locked cast portraits, scene wardrobes, locations, and hero props automatically."
+                      "title": "إرساء الاستمرارية التلقائية",
+                      "description": "يشتمل كل إطار يتم إنشاؤه على صور الممثلين المقفلة وخزائن المشاهد والمواقع ودعائم الأبطال تلقائيًا."
                     },
                     {
-                      "title": "Lock composition before motion",
-                      "description": "Regenerate, edit, or upload your own references before committing compute to full motion video rendering."
+                      "title": "قفل التكوين قبل الحركة",
+                      "description": "قم بإعادة إنشاء المراجع الخاصة بك أو تحريرها أو تحميلها قبل الالتزام بالحوسبة لعرض الفيديو بالحركة الكاملة."
                     }
                   ]
                 }
@@ -789,68 +790,68 @@
                 "icon": "stillsWorkbench",
                 "title": "استوديو الصور الثابتة والإطارات المفتاحية بملء الشاشة",
                 "description": "انتقل إلى منصة Stills بملء الشاشة لإقران إطار البداية وإطار النهاية لتحويل الإطارات إلى فيديو (F2V)، والتبديل بين دقة Draft وFinal 4K أو وضعي Standard وCreative، وتخصيص حركة كين بيرنز، وإجراء تعديلات دقيقة باللغة الطبيعية عبر المخرج المساعد الذكي (IAD).",
-                "screenshot": "Fullscreen Stills & Keyframe Studio — F2V Start & End keyframe pairing, Final 4K controls, and surgical IAD editing",
+                "screenshot": "الصور الثابتة بملء الشاشة واستوديو الإطار الرئيسي — إقران الإطار الرئيسي لبدء ونهاية F2V، وعناصر التحكم النهائية بدقة 4K، وتحرير IAD الجراحي",
                 "learnMore": {
                   "items": [
                     {
-                      "title": "Frame-to-Video (F2V) Start & End pairing",
-                      "description": "Pair a locked Start Frame and End Frame Target on any shot to anchor exact camera movement and subject blocking during video generation."
+                      "title": "بدء ونهاية الاقتران من الإطار إلى الفيديو (F2V).",
+                      "description": "قم بإقران إطار البداية المقفل وإطار النهاية المستهدف في أي لقطة لتثبيت حركة الكاميرا الدقيقة وحظر الهدف أثناء إنشاء الفيديو."
                     },
                     {
-                      "title": "Surgical IAD keyframe editing",
-                      "description": "Edit specific props, chalkboard text, wardrobe details, or lighting in plain language while keeping the rest of the keyframe locked."
+                      "title": "تحرير الإطار الرئيسي IAD الجراحي",
+                      "description": "قم بتحرير دعائم معينة أو نص السبورة أو تفاصيل خزانة الملابس أو الإضاءة بلغة واضحة مع الحفاظ على بقية الإطار الرئيسي مغلقًا."
                     },
                     {
-                      "title": "Draft vs Final 4K & Creative modes",
-                      "description": "Toggle between rapid Draft previews and Final 4K resolution, plus Standard or Creative synthesis modes per shot."
+                      "title": "المسودة مقابل Final 4K والأوضاع الإبداعية",
+                      "description": "قم بالتبديل بين معاينات المسودة السريعة ودقة الوضوح النهائية 4K، بالإضافة إلى أوضاع التوليف القياسية أو الإبداعية لكل لقطة."
                     },
                     {
-                      "title": "Pre-Vis Ken Burns motion framing",
-                      "description": "Customize zoom and pan trajectories on every still so your Pre-Vis Animatic previews intentional camera motion."
+                      "title": "تأطير الحركة قبل فيس كين بيرنز",
+                      "description": "قم بتخصيص مسارات التكبير/التصغير والتحريك في كل صورة ثابتة حتى يقوم Pre-Vis Animatic بمعاينة حركة الكاميرا المقصودة."
                     }
                   ]
                 }
               },
               {
                 "icon": "animatic",
-                "title": "The Pre-Vis Animatic",
-                "description": "Watch the scene breathe. Review a fully assembled animatic—stitched stills, Ken Burns motion, and locked audio—in the Screening Room. Audit the pacing, share for feedback, and ensure the cut works before committing to video.",
-                "screenshot": "The Pre-Vis Animatic — stitched stills, Ken Burns motion, and locked audio",
+                "title": "مصطلح ما قبل فيس Animatic",
+                "description": "شاهد المشهد يتنفس. قم بمراجعة الرسوم المتحركة المجمعة بالكامل — اللقطات الثابتة وحركة Ken Burns والصوت المقفل — في Screening Room. قم بمراجعة وتيرة الفيديو، وشاركه للحصول على التعليقات، وتأكد من نجاح عملية القطع قبل الالتزام بالفيديو.",
+                "screenshot": "The Pre-Vis Animatic — لقطات ثابتة وحركة كين بيرنز وصوت مغلق",
                 "learnMore": {
                   "items": [
                     {
-                      "title": "Assembled multi-track animatic",
-                      "description": "Review stitched stills, Ken Burns motion, and locked dialogue, SFX, and musical score in the Screening Room."
+                      "title": "تجميعها متعددة المسارات المتحركة",
+                      "description": "قم بمراجعة اللقطات الثابتة وحركة Ken Burns والحوار المقفل والمؤثرات الصوتية والنتيجة الموسيقية في Screening Room."
                     },
                     {
-                      "title": "Prove pacing before video spend",
-                      "description": "Audit the dramatic rhythm, spot timing gaps, and refine shot lengths while iterations cost pennies instead of full video compute."
+                      "title": "إثبات السرعة قبل إنفاق الفيديو",
+                      "description": "قم بمراجعة الإيقاع الدرامي، وتحديد فجوات التوقيت، وتحسين أطوال اللقطات بينما تكلف التكرارات مبالغ قليلة بدلاً من حساب الفيديو بالكامل."
                     },
                     {
-                      "title": "Share for stakeholder sign-off",
-                      "description": "Audit the pacing, share for feedback, and ensure the cut works before committing to video."
+                      "title": "شارك لتوقيع أصحاب المصلحة",
+                      "description": "قم بمراجعة وتيرة الفيديو، وشاركه للحصول على التعليقات، وتأكد من نجاح عملية القطع قبل الالتزام بالفيديو."
                     }
                   ]
                 }
               },
               {
                 "icon": "videoAgent",
-                "title": "The Clips Agent",
-                "description": "Once the Pre-Vis is approved, the Clips Agent takes over, rendering high-fidelity motion clips that adhere strictly to your approved stills, Frame-to-Video start and end anchors, and continuity references—backed by automated safety pre-flight checks.",
-                "screenshot": "The Clips Agent — high-fidelity motion clips from approved stills",
+                "title": "Clips Agent",
+                "description": "بمجرد الموافقة على Pre-Vis، يتولى Clips Agent المسؤولية، مما يعرض مقاطع حركة عالية الدقة تلتزم بشكل صارم بالصور الثابتة المعتمدة، وأدوات تثبيت بداية ونهاية الإطار إلى الفيديو، ومراجع الاستمرارية - مدعومة بفحوصات السلامة الآلية قبل الرحلة.",
+                "screenshot": "Clips Agent — مقاطع متحركة عالية الدقة من الصور الثابتة المعتمدة",
                 "learnMore": {
                   "items": [
                     {
-                      "title": "Triggered after Pre-Vis approval",
-                      "description": "The Clips Agent renders motion only after the Pre-Vis animatic and shot timings are approved."
+                      "title": "يتم تشغيله بعد الموافقة المسبقة",
+                      "description": "يعرض Clips Agent الحركة فقط بعد الموافقة على توقيتات التصوير والحركة المسبقة."
                     },
                     {
-                      "title": "Strict keyframe & F2V adherence",
-                      "description": "High-fidelity motion clips adhere strictly to your approved Start and End stills and continuity references."
+                      "title": "إطار رئيسي صارم والتزام F2V",
+                      "description": "تلتزم مقاطع الحركة عالية الدقة بدقة بلقطات البداية والنهاية المعتمدة ومراجع الاستمرارية."
                     },
                     {
-                      "title": "Automated safety pre-flight",
-                      "description": "Pre-flight prompt sanitation prevents false-positive safety rejections on dramatic action beats so clips render reliably."
+                      "title": "السلامة الآلية قبل الرحلة",
+                      "description": "يمنع الصرف الصحي الفوري قبل الرحلة حالات رفض السلامة الإيجابية الكاذبة على إيقاعات الحركة الدرامية، لذلك يتم عرض المقاطع بشكل موثوق."
                     }
                   ]
                 }
@@ -859,24 +860,24 @@
                 "icon": "clipsWorkbench",
                 "title": "استوديو المقاطع متعددة اللقطات وإعادة التصوير",
                 "description": "وجّه وأدر كل عملية تصيير حركي داخل استوديو Clips بملء الشاشة. قارن بين اللقطات في الخزنة غير المدمرة (Take 1 / Take 2 / Take 3)، وصفِّ اللقطات حسب حالة In the Can، وشغّل الإعادة الذكية عبر IAD، وأدر اللقطات المترجمة لكل تدفق لغوي.",
-                "screenshot": "Multi-Take Clips & Retake Studio — non-destructive Take 1/2/3 vault, IAD Smart Retake, and localized stream takes",
+                "screenshot": "Multi-Take Clips & Retake Studio — التقاط غير مدمر لـ 1/2/3 قبو، واستعادة ذكية لـ IAD، ومقاطع بث محلية",
                 "learnMore": {
                   "items": [
                     {
-                      "title": "Non-destructive Multi-Take Vault",
-                      "description": "Every motion render is preserved in the shot vault so you can compare Take 1, Take 2, and Take 3 and promote your favorite take live."
+                      "title": "قبو متعدد الأغراض غير مدمر",
+                      "description": "يتم الاحتفاظ بكل عرض حركة في مخزن اللقطة حتى تتمكن من مقارنة اللقطات 1 ولقطة 2 ولقطة 3 والترويج لمقاطع الفيديو المفضلة لديك."
                     },
                     {
-                      "title": "IAD Smart Retake & Direct Video",
-                      "description": "Refine camera motion, subject physics, or facial performance with the Intelligent Assistant Director and Direct Video pre-flight controls."
+                      "title": "IAD الاستعادة الذكية والفيديو المباشر",
+                      "description": "قم بتحسين حركة الكاميرا أو فيزياء الهدف أو أداء الوجه باستخدام عناصر التحكم المسبقة للطيران Intelligent Assistant Director وDirect Video."
                     },
                     {
-                      "title": "Per-stream localized shot takes",
-                      "description": "Switch between your English Master take and regenerated localized clips for spoken dialogue and in-scene signage per language stream."
+                      "title": "يتم التقاط اللقطة المترجمة لكل تيار",
+                      "description": "قم بالتبديل بين مقطع اللغة الإنجليزية الرئيسي الخاص بك والمقاطع المترجمة المُعاد إنشاؤها للحوار المنطوق واللافتات الموجودة في المشهد لكل بث لغة."
                     },
                     {
-                      "title": "Dialogue-free stem readiness",
-                      "description": "Extract embedded clip audio into a dialogue-free SFX and ambience stem so localized dubs retain original foley and room tone."
+                      "title": "الاستعداد الجذعي الخالي من الحوار",
+                      "description": "قم باستخراج المقطع الصوتي المضمن إلى مؤثرات صوتية خالية من الحوار وجذع محيطي بحيث تحتفظ الدبلجات المحلية بالفولي الأصلي ونغمة الغرفة."
                     }
                   ]
                 }
@@ -945,28 +946,28 @@
                 "icon": "languageStreams",
                 "title": "التدفقات متعددة اللغات (Streams)",
                 "description": "وسّع انتشارك العالمي عبر 44 لغة من خط زمني رئيسي واحد. أعد توليد اللقطات المحددة التي تحتوي على حوار منطوق أو لافتات نصية داخل المشهد فقط مع الاحتفاظ باللقطات الرئيسية غير المحددة دون تكلفة إضافية. استخرج صوت الفيديو وأزل الحوار الإنجليزي المنطوق (htdemucs) للاحتفاظ بالمؤثرات الصوتية والموسيقى المولدة للدبلجة، وقم بمحاذاة مدد الدبلجة الأطول عبر إبطاء مقطع الفيديو (من 10 ثوانٍ حتى 15 ثانية بسرعة 67%).",
-                "screenshot": "Streams (Multi-Language) — Selective shot regeneration vs retained master shots, dialogue-free stem extraction, and elastic slow-video dub alignment",
+                "screenshot": "التدفقات (متعددة اللغات) - تجديد اللقطات الانتقائية مقابل اللقطات الرئيسية المحتجزة، واستخراج الجذع بدون حوار، ومحاذاة دبلجة الفيديو البطيئة المرنة",
                 "learnMore": {
                   "items": [
                     {
-                      "title": "Selective shot regeneration & retained master clips",
-                      "description": "Select only the shots with spoken dialogue or in-scene signage to regenerate in your target language while unselected action shots automatically retain the master video clip."
+                      "title": "تجديد اللقطات الانتقائية والمقاطع الرئيسية المحتفظ بها",
+                      "description": "حدد فقط اللقطات التي تحتوي على حوار منطوق أو لافتات في المشهد لإعادة إنشائها باللغة المستهدفة بينما تحتفظ لقطات الحركة غير المحددة تلقائيًا بمقطع الفيديو الرئيسي."
                     },
                     {
-                      "title": "Dialogue-free stem extraction (keep generated SFX & music)",
-                      "description": "Neural stem separation extracts embedded video audio and removes spoken English dialogue while preserving generated foley, room ambience, and music for clean MP3 dubbing."
+                      "title": "استخراج الجذع بدون حوار (استمر في إنشاء المؤثرات الصوتية والموسيقى)",
+                      "description": "يستخرج فصل الجذع العصبي صوت الفيديو المضمن ويزيل الحوار الإنجليزي المنطوق مع الحفاظ على فولي الذي تم إنشاؤه وأجواء الغرفة والموسيقى من أجل دبلجة MP3 نظيفة."
                     },
                     {
-                      "title": "Elastic video slow-down & multi-method dub alignment",
-                      "description": "Align longer translated dialogue by slowing a 10s video clip up to 15s (down to 67% speed), pairing an 80% slow-down with a 103% zoom hold, or fitting dub audio tempo up to 1.25x."
+                      "title": "مرونة إبطاء الفيديو ومحاذاة الدبلجة متعددة الطرق",
+                      "description": "قم بمحاذاة الحوار المترجم الأطول عن طريق إبطاء مقطع فيديو مدته 10 ثوانٍ حتى 15 ثانية (سرعة تصل إلى 67%)، أو إقران تباطؤ بنسبة 80% مع تثبيت التكبير/التصغير بنسبة 103%، أو ضبط إيقاع الصوت المدبلج بما يصل إلى 1.25x."
                     },
                     {
-                      "title": "Regenerated dialogue & signage clips across 44 languages",
-                      "description": "Regenerate localized dialogue takes and in-scene signage clips directly within the scene across 44 languages so visuals, stencils, and speech match every audience."
+                      "title": "حوار متجدد ومقاطع لافتات عبر 44 لغة",
+                      "description": "قم بإعادة إنشاء لقطات الحوار المحلية ومقاطع اللافتات الموجودة في المشهد مباشرةً داخل المشهد عبر 44 لغة، بحيث تتوافق العناصر المرئية وقوالب الاستنسل والكلام مع كل جمهور."
                     },
                     {
-                      "title": "Localized Studio UI",
-                      "description": "Direct and produce in your native interface across English, Spanish, Portuguese, Hindi, Simplified Chinese, and Arabic."
+                      "title": "واجهة مستخدم الاستوديو المترجمة",
+                      "description": "قم بالتوجيه والإنتاج باستخدام واجهتك الأصلية باللغات الإنجليزية والإسبانية والبرتغالية والهندية والصينية المبسطة والعربية."
                     }
                   ]
                 }
@@ -979,64 +980,64 @@
                 "learnMore": {
                   "items": [
                     {
-                      "title": "Native studio workspace across 6 Tier-A interface languages",
-                      "description": "Switch the entire SceneFlow Studio UI—Series Studio, Blueprint Room, Production Stage, and Screening Room—between English, Spanish, Portuguese, Simplified Chinese, Hindi, and Arabic."
+                      "title": "مساحة عمل الاستوديو الأصلية عبر 6 لغات واجهة من المستوى A",
+                      "description": "قم بتبديل واجهة مستخدم SceneFlow Studio بأكملها —Series Studio وBlueprint Room وProduction Stage وScreening Room — بين الإنجليزية والإسبانية والبرتغالية والصينية المبسطة والهندية والعربية."
                     },
                     {
-                      "title": "Localized direction, camera, blocking & continuity controls",
-                      "description": "Every tab, shot rail, camera lens selector, continuity lock, and mixer control renders natively in your selected language so global directors and editors work at full speed."
+                      "title": "الاتجاه المحلي، والكاميرا، وضوابط الحظر والاستمرارية",
+                      "description": "يتم عرض كل علامة تبويب، وسكة التصوير، ومحدد عدسة الكاميرا، وقفل الاستمرارية، والتحكم في الخلاط باللغة الأصلية حتى يعمل المخرجون والمحررون العالميون بأقصى سرعة."
                     },
                     {
-                      "title": "Cross-border team collaboration on one shared project",
-                      "description": "A showrunner in Los Angeles, an editor in Madrid, a VFX lead in São Paulo, and a sound designer in Mumbai or Shanghai can each work on the same project in their preferred UI language."
+                      "title": "تعاون الفريق عبر الحدود في مشروع مشترك واحد",
+                      "description": "يمكن لكل من مدير العرض في لوس أنجلوس، ومحرر في مدريد، ورئيس VFX في ساو باولو، ومصمم صوت في مومباي أو شنغهاي، العمل على نفس المشروع بلغة واجهة المستخدم المفضلة لديهم."
                     },
                     {
-                      "title": "Paired with 75+ landing & 44+ dubbing stream languages",
-                      "description": "Combine a native localized Studio UI with 44-language neural voice dubbing and lip-sync streams to produce and distribute globally from day one."
+                      "title": "مقترن بأكثر من 75 لغة هبوطية و44+ لغة دبلجة",
+                      "description": "يمكنك الجمع بين واجهة مستخدم Studio محلية محلية ودبلجة صوتية عصبية بـ 44 لغة وتدفقات مزامنة الشفاه لإنتاج وتوزيع عالميًا من اليوم الأول."
                     }
                   ]
                 }
               },
               {
                 "icon": "promoTrailers",
-                "title": "Promo & Trailers",
-                "description": "Cut high-converting theatrical teasers, episodic recaps, and social-ready promo trailers at any time during production. Pull hero takes from your scene vault, reframe for horizontal (`16:9`) or vertical (`9:16`) feeds, and generate multi-language versions with localized title cards and voiceover hooks.",
-                "screenshot": "Promo & Trailers — multi-language horizontal and vertical trailers",
+                "title": "الترويجي والمقطورات",
+                "description": "قم بقص الإعلانات التشويقية المسرحية عالية التحويل والملخصات العرضية والإعلانات الترويجية الجاهزة للتواصل الاجتماعي في أي وقت أثناء الإنتاج. يأخذ البطل من قبو المشهد الخاص بك، ويعيد صياغة الخلاصات الأفقية (`16:9`) أو الرأسية (`9:16`)، وينشئ إصدارات متعددة اللغات باستخدام بطاقات عنوان محلية وخطافات التعليق الصوتي.",
+                "screenshot": "العروض الترويجية والمقطورات — مقطورات أفقية وعمودية متعددة اللغات",
                 "learnMore": {
                   "items": [
                     {
-                      "title": "Social-ready trailers at any stage",
-                      "description": "Cut promo trailers, theatrical teasers, and episodic recaps at any point during production."
+                      "title": "مقطورات جاهزة للاستخدام الاجتماعي في أي مرحلة",
+                      "description": "قم بقطع المقطورات الترويجية والمقاطع المسرحية والملخصات العرضية في أي وقت أثناء الإنتاج."
                     },
                     {
-                      "title": "Horizontal & vertical social formats",
-                      "description": "Generate multi-language versions optimized for horizontal 16:9 YouTube feeds or vertical 9:16 Shorts, Reels, and TikTok."
+                      "title": "الأشكال الاجتماعية الأفقية والرأسية",
+                      "description": "أنشئ إصدارات متعددة اللغات مُحسّنة لخلاصات YouTube الأفقية 16:9 أو الفيديوهات القصيرة الرأسية 9:16 وReels وTikTok."
                     },
                     {
-                      "title": "Localized hooks & title cards",
-                      "description": "Render localized trailer streams with translated voiceover hooks, burned-in captions, and market-specific title cards."
+                      "title": "الخطافات المترجمة وبطاقات العنوان",
+                      "description": "قم بعرض تدفقات المقاطع الدعائية المترجمة باستخدام روابط التعليق الصوتي المترجمة، والتسميات التوضيحية المدمجة، وبطاقات العناوين الخاصة بالسوق."
                     }
                   ]
                 }
               },
               {
                 "icon": "shipPackage",
-                "title": "Direct Publishing",
-                "description": "Export the final EBU R128-normalized master MP4 in 1080p or 4K, download complete production stems, or let SceneFlow auto-generate high-CTR thumbnails, localized titles, chapter markers, and descriptions to publish scenes, chapters, and promos directly to YouTube, TikTok, and Facebook.",
-                "screenshot": "Direct Publishing — MP4 export and direct publishing to YouTube, TikTok, and Facebook",
+                "title": "النشر المباشر",
+                "description": "قم بتصدير ملف MP4 الرئيسي المطابق لـ EBU R128 بدقة 1080p أو 4K، أو قم بتنزيل أصول الإنتاج الكاملة، أو اسمح لـ SceneFlow بإنشاء صور مصغرة ذات نسبة نقر إلى ظهور عالية تلقائيًا وعناوين محلية وعلامات فصول وأوصاف لنشر المشاهد والفصول والعروض الترويجية مباشرةً على YouTube وTikTok وFacebook.",
+                "screenshot": "النشر المباشر - تصدير MP4 والنشر المباشر إلى YouTube وTikTok وFacebook",
                 "learnMore": {
                   "items": [
                     {
-                      "title": "Master MP4 or direct social publishing",
-                      "description": "Export the final master MP4 or publish scenes, chapters, and promos directly to YouTube, TikTok, and Facebook."
+                      "title": "ماجستير MP4 أو النشر الاجتماعي المباشر",
+                      "description": "قم بتصدير الملف الرئيسي النهائي MP4 أو انشر المشاهد والفصول والعروض الترويجية مباشرةً على YouTube وTikTok وFacebook."
                     },
                     {
-                      "title": "Auto-generated thumbnails & metadata",
-                      "description": "Let SceneFlow auto-generate high-contrast thumbnails, localized titles, descriptions, tags, and chapter markers for every release."
+                      "title": "الصور المصغرة والبيانات الوصفية التي تم إنشاؤها تلقائيًا",
+                      "description": "اسمح لـ SceneFlow بإنشاء صور مصغرة عالية التباين وعناوين محلية وأوصاف وعلامات وعلامات فصول لكل إصدار تلقائيًا."
                     },
                     {
-                      "title": "Archival stems & screenplay bundle",
-                      "description": "Download stitched video masters, isolated dialogue and SFX stems, subtitle files, and formatted screenplays in one production package."
+                      "title": "ينبع الأرشيفية وحزمة السيناريو",
+                      "description": "قم بتنزيل مقاطع الفيديو الرئيسية المُدمجة والحوار المعزول ومؤثرات SFX وملفات الترجمة والسيناريوهات المنسقة في حزمة إنتاج واحدة."
                     }
                   ]
                 }
@@ -1053,52 +1054,52 @@
         "features": [
           {
             "icon": "screeningPlayer",
-            "title": "One Unified Player",
-            "description": "Toggle seamlessly between Pre-Vis animatics, stitched scenes, multi-scene chapters, promo trailers, and your final master. Switch Language Streams on the fly to audition dubbed audio, dialogue-free stem mixes, and regenerated dialogue or signage clips—always frame-locked to the exact cut from the Mixer.",
-            "screenshot": "Screening Room player",
+            "title": "لاعب واحد موحد",
+            "description": "قم بالتبديل بسلاسة بين الرسوم المتحركة Pre-Vis، والمشاهد المُدمجة، والفصول متعددة المشاهد، والمقاطع الدعائية، ومعلمك النهائي. قم بتبديل تدفقات اللغة أثناء التنقل لاختبار الصوت المُدبلج، والمزيج الجذري الخالي من الحوار، ومقاطع الحوار أو اللافتات المُعاد إنشاؤها - دائمًا ما يكون الإطار مقفلاً بالقطع الدقيق من جهاز Mixer.",
+            "screenshot": "مشغل Screening Room",
             "learnMore": {
               "items": [
                 {
-                  "title": "Every milestone in one theatre",
-                  "description": "Switch effortlessly among Pre-Vis animatics, individual scenes, chapters, promos, and the final master."
+                  "title": "كل معلم في مسرح واحد",
+                  "description": "قم بالتبديل بسهولة بين الرسوم المتحركة Pre-Vis والمشاهد الفردية والفصول والعروض الترويجية والمعلم النهائي."
                 },
                 {
-                  "title": "Live language stream auditioning",
-                  "description": "Audition any Language Stream—dubbed audio, lip-sync, or regenerated dialogue and signage clips—on the fly without reloading the timeline."
+                  "title": "اختبار البث المباشر للغة",
+                  "description": "قم بتجربة أداء أي دفق لغة — صوت مدبلج، أو مزامنة شفاه، أو حوار مُعاد إنشاؤه ومقاطع لافتات — بسرعة دون إعادة تحميل المخطط الزمني."
                 },
                 {
-                  "title": "Frame-locked to the Broadcast Mixer",
-                  "description": "Every stream plays the exact stitch transitions, J/L-cut overlaps, auto-ducking curves, and loudness normalization rendered in the Mixer."
+                  "title": "مغلق الإطار لخلاط البث",
+                  "description": "يقوم كل بث بتشغيل انتقالات الغرز الدقيقة، وتداخلات قطع J/L، ومنحنيات التخفيض التلقائي، وتطبيع جهارة الصوت المقدمة في جهاز المزج."
                 },
                 {
-                  "title": "Incremental episodic shipping",
-                  "description": "Ship a finished 3–5 minute scene, an 8–12 minute chapter, or a social promo immediately while downstream chapters continue rendering."
+                  "title": "الشحن العرضي المتزايد",
+                  "description": "أرسل مشهدًا نهائيًا مدته من 3 إلى 5 دقائق، أو فصلًا مدته 8 إلى 12 دقيقة، أو عرضًا ترويجيًا اجتماعيًا على الفور بينما يستمر عرض الفصول النهائية."
                 }
               ]
             }
           },
           {
             "icon": "screeningCollab",
-            "title": "Frame-Accurate Collaboration",
-            "description": "Stop exporting rough cuts to email. Share a private screening link where collaborators, sound editors, localization leads, and investors watch full-resolution playback in real time and drop timestamped notes directly on the picture—with instant notifications sent straight to your phone.",
-            "screenshot": "Shared review",
+            "title": "تعاون دقيق الإطار",
+            "description": "توقف عن تصدير التخفيضات التقريبية إلى البريد الإلكتروني. يمكنك مشاركة رابط فحص خاص حيث يشاهد المتعاونون ومحررو الصوت وقادة الترجمة والمستثمرون التشغيل بدقة كاملة في الوقت الفعلي ويسقطون ملاحظات ذات طابع زمني مباشرة على الصورة - مع إرسال إشعارات فورية مباشرة إلى هاتفك.",
+            "screenshot": "مراجعة مشتركة",
             "learnMore": {
               "items": [
                 {
-                  "title": "Private stakeholder screening links",
-                  "description": "Reviewers watch full-resolution playback across any language stream and leave frame-accurate timestamped notes on the picture."
+                  "title": "روابط فحص أصحاب المصلحة الخاصة",
+                  "description": "يشاهد المراجعون التشغيل بدقة كاملة عبر أي تدفق للغة ويتركون ملاحظات ذات طابع زمني دقيق الإطار على الصورة."
                 },
                 {
-                  "title": "Zero rough-cut file exports",
-                  "description": "Collect creative, legal, and localization feedback in one centralized review thread without uploading or mailing heavy video files."
+                  "title": "صفر تصدير الملفات الخام",
+                  "description": "اجمع التعليقات الإبداعية والقانونية والترجمة في سلسلة مراجعة مركزية واحدة دون تحميل ملفات فيديو ثقيلة أو إرسالها بالبريد."
                 },
                 {
-                  "title": "Instant mobile notifications",
-                  "description": "New reviewer notes notify you immediately on your phone so you can approve or dispatch revisions while directing on desktop."
+                  "title": "إشعارات الجوال الفورية",
+                  "description": "تُعلمك ملاحظات المراجعين الجديدة فورًا على هاتفك حتى تتمكن من الموافقة على المراجعات أو إرسالها أثناء التوجيه على سطح المكتب."
                 },
                 {
-                  "title": "Direct link back to the Shot Rail",
-                  "description": "Jump from any timestamped screening comment straight to the corresponding scene and shot in the Production Stage to execute the note."
+                  "title": "رابط مباشر للعودة إلى Shot Rail",
+                  "description": "انتقل من أي تعليق عرض ذو طابع زمني مباشرة إلى المشهد المقابل وقم بالتصوير في Production Stage لتنفيذ الملاحظة."
                 }
               ]
             }
@@ -1106,6 +1107,272 @@
         ]
       }
     ]
+  },
+  "productionAgent": {
+    "eyebrow": "وكيل الإنتاج • منشئ الاستوديو الذاتي",
+    "title": "توقف عن كتابة أكثر من 300 أمر للقطات يدوياً. ابدأ البناء وانصرف لأعمالك.",
+    "subtitle": "يتطلب الإنتاج المعتاد المكون من 27 مشهداً (12–20 لقطة لكل مشهد) أكثر من 300 أمر يدوي للصور والفيديو في أدوات الذكاء الاصطناعي التقليدية. أتقن سيناريو عملك في أقل من ساعة، واختر Pre-Vis أو المقاطع أو المشاهد أو النسخة الرئيسية أو العرض الترويجي، ودع وكيل الإنتاج يبني مشاهدك ويعالج اللقطات الفاشلة ذاتياً ويُشعرك برابط خاص /s/ إلى Screening Room عند الاكتمال.",
+    "showDetail": "عرض المزيد من التفاصيل",
+    "hideDetail": "إخفاء التفاصيل",
+    "drawerBadge": "تنسيق ذاتي للمشاهد خطوة بخطوة",
+    "drawerTitle": "أقل من ساعة على السيناريو. ساعات من الأوامر اليدوية تستبدلها تشغيلة ذاتية واحدة.",
+    "cards": [
+      {
+        "badge": "تخلّص من 300+ أمر يدوي",
+        "title": "< ساعة واحدة على السيناريو ← تفرّغ ليومك",
+        "description": "تجاوز كتابة أكثر من 300 أمر منفصل للصور الثابتة والفيديو عبر 27 مشهداً (12–20 لقطة لكل مشهد). أتقن السيناريو في أقل من ساعة واستعد يومك لأولوياتك."
+      },
+      {
+        "badge": "جميع المشاهد الـ 27 أو حسب الفصل",
+        "title": "5 مراحل إنتاج متكاملة من البداية للنهاية",
+        "description": "اختر Pre-Vis والمقاطع والمشاهد والنسخة الرئيسية والعرض الترويجي في أداة واحدة. يبني الوكيل تلقائياً مراجع الاستمرارية، وصوت الحوار والمؤثرات والموسيقى، والإطارات المفتاحية، ومقاطع الحركة، والعروض الترويجية."
+      },
+      {
+        "badge": "صفر توقف أثناء التصيير",
+        "title": "إصلاح ذاتي + انتقال تلقائي إلى Creative Clips",
+        "description": "يحسّن توجيه اللقطات تلقائياً ويعيد تشغيل اللقطات الفاشلة. وعندما تصطدم لقطة درامية بفلاتر سياسات Google حتى بعد التحسين، ينتقل تلقائياً إلى Creative Clips."
+      },
+      {
+        "badge": "تحكم كامل للمخرج",
+        "title": "نقاط فحص وروابط مراجعة /s/",
+        "description": "شغّل الإنتاج دون تدخل بنسبة 100% أو أوقفه مؤقتاً بعد Pre-Vis أو بعد كل مشهد. استقبل إشعارات بالتكرار الذي تختاره مع رابط مباشر /s/ إلى Screening Room جاهز للمراجعة."
+      }
+    ],
+    "viewScript": "عرض سيناريو فيديو آنا (جولة 30 ثانية)",
+    "hideScript": "إخفاء سيناريو فيديو آنا (جولة 30 ثانية)",
+    "copyScript": "نسخ السيناريو",
+    "copied": "تم النسخ",
+    "voLabel": "التعليق الصوتي:",
+    "pictureLabel": "الصورة:",
+    "scriptBlocks": [
+      {
+        "block": "المجموعة 01 (0:00–0:10)",
+        "title": "حائط 300 طلقة والتشغيل بنقرة واحدة",
+        "syncLine": "آنا (أمام الكاميرا): \"ثلاثمائة لقطة كانت تعني ثلاثمائة مطالبة يدوية. ليس بعد الآن.\"",
+        "narration": "اقضِ أقل من ساعة في تحسين النص الخاص بك عبر 27 مشهدًا، ثم قم بتشغيل وكيل الإنتاج بنقرة واحدة.",
+        "visual": "لقطة متوسطة لآنا (CHAR_ANA، سترة زيتونية فوق الياقة المدورة) في جناح الإنتاج الافتراضي المظلم. إنها تنقر على عنصر تحكم واحد في الإطلاق باللون السماوي؛ خلفها، تشتعل شبكة القصة المصورة المكونة من 27 مشهدًا وشريط التقدم من اللون السماوي إلى الزمرد عبر شاشة الحائط المنحنية."
+      },
+      {
+        "block": "المجموعة 02 (0:10–0:20)",
+        "title": "البناء المستقل والشفاء الذاتي والمقاطع الإبداعية الاحتياطية",
+        "narration": "يتنقل العميل في كل مشهد — قفل المراجع، ووضع السرد وإشارات الموسيقى، وتحسين مطالبات المقاطع الفاشلة، والتبديل إلى المقاطع الإبداعية عندما تصل اللقطة إلى مرشحات السياسة.",
+        "visual": "من فوق الكتف تمر بـ Ana باتجاه شاشة الحائط المنحنية حيث يتم نشر إطارات القصة المصورة والأشكال الموجية الصوتية ومعاينات الحركة عبر 27 فتحة مشهد. ينبض أحد المربعات لفترة وجيزة باللون الكهرماني (إعادة محاولة السياسة)، ويعيد كتابة زاوية الكاميرا، ويتحول إلى اللون الأخضر الزمردي الصلب."
+      },
+      {
+        "block": "المجموعة 03 (0:20–0:30)",
+        "title": "ابتعد وإشعار Screening Room",
+        "narration": "ضع نقاط التفتيش في مكان الحادث، أو ابتعد تمامًا. عندما يصبح العرض التمهيدي أو المقطع الرئيسي جاهزًا، يرسل إشعار رابط Screening Room الخاص للمراجعة.",
+        "visual": "تلتقط آنا كوب القهوة الخزفي الخاص بها بينما تصل شاشة الحائط إلى اللون الزمردي بنسبة 100%. يضيء هاتفها بإشعار خاص /s/ Screening Room؛ تبتسم بحرارة للكاميرا بينما يلعب المعلم النهائي خلفها."
+      }
+    ],
+    "cta": "أطلق الاستوديو ($9)"
+  },
+  "studioAcademy": {
+    "eyebrow": "أكاديمية SceneFlow Studio والتدريب الفوري (Just-In-Time)",
+    "title": "إرشاد في كل خطوة. أتقن الاستوديو أثناء الإبداع.",
+    "subtitle": "لا تقف حائراً أمام خط زمني فارغ ولا تهدر الرصيد في تخمين الخطوة التالية. اضغط على ? في أي شاشة لفتح خريطة شاشة فورية (JIT) وقائمة مهام مدتها 60 ثانية بأزرار تنفيذ بنقرة واحدة—أو اتبع دورات تفاعلية من فكرتك الأولى حتى النسخة الرئيسية المنشورة.",
+    "showDetail": "عرض المزيد من التفاصيل",
+    "hideDetail": "إخفاء التفاصيل",
+    "drawerBadge": "قوة استوديو هوليوود · دون الحاجة لمعهد سينما",
+    "drawerTitle": "خرائط شاشة تفاعلية، وقوائم مهام في 60 ثانية، وضوابط حماية الرصيد مدمجة في كل غرفة",
+    "cards": [
+      {
+        "badge": "دائماً بضغطة زر واحدة (?)",
+        "title": "مدرب فوري (JIT) مدرك للسياق",
+        "description": "اضغط على ? في أي شاشة لفتح خريطة مرئية فورية لمساحة عملك النشطة، وقائمة مهام في 60 ثانية للخطوة التالية، وأزرار بنقرة واحدة تنفّذ إجراء الاستوديو المطلوب مباشرة."
+      },
+      {
+        "badge": "4 دورات تفاعلية موجهة",
+        "title": "محاكي «فيلمك الأول في 10 دقائق»",
+        "description": "مصمم لرواة القصص والمؤلفين وصنّاع المسلسلات دون أي خبرة سابقة في المونتاج. اتبع إرشادات Spotlight X-Ray التفاعلية من فكرة في جملة واحدة إلى فيلم مكتمل بالأصوات والموسيقى وجاهز للعرض."
+      },
+      {
+        "badge": "وفّر حتى 70% من الرصيد",
+        "title": "ضوابط حماية الرصيد بمنهج Animatic أولاً",
+        "description": "تتضمن كل مساحة عمل ضوابط رصيد فورية توضح كيفية اعتماد سيناريو بتقييم 80+ في Audience Resonance ومعاينة Animatic ناطق قبل إنفاق الرصيد على تصيير مقاطع الفيديو المتحركة."
+      },
+      {
+        "badge": "مضمن مجاناً مع كل باقة",
+        "title": "4 دورات استوديو تفاعلية مدمجة",
+        "description": "أتقن Blueprint وAudience Resonance، وخزنة استمرارية الشخصيات والمواقع، وضوابط حماية الرصيد عبر Animatic، وغرفة العرض Screening Room مع الدبلجة لأكثر من 70 لغة مباشرة داخل الاستوديو."
+      }
+    ],
+    "courses": [
+      {
+        "id": "first-film-10m",
+        "title": "فيلمك الأول في 10 دقائق",
+        "totalDuration": "10 دقائق"
+      },
+      {
+        "id": "continuity-mastery",
+        "title": "إتقان الشخصية واستمرارية العالم",
+        "totalDuration": "6 دقائق"
+      },
+      {
+        "id": "animatic-first-savings",
+        "title": "Animatic- صناعة الأفلام الأولى (وفر 70% من الاعتمادات)",
+        "totalDuration": "5 دقائق"
+      },
+      {
+        "id": "series-and-global-dubbing",
+        "title": "سلسلة متعددة الحلقات وإصدار عالمي بأكثر من 13 لغة",
+        "totalDuration": "6 دقائق"
+      }
+    ],
+    "jitMap": {
+      "eyebrow": "خريطة الشاشة المرئية المباشرة في الوقت المناسب (JIT).",
+      "title": "انقر فوق أي مساحة عمل ودبوس مرقم (1–4) لفحص عناصر التحكم في الاستوديو",
+      "coachPrefix": "مدرب جيت:",
+      "autoDetected": "● الكشف التلقائي",
+      "checklistTitle": "قائمة مرجعية إرشادية مدتها 60 ثانية",
+      "screens": {
+        "blueprint": {
+          "tabLabel": "1. Blueprint & 80+ الرنين",
+          "stepBadge": "المرحلة 1 • القصة والضوء الأخضر",
+          "shortTitle": "Blueprint Room",
+          "subtitle": "قم بتحويل مفهومك الخام إلى معالجة فيلم رنين مضاءة باللون الأخضر بنسبة 80+ قبل إنفاق أرصدة الإنتاج.",
+          "quickSteps": [
+            {
+              "number": "1",
+              "title": "إنشاء معالجة الفيلم الخاص بك",
+              "description": "أدخل مفهوم قصتك أو السيناريو الخاص بك وقم بإنشاء معالجة فيلم كاملة مكونة من 3 فصول باستخدام الفن الرئيسي للبطل.",
+              "creditBadge": "~25 ساعة معتمدة"
+            },
+            {
+              "number": "2",
+              "title": "قم بتشغيل تحليل Audience Resonance™",
+              "description": "قم بتقييم قصتك مقابل الديموغرافية المستهدفة عبر 5 محاور سردية وحدد النقاط الضعيفة.",
+              "creditBadge": "~ 20 ساعة معتمدة"
+            },
+            {
+              "number": "3",
+              "title": "قم بتطبيق الإصلاحات بنقرة واحدة للوصول إلى أكثر من 80 درجة",
+              "description": "قم بتطبيق توصيات طبيب البرنامج النصي للذكاء الاصطناعي حتى تصل درجة الرنين إلى 80/100 أو أعلى.",
+              "creditBadge": "~ 15 ساعة معتمدة"
+            },
+            {
+              "number": "4",
+              "title": "الضوء الأخضر للإنتاج الافتراضي",
+              "description": "قم بقفل Blueprint وقم بإنشاء سيناريو مشهد تلو الآخر وقائمة الممثلين والتفصيل البصري.",
+              "creditBadge": "~ 30 ساعة معتمدة"
+            }
+          ]
+        },
+        "production": {
+          "tabLabel": "2. قبو الاستمرارية وحركة الفيديو",
+          "stepBadge": "المرحلة الثانية • Virtual Soundstage",
+          "shortTitle": "الإنتاج الافتراضي",
+          "subtitle": "قم بقفل وجوه الشخصيات وأصواتها في Continuity Vault، وعرض الإطارات الرئيسية للبداية/النهاية، وتحريك مقاطع الفيديو المتحركة.",
+          "quickSteps": [
+            {
+              "number": "1",
+              "title": "قفل الصور الشخصية والأصوات والمواقع أولاً",
+              "description": "قم بإنشاء واعتماد صور الشخصيات والأصوات العصبية ومراجع الموقع في Reference Library.",
+              "creditBadge": "10-15 كر / المرجع"
+            },
+            {
+              "number": "2",
+              "title": "تجميع الحوار والمؤثرات الصوتية والنتيجة الموسيقية",
+              "description": "قم بتعيين أصوات لكل شخصية وقم بإنشاء حوار وأجواء المشهد بحيث يتم قفل توقيت المخطط الزمني الخاص بك.",
+              "creditBadge": "5-15 كر / مشهد"
+            },
+            {
+              "number": "3",
+              "title": "عرض الإطارات الرئيسية للبداية/النهاية ومعاينة Animatic",
+              "description": "قم بإنشاء إطارات رئيسية مقفلة مرجعيًا لكل مقطع وشاهد الفيلم كاملاً في Screening Room باعتباره Animatic.",
+              "creditBadge": "10-15 كر / إطار"
+            },
+            {
+              "number": "4",
+              "title": "قم بتحريك لقطات البطل أو إطلاق وكيل الإنتاج",
+              "description": "قم بتحويل اللقطات الرئيسية إلى فيديو متحرك يدويًا، أو قم بتشغيل وكيل الإنتاج المستقل لإنشاء Pre-Vis، وClips، وMaster، وPromo أثناء رحيلك.",
+              "creditBadge": "وضع المشي بعيدا"
+            }
+          ]
+        },
+        "series": {
+          "tabLabel": "3. سلسلة قصة الكتاب المقدس",
+          "stepBadge": "استمرارية الحلقات المتعددة",
+          "shortTitle": "استوديو المسلسلات",
+          "subtitle": "أنشئ عروضًا متعددة الحلقات أو تعديلات فصلًا تلو الآخر باستخدام طاقم عمل مشترك وخزينة موقع واحدة.",
+          "quickSteps": [
+            {
+              "number": "1",
+              "title": "قم بإنشاء أو تحديد سلسلة الكتاب المقدس الخاصة بك",
+              "description": "أدخل سجل المسلسل والنوع وعدد الحلقات المستهدفة لإنشاء قصة متعددة الحلقات وطاقم عمل مشترك.",
+              "creditBadge": "~ 30 ساعة معتمدة"
+            },
+            {
+              "number": "2",
+              "title": "قفل الشخصيات والمواقع المتكررة",
+              "description": "الموافقة على الصور المرجعية والواجبات الصوتية في سلسلة الكتاب المقدس بحيث ترثها كل حلقة تلقائيًا.",
+              "creditBadge": "10-15 كر / صورة"
+            },
+            {
+              "number": "3",
+              "title": "قم بتشغيل الحلقة 1 في Blueprint Room",
+              "description": "انقر فوق \"إطلاق الحلقة Blueprint\" في الحلقة 1 لتحسين معالجتها المكونة من ثلاثة فصول وبدء الإنتاج الافتراضي."
+            }
+          ]
+        },
+        "final-cut": {
+          "tabLabel": "4. Final Cut وأكثر من 13 لغة",
+          "stepBadge": "المرحلة 3-4 • الفحص والدبلجة",
+          "shortTitle": "Final Cut والفحص",
+          "subtitle": "امزج مصطلح Animatic وتدفقات الفيديو، وقم بالتبديل عبر أكثر من 13 لغة مدبلجة، وشارك روابط المراجعة.",
+          "quickSteps": [
+            {
+              "number": "1",
+              "title": "شاهد بملء الشاشة في Screening Room",
+              "description": "قم بتشغيل مشاهدك المجمعة بشكل متتابع باستخدام التحولات والحوار والمؤثرات الصوتية والنتيجة التي يتم تلخيصها تلقائيًا.",
+              "creditBadge": "0 اعتمادات"
+            },
+            {
+              "number": "2",
+              "title": "مشاركة رابط المراجعة /s/ للحصول على الملاحظات",
+              "description": "قم بإنشاء رابط فحص قابل للمشاركة لجمع الملاحظات ذات الطابع الزمني من المتعاونين أو العملاء.",
+              "creditBadge": "0 اعتمادات"
+            },
+            {
+              "number": "3",
+              "title": "تصدير MP4 Master والدبلجات متعددة اللغات",
+              "description": "اعرض ملفات MP4 الرئيسية بدقة 1080p/4K وتدفقات الصوت/الترجمة الاختيارية المترجمة.",
+              "creditBadge": "تقديم 20-50 كر"
+            }
+          ]
+        }
+      }
+    },
+    "tryLiveMap": "جرّب خريطة الشاشة المرئية الفورية JIT (الدبابيس 1–4)",
+    "hideLiveMap": "إخفاء خريطة الشاشة المرئية الفورية JIT",
+    "viewScript": "عرض سيناريو فيديو 30 ثانية (آنا)",
+    "hideScript": "إخفاء سيناريو فيديو 30 ثانية (آنا)",
+    "copyScript": "نسخ السيناريو",
+    "copied": "تم النسخ",
+    "voLabel": "التعليق الصوتي:",
+    "pictureLabel": "الصورة:",
+    "scriptBlocks": [
+      {
+        "block": "المجموعة 01 (0:00–0:10)",
+        "title": "خريطة الشاشة في الوقت المناسب",
+        "syncLine": "آنا (أمام الكاميرا): \"لست بحاجة إلى مدرسة السينما عندما يرشدك الاستوديو في كل خطوة.\"",
+        "narration": "اضغط على علامة الاستفهام على أي شاشة لفتح خريطة مرئية في الوقت المناسب لمساحة العمل المحددة التي تتواجد فيها.",
+        "visual": "لقطة متوسطة لآنا (CHAR_ANA، سترة زيتونية فوق الياقة المدورة) في الاستوديو الدافئ بجانب صورة ثلاثية الأبعاد شفافة تظهر دبابيس وسائل شرح مرقمة باللون السماوي المتوهجة متصلة بإطارات لوحة العمل والأشكال الموجية."
+      },
+      {
+        "block": "المجموعة 02 (0:10–0:20)",
+        "title": "قائمة المراجعة لمدة 60 ثانية وحواجز الائتمان",
+        "narration": "اتبع قائمة مرجعية مدتها 60 ثانية مع إجراءات الاستوديو بنقرة واحدة، بينما تعمل حواجز الحماية المدمجة على قفل السرد والموسيقى والإطارات المتحركة قبل أن تنفق على الحركة.",
+        "visual": "لقطة قريبة ومتوسطة عبر Ana واللوحة الزجاجية العائمة حيث تضيء ثلاث عقد قائمة مرجعية من اللون السماوي إلى الأخضر الزمردي، مما يؤدي إلى قفل الخط الزمني المتحرك الصوتي قبل عرض الفيديو الثقيل."
+      },
+      {
+        "block": "المجموعة 03 (0:20–0:30)",
+        "title": "محاكاة \"فيلمك الأول في 10 دقائق\".",
+        "narration": "أو قم بتشغيل جهاز محاكاة تفاعلي مدته عشر دقائق - ينقلك من فكرة من جملة واحدة إلى رسالة رئيسية معبّرة ومسجلة ومنشورة أثناء إنشائك.",
+        "visual": "صورة متوسطة لآنا وهي تبتسم بحرارة أمام الكاميرا بينما تنتقل دبابيس التدريب المرقمة بسلاسة إلى إطار رئيسي بشاشة عريضة ومضيئة وقابلة للتشغيل خلفها."
+      }
+    ],
+    "cta": "أطلق الاستوديو ($9)"
   },
   "metadata": {
     "title": "SceneFlow Studio - إنشاء فيديو بالذكاء الاصطناعي",
@@ -1125,13 +1392,17 @@
     "goToDashboard": "الانتقال إلى لوحة المعلومات",
     "userFallback": "المستخدم",
     "searchLanguages": "لغات البحث",
-    "noLanguagesFound": "لم يتم العثور على لغات."
+    "noLanguagesFound": "لم يتم العثور على لغات.",
+    "workflow": "سير العمل",
+    "platformWalkthrough": "جولة في المنصة"
   },
   "floatingNav": {
     "productionExamples": "أمثلة",
     "twoModes": "مسار واحد",
     "directControl": "مباشر",
+    "productionAgent": "بناء",
     "publishCut": "نشر",
+    "studioAcademy": "الأكاديمية",
     "keyFeatures": "الميزات الرئيسية",
     "audienceResonance": "مصطلح صدى الجمهور",
     "preVisEngine": "محرك التصور المسبق",
@@ -1187,14 +1458,6 @@
         "label": "الإسبانية",
         "nativeLabel": "Español"
       },
-      "zh": {
-        "label": "صيني",
-        "nativeLabel": "中文"
-      },
-      "ar": {
-        "label": "العربية",
-        "nativeLabel": "العربية"
-      },
       "pt": {
         "label": "البرتغالية",
         "nativeLabel": "Português"
@@ -1202,6 +1465,14 @@
       "hi": {
         "label": "الهندية",
         "nativeLabel": "हिन्दी"
+      },
+      "zh": {
+        "label": "صيني",
+        "nativeLabel": "中文"
+      },
+      "ar": {
+        "label": "العربية",
+        "nativeLabel": "العربية"
       },
       "th": {
         "label": "التايلاندية",
@@ -1622,6 +1893,7 @@
           "description": "إضاءة سينمائية واقعية للغاية",
           "tagline": "الواقعية المرموقة ذات السرد المطوّل",
           "marketingBody": "يمنح الأسلوب الواقعي (Photorealism) العملَ ذلك الجاذبيةَ الجماهيرية التي يتوقعها جمهور الأعمال التلفزيونية المرموقة والوثائقيات. لذا، احرص على تثبيت سمات الشخصيات والإضاءة الواقعية عبر المحطات الدرامية المتتابعة، لضمان حفاظ الدراما المسلسلة والسلاسل الوثائقية على زخمها العاطفي المتصل من الحلقة الأولى وحتى الختام.",
+          "featured": true,
           "thumbnail": "https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Gemini_Generated_Image_w5y03bw5y03bw5y0.jpeg"
         },
         {
@@ -1629,6 +1901,7 @@
           "name": "رسوميات ثلاثية الأبعاد سينمائية / صور مولدة بالحاسوب (CGI)",
           "displayTitle": "رسوميات ثلاثية الأبعاد سينمائية / صور مولدة بالحاسوب (CGI)",
           "description": "مظهر أفلام سينمائية مُعالج بتقنية ثلاثية الأبعاد",
+          "featured": false,
           "thumbnail": "https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Gemini_Generated_Image_5qoasf5qoasf5qoa.jpeg"
         },
         {
@@ -1638,6 +1911,7 @@
           "description": "فيلم رسوم متحركة ثلاثي الأبعاد ذو طابع فني مميز",
           "tagline": "الاستمرارية العاطفية عبر الحلقات",
           "marketingBody": "تخلق الأشكال الهندسية الناعمة والمستديرة وتصاميم الشخصيات المعبرة دفئاً عاطفياً يشد انتباه المشاهدين طوال الموسم بأكمله؛ مما يجعل هذا الأسلوب مثالياً لمسلسلات الرسوم المتحركة، والأعمال العائلية الطويلة، وسرد القصص المرتبط بالعلامات التجارية، حيث يُعد الحفاظ على اتساق الشخصية أمراً جوهرياً في كل تفاصيل السرد.",
+          "featured": true,
           "thumbnail": "https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Gemini_Generated_Image_zi32rnzi32rnzi32.jpeg"
         },
         {
@@ -1647,6 +1921,7 @@
           "description": "أسلوب الأنمي ذو التظليل المسطح (Cel-shading)",
           "tagline": "مسارات سردية متسلسلة",
           "marketingBody": "يُحقق أسلوب التظليل المسطح (cel shading) المميز للأنمي تفاعلاً جماهيرياً عميقاً عبر سلاسل الويب متعددة الحلقات والمسارات السردية الممتدة. وتُنتج محركات الذكاء الاصطناعي التوليدي -المُدرَّبة على هذا النمط- رسوماً ذات خطوط حادة وتكوينات بصرية متسقة، مما يجعلها خياراً مثالياً للإنتاج التسلسلي واسع النطاق.",
+          "featured": true,
           "thumbnail": "https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Gemini_Generated_Image_qlf261qlf261qlf2.jpeg"
         },
         {
@@ -1656,6 +1931,7 @@
           "description": "رسوم متحركة مرسومة يدوياً بأسلوب فني يشبه الرسم",
           "tagline": "الحرفة كرفاهية",
           "marketingBody": "يستلهم هذا الأسلوب مباشرةً من حركة إبداعية بارزة تضع \"الحرفة في مصاف الرفاهية\"؛ إذ تُشكّل ملامس الألوان المائية والخلفيات ذات الطابع الفني عوالمَ مصممةً يدوياً، حيث تكتسب \"العيوب العفوية\" دلالةً فنيةً مقصودةً عبر حلقات السلسلة الطويلة.",
+          "featured": true,
           "thumbnail": "https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Gemini_Generated_Image_xojqsuxojqsuxojq.jpeg"
         },
         {
@@ -1664,6 +1940,7 @@
           "displayTitle": "قصة مصورة",
           "description": "حبر بارز، ومظهر الروايات المصورة",
           "tagline": "خطوط حبر بارزة، وملمس بنمط \"نصف النغمة\" (halftone)، وألوان مستوحاة من فن البوب، وذلك لسرد القصص بنظام الحلقات المتسلسلة.",
+          "featured": false,
           "thumbnail": "https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Gemini_Generated_Image_ezhp8cezhp8cezhp.jpeg"
         },
         {
@@ -1672,6 +1949,7 @@
           "displayTitle": "فن التصور",
           "description": "رسوم تصورية (Concept Art) سينمائية للألعاب أو الأفلام",
           "tagline": "لقطات مرجعية أساسية (Keyframes) لمرحلة التصور المسبق للأفلام والمسلسلات، تتميز بإضاءة ذات طابع درامي وجاهزة للإنتاج.",
+          "featured": false,
           "thumbnail": "https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Gemini_Generated_Image_7z9qm7z9qm7z9qm7.jpeg"
         },
         {
@@ -1679,6 +1957,7 @@
           "name": "رسوميات متجهة مسطحة / رسوم متحركة (موشن جرافيك)",
           "displayTitle": "رسوميات متجهة مسطحة / رسوم متحركة (موشن جرافيك)",
           "description": "مظهر \"فيكتور\" (Vector) أنيق ونظيف لمقاطع الفيديو التوضيحية",
+          "featured": false,
           "thumbnail": "https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Gemini_Generated_Image_omdmt6omdmt6omdm.jpeg"
         },
         {
@@ -1686,6 +1965,7 @@
           "name": "لوحة القصة / الأنيماتيك",
           "displayTitle": "لوحة القصة / الأنيماتيك",
           "description": "إطارات لوحة قصص أولية بتدرج الرمادي",
+          "featured": false,
           "thumbnail": "https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Gemini_Generated_Image_7i1wus7i1wus7i1w.jpeg"
         },
         {
@@ -1694,6 +1974,7 @@
           "displayTitle": "الفن الرقمي",
           "description": "رسم رقمي حديث",
           "tagline": "رسوم توضيحية بأسلوب فني مميز لفيلم وثائقي رسوم متحركة وسلسلة حلقات توضيحية.",
+          "featured": false,
           "thumbnail": "https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Gemini_Generated_Image_bmbpbibmbpbibmbp.jpeg"
         },
         {
@@ -1702,6 +1983,7 @@
           "displayTitle": "ألوان مائية",
           "description": "لوحة ألوان مائية ناعمة",
           "tagline": "مسحات لونية ناعمة تناسب المذكرات، والأعمال الوثائقية، والمقالات المطولة التأملية.",
+          "featured": false,
           "thumbnail": "https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Gemini_Generated_Image_7i1wus7i1wus7i1w.jpeg"
         },
         {
@@ -1710,6 +1992,7 @@
           "displayTitle": "رسم أولي / رسم خطي",
           "description": "أسلوب الرسم بقلم الرصاص",
           "tagline": "خطوط دقيقة وملمس قلم رصاص لمراحل العمل الطويلة، بدءاً من التصور الأولي (Pre-vis) ووصولاً إلى الإنتاج.",
+          "featured": false,
           "thumbnail": "https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Gemini_Generated_Image_bmbpbibmbpbibmbp.jpeg"
         },
         {
@@ -1718,6 +2001,7 @@
           "displayTitle": "الرسم الزيتي",
           "description": "لوحة زيتية كلاسيكية",
           "tagline": "لمسات فرشاة كلاسيكية وألوان غنية للأعمال الوثائقية والتاريخية المطوّلة.",
+          "featured": false,
           "thumbnail": "https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Gemini_Generated_Image_7z9qm7z9qm7z9qm7.jpeg"
         }
       ]
@@ -1865,7 +2149,8 @@
           "مخططات متماسكة للحلقات — يتم إنشاؤها تلقائياً على امتداد الموسم",
           "تتبّع التسلسل — مواءمة المواسم متعددة الحلقات",
           "مزامنة السلسلة مع الحلقات — في Blueprint Room و Production Stage"
-        ]
+        ],
+        "optional": true
       },
       {
         "id": "مخطط",
@@ -1882,7 +2167,8 @@
           "من الفكرة إلى الهيكل في دقائق: الملخص الموجز (Logline)، والمحطات الدرامية، والشخصيات، والطابع العام.",
           "تسجيل نقاط Audience Resonance بمستهدف 80+ قبل Production Stage",
           "روابط مشاركة المتعاونين — تجميع الملاحظات وتحويلها إلى مراجعة موجهة"
-        ]
+        ],
+        "optional": false
       },
       {
         "id": "إنتاج",
@@ -1902,7 +2188,8 @@
           "المقاطع، والمزج، والبث — أنشئ كل لقطة دون مغادرة Production Stage",
           "مخطط الإنتاج — أهداف التصوير، وجدول زمني مؤرخ، وحالة الهاتف",
           "Screening Room — معاينة المشاهد، تجميع النسخة النهائية، العروض، والنشر على يوتيوب"
-        ]
+        ],
+        "optional": false
       },
       {
         "id": "غرفة عرض",
@@ -1920,7 +2207,8 @@
           "إعدادات التجميع المسبقة — فيديو بالكامل، أو هجين، أو مزيج مخصص لكل مشهد",
           "اختبارات تقييم قابلة للمشاركة — روابط تتضمن درجات وملاحظات منظمة",
           "معالج YouTube، وتصدير مقاطع الفيديو القصيرة، وباقات التوزيع"
-        ]
+        ],
+        "optional": false
       }
     ]
   },
@@ -2020,6 +2308,361 @@
     "finalDoor": "نهائي",
     "enterFullscreen": "الدخول إلى وضع ملء الشاشة",
     "exitFullscreen": "الخروج من وضع ملء الشاشة",
+    "showDetail": "عرض المزيد من التفاصيل",
+    "hideDetail": "إخفاء التفاصيل",
+    "featuredPlayer": "لاعب مميز",
+    "openPlayer": "افتح المشغل",
+    "featureModes": [
+      "ما قبل فيس",
+      "مقاطع",
+      "مشاهد",
+      "فصول",
+      "سيد",
+      "الترويجي"
+    ],
+    "seriesPanel": {
+      "headerLabel": "سلسلة الكتاب المقدس والحلقة 1",
+      "bibleTab": "سلسلة الكتاب المقدس",
+      "castTab": "طاقم الممثلين المقفل",
+      "episode1Tab": "الجيش الشعبي. 1 والفصل. 1",
+      "seasonTab": "الموسم",
+      "formatLabel": "التنسيق",
+      "durationLabel": "المدة",
+      "artStyleLabel": "نمط الفن",
+      "continuityLockLabel": "قفل الاستمرارية",
+      "loglineLabel": "السجل",
+      "synopsisLabel": "ملخص السلسلة والكتاب المقدس المرئي",
+      "lockedCastHeading": "فريق الممثلين المقفل والاستمرارية الرئيسية",
+      "inputs": {
+        "drama": {
+          "showTitle": "تيار المدينة البيضاء",
+          "format": "سلسلة الهيبة المكونة من 6 حلقات · الحلقة الأولى تجريبية (8 فصول)",
+          "genre": "إثارة الخيال العلمي والبنية التحتية",
+          "artStyle": "الواقعية الصورية المشوهة · التنغستن، والأردواز تحت الصفر، والتوهج التعريفي باللون البنفسجي المخضر",
+          "duration": "مسلسل مدته 265 دقيقة (6 × 42–48 دقيقة) · الحلقة 1: 42.5 دقيقة",
+          "continuityLock": "جدعون كروفت، بايبر هايز، جوليان وارد ود. كلارا فانس كروفت · 4 مجموعات تحت الأرض وواجهة البحيرة · Clara's 1893 Manifold & Cipher",
+          "unitLabel": "الحلقة 1 إيقاعات القصة / الفصول (8)",
+          "artLock": "صورة بصرية مشوهة مقفلة عبر كل إيقاع: ثوب جيديون كروفت المحفوظ، ومعطف بايبر هايز الميداني المغطا بالثلج، والعتاد التكتيكي لشركة جوليان وارد، ومشعب الحث المستعاد من كلارا عام 1893، والتقدم من أنفاق الشحن عام 1906 إلى سرير Two-Mile Crib المتجمد.",
+          "logline": "عندما يخترق مراسل مشين المخبأ الجوفي لأمين أرشيف البنية التحتية المعزول لتنشيط قطعة أثرية للطاقة الجوية عام 1893، يجب على الزوجين النجاة من فريق هجوم من النخبة بقيادة عميل المخاطر في الشركة الذي قتل زوجته - وبلغت ذروتها في الاختيار بين الحفاظ على الذات وتحرير البشرية من الندرة المصطنعة.",
+          "seriesSynopsis": "تدور أحداث مسلسل The White City Current في الغرب الأوسط الأمريكي الذي تضرر من المناخ، حيث تستخدم مجموعة المرافق الخاصة Vane-Calhoun Energy انقطاع التيار الكهربائي في فصل الشتاء كسلاح لانتزاع الامتيازات البلدية، ويمتد على ست حلقات مدة كل منها 45 دقيقة. يكشف أمين المحفوظات البلدية السابق جدعون كروفت والصحفي الاستقصائي بايبر هايز المدرج في القائمة السوداء عن شبكة تحريض الرنين للمعرض الكولومبي المكبوتة عام 1893 والتي صممتها زوجة جدعون الراحلة، الدكتورة كلارا فانس كروفت. خلال الموسم الأول، تؤدي إضاءة Chicago Two-Mile Crib في الحلقة 1 إلى إشعال حرب عالية المخاطر عبر ممرات البنية التحتية الجوفية التاريخية - من محطات مناجم الملح الفرعية في ديترويت إلى حفر العجلات التي تم إيقاف تشغيلها في نياجرا - مما يضع تحرير الشبكة العامة في مواجهة مديرية الاحتواء الخاصة التابعة لكبير مديري المخاطر جوليان وارد.",
+          "cast": [
+            {
+              "name": "جدعون كروفت",
+              "role": "بطل الرواية · ورقة شخصية مقفلة",
+              "descriptor": "أمين محفوظات البنية التحتية البلدية السابق (54). جلباب أرشيفي من الصوف الفحمي، ونظارات ذات إطار سلكي، ولحية ملح وفلفل، وأيدي رسام قاسية؛ مضاء بالتنجستين الدافئ 3200 كلفن مقابل لوح النفق البارد."
+            },
+            {
+              "name": "بايبر هايز",
+              "role": "القائد المشارك · ورقة الأحرف المقفلة",
+              "descriptor": "مراسل الطاقة الاستقصائي المدرج في القائمة السوداء (31). سترة حقل الزيتون المغطاة بالثلوج، وحقيبة قماشية مع محرك مشفر وأسطوانة تشفير نحاسية، وكثافة حركية حادة تحت انسكاب الحث باللون البنفسجي المخضر."
+            },
+            {
+              "name": "جوليان وارد",
+              "role": "الخصم الأساسي · ورقة الأحرف المقفلة",
+              "descriptor": "مدير أول للمخاطر المؤسسية، شركة Vane-Calhoun Energy (46). معطف تكتيكي أسود غير لامع، واتصالات التوصيل العظمي، والهدوء الجراحي؛ مؤطرة بإضاءة مؤسسية معقمة عالية التباين."
+            },
+            {
+              "name": "الدكتورة كلارا فانس كروفت",
+              "role": "مرساة الأرشفة والذاكرة · ورقة الأحرف المقفلة",
+              "descriptor": "فيزيائي الرنين المتأخر (48). معطف مختبر أردوازي، وأداة معايرة 1893 ملفوفة بالنحاس، وألواح ارتجاعية من العنبر الدافئ وانعكاسات تخطيطية ثلاثية الأبعاد."
+            }
+          ],
+          "episode1Synopsis": {
+            "episodeLabel": "ملخص الحلقة 1 · طيار طويل (8 فصول)",
+            "title": "الحلقة 1: بروتوكول فاراداي",
+            "duration": "42.5 دقيقة (8 فصول · الفصل الأول دليل حي: 6 دقائق)",
+            "logline": "يقوم موظف أرشيف النفق الحزين ومراسل مطارد بإشعال مشعب طاقة لاسلكي عام 1893 تحت شيكاغو المتجمدة ويقاتلون عبر ميلين من الأنفاق تحت قاع البحيرة لبث الحقيقة.",
+            "synopsis": "خلال دوامة قطبية مميتة صممتها شركة Vane-Calhoun Energy لإفلاس أجنحة الجانب الجنوبي من شيكاغو، اخترق بايبر هايز مخبأ نفق الشحن الخاص بجيديون كروفت عام 1906 باستخدام مفتاح التشفير المفقود لمشعب الحث الرنان الخاص بزوجته كلارا المقتولة عام 1893. يؤدي إيقاظ النموذج الأولي إلى تنبيه وحدة التعقيم التابعة لجوليان وارد، مما يجبر جدعون وبيبر المصاب على الخروج من مخبئهما ومن خلال مداخل البخار، ومحطة بريد هوائية في شارع آدامز، ونفق سحب تحت البحيرة من تسعينيات القرن التاسع عشر لربط المشعب بسرير تو مايل البحري.",
+            "chapter1Title": "الفصل 1 (الفوز 1): العزلة الجوفية",
+            "chapter1Duration": "6 دقائق · إثبات الفصل الأولي",
+            "chapter1Synopsis": "على ارتفاع أربعين قدمًا تحت شيكاغو المتجمدة، يطن قبو جدعون كروفت المغطى بالطباشير تحت تيار البلدية المسروق بينما تحسب الإرساليات الإذاعية ضحايا انقطاع التيار الكهربائي في الجانب الجنوبي. يتجاوز بايبر هايز أسلاك التعثر المحيطة به التي تحمل تشفير كلارا النحاسي وأوامر فاين كالهون لتفريغ الأحمال - مما يجبر جيديون على مواجهة الدليل على أن وفاة كلارا كانت اغتيالًا لشركة."
+          },
+          "episodes": [
+            {
+              "number": "1",
+              "title": "العزلة الجوفية",
+              "duration": "6 دقائق",
+              "synopsis": "أسس العزلة الدفاعية لجيديون في أنفاق الشحن في شيكاغو عام 1906، وهوسه بتبرير مقتل كلارا باعتباره فشلًا شخصيًا بينما أدى انقطاع التيار الكهربائي عن الدوامة القطبية لـ Vane-Calhoun إلى تجميد الجانب الجنوبي، وتدخل بايبر هايز التخريبي بشفرات التشفير النهائية لكلارا."
+            },
+            {
+              "number": "2",
+              "title": "فتح بروتوكول فاراداي",
+              "duration": "5.5 دقيقة",
+              "synopsis": "قم بتنظيم تصادم أيديولوجي شرس عندما يواجه بايبر جدعون ببيانات إغلاق Vane-Calhoun الداخلية ونداء كلارا المكتوب بخط اليد - مما حطم سخريته وأجبره على إدخال تسلسل المحاذاة الذي يوقظ النموذج الأولي للتحريض الرنان في موجة كهرومغناطيسية بنفسجية."
+            },
+            {
+              "number": "3",
+              "title": "الهجوم المضاد الخانق",
+              "duration": "5.5 دقيقة",
+              "synopsis": "قامت فرقة التعقيم التكتيكية التابعة لجوليان وارد بتفجير عبوات الاختراق في القبو. عندما تأخذ بايبر شظية تحمي جيديون، فإنه يتغلب على غريزته لإغلاق نفسه بمفرده - حيث يوجهها عبر فتحات الصرف المنسية ويحرق مقاولي وارد بممر بخاري صناعي."
+            },
+            {
+              "number": "4",
+              "title": "خياطة ومحطة فرعية",
+              "duration": "4.5 دقيقة",
+              "synopsis": "لجأ جدعون إلى محطة فرز البريد الهوائية المهجورة أسفل شارع آدامز، وقام بخياطة جرح بايبر بضربة حميمة لتخفيف الضغط تربط إرث كلارا بمهمة بايبر وتعزز التزام جدعون بالقتال."
+            },
+            {
+              "number": "5",
+              "title": "خرق ميناء المداخن",
+              "duration": "4.5 دقيقة",
+              "synopsis": "محاصرًا بمحيط سطح وارد وشحنات الثرمايت الموقوتة، ينفذ جدعون وبيبر اختراقًا تكتيكيًا مترابطًا - حيث تقوم هيئة المحلفين بتجهيز علبة ارتجاج مضغوطة في أنبوب إرسال هوائي لتفجير مدخنة تهوية على واجهة البحيرة المتجمدة."
+            },
+            {
+              "number": "6",
+              "title": "اجتياز منطقة لاكوسترين الفرعية",
+              "duration": "5 دقائق",
+              "synopsis": "في مواجهة ميلين من الجليد المتماوج للوصول إلى سرير Two-Mile Crib البحري، يقود جدعون بايبر عبر سيفون خطير نصف مغمور بالمياه من تسعينيات القرن التاسع عشر تحت قاع البحيرة المتجمد - يكافح انخفاض حرارة الجسم، وارتفاع التسرب الجليدي، والانهيار الهيكلي لسحبها إلى أعلى عمود السحب."
+            },
+            {
+              "number": "7",
+              "title": "الوقوف على العملاقة",
+              "duration": "5.5 دقيقة",
+              "synopsis": "على جسر سرير الأطفال الذي اجتاحته العاصفة، قام وارد بمحاصرتهم بمرحل انعكاس عالي الجهد ويقدم مناعة لجيديون تحت الأرض وتمويلًا مختبريًا لمشعب كلارا. يرفض جدعون المشاركة في الشركات ويقوم بتوصيل بوابات الفيضان الهيدروليكية الفيكتورية بالأسلاك الساخنة لتوجيه الشحن العكسي لـ Ward عبر المحركات."
+            },
+            {
+              "number": "8",
+              "title": "انتقال الشبكة التوافقية والدفاع",
+              "duration": "6 دقائق",
+              "synopsis": "ينضم بايبر إلى الوصلة الصاعدة للميكروويف لبث جرائم Vane-Calhoun إلى منافذ الأخبار المستقلة بينما يقوم Gideon بربط مشعب Clara بالمصفوفة الإقليمية - مما يطلق العنان للإرسال التوافقي الرنان الذي يستعيد الحرارة والضوء عبر شيكاغو قبل أن يحرق Gideon أوراق اعتماده عند الفجر."
+            }
+          ]
+        },
+        "animation": {
+          "showTitle": "هارت هاوس",
+          "format": "الرسوم المتحركة المسرحية الهزلية · الموسم 5 حلقات",
+          "genre": "كوميديا عائلية متعددة الأجيال",
+          "artStyle": "الرسوم المتحركة ذات الخلايا المسطحة ثنائية الأبعاد · الخطوط العريضة بالحبر الغامق ولوحة الضواحي الدافئة",
+          "duration": "110 دقيقة الموسم (5 × 22 دقيقة) · الحلقة 1: 22 دقيقة",
+          "continuityLock": "5 أوراق شخصيات عائلية مقفلة · Millwick House & Side Porch · Zero Style Drift",
+          "unitLabel": "حلقات الموسم الأول (5)",
+          "artLock": "نمط واحد مغلق للموسم بأكمله: خطوط حبر جريئة وألوان دافئة في الضواحي وتصميمات الشخصيات نفسها في كل حلقة. يمكن للمنصة استيعاب العديد من الأنماط. هذه السلسلة لا تتحول.",
+          "logline": "في ميلويك، تحول عائلة هارت جدالًا منزليًا إلى نكتة الأسبوع، والنكتة إلى سبب استمرارهم في العيش تحت سقف واحد.",
+          "seriesSynopsis": "تدور أحداث Hart House في مدينة ميلويك المهووسة بالقانون المدني، وهي عبارة عن مسلسل كوميدي عائلي متحرك ثنائي الأبعاد مدته 22 دقيقة تم تصميمه لإثبات عدم الانجراف خارج النموذج عبر موسم البث بأكمله. كاتبة البلدية روث هارت وميكانيكي النقل الليلي إليس هارت يتقاسمان منزلًا حرفيًا ضيقًا مع كابتن المناظرة جون البالغ من العمر ستة عشر عامًا، وميلو جامع الحقائق البالغ من العمر تسع سنوات، ووالدة روث نانا إينيز، التي أصبحت شرفتها الجانبية المغلقة \"المؤقتة\" بهدوء المركز العاطفي للمنزل. تحول كل حلقة صداعًا محليًا صغيرًا إلى كوميديا ​​جماعية سريعة النيران مع الحفاظ على أوزان الخطوط المتطابقة واللوحات المظللة الدافئة وأوراق الشخصيات متعددة الزوايا المقفلة من الحلقة 1 حتى تصويت الأسرة في الحلقة 5.",
+          "cast": [
+            {
+              "name": "روث هارت",
+              "role": "الأم الحاكمة · ورقة شخصية مقفلة ثنائية الأبعاد",
+              "descriptor": "كاتب بلدية ميلويك (42). سترة صوفية منسوجة من التراكوتا، ونظارات على شكل صدفة السلحفاة، وتقويم حائطي مرمز بالألوان؛ التوقيت الصوتي الجامد وأقواس الحاجب التعبيرية."
+            },
+            {
+              "name": "إليس هارت",
+              "role": "البطريرك · ورقة شخصية مقفلة ثنائية الأبعاد",
+              "descriptor": "ميكانيكي حافلات بلدية نوبة ليلية (44). مآزر متجر البحرية، الترمس الفولاذي، مخترع المرآب المتفائل الذي يحل مهام مدتها 5 دقائق بأدوات غريبة تزن 40 رطلاً."
+            },
+            {
+              "name": "يونيو هارت",
+              "role": "الابنة · ورقة شخصية مقفلة ثنائية الأبعاد",
+              "descriptor": "نقيب مناظرات المدرسة الثانوية (16). سترة بغطاء للرأس بلون الخردل فوق تنورة مطوية، وميثاق المدينة المشروح في اليد؛ يتعامل مع كل قاعدة على مائدة العشاء وكأنها مرافعة شفهية للمحكمة العليا."
+            },
+            {
+              "name": "ميلو هارت",
+              "role": "الابن · ورقة شخصية مقفلة ثنائية الأبعاد",
+              "descriptor": "متحمس لأرشيف الأسرة وصانع الملصقات (9). قميص الرجبي المخطط، والقمصان العالية غير المقيدة، ومسدس الملصقات الصناعية؛ يقدم حقائق حرفية مدمرة على الإيقاع الكوميدي."
+            },
+            {
+              "name": "نانا إينيز",
+              "role": "الجدة · ورقة شخصية مقفلة ثنائية الأبعاد",
+              "descriptor": "خياطة جانبية سيادية ومتقاعدة (71). شال نيلي مطرز، عقدة فضية، عرش من الخيزران؛ يتذكر كل اختلاف في تقسيم المناطق على الكتلة منذ عام 1984."
+            }
+          ],
+          "episode1Synopsis": {
+            "episodeLabel": "ملخص الحلقة 1 · الموسم SFAIPREMIERETRM (4 فصول)",
+            "title": "الحلقة 1: قاعدة الفرز",
+            "duration": "22 دقيقة (4 فصول · الفصل 1 دليل حي: 5.5 دقيقة)",
+            "logline": "يُلهم تفويض إعادة التدوير في المدينة المكون من اثنتي عشرة فئة إليس ببناء ناقل فرز المرآب الآلي الذي يصنف عن طريق الخطأ ممتلكات شرفة نانا إينيز على أنها فائض بلدي.",
+            "synopsis": "عندما يسن ميلويك القانون 412 - الذي يتطلب اثني عشر صندوقًا مرمزًا بالألوان بحلول صباح يوم الخميس - تريد روث الامتثال الهادئ حتى لا يتمكن زملاؤها في العمل في Town Hall من الثرثرة، وتقوم يونيو بصياغة تحدي دستوري لميكروفون المجلس، ويقوم إليس ببناء آلة فرز تعمل ببكرة في المرآب. تنتصر الآلة على الزجاجات قبل أن تلتهم صناديق التخزين غير المُلصقة الخاصة بالعائلة، وبلغت ذروتها في مواجهة في غرفة المعيشة عندما طبع ميلو بطاقة كتب عليها \"أشياء الشرفة المؤقتة لـ نانا\" ويجب على العائلة الاعتراف بأنه لا أحد يعرف ما تعنيه كلمة \"مؤقتة\".",
+            "chapter1Title": "الفصل الأول (الفتح البارد والفصل الأول): اثنتا عشرة سلة بحلول يوم الخميس",
+            "chapter1Duration": "5.5 دقيقة · إثبات الفصل الأولي",
+            "chapter1Synopsis": "في الساعة 6:15 صباحًا في مطبخ هارت المغلق، تكشف روث عن مخطط فرز المدينة المكون من اثنتي عشرة فئة بينما يعود إليس من النوبة الليلية بمحرك باب الحافلة الذي تم إنقاذه. عبر لقطات رد فعل مسطحة سريعة القطع، يبدأ ميلو في وضع علامات على الأثاث المنزلي وتعلن نانا إينيز أن الشرفة الجانبية معفاة من الولاية القضائية البلدية."
+          },
+          "episodes": [
+            {
+              "number": "1",
+              "title": "قاعدة الفرز",
+              "duration": "22 دقيقة",
+              "synopsis": "يصدر ميلويك أمرًا جديدًا لإعادة التدوير يتضمن اثنتي عشرة فئة. يقوم إليس ببناء آلة فرز في المرآب. إنه يعمل على الزجاجات، ومن ثم، بشكل كارثي، على صناديق العائلة التي لا تحمل علامات. يريد يونيو تحدي القاعدة في اجتماع المدينة. تريد روث أن يبدو الرصيف متوافقًا بحلول يوم الخميس. تنتهي الحلقة عندما يقوم ميلو بتسمية أحد الصناديق \"أشياء شرفة نانا\" ولا يمكن لأحد أن يتفق على معنى التسمية."
+            },
+            {
+              "number": "2",
+              "title": "موكب الطقس",
+              "duration": "22 دقيقة",
+              "synopsis": "من المتوقع هطول أمطار في يوم ميلويك. تريد \"جون\" إلغاء لافتة نادي المناظرة الخاصة بها. ميلو يريد تسجيل البرق. ترفض نانا إينيز التلويح لجارتها التي تجنبتها منذ نزاع على السياج. لا يزال يتعين على روث استضافة الكتلة تحت قماش القنب. النكتة هي قماش القنب. النقطة المهمة هي من الذي سيقرر حدوث الاحتفال."
+            },
+            {
+              "number": "3",
+              "title": "الإفطار الليلي",
+              "duration": "22 دقيقة",
+              "synopsis": "يعود إليس إلى المنزل عند الفجر ويطبخ للأشخاص الذين يغادرون بالفعل. يونيو لديه البطولة. ميلو لديه رحلة ميدانية. روث لديها تحول مضاد. لمدة ساعة واحدة، المطبخ هو العائلة بأكملها، والبيض هو المحادثة الوحيدة التي تناسبها. تصبح الفطيرة المحترقة هي الجدل الدائر حول من تم بناء المنزل حوله."
+            },
+            {
+              "number": "4",
+              "title": "المفتاح الاحتياطي",
+              "duration": "22 دقيقة",
+              "synopsis": "كان شخص ما يعيد ملء وعاء القطة في الصباح الذي ينام فيه إليس. يقوم آل هارتس بالتحقيق والعثور على المفتاح الذي أخفوه تحت الطوب منذ سنوات. كان الجار الذي كانوا يسمونه فضوليًا يغطي فجوة الفجر. يتعين على Nana Inez أن تقرر ما إذا كانت ستستعيد المفتاح أو تعترف بأن الكتلة كانت مفيدة."
+            },
+            {
+              "number": "5",
+              "title": "تصويت الشرفة",
+              "duration": "22 دقيقة",
+              "synopsis": "تعلن \"نانا إينيز\" أنها انتهت من الشرفة \"المؤقتة\" وستنتقل إلى بلدة أختها. يدعو آل هارتس إلى تصويت الأسرة. إعادة بناء الشرفة كغرفها الحقيقية يعني توقف مشروع مرآب إليس، وتحريك ركن الدراسة الخاص بشهر يونيو، ويتعين على ميلويك السماح بالتغيير الذي كان يتجاهله. هنا ينقلب الموسم: لم تعد الكوميديا ​​تدور حول أسبوع فوضوي. الأمر يتعلق بمن يمكنه البقاء."
+            }
+          ]
+        },
+        "documentary": {
+          "showTitle": "الفكر الطويل",
+          "format": "وثائقي تاريخي · سلسلة من 5 أجزاء",
+          "genre": "التاريخ العالمي للعلوم والتكنولوجيا",
+          "artStyle": "الواقعية الأرشيفية الدقيقة (1950s 16mm Grain → 1980s CRT → Modern 4K)",
+          "duration": "مسلسل 200 دقيقة (5 × 40 دقيقة) · الحلقة 1: 40 دقيقة",
+          "continuityLock": "شاهدان متكرران (د. أميرة حسن وكينجي ساتو) · 12 مدينة عالمية · حواجز حماية زمنية صارمة",
+          "unitLabel": "الحلقات الوثائقية (5)",
+          "artLock": "دقة الفترة هي حكم الصورة. يحتوي مختبر يعود تاريخه إلى عام 1956 على خزانة ملابس قديمة، وحبوب أفلام، وآلات ذلك العام - لا شاشات مسطحة ولا هواتف. الفصل الحالي يبدو الآن. نفس الشاهدين، الدكتورة أميرة حسن وكينجي ساتو، يحتفظان بنفس الوجوه في كل عصر يظهران فيه.",
+          "logline": "يتتبع فيلم وثائقي من خمسة أجزاء الذكاء - الذي تم بناؤه، واستعارته، والذي لم يكتمل بعد - بدءًا من الآلات المفيدة الأولى وحتى مسألة وجود نظام أكثر ذكاءً من صانعيه.",
+          "seriesSynopsis": "يمتد \"الفكر الطويل\" على سبعين عامًا ويشتمل على اثنتي عشرة مدينة عبر خمس قارات، وهو عبارة عن سلسلة وثائقية مكونة من خمسة أجزاء مدتها 200 دقيقة تتتبع محاولة البشرية إضفاء الطابع الخارجي على التفكير - بدءًا من غرف التتابع في عام 1956 في مانشستر وطوكيو وحتى البنية التحتية المعاصرة لنموذج الأساس وأفق حوكمة الذكاء الفائق. بفضل الشهود المتكررين أمام الكاميرا، الدكتورة أميرة حسن (القاهرة/لندن) وكينجي ساتو (أوساكا/طوكيو)، تعمل حواجز الحماية ذات الطراز التاريخي لـ SceneFlow على تأمين العدسات الأصلية وخزانة الملابس وهندسة الغرفة لكل عقد من الزمن بينما تقوم تلقائيًا بنسج قصاصات أرشيفية ومخططات وسرد متعدد اللغات متزامنة مع النص.",
+          "cast": [
+            {
+              "name": "دكتورة أميرة حسن",
+              "role": "الشاهد الرئيسي · هوية مقفلة متعددة العصور",
+              "descriptor": "منطقي رياضي وباحث في حوكمة الذكاء الاصطناعي. ظهر في الثمانينات من القرن الماضي في الاستجمام الأرشيفي للقاهرة/باريس (28 عامًا) ولوحات المقابلات الحالية بدقة 4K في لندن (64 عامًا) مع بنية وجه مغلقة وإيقاع صوتي."
+            },
+            {
+              "name": "كينجي ساتو",
+              "role": "شاهد رئيسي مشارك · هوية مقفلة متعددة العصور",
+              "descriptor": "مهندس التحكم الصناعي وأشباه الموصلات. تم تتبعه من أرضيات التصنيع في أوساكا/سيول في الثمانينيات إلى أرشيفات الروبوتات المعاصرة في طوكيو مع التعبيرات الدقيقة الطبيعية ومزامنة الشفاه."
+            },
+            {
+              "name": "المؤرخ (الراوي)",
+              "role": "فيلم وثائقي صوت الله · قفل عصبي بأربع لغات",
+              "descriptor": "راوي وثائقي مدروس وغير مثير يقود لقطات B-roll أرشيفية محددة التوقيت ومزيجًا صوتيًا محليًا باللغات الإنجليزية والإسبانية والصينية والعربية."
+            },
+            {
+              "name": "فرقة المختبرات والميدان التاريخية",
+              "role": "طاقم إعادة تمثيل الفترة الخاضعة للحراسة (1956 إلى الوقت الحاضر)",
+              "descriptor": "1956 رواد الحوسبة في مانشستر وطوكيو، 1989 مستشفى نيروبي يسجل المحللون والممارسون الحاليون في مانيلا وأكرا وروتردام - تمت تصفيتهم بدقة ضد المفارقات التاريخية الحديثة."
+            }
+          ],
+          "episode1Synopsis": {
+            "episodeLabel": "الحلقة 1 ملخص · السلسلة SFAIPREMIERETRM (5 فصول)",
+            "title": "الحلقة 1: الغرفة ذات المفاتيح (1950-1968)",
+            "duration": "40 دقيقة (5 فصول · الفصل الأول إثبات حي: 6 دقائق)",
+            "logline": "في مانشستر وبرينستون وطوكيو في مرحلة ما بعد الحرب، قامت مجموعة من علماء الرياضيات ومهندسي التتابع بتركيب غرف بحجم صالات الألعاب الرياضية لاختبار ما إذا كانت الآلة قادرة على التمسك بقاعدة معينة وتغيير رأيها.",
+            "synopsis": "تعيد الحلقة الأولى بناء الميلاد المادي والفلسفي للذكاء الآلي بين عامي 1950 و1968. وبالتنقل بين النسخ الأرشيفية مقاس 16 مم لـ Ferranti Mark 1 في مانشستر، وغرفة التتابع ETL Mark III في طوكيو، والدراسة الصيفية التي أجرتها دارتموث في عام 1956، قامت الدكتورة أميرة حسن وكينجي ساتو بفحص القطع الأثرية التي تركها معلموهم وراءهم - مما يوضح كيف أخطأ الباحثون الأوائل في فهم المنطق الرسمي على أنه عام بشري. ومع ذلك، فقد وضعت بنية التبديل التي لا تزال تحكم الحوسبة الحديثة.",
+            "chapter1Title": "الفصل الأول: التتابع الذي يتذكر (مانشستر وطوكيو، 1956)",
+            "chapter1Duration": "6 دقائق · إثبات الفصل الأولي",
+            "chapter1Synopsis": "تم تصوير الفيلم في عام 1956 بحبيبات مقاس 16 ملم بدون أية تحف فنية حديثة، حيث يتتبع مهندسون يرتدون سترات صوفية خطأً عبر المرحلات الكهرومغناطيسية المتناثرة في مانشستر وطوكيو، ويتقاطعون مع لوحات المقابلة الحالية بدقة 4K لأميرة حسن وكينجي ساتو وهما يحملان شريطًا أصليًا مثقوبًا بخمسة ثقوب - يُغلق بمفتاح تبديل واحد تم تركه طوال الليل."
+          },
+          "episodes": [
+            {
+              "number": "1",
+              "title": "الغرفة مع المفاتيح",
+              "duration": "40 دقيقة",
+              "synopsis": "مختبرات منتصف القرن في مانشستر وبرينستون وطوكيو. يقف الباحثون الذين يرتدون ملابس قديمة أمام آلات تقوم بشيء ذكي في غرفة صاخبة. تصف معلمة أميرة، في شريط مقابلة لاحقة، الأمل دون استخدام أي شيء من المستقبل. يقدم عم كينجي خدماته لوحدة تحكم في المصنع بحجم خزانة ملابس. ينتهي الفصل عند ترك المفتاح في وضع التشغيل طوال الليل."
+            },
+            {
+              "number": "2",
+              "title": "الآلة المفيدة",
+              "duration": "40 دقيقة",
+              "synopsis": "الثمانينيات والتسعينيات. نظام خبير في غرفة سجلات مستشفى نيروبي، وأرضية شرائح في سيول، ومكتب ترجمة في باريس. محطات باللون البيج، وتوهج CRT، والملابس والسيارات في ذلك العقد. أميرة، شابة، تشاهد برنامجًا يقترح تشخيصًا يرفضه أحد كبار الأطباء. يرى كينجي توقفًا في الخط لأن المستشعر يثق في نفسه. مفيد، ويتجادل بالفعل مع الأشخاص بجانبه."
+            },
+            {
+              "number": "3",
+              "title": "الوصول العام",
+              "duration": "40 دقيقة",
+              "synopsis": "2010s. غرفة أخبار في لاغوس، وفصل دراسي في ساو باولو، ومطبخ في برلين حيث يجيب الهاتف على سؤال يطرحه طفل بصوت عال. لقد غادر النموذج المختبر. أميرة هي الآن الشخص الذي يتصل به الصحفيون. ينشر مصنع كينجي إشعارًا بأن النوبة الليلية سوف \"تستشير النظام\". الفصل يحمل على وجوه تقرأ شاشة، وليس على الشاشة."
+            },
+            {
+              "number": "4",
+              "title": "التسارع",
+              "duration": "40 دقيقة",
+              "synopsis": "يوم واحد، ثلاث مدن. ممرضة في مانيلا، ملحنة في أكرا، مخططة رصيف في روتردام. يستخدم كل منهم نظامًا ينهي الجملة التي بدأوها. يقوم الراوي بإحصاء ما تم تسريعه ومن لم يكن في الغرفة عندما تم تحديد الشروط. أميرة وكينجي، الأكبر سنًا، يقارنان بين الملاحظات الموجودة على أبواب منزلهما. الصور معاصرة: اللباس الحالي، الشوارع الحالية، الضوء الحالي."
+            },
+            {
+              "number": "5",
+              "title": "السؤال أمامنا",
+              "duration": "40 دقيقة",
+              "synopsis": "أفق الذكاء الفائق، يُقال على شكل سؤال وليس نبوءة. أميرة وكينجي يجلسان في أرشيف هادئ - أوراق وصور فوتوغرافية وآلة لا تتظاهر بأنها شخص. إنهم يتساءلون ما الذي يدين به نظام أكثر ذكاءً من صانعيه للممرضة، والملحن، ومخطط الرصيف، والأشخاص الذين لم يلمسوا المفتاح أبدًا. المسلسل لا يجيب. ويترك الالتزام في الغرفة."
+            }
+          ]
+        },
+        "training": {
+          "showTitle": "خمس لوحات",
+          "format": "السلسلة التعليمية · دورة مكونة من 5 وحدات",
+          "genre": "التدريب العملي على مناهج الطهي",
+          "artStyle": "استوديو ضوء النهار الطبيعي · تغطية علوية نظيفة ومقاعد",
+          "duration": "دورة مدتها 75 دقيقة (5 × 15 دقيقة) · الوحدة 1: 15 دقيقة",
+          "continuityLock": "1 مدرب مغلق (الشيف ليلى منساه) · 2 طباخين متدربين · 1 مطبخ هاربور ستريت التعليمي · 5 أطباق تقدمية",
+          "unitLabel": "وحدات الدورة (5)",
+          "artLock": "طاهٍ واحد مقفل. الشيف ليلى منساه، نفس الوجه، نفس المعطف الأبيض، نفس الشعر القصير، في نفس مطبخ التدريس في شارع هاربور - نفس البلاط، نفس الأواني، نفس النافذة - من المرق إلى الحلوى.",
+          "logline": "طاهٍ واحد، ومطبخ واحد، وخمس وجبات - كل طبق يعلم اليدين ما سيحتاجه الطبق التالي.",
+          "seriesSynopsis": "تم تصميم Five Plates ليكون منهجًا تعليميًا متعدد الوحدات على مستوى المؤسسات، ويتبع الشيف Lila Mensah عبر خمسة دروس مدتها 15 دقيقة (إجمالي 75 دقيقة) داخل مطبخ Harbour Street التعليمي المغلق. على عكس قارئات الشرائح الرمزية التي لا يمكنها إظهار المهارات البدنية، يقوم SceneFlow بتأمين وجه الشيف منساه، ومعطفه مزدوج الصدر، ومحطة السكاكين، وبلاط الجدران الخزفي الأخضر عبر إيقاعات التدريس المتوسطة لـ A-Cam، وعروض المقاعد العلوية B-Cam 90 درجة، وعمليات فحص الفتات/الغليان الكلي لـ C-Cam - مما يؤدي إلى بناء كفاءة طهي تراكمية من مرق أساسي واضح إلى خدمة تخرج من خمس أطباق.",
+          "cast": [
+            {
+              "name": "الشيف ليلى منساه",
+              "role": "المدرب الرئيسي · الهوية المقفلة وخزانة الملابس",
+              "descriptor": "الشيف التنفيذي-المدرب (38). معطف الشيف الأبيض الناصع مزدوج الصدر، وساحة الأردواز، والشعر المقصوص؛ يحافظ على هندسة الوجه المتطابقة، واستمرارية اليد، والسلطة التربوية الهادئة في جميع الوحدات الخمس."
+            },
+            {
+              "name": "ماركوس كول",
+              "role": "طباخ مجموعة المتدرب · ورقة الأحرف المقفلة",
+              "descriptor": "طالب الطهي في السنة الأولى (26). سترة المتدرب البحرية في المقعد رقم 2؛ ينفذ فحوصات تقنية حية وتعديلات الحرارة واستكشاف الأخطاء وإصلاحها."
+            },
+            {
+              "name": "بريا ناير",
+              "role": "طباخ مجموعة المتدرب · ورقة الأحرف المقفلة",
+              "descriptor": "طالب الطهي في السنة الأولى (24). سترة المتدرب الفحمي في المقعد رقم 3؛ يوضح معايرة التوابل، وفحص العجين، والطلاء على الطراز العائلي."
+            },
+            {
+              "name": "مطبخ هاربور ستريت التعليمي",
+              "role": "مجموعة استوديو مقفلة · منصة تعليمية مكونة من 3 كاميرات",
+              "descriptor": "استوديو من الطوب الصناعي والبلاط الأخضر مضاء بضوء النهار مع جزيرة من الفولاذ المصقول وأوعية تخزين نحاسية ثقيلة ورسومات وسائل شرح متزامنة عبر A-Cam و90° Overhead B-Cam وMacro C-Cam."
+            }
+          ],
+          "episode1Synopsis": {
+            "episodeLabel": "الحلقة 1 (الوحدة 1) ملخص · أساس الدورة (3 فصول)",
+            "title": "الوحدة 1: المرق - الاستخلاص والوضوح والتحكم في الحرارة",
+            "duration": "15 دقيقة (3 فصول · الفصل الأول دليل حي: 5 دقائق)",
+            "logline": "تقوم الشيف ليلى منساه بتدريس إدارة الحرارة، والعطريات، والانضباط في القشط من خلال مرق أساس واضح تمامًا يدعم بقية المنهج الدراسي.",
+            "synopsis": "في الوحدة الأولى، تقوم الشيف ليلى منساه بإنشاء طاولة عمل هاربور ستريت وتعلم المهارات الأساسية للدورة: تحويل الماء البارد، والعظام المحمصة أو الخضروات الجذرية، والمواد العطرية إلى مرق واضح ومنظم. تم تنظيمه في ثلاثة فصول تعليمية - (1) التشغيل البارد والسكين Mise en Place، (2) التسخين الحراري والتصفية، و (3) معايرة الملح في المرحلة المتأخرة والتحقق من الوضوح - يتقن المتعلمون التحكم الحراري قبل لمس الدقيق أو البروتينات المحمصة في الوحدات اللاحقة.",
+            "chapter1Title": "الفصل الأول: الماء البارد والعظام النظيفة والطهي الأول",
+            "chapter1Duration": "5 دقائق · إثبات الفصل الأولي",
+            "chapter1Synopsis": "الافتتاح على A-Cam في Harbour Street Kitchen الذي يتوازن فيه ضوء النهار، تقدم الشيف Lila Mensah المنهج المكون من خمس أطباق، وتتحول إلى B-Cam العلوية المقفلة بزاوية 90 درجة لتوضيح قطع الميربواكس الموحدة والغمر في الماء البارد، وتجلب الوعاء إلى أول فقاعة حرارية كسولة جنبًا إلى جنب مع المتدربين ماركوس وبريا."
+          },
+          "episodes": [
+            {
+              "number": "1",
+              "title": "المرق",
+              "duration": "15 دقيقة",
+              "synopsis": "تبدأ ليلى بمرق صافي: سكين، وعظام أو خضروات، وحرارة، وصبر. إنها تُظهر درجة الغليان، والقشدة، ولحظة دخول الملح. المطبخ، والمعطف، ووجهها تم تحديدهما كمجموعة مقفلة. الشيك عبارة عن ملعقة طعمها نهائي وليس غائم."
+            },
+            {
+              "number": "2",
+              "title": "الخبز",
+              "duration": "15 دقيقة",
+              "synopsis": "نفس المقعد، نفس الشيف. العجين والوقت وإحساس الرغيف المثبت. تربط ليلى درس المرق حول الصبر بالانتظار الذي يتطلبه العجين. يشكل الطلاب ويسجلون ويخبزون. الشيك عبارة عن فتات مفتوحة وليست لزجة، مع ملاحظة عما سيغيرونه في المرة القادمة."
+            },
+            {
+              "number": "3",
+              "title": "الخضار الرئيسية",
+              "duration": "15 دقيقة",
+              "synopsis": "وعاء من الخضر والحبوب يجب أن يطعم الفصل بأكمله، وليس كاميرا. تعرض ليلى صلصة مصنوعة من المرق، وتوابل لمجموعة، وكيفية الحفاظ على اللون في الخضار. الشيك عبارة عن طبق يكون نفسه في الوعاء الأول والأخير."
+            },
+            {
+              "number": "4",
+              "title": "مشوي الاحتفال",
+              "duration": "15 دقيقة",
+              "synopsis": "طبق مركزي لليلة مهمة: تحميص، راحة، وطبق جانبي يستخدم خبز الأمس. تحتفظ ليلى بنفس المحطة ونفس الصوت بينما ترتفع حصص اللوحة. الشيك منقوش على طاولة، وليس لقطة بطل واحدة."
+            },
+            {
+              "number": "5",
+              "title": "آخر الحلو",
+              "duration": "15 دقيقة",
+              "synopsis": "حلوى تحتاج إلى التحكم في الحرارة في الوحدة 1، وتوقيت الوحدة 2، وعين التتبيل في الوحدة 3. ثم يقوم الفصل بإعداد الأطباق الخمسة كوجبة واحدة. تسير \"ليلى\" في الممر بنفس المعطف وفي نفس المطبخ. تتحول الدورة من دروس إلى خدمة."
+            }
+          ]
+        }
+      }
+    },
     "explorerHandoff": "تُمثّل هذه الروابط عملاً مُنجزاً، بينما يُعدّ Explorer المكان الذي تبتكر فيه عملك الخاص.",
     "languagesBanner": "تتوفر الأمثلة العامة بأربع لغات: الإنجليزية والإسبانية والصينية والعربية.",
     "workflowLabel": "حلول",
@@ -2197,16 +2840,19 @@
     "chapters": [
       {
         "id": "ابدأ من هنا",
-        "label": "ابدأ من هنا: التخطيط، والاستمرارية، والملاءمة للجمهور."
+        "label": "ابدأ من هنا: التخطيط، والاستمرارية، والملاءمة للجمهور.",
+        "defaultExpanded": false
       },
       {
         "id": "إنتاج ونشر",
-        "label": "الإنتاج والنشر — مقاطع إلى Screening Room"
+        "label": "الإنتاج والنشر — مقاطع إلى Screening Room",
+        "defaultExpanded": false
       }
     ],
     "close": "إغلاق",
     "viewDetails": "عرض التفاصيل",
     "beatFirst": {
+      "id": 15,
       "title": "مسار عمل فيديو يرتكز على الإيقاع",
       "description": "اعتمد محطات التصور المسبق (pre-vis beats) وإطارات اللقطة قبل مرحلة التحويل من النص إلى الفيديو (F2V)؛ لتقليل عمليات إعادة التوليد العشوائية الناتجة عن \"الهلوسة\" والانحراف البصري. مسار عمل واحد ومنظم يمتد من مرحلة المراجعة وحتى المقطع النهائي.",
       "keyFeatures": [
@@ -2632,7 +3278,7 @@
         }
       ],
       "supportedProviders": "المزودون المدعومون",
-      "vertexName": "Google Vertex AI",
+      "vertexName": "جوجل Vertex AI",
       "vertexDetail": "المراجع، والصور الثابتة، ومقاطع \"أومني\" (Omni)",
       "elevenLabsName": "كلينغ",
       "elevenLabsDetail": "إنشاء مقاطع عند استخدام مفتاحك",
@@ -2681,7 +3327,7 @@
       "imageGeneration": "توليد الصور",
       "videoGeneration": "توليد الفيديو",
       "voiceover": "تعليق صوتي",
-      "byokTag": "(BYOK)",
+      "byokTag": "(سفيبيوكتيرم)",
       "totalEstimate": "إجمالي التقدير",
       "withTopUps": "مع عمليات الشحن",
       "creditSavings": "مدخرات الائتمان SceneFlow",
@@ -2905,79 +3551,5 @@
     "mute": "كتم الصوت",
     "unmute": "إلغاء كتم الصوت",
     "expandVideo": "تكبير الفيديو"
-  },
-  "productionAgent": {
-    "eyebrow": "وكيل الإنتاج • منشئ الاستوديو الذاتي",
-    "title": "توقف عن كتابة أكثر من 300 أمر للقطات يدوياً. ابدأ البناء وانصرف لأعمالك.",
-    "subtitle": "يتطلب الإنتاج المعتاد المكون من 27 مشهداً (12–20 لقطة لكل مشهد) أكثر من 300 أمر يدوي للصور والفيديو في أدوات الذكاء الاصطناعي التقليدية. أتقن سيناريو عملك في أقل من ساعة، واختر Pre-Vis أو المقاطع أو المشاهد أو النسخة الرئيسية أو العرض الترويجي، ودع وكيل الإنتاج يبني مشاهدك ويعالج اللقطات الفاشلة ذاتياً ويُشعرك برابط خاص /s/ إلى Screening Room عند الاكتمال.",
-    "showDetail": "عرض المزيد من التفاصيل",
-    "hideDetail": "إخفاء التفاصيل",
-    "drawerBadge": "تنسيق ذاتي للمشاهد خطوة بخطوة",
-    "drawerTitle": "أقل من ساعة على السيناريو. ساعات من الأوامر اليدوية تستبدلها تشغيلة ذاتية واحدة.",
-    "cards": [
-      {
-        "badge": "تخلّص من 300+ أمر يدوي",
-        "title": "< ساعة واحدة على السيناريو ← تفرّغ ليومك",
-        "description": "تجاوز كتابة أكثر من 300 أمر منفصل للصور الثابتة والفيديو عبر 27 مشهداً (12–20 لقطة لكل مشهد). أتقن السيناريو في أقل من ساعة واستعد يومك لأولوياتك."
-      },
-      {
-        "badge": "جميع المشاهد الـ 27 أو حسب الفصل",
-        "title": "5 مراحل إنتاج متكاملة من البداية للنهاية",
-        "description": "اختر Pre-Vis والمقاطع والمشاهد والنسخة الرئيسية والعرض الترويجي في أداة واحدة. يبني الوكيل تلقائياً مراجع الاستمرارية، وصوت الحوار والمؤثرات والموسيقى، والإطارات المفتاحية، ومقاطع الحركة، والعروض الترويجية."
-      },
-      {
-        "badge": "صفر توقف أثناء التصيير",
-        "title": "إصلاح ذاتي + انتقال تلقائي إلى Creative Clips",
-        "description": "يحسّن توجيه اللقطات تلقائياً ويعيد تشغيل اللقطات الفاشلة. وعندما تصطدم لقطة درامية بفلاتر سياسات Google حتى بعد التحسين، ينتقل تلقائياً إلى Creative Clips."
-      },
-      {
-        "badge": "تحكم كامل للمخرج",
-        "title": "نقاط فحص وروابط مراجعة /s/",
-        "description": "شغّل الإنتاج دون تدخل بنسبة 100% أو أوقفه مؤقتاً بعد Pre-Vis أو بعد كل مشهد. استقبل إشعارات بالتكرار الذي تختاره مع رابط مباشر /s/ إلى Screening Room جاهز للمراجعة."
-      }
-    ],
-    "viewScript": "عرض سيناريو فيديو آنا (جولة 30 ثانية)",
-    "hideScript": "إخفاء سيناريو فيديو آنا (جولة 30 ثانية)",
-    "copyScript": "نسخ السيناريو",
-    "copied": "تم النسخ",
-    "cta": "أطلق الاستوديو ($9)"
-  },
-  "studioAcademy": {
-    "eyebrow": "أكاديمية SceneFlow Studio والتدريب الفوري (Just-In-Time)",
-    "title": "إرشاد في كل خطوة. أتقن الاستوديو أثناء الإبداع.",
-    "subtitle": "لا تقف حائراً أمام خط زمني فارغ ولا تهدر الرصيد في تخمين الخطوة التالية. اضغط على ? في أي شاشة لفتح خريطة شاشة فورية (JIT) وقائمة مهام مدتها 60 ثانية بأزرار تنفيذ بنقرة واحدة—أو اتبع دورات تفاعلية من فكرتك الأولى حتى النسخة الرئيسية المنشورة.",
-    "showDetail": "عرض المزيد من التفاصيل",
-    "hideDetail": "إخفاء التفاصيل",
-    "drawerBadge": "قوة استوديو هوليوود · دون الحاجة لمعهد سينما",
-    "drawerTitle": "خرائط شاشة تفاعلية، وقوائم مهام في 60 ثانية، وضوابط حماية الرصيد مدمجة في كل غرفة",
-    "cards": [
-      {
-        "badge": "دائماً بضغطة زر واحدة (?)",
-        "title": "مدرب فوري (JIT) مدرك للسياق",
-        "description": "اضغط على ? في أي شاشة لفتح خريطة مرئية فورية لمساحة عملك النشطة، وقائمة مهام في 60 ثانية للخطوة التالية، وأزرار بنقرة واحدة تنفّذ إجراء الاستوديو المطلوب مباشرة."
-      },
-      {
-        "badge": "4 دورات تفاعلية موجهة",
-        "title": "محاكي «فيلمك الأول في 10 دقائق»",
-        "description": "مصمم لرواة القصص والمؤلفين وصنّاع المسلسلات دون أي خبرة سابقة في المونتاج. اتبع إرشادات Spotlight X-Ray التفاعلية من فكرة في جملة واحدة إلى فيلم مكتمل بالأصوات والموسيقى وجاهز للعرض."
-      },
-      {
-        "badge": "وفّر حتى 70% من الرصيد",
-        "title": "ضوابط حماية الرصيد بمنهج Animatic أولاً",
-        "description": "تتضمن كل مساحة عمل ضوابط رصيد فورية توضح كيفية اعتماد سيناريو بتقييم 80+ في Audience Resonance ومعاينة Animatic ناطق قبل إنفاق الرصيد على تصيير مقاطع الفيديو المتحركة."
-      },
-      {
-        "badge": "مضمن مجاناً مع كل باقة",
-        "title": "4 دورات استوديو تفاعلية مدمجة",
-        "description": "أتقن Blueprint وAudience Resonance، وخزنة استمرارية الشخصيات والمواقع، وضوابط حماية الرصيد عبر Animatic، وغرفة العرض Screening Room مع الدبلجة لأكثر من 70 لغة مباشرة داخل الاستوديو."
-      }
-    ],
-    "tryLiveMap": "جرّب خريطة الشاشة المرئية الفورية JIT (الدبابيس 1–4)",
-    "hideLiveMap": "إخفاء خريطة الشاشة المرئية الفورية JIT",
-    "viewScript": "عرض سيناريو فيديو 30 ثانية (آنا)",
-    "hideScript": "إخفاء سيناريو فيديو 30 ثانية (آنا)",
-    "copyScript": "نسخ السيناريو",
-    "copied": "تم النسخ",
-    "cta": "أطلق الاستوديو ($9)"
   }
 }

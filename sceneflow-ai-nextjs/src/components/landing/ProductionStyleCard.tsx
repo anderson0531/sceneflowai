@@ -119,6 +119,11 @@ export function ProductionStyleCard({
   enterFullscreenLabel,
   exitFullscreenLabel,
   explorerHandoff,
+  showDetailLabel = 'Show more detail',
+  hideDetailLabel = 'Hide detail',
+  featuredPlayerLabel = 'Featured Player',
+  openPlayerLabel = 'Open Player',
+  featureModes,
 }: {
   card: ProductionStyleCardData
   index: number
@@ -133,10 +138,17 @@ export function ProductionStyleCard({
   enterFullscreenLabel: string
   exitFullscreenLabel: string
   explorerHandoff: string
+  showDetailLabel?: string
+  hideDetailLabel?: string
+  featuredPlayerLabel?: string
+  openPlayerLabel?: string
+  featureModes?: readonly string[]
 }) {
   const style = CARD_STYLES[card.id] ?? FALLBACK_STYLE
   const Icon = style.icon
   const media = getProductionExampleMedia(card.id)
+  const resolvedFeatureModes =
+    featureModes && featureModes.length > 0 ? featureModes : SCREENING_ROOM_FEATURE_MODES
   const watchLabel = media.longformRuntimeLabel
     ? `${watchLongformLabel} · ${media.longformRuntimeLabel}`
     : watchLongformLabel
@@ -210,7 +222,7 @@ export function ProductionStyleCard({
             aria-expanded={showDetail}
             className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-slate-900/80 px-3.5 py-1.5 text-xs font-semibold text-cyan-200 transition hover:border-cyan-400/40 hover:bg-slate-800 hover:text-white"
           >
-            <span>{showDetail ? 'Hide detail' : 'Show more detail'}</span>
+            <span>{showDetail ? hideDetailLabel : showDetailLabel}</span>
             {showDetail ? (
               <ChevronUp className="h-3.5 w-3.5 text-cyan-300" aria-hidden />
             ) : (
@@ -242,7 +254,7 @@ export function ProductionStyleCard({
                       </span>
                       <div>
                         <span className="block text-[10px] font-bold uppercase tracking-widest text-white/80">
-                          Featured Player
+                          {featuredPlayerLabel}
                         </span>
                         <span className="text-base font-bold tracking-tight text-white">
                           {milestoneLabels[screeningMilestone.id]}
@@ -250,12 +262,12 @@ export function ProductionStyleCard({
                       </div>
                     </div>
                     <span className="inline-flex items-center gap-1 rounded-full bg-black/25 px-2.5 py-1 text-xs font-semibold text-white ring-1 ring-white/20 transition-transform group-hover/screening:translate-x-0.5">
-                      Open Player
+                      {openPlayerLabel}
                       <ArrowRight className="h-3.5 w-3.5" />
                     </span>
                   </div>
                   <div className="flex flex-wrap items-center gap-1.5">
-                    {SCREENING_ROOM_FEATURE_MODES.map((modeLabel) => (
+                    {resolvedFeatureModes.map((modeLabel) => (
                       <span
                         key={modeLabel}
                         className="rounded-md bg-black/30 px-2 py-0.5 text-[11px] font-medium text-white/95 ring-1 ring-white/15"

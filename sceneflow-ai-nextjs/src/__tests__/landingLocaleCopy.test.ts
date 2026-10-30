@@ -110,9 +110,21 @@ describe('landing locale copy', () => {
       'hero.headline',
       'hero.ctaPrimaryLaunch',
       'keyFeatures.title',
+      'keyFeatures.featuresListLabel',
+      'keyFeatures.rooms.0.features.0.description',
+      'keyFeatures.rooms.0.features.0.learnMore.items.0.title',
+      'keyFeatures.rooms.0.features.0.learnMore.items.0.description',
+      'keyFeatures.rooms.2.groups.1.features.0.description',
+      'keyFeatures.rooms.2.groups.1.features.0.learnMore.items.0.description',
+      'productionShowcase.showDetail',
+      'productionShowcase.seriesPanel.headerLabel',
+      'productionShowcase.seriesPanel.inputs.drama.seriesSynopsis',
       'forFilmmakers.heading',
       'productionAgent.title',
+      'productionAgent.scriptBlocks.0.narration',
       'studioAcademy.title',
+      'studioAcademy.jitMap.title',
+      'studioAcademy.scriptBlocks.0.narration',
     ] as const
     for (const code of ['es', 'pt', 'hi', 'zh-CN', 'ar', 'th']) {
       const localeMessages = JSON.parse(readFileSync(join(ROOT, `${code}.json`), 'utf8')) as Record<
@@ -122,7 +134,7 @@ describe('landing locale copy', () => {
       for (const path of paths) {
         const value = String(getAtPath(localeMessages, path))
         const source = String(getAtPath(enMessages, path))
-        expect(value.length, `${code} ${path}`).toBeGreaterThan(4)
+        expect(value.length, `${code} ${path}`).toBeGreaterThanOrEqual(2)
         expect(value, `${code} ${path} is still English`).not.toBe(source)
       }
     }

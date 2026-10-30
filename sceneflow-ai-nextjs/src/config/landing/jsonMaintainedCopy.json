@@ -244,6 +244,7 @@
     "badge": "Key Features",
     "title": "From the idea to the master.",
     "subtitle": "Series Room → Blueprint Room → Production Stage → Screening Room.",
+    "featuresListLabel": "Features List",
     "learnMoreLabel": "Learn more",
     "showLessLabel": "Show less",
     "videoComingSoon": "Feature demo coming soon",
@@ -1141,6 +1142,29 @@
     "hideScript": "Hide Ana Video Script (30s Walkthrough)",
     "copyScript": "Copy script",
     "copied": "Copied",
+    "voLabel": "VO:",
+    "pictureLabel": "Picture:",
+    "scriptBlocks": [
+      {
+        "block": "Block 01 (0:00–0:10)",
+        "title": "The 300-Shot Wall & One-Click Launch",
+        "syncLine": "ANA (on camera): \"Three hundred shots used to mean three hundred manual prompts. Not anymore.\"",
+        "narration": "Spend under an hour perfecting your script across 27 scenes — then launch the Production Agent in one click.",
+        "visual": "Medium shot of Ana (CHAR_ANA, olive field jacket over slate turtleneck) in the dark virtual production suite. She taps a single cyan launch control; behind her, a 27-scene storyboard grid and a cyan-to-emerald progress bar ignite across the curved wall display."
+      },
+      {
+        "block": "Block 02 (0:10–0:20)",
+        "title": "Autonomous Build, Self-Healing & Creative Clips Fallback",
+        "narration": "The Agent walks every scene — locking references, laying narration and music cues, optimizing failed clip prompts, and switching to Creative Clips when a shot hits policy filters.",
+        "visual": "Over-the-shoulder past Ana toward the curved wall display as storyboard frames, audio waveforms, and motion previews populate across 27 scene slots. One tile briefly pulses amber (policy retry), rewrites its camera angle, and turns solid emerald green."
+      },
+      {
+        "block": "Block 03 (0:20–0:30)",
+        "title": "Walk Away & Screening Room Notification",
+        "narration": "Set scene checkpoints, or walk away completely. When your Pre-Vis or master cut is ready, a notification delivers your private Screening Room link for review.",
+        "visual": "Ana picks up her ceramic coffee mug as the wall display reaches 100% emerald completion. Her phone lights up with a private /s/ Screening Room notification; she smiles warmly to camera while the finished master plays behind her."
+      }
+    ],
     "cta": "Launch Studio ($9)"
   },
   "studioAcademy": {
@@ -1173,12 +1197,181 @@
         "description": "Master Blueprint & Audience Resonance, the Character & Setting Continuity Vault, Animatic-First Credit Guardrails, and Screening Room & 70+ Language Dubbing right inside the studio."
       }
     ],
+    "courses": [
+      {
+        "id": "first-film-10m",
+        "title": "Your First Film in 10 Minutes",
+        "totalDuration": "10 mins"
+      },
+      {
+        "id": "continuity-mastery",
+        "title": "Character & World Continuity Mastery",
+        "totalDuration": "6 mins"
+      },
+      {
+        "id": "animatic-first-savings",
+        "title": "Animatic-First Filmmaking (Save 70% of Credits)",
+        "totalDuration": "5 mins"
+      },
+      {
+        "id": "series-and-global-dubbing",
+        "title": "Multi-Episode Series & 13+ Language Global Release",
+        "totalDuration": "6 mins"
+      }
+    ],
+    "jitMap": {
+      "eyebrow": "Live Just-In-Time (JIT) Visual Screen Map",
+      "title": "Click Any Workspace & Numbered Pin (1–4) to Inspect Studio Controls",
+      "coachPrefix": "JIT Coach:",
+      "autoDetected": "● Auto-Detected",
+      "checklistTitle": "60-Second Guided Checklist",
+      "screens": {
+        "blueprint": {
+          "tabLabel": "1. Blueprint & 80+ Resonance",
+          "stepBadge": "Phase 1 • Story & Greenlight",
+          "shortTitle": "Blueprint Room",
+          "subtitle": "Transform your raw concept into a greenlit, 80+ Resonance film treatment before spending production credits.",
+          "quickSteps": [
+            {
+              "number": "1",
+              "title": "Generate Your Film Treatment",
+              "description": "Enter your story concept or script and generate a complete 3-act Film Treatment with hero key art.",
+              "creditBadge": "~25 credits"
+            },
+            {
+              "number": "2",
+              "title": "Run Audience Resonance™ Analysis",
+              "description": "Evaluate your story against your target demographic across 5 narrative axes and identify weak beats.",
+              "creditBadge": "~20 credits"
+            },
+            {
+              "number": "3",
+              "title": "Apply 1-Click Fixes to Reach 80+ Score",
+              "description": "Apply the AI script doctor recommendations until your Resonance score reaches 80/100 or higher.",
+              "creditBadge": "~15 credits"
+            },
+            {
+              "number": "4",
+              "title": "Greenlight into Virtual Production",
+              "description": "Lock the Blueprint and generate your scene-by-scene screenplay, cast list, and visual breakdown.",
+              "creditBadge": "~30 credits"
+            }
+          ]
+        },
+        "production": {
+          "tabLabel": "2. Continuity Vault & Video Motion",
+          "stepBadge": "Phase 2 • Virtual Soundstage",
+          "shortTitle": "Virtual Production",
+          "subtitle": "Lock character faces & voices in the Continuity Vault, render start/end keyframes, and animate motion video clips.",
+          "quickSteps": [
+            {
+              "number": "1",
+              "title": "Lock Cast Portraits, Voices & Locations First",
+              "description": "Generate and approve character portraits, neural voices, and location references in the Reference Library.",
+              "creditBadge": "10–15 cr / ref"
+            },
+            {
+              "number": "2",
+              "title": "Synthesize Dialogue, SFX & Musical Score",
+              "description": "Assign voices to each character and generate scene dialogue and atmosphere so your timeline timing is locked.",
+              "creditBadge": "5–15 cr / scene"
+            },
+            {
+              "number": "3",
+              "title": "Render Start/End Keyframes & Preview Animatic",
+              "description": "Generate reference-locked keyframes for each segment and watch the full film in the Screening Room as an Animatic.",
+              "creditBadge": "10–15 cr / frame"
+            },
+            {
+              "number": "4",
+              "title": "Animate Hero Shots or Launch Production Agent",
+              "description": "Convert key shots into motion video manually, or launch the autonomous Production Agent to build Pre-Vis, Clips, Master, and Promo while you walk away.",
+              "creditBadge": "Walk-Away Mode"
+            }
+          ]
+        },
+        "series": {
+          "tabLabel": "3. Series Story Bible",
+          "stepBadge": "Multi-Episode Continuity",
+          "shortTitle": "Series Studio",
+          "subtitle": "Build multi-episode shows or chapter-by-chapter adaptations with one shared cast & location vault.",
+          "quickSteps": [
+            {
+              "number": "1",
+              "title": "Create or Select Your Series Bible",
+              "description": "Enter your series logline, genre, and target episode count to generate a multi-episode story arc and shared cast.",
+              "creditBadge": "~30 credits"
+            },
+            {
+              "number": "2",
+              "title": "Lock Recurring Characters & Locations",
+              "description": "Approve the reference portraits and voice assignments in the Series Bible so every episode inherits them automatically.",
+              "creditBadge": "10–15 cr / portrait"
+            },
+            {
+              "number": "3",
+              "title": "Launch Episode 1 into Blueprint Room",
+              "description": "Click \"Launch Episode Blueprint\" on Episode 1 to refine its 3-act treatment and start Virtual Production."
+            }
+          ]
+        },
+        "final-cut": {
+          "tabLabel": "4. Final Cut & 13+ Languages",
+          "stepBadge": "Phase 3–4 • Screening & Dubs",
+          "shortTitle": "Final Cut & Screening",
+          "subtitle": "Blend Animatic & Video streams, switch across 13+ dubbed languages, and share /s/ review links.",
+          "quickSteps": [
+            {
+              "number": "1",
+              "title": "Watch Full-Screen in the Screening Room",
+              "description": "Play your assembled scenes back-to-back with transitions, dialogue, SFX, and auto-ducked score.",
+              "creditBadge": "0 credits"
+            },
+            {
+              "number": "2",
+              "title": "Share a /s/ Review Link for Feedback",
+              "description": "Generate a shareable screening link to collect timestamped notes from collaborators or clients.",
+              "creditBadge": "0 credits"
+            },
+            {
+              "number": "3",
+              "title": "Export MP4 Master & Multi-Language Dubs",
+              "description": "Render your final 1080p/4K MP4 master and optional localized audio/subtitle streams.",
+              "creditBadge": "20–50 cr render"
+            }
+          ]
+        }
+      }
+    },
     "tryLiveMap": "Try Live JIT Visual Screen Map (Pins 1–4)",
     "hideLiveMap": "Hide Live JIT Visual Screen Map",
     "viewScript": "View 30s Video Script (Ana)",
     "hideScript": "Hide 30s Video Script (Ana)",
     "copyScript": "Copy script",
     "copied": "Copied",
+    "voLabel": "VO:",
+    "pictureLabel": "Picture:",
+    "scriptBlocks": [
+      {
+        "block": "Block 01 (0:00–0:10)",
+        "title": "The Just-In-Time Screen Map",
+        "syncLine": "ANA (on camera): \"You don't need film school when the studio guides every step.\"",
+        "narration": "Press question mark on any screen to open a Just-In-Time visual map of the exact workspace you are in.",
+        "visual": "Medium shot of Ana (CHAR_ANA, olive field jacket over slate turtleneck) in the warm studio beside a translucent hologram showing glowing cyan numbered callout pins connected to storyboard frames and waveforms."
+      },
+      {
+        "block": "Block 02 (0:10–0:20)",
+        "title": "60-Second Checklist & Credit Guardrails",
+        "narration": "Follow a 60-second checklist with one-click studio actions, while built-in credit guardrails lock narration, music, and animatic frames before you spend on motion.",
+        "visual": "Close-medium shot across Ana and the floating glass panel as three checklist nodes light up from cyan to emerald green, locking the voiced animatic timeline before heavy video render."
+      },
+      {
+        "block": "Block 03 (0:20–0:30)",
+        "title": "“Your First Film in 10 Minutes” Simulator",
+        "narration": "Or launch the ten-minute interactive simulator — walking you from a one-sentence idea to a voiced, scored, and published master as you create.",
+        "visual": "Medium portrait of Ana smiling warmly to camera as the numbered training pins transition smoothly into a luminous playable widescreen master frame behind her."
+      }
+    ],
     "cta": "Launch Studio ($9)"
   }
 }

@@ -75,6 +75,19 @@ export function ProductionAgentSection() {
   const tCommon = useTranslations('common')
   const tShowcase = useTranslations('productionShowcase')
   const detailCards = t.raw('cards') as Array<{ badge: string; title: string; description: string }>
+  const scriptBlocks = (
+    t.has('scriptBlocks')
+      ? (t.raw('scriptBlocks') as Array<{
+          block: string
+          title: string
+          syncLine?: string
+          narration: string
+          visual: string
+        }>)
+      : ANA_VIDEO_BLOCKS
+  )
+  const voLabel = t.has('voLabel') ? t('voLabel') : 'VO:'
+  const pictureLabel = t.has('pictureLabel') ? t('pictureLabel') : 'Picture:'
   const [showDetail, setShowDetail] = useState(false)
   const [showAnaScript, setShowAnaScript] = useState(false)
   const [copiedScript, setCopiedScript] = useState(false)
@@ -435,7 +448,7 @@ export function ProductionAgentSection() {
 
               {showAnaScript && (
                 <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-3">
-                  {ANA_VIDEO_BLOCKS.map((item) => (
+                  {scriptBlocks.map((item) => (
                     <div
                       key={item.block}
                       className="rounded-xl border border-white/10 bg-slate-950/85 p-3.5 text-left"
@@ -450,11 +463,11 @@ export function ProductionAgentSection() {
                         </p>
                       ) : null}
                       <p className="mt-2 text-xs leading-relaxed text-gray-200">
-                        <span className="font-semibold text-gray-400">VO: </span>
+                        <span className="font-semibold text-gray-400">{voLabel} </span>
                         {item.narration}
                       </p>
                       <p className="mt-1.5 text-[11px] leading-relaxed text-gray-400">
-                        <span className="font-semibold text-gray-500">Picture: </span>
+                        <span className="font-semibold text-gray-500">{pictureLabel} </span>
                         {item.visual}
                       </p>
                     </div>

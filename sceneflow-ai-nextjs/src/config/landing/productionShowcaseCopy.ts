@@ -1,4 +1,5 @@
 /** Production Examples section — display strings for landing i18n. */
+import { EXAMPLE_SERIES_INPUTS } from '@/config/landing/exampleSeriesInputs'
 
 export const PRODUCTION_SHOWCASE_COPY = {
   badge: 'Production Examples',
@@ -22,6 +23,63 @@ export const PRODUCTION_SHOWCASE_COPY = {
   finalDoor: 'Final',
   enterFullscreen: 'Enter fullscreen',
   exitFullscreen: 'Exit fullscreen',
+  showDetail: 'Show more detail',
+  hideDetail: 'Hide detail',
+  featuredPlayer: 'Featured Player',
+  openPlayer: 'Open Player',
+  featureModes: ['Pre-Vis', 'Clips', 'Scenes', 'Chapters', 'Master', 'Promo'],
+  seriesPanel: {
+    headerLabel: 'Series Bible & Episode 1',
+    bibleTab: 'Series Bible',
+    castTab: 'Locked Cast',
+    episode1Tab: 'Ep. 1 & Ch. 1',
+    seasonTab: 'Season',
+    formatLabel: 'Format',
+    durationLabel: 'Duration',
+    artStyleLabel: 'Art Style',
+    continuityLockLabel: 'Continuity Lock',
+    loglineLabel: 'Logline',
+    synopsisLabel: 'Series Synopsis & Visual Bible',
+    lockedCastHeading: 'Locked Cast & Principal Continuity',
+    inputs: Object.fromEntries(
+      EXAMPLE_SERIES_INPUTS.map((series) => [
+        series.cardId,
+        {
+          showTitle: series.showTitle,
+          format: series.format,
+          genre: series.genre,
+          artStyle: series.artStyle,
+          duration: series.duration,
+          continuityLock: series.continuityLock,
+          unitLabel: series.unitLabel,
+          artLock: series.artLock,
+          logline: series.logline,
+          seriesSynopsis: series.seriesSynopsis,
+          cast: series.cast.map((member) => ({
+            name: member.name,
+            role: member.role,
+            descriptor: member.descriptor,
+          })),
+          episode1Synopsis: {
+            episodeLabel: series.episode1Synopsis.episodeLabel,
+            title: series.episode1Synopsis.title,
+            duration: series.episode1Synopsis.duration,
+            logline: series.episode1Synopsis.logline,
+            synopsis: series.episode1Synopsis.synopsis,
+            chapter1Title: series.episode1Synopsis.chapter1Title,
+            chapter1Duration: series.episode1Synopsis.chapter1Duration,
+            chapter1Synopsis: series.episode1Synopsis.chapter1Synopsis,
+          },
+          episodes: series.episodes.map((ep) => ({
+            number: String(ep.number),
+            title: ep.title,
+            duration: ep.duration,
+            synopsis: ep.synopsis,
+          })),
+        },
+      ])
+    ),
+  },
   explorerHandoff:
     'These links are a finished production. Explorer is where you make your own.',
   languagesBanner:

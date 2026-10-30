@@ -567,7 +567,9 @@ export const LANDING_NAMESPACES = [
   'hero',
   'twoModes',
   'directControl',
+  'productionAgent',
   'publishCut',
+  'studioAcademy',
   'infrastructure',
   'useCasesShowcase',
   'pricing',
@@ -581,6 +583,8 @@ export const LANDING_NAMESPACES = [
   'keyFeatures',
   'pipeline',
   'screeningRoom',
+  'trustSafeguard',
+  'forFilmmakers',
 ] as const
 
 export const PRIORITY_LANDING_NAMESPACES = [

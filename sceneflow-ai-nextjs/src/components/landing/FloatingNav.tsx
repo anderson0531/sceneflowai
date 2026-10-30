@@ -12,9 +12,9 @@ export function FloatingNav() {
     () => [
       { id: 'two-modes', label: t('twoModes'), icon: Layers },
       { id: 'direct-control', label: t('directControl'), icon: Sliders },
-      { id: 'production-agent', label: 'Build', icon: Bot },
+      { id: 'production-agent', label: t.has('productionAgent') ? t('productionAgent') : 'Build', icon: Bot },
       { id: 'publish-cut', label: t('publishCut'), icon: Share2 },
-      { id: 'studio-academy', label: 'Academy', icon: GraduationCap },
+      { id: 'studio-academy', label: t.has('studioAcademy') ? t('studioAcademy') : 'Academy', icon: GraduationCap },
       { id: 'production-examples', label: t('productionExamples'), icon: Clapperboard },
       { id: 'key-features', label: t('keyFeatures'), icon: Sparkles },
       { id: 'pricing', label: t('pricing'), icon: DollarSign },

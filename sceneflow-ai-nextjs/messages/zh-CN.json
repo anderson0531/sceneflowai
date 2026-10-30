@@ -107,9 +107,9 @@
       },
       {
         "id": "production",
-        "tabLabel": "Production Stage",
+        "tabLabel": "SFAI生产_阶段术语",
         "number": "03",
-        "title": "Production Stage",
+        "title": "SFAI生产_阶段术语",
         "header": "从剧本到最终成片",
         "body": "SFAI 制作阶段利用 SFAI 智能助理导演、SFAI 审片室以及多语言流，同步运行多引擎生成任务（涵盖剧本、音频、画面和视频），助您完成从剧本定稿到 4K 成片发布的完整流程。",
         "steps": [
@@ -244,6 +244,7 @@
     "badge": "主要特点",
     "title": "从构思到杰作。",
     "subtitle": "Series Room → Blueprint Room → Production Stage → Screening Room.",
+    "featuresListLabel": "功能列表",
     "learnMoreLabel": "了解更多",
     "showLessLabel": "显示较少",
     "videoComingSoon": "功能演示即将推出",
@@ -267,52 +268,52 @@
         "features": [
           {
             "icon": "newSeries",
-            "title": "New Series",
-            "description": "Pitch your series, anthology, or episodic channel concept in plain language. Interactive AI refinement sharpens your premise, target audience, and visual tone before generating a complete multi-episode season baseline—complete with overarching plot arcs, recurring character hooks, and episode-by-episode breakdowns.",
-            "screenshot": "Create New Series — intent, Clarify and Confirm, Generate Series",
+            "title": "新系列",
+            "description": "用通俗易懂的语言宣传您的系列、选集或剧集频道概念。交互式人工智能细化在生成完整的多集季基线之前，会锐化您的前提、目标受众和视觉基调，包括总体情节弧线、重复出现的角色挂钩和逐集细分。",
+            "screenshot": "创建新系列——意图、澄清和确认、生成系列",
             "learnMore": {
               "items": [
                 {
-                  "title": "Plain-language series pitch",
-                  "description": "Pitch the premise, episode format, target demographic, and visual art style in plain language."
+                  "title": "通俗易懂的系列宣传片",
+                  "description": "用通俗易懂的语言介绍前提、剧集格式、目标人群和视觉艺术风格。"
                 },
                 {
-                  "title": "Interactive Clarify & Confirm",
-                  "description": "Clarify and Confirm sharpens the season synopsis, tone, and thematic pillars with you before anything is generated."
+                  "title": "互动澄清和确认",
+                  "description": "在生成任何内容之前，澄清和确认会与您一起完善季节概要、基调和主题支柱。"
                 },
                 {
-                  "title": "Multi-episode season baseline",
-                  "description": "Generate Series builds a structured five-episode season arc with individual synopses and story hooks that you can expand anytime."
+                  "title": "多集季节基线",
+                  "description": "生成系列构建了一个结构化的五集季线，其中包含单独的概要和故事情节，您可以随时扩展。"
                 },
                 {
-                  "title": "World & genre calibration",
-                  "description": "Lock visual aesthetics, era settings, and recurring narrative motifs up front so every episode shares the same creative DNA."
+                  "title": "世界和流派校准",
+                  "description": "预先锁定视觉美学、时代背景和反复出现的叙事主题，使每一集都具有相同的创意 DNA。"
                 }
               ]
             }
           },
           {
             "icon": "seriesReview",
-            "title": "Season Bible & Continuity",
-            "description": "Read or listen to the narrated season overview and episode slate. SceneFlow locks your story threads, cast profiles, recurring locations, and signature props into a shared Reference Library that every episode inherits automatically—eliminating continuity drift across multi-part storytelling.",
-            "screenshot": "Overview Listen, Episodes Listen, Consistency, Continuity — Cast, Locations, Props, Settings",
+            "title": "季节圣经与连续性",
+            "description": "阅读或收听解说的季节概述和剧集列表。 SceneFlow 将您的故事线索、演员简介、重复出现的地点和标志性道具锁定到每个剧集都会自动继承的共享 Reference Library 中，从而消除多部分故事叙述中的连续性漂移。",
+            "screenshot": "概述聆听、剧集聆听、一致性、连续性——演员、地点、道具、设置",
             "learnMore": {
               "items": [
                 {
-                  "title": "Narrated season & episode audit",
-                  "description": "Audit the overarching season overview and every individual episode synopsis with built-in studio audio narration."
+                  "title": "解说季和剧集审核",
+                  "description": "使用内置工作室音频旁白审核整个季节的概述和每个单独的剧集概要。"
                 },
                 {
-                  "title": "Cross-episode story consistency",
-                  "description": "Visual aesthetics, canonical plot events, and character relationship threads stay locked across the entire season."
+                  "title": "跨情节故事一致性",
+                  "description": "视觉美学、经典情节事件和人物关系线索在整个季节中都保持锁定。"
                 },
                 {
-                  "title": "Shared Reference Library inheritance",
-                  "description": "Cast portraits, voice profiles, wardrobes, locations, and signature props carry automatically into every episode you produce."
+                  "title": "共享 Reference Library 继承",
+                  "description": "演员肖像、声音简介、服装、地点和标志性道具会自动融入您制作的每一集。"
                 },
                 {
-                  "title": "Centralized canon management",
-                  "description": "Update a character look, location plate, or prop once in the Series Bible to propagate the change to future episodes."
+                  "title": "集中管理佳能",
+                  "description": "在系列圣经中更新一次角色外观、地点牌或道具，以将更改传播到未来的剧集。"
                 }
               ]
             }
@@ -320,87 +321,87 @@
           {
             "icon": "seriesResonance",
             "title": "Audience Resonance",
-            "description": "Test your season arc against your target demographic before writing a single script. Review episode-by-episode resonance scores, binge-retention curves, and structural critiques, then apply data-backed story improvements with one click—only when you agree with the note.",
-            "screenshot": "Audience Resonance analysis, then Actionable Insights, unapplied",
+            "description": "在编写单个脚本之前，根据目标人群测试您的季节弧。查看逐集共鸣分数、追剧保留曲线和结构批评，然后一键应用数据支持的故事改进 - 仅当您同意注释时。",
+            "screenshot": "Audience Resonance 分析，然后是可操作的见解，未应用",
             "learnMore": {
               "items": [
                 {
-                  "title": "Demographic & retention scoring",
-                  "description": "Multi-axis scores and structural analysis reveal how your season arc and episode cliffhangers land with your target audience."
+                  "title": "人口统计和保留评分",
+                  "description": "多轴分数和结构分析揭示了您的季节弧和剧集扣人心弦的内容如何吸引目标受众。"
                 },
                 {
-                  "title": "Episode-by-episode diagnostics",
-                  "description": "Spot mid-season pacing dips, character underutilization, or tonal drift across the full episode slate before scripting."
+                  "title": "逐集诊断",
+                  "description": "在编写剧本之前，发现季中节奏下降、角色利用不足或整个剧集的基调漂移。"
                 },
                 {
-                  "title": "Director's prerogative",
-                  "description": "Actionable Insights update your series bible and episode outlines only when you explicitly choose to apply them."
+                  "title": "董事特权",
+                  "description": "仅当您明确选择应用时，可行的见解才会更新您的系列圣经和剧集大纲。"
                 }
               ]
             }
           },
           {
             "icon": "seriesDirector",
-            "title": "The Series Director",
-            "description": "Reshape the entire season by voice or text. Shift the dramatic tone, raise the stakes, introduce a new antagonist, or rework a character arc across all episodes at once while keeping the rest of your storyline and continuity bible intact.",
-            "screenshot": "Series Director — direction, focus, accept",
+            "title": "系列总监",
+            "description": "通过语音或文字重塑整个赛季。改变戏剧性的基调，提高赌注，引入新的对手，或者一次性修改所有剧集中的角色弧线，同时保持故事情节的其余部分和连续性圣经完好无损。",
+            "screenshot": "系列总监——方向、焦点、接受",
             "learnMore": {
               "items": [
                 {
-                  "title": "Plain-language season direction",
-                  "description": "Speak or type your creative note and target overarching plot, characters, episode arcs, tone, or world setting."
+                  "title": "通俗易懂的季节方向",
+                  "description": "说出或输入您的创意笔记并定位总体情节、角色、情节弧线、基调或世界背景。"
                 },
                 {
-                  "title": "Surgical multi-episode updates",
-                  "description": "Nothing changes until you accept the previewed revision, and unrelated story threads stay completely untouched."
+                  "title": "手术多集更新",
+                  "description": "在您接受预览版本之前，任何内容都不会发生变化，并且不相关的故事线索完全保持不变。"
                 },
                 {
-                  "title": "Guided AI recommendations",
-                  "description": "Apply one-click story improvements surfaced by Audience Resonance or steer every creative choice yourself."
+                  "title": "引导式人工智能建议",
+                  "description": "应用 Audience Resonance 提出的一键式故事改进或亲自指导每个创意选择。"
                 }
               ]
             }
           },
           {
             "icon": "directEpisode",
-            "title": "Episode-Level Direction",
-            "description": "Zoom into any individual episode to rework its plot outline, act structure, pacing, or cold-open hook in isolation—without destabilizing neighboring episodes or mutating the rest of your season slate.",
-            "screenshot": "Episodes — Direct this episode, other episodes unchanged",
+            "title": "剧集级方向",
+            "description": "放大任何单个剧集，单独修改其情节大纲、行为结构、节奏或冷开钩，而不会破坏相邻剧集的稳定性或改变季节的其余部分。",
+            "screenshot": "剧集 - 导演本集，其他剧集不变",
             "learnMore": {
               "items": [
                 {
-                  "title": "Isolated episode rewrites",
-                  "description": "Direct changes to a single episode's synopsis, act beats, and character focus without altering neighboring episodes."
+                  "title": "孤立的情节重写",
+                  "description": "直接更改单个剧集的概要、动作节拍和角色焦点，而不改变相邻剧集。"
                 },
                 {
-                  "title": "Locked season integrity",
-                  "description": "The overarching season bible, shared cast continuity, and remaining episode slate stay locked while you iterate."
+                  "title": "锁定赛季完整性",
+                  "description": "当您迭代时，整个季节的圣经、共享的演员连续性和剩余的剧集列表都保持锁定。"
                 },
                 {
-                  "title": "Pre-launch beat polishing",
-                  "description": "Refine individual episode hooks and cliffhangers until the episode is ready to launch into the Blueprint Room."
+                  "title": "上线前节奏打磨",
+                  "description": "完善单个剧集的挂钩和悬念，直到该剧集准备好进入 Blueprint Room。"
                 }
               ]
             }
           },
           {
             "icon": "startEpisode",
-            "title": "One-Click Episode Launch",
-            "description": "When an episode's outline hits the mark, launch it straight into the Blueprint Room with a single click—bringing its synopsis, narrative beats, recurring cast, voice profiles, locations, and visual style automatically wired in.",
-            "screenshot": "Start Project — outline and cast already on the episode",
+            "title": "一键式剧集启动",
+            "description": "当一集的大纲达到目标时，只需单击一下即可将其直接启动到 Blueprint Room，从而自动连接其概要、叙事节拍、重复演员表、配音资料、地点和视觉风格。",
+            "screenshot": "启动项目——本集的大纲和演员阵容已经确定",
             "learnMore": {
               "items": [
                 {
-                  "title": "Instant Blueprint handoff",
-                  "description": "Launch any approved episode directly into the Blueprint Room with a single click to begin detailed beat and script work."
+                  "title": "即时 Blueprint 切换",
+                  "description": "只需单击一下即可将任何批准的剧集直接启动到 Blueprint Room 中，开始详细的节拍和脚本工作。"
                 },
                 {
-                  "title": "Pre-wired creative DNA",
-                  "description": "The episode outline, synopsis, story beats, cast profiles, wardrobes, and locations travel automatically with zero re-entry."
+                  "title": "预先连接的创意 DNA",
+                  "description": "剧集大纲、剧情简介、故事情节、演员简介、服装和地点都会自动移动，零重新进入。"
                 },
                 {
-                  "title": "Parallel episode production",
-                  "description": "Spin up multiple episodes from the same season slate as independent projects that share the same canonical series assets."
+                  "title": "平行剧集制作",
+                  "description": "将同一季中的多个剧集作为共享相同规范系列资产的独立项目进行旋转。"
                 }
               ]
             }
@@ -415,92 +416,92 @@
         "features": [
           {
             "icon": "startBlueprint",
-            "title": "Start the Blueprint",
-            "description": "Bring in an episode from your series slate with its outline, cast, and world pre-loaded, or pitch a brand-new standalone film concept from scratch and let AI validate, enhance, and structure the foundational treatment.",
-            "screenshot": "Series episode already known, or Start Your Project — intent, Validate & Enhance with AI, Generate Blueprint",
+            "title": "启动 Blueprint",
+            "description": "从您的剧集中引入一集，并预装其大纲、演员阵容和世界观，或者从头开始推出全新的独立电影概念，让人工智能验证、增强和构建基础处理。",
+            "screenshot": "系列剧集已知，或开始您的项目 — 意图、使用 AI 验证和增强、生成 Blueprint",
             "learnMore": {
               "items": [
                 {
-                  "title": "Seamless from Series Room",
-                  "description": "Series episodes arrive with their outline, synopsis, story beats, recurring cast, and locations already attached."
+                  "title": "与 Series Room 无缝连接",
+                  "description": "系列剧集的大纲、剧情简介、故事节奏、重复演员阵容和地点均已附上。"
                 },
                 {
-                  "title": "Standalone film or short",
-                  "description": "Pitch a new film concept in plain language, refine it with AI validation, and generate a complete film treatment."
+                  "title": "独立电影或短片",
+                  "description": "用简单的语言提出新的电影概念，通过人工智能验证对其进行完善，并生成完整的电影处理。"
                 },
                 {
-                  "title": "Narrated treatment overview",
-                  "description": "Read or listen to the narrated logline, synopsis, and creative reasoning to verify the story foundation immediately."
+                  "title": "叙述治疗概述",
+                  "description": "阅读或聆听叙述的故事情节、概要和创意推理，以立即验证故事基础。"
                 }
               ]
             }
           },
           {
             "icon": "treatment",
-            "title": "The Beat Sheet",
-            "description": "Structure the dramatic spine of your film before dialogue is written. Read or listen to your narrative beat sheet, reorder acts, and fine-tune scene pacing here—every beat you lock in the Blueprint Room drives a dedicated chapter in the Production Stage.",
-            "screenshot": "Beats tab, with Listen",
+            "title": "节拍表",
+            "description": "在写对话之前，先构建电影的戏剧性主线。在这里阅读或聆听您的叙事节拍表、重新排序表演并微调场景节奏 - 您在 Blueprint Room 中锁定的每个节拍都会驱动 Production Stage 中的专用章节。",
+            "screenshot": "节拍选项卡，带有“聆听”",
             "learnMore": {
               "items": [
                 {
-                  "title": "Narrative spine",
-                  "description": "Beats are authored and locked in the Blueprint Room before script generation begins."
+                  "title": "叙事脊柱",
+                  "description": "在脚本生成开始之前，节拍将被创作并锁定在 Blueprint Room 中。"
                 },
                 {
-                  "title": "Pacing & structural discipline",
-                  "description": "Optimizing the beat sheet here ensures the multi-scene screenplay builds with tight dramatic structure and clear turning points."
+                  "title": "节奏和结构纪律",
+                  "description": "在此优化节拍表可确保多场景剧本具有紧凑的戏剧结构和清晰的转折点。"
                 },
                 {
-                  "title": "Beat-to-chapter mapping",
-                  "description": "Production Stage turns each beat into a chapter."
+                  "title": "节拍到章节映射",
+                  "description": "Production Stage 将每个节拍变成一个章节。"
                 },
                 {
-                  "title": "Narrated beat audition",
-                  "description": "Listen to the beat sheet read aloud to feel the rhythm and momentum of the story before compiling the script."
+                  "title": "旁白节拍试听",
+                  "description": "在编写剧本之前，先听朗读的节拍表，感受故事的节奏和气势。"
                 }
               ]
             }
           },
           {
             "icon": "castLocations",
-            "title": "Cast & World Design",
-            "description": "Define your characters, vocal identities, period wardrobes, and primary locations before the screenplay is generated—ensuring the script is written around your exact cast, blocking environments, and visual atmosphere from page one.",
-            "screenshot": "Characters tab, then Setting on Story",
+            "title": "演员表和世界设计",
+            "description": "在生成剧本之前定义您的角色、声音身份、时代服装和主要地点，确保剧本是围绕您的确切演员阵容、阻塞环境和第一页的视觉氛围编写的。",
+            "screenshot": "角色选项卡，然后是故事设置",
             "learnMore": {
               "items": [
                 {
-                  "title": "Rich character profiles",
-                  "description": "Direct your cast profiles, backstories, and physical attributes up front so dialogue and blocking match each character."
+                  "title": "丰富的人物简介",
+                  "description": "预先指导你的演员简介、背景故事和身体属性，以便对话和阻止与每个角色相匹配。"
                 },
                 {
-                  "title": "World, era & locations",
-                  "description": "Establish primary settings, lighting palettes, and cinematic style on the Story tab to anchor every scene's environment."
+                  "title": "世界、时代和地点",
+                  "description": "在“故事”选项卡上建立主要设置、灯光调色板和电影风格，以锚定每个场景的环境。"
                 },
                 {
-                  "title": "Zero script refactoring",
-                  "description": "Locking cast and locations before script generation eliminates costly rewrites and continuity mismatches on the Production Stage."
+                  "title": "零脚本重构",
+                  "description": "在脚本生成之前锁定演员表和位置可以消除 Production Stage 上代价高昂的重写和连续性不匹配。"
                 }
               ]
             }
           },
           {
             "icon": "blueprintDirector",
-            "title": "The Blueprint Director",
-            "description": "Speak or type your story notes to revise beats, character motivations, or world details without prompt engineering. Preview a balanced revision side-by-side with creative reasoning—nothing changes in your treatment until you approve the cut.",
-            "screenshot": "Blueprint Director — direction, focus, preview, Apply revision",
+            "title": "Blueprint 总监",
+            "description": "说出或输入您的故事笔记来修改节拍、角色动机或世界细节，无需立即进行工程设计。与创造性推理并排预览平衡的修订版——在您批准剪辑之前，您的处理不会发生任何变化。",
+            "screenshot": "Blueprint 总监 — 方向、焦点、预览、应用修订",
             "learnMore": {
               "items": [
                 {
-                  "title": "Targeted voice or text notes",
-                  "description": "Speak or type your direction and focus the revision surgically on Beats, Characters, or Story."
+                  "title": "有针对性的语音或文字注释",
+                  "description": "说出或输入您的方向，然后将复习重点集中在节拍、角色或故事上。"
                 },
                 {
-                  "title": "Side-by-side revision preview",
-                  "description": "Review a balanced revision and its underlying story reasoning before committing any changes to your Blueprint."
+                  "title": "并排修订预览",
+                  "description": "在对 Blueprint 进行任何更改之前，请先审查平衡的修订版及其基本故事推理。"
                 },
                 {
-                  "title": "You hold the creative lock",
-                  "description": "Nothing in your treatment, beat sheet, or character roster changes until you explicitly apply the revision."
+                  "title": "创意锁由你掌控",
+                  "description": "在您明确应用修订之前，您的处理、节拍表或角色名册中的任何内容都不会改变。"
                 }
               ]
             }
@@ -508,43 +509,43 @@
           {
             "icon": "blueprintResonance",
             "title": "Audience Resonance",
-            "description": "Score your treatment against your target audience's cultural, genre, and demographic profile before generating the script. Catch structural pacing gaps or weak character stakes early and apply targeted recommendations in the Blueprint Director.",
-            "screenshot": "Audience Resonance — saved audience, scores, recommendations unapplied",
+            "description": "在生成脚本之前，根据目标受众的文化、流派和人口统计特征对您的处理进行评分。尽早发现结构性节奏差距或薄弱的性格风险，并在 Blueprint 总监中应用有针对性的建议。",
+            "screenshot": "Audience Resonance — 已保存的受众、分数、未应用的建议",
             "learnMore": {
               "items": [
                 {
-                  "title": "Pre-script audience validation",
-                  "description": "Analyze your treatment against your saved target audience to inspect category scores, strengths, and story risks."
+                  "title": "预先编写的观众验证",
+                  "description": "根据已保存的目标受众分析您的处理方式，以检查类别分数、优势和故事风险。"
                 },
                 {
-                  "title": "Actionable story remedies",
-                  "description": "Each insight pairs a structural diagnosis with a concrete rewrite recommendation tailored to your beat sheet and cast."
+                  "title": "可行的故事补救措施",
+                  "description": "每个见解都将结构诊断与针对您的节拍表和演员阵容量身定制的具体重写建议相结合。"
                 },
                 {
-                  "title": "Selective one-click application",
-                  "description": "Recommendations only modify your Blueprint when you choose to apply them in the Blueprint Director."
+                  "title": "选择性一键申请",
+                  "description": "当您选择在 Blueprint Director 中应用建议时，仅会修改您的 Blueprint。"
                 }
               ]
             }
           },
           {
             "icon": "goToProduction",
-            "title": "Greenlight to Production",
-            "description": "When the treatment, beat sheet, and cast are locked, step onto the Production Stage. SceneFlow compiles your full multi-chapter screenplay directly from your approved Blueprint—mapping every beat into a production chapter with cast and continuity pre-wired.",
-            "screenshot": "Go to Production Stage — storyline, beats, and cast already set",
+            "title": "批准生产",
+            "description": "当治疗、节拍表和石膏被锁定时，进入 Production Stage。 SceneFlow 直接根据您批准的 Blueprint 编译完整的多章节剧本 - 将每个节拍映射到预先连接演员表和连续性的制作章节中。",
+            "screenshot": "转到 Production Stage — 故事情节、节拍和演员阵容已设定",
             "learnMore": {
               "items": [
                 {
-                  "title": "Seamless script compilation",
-                  "description": "Stepping onto the Production Stage compiles the full multi-scene screenplay directly from your approved Blueprint."
+                  "title": "无缝脚本编译",
+                  "description": "进入 Production Stage 可以直接从您批准的 Blueprint 编译完整的多场景剧本。"
                 },
                 {
-                  "title": "Locked continuity foundation",
-                  "description": "Your storyline, beat-to-chapter structure, cast profiles, and locations arrive ready for scene and shot direction."
+                  "title": "锁定连续性基础",
+                  "description": "您的故事情节、章节结构、演员简介和地点都已准备好进行场景和拍摄指导。"
                 },
                 {
-                  "title": "Shareable Blueprint review",
-                  "description": "Share the locked Blueprint with co-creators or executive stakeholders for sign-off before commencing production."
+                  "title": "可共享 Blueprint 评论",
+                  "description": "与共同创作者或执行利益相关者共享锁定的 Blueprint，以便在开始制作之前签字。"
                 }
               ]
             }
@@ -553,7 +554,7 @@
       },
       {
         "id": "production-stage",
-        "label": "Production Stage",
+        "label": "SFAI生产_阶段术语",
         "headline": "从剧本到母版，全部在一个房间里完成。",
         "promise": "Blueprint 已锁定。你的演员阵容已选好。现在，进入 SFAIProduction_STAGETERM。每个章节、场景和镜头都被组织成线性工作流程。你引导意图；智能代理执行生成。",
         "groups": [
@@ -567,142 +568,142 @@
                 "icon": "sceneWorkflow",
                 "title": "场景制作工作流（全屏视图）",
                 "description": "打开专属全屏场景制作工作室，通过统一的 8 标签线性工具栏（Direction · Audio · Music · Continuity · Stills · Clips · Mixer · Streams）指导场景的每个阶段。在左侧镜头轨中拖拽排序镜头并查看实时就绪状态，在 16:9 舞台旁并排检查摄影机、走位、情绪、灯光与连续性参考卡片。",
-                "screenshot": "Scene Production Workflow (Fullscreen) — 8-tab linear studio, sortable Shot Rail, and structured Shot Direction Workbench",
+                "screenshot": "场景制作工作流程（全屏）- 8 个选项卡线性工作室、可排序的镜头轨道和结构化的镜头方向工作台",
                 "learnMore": {
                   "items": [
                     {
-                      "title": "8-tab fullscreen linear studio",
-                      "description": "Move seamlessly across Direction, Audio, Music, Continuity, Stills, Clips, Mixer, and Streams inside a distraction-free fullscreen workspace."
+                      "title": "8 选项卡全屏线性工作室",
+                      "description": "在无干扰的全屏工作区中无缝地跨方向、音频、音乐、连续性、静态、剪辑、混音器和流移动。"
                     },
                     {
-                      "title": "Sortable Shot Rail & live badges",
-                      "description": "Drag to reorder shots in the left-hand rail while tracking real-time badges for Action, Dialogue, Narration, SFX, Music, Signage, Final 4K stills, and clips In the Can."
+                      "title": "可排序的 Shot Rail 和实时徽章",
+                      "description": "拖动以重新排序左侧栏中的镜头，同时跟踪动作、对话、旁白、SFX、音乐、标牌、最终 4K 剧照和罐中剪辑的实时徽章。"
                     },
                     {
-                      "title": "Structured Shot Direction Workbench",
-                      "description": "Inspect the 16:9 Still & Clip Stage beside structured cards for spoken beats, camera lens and motion, talent blocking and gaze, lighting, locked continuity refs, and compiled prompts."
+                      "title": "结构化射击方向工作台",
+                      "description": "检查 16:9 Still & Clip Stage 旁边的结构化卡片，了解语音节拍、摄像机镜头和动作、演员阻挡和凝视、灯光、锁定的连续性参考以及编译的提示。"
                     },
                     {
-                      "title": "End-to-end scene pipeline telemetry",
-                      "description": "Monitor readiness across direction, voice and score, keyframes, multi-take clips, broadcast mixing, and localized streams before publishing."
+                      "title": "端到端场景管道遥测",
+                      "description": "在发布前监控方向、声音和乐谱、关键帧、多镜头剪辑、广播混音和本地化流的准备情况。"
                     }
                   ]
                 }
               },
               {
                 "icon": "directShot",
-                "title": "The Scene & Shot Director",
-                "description": "Type or speak your direction in plain language. Tell the agent who is in the frame, where the camera moves, and what the emotional beat is. The Shot Director automatically writes the complex underlying prompts for your stills and clips while syncing camera lens, focal length, talent blocking, and lighting across the scene.",
-                "screenshot": "The Scene & Shot Director — plain-language direction for stills and clips",
+                "title": "场景及镜头导演",
+                "description": "用简单的语言输入或说出您的指示。告诉工作人员谁在画面中、摄像机移动到哪里以及情绪节拍是什么。镜头导演会自动为您的剧照和剪辑编写复杂的底层提示，同时同步整个场景的摄像机镜头、焦距、人才遮挡和灯光。",
+                "screenshot": "场景和镜头导演 — 剧照和剪辑的通俗语言指导",
                 "learnMore": {
                   "items": [
                     {
-                      "title": "Plain-language film direction",
-                      "description": "Type or speak who is in the frame, where the camera moves, and what the emotional beat is without writing bracketed prompt syntax."
+                      "title": "平实语言电影导演",
+                      "description": "输入或说出画面中的人物、摄像机移动的位置以及情绪节拍，而无需编写括号内的提示语法。"
                     },
                     {
-                      "title": "Scene-wide or per-shot precision",
-                      "description": "Apply atmospheric direction across the entire scene or drill down into an individual shot's framing, lens, blocking, and lighting."
+                      "title": "场景范围或每次拍摄的精度",
+                      "description": "在整个场景中应用大气方向或深入了解单个镜头的取景、镜头、遮挡和灯光。"
                     },
                     {
-                      "title": "Automatic prompt compilation",
-                      "description": "The Shot Director automatically writes and syncs the underlying keyframe and motion prompts for your stills and clips."
+                      "title": "自动提示编译",
+                      "description": "镜头导演会自动编写并同步静态图像和剪辑的基础关键帧和动作提示。"
                     },
                     {
                       "title": "Intelligent Assistant Director (IAD)",
-                      "description": "Request surgical revisions to camera angles, character posture, or scene tension in plain language while keeping unrelated beats untouched."
+                      "description": "请求用通俗易懂的语言对摄像机角度、角色姿势或场景张力进行外科手术修改，同时保持不相关的节拍不变。"
                     }
                   ]
                 }
               },
               {
                 "icon": "continuity",
-                "title": "The Continuity Library",
-                "description": "Absolute visual and vocal consistency across your entire film or series. Automatically generate or manually assign locked reference portraits, multi-angle turnaround sheets, scene-specific wardrobes, locations, and essential props—ensuring every shot matches the Blueprint without character drift.",
-                "screenshot": "The Continuity Library — cast, wardrobes, locations, and essential props",
+                "title": "Continuity Library",
+                "description": "整个电影或系列的视觉和声音绝对一致。自动生成或手动分配锁定的参考肖像、多角度周转表、特定于场景的衣柜、位置和基本道具，确保每个镜头都符合 Blueprint，而不会出现角色漂移。",
+                "screenshot": "Continuity Library — 演员、服装、地点和基本道具",
                 "learnMore": {
                   "items": [
                     {
-                      "title": "Cast identity & turnaround locks",
-                      "description": "Anchor every character with diptych portraits, turnaround sheets, and locked voice profiles across every shot and episode."
+                      "title": "演员身份和周转锁",
+                      "description": "在每个镜头和剧集中使用双联肖像、周转表和锁定的语音配置文件来锚定每个角色。"
                     },
                     {
-                      "title": "Scene-specific wardrobes & props",
-                      "description": "Assign period or scene-specific wardrobes and essential hero props per shot so costumes and hand-held items stay unified."
+                      "title": "特定场景的衣柜和道具",
+                      "description": "为每个镜头分配特定时期或场景的衣柜和基本英雄道具，使服装和手持物品保持统一。"
                     },
                     {
-                      "title": "Generate, upload, or surgically edit",
-                      "description": "Automatically generate reference images, upload custom studio plates, or refine details with the Intelligent Assistant Director."
+                      "title": "生成、上传或精确编辑",
+                      "description": "自动生成参考图像、上传自定义工作室印版或使用 Intelligent Assistant Director 细化细节。"
                     },
                     {
-                      "title": "Continuity readiness gate",
-                      "description": "Verify that all cast, wardrobe, location, and prop anchors are locked in the Continuity tab before generating scene keyframes."
+                      "title": "连续性就绪门",
+                      "description": "在生成场景关键帧之前，请验证所有演员、衣柜、位置和道具锚点是否已锁定在“连续性”选项卡中。"
                     }
                   ]
                 }
               },
               {
                 "icon": "scriptResonance",
-                "title": "Audience Resonance Integration",
-                "description": "Get a read on the room before you render. AI analyzes your script against your target audience, providing scene-by-scene insights, pacing diagnostics, and dialogue tension scores. Apply recommended directions instantly, or trust your gut and ignore them.",
-                "screenshot": "Audience Resonance Integration — scene-by-scene audience insights",
+                "title": "Audience Resonance 集成",
+                "description": "在渲染之前先了解一下房间。人工智能根据目标受众分析您的剧本，提供逐个场景的见解、节奏诊断和对话张力评分。立即应用推荐的方向，或者相信你的直觉并忽略它们。",
+                "screenshot": "Audience Resonance 集成 — 逐场景观众洞察",
                 "learnMore": {
                   "items": [
                     {
-                      "title": "Scene-by-scene audience insights",
-                      "description": "AI analyzes your script against your target audience before you render to surface pacing, tension, and engagement scores."
+                      "title": "现场观众洞察",
+                      "description": "在渲染表面节奏、张力和参与度分数之前，人工智能会根据目标受众分析您的脚本。"
                     },
                     {
-                      "title": "Narrated critique & recommendations",
-                      "description": "Listen to the narrated analysis and inspect targeted scene-level rewrite recommendations backed by demographic reasoning."
+                      "title": "叙述性批评和建议",
+                      "description": "聆听叙述的分析并检查由人口统计推理支持的有针对性的场景级重写建议。"
                     },
                     {
-                      "title": "Your creative call",
-                      "description": "Apply recommended directions instantly with one click, or trust your gut and ignore them."
+                      "title": "您的创意电话",
+                      "description": "一键立即应用推荐的方向，或者相信你的直觉并忽略它们。"
                     }
                   ]
                 }
               },
               {
                 "icon": "budget",
-                "title": "Production Planner",
-                "description": "Establish the budget and schedule generation across every scene and chapter using SceneFlow credits or your own BYOK API keys. Set still and clip targets per shot, toggle between Draft and Final resolution tiers, and forecast compute spend before you render.",
-                "screenshot": "Production Planner — budget, schedule, and BYOK API keys",
+                "title": "生产计划员",
+                "description": "使用 SceneFlow 积分或您自己的 BYOK API 密钥建立每个场景和章节的预算和时间表生成。设置每个镜头的静态和剪辑目标，在草稿和最终分辨率层之间切换，并在渲染前预测计算支出。",
+                "screenshot": "生产计划员 — 预算、计划和 BYOK API 密钥",
                 "learnMore": {
                   "items": [
                     {
-                      "title": "Budget and schedule forecasting",
-                      "description": "Establish the budget and schedule generation across every scene and chapter with transparent per-shot credit estimates before you render."
+                      "title": "预算和进度预测",
+                      "description": "在渲染之前，通过透明的每镜头信用估算，建立每个场景和章节的预算和计划生成。"
                     },
                     {
-                      "title": "SceneFlow credits or BYOK keys",
-                      "description": "Run generation using included SceneFlow credits or connect your own Vertex AI, OpenAI, and ElevenLabs BYOK API keys."
+                      "title": "SceneFlow 积分或 BYOK 密钥",
+                      "description": "使用包含的 SceneFlow 积分运行生成或连接您自己的 Vertex AI、OpenAI 和 ElevenLabs BYOK API 密钥。"
                     },
                     {
-                      "title": "Draft-to-Final tier scheduling",
-                      "description": "Schedule rapid Draft passes for animatic pre-visualization and reserve Final 4K still and FHD video compute for locked cuts."
+                      "title": "从选秀到决赛的排程",
+                      "description": "安排快速草稿通道进行动画预可视化，并保留最终 4K 静态和 FHD 视频计算以进行锁定剪辑。"
                     }
                   ]
                 }
               },
               {
                 "icon": "productionScript",
-                "title": "Production Script",
-                "description": "Built for traditional and AI filmmakers alike. Preview a clean, formatted screenplay in-studio and export in industry-standard formats (PDF, FDX, Fountain). Use SceneFlow as a standalone script room—or pair your screenplay with a Pre-Vis Animatic and Promo Trailer to pitch financiers and secure project funding.",
-                "screenshot": "Production Script — in-platform preview and PDF, FDX, and Fountain export",
+                "title": "制作脚本",
+                "description": "专为传统和人工智能电影制作人打造。在工作室中预览干净、格式化的剧本并以行业标准格式（PDF、FDX、Fountain）导出。使用 SceneFlow 作为独立的脚本室，或者将您的剧本与预览版 Animatic 和宣传预告片配对，以向金融家推销并确保项目资金。",
+                "screenshot": "制作脚本 — 平台内预览和 PDF、FDX 和 Fountain 导出",
                 "learnMore": {
                   "items": [
                     {
-                      "title": "In-platform preview & export",
-                      "description": "Preview the formatted script in the studio and export in industry-standard PDF, Final Draft FDX, or Fountain format."
+                      "title": "平台内预览和导出",
+                      "description": "在工作室中预览格式化脚本并以行业标准 PDF、Final Draft FDX 或 Fountain 格式导出。"
                     },
                     {
-                      "title": "For traditional filmmakers",
-                      "description": "Use SceneFlow as an intelligent script production platform without generating video."
+                      "title": "对于传统电影人来说",
+                      "description": "使用SceneFlow作为智能脚本制作平台，无需生成视频。"
                     },
                     {
-                      "title": "Pitch & project funding",
-                      "description": "Package your script with a Pre-Vis Animatic and Promo Trailers to pitch and acquire project funding."
+                      "title": "推介和项目资金",
+                      "description": "将您的脚本与预览版 Animatic 和促销预告片打包在一起，以推销并获得项目资金。"
                     }
                   ]
                 }
@@ -717,22 +718,22 @@
             "features": [
               {
                 "icon": "audioAgent",
-                "title": "The Audio Agent",
-                "description": "Generate expressive character dialogue, narrator voiceover, action sound effects, and musical scores concurrently across up to 30 shots per scene. Cast voices automatically match character profiles from your Continuity Library or can be custom-tuned per beat.",
-                "screenshot": "The Audio Agent — concurrent dialogue, sound effects, and music scores",
+                "title": "Audio Agent",
+                "description": "每个场景最多 30 个镜头同时生成富有表现力的角色对话、旁白配音、动作音效和乐谱。演员声音会自动匹配 Continuity Library 中的角色配置文件，或者可以按节拍进行自定义调整。",
+                "screenshot": "Audio Agent — 并发对话、音效和乐谱",
                 "learnMore": {
                   "items": [
                     {
-                      "title": "Concurrent multi-track audio",
-                      "description": "Generate dialogue, narration, sound effects, and music scores concurrently across up to 30 shots per scene."
+                      "title": "并发多轨音频",
+                      "description": "每个场景最多 30 个镜头同时生成对话、旁白、音效和乐谱。"
                     },
                     {
-                      "title": "Locked character voice casting",
-                      "description": "Cast voices automatically match character profiles from your Reference Library or can be custom-tuned for timbre and cadence."
+                      "title": "锁定角色配音",
+                      "description": "演员的声音会自动匹配 Reference Library 中的角色配置文件，或者可以针对音色和节奏进行自定义调整。"
                     },
                     {
-                      "title": "Batch scene or single-shot runs",
-                      "description": "Run the Audio Agent across the entire scene in one pass or regenerate individual dialogue and SFX beats on demand."
+                      "title": "批量场景或单次运行",
+                      "description": "一次性在整个场景中运行 Audio Agent 或根据需要重新生成单独的对话和 SFX 节拍。"
                     }
                   ]
                 }
@@ -741,46 +742,46 @@
                 "icon": "musicScore",
                 "title": "对白、音效与配乐工作台",
                 "description": "进入全屏 Audio 与 Music 标签页，精细指导场景的每一层声音。使用情绪演绎标签与 Hi-Fi Studio 音质塑造角色对白，直接从生成的视频片段中提取内嵌音频，设置动作音效时长预设（Auto、3s、8s、15s），并编写跨镜头的 Lyria 电影配乐与淡入过渡。",
-                "screenshot": "Dialogue, SFX & Musical Score Workbench — Fullscreen Audio & Music tabs with score cues, voice casting, and SFX duration presets",
+                "screenshot": "对话、SFX 和乐谱工作台 — 全屏音频和音乐选项卡，包含乐谱提示、语音投射和 SFX 持续时间预设",
                 "learnMore": {
                   "items": [
                     {
-                      "title": "Multi-shot musical score cues",
-                      "description": "Compose custom Lyria musical score cues that span specific shot ranges with configurable intro fades and auto-ducking metadata."
+                      "title": "多镜头乐谱提示",
+                      "description": "通过可配置的介绍淡入淡出和自动闪避元数据，编写跨越特定镜头范围的自定义 Lyria 乐谱提示。"
                     },
                     {
-                      "title": "Performance Director & delivery tags",
-                      "description": "Direct spoken dialogue with bracketed emotional delivery tags, Hi-Fi Studio synthesis, and per-shot voice casting."
+                      "title": "绩效总监和交付标签",
+                      "description": "直接口头对话，带有括号内的情感传递标签、Hi-Fi Studio 合成和逐镜头配音。"
                     },
                     {
-                      "title": "Precision SFX duration presets",
-                      "description": "Time action sound effects to your shot choreography using Auto, Short 3s, Medium 8s, or Long 15s duration presets."
+                      "title": "精确的 SFX 持续时间预设",
+                      "description": "使用自动、短 3 秒、中 8 秒或长 15 秒持续时间预设为您的镜头编排提供时间动作音效。"
                     },
                     {
-                      "title": "Extract audio from video clips",
-                      "description": "Pull embedded audio directly from generated motion clips to preserve native on-camera speech or ambient foley."
+                      "title": "从视频剪辑中提取音频",
+                      "description": "直接从生成的运动剪辑中提取嵌入音频，以保留本机机上语音或环境拟音。"
                     }
                   ]
                 }
               },
               {
                 "icon": "stillsAgent",
-                "title": "The Stills Agent",
-                "description": "Rapidly batch-generate the high-resolution keyframe images that illustrate your shot direction across the scene. Regenerate, edit, or upload your own references to lock the composition, lighting, and character blocking before committing to video.",
-                "screenshot": "The Stills Agent — keyframe composition and references",
+                "title": "Stills Agent",
+                "description": "快速批量生成高分辨率关键帧图像，以说明场景中的拍摄方向。重新生成、编辑或上传您自己的参考，以在提交视频之前锁定构图、灯光和角色遮挡。",
+                "screenshot": "Stills Agent — 关键帧合成和参考",
                 "learnMore": {
                   "items": [
                     {
-                      "title": "Batch keyframe generation",
-                      "description": "Rapidly generate the keyframe images that illustrate your shot direction across every shot in the scene."
+                      "title": "批量关键帧生成",
+                      "description": "快速生成关键帧图像，说明场景中每个镜头的拍摄方向。"
                     },
                     {
-                      "title": "Automatic continuity anchoring",
-                      "description": "Every generated frame incorporates your locked cast portraits, scene wardrobes, locations, and hero props automatically."
+                      "title": "自动连续性锚定",
+                      "description": "每个生成的帧都会自动包含您锁定的演员肖像、场景衣柜、地点和英雄道具。"
                     },
                     {
-                      "title": "Lock composition before motion",
-                      "description": "Regenerate, edit, or upload your own references before committing compute to full motion video rendering."
+                      "title": "运动前锁定构图",
+                      "description": "在将计算提交给全动态视频渲染之前，重新生成、编辑或上传您自己的参考。"
                     }
                   ]
                 }
@@ -789,68 +790,68 @@
                 "icon": "stillsWorkbench",
                 "title": "全屏剧照与关键帧工作室",
                 "description": "进入全屏 Stills 工作台进行精准关键帧控制。为首尾帧生成视频（F2V）配对起始帧与目标结束帧，在 Draft 与 Final 4K 分辨率以及 Standard 与 Creative 模式间切换，自定义动态预演的 Ken Burns 推拉摇移，并通过智能副导演（IAD）用自然语言进行局部修图。",
-                "screenshot": "Fullscreen Stills & Keyframe Studio — F2V Start & End keyframe pairing, Final 4K controls, and surgical IAD editing",
+                "screenshot": "全屏剧照和关键帧工作室 — F2V 开始和结束关键帧配对、最终 4K 控制和外科 IAD 编辑",
                 "learnMore": {
                   "items": [
                     {
-                      "title": "Frame-to-Video (F2V) Start & End pairing",
-                      "description": "Pair a locked Start Frame and End Frame Target on any shot to anchor exact camera movement and subject blocking during video generation."
+                      "title": "帧到视频 (F2V) 开始和结束配对",
+                      "description": "在任何镜头上配对锁定的开始帧和结束帧目标，以在视频生成期间锚定精确的摄像机移动和主体阻挡。"
                     },
                     {
-                      "title": "Surgical IAD keyframe editing",
-                      "description": "Edit specific props, chalkboard text, wardrobe details, or lighting in plain language while keeping the rest of the keyframe locked."
+                      "title": "外科 IAD 关键帧编辑",
+                      "description": "用简单的语言编辑特定的道具、黑板文本、衣柜细节或灯光，同时保持关键帧的其余部分锁定。"
                     },
                     {
-                      "title": "Draft vs Final 4K & Creative modes",
-                      "description": "Toggle between rapid Draft previews and Final 4K resolution, plus Standard or Creative synthesis modes per shot."
+                      "title": "草稿与最终 4K 和创意模式",
+                      "description": "在快速草稿预览和最终 4K 分辨率之间切换，以及每个镜头的标准或创意合成模式。"
                     },
                     {
-                      "title": "Pre-Vis Ken Burns motion framing",
-                      "description": "Customize zoom and pan trajectories on every still so your Pre-Vis Animatic previews intentional camera motion."
+                      "title": "预视 Ken Burns 运动框架",
+                      "description": "在每个静态图像上自定义缩放和平移轨迹，以便您的 Pre-Vis Animatic 预览有意的相机运动。"
                     }
                   ]
                 }
               },
               {
                 "icon": "animatic",
-                "title": "The Pre-Vis Animatic",
-                "description": "Watch the scene breathe. Review a fully assembled animatic—stitched stills, Ken Burns motion, and locked audio—in the Screening Room. Audit the pacing, share for feedback, and ensure the cut works before committing to video.",
-                "screenshot": "The Pre-Vis Animatic — stitched stills, Ken Burns motion, and locked audio",
+                "title": "预视 Animatic",
+                "description": "观看现场呼吸。在 Screening Room 中查看完整组装的动画 — 缝合的剧照、Ken Burns 动作和锁定的音频。在投入视频之前审核节奏、分享反馈并确保剪辑有效。",
+                "screenshot": "Pre-Vis Animatic — 拼接静态图像、Ken Burns 动作和锁定音频",
                 "learnMore": {
                   "items": [
                     {
-                      "title": "Assembled multi-track animatic",
-                      "description": "Review stitched stills, Ken Burns motion, and locked dialogue, SFX, and musical score in the Screening Room."
+                      "title": "组装多轨动画",
+                      "description": "在 Screening Room 中查看拼接的剧照、Ken Burns 动作以及锁定的对话、SFX 和乐谱。"
                     },
                     {
-                      "title": "Prove pacing before video spend",
-                      "description": "Audit the dramatic rhythm, spot timing gaps, and refine shot lengths while iterations cost pennies instead of full video compute."
+                      "title": "在视频支出之前证明节奏",
+                      "description": "审核戏剧性的节奏、发现时间间隙并优化镜头长度，而迭代成本只需几分钱，而不是完整的视频计算。"
                     },
                     {
-                      "title": "Share for stakeholder sign-off",
-                      "description": "Audit the pacing, share for feedback, and ensure the cut works before committing to video."
+                      "title": "分享以供利益相关者签字",
+                      "description": "在投入视频之前审核节奏、分享反馈并确保剪辑有效。"
                     }
                   ]
                 }
               },
               {
                 "icon": "videoAgent",
-                "title": "The Clips Agent",
-                "description": "Once the Pre-Vis is approved, the Clips Agent takes over, rendering high-fidelity motion clips that adhere strictly to your approved stills, Frame-to-Video start and end anchors, and continuity references—backed by automated safety pre-flight checks.",
-                "screenshot": "The Clips Agent — high-fidelity motion clips from approved stills",
+                "title": "Clips Agent",
+                "description": "一旦预览获得批准，Clips Agent 就会接管，渲染严格遵守您批准的静态图像、帧到视频开始和结束锚点以及连续性参考的高保真运动剪辑，并由自动安全飞行前检查支持。",
+                "screenshot": "Clips Agent — 来自批准的静态图像的高保真运动剪辑",
                 "learnMore": {
                   "items": [
                     {
-                      "title": "Triggered after Pre-Vis approval",
-                      "description": "The Clips Agent renders motion only after the Pre-Vis animatic and shot timings are approved."
+                      "title": "会见前批准后触发",
+                      "description": "Clips Agent 仅在 Pre-Vis 动画和镜头计时获得批准后渲染运动。"
                     },
                     {
-                      "title": "Strict keyframe & F2V adherence",
-                      "description": "High-fidelity motion clips adhere strictly to your approved Start and End stills and continuity references."
+                      "title": "严格关键帧和 F2V 遵守",
+                      "description": "高保真运动剪辑严格遵守您批准的开始和结束剧照以及连续性参考。"
                     },
                     {
-                      "title": "Automated safety pre-flight",
-                      "description": "Pre-flight prompt sanitation prevents false-positive safety rejections on dramatic action beats so clips render reliably."
+                      "title": "飞行前自动安全",
+                      "description": "飞行前提示卫生可防止戏剧性动作节拍上的误报安全拒绝，从而使剪辑能够可靠地渲染。"
                     }
                   ]
                 }
@@ -859,24 +860,24 @@
                 "icon": "clipsWorkbench",
                 "title": "多镜头保险库与重拍工作室",
                 "description": "在全屏 Clips 工作室中指导并管理每个动态视频渲染。在非破坏性多镜头保险库（Take 1 / Take 2 / Take 3）中试看并切换最佳镜头，按 In the Can 状态筛选，触发 IAD 智能重拍，并按多语言流管理重新生成的对白与场景标识镜头。",
-                "screenshot": "Multi-Take Clips & Retake Studio — non-destructive Take 1/2/3 vault, IAD Smart Retake, and localized stream takes",
+                "screenshot": "Multi-Take Clips 和 Retake Studio — 非破坏性 Take 1/2/3 库、IAD 智能重拍和本地化流片段",
                 "learnMore": {
                   "items": [
                     {
-                      "title": "Non-destructive Multi-Take Vault",
-                      "description": "Every motion render is preserved in the shot vault so you can compare Take 1, Take 2, and Take 3 and promote your favorite take live."
+                      "title": "无损 Multi-Take Vault",
+                      "description": "每个动作渲染都保存在镜头库中，因此您可以比较镜头 1、镜头 2 和镜头 3，并现场推广您最喜爱的镜头。"
                     },
                     {
-                      "title": "IAD Smart Retake & Direct Video",
-                      "description": "Refine camera motion, subject physics, or facial performance with the Intelligent Assistant Director and Direct Video pre-flight controls."
+                      "title": "IAD 智能重拍和直接视频",
+                      "description": "使用 Intelligent Assistant Director 和直接视频飞行前控件来优化相机运动、主体物理或面部表现。"
                     },
                     {
-                      "title": "Per-stream localized shot takes",
-                      "description": "Switch between your English Master take and regenerated localized clips for spoken dialogue and in-scene signage per language stream."
+                      "title": "每个流的本地镜头",
+                      "description": "在英语母版拍摄和重新生成的本地化剪辑之间切换，以实现每种语言流的口语对话和场景内标牌。"
                     },
                     {
-                      "title": "Dialogue-free stem readiness",
-                      "description": "Extract embedded clip audio into a dialogue-free SFX and ambience stem so localized dubs retain original foley and room tone."
+                      "title": "无对话干准备",
+                      "description": "将嵌入的剪辑音频提取到无对话的 SFX 和氛围主干中，以便本地配音保留原始的拟音和房间音调。"
                     }
                   ]
                 }
@@ -945,28 +946,28 @@
                 "icon": "languageStreams",
                 "title": "多语言流（Streams）",
                 "description": "从同一条主时间线扩展至 44 种语言。仅选择包含口语对白或场景内文字标识的镜头进行目标语言重新生成，未选中的动作镜头自动保留主视频片段且零额外积分消耗。通过 htdemucs 神经干声分离提取视频音频并剥离原始人声（保留生成的环境音效、拟音与配乐用于 MP3 配音），并通过慢放视频片段（将 10 秒片段平滑延展至 15 秒 / 67% 速度）或混合光学延展自动对齐不同语言的配音时长。",
-                "screenshot": "Streams (Multi-Language) — Selective shot regeneration vs retained master shots, dialogue-free stem extraction, and elastic slow-video dub alignment",
+                "screenshot": "流（多语言）——选择性镜头再生与保留的主镜头、无对话主干提取和弹性慢视频配音对齐",
                 "learnMore": {
                   "items": [
                     {
-                      "title": "Selective shot regeneration & retained master clips",
-                      "description": "Select only the shots with spoken dialogue or in-scene signage to regenerate in your target language while unselected action shots automatically retain the master video clip."
+                      "title": "选择性镜头再生和保留的主剪辑",
+                      "description": "仅选择带有语音对话或场景标牌的镜头以目标语言重新生成，而未选择的动作镜头会自动保留主视频剪辑。"
                     },
                     {
-                      "title": "Dialogue-free stem extraction (keep generated SFX & music)",
-                      "description": "Neural stem separation extracts embedded video audio and removes spoken English dialogue while preserving generated foley, room ambience, and music for clean MP3 dubbing."
+                      "title": "无对话词干提取（保留生成的 SFX 和音乐）",
+                      "description": "神经干分离提取嵌入的视频音频并删除英语口语对话，同时保留生成的拟音、房间氛围和音乐，以实现干净的 MP3 配音。"
                     },
                     {
-                      "title": "Elastic video slow-down & multi-method dub alignment",
-                      "description": "Align longer translated dialogue by slowing a 10s video clip up to 15s (down to 67% speed), pairing an 80% slow-down with a 103% zoom hold, or fitting dub audio tempo up to 1.25x."
+                      "title": "弹性视频减速和多方法配音对齐",
+                      "description": "通过将 10 秒的视频剪辑减慢至 15 秒（速度降至 67%）、将 80% 的减慢与 103% 的变焦保持配对或将配音音频速度调整至 1.25 倍，来调整较长的翻译对话。"
                     },
                     {
-                      "title": "Regenerated dialogue & signage clips across 44 languages",
-                      "description": "Regenerate localized dialogue takes and in-scene signage clips directly within the scene across 44 languages so visuals, stencils, and speech match every audience."
+                      "title": "重新生成 44 种语言的对话和标牌剪辑",
+                      "description": "直接在场景中以 44 种语言重新生成本地化的对话片段和场景内标牌剪辑，以便视觉效果、模板和语音与每位观众相匹配。"
                     },
                     {
-                      "title": "Localized Studio UI",
-                      "description": "Direct and produce in your native interface across English, Spanish, Portuguese, Hindi, Simplified Chinese, and Arabic."
+                      "title": "本地化 Studio 用户界面",
+                      "description": "在您的本地界面中进行导演和制作，支持英语、西班牙语、葡萄牙语、印地语、简体中文和阿拉伯语。"
                     }
                   ]
                 }
@@ -979,64 +980,64 @@
                 "learnMore": {
                   "items": [
                     {
-                      "title": "Native studio workspace across 6 Tier-A interface languages",
-                      "description": "Switch the entire SceneFlow Studio UI—Series Studio, Blueprint Room, Production Stage, and Screening Room—between English, Spanish, Portuguese, Simplified Chinese, Hindi, and Arabic."
+                      "title": "跨 6 种 A 级界面语言的本机工作室工作区",
+                      "description": "在英语、西班牙语、葡萄牙语、简体中文、印地语和阿拉伯语之间切换整个 SceneFlow Studio UI（Series Studio、Blueprint Room、Production Stage 和 Screening Room）。"
                     },
                     {
-                      "title": "Localized direction, camera, blocking & continuity controls",
-                      "description": "Every tab, shot rail, camera lens selector, continuity lock, and mixer control renders natively in your selected language so global directors and editors work at full speed."
+                      "title": "本地化方向、摄像机、遮挡和连续性控制",
+                      "description": "每个选项卡、镜头轨、摄像机镜头选择器、连续性锁定和混音器控制都以您选择的语言本地渲染，以便全球导演和剪辑师全速工作。"
                     },
                     {
-                      "title": "Cross-border team collaboration on one shared project",
-                      "description": "A showrunner in Los Angeles, an editor in Madrid, a VFX lead in São Paulo, and a sound designer in Mumbai or Shanghai can each work on the same project in their preferred UI language."
+                      "title": "跨境团队协作完成一个共享项目",
+                      "description": "洛杉矶的剧集主管、马德里的剪辑师、圣保罗的视觉特效主管以及孟买或上海的声音设计师都可以使用自己喜欢的 UI 语言处理同一个项目。"
                     },
                     {
-                      "title": "Paired with 75+ landing & 44+ dubbing stream languages",
-                      "description": "Combine a native localized Studio UI with 44-language neural voice dubbing and lip-sync streams to produce and distribute globally from day one."
+                      "title": "搭配超过 75 种登陆语言和超过 44 种配音流语言",
+                      "description": "将本地化的 Studio UI 与 44 种语言的神经语音配音和口型同步流相结合，从第一天起就可以在全球范围内制作和分发。"
                     }
                   ]
                 }
               },
               {
                 "icon": "promoTrailers",
-                "title": "Promo & Trailers",
-                "description": "Cut high-converting theatrical teasers, episodic recaps, and social-ready promo trailers at any time during production. Pull hero takes from your scene vault, reframe for horizontal (`16:9`) or vertical (`9:16`) feeds, and generate multi-language versions with localized title cards and voiceover hooks.",
-                "screenshot": "Promo & Trailers — multi-language horizontal and vertical trailers",
+                "title": "宣传片和预告片",
+                "description": "在制作过程中随时剪辑高转化率的戏剧预告片、剧集回顾和社交宣传预告片。从场景库中提取英雄片段，重新构建水平（“16:9”）或垂直（“9:16”）提要，并生成带有本地化标题卡和画外音挂钩的多语言版本。",
+                "screenshot": "促销和预告片 — 多语言水平和垂直预告片",
                 "learnMore": {
                   "items": [
                     {
-                      "title": "Social-ready trailers at any stage",
-                      "description": "Cut promo trailers, theatrical teasers, and episodic recaps at any point during production."
+                      "title": "任何阶段的社交预告片",
+                      "description": "在制作过程中随时剪辑宣传预告片、戏剧预告片和剧集回顾。"
                     },
                     {
-                      "title": "Horizontal & vertical social formats",
-                      "description": "Generate multi-language versions optimized for horizontal 16:9 YouTube feeds or vertical 9:16 Shorts, Reels, and TikTok."
+                      "title": "横向和纵向社交形式",
+                      "description": "生成针对水平 16:9 YouTube feed 或垂直 9:16 Shorts、Reels 和 TikTok 进行优化的多语言版本。"
                     },
                     {
-                      "title": "Localized hooks & title cards",
-                      "description": "Render localized trailer streams with translated voiceover hooks, burned-in captions, and market-specific title cards."
+                      "title": "本地化的挂钩和标题卡",
+                      "description": "使用翻译的配音挂钩、内置字幕和特定于市场的标题卡渲染本地化的预告片流。"
                     }
                   ]
                 }
               },
               {
                 "icon": "shipPackage",
-                "title": "Direct Publishing",
-                "description": "Export the final EBU R128-normalized master MP4 in 1080p or 4K, download complete production stems, or let SceneFlow auto-generate high-CTR thumbnails, localized titles, chapter markers, and descriptions to publish scenes, chapters, and promos directly to YouTube, TikTok, and Facebook.",
-                "screenshot": "Direct Publishing — MP4 export and direct publishing to YouTube, TikTok, and Facebook",
+                "title": "直接出版",
+                "description": "以 1080p 或 4K 导出最终的 EBU R128 标准化母带 MP4，下载完整的制作主干，或让 SceneFlow 自动生成高点击率缩略图、本地化标题、章节标记和描述，以将场景、章节和宣传片直接发布到 YouTube、TikTok 和 Facebook。",
+                "screenshot": "直接发布 — MP4 导出并直接发布到 YouTube、TikTok 和 Facebook",
                 "learnMore": {
                   "items": [
                     {
-                      "title": "Master MP4 or direct social publishing",
-                      "description": "Export the final master MP4 or publish scenes, chapters, and promos directly to YouTube, TikTok, and Facebook."
+                      "title": "掌握 MP4 或直接社交发布",
+                      "description": "导出最终的母带 MP4 或将场景、章节和宣传片直接发布到 YouTube、TikTok 和 Facebook。"
                     },
                     {
-                      "title": "Auto-generated thumbnails & metadata",
-                      "description": "Let SceneFlow auto-generate high-contrast thumbnails, localized titles, descriptions, tags, and chapter markers for every release."
+                      "title": "自动生成的缩略图和元数据",
+                      "description": "让 SceneFlow 为每个版本自动生成高对比度缩略图、本地化标题、描述、标签和章节标记。"
                     },
                     {
-                      "title": "Archival stems & screenplay bundle",
-                      "description": "Download stitched video masters, isolated dialogue and SFX stems, subtitle files, and formatted screenplays in one production package."
+                      "title": "档案梗概和剧本捆绑包",
+                      "description": "在一个制作包中下载拼接视频母版、独立对话和 SFX 主干、字幕文件和格式化剧本。"
                     }
                   ]
                 }
@@ -1053,52 +1054,52 @@
         "features": [
           {
             "icon": "screeningPlayer",
-            "title": "One Unified Player",
-            "description": "Toggle seamlessly between Pre-Vis animatics, stitched scenes, multi-scene chapters, promo trailers, and your final master. Switch Language Streams on the fly to audition dubbed audio, dialogue-free stem mixes, and regenerated dialogue or signage clips—always frame-locked to the exact cut from the Mixer.",
-            "screenshot": "Screening Room player",
+            "title": "一个统一的播放器",
+            "description": "在预览动画、拼接场景、多场景章节、宣传预告片和最终母版之间无缝切换。即时切换语言流以试听配音音频、无对话主干混合以及重新生成的对话或标牌剪辑 - 始终帧锁定到混音器的精确剪辑。",
+            "screenshot": "Screening Room 玩家",
             "learnMore": {
               "items": [
                 {
-                  "title": "Every milestone in one theatre",
-                  "description": "Switch effortlessly among Pre-Vis animatics, individual scenes, chapters, promos, and the final master."
+                  "title": "一个剧院的每一个里程碑",
+                  "description": "在预览动画、单个场景、章节、宣传片和最终母版之间轻松切换。"
                 },
                 {
-                  "title": "Live language stream auditioning",
-                  "description": "Audition any Language Stream—dubbed audio, lip-sync, or regenerated dialogue and signage clips—on the fly without reloading the timeline."
+                  "title": "现场语言流试听",
+                  "description": "即时试听任何语言流（配音、口型同步或重新生成的对话和标牌剪辑），无需重新加载时间线。"
                 },
                 {
-                  "title": "Frame-locked to the Broadcast Mixer",
-                  "description": "Every stream plays the exact stitch transitions, J/L-cut overlaps, auto-ducking curves, and loudness normalization rendered in the Mixer."
+                  "title": "帧锁定到广播混合器",
+                  "description": "每个流都会播放精确的拼接过渡、J/L 剪切重叠、自动闪避曲线以及混音器中渲染的响度标准化。"
                 },
                 {
-                  "title": "Incremental episodic shipping",
-                  "description": "Ship a finished 3–5 minute scene, an 8–12 minute chapter, or a social promo immediately while downstream chapters continue rendering."
+                  "title": "增量间歇式运输",
+                  "description": "立即发送完成的 3-5 分钟场景、8-12 分钟章节或社交宣传片，同时下游章节继续渲染。"
                 }
               ]
             }
           },
           {
             "icon": "screeningCollab",
-            "title": "Frame-Accurate Collaboration",
-            "description": "Stop exporting rough cuts to email. Share a private screening link where collaborators, sound editors, localization leads, and investors watch full-resolution playback in real time and drop timestamped notes directly on the picture—with instant notifications sent straight to your phone.",
-            "screenshot": "Shared review",
+            "title": "帧精确协作",
+            "description": "停止将粗剪导出到电子邮件。共享私人放映链接，合作者、声音编辑、本地化主管和投资者可以实时观看全分辨率播放，并将带时间戳的注释直接放在图片上，并将即时通知直接发送到您的手机。",
+            "screenshot": "共同评论",
             "learnMore": {
               "items": [
                 {
-                  "title": "Private stakeholder screening links",
-                  "description": "Reviewers watch full-resolution playback across any language stream and leave frame-accurate timestamped notes on the picture."
+                  "title": "私人利益相关者筛选链接",
+                  "description": "审阅者可以观看任何语言流的全分辨率播放，并在图片上留下帧精确的时间戳注释。"
                 },
                 {
-                  "title": "Zero rough-cut file exports",
-                  "description": "Collect creative, legal, and localization feedback in one centralized review thread without uploading or mailing heavy video files."
+                  "title": "零粗剪文件导出",
+                  "description": "在一个集中审核线程中收集创意、法律和本地化反馈，无需上传或邮寄大量视频文件。"
                 },
                 {
-                  "title": "Instant mobile notifications",
-                  "description": "New reviewer notes notify you immediately on your phone so you can approve or dispatch revisions while directing on desktop."
+                  "title": "即时移动通知",
+                  "description": "新的审阅者注释会立即在手机上通知您，以便您可以在桌面上指导时批准或发送修订。"
                 },
                 {
-                  "title": "Direct link back to the Shot Rail",
-                  "description": "Jump from any timestamped screening comment straight to the corresponding scene and shot in the Production Stage to execute the note."
+                  "title": "直接链接回 Shot Rail",
+                  "description": "从任何带时间戳的放映评论直接跳转到相应的场景并在 Production Stage 中拍摄以执行注释。"
                 }
               ]
             }
@@ -1106,6 +1107,272 @@
         ]
       }
     ]
+  },
+  "productionAgent": {
+    "eyebrow": "Production Agent • 全自动工作室构建器",
+    "title": "告别手动输入 300+ 个镜头提示词。启动构建，安心离席。",
+    "subtitle": "一部常规 27 场景作品（每场 12–20 个镜头）在传统 AI 工具中需要手动输入 300 多次静态帧与视频提示词。现在只需不到一小时打磨剧本，勾选 Pre-Vis、视频片段、场景、母带或宣传片，即可让制片智能体自动构建场景、自愈修复失败镜头，并在完成时通过私密 /s/ Screening Room 链接通知您。",
+    "showDetail": "展开更多详情",
+    "hideDetail": "收起详情",
+    "drawerBadge": "逐场全自动制片编排",
+    "drawerTitle": "不到一小时打磨剧本。数小时的手动提示词由一次全自动运行完全替代。",
+    "cards": [
+      {
+        "badge": "省去 300+ 次手动提示词",
+        "title": "剧本打磨 < 1 小时 → 解放全天时间",
+        "description": "告别跨 27 个场景（每场 12–20 个镜头）逐条输入 300 多个静态图与视频提示词。一小时内定稿剧本，把时间留给核心业务与生活。"
+      },
+      {
+        "badge": "全部 27 场或按章节生成",
+        "title": "5 大端到端制片阶段",
+        "description": "在同一个构建器中勾选 Pre-Vis、视频片段、场景、母带与宣传片。智能体将自动生成连续性参考图、对白/音效/配乐、关键帧、动态视频与预告片。"
+      },
+      {
+        "badge": "零卡顿渲染",
+        "title": "自愈重试 + Creative Clips 自动回退",
+        "description": "自动优化镜头调度并重跑失败镜头。当戏剧张力镜头在优化后仍触发 Google 策略过滤时，会自动切换至 Creative Clips 完成生成。"
+      },
+      {
+        "badge": "完整的导演控制权",
+        "title": "导演检查点与 /s/ 审片室链接",
+        "description": "可 100% 全自动运行，也可在 Pre-Vis 或每场戏后暂停审核。按您设定的频率接收包含 /s/ Screening Room 直达链接的通知。"
+      }
+    ],
+    "viewScript": "查看 Ana 视频脚本（30 秒演示）",
+    "hideScript": "收起 Ana 视频脚本（30 秒演示）",
+    "copyScript": "复制脚本",
+    "copied": "已复制",
+    "voLabel": "画外音：",
+    "pictureLabel": "图片：",
+    "scriptBlocks": [
+      {
+        "block": "01区（0:00–0:10）",
+        "title": "300 弹墙和一键发射",
+        "syncLine": "全日空航空公司（镜头前）：“过去三百次拍摄意味着三百次手动提示。现在不再了。”",
+        "narration": "花不到一个小时的时间完善 27 个场景的脚本，然后一键启动制作代理。",
+        "visual": "安娜（CHAR_ANA，橄榄色野战夹克搭配石板色高领毛衣）在黑暗的虚拟制作室中的中景镜头。她点击了一个青色的发射控制按钮；在她身后，27 个场景的故事板网格和青色到翠绿色的进度条在弯曲的墙壁显示屏上点亮。"
+      },
+      {
+        "block": "02 区（0:10–0:20）",
+        "title": "自主构建、自我修复和创意剪辑回退",
+        "narration": "代理会遍历每个场景 - 锁定参考、放置旁白和音乐提示、优化失败的剪辑提示，以及在镜头命中策略过滤器时切换到创意剪辑。",
+        "visual": "过肩越过 Ana，走向弧形墙，显示故事板框架、音频波形和运动预览填充在 27 个场景槽中。一块图块短暂地发出琥珀色脉冲（策略重试），重写其摄像机角度，并变成稳定的翠绿色。"
+      },
+      {
+        "block": "03 区（0:20–0:30）",
+        "title": "走开并 Screening Room 通知",
+        "narration": "设置场景检查点，或者完全走开。当您的预视或母版剪辑准备就绪时，系统会向您发送一条通知，提供您的私人 Screening Room 链接以供审核。",
+        "visual": "当墙壁展示达到 100% 祖母绿完成度时，安娜拿起她的陶瓷咖啡杯。她的手机亮起了一条私人 /s/ Screening Room 通知；当完成的大师在她身后演奏时，她对着镜头热情地微笑。"
+      }
+    ],
+    "cta": "启动工作室 ($9)"
+  },
+  "studioAcademy": {
+    "eyebrow": "SceneFlow 工作室学院与即时 (JIT) 实训",
+    "title": "每一步都有引导。在创作中掌握整座工作室。",
+    "subtitle": "再也不必面对空白时间线发呆，也不会因为猜测下一步而白白消耗积分。在任意界面按下 ? 键，即可呼出即时 (JIT) 视觉界面地图与带有一键操作的 60 秒核对清单——或跟随交互式课程从一句话灵感直达发布级成片。",
+    "showDetail": "展开更多详情",
+    "hideDetail": "收起详情",
+    "drawerBadge": "好莱坞级制片实力 · 零影视学院门槛",
+    "drawerTitle": "每个工作间均内置交互式界面地图、60 秒核对清单与积分护栏",
+    "cards": [
+      {
+        "badge": "随时一键呼出 (?)",
+        "title": "上下文感知即时 (JIT) 教练",
+        "description": "在任意界面按下 ? 键，即可打开当前工作区的即时视觉地图、下一步操作的 60 秒清单，以及为您直接触发对应工作室操作的一键按钮。"
+      },
+      {
+        "badge": "4 门引导式交互课程",
+        "title": "“10 分钟完成你的第一部影片”模拟器",
+        "description": "专为零剪辑经验的创作者、作家与剧集统筹打造。跟随 Spotlight X-Ray 交互式标注，从一句话概念完成配音、配乐并生成可播放成片。"
+      },
+      {
+        "badge": "节省高达 70% 的积分",
+        "title": "故事板优先 (Animatic-First) 积分护栏",
+        "description": "每个工作区都内置实时积分护栏，指导您如何先锁定 80+ Audience Resonance 剧本并预览配音版关键帧故事板，然后再投入积分渲染动态视频。"
+      },
+      {
+        "badge": "所有套餐免费包含",
+        "title": "工作室内置 4 门交互式实训课程",
+        "description": "在工作室内直接掌握 Blueprint 与受众共鸣、角色与场景连续性资产库、故事板优先积分护栏，以及 Screening Room 与 70+ 语言配音流。"
+      }
+    ],
+    "courses": [
+      {
+        "id": "first-film-10m",
+        "title": "10 分钟内你的第一部电影",
+        "totalDuration": "10分钟"
+      },
+      {
+        "id": "continuity-mastery",
+        "title": "角色与世界连续性掌握",
+        "totalDuration": "6分钟"
+      },
+      {
+        "id": "animatic-first-savings",
+        "title": "Animatic-首次电影制作（节省 70% 的积分）",
+        "totalDuration": "5分钟"
+      },
+      {
+        "id": "series-and-global-dubbing",
+        "title": "多集系列和 13 种以上语言全球发布",
+        "totalDuration": "6分钟"
+      }
+    ],
+    "jitMap": {
+      "eyebrow": "实时即时 (JIT) 视觉屏幕地图",
+      "title": "单击任意工作区和编号引脚 (1–4) 以检查 Studio 控件",
+      "coachPrefix": "即时教练：",
+      "autoDetected": "● 自动检测",
+      "checklistTitle": "60 秒指导清单",
+      "screens": {
+        "blueprint": {
+          "tabLabel": "1. Blueprint & 80+ 共振",
+          "stepBadge": "第 1 阶段 • 故事和绿灯",
+          "shortTitle": "Blueprint Room",
+          "subtitle": "在花费制作积分之前，将您的原始概念转变为获得批准的 80+ 共振胶片处理。",
+          "quickSteps": [
+            {
+              "number": "1",
+              "title": "生成您的胶片处理",
+              "description": "输入您的故事概念或剧本，并生成带有英雄关键艺术的完整三幕电影处理。",
+              "creditBadge": "~25 学分"
+            },
+            {
+              "number": "2",
+              "title": "运行 Audience Resonance™ 分析",
+              "description": "根据 5 个叙事轴的目标人群评估您的故事，并找出薄弱环节。",
+              "creditBadge": "~20 学分"
+            },
+            {
+              "number": "3",
+              "title": "应用一键修复即可达到 80+ 分数",
+              "description": "应用 AI 脚本医生的建议，直到您的共振分数达到 80/100 或更高。",
+              "creditBadge": "~15 学分"
+            },
+            {
+              "number": "4",
+              "title": "虚拟制作获准",
+              "description": "锁定 Blueprint 并生成逐场剧本、演员列表和视觉分解。",
+              "creditBadge": "〜30学分"
+            }
+          ]
+        },
+        "production": {
+          "tabLabel": "2. 连续性库和视频运动",
+          "stepBadge": "第 2 阶段 • 虚拟声场",
+          "shortTitle": "虚拟制作",
+          "subtitle": "在 Continuity Vault 中锁定角色面部和声音、渲染开始/结束关键帧以及为运动视频剪辑制作动画。",
+          "quickSteps": [
+            {
+              "number": "1",
+              "title": "首先锁定演员肖像、声音和地点",
+              "description": "在 Reference Library 中生成并批准角色肖像、神经语音和位置引用。",
+              "creditBadge": "10–15 cr/参考"
+            },
+            {
+              "number": "2",
+              "title": "综合对话、音效和乐谱",
+              "description": "为每个角色分配声音并生成场景对话和氛围，以便锁定您的时间线时间。",
+              "creditBadge": "5–15 学分/场景"
+            },
+            {
+              "number": "3",
+              "title": "渲染开始/结束关键帧和预览 Animatic",
+              "description": "为每个片段生成参考锁定关键帧，并在 Screening Room 中作为 Animatic 观看完整影片。",
+              "creditBadge": "10–15 cr/帧"
+            },
+            {
+              "number": "4",
+              "title": "动画英雄镜头或启动制作代理",
+              "description": "手动将关键镜头转换为动态视频，或者在您离开时启动自主制作代理来构建预览、剪辑、母版和宣传片。",
+              "creditBadge": "无人值守模式"
+            }
+          ]
+        },
+        "series": {
+          "tabLabel": "3.系列故事圣经",
+          "stepBadge": "多集连续性",
+          "shortTitle": "系列工作室",
+          "subtitle": "使用一个共享的演员和地点库构建多集节目或逐章改编。",
+          "quickSteps": [
+            {
+              "number": "1",
+              "title": "创建或选择您的系列圣经",
+              "description": "输入您的系列日志、类型和目标集数，以生成多集故事情节和共享演员阵容。",
+              "creditBadge": "〜30学分"
+            },
+            {
+              "number": "2",
+              "title": "锁定重复出现的字符和位置",
+              "description": "批准系列圣经中的参考肖像和语音分配，以便每一集自动继承它们。",
+              "creditBadge": "10–15 cr/肖像"
+            },
+            {
+              "number": "3",
+              "title": "在 Blueprint Room 中启动第 1 集",
+              "description": "单击第 1 集上的“启动剧集 Blueprint”以完善其 3 幕处理并开始虚拟制作。"
+            }
+          ]
+        },
+        "final-cut": {
+          "tabLabel": "4.Final Cut & 13+ 语言",
+          "stepBadge": "第 3–4 阶段 • 筛选和配音",
+          "shortTitle": "Final Cut 和筛选",
+          "subtitle": "混合 Animatic 和视频流，在 13 种以上配音语言之间切换，并共享/s/评论链接。",
+          "quickSteps": [
+            {
+              "number": "1",
+              "title": "在 Screening Room 中全屏观看",
+              "description": "使用转场、对话、SFX 和自动闪避乐谱连续播放您组装的场景。",
+              "creditBadge": "0 学分"
+            },
+            {
+              "number": "2",
+              "title": "分享/s/评论链接以获取反馈",
+              "description": "生成可共享的筛选链接以收集来自协作者或客户的带时间戳的注释。",
+              "creditBadge": "0 学分"
+            },
+            {
+              "number": "3",
+              "title": "导出 MP4 母带和多语言配音",
+              "description": "渲染最终的 1080p/4K MP4 母带和可选的本地化音频/字幕流。",
+              "creditBadge": "20–50 cr 渲染"
+            }
+          ]
+        }
+      }
+    },
+    "tryLiveMap": "体验实时 JIT 视觉界面地图（标注 1–4）",
+    "hideLiveMap": "收起实时 JIT 视觉界面地图",
+    "viewScript": "查看 30 秒视频脚本 (Ana)",
+    "hideScript": "收起 30 秒视频脚本 (Ana)",
+    "copyScript": "复制脚本",
+    "copied": "已复制",
+    "voLabel": "画外音：",
+    "pictureLabel": "图片：",
+    "scriptBlocks": [
+      {
+        "block": "01区（0:00–0:10）",
+        "title": "即时屏幕地图",
+        "syncLine": "全日空（镜头前）：“当工作室指导每一步时，你不需要电影学校。”",
+        "narration": "在任何屏幕上按问号即可打开您所在工作区的即时可视化地图。",
+        "visual": "安娜（CHAR_ANA，橄榄色野战夹克搭配石板色高领毛衣）的中景镜头，在温暖的工作室中，旁边是半透明全息图，显示连接到故事板框架和波形的发光青色编号标注引脚。"
+      },
+      {
+        "block": "02 区（0:10–0:20）",
+        "title": "60 秒清单和信用护栏",
+        "narration": "遵循 60 秒的清单，执行一键式工作室操作，同时内置信用护栏会在您花在动作上之前锁定旁白、音乐和动画帧。",
+        "visual": "近中镜头穿过安娜和浮动玻璃面板，三个清单节点从青色变为翠绿色，在大量视频渲染之前锁定有声动画时间线。"
+      },
+      {
+        "block": "03 区（0:20–0:30）",
+        "title": "“10 分钟内你的第一部电影”模拟器",
+        "narration": "或者启动十分钟的交互式模拟器——在您创作时将您从一句话的想法变成有声、评分和出版的大师。",
+        "visual": "安娜对着镜头热情微笑的中号肖像，编号的训练别针平稳地过渡到她身后的发光可播放宽屏主框架中。"
+      }
+    ],
+    "cta": "启动工作室 ($9)"
   },
   "metadata": {
     "title": "SceneFlow Studio - AI 智能视频创作",
@@ -1125,13 +1392,17 @@
     "goToDashboard": "转到仪表板",
     "userFallback": "用户",
     "searchLanguages": "搜索语言",
-    "noLanguagesFound": "找不到语言"
+    "noLanguagesFound": "找不到语言",
+    "workflow": "工作流程",
+    "platformWalkthrough": "平台导览"
   },
   "floatingNav": {
     "productionExamples": "示例",
     "twoModes": "单一管线",
     "directControl": "直接",
+    "productionAgent": "构建",
     "publishCut": "发布",
+    "studioAcademy": "学院",
     "keyFeatures": "主要特点",
     "audienceResonance": "Audience Resonance",
     "preVisEngine": "预演引擎",
@@ -1187,14 +1458,6 @@
         "label": "西班牙语",
         "nativeLabel": "Español"
       },
-      "zh": {
-        "label": "中文",
-        "nativeLabel": "中文"
-      },
-      "ar": {
-        "label": "阿拉伯语",
-        "nativeLabel": "العربية"
-      },
       "pt": {
         "label": "葡萄牙语",
         "nativeLabel": "Português"
@@ -1202,6 +1465,14 @@
       "hi": {
         "label": "印地语",
         "nativeLabel": "हिन्दी"
+      },
+      "zh": {
+        "label": "中文",
+        "nativeLabel": "中文"
+      },
+      "ar": {
+        "label": "阿拉伯语",
+        "nativeLabel": "العربية"
       },
       "th": {
         "label": "泰语",
@@ -1288,7 +1559,7 @@
   "valueProp": {
     "pills": [
       {
-        "label": "One Studio",
+        "label": "一间工作室",
         "detail": "集中发布概念"
       },
       {
@@ -1622,6 +1893,7 @@
           "description": "照片级真实感，电影感光效",
           "tagline": "高质量长篇现实主义作品",
           "marketingBody": "照片级写实风格能满足精品剧集与纪录片受众对主流质感的期待。通过在连贯的叙事节点间保持写实的角色与光影效果，确保剧集或纪录片系列从开篇到结局始终维持情感连贯性。",
+          "featured": true,
           "thumbnail": "https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Gemini_Generated_Image_w5y03bw5y03bw5y0.jpeg"
         },
         {
@@ -1629,6 +1901,7 @@
           "name": "电影级 3D / CGI",
           "displayTitle": "电影级 3D / CGI",
           "description": "渲染出的3D电影质感",
+          "featured": false,
           "thumbnail": "https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Gemini_Generated_Image_5qoasf5qoasf5qoa.jpeg"
         },
         {
@@ -1638,6 +1911,7 @@
           "description": "风格化3D动画长片",
           "tagline": "跨集的情感连贯性",
           "marketingBody": "柔和圆润的几何造型与富有表现力的角色设计营造出一种情感上的温暖感，能够让观众在整季内容中保持情感共鸣。这种风格非常适合动画剧集、合家欢长篇内容以及品牌叙事，尤其是在需要确保角色形象在各个情节节点保持连贯性的场景中。",
+          "featured": true,
           "thumbnail": "https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Gemini_Generated_Image_zi32rnzi32rnzi32.jpeg"
         },
         {
@@ -1647,6 +1921,7 @@
           "description": "赛璐珞风格动漫画风",
           "tagline": "连载式叙事弧线",
           "marketingBody": "动画风格的赛璐珞渲染（cel shading）在多集网络剧集及长篇叙事中能引发粉丝的深度共鸣。基于此类风格训练的生成式引擎能够产出线条清晰、构图规范的画面，是实现规模化系列制作的理想选择。",
+          "featured": true,
           "thumbnail": "https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Gemini_Generated_Image_qlf261qlf261qlf2.jpeg"
         },
         {
@@ -1656,6 +1931,7 @@
           "description": "手绘风格动画",
           "tagline": "工艺即奢华",
           "marketingBody": "这种风格直接呼应了“工艺即奢华”这一重要的创作潮流。水彩质感与绘画风格的背景构建出充满手工质感的叙事世界，其中那种自然的瑕疵感，在长篇系列作品中被赋予了精心构思的艺术意蕴。",
+          "featured": true,
           "thumbnail": "https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Gemini_Generated_Image_xojqsuxojqsuxojq.jpeg"
         },
         {
@@ -1664,6 +1940,7 @@
           "displayTitle": "漫画书",
           "description": "浓墨笔触，呈现图像小说风格",
           "tagline": "适用于多集连载叙事的粗犷笔触、半调纹理与波普艺术色彩。",
+          "featured": false,
           "thumbnail": "https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Gemini_Generated_Image_ezhp8cezhp8cezhp.jpeg"
         },
         {
@@ -1672,6 +1949,7 @@
           "displayTitle": "概念设计",
           "description": "电影级游戏/影视概念美术",
           "tagline": "具备氛围感且达到制作标准的影视预演关键帧。",
+          "featured": false,
           "thumbnail": "https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Gemini_Generated_Image_7z9qm7z9qm7z9qm7.jpeg"
         },
         {
@@ -1679,6 +1957,7 @@
           "name": "扁平矢量 / 动态图形",
           "displayTitle": "扁平矢量 / 动态图形",
           "description": "适用于解说视频的简洁矢量风格",
+          "featured": false,
           "thumbnail": "https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Gemini_Generated_Image_omdmt6omdmt6omdm.jpeg"
         },
         {
@@ -1686,6 +1965,7 @@
           "name": "分镜脚本 / 动态分镜",
           "displayTitle": "分镜脚本 / 动态分镜",
           "description": "粗略的灰度分镜画面",
+          "featured": false,
           "thumbnail": "https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Gemini_Generated_Image_7i1wus7i1wus7i1w.jpeg"
         },
         {
@@ -1694,6 +1974,7 @@
           "displayTitle": "数字艺术",
           "description": "现代数字插画",
           "tagline": "用于动画纪录片及系列解说短片的风格化插画。",
+          "featured": false,
           "thumbnail": "https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Gemini_Generated_Image_bmbpbibmbpbibmbp.jpeg"
         },
         {
@@ -1702,6 +1983,7 @@
           "displayTitle": "水彩画",
           "description": "柔和的水彩画",
           "tagline": "适用于回忆录、纪录片及沉思型长篇作品的柔和颜料渲染风格。",
+          "featured": false,
           "thumbnail": "https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Gemini_Generated_Image_7i1wus7i1wus7i1w.jpeg"
         },
         {
@@ -1710,6 +1992,7 @@
           "displayTitle": "草图 / 线稿",
           "description": "铅笔素描风格",
           "tagline": "针对从预演（pre-vis）到制作阶段的长篇叙事节点，呈现细腻的线条与铅笔质感。",
+          "featured": false,
           "thumbnail": "https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Gemini_Generated_Image_bmbpbibmbpbibmbp.jpeg"
         },
         {
@@ -1718,6 +2001,7 @@
           "displayTitle": "油画",
           "description": "古典油画",
           "tagline": "为纪实与历史题材长篇作品呈现古典笔触与浓郁色彩。",
+          "featured": false,
           "thumbnail": "https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Gemini_Generated_Image_7z9qm7z9qm7z9qm7.jpeg"
         }
       ]
@@ -1811,7 +2095,7 @@
           "detail": "性格连贯的角色"
         },
         {
-          "label": "Production Stage",
+          "label": "SFAI生产_阶段术语",
           "detail": "语音与视觉画面"
         },
         {
@@ -1865,7 +2149,8 @@
           "连贯的剧集大纲——贯穿整季自动生成",
           "连贯性追踪——确保多集季度的内容衔接一致",
           "剧集与单集同步 —— 同步至 Blueprint Room 和 Production Stage"
-        ]
+        ],
+        "optional": true
       },
       {
         "id": "蓝图",
@@ -1882,11 +2167,12 @@
           "从构思到架构，仅需数分钟——涵盖故事梗概、关键节点、角色与基调。",
           "在 Production Stage 之前，针对 80+ 目标进行 Audience Resonance 评分",
           "协作者分享链接 —— 整合反馈并转化为指导性修订"
-        ]
+        ],
+        "optional": false
       },
       {
         "id": "生产",
-        "stepLabel": "Production Stage",
+        "stepLabel": "SFAI生产_阶段术语",
         "subtitle": "流向指引",
         "description": "导演、剧本、音乐、参考素材和剧照通过“受众共鸣”评估与预演（Pre-Vis）评审对剧本进行优化。片段、混音与流媒体处理模块负责生成每个镜头的视频。审片室模块则负责预览、剪辑合成及发布工作。",
         "keySteps": [
@@ -1902,7 +2188,8 @@
           "片段、混音器与流 —— 无需离开 Production Stage 即可生成每个镜头。",
           "制作规划器——拍摄目标、带日期的日程安排及手机状态",
           "Screening Room — 场景预览、成片剪辑与合成、放映及 YouTube 发布"
-        ]
+        ],
+        "optional": false
       },
       {
         "id": "放映室",
@@ -1920,7 +2207,8 @@
           "组装预设 —— 全视频、混合模式，或针对各场景的自定义组合",
           "可分享的筛选评估 —— 包含评分与结构化反馈的 /s/ 链接",
           "YouTube 智能向导、短视频导出及分发组合包"
-        ]
+        ],
+        "optional": false
       }
     ]
   },
@@ -2020,6 +2308,361 @@
     "finalDoor": "最终",
     "enterFullscreen": "进入全屏",
     "exitFullscreen": "退出全屏",
+    "showDetail": "显示更多详细信息",
+    "hideDetail": "隐藏详细信息",
+    "featuredPlayer": "精选球员",
+    "openPlayer": "开放玩家",
+    "featureModes": [
+      "预视",
+      "剪辑",
+      "场景",
+      "章节",
+      "大师",
+      "促销"
+    ],
+    "seriesPanel": {
+      "headerLabel": "系列圣经和第 1 集",
+      "bibleTab": "系列圣经",
+      "castTab": "锁定演员阵容",
+      "episode1Tab": "ep。 1 & 第 1 章1",
+      "seasonTab": "季节",
+      "formatLabel": "格式",
+      "durationLabel": "持续时间",
+      "artStyleLabel": "艺术风格",
+      "continuityLockLabel": "连续性锁定",
+      "loglineLabel": "故事梗概",
+      "synopsisLabel": "系列概要和视觉圣经",
+      "lockedCastHeading": "锁定演员表和主体连续性",
+      "inputs": {
+        "drama": {
+          "showTitle": "白城潮流",
+          "format": "6 集 Prestige 系列·第 1 集试播集（8 章）",
+          "genre": "科幻基础设施惊悚片",
+          "artStyle": "变形照片写实主义 · 钨丝灯、亚零板岩和紫罗兰青色感应发光",
+          "duration": "265 分钟系列（6 × 42–48 分钟）· 第 1 集：42.5 分钟",
+          "continuityLock": "Gideon Croft、Piper Hayes、Julian Ward 和 Clara Vance-Croft 博士 · 4 套地下和湖畔套装 · Clara 的 1893 年歧管和密码",
+          "unitLabel": "第 1 集故事节拍/章节 (8)",
+          "artLock": "每一个节奏都锁定了变形的真实感：吉迪恩·克罗夫特 (Gideon Croft) 饱经风霜的档案工作服、派珀·海耶斯 (Piper Hayes) 沾满雪的野战外套、朱利安·沃德 (Julian Ward) 的公司战术装备、克拉拉 (Clara) 修复的 1893 年进气歧管，以及从 1906 年货运隧道到冰冻的两英里婴儿床的进展。",
+          "logline": "当一名名誉扫地的记者闯入一名偏僻的基础设施档案管理员的地下掩体，激活一件 1893 年的大气能源神器时，两人必须在由谋杀其妻子的公司风险特工领导的精英突击队中生存下来，最终在自我保护和将人类从人为匮乏中解放出来之间做出选择。",
+          "seriesSynopsis": "《白城潮流》以饱受气候影响的美国中西部为背景，私人公用事业集团 Vane-Calhoun Energy 将冬季轮流停电作为武器，以获取市政特许权。《白城潮流》共 6 集，时长 45 分钟。前市政档案管理员吉迪恩·克罗夫特 (Gideon Croft) 和列入黑名单的调查记者派珀·海耶斯 (Piper Hayes) 发现了一个被压制的 1893 年哥伦布博览会共振感应网络，该网络由吉迪恩已故的妻子克拉拉·万斯-克罗夫特 (Clara Vance-Croft) 博士设计。在第一季中，第一集中点燃的芝加哥两英里婴儿床引发了一场跨越历史悠久的地下基础设施走廊的高风险战争——从底特律的盐矿变电站到尼亚加拉退役的轮坑——公共电网解放与高级风险总监朱利安·沃德的私人遏制局之间展开对立。",
+          "cast": [
+            {
+              "name": "吉迪恩·克罗夫特",
+              "role": "主角·锁定角色表",
+              "descriptor": "前市政基础设施档案员 (54)。饱经风霜的木炭色羊毛档案保管员工作服，金属丝边框眼镜，花白的胡须，绘图员布满老茧的双手；由温暖的 3200K 钨丝灯和冷隧道石板照明。"
+            },
+            {
+              "name": "派珀·海耶斯",
+              "role": "共同负责人 · 锁定角色表",
+              "descriptor": "列入黑名单的能源调查记者 (31)。积雪覆盖的橄榄野派克大衣，配有加密驱动器和黄铜密码筒的帆布挎包，紫罗兰色-青色感应溢出下的锐利动力强度。"
+            },
+            {
+              "name": "朱利安·沃德",
+              "role": "主要对手 · 锁定角色表",
+              "descriptor": "Vane-Calhoun Energy 公司风险高级总监 (46)。量身定制的哑光黑色战术大衣，骨传导通讯，手术般的冷静；框架采用无菌高对比度机构照明。"
+            },
+            {
+              "name": "克拉拉·万斯·克罗夫特博士",
+              "role": "档案与记忆锚 · 锁定角色表",
+              "descriptor": "晚期共振物理学家 (48)。板岩实验室外套、1893 年铜绕校准装置、温暖的琥珀色闪回板和全息示意图反射。"
+            }
+          ],
+          "episode1Synopsis": {
+            "episodeLabel": "第 1 集剧情简介 · 长篇试播集（8 章）",
+            "title": "第一集：法拉第协议",
+            "duration": "42.5 分钟（8 章·第 1 章现场校样：6 分钟）",
+            "logline": "一名悲痛的隧道档案管理员和一名被追捕的记者在冰冻的芝加哥地下点燃了一个 1893 年的无线电力歧管，并奋力穿过两英里长的湖床下隧道来传播真相。",
+            "synopsis": "在 Vane-Calhoun Energy 制造的致命极地涡旋导致芝加哥南区病房破产期间，派珀·海耶斯 (Piper Hayes) 带着他被谋杀的妻子克拉拉 (Clara) 的 1893 年谐振感应歧管的丢失的加密密钥突破了吉迪恩·克罗夫特 (Gideon Croft) 1906 年的货运隧道掩体。唤醒原型机会向朱利安·沃德 (Julian Ward) 的消毒部门发出警报，迫使吉迪恩 (Gideon) 和受伤的派珀 (Piper) 走出藏身之处，穿过蒸汽水闸、亚当斯街 (Adams Street) 气动邮件站和一条倒塌的 1890 年代湖底进水隧道，将歧管连接到近海的两英里婴儿床 (Two-Mile Crib)。",
+            "chapter1Title": "第 1 章（第 1 节）：地下隔离",
+            "chapter1Duration": "6 分钟 · 初始章节校样",
+            "chapter1Synopsis": "在冰冷的芝加哥地下四十英尺处，吉迪恩·克罗夫特的粉笔覆盖的金库在偷来的市政电流下嗡嗡作响，同时广播电台正在统计南区停电的伤亡人数。派珀·海耶斯绕过了他的周界绊网，上面载有克拉拉的黄铜密码和维恩-卡尔霍恩的减载命令，迫使吉迪恩面对证据，证明克拉拉的死是一次公司暗杀。"
+          },
+          "episodes": [
+            {
+              "number": "1",
+              "title": "地下隔离",
+              "duration": "6分钟",
+              "synopsis": "建立吉迪恩在 1906 年芝加哥货运隧道中的防御孤立，他痴迷于将克拉拉的谋杀合理化为个人失败，而范恩-卡尔霍恩的极涡停电冻结了南区，以及派珀·海耶斯对克拉拉最终密码的破坏性入侵。"
+            },
+            {
+              "number": "2",
+              "title": "解锁法拉第协议",
+              "duration": "5.5分钟",
+              "synopsis": "派珀用内部范恩-卡尔霍恩关闭清单和克拉拉的手写恳求与吉迪恩对峙，上演了一场激烈的意识形态冲突——粉碎了他的愤世嫉俗，并迫使他输入对齐序列，以紫色电磁浪唤醒谐振感应原型。"
+            },
+            {
+              "number": "3",
+              "title": "幽闭恐惧症的反攻",
+              "duration": "5.5分钟",
+              "synopsis": "朱利安·沃德的战术消毒小组向金库引爆了违规指控。当派珀用弹片保护吉迪恩时，他克服了独自封闭自己的本能——引导她穿过被遗忘的排水闸，并用工业蒸汽旁路烫伤了沃德的承包商。"
+            },
+            {
+              "number": "4",
+              "title": "缝合和分站",
+              "duration": "4.5分钟",
+              "synopsis": "吉迪恩在亚当斯街下方的一个废弃的气动邮件分拣站避难，以亲密的减压节奏现场缝合了派珀的伤口，将克拉拉的遗产与派珀的使命联系在一起，并巩固了吉迪恩对战斗的承诺。"
+            },
+            {
+              "number": "5",
+              "title": "突破港口烟道",
+              "duration": "4.5分钟",
+              "synopsis": "在沃德的地表周界和定时铝热剂的围攻下，吉迪恩和派珀执行了一项相互依赖的战术突破——在气动调度管中临时安装了一个加压震荡罐，以炸开通向冰冻湖边的通风道。"
+            },
+            {
+              "number": "6",
+              "title": "湖底穿越",
+              "duration": "5分钟",
+              "synopsis": "面对着两英里翻腾的浮冰，要到达近海的两英里婴儿床，吉迪恩带领派珀穿过冰冻湖床下一个危险的、半淹没的 1890 年代砖制进水虹吸管，与低温、不断上升的冰渗和结构倒塌作斗争，将她拖上进水井。"
+            },
+            {
+              "number": "7",
+              "title": "站在龙门架上",
+              "duration": "5.5分钟",
+              "synopsis": "在婴儿床的大风扫过的龙门架上，沃德用高压逆变继电器将他们逼到墙角，并为克拉拉的歧管提供吉迪恩地下免疫和实验室资金。吉迪恩拒绝企业合作，并热线维多利亚式液压闸门，将沃德的反向冲锋通过执行器传回。"
+            },
+            {
+              "number": "8",
+              "title": "谐波电网传输和辩护",
+              "duration": "6分钟",
+              "synopsis": "派珀接合到微波上行链路，向独立新闻媒体广播维恩-卡尔霍恩的犯罪行为，而吉迪恩将克拉拉的歧管连接到区域阵列，释放谐振谐波传输，在吉迪恩在黎明烧毁他的证件之前恢复整个芝加哥的热量和光。"
+            }
+          ]
+        },
+        "animation": {
+          "showTitle": "哈特之家",
+          "format": "动画情景喜剧 · 5 集季",
+          "genre": "多代家庭喜剧",
+          "artStyle": "2D Flat-Cel 动画 · 大胆的墨水轮廓和温暖的郊区调色板",
+          "duration": "110 分钟季（5 × 22 分钟）· 第 1 集：22 分钟",
+          "continuityLock": "5 张锁定的家庭角色表 · 米尔威克住宅和侧门廊 · 零风格漂移",
+          "unitLabel": "第 1 季集数 (5)",
+          "artLock": "整个季节锁定的平面风格：大胆的墨水轮廓、温暖的郊区色彩以及每集相同的角色设计。该平台可以容纳多种款式。这个系列不换。",
+          "logline": "在米尔威克，哈特一家把一场家庭争吵变成了一周的笑话，而这个笑话又变成了他们仍然住在同一屋檐下的原因。",
+          "seriesSynopsis": "《哈特之家》以对公民法规痴迷的米尔威克小镇为背景，是一部 5 集、22 分钟的 2D 动画家庭情景喜剧，旨在证明整个播出季的零脱模漂移。市政职员露丝·哈特 (Ruth Hart) 和夜班交通机械师埃利斯·哈特 (Ellis Hart) 与 16 岁的辩论队长琼 (June)、9 岁的事实收集员米洛 (Milo) 以及露丝的母亲娜娜·伊内兹 (Nana Inez) 共用一间狭窄的工匠屋，她的“临时”封闭侧门廊已悄然成为家中的情感中心。每一集都将一个令人头疼的市政小问题变成连珠炮般的集体喜剧，同时保持从第一集到第五集家庭投票锁定的相同的线宽、温暖的卡通阴影调色板和多角度角色表。",
+          "cast": [
+            {
+              "name": "露丝·哈特",
+              "role": "女族长 · 锁定的 2D 角色表",
+              "descriptor": "米尔威克市政职员 (42)。赤土色针织开衫、玳瑁眼镜、彩色挂历；面无表情的声音节奏和富有表现力的眉毛弧线。"
+            },
+            {
+              "name": "埃利斯·哈特",
+              "role": "族长 · 锁定的 2D 角色表",
+              "descriptor": "夜班市政巴士机械师 (44)。海军蓝工作服、钢制保温瓶、乐观的车库发明家，用 40 磅重的装置解决了 5 分钟的家务事。"
+            },
+            {
+              "name": "琼·哈特",
+              "role": "女儿 · 锁定的 2D 角色表",
+              "descriptor": "高中辩论队长 (16)。芥末色连帽衫搭配百褶裙，手里拿着带有注释的城镇章程；将每一条餐桌规则都视为最高法院的口头辩论。"
+            },
+            {
+              "name": "米洛·哈特",
+              "role": "儿子 · 锁定的 2D 角色表",
+              "descriptor": "家庭档案管理员和标签制作爱好者 (9)。条纹橄榄球衫、解开的高帮鞋、工业标签枪；以喜剧的节奏传递出毁灭性的真实真相。"
+            },
+            {
+              "name": "娜娜·伊内兹",
+              "role": "祖母 · 锁定的 2D 角色表",
+              "descriptor": "侧门廊君主和退休裁缝 (71)。绣花靛蓝披肩、银发髻、柳条宝座；记住自 1984 年以来该街区的每一个分区差异。"
+            }
+          ],
+          "episode1Synopsis": {
+            "episodeLabel": "第 1 集剧情简介·季 Premiere（4 章）",
+            "title": "第一集：排序规则",
+            "duration": "22 分钟（4 章·第 1 章现场校样：5.5 分钟）",
+            "logline": "一项十二类城镇回收任务激励埃利斯建造了一个机动车库分类输送机，它意外地将娜娜伊内兹的门廊物品分类为市政剩余物品。",
+            "synopsis": "当米尔威克颁布第 412 号条例时——要求在周四早上之前设置 12 个颜色编码的路边垃圾桶——露丝希望安静地遵守规定，这样她在市政厅的同事就不能闲聊，琼为议会麦克风起草了一份宪法挑战书，埃利斯在车库里建造了一台滑轮驱动的分拣机。这台机器在玻璃瓶上取得了胜利，然后吞噬了家里没有标签的储物盒，当米洛打印了一个标签，上面写着“娜娜的临时门廊物品”时，最终在客厅对峙，而一家人必须承认没有人知道“临时”意味着什么。",
+            "chapter1Title": "第一章（冷开和第一幕）：周四之前十二个垃圾箱",
+            "chapter1Duration": "5.5 分钟 · 初始章节校样",
+            "chapter1Synopsis": "早上 6 点 15 分，在上锁的哈特厨房里，露丝公布了该镇的十二类分类表，而埃利斯则带着一辆报废的公交车门电机从夜班回来。在快速剪辑的平板反应镜头中，米洛开始给家具贴上标签，娜娜·伊内兹宣布侧门廊不受市政管辖。"
+          },
+          "episodes": [
+            {
+              "number": "1",
+              "title": "排序规则",
+              "duration": "22分钟",
+              "synopsis": "米尔威克发布了一项新的回收命令，涉及十二类。埃利斯在车库里建造了一台分拣机。它适用于瓶子，然后灾难性地适用于家里没有标签的盒子。琼想在镇会议上挑战这一规则。露丝希望周四之前路边看起来会合规。当米洛给一个盒子贴上“娜娜门廊的东西”的标签时，这一集播出了，但没有人能同意这个标签的含义。"
+            },
+            {
+              "number": "2",
+              "title": "游行天气",
+              "duration": "22分钟",
+              "synopsis": "米尔威克日预计有雨。琼想取消她辩论俱乐部的横幅。米洛想要记录闪电。娜娜·伊内兹 (Nana Inez) 拒绝向邻居挥手，因为她因围栏纠纷而一直回避。露丝仍然必须在防水布下主持该街区。笑话是防水布。关键是谁来决定庆祝活动的发生。"
+            },
+            {
+              "number": "3",
+              "title": "夜班早餐",
+              "duration": "22分钟",
+              "synopsis": "埃利斯黎明时分回到家，为已经离开的人做饭。六月有一场锦标赛。米洛有一次实地考察。露丝有一个逆班。一小时里，厨房就是全家人的聚会，鸡蛋是唯一合适的谈话。一块烧焦的煎饼成为人们争论房子是围绕谁的早晨建造的。"
+            },
+            {
+              "number": "4",
+              "title": "备用钥匙",
+              "duration": "22分钟",
+              "synopsis": "在埃利斯睡过头的早晨，有人一直在给猫的碗里加水。哈特夫妇调查并找到了多年前他们藏在砖下的钥匙。他们一直称其为爱管闲事的邻居一直在黎明时分。娜娜·伊内兹必须决定是收回钥匙还是承认封锁起到了帮助作用。"
+            },
+            {
+              "number": "5",
+              "title": "门廊投票",
+              "duration": "22分钟",
+              "synopsis": "娜娜伊内兹宣布她已经完成了“临时”门廊的工作，并将搬到她姐姐的小镇。哈特夫妇召集家庭投票。将门廊重建为她真正的房间意味着埃利斯的车库项目停止，琼的学习角移动，而米尔威克必须允许它一直忽视的改变。季节就此转变：喜剧不再讲述混乱的一周。这是关于谁能留下来的问题。"
+            }
+          ]
+        },
+        "documentary": {
+          "showTitle": "漫长的思考",
+          "format": "历史纪录片 · 5 部分系列",
+          "genre": "全球科学技术史",
+          "artStyle": "时代精确的档案现实主义（1950 年代 16 毫米颗粒 → 1980 年代 CRT → 现代 4K）",
+          "duration": "200 分钟系列（5 × 40 分钟）· 第 1 集：40 分钟",
+          "continuityLock": "2 位经常见证人（阿米拉·哈桑博士和佐藤健二）· 12 个全球城市· 严格的时期护栏",
+          "unitLabel": "纪录片剧集 (5)",
+          "artLock": "周期准确性是图像的规则。 1956 年的实验室里有古装、胶片颗粒和当年的机器——没有平面屏幕，没有电话。现在的章节就像现在这样。同样的两位目击者，阿米拉·哈桑博士和佐藤健二，在他们出现的每个时代都保持着同样的面孔。",
+          "logline": "这部由五部分组成的纪录片讲述了智能——建造的、借用的和尚未完成的——从第一批有用的机器到比其制造者更聪明的系统的问题。",
+          "seriesSynopsis": "《漫长的思考》是一部时长 200 分钟、五部分的纪录片系列，跨越七十年、横跨五大洲 12 个城市，追踪人类将推理外化的尝试——从 1956 年曼彻斯特和东京的中继室到当代基础模型基础设施和超级智能的治理视野。在反复出现的镜头目击者 Amira Hassan 博士（开罗/伦敦）和 Kenji Sato（大阪/东京）的主持下，SceneFlow 的历史风格护栏每十年锁定真实的镜头、衣柜和房间几何形状，同时自动编织同步转录的档案剖面图、示意图和多语言旁白。",
+          "cast": [
+            {
+              "name": "阿米拉·哈桑博士",
+              "role": "首席见证人·多时代锁定身份",
+              "descriptor": "数理逻辑学家和人工智能治理学者。出现在 28 世纪 80 年代的开罗/巴黎档案娱乐（28 岁）和当今的 4K 伦敦采访画面（64 岁）中，具有锁定的面部结构和声音节奏。"
+            },
+            {
+              "name": "佐藤健二",
+              "role": "共同首席见证人·多时代锁定身份",
+              "descriptor": "工业控制和半导体工程师。从 20 世纪 80 年代的大阪/首尔制造车间到具有自然微表情和口型同步的当代东京机器人档案。"
+            },
+            {
+              "name": "编年史家（旁白）",
+              "role": "纪录片上帝之声·四语神经锁",
+              "descriptor": "严谨、平庸的纪录片旁白以英语、西班牙语、中文和阿拉伯语录制按时间记录的 B 卷和本地化音频混音。"
+            },
+            {
+              "name": "历史实验室和现场合奏团",
+              "role": "受时代保护的重演演员阵容（1956 年至今）",
+              "descriptor": "1956 年曼彻斯特和东京的计算先驱，1989 年内罗毕医院记录分析师，以及当今马尼拉、阿克拉和鹿特丹的从业者——严格过滤现代不合时宜的内容。"
+            }
+          ],
+          "episode1Synopsis": {
+            "episodeLabel": "第 1 集剧情简介·系列 Premiere（5 章）",
+            "title": "第一集：有开关的房间（1950–1968）",
+            "duration": "40 分钟（5 章·第 1 章现场校样：6 分钟）",
+            "logline": "战后，在曼彻斯特、普林斯顿和东京，一些数学家和中继工程师在体育馆大小的房间里安装电线，以测试机器是否可以遵守规则并改变主意。",
+            "synopsis": "第一集重建了 1950 年至 1968 年间机器智能的物理和哲学诞生。在曼彻斯特 Ferranti Mark 1、东京 ETL Mark III 中继室和达特茅斯 1956 年夏季研究的 16 毫米档案级再现之间，阿米拉·哈桑 (Amira Hassan) 博士和佐藤健二 (Kenji Sato) 检查了他们的导师留下的文物，展示了早期研究人员如何将形式逻辑误认为是人类常识，但却奠定了转换的基础仍然统治着现代计算的架构。",
+            "chapter1Title": "第一章：记忆中的接力（曼彻斯特和东京，1956 年）",
+            "chapter1Duration": "6 分钟 · 初始章节校样",
+            "chapter1Synopsis": "采用 1956 年锁定的 16 毫米纹理拍摄，现代文物为零，身着羊毛背心的工程师在曼彻斯特和东京的叮当作响的电磁继电器中追踪故障，并与阿米拉·哈桑 (Amira Hassan) 和佐藤健二 (Kenji Sato) 清晰的 4K 当今采访画面进行交叉剪辑，画面中阿米拉·哈桑 (Amira Hassan) 和佐藤健二 (Kenji Sato) 拿着原始的 5 孔打孔胶带 — 关闭了一个彻夜打开的拨动开关。"
+          },
+          "episodes": [
+            {
+              "number": "1",
+              "title": "有开关的房间",
+              "duration": "40分钟",
+              "synopsis": "曼彻斯特、普林斯顿和东京的中世纪实验室。身着古装的研究人员站在机器旁，这些机器在喧闹的房间里做着一件聪明的事情。阿米拉的老师在后来的采访磁带中描述了这种希望，但没有使用任何来自未来的物体。 Kenji 的叔叔为一位衣柜大小的工厂控制员提供服务。本章以将开关置于打开位置过夜结束。"
+            },
+            {
+              "number": "2",
+              "title": "有用的机器",
+              "duration": "40分钟",
+              "synopsis": "20 世纪 80 年代和 90 年代。内罗毕医院记录室的专家系统、首尔的芯片层、巴黎的翻译办公室。米色终端、CRT 发光、那个十年的服装和汽车。年轻的阿米拉正在观看一个节目，该节目提出了一位高级临床医生拒绝的诊断。 Kenji 发现线路停止了，因为传感器信任自己。有用，已经和旁边的人吵起来了。"
+            },
+            {
+              "number": "3",
+              "title": "公众到来",
+              "duration": "40分钟",
+              "synopsis": "2010年代。拉各斯的新闻编辑室、圣保罗的教室、柏林的厨房，电话回答孩子大声提出的问题。该模型已离开实验室。现在记者打电话给阿米拉。 Kenji的工厂贴出通知，夜班人员将“咨询系统”。本章讲述的是阅读屏幕的面孔，而不是屏幕上的内容。"
+            },
+            {
+              "number": "4",
+              "title": "加速",
+              "duration": "40分钟",
+              "synopsis": "今天，三个城市。马尼拉的一名护士，阿克拉的一名作曲家，鹿特丹的一名码头规划师。每个人都使用一个系统来完成他们开始的句子。叙述者会计算条款确定时哪些人加速了，哪些人不在房间里。阿米拉和年长的健二比较了门上的告示。这些照片是当代的：当前的服装、当前的街道、当前的灯光。"
+            },
+            {
+              "number": "5",
+              "title": "未来的问题",
+              "duration": "40分钟",
+              "synopsis": "超级智能地平线，作为一个问题而不是一个预言来讲述。阿米拉（Amira）和健二（Kenji）坐在一个安静的档案馆里，里面有文件、照片和一台不冒充人的机器。他们问，一个比其制造者更聪明的系统会欠护士、作曲家、码头规划师和那些从未接触过开关的人什么。该系列没有回答。它把义务留在了房间里。"
+            }
+          ]
+        },
+        "training": {
+          "showTitle": "五盘",
+          "format": "教学系列 · 5 模块课程",
+          "genre": "实践烹饪课程",
+          "artStyle": "自然日光工作室 · 干净的头顶和长凳覆盖",
+          "duration": "75 分钟课程（5 × 15 分钟）· 第 1 单元：15 分钟",
+          "continuityLock": "1 个上锁教练（主厨 Lila Mensah）· 2 个学徒组厨师 · 1 个海港街教学厨房 · 5 个渐进式盘子",
+          "unitLabel": "课程模块 (5)",
+          "artLock": "一名上锁的厨师。厨师莉拉·门萨（Lila Mensah），同样的脸，同样的白大褂，同样的短发，在同一个海港街的教学厨房里——同样的瓷砖，同样的锅，同样的窗户——从肉汤到甜点。",
+          "logline": "一位厨师、一间厨房、五顿饭——每一盘都教手下一盘需要什么。",
+          "seriesSynopsis": "《五盘》设计为企业级、多模块教学课程，跟随主厨 Lila Mensah 在锁着的海港街教学厨房内完成五节 15 分钟的课程（总共 75 分钟）。与无法展示物理手艺的化身幻灯片阅读器不同，SceneFlow 可以在 A-Cam 中型教学节拍、B-Cam 90° 高架长凳演示和 C-Cam 宏观慢炖/面包屑检查中锁定厨师 Mensah 的脸、双排扣外套、刀具台和绿色陶瓷墙砖，从而建立从基础清汤到五盘毕业服务的累积烹饪能力。",
+          "cast": [
+            {
+              "name": "厨师莉拉·门萨",
+              "role": "首席讲师·锁定身份和衣橱",
+              "descriptor": "行政总厨-讲师 (38)。清爽的白色双排扣厨师外套，石板色围裙，短发；在所有 5 个模块中保持相同的面部几何形状、手部连续性和冷静的教学权威。"
+            },
+            {
+              "name": "马库斯·科尔",
+              "role": "学徒队列厨师 · 锁定角色表",
+              "descriptor": "一年级烹饪学生（26）。 2 号板凳上的海军蓝学徒夹克；执行实时技术检查、热量调整和故障诊断。"
+            },
+            {
+              "name": "普里亚·奈尔",
+              "role": "学徒队列厨师 · 锁定角色表",
+              "descriptor": "一年级烹饪学生（24）。 3 号板凳上的木炭学徒夹克；演示调味校准、面团打样检查和家庭式摆盘。"
+            },
+            {
+              "name": "港湾街教学厨房",
+              "role": "锁定工作室套装 · 3 摄像头教学设备",
+              "descriptor": "日光照明的工业砖和绿色瓷砖工作室，配有拉丝钢岛、重型铜汤锅，以及 A 型摄像机、90° 顶置 B 型摄像机和宏 C 型摄像机的同步标注图形。"
+            }
+          ],
+          "episode1Synopsis": {
+            "episodeLabel": "第 1 集（模块 1）概要·课程基础（3 章）",
+            "title": "模块 1：肉汤 — 提取、澄清度和热量控制",
+            "duration": "15 分钟（3 章·第 1 章现场校样：5 分钟）",
+            "logline": "主厨 Lila Mensah 通过水晶般清澈的基础肉汤教授热量管理、芳香和撇油学科，为其余课程提供动力。",
+            "synopsis": "在模块 1 中，主厨 Lila Mensah 建立了 Harbour Street 工作台，并教授课程的基本技能：将冷水、烤骨头或根类蔬菜以及芳香剂转化为清澈、结构化的肉汤。分为三个教学章节 - (1) 冷启动和刀准备到位，(2) 对流慢煮和脱脂，以及 (3) 后期盐校准和清晰度检查 - 学习者在接触后续模块中的面粉或烘烤蛋白质之前掌握热控制。",
+            "chapter1Title": "第一章：冷水、干净的骨头和第一次慢炖",
+            "chapter1Duration": "5 分钟 · 初始章节校样",
+            "chapter1Synopsis": "在日光平衡的海港街厨房中，厨师 Lila Mensah 在 A-Cam 上开场，介绍了五盘式教学大纲，切换到锁定的 90° 头顶 B-Cam 来演示均匀的 mirepoix 切割和冷水浸泡，并与学徒 Marcus 和 Priya 一起将汤锅带到第一个懒惰对流气泡。"
+          },
+          "episodes": [
+            {
+              "number": "1",
+              "title": "肉汤",
+              "duration": "15分钟",
+              "synopsis": "莉拉从清汤开始：刀、骨头或蔬菜、热量和耐心。她展示了小火慢煮、撇去浮沫，以及加盐的那一刻。厨房、外套和她的脸都被设定为锁定的场景。支票是一勺，尝起来已经完成，不混浊。"
+            },
+            {
+              "number": "2",
+              "title": "面包",
+              "duration": "15分钟",
+              "synopsis": "同一个长凳，同一个厨​​师。面团、时间和成熟面包的感觉。莉拉将汤中关于耐心的教训与面团所需的等待联系起来。学生们塑造、评分和烘焙。支票是一种打开的面包屑，而不是粘性的，并附有关于下次要更改的内容的注释。"
+            },
+            {
+              "number": "3",
+              "title": "蔬菜主菜",
+              "duration": "15分钟",
+              "synopsis": "一盘蔬菜和谷物必须养活全班同学，而不是相机。莉拉展示了一种用肉汤制成的酱汁、一组调味料，以及如何保持蔬菜的颜色。支票是第一个碗和最后一个碗中的相同的盘子。"
+            },
+            {
+              "number": "4",
+              "title": "庆祝烤肉",
+              "duration": "15分钟",
+              "synopsis": "一个重要夜晚的中心盘：烘烤、休息和使用昨天面包的配菜。当赌注增加时，莉拉保持同样的电台和同样的声音。这张支票是在雕刻一张桌子，而不是一个英雄镜头。"
+            },
+            {
+              "number": "5",
+              "title": "最后的甜蜜",
+              "duration": "15分钟",
+              "synopsis": "一道甜点，需要模块1的火候控制、模块2的时间控制、模块3的调味眼。然后全班将所有五盘菜设置为一顿饭。莉拉穿着同样的外套，在同一个厨房里走过山口。该课程从课程变成了服务。"
+            }
+          ]
+        }
+      }
+    },
     "explorerHandoff": "这些链接展示的是成品；Explorer 则是让你亲手制作的地方。",
     "languagesBanner": "公开示例提供四种语言版本：英语、西班牙语、中文和阿拉伯语。",
     "workflowLabel": "解决方案",
@@ -2197,16 +2840,19 @@
     "chapters": [
       {
         "id": "从这里开始",
-        "label": "从这里入手——规划、连贯性与受众契合度"
+        "label": "从这里入手——规划、连贯性与受众契合度",
+        "defaultExpanded": false
       },
       {
         "id": "制作与发布",
-        "label": "制作并发布 — 将片段发布至 Screening Room"
+        "label": "制作并发布 — 将片段发布至 Screening Room",
+        "defaultExpanded": false
       }
     ],
     "close": "关闭",
     "viewDetails": "查看详情",
     "beatFirst": {
+      "id": 15,
       "title": "以节拍为先的视频制作流程",
       "description": "在进行 F2V（视频生成）之前，先确认预演（pre-vis）的关键节点与镜头帧范围——从而减少因模型“幻觉”或视觉偏差导致的盲目重生成。建立从审核到最终成片的规范化流程。",
       "keyFeatures": [
@@ -2632,7 +3278,7 @@
         }
       ],
       "supportedProviders": "支持的提供商",
-      "vertexName": "Google Vertex AI",
+      "vertexName": "谷歌 Vertex AI",
       "vertexDetail": "参考资料、剧照与 Omni 剪辑片段",
       "elevenLabsName": "克林",
       "elevenLabsDetail": "使用您的密钥时生成片段",
@@ -2681,7 +3327,7 @@
       "imageGeneration": "图像生成",
       "videoGeneration": "视频生成",
       "voiceover": "旁白",
-      "byokTag": "(BYOK)",
+      "byokTag": "（SFAIBYOK 术语）",
       "totalEstimate": "总估算",
       "withTopUps": "包含充值",
       "creditSavings": "SceneFlow 信用节省",
@@ -2809,7 +3455,7 @@
   "notify": {
     "heading": "获取发布资讯",
     "description": "留下您的邮箱，我们会在发布时通知您。除此之外，不会有其他信息。",
-    "placeholder": "you@studio.com",
+    "placeholder": "你@studio.com",
     "submit": "通知我",
     "submitting": "正在发送……",
     "successTitle": "检查您的收件箱。",
@@ -2833,7 +3479,7 @@
     "closedNote": "申请将由编辑进行审核。提交申请并不意味着您的影片会被发布到目录中。",
     "fields": {
       "email": "电子邮件",
-      "emailPlaceholder": "you@studio.com",
+      "emailPlaceholder": "你@studio.com",
       "name": "您的姓名",
       "namePlaceholder": "导演或制片人姓名",
       "title": "试播集或剧情长片标题",
@@ -2905,79 +3551,5 @@
     "mute": "静音",
     "unmute": "取消静音",
     "expandVideo": "展开视频"
-  },
-  "productionAgent": {
-    "eyebrow": "Production Agent • 全自动工作室构建器",
-    "title": "告别手动输入 300+ 个镜头提示词。启动构建，安心离席。",
-    "subtitle": "一部常规 27 场景作品（每场 12–20 个镜头）在传统 AI 工具中需要手动输入 300 多次静态帧与视频提示词。现在只需不到一小时打磨剧本，勾选 Pre-Vis、视频片段、场景、母带或宣传片，即可让制片智能体自动构建场景、自愈修复失败镜头，并在完成时通过私密 /s/ Screening Room 链接通知您。",
-    "showDetail": "展开更多详情",
-    "hideDetail": "收起详情",
-    "drawerBadge": "逐场全自动制片编排",
-    "drawerTitle": "不到一小时打磨剧本。数小时的手动提示词由一次全自动运行完全替代。",
-    "cards": [
-      {
-        "badge": "省去 300+ 次手动提示词",
-        "title": "剧本打磨 < 1 小时 → 解放全天时间",
-        "description": "告别跨 27 个场景（每场 12–20 个镜头）逐条输入 300 多个静态图与视频提示词。一小时内定稿剧本，把时间留给核心业务与生活。"
-      },
-      {
-        "badge": "全部 27 场或按章节生成",
-        "title": "5 大端到端制片阶段",
-        "description": "在同一个构建器中勾选 Pre-Vis、视频片段、场景、母带与宣传片。智能体将自动生成连续性参考图、对白/音效/配乐、关键帧、动态视频与预告片。"
-      },
-      {
-        "badge": "零卡顿渲染",
-        "title": "自愈重试 + Creative Clips 自动回退",
-        "description": "自动优化镜头调度并重跑失败镜头。当戏剧张力镜头在优化后仍触发 Google 策略过滤时，会自动切换至 Creative Clips 完成生成。"
-      },
-      {
-        "badge": "完整的导演控制权",
-        "title": "导演检查点与 /s/ 审片室链接",
-        "description": "可 100% 全自动运行，也可在 Pre-Vis 或每场戏后暂停审核。按您设定的频率接收包含 /s/ Screening Room 直达链接的通知。"
-      }
-    ],
-    "viewScript": "查看 Ana 视频脚本（30 秒演示）",
-    "hideScript": "收起 Ana 视频脚本（30 秒演示）",
-    "copyScript": "复制脚本",
-    "copied": "已复制",
-    "cta": "启动工作室 ($9)"
-  },
-  "studioAcademy": {
-    "eyebrow": "SceneFlow 工作室学院与即时 (JIT) 实训",
-    "title": "每一步都有引导。在创作中掌握整座工作室。",
-    "subtitle": "再也不必面对空白时间线发呆，也不会因为猜测下一步而白白消耗积分。在任意界面按下 ? 键，即可呼出即时 (JIT) 视觉界面地图与带有一键操作的 60 秒核对清单——或跟随交互式课程从一句话灵感直达发布级成片。",
-    "showDetail": "展开更多详情",
-    "hideDetail": "收起详情",
-    "drawerBadge": "好莱坞级制片实力 · 零影视学院门槛",
-    "drawerTitle": "每个工作间均内置交互式界面地图、60 秒核对清单与积分护栏",
-    "cards": [
-      {
-        "badge": "随时一键呼出 (?)",
-        "title": "上下文感知即时 (JIT) 教练",
-        "description": "在任意界面按下 ? 键，即可打开当前工作区的即时视觉地图、下一步操作的 60 秒清单，以及为您直接触发对应工作室操作的一键按钮。"
-      },
-      {
-        "badge": "4 门引导式交互课程",
-        "title": "“10 分钟完成你的第一部影片”模拟器",
-        "description": "专为零剪辑经验的创作者、作家与剧集统筹打造。跟随 Spotlight X-Ray 交互式标注，从一句话概念完成配音、配乐并生成可播放成片。"
-      },
-      {
-        "badge": "节省高达 70% 的积分",
-        "title": "故事板优先 (Animatic-First) 积分护栏",
-        "description": "每个工作区都内置实时积分护栏，指导您如何先锁定 80+ Audience Resonance 剧本并预览配音版关键帧故事板，然后再投入积分渲染动态视频。"
-      },
-      {
-        "badge": "所有套餐免费包含",
-        "title": "工作室内置 4 门交互式实训课程",
-        "description": "在工作室内直接掌握 Blueprint 与受众共鸣、角色与场景连续性资产库、故事板优先积分护栏，以及 Screening Room 与 70+ 语言配音流。"
-      }
-    ],
-    "tryLiveMap": "体验实时 JIT 视觉界面地图（标注 1–4）",
-    "hideLiveMap": "收起实时 JIT 视觉界面地图",
-    "viewScript": "查看 30 秒视频脚本 (Ana)",
-    "hideScript": "收起 30 秒视频脚本 (Ana)",
-    "copyScript": "复制脚本",
-    "copied": "已复制",
-    "cta": "启动工作室 ($9)"
   }
 }

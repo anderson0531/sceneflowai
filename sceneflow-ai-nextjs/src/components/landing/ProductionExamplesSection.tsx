@@ -31,6 +31,11 @@ function exampleLabels(t: ReturnType<typeof useTranslations<'productionShowcase'
     enterFullscreenLabel: t('enterFullscreen'),
     exitFullscreenLabel: t('exitFullscreen'),
     explorerHandoff: t('explorerHandoff'),
+    showDetailLabel: t.has('showDetail') ? t('showDetail') : 'Show more detail',
+    hideDetailLabel: t.has('hideDetail') ? t('hideDetail') : 'Hide detail',
+    featuredPlayerLabel: t.has('featuredPlayer') ? t('featuredPlayer') : 'Featured Player',
+    openPlayerLabel: t.has('openPlayer') ? t('openPlayer') : 'Open Player',
+    featureModes: t.has('featureModes') ? (t.raw('featureModes') as string[]) : undefined,
   }
 }
 

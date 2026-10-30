@@ -244,6 +244,7 @@
     "badge": "मुख्य विशेषताएँ",
     "title": "विचार से लेकर मास्टरपीस तक।",
     "subtitle": "Series Room → Blueprint Room → Production Stage → Screening Room.",
+    "featuresListLabel": "विशेषताएं सूची",
     "learnMoreLabel": "और जानें",
     "showLessLabel": "कम दिखाएँ",
     "videoComingSoon": "फ़ीचर डेमो जल्द ही आ रहा है",
@@ -267,52 +268,52 @@
         "features": [
           {
             "icon": "newSeries",
-            "title": "New Series",
-            "description": "Pitch your series, anthology, or episodic channel concept in plain language. Interactive AI refinement sharpens your premise, target audience, and visual tone before generating a complete multi-episode season baseline—complete with overarching plot arcs, recurring character hooks, and episode-by-episode breakdowns.",
-            "screenshot": "Create New Series — intent, Clarify and Confirm, Generate Series",
+            "title": "नई शृंखला",
+            "description": "अपनी श्रृंखला, संकलन, या एपिसोडिक चैनल अवधारणा को सरल भाषा में प्रस्तुत करें। इंटरएक्टिव एआई परिशोधन एक संपूर्ण मल्टी-एपिसोड सीज़न बेसलाइन तैयार करने से पहले आपके आधार, लक्षित दर्शकों और दृश्य टोन को तेज करता है - व्यापक कथानक आर्क्स, आवर्ती चरित्र हुक और एपिसोड-दर-एपिसोड ब्रेकडाउन के साथ।",
+            "screenshot": "नई शृंखला बनाएं - इरादा, स्पष्ट करें और पुष्टि करें, शृंखला बनाएं",
             "learnMore": {
               "items": [
                 {
-                  "title": "Plain-language series pitch",
-                  "description": "Pitch the premise, episode format, target demographic, and visual art style in plain language."
+                  "title": "सादी भाषा श्रृंखला पिच",
+                  "description": "सरल भाषा में आधार, एपिसोड प्रारूप, लक्ष्य जनसांख्यिकीय और दृश्य कला शैली को प्रस्तुत करें।"
                 },
                 {
-                  "title": "Interactive Clarify & Confirm",
-                  "description": "Clarify and Confirm sharpens the season synopsis, tone, and thematic pillars with you before anything is generated."
+                  "title": "इंटरएक्टिव स्पष्ट करें और पुष्टि करें",
+                  "description": "कुछ भी उत्पन्न होने से पहले स्पष्ट करें और पुष्टि करें आपके साथ सीज़न सारांश, टोन और विषयगत स्तंभों को तेज करता है।"
                 },
                 {
-                  "title": "Multi-episode season baseline",
-                  "description": "Generate Series builds a structured five-episode season arc with individual synopses and story hooks that you can expand anytime."
+                  "title": "मल्टी-एपिसोड सीज़न बेसलाइन",
+                  "description": "जेनरेट सीरीज़ व्यक्तिगत सारांश और कहानी हुक के साथ एक संरचित पांच-एपिसोड सीज़न आर्क बनाता है जिसे आप किसी भी समय विस्तारित कर सकते हैं।"
                 },
                 {
-                  "title": "World & genre calibration",
-                  "description": "Lock visual aesthetics, era settings, and recurring narrative motifs up front so every episode shares the same creative DNA."
+                  "title": "विश्व एवं शैली अंशांकन",
+                  "description": "दृश्य सौंदर्यशास्त्र, युग सेटिंग और आवर्ती कथा रूपांकनों को सामने से लॉक करें ताकि प्रत्येक एपिसोड समान रचनात्मक डीएनए साझा कर सके।"
                 }
               ]
             }
           },
           {
             "icon": "seriesReview",
-            "title": "Season Bible & Continuity",
-            "description": "Read or listen to the narrated season overview and episode slate. SceneFlow locks your story threads, cast profiles, recurring locations, and signature props into a shared Reference Library that every episode inherits automatically—eliminating continuity drift across multi-part storytelling.",
-            "screenshot": "Overview Listen, Episodes Listen, Consistency, Continuity — Cast, Locations, Props, Settings",
+            "title": "सीज़न बाइबिल और निरंतरता",
+            "description": "सुनाए गए सीज़न का अवलोकन और एपिसोड स्लेट पढ़ें या सुनें। SceneFlow आपकी कहानी के धागे, कास्ट प्रोफाइल, आवर्ती स्थानों और हस्ताक्षर प्रॉप्स को एक साझा Reference Library में लॉक कर देता है, जो हर एपिसोड को स्वचालित रूप से विरासत में मिलता है - बहु-भाग कहानी कहने में निरंतरता के बहाव को समाप्त करता है।",
+            "screenshot": "अवलोकन सुनें, एपिसोड सुनें, संगति, निरंतरता - कास्ट, स्थान, प्रॉप्स, सेटिंग्स",
             "learnMore": {
               "items": [
                 {
-                  "title": "Narrated season & episode audit",
-                  "description": "Audit the overarching season overview and every individual episode synopsis with built-in studio audio narration."
+                  "title": "वर्णित सीज़न और एपिसोड ऑडिट",
+                  "description": "अंतर्निहित स्टूडियो ऑडियो कथन के साथ व्यापक सीज़न अवलोकन और प्रत्येक व्यक्तिगत एपिसोड सारांश का ऑडिट करें।"
                 },
                 {
-                  "title": "Cross-episode story consistency",
-                  "description": "Visual aesthetics, canonical plot events, and character relationship threads stay locked across the entire season."
+                  "title": "क्रॉस-एपिसोड कहानी की निरंतरता",
+                  "description": "दृश्य सौंदर्यशास्त्र, विहित कथानक घटनाएँ, और चरित्र संबंध सूत्र पूरे सीज़न में लॉक रहते हैं।"
                 },
                 {
-                  "title": "Shared Reference Library inheritance",
-                  "description": "Cast portraits, voice profiles, wardrobes, locations, and signature props carry automatically into every episode you produce."
+                  "title": "साझा Reference Library इनहेरिटेंस",
+                  "description": "कास्ट पोर्ट्रेट, वॉयस प्रोफाइल, वार्डरोब, स्थान और सिग्नेचर प्रॉप्स आपके द्वारा निर्मित प्रत्येक एपिसोड में स्वचालित रूप से शामिल होते हैं।"
                 },
                 {
-                  "title": "Centralized canon management",
-                  "description": "Update a character look, location plate, or prop once in the Series Bible to propagate the change to future episodes."
+                  "title": "केंद्रीकृत कैनन प्रबंधन",
+                  "description": "भविष्य के एपिसोड में बदलाव का प्रचार करने के लिए सीरीज बाइबिल में एक बार चरित्र लुक, लोकेशन प्लेट या प्रॉप को अपडेट करें।"
                 }
               ]
             }
@@ -320,87 +321,87 @@
           {
             "icon": "seriesResonance",
             "title": "Audience Resonance",
-            "description": "Test your season arc against your target demographic before writing a single script. Review episode-by-episode resonance scores, binge-retention curves, and structural critiques, then apply data-backed story improvements with one click—only when you agree with the note.",
-            "screenshot": "Audience Resonance analysis, then Actionable Insights, unapplied",
+            "description": "एकल स्क्रिप्ट लिखने से पहले अपने लक्षित जनसांख्यिकीय के विरुद्ध अपने सीज़न आर्क का परीक्षण करें। एपिसोड-दर-एपिसोड अनुनाद स्कोर, द्वि-प्रतिधारण वक्र और संरचनात्मक आलोचनाओं की समीक्षा करें, फिर एक क्लिक के साथ डेटा-समर्थित कहानी सुधार लागू करें - केवल तभी जब आप नोट से सहमत हों।",
+            "screenshot": "Audience Resonance विश्लेषण, फिर एक्शनेबल इनसाइट्स, अप्रयुक्त",
             "learnMore": {
               "items": [
                 {
-                  "title": "Demographic & retention scoring",
-                  "description": "Multi-axis scores and structural analysis reveal how your season arc and episode cliffhangers land with your target audience."
+                  "title": "जनसांख्यिकीय और प्रतिधारण स्कोरिंग",
+                  "description": "मल्टी-एक्सिस स्कोर और संरचनात्मक विश्लेषण से पता चलता है कि आपका सीज़न आर्क और एपिसोड क्लिफहैंगर आपके लक्षित दर्शकों के साथ कैसे जुड़ते हैं।"
                 },
                 {
-                  "title": "Episode-by-episode diagnostics",
-                  "description": "Spot mid-season pacing dips, character underutilization, or tonal drift across the full episode slate before scripting."
+                  "title": "एपिसोड-दर-एपिसोड निदान",
+                  "description": "स्क्रिप्टिंग से पहले पूरे एपिसोड की स्लेट में मध्य सीज़न की गति में गिरावट, चरित्र का कम उपयोग, या टोनल बहाव को स्पॉट करें।"
                 },
                 {
-                  "title": "Director's prerogative",
-                  "description": "Actionable Insights update your series bible and episode outlines only when you explicitly choose to apply them."
+                  "title": "निदेशक का विशेषाधिकार",
+                  "description": "एक्शनेबल इनसाइट्स आपकी श्रृंखला की बाइबिल और एपिसोड की रूपरेखा को तभी अपडेट करता है जब आप स्पष्ट रूप से उन्हें लागू करना चुनते हैं।"
                 }
               ]
             }
           },
           {
             "icon": "seriesDirector",
-            "title": "The Series Director",
-            "description": "Reshape the entire season by voice or text. Shift the dramatic tone, raise the stakes, introduce a new antagonist, or rework a character arc across all episodes at once while keeping the rest of your storyline and continuity bible intact.",
-            "screenshot": "Series Director — direction, focus, accept",
+            "title": "श्रृंखला निदेशक",
+            "description": "आवाज या पाठ द्वारा पूरे सीज़न को नया आकार दें। नाटकीय स्वर को बदलें, दांव बढ़ाएं, एक नए प्रतिपक्षी का परिचय दें, या अपनी शेष कहानी और निरंतरता बाइबिल को बरकरार रखते हुए एक ही बार में सभी एपिसोड में एक चरित्र चाप को फिर से तैयार करें।",
+            "screenshot": "शृंखला निर्देशक - दिशा, फोकस, स्वीकार",
             "learnMore": {
               "items": [
                 {
-                  "title": "Plain-language season direction",
-                  "description": "Speak or type your creative note and target overarching plot, characters, episode arcs, tone, or world setting."
+                  "title": "सरल भाषा में सीज़न दिशा",
+                  "description": "अपना रचनात्मक नोट बोलें या टाइप करें और व्यापक कथानक, पात्र, एपिसोड आर्क, टोन या विश्व सेटिंग को लक्षित करें।"
                 },
                 {
-                  "title": "Surgical multi-episode updates",
-                  "description": "Nothing changes until you accept the previewed revision, and unrelated story threads stay completely untouched."
+                  "title": "सर्जिकल मल्टी-एपिसोड अपडेट",
+                  "description": "जब तक आप पूर्वावलोकन किए गए संशोधन को स्वीकार नहीं करते तब तक कुछ भी नहीं बदलता है, और असंबद्ध कहानी सूत्र पूरी तरह से अछूते रहते हैं।"
                 },
                 {
-                  "title": "Guided AI recommendations",
-                  "description": "Apply one-click story improvements surfaced by Audience Resonance or steer every creative choice yourself."
+                  "title": "निर्देशित एआई सिफ़ारिशें",
+                  "description": "Audience Resonance द्वारा सामने आए एक-क्लिक कहानी सुधारों को लागू करें या प्रत्येक रचनात्मक विकल्प को स्वयं संचालित करें।"
                 }
               ]
             }
           },
           {
             "icon": "directEpisode",
-            "title": "Episode-Level Direction",
-            "description": "Zoom into any individual episode to rework its plot outline, act structure, pacing, or cold-open hook in isolation—without destabilizing neighboring episodes or mutating the rest of your season slate.",
-            "screenshot": "Episodes — Direct this episode, other episodes unchanged",
+            "title": "एपिसोड-स्तरीय निर्देशन",
+            "description": "किसी भी व्यक्तिगत एपिसोड को उसके कथानक की रूपरेखा, अभिनय संरचना, गति, या कोल्ड-ओपन हुक को अलग-थलग करने के लिए ज़ूम करें - पड़ोसी एपिसोड को अस्थिर किए बिना या आपके सीज़न स्लेट के बाकी हिस्सों को बदले बिना।",
+            "screenshot": "एपिसोड्स - इस एपिसोड को निर्देशित करें, अन्य एपिसोड अपरिवर्तित रहेंगे",
             "learnMore": {
               "items": [
                 {
-                  "title": "Isolated episode rewrites",
-                  "description": "Direct changes to a single episode's synopsis, act beats, and character focus without altering neighboring episodes."
+                  "title": "पृथक प्रकरण पुनः लिखता है",
+                  "description": "पड़ोसी एपिसोड में बदलाव किए बिना किसी एक एपिसोड के सारांश, एक्ट बीट्स और चरित्र फोकस में सीधे बदलाव।"
                 },
                 {
-                  "title": "Locked season integrity",
-                  "description": "The overarching season bible, shared cast continuity, and remaining episode slate stay locked while you iterate."
+                  "title": "लॉक सीज़न अखंडता",
+                  "description": "जब आप पुनरावृति करते हैं तो व्यापक सीज़न बाइबिल, साझा कलाकारों की निरंतरता, और शेष एपिसोड स्लेट लॉक रहते हैं।"
                 },
                 {
-                  "title": "Pre-launch beat polishing",
-                  "description": "Refine individual episode hooks and cliffhangers until the episode is ready to launch into the Blueprint Room."
+                  "title": "प्री-लॉन्च बीट पॉलिशिंग",
+                  "description": "जब तक एपिसोड Blueprint Room में लॉन्च होने के लिए तैयार न हो जाए, तब तक व्यक्तिगत एपिसोड हुक और क्लिफहैंगर्स को परिष्कृत करें।"
                 }
               ]
             }
           },
           {
             "icon": "startEpisode",
-            "title": "One-Click Episode Launch",
-            "description": "When an episode's outline hits the mark, launch it straight into the Blueprint Room with a single click—bringing its synopsis, narrative beats, recurring cast, voice profiles, locations, and visual style automatically wired in.",
-            "screenshot": "Start Project — outline and cast already on the episode",
+            "title": "वन-क्लिक एपिसोड लॉन्च",
+            "description": "जब किसी एपिसोड की रूपरेखा सटीक बैठती है, तो इसे एक क्लिक के साथ सीधे Blueprint Room में लॉन्च करें - इसके सारांश, कथा बीट्स, आवर्ती कलाकारों, वॉयस प्रोफाइल, स्थानों और दृश्य शैली को स्वचालित रूप से शामिल करें।",
+            "screenshot": "प्रोजेक्ट प्रारंभ करें - एपिसोड पर पहले से ही रूपरेखा और कास्ट करें",
             "learnMore": {
               "items": [
                 {
-                  "title": "Instant Blueprint handoff",
-                  "description": "Launch any approved episode directly into the Blueprint Room with a single click to begin detailed beat and script work."
+                  "title": "त्वरित Blueprint हैंडऑफ़",
+                  "description": "विस्तृत बीट और स्क्रिप्ट का काम शुरू करने के लिए किसी भी स्वीकृत एपिसोड को एक क्लिक से सीधे Blueprint Room में लॉन्च करें।"
                 },
                 {
-                  "title": "Pre-wired creative DNA",
-                  "description": "The episode outline, synopsis, story beats, cast profiles, wardrobes, and locations travel automatically with zero re-entry."
+                  "title": "प्री-वायर्ड क्रिएटिव डीएनए",
+                  "description": "एपिसोड की रूपरेखा, सारांश, कहानी की धड़कन, कलाकारों की प्रोफाइल, वार्डरोब और स्थान शून्य पुनः प्रविष्टि के साथ स्वचालित रूप से यात्रा करते हैं।"
                 },
                 {
-                  "title": "Parallel episode production",
-                  "description": "Spin up multiple episodes from the same season slate as independent projects that share the same canonical series assets."
+                  "title": "समानांतर एपिसोड निर्माण",
+                  "description": "एक ही सीज़न स्लेट से कई एपिसोड को स्वतंत्र परियोजनाओं के रूप में स्पिन करें जो समान कैनोनिकल श्रृंखला संपत्ति साझा करते हैं।"
                 }
               ]
             }
@@ -415,92 +416,92 @@
         "features": [
           {
             "icon": "startBlueprint",
-            "title": "Start the Blueprint",
-            "description": "Bring in an episode from your series slate with its outline, cast, and world pre-loaded, or pitch a brand-new standalone film concept from scratch and let AI validate, enhance, and structure the foundational treatment.",
-            "screenshot": "Series episode already known, or Start Your Project — intent, Validate & Enhance with AI, Generate Blueprint",
+            "title": "Blueprint प्रारंभ करें",
+            "description": "अपनी श्रृंखला के स्लेट से उसकी रूपरेखा, कलाकारों और दुनिया के साथ एक एपिसोड पहले से लोड करें, या स्क्रैच से एक बिल्कुल नई स्टैंडअलोन फिल्म अवधारणा पेश करें और एआई को मूलभूत उपचार को मान्य, बढ़ाने और संरचना करने दें।",
+            "screenshot": "श्रृंखला एपिसोड पहले से ही ज्ञात है, या अपना प्रोजेक्ट शुरू करें - एआई के साथ इरादा, मान्य करें और बढ़ाएं, Blueprint उत्पन्न करें",
             "learnMore": {
               "items": [
                 {
-                  "title": "Seamless from Series Room",
-                  "description": "Series episodes arrive with their outline, synopsis, story beats, recurring cast, and locations already attached."
+                  "title": "Series Room से निर्बाध",
+                  "description": "श्रृंखला के एपिसोड अपनी रूपरेखा, सारांश, कहानी की लय, आवर्ती कलाकारों और पहले से ही संलग्न स्थानों के साथ आते हैं।"
                 },
                 {
-                  "title": "Standalone film or short",
-                  "description": "Pitch a new film concept in plain language, refine it with AI validation, and generate a complete film treatment."
+                  "title": "स्टैंडअलोन फिल्म या लघु",
+                  "description": "एक नई फिल्म अवधारणा को सरल भाषा में पेश करें, इसे एआई सत्यापन के साथ परिष्कृत करें और एक संपूर्ण फिल्म ट्रीटमेंट तैयार करें।"
                 },
                 {
-                  "title": "Narrated treatment overview",
-                  "description": "Read or listen to the narrated logline, synopsis, and creative reasoning to verify the story foundation immediately."
+                  "title": "वर्णित उपचार सिंहावलोकन",
+                  "description": "कहानी की बुनियाद को तुरंत सत्यापित करने के लिए वर्णित लॉगलाइन, सारांश और रचनात्मक तर्क को पढ़ें या सुनें।"
                 }
               ]
             }
           },
           {
             "icon": "treatment",
-            "title": "The Beat Sheet",
-            "description": "Structure the dramatic spine of your film before dialogue is written. Read or listen to your narrative beat sheet, reorder acts, and fine-tune scene pacing here—every beat you lock in the Blueprint Room drives a dedicated chapter in the Production Stage.",
-            "screenshot": "Beats tab, with Listen",
+            "title": "द बीट शीट",
+            "description": "संवाद लिखने से पहले अपनी फिल्म की नाटकीय रीढ़ की संरचना करें। अपनी कथा बीट शीट को पढ़ें या सुनें, कृत्यों को पुन: व्यवस्थित करें, और दृश्य गति को ठीक-ठाक करें - Blueprint Room में आपके द्वारा लॉक की गई प्रत्येक बीट Production Stage में एक समर्पित अध्याय चलाती है।",
+            "screenshot": "बीट्स टैब, लिसन के साथ",
             "learnMore": {
               "items": [
                 {
-                  "title": "Narrative spine",
-                  "description": "Beats are authored and locked in the Blueprint Room before script generation begins."
+                  "title": "कथात्मक रीढ़",
+                  "description": "स्क्रिप्ट निर्माण शुरू होने से पहले बीट्स को Blueprint Room में लिखा और लॉक किया जाता है।"
                 },
                 {
-                  "title": "Pacing & structural discipline",
-                  "description": "Optimizing the beat sheet here ensures the multi-scene screenplay builds with tight dramatic structure and clear turning points."
+                  "title": "गति और संरचनात्मक अनुशासन",
+                  "description": "यहां बीट शीट को अनुकूलित करने से यह सुनिश्चित होता है कि बहु-दृश्य पटकथा कड़ी नाटकीय संरचना और स्पष्ट मोड़ के साथ बनती है।"
                 },
                 {
-                  "title": "Beat-to-chapter mapping",
-                  "description": "Production Stage turns each beat into a chapter."
+                  "title": "बीट-टू-चैप्टर मैपिंग",
+                  "description": "Production Stage प्रत्येक बीट को एक अध्याय में बदल देता है।"
                 },
                 {
-                  "title": "Narrated beat audition",
-                  "description": "Listen to the beat sheet read aloud to feel the rhythm and momentum of the story before compiling the script."
+                  "title": "सुनाया गया बीट ऑडिशन",
+                  "description": "स्क्रिप्ट संकलित करने से पहले कहानी की लय और गति को महसूस करने के लिए बीट शीट को जोर से पढ़ें।"
                 }
               ]
             }
           },
           {
             "icon": "castLocations",
-            "title": "Cast & World Design",
-            "description": "Define your characters, vocal identities, period wardrobes, and primary locations before the screenplay is generated—ensuring the script is written around your exact cast, blocking environments, and visual atmosphere from page one.",
-            "screenshot": "Characters tab, then Setting on Story",
+            "title": "कास्ट और वर्ल्ड डिज़ाइन",
+            "description": "पटकथा तैयार होने से पहले अपने पात्रों, मुखर पहचान, अवधि वार्डरोब और प्राथमिक स्थानों को परिभाषित करें - यह सुनिश्चित करें कि स्क्रिप्ट आपके सटीक कलाकारों, अवरुद्ध वातावरण और पृष्ठ एक से दृश्य वातावरण के आसपास लिखी गई है।",
+            "screenshot": "अक्षर टैब, फिर कहानी पर सेटिंग",
             "learnMore": {
               "items": [
                 {
-                  "title": "Rich character profiles",
-                  "description": "Direct your cast profiles, backstories, and physical attributes up front so dialogue and blocking match each character."
+                  "title": "समृद्ध चरित्र प्रोफाइल",
+                  "description": "अपने कास्ट प्रोफाइल, बैकस्टोरी और भौतिक विशेषताओं को सामने से निर्देशित करें ताकि संवाद और अवरोधन प्रत्येक चरित्र से मेल खाए।"
                 },
                 {
-                  "title": "World, era & locations",
-                  "description": "Establish primary settings, lighting palettes, and cinematic style on the Story tab to anchor every scene's environment."
+                  "title": "विश्व, युग और स्थान",
+                  "description": "प्रत्येक दृश्य के परिवेश को ठीक करने के लिए स्टोरी टैब पर प्राथमिक सेटिंग्स, प्रकाश पैलेट और सिनेमाई शैली स्थापित करें।"
                 },
                 {
-                  "title": "Zero script refactoring",
-                  "description": "Locking cast and locations before script generation eliminates costly rewrites and continuity mismatches on the Production Stage."
+                  "title": "शून्य स्क्रिप्ट रिफैक्टरिंग",
+                  "description": "स्क्रिप्ट निर्माण से पहले कलाकारों और स्थानों को लॉक करने से Production Stage पर महंगा पुनर्लेखन और निरंतरता बेमेल समाप्त हो जाता है।"
                 }
               ]
             }
           },
           {
             "icon": "blueprintDirector",
-            "title": "The Blueprint Director",
-            "description": "Speak or type your story notes to revise beats, character motivations, or world details without prompt engineering. Preview a balanced revision side-by-side with creative reasoning—nothing changes in your treatment until you approve the cut.",
-            "screenshot": "Blueprint Director — direction, focus, preview, Apply revision",
+            "title": "Blueprint निदेशक",
+            "description": "त्वरित इंजीनियरिंग के बिना बीट्स, चरित्र प्रेरणाओं या दुनिया के विवरण को संशोधित करने के लिए अपने कहानी नोट्स को बोलें या टाइप करें। रचनात्मक तर्क के साथ-साथ एक संतुलित संशोधन का पूर्वावलोकन करें - जब तक आप कटौती को मंजूरी नहीं देते तब तक आपके उपचार में कुछ भी नहीं बदलता है।",
+            "screenshot": "Blueprint निदेशक - दिशा, फोकस, पूर्वावलोकन, संशोधन लागू करें",
             "learnMore": {
               "items": [
                 {
-                  "title": "Targeted voice or text notes",
-                  "description": "Speak or type your direction and focus the revision surgically on Beats, Characters, or Story."
+                  "title": "लक्षित आवाज या पाठ नोट्स",
+                  "description": "बोलें या अपना निर्देशन टाइप करें और संशोधन को बीट्स, कैरेक्टर्स या स्टोरी पर ध्यान केंद्रित करें।"
                 },
                 {
-                  "title": "Side-by-side revision preview",
-                  "description": "Review a balanced revision and its underlying story reasoning before committing any changes to your Blueprint."
+                  "title": "अगल-बगल पुनरीक्षण पूर्वावलोकन",
+                  "description": "अपने Blueprint में कोई भी बदलाव करने से पहले एक संतुलित संशोधन और इसकी अंतर्निहित कहानी तर्क की समीक्षा करें।"
                 },
                 {
-                  "title": "You hold the creative lock",
-                  "description": "Nothing in your treatment, beat sheet, or character roster changes until you explicitly apply the revision."
+                  "title": "आप रचनात्मक ताला पकड़ें",
+                  "description": "जब तक आप संशोधन को स्पष्ट रूप से लागू नहीं करते तब तक आपके उपचार, बीट शीट, या चरित्र रोस्टर में कुछ भी नहीं बदलता है।"
                 }
               ]
             }
@@ -508,43 +509,43 @@
           {
             "icon": "blueprintResonance",
             "title": "Audience Resonance",
-            "description": "Score your treatment against your target audience's cultural, genre, and demographic profile before generating the script. Catch structural pacing gaps or weak character stakes early and apply targeted recommendations in the Blueprint Director.",
-            "screenshot": "Audience Resonance — saved audience, scores, recommendations unapplied",
+            "description": "स्क्रिप्ट तैयार करने से पहले अपने लक्षित दर्शकों की सांस्कृतिक, शैली और जनसांख्यिकीय प्रोफ़ाइल के अनुसार अपने उपचार का मूल्यांकन करें। संरचनात्मक पेसिंग अंतराल या कमजोर चरित्र दांव को जल्दी से पकड़ें और Blueprint निदेशक में लक्षित सिफारिशें लागू करें।",
+            "screenshot": "Audience Resonance - सहेजे गए दर्शक, स्कोर, सिफारिशें अप्रभावित",
             "learnMore": {
               "items": [
                 {
-                  "title": "Pre-script audience validation",
-                  "description": "Analyze your treatment against your saved target audience to inspect category scores, strengths, and story risks."
+                  "title": "प्री-स्क्रिप्ट दर्शकों का सत्यापन",
+                  "description": "श्रेणी स्कोर, ताकत और कहानी के जोखिमों का निरीक्षण करने के लिए अपने सहेजे गए लक्षित दर्शकों के प्रति अपने व्यवहार का विश्लेषण करें।"
                 },
                 {
-                  "title": "Actionable story remedies",
-                  "description": "Each insight pairs a structural diagnosis with a concrete rewrite recommendation tailored to your beat sheet and cast."
+                  "title": "क्रियायोग्य कथा उपाय",
+                  "description": "प्रत्येक अंतर्दृष्टि आपके बीट शीट और कास्ट के अनुरूप एक ठोस पुनर्लेखन अनुशंसा के साथ एक संरचनात्मक निदान जोड़ती है।"
                 },
                 {
-                  "title": "Selective one-click application",
-                  "description": "Recommendations only modify your Blueprint when you choose to apply them in the Blueprint Director."
+                  "title": "चयनात्मक एक-क्लिक आवेदन",
+                  "description": "सिफ़ारिशें आपके Blueprint को केवल तभी संशोधित करती हैं जब आप उन्हें Blueprint निदेशक में लागू करना चुनते हैं।"
                 }
               ]
             }
           },
           {
             "icon": "goToProduction",
-            "title": "Greenlight to Production",
-            "description": "When the treatment, beat sheet, and cast are locked, step onto the Production Stage. SceneFlow compiles your full multi-chapter screenplay directly from your approved Blueprint—mapping every beat into a production chapter with cast and continuity pre-wired.",
-            "screenshot": "Go to Production Stage — storyline, beats, and cast already set",
+            "title": "उत्पादन को हरी झंडी",
+            "description": "जब ट्रीटमेंट, बीट शीट और कास्ट लॉक हो जाएं, तो Production Stage पर कदम रखें। SceneFlow आपके स्वीकृत Blueprint से सीधे आपके पूर्ण मल्टी-चैप्टर स्क्रीनप्ले को संकलित करता है - प्रत्येक बीट को कास्ट और निरंतरता पूर्व-वायर्ड के साथ एक प्रोडक्शन चैप्टर में मैप करता है।",
+            "screenshot": "Production Stage पर जाएं - कहानी, बीट्स और कास्ट पहले से ही सेट हैं",
             "learnMore": {
               "items": [
                 {
-                  "title": "Seamless script compilation",
-                  "description": "Stepping onto the Production Stage compiles the full multi-scene screenplay directly from your approved Blueprint."
+                  "title": "निर्बाध स्क्रिप्ट संकलन",
+                  "description": "Production Stage पर कदम रखने से आपके स्वीकृत Blueprint से सीधे पूर्ण बहु-दृश्य पटकथा संकलित हो जाती है।"
                 },
                 {
-                  "title": "Locked continuity foundation",
-                  "description": "Your storyline, beat-to-chapter structure, cast profiles, and locations arrive ready for scene and shot direction."
+                  "title": "निरंतरता का आधार बंद कर दिया गया",
+                  "description": "आपकी कहानी, बीट-टू-चैप्टर संरचना, कास्ट प्रोफाइल और स्थान दृश्य और शॉट निर्देशन के लिए तैयार हैं।"
                 },
                 {
-                  "title": "Shareable Blueprint review",
-                  "description": "Share the locked Blueprint with co-creators or executive stakeholders for sign-off before commencing production."
+                  "title": "साझा करने योग्य Blueprint समीक्षा",
+                  "description": "उत्पादन शुरू करने से पहले साइन-ऑफ के लिए लॉक किए गए Blueprint को सह-निर्माताओं या कार्यकारी हितधारकों के साथ साझा करें।"
                 }
               ]
             }
@@ -567,142 +568,142 @@
                 "icon": "sceneWorkflow",
                 "title": "सीन प्रोडक्शन वर्कफ़्लो (फ़ुलस्क्रीन)",
                 "description": "एकीकृत 8-टैब कमांड बार (Direction · Audio · Music · Continuity · Stills · Clips · Mixer · Streams) से दृश्य के हर चरण को निर्देशित करने के लिए समर्पित फ़ुलस्क्रीन सीन प्रोडक्शन स्टूडियो खोलें। बाईं शॉट रेल में लाइव रेडीनेस बैज के साथ शॉट्स को पुनर्व्यवस्थित करें और कैमरा, ब्लॉकिंग, भावना और प्रकाश कार्डों के साथ 16:9 स्टेज का निरीक्षण करें।",
-                "screenshot": "Scene Production Workflow (Fullscreen) — 8-tab linear studio, sortable Shot Rail, and structured Shot Direction Workbench",
+                "screenshot": "दृश्य उत्पादन वर्कफ़्लो (फ़ुलस्क्रीन) - 8-टैब लीनियर स्टूडियो, सॉर्टेबल शॉट रेल, और संरचित शॉट डायरेक्शन वर्कबेंच",
                 "learnMore": {
                   "items": [
                     {
-                      "title": "8-tab fullscreen linear studio",
-                      "description": "Move seamlessly across Direction, Audio, Music, Continuity, Stills, Clips, Mixer, and Streams inside a distraction-free fullscreen workspace."
+                      "title": "8-टैब फुलस्क्रीन लीनियर स्टूडियो",
+                      "description": "एक व्याकुलता-मुक्त पूर्णस्क्रीन कार्यक्षेत्र के अंदर दिशा, ऑडियो, संगीत, निरंतरता, चित्र, क्लिप, मिक्सर और स्ट्रीम में निर्बाध रूप से आगे बढ़ें।"
                     },
                     {
-                      "title": "Sortable Shot Rail & live badges",
-                      "description": "Drag to reorder shots in the left-hand rail while tracking real-time badges for Action, Dialogue, Narration, SFX, Music, Signage, Final 4K stills, and clips In the Can."
+                      "title": "क्रमबद्ध शॉट रेल और लाइव बैज",
+                      "description": "एक्शन, डायलॉग, नैरेशन, एसएफएक्स, म्यूजिक, साइनेज, फाइनल 4K स्टिल और क्लिप इन द कैन के लिए वास्तविक समय बैज को ट्रैक करते हुए बाएं हाथ की रेल में शॉट्स को फिर से व्यवस्थित करने के लिए खींचें।"
                     },
                     {
-                      "title": "Structured Shot Direction Workbench",
-                      "description": "Inspect the 16:9 Still & Clip Stage beside structured cards for spoken beats, camera lens and motion, talent blocking and gaze, lighting, locked continuity refs, and compiled prompts."
+                      "title": "संरचित शॉट दिशा कार्यक्षेत्र",
+                      "description": "स्पोकन बीट्स, कैमरा लेंस और मोशन, टैलेंट ब्लॉकिंग और टकटकी, लाइटिंग, लॉक निरंतरता रेफरी और संकलित संकेतों के लिए संरचित कार्ड के बगल में 16:9 स्टिल और क्लिप स्टेज का निरीक्षण करें।"
                     },
                     {
-                      "title": "End-to-end scene pipeline telemetry",
-                      "description": "Monitor readiness across direction, voice and score, keyframes, multi-take clips, broadcast mixing, and localized streams before publishing."
+                      "title": "एंड-टू-एंड सीन पाइपलाइन टेलीमेट्री",
+                      "description": "प्रकाशन से पहले दिशा, आवाज़ और स्कोर, कीफ़्रेम, मल्टी-टेक क्लिप, प्रसारण मिश्रण और स्थानीय स्ट्रीम में तत्परता की निगरानी करें।"
                     }
                   ]
                 }
               },
               {
                 "icon": "directShot",
-                "title": "The Scene & Shot Director",
-                "description": "Type or speak your direction in plain language. Tell the agent who is in the frame, where the camera moves, and what the emotional beat is. The Shot Director automatically writes the complex underlying prompts for your stills and clips while syncing camera lens, focal length, talent blocking, and lighting across the scene.",
-                "screenshot": "The Scene & Shot Director — plain-language direction for stills and clips",
+                "title": "दृश्य एवं शॉट निर्देशक",
+                "description": "अपना निर्देश सरल भाषा में लिखें या बोलें। एजेंट को बताएं कि फ्रेम में कौन है, कैमरा कहां घूम रहा है और भावनात्मक धड़कन क्या है। शॉट डायरेक्टर कैमरे के लेंस, फोकल लेंथ, टैलेंट ब्लॉकिंग और पूरे दृश्य में प्रकाश व्यवस्था को सिंक करते समय स्वचालित रूप से आपके चित्र और क्लिप के लिए जटिल अंतर्निहित संकेत लिखता है।",
+                "screenshot": "दृश्य और शॉट निर्देशक - चित्र और क्लिप के लिए सरल भाषा निर्देशन",
                 "learnMore": {
                   "items": [
                     {
-                      "title": "Plain-language film direction",
-                      "description": "Type or speak who is in the frame, where the camera moves, and what the emotional beat is without writing bracketed prompt syntax."
+                      "title": "सादे भाषा में फिल्म निर्देशन",
+                      "description": "टाइप करें या बोलें कि फ़्रेम में कौन है, कैमरा कहाँ चलता है, और भावनात्मक धड़कन क्या है, ब्रैकेटेड प्रॉम्प्ट सिंटैक्स लिखे बिना।"
                     },
                     {
-                      "title": "Scene-wide or per-shot precision",
-                      "description": "Apply atmospheric direction across the entire scene or drill down into an individual shot's framing, lens, blocking, and lighting."
+                      "title": "दृश्य-व्यापी या प्रति-शॉट सटीकता",
+                      "description": "संपूर्ण दृश्य पर वायुमंडलीय दिशा लागू करें या किसी व्यक्तिगत शॉट की फ़्रेमिंग, लेंस, ब्लॉकिंग और प्रकाश व्यवस्था में गहराई से जाएँ।"
                     },
                     {
-                      "title": "Automatic prompt compilation",
-                      "description": "The Shot Director automatically writes and syncs the underlying keyframe and motion prompts for your stills and clips."
+                      "title": "स्वचालित शीघ्र संकलन",
+                      "description": "शॉट डायरेक्टर स्वचालित रूप से आपके चित्र और क्लिप के लिए अंतर्निहित कीफ़्रेम और गति संकेतों को लिखता और सिंक करता है।"
                     },
                     {
-                      "title": "Intelligent Assistant Director (IAD)",
-                      "description": "Request surgical revisions to camera angles, character posture, or scene tension in plain language while keeping unrelated beats untouched."
+                      "title": "SFAIINTELLIGENT_ASSISTANT_डायरेक्टरटर्म (IAD)",
+                      "description": "असंबद्ध बीट्स को अछूता रखते हुए कैमरे के कोणों, चरित्र मुद्रा, या दृश्य तनाव को सरल भाषा में सर्जिकल संशोधन का अनुरोध करें।"
                     }
                   ]
                 }
               },
               {
                 "icon": "continuity",
-                "title": "The Continuity Library",
-                "description": "Absolute visual and vocal consistency across your entire film or series. Automatically generate or manually assign locked reference portraits, multi-angle turnaround sheets, scene-specific wardrobes, locations, and essential props—ensuring every shot matches the Blueprint without character drift.",
-                "screenshot": "The Continuity Library — cast, wardrobes, locations, and essential props",
+                "title": "Continuity Library",
+                "description": "आपकी पूरी फिल्म या श्रृंखला में पूर्ण दृश्य और स्वर की स्थिरता। स्वचालित रूप से लॉक किए गए संदर्भ पोर्ट्रेट, मल्टी-एंगल टर्नअराउंड शीट, दृश्य-विशिष्ट वार्डरोब, स्थान और आवश्यक प्रॉप्स को स्वचालित रूप से उत्पन्न या मैन्युअल रूप से असाइन करें - यह सुनिश्चित करते हुए कि प्रत्येक शॉट चरित्र बहाव के बिना Blueprint से मेल खाता है।",
+                "screenshot": "Continuity Library - कास्ट, वार्डरोब, स्थान और आवश्यक सामान",
                 "learnMore": {
                   "items": [
                     {
-                      "title": "Cast identity & turnaround locks",
-                      "description": "Anchor every character with diptych portraits, turnaround sheets, and locked voice profiles across every shot and episode."
+                      "title": "कास्ट पहचान और टर्नअराउंड ताले",
+                      "description": "हर शॉट और एपिसोड में हर किरदार को डिप्टीच पोर्ट्रेट, टर्नअराउंड शीट और लॉक्ड वॉयस प्रोफाइल के साथ एंकर करें।"
                     },
                     {
-                      "title": "Scene-specific wardrobes & props",
-                      "description": "Assign period or scene-specific wardrobes and essential hero props per shot so costumes and hand-held items stay unified."
+                      "title": "दृश्य-विशिष्ट वार्डरोब और प्रॉप्स",
+                      "description": "प्रति शॉट अवधि या दृश्य-विशिष्ट वार्डरोब और आवश्यक हीरो प्रॉप्स निर्दिष्ट करें ताकि पोशाक और हाथ से पकड़ी जाने वाली वस्तुएं एकीकृत रहें।"
                     },
                     {
-                      "title": "Generate, upload, or surgically edit",
-                      "description": "Automatically generate reference images, upload custom studio plates, or refine details with the Intelligent Assistant Director."
+                      "title": "उत्पन्न करें, अपलोड करें या शल्य चिकित्सा द्वारा संपादित करें",
+                      "description": "स्वचालित रूप से संदर्भ छवियां उत्पन्न करें, कस्टम स्टूडियो प्लेट अपलोड करें, या Intelligent Assistant Director के साथ विवरण परिष्कृत करें।"
                     },
                     {
-                      "title": "Continuity readiness gate",
-                      "description": "Verify that all cast, wardrobe, location, and prop anchors are locked in the Continuity tab before generating scene keyframes."
+                      "title": "निरंतरता तत्परता द्वार",
+                      "description": "दृश्य कीफ़्रेम बनाने से पहले सत्यापित करें कि सभी कलाकार, अलमारी, स्थान और प्रोप एंकर निरंतरता टैब में लॉक हैं।"
                     }
                   ]
                 }
               },
               {
                 "icon": "scriptResonance",
-                "title": "Audience Resonance Integration",
-                "description": "Get a read on the room before you render. AI analyzes your script against your target audience, providing scene-by-scene insights, pacing diagnostics, and dialogue tension scores. Apply recommended directions instantly, or trust your gut and ignore them.",
-                "screenshot": "Audience Resonance Integration — scene-by-scene audience insights",
+                "title": "Audience Resonance एकीकरण",
+                "description": "प्रस्तुत करने से पहले कमरे का अध्ययन कर लें। एआई आपके लक्षित दर्शकों के अनुरूप आपकी स्क्रिप्ट का विश्लेषण करता है, दृश्य-दर-दृश्य अंतर्दृष्टि, गति निदान और संवाद तनाव स्कोर प्रदान करता है। अनुशंसित निर्देशों को तुरंत लागू करें, या अपने मन पर भरोसा करें और उन्हें अनदेखा करें।",
+                "screenshot": "Audience Resonance एकीकरण - दृश्य-दर-दृश्य दर्शकों की अंतर्दृष्टि",
                 "learnMore": {
                   "items": [
                     {
-                      "title": "Scene-by-scene audience insights",
-                      "description": "AI analyzes your script against your target audience before you render to surface pacing, tension, and engagement scores."
+                      "title": "दृश्य-दर-दृश्य दर्शकों की अंतर्दृष्टि",
+                      "description": "सतह की गति, तनाव और सहभागिता स्कोर प्रस्तुत करने से पहले AI आपके लक्षित दर्शकों के विरुद्ध आपकी स्क्रिप्ट का विश्लेषण करता है।"
                     },
                     {
-                      "title": "Narrated critique & recommendations",
-                      "description": "Listen to the narrated analysis and inspect targeted scene-level rewrite recommendations backed by demographic reasoning."
+                      "title": "वर्णित आलोचना एवं सिफ़ारिशें",
+                      "description": "वर्णित विश्लेषण को सुनें और जनसांख्यिकीय तर्क द्वारा समर्थित लक्षित दृश्य-स्तरीय पुनर्लेखन अनुशंसाओं का निरीक्षण करें।"
                     },
                     {
-                      "title": "Your creative call",
-                      "description": "Apply recommended directions instantly with one click, or trust your gut and ignore them."
+                      "title": "आपकी रचनात्मक कॉल",
+                      "description": "अनुशंसित दिशा-निर्देशों को एक क्लिक से तुरंत लागू करें, या अपने मन पर भरोसा करें और उन्हें अनदेखा करें।"
                     }
                   ]
                 }
               },
               {
                 "icon": "budget",
-                "title": "Production Planner",
-                "description": "Establish the budget and schedule generation across every scene and chapter using SceneFlow credits or your own BYOK API keys. Set still and clip targets per shot, toggle between Draft and Final resolution tiers, and forecast compute spend before you render.",
-                "screenshot": "Production Planner — budget, schedule, and BYOK API keys",
+                "title": "उत्पादन योजनाकार",
+                "description": "SceneFlow क्रेडिट या अपनी स्वयं की BYOK API कुंजियों का उपयोग करके प्रत्येक दृश्य और अध्याय में बजट और शेड्यूल जनरेशन स्थापित करें। प्रति शॉट स्थिर और क्लिप लक्ष्य सेट करें, ड्राफ्ट और अंतिम रिज़ॉल्यूशन स्तरों के बीच टॉगल करें, और रेंडर करने से पहले गणना खर्च का पूर्वानुमान लगाएं।",
+                "screenshot": "प्रोडक्शन प्लानर - बजट, शेड्यूल और BYOK एपीआई कुंजियाँ",
                 "learnMore": {
                   "items": [
                     {
-                      "title": "Budget and schedule forecasting",
-                      "description": "Establish the budget and schedule generation across every scene and chapter with transparent per-shot credit estimates before you render."
+                      "title": "बजट और कार्यक्रम का पूर्वानुमान",
+                      "description": "प्रस्तुत करने से पहले प्रत्येक दृश्य और अध्याय में पारदर्शी प्रति-शॉट क्रेडिट अनुमान के साथ बजट और शेड्यूल जनरेशन स्थापित करें।"
                     },
                     {
-                      "title": "SceneFlow credits or BYOK keys",
-                      "description": "Run generation using included SceneFlow credits or connect your own Vertex AI, OpenAI, and ElevenLabs BYOK API keys."
+                      "title": "SceneFlow क्रेडिट या BYOK कुंजी",
+                      "description": "शामिल SceneFlow क्रेडिट का उपयोग करके जनरेशन चलाएं या अपनी स्वयं की Vertex AI, OpenAI, और ElevenLabs BYOK API कुंजी कनेक्ट करें।"
                     },
                     {
-                      "title": "Draft-to-Final tier scheduling",
-                      "description": "Schedule rapid Draft passes for animatic pre-visualization and reserve Final 4K still and FHD video compute for locked cuts."
+                      "title": "ड्राफ्ट-टू-फाइनल टियर शेड्यूलिंग",
+                      "description": "एनिमेटिक प्री-विज़ुअलाइज़ेशन के लिए रैपिड ड्राफ्ट पास शेड्यूल करें और लॉक कट के लिए फ़ाइनल 4K स्टिल और FHD वीडियो कंप्यूट आरक्षित करें।"
                     }
                   ]
                 }
               },
               {
                 "icon": "productionScript",
-                "title": "Production Script",
-                "description": "Built for traditional and AI filmmakers alike. Preview a clean, formatted screenplay in-studio and export in industry-standard formats (PDF, FDX, Fountain). Use SceneFlow as a standalone script room—or pair your screenplay with a Pre-Vis Animatic and Promo Trailer to pitch financiers and secure project funding.",
-                "screenshot": "Production Script — in-platform preview and PDF, FDX, and Fountain export",
+                "title": "प्रोडक्शन स्क्रिप्ट",
+                "description": "पारंपरिक और एआई फिल्म निर्माताओं के लिए समान रूप से निर्मित। स्टूडियो में एक साफ, स्वरूपित पटकथा का पूर्वावलोकन करें और उद्योग-मानक प्रारूपों (पीडीएफ, एफडीएक्स, फाउंटेन) में निर्यात करें। एक स्टैंडअलोन स्क्रिप्ट रूम के रूप में SceneFlow का उपयोग करें - या फाइनेंसरों को पिच करने और प्रोजेक्ट फंडिंग को सुरक्षित करने के लिए अपनी पटकथा को प्री-विज़ Animatic और प्रोमो ट्रेलर के साथ जोड़ें।",
+                "screenshot": "प्रोडक्शन स्क्रिप्ट - इन-प्लेटफ़ॉर्म पूर्वावलोकन और पीडीएफ, एफडीएक्स और फाउंटेन निर्यात",
                 "learnMore": {
                   "items": [
                     {
-                      "title": "In-platform preview & export",
-                      "description": "Preview the formatted script in the studio and export in industry-standard PDF, Final Draft FDX, or Fountain format."
+                      "title": "इन-प्लेटफ़ॉर्म पूर्वावलोकन और निर्यात",
+                      "description": "स्टूडियो में स्वरूपित स्क्रिप्ट का पूर्वावलोकन करें और उद्योग-मानक पीडीएफ, फाइनल ड्राफ्ट एफडीएक्स, या फाउंटेन प्रारूप में निर्यात करें।"
                     },
                     {
-                      "title": "For traditional filmmakers",
-                      "description": "Use SceneFlow as an intelligent script production platform without generating video."
+                      "title": "पारंपरिक फिल्म निर्माताओं के लिए",
+                      "description": "वीडियो उत्पन्न किए बिना एक बुद्धिमान स्क्रिप्ट उत्पादन मंच के रूप में SceneFlow का उपयोग करें।"
                     },
                     {
-                      "title": "Pitch & project funding",
-                      "description": "Package your script with a Pre-Vis Animatic and Promo Trailers to pitch and acquire project funding."
+                      "title": "पिच एवं प्रोजेक्ट फंडिंग",
+                      "description": "प्रोजेक्ट फंडिंग को पिच करने और प्राप्त करने के लिए प्री-विज़ Animatic और प्रोमो ट्रेलरों के साथ अपनी स्क्रिप्ट को पैकेज करें।"
                     }
                   ]
                 }
@@ -717,22 +718,22 @@
             "features": [
               {
                 "icon": "audioAgent",
-                "title": "The Audio Agent",
-                "description": "Generate expressive character dialogue, narrator voiceover, action sound effects, and musical scores concurrently across up to 30 shots per scene. Cast voices automatically match character profiles from your Continuity Library or can be custom-tuned per beat.",
-                "screenshot": "The Audio Agent — concurrent dialogue, sound effects, and music scores",
+                "title": "Audio Agent",
+                "description": "प्रति दृश्य 30 शॉट्स तक अभिव्यंजक चरित्र संवाद, कथावाचक वॉयसओवर, एक्शन ध्वनि प्रभाव और संगीत स्कोर एक साथ उत्पन्न करें। कास्ट आवाज़ें स्वचालित रूप से आपके Continuity Library से वर्ण प्रोफाइल से मेल खाती हैं या प्रति बीट कस्टम-ट्यून की जा सकती हैं।",
+                "screenshot": "Audio Agent - समवर्ती संवाद, ध्वनि प्रभाव और संगीत स्कोर",
                 "learnMore": {
                   "items": [
                     {
-                      "title": "Concurrent multi-track audio",
-                      "description": "Generate dialogue, narration, sound effects, and music scores concurrently across up to 30 shots per scene."
+                      "title": "समवर्ती मल्टी-ट्रैक ऑडियो",
+                      "description": "प्रति दृश्य 30 शॉट्स तक संवाद, कथन, ध्वनि प्रभाव और संगीत स्कोर एक साथ उत्पन्न करें।"
                     },
                     {
-                      "title": "Locked character voice casting",
-                      "description": "Cast voices automatically match character profiles from your Reference Library or can be custom-tuned for timbre and cadence."
+                      "title": "लॉक्ड कैरेक्टर वॉयस कास्टिंग",
+                      "description": "कास्ट आवाजें स्वचालित रूप से आपके Reference Library से चरित्र प्रोफाइल से मेल खाती हैं या समय और ताल के लिए कस्टम-ट्यून की जा सकती हैं।"
                     },
                     {
-                      "title": "Batch scene or single-shot runs",
-                      "description": "Run the Audio Agent across the entire scene in one pass or regenerate individual dialogue and SFX beats on demand."
+                      "title": "बैच दृश्य या एकल-शॉट रन",
+                      "description": "पूरे दृश्य में Audio Agent को एक बार में चलाएं या मांग पर व्यक्तिगत संवाद और SFX बीट्स को पुन: उत्पन्न करें।"
                     }
                   ]
                 }
@@ -741,46 +742,46 @@
                 "icon": "musicScore",
                 "title": "संवाद, SFX और म्यूज़िकल स्कोर वर्कबेंच",
                 "description": "अपने दृश्य की प्रत्येक ध्वनि परत को निर्देशित करने के लिए फ़ुलस्क्रीन Audio और Music टैब खोलें। भावनात्मक डिलीवरी टैग और Hi-Fi Studio गुणवत्ता के साथ संवाद को आकार दें, वीडियो क्लिप से ऑडियो निकालें, SFX अवधि प्रीसेट (Auto, 3s, 8s, 15s) चुनें और मल्टी-शॉट Lyria म्यूज़िक स्कोर तैयार करें।",
-                "screenshot": "Dialogue, SFX & Musical Score Workbench — Fullscreen Audio & Music tabs with score cues, voice casting, and SFX duration presets",
+                "screenshot": "डायलॉग, एसएफएक्स और म्यूजिकल स्कोर वर्कबेंच - स्कोर संकेतों, वॉयस कास्टिंग और एसएफएक्स अवधि प्रीसेट के साथ फुलस्क्रीन ऑडियो और म्यूजिक टैब",
                 "learnMore": {
                   "items": [
                     {
-                      "title": "Multi-shot musical score cues",
-                      "description": "Compose custom Lyria musical score cues that span specific shot ranges with configurable intro fades and auto-ducking metadata."
+                      "title": "मल्टी-शॉट संगीत स्कोर संकेत",
+                      "description": "कस्टम Lyria संगीत स्कोर संकेत लिखें जो कॉन्फ़िगर करने योग्य इंट्रो फ़ेड्स और ऑटो-डकिंग मेटाडेटा के साथ विशिष्ट शॉट रेंज को फैलाते हैं।"
                     },
                     {
-                      "title": "Performance Director & delivery tags",
-                      "description": "Direct spoken dialogue with bracketed emotional delivery tags, Hi-Fi Studio synthesis, and per-shot voice casting."
+                      "title": "प्रदर्शन निदेशक और वितरण टैग",
+                      "description": "ब्रैकेटेड इमोशनल डिलीवरी टैग, हाई-फाई स्टूडियो सिंथेसिस और प्रति-शॉट वॉयस कास्टिंग के साथ सीधे बोले गए संवाद।"
                     },
                     {
-                      "title": "Precision SFX duration presets",
-                      "description": "Time action sound effects to your shot choreography using Auto, Short 3s, Medium 8s, or Long 15s duration presets."
+                      "title": "परिशुद्धता एसएफएक्स अवधि प्रीसेट",
+                      "description": "ऑटो, शॉर्ट 3एस, मीडियम 8एस, या लॉन्ग 15एस अवधि प्रीसेट का उपयोग करके आपके शॉट कोरियोग्राफी पर टाइम एक्शन ध्वनि प्रभाव।"
                     },
                     {
-                      "title": "Extract audio from video clips",
-                      "description": "Pull embedded audio directly from generated motion clips to preserve native on-camera speech or ambient foley."
+                      "title": "वीडियो क्लिप से ऑडियो निकालें",
+                      "description": "मूल ऑन-कैमरा भाषण या परिवेश फ़ॉले को संरक्षित करने के लिए जेनरेट किए गए मोशन क्लिप से सीधे एम्बेडेड ऑडियो खींचें।"
                     }
                   ]
                 }
               },
               {
                 "icon": "stillsAgent",
-                "title": "The Stills Agent",
-                "description": "Rapidly batch-generate the high-resolution keyframe images that illustrate your shot direction across the scene. Regenerate, edit, or upload your own references to lock the composition, lighting, and character blocking before committing to video.",
-                "screenshot": "The Stills Agent — keyframe composition and references",
+                "title": "Stills Agent",
+                "description": "उच्च-रिज़ॉल्यूशन कीफ़्रेम छवियों को तेजी से बैच-जनरेट करें जो पूरे दृश्य में आपके शॉट की दिशा को दर्शाती हैं। वीडियो बनाने से पहले रचना, प्रकाश व्यवस्था और चरित्र अवरोधन को लॉक करने के लिए अपने स्वयं के संदर्भों को पुनर्जीवित करें, संपादित करें या अपलोड करें।",
+                "screenshot": "Stills Agent - मुख्यफ़्रेम संरचना और संदर्भ",
                 "learnMore": {
                   "items": [
                     {
-                      "title": "Batch keyframe generation",
-                      "description": "Rapidly generate the keyframe images that illustrate your shot direction across every shot in the scene."
+                      "title": "बैच कीफ़्रेम पीढ़ी",
+                      "description": "तेजी से कीफ़्रेम छवियां उत्पन्न करें जो दृश्य के प्रत्येक शॉट में आपके शॉट की दिशा को दर्शाती हैं।"
                     },
                     {
-                      "title": "Automatic continuity anchoring",
-                      "description": "Every generated frame incorporates your locked cast portraits, scene wardrobes, locations, and hero props automatically."
+                      "title": "स्वचालित निरंतरता एंकरिंग",
+                      "description": "प्रत्येक उत्पन्न फ़्रेम में आपके लॉक किए गए कास्ट पोर्ट्रेट, दृश्य वार्डरोब, स्थान और हीरो प्रॉप्स स्वचालित रूप से शामिल होते हैं।"
                     },
                     {
-                      "title": "Lock composition before motion",
-                      "description": "Regenerate, edit, or upload your own references before committing compute to full motion video rendering."
+                      "title": "गति से पहले रचना को लॉक करें",
+                      "description": "पूर्ण गति वीडियो रेंडरिंग की गणना करने से पहले अपने स्वयं के संदर्भों को पुन: उत्पन्न करें, संपादित करें या अपलोड करें।"
                     }
                   ]
                 }
@@ -789,68 +790,68 @@
                 "icon": "stillsWorkbench",
                 "title": "फ़ुलस्क्रीन स्टिल्स और कीफ़्रेम स्टूडियो",
                 "description": "सटीक कीफ़्रेम नियंत्रण के लिए फ़ुलस्क्रीन Stills वर्कबेंच में कदम रखें। Frame-to-Video (F2V) मोशन ब्रिजिंग के लिए स्टार्ट और एंड फ़्रेम जोड़ें, Draft और Final 4K रिज़ॉल्यूशन चुनें, Pre-Vis केन बर्न्स मोशन को कस्टमाइज़ करें और IAD के साथ सर्जिकल फ़्रेम संपादन करें।",
-                "screenshot": "Fullscreen Stills & Keyframe Studio — F2V Start & End keyframe pairing, Final 4K controls, and surgical IAD editing",
+                "screenshot": "फ़ुलस्क्रीन स्टिल्स और कीफ़्रेम स्टूडियो - F2V स्टार्ट और एंड कीफ़्रेम पेयरिंग, फ़ाइनल 4K नियंत्रण और सर्जिकल IAD संपादन",
                 "learnMore": {
                   "items": [
                     {
-                      "title": "Frame-to-Video (F2V) Start & End pairing",
-                      "description": "Pair a locked Start Frame and End Frame Target on any shot to anchor exact camera movement and subject blocking during video generation."
+                      "title": "फ़्रेम-टू-वीडियो (F2V) प्रारंभ और समाप्ति युग्मन",
+                      "description": "वीडियो निर्माण के दौरान सटीक कैमरा मूवमेंट और सब्जेक्ट ब्लॉकिंग को एंकर करने के लिए किसी भी शॉट पर लॉक किए गए स्टार्ट फ्रेम और एंड फ्रेम टारगेट को जोड़ें।"
                     },
                     {
-                      "title": "Surgical IAD keyframe editing",
-                      "description": "Edit specific props, chalkboard text, wardrobe details, or lighting in plain language while keeping the rest of the keyframe locked."
+                      "title": "सर्जिकल आईएडी कीफ़्रेम संपादन",
+                      "description": "शेष कीफ़्रेम को लॉक रखते हुए विशिष्ट प्रॉप्स, चॉकबोर्ड टेक्स्ट, अलमारी विवरण, या प्रकाश व्यवस्था को सरल भाषा में संपादित करें।"
                     },
                     {
-                      "title": "Draft vs Final 4K & Creative modes",
-                      "description": "Toggle between rapid Draft previews and Final 4K resolution, plus Standard or Creative synthesis modes per shot."
+                      "title": "ड्राफ्ट बनाम फ़ाइनल 4K और क्रिएटिव मोड",
+                      "description": "तीव्र ड्राफ्ट पूर्वावलोकन और अंतिम 4K रिज़ॉल्यूशन, साथ ही प्रति शॉट मानक या क्रिएटिव संश्लेषण मोड के बीच टॉगल करें।"
                     },
                     {
-                      "title": "Pre-Vis Ken Burns motion framing",
-                      "description": "Customize zoom and pan trajectories on every still so your Pre-Vis Animatic previews intentional camera motion."
+                      "title": "प्री-विज़ केन बर्न्स मोशन फ़्रेमिंग",
+                      "description": "हर स्टिल पर ज़ूम और पैन प्रक्षेपवक्र को अनुकूलित करें ताकि आपका प्री-विज़ Animatic जानबूझकर कैमरा गति का पूर्वावलोकन कर सके।"
                     }
                   ]
                 }
               },
               {
                 "icon": "animatic",
-                "title": "The Pre-Vis Animatic",
-                "description": "Watch the scene breathe. Review a fully assembled animatic—stitched stills, Ken Burns motion, and locked audio—in the Screening Room. Audit the pacing, share for feedback, and ensure the cut works before committing to video.",
-                "screenshot": "The Pre-Vis Animatic — stitched stills, Ken Burns motion, and locked audio",
+                "title": "प्री-विज़ sfaanimaticterm",
+                "description": "दृश्य को सांस लेते हुए देखें. Screening Room में पूरी तरह से इकट्ठे एनिमेटिक-सिले हुए चित्र, केन बर्न्स मोशन और लॉक किए गए ऑडियो की समीक्षा करें। गति का ऑडिट करें, फीडबैक के लिए साझा करें और सुनिश्चित करें कि वीडियो पर काम करने से पहले कट काम करता है।",
+                "screenshot": "प्री-विज़ Animatic - सिले हुए चित्र, केन बर्न्स मोशन, और लॉक किया गया ऑडियो",
                 "learnMore": {
                   "items": [
                     {
-                      "title": "Assembled multi-track animatic",
-                      "description": "Review stitched stills, Ken Burns motion, and locked dialogue, SFX, and musical score in the Screening Room."
+                      "title": "इकट्ठे मल्टी-ट्रैक एनिमेटिक",
+                      "description": "Screening Room में सिले हुए चित्र, केन बर्न्स मोशन और लॉक किए गए संवाद, SFX और संगीत स्कोर की समीक्षा करें।"
                     },
                     {
-                      "title": "Prove pacing before video spend",
-                      "description": "Audit the dramatic rhythm, spot timing gaps, and refine shot lengths while iterations cost pennies instead of full video compute."
+                      "title": "वीडियो खर्च करने से पहले गति साबित करें",
+                      "description": "नाटकीय लय का ऑडिट करें, समय अंतराल का पता लगाएं और शॉट की लंबाई को परिष्कृत करें जबकि पुनरावृत्तियों में पूर्ण वीडियो गणना के बजाय पैसे खर्च होते हैं।"
                     },
                     {
-                      "title": "Share for stakeholder sign-off",
-                      "description": "Audit the pacing, share for feedback, and ensure the cut works before committing to video."
+                      "title": "हितधारक साइन-ऑफ़ के लिए साझा करें",
+                      "description": "गति का ऑडिट करें, फीडबैक के लिए साझा करें और सुनिश्चित करें कि वीडियो पर काम करने से पहले कट काम करता है।"
                     }
                   ]
                 }
               },
               {
                 "icon": "videoAgent",
-                "title": "The Clips Agent",
-                "description": "Once the Pre-Vis is approved, the Clips Agent takes over, rendering high-fidelity motion clips that adhere strictly to your approved stills, Frame-to-Video start and end anchors, and continuity references—backed by automated safety pre-flight checks.",
-                "screenshot": "The Clips Agent — high-fidelity motion clips from approved stills",
+                "title": "Clips Agent",
+                "description": "एक बार प्री-विज़ स्वीकृत हो जाने के बाद, Clips Agent उच्च-निष्ठा गति क्लिप प्रदान करता है, जो आपके अनुमोदित स्टिल, फ़्रेम-टू-वीडियो प्रारंभ और अंत एंकर और निरंतरता संदर्भों का सख्ती से पालन करता है - स्वचालित सुरक्षा प्री-फ़्लाइट जांच द्वारा समर्थित।",
+                "screenshot": "Clips Agent - स्वीकृत चित्रों से उच्च-निष्ठा गति क्लिप",
                 "learnMore": {
                   "items": [
                     {
-                      "title": "Triggered after Pre-Vis approval",
-                      "description": "The Clips Agent renders motion only after the Pre-Vis animatic and shot timings are approved."
+                      "title": "प्री-विज़ अनुमोदन के बाद ट्रिगर किया गया",
+                      "description": "Clips Agent प्री-विज़ एनिमेटिक और शॉट टाइमिंग स्वीकृत होने के बाद ही गति प्रदान करता है।"
                     },
                     {
-                      "title": "Strict keyframe & F2V adherence",
-                      "description": "High-fidelity motion clips adhere strictly to your approved Start and End stills and continuity references."
+                      "title": "सख्त कीफ़्रेम और F2V का पालन",
+                      "description": "उच्च-निष्ठा गति क्लिप आपके स्वीकृत प्रारंभ और अंत चित्र और निरंतरता संदर्भों का सख्ती से पालन करते हैं।"
                     },
                     {
-                      "title": "Automated safety pre-flight",
-                      "description": "Pre-flight prompt sanitation prevents false-positive safety rejections on dramatic action beats so clips render reliably."
+                      "title": "उड़ान पूर्व स्वचालित सुरक्षा",
+                      "description": "उड़ान-पूर्व शीघ्र स्वच्छता नाटकीय एक्शन बीट्स पर गलत-सकारात्मक सुरक्षा अस्वीकृतियों को रोकती है ताकि क्लिप विश्वसनीय रूप से प्रस्तुत हो सकें।"
                     }
                   ]
                 }
@@ -859,24 +860,24 @@
                 "icon": "clipsWorkbench",
                 "title": "मल्टी-टेक क्लिप्स और रीटेक स्टूडियो",
                 "description": "फ़ुलस्क्रीन Clips स्टूडियो के भीतर हर मोशन रेंडर को निर्देशित और क्यूरेट करें। नॉन-डिस्ट्रक्टिव मल्टी-टेक वॉल्ट (Take 1 / Take 2 / Take 3) में टेक की तुलना करें, In the Can स्थिति से फ़िल्टर करें, IAD स्मार्ट रीटेक ट्रिगर करें और प्रत्येक भाषा स्ट्रीम के लिए स्थानीयकृत क्लिप प्रबंधित करें।",
-                "screenshot": "Multi-Take Clips & Retake Studio — non-destructive Take 1/2/3 vault, IAD Smart Retake, and localized stream takes",
+                "screenshot": "मल्टी-टेक क्लिप्स और रीटेक स्टूडियो - गैर-विनाशकारी टेक 1/2/3 वॉल्ट, आईएडी स्मार्ट रीटेक और स्थानीयकृत स्ट्रीम टेक",
                 "learnMore": {
                   "items": [
                     {
-                      "title": "Non-destructive Multi-Take Vault",
-                      "description": "Every motion render is preserved in the shot vault so you can compare Take 1, Take 2, and Take 3 and promote your favorite take live."
+                      "title": "गैर-विनाशकारी मल्टी-टेक वॉल्ट",
+                      "description": "प्रत्येक मोशन रेंडर को शॉट वॉल्ट में संरक्षित किया जाता है ताकि आप टेक 1, टेक 2 और टेक 3 की तुलना कर सकें और अपने पसंदीदा टेक लाइव का प्रचार कर सकें।"
                     },
                     {
-                      "title": "IAD Smart Retake & Direct Video",
-                      "description": "Refine camera motion, subject physics, or facial performance with the Intelligent Assistant Director and Direct Video pre-flight controls."
+                      "title": "IAD स्मार्ट रीटेक और डायरेक्ट वीडियो",
+                      "description": "Intelligent Assistant Director और डायरेक्ट वीडियो प्री-फ़्लाइट नियंत्रणों के साथ कैमरा गति, विषय भौतिकी, या चेहरे के प्रदर्शन को परिष्कृत करें।"
                     },
                     {
-                      "title": "Per-stream localized shot takes",
-                      "description": "Switch between your English Master take and regenerated localized clips for spoken dialogue and in-scene signage per language stream."
+                      "title": "प्रति-स्ट्रीम स्थानीयकृत शॉट लेता है",
+                      "description": "बोले गए संवाद और प्रति भाषा स्ट्रीम के लिए इन-सीन साइनेज के लिए अपने अंग्रेजी मास्टर टेक और पुनर्जीवित स्थानीयकृत क्लिप के बीच स्विच करें।"
                     },
                     {
-                      "title": "Dialogue-free stem readiness",
-                      "description": "Extract embedded clip audio into a dialogue-free SFX and ambience stem so localized dubs retain original foley and room tone."
+                      "title": "संवाद-रहित तने की तत्परता",
+                      "description": "एम्बेडेड क्लिप ऑडियो को संवाद-मुक्त एसएफएक्स और परिवेश स्टेम में निकालें ताकि स्थानीयकृत डब मूल फ़ॉले और रूम टोन को बनाए रखें।"
                     }
                   ]
                 }
@@ -945,28 +946,28 @@
                 "icon": "languageStreams",
                 "title": "स्ट्रीम्स (बहु-भाषा)",
                 "description": "एक मास्टर टाइमलाइन से 44 भाषाओं में अपनी वैश्विक पहुंच का विस्तार करें। बिना अतिरिक्त क्रेडिट खर्च के अचयनित मास्टर शॉट्स को बनाए रखते हुए केवल संवाद और इन-सीन साइनेज वाले शॉट्स को चुनिंदा रूप से रीजेनरेट करें। वीडियो ऑडियो से अंग्रेजी संवाद हटाकर (htdemucs) मूल SFX और संगीत को बनाए रखें, और वीडियो क्लिप को धीमा करके (10s से 15s तक, 67% गति) लंबी डब ऑडियो को संरेखित करें।",
-                "screenshot": "Streams (Multi-Language) — Selective shot regeneration vs retained master shots, dialogue-free stem extraction, and elastic slow-video dub alignment",
+                "screenshot": "स्ट्रीम (बहु-भाषा) - चयनात्मक शॉट पुनर्जनन बनाम बरकरार मास्टर शॉट्स, संवाद-मुक्त स्टेम निष्कर्षण, और लोचदार धीमी-वीडियो डब संरेखण",
                 "learnMore": {
                   "items": [
                     {
-                      "title": "Selective shot regeneration & retained master clips",
-                      "description": "Select only the shots with spoken dialogue or in-scene signage to regenerate in your target language while unselected action shots automatically retain the master video clip."
+                      "title": "चयनात्मक शॉट पुनर्जनन और बनाए रखा मास्टर क्लिप",
+                      "description": "अपनी लक्षित भाषा में पुन: उत्पन्न करने के लिए केवल बोले गए संवाद या दृश्य संकेत वाले शॉट्स का चयन करें, जबकि अचयनित एक्शन शॉट्स स्वचालित रूप से मास्टर वीडियो क्लिप को बनाए रखते हैं।"
                     },
                     {
-                      "title": "Dialogue-free stem extraction (keep generated SFX & music)",
-                      "description": "Neural stem separation extracts embedded video audio and removes spoken English dialogue while preserving generated foley, room ambience, and music for clean MP3 dubbing."
+                      "title": "संवाद-मुक्त स्टेम निष्कर्षण (उत्पन्न एसएफएक्स और संगीत रखें)",
+                      "description": "न्यूरल स्टेम पृथक्करण एम्बेडेड वीडियो ऑडियो को निकालता है और स्वच्छ एमपी3 डबिंग के लिए उत्पन्न फ़ोले, कमरे के माहौल और संगीत को संरक्षित करते हुए बोले गए अंग्रेजी संवाद को हटा देता है।"
                     },
                     {
-                      "title": "Elastic video slow-down & multi-method dub alignment",
-                      "description": "Align longer translated dialogue by slowing a 10s video clip up to 15s (down to 67% speed), pairing an 80% slow-down with a 103% zoom hold, or fitting dub audio tempo up to 1.25x."
+                      "title": "इलास्टिक वीडियो धीमा-डाउन और बहु-विधि डब संरेखण",
+                      "description": "10s वीडियो क्लिप को 15s तक (67% गति तक) धीमा करके, 80% स्लो-डाउन को 103% ज़ूम होल्ड के साथ जोड़कर, या डब ऑडियो टेम्पो को 1.25x तक फ़िट करके लंबे अनुवादित संवाद को संरेखित करें।"
                     },
                     {
-                      "title": "Regenerated dialogue & signage clips across 44 languages",
-                      "description": "Regenerate localized dialogue takes and in-scene signage clips directly within the scene across 44 languages so visuals, stencils, and speech match every audience."
+                      "title": "44 भाषाओं में पुनर्जीवित संवाद और साइनेज क्लिप",
+                      "description": "44 भाषाओं में सीधे दृश्य के भीतर स्थानीय संवाद और इन-सीन साइनेज क्लिप को पुनर्जीवित करें ताकि दृश्य, स्टेंसिल और भाषण हर दर्शक से मेल खा सकें।"
                     },
                     {
-                      "title": "Localized Studio UI",
-                      "description": "Direct and produce in your native interface across English, Spanish, Portuguese, Hindi, Simplified Chinese, and Arabic."
+                      "title": "स्थानीयकृत स्टूडियो यूआई",
+                      "description": "अंग्रेजी, स्पेनिश, पुर्तगाली, हिंदी, सरलीकृत चीनी और अरबी में अपने मूल इंटरफ़ेस में प्रत्यक्ष और उत्पादन करें।"
                     }
                   ]
                 }
@@ -979,64 +980,64 @@
                 "learnMore": {
                   "items": [
                     {
-                      "title": "Native studio workspace across 6 Tier-A interface languages",
-                      "description": "Switch the entire SceneFlow Studio UI—Series Studio, Blueprint Room, Production Stage, and Screening Room—between English, Spanish, Portuguese, Simplified Chinese, Hindi, and Arabic."
+                      "title": "6 टियर-ए इंटरफ़ेस भाषाओं में नेटिव स्टूडियो कार्यक्षेत्र",
+                      "description": "संपूर्ण SceneFlow Studio UI—सीरीज़ स्टूडियो, Blueprint Room, Production Stage, और Screening Room—को अंग्रेजी, स्पेनिश, पुर्तगाली, सरलीकृत चीनी, हिंदी और अरबी के बीच स्विच करें।"
                     },
                     {
-                      "title": "Localized direction, camera, blocking & continuity controls",
-                      "description": "Every tab, shot rail, camera lens selector, continuity lock, and mixer control renders natively in your selected language so global directors and editors work at full speed."
+                      "title": "स्थानीयकृत दिशा, कैमरा, अवरोधन और निरंतरता नियंत्रण",
+                      "description": "प्रत्येक टैब, शॉट रेल, कैमरा लेंस चयनकर्ता, निरंतरता लॉक और मिक्सर नियंत्रण आपकी चयनित भाषा में मूल रूप से प्रस्तुत होता है ताकि वैश्विक निदेशक और संपादक पूरी गति से काम करें।"
                     },
                     {
-                      "title": "Cross-border team collaboration on one shared project",
-                      "description": "A showrunner in Los Angeles, an editor in Madrid, a VFX lead in São Paulo, and a sound designer in Mumbai or Shanghai can each work on the same project in their preferred UI language."
+                      "title": "एक साझा परियोजना पर सीमा पार टीम का सहयोग",
+                      "description": "लॉस एंजिल्स में एक शोरुनर, मैड्रिड में एक संपादक, साओ पाउलो में एक वीएफएक्स लीड, और मुंबई या शंघाई में एक साउंड डिजाइनर अपनी पसंदीदा यूआई भाषा में एक ही प्रोजेक्ट पर काम कर सकते हैं।"
                     },
                     {
-                      "title": "Paired with 75+ landing & 44+ dubbing stream languages",
-                      "description": "Combine a native localized Studio UI with 44-language neural voice dubbing and lip-sync streams to produce and distribute globally from day one."
+                      "title": "75+ लैंडिंग और 44+ डबिंग स्ट्रीम भाषाओं के साथ जोड़ा गया",
+                      "description": "पहले दिन से वैश्विक स्तर पर उत्पादन और वितरण के लिए 44-भाषा न्यूरल वॉयस डबिंग और लिप-सिंक स्ट्रीम के साथ एक देशी स्थानीयकृत स्टूडियो यूआई को संयोजित करें।"
                     }
                   ]
                 }
               },
               {
                 "icon": "promoTrailers",
-                "title": "Promo & Trailers",
-                "description": "Cut high-converting theatrical teasers, episodic recaps, and social-ready promo trailers at any time during production. Pull hero takes from your scene vault, reframe for horizontal (`16:9`) or vertical (`9:16`) feeds, and generate multi-language versions with localized title cards and voiceover hooks.",
-                "screenshot": "Promo & Trailers — multi-language horizontal and vertical trailers",
+                "title": "प्रोमो और ट्रेलर",
+                "description": "उत्पादन के दौरान किसी भी समय उच्च-परिवर्तित नाटकीय टीज़र, एपिसोडिक पुनर्कथन और सामाजिक-तैयार प्रोमो ट्रेलरों को काटें। अपने दृश्य वॉल्ट से नायक को खींचें, क्षैतिज (`16:9`) या ऊर्ध्वाधर (`9:16`) फ़ीड के लिए पुनः फ़्रेम करें, और स्थानीयकृत शीर्षक कार्ड और वॉयसओवर हुक के साथ बहु-भाषा संस्करण तैयार करें।",
+                "screenshot": "प्रोमो और ट्रेलर - बहुभाषी क्षैतिज और ऊर्ध्वाधर ट्रेलर",
                 "learnMore": {
                   "items": [
                     {
-                      "title": "Social-ready trailers at any stage",
-                      "description": "Cut promo trailers, theatrical teasers, and episodic recaps at any point during production."
+                      "title": "किसी भी स्तर पर सामाजिक रूप से तैयार ट्रेलर",
+                      "description": "उत्पादन के दौरान किसी भी समय प्रोमो ट्रेलर, नाटकीय टीज़र और एपिसोडिक पुनर्कथन काटें।"
                     },
                     {
-                      "title": "Horizontal & vertical social formats",
-                      "description": "Generate multi-language versions optimized for horizontal 16:9 YouTube feeds or vertical 9:16 Shorts, Reels, and TikTok."
+                      "title": "क्षैतिज और ऊर्ध्वाधर सामाजिक प्रारूप",
+                      "description": "क्षैतिज 16:9 YouTube फ़ीड या लंबवत 9:16 शॉर्ट्स, रील्स और टिकटॉक के लिए अनुकूलित बहु-भाषा संस्करण तैयार करें।"
                     },
                     {
-                      "title": "Localized hooks & title cards",
-                      "description": "Render localized trailer streams with translated voiceover hooks, burned-in captions, and market-specific title cards."
+                      "title": "स्थानीयकृत हुक और शीर्षक कार्ड",
+                      "description": "अनुवादित वॉयसओवर हुक, बर्न-इन कैप्शन और बाज़ार-विशिष्ट शीर्षक कार्ड के साथ स्थानीयकृत ट्रेलर स्ट्रीम प्रस्तुत करें।"
                     }
                   ]
                 }
               },
               {
                 "icon": "shipPackage",
-                "title": "Direct Publishing",
-                "description": "Export the final EBU R128-normalized master MP4 in 1080p or 4K, download complete production stems, or let SceneFlow auto-generate high-CTR thumbnails, localized titles, chapter markers, and descriptions to publish scenes, chapters, and promos directly to YouTube, TikTok, and Facebook.",
-                "screenshot": "Direct Publishing — MP4 export and direct publishing to YouTube, TikTok, and Facebook",
+                "title": "प्रत्यक्ष प्रकाशन",
+                "description": "अंतिम EBU R128-सामान्यीकृत मास्टर MP4 को 1080p या 4K में निर्यात करें, पूर्ण उत्पादन स्टेम डाउनलोड करें, या SceneFlow को दृश्यों, अध्यायों और प्रोमो को सीधे YouTube, टिकटॉक और फेसबुक पर प्रकाशित करने के लिए उच्च-CTR थंबनेल, स्थानीयकृत शीर्षक, अध्याय मार्कर और विवरण स्वतः उत्पन्न करने दें।",
+                "screenshot": "प्रत्यक्ष प्रकाशन - YouTube, टिकटॉक और फेसबुक पर MP4 निर्यात और प्रत्यक्ष प्रकाशन",
                 "learnMore": {
                   "items": [
                     {
-                      "title": "Master MP4 or direct social publishing",
-                      "description": "Export the final master MP4 or publish scenes, chapters, and promos directly to YouTube, TikTok, and Facebook."
+                      "title": "मास्टर MP4 या प्रत्यक्ष सामाजिक प्रकाशन",
+                      "description": "अंतिम मास्टर MP4 निर्यात करें या दृश्य, अध्याय और प्रोमो सीधे YouTube, टिकटॉक और फेसबुक पर प्रकाशित करें।"
                     },
                     {
-                      "title": "Auto-generated thumbnails & metadata",
-                      "description": "Let SceneFlow auto-generate high-contrast thumbnails, localized titles, descriptions, tags, and chapter markers for every release."
+                      "title": "स्वतः उत्पन्न थंबनेल और मेटाडेटा",
+                      "description": "SceneFlow को प्रत्येक रिलीज़ के लिए उच्च-कंट्रास्ट थंबनेल, स्थानीयकृत शीर्षक, विवरण, टैग और अध्याय मार्कर स्वतः उत्पन्न करने दें।"
                     },
                     {
-                      "title": "Archival stems & screenplay bundle",
-                      "description": "Download stitched video masters, isolated dialogue and SFX stems, subtitle files, and formatted screenplays in one production package."
+                      "title": "अभिलेखीय तने और पटकथा बंडल",
+                      "description": "सिले हुए वीडियो मास्टर्स, पृथक संवाद और एसएफएक्स स्टेम्स, उपशीर्षक फ़ाइलें और स्वरूपित स्क्रीनप्ले को एक प्रोडक्शन पैकेज में डाउनलोड करें।"
                     }
                   ]
                 }
@@ -1053,52 +1054,52 @@
         "features": [
           {
             "icon": "screeningPlayer",
-            "title": "One Unified Player",
-            "description": "Toggle seamlessly between Pre-Vis animatics, stitched scenes, multi-scene chapters, promo trailers, and your final master. Switch Language Streams on the fly to audition dubbed audio, dialogue-free stem mixes, and regenerated dialogue or signage clips—always frame-locked to the exact cut from the Mixer.",
-            "screenshot": "Screening Room player",
+            "title": "एक एकीकृत खिलाड़ी",
+            "description": "प्री-विज़ एनिमेटिक्स, सिले हुए दृश्य, बहु-दृश्य अध्याय, प्रोमो ट्रेलर और अपने अंतिम मास्टर के बीच सहजता से टॉगल करें। डब किए गए ऑडियो, संवाद-मुक्त स्टेम मिक्स, और पुनर्जीवित संवाद या साइनेज क्लिप के ऑडिशन के लिए भाषा स्ट्रीम को तुरंत स्विच करें - हमेशा मिक्सर से सटीक कट के लिए फ्रेम-लॉक किया जाता है।",
+            "screenshot": "Screening Room प्लेयर",
             "learnMore": {
               "items": [
                 {
-                  "title": "Every milestone in one theatre",
-                  "description": "Switch effortlessly among Pre-Vis animatics, individual scenes, chapters, promos, and the final master."
+                  "title": "एक थिएटर में हर मील का पत्थर",
+                  "description": "प्री-विज़ एनिमेटिक्स, व्यक्तिगत दृश्यों, अध्यायों, प्रोमो और अंतिम मास्टर के बीच सहजता से स्विच करें।"
                 },
                 {
-                  "title": "Live language stream auditioning",
-                  "description": "Audition any Language Stream—dubbed audio, lip-sync, or regenerated dialogue and signage clips—on the fly without reloading the timeline."
+                  "title": "लाइव भाषा स्ट्रीम ऑडिशनिंग",
+                  "description": "किसी भी भाषा स्ट्रीम का ऑडिशन - डब किया गया ऑडियो, लिप-सिंक, या पुनर्जीवित संवाद और साइनेज क्लिप - टाइमलाइन को फिर से लोड किए बिना तुरंत।"
                 },
                 {
-                  "title": "Frame-locked to the Broadcast Mixer",
-                  "description": "Every stream plays the exact stitch transitions, J/L-cut overlaps, auto-ducking curves, and loudness normalization rendered in the Mixer."
+                  "title": "ब्रॉडकास्ट मिक्सर को फ़्रेम-लॉक किया गया",
+                  "description": "प्रत्येक स्ट्रीम मिक्सर में प्रदान किए गए सटीक स्टिच ट्रांज़िशन, जे/एल-कट ओवरलैप्स, ऑटो-डकिंग कर्व्स और लाउडनेस सामान्यीकरण को चलाती है।"
                 },
                 {
-                  "title": "Incremental episodic shipping",
-                  "description": "Ship a finished 3–5 minute scene, an 8–12 minute chapter, or a social promo immediately while downstream chapters continue rendering."
+                  "title": "वृद्धिशील एपिसोडिक शिपिंग",
+                  "description": "3-5 मिनट का पूरा दृश्य, 8-12 मिनट का अध्याय, या एक सामाजिक प्रोमो तुरंत भेजें जबकि डाउनस्ट्रीम अध्याय प्रस्तुत करना जारी रखें।"
                 }
               ]
             }
           },
           {
             "icon": "screeningCollab",
-            "title": "Frame-Accurate Collaboration",
-            "description": "Stop exporting rough cuts to email. Share a private screening link where collaborators, sound editors, localization leads, and investors watch full-resolution playback in real time and drop timestamped notes directly on the picture—with instant notifications sent straight to your phone.",
-            "screenshot": "Shared review",
+            "title": "फ़्रेम-सटीक सहयोग",
+            "description": "ईमेल पर रफ कट निर्यात करना बंद करें। एक निजी स्क्रीनिंग लिंक साझा करें जहां सहयोगी, ध्वनि संपादक, स्थानीयकरण लीड और निवेशक वास्तविक समय में पूर्ण-रिज़ॉल्यूशन प्लेबैक देखते हैं और टाइमस्टैम्प्ड नोट्स को सीधे चित्र पर छोड़ते हैं - तत्काल सूचनाएं सीधे आपके फोन पर भेजी जाती हैं।",
+            "screenshot": "साझा समीक्षा",
             "learnMore": {
               "items": [
                 {
-                  "title": "Private stakeholder screening links",
-                  "description": "Reviewers watch full-resolution playback across any language stream and leave frame-accurate timestamped notes on the picture."
+                  "title": "निजी हितधारक स्क्रीनिंग लिंक",
+                  "description": "समीक्षक किसी भी भाषा स्ट्रीम में पूर्ण-रिज़ॉल्यूशन प्लेबैक देखते हैं और चित्र पर फ़्रेम-सटीक टाइमस्टैम्प्ड नोट्स छोड़ते हैं।"
                 },
                 {
-                  "title": "Zero rough-cut file exports",
-                  "description": "Collect creative, legal, and localization feedback in one centralized review thread without uploading or mailing heavy video files."
+                  "title": "शून्य रफ-कट फ़ाइल निर्यात",
+                  "description": "भारी वीडियो फ़ाइलों को अपलोड या मेल किए बिना एक केंद्रीकृत समीक्षा थ्रेड में रचनात्मक, कानूनी और स्थानीयकरण प्रतिक्रिया एकत्र करें।"
                 },
                 {
-                  "title": "Instant mobile notifications",
-                  "description": "New reviewer notes notify you immediately on your phone so you can approve or dispatch revisions while directing on desktop."
+                  "title": "त्वरित मोबाइल सूचनाएं",
+                  "description": "नए समीक्षक नोट आपको तुरंत आपके फ़ोन पर सूचित करते हैं ताकि आप डेस्कटॉप पर निर्देशित करते समय संशोधनों को स्वीकृत या भेज सकें।"
                 },
                 {
-                  "title": "Direct link back to the Shot Rail",
-                  "description": "Jump from any timestamped screening comment straight to the corresponding scene and shot in the Production Stage to execute the note."
+                  "title": "शॉट रेल से सीधा लिंक",
+                  "description": "किसी भी टाइमस्टैम्प्ड स्क्रीनिंग टिप्पणी से सीधे संबंधित दृश्य पर जाएं और नोट को निष्पादित करने के लिए Production Stage में शूट करें।"
                 }
               ]
             }
@@ -1106,6 +1107,272 @@
         ]
       }
     ]
+  },
+  "productionAgent": {
+    "eyebrow": "Production Agent • स्वायत्त स्टूडियो बिल्डर",
+    "title": "हाथ से 300+ शॉट्स प्रॉम्प्ट करना बंद करें। बिल्ड शुरू करें और निश्चिंत हो जाएँ।",
+    "subtitle": "एक सामान्य 27-दृश्य प्रोडक्शन (प्रति दृश्य 12–20 शॉट्स) में पारंपरिक AI टूल्स में 300 से अधिक मैनुअल स्टिल और वीडियो प्रॉम्प्ट्स लगते हैं। एक घंटे से कम समय में अपनी स्क्रिप्ट को निखारें, Pre-Vis, Clips, Scenes, Master या Promo चुनें, और Production Agent को आपके दृश्य बनाने दें, विफल शॉट्स को सुधारने दें, और पूरा होने पर निजी /s/ Screening Room लिंक के साथ सूचित करने दें।",
+    "showDetail": "अधिक विवरण दिखाएँ",
+    "hideDetail": "विवरण छिपाएँ",
+    "drawerBadge": "स्वायत्त दृश्य-दर-दृश्य ऑर्केस्ट्रेशन",
+    "drawerTitle": "आपकी स्क्रिप्ट पर एक घंटे से कम समय। घंटों के मैनुअल प्रॉम्प्ट्स की जगह एक स्वायत्त रन।",
+    "cards": [
+      {
+        "badge": "300+ मैनुअल प्रॉम्प्ट्स समाप्त करें",
+        "title": "स्क्रिप्ट पर < 1 घंटा → बाकी समय आपका",
+        "description": "27 दृश्यों (प्रति दृश्य 12–20 शॉट्स) में 300+ अलग-अलग स्टिल और वीडियो प्रॉम्प्ट टाइप करने से बचें। एक घंटे से कम समय में अपनी स्क्रिप्ट तैयार करें और अपना दिन बचाएँ।"
+      },
+      {
+        "badge": "सभी 27 दृश्य या अध्याय के अनुसार",
+        "title": "5 एंड-टू-एंड प्रोडक्शन चरण",
+        "description": "एक ही बिल्डर में Pre-Vis, Clips, Scenes, Master और Promo चुनें। एजेंट स्वतः निरंतरता रेफ़रेंस, संवाद/SFX/संगीत ऑडियो, कीफ़्रेम, मोशन क्लिप्स और ट्रेलर तैयार करता है।"
+      },
+      {
+        "badge": "शून्य रुके हुए रेंडर",
+        "title": "सेल्फ-हीलिंग + Creative Clips फ़ॉलबैक",
+        "description": "शॉट डायरेक्शन को स्वतः ऑप्टिमाइज़ करता है और विफल शॉट्स को फिर से चलाता है। जब कोई नाटकीय शॉट ऑप्टिमाइज़ेशन के बाद भी Google पॉलिसी फ़िल्टर से रुकता है, तो वह स्वतः Creative Clips पर स्विच हो जाता है।"
+      },
+      {
+        "badge": "पूर्ण डायरेक्टर नियंत्रण",
+        "title": "चेकपॉइंट्स और /s/ Screening लिंक्स",
+        "description": "100% हैंड्स-फ़्री चलाएँ या Pre-Vis या प्रत्येक दृश्य के बाद रोकें। समीक्षा के लिए तैयार सीधे /s/ Screening Room लिंक के साथ अपनी चुनी हुई आवृत्ति पर नोटिफिकेशन पाएँ।"
+      }
+    ],
+    "viewScript": "एना वीडियो स्क्रिप्ट देखें (30s वॉकथ्रू)",
+    "hideScript": "एना वीडियो स्क्रिप्ट छिपाएँ (30s वॉकथ्रू)",
+    "copyScript": "स्क्रिप्ट कॉपी करें",
+    "copied": "कॉपी किया गया",
+    "voLabel": "वीओ:",
+    "pictureLabel": "चित्र:",
+    "scriptBlocks": [
+      {
+        "block": "ब्लॉक 01 (0:00–0:10)",
+        "title": "300-शॉट दीवार और एक-क्लिक लॉन्च",
+        "syncLine": "एएनए (कैमरे पर): \"तीन सौ शॉट्स का मतलब तीन सौ मैनुअल संकेत होता था। अब नहीं।\"",
+        "narration": "27 दृश्यों में अपनी स्क्रिप्ट को बेहतर बनाने में एक घंटे से भी कम समय व्यतीत करें - फिर एक क्लिक में प्रोडक्शन एजेंट लॉन्च करें।",
+        "visual": "डार्क वर्चुअल प्रोडक्शन सूट में एना का मीडियम शॉट (CHAR_ANA, स्लेट टर्टलनेक के ऊपर ऑलिव फील्ड जैकेट)। वह एकल सियान प्रक्षेपण नियंत्रण को टैप करती है; उसके पीछे, एक 27-दृश्य स्टोरीबोर्ड ग्रिड और एक सियान-से-पन्ना प्रगति पट्टी घुमावदार दीवार डिस्प्ले पर प्रज्वलित होती है।"
+      },
+      {
+        "block": "ब्लॉक 02 (0:10–0:20)",
+        "title": "स्वायत्त निर्माण, स्व-उपचार और रचनात्मक क्लिप फ़ॉलबैक",
+        "narration": "एजेंट हर दृश्य पर नज़र रखता है - संदर्भों को लॉक करना, कथन और संगीत संकेत देना, विफल क्लिप संकेतों को अनुकूलित करना, और जब कोई शॉट पॉलिसी फ़िल्टर पर हिट होता है तो क्रिएटिव क्लिप्स पर स्विच करना।",
+        "visual": "स्टोरीबोर्ड फ्रेम, ऑडियो वेवफॉर्म और मोशन पूर्वावलोकन 27 दृश्य स्लॉट में पॉप्युलेट होने पर घुमावदार दीवार डिस्प्ले की ओर एना के ऊपर-द-कंधे। एक टाइल संक्षेप में एम्बर को स्पंदित करती है (नीति पुनः प्रयास करें), इसके कैमरे के कोण को फिर से लिखती है, और ठोस पन्ना को हरा कर देती है।"
+      },
+      {
+        "block": "ब्लॉक 03 (0:20–0:30)",
+        "title": "चले जाओ और Screening Room अधिसूचना",
+        "narration": "दृश्य चौकियाँ स्थापित करें, या पूरी तरह से चले जाएँ। जब आपका प्री-विज़ या मास्टर कट तैयार हो जाता है, तो एक अधिसूचना आपके निजी Screening Room लिंक को समीक्षा के लिए भेजती है।",
+        "visual": "जैसे ही दीवार का प्रदर्शन 100% पन्ना पूरा हो गया, एना ने अपना सिरेमिक कॉफी मग उठाया। उसका फ़ोन एक निजी /s/ Screening Room अधिसूचना के साथ चमकता है; वह कैमरे के सामने गर्मजोशी से मुस्कुराती है जबकि तैयार मास्टर उसके पीछे खेलता है।"
+      }
+    ],
+    "cta": "स्टूडियो लॉन्च करें ($9)"
+  },
+  "studioAcademy": {
+    "eyebrow": "SceneFlow Studio Academy और जस्ट-इन-टाइम ट्रेनिंग",
+    "title": "हर कदम पर मार्गदर्शन। बनाते-बनाते स्टूडियो में महारत हासिल करें।",
+    "subtitle": "कभी भी खाली टाइमलाइन को न घूरें और न ही अगला कदम सोचने में क्रेडिट बर्बाद करें। किसी भी स्क्रीन पर ? दबाएँ और तुरंत Just-In-Time (JIT) स्क्रीन मैप व एक-क्लिक स्टूडियो एक्शन वाली 60-सेकंड की चेकलिस्ट पाएँ—या अपनी पहली अवधारणा से लेकर प्रकाशित मास्टर तक इंटरैक्टिव कोर्स फॉलो करें।",
+    "showDetail": "अधिक विवरण दिखाएँ",
+    "hideDetail": "विवरण छिपाएँ",
+    "drawerBadge": "हॉलीवुड स्टूडियो की शक्ति · फ़िल्म स्कूल की आवश्यकता नहीं",
+    "drawerTitle": "हर रूम में इन-बिल्ट इंटरैक्टिव स्क्रीन मैप्स, 60-सेकंड चेकलिस्ट और क्रेडिट गार्डरेल्स",
+    "cards": [
+      {
+        "badge": "हमेशा सिर्फ़ 1 कुंजी दूर (?)",
+        "title": "संदर्भ-जागरूक Just-In-Time (JIT) कोच",
+        "description": "अपने सक्रिय वर्कस्पेस का तुरंत विज़ुअल मैप, आगे क्या करना है इसकी 60-सेकंड की चेकलिस्ट, और सटीक स्टूडियो एक्शन शुरू करने वाले 1-क्लिक बटन खोलने के लिए किसी भी स्क्रीन पर ? दबाएँ।"
+      },
+      {
+        "badge": "4 निर्देशित इंटरैक्टिव कोर्स",
+        "title": "“10 मिनट में आपकी पहली फ़िल्म” सिम्युलेटर",
+        "description": "बिना किसी एडिटिंग अनुभव वाले कहानीकारों, लेखकों और शोरनर्स के लिए निर्मित। 1-वाक्य के विचार से लेकर आवाज़, संगीत और चलने योग्य फ़िल्म तक इंटरैक्टिव Spotlight X-Ray कॉलआउट्स का अनुसरण करें।"
+      },
+      {
+        "badge": "70% तक क्रेडिट बचाएँ",
+        "title": "एनिमैटिक-फ़र्स्ट क्रेडिट गार्डरेल्स",
+        "description": "प्रत्येक वर्कस्पेस में रियल-टाइम क्रेडिट गार्डरेल्स शामिल हैं जो दिखाते हैं कि मोशन वीडियो क्लिप रेंडर करने से पहले 80+ Audience Resonance स्क्रिप्ट कैसे लॉक करें और वॉइस युक्त Keyframe Animatic का पूर्वावलोकन कैसे करें।"
+      },
+      {
+        "badge": "हर प्लान के साथ मुफ़्त शामिल",
+        "title": "स्टूडियो में अंतर्निहित 4 इंटरैक्टिव कोर्स",
+        "description": "स्टूडियो के भीतर ही Blueprint और Audience Resonance, कैरेक्टर और सेटिंग निरंतरता वॉल्ट, एनिमैटिक-फ़र्स्ट क्रेडिट गार्डरेल्स, और Screening Room व 70+ भाषा डबिंग में महारत हासिल करें।"
+      }
+    ],
+    "courses": [
+      {
+        "id": "first-film-10m",
+        "title": "10 मिनट में आपकी पहली फ़िल्म",
+        "totalDuration": "10 मिनट"
+      },
+      {
+        "id": "continuity-mastery",
+        "title": "चरित्र और विश्व निरंतरता निपुणता",
+        "totalDuration": "6 मिनट"
+      },
+      {
+        "id": "animatic-first-savings",
+        "title": "Animatic-प्रथम फिल्म निर्माण (70% क्रेडिट बचाएं)",
+        "totalDuration": "5 मिनट"
+      },
+      {
+        "id": "series-and-global-dubbing",
+        "title": "मल्टी-एपिसोड श्रृंखला और 13+ भाषा में वैश्विक रिलीज़",
+        "totalDuration": "6 मिनट"
+      }
+    ],
+    "jitMap": {
+      "eyebrow": "लाइव जस्ट-इन-टाइम (जेआईटी) विज़ुअल स्क्रीन मैप",
+      "title": "स्टूडियो नियंत्रणों का निरीक्षण करने के लिए किसी भी कार्यक्षेत्र और क्रमांकित पिन (1-4) पर क्लिक करें",
+      "coachPrefix": "जेआईटी कोच:",
+      "autoDetected": "● स्वतः पता लगाया गया",
+      "checklistTitle": "60-दूसरी निर्देशित चेकलिस्ट",
+      "screens": {
+        "blueprint": {
+          "tabLabel": "1. Blueprint और 80+ अनुनाद",
+          "stepBadge": "चरण 1 • कहानी और हरी झंडी",
+          "shortTitle": "Blueprint Room",
+          "subtitle": "प्रोडक्शन क्रेडिट खर्च करने से पहले अपनी कच्ची अवधारणा को एक हरे-भरे, 80+ अनुनाद फिल्म उपचार में बदलें।",
+          "quickSteps": [
+            {
+              "number": "1",
+              "title": "अपनी फ़िल्म ट्रीटमेंट तैयार करें",
+              "description": "अपनी कहानी की अवधारणा या स्क्रिप्ट दर्ज करें और हीरो की कला के साथ एक संपूर्ण 3-एक्ट फिल्म ट्रीटमेंट तैयार करें।",
+              "creditBadge": "~25 क्रेडिट"
+            },
+            {
+              "number": "2",
+              "title": "Audience Resonance™ विश्लेषण चलाएँ",
+              "description": "5 कथा अक्षों में अपने लक्ष्य जनसांख्यिकीय के विरुद्ध अपनी कहानी का मूल्यांकन करें और कमजोर बीट्स की पहचान करें।",
+              "creditBadge": "~20 क्रेडिट"
+            },
+            {
+              "number": "3",
+              "title": "80+ स्कोर तक पहुंचने के लिए 1-क्लिक सुधार लागू करें",
+              "description": "जब तक आपका रेजोनेंस स्कोर 80/100 या उससे अधिक न हो जाए, तब तक एआई स्क्रिप्ट डॉक्टर की सिफारिशों को लागू करें।",
+              "creditBadge": "~15 क्रेडिट"
+            },
+            {
+              "number": "4",
+              "title": "आभासी उत्पादन को हरी झंडी",
+              "description": "Blueprint को लॉक करें और अपनी दृश्य-दर-दृश्य पटकथा, कलाकारों की सूची और दृश्य विवरण तैयार करें।",
+              "creditBadge": "~30 क्रेडिट"
+            }
+          ]
+        },
+        "production": {
+          "tabLabel": "2. निरंतरता वॉल्ट और वीडियो मोशन",
+          "stepBadge": "चरण 2 • वर्चुअल साउंडस्टेज",
+          "shortTitle": "आभासी उत्पादन",
+          "subtitle": "निरंतरता वॉल्ट में पात्रों के चेहरों और आवाज़ों को लॉक करें, प्रारंभ/अंत कीफ़्रेम प्रस्तुत करें और मोशन वीडियो क्लिप को चेतन करें।",
+          "quickSteps": [
+            {
+              "number": "1",
+              "title": "सबसे पहले कास्ट पोर्ट्रेट, आवाज़ और स्थान को लॉक करें",
+              "description": "Reference Library में चरित्र चित्र, तंत्रिका आवाजें और स्थान संदर्भ बनाएं और स्वीकृत करें।",
+              "creditBadge": "10-15 करोड़/रेफरी"
+            },
+            {
+              "number": "2",
+              "title": "संवाद, एसएफएक्स और संगीत स्कोर का संश्लेषण करें",
+              "description": "प्रत्येक पात्र के लिए आवाज़ें निर्दिष्ट करें और दृश्य संवाद और माहौल तैयार करें ताकि आपकी टाइमलाइन का समय लॉक हो जाए।",
+              "creditBadge": "5-15 करोड़/सीन"
+            },
+            {
+              "number": "3",
+              "title": "प्रारंभ/अंत कीफ़्रेम प्रस्तुत करें और Animatic का पूर्वावलोकन करें",
+              "description": "प्रत्येक खंड के लिए संदर्भ-लॉक कीफ़्रेम बनाएं और Screening Room में Animatic के रूप में पूरी फ़िल्म देखें।",
+              "creditBadge": "10-15 करोड़/फ्रेम"
+            },
+            {
+              "number": "4",
+              "title": "हीरो शॉट्स को एनिमेट करें या प्रोडक्शन एजेंट को लॉन्च करें",
+              "description": "मुख्य शॉट्स को मैन्युअल रूप से मोशन वीडियो में परिवर्तित करें, या दूर जाने के दौरान प्री-विज़, क्लिप्स, मास्टर और प्रोमो बनाने के लिए स्वायत्त उत्पादन एजेंट लॉन्च करें।",
+              "creditBadge": "वॉक-अवे मोड"
+            }
+          ]
+        },
+        "series": {
+          "tabLabel": "3. सीरीज स्टोरी बाइबिल",
+          "stepBadge": "मल्टी-एपिसोड निरंतरता",
+          "shortTitle": "सीरीज स्टूडियो",
+          "subtitle": "एक साझा कास्ट और लोकेशन वॉल्ट के साथ मल्टी-एपिसोड शो या अध्याय-दर-अध्याय अनुकूलन बनाएं।",
+          "quickSteps": [
+            {
+              "number": "1",
+              "title": "अपनी शृंखला बाइबिल बनाएं या चुनें",
+              "description": "मल्टी-एपिसोड स्टोरी आर्क और साझा कास्ट तैयार करने के लिए अपनी श्रृंखला लॉगलाइन, शैली और लक्ष्य एपिसोड गिनती दर्ज करें।",
+              "creditBadge": "~30 क्रेडिट"
+            },
+            {
+              "number": "2",
+              "title": "आवर्ती वर्णों और स्थानों को लॉक करें",
+              "description": "सीरीज़ बाइबिल में संदर्भ पोर्ट्रेट और वॉयस असाइनमेंट को मंजूरी दें ताकि प्रत्येक एपिसोड उन्हें स्वचालित रूप से विरासत में मिले।",
+              "creditBadge": "10-15 करोड़/पोर्ट्रेट"
+            },
+            {
+              "number": "3",
+              "title": "एपिसोड 1 को Blueprint Room में लॉन्च करें",
+              "description": "इसके 3-एक्ट ट्रीटमेंट को परिष्कृत करने और वर्चुअल प्रोडक्शन शुरू करने के लिए एपिसोड 1 पर \"लॉन्च एपिसोड Blueprint\" पर क्लिक करें।"
+            }
+          ]
+        },
+        "final-cut": {
+          "tabLabel": "4. Final Cut और 13+ भाषाएँ",
+          "stepBadge": "चरण 3-4 • स्क्रीनिंग और डब",
+          "shortTitle": "Final Cut और स्क्रीनिंग",
+          "subtitle": "Animatic और वीडियो स्ट्रीम को मिश्रित करें, 13+ डब भाषाओं में स्विच करें, और समीक्षा लिंक साझा करें।",
+          "quickSteps": [
+            {
+              "number": "1",
+              "title": "Screening Room में फ़ुल-स्क्रीन देखें",
+              "description": "ट्रांज़िशन, संवाद, एसएफएक्स और ऑटो-डक स्कोर के साथ अपने इकट्ठे दृश्यों को बैक-टू-बैक चलाएं।",
+              "creditBadge": "0 क्रेडिट"
+            },
+            {
+              "number": "2",
+              "title": "फीडबैक के लिए समीक्षा लिंक साझा करें",
+              "description": "सहयोगियों या ग्राहकों से टाइमस्टैम्प्ड नोट्स एकत्र करने के लिए एक साझा करने योग्य स्क्रीनिंग लिंक जेनरेट करें।",
+              "creditBadge": "0 क्रेडिट"
+            },
+            {
+              "number": "3",
+              "title": "MP4 मास्टर और बहु-भाषा डब निर्यात करें",
+              "description": "अपनी अंतिम 1080p/4K MP4 मास्टर और वैकल्पिक स्थानीयकृत ऑडियो/उपशीर्षक स्ट्रीम प्रस्तुत करें।",
+              "creditBadge": "20-50 करोड़ रेंडर"
+            }
+          ]
+        }
+      }
+    },
+    "tryLiveMap": "लाइव JIT विज़ुअल स्क्रीन मैप आज़माएँ (पिन 1–4)",
+    "hideLiveMap": "लाइव JIT विज़ुअल स्क्रीन मैप छिपाएँ",
+    "viewScript": "30s वीडियो स्क्रिप्ट देखें (एना)",
+    "hideScript": "30s वीडियो स्क्रिप्ट छिपाएँ (एना)",
+    "copyScript": "स्क्रिप्ट कॉपी करें",
+    "copied": "कॉपी किया गया",
+    "voLabel": "वीओ:",
+    "pictureLabel": "चित्र:",
+    "scriptBlocks": [
+      {
+        "block": "ब्लॉक 01 (0:00–0:10)",
+        "title": "जस्ट-इन-टाइम स्क्रीन मैप",
+        "syncLine": "एएनए (कैमरे पर): \"जब स्टूडियो हर कदम पर मार्गदर्शन करता है तो आपको फिल्म स्कूल की आवश्यकता नहीं है।\"",
+        "narration": "आप जिस कार्यक्षेत्र में हैं, उसका जस्ट-इन-टाइम विज़ुअल मानचित्र खोलने के लिए किसी भी स्क्रीन पर प्रश्न चिह्न दबाएँ।",
+        "visual": "पारभासी होलोग्राम के बगल में गर्म स्टूडियो में एना (CHAR_ANA, स्लेट टर्टलनेक के ऊपर ऑलिव फील्ड जैकेट) का मीडियम शॉट, जिसमें स्टोरीबोर्ड फ्रेम और वेवफॉर्म से जुड़े चमकते सियान क्रमांकित कॉलआउट पिन दिखाई दे रहे हैं।"
+      },
+      {
+        "block": "ब्लॉक 02 (0:10–0:20)",
+        "title": "60-दूसरी चेकलिस्ट और क्रेडिट रेलिंग",
+        "narration": "एक-क्लिक स्टूडियो क्रियाओं के साथ 60-सेकंड की चेकलिस्ट का पालन करें, जबकि अंतर्निहित क्रेडिट रेलिंग गति पर खर्च करने से पहले कथन, संगीत और एनिमेटिक फ्रेम को लॉक कर देती है।",
+        "visual": "एना और फ्लोटिंग ग्लास पैनल पर क्लोज-मीडियम शॉट, जिसमें तीन चेकलिस्ट नोड्स सियान से पन्ना हरे रंग में चमकते हैं, भारी वीडियो रेंडर से पहले वॉयस एनिमेटिक टाइमलाइन को लॉक कर देते हैं।"
+      },
+      {
+        "block": "ब्लॉक 03 (0:20–0:30)",
+        "title": "\"10 मिनट में आपकी पहली फ़िल्म\" सिम्युलेटर",
+        "narration": "या दस मिनट का इंटरैक्टिव सिम्युलेटर लॉन्च करें - जैसे ही आप निर्माण करते हैं, आपको एक-वाक्य के विचार से आवाज उठाई गई, स्कोर की गई और प्रकाशित मास्टर तक ले जाया जाता है।",
+        "visual": "एना का मध्यम चित्र कैमरे के सामने गर्मजोशी से मुस्कुरा रहा है क्योंकि क्रमांकित प्रशिक्षण पिन उसके पीछे एक चमकदार बजाने योग्य वाइडस्क्रीन मास्टर फ्रेम में आसानी से परिवर्तित हो रहे हैं।"
+      }
+    ],
+    "cta": "स्टूडियो लॉन्च करें ($9)"
   },
   "metadata": {
     "title": "SceneFlow Studio - AI-पावर्ड वीडियो क्रिएशन",
@@ -1125,13 +1392,17 @@
     "goToDashboard": "\"डैशबोर्ड पर जाएं\"",
     "userFallback": "यूज़र",
     "searchLanguages": "भाषाएँ खोजें...",
-    "noLanguagesFound": "कोई भाषा नहीं मिली"
+    "noLanguagesFound": "कोई भाषा नहीं मिली",
+    "workflow": "वर्कफ़्लो",
+    "platformWalkthrough": "प्लेटफ़ॉर्म वॉकथ्रू"
   },
   "floatingNav": {
     "productionExamples": "उदाहरण",
     "twoModes": "एक पाइपलाइन",
     "directControl": "सीधा",
+    "productionAgent": "निर्माण",
     "publishCut": "प्रकाशित करें",
+    "studioAcademy": "अकादमी",
     "keyFeatures": "मुख्य विशेषताएँ",
     "audienceResonance": "Audience Resonance",
     "preVisEngine": "प्री-विज़ इंजन",
@@ -1187,14 +1458,6 @@
         "label": "स्पैनिश",
         "nativeLabel": "Español"
       },
-      "zh": {
-        "label": "चीनी",
-        "nativeLabel": "中文"
-      },
-      "ar": {
-        "label": "अरबी",
-        "nativeLabel": "العربية"
-      },
       "pt": {
         "label": "पुर्तगाली",
         "nativeLabel": "Português"
@@ -1202,6 +1465,14 @@
       "hi": {
         "label": "हिंदी",
         "nativeLabel": "हिन्दी"
+      },
+      "zh": {
+        "label": "चीनी",
+        "nativeLabel": "中文"
+      },
+      "ar": {
+        "label": "अरबी",
+        "nativeLabel": "العربية"
       },
       "th": {
         "label": "थाई",
@@ -1622,6 +1893,7 @@
           "description": "फ़ोटो जैसा असली लगने वाला, फ़िल्मों जैसी लाइटिंग",
           "tagline": "प्रतिष्ठित और विस्तृत यथार्थवाद",
           "marketingBody": "फ़ोटो-रियलिज़्म से वह आम अपील मिलती है जिसकी उम्मीद प्रतिष्ठित टीवी और डॉक्यूमेंट्री के दर्शक करते हैं। कहानी के अलग-अलग हिस्सों में रियलिस्टिक किरदारों और लाइटिंग को एक जैसा बनाए रखें, ताकि एपिसोडिक ड्रामा और डॉक्युसीरीज़ में शुरुआत से लेकर आखिर तक इमोशनल जुड़ाव बना रहे।",
+          "featured": true,
           "thumbnail": "https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Gemini_Generated_Image_w5y03bw5y03bw5y0.jpeg"
         },
         {
@@ -1629,6 +1901,7 @@
           "name": "सिनेमैटिक 3D / CGI",
           "displayTitle": "सिनेमैटिक 3D / CGI",
           "description": "रेंडर किया हुआ 3D फ़ीचर-फ़िल्म जैसा लुक",
+          "featured": false,
           "thumbnail": "https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Gemini_Generated_Image_5qoasf5qoasf5qoa.jpeg"
         },
         {
@@ -1638,6 +1911,7 @@
           "description": "खास स्टाइल वाली 3D एनिमेटेड फ़िल्म",
           "tagline": "एपिसोड्स के बीच भावनात्मक निरंतरता",
           "marketingBody": "मुलायम, गोल आकार और भावपूर्ण कैरेक्टर डिज़ाइन एक ऐसा भावनात्मक जुड़ाव बनाते हैं जो दर्शकों को पूरे सीज़न तक बांधे रखता है। यह एनिमेटेड सीरीज़, परिवार के लिए लंबी कहानियों और ब्रांडेड स्टोरीटेलिंग के लिए एकदम सही है, जहाँ हर पल कैरेक्टर की एक जैसी छवि बनाए रखना ज़रूरी होता है।",
+          "featured": true,
           "thumbnail": "https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Gemini_Generated_Image_zi32rnzi32rnzi32.jpeg"
         },
         {
@@ -1647,6 +1921,7 @@
           "description": "सेल-शेडेड एनीमे स्टाइल",
           "tagline": "सीरीज़ के रूप में आगे बढ़ने वाली कहानी के हिस्से",
           "marketingBody": "एनिमे-स्टाइल की 'सेल शेडिंग' मल्टी-एपिसोड वेब सीरीज़ और लंबी कहानी वाली सीरीज़ में दर्शकों को गहराई से जोड़े रखती है। इस शैली पर आधारित जेनरेटिव इंजन साफ़ लाइन आर्ट और एक जैसी फ़्रेमिंग देते हैं — जो बड़े पैमाने पर सीरीज़ के प्रोडक्शन के लिए बहुत बढ़िया है।",
+          "featured": true,
           "thumbnail": "https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Gemini_Generated_Image_qlf261qlf261qlf2.jpeg"
         },
         {
@@ -1656,6 +1931,7 @@
           "description": "हाथ से बनाया गया, पेंटिंग जैसा एनिमेशन",
           "tagline": "लक्ज़री के तौर पर शिल्प",
           "marketingBody": "यह स्टाइल सीधे तौर पर एक बड़े क्रिएटिव मूवमेंट से जुड़ता है जो \"क्राफ्ट को लक्ज़री\" के तौर पर अहमियत देता है। वॉटरकलर टेक्सचर और पेंटिंग जैसे बैकग्राउंड हाथ से बनी एपिसोडिक दुनिया बनाते हैं, जहाँ एक लंबी सीरीज़ में स्वाभाविक कमियाँ भी जान-बूझकर की गई कलाकारी जैसी लगती हैं।",
+          "featured": true,
           "thumbnail": "https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Gemini_Generated_Image_xojqsuxojqsuxojq.jpeg"
         },
         {
@@ -1664,6 +1940,7 @@
           "displayTitle": "कॉमिक बुक",
           "description": "बोल्ड इंक, ग्राफ़िक-नॉवेल जैसा लुक",
           "tagline": "कई एपिसोड वाली सीरियल कहानी कहने के लिए बोल्ड इंक, हाफ़टोन टेक्सचर और पॉप-आर्ट रंगों का इस्तेमाल।",
+          "featured": false,
           "thumbnail": "https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Gemini_Generated_Image_ezhp8cezhp8cezhp.jpeg"
         },
         {
@@ -1672,6 +1949,7 @@
           "displayTitle": "कॉन्सेप्ट आर्ट",
           "description": "सिनेमैटिक गेम/फ़िल्म कॉन्सेप्ट आर्ट",
           "tagline": "फ़िल्म और सीरीज़ के प्री-विज़ुअल की-फ़्रेम्स, जिनमें मूड बनाने वाली और प्रोडक्शन के लिए तैयार लाइटिंग है।",
+          "featured": false,
           "thumbnail": "https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Gemini_Generated_Image_7z9qm7z9qm7z9qm7.jpeg"
         },
         {
@@ -1679,6 +1957,7 @@
           "name": "फ़्लैट वेक्टर / मोशन ग्राफ़िक्स",
           "displayTitle": "फ़्लैट वेक्टर / मोशन ग्राफ़िक्स",
           "description": "एक्सप्लेनर वीडियो के लिए साफ़-सुथरा वेक्टर लुक",
+          "featured": false,
           "thumbnail": "https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Gemini_Generated_Image_omdmt6omdmt6omdm.jpeg"
         },
         {
@@ -1686,6 +1965,7 @@
           "name": "स्टोरीबोर्ड / Animatic",
           "displayTitle": "स्टोरीबोर्ड / Animatic",
           "description": "रफ़ ग्रेस्केल स्टोरीबोर्ड फ़्रेम",
+          "featured": false,
           "thumbnail": "https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Gemini_Generated_Image_7i1wus7i1wus7i1w.jpeg"
         },
         {
@@ -1694,6 +1974,7 @@
           "displayTitle": "डिजिटल आर्ट",
           "description": "आधुनिक डिजिटल चित्रण",
           "tagline": "एनिमेटेड डॉक्यूमेंट्री और एपिसोडिक एक्सप्लेनर सीरीज़ के लिए खास स्टाइल वाली इलस्ट्रेशन।",
+          "featured": false,
           "thumbnail": "https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Gemini_Generated_Image_bmbpbibmbpbibmbp.jpeg"
         },
         {
@@ -1702,6 +1983,7 @@
           "displayTitle": "वॉटरकलर",
           "description": "हल्की वॉटरकलर पेंटिंग",
           "tagline": "संस्मरण, डॉक्यूमेंट्री और चिंतनशील लंबे लेखों के लिए हल्के पिगमेंट वॉश।",
+          "featured": false,
           "thumbnail": "https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Gemini_Generated_Image_7i1wus7i1wus7i1w.jpeg"
         },
         {
@@ -1710,6 +1992,7 @@
           "displayTitle": "स्केच / लाइन आर्ट",
           "description": "पेंसिल स्केच स्टाइल",
           "tagline": "प्री-विज़ुअलाइज़ेशन से लेकर प्रोडक्शन तक के लंबे सीक्वेंस के लिए डिटेल्ड लाइनवर्क और पेंसिल टेक्सचर।",
+          "featured": false,
           "thumbnail": "https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Gemini_Generated_Image_bmbpbibmbpbibmbp.jpeg"
         },
         {
@@ -1718,6 +2001,7 @@
           "displayTitle": "ऑयल पेंटिंग",
           "description": "क्लासिकल ऑयल पेंटिंग",
           "tagline": "डॉक्यूमेंट्री और ऐतिहासिक लॉन्ग-फ़ॉर्म के लिए क्लासिकल ब्रशवर्क और गहरे रंग।",
+          "featured": false,
           "thumbnail": "https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Gemini_Generated_Image_7z9qm7z9qm7z9qm7.jpeg"
         }
       ]
@@ -1865,7 +2149,8 @@
           "सीज़न के दौरान अपने-आप बनने वाली, एक-दूसरे से जुड़ी एपिसोड की रूपरेखाएँ",
           "निरंतरता की ट्रैकिंग — मल्टी-एपिसोड सीज़न का तालमेल",
           "सीरीज़-से-एपिसोड सिंक — Blueprint Room और Production Stage में"
-        ]
+        ],
+        "optional": true
       },
       {
         "id": "ब्लूप्रिंट",
@@ -1882,7 +2167,8 @@
           "कुछ ही मिनटों में कॉन्सेप्ट से स्ट्रक्चर — लॉगलाइन, बीट्स, किरदार और टोन",
           "Production Stage से पहले 80+ टारगेट के साथ Audience Resonance स्कोरिंग",
           "सहयोगियों द्वारा लिंक साझा करना — फीडबैक को मिलाकर निर्देशित संशोधन करना"
-        ]
+        ],
+        "optional": false
       },
       {
         "id": "उत्पादन",
@@ -1902,7 +2188,8 @@
           "क्लिप्स, मिक्सर और स्ट्रीम्स — Production Stage से बाहर निकले बिना हर शॉट बनाएँ।",
           "प्रोडक्शन प्लानर — शॉट टारगेट, तारीख के साथ शेड्यूल और फ़ोन का स्टेटस",
           "Screening Room — सीन प्रीव्यू, मास्टर असेंबली, स्क्रीनिंग और YouTube पर पब्लिश करना"
-        ]
+        ],
+        "optional": false
       },
       {
         "id": "स्क्रीनिंग-रूम",
@@ -1920,7 +2207,8 @@
           "असेंबली प्रीसेट — सभी वीडियो, हाइब्रिड, या हर सीन के हिसाब से कस्टम मिक्स",
           "शेयर करने लायक स्क्रीनिंग — स्कोरिंग और व्यवस्थित फ़ीडबैक वाले लिंक",
           "YouTube विज़ार्ड, शॉर्ट-फ़ॉर्म एक्सपोर्ट और डिस्ट्रिब्यूशन बंडल"
-        ]
+        ],
+        "optional": false
       }
     ]
   },
@@ -2020,6 +2308,361 @@
     "finalDoor": "अंतिम",
     "enterFullscreen": "फ़ुलस्क्रीन मोड में जाएँ",
     "exitFullscreen": "फ़ुल स्क्रीन से बाहर निकलें",
+    "showDetail": "अधिक विवरण दिखाएँ",
+    "hideDetail": "विवरण छिपाएँ",
+    "featuredPlayer": "विशेष रुप से प्रदर्शित खिलाड़ी",
+    "openPlayer": "प्लेयर खोलें",
+    "featureModes": [
+      "प्री-विज़",
+      "क्लिप्स",
+      "दृश्य",
+      "अध्याय",
+      "मास्टर",
+      "प्रोमो"
+    ],
+    "seriesPanel": {
+      "headerLabel": "शृंखला बाइबिल और एपिसोड 1",
+      "bibleTab": "श्रृंखला बाइबिल",
+      "castTab": "लॉक्ड कास्ट",
+      "episode1Tab": "ईपी. 1 एवं चौ. 1",
+      "seasonTab": "ऋतु",
+      "formatLabel": "प्रारूप",
+      "durationLabel": "अवधि",
+      "artStyleLabel": "कला शैली",
+      "continuityLockLabel": "निरंतरता लॉक",
+      "loglineLabel": "लॉगलाइन",
+      "synopsisLabel": "श्रृंखला सारांश और दृश्य बाइबिल",
+      "lockedCastHeading": "लॉक्ड कास्ट और प्रिंसिपल निरंतरता",
+      "inputs": {
+        "drama": {
+          "showTitle": "व्हाइट सिटी करंट",
+          "format": "6-एपिसोड प्रेस्टीज सीरीज़ · एपिसोड 1 पायलट (8 अध्याय)",
+          "genre": "साइंस-फाई इन्फ्रास्ट्रक्चर थ्रिलर",
+          "artStyle": "एनामॉर्फिक फोटोरियलिज्म · टंगस्टन, सब-ज़ीरो स्लेट और वायलेट-टील इंडक्शन ग्लो",
+          "duration": "265 मिनट श्रृंखला (6 × 42-48 मिनट) · एपिसोड 1: 42.5 मिनट",
+          "continuityLock": "गिदोन क्रॉफ्ट, पाइपर हेस, जूलियन वार्ड और डॉ. क्लारा वेंस-क्रॉफ्ट · 4 भूमिगत और लेकफ्रंट सेट · क्लारा का 1893 मैनिफोल्ड और सिफर",
+          "unitLabel": "एपिसोड 1 स्टोरी बीट्स / अध्याय (8)",
+          "artLock": "हर बीट में लॉक्ड एनामॉर्फिक फोटोरियलिज्म: गिदोन क्रॉफ्ट का अनुभवी आर्काइविस्ट स्मॉक, पाइपर हेस का स्नो-डस्टेड फील्ड कोट, जूलियन वार्ड का कॉर्पोरेट टैक्टिकल गियर, क्लारा का 1893 इंडक्शन मैनिफोल्ड को बहाल किया गया, और 1906 माल सुरंगों से जमे हुए टू-माइल क्रिब तक की प्रगति।",
+          "logline": "जब एक बदनाम रिपोर्टर 1893 की वायुमंडलीय ऊर्जा कलाकृतियों को सक्रिय करने के लिए एक पृथक बुनियादी ढांचे के पुरालेखपाल के भूमिगत बंकर को तोड़ता है, तो इस जोड़ी को कॉर्पोरेट जोखिम संचालक के नेतृत्व में एक विशिष्ट स्ट्राइक टीम से बचना होगा जिसने अपनी पत्नी की हत्या कर दी थी - आत्म-संरक्षण और मानवता को कृत्रिम कमी से मुक्त करने के बीच एक विकल्प में परिणत।",
+          "seriesSynopsis": "जलवायु-पीड़ित अमेरिकी मिडवेस्ट के नीचे स्थापित, जहां निजी उपयोगिता समूह वेन-कैल्होन एनर्जी नगरपालिका रियायतें निकालने के लिए शीतकालीन ब्लैकआउट को हथियार बनाता है, द व्हाइट सिटी करंट छह 45 मिनट के एपिसोड तक फैला हुआ है। पूर्व नगरपालिका पुरालेखपाल गिदोन क्रॉफ्ट और ब्लैकलिस्टेड खोजी पत्रकार पाइपर हेस ने गिदोन की दिवंगत पत्नी, डॉ. क्लारा वेंस-क्रॉफ्ट द्वारा इंजीनियर किए गए एक दबाए गए 1893 कोलंबियन एक्सपोज़िशन अनुनाद-प्रेरण नेटवर्क का खुलासा किया। पूरे सीज़न 1 में, एपिसोड 1 में शिकागो टू-माइल क्रिब को रोशन करने से ऐतिहासिक भूमिगत बुनियादी ढांचे के गलियारों में एक उच्च जोखिम वाला युद्ध शुरू हो जाता है - डेट्रॉइट के नमक-खदान सबस्टेशनों से लेकर नियाग्रा के डीकमीशन किए गए व्हील-पिट्स तक - वरिष्ठ जोखिम निदेशक जूलियन वार्ड के निजी नियंत्रण निदेशालय के खिलाफ सार्वजनिक-ग्रिड मुक्ति को खड़ा करना।",
+          "cast": [
+            {
+              "name": "गिदोन क्रॉफ्ट",
+              "role": "नायक · बंद चरित्र पत्रक",
+              "descriptor": "पूर्व म्यूनिसिपल इन्फ्रास्ट्रक्चर आर्काइविस्ट (54)। घिसा-पिटा चारकोल ऊन पुरालेखपाल स्मॉक, तार-किनारे वाला चश्मा, नमक-और-मिर्च-दाढ़ी, कठोर ड्राफ्ट्समैन हाथ; ठंडे सुरंग स्लेट के विरुद्ध गर्म 3200K टंगस्टन द्वारा जलाया गया।"
+            },
+            {
+              "name": "पाइपर हेस",
+              "role": "सह-नेतृत्व · लॉक्ड कैरेक्टर शीट",
+              "descriptor": "ब्लैकलिस्टेड इन्वेस्टिगेटिव एनर्जी रिपोर्टर (31)। स्नो-डस्टेड ऑलिव फील्ड पार्का, एन्क्रिप्टेड ड्राइव और ब्रास सिफर सिलेंडर के साथ कैनवास सैचेल, वायलेट-टील इंडक्शन स्पिल के तहत तेज गतिज तीव्रता।"
+            },
+            {
+              "name": "जूलियन वार्ड",
+              "role": "प्राथमिक प्रतिपक्षी · लॉक्ड कैरेक्टर शीट",
+              "descriptor": "कॉर्पोरेट जोखिम के वरिष्ठ निदेशक, वेन-कैलहौन एनर्जी (46)। सिलवाया मैट-काला सामरिक ओवरकोट, हड्डी-संचालन कॉम, सर्जिकल शांत; बाँझ उच्च-विपरीत संस्थागत प्रकाश व्यवस्था के साथ तैयार किया गया।"
+            },
+            {
+              "name": "डॉ. क्लारा वेंस-क्रॉफ्ट",
+              "role": "अभिलेखीय एवं स्मृति एंकर · लॉक की गई कैरेक्टर शीट",
+              "descriptor": "स्वर्गीय अनुनाद भौतिक विज्ञानी (48)। स्लेट लैब कोट, कॉपर-वाउंड 1893 कैलिब्रेशन रिग, गर्म एम्बर फ्लैशबैक प्लेटें और होलोग्राफिक योजनाबद्ध प्रतिबिंब।"
+            }
+          ],
+          "episode1Synopsis": {
+            "episodeLabel": "एपिसोड 1 सारांश · फ़ीचर-लंबाई पायलट (8 अध्याय)",
+            "title": "एपिसोड 1: फैराडे प्रोटोकॉल",
+            "duration": "42.5 मिनट (8 अध्याय · अध्याय 1 लाइव प्रमाण: 6 मिनट)",
+            "logline": "एक दुःखी सुरंग पुरालेखपाल और एक शिकार रिपोर्टर ने जमे हुए शिकागो के नीचे 1893 वायरलेस पावर मैनिफोल्ड को प्रज्वलित किया और सच्चाई को प्रसारित करने के लिए दो मील उप-झील वाली सुरंगों के माध्यम से लड़ाई की।",
+            "synopsis": "शिकागो के साउथ साइड वार्डों को दिवालिया बनाने के लिए वेन-कैलहौन एनर्जी द्वारा इंजीनियर किए गए एक घातक ध्रुवीय भंवर के दौरान, पाइपर हेस ने गिदोन क्रॉफ्ट के 1906 फ्रेट-टनल बंकर को अपनी हत्या की गई पत्नी क्लारा की 1893 अनुनाद प्रेरण मैनिफोल्ड की लापता क्रिप्टोग्राफ़िक कुंजी के साथ तोड़ दिया। प्रोटोटाइप को जगाने से जूलियन वार्ड की स्वच्छता इकाई सचेत हो जाती है, जिससे गिदोन और एक घायल पाइपर को छिपने से बाहर निकाला जाता है और स्टीम स्लुइस, एक एडम्स स्ट्रीट न्यूमेटिक मेल स्टेशन और 1890 के दशक की ढहती उप-लैक्स्ट्रिन सेवन सुरंग के माध्यम से अपतटीय टू-माइल क्रिब में जोड़ा जाता है।",
+            "chapter1Title": "अध्याय 1 (बीट 1): भूमिगत अलगाव",
+            "chapter1Duration": "6 मिनट · प्रारंभिक अध्याय प्रमाण",
+            "chapter1Synopsis": "शिकागो की बर्फ़ीली ठंड से चालीस फीट नीचे, गिदोन क्रॉफ्ट की चाक से ढकी हुई तिजोरी नगर निगम की चोरी की धारा के तहत गुनगुना रही है, जबकि रेडियो प्रेषण साउथ साइड ब्लैकआउट हताहतों की गिनती कर रहे हैं। पाइपर हेस ने क्लारा के ब्रास सिफर और वेन-कैलहौन के लोड-शेडिंग आदेशों को ले जाने वाले अपने परिधि ट्रिपवायर को दरकिनार कर दिया - गिदोन को इस सबूत का सामना करने के लिए मजबूर किया कि क्लारा की मौत एक कॉर्पोरेट हत्या थी।"
+          },
+          "episodes": [
+            {
+              "number": "1",
+              "title": "भूमिगत अलगाव",
+              "duration": "6 मिनट",
+              "synopsis": "1906 के शिकागो मालवाहक सुरंगों में गिदोन के रक्षात्मक अलगाव को स्थापित करें, क्लारा की हत्या को व्यक्तिगत विफलता के रूप में तर्कसंगत बनाने का उसका जुनून, जबकि वेन-कैल्होन के ध्रुवीय-भंवर ब्लैकआउट ने दक्षिण की ओर को रोक दिया, और क्लारा के अंतिम क्रिप्टोग्राफ़िक सिफर के साथ पाइपर हेस की विघटनकारी घुसपैठ।"
+            },
+            {
+              "number": "2",
+              "title": "फैराडे प्रोटोकॉल को अनलॉक करना",
+              "duration": "5.5 मि",
+              "synopsis": "एक भयंकर वैचारिक टकराव का मंचन करें क्योंकि पाइपर ने गिदोन को आंतरिक वेन-कैलहौन शटऑफ मैनिफ़ेस्ट और क्लारा की हस्तलिखित दलील के साथ सामना किया - उसकी निराशा को चकनाचूर कर दिया और उसे संरेखण अनुक्रम को इनपुट करने के लिए मजबूर किया जो एक बैंगनी विद्युत चुम्बकीय उछाल में गुंजयमान प्रेरण प्रोटोटाइप को जगाता है।"
+            },
+            {
+              "number": "3",
+              "title": "क्लॉस्ट्रोफोबिक जवाबी हमला",
+              "duration": "5.5 मि",
+              "synopsis": "जूलियन वार्ड के सामरिक स्वच्छता दस्ते ने तिजोरी में उल्लंघन के आरोप लगाए। जब पाइपर गिदोन को बचाने के लिए छर्रे लेता है, तो वह अकेले ही खुद को सील करने की अपनी प्रवृत्ति पर काबू पा लेता है - उसे भूले हुए जल निकासी नालों के माध्यम से मार्गदर्शन करता है और एक औद्योगिक भाप बाईपास के साथ वार्ड के ठेकेदारों को झुलसा देता है।"
+            },
+            {
+              "number": "4",
+              "title": "सिवनी एवं सब-स्टेशन",
+              "duration": "4.5 मि",
+              "synopsis": "एडम्स स्ट्रीट के नीचे एक परित्यक्त वायवीय मेल सॉर्टिंग स्टेशन में आश्रय लेते हुए, गिदोन ने पाइपर के घाव को एक अंतरंग डीकंप्रेसन बीट में फ़ील्ड-टांके लगाए जो क्लारा की विरासत को पाइपर के मिशन से बांधता है और गिदोन की लड़ाई के प्रति प्रतिबद्धता को मजबूत करता है।"
+            },
+            {
+              "number": "5",
+              "title": "हार्बर फ़्लू का उल्लंघन",
+              "duration": "4.5 मि",
+              "synopsis": "वार्ड की सतह परिधि और समयबद्ध थर्माइट चार्ज से घिरे, गिदोन और पाइपर ने एक अन्योन्याश्रित सामरिक सफलता को अंजाम दिया - जूरी ने जमे हुए झील के किनारे पर एक वेंटिलेशन फ़्लू को खोलने के लिए एक वायवीय प्रेषण ट्यूब में एक दबावयुक्त कंस्यूशन कनस्तर को रिगिंग किया।"
+            },
+            {
+              "number": "6",
+              "title": "सब-लैक्स्ट्रिन ट्रैवर्स",
+              "duration": "5 मिनट",
+              "synopsis": "अपतटीय टू-माइल क्रिब तक पहुंचने के लिए दो मील की मथनी पैक बर्फ का सामना करते हुए, गिदोन पाइपर को जमे हुए झील के नीचे 1890 के दशक के ईंट के पानी के खतरनाक, आधे-भरे साइफन के माध्यम से ले जाता है - हाइपोथर्मिया, बढ़ते बर्फीले रिसाव और संरचनात्मक पतन से जूझते हुए उसे इनटेक शाफ्ट तक ले जाता है।"
+            },
+            {
+              "number": "7",
+              "title": "गैन्ट्री पर खड़े हो जाओ",
+              "duration": "5.5 मि",
+              "synopsis": "पालने की तूफानी गैन्ट्री पर, वार्ड उन्हें एक उच्च-वोल्टेज उलटा रिले के साथ घेरता है और गिदोन को क्लारा के मैनिफोल्ड के लिए भूमिगत प्रतिरक्षा और लैब फंडिंग प्रदान करता है। गिदोन ने वार्ड के रिवर्स चार्ज को एक्चुएटर्स के माध्यम से वापस भेजने के लिए कॉर्पोरेट सहयोग और हॉटवायर विक्टोरियन हाइड्रोलिक फ्लड-गेट्स को अस्वीकार कर दिया।"
+            },
+            {
+              "number": "8",
+              "title": "हार्मोनिक ग्रिड ट्रांसमिशन और विन्डिकेशन",
+              "duration": "6 मिनट",
+              "synopsis": "वेन-कैलहौन के अपराधों को स्वतंत्र समाचार आउटलेट्स पर प्रसारित करने के लिए पाइपर ने माइक्रोवेव अपलिंक को जोड़ा, जबकि गिदोन ने क्लारा के मैनिफोल्ड को क्षेत्रीय सरणी में जोड़ा - एक गुंजयमान हार्मोनिक ट्रांसमिशन को उजागर किया जो गिदोन द्वारा भोर में अपनी साख जलाने से पहले पूरे शिकागो में गर्मी और रोशनी बहाल करता है।"
+            }
+          ]
+        },
+        "animation": {
+          "showTitle": "हार्ट हाउस",
+          "format": "एनिमेटेड सिटकॉम · 5-एपिसोड सीज़न",
+          "genre": "बहु-पीढ़ीगत पारिवारिक कॉमेडी",
+          "artStyle": "2डी फ़्लैट-सेल एनिमेशन · बोल्ड इंक आउटलाइन और गर्म उपनगरीय पैलेट",
+          "duration": "110 मिनट सीज़न (5 × 22 मिनट) · एपिसोड 1: 22 मिनट",
+          "continuityLock": "5 लॉक्ड फैमिली कैरेक्टर शीट्स · मिलविक हाउस और साइड पोर्च · जीरो स्टाइल ड्रिफ्ट",
+          "unitLabel": "सीज़न 1 एपिसोड्स (5)",
+          "artLock": "पूरे सीज़न के लिए एक लॉक्ड फ्लैट-सीएल शैली: बोल्ड स्याही की रूपरेखा, गर्म उपनगरीय रंग, और हर एपिसोड में समान चरित्र डिजाइन। प्लेटफ़ॉर्म कई शैलियों को धारण कर सकता है। यह श्रृंखला स्विच नहीं करती.",
+          "logline": "मिलविक में, हर्ट्स एक घरेलू बहस को सप्ताह के मजाक में बदल देते हैं, और मजाक को इस कारण में बदल देते हैं कि वे अभी भी एक ही छत के नीचे रहते हैं।",
+          "seriesSynopsis": "मिलविक के नागरिक-अध्यादेश-जुनूनी शहर में स्थापित, हार्ट हाउस एक पांच-एपिसोड, 22 मिनट का 2 डी एनिमेटेड पारिवारिक सिटकॉम है जो पूरे प्रसारण सीज़न में शून्य ऑफ-मॉडल बहाव साबित करने के लिए बनाया गया है। नगरपालिका क्लर्क रूथ हार्ट और नाइट-शिफ्ट ट्रांजिट मैकेनिक एलिस हार्ट सोलह वर्षीय डिबेट कैप्टन जून, नौ वर्षीय तथ्य-संग्राहक मिलो और रूथ की मां नाना इनेज़ के साथ एक तंग शिल्पकार घर साझा करते हैं, जिसका \"अस्थायी\" संलग्न बरामदा चुपचाप घर का भावनात्मक केंद्र बन गया है। प्रत्येक एपिसोड एपिसोड 1 से लेकर एपिसोड 5 के घरेलू वोट तक समान लाइन वेट, वार्म सेल-शेडेड पैलेट्स और मल्टी-एंगल कैरेक्टर शीट को लॉक रखते हुए एक छोटे से नगरपालिका सिरदर्द को तेजी से बढ़ती कॉमेडी में बदल देता है।",
+          "cast": [
+            {
+              "name": "रूथ हार्ट",
+              "role": "कुलमाता · लॉक की गई 2डी कैरेक्टर शीट",
+              "descriptor": "मिलविक म्यूनिसिपल क्लर्क (42)। टेराकोटा बुना हुआ कार्डिगन, कछुआ चश्मा, रंग-कोडित दीवार कैलेंडर; डेडपैन वोकल टाइमिंग और अभिव्यंजक आइब्रो आर्क्स।"
+            },
+            {
+              "name": "एलिस हार्ट",
+              "role": "पितृसत्ता · लॉक्ड 2डी कैरेक्टर शीट",
+              "descriptor": "रात्रि-शिफ्ट नगरपालिका बस मैकेनिक (44)। नेवी शॉप कवरऑल, स्टील थर्मस, आशावादी गेराज आविष्कारक जो 40-पाउंड उपकरणों के साथ 5 मिनट के काम को हल करता है।"
+            },
+            {
+              "name": "जून हार्ट",
+              "role": "बेटी · लॉक की गई 2डी कैरेक्टर शीट",
+              "descriptor": "हाई स्कूल डिबेट कैप्टन (16)। प्लीटेड स्कर्ट के ऊपर मस्टर्ड हुडी, हाथ में एनोटेटेड टाउन चार्टर; प्रत्येक डिनर-टेबल नियम को सुप्रीम कोर्ट के मौखिक तर्क की तरह मानता है।"
+            },
+            {
+              "name": "मिलो हार्ट",
+              "role": "बेटा · लॉक्ड 2डी कैरेक्टर शीट",
+              "descriptor": "घरेलू पुरालेखपाल और लेबल-निर्माता उत्साही (9)। धारीदार रग्बी शर्ट, खुला हाई-टॉप, औद्योगिक लेबल बंदूक; कॉमेडी बीट पर विनाशकारी शाब्दिक सत्य प्रस्तुत करता है।"
+            },
+            {
+              "name": "नाना इनेज़",
+              "role": "दादी · लॉक की गई 2डी कैरेक्टर शीट",
+              "descriptor": "साइड-पोर्च संप्रभु और सेवानिवृत्त सीमस्ट्रेस (71)। कढ़ाईदार इंडिगो शॉल, चांदी की शिग्नन, विकर सिंहासन; 1984 के बाद से ब्लॉक पर हर ज़ोनिंग भिन्नता को याद करता है।"
+            }
+          ],
+          "episode1Synopsis": {
+            "episodeLabel": "एपिसोड 1 सारांश · सीज़न Premiere (4 अध्याय)",
+            "title": "एपिसोड 1: छँटाई नियम",
+            "duration": "22 मिनट (4 अध्याय · अध्याय 1 लाइव प्रमाण: 5.5 मिनट)",
+            "logline": "बारह-श्रेणी के शहर रीसाइक्लिंग जनादेश ने एलिस को एक मोटर चालित गेराज सॉर्टिंग कन्वेयर बनाने के लिए प्रेरित किया जो गलती से नाना इनेज़ के पोर्च सामान को नगरपालिका अधिशेष के रूप में वर्गीकृत करता है।",
+            "synopsis": "जब मिलविक अध्यादेश 412 लागू करता है - जिसमें गुरुवार की सुबह तक बारह रंग-कोडित कर्ब डिब्बे की आवश्यकता होती है - रूथ शांत अनुपालन चाहता है ताकि टाउन हॉल में उसके सहकर्मी गपशप न कर सकें, जून काउंसिल माइक के लिए एक संवैधानिक चुनौती का मसौदा तैयार करता है, और एलिस गैरेज में एक चरखी-चालित सॉर्टिंग मशीन का निर्माण करती है। मशीन परिवार के बिना लेबल वाले भंडारण बक्सों को निगलने से पहले कांच की बोतलों पर विजय प्राप्त करती है, जिसकी परिणति लिविंग-रूम गतिरोध में होती है जब मिलो \"नाना की अस्थायी पोर्च चीजें\" पढ़ते हुए एक टैग प्रिंट करता है और परिवार को यह स्वीकार करना होगा कि कोई नहीं जानता कि \"अस्थायी\" का क्या मतलब है।",
+            "chapter1Title": "अध्याय 1 (कोल्ड ओपन और एक्ट I): गुरुवार तक बारह डिब्बे",
+            "chapter1Duration": "5.5 मिनट · प्रारंभिक अध्याय प्रमाण",
+            "chapter1Synopsis": "सुबह 6:15 बजे, बंद हार्ट रसोई में, रूथ शहर के बारह-श्रेणी के सॉर्टिंग चार्ट का अनावरण करती है, जबकि एलिस रात की पाली से एक सुरक्षित बस-डोर मोटर के साथ लौटती है। फास्ट-कट फ्लैट-सेल रिएक्शन शॉट्स में, मिलो ने घरेलू फर्नीचर पर लेबल लगाना शुरू कर दिया और नाना इनेज़ ने साइड पोर्च को नगर निगम के अधिकार क्षेत्र से मुक्त घोषित कर दिया।"
+          },
+          "episodes": [
+            {
+              "number": "1",
+              "title": "छँटाई नियम",
+              "duration": "22 मिनट",
+              "synopsis": "मिलविक बारह श्रेणियों के साथ एक नया रीसाइक्लिंग आदेश जारी करता है। एलिस गैरेज में एक छँटाई मशीन बनाता है। यह बोतलों पर और फिर परिवार के बिना लेबल वाले बक्सों पर विनाशकारी रूप से काम करता है। जून शहर की बैठक में नियम को चुनौती देना चाहता है। रूथ चाहती है कि गुरुवार तक अंकुश लागू हो जाए। एपिसोड तब शुरू होता है जब मिलो एक बॉक्स को \"नाना के बरामदे की चीजें\" लेबल करता है और कोई भी इस बात से सहमत नहीं हो सकता है कि लेबल का क्या मतलब है।"
+            },
+            {
+              "number": "2",
+              "title": "परेड का मौसम",
+              "duration": "22 मिनट",
+              "synopsis": "मिलविक डे के लिए बारिश का पूर्वानुमान है। जून अपना डिबेट-क्लब बैनर रद्द करना चाहती है। मिलो बिजली को लॉग करना चाहता है। नाना इनेज़ ने एक पड़ोसी की ओर हाथ हिलाने से इंकार कर दिया जिससे वह बाड़ विवाद के बाद से बचती रही है। रूथ को अभी भी ब्लॉक को तिरपाल के नीचे रखना पड़ता है। मज़ाक है तिरपाल. मुद्दा यह है कि यह निर्णय कौन करेगा कि जश्न मनाया गया।"
+            },
+            {
+              "number": "3",
+              "title": "रात्रि पाली का नाश्ता",
+              "duration": "22 मिनट",
+              "synopsis": "एलिस भोर में घर पहुंचती है और उन लोगों के लिए खाना बनाती है जो पहले ही जा रहे हैं। जून में एक टूर्नामेंट है. मिलो की एक फ़ील्ड यात्रा है। रूथ के पास एक काउंटर शिफ्ट है। एक घंटे के लिए रसोई में पूरा परिवार रहता है, और अंडे ही एकमात्र बातचीत है जो फिट बैठती है। एक जला हुआ पैनकेक इस बात पर बहस बन जाता है कि घर किसकी सुबह के आसपास बना है।"
+            },
+            {
+              "number": "4",
+              "title": "अतिरिक्त कुंजी",
+              "duration": "22 मिनट",
+              "synopsis": "जिस दिन सुबह एलिस सोती है, उस समय कोई बिल्ली का कटोरा भर रहा होता है। हर्ट्स जांच करते हैं और उस चाबी को ढूंढते हैं जो उन्होंने वर्षों पहले एक ईंट के नीचे छिपाई थी। जिस पड़ोसी को वे नासमझ कह रहे हैं, वह भोर के अंतराल को कवर कर रहा है। नाना इनेज़ को यह तय करना है कि चाबी वापस लेनी है या स्वीकार करना है कि ब्लॉक मदद कर रहा है।"
+            },
+            {
+              "number": "5",
+              "title": "पोर्च वोट",
+              "duration": "22 मिनट",
+              "synopsis": "नाना इनेज़ ने घोषणा की कि उनका \"अस्थायी\" बरामदा ख़त्म हो गया है और वह अपनी बहन के शहर में चली जाएंगी। हर्ट्स घरेलू वोट कहते हैं। पोर्च को उसके असली कमरों के रूप में फिर से बनाने का मतलब है कि एलिस का गेराज प्रोजेक्ट बंद हो जाएगा, जून का स्टडी कॉर्नर हट जाएगा और मिलविक को उस बदलाव की अनुमति देनी होगी जिसे वह अनदेखा कर रहा है। सीज़न यहाँ बदल जाता है: कॉमेडी अब एक गंदे सप्ताह के बारे में नहीं है। यह इस बारे में है कि किसे रहना है।"
+            }
+          ]
+        },
+        "documentary": {
+          "showTitle": "दीर्घ विचार",
+          "format": "ऐतिहासिक वृत्तचित्र · 5-भाग श्रृंखला",
+          "genre": "विज्ञान एवं प्रौद्योगिकी का वैश्विक इतिहास",
+          "artStyle": "युग-सटीक अभिलेखीय यथार्थवाद (1950 का 16 मिमी अनाज → 1980 का सीआरटी → आधुनिक 4के)",
+          "duration": "200 मिनट श्रृंखला (5 × 40 मिनट) · एपिसोड 1: 40 मिनट",
+          "continuityLock": "2 आवर्ती गवाह (डॉ. अमीरा हसन और केंजी सातो) · 12 वैश्विक शहर · सख्त अवधि की रेलिंग",
+          "unitLabel": "डॉक्यूमेंट्री एपिसोड्स (5)",
+          "artLock": "अवधि सटीकता चित्र का नियम है. 1956 की प्रयोगशाला में पुरानी अलमारी, फिल्म ग्रेन और उस वर्ष की मशीनें हैं - कोई फ्लैट स्क्रीन नहीं, कोई फोन नहीं। एक वर्तमान अध्याय अब जैसा दिखता है। वही दो गवाह, डॉ. अमीरा हसन और केंजी सातो, हर युग में एक जैसे चेहरे रखते हैं।",
+          "logline": "पांच भाग की एक डॉक्यूमेंट्री बुद्धिमत्ता का अनुसरण करती है - निर्मित, उधार ली गई, और अभी भी अधूरी - पहली उपयोगी मशीनों से लेकर अपने निर्माताओं की तुलना में अधिक स्मार्ट सिस्टम के सवाल तक।",
+          "seriesSynopsis": "पांच महाद्वीपों के सत्तर साल और बारह शहरों में फैली, द लॉन्ग थॉट एक पांच-भाग, 200 मिनट की डॉक्यूमेंट्री श्रृंखला है, जो मैनचेस्टर और टोक्यो में 1956 के रिले रूम से लेकर समकालीन फाउंडेशन-मॉडल बुनियादी ढांचे और सुपरइंटेलिजेंस के शासन क्षितिज तक तर्क को बाहरी बनाने के मानवता के प्रयास का पता लगाती है। बार-बार ऑन-कैमरा गवाह डॉ. अमीरा हसन (काहिरा/लंदन) और केंजी सातो (ओसाका/टोक्यो) की एंकरिंग करते हुए, SceneFlow के ऐतिहासिक स्टाइल रेलिंग प्रति दशक अवधि-प्रामाणिक लेंस, अलमारी और कमरे की ज्यामिति को लॉक करते हैं, जबकि स्वचालित रूप से ट्रांसक्रिप्ट-सिंक किए गए अभिलेखीय कटअवे, योजनाबद्ध और बहु-भाषा कथन बुनते हैं।",
+          "cast": [
+            {
+              "name": "डॉ अमीरा हसन",
+              "role": "प्रमुख गवाह · बहु-युग बंद पहचान",
+              "descriptor": "गणितीय तर्कशास्त्री और एआई गवर्नेंस विद्वान। 1980 के दशक के काहिरा/पेरिस अभिलेखीय मनोरंजन (उम्र 28 वर्ष) और वर्तमान 4K लंदन साक्षात्कार प्लेटों (उम्र 64 वर्ष) में बंद चेहरे की संरचना और स्वर ताल के साथ दिखाई देता है।"
+            },
+            {
+              "name": "केन्जी सातो",
+              "role": "सह-प्रमुख गवाह · मल्टी-एरा लॉक्ड आइडेंटिटी",
+              "descriptor": "औद्योगिक नियंत्रण एवं सेमीकंडक्टर इंजीनियर। 1980 के दशक के ओसाका/सियोल फैब्रिकेशन फ्लोर से लेकर समकालीन टोक्यो रोबोटिक्स अभिलेखागार तक प्राकृतिक सूक्ष्म-अभिव्यक्तियों और लिप-सिंक के साथ ट्रैक किया गया।"
+            },
+            {
+              "name": "क्रॉनिकलर (वर्णनकर्ता)",
+              "role": "डॉक्यूमेंट्री वॉइस-ऑफ़-गॉड · 4-भाषा न्यूरल लॉक",
+              "descriptor": "नपा-तुला, सनसनीखेज़ डॉक्यूमेंट्री कथावाचक प्रतिलेख-समयबद्ध अभिलेखीय बी-रोल और अंग्रेजी, स्पेनिश, चीनी और अरबी में स्थानीयकृत ऑडियो मिश्रण चला रहा है।"
+            },
+            {
+              "name": "ऐतिहासिक प्रयोगशाला एवं क्षेत्र समूह",
+              "role": "पीरियड-गार्डेड री-एक्टमेंट कास्ट (1956-वर्तमान)",
+              "descriptor": "1956 मैनचेस्टर और टोक्यो कंप्यूटिंग अग्रणी, 1989 नैरोबी अस्पताल रिकॉर्ड विश्लेषक, और मनीला, अकरा और रॉटरडैम में वर्तमान-दिन के चिकित्सक-आधुनिक अनाक्रोनिज्म के खिलाफ सख्ती से फ़िल्टर किए गए।"
+            }
+          ],
+          "episode1Synopsis": {
+            "episodeLabel": "एपिसोड 1 सारांश · श्रृंखला Premiere (5 अध्याय)",
+            "title": "एपिसोड 1: स्विच वाला कमरा (1950-1968)",
+            "duration": "40 मिनट (5 अध्याय · अध्याय 1 लाइव प्रमाण: 6 मिनट)",
+            "logline": "युद्ध के बाद मैनचेस्टर, प्रिंसटन और टोक्यो में, मुट्ठी भर गणितज्ञों और रिले इंजीनियरों ने यह परीक्षण करने के लिए व्यायामशालाओं के आकार के तार कक्ष बनाए कि क्या कोई मशीन किसी नियम को पकड़ सकती है और अपना दिमाग बदल सकती है।",
+            "synopsis": "एपिसोड 1 1950 और 1968 के बीच मशीन इंटेलिजेंस के भौतिक और दार्शनिक जन्म का पुनर्निर्माण करता है। मैनचेस्टर के फेरांति मार्क 1, टोक्यो के ईटीएल मार्क III रिले रूम और डार्टमाउथ के 1956 के ग्रीष्मकालीन अध्ययन के 16 मिमी अभिलेखीय-श्रेणी के मनोरंजन के बीच चलते हुए, डॉ. अमीरा हसन और केनजी सातो अपने गुरुओं द्वारा छोड़ी गई कलाकृतियों की जांच करते हैं - यह दिखाते हुए कि कैसे शुरुआती शोधकर्ताओं ने मानव सामान्य ज्ञान के लिए औपचारिक तर्क को गलत समझा, फिर भी स्विचिंग की नींव रखी। वास्तुकला जो अभी भी आधुनिक कंप्यूटर को नियंत्रित करती है।",
+            "chapter1Title": "अध्याय 1: वह रिले जिसे याद किया गया (मैनचेस्टर और टोक्यो, 1956)",
+            "chapter1Duration": "6 मिनट · प्रारंभिक अध्याय प्रमाण",
+            "chapter1Synopsis": "1956 में बंद 16 मिमी अनाज में शून्य आधुनिक कलाकृतियों के साथ फिल्माया गया, ऊनी वास्कट में इंजीनियरों ने मैनचेस्टर और टोक्यो में खड़खड़ाने वाले विद्युत चुम्बकीय रिले में एक खराबी का पता लगाया, अमीरा हसन और केनजी सातो की कुरकुरा 4K वर्तमान साक्षात्कार प्लेटों के साथ इंटरकट किया, जिसमें मूल 5-छेद छिद्रित टेप था - जो रात भर चालू रहने वाले एकल टॉगल स्विच पर बंद होता था।"
+          },
+          "episodes": [
+            {
+              "number": "1",
+              "title": "स्विच वाला कमरा",
+              "duration": "40 मिनट",
+              "synopsis": "मैनचेस्टर, प्रिंसटन और टोक्यो में मध्य-शताब्दी प्रयोगशालाएँ। पीरियड ड्रेस में शोधकर्ता उन मशीनों के सामने खड़े हैं जो शोरगुल वाले कमरे में एक चतुर काम करती हैं। अमीरा के शिक्षक, बाद के एक साक्षात्कार टेप पर, भविष्य से एक भी वस्तु का उपयोग किए बिना आशा का वर्णन करते हैं। केन्जी के चाचा एक अलमारी के आकार के फ़ैक्टरी नियंत्रक की सेवा लेते हैं। अध्याय रात भर चालू स्थिति में छोड़े गए स्विच पर समाप्त होता है।"
+            },
+            {
+              "number": "2",
+              "title": "उपयोगी मशीन",
+              "duration": "40 मिनट",
+              "synopsis": "1980 और 1990 का दशक. नैरोबी अस्पताल के रिकॉर्ड रूम में एक विशेषज्ञ प्रणाली, सियोल में एक चिप फ्लोर, पेरिस में एक अनुवाद कार्यालय। बेज रंग के टर्मिनल, सीआरटी चमक, कपड़े और उस दशक की कारें। अमीरा, युवा, एक कार्यक्रम देखती है जिसमें निदान का सुझाव दिया जाता है जिसे एक वरिष्ठ चिकित्सक अस्वीकार कर देता है। केनजी को लाइन रुकती हुई दिखती है क्योंकि एक सेंसर ने खुद पर भरोसा किया है। उपयोगी, और पहले से ही इसके बगल के लोगों के साथ बहस कर रहा है।"
+            },
+            {
+              "number": "3",
+              "title": "सार्वजनिक आगमन",
+              "duration": "40 मिनट",
+              "synopsis": "2010 का दशक. एक लागोस न्यूज़रूम, एक साओ पाउलो कक्षा, एक बर्लिन रसोईघर जहां एक फ़ोन एक बच्चे द्वारा ज़ोर से पूछे गए प्रश्न का उत्तर देता है। मॉडल ने लैब छोड़ दी है. अमीरा अब वह व्यक्ति है जिसे पत्रकार बुलाते हैं। केंजी की फ़ैक्टरी ने एक नोटिस पोस्ट किया है कि रात की पाली \"सिस्टम से परामर्श करेगी।\" यह अध्याय स्क्रीन को पढ़ने वाले चेहरों पर आधारित है, स्क्रीन पर नहीं।"
+            },
+            {
+              "number": "4",
+              "title": "त्वरण",
+              "duration": "40 मिनट",
+              "synopsis": "एक वर्तमान दिन, तीन शहर। मनीला में एक नर्स, अकरा में एक संगीतकार, रॉटरडैम में एक गोदी योजनाकार। प्रत्येक एक ऐसी प्रणाली का उपयोग करता है जो उनके द्वारा शुरू किए गए वाक्य को पूरा करता है। वर्णनकर्ता गिनता है कि शर्तें तय होने पर कमरे में क्या तेजी से हुआ और कौन नहीं था। अमीरा और केन्जी, बड़ी उम्र की, अपने दरवाज़ों पर लगे नोटिसों की तुलना करती हैं। तस्वीरें समकालीन हैं: वर्तमान पोशाक, वर्तमान सड़कें, वर्तमान रोशनी।"
+            },
+            {
+              "number": "5",
+              "title": "आगे का प्रश्न",
+              "duration": "40 मिनट",
+              "synopsis": "अधीक्षण क्षितिज, एक भविष्यवाणी के बजाय एक प्रश्न के रूप में बताया गया। अमीरा और केनजी एक शांत संग्रह में बैठे हैं - कागजात, तस्वीरें, और एक मशीन जो किसी व्यक्ति होने का दिखावा नहीं कर रही है। वे पूछते हैं कि अपने निर्माताओं से अधिक बुद्धिमान प्रणाली नर्स, संगीतकार, डॉक प्लानर और उन लोगों का क्या ऋणी होगी जिन्होंने कभी स्विच नहीं छुआ। श्रृंखला उत्तर नहीं देती. यह कमरे में दायित्व छोड़ देता है।"
+            }
+          ]
+        },
+        "training": {
+          "showTitle": "पाँच प्लेटें",
+          "format": "अनुदेशात्मक श्रृंखला · 5-मॉड्यूल पाठ्यक्रम",
+          "genre": "व्यावहारिक पाक पाठ्यचर्या",
+          "artStyle": "नेचुरल डेलाइट स्टूडियो · स्वच्छ ओवरहेड और बेंच कवरेज",
+          "duration": "75 मिनट पाठ्यक्रम (5 × 15 मिनट) · मॉड्यूल 1: 15 मिनट",
+          "continuityLock": "1 लॉक्ड इंस्ट्रक्टर (शेफ लीला मेन्सा) · 2 अप्रेंटिस कोहोर्ट कुक · 1 हार्बर स्ट्रीट टीचिंग किचन · 5 प्रोग्रेसिव प्लेट्स",
+          "unitLabel": "पाठ्यक्रम मॉड्यूल (5)",
+          "artLock": "एक बंद शेफ. शेफ लीला मेन्सा, वही चेहरा, वही सफेद कोट, वही कटे हुए बाल, उसी हार्बर स्ट्रीट में रसोई पढ़ाते हुए - वही टाइलें, वही बर्तन, वही खिड़की - शोरबा से लेकर मिठाई तक।",
+          "logline": "एक रसोइया, एक रसोईघर, पाँच भोजन - प्रत्येक थाली हाथों को सिखाती है कि अगली थाली को क्या चाहिए।",
+          "seriesSynopsis": "एक एंटरप्राइज-ग्रेड, मल्टी-मॉड्यूल अनुदेशात्मक पाठ्यक्रम के रूप में डिज़ाइन किया गया, फाइव प्लेट्स बंद हार्बर स्ट्रीट टीचिंग किचन के अंदर शेफ लीला मेन्सा को पांच 15 मिनट के पाठ (कुल 75 मिनट) का अनुसरण करता है। अवतार स्लाइड-रीडर्स के विपरीत, जो भौतिक शिल्प का प्रदर्शन नहीं कर सकते हैं, SceneFlow शेफ मेन्सा के चेहरे, डबल-ब्रेस्टेड कोट, चाकू स्टेशन और हरे सिरेमिक दीवार टाइलों को ए-कैम मीडियम टीचिंग बीट्स, बी-कैम 90° ओवरहेड बेंच प्रदर्शनों और सी-कैम मैक्रो सिमर/क्रंब निरीक्षणों में लॉक कर देता है - एक मूलभूत स्पष्ट शोरबा से पांच-प्लेट ग्रेजुएशन सेवा तक संचयी पाक क्षमता का निर्माण।",
+          "cast": [
+            {
+              "name": "शेफ लीला मेन्सा",
+              "role": "प्रमुख प्रशिक्षक · बंद पहचान और अलमारी",
+              "descriptor": "कार्यकारी शेफ-प्रशिक्षक (38)। कुरकुरा सफेद डबल-ब्रेस्टेड शेफ कोट, स्लेट एप्रन, कटे हुए बाल; सभी 5 मॉड्यूलों में समान चेहरे की ज्यामिति, हाथ की निरंतरता और शांत शैक्षणिक अधिकार बनाए रखता है।"
+            },
+            {
+              "name": "मार्कस कोल",
+              "role": "अपरेंटिस कोहोर्ट कुक · लॉक्ड कैरेक्टर शीट",
+              "descriptor": "प्रथम वर्ष के पाककला छात्र (26)। बेंच #2 पर नौसेना प्रशिक्षु जैकेट; लाइव तकनीक जांच, ताप समायोजन और समस्या निवारण निदान निष्पादित करता है।"
+            },
+            {
+              "name": "प्रिया नायर",
+              "role": "अपरेंटिस कोहोर्ट कुक · लॉक्ड कैरेक्टर शीट",
+              "descriptor": "प्रथम वर्ष का पाककला छात्र (24)। बेंच #3 पर चारकोल अपरेंटिस जैकेट; मसाला अंशांकन, आटा प्रूफ़िंग जांच और पारिवारिक-शैली चढ़ाना प्रदर्शित करता है।"
+            },
+            {
+              "name": "हार्बर स्ट्रीट टीचिंग किचन",
+              "role": "लॉक्ड स्टूडियो सेट · 3-कैमरा इंस्ट्रक्शनल रिग",
+              "descriptor": "ब्रश-स्टील द्वीप, भारी तांबे के स्टॉकपॉट और ए-कैम, 90° ओवरहेड बी-कैम और मैक्रो सी-कैम में सिंक किए गए कॉलआउट ग्राफिक्स के साथ दिन के उजाले में प्रकाशित औद्योगिक ईंट और हरे-टाइल स्टूडियो।"
+            }
+          ],
+          "episode1Synopsis": {
+            "episodeLabel": "एपिसोड 1 (मॉड्यूल 1) सारांश · कोर्स फाउंडेशन (3 अध्याय)",
+            "title": "मॉड्यूल 1: शोरबा - निष्कर्षण, स्पष्टता और गर्मी नियंत्रण",
+            "duration": "15 मिनट (3 अध्याय · अध्याय 1 लाइव प्रमाण: 5 मिनट)",
+            "logline": "शेफ लीला मेन्सा एक क्रिस्टल-क्लियर फाउंडेशन शोरबा के माध्यम से गर्मी प्रबंधन, एरोमैटिक्स और स्किमिंग अनुशासन सिखाते हैं जो बाकी पाठ्यक्रम को शक्ति प्रदान करता है।",
+            "synopsis": "मॉड्यूल 1 में, शेफ लीला मेन्सा हार्बर स्ट्रीट वर्कबेंच की स्थापना करती है और पाठ्यक्रम का मूलभूत कौशल सिखाती है: ठंडे पानी, भुनी हुई हड्डियों या जड़ वाली सब्जियों और सुगंधित पदार्थों को एक स्पष्ट, संरचित शोरबा में बदलना। तीन निर्देशात्मक अध्यायों में संरचित - (1) कोल्ड स्टार्ट एंड नाइफ माइस एन प्लेस, (2) द कन्वेक्शन सिमर एंड स्किम, और (3) लेट-स्टेज साल्ट कैलिब्रेशन एंड क्लैरिटी चेक - शिक्षार्थी बाद के मॉड्यूल में आटा या रोस्ट प्रोटीन को छूने से पहले थर्मल नियंत्रण में महारत हासिल करते हैं।",
+            "chapter1Title": "अध्याय 1: ठंडा पानी, साफ़ हड्डियाँ और पहला सिमर",
+            "chapter1Duration": "5 मिनट · प्रारंभिक अध्याय प्रमाण",
+            "chapter1Synopsis": "दिन के उजाले में संतुलित हार्बर स्ट्रीट किचन में ए-कैम पर शुरुआत करते हुए, शेफ लीला मेन्सा ने पांच-प्लेट पाठ्यक्रम का परिचय दिया, एक समान मिरपोइक्स कटौती और ठंडे पानी के विसर्जन को प्रदर्शित करने के लिए लॉक किए गए 90 डिग्री ओवरहेड बी-कैम पर स्विच किया, और स्टॉकपॉट को प्रशिक्षु मार्कस और प्रिया के साथ अपने पहले आलसी संवहन बुलबुले में लाया।"
+          },
+          "episodes": [
+            {
+              "number": "1",
+              "title": "शोरबा",
+              "duration": "15 मि",
+              "synopsis": "लीला एक स्पष्ट शोरबा से शुरू होती है: चाकू, हड्डियाँ या सब्जियाँ, गर्मी, और धैर्य। वह उबाल, मलाई और नमक के अंदर जाते ही दिखाती है। रसोई, कोट और उसका चेहरा बंद सेट के रूप में स्थापित हैं। चेक एक चम्मच है जिसका स्वाद खत्म हो गया है, धुंधला नहीं है।"
+            },
+            {
+              "number": "2",
+              "title": "रोटी",
+              "duration": "15 मि",
+              "synopsis": "वही बेंच, वही शेफ। आटा, समय और एक सिद्ध रोटी का अहसास। लीला धैर्य के बारे में शोरबे की सीख को आटे के लिए आवश्यक प्रतीक्षा से जोड़ती है। छात्र आकार देते हैं, स्कोर करते हैं और पकाते हैं। चेक एक टुकड़ा है जो खुला है, चिपचिपा नहीं है, और एक नोट है कि वे अगली बार क्या बदलेंगे।"
+            },
+            {
+              "number": "3",
+              "title": "सब्जी मुख्य",
+              "duration": "15 मि",
+              "synopsis": "साग-सब्जी और अनाज का एक बर्तन, जिसे पूरी कक्षा को खिलाना है, कैमरा नहीं। लीला शोरबा से बनी चटनी, एक समूह के लिए मसाला, और सब्जियों में रंग कैसे बनाए रखें, दिखाती है। चेक एक प्लेट है जो पहले और आखिरी कटोरे में समान होती है।"
+            },
+            {
+              "number": "4",
+              "title": "उत्सव रोस्ट",
+              "duration": "15 मि",
+              "synopsis": "एक रात के लिए एक केंद्रीय प्लेट जो मायने रखती है: भूनना, आराम करना, और एक तरफ जिसमें कल की रोटी का उपयोग होता है। जब प्लेट के हिस्से ऊपर जाते हैं तो लीला एक ही स्टेशन और एक ही आवाज रखती है। चेक एक मेज की नक्काशी कर रहा है, एक भी हीरो शॉट नहीं।"
+            },
+            {
+              "number": "5",
+              "title": "द लास्ट स्वीट",
+              "duration": "15 मि",
+              "synopsis": "एक मिठाई जिसके लिए मॉड्यूल 1 के ताप नियंत्रण, मॉड्यूल 2 के समय और मॉड्यूल 3 की मसाला आंख की आवश्यकता होती है। फिर कक्षा सभी पांच प्लेटों को एक भोजन के रूप में सेट करती है। लीला उसी कोट में, उसी रसोई में चलती है। पाठ्यक्रम पाठ से सेवा में बदल जाता है।"
+            }
+          ]
+        }
+      }
+    },
     "explorerHandoff": "ये लिंक एक तैयार प्रॉडक्शन हैं। Explorer वह जगह है जहाँ आप अपना खुद का प्रॉडक्शन बना सकते हैं।",
     "languagesBanner": "पब्लिक उदाहरण 4 भाषाओं में उपलब्ध हैं: अंग्रेज़ी, स्पैनिश, चीनी और अरबी।",
     "workflowLabel": "समाधान",
@@ -2197,16 +2840,19 @@
     "chapters": [
       {
         "id": "यहाँ से शुरू करें",
-        "label": "यहाँ से शुरू करें — योजना, निरंतरता और दर्शकों के अनुकूल होना"
+        "label": "यहाँ से शुरू करें — योजना, निरंतरता और दर्शकों के अनुकूल होना",
+        "defaultExpanded": false
       },
       {
         "id": "बनाना-प्रकाशित करना",
-        "label": "Screening Room के लिए क्लिप्स तैयार और प्रकाशित करें"
+        "label": "Screening Room के लिए क्लिप्स तैयार और प्रकाशित करें",
+        "defaultExpanded": false
       }
     ],
     "close": "बंद करें",
     "viewDetails": "विवरण देखें",
     "beatFirst": {
+      "id": 15,
       "title": "बीट-फ़र्स्ट वीडियो पाइपलाइन",
       "description": "F2V से पहले प्री-विज़ बीट्स और Shot Frames को मंज़ूरी दें — इससे हैलुसिनेशन और विज़ुअल ड्रिफ़्ट के कारण बिना सोचे-समझे बार-बार री-जेनरेशन करने की ज़रूरत कम होगी। रिव्यू से लेकर फ़ाइनल क्लिप तक एक व्यवस्थित रास्ता।",
       "keyFeatures": [
@@ -2632,7 +3278,7 @@
         }
       ],
       "supportedProviders": "समर्थित प्रदाता",
-      "vertexName": "Google Vertex AI",
+      "vertexName": "गूगल Vertex AI",
       "vertexDetail": "रेफ़रेंस, स्टिल्स और ओम्नी क्लिप्स",
       "elevenLabsName": "क्लिंग",
       "elevenLabsDetail": "जब आपकी की (key) का इस्तेमाल हो, तो क्लिप बनाना",
@@ -2905,79 +3551,5 @@
     "mute": "म्यूट",
     "unmute": "अनम्यूट",
     "expandVideo": "वीडियो बड़ा करें"
-  },
-  "productionAgent": {
-    "eyebrow": "Production Agent • स्वायत्त स्टूडियो बिल्डर",
-    "title": "हाथ से 300+ शॉट्स प्रॉम्प्ट करना बंद करें। बिल्ड शुरू करें और निश्चिंत हो जाएँ।",
-    "subtitle": "एक सामान्य 27-दृश्य प्रोडक्शन (प्रति दृश्य 12–20 शॉट्स) में पारंपरिक AI टूल्स में 300 से अधिक मैनुअल स्टिल और वीडियो प्रॉम्प्ट्स लगते हैं। एक घंटे से कम समय में अपनी स्क्रिप्ट को निखारें, Pre-Vis, Clips, Scenes, Master या Promo चुनें, और Production Agent को आपके दृश्य बनाने दें, विफल शॉट्स को सुधारने दें, और पूरा होने पर निजी /s/ Screening Room लिंक के साथ सूचित करने दें।",
-    "showDetail": "अधिक विवरण दिखाएँ",
-    "hideDetail": "विवरण छिपाएँ",
-    "drawerBadge": "स्वायत्त दृश्य-दर-दृश्य ऑर्केस्ट्रेशन",
-    "drawerTitle": "आपकी स्क्रिप्ट पर एक घंटे से कम समय। घंटों के मैनुअल प्रॉम्प्ट्स की जगह एक स्वायत्त रन।",
-    "cards": [
-      {
-        "badge": "300+ मैनुअल प्रॉम्प्ट्स समाप्त करें",
-        "title": "स्क्रिप्ट पर < 1 घंटा → बाकी समय आपका",
-        "description": "27 दृश्यों (प्रति दृश्य 12–20 शॉट्स) में 300+ अलग-अलग स्टिल और वीडियो प्रॉम्प्ट टाइप करने से बचें। एक घंटे से कम समय में अपनी स्क्रिप्ट तैयार करें और अपना दिन बचाएँ।"
-      },
-      {
-        "badge": "सभी 27 दृश्य या अध्याय के अनुसार",
-        "title": "5 एंड-टू-एंड प्रोडक्शन चरण",
-        "description": "एक ही बिल्डर में Pre-Vis, Clips, Scenes, Master और Promo चुनें। एजेंट स्वतः निरंतरता रेफ़रेंस, संवाद/SFX/संगीत ऑडियो, कीफ़्रेम, मोशन क्लिप्स और ट्रेलर तैयार करता है।"
-      },
-      {
-        "badge": "शून्य रुके हुए रेंडर",
-        "title": "सेल्फ-हीलिंग + Creative Clips फ़ॉलबैक",
-        "description": "शॉट डायरेक्शन को स्वतः ऑप्टिमाइज़ करता है और विफल शॉट्स को फिर से चलाता है। जब कोई नाटकीय शॉट ऑप्टिमाइज़ेशन के बाद भी Google पॉलिसी फ़िल्टर से रुकता है, तो वह स्वतः Creative Clips पर स्विच हो जाता है।"
-      },
-      {
-        "badge": "पूर्ण डायरेक्टर नियंत्रण",
-        "title": "चेकपॉइंट्स और /s/ Screening लिंक्स",
-        "description": "100% हैंड्स-फ़्री चलाएँ या Pre-Vis या प्रत्येक दृश्य के बाद रोकें। समीक्षा के लिए तैयार सीधे /s/ Screening Room लिंक के साथ अपनी चुनी हुई आवृत्ति पर नोटिफिकेशन पाएँ।"
-      }
-    ],
-    "viewScript": "एना वीडियो स्क्रिप्ट देखें (30s वॉकथ्रू)",
-    "hideScript": "एना वीडियो स्क्रिप्ट छिपाएँ (30s वॉकथ्रू)",
-    "copyScript": "स्क्रिप्ट कॉपी करें",
-    "copied": "कॉपी किया गया",
-    "cta": "स्टूडियो लॉन्च करें ($9)"
-  },
-  "studioAcademy": {
-    "eyebrow": "SceneFlow Studio Academy और जस्ट-इन-टाइम ट्रेनिंग",
-    "title": "हर कदम पर मार्गदर्शन। बनाते-बनाते स्टूडियो में महारत हासिल करें।",
-    "subtitle": "कभी भी खाली टाइमलाइन को न घूरें और न ही अगला कदम सोचने में क्रेडिट बर्बाद करें। किसी भी स्क्रीन पर ? दबाएँ और तुरंत Just-In-Time (JIT) स्क्रीन मैप व एक-क्लिक स्टूडियो एक्शन वाली 60-सेकंड की चेकलिस्ट पाएँ—या अपनी पहली अवधारणा से लेकर प्रकाशित मास्टर तक इंटरैक्टिव कोर्स फॉलो करें।",
-    "showDetail": "अधिक विवरण दिखाएँ",
-    "hideDetail": "विवरण छिपाएँ",
-    "drawerBadge": "हॉलीवुड स्टूडियो की शक्ति · फ़िल्म स्कूल की आवश्यकता नहीं",
-    "drawerTitle": "हर रूम में इन-बिल्ट इंटरैक्टिव स्क्रीन मैप्स, 60-सेकंड चेकलिस्ट और क्रेडिट गार्डरेल्स",
-    "cards": [
-      {
-        "badge": "हमेशा सिर्फ़ 1 कुंजी दूर (?)",
-        "title": "संदर्भ-जागरूक Just-In-Time (JIT) कोच",
-        "description": "अपने सक्रिय वर्कस्पेस का तुरंत विज़ुअल मैप, आगे क्या करना है इसकी 60-सेकंड की चेकलिस्ट, और सटीक स्टूडियो एक्शन शुरू करने वाले 1-क्लिक बटन खोलने के लिए किसी भी स्क्रीन पर ? दबाएँ।"
-      },
-      {
-        "badge": "4 निर्देशित इंटरैक्टिव कोर्स",
-        "title": "“10 मिनट में आपकी पहली फ़िल्म” सिम्युलेटर",
-        "description": "बिना किसी एडिटिंग अनुभव वाले कहानीकारों, लेखकों और शोरनर्स के लिए निर्मित। 1-वाक्य के विचार से लेकर आवाज़, संगीत और चलने योग्य फ़िल्म तक इंटरैक्टिव Spotlight X-Ray कॉलआउट्स का अनुसरण करें।"
-      },
-      {
-        "badge": "70% तक क्रेडिट बचाएँ",
-        "title": "एनिमैटिक-फ़र्स्ट क्रेडिट गार्डरेल्स",
-        "description": "प्रत्येक वर्कस्पेस में रियल-टाइम क्रेडिट गार्डरेल्स शामिल हैं जो दिखाते हैं कि मोशन वीडियो क्लिप रेंडर करने से पहले 80+ Audience Resonance स्क्रिप्ट कैसे लॉक करें और वॉइस युक्त Keyframe Animatic का पूर्वावलोकन कैसे करें।"
-      },
-      {
-        "badge": "हर प्लान के साथ मुफ़्त शामिल",
-        "title": "स्टूडियो में अंतर्निहित 4 इंटरैक्टिव कोर्स",
-        "description": "स्टूडियो के भीतर ही Blueprint और Audience Resonance, कैरेक्टर और सेटिंग निरंतरता वॉल्ट, एनिमैटिक-फ़र्स्ट क्रेडिट गार्डरेल्स, और Screening Room व 70+ भाषा डबिंग में महारत हासिल करें।"
-      }
-    ],
-    "tryLiveMap": "लाइव JIT विज़ुअल स्क्रीन मैप आज़माएँ (पिन 1–4)",
-    "hideLiveMap": "लाइव JIT विज़ुअल स्क्रीन मैप छिपाएँ",
-    "viewScript": "30s वीडियो स्क्रिप्ट देखें (एना)",
-    "hideScript": "30s वीडियो स्क्रिप्ट छिपाएँ (एना)",
-    "copyScript": "स्क्रिप्ट कॉपी करें",
-    "copied": "कॉपी किया गया",
-    "cta": "स्टूडियो लॉन्च करें ($9)"
   }
 }

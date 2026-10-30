@@ -112,6 +112,50 @@ export function StudioAcademySection() {
   const tCommon = useTranslations('common')
   const tShowcase = useTranslations('productionShowcase')
   const detailCards = t.raw('cards') as Array<{ badge: string; title: string; description: string }>
+  const courses = (
+    t.has('courses')
+      ? (t.raw('courses') as Array<{ id: string; title: string; totalDuration: string }>)
+      : INTERACTIVE_TUTORIALS
+  )
+  const jitMapCopy = (
+    t.has('jitMap')
+      ? (t.raw('jitMap') as {
+          eyebrow?: string
+          title?: string
+          coachPrefix?: string
+          autoDetected?: string
+          checklistTitle?: string
+          screens?: Record<
+            string,
+            {
+              tabLabel?: string
+              stepBadge?: string
+              shortTitle?: string
+              subtitle?: string
+              quickSteps?: Array<{
+                number?: string
+                title: string
+                description: string
+                creditBadge?: string
+              }>
+            }
+          >
+        })
+      : undefined
+  )
+  const scriptBlocks = (
+    t.has('scriptBlocks')
+      ? (t.raw('scriptBlocks') as Array<{
+          block: string
+          title: string
+          syncLine?: string
+          narration: string
+          visual: string
+        }>)
+      : ANA_VIDEO_BLOCKS
+  )
+  const voLabel = t.has('voLabel') ? t('voLabel') : 'VO:'
+  const pictureLabel = t.has('pictureLabel') ? t('pictureLabel') : 'Picture:'
   const [showDetail, setShowDetail] = useState(false)
   const [showInteractiveMap, setShowInteractiveMap] = useState(false)
   const [showAnaScript, setShowAnaScript] = useState(false)
@@ -437,7 +481,7 @@ export function StudioAcademySection() {
 
             {/* 4 Included Curriculum Pills */}
             <div className="mt-4 flex flex-wrap items-center justify-center gap-2">
-              {INTERACTIVE_TUTORIALS.map((course) => (
+              {courses.map((course) => (
                 <span
                   key={course.id}
                   className="inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-slate-900/80 px-3 py-1 text-xs font-medium text-slate-200"
@@ -515,22 +559,26 @@ export function StudioAcademySection() {
                   <div className="flex flex-col justify-between gap-3 border-b border-slate-800 pb-4 lg:flex-row lg:items-center">
                     <div>
                       <p className="text-xs font-bold uppercase tracking-wider text-cyan-400">
-                        Live Just-In-Time (JIT) Visual Screen Map
+                        {jitMapCopy?.eyebrow || 'Live Just-In-Time (JIT) Visual Screen Map'}
                       </p>
                       <p className="text-sm font-semibold text-white">
-                        Click Any Workspace &amp; Numbered Pin (1–4) to Inspect Studio Controls
+                        {jitMapCopy?.title || 'Click Any Workspace & Numbered Pin (1–4) to Inspect Studio Controls'}
                       </p>
                     </div>
                     <div className="flex flex-wrap gap-1.5">
                       {SHOWCASE_SCREENS.map((screen) => {
                         const isSelected = screen.id === selectedContextId
                         const guide = JIT_CONTEXT_GUIDES[screen.id]
+                        const localizedScreen = jitMapCopy?.screens?.[screen.id]
+                        const tabLabel = localizedScreen?.tabLabel || screen.tabLabel
+                        const stepBadge = localizedScreen?.stepBadge || screen.stepBadge
+                        const subtitle = localizedScreen?.subtitle || guide?.subtitle || ''
                         return (
                           <button
                             key={screen.id}
                             type="button"
                             onClick={() => setSelectedContextId(screen.id)}
-                            title={`${screen.tabLabel} (${screen.stepBadge}) — ${guide?.subtitle || ''}`}
+                            title={`${tabLabel} (${stepBadge}) — ${subtitle}`}
                             className={cn(
                               'rounded-lg border px-3 py-1.5 text-xs font-bold transition-all',
                               isSelected
@@ -538,7 +586,7 @@ export function StudioAcademySection() {
                                 : 'border-slate-800 bg-slate-950/80 text-slate-300 hover:border-slate-700 hover:text-white'
                             )}
                           >
-                            {screen.tabLabel}
+                            {tabLabel}
                           </button>
                         )
                       })}
@@ -561,31 +609,32 @@ export function StudioAcademySection() {
                         <div className="mb-1 flex items-center justify-between gap-2">
                           <span className="inline-flex items-center gap-1.5 text-[11px] font-bold text-cyan-300">
                             <HelpCircle className="h-3.5 w-3.5 text-cyan-400" />
-                            JIT Coach: {activeGuide.shortTitle}
+                            {jitMapCopy?.coachPrefix || 'JIT Coach:'}{' '}
+                            {jitMapCopy?.screens?.[selectedContextId]?.shortTitle || activeGuide.shortTitle}
                           </span>
                           <span className="rounded-full border border-emerald-500/30 bg-emerald-500/15 px-2 py-0.5 text-[10px] font-bold text-emerald-300">
-                            ● Auto-Detected
+                            {jitMapCopy?.autoDetected || '● Auto-Detected'}
                           </span>
                         </div>
                         <p className="text-xs leading-relaxed text-slate-300">
-                          {activeGuide.subtitle}
+                          {jitMapCopy?.screens?.[selectedContextId]?.subtitle || activeGuide.subtitle}
                         </p>
                       </div>
 
                       <div className="rounded-xl border border-slate-800 bg-slate-950/90 p-3.5">
                         <h4 className="mb-2.5 flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-slate-400">
                           <Zap className="h-3.5 w-3.5 text-cyan-400" />
-                          <span>60-Second Guided Checklist</span>
+                          <span>{jitMapCopy?.checklistTitle || '60-Second Guided Checklist'}</span>
                         </h4>
                         <div className="space-y-2">
-                          {activeGuide.quickSteps.map((step) => (
+                          {(jitMapCopy?.screens?.[selectedContextId]?.quickSteps || activeGuide.quickSteps).map((step, idx) => (
                             <div
-                              key={step.id}
+                              key={('id' in step && step.id) ? step.id : `${selectedContextId}-step-${idx}`}
                               className="rounded-lg border border-slate-800/90 bg-slate-900/90 p-2.5"
                             >
                               <div className="mb-0.5 flex items-center justify-between gap-2">
                                 <span className="text-xs font-bold text-white">
-                                  {step.stepNumber}. {step.title}
+                                  {'number' in step && step.number ? step.number : ('stepNumber' in step ? step.stepNumber : idx + 1)}. {step.title}
                                 </span>
                                 {step.creditBadge && (
                                   <span className="shrink-0 rounded bg-emerald-500/15 px-1.5 py-0.5 text-[10px] font-semibold text-emerald-300">
@@ -608,7 +657,7 @@ export function StudioAcademySection() {
               {/* 30s Ana Video Script Drawer */}
               {showAnaScript && (
                 <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-                  {ANA_VIDEO_BLOCKS.map((item) => (
+                  {scriptBlocks.map((item) => (
                     <div
                       key={item.block}
                       className="rounded-xl border border-white/10 bg-slate-950/85 p-3.5 text-left"
@@ -623,11 +672,11 @@ export function StudioAcademySection() {
                         </p>
                       ) : null}
                       <p className="mt-2 text-xs leading-relaxed text-gray-200">
-                        <span className="font-semibold text-gray-400">VO: </span>
+                        <span className="font-semibold text-gray-400">{voLabel} </span>
                         {item.narration}
                       </p>
                       <p className="mt-1.5 text-[11px] leading-relaxed text-gray-400">
-                        <span className="font-semibold text-gray-500">Picture: </span>
+                        <span className="font-semibold text-gray-500">{pictureLabel} </span>
                         {item.visual}
                       </p>
                     </div>
