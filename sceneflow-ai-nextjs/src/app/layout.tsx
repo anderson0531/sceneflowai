@@ -19,6 +19,7 @@ import { GlobalErrorGuard } from '@/components/providers/GlobalErrorGuard'
 import AudioPlayerProvider from '@/context/AudioPlayerProvider'
 import {
   LEGAL_COMPANY_NAME,
+  LEGAL_EIN,
   LEGAL_SERVICE_NAME,
   LEGAL_SUPPORT_EMAIL,
   LEGAL_WEBSITE,
@@ -95,6 +96,7 @@ const organizationStructuredData = {
   '@type': 'Organization',
   name: LEGAL_COMPANY_NAME,
   legalName: LEGAL_COMPANY_NAME,
+  taxID: LEGAL_EIN,
   brand: {
     '@type': 'Brand',
     name: LEGAL_SERVICE_NAME,
@@ -103,10 +105,10 @@ const organizationStructuredData = {
   email: LEGAL_SUPPORT_EMAIL,
   address: {
     '@type': 'PostalAddress',
-    streetAddress: '2900 W Anderson Ln, Suite C200',
-    addressLocality: 'Austin',
-    addressRegion: 'TX',
-    postalCode: '78757',
+    streetAddress: '131 Continental Dr, Suite 305',
+    addressLocality: 'Newark',
+    addressRegion: 'DE',
+    postalCode: '19713',
     addressCountry: 'US',
   },
   contactPoint: [

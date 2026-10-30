@@ -5,8 +5,12 @@ import {
   LEGAL_ABUSE_EMAIL,
   LEGAL_ADDRESS,
   LEGAL_COMPANY_NAME,
+  LEGAL_EIN,
+  LEGAL_FORMATION_DATE,
   LEGAL_LEGAL_EMAIL,
+  LEGAL_REGISTERED_AGENT,
   LEGAL_SERVICE_NAME,
+  LEGAL_STATE_OF_FORMATION,
   LEGAL_SUPPORT_EMAIL,
   LEGAL_TRUST_EMAIL,
   WHOP_MOR_NAME,
@@ -20,7 +24,7 @@ const LEGAL_PAGES = [
 ]
 
 describe('legal document consistency', () => {
-  it('uses Life Focus, LLC as the legal entity across all legal pages', () => {
+  it('uses LifeFocus, LLC as the legal entity across all legal pages', () => {
     for (const page of LEGAL_PAGES) {
       const content = readFileSync(join(process.cwd(), page), 'utf8')
       expect(content).toContain('LEGAL_COMPANY_NAME')
@@ -29,14 +33,18 @@ describe('legal document consistency', () => {
     }
   })
 
-  it('exports the expected legal entity, MoR, and contact emails', () => {
-    expect(LEGAL_COMPANY_NAME).toBe('Life Focus, LLC')
+  it('exports the expected Delaware LLC legal entity, EIN, MoR, and contact emails', () => {
+    expect(LEGAL_COMPANY_NAME).toBe('LifeFocus, LLC')
+    expect(LEGAL_EIN).toBe('99-5087112')
+    expect(LEGAL_STATE_OF_FORMATION).toBe('Delaware')
+    expect(LEGAL_FORMATION_DATE).toBe('September 23, 2024')
+    expect(LEGAL_REGISTERED_AGENT).toBe('Legalinc Corporate Services, Inc.')
     expect(LEGAL_SERVICE_NAME).toBe('SceneFlow Studio')
     expect(WHOP_MOR_NAME).toBe('Whop')
     expect(LEGAL_SUPPORT_EMAIL).toBe('support@sceneflowai.studio')
     expect(LEGAL_ABUSE_EMAIL).toBe('abuse@sceneflowai.studio')
     expect(LEGAL_TRUST_EMAIL).toBe('trust@sceneflowai.studio')
-    expect(LEGAL_ADDRESS).toBe('2900 W Anderson Ln, Suite C200, Austin, TX 78757, United States')
+    expect(LEGAL_ADDRESS).toBe('131 Continental Dr, Suite 305, Newark, DE 19713, United States')
     expect(LEGAL_LEGAL_EMAIL).toBe('legal@sceneflowai.studio')
   })
 })

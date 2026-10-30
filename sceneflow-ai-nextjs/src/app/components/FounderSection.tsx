@@ -83,7 +83,7 @@ export function FounderSection() {
                 <div className="text-center sm:text-left">
                   <h3 className="text-2xl sm:text-3xl font-bold text-white mb-1">Brian Anderson</h3>
                   <p className="text-cyan-400 font-medium mb-2">Founder & CEO</p>
-                  <p className="text-gray-400 text-sm">Life Focus, LLC</p>
+                  <p className="text-gray-400 text-sm">LifeFocus, LLC</p>
                   
                   {/* Social Links */}
                   <div className="flex justify-center sm:justify-start gap-3 mt-4">

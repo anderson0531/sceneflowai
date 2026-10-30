@@ -3,8 +3,11 @@ import Link from 'next/link'
 import {
   LEGAL_ADDRESS,
   LEGAL_COMPANY_NAME,
+  LEGAL_EIN,
   LEGAL_LAST_UPDATED,
+  LEGAL_REGISTERED_AGENT,
   LEGAL_SERVICE_NAME,
+  LEGAL_STATE_OF_FORMATION,
   LEGAL_SUPPORT_EMAIL,
   LEGAL_WEBSITE,
   WHOP_MOR_NAME,
@@ -207,15 +210,16 @@ export default function TermsOfServicePage() {
           <section>
             <h2 className="text-2xl font-semibold text-white mb-4">15. Governing Law</h2>
             <p className="text-gray-300 leading-relaxed">
-              These terms are governed by the laws of the State of Texas, United States, without regard to conflict of law principles.
+              These terms are governed by the laws of the State of {LEGAL_STATE_OF_FORMATION}, United States, without regard to conflict of law principles.
             </p>
           </section>
 
           <section>
             <h2 className="text-2xl font-semibold text-white mb-4">16. Contact</h2>
             <p className="text-gray-300">
-              <strong>{LEGAL_COMPANY_NAME}</strong><br />
+              <strong>{LEGAL_COMPANY_NAME}</strong> (Delaware LLC • EIN: {LEGAL_EIN})<br />
               {LEGAL_ADDRESS}<br />
+              <strong>Registered Agent:</strong> {LEGAL_REGISTERED_AGENT}<br />
               <strong>Email:</strong> {LEGAL_SUPPORT_EMAIL}<br />
               <strong>Website:</strong> {LEGAL_WEBSITE}
             </p>

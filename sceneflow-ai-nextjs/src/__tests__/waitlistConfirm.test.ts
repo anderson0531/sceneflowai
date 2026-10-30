@@ -137,9 +137,9 @@ describe('POST /api/waitlist', () => {
     expect(payload.from).toContain('support@sceneflowai.studio')
     expect(payload.headers?.['List-Unsubscribe']).toContain('/api/waitlist/unsubscribe')
     expect(payload.headers?.['List-Unsubscribe-Post']).toBe('List-Unsubscribe=One-Click')
-    expect(String(payload.html)).toContain('Life Focus, LLC')
+    expect(String(payload.html)).toContain('LifeFocus, LLC')
     expect(String(payload.html)).toContain('/brand/sf-badge.png')
-    expect(String(payload.text)).toContain('2900 W Anderson Ln')
+    expect(String(payload.text)).toContain('131 Continental Dr')
     expect(getResendFromEmail()).toContain('support@sceneflowai.studio')
   })
 
@@ -407,7 +407,7 @@ describe('waitlist admin helpers', () => {
     expect(campaign.text).toContain('studio access is open')
     expect(campaign.text).not.toContain('November 2026')
     expect(campaign.html).toContain('<html')
-    expect(campaign.html).toContain('Life Focus, LLC')
+    expect(campaign.html).toContain('LifeFocus, LLC')
     expect(getResendFromEmail()).toContain('support@sceneflowai.studio')
   })
 

@@ -1,9 +1,13 @@
 /** Shared legal entity and contact constants for landing-page legal documents. */
-export const LEGAL_COMPANY_NAME = 'Life Focus, LLC'
+export const LEGAL_COMPANY_NAME = 'LifeFocus, LLC'
+export const LEGAL_EIN = '99-5087112'
+export const LEGAL_STATE_OF_FORMATION = 'Delaware'
+export const LEGAL_FORMATION_DATE = 'September 23, 2024'
+export const LEGAL_REGISTERED_AGENT = 'Legalinc Corporate Services, Inc.'
 export const LEGAL_SERVICE_NAME = 'SceneFlow Studio'
 export const LEGAL_LAST_UPDATED = 'July 31, 2026'
 export const LEGAL_WEBSITE = 'https://sceneflowai.studio'
-export const LEGAL_ADDRESS = '2900 W Anderson Ln, Suite C200, Austin, TX 78757, United States'
+export const LEGAL_ADDRESS = '131 Continental Dr, Suite 305, Newark, DE 19713, United States'
 
 export const LEGAL_EMAIL_DOMAIN = 'sceneflowai.studio'
 export const LEGAL_SUPPORT_EMAIL = 'support@sceneflowai.studio'

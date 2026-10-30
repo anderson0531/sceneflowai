@@ -252,4 +252,4 @@ export const FINAL_CTA_COPY = {
 export const PAYMENT_PROCESSOR_NAME = 'Whop'
 
 export const MOR_FOOTER_LINE =
-  'Secure payments, tax calculation, and compliance are handled by Whop, our Merchant of Record, on behalf of Life Focus, LLC.'
+  'Secure payments, tax calculation, and compliance are handled by Whop, our Merchant of Record, on behalf of LifeFocus, LLC.'

@@ -126,7 +126,7 @@ describe('admin waitlist routes', () => {
     expect(data.from).toContain('support@sceneflowai.studio')
     expect(data.fallbackFrom).toBeTruthy()
     expect(data.confirmation.subject).toContain('Confirm')
-    expect(data.confirmation.html).toContain('Life Focus, LLC')
+    expect(data.confirmation.html).toContain('LifeFocus, LLC')
     expect(data.campaign.subject).toContain('SceneFlow is open')
     expect(data.campaign.subject).not.toContain('November 2026')
   })
