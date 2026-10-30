@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { useTranslations } from 'next-intl'
-import { Sparkles, ChevronDown, ImageIcon } from 'lucide-react'
+import { Sparkles, ChevronDown, ChevronUp, ImageIcon } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { FEATURE_ICONS } from './keyFeatureIcons'
 import { FeatureRoomOverview } from '@/components/landing/FeatureRoomOverview'
@@ -396,6 +396,7 @@ export default function KeyFeaturesSection() {
   const [activeGroupId, setActiveGroupId] = useState('spend')
   const [selectedIcon, setSelectedIcon] = useState<string | null>(null)
   const [expandedFeature, setExpandedFeature] = useState<string | null>(null)
+  const [showFeaturesList, setShowFeaturesList] = useState(false)
 
   useEffect(() => {
     const syncRoomFromHash = () => {
@@ -530,104 +531,125 @@ export default function KeyFeaturesSection() {
             }
           />
 
-          {panes.length > 0 ? (
-            <div
-              role="tablist"
-              aria-label={activeRoom.label}
-              className="mb-5 flex gap-1 overflow-x-auto"
+          <div className="mb-5 flex items-center justify-center sm:justify-start">
+            <button
+              type="button"
+              onClick={() => setShowFeaturesList((prev) => !prev)}
+              aria-expanded={showFeaturesList}
+              aria-controls="key-features-detail-list"
+              className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-slate-900/80 px-4 py-2 text-xs font-semibold text-cyan-200 transition hover:border-cyan-400/40 hover:bg-slate-800 hover:text-white sm:text-sm"
             >
-              {panes.map((pane) => {
-                const isActive = pane.id === (activePane?.id ?? panes[0].id)
-                return (
-                  <button
-                    key={pane.id}
-                    id={`key-feature-group-${pane.id}`}
-                    type="button"
-                    role="tab"
-                    aria-selected={isActive}
-                    onClick={() => selectGroup(pane.id)}
-                    className={cn(
-                      'shrink-0 whitespace-nowrap rounded-full border px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.14em] transition-colors',
-                      isActive
-                        ? 'border-emerald-400/40 bg-emerald-500/15 text-emerald-200'
-                        : 'border-slate-700 text-slate-400 hover:border-slate-500 hover:text-white'
-                    )}
-                  >
-                    {pane.label}
-                  </button>
-                )
-              })}
-            </div>
-          ) : null}
+              <span>Features List</span>
+              {showFeaturesList ? (
+                <ChevronUp className="h-4 w-4 text-cyan-300" aria-hidden />
+              ) : (
+                <ChevronDown className="h-4 w-4 text-cyan-300" aria-hidden />
+              )}
+            </button>
+          </div>
 
-          {activePane && (activePane.headline || activePane.description) ? (
-            <div className="mb-5 rounded-2xl border border-slate-800/80 bg-slate-900/30 px-4 py-3.5 sm:px-5">
-              {activePane.headline ? (
-                <p className="text-sm font-semibold text-white sm:text-base">
-                  {activePane.headline}
-                </p>
+          {showFeaturesList ? (
+            <div id="key-features-detail-list">
+              {panes.length > 0 ? (
+                <div
+                  role="tablist"
+                  aria-label={activeRoom.label}
+                  className="mb-5 flex gap-1 overflow-x-auto"
+                >
+                  {panes.map((pane) => {
+                    const isActive = pane.id === (activePane?.id ?? panes[0].id)
+                    return (
+                      <button
+                        key={pane.id}
+                        id={`key-feature-group-${pane.id}`}
+                        type="button"
+                        role="tab"
+                        aria-selected={isActive}
+                        onClick={() => selectGroup(pane.id)}
+                        className={cn(
+                          'shrink-0 whitespace-nowrap rounded-full border px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.14em] transition-colors',
+                          isActive
+                            ? 'border-emerald-400/40 bg-emerald-500/15 text-emerald-200'
+                            : 'border-slate-700 text-slate-400 hover:border-slate-500 hover:text-white'
+                        )}
+                      >
+                        {pane.label}
+                      </button>
+                    )
+                  })}
+                </div>
               ) : null}
-              {activePane.description ? (
-                <p className="mt-1 max-w-3xl text-xs leading-relaxed text-gray-400 sm:text-sm">
-                  {activePane.description}
-                </p>
-              ) : null}
-            </div>
-          ) : null}
 
-          <div className="flex flex-col gap-1 lg:grid lg:grid-cols-[minmax(16rem,20rem)_minmax(0,1fr)] lg:items-start lg:gap-x-6 lg:gap-y-1">
-            {visibleFeatures.map((feature, index) => {
-              const Icon = FEATURE_ICONS[feature.icon] ?? Sparkles
-              const isSelected = feature.icon === selected.icon
-              return (
-                <button
-                  key={feature.icon}
-                  type="button"
-                  aria-pressed={isSelected}
-                  onClick={() => {
-                    setSelectedIcon(feature.icon)
-                    setExpandedFeature(null)
-                  }}
+              {activePane && (activePane.headline || activePane.description) ? (
+                <div className="mb-5 rounded-2xl border border-slate-800/80 bg-slate-900/30 px-4 py-3.5 sm:px-5">
+                  {activePane.headline ? (
+                    <p className="text-sm font-semibold text-white sm:text-base">
+                      {activePane.headline}
+                    </p>
+                  ) : null}
+                  {activePane.description ? (
+                    <p className="mt-1 max-w-3xl text-xs leading-relaxed text-gray-400 sm:text-sm">
+                      {activePane.description}
+                    </p>
+                  ) : null}
+                </div>
+              ) : null}
+
+              <div className="flex flex-col gap-1 lg:grid lg:grid-cols-[minmax(16rem,20rem)_minmax(0,1fr)] lg:items-start lg:gap-x-6 lg:gap-y-1">
+                {visibleFeatures.map((feature, index) => {
+                  const Icon = FEATURE_ICONS[feature.icon] ?? Sparkles
+                  const isSelected = feature.icon === selected.icon
+                  return (
+                    <button
+                      key={feature.icon}
+                      type="button"
+                      aria-pressed={isSelected}
+                      onClick={() => {
+                        setSelectedIcon(feature.icon)
+                        setExpandedFeature(null)
+                      }}
+                      className={cn(
+                        'flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm transition-colors lg:col-start-1 lg:order-none',
+                        FEATURE_ROW_ORDER[index],
+                        FEATURE_ROW_START[index],
+                        isSelected
+                          ? 'bg-slate-800 text-white'
+                          : 'text-gray-400 hover:bg-slate-800/60 hover:text-white'
+                      )}
+                    >
+                      <span
+                        className={cn(
+                          'flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br',
+                          gradient
+                        )}
+                      >
+                        <Icon className="h-4 w-4 text-white" />
+                      </span>
+                      <span className="font-medium">{feature.title}</span>
+                    </button>
+                  )
+                })}
+                <div
                   className={cn(
-                    'flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm transition-colors lg:col-start-1 lg:order-none',
-                    FEATURE_ROW_ORDER[index],
-                    FEATURE_ROW_START[index],
-                    isSelected
-                      ? 'bg-slate-800 text-white'
-                      : 'text-gray-400 hover:bg-slate-800/60 hover:text-white'
+                    'lg:col-start-2 lg:row-span-10 lg:row-start-1 lg:order-none',
+                    FEATURE_DETAIL_ORDER[visibleFeatures.findIndex((feature) => feature.icon === selected.icon)]
                   )}
                 >
-                  <span
-                    className={cn(
-                      'flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br',
-                      gradient
-                    )}
-                  >
-                    <Icon className="h-4 w-4 text-white" />
-                  </span>
-                  <span className="font-medium">{feature.title}</span>
-                </button>
-              )
-            })}
-            <div
-              className={cn(
-                'lg:col-start-2 lg:row-span-10 lg:row-start-1 lg:order-none',
-                FEATURE_DETAIL_ORDER[visibleFeatures.findIndex((feature) => feature.icon === selected.icon)]
-              )}
-            >
-              <FeatureDetail
-                feature={selected}
-                gradient={gradient}
-                expanded={expandedFeature === selected.icon}
-                onToggle={toggleSelectedLearnMore}
-                screenshotSrc={screenshot ? keyFeatureScreenshotSrc(screenshot) : ''}
-                screenshotVariants={screenshot?.variants}
-                enterFullscreenLabel={t('enterFullscreenOverview')}
-                exitFullscreenLabel={t('exitFullscreenOverview')}
-                {...detailLabels}
-              />
+                  <FeatureDetail
+                    feature={selected}
+                    gradient={gradient}
+                    expanded={expandedFeature === selected.icon}
+                    onToggle={toggleSelectedLearnMore}
+                    screenshotSrc={screenshot ? keyFeatureScreenshotSrc(screenshot) : ''}
+                    screenshotVariants={screenshot?.variants}
+                    enterFullscreenLabel={t('enterFullscreenOverview')}
+                    exitFullscreenLabel={t('exitFullscreenOverview')}
+                    {...detailLabels}
+                  />
+                </div>
+              </div>
             </div>
-          </div>
+          ) : null}
         </div>
       </div>
     </section>
