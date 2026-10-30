@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState } from 'react'
+import React, { useCallback, useEffect, useRef, useState } from 'react'
 import { motion } from 'framer-motion'
 import {
   ArrowRight,
@@ -13,11 +13,23 @@ import {
   Copy,
   Film,
   Layers,
+  Loader2,
+  Maximize2,
+  Pause,
   PauseCircle,
+  Play,
   ShieldCheck,
+  Volume2,
+  VolumeX,
 } from 'lucide-react'
 import { useTranslations } from 'next-intl'
 import { Button } from '@/components/ui/Button'
+import {
+  openTwoModesOnPhoneOrTheater,
+  TwoModesTheaterModal,
+} from '@/components/landing/TwoModesTheaterModal'
+import { PRODUCTION_AGENT_MEDIA } from '@/config/landing/primaryValueMedia'
+import { useReducedMotion } from '@/hooks/useReducedMotion'
 import { getSignupUrlForTier } from '@/lib/billing/checkoutIntent'
 import {
   formatHeroVideoScript,
@@ -87,12 +99,119 @@ const ANA_VIDEO_BLOCKS = [
 ] as const
 
 export function ProductionAgentSection() {
+  const tHero = useTranslations('hero')
+  const tCommon = useTranslations('common')
   const tShowcase = useTranslations('productionShowcase')
   const [showDetail, setShowDetail] = useState(false)
   const [showAnaScript, setShowAnaScript] = useState(false)
   const [copiedScript, setCopiedScript] = useState(false)
 
+  const media = PRODUCTION_AGENT_MEDIA
+  const hasVideo = Boolean(media.webmUrl || media.mp4Url)
+  const prefersReducedMotion = useReducedMotion()
+  const videoRef = useRef<HTMLVideoElement>(null)
+  const [isPlaying, setIsPlaying] = useState(!prefersReducedMotion)
+  const [inViewport, setInViewport] = useState(true)
+  const [isMuted, setIsMuted] = useState(true)
+  const [showUnmutePrompt, setShowUnmutePrompt] = useState(true)
+  const [isTheaterOpen, setIsTheaterOpen] = useState(false)
+  const [isBuffering, setIsBuffering] = useState(hasVideo)
+
   const anaHeroScript = getHeroSectionScript('agent')
+
+  useEffect(() => {
+    if (prefersReducedMotion) setIsPlaying(false)
+  }, [prefersReducedMotion])
+
+  useEffect(() => {
+    const video = videoRef.current
+    if (!video || !hasVideo || typeof IntersectionObserver === 'undefined') return
+    const observer = new IntersectionObserver(
+      (entries) => {
+        for (const entry of entries) {
+          setInViewport(entry.isIntersecting && entry.intersectionRatio >= 0.2)
+        }
+      },
+      { threshold: [0, 0.2, 0.5] }
+    )
+    observer.observe(video)
+    return () => observer.disconnect()
+  }, [hasVideo])
+
+  useEffect(() => {
+    const video = videoRef.current
+    if (!video || !hasVideo) return
+
+    const shouldPlay = isPlaying && inViewport && !isTheaterOpen && !prefersReducedMotion
+    video.muted = isTheaterOpen ? true : isMuted
+    if (!shouldPlay) {
+      video.pause()
+      return
+    }
+
+    void video.play().catch(() => {})
+  }, [
+    hasVideo,
+    inViewport,
+    isMuted,
+    isPlaying,
+    isTheaterOpen,
+    prefersReducedMotion,
+    media.mp4Url,
+    media.webmUrl,
+  ])
+
+  const unmuteWithSound = useCallback(() => {
+    const video = videoRef.current
+    if (video) {
+      video.muted = false
+      void video.play().catch(() => {})
+    }
+    setIsMuted(false)
+    setIsPlaying(true)
+    setShowUnmutePrompt(false)
+  }, [])
+
+  const togglePlay = () => {
+    const video = videoRef.current
+    if (!video) return
+
+    if (!video.paused) {
+      video.pause()
+      setIsPlaying(false)
+      return
+    }
+
+    void video.play().catch(() => {})
+    setIsPlaying(true)
+  }
+
+  const toggleMute = () => {
+    const video = videoRef.current
+    if (!video) return
+    const nextMuted = !isMuted
+    video.muted = nextMuted
+    setIsMuted(nextMuted)
+    if (!nextMuted) setShowUnmutePrompt(false)
+  }
+
+  const openTheater = useCallback(() => {
+    const openedNative = openTwoModesOnPhoneOrTheater(videoRef.current, () => setIsTheaterOpen(true))
+    if (openedNative) {
+      setIsMuted(false)
+      setShowUnmutePrompt(false)
+    }
+  }, [])
+
+  const closeTheater = useCallback(() => {
+    setIsTheaterOpen(false)
+    const video = videoRef.current
+    if (!video) return
+    video.muted = isMuted
+    if (isPlaying && !prefersReducedMotion) {
+      void video.play().catch(() => {})
+    }
+  }, [isMuted, isPlaying, prefersReducedMotion])
 
   const scrollToCheckout = () => {
     window.location.href = getSignupUrlForTier('explorer')
@@ -112,22 +231,113 @@ export function ProductionAgentSection() {
     }
   }
 
+  const videoCaption =
+    'Ana in the SceneFlow virtual production suite as the Autonomous Production Agent builds 27 scenes in the background'
+
   return (
-    <section
-      id={PRODUCTION_AGENT_SECTION_ID}
-      className="relative min-h-[64vh] scroll-mt-20 overflow-hidden bg-gray-950 text-white"
-    >
-      {/* Full-bleed Ana backdrop matching TwoModesSection, DirectControlSection, and PublishCutSection */}
-      <div className="absolute inset-0 overflow-hidden">
-        <img
-          src="/landing/primary-value/production-agent.webp"
-          alt="Ana in the SceneFlow virtual production suite as the Autonomous Production Agent builds 27 scenes in the background"
-          className="absolute inset-0 h-full w-full bg-black object-cover"
-          loading="lazy"
-        />
-        <div className="pointer-events-none absolute inset-0 z-[1] bg-black/45" />
-        <div className="pointer-events-none absolute inset-0 z-[1] bg-gradient-to-t from-black/85 via-black/35 to-black/45" />
-      </div>
+    <>
+      <section
+        id={PRODUCTION_AGENT_SECTION_ID}
+        className="relative min-h-[64vh] scroll-mt-20 overflow-hidden bg-gray-950 text-white"
+      >
+        {/* Full-bleed Ana video backdrop matching TwoModesSection, DirectControlSection, and PublishCutSection */}
+        {hasVideo ? (
+          <div className="absolute inset-0 overflow-hidden">
+            <video
+              ref={videoRef}
+              className="absolute inset-0 h-full w-full bg-black object-cover"
+              autoPlay={!prefersReducedMotion}
+              loop
+              muted={isMuted || isTheaterOpen}
+              playsInline
+              preload={prefersReducedMotion ? 'none' : 'metadata'}
+              poster={media.posterUrl || undefined}
+              aria-label={videoCaption}
+              onPlay={() => setIsPlaying(true)}
+              onPause={() => {
+                if (!isTheaterOpen) setIsPlaying(false)
+              }}
+              onWaiting={() => setIsBuffering(true)}
+              onCanPlay={() => {
+                setIsBuffering(false)
+                if (isPlaying && !isTheaterOpen && !prefersReducedMotion) {
+                  void videoRef.current?.play().catch(() => {})
+                }
+              }}
+              onPlaying={() => setIsBuffering(false)}
+            >
+              {media.webmUrl ? <source src={media.webmUrl} type="video/webm" /> : null}
+              {media.mp4Url ? <source src={media.mp4Url} type="video/mp4" /> : null}
+            </video>
+            <div className="pointer-events-none absolute inset-0 z-[1] bg-black/40" />
+            <div className="pointer-events-none absolute inset-0 z-[1] bg-gradient-to-t from-black/80 via-black/25 to-black/35" />
+          </div>
+        ) : null}
+
+        {hasVideo && isBuffering && !prefersReducedMotion && (
+          <div
+            className="pointer-events-none absolute inset-0 z-[2] flex items-center justify-center bg-black/20"
+            aria-hidden
+          >
+            <Loader2 className="h-10 w-10 animate-spin text-cyan-400/80" />
+          </div>
+        )}
+
+        {hasVideo && (
+          <div className="absolute inset-x-0 top-0 z-20 flex items-center gap-1.5 bg-gradient-to-b from-black/80 to-transparent px-4 pt-3 pb-8 sm:gap-2">
+            <div className="ms-auto flex items-center gap-1.5 sm:gap-2">
+              {isMuted && !isBuffering && (
+                showUnmutePrompt ? (
+                  <button
+                    type="button"
+                    onClick={unmuteWithSound}
+                    aria-label={tHero('playWithNarration')}
+                    className="flex h-8 w-8 shrink-0 items-center justify-center gap-1.5 rounded-full border border-cyan-400/40 bg-black/70 text-xs font-semibold text-white shadow-lg shadow-cyan-500/20 transition-colors hover:border-cyan-400/60 hover:bg-black/85 sm:h-auto sm:w-auto sm:px-2 sm:py-1 sm:text-sm"
+                  >
+                    <Volume2 className="h-4 w-4 shrink-0 text-cyan-400" aria-hidden />
+                    <span className="hidden whitespace-nowrap sm:inline">{tHero('playWithNarration')}</span>
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={unmuteWithSound}
+                    aria-label={tHero('tapToHear')}
+                    className="flex h-8 w-8 shrink-0 items-center justify-center gap-1.5 rounded-full border border-white/20 bg-black/60 text-xs font-medium text-gray-200 transition-colors hover:border-cyan-400/40 hover:text-white sm:h-auto sm:w-auto sm:px-2 sm:py-1"
+                  >
+                    <VolumeX className="h-4 w-4 shrink-0 text-cyan-400" aria-hidden />
+                    <span className="hidden whitespace-nowrap sm:inline">{tHero('tapToHear')}</span>
+                  </button>
+                )
+              )}
+
+              <button
+                type="button"
+                onClick={togglePlay}
+                className="flex h-8 w-8 shrink-0 items-center justify-center text-white transition hover:text-cyan-400"
+                aria-label={isPlaying ? tHero('pauseBackgroundVideo') : tHero('playBackgroundVideo')}
+              >
+                {isPlaying ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
+              </button>
+              <button
+                type="button"
+                onClick={toggleMute}
+                className="flex h-8 w-8 shrink-0 items-center justify-center text-white transition hover:text-cyan-400"
+                aria-label={isMuted ? tCommon('unmute') : tCommon('mute')}
+              >
+                {isMuted ? <VolumeX className="h-4 w-4" /> : <Volume2 className="h-4 w-4" />}
+              </button>
+              <button
+                type="button"
+                onClick={openTheater}
+                className="flex h-8 w-8 shrink-0 items-center justify-center gap-1.5 rounded-lg border border-white/15 bg-black/50 text-xs font-medium text-gray-200 transition-colors hover:border-cyan-400/40 hover:text-white sm:h-auto sm:w-auto sm:px-2 sm:py-1"
+                aria-label={tHero('fullscreen')}
+              >
+                <Maximize2 className="h-3.5 w-3.5 shrink-0" aria-hidden />
+                <span className="hidden whitespace-nowrap sm:inline">{tHero('fullscreen')}</span>
+              </button>
+            </div>
+          </div>
+        )}
 
       <div className="relative z-10 mx-auto flex min-h-[64vh] max-w-7xl flex-col justify-center px-4 py-16 sm:px-6 sm:py-20 lg:px-8">
         <motion.div
@@ -310,7 +520,22 @@ export function ProductionAgentSection() {
           </Button>
         </motion.div>
       </div>
-    </section>
+      </section>
+
+      {hasVideo && (
+        <TwoModesTheaterModal
+          open={isTheaterOpen}
+          onClose={closeTheater}
+          media={media}
+          caption={videoCaption}
+          pauseLabel={tCommon('pause')}
+          playLabel={tCommon('play')}
+          muteLabel={tCommon('mute')}
+          unmuteLabel={tCommon('unmute')}
+          soonLabel={tHero('soon')}
+        />
+      )}
+    </>
   )
 }
 

@@ -8,10 +8,14 @@ import {
   DIRECT_CONTROL_VIDEO_BLOB_PATHS,
   PRIMARY_VALUE_MEDIA,
   PRIMARY_VALUE_MEDIA_IDS,
+  PRODUCTION_AGENT_MEDIA,
+  PRODUCTION_AGENT_VIDEO_BLOB_PATHS,
   PUBLISH_CUT_VIDEO_BLOB_PATHS,
   directControlVideoBlobPath,
   getDirectControlVideoLocales,
+  getPrimaryValueMedia,
   getPublishCutVideoLocales,
+  productionAgentVideoBlobPath,
   publishCutVideoBlobPath,
 } from '@/config/landing/primaryValueMedia'
 import { VIDEO_LOCALE_ORDER } from '@/config/landing/videoLocales'
@@ -81,6 +85,17 @@ describe('primary value sections', () => {
       webmUrl: '/landing/primary-value/publish-en.webm?v=20261012',
       mp4Url: '/landing/primary-value/publish-en.mp4?v=20261012',
     })
+    expect(PRODUCTION_AGENT_MEDIA).toEqual({
+      imageUrl: '',
+      posterUrl: '/landing/primary-value/production-agent.webp',
+      webmUrl: '/landing/primary-value/production-agent-en.webm?v=20261030',
+      mp4Url: '/landing/primary-value/production-agent-en.mp4?v=20261030',
+    })
+    expect(getPrimaryValueMedia('agent')).toEqual(PRODUCTION_AGENT_MEDIA)
+    expect(productionAgentVideoBlobPath('en')).toBe('Production Agent.mp4')
+    for (const id of VIDEO_LOCALE_ORDER) {
+      expect(PRODUCTION_AGENT_VIDEO_BLOB_PATHS[id]).toBe(productionAgentVideoBlobPath(id))
+    }
 
     const direct = readFileSync(join(ROOT, 'src/components/landing/DirectControlSection.tsx'), 'utf8')
     const publish = readFileSync(join(ROOT, 'src/components/landing/PublishCutSection.tsx'), 'utf8')

@@ -16,6 +16,7 @@ export type PrimaryValueMediaId = (typeof PRIMARY_VALUE_MEDIA_IDS)[number]
 
 const ILLUSTRATION_BASE = '/landing/primary-value'
 const DIRECTION_POSTER = `${ILLUSTRATION_BASE}/direction.webp`
+const PRODUCTION_AGENT_POSTER = `${ILLUSTRATION_BASE}/production-agent.webp`
 const PUBLISH_POSTER = `${ILLUSTRATION_BASE}/publish.webp`
 
 const EMPTY_MEDIA: TwoModesMediaEntry = {
@@ -139,7 +140,31 @@ export const PRIMARY_VALUE_MEDIA: Record<PrimaryValueMediaId, TwoModesMediaEntry
   publish: publishMedia('en'),
 }
 
+/** Blob master for the Production Agent hero walkthrough. */
+export const PRODUCTION_AGENT_VIDEO_BLOB_PATHS: Record<VideoLocaleId, string> = {
+  en: 'Production Agent.mp4',
+  es: 'Production Agent (Spanish).mp4',
+  zh: `Production Agent (${LOCALE_FILENAME_LABELS.zh}).mp4`,
+  ar: `Production Agent (${LOCALE_FILENAME_LABELS.ar}).mp4`,
+}
+
+export function productionAgentVideoBlobPath(locale: VideoLocaleId): string {
+  return PRODUCTION_AGENT_VIDEO_BLOB_PATHS[locale]
+}
+
+const PRODUCTION_AGENT_EN_VERSION = '20261030'
+
+export const PRODUCTION_AGENT_MEDIA: TwoModesMediaEntry = {
+  imageUrl: '',
+  posterUrl: PRODUCTION_AGENT_POSTER,
+  webmUrl: `${ILLUSTRATION_BASE}/production-agent-en.webm?v=${PRODUCTION_AGENT_EN_VERSION}`,
+  mp4Url: `${ILLUSTRATION_BASE}/production-agent-en.mp4?v=${PRODUCTION_AGENT_EN_VERSION}`,
+}
+
 export function getPrimaryValueMedia(id: string): TwoModesMediaEntry {
+  if (id === 'agent' || id === 'production-agent') {
+    return PRODUCTION_AGENT_MEDIA
+  }
   if ((PRIMARY_VALUE_MEDIA_IDS as readonly string[]).includes(id)) {
     return PRIMARY_VALUE_MEDIA[id as PrimaryValueMediaId]
   }

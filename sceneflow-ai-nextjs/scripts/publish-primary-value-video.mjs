@@ -31,6 +31,10 @@ const SLOTS = {
   direction: {
     blobPath: 'gemini_generated_video_1d48a8db.mp4',
   },
+  'production-agent-en': {
+    blobPath: 'Production Agent.mp4',
+    posterSlot: 'production-agent',
+  },
   publish: {
     blobPath: 'gemini_generated_video_de9e365a.mp4',
   },
