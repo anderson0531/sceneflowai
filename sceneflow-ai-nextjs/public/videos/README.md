@@ -7,7 +7,10 @@ The player requests:
 - `/videos/hero-pt.webm` and `/videos/hero-pt.mp4` — committed files from Blob `Hero Video (Portuguese).mp4`. These paths are not rewritten.
 - `/videos/hero-zh.webm` and `/videos/hero-zh.mp4` — committed files from Blob `Hero Video (Chinese).mp4`. These paths are not rewritten.
 - `/videos/hero-ar.webm` and `/videos/hero-ar.mp4` — committed files from Blob `Her Video (Arabic).mp4`. These paths are not rewritten.
-- `/videos/cinematic-drama-trailer.webm` — committed Feature-Length Cinematic Drama trailer. The MP4 fallback stays on Blob.
+- `/videos/cinematic-drama-trailer.webm` and `/videos/cinematic-drama-trailer.mp4` — committed 90s Feature-Length Cinematic Drama trailer (*The White City Current*).
+- `/videos/animated-series-trailer.webm` and `/videos/animated-series-trailer.mp4` — committed 90s Full-Season Animated Series trailer (*Hart House*).
+- `/videos/documentary-trailer.webm` and `/videos/documentary-trailer.mp4` — committed 90s Long-Form Documentary trailer (*The Long Thought*).
+- `/videos/training-series-trailer.webm` and `/videos/training-series-trailer.mp4` — committed 90s Multi-Module Training Series trailer (*Five Plates*).
 
 English, Spanish, Portuguese, Chinese, and Arabic are committed, so those paths are not rewritten to Blob. Do **not** point a rewrite at the older watermarked `landing/hero/sceneflow-hero-{lang}.mp4` files.
 

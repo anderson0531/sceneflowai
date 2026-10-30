@@ -54,6 +54,13 @@ google-cloud-cli*.tar.gz
 !/public/videos/hero-th.webm
 !/public/videos/hero-th.mp4
 !/public/videos/cinematic-drama-trailer.webm
+!/public/videos/cinematic-drama-trailer.mp4
+!/public/videos/animated-series-trailer.webm
+!/public/videos/animated-series-trailer.mp4
+!/public/videos/documentary-trailer.webm
+!/public/videos/documentary-trailer.mp4
+!/public/videos/training-series-trailer.webm
+!/public/videos/training-series-trailer.mp4
 
 # debug
 npm-debug.log*

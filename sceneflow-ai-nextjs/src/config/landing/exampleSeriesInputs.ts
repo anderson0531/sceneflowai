@@ -73,13 +73,13 @@ export const EXAMPLE_SERIES_INPUTS: readonly ExampleSeriesInput[] = [
         name: 'Gideon Croft',
         role: 'Protagonist · Locked Character Sheet',
         descriptor:
-          'Former Municipal Infrastructure Archivist (54). Weathered charcoal wool archivist smock, wire-rimmed spectacles, salt-and-pepper beard, calloused draftsman hands; lit by warm 3200K tungsten against cold tunnel slate.',
+          'Former Municipal Infrastructure Archivist (58). African American man in his late 50s, grey hair and short beard, intelligent; weathered charcoal wool archivist smock, wire-rimmed spectacles, calloused draftsman hands; lit by warm 3200K tungsten against cold tunnel slate.',
       },
       {
         name: 'Piper Hayes',
         role: 'Co-Lead · Locked Character Sheet',
         descriptor:
-          'Blacklisted Investigative Energy Reporter (31). Snow-dusted olive field parka, canvas satchel with encrypted drive and brass cipher cylinder, sharp kinetic intensity under violet-teal induction spill.',
+          'Blacklisted Investigative Energy Reporter (32). Attractive Asian American woman in her 30s; snow-dusted olive field parka, canvas satchel with encrypted drive and brass cipher cylinder, sharp kinetic intensity under violet-teal induction spill.',
       },
       {
         name: 'Julian Ward',
@@ -91,7 +91,7 @@ export const EXAMPLE_SERIES_INPUTS: readonly ExampleSeriesInput[] = [
         name: 'Dr. Clara Vance-Croft',
         role: 'Archival & Memory Anchor · Locked Character Sheet',
         descriptor:
-          'Late Resonance Physicist (48). Slate lab coat, copper-wound 1893 calibration rig, warm amber flashback plates and holographic schematic reflections.',
+          'Late Resonance Physicist (52). Attractive Asian American woman in her 50s; slate lab coat, copper-wound 1893 calibration rig, warm amber flashback plates and holographic schematic reflections.',
       },
     ],
     episode1Synopsis: {

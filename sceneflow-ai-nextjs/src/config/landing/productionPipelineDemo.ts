@@ -12,10 +12,18 @@
 
 export const FLAGSHIP_PRODUCTION_ID = 'drama' as const
 
-/** Same-path public file. The query busts the previous cached trailer. */
-export const CINEMATIC_DRAMA_TRAILER_WEBM = '/videos/cinematic-drama-trailer.webm?v=20261011'
-export const CINEMATIC_DRAMA_TRAILER_MP4 =
-  'https://xxavfkdhdebrqida.public.blob.vercel-storage.com/25467ce3-606a-4e07-98ba-a91cf2be7ff2.mp4'
+/** Same-path public files. The query busts previously cached trailers. */
+export const CINEMATIC_DRAMA_TRAILER_WEBM = '/videos/cinematic-drama-trailer.webm?v=20261030'
+export const CINEMATIC_DRAMA_TRAILER_MP4 = '/videos/cinematic-drama-trailer.mp4?v=20261030'
+
+export const ANIMATED_SERIES_TRAILER_WEBM = '/videos/animated-series-trailer.webm?v=20261030'
+export const ANIMATED_SERIES_TRAILER_MP4 = '/videos/animated-series-trailer.mp4?v=20261030'
+
+export const DOCUMENTARY_TRAILER_WEBM = '/videos/documentary-trailer.webm?v=20261030'
+export const DOCUMENTARY_TRAILER_MP4 = '/videos/documentary-trailer.mp4?v=20261030'
+
+export const TRAINING_SERIES_TRAILER_WEBM = '/videos/training-series-trailer.webm?v=20261030'
+export const TRAINING_SERIES_TRAILER_MP4 = '/videos/training-series-trailer.mp4?v=20261030'
 
 export const PRODUCTION_WALK_IDS = ['drama', 'animation', 'documentary', 'training'] as const
 
@@ -85,9 +93,18 @@ export const PRODUCTION_PIPELINE_WALKS: Record<ProductionWalkId, ProductionPipel
     trailerSrc: CINEMATIC_DRAMA_TRAILER_WEBM,
     trailerMp4Src: CINEMATIC_DRAMA_TRAILER_MP4,
   }),
-  animation: exampleWalk('animation'),
-  documentary: exampleWalk('documentary'),
-  training: exampleWalk('training'),
+  animation: exampleWalk('animation', {
+    trailerSrc: ANIMATED_SERIES_TRAILER_WEBM,
+    trailerMp4Src: ANIMATED_SERIES_TRAILER_MP4,
+  }),
+  documentary: exampleWalk('documentary', {
+    trailerSrc: DOCUMENTARY_TRAILER_WEBM,
+    trailerMp4Src: DOCUMENTARY_TRAILER_MP4,
+  }),
+  training: exampleWalk('training', {
+    trailerSrc: TRAINING_SERIES_TRAILER_WEBM,
+    trailerMp4Src: TRAINING_SERIES_TRAILER_MP4,
+  }),
 }
 
 /** Flagship walk. Older callers read this single triple. */

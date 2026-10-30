@@ -635,15 +635,32 @@ describe('Production showcase screening embeds', () => {
   it('ships a trailer and pipeline doors on every example before the longform master exists', () => {
     expect(getProductionExampleMedia('drama').isFlagship).toBe(true)
     expect(getProductionExampleMedia('drama').trailerSrc).toBe(
-      '/videos/cinematic-drama-trailer.webm?v=20261011'
+      '/videos/cinematic-drama-trailer.webm?v=20261030'
     )
-    expect(getProductionExampleMedia('drama').trailerMp4Src).toContain(
-      '25467ce3-606a-4e07-98ba-a91cf2be7ff2.mp4'
+    expect(getProductionExampleMedia('drama').trailerMp4Src).toBe(
+      '/videos/cinematic-drama-trailer.mp4?v=20261030'
     )
     expect(getProductionExampleMedia('drama').longformHref).toBeNull()
     expect(getProductionExampleMedia('animation').isFlagship).toBe(false)
-    expect(getProductionExampleMedia('animation').trailerSrc).toBeNull()
+    expect(getProductionExampleMedia('animation').trailerSrc).toBe(
+      '/videos/animated-series-trailer.webm?v=20261030'
+    )
+    expect(getProductionExampleMedia('animation').trailerMp4Src).toBe(
+      '/videos/animated-series-trailer.mp4?v=20261030'
+    )
+    expect(getProductionExampleMedia('documentary').trailerSrc).toBe(
+      '/videos/documentary-trailer.webm?v=20261030'
+    )
+    expect(getProductionExampleMedia('documentary').trailerMp4Src).toBe(
+      '/videos/documentary-trailer.mp4?v=20261030'
+    )
     expect(getProductionExampleMedia('documentary').longformHref).toBeNull()
+    expect(getProductionExampleMedia('training').trailerSrc).toBe(
+      '/videos/training-series-trailer.webm?v=20261030'
+    )
+    expect(getProductionExampleMedia('training').trailerMp4Src).toBe(
+      '/videos/training-series-trailer.mp4?v=20261030'
+    )
     expect(getProductionExampleMedia('training').longformHref).toBeNull()
     expect(getProductionExampleMedia('drama').milestones.map((milestone) => milestone.href)).toEqual([
       '/s/series/cb7cc9e663a87a074e37c62636ef8c00',
