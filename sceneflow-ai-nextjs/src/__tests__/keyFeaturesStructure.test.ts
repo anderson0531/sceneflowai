@@ -1,4 +1,4 @@
-import { readFileSync, readdirSync } from 'fs'
+import { existsSync, readFileSync, readdirSync, statSync } from 'fs'
 import path from 'path'
 import { describe, it, expect } from 'vitest'
 import { FEATURE_ICONS } from '@/components/landing/keyFeatureIcons'
@@ -17,9 +17,12 @@ import {
   SERIES_ROOM_OVERVIEW_WEBM,
   featureRoomHasVideo,
   featureRoomVideoSources,
+  getFeatureRoomDubLocales,
   getFeatureRoomMedia,
   getFeatureRoomVideoLocales,
 } from '@/config/landing/featureRoomMedia'
+import { ANA_CHARACTER_VOICE, FEATURE_ROOM_SCRIPTS } from '@/config/landing/featureRoomScripts'
+import { HERO_VIDEO_LOCALE_ORDER } from '@/config/landing/heroVideoLocales'
 import {
   FEATURE_CHAPTER_MAP,
   FEATURE_DEMO_SECONDS,
@@ -238,14 +241,15 @@ describe('keyFeatures structure', () => {
           { src: produced.webm, type: 'video/webm' },
           { src: produced.mp4, type: 'video/mp4' },
         ])
-        expect(locales.filter((locale) => locale.id !== 'en').every((locale) => !locale.available)).toBe(
-          true
-        )
+        expect(locales.every((locale) => locale.available)).toBe(true)
+        const dubLocales = getFeatureRoomDubLocales(roomId)
+        expect(dubLocales.map((locale) => locale.id)).toEqual([...HERO_VIDEO_LOCALE_ORDER])
+        expect(dubLocales.every((locale) => locale.available)).toBe(true)
       } else {
         expect(locales.every((locale) => !locale.available)).toBe(true)
         expect(featureRoomHasVideo(getFeatureRoomMedia(roomId))).toBe(false)
       }
-      for (const locale of VIDEO_LOCALE_ORDER) {
+      for (const locale of HERO_VIDEO_LOCALE_ORDER) {
         if (produced && locale === 'en') continue
         const sources = featureRoomVideoSources(roomId, locale)
         expect(sources.map((source) => source.type)).toEqual(['video/webm', 'video/mp4'])
@@ -383,8 +387,36 @@ describe('keyFeatures structure', () => {
     expect(overview).toContain('IntersectionObserver')
     expect(overview).toContain('useReducedMotion')
     expect(overview).toContain('comingSoonLabel')
+    expect(overview).toContain('useLocale')
+    expect(overview).toContain('getFeatureRoomMedia(roomId, locale)')
     expect(overview).not.toContain('useLandingVideoLocale')
     expect(overview).not.toContain('VideoLanguageControl')
     expect(overview).not.toContain('soonLabel')
+  })
+
+  it('ships Ana-voiced multilanguage dubbed WebM and MP4 videos for all 4 feature room overviews', () => {
+    expect(ANA_CHARACTER_VOICE.elevenLabsVoiceId).toBe('EXAVITQu4vr4xnSDxMaL')
+    for (const roomId of FEATURE_ROOM_IDS) {
+      const script = FEATURE_ROOM_SCRIPTS[roomId]
+      expect(script).toBeDefined()
+      const enBeats = script.beatsByLocale.en
+      expect(enBeats.length).toBeGreaterThanOrEqual(5)
+      for (const locale of HERO_VIDEO_LOCALE_ORDER) {
+        expect(script.beatsByLocale[locale].length).toBe(enBeats.length)
+        const media = getFeatureRoomMedia(roomId, locale)
+        expect(featureRoomHasVideo(media)).toBe(true)
+        if (locale !== 'en') {
+          const webmDisk = path.join(ROOT, 'public', media.webmUrl)
+          const mp4Disk = path.join(ROOT, 'public', media.mp4Url)
+          expect(existsSync(webmDisk), `${roomId}-${locale}.webm`).toBe(true)
+          expect(existsSync(mp4Disk), `${roomId}-${locale}.mp4`).toBe(true)
+          expect(statSync(webmDisk).size).toBeGreaterThan(500_000)
+          expect(statSync(mp4Disk).size).toBeGreaterThan(500_000)
+        }
+      }
+      expect(getFeatureRoomMedia(roomId, 'zh-CN').webmUrl).toBe(
+        `/landing/key-features/rooms/${roomId}-zh.webm`
+      )
+    }
   })
 })

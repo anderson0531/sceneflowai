@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState, useRef } from 'react'
+import { useLocale } from 'next-intl'
 import { Maximize, Minimize, Pause, Play, Volume2, VolumeX } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useReducedMotion } from '@/hooks/useReducedMotion'
@@ -64,6 +65,7 @@ export function FeatureRoomOverview({
   watchLongformHref,
   watchLongformLabel,
 }: FeatureRoomOverviewProps) {
+  const locale = useLocale()
   const prefersReducedMotion = useReducedMotion()
   const bandRef = useRef<HTMLDivElement>(null)
   const videoRef = useRef<HTMLVideoElement>(null)
@@ -74,14 +76,14 @@ export function FeatureRoomOverview({
   const [isFullscreen, setIsFullscreen] = useState(false)
   const [filmEngaged, setFilmEngaged] = useState(false)
 
-  const media = getFeatureRoomMedia(roomId)
+  const media = getFeatureRoomMedia(roomId, locale)
   const hasVideo = featureRoomHasVideo(media)
 
   useEffect(() => {
     setPausedByUser(false)
     setFilmEngaged(false)
     setIsMuted(true)
-  }, [roomId])
+  }, [roomId, locale])
 
   useEffect(() => {
     const syncFullscreen = () => {

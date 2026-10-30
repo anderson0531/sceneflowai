@@ -2,10 +2,15 @@
  * Room films for the four feature rooms.
  * Each film defines the room and walks its workflow (60–90 seconds).
  * The in-page band loops an 8-second muted cold open until the visitor
- * plays the film with sound. The Series Room film is one version.
+ * plays the film with sound.
  * WebM is listed before the MP4 fallback. A room stays empty until its film is set.
  */
 
+import {
+  HERO_VIDEO_LOCALE_ORDER,
+  landingLocaleToHeroVideoLocale,
+  type HeroVideoLocaleId,
+} from '@/config/landing/heroVideoLocales'
 import {
   VIDEO_LOCALE_ORDER,
   type VideoLocale,
@@ -40,6 +45,11 @@ export type FeatureRoomVideoLocale = VideoLocale & {
   mp4Url: string
 }
 
+export type FeatureRoomDubLocale = FeatureRoomMediaEntry & {
+  id: HeroVideoLocaleId
+  available: boolean
+}
+
 const EMPTY_ROOM_MEDIA: FeatureRoomMediaEntry = {
   posterUrl: '',
   webmUrl: '',
@@ -47,8 +57,8 @@ const EMPTY_ROOM_MEDIA: FeatureRoomMediaEntry = {
 }
 
 /**
- * Room overviews. One version per room: WebM plays first, and the Blob MP4 is the fallback.
- * A dub for a room is ignored until that room's film is in this map.
+ * Room overviews. WebM plays first, and the MP4 is the fallback.
+ * Each room ships English plus 6 Ana-voiced dubbed locales (es, pt, hi, zh, ar, th).
  */
 export const SERIES_ROOM_OVERVIEW_WEBM = '/landing/key-features/rooms/series-desk-en.webm'
 
@@ -70,49 +80,85 @@ export const SCREENING_ROOM_OVERVIEW_WEBM = '/landing/key-features/rooms/screeni
 export const SCREENING_ROOM_OVERVIEW_MP4 =
   'https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Screening%20Room%202.mp4'
 
-const PRODUCED_ROOM_FILMS: Partial<
-  Record<FeatureRoomId, Partial<Record<VideoLocaleId, FeatureRoomMediaEntry>>>
-> = {
-  'series-desk': {
-    en: {
-      posterUrl: '',
-      webmUrl: SERIES_ROOM_OVERVIEW_WEBM,
-      mp4Url: SERIES_ROOM_OVERVIEW_MP4,
-    },
-  },
-  'blueprint-board': {
-    en: {
-      posterUrl: '',
-      webmUrl: BLUEPRINT_ROOM_OVERVIEW_WEBM,
-      mp4Url: BLUEPRINT_ROOM_OVERVIEW_MP4,
-    },
-  },
-  'production-stage': {
-    en: {
-      posterUrl: '',
-      webmUrl: PRODUCTION_STAGE_OVERVIEW_WEBM,
-      mp4Url: PRODUCTION_STAGE_OVERVIEW_MP4,
-    },
-  },
-  'screening-room': {
-    en: {
-      posterUrl: '',
-      webmUrl: SCREENING_ROOM_OVERVIEW_WEBM,
-      mp4Url: SCREENING_ROOM_OVERVIEW_MP4,
-    },
-  },
-}
-
-/** Reserved site path for a room film that is not published yet. */
+/** Reserved site path for a room film in a given locale. */
 export function featureRoomOverviewPath(
   roomId: string,
-  locale: VideoLocaleId,
+  locale: HeroVideoLocaleId | VideoLocaleId,
   ext: 'webm' | 'mp4'
 ): string {
   return `/landing/key-features/rooms/${roomId}-${locale}.${ext}`
 }
 
-function localeMedia(roomId: string, locale: VideoLocaleId): FeatureRoomMediaEntry {
+function buildProducedRoomLocales(
+  roomId: FeatureRoomId,
+  enWebmUrl: string,
+  enMp4Url: string
+): Record<HeroVideoLocaleId, FeatureRoomMediaEntry> {
+  return {
+    en: {
+      posterUrl: '',
+      webmUrl: enWebmUrl,
+      mp4Url: enMp4Url,
+    },
+    es: {
+      posterUrl: '',
+      webmUrl: featureRoomOverviewPath(roomId, 'es', 'webm'),
+      mp4Url: featureRoomOverviewPath(roomId, 'es', 'mp4'),
+    },
+    pt: {
+      posterUrl: '',
+      webmUrl: featureRoomOverviewPath(roomId, 'pt', 'webm'),
+      mp4Url: featureRoomOverviewPath(roomId, 'pt', 'mp4'),
+    },
+    hi: {
+      posterUrl: '',
+      webmUrl: featureRoomOverviewPath(roomId, 'hi', 'webm'),
+      mp4Url: featureRoomOverviewPath(roomId, 'hi', 'mp4'),
+    },
+    zh: {
+      posterUrl: '',
+      webmUrl: featureRoomOverviewPath(roomId, 'zh', 'webm'),
+      mp4Url: featureRoomOverviewPath(roomId, 'zh', 'mp4'),
+    },
+    ar: {
+      posterUrl: '',
+      webmUrl: featureRoomOverviewPath(roomId, 'ar', 'webm'),
+      mp4Url: featureRoomOverviewPath(roomId, 'ar', 'mp4'),
+    },
+    th: {
+      posterUrl: '',
+      webmUrl: featureRoomOverviewPath(roomId, 'th', 'webm'),
+      mp4Url: featureRoomOverviewPath(roomId, 'th', 'mp4'),
+    },
+  }
+}
+
+const PRODUCED_ROOM_FILMS: Partial<
+  Record<FeatureRoomId, Partial<Record<HeroVideoLocaleId, FeatureRoomMediaEntry>>>
+> = {
+  'series-desk': buildProducedRoomLocales(
+    'series-desk',
+    SERIES_ROOM_OVERVIEW_WEBM,
+    SERIES_ROOM_OVERVIEW_MP4
+  ),
+  'blueprint-board': buildProducedRoomLocales(
+    'blueprint-board',
+    BLUEPRINT_ROOM_OVERVIEW_WEBM,
+    BLUEPRINT_ROOM_OVERVIEW_MP4
+  ),
+  'production-stage': buildProducedRoomLocales(
+    'production-stage',
+    PRODUCTION_STAGE_OVERVIEW_WEBM,
+    PRODUCTION_STAGE_OVERVIEW_MP4
+  ),
+  'screening-room': buildProducedRoomLocales(
+    'screening-room',
+    SCREENING_ROOM_OVERVIEW_WEBM,
+    SCREENING_ROOM_OVERVIEW_MP4
+  ),
+}
+
+function localeMedia(roomId: string, locale: HeroVideoLocaleId): FeatureRoomMediaEntry {
   if (!(FEATURE_ROOM_IDS as readonly string[]).includes(roomId)) {
     return { ...EMPTY_ROOM_MEDIA }
   }
@@ -133,12 +179,25 @@ export const FEATURE_ROOM_MEDIA: Record<FeatureRoomId, FeatureRoomMediaEntry> = 
 
 export function getFeatureRoomMedia(
   id: string,
-  locale: VideoLocaleId = 'en'
+  locale: string = 'en'
 ): FeatureRoomMediaEntry {
   if ((FEATURE_ROOM_IDS as readonly string[]).includes(id)) {
-    return localeMedia(id, locale)
+    const resolved = landingLocaleToHeroVideoLocale(locale)
+    return localeMedia(id, resolved)
   }
   return { ...EMPTY_ROOM_MEDIA }
+}
+
+export function getFeatureRoomDubLocales(roomId: string): FeatureRoomDubLocale[] {
+  return HERO_VIDEO_LOCALE_ORDER.map((id) => {
+    const media = localeMedia(roomId, id)
+    const available = Boolean(media.webmUrl || media.mp4Url)
+    return {
+      id,
+      ...media,
+      available,
+    }
+  })
 }
 
 export function getFeatureRoomVideoLocales(roomId: string): FeatureRoomVideoLocale[] {
@@ -159,7 +218,7 @@ export function getFeatureRoomVideoLocales(roomId: string): FeatureRoomVideoLoca
 /** Produced sources when a film exists, otherwise the reserved WebM then MP4 paths. */
 export function featureRoomVideoSources(
   roomId: string,
-  locale: VideoLocaleId
+  locale: HeroVideoLocaleId | VideoLocaleId
 ): Array<{ src: string; type: 'video/webm' | 'video/mp4' }> {
   const media = localeMedia(roomId, locale)
   const sources: Array<{ src: string; type: 'video/webm' | 'video/mp4' }> = []
