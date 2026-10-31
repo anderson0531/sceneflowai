@@ -33,7 +33,7 @@ import {
   isGcsUri,
   parseGcsHttpsUrl,
 } from '@/lib/storage/gcsAssets'
-import { safeParseJsonFromText } from '@/lib/utils/safeParseJson'
+import { safeParseJsonFromText } from '@/lib/safeJson'
 import { generateWithVision, type VisionPart } from '@/lib/vertexai/gemini'
 
 // ============================================================================
@@ -1331,7 +1331,7 @@ export async function reviewSceneVideoMultimodal(
     }
   }
 
-  const parsed = safeParseJsonFromText<Record<string, unknown>>(visionResponse.text)
+  const parsed = safeParseJsonFromText(visionResponse.text) as Record<string, unknown>
   const heading =
     typeof input.scene.heading === 'string'
       ? input.scene.heading

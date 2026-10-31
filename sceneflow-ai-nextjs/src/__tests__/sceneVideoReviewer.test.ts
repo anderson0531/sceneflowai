@@ -406,6 +406,12 @@ describe('Multimodal Scene Video Reviewer — Source & UI Wiring', () => {
     )
     expect(reviewerPanel).toContain('Script Supervisor · Scene')
     expect(reviewerPanel).toContain('Run Script Supervisor')
+    expect(reviewerPanel).toContain("from '@/components/ui/Button'")
+    expect(reviewerPanel).not.toContain("from '@/components/ui/button'")
+
+    const reviewerLib = readSource('src/lib/intelligence/scene-video-reviewer.ts')
+    expect(reviewerLib).toContain("from '@/lib/safeJson'")
+    expect(reviewerLib).not.toContain("from '@/lib/utils/safeParseJson'")
 
     const beatDirectorDialog = readSource('src/components/vision/BeatDirectorDialog.tsx')
     expect(beatDirectorDialog).toContain('initialInstruction')
