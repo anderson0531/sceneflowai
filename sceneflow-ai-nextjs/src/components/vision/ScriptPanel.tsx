@@ -4701,9 +4701,9 @@ function SceneCard({
     | 'references'
     | 'previs'
     | 'video'
+    | 'review'
     | 'mixer'
     | 'streams'
-    | 'review'
   const [activeSceneTab, setActiveSceneTab] = useState<ProductionWorkflowTab>('direction')
   const sceneToolbarControl =
     'h-8 px-2.5 text-xs rounded-md inline-flex items-center gap-1.5 transition-colors disabled:opacity-50'
@@ -5200,9 +5200,9 @@ function SceneCard({
       'references',
       'previs',
       'video',
+      'review',
       'mixer',
       'streams',
-      'review',
     ],
     []
   )
@@ -7168,15 +7168,7 @@ function SceneCard({
                               <Film className="w-3.5 h-3.5 shrink-0" />
                               Clips
                             </TabsTrigger>
-                            <TabsTrigger value="mixer" className={sceneTabTriggerClass}>
-                              <Clapperboard className="w-3.5 h-3.5 shrink-0" />
-                              Mixer
-                            </TabsTrigger>
-                            <TabsTrigger value="streams" title="Language versions of this scene" className={sceneTabTriggerClass}>
-                              <ListVideo className="w-3.5 h-3.5 shrink-0" />
-                              Streams
-                            </TabsTrigger>
-                            <TabsTrigger value="review" title="FlowDirector — Multimodal Audience & Director review of rendered MP4s and shot clips" className={sceneTabTriggerClass}>
+                            <TabsTrigger value="review" title="FlowDirector — Multimodal Audience & Director review to iterate and optimize Stills & Clips before Mixer and Streams" className={sceneTabTriggerClass}>
                               <Eye className="w-3.5 h-3.5 shrink-0" />
                               FlowDirector
                               {typeof scene.videoReview?.arScore === 'number' && (
@@ -7184,6 +7176,14 @@ function SceneCard({
                                   (AR {scene.videoReview.arScore})
                                 </span>
                               )}
+                            </TabsTrigger>
+                            <TabsTrigger value="mixer" className={sceneTabTriggerClass}>
+                              <Clapperboard className="w-3.5 h-3.5 shrink-0" />
+                              Mixer
+                            </TabsTrigger>
+                            <TabsTrigger value="streams" title="Language versions of this scene" className={sceneTabTriggerClass}>
+                              <ListVideo className="w-3.5 h-3.5 shrink-0" />
+                              Streams
                             </TabsTrigger>
                           </TabsList>
                         </div>
@@ -7833,19 +7833,6 @@ function SceneCard({
                                   />
                                 )}
                               </TabsContent>
-                              <TabsContent value="mixer" className="mt-3 focus-visible:outline-none">
-                                <div id={`production-mixer-${workflowSceneId}`} className="scroll-mt-4">
-                                  {slots.mixerBody ?? (
-                                    <p className="text-sm text-slate-400">Mixer opens after this scene has one video clip per shot.</p>
-                                  )}
-                                </div>
-                              </TabsContent>
-                              <TabsContent value="streams" className="mt-3 focus-visible:outline-none overflow-hidden">
-                                {slots.streamsBody}
-                                {slots.streamCount > 0 && (
-                                  <p className="sr-only">{slots.streamCount} streams</p>
-                                )}
-                              </TabsContent>
                               <TabsContent value="review" className="mt-3 focus-visible:outline-none">
                                 <SceneVideoReviewerPanel
                                   projectId={projectId}
@@ -7876,6 +7863,19 @@ function SceneCard({
                                     setDirectBeatId(beatId)
                                   }}
                                 />
+                              </TabsContent>
+                              <TabsContent value="mixer" className="mt-3 focus-visible:outline-none">
+                                <div id={`production-mixer-${workflowSceneId}`} className="scroll-mt-4">
+                                  {slots.mixerBody ?? (
+                                    <p className="text-sm text-slate-400">Mixer opens after this scene has one video clip per shot.</p>
+                                  )}
+                                </div>
+                              </TabsContent>
+                              <TabsContent value="streams" className="mt-3 focus-visible:outline-none overflow-hidden">
+                                {slots.streamsBody}
+                                {slots.streamCount > 0 && (
+                                  <p className="sr-only">{slots.streamCount} streams</p>
+                                )}
                               </TabsContent>
                       </div>
 

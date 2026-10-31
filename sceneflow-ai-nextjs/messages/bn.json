@@ -884,7 +884,7 @@
               {
                 "icon": "scriptSupervisor",
                 "title": "FlowDirector",
-                "description": "Review rendered scene MP4s and individual shot clips inside the Fullscreen `FlowDirector` tab using multimodal video intelligence that unites oversight and action from both the Audience Resonance (`AR Score`) and Director perspectives. Inspect 5-axis audience sub-scores, script and continuity compliance telemetry, and root-cause anomaly attribution (`Keyframe`, `Motion Video`, or `Scene Direction`)—then selectively apply optional pickup recommendations and fixes through the Shot Director or Scene Director.",
+                "description": "Positioned right after `Clips` in the Scene Workflow, `FlowDirector` uses multimodal video intelligence to iterate and optimize your Stills and Clips before final edits in the Mixer and multi-language Stream generation. Uniting oversight and action from both the Audience Resonance (`AR Score`) and Director perspectives, it inspects 5-axis audience sub-scores, script and continuity compliance telemetry, and root-cause anomaly attribution (`Keyframe`, `Motion Video`, or `Scene Direction`)—so you can selectively apply optional pickup recommendations and fixes through the Shot Director or Scene Director.",
                 "screenshot": "FlowDirector — multimodal Audience Resonance (AR Score) and Director video review, shot compliance matrix, and optional Shot & Scene Director pickups",
                 "learnMore": {
                   "items": [
