@@ -6055,47 +6055,6 @@ function SceneCard({
           
           {/* Right Side: Scene Actions */}
           <div className="flex items-center gap-2">
-            {!isOutline && setWorkflowFullscreen && (
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        setWorkflowFullscreen(!workflowFullscreen)
-                      }}
-                      aria-label={
-                        workflowFullscreen
-                          ? 'Exit scene workflow fullscreen'
-                          : 'Open scene workflow in fullscreen window'
-                      }
-                      aria-pressed={workflowFullscreen}
-                      className={`inline-flex h-8 items-center gap-1.5 rounded-full border px-2.5 text-xs font-medium transition-colors ${
-                        workflowFullscreen
-                          ? 'border-indigo-400 bg-indigo-500/30 text-indigo-100'
-                          : 'border-indigo-500/40 bg-indigo-500/15 text-indigo-200 hover:bg-indigo-500/25 hover:text-white'
-                      }`}
-                    >
-                      {workflowFullscreen ? (
-                        <Minimize2 className="w-3.5 h-3.5" />
-                      ) : (
-                        <Maximize2 className="w-3.5 h-3.5" />
-                      )}
-                      <span className="hidden sm:inline">
-                        {workflowFullscreen ? 'Exit Fullscreen' : 'Fullscreen Workflow'}
-                      </span>
-                    </button>
-                  </TooltipTrigger>
-                  <TooltipContent className="bg-gray-900 dark:bg-gray-800 text-white border border-gray-700">
-                    {workflowFullscreen
-                      ? 'Return scene workflow to standard view (Esc)'
-                      : 'Expand scene workflow to fit fullscreen window'}
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-            )}
-
             {/* Bookmark toggle button */}
             {onBookmarkToggle && (
               <TooltipProvider>
