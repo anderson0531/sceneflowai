@@ -61,6 +61,10 @@ google-cloud-cli*.tar.gz
 !/public/videos/documentary-trailer.mp4
 !/public/videos/training-series-trailer.webm
 !/public/videos/training-series-trailer.mp4
+!/public/videos/creator-podcast-trailer.webm
+!/public/videos/creator-podcast-trailer.mp4
+!/public/videos/video-memoir-trailer.webm
+!/public/videos/video-memoir-trailer.mp4
 
 # debug
 npm-debug.log*

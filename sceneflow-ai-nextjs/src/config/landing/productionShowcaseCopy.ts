@@ -281,6 +281,98 @@ export const PRODUCTION_SHOWCASE_COPY = {
       ],
       screeningRoomPreview: 'Five Plates — Screening Room',
     },
+    {
+      id: 'podcast',
+      title: 'Creator Channels & Video Podcasts. Upload Live Host Clips, Generate the World.',
+      subtitle:
+        'Pair your recorded studio camera feed with a locked desk co-host and cinema-grade historical or sci-fi reconstructions—then publish multi-language YouTube and Spotify Video streams in one click.',
+      badge: 'Creator & Podcasts',
+      solutionPillars: [
+        {
+          title: 'Hybrid Live Upload + AI Cinema',
+          frictionHeadline: '40 Hours of Stock B-Roll Hunting.',
+          friction:
+            'Recording a 30-minute investigative podcast or lore episode takes an hour, but illustrating the story with repetitive stock clips or custom animation takes weeks.',
+          solutionHeadline: 'Seamless Studio-to-Story Cutaways.',
+          solution:
+            'Upload your live on-camera host segments and intercut directly into SceneFlow-generated historical, scientific, or thriller reconstructions timed to your voice track.',
+        },
+        {
+          title: 'Recurring Desk Co-Hosts & Set Continuity',
+          frictionHeadline: 'Talking-Head Fatigue.',
+          friction:
+            'Static single-camera podcasts lose viewer retention during complex explanations without visual chemistry or dynamic desk staging.',
+          solutionHeadline: 'Locked Sidekick & Studio Blueprints.',
+          solution:
+            'Anchor a recurring animated or photoreal desk companion—like The Why Files—alongside your live studio feed with consistent lighting, banter, and reaction beats.',
+        },
+        {
+          title: 'Automated Pacing & Visual Evidence',
+          frictionHeadline: 'Manual Timeline Assembly.',
+          friction:
+            'Syncing declassified documents, maps, sound effects, and dramatic music swells across a weekly 30-minute show creates unsustainable editing bottlenecks.',
+          solutionHeadline: 'FlowDirector & Mixer Automation.',
+          solution:
+            'FlowDirector polishes visual continuity across every cutaway while Mixer and Streams balance voice, atmospheric SFX, and score automatically.',
+        },
+        {
+          title: 'Global Multi-Language Channel Scaling',
+          frictionHeadline: 'Single-Language Ceiling.',
+          friction:
+            'Hiring voice actors and re-editing timelines for Spanish, Portuguese, Hindi, or Arabic audio tracks is too expensive for independent channels.',
+          solutionHeadline: 'One-Click Multi-Language Streams.',
+          solution:
+            'Generate localized audio and lip-synced cutaways across dozens of languages to multiply global YouTube AdSense and podcast sponsorship reach.',
+        },
+      ],
+      screeningRoomPreview: 'The Midnight Frequency — Screening Room',
+    },
+    {
+      id: 'memoir',
+      title: 'Video Memoirs & Bespoke Client Studios. Turn Spoken Memories into Cinema.',
+      subtitle:
+        'Combine uploaded family interviews and vintage photos with age-locked period reenactments to launch a high-margin video memoir, reunion, and biography production service.',
+      badge: 'New Business Model',
+      solutionPillars: [
+        {
+          title: 'Unfilmed Memories Brought to Life',
+          frictionHeadline: 'The Missing Footage Problem.',
+          friction:
+            'Families have hours of spoken stories from grandparents and a handful of faded photos, but zero video of the moments that defined their lives.',
+          solutionHeadline: 'Age-Locked Period Reenactments.',
+          solution:
+            'Upload a real living-room interview and reference photos; SceneFlow locks the subject’s young likeness to recreate 1960s harbors, hometown streets, and milestone moments.',
+        },
+        {
+          title: 'Turnkey Studio-in-a-Box Economics',
+          frictionHeadline: '$25,000 Crew & Cast Costs.',
+          friction:
+            'Traditional biographical documentaries require actors, period wardrobe, location permits, and weeks of post-production—pricing out 99% of families and small businesses.',
+          solutionHeadline: 'Solo-Operator Client Production.',
+          solution:
+            'Deliver broadcast-grade 20-to-30-minute legacy films, wedding/reunion tributes, and founder biographies in a single afternoon with high client margins.',
+        },
+        {
+          title: 'Authentic Era & Keepsake Continuity',
+          frictionHeadline: 'Generic Stock Footage Disconnect.',
+          friction:
+            'Generic stock clips feel impersonal and break the emotional truth of a family’s specific heritage, heirloom objects, and hometown.',
+          solutionHeadline: 'Keepsake & Prop Reference Locks.',
+          solution:
+            'Lock real family heirlooms—a 1966 leather recipe book, a wedding ring, or a first storefront—so the exact object passes from the present-day interview into the historical reenactment.',
+        },
+        {
+          title: 'Multi-Generational Language Sharing',
+          frictionHeadline: 'Language Barriers Across Generations.',
+          friction:
+            'When grandparents speak one language and grandchildren speak another, recorded oral histories often go unwatched by the younger generation.',
+          solutionHeadline: 'Multilingual Family Editions.',
+          solution:
+            'Deliver the finished memoir in both the storyteller’s native voice and localized editions so every branch of a global family can experience the story together.',
+        },
+      ],
+      screeningRoomPreview: 'Letters Across the Water — Screening Room',
+    },
   ],
 } as const
 

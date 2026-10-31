@@ -34,6 +34,8 @@ describe('Imagine the Possibilities top cinematic video header & 60s–90s trail
       'Animated Series',
       'Documentaries',
       'Training Series',
+      'Creator & Podcasts',
+      'Video Memoirs',
     ])
 
     const heroComponent = readSource('src/components/landing/ImaginePossibilitiesHero.tsx')
@@ -62,19 +64,24 @@ describe('Imagine the Possibilities top cinematic video header & 60s–90s trail
       expect(script.referenceLocks.length).toBeGreaterThanOrEqual(3)
       expect(script.webmSrc).toContain('/videos/')
       expect(script.mp4Src).toContain('/videos/')
+      expect(script.backgroundMusic.mixLevel).toContain('25% volume')
+      expect(script.backgroundMusic.generationPrompt.length).toBeGreaterThan(80)
 
       for (const block of script.blocks) {
         expect(block.title.length).toBeGreaterThan(4)
         expect(block.timecode).toMatch(/^\d:\d{2}–\d:\d{2}$/)
         expect(block.timing).toContain('Motion')
-        expect(block.videoPrompt.length).toBeGreaterThan(40)
+        expect(block.videoPrompt).toContain('Single continuous')
+        expect(block.videoPrompt).toContain('At 0.0s')
+        expect(block.videoPrompt).toContain('From ')
         expect(block.cameraAndLighting.length).toBeGreaterThan(15)
-        expect(block.sfxAndMusic.length).toBeGreaterThan(15)
+        expect(block.sfxAndMusic).toContain('25% volume')
         expect(block.settleOn.length).toBeGreaterThan(15)
       }
 
       const formatted = formatExampleTrailerScript(script)
       expect(formatted).toContain(script.showTitle)
+      expect(formatted).toContain('BACKGROUND MUSIC SPECIFICATION (MIX AT 25% VOLUME / -12 dB)')
       expect(formatted).toContain('LOCKED CHARACTER, PROP & ENVIRONMENT REFERENCES')
       expect(formatted).toContain('SHOT-BY-SHOT TRAILER SCRIPT')
       expect(getExampleTrailerScript(script.id)?.showTitle).toBe(script.showTitle)
@@ -87,9 +94,13 @@ describe('Imagine the Possibilities top cinematic video header & 60s–90s trail
     expect(md).toContain('Hart House')
     expect(md).toContain('The Long Thought')
     expect(md).toContain('Five Plates')
+    expect(md).toContain('The Midnight Frequency')
+    expect(md).toContain('Letters Across the Water')
     expect(md).toContain('Cinematic Drama')
     expect(md).toContain('Animated Series')
     expect(md).toContain('Documentaries')
     expect(md).toContain('Training Series')
+    expect(md).toContain('Creator & Podcasts')
+    expect(md).toContain('Video Memoirs')
   })
 })

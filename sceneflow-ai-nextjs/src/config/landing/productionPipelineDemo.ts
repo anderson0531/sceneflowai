@@ -25,7 +25,20 @@ export const DOCUMENTARY_TRAILER_MP4 = '/videos/documentary-trailer.mp4?v=202610
 export const TRAINING_SERIES_TRAILER_WEBM = '/videos/training-series-trailer.webm?v=20261030'
 export const TRAINING_SERIES_TRAILER_MP4 = '/videos/training-series-trailer.mp4?v=20261030'
 
-export const PRODUCTION_WALK_IDS = ['drama', 'animation', 'documentary', 'training'] as const
+export const CREATOR_PODCAST_TRAILER_WEBM = '/videos/creator-podcast-trailer.webm?v=20261031'
+export const CREATOR_PODCAST_TRAILER_MP4 = '/videos/creator-podcast-trailer.mp4?v=20261031'
+
+export const VIDEO_MEMOIR_TRAILER_WEBM = '/videos/video-memoir-trailer.webm?v=20261031'
+export const VIDEO_MEMOIR_TRAILER_MP4 = '/videos/video-memoir-trailer.mp4?v=20261031'
+
+export const PRODUCTION_WALK_IDS = [
+  'drama',
+  'animation',
+  'documentary',
+  'training',
+  'podcast',
+  'memoir',
+] as const
 
 export type ProductionWalkId = (typeof PRODUCTION_WALK_IDS)[number]
 
@@ -34,6 +47,8 @@ export const PRODUCTION_WALK_LABELS: Record<ProductionWalkId, string> = {
   animation: 'Full-Season Animated Series',
   documentary: 'Long-Form Documentary',
   training: 'Multi-Module Training Series',
+  podcast: 'Creator Channels & Video Podcasts',
+  memoir: 'Video Memoirs & Client Studios',
 }
 
 export type ScreeningCut = 'previs' | 'rough' | 'scenes' | 'trailer' | 'final'
@@ -104,6 +119,14 @@ export const PRODUCTION_PIPELINE_WALKS: Record<ProductionWalkId, ProductionPipel
   training: exampleWalk('training', {
     trailerSrc: TRAINING_SERIES_TRAILER_WEBM,
     trailerMp4Src: TRAINING_SERIES_TRAILER_MP4,
+  }),
+  podcast: exampleWalk('podcast', {
+    trailerSrc: CREATOR_PODCAST_TRAILER_WEBM,
+    trailerMp4Src: CREATOR_PODCAST_TRAILER_MP4,
+  }),
+  memoir: exampleWalk('memoir', {
+    trailerSrc: VIDEO_MEMOIR_TRAILER_WEBM,
+    trailerMp4Src: VIDEO_MEMOIR_TRAILER_MP4,
   }),
 }
 

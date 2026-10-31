@@ -29,7 +29,7 @@ export type ExampleEpisodeOneHighlight = {
 }
 
 export type ExampleSeriesInput = {
-  cardId: 'drama' | 'animation' | 'documentary' | 'training'
+  cardId: 'drama' | 'animation' | 'documentary' | 'training' | 'podcast' | 'memoir'
   showTitle: string
   format: string
   genre: string
@@ -463,6 +463,209 @@ export const EXAMPLE_SERIES_INPUTS: readonly ExampleSeriesInput[] = [
       },
     ],
   },
+  {
+    cardId: 'podcast',
+    showTitle: 'The Midnight Frequency',
+    format: '6-Episode Creator Channel & Video Podcast Series · Hybrid Studio Upload + AI Cinema',
+    genre: 'Investigative Mystery, Hidden History & Science Lore',
+    artStyle:
+      'Hybrid Warm Broadcast Studio Desk (Uploaded Live Camera) + Anamorphic Period & Deep-Sea Cinematic Reconstructions',
+    duration: '190 min Season (6 × 30–34 min) · Ep 1: 32 min',
+    continuityLock:
+      'Host Devon Vance (Live Studio Upload), Orson the Brass Automaton Owl (Co-Host), Captain Nils Lindqvist (1928 Reconstruction) & Locked Midnight Studio Desk',
+    unitLabel: 'Season 1 Investigative Episodes (6)',
+    artLock:
+      'Seamless match-cuts between Devon Vance’s warm walnut-and-neon broadcast studio desk (uploaded live camera feed), recurring brass automaton sidekick Orson on the desk perch, and photorealistic 35mm period reconstructions of 1928 Arctic acoustic telegraph outposts and deep-ocean sonar vaults.',
+    concept:
+      'Combine uploaded live podcast camera clips with SceneFlow-generated cinematic reconstructions and a locked desk companion to produce weekly high-retention investigative mystery episodes—then auto-dub into global languages for YouTube and Spotify Video.',
+    logline:
+      'From a late-night broadcast desk, investigative host Devon Vance and his skeptical automaton co-host unpack declassified engineering mysteries—cutting seamlessly from live studio commentary into cinema-grade historical reconstructions.',
+    seriesSynopsis:
+      'Built for the new wave of narrative YouTube channels and video podcasters, The Midnight Frequency demonstrates how a solo creator turns a recorded studio microphone track and live webcam/camera clips into a television-grade investigative series. Across six 32-minute episodes, host Devon Vance uploads his live studio desk segments and intercuts them with SceneFlow-generated cinematic reconstructions, blueprint overlays, and his recurring desk sidekick Orson—ending each episode by publishing localized multi-language streams for global channel growth.',
+    storyline:
+      'In Episode 1, Devon Vance opens on his uploaded live studio camera feed holding a declassified 1928 brass telegraph cylinder recovered from Spitzbergen. As he narrates the disappearance of acoustic physicist Captain Nils Lindqvist’s Arctic listening post, SceneFlow cuts seamlessly from the studio desk into a howling 1928 Svalbard blizzard where Lindqvist’s crew hears a rhythmic sub-glacial pulse twelve miles beneath the ice. Returning to the studio desk for skeptical banter with Orson, Devon walks viewers through the physical acoustics, declassified sonar logs, and the final night inside the ice cavern—proving how one creator can deliver theatrical storytelling every week.',
+    cast: [
+      {
+        name: 'Devon Vance',
+        role: 'Lead Host · Uploaded Live Studio Camera & Locked Double',
+        descriptor:
+          'Investigative Podcast Host (36). Charcoal henley under a tailored slate chore jacket, broadcast boom mic on a brass arm, warm key light against acoustic walnut panels and cyan LED rim spill.',
+      },
+      {
+        name: 'Orson',
+        role: 'Co-Host Companion · Locked 3D/Photoreal Character Asset',
+        descriptor:
+          'Clockwork Brass Barn Owl perched beside the studio mixer; articulated copper feathers, amber glass aperture eyes that widen or squint in comedic skepticism during desk banter.',
+      },
+      {
+        name: 'Captain Nils Lindqvist',
+        role: 'Historical Lead · 1928 Svalbard Reconstruction Cast',
+        descriptor:
+          'Norwegian Acoustic Telegraph Engineer (48). Frost-encrusted sheepskin greatcoat, Bakelite headphones, ice-rimmed beard lit by kerosene lantern glow.',
+      },
+      {
+        name: 'Dr. Astrid Solberg',
+        role: 'Historical Co-Lead · 1928 Seismologist Cast',
+        descriptor:
+          'Expedition Geophysicist (34). Heavy cable-knit wool sweater, brass tuning-fork galvanometer, ink-stained leather logbook in the 1928 listening hut.',
+      },
+    ],
+    episode1Synopsis: {
+      episodeLabel: 'Episode 1 Synopsis · Hybrid Creator & Podcast Pilot (6 Chapters)',
+      title: 'Episode 1: The Svalbard Sub-Glacial Bell',
+      duration: '32 min (Hybrid Live Studio + 1928 Arctic Reconstructions)',
+      logline:
+        'In 1928, an Arctic radio outpost recorded a rhythmic metallic chime two miles beneath the glacier—then vanished leaving their tea still warm.',
+      synopsis:
+        'Host Devon Vance uploads his live studio desk camera takes and pairs them with SceneFlow cinematic reconstructions of the 1928 Lindqvist Expedition, guiding viewers from the initial mystery hook through the declassified acoustic evidence and the rational geological twist.',
+      chapter1Title: 'Chapter 1: The Cylinder on the Desk & The 82° North Signal',
+      chapter1Duration: '5.5 min · Live Studio Hook to 1928 Blizzard Match-Cut',
+      chapter1Synopsis:
+        'Devon sets a corroded 1928 brass wax-cylinder case onto the studio desk beside Orson and plays the original low-frequency recording—triggering a seamless match-cut from the glowing studio VU meter into the freezing 1928 Svalbard listening post.',
+    },
+    episodes: [
+      {
+        number: 1,
+        title: 'The Svalbard Sub-Glacial Bell',
+        duration: '32 min',
+        synopsis:
+          'Devon and Orson investigate the 1928 disappearance of an Arctic acoustic telegraph crew who recorded a rhythmic chime beneath two miles of pack ice.',
+      },
+      {
+        number: 2,
+        title: 'The Glass Library of Alexandria',
+        duration: '30 min',
+        synopsis:
+          'How a 1963 deep-desert archaeological survey uncovered vitrified subterranean vaults aligned with ancient astronomical sightlines.',
+      },
+      {
+        number: 3,
+        title: 'Flight 19 & The Bermuda Magnetometer',
+        duration: '34 min',
+        synopsis:
+          'Declassified naval compass logs and cockpit reconstructions reveal what really happened inside the 1945 night storm.',
+      },
+      {
+        number: 4,
+        title: 'The Clockwork Automaton of Prague',
+        duration: '31 min',
+        synopsis:
+          'A 17th-century guild master builds a mechanical scribe whose surviving gears encode a cipher nobody solved for three hundred years.',
+      },
+      {
+        number: 5,
+        title: 'The Mariana Trench Echo',
+        duration: '33 min',
+        synopsis:
+          'In 1977, a deep-ocean hydrophone array tracked a 28-hertz acoustic signature moving against the Pacific abyssal current.',
+      },
+      {
+        number: 6,
+        title: 'The Carrington Vault',
+        duration: '30 min',
+        synopsis:
+          'When the 1859 solar superstorm set telegraph wires ablaze, two operators in Boston and Portland kept transmitting with the batteries unplugged.',
+      },
+    ],
+  },
+  {
+    cardId: 'memoir',
+    showTitle: 'Letters Across the Water',
+    format: '5-Chapter Commissioned Family Legacy Film · Hybrid Interview Upload + Period Reenactment',
+    genre: 'Biographical Family Memoir & Reunion Documentary',
+    artStyle:
+      'Warm 4K Living-Room Interview Uploads + Lush 1966 Kodachrome Harbor & 1974 Bakery Reenactments',
+    duration: '28 min Commissioned Featurette (5 Chapters)',
+    continuityLock:
+      'Elena Rossi-Chen at Age 82 (Uploaded Interview) & Age 22 (1966 Locked Cast), Mateo Chen at Age 24 (1966 Locked Cast), & The 1966 Leather Recipe Trunk',
+    unitLabel: 'Commissioned Memoir Chapters (5)',
+    artLock:
+      'Age-locked facial and wardrobe continuity bridging uploaded smartphone/camera interviews of 82-year-old Elena with photorealistic 1966 Naples harbor piers, ocean liner steerage decks, and the 1974 corner bakery—unlocking a turnkey video memoir business model.',
+    concept:
+      'Turn recorded family interviews, voice notes, and vintage photographs into a cinema-grade biographical legacy film for reunions, anniversaries, and client commissions—automated in a single studio workflow.',
+    logline:
+      'At her 60th family reunion, an 82-year-old matriarch shares how a rained-out 1966 harbor departure and a handwritten sourdough starter recipe built a three-generation neighborhood institution.',
+    seriesSynopsis:
+      'Designed for solo video entrepreneurs, boutique agencies, and families preserving multi-generational heritage, Letters Across the Water showcases how SceneFlow transforms a recorded living-room interview and five scanned family photos into a breathtaking 28-minute biographical film. Uploading real interview clips of 82-year-old Elena Rossi-Chen, the producer uses SceneFlow’s Continuity Lock and FlowDirector to recreate Elena and her late husband Mateo at age 22—bringing unfilmed family memories to life with emotional authenticity.',
+    storyline:
+      'Opening in a sunlit modern dining room where 82-year-old Elena holds a weathered 1966 brass-clasped leather recipe notebook (uploaded live interview clip), her voice carries us into a rain-slicked 1966 port where 22-year-old Elena clutches the exact same notebook at the gangway. Across five chapters, we witness her meeting young ship’s carpenter Mateo on the ocean crossing, their first winter firing a second-hand brick oven in a snowbound new city, the night the neighborhood rallied to save their flooded bakery in 1978, and the present-day three-generation family reunion where her granddaughter opens the same recipe book.',
+    cast: [
+      {
+        name: 'Elena Rossi-Chen (Age 82)',
+        role: 'Present-Day Storyteller · Uploaded Family Interview Clip',
+        descriptor:
+          'Warm 82-year-old matriarch in an ivory cashmere shawl, silver hair, holding the worn 1966 brown leather recipe notebook in a sunlit living room.',
+      },
+      {
+        name: 'Young Elena Rossi (Age 22, 1966)',
+        role: 'Period Reenactment Lead · Age-Locked Character Sheet',
+        descriptor:
+          'Young Italian woman (22) with identical hazel eyes and facial structure to Present-Day Elena; 1966 navy wool belted trench coat, silk headscarf, clutching the new brown leather recipe notebook.',
+      },
+      {
+        name: 'Young Mateo Chen (Age 24, 1966)',
+        role: 'Period Reenactment Co-Lead · Locked Character Sheet',
+        descriptor:
+          'Young ship’s carpenter and baker (24); rolled-sleeve chambray work shirt, canvas tool apron, warm reassuring smile under 1960s tungsten lantern light.',
+      },
+      {
+        name: 'Maya Chen (Age 26, Present Day)',
+        role: 'Granddaughter · Reunion Host & Third-Generation Baker',
+        descriptor:
+          'Elena’s granddaughter (26) in a linen baker’s apron setting the long family reunion table under warm courtyard string lights.',
+      },
+    ],
+    episode1Synopsis: {
+      episodeLabel: 'Commissioned Memoir Overview · 5-Chapter Legacy Film',
+      title: 'Letters Across the Water: The Rossi-Chen Family Story',
+      duration: '28 min Complete Legacy Film · Chapter 1 Proof: 5.5 min',
+      logline:
+        'One leather recipe book, two oceans, and sixty years of family memory brought from spoken interview to cinema screen.',
+      synopsis:
+        'Combining real family interview footage and scanned keepsakes with SceneFlow period reenactments, this commissioned memoir turns spoken oral history into a family heirloom—and demonstrates a scalable high-margin service business for creators.',
+      chapter1Title: 'Chapter 1: Pier 14 & The Cedar Trunk (1966)',
+      chapter1Duration: '5.5 min · Interview Upload to 1966 Harbor Reenactment',
+      chapter1Synopsis:
+        'Present-day Elena opens her 1966 leather notebook to a pressed olive leaf; as she describes the rain on Pier 14, the frame transitions to 22-year-old Elena standing on the misty 1966 steamer gangway holding the exact same notebook.',
+    },
+    episodes: [
+      {
+        number: 1,
+        title: 'Pier 14 & The Cedar Trunk (1966)',
+        duration: '5.5 min',
+        synopsis:
+          'From Elena’s living-room interview to the rain-swept 1966 harbor departure with one suitcase and her mother’s recipe notebook.',
+      },
+      {
+        number: 2,
+        title: 'The Steerage Deck & The Carpenter’s Table',
+        duration: '5.5 min',
+        synopsis:
+          'Mid-Atlantic crossing: young Mateo repairs Elena’s broken trunk clasp and shares a pot of ginger tea during an Atlantic gale.',
+      },
+      {
+        number: 3,
+        title: 'The First Brick Oven on Mulberry Street (1974)',
+        duration: '6 min',
+        synopsis:
+          'Firing the second-hand stone oven at 4:00 A.M. in their first tiny storefront as snow piles against the glass.',
+      },
+      {
+        number: 4,
+        title: 'The Great Flood of ’78 & The Neighborhood Line',
+        duration: '5.5 min',
+        synopsis:
+          'When a burst water main floods the basement flour cellar, thirty neighbors form a bucket brigade to save the morning bake.',
+      },
+      {
+        number: 5,
+        title: 'Sixty Years at One Table (The Reunion)',
+        duration: '5.5 min',
+        synopsis:
+          'Three generations gather under courtyard lights as granddaughter Maya pulls the original 1966 hearth loaf from the oven.',
+      },
+    ],
+  },
 ]
 
 const SERIES_BY_CARD: Record<ExampleSeriesInput['cardId'], ExampleSeriesInput> = {
@@ -470,6 +673,8 @@ const SERIES_BY_CARD: Record<ExampleSeriesInput['cardId'], ExampleSeriesInput> =
   animation: EXAMPLE_SERIES_INPUTS[1],
   documentary: EXAMPLE_SERIES_INPUTS[2],
   training: EXAMPLE_SERIES_INPUTS[3],
+  podcast: EXAMPLE_SERIES_INPUTS[4],
+  memoir: EXAMPLE_SERIES_INPUTS[5],
 }
 
 export function getExampleSeriesInput(cardId: string): ExampleSeriesInput | null {
@@ -477,7 +682,9 @@ export function getExampleSeriesInput(cardId: string): ExampleSeriesInput | null
     cardId === 'drama' ||
     cardId === 'animation' ||
     cardId === 'documentary' ||
-    cardId === 'training'
+    cardId === 'training' ||
+    cardId === 'podcast' ||
+    cardId === 'memoir'
   ) {
     return SERIES_BY_CARD[cardId]
   }

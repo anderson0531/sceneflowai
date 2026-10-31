@@ -160,10 +160,10 @@ describe('Production Examples i18n contract', () => {
     expect(enMessages.productionShowcase).not.toHaveProperty('pipelineComingSoon')
   })
 
-  it('ships exactly four focused production cards', () => {
+  it('ships six focused production cards including Creator & Podcasts and Video Memoirs', () => {
     const { cards } = enMessages.productionShowcase
 
-    expect(cards).toHaveLength(4)
+    expect(cards).toHaveLength(6)
 
     for (const card of cards) {
       for (const key of [
@@ -239,12 +239,14 @@ describe('Production Examples i18n contract', () => {
     expect(backdrop).not.toContain('Copy script')
   })
 
-  it('gives all four examples structured specs, a storyline, breakdown beats/episodes, and a copyable pack', () => {
+  it('gives all six examples structured specs, a storyline, breakdown beats/episodes, and a copyable pack', () => {
     expect(EXAMPLE_SERIES_INPUTS.map((series) => series.cardId)).toEqual([
       'drama',
       'animation',
       'documentary',
       'training',
+      'podcast',
+      'memoir',
     ])
     for (const series of EXAMPLE_SERIES_INPUTS) {
       expect(series.format.length).toBeGreaterThan(5)
@@ -321,6 +323,8 @@ describe('Production Examples i18n contract', () => {
       'animation',
       'documentary',
       'training',
+      'podcast',
+      'memoir',
     ])
   })
 
@@ -680,7 +684,14 @@ describe('Production showcase screening embeds', () => {
     expect(getProductionExampleMedia('training').milestones.every((milestone) => milestone.placeholder)).toBe(
       true
     )
-    expect([...PRODUCTION_WALK_IDS]).toEqual(['drama', 'animation', 'documentary', 'training'])
+    expect([...PRODUCTION_WALK_IDS]).toEqual([
+      'drama',
+      'animation',
+      'documentary',
+      'training',
+      'podcast',
+      'memoir',
+    ])
 
     const empty: ProductionPipelineWalk = {
       seriesShareToken: '',

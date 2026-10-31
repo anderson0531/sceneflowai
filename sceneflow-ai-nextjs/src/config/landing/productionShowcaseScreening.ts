@@ -5,6 +5,8 @@ export const PRODUCTION_SHOWCASE_SCREENING_SLUGS: Record<string, string> = {
   animation: '',
   documentary: '',
   training: '',
+  podcast: '',
+  memoir: '',
 } as const
 
 export type ProductionShowcaseScreeningCardId =

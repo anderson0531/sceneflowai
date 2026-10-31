@@ -9,6 +9,8 @@ import {
   Clapperboard,
   Film,
   GraduationCap,
+  Heart,
+  Mic,
   Palette,
   Play,
   Sparkles,
@@ -84,6 +86,22 @@ const CARD_STYLES: Record<string, CardStyle> = {
     accent: 'text-emerald-400',
     badge: 'bg-emerald-500/20 text-emerald-400',
     ctaGradient: 'from-emerald-500 to-teal-500',
+  },
+  podcast: {
+    icon: Mic,
+    surface: 'from-cyan-500/10 to-indigo-500/5',
+    border: 'border-cyan-500/30',
+    accent: 'text-cyan-400',
+    badge: 'bg-cyan-500/20 text-cyan-400',
+    ctaGradient: 'from-cyan-500 to-indigo-500',
+  },
+  memoir: {
+    icon: Heart,
+    surface: 'from-amber-500/10 to-rose-500/5',
+    border: 'border-amber-500/30',
+    accent: 'text-amber-300',
+    badge: 'bg-amber-500/20 text-amber-300',
+    ctaGradient: 'from-amber-500 to-rose-500',
   },
 }
 
