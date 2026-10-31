@@ -14,7 +14,7 @@ describe('hero section copy and UI', () => {
     expect(HERO_COPY.subheadline).toContain('locks character and setting continuity')
     expect(HERO_COPY.subheadline).not.toContain('multi-scene')
     expect(HERO_COPY.subheadline).not.toContain('ProRes')
-    expect(HERO_COPY.eyebrow).toBe('Democratized filmmaking for storytellers, series creators & studios')
+    expect(HERO_COPY.eyebrow).toBe('Studio-grade filmmaking for storytellers, series creators & studios')
     expect(HERO_COPY.ctaPrimaryLaunch).toBe('Launch Studio ($9)')
     expect(HERO_COPY.ctaSecondary).toBe('Explore the pipeline')
     expect(HERO_VALUE_CHIPS).toHaveLength(4)

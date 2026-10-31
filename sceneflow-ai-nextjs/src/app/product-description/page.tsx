@@ -34,7 +34,7 @@ const productDescription = `# SceneFlow Studio - Product Description
 
 **SceneFlow Studio** is an AI-powered video production platform that transforms creative concepts into production-ready video content. From initial idea to final cut, SceneFlow Studio provides an end-to-end workflow that combines advanced AI capabilities with professional filmmaking tools.
 
-**Mission**: Democratize video production by putting the power of a full production studio in the hands of every creator.
+**Mission**: Put the discipline and craft of a full production studio in the hands of every storyteller and team.
 
 **Target Audience**: Content creators, filmmakers, marketing teams, educators, and storytellers who need to produce high-quality video content efficiently.
 

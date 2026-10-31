@@ -49,7 +49,7 @@ export function FounderSection() {
             </span>
           </h2>
           <p className="text-gray-400 max-w-2xl mx-auto">
-            30+ years of technology leadership, now focused on democratizing professional video production
+            30+ years of technology leadership, now focused on putting a complete film &amp; series studio in every creator&apos;s hands
           </p>
         </motion.div>
 
@@ -124,7 +124,7 @@ export function FounderSection() {
                 <p className="text-gray-300 leading-relaxed mt-4">
                   He holds a Master of Science in Organizational Dynamics from the University of Pennsylvania and a BS in IT from Drexel University.
                   With SceneFlow Studio, Brian is leveraging his deep expertise in cloud-native architecture and AI-powered 
-                  productivity to <span className="text-purple-400 font-medium">democratize professional video production</span>.
+                  productivity to <span className="text-purple-400 font-medium">deliver studio-grade film and series production at cloud scale</span>.
                 </p>
               </div>
 

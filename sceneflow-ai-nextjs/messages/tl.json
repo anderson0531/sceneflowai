@@ -882,6 +882,32 @@
                 }
               },
               {
+                "icon": "scriptSupervisor",
+                "title": "The Script Supervisor",
+                "description": "Audit rendered scene MP4s and individual shot clips inside the Fullscreen `Supervisor` tab using multimodal video intelligence from both the Audience Resonance (`AR Score`) and Director perspectives. Inspect 5-axis audience sub-scores, script and continuity compliance telemetry, and root-cause anomaly attribution (`Keyframe`, `Motion Video`, or `Scene Direction`)—then selectively apply optional pickup recommendations through the Shot Director or Scene Director.",
+                "screenshot": "The Script Supervisor — multimodal Audience Resonance (AR Score) and Director video review, shot compliance matrix, and optional Shot & Scene Director pickups",
+                "learnMore": {
+                  "items": [
+                    {
+                      "title": "Dual Audience Resonance & Director audit",
+                      "description": "Evaluate rendered clips and scene MP4s simultaneously for 5-axis Audience Resonance (AR Score) and Director script and continuity compliance."
+                    },
+                    {
+                      "title": "Shot-by-shot compliance & anomaly attribution",
+                      "description": "Spot visual continuity drift, missing props, lip-sync gaps, and pacing friction with root-cause attribution across Keyframe, Motion, or Scene Direction."
+                    },
+                    {
+                      "title": "1-click Shot Director prompt patches",
+                      "description": "Apply optional visual pickup recommendations directly through the Shot Director to update camera framing, blocking, props, and compiled prompts automatically."
+                    },
+                    {
+                      "title": "Surgical Scene Director handoff",
+                      "description": "Route narrative pacing and dialogue adjustments into a pre-loaded Scene Director revision while preserving all unaffected locked shots."
+                    }
+                  ]
+                }
+              },
+              {
                 "icon": "productionAgent",
                 "title": "The Production Agent",
                 "description": "Skip prompting 300+ shots by hand and let the autonomous studio builder produce all 27 scenes or a single chapter while you walk away. Select Pre-Vis, Clips, Scenes, Master, and Promo in one dialog, set Director Checkpoints and notification frequency, and let the Agent automatically optimize shot direction, rerun failed shots, escalate persistent policy blocks to Creative Clips, and deliver a private `/s/` Screening Room link.",
@@ -1142,7 +1168,7 @@
     "studioAcademy": "Academy"
   },
   "hero": {
-    "eyebrow": "Democratized filmmaking para sa mga storyteller, series creator, at studio",
+    "eyebrow": "Studio-grade filmmaking para sa mga storyteller, series creator, at studio",
     "headline": "Mula sa unang kislap hanggang sa ganap na obra maestra.",
     "subheadline": "Kung maiisip mo ang isang kuwento, maaari kang magdirek ng isang pelikula—walang kinakailangang teknikal na paggawa ng pelikula o mga kasanayan sa pag-udyok. Ilarawan ang iyong pananaw sa pang-araw-araw na mga salita, at bubuo ng SceneFlow ang Blueprint, ikinakandado ang karakter at pagpapatuloy ng pagtatakda, pinapatugtog ang buong animatic, at tinatahi ang natapos na master.",
     "ctaPrimaryLaunch": "Launch Studio ($9)",

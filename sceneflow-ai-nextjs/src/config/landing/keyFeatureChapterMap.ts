@@ -71,7 +71,7 @@ export const FEATURE_CHAPTER_MAP: readonly FeatureRoomChapterPlan[] = [
       { id: 'continuity', demoIcons: ['continuity'], standaloneDemo: true },
       { id: 'stills', demoIcons: ['stillsAgent', 'stillsWorkbench'], standaloneDemo: true },
       { id: 'animatic', demoIcons: ['animatic'], standaloneDemo: true },
-      { id: 'clips', demoIcons: ['videoAgent', 'clipsWorkbench', 'productionAgent'], standaloneDemo: true },
+      { id: 'clips', demoIcons: ['videoAgent', 'clipsWorkbench', 'scriptSupervisor', 'productionAgent'], standaloneDemo: true },
       { id: 'mixer', demoIcons: ['mixer'], standaloneDemo: true },
       { id: 'languages', demoIcons: ['languageStreams', 'multilanguageUi'], standaloneDemo: true },
       { id: 'publish', demoIcons: ['promoTrailers', 'shipPackage'], standaloneDemo: false },

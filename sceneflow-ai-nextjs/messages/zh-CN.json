@@ -883,6 +883,32 @@
                 }
               },
               {
+                "icon": "scriptSupervisor",
+                "title": "The Script Supervisor（场记监督）",
+                "description": "在全屏 `Supervisor` 标签页中，从 Audience Resonance（`AR Score`）与导演双重视角利用多模态视频智能审计渲染完成的场景 MP4 与单镜头片段。查看五维观众子评分、剧本与连贯性合规遥测以及异常根因归因（`关键帧`、`动态视频` 或 `场景执导`），并通过分镜导演或场景导演选择性应用补拍建议。",
+                "screenshot": "The Script Supervisor — 多模态 Audience Resonance (AR Score) 与导演视频审查、分镜合规矩阵及可选补拍派发",
+                "learnMore": {
+                  "items": [
+                    {
+                      "title": "Audience Resonance 与导演双重审计",
+                      "description": "同时评估已渲染片段与场景 MP4 的五维 Audience Resonance (AR Score) 以及导演剧本与连贯性合规度。"
+                    },
+                    {
+                      "title": "逐镜头合规矩阵与异常根因归因",
+                      "description": "精准定位视觉连贯性漂移、缺失道具、口型同步偏差与节奏摩擦，并归因至关键帧、动作渲染或场景执导。"
+                    },
+                    {
+                      "title": "分镜导演一键提示词补丁",
+                      "description": "通过分镜导演直接应用可选视觉修正建议，自动同步更新景别构图、人物调度、关键道具与底层编译提示词。"
+                    },
+                    {
+                      "title": "场景导演精准协同交接",
+                      "description": "将叙事节奏与台词调整路由至预填充的场景导演修订指令中，同时完好保留其余已锁定镜头。"
+                    }
+                  ]
+                }
+              },
+              {
                 "icon": "productionAgent",
                 "title": "制片智能体 (The Production Agent)",
                 "description": "无需手动编写 300 多个镜头提示词，让全自动工作室构建器在您离开时自动完成全部 27 个场景或单个章节的制作。在一个对话框中选择 Pre-Vis、视频片段、场景、成片母带和宣传片，设置导演检查点与通知频率，让智能体自动优化镜头调度、重跑失败镜头、将持续触发策略拦截的镜头切换至 Creative Clips，并向您发送私密 `/s/` Screening Room 审片链接。",
@@ -1410,7 +1436,7 @@
     "pricing": "定价"
   },
   "hero": {
-    "eyebrow": "为故事讲述者、剧集创作者和工作室提供民主化的电影制作",
+    "eyebrow": "面向故事创作者、剧集主创与制片工作室的专业级电影制作",
     "headline": "从最初的灵感火花到最终的杰作。",
     "subheadline": "如果你能想象一个故事，你就可以导演一部电影——不需要技术电影制作或提示技巧。用日常用语描述您的愿景，SceneFlow 构建 Blueprint，锁定角色和设置连续性，播放完整的动画，并缝合完成的母版。",
     "ctaPrimaryLaunch": "Launch Studio（9美元）",

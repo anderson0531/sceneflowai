@@ -883,6 +883,32 @@
                 }
               },
               {
+                "icon": "scriptSupervisor",
+                "title": "The Script Supervisor",
+                "description": "Audita los MP4 de escenas renderizadas y los clips individuales dentro de la pestaña `Supervisor` en pantalla completa usando inteligencia de video multimodal desde las perspectivas de Audience Resonance (`AR Score`) y del Director. Inspecciona subpuntuaciones de audiencia en 5 ejes, telemetría de cumplimiento de guion y continuidad, y atribución de anomalías (`Keyframe`, `Motion Video` o `Scene Direction`), aplicando recomendaciones opcionales mediante el Shot Director o el Scene Director.",
+                "screenshot": "The Script Supervisor — revisión multimodal de video con Audience Resonance (AR Score) y Director, matriz de cumplimiento por toma y pickups opcionales",
+                "learnMore": {
+                  "items": [
+                    {
+                      "title": "Auditoría dual de Audience Resonance y Director",
+                      "description": "Evalúa clips renderizados y MP4 de escenas simultáneamente para obtener el AR Score en 5 ejes y el cumplimiento de guion y continuidad del Director."
+                    },
+                    {
+                      "title": "Matriz de cumplimiento por toma y atribución de anomalías",
+                      "description": "Detecta desviaciones de continuidad visual, utilería faltante, desajustes de sincronía labial y fricción de ritmo con atribución de causa raíz."
+                    },
+                    {
+                      "title": "Parches de prompts en 1 clic con el Shot Director",
+                      "description": "Aplica recomendaciones visuales opcionales directamente a través del Shot Director para actualizar encuadre, bloqueo, utilería y prompts compilados."
+                    },
+                    {
+                      "title": "Entrega quirúrgica al Scene Director",
+                      "description": "Dirige los ajustes de ritmo narrativo y diálogo hacia una revisión precargada en el Scene Director conservando intactas las demás tomas bloqueadas."
+                    }
+                  ]
+                }
+              },
+              {
                 "icon": "productionAgent",
                 "title": "El Agente de Producción",
                 "description": "Evita escribir más de 300 prompts a mano y deja que el constructor autónomo del estudio produzca las 27 escenas o un capítulo completo mientras te desconectas. Selecciona Pre-Vis, Clips, Escenas, Máster y Promo en un solo diálogo, configura puntos de control del director y la frecuencia de notificaciones, y deja que el Agente optimice automáticamente la dirección de toma, reintente tomas fallidas, cambie bloqueos de políticas a Creative Clips y te envíe un enlace privado `/s/` de Screening Room.",
@@ -1410,7 +1436,7 @@
     "pricing": "Precios"
   },
   "hero": {
-    "eyebrow": "Cine democratizado para narradores, creadores de series y estudios",
+    "eyebrow": "Cine con calidad de estudio para narradores, creadores de series y estudios",
     "headline": "Desde la chispa inicial hasta la obra maestra terminada.",
     "subheadline": "Si puedes imaginar una historia, puedes dirigir una película; no se requieren habilidades técnicas de realización cinematográfica ni de indicaciones. Describe tu visión con palabras cotidianas y SceneFlow construirá Blueprint, bloqueará la continuidad del personaje y del escenario, reproducirá la animación completa y coserá el maestro terminado.",
     "ctaPrimaryLaunch": "Launch Studio (9 $)",

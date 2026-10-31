@@ -110,6 +110,12 @@ export const CLIPS_AGENT_SCREENSHOT_WEBP =
 export const SCENE_CLIPS_WORKBENCH_SCREENSHOT_WEBP =
   '/landing/key-features/screenshots/scene-clips-workbench.webp'
 
+export const SCRIPT_SUPERVISOR_SCREENSHOT_WEBP =
+  '/landing/key-features/screenshots/script-supervisor.webp'
+
+export const SCRIPT_SUPERVISOR_PICKUPS_SCREENSHOT_WEBP =
+  '/landing/key-features/screenshots/script-supervisor-pickups.webp'
+
 export const PRODUCTION_AGENT_SCREENSHOT_WEBP =
   '/landing/key-features/screenshots/production-agent.webp'
 
@@ -181,6 +187,21 @@ const KEY_FEATURE_SCREENSHOTS: Record<string, KeyFeatureScreenshot> = {
   animatic: { imageUrl: PRE_VIS_ANIMATIC_SCREENSHOT_WEBP },
   videoAgent: { imageUrl: CLIPS_AGENT_SCREENSHOT_WEBP },
   clipsWorkbench: { imageUrl: SCENE_CLIPS_WORKBENCH_SCREENSHOT_WEBP },
+  scriptSupervisor: {
+    imageUrl: SCRIPT_SUPERVISOR_SCREENSHOT_WEBP,
+    variants: [
+      {
+        id: 'overview',
+        label: '1 · AR Score & Shot Compliance',
+        imageUrl: SCRIPT_SUPERVISOR_SCREENSHOT_WEBP,
+      },
+      {
+        id: 'pickups',
+        label: '2 · Shot & Scene Director Pickups',
+        imageUrl: SCRIPT_SUPERVISOR_PICKUPS_SCREENSHOT_WEBP,
+      },
+    ],
+  },
   productionAgent: { imageUrl: PRODUCTION_AGENT_SCREENSHOT_WEBP },
   mixer: { imageUrl: PRODUCTION_MIXER_SCREENSHOT_WEBP },
   languageStreams: { imageUrl: STREAMS_MULTILANGUAGE_SCREENSHOT_WEBP },

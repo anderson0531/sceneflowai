@@ -27,6 +27,8 @@ import {
   SCREENING_COLLAB_SCREENSHOT_WEBP,
   SCREENING_PLAYER_SCREENSHOT_WEBP,
   SCRIPT_RESONANCE_SCREENSHOT_WEBP,
+  SCRIPT_SUPERVISOR_PICKUPS_SCREENSHOT_WEBP,
+  SCRIPT_SUPERVISOR_SCREENSHOT_WEBP,
   START_BLUEPRINT_SCREENSHOT_WEBP,
   START_EPISODE_SCREENSHOT_WEBP,
   STILLS_AGENT_SCREENSHOT_WEBP,
@@ -183,6 +185,24 @@ describe('key feature screenshots', () => {
     expect(keyFeatureScreenshotSrc(getKeyFeatureScreenshot('clipsWorkbench')!)).toBe(
       SCENE_CLIPS_WORKBENCH_SCREENSHOT_WEBP
     )
+    expect(getKeyFeatureScreenshot('scriptSupervisor')).toEqual({
+      imageUrl: SCRIPT_SUPERVISOR_SCREENSHOT_WEBP,
+      variants: [
+        {
+          id: 'overview',
+          label: '1 · AR Score & Shot Compliance',
+          imageUrl: SCRIPT_SUPERVISOR_SCREENSHOT_WEBP,
+        },
+        {
+          id: 'pickups',
+          label: '2 · Shot & Scene Director Pickups',
+          imageUrl: SCRIPT_SUPERVISOR_PICKUPS_SCREENSHOT_WEBP,
+        },
+      ],
+    })
+    expect(keyFeatureScreenshotSrc(getKeyFeatureScreenshot('scriptSupervisor')!)).toBe(
+      SCRIPT_SUPERVISOR_SCREENSHOT_WEBP
+    )
     expect(getKeyFeatureScreenshot('productionAgent')).toEqual({
       imageUrl: PRODUCTION_AGENT_SCREENSHOT_WEBP,
     })
@@ -335,6 +355,8 @@ describe('key feature screenshots', () => {
       PRE_VIS_ANIMATIC_SCREENSHOT_WEBP,
       CLIPS_AGENT_SCREENSHOT_WEBP,
       SCENE_CLIPS_WORKBENCH_SCREENSHOT_WEBP,
+      SCRIPT_SUPERVISOR_SCREENSHOT_WEBP,
+      SCRIPT_SUPERVISOR_PICKUPS_SCREENSHOT_WEBP,
       PRODUCTION_AGENT_SCREENSHOT_WEBP,
       PRODUCTION_MIXER_SCREENSHOT_WEBP,
       STREAMS_MULTILANGUAGE_SCREENSHOT_WEBP,

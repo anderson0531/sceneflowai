@@ -15,7 +15,7 @@ const testimonials = [
     rating: 5
   },
   {
-    quote: "The frame-anchored technology is a game-changer. Finally, AI video that maintains character consistency across an entire project.",
+    quote: "Frame-anchored continuity changed how we produce. Finally, AI video that maintains character consistency across an entire project.",
     author: "Sarah Mitchell",
     role: "Creative Director",
     avatar: "SM",

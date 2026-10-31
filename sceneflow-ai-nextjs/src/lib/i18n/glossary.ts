@@ -26,6 +26,7 @@ export const GLOSSARY_TERMS = [
   'Shot Frames',
   'Audience Resonance',
   'Intelligent Assistant Director',
+  'Script Supervisor',
   'Co-Director',
   'Screening Room',
   'Reference Library',

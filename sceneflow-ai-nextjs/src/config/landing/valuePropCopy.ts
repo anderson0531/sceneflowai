@@ -3,7 +3,7 @@
  */
 
 export const HERO_COPY = {
-  eyebrow: 'Democratized filmmaking for storytellers, series creators & studios',
+  eyebrow: 'Studio-grade filmmaking for storytellers, series creators & studios',
   headline: 'From first spark to finished master.',
   subheadline:
     'If you can imagine a story, you can direct a film—no technical filmmaking or prompting skills required. Describe your vision in everyday words, and SceneFlow builds the Blueprint, locks character and setting continuity, plays the full animatic, and stitches the finished master.',

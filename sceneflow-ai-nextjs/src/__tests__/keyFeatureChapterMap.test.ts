@@ -47,6 +47,7 @@ describe('key feature chapter map', () => {
     expect(standaloneDemoKey('animatic')).toBe('animatic')
     expect(standaloneDemoKey('videoAgent')).toBe('videoAgent')
     expect(standaloneDemoKey('clipsWorkbench')).toBe('videoAgent')
+    expect(standaloneDemoKey('scriptSupervisor')).toBe('videoAgent')
     expect(standaloneDemoKey('productionAgent')).toBe('videoAgent')
     expect(standaloneDemoKey('mixer')).toBe('mixer')
     expect(standaloneDemoKey('languageStreams')).toBe('languageStreams')

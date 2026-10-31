@@ -422,7 +422,7 @@
             "learnMore": {
               "items": [
                 {
-                  "title": "Seamless from Series Room",
+                  "title": "Direct handoff from Series Room",
                   "description": "Series episodes arrive with their outline, synopsis, story beats, recurring cast, and locations already attached."
                 },
                 {
@@ -536,7 +536,7 @@
             "learnMore": {
               "items": [
                 {
-                  "title": "Seamless script compilation",
+                  "title": "Automatic script compilation",
                   "description": "Stepping onto the Production Stage compiles the full multi-scene screenplay directly from your approved Blueprint."
                 },
                 {
@@ -556,7 +556,7 @@
         "id": "production-stage",
         "label": "Production Stage",
         "headline": "From script to master, all in one room.",
-        "promise": "The Blueprint is locked. Your cast is cast. Now, step onto the Production Stage. Every chapter, scene, and shot is organized into a fullscreen linear workflow—from Direction, Audio, Music, Continuity, Stills, and Clips to the Broadcast Mixer and Multi-Language Streams. You direct the intent; intelligent agents execute the generation.",
+        "promise": "The Blueprint is locked. Your cast is cast. Now, step onto the Production Stage. Every chapter, scene, and shot is organized into a fullscreen linear workflow—from Direction, Audio, Music, Continuity, Stills, and Clips to the Broadcast Mixer, Multi-Language Streams, and the Script Supervisor. You direct the intent; intelligent agents execute the generation.",
         "groups": [
           {
             "id": "direct-control",
@@ -567,13 +567,13 @@
               {
                 "icon": "sceneWorkflow",
                 "title": "Scene Production Workflow (Fullscreen)",
-                "description": "Open the dedicated Fullscreen Scene Production Studio to direct every stage of a scene from one unified 8-tab command bar (`Direction · Audio · Music · Continuity · Stills · Clips · Mixer · Streams`). Reorder shots in the left-hand Shot Rail with live readiness badges, inspect the 16:9 Still & Clip Stage alongside structured camera, blocking, emotion, and lighting cards, and track end-to-end scene completion without losing context.",
-                "screenshot": "Scene Production Workflow (Fullscreen) — 8-tab linear studio, sortable Shot Rail, and structured Shot Direction Workbench",
+                "description": "Open the dedicated Fullscreen Scene Production Studio to direct every stage of a scene from one unified 9-tab command bar (`Direction · Audio · Music · Continuity · Stills · Clips · Mixer · Streams · Supervisor`). Reorder shots in the left-hand Shot Rail with live readiness badges, inspect the 16:9 Still & Clip Stage alongside structured camera, blocking, emotion, and lighting cards, and track end-to-end scene completion without losing context.",
+                "screenshot": "Scene Production Workflow (Fullscreen) — 9-tab linear studio, sortable Shot Rail, and structured Shot Direction Workbench",
                 "learnMore": {
                   "items": [
                     {
-                      "title": "8-tab fullscreen linear studio",
-                      "description": "Move seamlessly across Direction, Audio, Music, Continuity, Stills, Clips, Mixer, and Streams inside a distraction-free fullscreen workspace."
+                      "title": "9-tab fullscreen linear studio",
+                      "description": "Move fluidly across Direction, Audio, Music, Continuity, Stills, Clips, Mixer, Streams, and Supervisor inside a distraction-free fullscreen workspace."
                     },
                     {
                       "title": "Sortable Shot Rail & live badges",
@@ -714,7 +714,7 @@
             "id": "generate-audit",
             "label": "Generate & Audit",
             "headline": "Prove the cut before you spend the compute.",
-            "description": "Don't guess how a scene will play. SceneFlow separates voice, SFX, musical score, and keyframe generation from expensive motion rendering—giving you dedicated Fullscreen Audio, Music, Stills, and Clips workbenches to audit the rhythm of the edit first.",
+            "description": "Don't guess how a scene will play. SceneFlow separates voice, SFX, musical score, and keyframe generation from expensive motion rendering—giving you dedicated Fullscreen Audio, Music, Stills, Clips, and Script Supervisor workbenches to audit the rhythm and continuity of the cut.",
             "features": [
               {
                 "icon": "audioAgent",
@@ -883,6 +883,32 @@
                 }
               },
               {
+                "icon": "scriptSupervisor",
+                "title": "The Script Supervisor",
+                "description": "Audit rendered scene MP4s and individual shot clips inside the Fullscreen `Supervisor` tab using multimodal video intelligence from both the Audience Resonance (`AR Score`) and Director perspectives. Inspect 5-axis audience sub-scores, script and continuity compliance telemetry, and root-cause anomaly attribution (`Keyframe`, `Motion Video`, or `Scene Direction`)—then selectively apply optional pickup recommendations through the Shot Director or Scene Director.",
+                "screenshot": "The Script Supervisor — multimodal Audience Resonance (AR Score) and Director video review, shot compliance matrix, and optional Shot & Scene Director pickups",
+                "learnMore": {
+                  "items": [
+                    {
+                      "title": "Dual Audience Resonance & Director audit",
+                      "description": "Evaluate rendered clips and scene MP4s simultaneously for 5-axis Audience Resonance (AR Score) and Director script and continuity compliance."
+                    },
+                    {
+                      "title": "Shot-by-shot compliance & anomaly attribution",
+                      "description": "Spot visual continuity drift, missing props, lip-sync gaps, and pacing friction with root-cause attribution across Keyframe, Motion, or Scene Direction."
+                    },
+                    {
+                      "title": "1-click Shot Director prompt patches",
+                      "description": "Apply optional visual pickup recommendations directly through the Shot Director to update camera framing, blocking, props, and compiled prompts automatically."
+                    },
+                    {
+                      "title": "Surgical Scene Director handoff",
+                      "description": "Route narrative pacing and dialogue adjustments into a pre-loaded Scene Director revision while preserving all unaffected locked shots."
+                    }
+                  ]
+                }
+              },
+              {
                 "icon": "productionAgent",
                 "title": "The Production Agent",
                 "description": "Skip prompting 300+ shots by hand and let the autonomous studio builder produce all 27 scenes or a single chapter while you walk away. Select Pre-Vis, Clips, Scenes, Master, and Promo in one dialog, set Director Checkpoints and notification frequency, and let the Agent automatically optimize shot direction, rerun failed shots, escalate persistent policy blocks to Creative Clips, and deliver a private `/s/` Screening Room link.",
@@ -975,7 +1001,7 @@
               {
                 "icon": "multilanguageUi",
                 "title": "Multilanguage Studio UI",
-                "description": "Direct, write, and produce in your team's native language across the entire SceneFlow AI Studio. Switch the studio interface on the fly between English, Español (`ES`), Português (`PT`), 中文 (简体) (`ZH`), हिन्दी (`HI`), and العربية (`AR`)—localizing every room, direction control, camera & lighting inspector, continuity library, and timeline while collaborating seamlessly across global production teams.",
+                "description": "Direct, write, and produce in your team's native language across the entire SceneFlow AI Studio. Switch the studio interface on the fly between English, Español (`ES`), Português (`PT`), 中文 (简体) (`ZH`), हिन्दी (`HI`), and العربية (`AR`)—localizing every room, direction control, camera & lighting inspector, continuity library, and timeline while collaborating in real time across global production teams.",
                 "screenshot": "Multilanguage Studio UI — Interactive localized studio workspaces in Español (ES), Português (PT), 中文 (简体), and हिन्दी (HI)",
                 "learnMore": {
                   "items": [
@@ -1055,7 +1081,7 @@
           {
             "icon": "screeningPlayer",
             "title": "One Unified Player",
-            "description": "Toggle seamlessly between Pre-Vis animatics, stitched scenes, multi-scene chapters, promo trailers, and your final master. Switch Language Streams on the fly to audition dubbed audio, dialogue-free stem mixes, and regenerated dialogue or signage clips—always frame-locked to the exact cut from the Mixer.",
+            "description": "Switch instantly between Pre-Vis animatics, stitched scenes, multi-scene chapters, promo trailers, and your final master. Switch Language Streams on the fly to audition dubbed audio, dialogue-free stem mixes, and regenerated dialogue or signage clips—always frame-locked to the exact cut from the Mixer.",
             "screenshot": "Screening Room player",
             "learnMore": {
               "items": [

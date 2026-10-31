@@ -26,7 +26,7 @@ export function SocialProof() {
           <div className="hidden md:block w-px h-4 bg-gray-700" />
           <div className="flex items-center gap-2 text-sm">
             <Sparkles className="w-4 h-4 text-amber-400" />
-            <span className="text-gray-300">Built with cutting-edge AI</span>
+            <span className="text-gray-300">Built for production-grade continuity</span>
           </div>
         </motion.div>
       </div>
