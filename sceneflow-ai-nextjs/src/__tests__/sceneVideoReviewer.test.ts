@@ -397,6 +397,7 @@ describe('Multimodal Scene Video Reviewer — Source & UI Wiring', () => {
     const scriptPanel = readSource('src/components/vision/ScriptPanel.tsx')
     expect(scriptPanel).toContain('SceneVideoReviewerPanel')
     expect(scriptPanel).toContain('value="review"')
+    expect(scriptPanel).toContain("'streams',\n      'review'")
     expect(scriptPanel).toContain('Script Supervisor')
     expect(scriptPanel).toContain('Supervisor')
     expect(scriptPanel).toContain('onOpenDirectShotWithRecommendation')

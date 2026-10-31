@@ -5193,7 +5193,17 @@ function SceneCard({
   }, [defaultMusicPlayDuration, sceneIdx])
 
   const availableSceneTabs = useMemo<ProductionWorkflowTab[]>(
-    () => ['direction', 'beats', 'music', 'references', 'previs', 'video', 'mixer', 'streams'],
+    () => [
+      'direction',
+      'beats',
+      'music',
+      'references',
+      'previs',
+      'video',
+      'mixer',
+      'streams',
+      'review',
+    ],
     []
   )
 
@@ -6820,6 +6830,9 @@ function SceneCard({
                           type="button"
                           onClick={(e) => {
                             e.stopPropagation()
+                            if (!isWorkflowOpen && onWorkflowOpenChange) {
+                              onWorkflowOpenChange(true)
+                            }
                             setActiveSceneTab('review')
                           }}
                           title="Script Supervisor — Multimodal Audience Resonance (AR), script compliance, continuity & pickup recommendations"
