@@ -60,17 +60,8 @@ export type ExampleTrailerScript = {
 }
 
 export const IMAGINE_POSSIBILITIES_COPY = {
-  eyebrow: 'SceneFlow Studio Showcase · Full-Length Productions, Not Disconnected Clips',
   headline: 'Imagine the Possibilities',
-  subheadline:
-    'Direct feature-length cinematic dramas, full-season animated series, period-accurate documentaries, and multi-module training courses—with locked characters, sets, voice, and score from first spark to finished master.',
-  unmuteLabel: 'Unmute Trailer',
-  muteLabel: 'Mute',
-  fullscreenLabel: 'Fullscreen',
-  exitFullscreenLabel: 'Exit Fullscreen',
-  viewScriptLabel: 'Trailer Script & Shots',
-  exploreProductionLabel: 'Explore Full Production',
-  platformOverviewLabel: 'Platform Overview',
+  subheadline: 'with SceneFlow Studio',
 } as const
 
 export const EXAMPLE_TRAILER_SCRIPTS: readonly ExampleTrailerScript[] = [

@@ -13,8 +13,8 @@
 export const FLAGSHIP_PRODUCTION_ID = 'drama' as const
 
 /** Same-path public files. The query busts previously cached trailers. */
-export const CINEMATIC_DRAMA_TRAILER_WEBM = '/videos/cinematic-drama-trailer.webm?v=20261030'
-export const CINEMATIC_DRAMA_TRAILER_MP4 = '/videos/cinematic-drama-trailer.mp4?v=20261030'
+export const CINEMATIC_DRAMA_TRAILER_WEBM = '/videos/cinematic-drama-trailer.webm?v=20261031'
+export const CINEMATIC_DRAMA_TRAILER_MP4 = '/videos/cinematic-drama-trailer.mp4?v=20261031'
 
 export const ANIMATED_SERIES_TRAILER_WEBM = '/videos/animated-series-trailer.webm?v=20261030'
 export const ANIMATED_SERIES_TRAILER_MP4 = '/videos/animated-series-trailer.mp4?v=20261030'

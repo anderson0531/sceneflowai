@@ -635,10 +635,10 @@ describe('Production showcase screening embeds', () => {
   it('ships a trailer and pipeline doors on every example before the longform master exists', () => {
     expect(getProductionExampleMedia('drama').isFlagship).toBe(true)
     expect(getProductionExampleMedia('drama').trailerSrc).toBe(
-      '/videos/cinematic-drama-trailer.webm?v=20261030'
+      '/videos/cinematic-drama-trailer.webm?v=20261031'
     )
     expect(getProductionExampleMedia('drama').trailerMp4Src).toBe(
-      '/videos/cinematic-drama-trailer.mp4?v=20261030'
+      '/videos/cinematic-drama-trailer.mp4?v=20261031'
     )
     expect(getProductionExampleMedia('drama').longformHref).toBeNull()
     expect(getProductionExampleMedia('animation').isFlagship).toBe(false)
