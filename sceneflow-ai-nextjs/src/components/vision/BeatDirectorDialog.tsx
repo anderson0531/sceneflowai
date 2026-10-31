@@ -54,6 +54,10 @@ export interface BeatDirectorDialogProps {
   readOnly?: boolean
   /** Open with Safety already checked, for a content-policy failure. */
   initialSafety?: boolean
+  /** Pre-fill the direction note (e.g. from Scene Video Reviewer recommendation). */
+  initialInstruction?: string
+  /** Pre-load a proposed StillDirectorPatch preview (e.g. from Scene Video Reviewer). */
+  initialPatch?: StillDirectorPatch | null
   characters: DirectorCharacter[]
   locationReferences: DirectorLocation[]
   objectReferences: DirectorObject[]
@@ -125,19 +129,21 @@ export function BeatDirectorDialog({
   onToggleObject,
   onSelectLocation,
   initialSafety = false,
+  initialInstruction = '',
+  initialPatch = null,
 }: BeatDirectorDialogProps) {
   const t = useTranslations('production.direction.beatDirector')
-  const [instruction, setInstruction] = useState('')
-  const [preview, setPreview] = useState<StillDirectorPatch | null>(null)
+  const [instruction, setInstruction] = useState(initialInstruction)
+  const [preview, setPreview] = useState<StillDirectorPatch | null>(initialPatch)
   const [previewing, setPreviewing] = useState(false)
   const [safety, setSafety] = useState(initialSafety)
 
   useEffect(() => {
     if (!open) return
-    setInstruction('')
-    setPreview(null)
+    setInstruction(initialInstruction || '')
+    setPreview(initialPatch ?? null)
     setSafety(initialSafety)
-  }, [open, initialSafety])
+  }, [open, initialSafety, initialInstruction, initialPatch])
   const [query, setQuery] = useState('')
   const [scope, setScope] = useState<LibrarySceneFilter>(sceneNumber)
   const [tab, setTab] = useState<ReferenceTab>('locations')

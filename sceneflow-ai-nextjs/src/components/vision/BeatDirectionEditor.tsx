@@ -69,6 +69,10 @@ export interface BeatDirectionEditorProps {
   onDirectorOpenChange?: (open: boolean) => void
   /** Open Direct Shot with Safety already checked. */
   initialSafety?: boolean
+  /** Pre-fill Direct Shot direction note (e.g. from Scene Video Reviewer). */
+  initialInstruction?: string
+  /** Pre-load Direct Shot patch preview (e.g. from Scene Video Reviewer). */
+  initialPatch?: StillDirectorPatch | null
 }
 
 export interface DirectionCharacter {
@@ -218,6 +222,8 @@ export function BeatDirectionEditor({
   directorOpen: directorOpenProp,
   onDirectorOpenChange,
   initialSafety = false,
+  initialInstruction,
+  initialPatch,
 }: BeatDirectionEditorProps) {
   const [expanded, setExpanded] = useState(layout === 'board')
   const [directorOpenInternal, setDirectorOpenInternal] = useState(false)
@@ -453,6 +459,8 @@ export function BeatDirectionEditor({
       onToggleObject={toggleObject}
       onSelectLocation={selectLocation}
       initialSafety={initialSafety}
+      initialInstruction={initialInstruction}
+      initialPatch={initialPatch}
     />
   )
 

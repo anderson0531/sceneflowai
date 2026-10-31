@@ -399,6 +399,14 @@ export interface VisionPart {
     mimeType: string
     data: string  // base64
   }
+  fileData?: {
+    mimeType: string
+    fileUri: string
+  }
+  videoMetadata?: {
+    startOffset?: string
+    endOffset?: string
+  }
 }
 
 export interface VisionGenerationOptions extends TextGenerationOptions {
@@ -440,12 +448,28 @@ export async function generateWithVision(
       return { text: part.text }
     }
     if (part.inlineData) {
-      return {
+      const built: Record<string, unknown> = {
         inlineData: {
           mimeType: part.inlineData.mimeType,
           data: part.inlineData.data
         }
       }
+      if (part.videoMetadata) {
+        built.videoMetadata = part.videoMetadata
+      }
+      return built
+    }
+    if (part.fileData) {
+      const built: Record<string, unknown> = {
+        fileData: {
+          mimeType: part.fileData.mimeType,
+          fileUri: part.fileData.fileUri
+        }
+      }
+      if (part.videoMetadata) {
+        built.videoMetadata = part.videoMetadata
+      }
+      return built
     }
     return part
   })
@@ -577,6 +601,7 @@ export async function generateWithVision(
   
   const responseParts = candidate.content?.parts ?? []
   const text = responseParts
+    .filter((part: { thought?: boolean }) => !part.thought)
     .map((part: { text?: string }) => part.text)
     .filter(Boolean)
     .join('')
@@ -590,7 +615,11 @@ export async function generateWithVision(
   return {
     text,
     finishReason: candidate.finishReason,
-    safetyRatings: candidate.safetyRatings
+    safetyRatings: candidate.safetyRatings,
+    modelId: model,
+    requestedModelId: model,
+    downgraded: false,
+    usageMetadata: data.usageMetadata,
   }
 }
 

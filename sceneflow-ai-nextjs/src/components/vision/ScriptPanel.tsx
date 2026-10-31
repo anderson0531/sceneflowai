@@ -27,6 +27,8 @@ import {
 } from './SceneRecommendationsDialog'
 import { SceneProductionManager } from './scene-production/SceneProductionManager'
 import { SceneProductionDirector } from './scene-production/SceneProductionDirector'
+import { SceneVideoReviewerPanel } from './scene-production/SceneVideoReviewerPanel'
+import type { StillDirectorPatch } from '@/lib/intelligence/beat-still-director-fallback'
 import { SegmentFrameTimeline } from './scene-production/SegmentFrameTimeline'
 import { AddSegmentDialog } from './scene-production/AddSegmentDialog'
 import { EditSegmentDialog } from './scene-production/EditSegmentDialog'
@@ -4701,6 +4703,7 @@ function SceneCard({
     | 'video'
     | 'mixer'
     | 'streams'
+    | 'review'
   const [activeSceneTab, setActiveSceneTab] = useState<ProductionWorkflowTab>('direction')
   const sceneToolbarControl =
     'h-8 px-2.5 text-xs rounded-md inline-flex items-center gap-1.5 transition-colors disabled:opacity-50'
@@ -4710,6 +4713,8 @@ function SceneCard({
   const sceneBeatsForTabs = useMemo(() => getSceneBeats(scene), [scene])
   const [directBeatId, setDirectBeatId] = useState<string | null>(null)
   const [directBeatSafety, setDirectBeatSafety] = useState(false)
+  const [directBeatInstruction, setDirectBeatInstruction] = useState<string>('')
+  const [directBeatPatch, setDirectBeatPatch] = useState<StillDirectorPatch | null>(null)
   const [selectedBeatId, setSelectedBeatId] = useState<string | null>(
     () => getSceneBeats(scene)[0]?.beatId ?? null
   )
@@ -6810,6 +6815,25 @@ function SceneCard({
                           <span>Scene Director</span>
                         </button>
                       )}
+                      {activeStep && (
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            setActiveSceneTab('review')
+                          }}
+                          title="Script Supervisor — Multimodal Audience Resonance (AR), script compliance, continuity & pickup recommendations"
+                          className={`${sceneToolbarControl} font-medium border border-indigo-400/60 bg-indigo-500/15 text-indigo-200 hover:bg-indigo-500/25`}
+                        >
+                          <Eye className="w-3.5 h-3.5" />
+                          <span>Script Supervisor</span>
+                          {typeof scene.videoReview?.arScore === 'number' && (
+                            <span className="rounded-full bg-indigo-500/35 px-1.5 py-0.2 text-[10px] font-bold text-indigo-100 tabular-nums">
+                              AR {scene.videoReview.arScore}
+                            </span>
+                          )}
+                        </button>
+                      )}
                       <GroupedLanguageSelector
                         value={selectedLanguage}
                         onValueChange={(code) => onLanguageChange?.(code)}
@@ -7138,6 +7162,15 @@ function SceneCard({
                             <TabsTrigger value="streams" title="Language versions of this scene" className={sceneTabTriggerClass}>
                               <ListVideo className="w-3.5 h-3.5 shrink-0" />
                               Streams
+                            </TabsTrigger>
+                            <TabsTrigger value="review" title="Script Supervisor — Multimodal Audience & Director review of rendered MP4s and shot clips" className={sceneTabTriggerClass}>
+                              <Eye className="w-3.5 h-3.5 shrink-0" />
+                              Supervisor
+                              {typeof scene.videoReview?.arScore === 'number' && (
+                                <span className="text-[10px] font-medium text-emerald-400">
+                                  (AR {scene.videoReview.arScore})
+                                </span>
+                              )}
                             </TabsTrigger>
                           </TabsList>
                         </div>
@@ -7800,6 +7833,37 @@ function SceneCard({
                                   <p className="sr-only">{slots.streamCount} streams</p>
                                 )}
                               </TabsContent>
+                              <TabsContent value="review" className="mt-3 focus-visible:outline-none">
+                                <SceneVideoReviewerPanel
+                                  projectId={projectId}
+                                  sceneId={workflowSceneId}
+                                  sceneNumber={sceneNumber}
+                                  sceneIndex={sceneIdx}
+                                  scene={scene}
+                                  scenes={scenes ?? []}
+                                  script={script}
+                                  onScriptChange={onScriptChange}
+                                  productionData={sceneProductionData || null}
+                                  onSegmentPromptChange={onSegmentPromptChange}
+                                  onProductionDataChange={onProductionDataChange}
+                                  characters={characters}
+                                  locationReferences={locationReferences}
+                                  objectReferences={objectReferences}
+                                  promptComposition={promptComposition}
+                                  onEditSceneWithRecommendations={onEditSceneWithRecommendations}
+                                  onOpenDirectShotWithRecommendation={({
+                                    beatId,
+                                    instruction,
+                                    patch,
+                                    safety,
+                                  }) => {
+                                    setDirectBeatInstruction(instruction || '')
+                                    setDirectBeatPatch(patch ?? null)
+                                    setDirectBeatSafety(safety === true)
+                                    setDirectBeatId(beatId)
+                                  }}
+                                />
+                              </TabsContent>
                       </div>
 
                     </Tabs>
@@ -7810,10 +7874,14 @@ function SceneCard({
                         layout="dialog"
                         directorOpen
                         initialSafety={directBeatSafety}
+                        initialInstruction={directBeatInstruction}
+                        initialPatch={directBeatPatch}
                         onDirectorOpenChange={(open) => {
                           if (!open) {
                             setDirectBeatId(null)
                             setDirectBeatSafety(false)
+                            setDirectBeatInstruction('')
+                            setDirectBeatPatch(null)
                           }
                         }}
                         beat={sceneBeatsForTabs.find((beat) => beat.beatId === directBeatId)!}
