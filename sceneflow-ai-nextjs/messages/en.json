@@ -556,7 +556,7 @@
         "id": "production-stage",
         "label": "Production Stage",
         "headline": "From script to master, all in one room.",
-        "promise": "The Blueprint is locked. Your cast is cast. Now, step onto the Production Stage. Every chapter, scene, and shot is organized into a fullscreen linear workflow—from Direction, Audio, Music, Continuity, Stills, and Clips to the Broadcast Mixer, Multi-Language Streams, and the Script Supervisor. You direct the intent; intelligent agents execute the generation.",
+        "promise": "The Blueprint is locked. Your cast is cast. Now, step onto the Production Stage. Every chapter, scene, and shot is organized into a fullscreen linear workflow—from Direction, Audio, Music, Continuity, Stills, and Clips to the Broadcast Mixer, Multi-Language Streams, and FlowDirector. You direct the intent; intelligent agents execute the generation.",
         "groups": [
           {
             "id": "direct-control",
@@ -567,13 +567,13 @@
               {
                 "icon": "sceneWorkflow",
                 "title": "Scene Production Workflow (Fullscreen)",
-                "description": "Open the dedicated Fullscreen Scene Production Studio to direct every stage of a scene from one unified 9-tab command bar (`Direction · Audio · Music · Continuity · Stills · Clips · Mixer · Streams · Supervisor`). Reorder shots in the left-hand Shot Rail with live readiness badges, inspect the 16:9 Still & Clip Stage alongside structured camera, blocking, emotion, and lighting cards, and track end-to-end scene completion without losing context.",
+                "description": "Open the dedicated Fullscreen Scene Production Studio to direct every stage of a scene from one unified 9-tab command bar (`Direction · Audio · Music · Continuity · Stills · Clips · Mixer · Streams · FlowDirector`). Reorder shots in the left-hand Shot Rail with live readiness badges, inspect the 16:9 Still & Clip Stage alongside structured camera, blocking, emotion, and lighting cards, and track end-to-end scene completion without losing context.",
                 "screenshot": "Scene Production Workflow (Fullscreen) — 9-tab linear studio, sortable Shot Rail, and structured Shot Direction Workbench",
                 "learnMore": {
                   "items": [
                     {
                       "title": "9-tab fullscreen linear studio",
-                      "description": "Move fluidly across Direction, Audio, Music, Continuity, Stills, Clips, Mixer, Streams, and Supervisor inside a distraction-free fullscreen workspace."
+                      "description": "Move fluidly across Direction, Audio, Music, Continuity, Stills, Clips, Mixer, Streams, and FlowDirector inside a distraction-free fullscreen workspace."
                     },
                     {
                       "title": "Sortable Shot Rail & live badges",
@@ -714,7 +714,7 @@
             "id": "generate-audit",
             "label": "Generate & Audit",
             "headline": "Prove the cut before you spend the compute.",
-            "description": "Don't guess how a scene will play. SceneFlow separates voice, SFX, musical score, and keyframe generation from expensive motion rendering—giving you dedicated Fullscreen Audio, Music, Stills, Clips, and Script Supervisor workbenches to audit the rhythm and continuity of the cut.",
+            "description": "Don't guess how a scene will play. SceneFlow separates voice, SFX, musical score, and keyframe generation from expensive motion rendering—giving you dedicated Fullscreen Audio, Music, Stills, Clips, and FlowDirector workbenches to audit the rhythm and continuity of the cut.",
             "features": [
               {
                 "icon": "audioAgent",
@@ -884,13 +884,13 @@
               },
               {
                 "icon": "scriptSupervisor",
-                "title": "The Script Supervisor",
-                "description": "Audit rendered scene MP4s and individual shot clips inside the Fullscreen `Supervisor` tab using multimodal video intelligence from both the Audience Resonance (`AR Score`) and Director perspectives. Inspect 5-axis audience sub-scores, script and continuity compliance telemetry, and root-cause anomaly attribution (`Keyframe`, `Motion Video`, or `Scene Direction`)—then selectively apply optional pickup recommendations through the Shot Director or Scene Director.",
-                "screenshot": "The Script Supervisor — multimodal Audience Resonance (AR Score) and Director video review, shot compliance matrix, and optional Shot & Scene Director pickups",
+                "title": "FlowDirector",
+                "description": "Review rendered scene MP4s and individual shot clips inside the Fullscreen `FlowDirector` tab using multimodal video intelligence that unites oversight and action from both the Audience Resonance (`AR Score`) and Director perspectives. Inspect 5-axis audience sub-scores, script and continuity compliance telemetry, and root-cause anomaly attribution (`Keyframe`, `Motion Video`, or `Scene Direction`)—then selectively apply optional pickup recommendations and fixes through the Shot Director or Scene Director.",
+                "screenshot": "FlowDirector — multimodal Audience Resonance (AR Score) and Director video review, shot compliance matrix, and optional Shot & Scene Director pickups",
                 "learnMore": {
                   "items": [
                     {
-                      "title": "Dual Audience Resonance & Director audit",
+                      "title": "Dual Audience Resonance & Director oversight",
                       "description": "Evaluate rendered clips and scene MP4s simultaneously for 5-axis Audience Resonance (AR Score) and Director script and continuity compliance."
                     },
                     {
@@ -898,7 +898,7 @@
                       "description": "Spot visual continuity drift, missing props, lip-sync gaps, and pacing friction with root-cause attribution across Keyframe, Motion, or Scene Direction."
                     },
                     {
-                      "title": "1-click Shot Director prompt patches",
+                      "title": "1-click Shot Director fixes & prompt patches",
                       "description": "Apply optional visual pickup recommendations directly through the Shot Director to update camera framing, blocking, props, and compiled prompts automatically."
                     },
                     {

@@ -884,13 +884,13 @@
               },
               {
                 "icon": "scriptSupervisor",
-                "title": "The Script Supervisor",
-                "description": "Audita los MP4 de escenas renderizadas y los clips individuales dentro de la pestaña `Supervisor` en pantalla completa usando inteligencia de video multimodal desde las perspectivas de Audience Resonance (`AR Score`) y del Director. Inspecciona subpuntuaciones de audiencia en 5 ejes, telemetría de cumplimiento de guion y continuidad, y atribución de anomalías (`Keyframe`, `Motion Video` o `Scene Direction`), aplicando recomendaciones opcionales mediante el Shot Director o el Scene Director.",
-                "screenshot": "The Script Supervisor — revisión multimodal de video con Audience Resonance (AR Score) y Director, matriz de cumplimiento por toma y pickups opcionales",
+                "title": "FlowDirector",
+                "description": "Revisa los MP4 de escenas renderizadas y los clips individuales dentro de la pestaña `FlowDirector` en pantalla completa usando inteligencia de video multimodal que une supervisión y acción desde las perspectivas de Audience Resonance (`AR Score`) y del Director. Inspecciona subpuntuaciones de audiencia en 5 ejes, telemetría de cumplimiento de guion y continuidad, y atribución de anomalías (`Keyframe`, `Motion Video` o `Scene Direction`), aplicando recomendaciones y correcciones opcionales mediante el Shot Director o el Scene Director.",
+                "screenshot": "FlowDirector — revisión multimodal de video con Audience Resonance (AR Score) y Director, matriz de cumplimiento por toma y pickups opcionales",
                 "learnMore": {
                   "items": [
                     {
-                      "title": "Auditoría dual de Audience Resonance y Director",
+                      "title": "Supervisión dual de Audience Resonance y Director",
                       "description": "Evalúa clips renderizados y MP4 de escenas simultáneamente para obtener el AR Score en 5 ejes y el cumplimiento de guion y continuidad del Director."
                     },
                     {
@@ -898,7 +898,7 @@
                       "description": "Detecta desviaciones de continuidad visual, utilería faltante, desajustes de sincronía labial y fricción de ritmo con atribución de causa raíz."
                     },
                     {
-                      "title": "Parches de prompts en 1 clic con el Shot Director",
+                      "title": "Correcciones y parches de prompts en 1 clic con el Shot Director",
                       "description": "Aplica recomendaciones visuales opcionales directamente a través del Shot Director para actualizar encuadre, bloqueo, utilería y prompts compilados."
                     },
                     {

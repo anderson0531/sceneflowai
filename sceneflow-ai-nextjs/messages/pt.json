@@ -884,13 +884,13 @@
               },
               {
                 "icon": "scriptSupervisor",
-                "title": "The Script Supervisor",
-                "description": "Audite MP4s de cenas renderizadas e clipes individuais na aba `Supervisor` em tela cheia usando inteligência de vídeo multimodal sob as perspectivas de Audience Resonance (`AR Score`) e do Diretor. Inspecione subpontuações de público em 5 eixos, telemetria de conformidade de roteiro e continuidade e atribuição de anomalias (`Keyframe`, `Motion Video` ou `Scene Direction`), aplicando recomendações opcionais pelo Shot Director ou Scene Director.",
-                "screenshot": "The Script Supervisor — revisão multimodal de vídeo com Audience Resonance (AR Score) e Diretor, matriz de conformidade por tomada e pickups opcionais",
+                "title": "FlowDirector",
+                "description": "Revise MP4s de cenas renderizadas e clipes individuais na aba `FlowDirector` em tela cheia usando inteligência de vídeo multimodal que une supervisão e ação sob as perspectivas de Audience Resonance (`AR Score`) e do Diretor. Inspecione subpontuações de público em 5 eixos, telemetria de conformidade de roteiro e continuidade e atribuição de anomalias (`Keyframe`, `Motion Video` ou `Scene Direction`), aplicando recomendações e correções opcionais pelo Shot Director ou Scene Director.",
+                "screenshot": "FlowDirector — revisão multimodal de vídeo com Audience Resonance (AR Score) e Diretor, matriz de conformidade por tomada e pickups opcionais",
                 "learnMore": {
                   "items": [
                     {
-                      "title": "Auditoria dupla de Audience Resonance e Diretor",
+                      "title": "Supervisão dupla de Audience Resonance e Diretor",
                       "description": "Avalie clipes renderizados e MP4s de cena simultaneamente para obter o AR Score em 5 eixos e a conformidade de roteiro e continuidade do Diretor."
                     },
                     {
@@ -898,7 +898,7 @@
                       "description": "Identifique desvios de continuidade visual, objetos ausentes, falhas de sincronia labial e atritos de ritmo com atribuição precisa da causa raiz."
                     },
                     {
-                      "title": "Patches de prompt em 1 clique via Shot Director",
+                      "title": "Correções e patches de prompt em 1 clique via Shot Director",
                       "description": "Aplique recomendações visuais opcionais diretamente pelo Shot Director para atualizar enquadramento, marcação de cena, objetos e prompts compilados."
                     },
                     {

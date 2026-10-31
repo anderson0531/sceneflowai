@@ -825,7 +825,7 @@ export function SceneVideoReviewerPanel({
             <div>
               <div className="flex items-center gap-2">
                 <h3 className="text-sm font-semibold text-white">
-                  Script Supervisor · Scene {sceneNumber}
+                  FlowDirector · Scene {sceneNumber}
                 </h3>
                 {review?.modelId && (
                   <span className="rounded border border-slate-700 bg-slate-800/80 px-1.5 py-0.5 text-[10px] font-mono text-slate-300">
@@ -928,12 +928,12 @@ export function SceneVideoReviewerPanel({
             ) : review ? (
               <>
                 <RefreshCw className="h-3.5 w-3.5" />
-                Re-Run Supervisor
+                Re-Run FlowDirector
               </>
             ) : (
               <>
                 <Sparkles className="h-3.5 w-3.5" />
-                Run Script Supervisor
+                Run FlowDirector
               </>
             )}
           </Button>
@@ -948,10 +948,10 @@ export function SceneVideoReviewerPanel({
           </div>
           <div className="max-w-lg space-y-1">
             <h4 className="text-sm font-semibold text-white">
-              Script Supervisor · Multimodal Review &amp; Pickup Dispatch
+              FlowDirector · Multimodal Review &amp; Pickup Dispatch
             </h4>
             <p className="text-xs text-slate-400 leading-relaxed">
-              The Script Supervisor inspects your rendered scene MP4 stream and/or individual shot
+              FlowDirector inspects your rendered scene MP4 stream and/or individual shot
               clips, start keyframes, and canonical reference plates against the screenplay —
               delivering an Audience Resonance (AR) Score, Director compliance breakdown, continuity
               anomaly log, and optional pickup recommendations routed directly to the Shot Director
@@ -964,7 +964,7 @@ export function SceneVideoReviewerPanel({
             className="mt-1 bg-indigo-600 hover:bg-indigo-500 text-white text-xs gap-1.5"
           >
             <Sparkles className="h-4 w-4" />
-            Run Script Supervisor
+            Run FlowDirector
           </Button>
         </div>
       )}
@@ -1418,7 +1418,7 @@ export function SceneVideoReviewerPanel({
               <div>
                 <h4 className="text-xs font-semibold uppercase tracking-wider text-white flex items-center gap-1.5">
                   <Wand2 className="h-3.5 w-3.5 text-teal-400" />
-                  Optional Supervisor Pickups &amp; Recommendations ({review.recommendations.length})
+                  Optional FlowDirector Pickups &amp; Recommendations ({review.recommendations.length})
                 </h4>
                 <p className="text-[11px] text-slate-400">
                   Select which pickup recommendations to apply. Visual, camera, blocking, and continuity
@@ -1828,7 +1828,7 @@ export function SceneVideoReviewerDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="flex w-[min(76rem,calc(100vw-2rem))] max-w-none min-w-0 max-h-[92vh] flex-col gap-3 overflow-x-hidden overflow-y-auto bg-slate-950 border-slate-800 text-slate-100 p-4">
         <DialogTitle className="sr-only">
-          Script Supervisor · Scene {panelProps.sceneNumber}
+          FlowDirector · Scene {panelProps.sceneNumber}
         </DialogTitle>
         <DialogDescription className="sr-only">
           Review rendered scene video or shot clips from Audience and Director perspectives and

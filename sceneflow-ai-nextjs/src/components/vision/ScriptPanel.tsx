@@ -6835,11 +6835,11 @@ function SceneCard({
                             }
                             setActiveSceneTab('review')
                           }}
-                          title="Script Supervisor — Multimodal Audience Resonance (AR), script compliance, continuity & pickup recommendations"
+                          title="FlowDirector — Multimodal Audience Resonance (AR), script compliance, continuity & pickup recommendations"
                           className={`${sceneToolbarControl} font-medium border border-indigo-400/60 bg-indigo-500/15 text-indigo-200 hover:bg-indigo-500/25`}
                         >
                           <Eye className="w-3.5 h-3.5" />
-                          <span>Script Supervisor</span>
+                          <span>FlowDirector</span>
                           {typeof scene.videoReview?.arScore === 'number' && (
                             <span className="rounded-full bg-indigo-500/35 px-1.5 py-0.2 text-[10px] font-bold text-indigo-100 tabular-nums">
                               AR {scene.videoReview.arScore}
@@ -7176,9 +7176,9 @@ function SceneCard({
                               <ListVideo className="w-3.5 h-3.5 shrink-0" />
                               Streams
                             </TabsTrigger>
-                            <TabsTrigger value="review" title="Script Supervisor — Multimodal Audience & Director review of rendered MP4s and shot clips" className={sceneTabTriggerClass}>
+                            <TabsTrigger value="review" title="FlowDirector — Multimodal Audience & Director review of rendered MP4s and shot clips" className={sceneTabTriggerClass}>
                               <Eye className="w-3.5 h-3.5 shrink-0" />
-                              Supervisor
+                              FlowDirector
                               {typeof scene.videoReview?.arScore === 'number' && (
                                 <span className="text-[10px] font-medium text-emerald-400">
                                   (AR {scene.videoReview.arScore})

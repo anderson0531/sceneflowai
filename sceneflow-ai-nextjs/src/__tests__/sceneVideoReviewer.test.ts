@@ -393,20 +393,19 @@ describe('Multimodal Scene Video Reviewer — Source & UI Wiring', () => {
     expect(geminiSource).toContain('videoMetadata?: {')
   })
 
-  it('wires SceneVideoReviewerPanel (Script Supervisor) into ScriptPanel and BeatDirectorDialog', () => {
+  it('wires SceneVideoReviewerPanel (FlowDirector) into ScriptPanel and BeatDirectorDialog', () => {
     const scriptPanel = readSource('src/components/vision/ScriptPanel.tsx')
     expect(scriptPanel).toContain('SceneVideoReviewerPanel')
     expect(scriptPanel).toContain('value="review"')
     expect(scriptPanel).toContain("'streams',\n      'review'")
-    expect(scriptPanel).toContain('Script Supervisor')
-    expect(scriptPanel).toContain('Supervisor')
+    expect(scriptPanel).toContain('FlowDirector')
     expect(scriptPanel).toContain('onOpenDirectShotWithRecommendation')
 
     const reviewerPanel = readSource(
       'src/components/vision/scene-production/SceneVideoReviewerPanel.tsx'
     )
-    expect(reviewerPanel).toContain('Script Supervisor · Scene')
-    expect(reviewerPanel).toContain('Run Script Supervisor')
+    expect(reviewerPanel).toContain('FlowDirector · Scene')
+    expect(reviewerPanel).toContain('Run FlowDirector')
     expect(reviewerPanel).toContain("from '@/components/ui/Button'")
     expect(reviewerPanel).not.toContain("from '@/components/ui/button'")
 

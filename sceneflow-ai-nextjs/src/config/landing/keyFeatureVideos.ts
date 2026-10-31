@@ -53,7 +53,7 @@ export const KEY_FEATURE_VIDEO_LABELS: Record<string, string> = {
   animatic: 'Animatic',
   videoAgent: 'Video Agent',
   clipsWorkbench: 'Multi-Take Clips Studio',
-  scriptSupervisor: 'Script Supervisor',
+  scriptSupervisor: 'FlowDirector',
   productionAgent: 'Production Agent',
   mixer: 'Mixer',
   languageStreams: 'Language versions',

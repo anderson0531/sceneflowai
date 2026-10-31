@@ -884,13 +884,13 @@
               },
               {
                 "icon": "scriptSupervisor",
-                "title": "The Script Supervisor（场记监督）",
-                "description": "在全屏 `Supervisor` 标签页中，从 Audience Resonance（`AR Score`）与导演双重视角利用多模态视频智能审计渲染完成的场景 MP4 与单镜头片段。查看五维观众子评分、剧本与连贯性合规遥测以及异常根因归因（`关键帧`、`动态视频` 或 `场景执导`），并通过分镜导演或场景导演选择性应用补拍建议。",
-                "screenshot": "The Script Supervisor — 多模态 Audience Resonance (AR Score) 与导演视频审查、分镜合规矩阵及可选补拍派发",
+                "title": "FlowDirector",
+                "description": "在全屏 `FlowDirector` 标签页中，从 Audience Resonance（`AR Score`）与导演双重视角利用多模态视频智能统筹审查与执行修正，全面检视渲染完成的场景 MP4 与单镜头片段。查看五维观众子评分、剧本与连贯性合规遥测以及异常根因归因（`关键帧`、`动态视频` 或 `场景执导`），并通过分镜导演或场景导演选择性应用修改与补拍建议。",
+                "screenshot": "FlowDirector — 多模态 Audience Resonance (AR Score) 与导演视频审查、分镜合规矩阵及可选补拍派发",
                 "learnMore": {
                   "items": [
                     {
-                      "title": "Audience Resonance 与导演双重审计",
+                      "title": "Audience Resonance 与导演双重统筹审查",
                       "description": "同时评估已渲染片段与场景 MP4 的五维 Audience Resonance (AR Score) 以及导演剧本与连贯性合规度。"
                     },
                     {
@@ -898,7 +898,7 @@
                       "description": "精准定位视觉连贯性漂移、缺失道具、口型同步偏差与节奏摩擦，并归因至关键帧、动作渲染或场景执导。"
                     },
                     {
-                      "title": "分镜导演一键提示词补丁",
+                      "title": "分镜导演一键修正与提示词补丁",
                       "description": "通过分镜导演直接应用可选视觉修正建议，自动同步更新景别构图、人物调度、关键道具与底层编译提示词。"
                     },
                     {
