@@ -10,6 +10,7 @@ import {
   type ExampleTrailerScript,
 } from '@/config/landing/exampleTrailerScripts'
 import {
+  getAnimatedSeriesTrailerSources,
   getCinematicDramaTrailerSources,
   type ProductionWalkId,
 } from '@/config/landing/productionPipelineDemo'
@@ -33,7 +34,9 @@ export function ImaginePossibilitiesHero() {
   const activeSources =
     activeScript.id === 'drama'
       ? getCinematicDramaTrailerSources(locale)
-      : { webmSrc: activeScript.webmSrc, mp4Src: activeScript.mp4Src }
+      : activeScript.id === 'animation'
+        ? getAnimatedSeriesTrailerSources(locale)
+        : { webmSrc: activeScript.webmSrc, mp4Src: activeScript.mp4Src }
 
   useEffect(() => {
     const video = videoRef.current

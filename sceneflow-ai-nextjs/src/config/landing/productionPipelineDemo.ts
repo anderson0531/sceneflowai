@@ -80,8 +80,72 @@ export function getCinematicDramaTrailerSources(locale?: string): {
   return CINEMATIC_DRAMA_DUB_TRAILERS[resolved]
 }
 
-export const ANIMATED_SERIES_TRAILER_WEBM = '/videos/animated-series-trailer.webm?v=20261030'
-export const ANIMATED_SERIES_TRAILER_MP4 = '/videos/animated-series-trailer.mp4?v=20261030'
+export const ANIMATED_SERIES_TRAILER_VERSION = '20261101'
+
+export const ANIMATED_SERIES_TRAILER_WEBM = `/videos/animated-series-trailer.webm?v=${ANIMATED_SERIES_TRAILER_VERSION}`
+export const ANIMATED_SERIES_TRAILER_MP4 = `/videos/animated-series-trailer.mp4?v=${ANIMATED_SERIES_TRAILER_VERSION}`
+
+export const ANIMATED_SERIES_DUB_LOCALE_IDS = [
+  'en',
+  'es',
+  'pt',
+  'hi',
+  'zh',
+  'ar',
+  'th',
+] as const
+
+export type AnimatedSeriesDubLocaleId = (typeof ANIMATED_SERIES_DUB_LOCALE_IDS)[number]
+
+export const ANIMATED_SERIES_DUB_TRAILERS: Record<
+  AnimatedSeriesDubLocaleId,
+  { webmSrc: string; mp4Src: string }
+> = {
+  en: {
+    webmSrc: ANIMATED_SERIES_TRAILER_WEBM,
+    mp4Src: ANIMATED_SERIES_TRAILER_MP4,
+  },
+  es: {
+    webmSrc: `/videos/animated-series-trailer-es.webm?v=${ANIMATED_SERIES_TRAILER_VERSION}`,
+    mp4Src: `/videos/animated-series-trailer-es.mp4?v=${ANIMATED_SERIES_TRAILER_VERSION}`,
+  },
+  pt: {
+    webmSrc: `/videos/animated-series-trailer-pt.webm?v=${ANIMATED_SERIES_TRAILER_VERSION}`,
+    mp4Src: `/videos/animated-series-trailer-pt.mp4?v=${ANIMATED_SERIES_TRAILER_VERSION}`,
+  },
+  hi: {
+    webmSrc: `/videos/animated-series-trailer-hi.webm?v=${ANIMATED_SERIES_TRAILER_VERSION}`,
+    mp4Src: `/videos/animated-series-trailer-hi.mp4?v=${ANIMATED_SERIES_TRAILER_VERSION}`,
+  },
+  zh: {
+    webmSrc: `/videos/animated-series-trailer-zh.webm?v=${ANIMATED_SERIES_TRAILER_VERSION}`,
+    mp4Src: `/videos/animated-series-trailer-zh.mp4?v=${ANIMATED_SERIES_TRAILER_VERSION}`,
+  },
+  ar: {
+    webmSrc: `/videos/animated-series-trailer-ar.webm?v=${ANIMATED_SERIES_TRAILER_VERSION}`,
+    mp4Src: `/videos/animated-series-trailer-ar.mp4?v=${ANIMATED_SERIES_TRAILER_VERSION}`,
+  },
+  th: {
+    webmSrc: `/videos/animated-series-trailer-th.webm?v=${ANIMATED_SERIES_TRAILER_VERSION}`,
+    mp4Src: `/videos/animated-series-trailer-th.mp4?v=${ANIMATED_SERIES_TRAILER_VERSION}`,
+  },
+}
+
+export function resolveAnimatedSeriesDubLocale(locale?: string): AnimatedSeriesDubLocaleId {
+  const base = (locale ?? 'en').trim().toLowerCase().split(/[-_]/)[0] ?? 'en'
+  if ((ANIMATED_SERIES_DUB_LOCALE_IDS as readonly string[]).includes(base)) {
+    return base as AnimatedSeriesDubLocaleId
+  }
+  return 'en'
+}
+
+export function getAnimatedSeriesTrailerSources(locale?: string): {
+  webmSrc: string
+  mp4Src: string
+} {
+  const resolved = resolveAnimatedSeriesDubLocale(locale)
+  return ANIMATED_SERIES_DUB_TRAILERS[resolved]
+}
 
 export const DOCUMENTARY_TRAILER_WEBM = '/videos/documentary-trailer.webm?v=20261030'
 export const DOCUMENTARY_TRAILER_MP4 = '/videos/documentary-trailer.mp4?v=20261030'
@@ -418,9 +482,18 @@ export function buildProductionExampleMedia(
     Boolean(locale) &&
     rawWebm === CINEMATIC_DRAMA_TRAILER_WEBM &&
     rawMp4 === CINEMATIC_DRAMA_TRAILER_MP4
-  const localizedDrama = useLocalizedDrama ? getCinematicDramaTrailerSources(locale) : null
-  const trailerSrc = (localizedDrama ? localizedDrama.webmSrc : rawWebm) || null
-  const trailerMp4Src = (localizedDrama ? localizedDrama.mp4Src : rawMp4) || null
+  const useLocalizedAnimation =
+    walkId === 'animation' &&
+    Boolean(locale) &&
+    rawWebm === ANIMATED_SERIES_TRAILER_WEBM &&
+    rawMp4 === ANIMATED_SERIES_TRAILER_MP4
+  const localizedSources = useLocalizedDrama
+    ? getCinematicDramaTrailerSources(locale)
+    : useLocalizedAnimation
+      ? getAnimatedSeriesTrailerSources(locale)
+      : null
+  const trailerSrc = (localizedSources ? localizedSources.webmSrc : rawWebm) || null
+  const trailerMp4Src = (localizedSources ? localizedSources.mp4Src : rawMp4) || null
   const longformHref = publishedScreeningHref(walk)
   const milestones = [
     milestone('series', walkSeriesHref(walk)),

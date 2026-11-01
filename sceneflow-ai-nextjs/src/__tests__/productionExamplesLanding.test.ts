@@ -647,10 +647,10 @@ describe('Production showcase screening embeds', () => {
     expect(getProductionExampleMedia('drama').longformHref).toBeNull()
     expect(getProductionExampleMedia('animation').isFlagship).toBe(false)
     expect(getProductionExampleMedia('animation').trailerSrc).toBe(
-      '/videos/animated-series-trailer.webm?v=20261030'
+      '/videos/animated-series-trailer.webm?v=20261101'
     )
     expect(getProductionExampleMedia('animation').trailerMp4Src).toBe(
-      '/videos/animated-series-trailer.mp4?v=20261030'
+      '/videos/animated-series-trailer.mp4?v=20261101'
     )
     expect(getProductionExampleMedia('documentary').trailerSrc).toBe(
       '/videos/documentary-trailer.webm?v=20261030'
