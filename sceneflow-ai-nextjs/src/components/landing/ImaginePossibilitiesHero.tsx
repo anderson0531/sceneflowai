@@ -13,6 +13,7 @@ import {
   getAnimatedSeriesTrailerSources,
   getCinematicDramaTrailerSources,
   getDocumentaryTrailerSources,
+  getTrainingSeriesTrailerSources,
   type ProductionWalkId,
 } from '@/config/landing/productionPipelineDemo'
 import { useReducedMotion } from '@/hooks/useReducedMotion'
@@ -39,7 +40,9 @@ export function ImaginePossibilitiesHero() {
         ? getAnimatedSeriesTrailerSources(locale)
         : activeScript.id === 'documentary'
           ? getDocumentaryTrailerSources(locale)
-          : { webmSrc: activeScript.webmSrc, mp4Src: activeScript.mp4Src }
+          : activeScript.id === 'training'
+            ? getTrainingSeriesTrailerSources(locale)
+            : { webmSrc: activeScript.webmSrc, mp4Src: activeScript.mp4Src }
 
   useEffect(() => {
     const video = videoRef.current
