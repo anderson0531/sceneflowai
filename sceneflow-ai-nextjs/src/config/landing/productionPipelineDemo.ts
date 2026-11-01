@@ -147,8 +147,72 @@ export function getAnimatedSeriesTrailerSources(locale?: string): {
   return ANIMATED_SERIES_DUB_TRAILERS[resolved]
 }
 
-export const DOCUMENTARY_TRAILER_WEBM = '/videos/documentary-trailer.webm?v=20261030'
-export const DOCUMENTARY_TRAILER_MP4 = '/videos/documentary-trailer.mp4?v=20261030'
+export const DOCUMENTARY_TRAILER_VERSION = '20261101'
+
+export const DOCUMENTARY_TRAILER_WEBM = `/videos/documentary-trailer.webm?v=${DOCUMENTARY_TRAILER_VERSION}`
+export const DOCUMENTARY_TRAILER_MP4 = `/videos/documentary-trailer.mp4?v=${DOCUMENTARY_TRAILER_VERSION}`
+
+export const DOCUMENTARY_DUB_LOCALE_IDS = [
+  'en',
+  'es',
+  'pt',
+  'hi',
+  'zh',
+  'ar',
+  'th',
+] as const
+
+export type DocumentaryDubLocaleId = (typeof DOCUMENTARY_DUB_LOCALE_IDS)[number]
+
+export const DOCUMENTARY_DUB_TRAILERS: Record<
+  DocumentaryDubLocaleId,
+  { webmSrc: string; mp4Src: string }
+> = {
+  en: {
+    webmSrc: DOCUMENTARY_TRAILER_WEBM,
+    mp4Src: DOCUMENTARY_TRAILER_MP4,
+  },
+  es: {
+    webmSrc: `/videos/documentary-trailer-es.webm?v=${DOCUMENTARY_TRAILER_VERSION}`,
+    mp4Src: `/videos/documentary-trailer-es.mp4?v=${DOCUMENTARY_TRAILER_VERSION}`,
+  },
+  pt: {
+    webmSrc: `/videos/documentary-trailer-pt.webm?v=${DOCUMENTARY_TRAILER_VERSION}`,
+    mp4Src: `/videos/documentary-trailer-pt.mp4?v=${DOCUMENTARY_TRAILER_VERSION}`,
+  },
+  hi: {
+    webmSrc: `/videos/documentary-trailer-hi.webm?v=${DOCUMENTARY_TRAILER_VERSION}`,
+    mp4Src: `/videos/documentary-trailer-hi.mp4?v=${DOCUMENTARY_TRAILER_VERSION}`,
+  },
+  zh: {
+    webmSrc: `/videos/documentary-trailer-zh.webm?v=${DOCUMENTARY_TRAILER_VERSION}`,
+    mp4Src: `/videos/documentary-trailer-zh.mp4?v=${DOCUMENTARY_TRAILER_VERSION}`,
+  },
+  ar: {
+    webmSrc: `/videos/documentary-trailer-ar.webm?v=${DOCUMENTARY_TRAILER_VERSION}`,
+    mp4Src: `/videos/documentary-trailer-ar.mp4?v=${DOCUMENTARY_TRAILER_VERSION}`,
+  },
+  th: {
+    webmSrc: `/videos/documentary-trailer-th.webm?v=${DOCUMENTARY_TRAILER_VERSION}`,
+    mp4Src: `/videos/documentary-trailer-th.mp4?v=${DOCUMENTARY_TRAILER_VERSION}`,
+  },
+}
+
+export function resolveDocumentaryDubLocale(locale?: string): DocumentaryDubLocaleId {
+  const base = (locale ?? 'en').trim().toLowerCase().split(/[-_]/)[0] ?? 'en'
+  if ((DOCUMENTARY_DUB_LOCALE_IDS as readonly string[]).includes(base)) {
+    return base as DocumentaryDubLocaleId
+  }
+  return 'en'
+}
+
+export function getDocumentaryTrailerSources(locale?: string): {
+  webmSrc: string
+  mp4Src: string
+} {
+  const resolved = resolveDocumentaryDubLocale(locale)
+  return DOCUMENTARY_DUB_TRAILERS[resolved]
+}
 
 export const TRAINING_SERIES_TRAILER_WEBM = '/videos/training-series-trailer.webm?v=20261030'
 export const TRAINING_SERIES_TRAILER_MP4 = '/videos/training-series-trailer.mp4?v=20261030'
@@ -487,11 +551,18 @@ export function buildProductionExampleMedia(
     Boolean(locale) &&
     rawWebm === ANIMATED_SERIES_TRAILER_WEBM &&
     rawMp4 === ANIMATED_SERIES_TRAILER_MP4
+  const useLocalizedDocumentary =
+    walkId === 'documentary' &&
+    Boolean(locale) &&
+    rawWebm === DOCUMENTARY_TRAILER_WEBM &&
+    rawMp4 === DOCUMENTARY_TRAILER_MP4
   const localizedSources = useLocalizedDrama
     ? getCinematicDramaTrailerSources(locale)
     : useLocalizedAnimation
       ? getAnimatedSeriesTrailerSources(locale)
-      : null
+      : useLocalizedDocumentary
+        ? getDocumentaryTrailerSources(locale)
+        : null
   const trailerSrc = (localizedSources ? localizedSources.webmSrc : rawWebm) || null
   const trailerMp4Src = (localizedSources ? localizedSources.mp4Src : rawMp4) || null
   const longformHref = publishedScreeningHref(walk)

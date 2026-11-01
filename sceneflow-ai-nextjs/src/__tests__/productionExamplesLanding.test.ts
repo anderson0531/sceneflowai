@@ -653,10 +653,10 @@ describe('Production showcase screening embeds', () => {
       '/videos/animated-series-trailer.mp4?v=20261101'
     )
     expect(getProductionExampleMedia('documentary').trailerSrc).toBe(
-      '/videos/documentary-trailer.webm?v=20261030'
+      '/videos/documentary-trailer.webm?v=20261101'
     )
     expect(getProductionExampleMedia('documentary').trailerMp4Src).toBe(
-      '/videos/documentary-trailer.mp4?v=20261030'
+      '/videos/documentary-trailer.mp4?v=20261101'
     )
     expect(getProductionExampleMedia('documentary').longformHref).toBeNull()
     expect(getProductionExampleMedia('training').trailerSrc).toBe(
