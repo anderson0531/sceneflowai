@@ -2,18 +2,23 @@
 
 import React, { useCallback, useEffect, useRef, useState } from 'react'
 import { motion } from 'framer-motion'
+import { useLocale } from 'next-intl'
 import { Loader2, Pause, Play, Volume2, VolumeX } from 'lucide-react'
 import {
   EXAMPLE_TRAILER_SCRIPTS,
   IMAGINE_POSSIBILITIES_COPY,
   type ExampleTrailerScript,
 } from '@/config/landing/exampleTrailerScripts'
-import type { ProductionWalkId } from '@/config/landing/productionPipelineDemo'
+import {
+  getCinematicDramaTrailerSources,
+  type ProductionWalkId,
+} from '@/config/landing/productionPipelineDemo'
 import { useReducedMotion } from '@/hooks/useReducedMotion'
 
 export const IMAGINE_POSSIBILITIES_SECTION_ID = 'imagine-possibilities'
 
 export function ImaginePossibilitiesHero() {
+  const locale = useLocale()
   const prefersReducedMotion = useReducedMotion()
   const videoRef = useRef<HTMLVideoElement>(null)
 
@@ -25,6 +30,10 @@ export function ImaginePossibilitiesHero() {
 
   const activeScript: ExampleTrailerScript =
     EXAMPLE_TRAILER_SCRIPTS.find((item) => item.id === activeId) ?? EXAMPLE_TRAILER_SCRIPTS[0]
+  const activeSources =
+    activeScript.id === 'drama'
+      ? getCinematicDramaTrailerSources(locale)
+      : { webmSrc: activeScript.webmSrc, mp4Src: activeScript.mp4Src }
 
   useEffect(() => {
     const video = videoRef.current
@@ -111,7 +120,7 @@ export function ImaginePossibilitiesHero() {
       {/* Background Video Layer — mirrors HeroSection.tsx & HeroVideoBackground.tsx */}
       <div className="absolute inset-x-0 bottom-0 top-16 overflow-hidden lg:inset-0">
         <video
-          key={`${activeScript.id}-${activeScript.webmSrc}`}
+          key={`${activeScript.id}-${activeSources.webmSrc}`}
           ref={videoRef}
           className="absolute inset-0 z-0 h-full w-full bg-black object-cover object-top lg:object-contain lg:object-center"
           autoPlay={!prefersReducedMotion}
@@ -132,8 +141,8 @@ export function ImaginePossibilitiesHero() {
           onContextMenu={(event) => event.preventDefault()}
           aria-label={activeScript.buttonLabel}
         >
-          <source src={activeScript.webmSrc} type="video/webm" />
-          <source src={activeScript.mp4Src} type="video/mp4" />
+          <source src={activeSources.webmSrc} type="video/webm" />
+          <source src={activeSources.mp4Src} type="video/mp4" />
         </video>
         <div className="pointer-events-none absolute inset-0 z-[1] bg-black/35" />
         <div className="pointer-events-none absolute inset-0 z-[1] bg-gradient-to-t from-black/85 via-black/20 to-black/35" />

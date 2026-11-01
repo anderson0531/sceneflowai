@@ -12,9 +12,73 @@
 
 export const FLAGSHIP_PRODUCTION_ID = 'drama' as const
 
+export const CINEMATIC_DRAMA_TRAILER_VERSION = '20261101'
+
 /** Same-path public files. The query busts previously cached trailers. */
-export const CINEMATIC_DRAMA_TRAILER_WEBM = '/videos/cinematic-drama-trailer.webm?v=20261031'
-export const CINEMATIC_DRAMA_TRAILER_MP4 = '/videos/cinematic-drama-trailer.mp4?v=20261031'
+export const CINEMATIC_DRAMA_TRAILER_WEBM = `/videos/cinematic-drama-trailer.webm?v=${CINEMATIC_DRAMA_TRAILER_VERSION}`
+export const CINEMATIC_DRAMA_TRAILER_MP4 = `/videos/cinematic-drama-trailer.mp4?v=${CINEMATIC_DRAMA_TRAILER_VERSION}`
+
+export const CINEMATIC_DRAMA_DUB_LOCALE_IDS = [
+  'en',
+  'es',
+  'pt',
+  'hi',
+  'zh',
+  'ar',
+  'th',
+] as const
+
+export type CinematicDramaDubLocaleId = (typeof CINEMATIC_DRAMA_DUB_LOCALE_IDS)[number]
+
+export const CINEMATIC_DRAMA_DUB_TRAILERS: Record<
+  CinematicDramaDubLocaleId,
+  { webmSrc: string; mp4Src: string }
+> = {
+  en: {
+    webmSrc: CINEMATIC_DRAMA_TRAILER_WEBM,
+    mp4Src: CINEMATIC_DRAMA_TRAILER_MP4,
+  },
+  es: {
+    webmSrc: `/videos/cinematic-drama-trailer-es.webm?v=${CINEMATIC_DRAMA_TRAILER_VERSION}`,
+    mp4Src: `/videos/cinematic-drama-trailer-es.mp4?v=${CINEMATIC_DRAMA_TRAILER_VERSION}`,
+  },
+  pt: {
+    webmSrc: `/videos/cinematic-drama-trailer-pt.webm?v=${CINEMATIC_DRAMA_TRAILER_VERSION}`,
+    mp4Src: `/videos/cinematic-drama-trailer-pt.mp4?v=${CINEMATIC_DRAMA_TRAILER_VERSION}`,
+  },
+  hi: {
+    webmSrc: `/videos/cinematic-drama-trailer-hi.webm?v=${CINEMATIC_DRAMA_TRAILER_VERSION}`,
+    mp4Src: `/videos/cinematic-drama-trailer-hi.mp4?v=${CINEMATIC_DRAMA_TRAILER_VERSION}`,
+  },
+  zh: {
+    webmSrc: `/videos/cinematic-drama-trailer-zh.webm?v=${CINEMATIC_DRAMA_TRAILER_VERSION}`,
+    mp4Src: `/videos/cinematic-drama-trailer-zh.mp4?v=${CINEMATIC_DRAMA_TRAILER_VERSION}`,
+  },
+  ar: {
+    webmSrc: `/videos/cinematic-drama-trailer-ar.webm?v=${CINEMATIC_DRAMA_TRAILER_VERSION}`,
+    mp4Src: `/videos/cinematic-drama-trailer-ar.mp4?v=${CINEMATIC_DRAMA_TRAILER_VERSION}`,
+  },
+  th: {
+    webmSrc: `/videos/cinematic-drama-trailer-th.webm?v=${CINEMATIC_DRAMA_TRAILER_VERSION}`,
+    mp4Src: `/videos/cinematic-drama-trailer-th.mp4?v=${CINEMATIC_DRAMA_TRAILER_VERSION}`,
+  },
+}
+
+export function resolveCinematicDramaDubLocale(locale?: string): CinematicDramaDubLocaleId {
+  const base = (locale ?? 'en').trim().toLowerCase().split(/[-_]/)[0] ?? 'en'
+  if ((CINEMATIC_DRAMA_DUB_LOCALE_IDS as readonly string[]).includes(base)) {
+    return base as CinematicDramaDubLocaleId
+  }
+  return 'en'
+}
+
+export function getCinematicDramaTrailerSources(locale?: string): {
+  webmSrc: string
+  mp4Src: string
+} {
+  const resolved = resolveCinematicDramaDubLocale(locale)
+  return CINEMATIC_DRAMA_DUB_TRAILERS[resolved]
+}
 
 export const ANIMATED_SERIES_TRAILER_WEBM = '/videos/animated-series-trailer.webm?v=20261030'
 export const ANIMATED_SERIES_TRAILER_MP4 = '/videos/animated-series-trailer.mp4?v=20261030'
@@ -330,7 +394,8 @@ function milestone(id: ReviewerMilestoneId, href: string | null): ReviewerMilest
 /** Pure view of one card. Four reviewer milestones, never the Screening Room cut buttons. */
 export function buildProductionExampleMedia(
   walks: Record<ProductionWalkId, ProductionPipelineWalk>,
-  cardId: string
+  cardId: string,
+  locale?: string
 ): ProductionExampleMedia {
   const walkId = productionWalkKey(cardId)
   const isFlagship = walkId === FLAGSHIP_PRODUCTION_ID
@@ -346,8 +411,16 @@ export function buildProductionExampleMedia(
   }
 
   const walk = walks[walkId]
-  const trailerSrc = walk.trailerSrc.trim() || null
-  const trailerMp4Src = walk.trailerMp4Src.trim() || null
+  const rawWebm = walk.trailerSrc.trim()
+  const rawMp4 = walk.trailerMp4Src.trim()
+  const useLocalizedDrama =
+    walkId === 'drama' &&
+    Boolean(locale) &&
+    rawWebm === CINEMATIC_DRAMA_TRAILER_WEBM &&
+    rawMp4 === CINEMATIC_DRAMA_TRAILER_MP4
+  const localizedDrama = useLocalizedDrama ? getCinematicDramaTrailerSources(locale) : null
+  const trailerSrc = (localizedDrama ? localizedDrama.webmSrc : rawWebm) || null
+  const trailerMp4Src = (localizedDrama ? localizedDrama.mp4Src : rawMp4) || null
   const longformHref = publishedScreeningHref(walk)
   const milestones = [
     milestone('series', walkSeriesHref(walk)),
@@ -366,6 +439,9 @@ export function buildProductionExampleMedia(
   }
 }
 
-export function getProductionExampleMedia(cardId: string): ProductionExampleMedia {
-  return buildProductionExampleMedia(PRODUCTION_PIPELINE_WALKS, cardId)
+export function getProductionExampleMedia(
+  cardId: string,
+  locale?: string
+): ProductionExampleMedia {
+  return buildProductionExampleMedia(PRODUCTION_PIPELINE_WALKS, cardId, locale)
 }

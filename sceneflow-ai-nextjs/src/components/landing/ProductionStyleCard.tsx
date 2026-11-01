@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react'
 import { motion } from 'framer-motion'
+import { useLocale } from 'next-intl'
 import {
   ArrowRight,
   ChevronDown,
@@ -162,9 +163,10 @@ export function ProductionStyleCard({
   openPlayerLabel?: string
   featureModes?: readonly string[]
 }) {
+  const locale = useLocale()
   const style = CARD_STYLES[card.id] ?? FALLBACK_STYLE
   const Icon = style.icon
-  const media = getProductionExampleMedia(card.id)
+  const media = getProductionExampleMedia(card.id, locale)
   const resolvedFeatureModes =
     featureModes && featureModes.length > 0 ? featureModes : SCREENING_ROOM_FEATURE_MODES
   const watchLabel = media.longformRuntimeLabel
