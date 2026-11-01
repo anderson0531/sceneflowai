@@ -666,6 +666,13 @@ describe('Production showcase screening embeds', () => {
       '/videos/training-series-trailer.mp4?v=20261101'
     )
     expect(getProductionExampleMedia('training').longformHref).toBeNull()
+    expect(getProductionExampleMedia('podcast').trailerSrc).toBe(
+      '/videos/creator-podcast-trailer.webm?v=20261102'
+    )
+    expect(getProductionExampleMedia('podcast').trailerMp4Src).toBe(
+      '/videos/creator-podcast-trailer.mp4?v=20261102'
+    )
+    expect(getProductionExampleMedia('podcast').longformHref).toBeNull()
     expect(getProductionExampleMedia('drama').milestones.map((milestone) => milestone.href)).toEqual([
       '/s/series/cb7cc9e663a87a074e37c62636ef8c00',
       '/blueprint/share/5GDScu72NC7SWo1ioPMwzUxTg9KM2joz',

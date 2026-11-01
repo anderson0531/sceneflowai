@@ -12,6 +12,7 @@ import {
 import {
   getAnimatedSeriesTrailerSources,
   getCinematicDramaTrailerSources,
+  getCreatorPodcastTrailerSources,
   getDocumentaryTrailerSources,
   getTrainingSeriesTrailerSources,
   type ProductionWalkId,
@@ -42,7 +43,9 @@ export function ImaginePossibilitiesHero() {
           ? getDocumentaryTrailerSources(locale)
           : activeScript.id === 'training'
             ? getTrainingSeriesTrailerSources(locale)
-            : { webmSrc: activeScript.webmSrc, mp4Src: activeScript.mp4Src }
+            : activeScript.id === 'podcast'
+              ? getCreatorPodcastTrailerSources(locale)
+              : { webmSrc: activeScript.webmSrc, mp4Src: activeScript.mp4Src }
 
   useEffect(() => {
     const video = videoRef.current

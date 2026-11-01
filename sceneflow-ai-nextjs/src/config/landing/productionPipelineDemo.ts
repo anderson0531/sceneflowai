@@ -281,8 +281,72 @@ export function getTrainingSeriesTrailerSources(locale?: string): {
   return TRAINING_SERIES_DUB_TRAILERS[resolved]
 }
 
-export const CREATOR_PODCAST_TRAILER_WEBM = '/videos/creator-podcast-trailer.webm?v=20261031'
-export const CREATOR_PODCAST_TRAILER_MP4 = '/videos/creator-podcast-trailer.mp4?v=20261031'
+export const CREATOR_PODCAST_TRAILER_VERSION = '20261102'
+
+export const CREATOR_PODCAST_TRAILER_WEBM = `/videos/creator-podcast-trailer.webm?v=${CREATOR_PODCAST_TRAILER_VERSION}`
+export const CREATOR_PODCAST_TRAILER_MP4 = `/videos/creator-podcast-trailer.mp4?v=${CREATOR_PODCAST_TRAILER_VERSION}`
+
+export const CREATOR_PODCAST_DUB_LOCALE_IDS = [
+  'en',
+  'es',
+  'pt',
+  'hi',
+  'zh',
+  'ar',
+  'th',
+] as const
+
+export type CreatorPodcastDubLocaleId = (typeof CREATOR_PODCAST_DUB_LOCALE_IDS)[number]
+
+export const CREATOR_PODCAST_DUB_TRAILERS: Record<
+  CreatorPodcastDubLocaleId,
+  { webmSrc: string; mp4Src: string }
+> = {
+  en: {
+    webmSrc: CREATOR_PODCAST_TRAILER_WEBM,
+    mp4Src: CREATOR_PODCAST_TRAILER_MP4,
+  },
+  es: {
+    webmSrc: `/videos/creator-podcast-trailer-es.webm?v=${CREATOR_PODCAST_TRAILER_VERSION}`,
+    mp4Src: `/videos/creator-podcast-trailer-es.mp4?v=${CREATOR_PODCAST_TRAILER_VERSION}`,
+  },
+  pt: {
+    webmSrc: `/videos/creator-podcast-trailer-pt.webm?v=${CREATOR_PODCAST_TRAILER_VERSION}`,
+    mp4Src: `/videos/creator-podcast-trailer-pt.mp4?v=${CREATOR_PODCAST_TRAILER_VERSION}`,
+  },
+  hi: {
+    webmSrc: `/videos/creator-podcast-trailer-hi.webm?v=${CREATOR_PODCAST_TRAILER_VERSION}`,
+    mp4Src: `/videos/creator-podcast-trailer-hi.mp4?v=${CREATOR_PODCAST_TRAILER_VERSION}`,
+  },
+  zh: {
+    webmSrc: `/videos/creator-podcast-trailer-zh.webm?v=${CREATOR_PODCAST_TRAILER_VERSION}`,
+    mp4Src: `/videos/creator-podcast-trailer-zh.mp4?v=${CREATOR_PODCAST_TRAILER_VERSION}`,
+  },
+  ar: {
+    webmSrc: `/videos/creator-podcast-trailer-ar.webm?v=${CREATOR_PODCAST_TRAILER_VERSION}`,
+    mp4Src: `/videos/creator-podcast-trailer-ar.mp4?v=${CREATOR_PODCAST_TRAILER_VERSION}`,
+  },
+  th: {
+    webmSrc: `/videos/creator-podcast-trailer-th.webm?v=${CREATOR_PODCAST_TRAILER_VERSION}`,
+    mp4Src: `/videos/creator-podcast-trailer-th.mp4?v=${CREATOR_PODCAST_TRAILER_VERSION}`,
+  },
+}
+
+export function resolveCreatorPodcastDubLocale(locale?: string): CreatorPodcastDubLocaleId {
+  const base = (locale ?? 'en').trim().toLowerCase().split(/[-_]/)[0] ?? 'en'
+  if ((CREATOR_PODCAST_DUB_LOCALE_IDS as readonly string[]).includes(base)) {
+    return base as CreatorPodcastDubLocaleId
+  }
+  return 'en'
+}
+
+export function getCreatorPodcastTrailerSources(locale?: string): {
+  webmSrc: string
+  mp4Src: string
+} {
+  const resolved = resolveCreatorPodcastDubLocale(locale)
+  return CREATOR_PODCAST_DUB_TRAILERS[resolved]
+}
 
 export const VIDEO_MEMOIR_TRAILER_WEBM = '/videos/video-memoir-trailer.webm?v=20261031'
 export const VIDEO_MEMOIR_TRAILER_MP4 = '/videos/video-memoir-trailer.mp4?v=20261031'
@@ -625,6 +689,11 @@ export function buildProductionExampleMedia(
     Boolean(locale) &&
     rawWebm === TRAINING_SERIES_TRAILER_WEBM &&
     rawMp4 === TRAINING_SERIES_TRAILER_MP4
+  const useLocalizedPodcast =
+    walkId === 'podcast' &&
+    Boolean(locale) &&
+    rawWebm === CREATOR_PODCAST_TRAILER_WEBM &&
+    rawMp4 === CREATOR_PODCAST_TRAILER_MP4
   const localizedSources = useLocalizedDrama
     ? getCinematicDramaTrailerSources(locale)
     : useLocalizedAnimation
@@ -633,7 +702,9 @@ export function buildProductionExampleMedia(
         ? getDocumentaryTrailerSources(locale)
         : useLocalizedTraining
           ? getTrainingSeriesTrailerSources(locale)
-          : null
+          : useLocalizedPodcast
+            ? getCreatorPodcastTrailerSources(locale)
+            : null
   const trailerSrc = (localizedSources ? localizedSources.webmSrc : rawWebm) || null
   const trailerMp4Src = (localizedSources ? localizedSources.mp4Src : rawMp4) || null
   const longformHref = publishedScreeningHref(walk)
