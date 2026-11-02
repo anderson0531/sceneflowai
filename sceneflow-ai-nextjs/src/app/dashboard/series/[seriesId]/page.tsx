@@ -437,7 +437,7 @@ export default function SeriesStudioPage() {
       console.log(`[DEBUG_START_PROJECT] Success. Project ID: ${result.project.id}`);
       toast.success(`Started Episode ${result.episode.episodeNumber}`, { id: 'start-ep' })
       await refreshSeries()
-      window.location.href = `/dashboard/studio/${result.project.id}?primeBlueprint=true`
+      router.push(`/dashboard/studio/${result.project.id}?primeBlueprint=true`)
     } catch (err) {
       console.error(`[DEBUG_START_PROJECT] Error starting episode:`, err);
       toast.error(err instanceof Error ? err.message : 'Failed to start episode', { id: 'start-ep' })
@@ -886,6 +886,7 @@ export default function SeriesStudioPage() {
               resonanceAnalysis={resonanceAnalysis}
               onRegenerate={handleRegenerateField}
               isGenerating={isGenerating}
+              onAnalyzeResonance={() => setIsResonancePanelOpen(true)}
               onNarrationSaved={(narration) => {
                 setSeries((current) =>
                   current
@@ -1285,6 +1286,7 @@ interface OverviewPanelProps {
   resonanceAnalysis: SeriesResonanceAnalysis | null
   onRegenerate: (field: string) => void
   isGenerating: boolean
+  onAnalyzeResonance?: () => void
   onOpenBibleSync?: () => void
   onNarrationSaved: (narration: SavedSeriesNarration) => void
 }
@@ -1355,6 +1357,7 @@ function OverviewPanel({
   resonanceAnalysis,
   onRegenerate,
   isGenerating,
+  onAnalyzeResonance,
   onOpenBibleSync,
   onNarrationSaved,
 }: OverviewPanelProps) {
@@ -1534,30 +1537,82 @@ function OverviewPanel({
             </div>
           )}
         </div>
+
+        {/* Protagonist & Antagonist / Conflict Side-by-Side */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {/* Protagonist */}
+          <div className={overviewCardClass}>
+            <div className="flex items-center justify-between mb-4">
+              <h3 className={overviewHeadingClass}>Protagonist</h3>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => onRegenerate('protagonist')}
+                disabled={isGenerating}
+                className="text-gray-400 hover:text-emerald-400 hover:bg-emerald-500/10"
+              >
+                <RefreshCw className={`w-4 h-4 ${isGenerating ? 'animate-spin' : ''}`} />
+              </Button>
+            </div>
+            {bible?.protagonist?.name ? (
+              <div className="space-y-2">
+                <p className="text-white font-medium text-lg">{bible.protagonist.name}</p>
+                <p className="text-gray-300 text-sm leading-relaxed">{bible.protagonist.goal}</p>
+                {bible.protagonist.flaw ? (
+                  <p className="text-xs text-gray-400 pt-2 border-t border-gray-800">
+                    <span className="text-gray-500 font-medium">Flaw:</span> {bible.protagonist.flaw}
+                  </p>
+                ) : null}
+              </div>
+            ) : (
+              <p className="text-gray-500 text-sm">No protagonist defined yet.</p>
+            )}
+          </div>
+
+          {/* Antagonist / Conflict */}
+          <div className={overviewCardClass}>
+            <div className="flex items-center justify-between mb-4">
+              <h3 className={overviewHeadingClass}>Antagonist / Conflict</h3>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => onRegenerate('antagonist')}
+                disabled={isGenerating}
+                className="text-gray-400 hover:text-red-400 hover:bg-red-500/10"
+              >
+                <RefreshCw className={`w-4 h-4 ${isGenerating ? 'animate-spin' : ''}`} />
+              </Button>
+            </div>
+            {bible?.antagonistConflict?.description ? (
+              <div className="space-y-3">
+                <span className="inline-block text-xs px-2.5 py-1 rounded-full bg-red-500/20 text-red-400 font-medium capitalize">
+                  {bible.antagonistConflict.type}
+                </span>
+                <p className="text-gray-300 text-sm leading-relaxed">{bible.antagonistConflict.description}</p>
+              </div>
+            ) : (
+              <p className="text-gray-500 text-sm">No antagonist/conflict defined yet.</p>
+            )}
+          </div>
+        </div>
       </div>
 
-      <div className="space-y-4 rounded-2xl border border-gray-600 bg-gray-900/60 p-4 shadow-lg shadow-black/40">
-        {onOpenBibleSync ? (
-          <div className={overviewCardClass}>
-            <h3 className={`mb-3 ${overviewHeadingClass}`}>Series Bible Sync</h3>
-            <p className="text-sm text-gray-400 mb-4">
-              Production-authored assets and storylines push up to the Series Bible through Review
-              Updates. Approve diffs before they merge into the shared library.
-            </p>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={onOpenBibleSync}
-              className="w-full border-white/15 text-gray-200 hover:bg-white/5"
-            >
-              Open Review Updates
-            </Button>
-          </div>
-        ) : null}
-
+      <div className="space-y-6">
         <div className={overviewCardClass}>
-          <h3 className={`mb-4 ${overviewHeadingClass}`}>Audience Resonance</h3>
-          <div className="space-y-2">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className={overviewHeadingClass}>Audience Resonance</h3>
+            {onAnalyzeResonance ? (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={onAnalyzeResonance}
+                className="h-7 px-2.5 text-xs border-cyan-500/40 text-cyan-300 hover:bg-cyan-500/10"
+              >
+                {resonanceAnalysis?.greenlightScore?.score ? 'Open Analysis' : 'Analyze Season'}
+              </Button>
+            ) : null}
+          </div>
+          <div className="space-y-2.5">
             <ResonanceScoreBar
               label="Target Audience Resonance"
               score={resonanceAnalysis?.greenlightScore?.score}
@@ -1576,6 +1631,50 @@ function OverviewPanel({
         </div>
 
         <div className={overviewCardClass}>
+          <h3 className={`mb-4 ${overviewHeadingClass}`}>Episode Progress</h3>
+          <div className="space-y-3 text-sm">
+            <div className="flex justify-between">
+              <span className="text-gray-400">Episodes</span>
+              <span className="text-white font-medium">{series.episodeCount}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-gray-400">In Progress</span>
+              <span className="text-amber-300 font-medium">{series.startedCount}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-gray-400">Completed</span>
+              <span className="text-emerald-300 font-medium">{series.completedCount}</span>
+            </div>
+            <div className="flex justify-between pt-2 border-t border-gray-800">
+              <span className="text-gray-400">Characters</span>
+              <span className="text-white">{bible?.characters?.length || 0}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-gray-400">Locations</span>
+              <span className="text-white">{bible?.locations?.length || 0}</span>
+            </div>
+          </div>
+        </div>
+
+        {onOpenBibleSync ? (
+          <div className={overviewCardClass}>
+            <h3 className={`mb-2 ${overviewHeadingClass}`}>Series Bible Sync</h3>
+            <p className="text-sm text-gray-400 mb-4">
+              Production-authored assets and storylines push up to the Series Bible through Review
+              Updates. Approve diffs before they merge into the shared library.
+            </p>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={onOpenBibleSync}
+              className="w-full border-white/15 text-gray-200 hover:bg-white/5"
+            >
+              Open Review Updates
+            </Button>
+          </div>
+        ) : null}
+
+        <div className={overviewCardClass}>
           <h3 className={`mb-2 ${overviewHeadingClass}`}>Share Series Room</h3>
           <p className="text-sm text-gray-400 mb-4">
             Create a read-only link for collaborators or stakeholders.
@@ -1589,85 +1688,6 @@ function OverviewPanel({
           >
             {isSharing ? 'Creating…' : shareUrl ? 'Copy link again' : 'Create share link'}
           </Button>
-        </div>
-
-        {/* Protagonist */}
-        <div className={overviewCardClass}>
-          <div className="flex items-center justify-between mb-4">
-            <h3 className={overviewHeadingClass}>Protagonist</h3>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => onRegenerate('protagonist')}
-              disabled={isGenerating}
-              className="text-gray-400 hover:text-emerald-400 hover:bg-emerald-500/10"
-            >
-              <RefreshCw className={`w-4 h-4 ${isGenerating ? 'animate-spin' : ''}`} />
-            </Button>
-          </div>
-          {bible?.protagonist?.name ? (
-            <div className="space-y-2">
-              <p className="text-white font-medium text-lg">{bible.protagonist.name}</p>
-              <p className="text-gray-400 text-sm">{bible.protagonist.goal}</p>
-              {bible.protagonist.flaw ? (
-                <p className="text-sm text-gray-400">Flaw: {bible.protagonist.flaw}</p>
-              ) : null}
-            </div>
-          ) : (
-            <p className="text-gray-500 text-sm">No protagonist defined yet.</p>
-          )}
-        </div>
-
-        {/* Antagonist / Conflict */}
-        <div className={overviewCardClass}>
-          <div className="flex items-center justify-between mb-4">
-            <h3 className={overviewHeadingClass}>Antagonist / Conflict</h3>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => onRegenerate('antagonist')}
-              disabled={isGenerating}
-              className="text-gray-400 hover:text-red-400 hover:bg-red-500/10"
-            >
-              <RefreshCw className={`w-4 h-4 ${isGenerating ? 'animate-spin' : ''}`} />
-            </Button>
-          </div>
-          {bible?.antagonistConflict?.description ? (
-            <div className="space-y-3">
-              <span className="text-xs px-2.5 py-1 rounded-full bg-red-500/20 text-red-400 font-medium">
-                {bible.antagonistConflict.type}
-              </span>
-              <p className="text-gray-300 text-sm leading-relaxed">{bible.antagonistConflict.description}</p>
-            </div>
-          ) : (
-            <p className="text-gray-500 text-sm">No antagonist/conflict defined yet.</p>
-          )}
-        </div>
-
-        <div className={overviewCardClass}>
-          <h3 className={`mb-4 ${overviewHeadingClass}`}>Episode Progress</h3>
-          <div className="space-y-3 text-sm">
-            <div className="flex justify-between">
-              <span className="text-gray-400">Episodes</span>
-              <span className="text-white">{series.episodeCount}</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-gray-400">In Progress</span>
-              <span className="text-white">{series.startedCount}</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-gray-400">Completed</span>
-              <span className="text-white">{series.completedCount}</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-gray-400">Characters</span>
-              <span className="text-white">{bible?.characters?.length || 0}</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-gray-400">Locations</span>
-              <span className="text-white">{bible?.locations?.length || 0}</span>
-            </div>
-          </div>
         </div>
       </div>
     </div>
@@ -1995,7 +2015,7 @@ function EpisodesPanel({
                   </Button>
                 )}
                 {selectedEpisode.projectId && (
-                  <Link href={`/dashboard/studio/${selectedEpisode.projectId}`}>
+                  <Link href={`/dashboard/studio/${selectedEpisode.projectId}?primeBlueprint=true`}>
                     <Button className="bg-blue-600 hover:bg-blue-700">
                       Continue Project
                       <ChevronRight className="w-4 h-4 ml-1" />

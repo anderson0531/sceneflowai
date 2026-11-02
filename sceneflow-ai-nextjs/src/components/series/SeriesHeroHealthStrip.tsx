@@ -42,9 +42,9 @@ export function SeriesHeroHealthStrip({
     score?: number
   }> = [
     {
-      id: 'episodes',
-      label: 'Active Episodes',
-      detail: `${slate.inProgress} of ${slate.total}`,
+      id: 'slate',
+      label: 'Episode Slate',
+      detail: `${slate.completed} done · ${slate.inProgress} active · ${slate.blueprint} blueprint`,
       tab: 'episodes',
     },
     {
@@ -57,14 +57,14 @@ export function SeriesHeroHealthStrip({
     {
       id: 'continuity',
       label: 'Consistency',
-      detail: `${continuity.characters} cast · ${continuity.threads} threads · ${continuity.keyEvents} events`,
+      detail: `${continuity.threads} threads · ${continuity.keyEvents} key events`,
       tab: 'continuity',
     },
     {
-      id: 'slate',
-      label: 'Episode Slate',
-      detail: `${slate.completed} done · ${slate.inProgress} active · ${slate.blueprint} blueprint`,
-      tab: 'episodes',
+      id: 'reference-library',
+      label: 'Continuity',
+      detail: `${continuity.characters} cast · ${continuity.locations} locations · ${continuity.props} props`,
+      tab: 'reference-library',
     },
   ]
 
@@ -75,7 +75,7 @@ export function SeriesHeroHealthStrip({
           key={chip.id}
           type="button"
           onClick={() => (chip.action ? chip.action() : chip.tab && onNavigate(chip.tab))}
-          className="rounded-xl border border-gray-600 bg-gray-900/50 p-4 text-left transition-colors hover:bg-gray-900"
+          className="rounded-xl border border-gray-700/80 bg-gray-900/50 p-4 text-left transition-colors hover:border-amber-500/40 hover:bg-gray-900"
         >
           <p className="text-xs font-medium text-gray-400">{chip.label}</p>
           {chip.id === 'resonance' ? (
@@ -84,7 +84,7 @@ export function SeriesHeroHealthStrip({
                 <SeriesGreenlightGauge score={chip.score} size="compact" />
               </div>
             ) : (
-              <p className="mt-1 text-sm font-bold text-white">Not analyzed</p>
+              <p className="mt-1 text-sm font-bold text-amber-400">Analyze Resonance →</p>
             )
           ) : (
             <p className="mt-1 text-sm text-white">{chip.detail}</p>

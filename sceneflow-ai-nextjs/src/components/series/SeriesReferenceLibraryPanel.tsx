@@ -90,7 +90,7 @@ export function SeriesReferenceLibraryPanel({
   )
   const [libraryGroups, setLibraryGroups] = useState<ReferenceGroups>(emptyGroups)
   const [productionByProject, setProductionByProject] = useState<Record<string, ReferenceGroups>>({})
-  const [selectedEpisodeId, setSelectedEpisodeId] = useState('')
+  const [selectedEpisodeId, setSelectedEpisodeId] = useState<string>('all')
 
   useEffect(() => {
     let cancelled = false
@@ -111,12 +111,6 @@ export function SeriesReferenceLibraryPanel({
     () => [...episodeBlueprints].sort((a, b) => a.episodeNumber - b.episodeNumber),
     [episodeBlueprints]
   )
-
-  useEffect(() => {
-    if (!selectedEpisodeId && orderedEpisodes[0]) {
-      setSelectedEpisodeId(orderedEpisodes[0].id)
-    }
-  }, [orderedEpisodes, selectedEpisodeId])
 
   useEffect(() => {
     if (!userId) return
@@ -173,7 +167,9 @@ export function SeriesReferenceLibraryPanel({
     : null
 
   const selectedBlueprint =
-    orderedEpisodes.find((episode) => episode.id === selectedEpisodeId) || orderedEpisodes[0]
+    selectedEpisodeId === 'all'
+      ? null
+      : orderedEpisodes.find((episode) => episode.id === selectedEpisodeId) || null
   const seriesGroups = useMemo<ReferenceGroups>(
     () => ({
       characters: (bible?.characters || []).map((character) => ({
@@ -206,7 +202,9 @@ export function SeriesReferenceLibraryPanel({
           : emptyGroups,
         library: libraryGroups,
         series: seriesGroups,
-        episodeCharacterIds: (selectedBlueprint?.characters || []).map((character) => character.characterId),
+        episodeCharacterIds: selectedBlueprint
+          ? (selectedBlueprint.characters || []).map((character) => character.characterId)
+          : undefined,
       }),
     [selectedBlueprint, productionByProject, libraryGroups, seriesGroups, emptyGroups]
   )
@@ -279,15 +277,26 @@ export function SeriesReferenceLibraryPanel({
       </div>
 
       {orderedEpisodes.length > 0 ? (
-        <div className="flex gap-2 overflow-x-auto pb-1">
+        <div className="flex items-center gap-2 overflow-x-auto pb-1">
+          <button
+            type="button"
+            onClick={() => setSelectedEpisodeId('all')}
+            className={`shrink-0 rounded-full border px-3 py-1.5 text-xs font-bold transition-colors ${
+              selectedEpisodeId === 'all'
+                ? 'border-amber-400 bg-amber-500/15 text-amber-100'
+                : 'border-white/15 text-gray-300 hover:border-white/30'
+            }`}
+          >
+            All Episodes
+          </button>
           {orderedEpisodes.map((episode) => {
-            const active = episode.id === (selectedBlueprint?.id || '')
+            const active = episode.id === selectedEpisodeId
             return (
               <button
                 key={episode.id}
                 type="button"
                 onClick={() => setSelectedEpisodeId(episode.id)}
-                className={`shrink-0 rounded-full border px-3 py-1.5 text-xs font-bold ${
+                className={`shrink-0 rounded-full border px-3 py-1.5 text-xs font-bold transition-colors ${
                   active
                     ? 'border-amber-400 bg-amber-500/15 text-amber-100'
                     : 'border-white/15 text-gray-300 hover:border-white/30'

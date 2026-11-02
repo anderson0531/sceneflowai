@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState } from 'react'
+import React, { useState, useMemo } from 'react'
 import { resolveContentIntentFromMetadata } from '@/lib/content/contentIntent'
 import { motion } from 'framer-motion'
 import {
@@ -12,6 +12,7 @@ import {
   List,
   Clapperboard,
   Loader2,
+  ArrowUpDown,
 } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
@@ -22,6 +23,7 @@ import {
   DialogTitle,
   DialogDescription
 } from '@/components/ui/dialog'
+import { DeleteConfirmationDialog } from '@/components/ui/DeleteConfirmationDialog'
 import { SeriesCard } from '@/components/series/SeriesCard'
 import { SeriesSynopsisIdeation } from '@/components/series/SeriesSynopsisIdeation'
 import {
@@ -29,6 +31,7 @@ import {
   type AudienceDefinition,
 } from '@/lib/types/audienceResonance'
 import type { SeriesSynopsisLock } from '@/lib/series/clarifySynopsis'
+import type { SeriesResponse } from '@/types/series'
 import {
   DEFAULT_SERIES_PRODUCTION_FORMAT,
   NEW_SERIES_EPISODE_COUNT,
@@ -40,6 +43,9 @@ import { useSeriesList, useEpisode } from '@/hooks/useSeries'
 import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
+
+const EPISODE_COUNT_OPTIONS = [3, 5, 8, 10, 12]
+
 export default function SeriesPage() {
   const { data: session } = useSession()
   const userId = session?.user?.id || null
@@ -54,6 +60,7 @@ export default function SeriesPage() {
     fetchSeries,
     createSeries,
     deleteSeries,
+    updateSeriesStatus,
     setPage
   } = useSeriesList(userId)
   
@@ -62,29 +69,51 @@ export default function SeriesPage() {
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid')
   const [searchQuery, setSearchQuery] = useState('')
   const [statusFilter, setStatusFilter] = useState<string>('all')
+  const [sortBy, setSortBy] = useState<'recent' | 'alphabetical' | 'episodes'>('recent')
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false)
   const [format, setFormat] = useState(DEFAULT_SERIES_PRODUCTION_FORMAT)
   const [artStyle, setArtStyle] = useState(DEFAULT_ART_STYLE)
+  const [episodeCount, setEpisodeCount] = useState<number>(NEW_SERIES_EPISODE_COUNT)
   const [audienceDef, setAudienceDef] = useState<AudienceDefinition>(() =>
     createAudienceDefinition({ description: '', source: 'series' })
   )
   const [lockedSynopsis, setLockedSynopsis] = useState<SeriesSynopsisLock | null>(null)
   const [createSession, setCreateSession] = useState(0)
   const [isCreating, setIsCreating] = useState(false)
+
+  // Delete confirmation modal state
+  const [seriesToDelete, setSeriesToDelete] = useState<{ id: string; title: string } | null>(null)
+  const [isDeleting, setIsDeleting] = useState(false)
   
-  // Filter series by search and status
-  const filteredSeries = (Array.isArray(series) ? series : []).filter(s => {
-    const title = s.title || ''
-    const matchesSearch = !searchQuery || 
-      title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      s.logline?.toLowerCase().includes(searchQuery.toLowerCase())
-    const matchesStatus = statusFilter === 'all' || s.status === statusFilter
-    return matchesSearch && matchesStatus
-  })
+  // Filter and sort series
+  const filteredSeries = useMemo(() => {
+    const list = (Array.isArray(series) ? series : []).filter(s => {
+      const title = s.title || ''
+      const matchesSearch = !searchQuery || 
+        title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        s.logline?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        s.genre?.toLowerCase().includes(searchQuery.toLowerCase())
+      if (!matchesSearch) return false
+      if (statusFilter === 'archived') return s.status === 'archived'
+      if (s.status === 'archived') return false
+      return statusFilter === 'all' || s.status === statusFilter
+    })
+
+    return [...list].sort((a, b) => {
+      if (sortBy === 'alphabetical') {
+        return (a.title || '').localeCompare(b.title || '')
+      }
+      if (sortBy === 'episodes') {
+        return (b.episodeCount || 0) - (a.episodeCount || 0)
+      }
+      return new Date(b.updatedAt || 0).getTime() - new Date(a.updatedAt || 0).getTime()
+    })
+  }, [series, searchQuery, statusFilter, sortBy])
 
   const resetCreateForm = () => {
     setFormat(DEFAULT_SERIES_PRODUCTION_FORMAT)
     setArtStyle(DEFAULT_ART_STYLE)
+    setEpisodeCount(NEW_SERIES_EPISODE_COUNT)
     setAudienceDef(createAudienceDefinition({ description: '', source: 'series' }))
     setLockedSynopsis(null)
     setCreateSession((session) => session + 1)
@@ -101,11 +130,10 @@ export default function SeriesPage() {
       const workingTitle = words.slice(0, 5).join(' ') + (words.length > 5 ? '...' : '')
       
       const hasAudience = !!audienceDef.description?.trim()
-      const episodeCount = NEW_SERIES_EPISODE_COUNT
       const newSeries = await createSeries({
         userId,
         title: workingTitle || 'Untitled Series',
-        maxEpisodes: episodeCount,
+        maxEpisodes: Math.max(20, episodeCount),
         genre: lockedSynopsis?.genre,
         targetAudience: hasAudience ? audienceDef.description.trim() : undefined,
         metadata: {
@@ -138,16 +166,30 @@ export default function SeriesPage() {
     }
   }
 
-  const handleDeleteSeries = async (seriesId: string) => {
-    if (!confirm('Are you sure you want to delete this series? This will unlink all episodes.')) {
-      return
-    }
-    
+  const handleRequestDeleteSeries = (s: SeriesResponse) => {
+    setSeriesToDelete({ id: s.id, title: s.title || 'Untitled Series' })
+  }
+
+  const handleConfirmDeleteSeries = async () => {
+    if (!seriesToDelete) return
+    setIsDeleting(true)
     try {
-      await deleteSeries(seriesId)
+      await deleteSeries(seriesToDelete.id)
       toast.success('Series deleted')
+      setSeriesToDelete(null)
     } catch (err) {
       toast.error('Failed to delete series')
+    } finally {
+      setIsDeleting(false)
+    }
+  }
+
+  const handleStatusChange = async (seriesId: string, newStatus: SeriesResponse['status']) => {
+    try {
+      await updateSeriesStatus(seriesId, newStatus)
+      toast.success(`Series marked as ${newStatus}`)
+    } catch {
+      toast.error('Failed to update series status')
     }
   }
 
@@ -198,14 +240,14 @@ export default function SeriesPage() {
           transition={{ delay: 0.15 }}
           className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6"
         >
-          <div className="flex items-center gap-3">
-            <div className="relative flex-1 md:w-64">
+          <div className="flex flex-wrap items-center gap-3 flex-1">
+            <div className="relative flex-1 min-w-[200px] md:max-w-xs">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
               <Input
-                placeholder="Search series..."
+                placeholder="Search series by title, logline, or genre..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-9 bg-gray-800 border-gray-700 text-white"
+                className="pl-9 bg-gray-900 border-gray-800 text-white"
               />
             </div>
             <label className="relative">
@@ -214,25 +256,38 @@ export default function SeriesPage() {
                 aria-label="Status"
                 value={statusFilter}
                 onChange={(event) => setStatusFilter(event.target.value)}
-                className="h-10 w-36 appearance-none rounded-md border border-gray-700 bg-gray-800 pl-9 pr-3 text-sm text-white"
+                className="h-10 w-40 appearance-none rounded-lg border border-gray-800 bg-gray-900 pl-9 pr-3 text-sm text-gray-200 hover:bg-gray-800/80 transition-colors"
               >
-                <option value="all">All</option>
+                <option value="all">All Active & Drafts</option>
                 <option value="draft">Draft</option>
                 <option value="active">Active</option>
                 <option value="completed">Completed</option>
                 <option value="archived">Archived</option>
               </select>
             </label>
+            <label className="relative">
+              <ArrowUpDown className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-500" />
+              <select
+                aria-label="Sort by"
+                value={sortBy}
+                onChange={(event) => setSortBy(event.target.value as 'recent' | 'alphabetical' | 'episodes')}
+                className="h-10 w-44 appearance-none rounded-lg border border-gray-800 bg-gray-900 pl-9 pr-3 text-sm text-gray-200 hover:bg-gray-800/80 transition-colors"
+              >
+                <option value="recent">Recently Updated</option>
+                <option value="alphabetical">Title (A–Z)</option>
+                <option value="episodes">Episode Count</option>
+              </select>
+            </label>
           </div>
           
-          <div className="flex items-center gap-2">
+          <div className="flex items-center justify-end gap-2">
             <span className="text-sm text-gray-500">{filteredSeries.length} series</span>
-            <div className="flex items-center border border-gray-700 rounded-lg">
+            <div className="flex items-center border border-gray-800 bg-gray-900 rounded-lg p-1">
               <Button
                 variant="ghost"
                 size="sm"
                 onClick={() => setViewMode('grid')}
-                className={`h-8 px-3 rounded-r-none ${viewMode === 'grid' ? 'bg-gray-700 text-white' : 'text-gray-400'}`}
+                className={`h-7 px-2.5 rounded-md ${viewMode === 'grid' ? 'bg-amber-500/20 text-amber-300 border border-amber-500/30' : 'text-gray-400'}`}
               >
                 <Grid className="w-4 h-4" />
               </Button>
@@ -240,7 +295,7 @@ export default function SeriesPage() {
                 variant="ghost"
                 size="sm"
                 onClick={() => setViewMode('list')}
-                className={`h-8 px-3 rounded-l-none ${viewMode === 'list' ? 'bg-gray-700 text-white' : 'text-gray-400'}`}
+                className={`h-7 px-2.5 rounded-md ${viewMode === 'list' ? 'bg-amber-500/20 text-amber-300 border border-amber-500/30' : 'text-gray-400'}`}
               >
                 <List className="w-4 h-4" />
               </Button>
@@ -262,7 +317,7 @@ export default function SeriesPage() {
             transition={{ delay: 0.2 }}
             className={viewMode === 'grid' 
               ? 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6'
-              : 'space-y-4'
+              : 'space-y-3'
             }
           >
             {filteredSeries.map((s, index) => (
@@ -274,8 +329,10 @@ export default function SeriesPage() {
               >
                 <SeriesCard
                   series={s}
+                  viewMode={viewMode}
                   onEdit={() => router.push(`/dashboard/series/${s.id}`)}
-                  onDelete={() => handleDeleteSeries(s.id)}
+                  onDelete={() => handleRequestDeleteSeries(s)}
+                  onStatusChange={(newStatus) => void handleStatusChange(s.id, newStatus)}
                   onStartEpisode={(episodeId) => handleStartEpisode(s.id, episodeId)}
                   showEpisodeList={viewMode === 'grid'}
                 />
@@ -292,12 +349,15 @@ export default function SeriesPage() {
                 : 'Create your first series to start building multi-episode video content with consistent characters and storylines.'
             }
             actionLabel={
-              !searchQuery && statusFilter === 'all' ? 'Create Your First Series' : undefined
+              searchQuery || statusFilter !== 'all' ? 'Clear Filters' : 'Create Your First Series'
             }
             onAction={
-              !searchQuery && statusFilter === 'all'
-                ? () => setIsCreateDialogOpen(true)
-                : undefined
+              searchQuery || statusFilter !== 'all'
+                ? () => {
+                    setSearchQuery('')
+                    setStatusFilter('all')
+                  }
+                : () => setIsCreateDialogOpen(true)
             }
             accent="product"
           />
@@ -339,6 +399,29 @@ export default function SeriesPage() {
           </DialogHeader>
           
           <div className="space-y-4 pt-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 rounded-xl border border-gray-800 bg-gray-950/60 px-3.5 py-2.5">
+              <div>
+                <p className="text-xs font-semibold text-gray-200">Initial Season Length</p>
+                <p className="text-[11px] text-gray-400">Choose how many episode blueprints to generate first</p>
+              </div>
+              <div className="inline-flex items-center gap-1 rounded-lg bg-gray-900 p-1 border border-gray-800">
+                {EPISODE_COUNT_OPTIONS.map((count) => (
+                  <button
+                    key={count}
+                    type="button"
+                    onClick={() => setEpisodeCount(count)}
+                    className={`px-2.5 py-1 rounded-md text-xs font-medium transition-colors ${
+                      episodeCount === count
+                        ? 'bg-amber-500/20 text-amber-300 border border-amber-500/30'
+                        : 'text-gray-400 hover:text-white'
+                    }`}
+                  >
+                    {count} eps
+                  </button>
+                ))}
+              </div>
+            </div>
+
             <SeriesSynopsisIdeation
               key={createSession}
               format={format}
@@ -347,7 +430,7 @@ export default function SeriesPage() {
               onAudienceChange={setAudienceDef}
               artStyle={artStyle}
               onArtStyleChange={setArtStyle}
-              episodeCount={NEW_SERIES_EPISODE_COUNT}
+              episodeCount={episodeCount}
               showEpisodeHint
               initialLock={lockedSynopsis}
               onLockedChange={setLockedSynopsis}
@@ -379,6 +462,15 @@ export default function SeriesPage() {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Delete Series Confirmation Dialog */}
+      <DeleteConfirmationDialog
+        isOpen={Boolean(seriesToDelete)}
+        onClose={() => setSeriesToDelete(null)}
+        onConfirm={handleConfirmDeleteSeries}
+        projectTitle={seriesToDelete?.title || ''}
+        isDeleting={isDeleting}
+      />
     </ProductPageShell>
   )
 }

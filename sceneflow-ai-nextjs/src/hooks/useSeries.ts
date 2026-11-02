@@ -111,6 +111,25 @@ export function useSeriesList(userId: string | null) {
     }
   }, [])
 
+  const updateSeriesStatus = useCallback(async (seriesId: string, status: SeriesResponse['status']) => {
+    try {
+      const response = await fetch(`${API_BASE}/${seriesId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status })
+      })
+      const data = await response.json()
+      if (!data.success) {
+        throw new Error(data.error || 'Failed to update series status')
+      }
+      setSeries(prev => prev.map(s => (s.id === seriesId ? data.series : s)))
+      return data.series as SeriesResponse
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Unknown error')
+      throw err
+    }
+  }, [])
+
   return {
     series,
     isLoading,
@@ -120,6 +139,7 @@ export function useSeriesList(userId: string | null) {
     fetchSeries,
     createSeries,
     deleteSeries,
+    updateSeriesStatus,
     setPage: (p: number) => fetchSeries(p)
   }
 }
@@ -532,6 +552,17 @@ export function useSeriesStudio(seriesId: string | null, userId: string | null) 
   
   const [selectedEpisodeId, setSelectedEpisodeId] = useState<string | null>(null)
   const [editMode, setEditMode] = useState<'view' | 'edit' | 'generate'>('view')
+
+  useEffect(() => {
+    const blueprints = seriesHook.series?.episodeBlueprints
+    if (!blueprints || blueprints.length === 0) return
+    const exists = selectedEpisodeId && blueprints.some((ep) => ep.id === selectedEpisodeId)
+    if (!exists) {
+      const ordered = [...blueprints].sort((a, b) => a.episodeNumber - b.episodeNumber)
+      const inProgressEp = ordered.find((ep) => ep.status === 'in_progress')
+      setSelectedEpisodeId((inProgressEp || ordered[0]).id)
+    }
+  }, [seriesHook.series?.episodeBlueprints, selectedEpisodeId])
 
   const selectedEpisode = seriesHook.series?.episodeBlueprints?.find(
     ep => ep.id === selectedEpisodeId
