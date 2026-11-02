@@ -2,12 +2,20 @@
 
 import { motion } from 'framer-motion'
 import { ActiveProjectCard } from './ActiveProjectCard'
-import { Filter, ArrowUpDown, Plus } from 'lucide-react'
+import { Plus } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import Link from 'next/link'
 import { formatRelativeTime, getPhaseDisplayName, getStepNumber, getTotalSteps } from '@/hooks/useDashboardData'
-import { getProjectCreditsUsed } from '@/lib/credits/projectBudgetShared'
-import { getProductionRoute, getResumeRouteForStep } from '@/constants/workflowRoutes'
+import {
+  getProjectAudienceResonanceScore,
+  getProjectBudgetStatus,
+  getProjectCreditsUsed,
+  getProjectEstimatedRemainingCredits,
+  getProjectSceneCount,
+  getProjectScenesList,
+} from '@/lib/credits/projectBudgetShared'
+import { getResumeRouteForStep } from '@/constants/workflowRoutes'
+import { normalizeWorkflowStep } from '@/constants/workflowSteps'
 import { STUDIO_DISPLAY_NAMES } from '@/constants/studioDisplayNames'
 
 // Types for project data from API
@@ -27,125 +35,76 @@ interface DashboardProject {
 
 interface ActiveProjectsContainerProps {
   projects?: DashboardProject[]
+  selectedProjectId?: string | null
   onProjectUpdated?: () => void
 }
 
 // Transform API project to ActiveProjectCard props
-function transformProject(project: DashboardProject, index: number) {
+function transformProject(project: DashboardProject, index: number, selectedProjectId?: string | null) {
   const currentStep = getStepNumber(project.currentStep)
   const totalSteps = getTotalSteps()
   const phaseName = getPhaseDisplayName(project.currentStep)
-  
-  // Extract scores from metadata if available
+  const normalizedStep = normalizeWorkflowStep(project.currentStep)
+
   const visionPhase = project.metadata?.visionPhase
-  const scenes = visionPhase?.script?.script?.scenes || visionPhase?.scenes || []
-  
+  const scenes = getProjectScenesList(project.metadata)
+  const sceneCount = getProjectSceneCount(project.metadata)
+
   // Get thumbnail - prioritize billboard, then thumbnail, then first scene image
-  const thumbnailUrl = 
+  const thumbnailUrl =
     project.metadata?.billboardUrl ||
     visionPhase?.billboardUrl ||
-    project.metadata?.thumbnailUrl || 
+    project.metadata?.thumbnailUrl ||
     project.metadata?.thumbnail ||
     visionPhase?.thumbnailUrl ||
     scenes[0]?.imageUrl ||
     scenes[0]?.generatedImage?.url ||
-    null
-  
-  // Calculate average scene score
-  const sceneScores = scenes
-    .map((s: any) => s.score || s.reviewScore || 0)
-    .filter((s: number) => s > 0)
-  const avgScene = sceneScores.length > 0 
-    ? Math.round(sceneScores.reduce((a: number, b: number) => a + b, 0) / sceneScores.length)
-    : 75
+    undefined
 
-  // Extract Audience Resonance score from vision phase reviews
-  const audienceResonanceScore = visionPhase?.reviews?.audience?.overallScore || 
-    project.metadata?.audienceScore || 
-    avgScene
+  // Truthful Audience Resonance score (null if not yet analyzed)
+  const audienceResonanceScore = getProjectAudienceResonanceScore(project.metadata)
+  const estimatedRemaining = getProjectEstimatedRemainingCredits(project.metadata, project.progress)
 
-  // Determine next step based on current step
+  // Determine current phase & resume action accurately
   const getNextStep = () => {
-    const productionUrl = getProductionRoute(project.id)
-    const screeningRoomUrl = `/dashboard/workflow/screening-room?projectId=${project.id}`
-    const stepConfig: Record<string, { name: string; description: string; url: string }> = {
-      blueprint: {
-        name: STUDIO_DISPLAY_NAMES.production,
-        description: 'Script, audio, frames, and video production',
-        url: productionUrl,
-      },
-      vision: {
-        name: STUDIO_DISPLAY_NAMES.production,
-        description: 'Render, screen, and publish your production',
-        url: `${screeningRoomUrl}&tab=assemble`,
-      },
-      creation: {
-        name: STUDIO_DISPLAY_NAMES.production,
-        description: 'Render, screen, and publish your production',
-        url: `${screeningRoomUrl}&tab=assemble`,
-      },
-      polish: {
-        name: STUDIO_DISPLAY_NAMES.production,
-        description: 'Screen and publish your production',
-        url: `${screeningRoomUrl}&tab=publish`,
-      },
-      launch: {
-        name: 'Complete',
-        description: 'Project is ready for distribution',
-        url: `/dashboard/projects/${project.id}`,
-      },
-      ideation: {
-        name: STUDIO_DISPLAY_NAMES.production,
-        description: 'Script, audio, frames, and video production',
-        url: productionUrl,
-      },
-      storyboard: {
-        name: STUDIO_DISPLAY_NAMES.production,
-        description: 'Script, audio, frames, and video production',
-        url: productionUrl,
-      },
-      'scene-direction': {
-        name: STUDIO_DISPLAY_NAMES.production,
-        description: 'Continue video and render workflow',
-        url: productionUrl,
-      },
-      'video-generation': {
-        name: STUDIO_DISPLAY_NAMES.production,
-        description: 'Continue video and render workflow',
-        url: productionUrl,
-      },
-      review: {
-        name: STUDIO_DISPLAY_NAMES.production,
-        description: 'Screen and publish your production',
-        url: `${screeningRoomUrl}&tab=publish`,
-      },
-      optimization: {
-        name: STUDIO_DISPLAY_NAMES.production,
-        description: 'Screen and publish your production',
-        url: `${screeningRoomUrl}&tab=publish`,
-      },
+    const isComplete = project.progress >= 100 || project.status === 'completed'
+    const resumeUrl = getResumeRouteForStep(project.id, project.currentStep)
+    const screeningRoomUrl = `/dashboard/workflow/screening-room?projectId=${project.id}&tab=publish`
+
+    if (isComplete) {
+      return {
+        name: 'Screening Room',
+        description: 'Screen, export, and publish your completed production',
+        estimatedCredits: 0,
+        actionLabel: 'Open Screening Room',
+        actionUrl: screeningRoomUrl,
+        isComplete: true,
+      }
     }
-    
-    const config = stepConfig[project.currentStep] || stepConfig['blueprint']
-    const isComplete = project.progress >= 100
+
+    if (normalizedStep === 'blueprint') {
+      return {
+        name: STUDIO_DISPLAY_NAMES.blueprint,
+        description: 'Develop treatment, target audience resonance, and story bible',
+        estimatedCredits: estimatedRemaining,
+        actionLabel: `Resume ${STUDIO_DISPLAY_NAMES.blueprint}`,
+        actionUrl: resumeUrl,
+        isComplete: false,
+      }
+    }
+
     return {
-      name: config.name,
-      description: config.description,
-      estimatedCredits: scenes.length * 10 || 35,
-      actionLabel: isComplete ? 'View Project' : 'Resume',
-      actionUrl: isComplete
-        ? config.url
-        : getResumeRouteForStep(project.id, project.currentStep),
-      isComplete,
+      name: STUDIO_DISPLAY_NAMES.production,
+      description: 'Continue script direction, frames, audio, and video streams',
+      estimatedCredits: estimatedRemaining,
+      actionLabel: `Resume ${STUDIO_DISPLAY_NAMES.production}`,
+      actionUrl: resumeUrl,
+      isComplete: false,
     }
   }
 
-  // Determine budget status
   const creditsUsed = getProjectCreditsUsed(project.metadata)
-  const estimatedTotal = scenes.length * 100 || 500
-  const budgetStatus = creditsUsed > estimatedTotal ? 'over-budget' 
-    : creditsUsed > estimatedTotal * 0.75 ? 'near-limit' 
-    : 'on-track'
+  const budgetStatus = getProjectBudgetStatus(project.metadata)
 
   return {
     id: project.id,
@@ -155,52 +114,66 @@ function transformProject(project: DashboardProject, index: number) {
     currentStep,
     totalSteps,
     phaseName,
-    progressPercent: project.progress,
-    audienceResonanceScore: Math.min(100, Math.max(0, audienceResonanceScore)),
+    progressPercent: project.progress || (normalizedStep === 'blueprint' ? 20 : 50),
+    audienceResonanceScore,
     nextStep: getNextStep(),
-    estimatedCredits: scenes.length * 50 || 250,
+    estimatedCredits: estimatedRemaining,
     lastActive: formatRelativeTime(project.updatedAt),
-    budgetStatus: budgetStatus as 'on-track' | 'near-limit' | 'over-budget',
+    budgetStatus,
     creditsUsed,
+    sceneCount,
+    isStarred: Boolean(selectedProjectId && project.id === selectedProjectId),
     index,
     genre: project.genre || project.metadata?.genre,
-    metadata: project.metadata
+    metadata: project.metadata,
   }
 }
 
-export function ActiveProjectsContainer({ projects = [], onProjectUpdated }: ActiveProjectsContainerProps) {
+export function ActiveProjectsContainer({
+  projects = [],
+  selectedProjectId,
+  onProjectUpdated,
+}: ActiveProjectsContainerProps) {
   const displayProjects = projects.length > 0 ? projects : []
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 20 }}
+      initial={{ opacity: 0, y: 16 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.6, delay: 0.3 }}
+      transition={{ duration: 0.4, delay: 0.15 }}
       className="space-y-4"
     >
-      {/* Project Cards - No header needed for single project view */}
       {displayProjects.map((project, index) => (
         <ActiveProjectCard
           key={project.id}
-          {...transformProject(project, index)}
+          {...transformProject(project, index, selectedProjectId)}
           onThumbnailUpdated={() => onProjectUpdated?.()}
           onBudgetUpdated={() => onProjectUpdated?.()}
         />
       ))}
 
-      {/* Empty State */}
       {displayProjects.length === 0 && (
-        <div className="bg-gray-900/95 backdrop-blur-sm rounded-2xl border border-gray-700/50 shadow-2xl p-12 text-center">
-          <div className="w-16 h-16 bg-gray-800 rounded-full flex items-center justify-center mx-auto mb-4">
-            <Plus className="w-8 h-8 text-gray-600" />
+        <div className="bg-gray-900/95 backdrop-blur-sm rounded-2xl border border-gray-700/50 shadow-xl p-8 text-center">
+          <div className="w-12 h-12 bg-indigo-500/15 border border-indigo-500/30 rounded-full flex items-center justify-center mx-auto mb-3">
+            <Plus className="w-6 h-6 text-indigo-400" />
           </div>
-          <h3 className="text-lg font-semibold text-white mb-2">No Project Selected</h3>
-          <p className="text-gray-400 mb-6">Select a project from the Projects page or create a new one</p>
-          <Link href="/dashboard/studio/new-project">
-            <Button className="bg-blue-600 hover:bg-blue-700 text-white">
-              Create New Project
-            </Button>
-          </Link>
+          <h3 className="text-base font-semibold text-white mb-1">No Active Productions Yet</h3>
+          <p className="text-sm text-gray-400 mb-5 max-w-md mx-auto">
+            Create your first film blueprint, start a multi-episode series bible, or import an existing screenplay.
+          </p>
+          <div className="flex flex-wrap items-center justify-center gap-3">
+            <Link href="/dashboard/studio/new-project">
+              <Button variant="primary">
+                <Plus className="w-4 h-4 mr-2" />
+                Create First Project
+              </Button>
+            </Link>
+            <Link href="/dashboard/series">
+              <Button variant="outline" className="border-gray-700 text-gray-300 hover:text-white">
+                Explore {STUDIO_DISPLAY_NAMES.series}
+              </Button>
+            </Link>
+          </div>
         </div>
       )}
     </motion.div>

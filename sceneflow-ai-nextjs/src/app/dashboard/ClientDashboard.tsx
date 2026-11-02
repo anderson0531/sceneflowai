@@ -1,6 +1,8 @@
 'use client'
 
-import { useEffect } from 'react'
+import { useEffect, useState, useCallback } from 'react'
+import { useRouter } from 'next/navigation'
+import { useSession } from 'next-auth/react'
 import { CueCommandBar } from './components/CueCommandBar'
 import { BudgetHealthWidget } from './components/BudgetHealthWidget'
 import { ActiveProjectsContainer } from './components/ActiveProjectsContainer'
@@ -9,16 +11,56 @@ import { RecentProjectsPanel } from './components/RecentProjectsPanel'
 import { DashboardQuickStart } from './components/DashboardQuickStart'
 import { useDashboardData } from '@/hooks/useDashboardData'
 import { DashboardRedirectGuard } from '@/components/auth/DashboardRedirectGuard'
-import { getProjectCreditsUsed } from '@/lib/credits/projectBudgetShared'
+import { ProjectLimitBanner } from '@/components/dashboard/ProjectLimitBanner'
+import {
+  ScriptImportDialog,
+  type ScriptImportPayload,
+} from '@/components/blueprint/ScriptImportDialog'
+import {
+  getProjectBudgetStatus,
+  getProjectEstimatedRemainingCredits,
+} from '@/lib/credits/projectBudgetShared'
+import { useEnhancedStore } from '@/store/enhancedStore'
 import { ProductPageShell, ProductSection } from '@/components/product'
 import { motion } from 'framer-motion'
-import { Loader2, AlertCircle } from 'lucide-react'
+import { AlertCircle } from 'lucide-react'
+
+function DashboardLoadingSkeleton() {
+  return (
+    <div className="space-y-6 animate-pulse" aria-busy="true" aria-label="Loading dashboard data">
+      <div className="h-32 rounded-xl bg-gray-900/80 border border-gray-800" />
+      <div className="h-64 rounded-2xl bg-gray-900/80 border border-gray-800" />
+      <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
+        <div className="lg:col-span-3 h-72 rounded-xl bg-gray-900/80 border border-gray-800" />
+        <div className="lg:col-span-2 h-72 rounded-xl bg-gray-900/80 border border-gray-800" />
+      </div>
+    </div>
+  )
+}
 
 export default function ClientDashboard() {
-  const { credits, subscription, projects, recentProjects, stats, isLoading, error, refresh } =
-    useDashboardData()
+  const {
+    credits,
+    subscription,
+    projects,
+    recentProjects,
+    recentSeries,
+    stats,
+    isLoading,
+    error,
+    refresh,
+  } = useDashboardData()
 
-  const featuredProject = recentProjects[0] ?? null
+  const { data: session, status: authStatus } = useSession()
+  const router = useRouter()
+  const selectedProjectId = useEnhancedStore((s: any) => s.selectedProjectId)
+  const [showScriptImportDialog, setShowScriptImportDialog] = useState(false)
+
+  // Honor pinned/selected project from Projects page if it exists among active projects
+  const featuredProject =
+    (selectedProjectId ? projects.find((p) => p.id === selectedProjectId) : null) ??
+    recentProjects[0] ??
+    null
 
   const monthlyCredits =
     subscription?.monthlyCredits || subscription?.tier?.included_credits_monthly || 0
@@ -35,38 +77,65 @@ export default function ClientDashboard() {
     return () => window.removeEventListener('project-updated', handleProjectUpdated)
   }, [refresh])
 
-  const projectedRequired = projects.reduce((sum, p) => {
-    const sceneCount =
-      p.metadata?.visionPhase?.script?.script?.scenes?.length ||
-      p.metadata?.visionPhase?.scenes?.length ||
-      0
-    const completionPct = p.progress / 100
-    const remainingScenes = Math.ceil(sceneCount * (1 - completionPct))
-    return sum + remainingScenes * 50
-  }, 0)
+  const handleScriptImport = useCallback(
+    async (result: ScriptImportPayload) => {
+      try {
+        if (authStatus !== 'authenticated' || !session?.user?.id) {
+          const { toast } = await import('sonner')
+          toast.error('Sign in to import a script')
+          return
+        }
+
+        const { toast } = await import('sonner')
+        toast.info('Importing script...')
+
+        const res = await fetch('/api/projects/from-script', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            parsedScript: result.parsedScript,
+            importCompletenessScore: result.importCompletenessScore,
+            importGapsResolved: result.importGapsResolved,
+          }),
+        })
+
+        const data = await res.json()
+
+        if (data.success && data.project) {
+          toast.success(
+            `Script imported! ${data.project.metadata?.sceneCount || 0} scenes, ${data.project.metadata?.characterCount || 0} characters`
+          )
+          router.push(`/dashboard/workflow/vision/${data.project.id}`)
+        } else {
+          toast.error(data.error || 'Failed to import script')
+        }
+      } catch (e: unknown) {
+        console.error('Script import error:', e)
+        const { toast } = await import('sonner')
+        const message = e instanceof Error ? e.message : 'Unknown error'
+        toast.error('Failed to import script: ' + message)
+      }
+    },
+    [authStatus, session?.user?.id, router]
+  )
+
+  const projectedRequired = projects.reduce(
+    (sum, p) => sum + getProjectEstimatedRemainingCredits(p.metadata, p.progress),
+    0
+  )
 
   const projectsNearLimit = projects.filter((p) => {
-    const creditsUsed = getProjectCreditsUsed(p.metadata)
-    const estimated = (p.metadata?.visionPhase?.script?.script?.scenes?.length || 5) * 100
-    return creditsUsed > estimated * 0.75
+    const status = getProjectBudgetStatus(p.metadata)
+    return status === 'near-limit' || status === 'over-budget'
   }).length
-
-  if (isLoading) {
-    return (
-      <div className="min-h-screen bg-gray-950 text-white flex items-center justify-center">
-        <motion.div className="flex flex-col items-center gap-4">
-          <Loader2 className="w-8 h-8 animate-spin text-indigo-500" />
-          <p className="text-gray-400">Loading dashboard...</p>
-        </motion.div>
-      </div>
-    )
-  }
 
   return (
     <ProductPageShell className="font-sans">
       <DashboardRedirectGuard />
       <div className="space-y-6">
-        <CueCommandBar />
+        <CueCommandBar onImportScript={() => setShowScriptImportDialog(true)} />
+
+        {session?.user?.id && <ProjectLimitBanner userId={session.user.id} />}
 
         {error && (
           <div className="flex items-center gap-2 text-amber-400 text-sm bg-amber-500/10 border border-amber-500/20 rounded-lg px-4 py-3">
@@ -75,44 +144,64 @@ export default function ClientDashboard() {
           </div>
         )}
 
-        <DashboardOverviewStats
-          stats={stats}
-          availableCredits={availableCredits}
-          subscriptionTier={subscription?.tier?.display_name}
-        />
-
-        {featuredProject && (
-          <ProductSection label="Continue working">
-            <ActiveProjectsContainer
-              projects={[featuredProject]}
-              onProjectUpdated={refresh}
+        {isLoading ? (
+          <DashboardLoadingSkeleton />
+        ) : (
+          <>
+            <DashboardOverviewStats
+              stats={stats}
+              availableCredits={availableCredits}
+              subscriptionTier={subscription?.tier?.display_name}
             />
-          </ProductSection>
+
+            {featuredProject && (
+              <ProductSection
+                label={
+                  selectedProjectId && featuredProject.id === selectedProjectId
+                    ? 'Continue working · Pinned project'
+                    : 'Continue working'
+                }
+              >
+                <ActiveProjectsContainer
+                  projects={[featuredProject]}
+                  selectedProjectId={selectedProjectId}
+                  onProjectUpdated={refresh}
+                />
+              </ProductSection>
+            )}
+
+            <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
+              <div className="lg:col-span-3">
+                <RecentProjectsPanel
+                  projects={recentProjects}
+                  series={recentSeries}
+                  featuredProjectId={featuredProject?.id}
+                />
+              </div>
+              <motion.div className="lg:col-span-2">
+                <DashboardQuickStart onImportScript={() => setShowScriptImportDialog(true)} />
+              </motion.div>
+            </div>
+
+            <BudgetHealthWidget
+              availableCredits={availableCredits}
+              usedCredits={usedCredits}
+              monthlyCredits={monthlyCredits || availableCredits || 1000}
+              projectedRequired={projectedRequired}
+              estimatedCostUSD={Math.round(projectedRequired * 0.01)}
+              projectsNearLimit={projectsNearLimit}
+              subscriptionTier={subscription?.tier?.display_name}
+              addonCredits={addonCredits}
+            />
+          </>
         )}
-
-        <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
-          <div className="lg:col-span-3">
-            <RecentProjectsPanel
-              projects={recentProjects}
-              featuredProjectId={featuredProject?.id}
-            />
-          </div>
-          <motion.div className="lg:col-span-2">
-            <DashboardQuickStart />
-          </motion.div>
-        </div>
-
-        <BudgetHealthWidget
-          availableCredits={availableCredits}
-          usedCredits={usedCredits}
-          monthlyCredits={monthlyCredits || availableCredits || 1000}
-          projectedRequired={projectedRequired}
-          estimatedCostUSD={Math.round(projectedRequired * 0.01)}
-          projectsNearLimit={projectsNearLimit}
-          subscriptionTier={subscription?.tier?.display_name}
-          addonCredits={addonCredits}
-        />
       </div>
+
+      <ScriptImportDialog
+        open={showScriptImportDialog}
+        onOpenChange={setShowScriptImportDialog}
+        onImport={handleScriptImport}
+      />
     </ProductPageShell>
   )
 }

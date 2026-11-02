@@ -42,7 +42,11 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import ThumbnailPromptDrawer from '@/components/project/ThumbnailPromptDrawer'
 import { ProjectCostCalculator } from '@/components/credits/ProjectCostCalculator'
 import { AdjustCreditsUsedDialog } from '@/components/credits/AdjustCreditsUsedDialog'
-import { getProjectCreditsBudget, getProjectCreditsUsed } from '@/lib/credits/projectBudgetShared'
+import {
+  getProjectCreditsBudget,
+  getProjectCreditsUsed,
+  getProjectEstimatedRemainingCredits,
+} from '@/lib/credits/projectBudgetShared'
 import { useProjectCosts } from '@/hooks/useProjectCosts'
 import {
   WORKFLOW_STEPS,
@@ -273,31 +277,23 @@ export function ProjectCard({ project, className = '', isSelected = false, onSel
   const getProjectCosts = () => {
     const creditsUsed = getProjectCreditsUsed(project.metadata)
     const creditsBudget = getProjectCreditsBudget(project.metadata)
-    const sceneCount = getSceneCount()
-    
-    // Estimate remaining cost based on scenes and current progress
-    const progressPercent = getProgressPercentage()
-    const remainingProgress = 100 - progressPercent
-    
-    // Base estimate: ~200 credits per scene for video generation + audio/images
-    const perSceneCost = 200
-    const baseEstimate = sceneCount > 0 ? sceneCount * perSceneCost : 1500
-    
-    // Scale estimate by remaining progress
-    const estimatedCreditsToComplete = project.metadata?.estimatedCreditsToComplete || 
-      Math.round(baseEstimate * (remainingProgress / 100))
-    
+    const progressPercent = project.progress || getProgressPercentage()
+    const estimatedCreditsToComplete = getProjectEstimatedRemainingCredits(
+      project.metadata,
+      progressPercent
+    )
+
     // Calculate variance from budget (in credits)
     const variance = creditsBudget > 0 ? creditsUsed - creditsBudget : 0
     const variancePercent = creditsBudget > 0 ? Math.round((variance / creditsBudget) * 100) : 0
-    
+
     return {
       creditsUsed,
       creditsBudget,
       estimatedCreditsToComplete,
       variance,
       variancePercent,
-      isOverBudget: variance > 0
+      isOverBudget: variance > 0,
     }
   }
 

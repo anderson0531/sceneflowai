@@ -35,6 +35,21 @@ export interface DashboardProject {
   updatedAt: string
   completedSteps: string[]
   metadata: Record<string, any>
+  genre?: string
+}
+
+export interface DashboardSeries {
+  id: string
+  title: string
+  logline?: string
+  genre?: string
+  status: 'draft' | 'active' | 'completed' | 'archived'
+  episodeCount: number
+  maxEpisodes?: number
+  startedCount: number
+  completedCount: number
+  updatedAt: string
+  metadata?: Record<string, any>
 }
 
 export interface DashboardStats {
@@ -52,6 +67,7 @@ export interface DashboardData {
   subscription: DashboardSubscription | null
   projects: DashboardProject[]
   recentProjects: DashboardProject[]
+  recentSeries: DashboardSeries[]
   stats: DashboardStats | null
   isLoading: boolean
   error: string | null
@@ -64,6 +80,7 @@ export function useDashboardData(): DashboardData {
   const [subscription, setSubscription] = useState<DashboardSubscription | null>(null)
   const [projects, setProjects] = useState<DashboardProject[]>([])
   const [recentProjects, setRecentProjects] = useState<DashboardProject[]>([])
+  const [recentSeries, setRecentSeries] = useState<DashboardSeries[]>([])
   const [stats, setStats] = useState<DashboardStats | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -83,7 +100,7 @@ export function useDashboardData(): DashboardData {
         fetch('/api/user/credits'),
         fetch('/api/subscription/status'),
         fetch(`/api/projects?userId=${userId}&pageSize=50&summary=1`),
-        fetch(`/api/series?userId=${userId}&pageSize=1`),
+        fetch(`/api/series?userId=${userId}&pageSize=6`),
       ])
 
       // Parse credits
@@ -113,8 +130,19 @@ export function useDashboardData(): DashboardData {
       let totalSeries = 0
       if (seriesRes.ok) {
         const seriesData = await seriesRes.json()
-        if (seriesData.success && typeof seriesData.total === 'number') {
-          totalSeries = seriesData.total
+        if (seriesData.success) {
+          if (typeof seriesData.total === 'number') {
+            totalSeries = seriesData.total
+          }
+          if (Array.isArray(seriesData.series)) {
+            const activeSeries = (seriesData.series as DashboardSeries[])
+              .filter((s) => s.status !== 'archived')
+              .sort(
+                (a, b) =>
+                  new Date(b.updatedAt || 0).getTime() - new Date(a.updatedAt || 0).getTime()
+              )
+            setRecentSeries(activeSeries.slice(0, 5))
+          }
         }
       }
 
@@ -189,6 +217,7 @@ export function useDashboardData(): DashboardData {
     subscription,
     projects,
     recentProjects,
+    recentSeries,
     stats,
     isLoading,
     error,
@@ -220,7 +249,7 @@ export function getPhaseDisplayName(currentStep: string): string {
 }
 
 export function getStepNumber(currentStep: string): number {
-  const normalized = currentStep === 'blueprint' || currentStep === 'ideation' ? 'blueprint' : 'production'
+  const normalized = normalizeWorkflowStep(currentStep)
   return normalized === 'blueprint' ? 1 : 2
 }
 

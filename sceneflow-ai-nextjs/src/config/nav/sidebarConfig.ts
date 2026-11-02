@@ -303,7 +303,7 @@ export const dashboardSidebarConfig: WorkflowSidebarConfig = {
     reviewScores: false,
     screeningRoom: false,
     projectStats: false,
-    credits: true,
+    credits: false,
   },
 }
 
