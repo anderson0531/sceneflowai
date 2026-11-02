@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import {
+  buildTreatmentImportPrompt,
   isTreatmentTextUsable,
   parseTreatmentImportResult,
 } from '@/lib/blueprint/importTreatment'
@@ -16,6 +17,16 @@ describe('isTreatmentTextUsable', () => {
         'A documentary following three urban beekeepers across one honey season in Chicago.'
       )
     ).toBe(true)
+  })
+})
+
+describe('buildTreatmentImportPrompt', () => {
+  it('instructs the model to preserve full script characters, locations, and scene progression', () => {
+    const prompt = buildTreatmentImportPrompt('INT. LAB - NIGHT\nDR. ELENA VANCE inspects the core.')
+    expect(prompt).toContain('COMPLETE SCRIPT, SCREENPLAY, or DETAILED MULTI-SCENE TREATMENT')
+    expect(prompt).toContain('Named characters or subjects')
+    expect(prompt).toContain('Act-by-act or scene-by-scene narrative progression')
+    expect(prompt).toContain('DR. ELENA VANCE')
   })
 })
 

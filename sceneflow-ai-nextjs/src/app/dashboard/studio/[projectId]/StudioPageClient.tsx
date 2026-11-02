@@ -2020,6 +2020,7 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
         open={showReimaginDialog}
         onClose={() => setShowReimaginDialog(false)}
         projectId={projectId}
+        defaultImportOpen={searchParams.get('import') === 'true'}
         existingVariant={
           activeTreatmentVariant ||
           (currentProject?.metadata?.blueprintPrimeInput || currentProject?.metadata?.seriesId

@@ -30,10 +30,10 @@ export function DashboardQuickStart({ onImportScript }: DashboardQuickStartProps
     },
     {
       id: 'import-script',
-      label: 'Import Screenplay',
-      description: 'Upload a script to auto-extract scenes & characters',
+      label: 'Import Script or Treatment',
+      description: 'Upload a screenplay or treatment into Blueprint Room',
       onClick: onImportScript,
-      href: onImportScript ? undefined : '/dashboard/projects',
+      href: onImportScript ? undefined : '/dashboard/studio/new-project?import=true',
       icon: FileText,
       accent: 'cyan',
     },

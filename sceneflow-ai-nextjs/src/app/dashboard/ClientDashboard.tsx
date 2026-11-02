@@ -1,7 +1,6 @@
 'use client'
 
-import { useEffect, useState, useCallback } from 'react'
-import { useRouter } from 'next/navigation'
+import { useEffect } from 'react'
 import { useSession } from 'next-auth/react'
 import { CueCommandBar } from './components/CueCommandBar'
 import { BudgetHealthWidget } from './components/BudgetHealthWidget'
@@ -12,10 +11,6 @@ import { DashboardQuickStart } from './components/DashboardQuickStart'
 import { useDashboardData } from '@/hooks/useDashboardData'
 import { DashboardRedirectGuard } from '@/components/auth/DashboardRedirectGuard'
 import { ProjectLimitBanner } from '@/components/dashboard/ProjectLimitBanner'
-import {
-  ScriptImportDialog,
-  type ScriptImportPayload,
-} from '@/components/blueprint/ScriptImportDialog'
 import {
   getProjectBudgetStatus,
   getProjectEstimatedRemainingCredits,
@@ -51,10 +46,8 @@ export default function ClientDashboard() {
     refresh,
   } = useDashboardData()
 
-  const { data: session, status: authStatus } = useSession()
-  const router = useRouter()
+  const { data: session } = useSession()
   const selectedProjectId = useEnhancedStore((s: any) => s.selectedProjectId)
-  const [showScriptImportDialog, setShowScriptImportDialog] = useState(false)
 
   // Honor pinned/selected project from Projects page if it exists among active projects
   const featuredProject =
@@ -77,48 +70,6 @@ export default function ClientDashboard() {
     return () => window.removeEventListener('project-updated', handleProjectUpdated)
   }, [refresh])
 
-  const handleScriptImport = useCallback(
-    async (result: ScriptImportPayload) => {
-      try {
-        if (authStatus !== 'authenticated' || !session?.user?.id) {
-          const { toast } = await import('sonner')
-          toast.error('Sign in to import a script')
-          return
-        }
-
-        const { toast } = await import('sonner')
-        toast.info('Importing script...')
-
-        const res = await fetch('/api/projects/from-script', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            parsedScript: result.parsedScript,
-            importCompletenessScore: result.importCompletenessScore,
-            importGapsResolved: result.importGapsResolved,
-          }),
-        })
-
-        const data = await res.json()
-
-        if (data.success && data.project) {
-          toast.success(
-            `Script imported! ${data.project.metadata?.sceneCount || 0} scenes, ${data.project.metadata?.characterCount || 0} characters`
-          )
-          router.push(`/dashboard/workflow/vision/${data.project.id}`)
-        } else {
-          toast.error(data.error || 'Failed to import script')
-        }
-      } catch (e: unknown) {
-        console.error('Script import error:', e)
-        const { toast } = await import('sonner')
-        const message = e instanceof Error ? e.message : 'Unknown error'
-        toast.error('Failed to import script: ' + message)
-      }
-    },
-    [authStatus, session?.user?.id, router]
-  )
-
   const projectedRequired = projects.reduce(
     (sum, p) => sum + getProjectEstimatedRemainingCredits(p.metadata, p.progress),
     0
@@ -133,7 +84,7 @@ export default function ClientDashboard() {
     <ProductPageShell className="font-sans">
       <DashboardRedirectGuard />
       <div className="space-y-6">
-        <CueCommandBar onImportScript={() => setShowScriptImportDialog(true)} />
+        <CueCommandBar />
 
         {session?.user?.id && <ProjectLimitBanner userId={session.user.id} />}
 
@@ -179,7 +130,7 @@ export default function ClientDashboard() {
                 />
               </div>
               <motion.div className="lg:col-span-2">
-                <DashboardQuickStart onImportScript={() => setShowScriptImportDialog(true)} />
+                <DashboardQuickStart />
               </motion.div>
             </div>
 
@@ -196,12 +147,6 @@ export default function ClientDashboard() {
           </>
         )}
       </div>
-
-      <ScriptImportDialog
-        open={showScriptImportDialog}
-        onOpenChange={setShowScriptImportDialog}
-        onImport={handleScriptImport}
-      />
     </ProductPageShell>
   )
 }

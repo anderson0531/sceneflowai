@@ -85,6 +85,8 @@ type Props = {
   initialIdea?: IdeationConcept // Pre-populated from Ideation
   projectId?: string
   focusField?: 'artStyle' | 'aspectRatio'
+  /** Open the Script / Treatment Import modal automatically when the dialog opens. */
+  defaultImportOpen?: boolean
   /** Series or project values used when the existing Blueprint left a required field empty. */
   fallback?: {
     synopsis?: string
@@ -135,6 +137,7 @@ export function BlueprintReimaginDialog({
   initialIdea,
   projectId,
   focusField,
+  defaultImportOpen = false,
   fallback,
 }: Props) {
   const t = useTranslations('blueprint.reimagine')
@@ -156,7 +159,7 @@ export function BlueprintReimaginDialog({
   const [ideationSession, setIdeationSession] = useState(0)
   const [treatmentImportOpen, setTreatmentImportOpen] = useState(false)
 
-  // Apply an imported treatment. Create mode confirms the synopsis immediately.
+  // Apply an imported script or treatment. Create mode confirms the synopsis immediately.
   // Reimagine mode prefills description, content type, genre, and tone.
   const applyTreatmentImport = (result: TreatmentImportResult) => {
     if (result.synopsis) setSynopsis(result.synopsis)
@@ -174,7 +177,7 @@ export function BlueprintReimaginDialog({
       setSynopsisDraft('')
       setIdeationSession((session) => session + 1)
     }
-    toast.success('Treatment imported — review and generate your Blueprint.')
+    toast.success('Script / treatment imported — review and generate your Blueprint.')
   }
 
   // UI state
@@ -236,11 +239,15 @@ export function BlueprintReimaginDialog({
       setProductionFormat(DEFAULT_SERIES_PRODUCTION_FORMAT)
       setAudienceDef(createAudienceDefinition({ description: '', source: 'blueprint' }))
       setIdeationSession((session) => session + 1)
+      if (defaultImportOpen) {
+        setTreatmentImportOpen(true)
+      }
     }
   }, [
     existingVariant,
     initialIdea,
     open,
+    defaultImportOpen,
     fallback?.synopsis,
     fallback?.genre,
     fallback?.tone,
@@ -338,13 +345,21 @@ export function BlueprintReimaginDialog({
         
         <div className={isReimaginMode ? 'space-y-6 py-4' : 'space-y-4 pt-4'}>
           {isReimaginMode ? null : (
-            <div className="flex justify-end">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 rounded-xl border border-cyan-500/25 bg-cyan-500/5 px-3.5 py-2.5">
+              <div className="min-w-0">
+                <p className="text-xs font-medium text-cyan-100">
+                  Have an existing screenplay, beat sheet, or treatment?
+                </p>
+                <p className="text-[11px] text-gray-400">
+                  Upload or paste <span className="text-gray-300">.pdf, .docx, .fdx, .fountain, .txt</span> to extract characters, beats &amp; tone
+                </p>
+              </div>
               <button
                 type="button"
                 onClick={() => setTreatmentImportOpen(true)}
-                className="inline-flex items-center gap-1.5 rounded-md border border-gray-600 px-2.5 py-1 text-[11px] font-medium text-gray-300 hover:bg-gray-800 hover:text-white"
+                className="inline-flex shrink-0 items-center gap-1.5 rounded-lg border border-cyan-500/40 bg-cyan-500/15 px-3 py-1.5 text-xs font-medium text-cyan-100 hover:bg-cyan-500/25 transition-colors"
               >
-                <Upload className="h-3.5 w-3.5" />
+                <Upload className="h-3.5 w-3.5 text-cyan-300" />
                 {t('importTreatment')}
               </button>
             </div>

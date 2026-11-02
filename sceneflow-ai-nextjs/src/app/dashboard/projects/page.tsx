@@ -27,10 +27,6 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { DeleteConfirmationDialog } from '@/components/ui/DeleteConfirmationDialog'
 import {
-  ScriptImportDialog,
-  type ScriptImportPayload,
-} from '@/components/blueprint/ScriptImportDialog'
-import {
   ProductPageShell,
   ProductPageHeader,
   ProductEmptyState,
@@ -84,50 +80,9 @@ export default function ProjectsPage() {
   )
   const [isDeleting, setIsDeleting] = useState(false)
   const [ownershipSynced, setOwnershipSynced] = useState(false)
-  const [showScriptImportDialog, setShowScriptImportDialog] = useState(false)
 
   const router = useRouter()
   const { data: session, status: authStatus } = useSession()
-
-  // Import a full screenplay: create a production project and jump to Vision.
-  const handleScriptImport = useCallback(
-    async (result: ScriptImportPayload) => {
-      try {
-        if (authStatus !== 'authenticated' || !session?.user?.id) {
-          toast.error('Sign in to import a script')
-          return
-        }
-
-        toast.info('Importing script...')
-
-        const res = await fetch('/api/projects/from-script', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            parsedScript: result.parsedScript,
-            importCompletenessScore: result.importCompletenessScore,
-            importGapsResolved: result.importGapsResolved,
-          }),
-        })
-
-        const data = await res.json()
-
-        if (data.success && data.project) {
-          toast.success(
-            `Script imported! ${data.project.metadata?.sceneCount || 0} scenes, ${data.project.metadata?.characterCount || 0} characters`
-          )
-          router.push(`/dashboard/workflow/vision/${data.project.id}`)
-        } else {
-          toast.error(data.error || 'Failed to import script')
-        }
-      } catch (e: unknown) {
-        console.error('Script import error:', e)
-        const message = e instanceof Error ? e.message : 'Unknown error'
-        toast.error('Failed to import script: ' + message)
-      }
-    },
-    [authStatus, session?.user?.id, router]
-  )
 
   // Selected project for dashboard display
   const selectedProjectId = useEnhancedStore((s: any) => s.selectedProjectId)
@@ -519,14 +474,6 @@ export default function ProjectsPage() {
                 UI Sandbox Demo
               </Button>
             </Link>
-            <Button
-              variant="outline"
-              onClick={() => setShowScriptImportDialog(true)}
-              className="flex items-center gap-2 border-gray-700 bg-gray-900/60 text-gray-200 hover:bg-gray-800"
-            >
-              <FileText className="w-4 h-4" />
-              Import Script
-            </Button>
           </div>
         }
         primaryAction={
@@ -791,12 +738,6 @@ export default function ProjectsPage() {
         onConfirm={confirmDelete}
         projectTitle={projectToDelete?.title || ''}
         isDeleting={isDeleting}
-      />
-
-      <ScriptImportDialog
-        open={showScriptImportDialog}
-        onOpenChange={setShowScriptImportDialog}
-        onImport={handleScriptImport}
       />
     </ProductPageShell>
   )

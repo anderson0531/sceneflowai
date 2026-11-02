@@ -37,7 +37,7 @@ export async function POST(request: NextRequest) {
 
     if (!isTreatmentTextUsable(text)) {
       return NextResponse.json(
-        { success: false, error: 'Provide a longer treatment or description to import.' },
+        { success: false, error: 'Provide a longer script, treatment, or description to import.' },
         { status: 400 }
       )
     }
@@ -55,7 +55,7 @@ export async function POST(request: NextRequest) {
     const result = await generateText(prompt, {
       model: getGeminiProductModel('blueprint'),
       temperature: 0.2,
-      maxOutputTokens: 2048,
+      maxOutputTokens: 4096,
       thinkingLevel: 'low',
       responseMimeType: 'application/json',
       timeoutMs: 45000,

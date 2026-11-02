@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useCallback, useRef, useState } from 'react'
-import { Loader2, Upload } from 'lucide-react'
+import { FileText, Loader2, Upload, X } from 'lucide-react'
 import {
   Dialog,
   DialogContent,
@@ -13,6 +13,7 @@ import {
 import { Button } from '@/components/ui/Button'
 import { Textarea } from '@/components/ui/textarea'
 import { extractTextFromPdf, extractTextFromDocx } from '@/lib/upload/extractors'
+import { normalizeImportedScriptText } from '@/lib/script/fdxParser'
 import { isTreatmentTextUsable, type TreatmentImportResult } from '@/lib/blueprint/importTreatment'
 
 interface TreatmentImportDialogProps {
@@ -32,12 +33,14 @@ export function TreatmentImportDialog({
 }: TreatmentImportDialogProps) {
   const fileInputRef = useRef<HTMLInputElement | null>(null)
   const [text, setText] = useState('')
+  const [uploadedFileName, setUploadedFileName] = useState<string | null>(null)
   const [isExtracting, setIsExtracting] = useState(false)
   const [isImporting, setIsImporting] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
   const reset = useCallback(() => {
     setText('')
+    setUploadedFileName(null)
     setIsExtracting(false)
     setIsImporting(false)
     setError(null)
@@ -66,13 +69,15 @@ export function TreatmentImportDialog({
         } else if (name.endsWith('.docx')) {
           extracted = await extractTextFromDocx(file)
         } else {
-          extracted = await file.text()
+          const rawText = await file.text()
+          extracted = normalizeImportedScriptText(rawText, file.name)
         }
         if (!extracted.trim()) {
-          setError('Could not read any text from that file. Try pasting the treatment instead.')
+          setError('Could not read any text from that file. Try pasting your script or treatment instead.')
           return
         }
         setText(extracted.trim())
+        setUploadedFileName(file.name)
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to read file')
       } finally {
@@ -84,9 +89,9 @@ export function TreatmentImportDialog({
   )
 
   const handleImport = useCallback(async () => {
-    const trimmed = text.trim()
+    const trimmed = normalizeImportedScriptText(text.trim(), uploadedFileName || undefined)
     if (!isTreatmentTextUsable(trimmed)) {
-      setError('Provide a longer treatment or description to import.')
+      setError('Provide a longer script, treatment, or description to import.')
       return
     }
     setIsImporting(true)
@@ -99,7 +104,7 @@ export function TreatmentImportDialog({
       })
       const data = await response.json().catch(() => null)
       if (!response.ok || !data?.success) {
-        throw new Error(data?.error || 'Could not import the treatment.')
+        throw new Error(data?.error || 'Could not import the script or treatment.')
       }
       onImported(data.result as TreatmentImportResult)
       handleOpenChange(false)
@@ -108,16 +113,20 @@ export function TreatmentImportDialog({
     } finally {
       setIsImporting(false)
     }
-  }, [text, projectId, onImported, handleOpenChange])
+  }, [text, uploadedFileName, projectId, onImported, handleOpenChange])
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent className="max-w-2xl bg-slate-900 border-slate-700 text-slate-100">
         <DialogHeader>
-          <DialogTitle>Import a Film Treatment</DialogTitle>
+          <DialogTitle className="flex items-center gap-2">
+            <FileText className="w-5 h-5 text-cyan-400" />
+            <span>Import Script or Treatment</span>
+          </DialogTitle>
           <DialogDescription className="text-slate-400">
-            Paste a treatment (synopsis, characters, etc.) or upload a document. We will extract a
-            clean project description and suggest content type, genre, and tone.
+            Upload or paste a complete screenplay, beat sheet, or film treatment. SceneFlow will
+            extract the story progression, characters, locations, genre, and tone to build your
+            Blueprint foundation.
           </DialogDescription>
         </DialogHeader>
 
@@ -129,31 +138,66 @@ export function TreatmentImportDialog({
             onChange={handleFileSelect}
             className="hidden"
           />
-          <div className="flex items-center gap-2">
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={() => fileInputRef.current?.click()}
-              disabled={isExtracting || isImporting}
-              className="border-slate-600 text-slate-200"
-            >
-              {isExtracting ? (
-                <Loader2 className="w-4 h-4 mr-1.5 animate-spin" />
-              ) : (
-                <Upload className="w-4 h-4 mr-1.5" />
-              )}
-              {isExtracting ? 'Reading…' : 'Upload document'}
-            </Button>
-            <span className="text-[11px] text-slate-500">.txt, .md, .fountain, .fdx, .pdf, .docx</span>
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <div className="flex items-center gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={isExtracting || isImporting}
+                className="border-slate-600 text-slate-200 hover:bg-slate-800"
+              >
+                {isExtracting ? (
+                  <Loader2 className="w-4 h-4 mr-1.5 animate-spin" />
+                ) : (
+                  <Upload className="w-4 h-4 mr-1.5 text-cyan-400" />
+                )}
+                {isExtracting ? 'Reading file…' : 'Upload Script or Treatment'}
+              </Button>
+              <span className="text-[11px] text-slate-400">
+                Supports <span className="text-slate-300 font-medium">.pdf, .docx, .fdx, .fountain, .txt, .md</span>
+              </span>
+            </div>
+
+            {uploadedFileName && (
+              <span className="inline-flex items-center gap-1.5 rounded-md border border-cyan-500/30 bg-cyan-500/10 px-2.5 py-1 text-xs text-cyan-200">
+                <FileText className="w-3.5 h-3.5 text-cyan-400" />
+                <span className="max-w-[180px] truncate">{uploadedFileName}</span>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setUploadedFileName(null)
+                    setText('')
+                  }}
+                  className="text-cyan-300/70 hover:text-white"
+                  aria-label="Clear uploaded file"
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              </span>
+            )}
           </div>
 
           <Textarea
             value={text}
             onChange={(e) => setText(e.target.value)}
-            placeholder="Paste your film treatment here — synopsis, characters, setting, tone…"
-            className="min-h-[200px] bg-slate-800/50 border-slate-700 text-sm"
+            placeholder="Paste your complete screenplay (Fountain / standard script format), beat sheet, or film treatment here — scenes, dialogue, characters, setting, or synopsis…"
+            className="min-h-[240px] bg-slate-800/50 border-slate-700 text-sm font-mono sm:font-sans"
           />
+
+          {text.trim().length > 0 && (
+            <div className="flex items-center justify-between text-[11px] text-slate-400">
+              <span>
+                {text.trim().length.toLocaleString()} characters ready to extract into Blueprint brief
+              </span>
+              {text.trim().length > 32000 && (
+                <span className="text-amber-300">
+                  First 32,000 characters will be analyzed
+                </span>
+              )}
+            </div>
+          )}
 
           {error ? <p className="text-[11px] text-red-300">{error}</p> : null}
         </div>
@@ -162,14 +206,19 @@ export function TreatmentImportDialog({
           <Button type="button" variant="outline" onClick={() => handleOpenChange(false)} disabled={isImporting}>
             Cancel
           </Button>
-          <Button type="button" onClick={handleImport} disabled={isImporting || isExtracting || !text.trim()}>
+          <Button
+            type="button"
+            onClick={handleImport}
+            disabled={isImporting || isExtracting || !text.trim()}
+            className="bg-gradient-to-r from-cyan-500 to-indigo-600 hover:from-cyan-600 hover:to-indigo-700 text-white"
+          >
             {isImporting ? (
               <>
                 <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                Importing…
+                Extracting Blueprint Brief…
               </>
             ) : (
-              'Import treatment'
+              'Import to Blueprint'
             )}
           </Button>
         </DialogFooter>

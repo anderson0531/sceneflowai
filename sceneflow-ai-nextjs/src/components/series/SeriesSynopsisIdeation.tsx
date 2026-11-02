@@ -87,10 +87,11 @@ export function SeriesSynopsisIdeation({
   useEffect(() => {
     if (!signedRef.current || signedRef.current === contextSignature) return
     signedRef.current = contextSignature
+    if (turns.length === 0) return
     setLocked(null)
     setContextStale(true)
     onLockedChangeRef.current(null)
-  }, [contextSignature])
+  }, [contextSignature, turns.length])
 
   const clearLock = useCallback(() => {
     setLocked(null)
@@ -310,7 +311,9 @@ export function SeriesSynopsisIdeation({
         {proposed && !locked ? (
           <div className="space-y-2 rounded-lg border border-emerald-500/30 bg-emerald-500/5 px-3 py-3">
             <p className="text-xs font-medium text-emerald-200">Proposed synopsis</p>
-            <p className="text-sm leading-relaxed text-gray-200">{proposed}</p>
+            <p className="text-sm leading-relaxed text-gray-200 whitespace-pre-line max-h-60 overflow-y-auto pr-1">
+              {proposed}
+            </p>
             {readyToLock && !contextStale ? (
               <p className="text-[11px] text-emerald-300/90">
                 This synopsis is specific enough to confirm.
@@ -340,7 +343,9 @@ export function SeriesSynopsisIdeation({
               <CheckCircle2 className="h-3.5 w-3.5 text-emerald-300" />
               Synopsis confirmed
             </div>
-            <p className="text-sm leading-relaxed text-gray-100">{locked.synopsis}</p>
+            <p className="text-sm leading-relaxed text-gray-100 whitespace-pre-line max-h-60 overflow-y-auto pr-1">
+              {locked.synopsis}
+            </p>
             <div className="flex flex-wrap gap-2">
               <button
                 type="button"
