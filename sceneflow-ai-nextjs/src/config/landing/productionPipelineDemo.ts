@@ -362,6 +362,48 @@ export const PRODUCTION_WALK_IDS = [
 
 export type ProductionWalkId = (typeof PRODUCTION_WALK_IDS)[number]
 
+export const PRODUCTION_TRAILER_POSTERS: Record<ProductionWalkId, string> = {
+  drama: '/images/trailers/cinematic-drama-poster.webp',
+  animation: '/images/trailers/animated-series-poster.webp',
+  documentary: '/images/trailers/documentary-poster.webp',
+  training: '/images/trailers/training-series-poster.webp',
+  podcast: '/images/trailers/creator-podcast-poster.webp',
+  memoir: '/images/trailers/video-memoir-poster.webp',
+}
+
+export function getProductionTrailerPoster(walkId: ProductionWalkId): string {
+  return PRODUCTION_TRAILER_POSTERS[walkId]
+}
+
+export function getProductionTrailerSources(
+  walkId: ProductionWalkId,
+  locale?: string
+): {
+  webmSrc: string
+  mp4Src: string
+  posterSrc: string
+} {
+  const posterSrc = PRODUCTION_TRAILER_POSTERS[walkId]
+  switch (walkId) {
+    case 'drama':
+      return { ...getCinematicDramaTrailerSources(locale), posterSrc }
+    case 'animation':
+      return { ...getAnimatedSeriesTrailerSources(locale), posterSrc }
+    case 'documentary':
+      return { ...getDocumentaryTrailerSources(locale), posterSrc }
+    case 'training':
+      return { ...getTrainingSeriesTrailerSources(locale), posterSrc }
+    case 'podcast':
+      return { ...getCreatorPodcastTrailerSources(locale), posterSrc }
+    case 'memoir':
+      return {
+        webmSrc: VIDEO_MEMOIR_TRAILER_WEBM,
+        mp4Src: VIDEO_MEMOIR_TRAILER_MP4,
+        posterSrc,
+      }
+  }
+}
+
 export const PRODUCTION_WALK_LABELS: Record<ProductionWalkId, string> = {
   drama: 'Feature-Length Cinematic Drama',
   animation: 'Full-Season Animated Series',

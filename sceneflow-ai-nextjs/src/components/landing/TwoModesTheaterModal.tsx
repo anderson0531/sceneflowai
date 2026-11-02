@@ -130,7 +130,7 @@ export function TwoModesTheaterModal({
             exit={{ opacity: 0 }}
           >
             <video
-              key={activeLocaleId ?? 'single'}
+              key={activeLocaleId ?? `${media.webmUrl}|${media.mp4Url}`}
               ref={videoRef}
               poster={media.posterUrl || undefined}
               loop

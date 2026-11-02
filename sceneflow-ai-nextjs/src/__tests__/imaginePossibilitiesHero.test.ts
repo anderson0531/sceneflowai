@@ -12,6 +12,7 @@ import {
   CINEMATIC_DRAMA_DUB_LOCALE_IDS,
   CREATOR_PODCAST_DUB_LOCALE_IDS,
   DOCUMENTARY_DUB_LOCALE_IDS,
+  PRODUCTION_TRAILER_POSTERS,
   PRODUCTION_WALK_IDS,
   TRAINING_SERIES_DUB_LOCALE_IDS,
   getAnimatedSeriesTrailerSources,
@@ -19,6 +20,7 @@ import {
   getCreatorPodcastTrailerSources,
   getDocumentaryTrailerSources,
   getProductionExampleMedia,
+  getProductionTrailerSources,
   getTrainingSeriesTrailerSources,
 } from '@/config/landing/productionPipelineDemo'
 
@@ -58,6 +60,14 @@ describe('Imagine the Possibilities top cinematic video header & 60s–90s trail
     expect(heroComponent).toContain('min-h-[100dvh]')
     expect(heroComponent).toContain('type="video/webm"')
     expect(heroComponent).toContain('type="video/mp4"')
+    expect(heroComponent).toContain('Maximize2')
+    expect(heroComponent).toContain("tHero('fullscreen')")
+    expect(heroComponent).toContain('openTwoModesOnPhoneOrTheater')
+    expect(heroComponent).toContain('TwoModesTheaterModal')
+    expect(heroComponent).toContain('getVideoPreloadStrategy')
+    expect(heroComponent).toContain('poster={activePoster}')
+    expect(heroComponent).toContain('prefetchCategory')
+    expect(heroComponent).toContain('warmNextTrailer')
 
     // Ensure removed showcase/example clutter is not rendered in the hero component
     expect(heroComponent).not.toContain('SceneFlow Studio Showcase')
@@ -207,6 +217,24 @@ describe('Imagine the Possibilities top cinematic video header & 60s–90s trail
       expect(existsSync(mp4Abs), `missing ${mp4Rel}`).toBe(true)
       expect(statSync(webmAbs).size).toBeGreaterThan(1_000_000)
       expect(statSync(mp4Abs).size).toBeGreaterThan(1_000_000)
+    }
+
+    for (const walkId of PRODUCTION_WALK_IDS) {
+      const posterRel = PRODUCTION_TRAILER_POSTERS[walkId].replace(/^\//, '')
+      const posterAbs = path.join(ROOT, 'public', posterRel)
+      expect(existsSync(posterAbs), `missing poster ${posterRel}`).toBe(true)
+      expect(statSync(posterAbs).size).toBeGreaterThan(5_000)
+
+      const sources = getProductionTrailerSources(walkId, 'en')
+      expect(sources.posterSrc).toBe(PRODUCTION_TRAILER_POSTERS[walkId])
+      const webmRel = sources.webmSrc.split('?')[0].replace(/^\//, '')
+      const webmBuf = readFileSync(path.join(ROOT, 'public', webmRel))
+      const cuesOffset = webmBuf.indexOf(Buffer.from([0x1c, 0x53, 0xbb, 0x6b]), 200)
+      const firstClusterOffset = webmBuf.indexOf(Buffer.from([0x1f, 0x43, 0xb6, 0x75]), 200)
+      expect(cuesOffset, `${webmRel} Cues should be front-loaded before first Cluster`).toBeGreaterThan(0)
+      expect(cuesOffset, `${webmRel} Cues should be front-loaded before first Cluster`).toBeLessThan(
+        firstClusterOffset
+      )
     }
   })
 })

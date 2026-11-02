@@ -175,6 +175,8 @@ function encodeEnglishMasters(forceReencode = false) {
       '48000',
       '-ac',
       '2',
+      '-cues_to_front',
+      '1',
       enWebm,
     ],
     'enWebm'
@@ -346,6 +348,8 @@ function buildLocaleMixAndVideos(locale, enMp4, enWebm, videoDur) {
       '2',
       '-t',
       videoDur.toFixed(3),
+      '-cues_to_front',
+      '1',
       outWebm,
     ],
     `webm-${locale}`

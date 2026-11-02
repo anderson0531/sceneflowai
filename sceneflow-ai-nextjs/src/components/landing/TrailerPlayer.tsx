@@ -14,6 +14,7 @@ import {
 type Props = {
   webmSrc?: string | null
   mp4Src?: string | null
+  posterSrc?: string | null
   label: string
   /** Cover the parent. Stage is a contained trailer for the Screening Room cut. */
   mode?: 'background' | 'stage'
@@ -25,6 +26,7 @@ type Props = {
 export function TrailerPlayer({
   webmSrc,
   mp4Src,
+  posterSrc,
   label,
   mode = 'stage',
   enterFullscreenLabel = 'Enter fullscreen',
@@ -36,11 +38,13 @@ export function TrailerPlayer({
   const prefersReducedMotion = useReducedMotion()
   const [theaterOpen, setTheaterOpen] = useState(false)
   const [isPlaying, setIsPlaying] = useState(mode === 'background')
-  const [inViewport, setInViewport] = useState(true)
+  const [inViewport, setInViewport] = useState(mode !== 'background')
+  const [nearViewport, setNearViewport] = useState(mode !== 'background')
   const [isMuted, setIsMuted] = useState(true)
   const [isFullscreen, setIsFullscreen] = useState(false)
   const webm = webmSrc?.trim() || ''
   const mp4 = mp4Src?.trim() || ''
+  const poster = posterSrc?.trim() || ''
   const hasVideo = Boolean(webm || mp4)
   const background = mode === 'background'
 
@@ -50,10 +54,13 @@ export function TrailerPlayer({
     const observer = new IntersectionObserver(
       (entries) => {
         for (const entry of entries) {
+          if (entry.isIntersecting) {
+            setNearViewport(true)
+          }
           setInViewport(entry.isIntersecting && entry.intersectionRatio >= 0.15)
         }
       },
-      { threshold: [0, 0.15, 0.5] }
+      { rootMargin: '400px 0px', threshold: [0, 0.15, 0.5] }
     )
     observer.observe(video)
     return () => observer.disconnect()
@@ -166,11 +173,12 @@ export function TrailerPlayer({
                 : 'h-full w-full object-cover'
               : 'aspect-video w-full rounded-xl object-contain'
           )}
-          autoPlay={background && !prefersReducedMotion}
+          poster={poster || undefined}
+          autoPlay={background && inViewport && !prefersReducedMotion}
           loop={background}
           muted={isMuted}
           playsInline
-          preload={prefersReducedMotion ? 'none' : 'metadata'}
+          preload={prefersReducedMotion || (background && !nearViewport) ? 'none' : 'metadata'}
           controls={!background || isFullscreen}
           controlsList={background && !isFullscreen ? undefined : 'nodownload'}
           onContextMenu={(event) => event.preventDefault()}

@@ -20,7 +20,9 @@ import {
 import { Button } from '@/components/ui/Button'
 import { getLoginUrl } from '@/lib/auth/postLoginRedirect'
 import {
+  PRODUCTION_TRAILER_POSTERS,
   getProductionExampleMedia,
+  type ProductionWalkId,
   type ReviewerMilestoneId,
 } from '@/config/landing/productionPipelineDemo'
 import { TrailerPlayer } from '@/components/landing/TrailerPlayer'
@@ -211,6 +213,7 @@ export function ProductionStyleCard({
           mode="background"
           webmSrc={media.trailerSrc}
           mp4Src={media.trailerMp4Src}
+          posterSrc={PRODUCTION_TRAILER_POSTERS[card.id as ProductionWalkId]}
           label={trailerLabel}
           enterFullscreenLabel={enterFullscreenLabel}
           exitFullscreenLabel={exitFullscreenLabel}
