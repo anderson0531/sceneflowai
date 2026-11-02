@@ -23,9 +23,17 @@ const SUMMARY_METADATA_SQL = `jsonb_strip_nulls(jsonb_build_object(
   'duration', metadata->'duration',
   'estimatedCost', metadata->'estimatedCost',
   'Cost', metadata->'Cost',
+  'creditsUsed', metadata->'creditsUsed',
+  'creditsBudget', metadata->'creditsBudget',
+  'audienceScore', COALESCE(
+    metadata->'visionPhase'->'reviews'->'audience'->'overallScore',
+    metadata->'blueprintAudienceResonance'->'analysis'->'overallScore',
+    metadata->'audienceScore'
+  ),
   'seriesId', metadata->'seriesId',
   'episodeNumber', metadata->'episodeNumber',
-  'thumbnailUrl', COALESCE(metadata->'thumbnailUrl', metadata->'visionPhase'->'thumbnailUrl'),
+  'billboardUrl', COALESCE(metadata->'billboardUrl', metadata->'visionPhase'->'billboardUrl'),
+  'thumbnailUrl', COALESCE(metadata->'thumbnailUrl', metadata->'visionPhase'->'thumbnailUrl', metadata->'thumbnail'),
   'posterUrl', metadata->'posterUrl'
 ))`
 
@@ -150,6 +158,10 @@ export async function GET(request: NextRequest) {
       id: p.id,
       title: p.title,
       description: p.description || '',
+      series_id: p.series_id || p.metadata?.seriesId || null,
+      seriesId: p.series_id || p.metadata?.seriesId || null,
+      episode_number: p.episode_number ?? p.metadata?.episodeNumber ?? null,
+      episodeNumber: p.episode_number ?? p.metadata?.episodeNumber ?? null,
       currentStep: normalizeWorkflowStep(p.current_step),
       progress: (typeof (p.step_progress as any)?.overall === 'number' ? (p.step_progress as any).overall : 0) || 0,
       status: (p.status as any) || 'draft',

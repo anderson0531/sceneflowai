@@ -4,8 +4,6 @@ import React, { useState } from 'react'
 import { getResumeRouteForStep } from '@/constants/workflowRoutes'
 import { motion } from 'framer-motion'
 import {
-  Play,
-  Video,
   FileText,
   Film,
   CheckCircle,
@@ -14,7 +12,6 @@ import {
   Eye,
   Clock,
   Key,
-  AlertTriangle,
   MoreVertical,
   Edit,
   Copy,
@@ -30,30 +27,32 @@ import {
   Coins,
   ChevronRight,
   Clapperboard,
+  Library,
 } from 'lucide-react'
 import { useCredits } from '@/contexts/CreditsContext'
 import { useEnhancedStore } from '@/store/enhancedStore'
-import { useCueStore } from '@/store/useCueStore'
 import { toast } from 'sonner'
 import Link from 'next/link'
-import { Button } from '@/components/ui/Button'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog'
 import ThumbnailPromptDrawer from '@/components/project/ThumbnailPromptDrawer'
 import { ProjectCostCalculator } from '@/components/credits/ProjectCostCalculator'
 import { AdjustCreditsUsedDialog } from '@/components/credits/AdjustCreditsUsedDialog'
 import {
+  getProjectAudienceResonanceScore,
   getProjectCreditsBudget,
   getProjectCreditsUsed,
   getProjectEstimatedRemainingCredits,
+  getProjectSceneCount,
+  getProjectScenesList,
 } from '@/lib/credits/projectBudgetShared'
 import { useProjectCosts } from '@/hooks/useProjectCosts'
+import { isDemoProjectId } from '@/lib/demo/uiSandboxProject'
 import {
   WORKFLOW_STEPS,
   WORKFLOW_STEP_LABELS,
   normalizeCompletedWorkflowSteps,
   normalizeWorkflowStep,
-  getWorkflowStepIndex,
 } from '@/constants/workflowSteps'
 
 type NormalizedWorkflowStep = (typeof WORKFLOW_STEPS)[number]
@@ -74,12 +73,12 @@ const STEP_STYLES: Record<
   blueprint: {
     name: WORKFLOW_STEP_LABELS.blueprint,
     icon: FileText,
-    color: 'text-blue-400',
-    bgColor: 'bg-blue-500/20',
-    borderColor: 'border-blue-500/40',
-    badgeBg: 'bg-blue-500/20',
-    badgeText: 'text-blue-300',
-    badgeBorder: 'border-blue-500/40',
+    color: 'text-indigo-400',
+    bgColor: 'bg-indigo-500/20',
+    borderColor: 'border-indigo-500/40',
+    badgeBg: 'bg-indigo-950/85',
+    badgeText: 'text-indigo-300',
+    badgeBorder: 'border-indigo-500/40',
   },
   vision: {
     name: WORKFLOW_STEP_LABELS.vision,
@@ -87,19 +86,19 @@ const STEP_STYLES: Record<
     color: 'text-purple-400',
     bgColor: 'bg-purple-500/20',
     borderColor: 'border-purple-500/40',
-    badgeBg: 'bg-purple-500/20',
+    badgeBg: 'bg-purple-950/85',
     badgeText: 'text-purple-300',
     badgeBorder: 'border-purple-500/40',
   },
   creation: {
     name: WORKFLOW_STEP_LABELS.creation,
     icon: Film,
-    color: 'text-orange-400',
-    bgColor: 'bg-orange-500/20',
-    borderColor: 'border-orange-500/40',
-    badgeBg: 'bg-orange-500/20',
-    badgeText: 'text-orange-300',
-    badgeBorder: 'border-orange-500/40',
+    color: 'text-purple-400',
+    bgColor: 'bg-purple-500/20',
+    borderColor: 'border-purple-500/40',
+    badgeBg: 'bg-purple-950/85',
+    badgeText: 'text-purple-300',
+    badgeBorder: 'border-purple-500/40',
   },
   polish: {
     name: WORKFLOW_STEP_LABELS.polish,
@@ -107,19 +106,19 @@ const STEP_STYLES: Record<
     color: 'text-teal-400',
     bgColor: 'bg-teal-500/20',
     borderColor: 'border-teal-500/40',
-    badgeBg: 'bg-teal-500/20',
+    badgeBg: 'bg-teal-950/85',
     badgeText: 'text-teal-300',
     badgeBorder: 'border-teal-500/40',
   },
   launch: {
     name: WORKFLOW_STEP_LABELS.launch,
     icon: Wrench,
-    color: 'text-pink-400',
-    bgColor: 'bg-pink-500/20',
-    borderColor: 'border-pink-500/40',
-    badgeBg: 'bg-pink-500/20',
-    badgeText: 'text-pink-300',
-    badgeBorder: 'border-pink-500/40',
+    color: 'text-emerald-400',
+    bgColor: 'bg-emerald-500/20',
+    borderColor: 'border-emerald-500/40',
+    badgeBg: 'bg-emerald-950/85',
+    badgeText: 'text-emerald-300',
+    badgeBorder: 'border-emerald-500/40',
   },
 }
 
@@ -131,9 +130,13 @@ interface ProjectCardProps {
     currentStep: string
     progress: number
     status: string
-    createdAt: Date
-    updatedAt: Date
+    createdAt: Date | string
+    updatedAt: Date | string
     completedSteps: string[]
+    series_id?: string | null
+    seriesId?: string | null
+    episode_number?: number | null
+    episodeNumber?: number | null
     metadata?: {
       genre?: string
       duration?: number
@@ -143,6 +146,8 @@ interface ProjectCardProps {
       keyMessage?: string
       tone?: string
       thumbnail?: string
+      thumbnailUrl?: string
+      billboardUrl?: string
       visionPhase?: any
       directorScore?: number
       audienceScore?: number
@@ -153,9 +158,10 @@ interface ProjectCardProps {
       actualCostUsd?: number
       budgetCostUsd?: number
       estimatedCompletionCostUsd?: number
-      [key: string]: any // Allow additional properties
+      [key: string]: any
     }
   }
+  viewMode?: 'grid' | 'list'
   className?: string
   isSelected?: boolean
   onSelectAsCurrent?: (projectId: string) => void
@@ -166,31 +172,44 @@ interface ProjectCardProps {
   onPromoteToSeries?: (projectId: string) => void
 }
 
-export function ProjectCard({ project, className = '', isSelected = false, onSelectAsCurrent, onStatusChange, onDuplicate, onArchive, onDelete, onPromoteToSeries }: ProjectCardProps) {
-  const user = useEnhancedStore((s: any) => s.user)
+export function ProjectCard({
+  project,
+  viewMode = 'grid',
+  className = '',
+  isSelected = false,
+  onSelectAsCurrent,
+  onStatusChange,
+  onDuplicate,
+  onArchive,
+  onDelete,
+  onPromoteToSeries,
+}: ProjectCardProps) {
   const byokSettings = useEnhancedStore((s: any) => s.byokSettings)
-  const { invokeCue } = useCueStore()
   const { credits: userCredits } = useCredits()
-  const [isHovered, setIsHovered] = useState(false)
   const [isGeneratingThumbnail, setIsGeneratingThumbnail] = useState(false)
   const [promptDrawerOpen, setPromptDrawerOpen] = useState(false)
   const [costCalculatorOpen, setCostCalculatorOpen] = useState(false)
   const [adjustCreditsOpen, setAdjustCreditsOpen] = useState(false)
-  
+
+  const isDemo = isDemoProjectId(project.id)
+  const seriesId = project.series_id || project.seriesId || project.metadata?.seriesId || null
+  const episodeNumber =
+    project.episode_number ?? project.episodeNumber ?? project.metadata?.episodeNumber ?? null
+
   // Get project cost parameters from actual project data stored in metadata
   const projectCosts = useProjectCosts(project.metadata?.visionPhase)
 
   const normalizedCurrentStep = normalizeWorkflowStep(project.currentStep)
   const normalizedCompletedSteps = normalizeCompletedWorkflowSteps(project.completedSteps)
   const currentStepInfo = STEP_STYLES[normalizedCurrentStep]
-  const currentStepIndex = getWorkflowStepIndex(normalizedCurrentStep)
-  const stepNumber = currentStepIndex === -1 ? 1 : currentStepIndex + 1
-  const totalSteps = WORKFLOW_STEPS.length
+  // Canonical 2-stage pipeline: Stage 1 = Blueprint Room, Stage 2 = Production Stage
+  const stepNumber = normalizedCurrentStep === 'blueprint' ? 1 : 2
+  const totalSteps = 2
   const isPhase1Complete = normalizedCompletedSteps.includes('creation')
   const isPhase2Available = isPhase1Complete
   const hasValidBYOK = Boolean(byokSettings?.videoGenerationProvider?.isConfigured)
 
-  // Format relative time (e.g., "2 days ago", "just now")
+  // Format relative time (e.g., "2d ago", "Just now")
   const formatRelativeTime = (date: Date | string) => {
     const now = new Date()
     const then = new Date(date)
@@ -198,7 +217,7 @@ export function ProjectCard({ project, className = '', isSelected = false, onSel
     const diffMins = Math.floor(diffMs / 60000)
     const diffHours = Math.floor(diffMins / 60)
     const diffDays = Math.floor(diffHours / 24)
-    
+
     if (diffMins < 1) return 'Just now'
     if (diffMins < 60) return `${diffMins}m ago`
     if (diffHours < 24) return `${diffHours}h ago`
@@ -207,83 +226,62 @@ export function ProjectCard({ project, className = '', isSelected = false, onSel
     return then.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
   }
 
-  // Get scenes array from vision phase data
-  const getScenes = () => {
-    return project.metadata?.visionPhase?.script?.script?.scenes ||
-           project.metadata?.visionPhase?.scenes ||
-           project.metadata?.scenes ||
-           []
-  }
-
-  // Get scene count from vision phase data
-  const getSceneCount = () => {
-    return getScenes().length
-  }
+  const getScenes = () => getProjectScenesList(project.metadata)
+  const getSceneCount = () => getProjectSceneCount(project.metadata)
 
   // Get calculated duration from actual scene durations or metadata
   const getProjectDuration = (): number | null => {
-    // First check if we have explicit duration in metadata (in minutes)
     if (project.metadata?.duration && project.metadata.duration > 0) {
       return project.metadata.duration
     }
-    
-    // Calculate total duration from scene durations (scenes store duration in seconds)
+
     const scenes = getScenes()
     if (scenes.length > 0) {
-      // Check if any scenes have duration data
-      const scenesWithDuration = scenes.filter((scene: any) => 
-        scene.duration !== undefined && scene.duration !== null && Number(scene.duration) > 0
+      const scenesWithDuration = scenes.filter(
+        (scene: any) =>
+          scene.duration !== undefined && scene.duration !== null && Number(scene.duration) > 0
       )
-      
+
       if (scenesWithDuration.length === 0) {
-        return null // No duration data available
+        return null
       }
-      
+
       const totalSeconds = scenes.reduce((sum: number, scene: any) => {
         return sum + (Number(scene.duration) || 0)
       }, 0)
-      
+
       if (totalSeconds > 0) {
-        // Convert to minutes, round to 1 decimal
         return Math.round((totalSeconds / 60) * 10) / 10
       }
     }
-    
+
     return null
   }
 
-  // Format duration display
   const formatDuration = (minutes: number | null): string => {
     if (minutes === null) return 'TBD'
     if (minutes < 1) return `${Math.round(minutes * 60)}s`
     return `${minutes} min`
   }
 
-  // Calculate project progress percentage based on current step position
-  // Each of 5 phases represents 20% progress. Current phase adds partial progress.
+  // Use stored progress percentage when present; fallback to canonical stage progress
   const getProgressPercentage = () => {
-    const currentIndex = getWorkflowStepIndex(normalizedCurrentStep)
-    const completedPhases = Math.max(0, currentIndex)
-    const phaseProgress = 20 // Each phase = 20% of total (5 phases)
-    
-    // Add 10% for being "in progress" on current phase (halfway through phase)
-    const inProgressBonus = 10
-    
-    // Total: completed phases * 20% + 10% for current phase in progress
-    return Math.min(100, (completedPhases * phaseProgress) + inProgressBonus)
+    if (typeof project.progress === 'number' && project.progress > 0) {
+      return Math.min(100, Math.round(project.progress))
+    }
+    if (project.status === 'completed') return 100
+    return normalizedCurrentStep === 'blueprint' ? 20 : 50
   }
 
-  // Calculate project costs in CREDITS - actual, budget, and estimated to complete
   const getProjectCosts = () => {
     const creditsUsed = getProjectCreditsUsed(project.metadata)
     const creditsBudget = getProjectCreditsBudget(project.metadata)
-    const progressPercent = project.progress || getProgressPercentage()
+    const progressPercent = getProgressPercentage()
     const estimatedCreditsToComplete = getProjectEstimatedRemainingCredits(
       project.metadata,
       progressPercent
     )
 
-    // Calculate variance from budget (in credits)
     const variance = creditsBudget > 0 ? creditsUsed - creditsBudget : 0
     const variancePercent = creditsBudget > 0 ? Math.round((variance / creditsBudget) * 100) : 0
 
@@ -297,25 +295,20 @@ export function ProjectCard({ project, className = '', isSelected = false, onSel
     }
   }
 
-  // Get review scores from visionPhase.reviews (actual AI-generated review data)
-  const getReviewScores = (): { director: number | null; audience: number | null; hasReviews: boolean } => {
-    // Priority 1: Get from visionPhase.reviews (the actual review objects)
+  const getReviewScores = (): {
+    director: number | null
+    audience: number | null
+    hasReviews: boolean
+  } => {
     const visionPhase = project.metadata?.visionPhase
     const directorReview = visionPhase?.reviews?.director
-    const audienceReview = visionPhase?.reviews?.audience
-    
-    // Extract overallScore from review objects
-    const directorScore = directorReview?.overallScore ?? null
-    const audienceScore = audienceReview?.overallScore ?? null
-    
-    // Priority 2: Fallback to legacy metadata fields (if set directly)
-    const finalDirector = directorScore ?? project.metadata?.directorScore ?? null
-    const finalAudience = audienceScore ?? project.metadata?.audienceScore ?? null
-    
+    const directorScore = directorReview?.overallScore ?? project.metadata?.directorScore ?? null
+    const audienceScore = getProjectAudienceResonanceScore(project.metadata)
+
     return {
-      director: finalDirector !== null ? Math.min(100, Math.max(0, finalDirector)) : null,
-      audience: finalAudience !== null ? Math.min(100, Math.max(0, finalAudience)) : null,
-      hasReviews: finalDirector !== null || finalAudience !== null
+      director: directorScore !== null ? Math.min(100, Math.max(0, Number(directorScore))) : null,
+      audience: audienceScore,
+      hasReviews: directorScore !== null || audienceScore !== null,
     }
   }
 
@@ -325,82 +318,26 @@ export function ProjectCard({ project, className = '', isSelected = false, onSel
   const progressPercent = getProgressPercentage()
   const reviewScores = getReviewScores()
 
-  // Get contextual button label based on stage
-  const getActionLabel = () => {
-    if (isPhase1Complete) return hasValidBYOK ? 'Generate Video' : 'Setup & Generate'
-    // Stage is already displayed separately, so just use "Continue"
-    return 'Continue'
-  }
-
-  // Handle Generate Video button click with JIT BYOK onboarding
-  const handleGenerateVideo = () => {
-    if (!hasValidBYOK) {
-      // Trigger Cue with BYOK onboarding flow
-      invokeCue({
-        type: 'analysis',
-        content: 'BYOK_GUIDED_SETUP',
-        payload: {
-          projectId: project.id,
-          projectTitle: project.title,
-          estimatedCost: costs.estimatedBYOK,
-          message: `I need help setting up BYOK (Bring Your Own Key) to generate video for "${project.title}". The estimated cost is $${costs.estimatedBYOK}. Can you guide me through the setup process?`
-        }
-      })
-    } else {
-      // Proceed to generation page
-      window.location.href = `/dashboard/workflow/video-generation?project=${project.id}`
-    }
-  }
-
-
-
-  // Get workflow status display
-  const getWorkflowStatus = () => {
-    if (isPhase1Complete) {
-      return {
-        text: 'Pre-Production Complete',
-        color: 'text-green-400',
-        bgColor: 'bg-green-500/20',
-        borderColor: 'border-green-500/40'
-      }
-    } else {
-      return {
-        text: `Stage ${stepNumber}/${totalSteps}: ${currentStepInfo.name}`,
-        color: currentStepInfo.color,
-        bgColor: currentStepInfo.bgColor,
-        borderColor: currentStepInfo.borderColor,
-      }
-    }
-  }
-
-  const workflowStatus = getWorkflowStatus()
-
-  // Helper function to get project thumbnail
+  // Unified thumbnail lookup matching Dashboard & ActiveProjectCard
   const getThumbnailUrl = (): string | null => {
-    // Priority 1: First scene image from vision phase
-    const firstSceneImage = project.metadata?.visionPhase?.script?.script?.scenes?.[0]?.imageUrl
-    if (firstSceneImage) return firstSceneImage
-    
-    // Priority 2: First scene from scenes array
-    const firstScene = project.metadata?.visionPhase?.scenes?.[0]?.imageUrl
-    if (firstScene) return firstScene
-    
-    // Priority 3: First character image
-    const firstCharImage = project.metadata?.visionPhase?.characters?.[0]?.referenceImage
-    if (firstCharImage) return firstCharImage
-    
-    // Priority 4: Cached generated thumbnail
-    const cachedThumb = project.metadata?.thumbnail
-    if (cachedThumb) return cachedThumb
-    
-    // Priority 5: null (show gradient placeholder)
-    return null
+    const visionPhase = project.metadata?.visionPhase
+    const scenes = getScenes()
+    return (
+      project.metadata?.billboardUrl ||
+      visionPhase?.billboardUrl ||
+      project.metadata?.thumbnailUrl ||
+      visionPhase?.thumbnailUrl ||
+      project.metadata?.thumbnail ||
+      scenes[0]?.imageUrl ||
+      scenes[0]?.generatedImage?.url ||
+      visionPhase?.characters?.[0]?.referenceImage ||
+      null
+    )
   }
 
-  // Handler for generating thumbnail
   const handleGenerateThumbnail = async () => {
-    if (isGeneratingThumbnail) return
-    
+    if (isGeneratingThumbnail || isDemo) return
+
     setIsGeneratingThumbnail(true)
     try {
       const response = await fetch('/api/projects/generate-thumbnail', {
@@ -411,436 +348,231 @@ export function ProjectCard({ project, className = '', isSelected = false, onSel
           description: project.description || project.metadata?.concept || project.title,
           title: project.title,
           genre: project.metadata?.genre,
-          userApiKey: byokSettings?.imageGenerationProvider?.apiKey || '' // Pass BYOK key
-        })
+          userApiKey: byokSettings?.imageGenerationProvider?.apiKey || '',
+        }),
       })
 
       const data = await response.json()
 
       if (response.ok && data.success) {
-        // Trigger a reload of the projects list by calling parent
-        // The thumbnail is already saved in the backend, so a page refresh will show it
-        try { 
-          const { toast } = require('sonner')
-          toast.success('Thumbnail generated successfully!')
-        } catch {}
-        
-        // Force a page reload to show the new thumbnail
-        window.location.reload()
+        toast.success('Thumbnail generated successfully!')
+        window.dispatchEvent(new CustomEvent('project-updated'))
       } else {
-        // Check if BYOK is required
         if (data.requiresBYOK) {
-          throw new Error('OpenAI API key required. Please configure your BYOK settings in the dashboard.')
+          throw new Error(
+            'OpenAI API key required. Please configure your BYOK settings in the dashboard.'
+          )
         }
         throw new Error(data.error || 'Failed to generate thumbnail')
       }
     } catch (error: any) {
       console.error('Thumbnail generation error:', error)
-      try { 
-        const { toast } = require('sonner')
-        toast.error(error.message || 'Failed to generate thumbnail')
-      } catch {}
+      toast.error(error.message || 'Failed to generate thumbnail')
     } finally {
       setIsGeneratingThumbnail(false)
     }
   }
 
-  // Helper function to get correct route for resume action
   const getResumeRoute = (): string => {
     return getResumeRouteForStep(project.id, project.currentStep)
   }
 
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      whileHover={{ y: -2 }}
-      onHoverStart={() => setIsHovered(true)}
-      onHoverEnd={() => setIsHovered(false)}
-      className={`bg-gray-900/95 backdrop-blur-sm rounded-xl border ${isSelected ? 'border-yellow-500 ring-2 ring-yellow-500/30' : 'border-gray-700/50'} shadow-2xl overflow-hidden ${className}`}
-    >
-      {/* Project Thumbnail */}
-      <div className="relative h-40 bg-gradient-to-br from-gray-800 to-gray-700 flex items-center justify-center overflow-hidden">
-        {getThumbnailUrl() ? (
-          <img 
-            src={`${getThumbnailUrl()}?t=${project.metadata?.thumbnailGeneratedAt || Date.now()}`}
-            alt={project.title}
-            className="w-full h-full object-cover"
-          />
-        ) : (
-          <div className="text-center">
-            <div className={`w-16 h-16 mx-auto mb-3 ${currentStepInfo.bgColor} ${currentStepInfo.borderColor} border-2 rounded-xl flex items-center justify-center`}>
-              <currentStepInfo.icon className={`w-8 h-8 ${currentStepInfo.color}`} />
-            </div>
-            <p className="text-gray-400 text-sm">{project.metadata?.genre || 'Project'}</p>
-          </div>
-        )}
-        
-        {/* Current Project Star Toggle */}
-        {onSelectAsCurrent && (
-          <button
+  const getStatusLabel = (status: string) => {
+    if (status === 'in-progress' || status === 'in_progress' || status === 'active') return 'Active'
+    return status
+  }
+
+  const getStatusDotClass = (status: string) => {
+    if (status === 'completed') return 'bg-emerald-400'
+    if (status === 'in-progress' || status === 'in_progress' || status === 'active')
+      return 'bg-indigo-400'
+    if (status === 'archived') return 'bg-gray-600'
+    return 'bg-gray-400'
+  }
+
+  const renderActionsDropdown = () => (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <button
+          type="button"
+          className="p-2 rounded-lg bg-gray-900/80 hover:bg-gray-800 text-gray-300 hover:text-white border border-gray-700/60 backdrop-blur-sm transition-colors"
+          onClick={(e) => e.stopPropagation()}
+          aria-label="Project options"
+        >
+          <MoreVertical className="w-4 h-4" />
+        </button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="start" className="min-w-[190px]">
+        {!isDemo && onDuplicate && (
+          <DropdownMenuItem
             onClick={(e) => {
               e.stopPropagation()
               e.preventDefault()
-              onSelectAsCurrent(project.id)
+              onDuplicate(project.id)
             }}
-            className={`absolute top-3 left-14 p-2 rounded-lg backdrop-blur-sm transition-all z-10 ${
-              isSelected 
-                ? 'bg-yellow-500/30 text-yellow-400 hover:bg-yellow-500/40 shadow-lg shadow-yellow-500/20' 
-                : 'bg-gray-800/80 text-gray-400 hover:bg-gray-700 hover:text-yellow-400'
-            }`}
-            title={isSelected ? 'Current project (shown on dashboard)' : 'Set as current project'}
           >
-            <Star className={`w-4 h-4 ${isSelected ? 'fill-yellow-400' : ''}`} />
-          </button>
+            <Copy className="w-4 h-4 mr-2" />
+            Duplicate
+          </DropdownMenuItem>
         )}
-        
-        {/* Actions Menu */}
-        {(onDuplicate || onArchive || onDelete) && (
-          <div className="absolute top-3 left-3">
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <button 
-                  className="p-2 rounded-lg bg-gray-800/80 hover:bg-gray-700 text-gray-300 backdrop-blur-sm transition-colors"
-                  onClick={(e) => e.stopPropagation()}
-                >
-                  <MoreVertical className="w-4 h-4" />
-                </button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="start" className="min-w-[180px]">
-                {onDuplicate && (
-                  <DropdownMenuItem 
-                    onClick={(e) => { 
-                      e.stopPropagation()
-                      e.preventDefault()
-                      onDuplicate(project.id)
-                    }}
-                  >
-                    <Copy className="w-4 h-4 mr-2" />
-                    Duplicate
-                  </DropdownMenuItem>
-                )}
-                {onPromoteToSeries && !project.series_id ? (
-                  <DropdownMenuItem
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      e.preventDefault()
-                      onPromoteToSeries(project.id)
-                    }}
-                  >
-                    <Clapperboard className="w-4 h-4 mr-2" />
-                    Promote to Series
-                  </DropdownMenuItem>
-                ) : null}
-                <DropdownMenuItem 
-                  onClick={(e) => { 
-                    e.stopPropagation()
-                    e.preventDefault()
-                    setPromptDrawerOpen(true)
-                  }}
-                >
-                  <Edit className="w-4 h-4 mr-2" />
-                  Edit Thumbnail Prompt
-                </DropdownMenuItem>
-                <DropdownMenuItem 
-                  onClick={(e) => { 
-                    e.stopPropagation()
-                    e.preventDefault()
-                    handleGenerateThumbnail()
-                  }}
-                  disabled={isGeneratingThumbnail}
-                >
-                  <Sparkles className="w-4 h-4 mr-2" />
-                  {isGeneratingThumbnail ? 'Generating...' : 'Quick Generate'}
-                </DropdownMenuItem>
-                {onArchive && (
-                  <DropdownMenuItem 
-                    onClick={(e) => { 
-                      e.stopPropagation()
-                      e.preventDefault()
-                      onArchive(project.id)
-                    }}
-                  >
-                    <Archive className="w-4 h-4 mr-2" />
-                    Archive
-                  </DropdownMenuItem>
-                )}
-                {onDelete && (
-                  <>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem 
-                      onClick={(e) => { 
-                        e.stopPropagation()
-                        e.preventDefault()
-                        onDelete(project.id, project.title)
-                      }}
-                      className="text-red-400 hover:text-red-300 hover:bg-red-900/20 focus:text-red-300 focus:bg-red-900/20"
-                    >
-                      <Trash className="w-4 h-4 mr-2" />
-                      Delete
-                    </DropdownMenuItem>
-                  </>
-                )}
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
-        )}
-        
-        {/* Stage Indicator */}
-        <div className="absolute top-3 right-3">
-          <div className={`px-3 py-1 rounded-full text-xs font-semibold ${currentStepInfo.badgeBg} ${currentStepInfo.badgeText} border ${currentStepInfo.badgeBorder}`}>
-            Stage {stepNumber} • {currentStepInfo.name}
-          </div>
-        </div>
-      </div>
-
-      {/* Project Content */}
-      <div className="p-6">
-        {/* Project Header */}
-        <div className="mb-3">
-          <h3 className="text-xl font-bold text-white mb-2 line-clamp-2">{project.title}</h3>
-          
-          {/* Project Status Selector - Now directly below title */}
-          {onStatusChange && (
-            <div className="mb-3">
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <button className="inline-flex items-center gap-2 px-2.5 py-1 bg-gray-800/40 hover:bg-gray-800/60 rounded-lg border border-gray-700/40 hover:border-gray-600/50 transition-colors text-xs">
-                    <span className={`w-2 h-2 rounded-full ${
-                      project.status === 'completed' ? 'bg-green-400' : 
-                      project.status === 'in-progress' || project.status === 'in_progress' ? 'bg-blue-400' : 
-                      project.status === 'archived' ? 'bg-gray-600' : 
-                      'bg-gray-400'
-                    }`} />
-                    <span className="text-white font-medium capitalize">
-                      {project.status === 'in-progress' || project.status === 'in_progress' ? 'Active' : project.status}
-                    </span>
-                    <ChevronDown className="w-3 h-3 text-gray-400" />
-                  </button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="start" className="w-[160px]">
-                  <DropdownMenuItem 
-                    onClick={() => onStatusChange(project.id, 'draft')}
-                    className={project.status === 'draft' ? 'bg-gray-800/50' : ''}
-                  >
-                    <span className="w-2 h-2 rounded-full bg-gray-400 mr-2" />
-                    Draft
-                  </DropdownMenuItem>
-                  <DropdownMenuItem 
-                    onClick={() => onStatusChange(project.id, 'in-progress')}
-                    className={project.status === 'in-progress' || project.status === 'in_progress' ? 'bg-gray-800/50' : ''}
-                  >
-                    <span className="w-2 h-2 rounded-full bg-blue-400 mr-2" />
-                    Active
-                  </DropdownMenuItem>
-                  <DropdownMenuItem 
-                    onClick={() => onStatusChange(project.id, 'completed')}
-                    className={project.status === 'completed' ? 'bg-gray-800/50' : ''}
-                  >
-                    <span className="w-2 h-2 rounded-full bg-green-400 mr-2" />
-                    Completed
-                  </DropdownMenuItem>
-                  <DropdownMenuItem 
-                    onClick={() => onStatusChange(project.id, 'archived')}
-                    className={project.status === 'archived' ? 'bg-gray-800/50' : ''}
-                  >
-                    <span className="w-2 h-2 rounded-full bg-gray-600 mr-2" />
-                    Archived
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </div>
-          )}
-          
-          <div className="flex flex-wrap items-center gap-3 text-sm text-gray-400">
-            {/* Duration */}
-            <span className="flex items-center gap-1" title="Estimated duration">
-              <Clock className="w-3.5 h-3.5" />
-              {formatDuration(duration)}
-            </span>
-            
-            {/* Scene count */}
-            {sceneCount > 0 && (
-              <span className="flex items-center gap-1" title="Number of scenes">
-                <Layers className="w-3.5 h-3.5" />
-                {sceneCount} scenes
-              </span>
-            )}
-            
-            {/* Last updated */}
-            <span className="flex items-center gap-1" title={`Last updated: ${new Date(project.updatedAt).toLocaleString()}`}>
-              <Calendar className="w-3.5 h-3.5" />
-              {formatRelativeTime(project.updatedAt)}
-            </span>
-            
-            {/* Project ID with copy */}
-            <button
+        {!isDemo && onPromoteToSeries && !seriesId ? (
+          <DropdownMenuItem
+            onClick={(e) => {
+              e.stopPropagation()
+              e.preventDefault()
+              onPromoteToSeries(project.id)
+            }}
+          >
+            <Clapperboard className="w-4 h-4 mr-2" />
+            Promote to Series
+          </DropdownMenuItem>
+        ) : null}
+        {!isDemo && (
+          <>
+            <DropdownMenuItem
               onClick={(e) => {
                 e.stopPropagation()
                 e.preventDefault()
-                navigator.clipboard.writeText(project.id || '')
-                toast.success('Project ID copied')
+                setPromptDrawerOpen(true)
               }}
-              className="flex items-center gap-1 px-1.5 py-0.5 rounded bg-gray-800/50 hover:bg-gray-700/50 transition-colors cursor-pointer group"
-              title={`Copy Project ID: ${project.id || ''}`}
             >
-              <span className="text-xs text-gray-500 font-mono truncate max-w-[80px]">
-                {project.id?.slice(0, 8) ?? '—'}...
-              </span>
-                <Copy className="w-3 h-3 text-gray-500 group-hover:text-gray-300 flex-shrink-0" />
-            </button>
-          </div>
-        </div>
-
-        {/* Progress Bar + Workflow Status */}
-        <div className="mb-4 space-y-2">
-          {/* Progress bar */}
-          <div className="h-1.5 bg-gray-700/50 rounded-full overflow-hidden">
-            <div 
-              className={`h-full ${currentStepInfo.bgColor.replace('/20', '')} transition-all duration-500`}
-              style={{ width: `${Math.max(5, progressPercent)}%` }}
-            />
-          </div>
-          
-          {/* Status badge */}
-          <div className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-lg ${workflowStatus.bgColor} ${workflowStatus.borderColor} border`}>
-            <span className={`text-xs font-semibold ${workflowStatus.color}`}>
-              {workflowStatus.text}
-            </span>
-          </div>
-        </div>
-
-        {/* Review Scores */}
-        <div className="mb-4 p-3 bg-gray-800/40 rounded-lg border border-gray-700/40">
-          <div className="text-xs uppercase tracking-wider text-gray-500 mb-2">Review Scores</div>
-          <div className="grid grid-cols-2 gap-3">
-            <div className="flex items-center gap-2">
-              <span className="text-sm">🎬</span>
-              <span className="text-xs text-gray-400">Director</span>
-              <span className={`text-sm font-bold ml-auto ${reviewScores.director !== null ? 'text-white' : 'text-gray-500'}`}>
-                {reviewScores.director !== null ? reviewScores.director : '—'}
-              </span>
-              {reviewScores.director !== null && (
-                <span className="text-xs">{reviewScores.director >= 85 ? '🟢' : reviewScores.director >= 75 ? '🟡' : '🔴'}</span>
-              )}
-            </div>
-            <div className="flex items-center gap-2">
-              <span className="text-sm">👥</span>
-              <span className="text-xs text-gray-400">Audience</span>
-              <span className={`text-sm font-bold ml-auto ${reviewScores.audience !== null ? 'text-white' : 'text-gray-500'}`}>
-                {reviewScores.audience !== null ? reviewScores.audience : '—'}
-              </span>
-              {reviewScores.audience !== null && (
-                <span className="text-xs">{reviewScores.audience >= 85 ? '🟢' : reviewScores.audience >= 75 ? '🟡' : '🔴'}</span>
-              )}
-            </div>
-          </div>
-        </div>
-
-        {/* Project Cost Section */}
-        <div className="mb-5 p-3 bg-gray-800/40 rounded-lg border border-gray-700/40">
-          <div className="flex items-center justify-between mb-2">
-            <div className="text-xs uppercase tracking-wider text-gray-500 flex items-center gap-1">
-              <DollarSign className="w-3 h-3" />
-              Cost Tracking
-            </div>
-            <button 
-              onClick={() => setCostCalculatorOpen(true)}
-              className="px-3 py-1.5 bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-600 hover:to-blue-600 text-white text-xs font-medium rounded-lg flex items-center gap-1.5 transition-all shadow-sm shadow-cyan-500/20"
-              title="Open cost calculator to set budget"
+              <Edit className="w-4 h-4 mr-2" />
+              Edit Thumbnail Prompt
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              onClick={(e) => {
+                e.stopPropagation()
+                e.preventDefault()
+                handleGenerateThumbnail()
+              }}
+              disabled={isGeneratingThumbnail}
             >
-              <Calculator className="w-3.5 h-3.5" />
-              Production Budget
-            </button>
-          </div>
-          
-          {/* Cost Grid */}
-          <div className="grid grid-cols-3 gap-2 text-xs">
-            {/* Used */}
-            <div className="text-center p-2 bg-gray-700/30 rounded">
-              <div className="text-gray-400 mb-1 flex items-center justify-center gap-1">
-                <Coins className="w-3 h-3" />
-                Used
-              </div>
-              <div className="font-bold text-white">{costs.creditsUsed.toLocaleString()}</div>
-              <button
-                type="button"
-                onClick={() => setAdjustCreditsOpen(true)}
-                className="mt-1 text-[10px] text-sf-primary hover:text-sf-accent underline-offset-2 hover:underline"
-              >
-                Adjust
-              </button>
-            </div>
-            
-            {/* Budget */}
-            <div className="text-center p-2 bg-gray-700/30 rounded">
-              <div className="text-gray-400 mb-1 flex items-center justify-center gap-1">
-                <Coins className="w-3 h-3" />
-                Budget
-              </div>
-              <div className={`font-bold ${costs.creditsBudget > 0 ? 'text-white' : 'text-gray-500'}`}>
-                {costs.creditsBudget > 0 ? costs.creditsBudget.toLocaleString() : '—'}
-              </div>
-            </div>
-            
-            {/* Est. to Complete */}
-            <div className="text-center p-2 bg-gray-700/30 rounded">
-              <div className="text-gray-400 mb-1 flex items-center justify-center gap-1">
-                <Coins className="w-3 h-3" />
-                Est. Left
-              </div>
-              <div className="font-bold text-amber-400">{costs.estimatedCreditsToComplete.toLocaleString()}</div>
-            </div>
-          </div>
-          
-          {/* Budget Variance Indicator */}
-          {costs.creditsBudget > 0 && (
-            <div className={`mt-2 flex items-center justify-center gap-1 text-xs ${costs.isOverBudget ? 'text-red-400' : 'text-green-400'}`}>
-              <TrendingUp className={`w-3 h-3 ${costs.isOverBudget ? 'rotate-0' : 'rotate-180'}`} />
-              <span>
-                {costs.isOverBudget ? 'Over' : 'Under'} budget by {Math.abs(costs.variance).toLocaleString()} credits ({Math.abs(costs.variancePercent)}%)
-              </span>
-            </div>
-          )}
-        </div>
-
-        {/* BYOK Status Indicator - Only show when relevant */}
-        {isPhase2Available && !hasValidBYOK && (
-          <div className="mt-3 p-2.5 rounded-lg border border-amber-500/30 bg-amber-500/10">
-            <div className="flex items-center gap-2">
-              <Key className="w-3.5 h-3.5 text-amber-400" />
-              <span className="text-xs text-amber-300">
-                API key required for video generation
-              </span>
-            </div>
-          </div>
+              <Sparkles className="w-4 h-4 mr-2" />
+              {isGeneratingThumbnail ? 'Generating...' : 'Quick Generate Thumbnail'}
+            </DropdownMenuItem>
+          </>
         )}
-        
-        {/* Resume Button */}
-        <div className="mt-4 flex items-center justify-end">
-          <Link
-            href={getResumeRoute()}
-            className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-sf-primary/20 hover:bg-sf-primary/30 text-sf-primary border border-sf-primary/30 hover:border-sf-primary/50 rounded-lg text-sm font-medium transition-all"
+        <DropdownMenuItem
+          onClick={(e) => {
+            e.stopPropagation()
+            e.preventDefault()
+            navigator.clipboard.writeText(project.id || '')
+            toast.success('Project ID copied')
+          }}
+        >
+          <Copy className="w-4 h-4 mr-2" />
+          Copy Project ID
+        </DropdownMenuItem>
+        {!isDemo && onArchive && (
+          <DropdownMenuItem
+            onClick={(e) => {
+              e.stopPropagation()
+              e.preventDefault()
+              onArchive(project.id)
+            }}
           >
-            Resume <ChevronRight className="w-4 h-4" />
-          </Link>
-        </div>
-      </div>
+            <Archive className="w-4 h-4 mr-2" />
+            Archive
+          </DropdownMenuItem>
+        )}
+        {!isDemo && onDelete && (
+          <>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem
+              onClick={(e) => {
+                e.stopPropagation()
+                e.preventDefault()
+                onDelete(project.id, project.title)
+              }}
+              className="text-red-400 hover:text-red-300 hover:bg-red-900/20 focus:text-red-300 focus:bg-red-900/20"
+            >
+              <Trash className="w-4 h-4 mr-2" />
+              Delete
+            </DropdownMenuItem>
+          </>
+        )}
+      </DropdownMenuContent>
+    </DropdownMenu>
+  )
 
-      {/* Thumbnail Prompt Editor Drawer */}
+  const renderStatusControl = () => {
+    if (isDemo) {
+      return (
+        <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium bg-cyan-500/15 text-cyan-300 border border-cyan-500/30">
+          UI Sandbox Demo
+        </span>
+      )
+    }
+    if (!onStatusChange) return null
+    return (
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <button
+            type="button"
+            className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-gray-800/60 hover:bg-gray-800 rounded-lg border border-gray-700/50 hover:border-gray-600 transition-colors text-xs"
+          >
+            <span className={`w-2 h-2 rounded-full ${getStatusDotClass(project.status)}`} />
+            <span className="text-gray-200 font-medium capitalize">
+              {getStatusLabel(project.status)}
+            </span>
+            <ChevronDown className="w-3 h-3 text-gray-400" />
+          </button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="start" className="w-[150px]">
+          <DropdownMenuItem
+            onClick={() => onStatusChange(project.id, 'draft')}
+            className={project.status === 'draft' ? 'bg-gray-800/50' : ''}
+          >
+            <span className="w-2 h-2 rounded-full bg-gray-400 mr-2" />
+            Draft
+          </DropdownMenuItem>
+          <DropdownMenuItem
+            onClick={() => onStatusChange(project.id, 'in-progress')}
+            className={
+              project.status === 'in-progress' ||
+              project.status === 'in_progress' ||
+              project.status === 'active'
+                ? 'bg-gray-800/50'
+                : ''
+            }
+          >
+            <span className="w-2 h-2 rounded-full bg-indigo-400 mr-2" />
+            Active
+          </DropdownMenuItem>
+          <DropdownMenuItem
+            onClick={() => onStatusChange(project.id, 'completed')}
+            className={project.status === 'completed' ? 'bg-gray-800/50' : ''}
+          >
+            <span className="w-2 h-2 rounded-full bg-emerald-400 mr-2" />
+            Completed
+          </DropdownMenuItem>
+          <DropdownMenuItem
+            onClick={() => onStatusChange(project.id, 'archived')}
+            className={project.status === 'archived' ? 'bg-gray-800/50' : ''}
+          >
+            <span className="w-2 h-2 rounded-full bg-gray-600 mr-2" />
+            Archived
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+    )
+  }
+
+  const renderDialogs = () => (
+    <>
       <ThumbnailPromptDrawer
         open={promptDrawerOpen}
         onClose={() => setPromptDrawerOpen(false)}
-        project={project}
+        project={{
+          ...project,
+          description: project.description || '',
+        }}
         currentThumbnail={getThumbnailUrl() || undefined}
-        onThumbnailGenerated={(imageUrl) => {
-          // Thumbnail was generated and saved via API
-          // Trigger parent to reload projects
+        onThumbnailGenerated={() => {
           window.dispatchEvent(new CustomEvent('project-updated'))
         }}
       />
 
-      {/* Cost Calculator Modal */}
       <Dialog open={costCalculatorOpen} onOpenChange={setCostCalculatorOpen}>
         <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto bg-gray-900 border-gray-700">
           <DialogHeader>
@@ -853,7 +585,7 @@ export function ProjectCard({ project, className = '', isSelected = false, onSel
             </DialogDescription>
           </DialogHeader>
           <div className="mt-4">
-            <ProjectCostCalculator 
+            <ProjectCostCalculator
               currentTier="starter"
               currentBalance={userCredits?.total_credits ?? 0}
               compact={false}
@@ -901,6 +633,447 @@ export function ProjectCard({ project, className = '', isSelected = false, onSel
         projectTitle={project.title}
         currentCreditsUsed={costs.creditsUsed}
       />
+    </>
+  )
+
+  const thumbUrl = getThumbnailUrl()
+
+  // ============================================================================
+  // COMPACT HORIZONTAL ROW FOR LIST VIEW (viewMode === 'list')
+  // ============================================================================
+  if (viewMode === 'list') {
+    return (
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        className={`bg-gray-900/95 backdrop-blur-sm rounded-xl border ${
+          isSelected
+            ? 'border-yellow-500/80 ring-1 ring-yellow-500/30'
+            : 'border-gray-700/60 hover:border-gray-600'
+        } shadow-lg p-4 transition-all ${className}`}
+      >
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+          {/* Left: Thumbnail + Pin + Title & Metadata */}
+          <div className="flex items-center gap-3.5 min-w-0 flex-1">
+            {!isDemo && onSelectAsCurrent && (
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation()
+                  e.preventDefault()
+                  onSelectAsCurrent(project.id)
+                }}
+                className={`p-2 rounded-lg transition-colors shrink-0 ${
+                  isSelected
+                    ? 'bg-yellow-500/20 text-yellow-400 border border-yellow-500/40'
+                    : 'bg-gray-800/70 text-gray-500 hover:text-yellow-400 border border-gray-700/50'
+                }`}
+                title={isSelected ? 'Pinned on dashboard' : 'Pin as current project on dashboard'}
+              >
+                <Star className={`w-4 h-4 ${isSelected ? 'fill-yellow-400' : ''}`} />
+              </button>
+            )}
+
+            <Link
+              href={getResumeRoute()}
+              className="w-24 h-16 rounded-lg overflow-hidden bg-gray-800 border border-gray-700/60 shrink-0 flex items-center justify-center relative"
+            >
+              {thumbUrl ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={`${thumbUrl}${thumbUrl.includes('?') ? '&' : '?'}t=${project.metadata?.thumbnailGeneratedAt || ''}`}
+                  alt={project.title}
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                <currentStepInfo.icon className={`w-6 h-6 ${currentStepInfo.color}`} />
+              )}
+            </Link>
+
+            <div className="min-w-0 flex-1">
+              <div className="flex flex-wrap items-center gap-2">
+                <Link href={getResumeRoute()} className="min-w-0">
+                  <h3 className="text-base font-bold text-white hover:text-indigo-300 transition-colors truncate">
+                    {project.title}
+                  </h3>
+                </Link>
+                {seriesId && (
+                  <Link
+                    href={`/dashboard/series/${seriesId}`}
+                    className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium bg-cyan-500/15 text-cyan-300 border border-cyan-500/30 hover:bg-cyan-500/25"
+                  >
+                    <Library className="w-3 h-3" />
+                    {episodeNumber ? `Ep. ${episodeNumber}` : 'Series'}
+                  </Link>
+                )}
+                {renderStatusControl()}
+              </div>
+              <div className="flex flex-wrap items-center gap-3 text-xs text-gray-400 mt-1">
+                <span className="inline-flex items-center gap-1">
+                  <Clock className="w-3.5 h-3.5" />
+                  {formatDuration(duration)}
+                </span>
+                {sceneCount > 0 && (
+                  <span className="inline-flex items-center gap-1">
+                    <Layers className="w-3.5 h-3.5" />
+                    {sceneCount} {sceneCount === 1 ? 'scene' : 'scenes'}
+                  </span>
+                )}
+                <span className="inline-flex items-center gap-1">
+                  <Calendar className="w-3.5 h-3.5" />
+                  {formatRelativeTime(project.updatedAt)}
+                </span>
+                {project.metadata?.genre && (
+                  <span className="text-gray-500">· {project.metadata.genre}</span>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* Middle: Stage, Progress, Resonance, & Cost */}
+          <div className="flex flex-wrap items-center gap-4 lg:gap-6 shrink-0">
+            <div className="w-40">
+              <div className="flex items-center justify-between text-xs mb-1">
+                <span className={`font-medium ${currentStepInfo.badgeText}`}>
+                  Stage {stepNumber}/{totalSteps} · {currentStepInfo.name}
+                </span>
+                <span className="text-gray-400">{progressPercent}%</span>
+              </div>
+              <div className="h-1.5 bg-gray-800 rounded-full overflow-hidden">
+                <div
+                  className="h-full bg-indigo-500 rounded-full transition-all duration-300"
+                  style={{ width: `${Math.max(5, progressPercent)}%` }}
+                />
+              </div>
+            </div>
+
+            <div className="flex items-center gap-3 text-xs bg-gray-800/50 border border-gray-700/50 rounded-lg px-3 py-1.5">
+              <span title="Director Review Score">
+                🎬{' '}
+                <strong className="text-white">
+                  {reviewScores.director !== null ? reviewScores.director : '—'}
+                </strong>
+              </span>
+              <span className="text-gray-600">|</span>
+              <span title="Audience Resonance Score">
+                👥{' '}
+                <strong className="text-white">
+                  {reviewScores.audience !== null ? reviewScores.audience : '—'}
+                </strong>
+              </span>
+            </div>
+
+            <div className="flex items-center gap-2 text-xs bg-gray-800/50 border border-gray-700/50 rounded-lg px-3 py-1.5">
+              <Coins className="w-3.5 h-3.5 text-indigo-400" />
+              <span className="text-gray-300">
+                <strong className="text-white">{costs.creditsUsed.toLocaleString()}</strong> used
+              </span>
+              {!isDemo && (
+                <button
+                  type="button"
+                  onClick={() => setCostCalculatorOpen(true)}
+                  className="ml-1 text-indigo-400 hover:text-indigo-300"
+                  title="Open budget calculator"
+                >
+                  <Calculator className="w-3.5 h-3.5" />
+                </button>
+              )}
+            </div>
+          </div>
+
+          {/* Right: Resume CTA + Actions Dropdown */}
+          <div className="flex items-center gap-2 shrink-0">
+            <Link
+              href={getResumeRoute()}
+              className="flex-1 lg:flex-initial inline-flex items-center justify-center gap-1.5 px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-xs font-semibold shadow-sm transition-colors"
+            >
+              {isDemo ? 'Explore Demo' : `Resume`}
+              <ChevronRight className="w-3.5 h-3.5" />
+            </Link>
+            {renderActionsDropdown()}
+          </div>
+        </div>
+        {renderDialogs()}
+      </motion.div>
+    )
+  }
+
+  // ============================================================================
+  // GRID CARD VIEW (viewMode === 'grid')
+  // ============================================================================
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      whileHover={{ y: -2 }}
+      className={`bg-gray-900/95 backdrop-blur-sm rounded-xl border ${
+        isSelected
+          ? 'border-yellow-500 ring-2 ring-yellow-500/30'
+          : 'border-gray-700/60 hover:border-gray-600/80'
+      } shadow-xl overflow-hidden flex flex-col justify-between transition-all ${className}`}
+    >
+      <div>
+        {/* Project Thumbnail */}
+        <div className="relative h-44 bg-gradient-to-br from-gray-800 to-gray-900 flex items-center justify-center overflow-hidden">
+          {thumbUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={`${thumbUrl}${thumbUrl.includes('?') ? '&' : '?'}t=${project.metadata?.thumbnailGeneratedAt || ''}`}
+              alt={project.title}
+              className="w-full h-full object-cover"
+            />
+          ) : (
+            <div className="text-center">
+              <div
+                className={`w-14 h-14 mx-auto mb-2 ${currentStepInfo.bgColor} ${currentStepInfo.borderColor} border rounded-xl flex items-center justify-center`}
+              >
+                <currentStepInfo.icon className={`w-7 h-7 ${currentStepInfo.color}`} />
+              </div>
+              <p className="text-gray-400 text-xs">{project.metadata?.genre || 'Project'}</p>
+            </div>
+          )}
+
+          <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-gray-900/90 via-transparent to-black/30" />
+
+          {/* Top Left: Actions Dropdown + Pin Star Toggle */}
+          <div className="absolute top-3 left-3 flex items-center gap-1.5 z-10">
+            {renderActionsDropdown()}
+            {!isDemo && onSelectAsCurrent && (
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation()
+                  e.preventDefault()
+                  onSelectAsCurrent(project.id)
+                }}
+                className={`p-2 rounded-lg backdrop-blur-sm border transition-all ${
+                  isSelected
+                    ? 'bg-yellow-500/30 text-yellow-400 border-yellow-500/50 shadow-lg shadow-yellow-500/20'
+                    : 'bg-gray-900/80 text-gray-400 border-gray-700/60 hover:bg-gray-800 hover:text-yellow-400'
+                }`}
+                title={
+                  isSelected
+                    ? 'Pinned on dashboard'
+                    : 'Pin as current project on dashboard'
+                }
+              >
+                <Star className={`w-4 h-4 ${isSelected ? 'fill-yellow-400' : ''}`} />
+              </button>
+            )}
+          </div>
+
+          {/* Top Right: Canonical 2-Stage Indicator */}
+          <div className="absolute top-3 right-3 flex flex-col items-end gap-1.5 z-10">
+            <div
+              className={`px-2.5 py-1 rounded-full text-xs font-semibold backdrop-blur-md ${currentStepInfo.badgeBg} ${currentStepInfo.badgeText} border ${currentStepInfo.badgeBorder}`}
+            >
+              Stage {stepNumber}/{totalSteps} · {currentStepInfo.name}
+            </div>
+            {seriesId && (
+              <Link
+                href={`/dashboard/series/${seriesId}`}
+                className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-cyan-950/90 text-cyan-300 border border-cyan-500/40 backdrop-blur-md hover:bg-cyan-900/90"
+              >
+                <Library className="w-3 h-3" />
+                {episodeNumber ? `Episode ${episodeNumber}` : 'Series Episode'}
+              </Link>
+            )}
+          </div>
+        </div>
+
+        {/* Project Content */}
+        <div className="p-5">
+          {/* Header + Status Pill */}
+          <div className="mb-3">
+            <div className="flex items-start justify-between gap-2 mb-2">
+              <Link href={getResumeRoute()} className="min-w-0 flex-1">
+                <h3 className="text-lg font-bold text-white hover:text-indigo-300 transition-colors line-clamp-1">
+                  {project.title}
+                </h3>
+              </Link>
+              {renderStatusControl()}
+            </div>
+
+            <div className="flex flex-wrap items-center gap-3 text-xs text-gray-400">
+              <span className="flex items-center gap-1" title="Estimated duration">
+                <Clock className="w-3.5 h-3.5" />
+                {formatDuration(duration)}
+              </span>
+
+              {sceneCount > 0 && (
+                <span className="flex items-center gap-1" title="Number of scenes">
+                  <Layers className="w-3.5 h-3.5" />
+                  {sceneCount} {sceneCount === 1 ? 'scene' : 'scenes'}
+                </span>
+              )}
+
+              <span
+                className="flex items-center gap-1"
+                title={`Last updated: ${new Date(project.updatedAt).toLocaleString()}`}
+              >
+                <Calendar className="w-3.5 h-3.5" />
+                {formatRelativeTime(project.updatedAt)}
+              </span>
+            </div>
+          </div>
+
+          {/* Progress Bar (Single clean indicator — no duplicate stage badge) */}
+          <div className="mb-4">
+            <div className="flex items-center justify-between text-xs mb-1.5">
+              <span className="text-gray-400">
+                {isPhase1Complete ? 'Pre-Production Ready' : currentStepInfo.name}
+              </span>
+              <span className="text-gray-300 font-medium">{progressPercent}%</span>
+            </div>
+            <div className="h-1.5 bg-gray-800 rounded-full overflow-hidden">
+              <div
+                className="h-full bg-gradient-to-r from-indigo-500 to-purple-500 rounded-full transition-all duration-500"
+                style={{ width: `${Math.max(5, progressPercent)}%` }}
+              />
+            </div>
+          </div>
+
+          {/* Review Scores */}
+          <div className="mb-3.5 p-2.5 bg-gray-800/40 rounded-lg border border-gray-700/40">
+            <div className="grid grid-cols-2 gap-3">
+              <div className="flex items-center gap-1.5">
+                <span className="text-xs">🎬</span>
+                <span className="text-xs text-gray-400">Director</span>
+                <span
+                  className={`text-xs font-bold ml-auto ${
+                    reviewScores.director !== null ? 'text-white' : 'text-gray-500'
+                  }`}
+                >
+                  {reviewScores.director !== null ? reviewScores.director : '—'}
+                </span>
+                {reviewScores.director !== null && (
+                  <span className="text-[10px]">
+                    {reviewScores.director >= 85
+                      ? '🟢'
+                      : reviewScores.director >= 75
+                        ? '🟡'
+                        : '🔴'}
+                  </span>
+                )}
+              </div>
+              <div className="flex items-center gap-1.5 border-l border-gray-700/50 pl-3">
+                <span className="text-xs">👥</span>
+                <span className="text-xs text-gray-400">Audience</span>
+                <span
+                  className={`text-xs font-bold ml-auto ${
+                    reviewScores.audience !== null ? 'text-white' : 'text-gray-500'
+                  }`}
+                >
+                  {reviewScores.audience !== null ? reviewScores.audience : '—'}
+                </span>
+                {reviewScores.audience !== null && (
+                  <span className="text-[10px]">
+                    {reviewScores.audience >= 85
+                      ? '🟢'
+                      : reviewScores.audience >= 75
+                        ? '🟡'
+                        : '🔴'}
+                  </span>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* Project Cost Section (Subtle calculator button so Resume CTA remains primary) */}
+          <div className="p-2.5 bg-gray-800/40 rounded-lg border border-gray-700/40">
+            <div className="flex items-center justify-between mb-2">
+              <div className="text-[11px] uppercase tracking-wider text-gray-400 font-medium flex items-center gap-1">
+                <DollarSign className="w-3 h-3 text-gray-500" />
+                Credits & Budget
+              </div>
+              {!isDemo && (
+                <button
+                  type="button"
+                  onClick={() => setCostCalculatorOpen(true)}
+                  className="px-2 py-1 bg-gray-800 hover:bg-gray-700 text-indigo-300 hover:text-white border border-gray-700 rounded-md text-[11px] font-medium flex items-center gap-1 transition-colors"
+                  title="Open cost calculator to set budget"
+                >
+                  <Calculator className="w-3 h-3" />
+                  Calculator
+                </button>
+              )}
+            </div>
+
+            <div className="grid grid-cols-3 gap-2 text-xs">
+              <div className="text-center p-1.5 bg-gray-900/50 rounded">
+                <div className="text-gray-400 text-[11px] mb-0.5">Used</div>
+                <div className="font-bold text-white">{costs.creditsUsed.toLocaleString()}</div>
+                {!isDemo && (
+                  <button
+                    type="button"
+                    onClick={() => setAdjustCreditsOpen(true)}
+                    className="mt-0.5 text-[10px] text-indigo-400 hover:text-indigo-300 underline-offset-2 hover:underline"
+                  >
+                    Adjust
+                  </button>
+                )}
+              </div>
+
+              <div className="text-center p-1.5 bg-gray-900/50 rounded">
+                <div className="text-gray-400 text-[11px] mb-0.5">Budget</div>
+                <div
+                  className={`font-bold ${
+                    costs.creditsBudget > 0 ? 'text-white' : 'text-gray-500'
+                  }`}
+                >
+                  {costs.creditsBudget > 0 ? costs.creditsBudget.toLocaleString() : '—'}
+                </div>
+              </div>
+
+              <div className="text-center p-1.5 bg-gray-900/50 rounded">
+                <div className="text-gray-400 text-[11px] mb-0.5">Est. Left</div>
+                <div className="font-bold text-amber-400">
+                  {costs.estimatedCreditsToComplete.toLocaleString()}
+                </div>
+              </div>
+            </div>
+
+            {costs.creditsBudget > 0 && (
+              <div
+                className={`mt-2 flex items-center justify-center gap-1 text-[11px] ${
+                  costs.isOverBudget ? 'text-red-400' : 'text-emerald-400'
+                }`}
+              >
+                <TrendingUp className={`w-3 h-3 ${costs.isOverBudget ? 'rotate-0' : 'rotate-180'}`} />
+                <span>
+                  {costs.isOverBudget ? 'Over' : 'Under'} budget by{' '}
+                  {Math.abs(costs.variance).toLocaleString()} credits (
+                  {Math.abs(costs.variancePercent)}%)
+                </span>
+              </div>
+            )}
+          </div>
+
+          {isPhase2Available && !hasValidBYOK && (
+            <div className="mt-3 p-2 rounded-lg border border-amber-500/30 bg-amber-500/10">
+              <div className="flex items-center gap-2">
+                <Key className="w-3.5 h-3.5 text-amber-400" />
+                <span className="text-xs text-amber-300">
+                  API key required for video generation
+                </span>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Primary Resume Button Footer */}
+      <div className="px-5 pb-5 pt-1">
+        <Link
+          href={getResumeRoute()}
+          className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white shadow-md shadow-indigo-500/15 rounded-lg text-sm font-semibold transition-all"
+        >
+          {isDemo ? 'Explore UI Sandbox' : `Resume ${currentStepInfo.name}`}
+          <ChevronRight className="w-4 h-4" />
+        </Link>
+      </div>
+
+      {renderDialogs()}
     </motion.div>
   )
 }
