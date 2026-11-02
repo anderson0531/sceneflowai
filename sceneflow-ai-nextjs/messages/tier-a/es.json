@@ -40,5 +40,18 @@
     },
     "cta": "Start with Script Upload",
     "ctaSubtext": "Bridge traditional filmmaking and generative AI"
+  },
+  "imaginePossibilities": {
+    "headline": "Imagina las posibilidades",
+    "subheadline": "con SceneFlow Studio",
+    "categoriesAriaLabel": "Categorías de producción de Imagina las posibilidades",
+    "categories": {
+      "drama": "Drama Cinematográfico",
+      "animation": "Series Animadas",
+      "documentary": "Documentales",
+      "training": "Series de Formación",
+      "podcast": "Creadores y Podcasts",
+      "memoir": "Memorias en Video"
+    }
   }
 }

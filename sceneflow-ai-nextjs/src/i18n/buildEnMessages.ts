@@ -56,6 +56,7 @@ import {
 import { PRICING_LANDING_COPY } from '@/config/landing/pricingLandingCopy'
 import { PRE_VIS_ENGINE_COPY } from '@/config/landing/preVisEngineCopy'
 import { FOR_FILMMAKERS_COPY } from '@/config/landing/forFilmmakersCopy'
+import { IMAGINE_POSSIBILITIES_COPY } from '@/config/landing/exampleTrailerScripts'
 import { LANDING_SECTION_COLLAPSE_COPY } from '@/config/landing/landingSectionCollapseCopy'
 import {
   SIMPLE_WALKTHROUGH_HEADER,
@@ -102,6 +103,12 @@ export function buildEnMessages() {
       preVisEngine: 'Pre-Vis Engine',
       trustSafety: 'Trust & Safety',
       pricing: 'Pricing',
+    },
+    imaginePossibilities: {
+      headline: IMAGINE_POSSIBILITIES_COPY.headline,
+      subheadline: IMAGINE_POSSIBILITIES_COPY.subheadline,
+      categoriesAriaLabel: IMAGINE_POSSIBILITIES_COPY.categoriesAriaLabel,
+      categories: { ...IMAGINE_POSSIBILITIES_COPY.categories },
     },
     hero: {
       ...HERO_COPY,

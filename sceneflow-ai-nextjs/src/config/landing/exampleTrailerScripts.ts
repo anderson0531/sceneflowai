@@ -82,6 +82,15 @@ export type ExampleTrailerScript = {
 export const IMAGINE_POSSIBILITIES_COPY = {
   headline: 'Imagine the Possibilities',
   subheadline: 'with SceneFlow Studio',
+  categoriesAriaLabel: 'Imagine the Possibilities production categories',
+  categories: {
+    drama: 'Cinematic Drama',
+    animation: 'Animated Series',
+    documentary: 'Documentaries',
+    training: 'Training Series',
+    podcast: 'Creator & Podcasts',
+    memoir: 'Video Memoirs',
+  },
 } as const
 
 export const EXAMPLE_TRAILER_SCRIPTS: readonly ExampleTrailerScript[] = [

@@ -1,6 +1,7 @@
 import {
   APP_SURFACE_PATH_PREFIX,
   ENGLISH_UNTIL_TRANSLATE_PREFIXES,
+  LANDING_LOCALES,
   RTL_LOCALES,
   UI_LOCALE_COOKIE,
   LANDING_LOCALE_COOKIE,
@@ -42,6 +43,8 @@ return;
 var c=document.cookie,r=/(?:^|;\\s*)([^=]+)=([^;]*)/g,m,v={};
 while((m=r.exec(c))){v[m[1].trim()]=m[2]}
 var l=v[${JSON.stringify(UI_LOCALE_COOKIE)}];
+var seg=location.pathname.split('/')[1]||'';
+if(!l&&location.pathname.indexOf(${JSON.stringify(APP_SURFACE_PATH_PREFIX)})!==0&&${JSON.stringify([...LANDING_LOCALES])}.indexOf(seg)>-1){l=seg}
 if(!l&&location.pathname.indexOf(${JSON.stringify(APP_SURFACE_PATH_PREFIX)})!==0){l=v[${JSON.stringify(LANDING_LOCALE_COOKIE)}]}
 if(!l)return;
 l=decodeURIComponent(l);

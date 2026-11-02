@@ -107,6 +107,11 @@ describe('landing locale copy', () => {
 
   it('translates current hero and Key Features copy in priority locales', () => {
     const paths = [
+      'imaginePossibilities.headline',
+      'imaginePossibilities.subheadline',
+      'imaginePossibilities.categories.drama',
+      'imaginePossibilities.categories.podcast',
+      'imaginePossibilities.categories.memoir',
       'hero.headline',
       'hero.ctaPrimaryLaunch',
       'keyFeatures.title',
@@ -117,8 +122,12 @@ describe('landing locale copy', () => {
       'keyFeatures.rooms.2.groups.1.features.0.description',
       'keyFeatures.rooms.2.groups.1.features.0.learnMore.items.0.description',
       'productionShowcase.showDetail',
+      'productionShowcase.cards.4.title',
+      'productionShowcase.cards.5.title',
       'productionShowcase.seriesPanel.headerLabel',
       'productionShowcase.seriesPanel.inputs.drama.seriesSynopsis',
+      'productionShowcase.seriesPanel.inputs.podcast.seriesSynopsis',
+      'productionShowcase.seriesPanel.inputs.memoir.seriesSynopsis',
       'forFilmmakers.heading',
       'productionAgent.title',
       'productionAgent.scriptBlocks.0.narration',

@@ -884,7 +884,7 @@
               },
               {
                 "icon": "scriptSupervisor",
-                "title": "FlowDirector",
+                "title": "TERMO DIRETOR SFAIFLOW",
                 "description": "Revise MP4s de cenas renderizadas e clipes individuais na aba `FlowDirector` em tela cheia usando inteligência de vídeo multimodal que une supervisão e ação sob as perspectivas de Audience Resonance (`AR Score`) e do Diretor. Inspecione subpontuações de público em 5 eixos, telemetria de conformidade de roteiro e continuidade e atribuição de anomalias (`Keyframe`, `Motion Video` ou `Scene Direction`), aplicando recomendações e correções opcionais pelo Shot Director ou Scene Director.",
                 "screenshot": "FlowDirector — revisão multimodal de vídeo com Audience Resonance (AR Score) e Diretor, matriz de conformidade por tomada e pickups opcionais",
                 "learnMore": {
@@ -1434,6 +1434,19 @@
     "preVisEngine": "Motor de pré-visualização",
     "trustSafety": "Confiança e Segurança",
     "pricing": "Preços"
+  },
+  "imaginePossibilities": {
+    "headline": "Imagine as possibilidades",
+    "subheadline": "com o SceneFlow Studio",
+    "categoriesAriaLabel": "Categorias de produção de Imagine as possibilidades",
+    "categories": {
+      "drama": "Drama Cinematográfico",
+      "animation": "Séries Animadas",
+      "documentary": "Documentários",
+      "training": "Séries de Treinamento",
+      "podcast": "Criadores e Podcasts",
+      "memoir": "Memórias em Vídeo"
+    }
   },
   "hero": {
     "eyebrow": "Cinema com qualidade de estúdio para contadores de histórias, criadores de séries e estúdios",
@@ -2686,6 +2699,164 @@
               "synopsis": "Uma sobremesa que precisa do controle de calor do módulo 1, do tempo do módulo 2 e do tempero do módulo 3. Em seguida, a turma prepara todos os cinco pratos como uma refeição. Lila caminha pelo desfiladeiro com o mesmo casaco, na mesma cozinha. O curso passa de aulas a um serviço."
             }
           ]
+        },
+        "podcast": {
+          "showTitle": "A frequência da meia-noite",
+          "format": "Canal de criação de 6 episódios e série de podcast de vídeo · Upload de estúdio híbrido + AI Cinema",
+          "genre": "Mistério investigativo, história oculta e conhecimento científico",
+          "artStyle": "Mesa de estúdio de transmissão quente híbrida (câmera ao vivo carregada) + período anamórfico e reconstruções cinematográficas em alto mar",
+          "duration": "Temporada de 190 min (6 × 30–34 min) · Ep 1: 32 min",
+          "continuityLock": "Apresentador Devon Vance (Upload do Live Studio), Orson the Brass Automaton Owl (Co-apresentador), Capitão Nils Lindqvist (Reconstrução de 1928) e Locked Midnight Studio Desk",
+          "unitLabel": "Episódios investigativos da 1ª temporada (6)",
+          "artLock": "Cortes perfeitos entre a mesa quente do estúdio de transmissão de nogueira e neon de Devon Vance (transmissão ao vivo da câmera carregada), o ajudante autômato de latão recorrente Orson no poleiro da mesa e reconstruções fotorrealistas do período de 35 mm de postos avançados de telégrafo acústico do Ártico de 1928 e abóbadas de sonar em águas profundas.",
+          "logline": "Em uma mesa de transmissão noturna, o apresentador investigativo Devon Vance e seu cético co-apresentador autômato desvendam mistérios de engenharia desclassificados - cortando perfeitamente de comentários de estúdio ao vivo para reconstruções históricas de nível cinematográfico.",
+          "seriesSynopsis": "Criado para a nova onda de canais narrativos do YouTube e podcasters de vídeo, The Midnight Frequency demonstra como um criador solo transforma uma faixa gravada de microfone de estúdio e clipes de webcam/câmera ao vivo em uma série investigativa de nível televisivo. Ao longo de seis episódios de 32 minutos, o apresentador Devon Vance carrega seus segmentos de mesa de estúdio ao vivo e os intercala com reconstruções cinematográficas geradas por SceneFlow, sobreposições de projetos e seu ajudante de mesa recorrente Orson – terminando cada episódio publicando fluxos multilíngues localizados para o crescimento global do canal.",
+          "cast": [
+            {
+              "name": "Devon Vance",
+              "role": "Apresentador principal · Câmera de estúdio ao vivo carregada e dupla bloqueada",
+              "descriptor": "Apresentador de podcast investigativo (36). Henley de carvão sob uma jaqueta de ardósia sob medida, microfone boom de transmissão em um braço de latão, luz quente contra painéis acústicos de nogueira e borda de LED ciano."
+            },
+            {
+              "name": "Orson",
+              "role": "Companheiro co-apresentador · Ativo de personagem 3D/fotoreal bloqueado",
+              "descriptor": "Clockwork Brass Barn Owl empoleirado ao lado do mixer do estúdio; penas de cobre articuladas, olhos com abertura de vidro âmbar que se arregalam ou apertam os olhos em ceticismo cômico durante brincadeiras de mesa."
+            },
+            {
+              "name": "Capitão Nils Lindqvist",
+              "role": "Liderança histórica · Elenco de reconstrução de Svalbard de 1928",
+              "descriptor": "Engenheiro Telegráfico Acústico Norueguês (48). Casaco de pele de carneiro incrustado de gelo, fones de ouvido de baquelite, barba com bordas de gelo iluminada pelo brilho de uma lanterna de querosene."
+            },
+            {
+              "name": "Dra.",
+              "role": "Co-líder histórico · Elenco sismólogo de 1928",
+              "descriptor": "Geofísico de Expedição (34). Suéter pesado de lã tricotado, galvanômetro de diapasão de latão, diário de bordo de couro manchado de tinta na cabana de escuta de 1928."
+            }
+          ],
+          "episode1Synopsis": {
+            "episodeLabel": "Sinopse do Episódio 1 · Criador Híbrido e Piloto de Podcast (6 Capítulos)",
+            "title": "Episódio 1: O Sino Subglacial de Svalbard",
+            "duration": "32 min (Hybrid Live Studio + Reconstruções do Ártico de 1928)",
+            "logline": "Em 1928, um posto avançado de rádio no Ártico gravou um som metálico rítmico três quilômetros abaixo da geleira e depois desapareceu, deixando o chá ainda quente.",
+            "synopsis": "O apresentador Devon Vance carrega suas tomadas de câmera de estúdio ao vivo e as combina com as reconstruções cinematográficas SceneFlow da Expedição Lindqvist de 1928, guiando os espectadores desde o gancho misterioso inicial até a evidência acústica desclassificada e a reviravolta geológica racional.",
+            "chapter1Title": "Capítulo 1: O Cilindro na Mesa e o Sinal Norte de 82°",
+            "chapter1Duration": "5,5 min · Live Studio Hook to 1928 Blizzard Match-Cut",
+            "chapter1Synopsis": "Devon coloca uma caixa de cilindro de cera de latão corroída de 1928 na mesa do estúdio ao lado de Orson e reproduz a gravação original de baixa frequência - desencadeando um corte contínuo do medidor VU brilhante do estúdio para o posto de escuta gelado de 1928 em Svalbard."
+          },
+          "episodes": [
+            {
+              "number": "1",
+              "title": "O Sino Subglacial de Svalbard",
+              "duration": "32 minutos",
+              "synopsis": "Devon e Orson investigam o desaparecimento em 1928 de uma equipe de telégrafo acústico do Ártico que gravou um toque rítmico sob três quilômetros de gelo."
+            },
+            {
+              "number": "2",
+              "title": "A Biblioteca de Vidro de Alexandria",
+              "duration": "30 minutos",
+              "synopsis": "Como uma pesquisa arqueológica no deserto profundo de 1963 descobriu abóbadas subterrâneas vitrificadas alinhadas com antigas linhas de visão astronômicas."
+            },
+            {
+              "number": "3",
+              "title": "Voo 19 e Magnetômetro das Bermudas",
+              "duration": "34 minutos",
+              "synopsis": "Registros desclassificados da bússola naval e reconstruções da cabine revelam o que realmente aconteceu durante a tempestade noturna de 1945."
+            },
+            {
+              "number": "4",
+              "title": "O Autômato Mecânico de Praga",
+              "duration": "31 minutos",
+              "synopsis": "Um mestre de guilda do século XVII constrói um escriba mecânico cujas engrenagens sobreviventes codificam uma cifra que ninguém resolveu durante trezentos anos."
+            },
+            {
+              "number": "5",
+              "title": "O Eco da Fossa Mariana",
+              "duration": "33 minutos",
+              "synopsis": "Em 1977, um conjunto de hidrofones nas profundezas do oceano rastreou uma assinatura acústica de 28 hertz movendo-se contra a corrente abissal do Pacífico."
+            },
+            {
+              "number": "6",
+              "title": "O Cofre de Carrington",
+              "duration": "30 minutos",
+              "synopsis": "Quando a supertempestade solar de 1859 incendiou os fios telegráficos, duas operadoras em Boston e Portland continuaram transmitindo com as baterias desconectadas."
+            }
+          ]
+        },
+        "memoir": {
+          "showTitle": "Cartas através da água",
+          "format": "Filme de legado familiar encomendado com 5 capítulos · Upload de entrevista híbrida + reconstituição do período",
+          "genre": "Memórias biográficas de família e documentário sobre reunião",
+          "artStyle": "Uploads de entrevistas calorosas na sala de estar em 4K + Exuberantes Kodachrome Harbor de 1966 e reconstituições de padaria de 1974",
+          "duration": "Featurette comissionado de 28 min (5 capítulos)",
+          "continuityLock": "Elena Rossi-Chen aos 82 anos (entrevista carregada) e 22 anos (elenco bloqueado de 1966), Mateo Chen aos 24 anos (elenco bloqueado de 1966) e o baú de receitas de couro de 1966",
+          "unitLabel": "Capítulos de memórias encomendados (5)",
+          "artLock": "Continuidade facial e de guarda-roupa bloqueada pela idade conectando entrevistas carregadas em smartphone/câmera de Elena, de 82 anos, com cais fotorrealistas do porto de Nápoles de 1966, conveses de transporte de transatlânticos e a padaria da esquina de 1974 - desbloqueando um modelo de negócios de vídeo-memórias pronto para uso.",
+          "logline": "Em sua 60ª reunião de família, uma matriarca de 82 anos conta como uma partida do porto chuvosa em 1966 e uma receita de massa fermentada manuscrita construíram uma instituição de bairro de três gerações.",
+          "seriesSynopsis": "Projetado para empreendedores de vídeo solo, agências boutique e famílias que preservam a herança multigeracional, Letters Across the Water mostra como SceneFlow transforma uma entrevista gravada na sala de estar e cinco fotos de família digitalizadas em um filme biográfico de tirar o fôlego de 28 minutos. Carregando clipes de entrevistas reais de Elena Rossi-Chen, de 82 anos, o produtor usa o Continuity Lock do SceneFlow e o FlowDirector para recriar Elena e seu falecido marido Mateo aos 22 anos – dando vida a memórias familiares não filmadas com autenticidade emocional.",
+          "cast": [
+            {
+              "name": "Elena Rossi-Chen (82 anos)",
+              "role": "Contador de histórias atual · Clipe de entrevista familiar enviado",
+              "descriptor": "A calorosa matriarca de 82 anos com um xale de caxemira marfim, cabelos prateados, segurando o desgastado caderno de receitas de couro marrom de 1966 em uma sala de estar ensolarada."
+            },
+            {
+              "name": "Jovem Elena Rossi (22 anos, 1966)",
+              "role": "Líder de reconstituição do período · Ficha de personagem com idade bloqueada",
+              "descriptor": "Jovem italiana (22) com olhos castanhos e estrutura facial idênticos aos da Elena atual; Casaco impermeável de lã marinho de 1966 com cinto, lenço de seda, segurando o novo caderno de receitas de couro marrom."
+            },
+            {
+              "name": "Jovem Mateo Chen (24 anos, 1966)",
+              "role": "Co-líder da reconstituição do período · Ficha de personagem bloqueada",
+              "descriptor": "Jovem carpinteiro e padeiro de navio (24); camisa de trabalho de cambraia com mangas enroladas, avental de lona para ferramentas, sorriso caloroso e reconfortante sob a luz de uma lanterna de tungstênio dos anos 1960."
+            },
+            {
+              "name": "Maya Chen (26 anos, dias atuais)",
+              "role": "Neta · Anfitriã da reunião e confeiteira de terceira geração",
+              "descriptor": "A neta de Elena (26) com um avental de linho de padeiro, arrumando a longa mesa de reunião familiar sob as luzes quentes do pátio."
+            }
+          ],
+          "episode1Synopsis": {
+            "episodeLabel": "Visão geral do livro de memórias encomendado · Filme legado de 5 capítulos",
+            "title": "Cartas do outro lado da água: a história da família Rossi-Chen",
+            "duration": "28 min Filme Legado Completo · Prova do Capítulo 1: 5,5 min",
+            "logline": "Um livro de receitas de couro, dois oceanos e sessenta anos de memória familiar trazidos de entrevistas faladas para a tela do cinema.",
+            "synopsis": "Combinando imagens reais de entrevistas familiares e lembranças digitalizadas com reconstituições do período SceneFlow, este livro de memórias encomendado transforma a história oral falada em uma herança de família - e demonstra um negócio de serviços escalável e de alta margem para criadores.",
+            "chapter1Title": "Capítulo 1: Píer 14 e o tronco de cedro (1966)",
+            "chapter1Duration": "5,5 min · Upload de entrevista para a reconstituição do porto de 1966",
+            "chapter1Synopsis": "A Elena atual abre seu caderno de couro de 1966 em uma folha de oliveira prensada; enquanto ela descreve a chuva no Píer 14, o quadro muda para Elena, de 22 anos, parada na enevoada passarela do navio a vapor de 1966, segurando exatamente o mesmo caderno."
+          },
+          "episodes": [
+            {
+              "number": "1",
+              "title": "Píer 14 e o tronco de cedro (1966)",
+              "duration": "5,5 minutos",
+              "synopsis": "Desde a entrevista de Elena na sala de estar até a partida do porto em 1966, varrida pela chuva, com uma mala e o caderno de receitas de sua mãe."
+            },
+            {
+              "number": "2",
+              "title": "O convés da terceira classe e a mesa do carpinteiro",
+              "duration": "5,5 minutos",
+              "synopsis": "Travessia do meio do Atlântico: o jovem Mateo conserta o fecho quebrado do porta-malas de Elena e compartilha um bule de chá de gengibre durante um vendaval do Atlântico."
+            },
+            {
+              "number": "3",
+              "title": "O primeiro forno de tijolos na Mulberry Street (1974)",
+              "duration": "6 minutos",
+              "synopsis": "Acendendo o forno de pedra usado às 4h. em sua primeira pequena vitrine enquanto a neve se acumula no vidro."
+            },
+            {
+              "number": "4",
+              "title": "A Grande Inundação de 78 e a Linha do Bairro",
+              "duration": "5,5 minutos",
+              "synopsis": "Quando uma tubulação de água rompida inunda o porão de farinha do porão, trinta vizinhos formam uma brigada de baldes para salvar o cozimento matinal."
+            },
+            {
+              "number": "5",
+              "title": "Sessenta anos em uma mesa (A Reunião)",
+              "duration": "5,5 minutos",
+              "synopsis": "Três gerações se reúnem sob as luzes do pátio enquanto a neta Maya tira do forno o pão original de 1966."
+            }
+          ]
         }
       }
     },
@@ -2851,6 +3022,80 @@
           }
         ],
         "screeningRoomPreview": "Cinco Pratos — Screening Room"
+      },
+      {
+        "id": "podcast",
+        "title": "Canais de criadores e podcasts de vídeo. Carregue clipes de host ao vivo, gere o mundo.",
+        "subtitle": "Combine o feed da sua câmera de estúdio gravada com um co-apresentador de mesa trancado e reconstruções históricas ou de ficção científica de nível cinematográfico e, em seguida, publique streams de vídeo multilíngues do YouTube e do Spotify com um clique.",
+        "badge": "Criador e podcasts",
+        "solutionPillars": [
+          {
+            "title": "Upload Híbrido ao Vivo + Cinema AI",
+            "frictionHeadline": "40 horas de caça ao estoque B-Roll.",
+            "friction": "Gravar um podcast investigativo de 30 minutos ou um episódio de história leva uma hora, mas ilustrar a história com clipes repetitivos ou animações personalizadas leva semanas.",
+            "solutionHeadline": "Cortes perfeitos do estúdio para a história.",
+            "solution": "Carregue seus segmentos de host ao vivo na câmera e intercale diretamente em reconstruções históricas, científicas ou de suspense geradas por SceneFlow e sincronizadas com sua trilha de voz."
+          },
+          {
+            "title": "Co-anfitriões recorrentes da mesa e continuidade do conjunto",
+            "frictionHeadline": "Fadiga da cabeça falante.",
+            "friction": "Podcasts estáticos de câmera única perdem a retenção do espectador durante explicações complexas sem química visual ou encenação dinâmica na mesa.",
+            "solutionHeadline": "Sidekick e Studio Blueprints bloqueados.",
+            "solution": "Ancore um companheiro de mesa animado ou fotorreal recorrente - como The Why Files - ao lado do feed do seu estúdio ao vivo com iluminação, brincadeiras e batidas de reação consistentes."
+          },
+          {
+            "title": "Estimulação automatizada e evidências visuais",
+            "frictionHeadline": "Montagem manual da linha do tempo.",
+            "friction": "Sincronizar documentos desclassificados, mapas, efeitos sonoros e músicas dramáticas em um programa semanal de 30 minutos cria gargalos de edição insustentáveis.",
+            "solutionHeadline": "FlowDirector e automação de mixagem.",
+            "solution": "FlowDirector aprimora a continuidade visual em cada corte enquanto Mixer e Streams equilibram voz, SFX atmosférico e pontuação automaticamente."
+          },
+          {
+            "title": "Dimensionamento global de canais multilíngues",
+            "frictionHeadline": "Teto de idioma único.",
+            "friction": "Contratar dubladores e reeditar cronogramas de faixas de áudio em espanhol, português, hindi ou árabe é muito caro para canais independentes.",
+            "solutionHeadline": "Streams multilíngues com um clique.",
+            "solution": "Gere áudio localizado e cortes sincronizados com os lábios em dezenas de idiomas para multiplicar o alcance global do YouTube AdSense e do patrocínio de podcast."
+          }
+        ],
+        "screeningRoomPreview": "A frequência da meia-noite — Screening Room"
+      },
+      {
+        "id": "memoir",
+        "title": "Memórias em vídeo e estúdios de clientes personalizados. Transforme memórias faladas em cinema.",
+        "subtitle": "Combine entrevistas familiares enviadas e fotos antigas com reconstituições de períodos com idade restrita para lançar um serviço de produção de memórias, reuniões e biografias em vídeo de alta margem.",
+        "badge": "Novo modelo de negócios",
+        "solutionPillars": [
+          {
+            "title": "Memórias não filmadas trazidas à vida",
+            "frictionHeadline": "O problema da filmagem perdida.",
+            "friction": "As famílias têm horas de histórias contadas pelos avós e um punhado de fotos desbotadas, mas nenhum vídeo dos momentos que definiram suas vidas.",
+            "solutionHeadline": "Reconstituições de período com bloqueio de idade.",
+            "solution": "Carregue uma entrevista real na sala de estar e fotos de referência; SceneFlow bloqueia a imagem jovem do sujeito para recriar os portos dos anos 1960, as ruas de sua cidade natal e momentos marcantes."
+          },
+          {
+            "title": "Economia Studio-in-a-Box pronta para uso",
+            "frictionHeadline": "$ 25.000 em custos de equipe e elenco.",
+            "friction": "Os documentários biográficos tradicionais exigem atores, guarda-roupas de época, licenças de locação e semanas de pós-produção – cobrando preços de 99% das famílias e pequenas empresas.",
+            "solutionHeadline": "Produção de Cliente Solo-Operador.",
+            "solution": "Entregue filmes legados de 20 a 30 minutos com qualidade de transmissão, homenagens a casamentos/reuniões e biografias de fundadores em uma única tarde com altas margens de clientes."
+          },
+          {
+            "title": "Era autêntica e continuidade de lembranças",
+            "frictionHeadline": "Genérico Filme Desconecte.",
+            "friction": "Clipes de ações genéricos parecem impessoais e quebram a verdade emocional da herança específica de uma família, dos objetos de herança e da cidade natal.",
+            "solutionHeadline": "Bloqueios de referência de lembrança e acessórios.",
+            "solution": "Bloqueie heranças de família reais - um livro de receitas de couro de 1966, uma aliança de casamento ou uma primeira vitrine - para que o objeto exato passe da entrevista atual para a reconstituição histórica."
+          },
+          {
+            "title": "Compartilhamento de idiomas multigeracionais",
+            "frictionHeadline": "Barreiras linguísticas entre gerações.",
+            "friction": "Quando os avós falam uma língua e os netos falam outra, as histórias orais registadas muitas vezes passam despercebidas pela geração mais jovem.",
+            "solutionHeadline": "Edições familiares multilíngues.",
+            "solution": "Entregue o livro de memórias finalizado na voz nativa do contador de histórias e em edições localizadas para que todos os ramos de uma família global possam vivenciar a história juntos."
+          }
+        ],
+        "screeningRoomPreview": "Cartas através da água — Screening Room"
       }
     ]
   },

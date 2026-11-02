@@ -40,5 +40,18 @@
     },
     "cta": "Start with Script Upload",
     "ctaSubtext": "Bridge traditional filmmaking and generative AI"
+  },
+  "imaginePossibilities": {
+    "headline": "संभावनाओं की कल्पना करें",
+    "subheadline": "SceneFlow Studio के साथ",
+    "categoriesAriaLabel": "संभावनाओं की कल्पना करें उत्पादन श्रेणियाँ",
+    "categories": {
+      "drama": "सिनेमैटिक ड्रामा",
+      "animation": "एनिमेटेड सीरीज़",
+      "documentary": "डॉक्यूमेंट्री",
+      "training": "प्रशिक्षण सीरीज़",
+      "podcast": "क्रिएटर और पॉडकास्ट",
+      "memoir": "वीडियो संस्मरण"
+    }
   }
 }

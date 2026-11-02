@@ -25,5 +25,18 @@
   },
   "pricing": {
     "title": "เริ่มต้นด้วย Explorer — $9"
+  },
+  "imaginePossibilities": {
+    "headline": "จินตนาการถึงความเป็นไปได้",
+    "subheadline": "ด้วย SceneFlow Studio",
+    "categoriesAriaLabel": "หมวดหมู่การผลิตของจินตนาการถึงความเป็นไปได้",
+    "categories": {
+      "drama": "ดราม่าภาพยนตร์",
+      "animation": "ซีรีส์แอนิเมชัน",
+      "documentary": "สารคดี",
+      "training": "ซีรีส์ฝึกอบรม",
+      "podcast": "ครีเอเตอร์และพอดแคสต์",
+      "memoir": "วิดีโอความทรงจำ"
+    }
   }
 }

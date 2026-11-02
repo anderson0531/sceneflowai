@@ -23,12 +23,12 @@ describe('resolveLandingLocaleFromHints', () => {
     ).toBe('es')
   })
 
-  it('selects Japanese from Accept-Language when no cookie is set', () => {
+  it('selects Thai from Accept-Language when no cookie is set', () => {
     expect(
       resolveLandingLocaleFromHints({
-        acceptLanguage: 'ja,en;q=0.4',
+        acceptLanguage: 'th,en;q=0.4',
       })
-    ).toBe('ja')
+    ).toBe('th')
   })
 
   it('ignores an unsupported cookie and falls through to Accept-Language', () => {
@@ -53,18 +53,25 @@ describe('resolveLandingLocaleFromHints', () => {
 describe('landing homepage wires Accept-Language without touching the studio', () => {
   const root = join(process.cwd())
 
-  it('resolves `/` from cookie then Accept-Language and redirects first visits', () => {
+  it('resolves `/` from explicit cookie then Accept-Language and redirects first visits', () => {
     const page = readFileSync(join(root, 'src/app/page.tsx'), 'utf8')
     expect(page).toContain('resolveLandingLocaleFromHints')
     expect(page).toContain('accept-language')
     expect(page).toContain('redirect(getLandingLocalePath(locale))')
     expect(page).toContain('LANDING_LOCALE_COOKIE')
+    expect(page).toContain('LANDING_LOCALE_EXPLICIT_COOKIE')
   })
 
-  it('persists the detected locale on the marketing client only', () => {
+  it('persists the detected locale on the marketing client only and checks navigator.languages on `/`', () => {
     const landing = readFileSync(join(root, 'src/app/LandingPageClient.tsx'), 'utf8')
+    const persistComp = readFileSync(
+      join(root, 'src/components/i18n/PersistLandingLocale.tsx'),
+      'utf8'
+    )
     const studioLocale = readFileSync(join(root, 'src/i18n/serverLocale.ts'), 'utf8')
     expect(landing).toContain('PersistLandingLocale')
+    expect(persistComp).toContain('navigator.languages')
+    expect(persistComp).toContain('matchAcceptLanguage')
     expect(studioLocale).not.toContain('matchAcceptLanguage')
     expect(studioLocale).not.toContain('accept-language')
   })

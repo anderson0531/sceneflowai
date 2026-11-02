@@ -15,6 +15,9 @@ export const UI_LOCALE_COOKIE = 'sf-locale'
 /** Cookie holding the landing-page locale (predates the app-wide setting). */
 export const LANDING_LOCALE_COOKIE = 'sf-landing-locale'
 
+/** Cookie marking that `sf-landing-locale` was explicitly chosen by the user. */
+export const LANDING_LOCALE_EXPLICIT_COOKIE = 'sf-landing-locale-explicit'
+
 export const UI_LOCALE_STORAGE_KEY = 'sf-locale'
 
 /** Path prefix for authenticated app surfaces (studios, settings, dashboard). */

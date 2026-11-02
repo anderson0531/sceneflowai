@@ -564,6 +564,7 @@ export async function translateFlatMessages(
 
 export const LANDING_NAMESPACES = [
   'nav',
+  'imaginePossibilities',
   'hero',
   'twoModes',
   'directControl',
@@ -589,6 +590,7 @@ export const LANDING_NAMESPACES = [
 
 export const PRIORITY_LANDING_NAMESPACES = [
   'nav',
+  'imaginePossibilities',
   'hero',
   'twoModes',
   'directControl',

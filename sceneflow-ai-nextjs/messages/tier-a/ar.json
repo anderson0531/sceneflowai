@@ -40,5 +40,18 @@
     },
     "cta": "Start with Script Upload",
     "ctaSubtext": "Bridge traditional filmmaking and generative AI"
+  },
+  "imaginePossibilities": {
+    "headline": "تخيل الإمكانيات",
+    "subheadline": "مع SceneFlow Studio",
+    "categoriesAriaLabel": "فئات الإنتاج في تخيل الإمكانيات",
+    "categories": {
+      "drama": "دراما سينمائية",
+      "animation": "مسلسلات رسوم متحركة",
+      "documentary": "أفلام وثائقية",
+      "training": "سلاسل تدريبية",
+      "podcast": "صنّاع المحتوى والبودكاست",
+      "memoir": "مذكرات فيديو"
+    }
   }
 }

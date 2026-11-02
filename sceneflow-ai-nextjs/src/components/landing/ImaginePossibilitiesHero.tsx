@@ -32,10 +32,28 @@ export const IMAGINE_POSSIBILITIES_SECTION_ID = 'imagine-possibilities'
 
 export function ImaginePossibilitiesHero() {
   const locale = useLocale()
+  const tPossibilities = useTranslations('imaginePossibilities')
   const tHero = useTranslations('hero')
   const tCommon = useTranslations('common')
   const prefersReducedMotion = useReducedMotion()
   const videoRef = useRef<HTMLVideoElement>(null)
+
+  const headline = tPossibilities.has('headline')
+    ? tPossibilities('headline')
+    : IMAGINE_POSSIBILITIES_COPY.headline
+  const subheadline = tPossibilities.has('subheadline')
+    ? tPossibilities('subheadline')
+    : IMAGINE_POSSIBILITIES_COPY.subheadline
+  const categoriesAriaLabel = tPossibilities.has('categoriesAriaLabel')
+    ? tPossibilities('categoriesAriaLabel')
+    : IMAGINE_POSSIBILITIES_COPY.categoriesAriaLabel
+  const getCategoryLabel = useCallback(
+    (script: ExampleTrailerScript) => {
+      const key = `categories.${script.id}` as const
+      return tPossibilities.has(key) ? tPossibilities(key) : script.buttonLabel
+    },
+    [tPossibilities]
+  )
 
   const [activeId, setActiveId] = useState<ProductionWalkId>('drama')
   const [isMuted, setIsMuted] = useState(true)
@@ -63,6 +81,7 @@ export function ImaginePossibilitiesHero() {
                 ? getVideoMemoirTrailerSources(locale)
                 : { webmSrc: activeScript.webmSrc, mp4Src: activeScript.mp4Src }
   const activePoster = PRODUCTION_TRAILER_POSTERS[activeScript.id]
+  const activeCategoryLabel = getCategoryLabel(activeScript)
 
   useEffect(() => {
     const ctx = readHeroNetworkContext()
@@ -179,7 +198,7 @@ export function ImaginePossibilitiesHero() {
     <>
       <section
         id={IMAGINE_POSSIBILITIES_SECTION_ID}
-        aria-label={IMAGINE_POSSIBILITIES_COPY.headline}
+        aria-label={headline}
         className="relative min-h-[100dvh] w-full overflow-hidden bg-gray-950 text-white"
       >
         {/* Background Video Layer — mirrors HeroSection.tsx & HeroVideoBackground.tsx */}
@@ -210,7 +229,7 @@ export function ImaginePossibilitiesHero() {
               warmNextTrailer()
             }}
             onContextMenu={(event) => event.preventDefault()}
-            aria-label={activeScript.buttonLabel}
+            aria-label={activeCategoryLabel}
           >
             <source src={activeSources.webmSrc} type="video/webm" />
             <source src={activeSources.mp4Src} type="video/mp4" />
@@ -286,7 +305,7 @@ export function ImaginePossibilitiesHero() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: prefersReducedMotion ? 0 : 0.8, delay: prefersReducedMotion ? 0 : 0.1 }}
             >
-              {IMAGINE_POSSIBILITIES_COPY.headline}
+              {headline}
             </motion.h2>
 
             <motion.p
@@ -295,12 +314,12 @@ export function ImaginePossibilitiesHero() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: prefersReducedMotion ? 0 : 0.8, delay: prefersReducedMotion ? 0 : 0.2 }}
             >
-              {IMAGINE_POSSIBILITIES_COPY.subheadline}
+              {subheadline}
             </motion.p>
 
             <motion.div
               role="tablist"
-              aria-label="Imagine the Possibilities production categories"
+              aria-label={categoriesAriaLabel}
               className="mt-7 flex flex-wrap items-center justify-center gap-2 sm:gap-2.5"
               initial={{ opacity: 0, y: prefersReducedMotion ? 0 : 14 }}
               animate={{ opacity: 1, y: 0 }}
@@ -324,7 +343,7 @@ export function ImaginePossibilitiesHero() {
                         : 'border-white/20 bg-black/50 text-gray-200 hover:border-white/40 hover:bg-black/70 hover:text-white'
                     }`}
                   >
-                    {script.buttonLabel}
+                    {getCategoryLabel(script)}
                   </button>
                 )
               })}
@@ -342,7 +361,7 @@ export function ImaginePossibilitiesHero() {
           webmUrl: activeSources.webmSrc,
           mp4Url: activeSources.mp4Src,
         }}
-        caption={activeScript.buttonLabel}
+        caption={activeCategoryLabel}
         pauseLabel={tCommon('pause')}
         playLabel={tCommon('play')}
         muteLabel={tCommon('mute')}

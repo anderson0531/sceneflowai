@@ -40,5 +40,18 @@
     },
     "cta": "Start with Script Upload",
     "ctaSubtext": "Bridge traditional filmmaking and generative AI"
+  },
+  "imaginePossibilities": {
+    "headline": "想象无限可能",
+    "subheadline": "尽在 SceneFlow Studio",
+    "categoriesAriaLabel": "想象无限可能制作类别",
+    "categories": {
+      "drama": "电影级剧情片",
+      "animation": "动画剧集",
+      "documentary": "纪录片",
+      "training": "培训系列",
+      "podcast": "创作者与播客",
+      "memoir": "视频回忆录"
+    }
   }
 }

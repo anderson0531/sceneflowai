@@ -19,7 +19,7 @@ export function useLandingLocale() {
     (nextLocale: string) => {
       if (!isLandingLocale(nextLocale) || nextLocale === locale) return
 
-      persistLandingLocale(nextLocale)
+      persistLandingLocale(nextLocale, { explicit: true })
 
       const hash = typeof window !== 'undefined' ? window.location.hash : ''
       const nextPath = getLandingLocalePath(nextLocale, hash)
