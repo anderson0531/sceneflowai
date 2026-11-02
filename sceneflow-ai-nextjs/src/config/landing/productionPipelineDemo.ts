@@ -348,8 +348,72 @@ export function getCreatorPodcastTrailerSources(locale?: string): {
   return CREATOR_PODCAST_DUB_TRAILERS[resolved]
 }
 
-export const VIDEO_MEMOIR_TRAILER_WEBM = '/videos/video-memoir-trailer.webm?v=20261031'
-export const VIDEO_MEMOIR_TRAILER_MP4 = '/videos/video-memoir-trailer.mp4?v=20261031'
+export const VIDEO_MEMOIR_TRAILER_VERSION = '20261102'
+
+export const VIDEO_MEMOIR_TRAILER_WEBM = `/videos/video-memoir-trailer.webm?v=${VIDEO_MEMOIR_TRAILER_VERSION}`
+export const VIDEO_MEMOIR_TRAILER_MP4 = `/videos/video-memoir-trailer.mp4?v=${VIDEO_MEMOIR_TRAILER_VERSION}`
+
+export const VIDEO_MEMOIR_DUB_LOCALE_IDS = [
+  'en',
+  'es',
+  'pt',
+  'hi',
+  'zh',
+  'ar',
+  'th',
+] as const
+
+export type VideoMemoirDubLocaleId = (typeof VIDEO_MEMOIR_DUB_LOCALE_IDS)[number]
+
+export const VIDEO_MEMOIR_DUB_TRAILERS: Record<
+  VideoMemoirDubLocaleId,
+  { webmSrc: string; mp4Src: string }
+> = {
+  en: {
+    webmSrc: VIDEO_MEMOIR_TRAILER_WEBM,
+    mp4Src: VIDEO_MEMOIR_TRAILER_MP4,
+  },
+  es: {
+    webmSrc: `/videos/video-memoir-trailer-es.webm?v=${VIDEO_MEMOIR_TRAILER_VERSION}`,
+    mp4Src: `/videos/video-memoir-trailer-es.mp4?v=${VIDEO_MEMOIR_TRAILER_VERSION}`,
+  },
+  pt: {
+    webmSrc: `/videos/video-memoir-trailer-pt.webm?v=${VIDEO_MEMOIR_TRAILER_VERSION}`,
+    mp4Src: `/videos/video-memoir-trailer-pt.mp4?v=${VIDEO_MEMOIR_TRAILER_VERSION}`,
+  },
+  hi: {
+    webmSrc: `/videos/video-memoir-trailer-hi.webm?v=${VIDEO_MEMOIR_TRAILER_VERSION}`,
+    mp4Src: `/videos/video-memoir-trailer-hi.mp4?v=${VIDEO_MEMOIR_TRAILER_VERSION}`,
+  },
+  zh: {
+    webmSrc: `/videos/video-memoir-trailer-zh.webm?v=${VIDEO_MEMOIR_TRAILER_VERSION}`,
+    mp4Src: `/videos/video-memoir-trailer-zh.mp4?v=${VIDEO_MEMOIR_TRAILER_VERSION}`,
+  },
+  ar: {
+    webmSrc: `/videos/video-memoir-trailer-ar.webm?v=${VIDEO_MEMOIR_TRAILER_VERSION}`,
+    mp4Src: `/videos/video-memoir-trailer-ar.mp4?v=${VIDEO_MEMOIR_TRAILER_VERSION}`,
+  },
+  th: {
+    webmSrc: `/videos/video-memoir-trailer-th.webm?v=${VIDEO_MEMOIR_TRAILER_VERSION}`,
+    mp4Src: `/videos/video-memoir-trailer-th.mp4?v=${VIDEO_MEMOIR_TRAILER_VERSION}`,
+  },
+}
+
+export function resolveVideoMemoirDubLocale(locale?: string): VideoMemoirDubLocaleId {
+  const base = (locale ?? 'en').trim().toLowerCase().split(/[-_]/)[0] ?? 'en'
+  if ((VIDEO_MEMOIR_DUB_LOCALE_IDS as readonly string[]).includes(base)) {
+    return base as VideoMemoirDubLocaleId
+  }
+  return 'en'
+}
+
+export function getVideoMemoirTrailerSources(locale?: string): {
+  webmSrc: string
+  mp4Src: string
+} {
+  const resolved = resolveVideoMemoirDubLocale(locale)
+  return VIDEO_MEMOIR_DUB_TRAILERS[resolved]
+}
 
 export const PRODUCTION_WALK_IDS = [
   'drama',
@@ -396,11 +460,7 @@ export function getProductionTrailerSources(
     case 'podcast':
       return { ...getCreatorPodcastTrailerSources(locale), posterSrc }
     case 'memoir':
-      return {
-        webmSrc: VIDEO_MEMOIR_TRAILER_WEBM,
-        mp4Src: VIDEO_MEMOIR_TRAILER_MP4,
-        posterSrc,
-      }
+      return { ...getVideoMemoirTrailerSources(locale), posterSrc }
   }
 }
 
@@ -736,6 +796,11 @@ export function buildProductionExampleMedia(
     Boolean(locale) &&
     rawWebm === CREATOR_PODCAST_TRAILER_WEBM &&
     rawMp4 === CREATOR_PODCAST_TRAILER_MP4
+  const useLocalizedMemoir =
+    walkId === 'memoir' &&
+    Boolean(locale) &&
+    rawWebm === VIDEO_MEMOIR_TRAILER_WEBM &&
+    rawMp4 === VIDEO_MEMOIR_TRAILER_MP4
   const localizedSources = useLocalizedDrama
     ? getCinematicDramaTrailerSources(locale)
     : useLocalizedAnimation
@@ -746,7 +811,9 @@ export function buildProductionExampleMedia(
           ? getTrainingSeriesTrailerSources(locale)
           : useLocalizedPodcast
             ? getCreatorPodcastTrailerSources(locale)
-            : null
+            : useLocalizedMemoir
+              ? getVideoMemoirTrailerSources(locale)
+              : null
   const trailerSrc = (localizedSources ? localizedSources.webmSrc : rawWebm) || null
   const trailerMp4Src = (localizedSources ? localizedSources.mp4Src : rawMp4) || null
   const longformHref = publishedScreeningHref(walk)

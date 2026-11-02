@@ -15,6 +15,7 @@ import {
   PRODUCTION_TRAILER_POSTERS,
   PRODUCTION_WALK_IDS,
   TRAINING_SERIES_DUB_LOCALE_IDS,
+  VIDEO_MEMOIR_DUB_LOCALE_IDS,
   getAnimatedSeriesTrailerSources,
   getCinematicDramaTrailerSources,
   getCreatorPodcastTrailerSources,
@@ -22,6 +23,7 @@ import {
   getProductionExampleMedia,
   getProductionTrailerSources,
   getTrainingSeriesTrailerSources,
+  getVideoMemoirTrailerSources,
 } from '@/config/landing/productionPipelineDemo'
 
 const ROOT = path.resolve(__dirname, '../..')
@@ -127,12 +129,13 @@ describe('Imagine the Possibilities top cinematic video header & 60s–90s trail
     expect(md).toContain('Video Memoirs')
   })
 
-  it('ships English and 6 multilingual dubbed Cinematic Drama, Animated Series, Documentary, Training Series, and Creator Podcast trailers (.webm and .mp4) for es, pt, hi, zh, ar, and th', () => {
+  it('ships English and 6 multilingual dubbed Cinematic Drama, Animated Series, Documentary, Training Series, Creator Podcast, and Video Memoir trailers (.webm and .mp4) for es, pt, hi, zh, ar, and th', () => {
     expect(CINEMATIC_DRAMA_DUB_LOCALE_IDS).toEqual(['en', 'es', 'pt', 'hi', 'zh', 'ar', 'th'])
     expect(ANIMATED_SERIES_DUB_LOCALE_IDS).toEqual(['en', 'es', 'pt', 'hi', 'zh', 'ar', 'th'])
     expect(DOCUMENTARY_DUB_LOCALE_IDS).toEqual(['en', 'es', 'pt', 'hi', 'zh', 'ar', 'th'])
     expect(TRAINING_SERIES_DUB_LOCALE_IDS).toEqual(['en', 'es', 'pt', 'hi', 'zh', 'ar', 'th'])
     expect(CREATOR_PODCAST_DUB_LOCALE_IDS).toEqual(['en', 'es', 'pt', 'hi', 'zh', 'ar', 'th'])
+    expect(VIDEO_MEMOIR_DUB_LOCALE_IDS).toEqual(['en', 'es', 'pt', 'hi', 'zh', 'ar', 'th'])
 
     for (const locale of CINEMATIC_DRAMA_DUB_LOCALE_IDS) {
       const sources = getCinematicDramaTrailerSources(locale)
@@ -205,6 +208,23 @@ describe('Imagine the Possibilities top cinematic video header & 60s–90s trail
     for (const locale of CREATOR_PODCAST_DUB_LOCALE_IDS) {
       const sources = getCreatorPodcastTrailerSources(locale)
       const media = getProductionExampleMedia('podcast', locale)
+      expect(media.trailerSrc).toBe(sources.webmSrc)
+      expect(media.trailerMp4Src).toBe(sources.mp4Src)
+
+      const webmRel = sources.webmSrc.split('?')[0].replace(/^\//, '')
+      const mp4Rel = sources.mp4Src.split('?')[0].replace(/^\//, '')
+      const webmAbs = path.join(ROOT, 'public', webmRel)
+      const mp4Abs = path.join(ROOT, 'public', mp4Rel)
+
+      expect(existsSync(webmAbs), `missing ${webmRel}`).toBe(true)
+      expect(existsSync(mp4Abs), `missing ${mp4Rel}`).toBe(true)
+      expect(statSync(webmAbs).size).toBeGreaterThan(1_000_000)
+      expect(statSync(mp4Abs).size).toBeGreaterThan(1_000_000)
+    }
+
+    for (const locale of VIDEO_MEMOIR_DUB_LOCALE_IDS) {
+      const sources = getVideoMemoirTrailerSources(locale)
+      const media = getProductionExampleMedia('memoir', locale)
       expect(media.trailerSrc).toBe(sources.webmSrc)
       expect(media.trailerMp4Src).toBe(sources.mp4Src)
 

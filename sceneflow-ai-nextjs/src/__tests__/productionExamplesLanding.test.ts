@@ -673,6 +673,13 @@ describe('Production showcase screening embeds', () => {
       '/videos/creator-podcast-trailer.mp4?v=20261102'
     )
     expect(getProductionExampleMedia('podcast').longformHref).toBeNull()
+    expect(getProductionExampleMedia('memoir').trailerSrc).toBe(
+      '/videos/video-memoir-trailer.webm?v=20261102'
+    )
+    expect(getProductionExampleMedia('memoir').trailerMp4Src).toBe(
+      '/videos/video-memoir-trailer.mp4?v=20261102'
+    )
+    expect(getProductionExampleMedia('memoir').longformHref).toBeNull()
     expect(getProductionExampleMedia('drama').milestones.map((milestone) => milestone.href)).toEqual([
       '/s/series/cb7cc9e663a87a074e37c62636ef8c00',
       '/blueprint/share/5GDScu72NC7SWo1ioPMwzUxTg9KM2joz',

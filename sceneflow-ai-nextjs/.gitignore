@@ -125,6 +125,18 @@ google-cloud-cli*.tar.gz
 !/public/videos/creator-podcast-trailer-th.mp4
 !/public/videos/video-memoir-trailer.webm
 !/public/videos/video-memoir-trailer.mp4
+!/public/videos/video-memoir-trailer-es.webm
+!/public/videos/video-memoir-trailer-es.mp4
+!/public/videos/video-memoir-trailer-pt.webm
+!/public/videos/video-memoir-trailer-pt.mp4
+!/public/videos/video-memoir-trailer-hi.webm
+!/public/videos/video-memoir-trailer-hi.mp4
+!/public/videos/video-memoir-trailer-zh.webm
+!/public/videos/video-memoir-trailer-zh.mp4
+!/public/videos/video-memoir-trailer-ar.webm
+!/public/videos/video-memoir-trailer-ar.mp4
+!/public/videos/video-memoir-trailer-th.webm
+!/public/videos/video-memoir-trailer-th.mp4
 
 # debug
 npm-debug.log*
