@@ -18,7 +18,10 @@ import {
   type MusicCueSegment,
   type ProductionMusicCueClip,
 } from '@/lib/scene/productionMusicCues'
-import { DEFAULT_MUSIC_FILE_DURATION_SEC } from '@/lib/storyboard/musicPlayback'
+import {
+  DEFAULT_MUSIC_FILE_DURATION_SEC,
+  resolveSceneMusicCues,
+} from '@/lib/storyboard/musicPlayback'
 
 export type MixerMusicClip = ProductionMusicCueClip
 
@@ -74,7 +77,10 @@ export function resolveMixerMusicClips(options: {
     buildProductionMusicCueClips(options.scene, mapped),
     options.musicShotVolumes
   )
-  if (scored.length > 0) {
+  if (
+    scored.length > 0 ||
+    (options.segments.length > 0 && resolveSceneMusicCues(options.scene).length > 0)
+  ) {
     return { clips: scored, usingScore: true }
   }
 

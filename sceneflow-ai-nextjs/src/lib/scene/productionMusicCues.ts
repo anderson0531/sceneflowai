@@ -12,12 +12,10 @@ import { getSceneBeats } from '@/lib/script/beatMigration'
 import {
   isMusicCueScored,
   parsePersistedMusicCues,
+  resolveActiveBeatScoreCue,
 } from '@/lib/script/sceneMusicCues'
 import { musicCueMixFields, resolveMusicCueFadeSec } from '@/lib/audio/loopingAudioSync'
-import {
-  DEFAULT_MUSIC_FILE_DURATION_SEC,
-  isCuedBeatMusicEnabled,
-} from '@/lib/storyboard/musicPlayback'
+import { DEFAULT_MUSIC_FILE_DURATION_SEC } from '@/lib/storyboard/musicPlayback'
 import type { SceneMusicCue } from '@/lib/script/segmentTypes'
 
 /** The subset of a production segment this mapping needs. */
@@ -118,10 +116,11 @@ export function buildProductionMusicCueClips(
   const beats = getSceneBeats(scene)
   if (beats.length === 0) return []
 
-  const cues = parsePersistedMusicCues(
+  const allCues = parsePersistedMusicCues(
     (scene as Record<string, unknown>).sceneMusicCues,
     beats
-  ).filter(isMusicCueScored)
+  )
+  const cues = allCues.filter(isMusicCueScored)
   if (cues.length === 0) return []
 
   const beatIndexById = new Map(beats.map((beat, index) => [beat.beatId, index]))
@@ -135,12 +134,18 @@ export function buildProductionMusicCueClips(
       const index = beatIndexById.get(segment.beatId)
       return index !== undefined && index >= cue.beatStart && index <= cue.beatEnd
     })
-    if (inRange.length === 0) continue
+    const enabled = segments.filter((segment) => {
+      if (!segment.beatId) return false
+      const index = beatIndexById.get(segment.beatId)
+      const beat = beatById.get(segment.beatId)
+      return (
+        resolveActiveBeatScoreCue(beat, index, allCues, cues)?.cueId === cue.cueId
+      )
+    })
+    const originSegments = [...inRange, ...enabled]
+    if (originSegments.length === 0) continue
 
-    const cueOrigin = Math.min(...inRange.map(segmentStart))
-    const enabled = inRange.filter((segment) =>
-      isCuedBeatMusicEnabled(beatById.get(segment.beatId))
-    )
+    const cueOrigin = Math.min(...originSegments.map(segmentStart))
     const fileDuration = cueFileDuration(cue)
     const url = (cue.url as string).trim()
     const label = cue.intent?.trim() || 'Background Music'

@@ -18,7 +18,9 @@ import {
   musicCueBudget,
   parsePersistedMusicCues,
   planSceneMusicCues,
+  resolveActiveBeatScoreCue,
   resolveBeatMusicCue,
+  resolveFallbackMusicCue,
 } from '@/lib/script/sceneMusicCues'
 import type { SceneBeat, SceneMovement, SceneMusicCue } from '@/lib/script/segmentTypes'
 
@@ -684,6 +686,22 @@ describe('cue helpers', () => {
     expect(resolveBeatMusicCue([cue], 6)?.cueId).toBe(cue.cueId)
     expect(resolveBeatMusicCue([cue], 2)).toBeUndefined()
     expect(resolveBeatMusicCue([cue], 7)).toBeUndefined()
+  })
+
+  it('resolves a fallback score cue for beats outside a cue’s initial range when music is turned on', () => {
+    const scoredA: SceneMusicCue = { ...cue, cueId: 'cue-1-2', beatStart: 1, beatEnd: 2, url: 'https://blob/a.wav' }
+    const scoredB: SceneMusicCue = { ...cue, cueId: 'cue-4-5', beatStart: 4, beatEnd: 5, url: 'https://blob/b.wav' }
+    const cues = [scoredA, scoredB]
+
+    expect(resolveFallbackMusicCue(cues, 0)?.cueId).toBe('cue-1-2')
+    expect(resolveFallbackMusicCue(cues, 3)?.cueId).toBe('cue-1-2')
+    expect(resolveFallbackMusicCue(cues, 6)?.cueId).toBe('cue-4-5')
+
+    expect(resolveActiveBeatScoreCue({ musicEnabled: undefined }, 3, cues)).toBeUndefined()
+    expect(resolveActiveBeatScoreCue({ musicEnabled: false }, 3, cues)).toBeUndefined()
+    expect(resolveActiveBeatScoreCue({ musicEnabled: true }, 3, cues)?.cueId).toBe('cue-1-2')
+    expect(resolveActiveBeatScoreCue({ musicEnabled: true }, 0, cues)?.cueId).toBe('cue-1-2')
+    expect(resolveActiveBeatScoreCue({ musicEnabled: true }, 6, cues)?.cueId).toBe('cue-4-5')
   })
 
   it('labels a cue’s span 1-based for the UI', () => {

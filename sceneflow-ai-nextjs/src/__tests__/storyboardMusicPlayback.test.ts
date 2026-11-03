@@ -605,7 +605,7 @@ describe('cue-scored scenes', () => {
     expect(clips[0].url).toBe(VIOLENCE_URL)
   })
 
-  it('falls back to the scene track for an enabled beat no cue covers', () => {
+  it('extends the score cue to an enabled beat outside its initial range instead of legacy musicAudio', () => {
     const clips = buildStoryboardMusicClips(
       buildCueScene({
         musicAudio: MUSIC_URL,
@@ -624,11 +624,13 @@ describe('cue-scored scenes', () => {
       16
     )
 
-    expect(clips.map((clip) => clip.url)).toEqual([DREAD_URL, MUSIC_URL])
-    expect(clips[1].startTime).toBe(8)
+    expect(clips).toHaveLength(1)
+    expect(clips[0].url).toBe(DREAD_URL)
+    expect(clips[0].startTime).toBe(0)
+    expect(clips[0].duration).toBe(16)
   })
 
-  it('plays nothing for an uncovered beat when the scene has no track of its own', () => {
+  it('plays the score cue on a later non-contiguous beat when music is turned on for that shot', () => {
     const clips = buildStoryboardMusicClips(
       buildCueScene({
         cues: [
@@ -640,13 +642,21 @@ describe('cue-scored scenes', () => {
             url: DREAD_URL,
           },
         ],
+        beats: [
+          { beatId: 'bt_a1', kind: 'action', durationSeconds: 4 },
+          { beatId: 'bt_a2', kind: 'action', durationSeconds: 4 },
+          { beatId: 'bt_a3', kind: 'action', durationSeconds: 4, musicEnabled: false },
+          { beatId: 'bt_a4', kind: 'action', durationSeconds: 4, musicEnabled: true },
+        ],
       }),
       cueFrames,
       16
     )
 
-    expect(clips).toHaveLength(1)
-    expect(clips[0].url).toBe(DREAD_URL)
+    expect(clips).toHaveLength(2)
+    expect(clips.every((clip) => clip.url === DREAD_URL)).toBe(true)
+    expect(clips[0]).toMatchObject({ startTime: 0, duration: 8 })
+    expect(clips[1]).toMatchObject({ startTime: 12, duration: 4 })
   })
 })
 

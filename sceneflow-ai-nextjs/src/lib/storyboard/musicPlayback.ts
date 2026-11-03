@@ -5,7 +5,11 @@
 import { musicCueMixFields } from '@/lib/audio/loopingAudioSync'
 import { getSceneBeats } from '@/lib/script/beatMigration'
 import type { SceneBeat, SceneMusicCue } from '@/lib/script/segmentTypes'
-import { isMusicCueScored, parsePersistedMusicCues } from '@/lib/script/sceneMusicCues'
+import {
+  isMusicCueScored,
+  parsePersistedMusicCues,
+  resolveActiveBeatScoreCue,
+} from '@/lib/script/sceneMusicCues'
 import type { StoryboardVisualFrame } from '@/lib/storyboard/types'
 
 /** Fallback only when the file length was never measured or stored. */
@@ -129,10 +133,18 @@ export function buildBeatAlignedMusicClips(
   const { musicUrl, sceneDuration } = options
   const musicFileDuration = options.musicFileDuration ?? DEFAULT_MUSIC_FILE_DURATION_SEC
   const dynamicDurations = options.dynamicDurations ?? {}
-  const cues = (options.cues ?? []).filter(isMusicCueScored)
+  const beats = getSceneBeats(scene)
+  const persistedCues = scene
+    ? parsePersistedMusicCues(
+        (scene as Record<string, unknown>).sceneMusicCues,
+        beats
+      )
+    : []
+  const allCues =
+    persistedCues.length > 0 ? persistedCues : (options.cues ?? [])
+  const cues = (options.cues ?? persistedCues).filter(isMusicCueScored)
   if (!musicUrl.trim() && cues.length === 0) return []
 
-  const beats = getSceneBeats(scene)
   if (beats.length === 0) {
     if (!musicUrl.trim()) return []
     return [
@@ -161,8 +173,10 @@ export function buildBeatAlignedMusicClips(
   for (const cue of cues) {
     const cueFrames = eligibleFrames.filter((frame) => {
       const index = indexByBeatId.get(frame.beatId as string)
-      if (index === undefined || index < cue.beatStart || index > cue.beatEnd) return false
-      return isCuedBeatMusicEnabled(beatById.get(frame.beatId as string))
+      const beat = beatById.get(frame.beatId as string)
+      return (
+        resolveActiveBeatScoreCue(beat, index, allCues, cues)?.cueId === cue.cueId
+      )
     })
     if (cueFrames.length === 0) continue
 
@@ -194,11 +208,15 @@ export function buildBeatAlignedMusicClips(
     for (const frame of cueFrames) claimed.add(frame)
   }
 
-  // Outside every cue the flag stays an explicit opt-in: the scene's own track
-  // only plays where the user asked for it.
-  const looseFrames = eligibleFrames.filter(
-    (frame) => !claimed.has(frame) && isBeatMusicEnabled(beatById.get(frame.beatId as string))
-  )
+  // Legacy scene-wide musicAudio fallback only when the scene has no scored cues.
+  const looseFrames =
+    cues.length === 0
+      ? eligibleFrames.filter(
+          (frame) =>
+            !claimed.has(frame) &&
+            isBeatMusicEnabled(beatById.get(frame.beatId as string))
+        )
+      : []
   if (looseFrames.length > 0 && musicUrl.trim()) {
     const fadeAnchorTime = Math.min(...looseFrames.map((frame) => frame.startTime))
     const coversWholeScene =

@@ -854,6 +854,60 @@ export function resolveBeatMusicCue(
 }
 
 /**
+ * The cue that plays on a beat when music is enabled for that shot, even if the
+ * beat sits outside every cue's initial `[beatStart, beatEnd]` range.
+ *
+ * Prefers the cue covering `beatIndex`, then the most recent cue that ended
+ * before `beatIndex` (so turning on music after a cue extends that score), and
+ * finally the earliest cue in the scene.
+ */
+export function resolveFallbackMusicCue(
+  cues: SceneMusicCue[],
+  beatIndex: number
+): SceneMusicCue | undefined {
+  if (cues.length === 0 || beatIndex < 0) return undefined
+  const direct = resolveBeatMusicCue(cues, beatIndex)
+  if (direct) return direct
+
+  let preceding: SceneMusicCue | undefined
+  for (const cue of cues) {
+    if (cue.beatEnd < beatIndex) {
+      if (!preceding || cue.beatEnd >= preceding.beatEnd) {
+        preceding = cue
+      }
+    }
+  }
+  return preceding ?? cues[0]
+}
+
+/**
+ * Resolve which scored cue (if any) should play on `beat` at `beatIndex`.
+ *
+ * - Beats inside a planned cue (`allCues`) default to on (`musicEnabled !== false`)
+ *   and play that cue once it has a generated track.
+ * - Beats outside every planned cue default to off and play the nearest scored
+ *   cue (`resolveFallbackMusicCue`) when the user turns music on for that shot
+ *   (`musicEnabled === true`).
+ */
+export function resolveActiveBeatScoreCue(
+  beat: Pick<SceneBeat, 'musicEnabled'> | undefined,
+  beatIndex: number | undefined,
+  allCues: SceneMusicCue[],
+  scoredCues: SceneMusicCue[] = allCues.filter(isMusicCueScored)
+): SceneMusicCue | undefined {
+  if (beatIndex === undefined || beatIndex < 0 || scoredCues.length === 0) {
+    return undefined
+  }
+  const directCue = resolveBeatMusicCue(allCues, beatIndex)
+  if (directCue) {
+    if (beat?.musicEnabled === false) return undefined
+    return isMusicCueScored(directCue) ? directCue : undefined
+  }
+  if (beat?.musicEnabled !== true) return undefined
+  return resolveFallbackMusicCue(scoredCues, beatIndex)
+}
+
+/**
  * The cue as direction for the video model — how the moment should feel and
  * move, never what it should sound like.
  *

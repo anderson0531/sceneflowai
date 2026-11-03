@@ -153,6 +153,41 @@ describe('buildProductionMusicCueClips', () => {
     expect(dread).toMatchObject({ startTime: 0, duration: 10 })
   })
 
+  it('plays the score cue on an uncued shot when music is turned on for that shot', () => {
+    const clips = buildProductionMusicCueClips(
+      cueScene({
+        cues: [
+          {
+            cueId: 'cue-0-1',
+            beatStart: 0,
+            beatEnd: 1,
+            description: 'Cinematic orchestral score, ominous mood, slow tempo',
+            intent: 'rising dread',
+            url: DREAD_URL,
+            fileDuration: 30,
+          },
+        ],
+        beats: [
+          { beatId: 'bt_a1', kind: 'action', durationSeconds: 4 },
+          { beatId: 'bt_a2', kind: 'action', durationSeconds: 4 },
+          { beatId: 'bt_a3', kind: 'action', durationSeconds: 4, musicEnabled: false },
+          { beatId: 'bt_a4', kind: 'action', durationSeconds: 4, musicEnabled: true },
+        ],
+      }),
+      beatSegments()
+    )
+
+    expect(clips.map((clip) => clip.beatId)).toEqual(['bt_a1', 'bt_a2', 'bt_a4'])
+    expect(clips.every((clip) => clip.url === DREAD_URL)).toBe(true)
+    expect(clips[2]).toMatchObject({
+      id: 'music-cue-0-1-bt_a4',
+      beatId: 'bt_a4',
+      startTime: 30,
+      duration: 10,
+      trimStart: 30,
+    })
+  })
+
   it('returns nothing when no cue has been generated, so the legacy track can play', () => {
     const clips = buildProductionMusicCueClips(
       cueScene({

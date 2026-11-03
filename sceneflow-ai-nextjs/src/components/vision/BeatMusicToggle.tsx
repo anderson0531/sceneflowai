@@ -19,6 +19,8 @@ export interface BeatMusicToggleProps {
   onScriptChange?: (script: any) => void
   /** The cue scoring this beat, when one covers it. */
   cue?: SceneMusicCue
+  /** Fallback score cue that plays when music is enabled on an uncued beat. */
+  fallbackCue?: SceneMusicCue
   className?: string
 }
 
@@ -29,6 +31,7 @@ export function BeatMusicToggle({
   script,
   onScriptChange,
   cue,
+  fallbackCue,
   className,
 }: BeatMusicToggleProps) {
   const enabled = cue ? isCuedBeatMusicEnabled(beat) : isBeatMusicEnabled(beat)
@@ -51,14 +54,26 @@ export function BeatMusicToggle({
   }
 
   // The cue is what actually scores the beat; the switch stays an override, so
-  // it reads as the cue's name once one covers the beat.
-  const scored = cue ? isMusicCueScored(cue) : false
-  const label = cue ? formatMusicCueRange(cue) : 'Music'
+  // it reads as the cue's name once one covers the beat. When a beat is outside
+  // the cue's initial range, turning it on plays `fallbackCue`.
+  const effectiveCue = cue ?? fallbackCue
+  const scored = effectiveCue ? isMusicCueScored(effectiveCue) : false
+  const label = cue
+    ? formatMusicCueRange(cue)
+    : fallbackCue
+      ? enabled
+        ? formatMusicCueRange(fallbackCue)
+        : 'Score'
+      : 'Music'
   const title = cue
     ? `${formatMusicCueRange(cue)}${cue.intent ? ` — ${cue.intent}` : ''}${
         scored ? '' : ' (not generated yet)'
       }`
-    : 'Background music for this shot'
+    : fallbackCue
+      ? `Score (${formatMusicCueRange(fallbackCue)}${
+          fallbackCue.intent ? ` — ${fallbackCue.intent}` : ''
+        })${scored ? '' : ' (not generated yet)'}`
+      : 'Background music for this shot'
 
   return (
     <label
@@ -67,10 +82,14 @@ export function BeatMusicToggle({
       title={title}
     >
       <Music
-        className={`w-3 h-3 ${cue && !scored ? 'text-purple-300/50' : 'text-purple-300'}`}
+        className={`w-3 h-3 ${
+          effectiveCue && !scored ? 'text-purple-300/50' : 'text-purple-300'
+        }`}
       />
       <span
-        className={`text-[10px] ${cue && !scored ? 'text-purple-200/60 italic' : 'text-purple-200'}`}
+        className={`text-[10px] ${
+          effectiveCue && !scored ? 'text-purple-200/60 italic' : 'text-purple-200'
+        }`}
       >
         {label}
       </span>

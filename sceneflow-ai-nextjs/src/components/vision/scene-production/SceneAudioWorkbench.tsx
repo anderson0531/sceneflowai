@@ -55,6 +55,8 @@ import {
   stripInlineSfxLinesFromActionText,
 } from '@/lib/script/deriveSfxFromSceneContent'
 import type { SceneBeat, SceneMusicCue } from '@/lib/script/segmentTypes'
+import { resolveFallbackMusicCue } from '@/lib/script/sceneMusicCues'
+import { isBeatMusicEnabled, isCuedBeatMusicEnabled } from '@/lib/storyboard/musicPlayback'
 import { dialogueDirectionDisplay } from '@/lib/scene/dialogueDirectionDisplay'
 import { coerceDialogueLineText } from '@/lib/script/segmentScript'
 import {
@@ -415,7 +417,10 @@ export function SceneAudioWorkbench(props: SceneAudioWorkbenchProps & { onSaveSf
         if (kind) markers.push(kind)
         if (facts?.excluded || beat.excluded) markers.push('Excluded')
         if ((sfxByBeatId.get(beat.beatId)?.length ?? 0) > 0 || facts?.tracksSfx) markers.push('SFX')
-        if (musicCueByBeatId.get(beat.beatId)) markers.push('Music')
+        const cue = musicCueByBeatId.get(beat.beatId)
+        if (cue ? isCuedBeatMusicEnabled(beat) : isBeatMusicEnabled(beat)) {
+          markers.push('Music')
+        }
         return {
           id: beat.beatId,
           beatNumber: Number.isFinite(beatNumber) ? beatNumber : index + 1,
@@ -953,6 +958,10 @@ function ActionBeatAudio(
             script={props.script}
             onScriptChange={props.onScriptChange}
             cue={props.musicCueByBeatId.get(beat.beatId)}
+            fallbackCue={resolveFallbackMusicCue(
+              props.sceneMusicCues,
+              Math.max(0, beatNumber - 1)
+            )}
           />
         )}
         {hasBeatSfx && (
@@ -1255,6 +1264,10 @@ function SpokenBeatAudio(
                 script={props.script}
                 onScriptChange={props.onScriptChange}
                 cue={props.musicCueByBeatId.get(beat.beatId)}
+                fallbackCue={resolveFallbackMusicCue(
+                  props.sceneMusicCues,
+                  Math.max(0, beatNumber - 1)
+                )}
               />
             )}
             {showSfx && (

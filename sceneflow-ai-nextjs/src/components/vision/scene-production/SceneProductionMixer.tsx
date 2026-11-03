@@ -33,12 +33,19 @@ import {
   resolveMixerMusicClips,
   type MixerMusicClip,
 } from '@/lib/scene/mixerScoreMusic'
-import { DEFAULT_MUSIC_FILE_DURATION_SEC, isCuedBeatMusicEnabled } from '@/lib/storyboard/musicPlayback'
+import {
+  DEFAULT_MUSIC_FILE_DURATION_SEC,
+  isBeatMusicEnabled,
+  isCuedBeatMusicEnabled,
+} from '@/lib/storyboard/musicPlayback'
 import { getSceneBeats } from '@/lib/script/beatMigration'
 import {
   applySceneMusicCues,
   isMusicCueScored,
   parsePersistedMusicCues,
+  resolveActiveBeatScoreCue,
+  resolveBeatMusicCue,
+  resolveFallbackMusicCue,
   setBeatsMusicEnabled,
 } from '@/lib/script/sceneMusicCues'
 import {
@@ -4401,26 +4408,37 @@ export function SceneProductionMixer({
     if (!mixerMusic.usingScore) return []
     const scene = audioAssets.scoreScene
     const beats = scene ? getSceneBeats(scene) : []
+    const allCues = scene ? parsePersistedMusicCues(scene.sceneMusicCues, beats) : []
     const beatIndexById = new Map(beats.map((beat, index) => [beat.beatId, index]))
     const beatById = new Map(beats.map((beat) => [beat.beatId, beat]))
     return previewSegments.flatMap((segment, index) => {
       const beatId = segment.beatId
       if (!beatId) return []
       const beatIndex = beatIndexById.get(beatId)
-      const cue =
+      const beat = beatById.get(beatId)
+      const directCue =
+        beatIndex == null ? undefined : resolveBeatMusicCue(allCues, beatIndex)
+      const activeCue = resolveActiveBeatScoreCue(
+        beat,
+        beatIndex,
+        allCues,
+        scoredMusicCues
+      )
+      const fallbackCue =
         beatIndex == null
           ? undefined
-          : scoredMusicCues.find(
-              (entry) => beatIndex >= entry.beatStart && beatIndex <= entry.beatEnd
-            )
-      const beat = beatById.get(beatId)
+          : resolveFallbackMusicCue(scoredMusicCues, beatIndex)
+      const enabled = directCue
+        ? isCuedBeatMusicEnabled(beat)
+        : isBeatMusicEnabled(beat)
+      const displayCue = activeCue ?? directCue ?? fallbackCue
       return [
         {
           beatId,
           number: index + 1,
-          enabled: isCuedBeatMusicEnabled(beat),
-          covered: !!cue,
-          cueLabel: cue?.intent?.trim() || 'Score',
+          enabled: !!activeCue || (enabled && !!displayCue),
+          covered: !!activeCue || (!!directCue && isMusicCueScored(directCue)),
+          cueLabel: displayCue?.intent?.trim() || 'Score',
           volume: musicShotConfigs[beatId]?.volume ?? 1,
         },
       ]
