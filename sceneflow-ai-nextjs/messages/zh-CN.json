@@ -2861,13 +2861,13 @@
       }
     },
     "explorerHandoff": "这些链接展示的是成品；Explorer 则是让你亲手制作的地方。",
-    "languagesBanner": "公开示例提供四种语言版本：英语、西班牙语、中文和阿拉伯语。",
+    "languagesBanner": "公开示例提供 7 种语言版本：英语、西班牙语、葡萄牙语、印地语、中文、阿拉伯语和泰语。",
     "workflowLabel": "解决方案",
     "startProduction": "开始生产",
     "cta": "开始生产",
     "continuityNote": "Series Room 管理连续性",
     "resonanceNote": "Audience Resonance™ 优化话术",
-    "videoLanguagePrompt": "以英语、西班牙语、中文或阿拉伯语观看",
+    "videoLanguagePrompt": "以英语、西班牙语、葡萄牙语、印地语、中文、阿拉伯语或泰语观看",
     "videoComingSoon": "配音版即将推出",
     "videoSoon": "很快",
     "frictionLabel": "摩擦",
@@ -3454,7 +3454,7 @@
     "badge": "工作室会员资格和使用定价",
     "title": "Explorer 入门价 — 9 美元",
     "subtitle": "立即开始您的第一部电影，只需 9 美元——将您的想法转化为结构化的 Blueprint，选角您的角色，并预览您的第一个场景。然后订阅以保留您的 Continuity Vault 并在完成制作时添加积分。",
-    "explorerHighlight": "无需电影制作技术——专为日常故事讲述者、逐章独立创作者、系列频道和混合电影工作室而打造。",
+    "explorerHighlight": "无需专业影视技术——专为日常故事创作者、分章发布的独立创作者、视频播客主播、剧集频道以及定制视频制作企业打造。",
     "trustBadges": [
       "通过 Whop 进行安全支付",
       "仅需 9 美元（使用代码 Explorer）即可体验该工作室",
@@ -3490,16 +3490,16 @@
         },
         {
           "id": "series",
-          "badge": "货币化频道 • 149 美元/月",
+          "badge": "变现频道与视频播客 • $149/月",
           "title": "系列的角色和设置连续性",
-          "description": "当观众与熟悉的角色和世界产生联系时，他们就会订阅频道。您的连续性保险库会保留每集的演员面孔、服装、自定义语音克隆和地点，以便您可以在 YouTube、TikTok 和 Reels 上持续成长。",
+          "description": "当观众与熟悉的主播、角色和世界产生共鸣时就会订阅。在每一集中锁定演员面孔、声音克隆和场景——或上传现场播客镜头并与 SceneFlow 生成的剧情重现无缝剪辑，支持 7 种界面语言和 70 多种配音语言。",
           "recommendedPlan": "专业版（$149/月）"
         },
         {
           "id": "hybrid",
-          "badge": "经验丰富的混合型电影制片人 • $149–$599/月",
+          "badge": "电影人与视频制作企业 • $149–$599/月",
           "title": "制作资金包和混合拍摄",
-          "description": "导出行业标准脚本（PDF、FDX、Fountain），搭配预览版 Animatic 和宣传预告片以确保投资者资金，或者上传现场拍摄的场景并将其与 4K AI 镜头混合，而成本只是实际制作成本的一小部分。",
+          "description": "上传剧本（PDF、FDX、Fountain）生成独立的放映室 Pre-Vis 动态分镜与宣传预告片以获取投资——或将真人访谈与 4K AI 历史重现相结合，开启高利润的在线视频制作业务（视频回忆录、房产漫游、客户传记）。",
           "recommendedPlan": "专业版/工作室 + 附加组件"
         }
       ]

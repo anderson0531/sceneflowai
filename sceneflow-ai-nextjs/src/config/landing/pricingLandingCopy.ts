@@ -6,7 +6,7 @@ export const PRICING_LANDING_COPY = {
   subtitle:
     'Start your first film today for $9—turn your idea into a structured Blueprint, cast your characters, and preview your first scene. Then subscribe to retain your Continuity Vault and add credits as you finish your production.',
   explorerHighlight:
-    'No technical filmmaking skills required—built for everyday storytellers, chapter-by-chapter indie creators, series channels, and hybrid film studios.',
+    'No technical filmmaking skills required—built for everyday storytellers, chapter-by-chapter indie creators, video podcasters, series channels, and bespoke video production businesses.',
   trustBadges: [
     'Secure payments via Whop',
     '$9 Explorer to try the studio',
@@ -45,18 +45,18 @@ export const PRICING_LANDING_COPY = {
       },
       {
         id: 'series',
-        badge: 'Monetized Channels • $149/mo',
+        badge: 'Monetized Channels & Podcasters • $149/mo',
         title: 'Character and Setting Continuity for Series',
         description:
-          'Audiences subscribe to channels when they connect with familiar characters and worlds. Your Continuity Vault preserves cast faces, outfits, custom voice clones, and locations across every episode so you can sustainably grow on YouTube, TikTok, and Reels.',
+          'Audiences subscribe when they connect with familiar hosts, characters, and worlds. Preserve cast faces, voice clones, and sets across every episode—or upload live podcast camera clips with SceneFlow-generated reconstructions across 7 UI languages and 70+ dubbing languages.',
         recommendedPlan: 'Pro ($149/mo)',
       },
       {
         id: 'hybrid',
-        badge: 'Experienced & Hybrid Filmmakers • $149–$599/mo',
+        badge: 'Filmmakers & Production Businesses • $149–$599/mo',
         title: 'Production Funding Packages & Hybrid Shoots',
         description:
-          'Export industry-standard scripts (PDF, FDX, Fountain) paired with a Pre-Vis Animatic and Promo Trailer to secure investor funding—or upload live-filmed scenes and blend them with 4K AI shots at a fraction of physical production costs.',
+          'Upload scripts (PDF, FDX, Fountain) to generate a standalone Screening Room Pre-Vis Animatic and Promo Trailer for investor funding—or launch a high-margin online video production business (Video Memoirs, Real Estate Tours, Client Biographies) blending live interviews with 4K AI reenactments.',
         recommendedPlan: 'Pro / Studio + Add-Ons',
       },
     ],

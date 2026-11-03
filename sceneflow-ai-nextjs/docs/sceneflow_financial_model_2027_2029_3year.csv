@@ -1,0 +1,72 @@
+Table,Line Item / Metric,FY 2027,FY 2028,FY 2029,Notes & Assumptions
+3-YEAR P&L & KPI FORECAST,Ending Active Monthly Subscribers (7 Global Markets),28000,110000,275000,"Across English, Spanish, Portuguese, Hindi, Chinese, Arabic & Thai"
+3-YEAR P&L & KPI FORECAST,Annual $9 Explorer Trial Buyers,190000,480000,960000,Zero-skill-barrier 30-day Studio Test Flight buyers across 7 UI languages
+3-YEAR P&L & KPI FORECAST,Exit Monthly Recurring Revenue (Dec MRR - USD),2409000,9350000,22800000,Pure subscription MRR excluding Add-On packs
+3-YEAR P&L & KPI FORECAST,Exit Annual Recurring Revenue (Dec ARR - USD),28908000,112200000,273600000,Dec MRR * 12 ($28.91M -> $112.20M -> $273.60M)
+3-YEAR P&L & KPI FORECAST,1. Base Studio Subscriptions Revenue (USD),11234115,54200000,142000000,"Hobbyist ($19), Starter ($49), Pro ($149), Studio ($599)"
+3-YEAR P&L & KPI FORECAST,2. Subscriber 12-Month Add-On Packs Revenue (USD),2831771,15180000,42600000,"$25 (2k cr), $100 (9k cr), $250 (25k cr) client memoir/agency & chapter packs"
+3-YEAR P&L & KPI FORECAST,3. $9 Explorer Studio Test Flights Revenue (USD),1710000,4320000,8640000,Self-liquidating top-of-funnel paid trial wedge ($9 * annual buyers)
+3-YEAR P&L & KPI FORECAST,4. BYOK Orchestration Fees Revenue (USD),499724,2950000,8560000,20% platform fee on Pro & Studio BYOK generations (~95% margin)
+3-YEAR P&L & KPI FORECAST,5. SceneFlow Network Watch SKU (Net 50% Share - USD),0,1550000,6200000,$4.99/mo SVOD catalog across 7 languages after Originals Seed cohort
+3-YEAR P&L & KPI FORECAST,Total Recognized Gross Revenue (USD),16275610,78200000,208000000,YoY Growth: +380.5% in FY28; +166.0% in FY29
+3-YEAR P&L & KPI FORECAST,Memo: Revenue from Production Businesses & Pro/Studio Creators (USD),10684308,53800000,145600000,#1 Revenue Driver (65.6% in FY27 -> 68.8% in FY28 -> 70.0% in FY29)
+3-YEAR P&L & KPI FORECAST,Google Cloud / Vertex AI Compute COGS (USD),2415606,8758400,19136000,Deflates from 25.0% in Q1 2027 to 12.5% in Q4 2027 (14.7% FY27 -> 11.2% FY28 -> 9.2% FY29)
+3-YEAR P&L & KPI FORECAST,Third-Party Generation & Audio COGS (USD),941543,3910000,9360000,"ElevenLabs 70+ lang, Kling/Fal, Topaz, Hive AI (5.8% FY27 -> 5.0% FY28 -> 4.5% FY29)"
+3-YEAR P&L & KPI FORECAST,Whop Merchant of Record Payment Fees (USD),618474,2971600,7904000,3.8% blended payment processing & global tax compliance across 7 markets
+3-YEAR P&L & KPI FORECAST,Total Un-Subsidized GAAP COGS (USD),3975623,15640000,36400000,Drops from 24.4% of rev in FY27 -> 20.0% in FY28 -> 17.5% in FY29
+3-YEAR P&L & KPI FORECAST,GAAP Gross Profit (USD),12299987,62560000,171600000,Total Revenue minus Total GAAP COGS
+3-YEAR P&L & KPI FORECAST,GAAP Gross Margin %,75.6%,80.0%,82.5%,"Driven by 2027-2029 AI model deflation + rising B2B Add-On, BYOK & Vault mix"
+3-YEAR P&L & KPI FORECAST,GCP Startup Credit Offset - $2K Start Tier (Pre-Launch + Jan 2027),1250,0,0,"$2,000 Start Tier ($750 Nov-Dec 2026 showcase rendering + $1,250 Jan 2027 offset)"
+3-YEAR P&L & KPI FORECAST,GCP / NVIDIA Startup Credit Offset - Base Partner Track (USD),100000,100000,0,$100k Year 1 + $100k Year 2 credit offset
+3-YEAR P&L & KPI FORECAST,GCP / NVIDIA Startup Credit Offset - AI-First Track (USD),250000,100000,0,Up to $250k Year 1 + $100k Year 2
+3-YEAR P&L & KPI FORECAST,Cash Gross Profit - Base $100k Credit Track (USD),12399987,62660000,171600000,76.2% in FY27; 80.1% in FY28; 82.5% in FY29
+3-YEAR P&L & KPI FORECAST,Cash Gross Profit - $250k AI-First Credit Track (USD),12549987,62660000,171600000,77.1% in FY27; 80.1% in FY28; 82.5% in FY29
+3-YEAR P&L & KPI FORECAST,R&D / Engineering & Product OpEx (USD),1720000,8600000,20800000,10.6% of rev in FY27 -> 11.0% in FY28 -> 10.0% in FY29
+3-YEAR P&L & KPI FORECAST,"S&M — Creator, Podcaster & 7-Language Explorer Funnel (USD)",1515000,6250000,14500000,Top-of-funnel creator & podcaster acquisition across 7 language markets
+3-YEAR P&L & KPI FORECAST,S&M — Viral Video Production Business Campaigns (USD),2085000,10950000,27100000,"Reinvested revenue scaling global B2B Video Memoir, Real Estate & Agency campaigns"
+3-YEAR P&L & KPI FORECAST,Total Sales & Marketing OpEx (USD),3600000,17200000,41600000,22.1% of rev in FY27 -> 22.0% in FY28 -> 20.0% in FY29
+3-YEAR P&L & KPI FORECAST,General & Administrative OpEx (USD),560000,3900000,10400000,3.4% of rev in FY27 -> 5.0% in FY28 -> 5.0% in FY29
+3-YEAR P&L & KPI FORECAST,Total Operating Expenses (USD),5880000,29700000,72800000,Total OpEx funded out of operating cash flow
+3-YEAR P&L & KPI FORECAST,GAAP Operating Income / EBITDA (USD),6419987,32860000,98800000,GAAP EBITDA Margin: 39.4% (FY27) -> 42.0% (FY28) -> 47.5% (FY29)
+3-YEAR P&L & KPI FORECAST,Cash Operating Income / EBITDA - $2K Start Tier Only (USD),6421237,32860000,98800000,Proves 100% self-funding profitability with initial $2K Start Tier credits alone
+3-YEAR P&L & KPI FORECAST,Cash Operating Income / EBITDA - $100k Credit Track (USD),6519987,32960000,98800000,Cash EBITDA Margin: 40.1% (FY27) -> 42.1% (FY28) -> 47.5% (FY29)
+3-YEAR P&L & KPI FORECAST,Cash Operating Income / EBITDA - $250k AI-First Track (USD),6669987,32960000,98800000,Cash EBITDA Margin: 41.0% (FY27) -> 42.1% (FY28) -> 47.5% (FY29)
+,,,,,
+,,,,,
+7-MARKET SUBSCRIBER MIX,Language Market,Dec 2027 Active Subs,FY 2028 Active Subs,FY 2029 Active Subs,Primary Regional & B2B Production Business Growth Drivers
+7-MARKET SUBSCRIBER MIX,1. English (`en` - 1.5B Speakers),8120,31900,79750,"US, UK, Canada, Australia; highest Video Memoir Studio ($599), Real Estate & Podcaster Pro ($149) mix"
+7-MARKET SUBSCRIBER MIX,2. Spanish (`es` - 600M Speakers),4620,18150,45375,"US Hispanic, Mexico, Spain, LATAM; multi-generational Family Memoirs, podcasts & serialized dramas"
+7-MARKET SUBSCRIBER MIX,3. Chinese (`zh-CN` - 1.1B+ Speakers),4340,17050,42625,"Bilibili UP 主 long-form, Douyin micro-dramas, Taiwan/Singapore/Diaspora family legacy studios"
+7-MARKET SUBSCRIBER MIX,4. Hindi (`hi` - 615M+ Speakers),4060,15950,39875,"India (#1 global YouTube market); wedding/anniversary legacy memoirs, lore podcasts & EdTech"
+7-MARKET SUBSCRIBER MIX,5. Portuguese (`pt` - 265M Speakers),3080,12100,30250,"Brazil & Portugal; narrative video podcasts, client video agencies, series & digital courses"
+7-MARKET SUBSCRIBER MIX,6. Arabic (`ar` - 420M+ Speakers),2380,9350,23375,"Saudi Arabia, UAE, Egypt; high-ticket family heritage biographies, luxury real estate tours & docs"
+7-MARKET SUBSCRIBER MIX,7. Thai & SEA (`th` - 70M+ Speakers),1400,5500,13750,"Thailand & Southeast Asia; booming creator podcasts, vertical series & boutique client video studios"
+,,,,,
+,,,,,
+Tier / Pack Name,Retail Price (USD),Included Credits,Q1 2027 GAAP Margin %,Q4 2027 GAAP Margin % (After -55% Model Cost Drop),Q1 vs Q4 2027 Profit Per Unit & Primary Customer Archetype
+TIER UNIT ECONOMICS,Explorer (One-Time 30-Day Test Flight),9.00,750,65.6%,79.8%
+TIER UNIT ECONOMICS,Hobbyist (Monthly Storyteller & Vault),19.00,1500,67.9%,81.2%
+TIER UNIT ECONOMICS,Starter (Monthly Chapter & Pre-Vis Pitch),49.00,4500,63.4%,79.4%
+TIER UNIT ECONOMICS,Pro (Monthly Podcaster & Solo Memoir Business),149.00,15000,58.1%,76.8%
+TIER UNIT ECONOMICS,Studio (Monthly Production Agency & B2B),599.00,75000,54.6%,75.1%
+TIER UNIT ECONOMICS,$25 Subscriber Add-On Pack (12-Mo Validity),25.00,2000,61.9%,78.6%
+TIER UNIT ECONOMICS,$100 Subscriber Add-On Pack (12-Mo Validity),100.00,9000,58.7%,77.5%
+TIER UNIT ECONOMICS,$250 Subscriber Add-On Pack (12-Mo Validity),250.00,25000,53.8%,75.2%
+,,,,,
+,,,,,
+AI Operation (`creditCosts.ts`),Q1_2027_ProviderCost_USD,Q4_2027_ProviderCost_USD,RetailPrice_USD,Q1_Margin_Pct,Q4_Margin_Pct (With -55% Model Deflation)
+MODEL DEFLATION CURVE,Veo 3.1 Fast Video Segment (1080p 8s + EXT),0.75,0.34,1.50,50.0%
+MODEL DEFLATION CURVE,Veo 3.1 Quality Video Segment (4K 8s),1.30,0.58,2.50,48.0%
+MODEL DEFLATION CURVE,Veo 3.1 Lite Video Segment (720p 8s),0.40,0.18,0.75,46.7%
+MODEL DEFLATION CURVE,Imagen 4 Storyboard / Beat Frame (1K),0.04,0.018,0.10,60.0%
+MODEL DEFLATION CURVE,Gemini Pro Image Scene / Character Ref (2K/4K),0.12,0.054,0.30,60.0%
+MODEL DEFLATION CURVE,ElevenLabs Multilingual TTS (per 1K chars - 70+ Lang),0.35,0.16,0.80,56.3%
+MODEL DEFLATION CURVE,Kling v3 Omni / Neural Lipsync (10s),0.85,0.40,2.00,57.5%
+MODEL DEFLATION CURVE,Full 28-Min Commissioned Video Memoir Delivery Cost,58.00,26.10,125.00,53.6%
+MODEL DEFLATION CURVE,Full 10-Min Multi-Language Episode Delivery Cost,42.00,18.90,90.00,53.3%
+,,,,,
+,,,,,
+FY 2027 Scenario,Dec_2027_Active_Subs,FY2027_Gross_Revenue_USD,Dec_2027_Exit_ARR_USD,FY2027_Cash_EBITDA_USD,Key Scenario Drivers
+SCENARIO SENSITIVITY,Conservative (Organic Launch + $2K Start Credits Only),9500,4650000,7900000,1680000
+SCENARIO SENSITIVITY,Base Case (7 Languages + Viral B2B Production Business Reinvestment),28000,16275610,28908000,6669987
+SCENARIO SENSITIVITY,Bull Case (Global Viral Breakout of AI Video Production Businesses),62000,34500000,61200000,14800000

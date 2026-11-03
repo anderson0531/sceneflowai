@@ -2861,13 +2861,13 @@
       }
     },
     "explorerHandoff": "Estos enlaces representan un producto terminado. Explorer es el lugar donde creas el tuyo propio.",
-    "languagesBanner": "Los ejemplos públicos se ofrecen en cuatro idiomas: inglés, español, chino y árabe.",
+    "languagesBanner": "Los ejemplos públicos se ofrecen en 7 idiomas: inglés, español, portugués, hindi, chino, árabe y tailandés.",
     "workflowLabel": "Soluciones",
     "startProduction": "Comienza tu producción",
     "cta": "Comienza tu producción",
     "continuityNote": "Series Room gestiona la continuidad.",
     "resonanceNote": "Audience Resonance™ optimiza los guiones.",
-    "videoLanguagePrompt": "Véalo en inglés, español, chino o árabe.",
+    "videoLanguagePrompt": "Véalo en inglés, español, portugués, hindi, chino, árabe o tailandés",
     "videoComingSoon": "Doblaje próximamente",
     "videoSoon": "Pronto",
     "frictionLabel": "La fricción",
@@ -3454,7 +3454,7 @@
     "badge": "Precios de uso y membresía de Studio",
     "title": "Empieza con Explorer — $9",
     "subtitle": "Comience su primera película hoy por $9: convierta su idea en un Blueprint estructurado, elija sus personajes y obtenga una vista previa de su primera escena. Luego suscríbete para conservar tu Continuity Vault y agregar créditos a medida que termines tu producción.",
-    "explorerHighlight": "No se requieren habilidades técnicas de realización cinematográfica: está diseñado para narradores cotidianos, creadores independientes capítulo por capítulo, canales de series y estudios de cine híbridos.",
+    "explorerHighlight": "No se requieren habilidades técnicas de cine: diseñado para narradores cotidianos, creadores independientes por capítulos, podcasters de video, canales de series y negocios de producción de video a medida.",
     "trustBadges": [
       "Pagos seguros a través de Whop",
       "$9 Explorer para probar el estudio",
@@ -3490,16 +3490,16 @@
         },
         {
           "id": "series",
-          "badge": "Canales monetizados • $149/mes",
+          "badge": "Canales Monetizados y Podcasters • $149/mes",
           "title": "Continuidad de personajes y escenarios de la serie.",
-          "description": "El público se suscribe a canales cuando se conecta con personajes y mundos familiares. Your Continuity Vault conserva rostros del elenco, atuendos, clones de voz personalizados y ubicaciones en cada episodio para que puedas crecer de manera sostenible en YouTube, TikTok y Reels.",
+          "description": "Las audiencias se suscriben cuando conectan con presentadores, personajes y mundos familiares. Conserva rostros del elenco, clones de voz y escenarios en cada episodio, o sube clips en vivo de cámara de podcast con reconstrucciones generadas por SceneFlow en 7 idiomas de interfaz y más de 70 idiomas de doblaje.",
           "recommendedPlan": "Profesional ($149/mes)"
         },
         {
           "id": "hybrid",
-          "badge": "Cineastas experimentados e híbridos • $149–$599/mes",
+          "badge": "Cineastas y Negocios de Producción • $149–$599/mes",
           "title": "Paquetes de financiación de producción y rodajes híbridos",
-          "description": "Exporte guiones estándar de la industria (PDF, FDX, Fountain) junto con un Animatic Pre-Vis y un tráiler promocional para asegurar la financiación de los inversores, o cargue escenas filmadas en vivo y combínelas con tomas de IA 4K a una fracción de los costos de producción física.",
+          "description": "Sube guiones (PDF, FDX, Fountain) para generar un Animatic Pre-Vis independiente en Screening Room y un tráiler promocional para financiación de inversores, o lanza un negocio de producción de video en línea de alto margen (Memorias en Video, Tours Inmobiliarios, Biografías de Clientes) combinando entrevistas en vivo con recreaciones de IA en 4K.",
           "recommendedPlan": "Pro / Studio + Complementos"
         }
       ]

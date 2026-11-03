@@ -83,13 +83,14 @@ export const PRODUCTION_SHOWCASE_COPY = {
   explorerHandoff:
     'These links are a finished production. Explorer is where you make your own.',
   languagesBanner:
-    'Public examples ship in 4 languages: English, Spanish, Chinese, and Arabic.',
+    'Public examples ship in 7 languages: English, Spanish, Portuguese, Hindi, Chinese, Arabic, and Thai.',
   workflowLabel: 'Solutions',
   startProduction: 'Start Your Production',
   cta: 'Start Your Production',
   continuityNote: 'Series Room manages continuity',
   resonanceNote: 'Audience Resonance™ optimizes scripts',
-  videoLanguagePrompt: 'Watch in English, Spanish, Chinese, or Arabic',
+  videoLanguagePrompt:
+    'Watch in English, Spanish, Portuguese, Hindi, Chinese, Arabic, or Thai',
   videoComingSoon: 'Dub coming soon',
   videoSoon: 'Soon',
   frictionLabel: 'The Friction',
