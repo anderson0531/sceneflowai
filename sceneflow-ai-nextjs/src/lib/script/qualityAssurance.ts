@@ -10,6 +10,11 @@ import { toCanonicalName, generateAliases } from '@/lib/character/canonical'
 import { isCinematicBookendScene } from '@/lib/script/cinematicBookends'
 import { ensureSceneBeats, applyBeatsToScene, getSceneBeats } from '@/lib/script/beatMigration'
 import { dedupeRedundantActionBeats, findRedundantActionBeatIndices } from '@/lib/script/actionBeatDedupe'
+import {
+  doesSceneRequireEstablishingShot,
+  ensureSceneHasEstablishingShot,
+  isBeatEstablishingShot,
+} from '@/lib/script/establishingShots'
 import type { BeatKind, SceneBeat } from '@/lib/script/segmentTypes'
 import { MAX_BEATS_PER_SCENE } from '@/lib/script/sceneDecomposition'
 
@@ -334,24 +339,46 @@ export function runScriptQA(
       }
     }
 
-    // Scene continuity checks
-    if (sceneIdx > 0) {
-      const prevScene = scenes[sceneIdx - 1]
-      
-      // Check for abrupt location changes without transition
+    // Scene continuity & establishing shot checks
+    const prevScene = sceneIdx > 0 ? scenes[sceneIdx - 1] : null
+    if (
+      !isBookend &&
+      beats.length > 0 &&
+      doesSceneRequireEstablishingShot(
+        scene as Record<string, unknown>,
+        prevScene as Record<string, unknown> | null,
+        sceneIdx
+      ) &&
+      !isBeatEstablishingShot(beats[0], true)
+    ) {
+      issues.push({
+        type: 'warning',
+        category: 'continuity',
+        sceneIndex: sceneIdx,
+        message: `Scene ${sceneNum} enters a new location without an opening establishing shot beat`,
+        suggestion:
+          'Prepend an opening Wide Establishing Shot action beat at Beat 0 to orient the viewer spatially',
+        autoFixable: true,
+      })
+    } else if (sceneIdx > 0 && prevScene) {
+      // Check for abrupt location changes without transition in legacy action text
       const currentLocation = extractLocation(scene.heading)
       const prevLocation = extractLocation(prevScene.heading)
-      
-      if (currentLocation && prevLocation && 
-          currentLocation !== prevLocation &&
-          !hasTransitionIndicator(scene.action)) {
+
+      if (
+        currentLocation &&
+        prevLocation &&
+        currentLocation !== prevLocation &&
+        !hasTransitionIndicator(scene.action) &&
+        !(beats.length > 0 && isBeatEstablishingShot(beats[0], true))
+      ) {
         issues.push({
           type: 'info',
           category: 'continuity',
           sceneIndex: sceneIdx,
           message: `Scene ${sceneNum} changes location from "${prevLocation}" to "${currentLocation}" - consider adding a transition`,
           suggestion: 'Add a transitional phrase or establish the new location clearly',
-          autoFixable: false
+          autoFixable: false,
         })
       }
     }
@@ -536,6 +563,26 @@ export function autoFixScript(
             scene as Record<string, unknown>,
             after
           ) as Scene
+          fixedCount++
+        }
+      }
+    }
+
+    if (
+      issue.category === 'continuity' &&
+      issue.message.includes('without an opening establishing shot beat') &&
+      issue.sceneIndex !== undefined
+    ) {
+      const scene = fixedScenes[issue.sceneIndex]
+      const prevScene = issue.sceneIndex > 0 ? fixedScenes[issue.sceneIndex - 1] : null
+      if (scene) {
+        const res = ensureSceneHasEstablishingShot(
+          scene as Record<string, unknown>,
+          prevScene as Record<string, unknown> | null,
+          issue.sceneIndex
+        )
+        if (res.injected || res.tagged) {
+          fixedScenes[issue.sceneIndex] = ensureSceneBeats(res.scene) as Scene
           fixedCount++
         }
       }

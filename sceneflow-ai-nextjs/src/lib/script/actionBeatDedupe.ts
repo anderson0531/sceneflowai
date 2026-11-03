@@ -56,7 +56,10 @@ const STOP_WORDS = new Set([
 
 /** Distinct visual beats that should survive even with some lexical overlap. */
 const DISTINCT_VISUAL_CUE =
-  /\b(insert|cutaway|establishing|extreme\s+wide|aerial|overhead|pov|b-?roll|montage|timelapse|time-lapse|environment|exterior|landscape|detail\s+of|object\s+insert)\b/i
+  /\b(insert|cutaway|establishing|wide\s+establishing|extreme\s+wide|wide\s+shot|aerial|overhead|pov|b-?roll|montage|timelapse|time-lapse|environment|exterior|landscape|architecture|geography|detail\s+of|object\s+insert)\b/i
+
+const PROTECTED_BEAT_ROLES = new Set(['establishing', 'opening', 'title_reveal', 'credit'])
+const OPENING_WIDE_SHOT_RE = /\b(establishing|wide|aerial|overhead|master)\b/i
 
 function isSpokenBeatKind(kind: BeatKind): boolean {
   return kind === 'dialogue' || kind === 'narration'
@@ -130,6 +133,18 @@ export function findRedundantActionBeatIndices(beats: SceneBeat[]): number[] {
     if (beat.kind !== 'action') continue
     const desc = beat.actionDescription || ''
     if (!desc.trim()) continue
+
+    // Never strip an explicit establishing / opening / title beat or a Beat 0 wide/establishing shot
+    if (beat.beatRole && PROTECTED_BEAT_ROLES.has(beat.beatRole.toLowerCase())) {
+      continue
+    }
+    if (
+      i === 0 &&
+      (OPENING_WIDE_SHOT_RE.test(beat.beatDirection?.shotType || '') ||
+        DISTINCT_VISUAL_CUE.test(desc))
+    ) {
+      continue
+    }
 
     let isRedundant = false
     for (const j of [i - 1, i + 1]) {

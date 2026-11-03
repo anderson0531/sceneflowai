@@ -24,6 +24,7 @@ export type SceneBeatStageStatus = 'ready' | 'attention' | 'action' | 'idle'
 
 export type SceneBeatStageMarker =
   | 'Action'
+  | 'Establishing'
   | 'Dialogue'
   | 'Narration'
   | 'Custom'
@@ -107,6 +108,8 @@ function markerClass(marker: string): string {
       return 'border-violet-500/40 bg-violet-500/10 text-violet-200'
     case 'Action':
       return 'border-slate-500/50 bg-slate-700/50 text-slate-200'
+    case 'Establishing':
+      return 'border-teal-500/45 bg-teal-500/15 text-teal-200'
     case 'Custom':
       return 'border-indigo-500/40 bg-indigo-500/10 text-indigo-200'
     case 'SFX':

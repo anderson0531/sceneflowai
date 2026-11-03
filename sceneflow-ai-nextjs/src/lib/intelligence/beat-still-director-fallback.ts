@@ -468,7 +468,7 @@ HARD RULES:
 8. Do NOT write style, lighting essays, exclusions, F2V, start-frame, or appearance of library refs — code owns those.
 9. Include audioCue only for a distinct sound the score cannot carry (a slam, a mechanism, a creature, a specific device). Omit audioCue when music should carry the shot, and never use it for generic ambience. Include cameraMovement and transition only when the user note or the current beat calls for them. transition must be one of CUT, CONTINUE, DISSOLVE, FADE, MATCH_CUT. Omit a field to leave it unchanged.
 10. ${buildPolicySafePhrasingRules()}
-11. SCENE SHOT FLOW & CONTINUITY: When SCENE DIRECTION & SHOT FLOW CONTEXT is provided, honor the scene's coverage philosophy, movement turns, and 180-degree camera axis. Maintain consistent screen-left / screen-right character geography and eyeline match across consecutive beats, and vary shot scales purposefully across each movement (establish geography → medium/OTS interaction → close-up or insert on emotional turns) so the sequence cuts together smoothly.
+11. SCENE SHOT FLOW & CONTINUITY: When SCENE DIRECTION & SHOT FLOW CONTEXT is provided, honor the scene's coverage philosophy, movement turns, and 180-degree camera axis. Maintain consistent screen-left / screen-right character geography and eyeline match across consecutive beats, and vary shot scales purposefully across each movement (establish geography → medium/OTS interaction → close-up or insert on emotional turns) so the sequence cuts together smoothly. When a beat is marked with Role: establishing (typically Beat 0 opening a new location), preserve its wide/establishing shotType ("Wide Establishing Shot" or "Establishing Shot") to orient the viewer spatially unless USER NOTES or VISUAL / TALENT OVERLAY explicitly ask for a different shot scale.
 
 Output JSON only:
 {
@@ -591,6 +591,9 @@ export function buildStillDirectorUserPrompt(request: DirectBeatStillRequest): s
     const { beat, beatIndex } = entry
     const direction = beat.beatDirection
     parts.push(`--- Beat ${beatIndex} id=${beat.beatId} (${beat.kind}) ---`)
+    if (beat.beatRole?.trim()) {
+      parts.push(`Role: ${beat.beatRole.trim()}`)
+    }
     if (beat.actionDescription?.trim()) {
       parts.push(`Action: ${beat.actionDescription.trim()}`)
     }

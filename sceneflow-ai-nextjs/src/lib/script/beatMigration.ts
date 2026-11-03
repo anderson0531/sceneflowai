@@ -2431,6 +2431,17 @@ export function parseLlmBeats(raw: unknown[]): SceneBeat[] {
       beat.beatDirection = beatDirection
     }
 
+    if (typeof b.beatRole === 'string' && b.beatRole.trim()) {
+      beat.beatRole = b.beatRole.trim()
+    } else if (
+      beats.length === 0 &&
+      kind === 'action' &&
+      (/\bestablishing\b/i.test(beatDirection?.shotType || '') ||
+        /\b(establish|spatial\s+geography)\b/i.test(beatDirection?.coveragePurpose || ''))
+    ) {
+      beat.beatRole = 'establishing'
+    }
+
     const movementIndex = Number(b.movementIndex)
     if (Number.isInteger(movementIndex) && movementIndex >= 0) {
       beat.movementIndex = movementIndex

@@ -98,7 +98,14 @@ export function SceneDirectionWorkbench({
           stillPromptDirectionKey: beat.storyboardImagePromptDirectionKey,
         })
         const kind = shotKindMarker(beat.kind)
-        const markers = kind ? [kind] : []
+        const markers: NonNullable<SceneBeatStageItem['markers']> = kind ? [kind] : []
+        const isEstablishing =
+          beat.beatRole === 'establishing' ||
+          (index === 0 &&
+            beat.kind === 'action' &&
+            /\bestablishing\b/i.test(beat.beatDirection?.shotType || ''))
+        if (isEstablishing) markers.push('Establishing')
+        if (beat.excluded === true) markers.push('Excluded')
         if (promoShots.has(`${sceneIdx}:${beat.beatId}`)) markers.push('In promo')
         return {
           id: beat.beatId,

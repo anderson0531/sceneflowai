@@ -334,7 +334,12 @@ function buildSceneArcBlock(scene: GenerateSceneDirectionParams['scene']): {
         beat.kind === 'action'
           ? beat.actionDescription || 'action beat'
           : `${beat.character || 'SPEAKER'}: ${beat.line || ''}`
-      lines.push(`  Beat ${i + 1} (${beat.kind}): ${String(label).slice(0, 200)}`)
+      const roleTag =
+        beat.beatRole === 'establishing' ||
+        (i === 0 && beat.kind === 'action' && /\bestablishing\b/i.test(beat.beatDirection?.shotType || ''))
+          ? ', ESTABLISHING SHOT'
+          : ''
+      lines.push(`  Beat ${i + 1} (${beat.kind}${roleTag}): ${String(label).slice(0, 200)}`)
     }
   }
 
@@ -379,6 +384,7 @@ DIRECT THE ARC, NOT THE AVERAGE (MANDATORY):
 - "camera.coveragePhilosophy" is how this scene is covered, in director language. Do not fill "camera.shots" with one scale per beat. A scale list is optional and sparse; omit it rather than recycling Wide / Medium / Close-Up.
 - "beatCoverage" MUST contain exactly one object per beat in the arc above, in beat order. Design a cohesive, entertaining, professional shot flow across the scene:
   • Maintain 180-degree camera axis and consistent screen-left / screen-right character geography within each movement so cuts match seamlessly.
+  • When Beat 1 is marked as an ESTABLISHING SHOT, beatCoverage[0] MUST use a wide/establishing shotType ("Wide Establishing Shot" or "Establishing Shot") and frame the environment/spatial layout to orient the viewer before cutting into closer coverage.
   • Progress shot scales naturally across each movement (establish geography → medium/OTS interaction → close-up or insert on emotional turns); shotType is optional free text — leave it out when a scale would be arbitrary.
   • For each beat, specify why that image exists (coveragePurpose), how the camera behaves (lensEnergy), who or what is where (spatialRelationship), cameraAngle, concrete beat-specific blocking (screen-left/right, weight, hands), gaze (eyeline target), emotion (specific facial/physical tell per visible character), frozenMoment (one settled photographic instant), and lightingAccent.
 - Never condense, shorten, or paraphrase quoted dialogue. A spoken line that runs long continues across later beats. Do not cut words to fit a clip.

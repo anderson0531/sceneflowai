@@ -461,6 +461,7 @@ function buildStoryboardSlotFrameProps(
 
 function formatBeatRoleLabel(beatRole?: string): string | null {
   if (!beatRole) return null
+  if (beatRole === 'establishing') return 'Establishing'
   if (beatRole === 'title_reveal') return 'Title'
   if (beatRole === 'credit') return 'Credit'
   if (beatRole === 'opening') return 'Opening'

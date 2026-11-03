@@ -125,6 +125,7 @@ function collectCastInFrameForBeat(
  * A short scene-level shot list is not copied onto later beats.
  */
 function inferShotType(beat: SceneBeat): string | undefined {
+  if (beat.beatRole === 'establishing') return 'Wide Establishing Shot'
   const beatText = [
     beat.actionDescription ?? '',
     beat.line ?? '',
@@ -358,8 +359,19 @@ export function applyDirectionCoverageToBeats(
     if (frozenMoment) next.frozenMoment = frozenMoment
     if (lightingAccent) next.lightingAccent = lightingAccent
     if (propInteraction) next.propInteraction = propInteraction
-    if (shot) next.shotType = shot
-    else if (!existing?.generatedBy || existing.generatedBy === 'derived') delete next.shotType
+    if (shot) {
+      // Preserve an explicit establishing beat's wide/establishing scale if coverage tried to tighten it
+      const isEstablishingBeat = beat.beatRole === 'establishing' && index === 0
+      const shotIsWideOrEstablishing = /\b(establishing|wide|aerial|overhead|master)\b/i.test(shot)
+      if (!isEstablishingBeat || shotIsWideOrEstablishing || !existing?.shotType) {
+        next.shotType = shot
+      }
+    } else if (
+      beat.beatRole !== 'establishing' &&
+      (!existing?.generatedBy || existing.generatedBy === 'derived')
+    ) {
+      delete next.shotType
+    }
     if (!next.generatedBy || next.generatedBy === 'derived') next.generatedBy = 'derived'
     next.updatedAt =
       existing?.updatedAt && !directionFieldsChanged(existing, next)

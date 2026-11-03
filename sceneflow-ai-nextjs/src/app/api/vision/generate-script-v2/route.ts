@@ -48,6 +48,7 @@ import {
   creditLinesJsonForPrompt,
   ensureCinematicBookends,
 } from '@/lib/script/cinematicBookends'
+import { ensureEstablishingShotsAcrossScenes } from '@/lib/script/establishingShots'
 import { isUnconfirmedScriptShrink } from '@/lib/script/scriptShrinkGuard'
 import {
   buildBeatDirectionPromptBlock,
@@ -501,6 +502,24 @@ export async function POST(request: NextRequest) {
 
         // Consolidate first: merging after a split would undo it.
         allScenes = consolidateFragmentedScenes(allScenes)
+
+        // Ensure every scene that opens in a new location, switches INT/EXT, or jumps in time
+        // begins with an explicit Establishing Shot beat (Beat 0) to orient the viewer.
+        if (format !== 'podcast') {
+          const establishingResult = ensureEstablishingShotsAcrossScenes(
+            allScenes as Record<string, unknown>[],
+            { allowExceedMaxBeats: true }
+          )
+          if (establishingResult.injectedCount > 0 || establishingResult.taggedCount > 0) {
+            console.log('[Script Gen V2] Establishing shots enforced on location changes:', {
+              injectedCount: establishingResult.injectedCount,
+              taggedCount: establishingResult.taggedCount,
+            })
+            allScenes = establishingResult.scenes.map((scene) =>
+              ensureSceneBeats(scene as Record<string, unknown>)
+            )
+          }
+        }
 
         // Safety net for any scene that still exceeds the production beat cap.
         const splitResult = splitOversizedScenes(allScenes as Record<string, unknown>[])
@@ -1084,8 +1103,9 @@ SCENE ARC → BEATS (PLAN BEFORE YOU WRITE):
 • Across a movement boundary the story must visibly turn — that turn is why the boundary is there.
 
 CINEMATIC SCENE & SHOT FLOW (MANDATORY):
-• Enter Late, Leave Early: cut into the scene when action or interpersonal friction is already in motion; cut out on a visual turn, emotional button, or unresolved hook that propels into the next scene.
-• Shot Scale Progression: vary shot scales purposefully across each movement (e.g., open a movement with Establishing / Wide or Medium Two-Shot to anchor spatial geography, progress into Over-the-Shoulder / Medium Close-Up for tactical exchanges, and reserve Close-Up / Extreme Close-Up / Insert Shot for emotional turns, reveals, and silent reactions).
+• Establishing Shots on Location Changes (CRITICAL FOR VIEWER ORIENTATION): Whenever a scene opens in a NEW location, transitions between INT. and EXT., or follows a significant time jump (including the opening narrative scene of the script and any scene whose setting differs from the immediately preceding scene), Beat 0 (beats[0], "movementIndex": 0) MUST be an Establishing Shot ("kind": "action", "beatRole": "establishing", "beatDirection": {"shotType": "Wide Establishing Shot", ...}) that visually anchors the architecture, environment, lighting/time of day, and spatial geography BEFORE cutting into medium/close-up coverage or dialogue. Never jump into a new location straight on a talking head or tight close-up without orienting the audience first. Only omit an opening establishing shot when a scene is a direct continuous split in the exact same room (Scene NA → Scene NB).
+• Enter Late, Leave Early (Dramatic Friction, Not Spatial Geography): cut into the scene when dramatic tension or physical business is already in motion (skip doorway greetings and small talk), AFTER Beat 0 establishes the new location's visual geography; cut out on a visual turn, emotional button, or unresolved hook that propels into the next scene.
+• Shot Scale Progression: vary shot scales purposefully across each movement (open a new location with a Wide Establishing Shot at Beat 0 to anchor spatial geography, progress into Medium Two-Shot / Over-the-Shoulder / Medium Close-Up for tactical exchanges, and reserve Close-Up / Extreme Close-Up / Insert Shot for emotional turns, reveals, and silent reactions).
 • 180-Degree Axis & Eyeline Continuity: establish consistent screen-left and screen-right character positions within each movement so shot-to-shot cuts feel like a single directed film.
 • Entertaining Subtext & Physical Business: never reduce a scene to static talking heads; pair spoken exchanges with tactile prop interactions, spatial shifts, and silent reaction beats that reveal what characters are hiding.
 
@@ -1232,9 +1252,10 @@ ${beatSynopsisBlock}${neighborLines.length > 0 ? `\nADJACENT CONTEXT (do not wri
       "beats": [
         {
           "kind": "action",
+          "beatRole": "establishing",
           "movementIndex": 0,
           "actionDescription": "Wide establishing shot of the location, golden hour light...",
-          ${shared.beatDirectionSchema}
+          "beatDirection": {"castInFrame": [], "shotType": "Wide Establishing Shot", "frozenMoment": "Wide architectural view of the location in golden hour light, establishing the full spatial layout and atmosphere.", "transition": "CUT"}
         },
 ${shared.narrationSchemaLine}
         {
@@ -1249,7 +1270,7 @@ ${shared.narrationSchemaLine}
           "kind": "action",
           "movementIndex": 1,
           "actionDescription": "Reaction shot: character turns toward window, concern on face...",
-          "beatDirection": {"castInFrame": ["Character Name"], "shotType": "Medium Close-Up", "frozenMoment": "Listener's profile against the window light, brow furrowed.", "transition": "CUT"}
+          ${shared.beatDirectionSchema}
         }
       ],
       "visualDescription": "Camera and lighting notes (or audio focus if podcast)",
