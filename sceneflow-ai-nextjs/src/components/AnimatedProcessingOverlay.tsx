@@ -1277,8 +1277,19 @@ const AnimatedProcessingOverlay = () => {
             {customStatus || currentPhaseLabel || message}
           </p>
           <p className="text-sm text-slate-400 mt-2">
-            Please do not close this window
+            {operationType === 'script-generation'
+              ? "Running in the background — we'll notify you on your mobile app and by email when your script is ready."
+              : 'Please do not close this window'}
           </p>
+          {operationType === 'script-generation' && (
+            <button
+              type="button"
+              onClick={() => useOverlayStore.getState().hide()}
+              className="mt-3 inline-flex items-center gap-1.5 rounded-lg border border-slate-600/80 bg-slate-800/70 px-3.5 py-1.5 text-xs font-medium text-slate-200 hover:bg-slate-700/80 hover:text-white transition-colors"
+            >
+              Continue in Background
+            </button>
+          )}
         </div>
         
         {/* Progress bar - use actual progress if available */}

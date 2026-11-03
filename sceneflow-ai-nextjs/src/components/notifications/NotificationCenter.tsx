@@ -123,6 +123,14 @@ export function NotificationCenter() {
                       🎬 Open Screening Room →
                     </a>
                   )}
+                  {typeof n.metadata?.productionUrl === 'string' && n.metadata.productionUrl && (
+                    <a
+                      href={n.metadata.productionUrl}
+                      className="mt-1.5 inline-flex items-center gap-1 rounded-md bg-cyan-500/15 border border-cyan-500/40 px-2 py-0.5 text-[11px] font-semibold text-cyan-300 hover:bg-cyan-500/25 transition-colors"
+                    >
+                      🎬 Open Production Stage →
+                    </a>
+                  )}
                 </div>
               ))
             )}

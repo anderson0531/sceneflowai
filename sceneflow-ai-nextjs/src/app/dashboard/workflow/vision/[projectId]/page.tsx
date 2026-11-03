@@ -8796,6 +8796,61 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     },
   })
 
+  const scriptCompleteHandledForJobRef = useRef<Set<string>>(new Set())
+
+  const scriptGenerationJob = useBackgroundJob({
+    projectId,
+    jobType: 'script_generation',
+    enabled: !!projectId,
+    onCompleted: (job) => {
+      if (scriptCompleteHandledForJobRef.current.has(job.id)) return
+      scriptCompleteHandledForJobRef.current.add(job.id)
+      const totalScenes = Number((job.result as any)?.totalScenes || 0)
+      overlayStore.hide()
+      toast.success(
+        totalScenes > 0
+          ? `Script generated with ${totalScenes} scenes!`
+          : 'Script generation complete!'
+      )
+      notifyIfHidden({
+        title: 'Script ready for Production',
+        body:
+          totalScenes > 0
+            ? `Generated ${totalScenes} scenes.`
+            : 'Your production script is ready.',
+        tag: `script-gen-${job.id}`,
+      })
+      void (async () => {
+        try {
+          await loadProject(true)
+          if (totalScenes > 0) {
+            startScriptInceptionFollowups(totalScenes)
+          }
+        } catch (err) {
+          console.warn('[Vision] Failed to reload project after background script completion:', err)
+        }
+      })()
+    },
+    onFailed: (job) => {
+      if (scriptCompleteHandledForJobRef.current.has(job.id)) return
+      const cancelled =
+        job.status === 'cancelled' ||
+        (typeof job.error === 'string' && job.error.toLowerCase().includes('cancelled'))
+      if (cancelled) return
+      scriptCompleteHandledForJobRef.current.add(job.id)
+      overlayStore.hide()
+      toast.error('Script generation failed', {
+        description: job.error || 'Please try again.',
+        duration: 10000,
+      })
+      notifyIfHidden({
+        title: 'Script generation failed',
+        body: job.error || 'Please try again.',
+        tag: `script-gen-${job.id}`,
+      })
+    },
+  })
+
   const handleSceneRenderQueued = useCallback(
     (info: SceneRenderQueuedInfo) => {
       sceneRenderJob.track(info.generationJobId, {
@@ -9880,8 +9935,8 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           }
         })
         
-        // Check if generation is complete (skip if explicitly requested)
-        if (!skipAutoGeneration && (!visionPhase.scriptGenerated || !visionPhase.charactersGenerated || !visionPhase.scenesGenerated)) {
+        // Check if script generation is complete (skip if explicitly requested)
+        if (!skipAutoGeneration && !visionPhase.scriptGenerated) {
           // Defer generation until after hydration to prevent hydration mismatch
           // Use 500ms delay to allow Vercel serverless DB connection pool to warm up
           setTimeout(() => initiateGeneration(proj), 500)
@@ -9978,6 +10033,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       
       // ONLY generate script text (not images)
       if (!visionPhase?.scriptGenerated) {
+        void ensureBrowserNotificationPermission()
         // Wrap with execute for blocking overlay
         await execute(
           async () => {
@@ -10159,146 +10215,167 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       }
 
       let scriptData: any = null
+      let sseBuffer = ''
 
       // Read SSE stream
       while (true) {
         const { done, value } = await reader.read()
-        if (done) break
+        if (done) {
+          sseBuffer += decoder.decode()
+        } else {
+          sseBuffer += decoder.decode(value, { stream: true })
+        }
 
-        const chunk = decoder.decode(value)
-        const lines = chunk.split('\n')
+        const lines = sseBuffer.split('\n')
+        sseBuffer = done ? '' : (lines.pop() ?? '')
 
-        for (const line of lines) {
+        for (const rawLine of lines) {
+          const line = rawLine.trim()
           if (line.startsWith('data: ')) {
+            let data: any
             try {
-              const data = JSON.parse(line.slice(6))
+              data = JSON.parse(line.slice(6))
+            } catch (e) {
+              console.error('[Vision] Parse error:', e)
+              continue
+            }
 
-              if (data.type === 'progress') {
-                // Use API's progress field if available (for estimated progress during Gemini call)
-                // Otherwise calculate based on scenesGenerated (for actual scene parsing progress)
-                const progress = data.progress !== undefined 
-                  ? data.progress 
-                  : Math.min(90, 10 + (data.scenesGenerated / data.totalScenes) * 80)
-                setGenerationProgress(prev => ({ 
-                  ...prev, 
-                  script: { 
-                    complete: false, 
-                    progress,
+            if (data.type === 'progress') {
+              // Use API's progress field if available (for estimated progress during Gemini call)
+              // Otherwise calculate based on scenesGenerated (for actual scene parsing progress)
+              const progress = data.progress !== undefined 
+                ? data.progress 
+                : Math.min(90, 10 + (data.scenesGenerated / data.totalScenes) * 80)
+              if (typeof data.jobId === 'string' && data.jobId) {
+                scriptGenerationJob.track(data.jobId, {
+                  status: 'processing',
+                  progress,
+                  payload: {
                     status: data.status,
                     scenesGenerated: data.scenesGenerated,
                     totalScenes: data.totalScenes,
-                    batch: data.batch,
-                    elapsedSeconds: data.elapsedSeconds || 0,
-                    estimatedRemainingSeconds: data.estimatedRemainingSeconds || 0
-                  }
-                }))
-                
-                // Update overlay with detailed progress
-                const statusText = data.scenesGenerated > 0 
-                  ? `Building scenes ${data.scenesGenerated} of ${data.totalScenes}...`
-                  : data.status || 'Analyzing story structure...'
-                overlayStore.setProgress(progress)
-                overlayStore.setStatus(statusText, data.estimatedRemainingSeconds || 0)
-                
-                console.log(`[Vision] ${data.status} (${data.scenesGenerated}/${data.totalScenes}) ${progress}%${data.estimatedRemainingSeconds ? ` ~${data.estimatedRemainingSeconds}s remaining` : ''}`)
-              } else if (data.type === 'warning') {
-                console.warn(`[Vision] Warning: ${data.message}`)
-                try {
-                  const { toast } = require('sonner')
-                  toast.warning(data.message, { duration: 10000 })
-                } catch {}
-              } else if (data.type === 'complete') {
-                // Don't use script data from SSE - reload from database instead
-                console.log(`[Vision] Script generation complete: ${data.totalScenes} scenes`)
+                  },
+                })
+              }
+              setGenerationProgress(prev => ({ 
+                ...prev, 
+                script: { 
+                  complete: false, 
+                  progress,
+                  status: data.status,
+                  scenesGenerated: data.scenesGenerated,
+                  totalScenes: data.totalScenes,
+                  batch: data.batch,
+                  elapsedSeconds: data.elapsedSeconds || 0,
+                  estimatedRemainingSeconds: data.estimatedRemainingSeconds || 0
+                }
+              }))
+              
+              // Update overlay with detailed progress
+              const statusText = data.scenesGenerated > 0 
+                ? `Building scenes ${data.scenesGenerated} of ${data.totalScenes}...`
+                : data.status || 'Analyzing story structure...'
+              overlayStore.setProgress(progress)
+              overlayStore.setStatus(statusText, data.estimatedRemainingSeconds || 0)
+              
+              console.log(`[Vision] ${data.status} (${data.scenesGenerated}/${data.totalScenes}) ${progress}%${data.estimatedRemainingSeconds ? ` ~${data.estimatedRemainingSeconds}s remaining` : ''}`)
+            } else if (data.type === 'warning') {
+              console.warn(`[Vision] Warning: ${data.message}`)
+              try {
+                const { toast } = require('sonner')
+                toast.warning(data.message, { duration: 10000 })
+              } catch {}
+            } else if (data.type === 'complete') {
+              if (typeof data.jobId === 'string' && data.jobId) {
+                scriptCompleteHandledForJobRef.current.add(data.jobId)
+              }
+              scriptGenerationJob.dismiss()
 
-                if (data.sceneLimitWarning) {
-                  try {
-                    const { toast } = require('sonner')
-                    toast.warning(
-                      `Script has ${data.sceneLimitWarning.generated} scenes but your plan allows ${data.sceneLimitWarning.allowed}. Full script was saved — upgrade or split manually to generate all scenes.`,
-                      { duration: 15000 }
-                    )
-                  } catch {}
-                }
-                
-                // Show warning if partial generation
-                if (data.partial) {
-                  console.warn(`[Vision] Partial generation: ${data.totalScenes}/${data.expectedScenes} scenes`)
-                  try {
-                    const { toast } = require('sonner')
-                    toast.warning(`Script generated with ${data.totalScenes} of ${data.expectedScenes} scenes. You can regenerate to get the remaining scenes.`, { duration: 12000 })
-                  } catch {}
-                } else {
-                  try {
-                    const { toast } = require('sonner')
-                    toast.success(`Script generated with ${data.totalScenes} scenes!`)
-                  } catch {}
-                }
-                
-                setGenerationProgress(prev => ({ 
-                  ...prev, 
-                  script: { 
-                    complete: true, 
-                    progress: 100, 
-                    status: data.partial ? 'Partial' : 'Complete',
-                    scenesGenerated: data.totalScenes,
-                    totalScenes: data.expectedScenes || data.totalScenes,
-                    batch: 0
-                  }
-                }))
-                
-                // Reload project data from database with retry
-                let retries = 3
-                let reloadSucceeded = false
-                while (retries > 0) {
-                  try {
-                    await loadProject()
-                    reloadSucceeded = true
-                    break
-                  } catch (error) {
-                    retries--
-                    if (retries > 0) {
-                      await new Promise(resolve => setTimeout(resolve, 1000))
-                } else {
-                  try { 
-                    const { toast } = require('sonner')
-                    toast.warning('Script generated but page reload failed. Please refresh manually.') 
-                  } catch {}
-                }
-              }
-            }
-                
-                // Scene direction and shot direction are separate passes so the
-                // script route can spend its budget on scenes.
-                if (reloadSucceeded && data.totalScenes > 0) {
-                  startScriptInceptionFollowups(data.totalScenes)
-                }
-                
-                // Return empty scriptData - not used anymore
-                scriptData = { characters: [], scenes: [] }
-              } else if (data.type === 'error') {
-                throw new Error(data.error)
-              }
-            } catch (e) {
-              console.error('[Vision] Parse error:', e)
-              // If the parse error contains a film treatment error, surface it to the user
-              const parseErrorMsg = e instanceof Error ? e.message : String(e)
-              if (parseErrorMsg.toLowerCase().includes('film treatment')) {
+              // Don't use script data from SSE - reload from database instead
+              console.log(`[Vision] Script generation complete: ${data.totalScenes} scenes`)
+
+              notifyIfHidden({
+                title: 'Script ready for Production',
+                body: `Generated ${data.totalScenes} scenes.`,
+                tag: `script-gen-${proj.id}`,
+              })
+
+              if (data.sceneLimitWarning) {
                 try {
                   const { toast } = require('sonner')
-                  toast.error('Film treatment data temporarily unavailable.', {
-                    duration: 12000,
-                    action: {
-                      label: 'Reload & Retry',
-                      onClick: () => loadProject()
-                    },
-                    description: 'This is usually a temporary issue. Click to reload and retry.'
-                  })
+                  toast.warning(
+                    `Script has ${data.sceneLimitWarning.generated} scenes but your plan allows ${data.sceneLimitWarning.allowed}. Full script was saved — upgrade or split manually to generate all scenes.`,
+                    { duration: 15000 }
+                  )
                 } catch {}
               }
+              
+              // Show warning if partial generation
+              if (data.partial) {
+                console.warn(`[Vision] Partial generation: ${data.totalScenes}/${data.expectedScenes} scenes`)
+                try {
+                  const { toast } = require('sonner')
+                  toast.warning(`Script generated with ${data.totalScenes} of ${data.expectedScenes} scenes. You can regenerate to get the remaining scenes.`, { duration: 12000 })
+                } catch {}
+              } else {
+                try {
+                  const { toast } = require('sonner')
+                  toast.success(`Script generated with ${data.totalScenes} scenes!`)
+                } catch {}
+              }
+              
+              setGenerationProgress(prev => ({ 
+                ...prev, 
+                script: { 
+                  complete: true, 
+                  progress: 100, 
+                  status: data.partial ? 'Partial' : 'Complete',
+                  scenesGenerated: data.totalScenes,
+                  totalScenes: data.expectedScenes || data.totalScenes,
+                  batch: 0
+                }
+              }))
+              
+              // Reload project data from database with retry
+              let retries = 3
+              let reloadSucceeded = false
+              while (retries > 0) {
+                try {
+                  await loadProject(true)
+                  reloadSucceeded = true
+                  break
+                } catch (error) {
+                  retries--
+                  if (retries > 0) {
+                    await new Promise(resolve => setTimeout(resolve, 1000))
+                  } else {
+                    try { 
+                      const { toast } = require('sonner')
+                      toast.warning('Script generated but page reload failed. Please refresh manually.') 
+                    } catch {}
+                  }
+                }
+              }
+              
+              // Scene direction and shot direction are separate passes so the
+              // script route can spend its budget on scenes.
+              if (reloadSucceeded && data.totalScenes > 0) {
+                startScriptInceptionFollowups(data.totalScenes)
+              }
+              
+              // Return empty scriptData - not used anymore
+              scriptData = { characters: [], scenes: [] }
+            } else if (data.type === 'error') {
+              if (typeof data.jobId === 'string' && data.jobId) {
+                scriptCompleteHandledForJobRef.current.add(data.jobId)
+              }
+              scriptGenerationJob.dismiss()
+              throw new Error(data.error || 'Script generation failed')
             }
           }
         }
+
+        if (done) break
       }
 
       return scriptData

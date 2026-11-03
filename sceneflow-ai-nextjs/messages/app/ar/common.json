@@ -144,6 +144,7 @@
       "progress": "{progress}%"
     },
     "jobs": {
+      "script_generation": "إنشاء السيناريو",
       "scene_audio": "صوت المشهد",
       "segment_frames": "لقطات ثابتة",
       "segment_video": "لقطات النار",

@@ -144,6 +144,7 @@
       "progress": "{progress}%"
     },
     "jobs": {
+      "script_generation": "Script generation",
       "scene_audio": "Scene audio",
       "segment_frames": "Shot stills",
       "segment_video": "Shot clips",

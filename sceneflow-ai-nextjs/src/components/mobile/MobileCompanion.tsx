@@ -20,7 +20,7 @@ type NotificationRow = {
   read: boolean
   created_at: string
   project_id?: string | null
-  metadata?: { source?: string } | null
+  metadata?: { source?: string; productionUrl?: string; kind?: string } | null
 }
 
 type JobRow = {
@@ -45,6 +45,7 @@ type FeedbackItem = {
 }
 
 const JOB_TYPES = [
+  'script_generation',
   'scene_audio',
   'segment_frames',
   'segment_video',

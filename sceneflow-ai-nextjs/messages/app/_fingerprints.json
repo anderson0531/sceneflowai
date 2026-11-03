@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "generatedAt": "2026-10-24T19:55:31.775Z",
+  "generatedAt": "2026-11-03T09:37:55.856Z",
   "surfaces": {
     "common": {
       "actions.save": "1509f561f2416598",
@@ -130,6 +130,7 @@
       "companion.inbox.activeJobs": "c1f88e9d6c4145cf",
       "companion.inbox.noJobs": "bc716dd710d88602",
       "companion.inbox.progress": "7c9407bb9fbdc664",
+      "companion.jobs.script_generation": "a1d2bf9a4da8c0f3",
       "companion.jobs.scene_audio": "fafe1174d7fca642",
       "companion.jobs.segment_frames": "a91a9e8ff9da9095",
       "companion.jobs.segment_video": "76b974f07bd2afde",
@@ -674,7 +675,7 @@
       "reimagine.startTitle": "fd8ff1102656ccec",
       "reimagine.startDescription": "8703662593e3c7dc",
       "reimagine.describeProject": "c99749f12599a067",
-      "reimagine.importTreatment": "243d914bbe389b18",
+      "reimagine.importTreatment": "73bf3f5481d52b7e",
       "reimagine.contentType": "59641229606e33c3",
       "reimagine.genre": "6da795a8664f37f6",
       "reimagine.tone": "c2c8b72e302ec730",

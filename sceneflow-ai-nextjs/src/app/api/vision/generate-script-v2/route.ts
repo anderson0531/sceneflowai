@@ -1,5 +1,18 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { NextRequest, NextResponse, after } from 'next/server'
 import Project from '../../../../models/Project'
+import GenerationJob from '@/models/GenerationJob'
+import {
+  cancelActiveJobsForProject,
+  createGenerationJob,
+  findActiveJob,
+  notifyUser,
+  updateGenerationJob,
+} from '@/lib/jobs/jobService'
+import {
+  buildScriptChunkPlanSignature,
+  isActiveScriptGenerationJobFresh,
+  restoreCompletedChunksFromCheckpoint,
+} from '@/lib/script/scriptGenerationCheckpoint'
 import { sequelize } from '../../../../config/database'
 import { v4 as uuidv4 } from 'uuid'
 import { toCanonicalName, generateAliases } from '@/lib/character/canonical'
@@ -83,32 +96,146 @@ export const maxDuration = 600  // 10 minutes for large script generation (requi
 
 export async function POST(request: NextRequest) {
   const encoder = new TextEncoder()
-  
+  let backgroundTaskPromise: Promise<void> | null = null
+  let streamClosed = false
+
   const stream = new ReadableStream({
     async start(controller) {
-      try {
-        const { projectId, confirmScriptReplace } = await request.json()
-        
-        if (!projectId) {
-          controller.enqueue(encoder.encode(`data: ${JSON.stringify({ 
-            type: 'error', 
-            error: 'projectId required' 
-          })}\n\n`))
-          controller.close()
-          return
+      const safeEmit = (payload: Record<string, unknown>) => {
+        if (streamClosed) return
+        try {
+          controller.enqueue(encoder.encode(`data: ${JSON.stringify(payload)}\n\n`))
+        } catch {
+          streamClosed = true
         }
+      }
+      const safeClose = () => {
+        if (streamClosed) return
+        streamClosed = true
+        try {
+          controller.close()
+        } catch {
+          // Ignore close after cancel
+        }
+      }
 
-        await sequelize.authenticate()
-        let project = await Project.findByPk(projectId)
-        
-        if (!project) {
-          controller.enqueue(encoder.encode(`data: ${JSON.stringify({ 
-            type: 'error', 
-            error: 'Project not found' 
-          })}\n\n`))
-          controller.close()
-          return
-        }
+      const runTask = async () => {
+        let scriptJobId: string | null = null
+        let ownerUserId = ''
+        let activeProjectId = ''
+        let projectTitleForNotice = 'Your project'
+        try {
+          const { projectId, confirmScriptReplace } = await request.json()
+          activeProjectId = projectId || ''
+
+          if (!projectId) {
+            safeEmit({
+              type: 'error',
+              error: 'projectId required',
+            })
+            safeClose()
+            return
+          }
+
+          await sequelize.authenticate()
+          let project = await Project.findByPk(projectId)
+
+          if (!project) {
+            safeEmit({
+              type: 'error',
+              error: 'Project not found',
+            })
+            safeClose()
+            return
+          }
+
+          ownerUserId = (project as any).user_id ? String((project as any).user_id) : ''
+          projectTitleForNotice = project.title || 'Your project'
+
+          // If a background script_generation job is already actively running for
+          // this project (e.g. the user reloaded the page mid-generation), attach
+          // to that running job instead of starting a duplicate run from Scene 1.
+          if (ownerUserId && !confirmScriptReplace) {
+            try {
+              const existingJob = await findActiveJob({
+                userId: ownerUserId,
+                projectId,
+                jobType: 'script_generation',
+              })
+              if (existingJob && isActiveScriptGenerationJobFresh(existingJob)) {
+                console.log(
+                  `[Script Gen V2] Re-attaching to active script_generation job ${existingJob.id} for project ${projectId}`
+                )
+                const attachStart = Date.now()
+                while (!streamClosed && Date.now() - attachStart < 580_000) {
+                  const latest = await GenerationJob.findByPk(existingJob.id)
+                  if (!latest) break
+                  const payload = (latest.payload ?? {}) as Record<string, any>
+                  if (latest.status === 'completed') {
+                    const result = (latest.result ?? {}) as Record<string, any>
+                    const totalScenes = Number(result.totalScenes ?? payload.totalScenes ?? 0)
+                    const totalDuration = Number(result.totalDuration ?? 0)
+                    safeEmit({
+                      type: 'complete',
+                      totalScenes,
+                      totalDuration,
+                      partial: false,
+                      expectedScenes: totalScenes,
+                      projectId,
+                      jobId: latest.id,
+                      ...(result.sceneLimitWarning ? { sceneLimitWarning: result.sceneLimitWarning } : {}),
+                    })
+                    safeClose()
+                    return
+                  }
+                  if (latest.status === 'failed' || latest.status === 'cancelled') {
+                    safeEmit({
+                      type: 'error',
+                      error: latest.error || 'Script generation failed',
+                    })
+                    safeClose()
+                    return
+                  }
+                  if (!isActiveScriptGenerationJobFresh(latest)) {
+                    console.warn(
+                      `[Script Gen V2] Attached job ${latest.id} became stale; taking over from checkpoint`
+                    )
+                    break
+                  }
+                  safeEmit({
+                    type: 'progress',
+                    status: payload.status || 'Writing scenes in background...',
+                    batch: Number(payload.batch ?? 1),
+                    scenesGenerated: Number(payload.scenesGenerated ?? 0),
+                    totalScenes: Number(payload.totalScenes ?? 0),
+                    elapsedSeconds: Number(payload.elapsedSeconds ?? Math.floor((Date.now() - attachStart) / 1000)),
+                    estimatedRemainingSeconds: Number(payload.estimatedRemainingSeconds ?? 45),
+                    progress: Number(latest.progress ?? 15),
+                    jobId: latest.id,
+                  })
+                  await new Promise((r) => setTimeout(r, 2000))
+                }
+                if (streamClosed) {
+                  return
+                }
+              }
+              if (existingJob) {
+                await cancelActiveJobsForProject({
+                  userId: ownerUserId,
+                  projectId,
+                  jobType: 'script_generation',
+                }).catch(() => {})
+              }
+            } catch (attachErr) {
+              console.warn('[Script Gen V2] Active job check failed (continuing):', attachErr)
+            }
+          } else if (ownerUserId && confirmScriptReplace) {
+            await cancelActiveJobsForProject({
+              userId: ownerUserId,
+              projectId,
+              jobType: 'script_generation',
+            }).catch(() => {})
+          }
 
         // Retry logic for intermittent cold-start issues where metadata may not
         // be fully hydrated on first load (Vercel serverless connection pool timing)
@@ -149,11 +276,11 @@ export async function POST(request: NextRequest) {
               hasFilmTreatment: !!project?.metadata?.filmTreatment,
               hasVisionPhase: !!project?.metadata?.visionPhase,
             })
-            controller.enqueue(encoder.encode(`data: ${JSON.stringify({ 
-              type: 'error', 
-              error: 'No film treatment found. Please go back to Blueprint and generate a Film Treatment first, then return to Production.' 
-            })}\n\n`))
-            controller.close()
+            safeEmit({
+              type: 'error',
+              error: 'No film treatment found. Please go back to Blueprint and generate a Film Treatment first, then return to Production.',
+            })
+            safeClose()
             return
           }
         } else {
@@ -187,10 +314,10 @@ export async function POST(request: NextRequest) {
         
         if (rawDuration > maxAllowedDuration) {
           console.warn(`[Script Gen V2] Duration ${rawDuration}s exceeds max for ${projectFormat} (${maxAllowedDuration}s). Capping to ${duration}s.`)
-          controller.enqueue(encoder.encode(`data: ${JSON.stringify({ 
-            type: 'warning', 
-            message: `Duration capped from ${Math.round(rawDuration/60)} minutes to ${Math.round(duration/60)} minutes (max for ${projectFormat})` 
-          })}\n\n`))
+          safeEmit({
+            type: 'warning',
+            message: `Duration capped from ${Math.round(rawDuration/60)} minutes to ${Math.round(duration/60)} minutes (max for ${projectFormat})`,
+          })
         }
         
         // Blueprint beats (canonical: treatment.beats)
@@ -299,15 +426,15 @@ export async function POST(request: NextRequest) {
         const expectedTotalScenes = plannedScenes + 2
 
         // Send initial progress
-        controller.enqueue(encoder.encode(`data: ${JSON.stringify({
+        safeEmit({
           type: 'progress',
           status: 'Analyzing story structure...',
           batch: 1,
           scenesGenerated: 0,
           totalScenes: expectedTotalScenes,
           elapsedSeconds: 0,
-          estimatedRemainingSeconds: 60  // Conservative initial estimate
-        })}\n\n`))
+          estimatedRemainingSeconds: 60, // Conservative initial estimate
+        })
 
         console.log(
           `[Script Gen V2] Starting chunked generation for ${duration}s film: ${plannedScenes} planned scenes across ${beatCount} Blueprint beats`
@@ -382,66 +509,206 @@ export async function POST(request: NextRequest) {
         )
 
         let sceneLimitWarning: { generated: number; allowed: number } | null = null
-        let scenesGenerated = 0
-        let chunksDone = 0
+        const planSignature = buildScriptChunkPlanSignature(chunkPlan.chunks)
+        const restored = confirmScriptReplace
+          ? { completedChunks: {} as Record<number, any[]>, restoredChunksCount: 0, restoredScenesCount: 0 }
+          : restoreCompletedChunksFromCheckpoint(
+              project.metadata?.visionPhase?.scriptGenerationCheckpoint,
+              planSignature,
+              chunkPlan.chunks.length
+            )
+
+        const completedChunks: Record<number, any[]> = { ...restored.completedChunks }
+        let scenesGenerated = restored.restoredScenesCount
+        let chunksDone = restored.restoredChunksCount
+
+        if (restored.restoredChunksCount > 0) {
+          console.log(
+            `[Script Gen V2] Resuming from checkpoint: ${restored.restoredChunksCount}/${chunkPlan.chunks.length} chunks (${restored.restoredScenesCount}/${expectedTotalScenes} scenes) already completed`
+          )
+        }
+
+        projectTitleForNotice = treatment.title || project.title || 'Your project'
+
+        if (ownerUserId) {
+          try {
+            const initialProgress = Math.min(
+              85,
+              10 + Math.floor((chunksDone / Math.max(1, chunkPlan.chunks.length)) * 75)
+            )
+            const { job } = await createGenerationJob({
+              userId: ownerUserId,
+              projectId,
+              jobType: 'script_generation',
+              payload: {
+                projectTitle: projectTitleForNotice,
+                totalScenes: expectedTotalScenes,
+                scenesGenerated,
+                batch: chunksDone + 1,
+                totalBatches: chunkPlan.chunks.length,
+                status:
+                  chunksDone > 0
+                    ? `Resuming from scene ${scenesGenerated + 1} of ${expectedTotalScenes}...`
+                    : 'Analyzing story structure...',
+                planSignature,
+              },
+              dispatch: false,
+            })
+            scriptJobId = job.id
+            await updateGenerationJob(job.id, {
+              status: 'processing',
+              progress: initialProgress,
+            })
+          } catch (jobErr) {
+            console.warn('[Script Gen V2] Non-blocking job creation failed:', jobErr)
+          }
+        }
+
+        let checkpointChain: Promise<void> = Promise.resolve()
+        const persistProgressAndCheckpoint = (
+          statusText: string,
+          overrideProgress?: number,
+          saveProjectCheckpoint: boolean = false
+        ) => {
+          const elapsed = Math.floor((Date.now() - generationStartTime) / 1000)
+          const progress =
+            overrideProgress ??
+            Math.min(85, 10 + Math.floor((chunksDone / Math.max(1, chunkPlan.chunks.length)) * 75))
+          const estimatedRemainingSeconds = Math.max(
+            5,
+            Math.round(
+              (elapsed / Math.max(1, chunksDone)) * (chunkPlan.chunks.length - chunksDone)
+            ) || 45
+          )
+
+          checkpointChain = checkpointChain
+            .then(async () => {
+              if (scriptJobId) {
+                await updateGenerationJob(scriptJobId, {
+                  status: 'processing',
+                  progress,
+                  payload: {
+                    projectTitle: projectTitleForNotice,
+                    totalScenes: expectedTotalScenes,
+                    scenesGenerated,
+                    batch: Math.min(chunkPlan.chunks.length, chunksDone + 1),
+                    totalBatches: chunkPlan.chunks.length,
+                    status: statusText,
+                    elapsedSeconds: elapsed,
+                    estimatedRemainingSeconds,
+                    planSignature,
+                  },
+                }).catch((err) => {
+                  console.warn('[Script Gen V2] Non-blocking job progress update failed:', err)
+                })
+              }
+              if (saveProjectCheckpoint && project) {
+                const currentMeta = (project.metadata || {}) as Record<string, any>
+                const currentVp = (currentMeta.visionPhase || {}) as Record<string, any>
+                await project
+                  .update({
+                    metadata: {
+                      ...currentMeta,
+                      visionPhase: {
+                        ...currentVp,
+                        scriptGenerationCheckpoint: {
+                          jobId: scriptJobId,
+                          planSignature,
+                          updatedAt: new Date().toISOString(),
+                          scenesGenerated,
+                          totalScenes: expectedTotalScenes,
+                          completedChunks,
+                        },
+                      },
+                    },
+                  })
+                  .catch((err: unknown) => {
+                    console.warn('[Script Gen V2] Non-blocking checkpoint save failed:', err)
+                  })
+              }
+            })
+            .catch(() => {})
+        }
 
         const progressStatuses = getScriptProgressStatuses(projectFormat)
         let statusIndex = 0
-        const emitGenerationProgress = (status: string) => {
+        const emitGenerationProgress = (status: string, saveProjectCheckpoint: boolean = false) => {
           const elapsed = Math.floor((Date.now() - generationStartTime) / 1000)
           // 10–85% covers generation; the remainder is post-processing.
           const progress = Math.min(
             85,
             10 + Math.floor((chunksDone / Math.max(1, chunkPlan.chunks.length)) * 75)
           )
-          try {
-            controller.enqueue(encoder.encode(`data: ${JSON.stringify({
-              type: 'progress',
-              status,
-              batch: chunksDone + 1,
-              scenesGenerated,
-              totalScenes: expectedTotalScenes,
-              elapsedSeconds: elapsed,
-              estimatedRemainingSeconds: Math.max(
-                5,
-                Math.round(
-                  (elapsed / Math.max(1, chunksDone)) * (chunkPlan.chunks.length - chunksDone)
-                ) || 45
-              ),
-              progress,
-            })}\n\n`))
-          } catch {
-            // A disconnected client must not abort generation from a timer.
-          }
+          safeEmit({
+            type: 'progress',
+            status,
+            batch: chunksDone + 1,
+            scenesGenerated,
+            totalScenes: expectedTotalScenes,
+            elapsedSeconds: elapsed,
+            estimatedRemainingSeconds: Math.max(
+              5,
+              Math.round(
+                (elapsed / Math.max(1, chunksDone)) * (chunkPlan.chunks.length - chunksDone)
+              ) || 45
+            ),
+            progress,
+            ...(scriptJobId ? { jobId: scriptJobId } : {}),
+          })
+          persistProgressAndCheckpoint(status, progress, saveProjectCheckpoint)
         }
 
-        emitGenerationProgress('Writing scenes...')
+        emitGenerationProgress(
+          chunksDone > 0
+            ? `Resuming scenes (${scenesGenerated} of ${expectedTotalScenes} complete)...`
+            : 'Writing scenes...'
+        )
         const progressInterval = setInterval(() => {
-          emitGenerationProgress(progressStatuses[statusIndex++ % progressStatuses.length])
+          emitGenerationProgress(progressStatuses[statusIndex++ % progressStatuses.length], false)
         }, 5000)
 
         let chunkResults: any[][] = []
         try {
+          const indexedChunks = chunkPlan.chunks.map((chunk, chunkIndex) => ({
+            chunk,
+            chunkIndex,
+          }))
           chunkResults = await runWithConcurrencyLimit(
-            chunkPlan.chunks,
+            indexedChunks,
             CHUNK_CONCURRENCY,
-            (chunk) =>
+            async ({ chunk, chunkIndex }) => {
+              if (Array.isArray(completedChunks[chunkIndex]) && completedChunks[chunkIndex].length > 0) {
+                return completedChunks[chunkIndex]
+              }
               // One failed chunk must cost its own scenes, not the whole script.
-              generateSceneChunk(sharedContext, chunk, {
+              return generateSceneChunk(sharedContext, chunk, {
                 storyBeats,
                 totalScenes: plannedScenes,
                 onChunkScenes: (count) => {
                   scenesGenerated += count
                   chunksDone++
                 },
-              }).catch((err) => {
-                chunksDone++
-                console.error(`[Script Gen V2] Chunk failed entirely (${describeChunk(chunk)}):`, err)
-                return [] as any[]
               })
+                .then((scenes) => {
+                  if (scenes.length > 0) {
+                    completedChunks[chunkIndex] = scenes
+                    emitGenerationProgress(
+                      `Building scenes ${scenesGenerated} of ${expectedTotalScenes}...`,
+                      true
+                    )
+                  }
+                  return scenes
+                })
+                .catch((err) => {
+                  chunksDone++
+                  console.error(`[Script Gen V2] Chunk failed entirely (${describeChunk(chunk)}):`, err)
+                  return [] as any[]
+                })
+            }
           )
         } finally {
           clearInterval(progressInterval)
+          await checkpointChain
         }
 
         // Chunk order is script order; runWithConcurrencyLimit preserves it.
@@ -459,12 +726,7 @@ export async function POST(request: NextRequest) {
         )
 
         if (allScenes.length === 0) {
-          controller.enqueue(encoder.encode(`data: ${JSON.stringify({
-            type: 'error',
-            error: 'Script generation failed: the model returned no usable scenes.',
-          })}\n\n`))
-          controller.close()
-          return
+          throw new Error('Script generation failed: the model returned no usable scenes.')
         }
 
         const underDecomposed = chunkYield.filter((y) => y.produced < y.planned)
@@ -472,14 +734,14 @@ export async function POST(request: NextRequest) {
           console.warn(
             `[Script Gen V2] Under-decomposed: ${allScenes.length} scenes vs ${plannedScenes} planned`
           )
-          controller.enqueue(encoder.encode(`data: ${JSON.stringify({
+          safeEmit({
             type: 'warning',
             message: `Generated ${allScenes.length} scenes for a ${plannedScenes}-scene plan. Some Blueprint beats may be thinner than intended.`,
             underDecomposedBeats: underDecomposed.map((y) => y.title),
-          })}\n\n`))
+          })
         }
 
-        controller.enqueue(encoder.encode(`data: ${JSON.stringify({
+        safeEmit({
           type: 'progress',
           status: 'Assembling script...',
           batch: chunkPlan.chunks.length,
@@ -488,7 +750,9 @@ export async function POST(request: NextRequest) {
           elapsedSeconds: Math.floor((Date.now() - generationStartTime) / 1000),
           estimatedRemainingSeconds: 10,
           progress: 88,
-        })}\n\n`))
+          ...(scriptJobId ? { jobId: scriptJobId } : {}),
+        })
+        persistProgressAndCheckpoint('Assembling script...', 88, false)
 
         // Beats are the story payload; derive the legacy dialogue/action/narration
         // fields now so character extraction, consolidation, and QA all see them.
@@ -505,7 +769,7 @@ export async function POST(request: NextRequest) {
 
         // Ensure every scene that opens in a new location, switches INT/EXT, or jumps in time
         // begins with an explicit Establishing Shot beat (Beat 0) to orient the viewer.
-        if (format !== 'podcast') {
+        if (projectFormat !== 'podcast') {
           const establishingResult = ensureEstablishingShotsAcrossScenes(
             allScenes as Record<string, unknown>[],
             { allowExceedMaxBeats: true }
@@ -570,7 +834,7 @@ export async function POST(request: NextRequest) {
           `[Script Gen V2] Chunked generation complete: ${allScenes.length} scenes (planned ${plannedScenes} + bookends)`
         )
 
-        controller.enqueue(encoder.encode(`data: ${JSON.stringify({
+        safeEmit({
           type: 'progress',
           status: `Generated ${allScenes.length} complete scenes`,
           batch: chunkPlan.chunks.length,
@@ -579,7 +843,9 @@ export async function POST(request: NextRequest) {
           elapsedSeconds: Math.floor((Date.now() - generationStartTime) / 1000),
           estimatedRemainingSeconds: 3,
           progress: 92,
-        })}\n\n`))
+          ...(scriptJobId ? { jobId: scriptJobId } : {}),
+        })
+        persistProgressAndCheckpoint(`Generated ${allScenes.length} complete scenes`, 92, false)
     
         // Process characters and embed IDs (existing logic)
         const includeNarratorChars =
@@ -752,20 +1018,20 @@ export async function POST(request: NextRequest) {
             finalScenes = fixedScenes
             console.log(`[Script Gen V2] Auto-fixed ${fixedCount} issues`)
             
-            controller.enqueue(encoder.encode(`data: ${JSON.stringify({
+            safeEmit({
               type: 'qa',
               status: 'Auto-fixed script quality issues',
               fixedCount,
-              totalIssues: qaResult.issues.length
-            })}\n\n`))
+              totalIssues: qaResult.issues.length,
+            })
           }
           
           // Report QA warnings (but don't block)
           if (qaResult.stats.unmatchedCharacters.length > 0) {
-            controller.enqueue(encoder.encode(`data: ${JSON.stringify({
+            safeEmit({
               type: 'warning',
-              message: `Found ${qaResult.stats.unmatchedCharacters.length} unmatched character names: ${qaResult.stats.unmatchedCharacters.join(', ')}`
-            })}\n\n`))
+              message: `Found ${qaResult.stats.unmatchedCharacters.length} unmatched character names: ${qaResult.stats.unmatchedCharacters.join(', ')}`,
+            })
           }
         } catch (qaError) {
           console.warn('[Script Gen V2] QA failed (non-blocking):', qaError)
@@ -789,6 +1055,7 @@ export async function POST(request: NextRequest) {
             ...existingVisionPhase,
             script: finalScript,
             scriptGenerated: true,
+            scriptGenerationCheckpoint: null,
             characters: mergedCharacters,
             scenes: finalScenes
           }
@@ -838,11 +1105,15 @@ export async function POST(request: NextRequest) {
             existingSceneCount,
             generatedSceneCount: finalScenes.length,
           })
-          controller.enqueue(encoder.encode(`data: ${JSON.stringify({
+          const shrinkMsg = `Refusing to replace ${existingSceneCount} stored scenes with ${finalScenes.length}. Confirm script replace to overwrite.`
+          if (scriptJobId) {
+            await updateGenerationJob(scriptJobId, { status: 'failed', error: shrinkMsg }).catch(() => {})
+          }
+          safeEmit({
             type: 'error',
-            error: `Refusing to replace ${existingSceneCount} stored scenes with ${finalScenes.length}. Confirm script replace to overwrite.`,
-          })}\n\n`))
-          controller.close()
+            error: shrinkMsg,
+          })
+          safeClose()
           return
         }
 
@@ -878,28 +1149,114 @@ export async function POST(request: NextRequest) {
           }
         }
 
+        if (scriptJobId) {
+          try {
+            await updateGenerationJob(scriptJobId, {
+              status: 'completed',
+              progress: 100,
+              result: {
+                totalScenes: allScenes.length,
+                totalDuration: totalEstimatedDuration,
+                projectTitle: projectTitleForNotice,
+                ...(sceneLimitWarning ? { sceneLimitWarning } : {}),
+              },
+            })
+          } catch (jobCompleteErr) {
+            console.warn('[Script Gen V2] Non-blocking job completion update failed:', jobCompleteErr)
+          }
+        }
+
+        if (ownerUserId) {
+          try {
+            await notifyUser({
+              userId: ownerUserId,
+              projectId,
+              jobId: scriptJobId ?? undefined,
+              type: 'job_completed',
+              title: 'Script ready for Production',
+              message: `"${projectTitleForNotice}" (${allScenes.length} scenes) is ready in the Production Stage.`,
+              metadata: {
+                kind: 'script_generation',
+                totalScenes: allScenes.length,
+                totalDuration: derivedDuration,
+                projectTitle: projectTitleForNotice,
+                productionUrl: `/dashboard/workflow/vision/${projectId}`,
+              },
+              sendEmail: true,
+            })
+          } catch (notifyErr) {
+            console.warn('[Script Gen V2] Non-blocking completion notification failed:', notifyErr)
+          }
+        }
+
         // Send completion (single-pass is always complete, not partial)
-        controller.enqueue(encoder.encode(`data: ${JSON.stringify({
+        safeEmit({
           type: 'complete',
           totalScenes: allScenes.length,
           totalDuration: totalEstimatedDuration,
           partial: false,
           expectedScenes: allScenes.length,
           projectId: projectId,
+          ...(scriptJobId ? { jobId: scriptJobId } : {}),
           ...(sceneLimitWarning ? { sceneLimitWarning } : {}),
-        })}\n\n`))
+        })
         
-        controller.close()
+        safeClose()
         
       } catch (error: any) {
         console.error('[Script Gen V2] Error:', error)
-        controller.enqueue(encoder.encode(`data: ${JSON.stringify({
+        const errMsg = error?.message || 'Script generation failed'
+        if (scriptJobId) {
+          try {
+            await updateGenerationJob(scriptJobId, {
+              status: 'failed',
+              error: errMsg,
+            })
+          } catch {}
+        }
+        if (ownerUserId && activeProjectId) {
+          try {
+            await notifyUser({
+              userId: ownerUserId,
+              projectId: activeProjectId,
+              jobId: scriptJobId ?? undefined,
+              type: 'job_failed',
+              title: 'Script generation failed',
+              message: `Could not finish generating the script for "${projectTitleForNotice}": ${errMsg}`,
+              metadata: {
+                kind: 'script_generation',
+                projectTitle: projectTitleForNotice,
+                productionUrl: `/dashboard/workflow/vision/${activeProjectId}`,
+              },
+              sendEmail: true,
+            })
+          } catch {}
+        }
+        safeEmit({
           type: 'error',
-          error: error.message
-        })}\n\n`))
-        controller.close()
+          error: errMsg,
+        })
+        safeClose()
       }
-    }
+      }
+
+      backgroundTaskPromise = runTask()
+      try {
+        after(async () => {
+          if (backgroundTaskPromise) {
+            await backgroundTaskPromise
+          }
+        })
+      } catch {
+        // Outside Next.js request context (e.g. unit tests)
+      }
+      await backgroundTaskPromise
+    },
+    cancel() {
+      // Client disconnected (tab closed, reloaded, or backgrounded).
+      // Detach the SSE stream sink; backgroundTaskPromise continues via after().
+      streamClosed = true
+    },
   })
 
   return new Response(stream, {

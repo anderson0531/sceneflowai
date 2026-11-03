@@ -4,8 +4,11 @@ import GenerationJob, {
   type GenerationJobType,
 } from '@/models/GenerationJob'
 import Notification, { type NotificationType } from '@/models/Notification'
+import User from '@/models/User'
 import { companionOpenPath } from '@/lib/companion/feedbackNotification'
 import { sendWebPushToUser } from '@/lib/notifications/webPush'
+import { buildOfficialEmail } from '@/lib/email/officialEmail'
+import { getAppBaseUrl, sendEmail } from '@/lib/email/resendClient'
 import { inngest } from '@/inngest/client'
 import { sequelize } from '@/config/database'
 import { ACTIVE_JOB_STATUSES } from '@/lib/jobs/jobStatus'
@@ -180,6 +183,58 @@ export async function patchGenerationJobPayload(
   return next
 }
 
+export async function sendJobNotificationEmail(input: {
+  userId: string
+  projectId?: string
+  type: NotificationType
+  title: string
+  message: string
+  metadata?: Record<string, unknown>
+}): Promise<boolean> {
+  const user = await User.findByPk(input.userId)
+  const email = user?.email?.trim().toLowerCase()
+  if (!email || !email.includes('@') || email.endsWith('@temp.sceneflow.ai')) {
+    return false
+  }
+
+  const baseUrl = getAppBaseUrl()
+  const rawProductionPath =
+    typeof input.metadata?.productionUrl === 'string' && input.metadata.productionUrl.trim()
+      ? input.metadata.productionUrl.trim()
+      : input.projectId
+        ? `/dashboard/workflow/vision/${input.projectId}`
+        : '/dashboard'
+  const ctaUrl = rawProductionPath.startsWith('http')
+    ? rawProductionPath
+    : `${baseUrl}${rawProductionPath.startsWith('/') ? '' : '/'}${rawProductionPath}`
+
+  const isFailed = input.type === 'job_failed'
+  const ctaLabel = isFailed ? 'Open Project in SceneFlow' : 'Open Production Stage'
+  const followUpParagraph = isFailed
+    ? 'Open your project in SceneFlow Studio to review the status and retry generation.'
+    : 'Your script is saved and ready in the Production Stage. Open SceneFlow Studio to review your scenes, run Audience Resonance, or direct your shots.'
+
+  const { html, text } = buildOfficialEmail({
+    preheader: input.message,
+    heading: input.title,
+    paragraphs: [input.message, followUpParagraph],
+    ctaLabel,
+    ctaUrl,
+    whyReceived:
+      'You received this email because a background generation job completed in your SceneFlow Studio account.',
+    unsubscribeUrl: `${baseUrl}/dashboard/settings`,
+  })
+
+  await sendEmail({
+    to: email,
+    subject: input.title,
+    html,
+    text,
+    allowFallbackFrom: true,
+  })
+  return true
+}
+
 export async function notifyUser(input: {
   userId: string
   projectId?: string
@@ -188,6 +243,7 @@ export async function notifyUser(input: {
   title: string
   message: string
   metadata?: Record<string, unknown>
+  sendEmail?: boolean
 }): Promise<void> {
   await ensureNotificationsSchema()
   await Notification.create({
@@ -212,6 +268,16 @@ export async function notifyUser(input: {
     })
   } catch (error) {
     console.error('[notifyUser] web push failed', error)
+  }
+
+  const shouldSendEmail =
+    input.sendEmail === true || input.metadata?.kind === 'script_generation'
+  if (shouldSendEmail) {
+    try {
+      await sendJobNotificationEmail(input)
+    } catch (error) {
+      console.error('[notifyUser] email notification failed', error)
+    }
   }
 }
 

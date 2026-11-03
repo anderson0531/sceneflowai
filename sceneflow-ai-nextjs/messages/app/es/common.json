@@ -144,6 +144,7 @@
       "progress": "{progress}%"
     },
     "jobs": {
+      "script_generation": "Generación de guión",
       "scene_audio": "audio de escena",
       "segment_frames": "Fotogramas",
       "segment_video": "Clips de toma",

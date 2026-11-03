@@ -144,6 +144,7 @@
       "progress": "{progress}%"
     },
     "jobs": {
+      "script_generation": "การสร้างบทภาพยนตร์",
       "scene_audio": "เสียงของฉาก",
       "segment_frames": "ภาพนิ่งประจำช็อต",
       "segment_video": "คลิปวิดีโอประจำช็อต",

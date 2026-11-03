@@ -114,6 +114,9 @@ export const processGenerationJob = inngest.createFunction(
       // Cloud Run encodes the video. This job only tracks it.
       return { ok: true, delegated: 'cloud-run' }
     }
+    if (jobType === 'script_generation') {
+      return { ok: true, delegated: 'generate-script-v2' }
+    }
 
     await step.run('mark-processing', async () => {
       await updateGenerationJob(jobId, { status: 'processing', progress: 5 })

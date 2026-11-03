@@ -13,6 +13,7 @@ export type GenerationJobType =
   | 'script_analysis'
   | 'scene_polish'
   | 'blueprint_guided_revise'
+  | 'script_generation'
 
 export type GenerationJobStatus =
   | 'queued'

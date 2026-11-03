@@ -144,6 +144,7 @@
       "progress": "{progress}%"
     },
     "jobs": {
+      "script_generation": "剧本生成",
       "scene_audio": "场景音频",
       "segment_frames": "拍摄剧照",
       "segment_video": "拍摄片段",
