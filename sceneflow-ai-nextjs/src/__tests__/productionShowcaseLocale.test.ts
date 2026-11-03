@@ -10,8 +10,8 @@ const ENGLISH_BADGE = 'Production Examples'
 describe('productionShowcase locale copy', () => {
   const localeCodes = LANDING_TRANSLATE_LANGUAGES.map((l) => l.code).filter((c) => c !== 'en')
 
-  it('defines four cards in English productionShowcase', () => {
-    expect(enMessages.productionShowcase.cards).toHaveLength(4)
+  it('defines six cards in English productionShowcase', () => {
+    expect(enMessages.productionShowcase.cards).toHaveLength(6)
     expect(enMessages.productionShowcase.badge).toBe(ENGLISH_BADGE)
   })
 
@@ -34,7 +34,7 @@ describe('productionShowcase locale copy', () => {
       expect(typeof showcase?.badge).toBe('string')
       expect(typeof showcase?.title).toBe('string')
       expect(typeof showcase?.subtitle).toBe('string')
-      expect(showcase?.cards).toHaveLength(4)
+      expect(showcase?.cards).toHaveLength(6)
     })
   }
 })
