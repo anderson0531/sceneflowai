@@ -168,8 +168,7 @@ function resolveDirectPostgresEnv(): { source: string; url: string } | null {
 const resolvedDirect = resolveDirectPostgresEnv()
 
 function useCloudSqlFromEnv(): boolean {
-  // Prefer direct Postgres URL (e.g. Neon Postgres on Vercel) unless FORCE_CLOUD_SQL=true
-  if (resolvedDirect && process.env.FORCE_CLOUD_SQL !== 'true') {
+  if (process.env.FORCE_DIRECT_POSTGRES === 'true' && resolvedDirect) {
     return false
   }
   return Boolean(

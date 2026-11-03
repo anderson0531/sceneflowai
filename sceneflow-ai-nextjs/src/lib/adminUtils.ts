@@ -3,11 +3,11 @@
  */
 
 const DEFAULT_ADMIN_EMAILS = [
+  'brian@sceneflowai.studio',
   'anderson0531@gmail.com',
   'andersoneric0531@gmail.com',
-  'brian@sfai.studio',
-  'brian@sceneflowai.studio',
   'brian@sceneflowai.com',
+  'brian@sfai.studio',
 ]
 
 /**

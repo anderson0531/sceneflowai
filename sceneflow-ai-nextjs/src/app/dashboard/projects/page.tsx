@@ -172,24 +172,16 @@ export default function ProjectsPage() {
       const res = await fetch(apiUrl)
       const data = await res.json()
 
-      if (data.success && Array.isArray(data.projects) && data.projects.length > 0) {
+      if (data.success && Array.isArray(data.projects)) {
         applyLoadedProjects(data.projects, data.total)
       } else {
-        const fallbackList = [getUiSandboxProjectSummary()]
-        setProjects(fallbackList)
-        setTotalCount(1)
-        if (!selectedProjectId) {
-          setSelectedProjectId(DEMO_PROJECT_ID)
-        }
+        setProjects([])
+        setTotalCount(0)
       }
     } catch (error) {
-      console.error('Failed to load projects, falling back to UI Sandbox project:', error)
-      const fallbackList = [getUiSandboxProjectSummary()]
-      setProjects(fallbackList)
-      setTotalCount(1)
-      if (!selectedProjectId) {
-        setSelectedProjectId(DEMO_PROJECT_ID)
-      }
+      console.error('Failed to load projects:', error)
+      setProjects([])
+      setTotalCount(0)
     } finally {
       setLoading(false)
     }
@@ -463,19 +455,6 @@ export default function ProjectsPage() {
         title="Projects"
         subtitle={`Standalone films and series episodes across ${STUDIO_DISPLAY_NAMES.blueprint} and ${STUDIO_DISPLAY_NAMES.production}.`}
         accent="product"
-        secondaryActions={
-          <div className="flex flex-wrap items-center gap-2">
-            <Link href={`/dashboard/workflow/vision/${DEMO_PROJECT_ID}`}>
-              <Button
-                variant="outline"
-                className="flex items-center gap-2 border-cyan-500/40 text-cyan-400 hover:bg-cyan-500/10"
-              >
-                <Sparkles className="w-4 h-4" />
-                UI Sandbox Demo
-              </Button>
-            </Link>
-          </div>
-        }
         primaryAction={
           <Link href="/dashboard/studio/new-project">
             <Button variant="primary" className="flex items-center gap-2">
@@ -647,25 +626,13 @@ export default function ProjectsPage() {
               ? searchQuery
                 ? `No projects match "${searchQuery}" under the selected filters.`
                 : 'No projects match your current stage or status filters.'
-              : `Start a new project in ${STUDIO_DISPLAY_NAMES.blueprint} or explore the interactive UI Sandbox Demo.`
+              : `Start a new project in ${STUDIO_DISPLAY_NAMES.blueprint} to generate your first film treatment and script.`
           }
           actionLabel={hasActiveFilters ? 'Clear Filters' : 'Create First Project'}
           onAction={
             hasActiveFilters
               ? resetFilters
               : () => router.push('/dashboard/studio/new-project')
-          }
-          secondaryAction={
-            !hasActiveFilters ? (
-              <Link href={`/dashboard/workflow/vision/${DEMO_PROJECT_ID}`}>
-                <Button
-                  variant="outline"
-                  className="border-cyan-500/40 text-cyan-400 hover:bg-cyan-500/10"
-                >
-                  Open UI Sandbox Project
-                </Button>
-              </Link>
-            ) : undefined
           }
         />
       ) : (

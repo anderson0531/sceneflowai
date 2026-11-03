@@ -171,10 +171,10 @@ export async function GET(request: NextRequest) {
       metadata: isSummary ? (p.metadata || {}) : slimProjectResponseMetadata(p.metadata || {})
     }))
 
-    const demoSummary = getUiSandboxProjectSummary()
+    const includeSandbox = searchParams.get('includeSandbox') === '1'
     const projectsWithDemo =
-      page === 1 && !projects.some((p: any) => isDemoProjectId(p.id))
-        ? [demoSummary, ...projects]
+      includeSandbox && page === 1 && !projects.some((p: any) => isDemoProjectId(p.id))
+        ? [getUiSandboxProjectSummary(), ...projects]
         : projects
 
     console.log(`[${timestamp}] [GET /api/projects] Sending response with ${projectsWithDemo.length} projects`)

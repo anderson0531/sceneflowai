@@ -46,14 +46,6 @@ export function DashboardQuickStart({ onImportScript }: DashboardQuickStartProps
       accent: 'purple',
     },
     {
-      id: 'sandbox-demo',
-      label: 'UI Sandbox Demo',
-      description: 'Explore a populated Production Stage with zero credits',
-      href: `/dashboard/workflow/vision/${DEMO_PROJECT_ID}`,
-      icon: Sparkles,
-      accent: 'emerald',
-    },
-    {
       id: 'byok-keys',
       label: 'BYOK & Cloud Keys',
       description: 'Connect your own AI provider keys for direct billing',

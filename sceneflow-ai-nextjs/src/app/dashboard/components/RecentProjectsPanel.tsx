@@ -118,7 +118,7 @@ export function RecentProjectsPanel({
                   Your active project is featured above
                 </p>
                 <p className="text-gray-400 text-xs mb-5 max-w-sm">
-                  Start another standalone film, explore the interactive UI Sandbox, or switch to the{' '}
+                  Start another standalone film or switch to the{' '}
                   {STUDIO_DISPLAY_NAMES.series} tab for multi-episode stories.
                 </p>
                 <div className="flex flex-wrap items-center justify-center gap-2.5">
@@ -128,39 +128,19 @@ export function RecentProjectsPanel({
                       New Project
                     </Button>
                   </Link>
-                  <Link href={`/dashboard/workflow/vision/${DEMO_PROJECT_ID}`}>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      className="border-cyan-500/40 text-cyan-300 hover:bg-cyan-500/10"
-                    >
-                      <Sparkles className="w-3.5 h-3.5 mr-1.5" />
-                      UI Sandbox Demo
-                    </Button>
-                  </Link>
                 </div>
               </>
             ) : (
               <>
                 <p className="text-gray-300 text-sm font-medium mb-1">No projects yet</p>
                 <p className="text-gray-400 text-xs mb-5 max-w-sm">
-                  Start your first production from a 1-sentence concept or explore the UI Sandbox Demo.
+                  Start your first production from a 1-sentence concept or script import.
                 </p>
                 <div className="flex flex-wrap items-center justify-center gap-2.5">
                   <Link href="/dashboard/studio/new-project">
                     <Button size="sm" variant="primary">
                       <Plus className="w-4 h-4 mr-1.5" />
                       New Project
-                    </Button>
-                  </Link>
-                  <Link href={`/dashboard/workflow/vision/${DEMO_PROJECT_ID}`}>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      className="border-cyan-500/40 text-cyan-300 hover:bg-cyan-500/10"
-                    >
-                      <Sparkles className="w-3.5 h-3.5 mr-1.5" />
-                      UI Sandbox Demo
                     </Button>
                   </Link>
                 </div>

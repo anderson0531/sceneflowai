@@ -21,7 +21,9 @@ export async function POST(request: NextRequest) {
     const hasSetupToken = setupToken === 'initial_setup_2025';
     
     const session = await getServerSession(authOptions);
-    const isAdmin = session?.user?.email?.endsWith('@sceneflow.ai') || 
+    const isAdmin = session?.user?.email?.endsWith('@sceneflowai.studio') ||
+                   session?.user?.email?.endsWith('@sceneflow.ai') || 
+                   session?.user?.email === 'brian@sceneflowai.studio' ||
                    session?.user?.email === 'brian@sceneflow.ai' ||
                    process.env.NODE_ENV === 'development';
     
