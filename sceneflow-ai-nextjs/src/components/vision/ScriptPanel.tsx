@@ -3404,7 +3404,7 @@ export function ScriptPanel({ script, onScriptChange, onAudioSlotSaved, isGenera
           </div>
         ) : null}
 
-        {!script || isGenerating ? (
+        {!script || (isGenerating && scenes.length === 0) ? (
           <div className="h-full flex items-center justify-center text-gray-500 dark:text-gray-400">
             {isGenerating ? (
               <div className="text-center">

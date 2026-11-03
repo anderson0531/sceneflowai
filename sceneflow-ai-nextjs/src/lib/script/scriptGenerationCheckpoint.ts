@@ -17,6 +17,51 @@ export interface ScriptGenerationCheckpoint {
 export const ACTIVE_SCRIPT_JOB_HEARTBEAT_TTL_MS = 90 * 1000
 
 /**
+ * Splits the first chunk into a 1-scene lead chunk (`Scene 1`) followed by the
+ * remainder of that beat when `chunks[0].sceneCount > 1`.
+ *
+ * This lets the server generate and persist Scene 1 in ~5–8 seconds while the
+ * processing overlay is visible, then immediately dismiss the overlay and
+ * stream the remaining scenes in the background while the user reviews Scene 1.
+ */
+export function prioritizeFirstSceneChunk(chunks: SceneChunk[]): SceneChunk[] {
+  if (chunks.length === 0 || chunks[0].sceneCount <= 1) {
+    return [...chunks]
+  }
+  const first = chunks[0]
+  const beatIdx = first.blueprintBeatIndex
+  const newPartCount = first.partCount + 1
+
+  const leadChunk: SceneChunk = {
+    ...first,
+    partIndex: 1,
+    partCount: newPartCount,
+    sceneCount: 1,
+    sceneNumberStart: first.sceneNumberStart,
+  }
+  const remainderChunk: SceneChunk = {
+    ...first,
+    partIndex: 2,
+    partCount: newPartCount,
+    sceneCount: first.sceneCount - 1,
+    sceneNumberStart: first.sceneNumberStart + 1,
+  }
+
+  const tail = chunks.slice(1).map((c) => {
+    if (beatIdx !== null && c.blueprintBeatIndex === beatIdx) {
+      return {
+        ...c,
+        partIndex: c.partIndex + 1,
+        partCount: newPartCount,
+      }
+    }
+    return c
+  })
+
+  return [leadChunk, remainderChunk, ...tail]
+}
+
+/**
  * Deterministic signature for a Blueprint beat chunk plan.
  * If the Blueprint beats or scene counts change, the signature changes and old
  * checkpoints are ignored.

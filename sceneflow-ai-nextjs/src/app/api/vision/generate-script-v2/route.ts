@@ -11,6 +11,7 @@ import {
 import {
   buildScriptChunkPlanSignature,
   isActiveScriptGenerationJobFresh,
+  prioritizeFirstSceneChunk,
   restoreCompletedChunksFromCheckpoint,
 } from '@/lib/script/scriptGenerationCheckpoint'
 import { sequelize } from '../../../../config/database'
@@ -152,6 +153,41 @@ export async function POST(request: NextRequest) {
           ownerUserId = (project as any).user_id ? String((project as any).user_id) : ''
           projectTitleForNotice = project.title || 'Your project'
 
+          const existingStoredScenes =
+            project.metadata?.visionPhase?.script?.script?.scenes ||
+            project.metadata?.visionPhase?.scenes ||
+            []
+          const initialExistingSceneCount =
+            project.metadata?.visionPhase?.scriptGenerated && Array.isArray(existingStoredScenes)
+              ? existingStoredScenes.length
+              : 0
+
+          if (
+            !confirmScriptReplace &&
+            project.metadata?.visionPhase?.scriptGenerated === true &&
+            initialExistingSceneCount > 0 &&
+            !project.metadata?.visionPhase?.scriptGenerationCheckpoint
+          ) {
+            const existingDuration =
+              Number(project.metadata?.visionPhase?.script?.totalDuration) ||
+              Number(project.duration) ||
+              0
+            console.log(
+              `[Script Gen V2] Script already generated (${initialExistingSceneCount} scenes) for project ${projectId}; skipping duplicate generation.`
+            )
+            safeEmit({
+              type: 'complete',
+              totalScenes: initialExistingSceneCount,
+              totalDuration: existingDuration,
+              partial: false,
+              expectedScenes: initialExistingSceneCount,
+              projectId,
+              alreadyGenerated: true,
+            })
+            safeClose()
+            return
+          }
+
           // If a background script_generation job is already actively running for
           // this project (e.g. the user reloaded the page mid-generation), attach
           // to that running job instead of starting a duplicate run from Scene 1.
@@ -167,6 +203,7 @@ export async function POST(request: NextRequest) {
                   `[Script Gen V2] Re-attaching to active script_generation job ${existingJob.id} for project ${projectId}`
                 )
                 const attachStart = Date.now()
+                let lastPersistedScenes = 0
                 while (!streamClosed && Date.now() - attachStart < 580_000) {
                   const latest = await GenerationJob.findByPk(existingJob.id)
                   if (!latest) break
@@ -202,6 +239,19 @@ export async function POST(request: NextRequest) {
                     )
                     break
                   }
+                  const persistedScenesCount = Number(payload.persistedScenesCount ?? 0)
+                  if (persistedScenesCount > lastPersistedScenes) {
+                    const eventType = lastPersistedScenes === 0 ? 'first-scene-ready' : 'scenes-updated'
+                    lastPersistedScenes = persistedScenesCount
+                    safeEmit({
+                      type: eventType,
+                      scenesGenerated: Number(payload.scenesGenerated ?? persistedScenesCount),
+                      persistedScenesCount,
+                      totalScenes: Number(payload.totalScenes ?? 0),
+                      progress: Number(latest.progress ?? 15),
+                      jobId: latest.id,
+                    })
+                  }
                   safeEmit({
                     type: 'progress',
                     status: payload.status || 'Writing scenes in background...',
@@ -235,6 +285,36 @@ export async function POST(request: NextRequest) {
               projectId,
               jobType: 'script_generation',
             }).catch(() => {})
+          }
+
+          // Claim the active script_generation job slot immediately so concurrent
+          // duplicate requests cannot race through the 1–3s setup window before
+          // chunk execution begins.
+          if (ownerUserId) {
+            try {
+              const { job } = await createGenerationJob({
+                userId: ownerUserId,
+                projectId,
+                jobType: 'script_generation',
+                payload: {
+                  projectTitle: projectTitleForNotice,
+                  totalScenes: 0,
+                  scenesGenerated: 0,
+                  persistedScenesCount: 0,
+                  batch: 1,
+                  totalBatches: 1,
+                  status: 'Analyzing story structure...',
+                },
+                dispatch: false,
+              })
+              scriptJobId = job.id
+              await updateGenerationJob(job.id, {
+                status: 'processing',
+                progress: 5,
+              })
+            } catch (jobErr) {
+              console.warn('[Script Gen V2] Non-blocking job creation failed:', jobErr)
+            }
           }
 
         // Retry logic for intermittent cold-start issues where metadata may not
@@ -509,58 +589,221 @@ export async function POST(request: NextRequest) {
         )
 
         let sceneLimitWarning: { generated: number; allowed: number } | null = null
-        const planSignature = buildScriptChunkPlanSignature(chunkPlan.chunks)
+        // Split the first beat chunk so Scene 1 generates quickly on its own
+        // (~5–8s) with the processing overlay, then hands off the remaining
+        // scenes to background generation so the user can review immediately.
+        const prioritizedChunks = prioritizeFirstSceneChunk(chunkPlan.chunks)
+        const planSignature = buildScriptChunkPlanSignature(prioritizedChunks)
         const restored = confirmScriptReplace
           ? { completedChunks: {} as Record<number, any[]>, restoredChunksCount: 0, restoredScenesCount: 0 }
           : restoreCompletedChunksFromCheckpoint(
               project.metadata?.visionPhase?.scriptGenerationCheckpoint,
               planSignature,
-              chunkPlan.chunks.length
+              prioritizedChunks.length
             )
 
         const completedChunks: Record<number, any[]> = { ...restored.completedChunks }
         let scenesGenerated = restored.restoredScenesCount
         let chunksDone = restored.restoredChunksCount
+        let persistedScenesCount = 0
+        let firstSceneReadyEmitted = false
 
         if (restored.restoredChunksCount > 0) {
           console.log(
-            `[Script Gen V2] Resuming from checkpoint: ${restored.restoredChunksCount}/${chunkPlan.chunks.length} chunks (${restored.restoredScenesCount}/${expectedTotalScenes} scenes) already completed`
+            `[Script Gen V2] Resuming from checkpoint: ${restored.restoredChunksCount}/${prioritizedChunks.length} chunks (${restored.restoredScenesCount}/${expectedTotalScenes} scenes) already completed`
           )
         }
 
         projectTitleForNotice = treatment.title || project.title || 'Your project'
 
-        if (ownerUserId) {
+        const treatmentForBookends = {
+          title: treatment.title,
+          logline: treatment.logline,
+          genre: treatment.genre,
+          tone: treatment.tone,
+          author_writer: treatment.author_writer,
+        }
+        const cachedTitleScene = ensureCinematicBookends([], treatmentForBookends, {
+          includeOutro: false,
+        }).scenes[0]
+
+        const buildPartialScriptVisionPhase = (currentMeta: Record<string, any>) => {
+          const orderedIndices = Object.keys(completedChunks)
+            .map((k) => Number(k))
+            .filter((n) => Number.isInteger(n) && n >= 0)
+            .sort((a, b) => a - b)
+          let partialScenes: any[] = orderedIndices.flatMap((idx) =>
+            Array.isArray(completedChunks[idx]) ? completedChunks[idx] : []
+          )
+          if (partialScenes.length === 0) return null
+
+          partialScenes = partialScenes.map((scene: any) =>
+            ensureSceneBeats(scene as Record<string, unknown>)
+          )
+          partialScenes = partialScenes.map((scene: any) => ({
+            ...scene,
+            dialogue: normalizeDialogueToProductionLineTargets(
+              Array.isArray(scene?.dialogue) ? scene.dialogue : []
+            ),
+          }))
+
+          if (projectFormat !== 'podcast') {
+            const establishingResult = ensureEstablishingShotsAcrossScenes(
+              partialScenes as Record<string, unknown>[],
+              { allowExceedMaxBeats: true }
+            )
+            if (establishingResult.injectedCount > 0 || establishingResult.taggedCount > 0) {
+              partialScenes = establishingResult.scenes.map((scene) =>
+                ensureSceneBeats(scene as Record<string, unknown>)
+              )
+            }
+          }
+
+          const partialSplit = splitOversizedScenes(partialScenes as Record<string, unknown>[])
+          partialScenes = renumberScenes(partialSplit.scenes)
+          const partialBookends = ensureCinematicBookends(partialScenes, treatmentForBookends, {
+            includeOutro: false,
+            cachedTitleScene,
+          })
+          partialScenes = enforceNarrationPolicyOnScenes(partialBookends.scenes, narrationPolicy)
+
+          const includeNarratorChars =
+            narrationPolicy.allowNarration || narrationPolicy.blueprintHasNarrator
+          const dialogueChars = extractCharacters(partialScenes, includeNarratorChars)
+          const existingCharNamesNormalized = existingCharacters.map((c: any) =>
+            normalizeCharacterName(c.name || '')
+          )
+          const newChars = dialogueChars.filter(
+            (c: any) => !existingCharNamesNormalized.includes(normalizeCharacterName(c.name || ''))
+          )
+          const partialCharacters = [
+            ...existingCharacters,
+            ...newChars.map((c: any) => ({
+              ...c,
+              id: uuidv4(),
+              name: toCanonicalName(c.name || ''),
+              role: c.role || 'supporting',
+              imagePrompt: `Professional character portrait: ${c.name}, ${c.description}, photorealistic, high detail, studio lighting, neutral background, character design, 8K quality`,
+              referenceImage: null,
+              generating: false,
+            })),
+          ]
+
+          const scenesWithIds = partialScenes.map((scene: any) => {
+            const withDialogue = {
+              ...scene,
+              dialogue: scene.dialogue?.map((d: any) => {
+                if (!d.character) return d
+                const normalizedDialogueName = toCanonicalName(d.character)
+                const dialogueNameUpper = d.character.toUpperCase().trim()
+                const matched =
+                  partialCharacters.find(
+                    (c: any) => toCanonicalName(c.name) === normalizedDialogueName
+                  ) ||
+                  partialCharacters.find(
+                    (c: any) => (c.name || '').toUpperCase() === dialogueNameUpper
+                  )
+                return {
+                  ...d,
+                  character: matched ? matched.name.toUpperCase() : d.character,
+                  characterId: matched?.id,
+                }
+              }),
+            }
+            return embedCharacterIdsInSceneBeats(
+              ensureSceneBeats(withDialogue as Record<string, unknown>),
+              partialCharacters
+            )
+          })
+
+          const partialDuration = scenesWithIds.reduce(
+            (sum: number, s: any) => sum + (s.duration || 0),
+            0
+          )
+          const currentVp = (currentMeta.visionPhase || {}) as Record<string, any>
+          const savedCharacters = Array.isArray(currentVp.characters) ? currentVp.characters : []
+          const savedCharMap = new Map(
+            savedCharacters.map((c: any) => [c.name?.toLowerCase(), c])
+          )
+          const mergedPartialCharacters = partialCharacters.map((newChar: any) => {
+            const existingChar = savedCharMap.get(newChar.name?.toLowerCase()) as any
+            if (existingChar) {
+              return {
+                ...newChar,
+                id: existingChar.id || newChar.id,
+                referenceImage: existingChar.referenceImage || newChar.referenceImage,
+                voiceConfig: existingChar.voiceConfig || newChar.voiceConfig,
+                appearanceDescription:
+                  existingChar.appearanceDescription || newChar.appearanceDescription,
+                visionDescription: existingChar.visionDescription || newChar.visionDescription,
+                imageApproved: existingChar.imageApproved,
+              }
+            }
+            return newChar
+          })
+
+          const partialScript = {
+            title: treatment.title,
+            logline: treatment.logline,
+            script: { scenes: scenesWithIds },
+            characters: mergedPartialCharacters,
+            totalDuration: partialDuration,
+          }
+
+          let candidateMeta: Record<string, any> = {
+            ...currentMeta,
+            visionPhase: {
+              ...currentVp,
+              script: partialScript,
+              scenes: scenesWithIds,
+              characters: mergedPartialCharacters,
+              scriptGenerated: false,
+              scriptPartial: true,
+            },
+          }
+          try {
+            const seg = migrateProjectToSegmented(candidateMeta)
+            const beat = migrateProjectToBeats(seg.metadata)
+            const startFrame = migrateProjectBeatsToStartFrameOnly(beat.metadata)
+            candidateMeta = startFrame.metadata
+          } catch {
+            // Best-effort partial migration
+          }
+          const finalPartialScenes =
+            candidateMeta.visionPhase?.script?.script?.scenes || scenesWithIds
+          return {
+            visionPhase: candidateMeta.visionPhase as Record<string, any>,
+            persistedCount: Array.isArray(finalPartialScenes)
+              ? finalPartialScenes.length
+              : scenesWithIds.length,
+          }
+        }
+
+        if (scriptJobId) {
           try {
             const initialProgress = Math.min(
               85,
-              10 + Math.floor((chunksDone / Math.max(1, chunkPlan.chunks.length)) * 75)
+              10 + Math.floor((chunksDone / Math.max(1, prioritizedChunks.length)) * 75)
             )
-            const { job } = await createGenerationJob({
-              userId: ownerUserId,
-              projectId,
-              jobType: 'script_generation',
+            await updateGenerationJob(scriptJobId, {
+              status: 'processing',
+              progress: initialProgress,
               payload: {
                 projectTitle: projectTitleForNotice,
                 totalScenes: expectedTotalScenes,
                 scenesGenerated,
+                persistedScenesCount,
                 batch: chunksDone + 1,
-                totalBatches: chunkPlan.chunks.length,
+                totalBatches: prioritizedChunks.length,
                 status:
                   chunksDone > 0
                     ? `Resuming from scene ${scenesGenerated + 1} of ${expectedTotalScenes}...`
                     : 'Analyzing story structure...',
                 planSignature,
               },
-              dispatch: false,
-            })
-            scriptJobId = job.id
-            await updateGenerationJob(job.id, {
-              status: 'processing',
-              progress: initialProgress,
             })
           } catch (jobErr) {
-            console.warn('[Script Gen V2] Non-blocking job creation failed:', jobErr)
+            console.warn('[Script Gen V2] Non-blocking job update failed:', jobErr)
           }
         }
 
@@ -573,49 +816,39 @@ export async function POST(request: NextRequest) {
           const elapsed = Math.floor((Date.now() - generationStartTime) / 1000)
           const progress =
             overrideProgress ??
-            Math.min(85, 10 + Math.floor((chunksDone / Math.max(1, chunkPlan.chunks.length)) * 75))
+            Math.min(85, 10 + Math.floor((chunksDone / Math.max(1, prioritizedChunks.length)) * 75))
           const estimatedRemainingSeconds = Math.max(
             5,
             Math.round(
-              (elapsed / Math.max(1, chunksDone)) * (chunkPlan.chunks.length - chunksDone)
+              (elapsed / Math.max(1, chunksDone)) * (prioritizedChunks.length - chunksDone)
             ) || 45
           )
 
           checkpointChain = checkpointChain
             .then(async () => {
-              if (scriptJobId) {
-                await updateGenerationJob(scriptJobId, {
-                  status: 'processing',
-                  progress,
-                  payload: {
-                    projectTitle: projectTitleForNotice,
-                    totalScenes: expectedTotalScenes,
-                    scenesGenerated,
-                    batch: Math.min(chunkPlan.chunks.length, chunksDone + 1),
-                    totalBatches: chunkPlan.chunks.length,
-                    status: statusText,
-                    elapsedSeconds: elapsed,
-                    estimatedRemainingSeconds,
-                    planSignature,
-                  },
-                }).catch((err) => {
-                  console.warn('[Script Gen V2] Non-blocking job progress update failed:', err)
-                })
-              }
+              let newlyPersistedScenes = false
               if (saveProjectCheckpoint && project) {
                 const currentMeta = (project.metadata || {}) as Record<string, any>
                 const currentVp = (currentMeta.visionPhase || {}) as Record<string, any>
+                const partialBuilt = buildPartialScriptVisionPhase(currentMeta)
+                if (partialBuilt && partialBuilt.persistedCount > persistedScenesCount) {
+                  persistedScenesCount = partialBuilt.persistedCount
+                  newlyPersistedScenes = true
+                }
                 await project
                   .update({
                     metadata: {
                       ...currentMeta,
                       visionPhase: {
-                        ...currentVp,
+                        ...(partialBuilt ? partialBuilt.visionPhase : currentVp),
+                        scriptGenerated: false,
+                        scriptPartial: true,
                         scriptGenerationCheckpoint: {
                           jobId: scriptJobId,
                           planSignature,
                           updatedAt: new Date().toISOString(),
                           scenesGenerated,
+                          persistedScenesCount,
                           totalScenes: expectedTotalScenes,
                           completedChunks,
                         },
@@ -625,6 +858,38 @@ export async function POST(request: NextRequest) {
                   .catch((err: unknown) => {
                     console.warn('[Script Gen V2] Non-blocking checkpoint save failed:', err)
                   })
+              }
+              if (scriptJobId) {
+                await updateGenerationJob(scriptJobId, {
+                  status: 'processing',
+                  progress,
+                  payload: {
+                    projectTitle: projectTitleForNotice,
+                    totalScenes: expectedTotalScenes,
+                    scenesGenerated,
+                    persistedScenesCount,
+                    batch: Math.min(prioritizedChunks.length, chunksDone + 1),
+                    totalBatches: prioritizedChunks.length,
+                    status: statusText,
+                    elapsedSeconds: elapsed,
+                    estimatedRemainingSeconds,
+                    planSignature,
+                  },
+                }).catch((err) => {
+                  console.warn('[Script Gen V2] Non-blocking job progress update failed:', err)
+                })
+              }
+              if (newlyPersistedScenes && persistedScenesCount > 0) {
+                const eventType = !firstSceneReadyEmitted ? 'first-scene-ready' : 'scenes-updated'
+                firstSceneReadyEmitted = true
+                safeEmit({
+                  type: eventType,
+                  scenesGenerated,
+                  persistedScenesCount,
+                  totalScenes: expectedTotalScenes,
+                  progress,
+                  ...(scriptJobId ? { jobId: scriptJobId } : {}),
+                })
               }
             })
             .catch(() => {})
@@ -637,19 +902,20 @@ export async function POST(request: NextRequest) {
           // 10–85% covers generation; the remainder is post-processing.
           const progress = Math.min(
             85,
-            10 + Math.floor((chunksDone / Math.max(1, chunkPlan.chunks.length)) * 75)
+            10 + Math.floor((chunksDone / Math.max(1, prioritizedChunks.length)) * 75)
           )
           safeEmit({
             type: 'progress',
             status,
             batch: chunksDone + 1,
             scenesGenerated,
+            persistedScenesCount,
             totalScenes: expectedTotalScenes,
             elapsedSeconds: elapsed,
             estimatedRemainingSeconds: Math.max(
               5,
               Math.round(
-                (elapsed / Math.max(1, chunksDone)) * (chunkPlan.chunks.length - chunksDone)
+                (elapsed / Math.max(1, chunksDone)) * (prioritizedChunks.length - chunksDone)
               ) || 45
             ),
             progress,
@@ -661,7 +927,8 @@ export async function POST(request: NextRequest) {
         emitGenerationProgress(
           chunksDone > 0
             ? `Resuming scenes (${scenesGenerated} of ${expectedTotalScenes} complete)...`
-            : 'Writing scenes...'
+            : 'Writing Scene 1...',
+          chunksDone > 0
         )
         const progressInterval = setInterval(() => {
           emitGenerationProgress(progressStatuses[statusIndex++ % progressStatuses.length], false)
@@ -669,43 +936,66 @@ export async function POST(request: NextRequest) {
 
         let chunkResults: any[][] = []
         try {
-          const indexedChunks = chunkPlan.chunks.map((chunk, chunkIndex) => ({
+          const indexedChunks = prioritizedChunks.map((chunk, chunkIndex) => ({
             chunk,
             chunkIndex,
           }))
-          chunkResults = await runWithConcurrencyLimit(
-            indexedChunks,
-            CHUNK_CONCURRENCY,
-            async ({ chunk, chunkIndex }) => {
-              if (Array.isArray(completedChunks[chunkIndex]) && completedChunks[chunkIndex].length > 0) {
-                return completedChunks[chunkIndex]
-              }
-              // One failed chunk must cost its own scenes, not the whole script.
-              return generateSceneChunk(sharedContext, chunk, {
-                storyBeats,
-                totalScenes: plannedScenes,
-                onChunkScenes: (count) => {
-                  scenesGenerated += count
-                  chunksDone++
-                },
-              })
-                .then((scenes) => {
-                  if (scenes.length > 0) {
-                    completedChunks[chunkIndex] = scenes
-                    emitGenerationProgress(
-                      `Building scenes ${scenesGenerated} of ${expectedTotalScenes}...`,
-                      true
-                    )
-                  }
-                  return scenes
-                })
-                .catch((err) => {
-                  chunksDone++
-                  console.error(`[Script Gen V2] Chunk failed entirely (${describeChunk(chunk)}):`, err)
-                  return [] as any[]
-                })
+          const executeIndexedChunk = async ({
+            chunk,
+            chunkIndex,
+          }: {
+            chunk: SceneChunk
+            chunkIndex: number
+          }) => {
+            if (
+              Array.isArray(completedChunks[chunkIndex]) &&
+              completedChunks[chunkIndex].length > 0
+            ) {
+              return completedChunks[chunkIndex]
             }
-          )
+            // One failed chunk must cost its own scenes, not the whole script.
+            return generateSceneChunk(sharedContext, chunk, {
+              storyBeats,
+              totalScenes: plannedScenes,
+              onChunkScenes: (count) => {
+                scenesGenerated += count
+                chunksDone++
+              },
+            })
+              .then((scenes) => {
+                if (scenes.length > 0) {
+                  completedChunks[chunkIndex] = scenes
+                  emitGenerationProgress(
+                    `Building scenes ${scenesGenerated} of ${expectedTotalScenes}...`,
+                    true
+                  )
+                }
+                return scenes
+              })
+              .catch((err) => {
+                chunksDone++
+                console.error(`[Script Gen V2] Chunk failed entirely (${describeChunk(chunk)}):`, err)
+                return [] as any[]
+              })
+          }
+
+          // Generate Scene 1 (Chunk 0) first with full priority so it persists and
+          // streams `first-scene-ready` to the user immediately (~5–8s), then generate
+          // all remaining chunks in the background.
+          if (indexedChunks.length > 0) {
+            const firstChunkScenes = await executeIndexedChunk(indexedChunks[0])
+            await checkpointChain
+            const remainingChunks = indexedChunks.slice(1)
+            const remainingResults =
+              remainingChunks.length > 0
+                ? await runWithConcurrencyLimit(
+                    remainingChunks,
+                    CHUNK_CONCURRENCY,
+                    executeIndexedChunk
+                  )
+                : []
+            chunkResults = [firstChunkScenes, ...remainingResults]
+          }
         } finally {
           clearInterval(progressInterval)
           await checkpointChain
@@ -715,7 +1005,7 @@ export async function POST(request: NextRequest) {
         allScenes = chunkResults.flat()
 
         const chunkYield = summarizeChunkYield(
-          chunkPlan.chunks,
+          prioritizedChunks,
           chunkResults.map((scenes) => scenes.length)
         )
         console.log(
@@ -794,13 +1084,11 @@ export async function POST(request: NextRequest) {
         }
         allScenes = renumberScenes(splitResult.scenes)
 
-        const bookendsResult = ensureCinematicBookends(allScenes, {
-          title: treatment.title,
-          logline: treatment.logline,
-          genre: treatment.genre,
-          tone: treatment.tone,
-          author_writer: treatment.author_writer,
-        })
+        const bookendsResult = ensureCinematicBookends(
+          allScenes,
+          treatmentForBookends,
+          { cachedTitleScene }
+        )
         allScenes = bookendsResult.scenes
         if (bookendsResult.injectedTitle || bookendsResult.injectedOutro) {
           console.log('[Script Gen V2] Injected cinematic bookends:', {
@@ -1055,6 +1343,7 @@ export async function POST(request: NextRequest) {
             ...existingVisionPhase,
             script: finalScript,
             scriptGenerated: true,
+            scriptPartial: false,
             scriptGenerationCheckpoint: null,
             characters: mergedCharacters,
             scenes: finalScenes
@@ -1094,8 +1383,7 @@ export async function POST(request: NextRequest) {
         // rather than a target the content was forced to hit. Persist it so the
         // downstream video/cost/Veo budgeting reflects the real content length.
         const derivedDuration = Math.round(totalEstimatedDuration)
-        const existingSceneCount =
-          project.metadata?.visionPhase?.script?.script?.scenes?.length || 0
+        const existingSceneCount = initialExistingSceneCount
         if (
           isUnconfirmedScriptShrink(existingSceneCount, finalScenes.length, {
             confirmScriptReplace: confirmScriptReplace === true,

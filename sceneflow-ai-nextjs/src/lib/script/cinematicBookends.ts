@@ -210,18 +210,24 @@ function buildOutroScene(treatment: TreatmentContext): Record<string, unknown> {
 /** Prepend title and append credits scenes when missing; renumber sceneNumber. */
 export function ensureCinematicBookends(
   scenes: Record<string, unknown>[],
-  treatment: TreatmentContext
+  treatment: TreatmentContext,
+  options?: {
+    includeOutro?: boolean
+    cachedTitleScene?: Record<string, unknown>
+  }
 ): CinematicBookendsResult {
   let result = [...scenes]
   let injectedTitle = false
   let injectedOutro = false
+  const includeOutro = options?.includeOutro ?? true
 
   if (!result.some(isTitleScene)) {
-    result = [buildTitleScene(treatment), ...result]
+    const titleScene = options?.cachedTitleScene ?? buildTitleScene(treatment)
+    result = [titleScene, ...result]
     injectedTitle = true
   }
 
-  if (!result.some(isOutroScene)) {
+  if (includeOutro && !result.some(isOutroScene)) {
     result = [...result, buildOutroScene(treatment)]
     injectedOutro = true
   }

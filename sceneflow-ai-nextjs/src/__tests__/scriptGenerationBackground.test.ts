@@ -3,9 +3,11 @@ import path from 'path'
 import { describe, expect, it, vi, beforeEach } from 'vitest'
 import {
   buildScriptChunkPlanSignature,
+  prioritizeFirstSceneChunk,
   restoreCompletedChunksFromCheckpoint,
   isActiveScriptGenerationJobFresh,
 } from '@/lib/script/scriptGenerationCheckpoint'
+import { ensureCinematicBookends } from '@/lib/script/cinematicBookends'
 import type { SceneChunk } from '@/lib/script/sceneChunkPlan'
 
 const {
@@ -271,5 +273,116 @@ describe('Script generation background job, checkpointing, and notifications', (
     const emailCall = mockSendEmail.mock.calls[0][0]
     expect(emailCall.html).toContain('/dashboard/workflow/vision/proj-42')
     expect(emailCall.html).toContain('Open Production Stage')
+  })
+
+  it('prioritizeFirstSceneChunk splits a multi-scene first chunk so Scene 1 generates solo first', () => {
+    const chunks: SceneChunk[] = [
+      {
+        blueprintBeatIndex: 0,
+        beatTitle: 'Act I',
+        beatDescription: 'Opening',
+        partIndex: 1,
+        partCount: 1,
+        sceneCount: 3,
+        sceneNumberStart: 1,
+      },
+      {
+        blueprintBeatIndex: 1,
+        beatTitle: 'Act II',
+        beatDescription: 'Escalation',
+        partIndex: 1,
+        partCount: 1,
+        sceneCount: 4,
+        sceneNumberStart: 4,
+      },
+    ]
+
+    const prioritized = prioritizeFirstSceneChunk(chunks)
+    expect(prioritized).toHaveLength(3)
+    expect(prioritized[0]).toMatchObject({
+      blueprintBeatIndex: 0,
+      partIndex: 1,
+      partCount: 2,
+      sceneCount: 1,
+      sceneNumberStart: 1,
+    })
+    expect(prioritized[1]).toMatchObject({
+      blueprintBeatIndex: 0,
+      partIndex: 2,
+      partCount: 2,
+      sceneCount: 2,
+      sceneNumberStart: 2,
+    })
+    expect(prioritized[2]).toEqual(chunks[1])
+
+    // Single-scene first chunk is unchanged
+    const singleLead = prioritizeFirstSceneChunk([
+      { ...chunks[0], sceneCount: 1 },
+      chunks[1],
+    ])
+    expect(singleLead).toHaveLength(2)
+  })
+
+  it('ensureCinematicBookends supports includeOutro: false with cachedTitleScene for incremental partial saves', () => {
+    const treatment = {
+      title: 'The Last Lighthouse',
+      logline: 'A keeper guards the final beacon.',
+      genre: 'Thriller',
+    }
+    const cachedTitleScene = ensureCinematicBookends([], treatment, {
+      includeOutro: false,
+    }).scenes[0]
+    expect(cachedTitleScene).toBeDefined()
+    expect(cachedTitleScene.cinematicType).toBe('title')
+
+    const partial = ensureCinematicBookends(
+      [{ heading: 'EXT. LIGHTHOUSE - NIGHT', action: 'Waves crash.', duration: 16 }],
+      treatment,
+      { includeOutro: false, cachedTitleScene }
+    )
+    expect(partial.scenes).toHaveLength(2)
+    expect(partial.scenes[0]).toEqual(cachedTitleScene)
+    expect((partial.scenes[0].beats as any[])[0].beatId).toBe(
+      (cachedTitleScene.beats as any[])[0].beatId
+    )
+    expect(partial.scenes[1].heading).toBe('EXT. LIGHTHOUSE - NIGHT')
+    expect(partial.injectedOutro).toBe(false)
+  })
+
+  it('streams Scene 1 with the overlay, then hands off to background processing and incremental scene adoption', () => {
+    const routeSrc = fs.readFileSync(
+      path.join(process.cwd(), 'src/app/api/vision/generate-script-v2/route.ts'),
+      'utf8'
+    )
+    const pageSrc = fs.readFileSync(
+      path.join(process.cwd(), 'src/app/dashboard/workflow/vision/[projectId]/page.tsx'),
+      'utf8'
+    )
+    const panelSrc = fs.readFileSync(
+      path.join(process.cwd(), 'src/components/vision/ScriptPanel.tsx'),
+      'utf8'
+    )
+    const inceptionDockSrc = fs.readFileSync(
+      path.join(process.cwd(), 'src/components/vision/ScriptInceptionDock.tsx'),
+      'utf8'
+    )
+
+    // Route prioritizes Scene 1, emits first-scene-ready & scenes-updated, and saves partial script
+    expect(routeSrc).toContain('prioritizeFirstSceneChunk(chunkPlan.chunks)')
+    expect(routeSrc).toContain("'first-scene-ready'")
+    expect(routeSrc).toContain("'scenes-updated'")
+    expect(routeSrc).toContain('buildPartialScriptVisionPhase')
+
+    // Page adopts Scene 1 immediately, hides the full-screen overlay, and continues in background dock
+    expect(pageSrc).toContain("data.type === 'first-scene-ready' || data.type === 'scenes-updated'")
+    expect(pageSrc).toContain('adoptPartialScriptFromServer')
+    expect(pageSrc).toContain('isGeneratingScriptRef')
+    expect(pageSrc).toContain('job={scriptGenerationJob.job}')
+
+    // ScriptPanel renders scenes as soon as Scene 1 is adopted even if background generation continues
+    expect(panelSrc).toContain('{!script || (isGenerating && scenes.length === 0) ? (')
+
+    // Post-script direction dock is clearly labeled Scene & Shot Direction
+    expect(inceptionDockSrc).toContain('title="Scene & Shot Direction"')
   })
 })

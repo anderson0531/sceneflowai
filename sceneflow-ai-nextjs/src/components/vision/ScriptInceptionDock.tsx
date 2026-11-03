@@ -59,7 +59,7 @@ export function ScriptInceptionDock({
 
   return (
     <AgentRunDock
-      title="Script inception"
+      title="Scene & Shot Direction"
       subtitle={subtitle}
       tone={tone}
       phases={[

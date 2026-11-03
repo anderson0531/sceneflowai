@@ -8797,6 +8797,115 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
   })
 
   const scriptCompleteHandledForJobRef = useRef<Set<string>>(new Set())
+  const isGeneratingScriptRef = useRef<boolean>(false)
+  const autoGenTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const lastAdoptedPartialScenesCountRef = useRef<number>(0)
+  const firstSceneHandoffDoneRef = useRef<boolean>(false)
+
+  useEffect(() => {
+    return () => {
+      if (autoGenTimerRef.current) {
+        clearTimeout(autoGenTimerRef.current)
+      }
+    }
+  }, [])
+
+  /**
+   * Pulls incremental partial scenes from the server as each chunk completes
+   * so Scene 1 is immediately reviewable after the initial processing toast,
+   * and subsequent scenes append in place without resetting user edits or selection.
+   */
+  const adoptPartialScriptFromServer = useCallback(
+    async (opts?: { selectFirstNarrativeScene?: boolean }): Promise<number> => {
+      try {
+        const res = await fetch(`/api/projects/${projectId}?lite=true&_t=${Date.now()}`, {
+          cache: 'no-store',
+        })
+        if (!res.ok) return 0
+        const data = await res.json()
+        const proj = data?.project || data
+        const visionPhase = proj?.metadata?.visionPhase
+        if (!visionPhase) return 0
+
+        const incomingScript = visionPhase.script
+        const incomingScenes: any[] =
+          incomingScript?.script?.scenes || visionPhase.scenes || []
+        if (!Array.isArray(incomingScenes) || incomingScenes.length === 0) return 0
+
+        const existingScenes = Array.isArray(scriptRef.current?.script?.scenes)
+          ? scriptRef.current.script.scenes
+          : []
+        const mergedScenes = incomingScenes.map((incomingScene: any, idx: number) => {
+          const existing = existingScenes[idx]
+          if (
+            existing &&
+            typeof existing.heading === 'string' &&
+            existing.heading === incomingScene?.heading
+          ) {
+            return existing
+          }
+          return incomingScene
+        })
+
+        const nextScript = sanitizeScriptDialogueLines({
+          ...(incomingScript || {}),
+          script: {
+            ...(incomingScript?.script || {}),
+            scenes: mergedScenes,
+          },
+        })
+        scriptRef.current = nextScript
+        setScript(nextScript)
+        setScenes(mergedScenes)
+
+        if (Array.isArray(visionPhase.characters) && visionPhase.characters.length > 0) {
+          const narratorChar = ensureNarratorCharacter(
+            visionPhase.characters,
+            narrationVoice || undefined
+          )
+          const withNarrator = visionPhase.characters.some((c: any) => c.type === 'narrator')
+            ? visionPhase.characters
+            : [...visionPhase.characters, narratorChar]
+          const filteredChars = withNarrator.filter((c: any) => c.type !== 'description')
+          charactersRef.current = filteredChars
+          setCharacters(filteredChars)
+        }
+
+        setProject((prev) => {
+          if (!prev) return proj
+          const prevVp = (prev.metadata?.visionPhase || {}) as Record<string, any>
+          const updated = {
+            ...prev,
+            metadata: {
+              ...prev.metadata,
+              visionPhase: {
+                ...prevVp,
+                script: nextScript,
+                scenes: mergedScenes,
+                characters: Array.isArray(visionPhase.characters)
+                  ? visionPhase.characters
+                  : prevVp.characters,
+              },
+            },
+          } as typeof prev
+          projectRef.current = updated
+          return updated
+        })
+
+        if (opts?.selectFirstNarrativeScene) {
+          const firstNarrativeIdx =
+            mergedScenes[0]?.cinematicType === 'title' && mergedScenes.length > 1 ? 1 : 0
+          setSelectedSceneIndex((prev) => prev ?? firstNarrativeIdx)
+        }
+
+        return mergedScenes.length
+      } catch (err) {
+        console.warn('[Vision] Failed to adopt partial script scenes:', err)
+        return 0
+      }
+    },
+    [projectId, narrationVoice]
+  )
 
   const scriptGenerationJob = useBackgroundJob({
     projectId,
@@ -8807,6 +8916,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       scriptCompleteHandledForJobRef.current.add(job.id)
       const totalScenes = Number((job.result as any)?.totalScenes || 0)
       overlayStore.hide()
+      setIsGenerating(false)
       toast.success(
         totalScenes > 0
           ? `Script generated with ${totalScenes} scenes!`
@@ -8822,7 +8932,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       })
       void (async () => {
         try {
-          await loadProject(true)
+          await loadProject(true, { quiet: firstSceneHandoffDoneRef.current })
           if (totalScenes > 0) {
             startScriptInceptionFollowups(totalScenes)
           }
@@ -8839,6 +8949,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       if (cancelled) return
       scriptCompleteHandledForJobRef.current.add(job.id)
       overlayStore.hide()
+      setIsGenerating(false)
       toast.error('Script generation failed', {
         description: job.error || 'Please try again.',
         duration: 10000,
@@ -8850,6 +8961,42 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       })
     },
   })
+
+  const polledPersistedScenesCount = Number(
+    scriptGenerationJob.job?.payload?.persistedScenesCount ?? 0
+  )
+  useEffect(() => {
+    if (
+      !scriptGenerationJob.isActive ||
+      polledPersistedScenesCount <= 0 ||
+      polledPersistedScenesCount <= lastAdoptedPartialScenesCountRef.current
+    ) {
+      return
+    }
+    lastAdoptedPartialScenesCountRef.current = polledPersistedScenesCount
+    const isFirstHandoff = !firstSceneHandoffDoneRef.current
+    firstSceneHandoffDoneRef.current = true
+    void (async () => {
+      const count = await adoptPartialScriptFromServer({
+        selectFirstNarrativeScene: isFirstHandoff,
+      })
+      if (count > 0) {
+        overlayStore.hide()
+        setIsGenerating(false)
+        if (isFirstHandoff) {
+          toast.info(
+            'Scene 1 is ready! Remaining scenes are generating in the background — you can begin reviewing now.',
+            { duration: 8000 }
+          )
+        }
+      }
+    })()
+  }, [
+    scriptGenerationJob.isActive,
+    polledPersistedScenesCount,
+    adoptPartialScriptFromServer,
+    overlayStore,
+  ])
 
   const handleSceneRenderQueued = useCallback(
     (info: SceneRenderQueuedInfo) => {
@@ -9939,14 +10086,26 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         if (!skipAutoGeneration && !visionPhase.scriptGenerated) {
           // Defer generation until after hydration to prevent hydration mismatch
           // Use 500ms delay to allow Vercel serverless DB connection pool to warm up
-          setTimeout(() => initiateGeneration(proj), 500)
+          if (autoGenTimerRef.current) clearTimeout(autoGenTimerRef.current)
+          autoGenTimerRef.current = setTimeout(() => {
+            autoGenTimerRef.current = null
+            if (!isGeneratingScriptRef.current) {
+              void initiateGeneration(proj)
+            }
+          }, 500)
         }
       } else {
         // No Vision data yet, start generation (skip if explicitly requested)
         if (!skipAutoGeneration) {
           // Defer generation until after hydration to prevent hydration mismatch
           // Use 500ms delay to allow Vercel serverless DB connection pool to warm up
-          setTimeout(() => initiateGeneration(proj), 500)
+          if (autoGenTimerRef.current) clearTimeout(autoGenTimerRef.current)
+          autoGenTimerRef.current = setTimeout(() => {
+            autoGenTimerRef.current = null
+            if (!isGeneratingScriptRef.current) {
+              void initiateGeneration(proj)
+            }
+          }, 500)
         }
       }
     } catch (error) {
@@ -10026,22 +10185,35 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     proj: Project,
     options?: { confirmScriptReplace?: boolean }
   ) => {
+    if (isGeneratingScriptRef.current) {
+      console.log('[Vision] Script generation already in progress; skipping duplicate initiateGeneration call')
+      return
+    }
+    if (autoGenTimerRef.current) {
+      clearTimeout(autoGenTimerRef.current)
+      autoGenTimerRef.current = null
+    }
+    isGeneratingScriptRef.current = true
+    firstSceneHandoffDoneRef.current = false
+    lastAdoptedPartialScenesCountRef.current = 0
     setIsGenerating(true)
     
     try {
       const visionPhase = proj.metadata?.visionPhase
       
       // ONLY generate script text (not images)
-      if (!visionPhase?.scriptGenerated) {
+      if (!visionPhase?.scriptGenerated || options?.confirmScriptReplace) {
         void ensureBrowserNotificationPermission()
-        // Wrap with execute for blocking overlay
+        // Wrap with execute for blocking overlay while Scene 1 generates;
+        // once Scene 1 is persisted (`first-scene-ready`), the overlay hides
+        // automatically so the user can review Scene 1 while the rest build in background.
         await execute(
           async () => {
             await generateScript(proj, options)
           },
           { 
-            message: 'Generating script... This may take 5-8 minutes for longer films.',
-            estimatedDuration: 420,  // 7 minutes conservative estimate (actual: 5-7 min for ~90 scenes)
+            message: 'Writing Scene 1... Remaining scenes will continue in the background.',
+            estimatedDuration: 20,
             operationType: 'script-generation'
           }
         )
@@ -10089,6 +10261,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         }
       } catch {}
     } finally {
+      isGeneratingScriptRef.current = false
       setIsGenerating(false)
     }
   }
@@ -10279,6 +10452,39 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
               overlayStore.setStatus(statusText, data.estimatedRemainingSeconds || 0)
               
               console.log(`[Vision] ${data.status} (${data.scenesGenerated}/${data.totalScenes}) ${progress}%${data.estimatedRemainingSeconds ? ` ~${data.estimatedRemainingSeconds}s remaining` : ''}`)
+            } else if (data.type === 'first-scene-ready' || data.type === 'scenes-updated') {
+              if (typeof data.jobId === 'string' && data.jobId) {
+                scriptGenerationJob.track(data.jobId, {
+                  status: 'processing',
+                  progress: data.progress ?? 20,
+                  payload: {
+                    status: `Building scenes ${data.scenesGenerated || 1} of ${data.totalScenes || 0}...`,
+                    scenesGenerated: data.scenesGenerated,
+                    persistedScenesCount: data.persistedScenesCount,
+                    totalScenes: data.totalScenes,
+                  },
+                })
+              }
+              const isFirstHandoff = !firstSceneHandoffDoneRef.current
+              firstSceneHandoffDoneRef.current = true
+              if (typeof data.persistedScenesCount === 'number') {
+                lastAdoptedPartialScenesCountRef.current = Math.max(
+                  lastAdoptedPartialScenesCountRef.current,
+                  data.persistedScenesCount
+                )
+              }
+              await adoptPartialScriptFromServer({ selectFirstNarrativeScene: isFirstHandoff })
+              overlayStore.hide()
+              setIsGenerating(false)
+              if (isFirstHandoff) {
+                try {
+                  const { toast } = require('sonner')
+                  toast.info(
+                    'Scene 1 is ready! Remaining scenes are generating in the background — you can begin reviewing now.',
+                    { duration: 8000 }
+                  )
+                } catch {}
+              }
             } else if (data.type === 'warning') {
               console.warn(`[Vision] Warning: ${data.message}`)
               try {
@@ -10290,6 +10496,12 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                 scriptCompleteHandledForJobRef.current.add(data.jobId)
               }
               scriptGenerationJob.dismiss()
+
+              if (data.alreadyGenerated) {
+                await loadProject(true, { quiet: true })
+                scriptData = { characters: [], scenes: [] }
+                continue
+              }
 
               // Don't use script data from SSE - reload from database instead
               console.log(`[Vision] Script generation complete: ${data.totalScenes} scenes`)
@@ -10341,7 +10553,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
               let reloadSucceeded = false
               while (retries > 0) {
                 try {
-                  await loadProject(true)
+                  await loadProject(true, { quiet: firstSceneHandoffDoneRef.current })
                   reloadSucceeded = true
                   break
                 } catch (error) {
@@ -19982,6 +20194,25 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
             onOpenScreeningView={() => setProductionViewWithUrl('screening')}
           />
         )}
+        <BackgroundJobDock
+          job={scriptGenerationJob.job}
+          title="Writing Script"
+          activeLabel={
+            typeof scriptGenerationJob.job?.payload?.status === 'string' &&
+            scriptGenerationJob.job.payload.status.trim()
+              ? String(scriptGenerationJob.job.payload.status)
+              : scriptGenerationJob.job?.status === 'queued'
+                ? 'Queued'
+                : 'Writing remaining scenes in background'
+          }
+          preventDismissWhileActive
+          describeResult={(job) => {
+            const total = Number(job.result?.totalScenes ?? job.payload?.totalScenes ?? 0)
+            return total > 0 ? `All ${total} scenes are ready` : 'Script generation complete'
+          }}
+          onDismiss={scriptGenerationJob.dismiss}
+        />
+
         <BackgroundJobDock
           job={scriptAnalysisJob.job}
           title="Audience Resonance analysis"
