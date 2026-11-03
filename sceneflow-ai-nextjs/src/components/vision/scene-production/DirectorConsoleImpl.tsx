@@ -2126,8 +2126,16 @@ export function DirectorConsoleRoot({
             variant="outline"
             onClick={handleOpenVideoAgent}
             disabled={queue.length === 0}
-            className="h-7 px-2 text-[10px] font-medium border-indigo-500/50 text-indigo-300 hover:bg-indigo-500/10 hover:border-indigo-400 shadow-md hover:shadow-lg transition-all"
-            title={tVideoAgent('toolbarTitle')}
+            className={
+              videoClips.some((clip) => clip.status === 'complete' && clip.promptChanged)
+                ? 'h-7 px-2 text-[10px] font-medium border-amber-400/80 bg-amber-500/20 text-amber-200 ring-1 ring-amber-400/35 hover:bg-amber-500/30 hover:border-amber-400 shadow-md hover:shadow-lg transition-all'
+                : 'h-7 px-2 text-[10px] font-medium border-indigo-500/50 text-indigo-300 hover:bg-indigo-500/10 hover:border-indigo-400 shadow-md hover:shadow-lg transition-all'
+            }
+            title={
+              videoClips.some((clip) => clip.status === 'complete' && clip.promptChanged)
+                ? 'Action needed: One or more clips have "Prompt changed" — run Video Agent to refresh stale clips'
+                : tVideoAgent('toolbarTitle')
+            }
           >
             <Zap className="w-3 h-3 mr-1" />
             {tVideoAgent('toolbarButton')}

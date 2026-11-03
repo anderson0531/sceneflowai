@@ -58,6 +58,7 @@ import { isBeatFrameStale } from '@/lib/storyboard/syncBeatStillPrompt'
 import {
   frameMatchesFilters,
   frameRailStatus,
+  frameRailTooltip,
   type FrameAttentionFilter,
   type FrameListFacts,
   type FrameTypeFilter,
@@ -1357,7 +1358,11 @@ export function SceneStoryboardFrameViewer({
                           type="button"
                           variant="outline"
                           size="sm"
-                          className="h-7 text-[10px] border-amber-500/40 text-amber-400 hover:bg-amber-500/10"
+                          className={
+                            frameFacts.some((facts) => facts.promptChanged)
+                              ? 'h-7 text-[10px] border-amber-400/80 bg-amber-500/20 text-amber-200 ring-1 ring-amber-400/35 hover:bg-amber-500/30'
+                              : 'h-7 text-[10px] border-amber-500/40 text-amber-400 hover:bg-amber-500/10'
+                          }
                           disabled={sceneExpressDisabled}
                           onClick={openExpressSceneDialog}
                         >
@@ -1367,7 +1372,11 @@ export function SceneStoryboardFrameViewer({
                             : 'Stills Agent'}
                         </Button>
                       </TooltipTrigger>
-                      <TooltipContent className="max-w-xs">{sceneExpressTooltip}</TooltipContent>
+                      <TooltipContent className="max-w-xs">
+                        {frameFacts.some((facts) => facts.promptChanged)
+                          ? 'Action needed: One or more stills have "Prompt changed" — run Stills Agent to refresh stale shot frames.'
+                          : sceneExpressTooltip}
+                      </TooltipContent>
                     </Tooltip>
                   )}
                   {draftFrameCount > 0 && (
@@ -1476,6 +1485,7 @@ export function SceneStoryboardFrameViewer({
                     markers,
                     status: rail?.status,
                     statusLabel: rail?.label,
+                    statusDetail: facts ? frameRailTooltip(facts) : undefined,
                     ariaLabel: slot.label || `Shot ${slot.beatNumber ?? ''}`,
                   }
                 })}

@@ -22,6 +22,7 @@ import {
   isContentPolicyFailureMessage,
   videoMatchesFilters,
   videoRailStatus,
+  videoRailTooltip,
   type VideoAttentionFilter,
   type VideoClipFacts,
   type VideoQualityFilter,
@@ -445,8 +446,7 @@ export function BeatVideoGallery({
               markers,
               status: rail?.status,
               statusLabel: rail?.label || undefined,
-              statusDetail:
-                rail?.label === 'Error' && errorText ? clipFailureTooltip(errorText) : undefined,
+              statusDetail: facts ? videoRailTooltip(facts, errorText) : undefined,
               ariaLabel: clip.label || `Shot ${clip.beatNumber}`,
             }
           })}
@@ -854,7 +854,10 @@ export function BeatVideoGallery({
                     </span>
                   )}
                   {preview.promptChanged && (
-                    <span className="flex items-center gap-0.5 rounded-full bg-amber-500/20 px-1.5 py-0.5 text-[10px] text-amber-300">
+                    <span
+                      className="flex items-center gap-0.5 rounded-full bg-amber-500/20 px-1.5 py-0.5 text-[10px] text-amber-300"
+                      title="Action needed: Shot prompt or direction changed after this clip was rendered — run Video Agent or click Regenerate Clip to update it."
+                    >
                       <AlertTriangle className="h-2.5 w-2.5" />
                       Prompt changed
                     </span>

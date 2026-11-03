@@ -64,6 +64,7 @@ import {
   beatListFiltersActive,
   beatMatchesFilters,
   beatRailStatus,
+  beatRailTooltip,
   DEFAULT_BEAT_LIST_FILTERS,
   type BeatAttentionFilter,
   type BeatListFacts,
@@ -427,6 +428,7 @@ export function SceneAudioWorkbench(props: SceneAudioWorkbenchProps & { onSaveSf
           markers,
           status: rail?.status,
           statusLabel: rail?.label || undefined,
+          statusDetail: facts ? beatRailTooltip(facts) : undefined,
           ariaLabel: `Shot ${beatNumber}`,
         }
       }),
@@ -525,6 +527,9 @@ function AudioToolbar(
     !!String(scene.narration || '').trim() ||
     !!scene.music ||
     !!hasSelectableActionBeats
+  const hasAttentionAudio = props.beatFacts.some(
+    (facts) => !facts.excluded && (facts.promptChanged || facts.needsSpeaker)
+  )
   const isDisabled = !!isExpressAudioRunning || !voicesReady || !hasNarrationVoice
 
   const button = hasAudioContent ? (
@@ -532,7 +537,16 @@ function AudioToolbar(
       type="button"
       size="sm"
       variant="outline"
-      className="h-8 border-violet-400/60 text-xs text-violet-200 hover:bg-violet-900/30"
+      className={
+        hasAttentionAudio
+          ? 'h-8 border-amber-400/80 bg-amber-500/20 text-xs text-amber-200 ring-1 ring-amber-400/35 hover:bg-amber-500/30'
+          : 'h-8 border-violet-400/60 text-xs text-violet-200 hover:bg-violet-900/30'
+      }
+      title={
+        hasAttentionAudio
+          ? 'Action needed: One or more shots have "Prompt changed" or "Needs speaker" — run Audio Agent to refresh audio'
+          : undefined
+      }
       disabled={isDisabled}
       onClick={(e) => {
         e.stopPropagation()

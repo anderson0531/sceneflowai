@@ -96,6 +96,29 @@ export function frameRailStatus(facts: FrameListFacts): { status: FrameRailStatu
   return { status: 'attention', label: 'Draft' }
 }
 
+/** Action-needed tooltip for a shot row in the Stills / Frames tab. */
+export function frameRailTooltip(facts: FrameListFacts): string {
+  const rail = frameRailStatus(facts)
+  switch (rail.label) {
+    case 'Placeholder':
+      return 'Action needed: Placeholder frame — run Stills Agent or click Generate Still to create this shot frame.'
+    case 'Missing':
+      return 'Action needed: No still frame generated yet — run Stills Agent or click Generate Still to create this shot frame.'
+    case 'Error':
+      return 'Action needed: Still generation failed — select this shot and click Generate Still to retry.'
+    case 'Reference missed':
+      return 'Action needed: Generated still missed a required reference plate — regenerate this still in Final quality.'
+    case 'Prompt changed':
+      return 'Action needed: Shot prompt or direction changed after this still was generated — run Stills Agent (highlighted in yellow) or click Regenerate Still to update it.'
+    case 'Reference drifted':
+      return 'Action needed: Generated still drifted from its reference plates — regenerate this still to restore continuity.'
+    case 'Draft':
+      return 'Draft still frame — switch to Final quality and regenerate when ready for final production.'
+    default:
+      return 'Final still frame is generated and in sync with the shot prompt.'
+  }
+}
+
 /** Toast copy when a generated still did not use its plates. Pass and unchecked stay silent. */
 export function frameReferenceNotice(
   status?: string | null,

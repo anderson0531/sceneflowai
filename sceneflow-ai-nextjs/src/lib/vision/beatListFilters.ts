@@ -79,6 +79,26 @@ export function beatRailStatus(facts: BeatListFacts): { status: BeatRailStatus; 
   return { status: 'ready', label: 'Ready' }
 }
 
+/** Action-needed tooltip for a shot row in the Audio tab. */
+export function beatRailTooltip(facts: BeatListFacts): string | undefined {
+  const expectsAudio = facts.kind !== 'action' || facts.tracksSfx
+  if (!expectsAudio) return undefined
+  if (!facts.hasAudio) {
+    return facts.kind === 'action'
+      ? 'Action needed: Sound effect audio is missing — run Audio Agent or generate SFX for this shot.'
+      : 'Action needed: Voice audio is missing — run Audio Agent or generate audio for this line.'
+  }
+  if (facts.promptChanged) {
+    return facts.kind === 'action'
+      ? 'Action needed: SFX prompt changed after audio was generated — run Audio Agent (highlighted in yellow) or regenerate SFX for this shot.'
+      : 'Action needed: Dialogue or voice direction changed after audio was generated — run Audio Agent (highlighted in yellow) or regenerate audio for this shot.'
+  }
+  if (facts.needsSpeaker) {
+    return 'Action needed: Speaker is not linked to a cast voice — assign a character voice to this line before generating audio.'
+  }
+  return 'Shot audio is generated and in sync with the current prompt.'
+}
+
 export function beatMatchesAttention(facts: BeatListFacts, attention: BeatAttentionFilter): boolean {
   switch (attention) {
     case 'all':

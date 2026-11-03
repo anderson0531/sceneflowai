@@ -552,13 +552,16 @@ export function SceneImageFrame({
               {promptChanged ? (
                 <span
                   className="text-[9px] px-1.5 py-0.5 bg-amber-500/20 text-amber-300 rounded-full flex items-center gap-0.5 backdrop-blur-sm"
-                  title="Direction changed after this frame was generated. Regen is optional."
+                  title="Action needed: Shot prompt or direction changed after this frame was generated — run Stills Agent or click Regenerate Still to update it."
                 >
                   <AlertTriangle className="w-2.5 h-2.5" />
                   Prompt changed
                 </span>
               ) : isPlaceholder ? (
-                <span className="text-[9px] px-1.5 py-0.5 bg-amber-500/20 text-amber-300 rounded-full flex items-center gap-0.5 backdrop-blur-sm">
+                <span
+                  className="text-[9px] px-1.5 py-0.5 bg-amber-500/20 text-amber-300 rounded-full flex items-center gap-0.5 backdrop-blur-sm"
+                  title="Action needed: Placeholder frame — run Stills Agent or click Generate Still to create this shot frame."
+                >
                   <AlertTriangle className="w-2.5 h-2.5" />
                   Placeholder
                 </span>

@@ -183,6 +183,7 @@ import {
 } from '@/lib/vision/beatListFilters'
 import { SceneAudioWorkbench, SceneNarrationAudioCard } from '@/components/vision/scene-production/SceneAudioWorkbench'
 import { SceneDirectionWorkbench } from '@/components/vision/scene-production/SceneDirectionWorkbench'
+import { directionRailStatus } from '@/lib/vision/directionRailStatus'
 import { BeatDirectionEditor } from '@/components/vision/BeatDirectionEditor'
 import { ExportDialog } from './ExportDialog'
 import { generateSceneContentHash, isDirectionStale, isImageStale } from '@/lib/utils/contentHash'
@@ -4914,6 +4915,18 @@ function SceneCard({
   )
   const beatFiltersActive = beatListFiltersActive(beatListFilters)
   const visibleBeatCount = beatFacts.filter((facts) => beatMatchesFilters(facts, beatListFilters)).length
+  const hasDirectionPromptChanged = useMemo(
+    () =>
+      sceneBeatsForTabs.some(
+        (beat) =>
+          directionRailStatus({
+            direction: beat.beatDirection,
+            stillPrompt: beat.storyboardImagePrompt,
+            stillPromptDirectionKey: beat.storyboardImagePromptDirectionKey,
+          }).status === 'attention'
+      ),
+    [sceneBeatsForTabs]
+  )
   const sceneScoreOn = isSceneScoreEnabled(sceneBeatsForTabs, sceneMusicCues)
   const handleSceneScoreChange = useCallback(
     (checked: boolean) => {
@@ -6409,7 +6422,11 @@ function SceneCard({
                                 e.stopPropagation()
                                 void runShotDirectionAgent()
                               }}
-                              className={`${sceneToolbarControl} font-medium border border-teal-500/60 text-teal-200 hover:bg-teal-900/30`}
+                              className={`${sceneToolbarControl} font-medium ${
+                                hasDirectionPromptChanged
+                                  ? 'border border-amber-400/80 bg-amber-500/20 text-amber-200 ring-1 ring-amber-400/35 hover:bg-amber-500/30'
+                                  : 'border border-teal-500/60 text-teal-200 hover:bg-teal-900/30'
+                              }`}
                             >
                               {shotDirectionProgress ? (
                                 <>
@@ -6427,7 +6444,9 @@ function SceneCard({
                           <TooltipContent className="bg-gray-900 dark:bg-gray-800 text-white border border-gray-700 max-w-xs">
                             {shotDirectionRunning
                               ? 'Click to stop. Shots already optimized stay saved.'
-                              : 'Optimize and save every shot with Direct Shot before running Stills Agent and Video Agent.'}
+                              : hasDirectionPromptChanged
+                                ? 'Action needed: One or more shots have "Prompt changed" — run Shot Direction Agent to refresh shot direction and prompts before running Stills Agent and Video Agent.'
+                                : 'Optimize and save every shot with Direct Shot before running Stills Agent and Video Agent.'}
                           </TooltipContent>
                         </Tooltip>
                       </TooltipProvider>
@@ -6822,8 +6841,16 @@ function SceneCard({
                             e.stopPropagation()
                             void runShotDirectionAgent()
                           }}
-                          title="Direct all shots in this scene for cohesive shot flow, blocking, and still/clip prompts"
-                          className={`${sceneToolbarControl} font-medium border border-teal-500/60 text-teal-200 hover:bg-teal-900/30`}
+                          title={
+                            hasDirectionPromptChanged
+                              ? 'Action needed: One or more shots have "Prompt changed" — run Shot Direction Agent to refresh shot direction and prompts'
+                              : 'Direct all shots in this scene for cohesive shot flow, blocking, and still/clip prompts'
+                          }
+                          className={`${sceneToolbarControl} font-medium ${
+                            hasDirectionPromptChanged
+                              ? 'border border-amber-400/80 bg-amber-500/20 text-amber-200 ring-1 ring-amber-400/35 hover:bg-amber-500/30'
+                              : 'border border-teal-500/60 text-teal-200 hover:bg-teal-900/30'
+                          }`}
                         >
                           {shotDirectionProgress ? (
                             <>

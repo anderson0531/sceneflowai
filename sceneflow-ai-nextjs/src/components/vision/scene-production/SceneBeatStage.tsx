@@ -197,7 +197,10 @@ function ShotRow({
         ))}
       </span>
       {(dot || statusLabel) && (
-        <span className="flex max-w-[46%] shrink-0 items-center gap-1">
+        <span
+          className="flex max-w-[46%] shrink-0 items-center gap-1"
+          title={item.statusDetail || statusLabel}
+        >
           {dot && (
             <span
               className={cn('h-2 w-2 shrink-0 rounded-full', dot)}
@@ -207,7 +210,7 @@ function ShotRow({
           {statusLabel && (
             <span
               className={cn('truncate text-xs leading-tight', statusTextClass(item.status))}
-              title={statusLabel}
+              title={item.statusDetail || statusLabel}
             >
               {statusLabel}
             </span>

@@ -80,6 +80,7 @@ import {
 } from '@/lib/intelligence/beat-sequence-planner-fallback'
 import { applySceneImageAiResultToPrompt } from '@/lib/scene/sceneImageAiPromptApply'
 import {
+  actionFramingFromStoredPrompt,
   assembleStructuredStillPrompt,
   assignStableLibraryTokens,
   bindLibraryNamesToTokens,

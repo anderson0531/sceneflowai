@@ -7,13 +7,18 @@ import {
   beatMatchesFilters,
   beatNeedsAction,
   beatRailStatus,
+  beatRailTooltip,
   type BeatListFacts,
 } from '@/lib/vision/beatListFilters'
-import { directionRailStatus } from '@/lib/vision/directionRailStatus'
+import {
+  directionRailStatus,
+  directionRailTooltip,
+} from '@/lib/vision/directionRailStatus'
 import {
   frameMatchesFilters,
   frameNeedsAction,
   frameRailStatus,
+  frameRailTooltip,
   frameReferenceNotice,
   type FrameListFacts,
 } from '@/lib/vision/frameListFilters'
@@ -23,6 +28,7 @@ import {
   videoMatchesFilters,
   videoNeedsAction,
   videoRailStatus,
+  videoRailTooltip,
   type VideoClipFacts,
 } from '@/lib/vision/videoClipFilters'
 import {
@@ -365,5 +371,45 @@ describe('clip failure tooltip', () => {
 
   it('keeps a non-policy failure to its first sentence', () => {
     expect(clipFailureTooltip('Render failed. Try again later.')).toBe('Render failed.')
+  })
+
+  it('provides action-needed tooltips for shot indicators across Direction, Audio, Frames, and Video tabs', () => {
+    expect(directionRailTooltip({ status: 'attention', label: 'Prompt changed' })).toContain(
+      'Shot Direction Agent'
+    )
+    expect(directionRailTooltip({ status: 'action', label: 'No direction' })).toContain(
+      'Shot Direction Agent'
+    )
+    expect(
+      beatRailTooltip({
+        beatId: 'b1',
+        kind: 'dialogue',
+        excluded: false,
+        hasAudio: true,
+        promptChanged: true,
+        needsSpeaker: false,
+        tracksSfx: false,
+      })
+    ).toContain('Audio Agent')
+    expect(
+      frameRailTooltip({
+        key: 'f1',
+        kind: 'action',
+        imageTier: 'final',
+        isMissing: false,
+        isPlaceholder: false,
+        promptChanged: true,
+        hasImageError: false,
+        hasOwnImage: true,
+      })
+    ).toContain('Stills Agent')
+    expect(
+      videoRailTooltip({
+        key: 'v1',
+        status: 'complete',
+        promptChanged: true,
+        imageTier: 'final',
+      })
+    ).toContain('Video Agent')
   })
 })

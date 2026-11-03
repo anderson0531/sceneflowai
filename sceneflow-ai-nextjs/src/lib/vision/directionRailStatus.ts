@@ -46,3 +46,18 @@ export function directionRailStatus(input: DirectionRailInput): {
   }
   return { status: 'ready', label: 'Ready' }
 }
+
+/** Action-needed tooltip for a shot row in the Direction tab. */
+export function directionRailTooltip(rail: {
+  status: DirectionRailStatus
+  label: string
+}): string {
+  switch (rail.label) {
+    case 'No direction':
+      return 'Action needed: No shot direction yet — run Shot Direction Agent or click Direct Shot to direct this shot.'
+    case 'Prompt changed':
+      return 'Action needed: Shot direction changed after prompts were composed — run Shot Direction Agent (highlighted in yellow) or click Direct Shot to update this shot.'
+    default:
+      return 'Shot direction and prompts are in sync.'
+  }
+}

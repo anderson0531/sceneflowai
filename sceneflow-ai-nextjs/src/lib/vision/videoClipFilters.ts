@@ -87,3 +87,29 @@ export function clipFailureTooltip(message: string): string {
   if (!isContentPolicyFailureMessage(trimmed)) return sentence
   return `Content policy blocked. ${sentence} Select this shot to rewrite it.`
 }
+
+/** Action-needed tooltip for a shot row in the Video Clips tab. */
+export function videoRailTooltip(
+  facts: VideoClipFacts,
+  errorText?: string | null
+): string | undefined {
+  if (facts.status === 'rendering') return undefined
+  if (facts.status === 'error') {
+    return errorText?.trim()
+      ? clipFailureTooltip(errorText)
+      : 'Action needed: Video render failed — select this shot and click Generate Clip to retry.'
+  }
+  if (facts.status !== 'complete') {
+    return 'Action needed: No video clip rendered yet — run Video Agent or click Generate Clip to render this shot.'
+  }
+  if (facts.promptChanged) {
+    return 'Action needed: Shot prompt or direction changed after this clip was rendered — run Video Agent (highlighted in yellow) or click Regenerate Clip to update it.'
+  }
+  if (facts.imageTier === 'draft') {
+    return 'Rendered from a Draft still frame — upgrade the still to Final and re-render when ready.'
+  }
+  if (facts.imageTier === 'final') {
+    return 'Video clip is rendered and in sync with the shot prompt.'
+  }
+  return 'Action needed: Source still frame is missing — generate the still frame first, then render this clip.'
+}
