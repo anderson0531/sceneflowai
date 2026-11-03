@@ -7,7 +7,7 @@ import { Input } from '../ui/Input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select'
 import { Button } from '../ui/Button'
 import { Textarea } from '../ui/textarea'
-import { Copy, Check, Sparkles, Info, ChevronDown, ChevronUp, User, Box, Image as ImageIcon, Loader2, Eye, Film } from 'lucide-react'
+import { Copy, Check, Sparkles, Info, ChevronDown, ChevronUp, User, Box, Image as ImageIcon, Loader2, Film } from 'lucide-react'
 import { artStylePresets } from '@/constants/artStylePresets'
 import {
   POSTER_SHOT_TYPES,
@@ -61,9 +61,6 @@ export function HeroImagePromptBuilder({
   const [selectedSceneRefIds, setSelectedSceneRefIds] = useState<string[]>([])
   const [selectedObjectRefIds, setSelectedObjectRefIds] = useState<string[]>([])
   const [referenceLibraryOpen, setReferenceLibraryOpen] = useState(false)
-  
-  // Title preview toggle
-  const [showTitlePreview, setShowTitlePreview] = useState(true)
   
   const [structure, setStructure] = useState<HeroPromptStructure>(() =>
     deriveHeroPromptPreset({
@@ -340,62 +337,6 @@ export function HeroImagePromptBuilder({
                 Custom Prompt
               </TabsTrigger>
             </TabsList>
-
-            {/* Title Overlay Preview Toggle */}
-            <div className="mt-4 p-3 bg-slate-800/50 border border-slate-700 rounded-lg">
-              <button
-                onClick={() => setShowTitlePreview(!showTitlePreview)}
-                className="w-full flex items-center justify-between text-sm font-medium text-slate-200 hover:text-white transition-colors"
-              >
-                <span className="flex items-center gap-2">
-                  <Eye className="w-4 h-4 text-amber-400" />
-                  Title Placement Preview
-                </span>
-                {showTitlePreview ? (
-                  <ChevronUp className="w-4 h-4 text-gray-400" />
-                ) : (
-                  <ChevronDown className="w-4 h-4 text-gray-400" />
-                )}
-              </button>
-              
-              {showTitlePreview && (
-                <div className="mt-3 relative aspect-[2.39/1] bg-gradient-to-br from-slate-800 to-slate-900 rounded-lg overflow-hidden border border-slate-600">
-                  {/* Mock image area */}
-                  <div className="absolute inset-0 flex items-center justify-center text-slate-600">
-                    <ImageIcon className="w-12 h-12" />
-                  </div>
-                  
-                  {/* Title overlay simulation */}
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
-                  <div className="absolute bottom-0 left-0 right-0 p-4">
-                    {treatment.genre && (
-                      <span className="inline-block px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-amber-400 bg-amber-400/10 rounded-full mb-2 border border-amber-400/20">
-                        {treatment.genre}
-                      </span>
-                    )}
-                    <h3 className="text-lg font-bold text-white drop-shadow-lg">
-                      {treatment.title || 'Your Title Here'}
-                    </h3>
-                    {treatment.logline && (
-                      <p className="mt-1 text-xs text-slate-300 drop-shadow-md line-clamp-2">
-                        {treatment.logline}
-                      </p>
-                    )}
-                  </div>
-                  
-                  {/* Composition guide overlay */}
-                  <div className="absolute inset-0 pointer-events-none">
-                    <div className="absolute bottom-0 left-0 right-0 h-1/3 border-t border-dashed border-amber-500/30" />
-                    <p className="absolute bottom-1/3 left-2 text-[9px] text-amber-500/50 -translate-y-1">
-                      Title safe zone
-                    </p>
-                  </div>
-                </div>
-              )}
-              <p className="text-[10px] text-slate-500 mt-2">
-                💡 Keep main subject above the title zone for best poster composition
-              </p>
-            </div>
 
             {/* Continuity Library Reference Guidance Banner */}
             {activeReferenceSummary.totalImages > 0 && (
