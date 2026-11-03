@@ -92,6 +92,7 @@ import {
 import { scrollToBlueprintSection } from '@/lib/blueprint/blueprintProgress'
 import {
   buildVisionPhaseContinuityFromVariant,
+  resolveBlueprintContinuity,
   type SharedContinuitySource,
 } from '@/lib/blueprint/blueprintContinuity'
 
@@ -146,9 +147,14 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
   const sharedContinuitySource = useMemo<SharedContinuitySource | null>(() => {
     const visionPhase = (currentProject?.metadata as Record<string, any> | undefined)?.visionPhase
     const visionChars = Array.isArray(visionPhase?.characters) ? visionPhase.characters : []
-    const visionLocs = Array.isArray(visionPhase?.references?.locationReferences)
-      ? visionPhase.references.locationReferences
-      : []
+    const visionLocs = [
+      ...(Array.isArray(visionPhase?.references?.locationReferences)
+        ? visionPhase.references.locationReferences
+        : []),
+      ...(Array.isArray(visionPhase?.references?.sceneReferences)
+        ? visionPhase.references.sceneReferences
+        : []),
+    ]
     const visionProps = Array.isArray(visionPhase?.references?.objectReferences)
       ? visionPhase.references.objectReferences
       : []
@@ -324,6 +330,15 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
     const id = selectedId || variants?.[0]?.id
     return variants?.find((v) => v.id === id) ?? variants?.[0] ?? null
   }, [guide])
+
+  const resolvedHeroContinuity = useMemo(
+    () =>
+      resolveBlueprintContinuity(
+        (activeTreatmentVariant || guide.treatmentVariants?.[0]) as Record<string, any> | undefined,
+        sharedContinuitySource
+      ),
+    [activeTreatmentVariant, guide.treatmentVariants, sharedContinuitySource]
+  )
 
   const syncVariantToProductionProject = useCallback(
     async (variant: Record<string, unknown>, productionProjectId: string) => {
@@ -773,10 +788,29 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
     handleAnalysisComplete,
   ])
 
-  // Auto-generate hero image for treatment variant
+  // Auto-generate or custom-generate hero image for treatment variant
   // Uses sessionStorage to prevent duplicate generation across navigation
-  const generateHeroImage = async (variant: any, force: boolean = false, customPrompt?: string) => {
+  const generateHeroImage = async (
+    variant: any,
+    force: boolean = false,
+    promptOrOptions?:
+      | string
+      | {
+          prompt?: string
+          negativePrompt?: string
+          posterType?: string
+          artStyle?: string
+          characters?: any[]
+          sceneReferences?: any[]
+          objectReferences?: any[]
+        }
+  ) => {
     if (!variant?.title) return
+
+    const customOptions =
+      typeof promptOrOptions === 'string'
+        ? { prompt: promptOrOptions }
+        : promptOrOptions || {}
     
     // Check if hero image already exists on the variant
     // Consider image ready if URL exists (status may be missing from database loads)
@@ -811,11 +845,58 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
     
     setIsGeneratingHeroImage(true)
     setHeroImageError(null) // Clear previous error
+
+    // Resolve Continuity Library cast, locations, and props for this variant
+    const variantContinuity = resolveBlueprintContinuity(
+      variant as Record<string, any>,
+      sharedContinuitySource
+    )
+    const defaultCharacters = variantContinuity.cast.map((c) => ({
+      name: c.name,
+      role: c.role,
+      description: c.description,
+      appearanceDescription: c.appearance,
+      appearance: c.appearance,
+      ethnicity: c.ethnicity,
+      defaultWardrobe: c.defaultWardrobe,
+      wardrobeAccessories: c.wardrobeAccessories,
+      keyFeature: c.keyFeature,
+      hairStyle: c.hairStyle,
+      hairColor: c.hairColor,
+      eyeColor: c.eyeColor,
+      expression: c.expression,
+      build: c.build,
+      externalGoal: c.externalGoal,
+      internalNeed: c.internalNeed,
+      fatalFlaw: c.fatalFlaw,
+      arcStartingState: c.arcStartingState,
+      referenceImage: c.referenceImage,
+    }))
+    const defaultSceneRefs = variantContinuity.locations.map((loc, idx) => ({
+      id: loc.id || `loc-${idx}`,
+      name: loc.name,
+      description: [loc.location, loc.atmosphere, loc.furniture_props].filter(Boolean).join('. '),
+      location: loc.location,
+      atmosphere: loc.atmosphere,
+      furniture_props: loc.furniture_props,
+      imageUrl: loc.referenceImage,
+      type: 'scene' as const,
+    }))
+    const defaultObjectRefs = variantContinuity.props.map((prop, idx) => ({
+      id: prop.id || `prop-${idx}`,
+      name: prop.name,
+      description: prop.description,
+      significance: prop.significance,
+      importance: prop.importance,
+      category: prop.category,
+      imageUrl: prop.referenceImage,
+      type: 'object' as const,
+    }))
     
     // Wrap in processing overlay for film production animation
     await executeWithOverlay(async () => {
       try {
-        console.log('[StudioPage] Auto-generating hero image for:', variant.title)
+        console.log('[StudioPage] Generating hero image for:', variant.title)
         
         const response = await fetch('/api/treatment/generate-visual', {
           method: 'POST',
@@ -828,8 +909,13 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
               logline: variant.logline || '',
               synopsis: variant.synopsis || variant.content || '',
               genre: variant.genre || '',
-              // Character data - CRITICAL for accurate hero image
-              character_descriptions: variant.character_descriptions || [],
+              opening_hook: variant.opening_hook || '',
+              beats: variant.beats || beatsView || [],
+              act_breakdown: variant.act_breakdown || undefined,
+              // Character, Location & Prop continuity data
+              character_descriptions: variant.character_descriptions || defaultCharacters,
+              scene_descriptions: variant.scene_descriptions || [],
+              prop_descriptions: variant.prop_descriptions || [],
               protagonist: variant.protagonist || '',
               antagonist: variant.antagonist || '',
               // Setting and atmosphere
@@ -839,12 +925,18 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
               // Visual styling
               visual_style: variant.visual_style || variant.visualStyle || '',
               visualStyle: variant.visualStyle || variant.visual_style || '',
-              artStyle: variant.artStyle,
+              artStyle: customOptions.artStyle || variant.artStyle,
               aspectRatio: variant.aspectRatio,
             },
             visualType: 'hero',
             mood: 'balanced',
-            customPrompt: customPrompt // Pass custom prompt if provided
+            posterType: customOptions.posterType || 'hero-portrait',
+            customPrompt: customOptions.prompt,
+            negativePrompt: customOptions.negativePrompt,
+            artStyle: customOptions.artStyle || variant.artStyle,
+            characters: customOptions.characters || defaultCharacters,
+            sceneReferences: customOptions.sceneReferences || defaultSceneRefs,
+            objectReferences: customOptions.objectReferences || defaultObjectRefs,
           })
         })
         
@@ -880,13 +972,22 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
         if (data.success && data.visuals?.heroImage?.url) {
           // Get CURRENT variants from the store using getState() to avoid stale closure
           const currentVariants = useGuideStore.getState().guide.treatmentVariants || []
+          const selectedId = useGuideStore.getState().guide.selectedTreatmentId
+          const targetId = variant.id || selectedId || currentVariants[0]?.id
           console.log('[StudioPage] Current variants from store:', currentVariants.length)
           
           const updatedVariants = currentVariants.map((v: any, idx: number) => 
-            idx === 0 ? { ...v, heroImage: data.visuals.heroImage } : v
+            (targetId ? v.id === targetId : idx === 0)
+              ? { ...v, heroImage: data.visuals.heroImage }
+              : v
           )
           setTreatmentVariants(updatedVariants)
-          console.log('[StudioPage] Hero image generated successfully:', data.visuals.heroImage.url)
+          await persistBlueprintMetadata({ treatmentVariants: updatedVariants })
+          const updatedVariant = updatedVariants.find((v: any) => v.id === targetId) || updatedVariants[0]
+          if (updatedVariant) {
+            await syncActiveBlueprintShare(updatedVariant as Record<string, unknown>)
+          }
+          console.log('[StudioPage] Hero image generated & persisted successfully:', data.visuals.heroImage.url)
           
           // Clear the generation flag on success
           if (typeof window !== 'undefined') {
@@ -1310,19 +1411,47 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
                   seriesTitle: String(resolvedSeriesTitle),
                   episodeNumber: Number(resolvedEpNum) || 1,
                 })
+                const byProjectGroups = Object.values(
+                  (refsJson?.byProjectId || {}) as Record<string, any>
+                )
+                const libraryChars = [
+                  ...(Array.isArray(refsJson?.library?.characters)
+                    ? refsJson.library.characters
+                    : []),
+                  ...byProjectGroups.flatMap((g: any) =>
+                    Array.isArray(g?.characters) ? g.characters : []
+                  ),
+                  ...(Array.isArray(refsJson?.characters) ? refsJson.characters : []),
+                ]
+                const libraryLocs = [
+                  ...(Array.isArray(refsJson?.library?.locations)
+                    ? refsJson.library.locations
+                    : []),
+                  ...byProjectGroups.flatMap((g: any) =>
+                    Array.isArray(g?.locations) ? g.locations : []
+                  ),
+                  ...(Array.isArray(refsJson?.sceneReferences)
+                    ? refsJson.sceneReferences
+                    : []),
+                ]
+                const libraryProps = [
+                  ...(Array.isArray(refsJson?.library?.props) ? refsJson.library.props : []),
+                  ...byProjectGroups.flatMap((g: any) =>
+                    Array.isArray(g?.props) ? g.props : []
+                  ),
+                  ...(Array.isArray(refsJson?.objectReferences)
+                    ? refsJson.objectReferences
+                    : []),
+                ]
                 setSeriesBibleContinuity({
                   seriesId: String(resolvedSeriesId),
                   seriesTitle: String(resolvedSeriesTitle),
                   bibleCharacters: Array.isArray(bible.characters) ? bible.characters : [],
                   bibleLocations: Array.isArray(bible.locations) ? bible.locations : [],
                   bibleProps: Array.isArray(bible.props) ? bible.props : [],
-                  visionCharacters: Array.isArray(refsJson?.characters) ? refsJson.characters : [],
-                  visionLocations: Array.isArray(refsJson?.sceneReferences)
-                    ? refsJson.sceneReferences
-                    : [],
-                  visionProps: Array.isArray(refsJson?.objectReferences)
-                    ? refsJson.objectReferences
-                    : [],
+                  visionCharacters: libraryChars,
+                  visionLocations: libraryLocs,
+                  visionProps: libraryProps,
                 })
               } catch (seriesErr) {
                 console.warn('[StudioPage] Non-fatal error loading Series continuity:', seriesErr)
@@ -2104,29 +2233,128 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
           open={showHeroPromptBuilder}
           onClose={() => setShowHeroPromptBuilder(false)}
           treatment={{
-            title: guide.treatmentVariants[0]?.title || guide.title || t('untitled'),
-            logline: guide.treatmentVariants[0]?.logline,
-            synopsis: guide.treatmentVariants[0]?.synopsis || guide.treatmentVariants[0]?.content,
-            genre: guide.treatmentVariants[0]?.genre,
-            setting: guide.treatmentVariants[0]?.setting,
-            tone: guide.treatmentVariants[0]?.tone,
-            themes: guide.treatmentVariants[0]?.themes,
-            visual_style: guide.treatmentVariants[0]?.visual_style || guide.treatmentVariants[0]?.visualStyle
+            title:
+              (activeTreatmentVariant as any)?.title ||
+              guide.treatmentVariants[0]?.title ||
+              guide.title ||
+              t('untitled'),
+            logline:
+              (activeTreatmentVariant as any)?.logline ??
+              guide.treatmentVariants[0]?.logline,
+            synopsis:
+              (activeTreatmentVariant as any)?.synopsis ||
+              (activeTreatmentVariant as any)?.content ||
+              guide.treatmentVariants[0]?.synopsis ||
+              guide.treatmentVariants[0]?.content,
+            genre:
+              (activeTreatmentVariant as any)?.genre ??
+              guide.treatmentVariants[0]?.genre,
+            setting:
+              (activeTreatmentVariant as any)?.setting ??
+              guide.treatmentVariants[0]?.setting,
+            tone:
+              (activeTreatmentVariant as any)?.tone ??
+              guide.treatmentVariants[0]?.tone,
+            themes:
+              (activeTreatmentVariant as any)?.themes ??
+              guide.treatmentVariants[0]?.themes,
+            visual_style:
+              (activeTreatmentVariant as any)?.visual_style ||
+              (activeTreatmentVariant as any)?.visualStyle ||
+              guide.treatmentVariants[0]?.visual_style ||
+              guide.treatmentVariants[0]?.visualStyle,
+            artStyle:
+              (activeTreatmentVariant as any)?.artStyle ??
+              guide.treatmentVariants[0]?.artStyle,
+            aspectRatio:
+              (activeTreatmentVariant as any)?.aspectRatio ??
+              guide.treatmentVariants[0]?.aspectRatio,
+            protagonist:
+              (activeTreatmentVariant as any)?.protagonist ??
+              guide.treatmentVariants[0]?.protagonist,
+            antagonist:
+              (activeTreatmentVariant as any)?.antagonist ??
+              guide.treatmentVariants[0]?.antagonist,
+            opening_hook:
+              (activeTreatmentVariant as any)?.opening_hook ??
+              guide.treatmentVariants[0]?.opening_hook,
+            beats:
+              (activeTreatmentVariant as any)?.beats ||
+              guide.treatmentVariants[0]?.beats ||
+              beatsView,
+            act_breakdown:
+              (activeTreatmentVariant as any)?.act_breakdown ??
+              guide.treatmentVariants[0]?.act_breakdown,
+            character_descriptions:
+              (activeTreatmentVariant as any)?.character_descriptions ??
+              guide.treatmentVariants[0]?.character_descriptions,
+            scene_descriptions:
+              (activeTreatmentVariant as any)?.scene_descriptions ??
+              guide.treatmentVariants[0]?.scene_descriptions,
+            prop_descriptions:
+              (activeTreatmentVariant as any)?.prop_descriptions ??
+              guide.treatmentVariants[0]?.prop_descriptions,
           }}
-          availableCharacters={((guide as any).characters || guide.treatmentVariants[0]?.character_descriptions || []).map((c: any) => ({
+          availableCharacters={resolvedHeroContinuity.cast.map((c) => ({
+            id: c.id,
             name: c.name,
             description: c.description,
             referenceImage: c.referenceImage,
-            appearanceDescription: c.appearanceDescription,
+            appearanceDescription: c.appearance,
+            appearance: c.appearance,
             ethnicity: c.ethnicity,
-            role: c.role
+            role: c.role,
+            defaultWardrobe: c.defaultWardrobe,
+            wardrobeAccessories: c.wardrobeAccessories,
+            keyFeature: c.keyFeature,
+            hairStyle: c.hairStyle,
+            hairColor: c.hairColor,
+            eyeColor: c.eyeColor,
+            expression: c.expression,
+            build: c.build,
+            externalGoal: c.externalGoal,
+            internalNeed: c.internalNeed,
+            fatalFlaw: c.fatalFlaw,
+            arcStartingState: c.arcStartingState,
+            isSharedFromSeries: c.isSharedFromSeries,
           }))}
-          sceneReferences={(guide as any).sceneReferences || []}
-          objectReferences={(guide as any).objectReferences || []}
+          sceneReferences={resolvedHeroContinuity.locations.map((loc, idx) => ({
+            id: loc.id || `loc-${idx}`,
+            name: loc.name,
+            description: [loc.location, loc.atmosphere, loc.furniture_props]
+              .filter(Boolean)
+              .join('. '),
+            location: loc.location,
+            atmosphere: loc.atmosphere,
+            furniture_props: loc.furniture_props,
+            imageUrl: loc.referenceImage || '',
+            type: 'scene' as const,
+            isSharedFromSeries: loc.isSharedFromSeries,
+          }))}
+          objectReferences={resolvedHeroContinuity.props.map((prop, idx) => ({
+            id: prop.id || `prop-${idx}`,
+            name: prop.name,
+            description: [
+              prop.description,
+              prop.significance ? `Significance: ${prop.significance}` : '',
+            ]
+              .filter(Boolean)
+              .join(' — '),
+            significance: prop.significance,
+            importance: prop.importance,
+            category: prop.category,
+            imageUrl: prop.referenceImage || '',
+            type: 'object' as const,
+            isSharedFromSeries: prop.isSharedFromSeries,
+          }))}
           onGenerateImage={async (promptData) => {
             setShowHeroPromptBuilder(false)
-            // Generate hero image with the structured prompt data
-            await generateHeroImage(guide.treatmentVariants[0], true, promptData.prompt)
+            // Generate hero image with the structured prompt data & Continuity Library references
+            await generateHeroImage(
+              activeTreatmentVariant || guide.treatmentVariants[0],
+              true,
+              promptData
+            )
           }}
           isGenerating={isGeneratingHeroImage}
         />

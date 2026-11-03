@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
+import { Op } from 'sequelize'
 import { authOptions } from '@/lib/auth'
 import { CreditService } from '@/services/CreditService'
-import { generateImageWithGemini } from '@/lib/gemini/imageClient'
+import { generateImageWithGemini, type ReferenceImage } from '@/lib/gemini/imageClient'
 import { uploadImageToBlob } from '@/lib/storage/blob'
 import { englishForModel, resolveRequestStoryLocale } from '@/i18n/server/requestLocale'
 import { DEFAULT_PROMPT_TEMPLATES, TREATMENT_VISUAL_CREDITS } from '@/types/treatment-visuals'
@@ -10,7 +11,17 @@ import type { TreatmentMood, TreatmentVisuals, GeneratedImage, CharacterPortrait
 import type { FilmTreatmentData } from '@/lib/types/reports'
 import { blueprintAspectRatioToImageApi, resolveVariantArtStyle } from '@/lib/treatment/blueprintFoundation'
 import { getArtStylePromptSuffix } from '@/lib/vision/artStyle'
-import { classifyAiError, errorMessageOf } from '@/lib/errors/aiErrorClassification'
+import { classifyAiError } from '@/lib/errors/aiErrorClassification'
+import {
+  deriveHeroPromptPreset,
+  buildHeroImagePrompt,
+  resolveHeroContinuityReferences,
+  type PosterShotTypeId,
+  type HeroPromptCharacterInput,
+  type HeroPromptSceneRefInput,
+  type HeroPromptObjectRefInput,
+} from '@/lib/treatment/heroImagePrompts'
+import type { SharedContinuitySource } from '@/lib/blueprint/blueprintContinuity'
 
 export const runtime = 'nodejs'
 export const maxDuration = 300
@@ -28,6 +39,128 @@ interface GenerateVisualRequest {
   visualType?: 'hero' | 'character' | 'act' | 'keyProp'
   visualId?: string | number
   mood?: TreatmentMood
+  posterType?: PosterShotTypeId
+  customPrompt?: string
+  negativePrompt?: string
+  artStyle?: string
+  characters?: HeroPromptCharacterInput[]
+  sceneReferences?: HeroPromptSceneRefInput[]
+  objectReferences?: HeroPromptObjectRefInput[]
+  referenceImages?: ReferenceImage[]
+}
+
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+
+/**
+ * Load Project + Series Continuity Library references from the database when available.
+ * Non-fatal if project/series is not yet saved or DB is unreachable in tests.
+ */
+async function loadServerContinuitySource(
+  projectId: string,
+  treatment: FilmTreatmentData
+): Promise<SharedContinuitySource | null> {
+  if (!projectId || !UUID_REGEX.test(projectId)) return null
+
+  try {
+    await import('@/models')
+    const { Project } = await import('@/models/Project')
+    const { Series } = await import('@/models/Series')
+    const { ReferenceAsset } = await import('@/models/ReferenceAsset')
+    const { ReferenceAssetLink } = await import('@/models/ReferenceAssetLink')
+
+    const project = await Project.findByPk(projectId)
+    if (!project) return null
+
+    const metadata = (project.metadata || {}) as Record<string, any>
+    const visionPhase = (metadata.visionPhase || {}) as Record<string, any>
+    const visionRefs = (visionPhase.references || {}) as Record<string, any>
+
+    const visionCharacters: Array<Record<string, any>> = Array.isArray(visionPhase.characters)
+      ? [...visionPhase.characters]
+      : []
+    const visionLocations: Array<Record<string, any>> = [
+      ...(Array.isArray(visionRefs.locationReferences) ? visionRefs.locationReferences : []),
+      ...(Array.isArray(visionRefs.sceneReferences) ? visionRefs.sceneReferences : []),
+    ]
+    const visionProps: Array<Record<string, any>> = Array.isArray(visionRefs.objectReferences)
+      ? [...visionRefs.objectReferences]
+      : []
+
+    const seriesId =
+      (project as any).series_id ||
+      metadata.seriesId ||
+      (treatment as any)?.seriesId ||
+      null
+
+    let seriesTitle: string | null = metadata.seriesTitle || null
+    let bibleCharacters: Array<Record<string, any>> = []
+    let bibleLocations: Array<Record<string, any>> = []
+    let bibleProps: Array<Record<string, any>> = []
+
+    if (seriesId && UUID_REGEX.test(String(seriesId))) {
+      const series = await Series.findByPk(String(seriesId)).catch(() => null)
+      if (series) {
+        seriesTitle = series.title || seriesTitle
+        const bible = ((series as any).production_bible ||
+          (series as any).metadata?.productionBible ||
+          {}) as Record<string, any>
+        if (Array.isArray(bible.characters)) bibleCharacters = bible.characters
+        if (Array.isArray(bible.locations)) bibleLocations = bible.locations
+        if (Array.isArray(bible.props)) bibleProps = bible.props
+      }
+    }
+
+    // Also load linked ReferenceAsset rows for this project or series
+    try {
+      const linkOr: Array<Record<string, any>> = [{ project_id: projectId }]
+      if (seriesId && UUID_REGEX.test(String(seriesId))) {
+        linkOr.push({ series_id: String(seriesId) })
+      }
+      const links = await ReferenceAssetLink.findAll({
+        where: { [Op.or]: linkOr },
+      }).catch(() => [])
+      const assetIds = [...new Set(links.map((l: any) => l.asset_id).filter(Boolean))]
+      if (assetIds.length > 0) {
+        const assets = await ReferenceAsset.findAll({
+          where: { id: assetIds, archived_at: null },
+        }).catch(() => [])
+        for (const asset of assets) {
+          const item = {
+            id: asset.id,
+            name: asset.name,
+            description: asset.description || '',
+            referenceImage: asset.reference_image_url || null,
+            imageUrl: asset.reference_image_url || null,
+            role: (asset.attributes as any)?.role,
+            libraryAssetId: asset.id,
+          }
+          if (asset.kind === 'character' || asset.kind === 'wardrobe') {
+            visionCharacters.push(item)
+          } else if (asset.kind === 'location') {
+            visionLocations.push(item)
+          } else if (asset.kind === 'prop') {
+            visionProps.push(item)
+          }
+        }
+      }
+    } catch {
+      /* ReferenceAsset table optional */
+    }
+
+    return {
+      seriesId: seriesId ? String(seriesId) : null,
+      seriesTitle,
+      bibleCharacters,
+      bibleLocations,
+      bibleProps,
+      visionCharacters,
+      visionLocations,
+      visionProps,
+    }
+  } catch (err) {
+    console.warn('[Treatment Visual] Non-fatal error loading continuity source:', err)
+    return null
+  }
 }
 
 // Build prompt based on mood
@@ -48,214 +181,188 @@ async function generateHeroImage(
   mood: TreatmentMood,
   projectId: string,
   storyLocale: string,
-  properNouns: string[]
+  properNouns: string[],
+  options: {
+    posterType?: PosterShotTypeId
+    customPrompt?: string
+    negativePrompt?: string
+    artStyle?: string
+    characters?: HeroPromptCharacterInput[]
+    sceneReferences?: HeroPromptSceneRefInput[]
+    objectReferences?: HeroPromptObjectRefInput[]
+    referenceImages?: ReferenceImage[]
+    sharedContinuitySource?: SharedContinuitySource | null
+  } = {}
 ): Promise<GeneratedImage> {
-  // Extract character details for accurate depiction
-  const characters = (treatment as any).character_descriptions || []
-  
-  // DEBUG: Log character data availability for prompt validation
-  console.log('[HeroImage] Character data received:', {
-    hasCharacterDescriptions: characters.length > 0,
-    characterCount: characters.length,
-    hasTreatmentProtagonist: !!(treatment as any).protagonist,
-    hasTreatmentAntagonist: !!(treatment as any).antagonist,
-    treatmentTitle: treatment.title,
-    hasLogline: !!treatment.logline,
-    hasSetting: !!treatment.setting,
-    hasTone: !!treatment.tone
+  const posterType: PosterShotTypeId = options.posterType || 'hero-portrait'
+
+  // Resolve Continuity Library references (Characters, Locations, Props)
+  const continuityResolution = resolveHeroContinuityReferences({
+    treatment: treatment as any,
+    posterType,
+    selectedCharacters: options.characters,
+    selectedSceneRefs: options.sceneReferences,
+    selectedObjectRefs: options.objectReferences,
+    sharedContinuitySource: options.sharedContinuitySource,
+    explicitReferenceImages: options.referenceImages,
   })
-  
-  if (characters.length === 0) {
-    console.warn('[HeroImage] WARNING: No character_descriptions provided - hero image may lack accurate character depiction')
+
+  const { resolvedContinuity, referenceImages, referenceBindingPromptBlock } =
+    continuityResolution
+
+  const resolvedSceneRefs: HeroPromptSceneRefInput[] =
+    options.sceneReferences && options.sceneReferences.length > 0
+      ? options.sceneReferences
+      : resolvedContinuity.locations.map((loc, idx) => ({
+          id: loc.id || `loc-${idx}`,
+          name: loc.name,
+          description: [loc.location, loc.atmosphere, loc.furniture_props]
+            .filter(Boolean)
+            .join('. '),
+          location: loc.location,
+          atmosphere: loc.atmosphere,
+          furniture_props: loc.furniture_props,
+          imageUrl: loc.referenceImage,
+          type: 'scene' as const,
+        }))
+
+  const resolvedObjectRefs: HeroPromptObjectRefInput[] =
+    options.objectReferences && options.objectReferences.length > 0
+      ? options.objectReferences
+      : resolvedContinuity.props.map((prop, idx) => ({
+          id: prop.id || `prop-${idx}`,
+          name: prop.name,
+          description: prop.description,
+          significance: prop.significance,
+          importance: prop.importance,
+          category: prop.category,
+          imageUrl: prop.referenceImage,
+          type: 'object' as const,
+        }))
+
+  const artStyleId =
+    options.artStyle ||
+    resolveVariantArtStyle(treatment as unknown as Record<string, unknown>)
+
+  let basePrompt: string
+  let effectiveNegativePrompt = options.negativePrompt
+
+  if (options.customPrompt && options.customPrompt.trim()) {
+    basePrompt = options.customPrompt.trim()
+  } else {
+    const derived = deriveHeroPromptPreset({
+      treatment: {
+        ...(treatment as any),
+        artStyle: artStyleId,
+      },
+      posterType,
+      availableCharacters:
+        options.characters && options.characters.length > 0
+          ? options.characters
+          : resolvedContinuity.cast,
+      sceneReferences: resolvedSceneRefs,
+      objectReferences: resolvedObjectRefs,
+    })
+
+    if (!effectiveNegativePrompt) {
+      effectiveNegativePrompt = derived.structure.negativePrompt
+    }
+
+    basePrompt = buildPromptWithMood(
+      buildHeroImagePrompt({
+        treatment: {
+          ...(treatment as any),
+          artStyle: artStyleId,
+        },
+        structure: derived.structure,
+        availableCharacters:
+          options.characters && options.characters.length > 0
+            ? options.characters
+            : resolvedContinuity.cast,
+        sceneReferences: resolvedSceneRefs,
+        selectedSceneRefIds: derived.selectedSceneRefIds,
+        objectReferences: resolvedObjectRefs,
+        selectedObjectRefIds: derived.selectedObjectRefIds,
+      }),
+      mood
+    )
   }
-  
-  // Find protagonist
-  const protagonist = characters.find((c: any) => 
-    c.role?.toLowerCase()?.includes('protagonist') || 
-    c.role?.toLowerCase()?.includes('lead') ||
-    c.role?.toLowerCase()?.includes('main')
-  ) || characters[0]
-  
-  // Find antagonist
-  const antagonist = characters.find((c: any) => 
-    c.role?.toLowerCase()?.includes('antagonist') || 
-    c.role?.toLowerCase()?.includes('villain')
-  )
-  
-  /**
-   * Enhanced character appearance builder with emotional state extraction
-   * and detailed physical description for cinematic hero images.
-   * 
-   * Follows the "Subject & Micro-Expression" layer of Layered Narrative Construction.
-   */
-  function buildCharacterAppearance(character: any, isProtagonist: boolean = false): string {
-    if (!character) return ''
-    
-    const parts: string[] = []
-    
-    // Core physical attributes (maintain order for natural description)
-    if (character.name) parts.push(character.name)
-    
-    // Age and ethnicity first for accurate representation
-    if (character.ethnicity) parts.push(`${character.ethnicity} ethnicity`)
-    if (character.age) parts.push(`${character.age} years old`)
-    if (character.gender) parts.push(character.gender)
-    
-    // Build/physical presence
-    if (character.build) parts.push(character.build + ' build')
-    if (character.height) parts.push(character.height)
-    
-    // Hair styling (combine for natural flow)
-    const hairParts: string[] = []
-    if (character.hairColor) hairParts.push(character.hairColor)
-    if (character.hairStyle) hairParts.push(character.hairStyle)
-    if (hairParts.length > 0) parts.push(`${hairParts.join(' ')} hair`)
-    
-    // Distinctive features
-    if (character.eyeColor) parts.push(`${character.eyeColor} eyes`)
-    if (character.keyFeature) parts.push(character.keyFeature)
-    if (character.distinguishingFeatures) parts.push(character.distinguishingFeatures)
-    
-    // Wardrobe - critical for establishing character
-    if (character.defaultWardrobe) {
-      parts.push(`wearing ${character.defaultWardrobe}`)
-    } else if (character.wardrobe) {
-      parts.push(`wearing ${character.wardrobe}`)
-    }
-    
-    // MICRO-EXPRESSION: Emotional state from character arc or logline context
-    // This is the "inner emptiness" or emotional weight the camera captures
-    if (character.expression) {
-      parts.push(`expression: ${character.expression}`)
-    } else if (character.emotionalState) {
-      parts.push(`expression: ${character.emotionalState}`)
-    } else if (isProtagonist && treatment.logline) {
-      // Infer emotional state from logline for protagonist
-      const logline = treatment.logline.toLowerCase()
-      if (logline.includes('heartbreak') || logline.includes('loss') || logline.includes('grief')) {
-        parts.push('expression: hollow and introspective, look of profound regret')
-      } else if (logline.includes('revenge') || logline.includes('justice')) {
-        parts.push('expression: steely determination, simmering intensity')
-      } else if (logline.includes('discover') || logline.includes('uncover') || logline.includes('search')) {
-        parts.push('expression: searching gaze, restless curiosity')
-      } else if (logline.includes('escape') || logline.includes('flee') || logline.includes('survive')) {
-        parts.push('expression: haunted vigilance, survival instinct')
-      } else if (logline.includes('love') || logline.includes('romance')) {
-        parts.push('expression: vulnerable longing, guarded hope')
-      }
-    }
-    
-    // Physical stance for cinematic framing
-    if (character.stance) {
-      parts.push(character.stance)
-    } else if (isProtagonist) {
-      parts.push('standing perfectly still, staring directly through the camera lens')
-    }
-    
-    // Fallback to description if no structured data
-    if (parts.length <= 1 && character.description) {
-      return character.name ? `${character.name} - ${character.description}` : character.description
-    }
-    
-    return parts.join(', ')
-  }
-  
-  const mainCharacterAppearance = buildCharacterAppearance(protagonist, true)
-  const antagonistAppearance = buildCharacterAppearance(antagonist, false)
-  
-  // Log appearance strings for debugging
-  console.log('[HeroImage] Character appearances built:', {
-    protagonist: mainCharacterAppearance.substring(0, 100) + (mainCharacterAppearance.length > 100 ? '...' : ''),
-    antagonist: antagonistAppearance.substring(0, 100) + (antagonistAppearance.length > 100 ? '...' : '')
-  })
-  
-  // Extract themes - handle both array and string formats
-  let themes: string[] = []
-  if (treatment.themes) {
-    if (Array.isArray(treatment.themes)) {
-      themes = treatment.themes
-    } else if (typeof treatment.themes === 'string') {
-      themes = treatment.themes.split(',').map(t => t.trim())
-    }
-  }
-  
-  // Build conflict dynamic from character roles/relationships
-  let conflictDynamic = ''
-  if (protagonist && antagonist) {
-    // Try to infer relationship from character data
-    const protRole = protagonist.role || 'protagonist'
-    const antRole = antagonist.role || 'antagonist'
-    conflictDynamic = `${protagonist.name || 'protagonist'} (${protRole}) vs ${antagonist.name || 'antagonist'} (${antRole})`
-  }
-  
-  const artStyleId = resolveVariantArtStyle(treatment as unknown as Record<string, unknown>)
-  const styledPrompt = buildPromptWithMood(
-    DEFAULT_PROMPT_TEMPLATES.heroImage({
-      title: treatment.title || 'Untitled',
-      genre: treatment.genre || 'drama',
-      mood: treatment.tone || 'dramatic',
-      setting: treatment.setting || '',
-      synopsis: treatment.synopsis || treatment.logline || '',
-      protagonist: treatment.protagonist || protagonist?.name || '',
-      mainCharacterAppearance,
-      antagonist: treatment.antagonist || antagonist?.name || '',
-      antagonistAppearance,
-      themes,
-      visualStyle: treatment.visual_style || '',
-      conflictDynamic,
-      artStyle: artStyleId,
-    }),
-    mood
-  )
+
   const artStyleSuffix = getArtStylePromptSuffix(artStyleId)
-  const prompt =
-    artStyleSuffix && !styledPrompt.includes(artStyleSuffix)
-      ? `${styledPrompt} ${artStyleSuffix}`
-      : styledPrompt
-  
-  // Log final prompt for debugging hero image quality
+  const styledPrompt =
+    artStyleSuffix && !basePrompt.includes(artStyleSuffix)
+      ? `${basePrompt} ${artStyleSuffix}`
+      : basePrompt
+
+  const promptWithContinuityRefs = referenceBindingPromptBlock
+    ? `${referenceBindingPromptBlock}${styledPrompt}`
+    : styledPrompt
+
   console.log('[HeroImage] Final prompt generated:', {
-    promptLength: prompt.length,
-    hasSubjectLayer: prompt.includes('(Subject)'),
-    hasEnvironmentLayer: prompt.includes('(Environment)'),
-    hasLightingLayer: prompt.includes('(Lighting/Mood)'),
-    hasCinematographyLayer: prompt.includes('(Cinematography)'),
-    promptPreview: prompt.substring(0, 300) + '...'
+    posterType,
+    promptLength: promptWithContinuityRefs.length,
+    referenceImageCount: referenceImages.length,
+    castCount: resolvedContinuity.cast.length,
+    locationCount: resolvedContinuity.locations.length,
+    propCount: resolvedContinuity.props.length,
+    promptPreview: promptWithContinuityRefs.substring(0, 320) + '...',
   })
-  
+
+  // Also include continuity cast & location names in properNouns so translation preserves them
+  const mergedProperNouns = [
+    ...new Set([
+      ...properNouns,
+      ...resolvedContinuity.cast.map((c) => c.name).filter(Boolean),
+      ...resolvedContinuity.locations.map((l) => l.name).filter(Boolean),
+    ]),
+  ]
+
   const heroAspectRatio = blueprintAspectRatioToImageApi(
     (treatment as { aspectRatio?: string }).aspectRatio
   )
-  const modelPrompt = await englishForModel(prompt, storyLocale, properNouns)
+  const modelPrompt = await englishForModel(
+    promptWithContinuityRefs,
+    storyLocale,
+    mergedProperNouns
+  )
   const base64Image = await generateImageWithGemini(modelPrompt, {
     aspectRatio: heroAspectRatio,
-    imageSize: '2K'
+    imageSize: '2K',
+    ...(referenceImages.length > 0 ? { referenceImages } : {}),
+    ...(effectiveNegativePrompt ? { negativePrompt: effectiveNegativePrompt } : {}),
   })
-  
+
   const blobUrl = await uploadImageToBlob(
     base64Image,
     `treatment/hero-${Date.now()}.png`,
     projectId
   )
-  
+
   return {
     id: `hero-${projectId}-${Date.now()}`,
     url: blobUrl,
-    prompt,
+    prompt: styledPrompt,
     generatedAt: new Date().toISOString(),
     aspectRatio: heroAspectRatio,
-    status: 'ready' as const
+    status: 'ready' as const,
   }
 }
 
 // Generate character portrait
 async function generateCharacterPortrait(
-  character: { name: string; role?: string; description?: string; image_prompt?: string },
+  character: {
+    name: string
+    role?: string
+    description?: string
+    image_prompt?: string
+    referenceImage?: string | null
+  },
   treatment: FilmTreatmentData,
   mood: TreatmentMood,
   projectId: string,
   storyLocale: string,
-  properNouns: string[]
+  properNouns: string[],
+  continuityCast: HeroPromptCharacterInput[] = []
 ): Promise<CharacterPortrait> {
   const role = character.role?.toLowerCase() || 'supporting'
   const roleType = role.includes('protagonist') || role.includes('lead') || role.includes('hero') 
@@ -263,22 +370,42 @@ async function generateCharacterPortrait(
     : role.includes('antagonist') || role.includes('villain') 
       ? 'antagonist' 
       : 'supporting'
-  
+
+  const matchedContinuityChar = continuityCast.find(
+    (c) => c.name?.toLowerCase() === character.name?.toLowerCase()
+  )
+  const refImgUrl = character.referenceImage || matchedContinuityChar?.referenceImage || null
+
   const prompt = buildPromptWithMood(
     DEFAULT_PROMPT_TEMPLATES.characterPortrait({
       name: character.name,
-      description: character.description || '',
-      role: character.role || 'character',
-      ethnicity: (character as any).ethnicity,
+      description:
+        character.description ||
+        matchedContinuityChar?.appearance ||
+        matchedContinuityChar?.description ||
+        '',
+      role: character.role || matchedContinuityChar?.role || 'character',
+      ethnicity: (character as any).ethnicity || matchedContinuityChar?.ethnicity,
       age: (character as any).age
     }),
     mood
   )
+
+  const referenceImages: ReferenceImage[] = refImgUrl
+    ? [
+        {
+          referenceId: 1,
+          imageUrl: refImgUrl,
+          subjectDescription: `Reference [1] — Character identity & wardrobe reference for ${character.name}: match facial features, bone structure, hair, skin tone, and signature attire`,
+        },
+      ]
+    : []
   
   const modelPrompt = await englishForModel(prompt, storyLocale, properNouns)
   const base64Image = await generateImageWithGemini(modelPrompt, {
     aspectRatio: '3:4',
-    imageSize: '1K'
+    imageSize: '1K',
+    ...(referenceImages.length > 0 ? { referenceImages } : {}),
   })
   
   const blobUrl = await uploadImageToBlob(
@@ -298,7 +425,7 @@ async function generateCharacterPortrait(
       aspectRatio: '3:4',
       status: 'ready' as const
     }
-  }
+  } as unknown as CharacterPortrait
 }
 
 // Generate act anchor (establishing shot)
@@ -309,23 +436,36 @@ async function generateActAnchor(
   mood: TreatmentMood,
   projectId: string,
   storyLocale: string,
-  properNouns: string[]
+  properNouns: string[],
+  continuityLocations: Array<{ name: string; referenceImage?: string | null }> = []
 ): Promise<ActAnchor> {
   const prompt = buildPromptWithMood(
     DEFAULT_PROMPT_TEMPLATES.actEstablishing({
       actNumber,
-      setting: treatment.setting || 'dramatic location',
+      setting: treatment.setting || continuityLocations[0]?.name || 'dramatic location',
       timeOfDay: 'day',
       mood: treatment.tone || 'dramatic',
       genre: treatment.genre || 'drama'
     }),
     mood
   )
+
+  const locWithImg = continuityLocations.find((l) => Boolean(l.referenceImage))
+  const referenceImages: ReferenceImage[] = locWithImg?.referenceImage
+    ? [
+        {
+          referenceId: 1,
+          imageUrl: locWithImg.referenceImage,
+          subjectDescription: `Reference [1] — Environment / location reference for "${locWithImg.name}": match architectural layout, atmosphere, and color palette`,
+        },
+      ]
+    : []
   
   const modelPrompt = await englishForModel(prompt, storyLocale, properNouns)
   const base64Image = await generateImageWithGemini(modelPrompt, {
     aspectRatio: '21:9', // Cinematic 2.39:1
-    imageSize: '2K'
+    imageSize: '2K',
+    ...(referenceImages.length > 0 ? { referenceImages } : {}),
   })
   
   const blobUrl = await uploadImageToBlob(
@@ -346,7 +486,7 @@ async function generateActAnchor(
       status: 'ready' as const
     },
     description: actContent
-  }
+  } as unknown as ActAnchor
 }
 
 export async function POST(request: NextRequest) {
@@ -359,7 +499,22 @@ export async function POST(request: NextRequest) {
     }
 
     const body: GenerateVisualRequest = await request.json()
-    const { projectId, treatment, generateAll, visualType, visualId, mood = 'balanced' } = body
+    const {
+      projectId,
+      treatment,
+      generateAll,
+      visualType,
+      visualId,
+      mood = 'balanced',
+      posterType,
+      customPrompt,
+      negativePrompt,
+      artStyle,
+      characters,
+      sceneReferences,
+      objectReferences,
+      referenceImages,
+    } = body
     
     if (!projectId || !treatment) {
       return NextResponse.json(
@@ -404,6 +559,18 @@ export async function POST(request: NextRequest) {
         }, { status: 402 })
       }
     }
+
+    // Load Continuity Library from DB (Project visionPhase + Series production_bible + ReferenceAssets)
+    const sharedContinuitySource = await loadServerContinuitySource(projectId, treatment)
+    const continuityResolution = resolveHeroContinuityReferences({
+      treatment: treatment as any,
+      posterType,
+      selectedCharacters: characters,
+      selectedSceneRefs: sceneReferences,
+      selectedObjectRefs: objectReferences,
+      sharedContinuitySource,
+      explicitReferenceImages: referenceImages,
+    })
     
     let visuals: Partial<TreatmentVisuals> = {
       id: `visuals-${projectId}`,
@@ -433,18 +600,43 @@ export async function POST(request: NextRequest) {
     if (generateAll) {
       // Hero image
       try {
-        visuals.heroImage = await generateHeroImage(treatment, mood, projectId, storyLocale, properNouns)
+        visuals.heroImage = await generateHeroImage(
+          treatment,
+          mood,
+          projectId,
+          storyLocale,
+          properNouns,
+          {
+            posterType,
+            customPrompt,
+            negativePrompt,
+            artStyle,
+            characters,
+            sceneReferences,
+            objectReferences,
+            referenceImages,
+            sharedContinuitySource,
+          }
+        )
         visuals.creditsUsed = (visuals.creditsUsed || 0) + TREATMENT_VISUAL_CREDITS.heroImage
       } catch (error) {
         recordFailure('hero', error)
       }
       
       // Character portraits (first 4)
-      const characters = treatment.character_descriptions?.slice(0, 4) || []
+      const charsToRender = treatment.character_descriptions?.slice(0, 4) || []
       visuals.characterPortraits = []
-      for (const char of characters) {
+      for (const char of charsToRender) {
         try {
-          const portrait = await generateCharacterPortrait(char, treatment, mood, projectId, storyLocale, properNouns)
+          const portrait = await generateCharacterPortrait(
+            char,
+            treatment,
+            mood,
+            projectId,
+            storyLocale,
+            properNouns,
+            continuityResolution.resolvedContinuity.cast
+          )
           visuals.characterPortraits.push(portrait)
           visuals.creditsUsed = (visuals.creditsUsed || 0) + TREATMENT_VISUAL_CREDITS.characterPortrait
         } catch (error) {
@@ -464,7 +656,16 @@ export async function POST(request: NextRequest) {
       for (const [actNum, actContent] of acts) {
         if (actContent) {
           try {
-            const anchor = await generateActAnchor(actNum, actContent, treatment, mood, projectId, storyLocale, properNouns)
+            const anchor = await generateActAnchor(
+              actNum,
+              actContent,
+              treatment,
+              mood,
+              projectId,
+              storyLocale,
+              properNouns,
+              continuityResolution.resolvedContinuity.locations
+            )
             visuals.actAnchors.push(anchor)
             visuals.creditsUsed = (visuals.creditsUsed || 0) + TREATMENT_VISUAL_CREDITS.actEstablishing
           } catch (error) {
@@ -494,7 +695,24 @@ export async function POST(request: NextRequest) {
     else if (visualType) {
       switch (visualType) {
         case 'hero':
-          visuals.heroImage = await generateHeroImage(treatment, mood, projectId, storyLocale, properNouns)
+          visuals.heroImage = await generateHeroImage(
+            treatment,
+            mood,
+            projectId,
+            storyLocale,
+            properNouns,
+            {
+              posterType,
+              customPrompt,
+              negativePrompt,
+              artStyle,
+              characters,
+              sceneReferences,
+              objectReferences,
+              referenceImages,
+              sharedContinuitySource,
+            }
+          )
           visuals.creditsUsed = TREATMENT_VISUAL_CREDITS.heroImage
           break
           
@@ -502,7 +720,15 @@ export async function POST(request: NextRequest) {
           const charIndex = typeof visualId === 'number' ? visualId : 0
           const char = treatment.character_descriptions?.[charIndex]
           if (char) {
-            const portrait = await generateCharacterPortrait(char, treatment, mood, projectId, storyLocale, properNouns)
+            const portrait = await generateCharacterPortrait(
+              char,
+              treatment,
+              mood,
+              projectId,
+              storyLocale,
+              properNouns,
+              continuityResolution.resolvedContinuity.cast
+            )
             visuals.characterPortraits = [portrait]
             visuals.creditsUsed = TREATMENT_VISUAL_CREDITS.characterPortrait
           }
@@ -512,7 +738,16 @@ export async function POST(request: NextRequest) {
           const actNum = (typeof visualId === 'number' ? visualId : 1) as 1 | 2 | 3
           const actContent = treatment.act_breakdown?.[`act${actNum}` as keyof typeof treatment.act_breakdown] || ''
           if (actContent) {
-            const anchor = await generateActAnchor(actNum, actContent as string, treatment, mood, projectId, storyLocale, properNouns)
+            const anchor = await generateActAnchor(
+              actNum,
+              actContent as string,
+              treatment,
+              mood,
+              projectId,
+              storyLocale,
+              properNouns,
+              continuityResolution.resolvedContinuity.locations
+            )
             visuals.actAnchors = [anchor]
             visuals.creditsUsed = TREATMENT_VISUAL_CREDITS.actEstablishing
           }
