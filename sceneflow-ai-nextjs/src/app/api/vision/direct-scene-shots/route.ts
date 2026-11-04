@@ -144,6 +144,10 @@ export async function POST(req: NextRequest) {
       force,
     })
 
+    if (applied.scenes[sceneIndex] && typeof applied.scenes[sceneIndex] === 'object') {
+      ;(applied.scenes[sceneIndex] as Record<string, unknown>).shotDirectionNeedsRefresh = false
+    }
+
     if (!demoMode && applied.optimized > 0 && typeof fresh.update === 'function') {
       await fresh.update({
         metadata: writeScenesIntoVisionMetadata(fresh.metadata, applied.scenes),

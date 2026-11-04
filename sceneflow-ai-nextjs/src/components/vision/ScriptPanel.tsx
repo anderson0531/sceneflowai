@@ -4768,7 +4768,10 @@ function SceneCard({
       })
       if (result.scene && onScriptChange) {
         const workingScenes: any[] = Array.isArray(scenes) ? [...scenes] : []
-        workingScenes[sceneIdx] = result.scene
+        workingScenes[sceneIdx] = {
+          ...(result.scene as Record<string, any>),
+          shotDirectionNeedsRefresh: false,
+        }
         onScriptChange({ ...script, script: { ...script?.script, scenes: workingScenes } })
       }
       setShotDirectionProgress({ done: result.optimized, total: shots.length })
@@ -4917,6 +4920,7 @@ function SceneCard({
   const visibleBeatCount = beatFacts.filter((facts) => beatMatchesFilters(facts, beatListFilters)).length
   const hasDirectionPromptChanged = useMemo(
     () =>
+      Boolean((scene as Record<string, any>)?.shotDirectionNeedsRefresh) ||
       sceneBeatsForTabs.some(
         (beat) =>
           directionRailStatus({
@@ -4925,7 +4929,7 @@ function SceneCard({
             stillPromptDirectionKey: beat.storyboardImagePromptDirectionKey,
           }).status === 'attention'
       ),
-    [sceneBeatsForTabs]
+    [scene, sceneBeatsForTabs]
   )
   const sceneScoreOn = isSceneScoreEnabled(sceneBeatsForTabs, sceneMusicCues)
   const handleSceneScoreChange = useCallback(
@@ -6437,6 +6441,9 @@ function SceneCard({
                                 <>
                                   <Clapperboard className="w-3.5 h-3.5" />
                                   Shot Direction Agent
+                                  {hasDirectionPromptChanged && (
+                                    <span className="h-2 w-2 rounded-full bg-amber-400 animate-pulse" />
+                                  )}
                                 </>
                               )}
                             </button>
@@ -6863,6 +6870,9 @@ function SceneCard({
                             <>
                               <Clapperboard className="w-3.5 h-3.5" />
                               <span className="hidden sm:inline">Shot Direction Agent</span>
+                              {hasDirectionPromptChanged && (
+                                <span className="h-2 w-2 rounded-full bg-amber-400 animate-pulse" />
+                              )}
                             </>
                           )}
                         </button>
@@ -7111,9 +7121,23 @@ function SceneCard({
                             aria-label="Scene workflow"
                             className="inline-flex h-auto w-max min-w-full flex-nowrap items-center gap-0.5 border-0 bg-transparent p-0.5 text-slate-400"
                           >
-                            <TabsTrigger value="direction" className={sceneTabTriggerClass}>
+                            <TabsTrigger
+                              value="direction"
+                              title={
+                                hasDirectionPromptChanged
+                                  ? 'Script updated — run Shot Direction Agent to refresh shot direction and prompts'
+                                  : undefined
+                              }
+                              className={sceneTabTriggerClass}
+                            >
                               <Film className="w-3.5 h-3.5 shrink-0" />
                               Direction
+                              {hasDirectionPromptChanged && (
+                                <span className="ml-1 inline-flex items-center gap-1 rounded-full border border-amber-400/60 bg-amber-500/20 px-1.5 py-0.2 text-[9px] font-semibold text-amber-300">
+                                  <span className="h-1.5 w-1.5 rounded-full bg-amber-400 animate-pulse" />
+                                  Run Shot Direction
+                                </span>
+                              )}
                             </TabsTrigger>
                             <TabsTrigger value="beats" title="Dialogue, narration, and sound effects for each shot" className={sceneTabTriggerClass}>
                               <FileText className="w-3.5 h-3.5 shrink-0" />

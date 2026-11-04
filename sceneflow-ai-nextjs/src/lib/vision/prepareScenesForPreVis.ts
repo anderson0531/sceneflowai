@@ -241,11 +241,14 @@ export interface RunPreVisScenePreparationParams {
 }
 
 /**
- * Orchestrates the Pre-Vis Preparation Agent from the Audience Resonance Scene Breakdown:
+ * Orchestrates applying selected Audience Resonance scene recommendations in batch:
  * 1. Revises all scenes that have >= 1 selected recommendation via `/api/vision/revise-scene` (concurrency 2).
- * 2. Persists all revised scenes to the database in a single batch save so server endpoints see the updated script.
- * 3. Runs Scene Direction (`/api/vision/attach-scene-directions`) and Shot Direction Agent (`/api/vision/direct-scene-shots`)
- *    across all scenes so every scene has production-ready camera/lighting/blocking direction for Pre-Vis (Audio + Stills).
+ * 2. Persists all revised scenes to the database in a single batch save and marks revised scenes
+ *    as needing Shot Direction refresh (`shotDirectionNeedsRefresh: true`).
+ *
+ * Shot Direction is intentionally deferred to the scene card's Shot Direction Agent or the
+ * Production Agent so the user can iterate quickly on script revisions + AR re-analysis
+ * inside the Audience Analysis dialog.
  */
 export async function runPreVisScenePreparation(
   params: RunPreVisScenePreparationParams
@@ -275,10 +278,8 @@ export async function runPreVisScenePreparation(
   const failedRevisions: Array<{ sceneNumber: number; error: string }> = []
   const failedDirections: Array<{ sceneNumber: number; error: string }> = []
   const successfulRevisions: BatchSceneRevisionItem[] = []
-  const revisedSceneIndices = new Set<number>()
   let appliedRecommendationCount = 0
 
-  // Phase 1: Revise scenes with selected recommendations
   if (groups.length > 0) {
     let completedRevisions = 0
     onProgress?.({
@@ -345,11 +346,10 @@ export async function runPreVisScenePreparation(
               : undefined,
             appliedRecommendationIds: recIds,
           })
-          revisedSceneIndices.add(group.sceneIndex)
           appliedRecommendationCount += recIds.length
         } catch (err) {
-          if (signal?.aborted || (err instanceof DOMException && err.name === 'AbortError')) {
-            throw err
+          if (signal?.aborted || isAbortError(err)) {
+            throw new DOMException('Aborted', 'AbortError')
           }
           failedRevisions.push({
             sceneNumber: group.sceneNumber,
@@ -373,8 +373,6 @@ export async function runPreVisScenePreparation(
     throw new DOMException('Aborted', 'AbortError')
   }
 
-  // Persist revised scenes to DB before running server-side Scene Direction & Shot Direction
-  let totalScenesForDirection = scriptScenes.length
   if (successfulRevisions.length > 0) {
     onProgress?.({
       phase: 'persist-scenes',
@@ -382,144 +380,22 @@ export async function runPreVisScenePreparation(
       total: successfulRevisions.length,
       label: `Saving ${successfulRevisions.length} revised scene${successfulRevisions.length === 1 ? '' : 's'}…`,
     })
-    const persistResult = await onPersistRevisedScenes(successfulRevisions)
-    if (typeof persistResult?.sceneCount === 'number' && persistResult.sceneCount > 0) {
-      totalScenesForDirection = persistResult.sceneCount
-    }
+    await onPersistRevisedScenes(successfulRevisions)
+    await onRefreshProject?.()
   }
-
-  if (signal?.aborted) {
-    throw new DOMException('Aborted', 'AbortError')
-  }
-
-  // Phase 2a: Ensure Scene Direction is generated for revised / undirected scenes
-  if (totalScenesForDirection > 0) {
-    onProgress?.({
-      phase: 'scene-direction',
-      done: 0,
-      total: totalScenesForDirection,
-      label: 'Generating scene direction for scenes…',
-    })
-
-    try {
-      const response = await fetchImpl('/api/vision/attach-scene-directions', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ projectId }),
-        signal,
-      })
-      if (response.ok && response.body?.getReader) {
-        const reader = response.body.getReader()
-        const decoder = new TextDecoder()
-        let buffer = ''
-        const parseLine = (part: string) => {
-          const line = part
-            .split('\n')
-            .map((entry) => entry.trim())
-            .find((entry) => entry.startsWith('data:'))
-          if (!line) return
-          try {
-            const event = JSON.parse(line.slice(line.indexOf(':') + 1).trim())
-            if (event?.type === 'progress') {
-              const done = Number(event.done) || 0
-              const total = Number(event.total) || totalScenesForDirection
-              onProgress?.({
-                phase: 'scene-direction',
-                done,
-                total,
-                label: `Scene direction (${done}/${total})…`,
-              })
-            }
-          } catch {}
-        }
-        while (true) {
-          const { done, value } = await reader.read()
-          if (done) {
-            buffer += decoder.decode()
-            buffer.split('\n\n').forEach(parseLine)
-            break
-          }
-          buffer += decoder.decode(value, { stream: true })
-          const parts = buffer.split('\n\n')
-          buffer = parts.pop() ?? ''
-          parts.forEach(parseLine)
-        }
-      }
-    } catch (err) {
-      if (signal?.aborted || isAbortError(err)) {
-        throw new DOMException('Aborted', 'AbortError')
-      }
-      console.warn('[PreVisPrep] attach-scene-directions warning:', err)
-    }
-  }
-
-  if (signal?.aborted) {
-    throw new DOMException('Aborted', 'AbortError')
-  }
-
-  // Phase 2b: Run Shot Direction Agent across all scenes
-  let directedSceneCount = 0
-  let totalShotsDirected = 0
-
-  for (let sceneIndex = 0; sceneIndex < totalScenesForDirection; sceneIndex++) {
-    if (signal?.aborted) {
-      throw new DOMException('Aborted', 'AbortError')
-    }
-    const sceneNumber = sceneIndex + 1
-    onProgress?.({
-      phase: 'shot-direction',
-      done: sceneIndex,
-      total: totalScenesForDirection,
-      currentSceneNumber: sceneNumber,
-      label: `Running Shot Direction Agent (Scene ${sceneNumber}/${totalScenesForDirection})…`,
-    })
-
-    // Force regeneration when either no scenes were revised (explicit "Run Shot Direction for All Scenes")
-    // or when this specific scene was revised in Phase 1.
-    const force = revisedSceneIndices.size === 0 || revisedSceneIndices.has(sceneIndex)
-    try {
-      const shotRes = await requestSceneShotDirection({
-        projectId,
-        sceneIndex,
-        force,
-        signal,
-        fetchImpl,
-      })
-      directedSceneCount += 1
-      totalShotsDirected += shotRes.optimized ?? 0
-    } catch (err) {
-      if (signal?.aborted || isAbortError(err)) {
-        throw new DOMException('Aborted', 'AbortError')
-      }
-      failedDirections.push({
-        sceneNumber,
-        error: err instanceof Error ? err.message : `Failed shot direction for Scene ${sceneNumber}`,
-      })
-    }
-
-    onProgress?.({
-      phase: 'shot-direction',
-      done: sceneIndex + 1,
-      total: totalScenesForDirection,
-      currentSceneNumber: sceneNumber,
-      label: `Shot Direction Agent (${sceneIndex + 1}/${totalScenesForDirection} scenes)…`,
-    })
-  }
-
-  await onRefreshProject?.()
 
   onProgress?.({
     phase: 'done',
-    done: totalScenesForDirection,
-    total: totalScenesForDirection,
-    label: 'Pre-Vis preparation complete',
+    done: groups.length,
+    total: groups.length,
+    label: 'Scene recommendations applied',
   })
 
   return {
     revisedSceneCount: successfulRevisions.length,
     appliedRecommendationCount,
-    directedSceneCount,
-    totalShotsDirected,
+    directedSceneCount: 0,
+    totalShotsDirected: 0,
     failedRevisions,
     failedDirections,
   }

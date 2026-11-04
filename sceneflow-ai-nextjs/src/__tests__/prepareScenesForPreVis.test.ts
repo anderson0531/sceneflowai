@@ -80,7 +80,7 @@ describe('prepareScenesForPreVis', () => {
     expect(groups[0].selectedRecommendations[0].recId).toBe(rec0Id)
   })
 
-  it('revises selected scenes, persists in batch, and runs Shot Direction Agent across all scenes', async () => {
+  it('revises selected scenes and persists in batch without blocking on Shot Direction', async () => {
     const rec0Id = recommendationId(sampleSceneAnalysis[0].recommendations![0], 0)
     const selected = new Set([buildSceneRecSelectionKey(0, rec0Id)])
     const scriptScenes = [
@@ -106,12 +106,6 @@ describe('prepareScenesForPreVis', () => {
           { status: 200 }
         )
       }
-      if (url === '/api/vision/attach-scene-directions') {
-        return new Response(JSON.stringify({ success: true, generatedCount: 1 }), { status: 200 })
-      }
-      if (url === '/api/vision/direct-scene-shots') {
-        return new Response(JSON.stringify({ optimized: 4, failed: 0, skipped: 0 }), { status: 200 })
-      }
       throw new Error(`Unexpected URL: ${url}`)
     }) as unknown as typeof fetch
 
@@ -131,8 +125,8 @@ describe('prepareScenesForPreVis', () => {
 
     expect(result.revisedSceneCount).toBe(1)
     expect(result.appliedRecommendationCount).toBe(1)
-    expect(result.directedSceneCount).toBe(2)
-    expect(result.totalShotsDirected).toBe(8)
+    expect(result.directedSceneCount).toBe(0)
+    expect(result.totalShotsDirected).toBe(0)
     expect(result.failedRevisions).toHaveLength(0)
     expect(result.failedDirections).toHaveLength(0)
 
@@ -149,11 +143,8 @@ describe('prepareScenesForPreVis', () => {
       },
     ])
 
-    const shotCalls = calls.filter((c) => c.url === '/api/vision/direct-scene-shots')
-    expect(shotCalls).toHaveLength(2)
-    // Scene 0 was revised so force=true; Scene 1 was not revised so force is omitted
-    expect(shotCalls[0].body).toEqual({ projectId: 'proj-123', sceneIndex: 0, force: true })
-    expect(shotCalls[1].body).toEqual({ projectId: 'proj-123', sceneIndex: 1 })
+    // Shot direction is deferred to the scene card / Production Agent for fast AR iteration
+    expect(calls.every((c) => c.url === '/api/vision/revise-scene')).toBe(true)
     expect(onRefreshProject).toHaveBeenCalledTimes(1)
   })
 })

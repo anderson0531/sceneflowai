@@ -1069,15 +1069,10 @@ export default function ScriptReviewModal({
 
   const handleRunPreVisPrepAgent = async () => {
     if (!projectId) {
-      toast.error('Save the project before running the Pre-Vis Preparation Agent')
+      toast.error('Save the project before applying scene recommendations')
       return
     }
     if (isRunningPreVisPrep) return
-
-    const controller = new AbortController()
-    preVisAbortRef.current = controller
-    setIsRunningPreVisPrep(true)
-    setPreVisPrepResult(null)
 
     const initialGroups = groupSelectedRecommendationsByScene(
       sceneAnalysis,
@@ -1085,10 +1080,18 @@ export default function ScriptReviewModal({
       scriptScenes,
       localAppliedRecKeys
     )
+    if (initialGroups.length === 0) {
+      toast.info('Select at least one scene recommendation to apply')
+      return
+    }
+
+    const controller = new AbortController()
+    preVisAbortRef.current = controller
+    setIsRunningPreVisPrep(true)
+    setPreVisPrepResult(null)
+
     const toastId = toast.loading(
-      initialGroups.length > 0
-        ? `Applying ${selectedRecKeys.size} recommendation${selectedRecKeys.size === 1 ? '' : 's'} across ${initialGroups.length} scene${initialGroups.length === 1 ? '' : 's'} & running Shot Direction Agent…`
-        : 'Running Shot Direction Agent across all scenes…'
+      `Applying ${selectedRecKeys.size} recommendation${selectedRecKeys.size === 1 ? '' : 's'} across ${initialGroups.length} scene${initialGroups.length === 1 ? '' : 's'}…`
     )
 
     try {
@@ -1133,24 +1136,14 @@ export default function ScriptReviewModal({
 
       setPreVisPrepResult(result)
 
-      const hasFailures =
-        result.failedRevisions.length > 0 || result.failedDirections.length > 0
-      const summaryParts: string[] = []
-      if (result.revisedSceneCount > 0) {
-        summaryParts.push(
-          `applied ${result.appliedRecommendationCount} recommendation${result.appliedRecommendationCount === 1 ? '' : 's'} across ${result.revisedSceneCount} scene${result.revisedSceneCount === 1 ? '' : 's'}`
-        )
-      }
-      summaryParts.push(
-        `directed shots for ${result.directedSceneCount} scene${result.directedSceneCount === 1 ? '' : 's'} — ready for Pre-Vis`
-      )
-      const summaryText =
-        summaryParts.join(' and ').replace(/^./, (c) => c.toUpperCase())
+      const hasFailures = result.failedRevisions.length > 0
+      const summaryText = `Applied ${result.appliedRecommendationCount} recommendation${result.appliedRecommendationCount === 1 ? '' : 's'} across ${result.revisedSceneCount} scene${result.revisedSceneCount === 1 ? '' : 's'} — re-run AR Analysis to update your score`
 
       if (hasFailures) {
-        toast.warning(`${summaryText} (with ${result.failedRevisions.length + result.failedDirections.length} warning(s))`, {
-          id: toastId,
-        })
+        toast.warning(
+          `${summaryText} (${result.failedRevisions.length} scene${result.failedRevisions.length === 1 ? '' : 's'} failed)`,
+          { id: toastId }
+        )
       } else {
         toast.success(summaryText, { id: toastId })
       }
@@ -1159,10 +1152,10 @@ export default function ScriptReviewModal({
         controller.signal.aborted ||
         (err instanceof DOMException && err.name === 'AbortError')
       ) {
-        toast.info('Pre-Vis preparation cancelled', { id: toastId })
+        toast.info('Scene recommendation update cancelled', { id: toastId })
       } else {
         toast.error(
-          err instanceof Error ? err.message : 'Failed to complete Pre-Vis preparation',
+          err instanceof Error ? err.message : 'Failed to apply scene recommendations',
           { id: toastId }
         )
       }
@@ -1851,14 +1844,14 @@ export default function ScriptReviewModal({
                             <div className="flex items-center gap-2 flex-wrap">
                               <span className="inline-flex items-center gap-1.5 rounded-md bg-cyan-500/20 border border-cyan-400/30 px-2 py-0.5 text-xs font-semibold text-cyan-200">
                                 <Bot className="w-3.5 h-3.5 text-cyan-300" />
-                                Pre-Vis Preparation Agent
+                                Scene Recommendations Agent
                               </span>
                               <Badge variant="outline" className="border-purple-400/40 bg-purple-500/15 text-purple-200 text-[10px]">
-                                Scene Revisions + Shot Direction Agent
+                                Fast AR Script Iteration
                               </Badge>
                             </div>
                             <p className="text-xs text-slate-300 leading-relaxed m-0">
-                              Select or unselect the scene recommendations below, then run the agent to apply your selected script revisions and execute the Shot Direction Agent across all {totalScenesCount} scene{totalScenesCount === 1 ? '' : 's'} — setting the stage for Pre-Vis generation (all audio and stills).
+                              Select or unselect the scene recommendations below and apply them in one batch. Once applied, re-run Audience Analysis to verify your updated score. Revised scenes will flag their scene card Direction tab so you (or the Production Agent) can run Shot Direction when you are ready for Pre-Vis.
                             </p>
                           </div>
 
@@ -1866,23 +1859,18 @@ export default function ScriptReviewModal({
                             <Button
                               size="sm"
                               onClick={handleRunPreVisPrepAgent}
-                              disabled={isRunningPreVisPrep || !projectId || totalScenesCount === 0}
+                              disabled={isRunningPreVisPrep || !projectId || selectedRecCount === 0}
                               className="bg-gradient-to-r from-cyan-500 to-indigo-600 hover:from-cyan-400 hover:to-indigo-500 text-white border-0 shadow-sm h-9 px-3.5 text-xs font-semibold"
                             >
                               {isRunningPreVisPrep ? (
                                 <>
                                   <Loader className="w-3.5 h-3.5 mr-1.5 animate-spin" />
-                                  Running Pre-Vis Prep…
-                                </>
-                              ) : selectedRecCount > 0 ? (
-                                <>
-                                  <Sparkles className="w-3.5 h-3.5 mr-1.5" />
-                                  Apply Selected ({selectedRecCount} in {selectedGroups.length} Scene{selectedGroups.length === 1 ? '' : 's'}) &amp; Run Shot Direction Agent
+                                  Applying Recommendations…
                                 </>
                               ) : (
                                 <>
-                                  <Clapperboard className="w-3.5 h-3.5 mr-1.5" />
-                                  Run Shot Direction Agent (All {totalScenesCount} Scenes)
+                                  <Sparkles className="w-3.5 h-3.5 mr-1.5" />
+                                  Apply Selected ({selectedRecCount} in {selectedGroups.length} Scene{selectedGroups.length === 1 ? '' : 's'})
                                 </>
                               )}
                             </Button>
@@ -1898,7 +1886,7 @@ export default function ScriptReviewModal({
                             <span>unapplied recommendation{allUnappliedKeys.size === 1 ? '' : 's'} selected</span>
                             {selectedGroups.length > 0 && (
                               <span className="text-cyan-300">
-                                ({selectedGroups.length} scene{selectedGroups.length === 1 ? '' : 's'} to revise, {totalScenesCount} scene{totalScenesCount === 1 ? '' : 's'} for Shot Direction)
+                                ({selectedGroups.length} scene{selectedGroups.length === 1 ? '' : 's'} to revise)
                               </span>
                             )}
                           </div>
@@ -1976,38 +1964,48 @@ export default function ScriptReviewModal({
                           </div>
                         )}
 
-                        {/* Completion handoff banner to Production Agent (Pre-Vis) */}
+                        {/* Completion banner — Re-run AR Analysis to iterate or Launch Production Agent */}
                         {!isRunningPreVisPrep && preVisPrepResult && (
                           <div className="mt-3 rounded-lg border border-emerald-400/40 bg-emerald-950/40 p-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2.5">
                             <div className="flex items-start gap-2 text-xs text-emerald-100">
                               <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
                               <div>
                                 <div className="font-semibold text-white">
-                                  Stage Set for Pre-Vis Generation
+                                  Applied {preVisPrepResult.appliedRecommendationCount} Recommendation{preVisPrepResult.appliedRecommendationCount === 1 ? '' : 's'} Across {preVisPrepResult.revisedSceneCount} Scene{preVisPrepResult.revisedSceneCount === 1 ? '' : 's'}
                                 </div>
                                 <p className="text-[11px] text-emerald-200/90 m-0 mt-0.5">
-                                  {preVisPrepResult.revisedSceneCount > 0
-                                    ? `Applied ${preVisPrepResult.appliedRecommendationCount} recommendation${preVisPrepResult.appliedRecommendationCount === 1 ? '' : 's'} across ${preVisPrepResult.revisedSceneCount} scene${preVisPrepResult.revisedSceneCount === 1 ? '' : 's'} and directed shots across ${preVisPrepResult.directedSceneCount} scene${preVisPrepResult.directedSceneCount === 1 ? '' : 's'}.`
-                                    : `Completed Shot Direction Agent across ${preVisPrepResult.directedSceneCount} scene${preVisPrepResult.directedSceneCount === 1 ? '' : 's'}.`}
+                                  Re-run AR Analysis to score your updated script, or proceed to Production (updated scenes are flagged for Shot Direction).
                                 </p>
                               </div>
                             </div>
-                            <Button
-                              size="sm"
-                              onClick={() => {
-                                stopPlayback()
-                                onClose()
-                                if (typeof window !== 'undefined') {
-                                  window.dispatchEvent(
-                                    new CustomEvent('sceneflow:open-production-builder')
-                                  )
-                                }
-                              }}
-                              className="bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-semibold h-8 px-3 text-xs shrink-0"
-                            >
-                              <Bot className="w-3.5 h-3.5 mr-1.5" />
-                              Launch Production Agent (Pre-Vis)
-                            </Button>
+                            <div className="flex flex-wrap items-center gap-2 shrink-0">
+                              <Button
+                                size="sm"
+                                disabled={isGenerating}
+                                onClick={() => void handleRegenerate()}
+                                className="bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-semibold h-8 px-3 text-xs"
+                              >
+                                <RefreshCw className={cn('w-3.5 h-3.5 mr-1.5', isGenerating && 'animate-spin')} />
+                                {isGenerating ? 'Analyzing Script…' : 'Re-run AR Analysis'}
+                              </Button>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => {
+                                  stopPlayback()
+                                  onClose()
+                                  if (typeof window !== 'undefined') {
+                                    window.dispatchEvent(
+                                      new CustomEvent('sceneflow:open-production-builder')
+                                    )
+                                  }
+                                }}
+                                className="border-emerald-400/40 bg-emerald-950/60 hover:bg-emerald-900/60 text-emerald-100 h-8 px-3 text-xs"
+                              >
+                                <Bot className="w-3.5 h-3.5 mr-1.5" />
+                                Production Agent
+                              </Button>
+                            </div>
                           </div>
                         )}
                       </div>

@@ -265,7 +265,10 @@ import {
   ScriptInceptionDock,
   type ScriptInceptionRunState,
 } from '@/components/vision/ScriptInceptionDock'
-import { runScriptInceptionFollowups } from '@/lib/vision/scriptInceptionFollowups'
+import {
+  requestSceneShotDirection,
+  runScriptInceptionFollowups,
+} from '@/lib/vision/scriptInceptionFollowups'
 import { DirectFrameRunDock, type DirectFrameRunState } from '@/components/vision/DirectFrameRunDock'
 import {
   VideoAgentRunDock,
@@ -16013,6 +16016,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     // For light/moderate, invalidate storyboard frames only for beats whose content changed.
     if (!shouldSkipBeatRederivation(preserveElements)) {
       cleanedScene.segments = undefined
+      cleanedScene.shotDirectionNeedsRefresh = true
       if (!isDeepRestructure && getSceneBeats(cleanedScene).length > 0) {
         cleanedScene = invalidateChangedBeatFramesOnScene(cleanedScene, originalScene)
       }
@@ -16024,6 +16028,9 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       let part = { ...scene }
       delete part[REVISION_DEPTH_SCENE_KEY]
       delete part.segments
+      if (!shouldSkipBeatRederivation(preserveElements)) {
+        part.shotDirectionNeedsRefresh = true
+      }
       if (!shouldSkipBeatRederivation(preserveElements) && !isDeepRestructure && getSceneBeats(part).length > 0) {
         part = invalidateChangedBeatFramesOnScene(part, originalScene)
       }
@@ -16216,8 +16223,9 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       }
 
       cleanedScene.segments = undefined
-      // Clear stale sceneDirection so Phase 2 regenerates fresh scene & shot direction for the revised script
-      delete cleanedScene.sceneDirection
+      // Flag scene so the scene card Direction tab shows the "Run Shot Direction" indicator
+      // and the Production Agent knows to refresh scene & shot direction during Pre-Vis.
+      cleanedScene.shotDirectionNeedsRefresh = true
       if (getSceneBeats(cleanedScene).length > 0) {
         cleanedScene = invalidateChangedBeatFramesOnScene(cleanedScene, originalScene)
       }
@@ -16227,7 +16235,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         let part = { ...scene }
         delete part[REVISION_DEPTH_SCENE_KEY]
         delete part.segments
-        delete part.sceneDirection
+        part.shotDirectionNeedsRefresh = true
         if (getSceneBeats(part).length > 0) {
           part = invalidateChangedBeatFramesOnScene(part, originalScene)
         }
@@ -18803,32 +18811,76 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                 scene.sceneDirection.camera &&
                 scene.sceneDirection.scene
             )
-            if (hasDir && options.missingOnly) return
-            const res = await fetch('/api/scene/generate-direction', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                projectId: project.id,
-                sceneIndex,
-                scene,
-              }),
-              signal: abortController.signal,
-            })
-            if (res.ok) {
-              const data = await res.json().catch(() => null)
-              if (data?.direction) {
-                const updatedScenes = [...currentScenes]
-                updatedScenes[sceneIndex] = {
-                  ...updatedScenes[sceneIndex],
-                  sceneDirection: data.direction,
+            const needsRefresh = Boolean(scene?.shotDirectionNeedsRefresh)
+            if (!hasDir || needsRefresh || !options.missingOnly) {
+              const res = await fetch('/api/scene/generate-direction', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  projectId: project.id,
+                  sceneIndex,
+                  scene,
+                }),
+                signal: abortController.signal,
+              })
+              if (res.ok) {
+                const data = await res.json().catch(() => null)
+                const direction = data?.sceneDirection || data?.direction
+                if (direction) {
+                  const updatedScenes = [...currentScenes]
+                  updatedScenes[sceneIndex] = {
+                    ...updatedScenes[sceneIndex],
+                    sceneDirection: direction,
+                  }
+                  const nextScript = scriptRef.current?.script
+                    ? {
+                        ...scriptRef.current,
+                        script: { ...scriptRef.current.script, scenes: updatedScenes },
+                      }
+                    : { ...scriptRef.current, scenes: updatedScenes }
+                  await handleScriptChange(nextScript)
                 }
-                const nextScript = scriptRef.current?.script
-                  ? {
-                      ...scriptRef.current,
-                      script: { ...scriptRef.current.script, scenes: updatedScenes },
-                    }
-                  : { ...scriptRef.current, scenes: updatedScenes }
-                await handleScriptChange(nextScript)
+              }
+            }
+
+            // Ensure Shot Direction Agent runs for scenes whose script was revised or whose beats lack shot direction
+            const latestScenes =
+              scriptRef.current?.script?.scenes ?? scriptRef.current?.scenes ?? []
+            const latestScene = latestScenes[sceneIndex]
+            if (!latestScene) return
+            const activeBeats = getSceneBeats(latestScene).filter((b) => !b?.excluded)
+            const missingShotDir = activeBeats.some(
+              (b) => !b?.beatDirection?.shotType && !b?.beatDirection?.frozenMoment
+            )
+            if (
+              activeBeats.length > 0 &&
+              (needsRefresh || missingShotDir || !options.missingOnly)
+            ) {
+              try {
+                const shotRes = await requestSceneShotDirection({
+                  projectId: project.id,
+                  sceneIndex,
+                  force: needsRefresh || !options.missingOnly,
+                  signal: abortController.signal,
+                })
+                if (shotRes.scene) {
+                  const refreshedScenes = [
+                    ...(scriptRef.current?.script?.scenes ?? scriptRef.current?.scenes ?? []),
+                  ]
+                  refreshedScenes[sceneIndex] = {
+                    ...(shotRes.scene as Record<string, any>),
+                    shotDirectionNeedsRefresh: false,
+                  }
+                  const nextScript = scriptRef.current?.script
+                    ? {
+                        ...scriptRef.current,
+                        script: { ...scriptRef.current.script, scenes: refreshedScenes },
+                      }
+                    : { ...scriptRef.current, scenes: refreshedScenes }
+                  await handleScriptChange(nextScript)
+                }
+              } catch (err) {
+                console.warn('[ProductionAgent] Shot direction warning for scene', sceneIndex + 1, err)
               }
             }
           },
