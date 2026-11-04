@@ -91,6 +91,8 @@ export interface TextGenerationOptions {
    * Used by the model preflight probe, which needs the true per-model result.
    */
   disableModelFallback?: boolean
+  /** Optional AbortSignal to cancel the Vertex request and any retry sleeps. */
+  signal?: AbortSignal
 }
 
 export interface TextGenerationResult {
@@ -240,9 +242,10 @@ async function generateTextWithModel(
         'Content-Type': 'application/json',
         ...priorityPaygoHeaders()
       },
-      body: JSON.stringify(requestBody)
+      body: JSON.stringify(requestBody),
+      ...(options.signal ? { signal: options.signal } : {}),
     },
-    { maxRetries, timeoutMs: timeoutToUse }
+    { maxRetries, timeoutMs: timeoutToUse, signal: options.signal }
   );
 
   const isOk = response.ok;

@@ -19,6 +19,7 @@ import { processWithConcurrency } from '../utils/concurrent-processor'
 import {
   FRAME_AGENT_STILL_CONCURRENCY,
   getSceneExpressBeat429CooldownMs,
+  getSceneExpressInitialStaggerMs,
   getSceneExpressPostShotDelayMs,
   runAdaptiveBeatPool,
   type AdaptiveBeatPoolOptions,
@@ -48,6 +49,7 @@ import {
   type ExpressPhase,
   type ExpressRateLimitedFailure,
   type ExpressResult,
+  type ExpressRunTelemetry,
   type SceneAudioCounts,
   type SceneImageResult,
 } from './types'
@@ -435,6 +437,8 @@ export interface RunExpressParams {
     sceneIndex: number,
     summary: ExpressPerSceneSummary
   ) => void | Promise<void>
+  /** Optional incremental checkpoint hook invoked after a shot or audio track settles within a scene. */
+  onSceneCheckpoint?: (sceneIndex: number) => void | Promise<void>
   /** Abort remaining work when the client cancels the Frame Agent SSE run. */
   signal?: AbortSignal
 }
@@ -449,6 +453,8 @@ interface SceneRunContext {
   storySpine?: LookbookSceneSummary[]
   /** Last beat of the preceding scene, for continuity across the cut. */
   previousSceneLastBeat?: BeatPlannerContinuityAnchor
+  /** Incremental DB checkpoint callback for mid-scene progress. */
+  onSceneCheckpoint?: (sceneIndex: number) => void | Promise<void>
   /** Same abort signal as the Express run. */
   signal?: AbortSignal
 }
@@ -655,6 +661,7 @@ function buildAdaptiveBeatPoolOptions(
     minConcurrency: 1,
     maxAttempts: 1,
     postShotDelayMs: getSceneExpressPostShotDelayMs(),
+    initialLaunchStaggerMs: getSceneExpressInitialStaggerMs(),
     isRetryable: isExpressBeatPoolRetryable,
     isCanaryAbort: isExpressImageCanaryAbortError,
     onConcurrencyChange: (max, reason) => {
@@ -820,7 +827,12 @@ async function runDirectionPhase(
   try {
     const result = await trafficCop.runInLane(
       'text',
-      () => generateSceneDirection({ scene, sceneIndex }),
+      () =>
+        generateSceneDirection({
+          scene,
+          sceneIndex,
+          ...(ctx.signal ? { signal: ctx.signal } : {}),
+        }),
       ctx.signal
     )
     scene.sceneDirection = result.sceneDirection
@@ -1676,6 +1688,9 @@ async function runBeatImages(
           beatPlansByIndex.get(beatIdx)
         )
         lastImageUrl = result.imageUrl
+        if (!ctx.signal?.aborted) {
+          await ctx.onSceneCheckpoint?.(sceneIndex)
+        }
       },
       buildAdaptiveBeatPoolOptions(emit, options, ctx.signal, (beatIdx, err) => {
         failedStartBeatIndices.add(beatIdx)
@@ -1955,13 +1970,11 @@ export async function planSceneBeatKeyframes(
 
     // A stored prompt whose direction fingerprint still matches describes the
     // beat as it stands, so it is replayed instead of re-planned. Beats that
-    // already carry complete authored direction from the Shot Direction Agent
+    // already carry complete authored direction from Scene Director / Shot Director
     // also reuse their composed direction rather than firing a redundant
-    // scene-wide planner LLM pass.
+    // scene-wide planner LLM pass, even when regenerating frames.
     const canReuseBeatDirection = (beat: SceneBeat): boolean =>
-      selectedKeys
-        ? storedPromptMatchesDirection(beat) || hasCompleteAuthoredBeatDirection(beat)
-        : !options.regenerate && hasCompleteAuthoredBeatDirection(beat)
+      storedPromptMatchesDirection(beat) || hasCompleteAuthoredBeatDirection(beat)
 
     const toPlan = inScope.filter(({ beat }) => !canReuseBeatDirection(beat))
 
@@ -2088,7 +2101,8 @@ async function runStillDirectorPhase(
         if (!isBeatStartSlotSelected(beat, selectedKeys)) return false
         return shouldRunStillDirectorAuto(beat, {
           needsNewStartFrame: beatFrameNeedsGeneration(beat, genCtx),
-          reusedStoredPrompt: Boolean(selectedKeys && storedPromptMatchesDirection(beat)),
+          reusedStoredPrompt:
+            storedPromptMatchesDirection(beat) || hasCompleteAuthoredBeatDirection(beat),
           unnamedTitleBeat: titleBeatNeedsCastClarify({
             scene,
             beat,
@@ -2774,11 +2788,44 @@ async function runScene(
 export async function runExpress(
   params: RunExpressParams
 ): Promise<ExpressResult> {
-  const { project, options, baseUrl, authCookie, emit: rawEmit, onSceneComplete, signal } = params
+  const {
+    project,
+    options,
+    baseUrl,
+    authCookie,
+    emit: rawEmit,
+    onSceneComplete,
+    onSceneCheckpoint,
+    signal,
+  } = params
+  const runStartedAt = Date.now()
+  const phaseStartTimes = new Map<string, number>()
+  let directionMs = 0
+  let audioMs = 0
+  let imageMs = 0
+  let throttleEvents = 0
+
   const { scenes } = getScenes(project)
   const frameNodes: Record<string, ExpressFrameNode> = {}
   const emit: ExpressEmit = (event) => {
     recordFrameNodeFromEvent(event, scenes, frameNodes)
+    if (event.type === 'phase-start') {
+      phaseStartTimes.set(`${event.sceneIndex}:${event.phase}`, Date.now())
+    } else if (
+      event.type === 'phase-done' &&
+      event.beatIndex == null &&
+      event.dialogueIndex == null
+    ) {
+      const started = phaseStartTimes.get(`${event.sceneIndex}:${event.phase}`)
+      if (started !== undefined) {
+        const elapsed = Math.max(0, Date.now() - started)
+        if (event.phase === 'direction') directionMs += elapsed
+        else if (event.phase === 'audio') audioMs += elapsed
+        else if (event.phase === 'image') imageMs += elapsed
+      }
+    } else if (event.type === 'throttle') {
+      throttleEvents += 1
+    }
     rawEmit(event)
   }
 
@@ -2879,6 +2926,7 @@ export async function runExpress(
           lookbook,
           storySpine,
           previousSceneLastBeat: getPreviousSceneContinuityAnchor(scenes, idx),
+          ...(onSceneCheckpoint ? { onSceneCheckpoint } : {}),
           ...(signal ? { signal } : {}),
         },
         options,
@@ -2919,6 +2967,17 @@ export async function runExpress(
 
   const successScenes = perScene.filter((s) => s.ok).length
   const failedScenes = perScene.length - successScenes
+  const frameEntries = Object.values(frameNodes)
+  const telemetry: ExpressRunTelemetry = {
+    durationMs: Math.max(0, Date.now() - runStartedAt),
+    directionMs,
+    audioMs,
+    imageMs,
+    throttleEvents,
+    rateLimitedCount: rateLimitedFailures.length,
+    framesSucceeded: frameEntries.filter((f) => f.status === 'ok').length,
+    framesFailed: frameEntries.filter((f) => f.status === 'failed').length,
+  }
 
   safeEmit(emit, {
     type: 'complete',
@@ -2926,11 +2985,13 @@ export async function runExpress(
     failedScenes,
     rateLimitedFailures: rateLimitedFailures.length > 0 ? rateLimitedFailures : undefined,
     ...(Object.keys(frameNodes).length > 0 ? { frames: frameNodes } : {}),
+    telemetry,
   })
 
   return {
     successScenes,
     failedScenes,
     perScene,
+    telemetry,
   }
 }

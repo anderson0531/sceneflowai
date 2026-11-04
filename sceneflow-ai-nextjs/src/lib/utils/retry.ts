@@ -7,6 +7,8 @@
  * @see https://cloud.google.com/vertex-ai/generative-ai/docs/error-code-429
  */
 
+import { combineAbortSignals } from './abortSignals'
+
 // =============================================================================
 // Types
 // =============================================================================
@@ -24,6 +26,8 @@ export interface RetryOptions {
   operationName?: string
   /** Timeout in milliseconds for the entire operation (default: none) */
   timeoutMs?: number
+  /** Optional caller AbortSignal to cancel in-flight fetch and retry sleeps immediately */
+  signal?: AbortSignal
 }
 
 export interface RetryResult<T> {
@@ -37,10 +41,16 @@ export interface RetryResult<T> {
 // Default Configuration
 // =============================================================================
 
-const DEFAULT_RETRY_OPTIONS: Required<Omit<RetryOptions, 'operationName' | 'isRetryable'>> = {
+const DEFAULT_RETRY_OPTIONS = {
   maxRetries: 3,
   initialDelayMs: 1000,
   maxDelayMs: 30000,
+}
+
+function createCallerAbortError(): Error {
+  const err = new Error('Operation aborted')
+  err.name = 'AbortError'
+  return err
 }
 
 // =============================================================================
@@ -52,6 +62,10 @@ const DEFAULT_RETRY_OPTIONS: Required<Omit<RetryOptions, 'operationName' | 'isRe
  * Detects 429 rate limit, RESOURCE_EXHAUSTED, and transient network errors
  */
 export function isRetryableError(error: any, status?: number): boolean {
+  if (error?.name === 'AbortError' || error?.code === 'ABORT_ERR') {
+    return false
+  }
+
   // Check HTTP status
   if (status === 429 || status === 502 || status === 503 || status === 504) {
     return true
@@ -160,16 +174,24 @@ export async function withRetry<T>(
     maxDelayMs = DEFAULT_RETRY_OPTIONS.maxDelayMs,
     isRetryable = isRetryableError,
     operationName = 'Operation',
+    signal,
   } = options
   
   let lastError: Error | undefined
   
   for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    if (signal?.aborted) {
+      throw createCallerAbortError()
+    }
     try {
       return await fn()
     } catch (error: any) {
       lastError = error
       
+      if (signal?.aborted || error?.name === 'AbortError' || error?.code === 'ABORT_ERR') {
+        throw error
+      }
+
       // Check if this is the last attempt
       if (attempt >= maxRetries) {
         console.error(`[Retry] ${operationName} failed after ${attempt + 1} attempts:`, error.message)
@@ -191,8 +213,22 @@ export async function withRetry<T>(
         `retrying in ${delay}ms... Error: ${error.message?.substring(0, 100)}`
       )
       
-      // Wait before retrying
-      await new Promise(resolve => setTimeout(resolve, delay))
+      // Wait before retrying (abort-aware)
+      await new Promise<void>((resolve, reject) => {
+        if (signal?.aborted) {
+          reject(createCallerAbortError())
+          return
+        }
+        const onAbort = () => {
+          clearTimeout(timer)
+          reject(createCallerAbortError())
+        }
+        const timer = setTimeout(() => {
+          signal?.removeEventListener('abort', onAbort)
+          resolve()
+        }, delay)
+        signal?.addEventListener('abort', onAbort, { once: true })
+      })
     }
   }
   
@@ -216,8 +252,12 @@ export async function fetchWithRetry(
 ): Promise<Response> {
   const operationName = options.operationName || `Fetch ${url.substring(0, 50)}`
   const timeoutMs = options.timeoutMs
+  const callerSignal = (init?.signal ?? options.signal) || undefined
   
   return withRetry(async () => {
+    if (callerSignal?.aborted) {
+      throw createCallerAbortError()
+    }
     // Create AbortController for timeout if specified
     let controller: AbortController | undefined
     let timeoutId: NodeJS.Timeout | undefined
@@ -230,10 +270,15 @@ export async function fetchWithRetry(
       }, timeoutMs)
     }
     
+    const combinedSignal =
+      controller?.signal || callerSignal
+        ? combineAbortSignals(controller?.signal, callerSignal)
+        : undefined
+
     try {
       const response = await fetch(url, {
         ...init,
-        signal: controller?.signal || init?.signal,
+        signal: combinedSignal,
       })
       
       // Check if response status indicates we should retry
@@ -252,7 +297,11 @@ export async function fetchWithRetry(
       
       return response
     } catch (error: any) {
-      // Convert AbortError to timeout error for better diagnostics
+      // If caller explicitly aborted, preserve AbortError so we don't retry
+      if (callerSignal?.aborted) {
+        throw error
+      }
+      // Convert timeout AbortError to timeout error for better diagnostics
       if (error.name === 'AbortError') {
         const timeoutError: any = new Error(`${operationName} timed out after ${timeoutMs}ms`)
         timeoutError.code = 'TIMEOUT'
@@ -264,7 +313,7 @@ export async function fetchWithRetry(
         clearTimeout(timeoutId)
       }
     }
-  }, { ...options, operationName })
+  }, { ...options, operationName, signal: callerSignal })
 }
 
 // =============================================================================

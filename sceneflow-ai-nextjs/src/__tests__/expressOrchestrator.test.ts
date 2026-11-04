@@ -65,6 +65,7 @@ vi.mock('@/lib/intelligence/beat-still-director', () => ({
 
 import { runExpress } from '@/lib/sceneGeneration/expressOrchestrator'
 import { planBeatSequence } from '@/lib/intelligence/beat-sequence-planner'
+import { directBeatStills } from '@/lib/intelligence/beat-still-director'
 import { generateSceneImage } from '@/lib/sceneGeneration/generateImage'
 import type { ExpressEvent, ExpressPhase } from '@/lib/sceneGeneration/types'
 import { getSceneBeats } from '@/lib/script/beatMigration'
@@ -124,6 +125,7 @@ function collectPhaseStarts(emit: (e: ExpressEvent) => void) {
 describe('runExpress', () => {
   const originalSceneConcurrency = process.env.EXPRESS_SCENE_CONCURRENCY
   const originalPostShotDelay = process.env.SCENE_EXPRESS_POST_SHOT_DELAY_MS
+  const originalInitialStagger = process.env.SCENE_EXPRESS_INITIAL_STAGGER_MS
 
   beforeEach(() => {
     directionCalls = 0
@@ -136,6 +138,7 @@ describe('runExpress', () => {
     process.env.EXPRESS_IMAGE_CONCURRENCY = '3'
     process.env.VERTEX_GEMINI_FLASH_IMAGE_CONCURRENCY = '2'
     process.env.SCENE_EXPRESS_POST_SHOT_DELAY_MS = '0'
+    process.env.SCENE_EXPRESS_INITIAL_STAGGER_MS = '0'
   })
 
   afterEach(() => {
@@ -148,6 +151,11 @@ describe('runExpress', () => {
       delete process.env.SCENE_EXPRESS_POST_SHOT_DELAY_MS
     } else {
       process.env.SCENE_EXPRESS_POST_SHOT_DELAY_MS = originalPostShotDelay
+    }
+    if (originalInitialStagger === undefined) {
+      delete process.env.SCENE_EXPRESS_INITIAL_STAGGER_MS
+    } else {
+      process.env.SCENE_EXPRESS_INITIAL_STAGGER_MS = originalInitialStagger
     }
     vi.mocked(generateSceneImage).mockImplementation(async (params: Record<string, unknown>) => {
       imageCalls++
@@ -654,5 +662,52 @@ describe('runExpress', () => {
     // First 2 beats start in the initial wave (concurrency 2); 3rd beat waits for
     // the post-shot delay after the first completion.
     expect(startedAt[2]! - finishedAt[0]!).toBeGreaterThanOrEqual(100)
+  })
+
+  it('skips redundant image-plan and still-direct LLM passes when beats have complete authored direction', async () => {
+    const project = buildProject(1)
+    const scene = project.metadata.visionPhase.script.script.scenes[0] as Record<string, any>
+    scene.beats = scene.beats.map((b: Record<string, any>) => ({
+      ...b,
+      beatDirection: {
+        generatedBy: 'llm',
+        shotType: 'Medium Shot',
+        cameraAngle: 'Eye-Level',
+        frozenMoment: 'ALICE stands at the desk.',
+        blocking: 'ALICE center frame.',
+        castInFrame: ['ALICE'],
+      },
+    }))
+
+    const checkpoints: number[] = []
+    const events: ExpressEvent[] = []
+    const result = await runExpress({
+      project,
+      options: {
+        projectId: 'p1',
+        mode: 'scene',
+        sceneIndices: [0],
+        framesOnly: true,
+        regenerate: true,
+      },
+      baseUrl: 'http://localhost',
+      emit: (e) => events.push(e),
+      onSceneCheckpoint: (sceneIndex) => {
+        checkpoints.push(sceneIndex)
+      },
+    })
+
+    expect(result.successScenes).toBe(1)
+    expect(vi.mocked(planBeatSequence)).not.toHaveBeenCalled()
+    expect(vi.mocked(directBeatStills)).not.toHaveBeenCalled()
+    expect(checkpoints).toEqual([0, 0, 0])
+
+    const complete = events.find((e) => e.type === 'complete')
+    expect(complete?.type).toBe('complete')
+    if (complete?.type === 'complete') {
+      expect(complete.telemetry?.framesSucceeded).toBe(3)
+      expect(complete.telemetry?.framesFailed).toBe(0)
+      expect(complete.telemetry?.durationMs).toBeGreaterThanOrEqual(0)
+    }
   })
 })

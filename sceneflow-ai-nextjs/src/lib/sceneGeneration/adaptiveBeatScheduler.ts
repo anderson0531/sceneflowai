@@ -67,6 +67,20 @@ export function getSceneExpressPostShotDelayMs(): number {
 }
 
 /**
+ * Stagger delay between initial concurrent worker launches at t=0 so two
+ * multi-reference Gemini Image calls do not hit the Vertex endpoint on the
+ * exact same millisecond.
+ */
+export const DEFAULT_SCENE_EXPRESS_INITIAL_STAGGER_MS = 1_500
+
+export function getSceneExpressInitialStaggerMs(): number {
+  return parseNonNegativeInt(
+    process.env.SCENE_EXPRESS_INITIAL_STAGGER_MS,
+    DEFAULT_SCENE_EXPRESS_INITIAL_STAGGER_MS
+  )
+}
+
+/**
  * Per-beat 429 backoff, laddering 5s/10s/20s across the retries above.
  *
  * This replaces the image client's own 5s/15s/30s ladder, which was served
@@ -124,6 +138,11 @@ export interface AdaptiveBeatPoolOptions {
    * shot run. Prevents back-to-back Vertex image bursts within a single agent.
    */
   postShotDelayMs?: number
+  /**
+   * Stagger delay (ms) between initial concurrent worker admissions at t=0 so
+   * two multi-reference image requests never hit Vertex on the same millisecond.
+   */
+  initialLaunchStaggerMs?: number
   /**
    * Fired when a beat is recorded as failed, including queued beats dropped
    * because the run aborted. Not fired for an attempt that will be retried.
@@ -185,6 +204,7 @@ export async function runAdaptiveBeatPool(
     options.isCanaryAbort ?? ((err: unknown) => !isRetryable(err))
   const abortOnNonRetryableCanary = options.abortOnNonRetryableCanary ?? true
   const postShotDelayMs = Math.max(0, options.postShotDelayMs ?? 0)
+  const initialLaunchStaggerMs = Math.max(0, options.initialLaunchStaggerMs ?? 0)
   const runSignal = options.signal
 
   const succeeded = new Set<number>()
@@ -331,6 +351,8 @@ export async function runAdaptiveBeatPool(
       const [entry] = queue.splice(nextIdx, 1)
       if (postShotDelayMs > 0 && nextAllowedDispatchAt > 0) {
         nextAllowedDispatchAt = now + postShotDelayMs
+      } else if (initialLaunchStaggerMs > 0) {
+        nextAllowedDispatchAt = Math.max(nextAllowedDispatchAt, now + initialLaunchStaggerMs)
       }
       const task = runEntry(entry).finally(() => {
         inFlight.delete(task)

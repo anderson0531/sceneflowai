@@ -3,11 +3,13 @@ import {
   DEFAULT_SCENE_EXPRESS_BEAT_429_COOLDOWN_MS,
   DEFAULT_SCENE_EXPRESS_BEAT_BACKOFF_MS,
   DEFAULT_SCENE_EXPRESS_BEAT_MAX_BACKOFF_MS,
+  DEFAULT_SCENE_EXPRESS_INITIAL_STAGGER_MS,
   DEFAULT_SCENE_EXPRESS_POST_SHOT_DELAY_MS,
   FRAME_AGENT_STILL_CONCURRENCY,
   getSceneExpressBeat429CooldownMs,
   getSceneExpressBeatConcurrency,
   getSceneExpressBeatMaxAttempts,
+  getSceneExpressInitialStaggerMs,
   getSceneExpressPostShotDelayMs,
   runAdaptiveBeatPool,
 } from '@/lib/sceneGeneration/adaptiveBeatScheduler'
@@ -800,5 +802,38 @@ describe('runAdaptiveBeatPool abort signal', () => {
     const result = await promise
     expect(result.succeeded.size).toBe(6)
     expect(peak).toBe(2)
+  })
+
+  it('staggers initial concurrent worker launches when initialLaunchStaggerMs is set', async () => {
+    delete process.env.SCENE_EXPRESS_INITIAL_STAGGER_MS
+    expect(getSceneExpressInitialStaggerMs()).toBe(DEFAULT_SCENE_EXPRESS_INITIAL_STAGGER_MS)
+    expect(DEFAULT_SCENE_EXPRESS_INITIAL_STAGGER_MS).toBe(1_500)
+
+    vi.useFakeTimers()
+    try {
+      const startedAt: Array<{ beatIndex: number; t: number }> = []
+      const promise = runAdaptiveBeatPool(
+        [0, 1],
+        async (beatIndex) => {
+          startedAt.push({ beatIndex, t: Date.now() })
+          await new Promise((resolve) => setTimeout(resolve, 3_000))
+        },
+        {
+          initialConcurrency: 2,
+          maxConcurrency: 2,
+          maxAttempts: 1,
+          initialLaunchStaggerMs: 1_500,
+        }
+      )
+
+      await vi.runAllTimersAsync()
+      const result = await promise
+
+      expect(result.succeeded.size).toBe(2)
+      expect(startedAt).toHaveLength(2)
+      expect(startedAt[1]!.t - startedAt[0]!.t).toBeGreaterThanOrEqual(1_500)
+    } finally {
+      vi.useRealTimers()
+    }
   })
 })

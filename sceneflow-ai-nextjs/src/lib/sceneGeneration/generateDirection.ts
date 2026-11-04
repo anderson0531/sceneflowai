@@ -31,11 +31,14 @@ export interface GenerateSceneDirectionParams {
   }
   /** Used only for log breadcrumbs. */
   sceneIndex?: number
+  /** Optional AbortSignal to cancel the Vertex direction request when a run is aborted. */
+  signal?: AbortSignal
 }
 
 async function callGemini(
   prompt: string,
-  sceneIndex?: number
+  sceneIndex?: number,
+  signal?: AbortSignal
 ): Promise<{ text: string; finishReason?: string }> {
   const requestedModel = getGeminiProductModel('script')
   const result = await generateText(prompt, {
@@ -45,6 +48,7 @@ async function callGemini(
     maxOutputTokens: 12000,
     responseMimeType: 'application/json',
     thinkingLevel: 'low',
+    ...(signal ? { signal } : {}),
   })
   if (result.modelId && result.modelId !== requestedModel) {
     console.log(
@@ -578,11 +582,11 @@ function normalizeBeatCoverage(raw: unknown, beatCount: number) {
 export async function generateSceneDirection(
   params: GenerateSceneDirectionParams
 ): Promise<SceneDirectionResult> {
-  const { scene, sceneIndex } = params
+  const { scene, sceneIndex, signal } = params
   const prompt = buildSceneDirectionPrompt(scene)
 
   console.log('[generateSceneDirection] Calling Gemini for scene', sceneIndex)
-  const { text: responseText, finishReason } = await callGemini(prompt, sceneIndex)
+  const { text: responseText, finishReason } = await callGemini(prompt, sceneIndex, signal)
 
   if (finishReason === 'MAX_TOKENS') {
     console.warn(

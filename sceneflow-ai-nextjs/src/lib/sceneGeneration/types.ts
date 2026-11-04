@@ -205,6 +205,17 @@ export function expressFrameNodeKey(
   return `scene:${sceneIndex}:establishing`
 }
 
+export interface ExpressRunTelemetry {
+  durationMs: number
+  directionMs: number
+  audioMs: number
+  imageMs: number
+  throttleEvents: number
+  rateLimitedCount: number
+  framesSucceeded: number
+  framesFailed: number
+}
+
 export type ExpressEvent =
   | { type: 'start'; sceneCount: number }
   | { type: 'scene-start'; sceneIndex: number; sceneNumber: number }
@@ -237,6 +248,7 @@ export type ExpressEvent =
       failedScenes: number
       rateLimitedFailures?: ExpressRateLimitedFailure[]
       frames?: Record<string, ExpressFrameNode>
+      telemetry?: ExpressRunTelemetry
     }
   | { type: 'error'; error: string }
 
@@ -254,6 +266,7 @@ export interface ExpressResult {
   successScenes: number
   failedScenes: number
   perScene: ExpressPerSceneSummary[]
+  telemetry?: ExpressRunTelemetry
 }
 
 /** Callback used by the orchestrator to push SSE events to the client. */

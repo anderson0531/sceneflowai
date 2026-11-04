@@ -310,6 +310,16 @@ export async function POST(req: NextRequest) {
         }
       }, 15_000)
 
+      let persistChain: Promise<void> = Promise.resolve()
+      const enqueueCheckpointPersist = (auditLabel?: string): Promise<void> => {
+        const next = persistChain.then(async () => {
+          if (streamAbortController.signal.aborted) return
+          await persistExpressScenes(projectId, project, options, auditLabel)
+        })
+        persistChain = next.catch(() => {})
+        return next
+      }
+
       try {
         const result = await runExpress({
           project,
@@ -319,10 +329,21 @@ export async function POST(req: NextRequest) {
           emit: send,
           // Combines client disconnect (signal: req.signal) with stream cancel / project supersede
           signal: streamAbortController.signal,
-          onSceneComplete: async (sceneIndex, summary) => {
-            if (!summary.ok || streamAbortController.signal.aborted) return
+          onSceneCheckpoint: async (sceneIndex) => {
+            if (streamAbortController.signal.aborted) return
             try {
-              await persistExpressScenes(projectId, project, options)
+              await enqueueCheckpointPersist()
+            } catch (checkpointErr: any) {
+              console.warn(
+                `[Express] Mid-scene checkpoint persist failed for scene ${sceneIndex + 1}:`,
+                checkpointErr?.message || checkpointErr
+              )
+            }
+          },
+          onSceneComplete: async (sceneIndex, _summary) => {
+            if (streamAbortController.signal.aborted) return
+            try {
+              await enqueueCheckpointPersist()
               send({
                 type: 'scene-persisted',
                 sceneIndex,
@@ -339,15 +360,10 @@ export async function POST(req: NextRequest) {
 
         if (!streamAbortController.signal.aborted) {
           // Final atomic DB write — orchestrated scenes are canonical
-          await persistExpressScenes(
-            projectId,
-            project,
-            options,
-            'before final save'
-          )
+          await enqueueCheckpointPersist('before final save')
 
           console.log(
-            `[Express] Atomic DB update complete (mode=${options.mode}, success=${result.successScenes}, failed=${result.failedScenes})`
+            `[Express] Atomic DB update complete (mode=${options.mode}, success=${result.successScenes}, failed=${result.failedScenes}, telemetry=${JSON.stringify(result.telemetry ?? {})})`
           )
         } else {
           console.log(
