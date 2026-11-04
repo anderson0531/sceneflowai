@@ -415,6 +415,9 @@ describe('Multimodal Scene Video Reviewer — Source & UI Wiring', () => {
     expect(reviewerPanel).toContain('Run FlowDirector')
     expect(reviewerPanel).toContain("from '@/components/ui/Button'")
     expect(reviewerPanel).not.toContain("from '@/components/ui/button'")
+    expect(reviewerPanel).toContain('toast.loading(')
+    expect(reviewerPanel).toContain('Applying Shot Director fix')
+    expect(reviewerPanel).toContain('Updating Shot Direction &amp; Prompts...')
 
     const reviewerLib = readSource('src/lib/intelligence/scene-video-reviewer.ts')
     expect(reviewerLib).toContain("from '@/lib/safeJson'")

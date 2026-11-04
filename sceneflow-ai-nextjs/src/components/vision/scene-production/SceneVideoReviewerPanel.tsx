@@ -284,6 +284,12 @@ export function SceneVideoReviewerPanel({
   const [selectedRecIds, setSelectedRecIds] = useState<Set<string>>(new Set())
   const [applyingRecId, setApplyingRecId] = useState<string | null>(null)
   const [isApplyingBatch, setIsApplyingBatch] = useState(false)
+  const [applyingProgress, setApplyingProgress] = useState<{
+    current: number
+    total: number
+    shotNumber?: number
+    title?: string
+  } | null>(null)
   const [selectedShotNumber, setSelectedShotNumber] = useState<number>(1)
   const [monitorMode, setMonitorMode] = useState<'stream' | 'shot'>('shot')
   const [expandedRecIds, setExpandedRecIds] = useState<Set<string>>(new Set())
@@ -547,121 +553,161 @@ export function SceneVideoReviewerPanel({
       return
     }
 
-    const resolvedItems: Array<{
-      recommendation: SceneVideoRecommendation
-      resolvedPatch?: StillDirectorPatch
-    }> = []
-
-    for (const rec of shotRecs) {
-      const resolvedBeat = resolveBeatForRecommendation(scene, rec, segments as any)
-      if (!resolvedBeat) continue
-      const refinedPatch = await resolveRefinedShotPatch(rec, resolvedBeat.beat.beatId)
-      resolvedItems.push({
-        recommendation: {
-          ...rec,
-          beatId: resolvedBeat.beat.beatId,
-        },
-        resolvedPatch: refinedPatch,
-      })
-    }
-
-    if (resolvedItems.length === 0) {
-      toast.error('Could not match recommendations to active shots in this scene.')
-      return
-    }
-
-    const appliedAt = new Date().toISOString()
-    const result = applyShotDirectorRecommendationsToScenes({
-      scenes,
-      sceneIdx: sceneIndex,
-      recommendations: resolvedItems,
-      characters: characters.map((c) => ({
-        id: c.id,
-        name: c.name,
-        referenceImage: c.referenceImage,
-        type: c.type,
-      })),
-      locationReferences: locationReferences.map((l) => ({ id: l.id })),
-      objectReferences: objectReferences.map((o) => ({ id: o.id, name: o.name })),
-      promptComposition,
-      segments: segments as any,
-    })
-
-    // Mark applied on the review state as well
-    const appliedSet = new Set(result.appliedIds)
-    const updatedReview: SceneVideoReviewResult | null = review
-      ? {
-          ...review,
-          recommendations: review.recommendations.map((r) =>
-            appliedSet.has(r.id) ? { ...r, applied: true, appliedAt } : r
-          ),
-        }
-      : null
-
-    if (updatedReview) {
-      setReview(updatedReview)
-      result.scenes[sceneIndex] = {
-        ...result.scenes[sceneIndex],
-        videoReview: updatedReview,
-      }
-    }
-
-    // Update script state (updates beatDirection, storyboardImagePrompt, and scene.segments)
-    onScriptChange({
-      ...script,
-      script: script?.script
-        ? { ...script.script, scenes: result.scenes }
-        : undefined,
-      ...(script?.script ? {} : { scenes: result.scenes }),
-    })
-
-    // Also synchronize sceneProductionData segments so Video Queue reflects prompt + negativePrompt immediately
-    if (result.segmentPromptUpdates.length > 0) {
-      for (const segUpdate of result.segmentPromptUpdates) {
-        if (segUpdate.videoPrompt && onSegmentPromptChange) {
-          onSegmentPromptChange(sceneId, segUpdate.segmentId, segUpdate.videoPrompt)
-        }
-      }
-      if (onProductionDataChange && productionData && Array.isArray(productionData.segments)) {
-        const updatedProdSegments = productionData.segments.map((seg: any) => {
-          const match = result.segmentPromptUpdates.find(
-            (u) => u.segmentId === seg.segmentId || (u.beatId && u.beatId === seg.beatId)
-          )
-          if (!match) return seg
-          return {
-            ...seg,
-            ...(match.videoPrompt ? { videoPrompt: match.videoPrompt } : {}),
-            ...(match.negativePrompt ? { negativePrompt: match.negativePrompt } : {}),
-          }
-        })
-        onProductionDataChange(sceneId, {
-          ...productionData,
-          segments: updatedProdSegments,
-        })
-      }
-    }
-
-    // Deselect applied IDs
-    setSelectedRecIds((prev) => {
-      const next = new Set(prev)
-      for (const id of result.appliedIds) next.delete(id)
-      return next
-    })
-
-    toast.success(
-      result.appliedIds.length === 1
-        ? 'Applied Shot Director fix — shot direction, still prompt, and video prompt updated.'
-        : `Applied ${result.appliedIds.length} Shot Director fixes — shot directions and prompts updated.`
+    const total = shotRecs.length
+    const firstShotNum = shotRecs[0]?.shotNumber
+    const toastId = toast.loading(
+      total === 1
+        ? `Applying Shot Director fix${firstShotNum ? ` to Shot #${firstShotNum}` : ''} — updating direction & prompts...`
+        : `Applying ${total} Shot Director fixes (1/${total}) — updating direction & prompts...`
     )
+
+    setIsApplyingBatch(true)
+    setApplyingProgress({
+      current: 1,
+      total,
+      shotNumber: firstShotNum,
+      title: shotRecs[0]?.title,
+    })
+
+    try {
+      const resolvedItems: Array<{
+        recommendation: SceneVideoRecommendation
+        resolvedPatch?: StillDirectorPatch
+      }> = []
+
+      for (let i = 0; i < shotRecs.length; i++) {
+        const rec = shotRecs[i]
+        const resolvedBeat = resolveBeatForRecommendation(scene, rec, segments as any)
+        if (!resolvedBeat) continue
+        const targetShotNumber = rec.shotNumber ?? resolvedBeat.shotNumber
+        setApplyingRecId(rec.id)
+        setApplyingProgress({
+          current: i + 1,
+          total,
+          shotNumber: targetShotNumber,
+          title: rec.title,
+        })
+        if (total > 1) {
+          toast.loading(
+            `Applying Shot Director fix ${i + 1} of ${total}${targetShotNumber ? ` (Shot #${targetShotNumber})` : ''} — updating direction & prompts...`,
+            { id: toastId }
+          )
+        }
+        const refinedPatch = await resolveRefinedShotPatch(rec, resolvedBeat.beat.beatId)
+        resolvedItems.push({
+          recommendation: {
+            ...rec,
+            beatId: resolvedBeat.beat.beatId,
+          },
+          resolvedPatch: refinedPatch,
+        })
+      }
+
+      if (resolvedItems.length === 0) {
+        toast.error('Could not match recommendations to active shots in this scene.', {
+          id: toastId,
+        })
+        return
+      }
+
+      const appliedAt = new Date().toISOString()
+      const result = applyShotDirectorRecommendationsToScenes({
+        scenes,
+        sceneIdx: sceneIndex,
+        recommendations: resolvedItems,
+        characters: characters.map((c) => ({
+          id: c.id,
+          name: c.name,
+          referenceImage: c.referenceImage,
+          type: c.type,
+        })),
+        locationReferences: locationReferences.map((l) => ({ id: l.id })),
+        objectReferences: objectReferences.map((o) => ({ id: o.id, name: o.name })),
+        promptComposition,
+        segments: segments as any,
+      })
+
+      // Mark applied on the review state as well
+      const appliedSet = new Set(result.appliedIds)
+      const updatedReview: SceneVideoReviewResult | null = review
+        ? {
+            ...review,
+            recommendations: review.recommendations.map((r) =>
+              appliedSet.has(r.id) ? { ...r, applied: true, appliedAt } : r
+            ),
+          }
+        : null
+
+      if (updatedReview) {
+        setReview(updatedReview)
+        result.scenes[sceneIndex] = {
+          ...result.scenes[sceneIndex],
+          videoReview: updatedReview,
+        }
+      }
+
+      // Update script state (updates beatDirection, storyboardImagePrompt, and scene.segments)
+      onScriptChange({
+        ...script,
+        script: script?.script
+          ? { ...script.script, scenes: result.scenes }
+          : undefined,
+        ...(script?.script ? {} : { scenes: result.scenes }),
+      })
+
+      // Also synchronize sceneProductionData segments so Video Queue reflects prompt + negativePrompt immediately
+      if (result.segmentPromptUpdates.length > 0) {
+        for (const segUpdate of result.segmentPromptUpdates) {
+          if (segUpdate.videoPrompt && onSegmentPromptChange) {
+            onSegmentPromptChange(sceneId, segUpdate.segmentId, segUpdate.videoPrompt)
+          }
+        }
+        if (onProductionDataChange && productionData && Array.isArray(productionData.segments)) {
+          const updatedProdSegments = productionData.segments.map((seg: any) => {
+            const match = result.segmentPromptUpdates.find(
+              (u) => u.segmentId === seg.segmentId || (u.beatId && u.beatId === seg.beatId)
+            )
+            if (!match) return seg
+            return {
+              ...seg,
+              ...(match.videoPrompt ? { videoPrompt: match.videoPrompt } : {}),
+              ...(match.negativePrompt ? { negativePrompt: match.negativePrompt } : {}),
+            }
+          })
+          onProductionDataChange(sceneId, {
+            ...productionData,
+            segments: updatedProdSegments,
+          })
+        }
+      }
+
+      // Deselect applied IDs
+      setSelectedRecIds((prev) => {
+        const next = new Set(prev)
+        for (const id of result.appliedIds) next.delete(id)
+        return next
+      })
+
+      toast.success(
+        result.appliedIds.length === 1
+          ? 'Applied Shot Director fix — shot direction, still prompt, and video prompt updated.'
+          : `Applied ${result.appliedIds.length} Shot Director fixes — shot directions and prompts updated.`,
+        { id: toastId }
+      )
+    } catch (err) {
+      toast.error(
+        err instanceof Error ? err.message : 'Failed to apply Shot Director recommendations.',
+        { id: toastId }
+      )
+    } finally {
+      setApplyingRecId(null)
+      setApplyingProgress(null)
+      setIsApplyingBatch(false)
+    }
   }
 
   const handleApplySingleShotRecommendation = async (rec: SceneVideoRecommendation) => {
-    setApplyingRecId(rec.id)
-    try {
-      await applyShotRecommendationsList([rec])
-    } finally {
-      setApplyingRecId(null)
-    }
+    await applyShotRecommendationsList([rec])
   }
 
   const handleOpenInDirectShot = (rec: SceneVideoRecommendation) => {
@@ -710,6 +756,16 @@ export function SceneVideoReviewerPanel({
         ),
       })
     }
+    setSelectedRecIds((prev) => {
+      const next = new Set(prev)
+      for (const id of appliedIds) next.delete(id)
+      return next
+    })
+    toast.success(
+      sceneRecs.length === 1
+        ? 'Sent recommendation to Scene Director.'
+        : `Sent ${sceneRecs.length} recommendations to Scene Director.`
+    )
   }
 
   const handleApplySelectedBatch = async () => {
@@ -1469,6 +1525,26 @@ export function SceneVideoReviewerPanel({
               </div>
             </div>
 
+            {isApplyingBatch && (
+              <div
+                role="status"
+                aria-live="polite"
+                className="flex items-center justify-between gap-2 rounded-lg border border-teal-500/50 bg-teal-950/50 px-3 py-2 text-xs text-teal-100"
+              >
+                <div className="flex items-center gap-2">
+                  <Loader2 className="h-3.5 w-3.5 shrink-0 animate-spin text-teal-300" />
+                  <span>
+                    {applyingProgress
+                      ? `Applying Shot Director fix ${applyingProgress.current} of ${applyingProgress.total}${applyingProgress.shotNumber ? ` · Shot #${applyingProgress.shotNumber}` : ''}${applyingProgress.title ? ` — ${applyingProgress.title}` : ''}...`
+                      : 'Applying Shot Director recommendations — updating shot direction, still prompts, and video prompts...'}
+                  </span>
+                </div>
+                <span className="shrink-0 text-[10px] font-medium uppercase tracking-wider text-teal-300">
+                  Processing
+                </span>
+              </div>
+            )}
+
             {/* Recommendations List */}
             {filteredRecommendations.length === 0 ? (
               <div className="rounded-lg border border-slate-800 bg-slate-950/60 p-4 text-center text-xs text-slate-400">
@@ -1486,17 +1562,20 @@ export function SceneVideoReviewerPanel({
                     <div
                       key={rec.id}
                       className={`rounded-lg border p-3 transition-colors ${
-                        rec.applied
-                          ? 'border-emerald-500/30 bg-emerald-950/10'
-                          : isSelected
-                            ? 'border-indigo-500/50 bg-indigo-950/20'
-                            : 'border-slate-800 bg-slate-950/70'
+                        isApplyingThis
+                          ? 'border-teal-400/70 bg-teal-950/30'
+                          : rec.applied
+                            ? 'border-emerald-500/30 bg-emerald-950/10'
+                            : isSelected
+                              ? 'border-indigo-500/50 bg-indigo-950/20'
+                              : 'border-slate-800 bg-slate-950/70'
                       }`}
                     >
                       <div className="flex items-start justify-between gap-3">
                         <div className="flex items-start gap-2.5 min-w-0 flex-1">
                           <Checkbox
                             checked={isSelected}
+                            disabled={isApplyingBatch}
                             onCheckedChange={() => toggleSelectRec(rec.id)}
                             aria-label={`Select recommendation ${rec.title}`}
                             className="mt-0.5"
@@ -1551,7 +1630,14 @@ export function SceneVideoReviewerPanel({
                                 </span>
                               )}
 
-                              {rec.applied && (
+                              {isApplyingThis && (
+                                <span className="inline-flex items-center gap-1 rounded border border-teal-400/60 bg-teal-500/20 px-1.5 py-0.5 text-[10px] font-semibold text-teal-200">
+                                  <Loader2 className="h-3 w-3 animate-spin" />
+                                  Updating Shot Direction &amp; Prompts...
+                                </span>
+                              )}
+
+                              {rec.applied && !isApplyingThis && (
                                 <span className="inline-flex items-center gap-1 rounded border border-emerald-500/50 bg-emerald-500/20 px-1.5 py-0.5 text-[10px] font-semibold text-emerald-200">
                                   <Check className="h-3 w-3" />
                                   Applied
@@ -1704,49 +1790,64 @@ export function SceneVideoReviewerPanel({
             {review.recommendations.length > 0 && (
               <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-slate-800 bg-slate-950/90 px-3.5 py-2.5">
                 <div className="flex flex-wrap items-center gap-2 text-xs">
-                  <span className="text-slate-300">
-                    <strong>{selectedRecommendations.length}</strong> selected
-                    {selectedShotFixCount > 0 && (
-                      <span className="text-teal-300">
-                        {' '}
-                        · {selectedShotFixCount} Shot Director
-                      </span>
-                    )}
-                    {selectedSceneFixCount > 0 && (
-                      <span className="text-indigo-300">
-                        {' '}
-                        · {selectedSceneFixCount} Scene Director
-                      </span>
-                    )}
-                  </span>
-                  <button
-                    type="button"
-                    onClick={() =>
-                      setSelectedRecIds(
-                        new Set(
-                          review.recommendations
-                            .filter((r) => !r.applied)
-                            .map((r) => r.id)
-                        )
-                      )
-                    }
-                    className="text-[11px] text-indigo-400 hover:underline"
-                  >
-                    Select all unapplied
-                  </button>
-                  {selectedRecommendations.length > 0 && (
-                    <button
-                      type="button"
-                      onClick={() => setSelectedRecIds(new Set())}
-                      className="text-[11px] text-slate-400 hover:underline"
+                  {isApplyingBatch ? (
+                    <span
+                      role="status"
+                      aria-live="polite"
+                      className="inline-flex items-center gap-1.5 font-medium text-teal-300"
                     >
-                      Clear
-                    </button>
+                      <Loader2 className="h-3.5 w-3.5 animate-spin text-teal-400" />
+                      {applyingProgress
+                        ? `Applying Shot Director fix (${applyingProgress.current}/${applyingProgress.total})${applyingProgress.shotNumber ? ` · Shot #${applyingProgress.shotNumber}` : ''}...`
+                        : 'Applying Shot Director fixes...'}
+                    </span>
+                  ) : (
+                    <>
+                      <span className="text-slate-300">
+                        <strong>{selectedRecommendations.length}</strong> selected
+                        {selectedShotFixCount > 0 && (
+                          <span className="text-teal-300">
+                            {' '}
+                            · {selectedShotFixCount} Shot Director
+                          </span>
+                        )}
+                        {selectedSceneFixCount > 0 && (
+                          <span className="text-indigo-300">
+                            {' '}
+                            · {selectedSceneFixCount} Scene Director
+                          </span>
+                        )}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setSelectedRecIds(
+                            new Set(
+                              review.recommendations
+                                .filter((r) => !r.applied)
+                                .map((r) => r.id)
+                            )
+                          )
+                        }
+                        className="text-[11px] text-indigo-400 hover:underline"
+                      >
+                        Select all unapplied
+                      </button>
+                      {selectedRecommendations.length > 0 && (
+                        <button
+                          type="button"
+                          onClick={() => setSelectedRecIds(new Set())}
+                          className="text-[11px] text-slate-400 hover:underline"
+                        >
+                          Clear
+                        </button>
+                      )}
+                    </>
                   )}
                 </div>
 
                 <div className="flex flex-wrap items-center gap-2">
-                  {selectedShotFixCount > 0 && (
+                  {(selectedShotFixCount > 0 || isApplyingBatch) && (
                     <Button
                       type="button"
                       size="sm"
@@ -1763,7 +1864,9 @@ export function SceneVideoReviewerPanel({
                       {isApplyingBatch ? (
                         <>
                           <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                          Applying Shot Fixes...
+                          {applyingProgress
+                            ? `Applying Shot Fixes (${applyingProgress.current}/${applyingProgress.total})...`
+                            : 'Applying Shot Fixes...'}
                         </>
                       ) : (
                         <>
@@ -1801,8 +1904,19 @@ export function SceneVideoReviewerPanel({
                       onClick={handleApplySelectedBatch}
                       className="h-8 bg-emerald-600 hover:bg-emerald-500 text-white text-xs gap-1.5"
                     >
-                      <Check className="h-3.5 w-3.5" />
-                      Apply All Selected ({selectedRecommendations.length})
+                      {isApplyingBatch ? (
+                        <>
+                          <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                          {applyingProgress
+                            ? `Applying All (${applyingProgress.current}/${applyingProgress.total})...`
+                            : 'Applying All Selected...'}
+                        </>
+                      ) : (
+                        <>
+                          <Check className="h-3.5 w-3.5" />
+                          Apply All Selected ({selectedRecommendations.length})
+                        </>
+                      )}
                     </Button>
                   )}
                 </div>
