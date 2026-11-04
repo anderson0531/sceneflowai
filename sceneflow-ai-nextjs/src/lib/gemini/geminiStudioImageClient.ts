@@ -43,6 +43,9 @@ export interface GeminiStudioEditOptions {
   modelTier?: ModelTier
   thinkingLevel?: ThinkingLevel
   negativePrompt?: string
+  failFastOnRateLimit?: boolean
+  deadlineAt?: number
+  signal?: AbortSignal
 }
 
 export async function generateImageWithGeminiStudio(
@@ -80,6 +83,9 @@ export async function editImageWithGeminiStudio(
     modelTier: options.modelTier,
     thinkingLevel: options.thinkingLevel,
     negativePrompt: options.negativePrompt,
+    failFastOnRateLimit: options.failFastOnRateLimit,
+    deadlineAt: options.deadlineAt,
+    signal: options.signal,
   })
   return { imageBase64: result.imageBase64, mimeType: result.mimeType, text: result.text }
 }

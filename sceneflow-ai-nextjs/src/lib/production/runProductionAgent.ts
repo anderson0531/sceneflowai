@@ -884,6 +884,28 @@ export async function runProductionAgent(
                 }
               } else if (!isPolicyErr && options.autoRerunFailedShots) {
                 try {
+                  const errMsg =
+                    firstErr instanceof Error ? firstErr.message : String(firstErr ?? '')
+                  const isRateLimit =
+                    errMsg.includes('429') ||
+                    errMsg.toLowerCase().includes('rate limit') ||
+                    errMsg.toLowerCase().includes('resource_exhausted')
+                  if (isRateLimit) {
+                    const retryMatch = errMsg.match(/(\d+)\s*seconds?/i)
+                    const waitSec = retryMatch ? Math.max(15, parseInt(retryMatch[1], 10)) : 60
+                    const cooldownMs =
+                      process.env.VITEST ? 0 : Math.min(90_000, waitSec * 1_000)
+                    if (cooldownMs > 0) {
+                      deps.onProgress({
+                        stage: 'clips',
+                        subtitle: `Scene ${sceneNumber} · Shot ${shot.sequenceIndex + 1}: Rate limited — cooling down ${waitSec}s before rerun`,
+                        progressPct: computePct(),
+                        telemetry: { ...telemetry },
+                      })
+                      await new Promise((resolve) => setTimeout(resolve, cooldownMs))
+                      checkAborted()
+                    }
+                  }
                   telemetry.failedShotsRerun += 1
                   await deps.generateSegmentClip({
                     sceneIndex,

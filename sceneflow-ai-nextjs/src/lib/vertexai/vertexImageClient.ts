@@ -14,7 +14,10 @@ import { priorityPaygoHeaders } from '@/lib/vertexai/priorityPaygo'
 import { runInVertexImageGate } from '@/lib/vertexai/vertexImageGate'
 import {
   acquireImageGenerationLease,
+  getImageAdmissionCooldownMs,
   noteImageGenerationCooldown,
+  paceOutboundVertexFetch,
+  recordVertexRollingTokens,
   VertexDispatchDeferredError,
 } from '@/lib/vertexai/vertexDispatchBucket'
 import { fullJitterDelayMs } from '@/lib/utils/retry'
@@ -594,6 +597,7 @@ function logPromptImageTokenUsage(
       perRef != null ? `, perRef=${perRef}` : ''
     }, model=${model})`
   )
+  recordVertexRollingTokens('image', imageTokens + 800)
   if (imageTokens === 0) {
     console.warn(
       `[Vertex Gemini Image] 0 IMAGE tokens with ${referenceCount} reference(s) attached — Vertex dropped the parts`
@@ -633,6 +637,7 @@ async function runWithinImageLease<T>(
 
   const maxWaitMs =
     options.deadlineAt != null ? Math.max(0, options.deadlineAt - Date.now()) : undefined
+  const estimatedTokens = Math.max(800, (options.referenceImages?.length ?? 0) * 1120 + 800)
   const attempt: ImageLeaseAttempt = { providerRequestSent: false }
   let finishLease: (mode?: 'release' | 'abandon') => Promise<void> = async () => {}
   let finished = false
@@ -643,7 +648,11 @@ async function runWithinImageLease<T>(
   }
   try {
     try {
-      finishLease = await acquireImageGenerationLease({ maxWaitMs, signal: options.signal })
+      finishLease = await acquireImageGenerationLease({
+        maxWaitMs,
+        signal: options.signal,
+        estimatedTokens,
+      })
     } catch (err) {
       if (options.signal?.aborted || (err instanceof Error && err.name === 'AbortError')) {
         throwAbortedByClient()
@@ -818,6 +827,8 @@ async function generateVertexGeminiImageAttempt(
       const vertexStartedAt = Date.now()
       try {
         throwIfImageAborted(requestSignal, options.signal, model)
+        await paceOutboundVertexFetch('image', { signal: requestSignal })
+        throwIfImageAborted(requestSignal, options.signal, model)
         const leaseAttempt = imageLeaseHeld.getStore()
         if (leaseAttempt) leaseAttempt.providerRequestSent = true
         return await fetch(endpoint, {
@@ -875,7 +886,10 @@ async function generateVertexGeminiImageAttempt(
   if (!response.ok) {
     const errorText = await response.text()
     if (response.status === 429) {
-      await noteImageGenerationCooldown()
+      const retryAfterMs = parseRetryAfterMs(response)
+      await noteImageGenerationCooldown(
+        retryAfterMs != null ? Math.max(getImageAdmissionCooldownMs(), retryAfterMs) : undefined
+      )
     }
     if (response.status === 429 && options.failFastOnRateLimit) {
       // The shared admission pause, not an immediate re-admit, keeps the next
@@ -1046,6 +1060,9 @@ export interface VertexImageEditOptions {
   negativePrompt?: string
   /** Appended when identity + wardrobe refs are both sent. */
   dualReferenceInstruction?: string
+  failFastOnRateLimit?: boolean
+  deadlineAt?: number
+  signal?: AbortSignal
 }
 
 export async function editVertexImage(options: VertexImageEditOptions): Promise<VertexImageResult> {
@@ -1125,5 +1142,8 @@ export async function editVertexImage(options: VertexImageEditOptions): Promise<
     modelTier: options.modelTier,
     thinkingLevel: options.thinkingLevel,
     negativePrompt: options.negativePrompt,
+    failFastOnRateLimit: options.failFastOnRateLimit,
+    deadlineAt: options.deadlineAt,
+    signal: options.signal,
   })
 }

@@ -84,4 +84,46 @@ describe('waitForVideoCompletion Omni status 429', () => {
     expect(result.status).toBe('FAILED')
     expect(result.error).toContain('404')
   })
+
+  it('keeps Veo fetchPredictOperation polling alive on HTTP 429 instead of failing the clip', async () => {
+    vi.useFakeTimers()
+    let calls = 0
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => {
+        calls += 1
+        if (calls === 1) {
+          return new Response(
+            JSON.stringify({
+              error: {
+                message: 'Resource exhausted (429).',
+                retryAfter: 30,
+              },
+            }),
+            { status: 429, headers: { 'retry-after': '30' } }
+          )
+        }
+        return new Response(
+          JSON.stringify({
+            done: true,
+            response: {
+              generatedVideos: [{ video: { uri: 'https://example.com/veo-clip.mp4' } }],
+            },
+          }),
+          { status: 200 }
+        )
+      })
+    )
+
+    const opName =
+      'projects/omni-poll-test/locations/us-central1/publishers/google/models/veo-3.1-fast-generate-001/operations/op-123'
+    const pending = waitForVideoCompletion(opName, 240, 20)
+    await vi.waitFor(() => expect(calls).toBe(1))
+    await vi.advanceTimersByTimeAsync(55_000)
+    const result = await pending
+
+    expect(calls).toBe(2)
+    expect(result.status).toBe('COMPLETED')
+    expect(result.videoUrl).toBe('https://example.com/veo-clip.mp4')
+  })
 })

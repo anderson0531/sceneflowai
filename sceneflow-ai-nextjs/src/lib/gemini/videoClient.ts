@@ -31,6 +31,7 @@ import {
 } from '@/lib/gemini/omniVideoInteractions'
 import { parseVertexRetryAfterSeconds } from '@/lib/gemini/vertexRateLimit'
 import { fullJitterDelayMs } from '@/lib/utils/retry'
+import { paceOutboundVertexFetch } from '@/lib/vertexai/vertexDispatchBucket'
 
 /**
  * Get Google OAuth2 Bearer token for Vertex AI
@@ -292,6 +293,7 @@ async function generateVideoWithOmniInteractions(
     const requestBody = await buildOmniInteractionRequestBody(model, prompt, buildOptions)
     assertOmniReferenceImagesAttached(requestBody.input, buildOptions)
     const accessToken = await getVertexAccessToken()
+    await paceOutboundVertexFetch('video')
     return fetch(endpoint, {
       method: 'POST',
       headers: {
@@ -782,6 +784,7 @@ export async function generateVideoWithVeo(
 
   try {
     const accessToken = await getVertexAccessToken();
+    await paceOutboundVertexFetch('video')
     const response = await fetch(endpoint, {
       method: 'POST',
       headers: {
@@ -918,6 +921,20 @@ export async function checkVideoGenerationStatus(
     if (!response.ok) {
       const errorText = await response.text()
       console.error('[Veo Video] Status check error:', errorText)
+      if (response.status === 429) {
+        const retryAfterSeconds = parseVertexRetryAfterSeconds(
+          response.headers.get('retry-after'),
+          errorText
+        )
+        console.warn(
+          `[Veo Video] Status check rate limited (429). Next poll in ${retryAfterSeconds}s`
+        )
+        return {
+          status: 'PROCESSING',
+          operationName,
+          retryAfterSeconds,
+        }
+      }
       return {
         status: 'FAILED',
         error: `Status check failed: ${response.status}`

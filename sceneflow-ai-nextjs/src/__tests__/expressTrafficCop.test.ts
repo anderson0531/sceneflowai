@@ -289,4 +289,28 @@ describe('ExpressTrafficCop', () => {
     expect(entered).toEqual([0, 1, 2, 3, 4, 5])
     expect(peak).toBe(2)
   })
+
+  it('enforces 60s rolling-window RPM ceiling for later beats in a batch sequence', async () => {
+    const cop = new ExpressTrafficCop({
+      laneMax: { image: 2 },
+      minSpacingMs: { image: 100 },
+      rollingWindowRpm: { image: 3 },
+    })
+
+    const enteredAt: number[] = []
+    const tasks = Array.from({ length: 4 }, () =>
+      cop.runInLane('image', async () => {
+        enteredAt.push(Date.now())
+      })
+    )
+
+    await vi.advanceTimersByTimeAsync(1_000)
+    // First 3 beats fit within the 3 RPM rolling window; 4th waits until 60s window slides
+    expect(enteredAt).toHaveLength(3)
+
+    await vi.advanceTimersByTimeAsync(59_500)
+    await Promise.all(tasks)
+    expect(enteredAt).toHaveLength(4)
+    expect(enteredAt[3] - enteredAt[0]).toBeGreaterThanOrEqual(60_000)
+  })
 })

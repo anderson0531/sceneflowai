@@ -252,4 +252,21 @@ describe('failFastOnRateLimit surrenders the lane on the first 429', () => {
     expect(String((thrown as Error).message)).toContain(IDENTITY_REF_RATE_LIMIT_EXHAUSTED)
     expect(isExpressBeatPoolRetryable(thrown)).toBe(false)
   })
+
+  it('forwards Retry-After header duration to the shared admission cooldown on 429', async () => {
+    const bucketMod = await import('@/lib/vertexai/vertexDispatchBucket')
+    const cooldownSpy = vi.spyOn(bucketMod, 'noteImageGenerationCooldown')
+    const fetchMock = vi.fn().mockResolvedValueOnce(rateLimitResponse(45))
+    vi.stubGlobal('fetch', fetchMock)
+
+    await expect(
+      generateVertexGeminiImage({
+        prompt: 'pressure gauge needle at redline',
+        modelTier: 'eco',
+        failFastOnRateLimit: true,
+      })
+    ).rejects.toThrow(/429/)
+
+    expect(cooldownSpy).toHaveBeenCalledWith(45_000)
+  })
 })

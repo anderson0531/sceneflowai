@@ -4952,7 +4952,13 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
             throw err
           }
           if (response.status === 429) {
-            throw new Error('Rate limit exceeded. Please wait a moment and try again.')
+            const retrySec =
+              typeof errorData?.retryAfter === 'number' && errorData.retryAfter > 0
+                ? Math.max(60, Math.ceil(errorData.retryAfter))
+                : 60
+            throw new Error(
+              `Rate limit exceeded. Please wait ${retrySec} seconds and try again.`
+            )
           }
           if (response.status === 503 && errorData?.code === 'AGGREGATOR_NOT_CONFIGURED') {
             throw new Error(

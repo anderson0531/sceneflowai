@@ -934,6 +934,8 @@ async function postGenerateImage(req: NextRequest) {
               editIntent: 'keyframeStart',
               segmentDurationSeconds: durationSeconds,
               negativePrompt: mergeBeatFrameNegativePrompt(),
+              deadlineAt: imageDeadlineAt,
+              signal: req.signal,
             })
 
             const imageUrl = await uploadImageToBlob(
@@ -1045,6 +1047,8 @@ async function postGenerateImage(req: NextRequest) {
             editIntent: 'keyframeEnd',
             segmentDurationSeconds: durationSeconds,
             negativePrompt: mergeBeatFrameNegativePrompt(),
+            deadlineAt: imageDeadlineAt,
+            signal: req.signal,
           })
 
           const imageUrl = await uploadImageToBlob(

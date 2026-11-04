@@ -39,9 +39,13 @@ export interface ExpressTrafficCopOptions {
   rateLimitThreshold?: number
   /** Minimum gap between dispatches per lane. Defaults to image-only staggering. */
   minSpacingMs?: Partial<Record<ExpressLane, number>>
+  /** Optional 60s rolling-window RPM ceiling per lane to prevent batch quota exhaustion. */
+  rollingWindowRpm?: Partial<Record<ExpressLane, number>>
 }
 
 const EXPRESS_LANES: ExpressLane[] = ['text', 'image', 'audio']
+export const EXPRESS_ROLLING_WINDOW_MS = 60_000
+const EXPRESS_BURST_ALLOWANCE = 6
 
 /** Default image in-flight cap — two concurrent still jobs, fail-fast isolated. */
 export const DEFAULT_EXPRESS_IMAGE_CONCURRENCY = 2
@@ -127,6 +131,8 @@ interface LaneState {
    */
   nextDispatchAt: number
   minSpacingMs: number
+  rollingWindowRpm: number
+  rollingStarts: number[]
 }
 
 export class ExpressTrafficCop {
@@ -156,6 +162,14 @@ export class ExpressTrafficCop {
       if (override !== undefined) return Math.max(0, override)
       return lane === 'image' ? getExpressImageMinSpacingMs() : 0
     }
+    const rollingRpmFor = (lane: ExpressLane): number => {
+      const override = options.rollingWindowRpm?.[lane]
+      if (override !== undefined) return Math.max(0, Math.floor(override))
+      if (lane === 'image') {
+        return parseNonNegativeInt(process.env.EXPRESS_IMAGE_ROLLING_RPM, 0)
+      }
+      return 0
+    }
     this.lanes = {
       text: {
         inFlight: 0,
@@ -164,6 +178,8 @@ export class ExpressTrafficCop {
         cooldownUntil: null,
         nextDispatchAt: 0,
         minSpacingMs: spacingFor('text'),
+        rollingWindowRpm: rollingRpmFor('text'),
+        rollingStarts: [],
       },
       image: {
         inFlight: 0,
@@ -172,6 +188,8 @@ export class ExpressTrafficCop {
         cooldownUntil: null,
         nextDispatchAt: 0,
         minSpacingMs: spacingFor('image'),
+        rollingWindowRpm: rollingRpmFor('image'),
+        rollingStarts: [],
       },
       audio: {
         inFlight: 0,
@@ -180,6 +198,8 @@ export class ExpressTrafficCop {
         cooldownUntil: null,
         nextDispatchAt: 0,
         minSpacingMs: spacingFor('audio'),
+        rollingWindowRpm: rollingRpmFor('audio'),
+        rollingStarts: [],
       },
     }
   }
@@ -309,12 +329,46 @@ export class ExpressTrafficCop {
 
       if (state.inFlight < state.max) {
         state.inFlight++
+        const cutoff = now - EXPRESS_ROLLING_WINDOW_MS
+        while (state.rollingStarts.length > 0 && state.rollingStarts[0] <= cutoff) {
+          state.rollingStarts.shift()
+        }
+
+        let effectiveSpacingMs = state.minSpacingMs
+        if (
+          state.minSpacingMs > 0 &&
+          state.rollingStarts.length >= EXPRESS_BURST_ALLOWANCE
+        ) {
+          const overBurst = state.rollingStarts.length - EXPRESS_BURST_ALLOWANCE + 1
+          effectiveSpacingMs = Math.min(
+            5_000,
+            Math.round(state.minSpacingMs * (1 + overBurst * 0.25))
+          )
+        }
+
+        if (
+          state.rollingWindowRpm > 0 &&
+          state.rollingStarts.length >= state.rollingWindowRpm
+        ) {
+          const oldestInWindow =
+            state.rollingStarts[state.rollingStarts.length - state.rollingWindowRpm]
+          if (oldestInWindow !== undefined) {
+            state.nextDispatchAt = Math.max(
+              state.nextDispatchAt,
+              oldestInWindow + EXPRESS_ROLLING_WINDOW_MS
+            )
+          }
+        }
+
         // The slot is taken before the stagger sleep, so the wait cannot be
         // raced by another acquirer and `release` stays balanced either way.
-        if (state.minSpacingMs > 0) {
+        if (effectiveSpacingMs > 0 || state.nextDispatchAt > now) {
           const startAt = Math.max(now, state.nextDispatchAt)
-          state.nextDispatchAt = startAt + state.minSpacingMs
+          state.nextDispatchAt = startAt + effectiveSpacingMs
+          state.rollingStarts.push(startAt)
           if (startAt > now) await sleep(startAt - now)
+        } else {
+          state.rollingStarts.push(now)
         }
         return
       }
@@ -328,6 +382,12 @@ export class ExpressTrafficCop {
   private release(lane: ExpressLane): void {
     const state = this.lanes[lane]
     state.inFlight = Math.max(0, state.inFlight - 1)
+    if (state.minSpacingMs > 0) {
+      const now = Date.now()
+      if (now > state.nextDispatchAt) {
+        state.nextDispatchAt = now + state.minSpacingMs
+      }
+    }
     const next = this.waiters[lane].shift()
     if (next) next()
   }

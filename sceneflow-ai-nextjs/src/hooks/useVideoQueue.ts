@@ -43,8 +43,11 @@ import type {
   VideoRunItemStatus,
 } from '@/lib/video/videoQueueRunReport'
 
-/** One cooldown, then the beat fails. A exhausted quota must not loop. */
-const MAX_RATE_LIMIT_REQUEUES_PER_BEAT = 1
+/** Allow up to 3 rate-limit cooldown requeues per beat across a batch before failing. */
+const MAX_RATE_LIMIT_REQUEUES_PER_BEAT = 3
+const VIDEO_ROLLING_WINDOW_MS = 60_000
+const VIDEO_BURST_ALLOWANCE = 3
+const VIDEO_ROLLING_RPM_CAP = 5
 
 export interface VideoQueueState {
   /** All queue items with their configs */
@@ -482,6 +485,60 @@ export function useVideoQueue(
       ])
     )
     let pausedFor = 0
+    let sharedRateLimitUntil = 0
+    let nextAllowedDispatchAt = 0
+    const rollingDispatchTimestamps: number[] = []
+
+    const waitForSharedRateLimitGate = async () => {
+      while (!cancelRequestedRef.current && Date.now() < sharedRateLimitUntil) {
+        const remainingMs = sharedRateLimitUntil - Date.now()
+        await new Promise((r) => setTimeout(r, Math.min(1_000, Math.max(50, remainingMs))))
+      }
+    }
+
+    const claimNextDispatchWindow = async () => {
+      await waitForSharedRateLimitGate()
+      if (cancelRequestedRef.current) return
+
+      const now = Date.now()
+      const cutoff = now - VIDEO_ROLLING_WINDOW_MS
+      while (rollingDispatchTimestamps.length > 0 && rollingDispatchTimestamps[0] <= cutoff) {
+        rollingDispatchTimestamps.shift()
+      }
+
+      const baseGapMs = Math.max(delayBetween, 1_500)
+      let effectiveGapMs = baseGapMs
+      if (rollingDispatchTimestamps.length >= VIDEO_BURST_ALLOWANCE) {
+        const overBurst = rollingDispatchTimestamps.length - VIDEO_BURST_ALLOWANCE + 1
+        effectiveGapMs = Math.min(15_000, Math.round(baseGapMs * (1 + overBurst * 0.5)))
+      }
+
+      if (rollingDispatchTimestamps.length >= VIDEO_ROLLING_RPM_CAP) {
+        const oldestInCap =
+          rollingDispatchTimestamps[rollingDispatchTimestamps.length - VIDEO_ROLLING_RPM_CAP]
+        if (oldestInCap !== undefined) {
+          nextAllowedDispatchAt = Math.max(
+            nextAllowedDispatchAt,
+            oldestInCap + VIDEO_ROLLING_WINDOW_MS
+          )
+        }
+      }
+
+      const startAt = Math.max(now, nextAllowedDispatchAt, sharedRateLimitUntil)
+      nextAllowedDispatchAt = startAt + effectiveGapMs
+      rollingDispatchTimestamps.push(startAt)
+
+      const waitMs = startAt - now
+      if (waitMs > 0) {
+        let remaining = waitMs
+        while (!cancelRequestedRef.current && remaining > 0) {
+          const step = Math.min(remaining, 1_000)
+          await new Promise((r) => setTimeout(r, step))
+          remaining = startAt - Date.now()
+        }
+      }
+      await waitForSharedRateLimitGate()
+    }
 
     const report = (finished: boolean) => {
       const reporter = runReportRef.current
@@ -518,6 +575,9 @@ export function useVideoQueue(
     // Independent shots claim the other worker slot.
     const worker = async () => {
       while (!cancelRequestedRef.current) {
+        await waitForSharedRateLimitGate()
+        if (cancelRequestedRef.current) break
+
         const liveSegmentsForClaim = getSegments?.() ?? segments
         const index = claimNextRunnableVideoIndex(
           itemsToProcess,
@@ -539,6 +599,9 @@ export function useVideoQueue(
         }
 
         const item = itemsToProcess[index]
+        await claimNextDispatchWindow()
+        if (cancelRequestedRef.current) break
+
         setCurrentSegmentId(item.segmentId)
         setProgress(Math.round(((completed + failed) / itemsToProcess.length) * 100))
         markItem(item.segmentId, 'running')
@@ -684,6 +747,7 @@ export function useVideoQueue(
           completed++
           setCompletedCount(completed)
           markItem(item.segmentId, 'done')
+          nextAllowedDispatchAt = Math.max(nextAllowedDispatchAt, Date.now() + delayBetween)
         } catch (error: any) {
           console.error(`[VideoQueue] Failed to render segment ${item.segmentId}:`, error)
           
@@ -694,19 +758,24 @@ export function useVideoQueue(
                              errorMessage.includes('isRateLimited')
           
           if (isRateLimit) {
-            // Extract retry time or default to 60 seconds, then spread the resume
-            // across the full jitter window so parallel Clip runs do not wake together.
+            // Extract retry time or default to 60 seconds (matching server-side
+            // RATE_LIMIT_COOLDOWN_MS = 60_000), then spread the resume across the
+            // full jitter window so parallel Clip runs do not wake together.
             const retryMatch = errorMessage.match(/(\d+)\s*seconds?/i)
-            const waitSeconds = retryMatch ? parseInt(retryMatch[1], 10) : 60
+            const parsedSeconds = retryMatch ? parseInt(retryMatch[1], 10) : 60
+            const waitSeconds = Math.max(60, Number.isFinite(parsedSeconds) ? parsedSeconds : 60)
             const delayMs = fullJitterDelayMs({
               attempt: 0,
               baseMs: 10_000,
               capMs: 30_000,
               retryAfterMs: waitSeconds * 1000,
             })
-            const jitteredSeconds = Math.max(1, Math.ceil(delayMs / 1000))
+            const jitteredSeconds = Math.max(60, Math.ceil(delayMs / 1000))
+            const cooldownUntil = Date.now() + jitteredSeconds * 1000
+            sharedRateLimitUntil = Math.max(sharedRateLimitUntil, cooldownUntil)
+            nextAllowedDispatchAt = Math.max(nextAllowedDispatchAt, sharedRateLimitUntil)
             
-            console.log(`[VideoQueue] Rate limited! Pausing for ${jitteredSeconds} seconds...`)
+            console.log(`[VideoQueue] Rate limited! Pausing all workers for ${jitteredSeconds} seconds...`)
             toast.warning(`Rate limit hit. Pausing for ${jitteredSeconds} seconds...`, {
               duration: 5000
             })
@@ -716,11 +785,12 @@ export function useVideoQueue(
             setRateLimitCountdown(jitteredSeconds)
             markItem(item.segmentId, 'pending', `Rate limited — retrying in ${jitteredSeconds}s`)
             
-            // Countdown timer
-            for (let sec = jitteredSeconds; sec > 0; sec--) {
-              if (cancelRequestedRef.current) break
-              setRateLimitCountdown(sec)
-              pausedFor = sec
+            // Countdown timer synchronized with sharedRateLimitUntil
+            while (!cancelRequestedRef.current) {
+              const secLeft = Math.ceil((sharedRateLimitUntil - Date.now()) / 1000)
+              if (secLeft <= 0) break
+              setRateLimitCountdown(secLeft)
+              pausedFor = secLeft
               report(false)
               await new Promise(r => setTimeout(r, 1000))
             }
@@ -736,6 +806,7 @@ export function useVideoQueue(
                 toast.info('Rate limit cleared. Resuming queue...')
                 itemsToProcess.push(item)
                 handedOff = true
+                notifyClaim()
                 continue
               }
               failed++
@@ -758,8 +829,8 @@ export function useVideoQueue(
           }
         }
 
-        // Serial runs keep a gap between calls. Parallel runs rely on the 429 pause.
-        if (concurrency === 1 && itemsToProcess.some((_, itemIndex) => !claimed.has(itemIndex))) {
+        // Maintain inter-clip spacing across both serial and parallel runs
+        if (itemsToProcess.some((_, itemIndex) => !claimed.has(itemIndex))) {
           await new Promise((resolve) => setTimeout(resolve, delayBetween))
         }
       }

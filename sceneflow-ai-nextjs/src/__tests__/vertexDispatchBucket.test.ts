@@ -14,7 +14,10 @@ import {
   getImageLeaseTtlMs,
   getVertexDispatchIntervalMs,
   getVertexDispatchMaxWaitMs,
+  getVertexRollingWindowSnapshot,
   noteImageGenerationCooldown,
+  paceOutboundVertexFetch,
+  recordVertexRollingTokens,
   reserveDispatchSlot,
   reserveImageLease,
   resetVertexDispatchBucketForTests,
@@ -505,5 +508,59 @@ describe('acquireImageGenerationLease', () => {
     const release = await pending
     expect(started).toBe(true)
     await release()
+  })
+
+  it('progressively scales spacing for later runs in a batch sequence (5th+ dispatch in 60s window)', async () => {
+    process.env.VERTEX_IMAGE_DISPATCH_INTERVAL_MS = '500'
+    resetVertexDispatchBucketForTests()
+
+    for (let i = 0; i < 4; i++) {
+      const release = await acquireImageGenerationLease({ maxWaitMs: 20_000 })
+      await release()
+      await vi.advanceTimersByTimeAsync(500)
+    }
+
+    const beforeFifth = Date.now()
+    const fifthRelease = await acquireImageGenerationLease({ maxWaitMs: 20_000 })
+    await fifthRelease()
+
+    // 5th dispatch pushed nextAt by scaled interval (750ms instead of 500ms), so 6th dispatch waits 750ms
+    let sixthResolved = false
+    const sixthPromise = acquireImageGenerationLease({ maxWaitMs: 20_000 }).then((r) => {
+      sixthResolved = true
+      return r
+    })
+    await vi.advanceTimersByTimeAsync(500)
+    expect(sixthResolved).toBe(false)
+    await vi.advanceTimersByTimeAsync(250)
+    const sixthRelease = await sixthPromise
+    expect(sixthResolved).toBe(true)
+    expect(Date.now() - beforeFifth).toBe(750)
+    await sixthRelease()
+  })
+
+  it('tracks rolling-window tokens and paces outbound Vertex fetches that converge after reference download', async () => {
+    process.env.VERTEX_IMAGE_DISPATCH_INTERVAL_MS = '500'
+    resetVertexDispatchBucketForTests()
+
+    recordVertexRollingTokens('image', 12_000)
+    expect(getVertexRollingWindowSnapshot('image').tokensInWindow).toBe(12_000)
+
+    const fetchedAt: number[] = []
+    const firstFetch = paceOutboundVertexFetch('image').then(() => {
+      fetchedAt.push(Date.now())
+    })
+    const secondFetch = paceOutboundVertexFetch('image').then(() => {
+      fetchedAt.push(Date.now())
+    })
+
+    await firstFetch
+    expect(fetchedAt).toHaveLength(1)
+    await vi.advanceTimersByTimeAsync(499)
+    expect(fetchedAt).toHaveLength(1)
+    await vi.advanceTimersByTimeAsync(1)
+    await secondFetch
+    expect(fetchedAt).toHaveLength(2)
+    expect(fetchedAt[1] - fetchedAt[0]).toBe(500)
   })
 })
