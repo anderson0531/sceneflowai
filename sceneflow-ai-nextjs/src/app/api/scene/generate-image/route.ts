@@ -593,6 +593,8 @@ async function postGenerateImage(req: NextRequest) {
   let creditsCharged = 0
   const CREDIT_COST = IMAGE_CREDITS.FAL_KLING_IMAGE // 12 credits per image
   const routeStart = Date.now()
+  /** Nothing downstream of the image call can run if the image itself overruns. */
+  const imageDeadlineAt = resolveImageDeadlineAt(routeStart, ROUTE_TIME_BUDGET_MS)
   let logContext: Record<string, unknown> = {}
 
   try {
@@ -2608,8 +2610,6 @@ async function postGenerateImage(req: NextRequest) {
     }
     
     let imageUrl = ''
-    /** Nothing downstream of the image call can run if the image itself overruns. */
-    const imageDeadlineAt = resolveImageDeadlineAt(routeStart, ROUTE_TIME_BUDGET_MS)
 
     let generationModelId = 'gemini-image'
     let generationProvider: 'vertex' | 'kling' = 'vertex'
