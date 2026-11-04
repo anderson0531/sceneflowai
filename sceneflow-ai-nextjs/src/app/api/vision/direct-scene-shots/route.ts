@@ -10,6 +10,7 @@ import {
   writeScenesIntoVisionMetadata,
 } from '@/lib/sceneGeneration/attachSceneDirectionsToScript'
 import { resolveProjectArtStyle } from '@/lib/vision/artStyle'
+import { generateSceneContentHash } from '@/lib/utils/contentHash'
 import {
   applyOptimizedShotPatches,
   getShotDirectionTextConcurrency,
@@ -145,7 +146,12 @@ export async function POST(req: NextRequest) {
     })
 
     if (applied.scenes[sceneIndex] && typeof applied.scenes[sceneIndex] === 'object') {
-      ;(applied.scenes[sceneIndex] as Record<string, unknown>).shotDirectionNeedsRefresh = false
+      const targetScene = applied.scenes[sceneIndex] as Record<string, unknown>
+      targetScene.shotDirectionNeedsRefresh = false
+      if (targetScene.sceneDirection && typeof targetScene.sceneDirection === 'object') {
+        ;(targetScene.sceneDirection as Record<string, unknown>).basedOnContentHash =
+          generateSceneContentHash(targetScene)
+      }
     }
 
     if (!demoMode && applied.optimized > 0 && typeof fresh.update === 'function') {

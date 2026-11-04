@@ -6,6 +6,7 @@ import { mergeSceneForDirection } from '@/lib/sceneGeneration/mergeSceneForDirec
 import { applyBeatsToScene, ensureSceneBeats, getSceneBeats } from '@/lib/script/beatMigration'
 import { syncBeatStillPromptToDirection } from '@/lib/storyboard/syncBeatStillPrompt'
 import { refreshProductionSegmentVideoPrompts } from '@/lib/scene/syncBeatVideoPrompt'
+import { generateSceneContentHash } from '@/lib/utils/contentHash'
 
 export const maxDuration = 300
 export const runtime = 'nodejs'
@@ -107,7 +108,17 @@ export async function POST(req: NextRequest) {
 
     const updatedScenes = scriptScenes.map((s: any, idx: number) => {
       if (idx !== sceneIndex) return s
-      const ensured = ensureSceneBeats({ ...s, sceneDirection } as Record<string, unknown>)
+      const stampedDirection =
+        sceneDirection && typeof sceneDirection === 'object'
+          ? {
+              ...sceneDirection,
+              basedOnContentHash: generateSceneContentHash(s),
+            }
+          : sceneDirection
+      const ensured = ensureSceneBeats({
+        ...s,
+        sceneDirection: stampedDirection,
+      } as Record<string, unknown>)
       const beats = getSceneBeats(ensured)
       const syncedBeats = beats.map((beat) =>
         beat.beatDirection

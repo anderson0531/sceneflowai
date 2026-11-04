@@ -41,8 +41,8 @@ describe('referenceExpressAgentLabel', () => {
     )
   })
 
-  it('names Scene Ref Agent for a scene-scoped run', () => {
-    expect(referenceExpressAgentLabel(undefined, { sceneScoped: true })).toBe('Scene Ref Agent')
+  it('names Continuity Agent for a scene-scoped run', () => {
+    expect(referenceExpressAgentLabel(undefined, { sceneScoped: true })).toBe('Continuity Agent')
     expect(referenceExpressAgentLabel(['location'], { sceneScoped: true })).toBe('Location Agent')
   })
 

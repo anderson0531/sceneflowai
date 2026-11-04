@@ -42,7 +42,7 @@ describe('sceneContinuityActions', () => {
       })
     ).toMatchObject({
       canGenerate: true,
-      needsSceneDirection: true,
+      needsSceneDirection: false,
       canSyncReferences: true,
     })
   })
@@ -60,7 +60,7 @@ describe('sceneContinuityActions', () => {
     ).toMatchObject({ canGenerate: true, needsSceneDirection: false })
   })
 
-  it('blocks a written scene whose direction is stale and whose shots are not optimized', () => {
+  it('marks needsSceneDirection while keeping canGenerate true on a written scene whose direction is stale and whose shots are not optimized', () => {
     expect(
       sceneContinuityActions({
         isExpanded: true,
@@ -69,7 +69,7 @@ describe('sceneContinuityActions', () => {
         beats: [{ beatId: 'shot-1', beatDirection: { generatedBy: 'llm' } }],
       })
     ).toEqual({
-      canGenerate: false,
+      canGenerate: true,
       needsSceneDirection: true,
       canSyncReferences: true,
     })
@@ -150,27 +150,25 @@ describe('fresh continuity selections', () => {
 })
 
 describe('Continuity tab controls', () => {
-  it('offers Update references and Lock direction on the scene card', () => {
+  it('offers unified Continuity Agent on the scene card', () => {
     const panel = read('src/components/vision/SceneReferencesPanel.tsx')
-    expect(panel).toContain('Update references')
-    expect(panel).toContain('Lock direction')
-    expect(panel).toContain('onSyncReferences')
-    expect(panel).toContain('onLockDirection')
+    expect(panel).toContain('Continuity Agent')
+    expect(panel).not.toContain('Scene Ref Agent')
     expect(panel).toContain('!canGenerate')
     expect(panel).not.toContain('scriptReady')
 
     const scriptPanel = read('src/components/vision/ScriptPanel.tsx')
     expect(scriptPanel).toContain('sceneContinuityActions')
-    expect(scriptPanel).toContain('handleSyncSceneReferences')
-    expect(scriptPanel).toContain('handleLockSceneDirection')
-    expect(scriptPanel).toContain("fetch('/api/scene/generate-direction'")
-    expect(scriptPanel).toContain('freshBeatReferenceSelection')
+    expect(scriptPanel).toContain('syncSceneDirectionToContinuityCatalog')
   })
 
-  it('uses the same readiness predicate before a scene reference draw', () => {
+  it('uses the same readiness predicate and auto-updates direction + references before a scene reference draw', () => {
     const page = read('src/app/dashboard/workflow/vision/[projectId]/page.tsx')
     expect(page).toContain('sceneContinuityActions')
     expect(page).toContain('continuity.canGenerate')
+    expect(page).toContain('continuity.needsSceneDirection')
+    expect(page).toContain('refreshPromoSceneDirection(sceneIndex)')
+    expect(page).toContain('syncSceneDirectionToContinuityCatalog')
     expect(page).not.toContain('if (scene && !isSceneScriptReadyForReferences(scene))')
   })
 })

@@ -29,10 +29,15 @@ export function sceneHasScreenplayBody(scene: Record<string, unknown> | null | u
   })
 }
 
+function shotDirectionIsOptimized(beat: { beatDirection?: { generatedBy?: string } | null }): boolean {
+  const generatedBy = beat.beatDirection?.generatedBy
+  return generatedBy === 'user' || generatedBy === 'director'
+}
+
 /**
  * Ready for reference images when the scene is a written script (not an
- * outline), it has action or dialogue, and scene direction exists and still
- * matches that script.
+ * outline), it has action or dialogue, and either scene direction still
+ * matches that script or its shots have been directed.
  */
 export function isSceneScriptReadyForReferences(
   scene: Record<string, unknown> | null | undefined
@@ -40,30 +45,26 @@ export function isSceneScriptReadyForReferences(
   if (!scene) return false
   if (isSceneOutline(scene)) return false
   if (!sceneHasScreenplayBody(scene)) return false
-  if (!scene.sceneDirection) return false
-  return !isDirectionStale(scene)
-}
-
-function shotDirectionIsOptimized(beat: { beatDirection?: { generatedBy?: string } | null }): boolean {
-  const generatedBy = beat.beatDirection?.generatedBy
-  return generatedBy === 'user' || generatedBy === 'director'
+  const sceneDirectionReady = Boolean(scene.sceneDirection) && !isDirectionStale(scene)
+  if (sceneDirectionReady) return true
+  const shootable = getSceneBeats(scene).filter((beat) => !isBeatExcluded(beat))
+  return shootable.some((beat) => shotDirectionIsOptimized(beat))
 }
 
 export interface SceneContinuityActions {
-  /** Gen, Regen, and Scene Ref Agent may draw plates. */
+  /** Gen, Update, and Continuity Agent may draw plates (auto-refreshing direction if needed). */
   canGenerate: boolean
-  /** Scene direction is missing or no longer matches the script. */
+  /** Neither scene direction nor shot direction matches the current script yet. */
   needsSceneDirection: boolean
   /** The scene has shootable shots whose plates can be rewritten. */
   canSyncReferences: boolean
 }
 
 /**
- * Continuity generate follows the locked direction the frames will use.
- * Scene direction is one lock. Optimized shot direction is the other, so a
- * scene can draw its plates before a separate scene-direction pass exists.
- * An outline stays blocked. A written scene with neither lock offers Lock
- * direction instead of a dead generate button.
+ * Continuity Agent can run on any written scene: if neither scene direction
+ * nor shot direction matches the current script (`needsSceneDirection`),
+ * Continuity Agent automatically updates scene direction and syncs continuity
+ * references before drawing any missing plates. An outline stays blocked.
  */
 export function sceneContinuityActions(
   scene: Record<string, unknown> | null | undefined
@@ -72,11 +73,11 @@ export function sceneContinuityActions(
     return { canGenerate: false, needsSceneDirection: false, canSyncReferences: false }
   }
   const shootable = getSceneBeats(scene).filter((beat) => !isBeatExcluded(beat))
-  const directionReady = isSceneScriptReadyForReferences(scene)
+  const directionReady = Boolean(scene.sceneDirection) && !isDirectionStale(scene)
   const shotsOptimized = shootable.some((beat) => shotDirectionIsOptimized(beat))
   return {
-    canGenerate: directionReady || shotsOptimized,
-    needsSceneDirection: !directionReady,
+    canGenerate: true,
+    needsSceneDirection: !directionReady && !shotsOptimized,
     canSyncReferences: shootable.length > 0,
   }
 }

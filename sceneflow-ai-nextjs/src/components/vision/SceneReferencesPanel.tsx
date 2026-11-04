@@ -1031,70 +1031,47 @@ export function SceneReferencesPanel({
             reference that gets named but has no image is drawn differently in every frame.
             Gen draws a default still; customise looks in the Continuity Library.
           </p>
-          {!canGenerate && !needsSceneDirection && (
+          {!canGenerate && (
             <p className="text-[11px] text-amber-700 dark:text-amber-300 mt-1">
-              This scene’s script is not finalized yet. Finish the scene and its direction
-              before drawing references — generating now would be redrawn when the script changes.
+              This scene’s script is not finalized yet. Finish the scene before running
+              Continuity Agent — generating now would be redrawn when the script changes.
             </p>
           )}
-          {!canGenerate && needsSceneDirection && (
-            <p className="text-[11px] text-amber-700 dark:text-amber-300 mt-1">
-              Lock scene direction, or run Shot Direction Agent, before drawing these references.
+          {canGenerate && needsSceneDirection && (
+            <p className="text-[11px] text-cyan-700 dark:text-cyan-300 mt-1">
+              Continuity Agent will automatically update scene direction and sync references as needed.
             </p>
           )}
         </div>
 
         <div className="flex items-center gap-1.5 shrink-0">
-          {needsSceneDirection && onLockDirection && (
-            <button
-              type="button"
-              onClick={(e) => {
-                e.stopPropagation()
-                void onLockDirection()
-              }}
-              disabled={busy || lockingDirection}
-              className="text-xs px-2.5 py-1.5 rounded border border-amber-400/70 text-amber-800 dark:text-amber-200 hover:bg-amber-100 dark:hover:bg-amber-900/40 disabled:opacity-50 inline-flex items-center gap-1.5"
-              title="Write this scene’s direction from the script so the plates match it"
-            >
-              {lockingDirection ? <Loader className="w-3 h-3 animate-spin" /> : null}
-              Lock direction
-            </button>
-          )}
-          {onSyncReferences && (
-            <button
-              type="button"
-              onClick={(e) => {
-                e.stopPropagation()
-                void onSyncReferences()
-              }}
-              disabled={syncingReferences}
-              className="text-xs px-2.5 py-1.5 rounded border border-cyan-300 dark:border-cyan-700 text-cyan-800 dark:text-cyan-200 hover:bg-cyan-100 dark:hover:bg-cyan-900/40 disabled:opacity-50 flex items-center gap-1.5"
-              title="Set each shot’s wardrobe, location, and props from the current scene and shot direction"
-            >
-              {syncingReferences ? <Loader className="w-3 h-3 animate-spin" /> : <RotateCcw className="w-3 h-3" />}
-              Update references
-            </button>
-          )}
-          {pending.length > 0 && onExpressReferences && expressable.length > 0 && (
-            <button
-              type="button"
-              onClick={(e) => {
-                e.stopPropagation()
-                void onExpressReferences()
-              }}
-              disabled={busy || lockingDirection || !canGenerate}
-              className="text-xs px-2.5 py-1.5 bg-cyan-600 hover:bg-cyan-700 text-white rounded disabled:opacity-50 flex items-center gap-1.5"
-              title={`Draw the ${expressable.length} missing reference${expressable.length === 1 ? '' : 's'} this scene needs`}
-            >
-              {busy ? (
-                <Loader className="w-3 h-3 animate-spin" />
-              ) : (
-                <Sparkles className="w-3 h-3" />
-              )}
-              Scene Ref Agent
-              <span className="opacity-80">({formatReferenceExpressEstimate(estimate)})</span>
-            </button>
-          )}
+          {onExpressReferences &&
+            (expressable.length > 0 || needsSceneDirection || Boolean(onSyncReferences)) && (
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation()
+                  void onExpressReferences()
+                }}
+                disabled={busy || lockingDirection || syncingReferences || !canGenerate}
+                className="text-xs px-2.5 py-1.5 bg-cyan-600 hover:bg-cyan-700 text-white rounded disabled:opacity-50 flex items-center gap-1.5"
+                title={
+                  expressable.length > 0
+                    ? `Update scene direction if needed, sync references, and draw the ${expressable.length} missing reference${expressable.length === 1 ? '' : 's'} this scene needs`
+                    : 'Update scene direction if needed and sync this scene’s continuity references'
+                }
+              >
+                {busy || lockingDirection || syncingReferences ? (
+                  <Loader className="w-3 h-3 animate-spin" />
+                ) : (
+                  <Sparkles className="w-3 h-3" />
+                )}
+                Continuity Agent
+                {expressable.length > 0 && (
+                  <span className="opacity-80">({formatReferenceExpressEstimate(estimate)})</span>
+                )}
+              </button>
+            )}
           {onOpenReferenceLibrary && (
             <button
               type="button"

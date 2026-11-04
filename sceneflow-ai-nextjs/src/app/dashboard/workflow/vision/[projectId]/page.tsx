@@ -471,6 +471,7 @@ import {
   directionFromDirectorPatch,
   freshBeatReferenceSelection,
   saveDirectorPatchToScenes,
+  syncSceneDirectionToContinuityCatalog,
 } from '@/lib/vision/saveBeatDirection'
 import { requestOptimizedShotDirection } from '@/lib/vision/shotDirectionAgent'
 import { VisualReference, VisualReferenceType, VisionReferencesPayload, LocationReference, LocationVersion } from '@/types/visionReferences'
@@ -583,6 +584,8 @@ type ReferenceExpressStartOutcome =
 type ReferenceExpressStartOptions = {
   /** Kind agents wait for identity/base stills before nested wardrobe/version gen. */
   waitUntilDone?: boolean
+  /** Persist script alongside references when Continuity Agent synced scene direction/beat selections. */
+  includeScriptInSync?: boolean
 }
 
 // UUID v4 validation regex - rejects placeholder IDs like 'new-project'
@@ -1589,7 +1592,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       if (readiness.ready) return false
       toast.error(formatReferenceReadinessMessage(readiness, 'scene'), {
         description:
-          'Open this scene’s Continuity tab and run Scene Ref Agent to draw the missing stills.',
+          'Open this scene’s Continuity tab and run Continuity Agent to draw the missing stills.',
       })
       focusSceneRefAgent(sceneIndex)
       return true
@@ -1614,7 +1617,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       if (sceneIndex != null) {
         toast.error(parsed.error || 'Generate this scene’s reference images first.', {
           description:
-            'Open this scene’s Continuity tab and run Scene Ref Agent to draw the missing stills.',
+            'Open this scene’s Continuity tab and run Continuity Agent to draw the missing stills.',
         })
         focusSceneRefAgent(sceneIndex)
         return true
@@ -11819,7 +11822,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
   }
 
   /** Sync live reference library + cast to project metadata before Express (server resolver source). */
-  const syncVisionReferencesForExpress = async () => {
+  const syncVisionReferencesForExpress = async (options?: { includeScript?: boolean }) => {
     if (!projectId) return
     const storedDropped = projectRef.current?.metadata?.visionPhase?.references
       ?.droppedObjectReferenceIds as string[] | undefined
@@ -11849,6 +11852,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       visionPhasePut({
         characters: charactersRef.current,
         references,
+        ...(options?.includeScript && scriptRef.current ? { script: scriptRef.current } : {}),
       }),
       'syncVisionReferencesForExpress'
     )
@@ -12511,7 +12515,9 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
 
     setIsExpressGeneratingReferences(true)
     try {
-      await syncVisionReferencesForExpress()
+      await syncVisionReferencesForExpress({
+        includeScript: options?.includeScriptInSync,
+      })
 
       const res = await fetch('/api/vision/references/express/start', {
         method: 'POST',
@@ -12695,30 +12701,77 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
   ensurePromoContinuityRef.current = ensurePromoContinuityPlates
 
   /**
-   * The scene card's own Express References — the same job, planned against one
-   * scene, so production does not detour through the whole library first.
+   * The scene card's Continuity Agent — updates scene direction if needed,
+   * syncs continuity references from scene & shot direction, and draws any
+   * missing reference stills for this scene.
    */
   const handleExpressSceneReferences = useCallback(
-    (sceneIndex: number, options?: { itemKeys?: string[] }) => {
-      const scene = scriptRef.current?.script?.scenes?.[sceneIndex]
-      const continuity = sceneContinuityActions(scene as Record<string, unknown> | undefined)
+    async (sceneIndex: number, options?: { itemKeys?: string[] }): Promise<ReferenceExpressStartOutcome> => {
+      const scenes = scriptRef.current?.script?.scenes ?? scriptRef.current?.scenes ?? []
+      const scene = scenes[sceneIndex] as Record<string, unknown> | undefined
+      const continuity = sceneContinuityActions(scene)
       if (scene && !continuity.canGenerate) {
-        toast.info(
-          continuity.needsSceneDirection
-            ? 'Lock this scene’s direction first'
-            : 'This scene’s script is not finalized yet',
-          {
-            description: continuity.needsSceneDirection
-              ? 'Lock direction on the Continuity tab, or run Shot Direction Agent, before drawing references.'
-              : 'Finish the scene script and its direction before drawing references. Generating now would be redrawn when the script changes.',
-          }
-        )
-        return Promise.resolve({ outcome: 'script-not-ready' as const })
+        toast.info('This scene’s script is not finalized yet', {
+          description:
+            'Finish the scene script before running Continuity Agent. Generating now would be redrawn when the script changes.',
+        })
+        return { outcome: 'script-not-ready' as const }
       }
-      return handleExpressGenerateReferences({
-        sceneIndices: [sceneIndex],
-        itemKeys: options?.itemKeys,
-      })
+      if (referenceExpressJob.isActive) {
+        toast.info('Continuity Agent is already running', {
+          description: 'Watch the status card in the corner — you can keep working.',
+        })
+        return { outcome: 'already-running' as const }
+      }
+
+      setIsExpressGeneratingReferences(true)
+      try {
+        if (continuity.needsSceneDirection) {
+          toast.info(`Updating scene direction for Scene ${sceneIndex + 1}…`)
+          await refreshPromoSceneDirection(sceneIndex)
+        }
+
+        const currentScenes = scriptRef.current?.script?.scenes ?? scriptRef.current?.scenes ?? []
+        if (Array.isArray(currentScenes) && currentScenes[sceneIndex]) {
+          const synced = syncSceneDirectionToContinuityCatalog({
+            scenes: currentScenes,
+            sceneIdx: sceneIndex,
+            characters: charactersRef.current ?? [],
+            locationReferences: (locationReferencesRef.current ?? []) as LocationReference[],
+            objectReferences: (objectReferencesRef.current ?? []) as VisualReference[],
+          })
+          if (synced.locationsChanged) {
+            locationReferencesRef.current = synced.locationReferences
+            setLocationReferences(synced.locationReferences)
+          }
+          if (synced.objectsChanged) {
+            objectReferencesRef.current = synced.objectReferences
+            setObjectReferences(synced.objectReferences)
+          }
+          setScript((currentScript: any) => {
+            if (!currentScript) return currentScript
+            const next = currentScript.script?.scenes
+              ? { ...currentScript, script: { ...currentScript.script, scenes: synced.scenes } }
+              : { ...currentScript, scenes: synced.scenes }
+            scriptRef.current = next
+            return next
+          })
+        }
+
+        return await handleExpressGenerateReferences(
+          {
+            sceneIndices: [sceneIndex],
+            itemKeys: options?.itemKeys,
+          },
+          { includeScriptInSync: true }
+        )
+      } catch (error) {
+        const message =
+          error instanceof Error ? error.message : 'Failed to run Continuity Agent'
+        toast.error(message)
+        setIsExpressGeneratingReferences(false)
+        return { outcome: 'error' as const, error: message }
+      }
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [projectId, referenceExpressJob.isActive]

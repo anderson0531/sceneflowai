@@ -299,7 +299,10 @@ export function syncSceneDirectionToContinuityCatalog(args: {
         }
 
         if (exactBeatVer) {
-          if (!notesCoverState(exactBeatVer.stateNotes || '', hit.notes)) {
+          if (
+            !exactBeatVer.imageUrl?.trim() &&
+            !notesCoverState(exactBeatVer.stateNotes || '', hit.notes)
+          ) {
             const mergedNotes = exactBeatVer.stateNotes?.trim()
               ? dedupeStateNoteClauses(`${exactBeatVer.stateNotes}; ${hit.notes}`)
               : dedupeStateNoteClauses(hit.notes)
@@ -339,17 +342,24 @@ export function syncSceneDirectionToContinuityCatalog(args: {
     }
   }
 
-  // 2. Sync directed keyProps from Scene Direction + Shot Direction into objectReferences
+  // 2. Sync directed keyProps from Scene Direction into objectReferences
+  // (Only fall back to beatDirection.keyProps when Scene Direction has no keyProps yet,
+  // so re-running Shot Direction Agent does not invent duplicate un-drawn prop rows.)
   const sceneDir = scene.sceneDirection as Record<string, any> | undefined
-  const rawPropCandidates: string[] = [
+  const scenePropCandidates: string[] = [
     ...(Array.isArray(sceneDir?.scene?.keyProps) ? sceneDir.scene.keyProps : []),
     ...(Array.isArray(sceneDir?.keyProps) ? sceneDir.keyProps : []),
-    ...getSceneBeats(scene)
-      .filter((b) => !isBeatExcluded(b))
-      .flatMap((b) => (Array.isArray(b.beatDirection?.keyProps) ? b.beatDirection.keyProps : [])),
   ]
     .map((p) => (typeof p === 'string' ? p.trim() : ''))
     .filter(Boolean)
+  const rawPropCandidates: string[] =
+    scenePropCandidates.length > 0
+      ? scenePropCandidates
+      : getSceneBeats(scene)
+          .filter((b) => !isBeatExcluded(b))
+          .flatMap((b) => (Array.isArray(b.beatDirection?.keyProps) ? b.beatDirection.keyProps : []))
+          .map((p) => (typeof p === 'string' ? p.trim() : ''))
+          .filter(Boolean)
 
   const filteredProps = primaryLoc
     ? rawPropCandidates.filter((p) => !isLocationResidentInstrumentName(p))

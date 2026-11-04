@@ -152,7 +152,7 @@ export function referenceExpressAgentLabel(
   options?: { sceneScoped?: boolean; continuity?: boolean }
 ): string {
   if (options?.continuity) return 'Continuity Agent'
-  if (options?.sceneScoped && !kinds?.length) return 'Scene Ref Agent'
+  if (options?.sceneScoped && !kinds?.length) return 'Continuity Agent'
   if (!kinds?.length) return 'Library Agent'
   if (kinds.length === 1) {
     if (kinds[0] === 'cast') return 'Cast Agent'
