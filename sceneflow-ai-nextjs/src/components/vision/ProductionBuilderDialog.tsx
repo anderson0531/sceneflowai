@@ -690,10 +690,27 @@ export function ProductionBuilderDialog({
                 />
                 <div className="text-xs">
                   <div className="font-semibold text-white">
-                    Optimize Shot Direction & Auto-Rerun Failed Shots
+                    Optimize Shot Direction
                   </div>
                   <p className="text-[11px] text-slate-400 mt-0.5 leading-snug">
-                    Automatically rewrites thin or policy-flagged shot direction for cinematic framing and safety compliance before rerunning failed shots.
+                    Automatically rewrites thin or policy-flagged shot direction for cinematic framing and safety compliance.
+                  </p>
+                </div>
+              </label>
+
+              <label className="flex items-start gap-2.5 rounded-lg border border-slate-800 bg-slate-950/60 p-2.5 cursor-pointer hover:border-slate-700">
+                <Checkbox
+                  checked={autoRerunFailedShots}
+                  onCheckedChange={(v) => setAutoRerunFailedShots(v === true)}
+                  disabled={isRunning}
+                  className="mt-0.5"
+                />
+                <div className="text-xs">
+                  <div className="font-semibold text-white">
+                    Auto-Rerun Failed Shots
+                  </div>
+                  <p className="text-[11px] text-slate-400 mt-0.5 leading-snug">
+                    Automatically retries failed shot generations with backoff and updated direction when needed.
                   </p>
                 </div>
               </label>

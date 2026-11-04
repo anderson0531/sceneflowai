@@ -1,9 +1,10 @@
 'use client'
 
 import { useState, useEffect, useRef, useCallback } from 'react'
-import { X, Users, RefreshCw, Loader, Volume2, VolumeX, AlertTriangle, ChevronDown, ChevronUp, Target, TrendingDown, TrendingUp, Square, BarChart3, ListChecks, Film, Sparkles, CheckCircle2, Lightbulb, Play, Share2 } from 'lucide-react'
+import { X, Users, RefreshCw, Loader, Volume2, VolumeX, AlertTriangle, ChevronDown, ChevronUp, Target, TrendingDown, TrendingUp, Square, BarChart3, ListChecks, Film, Sparkles, CheckCircle2, Lightbulb, Play, Share2, Bot, Clapperboard } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Badge } from '@/components/ui/badge'
+import { Checkbox } from '@/components/ui/checkbox'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Textarea } from '@/components/ui/textarea'
@@ -20,7 +21,23 @@ import {
   resolveAssistant,
   resolveAssistantGeminiVoiceId,
 } from '@/lib/tts/productionAssistants'
-import { collectTopImpactIssues, firstHighImpactSceneIndex, sceneHasHighImpactIssue } from '@/lib/script/audienceResonance/highImpact'
+import {
+  collectTopImpactIssues,
+  firstHighImpactSceneIndex,
+  recommendationId,
+  sceneHasHighImpactIssue,
+} from '@/lib/script/audienceResonance/highImpact'
+import {
+  buildSceneRecSelectionKey,
+  collectInitialSelectedRecKeys,
+  groupSelectedRecommendationsByScene,
+  isRecommendationApplied,
+  resolveSceneAnalysisIndex,
+  runPreVisScenePreparation,
+  type BatchSceneRevisionItem,
+  type PreVisPrepProgress,
+  type PreVisPrepResult,
+} from '@/lib/vision/prepareScenesForPreVis'
 import { useStore } from '@/store/useStore'
 import { AnimatedScore, AnimatedProgressBar } from '@/components/ui/AnimatedScore'
 import { toast } from 'sonner'
@@ -325,6 +342,12 @@ interface ScriptReviewModalProps {
   scriptUpdatedAt?: string | null
   /** Jump to a 0-based scene in Production Studio and close this dialog. */
   onJumpToScene?: (sceneIndex: number) => void
+  /** Batch-apply revised scenes from the Pre-Vis Preparation Agent */
+  onBatchApplySceneRevisions?: (
+    revisions: BatchSceneRevisionItem[]
+  ) => Promise<{ sceneCount: number } | void>
+  /** Reload project state after server-side Scene Direction & Shot Direction complete */
+  onRefreshProject?: () => Promise<void>
 }
 
 type ReviewTab = 'overview' | 'analysis' | 'recommendations'
@@ -551,6 +574,8 @@ export default function ScriptReviewModal({
   onSceneAnalysisComplete,
   audienceDefinition: projectAudienceDefinition,
   onJumpToScene,
+  onBatchApplySceneRevisions,
+  onRefreshProject,
 }: ScriptReviewModalProps) {
   const [voices, setVoices] = useState<Voice[]>([])
   const [activeTab, setActiveTab] = useState<ReviewTab>('overview')
@@ -967,6 +992,187 @@ export default function ScriptReviewModal({
     })
   }
 
+  // Cast to AudienceResonanceReview for new features
+  const review = audienceReview as AudienceResonanceReview | null
+  // Use localSceneAnalysis if available (from dedicated API), otherwise fall back to review data
+  const sceneAnalysis = localSceneAnalysis || review?.sceneAnalysis || []
+  const scriptScenes = Array.isArray(script?.scenes) ? script.scenes : []
+
+  // Scene Breakdown Recommendation Selection & Pre-Vis Preparation Agent State
+  const [selectedRecKeys, setSelectedRecKeys] = useState<Set<string>>(() => new Set())
+  const [localAppliedRecKeys, setLocalAppliedRecKeys] = useState<Set<string>>(() => new Set())
+  const [isRunningPreVisPrep, setIsRunningPreVisPrep] = useState(false)
+  const [preVisPrepProgress, setPreVisPrepProgress] = useState<PreVisPrepProgress | null>(null)
+  const [preVisPrepResult, setPreVisPrepResult] = useState<PreVisPrepResult | null>(null)
+  const preVisAbortRef = useRef<AbortController | null>(null)
+  const lastSelectionInitSignatureRef = useRef<string | null>(null)
+
+  const sceneAnalysisSignature = sceneAnalysis
+    .map((s, idx) => `${s?.sceneNumber ?? idx + 1}:${Array.isArray(s?.recommendations) ? s.recommendations.length : 0}`)
+    .join('|')
+
+  useEffect(() => {
+    if (!isOpen || sceneAnalysis.length === 0) return
+    if (lastSelectionInitSignatureRef.current === sceneAnalysisSignature) return
+    lastSelectionInitSignatureRef.current = sceneAnalysisSignature
+    setSelectedRecKeys(
+      collectInitialSelectedRecKeys(sceneAnalysis, scriptScenes, {
+        localAppliedKeys: localAppliedRecKeys,
+      })
+    )
+  }, [isOpen, sceneAnalysis, sceneAnalysisSignature, scriptScenes, localAppliedRecKeys])
+
+  const handleToggleRecSelection = (sceneIndex: number, recId: string) => {
+    const key = buildSceneRecSelectionKey(sceneIndex, recId)
+    setSelectedRecKeys((prev) => {
+      const next = new Set(prev)
+      if (next.has(key)) {
+        next.delete(key)
+      } else {
+        next.add(key)
+      }
+      return next
+    })
+  }
+
+  const handleSelectAllRecommendations = (highImpactOnly = false) => {
+    setSelectedRecKeys(
+      collectInitialSelectedRecKeys(sceneAnalysis, scriptScenes, {
+        highImpactOnly,
+        localAppliedKeys: localAppliedRecKeys,
+      })
+    )
+  }
+
+  const handleClearAllRecommendations = () => {
+    setSelectedRecKeys(new Set())
+  }
+
+  const handleToggleSceneRecommendations = (sceneIndex: number, unappliedRecIds: string[]) => {
+    if (unappliedRecIds.length === 0) return
+    setSelectedRecKeys((prev) => {
+      const next = new Set(prev)
+      const keys = unappliedRecIds.map((id) => buildSceneRecSelectionKey(sceneIndex, id))
+      const allSelected = keys.every((k) => next.has(k))
+      if (allSelected) {
+        keys.forEach((k) => next.delete(k))
+      } else {
+        keys.forEach((k) => next.add(k))
+      }
+      return next
+    })
+  }
+
+  const handleCancelPreVisPrep = () => {
+    preVisAbortRef.current?.abort()
+  }
+
+  const handleRunPreVisPrepAgent = async () => {
+    if (!projectId) {
+      toast.error('Save the project before running the Pre-Vis Preparation Agent')
+      return
+    }
+    if (isRunningPreVisPrep) return
+
+    const controller = new AbortController()
+    preVisAbortRef.current = controller
+    setIsRunningPreVisPrep(true)
+    setPreVisPrepResult(null)
+
+    const initialGroups = groupSelectedRecommendationsByScene(
+      sceneAnalysis,
+      selectedRecKeys,
+      scriptScenes,
+      localAppliedRecKeys
+    )
+    const toastId = toast.loading(
+      initialGroups.length > 0
+        ? `Applying ${selectedRecKeys.size} recommendation${selectedRecKeys.size === 1 ? '' : 's'} across ${initialGroups.length} scene${initialGroups.length === 1 ? '' : 's'} & running Shot Direction Agent…`
+        : 'Running Shot Direction Agent across all scenes…'
+    )
+
+    try {
+      const result = await runPreVisScenePreparation({
+        projectId,
+        sceneAnalysis,
+        selectedKeys: selectedRecKeys,
+        scriptScenes,
+        characters: characters || [],
+        localAppliedKeys: localAppliedRecKeys,
+        signal: controller.signal,
+        onProgress: (progress) => {
+          setPreVisPrepProgress(progress)
+          toast.loading(progress.label, { id: toastId })
+        },
+        onPersistRevisedScenes: async (revisions) => {
+          // Optimistically record applied keys locally so UI reflects applied status immediately
+          setLocalAppliedRecKeys((prev) => {
+            const next = new Set(prev)
+            for (const rev of revisions) {
+              for (const recId of rev.appliedRecommendationIds) {
+                next.add(buildSceneRecSelectionKey(rev.sceneIndex, recId))
+              }
+            }
+            return next
+          })
+          setSelectedRecKeys((prev) => {
+            const next = new Set(prev)
+            for (const rev of revisions) {
+              for (const recId of rev.appliedRecommendationIds) {
+                next.delete(buildSceneRecSelectionKey(rev.sceneIndex, recId))
+              }
+            }
+            return next
+          })
+          if (onBatchApplySceneRevisions) {
+            return await onBatchApplySceneRevisions(revisions)
+          }
+        },
+        onRefreshProject,
+      })
+
+      setPreVisPrepResult(result)
+
+      const hasFailures =
+        result.failedRevisions.length > 0 || result.failedDirections.length > 0
+      const summaryParts: string[] = []
+      if (result.revisedSceneCount > 0) {
+        summaryParts.push(
+          `applied ${result.appliedRecommendationCount} recommendation${result.appliedRecommendationCount === 1 ? '' : 's'} across ${result.revisedSceneCount} scene${result.revisedSceneCount === 1 ? '' : 's'}`
+        )
+      }
+      summaryParts.push(
+        `directed shots for ${result.directedSceneCount} scene${result.directedSceneCount === 1 ? '' : 's'} — ready for Pre-Vis`
+      )
+      const summaryText =
+        summaryParts.join(' and ').replace(/^./, (c) => c.toUpperCase())
+
+      if (hasFailures) {
+        toast.warning(`${summaryText} (with ${result.failedRevisions.length + result.failedDirections.length} warning(s))`, {
+          id: toastId,
+        })
+      } else {
+        toast.success(summaryText, { id: toastId })
+      }
+    } catch (err) {
+      if (
+        controller.signal.aborted ||
+        (err instanceof DOMException && err.name === 'AbortError')
+      ) {
+        toast.info('Pre-Vis preparation cancelled', { id: toastId })
+      } else {
+        toast.error(
+          err instanceof Error ? err.message : 'Failed to complete Pre-Vis preparation',
+          { id: toastId }
+        )
+      }
+    } finally {
+      setIsRunningPreVisPrep(false)
+      setPreVisPrepProgress(null)
+      preVisAbortRef.current = null
+    }
+  }
+
   if (!isOpen) return null
 
   const getScoreColor = (score: number): string => {
@@ -993,8 +1199,6 @@ export default function ScriptReviewModal({
     return 'Concept Stage — Major Revisions Needed'
   }
 
-  // Cast to AudienceResonanceReview for new features
-  const review = audienceReview as AudienceResonanceReview | null
   // Background analysis can finish after further edits, in which case scene
   // numbers may no longer line up with what was scored.
   const reviewIsStale = isStoredReviewStale(
@@ -1002,8 +1206,6 @@ export default function ScriptReviewModal({
     scriptUpdatedAt
   )
   const deductions = review?.deductions || []
-  // Use localSceneAnalysis if available (from dedicated API), otherwise fall back to review data
-  const sceneAnalysis = localSceneAnalysis || review?.sceneAnalysis || []
   const jumpToScenes = () => {
     const highImpactIndex = firstHighImpactSceneIndex(sceneAnalysis)
     if (highImpactIndex !== null) {
@@ -1617,8 +1819,200 @@ export default function ScriptReviewModal({
                 )}
 
                 {/* Recommendations Tab */}
-                {activeTab === 'recommendations' && (
+                {activeTab === 'recommendations' && (() => {
+                  const allUnappliedKeys = collectInitialSelectedRecKeys(
+                    sceneAnalysis,
+                    scriptScenes,
+                    { localAppliedKeys: localAppliedRecKeys }
+                  )
+                  const highImpactUnappliedKeys = collectInitialSelectedRecKeys(
+                    sceneAnalysis,
+                    scriptScenes,
+                    { highImpactOnly: true, localAppliedKeys: localAppliedRecKeys }
+                  )
+                  const selectedGroups = groupSelectedRecommendationsByScene(
+                    sceneAnalysis,
+                    selectedRecKeys,
+                    scriptScenes,
+                    localAppliedRecKeys
+                  )
+                  const selectedRecCount = selectedGroups.reduce(
+                    (sum, g) => sum + g.selectedRecommendations.length,
+                    0
+                  )
+                  const totalScenesCount = scriptScenes.length || sceneAnalysis.length
+
+                  return (
                   <div className="space-y-6">
+                    {sceneAnalysis.length > 0 && (
+                      <div className="rounded-xl border border-cyan-500/30 bg-gradient-to-r from-slate-900/95 via-indigo-950/80 to-cyan-950/80 p-4 text-white shadow-md">
+                        <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+                          <div className="space-y-1">
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <span className="inline-flex items-center gap-1.5 rounded-md bg-cyan-500/20 border border-cyan-400/30 px-2 py-0.5 text-xs font-semibold text-cyan-200">
+                                <Bot className="w-3.5 h-3.5 text-cyan-300" />
+                                Pre-Vis Preparation Agent
+                              </span>
+                              <Badge variant="outline" className="border-purple-400/40 bg-purple-500/15 text-purple-200 text-[10px]">
+                                Scene Revisions + Shot Direction Agent
+                              </Badge>
+                            </div>
+                            <p className="text-xs text-slate-300 leading-relaxed m-0">
+                              Select or unselect the scene recommendations below, then run the agent to apply your selected script revisions and execute the Shot Direction Agent across all {totalScenesCount} scene{totalScenesCount === 1 ? '' : 's'} — setting the stage for Pre-Vis generation (all audio and stills).
+                            </p>
+                          </div>
+
+                          <div className="flex flex-wrap items-center gap-2 shrink-0">
+                            <Button
+                              size="sm"
+                              onClick={handleRunPreVisPrepAgent}
+                              disabled={isRunningPreVisPrep || !projectId || totalScenesCount === 0}
+                              className="bg-gradient-to-r from-cyan-500 to-indigo-600 hover:from-cyan-400 hover:to-indigo-500 text-white border-0 shadow-sm h-9 px-3.5 text-xs font-semibold"
+                            >
+                              {isRunningPreVisPrep ? (
+                                <>
+                                  <Loader className="w-3.5 h-3.5 mr-1.5 animate-spin" />
+                                  Running Pre-Vis Prep…
+                                </>
+                              ) : selectedRecCount > 0 ? (
+                                <>
+                                  <Sparkles className="w-3.5 h-3.5 mr-1.5" />
+                                  Apply Selected ({selectedRecCount} in {selectedGroups.length} Scene{selectedGroups.length === 1 ? '' : 's'}) &amp; Run Shot Direction Agent
+                                </>
+                              ) : (
+                                <>
+                                  <Clapperboard className="w-3.5 h-3.5 mr-1.5" />
+                                  Run Shot Direction Agent (All {totalScenesCount} Scenes)
+                                </>
+                              )}
+                            </Button>
+                          </div>
+                        </div>
+
+                        {/* Bulk selection bar */}
+                        <div className="mt-3 pt-2.5 border-t border-white/10 flex flex-wrap items-center justify-between gap-2 text-xs">
+                          <div className="flex items-center gap-2 text-slate-300">
+                            <span className="font-medium text-white">
+                              {selectedRecCount} of {allUnappliedKeys.size}
+                            </span>
+                            <span>unapplied recommendation{allUnappliedKeys.size === 1 ? '' : 's'} selected</span>
+                            {selectedGroups.length > 0 && (
+                              <span className="text-cyan-300">
+                                ({selectedGroups.length} scene{selectedGroups.length === 1 ? '' : 's'} to revise, {totalScenesCount} scene{totalScenesCount === 1 ? '' : 's'} for Shot Direction)
+                              </span>
+                            )}
+                          </div>
+                          <div className="flex items-center gap-1.5">
+                            <button
+                              type="button"
+                              disabled={isRunningPreVisPrep || allUnappliedKeys.size === 0}
+                              onClick={() => handleSelectAllRecommendations(false)}
+                              className="rounded px-2 py-1 text-[11px] font-medium bg-white/10 hover:bg-white/20 text-slate-100 disabled:opacity-40 transition-colors"
+                            >
+                              Select All ({allUnappliedKeys.size})
+                            </button>
+                            {highImpactUnappliedKeys.size > 0 && (
+                              <button
+                                type="button"
+                                disabled={isRunningPreVisPrep}
+                                onClick={() => handleSelectAllRecommendations(true)}
+                                className="rounded px-2 py-1 text-[11px] font-medium bg-rose-500/20 hover:bg-rose-500/30 border border-rose-400/30 text-rose-200 disabled:opacity-40 transition-colors"
+                              >
+                                High-Impact Only ({highImpactUnappliedKeys.size})
+                              </button>
+                            )}
+                            <button
+                              type="button"
+                              disabled={isRunningPreVisPrep || selectedRecCount === 0}
+                              onClick={handleClearAllRecommendations}
+                              className="rounded px-2 py-1 text-[11px] font-medium bg-white/5 hover:bg-white/15 text-slate-300 disabled:opacity-40 transition-colors"
+                            >
+                              Clear Selection
+                            </button>
+                          </div>
+                        </div>
+
+                        {/* Live progress bar */}
+                        {isRunningPreVisPrep && preVisPrepProgress && (
+                          <div className="mt-3 rounded-lg border border-cyan-400/30 bg-slate-950/70 p-3 space-y-2">
+                            <div className="flex items-center justify-between gap-2 text-xs">
+                              <div className="flex items-center gap-2 min-w-0">
+                                <Loader className="w-3.5 h-3.5 text-cyan-400 animate-spin shrink-0" />
+                                <span className="font-medium text-cyan-100 truncate">
+                                  {preVisPrepProgress.label}
+                                </span>
+                              </div>
+                              <div className="flex items-center gap-2 shrink-0">
+                                <span className="text-[11px] tabular-nums text-slate-400">
+                                  {preVisPrepProgress.done}/{preVisPrepProgress.total}
+                                </span>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={handleCancelPreVisPrep}
+                                  className="h-6 px-2 text-[11px] border-slate-700 bg-slate-900 text-slate-200 hover:bg-slate-800"
+                                >
+                                  Cancel
+                                </Button>
+                              </div>
+                            </div>
+                            <div className="h-1.5 w-full rounded-full bg-slate-800 overflow-hidden">
+                              <div
+                                className="h-full bg-gradient-to-r from-cyan-400 to-indigo-500 transition-all duration-300"
+                                style={{
+                                  width: `${
+                                    preVisPrepProgress.total > 0
+                                      ? Math.min(
+                                          100,
+                                          Math.round(
+                                            (preVisPrepProgress.done / preVisPrepProgress.total) * 100
+                                          )
+                                        )
+                                      : 15
+                                  }%`,
+                                }}
+                              />
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Completion handoff banner to Production Agent (Pre-Vis) */}
+                        {!isRunningPreVisPrep && preVisPrepResult && (
+                          <div className="mt-3 rounded-lg border border-emerald-400/40 bg-emerald-950/40 p-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2.5">
+                            <div className="flex items-start gap-2 text-xs text-emerald-100">
+                              <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
+                              <div>
+                                <div className="font-semibold text-white">
+                                  Stage Set for Pre-Vis Generation
+                                </div>
+                                <p className="text-[11px] text-emerald-200/90 m-0 mt-0.5">
+                                  {preVisPrepResult.revisedSceneCount > 0
+                                    ? `Applied ${preVisPrepResult.appliedRecommendationCount} recommendation${preVisPrepResult.appliedRecommendationCount === 1 ? '' : 's'} across ${preVisPrepResult.revisedSceneCount} scene${preVisPrepResult.revisedSceneCount === 1 ? '' : 's'} and directed shots across ${preVisPrepResult.directedSceneCount} scene${preVisPrepResult.directedSceneCount === 1 ? '' : 's'}.`
+                                    : `Completed Shot Direction Agent across ${preVisPrepResult.directedSceneCount} scene${preVisPrepResult.directedSceneCount === 1 ? '' : 's'}.`}
+                                </p>
+                              </div>
+                            </div>
+                            <Button
+                              size="sm"
+                              onClick={() => {
+                                stopPlayback()
+                                onClose()
+                                if (typeof window !== 'undefined') {
+                                  window.dispatchEvent(
+                                    new CustomEvent('sceneflow:open-production-builder')
+                                  )
+                                }
+                              }}
+                              className="bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-semibold h-8 px-3 text-xs shrink-0"
+                            >
+                              <Bot className="w-3.5 h-3.5 mr-1.5" />
+                              Launch Production Agent (Pre-Vis)
+                            </Button>
+                          </div>
+                        )}
+                      </div>
+                    )}
+
                     <Card>
                       <CardHeader className="flex flex-row items-center justify-between">
                         <CardTitle className="text-lg flex items-center gap-2">
@@ -1633,7 +2027,35 @@ export default function ScriptReviewModal({
                           </div>
                         ) : (
                           <div className="space-y-4">
-                            {sceneAnalysis.map((scene, index) => (
+                            {sceneAnalysis.map((scene, index) => {
+                              const resolvedSceneIdx = resolveSceneAnalysisIndex(scene, index)
+                              const sceneRecs = Array.isArray(scene.recommendations)
+                                ? scene.recommendations
+                                : []
+                              const unappliedRecIdsInScene = sceneRecs
+                                .map((rec, rIdx) => ({
+                                  rec,
+                                  rIdx,
+                                  recId: recommendationId(rec, rIdx),
+                                }))
+                                .filter(
+                                  ({ recId }) =>
+                                    !isRecommendationApplied(
+                                      resolvedSceneIdx,
+                                      recId,
+                                      scriptScenes,
+                                      localAppliedRecKeys
+                                    )
+                                )
+                                .map(({ recId }) => recId)
+                              const selectedInSceneCount = unappliedRecIdsInScene.filter((recId) =>
+                                selectedRecKeys.has(buildSceneRecSelectionKey(resolvedSceneIdx, recId))
+                              ).length
+                              const allInSceneSelected =
+                                unappliedRecIdsInScene.length > 0 &&
+                                selectedInSceneCount === unappliedRecIdsInScene.length
+
+                              return (
                               <div
                                 key={index}
                                 className={cn(
@@ -1710,34 +2132,101 @@ export default function ScriptReviewModal({
                                 {/* Specific Recommendations */}
                                 {scene.recommendations && scene.recommendations.length > 0 && (
                                   <div className="bg-white dark:bg-gray-900 rounded-md p-3 border border-purple-100 dark:border-purple-900/30">
-                                    <div className="text-[10px] font-semibold text-purple-700 dark:text-purple-400 mb-2 uppercase tracking-wider">
-                                      Recommendations
+                                    <div className="flex items-center justify-between gap-2 mb-2">
+                                      <div className="text-[10px] font-semibold text-purple-700 dark:text-purple-400 uppercase tracking-wider">
+                                        Recommendations ({selectedInSceneCount}/{unappliedRecIdsInScene.length} selected)
+                                      </div>
+                                      {unappliedRecIdsInScene.length > 0 && (
+                                        <button
+                                          type="button"
+                                          disabled={isRunningPreVisPrep}
+                                          onClick={() =>
+                                            handleToggleSceneRecommendations(
+                                              resolvedSceneIdx,
+                                              unappliedRecIdsInScene
+                                            )
+                                          }
+                                          className="text-[11px] font-medium text-purple-600 dark:text-purple-400 hover:underline disabled:opacity-40"
+                                        >
+                                          {allInSceneSelected ? 'Unselect scene' : 'Select scene'}
+                                        </button>
+                                      )}
                                     </div>
                                     <ul className="space-y-1.5 mb-0">
                                       {scene.recommendations.map((rec, rIdx) => {
                                         const recText = typeof rec === 'string' ? rec : rec?.text || String(rec)
                                         const recPriority = typeof rec === 'object' && rec?.priority ? rec.priority : null
                                         const recPointsDeducted = typeof rec === 'object' && rec?.pointsDeducted ? rec.pointsDeducted : null
+                                        const recId = recommendationId(rec, rIdx)
+                                        const applied = isRecommendationApplied(
+                                          resolvedSceneIdx,
+                                          recId,
+                                          scriptScenes,
+                                          localAppliedRecKeys
+                                        )
+                                        const selectionKey = buildSceneRecSelectionKey(resolvedSceneIdx, recId)
+                                        const isSelected = !applied && selectedRecKeys.has(selectionKey)
+
                                         return (
-                                          <li key={rIdx} className="text-sm text-gray-700 dark:text-gray-300 flex items-start gap-2 mb-0">
-                                            <span className="text-purple-500 mt-0.5">•</span>
-                                            <span className="flex-1">
-                                              {recText}
-                                              {recPriority && (
-                                                <Badge variant="outline" className={`ml-2 text-[10px] px-1 py-0 h-4 border-none uppercase tracking-wider ${
-                                                  recPriority === 'high' ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400' :
-                                                  recPriority === 'medium' ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400' :
-                                                  'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'
-                                                }`}>
-                                                  {recPriority}
-                                                </Badge>
+                                          <li
+                                            key={rIdx}
+                                            className={cn(
+                                              'text-sm rounded-md px-2 py-1.5 transition-colors mb-0',
+                                              applied
+                                                ? 'bg-emerald-50/70 dark:bg-emerald-950/20 text-gray-500 dark:text-gray-400'
+                                                : isSelected
+                                                  ? 'bg-purple-50/70 dark:bg-purple-950/25 text-gray-800 dark:text-gray-200'
+                                                  : 'text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800/40'
+                                            )}
+                                          >
+                                            <label
+                                              className={cn(
+                                                'flex items-start gap-2.5',
+                                                applied || isRunningPreVisPrep
+                                                  ? 'cursor-default'
+                                                  : 'cursor-pointer'
                                               )}
-                                              {recPointsDeducted && (
-                                                <Badge variant="destructive" className="ml-2 text-[10px] px-1 py-0 h-4 border-none uppercase tracking-wider bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400">
-                                                  -{recPointsDeducted} pts
-                                                </Badge>
+                                            >
+                                              {applied ? (
+                                                <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0 mt-0.5" />
+                                              ) : (
+                                                <Checkbox
+                                                  checked={isSelected}
+                                                  onCheckedChange={() =>
+                                                    handleToggleRecSelection(resolvedSceneIdx, recId)
+                                                  }
+                                                  disabled={isRunningPreVisPrep}
+                                                  className="mt-0.5"
+                                                />
                                               )}
-                                            </span>
+                                              <span className="flex-1 leading-snug">
+                                                <span className={cn(applied && 'line-through opacity-80')}>
+                                                  {recText}
+                                                </span>
+                                                {applied && (
+                                                  <Badge
+                                                    variant="outline"
+                                                    className="ml-2 text-[10px] px-1.5 py-0 h-4 border-emerald-500/40 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 uppercase tracking-wider"
+                                                  >
+                                                    Applied
+                                                  </Badge>
+                                                )}
+                                                {recPriority && (
+                                                  <Badge variant="outline" className={`ml-2 text-[10px] px-1 py-0 h-4 border-none uppercase tracking-wider ${
+                                                    recPriority === 'high' ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400' :
+                                                    recPriority === 'medium' ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400' :
+                                                    'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'
+                                                  }`}>
+                                                    {recPriority}
+                                                  </Badge>
+                                                )}
+                                                {recPointsDeducted && (
+                                                  <Badge variant="destructive" className="ml-2 text-[10px] px-1 py-0 h-4 border-none uppercase tracking-wider bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400">
+                                                    -{recPointsDeducted} pts
+                                                  </Badge>
+                                                )}
+                                              </span>
+                                            </label>
                                           </li>
                                         )
                                       })}
@@ -1745,13 +2234,15 @@ export default function ScriptReviewModal({
                                   </div>
                                 )}
                               </div>
-                            ))}
+                              )
+                            })}
                           </div>
                         )}
                       </CardContent>
                     </Card>
                   </div>
-                )}
+                  )
+                })()}
 
               </div>
             </Tabs>

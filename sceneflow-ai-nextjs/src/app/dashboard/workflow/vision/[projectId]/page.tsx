@@ -16150,6 +16150,148 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     }
   }
 
+  const handleBatchApplySceneRevisions = async (
+    revisions: Array<{
+      sceneIndex: number
+      revisedScene: any
+      continuationScenes?: any[]
+      appliedRecommendationIds: string[]
+    }>
+  ): Promise<{ sceneCount: number } | void> => {
+    const activeScript = scriptRef.current || script
+    if (!activeScript || !Array.isArray(revisions) || revisions.length === 0) return
+
+    const updatedScenes = [...(activeScript.script?.scenes || [])]
+    const allDeletedUrls: string[] = []
+
+    // Process in descending sceneIndex order so any continuation scene insertions do not shift earlier indices
+    const sortedRevisions = [...revisions].sort((a, b) => b.sceneIndex - a.sceneIndex)
+
+    for (const rev of sortedRevisions) {
+      const { sceneIndex, revisedScene, appliedRecommendationIds: recIds = [] } = rev
+      const originalScene = updatedScenes[sceneIndex]
+      if (!originalScene || !revisedScene) continue
+
+      const editResult = applySceneEditAudioPolicy(originalScene, revisedScene, [])
+      allDeletedUrls.push(...editResult.deletedUrls)
+
+      let cleanedScene = applyScenePreservation(originalScene, editResult.cleanedScene, [])
+
+      if (originalScene?.audienceAnalysis) {
+        const appliedRecommendationIds = mergeAppliedRecommendationIds(
+          originalScene.audienceAnalysis.appliedRecommendationIds,
+          recIds
+        )
+        const recommendations = Array.isArray(originalScene.audienceAnalysis.recommendations)
+          ? originalScene.audienceAnalysis.recommendations.filter(
+              (rec: unknown, index: number) =>
+                !appliedRecommendationIds.includes(recommendationId(rec, index))
+            )
+          : originalScene.audienceAnalysis.recommendations
+        cleanedScene.audienceAnalysis = {
+          ...originalScene.audienceAnalysis,
+          recommendations,
+          appliedRecommendationIds,
+          optimizedAt: new Date().toISOString(),
+        }
+      }
+
+      if (originalScene?.polishAnalysis) {
+        const appliedRecommendationIds = mergeAppliedRecommendationIds(
+          originalScene.polishAnalysis.appliedRecommendationIds,
+          recIds
+        )
+        const recommendations = Array.isArray(originalScene.polishAnalysis.recommendations)
+          ? originalScene.polishAnalysis.recommendations.filter(
+              (rec: { id?: string }, index: number) =>
+                !appliedRecommendationIds.includes(rec?.id || recommendationId(rec, index))
+            )
+          : originalScene.polishAnalysis.recommendations
+        cleanedScene.polishAnalysis = {
+          ...originalScene.polishAnalysis,
+          recommendations,
+          appliedRecommendationIds,
+          optimizedAt: new Date().toISOString(),
+        }
+      }
+
+      cleanedScene.segments = undefined
+      // Clear stale sceneDirection so Phase 2 regenerates fresh scene & shot direction for the revised script
+      delete cleanedScene.sceneDirection
+      if (getSceneBeats(cleanedScene).length > 0) {
+        cleanedScene = invalidateChangedBeatFramesOnScene(cleanedScene, originalScene)
+      }
+      delete cleanedScene[REVISION_DEPTH_SCENE_KEY]
+
+      const continuationScenes = (rev.continuationScenes ?? []).map((scene) => {
+        let part = { ...scene }
+        delete part[REVISION_DEPTH_SCENE_KEY]
+        delete part.segments
+        delete part.sceneDirection
+        if (getSceneBeats(part).length > 0) {
+          part = invalidateChangedBeatFramesOnScene(part, originalScene)
+        }
+        return part
+      })
+
+      if (continuationScenes.length > 0) {
+        const renumberedScenes = replaceSceneWithSplit(
+          updatedScenes,
+          sceneIndex,
+          cleanedScene,
+          continuationScenes
+        )
+        updatedScenes.splice(0, updatedScenes.length, ...renumberedScenes)
+      } else {
+        updatedScenes[sceneIndex] = cleanedScene
+      }
+    }
+
+    const saveResult = await saveScenesToDatabase(updatedScenes)
+    const persistedScenes =
+      saveResult?.metadata?.visionPhase?.script?.script?.scenes ??
+      saveResult?.metadata?.visionPhase?.scenes ??
+      updatedScenes
+
+    if (allDeletedUrls.length > 0) {
+      fetch('/api/blobs/delete', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ urls: allDeletedUrls }),
+      }).catch(() => {})
+    }
+
+    const updatedScript = sanitizeScriptDialogueLines({
+      ...activeScript,
+      script: {
+        ...activeScript.script,
+        scenes: persistedScenes,
+      },
+    })
+    scriptRef.current = updatedScript
+    setScript(updatedScript)
+
+    setProject((prev: any) => {
+      if (!prev) return prev
+      const updated = {
+        ...prev,
+        metadata: saveResult?.metadata ?? {
+          ...prev.metadata,
+          visionPhase: {
+            ...prev.metadata?.visionPhase,
+            script: updatedScript,
+            scenes: persistedScenes,
+          },
+        },
+      }
+      projectRef.current = updated
+      return updated
+    })
+
+    setScriptEditedAt(Date.now())
+    return { sceneCount: persistedScenes.length }
+  }
+
   // Generate music for a scene (used by handleUpdateSceneAudio)
   const generateMusicForScene = async (sceneIndex: number, scene: any) => {
     const music = scene.music
@@ -19756,6 +19898,10 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         scoreOutdated={reviewsOutdated}
         reviewHistory={project?.metadata?.visionPhase?.reviewHistory || []}
         onSceneAnalysisComplete={handleSceneAnalysisComplete}
+        onBatchApplySceneRevisions={handleBatchApplySceneRevisions}
+        onRefreshProject={async () => {
+          await loadProject(true, { quiet: true })
+        }}
       />
 
       {/* Background script analysis: handoff explanation + non-blocking status */}
