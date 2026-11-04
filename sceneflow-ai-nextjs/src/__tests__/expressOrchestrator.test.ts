@@ -123,6 +123,7 @@ function collectPhaseStarts(emit: (e: ExpressEvent) => void) {
 
 describe('runExpress', () => {
   const originalSceneConcurrency = process.env.EXPRESS_SCENE_CONCURRENCY
+  const originalPostShotDelay = process.env.SCENE_EXPRESS_POST_SHOT_DELAY_MS
 
   beforeEach(() => {
     directionCalls = 0
@@ -134,6 +135,7 @@ describe('runExpress', () => {
     process.env.EXPRESS_SCENE_CONCURRENCY = '2'
     process.env.EXPRESS_IMAGE_CONCURRENCY = '3'
     process.env.VERTEX_GEMINI_FLASH_IMAGE_CONCURRENCY = '2'
+    process.env.SCENE_EXPRESS_POST_SHOT_DELAY_MS = '0'
   })
 
   afterEach(() => {
@@ -141,6 +143,11 @@ describe('runExpress', () => {
       delete process.env.EXPRESS_SCENE_CONCURRENCY
     } else {
       process.env.EXPRESS_SCENE_CONCURRENCY = originalSceneConcurrency
+    }
+    if (originalPostShotDelay === undefined) {
+      delete process.env.SCENE_EXPRESS_POST_SHOT_DELAY_MS
+    } else {
+      process.env.SCENE_EXPRESS_POST_SHOT_DELAY_MS = originalPostShotDelay
     }
     vi.mocked(generateSceneImage).mockImplementation(async (params: Record<string, unknown>) => {
       imageCalls++
@@ -575,5 +582,77 @@ describe('runExpress', () => {
     expect(result.successScenes).toBe(0)
     expect(result.failedScenes).toBe(1)
     expect(capturedImageCalls.every((call) => call.skipLikenessValidation === true)).toBe(true)
+  })
+
+  it('aborts queued beat image generation immediately when signal is aborted', async () => {
+    const abortController = new AbortController()
+
+    vi.mocked(generateSceneImage).mockImplementation(async (params: Record<string, unknown>) => {
+      imageCalls++
+      capturedImageCalls.push(params)
+      // Abort as soon as the first beat enters generateSceneImage
+      abortController.abort()
+      const err = new Error('Cancelled')
+      err.name = 'AbortError'
+      throw err
+    })
+
+    const project = buildProject(2)
+    const events: ExpressEvent[] = []
+    const result = await runExpress({
+      project,
+      options: {
+        projectId: 'p1',
+        mode: 'scene',
+        sceneIndices: [0, 1],
+        framesOnly: true,
+        regenerate: true,
+      },
+      baseUrl: 'http://localhost',
+      emit: (e) => events.push(e),
+      signal: abortController.signal,
+    })
+
+    // With 2 scenes x 3 beats = 6 total beats, aborting on the first beat must prevent
+    // the remaining queued beats from dispatching to Vertex.
+    expect(imageCalls).toBeLessThanOrEqual(2)
+    expect(result.successScenes).toBe(0)
+    expect(result.failedScenes).toBe(2)
+  })
+
+  it('applies post-shot delay before starting a new shot run after a shot completes', async () => {
+    process.env.SCENE_EXPRESS_POST_SHOT_DELAY_MS = '120'
+    const finishedAt: number[] = []
+    const startedAt: number[] = []
+
+    vi.mocked(generateSceneImage).mockImplementation(async (params: Record<string, unknown>) => {
+      startedAt.push(Date.now())
+      imageCalls++
+      capturedImageCalls.push(params)
+      await new Promise((r) => setTimeout(r, 15))
+      finishedAt.push(Date.now())
+      return { imageUrl: `https://example.com/beat-${params.beatIndex ?? 0}.png` }
+    })
+
+    const project = buildProject(1)
+    const result = await runExpress({
+      project,
+      options: {
+        projectId: 'p1',
+        mode: 'scene',
+        sceneIndices: [0],
+        framesOnly: true,
+        regenerate: true,
+      },
+      baseUrl: 'http://localhost',
+      emit: () => {},
+    })
+
+    expect(result.successScenes).toBe(1)
+    expect(startedAt).toHaveLength(3)
+    expect(finishedAt).toHaveLength(3)
+    // First 2 beats start in the initial wave (concurrency 2); 3rd beat waits for
+    // the post-shot delay after the first completion.
+    expect(startedAt[2]! - finishedAt[0]!).toBeGreaterThanOrEqual(100)
   })
 })

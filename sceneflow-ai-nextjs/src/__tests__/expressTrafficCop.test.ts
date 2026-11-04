@@ -313,4 +313,67 @@ describe('ExpressTrafficCop', () => {
     expect(enteredAt).toHaveLength(4)
     expect(enteredAt[3] - enteredAt[0]).toBeGreaterThanOrEqual(60_000)
   })
+
+  it('rejects queued lane waiters immediately when AbortSignal aborts', async () => {
+    const cop = new ExpressTrafficCop({
+      laneMax: { image: 1 },
+      minSpacingMs: { image: 0 },
+    })
+
+    let releaseFirst!: () => void
+    const first = cop.runInLane('image', () =>
+      new Promise<string>((resolve) => {
+        releaseFirst = () => resolve('first')
+      })
+    )
+
+    const abortController = new AbortController()
+    let secondRan = false
+    const second = cop.runInLane(
+      'image',
+      async () => {
+        secondRan = true
+        return 'second'
+      },
+      abortController.signal
+    )
+
+    await vi.advanceTimersByTimeAsync(0)
+    expect(cop.getSnapshot().image).toMatchObject({ inFlight: 1, waiting: 1 })
+
+    abortController.abort()
+    await expect(second).rejects.toMatchObject({ name: 'AbortError' })
+    expect(secondRan).toBe(false)
+    expect(cop.getSnapshot().image).toMatchObject({ inFlight: 1, waiting: 0 })
+
+    releaseFirst()
+    await expect(first).resolves.toBe('first')
+    expect(cop.getSnapshot().image).toMatchObject({ inFlight: 0, waiting: 0 })
+  })
+
+  it('aborts cooldown sleep immediately when AbortSignal fires', async () => {
+    const cop = new ExpressTrafficCop({
+      laneMax: { image: 2 },
+      cooldownMs: 30_000,
+      minSpacingMs: { image: 0 },
+    })
+
+    cop.reportRateLimit('image')
+    const abortController = new AbortController()
+    let taskRan = false
+    const pending = cop.runInLane(
+      'image',
+      async () => {
+        taskRan = true
+        return 'ok'
+      },
+      abortController.signal
+    )
+
+    await vi.advanceTimersByTimeAsync(100)
+    abortController.abort()
+
+    await expect(pending).rejects.toMatchObject({ name: 'AbortError' })
+    expect(taskRan).toBe(false)
+  })
 })

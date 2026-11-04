@@ -3,10 +3,12 @@ import {
   DEFAULT_SCENE_EXPRESS_BEAT_429_COOLDOWN_MS,
   DEFAULT_SCENE_EXPRESS_BEAT_BACKOFF_MS,
   DEFAULT_SCENE_EXPRESS_BEAT_MAX_BACKOFF_MS,
+  DEFAULT_SCENE_EXPRESS_POST_SHOT_DELAY_MS,
   FRAME_AGENT_STILL_CONCURRENCY,
   getSceneExpressBeat429CooldownMs,
   getSceneExpressBeatConcurrency,
   getSceneExpressBeatMaxAttempts,
+  getSceneExpressPostShotDelayMs,
   runAdaptiveBeatPool,
 } from '@/lib/sceneGeneration/adaptiveBeatScheduler'
 import {
@@ -71,6 +73,12 @@ describe('getSceneExpressBeatConcurrency', () => {
     delete process.env.SCENE_EXPRESS_BEAT_429_COOLDOWN_MS
     expect(getSceneExpressBeat429CooldownMs()).toBe(DEFAULT_SCENE_EXPRESS_BEAT_429_COOLDOWN_MS)
     expect(DEFAULT_SCENE_EXPRESS_BEAT_429_COOLDOWN_MS).toBe(15_000)
+  })
+
+  it('defaults post-shot completion delay to 3s', () => {
+    delete process.env.SCENE_EXPRESS_POST_SHOT_DELAY_MS
+    expect(getSceneExpressPostShotDelayMs()).toBe(DEFAULT_SCENE_EXPRESS_POST_SHOT_DELAY_MS)
+    expect(DEFAULT_SCENE_EXPRESS_POST_SHOT_DELAY_MS).toBe(3_000)
   })
 })
 
@@ -589,6 +597,64 @@ describe('runAdaptiveBeatPool', () => {
     expect(attempts).toBe(1)
     expect(result.failed.has(0)).toBe(true)
     expect(result.succeeded.has(0)).toBe(false)
+  })
+
+  it('waits postShotDelayMs after a shot completes before starting the next shot run', async () => {
+    const t0 = Date.now()
+    const startedAt = new Map<number, number>()
+    let releaseFirst!: () => void
+    let releaseSecond!: () => void
+
+    const promise = runAdaptiveBeatPool(
+      [0, 1, 2, 3],
+      async (beatIndex) => {
+        startedAt.set(beatIndex, Date.now() - t0)
+        if (beatIndex === 0) {
+          await new Promise<void>((resolve) => {
+            releaseFirst = resolve
+          })
+        } else if (beatIndex === 1) {
+          await new Promise<void>((resolve) => {
+            releaseSecond = resolve
+          })
+        }
+      },
+      {
+        initialConcurrency: 2,
+        maxConcurrency: 2,
+        maxAttempts: 1,
+        postShotDelayMs: 3_000,
+      }
+    )
+
+    await vi.advanceTimersByTimeAsync(0)
+    expect(startedAt.has(0)).toBe(true)
+    expect(startedAt.has(1)).toBe(true)
+    expect(startedAt.has(2)).toBe(false)
+
+    // Complete shot 0 at t=1000ms while shot 1 is still running
+    await vi.advanceTimersByTimeAsync(1_000)
+    releaseFirst()
+    await vi.advanceTimersByTimeAsync(0)
+
+    // Shot 2 must not start until 3,000ms after shot 0 completed (t=4000ms)
+    await vi.advanceTimersByTimeAsync(2_999)
+    expect(startedAt.has(2)).toBe(false)
+
+    await vi.advanceTimersByTimeAsync(1)
+    expect(startedAt.get(2)).toBe(4_000)
+
+    // Complete shot 1 at t=4500ms; shot 3 must wait until t=7500ms
+    await vi.advanceTimersByTimeAsync(500)
+    releaseSecond()
+    await vi.advanceTimersByTimeAsync(2_999)
+    expect(startedAt.has(3)).toBe(false)
+
+    await vi.advanceTimersByTimeAsync(1)
+    expect(startedAt.get(3)).toBe(7_500)
+
+    const result = await promise
+    expect(result.succeeded.size).toBe(4)
   })
 })
 

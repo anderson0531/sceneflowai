@@ -16818,6 +16818,9 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       if (blockedByMissingReferences()) return
 
       expressRunningRef.current = true
+      expressAbortRef.current?.abort()
+      const abortController = new AbortController()
+      expressAbortRef.current = abortController
 
       const sceneCount = script.script.scenes.length
       const initial: ExpressSceneStatusMap = {}
@@ -16835,6 +16838,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
 
       /** Settle the dock so its close button appears and the tone stops spinning. */
       const finishProjectRun = (summary: {
+        cancelled?: boolean
         runError?: string
         successScenes?: number
         failedScenes?: number
@@ -16900,9 +16904,14 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
 
       try {
         await syncVisionReferencesForExpress()
+        if (abortController.signal.aborted) {
+          finishProjectRun({ cancelled: true })
+          return
+        }
         const response = await fetch('/api/vision/express', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
+          signal: abortController.signal,
           body: JSON.stringify({
             projectId,
             language: options.language || 'en',
@@ -16935,6 +16944,10 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         }
 
         const reader = response.body.getReader()
+        const cancelReaderOnAbort = () => {
+          void reader.cancel().catch(() => {})
+        }
+        abortController.signal.addEventListener('abort', cancelReaderOnAbort, { once: true })
         const decoder = new TextDecoder()
         let buffer = ''
         let successScenes = 0
@@ -16956,15 +16969,34 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
               const event = JSON.parse(line.slice(6))
               switch (event.type) {
                 case 'phase-start':
-                  setPhase(event.sceneIndex, event.phase, 'running')
+                  if (
+                    event.phase === 'direction' ||
+                    event.phase === 'audio' ||
+                    event.phase === 'image'
+                  ) {
+                    setPhase(event.sceneIndex, event.phase, 'running')
+                  }
                   break
-                case 'phase-done':
+                case 'phase-done': {
+                  const isSceneLevelPhaseDone =
+                    event.beatIndex == null && event.dialogueIndex == null
+                  const isExpressPhase =
+                    event.phase === 'direction' ||
+                    event.phase === 'audio' ||
+                    event.phase === 'image'
                   if (event.ok) {
-                    setPhase(event.sceneIndex, event.phase, 'done', {
-                      ...(event.rateLimited
-                        ? { rateLimited: true, rateLimitedPhases: { [event.phase]: true } }
-                        : {}),
-                    })
+                    if (isExpressPhase && isSceneLevelPhaseDone) {
+                      setPhase(event.sceneIndex, event.phase, 'done', {
+                        ...(event.rateLimited
+                          ? { rateLimited: true, rateLimitedPhases: { [event.phase]: true } }
+                          : {}),
+                      })
+                    } else if (isExpressPhase && event.rateLimited) {
+                      setPhase(event.sceneIndex, event.phase, 'running', {
+                        rateLimited: true,
+                        rateLimitedPhases: { [event.phase]: true },
+                      })
+                    }
                     // A degraded phase still produces frames, so the run looks
                     // clean while the prompts behind it are the deterministic
                     // fallback's. One toast per run, every scene in the log.
@@ -17000,12 +17032,19 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                     }
                   } else {
                     const phaseError = event.error || 'phase failed'
-                    setPhase(event.sceneIndex, event.phase, 'error', {
-                      error: phaseError,
-                      ...(event.rateLimited
-                        ? { rateLimited: true, rateLimitedPhases: { [event.phase]: true } }
-                        : {}),
-                    })
+                    if (isExpressPhase && isSceneLevelPhaseDone) {
+                      setPhase(event.sceneIndex, event.phase, 'error', {
+                        error: phaseError,
+                        ...(event.rateLimited
+                          ? { rateLimited: true, rateLimitedPhases: { [event.phase]: true } }
+                          : {}),
+                      })
+                    } else if (isExpressPhase && event.rateLimited) {
+                      setPhase(event.sceneIndex, event.phase, 'running', {
+                        rateLimited: true,
+                        rateLimitedPhases: { [event.phase]: true },
+                      })
+                    }
                     if (event.phase === 'image' && event.beatIndex != null) {
                       applyExpressSceneImageError(event.sceneIndex, phaseError, {
                         beatIndex: event.beatIndex,
@@ -17014,6 +17053,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                     }
                   }
                   break
+                }
                 case 'complete':
                   successScenes = event.successScenes ?? 0
                   failedScenes = event.failedScenes ?? 0
@@ -17062,6 +17102,11 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
               console.warn('[Express] Failed to parse SSE event:', parseErr)
             }
           }
+        }
+
+        if (abortController.signal.aborted) {
+          finishProjectRun({ cancelled: true })
+          return
         }
 
         finishProjectRun({
@@ -17175,11 +17220,22 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           console.warn('[Express] Failed to refresh project after run:', refreshErr)
         }
       } catch (err: any) {
+        const aborted =
+          abortController.signal.aborted ||
+          err?.name === 'AbortError' ||
+          err?.code === 'ABORT_ERR'
+        if (aborted) {
+          finishProjectRun({ cancelled: true })
+          return
+        }
         console.error('[Express] Unexpected error:', err)
         finishProjectRun({ runError: err?.message || String(err) })
         toast.error(`Run All Agents error: ${err?.message || String(err)}`)
       } finally {
         expressRunningRef.current = false
+        if (expressAbortRef.current === abortController) {
+          expressAbortRef.current = null
+        }
         setIsExpressRunning(false)
       }
     },
@@ -17429,6 +17485,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       if (expressRunningRef.current || isExpressRunning) return
 
       expressRunningRef.current = true
+      expressAbortRef.current?.abort()
       const abortController = new AbortController()
       expressAbortRef.current = abortController
 
@@ -17462,41 +17519,56 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         status: ExpressBeatFrameStatus,
         error?: string
       ) => {
-        const key = slotKeyFromBeat(sceneRecord, beatIndex, frameRole)
+        const currentScene = (scriptRef.current?.script?.scenes?.[sceneIndex] ??
+          sceneRecord) as Record<string, unknown>
+        const key = slotKeyFromBeat(currentScene, beatIndex, frameRole)
         setExpressBeatFrameOverlay((prev) =>
           prev
             ? {
                 ...prev,
-                items: updateBeatFrameItemStatus(prev.items, key, status, error),
+                items: updateBeatFrameItemStatus(prev.items, key, status, error, {
+                  beatIndex,
+                  frameRole,
+                }),
               }
             : prev
         )
       }
 
-      const finishBeatFrameOverlay = (opts?: { preflightError?: string; cancelled?: boolean }) => {
+      const finishBeatFrameOverlay = (opts?: {
+        preflightError?: string
+        cancelled?: boolean
+        incompleteError?: string
+      }) => {
         setExpressBeatFrameOverlay((prev) => {
           if (!prev) return prev
-          const next = {
+          const settledItems = opts?.cancelled
+            ? prev.items.map((item) =>
+                item.status === 'done'
+                  ? item
+                  : { ...item, status: 'error' as const, error: 'Cancelled' }
+              )
+            : opts?.preflightError
+              ? prev.items
+              : prev.items.map((item) =>
+                  item.status === 'pending' || item.status === 'running'
+                    ? {
+                        ...item,
+                        status: 'error' as const,
+                        error:
+                          opts?.incompleteError ||
+                          item.error ||
+                          'Did not complete — use Retry failed',
+                      }
+                    : item
+                )
+          return {
             ...prev,
             finished: true,
             ...(opts?.preflightError ? { preflightError: opts.preflightError } : {}),
             ...(opts?.cancelled ? { cancelled: true } : {}),
-            ...(opts?.cancelled
-              ? {
-                  items: prev.items.map((item) =>
-                    item.status === 'done'
-                      ? item
-                      : { ...item, status: 'error' as const, error: 'Cancelled' }
-                  ),
-                }
-              : {}),
+            items: settledItems,
           }
-          const shouldAutoClose =
-            !opts?.preflightError && !opts?.cancelled && !hasFrameErrors(next.items)
-          if (shouldAutoClose) {
-            window.setTimeout(() => setExpressBeatFrameOverlay(null), 30000)
-          }
-          return next
         })
       }
 
@@ -17684,6 +17756,19 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
             return
           }
           sceneForRefs = refreshed
+          setExpressBeatFrameOverlay((prev) =>
+            prev
+              ? {
+                  ...prev,
+                  items: buildExpressBeatFrameItems(refreshed, {
+                    selectedFrameKeys: options?.selectedFrameKeys,
+                    includeEndFrames: options?.includeEndFrames,
+                    scope: options?.scope,
+                    storyboardQuality: imageTier,
+                  }),
+                }
+              : prev
+          )
           updateOverlayPhase('direction', 'done')
           setPhase(sceneIndex, 'direction', 'done')
         }
@@ -17795,6 +17880,10 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         }
 
         const reader = response.body.getReader()
+        const cancelReaderOnAbort = () => {
+          void reader.cancel().catch(() => {})
+        }
+        abortController.signal.addEventListener('abort', cancelReaderOnAbort, { once: true })
         const decoder = new TextDecoder()
         let buffer = ''
         let successScenes = 0
@@ -17804,6 +17893,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         let scenePersisted = false
         let lastSceneError: string | undefined
         let degradedToastShown = false
+        let receivedComplete = false
 
         while (true) {
           const { done, value } = await reader.read()
@@ -17826,17 +17916,24 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                   }
                   break
                 }
-                case 'phase-done':
+                case 'phase-done': {
+                  const isSceneLevelPhaseDone =
+                    event.beatIndex == null && event.dialogueIndex == null
                   if (event.ok) {
                     const expressPhase = mapToExpressPhase(event.phase)
-                    if (expressPhase) {
+                    if (expressPhase && isSceneLevelPhaseDone) {
                       setPhase(event.sceneIndex, expressPhase, 'done', {
                         ...(event.rateLimited
                           ? { rateLimited: true, rateLimitedPhases: { [expressPhase]: true } }
                           : {}),
                       })
+                    } else if (expressPhase && event.rateLimited) {
+                      setPhase(event.sceneIndex, expressPhase, 'running', {
+                        rateLimited: true,
+                        rateLimitedPhases: { [expressPhase]: true },
+                      })
                     }
-                    if (isOverlayPhase(event.phase) && event.beatIndex == null) {
+                    if (isOverlayPhase(event.phase) && isSceneLevelPhaseDone) {
                       updateOverlayPhase(event.phase, 'done')
                     }
                     // A degraded phase still produces frames, so the run looks
@@ -17882,15 +17979,20 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                     const phaseError = event.error || 'phase failed'
                     lastSceneError = phaseError
                     const expressPhase = mapToExpressPhase(event.phase)
-                    if (expressPhase) {
+                    if (expressPhase && isSceneLevelPhaseDone) {
                       setPhase(event.sceneIndex, expressPhase, 'error', {
                         error: phaseError,
                         ...(event.rateLimited
                           ? { rateLimited: true, rateLimitedPhases: { [expressPhase]: true } }
                           : {}),
                       })
+                    } else if (expressPhase && event.rateLimited) {
+                      setPhase(event.sceneIndex, expressPhase, 'running', {
+                        rateLimited: true,
+                        rateLimitedPhases: { [expressPhase]: true },
+                      })
                     }
-                    if (isOverlayPhase(event.phase) && event.beatIndex == null) {
+                    if (isOverlayPhase(event.phase) && isSceneLevelPhaseDone) {
                       updateOverlayPhase(event.phase, 'error')
                     }
                     if (event.phase === 'image' && event.beatIndex != null) {
@@ -17907,6 +18009,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                     }
                   }
                   break
+                }
                 case 'frame-start':
                   updateOverlayBeatFrame(
                     event.beatIndex,
@@ -17915,6 +18018,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                   )
                   break
                 case 'preflight-failed': {
+                  receivedComplete = true
                   const preflightMsg = event.errors?.join(' ') || 'preflight failed'
                   lastSceneError = preflightMsg
                   setPhase(event.sceneIndex, 'direction', 'error', { error: preflightMsg })
@@ -17959,6 +18063,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                   }
                   break
                 case 'complete':
+                  receivedComplete = true
                   successScenes = event.successScenes ?? 0
                   failedScenes = event.failedScenes ?? 0
                   rateLimitedFailureCount = event.rateLimitedFailures?.length ?? 0
@@ -17966,6 +18071,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                   break
                 case 'error':
                   console.error('[Scene Express] Stream error:', event.error)
+                  lastSceneError = String(event.error || 'stream error')
                   toast.error(`Stills Agent error: ${event.error}`)
                   break
                 default:
@@ -17975,6 +18081,20 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
               console.warn('[Scene Express] Failed to parse SSE event:', parseErr)
             }
           }
+        }
+
+        if (abortController.signal.aborted) {
+          finishBeatFrameOverlay({ cancelled: true })
+          return
+        }
+
+        if (!receivedComplete) {
+          finishBeatFrameOverlay({
+            incompleteError:
+              lastSceneError || 'Connection closed before all shots completed — use Retry failed',
+          })
+          await refreshProjectScript()
+          return
         }
 
         if (!scenePersisted && successScenes > 0) {
@@ -18018,11 +18138,19 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         setIsExpressRunning(false)
         setExpressBeatFrameOverlay((prev) => {
           if (!prev || prev.finished) return prev
-          const next = { ...prev, finished: true }
-          if (!hasFrameErrors(next.items) && !next.preflightError && !next.cancelled) {
-            window.setTimeout(() => setExpressBeatFrameOverlay(null), 30000)
+          return {
+            ...prev,
+            finished: true,
+            items: prev.items.map((item) =>
+              item.status === 'pending' || item.status === 'running'
+                ? {
+                    ...item,
+                    status: 'error' as const,
+                    error: item.error || 'Did not complete — use Retry failed',
+                  }
+                : item
+            ),
           }
-          return next
         })
       }
     },
@@ -20601,6 +20729,9 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
             }}
             onCancel={() => {
               productionAgentAbortRef.current?.abort()
+              expressAbortRef.current?.abort()
+              void referenceExpressJob.cancel()
+              videoAgentCancelRef.current?.()
               const resolver = productionCheckpointResolverRef.current
               productionCheckpointResolverRef.current = null
               resolver?.(false)
@@ -20758,6 +20889,14 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
             run={expressProjectRun}
             status={expressStatus}
             onClose={() => setExpressProjectRun(null)}
+            onCancel={
+              expressProjectRun.finished
+                ? undefined
+                : () => {
+                    expressAbortRef.current?.abort()
+                    void referenceExpressJob.cancel()
+                  }
+            }
           />
         )}
 

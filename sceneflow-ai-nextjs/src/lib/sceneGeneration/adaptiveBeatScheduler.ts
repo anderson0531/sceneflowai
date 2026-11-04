@@ -54,6 +54,19 @@ export function getSceneExpressBeat429CooldownMs(): number {
 }
 
 /**
+ * Quiet delay after a shot completes before starting a new shot run, giving
+ * Vertex Gemini Image quota buckets time to replenish between shots.
+ */
+export const DEFAULT_SCENE_EXPRESS_POST_SHOT_DELAY_MS = 3_000
+
+export function getSceneExpressPostShotDelayMs(): number {
+  return parseNonNegativeInt(
+    process.env.SCENE_EXPRESS_POST_SHOT_DELAY_MS,
+    DEFAULT_SCENE_EXPRESS_POST_SHOT_DELAY_MS
+  )
+}
+
+/**
  * Per-beat 429 backoff, laddering 5s/10s/20s across the retries above.
  *
  * This replaces the image client's own 5s/15s/30s ladder, which was served
@@ -106,6 +119,11 @@ export interface AdaptiveBeatPoolOptions {
    * so a hung sibling's Vertex call can drain before the next dispatch.
    */
   cooldownMsAfterError?: (err: unknown) => number
+  /**
+   * Quiet delay (ms) after any shot completes before starting the next queued
+   * shot run. Prevents back-to-back Vertex image bursts within a single agent.
+   */
+  postShotDelayMs?: number
   /**
    * Fired when a beat is recorded as failed, including queued beats dropped
    * because the run aborted. Not fired for an attempt that will be retried.
@@ -166,12 +184,14 @@ export async function runAdaptiveBeatPool(
   const isCanaryAbort =
     options.isCanaryAbort ?? ((err: unknown) => !isRetryable(err))
   const abortOnNonRetryableCanary = options.abortOnNonRetryableCanary ?? true
+  const postShotDelayMs = Math.max(0, options.postShotDelayMs ?? 0)
   const runSignal = options.signal
 
   const succeeded = new Set<number>()
   const failed = new Map<number, unknown>()
   let aborted: AdaptiveBeatPoolResult['aborted']
   let stopScheduling = false
+  let nextAllowedDispatchAt = 0
 
   if (beatIndices.length === 0) {
     return { succeeded, failed }
@@ -265,7 +285,14 @@ export async function runAdaptiveBeatPool(
     recordFailure(beatIndex, err)
     const cooldownMs = options.cooldownMsAfterError?.(err) ?? 0
     if (cooldownMs > 0) {
+      successStreak = 0
+      const nextTarget = Math.max(minConcurrency, Math.floor(target / 2))
+      if (nextTarget < target) {
+        target = nextTarget
+        options.onConcurrencyChange?.(target, 'decrease')
+      }
       const readyAt = Date.now() + cooldownMs
+      nextAllowedDispatchAt = Math.max(nextAllowedDispatchAt, readyAt)
       for (const entry of queue) {
         entry.readyAt = Math.max(entry.readyAt, readyAt)
       }
@@ -284,6 +311,11 @@ export async function runAdaptiveBeatPool(
       }
     } catch (err) {
       handleFailure(entry.beatIndex, entry.attempt, err)
+    } finally {
+      if (postShotDelayMs > 0 && !stopScheduling) {
+        const readyAt = Date.now() + postShotDelayMs
+        nextAllowedDispatchAt = Math.max(nextAllowedDispatchAt, readyAt)
+      }
     }
   }
 
@@ -291,22 +323,31 @@ export async function runAdaptiveBeatPool(
     const now = Date.now()
 
     while (!stopScheduling && inFlight.size < target && queue.length > 0) {
+      if (nextAllowedDispatchAt > now) break
       queue.sort((a, b) => a.readyAt - b.readyAt)
       const nextIdx = queue.findIndex((e) => e.readyAt <= now)
       if (nextIdx < 0) break
 
       const [entry] = queue.splice(nextIdx, 1)
+      if (postShotDelayMs > 0 && nextAllowedDispatchAt > 0) {
+        nextAllowedDispatchAt = now + postShotDelayMs
+      }
       const task = runEntry(entry).finally(() => {
         inFlight.delete(task)
       })
       inFlight.add(task)
     }
 
-    if (inFlight.size === 0 && queue.length > 0) {
+    if (!stopScheduling && inFlight.size < target && queue.length > 0) {
       queue.sort((a, b) => a.readyAt - b.readyAt)
-      const waitMs = Math.max(0, queue[0]!.readyAt - Date.now())
+      const nextReadyAt = Math.max(queue[0]!.readyAt, nextAllowedDispatchAt)
+      const waitMs = Math.max(0, nextReadyAt - Date.now())
       if (waitMs > 0) {
-        await Promise.race([sleep(waitMs), abortedWait])
+        await Promise.race(
+          inFlight.size > 0
+            ? [sleep(waitMs), ...inFlight, abortedWait]
+            : [sleep(waitMs), abortedWait]
+        )
         continue
       }
     }

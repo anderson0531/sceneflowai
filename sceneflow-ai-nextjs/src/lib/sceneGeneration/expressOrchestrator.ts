@@ -19,6 +19,7 @@ import { processWithConcurrency } from '../utils/concurrent-processor'
 import {
   FRAME_AGENT_STILL_CONCURRENCY,
   getSceneExpressBeat429CooldownMs,
+  getSceneExpressPostShotDelayMs,
   runAdaptiveBeatPool,
   type AdaptiveBeatPoolOptions,
   type AdaptiveBeatPoolResult,
@@ -653,6 +654,7 @@ function buildAdaptiveBeatPoolOptions(
     maxConcurrency: FRAME_AGENT_STILL_CONCURRENCY,
     minConcurrency: 1,
     maxAttempts: 1,
+    postShotDelayMs: getSceneExpressPostShotDelayMs(),
     isRetryable: isExpressBeatPoolRetryable,
     isCanaryAbort: isExpressImageCanaryAbortError,
     onConcurrencyChange: (max, reason) => {
@@ -675,6 +677,7 @@ function recordFrameNodeFromEvent(
 ): void {
   if (event.type !== 'phase-done' || event.phase !== 'image') return
   if (typeof event.beatIndex !== 'number' && typeof event.dialogueIndex !== 'number') {
+    if (getSceneBeats(scenes[event.sceneIndex]).length > 0) return
     if (!event.ok && !event.skipped) {
       const key = expressFrameNodeKey(event.sceneIndex, {})
       frames[key] = {
@@ -792,6 +795,9 @@ async function runDirectionPhase(
   trafficCop: ExpressTrafficCop
 ): Promise<{ ok: boolean; skipped: boolean; error?: string }> {
   const { sceneIndex, sceneNumber, scene } = ctx
+  if (ctx.signal?.aborted) {
+    return { ok: false, skipped: false, error: FRAME_AGENT_CANCELLED_MESSAGE }
+  }
   if (!options.regenerate && !sceneNeedsDirection(scene)) {
     safeEmit(emit, {
       type: 'phase-done',
@@ -812,8 +818,10 @@ async function runDirectionPhase(
   })
 
   try {
-    const result = await trafficCop.runInLane('text', () =>
-      generateSceneDirection({ scene, sceneIndex })
+    const result = await trafficCop.runInLane(
+      'text',
+      () => generateSceneDirection({ scene, sceneIndex }),
+      ctx.signal
     )
     scene.sceneDirection = result.sceneDirection
     safeEmit(emit, {
@@ -854,6 +862,9 @@ async function runAudioPhase(
   rateLimitedFailures: ExpressRateLimitedFailure[]
 ): Promise<{ ok: boolean; skipped: boolean; counts?: SceneAudioCounts; error?: string; rateLimited?: boolean }> {
   const { sceneIndex, sceneNumber, scene } = ctx
+  if (ctx.signal?.aborted) {
+    return { ok: false, skipped: false, error: FRAME_AGENT_CANCELLED_MESSAGE }
+  }
   const language = options.language || 'en'
 
   const musicReadyScene = ensureSceneMusicFromDirection(scene)
@@ -917,6 +928,7 @@ async function runAudioPhase(
         authCookie,
         parallelMode: true,
         trafficCop,
+        ...(ctx.signal ? { signal: ctx.signal } : {}),
       })
 
     applyAudioAssetsToScene(scene, language, result)
@@ -1028,6 +1040,7 @@ async function ensureDirectedBeatBeforeStill(
   trafficCop: ExpressTrafficCop,
   beatIdx: number
 ): Promise<void> {
+  if (ctx.signal?.aborted) return
   const { scene, sceneNumber } = ctx
   const beats = getSceneBeats(scene)
   const beat = beats[beatIdx]
@@ -1066,14 +1079,17 @@ async function ensureDirectedBeatBeforeStill(
   if (!shotNeedsDirectionRewrite(beat, { composedText: composed, plateNames, expectsCast })) return
 
   try {
-    const rewritten = await trafficCop.runInLane('text', () =>
-      rewriteThinStillBeat({
-        beat,
-        beats,
-        beatIndex: beatIdx,
-        catalog: buildExpressReferenceCatalog(project),
-        check: { composedText: composed, plateNames, expectsCast },
-      })
+    const rewritten = await trafficCop.runInLane(
+      'text',
+      () =>
+        rewriteThinStillBeat({
+          beat,
+          beats,
+          beatIndex: beatIdx,
+          catalog: buildExpressReferenceCatalog(project),
+          check: { composedText: composed, plateNames, expectsCast },
+        }),
+      ctx.signal
     )
     if (rewritten === beat) return
     const next = [...beats]
@@ -1171,7 +1187,7 @@ async function generateSingleBeatImage(
       ...(ctx.lookbook ? { lookbook: ctx.lookbook } : {}),
       ...(ctx.signal ? { signal: ctx.signal } : {}),
     })
-  })
+  }, ctx.signal)
   await persistBeatFrame(scene, beatIdx, result, imageParams.storyboardQuality)
   safeEmit(emit, {
     type: 'phase-done',
@@ -1271,7 +1287,7 @@ async function generateSingleBeatActionStartImage(
       ...(ctx.lookbook ? { lookbook: ctx.lookbook } : {}),
       ...(ctx.signal ? { signal: ctx.signal } : {}),
     })
-  })
+  }, ctx.signal)
 
   await persistBeatActionStartFrame(scene, beatIdx, result, imageParams.storyboardQuality)
   safeEmit(emit, {
@@ -1308,6 +1324,9 @@ async function runSupplementalActionStartFrames(
   rateLimitedFailures: ExpressRateLimitedFailure[]
 ): Promise<{ hadFailure: boolean; lastError?: string; lastImageUrl?: string }> {
   const { scene, sceneIndex, sceneNumber } = ctx
+  if (ctx.signal?.aborted) {
+    return { hadFailure: true, lastError: FRAME_AGENT_CANCELLED_MESSAGE, lastImageUrl: scene.imageUrl }
+  }
   const selectedKeys = getSelectedFrameKeySet(options)
   const hasExplicitActionStartSelection =
     !!selectedKeys && Array.from(selectedKeys).some((k) => k.endsWith('-start'))
@@ -1316,22 +1335,34 @@ async function runSupplementalActionStartFrames(
   }
 
   const startBeatsToGenerate: number[] = []
+  let hadFailure = false
+  let lastError: string | undefined
   for (let beatIdx = 0; beatIdx < beats.length; beatIdx++) {
-    if (failedStartBeatIndices.has(beatIdx)) continue
     const beat = beats[beatIdx]
     if (isBeatExcluded(beat)) continue
     if (!isBeatActionStartSlotSelected(beat, selectedKeys)) continue
     if (!beatActionStartFrameNeedsGeneration(beat, genCtx)) continue
+    if (failedStartBeatIndices.has(beatIdx)) {
+      hadFailure = true
+      const failure = emitImageFailure(
+        emit,
+        ctx,
+        new Error('Skipped because shot still failed'),
+        beatIdx,
+        'action-start'
+      )
+      await failure.persisted
+      lastError = failure.error
+      continue
+    }
     startBeatsToGenerate.push(beatIdx)
   }
 
   if (startBeatsToGenerate.length === 0) {
-    return { hadFailure: false, lastImageUrl: scene.imageUrl }
+    return { hadFailure, lastError, lastImageUrl: scene.imageUrl }
   }
 
   let lastImageUrl = scene.imageUrl as string | undefined
-  let lastError: string | undefined
-  let hadFailure = false
 
   const pool = await runAdaptiveBeatPool(
     startBeatsToGenerate,
@@ -1460,7 +1491,7 @@ async function generateSingleBeatEndImage(
       ...(ctx.lookbook ? { lookbook: ctx.lookbook } : {}),
       ...(ctx.signal ? { signal: ctx.signal } : {}),
     })
-  })
+  }, ctx.signal)
 
   await persistBeatEndFrame(scene, beatIdx, result, imageParams.storyboardQuality)
   safeEmit(emit, {
@@ -1497,31 +1528,45 @@ async function runSupplementalEndFrames(
   rateLimitedFailures: ExpressRateLimitedFailure[]
 ): Promise<{ hadFailure: boolean; lastError?: string; lastImageUrl?: string }> {
   const { scene, sceneIndex, sceneNumber } = ctx
+  if (ctx.signal?.aborted) {
+    return { hadFailure: true, lastError: FRAME_AGENT_CANCELLED_MESSAGE, lastImageUrl: scene.imageUrl }
+  }
   if (!options.includeEndFrames) {
     return { hadFailure: false, lastImageUrl: scene.imageUrl }
   }
 
   const endBeatsToGenerate: number[] = []
   const selectedKeys = getSelectedFrameKeySet(options)
+  let hadFailure = false
+  let lastError: string | undefined
   for (let beatIdx = 0; beatIdx < beats.length; beatIdx++) {
-    if (failedStartBeatIndices.has(beatIdx)) continue
     const beat = beats[beatIdx]
     if (isBeatExcluded(beat)) continue
     if (!isBeatEndSlotSelected(beat, selectedKeys)) continue
+    if (!beatEndFrameNeedsGeneration(beat, genCtx)) continue
     const anchorUrl =
       beat.storyboardStartImageUrl?.trim() || beat.storyboardImageUrl?.trim()
-    if (!anchorUrl) continue
-    if (!beatEndFrameNeedsGeneration(beat, genCtx)) continue
+    if (failedStartBeatIndices.has(beatIdx) || !anchorUrl) {
+      hadFailure = true
+      const failure = emitImageFailure(
+        emit,
+        ctx,
+        new Error('Skipped because shot start frame failed'),
+        beatIdx,
+        'end'
+      )
+      await failure.persisted
+      lastError = failure.error
+      continue
+    }
     endBeatsToGenerate.push(beatIdx)
   }
 
   if (endBeatsToGenerate.length === 0) {
-    return { hadFailure: false, lastImageUrl: scene.imageUrl }
+    return { hadFailure, lastError, lastImageUrl: scene.imageUrl }
   }
 
   let lastImageUrl = scene.imageUrl as string | undefined
-  let lastError: string | undefined
-  let hadFailure = false
 
   const pool = await runAdaptiveBeatPool(
     endBeatsToGenerate,
@@ -1595,6 +1640,9 @@ async function runBeatImages(
   rateLimitedFailures: ExpressRateLimitedFailure[]
 ): Promise<{ hadFailure: boolean; lastError?: string; lastImageUrl?: string }> {
   const { scene, sceneIndex, sceneNumber } = ctx
+  if (ctx.signal?.aborted) {
+    return { hadFailure: true, lastError: FRAME_AGENT_CANCELLED_MESSAGE, lastImageUrl: scene.imageUrl }
+  }
   const genCtx = getBeatGenerationContext(options)
   const selectedKeys = getSelectedFrameKeySet(options)
   const beatsToGenerate: number[] = []
@@ -1875,6 +1923,9 @@ export async function planSceneBeatKeyframes(
 ): Promise<Map<number, BeatKeyframePlan>> {
   const { sceneIndex, sceneNumber, scene } = ctx
   const beatPlansByIndex = new Map<number, BeatKeyframePlan>()
+  if (ctx.signal?.aborted) {
+    return beatPlansByIndex
+  }
 
   safeEmit(emit, {
     type: 'phase-start',
@@ -1964,7 +2015,8 @@ export async function planSceneBeatKeyframes(
         lookbook: ctx.lookbook,
         storySpine: ctx.storySpine,
         previousSceneLastBeat: ctx.previousSceneLastBeat,
-      })
+      }),
+      ctx.signal
     )
     const remappedPlans = planResult.plans.map((plan) => ({
       ...plan,
@@ -2012,6 +2064,7 @@ async function runStillDirectorPhase(
   trafficCop: ExpressTrafficCop,
   beatPlansByIndex: Map<number, BeatKeyframePlan>
 ): Promise<void> {
+  if (ctx.signal?.aborted) return
   const { sceneIndex, sceneNumber, scene } = ctx
   safeEmit(emit, {
     type: 'phase-start',
@@ -2065,23 +2118,27 @@ async function runStillDirectorPhase(
     const patches: Array<{ beatIndex: number; patch: Parameters<typeof applyStillDirectorPatch>[1] }> = []
     let fallbackReason: string | undefined
     for (let offset = 0; offset < eligible.length; offset += STILL_DIRECTOR_BEAT_CHUNK) {
+      if (ctx.signal?.aborted) break
       const chunk = eligible.slice(offset, offset + STILL_DIRECTOR_BEAT_CHUNK)
       try {
-        const result = await trafficCop.runInLane('text', () =>
-          directBeatStills({
-            mode: 'optimize',
-            beats: chunk.map(({ beat, beatIndex }) => ({
-              beatIndex,
-              beat,
-              previousMoment:
-                beatIndex > 0 ? composeBeatActionFraming(beats[beatIndex - 1]) : undefined,
-              nextMoment:
-                beatIndex + 1 < beats.length
-                  ? composeBeatActionFraming(beats[beatIndex + 1])
-                  : undefined,
-            })),
-            catalog,
-          })
+        const result = await trafficCop.runInLane(
+          'text',
+          () =>
+            directBeatStills({
+              mode: 'optimize',
+              beats: chunk.map(({ beat, beatIndex }) => ({
+                beatIndex,
+                beat,
+                previousMoment:
+                  beatIndex > 0 ? composeBeatActionFraming(beats[beatIndex - 1]) : undefined,
+                nextMoment:
+                  beatIndex + 1 < beats.length
+                    ? composeBeatActionFraming(beats[beatIndex + 1])
+                    : undefined,
+              })),
+              catalog,
+            }),
+          ctx.signal
         )
         patches.push(...result.patches)
         if (result.fallbackReason) fallbackReason = result.fallbackReason
@@ -2147,7 +2204,7 @@ async function generateLegacySceneImage(
   trafficCop: ExpressTrafficCop,
   params: Parameters<typeof generateSceneImage>[0]
 ) {
-  return trafficCop.runInLane('image', () => generateSceneImage(params))
+  return trafficCop.runInLane('image', () => generateSceneImage(params), params.signal)
 }
 
 async function runImagePhase(
@@ -2232,6 +2289,18 @@ async function runImagePhase(
       lastError = beatResult.lastError
       lastImageUrl = beatResult.lastImageUrl ?? lastImageUrl
       Object.assign(scene, applyExpressStoryboardStatus(scene))
+      const sceneRateLimited = rateLimitedFailures.some(
+        (f) => f.sceneIndex === sceneIndex && f.phase === 'image'
+      )
+      safeEmit(emit, {
+        type: 'phase-done',
+        sceneIndex,
+        sceneNumber,
+        phase: 'image',
+        ok: !hadFailure,
+        ...(lastError ? { error: lastError } : {}),
+        ...(sceneRateLimited ? { rateLimited: true } : {}),
+      })
     } else {
       const dialogue = Array.isArray(scene?.dialogue) ? scene.dialogue : []
       const imageParams = getExpressImageParams(options)
@@ -2768,10 +2837,18 @@ export async function runExpress(
   const lookbook = await resolveRunLookbook(project, options)
   const storySpine = summarizeScenesForLookbook(scenes)
 
+  const postShotDelayMs = getSceneExpressPostShotDelayMs()
   const trafficCop = new ExpressTrafficCop({
     laneMax: {
       image: FRAME_AGENT_STILL_CONCURRENCY,
     },
+    ...(postShotDelayMs > 0
+      ? {
+          postReleaseDelayMs: {
+            image: postShotDelayMs,
+          },
+        }
+      : {}),
     onThrottle: (lane, max, cooldownMs) => {
       safeEmit(emit, { type: 'throttle', lane, max, cooldownMs })
     },

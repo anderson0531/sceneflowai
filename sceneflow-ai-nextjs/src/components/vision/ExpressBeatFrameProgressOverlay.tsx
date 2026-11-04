@@ -12,6 +12,7 @@ import {
   failedExpressFrameKeys,
   formatEta,
   hasFrameErrors,
+  hasUnsettledFrames,
   type ExpressBeatFrameItem,
 } from '@/lib/storyboard/expressBeatFrameProgress'
 
@@ -111,6 +112,8 @@ export function ExpressBeatFrameProgressOverlay({
   const completedFrames = useMemo(() => countCompletedFrames(items), [items])
   const totalFrames = items.length
   const frameErrors = useMemo(() => hasFrameErrors(items), [items])
+  const unsettledFrames = useMemo(() => hasUnsettledFrames(items), [items])
+  const hasIncompleteFrames = frameErrors || (finished && unsettledFrames)
 
   const currentPhase = useMemo((): ExpressOverlayPhase | null => {
     for (const phase of PHASE_ORDER) {
@@ -126,8 +129,16 @@ export function ExpressBeatFrameProgressOverlay({
     phases.image === 'running' || phases.image === 'done' || phases.image === 'error'
 
   useEffect(() => {
+    setImagePhaseStartedAt(null)
+  }, [startedAt])
+
+  useEffect(() => {
     if (!visible) return
-    if (imagePhaseStarted && imagePhaseStartedAt == null) {
+    if (!imagePhaseStarted) {
+      setImagePhaseStartedAt(null)
+      return
+    }
+    if (imagePhaseStartedAt == null) {
       setImagePhaseStartedAt(Date.now())
     }
   }, [visible, imagePhaseStarted, imagePhaseStartedAt])
@@ -172,7 +183,7 @@ export function ExpressBeatFrameProgressOverlay({
       ? 'error'
       : cancelled
         ? 'warning'
-        : frameErrors
+        : hasIncompleteFrames
           ? 'warning'
           : 'success'
 
@@ -184,7 +195,7 @@ export function ExpressBeatFrameProgressOverlay({
       ? preflightError
       : cancelled
         ? t('cancelled')
-        : frameErrors
+        : hasIncompleteFrames
           ? 'Some frames failed — retry to fill the gaps'
           : 'Frames ready'
 

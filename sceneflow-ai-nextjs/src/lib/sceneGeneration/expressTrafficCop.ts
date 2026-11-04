@@ -17,6 +17,33 @@ import {
   isExpressImageRateLimitError,
 } from './expressImageErrors'
 
+function createAbortError(): Error {
+  const err = new Error('The operation was aborted')
+  err.name = 'AbortError'
+  return err
+}
+
+function sleepWithAbort(ms: number, signal?: AbortSignal): Promise<void> {
+  if (!signal) return sleep(ms)
+  if (signal.aborted) return Promise.reject(createAbortError())
+  return new Promise<void>((resolve, reject) => {
+    let settled = false
+    const onAbort = () => {
+      if (settled) return
+      settled = true
+      clearTimeout(timer)
+      reject(createAbortError())
+    }
+    const timer = setTimeout(() => {
+      if (settled) return
+      settled = true
+      signal.removeEventListener('abort', onAbort)
+      resolve()
+    }, ms)
+    signal.addEventListener('abort', onAbort, { once: true })
+  })
+}
+
 export type ExpressLane = 'text' | 'image' | 'audio'
 
 export interface ExpressLaneSnapshot {
@@ -39,6 +66,8 @@ export interface ExpressTrafficCopOptions {
   rateLimitThreshold?: number
   /** Minimum gap between dispatches per lane. Defaults to image-only staggering. */
   minSpacingMs?: Partial<Record<ExpressLane, number>>
+  /** Quiet delay (ms) after a lane slot is released before the next task in that lane may start. */
+  postReleaseDelayMs?: Partial<Record<ExpressLane, number>>
   /** Optional 60s rolling-window RPM ceiling per lane to prevent batch quota exhaustion. */
   rollingWindowRpm?: Partial<Record<ExpressLane, number>>
 }
@@ -131,6 +160,7 @@ interface LaneState {
    */
   nextDispatchAt: number
   minSpacingMs: number
+  postReleaseDelayMs: number
   rollingWindowRpm: number
   rollingStarts: number[]
 }
@@ -162,6 +192,11 @@ export class ExpressTrafficCop {
       if (override !== undefined) return Math.max(0, override)
       return lane === 'image' ? getExpressImageMinSpacingMs() : 0
     }
+    const postReleaseFor = (lane: ExpressLane): number => {
+      const override = options.postReleaseDelayMs?.[lane]
+      if (override !== undefined) return Math.max(0, Math.floor(override))
+      return 0
+    }
     const rollingRpmFor = (lane: ExpressLane): number => {
       const override = options.rollingWindowRpm?.[lane]
       if (override !== undefined) return Math.max(0, Math.floor(override))
@@ -178,6 +213,7 @@ export class ExpressTrafficCop {
         cooldownUntil: null,
         nextDispatchAt: 0,
         minSpacingMs: spacingFor('text'),
+        postReleaseDelayMs: postReleaseFor('text'),
         rollingWindowRpm: rollingRpmFor('text'),
         rollingStarts: [],
       },
@@ -188,6 +224,7 @@ export class ExpressTrafficCop {
         cooldownUntil: null,
         nextDispatchAt: 0,
         minSpacingMs: spacingFor('image'),
+        postReleaseDelayMs: postReleaseFor('image'),
         rollingWindowRpm: rollingRpmFor('image'),
         rollingStarts: [],
       },
@@ -198,15 +235,23 @@ export class ExpressTrafficCop {
         cooldownUntil: null,
         nextDispatchAt: 0,
         minSpacingMs: spacingFor('audio'),
+        postReleaseDelayMs: postReleaseFor('audio'),
         rollingWindowRpm: rollingRpmFor('audio'),
         rollingStarts: [],
       },
     }
   }
 
-  async runInLane<T>(lane: ExpressLane, fn: () => Promise<T>): Promise<T> {
-    await this.acquire(lane)
+  async runInLane<T>(
+    lane: ExpressLane,
+    fn: () => Promise<T>,
+    signal?: AbortSignal
+  ): Promise<T> {
+    await this.acquire(lane, signal)
     try {
+      if (signal?.aborted) {
+        throw createAbortError()
+      }
       return await fn()
     } catch (err) {
       const failFastImage429 =
@@ -316,14 +361,17 @@ export class ExpressTrafficCop {
     return this.rateLimitCount
   }
 
-  private async acquire(lane: ExpressLane): Promise<void> {
+  private async acquire(lane: ExpressLane, signal?: AbortSignal): Promise<void> {
     while (true) {
+      if (signal?.aborted) {
+        throw createAbortError()
+      }
       this.tryRecoverRegulator()
       const state = this.lanes[lane]
       const now = Date.now()
 
       if (state.cooldownUntil !== null && now < state.cooldownUntil) {
-        await sleep(state.cooldownUntil - now)
+        await sleepWithAbort(state.cooldownUntil - now, signal)
         continue
       }
 
@@ -366,15 +414,41 @@ export class ExpressTrafficCop {
           const startAt = Math.max(now, state.nextDispatchAt)
           state.nextDispatchAt = startAt + effectiveSpacingMs
           state.rollingStarts.push(startAt)
-          if (startAt > now) await sleep(startAt - now)
+          if (startAt > now) {
+            try {
+              await sleepWithAbort(startAt - now, signal)
+            } catch (err) {
+              this.release(lane)
+              throw err
+            }
+          }
         } else {
           state.rollingStarts.push(now)
         }
         return
       }
 
-      await new Promise<void>((resolve) => {
-        this.waiters[lane].push(resolve)
+      await new Promise<void>((resolve, reject) => {
+        if (signal?.aborted) {
+          reject(createAbortError())
+          return
+        }
+        let settled = false
+        const onAbort = () => {
+          if (settled) return
+          settled = true
+          const idx = this.waiters[lane].indexOf(onWake)
+          if (idx >= 0) this.waiters[lane].splice(idx, 1)
+          reject(createAbortError())
+        }
+        const onWake = () => {
+          if (settled) return
+          settled = true
+          signal?.removeEventListener('abort', onAbort)
+          resolve()
+        }
+        signal?.addEventListener('abort', onAbort, { once: true })
+        this.waiters[lane].push(onWake)
       })
     }
   }
@@ -382,10 +456,13 @@ export class ExpressTrafficCop {
   private release(lane: ExpressLane): void {
     const state = this.lanes[lane]
     state.inFlight = Math.max(0, state.inFlight - 1)
-    if (state.minSpacingMs > 0) {
+    const releaseDelayMs = Math.max(state.minSpacingMs, state.postReleaseDelayMs)
+    if (releaseDelayMs > 0) {
       const now = Date.now()
-      if (now > state.nextDispatchAt) {
-        state.nextDispatchAt = now + state.minSpacingMs
+      if (state.postReleaseDelayMs > 0) {
+        state.nextDispatchAt = Math.max(state.nextDispatchAt, now + releaseDelayMs)
+      } else if (now > state.nextDispatchAt) {
+        state.nextDispatchAt = now + releaseDelayMs
       }
     }
     const next = this.waiters[lane].shift()

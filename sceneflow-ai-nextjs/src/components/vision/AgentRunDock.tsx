@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, type ReactNode } from 'react'
+import { useEffect, useRef, type ReactNode } from 'react'
 import { AlertTriangle, Check, Loader2, X } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
@@ -178,14 +178,20 @@ export function AgentRunDock({
   className,
 }: AgentRunDockProps) {
   const hasProgress = typeof progressPct === 'number'
+  const hasUnsettledItems = Boolean(
+    items?.some((item) => item.status === 'running' || item.status === 'pending')
+  )
+  const onCloseRef = useRef(onClose)
+  onCloseRef.current = onClose
+  const canAutoClose = Boolean(onClose) && tone === 'success' && !hasUnsettledItems
 
   useEffect(() => {
-    if (tone === 'running' || !onClose) return
+    if (!canAutoClose) return
     const timer = window.setTimeout(() => {
-      onClose()
+      onCloseRef.current?.()
     }, AGENT_DOCK_AUTO_CLOSE_MS)
     return () => window.clearTimeout(timer)
-  }, [tone, onClose])
+  }, [canAutoClose])
 
   return (
     <div

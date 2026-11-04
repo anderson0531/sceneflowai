@@ -48,6 +48,8 @@ export interface GenerateSceneAudioParams {
   parallelMode?: boolean
   /** When set, each TTS request acquires an audio lane slot. */
   trafficCop?: ExpressTrafficCop
+  /** Abort remaining audio requests when the parent run is cancelled. */
+  signal?: AbortSignal
 }
 
 function findParentSegmentDurationSeconds(
@@ -133,9 +135,11 @@ async function generateSfxForCue(
   sceneIdx: number,
   sfxIdx: number,
   baseUrl: string,
-  authCookie?: string
+  authCookie?: string,
+  signal?: AbortSignal
 ): Promise<string | null> {
   try {
+    if (signal?.aborted) return null
     const cue = Array.isArray(scene?.sfx) ? scene.sfx[sfxIdx] : null
     const description: string =
       typeof cue === 'string'
@@ -170,6 +174,7 @@ async function generateSfxForCue(
         text: description,
         durationSeconds,
       }),
+      ...(signal ? { signal } : {}),
     })
 
     if (!response.ok) return null
@@ -208,6 +213,7 @@ export async function generateSceneAudio(
     authCookie,
     parallelMode = false,
     trafficCop,
+    signal,
   } = params
 
   const assets: SceneAudioAsset[] = []
@@ -234,6 +240,7 @@ export async function generateSceneAudio(
   const hasNarratorInDialogue = sceneHasNarratorInDialogue(scene)
 
   const runLegacyNarration = async () => {
+  if (signal?.aborted) return
   if (narrationVoice && !hasNarratorInDialogue) {
     const sceneTranslation = storedTranslations?.[sceneIndex]
     const storedNarration = sceneTranslation?.narration
@@ -256,10 +263,11 @@ export async function generateSceneAudio(
               skipTranslation: !!storedNarration?.trim(),
               skipDbUpdate: true,
             }),
+            ...(signal ? { signal } : {}),
           })
 
         const res = trafficCop
-          ? await trafficCop.runInLane('audio', fetchNarration)
+          ? await trafficCop.runInLane('audio', fetchNarration, signal)
           : await fetchNarration()
         const data = await res.json().catch(() => null as any)
         if (data?.success && data.audioUrl) {
@@ -296,6 +304,7 @@ export async function generateSceneAudio(
   }
 
   const runDialogueAudio = async () => {
+  if (signal?.aborted) return
   // 2. Dialogue (per-line). Narrator lines (kind === 'narration' or
   //    characterId === 'narrator' or character === 'NARRATOR') live in the
   //    same `scene.dialogue` array under the integrated narrator-as-character
@@ -308,6 +317,7 @@ export async function generateSceneAudio(
     const dialogueTasks = scene.dialogue.map((dialogueLine: any, dialogueIndex: number) => ({
       id: dialogueIndex,
       execute: async () => {
+        if (signal?.aborted) return null
         const lineKind: 'narration' | 'dialogue' =
           dialogueLine?.kind === 'narration' ? 'narration' : 'dialogue'
         const resolved = resolveDialogueTtsVoice({
@@ -376,10 +386,11 @@ export async function generateSceneAudio(
                 skipDbUpdate: true,
                 voiceDirection,
               }),
+              ...(signal ? { signal } : {}),
             })
 
           const res = trafficCop
-            ? await trafficCop.runInLane('audio', fetchDialogue)
+            ? await trafficCop.runInLane('audio', fetchDialogue, signal)
             : await fetchDialogue()
           const data = await res.json().catch(() => null as any)
           if (data?.success && data.audioUrl) {
@@ -452,6 +463,7 @@ export async function generateSceneAudio(
 
   // 3. Music
   const runMusic = async () => {
+    if (signal?.aborted) return
     if (includeMusic && scene?.music && !scene.musicAudio) {
       const music = await generateMusicForScene(scene, projectId, sceneIndex, baseUrl, authCookie)
       if (music) {
@@ -468,6 +480,7 @@ export async function generateSceneAudio(
 
   // 4. SFX (per-cue)
   const runSfx = async () => {
+    if (signal?.aborted) return
     if (includeSFX && Array.isArray(scene?.sfx) && scene.sfx.length > 0) {
       const existing = Array.isArray(params.existingSfxAudio)
         ? params.existingSfxAudio
@@ -488,13 +501,15 @@ export async function generateSceneAudio(
         sfxTasks.push({
           id: targetIdx,
           execute: async () => {
+            if (signal?.aborted) return
             const sfxUrl = await generateSfxForCue(
               scene,
               projectId,
               sceneIndex,
               targetIdx,
               baseUrl,
-              authCookie
+              authCookie,
+              signal
             )
             if (sfxUrl) {
               assets.push({

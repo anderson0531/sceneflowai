@@ -14,6 +14,11 @@ import {
 } from '@/lib/audio/audioAgentRunReport'
 import { videoRunProgressPct } from '@/lib/video/videoQueueRunReport'
 import {
+  hasUnsettledFrames,
+  updateBeatFrameItemStatus,
+  type ExpressBeatFrameItem,
+} from '@/lib/storyboard/expressBeatFrameProgress'
+import {
   failAgentRun,
   finishAgentRun,
   runWithAgentDock,
@@ -483,5 +488,70 @@ describe('videoQueueRunReport', () => {
 
   it('reports zero rather than NaN before the queue has any segments', () => {
     expect(videoRunProgressPct({ ...base, total: 0, completed: 0, failed: 0 })).toBe(0)
+  })
+})
+
+describe('Stills Agent dock persistence until all shots complete', () => {
+  it('does not schedule uncancelled 30s timeouts in page.tsx that can close a subsequent run', () => {
+    const handler = readHandler(PAGE, 'const handleExpressSceneGenerate = useCallback(')
+
+    expect(handler).not.toContain('window.setTimeout(() => setExpressBeatFrameOverlay(null)')
+  })
+
+  it('only marks scene-level image phase done when beatIndex and dialogueIndex are absent', () => {
+    const sceneHandler = readHandler(PAGE, 'const handleExpressSceneGenerate = useCallback(')
+    const projectHandler = readHandler(PAGE, 'const handleExpressGenerate = useCallback(')
+
+    expect(sceneHandler).toContain('event.beatIndex == null && event.dialogueIndex == null')
+    expect(projectHandler).toContain('event.beatIndex == null && event.dialogueIndex == null')
+  })
+
+  it('guards AgentRunDock auto-close while items remain pending or running', () => {
+    const dockSource = readSource('src/components/vision/AgentRunDock.tsx')
+    const overlaySource = readSource('src/components/vision/ExpressBeatFrameProgressOverlay.tsx')
+
+    expect(dockSource).toContain('hasUnsettledItems')
+    expect(dockSource).toContain("tone === 'success' && !hasUnsettledItems")
+    expect(overlaySource).toContain('hasUnsettledFrames(items)')
+  })
+
+  it('tracks unsettled frames and falls back to (beatIndex, frameRole) when beatId changes', () => {
+    const items: ExpressBeatFrameItem[] = [
+      {
+        key: 'beat:bt_old:start',
+        beatIndex: 0,
+        beatNumber: 1,
+        frameRole: 'start',
+        label: 'Shot 1 · Start frame',
+        status: 'pending',
+      },
+      {
+        key: 'beat:bt_old_2:start',
+        beatIndex: 1,
+        beatNumber: 2,
+        frameRole: 'start',
+        label: 'Shot 2 · Start frame',
+        status: 'pending',
+      },
+    ]
+
+    expect(hasUnsettledFrames(items)).toBe(true)
+
+    const afterFirstDone = updateBeatFrameItemStatus(items, 'beat:bt_new:start', 'done', undefined, {
+      beatIndex: 0,
+      frameRole: 'start',
+    })
+    expect(afterFirstDone[0].status).toBe('done')
+    expect(afterFirstDone[1].status).toBe('pending')
+    expect(hasUnsettledFrames(afterFirstDone)).toBe(true)
+
+    const afterSecondDone = updateBeatFrameItemStatus(
+      afterFirstDone,
+      'beat:bt_new_2:start',
+      'done',
+      undefined,
+      { beatIndex: 1, frameRole: 'start' }
+    )
+    expect(hasUnsettledFrames(afterSecondDone)).toBe(false)
   })
 })

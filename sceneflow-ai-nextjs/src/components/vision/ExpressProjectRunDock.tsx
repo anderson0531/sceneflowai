@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useMemo, useState } from 'react'
+import { Button } from '@/components/ui/Button'
 import { AgentRunDock } from '@/components/vision/AgentRunDock'
 import {
   summarizeExpressProjectRun,
@@ -19,6 +20,7 @@ export interface ExpressProjectRunState {
   startedAt: number | null
   sceneCount: number
   finished: boolean
+  cancelled?: boolean
   /** Set when the run could not start, or the stream itself failed. */
   runError?: string
   successScenes?: number
@@ -36,6 +38,7 @@ export function ExpressProjectRunDock({
   run,
   status,
   onClose,
+  onCancel,
 }: {
   run: ExpressProjectRunState
   /**
@@ -44,6 +47,7 @@ export function ExpressProjectRunDock({
    */
   status: ExpressRunStatusMap
   onClose: () => void
+  onCancel?: () => void
 }) {
   const [elapsedSec, setElapsedSec] = useState(0)
 
@@ -66,7 +70,7 @@ export function ExpressProjectRunDock({
     ? 'running'
     : run.runError
       ? 'error'
-      : failed > 0 || (run.rateLimitedFailures ?? 0) > 0
+      : run.cancelled || failed > 0 || (run.rateLimitedFailures ?? 0) > 0
         ? 'warning'
         : 'success'
 
@@ -74,11 +78,15 @@ export function ExpressProjectRunDock({
     ? 'All scenes — you can keep editing'
     : run.runError
       ? run.runError
-      : failed > 0
-        ? `${failed} scene${failed === 1 ? '' : 's'} finished with errors`
-        : run.rateLimitedFailures
-          ? `${run.rateLimitedFailures} item${run.rateLimitedFailures === 1 ? '' : 's'} rate limited — re-run with Only missing frames`
-          : 'All scenes complete'
+      : run.cancelled
+        ? 'Run cancelled'
+        : failed > 0
+          ? `${failed} scene${failed === 1 ? '' : 's'} finished with errors`
+          : run.rateLimitedFailures
+            ? `${run.rateLimitedFailures} item${run.rateLimitedFailures === 1 ? '' : 's'} rate limited — re-run with Only missing frames`
+            : 'All scenes complete'
+
+  const showCancel = !run.finished && !!onCancel
 
   return (
     <AgentRunDock
@@ -96,6 +104,18 @@ export function ExpressProjectRunDock({
       }
       progressPct={Math.max(run.finished ? 0 : 4, summary.pct)}
       onClose={run.finished ? onClose : undefined}
+      footer={
+        showCancel ? (
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={onCancel}
+            className="h-7 text-[11px]"
+          >
+            Cancel
+          </Button>
+        ) : undefined
+      }
     />
   )
 }

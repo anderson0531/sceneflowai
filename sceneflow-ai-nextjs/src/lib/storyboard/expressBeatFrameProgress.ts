@@ -160,6 +160,10 @@ export function hasFrameErrors(items: ExpressBeatFrameItem[]): boolean {
   return items.some((item) => item.status === 'error')
 }
 
+export function hasUnsettledFrames(items: ExpressBeatFrameItem[]): boolean {
+  return items.some((item) => item.status === 'pending' || item.status === 'running')
+}
+
 /** Wall-clock seconds per Vertex identity-ref job (prior before any frame completes). */
 export const EXPRESS_IMAGE_ETA_PRIOR_SEC = 55
 
@@ -211,9 +215,16 @@ export function updateBeatFrameItemStatus(
   items: ExpressBeatFrameItem[],
   key: string,
   status: ExpressBeatFrameStatus,
-  error?: string
+  error?: string,
+  fallback?: { beatIndex?: number; frameRole?: 'start' | 'action-start' | 'end' }
 ): ExpressBeatFrameItem[] {
-  return items.map((item) =>
-    item.key === key ? { ...item, status, ...(error ? { error } : {}) } : item
-  )
+  const hasExactMatch = items.some((item) => item.key === key)
+  return items.map((item) => {
+    const matches = hasExactMatch
+      ? item.key === key
+      : fallback?.beatIndex !== undefined &&
+        item.beatIndex === fallback.beatIndex &&
+        item.frameRole === (fallback.frameRole ?? 'start')
+    return matches ? { ...item, status, ...(error ? { error } : {}) } : item
+  })
 }

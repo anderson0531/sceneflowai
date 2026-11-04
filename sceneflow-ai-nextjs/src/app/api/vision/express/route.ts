@@ -16,6 +16,13 @@ import {
 export const runtime = 'nodejs'
 export const maxDuration = 600
 
+/**
+ * Track active Express SSE runs per projectId on this instance so starting a
+ * new run after cancelling immediately aborts any lingering orchestrator for
+ * the same project.
+ */
+const activeProjectExpressControllers = new Map<string, AbortController>()
+
 interface ExpressRequest {
   projectId: string
   language?: string
@@ -259,17 +266,49 @@ export async function POST(req: NextRequest) {
 
   const encoder = new TextEncoder()
 
+  const previousController = activeProjectExpressControllers.get(projectId)
+  if (previousController && !previousController.signal.aborted) {
+    console.warn(`[Express] Aborting previous in-flight run for project ${projectId}`)
+    previousController.abort()
+  }
+  const streamAbortController = new AbortController()
+  activeProjectExpressControllers.set(projectId, streamAbortController)
+
+  const abortStream = () => {
+    if (!streamAbortController.signal.aborted) {
+      streamAbortController.abort()
+    }
+  }
+  if (req.signal.aborted) {
+    abortStream()
+  } else {
+    req.signal.addEventListener('abort', abortStream, { once: true })
+  }
+
   const stream = new ReadableStream({
     async start(controller) {
       const send = (event: ExpressEvent) => {
+        if (streamAbortController.signal.aborted) return
         try {
           controller.enqueue(
             encoder.encode(`data: ${JSON.stringify(event)}\n\n`)
           )
         } catch (err) {
-          console.error('[Express] Failed to enqueue SSE event:', err)
+          console.warn('[Express] SSE stream closed by client; aborting orchestrator:', err)
+          abortStream()
         }
       }
+
+      // Periodic SSE comment heartbeat keeps the HTTP stream alive across proxies/CDNs
+      // during long LLM planning, image generation, or 429 cooldown windows.
+      const heartbeatInterval = setInterval(() => {
+        if (streamAbortController.signal.aborted) return
+        try {
+          controller.enqueue(encoder.encode(': keep-alive\n\n'))
+        } catch {
+          abortStream()
+        }
+      }, 15_000)
 
       try {
         const result = await runExpress({
@@ -278,9 +317,10 @@ export async function POST(req: NextRequest) {
           baseUrl,
           authCookie,
           emit: send,
-          signal: req.signal,
+          // Combines client disconnect (signal: req.signal) with stream cancel / project supersede
+          signal: streamAbortController.signal,
           onSceneComplete: async (sceneIndex, summary) => {
-            if (!summary.ok) return
+            if (!summary.ok || streamAbortController.signal.aborted) return
             try {
               await persistExpressScenes(projectId, project, options)
               send({
@@ -297,23 +337,43 @@ export async function POST(req: NextRequest) {
           },
         })
 
-        // Final atomic DB write — orchestrated scenes are canonical
-        await persistExpressScenes(
-          projectId,
-          project,
-          options,
-          'before final save'
-        )
+        if (!streamAbortController.signal.aborted) {
+          // Final atomic DB write — orchestrated scenes are canonical
+          await persistExpressScenes(
+            projectId,
+            project,
+            options,
+            'before final save'
+          )
 
-        console.log(
-          `[Express] Atomic DB update complete (mode=${options.mode}, success=${result.successScenes}, failed=${result.failedScenes})`
-        )
+          console.log(
+            `[Express] Atomic DB update complete (mode=${options.mode}, success=${result.successScenes}, failed=${result.failedScenes})`
+          )
+        } else {
+          console.log(
+            `[Express] Run cancelled by client (mode=${options.mode}); skipping final DB overwrite`
+          )
+        }
       } catch (error: any) {
-        console.error('[Express] Orchestrator error:', error)
-        send({ type: 'error', error: error?.message || String(error) })
+        if (!streamAbortController.signal.aborted) {
+          console.error('[Express] Orchestrator error:', error)
+          send({ type: 'error', error: error?.message || String(error) })
+        }
       } finally {
-        controller.close()
+        clearInterval(heartbeatInterval)
+        if (activeProjectExpressControllers.get(projectId) === streamAbortController) {
+          activeProjectExpressControllers.delete(projectId)
+        }
+        try {
+          controller.close()
+        } catch {
+          // Stream already closed or cancelled
+        }
       }
+    },
+    cancel() {
+      console.log(`[Express] Client cancelled SSE stream for project ${projectId}`)
+      abortStream()
     },
   })
 
