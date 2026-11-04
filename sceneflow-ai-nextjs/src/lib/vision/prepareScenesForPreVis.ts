@@ -222,6 +222,68 @@ export function groupSelectedRecommendationsByScene(
   return groups.sort((a, b) => a.sceneIndex - b.sceneIndex)
 }
 
+export interface PreVisSceneStatusEvent {
+  sceneIndex: number
+  sceneNumber: number
+  status: 'running' | 'done' | 'error'
+  error?: string
+  revision?: BatchSceneRevisionItem
+}
+
+export interface ArRecommendationsBackgroundState {
+  isRunning: boolean
+  progress: PreVisPrepProgress | null
+  result: PreVisPrepResult | null
+  appliedRecKeys: Set<string>
+  abortController: AbortController | null
+  pendingOpenTab: 'recommendations' | null
+}
+
+const backgroundStateByProject = new Map<string, ArRecommendationsBackgroundState>()
+const backgroundListeners = new Set<() => void>()
+
+export function getArRecommendationsBackgroundState(
+  projectId?: string
+): ArRecommendationsBackgroundState {
+  const key = projectId || '__default__'
+  let state = backgroundStateByProject.get(key)
+  if (!state) {
+    state = {
+      isRunning: false,
+      progress: null,
+      result: null,
+      appliedRecKeys: new Set<string>(),
+      abortController: null,
+      pendingOpenTab: null,
+    }
+    backgroundStateByProject.set(key, state)
+  }
+  return state
+}
+
+export function patchArRecommendationsBackgroundState(
+  projectId: string | undefined,
+  patch: Partial<ArRecommendationsBackgroundState>
+): ArRecommendationsBackgroundState {
+  const current = getArRecommendationsBackgroundState(projectId)
+  const next: ArRecommendationsBackgroundState = {
+    ...current,
+    ...patch,
+  }
+  backgroundStateByProject.set(projectId || '__default__', next)
+  backgroundListeners.forEach((listener) => listener())
+  return next
+}
+
+export function subscribeArRecommendationsBackgroundState(
+  listener: () => void
+): () => void {
+  backgroundListeners.add(listener)
+  return () => {
+    backgroundListeners.delete(listener)
+  }
+}
+
 export interface RunPreVisScenePreparationParams {
   projectId: string
   sceneAnalysis: SceneAnalysisForPreVis[]
@@ -236,6 +298,7 @@ export interface RunPreVisScenePreparationParams {
   revisionConcurrency?: number
   signal?: AbortSignal
   onProgress?: (progress: PreVisPrepProgress) => void
+  onSceneStatusChange?: (event: PreVisSceneStatusEvent) => void
   onPersistRevisedScenes: (
     revisions: BatchSceneRevisionItem[]
   ) => Promise<{ sceneCount: number } | void>
@@ -269,6 +332,7 @@ export async function runPreVisScenePreparation(
     revisionConcurrency = 2,
     signal,
     onProgress,
+    onSceneStatusChange,
     onPersistRevisedScenes,
     onRefreshProject,
     fetchImpl = fetch,
@@ -286,112 +350,155 @@ export async function runPreVisScenePreparation(
   const successfulRevisions: BatchSceneRevisionItem[] = []
   let appliedRecommendationCount = 0
 
-  if (groups.length > 0) {
-    let completedRevisions = 0
-    onProgress?.({
-      phase: 'revise-scenes',
-      done: 0,
-      total: groups.length,
-      currentSceneNumber: groups[0]?.sceneNumber,
-      label: `Running Scene Director on Scene ${groups[0]?.sceneNumber} (0/${groups.length} scenes)…`,
-    })
+  try {
+    if (groups.length > 0) {
+      let completedRevisions = 0
+      onProgress?.({
+        phase: 'revise-scenes',
+        done: 0,
+        total: groups.length,
+        currentSceneNumber: groups[0]?.sceneNumber,
+        label: `Running Scene Director on Scene ${groups[0]?.sceneNumber} (0/${groups.length} scenes)…`,
+      })
 
-    await runWithConcurrencyLimit(
-      groups,
-      Math.max(1, revisionConcurrency),
-      async (group) => {
-        if (signal?.aborted) {
-          throw new DOMException('Aborted', 'AbortError')
-        }
-        const currentScene = scriptScenes[group.sceneIndex]
-        if (!currentScene) {
-          failedRevisions.push({
-            sceneNumber: group.sceneNumber,
-            error: `Scene ${group.sceneNumber} not found in script`,
-          })
-          return
-        }
-
-        onProgress?.({
-          phase: 'revise-scenes',
-          done: completedRevisions,
-          total: groups.length,
-          currentSceneNumber: group.sceneNumber,
-          label: `Running Scene Director on Scene ${group.sceneNumber} (${completedRevisions}/${groups.length} scenes)…`,
-        })
-
-        const previousScene = group.sceneIndex > 0 ? scriptScenes[group.sceneIndex - 1] : null
-        const nextScene =
-          group.sceneIndex < scriptScenes.length - 1 ? scriptScenes[group.sceneIndex + 1] : null
-
-        const recItems = group.selectedRecommendations.map((r) => r.raw)
-        const formattedInstruction = group.selectedRecommendations
-          .map((r, idx) => `${idx + 1}. ${r.text}`)
-          .join('\n\n')
-        const recIds = group.selectedRecommendations.map((r) => r.recId)
-
-        try {
-          const response = await fetchImpl('/api/vision/revise-scene', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              projectId,
-              sceneIndex: group.sceneIndex,
-              currentScene,
-              revisionMode: 'recommendations',
-              selectedRecommendations: recItems,
-              customInstruction: formattedInstruction,
-              targetDemographic,
-              preserveElements: [],
-              revisionDepth: 'moderate',
-              context: {
-                characters,
-                previousScene,
-                nextScene,
-                scriptTitle,
-                logline,
-              },
-            }),
-            signal,
-          })
-
-          const data = await response.json().catch(() => ({}))
-          if (!response.ok || !data?.revisedScene) {
-            throw new Error(data?.error || `Failed to revise Scene ${group.sceneNumber}`)
-          }
-
-          successfulRevisions.push({
-            sceneIndex: group.sceneIndex,
-            revisedScene: data.revisedScene,
-            continuationScenes: Array.isArray(data.continuationScenes)
-              ? data.continuationScenes
-              : undefined,
-            appliedRecommendationIds: recIds,
-          })
-          appliedRecommendationCount += recIds.length
-        } catch (err) {
-          if (signal?.aborted || isAbortError(err)) {
+      await runWithConcurrencyLimit(
+        groups,
+        Math.max(1, revisionConcurrency),
+        async (group) => {
+          if (signal?.aborted) {
             throw new DOMException('Aborted', 'AbortError')
           }
-          failedRevisions.push({
+          const currentScene = scriptScenes[group.sceneIndex]
+          if (!currentScene) {
+            const errMsg = `Scene ${group.sceneNumber} not found in script`
+            failedRevisions.push({
+              sceneNumber: group.sceneNumber,
+              error: errMsg,
+            })
+            onSceneStatusChange?.({
+              sceneIndex: group.sceneIndex,
+              sceneNumber: group.sceneNumber,
+              status: 'error',
+              error: errMsg,
+            })
+            return
+          }
+
+          onSceneStatusChange?.({
+            sceneIndex: group.sceneIndex,
             sceneNumber: group.sceneNumber,
-            error: err instanceof Error ? err.message : String(err),
+            status: 'running',
           })
-        } finally {
-          completedRevisions += 1
+
           onProgress?.({
             phase: 'revise-scenes',
             done: completedRevisions,
             total: groups.length,
             currentSceneNumber: group.sceneNumber,
-            label: `Scene Director revised ${completedRevisions}/${groups.length} scene${groups.length === 1 ? '' : 's'}…`,
+            label: `Running Scene Director on Scene ${group.sceneNumber} (${completedRevisions}/${groups.length} scenes)…`,
           })
+
+          const previousScene = group.sceneIndex > 0 ? scriptScenes[group.sceneIndex - 1] : null
+          const nextScene =
+            group.sceneIndex < scriptScenes.length - 1 ? scriptScenes[group.sceneIndex + 1] : null
+
+          const recItems = group.selectedRecommendations.map((r) => r.raw)
+          const formattedInstruction = group.selectedRecommendations
+            .map((r, idx) => `${idx + 1}. ${r.text}`)
+            .join('\n\n')
+          const recIds = group.selectedRecommendations.map((r) => r.recId)
+
+          try {
+            const response = await fetchImpl('/api/vision/revise-scene', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                projectId,
+                sceneIndex: group.sceneIndex,
+                currentScene,
+                revisionMode: 'recommendations',
+                selectedRecommendations: recItems,
+                customInstruction: formattedInstruction,
+                targetDemographic,
+                preserveElements: [],
+                revisionDepth: 'moderate',
+                context: {
+                  characters,
+                  previousScene,
+                  nextScene,
+                  scriptTitle,
+                  logline,
+                },
+              }),
+              signal,
+            })
+
+            const data = await response.json().catch(() => ({}))
+            if (!response.ok || !data?.revisedScene) {
+              throw new Error(data?.error || `Failed to revise Scene ${group.sceneNumber}`)
+            }
+
+            const revisionItem: BatchSceneRevisionItem = {
+              sceneIndex: group.sceneIndex,
+              revisedScene: data.revisedScene,
+              continuationScenes: Array.isArray(data.continuationScenes)
+                ? data.continuationScenes
+                : undefined,
+              appliedRecommendationIds: recIds,
+            }
+            successfulRevisions.push(revisionItem)
+            appliedRecommendationCount += recIds.length
+            onSceneStatusChange?.({
+              sceneIndex: group.sceneIndex,
+              sceneNumber: group.sceneNumber,
+              status: 'done',
+              revision: revisionItem,
+            })
+          } catch (err) {
+            if (signal?.aborted || isAbortError(err)) {
+              throw new DOMException('Aborted', 'AbortError')
+            }
+            const errMsg = err instanceof Error ? err.message : String(err)
+            failedRevisions.push({
+              sceneNumber: group.sceneNumber,
+              error: errMsg,
+            })
+            onSceneStatusChange?.({
+              sceneIndex: group.sceneIndex,
+              sceneNumber: group.sceneNumber,
+              status: 'error',
+              error: errMsg,
+            })
+          } finally {
+            completedRevisions += 1
+            onProgress?.({
+              phase: 'revise-scenes',
+              done: completedRevisions,
+              total: groups.length,
+              currentSceneNumber: group.sceneNumber,
+              label: `Scene Director revised ${completedRevisions}/${groups.length} scene${groups.length === 1 ? '' : 's'}…`,
+            })
+          }
         }
-      }
-    )
+      )
+    }
+  } catch (err) {
+    if (
+      (signal?.aborted || isAbortError(err)) &&
+      successfulRevisions.length > 0
+    ) {
+      // Persist any scenes that finished before cancellation so completed work is preserved
+      await onPersistRevisedScenes(successfulRevisions).catch(() => {})
+      await onRefreshProject?.().catch(() => {})
+    }
+    throw err
   }
 
   if (signal?.aborted) {
+    if (successfulRevisions.length > 0) {
+      await onPersistRevisedScenes(successfulRevisions).catch(() => {})
+      await onRefreshProject?.().catch(() => {})
+    }
     throw new DOMException('Aborted', 'AbortError')
   }
 

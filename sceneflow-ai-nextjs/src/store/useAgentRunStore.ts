@@ -13,11 +13,16 @@ export type StoredAgentRun = {
   id: string
   title: string
   subtitle?: string
+  meta?: string
   items: AgentRunItem[]
   progressPct?: number | null
   finished: boolean
   tone: AgentRunTone
   keepTabOpen?: boolean
+  onCancel?: () => void
+  cancelLabel?: string
+  onAction?: () => void
+  actionLabel?: string
 }
 
 type AgentRunState = {
@@ -55,21 +60,31 @@ export function startAgentRun(input: {
   id: string
   title: string
   subtitle?: string
+  meta?: string
   items?: AgentRunItem[]
   itemLabel?: string
   keepTabOpen?: boolean
   progressPct?: number | null
+  onCancel?: () => void
+  cancelLabel?: string
+  onAction?: () => void
+  actionLabel?: string
 }): string {
   const items = input.items ?? defaultItems(input.itemLabel)
   useAgentRunStore.getState().upsert({
     id: input.id,
     title: input.title,
     subtitle: input.subtitle ?? 'you can keep editing',
+    meta: input.meta,
     items,
     progressPct: input.progressPct ?? (items.some((item) => item.status === 'running') ? 8 : 0),
     finished: false,
     tone: 'running',
     keepTabOpen: input.keepTabOpen,
+    onCancel: input.onCancel,
+    cancelLabel: input.cancelLabel,
+    onAction: input.onAction,
+    actionLabel: input.actionLabel,
   })
   return input.id
 }
@@ -101,6 +116,7 @@ export function finishAgentRun(id: string, patch?: Partial<StoredAgentRun>): voi
   const failed = items.some((item) => item.status === 'error')
   useAgentRunStore.getState().patch(id, {
     progressPct: 100,
+    onCancel: undefined,
     ...patch,
     items,
     finished: true,
@@ -121,6 +137,7 @@ export function failAgentRun(id: string, error: string): void {
     subtitle: error,
     items,
     progressPct: 100,
+    onCancel: undefined,
   })
 }
 
@@ -137,27 +154,51 @@ export async function runWithAgentDock<T>(
     id: string
     title: string
     subtitle?: string
-    itemLabel: string
+    meta?: string
+    items?: AgentRunItem[]
+    itemLabel?: string
     keepTabOpen?: boolean
+    onCancel?: () => void
+    cancelLabel?: string
+    onAction?: () => void
+    actionLabel?: string
   },
   fn: (api: {
     setProgress: (progressPct: number) => void
     setSubtitle: (subtitle: string) => void
+    setMeta: (meta: string) => void
+    setItem: (
+      key: string,
+      update: Partial<AgentRunItem> & { status: AgentRunItemStatus }
+    ) => void
+    setFinishPatch: (patch: Partial<StoredAgentRun>) => void
   }) => Promise<T>
 ): Promise<T> {
   startAgentRun({
     id: options.id,
     title: options.title,
     subtitle: options.subtitle,
+    meta: options.meta,
+    items: options.items,
     itemLabel: options.itemLabel,
     keepTabOpen: options.keepTabOpen,
+    onCancel: options.onCancel,
+    cancelLabel: options.cancelLabel,
+    onAction: options.onAction,
+    actionLabel: options.actionLabel,
   })
+  let finishPatch: Partial<StoredAgentRun> | undefined
   try {
     const result = await fn({
       setProgress: (progressPct) => patchAgentRun(options.id, { progressPct }),
       setSubtitle: (subtitle) => patchAgentRun(options.id, { subtitle }),
+      setMeta: (meta) => patchAgentRun(options.id, { meta }),
+      setItem: (key, update) => setAgentRunItem(options.id, key, update),
+      setFinishPatch: (patch) => {
+        finishPatch = { ...finishPatch, ...patch }
+      },
     })
-    finishAgentRun(options.id)
+    finishAgentRun(options.id, finishPatch)
     return result
   } catch (error) {
     failAgentRun(options.id, error instanceof Error ? error.message : 'Failed')

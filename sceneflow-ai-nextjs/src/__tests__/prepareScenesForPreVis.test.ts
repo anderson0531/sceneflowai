@@ -3,8 +3,12 @@ import { recommendationId } from '@/lib/script/audienceResonance/highImpact'
 import {
   buildSceneRecSelectionKey,
   collectInitialSelectedRecKeys,
+  getArRecommendationsBackgroundState,
   groupSelectedRecommendationsByScene,
+  patchArRecommendationsBackgroundState,
   runPreVisScenePreparation,
+  subscribeArRecommendationsBackgroundState,
+  type PreVisSceneStatusEvent,
   type SceneAnalysisForPreVis,
 } from '@/lib/vision/prepareScenesForPreVis'
 
@@ -111,6 +115,7 @@ describe('prepareScenesForPreVis', () => {
 
     const onPersistRevisedScenes = vi.fn(async () => ({ sceneCount: 2 }))
     const onRefreshProject = vi.fn(async () => {})
+    const statusEvents: PreVisSceneStatusEvent[] = []
 
     const result = await runPreVisScenePreparation({
       projectId: 'proj-123',
@@ -121,6 +126,7 @@ describe('prepareScenesForPreVis', () => {
       targetDemographic: 'Sci-Fi Thriller Core',
       scriptTitle: 'The Cipher',
       logline: 'A cryptographer uncovers a signal in the bunker.',
+      onSceneStatusChange: (ev) => statusEvents.push(ev),
       onPersistRevisedScenes,
       onRefreshProject,
       fetchImpl: fetchMock,
@@ -132,6 +138,11 @@ describe('prepareScenesForPreVis', () => {
     expect(result.totalShotsDirected).toBe(0)
     expect(result.failedRevisions).toHaveLength(0)
     expect(result.failedDirections).toHaveLength(0)
+
+    expect(statusEvents.map((e) => ({ sceneNumber: e.sceneNumber, status: e.status }))).toEqual([
+      { sceneNumber: 1, status: 'running' },
+      { sceneNumber: 1, status: 'done' },
+    ])
 
     // Verify Scene Director payload includes nested `context` so `/api/vision/revise-scene` executes Gemini
     expect(calls[0].body).toMatchObject({
@@ -166,5 +177,25 @@ describe('prepareScenesForPreVis', () => {
     // Shot direction is deferred to the scene card / Production Agent for fast AR iteration
     expect(calls.every((c) => c.url === '/api/vision/revise-scene')).toBe(true)
     expect(onRefreshProject).toHaveBeenCalledTimes(1)
+  })
+
+  it('tracks background AR recommendation state across modal open/close cycles', () => {
+    const notifySpy = vi.fn()
+    const unsubscribe = subscribeArRecommendationsBackgroundState(notifySpy)
+
+    const initial = getArRecommendationsBackgroundState('proj-bg-test')
+    expect(initial.isRunning).toBe(false)
+
+    patchArRecommendationsBackgroundState('proj-bg-test', {
+      isRunning: true,
+      pendingOpenTab: 'recommendations',
+    })
+    expect(notifySpy).toHaveBeenCalledTimes(1)
+    expect(getArRecommendationsBackgroundState('proj-bg-test').isRunning).toBe(true)
+    expect(getArRecommendationsBackgroundState('proj-bg-test').pendingOpenTab).toBe(
+      'recommendations'
+    )
+
+    unsubscribe()
   })
 })

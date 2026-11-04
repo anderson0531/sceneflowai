@@ -22,10 +22,41 @@ export function SimpleAgentRunDock({ run }: { run: StoredAgentRun }) {
     <AgentRunDock
       title={run.title}
       subtitle={subtitle}
+      meta={run.meta}
       tone={run.tone}
       items={run.items}
       progressPct={run.progressPct ?? null}
-      onClose={run.finished ? () => dismissAgentRun(run.id) : undefined}
+      onClose={
+        run.finished
+          ? () => dismissAgentRun(run.id)
+          : run.onCancel
+            ? () => run.onCancel?.()
+            : undefined
+      }
+      closeLabel={run.finished ? 'Dismiss' : 'Cancel run'}
+      footer={
+        !run.finished && run.onCancel ? (
+          <div className="flex items-center justify-end gap-2">
+            <button
+              type="button"
+              onClick={() => run.onCancel?.()}
+              className="rounded-md border border-slate-700 bg-slate-900 px-2.5 py-1 text-[11px] font-medium text-slate-200 hover:bg-slate-800 transition-colors"
+            >
+              {run.cancelLabel || 'Cancel'}
+            </button>
+          </div>
+        ) : run.finished && run.onAction && run.actionLabel ? (
+          <div className="flex items-center justify-end gap-2">
+            <button
+              type="button"
+              onClick={() => run.onAction?.()}
+              className="rounded-md bg-cyan-500 hover:bg-cyan-400 px-2.5 py-1 text-[11px] font-semibold text-slate-950 transition-colors"
+            >
+              {run.actionLabel}
+            </button>
+          </div>
+        ) : undefined
+      }
     />
   )
 }

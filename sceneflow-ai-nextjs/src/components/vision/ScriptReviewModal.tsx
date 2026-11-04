@@ -30,14 +30,18 @@ import {
 import {
   buildSceneRecSelectionKey,
   collectInitialSelectedRecKeys,
+  getArRecommendationsBackgroundState,
   groupSelectedRecommendationsByScene,
   isRecommendationApplied,
+  patchArRecommendationsBackgroundState,
   resolveSceneAnalysisIndex,
   runPreVisScenePreparation,
+  subscribeArRecommendationsBackgroundState,
   type BatchSceneRevisionItem,
   type PreVisPrepProgress,
   type PreVisPrepResult,
 } from '@/lib/vision/prepareScenesForPreVis'
+import { dismissAgentRun, runWithAgentDock } from '@/store/useAgentRunStore'
 import { useStore } from '@/store/useStore'
 import { AnimatedScore, AnimatedProgressBar } from '@/components/ui/AnimatedScore'
 import { toast } from 'sonner'
@@ -1002,14 +1006,37 @@ export default function ScriptReviewModal({
       ? script.script.scenes
       : []
 
-  // Scene Breakdown Recommendation Selection & Pre-Vis Preparation Agent State
+  // Scene Breakdown Recommendation Selection & Background Agent State
   const [selectedRecKeys, setSelectedRecKeys] = useState<Set<string>>(() => new Set())
-  const [localAppliedRecKeys, setLocalAppliedRecKeys] = useState<Set<string>>(() => new Set())
-  const [isRunningPreVisPrep, setIsRunningPreVisPrep] = useState(false)
-  const [preVisPrepProgress, setPreVisPrepProgress] = useState<PreVisPrepProgress | null>(null)
-  const [preVisPrepResult, setPreVisPrepResult] = useState<PreVisPrepResult | null>(null)
-  const preVisAbortRef = useRef<AbortController | null>(null)
+  const [, setBgStateVersion] = useState(0)
+  const bgState = getArRecommendationsBackgroundState(projectId)
+  const localAppliedRecKeys = bgState.appliedRecKeys
+  const isRunningPreVisPrep = bgState.isRunning
+  const preVisPrepProgress = bgState.progress
+  const preVisPrepResult = bgState.result
   const lastSelectionInitSignatureRef = useRef<string | null>(null)
+  const onBatchApplySceneRevisionsRef = useRef(onBatchApplySceneRevisions)
+  const onRefreshProjectRef = useRef(onRefreshProject)
+
+  useEffect(() => {
+    onBatchApplySceneRevisionsRef.current = onBatchApplySceneRevisions
+    onRefreshProjectRef.current = onRefreshProject
+  }, [onBatchApplySceneRevisions, onRefreshProject])
+
+  useEffect(() => {
+    return subscribeArRecommendationsBackgroundState(() => {
+      setBgStateVersion((v) => v + 1)
+    })
+  }, [])
+
+  useEffect(() => {
+    if (!isOpen) return
+    const currentBg = getArRecommendationsBackgroundState(projectId)
+    if (currentBg.pendingOpenTab === 'recommendations') {
+      setActiveTab('recommendations')
+      patchArRecommendationsBackgroundState(projectId, { pendingOpenTab: null })
+    }
+  }, [isOpen, projectId])
 
   const sceneAnalysisSignature = sceneAnalysis
     .map((s, idx) => `${s?.sceneNumber ?? idx + 1}:${Array.isArray(s?.recommendations) ? s.recommendations.length : 0}`)
@@ -1068,10 +1095,10 @@ export default function ScriptReviewModal({
   }
 
   const handleCancelPreVisPrep = () => {
-    preVisAbortRef.current?.abort()
+    getArRecommendationsBackgroundState(projectId).abortController?.abort()
   }
 
-  const handleRunPreVisPrepAgent = async () => {
+  const handleRunPreVisPrepAgent = () => {
     if (!projectId) {
       toast.error('Save the project before applying scene recommendations')
       return
@@ -1089,94 +1116,210 @@ export default function ScriptReviewModal({
       return
     }
 
-    const controller = new AbortController()
-    preVisAbortRef.current = controller
-    setIsRunningPreVisPrep(true)
-    setPreVisPrepResult(null)
+    const selectedRecCount = initialGroups.reduce(
+      (sum, g) => sum + g.selectedRecommendations.length,
+      0
+    )
+    const selectedSnapshot = new Set(selectedRecKeys)
+    const appliedSnapshot = new Set(localAppliedRecKeys)
+    const targetDemographicSnapshot =
+      formatAudienceDefinitionForPrompt(audienceDef) || review?.targetDemographic || ''
+    const scriptTitleSnapshot = script?.title || script?.script?.title
+    const loglineSnapshot = script?.logline || script?.script?.logline
+    const charactersSnapshot = characters || []
+    const sceneAnalysisSnapshot = [...sceneAnalysis]
+    const scriptScenesSnapshot = [...scriptScenes]
 
-    const toastId = toast.loading(
-      `Applying ${selectedRecKeys.size} recommendation${selectedRecKeys.size === 1 ? '' : 's'} across ${initialGroups.length} scene${initialGroups.length === 1 ? '' : 's'}…`
+    const controller = new AbortController()
+    patchArRecommendationsBackgroundState(projectId, {
+      isRunning: true,
+      progress: {
+        phase: 'revise-scenes',
+        done: 0,
+        total: initialGroups.length,
+        currentSceneNumber: initialGroups[0]?.sceneNumber,
+        label: `Running Scene Director on Scene ${initialGroups[0]?.sceneNumber} (0/${initialGroups.length} scenes)…`,
+      },
+      result: null,
+      abortController: controller,
+    })
+
+    // Hand off to the background dock so the user can keep working in Production Studio
+    stopPlayback()
+    onClose()
+
+    toast.info(
+      `Applying ${selectedRecCount} recommendation${selectedRecCount === 1 ? '' : 's'} across ${initialGroups.length} scene${initialGroups.length === 1 ? '' : 's'} in the background`,
+      {
+        description: 'Watch the Script Agent card in the bottom-right corner for live scene progress.',
+        duration: 6000,
+      }
     )
 
-    try {
-      const result = await runPreVisScenePreparation({
-        projectId,
-        sceneAnalysis,
-        selectedKeys: selectedRecKeys,
-        scriptScenes,
-        characters: characters || [],
-        targetDemographic: formatAudienceDefinitionForPrompt(audienceDef) || review?.targetDemographic || '',
-        scriptTitle: script?.title || script?.script?.title,
-        logline: script?.logline || script?.script?.logline,
-        localAppliedKeys: localAppliedRecKeys,
-        signal: controller.signal,
-        onProgress: (progress) => {
-          setPreVisPrepProgress(progress)
-          toast.loading(progress.label, { id: toastId })
-        },
-        onPersistRevisedScenes: async (revisions) => {
-          // Optimistically record applied keys locally so UI reflects applied status immediately
-          setLocalAppliedRecKeys((prev) => {
-            const next = new Set(prev)
-            for (const rev of revisions) {
-              for (const recId of rev.appliedRecommendationIds) {
-                next.add(buildSceneRecSelectionKey(rev.sceneIndex, recId))
-              }
-            }
-            return next
-          })
-          setSelectedRecKeys((prev) => {
-            const next = new Set(prev)
-            for (const rev of revisions) {
-              for (const recId of rev.appliedRecommendationIds) {
-                next.delete(buildSceneRecSelectionKey(rev.sceneIndex, recId))
-              }
-            }
-            return next
-          })
-          if (onBatchApplySceneRevisions) {
-            return await onBatchApplySceneRevisions(revisions)
-          }
-          await onRefreshProject?.()
-        },
+    const dockRunId = 'ar-scene-recommendations'
+    const reopenArDialog = () => {
+      patchArRecommendationsBackgroundState(projectId, {
+        pendingOpenTab: 'recommendations',
       })
-
-      setPreVisPrepResult(result)
-
-      const hasFailures = result.failedRevisions.length > 0
-      const summaryText = `Applied ${result.appliedRecommendationCount} recommendation${result.appliedRecommendationCount === 1 ? '' : 's'} across ${result.revisedSceneCount} scene${result.revisedSceneCount === 1 ? '' : 's'} — re-run AR Analysis to update your score`
-
-      if (result.revisedSceneCount === 0 && hasFailures) {
-        const firstErr = result.failedRevisions[0]?.error || 'Scene Director revision failed'
-        toast.error(
-          `Failed to revise ${result.failedRevisions.length} scene${result.failedRevisions.length === 1 ? '' : 's'}: ${firstErr}`,
-          { id: toastId }
-        )
-      } else if (hasFailures) {
-        toast.warning(
-          `${summaryText} (${result.failedRevisions.length} scene${result.failedRevisions.length === 1 ? '' : 's'} failed)`,
-          { id: toastId }
-        )
-      } else {
-        toast.success(summaryText, { id: toastId })
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('production:review-analysis'))
       }
-    } catch (err) {
-      if (
-        controller.signal.aborted ||
-        (err instanceof DOMException && err.name === 'AbortError')
-      ) {
-        toast.info('Scene recommendation update cancelled', { id: toastId })
-      } else {
-        toast.error(
-          err instanceof Error ? err.message : 'Failed to apply scene recommendations',
-          { id: toastId }
-        )
-      }
-    } finally {
-      setIsRunningPreVisPrep(false)
-      setPreVisPrepProgress(null)
-      preVisAbortRef.current = null
     }
+
+    void (async () => {
+      try {
+        await runWithAgentDock(
+          {
+            id: dockRunId,
+            title: 'Script Agent',
+            subtitle: `Applying ${selectedRecCount} AR recommendation${selectedRecCount === 1 ? '' : 's'} across ${initialGroups.length} scene${initialGroups.length === 1 ? '' : 's'}`,
+            meta: `0/${initialGroups.length}`,
+            keepTabOpen: true,
+            items: initialGroups.map((g) => ({
+              key: `scene-${g.sceneIndex}`,
+              label: `Scene ${g.sceneNumber} (${g.selectedRecommendations.length} rec${g.selectedRecommendations.length === 1 ? '' : 's'})`,
+              status: 'pending' as const,
+            })),
+            onCancel: () => controller.abort(),
+            cancelLabel: 'Cancel',
+          },
+          async ({ setSubtitle, setMeta, setItem, setFinishPatch }) => {
+            const result = await runPreVisScenePreparation({
+              projectId,
+              sceneAnalysis: sceneAnalysisSnapshot,
+              selectedKeys: selectedSnapshot,
+              scriptScenes: scriptScenesSnapshot,
+              characters: charactersSnapshot,
+              targetDemographic: targetDemographicSnapshot,
+              scriptTitle: scriptTitleSnapshot,
+              logline: loglineSnapshot,
+              localAppliedKeys: appliedSnapshot,
+              signal: controller.signal,
+              onProgress: (progress) => {
+                patchArRecommendationsBackgroundState(projectId, { progress })
+                setSubtitle(progress.label)
+                setMeta(`${progress.done}/${progress.total}`)
+              },
+              onSceneStatusChange: (event) => {
+                setItem(`scene-${event.sceneIndex}`, {
+                  status: event.status,
+                  error: event.error,
+                })
+                if (event.status === 'done' && event.revision) {
+                  const currentBg = getArRecommendationsBackgroundState(projectId)
+                  const nextApplied = new Set(currentBg.appliedRecKeys)
+                  for (const recId of event.revision.appliedRecommendationIds) {
+                    nextApplied.add(buildSceneRecSelectionKey(event.sceneIndex, recId))
+                  }
+                  patchArRecommendationsBackgroundState(projectId, {
+                    appliedRecKeys: nextApplied,
+                  })
+                  setSelectedRecKeys((prev) => {
+                    const next = new Set(prev)
+                    for (const recId of event.revision!.appliedRecommendationIds) {
+                      next.delete(buildSceneRecSelectionKey(event.sceneIndex, recId))
+                    }
+                    return next
+                  })
+                }
+              },
+              onPersistRevisedScenes: async (revisions) => {
+                const currentBg = getArRecommendationsBackgroundState(projectId)
+                const nextApplied = new Set(currentBg.appliedRecKeys)
+                for (const rev of revisions) {
+                  for (const recId of rev.appliedRecommendationIds) {
+                    nextApplied.add(buildSceneRecSelectionKey(rev.sceneIndex, recId))
+                  }
+                }
+                patchArRecommendationsBackgroundState(projectId, {
+                  appliedRecKeys: nextApplied,
+                })
+                setSelectedRecKeys((prev) => {
+                  const next = new Set(prev)
+                  for (const rev of revisions) {
+                    for (const recId of rev.appliedRecommendationIds) {
+                      next.delete(buildSceneRecSelectionKey(rev.sceneIndex, recId))
+                    }
+                  }
+                  return next
+                })
+                if (onBatchApplySceneRevisionsRef.current) {
+                  return await onBatchApplySceneRevisionsRef.current(revisions)
+                }
+                await onRefreshProjectRef.current?.()
+              },
+            })
+
+            patchArRecommendationsBackgroundState(projectId, {
+              result,
+            })
+
+            const hasFailures = result.failedRevisions.length > 0
+            const summaryText = `Applied ${result.appliedRecommendationCount} recommendation${result.appliedRecommendationCount === 1 ? '' : 's'} across ${result.revisedSceneCount} scene${result.revisedSceneCount === 1 ? '' : 's'} — re-run AR Analysis to update your score`
+
+            setFinishPatch({
+              subtitle:
+                result.revisedSceneCount === 0 && hasFailures
+                  ? result.failedRevisions[0]?.error || 'Scene Director revision failed'
+                  : summaryText,
+              meta: `${result.revisedSceneCount}/${initialGroups.length}`,
+              tone:
+                result.revisedSceneCount === 0 && hasFailures
+                  ? 'error'
+                  : hasFailures
+                    ? 'warning'
+                    : 'success',
+              actionLabel: 'Open AR Dialog',
+              onAction: reopenArDialog,
+            })
+
+            if (result.revisedSceneCount === 0 && hasFailures) {
+              const firstErr = result.failedRevisions[0]?.error || 'Scene Director revision failed'
+              toast.error(
+                `Failed to revise ${result.failedRevisions.length} scene${result.failedRevisions.length === 1 ? '' : 's'}: ${firstErr}`,
+                {
+                  duration: 10000,
+                  action: { label: 'Open AR Dialog', onClick: reopenArDialog },
+                }
+              )
+            } else if (hasFailures) {
+              toast.warning(
+                `${summaryText} (${result.failedRevisions.length} scene${result.failedRevisions.length === 1 ? '' : 's'} failed)`,
+                {
+                  duration: 10000,
+                  action: { label: 'Open AR Dialog', onClick: reopenArDialog },
+                }
+              )
+            } else {
+              toast.success(summaryText, {
+                duration: 10000,
+                action: { label: 'Open AR Dialog', onClick: reopenArDialog },
+              })
+            }
+
+            return result
+          }
+        )
+      } catch (err) {
+        if (
+          controller.signal.aborted ||
+          (err instanceof DOMException && err.name === 'AbortError')
+        ) {
+          dismissAgentRun(dockRunId)
+          toast.info('Scene recommendation update cancelled')
+        } else {
+          toast.error(
+            err instanceof Error ? err.message : 'Failed to apply scene recommendations'
+          )
+        }
+      } finally {
+        patchArRecommendationsBackgroundState(projectId, {
+          isRunning: false,
+          progress: null,
+          abortController: null,
+        })
+      }
+    })()
   }
 
   if (!isOpen) return null
