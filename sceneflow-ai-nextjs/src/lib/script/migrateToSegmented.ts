@@ -111,10 +111,19 @@ export function migrateProjectToSegmented(metadata: unknown): MigrateResult {
   let alreadyMigratedSceneCount = 0
   let audioEntriesRewritten = 0
   let translationLinesWritten = 0
+  let sceneIdsStamped = 0
 
   for (let sceneIdx = 0; sceneIdx < sceneList.length; sceneIdx++) {
     const scene = sceneList[sceneIdx]
     if (!scene || typeof scene !== 'object') continue
+
+    const legacyNumericSceneId = String(scene.sceneNumber || sceneIdx + 1)
+    if (!scene.id && !scene.sceneId) {
+      const fallbackId = `scene-${legacyNumericSceneId}`
+      scene.id = fallbackId
+      scene.sceneId = fallbackId
+      sceneIdsStamped++
+    }
 
     if (Array.isArray(scene.segments) && scene.segments.length > 0) {
       alreadyMigratedSceneCount++
@@ -122,7 +131,9 @@ export function migrateProjectToSegmented(metadata: unknown): MigrateResult {
     }
 
     const sceneId = resolveSceneId(scene, sceneIdx)
-    const productionData = sceneId ? productionByScene[sceneId] : undefined
+    const productionData = sceneId
+      ? (productionByScene[sceneId] ?? productionByScene[legacyNumericSceneId])
+      : undefined
     const productionSegments = readProductionSegments(productionData)
 
     const buildResult = buildSegmentsForScene(scene, productionSegments)
@@ -171,7 +182,8 @@ export function migrateProjectToSegmented(metadata: unknown): MigrateResult {
   const changed =
     migratedSceneCount > 0 ||
     audioEntriesRewritten > 0 ||
-    translationLinesWritten > 0
+    translationLinesWritten > 0 ||
+    sceneIdsStamped > 0
   if (changed) {
     visionPhase[MIGRATION_FLAG_KEY] = new Date().toISOString()
   } else if (alreadyMigratedSceneCount > 0 && !visionPhase[MIGRATION_FLAG_KEY]) {

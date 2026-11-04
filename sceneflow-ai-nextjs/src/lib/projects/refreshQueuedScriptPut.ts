@@ -87,6 +87,20 @@ export function persistSceneIdsForChangedScenes(
 ): { scenes: unknown[]; persistSceneIds?: string[] } {
   const scenes = scenesToPersistForScriptPut(previousScenes, nextScenes)
   if (scenes === nextScenes) return { scenes: nextScenes }
+  if (Array.isArray(previousScenes)) {
+    for (const scene of previousScenes) {
+      if (!scene || typeof scene !== 'object') return { scenes: nextScenes }
+      if (!sceneIdentity(scene as { id?: unknown; sceneId?: unknown })) {
+        return { scenes: nextScenes }
+      }
+    }
+  }
+  for (const scene of nextScenes) {
+    if (!scene || typeof scene !== 'object') return { scenes: nextScenes }
+    if (!sceneIdentity(scene as { id?: unknown; sceneId?: unknown })) {
+      return { scenes: nextScenes }
+    }
+  }
   const persistSceneIds: string[] = []
   for (const scene of scenes) {
     if (!scene || typeof scene !== 'object') return { scenes: nextScenes }
@@ -116,6 +130,7 @@ export function scopeScriptPutToSceneIds<T extends VisionPhaseBody>(
 
   return {
     ...body,
+    partialSceneBatch: true,
     metadata: {
       ...body.metadata,
       visionPhase: {
@@ -151,7 +166,10 @@ export function mergeLiveScriptWithQueuedMedia(
     if (id && !queuedById.has(id)) queuedById.set(id, scene)
   }
 
-  const mergedScenes = liveScenes.map((liveScene, index) => {
+  const salvaged = salvageStaleWriteMedia(liveScenes, queuedScenes)
+  const salvagedScenes = salvaged.scenes as any[]
+
+  const mergedScenes = salvagedScenes.map((liveScene, index) => {
     const liveId = sceneIdentity(liveScene)
     const queuedScene = liveId ? queuedById.get(liveId) : queuedScenes[index]
     if (!queuedScene) return liveScene
@@ -163,8 +181,7 @@ export function mergeLiveScriptWithQueuedMedia(
     return mergeScenePreservingMedia(queuedScene, spread)
   })
 
-  const salvaged = salvageStaleWriteMedia(mergedScenes, queuedScenes)
-  return replaceScriptScenes(liveScript, salvaged.scenes)
+  return replaceScriptScenes(liveScript, mergedScenes)
 }
 
 export function isScriptWriterPut(body: unknown): body is VisionPhaseBody {

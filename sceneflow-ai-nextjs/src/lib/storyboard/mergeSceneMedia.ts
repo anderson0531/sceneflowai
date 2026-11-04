@@ -838,6 +838,26 @@ export function mergeScenePreservingMedia(canonical: any, incoming: any): any {
 
 export interface MergeSceneArraysOptions {
   deletedSceneIds?: string[]
+  /**
+   * True when the incoming scenes array is an intentional subset of the full
+   * script (e.g. `splitScriptPutIntoFittingBatches` or `scopeScriptPutToSceneIds`).
+   * Synthesizes deterministic fallback IDs (`scene-${sceneNumber}`) for any
+   * existing or incoming scene lacking an explicit `id`/`sceneId` so un-sent
+   * scenes are never dropped by `preservedScenes`.
+   */
+  partialSceneBatch?: boolean
+}
+
+function resolveFallbackSceneId(scene: any, fallbackIndex?: number): string | undefined {
+  const explicit = scene?.id || scene?.sceneId
+  if (typeof explicit === 'string' && explicit.trim()) return explicit.trim()
+  if (typeof scene?.sceneNumber === 'number' && Number.isFinite(scene.sceneNumber)) {
+    return `scene-${scene.sceneNumber}`
+  }
+  if (typeof fallbackIndex === 'number') {
+    return `scene-${fallbackIndex + 1}`
+  }
+  return undefined
 }
 
 /**
@@ -856,13 +876,32 @@ export function mergeSceneArraysForPersistence(
     return incomingScenes
   }
 
+  const isPartialBatch = options?.partialSceneBatch === true
+  const normalizedExistingScenes = isPartialBatch
+    ? existingScenes.map((s: any, idx: number) => {
+        if (!s || typeof s !== 'object') return s
+        if (s.id || s.sceneId) return s
+        const fallbackId = resolveFallbackSceneId(s, idx)
+        return fallbackId ? { ...s, id: fallbackId, sceneId: fallbackId } : s
+      })
+    : existingScenes
+
+  const normalizedIncomingScenes = isPartialBatch
+    ? incomingScenes.map((s: any) => {
+        if (!s || typeof s !== 'object') return s
+        if (s.id || s.sceneId) return s
+        const fallbackId = resolveFallbackSceneId(s)
+        return fallbackId ? { ...s, id: fallbackId, sceneId: fallbackId } : s
+      })
+    : incomingScenes
+
   const existingScenesById = new Map(
-    existingScenes
+    normalizedExistingScenes
       .filter((s: any) => s.id || s.sceneId)
       .map((s: any) => [s.id || s.sceneId, s])
   )
 
-  const merged = incomingScenes.map((incomingScene: any, idx: number) => {
+  const merged = normalizedIncomingScenes.map((incomingScene: any, idx: number) => {
     const incomingId = incomingScene.id || incomingScene.sceneId
 
     if (incomingId && !existingScenesById.has(incomingId)) {
@@ -873,9 +912,21 @@ export function mergeSceneArraysForPersistence(
 
     let existingScene = incomingId ? existingScenesById.get(incomingId) : null
 
-    if (!existingScene && idx < existingScenes.length) {
-      const existingAtIdx = existingScenes[idx]
-      if (!existingAtIdx.id && !existingAtIdx.sceneId) {
+    if (!existingScene && typeof incomingScene.sceneNumber === 'number') {
+      existingScene = normalizedExistingScenes.find(
+        (s: any) => !s.id && !s.sceneId && s.sceneNumber === incomingScene.sceneNumber
+      )
+    }
+
+    if (!existingScene && !isPartialBatch && idx < normalizedExistingScenes.length) {
+      const existingAtIdx = normalizedExistingScenes[idx]
+      if (
+        !existingAtIdx.id &&
+        !existingAtIdx.sceneId &&
+        (!incomingScene.sceneNumber ||
+          !existingAtIdx.sceneNumber ||
+          existingAtIdx.sceneNumber === incomingScene.sceneNumber)
+      ) {
         existingScene = existingAtIdx
       }
     }
@@ -892,12 +943,12 @@ export function mergeSceneArraysForPersistence(
 
   const deletedSceneIds = new Set<string>(options?.deletedSceneIds || [])
   const incomingScenesById = new Map(
-    incomingScenes
+    normalizedIncomingScenes
       .filter((s: any) => s.id || s.sceneId)
       .map((s: any) => [s.id || s.sceneId, s])
   )
 
-  const preservedScenes = existingScenes.filter((existingScene: any) => {
+  const preservedScenes = normalizedExistingScenes.filter((existingScene: any) => {
     const existingId = existingScene.id || existingScene.sceneId
     if (!existingId) return false
     if (deletedSceneIds.has(existingId)) return false

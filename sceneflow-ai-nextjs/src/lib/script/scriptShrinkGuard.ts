@@ -30,12 +30,19 @@ export function isUnconfirmedScriptShrink(
 export function scenesAfterUnconfirmedShrinkGuard(
   existingScenes: any[],
   incomingScenes: any[],
-  options?: { deletedSceneIds?: string[]; confirmScriptReplace?: boolean }
+  options?: {
+    deletedSceneIds?: string[]
+    confirmScriptReplace?: boolean
+    partialSceneBatch?: boolean
+  }
 ): { scenes: any[]; rejectedShrink: boolean } {
   const existing = Array.isArray(existingScenes) ? existingScenes : []
   const incoming = Array.isArray(incomingScenes) ? incomingScenes : []
   const deletedSceneIds = options?.deletedSceneIds || []
-  const merged = mergeSceneArraysForPersistence(existing, incoming, { deletedSceneIds })
+  const merged = mergeSceneArraysForPersistence(existing, incoming, {
+    deletedSceneIds,
+    partialSceneBatch: options?.partialSceneBatch,
+  })
   if (
     isUnconfirmedScriptShrink(existing.length, merged.length, {
       confirmScriptReplace: options?.confirmScriptReplace,

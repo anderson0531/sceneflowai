@@ -192,6 +192,13 @@ describe('revise-scene beat volume prompt', () => {
   it('logs the before and after beat counts', () => {
     expect(source).toContain('${currentBeats.length} beats in, ${parsed.beats.length} out')
   })
+
+  it('enforces storytelling and beat-count preservation when applying scene recommendations', () => {
+    expect(source).toContain('STORYTELLING & NARRATIVE PRESERVATION (MANDATORY)')
+    expect(source).toMatch(/Keep unaffected beats intact/i)
+    expect(source).toMatch(/Never make the scene light on storytelling/i)
+    expect(source).toContain('minimum ${currentBeats.length} beats')
+  })
 })
 
 describe('scene optimization quick actions', () => {

@@ -62,4 +62,50 @@ describe('actionBeatDedupe', () => {
     const cleaned = dedupeRedundantActionBeats(beats)
     expect(cleaned.map((b) => b.beatId)).toEqual(['d1', 'd2', 'a-insert'])
   })
+
+  it('does not drop an action beat merely because an adjacent spoken beat voiceDirection mentions the same staging', () => {
+    const beats: SceneBeat[] = [
+      {
+        beatId: 'a-visual',
+        sequenceIndex: 0,
+        kind: 'action',
+        actionDescription: 'Gideon kneels beside the fractured copper turbine coils in the vault.',
+      },
+      {
+        beatId: 'd-spoken',
+        sequenceIndex: 1,
+        kind: 'dialogue',
+        character: 'GIDEON',
+        line: '[grim] It has been dead for twenty years.',
+        voiceDirection:
+          'Spoken in a low voice as Gideon kneels beside the fractured copper turbine coils in the vault.',
+      },
+    ]
+
+    const cleaned = dedupeRedundantActionBeats(beats)
+    expect(cleaned.map((b) => b.beatId)).toEqual(['a-visual', 'd-spoken'])
+  })
+
+  it('preserves original scene action beats included in protectedBeatIds', () => {
+    const beats: SceneBeat[] = [
+      {
+        beatId: 'd1',
+        sequenceIndex: 0,
+        kind: 'dialogue',
+        character: 'PIPER',
+        line: '[scared] My hands are still bruised and trembling.',
+      },
+      {
+        beatId: 'orig-action',
+        sequenceIndex: 1,
+        kind: 'action',
+        actionDescription: 'Piper shows her bruised trembling hands',
+      },
+    ]
+
+    const cleaned = dedupeRedundantActionBeats(beats, {
+      protectedBeatIds: new Set(['orig-action']),
+    })
+    expect(cleaned.map((b) => b.beatId)).toEqual(['d1', 'orig-action'])
+  })
 })

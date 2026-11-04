@@ -271,12 +271,14 @@ function visionPhaseScript(body: ProjectPutBody): unknown {
 function putBodyWithScenes(
   body: ProjectPutBody,
   scenes: any[],
-  scriptUpdatedAt: string
+  scriptUpdatedAt: string,
+  options?: { partialSceneBatch?: boolean }
 ): ProjectPutBody {
   const vision = body.metadata?.visionPhase
   if (!vision || typeof vision !== 'object') return body
   return {
     ...body,
+    ...(options?.partialSceneBatch ? { partialSceneBatch: true } : {}),
     metadata: {
       ...body.metadata,
       visionPhase: {
@@ -298,11 +300,20 @@ export function splitScriptPutIntoFittingBatches(
   options?: { budgetBytes?: number; nowIso?: () => string }
 ): ProjectPutBody[] | null {
   const budget = options?.budgetBytes ?? VERCEL_FUNCTION_REQUEST_BUDGET_BYTES
-  const scenes = scriptScenes(visionPhaseScript(body))
-  if (!Array.isArray(scenes) || scenes.length <= 1) return null
+  const rawScenes = scriptScenes(visionPhaseScript(body))
+  if (!Array.isArray(rawScenes) || rawScenes.length <= 1) return null
+
+  const scenes = rawScenes.map((scene: any, idx: number) => {
+    if (!scene || typeof scene !== 'object') return scene
+    if (scene.id || scene.sceneId) return scene
+    const fallbackId = `scene-${scene.sceneNumber || idx + 1}`
+    return { ...scene, id: fallbackId, sceneId: fallbackId }
+  })
 
   const timestamp = () => options?.nowIso?.() ?? new Date().toISOString()
-  const fits = (slice: any[]) => jsonByteLength(putBodyWithScenes(body, slice, timestamp())) < budget
+  const fits = (slice: any[]) =>
+    jsonByteLength(putBodyWithScenes(body, slice, timestamp(), { partialSceneBatch: true })) <
+    budget
 
   const batches: ProjectPutBody[] = []
   let current: any[] = []
@@ -313,12 +324,12 @@ export function splitScriptPutIntoFittingBatches(
       continue
     }
     if (current.length === 0) return null
-    batches.push(putBodyWithScenes(body, current, timestamp()))
+    batches.push(putBodyWithScenes(body, current, timestamp(), { partialSceneBatch: true }))
     current = [scene]
     if (!fits(current)) return null
   }
   if (current.length > 0) {
-    batches.push(putBodyWithScenes(body, current, timestamp()))
+    batches.push(putBodyWithScenes(body, current, timestamp(), { partialSceneBatch: true }))
   }
   return batches.length > 1 ? batches : null
 }

@@ -9237,7 +9237,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                 script: scriptData
               }
             }
-          }, 'debouncedSaveSceneAnalysis')
+          }, 'debouncedSaveSceneAnalysis', { refreshLiveScript: true, mintScriptUpdatedAt: true })
       } catch (err) {
         console.error('[SceneAnalysis] Failed to persist scene analysis:', err)
       }
@@ -16210,14 +16210,14 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     }
 
     let nextReviewsForSingle: Record<string, any> | undefined
+    let nextAudienceForSingle: any
     if (pendingIds.length > 0 && audienceReview) {
-      const nextAudience = pruneAppliedFromAudienceReview(audienceReview, [
+      nextAudienceForSingle = pruneAppliedFromAudienceReview(audienceReview, [
         { sceneIndex, recIds: pendingIds },
       ])
-      setAudienceReview(nextAudience)
       nextReviewsForSingle = {
         ...(projectRef.current?.metadata?.visionPhase?.reviews || {}),
-        audience: nextAudience,
+        audience: nextAudienceForSingle,
       }
     }
 
@@ -16276,6 +16276,10 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         projectRef.current = updated
         return updated
       })
+
+      if (nextAudienceForSingle) {
+        setAudienceReview(nextAudienceForSingle)
+      }
       
       // Update script edit timestamp to force cache clear in ScreeningRoom
       setScriptEditedAt(Date.now())
@@ -16447,18 +16451,18 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     }
 
     let nextReviewsForBatch: Record<string, any> | undefined
+    let nextAudienceForBatch: any
     if (audienceReview) {
-      const nextAudience = pruneAppliedFromAudienceReview(
+      nextAudienceForBatch = pruneAppliedFromAudienceReview(
         audienceReview,
         revisions.map((r) => ({
           sceneIndex: r.sceneIndex,
           recIds: r.appliedRecommendationIds || [],
         }))
       )
-      setAudienceReview(nextAudience)
       nextReviewsForBatch = {
         ...(projectRef.current?.metadata?.visionPhase?.reviews || {}),
-        audience: nextAudience,
+        audience: nextAudienceForBatch,
       }
     }
 
@@ -16502,6 +16506,10 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       projectRef.current = updated
       return updated
     })
+
+    if (nextAudienceForBatch) {
+      setAudienceReview(nextAudienceForBatch)
+    }
 
     setScriptEditedAt(Date.now())
     return { sceneCount: persistedScenes.length }

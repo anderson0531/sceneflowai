@@ -264,6 +264,8 @@ async function generateRevisedScene({
     }
   })
 
+  const currentBeats = getSceneBeats(currentScene)
+
   // Build the revision instruction based on mode and depth
   let revisionInstruction = ''
   
@@ -278,6 +280,12 @@ async function generateRevisedScene({
         moderate: `REWRITE the scene to fully address each issue. Make substantive changes to dialogue, action, and flow—not just surface-level rewording. Add, remove, and reorder beats as the story needs. Do not chase a beat-count target. If the composition needs more than ${MAX_BEATS_PER_SCENE} beats, return every beat; the system splits the overflow into the next scene.`,
         deep: `COMPLETELY RESTRUCTURE this scene. Rewrite from scratch if necessary to achieve the goals. Transform the dialogue, pacing, and visual storytelling. Do not be constrained by the original structure—reimagine how this scene should unfold. A restructure is free to depart from the original beat count. Coverage follows the story, not a quota. If the composition needs more than ${MAX_BEATS_PER_SCENE} beats, return every beat; the system splits the overflow into the next scene.`,
       })[revisionDepth]
+
+  const storytellingPreservationBlock = `STORYTELLING & NARRATIVE PRESERVATION (MANDATORY):
+- Address each selected recommendation with substantive improvements while preserving ALL narrative context, plot progression, character motivations, world-building, and emotional stakes.
+- Keep unaffected beats intact: beats that are not implicated by the selected recommendations should keep their existing beatId, dialogue, narration, and story detail. Do NOT gut, compress, or rewrite unaffected exchanges just to make the entire scene look different.
+- Never make the scene light on storytelling: when replacing on-the-nose exposition with subtext or converting "telling" narration into visual action, ensure the audience still clearly understands what is happening, why it matters, and what is at stake. Never strip story-critical narration or dialogue without conveying that full narrative information through rich dialogue and action beats.
+- Preserve or expand beat count (minimum ${currentBeats.length} beats): do NOT reduce the scene below its current ${currentBeats.length} beats or collapse multiple dialogue/story turns into fewer beats. If a recommendation asks to tighten a redundant moment, replace weak filler with stronger dramatic turns, character reactions, or visual storytelling beats so the scene retains at least ${currentBeats.length} beats and its full dramatic runtime.`
   
   if (revisionMode === 'recommendations' && selectedRecommendations.length > 0) {
     const allRecs = [...structuralRecs, ...polishRecs]
@@ -287,12 +295,14 @@ ${allRecs.map((r, i) => `${i + 1}. ${r}`).join('\n')}
 
 ${depthGuidance}
 
-For each recommendation, make the necessary STRUCTURAL or CONTENT changes. Do NOT make superficial rewording that leaves the underlying problem intact.`
+For each recommendation, make the necessary STRUCTURAL or CONTENT changes on the affected beats. Do NOT make superficial rewording that leaves the underlying problem intact.
+
+${storytellingPreservationBlock}`
   } else if (revisionMode === 'instruction' && customInstruction) {
     revisionInstruction = `${customInstruction}\n\n${depthGuidance}`
   } else if (revisionMode === 'hybrid') {
     const allRecs = [...structuralRecs, ...polishRecs]
-    revisionInstruction = `REWRITE this scene to address these issues:\n\n${allRecs.map((r, i) => `${i + 1}. ${r}`).join('\n')}\n\nAdditional instruction: ${customInstruction}\n\n${depthGuidance}`
+    revisionInstruction = `REWRITE this scene to address these issues:\n\n${allRecs.map((r, i) => `${i + 1}. ${r}`).join('\n')}\n\nAdditional instruction: ${customInstruction}\n\n${depthGuidance}\n\n${storytellingPreservationBlock}`
   } else {
     revisionInstruction = `Rewrite the scene for better storytelling and audience engagement.\n\n${depthGuidance}`
   }
@@ -321,7 +331,6 @@ For each recommendation, make the necessary STRUCTURAL or CONTENT changes. Do NO
   const dialogueText = currentScene.dialogue?.map((d: any) => `${d.character}: ${d.line || d.text || ''}`).join('\n') || 'No dialogue'
   const characterNames = context.characters?.map((c: any) => c.name).join(', ') || 'No characters'
   const characterProfiles = formatCharacterProfiles(context.characters)
-  const currentBeats = getSceneBeats(currentScene)
   const beatsText = formatBeatsForRevisionPrompt(currentBeats)
   const scriptCraftBlock = await loadScriptCraftPromptBlock(projectId)
 
@@ -483,7 +492,7 @@ BEAT COUNT: this scene currently has ${currentBeats.length} beats. ${
                 ? 'It sits over the target. Change what the beats contain. Remove a beat only when it adds nothing an audience will feel. Do not trim the scene to fit a number.'
                 : 'It is already at the target, so change what the beats contain. Add or remove beats only when the story needs it.'
           }`
-        : 'Story decides the length. Do not pad toward a number and do not cut beats just to make the scene shorter. If the composition exceeds the technical per-scene limit, keep writing; the system splits the overflow into the next scene.'
+        : `Story decides the length. Do not pad toward a number and do not cut beats just to make the scene shorter. Maintain at least the current ${currentBeats.length} beats so the scene does not lose narrative weight or runtime. If the composition exceeds the technical per-scene limit, keep writing; the system splits the overflow into the next scene.`
     }
 
 ${preserveInstructions ? `PRESERVATION REQUIREMENTS: ${preserveInstructions}` : ''}

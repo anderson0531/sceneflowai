@@ -406,11 +406,12 @@ export async function PUT(
               const existingScenes = existingScript.script.scenes
               const incomingScenes = incomingScript.script.scenes
               const deletedSceneIds = body.deletedSceneIds || []
+              const partialSceneBatch = body.partialSceneBatch === true
 
               const shrinkGuard = scenesAfterUnconfirmedShrinkGuard(
                 existingScenes,
                 incomingScenes,
-                { deletedSceneIds, confirmScriptReplace }
+                { deletedSceneIds, confirmScriptReplace, partialSceneBatch }
               )
               const mergedScenes = shrinkGuard.scenes
               if (shrinkGuard.rejectedShrink) {

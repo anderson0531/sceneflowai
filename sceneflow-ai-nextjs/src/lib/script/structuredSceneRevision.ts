@@ -246,7 +246,9 @@ export function mapStructuredRevisionBeats(
     aligned.push(isDeep ? stripBeatPlaybackAssets(minted) : minted)
   }
 
-  return normalizeBeatsForProduction(dedupeRedundantActionBeats(aligned))
+  return normalizeBeatsForProduction(
+    dedupeRedundantActionBeats(aligned, { protectedBeatIds: claimedOriginalIds })
+  )
 }
 
 function enforceRevisionBeatCount(

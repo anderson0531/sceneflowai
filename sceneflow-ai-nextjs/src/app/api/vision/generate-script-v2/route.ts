@@ -1178,9 +1178,15 @@ export async function POST(request: NextRequest) {
         // Track name normalizations for logging
         let normalizedCount = 0
         
-        const scenesWithCharacterIds = allScenes.map((scene: any) => {
+        const scenesWithCharacterIds = allScenes.map((scene: any, idx: number) => {
+          const resolvedSceneId =
+            (typeof scene.id === 'string' && scene.id.trim()) ||
+            (typeof scene.sceneId === 'string' && scene.sceneId.trim()) ||
+            `scene-${scene.sceneNumber || idx + 1}`
           const withDialogue = {
             ...scene,
+            id: resolvedSceneId,
+            sceneId: resolvedSceneId,
             dialogue: scene.dialogue?.map((d: any) => {
             if (!d.character) return d
             
@@ -2162,6 +2168,8 @@ function parseChunkResponse(response: string): { scenes: any[] } {
   // Process and normalize scenes
   return {
     scenes: parsedScenes.map((s: any, idx: number) => ({
+      ...(typeof s.id === 'string' && s.id.trim() ? { id: s.id.trim() } : {}),
+      ...(typeof s.sceneId === 'string' && s.sceneId.trim() ? { sceneId: s.sceneId.trim() } : {}),
       sceneNumber: s.sceneNumber || idx + 1,
       heading: s.heading || `SCENE ${idx + 1}`,
       cinematicType: s.cinematicType,

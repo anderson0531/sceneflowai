@@ -97,8 +97,13 @@ function actionCoverageOfShared(actionTokens: Set<string>, otherTokens: Set<stri
 }
 
 function spokenNeighborText(beat: SceneBeat): string {
-  const parts = [beat.character, beat.line, beat.voiceDirection].filter(Boolean)
+  const parts = [beat.character, beat.line].filter(Boolean)
   return parts.join(' ')
+}
+
+export interface ActionBeatDedupeOptions {
+  /** Beat IDs from the original scene that should not be auto-dropped as redundant. */
+  protectedBeatIds?: ReadonlySet<string>
 }
 
 /**
@@ -126,11 +131,15 @@ export function isRedundantActionDescription(
 }
 
 /** Indices of action beats that are redundant with an adjacent spoken or action beat. */
-export function findRedundantActionBeatIndices(beats: SceneBeat[]): number[] {
+export function findRedundantActionBeatIndices(
+  beats: SceneBeat[],
+  options?: ActionBeatDedupeOptions
+): number[] {
   const redundant: number[] = []
   for (let i = 0; i < beats.length; i++) {
     const beat = beats[i]
     if (beat.kind !== 'action') continue
+    if (beat.beatId && options?.protectedBeatIds?.has(beat.beatId)) continue
     const desc = beat.actionDescription || ''
     if (!desc.trim()) continue
 
@@ -171,9 +180,12 @@ export function findRedundantActionBeatIndices(beats: SceneBeat[]): number[] {
  * Drop action beats that restate adjacent spoken/action staging.
  * Preserves inserts/geography/cutaways that add new visual information.
  */
-export function dedupeRedundantActionBeats(beats: SceneBeat[]): SceneBeat[] {
+export function dedupeRedundantActionBeats(
+  beats: SceneBeat[],
+  options?: ActionBeatDedupeOptions
+): SceneBeat[] {
   if (!Array.isArray(beats) || beats.length < 2) return beats
-  const drop = new Set(findRedundantActionBeatIndices(beats))
+  const drop = new Set(findRedundantActionBeatIndices(beats, options))
   if (drop.size === 0) return beats
   return beats.filter((_, index) => !drop.has(index))
 }
