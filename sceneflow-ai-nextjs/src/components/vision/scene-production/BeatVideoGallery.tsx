@@ -614,7 +614,7 @@ export function BeatVideoGallery({
                         : 'Generate clip'
                   }
                   directTitle="Direct Clip"
-                  directorTitle="Direct Shot"
+                  directorTitle="Shot Director"
                   uploadTitle="Upload"
                   uploadAccept="video/*"
                   className="w-full"
@@ -789,7 +789,7 @@ export function BeatVideoGallery({
                         onClick={() => onDirectBeat(preview.beatId!)}
                       >
                         <Clapperboard className="h-3.5 w-3.5" />
-                        Direct Shot
+                        Shot Director
                       </button>
                     )}
                     {onTake && !languageStream && (
@@ -943,7 +943,7 @@ export function BeatVideoGallery({
                 )}
                 {readOnlyPrompts && preview.segment && (
                   <p className="mt-1 text-[10px] text-slate-500">
-                    Auto-derived from direction — use Direct Shot to change this clip's video prompt
+                    Auto-derived from direction — use Shot Director to change this clip's video prompt
                   </p>
                 )}
               </div>

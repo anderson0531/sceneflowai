@@ -76,7 +76,7 @@ describe('Video tab inline clip preview', () => {
     expect(audio).toContain("markers.push('Excluded')")
     expect(audio).not.toContain('imageUrl: beat.storyboardImageUrl')
 
-    expect(consoleSrc).toContain('kind: beat.kind')
+    expect(consoleSrc).toContain('kind: beat?.kind')
   })
 
   it('opens Screening Room Video for the scene instead of SceneVideoPlayer', () => {
@@ -101,14 +101,14 @@ describe('Video tab inline clip preview', () => {
     expect(frames).not.toContain('lg:w-auto')
     expect(gallery).toContain('w-[80%]')
     expect(gallery).not.toContain('max-w-md')
-    expect(gallery).toContain('Direct Shot')
+    expect(gallery).toContain('Shot Director')
     expect(gallery).toContain('onDirectBeat')
-    expect(frames).toContain('directorTitle="Direct Shot"')
+    expect(frames).toContain('Shot Director')
     expect(gallery).not.toContain('Frame-to-video')
     expect(gallery).not.toContain('Generate start and end frames')
     expect(gallery).not.toContain('Generate frame-to-video')
     expect(gallery).not.toContain('Use previous end frame')
-    expect(gallery).toContain('use Direct Shot to change this clip\'s video prompt')
+    expect(gallery).toContain('use Shot Director to change this clip\'s video prompt')
     expect(gallery).toContain('Regenerate clip')
     expect(gallery).toContain('Retake')
   })

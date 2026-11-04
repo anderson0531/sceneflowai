@@ -16176,7 +16176,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     // For light/moderate, invalidate storyboard frames only for beats whose content changed.
     if (!shouldSkipBeatRederivation(preserveElements)) {
       cleanedScene.segments = undefined
-      cleanedScene.shotDirectionNeedsRefresh = true
+      cleanedScene.shotDirectionNeedsRefresh = false
       if (!isDeepRestructure && getSceneBeats(cleanedScene).length > 0) {
         cleanedScene = invalidateChangedBeatFramesOnScene(cleanedScene, originalScene)
       }
@@ -16189,7 +16189,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       delete part[REVISION_DEPTH_SCENE_KEY]
       delete part.segments
       if (!shouldSkipBeatRederivation(preserveElements)) {
-        part.shotDirectionNeedsRefresh = true
+        part.shotDirectionNeedsRefresh = false
       }
       if (!shouldSkipBeatRederivation(preserveElements) && !isDeepRestructure && getSceneBeats(part).length > 0) {
         part = invalidateChangedBeatFramesOnScene(part, originalScene)
@@ -16418,9 +16418,8 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       }
 
       cleanedScene.segments = undefined
-      // Flag scene so the scene card Direction tab shows the "Run Shot Direction" indicator
-      // and the Production Agent knows to refresh scene & shot direction during Pre-Vis.
-      cleanedScene.shotDirectionNeedsRefresh = true
+      // Scene Director already outputs complete beatDirection and composed prompts on every beat.
+      cleanedScene.shotDirectionNeedsRefresh = false
       if (getSceneBeats(cleanedScene).length > 0) {
         cleanedScene = invalidateChangedBeatFramesOnScene(cleanedScene, originalScene)
       }
@@ -16430,7 +16429,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         let part = { ...scene }
         delete part[REVISION_DEPTH_SCENE_KEY]
         delete part.segments
-        part.shotDirectionNeedsRefresh = true
+        part.shotDirectionNeedsRefresh = false
         if (getSceneBeats(part).length > 0) {
           part = invalidateChangedBeatFramesOnScene(part, originalScene)
         }

@@ -253,8 +253,7 @@ describe('shot direction batches', () => {
     expect(capturedSceneContext.beatOutline).toHaveLength(2)
 
     const workbenchSource = read('src/components/vision/scene-production/SceneDirectionWorkbench.tsx')
-    expect(workbenchSource).toContain('Shot Direction Agent')
-    expect(workbenchSource).toContain('onRunShotDirector')
+    expect(workbenchSource).not.toContain('Shot Direction Agent')
     expect(workbenchSource).toContain('shots directed')
   })
 })

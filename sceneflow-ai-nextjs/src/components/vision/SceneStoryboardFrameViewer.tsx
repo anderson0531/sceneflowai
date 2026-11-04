@@ -1736,7 +1736,7 @@ export function SceneStoryboardFrameViewer({
                               ? 'Direct Start Frame'
                               : activeDisplaySlot.frameRole === 'end'
                                 ? 'Direct End Frame'
-                                : 'Direct Shot'
+                                : 'Shot Director'
                           }
                         />
                       ) : (

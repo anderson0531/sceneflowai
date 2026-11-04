@@ -4736,65 +4736,9 @@ function SceneCard({
     }
     onPendingDirectShotHandled?.()
   }, [pendingDirectShot, sceneIdx, sceneBeatsForTabs, onPendingDirectShotHandled])
-  const [shotDirectionProgress, setShotDirectionProgress] = useState<{
-    done: number
-    total: number
-  } | null>(null)
   const [lockingSceneDirection, setLockingSceneDirection] = useState(false)
   const [syncingSceneReferences, setSyncingSceneReferences] = useState(false)
-  const shotDirectionAbortRef = useRef<AbortController | null>(null)
-  useEffect(() => () => shotDirectionAbortRef.current?.abort(), [])
-  const shotDirectionRunning = shotDirectionProgress !== null
-  const runShotDirectionAgent = async () => {
-    if (shotDirectionAbortRef.current) {
-      shotDirectionAbortRef.current.abort()
-      return
-    }
-    if (!projectId || !onScriptChange) return
-    const shots = shotsForDirectionAgent(scene)
-    if (shots.length === 0) {
-      toast.error('This scene has no shots to direct.')
-      return
-    }
-    const controller = new AbortController()
-    shotDirectionAbortRef.current = controller
-    setShotDirectionProgress({ done: 0, total: shots.length })
-    try {
-      const result = await requestSceneShotDirection({
-        projectId,
-        sceneIndex: sceneIdx,
-        force: true,
-        signal: controller.signal,
-      })
-      if (result.scene && onScriptChange) {
-        const workingScenes: any[] = Array.isArray(scenes) ? [...scenes] : []
-        workingScenes[sceneIdx] = {
-          ...(result.scene as Record<string, any>),
-          shotDirectionNeedsRefresh: false,
-        }
-        onScriptChange({ ...script, script: { ...script?.script, scenes: workingScenes } })
-      }
-      setShotDirectionProgress({ done: result.optimized, total: shots.length })
-      if (result.failed > 0) {
-        toast.warning(
-          `Optimized ${result.optimized} of ${shots.length} shots. Open the other ${result.failed} in Direct Shot.`
-        )
-      } else {
-        toast.success(
-          `Optimized direction for ${result.optimized} shots. Run Stills Agent and Video Agent next.`
-        )
-      }
-    } catch (error) {
-      if (controller.signal.aborted || isAbortError(error)) {
-        toast.info('Shot Direction Agent stopped.')
-        return
-      }
-      toast.error(error instanceof Error ? error.message : 'Shot direction failed')
-    } finally {
-      shotDirectionAbortRef.current = null
-      setShotDirectionProgress(null)
-    }
-  }
+  const shotDirectionRunning = false
   const excludedBeatCount = useMemo(
     () => sceneBeatsForTabs.filter((beat) => beat.excluded === true).length,
     [sceneBeatsForTabs]
@@ -6380,33 +6324,6 @@ function SceneCard({
                   </div>
 
                   <div className="ml-auto flex flex-wrap items-center justify-end gap-2" onClick={(e) => e.stopPropagation()}>
-                    {onPolishScene && (
-                      <TooltipProvider>
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <button
-                              type="button"
-                              onClick={(e) => {
-                                e.stopPropagation()
-                                void handlePolishClick()
-                              }}
-                              disabled={polishingSceneIndex === sceneIdx}
-                              className={`${sceneToolbarControl} font-medium border border-emerald-400/60 text-emerald-200 hover:bg-emerald-900/30`}
-                            >
-                              {polishingSceneIndex === sceneIdx ? (
-                                <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                              ) : (
-                                <Sparkles className="w-3.5 h-3.5" />
-                              )}
-                              {tStudio('polish')}
-                            </button>
-                          </TooltipTrigger>
-                          <TooltipContent className="bg-gray-900 dark:bg-gray-800 text-white border border-gray-700">
-                            {tStudio('polishRunTooltip')}
-                          </TooltipContent>
-                        </Tooltip>
-                      </TooltipProvider>
-                    )}
                     {onEditScene && (
                       <TooltipProvider>
                         <Tooltip>
@@ -6437,49 +6354,6 @@ function SceneCard({
                       placeholder="Generate language..."
                       className="border-slate-600 bg-transparent text-slate-200"
                     />
-                    {activeStep && projectId && onScriptChange && sceneBeatsForTabs.length > 0 && (
-                      <TooltipProvider>
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <button
-                              type="button"
-                              disabled={isExpressAudioRunning || !!isExpressRunning}
-                              onClick={(e) => {
-                                e.stopPropagation()
-                                void runShotDirectionAgent()
-                              }}
-                              className={`${sceneToolbarControl} font-medium ${
-                                hasDirectionPromptChanged
-                                  ? 'border border-amber-400/80 bg-amber-500/20 text-amber-200 ring-1 ring-amber-400/35 hover:bg-amber-500/30'
-                                  : 'border border-teal-500/60 text-teal-200 hover:bg-teal-900/30'
-                              }`}
-                            >
-                              {shotDirectionProgress ? (
-                                <>
-                                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                                  Shot Direction Agent {shotDirectionProgress.done}/{shotDirectionProgress.total}
-                                </>
-                              ) : (
-                                <>
-                                  <Clapperboard className="w-3.5 h-3.5" />
-                                  Shot Direction Agent
-                                  {hasDirectionPromptChanged && (
-                                    <span className="h-2 w-2 rounded-full bg-amber-400 animate-pulse" />
-                                  )}
-                                </>
-                              )}
-                            </button>
-                          </TooltipTrigger>
-                          <TooltipContent className="bg-gray-900 dark:bg-gray-800 text-white border border-gray-700 max-w-xs">
-                            {shotDirectionRunning
-                              ? 'Click to stop. Shots already optimized stay saved.'
-                              : hasDirectionPromptChanged
-                                ? 'Action needed: One or more shots have "Prompt changed" — run Shot Direction Agent to refresh shot direction and prompts before running Stills Agent and Video Agent.'
-                                : 'Optimize and save every shot with Direct Shot before running Stills Agent and Video Agent.'}
-                          </TooltipContent>
-                        </Tooltip>
-                      </TooltipProvider>
-                    )}
                     {/* Generate All — audio + frames in parallel */}
                     {activeStep && (() => {
                       const voicesReady = productionReadiness?.isAudioReady ?? true
@@ -6801,24 +6675,6 @@ function SceneCard({
                           )}
                         </button>
                       )}
-                      {onPolishScene && (
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation()
-                            void handlePolishClick()
-                          }}
-                          disabled={polishingSceneIndex === sceneIdx}
-                          className={`${sceneToolbarControl} font-medium border border-emerald-400/60 text-emerald-200 hover:bg-emerald-900/30`}
-                        >
-                          {polishingSceneIndex === sceneIdx ? (
-                            <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                          ) : (
-                            <Sparkles className="w-3.5 h-3.5" />
-                          )}
-                          <span className="hidden lg:inline">{tStudio('polish')}</span>
-                        </button>
-                      )}
                       {onEditScene && (
                         <button
                           type="button"
@@ -6862,43 +6718,6 @@ function SceneCard({
                         placeholder="Generate language..."
                         className="border-slate-600 bg-transparent text-slate-200"
                       />
-                      {activeStep && projectId && onScriptChange && sceneBeatsForTabs.length > 0 && (
-                        <button
-                          type="button"
-                          disabled={isExpressAudioRunning || !!isExpressRunning || shotDirectionRunning}
-                          onClick={(e) => {
-                            e.stopPropagation()
-                            void runShotDirectionAgent()
-                          }}
-                          title={
-                            hasDirectionPromptChanged
-                              ? 'Action needed: One or more shots have "Prompt changed" — run Shot Direction Agent to refresh shot direction and prompts'
-                              : 'Direct all shots in this scene for cohesive shot flow, blocking, and still/clip prompts'
-                          }
-                          className={`${sceneToolbarControl} font-medium ${
-                            hasDirectionPromptChanged
-                              ? 'border border-amber-400/80 bg-amber-500/20 text-amber-200 ring-1 ring-amber-400/35 hover:bg-amber-500/30'
-                              : 'border border-teal-500/60 text-teal-200 hover:bg-teal-900/30'
-                          }`}
-                        >
-                          {shotDirectionProgress ? (
-                            <>
-                              <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                              <span>
-                                Shot Direction {shotDirectionProgress.done}/{shotDirectionProgress.total}
-                              </span>
-                            </>
-                          ) : (
-                            <>
-                              <Clapperboard className="w-3.5 h-3.5" />
-                              <span className="hidden sm:inline">Shot Direction Agent</span>
-                              {hasDirectionPromptChanged && (
-                                <span className="h-2 w-2 rounded-full bg-amber-400 animate-pulse" />
-                              )}
-                            </>
-                          )}
-                        </button>
-                      )}
                       {activeStep && (
                         <button
                           type="button"
@@ -7145,21 +6964,10 @@ function SceneCard({
                           >
                             <TabsTrigger
                               value="direction"
-                              title={
-                                hasDirectionPromptChanged
-                                  ? 'Script updated — run Shot Direction Agent to refresh shot direction and prompts'
-                                  : undefined
-                              }
                               className={sceneTabTriggerClass}
                             >
                               <Film className="w-3.5 h-3.5 shrink-0" />
                               Direction
-                              {hasDirectionPromptChanged && (
-                                <span className="ml-1 inline-flex items-center gap-1 rounded-full border border-amber-400/60 bg-amber-500/20 px-1.5 py-0.2 text-[9px] font-semibold text-amber-300">
-                                  <span className="h-1.5 w-1.5 rounded-full bg-amber-400 animate-pulse" />
-                                  Run Shot Direction
-                                </span>
-                              )}
                             </TabsTrigger>
                             <TabsTrigger value="beats" title="Dialogue, narration, and sound effects for each shot" className={sceneTabTriggerClass}>
                               <FileText className="w-3.5 h-3.5 shrink-0" />
@@ -7301,14 +7109,6 @@ function SceneCard({
                       locationReferences={locationReferences}
                       objectReferences={objectReferences}
                       projectId={projectId}
-                      onRunShotDirector={
-                        projectId && onScriptChange && sceneBeatsForTabs.length > 0
-                          ? () => void runShotDirectionAgent()
-                          : undefined
-                      }
-                      shotDirectorProgress={shotDirectionProgress}
-                      shotDirectorRunning={shotDirectionRunning}
-                      disabledShotDirector={isExpressAudioRunning || !!isExpressRunning}
                     />
                   </TabsContent>
                   )}

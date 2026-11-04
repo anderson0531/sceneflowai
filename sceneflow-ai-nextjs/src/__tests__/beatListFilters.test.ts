@@ -382,10 +382,10 @@ describe('clip failure tooltip', () => {
 
   it('provides action-needed tooltips for shot indicators across Direction, Audio, Frames, and Video tabs', () => {
     expect(directionRailTooltip({ status: 'attention', label: 'Prompt changed' })).toContain(
-      'Shot Direction Agent'
+      'Shot Director'
     )
     expect(directionRailTooltip({ status: 'action', label: 'No direction' })).toContain(
-      'Shot Direction Agent'
+      'Shot Director'
     )
     expect(
       beatRailTooltip({

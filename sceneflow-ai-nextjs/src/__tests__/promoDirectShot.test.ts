@@ -117,7 +117,7 @@ describe('policy-blocked promo shots', () => {
   it('wires the promo row to the scene card through the vision page', () => {
     const tab = read('src/components/publishing/PublishingPromoTab.tsx')
     expect(tab).toContain('onOpenDirectShot')
-    expect(tab).toContain('Direct Shot')
+    expect(tab).toContain('Shot Director')
     const page = read('src/app/dashboard/workflow/vision/[projectId]/page.tsx')
     expect(page).toContain('setPendingDirectShot(target)')
     expect(page).toContain("setProductionViewWithUrl('studio')")
@@ -286,19 +286,21 @@ describe('Shot Direction Agent', () => {
     expect(read('src/components/vision/BeatDirectionEditor.tsx')).toContain(
       'saveDirectorPatchToScenes({'
     )
+    expect(read('src/components/vision/BeatDirectionEditor.tsx')).toContain('Shot Director')
     const panel = read('src/components/vision/ScriptPanel.tsx')
-    expect(panel).toContain('requestSceneShotDirection({')
-    expect(panel).toContain('force: true')
-    expect(panel).toContain('Shot Direction Agent')
+    expect(panel).toContain('Scene Director')
+    expect(panel).not.toContain('Shot Direction Agent')
     expect(read('src/lib/vision/scriptInceptionFollowups.ts')).toContain(
       '/api/vision/direct-scene-shots'
     )
   })
 
   it('keeps its name out of machine translation', () => {
-    expect(GLOSSARY_TERMS).toContain('Shot Direction Agent')
-    const { protectedText } = protectGlossary('Run Shot Direction Agent before Stills Agent.')
-    expect(protectedText).not.toContain('Shot Direction Agent')
+    expect(GLOSSARY_TERMS).toContain('Scene Director')
+    expect(GLOSSARY_TERMS).toContain('Shot Director')
+    const { protectedText } = protectGlossary('Use Scene Director or Shot Director before Stills Agent.')
+    expect(protectedText).not.toContain('Scene Director')
+    expect(protectedText).not.toContain('Shot Director')
     expect(protectedText).not.toContain('Stills Agent')
   })
 })

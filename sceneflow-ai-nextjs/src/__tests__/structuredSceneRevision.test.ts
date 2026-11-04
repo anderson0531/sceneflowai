@@ -1,7 +1,10 @@
 import { readFileSync } from 'fs'
 import { join } from 'path'
 import { describe, expect, it } from 'vitest'
-import { finalizeStructuredRevisedScene } from '@/lib/script/structuredSceneRevision'
+import {
+  finalizeStructuredRevisedScene,
+  invalidateChangedBeatFramesOnScene,
+} from '@/lib/script/structuredSceneRevision'
 import { buildRevisionBeatVolumeBlock } from '@/lib/script/scriptCraftPrompt'
 import { SCENE_OPTIMIZATION_TEMPLATES } from '@/lib/constants/scene-optimization'
 import { MAX_BEATS_PER_SCENE, TARGET_BEATS_PER_SCENE } from '@/lib/script/sceneDecomposition'
@@ -198,6 +201,49 @@ describe('revise-scene beat volume prompt', () => {
     expect(source).toMatch(/Keep unaffected beats intact/i)
     expect(source).toMatch(/Never make the scene light on storytelling/i)
     expect(source).toContain('minimum ${currentBeats.length} beats')
+  })
+
+  it('composes still prompts and direction keys directly during Scene Director revision so no second pass is needed', () => {
+    const originalScene = {
+      heading: 'INT. VAULT - NIGHT',
+      beats: [
+        {
+          beatId: 'b1',
+          kind: 'action' as const,
+          sequenceIndex: 0,
+          actionDescription: 'Old action.',
+          storyboardImageUrl: 'https://example.com/old.png',
+        },
+      ],
+    }
+    const revised = finalizeStructuredRevisedScene(
+      {
+        beats: [
+          {
+            beatId: 'b1',
+            kind: 'action',
+            actionDescription: 'Elara unlocks the brass vault door.',
+            beatDirection: {
+              castInFrame: ['ELARA'],
+              shotType: 'Medium Close-Up',
+              cameraAngle: 'Eye-Level',
+              cameraMovement: 'Slow push-in',
+              blocking: 'Elara turns the heavy brass wheel with both hands',
+              frozenMoment: 'Elara gripping the brass vault wheel mid-turn.',
+              transition: 'CUT',
+            },
+          },
+        ],
+      },
+      originalScene,
+      [],
+      {}
+    )
+    const invalidated = invalidateChangedBeatFramesOnScene(revised, originalScene)
+    const [beat] = getSceneBeats(invalidated)
+    expect(beat.storyboardImageUrl).toBeUndefined()
+    expect(beat.storyboardImagePrompt).toContain('Elara gripping the brass vault wheel mid-turn')
+    expect(beat.storyboardImagePromptDirectionKey).toBeTruthy()
   })
 })
 

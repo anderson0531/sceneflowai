@@ -28,6 +28,8 @@ export const GLOSSARY_TERMS = [
   'Intelligent Assistant Director',
   'FlowDirector',
   'Co-Director',
+  'Scene Director',
+  'Shot Director',
   'Screening Room',
   'Reference Library',
   'Final Cut',

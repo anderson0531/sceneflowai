@@ -428,6 +428,8 @@ export function finalizeStructuredRevisedScene(
     })
   }
 
+  beats = beats.map((beat) => syncBeatStillPromptToDirection(beat, { force: true }))
+
   let finalScene = applyBeatsToScene(currentScene, beats)
   finalScene = enforceRevisionBeatCount(finalScene, beats, 'finalizeStructuredRevisedScene')
 
@@ -524,7 +526,7 @@ export function invalidateChangedBeatFramesOnScene(
     const prior = priorFingerprints.get(beat.beatId)
     const next = beatContentFingerprint(beat)
     if (prior === undefined || prior !== next) {
-      return clearBeatStoryboardFrames(beat)
+      return syncBeatStillPromptToDirection(clearBeatStoryboardFrames(beat), { force: true })
     }
     return syncBeatStillPromptToDirection(beat)
   })

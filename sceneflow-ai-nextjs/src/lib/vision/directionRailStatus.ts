@@ -54,9 +54,9 @@ export function directionRailTooltip(rail: {
 }): string {
   switch (rail.label) {
     case 'No direction':
-      return 'Action needed: No shot direction yet — run Shot Direction Agent or click Direct Shot to direct this shot.'
+      return 'Action needed: No shot direction yet — use Shot Director or Scene Director to direct this shot.'
     case 'Prompt changed':
-      return 'Action needed: Shot direction changed after prompts were composed — run Shot Direction Agent (highlighted in yellow) or click Direct Shot to update this shot.'
+      return 'Action needed: Shot direction changed after prompts were composed — use Shot Director to update this shot.'
     default:
       return 'Shot direction and prompts are in sync.'
   }

@@ -1228,7 +1228,7 @@ export function PublishingPromoTab({
                         size="sm"
                         variant="ghost"
                         className="h-7 shrink-0 gap-1 px-2 text-[10px] text-teal-200 hover:text-teal-100"
-                        title="Open this shot in Direct Shot to rewrite its direction"
+                        title="Open this shot in Shot Director to rewrite its direction"
                         onClick={() =>
                           onOpenDirectShot({
                             sceneId: beat.sceneId,
@@ -1239,7 +1239,7 @@ export function PublishingPromoTab({
                         }
                       >
                         <Clapperboard className="h-3 w-3" />
-                        Direct Shot
+                        Shot Director
                       </Button>
                     ) : null}
                     {onOptimizeDirection &&

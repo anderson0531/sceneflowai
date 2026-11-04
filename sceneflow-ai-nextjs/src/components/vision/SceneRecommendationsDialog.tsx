@@ -303,131 +303,94 @@ export function SceneRecommendationsDialog({
             )}
           </section>
 
+          {polishAnalysis && pendingPolish.length > 0 && (
           <section className="space-y-3 border-t border-gray-700/50 pt-4">
             <div className="flex items-center gap-2">
               <Sparkles className="w-4 h-4 text-emerald-300" />
               <h3 className="text-sm font-semibold text-emerald-200">{t('polishRecommendations')}</h3>
             </div>
 
-            {isPolishing && (
-              <p className="text-xs text-emerald-300 flex items-center gap-2">
-                <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                {t('polishAnalyzing')}
-              </p>
+            {polishAnalysis.notes && (
+              <div className="p-3 bg-gray-800/40 rounded-lg border-l-2 border-emerald-500/50">
+                <p className="text-xs text-gray-300 leading-relaxed italic">"{polishAnalysis.notes}"</p>
+              </div>
             )}
 
-            {polishAnalysis ? (
-              <>
-                {polishAnalysis.notes && (
-                  <div className="p-3 bg-gray-800/40 rounded-lg border-l-2 border-emerald-500/50">
-                    <p className="text-xs text-gray-300 leading-relaxed italic">"{polishAnalysis.notes}"</p>
-                  </div>
-                )}
-
-                {pendingPolish.length > 0 && (
-                  <ul className="space-y-2">
-                    {pendingPolish.map((rec, rIdx) => {
-                      const recId = rec.id || recommendationId(rec, rIdx)
-                      return (
-                        <li
-                          key={recId}
-                          className="text-xs text-gray-300 flex gap-3 p-2.5 rounded-lg border bg-gray-800/40 border-gray-700/30"
-                        >
-                          <button
-                            type="button"
-                            onClick={() => onTogglePolishRecommendation?.(sceneIndex, recId, true)}
-                            className="flex-shrink-0 mt-0.5 text-gray-400 hover:text-white"
-                            aria-label="Mark fix applied"
-                            aria-pressed={false}
+            <ul className="space-y-2">
+              {pendingPolish.map((rec, rIdx) => {
+                const recId = rec.id || recommendationId(rec, rIdx)
+                return (
+                  <li
+                    key={recId}
+                    className="text-xs text-gray-300 flex gap-3 p-2.5 rounded-lg border bg-gray-800/40 border-gray-700/30"
+                  >
+                    <button
+                      type="button"
+                      onClick={() => onTogglePolishRecommendation?.(sceneIndex, recId, true)}
+                      className="flex-shrink-0 mt-0.5 text-gray-400 hover:text-white"
+                      aria-label="Mark fix applied"
+                      aria-pressed={false}
+                    >
+                      <Square className="w-4 h-4" />
+                    </button>
+                    <div className="flex-1 min-w-0">
+                      <span className="leading-relaxed">
+                        {rec.text}
+                      </span>
+                      <div className="flex items-center gap-1.5 mt-1.5 flex-wrap">
+                        {(Array.isArray(rec.beatIndices) ? rec.beatIndices : []).map((n) => (
+                          <span
+                            key={`${recId}-beat-${n}`}
+                            className="inline-flex items-center text-[9px] font-semibold px-1.5 py-0.5 rounded uppercase tracking-wider bg-emerald-500/20 text-emerald-200 border border-emerald-500/30"
                           >
-                            <Square className="w-4 h-4" />
-                          </button>
-                          <div className="flex-1 min-w-0">
-                            <span className="leading-relaxed">
-                              {rec.text}
-                            </span>
-                            <div className="flex items-center gap-1.5 mt-1.5 flex-wrap">
-                              {(Array.isArray(rec.beatIndices) ? rec.beatIndices : []).map((n) => (
-                                <span
-                                  key={`${recId}-beat-${n}`}
-                                  className="inline-flex items-center text-[9px] font-semibold px-1.5 py-0.5 rounded uppercase tracking-wider bg-emerald-500/20 text-emerald-200 border border-emerald-500/30"
-                                >
-                                  {t('polishBeat', { number: n })}
-                                </span>
-                              ))}
-                              <span
-                                className={`inline-flex items-center text-[9px] font-semibold px-1.5 py-0.5 rounded uppercase tracking-wider ${
-                                  rec.priority === 'high'
-                                    ? 'bg-red-500/20 text-red-300 border border-red-500/30'
-                                    : rec.priority === 'medium'
-                                      ? 'bg-amber-500/20 text-amber-300 border border-amber-500/30'
-                                      : 'bg-blue-500/20 text-blue-300 border border-blue-500/30'
-                                }`}
-                              >
-                                {rec.priority}
-                              </span>
-                              {rec.category && (
-                                <span className="inline-flex items-center text-[9px] font-medium px-1.5 py-0.5 rounded bg-gray-700/50 text-gray-400 border border-gray-600/30">
-                                  {(POLISH_CATEGORIES as readonly string[]).includes(rec.category)
-                                    ? t(`polishCategory.${rec.category as PolishCategory}`)
-                                    : rec.category}
-                                </span>
-                              )}
-                            </div>
-                            {rec.reason && <p className="text-[11px] text-gray-500 mt-1.5">{rec.reason}</p>}
-                          </div>
-                        </li>
-                      )
-                    })}
-                  </ul>
-                )}
+                            {t('polishBeat', { number: n })}
+                          </span>
+                        ))}
+                        <span
+                          className={`inline-flex items-center text-[9px] font-semibold px-1.5 py-0.5 rounded uppercase tracking-wider ${
+                            rec.priority === 'high'
+                              ? 'bg-red-500/20 text-red-300 border border-red-500/30'
+                              : rec.priority === 'medium'
+                                ? 'bg-amber-500/20 text-amber-300 border border-amber-500/30'
+                                : 'bg-blue-500/20 text-blue-300 border border-blue-500/30'
+                          }`}
+                        >
+                          {rec.priority}
+                        </span>
+                        {rec.category && (
+                          <span className="inline-flex items-center text-[9px] font-medium px-1.5 py-0.5 rounded bg-gray-700/50 text-gray-400 border border-gray-600/30">
+                            {(POLISH_CATEGORIES as readonly string[]).includes(rec.category)
+                              ? t(`polishCategory.${rec.category as PolishCategory}`)
+                              : rec.category}
+                          </span>
+                        )}
+                      </div>
+                      {rec.reason && <p className="text-[11px] text-gray-500 mt-1.5">{rec.reason}</p>}
+                    </div>
+                  </li>
+                )
+              })}
+            </ul>
 
-                <div className="flex items-center gap-3 pt-1">
-                  {onEditWithPolishRecommendations && pendingPolish.length > 0 && (
-                    <Button
-                      size="sm"
-                      onClick={() =>
-                        onEditWithPolishRecommendations(
-                          sceneIndex,
-                          pendingPolish.map((rec) => rec.text)
-                        )
-                      }
-                      className="h-8 text-xs bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white rounded-lg"
-                    >
-                      <Pencil className="w-3.5 h-3.5 mr-1.5" />
-                      Scene Director &amp; Apply
-                    </Button>
-                  )}
-                  {onEditScene && pendingPolish.length === 0 && (
-                    <Button
-                      size="sm"
-                      onClick={() => onEditScene(sceneIndex)}
-                      className="h-8 text-xs bg-gray-700 hover:bg-gray-600 text-white rounded-lg"
-                    >
-                      <Pencil className="w-3.5 h-3.5 mr-1.5" />
-                      Scene Director
-                    </Button>
-                  )}
-                </div>
-              </>
-            ) : (
-              !isPolishing && (
-                <div className="rounded-lg border border-gray-700/50 bg-gray-800/40 p-3 flex items-center gap-3">
-                  <p className="text-xs text-gray-400 flex-1">{t('recommendationsPolishEmpty')}</p>
-                  {onPolish && (
-                    <Button
-                      size="sm"
-                      onClick={() => void onPolish(sceneIndex)}
-                      className="h-8 text-xs bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg"
-                    >
-                      <Sparkles className="w-3.5 h-3.5 mr-1.5" />
-                      {t('polish')}
-                    </Button>
-                  )}
-                </div>
-              )
-            )}
+            <div className="flex items-center gap-3 pt-1">
+              {onEditWithPolishRecommendations && (
+                <Button
+                  size="sm"
+                  onClick={() =>
+                    onEditWithPolishRecommendations(
+                      sceneIndex,
+                      pendingPolish.map((rec) => rec.text)
+                    )
+                  }
+                  className="h-8 text-xs bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white rounded-lg"
+                >
+                  <Pencil className="w-3.5 h-3.5 mr-1.5" />
+                  Scene Director &amp; Apply
+                </Button>
+              )}
+            </div>
           </section>
+          )}
         </div>
       </DialogContent>
     </Dialog>

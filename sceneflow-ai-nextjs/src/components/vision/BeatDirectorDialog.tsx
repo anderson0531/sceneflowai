@@ -224,7 +224,7 @@ export function BeatDirectorDialog({
       <DialogContent className="flex w-[min(48rem,calc(100vw-2rem))] max-w-none min-w-0 max-h-[90vh] flex-col gap-3 overflow-x-hidden overflow-y-auto bg-slate-900 border-slate-700 text-slate-100">
         <DialogTitle className="flex min-w-0 items-center gap-2 break-words text-base font-semibold text-white">
           <Clapperboard className="h-4 w-4 shrink-0 text-teal-400" />
-          Direct Shot · Scene {sceneNumber} · Shot {beat.sequenceIndex + 1}
+          Shot Director · Scene {sceneNumber} · Shot {beat.sequenceIndex + 1}
         </DialogTitle>
         <DialogDescription className="min-w-0 break-words text-sm text-slate-400">
           Type or dictate how this shot should be directed. Preview the direction, then save it.

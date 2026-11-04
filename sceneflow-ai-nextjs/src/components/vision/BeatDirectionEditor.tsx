@@ -437,7 +437,7 @@ export function BeatDirectionEditor({
       onClick={() => setDirectorOpen(true)}
     >
       <Clapperboard className="w-3.5 h-3.5" />
-      Direct Shot
+      Shot Director
     </button>
   )
 
@@ -528,7 +528,7 @@ export function BeatDirectionEditor({
             <p className="text-sm leading-relaxed text-slate-200">{beatProse}</p>
           ) : !hasStructuredDirection ? (
             <p className="text-sm leading-relaxed text-slate-400">
-              No direction yet. Use Direct Shot to describe the shot.
+              No direction yet. Use Shot Director to describe the shot.
             </p>
           ) : null}
 

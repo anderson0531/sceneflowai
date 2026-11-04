@@ -167,39 +167,6 @@ export function SceneDirectionWorkbench({
                 <span className="text-[11px] text-slate-400 tabular-nums">
                   {readyShotCount}/{beats.length} shots directed
                 </span>
-                {onRunShotDirector && (
-                  <button
-                    type="button"
-                    disabled={disabledShotDirector || shotDirectorRunning}
-                    onClick={onRunShotDirector}
-                    title={
-                      hasAttentionShots
-                        ? 'Action needed: One or more shots have "Prompt changed" — run Shot Direction Agent to refresh shot direction and prompts'
-                        : 'Direct all shots in this scene for cohesive shot flow, camera progression, blocking, and still/clip prompts'
-                    }
-                    className={
-                      hasAttentionShots
-                        ? 'inline-flex h-7 items-center gap-1.5 rounded-md border border-amber-400/80 bg-amber-500/20 px-2.5 text-xs font-medium text-amber-200 ring-1 ring-amber-400/35 transition-colors hover:bg-amber-500/30 hover:text-amber-100 disabled:cursor-not-allowed disabled:opacity-50'
-                        : 'inline-flex h-7 items-center gap-1.5 rounded-md border border-teal-500/60 bg-teal-500/15 px-2.5 text-xs font-medium text-teal-200 transition-colors hover:bg-teal-500/25 hover:text-white disabled:cursor-not-allowed disabled:opacity-50'
-                    }
-                  >
-                    {shotDirectorProgress || shotDirectorRunning ? (
-                      <>
-                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                        <span>
-                          {shotDirectorProgress
-                            ? `Directing Shots ${shotDirectorProgress.done}/${shotDirectorProgress.total}`
-                            : 'Directing Shots...'}
-                        </span>
-                      </>
-                    ) : (
-                      <>
-                        <Clapperboard className="h-3.5 w-3.5" />
-                        <span>Shot Direction Agent</span>
-                      </>
-                    )}
-                  </button>
-                )}
               </div>
             )}
           </div>

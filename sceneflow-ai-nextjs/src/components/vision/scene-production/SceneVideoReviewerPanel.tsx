@@ -1440,7 +1440,7 @@ export function SceneVideoReviewerPanel({
                         className="inline-flex items-center gap-1 rounded border border-teal-700/70 bg-teal-950/50 px-2 py-0.5 text-[11px] text-teal-200 hover:bg-teal-900/50"
                       >
                         <Clapperboard className="h-3 w-3" />
-                        Direct Shot #{selectedShotAssessment.shotNumber}
+                        Shot Director #{selectedShotAssessment.shotNumber}
                       </button>
                     )}
                   </div>
@@ -1922,7 +1922,7 @@ export function SceneVideoReviewerPanel({
                                   className="inline-flex items-center gap-1 rounded border border-slate-700 bg-slate-900 px-2 py-1 text-[10px] text-slate-300 hover:bg-slate-800 hover:text-white"
                                 >
                                   <Target className="h-3 w-3 text-teal-400" />
-                                  Open in Direct Shot…
+                                  Open in Shot Director…
                                 </button>
                               )}
                             </>
