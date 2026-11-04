@@ -10,7 +10,7 @@
 import { optimizeTextForTTS } from '../../lib/tts/textOptimizer'
 import { resolveDialogueTtsVoice, isNarratorDialogueSpeaker } from '../../lib/character/dialogueTtsVoice'
 import { getEdgeVoiceConfigForResolution } from '../../lib/tts/edgeTtsVoices'
-import { resolveSfxDuration } from '../../lib/elevenlabs/sfxDuration'
+import { resolveVeoSfxDuration } from '../../lib/sfx/veoSfxDuration'
 import { getBatchNarrationTtsText, sceneHasNarratorInDialogue } from '../../lib/script/narration'
 import { processWithConcurrency } from '../utils/concurrent-processor'
 import { isRetryableError } from '../utils/retry'
@@ -156,7 +156,7 @@ async function generateSfxForCue(
       sfxIdx,
       sfxId
     )
-    const durationSeconds = resolveSfxDuration({
+    const durationSeconds = resolveVeoSfxDuration({
       segmentDurationSeconds,
       override: 'auto',
     })
@@ -173,6 +173,7 @@ async function generateSfxForCue(
         sfxIndex: sfxIdx,
         text: description,
         durationSeconds,
+        promptMode: 'actionBeat',
       }),
       ...(signal ? { signal } : {}),
     })

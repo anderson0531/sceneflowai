@@ -36,10 +36,8 @@ import { ResetSegmentsConfirmDialog } from './scene-production/ResetSegmentsConf
 import { SegmentList } from './scene-production/SegmentList'
 import type { ScriptSegment } from '@/lib/script/segmentTypes'
 import type { LocationReference, VisualReference } from '@/types/visionReferences'
-import {
-  resolveSfxDuration,
-  type SfxDurationOverride,
-} from '@/lib/elevenlabs/sfxDuration'
+import type { SfxDurationOverride } from '@/lib/elevenlabs/sfxDuration'
+import { resolveVeoSfxDuration } from '@/lib/sfx/veoSfxDuration'
 import { dispatchExpressElevenLabsSfx } from '@/lib/sfx/clientExpressVeoSfx'
 import { listSelectableActionBeats } from '@/lib/sfx/resolveExpressVeoSfxItems'
 import { type ExpressBeatSfxStatus } from '@/components/vision/ActionBeatSfxControls'
@@ -2612,7 +2610,8 @@ export function ScriptPanel({ script, onScriptChange, onAudioSlotSaved, isGenera
         body: JSON.stringify({
           projectId,
           text: description,
-          durationSeconds: resolveSfxDuration({ override: 'auto' }),
+          durationSeconds: resolveVeoSfxDuration({ override: 'auto' }),
+          promptMode: 'actionBeat',
         }),
       })
       if (!response.ok) {
@@ -5449,7 +5448,7 @@ function SceneCard({
               setExpressBeatStatus((prev) => ({ ...prev, [beatId]: 'running' }))
               markItem(`sfx-${beatId}`, 'running')
             },
-            onItemDone: async ({ beatId, sfxIndex, url }) => {
+            onItemDone: async ({ beatId, sfxIndex, url, attribution }) => {
               setExpressBeatStatus((prev) => ({ ...prev, [beatId]: 'done' }))
               markItem(`sfx-${beatId}`, 'done')
               const beat = getSceneBeats(scene).find((entry) => entry.beatId === beatId)
@@ -5458,7 +5457,7 @@ function SceneCard({
                 'sfx',
                 url,
                 sfxIndex,
-                null,
+                attribution ?? null,
                 beat
                   ? { beatId, beatDescription: audioSourceFingerprintForSfxBeat(beat) }
                   : undefined

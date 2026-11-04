@@ -1,5 +1,8 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { readFileSync } from 'fs'
+import path from 'path'
 import { VIDEO_CREDITS } from '@/lib/credits/creditCosts'
+import { resolveSfxDuration } from '@/lib/elevenlabs/sfxDuration'
 import {
   beatHasSfxAudio,
   listSelectableActionBeats,
@@ -175,5 +178,28 @@ describe('runExpressVeoSfx', () => {
     expect(events).toContain('start')
     expect(events.filter((type) => type === 'item-done')).toHaveLength(2)
     expect(events).toContain('complete')
+  })
+})
+
+describe('Veo 3.1 Lite SFX route and duration alignment', () => {
+  it('routes /api/tts/elevenlabs/sound-effects through generateVeoSfxAudio instead of ElevenLabs API', () => {
+    const routeSource = readFileSync(
+      path.join(process.cwd(), 'src/app/api/tts/elevenlabs/sound-effects/route.ts'),
+      'utf8'
+    )
+    expect(routeSource).toContain('generateVeoSfxAudio')
+    expect(routeSource).not.toContain('generateElevenLabsSfx')
+    expect(routeSource).toContain('VIDEO_CREDITS.VEO_LITE')
+    expect(routeSource).toContain('maxDuration = 300')
+  })
+
+  it('snaps legacy resolveSfxDuration presets to Veo 3.1 Lite clip lengths (4s / 6s / 8s, default 8s)', () => {
+    expect(resolveSfxDuration()).toBe(8)
+    expect(resolveSfxDuration({ override: 'short' })).toBe(4)
+    expect(resolveSfxDuration({ override: 'medium' })).toBe(8)
+    expect(resolveSfxDuration({ override: 'long' })).toBe(8)
+    expect(resolveSfxDuration({ segmentDurationSeconds: 3, override: 'auto' })).toBe(4)
+    expect(resolveSfxDuration({ segmentDurationSeconds: 6, override: 'auto' })).toBe(6)
+    expect(resolveSfxDuration({ segmentDurationSeconds: 8, override: 'auto' })).toBe(8)
   })
 })

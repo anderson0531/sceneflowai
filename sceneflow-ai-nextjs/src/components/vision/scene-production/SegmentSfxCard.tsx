@@ -18,11 +18,12 @@ import {
 import { requestShotClipMp3Extraction } from '@/lib/audio/extractAndApplyShotClipAudio'
 import { getSceneBeats } from '@/lib/script/beatMigration'
 import type { SegmentSFX } from '@/lib/script/segmentTypes'
+import type { SfxDurationOverride } from '@/lib/elevenlabs/sfxDuration'
 import {
-  resolveAutoSfxDuration,
-  resolveSfxDuration,
-  type SfxDurationOverride,
-} from '@/lib/elevenlabs/sfxDuration'
+  resolveAutoVeoSfxDuration,
+  resolveVeoSfxDuration,
+} from '@/lib/sfx/veoSfxDuration'
+import { VIDEO_CREDITS } from '@/lib/credits/creditCosts'
 /**
  * One SFX cue inside a segment. The cue's description is used to drive
  * ElevenLabs sound-generation; the resulting
@@ -83,7 +84,7 @@ export function SegmentSfxCard({
   const [isExtractingClipAudio, setIsExtractingClipAudio] = useState(false)
   const [isUploadingAudio, setIsUploadingAudio] = useState(false)
   const [durationPreset, setDurationPreset] = useState<SfxDurationOverride>('auto')
-  const autoSeconds = resolveAutoSfxDuration(segmentDurationSeconds)
+  const autoSeconds = resolveAutoVeoSfxDuration(segmentDurationSeconds)
   const isGenerating = isGeneratingElevenLabs || isExtractingClipAudio || isUploadingAudio
 
   const legacyIdx = sfx.legacyIndex
@@ -169,9 +170,9 @@ export function SegmentSfxCard({
     }
 
     setIsGeneratingElevenLabs(true)
-    const toastId = toast.loading(audioUrl ? 'Re-generating SFX...' : 'Generating SFX...')
+    const toastId = toast.loading(audioUrl ? 'Re-generating SFX (Veo 3.1 Lite)...' : 'Generating SFX (Veo 3.1 Lite)...')
     try {
-      const durationSeconds = resolveSfxDuration({
+      const durationSeconds = resolveVeoSfxDuration({
         segmentDurationSeconds,
         override: durationPreset,
       })
@@ -184,6 +185,7 @@ export function SegmentSfxCard({
           sfxIndex: legacyIdx,
           text: description,
           durationSeconds,
+          promptMode: sourceBeat?.kind === 'action' ? 'actionBeat' : 'ambient',
         }),
       })
 
@@ -214,7 +216,7 @@ export function SegmentSfxCard({
         throw new Error('SFX response missing audio URL')
       }
 
-      await onSaveSfxAudio?.(sceneIdx, 'sfx', url, legacyIdx, null, {
+      await onSaveSfxAudio?.(sceneIdx, 'sfx', url, legacyIdx, data.attribution ?? null, {
         ...(sourceBeat?.beatId ? { beatId: sourceBeat.beatId } : {}),
         beatDescription: description,
       })
@@ -309,7 +311,7 @@ export function SegmentSfxCard({
               void dispatchGenerateElevenLabs()
             }}
             disabled={isGenerating}
-            title="Short clip via ElevenLabs (~15 credits)"
+            title={`Cinematic clip via Veo 3.1 Lite (~${VIDEO_CREDITS.VEO_LITE} credits)`}
           >
             {isGeneratingElevenLabs ? (
               <>
@@ -333,7 +335,7 @@ export function SegmentSfxCard({
       />
       <div className="text-sm text-gray-700 dark:text-gray-300 italic">{sfx.description}</div>
       <DialogueQualityToggle
-        lofiTitle="ElevenLabs sound effect"
+        lofiTitle="Veo 3.1 Lite sound effect"
         disabled={isGenerating}
         lofiDisabled={!sfxPrompt}
         hasClip={!!clipUrl}
@@ -402,9 +404,9 @@ function DurationPresetChips({
 }: DurationPresetChipsProps) {
   const chips: Array<{ id: SfxDurationOverride; label: string }> = [
     { id: 'auto', label: `Auto (${formatSeconds(autoSeconds)}s)` },
-    { id: 'short', label: 'Short 3s' },
+    { id: 'short', label: 'Short 4s' },
     { id: 'medium', label: 'Medium 8s' },
-    { id: 'long', label: 'Long 15s' },
+    { id: 'long', label: 'Long 8s' },
   ]
   return (
     <div className="flex flex-wrap items-center gap-1.5 mb-2">

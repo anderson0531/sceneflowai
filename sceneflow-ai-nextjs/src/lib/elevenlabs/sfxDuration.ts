@@ -19,14 +19,14 @@
 
 export type SfxDurationOverride = 'auto' | 'short' | 'medium' | 'long'
 
-export const SFX_DURATION_MIN = 0.5
-export const SFX_DURATION_MAX = 22
+export const SFX_DURATION_MIN = 4
+export const SFX_DURATION_MAX = 8
 const FALLBACK_SECONDS = 8
 
 export const SFX_PRESET_SECONDS: Record<Exclude<SfxDurationOverride, 'auto'>, number> = {
-  short: 3,
+  short: 4,
   medium: 8,
-  long: 15,
+  long: 8,
 }
 
 export interface ResolveSfxDurationParams {
@@ -37,8 +37,8 @@ export interface ResolveSfxDurationParams {
 }
 
 /**
- * Returns the duration (seconds) to send to ElevenLabs `sound-generation`,
- * always clamped to the API's accepted range.
+ * Returns the duration (seconds) for SFX generation, snapped to Veo 3.1 Lite
+ * clip durations (4 | 6 | 8, defaulting to 8s).
  */
 export function resolveSfxDuration(params: ResolveSfxDurationParams = {}): number {
   const { segmentDurationSeconds, override = 'auto' } = params
@@ -59,18 +59,19 @@ export function resolveSfxDuration(params: ResolveSfxDurationParams = {}): numbe
 
 /**
  * Returns the duration that "Auto" would resolve to for a given segment, used
- * by the UI to render labels like `Auto (10s)`.
+ * by the UI to render labels like `Auto (8s)`.
  */
 export function resolveAutoSfxDuration(segmentDurationSeconds?: number): number {
   return resolveSfxDuration({ segmentDurationSeconds, override: 'auto' })
 }
 
 /**
- * Clamp an arbitrary number to the ElevenLabs-accepted SFX duration range,
- * rounding to one decimal place to match the API's expected granularity.
+ * Snap an arbitrary number to the Veo 3.1 Lite SFX clip durations (4 | 6 | 8s).
  */
 export function clampSfxDuration(value: number): number {
-  if (!Number.isFinite(value)) return FALLBACK_SECONDS
+  if (!Number.isFinite(value) || value <= 0) return FALLBACK_SECONDS
   const clamped = Math.min(SFX_DURATION_MAX, Math.max(SFX_DURATION_MIN, value))
-  return Math.round(clamped * 10) / 10
+  if (clamped <= 5) return 4
+  if (clamped <= 7) return 6
+  return 8
 }

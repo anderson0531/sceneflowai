@@ -1,8 +1,9 @@
 import { toast } from 'sonner'
 import { VIDEO_CREDITS } from '@/lib/credits/creditCosts'
 import type { SfxDurationOverride } from '@/lib/elevenlabs/sfxDuration'
-import { resolveSfxDuration } from '@/lib/elevenlabs/sfxDuration'
+import type { ExpressVeoSfxAttribution } from '@/lib/sfx/expressVeoSfxTypes'
 import { resolveExpressVeoSfxItems } from '@/lib/sfx/resolveExpressVeoSfxItems'
+import { resolveVeoSfxDuration } from '@/lib/sfx/veoSfxDuration'
 import { CONCURRENCY_DEFAULTS, processWithConcurrency } from '@/lib/utils/concurrent-processor'
 
 export interface DispatchExpressVeoSfxResult {
@@ -23,7 +24,12 @@ export async function dispatchExpressElevenLabsSfx(params: {
   durationOverride?: SfxDurationOverride
   regenerate?: boolean
   onItemStart?: (beatId: string) => void
-  onItemDone?: (payload: { beatId: string; sfxIndex: number; url: string }) => void | Promise<void>
+  onItemDone?: (payload: {
+    beatId: string
+    sfxIndex: number
+    url: string
+    attribution?: ExpressVeoSfxAttribution | null
+  }) => void | Promise<void>
   onItemError?: (beatId: string, error: string) => void
 }): Promise<DispatchExpressVeoSfxResult> {
   const resolved = resolveExpressVeoSfxItems(params.scene, params.beatIds, {
@@ -32,14 +38,14 @@ export async function dispatchExpressElevenLabsSfx(params: {
   if (resolved.errors.length > 0) {
     throw new Error(resolved.errors.join('; '))
   }
-  const durationSeconds = resolveSfxDuration({
+  const durationSeconds = resolveVeoSfxDuration({
     segmentDurationSeconds: params.segmentDurationSeconds,
     override: params.durationOverride ?? 'auto',
   })
   let success = 0
   let failed = 0
   const toastId = toast.loading(
-    `ElevenLabs sound effects: starting ${resolved.items.length} shot${resolved.items.length === 1 ? '' : 's'}...`
+    `Sound effects (Veo 3.1 Lite): starting ${resolved.items.length} shot${resolved.items.length === 1 ? '' : 's'}...`
   )
   const tasks = resolved.items.map((item) => ({
     id: item.beatId,
@@ -55,6 +61,7 @@ export async function dispatchExpressElevenLabsSfx(params: {
             sfxIndex: item.sfxIndex,
             text: item.text,
             durationSeconds,
+            promptMode: item.promptMode,
           }),
         })
         if (!response.ok) {
@@ -63,9 +70,19 @@ export async function dispatchExpressElevenLabsSfx(params: {
         }
         const data = await response.json()
         if (!data?.url) throw new Error('Sound effect response missing audio URL')
-        await params.onItemDone?.({ beatId: item.beatId, sfxIndex: item.sfxIndex, url: data.url })
+        await params.onItemDone?.({
+          beatId: item.beatId,
+          sfxIndex: item.sfxIndex,
+          url: data.url,
+          attribution: data.attribution ?? {
+            source: 'veo',
+            clipDurationSeconds: data.clipDurationSeconds ?? durationSeconds,
+            veoQuality: 'lite',
+            promptMode: 'actionBeat',
+          },
+        })
         success++
-        toast.loading(`ElevenLabs sound effects: ${success}/${resolved.items.length} complete`, {
+        toast.loading(`Sound effects (Veo 3.1 Lite): ${success}/${resolved.items.length} complete`, {
           id: toastId,
         })
       } catch (error) {
@@ -76,11 +93,13 @@ export async function dispatchExpressElevenLabsSfx(params: {
   }))
   await processWithConcurrency(tasks, CONCURRENCY_DEFAULTS.AUDIO_GENERATION, undefined, false)
   if (success > 0 && failed === 0) {
-    toast.success(`ElevenLabs sound effects complete (${success}).`, { id: toastId })
+    toast.success(`Sound effects complete (${success}).`, { id: toastId })
   } else if (failed > 0) {
-    toast.error(`ElevenLabs sound effects: ${success} succeeded, ${failed} failed.`, { id: toastId })
+    toast.error(`Sound effects: ${success} succeeded, ${failed} failed.`, { id: toastId })
   } else {
     toast.dismiss(toastId)
   }
   return { success, failed, skipped: resolved.skipped.length }
 }
+
+export const dispatchExpressVeoSfx = dispatchExpressElevenLabsSfx

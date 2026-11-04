@@ -6,7 +6,8 @@ import { BeatAudioStatusBadge } from '@/components/vision/BeatAudioStatusBadge'
 import { DialogueQualityToggle } from '@/components/vision/DialogueQualityToggle'
 import { toast } from 'sonner'
 import type { SfxDurationOverride } from '@/lib/elevenlabs/sfxDuration'
-import { resolveAutoSfxDuration, resolveSfxDuration } from '@/lib/elevenlabs/sfxDuration'
+import { resolveAutoVeoSfxDuration, resolveVeoSfxDuration } from '@/lib/sfx/veoSfxDuration'
+import { VIDEO_CREDITS } from '@/lib/credits/creditCosts'
 import { saveAudioFile } from '@/lib/download/saveFile'
 import { distinctSfxCue } from '@/lib/audio/shotSfxTag'
 import { resolveBeatSfxSlot, readBeatSfxAudio } from '@/lib/script/deriveSfxFromSceneContent'
@@ -68,16 +69,16 @@ export function ActionBeatSfxControls({
   const sfxAudio = readBeatSfxAudio(scene, slot)
   const sfxStale = actionBeatSfxIsStale(scene, beat, !!sfxAudio)
   const sfxText = distinctSfxCue(beat)
-  const autoSeconds = resolveAutoSfxDuration(segmentDurationSeconds)
+  const autoSeconds = resolveAutoVeoSfxDuration(segmentDurationSeconds)
 
   const chips: Array<{ id: SfxDurationOverride; label: string }> = [
     {
       id: 'auto',
       label: `Auto (${Number.isInteger(autoSeconds) ? autoSeconds : autoSeconds.toFixed(1)}s)`,
     },
-    { id: 'short', label: 'Short 3s' },
+    { id: 'short', label: 'Short 4s' },
     { id: 'medium', label: 'Medium 8s' },
-    { id: 'long', label: 'Long 15s' },
+    { id: 'long', label: 'Long 8s' },
   ]
 
   const isBusy =
@@ -166,9 +167,9 @@ export function ActionBeatSfxControls({
       return
     }
     setIsGeneratingElevenLabs(true)
-    const toastId = toast.loading(sfxAudio ? 'Re-generating ElevenLabs sound...' : 'Generating ElevenLabs sound...')
+    const toastId = toast.loading(sfxAudio ? 'Re-generating sound effect (Veo 3.1 Lite)...' : 'Generating sound effect (Veo 3.1 Lite)...')
     try {
-      const durationSeconds = resolveSfxDuration({
+      const durationSeconds = resolveVeoSfxDuration({
         segmentDurationSeconds,
         override: durationPreset,
       })
@@ -181,6 +182,7 @@ export function ActionBeatSfxControls({
           sfxIndex: slot.sfxIndex,
           text: sfxText,
           durationSeconds,
+          promptMode: 'actionBeat',
         }),
       })
       if (!response.ok) {
@@ -189,11 +191,17 @@ export function ActionBeatSfxControls({
       }
       const data = await response.json()
       if (!data?.url) throw new Error('Sound effect response missing audio URL')
-      await onSaveSfxAudio?.(sceneIdx, 'sfx', data.url, slot.sfxIndex, null, {
+      const attribution = data.attribution ?? {
+        source: 'veo',
+        clipDurationSeconds: data.clipDurationSeconds ?? durationSeconds,
+        veoQuality: 'lite',
+        promptMode: 'actionBeat',
+      }
+      await onSaveSfxAudio?.(sceneIdx, 'sfx', data.url, slot.sfxIndex, attribution, {
         beatId: beat.beatId,
         beatDescription: audioSourceFingerprintForSfxBeat(beat),
       })
-      toast.success(sfxAudio ? 'ElevenLabs sound re-generated.' : 'ElevenLabs sound generated.', {
+      toast.success(sfxAudio ? 'Sound effect re-generated.' : 'Sound effect generated.', {
         id: toastId,
       })
     } catch (error) {
@@ -325,7 +333,7 @@ export function ActionBeatSfxControls({
                   void handleElevenLabs()
                 }}
                 disabled={isBusy || !sfxText}
-                title="Generate optional SFX via ElevenLabs (~15 credits)"
+                title={`Generate optional SFX via Veo 3.1 Lite (~${VIDEO_CREDITS.VEO_LITE} credits)`}
                 className="text-xs px-2 py-1 bg-amber-600 hover:bg-amber-700 text-white rounded disabled:opacity-50"
               >
                 {isGeneratingElevenLabs ? 'Generating...' : 'Generate'}
@@ -376,7 +384,7 @@ export function ActionBeatSfxControls({
               )
             })}
           </div>
-          <p className="text-[10px] text-amber-300/50">ElevenLabs · about 15 credits</p>
+          <p className="text-[10px] text-amber-300/50">Veo 3.1 Lite · ~{VIDEO_CREDITS.VEO_LITE} credits</p>
         </>
       ) : (
         <p className="text-[10px] text-amber-300/60">
@@ -384,7 +392,7 @@ export function ActionBeatSfxControls({
         </p>
       )}
       <DialogueQualityToggle
-        lofiTitle="ElevenLabs sound effect"
+        lofiTitle="Veo 3.1 Lite sound effect"
         disabled={isBusy}
         lofiDisabled={!sfxText}
         hasClip={!!clipUrl}

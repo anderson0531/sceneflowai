@@ -15,7 +15,7 @@ import { Checkbox } from '@/components/ui/checkbox'
 import { Switch } from '@/components/ui/switch'
 import { Image as ImageIcon, Loader, Sparkles, Zap } from 'lucide-react'
 import type { SfxDurationOverride } from '@/lib/elevenlabs/sfxDuration'
-import { resolveAutoSfxDuration } from '@/lib/elevenlabs/sfxDuration'
+import { resolveAutoVeoSfxDuration } from '@/lib/sfx/veoSfxDuration'
 import {
   defaultExpressAudioSelection,
   type ExpressAudioItem,
@@ -26,7 +26,7 @@ import {
   type ExpressSceneConfirmOptions,
   type ExpressSceneScope,
 } from '@/components/vision/ExpressSceneConfirmDialog'
-import { AUDIO_CREDITS, IMAGE_CREDITS } from '@/lib/credits/creditCosts'
+import { IMAGE_CREDITS, VIDEO_CREDITS } from '@/lib/credits/creditCosts'
 import {
   enumerateStoryboardFrameSlots,
   filterStoryboardSlotsForExpressChecklist,
@@ -123,8 +123,8 @@ export function ExpressGenerateAllConfirmDialog({
     [audioItems, selectedAudioSet]
   )
 
-  const autoSeconds = resolveAutoSfxDuration(segmentDurationSeconds)
-  const sfxCreditTotal = selectedSfxCount * AUDIO_CREDITS.ELEVENLABS_SFX
+  const autoSeconds = resolveAutoVeoSfxDuration(segmentDurationSeconds)
+  const sfxCreditTotal = selectedSfxCount * VIDEO_CREDITS.VEO_LITE
   const frameCreditTotal = selectedFrameKeys.length * IMAGE_CREDITS.FAL_KLING_IMAGE
   const autoSecondsLabel = Number.isInteger(autoSeconds) ? autoSeconds : autoSeconds.toFixed(1)
 
@@ -212,7 +212,7 @@ export function ExpressGenerateAllConfirmDialog({
               </div>
               {hasSfxItems && !includeSfx && (
                 <p className="text-[11px] text-slate-400 mb-2">
-                  SFX is optional — leaving it off saves {AUDIO_CREDITS.ELEVENLABS_SFX} credits per shot for Pre-Vis production.
+                  SFX is optional — leaving it off saves {VIDEO_CREDITS.VEO_LITE} credits per shot for Pre-Vis production.
                 </p>
               )}
               {audioItems.length === 0 ? (

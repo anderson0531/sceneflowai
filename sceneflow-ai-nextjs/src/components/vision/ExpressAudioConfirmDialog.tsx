@@ -15,13 +15,13 @@ import { Checkbox } from '@/components/ui/checkbox'
 import { Switch } from '@/components/ui/switch'
 import { Loader, Sparkles } from 'lucide-react'
 import type { SfxDurationOverride } from '@/lib/elevenlabs/sfxDuration'
-import { resolveAutoSfxDuration } from '@/lib/elevenlabs/sfxDuration'
+import { resolveAutoVeoSfxDuration } from '@/lib/sfx/veoSfxDuration'
 import {
   defaultExpressAudioSelection,
   type ExpressAudioItem,
   type ExpressAudioScope,
 } from '@/lib/audio/buildExpressAudioItems'
-import { AUDIO_CREDITS } from '@/lib/credits/creditCosts'
+import { VIDEO_CREDITS } from '@/lib/credits/creditCosts'
 
 export type { ExpressAudioScope } from '@/lib/audio/buildExpressAudioItems'
 
@@ -87,8 +87,8 @@ export function ExpressAudioConfirmDialog({
     () => items.filter((item) => item.kind === 'sfx' && selectedSet.has(item.id)).length,
     [items, selectedSet]
   )
-  const autoSeconds = resolveAutoSfxDuration(segmentDurationSeconds)
-  const creditTotal = selectedSfxCount * AUDIO_CREDITS.ELEVENLABS_SFX
+  const autoSeconds = resolveAutoVeoSfxDuration(segmentDurationSeconds)
+  const creditTotal = selectedSfxCount * VIDEO_CREDITS.VEO_LITE
   const autoSecondsLabel = Number.isInteger(autoSeconds) ? autoSeconds : autoSeconds.toFixed(1)
 
   const chips: Array<{ id: SfxDurationOverride; label: string }> = [
@@ -169,7 +169,7 @@ export function ExpressAudioConfirmDialog({
             </div>
             {hasSfxItems && !includeSfx && (
               <p className="text-[11px] text-slate-400 mb-2">
-                SFX is optional — leaving it off saves {AUDIO_CREDITS.ELEVENLABS_SFX} credits per shot for Pre-Vis production.
+                SFX is optional — leaving it off saves {VIDEO_CREDITS.VEO_LITE} credits per shot for Pre-Vis production.
               </p>
             )}
             {items.length === 0 ? (
@@ -252,7 +252,7 @@ export function ExpressAudioConfirmDialog({
                 {t('sfxCredits', {
                   credits: creditTotal,
                   hint: t('creditHint', {
-                    credits: AUDIO_CREDITS.ELEVENLABS_SFX,
+                    credits: VIDEO_CREDITS.VEO_LITE,
                   }),
                 })}
               </p>
