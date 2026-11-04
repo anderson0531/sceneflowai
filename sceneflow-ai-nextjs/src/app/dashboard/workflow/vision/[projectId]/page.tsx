@@ -7187,6 +7187,43 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       .map((rec: { id: string }) => rec.id)
   }
 
+  const pruneAppliedFromAudienceReview = (
+    review: any,
+    appliedBySceneIndex: ReadonlyArray<{ sceneIndex: number; recIds: string[] }>
+  ) => {
+    if (!review || !Array.isArray(review.sceneAnalysis) || appliedBySceneIndex.length === 0) {
+      return review
+    }
+    const bySceneNumber = new Map<number, string[]>()
+    for (const entry of appliedBySceneIndex) {
+      if (!entry.recIds?.length) continue
+      const sceneNum = entry.sceneIndex + 1
+      const prev = bySceneNumber.get(sceneNum) || []
+      bySceneNumber.set(sceneNum, mergeAppliedRecommendationIds(prev, entry.recIds))
+    }
+    if (bySceneNumber.size === 0) return review
+    return {
+      ...review,
+      sceneAnalysis: review.sceneAnalysis.map((sa: any, idx: number) => {
+        const sceneNum =
+          typeof sa?.sceneNumber === 'number' && sa.sceneNumber >= 1 ? sa.sceneNumber : idx + 1
+        const toRemove = bySceneNumber.get(sceneNum)
+        if (!toRemove || toRemove.length === 0) return sa
+        const mergedApplied = mergeAppliedRecommendationIds(sa.appliedRecommendationIds, toRemove)
+        const nextRecs = Array.isArray(sa.recommendations)
+          ? sa.recommendations.filter(
+              (rec: unknown, rIdx: number) => !mergedApplied.includes(recommendationId(rec, rIdx))
+            )
+          : sa.recommendations
+        return {
+          ...sa,
+          recommendations: nextRecs,
+          appliedRecommendationIds: mergedApplied,
+        }
+      }),
+    }
+  }
+
   const handleToggleAudienceRecommendation = (sceneIndex: number, recId: string, applied: boolean) => {
     const currentScript = scriptRef.current
     if (!currentScript?.script?.scenes?.[sceneIndex]?.audienceAnalysis) return
@@ -7195,11 +7232,18 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     const current = new Set(scene.audienceAnalysis.appliedRecommendationIds || [])
     if (applied) current.add(recId)
     else current.delete(recId)
+    const appliedRecommendationIds = Array.from(current)
+    const recommendations = Array.isArray(scene.audienceAnalysis.recommendations)
+      ? scene.audienceAnalysis.recommendations.filter(
+          (rec: unknown, idx: number) => !appliedRecommendationIds.includes(recommendationId(rec, idx))
+        )
+      : scene.audienceAnalysis.recommendations
     scenes[sceneIndex] = {
       ...scene,
       audienceAnalysis: {
         ...scene.audienceAnalysis,
-        appliedRecommendationIds: Array.from(current),
+        recommendations,
+        appliedRecommendationIds,
       },
     }
     const updatedScript = {
@@ -7208,7 +7252,18 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     }
     setScript(updatedScript)
     scriptRef.current = updatedScript
-    void saveScenesToDatabase(scenes)
+    let nextReviews: Record<string, any> | undefined
+    if (applied && audienceReview) {
+      const nextAudience = pruneAppliedFromAudienceReview(audienceReview, [
+        { sceneIndex, recIds: [recId] },
+      ])
+      setAudienceReview(nextAudience)
+      nextReviews = {
+        ...(projectRef.current?.metadata?.visionPhase?.reviews || {}),
+        audience: nextAudience,
+      }
+    }
+    void saveScenesToDatabase(scenes, undefined, nextReviews)
   }
 
   const handleTogglePolishRecommendation = (sceneIndex: number, recId: string, applied: boolean) => {
@@ -7219,11 +7274,19 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     const current = new Set(scene.polishAnalysis.appliedRecommendationIds || [])
     if (applied) current.add(recId)
     else current.delete(recId)
+    const appliedRecommendationIds = Array.from(current)
+    const recommendations = Array.isArray(scene.polishAnalysis.recommendations)
+      ? scene.polishAnalysis.recommendations.filter(
+          (rec: { id?: string }, idx: number) =>
+            !appliedRecommendationIds.includes(rec?.id || recommendationId(rec, idx))
+        )
+      : scene.polishAnalysis.recommendations
     scenes[sceneIndex] = {
       ...scene,
       polishAnalysis: {
         ...scene.polishAnalysis,
-        appliedRecommendationIds: Array.from(current),
+        recommendations,
+        appliedRecommendationIds,
       },
     }
     const updatedScript = {
@@ -9220,16 +9283,35 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       if (sceneIndex >= 0 && sceneIndex < updatedScenes.length) {
         // Check if this is a score improvement (for delta display)
         const existingAnalysis = updatedScenes[sceneIndex].audienceAnalysis
+        // If this scene already has an optimized analysis from the exact same review timestamp,
+        // keep the pruned recommendations and appliedRecommendationIds instead of overwriting them.
+        if (
+          existingAnalysis?.analyzedAt &&
+          analysis.analyzedAt &&
+          existingAnalysis.analyzedAt === analysis.analyzedAt &&
+          (existingAnalysis.optimizedAt ||
+            (Array.isArray(existingAnalysis.appliedRecommendationIds) &&
+              existingAnalysis.appliedRecommendationIds.length > 0))
+        ) {
+          continue
+        }
         const previousScore = existingAnalysis?.score
-        const preservedApplied = preserveAppliedRecommendationIds(
-          existingAnalysis,
-          analysis.recommendations || []
+        const preservedApplied = mergeAppliedRecommendationIds(
+          preserveAppliedRecommendationIds(existingAnalysis, analysis.recommendations || []),
+          (analysis as { appliedRecommendationIds?: string[] }).appliedRecommendationIds || []
         )
+        const filteredRecommendations = Array.isArray(analysis.recommendations)
+          ? analysis.recommendations.filter(
+              (rec: unknown, idx: number) =>
+                !preservedApplied.includes(recommendationId(rec, idx))
+            )
+          : []
 
         updatedScenes[sceneIndex] = {
           ...updatedScenes[sceneIndex],
           audienceAnalysis: {
             ...analysis,
+            recommendations: filteredRecommendations,
             appliedRecommendationIds: preservedApplied,
             previousScore: previousScore !== undefined && previousScore !== analysis.score
               ? previousScore
@@ -9248,6 +9330,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           scenes: updatedScenes
         }
       }
+      scriptRef.current = updatedScript
       setScript(updatedScript)
       
       // Auto-save scene analysis to database with debounce (no toast - silent save)
@@ -16026,20 +16109,38 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       pendingAppliedRecIdsRef.current = null
     }
     
-    // Preserve audienceAnalysis from original scene and mark as optimized
+    // Preserve audienceAnalysis from original scene (or fallback to audienceReview) and mark as optimized
     // so progressive analysis knows the scene was edited since last analysis
-    if (originalScene?.audienceAnalysis) {
+    const fallbackReviewSceneForSingle = audienceReview?.sceneAnalysis?.find(
+      (sa: { sceneNumber?: number }) => sa.sceneNumber === sceneIndex + 1
+    )
+    const baseAudienceAnalysisForSingle =
+      originalScene?.audienceAnalysis ??
+      (fallbackReviewSceneForSingle
+        ? {
+            score: fallbackReviewSceneForSingle.score,
+            pacing: fallbackReviewSceneForSingle.pacing,
+            tension: fallbackReviewSceneForSingle.tension,
+            characterDevelopment: fallbackReviewSceneForSingle.characterDevelopment,
+            visualPotential: fallbackReviewSceneForSingle.visualPotential,
+            notes: fallbackReviewSceneForSingle.notes,
+            recommendations: fallbackReviewSceneForSingle.recommendations || [],
+            appliedRecommendationIds: fallbackReviewSceneForSingle.appliedRecommendationIds || [],
+            analyzedAt: audienceReview?.generatedAt,
+          }
+        : undefined)
+    if (baseAudienceAnalysisForSingle) {
       const appliedRecommendationIds = mergeAppliedRecommendationIds(
-        originalScene.audienceAnalysis.appliedRecommendationIds,
+        baseAudienceAnalysisForSingle.appliedRecommendationIds,
         pendingIds
       )
-      const recommendations = Array.isArray(originalScene.audienceAnalysis.recommendations)
-        ? originalScene.audienceAnalysis.recommendations.filter(
+      const recommendations = Array.isArray(baseAudienceAnalysisForSingle.recommendations)
+        ? baseAudienceAnalysisForSingle.recommendations.filter(
             (rec: unknown, index: number) => !appliedRecommendationIds.includes(recommendationId(rec, index))
           )
-        : originalScene.audienceAnalysis.recommendations
+        : baseAudienceAnalysisForSingle.recommendations
       cleanedScene.audienceAnalysis = {
-        ...originalScene.audienceAnalysis,
+        ...baseAudienceAnalysisForSingle,
         recommendations,
         appliedRecommendationIds,
         optimizedAt: new Date().toISOString()
@@ -16102,9 +16203,21 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       updatedScenes[sceneIndex] = cleanedScene
     }
 
+    let nextReviewsForSingle: Record<string, any> | undefined
+    if (pendingIds.length > 0 && audienceReview) {
+      const nextAudience = pruneAppliedFromAudienceReview(audienceReview, [
+        { sceneIndex, recIds: pendingIds },
+      ])
+      setAudienceReview(nextAudience)
+      nextReviewsForSingle = {
+        ...(projectRef.current?.metadata?.visionPhase?.reviews || {}),
+        audience: nextAudience,
+      }
+    }
+
     // Save to database FIRST
     try {
-      const saveResult = await saveScenesToDatabase(updatedScenes)
+      const saveResult = await saveScenesToDatabase(updatedScenes, undefined, nextReviewsForSingle)
       const persistedScenes =
         saveResult?.metadata?.visionPhase?.script?.script?.scenes ??
         saveResult?.metadata?.visionPhase?.scenes ??
@@ -16237,19 +16350,38 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
 
       let cleanedScene = applyScenePreservation(originalScene, editResult.cleanedScene, [])
 
-      if (originalScene?.audienceAnalysis) {
+      const fallbackReviewScene = audienceReview?.sceneAnalysis?.find(
+        (sa: { sceneNumber?: number }) => sa.sceneNumber === sceneIndex + 1
+      )
+      const baseAudienceAnalysis =
+        originalScene?.audienceAnalysis ??
+        (fallbackReviewScene
+          ? {
+              score: fallbackReviewScene.score,
+              pacing: fallbackReviewScene.pacing,
+              tension: fallbackReviewScene.tension,
+              characterDevelopment: fallbackReviewScene.characterDevelopment,
+              visualPotential: fallbackReviewScene.visualPotential,
+              notes: fallbackReviewScene.notes,
+              recommendations: fallbackReviewScene.recommendations || [],
+              appliedRecommendationIds: fallbackReviewScene.appliedRecommendationIds || [],
+              analyzedAt: audienceReview?.generatedAt,
+            }
+          : undefined)
+
+      if (baseAudienceAnalysis) {
         const appliedRecommendationIds = mergeAppliedRecommendationIds(
-          originalScene.audienceAnalysis.appliedRecommendationIds,
+          baseAudienceAnalysis.appliedRecommendationIds,
           recIds
         )
-        const recommendations = Array.isArray(originalScene.audienceAnalysis.recommendations)
-          ? originalScene.audienceAnalysis.recommendations.filter(
+        const recommendations = Array.isArray(baseAudienceAnalysis.recommendations)
+          ? baseAudienceAnalysis.recommendations.filter(
               (rec: unknown, index: number) =>
                 !appliedRecommendationIds.includes(recommendationId(rec, index))
             )
-          : originalScene.audienceAnalysis.recommendations
+          : baseAudienceAnalysis.recommendations
         cleanedScene.audienceAnalysis = {
-          ...originalScene.audienceAnalysis,
+          ...baseAudienceAnalysis,
           recommendations,
           appliedRecommendationIds,
           optimizedAt: new Date().toISOString(),
@@ -16308,7 +16440,23 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       }
     }
 
-    const saveResult = await saveScenesToDatabase(updatedScenes)
+    let nextReviewsForBatch: Record<string, any> | undefined
+    if (audienceReview) {
+      const nextAudience = pruneAppliedFromAudienceReview(
+        audienceReview,
+        revisions.map((r) => ({
+          sceneIndex: r.sceneIndex,
+          recIds: r.appliedRecommendationIds || [],
+        }))
+      )
+      setAudienceReview(nextAudience)
+      nextReviewsForBatch = {
+        ...(projectRef.current?.metadata?.visionPhase?.reviews || {}),
+        audience: nextAudience,
+      }
+    }
+
+    const saveResult = await saveScenesToDatabase(updatedScenes, undefined, nextReviewsForBatch)
     const persistedScenes =
       saveResult?.metadata?.visionPhase?.script?.script?.scenes ??
       saveResult?.metadata?.visionPhase?.scenes ??
@@ -18601,7 +18749,8 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
   }
   const saveScenesToDatabase = async (
     updatedScenes: any[],
-    deletedSceneIds?: string[]
+    deletedSceneIds?: string[],
+    updatedReviews?: Record<string, any>
   ): Promise<{ metadata: Record<string, any> } | null> => {
     // Guard: refuse to save if script state is null/stale — spreading null produces
     // { script: { scenes: [...] } } which loses title, format, metadata, etc.
@@ -18632,6 +18781,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         ...existingMetadata,
         visionPhase: {
           ...existingVisionPhase,
+          ...(updatedReviews ? { reviews: updatedReviews } : {}),
           script: {
             ...currentScript,
             script: {
@@ -18701,6 +18851,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           visionPhase: {
             script: putScript,
             scriptUpdatedAt,
+            ...(updatedReviews ? { reviews: updatedReviews } : {}),
           },
         },
       }

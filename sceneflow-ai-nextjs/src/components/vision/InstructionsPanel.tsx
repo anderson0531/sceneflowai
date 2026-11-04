@@ -17,6 +17,7 @@ export interface InstructionsPanelAudienceAnalysis {
   score?: number
   notes?: string
   recommendations?: Array<string | SceneRecommendation | Record<string, unknown>>
+  appliedRecommendationIds?: string[]
 }
 
 export interface InstructionsPanelPreserveElements {
@@ -147,28 +148,43 @@ export function InstructionsPanel({
       audienceAnalysis?.recommendations?.length
         ? audienceAnalysis.recommendations
         : recommendations
+    const excludedIds = new Set([
+      ...appliedRecommendationIds,
+      ...(audienceAnalysis?.appliedRecommendationIds || []),
+    ])
     return raw
       .map((rec) => normalizeRecommendation(coerceRecommendationInput(rec)))
       .filter((rec) => rec.text.trim().length > 0)
-      .filter((rec) => !appliedRecommendationIds.includes(rec.id || ''))
-  }, [audienceAnalysis?.recommendations, recommendations, appliedRecommendationIds])
+      .filter((rec) => !excludedIds.has(rec.id || ''))
+  }, [
+    audienceAnalysis?.recommendations,
+    audienceAnalysis?.appliedRecommendationIds,
+    recommendations,
+    appliedRecommendationIds,
+  ])
 
-  const polishRecs = useMemo(
-    () =>
-      (polishAnalysis?.recommendations ?? [])
-        .map((rec, idx) =>
-          typeof rec === 'string'
-            ? { id: `polish-${idx}`, text: rec, priority: 'medium' as const, category: 'pacing' as const }
-            : rec
-        )
-        .filter(
-          (rec) =>
-            typeof rec?.text === 'string' &&
-            rec.text.trim().length > 0 &&
-            !appliedRecommendationIds.includes(rec.id || '')
-        ),
-    [polishAnalysis?.recommendations, appliedRecommendationIds]
-  )
+  const polishRecs = useMemo(() => {
+    const excludedIds = new Set([
+      ...appliedRecommendationIds,
+      ...(polishAnalysis?.appliedRecommendationIds || []),
+    ])
+    return (polishAnalysis?.recommendations ?? [])
+      .map((rec, idx) =>
+        typeof rec === 'string'
+          ? { id: `polish-${idx}`, text: rec, priority: 'medium' as const, category: 'pacing' as const }
+          : rec
+      )
+      .filter(
+        (rec) =>
+          typeof rec?.text === 'string' &&
+          rec.text.trim().length > 0 &&
+          !excludedIds.has(rec.id || '')
+      )
+  }, [
+    polishAnalysis?.recommendations,
+    polishAnalysis?.appliedRecommendationIds,
+    appliedRecommendationIds,
+  ])
 
   const mergedRecs = useMemo(() => {
     const polishKeys = new Set(polishRecs.map((rec) => instructionKey(rec.text)))

@@ -25,6 +25,7 @@ import {
   collectTopImpactIssues,
   firstHighImpactSceneIndex,
   recommendationId,
+  recommendationIsHighImpact,
   sceneHasHighImpactIssue,
 } from '@/lib/script/audienceResonance/highImpact'
 import {
@@ -97,6 +98,7 @@ interface SceneAnalysis {
   visualPotential: 'low' | 'medium' | 'high'
   notes: string
   recommendations?: (string | SceneRecommendation)[]  // Per-scene targeted fixes (string legacy, object new)
+  appliedRecommendationIds?: string[]
 }
 
 interface AudienceResonanceReview {
@@ -899,6 +901,7 @@ export default function ScriptReviewModal({
         visualPotential: sa.visualPotential,
         notes: sa.notes,
         recommendations: sa.recommendations || [],
+        appliedRecommendationIds: sa.appliedRecommendationIds,
         analyzedAt: review.generatedAt
       }
     }))
@@ -1221,6 +1224,17 @@ export default function ScriptReviewModal({
                     }
                     return next
                   })
+                  setLocalSceneAnalysis((prev) => {
+                    if (!prev) return prev
+                    const appliedSet = new Set(event.revision!.appliedRecommendationIds)
+                    return prev.map((sa, idx) => {
+                      if (resolveSceneAnalysisIndex(sa, idx) !== event.sceneIndex) return sa
+                      const nextRecs = (sa.recommendations || []).filter(
+                        (rec, rIdx) => !appliedSet.has(recommendationId(rec, rIdx))
+                      )
+                      return { ...sa, recommendations: nextRecs }
+                    })
+                  })
                 }
               },
               onPersistRevisedScenes: async (revisions) => {
@@ -1242,6 +1256,21 @@ export default function ScriptReviewModal({
                     }
                   }
                   return next
+                })
+                setLocalSceneAnalysis((prev) => {
+                  if (!prev) return prev
+                  const byScene = new Map<number, Set<string>>()
+                  for (const rev of revisions) {
+                    byScene.set(rev.sceneIndex, new Set(rev.appliedRecommendationIds))
+                  }
+                  return prev.map((sa, idx) => {
+                    const appliedSet = byScene.get(resolveSceneAnalysisIndex(sa, idx))
+                    if (!appliedSet) return sa
+                    const nextRecs = (sa.recommendations || []).filter(
+                      (rec, rIdx) => !appliedSet.has(recommendationId(rec, rIdx))
+                    )
+                    return { ...sa, recommendations: nextRecs }
+                  })
                 })
                 if (onBatchApplySceneRevisionsRef.current) {
                   return await onBatchApplySceneRevisionsRef.current(revisions)
@@ -1715,9 +1744,17 @@ export default function ScriptReviewModal({
                     {/* Top Impact Issues (from scene recommendations) */}
                     {(() => {
                       const topIssues = collectTopImpactIssues(sceneAnalysis, {
-                        excludeApplied: false,
+                        excludeApplied: true,
                         limit: 5,
-                      })
+                      }).filter(
+                        (issue) =>
+                          !isRecommendationApplied(
+                            issue.sceneIndex,
+                            issue.recId,
+                            scriptScenes,
+                            localAppliedRecKeys
+                          )
+                      )
                       if (topIssues.length === 0) return null
 
                       return (
@@ -2203,7 +2240,7 @@ export default function ScriptReviewModal({
                               const sceneRecs = Array.isArray(scene.recommendations)
                                 ? scene.recommendations
                                 : []
-                              const unappliedRecIdsInScene = sceneRecs
+                              const unappliedRecsInScene = sceneRecs
                                 .map((rec, rIdx) => ({
                                   rec,
                                   rIdx,
@@ -2218,7 +2255,10 @@ export default function ScriptReviewModal({
                                       localAppliedRecKeys
                                     )
                                 )
-                                .map(({ recId }) => recId)
+                              const unappliedRecIdsInScene = unappliedRecsInScene.map(({ recId }) => recId)
+                              const hasUnappliedHighImpact = unappliedRecsInScene.some(({ rec }) =>
+                                recommendationIsHighImpact(rec)
+                              )
                               const selectedInSceneCount = unappliedRecIdsInScene.filter((recId) =>
                                 selectedRecKeys.has(buildSceneRecSelectionKey(resolvedSceneIdx, recId))
                               ).length
@@ -2231,7 +2271,7 @@ export default function ScriptReviewModal({
                                 key={index}
                                 className={cn(
                                   'rounded-lg border p-3.5 bg-gray-50 dark:bg-gray-800/40',
-                                  sceneHasHighImpactIssue(scene)
+                                  hasUnappliedHighImpact
                                     ? 'border-rose-400/70 dark:border-rose-500/50'
                                     : 'border-gray-200 dark:border-gray-700'
                                 )}
@@ -2242,7 +2282,7 @@ export default function ScriptReviewModal({
                                       <span className="inline-flex h-5 shrink-0 items-center rounded px-1.5 text-[11px] font-medium bg-purple-100 text-purple-700 dark:bg-purple-900/50 dark:text-purple-300">
                                         Scene {scene.sceneNumber}
                                       </span>
-                                      {sceneHasHighImpactIssue(scene) && (
+                                      {hasUnappliedHighImpact && (
                                         <Badge variant="destructive" className="text-[10px] uppercase tracking-wider">
                                           High impact
                                         </Badge>
@@ -2300,88 +2340,61 @@ export default function ScriptReviewModal({
                                   </Badge>
                                 </div>
                                 
-                                {/* Specific Recommendations */}
-                                {scene.recommendations && scene.recommendations.length > 0 && (
+                                {/* Specific Recommendations (only unapplied recommendations are shown) */}
+                                {unappliedRecsInScene.length > 0 && (
                                   <div className="bg-white dark:bg-gray-900 rounded-md p-3 border border-purple-100 dark:border-purple-900/30">
                                     <div className="flex items-center justify-between gap-2 mb-2">
                                       <div className="text-[10px] font-semibold text-purple-700 dark:text-purple-400 uppercase tracking-wider">
                                         Recommendations ({selectedInSceneCount}/{unappliedRecIdsInScene.length} selected)
                                       </div>
-                                      {unappliedRecIdsInScene.length > 0 && (
-                                        <button
-                                          type="button"
-                                          disabled={isRunningPreVisPrep}
-                                          onClick={() =>
-                                            handleToggleSceneRecommendations(
-                                              resolvedSceneIdx,
-                                              unappliedRecIdsInScene
-                                            )
-                                          }
-                                          className="text-[11px] font-medium text-purple-600 dark:text-purple-400 hover:underline disabled:opacity-40"
-                                        >
-                                          {allInSceneSelected ? 'Unselect scene' : 'Select scene'}
-                                        </button>
-                                      )}
+                                      <button
+                                        type="button"
+                                        disabled={isRunningPreVisPrep}
+                                        onClick={() =>
+                                          handleToggleSceneRecommendations(
+                                            resolvedSceneIdx,
+                                            unappliedRecIdsInScene
+                                          )
+                                        }
+                                        className="text-[11px] font-medium text-purple-600 dark:text-purple-400 hover:underline disabled:opacity-40"
+                                      >
+                                        {allInSceneSelected ? 'Unselect scene' : 'Select scene'}
+                                      </button>
                                     </div>
                                     <ul className="space-y-1.5 mb-0">
-                                      {scene.recommendations.map((rec, rIdx) => {
+                                      {unappliedRecsInScene.map(({ rec, rIdx, recId }) => {
                                         const recText = typeof rec === 'string' ? rec : rec?.text || String(rec)
                                         const recPriority = typeof rec === 'object' && rec?.priority ? rec.priority : null
                                         const recPointsDeducted = typeof rec === 'object' && rec?.pointsDeducted ? rec.pointsDeducted : null
-                                        const recId = recommendationId(rec, rIdx)
-                                        const applied = isRecommendationApplied(
-                                          resolvedSceneIdx,
-                                          recId,
-                                          scriptScenes,
-                                          localAppliedRecKeys
-                                        )
                                         const selectionKey = buildSceneRecSelectionKey(resolvedSceneIdx, recId)
-                                        const isSelected = !applied && selectedRecKeys.has(selectionKey)
+                                        const isSelected = selectedRecKeys.has(selectionKey)
 
                                         return (
                                           <li
-                                            key={rIdx}
+                                            key={recId || rIdx}
                                             className={cn(
                                               'text-sm rounded-md px-2 py-1.5 transition-colors mb-0',
-                                              applied
-                                                ? 'bg-emerald-50/70 dark:bg-emerald-950/20 text-gray-500 dark:text-gray-400'
-                                                : isSelected
-                                                  ? 'bg-purple-50/70 dark:bg-purple-950/25 text-gray-800 dark:text-gray-200'
-                                                  : 'text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800/40'
+                                              isSelected
+                                                ? 'bg-purple-50/70 dark:bg-purple-950/25 text-gray-800 dark:text-gray-200'
+                                                : 'text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800/40'
                                             )}
                                           >
                                             <label
                                               className={cn(
                                                 'flex items-start gap-2.5',
-                                                applied || isRunningPreVisPrep
-                                                  ? 'cursor-default'
-                                                  : 'cursor-pointer'
+                                                isRunningPreVisPrep ? 'cursor-default' : 'cursor-pointer'
                                               )}
                                             >
-                                              {applied ? (
-                                                <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0 mt-0.5" />
-                                              ) : (
-                                                <Checkbox
-                                                  checked={isSelected}
-                                                  onCheckedChange={() =>
-                                                    handleToggleRecSelection(resolvedSceneIdx, recId)
-                                                  }
-                                                  disabled={isRunningPreVisPrep}
-                                                  className="mt-0.5"
-                                                />
-                                              )}
+                                              <Checkbox
+                                                checked={isSelected}
+                                                onCheckedChange={() =>
+                                                  handleToggleRecSelection(resolvedSceneIdx, recId)
+                                                }
+                                                disabled={isRunningPreVisPrep}
+                                                className="mt-0.5"
+                                              />
                                               <span className="flex-1 leading-snug">
-                                                <span className={cn(applied && 'line-through opacity-80')}>
-                                                  {recText}
-                                                </span>
-                                                {applied && (
-                                                  <Badge
-                                                    variant="outline"
-                                                    className="ml-2 text-[10px] px-1.5 py-0 h-4 border-emerald-500/40 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 uppercase tracking-wider"
-                                                  >
-                                                    Applied
-                                                  </Badge>
-                                                )}
+                                                <span>{recText}</span>
                                                 {recPriority && (
                                                   <Badge variant="outline" className={`ml-2 text-[10px] px-1 py-0 h-4 border-none uppercase tracking-wider ${
                                                     recPriority === 'high' ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400' :

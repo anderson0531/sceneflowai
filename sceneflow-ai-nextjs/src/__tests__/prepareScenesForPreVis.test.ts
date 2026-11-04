@@ -1,3 +1,5 @@
+import { readFileSync } from 'fs'
+import path from 'path'
 import { describe, expect, it, vi } from 'vitest'
 import { recommendationId } from '@/lib/script/audienceResonance/highImpact'
 import {
@@ -197,5 +199,15 @@ describe('prepareScenesForPreVis', () => {
     )
 
     unsubscribe()
+  })
+
+  it('removes applied recommendations from Scene Breakdown cards instead of leaving strikethrough lists', () => {
+    const modalSource = readFileSync(
+      path.join(process.cwd(), 'src/components/vision/ScriptReviewModal.tsx'),
+      'utf8'
+    )
+    expect(modalSource).toContain('{unappliedRecsInScene.length > 0 && (')
+    expect(modalSource).toContain('{unappliedRecsInScene.map(({ rec, rIdx, recId }) => {')
+    expect(modalSource).not.toContain('line-through opacity-80')
   })
 })
