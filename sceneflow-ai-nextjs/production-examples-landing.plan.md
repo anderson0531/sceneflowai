@@ -144,14 +144,23 @@ With all **6 flagship verticals** and **7 language dubs** (`EN`, `ES`, `PT`, `HI
 
 ## 4. Execution Roadmap: Nov 2026 Credit Unlock to Jan 2027 Commercial Launch
 
-### Milestone 1 — Week of Nov 3–8, 2026: Application Submission & 6-Vertical Showcase Verification
-1. Verify GCP Organization & Billing (`018BC7-19AC32-7CE0EE`) using `scripts/gcp-nov3-post-payment-setup.sh` and `scripts/gcp-setup-organization.sh`.
-2. Submit **Google for Startups Cloud Program Application** ([`docs/GOOGLE_STARTUP_APPLICATION.md`](docs/GOOGLE_STARTUP_APPLICATION.md)) showcasing all 6 flagship verticals and 7 UI languages (`en`, `es`, `pt`, `hi`, `zh-CN`, `ar`, `th`).
-3. Submit **NVIDIA Inception Application** and updated 2027–2029 Financial Model ([`docs/sceneflow_financial_model_2027_12month.csv`](docs/sceneflow_financial_model_2027_12month.csv), [`docs/sceneflow_financial_model_2027_2029_3year.csv`](docs/sceneflow_financial_model_2027_2029_3year.csv)).
+### Milestone 1 — Week of Nov 4–8, 2026: GCP Billing Filter Lock, 6-Vertical Pre-Vis + 7-Language Trailers & Google for Startups Submission
+1. **Pass the First Google for Startups Automated Filter (`018BC7-19AC32-7CE0EE` / `sceneflowai-2d3e6`):**
+   - ✅ Billing Account `018BC7-19AC32-7CE0EE` (*SceneFlow Platform*, USD) is **OPEN (`True`)** and consolidated to a single active project (`sceneflowai-2d3e6`, Project Number `809352734041`).
+   - ✅ `brian@sceneflowai.studio` and `admin@sceneflowai.studio` hold `roles/billing.admin` on `018BC7-19AC32-7CE0EE`.
+   - ⚠️ **Final Pre-Submit Action:** Sign in to `https://console.cloud.google.com` as `admin@sceneflowai.studio` to initialize the `sceneflowai.studio` GCP Organization and run `bash scripts/gcp-setup-organization.sh` so `brian@sceneflowai.studio` and `admin@sceneflowai.studio` are elevated from `roles/editor` to **`roles/owner`** on `sceneflowai-2d3e6` (currently only `anderson0531@gmail.com` and `brian@sfai.studio` hold `roles/owner`).
+   - Submit the Google for Startups application while signed in as **`brian@sceneflowai.studio`** (matching `https://sceneflowai.studio`).
+2. **Complete Pre-Vis Animatics & Trailers in All 7 Languages (`EN`, `ES`, `PT`, `HI`, `ZH`, `AR`, `TH`) Across All 6 Examples:**
+   - Complete the voiced & scored **Pre-Vis Animatics** and **60–90s Trailers** in all 7 languages for all 6 verticals (*The White City Current*, *Hart House*, *The Long Thought*, *Five Plates*, *The Midnight Frequency*, and *Letters Across the Water*).
+   - Replace the remaining `example-{id}-*` placeholder tokens in [`src/config/landing/productionPipelineDemo.ts`](src/config/landing/productionPipelineDemo.ts) with the live database share tokens (`seriesShareToken`, `blueprintShareToken`, `scriptResonanceShareToken`, `screeningRoomSlug`) so all 24 reviewer doors (6 cards × 4 doors) open live Studio experiences rather than `PipelinePlaceholderStage`.
+3. **Submit Google for Startups Cloud Program Application ([`docs/GOOGLE_STARTUP_APPLICATION.md`](docs/GOOGLE_STARTUP_APPLICATION.md)):**
+   - Showcase all 6 live verticals (complete 7-language Pre-Vis + 7-language Trailers + *White City Current* motion proof) and position the **$2,000 Start Tier credit ask** specifically to render the full multi-chapter Veo 3.1 motion masters across all 6 verticals.
 
-### Milestone 2 — Nov 2026 (Upon $2K Credit Activation): Live Share Tokens & Chapter 1 Masters for All 6 Verticals
-1. Generate and publish live database share tokens (`seriesShareToken`, `blueprintShareToken`, `scriptResonanceShareToken`, `screeningRoomSlug`) for `animation`, `documentary`, `training`, `podcast`, and `memoir` in [`src/config/landing/productionPipelineDemo.ts`](src/config/landing/productionPipelineDemo.ts).
-2. Render Chapter 1 complete motion masters (33.5 minutes total across the 6 verticals) and full Episode 1 Pre-Vis Animatics using the $2K Vertex AI credit grant.
+### Milestone 2 — Nov 2026 (Upon $2K Credit Activation): Render Full Motion Examples & Submit NVIDIA Inception Application
+1. **Render Chapter 1 & Episode 1 Motion Masters via $2K Google Credits:**
+   - Use the $2K Vertex AI credit grant to render the complete **Chapter 1 Motion Video Masters (33.5 minutes across all 6 verticals)** and Episode 1 continuations in [`src/config/landing/productionPipelineDemo.ts`](src/config/landing/productionPipelineDemo.ts).
+2. **Submit NVIDIA Inception Application ([`docs/NVIDIA_INCEPTION_APPLICATION.md`](docs/NVIDIA_INCEPTION_APPLICATION.md)) with Full Motion Examples:**
+   - Submit NVIDIA Inception **after** the $2K Google credits unlock and Chapter 1 motion video is live in the Screening Room across all 6 verticals—demonstrating temporal motion consistency across 2D animation, 1956 archival 16mm, 3-camera culinary instruction, live-camera podcast match-cuts, and age-locked period memoirs, while citing Google for Startups program backing.
 
 ### Milestone 3 — Dec 2026: Full Episode 1 Masters, Studio i18n Completion & B2B Playbooks
 1. Render remaining chapters across the 6 flagship examples (~$610–$790 in Vertex AI credits) and flip `longformPublished: true` in `productionPipelineDemo.ts`.

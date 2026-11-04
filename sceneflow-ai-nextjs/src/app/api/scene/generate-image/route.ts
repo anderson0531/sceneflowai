@@ -931,7 +931,7 @@ async function postGenerateImage(req: NextRequest) {
               instruction,
               aspectRatio: '16:9',
               imageSize: '1K',
-              editIntent: 'keyframeEnd',
+              editIntent: 'keyframeStart',
               segmentDurationSeconds: durationSeconds,
               negativePrompt: mergeBeatFrameNegativePrompt(),
             })

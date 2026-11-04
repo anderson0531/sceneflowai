@@ -634,12 +634,12 @@ export function buildKeyframePrompt(request: FramePromptRequest): EnhancedFrameP
     
     if (changes.length > 0) {
       // Content-aware end frame: specific, deliberate changes
-      promptParts.push(`Edit the start frame image to reflect ${duration}s of action. `)
+      promptParts.push(`Edit the start frame image to reflect ${duration}s of action and camera movement. `)
       if (segmentContent?.startFrameDescription) {
         promptParts.push(`The original image showed: ${segmentContent.startFrameDescription.substring(0, 120)}. `)
       }
       promptParts.push(`Apply these changes: ${changes.join('. ')}. `)
-      promptParts.push('Maintain absolute consistency of the background, characters, and overall scene. ')
+      promptParts.push('Allow the background perspective, spatial scale, parallax, and subject pose or position to evolve with the camera and action movement while preserving location architecture, lighting mood, and character identity. ')
     } else {
       // Fallback: generic progression (original behavior)
       const temporalContext = duration <= 3 
@@ -649,7 +649,7 @@ export function buildKeyframePrompt(request: FramePromptRequest): EnhancedFrameP
         : 'After the action'
       
       promptParts.push(`Edit the start frame image to show the end state ${temporalContext.toLowerCase()}. `)
-      promptParts.push('Maintain absolute consistency of the background, characters, and overall scene. ')
+      promptParts.push('Allow the background perspective, spatial scale, parallax, and subject pose or position to evolve with the camera and action movement while preserving location architecture, lighting mood, and character identity. ')
     }
   }
   

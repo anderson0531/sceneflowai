@@ -184,6 +184,36 @@ export function buildStartFramePrompt(
   return `Starting action state (t=0s): subject poised at opening speaking posture and expression before delivering line, with consistent lighting and location.`
 }
 
+function describeCameraEndFrameProgression(
+  cameraMove?: string,
+  shotType?: string,
+  cameraAngle?: string
+): string {
+  const camFraming = [shotType, cameraAngle].filter(Boolean).join(', ')
+  if (!cameraMove) {
+    return camFraming ? `Concluding framing (${camFraming})` : ''
+  }
+  if (/^static\b/i.test(cameraMove)) {
+    return camFraming
+      ? `Concluding framing (${camFraming}). Camera remains static holding locked composition while scene action and lighting progress to their terminal t=T state`
+      : 'Camera remains static holding locked composition while scene action and lighting progress to their terminal t=T state'
+  }
+  if (
+    /push[-\s]?in|dolly[-\s]?(?:in|forward)|zoom[-\s]?in|move\s+forward|draws?\s+deeper|creep[-\s]?in|track[-\s]?(?:in|forward)|micro[-\s]?dolly\s+forward/i.test(
+      cameraMove
+    )
+  ) {
+    return `Camera completes ${cameraMove}, advancing deeper into the space with tighter terminal framing${cameraAngle ? ` (${cameraAngle})` : ''} as near-field foreground elements from t=0s pass out of the frame edges and deeper background architecture and focal subjects scale larger with forward 3D parallax`
+  }
+  if (/pull[-\s]?(?:back|out)|dolly[-\s]?(?:out|back)|zoom[-\s]?out|widen/i.test(cameraMove)) {
+    return `Camera completes ${cameraMove}, widening the terminal framing${cameraAngle ? ` (${cameraAngle})` : ''} to reveal expanded surrounding architecture and environment beyond the t=0s crop while initial focal elements recede to a smaller scale`
+  }
+  if (/pan\b|tilt\b|track|follow|orbit|arc\b|crane|pedestal|rise|descend|sweep/i.test(cameraMove)) {
+    return `Camera completes ${cameraMove}, shifting background perspective, spatial crop, and 3D parallax to the terminal t=T vantage point${camFraming ? ` (${camFraming})` : ''} as trailing t=0s elements exit the frame edge and adjacent environment enters view`
+  }
+  return `Camera settles after ${cameraMove}, shifting perspective, spatial scale, and background framing from t=0s to the terminal t=T vantage point${camFraming ? ` (${camFraming})` : ''}`
+}
+
 export function buildEndFramePrompt(
   beat: SceneBeat,
   options?: ResolveBeatClipPromptOptions
@@ -223,13 +253,13 @@ export function buildEndFramePrompt(
   const lighting = meaningfulBookendField(facets.lighting || d?.lightingAccent)
 
   if (endOn) {
-    endCues.push(`Concluding action state: ${endOn}`)
+    endCues.push(`Concluding action state (t=T): ${endOn}`)
   } else if (baseAction) {
-    endCues.push(`Concluding action state: ${baseAction}`)
+    endCues.push(`Concluding action state (t=T): ${baseAction}`)
   }
-  if (shotType || cameraAngle) {
-    const cam = [shotType, cameraAngle].filter(Boolean).join(', ')
-    if (cam) endCues.push(`Concluding framing (${cam})`)
+  const cameraProgression = describeCameraEndFrameProgression(cameraMove, shotType, cameraAngle)
+  if (cameraProgression) {
+    endCues.push(cameraProgression)
   }
   if (blocking && (!endOn || !endOn.toLowerCase().includes(blocking.toLowerCase()))) {
     endCues.push(`Final blocking position: ${blocking}`)
@@ -238,13 +268,6 @@ export function buildEndFramePrompt(
     endCues.push(`Completed prop state: ${propInteraction}`)
   } else if (props) {
     endCues.push(`Props remain: ${props}`)
-  }
-  if (cameraMove) {
-    if (/^static\b/i.test(cameraMove)) {
-      endCues.push('Camera remains static holding locked composition')
-    } else {
-      endCues.push(`Camera settles after ${cameraMove}`)
-    }
   }
   if (noPeopleInFrame) {
     if (emotion) {
@@ -280,11 +303,11 @@ export function buildEndFramePrompt(
     if (startVisual) {
       return `Concluding pose and spatial progression at end of action while preserving consistent lighting, location, and character identity: ${shortenVisualPrompt(startVisual)}.`
     }
-    return `Motion completion: ${beat.actionDescription ?? 'subtle camera movement and completed action pose'}, with consistent lighting and location.`
+    return `Motion completion: ${beat.actionDescription ?? 'camera movement and completed action pose'}, with consistent lighting and location.`
   }
   if (beat.kind === 'narration') {
     if (startVisual) {
-      return `Concluding frame progression while preserving composition, lighting, and location: ${shortenVisualPrompt(startVisual)}.`
+      return `Concluding frame progression while preserving world lighting and location: ${shortenVisualPrompt(startVisual)}.`
     }
     return `Visual progression matching narration mood; concluding environmental state with consistent lighting and location.`
   }
@@ -293,7 +316,8 @@ export function buildEndFramePrompt(
 
 /**
  * Verify whether a persisted Start/End Still Frame prompt is aligned with the beat's
- * canonical Clips prompt. Rejects prompts with recursive edit preambles, double periods,
+ * canonical Clips prompt. Rejects prompts with recursive edit preambles, legacy restrictive
+ * end-frame preambles ("DO NOT change the background" / "Edit start frame:"), double periods,
  * facial expressions on no-people shots, mismatched shot/camera types, or missing quoted title text.
  */
 export function isStoredFrameBookendPromptAligned(
@@ -306,6 +330,9 @@ export function isStoredFrameBookendPromptAligned(
 
   // Reject nested preambles ("Edit start frame: Edit the reference shot still...") or double periods ("..")
   if (/Edit start frame:\s*Edit the reference shot still/i.test(raw)) return false
+  if (/^Edit the start frame image[\s\S]*?(?:DO NOT change the background|\bEdit start frame:)/i.test(raw)) {
+    return false
+  }
   if (/\.\s*\./.test(raw)) return false
 
   const clipPrompt = resolveBeatClipPrompt(beat, options)
@@ -342,7 +369,9 @@ export function isStoredFrameBookendPromptAligned(
   if (
     facets.camera &&
     /^static\b/i.test(facets.camera) &&
-    /Camera positioned at initial starting point before|Camera settles after/i.test(body)
+    /Camera positioned at initial starting point before|Camera settles after|Camera completes/i.test(
+      body
+    )
   ) {
     return false
   }

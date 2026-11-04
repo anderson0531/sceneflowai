@@ -55,20 +55,21 @@ describe('framePromptBaseline', () => {
     ).toBe('fallback prompt')
   })
 
-  it('buildPreVisEndFrameEditInstruction uses start visual without scene-direction bloat', () => {
+  it('buildPreVisEndFrameEditInstruction directs F2V t=T progression without freezing background or repeating start frame description', () => {
     const startVisual =
       'A shimmering, ethereal nebula of data points and glowing lines, slowly coalescing. Photorealistic rendering of digital space, 8K clarity.'
     const instruction = buildPreVisEndFrameEditInstruction({
       startFramePrompt: startVisual,
       endFramePrompt:
-        'Subtle environmental motion while preserving composition: nebula coalescing further',
+        'Camera completes slow push-in as the nebula coalesces into a dense luminous core filling the midground.',
     })
-    expect(instruction).toContain('DO NOT hallucinate new objects')
-    expect(instruction).toContain('Maintain absolute physics and visual continuity')
-    expect(instruction).toContain('Edit start frame:')
-    expect(instruction).toContain('ethereal nebula')
+    expect(instruction).toContain('Frame-to-Video (F2V)')
+    expect(instruction).toContain('Concluding end frame direction (t=T):')
+    expect(instruction).toContain('dense luminous core')
+    expect(instruction).not.toContain('DO NOT change the background')
+    expect(instruction).not.toContain('DO NOT alter character core appearance')
+    expect(instruction).not.toContain('Edit start frame:')
     expect(instruction).not.toMatch(/Wide Shot/i)
-    expect(instruction).not.toMatch(/Dolly in/i)
     expect(instruction).not.toMatch(/photorealistic, professional photography/i)
   })
 

@@ -664,4 +664,55 @@ describe('needsProductionDerive', () => {
     expect(parsed?.startFramePrompt).toContain('Episode 1: The White City Current')
     expect(parsed?.endFramePrompt).toContain('Episode 1: The White City Current')
   })
+
+  it('replaces restrictive End Frame prompts ("DO NOT change the background" / "Edit start frame:") with F2V-progressed camera and motion direction', () => {
+    const corridorClipPrompt =
+      'A low angle medium wide shot down a desolate subterranean freight corridor where massive concrete walls and overhead iron girders converge toward a distant vanishing point. Crisp white typography spelling "The Secret Journals Series" floats precisely centered at the corridor focal midpoint. Shot: Medium Wide Shot. Angle: low angle. Camera: slow push-in down the subterranean freight corridor. Blocking: Uninhabited industrial corridor receding into deep vanishing point. Lighting: Harsh tungsten amber downlight casting geometric girder grid shadows across cracked floor plates and frosted copper turbine coils. End on: Deeper down the freight corridor after the push-in, framing the centered white typography "The Secret Journals Series" closer against the receding ironwork and amber shadow grid. No people in frame.'
+
+    const legacyRestrictiveEndPrompt =
+      "Edit the start frame image to reflect movement that aligns with the beat action and illustrates the ending action of the shot. DO NOT hallucinate new objects, DO NOT change the background, and DO NOT alter character core appearance. Maintain absolute physics and visual continuity with consistent lighting and location.\n\nEdit start frame: A low angle medium wide shot down a desolate subterranean freight corridor where massive concrete walls and overhead iron girders converge toward a distant vanishing point. Overhead, a single amber cage fixture casts deep geometric grid shadows diagonally across cracked industrial floor plates and frosted copper turbine coils along the walls. Crisp white typography spelling 'The Secret Journals Series' floats precisely centered at the corridor's focal midpoint. Harsh tungsten amber downlight rims the overhead pipe runs and floor fractures amidst deep noir chiaroscuro shadows and atmospheric subterranean haze. No people in frame.\n\nMovement delta: Settling closer after a slow push-in down the subterranean freight corridor, the low angle medium wide composition draws deeper into the architectural vanishing point."
+
+    const beat: SceneBeat = {
+      beatId: 'bt_corridor_1',
+      sequenceIndex: 0,
+      kind: 'action',
+      beatRole: 'title_reveal',
+      actionDescription:
+        'Slow push-in down a desolate subterranean freight corridor toward centered white typography "The Secret Journals Series".',
+      storyboardEndImagePrompt: legacyRestrictiveEndPrompt,
+      beatDirection: {
+        shotType: 'Medium Wide Shot',
+        cameraAngle: 'low angle',
+        cameraMovement: 'slow push-in down the subterranean freight corridor',
+      },
+    }
+
+    const scene = {
+      beats: [beat],
+      segments: [
+        {
+          segmentId: 'seg_corridor_1',
+          beatId: 'bt_corridor_1',
+          generatedPrompt: corridorClipPrompt,
+        },
+      ],
+    }
+
+    expect(isStoredFrameBookendPromptAligned(legacyRestrictiveEndPrompt, beat, { scene })).toBe(
+      false
+    )
+
+    const alignedEndInstruction = resolveAlignedEndFrameInstruction(beat, { scene })
+    expect(alignedEndInstruction).not.toContain('DO NOT change the background')
+    expect(alignedEndInstruction).not.toContain('DO NOT alter character core appearance')
+    expect(alignedEndInstruction).not.toContain('Edit start frame:')
+    expect(alignedEndInstruction).toContain('Frame-to-Video (F2V)')
+    expect(alignedEndInstruction).toContain('Concluding end frame direction (t=T):')
+    expect(alignedEndInstruction).toContain(
+      'advancing deeper into the space with tighter terminal framing'
+    )
+    expect(alignedEndInstruction).toContain('near-field foreground elements from t=0s pass out')
+    expect(alignedEndInstruction).toContain('The Secret Journals Series')
+    expect(alignedEndInstruction).toContain('No people in frame')
+  })
 })

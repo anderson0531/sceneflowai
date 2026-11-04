@@ -38,7 +38,7 @@ export interface GeminiStudioEditOptions {
   referenceImages?: Array<{ imageUrl: string; name?: string }>
   aspectRatio?: GeminiStudioImageOptions['aspectRatio']
   imageSize?: '1K' | '2K'
-  editIntent?: 'default' | 'keyframeEnd' | 'preVisEdit'
+  editIntent?: 'default' | 'keyframeStart' | 'keyframeEnd' | 'preVisEdit'
   segmentDurationSeconds?: number
   modelTier?: ModelTier
   thinkingLevel?: ThinkingLevel

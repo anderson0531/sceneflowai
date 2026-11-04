@@ -7,7 +7,9 @@
 **Industry:** AI-Powered Long-Form Video Production / Creator Economy & B2B Production Services  
 **Funding Sought:** Google for Startups Cloud Credits ($2K Start Tier → Partner / AI-First Track) + Program Support  
 **Website:** https://sceneflowai.studio  
-**Admin / contact email:** support@sceneflowai.studio (billing account aligned with @sceneflowai.studio domain)
+**Primary Applicant & Billing Admin Email:** brian@sceneflowai.studio (Workspace Super Admin: admin@sceneflowai.studio; Support: support@sceneflowai.studio)  
+**GCP Billing Account ID:** `018BC7-19AC32-7CE0EE` (*SceneFlow Platform* — Active, USD, Single-Project Consolidated)  
+**GCP Project ID / Number:** `sceneflowai-2d3e6` (`809352734041`) — Linked to `018BC7-19AC32-7CE0EE` under `sceneflowai.studio` Organization
 
 ---
 
@@ -122,13 +124,13 @@ SERIES ROOM → BLUEPRINT ROOM → PRODUCTION STAGE → FINAL CUT → SCREENING 
 
 ## Traction, Validation & January 2027 Launch Trajectory
 
-### Development Progress (Complete)
+### Development Progress & Live 6-Vertical Showcase (Complete)
 
 - ✅ End-to-end pipeline live: Series Room → Blueprint Room → Production Stage → Final Cut → Screening Room
 - ✅ Vertex AI integration: Gemini (AR + Agent), Imagen 4 / Gemini Pro Image (Continuity Vault), Veo 3.1 + EXT chains
 - ✅ Dual workflow modes: Granular **Direct Control** for experienced directors + one-click **Autonomous Production Agent**
 - ✅ Hybrid upload pipeline: Script import (`.fdx`, `.fountain`, PDF) for Pre-Vis pitch packages + live camera clip uploads for Podcasters and Video Memoir producers
-- ✅ Global 7-language UI (`en`, `es`, `pt`, `hi`, `zh-CN`, `ar`, `th`) + 7-language localized trailers across all 6 flagship verticals
+- ✅ **6 Flagship Production Examples in 7 Languages (`en`, `es`, `pt`, `hi`, `zh-CN`, `ar`, `th`):** Complete Series Bibles, Blueprints, Audience Resonance™ script analyses, **voiced & scored Pre-Vis Animatics**, and **localized Promo Trailers** across all 6 verticals (*Cinematic Drama*, *Animated Series*, *Historical Documentary*, *Instructional Training*, *Creator & Video Podcasts*, and *Video Memoirs*), plus flagship motion video in *The White City Current*
 - ✅ Merchant of Record billing live via Whop ($9 Explorer Test Flight, $19 Hobbyist, $49 Starter, $149 Pro, $599 Studio + 12-month Add-On packs)
 
 ---
@@ -149,7 +151,7 @@ SERIES ROOM → BLUEPRINT ROOM → PRODUCTION STAGE → FINAL CUT → SCREENING 
 ### From Google for Startups
 
 **1. Cloud Credits ($2K Start Tier → Partner / AI-First Track)**  
-- **Immediate Use (Nov–Dec 2026 Pre-Launch):** Complete full long-form Episode 1 / Chapter 1 motion masters across all 6 flagship verticals and 7 UI language markets, and run pre-launch creator & B2B production agency test flights ahead of our **January 2027 commercial launch**.
+- **Immediate Use (Nov–Dec 2026 Pre-Launch):** With all 6 flagship verticals already live in Pre-Vis Animatic and 7-language Trailer form, we will deploy the $2,000 Start Tier grant directly into Vertex AI **Veo 3.1 + EXT** and **Cloud Run FFmpeg** to render the complete multi-chapter **Episode 1 / Chapter 1 Motion Video Masters (179.5 minutes across all 6 verticals in 7 languages)** and run pre-launch creator & B2B production agency test flights ahead of our **January 2027 commercial launch**.
 - **2027 Scale Track ($100K–$250K):** Scale Vertex AI (Gemini, Imagen 4, Veo 3.1) and Cloud Run compute across 7 global language markets as revenue reinvests into viral B2B "Video Production Business-in-a-Box" marketing campaigns.
 
 **2. Technical Mentorship**  
@@ -164,7 +166,8 @@ Google Cloud showcase co-marketing highlighting how Vertex AI powers new solo vi
 
 **Brian Anderson**  
 Founder, SceneFlow AI (Life Focus, LLC)  
-📧 support@sceneflowai.studio | brian@sceneflowai.studio  
+📧 brian@sceneflowai.studio | admin@sceneflowai.studio | support@sceneflowai.studio  
+💳 GCP Billing Account: `018BC7-19AC32-7CE0EE` · GCP Project: `sceneflowai-2d3e6` (`809352734041`)  
 🌐 https://sceneflowai.studio  
 📍 Austin, Texas area
 

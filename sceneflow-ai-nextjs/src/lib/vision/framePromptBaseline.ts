@@ -111,9 +111,9 @@ const START_FRAME_CONTINUITY_PREAMBLE =
   'Maintain absolute physics and visual continuity with consistent lighting and location.'
 
 const END_FRAME_CONTINUITY_PREAMBLE =
-  'Edit the start frame image to reflect movement that aligns with the beat action and illustrates the ending action of the shot. ' +
-  'DO NOT hallucinate new objects, DO NOT change the background, and DO NOT alter character core appearance. ' +
-  'Maintain absolute physics and visual continuity with consistent lighting and location.'
+  'Edit the start frame image to generate the concluding end frame (t=T) of the shot based on the camera motion, action, and temporal changes through the clip. ' +
+  'Allow the background perspective, spatial scale, parallax, framing crop, and subject pose or position to evolve naturally to reflect the completed movement from t=0s to t=T so the start and end frames create a clear motion delta for Frame-to-Video (F2V) generation. ' +
+  'Maintain world and character identity continuity within the same location and lighting atmosphere without hallucinating unrelated objects.'
 
 function sanitizeFramePromptSentence(value?: string | null): string {
   return normalize(value)
@@ -124,8 +124,9 @@ function sanitizeFramePromptSentence(value?: string | null): string {
 
 /**
  * Strip directed-edit preambles ("Edit the reference shot still...", "Edit the start frame image...",
- * "Starting action direction (t=0s):", "Edit start frame:", "Movement delta:") so stored or nested
- * frame instructions never duplicate boilerplate when re-wrapped or passed from Start -> End frame.
+ * "Starting action direction (t=0s):", "Concluding end frame direction (t=T):", "Edit start frame:",
+ * "Movement delta:") so stored or nested frame instructions never duplicate boilerplate when
+ * re-wrapped or passed from Start -> End frame.
  */
 export function stripFrameEditPreamble(value?: string | null): string {
   let text = normalize(value)
@@ -144,7 +145,7 @@ export function stripFrameEditPreamble(value?: string | null): string {
       ''
     )
     .replace(
-      /^Edit the start frame image to reflect movement that aligns with the beat action[\s\S]*?consistent lighting and location\.\s*/i,
+      /^Edit the start frame image to (?:reflect movement that aligns with the beat action|generate the concluding end frame)[\s\S]*?(?:consistent lighting and location|hallucinating unrelated objects)\.\s*/i,
       ''
     )
     .trim()
@@ -158,7 +159,23 @@ export function stripFrameEditPreamble(value?: string | null): string {
       .trim()
   }
 
-  // If "Movement delta: ..." is embedded after "Edit start frame: ...", extract the appropriate part
+  // If "Concluding end frame direction (t=T): ..." or legacy "Movement delta: ..." is present, keep the concluding direction
+  const concludingDirIdx = text.search(/Concluding end frame direction \(t=T\):\s*/i)
+  if (concludingDirIdx >= 0) {
+    text = text
+      .slice(concludingDirIdx)
+      .replace(/^Concluding end frame direction \(t=T\):\s*/i, '')
+      .trim()
+  } else {
+    const movementIdx = text.search(/Movement delta:\s*/i)
+    if (movementIdx >= 0) {
+      text = text
+        .slice(movementIdx)
+        .replace(/^Movement delta:\s*/i, '')
+        .trim()
+    }
+  }
+
   text = text
     .replace(/^Stage the initial opening pose and camera framing \(t=0s\) for:\s*/i, '')
     .replace(/^Edit start frame:\s*/i, '')
@@ -202,43 +219,41 @@ export function buildPreVisStartFrameEditInstruction(
 }
 
 /**
- * Minimal directed-edit instruction for Pre-Vis anchored end frames.
- * Anchors on the start-frame visual description — no scene-direction bloat.
+ * Directed-edit instruction for Pre-Vis anchored end frames (t=T).
+ * Focuses directly on the camera movement, spatial/perspective shift, and terminal action
+ * state from the Clip prompt so the End Frame provides a clear F2V motion delta rather than
+ * re-describing the static t=0s start frame.
  */
 export function buildPreVisEndFrameEditInstruction(
   args: PreVisEndFrameEditArgs
 ): string {
   const custom = stripFrameEditPreamble(args.customPrompt)
+  if (custom) {
+    return `${END_FRAME_CONTINUITY_PREAMBLE}\n\nConcluding end frame direction (t=T): ${custom}`
+  }
+
+  const endDelta = stripFrameEditPreamble(args.endFramePrompt)
   const strippedStart = stripFrameEditPreamble(args.startFramePrompt)
   const fallback = sanitizeFramePromptSentence(
     stripDialoguePrompt(normalize(args.fallbackActionPrompt))
   )
-  const startVisual = custom || strippedStart || fallback
+  const startVisual = strippedStart || fallback
 
-  if (!startVisual) {
-    const dur =
-      typeof args.durationSeconds === 'number' && args.durationSeconds > 0
-        ? args.durationSeconds
-        : undefined
-    const fallbackText =
-      dur != null
-        ? `Show subtle visual progression after ~${dur}s while preserving composition, lighting, and environment.`
-        : 'Show subtle visual progression while preserving composition, lighting, and environment.'
-    return `${END_FRAME_CONTINUITY_PREAMBLE}\n\nEdit start frame: ${fallbackText}`
+  if (endDelta && isVisualEndFrameDelta(endDelta)) {
+    return `${END_FRAME_CONTINUITY_PREAMBLE}\n\nConcluding end frame direction (t=T): ${endDelta}`
   }
 
-  let instruction = `${END_FRAME_CONTINUITY_PREAMBLE}\n\nEdit start frame: ${startVisual}`
-
-  let endDelta = stripFrameEditPreamble(args.endFramePrompt)
-  const movementIdx = endDelta.search(/Movement delta:\s*/i)
-  if (movementIdx >= 0) {
-    endDelta = sanitizeFramePromptSentence(
-      endDelta.slice(movementIdx).replace(/^Movement delta:\s*/i, '')
-    )
-  }
-  if (endDelta && isVisualEndFrameDelta(endDelta) && endDelta !== startVisual) {
-    instruction += `\n\nMovement delta: ${endDelta}`
+  if (startVisual) {
+    return `${END_FRAME_CONTINUITY_PREAMBLE}\n\nConcluding end frame direction (t=T): Advance the camera perspective, spatial framing, and subject or environmental motion from the opening state (${startVisual}) to the completed end-of-clip state.`
   }
 
-  return instruction
+  const dur =
+    typeof args.durationSeconds === 'number' && args.durationSeconds > 0
+      ? args.durationSeconds
+      : undefined
+  const fallbackText =
+    dur != null
+      ? `Advance camera perspective, framing, and scene motion over ~${dur}s to the completed end-of-clip state while maintaining world and lighting continuity.`
+      : 'Advance camera perspective, framing, and scene motion to the completed end-of-clip state while maintaining world and lighting continuity.'
+  return `${END_FRAME_CONTINUITY_PREAMBLE}\n\nConcluding end frame direction (t=T): ${fallbackText}`
 }

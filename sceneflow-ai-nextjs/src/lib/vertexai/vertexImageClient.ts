@@ -1039,7 +1039,7 @@ export interface VertexImageEditOptions {
   referenceImages?: Array<{ imageUrl: string; name?: string }>
   aspectRatio?: GenerateVertexImageOptions['aspectRatio']
   imageSize?: '1K' | '2K'
-  editIntent?: 'default' | 'keyframeEnd' | 'preVisEdit'
+  editIntent?: 'default' | 'keyframeStart' | 'keyframeEnd' | 'preVisEdit'
   segmentDurationSeconds?: number
   modelTier?: VertexImageTier
   thinkingLevel?: VertexThinkingLevel
@@ -1057,12 +1057,20 @@ export async function editVertexImage(options: VertexImageEditOptions): Promise<
       : undefined
 
   let editPrompt: string
-  if (intent === 'keyframeEnd') {
+  if (intent === 'keyframeStart') {
     const durLine =
       dur != null && dur > 0
-        ? `END keyframe of a ~${dur}s clip. Primary image is the START frame.`
-        : `END keyframe. Primary image is the START frame.`
-    editPrompt = `${durLine}\n\nDIRECTED EDIT:\n${options.instruction}\n\nPreserve scene, cast, and lighting continuity.`
+        ? `START keyframe (t=0s) of a ~${dur}s clip. Primary image is the reference Shot Still.`
+        : `START keyframe (t=0s). Primary image is the reference Shot Still.`
+    editPrompt = `${durLine}\n\nDIRECTED EDIT:\n${options.instruction}\n\nPreserve scene architecture, cast identity, and lighting continuity.`
+  } else if (intent === 'keyframeEnd') {
+    const durLine =
+      dur != null && dur > 0
+        ? `END keyframe (t=T) of a ~${dur}s video clip for Frame-to-Video (F2V) interpolation. Primary image is the START frame (t=0s).`
+        : `END keyframe (t=T) for Frame-to-Video (F2V) interpolation. Primary image is the START frame (t=0s).`
+    editPrompt =
+      `${durLine}\n\nDIRECTED EDIT:\n${options.instruction}\n\n` +
+      'Execute the full camera movement (perspective shift, focal scale change, 3D parallax, framing progression) and subject or environmental motion from t=0s to t=T so the END keyframe is visibly progressed from the START frame while preserving world architecture, lighting atmosphere, and character identity.'
   } else if (intent === 'preVisEdit') {
     editPrompt =
       `PRE-VIS STORYBOARD EDIT:\n${options.instruction}\n\n` +
