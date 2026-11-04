@@ -228,6 +228,9 @@ export interface RunPreVisScenePreparationParams {
   selectedKeys: Set<string>
   scriptScenes: any[]
   characters?: any[]
+  targetDemographic?: string
+  scriptTitle?: string
+  logline?: string
   localAppliedKeys?: Set<string>
   /** Concurrency for scene revisions (defaults to 2 to avoid Vertex AI 429s) */
   revisionConcurrency?: number
@@ -259,6 +262,9 @@ export async function runPreVisScenePreparation(
     selectedKeys,
     scriptScenes,
     characters = [],
+    targetDemographic = '',
+    scriptTitle,
+    logline,
     localAppliedKeys,
     revisionConcurrency = 2,
     signal,
@@ -287,7 +293,7 @@ export async function runPreVisScenePreparation(
       done: 0,
       total: groups.length,
       currentSceneNumber: groups[0]?.sceneNumber,
-      label: `Applying recommendations (0/${groups.length} scenes)…`,
+      label: `Running Scene Director on Scene ${groups[0]?.sceneNumber} (0/${groups.length} scenes)…`,
     })
 
     await runWithConcurrencyLimit(
@@ -306,11 +312,22 @@ export async function runPreVisScenePreparation(
           return
         }
 
+        onProgress?.({
+          phase: 'revise-scenes',
+          done: completedRevisions,
+          total: groups.length,
+          currentSceneNumber: group.sceneNumber,
+          label: `Running Scene Director on Scene ${group.sceneNumber} (${completedRevisions}/${groups.length} scenes)…`,
+        })
+
         const previousScene = group.sceneIndex > 0 ? scriptScenes[group.sceneIndex - 1] : null
         const nextScene =
           group.sceneIndex < scriptScenes.length - 1 ? scriptScenes[group.sceneIndex + 1] : null
 
-        const recTexts = group.selectedRecommendations.map((r) => r.text)
+        const recItems = group.selectedRecommendations.map((r) => r.raw)
+        const formattedInstruction = group.selectedRecommendations
+          .map((r, idx) => `${idx + 1}. ${r.text}`)
+          .join('\n\n')
         const recIds = group.selectedRecommendations.map((r) => r.recId)
 
         try {
@@ -322,13 +339,18 @@ export async function runPreVisScenePreparation(
               sceneIndex: group.sceneIndex,
               currentScene,
               revisionMode: 'recommendations',
-              selectedRecommendations: recTexts,
-              customInstruction: '',
+              selectedRecommendations: recItems,
+              customInstruction: formattedInstruction,
+              targetDemographic,
               preserveElements: [],
               revisionDepth: 'moderate',
-              characters,
-              previousScene,
-              nextScene,
+              context: {
+                characters,
+                previousScene,
+                nextScene,
+                scriptTitle,
+                logline,
+              },
             }),
             signal,
           })
@@ -362,7 +384,7 @@ export async function runPreVisScenePreparation(
             done: completedRevisions,
             total: groups.length,
             currentSceneNumber: group.sceneNumber,
-            label: `Applied recommendations (${completedRevisions}/${groups.length} scenes)…`,
+            label: `Scene Director revised ${completedRevisions}/${groups.length} scene${groups.length === 1 ? '' : 's'}…`,
           })
         }
       }

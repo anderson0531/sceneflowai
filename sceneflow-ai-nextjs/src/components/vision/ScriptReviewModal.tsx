@@ -996,7 +996,11 @@ export default function ScriptReviewModal({
   const review = audienceReview as AudienceResonanceReview | null
   // Use localSceneAnalysis if available (from dedicated API), otherwise fall back to review data
   const sceneAnalysis = localSceneAnalysis || review?.sceneAnalysis || []
-  const scriptScenes = Array.isArray(script?.scenes) ? script.scenes : []
+  const scriptScenes = Array.isArray(script?.scenes)
+    ? script.scenes
+    : Array.isArray(script?.script?.scenes)
+      ? script.script.scenes
+      : []
 
   // Scene Breakdown Recommendation Selection & Pre-Vis Preparation Agent State
   const [selectedRecKeys, setSelectedRecKeys] = useState<Set<string>>(() => new Set())
@@ -1101,6 +1105,9 @@ export default function ScriptReviewModal({
         selectedKeys: selectedRecKeys,
         scriptScenes,
         characters: characters || [],
+        targetDemographic: formatAudienceDefinitionForPrompt(audienceDef) || review?.targetDemographic || '',
+        scriptTitle: script?.title || script?.script?.title,
+        logline: script?.logline || script?.script?.logline,
         localAppliedKeys: localAppliedRecKeys,
         signal: controller.signal,
         onProgress: (progress) => {
@@ -1130,8 +1137,8 @@ export default function ScriptReviewModal({
           if (onBatchApplySceneRevisions) {
             return await onBatchApplySceneRevisions(revisions)
           }
+          await onRefreshProject?.()
         },
-        onRefreshProject,
       })
 
       setPreVisPrepResult(result)
@@ -1139,7 +1146,13 @@ export default function ScriptReviewModal({
       const hasFailures = result.failedRevisions.length > 0
       const summaryText = `Applied ${result.appliedRecommendationCount} recommendation${result.appliedRecommendationCount === 1 ? '' : 's'} across ${result.revisedSceneCount} scene${result.revisedSceneCount === 1 ? '' : 's'} — re-run AR Analysis to update your score`
 
-      if (hasFailures) {
+      if (result.revisedSceneCount === 0 && hasFailures) {
+        const firstErr = result.failedRevisions[0]?.error || 'Scene Director revision failed'
+        toast.error(
+          `Failed to revise ${result.failedRevisions.length} scene${result.failedRevisions.length === 1 ? '' : 's'}: ${firstErr}`,
+          { id: toastId }
+        )
+      } else if (hasFailures) {
         toast.warning(
           `${summaryText} (${result.failedRevisions.length} scene${result.failedRevisions.length === 1 ? '' : 's'} failed)`,
           { id: toastId }
@@ -1965,7 +1978,7 @@ export default function ScriptReviewModal({
                         )}
 
                         {/* Completion banner — Re-run AR Analysis to iterate or Launch Production Agent */}
-                        {!isRunningPreVisPrep && preVisPrepResult && (
+                        {!isRunningPreVisPrep && preVisPrepResult && preVisPrepResult.revisedSceneCount > 0 && (
                           <div className="mt-3 rounded-lg border border-emerald-400/40 bg-emerald-950/40 p-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2.5">
                             <div className="flex items-start gap-2 text-xs text-emerald-100">
                               <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
@@ -2005,6 +2018,23 @@ export default function ScriptReviewModal({
                                 <Bot className="w-3.5 h-3.5 mr-1.5" />
                                 Production Agent
                               </Button>
+                            </div>
+                          </div>
+                        )}
+                        {!isRunningPreVisPrep && preVisPrepResult && preVisPrepResult.failedRevisions.length > 0 && (
+                          <div className="mt-3 rounded-lg border border-rose-400/40 bg-rose-950/40 p-3 text-xs text-rose-100">
+                            <div className="flex items-start gap-2">
+                              <AlertTriangle className="w-4 h-4 text-rose-400 shrink-0 mt-0.5" />
+                              <div>
+                                <div className="font-semibold text-white">
+                                  {preVisPrepResult.failedRevisions.length} Scene{preVisPrepResult.failedRevisions.length === 1 ? '' : 's'} Failed During Scene Director Revision
+                                </div>
+                                <p className="text-[11px] text-rose-200/90 m-0 mt-0.5">
+                                  {preVisPrepResult.failedRevisions
+                                    .map((f) => `Scene ${f.sceneNumber}: ${f.error}`)
+                                    .join(' · ')}
+                                </p>
+                              </div>
                             </div>
                           </div>
                         )}

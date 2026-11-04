@@ -118,6 +118,9 @@ describe('prepareScenesForPreVis', () => {
       selectedKeys: selected,
       scriptScenes,
       characters: [{ name: 'Mara' }],
+      targetDemographic: 'Sci-Fi Thriller Core',
+      scriptTitle: 'The Cipher',
+      logline: 'A cryptographer uncovers a signal in the bunker.',
       onPersistRevisedScenes,
       onRefreshProject,
       fetchImpl: fetchMock,
@@ -129,6 +132,23 @@ describe('prepareScenesForPreVis', () => {
     expect(result.totalShotsDirected).toBe(0)
     expect(result.failedRevisions).toHaveLength(0)
     expect(result.failedDirections).toHaveLength(0)
+
+    // Verify Scene Director payload includes nested `context` so `/api/vision/revise-scene` executes Gemini
+    expect(calls[0].body).toMatchObject({
+      projectId: 'proj-123',
+      sceneIndex: 0,
+      revisionMode: 'recommendations',
+      customInstruction: '1. Replace exposition monologue with visual discovery of the cipher.',
+      targetDemographic: 'Sci-Fi Thriller Core',
+      revisionDepth: 'moderate',
+      context: {
+        characters: [{ name: 'Mara' }],
+        previousScene: null,
+        nextScene: scriptScenes[1],
+        scriptTitle: 'The Cipher',
+        logline: 'A cryptographer uncovers a signal in the bunker.',
+      },
+    })
 
     expect(onPersistRevisedScenes).toHaveBeenCalledTimes(1)
     expect(onPersistRevisedScenes.mock.calls[0][0]).toEqual([

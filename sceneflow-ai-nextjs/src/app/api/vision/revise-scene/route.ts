@@ -124,6 +124,13 @@ function formatCharacterProfiles(characters: any[]): string {
 
 export async function POST(req: NextRequest) {
   try {
+    const body = (await req.json()) as SceneRevisionRequest & {
+      characters?: any[]
+      previousScene?: any
+      nextScene?: any
+      logline?: string
+      scriptTitle?: string
+    }
     const {
       projectId,
       sceneIndex,
@@ -135,8 +142,20 @@ export async function POST(req: NextRequest) {
       preserveElements = [],
       revisionDepth = 'moderate', // Default to moderate (substantive rewrite)
       targetBeatCount,
-      context
-    }: SceneRevisionRequest = await req.json()
+      context: rawContext,
+    } = body
+
+    const context = {
+      characters: Array.isArray(rawContext?.characters)
+        ? rawContext.characters
+        : Array.isArray(body.characters)
+          ? body.characters
+          : [],
+      previousScene: rawContext?.previousScene ?? body.previousScene ?? undefined,
+      nextScene: rawContext?.nextScene ?? body.nextScene ?? undefined,
+      logline: rawContext?.logline ?? body.logline ?? undefined,
+      scriptTitle: rawContext?.scriptTitle ?? body.scriptTitle ?? undefined,
+    }
 
     if (!projectId || sceneIndex === undefined || !currentScene) {
       return NextResponse.json(
