@@ -517,15 +517,15 @@ export function resolveExpressGenerationMethod(
   hasStartFrame: boolean,
   hasEndFrame = false,
   preferredSourceMethod?: 'reference' | 'frame'
-): 'REF' | 'I2V' | 'FTV' {
+): 'REF' | 'I2V' | 'FTV' | 'T2V' {
   if (preferredSourceMethod === 'frame') {
     if (hasStartFrame && hasEndFrame) return 'FTV'
     return 'I2V'
   }
   if (preferredSourceMethod === 'reference') {
-    return hasRefs ? 'REF' : hasStartFrame && hasEndFrame ? 'FTV' : 'I2V'
+    return hasRefs ? 'REF' : hasStartFrame && hasEndFrame ? 'FTV' : hasStartFrame ? 'I2V' : 'T2V'
   }
-  return hasRefs ? 'REF' : hasStartFrame && hasEndFrame ? 'FTV' : hasStartFrame ? 'I2V' : 'I2V'
+  return hasRefs ? 'REF' : hasStartFrame && hasEndFrame ? 'FTV' : hasStartFrame ? 'I2V' : 'T2V'
 }
 
 /** Live beat start frame reconciled with production segment overrides. */

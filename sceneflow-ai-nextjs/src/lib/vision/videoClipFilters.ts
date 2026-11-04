@@ -52,7 +52,9 @@ export function videoMatchesFilters(
   quality: VideoQualityFilter
 ): boolean {
   if (!videoMatchesAttention(facts, attention)) return false
-  if (quality === 'final') return facts.imageTier === 'final'
+  if (quality === 'final') {
+    return facts.imageTier === 'final' || (facts.status === 'complete' && !facts.imageTier)
+  }
   if (quality === 'draft') return facts.imageTier === 'draft'
   return true
 }
@@ -61,10 +63,11 @@ export type VideoRailStatus = 'action' | 'attention' | 'ready' | 'idle'
 
 /**
  * Thumbnail light for one clip.
- * Red when there is no playable clip, the render failed, or a finished clip
- * has neither a draft nor a final still. Yellow for a draft still or a stale
- * prompt. Green only for a finished clip on a clean final still. A clip that
- * is still rendering has no light.
+ * Red when there is no playable clip or the render failed.
+ * Yellow for a draft source frame or a stale prompt.
+ * Green for a finished clip whose prompt is in sync (still frames are optional
+ * for Standard Reference-to-Video clips and only required for Creative / Kling AI).
+ * A clip that is still rendering has no light.
  */
 export function videoRailStatus(facts: VideoClipFacts): { status: VideoRailStatus; label: string } {
   if (facts.status === 'rendering') return { status: 'idle', label: '' }
@@ -72,8 +75,7 @@ export function videoRailStatus(facts: VideoClipFacts): { status: VideoRailStatu
   if (facts.status !== 'complete') return { status: 'action', label: 'No clip' }
   if (facts.promptChanged) return { status: 'attention', label: 'Prompt changed' }
   if (facts.imageTier === 'draft') return { status: 'attention', label: 'Draft' }
-  if (facts.imageTier === 'final') return { status: 'ready', label: 'Final' }
-  return { status: 'action', label: 'Missing' }
+  return { status: 'ready', label: 'Final' }
 }
 
 export function isContentPolicyFailureMessage(message: string): boolean {
@@ -100,7 +102,7 @@ export function videoRailTooltip(
       : 'Action needed: Video render failed — select this shot and click Generate Clip to retry.'
   }
   if (facts.status !== 'complete') {
-    return 'Action needed: No video clip rendered yet — run Video Agent or click Generate Clip to render this shot.'
+    return 'Action needed: No video clip rendered yet — run Video Agent or click Generate Clip to render this shot. Still frames are optional and only required for Creative (Kling AI) clips.'
   }
   if (facts.promptChanged) {
     return 'Action needed: Shot prompt or direction changed after this clip was rendered — run Video Agent (highlighted in yellow) or click Regenerate Clip to update it.'
@@ -108,8 +110,5 @@ export function videoRailTooltip(
   if (facts.imageTier === 'draft') {
     return 'Rendered from a Draft still frame — upgrade the still to Final and re-render when ready.'
   }
-  if (facts.imageTier === 'final') {
-    return 'Video clip is rendered and in sync with the shot prompt.'
-  }
-  return 'Action needed: Source still frame is missing — generate the still frame first, then render this clip.'
+  return 'Video clip is rendered and in sync with the shot prompt.'
 }

@@ -3,7 +3,7 @@ import type { DirectorQueueItem, SceneSegment } from '@/components/vision/scene-
 import { compileBeatVideoPromptFromDirection } from '@/lib/scene/beatVideoPromptCompiler'
 import { getSceneBeats, isBeatExcluded } from '@/lib/script/beatMigration'
 import { parsePersistedMusicCues, resolveBeatMusicCue } from '@/lib/script/sceneMusicCues'
-import { resolveCurrentStillTier, segmentHasPlayableVideo } from '@/lib/storyboard/mediaVersions'
+import { resolveBeatStillTier, segmentHasPlayableVideo } from '@/lib/storyboard/mediaVersions'
 import { isBeatFrameStale } from '@/lib/storyboard/syncBeatStillPrompt'
 import { f2vStartFromPreviousEnd, resolveF2VFrameUrls } from '@/lib/vision/segmentConfigBuilder'
 import type { DetailedSceneDirection } from '@/types/scene-direction'
@@ -56,18 +56,26 @@ export function buildBeatVideoClips({
     const item = segment ? queue.find((entry) => entry.segmentId === segment.segmentId) : undefined
     const f2v = segment
       ? resolveF2VFrameUrls(segment, sceneRecord ?? undefined)
-      : { startFrameUrl: null, endFrameUrl: null }
+      : {
+          startFrameUrl:
+            beat.storyboardStartImageUrl?.trim() || beat.storyboardImageUrl?.trim() || null,
+          endFrameUrl: beat.storyboardEndImageUrl?.trim() || null,
+        }
     const previousBeat = index > 0 ? beats[index - 1] : undefined
     const previousSegment = previousBeat
       ? segments.find((row) => row.beatId === previousBeat.beatId)
       : undefined
     const previousEndFrameUrl = f2vStartFromPreviousEnd(
-      previousSegment
+      (previousSegment
         ? resolveF2VFrameUrls(previousSegment, sceneRecord ?? undefined).endFrameUrl
-        : null
+        : null) ||
+        previousBeat?.storyboardEndImageUrl?.trim() ||
+        null
     )
     const thumbnail =
+      beat.storyboardStartImageUrl?.trim() ||
       beat.storyboardImageUrl?.trim() ||
+      f2v.startFrameUrl ||
       item?.thumbnailUrl ||
       segment?.startFrameUrl ||
       segment?.references?.startFrameUrl ||
@@ -105,12 +113,7 @@ export function buildBeatVideoClips({
       previousEndFrameUrl,
       segment,
       queueItem: item,
-      imageTier: resolveCurrentStillTier({
-        url: beat.storyboardImageUrl,
-        versionId: beat.storyboardImageVersionId,
-        versions: beat.storyboardImageVersions,
-        beatTier: beat.storyboardImageTier,
-      }),
+      imageTier: resolveBeatStillTier(beat, segment),
       promptChanged: isBeatFrameStale(beat) || !!segment?.isStale,
     }
   })
@@ -154,6 +157,7 @@ export function buildBeatVideoClips({
         ),
         segment,
         queueItem: item,
+        imageTier: resolveBeatStillTier(undefined, segment),
         promptChanged: !!segment.isStale,
       }
     })
@@ -173,6 +177,7 @@ export function buildBeatVideoClips({
         hasStartFrame: !!(item.thumbnailUrl || segment?.startFrameUrl),
         segment,
         queueItem: item,
+        imageTier: resolveBeatStillTier(undefined, segment),
         promptChanged: !!segment?.isStale,
       }
     })

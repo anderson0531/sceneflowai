@@ -203,7 +203,12 @@ export function formatPairedIdentityLandmarkLine(ref: StillPromptBoundRef): stri
   return line
 }
 
-export function formatProportionalScaleTaskLine(refs: StillPromptBoundRef[]): string | undefined {
+export function formatProportionalScaleTaskLine(
+  refs: StillPromptBoundRef[],
+  options?: { emptyCast?: boolean }
+): string | undefined {
+  const hasPeople = !options?.emptyCast && refs.some((ref) => ref.kind === 'person')
+  if (!hasPeople) return undefined
   const parts: string[] = []
   for (const ref of refs) {
     if (ref.kind === 'location' && (ref.description?.trim() || ref.canonicalScale)) {
@@ -221,7 +226,7 @@ export function formatProportionalScaleTaskLine(refs: StillPromptBoundRef[]): st
     }
   }
   if (parts.length === 0) return undefined
-  return `Proportional scale lock: maintain true spatial proportions between environment, fixtures, props, and standing characters (${parts.join('; ')}) — do not shrink ceiling or doors relative to characters.`
+  return `Proportional scale lock: maintain true spatial proportions between environment, fixtures, props, and standing characters (${parts.join('; ')}) — do not shrink ceiling or doors relative to characters. Ignore any right-margin scale ticks on the location plate; do not draw rulers, height marks, or stick figures into the frame.`
 }
 
 export function formatPairedIdentityLandmarkLines(refs: StillPromptBoundRef[]): string[] {
@@ -377,7 +382,7 @@ export function stillTaskLines(
     if (refs.some((ref) => ref.kind === 'location' && ref.currentSetState)) {
       lines.push(LOCATION_VERSION_CONSUMPTION_SUFFIX)
     }
-    const proportionalScaleLine = formatProportionalScaleTaskLine(refs)
+    const proportionalScaleLine = formatProportionalScaleTaskLine(refs, { emptyCast })
     if (proportionalScaleLine) {
       lines.push(proportionalScaleLine)
     }

@@ -42,6 +42,7 @@ import {
   type StoryboardFrameSlot,
 } from '@/lib/storyboard/types'
 import { getSceneBeats } from '@/lib/script/beatMigration'
+import { resolveBeatStillTier } from '@/lib/storyboard/mediaVersions'
 import {
   isStoredFrameBookendPromptAligned,
   resolveAlignedEndFrameInstruction,
@@ -622,18 +623,37 @@ export function SceneStoryboardFrameViewer({
   )
   const frameFacts = useMemo<FrameListFacts[]>(
     () =>
-      frameSlots.map((slot) => ({
-        key: slot.key,
-        kind: slot.kind,
-        imageTier: slot.ownImageUrl ? slot.imageTier : undefined,
-        isMissing: slot.isMissing,
-        isPlaceholder: slot.isPlaceholder,
-        promptChanged: slotPromptChanged(slot),
-        hasImageError: !!slot.imageError?.trim(),
-        hasOwnImage: !!slot.ownImageUrl,
-        referenceStatus: slot.referenceStatus,
-      })),
-    [frameSlots, slotPromptChanged]
+      frameSlots.map((slot) => {
+        const beat = slot.beatId
+          ? sceneBeats.find((entry) => entry.beatId === slot.beatId)
+          : undefined
+        const hasActionFrames = Boolean(
+          beat?.storyboardStartImageUrl?.trim() || beat?.storyboardEndImageUrl?.trim()
+        )
+        const hasOwnImage = !!slot.ownImageUrl || hasActionFrames
+        const imageTier = slot.ownImageUrl
+          ? slot.imageTier
+          : hasActionFrames
+            ? resolveBeatStillTier(beat)
+            : undefined
+        const imageError =
+          slot.imageError?.trim() ||
+          beat?.storyboardStartImageError?.trim() ||
+          beat?.storyboardEndImageError?.trim() ||
+          ''
+        return {
+          key: slot.key,
+          kind: slot.kind,
+          imageTier,
+          isMissing: slot.isMissing && !hasActionFrames,
+          isPlaceholder: slot.isPlaceholder && !hasActionFrames,
+          promptChanged: slotPromptChanged(slot),
+          hasImageError: !hasOwnImage && !!imageError,
+          hasOwnImage,
+          referenceStatus: slot.referenceStatus,
+        }
+      }),
+    [frameSlots, sceneBeats, slotPromptChanged]
   )
   const visibleFrameSlots = useMemo(
     () =>
@@ -677,10 +697,6 @@ export function SceneStoryboardFrameViewer({
     return visibleFrameSlots.find((slot) => slot.key === selectedFrameKey) ?? visibleFrameSlots[0]
   }, [visibleFrameSlots, selectedFrameKey])
 
-  useEffect(() => {
-    setActiveBeatFrameRole('start')
-  }, [previewSlot?.beatId])
-
   const activeBeatIndex = useMemo(() => {
     if (!previewSlot?.beatId) return -1
     return sceneBeats.findIndex((beat) => beat.beatId === previewSlot.beatId)
@@ -690,6 +706,17 @@ export function SceneStoryboardFrameViewer({
     if (activeBeatIndex < 0) return undefined
     return sceneBeats[activeBeatIndex]
   }, [activeBeatIndex, sceneBeats])
+
+  useEffect(() => {
+    if (
+      !previewSlot?.ownImageUrl &&
+      activeBeat?.storyboardStartImageUrl?.trim()
+    ) {
+      setActiveBeatFrameRole('action-start')
+      return
+    }
+    setActiveBeatFrameRole('start')
+  }, [previewSlot?.beatId, previewSlot?.ownImageUrl, activeBeat?.storyboardStartImageUrl])
 
   const prevBeatForContinuity = useMemo(() => {
     if (activeBeatIndex <= 0) return undefined

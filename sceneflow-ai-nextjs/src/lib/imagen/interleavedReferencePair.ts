@@ -206,7 +206,8 @@ function objectDescriptor(
 function environmentDescriptor(
   locationName: string,
   description?: string | null,
-  canonicalScale?: Partial<LocationCanonicalScale> | null
+  canonicalScale?: Partial<LocationCanonicalScale> | null,
+  options?: { hasCharacters?: boolean }
 ): string {
   const cleanDescription =
     description && !SCALE_ESSAY_PATTERN.test(description) ? description : null
@@ -218,7 +219,7 @@ function environmentDescriptor(
       canonicalScale?.fixtureHeights
   )
   const scale = hasExplicitScale
-    ? formatLocationScaleDescriptor(cleanDescription, locationName, canonicalScale)
+    ? formatLocationScaleDescriptor(cleanDescription, locationName, canonicalScale, options)
     : ''
   const base = usable
     ? `Environment reference: ${usable}`
@@ -262,6 +263,12 @@ export function buildInterleavedReferencePairCaptions(
   const personTokens = new Map<string, string>()
   let nextProp = 0
   let nextLocation = 0
+  const hasPersonPlates =
+    characterReferences.length > 0 ||
+    plates.some((plate) => {
+      const r = plateRole(plate)
+      return r === 'IDENTITY' || r === 'WARDROBE' || r === 'CHARACTER'
+    })
 
   return plates.map((plate) => {
     const role = plateRole(plate)
@@ -320,7 +327,8 @@ export function buildInterleavedReferencePairCaptions(
         descriptor: environmentDescriptor(
           locationName,
           plate.locationDescription,
-          plate.canonicalScale
+          plate.canonicalScale,
+          { hasCharacters: hasPersonPlates }
         ),
       }),
     }

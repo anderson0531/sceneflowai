@@ -94,7 +94,8 @@ function formatFeetNumber(n: number): string {
 export function formatLocationScaleDescriptor(
   description?: string | null,
   name?: string | null,
-  canonicalScale?: Partial<LocationCanonicalScale> | null
+  canonicalScale?: Partial<LocationCanonicalScale> | null,
+  options?: { hasCharacters?: boolean }
 ): string {
   const scale = extractLocationCanonicalScale(description, name, canonicalScale)
   const parts: string[] = [
@@ -104,7 +105,9 @@ export function formatLocationScaleDescriptor(
   if (scale.fixtureHeights) {
     parts.push(scale.fixtureHeights)
   }
-  parts.push('maintain proportionate size with characters')
+  if (options?.hasCharacters !== false) {
+    parts.push('maintain proportionate size with characters')
+  }
   return parts.join(', ')
 }
 

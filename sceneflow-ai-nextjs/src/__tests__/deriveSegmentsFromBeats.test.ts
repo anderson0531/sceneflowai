@@ -635,6 +635,8 @@ describe('needsProductionDerive', () => {
     expect(alignedStart).toContain('Static camera lock')
     expect(alignedStart).toContain('Episode 1: The White City Current')
     expect(alignedStart).toContain('No people in frame')
+    expect(alignedStart).toContain('Initial spatial staging at the start of action')
+    expect(alignedStart).not.toContain('Initial opening posture')
     expect(alignedStart).not.toContain('Medium Shot')
     expect(alignedStart).not.toContain('micro-dolly')
     expect(alignedStart).not.toMatch(/\bexpression\b/i)

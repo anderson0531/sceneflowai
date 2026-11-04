@@ -255,7 +255,7 @@ describe('frame and video filters', () => {
     expect(frameReferenceNotice('pass')).toBeNull()
   })
 
-  it('lights clips red without a finished draft or final, and idle while rendering', () => {
+  it('lights clips red without a finished clip, yellow on draft or prompt change, green when complete (including reference-to-video without a still frame), and idle while rendering', () => {
     expect(videoRailStatus(missing)).toEqual({ status: 'action', label: 'No clip' })
     expect(videoRailStatus({ ...complete, status: 'queued' })).toEqual({ status: 'action', label: 'No clip' })
     expect(videoRailStatus({ key: 'e', status: 'error', promptChanged: false, imageTier: 'final' })).toEqual({
@@ -276,10 +276,17 @@ describe('frame and video filters', () => {
     })
     expect(videoRailStatus(stale)).toEqual({ status: 'attention', label: 'Prompt changed' })
     expect(videoRailStatus(complete)).toEqual({ status: 'ready', label: 'Final' })
+    // Still frames are optional for Standard Reference-to-Video clips; a finished clip without imageTier is Final (never 'Missing')
     expect(videoRailStatus({ key: 'u', status: 'complete', promptChanged: false })).toEqual({
-      status: 'action',
-      label: 'Missing',
+      status: 'ready',
+      label: 'Final',
     })
+    expect(
+      videoRailTooltip({ key: 'u', status: 'complete', promptChanged: false })
+    ).toBe('Video clip is rendered and in sync with the shot prompt.')
+    expect(
+      videoMatchesFilters({ key: 'u', status: 'complete', promptChanged: false }, 'all', 'final')
+    ).toBe(true)
   })
 
   it('lights direction red without facets, yellow when the still prompt drifted, and green when it matches', () => {

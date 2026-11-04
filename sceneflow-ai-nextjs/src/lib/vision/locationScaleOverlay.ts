@@ -36,6 +36,17 @@ export function isLocationReferencePartName(name?: string, role?: string, locati
   return /\blocation\b/.test(lower)
 }
 
+export function isCharacterReferencePartName(
+  name?: string,
+  role?: string,
+  locationName?: string
+): boolean {
+  if (isLocationReferencePartName(name, role, locationName)) return false
+  if (role === 'character' || role === 'identity' || role === 'wardrobe') return true
+  if (!name) return false
+  return /\b(identity|wardrobe|character|person)\b/i.test(name)
+}
+
 function yForFeet(height: number, feet: number, ceilingHeightFt: number): number {
   const usableTop = Math.round(height * 0.06)
   const usableBottom = Math.round(height * 0.94)
@@ -44,6 +55,11 @@ function yForFeet(height: number, feet: number, ceilingHeightFt: number): number
   return Math.round(usableBottom - t * span)
 }
 
+/**
+ * Build right-margin architectural height tick marks (0, 6ft, door, ceiling).
+ * Never draw a stick figure / human silhouette inside the overlay strip: image
+ * diffusion models copy line-drawn figures from reference plates into the scene.
+ */
 export function buildLocationScaleOverlaySvg(
   width: number,
   height: number,
@@ -51,11 +67,6 @@ export function buildLocationScaleOverlaySvg(
 ): string {
   const stripW = Math.max(48, Math.round(width * 0.08))
   const x0 = width - stripW
-  const figureTop = yForFeet(height, scale.figureHeightFt, scale.ceilingHeightFt)
-  const figureBottom = yForFeet(height, 0, scale.ceilingHeightFt)
-  const figureH = Math.max(8, figureBottom - figureTop)
-  const cx = x0 + stripW * 0.38
-  const headR = Math.max(3, Math.round(figureH * 0.07))
   const ticks = [
     { ft: 0, label: '0' },
     { ft: scale.figureHeightFt, label: `${scale.figureHeightFt}ft` },
@@ -77,13 +88,9 @@ export function buildLocationScaleOverlaySvg(
     .join('')
 
   return (
-    `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}">` +
+    `<svg xmlns="http://www.w3.org/www.w3.org/2000/svg" width="${width}" height="${height}">`
+      .replace('http://www.w3.org/www.w3.org/2000/svg', 'http://www.w3.org/2000/svg') +
     `<rect x="${x0}" y="0" width="${stripW}" height="${height}" fill="rgb(12,14,18)" fill-opacity="0.92"/>` +
-    `<circle cx="${cx}" cy="${figureTop + headR}" r="${headR}" fill="none" stroke="#f4f1ea" stroke-width="2"/>` +
-    `<line x1="${cx}" y1="${figureTop + headR * 2}" x2="${cx}" y2="${figureTop + figureH * 0.55}" stroke="#f4f1ea" stroke-width="2"/>` +
-    `<line x1="${cx - headR * 1.6}" y1="${figureTop + figureH * 0.32}" x2="${cx + headR * 1.6}" y2="${figureTop + figureH * 0.32}" stroke="#f4f1ea" stroke-width="2"/>` +
-    `<line x1="${cx}" y1="${figureTop + figureH * 0.55}" x2="${cx - headR * 1.4}" y2="${figureBottom}" stroke="#f4f1ea" stroke-width="2"/>` +
-    `<line x1="${cx}" y1="${figureTop + figureH * 0.55}" x2="${cx + headR * 1.4}" y2="${figureBottom}" stroke="#f4f1ea" stroke-width="2"/>` +
     tickLines +
     `</svg>`
   )
@@ -171,7 +178,14 @@ async function overlayLocationScaleOnOneReference<T extends OverlayableLocationR
 }
 
 export async function overlayLocationScaleOnReferenceImages<T extends OverlayableLocationReference>(
-  refs: T[]
+  refs: T[],
+  options?: { hasCharacters?: boolean }
 ): Promise<T[]> {
+  const hasCharacters =
+    options?.hasCharacters ??
+    refs.some((ref) => isCharacterReferencePartName(ref.name, ref.role, ref.locationName))
+  if (!hasCharacters) {
+    return refs
+  }
   return Promise.all(refs.map((ref) => overlayLocationScaleOnOneReference(ref)))
 }

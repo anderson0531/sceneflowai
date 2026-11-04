@@ -157,7 +157,7 @@ import { isBeatFrameStale } from '@/lib/storyboard/syncBeatStillPrompt'
 import {
   applyVideoTakeSelection,
   healMissingVideoPointer,
-  resolveCurrentStillTier,
+  resolveBeatStillTier,
   segmentHasPlayableVideo,
 } from '@/lib/storyboard/mediaVersions'
 import {
@@ -1128,13 +1128,18 @@ export function DirectorConsoleRoot({
       const hasStartFrame = !!resolvedStart
       const hasEndFrame = !!resolvedEnd
       const hasRefs = (cfg.referenceImages?.length ?? 0) > 0 || cfg.mode === 'REF'
+      const hasPrompt = Boolean(
+        cfg.prompt?.trim() ||
+          segment.userEditedPrompt?.trim() ||
+          segment.generatedPrompt?.trim()
+      )
       return {
         hasStartFrame,
         hasEndFrame,
         hasRefs,
         resolvedStart,
         resolvedEnd,
-        eligible: hasRefs || hasStartFrame,
+        eligible: hasRefs || hasStartFrame || hasPrompt,
       }
     },
     [scene, sceneImageUrl, segments]
@@ -1171,15 +1176,10 @@ export function DirectorConsoleRoot({
           isRendering: item.status === 'rendering',
           hasError: item.status === 'error',
           eligible: inputs.eligible,
+          hasStartFrame: inputs.hasStartFrame,
+          hasEndFrame: inputs.hasEndFrame,
           promptChanged: beat ? isBeatFrameStale(beat) || !!segment?.isStale : !!segment?.isStale,
-          imageTier: beat
-            ? resolveCurrentStillTier({
-                url: beat.storyboardImageUrl,
-                versionId: beat.storyboardImageVersionId,
-                versions: beat.storyboardImageVersions,
-                beatTier: beat.storyboardImageTier,
-              })
-            : undefined,
+          imageTier: resolveBeatStillTier(beat, segment),
         },
       ]
     })
@@ -2190,6 +2190,17 @@ export function DirectorConsoleRoot({
           if (!item) {
             void import('sonner').then(({ toast }) => {
               toast.error('This clip is not in the video queue.')
+            })
+            return
+          }
+          const inputs = segmentHasVideoAgentInputs(item, segment)
+          const requiresFrames =
+            videoGenerationMode === 'creative' || effectiveVideoSourceMethod === 'frame'
+          if (requiresFrames && !inputs.hasStartFrame) {
+            void import('sonner').then(({ toast }) => {
+              toast.error(
+                'Start/End frames are required for Creative (Kling AI) / Frame-to-Video clips — generate frames in Stills first, or switch to Standard mode.'
+              )
             })
             return
           }

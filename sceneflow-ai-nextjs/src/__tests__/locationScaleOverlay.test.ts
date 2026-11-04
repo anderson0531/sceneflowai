@@ -60,6 +60,21 @@ describe('locationScaleOverlay', () => {
     ])
     expect(result[0]?.base64Image).toBe(original.toString('base64'))
     expect(result[1]?.base64Image).not.toBe(original.toString('base64'))
-    expect(buildLocationScaleOverlaySvg(100, 100, DEFAULT_LOCATION_CANONICAL_SCALE)).toContain('7ft door')
+    const svg = buildLocationScaleOverlaySvg(100, 100, DEFAULT_LOCATION_CANONICAL_SCALE)
+    expect(svg).toContain('7ft door')
+    expect(svg).not.toContain('<circle')
+  })
+
+  it('skips location scale overlay when no character references are attached (empty-cast shots)', async () => {
+    const original = await solidJpeg(800, 450, { r: 20, g: 180, b: 40 })
+    const result = await overlayLocationScaleOnReferenceImages([
+      {
+        name: 'Location reference 1: VAULT',
+        role: 'location',
+        locationName: 'VAULT',
+        base64Image: original.toString('base64'),
+      },
+    ])
+    expect(result[0]?.base64Image).toBe(original.toString('base64'))
   })
 })

@@ -76,6 +76,9 @@ export interface VideoAgentBeatOption {
   isRendering: boolean
   hasError: boolean
   eligible: boolean
+  /** True when the shot has a start frame (required only for Creative / Kling AI or Frame-to-Video). */
+  hasStartFrame?: boolean
+  hasEndFrame?: boolean
   promptChanged?: boolean
   imageTier?: 'draft' | 'final'
 }
@@ -106,8 +109,13 @@ function clipFacts(beat: VideoAgentBeatOption): VideoClipFacts {
   }
 }
 
-function beatEligibleForScope(beat: VideoAgentBeatOption, scope: VideoAgentScope): boolean {
+function beatEligibleForScope(
+  beat: VideoAgentBeatOption,
+  scope: VideoAgentScope,
+  requiresFrames = false
+): boolean {
   if (!beat.eligible || beat.isRendering) return false
+  if (requiresFrames && beat.hasStartFrame === false) return false
   if (scope === 'missing') return !beat.hasVideo
   return true
 }
@@ -148,6 +156,8 @@ export function VideoAgentConfirmDialog({
 
   const effectiveSourceMethod: VideoSourceMethod =
     generationMode === 'creative' ? 'frame' : sourceMethod
+  const requiresFrames =
+    generationMode === 'creative' || effectiveSourceMethod === 'frame'
 
   const checklistBeats = useMemo(
     () => beats.filter((beat) => beat.eligible),
@@ -161,12 +171,13 @@ export function VideoAgentConfirmDialog({
     const selected = checklistBeats
       .filter((beat) =>
         clipFilterActive
-          ? videoMatchesFilters(clipFacts(beat), clipAttention, 'all')
-          : beatEligibleForScope(beat, scope)
+          ? videoMatchesFilters(clipFacts(beat), clipAttention, 'all') &&
+            (!requiresFrames || beat.hasStartFrame !== false)
+          : beatEligibleForScope(beat, scope, requiresFrames)
       )
       .map((beat) => beat.segmentId)
     setSelectedSegmentIds(selected)
-  }, [open, scope, checklistBeats, clipAttention, clipFilterActive])
+  }, [open, scope, checklistBeats, clipAttention, clipFilterActive, requiresFrames])
 
   const selectedSet = useMemo(() => new Set(selectedSegmentIds), [selectedSegmentIds])
 
@@ -183,7 +194,9 @@ export function VideoAgentConfirmDialog({
     mode: generationMode,
   })
   const nothingSelected = selectedSegmentIds.length === 0
-  const scopeBeats = checklistBeats.filter((beat) => beatEligibleForScope(beat, scope) || scope === 'selected')
+  const scopeBeats = checklistBeats.filter(
+    (beat) => beatEligibleForScope(beat, scope, requiresFrames) || scope === 'selected'
+  )
   const visibleBeats = clipFilterActive
     ? checklistBeats.filter((beat) => videoMatchesFilters(clipFacts(beat), clipAttention, 'all'))
     : scopeBeats
@@ -369,7 +382,8 @@ export function VideoAgentConfirmDialog({
                       disabled={
                         isRunning ||
                         beat.isRendering ||
-                        (!clipFilterActive && !beatEligibleForScope(beat, scope))
+                        (requiresFrames && beat.hasStartFrame === false) ||
+                        (!clipFilterActive && !beatEligibleForScope(beat, scope, requiresFrames))
                       }
                       className="mt-0.5"
                     />
@@ -391,20 +405,24 @@ export function VideoAgentConfirmDialog({
                         className={`text-[10px] ${
                           beat.isRendering
                             ? 'text-indigo-300'
-                            : beat.hasVideo
-                              ? 'text-green-400'
-                              : beat.hasError
-                                ? 'text-rose-400'
-                                : 'text-amber-400'
+                            : requiresFrames && beat.hasStartFrame === false
+                              ? 'text-amber-300'
+                              : beat.hasVideo
+                                ? 'text-green-400'
+                                : beat.hasError
+                                  ? 'text-rose-400'
+                                  : 'text-amber-400'
                         }`}
                       >
                         {beat.isRendering
                           ? t('rendering')
-                          : beat.hasVideo
-                            ? t('hasVideo')
-                            : beat.hasError
-                              ? t('failed')
-                              : t('missing')}
+                          : requiresFrames && beat.hasStartFrame === false
+                            ? 'Frames required for Creative (Kling AI)'
+                            : beat.hasVideo
+                              ? t('hasVideo')
+                              : beat.hasError
+                                ? t('failed')
+                                : t('missing')}
                       </span>
                     </span>
                   </label>

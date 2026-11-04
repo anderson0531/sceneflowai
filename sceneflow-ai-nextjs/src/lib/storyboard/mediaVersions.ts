@@ -243,6 +243,100 @@ export function resolveCurrentStillTier(args: {
   return 'draft'
 }
 
+/**
+ * Resolve the effective still-frame tier for a beat across its Shot Still
+ * (`storyboardImageUrl`), dedicated Start Frame (`storyboardStartImageUrl`),
+ * and End Frame (`storyboardEndImageUrl`), plus optional segment start/end frame
+ * fallbacks.
+ *
+ * When a user creates Start/End frames via "Generate Frames" without first
+ * generating a Pre-Vis Shot Still, `storyboardImageUrl` is empty while
+ * `storyboardStartImageUrl` / `storyboardEndImageUrl` carry the frame URL and tier.
+ */
+export function resolveBeatStillTier(
+  beat:
+    | {
+        storyboardImageUrl?: string | null
+        storyboardImageVersionId?: string | null
+        storyboardImageVersions?: MediaVersion[] | unknown
+        storyboardImageTier?: 'draft' | 'final' | null
+        storyboardStartImageUrl?: string | null
+        storyboardStartImageVersionId?: string | null
+        storyboardStartImageVersions?: MediaVersion[] | unknown
+        storyboardStartImageTier?: 'draft' | 'final' | null
+        storyboardEndImageUrl?: string | null
+        storyboardEndImageVersionId?: string | null
+        storyboardEndImageVersions?: MediaVersion[] | unknown
+        storyboardEndImageTier?: 'draft' | 'final' | null
+      }
+    | null
+    | undefined,
+  segment?: {
+    startFrameUrl?: string | null
+    endFrameUrl?: string | null
+    references?: {
+      startFrameUrl?: string | null
+      startFrameVersionId?: string | null
+      startFrameVersions?: MediaVersion[] | unknown
+      endFrameUrl?: string | null
+      endFrameVersionId?: string | null
+      endFrameVersions?: MediaVersion[] | unknown
+    } | null
+  } | null
+): 'draft' | 'final' | undefined {
+  if (beat) {
+    const startTier = resolveCurrentStillTier({
+      url: beat.storyboardStartImageUrl,
+      versionId: beat.storyboardStartImageVersionId,
+      versions: beat.storyboardStartImageVersions,
+      beatTier: beat.storyboardStartImageTier ?? beat.storyboardImageTier,
+    })
+    const stillTier = resolveCurrentStillTier({
+      url: beat.storyboardImageUrl,
+      versionId: beat.storyboardImageVersionId,
+      versions: beat.storyboardImageVersions,
+      beatTier: beat.storyboardImageTier,
+    })
+    const endTier = resolveCurrentStillTier({
+      url: beat.storyboardEndImageUrl,
+      versionId: beat.storyboardEndImageVersionId,
+      versions: beat.storyboardEndImageVersions,
+      beatTier:
+        beat.storyboardEndImageTier ??
+        beat.storyboardStartImageTier ??
+        beat.storyboardImageTier,
+    })
+    const tiers = [stillTier, startTier, endTier].filter(
+      (t): t is 'draft' | 'final' => t === 'draft' || t === 'final'
+    )
+    if (tiers.includes('final')) return 'final'
+    if (tiers.includes('draft')) return 'draft'
+  }
+  if (segment) {
+    const segStartTier = resolveCurrentStillTier({
+      url: segment.startFrameUrl ?? segment.references?.startFrameUrl,
+      versionId: segment.references?.startFrameVersionId,
+      versions: segment.references?.startFrameVersions,
+      beatTier: beat?.storyboardStartImageTier ?? beat?.storyboardImageTier,
+    })
+    const segEndTier = resolveCurrentStillTier({
+      url: segment.endFrameUrl ?? segment.references?.endFrameUrl,
+      versionId: segment.references?.endFrameVersionId,
+      versions: segment.references?.endFrameVersions,
+      beatTier:
+        beat?.storyboardEndImageTier ??
+        beat?.storyboardStartImageTier ??
+        beat?.storyboardImageTier,
+    })
+    const segTiers = [segStartTier, segEndTier].filter(
+      (t): t is 'draft' | 'final' => t === 'draft' || t === 'final'
+    )
+    if (segTiers.includes('final')) return 'final'
+    if (segTiers.includes('draft')) return 'draft'
+  }
+  return undefined
+}
+
 /** Tier to write onto the beat when a history row becomes current. Unstamped history is draft. */
 export function restoredStillTier(
   versions: MediaVersion[] | unknown,

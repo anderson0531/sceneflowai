@@ -209,4 +209,99 @@ describe('deriveSegmentsFromBeats with excluded beats', () => {
     expect(clipsAfterReInclude[14]?.beatId).toBe('bt_15')
     expect(clipsAfterReInclude[14]?.segment?.segmentId).toBe('seg_15')
   })
+
+  it('resolves imageTier and thumbnailUrl when Start/End frames (storyboardStartImageUrl / storyboardEndImageUrl) are created without a Shot Still', () => {
+    const sceneWithActionFramesOnly = {
+      beats: [
+        {
+          beatId: 'bt_frames_only',
+          sequenceIndex: 0,
+          kind: 'action' as const,
+          actionDescription: 'Hero leaps across the rooftop',
+          storyboardStartImageUrl: 'https://example.com/start-frame.jpg',
+          storyboardStartImageTier: 'final' as const,
+          storyboardEndImageUrl: 'https://example.com/end-frame.jpg',
+          storyboardEndImageTier: 'final' as const,
+        },
+        {
+          beatId: 'bt_no_frames',
+          sequenceIndex: 1,
+          kind: 'dialogue' as const,
+          character: 'Sarah',
+          line: 'Watch out!',
+        },
+      ],
+    }
+
+    const segments: SceneSegment[] = [
+      {
+        segmentId: 'seg_1',
+        beatId: 'bt_frames_only',
+        sequenceIndex: 0,
+        startTime: 0,
+        endTime: 5,
+        status: 'COMPLETE',
+        assetType: 'video',
+        activeAssetUrl: 'https://example.com/clip-1.mp4',
+        takes: [
+          {
+            id: 'take_1',
+            assetUrl: 'https://example.com/clip-1.mp4',
+            videoUrl: 'https://example.com/clip-1.mp4',
+            status: 'COMPLETE',
+            createdAt: '2026-04-20T00:00:00.000Z',
+            duration: 5,
+          },
+        ],
+      } as SceneSegment,
+      {
+        segmentId: 'seg_2',
+        beatId: 'bt_no_frames',
+        sequenceIndex: 1,
+        startTime: 5,
+        endTime: 10,
+        status: 'COMPLETE',
+        assetType: 'video',
+        activeAssetUrl: 'https://example.com/clip-2.mp4',
+        takes: [
+          {
+            id: 'take_2',
+            assetUrl: 'https://example.com/clip-2.mp4',
+            videoUrl: 'https://example.com/clip-2.mp4',
+            status: 'COMPLETE',
+            createdAt: '2026-04-20T00:00:00.000Z',
+            duration: 5,
+          },
+        ],
+      } as SceneSegment,
+    ]
+
+    const clips = buildBeatVideoClips({
+      scene: sceneWithActionFramesOnly,
+      segments,
+      queue: [],
+    })
+
+    expect(clips).toHaveLength(2)
+    // Shot 1 has dedicated Start/End frames and no storyboardImageUrl -> resolves 'final' tier and start frame thumbnail
+    expect(clips[0]?.imageTier).toBe('final')
+    expect(clips[0]?.thumbnailUrl).toBe('https://example.com/start-frame.jpg')
+    expect(clips[0]?.hasStartFrame).toBe(true)
+    expect(clips[0]?.f2vStartUrl).toBe('https://example.com/start-frame.jpg')
+    expect(clips[0]?.f2vEndUrl).toBe('https://example.com/end-frame.jpg')
+
+    // Shot 2 was rendered via Standard Reference-to-Video without any still frames -> status is still 'Final' (ready), never 'Missing'
+    expect(clips[1]?.imageTier).toBeUndefined()
+    expect(
+      videoRailStatus({
+        key: clips[1]!.key,
+        status: 'complete',
+        promptChanged: false,
+        imageTier: clips[1]?.imageTier,
+      })
+    ).toEqual({
+      status: 'ready',
+      label: 'Final',
+    })
+  })
 })

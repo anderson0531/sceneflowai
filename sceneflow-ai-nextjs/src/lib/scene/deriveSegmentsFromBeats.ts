@@ -137,7 +137,11 @@ export function buildStartFramePrompt(
     startCues.push(`Starting action state (t=0s): ${baseAction}`)
   }
   if (blocking && (!baseAction || !baseAction.toLowerCase().includes(blocking.toLowerCase()))) {
-    startCues.push(`Initial opening posture and staging at the start of action: ${blocking}`)
+    startCues.push(
+      noPeopleInFrame
+        ? `Initial spatial staging at the start of action: ${blocking}`
+        : `Initial opening posture and staging at the start of action: ${blocking}`
+    )
   }
   if (
     space &&
@@ -352,7 +356,7 @@ export function isStoredFrameBookendPromptAligned(
   const body = stripFrameEditPreamble(raw)
   if (!body) return false
 
-  if (noPeopleInFrame && /\b(expression|gaze directed)\b/i.test(body)) {
+  if (noPeopleInFrame && /\b(expression|gaze directed|opening posture)\b/i.test(body)) {
     return false
   }
 

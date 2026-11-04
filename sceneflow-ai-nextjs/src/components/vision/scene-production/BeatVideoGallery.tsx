@@ -67,9 +67,9 @@ const videoQualityLabels: Record<VideoQualityFilter, string> = {
 }
 
 const videoQualityTooltips: Record<VideoQualityFilter, string> = {
-  all: 'Final and draft pre-vis frames.',
-  final: 'Clips whose pre-vis frame is final.',
-  draft: 'Clips whose pre-vis frame is a draft.',
+  all: 'All clips in this scene.',
+  final: 'Clips rendered on a Final frame or via Standard Reference-to-Video.',
+  draft: 'Clips whose source frame is a draft.',
 }
 
 function clipStatus(item?: DirectorQueueItem): { label: string; className: string } | null {
@@ -520,7 +520,7 @@ export function BeatVideoGallery({
               </p>
             )}
             <p className="px-1 text-[10px] font-medium uppercase tracking-wide text-slate-400">
-              {previewVideoUrl ? 'Clip preview' : 'Start frame'}
+              {previewVideoUrl ? 'Clip preview' : preview?.thumbnailUrl ? 'Start frame' : 'Clip preview'}
             </p>
             <div
               ref={previewStageRef}
@@ -662,9 +662,12 @@ export function BeatVideoGallery({
                     // eslint-disable-next-line @next/next/no-img-element
                     <img src={preview.thumbnailUrl} alt="" className="h-full w-full object-contain" />
                   ) : (
-                    <div className="flex h-full min-h-[140px] flex-col items-center justify-center">
-                      <Camera className="mb-2 h-8 w-8 text-gray-600" />
-                      <span className="text-xs text-gray-500">No start frame</span>
+                    <div className="flex h-full min-h-[140px] flex-col items-center justify-center px-4 text-center">
+                      <Film className="mb-2 h-8 w-8 text-gray-600" />
+                      <span className="text-xs text-gray-400">No clip rendered yet</span>
+                      <span className="mt-1 text-[11px] text-gray-500">
+                        Still frames are optional for Standard clips (only required for Creative / Kling AI)
+                      </span>
                     </div>
                   )}
                 </div>
@@ -862,7 +865,7 @@ export function BeatVideoGallery({
                       Prompt changed
                     </span>
                   )}
-                  {preview.imageTier === 'final' && (
+                  {(preview.imageTier === 'final' || (previewHasClip && !preview.imageTier)) && (
                     <span className="rounded-full bg-emerald-500/25 px-1.5 py-0.5 text-[10px] text-emerald-300">
                       Final
                     </span>
