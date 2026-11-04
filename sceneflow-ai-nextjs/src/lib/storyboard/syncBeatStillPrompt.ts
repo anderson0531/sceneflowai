@@ -13,6 +13,12 @@ import {
   beatStillDirectionFingerprint,
   storedStillDirectionKeyMatches,
 } from '@/lib/script/beatDirectionFingerprint'
+import {
+  buildEndFramePrompt,
+  buildStartFramePrompt,
+  resolveAlignedEndFrameInstruction,
+  resolveAlignedStartFrameInstruction,
+} from '@/lib/scene/deriveSegmentsFromBeats'
 import type { SceneBeat } from '@/lib/script/segmentTypes'
 
 export interface SyncBeatStillPromptOptions {
@@ -72,6 +78,20 @@ export function syncBeatStillPromptToDirection(
   const prompt = composed ?? composeBeatActionFraming(next)
   if (prompt.trim()) {
     next.storyboardImagePrompt = prompt
+  }
+  if (next.storyboardStartImagePrompt?.trim()) {
+    next.storyboardStartImagePrompt = /^Edit the reference shot still/i.test(
+      next.storyboardStartImagePrompt.trim()
+    )
+      ? resolveAlignedStartFrameInstruction(next)
+      : buildStartFramePrompt(next)
+  }
+  if (next.storyboardEndImagePrompt?.trim()) {
+    next.storyboardEndImagePrompt = /^Edit the start frame image/i.test(
+      next.storyboardEndImagePrompt.trim()
+    )
+      ? resolveAlignedEndFrameInstruction(next)
+      : buildEndFramePrompt(next)
   }
   next.storyboardImagePromptDirectionKey = beatStillDirectionFingerprint(next.beatDirection)
   return next

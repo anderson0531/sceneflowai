@@ -15,7 +15,10 @@ import { resolveBeatFrameGenerationContext } from '@/lib/vision/beatFrameGenerat
 import { resolveWardrobeIdForCharacterInScene } from '@/lib/character/characterReferenceAssembly'
 import { actionFramingFromStoredPrompt } from '@/lib/imagen/structuredStillPrompt'
 import { storedPromptMatchesDirection } from '@/lib/intelligence/beat-sequence-planner-fallback'
-import { buildEndFramePrompt, buildStartFramePrompt } from '@/lib/scene/deriveSegmentsFromBeats'
+import {
+  resolveAlignedEndFramePrompt,
+  resolveAlignedStartFramePrompt,
+} from '@/lib/scene/deriveSegmentsFromBeats'
 
 export interface PreVisFramePromptContext {
   frameLabel: string
@@ -214,13 +217,9 @@ export function resolvePreVisFramePromptContext(args: {
       const storedSeedIsCurrent = storedPromptMatchesDirection(beat)
       const seedPrompt =
         slot.frameRole === 'action-start'
-          ? actionFramingFromStoredPrompt(slot.storyboardImagePrompt) ||
-            actionFramingFromStoredPrompt(beat.storyboardStartImagePrompt) ||
-            buildStartFramePrompt(beat)
+          ? resolveAlignedStartFramePrompt(beat, { scene })
           : slot.frameRole === 'end'
-            ? actionFramingFromStoredPrompt(slot.storyboardImagePrompt) ||
-              actionFramingFromStoredPrompt(beat.storyboardEndImagePrompt) ||
-              buildEndFramePrompt(beat)
+            ? resolveAlignedEndFramePrompt(beat, { scene })
             : (storedSeedIsCurrent &&
                 (actionFramingFromStoredPrompt(slot.storyboardImagePrompt) ||
                   actionFramingFromStoredPrompt(beat.storyboardImagePrompt))) ||

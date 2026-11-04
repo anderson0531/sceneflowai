@@ -41,6 +41,13 @@ import {
 } from '@/lib/storyboard/transitions'
 import type { PlayableTransition, ResolvedTransition } from '@/lib/storyboard/transitions'
 import { DEFAULT_VEO_CLIP_DURATION } from '@/lib/config/modelConfig'
+import {
+  isStoredFrameBookendPromptAligned,
+  resolveAlignedEndFrameInstruction,
+  resolveAlignedEndFramePrompt,
+  resolveAlignedStartFrameInstruction,
+  resolveAlignedStartFramePrompt,
+} from '@/lib/scene/deriveSegmentsFromBeats'
 
 const NARRATION_CLIP_BUFFER_SEC = 0.5
 const DIALOGUE_CLIP_BUFFER_SEC = 0.3
@@ -449,9 +456,21 @@ function buildBeatFrameSlot(
     beatRole: beat.beatRole,
     storyboardImagePrompt:
       frameRole === 'action-start'
-        ? beat.storyboardStartImagePrompt
+        ? beat.storyboardStartImagePrompt?.trim()
+          ? isStoredFrameBookendPromptAligned(beat.storyboardStartImagePrompt, beat, { scene })
+            ? beat.storyboardStartImagePrompt
+            : /^Edit the reference shot still/i.test(beat.storyboardStartImagePrompt.trim())
+              ? resolveAlignedStartFrameInstruction(beat, { scene })
+              : resolveAlignedStartFramePrompt(beat, { scene })
+          : undefined
         : frameRole === 'end'
-          ? beat.storyboardEndImagePrompt
+          ? beat.storyboardEndImagePrompt?.trim()
+            ? isStoredFrameBookendPromptAligned(beat.storyboardEndImagePrompt, beat, { scene })
+              ? beat.storyboardEndImagePrompt
+              : /^Edit the start frame image/i.test(beat.storyboardEndImagePrompt.trim())
+                ? resolveAlignedEndFrameInstruction(beat, { scene })
+                : resolveAlignedEndFramePrompt(beat, { scene })
+            : undefined
           : beat.storyboardImagePrompt,
     allowTypography: beat.beatRole === 'title_reveal' || beat.beatRole === 'credit',
     imageVersions,

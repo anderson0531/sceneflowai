@@ -191,7 +191,13 @@ import {
 import { usesFlashDraftTier } from '@/lib/sceneGeneration/animaticImageModel'
 import { getArtStyleNegativeTerms, getArtStylePromptSuffix } from '@/lib/vision/artStyle'
 import { editImageWithGeminiStudio } from '@/lib/gemini/geminiStudioImageClient'
-import { buildEndFramePrompt, buildStartFramePrompt } from '@/lib/scene/deriveSegmentsFromBeats'
+import {
+  buildEndFramePrompt,
+  buildStartFramePrompt,
+  resolveAlignedStartFramePrompt,
+} from '@/lib/scene/deriveSegmentsFromBeats'
+import { directClipFrameBookends } from '@/lib/intelligence/clip-frame-bookend-director'
+import { resolveBeatClipPrompt } from '@/lib/intelligence/clip-frame-bookend-director-fallback'
 import {
   buildPreVisEndFrameEditInstruction,
   buildPreVisStartFrameEditInstruction,
@@ -882,22 +888,42 @@ async function postGenerateImage(req: NextRequest) {
             beat.storyboardImageUrl?.trim()
 
           if (resolvedStillUrl) {
-            const startPrompt =
-              (typeof customPrompt === 'string' && customPrompt.trim()) ||
-              buildStartFramePrompt(beat)
             const durationSeconds =
               typeof beat.durationSeconds === 'number' && beat.durationSeconds > 0
                 ? beat.durationSeconds
                 : DEFAULT_VEO_CLIP_DURATION
+            const clipPrompt = resolveBeatClipPrompt(beat, {
+              scene: resolvedScene as Record<string, unknown>,
+              previousBeat: effectiveBeatIndex > 0 ? beats[effectiveBeatIndex - 1] : null,
+            })
             const shotStillPrompt =
               actionFramingFromStoredPrompt(beat.storyboardImagePrompt) ||
               beat.storyboardImagePrompt?.trim() ||
               beat.actionDescription?.trim() ||
-              startPrompt
+              ''
+            const userCustomPrompt =
+              typeof customPrompt === 'string' && customPrompt.trim()
+                ? customPrompt.trim()
+                : undefined
+            const bookends = userCustomPrompt
+              ? null
+              : await directClipFrameBookends({
+                  clipPrompt,
+                  shotStillPrompt,
+                  beat,
+                  durationSeconds,
+                })
+            const startPrompt =
+              userCustomPrompt ||
+              bookends?.startFramePrompt ||
+              buildStartFramePrompt(beat, {
+                clipPrompt,
+                scene: resolvedScene as Record<string, unknown>,
+              })
             const instruction = buildPreVisStartFrameEditInstruction({
-              shotStillPrompt,
+              shotStillPrompt: shotStillPrompt || startPrompt,
               startFramePrompt: startPrompt,
-              customPrompt: typeof customPrompt === 'string' ? customPrompt : undefined,
+              customPrompt: userCustomPrompt,
             })
 
             const editResult = await editImageWithGeminiStudio({
@@ -965,18 +991,45 @@ async function postGenerateImage(req: NextRequest) {
             )
           }
 
-          const endPrompt =
-            (typeof customPrompt === 'string' && customPrompt.trim()) ||
-            buildEndFramePrompt(beat)
           const durationSeconds =
             typeof beat.durationSeconds === 'number' && beat.durationSeconds > 0
               ? beat.durationSeconds
               : DEFAULT_VEO_CLIP_DURATION
-          const startPromptForEnd =
-            beat.storyboardStartImagePrompt?.trim() ||
+          const clipPrompt = resolveBeatClipPrompt(beat, {
+            scene: resolvedScene as Record<string, unknown>,
+            previousBeat: effectiveBeatIndex > 0 ? beats[effectiveBeatIndex - 1] : null,
+          })
+          const shotStillPrompt =
             actionFramingFromStoredPrompt(beat.storyboardImagePrompt) ||
             beat.storyboardImagePrompt?.trim() ||
             beat.actionDescription?.trim() ||
+            ''
+          const userCustomPrompt =
+            typeof customPrompt === 'string' && customPrompt.trim()
+              ? customPrompt.trim()
+              : undefined
+          const bookends = userCustomPrompt
+            ? null
+            : await directClipFrameBookends({
+                clipPrompt,
+                shotStillPrompt,
+                beat,
+                durationSeconds,
+              })
+          const endPrompt =
+            userCustomPrompt ||
+            bookends?.endFramePrompt ||
+            buildEndFramePrompt(beat, {
+              clipPrompt,
+              scene: resolvedScene as Record<string, unknown>,
+            })
+          const startPromptForEnd =
+            bookends?.startFramePrompt ||
+            resolveAlignedStartFramePrompt(beat, {
+              clipPrompt,
+              scene: resolvedScene as Record<string, unknown>,
+            }) ||
+            shotStillPrompt ||
             endPrompt
           const instruction = buildPreVisEndFrameEditInstruction({
             startFramePrompt: startPromptForEnd,

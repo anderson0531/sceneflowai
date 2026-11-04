@@ -255,7 +255,9 @@ export function deriveBeatDirection(
   if (Object.keys(derived).length === 0) return undefined
 
   const source =
-    existing.generatedBy === 'llm' || existing.generatedBy === 'user'
+    existing.generatedBy === 'llm' ||
+    existing.generatedBy === 'user' ||
+    existing.generatedBy === 'director'
       ? existing.generatedBy
       : 'derived'
   derived.generatedBy = source
@@ -312,7 +314,7 @@ export function applyDirectionCoverageToBeats(
     const row = raw[index] as CoverageRow | undefined
     if (!row || typeof row !== 'object') return beat
     const existing = beat.beatDirection
-    if (existing?.generatedBy === 'user') return beat
+    if (existing?.generatedBy === 'user' || existing?.generatedBy === 'director') return beat
 
     const purpose = row.coveragePurpose?.trim()
     const energy = row.lensEnergy?.trim()

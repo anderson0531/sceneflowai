@@ -7,7 +7,14 @@ import {
   productionDeriveAttemptKey,
   buildStartFramePrompt,
   buildEndFramePrompt,
+  isStoredFrameBookendPromptAligned,
+  resolveAlignedStartFrameInstruction,
+  resolveAlignedEndFrameInstruction,
 } from '@/lib/scene/deriveSegmentsFromBeats'
+import {
+  extractClipPromptFacets,
+  parseClipBookendDirectorResponse,
+} from '@/lib/intelligence/clip-frame-bookend-director-fallback'
 import type { SceneBeat } from '@/lib/script/segmentTypes'
 
 const approvedScene = (beats: SceneBeat[]) => ({
@@ -565,5 +572,96 @@ describe('needsProductionDerive', () => {
     expect(startPrompt).toMatch(/consistent lighting, shadows, and location/i)
     expect(endPrompt).toMatch(/Concluding action state/i)
     expect(endPrompt).toMatch(/consistent lighting and location/i)
+  })
+
+  it('aligns start and end still frame prompts with the Episode 1 Clips prompt without character hallucinations or nested boilerplate', () => {
+    const episode1ClipPrompt =
+      'Twin horizontal beams of pale white light slice across an obsidian vault interior from screen-left to screen-right. Stationary particulate sits caught inside the parallel light shafts, suspended above pitch-black floor shadows. Centered prominently between the crossbeams, bold white typography displays "Episode 1: The White City Current". Coverage: Frame the primary episode title against an obsidian subterranean void cut by piercing crossbeams. Lens: Static, monumental presentation with subtle floating particle drift. Space: Episode title commands dead-center frame, bookended by horizontal light cuts piercing the deep vault. Shot: Extreme Wide Graphic Shot. Angle: eye-level. Camera: static. Blocking: Stationary dust clusters sit trapped in two parallel horizontal light beams stretching edge-to-edge across the obsidian void. Emotion: Stark grandeur and chilling finality. Gaze: N/A. Lighting: Narrow horizontal slits of razor-sharp white light puncturing an otherwise impenetrable black field. End on: Parallel horizontal light blades illuminate stationary particulate surrounding centered bold white lettering reading "Episode 1: The White City Current". Sound: low-frequency electrical thrum. Film Noir industrial subterranean low-key, fluid motion. Incoming continuity from Wide Corridor Tracking Shot. props remain: Suspended crystalline frost motes. No people in frame. The only action is: Twin horizontal beams of pale white light slice across an obsidian vault interior from screen-left to screen-right. Stationary particulate sits caught inside the parallel light shafts, suspended above pitch-black floor shadows. Centered prominently between the crossbeams, bold white typography displays "Episode 1: The White City Current". No spoken dialogue. photorealistic, cinematic motion, professional cinematography, natural lighting, shallow depth of field'
+
+    const brokenStartPrompt =
+      'Edit the reference shot still to illustrate the starting action of the shot (t=0s, the exact moment before the shot movement unfolds). Position the subject and camera at their initial opening pose and staging. DO NOT hallucinate new objects, DO NOT change the background or location architecture, and DO NOT alter character core appearance, wardrobe, or lighting. Maintain absolute physics and visual continuity with consistent lighting and location. Starting action direction (t=0s): Opening framing (Medium Shot, Eye-Level). Camera positioned at initial starting point before Hypnotic, micro-dolly forward maintaining pristine typographic alignment.. Initial opening posture and staging at the start of action: Horizontally bisected frame; pure negative shadow space in upper and lower thirds, bright volumetric light in mid-third.. initial Surgical coldness and mystery. expression, gaze directed Dead-center focal lock on the centered typography.. Consistent lighting and location (Twin volumetric white planes creating razor-edge contrast against surrounding black void.)'
+
+    const brokenEndPrompt =
+      'Edit the start frame image to reflect movement that aligns with the beat action and illustrates the ending action of the shot. DO NOT hallucinate new objects, DO NOT change the background, and DO NOT alter character core appearance. Maintain absolute physics and visual continuity with consistent lighting and location. Edit start frame: Edit the reference shot still to illustrate the starting action of the shot (t=0s, the exact moment before the shot movement unfolds)... Movement delta: Concluding action state: A horizontal slice of diamond-like stationary particulate caught in mid-air between two razor-sharp white light shafts.. Final blocking position: Horizontally bisected frame; pure negative shadow space in upper and lower thirds, bright volumetric light in mid-third.. Camera settles after Hypnotic, micro-dolly forward maintaining pristine typographic alignment.. expression shifts to Surgical coldness and mystery., gaze directed Dead-center focal lock on the centered typography.. Consistent lighting and location (Twin volumetric white planes creating razor-edge contrast against surrounding black void.)'
+
+    const beat: SceneBeat = {
+      beatId: 'bt_title_1',
+      sequenceIndex: 0,
+      kind: 'action',
+      beatRole: 'title_reveal',
+      actionDescription:
+        'Twin horizontal beams of pale white light slice across an obsidian vault interior from screen-left to screen-right. Centered prominently between the crossbeams, bold white typography displays "Episode 1: The White City Current".',
+      storyboardStartImagePrompt: brokenStartPrompt,
+      storyboardEndImagePrompt: brokenEndPrompt,
+      // Even if beatDirection was overwritten with stale Medium Shot / micro-dolly, scene.segments holds the Clips prompt
+      beatDirection: {
+        shotType: 'Medium Shot',
+        cameraAngle: 'Eye-Level',
+        cameraMovement: 'Hypnotic, micro-dolly forward maintaining pristine typographic alignment.',
+        blocking:
+          'Horizontally bisected frame; pure negative shadow space in upper and lower thirds, bright volumetric light in mid-third.',
+        emotion: 'Surgical coldness and mystery.',
+        gaze: 'Dead-center focal lock on the centered typography.',
+        lightingAccent:
+          'Twin volumetric white planes creating razor-edge contrast against surrounding black void.',
+      },
+    }
+
+    const scene = {
+      beats: [beat],
+      segments: [
+        {
+          segmentId: 'seg_1',
+          beatId: 'bt_title_1',
+          generatedPrompt: episode1ClipPrompt,
+        },
+      ],
+    }
+
+    const facets = extractClipPromptFacets(episode1ClipPrompt)
+    expect(facets.shot).toBe('Extreme Wide Graphic Shot')
+    expect(facets.camera).toBe('static')
+    expect(facets.gaze).toBeUndefined()
+    expect(facets.noPeopleInFrame).toBe(true)
+
+    expect(isStoredFrameBookendPromptAligned(brokenStartPrompt, beat, { scene })).toBe(false)
+    expect(isStoredFrameBookendPromptAligned(brokenEndPrompt, beat, { scene })).toBe(false)
+
+    const alignedStart = resolveAlignedStartFrameInstruction(beat, { scene })
+    const alignedEnd = resolveAlignedEndFrameInstruction(beat, { scene })
+
+    // Aligned with Clips prompt
+    expect(alignedStart).toContain('Extreme Wide Graphic Shot')
+    expect(alignedStart).toContain('Static camera lock')
+    expect(alignedStart).toContain('Episode 1: The White City Current')
+    expect(alignedStart).toContain('No people in frame')
+    expect(alignedStart).not.toContain('Medium Shot')
+    expect(alignedStart).not.toContain('micro-dolly')
+    expect(alignedStart).not.toMatch(/\bexpression\b/i)
+    expect(alignedStart).not.toMatch(/gaze directed/i)
+    expect(alignedStart).not.toMatch(/\.\s*\./)
+
+    expect(alignedEnd).toContain('Extreme Wide Graphic Shot')
+    expect(alignedEnd).toContain('Episode 1: The White City Current')
+    expect(alignedEnd).toContain('No people in frame')
+    expect(alignedEnd).not.toContain('Edit start frame: Edit the reference shot still')
+    expect(alignedEnd).not.toContain('Medium Shot')
+    expect(alignedEnd).not.toContain('micro-dolly')
+    expect(alignedEnd).not.toMatch(/\bexpression\b/i)
+    expect(alignedEnd).not.toMatch(/gaze directed/i)
+    expect(alignedEnd).not.toMatch(/\.\s*\./)
+
+    // Verify LLM JSON parser for Clip Bookend Director
+    const parsed = parseClipBookendDirectorResponse(
+      JSON.stringify({
+        startFramePrompt:
+          'Extreme Wide Graphic Shot, eye-level, static camera at t=0s. Twin horizontal beams of pale white light slice across an obsidian vault interior with centered bold white typography reading "Episode 1: The White City Current" and stationary crystalline frost motes. No people in frame.',
+        endFramePrompt:
+          'Extreme Wide Graphic Shot, eye-level, static camera at end of shot. Parallel horizontal light blades illuminate stationary particulate surrounding centered bold white lettering reading "Episode 1: The White City Current". No people in frame.',
+      }),
+      { clipPrompt: episode1ClipPrompt, beat }
+    )
+    expect(parsed?.startFramePrompt).toContain('Episode 1: The White City Current')
+    expect(parsed?.endFramePrompt).toContain('Episode 1: The White City Current')
   })
 })

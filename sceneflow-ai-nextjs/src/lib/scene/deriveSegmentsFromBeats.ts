@@ -20,7 +20,18 @@ import {
 import { collectDraftStoryboardFrameWarnings } from '@/lib/storyboard/storyboardQuality'
 import { actionFramingFromStoredPrompt } from '@/lib/imagen/structuredStillPrompt'
 import { composeBeatActionFraming } from '@/lib/intelligence/beat-sequence-planner-fallback'
+import {
+  extractClipPromptFacets,
+  isMeaningfulDirectionFacet,
+  resolveBeatClipPrompt,
+  type ResolveBeatClipPromptOptions,
+} from '@/lib/intelligence/clip-frame-bookend-director-fallback'
 import { compileBeatVideoPromptFromDirection } from '@/lib/scene/beatVideoPromptCompiler'
+import {
+  buildPreVisEndFrameEditInstruction,
+  buildPreVisStartFrameEditInstruction,
+  stripFrameEditPreamble,
+} from '@/lib/vision/framePromptBaseline'
 import type { SceneBeat } from '@/lib/script/segmentTypes'
 import type { DetailedSceneDirection } from '@/types/scene-direction'
 import type { SceneSegment } from '@/components/vision/scene-production/types'
@@ -46,82 +57,204 @@ function shortenVisualPrompt(text: string, maxLen = 160): string {
   return `${trimmed.slice(0, maxLen).trim()}…`
 }
 
+function cleanBookendClause(value?: string | null): string {
+  if (!value) return ''
+  return value
+    .replace(/\s+/g, ' ')
+    .replace(/\.\s*\./g, '.')
+    .trim()
+    .replace(/[.]+$/, '')
+    .trim()
+}
+
+function meaningfulBookendField(value?: string | null): string {
+  const cleaned = cleanBookendClause(value)
+  if (!cleaned || !isMeaningfulDirectionFacet(cleaned)) return ''
+  return cleaned
+}
+
 /**
- * Build a directed prompt for the F2V Start Frame (t=0s):
+ * Build a directed prompt for the F2V Start Frame (t=0s) aligned with the beat's Clips prompt:
  * illustrates the starting action, opening staging, and initial pose at the beginning
  * of the shot (before the beat's movement unfolds), with consistent lighting and location.
  */
-export function buildStartFramePrompt(beat: SceneBeat): string {
+export function buildStartFramePrompt(
+  beat: SceneBeat,
+  options?: ResolveBeatClipPromptOptions
+): string {
+  const clipPrompt = resolveBeatClipPrompt(beat, options)
+  const facets = extractClipPromptFacets(clipPrompt)
   const d = beat.beatDirection
   const startCues: string[] = []
 
-  const baseAction =
-    actionFramingFromStoredPrompt(beat.storyboardImagePrompt) ||
-    (beat.kind === 'action' ? beat.actionDescription?.trim() : undefined) ||
-    beat.line?.replace(/\[[^\]]*\]/g, '').trim()
+  const noPeopleInFrame =
+    facets.noPeopleInFrame ||
+    /\bno people in frame\b/i.test(clipPrompt) ||
+    (Array.isArray(d?.castInFrame) &&
+      d.castInFrame.length === 0 &&
+      beat.kind === 'action' &&
+      !beat.character?.trim() &&
+      !facets.visiblePeople?.trim())
 
-  if (d?.shotType?.trim() || d?.cameraAngle?.trim()) {
-    const cam = [d.shotType?.trim(), d.cameraAngle?.trim()].filter(Boolean).join(', ')
+  const baseAction = meaningfulBookendField(
+    facets.statedAction ||
+      facets.lead ||
+      actionFramingFromStoredPrompt(beat.storyboardImagePrompt) ||
+      (beat.kind === 'action' ? beat.actionDescription?.trim() : undefined) ||
+      beat.line?.replace(/\[[^\]]*\]/g, '').trim()
+  )
+
+  const shotType = meaningfulBookendField(facets.shot || d?.shotType)
+  const cameraAngle = meaningfulBookendField(facets.angle || d?.cameraAngle)
+  const cameraMove = meaningfulBookendField(facets.camera || d?.cameraMovement)
+  const lens = meaningfulBookendField(facets.lens || d?.lensAndMovement)
+  const blocking = meaningfulBookendField(facets.blocking || d?.blocking)
+  const space = meaningfulBookendField(facets.space || d?.spatialRelation)
+  const propInteraction = meaningfulBookendField(facets.propInteraction || d?.propInteraction)
+  const props = meaningfulBookendField(
+    facets.props || (d?.keyProps?.length ? d.keyProps.join(', ') : '')
+  )
+  const emotion = meaningfulBookendField(facets.emotion || d?.emotion)
+  const gaze = meaningfulBookendField(facets.gaze || d?.gaze)
+  const lighting = meaningfulBookendField(facets.lighting || d?.lightingAccent)
+
+  if (shotType || cameraAngle) {
+    const cam = [shotType, cameraAngle].filter(Boolean).join(', ')
     if (cam) startCues.push(`Opening framing (${cam})`)
   }
-  if (d?.cameraMovement?.trim() && d.cameraMovement.trim().toLowerCase() !== 'static') {
-    startCues.push(`Camera positioned at initial starting point before ${d.cameraMovement.trim()}`)
+  if (cameraMove) {
+    if (/^static\b/i.test(cameraMove)) {
+      startCues.push(
+        lens && !/^static$/i.test(lens)
+          ? `Static camera lock at initial composition (t=0s; ${lens})`
+          : 'Static camera lock at initial composition (t=0s)'
+      )
+    } else {
+      startCues.push(`Camera positioned at initial starting point before ${cameraMove}`)
+    }
   }
-  if (d?.blocking?.trim()) {
-    startCues.push(`Initial opening posture and staging at the start of action: ${d.blocking.trim()}`)
-  } else if (baseAction) {
-    startCues.push(`Starting action state (t=0s) at the onset of: ${shortenVisualPrompt(baseAction)}`)
+  if (baseAction) {
+    startCues.push(`Starting action state (t=0s): ${baseAction}`)
   }
-  if (d?.propInteraction?.trim()) {
-    startCues.push(`Initial prop position before interaction completes: ${d.propInteraction.trim()}`)
+  if (blocking && (!baseAction || !baseAction.toLowerCase().includes(blocking.toLowerCase()))) {
+    startCues.push(`Initial opening posture and staging at the start of action: ${blocking}`)
   }
-  if (d?.emotion?.trim() || d?.gaze?.trim()) {
+  if (
+    space &&
+    (!baseAction || !baseAction.toLowerCase().includes(space.toLowerCase())) &&
+    (!blocking || !blocking.toLowerCase().includes(space.toLowerCase()))
+  ) {
+    startCues.push(`Spatial composition: ${space}`)
+  }
+  if (propInteraction) {
+    startCues.push(`Initial prop position before interaction completes: ${propInteraction}`)
+  } else if (props) {
+    startCues.push(`Props in frame: ${props}`)
+  }
+  if (noPeopleInFrame) {
+    if (emotion) {
+      startCues.push(`Atmospheric tone: ${emotion}`)
+    }
+    startCues.push('No people in frame')
+  } else if (emotion || gaze) {
     const expr = [
-      d.emotion?.trim() ? `initial ${d.emotion.trim()} expression` : '',
-      d.gaze?.trim() ? `gaze directed ${d.gaze.trim()}` : '',
+      emotion ? `initial ${emotion} expression` : '',
+      gaze ? `gaze directed ${gaze}` : '',
     ]
       .filter(Boolean)
       .join(', ')
     if (expr) startCues.push(expr)
   }
-  if (d?.lightingAccent?.trim()) {
-    startCues.push(`Consistent lighting and location (${d.lightingAccent.trim()})`)
+  if (lighting) {
+    startCues.push(`Consistent lighting and location (${lighting})`)
   } else {
     startCues.push('Maintain consistent lighting, shadows, and location architecture')
   }
 
   if (startCues.length > 0) {
-    return startCues.join('. ')
+    return `${startCues.map(cleanBookendClause).filter(Boolean).join('. ')}.`
   }
 
   if (beat.kind === 'action') {
-    return `Starting action state (t=0s): subject positioned at opening stance just as action begins (${beat.actionDescription ?? 'initial staging'}), with consistent lighting and location`
+    return `Starting action state (t=0s): subject positioned at opening stance just as action begins (${beat.actionDescription ?? 'initial staging'}), with consistent lighting and location.`
   }
   if (beat.kind === 'narration') {
-    return `Opening frame state (t=0s) establishing the initial composition before movement begins, with consistent lighting and location`
+    return `Opening frame state (t=0s) establishing the initial composition before movement begins, with consistent lighting and location.`
   }
-  return `Starting action state (t=0s): subject poised at opening speaking posture and expression before delivering line, with consistent lighting and location`
+  return `Starting action state (t=0s): subject poised at opening speaking posture and expression before delivering line, with consistent lighting and location.`
 }
 
-export function buildEndFramePrompt(beat: SceneBeat): string {
+export function buildEndFramePrompt(
+  beat: SceneBeat,
+  options?: ResolveBeatClipPromptOptions
+): string {
+  const clipPrompt = resolveBeatClipPrompt(beat, options)
+  const facets = extractClipPromptFacets(clipPrompt)
   const d = beat.beatDirection
   const endCues: string[] = []
-  if (d?.frozenMoment?.trim()) {
-    endCues.push(`Concluding action state: ${d.frozenMoment.trim()}`)
+
+  const noPeopleInFrame =
+    facets.noPeopleInFrame ||
+    /\bno people in frame\b/i.test(clipPrompt) ||
+    (Array.isArray(d?.castInFrame) &&
+      d.castInFrame.length === 0 &&
+      beat.kind === 'action' &&
+      !beat.character?.trim() &&
+      !facets.visiblePeople?.trim())
+
+  const endOn = meaningfulBookendField(facets.endOn || d?.frozenMoment)
+  const baseAction = meaningfulBookendField(
+    facets.statedAction ||
+      facets.lead ||
+      actionFramingFromStoredPrompt(beat.storyboardImagePrompt) ||
+      (beat.kind === 'action' ? beat.actionDescription?.trim() : undefined) ||
+      beat.line?.replace(/\[[^\]]*\]/g, '').trim()
+  )
+  const shotType = meaningfulBookendField(facets.shot || d?.shotType)
+  const cameraAngle = meaningfulBookendField(facets.angle || d?.cameraAngle)
+  const cameraMove = meaningfulBookendField(facets.camera || d?.cameraMovement)
+  const blocking = meaningfulBookendField(facets.blocking || d?.blocking)
+  const propInteraction = meaningfulBookendField(facets.propInteraction || d?.propInteraction)
+  const props = meaningfulBookendField(
+    facets.props || (d?.keyProps?.length ? d.keyProps.join(', ') : '')
+  )
+  const emotion = meaningfulBookendField(facets.emotion || d?.emotion)
+  const gaze = meaningfulBookendField(facets.gaze || d?.gaze)
+  const lighting = meaningfulBookendField(facets.lighting || d?.lightingAccent)
+
+  if (endOn) {
+    endCues.push(`Concluding action state: ${endOn}`)
+  } else if (baseAction) {
+    endCues.push(`Concluding action state: ${baseAction}`)
   }
-  if (d?.blocking?.trim()) {
-    endCues.push(`Final blocking position: ${d.blocking.trim()}`)
+  if (shotType || cameraAngle) {
+    const cam = [shotType, cameraAngle].filter(Boolean).join(', ')
+    if (cam) endCues.push(`Concluding framing (${cam})`)
   }
-  if (d?.propInteraction?.trim()) {
-    endCues.push(`Completed prop state: ${d.propInteraction.trim()}`)
+  if (blocking && (!endOn || !endOn.toLowerCase().includes(blocking.toLowerCase()))) {
+    endCues.push(`Final blocking position: ${blocking}`)
   }
-  if (d?.cameraMovement?.trim() && d.cameraMovement.trim().toLowerCase() !== 'static') {
-    endCues.push(`Camera settles after ${d.cameraMovement.trim()}`)
+  if (propInteraction) {
+    endCues.push(`Completed prop state: ${propInteraction}`)
+  } else if (props) {
+    endCues.push(`Props remain: ${props}`)
   }
-  if (d?.emotion?.trim() || d?.gaze?.trim()) {
+  if (cameraMove) {
+    if (/^static\b/i.test(cameraMove)) {
+      endCues.push('Camera remains static holding locked composition')
+    } else {
+      endCues.push(`Camera settles after ${cameraMove}`)
+    }
+  }
+  if (noPeopleInFrame) {
+    if (emotion) {
+      endCues.push(`Sustained atmospheric tone: ${emotion}`)
+    }
+    endCues.push('No people in frame')
+  } else if (emotion || gaze) {
     const expr = [
-      d.emotion?.trim() ? `expression shifts to ${d.emotion.trim()}` : '',
-      d.gaze?.trim() ? `gaze directed ${d.gaze.trim()}` : '',
+      emotion ? `expression shifts to ${emotion}` : '',
+      gaze ? `gaze directed ${gaze}` : '',
     ]
       .filter(Boolean)
       .join(', ')
@@ -129,12 +262,12 @@ export function buildEndFramePrompt(beat: SceneBeat): string {
   }
 
   if (endCues.length > 0) {
-    if (d?.lightingAccent?.trim()) {
-      endCues.push(`Consistent lighting and location (${d.lightingAccent.trim()})`)
+    if (lighting) {
+      endCues.push(`Consistent lighting and location (${lighting})`)
     } else {
       endCues.push('Maintain consistent lighting and location')
     }
-    return endCues.join('. ')
+    return `${endCues.map(cleanBookendClause).filter(Boolean).join('. ')}.`
   }
 
   const startVisual =
@@ -145,17 +278,169 @@ export function buildEndFramePrompt(beat: SceneBeat): string {
 
   if (beat.kind === 'action') {
     if (startVisual) {
-      return `Concluding pose and spatial progression at end of action while preserving consistent lighting, location, and character identity: ${shortenVisualPrompt(startVisual)}`
+      return `Concluding pose and spatial progression at end of action while preserving consistent lighting, location, and character identity: ${shortenVisualPrompt(startVisual)}.`
     }
-    return `Motion completion: ${beat.actionDescription ?? 'subtle camera movement and completed action pose'}, with consistent lighting and location`
+    return `Motion completion: ${beat.actionDescription ?? 'subtle camera movement and completed action pose'}, with consistent lighting and location.`
   }
   if (beat.kind === 'narration') {
     if (startVisual) {
-      return `Concluding frame progression while preserving composition, lighting, and location: ${shortenVisualPrompt(startVisual)}`
+      return `Concluding frame progression while preserving composition, lighting, and location: ${shortenVisualPrompt(startVisual)}.`
     }
-    return `Visual progression matching narration mood; concluding environmental state with consistent lighting and location`
+    return `Visual progression matching narration mood; concluding environmental state with consistent lighting and location.`
   }
-  return `Subject settles into concluding reaction pose and expression after speaking; weight shifted slightly with natural follow-through, maintaining consistent lighting and location`
+  return `Subject settles into concluding reaction pose and expression after speaking; weight shifted slightly with natural follow-through, maintaining consistent lighting and location.`
+}
+
+/**
+ * Verify whether a persisted Start/End Still Frame prompt is aligned with the beat's
+ * canonical Clips prompt. Rejects prompts with recursive edit preambles, double periods,
+ * facial expressions on no-people shots, mismatched shot/camera types, or missing quoted title text.
+ */
+export function isStoredFrameBookendPromptAligned(
+  storedPrompt: string | null | undefined,
+  beat: SceneBeat,
+  options?: ResolveBeatClipPromptOptions
+): boolean {
+  const raw = (storedPrompt || '').trim()
+  if (!raw) return false
+
+  // Reject nested preambles ("Edit start frame: Edit the reference shot still...") or double periods ("..")
+  if (/Edit start frame:\s*Edit the reference shot still/i.test(raw)) return false
+  if (/\.\s*\./.test(raw)) return false
+
+  const clipPrompt = resolveBeatClipPrompt(beat, options)
+  if (!clipPrompt) return true
+
+  const facets = extractClipPromptFacets(clipPrompt)
+  const d = beat.beatDirection
+  const noPeopleInFrame =
+    facets.noPeopleInFrame ||
+    /\bno people in frame\b/i.test(clipPrompt) ||
+    (Array.isArray(d?.castInFrame) &&
+      d.castInFrame.length === 0 &&
+      beat.kind === 'action' &&
+      !beat.character?.trim() &&
+      !facets.visiblePeople?.trim())
+
+  const body = stripFrameEditPreamble(raw)
+  if (!body) return false
+
+  if (noPeopleInFrame && /\b(expression|gaze directed)\b/i.test(body)) {
+    return false
+  }
+
+  if (facets.shot) {
+    const openingFramingMatch = body.match(/Opening framing \(([^)]+)\)/i)
+    if (
+      openingFramingMatch &&
+      !openingFramingMatch[1].toLowerCase().includes(facets.shot.toLowerCase())
+    ) {
+      return false
+    }
+  }
+
+  if (
+    facets.camera &&
+    /^static\b/i.test(facets.camera) &&
+    /Camera positioned at initial starting point before|Camera settles after/i.test(body)
+  ) {
+    return false
+  }
+
+  // If the clip lead/action has quoted title text (e.g. "Episode 1: The White City Current"), the bookend must preserve it
+  const quotedLeadMatches = (facets.statedAction || facets.lead || '').match(/"([^"]{3,80})"/g)
+  if (quotedLeadMatches && beat.kind === 'action') {
+    for (const q of quotedLeadMatches) {
+      const inner = q.slice(1, -1).trim()
+      if (inner && !raw.toLowerCase().includes(inner.toLowerCase())) {
+        return false
+      }
+    }
+  }
+
+  return true
+}
+
+/**
+ * Resolve the aligned Start Frame (t=0s) action prompt for a beat, replacing stale or
+ * misaligned `storyboardStartImagePrompt` values with the Clips-aligned prompt.
+ */
+export function resolveAlignedStartFramePrompt(
+  beat: SceneBeat,
+  options?: ResolveBeatClipPromptOptions
+): string {
+  const stored = beat.storyboardStartImagePrompt?.trim()
+  if (stored && isStoredFrameBookendPromptAligned(stored, beat, options)) {
+    return stripFrameEditPreamble(stored) || buildStartFramePrompt(beat, options)
+  }
+  return buildStartFramePrompt(beat, options)
+}
+
+/**
+ * Resolve the aligned End Frame (t=T) action prompt for a beat, replacing stale or
+ * misaligned `storyboardEndImagePrompt` values with the Clips-aligned prompt.
+ */
+export function resolveAlignedEndFramePrompt(
+  beat: SceneBeat,
+  options?: ResolveBeatClipPromptOptions
+): string {
+  const stored = beat.storyboardEndImagePrompt?.trim()
+  if (stored && isStoredFrameBookendPromptAligned(stored, beat, options)) {
+    let body = stripFrameEditPreamble(stored)
+    const movementIdx = body.search(/Movement delta:\s*/i)
+    if (movementIdx >= 0) {
+      body = body.slice(movementIdx).replace(/^Movement delta:\s*/i, '').trim()
+    }
+    return body || buildEndFramePrompt(beat, options)
+  }
+  return buildEndFramePrompt(beat, options)
+}
+
+/**
+ * Resolve the full Pre-Vis Start Frame edit instruction (`Edit the reference shot still...`)
+ * guaranteed to be aligned with the Clips prompt and free of recursive boilerplate.
+ */
+export function resolveAlignedStartFrameInstruction(
+  beat: SceneBeat,
+  options?: ResolveBeatClipPromptOptions
+): string {
+  const stored = beat.storyboardStartImagePrompt?.trim()
+  if (stored && isStoredFrameBookendPromptAligned(stored, beat, options)) {
+    if (/^Edit the reference shot still/i.test(stored)) {
+      return stored
+    }
+  }
+  const startPrompt = resolveAlignedStartFramePrompt(beat, options)
+  return buildPreVisStartFrameEditInstruction({
+    shotStillPrompt: actionFramingFromStoredPrompt(beat.storyboardImagePrompt) || undefined,
+    startFramePrompt: startPrompt,
+  })
+}
+
+/**
+ * Resolve the full Pre-Vis End Frame edit instruction (`Edit the start frame image...`)
+ * guaranteed to be aligned with the Clips prompt and free of recursive boilerplate.
+ */
+export function resolveAlignedEndFrameInstruction(
+  beat: SceneBeat,
+  options?: ResolveBeatClipPromptOptions
+): string {
+  const stored = beat.storyboardEndImagePrompt?.trim()
+  if (stored && isStoredFrameBookendPromptAligned(stored, beat, options)) {
+    if (/^Edit the start frame image/i.test(stored)) {
+      return stored
+    }
+  }
+  const startPrompt = resolveAlignedStartFramePrompt(beat, options)
+  const endPrompt = resolveAlignedEndFramePrompt(beat, options)
+  return buildPreVisEndFrameEditInstruction({
+    startFramePrompt: startPrompt,
+    endFramePrompt: endPrompt,
+    durationSeconds:
+      typeof beat.durationSeconds === 'number' && beat.durationSeconds > 0
+        ? beat.durationSeconds
+        : undefined,
+  })
 }
 
 function beatDirectionSummary(beat: SceneBeat): string {
@@ -231,6 +516,23 @@ function beatToSegment(
     opts.transitionType ??
     (beatTransition === 'CONTINUE' ? 'CONTINUE' : 'CUT')
 
+  const generatedPrompt =
+    beat.beatDirection || opts.sceneDirection
+      ? compileBeatVideoPromptFromDirection(beat, opts.sceneDirection, {
+          ...(opts.spokenExcerpt ? { excerpt: opts.spokenExcerpt } : {}),
+          continuesSameLine: opts.veoTimelineContinuation ?? false,
+        }).prompt
+      : buildVideoPrompt(beat, spokenText)
+
+  const alignedStartStored =
+    beat.storyboardStartImagePrompt?.trim() &&
+    isStoredFrameBookendPromptAligned(beat.storyboardStartImagePrompt, beat, {
+      clipPrompt: generatedPrompt,
+      sceneDirection: opts.sceneDirection,
+    })
+      ? stripFrameEditPreamble(actionFramingFromStoredPrompt(beat.storyboardStartImagePrompt))
+      : undefined
+
   const segment: SceneSegment = {
     segmentId: mintSegmentId(),
     sequenceIndex,
@@ -274,20 +576,16 @@ function beatToSegment(
       objectRefIds: [],
     },
     startFramePrompt:
-      actionFramingFromStoredPrompt(beat.storyboardStartImagePrompt) ||
+      alignedStartStored ||
       actionFramingFromStoredPrompt(beat.storyboardImagePrompt) ||
       composeBeatActionFraming(beat) ||
       beat.actionDescription ||
       spokenText,
-    endFramePrompt:
-      actionFramingFromStoredPrompt(beat.storyboardEndImagePrompt) || buildEndFramePrompt(beat),
-    generatedPrompt:
-      beat.beatDirection || opts.sceneDirection
-        ? compileBeatVideoPromptFromDirection(beat, opts.sceneDirection, {
-            ...(opts.spokenExcerpt ? { excerpt: opts.spokenExcerpt } : {}),
-            continuesSameLine: opts.veoTimelineContinuation ?? false,
-          }).prompt
-        : buildVideoPrompt(beat, spokenText),
+    endFramePrompt: resolveAlignedEndFramePrompt(beat, {
+      clipPrompt: generatedPrompt,
+      sceneDirection: opts.sceneDirection,
+    }),
+    generatedPrompt,
     action: beat.actionDescription ?? '',
     beatId: beat.beatId,
     veoTimelineContinuation: opts.veoTimelineContinuation ?? false,

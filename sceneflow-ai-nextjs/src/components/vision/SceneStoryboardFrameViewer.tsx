@@ -42,7 +42,13 @@ import {
   type StoryboardFrameSlot,
 } from '@/lib/storyboard/types'
 import { getSceneBeats } from '@/lib/script/beatMigration'
-import { buildEndFramePrompt, buildStartFramePrompt } from '@/lib/scene/deriveSegmentsFromBeats'
+import {
+  isStoredFrameBookendPromptAligned,
+  resolveAlignedEndFrameInstruction,
+  resolveAlignedEndFramePrompt,
+  resolveAlignedStartFrameInstruction,
+  resolveAlignedStartFramePrompt,
+} from '@/lib/scene/deriveSegmentsFromBeats'
 import {
   composeBeatActionFraming,
   composePersistedBeatStillPrompt,
@@ -710,7 +716,7 @@ export function SceneStoryboardFrameViewer({
     if (fromAll) {
       const fallbackPrompt =
         fromAll.storyboardImagePrompt?.trim() ||
-        (activeBeat ? buildStartFramePrompt(activeBeat) : '')
+        (activeBeat ? resolveAlignedStartFramePrompt(activeBeat, { scene }) : '')
       return {
         ...fromAll,
         storyboardImagePrompt: fallbackPrompt || fromAll.storyboardImagePrompt,
@@ -718,6 +724,11 @@ export function SceneStoryboardFrameViewer({
     }
     if (!activeBeat) return null
     const ownStart = activeBeat.storyboardStartImageUrl?.trim() || undefined
+    const resolvedStartPrompt =
+      activeBeat.storyboardStartImagePrompt?.trim() &&
+      /^Edit the reference shot still/i.test(activeBeat.storyboardStartImagePrompt.trim())
+        ? resolveAlignedStartFrameInstruction(activeBeat, { scene })
+        : resolveAlignedStartFramePrompt(activeBeat, { scene })
     return {
       ...previewSlot,
       key: beatFrameSlotKey(previewSlot.beatId, 'action-start'),
@@ -727,13 +738,12 @@ export function SceneStoryboardFrameViewer({
       displayImageUrl: ownStart,
       isPlaceholder: false,
       isMissing: !ownStart,
-      storyboardImagePrompt:
-        activeBeat.storyboardStartImagePrompt?.trim() || buildStartFramePrompt(activeBeat),
+      storyboardImagePrompt: resolvedStartPrompt,
       imageError: activeBeat.storyboardStartImageError,
       imageVersions: activeBeat.storyboardStartImageVersions,
       imageVersionId: activeBeat.storyboardStartImageVersionId,
     }
-  }, [previewSlot, allFrameSlots, activeBeat])
+  }, [previewSlot, allFrameSlots, activeBeat, scene])
 
   const endSlotForActiveBeat = useMemo<StoryboardFrameSlot | null>(() => {
     if (!previewSlot?.beatId) return null
@@ -743,7 +753,7 @@ export function SceneStoryboardFrameViewer({
     if (fromAll) {
       const fallbackPrompt =
         fromAll.storyboardImagePrompt?.trim() ||
-        (activeBeat ? buildEndFramePrompt(activeBeat) : '')
+        (activeBeat ? resolveAlignedEndFramePrompt(activeBeat, { scene }) : '')
       return {
         ...fromAll,
         storyboardImagePrompt: fallbackPrompt || fromAll.storyboardImagePrompt,
@@ -751,6 +761,11 @@ export function SceneStoryboardFrameViewer({
     }
     if (!activeBeat) return null
     const ownEnd = activeBeat.storyboardEndImageUrl?.trim() || undefined
+    const resolvedEndPrompt =
+      activeBeat.storyboardEndImagePrompt?.trim() &&
+      /^Edit the start frame image/i.test(activeBeat.storyboardEndImagePrompt.trim())
+        ? resolveAlignedEndFrameInstruction(activeBeat, { scene })
+        : resolveAlignedEndFramePrompt(activeBeat, { scene })
     return {
       ...previewSlot,
       key: beatFrameSlotKey(previewSlot.beatId, 'end'),
@@ -760,13 +775,12 @@ export function SceneStoryboardFrameViewer({
       displayImageUrl: ownEnd,
       isPlaceholder: false,
       isMissing: !ownEnd,
-      storyboardImagePrompt:
-        activeBeat.storyboardEndImagePrompt?.trim() || buildEndFramePrompt(activeBeat),
+      storyboardImagePrompt: resolvedEndPrompt,
       imageError: activeBeat.storyboardEndImageError,
       imageVersions: activeBeat.storyboardEndImageVersions,
       imageVersionId: activeBeat.storyboardEndImageVersionId,
     }
-  }, [previewSlot, allFrameSlots, activeBeat])
+  }, [previewSlot, allFrameSlots, activeBeat, scene])
 
   const activeDisplaySlot = useMemo<StoryboardFrameSlot | null>(() => {
     if (!previewSlot) return null
@@ -787,17 +801,39 @@ export function SceneStoryboardFrameViewer({
   const previewStillPrompt = useMemo(() => {
     const slotToInspect = activeDisplaySlot ?? previewSlot
     if (!slotToInspect) return ''
-    if (slotToInspect.storyboardImagePrompt?.trim()) {
-      return slotToInspect.storyboardImagePrompt.trim()
-    }
     if (slotToInspect.beatId) {
       const beat = sceneBeats.find((entry) => entry.beatId === slotToInspect.beatId)
       if (beat) {
         if (slotToInspect.frameRole === 'action-start') {
-          return (beat.storyboardStartImagePrompt?.trim() || buildStartFramePrompt(beat)).trim()
+          if (
+            beat.storyboardStartImagePrompt?.trim() &&
+            isStoredFrameBookendPromptAligned(beat.storyboardStartImagePrompt, beat, { scene })
+          ) {
+            return beat.storyboardStartImagePrompt.trim()
+          }
+          return (
+            beat.storyboardStartImagePrompt?.trim() &&
+            /^Edit the reference shot still/i.test(beat.storyboardStartImagePrompt.trim())
+              ? resolveAlignedStartFrameInstruction(beat, { scene })
+              : resolveAlignedStartFramePrompt(beat, { scene })
+          ).trim()
         }
         if (slotToInspect.frameRole === 'end') {
-          return (beat.storyboardEndImagePrompt?.trim() || buildEndFramePrompt(beat)).trim()
+          if (
+            beat.storyboardEndImagePrompt?.trim() &&
+            isStoredFrameBookendPromptAligned(beat.storyboardEndImagePrompt, beat, { scene })
+          ) {
+            return beat.storyboardEndImagePrompt.trim()
+          }
+          return (
+            beat.storyboardEndImagePrompt?.trim() &&
+            /^Edit the start frame image/i.test(beat.storyboardEndImagePrompt.trim())
+              ? resolveAlignedEndFrameInstruction(beat, { scene })
+              : resolveAlignedEndFramePrompt(beat, { scene })
+          ).trim()
+        }
+        if (slotToInspect.storyboardImagePrompt?.trim()) {
+          return slotToInspect.storyboardImagePrompt.trim()
         }
         if (beat.beatDirection?.framePrompt?.trim()) {
           return beat.beatDirection.framePrompt.trim()
@@ -814,11 +850,14 @@ export function SceneStoryboardFrameViewer({
         ).trim()
       }
     }
+    if (slotToInspect.storyboardImagePrompt?.trim()) {
+      return slotToInspect.storyboardImagePrompt.trim()
+    }
     if (slotToInspect.key === 'establishing') {
       return (prompt || String(scene?.imagePrompt ?? '')).trim()
     }
     return ''
-  }, [activeDisplaySlot, previewSlot, sceneBeats, sceneIndex, prompt, scene?.imagePrompt])
+  }, [activeDisplaySlot, previewSlot, sceneBeats, sceneIndex, prompt, scene])
 
   const [copiedStillSlotKey, setCopiedStillSlotKey] = useState<string | null>(null)
 

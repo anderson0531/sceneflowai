@@ -115,6 +115,58 @@ const END_FRAME_CONTINUITY_PREAMBLE =
   'DO NOT hallucinate new objects, DO NOT change the background, and DO NOT alter character core appearance. ' +
   'Maintain absolute physics and visual continuity with consistent lighting and location.'
 
+function sanitizeFramePromptSentence(value?: string | null): string {
+  return normalize(value)
+    .replace(/\.\s*\./g, '.')
+    .replace(/\s{2,}/g, ' ')
+    .trim()
+}
+
+/**
+ * Strip directed-edit preambles ("Edit the reference shot still...", "Edit the start frame image...",
+ * "Starting action direction (t=0s):", "Edit start frame:", "Movement delta:") so stored or nested
+ * frame instructions never duplicate boilerplate when re-wrapped or passed from Start -> End frame.
+ */
+export function stripFrameEditPreamble(value?: string | null): string {
+  let text = normalize(value)
+  if (!text) return ''
+
+  // Strip full preambles if present
+  if (text.startsWith(START_FRAME_CONTINUITY_PREAMBLE)) {
+    text = text.slice(START_FRAME_CONTINUITY_PREAMBLE.length).trim()
+  }
+  if (text.startsWith(END_FRAME_CONTINUITY_PREAMBLE)) {
+    text = text.slice(END_FRAME_CONTINUITY_PREAMBLE.length).trim()
+  }
+  text = text
+    .replace(
+      /^Edit the reference shot still to illustrate the starting action of the shot[\s\S]*?consistent lighting and location\.\s*/i,
+      ''
+    )
+    .replace(
+      /^Edit the start frame image to reflect movement that aligns with the beat action[\s\S]*?consistent lighting and location\.\s*/i,
+      ''
+    )
+    .trim()
+
+  // If both "Shot context: ..." and "Starting action direction (t=0s): ..." are present, keep the starting action direction
+  const startDirIdx = text.search(/Starting action direction \(t=0s\):\s*/i)
+  if (startDirIdx >= 0) {
+    text = text
+      .slice(startDirIdx)
+      .replace(/^Starting action direction \(t=0s\):\s*/i, '')
+      .trim()
+  }
+
+  // If "Movement delta: ..." is embedded after "Edit start frame: ...", extract the appropriate part
+  text = text
+    .replace(/^Stage the initial opening pose and camera framing \(t=0s\) for:\s*/i, '')
+    .replace(/^Edit start frame:\s*/i, '')
+    .trim()
+
+  return sanitizeFramePromptSentence(text)
+}
+
 /**
  * Directed-edit instruction for anchoring a shot's Start Frame (t=0s) to the Pre-Vis Shot Still.
  * Stages the opening pose/camera position before the beat's action unfolds while preserving
@@ -123,15 +175,16 @@ const END_FRAME_CONTINUITY_PREAMBLE =
 export function buildPreVisStartFrameEditInstruction(
   args: PreVisStartFrameEditArgs
 ): string {
-  const custom = normalize(args.customPrompt)
+  const custom = stripFrameEditPreamble(args.customPrompt)
   if (custom) {
     return `${START_FRAME_CONTINUITY_PREAMBLE}\n\nStarting action direction (t=0s): ${custom}`
   }
 
-  const startDelta = normalize(args.startFramePrompt)
-  const stillVisual =
+  const startDelta = stripFrameEditPreamble(args.startFramePrompt)
+  const stillVisual = sanitizeFramePromptSentence(
     normalize(args.shotStillPrompt) ||
-    stripDialoguePrompt(normalize(args.fallbackActionPrompt))
+      stripDialoguePrompt(normalize(args.fallbackActionPrompt))
+  )
 
   if (startDelta && stillVisual && startDelta !== stillVisual) {
     return `${START_FRAME_CONTINUITY_PREAMBLE}\n\nShot context: ${stillVisual}\n\nStarting action direction (t=0s): ${startDelta}`
@@ -155,26 +208,34 @@ export function buildPreVisStartFrameEditInstruction(
 export function buildPreVisEndFrameEditInstruction(
   args: PreVisEndFrameEditArgs
 ): string {
-  const startVisual =
-    normalize(args.customPrompt) ||
-    normalize(args.startFramePrompt) ||
+  const custom = stripFrameEditPreamble(args.customPrompt)
+  const strippedStart = stripFrameEditPreamble(args.startFramePrompt)
+  const fallback = sanitizeFramePromptSentence(
     stripDialoguePrompt(normalize(args.fallbackActionPrompt))
+  )
+  const startVisual = custom || strippedStart || fallback
 
   if (!startVisual) {
     const dur =
       typeof args.durationSeconds === 'number' && args.durationSeconds > 0
         ? args.durationSeconds
         : undefined
-    const fallback =
+    const fallbackText =
       dur != null
         ? `Show subtle visual progression after ~${dur}s while preserving composition, lighting, and environment.`
         : 'Show subtle visual progression while preserving composition, lighting, and environment.'
-    return `${END_FRAME_CONTINUITY_PREAMBLE}\n\nEdit start frame: ${fallback}`
+    return `${END_FRAME_CONTINUITY_PREAMBLE}\n\nEdit start frame: ${fallbackText}`
   }
 
   let instruction = `${END_FRAME_CONTINUITY_PREAMBLE}\n\nEdit start frame: ${startVisual}`
 
-  const endDelta = normalize(args.endFramePrompt)
+  let endDelta = stripFrameEditPreamble(args.endFramePrompt)
+  const movementIdx = endDelta.search(/Movement delta:\s*/i)
+  if (movementIdx >= 0) {
+    endDelta = sanitizeFramePromptSentence(
+      endDelta.slice(movementIdx).replace(/^Movement delta:\s*/i, '')
+    )
+  }
   if (endDelta && isVisualEndFrameDelta(endDelta) && endDelta !== startVisual) {
     instruction += `\n\nMovement delta: ${endDelta}`
   }

@@ -1215,7 +1215,7 @@ async function generateSingleBeatActionStartImage(
   const beat = beats[beatIdx]
   if (!beat) return { imageUrl: '' }
 
-  const startPrompt = buildStartFramePrompt(beat)
+  const startPrompt = buildStartFramePrompt(beat, { scene })
   const verifiedBeatRefs = resolveExpressBeatReferences({
     beat,
     scene,
@@ -1263,7 +1263,6 @@ async function generateSingleBeatActionStartImage(
       ...(beat?.beatId ? { beatId: beat.beatId } : {}),
       sceneOverride: scene,
       ...beatRefPayload,
-      customPrompt: startPrompt,
       useAIPrompt: false,
       modelTier: imageParams.modelTier,
       animaticDraft: imageParams.animaticDraft,
@@ -1406,7 +1405,7 @@ async function generateSingleBeatEndImage(
   const beat = beats[beatIdx]
   if (!beat) return { imageUrl: startFrameUrl }
 
-  const endPrompt = buildEndFramePrompt(beat)
+  const endPrompt = buildEndFramePrompt(beat, { scene })
   const verifiedBeatRefs = resolveExpressBeatReferences({
     beat,
     scene,
@@ -1453,7 +1452,6 @@ async function generateSingleBeatEndImage(
       ...(beat?.beatId ? { beatId: beat.beatId } : {}),
       sceneOverride: scene,
       ...beatRefPayload,
-      customPrompt: endPrompt,
       useAIPrompt: false,
       modelTier: imageParams.modelTier,
       animaticDraft: imageParams.animaticDraft,
