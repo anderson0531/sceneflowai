@@ -3,6 +3,7 @@ import '@/models' // Import all models to register them with Sequelize
 import Project from '@/models/Project'
 import User from '@/models/User'
 import { sequelize } from '@/config/database'
+import { getAuthenticatedUserId } from '@/lib/projectAccess'
 import {
   DEFAULT_ASPECT_RATIO,
   resolveVariantArtStyle,
@@ -26,7 +27,8 @@ export async function POST(request: NextRequest) {
   try {
     // Parse request body with error handling
     const body = await request.json()
-    userId = body.userId
+    const sessionUserId = await getAuthenticatedUserId(request)
+    userId = sessionUserId || body.userId
     variant = body.variant
     const title = body.title
     const sourceBlueprintProjectId = body.sourceBlueprintProjectId as string | undefined

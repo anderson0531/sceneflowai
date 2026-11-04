@@ -20,6 +20,7 @@ import { Button } from '@/components/ui/Button'
 import { cn } from '@/lib/utils'
 import { AudienceDescriptionField } from '@/components/audience/AudienceDescriptionField'
 import { PromoPlanDirectorDialog } from '@/components/publishing/PromoPlanDirectorDialog'
+import { legacyOwnerIdFromStorage } from '@/lib/blueprint/createBlueprintShare'
 import { GroupedLanguageSelector } from '@/components/vision/GroupedLanguageSelector'
 import { getLanguageDisplayName } from '@/lib/publish/buildLanguageAudioTrack'
 import { collectPromoPlanFindings, type PromoPlanFinding } from '@/lib/publish/promoPlanFindings'
@@ -426,6 +427,7 @@ export function PublishingPromoTab({
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           projectId,
+          legacyOwnerId: legacyOwnerIdFromStorage(),
           action,
           targetDurationSec: targetDuration,
           language,

@@ -4,6 +4,7 @@ import Project from '@/models/Project'
 import User from '@/models/User'
 import { sequelize } from '@/config/database'
 import { SubscriptionService } from '../../../services/SubscriptionService'
+import { getAuthenticatedUserId } from '@/lib/projectAccess'
 import { resolveUserId } from '@/lib/userHelper'
 import { normalizeWorkflowStep } from '@/constants/workflowSteps'
 import { slimProjectResponseMetadata } from '@/lib/projects/slimProjectPutPayload'
@@ -232,7 +233,9 @@ export async function POST(request: NextRequest) {
     // Note: Run POST /api/setup/database once to create tables in fresh database
     
     const body = await request.json()
-    const { userId, title, description, metadata, currentStep } = body || {}
+    const { userId: bodyUserId, title, description, metadata, currentStep } = body || {}
+    const sessionUserId = await getAuthenticatedUserId(request)
+    const userId = sessionUserId || bodyUserId
 
     if (!title || typeof title !== 'string') {
       return NextResponse.json({ success: false, error: 'title is required' }, { status: 400 })

@@ -6,6 +6,7 @@ import { toast } from 'sonner'
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@/components/ui/dialog'
 import { DictationTextarea } from '@/components/ui/DictationTextarea'
 import { promoRecommendationNotes, type PromoPlanFinding } from '@/lib/publish/promoPlanFindings'
+import { legacyOwnerIdFromStorage } from '@/lib/blueprint/createBlueprintShare'
 import { slimPromoProductionState } from '@/lib/publish/promoShotCatalog'
 import type { AudienceDefinition } from '@/lib/types/audienceResonance'
 import type { PromoTrailerBeatPlan } from '@/types/publishingAssets'
@@ -67,6 +68,7 @@ export function PromoPlanDirectorDialog({
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           projectId,
+          legacyOwnerId: legacyOwnerIdFromStorage(),
           action: 'plan',
           targetDurationSec,
           directorNotes: direction,

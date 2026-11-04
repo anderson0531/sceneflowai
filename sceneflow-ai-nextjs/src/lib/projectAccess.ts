@@ -2,8 +2,17 @@ import { NextRequest } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { AuthService } from '@/services/AuthService'
-import { resolveUserId } from '@/lib/userHelper'
+import { resolveUser, resolveUserId } from '@/lib/userHelper'
 import Project from '@/models/Project'
+
+/**
+ * Synthetic placeholder email created when a project was saved with a browser
+ * localStorage `authUserId` before NextAuth ownership sync ran.
+ */
+export function isSyntheticTempUserEmail(email?: string | null): boolean {
+  if (typeof email !== 'string') return false
+  return /^user-.+@temp\.sceneflow\.ai$/i.test(email.trim())
+}
 
 /**
  * Resolve the authenticated user's canonical DB UUID (session.user.id may be email or legacy id).
@@ -74,14 +83,36 @@ export async function assertProjectAccess(
     return { ok: true, project, migrated: true }
   }
 
-  // Same account, different id representation (e.g. email vs uuid) — compare via resolveUserId
+  // Same account, different id representation (e.g. email vs uuid), or synthetic
+  // localStorage placeholder user (`user-<uuid>@temp.sceneflow.ai`) created before
+  // ownership sync ran.
   try {
-    const resolvedProjectOwner = await resolveUserId(projectOwnerId)
-    if (resolvedProjectOwner === ownerUserId) {
+    const resolvedOwner = await resolveUser(projectOwnerId)
+    if (String(resolvedOwner.id || '') === ownerUserId) {
       return { ok: true, project }
     }
-  } catch {
-    /* project owner id may be orphan localStorage uuid */
+    if (isSyntheticTempUserEmail(resolvedOwner.email)) {
+      await project.update({ user_id: ownerUserId })
+      return { ok: true, project, migrated: true }
+    }
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : ''
+    if (msg.startsWith('User not found:')) {
+      await project.update({ user_id: ownerUserId })
+      return { ok: true, project, migrated: true }
+    }
+  }
+
+  // Production project branched from a Blueprint project owned by this user
+  const sourceBlueprintId = (project.metadata as { sourceBlueprintProjectId?: unknown } | null)
+    ?.sourceBlueprintProjectId
+  if (typeof sourceBlueprintId === 'string' && sourceBlueprintId.trim() && sourceBlueprintId !== projectId) {
+    const sourceProject = await Project.findByPk(sourceBlueprintId.trim()).catch(() => null)
+    const sourceOwnerId = String((sourceProject as { user_id?: string } | null)?.user_id || '')
+    if (sourceOwnerId && sourceOwnerId === ownerUserId) {
+      await project.update({ user_id: ownerUserId })
+      return { ok: true, project, migrated: true }
+    }
   }
 
   return {

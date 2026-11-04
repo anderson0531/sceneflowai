@@ -291,6 +291,7 @@ export async function POST(request: NextRequest) {
       directorNotes?: string
       language?: string
       aspect?: '16:9' | '9:16'
+      legacyOwnerId?: string
     }
 
     const projectId = (body.projectId || '').trim()
@@ -299,7 +300,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'projectId is required' }, { status: 400 })
     }
 
-    const access = await assertProjectAccess(projectId, ownerUserId)
+    const access = await assertProjectAccess(projectId, ownerUserId, body.legacyOwnerId)
     if (!access.ok) {
       const error =
         access.status === 403
