@@ -5328,11 +5328,6 @@ function SceneCard({
               )
             )
           }
-          if (selection.includeMusic) {
-            deletions.push(
-              Promise.resolve(onDeleteSceneAudio(sceneIdx, 'music', undefined, undefined, true))
-            )
-          }
           await Promise.all(deletions)
           // Give deletions a moment to settle before regenerating.
           await new Promise((resolve) => setTimeout(resolve, 400))
@@ -5359,6 +5354,7 @@ function SceneCard({
             })
           }
 
+          const sceneBeats = getSceneBeats(scene)
           const dialogueLines: any[] = Array.isArray(scene.dialogue) ? scene.dialogue : []
           dialogueLines.forEach((d: any, i: number) => {
             if (!d?.line || !d?.character) return
@@ -5386,7 +5382,20 @@ function SceneCard({
               })
               if ((entry?.audioUrl || entry?.url) && !stale) return
             }
-            addItem(`dialogue-${i}`, `${i + 1}. ${d.character}`, 'tts')
+            const beatIdx = sceneBeats.findIndex(
+              (entry) =>
+                (d.lineId && entry.lineId === d.lineId) ||
+                (entry.kind !== 'action' &&
+                  entry.character === d.character &&
+                  String(entry.line ?? '').trim() === String(d.line ?? '').trim())
+            )
+            const shotNum =
+              beatIdx >= 0
+                ? (typeof sceneBeats[beatIdx].sequenceIndex === 'number'
+                    ? sceneBeats[beatIdx].sequenceIndex
+                    : beatIdx) + 1
+                : i + 1
+            addItem(`dialogue-${i}`, `Shot ${shotNum}: ${d.character}`, 'tts')
             tasks.push({
               id: `dialogue-${i}`,
               execute: async () => {
@@ -5419,23 +5428,18 @@ function SceneCard({
           }
         }
 
-        // ---- Music lane ----
-        const musicLane = async () => {
-          if (!selection.includeMusic || !generateMusic || !scene.music) return
-          const musicMissing = !((scene as any).musicAudio || (scene as any).music?.url)
-          if (!isAll && !musicMissing) return
-          addItem('music', 'Music bed', 'music')
-          markItem('music', 'running')
-          const scored = await generateMusic(sceneIdx)
-          markItem('music', scored ? 'done' : 'error', scored ? undefined : 'Scoring failed')
-        }
-
         const sfxLane = async () => {
           if (selection.sfxBeatIds.length === 0) return
           const sceneBeats = getSceneBeats(scene)
           for (const beatId of selection.sfxBeatIds) {
-            const beatNumber = sceneBeats.findIndex((entry) => entry.beatId === beatId) + 1
-            addItem(`sfx-${beatId}`, beatNumber > 0 ? `SFX — shot ${beatNumber}` : 'SFX', 'sfx')
+            const beatIdx = sceneBeats.findIndex((entry) => entry.beatId === beatId)
+            const beatNumber =
+              beatIdx >= 0
+                ? (typeof sceneBeats[beatIdx].sequenceIndex === 'number'
+                    ? sceneBeats[beatIdx].sequenceIndex
+                    : beatIdx) + 1
+                : 0
+            addItem(`sfx-${beatId}`, beatNumber > 0 ? `Shot ${beatNumber}: SFX` : 'SFX', 'sfx')
           }
           await dispatchExpressElevenLabsSfx({
             projectId,
@@ -5472,7 +5476,6 @@ function SceneCard({
 
         const laneResults = await Promise.allSettled([
           ttsLane(),
-          musicLane(),
           sfxLane(),
         ])
         const laneFailures = laneResults.filter((r) => r.status === 'rejected').length

@@ -8,7 +8,7 @@ import {
 } from '@/lib/audio/buildExpressAudioItems'
 
 describe('buildExpressAudioItems', () => {
-  it('returns music first, then timeline beats with correct audio status', () => {
+  it('excludes deprecated scene music and returns timeline beats with shot numbers and audio status', () => {
     const scene = {
       music: { prompt: 'Tense underscore' },
       musicAudio: { url: 'https://example.com/music.mp3' },
@@ -52,25 +52,21 @@ describe('buildExpressAudioItems', () => {
     const items = buildExpressAudioItems(scene, 'en')
 
     expect(items.map((item) => item.id)).toEqual([
-      'music',
       'dialogue-0',
       'sfx-bt_action_2',
     ])
     expect(items[0]).toMatchObject({
-      kind: 'music',
-      hasAudio: true,
-      typeLabel: 'Music (Lyria)',
-    })
-    expect(items[1]).toMatchObject({
       kind: 'dialogue',
       hasAudio: false,
-      label: 'Alex: We need to move now.',
+      shotNumber: 1,
+      label: 'Shot 1: Alex: We need to move now.',
     })
-    expect(items[2]).toMatchObject({
+    expect(items[1]).toMatchObject({
       kind: 'sfx',
       beatId: 'bt_action_2',
       recommended: true,
-      label: 'A metal door slams',
+      shotNumber: 3,
+      label: 'Shot 3: A metal door slams',
     })
     expect(defaultExpressAudioSelection(items, 'missing')).toEqual([
       'dialogue-0',
@@ -182,7 +178,7 @@ describe('defaultExpressAudioSelection', () => {
 })
 
 describe('parseExpressAudioSelectedIds', () => {
-  it('parses selected ids into generation lanes', () => {
+  it('parses selected ids into generation lanes and ignores deprecated music', () => {
     expect(
       parseExpressAudioSelectedIds([
         'narration',
@@ -194,7 +190,7 @@ describe('parseExpressAudioSelectedIds', () => {
     ).toEqual({
       includeNarration: true,
       dialogueIndices: [0, 2],
-      includeMusic: true,
+      includeMusic: false,
       sfxBeatIds: ['bt_action_1'],
     })
   })

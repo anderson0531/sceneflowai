@@ -25,6 +25,8 @@ export interface ExpressAudioItem {
   stale?: boolean
   dialogueIndex?: number
   beatId?: string
+  /** 1-based shot number in the scene beat timeline. */
+  shotNumber?: number
   /**
    * Sound-effect shots with a distinct in-scene cue. Filler action shots are
    * listed but left to the music bed.
@@ -166,19 +168,6 @@ export function buildExpressAudioItems(
   const beats = getSceneBeats(scene)
   let spokenBeatCursor = 0
 
-  if (scene.music) {
-    const sceneRecord = scene as Record<string, unknown>
-    const musicAudio = sceneRecord.musicAudio as { url?: string } | undefined
-    const music = sceneRecord.music as { url?: string } | undefined
-    items.push({
-      id: 'music',
-      kind: 'music',
-      label: 'Background music',
-      typeLabel: TYPE_LABELS.music,
-      hasAudio: !!(musicAudio?.url || music?.url),
-    })
-  }
-
   const narrationText = String(scene.narration ?? '').trim()
   if (narrationText && !sceneNarrationRepresentedInBeats(scene, narrationText)) {
     const status = getNarrationAudioStatus(scene, lang, undefined, narrationText)
@@ -192,10 +181,15 @@ export function buildExpressAudioItems(
     })
   }
 
-  for (const beat of beats) {
+  for (let beatIndex = 0; beatIndex < beats.length; beatIndex++) {
+    const beat = beats[beatIndex]
+    const shotNumber =
+      (typeof beat.sequenceIndex === 'number' ? beat.sequenceIndex : beatIndex) + 1
+
     if (beat.kind === 'narration' || beat.kind === 'dialogue') {
-      const label = buildSpokenLabel(beat)
-      if (!label) continue
+      const spokenLabel = buildSpokenLabel(beat)
+      if (!spokenLabel) continue
+      const label = `Shot ${shotNumber}: ${spokenLabel}`
 
       const dialogueIndex = resolveDialogueIndex(beat, dialogueLines, spokenBeatCursor)
       spokenBeatCursor = Math.max(spokenBeatCursor + 1, dialogueIndex + 1)
@@ -229,6 +223,7 @@ export function buildExpressAudioItems(
           hasAudio:
             (narrationStatus.hasAudio || dialogueStatus.hasAudio) && !stale,
           stale,
+          shotNumber,
         })
         continue
       }
@@ -255,6 +250,7 @@ export function buildExpressAudioItems(
         hasAudio: status.hasAudio,
         stale: status.stale,
         dialogueIndex,
+        shotNumber,
       })
       continue
     }
@@ -275,11 +271,12 @@ export function buildExpressAudioItems(
       items.push({
         id: `sfx-${beat.beatId}`,
         kind: 'sfx',
-        label: truncate(audioCue),
+        label: `Shot ${shotNumber}: ${truncate(audioCue)}`,
         typeLabel: TYPE_LABELS.sfx,
         hasAudio: hasUrl && !stale,
         stale,
         beatId: beat.beatId,
+        shotNumber,
         recommended: true,
       })
     }
@@ -321,7 +318,6 @@ export function parseExpressAudioSelectedIds(selectedIds: string[]): {
   const dialogueIndices: number[] = []
   const sfxBeatIds: string[] = []
   let includeNarration = false
-  let includeMusic = false
 
   for (const id of selectedIds) {
     if (id === 'narration') {
@@ -329,7 +325,7 @@ export function parseExpressAudioSelectedIds(selectedIds: string[]): {
       continue
     }
     if (id === 'music') {
-      includeMusic = true
+      // Deprecated single-track scene.music generation is disabled in Audio Agent.
       continue
     }
     if (id.startsWith('dialogue-')) {
@@ -345,7 +341,7 @@ export function parseExpressAudioSelectedIds(selectedIds: string[]): {
   return {
     includeNarration,
     dialogueIndices,
-    includeMusic,
+    includeMusic: false,
     sfxBeatIds,
   }
 }
