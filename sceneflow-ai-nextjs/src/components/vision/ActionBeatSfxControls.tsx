@@ -167,7 +167,7 @@ export function ActionBeatSfxControls({
       return
     }
     setIsGeneratingElevenLabs(true)
-    const toastId = toast.loading(sfxAudio ? 'Re-generating sound effect (Veo 3.1 Lite)...' : 'Generating sound effect (Veo 3.1 Lite)...')
+    const toastId = toast.loading(sfxAudio ? 'Re-generating sound effect...' : 'Generating sound effect...')
     try {
       const durationSeconds = resolveVeoSfxDuration({
         segmentDurationSeconds,
@@ -333,7 +333,7 @@ export function ActionBeatSfxControls({
                   void handleElevenLabs()
                 }}
                 disabled={isBusy || !sfxText}
-                title={`Generate optional SFX via Veo 3.1 Lite (~${VIDEO_CREDITS.VEO_LITE} credits)`}
+                title={`Generate optional SFX (~${VIDEO_CREDITS.VEO_LITE} credits)`}
                 className="text-xs px-2 py-1 bg-amber-600 hover:bg-amber-700 text-white rounded disabled:opacity-50"
               >
                 {isGeneratingElevenLabs ? 'Generating...' : 'Generate'}
@@ -384,7 +384,7 @@ export function ActionBeatSfxControls({
               )
             })}
           </div>
-          <p className="text-[10px] text-amber-300/50">Veo 3.1 Lite · ~{VIDEO_CREDITS.VEO_LITE} credits</p>
+          <p className="text-[10px] text-amber-300/50">~{VIDEO_CREDITS.VEO_LITE} credits</p>
         </>
       ) : (
         <p className="text-[10px] text-amber-300/60">
@@ -392,7 +392,7 @@ export function ActionBeatSfxControls({
         </p>
       )}
       <DialogueQualityToggle
-        lofiTitle="Veo 3.1 Lite sound effect"
+        lofiTitle="Generate sound effect"
         disabled={isBusy}
         lofiDisabled={!sfxText}
         hasClip={!!clipUrl}

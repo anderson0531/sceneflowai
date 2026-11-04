@@ -170,7 +170,7 @@ export function SegmentSfxCard({
     }
 
     setIsGeneratingElevenLabs(true)
-    const toastId = toast.loading(audioUrl ? 'Re-generating SFX (Veo 3.1 Lite)...' : 'Generating SFX (Veo 3.1 Lite)...')
+    const toastId = toast.loading(audioUrl ? 'Re-generating sound effect...' : 'Generating sound effect...')
     try {
       const durationSeconds = resolveVeoSfxDuration({
         segmentDurationSeconds,
@@ -311,7 +311,7 @@ export function SegmentSfxCard({
               void dispatchGenerateElevenLabs()
             }}
             disabled={isGenerating}
-            title={`Cinematic clip via Veo 3.1 Lite (~${VIDEO_CREDITS.VEO_LITE} credits)`}
+            title={`Generate sound effect (~${VIDEO_CREDITS.VEO_LITE} credits)`}
           >
             {isGeneratingElevenLabs ? (
               <>
@@ -335,7 +335,7 @@ export function SegmentSfxCard({
       />
       <div className="text-sm text-gray-700 dark:text-gray-300 italic">{sfx.description}</div>
       <DialogueQualityToggle
-        lofiTitle="Veo 3.1 Lite sound effect"
+        lofiTitle="Generate sound effect"
         disabled={isGenerating}
         lofiDisabled={!sfxPrompt}
         hasClip={!!clipUrl}

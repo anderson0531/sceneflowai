@@ -45,7 +45,7 @@ export async function dispatchExpressElevenLabsSfx(params: {
   let success = 0
   let failed = 0
   const toastId = toast.loading(
-    `Sound effects (Veo 3.1 Lite): starting ${resolved.items.length} shot${resolved.items.length === 1 ? '' : 's'}...`
+    `Generating sound effects: starting ${resolved.items.length} shot${resolved.items.length === 1 ? '' : 's'}...`
   )
   const tasks = resolved.items.map((item) => ({
     id: item.beatId,
@@ -82,7 +82,7 @@ export async function dispatchExpressElevenLabsSfx(params: {
           },
         })
         success++
-        toast.loading(`Sound effects (Veo 3.1 Lite): ${success}/${resolved.items.length} complete`, {
+        toast.loading(`Generating sound effects: ${success}/${resolved.items.length} complete`, {
           id: toastId,
         })
       } catch (error) {
