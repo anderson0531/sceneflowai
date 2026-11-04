@@ -82,6 +82,14 @@ export function ProductionAgentDock({
     return () => window.clearInterval(id)
   }, [state?.visible, state?.finished, state?.startedAt])
 
+  useEffect(() => {
+    if (!state?.visible || !state.finished || state.checkpointGate || !onClose) return
+    const timer = window.setTimeout(() => {
+      onClose()
+    }, 30_000)
+    return () => window.clearTimeout(timer)
+  }, [state?.visible, state?.finished, state?.checkpointGate, onClose])
+
   if (!state || !state.visible) return null
 
   const { telemetry, checkpointGate } = state

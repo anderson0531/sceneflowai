@@ -213,6 +213,9 @@ export function ActionBeatSfxControls({
           <span className="text-[11px] font-semibold uppercase tracking-wide text-amber-300/90">
             Action SFX
           </span>
+          <span className="text-[10px] px-1.5 py-0.5 rounded border border-amber-500/30 bg-amber-500/10 text-amber-200/80">
+            Optional
+          </span>
           <BeatAudioStatusBadge hasAudio={!!sfxAudio} stale={sfxStale} />
           {expressStatus === 'running' && (
             <span className="text-[10px] px-2 py-0.5 bg-amber-500/20 text-amber-200 rounded flex items-center gap-1">
@@ -322,10 +325,10 @@ export function ActionBeatSfxControls({
                   void handleElevenLabs()
                 }}
                 disabled={isBusy || !sfxText}
-                title="ElevenLabs · about 15 credits"
+                title="Generate optional SFX via ElevenLabs (~15 credits)"
                 className="text-xs px-2 py-1 bg-amber-600 hover:bg-amber-700 text-white rounded disabled:opacity-50"
               >
-                {isGeneratingElevenLabs ? 'ElevenLabs...' : 'ElevenLabs'}
+                {isGeneratingElevenLabs ? 'Generating...' : 'Generate'}
               </button>
               <button
                 type="button"

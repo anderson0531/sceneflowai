@@ -17333,7 +17333,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           const shouldAutoClose =
             !opts?.preflightError && !opts?.cancelled && !hasFrameErrors(next.items)
           if (shouldAutoClose) {
-            window.setTimeout(() => setExpressBeatFrameOverlay(null), 1500)
+            window.setTimeout(() => setExpressBeatFrameOverlay(null), 30000)
           }
           return next
         })
@@ -17859,7 +17859,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           if (!prev || prev.finished) return prev
           const next = { ...prev, finished: true }
           if (!hasFrameErrors(next.items) && !next.preflightError && !next.cancelled) {
-            window.setTimeout(() => setExpressBeatFrameOverlay(null), 1500)
+            window.setTimeout(() => setExpressBeatFrameOverlay(null), 30000)
           }
           return next
         })

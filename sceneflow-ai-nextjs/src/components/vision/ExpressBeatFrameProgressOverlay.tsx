@@ -151,7 +151,7 @@ export function ExpressBeatFrameProgressOverlay({
   const progressPct =
     totalFrames > 0 ? Math.round((completedFrames / totalFrames) * 100) : 0
 
-  const showClose = finished && (frameErrors || !!preflightError || cancelled)
+  const showClose = finished
   const showCancel = !finished && !!onCancel
 
   const dockPhases = useMemo(

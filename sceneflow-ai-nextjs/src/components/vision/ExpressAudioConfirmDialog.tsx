@@ -12,6 +12,7 @@ import {
 } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/Button'
 import { Checkbox } from '@/components/ui/checkbox'
+import { Switch } from '@/components/ui/switch'
 import { Loader, Sparkles } from 'lucide-react'
 import type { SfxDurationOverride } from '@/lib/elevenlabs/sfxDuration'
 import { resolveAutoSfxDuration } from '@/lib/elevenlabs/sfxDuration'
@@ -36,6 +37,7 @@ interface ExpressAudioConfirmDialogProps {
   items: ExpressAudioItem[]
   segmentDurationSeconds?: number
   isRunning?: boolean
+  defaultIncludeSfx?: boolean
   onConfirm: (options: ExpressAudioConfirmOptions) => void
 }
 
@@ -57,24 +59,28 @@ export function ExpressAudioConfirmDialog({
   items,
   segmentDurationSeconds,
   isRunning = false,
+  defaultIncludeSfx = false,
   onConfirm,
 }: ExpressAudioConfirmDialogProps) {
   const t = useTranslations('production.expressAudio')
   const tCommon = useTranslations('common')
   const [scope, setScope] = useState<ExpressAudioScope>('missing')
+  const [includeSfx, setIncludeSfx] = useState<boolean>(defaultIncludeSfx)
   const [selectedIds, setSelectedIds] = useState<string[]>([])
   const [durationPreset, setDurationPreset] = useState<SfxDurationOverride>('auto')
+  const hasSfxItems = useMemo(() => items.some((item) => item.kind === 'sfx'), [items])
 
   useEffect(() => {
     if (!open) return
     setDurationPreset('auto')
     setScope('missing')
-  }, [open])
+    setIncludeSfx(defaultIncludeSfx)
+  }, [open, defaultIncludeSfx])
 
   useEffect(() => {
     if (!open) return
-    setSelectedIds(defaultExpressAudioSelection(items, scope))
-  }, [open, scope, items])
+    setSelectedIds(defaultExpressAudioSelection(items, scope, { includeSfx }))
+  }, [open, scope, items, includeSfx])
 
   const selectedSet = useMemo(() => new Set(selectedIds), [selectedIds])
   const selectedSfxCount = useMemo(
@@ -144,9 +150,28 @@ export function ExpressAudioConfirmDialog({
           </div>
 
           <div className="min-w-0">
-            <p className="text-xs font-semibold uppercase tracking-wide text-gray-400 mb-2">
-              {t('audioToGenerate')}
-            </p>
+            <div className="flex items-center justify-between gap-2 mb-2">
+              <p className="text-xs font-semibold uppercase tracking-wide text-gray-400">
+                {t('audioToGenerate')}
+              </p>
+              {hasSfxItems && (
+                <label className="flex items-center gap-1.5 cursor-pointer text-xs text-violet-200">
+                  <span>Include optional SFX</span>
+                  <Switch
+                    checked={includeSfx}
+                    onCheckedChange={setIncludeSfx}
+                    disabled={isRunning}
+                    className="scale-75 origin-right"
+                    aria-label="Include optional SFX"
+                  />
+                </label>
+              )}
+            </div>
+            {hasSfxItems && !includeSfx && (
+              <p className="text-[11px] text-slate-400 mb-2">
+                SFX is optional — leaving it off saves {AUDIO_CREDITS.ELEVENLABS_SFX} credits per shot for Pre-Vis production.
+              </p>
+            )}
             {items.length === 0 ? (
               <p className="text-sm text-gray-500 py-4 text-center">
                 {t('noAudioItems')}

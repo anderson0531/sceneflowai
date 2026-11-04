@@ -4848,6 +4848,7 @@ function SceneCard({
           sfxAudioUrl = undefined
         }
         const hasAudio = !!sfxAudioUrl
+        const sfxEnabledForScene = Boolean((scene as Record<string, any>)?.sfxEnabled)
         return {
           beatId: beat.beatId,
           kind: 'action',
@@ -4855,7 +4856,7 @@ function SceneCard({
           hasAudio,
           promptChanged: actionBeatSfxIsStale(scene, beat, hasAudio),
           needsSpeaker: false,
-          tracksSfx: linked > 0 || inline > 0 || hasAudio,
+          tracksSfx: (sfxEnabledForScene && (linked > 0 || inline > 0)) || hasAudio,
         }
       }
       let dialogueIndex = spokenBeatCursor
@@ -4949,6 +4950,27 @@ function SceneCard({
       })
     },
     [onScriptChange, script, scenes, sceneIdx, sceneMusicCues, sceneBeatsForTabs]
+  )
+  const sceneSfxOn = Boolean((scene as Record<string, any>)?.sfxEnabled)
+  const handleSceneSfxChange = useCallback(
+    (checked: boolean) => {
+      if (!onScriptChange || !script || !Array.isArray(scenes)) return
+      const updatedScenes = scenes.map((entry: any, index: number) => {
+        if (index !== sceneIdx) return entry
+        return {
+          ...entry,
+          sfxEnabled: checked,
+          beats: getSceneBeats(entry).map((beat) =>
+            beat.kind === 'action' ? { ...beat, sfxMuted: !checked } : beat
+          ),
+        }
+      })
+      onScriptChange({
+        ...script,
+        script: { ...script.script, scenes: updatedScenes },
+      })
+    },
+    [onScriptChange, script, scenes, sceneIdx]
   )
   const canReorderBeats = !!onReorderBeats && sceneBeatsForTabs.length > 1 && !beatFiltersActive
   const [brokenContinuityBeatIds, setBrokenContinuityBeatIds] = useState<Set<string>>(
@@ -7590,6 +7612,8 @@ function SceneCard({
                       musicCueByBeatId={musicCueByBeatId}
                       sceneScoreOn={sceneScoreOn}
                       onSceneScoreChange={handleSceneScoreChange}
+                      sceneSfxOn={sceneSfxOn}
+                      onSceneSfxChange={handleSceneSfxChange}
                       onResyncAudioTiming={onResyncAudioTiming}
                       resyncingAudioSceneIndex={resyncingAudioSceneIndex}
                       brokenContinuityBeatIds={brokenContinuityBeatIds}
@@ -8047,6 +8071,7 @@ function SceneCard({
             items={expressAudioItems}
             segmentDurationSeconds={scene.duration}
             isRunning={isExpressAudioRunning}
+            defaultIncludeSfx={sceneSfxOn}
             onConfirm={handleExpressAudioConfirm}
           />
 
@@ -8057,6 +8082,7 @@ function SceneCard({
             audioItems={expressAudioItems}
             segmentDurationSeconds={scene.duration}
             isRunning={isExpressAudioRunning || !!isExpressRunning}
+            defaultIncludeSfx={sceneSfxOn}
             onConfirm={handleExpressGenerateAllConfirm}
           />
           

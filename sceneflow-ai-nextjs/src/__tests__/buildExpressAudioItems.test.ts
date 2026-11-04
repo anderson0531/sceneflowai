@@ -169,6 +169,16 @@ describe('defaultExpressAudioSelection', () => {
       'sfx-bt_1',
     ])
   })
+
+  it('skips optional SFX when includeSfx is false to save credits for Pre-Vis', () => {
+    expect(defaultExpressAudioSelection(items, 'missing', { includeSfx: false })).toEqual([
+      'dialogue-0',
+    ])
+    expect(defaultExpressAudioSelection(items, 'all', { includeSfx: false })).toEqual([
+      'music',
+      'dialogue-0',
+    ])
+  })
 })
 
 describe('parseExpressAudioSelectedIds', () => {

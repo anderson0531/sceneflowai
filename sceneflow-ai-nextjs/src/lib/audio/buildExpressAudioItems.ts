@@ -288,21 +288,28 @@ export function buildExpressAudioItems(
   return items
 }
 
-/** Filler action shots stay unchecked. Music carries them. */
+/** Filler action shots stay unchecked. Music carries them. Optional SFX can be left off to save credits. */
 export function expressAudioItemPrechecked(
   item: ExpressAudioItem,
-  scope: ExpressAudioScope
+  scope: ExpressAudioScope,
+  options?: { includeSfx?: boolean }
 ): boolean {
-  if (item.kind === 'sfx' && !item.recommended) return false
+  if (item.kind === 'sfx') {
+    if (options?.includeSfx === false) return false
+    if (!item.recommended) return false
+  }
   if (scope === 'all') return true
   return !item.hasAudio
 }
 
 export function defaultExpressAudioSelection(
   items: ExpressAudioItem[],
-  scope: ExpressAudioScope
+  scope: ExpressAudioScope,
+  options?: { includeSfx?: boolean }
 ): string[] {
-  return items.filter((item) => expressAudioItemPrechecked(item, scope)).map((item) => item.id)
+  return items
+    .filter((item) => expressAudioItemPrechecked(item, scope, options))
+    .map((item) => item.id)
 }
 
 export function parseExpressAudioSelectedIds(selectedIds: string[]): {

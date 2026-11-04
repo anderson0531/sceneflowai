@@ -13,9 +13,11 @@ import {
   Trash2,
   Upload,
   Volume2,
+  VolumeX,
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/Button'
+import { Switch } from '@/components/ui/switch'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 import { ActionBeatSfxControls, type ExpressBeatSfxStatus } from '@/components/vision/ActionBeatSfxControls'
 import { DialogueQualityToggle, isHifiDialogueProvider } from '@/components/vision/DialogueQualityToggle'
@@ -202,6 +204,8 @@ export interface SceneAudioWorkbenchProps {
   musicCueByBeatId: Map<string, SceneMusicCue>
   sceneScoreOn: boolean
   onSceneScoreChange: (checked: boolean) => void
+  sceneSfxOn?: boolean
+  onSceneSfxChange?: (checked: boolean) => void
   onResyncAudioTiming?: (sceneIdx: number, language: string) => void
   resyncingAudioSceneIndex?: number | null
   brokenContinuityBeatIds: Set<string>
@@ -512,6 +516,8 @@ function AudioToolbar(
     hasSceneMusic,
     sceneScoreOn,
     onSceneScoreChange,
+    sceneSfxOn = false,
+    onSceneSfxChange,
     isExpressAudioRunning,
     productionReadiness,
     hasSelectableActionBeats,
@@ -572,6 +578,32 @@ function AudioToolbar(
     <div className="mb-3 flex flex-wrap items-center gap-2">
       {hasSceneMusic && (
         <SceneScoreToggle checked={sceneScoreOn} onCheckedChange={onSceneScoreChange} />
+      )}
+      {hasSelectableActionBeats && onSceneSfxChange && (
+        <label
+          className="flex h-8 shrink-0 cursor-pointer items-center gap-1.5"
+          onClick={(event) => event.stopPropagation()}
+          title={
+            sceneSfxOn
+              ? 'SFX enabled for this scene. Turn off to skip optional SFX and save credits for Pre-Vis.'
+              : 'SFX is optional and off by default to save credits for Pre-Vis production. Turn on to include action SFX.'
+          }
+        >
+          {sceneSfxOn ? (
+            <Volume2 className="h-3.5 w-3.5 text-amber-300" />
+          ) : (
+            <VolumeX className="h-3.5 w-3.5 text-amber-300/50" />
+          )}
+          <span className={`text-xs ${sceneSfxOn ? 'text-amber-200' : 'text-amber-200/60'}`}>
+            SFX
+          </span>
+          <Switch
+            checked={sceneSfxOn}
+            onCheckedChange={onSceneSfxChange}
+            className="origin-left scale-90"
+            aria-label="Optional SFX across shots"
+          />
+        </label>
       )}
       <BeatFilters
         beatFacts={props.beatFacts}

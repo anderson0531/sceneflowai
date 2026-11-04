@@ -29,6 +29,8 @@ describe('Beats tab SFX UI', () => {
     expect(source).not.toContain('Generate SFX')
     expect(source).not.toContain('Re-generate SFX')
     expect(source).not.toContain('Veo...')
+    expect(source).not.toContain("'ElevenLabs'")
+    expect(source).toContain('Optional')
     expect(mixer).toContain('DialogueQualityToggle')
     expect(mixer).toContain('lofiTitle="ElevenLabs sound effect"')
     expect(readSource('src/components/vision/ScriptPanel.tsx')).toContain('if (detail?.beatId) setSelectedBeatId(detail.beatId)')
@@ -53,5 +55,12 @@ describe('Beats tab SFX UI', () => {
     expect(mixer).toContain('BeatAudioStatusBadge')
     expect(mixer).toContain('actionBeatSfxIsStale')
     expect(mixer).not.toContain('Audio Ready')
+  })
+
+  it('auto-closes finished agent processing docks after 30s', () => {
+    const agentDock = readSource('src/components/vision/AgentRunDock.tsx')
+    const productionDock = readSource('src/components/vision/ProductionAgentDock.tsx')
+    expect(agentDock).toContain('AGENT_DOCK_AUTO_CLOSE_MS = 30_000')
+    expect(productionDock).toContain('30_000')
   })
 })

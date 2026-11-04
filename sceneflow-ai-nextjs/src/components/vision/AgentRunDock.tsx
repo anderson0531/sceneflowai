@@ -1,6 +1,6 @@
 'use client'
 
-import type { ReactNode } from 'react'
+import { useEffect, type ReactNode } from 'react'
 import { AlertTriangle, Check, Loader2, X } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
@@ -154,6 +154,9 @@ function AgentItemRow({ item }: { item: AgentRunItem }) {
   )
 }
 
+/** Auto-dismiss finished agent processing docks after 30 seconds. */
+export const AGENT_DOCK_AUTO_CLOSE_MS = 30_000
+
 /**
  * A single agent run, reported without taking the page away from the user.
  *
@@ -175,6 +178,14 @@ export function AgentRunDock({
   className,
 }: AgentRunDockProps) {
   const hasProgress = typeof progressPct === 'number'
+
+  useEffect(() => {
+    if (tone === 'running' || !onClose) return
+    const timer = window.setTimeout(() => {
+      onClose()
+    }, AGENT_DOCK_AUTO_CLOSE_MS)
+    return () => window.clearTimeout(timer)
+  }, [tone, onClose])
 
   return (
     <div
