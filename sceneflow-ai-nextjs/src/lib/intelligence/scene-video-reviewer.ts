@@ -536,9 +536,13 @@ const SYSTEM_INSTRUCTION = `You are SceneFlow AI's Chief Multimodal Scene Review
 You are inspecting actual generated video clips (MP4), rendered scene streams, start/end keyframes, canonical character/location/prop reference plates, and the screenplay/shot direction ledger.
 
 Your job has THREE core deliverables:
-1. DUAL-PERSPECTIVE EVALUATION & SCORING:
-   - AUDIENCE PERSPECTIVE & AR SCORE (0-100): Evaluate the scene as a discerning target viewer watching the video. Assess Emotional Impact, Narrative Clarity, Pacing & Momentum, Character Connection, and Audio-Visual Cohesion.
-   - DIRECTOR PERSPECTIVE & DIRECTOR SCORE (0-100): Evaluate the scene as an exacting film director and script supervisor. Assess Script & Beat Compliance, Character Identity & Wardrobe Continuity, Camera & Blocking Execution, Temporal & Motion Stability (checking for morphing, dead/frozen motion, physics glitches, gibberish text), and Lighting & Atmospheric Cohesion.
+1. DUAL-PERSPECTIVE EVALUATION & SCORING (WITH PROPORTIONAL SHOT WEIGHTING & CRITICAL DIRECTOR CALIBRATION):
+   - AUDIENCE PERSPECTIVE & AR SCORE (0-100): Evaluate the scene holistically as a discerning target viewer watching the sequence. Assess Emotional Impact, Narrative Clarity, Pacing & Momentum, Character Connection, and Audio-Visual Cohesion. Viewers experience story and emotion holistically and forgive isolated technical quirks that do not break narrative immersion.
+   - DIRECTOR PERSPECTIVE & DIRECTOR SCORE (0-100): Evaluate the scene as a strictly more critical Executive Film Director, Script Supervisor, and Continuity Editor. Assess Script & Beat Compliance, Character Identity & Wardrobe Continuity, Camera & Blocking Execution, Temporal & Motion Stability (checking for morphing, dead/frozen motion, physics glitches, gibberish text), and Lighting & Atmospheric Cohesion.
+   - CRITICAL SCORING CALIBRATION RULES:
+     * PROPORTIONAL SHOT-WEIGHTED DEDUCTIONS: If a scene has N shots (e.g. 4 shots) and an anomaly occurs in only 1 shot while the other N-1 shots succeed, weight the scene-level penalty proportionally by 1/N. A single minor anomaly in 1 of 4 shots should reduce the scene AR Score by only ~2-4 points (e.g. 88 -> 85), NEVER by 15-25 points.
+     * SCORE STABILITY ACROSS ITERATIONS: When a Previous AR Score is provided, anchor your evaluation to that baseline and adjust proportionally based on resolved issues vs. newly introduced anomalies.
+     * DIRECTOR IS ALWAYS MORE CRITICAL THAN AUDIENCE: Because the Director scrutinizes technical craft, continuity locks, 180-degree axis, framing precision, and strict beat compliance far more harshly than a general audience, "directorScore" MUST ALWAYS be lower than or equal to "arScore" (typically 2 to 8 points lower than "arScore", and never higher than "arScore").
 
 2. SHOT-BY-SHOT COMPLIANCE & ANOMALY DETECTION:
    - Evaluate every shot in the Shot Ledger against its written script beat, dialogue, cast in frame, key props, and camera direction.
@@ -620,10 +624,18 @@ function buildSceneTextPrompt(args: {
     })
     .join('\n\n')
 
+  const modeFocusGuidance =
+    reviewedSource === 'keyframes_only'
+      ? 'MODE FOCUS — STILLS (KEYFRAMES): You are inspecting the static shot keyframe stills and canonical reference plates prior to or independent of video motion. Focus on character identity, wardrobe, prop continuity, framing/composition, lighting, and script beat compliance. Set anomaly origin to "frame" (or "script") and set "regenerateKeyframeRecommended": true on visual shot fixes.'
+      : reviewedSource === 'shot_clips'
+        ? 'MODE FOCUS — CLIPS (SHOT VIDEO CLIPS): You are inspecting the individual rendered shot video clips (MP4). Focus on temporal motion stability, morphing/anatomy artifacts, camera movement execution, performance, and shot-to-shot continuity.'
+        : 'MODE FOCUS — SCENE (RENDERED SCENE MP4): You are inspecting the assembled full-scene MP4 stream. Focus on holistic pacing, cut transitions, audio-visual synchronization, dialogue timing, and end-to-end audience resonance.'
+
   return `=== MULTIMODAL SCENE VIDEO REVIEW REQUEST ===
 Scene Number: ${sceneNumber}
 Scene Heading: ${heading}
 Review Mode / Source: ${reviewedSource}${streamLabel ? ` (${streamLabel})` : ''}
+${modeFocusGuidance}
 ${typeof previousArScore === 'number' ? `Previous AR Score: ${previousArScore}/100` : ''}
 
 --- SCREENPLAY CONTEXT ---
@@ -765,6 +777,143 @@ function clampScore(value: unknown, fallback: number = 75): number {
   return Math.max(0, Math.min(100, Math.round(num)))
 }
 
+/**
+ * Deterministically calibrate Scene Video Review scores so that:
+ * 1. Localized shot anomalies deduct proportionally to shot share (`1 / totalShots`)
+ *    rather than causing 20+ point scene-wide cliff drops (e.g. 1 anomaly in 1 of 4 shots
+ *    deducts ~2-4 points from AR Score, not 22 points).
+ * 2. Re-evaluations with `previousArScore` are anchored against uncalibrated LLM score swings.
+ * 3. The Director Perspective (`directorScore`) is strictly more critical than the Audience
+ *    Perspective (`arScore`), weighting technical/continuity/compliance deductions more heavily
+ *    and never exceeding `arScore`.
+ */
+export function calibrateSceneReviewScores(args: {
+  rawArScore: number
+  rawDirectorScore: number
+  rawOverallScore?: unknown
+  previousArScore?: number
+  totalShots: number
+  shotBreakdown: ShotReviewAssessment[]
+  anomalies: SceneVideoAnomaly[]
+  recommendationsCount: number
+}): {
+  arScore: number
+  directorScore: number
+  overallScore: number
+  audienceAnomalyPenalty: number
+  directorAnomalyPenalty: number
+} {
+  const {
+    rawArScore,
+    rawDirectorScore,
+    rawOverallScore,
+    previousArScore,
+    shotBreakdown,
+    anomalies,
+    recommendationsCount,
+  } = args
+  const totalShots = Math.max(1, args.totalShots || shotBreakdown.length || 1)
+
+  // 1. Compute proportional scene-level anomaly penalties weighted by shot share (1 / N)
+  let audienceAnomalyPenalty = 0
+  let directorAnomalyPenalty = 0
+
+  for (const anomaly of anomalies) {
+    const isShotLocalized = Boolean(anomaly.shotNumber || anomaly.beatId)
+    const shotShare = isShotLocalized
+      ? 1 / totalShots
+      : Math.min(1, 2 / Math.max(2, totalShots))
+
+    const audSeverityWeight =
+      anomaly.severity === 'critical' ? 26 : anomaly.severity === 'major' ? 16 : 8
+    const dirSeverityWeight =
+      anomaly.severity === 'critical' ? 36 : anomaly.severity === 'major' ? 24 : 14
+
+    audienceAnomalyPenalty += audSeverityWeight * shotShare
+    directorAnomalyPenalty += dirSeverityWeight * shotShare
+  }
+
+  // 2. Compute shot-weighted average score
+  const shotAvg =
+    shotBreakdown.length > 0
+      ? shotBreakdown.reduce((sum, s) => sum + s.score, 0) / shotBreakdown.length
+      : rawArScore
+
+  // 3. Stabilize Audience Resonance (AR) Score against uncalibrated single-shot cliff drops
+  let arScore = clampScore(rawArScore, 76)
+
+  // Floor based on shot-weighted average minus proportional penalty
+  const shotWeightedFloor = Math.max(
+    0,
+    Math.round(shotAvg - Math.ceil(audienceAnomalyPenalty * 0.5) - 2)
+  )
+  if (arScore < shotWeightedFloor) {
+    arScore = shotWeightedFloor
+  }
+
+  // Floor based on previousArScore when re-evaluating after iterative fixes/anomalies
+  if (typeof previousArScore === 'number' && Number.isFinite(previousArScore) && previousArScore > 0) {
+    const maxAllowedDropFromPrev =
+      anomalies.length === 0
+        ? 2
+        : Math.max(3, Math.ceil(audienceAnomalyPenalty) + 1)
+    const previousFloor = Math.max(0, Math.round(previousArScore - maxAllowedDropFromPrev))
+    if (arScore < previousFloor) {
+      arScore = previousFloor
+    }
+  }
+
+  arScore = clampScore(arScore, 76)
+
+  // 4. Calibrate Director Score to always be more critical than Audience Score (directorScore < arScore)
+  //    while also preventing uncalibrated cliff drops on localized shot anomalies.
+  const extraDirectorPenalty = Math.max(
+    0,
+    Math.round(directorAnomalyPenalty - audienceAnomalyPenalty)
+  )
+  const baseCriticalityGap = anomalies.length > 0 || recommendationsCount > 0 ? 3 : 2
+  const minDirectorGap = Math.min(
+    12,
+    Math.max(2, baseCriticalityGap + Math.floor(extraDirectorPenalty * 0.5))
+  )
+  const maxDirectorGap = Math.max(
+    minDirectorGap + 2,
+    Math.ceil(directorAnomalyPenalty) + 4
+  )
+
+  const maxAllowedDirectorScore = Math.max(0, arScore - minDirectorGap)
+  const minAllowedDirectorScore = Math.max(0, arScore - maxDirectorGap)
+
+  let directorScore = clampScore(rawDirectorScore, maxAllowedDirectorScore)
+  if (directorScore > maxAllowedDirectorScore) {
+    directorScore = maxAllowedDirectorScore
+  } else if (directorScore < minAllowedDirectorScore) {
+    directorScore = Math.max(
+      minAllowedDirectorScore,
+      Math.round(arScore - Math.max(minDirectorGap, Math.ceil(directorAnomalyPenalty)))
+    )
+  }
+
+  directorScore = clampScore(directorScore, Math.max(0, arScore - minDirectorGap))
+
+  // 5. Recompute overallScore consistently when arScore or directorScore was calibrated
+  const compositeScore = Math.round(arScore * 0.5 + directorScore * 0.5)
+  const scoresWereAdjusted =
+    arScore !== clampScore(rawArScore, 76) ||
+    directorScore !== clampScore(rawDirectorScore, 74)
+  const overallScore = scoresWereAdjusted
+    ? compositeScore
+    : clampScore(rawOverallScore, compositeScore)
+
+  return {
+    arScore,
+    directorScore,
+    overallScore,
+    audienceAnomalyPenalty,
+    directorAnomalyPenalty,
+  }
+}
+
 export function normalizeReviewResult(
   raw: Record<string, unknown>,
   context: {
@@ -786,92 +935,10 @@ export function normalizeReviewResult(
   const rawAud = (raw.audiencePerspective ?? {}) as Record<string, unknown>
   const rawDir = (raw.directorPerspective ?? {}) as Record<string, unknown>
 
-  const arScore = clampScore(raw.arScore ?? rawAud.arScore, 76)
-  const directorScore = clampScore(raw.directorScore ?? rawDir.directorScore, 74)
-  const overallScore = clampScore(
-    raw.overallScore,
-    Math.round(arScore * 0.5 + directorScore * 0.5)
-  )
+  const rawArScore = clampScore(raw.arScore ?? rawAud.arScore, 76)
+  const rawDirectorScore = clampScore(raw.directorScore ?? rawDir.directorScore, 74)
 
-  const normalizeDimensions = (
-    rawList: unknown,
-    defaults: Array<{ id: string; name: string; score: number; feedback: string }>
-  ): PerspectiveDimension[] => {
-    if (!Array.isArray(rawList) || rawList.length === 0) return defaults
-    return rawList.slice(0, 6).map((item, idx) => {
-      const obj = (item ?? {}) as Record<string, unknown>
-      const def = defaults[idx] ?? {
-        id: `dim-${idx + 1}`,
-        name: `Dimension ${idx + 1}`,
-        score: arScore,
-        feedback: '',
-      }
-      return {
-        id: typeof obj.id === 'string' && obj.id.trim() ? obj.id.trim() : def.id,
-        name: typeof obj.name === 'string' && obj.name.trim() ? obj.name.trim() : def.name,
-        score: clampScore(obj.score, def.score),
-        feedback:
-          typeof obj.feedback === 'string' && obj.feedback.trim()
-            ? obj.feedback.trim()
-            : def.feedback,
-      }
-    })
-  }
-
-  const audiencePerspective: AudiencePerspectiveReview = {
-    arScore,
-    summary:
-      typeof rawAud.summary === 'string' && rawAud.summary.trim()
-        ? rawAud.summary.trim()
-        : 'Scene delivers clear narrative intent with room to sharpen visual pacing and emotional beats.',
-    emotionalArcAssessment:
-      typeof rawAud.emotionalArcAssessment === 'string' && rawAud.emotionalArcAssessment.trim()
-        ? rawAud.emotionalArcAssessment.trim()
-        : 'Emotional progression tracks the scripted beats.',
-    narrativeClarity:
-      typeof rawAud.narrativeClarity === 'string' && rawAud.narrativeClarity.trim()
-        ? rawAud.narrativeClarity.trim()
-        : 'Story progression is readable across the sequence.',
-    pacingAndMomentum:
-      typeof rawAud.pacingAndMomentum === 'string' && rawAud.pacingAndMomentum.trim()
-        ? rawAud.pacingAndMomentum.trim()
-        : 'Shot cadence maintains steady momentum.',
-    dimensions: normalizeDimensions(rawAud.dimensions, [
-      { id: 'emotional_impact', name: 'Emotional Impact', score: arScore, feedback: 'Emotional tone aligns with scene intent.' },
-      { id: 'narrative_clarity', name: 'Narrative Clarity', score: arScore, feedback: 'Visual storytelling communicates the core beat.' },
-      { id: 'pacing_momentum', name: 'Pacing & Momentum', score: arScore, feedback: 'Rhythm across shots supports engagement.' },
-      { id: 'character_connection', name: 'Character Connection', score: arScore, feedback: 'Character presence anchors viewer focus.' },
-      { id: 'audiovisual_cohesion', name: 'Audio-Visual Cohesion', score: arScore, feedback: 'Visuals and audio cues complement one another.' },
-    ]),
-  }
-
-  const scriptComplianceScore = clampScore(rawDir.scriptComplianceScore, directorScore)
-  const continuityScore = clampScore(rawDir.continuityScore, directorScore)
-  const technicalExecutionScore = clampScore(rawDir.technicalExecutionScore, directorScore)
-
-  const directorPerspective: DirectorPerspectiveReview = {
-    directorScore,
-    summary:
-      typeof rawDir.summary === 'string' && rawDir.summary.trim()
-        ? rawDir.summary.trim()
-        : 'Visual execution largely follows the shot ledger, with targeted shot-level refinements recommended below.',
-    scriptComplianceScore,
-    continuityScore,
-    technicalExecutionScore,
-    coverageAndBlockingNotes:
-      typeof rawDir.coverageAndBlockingNotes === 'string' && rawDir.coverageAndBlockingNotes.trim()
-        ? rawDir.coverageAndBlockingNotes.trim()
-        : 'Coverage follows standard continuity progression.',
-    dimensions: normalizeDimensions(rawDir.dimensions, [
-      { id: 'script_compliance', name: 'Script & Beat Compliance', score: scriptComplianceScore, feedback: 'Adherence to written action and dialogue beats.' },
-      { id: 'continuity_identity', name: 'Identity & Continuity', score: continuityScore, feedback: 'Character, wardrobe, and prop consistency across cuts.' },
-      { id: 'camera_blocking', name: 'Camera & Blocking Execution', score: directorScore, feedback: 'Framing, camera movement, and spatial blocking.' },
-      { id: 'motion_stability', name: 'Motion & Temporal Stability', score: technicalExecutionScore, feedback: 'Temporal coherence and motion realism.' },
-      { id: 'lighting_atmosphere', name: 'Lighting & Atmosphere', score: directorScore, feedback: 'Lighting continuity and tonal atmosphere.' },
-    ]),
-  }
-
-  // Normalize anomalies
+  // 1. Normalize anomalies first so shot breakdown and score calibration can weight them
   const rawAnomalies = Array.isArray(raw.anomalies) ? raw.anomalies : []
   const anomalies: SceneVideoAnomaly[] = rawAnomalies.map((item, idx) => {
     const obj = (item ?? {}) as Record<string, unknown>
@@ -919,7 +986,12 @@ export function normalizeReviewResult(
     }
   })
 
-  // Normalize shot breakdown, ensuring every shot in the ledger is represented
+  // 2. Normalize shot breakdown with severity-proportional shot floors
+  const cleanShotBaseline = Math.max(
+    85,
+    typeof context.previousArScore === 'number' ? context.previousArScore : 0,
+    rawArScore
+  )
   const rawBreakdown = Array.isArray(raw.shotBreakdown) ? raw.shotBreakdown : []
   const shotBreakdown: ShotReviewAssessment[] = context.shots.map((shot) => {
     const rawMatch = (rawBreakdown.find((entry: any) => {
@@ -934,10 +1006,27 @@ export function normalizeReviewResult(
     )
     const hasCritical = shotAnomalies.some((a) => a.severity === 'critical')
     const hasMajor = shotAnomalies.some((a) => a.severity === 'major')
+    const hasMinor = !hasCritical && !hasMajor && shotAnomalies.length > 0
 
-    const defaultScore = hasCritical ? 55 : hasMajor ? 70 : Math.max(82, directorScore)
-    const score = clampScore(rawMatch.score, defaultScore)
+    const defaultScore = hasCritical
+      ? 55
+      : hasMajor
+        ? 70
+        : hasMinor
+          ? Math.max(78, cleanShotBaseline - 6 * shotAnomalies.length)
+          : Math.max(82, cleanShotBaseline)
+
     const rawStatus = String(rawMatch.status || '').toLowerCase()
+    let score = clampScore(rawMatch.score, defaultScore)
+
+    // Prevent clean shots or minor-anomaly shots from being disproportionately tanked
+    if (shotAnomalies.length === 0 && rawStatus !== 'fail' && rawStatus !== 'warning') {
+      score = Math.max(score, Math.min(82, cleanShotBaseline))
+    } else if (hasMinor && rawStatus !== 'fail') {
+      const minorShotFloor = Math.max(74, cleanShotBaseline - 10 * shotAnomalies.length)
+      score = Math.max(score, minorShotFloor)
+    }
+
     const status: 'pass' | 'warning' | 'fail' =
       rawStatus === 'fail' || hasCritical || score < 60
         ? 'fail'
@@ -978,7 +1067,7 @@ export function normalizeReviewResult(
     }
   })
 
-  // Normalize recommendations
+  // 3. Normalize recommendations
   const rawRecs = Array.isArray(raw.recommendations) ? raw.recommendations : []
   const recommendations: SceneVideoRecommendation[] = rawRecs
     .map((item, idx): SceneVideoRecommendation | null => {
@@ -1095,6 +1184,126 @@ export function normalizeReviewResult(
     })
     .filter((rec): rec is SceneVideoRecommendation => rec !== null)
 
+  // 4. Calibrate scene-level AR Score, Director Score, and Overall Score
+  const { arScore, directorScore, overallScore } = calibrateSceneReviewScores({
+    rawArScore,
+    rawDirectorScore,
+    rawOverallScore: raw.overallScore,
+    previousArScore: context.previousArScore,
+    totalShots: context.shots.length,
+    shotBreakdown,
+    anomalies,
+    recommendationsCount: recommendations.length,
+  })
+
+  const arLiftDelta = Math.max(0, arScore - rawArScore)
+  const dirCapDelta = Math.max(0, rawDirectorScore - directorScore)
+
+  const normalizeDimensions = (
+    rawList: unknown,
+    defaults: Array<{ id: string; name: string; score: number; feedback: string }>,
+    options?: { liftBy?: number; capDelta?: number; maxScore?: number }
+  ): PerspectiveDimension[] => {
+    if (!Array.isArray(rawList) || rawList.length === 0) return defaults
+    return rawList.slice(0, 6).map((item, idx) => {
+      const obj = (item ?? {}) as Record<string, unknown>
+      const def = defaults[idx] ?? {
+        id: `dim-${idx + 1}`,
+        name: `Dimension ${idx + 1}`,
+        score: arScore,
+        feedback: '',
+      }
+      let dimScore = clampScore(obj.score, def.score)
+      if (options?.liftBy && options.liftBy > 0) {
+        dimScore = clampScore(dimScore + Math.round(options.liftBy * 0.8), def.score)
+      }
+      if (options?.capDelta && options.capDelta > 0) {
+        dimScore = clampScore(dimScore - options.capDelta, def.score)
+      }
+      if (typeof options?.maxScore === 'number') {
+        dimScore = Math.min(dimScore, options.maxScore)
+      }
+      return {
+        id: typeof obj.id === 'string' && obj.id.trim() ? obj.id.trim() : def.id,
+        name: typeof obj.name === 'string' && obj.name.trim() ? obj.name.trim() : def.name,
+        score: dimScore,
+        feedback:
+          typeof obj.feedback === 'string' && obj.feedback.trim()
+            ? obj.feedback.trim()
+            : def.feedback,
+      }
+    })
+  }
+
+  const audiencePerspective: AudiencePerspectiveReview = {
+    arScore,
+    summary:
+      typeof rawAud.summary === 'string' && rawAud.summary.trim()
+        ? rawAud.summary.trim()
+        : 'Scene delivers clear narrative intent with room to sharpen visual pacing and emotional beats.',
+    emotionalArcAssessment:
+      typeof rawAud.emotionalArcAssessment === 'string' && rawAud.emotionalArcAssessment.trim()
+        ? rawAud.emotionalArcAssessment.trim()
+        : 'Emotional progression tracks the scripted beats.',
+    narrativeClarity:
+      typeof rawAud.narrativeClarity === 'string' && rawAud.narrativeClarity.trim()
+        ? rawAud.narrativeClarity.trim()
+        : 'Story progression is readable across the sequence.',
+    pacingAndMomentum:
+      typeof rawAud.pacingAndMomentum === 'string' && rawAud.pacingAndMomentum.trim()
+        ? rawAud.pacingAndMomentum.trim()
+        : 'Shot cadence maintains steady momentum.',
+    dimensions: normalizeDimensions(
+      rawAud.dimensions,
+      [
+        { id: 'emotional_impact', name: 'Emotional Impact', score: arScore, feedback: 'Emotional tone aligns with scene intent.' },
+        { id: 'narrative_clarity', name: 'Narrative Clarity', score: arScore, feedback: 'Visual storytelling communicates the core beat.' },
+        { id: 'pacing_momentum', name: 'Pacing & Momentum', score: arScore, feedback: 'Rhythm across shots supports engagement.' },
+        { id: 'character_connection', name: 'Character Connection', score: arScore, feedback: 'Character presence anchors viewer focus.' },
+        { id: 'audiovisual_cohesion', name: 'Audio-Visual Cohesion', score: arScore, feedback: 'Visuals and audio cues complement one another.' },
+      ],
+      { liftBy: arLiftDelta }
+    ),
+  }
+
+  const adjustDirectorSubScore = (rawSub: unknown): number => {
+    const base = clampScore(rawSub, directorScore)
+    if (dirCapDelta > 0) {
+      return clampScore(Math.min(arScore, base - dirCapDelta), directorScore)
+    }
+    return base
+  }
+
+  const scriptComplianceScore = adjustDirectorSubScore(rawDir.scriptComplianceScore)
+  const continuityScore = adjustDirectorSubScore(rawDir.continuityScore)
+  const technicalExecutionScore = adjustDirectorSubScore(rawDir.technicalExecutionScore)
+
+  const directorPerspective: DirectorPerspectiveReview = {
+    directorScore,
+    summary:
+      typeof rawDir.summary === 'string' && rawDir.summary.trim()
+        ? rawDir.summary.trim()
+        : 'Visual execution largely follows the shot ledger, with targeted shot-level refinements recommended below.',
+    scriptComplianceScore,
+    continuityScore,
+    technicalExecutionScore,
+    coverageAndBlockingNotes:
+      typeof rawDir.coverageAndBlockingNotes === 'string' && rawDir.coverageAndBlockingNotes.trim()
+        ? rawDir.coverageAndBlockingNotes.trim()
+        : 'Coverage follows standard continuity progression.',
+    dimensions: normalizeDimensions(
+      rawDir.dimensions,
+      [
+        { id: 'script_compliance', name: 'Script & Beat Compliance', score: scriptComplianceScore, feedback: 'Adherence to written action and dialogue beats.' },
+        { id: 'continuity_identity', name: 'Identity & Continuity', score: continuityScore, feedback: 'Character, wardrobe, and prop consistency across cuts.' },
+        { id: 'camera_blocking', name: 'Camera & Blocking Execution', score: directorScore, feedback: 'Framing, camera movement, and spatial blocking.' },
+        { id: 'motion_stability', name: 'Motion & Temporal Stability', score: technicalExecutionScore, feedback: 'Temporal coherence and motion realism.' },
+        { id: 'lighting_atmosphere', name: 'Lighting & Atmosphere', score: directorScore, feedback: 'Lighting continuity and tonal atmosphere.' },
+      ],
+      { capDelta: dirCapDelta }
+    ),
+  }
+
   return {
     sceneId: context.sceneId,
     sceneNumber: context.sceneNumber,
@@ -1129,6 +1338,79 @@ export function normalizeReviewResult(
 // Main Multimodal Review Execution
 // ============================================================================
 
+/**
+ * Resolve which media modalities to attach for the 3 distinct review modes:
+ * - 'stills': Inspects ONLY shot keyframe stills (`includeKeyframes: true`)
+ * - 'shot_clips': Inspects ONLY individual shot video clips (`includeShotClips: true`)
+ * - 'rendered_mp4': Inspects ONLY the full rendered scene MP4 stream (`includeRenderedMp4: true`)
+ * - 'auto': Picks the highest available stage (Scene -> Clips -> Stills) without mixing Stills & Clips
+ */
+export function resolveMediaInclusionForSourceMode(args: {
+  sourceMode: SceneVideoReviewSourceMode
+  hasRenderedStream: boolean
+  hasShotClips: boolean
+  hasKeyframes: boolean
+}): {
+  effectiveMode: 'stills' | 'shot_clips' | 'rendered_mp4'
+  includeRenderedMp4: boolean
+  includeShotClips: boolean
+  includeKeyframes: boolean
+} {
+  const { sourceMode, hasRenderedStream, hasShotClips, hasKeyframes } = args
+
+  if (sourceMode === 'stills') {
+    return {
+      effectiveMode: 'stills',
+      includeRenderedMp4: false,
+      includeShotClips: false,
+      includeKeyframes: true,
+    }
+  }
+
+  if (sourceMode === 'shot_clips') {
+    return {
+      effectiveMode: 'shot_clips',
+      includeRenderedMp4: false,
+      includeShotClips: hasShotClips,
+      // Only fall back to keyframes if no shot clips exist at all
+      includeKeyframes: !hasShotClips && hasKeyframes,
+    }
+  }
+
+  if (sourceMode === 'rendered_mp4') {
+    return {
+      effectiveMode: 'rendered_mp4',
+      includeRenderedMp4: hasRenderedStream,
+      includeShotClips: !hasRenderedStream && hasShotClips,
+      includeKeyframes: !hasRenderedStream && !hasShotClips && hasKeyframes,
+    }
+  }
+
+  // 'auto' selects the most complete single stage available (Scene -> Clips -> Stills)
+  if (hasRenderedStream) {
+    return {
+      effectiveMode: 'rendered_mp4',
+      includeRenderedMp4: true,
+      includeShotClips: false,
+      includeKeyframes: false,
+    }
+  }
+  if (hasShotClips) {
+    return {
+      effectiveMode: 'shot_clips',
+      includeRenderedMp4: false,
+      includeShotClips: true,
+      includeKeyframes: false,
+    }
+  }
+  return {
+    effectiveMode: 'stills',
+    includeRenderedMp4: false,
+    includeShotClips: false,
+    includeKeyframes: true,
+  }
+}
+
 export async function reviewSceneVideoMultimodal(
   input: ReviewSceneVideoInput
 ): Promise<SceneVideoReviewResult> {
@@ -1140,16 +1422,15 @@ export async function reviewSceneVideoMultimodal(
     input.streamId
   )
   const shotsWithClips = shots.filter((s) => !!s.videoClipUrl)
+  const shotsWithKeyframes = shots.filter((s) => !!s.startFrameUrl)
 
-  // Determine which video sources to inspect
-  const includeRenderedMp4 =
-    !!selectedStream &&
-    (sourceMode === 'rendered_mp4' ||
-      (sourceMode === 'auto' && selectedStream.url.length > 0))
-  const includeShotClips =
-    shotsWithClips.length > 0 &&
-    (sourceMode === 'shot_clips' ||
-      sourceMode === 'auto')
+  const { includeRenderedMp4, includeShotClips, includeKeyframes } =
+    resolveMediaInclusionForSourceMode({
+      sourceMode,
+      hasRenderedStream: Boolean(selectedStream && selectedStream.url.length > 0),
+      hasShotClips: shotsWithClips.length > 0,
+      hasKeyframes: shotsWithKeyframes.length > 0,
+    })
 
   const parts: VisionPart[] = []
   let usedAnyGcsFileUri = false
@@ -1202,7 +1483,7 @@ export async function reviewSceneVideoMultimodal(
     }
   }
 
-  // 2. Attach Rendered Scene MP4 (if selected)
+  // 2. Attach Rendered Scene MP4 (when Scene mode is selected)
   let attachedRenderedMp4 = false
   if (includeRenderedMp4 && selectedStream) {
     const resolvedVideo = await resolveVideoVisionPart(selectedStream.url, {
@@ -1221,7 +1502,7 @@ export async function reviewSceneVideoMultimodal(
     }
   }
 
-  // 3. Attach Shot Video Clips & Keyframe Stills
+  // 3. Attach Shot Video Clips (when Clips mode is selected) or Keyframe Stills (when Stills mode is selected)
   let reviewedClipCount = 0
   let reviewedKeyframeCount = 0
 
@@ -1247,8 +1528,11 @@ export async function reviewSceneVideoMultimodal(
       }
     }
 
-    // Attach Start Keyframe if within cap (especially critical for checking frame vs motion origin!)
-    if (shot.startFrameUrl && reviewedKeyframeCount < MAX_KEYFRAMES_IN_PROMPT) {
+    if (
+      includeKeyframes &&
+      shot.startFrameUrl &&
+      reviewedKeyframeCount < MAX_KEYFRAMES_IN_PROMPT
+    ) {
       const framePart = await fetchMediaAsInlinePart(
         shot.startFrameUrl,
         'image/jpeg',

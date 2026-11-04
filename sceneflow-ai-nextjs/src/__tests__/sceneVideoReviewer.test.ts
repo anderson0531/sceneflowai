@@ -10,7 +10,9 @@ import {
 } from '@/lib/intelligence/scene-video-reviewer-types'
 import {
   buildShotContextLedger,
+  calibrateSceneReviewScores,
   normalizeReviewResult,
+  resolveMediaInclusionForSourceMode,
   selectRenderedStreamForReview,
   toVertexGcsUri,
 } from '@/lib/intelligence/scene-video-reviewer'
@@ -57,6 +59,47 @@ describe('Multimodal Scene Video Reviewer — Media & GCS Resolution', () => {
     expect(chosen?.streamId).toBe('stream-vid-en')
     expect(chosen?.url).toContain('video-en.mp4')
     expect(chosen?.streamLabel).toBe('Video (EN)')
+  })
+
+  it('separates Stills, Clips, and Scene analysis modes cleanly without conflating Stills and Clips', () => {
+    const stillsOnly = resolveMediaInclusionForSourceMode({
+      sourceMode: 'stills',
+      hasRenderedStream: true,
+      hasShotClips: true,
+      hasKeyframes: true,
+    })
+    expect(stillsOnly).toEqual({
+      effectiveMode: 'stills',
+      includeRenderedMp4: false,
+      includeShotClips: false,
+      includeKeyframes: true,
+    })
+
+    const clipsOnly = resolveMediaInclusionForSourceMode({
+      sourceMode: 'shot_clips',
+      hasRenderedStream: true,
+      hasShotClips: true,
+      hasKeyframes: true,
+    })
+    expect(clipsOnly).toEqual({
+      effectiveMode: 'shot_clips',
+      includeRenderedMp4: false,
+      includeShotClips: true,
+      includeKeyframes: false,
+    })
+
+    const sceneOnly = resolveMediaInclusionForSourceMode({
+      sourceMode: 'rendered_mp4',
+      hasRenderedStream: true,
+      hasShotClips: true,
+      hasKeyframes: true,
+    })
+    expect(sceneOnly).toEqual({
+      effectiveMode: 'rendered_mp4',
+      includeRenderedMp4: true,
+      includeShotClips: false,
+      includeKeyframes: false,
+    })
   })
 })
 
@@ -248,6 +291,134 @@ describe('Multimodal Scene Video Reviewer — Shot Ledger & Result Normalization
     expect(result.recommendations[0].segmentId).toBe('seg-2')
     expect(result.recommendations[1].target).toBe('scene_director')
   })
+
+  it('prevents a single minor anomaly on 1 of 4 shots from causing a 22-point cliff drop (88 -> 66)', () => {
+    const fourShotScene = {
+      id: 'scene-4shots',
+      sceneNumber: 2,
+      heading: 'INT. LAB - NIGHT',
+      beats: [
+        { beatId: 'b-1', sequenceIndex: 0, kind: 'action' as const, text: 'Shot 1' },
+        { beatId: 'b-2', sequenceIndex: 1, kind: 'action' as const, text: 'Shot 2' },
+        { beatId: 'b-3', sequenceIndex: 2, kind: 'action' as const, text: 'Shot 3' },
+        { beatId: 'b-4', sequenceIndex: 3, kind: 'action' as const, text: 'Shot 4' },
+      ],
+    }
+    const shots = buildShotContextLedger(fourShotScene)
+    expect(shots).toHaveLength(4)
+
+    // Simulate LLM over-penalizing the scene from 88 down to 66 for 1 minor anomaly on Shot 1 of 4
+    const rawOverPenalized = {
+      arScore: 66,
+      directorScore: 62,
+      overallScore: 64,
+      anomalies: [
+        {
+          id: 'anom-shot-1',
+          shotNumber: 1,
+          beatId: 'b-1',
+          category: 'prop_inconsistency',
+          severity: 'minor',
+          origin: 'frame',
+          title: 'Slight clipboard angle shift in Shot 1',
+          description: 'Clipboard is held slightly lower than reference.',
+          evidence: 'Shot 1 start frame',
+        },
+      ],
+      recommendations: [
+        {
+          id: 'rec-1',
+          title: 'Adjust clipboard height in Shot 1',
+          target: 'shot_director',
+          category: 'continuity_fix',
+          shotNumber: 1,
+          beatId: 'b-1',
+          directorInstruction: 'Raise clipboard to chest level in Shot 1.',
+        },
+      ],
+    }
+
+    const result = normalizeReviewResult(rawOverPenalized, {
+      sceneId: 'scene-4shots',
+      sceneNumber: 2,
+      sceneHeading: 'INT. LAB - NIGHT',
+      reviewedSource: 'shot_clips',
+      reviewedClipCount: 4,
+      reviewedKeyframeCount: 4,
+      referencePlateCount: 2,
+      shots,
+      modelId: 'gemini-3.8-flash',
+      previousArScore: 88,
+    })
+
+    // 1 minor anomaly on 1 of 4 shots should only dip AR score by ~3 points (88 -> 85), never 66!
+    expect(result.arScore).toBeGreaterThanOrEqual(84)
+    expect(result.arScore).toBeLessThanOrEqual(87)
+    // Director score must be more critical than Audience score, but also proportional
+    expect(result.directorScore).toBeLessThan(result.arScore)
+    expect(result.directorScore).toBeGreaterThanOrEqual(78)
+  })
+
+  it('calibrates Director Score to always be more critical than Audience Score (never 91 Director vs 88 Audience)', () => {
+    const fourShotScene = {
+      id: 'scene-4shots',
+      sceneNumber: 2,
+      heading: 'INT. LAB - NIGHT',
+      beats: [
+        { beatId: 'b-1', sequenceIndex: 0, kind: 'action' as const, text: 'Shot 1' },
+        { beatId: 'b-2', sequenceIndex: 1, kind: 'action' as const, text: 'Shot 2' },
+        { beatId: 'b-3', sequenceIndex: 2, kind: 'action' as const, text: 'Shot 3' },
+        { beatId: 'b-4', sequenceIndex: 3, kind: 'action' as const, text: 'Shot 4' },
+      ],
+    }
+    const shots = buildShotContextLedger(fourShotScene)
+
+    // Simulate LLM returning arScore: 88 and directorScore: 91 after applying the fix
+    const rawInverted = {
+      arScore: 88,
+      directorScore: 91,
+      overallScore: 90,
+      directorPerspective: {
+        directorScore: 91,
+        scriptComplianceScore: 92,
+        continuityScore: 91,
+        technicalExecutionScore: 90,
+      },
+      anomalies: [],
+      recommendations: [],
+    }
+
+    const result = normalizeReviewResult(rawInverted, {
+      sceneId: 'scene-4shots',
+      sceneNumber: 2,
+      sceneHeading: 'INT. LAB - NIGHT',
+      reviewedSource: 'shot_clips',
+      reviewedClipCount: 4,
+      reviewedKeyframeCount: 4,
+      referencePlateCount: 2,
+      shots,
+      modelId: 'gemini-3.8-flash',
+      previousArScore: 85,
+    })
+
+    expect(result.arScore).toBe(88)
+    expect(result.directorScore).toBeLessThan(result.arScore)
+    expect(result.directorScore).toBe(86)
+    expect(result.directorPerspective.directorScore).toBe(result.directorScore)
+    expect(result.directorPerspective.scriptComplianceScore).toBeLessThanOrEqual(result.arScore)
+
+    // Also verify direct calibrateSceneReviewScores helper
+    const directCalibrated = calibrateSceneReviewScores({
+      rawArScore: 88,
+      rawDirectorScore: 91,
+      totalShots: 4,
+      shotBreakdown: result.shotBreakdown,
+      anomalies: [],
+      recommendationsCount: 1,
+    })
+    expect(directCalibrated.arScore).toBe(88)
+    expect(directCalibrated.directorScore).toBe(85)
+  })
 })
 
 describe('Multimodal Scene Video Reviewer — Applying Shot Director Recommendations Updates Prompts', () => {
@@ -418,6 +589,15 @@ describe('Multimodal Scene Video Reviewer — Source & UI Wiring', () => {
     expect(reviewerPanel).toContain('toast.loading(')
     expect(reviewerPanel).toContain('Applying Shot Director fix')
     expect(reviewerPanel).toContain('Updating Shot Direction &amp; Prompts...')
+    expect(reviewerPanel).toContain("from '@/components/ui/tooltip'")
+    expect(reviewerPanel).toContain('<TooltipProvider delayDuration={200}>')
+    expect(reviewerPanel).toContain('title={shot.scriptComplianceNote}')
+    expect(reviewerPanel).toContain("handleSelectSourceMode('stills')")
+    expect(reviewerPanel).toContain("handleSelectSourceMode('shot_clips')")
+    expect(reviewerPanel).toContain("handleSelectSourceMode('rendered_mp4')")
+    expect(reviewerPanel).toContain("setMonitorMode('stills')")
+    expect(reviewerPanel).toContain("setMonitorMode('clips')")
+    expect(reviewerPanel).toContain("setMonitorMode('scene')")
 
     const reviewerLib = readSource('src/lib/intelligence/scene-video-reviewer.ts')
     expect(reviewerLib).toContain("from '@/lib/safeJson'")

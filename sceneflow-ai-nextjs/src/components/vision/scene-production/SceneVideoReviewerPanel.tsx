@@ -34,6 +34,12 @@ import {
   DialogDescription,
   DialogTitle,
 } from '@/components/ui/dialog'
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip'
 import type { StillDirectorPatch } from '@/lib/intelligence/beat-still-director-fallback'
 import type { ProjectLookbook } from '@/lib/intelligence/project-lookbook-fallback'
 import {
@@ -277,7 +283,13 @@ export function SceneVideoReviewerPanel({
   const persistedReview = (scene?.videoReview ?? null) as SceneVideoReviewResult | null
   const [review, setReview] = useState<SceneVideoReviewResult | null>(persistedReview)
   const [isReviewing, setIsReviewing] = useState(false)
-  const [sourceMode, setSourceMode] = useState<SceneVideoReviewSourceMode>('auto')
+  const [sourceMode, setSourceMode] = useState<SceneVideoReviewSourceMode>(() => {
+    if (persistedReview?.reviewedSource === 'rendered_mp4') return 'rendered_mp4'
+    if (persistedReview?.reviewedSource === 'shot_clips') return 'shot_clips'
+    if (persistedReview?.reviewedSource === 'keyframes_only') return 'stills'
+    return 'stills'
+  })
+  const [hasUserChosenSourceMode, setHasUserChosenSourceMode] = useState(false)
   const [selectedStreamId, setSelectedStreamId] = useState<string>('')
   const [activePerspectiveTab, setActivePerspectiveTab] = useState<'both' | 'audience' | 'director'>('both')
   const [recFilter, setRecFilter] = useState<RecommendationFilter>('all')
@@ -291,7 +303,7 @@ export function SceneVideoReviewerPanel({
     title?: string
   } | null>(null)
   const [selectedShotNumber, setSelectedShotNumber] = useState<number>(1)
-  const [monitorMode, setMonitorMode] = useState<'stream' | 'shot'>('shot')
+  const [monitorMode, setMonitorMode] = useState<'stills' | 'clips' | 'scene'>('stills')
   const [expandedRecIds, setExpandedRecIds] = useState<Set<string>>(new Set())
   const videoRef = useRef<HTMLVideoElement | null>(null)
 
@@ -415,12 +427,28 @@ export function SceneVideoReviewerPanel({
     )
   }, [completedStreams, selectedStreamId, renderedSceneUrl, review?.reviewedVideoUrl])
 
-  // Switch monitor to stream if rendered_mp4 was reviewed and no shot clip exists
+  // Auto-select the highest ready production stage (Scene -> Clips -> Stills) until user explicitly picks one
   useEffect(() => {
-    if (activeStreamUrl && readyClipCount === 0) {
-      setMonitorMode('stream')
+    if (hasUserChosenSourceMode) return
+    if (hasRenderedStream) {
+      setSourceMode('rendered_mp4')
+      setMonitorMode('scene')
+    } else if (readyClipCount > 0) {
+      setSourceMode('shot_clips')
+      setMonitorMode('clips')
+    } else {
+      setSourceMode('stills')
+      setMonitorMode('stills')
     }
-  }, [activeStreamUrl, readyClipCount])
+  }, [hasUserChosenSourceMode, hasRenderedStream, readyClipCount])
+
+  const handleSelectSourceMode = (mode: 'stills' | 'shot_clips' | 'rendered_mp4') => {
+    setHasUserChosenSourceMode(true)
+    setSourceMode(mode)
+    if (mode === 'stills') setMonitorMode('stills')
+    else if (mode === 'shot_clips') setMonitorMode('clips')
+    else if (mode === 'rendered_mp4') setMonitorMode('scene')
+  }
 
   const seekOrFocusShot = useCallback(
     (shotNumber?: number, timecode?: string) => {
@@ -428,7 +456,7 @@ export function SceneVideoReviewerPanel({
         setSelectedShotNumber(shotNumber)
       }
       const sec = parseStartSecFromTimecode(timecode)
-      if (monitorMode === 'stream' && videoRef.current && sec !== null) {
+      if (monitorMode === 'scene' && videoRef.current && sec !== null) {
         try {
           videoRef.current.currentTime = sec
           void videoRef.current.play().catch(() => {})
@@ -936,38 +964,83 @@ export function SceneVideoReviewerPanel({
           </div>
         </div>
 
-        {/* Source Selector + Run Review CTA */}
+        {/* 3-Option Analysis Mode Selector (Stills | Clips | Scene) + Run Review CTA */}
         <div className="flex flex-wrap items-center gap-2">
-          <select
+          <div
+            role="group"
             aria-label="Review media source"
-            value={sourceMode}
-            onChange={(e) => setSourceMode(e.target.value as SceneVideoReviewSourceMode)}
-            disabled={isReviewing}
-            className="h-8 rounded-md border border-slate-700 bg-slate-900 px-2.5 text-xs text-slate-200 focus:border-indigo-500 focus:outline-none"
+            className="inline-flex h-8 items-center rounded-lg border border-slate-700 bg-slate-950 p-0.5 text-xs"
           >
-            <option value="auto">Source: Auto (MP4 + Shot Clips)</option>
-            <option value="rendered_mp4">Source: Rendered MP4 Stream</option>
-            <option value="shot_clips">Source: Shot Clips &amp; Keyframes</option>
-          </select>
+            <button
+              type="button"
+              onClick={() => handleSelectSourceMode('stills')}
+              disabled={isReviewing}
+              title="Analyze Shot Keyframe Stills (identity, wardrobe, props, framing & script compliance)"
+              className={`inline-flex h-7 items-center gap-1.5 rounded-md px-2.5 font-medium transition-colors ${
+                sourceMode === 'stills'
+                  ? 'bg-cyan-600 text-white shadow-sm'
+                  : 'text-slate-400 hover:text-slate-200'
+              }`}
+            >
+              <Layers className="h-3.5 w-3.5" />
+              <span>Stills</span>
+              <span className="text-[10px] opacity-80">
+                ({readyKeyframeCount}/{shotMediaItems.length})
+              </span>
+            </button>
+            <button
+              type="button"
+              onClick={() => handleSelectSourceMode('shot_clips')}
+              disabled={isReviewing}
+              title="Analyze Shot Video Clips (motion stability, camera movement & shot continuity)"
+              className={`inline-flex h-7 items-center gap-1.5 rounded-md px-2.5 font-medium transition-colors ${
+                sourceMode === 'shot_clips'
+                  ? 'bg-teal-600 text-white shadow-sm'
+                  : 'text-slate-400 hover:text-slate-200'
+              }`}
+            >
+              <Video className="h-3.5 w-3.5" />
+              <span>Clips</span>
+              <span className="text-[10px] opacity-80">
+                ({readyClipCount}/{shotMediaItems.length})
+              </span>
+            </button>
+            <button
+              type="button"
+              onClick={() => handleSelectSourceMode('rendered_mp4')}
+              disabled={isReviewing}
+              title="Analyze Full Rendered Scene MP4 (pacing, cuts, audio-visual sync & audience resonance)"
+              className={`inline-flex h-7 items-center gap-1.5 rounded-md px-2.5 font-medium transition-colors ${
+                sourceMode === 'rendered_mp4'
+                  ? 'bg-indigo-600 text-white shadow-sm'
+                  : 'text-slate-400 hover:text-slate-200'
+              }`}
+            >
+              <Film className="h-3.5 w-3.5" />
+              <span>Scene</span>
+              <span className="text-[10px] opacity-80">
+                ({completedStreams.length || (renderedSceneUrl ? 1 : 0)})
+              </span>
+            </button>
+          </div>
 
-          {(sourceMode === 'rendered_mp4' || sourceMode === 'auto') &&
-            completedStreams.length > 1 && (
-              <select
-                aria-label="Select rendered stream"
-                value={selectedStreamId}
-                onChange={(e) => setSelectedStreamId(e.target.value)}
-                disabled={isReviewing}
-                className="h-8 rounded-md border border-slate-700 bg-slate-900 px-2 text-xs text-slate-200 focus:border-indigo-500 focus:outline-none"
-              >
-                <option value="">Latest Video Stream</option>
-                {completedStreams.map((s: any) => (
-                  <option key={s.id} value={s.id}>
-                    {s.streamType === 'animatic' ? 'Animatic' : 'Video'} ·{' '}
-                    {(s.language || 'en').toUpperCase()}
-                  </option>
-                ))}
-              </select>
-            )}
+          {sourceMode === 'rendered_mp4' && completedStreams.length > 1 && (
+            <select
+              aria-label="Select rendered stream"
+              value={selectedStreamId}
+              onChange={(e) => setSelectedStreamId(e.target.value)}
+              disabled={isReviewing}
+              className="h-8 rounded-md border border-slate-700 bg-slate-900 px-2 text-xs text-slate-200 focus:border-indigo-500 focus:outline-none"
+            >
+              <option value="">Latest Video Stream</option>
+              {completedStreams.map((s: any) => (
+                <option key={s.id} value={s.id}>
+                  {s.streamType === 'animatic' ? 'Animatic' : 'Video'} ·{' '}
+                  {(s.language || 'en').toUpperCase()}
+                </option>
+              ))}
+            </select>
+          )}
 
           <Button
             type="button"
@@ -979,17 +1052,35 @@ export function SceneVideoReviewerPanel({
             {isReviewing ? (
               <>
                 <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                Inspecting Video &amp; Shots...
+                Inspecting{' '}
+                {sourceMode === 'stills'
+                  ? 'Stills'
+                  : sourceMode === 'shot_clips'
+                    ? 'Clips'
+                    : 'Scene'}
+                ...
               </>
             ) : review ? (
               <>
                 <RefreshCw className="h-3.5 w-3.5" />
-                Re-Run FlowDirector
+                Re-Run FlowDirector (
+                {sourceMode === 'stills'
+                  ? 'Stills'
+                  : sourceMode === 'shot_clips'
+                    ? 'Clips'
+                    : 'Scene'}
+                )
               </>
             ) : (
               <>
                 <Sparkles className="h-3.5 w-3.5" />
-                Run FlowDirector
+                Run FlowDirector (
+                {sourceMode === 'stills'
+                  ? 'Stills'
+                  : sourceMode === 'shot_clips'
+                    ? 'Clips'
+                    : 'Scene'}
+                )
               </>
             )}
           </Button>
@@ -1095,11 +1186,18 @@ export function SceneVideoReviewerPanel({
               </p>
 
               <div className="mt-3 flex flex-wrap items-center gap-1.5 pt-2 border-t border-slate-800/80 text-[11px] text-slate-400">
-                <span>Source: {review.reviewedSource.replace('_', ' ')}</span>
+                <span>
+                  Mode:{' '}
+                  {review.reviewedSource === 'keyframes_only'
+                    ? 'Stills'
+                    : review.reviewedSource === 'shot_clips'
+                      ? 'Clips'
+                      : 'Scene'}
+                </span>
                 <span>•</span>
                 <span>{review.reviewedClipCount} clips</span>
                 <span>•</span>
-                <span>{review.reviewedKeyframeCount} keyframes</span>
+                <span>{review.reviewedKeyframeCount} stills</span>
               </div>
             </div>
 
@@ -1219,40 +1317,53 @@ export function SceneVideoReviewerPanel({
                 <div className="flex items-center gap-1.5 text-xs font-medium text-slate-200">
                   <Play className="h-3.5 w-3.5 text-indigo-400" />
                   <span>
-                    {monitorMode === 'stream'
+                    {monitorMode === 'scene'
                       ? 'Rendered Scene Stream'
-                      : `Shot #${selectedShotNumber} Monitor`}
+                      : monitorMode === 'clips'
+                        ? `Shot #${selectedShotNumber} Clip`
+                        : `Shot #${selectedShotNumber} Still`}
                   </span>
                 </div>
                 <div className="inline-flex rounded-md border border-slate-700 bg-slate-950 p-0.5 text-[10px]">
                   <button
                     type="button"
-                    onClick={() => setMonitorMode('shot')}
-                    className={`rounded px-2 py-0.5 ${
-                      monitorMode === 'shot'
+                    onClick={() => setMonitorMode('stills')}
+                    className={`rounded px-2 py-0.5 transition-colors ${
+                      monitorMode === 'stills'
+                        ? 'bg-cyan-600 text-white font-semibold'
+                        : 'text-slate-400 hover:text-slate-200'
+                    }`}
+                  >
+                    Stills
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setMonitorMode('clips')}
+                    className={`rounded px-2 py-0.5 transition-colors ${
+                      monitorMode === 'clips'
                         ? 'bg-teal-600 text-white font-semibold'
                         : 'text-slate-400 hover:text-slate-200'
                     }`}
                   >
-                    Shot Clip / Still
+                    Clips
                   </button>
                   <button
                     type="button"
-                    onClick={() => setMonitorMode('stream')}
+                    onClick={() => setMonitorMode('scene')}
                     disabled={!activeStreamUrl}
-                    className={`rounded px-2 py-0.5 disabled:opacity-40 ${
-                      monitorMode === 'stream'
+                    className={`rounded px-2 py-0.5 transition-colors disabled:opacity-40 ${
+                      monitorMode === 'scene'
                         ? 'bg-indigo-600 text-white font-semibold'
                         : 'text-slate-400 hover:text-slate-200'
                     }`}
                   >
-                    Full Scene MP4
+                    Scene
                   </button>
                 </div>
               </div>
 
               <div className="relative aspect-video w-full overflow-hidden rounded-lg border border-slate-800 bg-black flex items-center justify-center">
-                {monitorMode === 'stream' && activeStreamUrl ? (
+                {monitorMode === 'scene' && activeStreamUrl ? (
                   <video
                     ref={videoRef}
                     key={activeStreamUrl}
@@ -1261,7 +1372,7 @@ export function SceneVideoReviewerPanel({
                     playsInline
                     className="h-full w-full object-contain"
                   />
-                ) : selectedShotMedia?.videoUrl ? (
+                ) : monitorMode === 'clips' && selectedShotMedia?.videoUrl ? (
                   <video
                     key={selectedShotMedia.videoUrl}
                     src={selectedShotMedia.videoUrl}
@@ -1269,7 +1380,7 @@ export function SceneVideoReviewerPanel({
                     playsInline
                     className="h-full w-full object-contain"
                   />
-                ) : selectedShotMedia?.frameUrl ? (
+                ) : monitorMode === 'stills' && selectedShotMedia?.frameUrl ? (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img
                     src={selectedShotMedia.frameUrl}
@@ -1279,7 +1390,13 @@ export function SceneVideoReviewerPanel({
                 ) : (
                   <div className="flex flex-col items-center gap-1.5 text-xs text-slate-500 p-4 text-center">
                     <Film className="h-6 w-6 text-slate-600" />
-                    <span>No rendered clip or keyframe for Shot #{selectedShotNumber} yet</span>
+                    <span>
+                      {monitorMode === 'scene'
+                        ? 'No rendered Scene MP4 stream available yet'
+                        : monitorMode === 'clips'
+                          ? `No rendered video clip for Shot #${selectedShotNumber} yet`
+                          : `No keyframe still for Shot #${selectedShotNumber} yet`}
+                    </span>
                   </div>
                 )}
               </div>
@@ -1355,49 +1472,92 @@ export function SceneVideoReviewerPanel({
                     Click a shot to inspect clip &amp; compliance notes
                   </span>
                 </div>
-                <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-4">
-                  {review.shotBreakdown.map((shot) => {
-                    const isSelected = shot.shotNumber === selectedShotNumber
-                    const statusIcon =
-                      shot.status === 'pass' ? (
-                        <CheckCircle2 className="h-3.5 w-3.5 text-emerald-400 shrink-0" />
-                      ) : shot.status === 'warning' ? (
-                        <AlertTriangle className="h-3.5 w-3.5 text-amber-400 shrink-0" />
-                      ) : (
-                        <XCircle className="h-3.5 w-3.5 text-rose-400 shrink-0" />
+                <TooltipProvider delayDuration={200}>
+                  <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-4">
+                    {review.shotBreakdown.map((shot) => {
+                      const isSelected = shot.shotNumber === selectedShotNumber
+                      const statusIcon =
+                        shot.status === 'pass' ? (
+                          <CheckCircle2 className="h-3.5 w-3.5 text-emerald-400 shrink-0" />
+                        ) : shot.status === 'warning' ? (
+                          <AlertTriangle className="h-3.5 w-3.5 text-amber-400 shrink-0" />
+                        ) : (
+                          <XCircle className="h-3.5 w-3.5 text-rose-400 shrink-0" />
+                        )
+                      return (
+                        <Tooltip key={shot.beatId || shot.shotNumber}>
+                          <TooltipTrigger asChild>
+                            <button
+                              type="button"
+                              onClick={() => seekOrFocusShot(shot.shotNumber, shot.timecodeRange)}
+                              className={`flex flex-col gap-1 rounded-lg border p-2 text-left transition-colors ${
+                                isSelected
+                                  ? 'border-indigo-500 bg-indigo-950/40 ring-1 ring-indigo-500/40'
+                                  : 'border-slate-800 bg-slate-950/60 hover:border-slate-700'
+                              }`}
+                            >
+                              <div className="flex items-center justify-between gap-1">
+                                <span className="text-xs font-semibold text-white">
+                                  Shot #{shot.shotNumber}
+                                </span>
+                                {statusIcon}
+                              </div>
+                              <div className="flex items-center justify-between text-[10px] text-slate-400">
+                                <span>Score: {shot.score}</span>
+                                {shot.anomalyIds.length > 0 && (
+                                  <span className="text-amber-300 font-medium">
+                                    {shot.anomalyIds.length} issue{shot.anomalyIds.length > 1 ? 's' : ''}
+                                  </span>
+                                )}
+                              </div>
+                              <p
+                                className="text-[10px] text-slate-400 truncate"
+                                title={shot.scriptComplianceNote}
+                              >
+                                {shot.scriptComplianceNote}
+                              </p>
+                            </button>
+                          </TooltipTrigger>
+                          <TooltipContent
+                            side="top"
+                            align="start"
+                            className="max-w-xs space-y-1.5 border border-slate-700 bg-slate-900 p-2.5 text-slate-100 shadow-xl"
+                          >
+                            <div className="flex items-center justify-between gap-2 border-b border-slate-800 pb-1">
+                              <span className="text-xs font-semibold text-white">
+                                Shot #{shot.shotNumber}
+                                {shot.timecodeRange ? ` (${shot.timecodeRange})` : ''}
+                              </span>
+                              <span className="text-[10px] font-medium text-slate-300">
+                                Score: {shot.score}/100
+                              </span>
+                            </div>
+                            <p className="text-[11px] leading-relaxed text-slate-200">
+                              <span className="font-semibold text-indigo-300">
+                                Script Compliance:{' '}
+                              </span>
+                              {shot.scriptComplianceNote}
+                            </p>
+                            {shot.visualQualityNote && (
+                              <p className="text-[11px] leading-relaxed text-slate-300">
+                                <span className="font-semibold text-slate-400">
+                                  Visual &amp; Motion:{' '}
+                                </span>
+                                {shot.visualQualityNote}
+                              </p>
+                            )}
+                            {shot.continuityNote && (
+                              <p className="text-[11px] leading-relaxed text-slate-300">
+                                <span className="font-semibold text-slate-400">Continuity: </span>
+                                {shot.continuityNote}
+                              </p>
+                            )}
+                          </TooltipContent>
+                        </Tooltip>
                       )
-                    return (
-                      <button
-                        key={shot.beatId || shot.shotNumber}
-                        type="button"
-                        onClick={() => seekOrFocusShot(shot.shotNumber, shot.timecodeRange)}
-                        className={`flex flex-col gap-1 rounded-lg border p-2 text-left transition-colors ${
-                          isSelected
-                            ? 'border-indigo-500 bg-indigo-950/40 ring-1 ring-indigo-500/40'
-                            : 'border-slate-800 bg-slate-950/60 hover:border-slate-700'
-                        }`}
-                      >
-                        <div className="flex items-center justify-between gap-1">
-                          <span className="text-xs font-semibold text-white">
-                            Shot #{shot.shotNumber}
-                          </span>
-                          {statusIcon}
-                        </div>
-                        <div className="flex items-center justify-between text-[10px] text-slate-400">
-                          <span>Score: {shot.score}</span>
-                          {shot.anomalyIds.length > 0 && (
-                            <span className="text-amber-300 font-medium">
-                              {shot.anomalyIds.length} issue{shot.anomalyIds.length > 1 ? 's' : ''}
-                            </span>
-                          )}
-                        </div>
-                        <p className="text-[10px] text-slate-400 truncate">
-                          {shot.scriptComplianceNote}
-                        </p>
-                      </button>
-                    )
-                  })}
-                </div>
+                    })}
+                  </div>
+                </TooltipProvider>
               </div>
 
               {/* Anomalies & Inconsistencies Ledger */}

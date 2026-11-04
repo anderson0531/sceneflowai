@@ -22,7 +22,11 @@ import {
 // Core Review Enums & Types
 // ============================================================================
 
-export type SceneVideoReviewSourceMode = 'auto' | 'rendered_mp4' | 'shot_clips'
+export type SceneVideoReviewSourceMode =
+  | 'stills'
+  | 'shot_clips'
+  | 'rendered_mp4'
+  | 'auto'
 
 export type ResolvedReviewSource = 'rendered_mp4' | 'shot_clips' | 'hybrid' | 'keyframes_only'
 

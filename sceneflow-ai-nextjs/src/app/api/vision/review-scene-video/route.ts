@@ -20,11 +20,15 @@ export async function POST(req: NextRequest) {
     const body = (await req.json()) as Record<string, unknown>
     const projectId = typeof body.projectId === 'string' ? body.projectId.trim() : ''
     const sceneIndex = typeof body.sceneIndex === 'number' ? body.sceneIndex : -1
-    const sourceModeRaw = typeof body.sourceMode === 'string' ? body.sourceMode : 'auto'
+    const sourceModeRaw = typeof body.sourceMode === 'string' ? body.sourceMode.trim() : 'auto'
     const sourceMode: SceneVideoReviewSourceMode =
-      sourceModeRaw === 'rendered_mp4' || sourceModeRaw === 'shot_clips'
-        ? sourceModeRaw
-        : 'auto'
+      sourceModeRaw === 'stills' || sourceModeRaw === 'keyframes_only'
+        ? 'stills'
+        : sourceModeRaw === 'shot_clips' || sourceModeRaw === 'clips'
+          ? 'shot_clips'
+          : sourceModeRaw === 'rendered_mp4' || sourceModeRaw === 'scene'
+            ? 'rendered_mp4'
+            : 'auto'
     const streamId = typeof body.streamId === 'string' ? body.streamId.trim() : undefined
 
     if (sceneIndex < 0 && !body.sceneOverride) {
