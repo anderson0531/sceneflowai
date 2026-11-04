@@ -49,12 +49,12 @@ describe('getSceneExpressBeatConcurrency', () => {
     else process.env.SCENE_EXPRESS_BEAT_MAX_ATTEMPTS = prevAttempts
   })
 
-  it('defaults to 4 so Frame Agent can run four identity-ref frames', () => {
+  it('defaults to 2 so Frame Agent can run two identity-ref frames', () => {
     delete process.env.SCENE_EXPRESS_BEAT_CONCURRENCY
     delete process.env.VERTEX_GEMINI_FLASH_IMAGE_CONCURRENCY
     delete process.env.EXPRESS_IMAGE_CONCURRENCY
-    expect(FRAME_AGENT_STILL_CONCURRENCY).toBe(4)
-    expect(getSceneExpressBeatConcurrency()).toBe(4)
+    expect(FRAME_AGENT_STILL_CONCURRENCY).toBe(2)
+    expect(getSceneExpressBeatConcurrency()).toBe(2)
   })
 
   it('defaults maxAttempts to 1 so Express fail-fast stamps the frame and continues', () => {

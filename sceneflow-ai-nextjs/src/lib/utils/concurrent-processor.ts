@@ -169,14 +169,14 @@ export function delay(ms: number): Promise<void> {
 export const CONCURRENCY_DEFAULTS = {
   IMAGE_GENERATION: 4,
   AUDIO_GENERATION: 4,
-  VIDEO_GENERATION: 4,
+  VIDEO_GENERATION: 2,
   API_CALLS: 6
 } as const
 
 /** Vertex image quotas — override via env for staging/prod tuning. */
 export const VERTEX_IMAGE_CONCURRENCY = {
-  geminiFlashImage: Number(process.env.VERTEX_GEMINI_FLASH_IMAGE_CONCURRENCY ?? 4),
-  imagen: Number(process.env.VERTEX_IMAGEN_CONCURRENCY ?? 4),
+  geminiFlashImage: Number(process.env.VERTEX_GEMINI_FLASH_IMAGE_CONCURRENCY ?? 2),
+  imagen: Number(process.env.VERTEX_IMAGEN_CONCURRENCY ?? 2),
 } as const
 
 export const SCENE_EXPRESS_BEAT_CONCURRENCY = VERTEX_IMAGE_CONCURRENCY.geminiFlashImage

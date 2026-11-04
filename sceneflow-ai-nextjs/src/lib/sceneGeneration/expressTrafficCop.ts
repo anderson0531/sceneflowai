@@ -43,14 +43,14 @@ export interface ExpressTrafficCopOptions {
 
 const EXPRESS_LANES: ExpressLane[] = ['text', 'image', 'audio']
 
-/** Default image in-flight cap — four concurrent still jobs, fail-fast isolated. */
-export const DEFAULT_EXPRESS_IMAGE_CONCURRENCY = 4
+/** Default image in-flight cap — two concurrent still jobs, fail-fast isolated. */
+export const DEFAULT_EXPRESS_IMAGE_CONCURRENCY = 2
 
 /**
- * Draft beats share the same four-wide cap as pro identity-ref frames.
+ * Draft beats share the same two-wide cap as pro identity-ref frames.
  * Frame Agent pins the pool to this default.
  */
-export const DEFAULT_EXPRESS_FLASH_IMAGE_CONCURRENCY = 4
+export const DEFAULT_EXPRESS_FLASH_IMAGE_CONCURRENCY = 2
 
 /** Default TTS in-flight cap for Express Audio / Storyboard Express audio lane. */
 export const DEFAULT_EXPRESS_AUDIO_CONCURRENCY = 8
