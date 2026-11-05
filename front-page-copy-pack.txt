@@ -1,0 +1,199 @@
+HERO LANDING COPY (friction, control, cut)
+
+The friction we remove
+One pipeline. Not a stack of tools.
+Clip prompts, music, and narration used to live in separate tools. SceneFlow is one pipeline for the series or the 90-minute master, then a scene or a chapter when you are ready to earn.
+
+Video caption: Separate clip, music, and narration tools beside one SceneFlow pipeline.
+
+CTA: Launch Studio ($9)
+
+---
+
+The control you keep
+Direct the story. Let agents do the prompting.
+You direct the shot in plain language. Shot direction writes the still and the clip prompt. Music cues and narration sit on the beat. Watch the animatic, change a shot if it is wrong, and only then spend on motion.
+
+Video caption: A director note, a clip prompt, and music and narration on the same beat.
+
+CTA: Launch Studio ($9)
+
+---
+
+The cut you publish
+Export anywhere. Premiere on SceneFlow when you earn it.
+Download a master and ship it yourself, or publish finished scenes and chapters to YouTube and cut trailers for TikTok and Shorts — picture, music, and narration already in the cut. Before anything hits the public feed, run drafts or your final master through the Screening Room. Standout projects can apply for the invite-only SceneFlow Network; it is a curated accelerator, not an open storefront.
+
+Video caption: A finished scene or chapter, with music and narration, and the 90-minute master, from one studio.
+
+CTA: Launch Studio ($9)
+
+---
+
+PRODUCTION EXAMPLES (section + three cards)
+
+Production Examples
+See the Full Pipeline in Action
+Each example opens on a short trailer. The longform master — a complete production from Blueprint through Pre-Vis to the final cut — plays in the Screening Room.
+Long-form productions. Not clips.
+
+Review this production the way a reviewer would — one milestone at a time. Start with Series, then Blueprint, then the script in AR Analysis, and finish in Screening.
+
+---
+
+Multi-Style Full-Season Animated Series. One Consistent Art Style.
+Lock one flat-cel style, the Hart family, and the town of Millwick from the first episode to the last. Direct the joke beat by beat, then review the episode in the Screening Room.
+
+Long-Form Documentaries. The Rise of Intelligence.
+Follow the rise of AI and superintelligence across continents. Each chapter looks like its own year — no modern objects in an early lab, no 1950s sets in the present.
+
+Curriculum-Ready Multi-Module Training Series. One Locked Chef.
+One chef, one kitchen, five meals. The face, the coat, and the tiles stay locked from the broth to the last dessert.
+
+---
+
+SERIES INPUTS (Create Series paste pack)
+
+Hart House
+One locked flat-cel style for the whole season: bold ink outlines, warm suburban color, and the same character designs in every episode. The platform can hold many styles. This series does not switch.
+
+Create Series input
+Hart House is a weekly family comedy in the invented town of Millwick. Ruth Hart, a municipal clerk, and Ellis Hart, a night-shift bus mechanic, share a small house with their daughter June (16), their son Milo (9), and Ruth’s mother, Nana Inez, who has turned the side porch into her rooms. Each episode is one ordinary Millwick problem — a new town rule, a rained-out festival, a breakfast that is the only hour the family overlaps — told so the joke is also the point. Lock one flat-cel art style, these five faces, and this house from episode 1 to episode 5. Episode 5 turns: the family has to decide whether Nana Inez’s “temporary” porch is actually her home.
+
+Storyline
+In Millwick, the Harts turn a household argument into the week’s joke, and the joke into the reason they still live under one roof.
+
+Ruth keeps the calendar. Ellis fixes machines that almost work. June, sixteen, will debate the rule before she follows it. Milo, nine, collects facts nobody requested. Nana Inez remembers every slight the block ever offered and still sets an extra plate. The season is five weeks in one house. The art style never changes: the same ink line, the same warm palette, the same faces. What changes is how much of the house belongs to Nana Inez, and whether Millwick will treat a temporary arrangement as a real home.
+
+Episodes
+1. The Sorting Rule
+Millwick issues a new recycling order with twelve categories. Ellis builds a sorting machine in the garage. It works on bottles and then, disastrously, on the family’s unlabeled boxes. June wants to challenge the rule at the town meeting. Ruth wants the curb to look compliant by Thursday. The episode lands when Milo labels one box “Nana’s porch things” and nobody can agree what the label means.
+
+2. Parade Weather
+Rain is forecast for Millwick Day. June wants to cancel her debate-club banner. Milo wants to log the lightning. Nana Inez refuses to wave at a neighbor she has avoided since a fence dispute. Ruth still has to host the block under a tarp. The joke is the tarp. The point is who gets to decide that a celebration happened.
+
+3. Night Shift Breakfast
+Ellis gets home at dawn and cooks for people who are already leaving. June has a tournament. Milo has a field trip. Ruth has a counter shift. For one hour the kitchen is the whole family, and the eggs are the only conversation that fits. A burnt pancake becomes the running argument about whose morning the house is built around.
+
+4. The Spare Key
+Someone has been refilling the cat’s bowl on the mornings Ellis oversleeps. The Harts investigate and find the key they hid under a brick years ago. The neighbor they have been calling nosy has been covering the dawn gap. Nana Inez has to decide whether to take the key back or admit the block has been helping.
+
+5. The Porch Vote
+Nana Inez announces she is done with the “temporary” porch and will move to her sister’s town. The Harts call a household vote. Rebuilding the porch as her real rooms means Ellis’s garage project stops, June’s study corner moves, and Millwick has to permit a change it has been ignoring. The season turns here: the comedy is no longer about a messy week. It is about who gets to stay.
+
+---
+
+The Long Thought
+Period accuracy is the rule of the picture. A 1956 lab has period wardrobe, film grain, and the machines of that year — no flat screens, no phones. A present-day chapter looks like now. The same two witnesses, Dr. Amira Hassan and Kenji Sato, keep the same faces across every era they appear in.
+
+Create Series input
+The Long Thought is a five-episode documentary on the rise and trajectory of artificial intelligence and the question of superintelligence. It is global, not a single-country story: Manchester and Tokyo in the early labs, a Nairobi records room and a Seoul chip floor when machines became useful, a Lagos newsroom and a São Paulo classroom when the public arrived, then one present day in Manila, Accra, and Rotterdam, and a final chapter that refuses both utopia and doom. Lock the narrator and the two witnesses. Keep every chapter’s wardrobe, rooms, and cities accurate to that year.
+
+Storyline
+A five-part documentary follows intelligence — built, borrowed, and still unfinished — from the first useful machines to the question of a system smarter than its makers.
+
+Two witnesses carry the series. Dr. Amira Hassan starts in a Cairo lecture hall and later works between Cairo and London. Kenji Sato starts on an Osaka factory floor and later in a research lab. A calm narrator ties the chapters. The pictures never cheat the year. Early episodes cannot contain a smartphone. The present cannot be dressed as the 1950s. The last episode does not predict a winner. It asks what a system smarter than the people who built it would owe the people who never got a vote.
+
+Episodes
+1. The Room with the Switches
+Mid-century labs in Manchester, Princeton, and Tokyo. Researchers in period dress stand over machines that do one clever thing in a loud room. Amira’s teacher, on a later interview tape, describes the hope without using a single object from the future. Kenji’s uncle services a factory controller the size of a wardrobe. The chapter ends on a switch left in the on position overnight.
+
+2. The Useful Machine
+The 1980s and 1990s. An expert system in a Nairobi hospital records room, a chip floor in Seoul, a translation office in Paris. Beige terminals, CRT glow, clothing and cars of that decade. Amira, young, watches a program suggest a diagnosis a senior clinician rejects. Kenji sees a line stop because a sensor trusted itself. Useful, and already arguing with the people beside it.
+
+3. The Public Arrival
+The 2010s. A Lagos newsroom, a São Paulo classroom, a Berlin kitchen where a phone answers a question a child asked out loud. The model has left the lab. Amira is now the person reporters call. Kenji’s factory posts a notice that the night shift will “consult the system.” The chapter holds on faces reading a screen, not on the screen.
+
+4. The Acceleration
+One present day, three cities. A nurse in Manila, a composer in Accra, a dock planner in Rotterdam. Each uses a system that finishes a sentence they started. The narrator counts what sped up and who was not in the room when the terms were set. Amira and Kenji, older, compare the notices on their doors. The pictures are contemporary: current dress, current streets, current light.
+
+5. The Question Ahead
+The superintelligence horizon, told as a question rather than a prophecy. Amira and Kenji sit in a quiet archive — papers, photographs, and a machine that is not pretending to be a person. They ask what a system smarter than its makers would owe the nurse, the composer, the dock planner, and the people who never touched the switch. The series does not answer. It leaves the obligation in the room.
+
+---
+
+Five Plates
+One locked chef. Chef Lila Mensah, the same face, the same white coat, the same close-cropped hair, in the same Harbor Street teaching kitchen — same tiles, same pots, same window — from the broth to the dessert.
+
+Create Series input
+Five Plates is a five-module culinary course taught by one chef in one kitchen. Chef Lila Mensah teaches five meals that build on each other: a clear broth, a bread, a vegetable main that can feed a class, a celebration roast, and a dessert that uses the skills of the first four. Learners see the same instructor, the same coat, and the same Harbor Street kitchen in every module. Each module is setup, demonstration, and a check before the next plate.
+
+Storyline
+One chef, one kitchen, five meals — each plate teaching the hands what the next plate will need.
+
+Chef Lila Mensah does not change wigs, kitchens, or personalities between modules. The course is a sequence, not a pile of clips. Students learn heat and salt in the broth, time and touch in the bread, feeding a group with the vegetable main, holding a celebration plate, and finishing with a dessert that depends on everything before it. The last module is the check: the class cooks the five plates as one meal, and Lila is still the person who started the broth.
+
+Episodes
+1. The Broth
+Lila starts with a clear broth: knife, bones or vegetables, heat, and patience. She shows the simmer, the skim, and the moment salt goes in. The kitchen, the coat, and her face are established as the locked set. The check is a spoonful that tastes finished, not cloudy.
+
+2. The Bread
+Same bench, same chef. Dough, time, and the feel of a proved loaf. Lila ties the broth’s lesson about patience to the wait the dough requires. Students shape, score, and bake. The check is a crumb that is open, not gummy, and a note on what they would change next time.
+
+3. The Vegetable Main
+A pan of greens and grains that has to feed the whole class, not a camera. Lila shows a sauce built from the broth, seasoning for a group, and how to hold color in the vegetables. The check is a plate that is the same in the first bowl and the last.
+
+4. The Celebration Roast
+A center plate for a night that matters: roast, rest, and a side that uses yesterday’s bread. Lila keeps the same station and the same voice while the stakes of the plate go up. The check is carving for a table, not a single hero shot.
+
+5. The Last Sweet
+A dessert that needs the heat control of module 1, the timing of module 2, and the seasoning eye of module 3. Then the class sets all five plates as one meal. Lila walks the pass in the same coat, in the same kitchen. The course turns from lessons into a service.
+
+---
+
+HERO VIDEO SCRIPTS (narration / picture / settle)
+
+The friction we remove
+
+1. The stack
+Narration: Clip prompts in one tab. Music in another. Narration recorded somewhere else, then dragged back onto a timeline that does not know the scene.
+Picture: A dim desk with three glowing tools side by side: a prompt box, a music waveform, and a narration track, none of them sharing a frame.
+Settle on: The three windows stay open and disconnected. The chair is empty.
+
+2. The pipeline
+Narration: SceneFlow is one pipeline. The series, or the 90-minute master, is built in the same studio that writes the clip prompt, lays the music cue, and holds the narration on the beat.
+Picture: One dark studio path: blueprint pages, a reference portrait, a shot frame, a music cue bar, and a narration line, arranged as a single sequence.
+Settle on: The path ends on one playable scene, not three exports.
+
+3. The publish
+Narration: When a scene or a chapter is ready, you publish that cut. You do not rebuild the prompt, the score, and the voice from scratch.
+Picture: A finished frame with a thin music bar and a narration line already sitting under the picture.
+Settle on: The frame holds. The music bar and the narration line remain in place.
+
+---
+
+The control you keep
+
+1. The direction
+Narration: You direct the shot in plain language. Who is in the frame, where they stand, what the moment is.
+Picture: A director’s note beside a storyboard frame. The note is handwriting, not a wall of keywords.
+Settle on: The note and the frame agree: same people, same pose.
+
+2. The clip prompt
+Narration: Shot direction writes the still and the clip prompt. You do not retype the shot into a generator.
+Picture: The same frame splitting into a still prompt and a clip prompt, both naming the people and the settled pose.
+Settle on: Both prompts stay visible under the frame you approved.
+
+3. Music and narration
+Narration: Music cues and narration sit on the beat. You hear them in the animatic, change the shot if it is wrong, and only then spend on motion.
+Picture: An animatic timeline: picture, a music cue across the scene, and a narration line locked to the same beats.
+Settle on: The playhead rests before the motion render. The cue and the narration are already there.
+
+---
+
+The cut you publish
+
+1. The scene
+Narration: The scene you export already carries the picture, the music, and the narration. The clip prompt was written with the shot, not pasted in later.
+Picture: A screening-room frame. Under it, a music stem and a narration stem, both aligned to the picture.
+Settle on: The frame holds in a dark review room. The stems do not drift.
+
+2. The master
+Narration: Download the master and ship it yourself, or publish a finished scene or chapter while the long cut is still in progress.
+Picture: One master timeline beside a shorter chapter pulled from it, same faces, same score, same voice.
+Settle on: The chapter card and the master share one frame of the same scene.
+
+3. The room
+Narration: Before anything reaches a public feed, watch it in the Screening Room. The network, if you earn it, is an invitation — not an open shelf.
+Picture: A quiet screening room, one large picture, no storefront. A small premiere mark waits, unlit, at the side.
+Settle on: The picture is the only light. The premiere mark stays dark until it is earned.
