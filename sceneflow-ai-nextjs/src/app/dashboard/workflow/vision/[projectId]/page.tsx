@@ -14762,7 +14762,10 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           const updatedScenes = [...currentScript.script.scenes]
           updatedScenes[sceneIdx] = ensureSceneBeats({
             ...updatedScenes[sceneIdx],
-            sceneDirection: data.sceneDirection,
+            sceneDirection: {
+              ...data.sceneDirection,
+              basedOnContentHash: generateSceneContentHash(updatedScenes[sceneIdx]),
+            },
           } as Record<string, unknown>)
           const updatedScript = {
             ...currentScript,
@@ -14943,7 +14946,10 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
             const updatedScenes = [...currentScript.script.scenes]
             updatedScenes[idx] = ensureSceneBeats({
               ...updatedScenes[idx],
-              sceneDirection: data.sceneDirection,
+              sceneDirection: {
+                ...data.sceneDirection,
+                basedOnContentHash: generateSceneContentHash(updatedScenes[idx]),
+              },
             } as Record<string, unknown>)
             const updatedScript = {
               ...currentScript,
@@ -17124,7 +17130,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     async (options: ExpressConfirmOptions) => {
       if (!projectId || !script?.script?.scenes?.length) return
       if (expressRunningRef.current || isExpressRunning) return
-      if (blockedByMissingReferences()) return
+      if (!options.dialogueOnly && blockedByMissingReferences()) return
 
       expressRunningRef.current = true
       expressAbortRef.current?.abort()
@@ -17212,7 +17218,9 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       }
 
       try {
-        await syncVisionReferencesForExpress()
+        if (!options.dialogueOnly) {
+          await syncVisionReferencesForExpress()
+        }
         if (abortController.signal.aborted) {
           finishProjectRun({ cancelled: true })
           return
@@ -17434,7 +17442,9 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
               },
             },
           })
-          openScreeningRoomFromVisionUi()
+          if (!options.dialogueOnly) {
+            openScreeningRoomFromVisionUi()
+          }
         } else if (failedScenes > 0 && successScenes > 0) {
           toast.warning(
             `Run All Agents finished — ${successScenes} ok, ${failedScenes} with errors${
@@ -20472,6 +20482,49 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         onGenerateLocationVersion={handleGenerateLocationVersion}
         onUploadLocationVersionImage={handleUploadLocationVersionImage}
         generatingLocationId={generatingLocationId}
+        onGenerateSceneDirection={async (sceneIdx, generatedDirection) => {
+          if (generatedDirection) {
+            setScript((currentScript: any) => {
+              if (!currentScript?.script?.scenes) return currentScript
+              const updatedScenes = [...currentScript.script.scenes]
+              updatedScenes[sceneIdx] = ensureSceneBeats({
+                ...updatedScenes[sceneIdx],
+                sceneDirection: {
+                  ...generatedDirection,
+                  basedOnContentHash: generateSceneContentHash(updatedScenes[sceneIdx]),
+                },
+              } as Record<string, unknown>)
+              const updatedScript = {
+                ...currentScript,
+                script: { ...currentScript.script, scenes: updatedScenes },
+              }
+              scriptRef.current = updatedScript
+              setProject((p: any) => {
+                if (!p) return p
+                const updated = {
+                  ...p,
+                  metadata: {
+                    ...p.metadata,
+                    visionPhase: {
+                      ...p.metadata?.visionPhase,
+                      script: updatedScript,
+                      scenes: updatedScenes,
+                    },
+                  },
+                }
+                projectRef.current = updated
+                return updated
+              })
+              return updatedScript
+            })
+            await handleBackgroundDirectionGeneration(sceneIdx, undefined, {
+              skipSceneDirection: true,
+              forceShotOptimization: true,
+            })
+          } else {
+            await handleBackgroundDirectionGeneration(sceneIdx)
+          }
+        }}
         onExpressGenerateReferences={handleExpressGenerateReferences}
         isExpressGeneratingReferences={isExpressGeneratingReferences}
         getLatestCharacters={() => charactersRef.current}

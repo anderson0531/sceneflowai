@@ -179,6 +179,7 @@ export async function POST(req: NextRequest) {
         force,
       })
 
+      let hashRepaired = false
       if (applied.scenes[sceneIndex] && typeof applied.scenes[sceneIndex] === 'object') {
         const targetScene = mergeScenePreservingMedia(
           freshScenes[sceneIndex] as Record<string, unknown>,
@@ -186,15 +187,22 @@ export async function POST(req: NextRequest) {
         ) as Record<string, unknown>
         targetScene.shotDirectionNeedsRefresh = false
         if (targetScene.sceneDirection && typeof targetScene.sceneDirection === 'object') {
-          ;(targetScene.sceneDirection as Record<string, unknown>).basedOnContentHash =
-            generateSceneContentHash(targetScene)
+          const nextHash = generateSceneContentHash(targetScene)
+          const priorHash = (targetScene.sceneDirection as Record<string, unknown>).basedOnContentHash
+          if (priorHash !== nextHash) {
+            hashRepaired = true
+            ;(targetScene.sceneDirection as Record<string, unknown>).basedOnContentHash = nextHash
+          }
         }
         applied.scenes[sceneIndex] = targetScene
       }
 
       const shouldPersist =
         !demoMode &&
-        (applied.optimized > 0 || syncedCatalog.locationsChanged || syncedCatalog.objectsChanged) &&
+        (applied.optimized > 0 ||
+          syncedCatalog.locationsChanged ||
+          syncedCatalog.objectsChanged ||
+          hashRepaired) &&
         typeof fresh.update === 'function'
       if (shouldPersist) {
         let nextMetadata = writeScenesIntoVisionMetadata(fresh.metadata, applied.scenes)

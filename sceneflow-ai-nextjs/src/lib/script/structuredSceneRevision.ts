@@ -25,6 +25,7 @@ import type { SceneBeat } from '@/lib/script/segmentTypes'
 import { clampSceneBeatTarget, SCENE_BEAT_TARGET_KEY } from '@/lib/script/sceneBeatTarget'
 import { restampPreVisHashIfScriptCurrent } from '@/lib/storyboard/preVisSync'
 import { syncBeatStillPromptToDirection } from '@/lib/storyboard/syncBeatStillPrompt'
+import { stampSceneDirectionContentHash } from '@/lib/utils/contentHash'
 
 export type RevisionDepth = 'light' | 'moderate' | 'deep'
 
@@ -457,6 +458,7 @@ export function finalizeStructuredRevisedScene(
 
   finalScene = relinkSceneCharacterIds(finalScene, context?.characters)
   finalScene = stampSceneBeatTarget(finalScene, options?.targetBeats)
+  finalScene = stampSceneDirectionContentHash(finalScene)
 
   return stampRevisionDepth(finalScene, revisionDepth)
 }
@@ -509,6 +511,7 @@ export function finalizeFlatRevisedScene(
 
   finalScene = relinkSceneCharacterIds(finalScene, context?.characters)
   finalScene = stampSceneBeatTarget(finalScene, options?.targetBeats)
+  finalScene = stampSceneDirectionContentHash(finalScene)
 
   return stampRevisionDepth(finalScene, revisionDepth)
 }

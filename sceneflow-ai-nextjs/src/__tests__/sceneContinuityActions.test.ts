@@ -1,13 +1,15 @@
 import { readFileSync } from 'fs'
 import path from 'path'
 import { describe, expect, it } from 'vitest'
-import { generateSceneContentHash } from '@/lib/utils/contentHash'
+import { generateSceneContentHash, isDirectionStale } from '@/lib/utils/contentHash'
 import { sceneContinuityActions } from '@/lib/vision/sceneScriptReadiness'
 import {
   freshBeatReferenceSelection,
   syncSceneReferenceSelections,
 } from '@/lib/vision/saveBeatDirection'
-import { getSceneBeats } from '@/lib/script/beatMigration'
+import { ensureSceneBeats, getSceneBeats } from '@/lib/script/beatMigration'
+import { finalizeStructuredRevisedScene } from '@/lib/script/structuredSceneRevision'
+import { getLocationMissingDirectionSceneNumbers } from '@/components/vision/LocationLibrary'
 
 function read(relative: string): string {
   return readFileSync(path.join(process.cwd(), relative), 'utf8')
@@ -170,5 +172,74 @@ describe('Continuity tab controls', () => {
     expect(page).toContain('refreshPromoSceneDirection(sceneIndex)')
     expect(page).toContain('syncSceneDirectionToContinuityCatalog')
     expect(page).not.toContain('if (scene && !isSceneScriptReadyForReferences(scene))')
+  })
+
+  it('keeps basedOnContentHash in sync across ensureSceneBeats and Scene Director revisions', () => {
+    const rawScene = {
+      heading: 'INT. ARCHIVE - NIGHT',
+      action: 'Gideon checks the current.',
+      narration: 'The loop never closes.',
+      dialogue: [{ character: 'GIDEON', line: 'Every time.' }],
+    }
+    const ensured = ensureSceneBeats({
+      ...rawScene,
+      sceneDirection: {
+        scene: { location: 'Archive' },
+        basedOnContentHash: generateSceneContentHash(rawScene),
+      },
+    })
+    expect(isDirectionStale(ensured)).toBe(false)
+
+    const revised = finalizeStructuredRevisedScene(
+      {
+        beats: [
+          {
+            kind: 'action',
+            actionDescription: 'Gideon slams the switch.',
+            beatDirection: { shotType: 'Close-Up', frozenMoment: 'Hand on switch.' },
+          },
+        ],
+      },
+      ensured,
+      ['sceneDirection'],
+      { characters: [{ id: 'c1', name: 'GIDEON' }] }
+    )
+    expect(isDirectionStale(revised)).toBe(false)
+  })
+
+  it('flags only missing scene directions in LocationLibrary and provides an actionable Direct control', () => {
+    const loc = {
+      id: 'loc-1',
+      location: 'ARCHIVE',
+      sceneNumbers: [1, 2],
+    } as any
+
+    const scenesWithDirection = [
+      {
+        heading: 'INT. ARCHIVE - NIGHT',
+        action: 'Gideon waits.',
+        sceneDirection: { scene: { location: 'Archive' }, basedOnContentHash: 'stale-hash' },
+      },
+      {
+        heading: 'INT. ARCHIVE - LATER',
+        action: 'Gideon leaves.',
+        sceneDirection: { scene: { location: 'Archive' } },
+      },
+    ]
+    expect(getLocationMissingDirectionSceneNumbers(loc, scenesWithDirection as any)).toEqual([])
+
+    const scenesMissingSecond = [
+      scenesWithDirection[0],
+      {
+        heading: 'INT. ARCHIVE - LATER',
+        action: 'Gideon leaves.',
+      },
+    ]
+    expect(getLocationMissingDirectionSceneNumbers(loc, scenesMissingSecond as any)).toEqual([2])
+
+    const locationLibrarySource = read('src/components/vision/LocationLibrary.tsx')
+    expect(locationLibrarySource).not.toContain('Scene direction missing or outdated for mapped scene(s)')
+    expect(locationLibrarySource).toContain('handleDirectLocationScenes')
+    expect(locationLibrarySource).toContain('Generate Scene Direction')
   })
 })

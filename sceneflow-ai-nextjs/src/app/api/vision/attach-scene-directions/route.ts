@@ -9,6 +9,7 @@ import {
 } from '@/lib/script/beatMigration'
 import { syncBeatStillPromptToDirection } from '@/lib/storyboard/syncBeatStillPrompt'
 import { refreshProductionSegmentVideoPrompts } from '@/lib/scene/syncBeatVideoPrompt'
+import { stampSceneDirectionContentHash } from '@/lib/utils/contentHash'
 import {
   attachSceneDirectionsToScript,
   mergeSceneDirectionsOntoFresh,
@@ -155,7 +156,7 @@ export async function POST(request: NextRequest) {
                 updatedScene = { ...updatedScene, segments: refreshedSegments }
               }
             }
-            return updatedScene
+            return stampSceneDirectionContentHash(updatedScene)
           })
           metadata = writeScenesIntoVisionMetadata(metadata, syncedScenes)
         } catch (syncErr) {

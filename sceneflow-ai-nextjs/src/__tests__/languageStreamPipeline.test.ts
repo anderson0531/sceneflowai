@@ -52,4 +52,12 @@ describe('Adding a language', () => {
     expect(mixer).toContain('placeholder="+ Add Language"')
     expect(mixer).not.toMatch(/language === 'en' \? 'es'/)
   })
+
+  it('does not block dialogue-only language stream generation on project-wide reference images', () => {
+    const start = visionPage.indexOf('const handleExpressGenerate = useCallback(')
+    const end = visionPage.indexOf('const handleGenerateLanguageStream = useCallback(')
+    const handler = visionPage.slice(start, end)
+    expect(handler).toContain('if (!options.dialogueOnly && blockedByMissingReferences()) return')
+    expect(handler).not.toMatch(/^\s*if\s*\(\s*blockedByMissingReferences\(\)\s*\)\s*return/m)
+  })
 })

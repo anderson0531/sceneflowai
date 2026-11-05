@@ -2498,7 +2498,7 @@ async function runScene(
     }
   }
 
-  if (sceneMode) {
+  if (sceneMode && !options.dialogueOnly) {
     const visionPhase = project?.metadata?.visionPhase || {}
     const preflight = runSceneExpressPreflight({
       scene: ctx.scene,

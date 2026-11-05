@@ -6,7 +6,7 @@ import { mergeSceneForDirection } from '@/lib/sceneGeneration/mergeSceneForDirec
 import { applyBeatsToScene, ensureSceneBeats, getSceneBeats } from '@/lib/script/beatMigration'
 import { syncBeatStillPromptToDirection } from '@/lib/storyboard/syncBeatStillPrompt'
 import { refreshProductionSegmentVideoPrompts } from '@/lib/scene/syncBeatVideoPrompt'
-import { generateSceneContentHash } from '@/lib/utils/contentHash'
+import { generateSceneContentHash, stampSceneDirectionContentHash } from '@/lib/utils/contentHash'
 import { mergeScenePreservingMedia } from '@/lib/storyboard/mergeSceneMedia'
 
 export const maxDuration = 300
@@ -97,6 +97,7 @@ export async function POST(req: NextRequest) {
         return { kind: 'invalid_index' as const }
       }
 
+      let persistedDirection = sceneDirection
       const updatedScenes = scriptScenes.map((s: any, idx: number) => {
         if (idx !== sceneIndex) return s
         const stampedDirection =
@@ -127,7 +128,13 @@ export async function POST(req: NextRequest) {
             nextScene = { ...nextScene, segments: refreshedSegments }
           }
         }
-        return mergeScenePreservingMedia(s, nextScene)
+        const merged = stampSceneDirectionContentHash(
+          mergeScenePreservingMedia(s, nextScene) as Record<string, any>
+        )
+        if (merged?.sceneDirection && typeof merged.sceneDirection === 'object') {
+          persistedDirection = merged.sceneDirection
+        }
+        return merged
       })
 
       const updatedScript = script.script
@@ -148,7 +155,7 @@ export async function POST(req: NextRequest) {
         transaction ? { transaction } : undefined
       )
 
-      return { kind: 'ok' as const }
+      return { kind: 'ok' as const, sceneDirection: persistedDirection }
     }
 
     const persistOutcome =
@@ -187,7 +194,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      sceneDirection,
+      sceneDirection: persistOutcome.sceneDirection ?? sceneDirection,
     })
   } catch (error: any) {
     console.error('[Scene Direction] Error:', error)

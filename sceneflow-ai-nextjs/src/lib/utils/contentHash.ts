@@ -88,6 +88,25 @@ export function generateImageSourceHash(scene: any, characterWardrobe?: Record<s
 }
 
 /**
+ * Stamp `sceneDirection.basedOnContentHash` with the current scene content hash
+ * when `sceneDirection` is present.
+ */
+export function stampSceneDirectionContentHash<T extends Record<string, any>>(scene: T): T {
+  if (!scene || typeof scene !== 'object') return scene
+  const direction = scene.sceneDirection
+  if (!direction || typeof direction !== 'object') return scene
+  const currentContentHash = generateSceneContentHash(scene)
+  if (direction.basedOnContentHash === currentContentHash) return scene
+  return {
+    ...scene,
+    sceneDirection: {
+      ...direction,
+      basedOnContentHash: currentContentHash,
+    },
+  }
+}
+
+/**
  * Check if a scene's direction is stale (needs regeneration)
  * 
  * @returns true if direction exists but was based on different content

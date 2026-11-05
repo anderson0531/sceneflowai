@@ -182,6 +182,8 @@ export interface VisionReferencesSidebarProps extends Omit<
   onUploadLocationVersionImage?: (locationId: string, versionId: string, file: File) => void
   /** ID of location currently generating an image */
   generatingLocationId?: string | null
+  /** Optional callback to generate scene direction + shot optimization for a 0-based scene index */
+  onGenerateSceneDirection?: (sceneIdx: number, generatedDirection?: any) => Promise<void> | void
   /**
    * Batch-generate missing reference images. Library Agent omits `kinds`;
    * Cast / Location / Object Agents pass a single kind. Kind agents can wait
@@ -1367,6 +1369,7 @@ export function VisionReferencesSidebar(props: VisionReferencesSidebarProps) {
     onGenerateLocationVersion,
     onUploadLocationVersionImage,
     generatingLocationId,
+    onGenerateSceneDirection,
     onExpressGenerateReferences,
     isExpressGeneratingReferences = false,
     getLatestCharacters,
@@ -2059,6 +2062,7 @@ export function VisionReferencesSidebar(props: VisionReferencesSidebarProps) {
               pendingKindAgentRun={pendingKindAgentRun}
               onPendingKindAgentRunConsumed={consumePendingKindAgentRun}
               catalogPropNames={objectReferences.map((o) => o.name).filter(Boolean)}
+              onGenerateSceneDirection={onGenerateSceneDirection}
               focusTarget={
                 deepLink?.tab === 'locations'
                   ? {

@@ -66,7 +66,7 @@ import {
 import { ReferenceSplitPane } from './ReferenceSplitPane'
 import { DictationTextarea } from '@/components/ui/DictationTextarea'
 import type { LocationSceneExcerpt } from '@/lib/vision/buildLocationDescriptionDirectorPrompt'
-import { isDirectionStale } from '@/lib/utils/contentHash'
+import { isSceneOutline, sceneHasScreenplayBody } from '@/lib/vision/sceneScriptReadiness'
 import {
   filterScenesForLocation,
   locationDescriptionWithMountedFixtures,
@@ -99,10 +99,15 @@ function buildScenesPayloadForLocationVersions(scenes: LocationLibraryProps['sce
   }))
 }
 
-function locationHasOutdatedDirection(
+/**
+ * Return 1-based scene numbers mapped to this location that are missing `sceneDirection`.
+ * Scenes that already have `sceneDirection` are not flagged as "outdated" because
+ * Scene Director updates scene and shot direction automatically when revising scenes.
+ */
+export function getLocationMissingDirectionSceneNumbers(
   loc: LocationReference,
   scenes: LocationLibraryProps['scenes']
-): boolean {
+): number[] {
   const sceneNumbers =
     loc.sceneNumbers && loc.sceneNumbers.length > 0
       ? loc.sceneNumbers
@@ -110,13 +115,17 @@ function locationHasOutdatedDirection(
         ? [loc.sourceSceneIndex + 1]
         : []
 
+  const missing: number[] = []
   for (const sceneNum of sceneNumbers) {
-    const scene = scenes[sceneNum - 1]
-    if (!scene?.sceneDirection || isDirectionStale(scene)) {
-      return true
+    const scene = scenes[sceneNum - 1] as Record<string, unknown> | undefined
+    if (!scene) continue
+    if (isSceneOutline(scene)) continue
+    if (!sceneHasScreenplayBody(scene) && getSceneBeats(scene).length === 0) continue
+    if (!scene.sceneDirection) {
+      missing.push(sceneNum)
     }
   }
-  return false
+  return missing
 }
 
 function locationVersionGeneratingId(locationId: string, versionId: string): string {
@@ -213,6 +222,8 @@ interface LocationLibraryProps {
   onPendingKindAgentRunConsumed?: () => void
   /** Object-library names used to strip beat props from version image prompts. */
   catalogPropNames?: string[]
+  /** Optional callback to generate scene direction + shot optimization for a 0-based scene index */
+  onGenerateSceneDirection?: (sceneIdx: number, generatedDirection?: any) => Promise<void> | void
   focusTarget?: {
     locationId?: string
     versionId?: string
@@ -411,6 +422,7 @@ export function LocationLibrary({
   pendingKindAgentRun = null,
   onPendingKindAgentRunConsumed,
   catalogPropNames: catalogPropNamesProp = [],
+  onGenerateSceneDirection,
   focusTarget = null,
 }: LocationLibraryProps) {
   const t = useTranslations('production.direction.locationLibrary')
@@ -424,6 +436,8 @@ export function LocationLibrary({
   const [promptBuilderOpenFor, setPromptBuilderOpenFor] = useState<PromptBuilderTarget | null>(null)
   const [directorTarget, setDirectorTarget] = useState<PromptBuilderTarget | null>(null)
   const [analyzingLocationId, setAnalyzingLocationId] = useState<string | null>(null)
+  const [directingLocationId, setDirectingLocationId] = useState<string | null>(null)
+  const [directedSceneOverrides, setDirectedSceneOverrides] = useState<Record<number, any>>({})
   const [isUpdatingLocations, setIsUpdatingLocations] = useState(false)
   const [expandedVersionTarget, setExpandedVersionTarget] = useState<{
     locationId: string
@@ -432,6 +446,16 @@ export function LocationLibrary({
   const [directedLocation, setDirectedLocation] = useState<LocationReference | null>(null)
   const [directedSubmitting, setDirectedSubmitting] = useState(false)
   const [locationAgentOpen, setLocationAgentOpen] = useState(false)
+
+  const effectiveScenes = useMemo(
+    () =>
+      scenes.map((scene, idx) =>
+        directedSceneOverrides[idx]
+          ? { ...scene, sceneDirection: directedSceneOverrides[idx] }
+          : scene
+      ),
+    [scenes, directedSceneOverrides]
+  )
 
   const openLocationAction = useCallback((locationId: string, item: ReferenceActionItem) => {
     setExpandedLocationId(locationId)
@@ -460,8 +484,8 @@ export function LocationLibrary({
   }, [focusTarget?.locationId, focusTarget?.versionId, focusTarget?.nonce])
 
   const extractedLocations = useMemo(
-    () => extractHeadingLocationsFromScenes(scenes),
-    [scenes]
+    () => extractHeadingLocationsFromScenes(effectiveScenes),
+    [effectiveScenes]
   )
 
   const extractMissingLocations = useCallback((): LocationReference[] => {
@@ -480,15 +504,51 @@ export function LocationLibrary({
     )
   }, [extractedLocations, locationReferences])
 
+  const generateDirectionForSceneIndex = useCallback(
+    async (sceneIdx: number): Promise<any | null> => {
+      const targetScene = effectiveScenes[sceneIdx]
+      if (!targetScene) return null
+      if (!projectId) {
+        if (onGenerateSceneDirection) {
+          await onGenerateSceneDirection(sceneIdx)
+        }
+        return null
+      }
+      const response = await fetch('/api/scene/generate-direction', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          projectId,
+          sceneIndex: sceneIdx,
+          scene: targetScene,
+        }),
+      })
+      const data = await response.json().catch(() => ({}))
+      if (!response.ok || !data?.success || !data?.sceneDirection) {
+        throw new Error(data?.error || `Failed to generate direction for Scene ${sceneIdx + 1}`)
+      }
+      setDirectedSceneOverrides((prev) => ({
+        ...prev,
+        [sceneIdx]: data.sceneDirection,
+      }))
+      if (onGenerateSceneDirection) {
+        await onGenerateSceneDirection(sceneIdx, data.sceneDirection)
+      }
+      return data.sceneDirection
+    },
+    [effectiveScenes, onGenerateSceneDirection, projectId]
+  )
+
   const syncLocationVersions = async (
-    location: LocationReference
+    location: LocationReference,
+    scenesSnapshot: LocationLibraryProps['scenes'] = effectiveScenes
   ): Promise<{
     location: LocationReference
     created: number
     updated: number
     stale: number
   } | null> => {
-    if (scenes.length === 0) return null
+    if (scenesSnapshot.length === 0) return null
     const response = await fetch('/api/vision/sync-location-versions-from-script', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -499,7 +559,7 @@ export function LocationLibrary({
           description: location.description,
           versions: location.versions || [],
         },
-        scenes: buildScenesPayloadForLocationVersions(scenesForLocation(location, scenes)),
+        scenes: buildScenesPayloadForLocationVersions(scenesForLocation(location, scenesSnapshot)),
         screenplayContext,
       }),
     })
@@ -508,13 +568,69 @@ export function LocationLibrary({
     return applyLocationUpdateFromSyncDiff(location, data.diff as LocationVersionSyncDiff)
   }
 
+  const handleDirectLocationScenes = useCallback(
+    async (location: LocationReference, missingSceneNumbers: number[]) => {
+      if (missingSceneNumbers.length === 0) return
+      setDirectingLocationId(location.id)
+      try {
+        const nextScenes = [...effectiveScenes]
+        for (const sceneNum of missingSceneNumbers) {
+          const idx = sceneNum - 1
+          if (idx < 0 || idx >= nextScenes.length) continue
+          const dir = await generateDirectionForSceneIndex(idx)
+          if (dir) {
+            nextScenes[idx] = { ...nextScenes[idx], sceneDirection: dir }
+          }
+        }
+        const refreshedExtracted = extractHeadingLocationsFromScenes(nextScenes)
+        const extractedMatch = refreshedExtracted.find((e) => e.location === location.location)
+        let updatedLoc: LocationReference = {
+          ...location,
+          description: location.description || extractedMatch?.description || '',
+        }
+        if (isDisplayableImageUrl(updatedLoc.imageUrl)) {
+          const synced = await syncLocationVersions(updatedLoc, nextScenes)
+          if (synced) updatedLoc = synced.location
+        }
+        await onUpdateLocations(
+          locationReferences.map((row) => (row.id === location.id ? updatedLoc : row))
+        )
+        toast.success(
+          `Generated scene direction for Scene ${missingSceneNumbers.join(', ')} and synced ${location.location}.`
+        )
+      } catch (error: any) {
+        toast.error(error?.message || 'Failed to generate scene direction')
+      } finally {
+        setDirectingLocationId(null)
+      }
+    },
+    [effectiveScenes, generateDirectionForSceneIndex, locationReferences, onUpdateLocations]
+  )
+
   const handleUpdateLocations = useCallback(async (): Promise<LocationReference[] | null> => {
-    if (scenes.length === 0) {
+    if (effectiveScenes.length === 0) {
       toast.error('No scenes available for analysis')
       return null
     }
     setIsUpdatingLocations(true)
     try {
+      const nextScenes = [...effectiveScenes]
+      if (projectId || onGenerateSceneDirection) {
+        for (let idx = 0; idx < nextScenes.length; idx++) {
+          const s = nextScenes[idx] as Record<string, unknown> | undefined
+          if (!s || isSceneOutline(s)) continue
+          if (!sceneHasScreenplayBody(s) && getSceneBeats(s).length === 0) continue
+          if (!s.sceneDirection) {
+            try {
+              const dir = await generateDirectionForSceneIndex(idx)
+              if (dir) nextScenes[idx] = { ...nextScenes[idx], sceneDirection: dir }
+            } catch (dirErr) {
+              console.warn(`[LocationLibrary] Auto direction skipped for Scene ${idx + 1}:`, dirErr)
+            }
+          }
+        }
+      }
+
       const newLocations = extractMissingLocations()
       let working: LocationReference[] = [...locationReferences, ...newLocations]
       let created = 0
@@ -522,7 +638,7 @@ export function LocationLibrary({
       let stale = 0
 
       for (const loc of working) {
-        const result = await syncLocationVersions(loc)
+        const result = await syncLocationVersions(loc, nextScenes)
         if (!result) continue
         working = working.map((row) => (row.id === loc.id ? result.location : row))
         created += result.created
@@ -546,7 +662,17 @@ export function LocationLibrary({
     } finally {
       setIsUpdatingLocations(false)
     }
-  }, [extractMissingLocations, locationReferences, onUpdateLocations, scenes, screenplayContext, t])
+  }, [
+    effectiveScenes,
+    extractMissingLocations,
+    generateDirectionForSceneIndex,
+    locationReferences,
+    onGenerateSceneDirection,
+    onUpdateLocations,
+    projectId,
+    screenplayContext,
+    t,
+  ])
 
   /**
    * Merge: update existing refs with latest scene numbers from extraction
@@ -615,7 +741,7 @@ export function LocationLibrary({
           currentDescription: location.description,
           directorNotes: recommendMode ? undefined : descriptionDirectorText,
           recommendMode,
-          scenes: locationSceneExcerpts(location, scenes),
+          scenes: locationSceneExcerpts(location, effectiveScenes),
         }),
       })
       const body = await response.json().catch(() => ({}))
@@ -728,13 +854,27 @@ export function LocationLibrary({
       toast.info(t('baseImageRequired'))
       return
     }
-    if (scenes.length === 0) {
+    if (effectiveScenes.length === 0) {
       toast.error('No scenes available for analysis')
       return
     }
     setAnalyzingLocationId(location.id)
     try {
-      const result = await syncLocationVersions(location)
+      const nextScenes = [...effectiveScenes]
+      const missingNumbers = getLocationMissingDirectionSceneNumbers(location, nextScenes)
+      if (missingNumbers.length > 0 && (projectId || onGenerateSceneDirection)) {
+        for (const sceneNum of missingNumbers) {
+          const idx = sceneNum - 1
+          if (idx < 0 || idx >= nextScenes.length) continue
+          try {
+            const dir = await generateDirectionForSceneIndex(idx)
+            if (dir) nextScenes[idx] = { ...nextScenes[idx], sceneDirection: dir }
+          } catch (dirErr) {
+            console.warn(`[LocationLibrary] Auto direction skipped for Scene ${sceneNum}:`, dirErr)
+          }
+        }
+      }
+      const result = await syncLocationVersions(location, nextScenes)
       if (!result) return
       await onUpdateLocations(
         mergedLocations.map((loc) => (loc.id === location.id ? result.location : loc))
@@ -756,12 +896,12 @@ export function LocationLibrary({
 
   const directedBeats = useMemo((): DirectedLocationBeatOption[] => {
     if (!directedLocation) return []
-    const scoped = scenesForLocation(directedLocation, scenes)
+    const scoped = scenesForLocation(directedLocation, effectiveScenes)
     return scoped.flatMap((scene) => {
-      const sceneNumber = scenes.indexOf(scene) + 1
+      const sceneNumber = effectiveScenes.indexOf(scene) + 1
       return directedBeatOptionsFromScene(scene as Record<string, unknown>, sceneNumber || 1)
     })
-  }, [directedLocation, scenes])
+  }, [directedLocation, effectiveScenes])
 
   const handleDirectedVersionConfirm = async (payload: {
     locationId: string
@@ -864,7 +1004,12 @@ export function LocationLibrary({
             const isUploading = uploadingForId === loc.id
             const hasImage = isDisplayableImageUrl(loc.imageUrl)
             const isDeferredImage = isDeferredImageUrl(loc.imageUrl)
-            const directionOutdated = locationHasOutdatedDirection(loc, scenes)
+            const missingDirectionSceneNumbers = getLocationMissingDirectionSceneNumbers(
+              loc,
+              effectiveScenes
+            )
+            const isDirectingLocation = directingLocationId === loc.id
+            const canDirectLocationScenes = Boolean(projectId || onGenerateSceneDirection)
             const stillActions = locationReferenceActions(loc)
             const cameraClass =
               stillActions.tone === 'ready'
@@ -924,16 +1069,6 @@ export function LocationLibrary({
                     )}
                   </div>
                   <div className="flex items-center gap-1.5 flex-shrink-0">
-                    {directionOutdated && (
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <span className="w-2 h-2 rounded-full bg-amber-400 shrink-0" />
-                        </TooltipTrigger>
-                        <TooltipContent>
-                          Scene direction missing or outdated for mapped scene(s)
-                        </TooltipContent>
-                      </Tooltip>
-                    )}
                     <Tooltip>
                       <TooltipTrigger asChild>
                         <span className="inline-flex" title={cameraTitle}>
@@ -947,6 +1082,35 @@ export function LocationLibrary({
                     {isExpanded ? <ChevronUp className="w-4 h-4 text-gray-400" /> : <ChevronDown className="w-4 h-4 text-gray-400" />}
                   </div>
                 </button>
+                {missingDirectionSceneNumbers.length > 0 && canDirectLocationScenes && (
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <button
+                        type="button"
+                        disabled={isDirectingLocation}
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          void handleDirectLocationScenes(loc, missingDirectionSceneNumbers)
+                        }}
+                        className="inline-flex items-center gap-1 rounded border border-amber-400/50 bg-amber-500/15 px-1.5 py-0.5 text-[10px] font-medium text-amber-200 hover:bg-amber-500/25 disabled:opacity-50 shrink-0"
+                      >
+                        {isDirectingLocation ? (
+                          <Loader2 className="w-3 h-3 animate-spin shrink-0" />
+                        ) : (
+                          <Clapperboard className="w-3 h-3 text-amber-400 shrink-0" />
+                        )}
+                        <span>
+                          {isDirectingLocation
+                            ? 'Directing…'
+                            : `Direct · ${missingDirectionSceneNumbers.map((n) => `S${n}`).join(', ')}`}
+                        </span>
+                      </button>
+                    </TooltipTrigger>
+                    <TooltipContent className="max-w-xs text-xs">
+                      Scene direction missing for Scene {missingDirectionSceneNumbers.join(', ')} — click to generate scene direction and sync this location.
+                    </TooltipContent>
+                  </Tooltip>
+                )}
                 <ReferenceActionCue
                   summary={stillActions}
                   onSelect={(item) => openLocationAction(loc.id, item)}
@@ -1038,6 +1202,29 @@ export function LocationLibrary({
                               Scene {n}
                             </span>
                           ))}
+                        </div>
+                      )}
+                      {missingDirectionSceneNumbers.length > 0 && canDirectLocationScenes && (
+                        <div className="flex items-center justify-between gap-2 rounded-md border border-amber-500/30 bg-amber-500/10 px-2.5 py-1.5 text-xs text-amber-200">
+                          <span>
+                            Scene direction missing for Scene {missingDirectionSceneNumbers.join(', ')}.
+                          </span>
+                          <button
+                            type="button"
+                            disabled={isDirectingLocation}
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              void handleDirectLocationScenes(loc, missingDirectionSceneNumbers)
+                            }}
+                            className="inline-flex items-center gap-1 rounded border border-amber-400/50 bg-amber-500/20 px-2 py-0.5 text-[11px] font-medium text-amber-100 hover:bg-amber-500/30 disabled:opacity-50 shrink-0"
+                          >
+                            {isDirectingLocation ? (
+                              <Loader2 className="w-3 h-3 animate-spin" />
+                            ) : (
+                              <Clapperboard className="w-3 h-3" />
+                            )}
+                            <span>{isDirectingLocation ? 'Directing…' : 'Generate Scene Direction'}</span>
+                          </button>
                         </div>
                       )}
 

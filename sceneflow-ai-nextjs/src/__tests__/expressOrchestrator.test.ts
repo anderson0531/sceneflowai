@@ -292,6 +292,22 @@ describe('runExpress', () => {
 
     expect(result.failedScenes).toBe(0)
     expect(imageCalls).toBe(0)
+
+    const sceneResult = await runExpress({
+      project,
+      options: {
+        projectId: 'p1',
+        mode: 'scene',
+        sceneIndices: [0],
+        dialogueOnly: true,
+        regenerate: true,
+      },
+      baseUrl: 'http://localhost',
+      emit: () => {},
+    })
+
+    expect(sceneResult.failedScenes).toBe(0)
+    expect(imageCalls).toBe(0)
   })
 
   it('retains all beat storyboardImageUrl values after concurrent generation', async () => {

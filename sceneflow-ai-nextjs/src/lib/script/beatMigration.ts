@@ -53,6 +53,10 @@ import {
   ensureSceneMusicCues,
   parsePersistedMusicCues,
 } from '@/lib/script/sceneMusicCues'
+import {
+  generateSceneContentHash,
+  stampSceneDirectionContentHash,
+} from '@/lib/utils/contentHash'
 
 const BEAT_MIGRATION_FLAG = 'beatsMigratedAt'
 const START_FRAME_ONLY_MIGRATION_FLAG = 'startFrameOnlyMigrationAt'
@@ -1359,15 +1363,21 @@ export function applyBeatsToScene(
   scene: Record<string, unknown>,
   beats: SceneBeat[]
 ): Record<string, unknown> {
+  const dir = scene?.sceneDirection as Record<string, unknown> | undefined
+  const priorHashMatched =
+    Boolean(dir && typeof dir === 'object' && typeof dir.basedOnContentHash === 'string') &&
+    dir!.basedOnContentHash === generateSceneContentHash(scene)
+
   const normalized = normalizeBeatsForProduction(beats)
   const legacy = beatsToLegacyFields(normalized)
-  return {
+  const next: Record<string, unknown> = {
     ...scene,
     beats: normalized,
     dialogue: legacy.dialogue,
     ...(legacy.narration !== undefined ? { narration: legacy.narration } : {}),
     ...(legacy.action !== undefined ? { action: legacy.action } : {}),
   }
+  return priorHashMatched ? stampSceneDirectionContentHash(next) : next
 }
 
 /** Move `list[from]` to index `to`, leaving the rest in order. */
