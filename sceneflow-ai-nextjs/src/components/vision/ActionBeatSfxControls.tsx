@@ -68,7 +68,11 @@ export function ActionBeatSfxControls({
 
   const sfxAudio = readBeatSfxAudio(scene, slot)
   const sfxStale = actionBeatSfxIsStale(scene, beat, !!sfxAudio)
-  const sfxText = distinctSfxCue(beat)
+  const hasDistinctCue = Boolean(distinctSfxCue(beat))
+  const sfxText =
+    distinctSfxCue(beat) ||
+    slot.description?.trim() ||
+    audioSourceFingerprintForSfxBeat(beat)
   const autoSeconds = resolveAutoVeoSfxDuration(segmentDurationSeconds)
 
   const chips: Array<{ id: SfxDurationOverride; label: string }> = [
@@ -333,7 +337,11 @@ export function ActionBeatSfxControls({
                   void handleElevenLabs()
                 }}
                 disabled={isBusy || !sfxText}
-                title={`Generate optional SFX (~${VIDEO_CREDITS.VEO_LITE} credits)`}
+                title={
+                  sfxText
+                    ? `Generate optional SFX (~${VIDEO_CREDITS.VEO_LITE} credits)`
+                    : 'Add an action description or audio cue to generate SFX'
+                }
                 className="text-xs px-2 py-1 bg-amber-600 hover:bg-amber-700 text-white rounded disabled:opacity-50"
               >
                 {isGeneratingElevenLabs ? 'Generating...' : 'Generate'}
@@ -384,11 +392,16 @@ export function ActionBeatSfxControls({
               )
             })}
           </div>
-          <p className="text-[10px] text-amber-300/50">~{VIDEO_CREDITS.VEO_LITE} credits</p>
+          <p className="text-[10px] text-amber-300/50">
+            ~{VIDEO_CREDITS.VEO_LITE} credits
+            {!hasDistinctCue && !sfxAudio
+              ? ' · Score carries shot by default (manual SFX uses action description)'
+              : ''}
+          </p>
         </>
       ) : (
         <p className="text-[10px] text-amber-300/60">
-          {sfxAudio ? 'Custom shot audio ready.' : 'Score carries this shot unless you upload or extract audio.'}
+          {sfxAudio ? 'Custom shot audio ready.' : 'Add an action description or upload audio for this shot.'}
         </p>
       )}
       <DialogueQualityToggle

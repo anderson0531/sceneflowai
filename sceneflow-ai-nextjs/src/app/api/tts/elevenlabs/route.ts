@@ -149,6 +149,7 @@ export async function POST(request: NextRequest) {
           access: 'public',
           contentType: 'audio/mpeg',
           addRandomSuffix: false,
+          allowOverwrite: true,
         })
         return NextResponse.json({
           url: blob.url,
@@ -208,6 +209,7 @@ export async function POST(request: NextRequest) {
         access: 'public',
         contentType: 'audio/mpeg',
         addRandomSuffix: false,
+        allowOverwrite: true,
       })
       return NextResponse.json({
         url: blob.url,

@@ -40,36 +40,48 @@ export async function POST(request: NextRequest) {
       cleanText = cleanText.replace(/\[DirectorNote:\s*(.*?)\]\s*/, '').trim()
     }
 
-    const voice = typeof voiceId === 'string' && voiceId.trim() ? voiceId.trim() : 'gemini-Kore'
+    let voice = typeof voiceId === 'string' && voiceId.trim() ? voiceId.trim() : 'gemini-Kore'
     if (isDesignedGeminiVoiceId(voice)) {
-      const designed = await synthesizeDesignedGeminiVoiceWav({
-        text: cleanText,
-        voiceId: voice,
-        designPrompt: typeof designPrompt === 'string' ? designPrompt : undefined,
-        displayName: 'SceneFlow character',
-      })
-      if (userId) {
-        try {
-          const credits = Math.max(
-            AUDIO_CREDITS.VOICE_PREVIEW,
-            Math.ceil(cleanText.length / 250) * AUDIO_CREDITS.DIALOGUE_PER_LINE
-          )
-          await CreditService.charge(userId, credits, 'ai_usage', projectId || null, {
-            operation: 'google_designed_voice_tts',
-            voiceId: voice,
-            charCount: cleanText.length,
-          })
-        } catch (chargeErr) {
-          console.warn('[Google TTS] Non-blocking credit charge failed:', chargeErr)
+      const resolvedDesignPrompt =
+        typeof designPrompt === 'string' && designPrompt.trim()
+          ? designPrompt.trim()
+          : directorNotes
+      try {
+        const designed = await synthesizeDesignedGeminiVoiceWav({
+          text: cleanText,
+          voiceId: voice,
+          designPrompt: resolvedDesignPrompt,
+          displayName: 'SceneFlow character',
+        })
+        if (userId) {
+          try {
+            const credits = Math.max(
+              AUDIO_CREDITS.VOICE_PREVIEW,
+              Math.ceil(cleanText.length / 250) * AUDIO_CREDITS.DIALOGUE_PER_LINE
+            )
+            await CreditService.charge(userId, credits, 'ai_usage', projectId || null, {
+              operation: 'google_designed_voice_tts',
+              voiceId: voice,
+              charCount: cleanText.length,
+            })
+          } catch (chargeErr) {
+            console.warn('[Google TTS] Non-blocking credit charge failed:', chargeErr)
+          }
         }
+        return new Response(new Uint8Array(designed), {
+          status: 200,
+          headers: {
+            'Content-Type': 'audio/wav',
+            'Cache-Control': 'no-store',
+          },
+        })
+      } catch (designedErr) {
+        console.warn(
+          `[Google TTS] Designed voice ${voice} synthesis failed; falling back to gemini-Puck:`,
+          (designedErr as Error)?.message || designedErr
+        )
+        voice = 'gemini-Puck'
       }
-      return new Response(new Uint8Array(designed), {
-        status: 200,
-        headers: {
-          'Content-Type': 'audio/wav',
-          'Cache-Control': 'no-store',
-        },
-      })
     }
     const ttsAudioType: GeminiTtsAudioType =
       audioType === 'dialogue' || audioType === 'narration' || audioType === 'music' || audioType === 'sfx'

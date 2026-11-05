@@ -73,6 +73,7 @@ export async function storeNarrationAudio(
       access: 'public',
       contentType,
       addRandomSuffix: false,
+      allowOverwrite: true,
     })
     return blob.url
   } catch (error) {

@@ -424,7 +424,10 @@ export async function POST(req: NextRequest) {
     // voice, so a hit there is safe to report as that voice. A run that fell
     // back to another provider stores under its own state and simply misses.
     const requestedStateHash = stateFor(finalVoiceConfig.voiceId, finalVoiceConfig.provider)
-    const cached = await lookupCachedSceneAudio(blobPathForState(requestedStateHash))
+    const cached = await lookupCachedSceneAudio(
+      blobPathForState(requestedStateHash),
+      isDesignedGeminiVoiceId(finalVoiceConfig.voiceId)
+    )
 
     let audioBuffer: Buffer
     let usedProvider: AudioSynthesisResult['provider']
@@ -463,6 +466,7 @@ export async function POST(req: NextRequest) {
           access: 'public',
           contentType: isWav ? 'audio/wav' : 'audio/mpeg',
           addRandomSuffix: false,
+          allowOverwrite: true,
         }
       )
       blobUrl = blob.url
@@ -652,16 +656,27 @@ type AudioSynthesisResult = {
  * any storage error returns null, which just means we synthesize.
  */
 async function lookupCachedSceneAudio(
-  pathname: string
+  pathname: string,
+  preferWav = false
 ): Promise<{ url: string; buffer: Buffer } | null> {
-  let url: string
-  try {
-    const existing = await head(pathname)
-    if (!existing?.url || !existing.size) return null
-    url = existing.url
-  } catch {
-    return null
+  const wavPathname = pathname.replace(/\.mp3$/, '.wav')
+  const candidatePaths = preferWav
+    ? [wavPathname, pathname]
+    : [pathname, wavPathname]
+
+  let url: string | null = null
+  for (const candidate of candidatePaths) {
+    try {
+      const existing = await head(candidate)
+      if (existing?.url && existing.size) {
+        url = existing.url
+        break
+      }
+    } catch {
+      // Try next extension candidate
+    }
   }
+  if (!url) return null
 
   try {
     const response = await fetch(url)

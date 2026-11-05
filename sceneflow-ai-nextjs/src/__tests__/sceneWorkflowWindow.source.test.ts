@@ -74,4 +74,22 @@ describe('Scene workflow viewport-fitted window and uncropped menu', () => {
     expect(imageFrame).toContain('max-h-[42vh]')
     expect(videoGallery).toContain('max-h-[42vh]')
   })
+
+  it('prevents Vercel Blob overwrite 500s on dialogue generation and checks both .wav and .mp3 caches', () => {
+    const route = readSource('src/app/api/vision/generate-scene-audio/route.ts')
+    expect(route).toContain('isDesignedGeminiVoiceId(finalVoiceConfig.voiceId)')
+    expect(route).toContain('allowOverwrite: true')
+    expect(route).toContain("const wavPathname = pathname.replace(/\\.mp3$/, '.wav')")
+
+    const googleTtsRoute = readSource('src/app/api/tts/google/route.ts')
+    expect(googleTtsRoute).toContain('resolvedDesignPrompt')
+    expect(googleTtsRoute).toContain('falling back to gemini-Puck')
+  })
+
+  it('enables Action SFX Generate button whenever shot has an audioCue, slot description, or actionDescription', () => {
+    const sfxControls = readSource('src/components/vision/ActionBeatSfxControls.tsx')
+    expect(sfxControls).toContain('distinctSfxCue(beat) ||')
+    expect(sfxControls).toContain('slot.description?.trim() ||')
+    expect(sfxControls).toContain('audioSourceFingerprintForSfxBeat(beat)')
+  })
 })
