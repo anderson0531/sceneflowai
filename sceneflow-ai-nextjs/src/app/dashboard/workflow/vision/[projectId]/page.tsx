@@ -51,6 +51,7 @@ import {
 import { audioSourceFingerprintForSpoken } from '@/lib/audio/beatAudioStale'
 import { resolveLineVoiceDirection } from '@/lib/tts/dialogueDirectorNotes'
 import { resolveStoryboardScenes, totalStoryboardMediaScore } from '@/lib/storyboard/resolveStoryboardScenes'
+import { mergeScenePreservingMedia } from '@/lib/storyboard/mergeSceneMedia'
 import { applyGeneratedClipTake, isLanguageClipTarget } from '@/lib/scene/languageClipVersions'
 import {
   appendSegmentTake,
@@ -1341,7 +1342,17 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     const currentProject = projectRef.current
     if (!currentScript?.script || !currentProject?.id) return false
 
-    const previousScenes = currentScript.script.scenes || []
+    const refScenes = currentScript.script.scenes || []
+    const projectPersistedScenes =
+      currentProject.metadata?.visionPhase?.script?.script?.scenes || []
+    const refAlreadyMatchesUpdated =
+      Array.isArray(refScenes) &&
+      refScenes.length === updatedScenes.length &&
+      refScenes.every((scene: unknown, idx: number) => scene === updatedScenes[idx])
+    const previousScenes =
+      refAlreadyMatchesUpdated && Array.isArray(projectPersistedScenes) && projectPersistedScenes.length > 0
+        ? projectPersistedScenes
+        : refScenes
     const { scenes: scenesToSend, persistSceneIds } = persistSceneIdsForChangedScenes(
       previousScenes,
       updatedScenes
@@ -1411,7 +1422,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     if (options?.mergeClientScenes) {
       const clientScenes = scriptRef.current?.script?.scenes
       if (Array.isArray(clientScenes) && clientScenes.length > 0) {
-        baseScenes = mergeScenesForScriptSave(dbCanonicalScenes, clientScenes)
+        baseScenes = mergeScenesForScriptSave(clientScenes, dbCanonicalScenes)
       }
     }
 
@@ -1432,6 +1443,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       script: { ...loadedScript.script, scenes: finalScenes },
     }
     const sanitizedScript = sanitizeScriptDialogueLines(nextScript)
+    scriptRef.current = sanitizedScript
     setScript(sanitizedScript)
     setScriptEditedAt(Date.now())
 
@@ -2918,7 +2930,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       if (beat?.beatId) {
         if (frameRole === 'end') {
           syncBeatEndFrameToProduction(sceneId, beat.beatId, imageUrl)
-        } else if (frameRole === 'action-start' || !beat.storyboardStartImageUrl?.trim()) {
+        } else {
           syncBeatStartFrameToProduction(sceneId, beat.beatId, imageUrl)
         }
       }
@@ -2941,15 +2953,25 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       const rawBeatIdx = resolveRawBeatIndex(scenes[sceneIdx], { beatId })
       if (rawBeatIdx === undefined) return
 
+      const existingBeat = getSceneBeats(scenes[sceneIdx])[rawBeatIdx]
+      const hasDedicatedActionStart = Boolean(existingBeat?.storyboardStartImageUrl?.trim())
+
       const updatedScenes = [...scenes]
-      updatedScenes[sceneIdx] = stampPreVisContentHash(
-        applyBeatStoryboardImageToScene(
-          updatedScenes[sceneIdx],
+      let nextScene = applyBeatStoryboardImageToScene(
+        updatedScenes[sceneIdx],
+        rawBeatIdx,
+        newUrl,
+        { frameRole: 'start', source: 'edit' }
+      )
+      if (hasDedicatedActionStart) {
+        nextScene = applyBeatStoryboardImageToScene(
+          nextScene,
           rawBeatIdx,
           newUrl,
           { frameRole: 'action-start', source: 'edit' }
         )
-      )
+      }
+      updatedScenes[sceneIdx] = stampPreVisContentHash(nextScene)
 
       const currentScript = scriptRef.current
       if (currentScript?.script) {
@@ -10401,7 +10423,10 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
               if (!currentScript?.script?.scenes) return currentScript
               const updatedScenes = [...currentScript.script.scenes]
               if (!updatedScenes[directedIdx]) return currentScript
-              updatedScenes[directedIdx] = directedScene
+              updatedScenes[directedIdx] = mergeScenePreservingMedia(
+                updatedScenes[directedIdx],
+                directedScene
+              )
               const updatedScript = {
                 ...currentScript,
                 script: { ...currentScript.script, scenes: updatedScenes },
@@ -13561,7 +13586,6 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       ...latestScript,
       script: { ...latestScript.script, scenes: updatedScenes },
     }
-    scriptRef.current = nextScript
     setScript(nextScript)
     const saved = await persistVisionScriptScenes(updatedScenes, 'persistStillDirectorPatch')
     if (!saved) {
@@ -13587,7 +13611,6 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       ...latestScript,
       script: { ...latestScript.script, scenes: updatedScenes },
     }
-    scriptRef.current = nextScript
     setScript(nextScript)
     await persistVisionScriptScenes(updatedScenes, 'persistShotImageSafetyError')
   }
@@ -13943,7 +13966,6 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         ...latestAfterGenerate,
         script: { ...latestAfterGenerate.script, scenes: updatedScenes },
       }
-      scriptRef.current = nextScript
       setScript(nextScript)
       const saved = await persistVisionScriptScenes(updatedScenes, 'handleDirectFrameGenerate')
       if (
@@ -13957,7 +13979,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           `scene-${sceneIndex}`
         if (slot.frameRole === 'end') {
           syncBeatEndFrameToProduction(sceneId, payload.beatId, data.imageUrl)
-        } else if (slot.frameRole === 'action-start' || !beat?.storyboardStartImageUrl?.trim()) {
+        } else {
           syncBeatStartFrameToProduction(sceneId, payload.beatId, data.imageUrl)
         }
       }
@@ -14126,10 +14148,9 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       const saved = await persistVisionScriptScenes(updatedScenes, 'handleUploadBeatFrame')
       if (saved) {
         const sceneId = scene.id || scene.sceneId || `scene-${sceneIndex}`
-        const beat = getSceneBeats(scene)[rawBeatIdx]
         if (frameRole === 'end') {
           syncBeatEndFrameToProduction(sceneId, beatId, uploadedUrl)
-        } else if (frameRole === 'action-start' || !beat?.storyboardStartImageUrl?.trim()) {
+        } else {
           syncBeatStartFrameToProduction(sceneId, beatId, uploadedUrl)
         }
         try {
@@ -14182,10 +14203,9 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     try {
       await persistVisionScriptScenes(updatedScenes, 'handleSaveEditedBeatFrame')
       const sceneId = scene.id || scene.sceneId || `scene-${sceneIndex}`
-      const beat = getSceneBeats(scene)[rawBeatIdx]
       if (frameRole === 'end') {
         syncBeatEndFrameToProduction(sceneId, beatId, newImageUrl)
-      } else if (frameRole === 'action-start' || !beat?.storyboardStartImageUrl?.trim()) {
+      } else {
         syncBeatStartFrameToProduction(sceneId, beatId, newImageUrl)
       }
       try {
@@ -14270,10 +14290,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           const sceneId = scene.id || scene.sceneId || `scene-${sceneIndex}`
           if (slot.frameRole === 'end') {
             syncBeatEndFrameToProduction(sceneId, slot.beatId, restoredUrl)
-          } else if (
-            slot.frameRole === 'action-start' ||
-            !beatRow?.storyboardStartImageUrl?.trim()
-          ) {
+          } else {
             syncBeatStartFrameToProduction(sceneId, slot.beatId, restoredUrl)
           }
         }
@@ -14784,10 +14801,10 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
             setScript((currentScript: any) => {
               if (!currentScript?.script?.scenes) return currentScript
               const updatedScenes = [...currentScript.script.scenes]
-              updatedScenes[sceneIdx] = {
+              updatedScenes[sceneIdx] = mergeScenePreservingMedia(updatedScenes[sceneIdx], {
                 ...(shotRes.scene as Record<string, unknown>),
                 shotDirectionNeedsRefresh: false,
-              }
+              })
               const updatedScript = {
                 ...currentScript,
                 script: { ...currentScript.script, scenes: updatedScenes },
@@ -14957,10 +14974,10 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                 setScript((currentScript: any) => {
                   if (!currentScript?.script?.scenes) return currentScript
                   const updatedScenes = [...currentScript.script.scenes]
-                  updatedScenes[idx] = {
+                  updatedScenes[idx] = mergeScenePreservingMedia(updatedScenes[idx], {
                     ...(shotRes.scene as Record<string, unknown>),
                     shotDirectionNeedsRefresh: false,
-                  }
+                  })
                   const updatedScript = {
                     ...currentScript,
                     script: { ...currentScript.script, scenes: updatedScenes },
@@ -19370,10 +19387,13 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                   const refreshedScenes = [
                     ...(scriptRef.current?.script?.scenes ?? scriptRef.current?.scenes ?? []),
                   ]
-                  refreshedScenes[sceneIndex] = {
-                    ...(shotRes.scene as Record<string, any>),
-                    shotDirectionNeedsRefresh: false,
-                  }
+                  refreshedScenes[sceneIndex] = mergeScenePreservingMedia(
+                    refreshedScenes[sceneIndex],
+                    {
+                      ...(shotRes.scene as Record<string, any>),
+                      shotDirectionNeedsRefresh: false,
+                    }
+                  )
                   const nextScript = scriptRef.current?.script
                     ? {
                         ...scriptRef.current,

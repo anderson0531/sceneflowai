@@ -7,6 +7,7 @@ import { applyBeatsToScene, ensureSceneBeats, getSceneBeats } from '@/lib/script
 import { syncBeatStillPromptToDirection } from '@/lib/storyboard/syncBeatStillPrompt'
 import { refreshProductionSegmentVideoPrompts } from '@/lib/scene/syncBeatVideoPrompt'
 import { generateSceneContentHash } from '@/lib/utils/contentHash'
+import { mergeScenePreservingMedia } from '@/lib/storyboard/mergeSceneMedia'
 
 export const maxDuration = 300
 export const runtime = 'nodejs'
@@ -84,75 +85,100 @@ export async function POST(req: NextRequest) {
       )
     }
 
-    // Re-read after Gemini so we patch sceneDirection onto the latest DB snapshot,
-    // not the ~25s-stale snapshot from request start (avoids clobbering concurrent edits).
-    const fresh = await Project.findByPk(projectId)
-    if (!fresh) {
+    // Re-read after Gemini under row lock so we patch sceneDirection onto the latest DB snapshot,
+    // not the ~25s-stale snapshot from request start (avoids clobbering concurrent edits/stills).
+    const applyDirectionUpdate = async (fresh: any, transaction?: any) => {
+      const metadata = fresh.metadata || {}
+      const visionPhase = metadata.visionPhase || {}
+      const script = visionPhase.script || {}
+      const scriptScenes = script.script?.scenes || script.scenes || []
+
+      if (sceneIndex < 0 || sceneIndex >= scriptScenes.length) {
+        return { kind: 'invalid_index' as const }
+      }
+
+      const updatedScenes = scriptScenes.map((s: any, idx: number) => {
+        if (idx !== sceneIndex) return s
+        const stampedDirection =
+          sceneDirection && typeof sceneDirection === 'object'
+            ? {
+                ...sceneDirection,
+                basedOnContentHash: generateSceneContentHash(s),
+              }
+            : sceneDirection
+        const ensured = ensureSceneBeats({
+          ...s,
+          sceneDirection: stampedDirection,
+        } as Record<string, unknown>)
+        const beats = getSceneBeats(ensured)
+        const syncedBeats = beats.map((beat) =>
+          beat.beatDirection
+            ? syncBeatStillPromptToDirection(beat, { sceneIndex: idx })
+            : beat
+        )
+        let nextScene = applyBeatsToScene(ensured, syncedBeats)
+        if (Array.isArray(nextScene.segments) && nextScene.segments.length > 0) {
+          const refreshedSegments = refreshProductionSegmentVideoPrompts(
+            nextScene.segments as any[],
+            nextScene,
+            { allBeats: true }
+          )
+          if (refreshedSegments) {
+            nextScene = { ...nextScene, segments: refreshedSegments }
+          }
+        }
+        return mergeScenePreservingMedia(s, nextScene)
+      })
+
+      const updatedScript = script.script
+        ? { ...script, script: { ...script.script, scenes: updatedScenes } }
+        : { ...script, scenes: updatedScenes }
+
+      await fresh.update(
+        {
+          metadata: {
+            ...metadata,
+            visionPhase: {
+              ...visionPhase,
+              script: updatedScript,
+              scenes: updatedScenes,
+            },
+          },
+        },
+        transaction ? { transaction } : undefined
+      )
+
+      return { kind: 'ok' as const }
+    }
+
+    const persistOutcome =
+      typeof (sequelize as { transaction?: unknown })?.transaction === 'function'
+        ? await sequelize.transaction(async (transaction) => {
+            const fresh = await Project.findByPk(projectId, {
+              transaction,
+              lock: transaction.LOCK?.UPDATE,
+            })
+            if (!fresh) return { kind: 'not_found' as const }
+            return applyDirectionUpdate(fresh, transaction)
+          })
+        : await (async () => {
+            const fresh = await Project.findByPk(projectId)
+            if (!fresh) return { kind: 'not_found' as const }
+            return applyDirectionUpdate(fresh)
+          })()
+
+    if (persistOutcome.kind === 'not_found') {
       return NextResponse.json(
         { success: false, error: 'Project not found after direction generation' },
         { status: 404 }
       )
     }
-
-    const metadata = fresh.metadata || {}
-    const visionPhase = metadata.visionPhase || {}
-    const script = visionPhase.script || {}
-    const scriptScenes = script.script?.scenes || script.scenes || []
-
-    if (sceneIndex < 0 || sceneIndex >= scriptScenes.length) {
+    if (persistOutcome.kind === 'invalid_index') {
       return NextResponse.json(
         { success: false, error: `Invalid scene index after refresh: ${sceneIndex}` },
         { status: 400 }
       )
     }
-
-    const updatedScenes = scriptScenes.map((s: any, idx: number) => {
-      if (idx !== sceneIndex) return s
-      const stampedDirection =
-        sceneDirection && typeof sceneDirection === 'object'
-          ? {
-              ...sceneDirection,
-              basedOnContentHash: generateSceneContentHash(s),
-            }
-          : sceneDirection
-      const ensured = ensureSceneBeats({
-        ...s,
-        sceneDirection: stampedDirection,
-      } as Record<string, unknown>)
-      const beats = getSceneBeats(ensured)
-      const syncedBeats = beats.map((beat) =>
-        beat.beatDirection
-          ? syncBeatStillPromptToDirection(beat, { sceneIndex: idx })
-          : beat
-      )
-      let nextScene = applyBeatsToScene(ensured, syncedBeats)
-      if (Array.isArray(nextScene.segments) && nextScene.segments.length > 0) {
-        const refreshedSegments = refreshProductionSegmentVideoPrompts(
-          nextScene.segments as any[],
-          nextScene,
-          { allBeats: true }
-        )
-        if (refreshedSegments) {
-          nextScene = { ...nextScene, segments: refreshedSegments }
-        }
-      }
-      return nextScene
-    })
-
-    const updatedScript = script.script
-      ? { ...script, script: { ...script.script, scenes: updatedScenes } }
-      : { ...script, scenes: updatedScenes }
-
-    await fresh.update({
-      metadata: {
-        ...metadata,
-        visionPhase: {
-          ...visionPhase,
-          script: updatedScript,
-          scenes: updatedScenes,
-        },
-      },
-    })
 
     console.log(
       '[Scene Direction] Successfully generated and saved direction for scene',

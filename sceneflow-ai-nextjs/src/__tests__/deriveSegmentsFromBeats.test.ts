@@ -249,6 +249,44 @@ describe('mergeDerivedSegmentsWithExisting', () => {
     expect(merged[0].references?.startFrameUrl).toBe(productionUrl)
   })
 
+  it('adopts a newer beat Shot Still when re-deriving over a stale production startFrameUrl', () => {
+    const staleProductionUrl = 'https://example.com/production-1779527367000.jpeg'
+    const newerBeatUrl = 'https://example.com/beat-1779527369000.jpeg'
+    const scene = approvedScene([
+      {
+        beatId: 'bt_1',
+        sequenceIndex: 0,
+        kind: 'action',
+        storyboardImageUrl: newerBeatUrl,
+      },
+    ])
+
+    const derived = deriveSegmentsFromBeats(scene).segments
+    const existing = [
+      {
+        ...derived[0],
+        startFrameUrl: staleProductionUrl,
+        references: {
+          ...derived[0].references,
+          startFrameUrl: staleProductionUrl,
+          startFrameVersions: [
+            {
+              id: 'sf_old',
+              url: staleProductionUrl,
+              createdAt: '2026-05-19T00:00:00.000Z',
+              source: 'generate' as const,
+            },
+          ],
+        },
+      },
+    ]
+
+    const merged = mergeDerivedSegmentsWithExisting(derived, existing)
+    expect(merged[0].startFrameUrl).toBe(newerBeatUrl)
+    expect(merged[0].references?.startFrameUrl).toBe(newerBeatUrl)
+    expect(merged[0].references?.startFrameVersions).toHaveLength(1)
+  })
+
   it('preserves mixer crop and trim fields when re-deriving segments', () => {
     const scene = approvedScene([
       {

@@ -85,66 +85,74 @@ async function persistExpressScenes(
   options: ExpressOptions,
   auditLabel?: string
 ): Promise<void> {
-  const freshProject = await Project.findByPk(projectId)
-  if (!freshProject) return
-
-  const freshMetadata = freshProject.metadata || {}
-  const freshVisionPhase = freshMetadata.visionPhase || {}
-  const orchestratedVisionPhase = orchestratedProject?.metadata?.visionPhase || {}
-  const nested = !!freshVisionPhase?.script?.script?.scenes?.length
-
-  const freshDbScenes = getFreshDbScenes(freshVisionPhase)
-  const orchestratedScenes = getOrchestratedScenes(orchestratedProject)
-
-  if (auditLabel) {
-    console.log(`[Express] Storyboard audit ${auditLabel}:`, {
-      freshDb: auditStoryboardSceneMedia(freshDbScenes),
-      orchestrated: auditStoryboardSceneMedia(orchestratedScenes),
+  await sequelize.transaction(async (transaction) => {
+    const freshProject = await Project.findByPk(projectId, {
+      transaction,
+      lock: transaction.LOCK.UPDATE,
     })
-  }
+    if (!freshProject) return
 
-  const mergedScenes = mergeExpressOrchestratedScenes(
-    orchestratedScenes,
-    freshDbScenes
-  )
+    const freshMetadata = freshProject.metadata || {}
+    const freshVisionPhase = freshMetadata.visionPhase || {}
+    const orchestratedVisionPhase = orchestratedProject?.metadata?.visionPhase || {}
+    const nested = !!freshVisionPhase?.script?.script?.scenes?.length
 
-  if (auditLabel) {
-    console.log(`[Express] Storyboard audit after merge ${auditLabel}:`, {
-      merged: auditStoryboardSceneMedia(mergedScenes),
-    })
-  }
+    const freshDbScenes = getFreshDbScenes(freshVisionPhase)
+    const orchestratedScenes = getOrchestratedScenes(orchestratedProject)
 
-  await freshProject.update({
-    metadata: {
-      ...freshMetadata,
-      visionPhase: {
-        ...freshVisionPhase,
-        ...(orchestratedVisionPhase.translations
-          ? { translations: orchestratedVisionPhase.translations }
-          : {}),
-        ...(orchestratedVisionPhase.playerLabels
-          ? { playerLabels: orchestratedVisionPhase.playerLabels }
-          : {}),
-        ...(orchestratedVisionPhase.lookbook
-          ? { lookbook: orchestratedVisionPhase.lookbook }
-          : {}),
-        artStyle: options.artStyle || freshVisionPhase.artStyle || 'photorealistic',
-        scenes: mergedScenes,
-        scriptUpdatedAt: new Date().toISOString(),
-        script: nested
-          ? {
-              ...freshVisionPhase.script,
-              script: {
-                ...freshVisionPhase.script?.script,
-                scenes: mergedScenes,
-              },
-            }
-          : {
-              ...freshVisionPhase.script,
-              scenes: mergedScenes,
-            },
+    if (auditLabel) {
+      console.log(`[Express] Storyboard audit ${auditLabel}:`, {
+        freshDb: auditStoryboardSceneMedia(freshDbScenes),
+        orchestrated: auditStoryboardSceneMedia(orchestratedScenes),
+      })
+    }
+
+    const mergedScenes = mergeExpressOrchestratedScenes(
+      orchestratedScenes,
+      freshDbScenes
+    )
+
+    if (auditLabel) {
+      console.log(`[Express] Storyboard audit after merge ${auditLabel}:`, {
+        merged: auditStoryboardSceneMedia(mergedScenes),
+      })
+    }
+
+    await freshProject.update(
+      {
+        metadata: {
+          ...freshMetadata,
+          visionPhase: {
+            ...freshVisionPhase,
+            ...(orchestratedVisionPhase.translations
+              ? { translations: orchestratedVisionPhase.translations }
+              : {}),
+            ...(orchestratedVisionPhase.playerLabels
+              ? { playerLabels: orchestratedVisionPhase.playerLabels }
+              : {}),
+            ...(orchestratedVisionPhase.lookbook
+              ? { lookbook: orchestratedVisionPhase.lookbook }
+              : {}),
+            artStyle: options.artStyle || freshVisionPhase.artStyle || 'photorealistic',
+            scenes: mergedScenes,
+            scriptUpdatedAt: new Date().toISOString(),
+            script: nested
+              ? {
+                  ...freshVisionPhase.script,
+                  script: {
+                    ...freshVisionPhase.script?.script,
+                    scenes: mergedScenes,
+                  },
+                }
+              : {
+                  ...freshVisionPhase.script,
+                  scenes: mergedScenes,
+                },
+          },
+        },
       },
-    },
+      { transaction }
+    )
   })
 }
 

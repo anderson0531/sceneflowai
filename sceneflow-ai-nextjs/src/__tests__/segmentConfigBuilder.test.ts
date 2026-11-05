@@ -188,6 +188,37 @@ describe('resolveF2VFrameUrls', () => {
       endFrameUrl: 'https://example.com/action-end-frame.jpg',
     })
   })
+
+  it('prefers a newly regenerated Shot Still (storyboardImageUrl) over an older Start Frame (storyboardStartImageUrl)', () => {
+    const oldActionStart = 'https://example.com/action-start-1779527367000.jpeg'
+    const newShotStill = 'https://example.com/shot-still-1779527369000.jpeg'
+    const segment = makeSegment({
+      startFrameUrl: oldActionStart,
+      references: {
+        startFrameUrl: oldActionStart,
+        characterIds: [],
+        sceneRefIds: [],
+        objectRefIds: [],
+      },
+    })
+    const sceneWithNewerShotStill = {
+      beats: [
+        {
+          beatId: BEAT_ID,
+          kind: 'action',
+          storyboardImageUrl: newShotStill,
+          storyboardImageVersions: [
+            { id: 'v_new', url: newShotStill, createdAt: '2026-06-02T00:00:00.000Z', source: 'generate' },
+          ],
+          storyboardStartImageUrl: oldActionStart,
+          storyboardStartImageVersions: [
+            { id: 'v_old', url: oldActionStart, createdAt: '2026-06-01T00:00:00.000Z', source: 'edit' },
+          ],
+        },
+      ],
+    }
+    expect(resolveEffectiveStartFrameUrl(segment, sceneWithNewerShotStill)).toBe(newShotStill)
+  })
 })
 
 describe('applyEndFrameUrlToProductionSegments', () => {

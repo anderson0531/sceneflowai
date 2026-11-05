@@ -152,58 +152,70 @@ export async function PATCH(
 
     await sequelize.authenticate()
 
-    const project = await Project.findByPk(id)
-    if (!project) {
+    const txResult = await sequelize.transaction(async (transaction) => {
+      const project = await Project.findByPk(id, {
+        transaction,
+        lock: transaction.LOCK.UPDATE,
+      })
+      if (!project) {
+        return { notFound: true as const, totalProductionScenes: 0 }
+      }
+
+      // Get existing metadata under row lock so concurrent script PUTs are never clobbered
+      const existingMetadata = project.metadata || {}
+      const existingVisionPhase = existingMetadata.visionPhase || {}
+      const existingProduction = existingVisionPhase.production || {}
+      const existingProductionScenes = existingProduction.scenes || {}
+      const existingSceneData = existingProductionScenes[sceneId]
+      const scriptScene = findSceneById(
+        getVisionScriptScenes(existingVisionPhase as Record<string, unknown>),
+        sceneId
+      ).scene
+      const preserveBeatIds = scriptScene
+        ? getSceneBeats(scriptScene)
+            .filter((beat) => isBeatExcluded(beat))
+            .map((beat) => beat.beatId)
+        : []
+      const mergedProductionData = mergeSceneProductionData(existingSceneData, productionData, {
+        preserveBeatIds,
+      })
+
+      // Update only the specific scene's production data
+      const updatedProductionScenes = {
+        ...existingProductionScenes,
+        [sceneId]: mergedProductionData,
+      }
+
+      // Build minimal update - only touch production.scenes
+      const updatedMetadata = {
+        ...existingMetadata,
+        visionPhase: {
+          ...existingVisionPhase,
+          production: {
+            ...existingProduction,
+            lastUpdated: new Date().toISOString(),
+            scenes: updatedProductionScenes,
+          },
+        },
+      }
+
+      await project.update({ metadata: updatedMetadata }, { transaction })
+      return {
+        notFound: false as const,
+        totalProductionScenes: Object.keys(updatedProductionScenes).length,
+      }
+    })
+
+    if (txResult.notFound) {
       console.error('[Projects PATCH Production] Project not found:', id)
       return NextResponse.json({ error: 'Project not found' }, { status: 404 })
     }
 
-    // Get existing metadata
-    const existingMetadata = project.metadata || {}
-    const existingVisionPhase = existingMetadata.visionPhase || {}
-    const existingProduction = existingVisionPhase.production || {}
-    const existingProductionScenes = existingProduction.scenes || {}
-    const existingSceneData = existingProductionScenes[sceneId]
-    const scriptScene = findSceneById(
-      getVisionScriptScenes(existingVisionPhase as Record<string, unknown>),
-      sceneId
-    ).scene
-    const preserveBeatIds = scriptScene
-      ? getSceneBeats(scriptScene)
-          .filter((beat) => isBeatExcluded(beat))
-          .map((beat) => beat.beatId)
-      : []
-    const mergedProductionData = mergeSceneProductionData(existingSceneData, productionData, {
-      preserveBeatIds,
-    })
-
-    // Update only the specific scene's production data
-    const updatedProductionScenes = {
-      ...existingProductionScenes,
-      [sceneId]: mergedProductionData
-    }
-
-    // Build minimal update - only touch production.scenes
-    const updatedMetadata = {
-      ...existingMetadata,
-      visionPhase: {
-        ...existingVisionPhase,
-        production: {
-          ...existingProduction,
-          lastUpdated: new Date().toISOString(),
-          scenes: updatedProductionScenes
-        }
-      }
-    }
-
-    // Update the project
-    await project.update({ metadata: updatedMetadata })
-
     console.log('[Projects PATCH Production] Updated successfully:', {
       projectId: id,
       sceneId,
-      totalProductionScenes: Object.keys(updatedProductionScenes).length,
-      timestamp: new Date().toISOString()
+      totalProductionScenes: txResult.totalProductionScenes,
+      timestamp: new Date().toISOString(),
     })
 
     return NextResponse.json({

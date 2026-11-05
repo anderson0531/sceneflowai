@@ -11,7 +11,12 @@ import {
   findSceneById,
   getVisionScriptScenes,
 } from '@/lib/script/resolveSceneById'
-import { segmentHasPlayableVideo } from '@/lib/storyboard/mediaVersions'
+import {
+  resolveLiveTake,
+  segmentHasPlayableVideo,
+  unionRowsById,
+} from '@/lib/storyboard/mediaVersions'
+import { mergeScenePreservingMedia } from '@/lib/storyboard/mergeSceneMedia'
 import type { SceneSegment } from '@/components/vision/scene-production/types'
 
 export const runtime = 'nodejs'
@@ -53,60 +58,96 @@ export async function POST(
     }
 
     await sequelize.authenticate()
-    const project = await Project.findByPk(projectId)
-    if (!project) {
+    const txOutcome = await sequelize.transaction(async (transaction) => {
+      const project = await Project.findByPk(projectId, {
+        transaction,
+        lock: transaction.LOCK.UPDATE,
+      })
+      if (!project) {
+        return { kind: 'not_found' as const }
+      }
+
+      const metadata = project.metadata || {}
+      const visionPhase = { ...(metadata.visionPhase || {}) }
+      const scenes = [...getVisionScriptScenes(visionPhase as Record<string, unknown>)]
+      const { scene: matchedScene, index: sceneIndex } = findSceneById(scenes, sceneId)
+      if (sceneIndex < 0 || !matchedScene) {
+        return { kind: 'scene_not_found' as const }
+      }
+
+      const scene = matchedScene
+      const artStyleId = resolveProjectArtStyle(metadata)
+      const storedSegments = readStoredProductionSegments(metadata, sceneId)
+      const segmentsToKeep = unionProductionSegments(storedSegments, existingSegments)
+
+      const deriveOptions = {
+        requireApproved: false,
+        language: language ?? 'en',
+        existingSegments: segmentsToKeep,
+      }
+      void skipApprovalCheck
+
+      // extendBeatId accepted for backward compatibility but ignored (Kling-first: one beat = one segment).
+      void extendBeatId
+      const result = deriveSegmentsFromBeats(scene, deriveOptions)
+
+      if (result.errors.length > 0) {
+        return { kind: 'derive_errors' as const, errors: result.errors }
+      }
+
+      const rawWorkingScene = {
+        ...(result.updatedScene ?? scene),
+      } as Record<string, unknown>
+      if (rawWorkingScene.storyboardStatus !== 'approved') {
+        rawWorkingScene.storyboardStatus = 'approved'
+        rawWorkingScene.storyboardApprovedAt = new Date().toISOString()
+      }
+      const workingScene = mergeScenePreservingMedia(
+        matchedScene as Record<string, unknown>,
+        rawWorkingScene
+      ) as Record<string, unknown>
+      scenes[sceneIndex] = workingScene
+      const scriptRoot = visionPhase.script || {}
+      const nested = scriptRoot.script || {}
+      if (nested.scenes) {
+        visionPhase.script = { ...scriptRoot, script: { ...nested, scenes } }
+      } else {
+        visionPhase.script = { ...scriptRoot, scenes }
+      }
+      if (Array.isArray(visionPhase.scenes)) {
+        visionPhase.scenes = scenes
+      }
+      await project.update(
+        {
+          metadata: { ...metadata, visionPhase },
+        },
+        { transaction }
+      )
+
+      return {
+        kind: 'ok' as const,
+        sceneIndex,
+        artStyleId,
+        segmentsToKeep,
+        result,
+        workingScene,
+      }
+    })
+
+    if (txOutcome.kind === 'not_found') {
       return NextResponse.json({ error: 'Project not found' }, { status: 404 })
     }
-
-    const metadata = project.metadata || {}
-    const visionPhase = metadata.visionPhase || {}
-    const scenes = [...getVisionScriptScenes(visionPhase as Record<string, unknown>)]
-    const { scene: matchedScene, index: sceneIndex } = findSceneById(scenes, sceneId)
-    if (sceneIndex < 0 || !matchedScene) {
+    if (txOutcome.kind === 'scene_not_found') {
       return NextResponse.json({ error: 'Scene not found' }, { status: 404 })
     }
-
-    const scene = matchedScene
-    const artStyleId = resolveProjectArtStyle(metadata)
-    const storedSegments = readStoredProductionSegments(metadata, sceneId)
-    const segmentsToKeep = unionProductionSegments(storedSegments, existingSegments)
-
-    const deriveOptions = {
-      requireApproved: false,
-      language: language ?? 'en',
-      existingSegments: segmentsToKeep,
-    }
-    void skipApprovalCheck
-
-    // extendBeatId accepted for backward compatibility but ignored (Kling-first: one beat = one segment).
-    void extendBeatId
-    const result = deriveSegmentsFromBeats(scene, deriveOptions)
-
-    if (result.errors.length > 0) {
+    if (txOutcome.kind === 'derive_errors') {
       return NextResponse.json(
-        { success: false, errors: result.errors, segments: [] },
+        { success: false, errors: txOutcome.errors, segments: [] },
         { status: 400 }
       )
     }
 
-    const workingScene = {
-      ...(result.updatedScene ?? scene),
-    } as Record<string, unknown>
-    if (workingScene.storyboardStatus !== 'approved') {
-      workingScene.storyboardStatus = 'approved'
-      workingScene.storyboardApprovedAt = new Date().toISOString()
-    }
-    scenes[sceneIndex] = workingScene
-    const scriptRoot = visionPhase.script || {}
-    const nested = scriptRoot.script || {}
-    if (nested.scenes) {
-      visionPhase.script = { ...scriptRoot, script: { ...nested, scenes } }
-    } else {
-      visionPhase.script = { ...scriptRoot, scenes }
-    }
-    await project.update({
-      metadata: { ...metadata, visionPhase },
-    })
+    const { sceneIndex, artStyleId, segmentsToKeep, result, workingScene } = txOutcome
 
     const beats = getSceneBeats(workingScene)
     const sceneDirection =
@@ -179,13 +220,16 @@ function unionProductionSegments(
       byId.set(segment.segmentId, segment)
       continue
     }
-    const takes = segment.takes?.length ? segment.takes : previous.takes
+    const takes = unionRowsById(previous.takes, segment.takes, 'id')
+    const preferredTakeId = segment.currentTakeId || previous.currentTakeId
+    const preferredActiveUrl = segment.activeAssetUrl || previous.activeAssetUrl
+    const liveTake = resolveLiveTake(takes, preferredTakeId, preferredActiveUrl)
     byId.set(segment.segmentId, {
       ...previous,
       ...segment,
       takes,
-      activeAssetUrl: segment.activeAssetUrl || previous.activeAssetUrl,
-      currentTakeId: segment.currentTakeId || previous.currentTakeId,
+      activeAssetUrl: preferredActiveUrl || liveTake?.url,
+      currentTakeId: preferredTakeId || liveTake?.id,
       assetType: segment.assetType || previous.assetType,
       status:
         segmentHasPlayableVideo(previous) && segment.status === 'PENDING'

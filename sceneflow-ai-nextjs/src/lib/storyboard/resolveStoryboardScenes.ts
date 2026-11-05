@@ -1,5 +1,6 @@
 import { validateAndCleanSceneAudio } from '@/lib/audio/cleanupAudio'
 import {
+  BEAT_ACTION_START_STILL_SLOT,
   BEAT_END_STILL_SLOT,
   BEAT_START_STILL_SLOT,
   CUSTOM_FRAME_STILL_SLOT,
@@ -36,7 +37,9 @@ export function mediaRichnessScore(scene: any): number {
   }
   for (const beat of scene.beats || []) {
     if (isValidStoryboardMediaUrl(beat?.storyboardImageUrl)) score += 2
+    if (isValidStoryboardMediaUrl(beat?.storyboardStartImageUrl)) score += 2
     score += stillVersionCount(beat, BEAT_START_STILL_SLOT)
+    score += stillVersionCount(beat, BEAT_ACTION_START_STILL_SLOT)
     score += stillVersionCount(beat, BEAT_END_STILL_SLOT)
   }
   for (const frame of scene.storyboardFrames || []) {

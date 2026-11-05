@@ -544,24 +544,52 @@ export function resolveEffectiveStartFrameUrl(
   let beatActionStartUrl: string | null = null
   let beatStillUrl: string | null = null
   let beatRow: Record<string, unknown> | undefined
+  let beatPreferredSlot = BEAT_START_STILL_SLOT
   if (beatId && scene) {
     const beat = getSceneBeats(scene).find((b) => b.beatId === beatId)
     beatRow = beat as unknown as Record<string, unknown> | undefined
     beatActionStartUrl = beat?.storyboardStartImageUrl?.trim() || null
     beatStillUrl = beat?.storyboardImageUrl?.trim() || null
-    beatUrl = beatActionStartUrl || beatStillUrl
+    if (beatActionStartUrl && beatStillUrl && beatActionStartUrl !== beatStillUrl) {
+      const actionStartAt = mediaRecencyMs(
+        beatActionStartUrl,
+        stillVersionsOnRow(beatRow, BEAT_ACTION_START_STILL_SLOT)
+      )
+      const stillAt = mediaRecencyMs(
+        beatStillUrl,
+        stillVersionsOnRow(beatRow, BEAT_START_STILL_SLOT)
+      )
+      if (stillAt > 0 && actionStartAt > 0 && stillAt > actionStartAt) {
+        beatUrl = beatStillUrl
+        beatPreferredSlot = BEAT_START_STILL_SLOT
+      } else {
+        beatUrl = beatActionStartUrl
+        beatPreferredSlot = BEAT_ACTION_START_STILL_SLOT
+      }
+    } else if (beatActionStartUrl) {
+      beatUrl = beatActionStartUrl
+      beatPreferredSlot = BEAT_ACTION_START_STILL_SLOT
+    } else {
+      beatUrl = beatStillUrl
+      beatPreferredSlot = BEAT_START_STILL_SLOT
+    }
   }
 
-  // If beat has a dedicated F2V Start Frame (storyboardStartImageUrl) and the segment
-  // still holds the Pre-Vis Shot Still (storyboardImageUrl), prefer the F2V Start Frame.
-  if (beatActionStartUrl && segmentUrl && beatStillUrl && segmentUrl === beatStillUrl) {
+  // If beat has a dedicated F2V Start Frame (storyboardStartImageUrl) that is not older
+  // than the Shot Still and the segment still holds the Pre-Vis Shot Still, prefer the F2V Start Frame.
+  if (
+    beatPreferredSlot === BEAT_ACTION_START_STILL_SLOT &&
+    beatActionStartUrl &&
+    segmentUrl &&
+    beatStillUrl &&
+    segmentUrl === beatStillUrl
+  ) {
     return beatActionStartUrl
   }
 
   if (beatUrl && segmentUrl) {
     if (beatUrl === segmentUrl) return beatUrl
-    const beatSlot = beatActionStartUrl ? BEAT_ACTION_START_STILL_SLOT : BEAT_START_STILL_SLOT
-    const beatAt = mediaRecencyMs(beatUrl, stillVersionsOnRow(beatRow, beatSlot))
+    const beatAt = mediaRecencyMs(beatUrl, stillVersionsOnRow(beatRow, beatPreferredSlot))
     const segmentAt = mediaRecencyMs(
       segmentUrl,
       stillVersionsOnRow(

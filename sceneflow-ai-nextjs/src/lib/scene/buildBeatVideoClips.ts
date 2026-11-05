@@ -5,7 +5,11 @@ import { getSceneBeats, isBeatExcluded } from '@/lib/script/beatMigration'
 import { parsePersistedMusicCues, resolveBeatMusicCue } from '@/lib/script/sceneMusicCues'
 import { resolveBeatStillTier, segmentHasPlayableVideo } from '@/lib/storyboard/mediaVersions'
 import { isBeatFrameStale } from '@/lib/storyboard/syncBeatStillPrompt'
-import { f2vStartFromPreviousEnd, resolveF2VFrameUrls } from '@/lib/vision/segmentConfigBuilder'
+import {
+  f2vStartFromPreviousEnd,
+  resolveEffectiveStartFrameUrl,
+  resolveF2VFrameUrls,
+} from '@/lib/vision/segmentConfigBuilder'
 import type { DetailedSceneDirection } from '@/types/scene-direction'
 
 export interface BuildBeatVideoClipsArgs {
@@ -72,7 +76,11 @@ export function buildBeatVideoClips({
         previousBeat?.storyboardEndImageUrl?.trim() ||
         null
     )
+    const effectiveStartFrameUrl = segment
+      ? resolveEffectiveStartFrameUrl(segment, sceneRecord ?? undefined)
+      : beat.storyboardStartImageUrl?.trim() || beat.storyboardImageUrl?.trim() || null
     const thumbnail =
+      effectiveStartFrameUrl ||
       beat.storyboardStartImageUrl?.trim() ||
       beat.storyboardImageUrl?.trim() ||
       f2v.startFrameUrl ||

@@ -426,6 +426,7 @@ export interface MigrationStats {
 /** Append-only still history lists that can still hold a leftover data URI. */
 export const MEDIA_VERSION_LIST_KEYS = [
   'storyboardImageVersions',
+  'storyboardStartImageVersions',
   'storyboardEndImageVersions',
   'imageVersions',
 ] as const
@@ -465,7 +466,7 @@ function visitSceneStillHosts(
   }
   for (const beat of scene.beats || []) {
     if (beat && typeof beat === 'object') {
-      visit(beat, ['storyboardImageUrl', 'storyboardEndImageUrl'])
+      visit(beat, ['storyboardImageUrl', 'storyboardStartImageUrl', 'storyboardEndImageUrl'])
     }
   }
 }

@@ -254,4 +254,20 @@ describe('salvaging media from a rejected stale write', () => {
       (result.scenes[0] as any).beats[0].storyboardImageVersions.map((v: { url: string }) => v.url).sort()
     ).toEqual([older, newerStill].sort())
   })
+
+  it('salvages storyboardStartImageUrl and storyboardStartImageVersions on action-start slot', () => {
+    const older = 'https://blob.example.com/frames/1779527000000.jpeg'
+    const newerStart = 'https://blob.example.com/frames/1779527999999.jpeg'
+    const newer = [scene({ beats: [beat({ storyboardStartImageUrl: older })] })]
+    const stale = [scene({ beats: [beat({ storyboardStartImageUrl: newerStart })] })]
+
+    const result = salvageStaleWriteMedia(newer, stale)
+
+    expect((result.scenes[0] as any).beats[0].storyboardStartImageUrl).toBe(newerStart)
+    expect(
+      (result.scenes[0] as any).beats[0].storyboardStartImageVersions
+        .map((v: { url: string }) => v.url)
+        .sort()
+    ).toEqual([older, newerStart].sort())
+  })
 })

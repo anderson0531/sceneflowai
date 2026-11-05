@@ -17,6 +17,7 @@
 import { isValidStoryboardMediaUrl } from './mergeSceneMedia'
 import { mergeVoiceAudioMapsByLineId } from './mergeVoiceAudioMaps'
 import {
+  BEAT_ACTION_START_STILL_SLOT,
   BEAT_END_STILL_SLOT,
   BEAT_START_STILL_SLOT,
   CUSTOM_FRAME_STILL_SLOT,
@@ -33,7 +34,11 @@ const SCENE_PATH_AND_AUDIO_KEYS = [
   'musicUrl',
 ] as const
 
-const BEAT_PATH_KEYS = ['storyboardImageGcsPath', 'storyboardEndImageGcsPath'] as const
+const BEAT_PATH_KEYS = [
+  'storyboardImageGcsPath',
+  'storyboardStartImageGcsPath',
+  'storyboardEndImageGcsPath',
+] as const
 
 const DIALOGUE_PATH_KEYS = ['storyboardImageGcsPath'] as const
 
@@ -132,6 +137,7 @@ function salvageScene(newerScene: Row, staleScene: Row, sceneLabel: string, fiel
       const stale = matchRow(beat, 'beatId', staleBeatsById, staleBeats, index)
       const label = `${sceneLabel}.beat[${stringKey(beat, 'beatId') ?? index}]`
       let merged = salvageStillSlot(beat, stale, BEAT_START_STILL_SLOT, label, fields)
+      merged = salvageStillSlot(merged, stale, BEAT_ACTION_START_STILL_SLOT, label, fields)
       merged = salvageStillSlot(merged, stale, BEAT_END_STILL_SLOT, label, fields)
       merged = fillEmptyMediaSlots(merged, stale, BEAT_PATH_KEYS, label, fields)
       if (merged !== beat) beatsChanged = true

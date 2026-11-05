@@ -135,6 +135,7 @@ import {
 import { buildBeatFirstPlaybackTimeline } from '@/lib/storyboard/types'
 import { buildStoryboardMusicClips } from '@/lib/storyboard/musicPlayback'
 import { isBeatSfxMuted } from '@/lib/storyboard/sfxPlayback'
+import { mergeScenePreservingMedia } from '@/lib/storyboard/mergeSceneMedia'
 import {
   readBeatSfxAudio,
   resolveBeatSfxSlot,
@@ -5053,10 +5054,10 @@ function SceneCard({
           force: true,
         })
         if (shotRes.scene && typeof shotRes.scene === 'object') {
-          nextScene = {
+          nextScene = mergeScenePreservingMedia(nextScene, {
             ...(shotRes.scene as Record<string, unknown>),
             shotDirectionNeedsRefresh: false,
-          }
+          }) as Record<string, unknown>
         }
       } catch (shotErr) {
         console.warn('[ScriptPanel] Shot optimization after scene direction lock warning:', shotErr)
