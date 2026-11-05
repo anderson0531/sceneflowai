@@ -508,7 +508,7 @@ export function buildStillDirectorUserPrompt(request: DirectBeatStillRequest): s
     )
   } else {
     parts.push(
-      'Optimize each beat still for first-try photographic legibility. Keep the story beat. Thicken blocking, gaze, prop placement, and distinct faces.'
+      'Optimize each beat still for first-try photographic legibility. Keep the story beat. Thicken blocking, gaze, prop placement, and distinct faces. Focus deeply on this shot\'s specific physical setting, spatial staging, lighting atmosphere, and nuanced character emotion so both the still frame and motion clip prompts land in one take.'
     )
   }
   if (request.policyCompliance) {

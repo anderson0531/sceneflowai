@@ -1,6 +1,7 @@
 import type { StillDirectorPatch } from '@/lib/intelligence/beat-still-director-fallback'
 import { getSceneBeats } from '@/lib/script/beatMigration'
 import type { SceneBeat } from '@/lib/script/segmentTypes'
+import { DEFAULT_SHOT_DIRECTION_TEXT_CONCURRENCY } from '@/lib/vision/shotDirectionBatch'
 
 export interface ShotDirectionAgentResult {
   optimized: number
@@ -91,7 +92,10 @@ export async function runShotDirectionAgent(args: {
 }): Promise<ShotDirectionAgentResult> {
   const { shots, signal } = args
   const total = shots.length
-  const concurrency = Math.max(1, Math.min(args.concurrency ?? 3, total || 1))
+  const concurrency = Math.max(
+    1,
+    Math.min(args.concurrency ?? DEFAULT_SHOT_DIRECTION_TEXT_CONCURRENCY, total || 1)
+  )
   const results: Array<StillDirectorPatch | null | undefined> = new Array(total).fill(undefined)
   let optimized = 0
   let failed = 0

@@ -10395,6 +10395,37 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                 : current
             )
           },
+          onSceneDirected: (directedIdx, directedScene) => {
+            if (!directedScene || typeof directedScene !== 'object') return
+            setScript((currentScript: any) => {
+              if (!currentScript?.script?.scenes) return currentScript
+              const updatedScenes = [...currentScript.script.scenes]
+              if (!updatedScenes[directedIdx]) return currentScript
+              updatedScenes[directedIdx] = directedScene
+              const updatedScript = {
+                ...currentScript,
+                script: { ...currentScript.script, scenes: updatedScenes },
+              }
+              scriptRef.current = updatedScript
+              setProject((p: any) => {
+                if (!p) return p
+                const updated = {
+                  ...p,
+                  metadata: {
+                    ...p.metadata,
+                    visionPhase: {
+                      ...p.metadata?.visionPhase,
+                      script: updatedScript,
+                      scenes: updatedScenes,
+                    },
+                  },
+                }
+                projectRef.current = updated
+                return updated
+              })
+              return updatedScript
+            })
+          },
         })
         try {
           await loadProject(true, { quiet: true })
@@ -14624,9 +14655,17 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     }
   }
 
-  // Background direction generator - runs silently after script generation
+  // Background direction + concurrent shot optimization generator - runs after Scene Director updates
   // Does NOT use the blocking overlay, just shows toast notifications
-  const handleBackgroundDirectionGeneration = async (sceneIdx: number, sceneOverride?: any) => {
+  const handleBackgroundDirectionGeneration = async (
+    sceneIdx: number,
+    sceneOverride?: any,
+    options?: {
+      skipSceneDirection?: boolean
+      skipShotOptimization?: boolean
+      forceShotOptimization?: boolean
+    }
+  ) => {
     // Guard: skip if already generating direction for this scene
     if (backgroundDirectionInFlight.current.has(sceneIdx) || generatingDirectionFor === sceneIdx) {
       console.log(`[AutoDirection] Skipping Scene ${sceneIdx + 1} - already generating`)
@@ -14635,97 +14674,151 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     
     const scene = sceneOverride ?? script?.script?.scenes?.[sceneIdx]
     if (!scene) return
-       backgroundDirectionInFlight.current.add(sceneIdx)
+    backgroundDirectionInFlight.current.add(sceneIdx)
     setGeneratingDirectionFor(sceneIdx)
     
     try {
-      console.log(`[AutoDirection] Auto-generating direction for Scene ${sceneIdx + 1}...`)
-      try { const { toast } = require('sonner'); toast.info(`Updating Scene ${sceneIdx + 1} direction...`, { duration: 3000 }) } catch {}
-      
-      const directionResponse = await fetch('/api/scene/generate-direction', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          projectId,
-          sceneIndex: sceneIdx,
-          scene: {
-            heading: scene.heading,
-            action: scene.action,
-            visualDescription: scene.visualDescription,
-            narration: scene.narration,
-            dialogue: scene.dialogue,
-            characters: scene.characters,
-            beats: scene.beats,
-            sceneMovements: scene.sceneMovements,
-          }
-        })
-      })
+      const runSceneDirection = options?.skipSceneDirection !== true
+      const runShotOptimization = options?.skipShotOptimization !== true
 
-      if (!directionResponse.ok) {
-        const errorData = await directionResponse.json().catch(() => ({ error: 'Unknown error' }))
-        const apiErr =
-          typeof errorData.error === 'string'
-            ? errorData.error
-            : typeof errorData.message === 'string'
-              ? errorData.message
-              : errorData.error != null
-                ? JSON.stringify(errorData.error)
-                : 'Failed to generate scene direction'
-        throw new Error(apiErr)
-      }
-
-      const data = await directionResponse.json()
-      
-      if (!data.success || !data.sceneDirection) {
-        const apiErr =
-          typeof data.error === 'string'
-            ? data.error
-            : data.error != null
-              ? JSON.stringify(data.error)
-              : 'Failed to generate scene direction'
-        throw new Error(apiErr)
-      }
-
-      // Re-read current script state (may have changed during async operation)
-      // LOCAL STATE ONLY — the API route (/api/scene/generate-direction) already
-      // saved the direction to DB server-side via project.update(). No client DB
-      // write needed here, which eliminates the double-save race condition that was
-      // causing ghost script reversions.
-      setScript((currentScript: any) => {
-        if (!currentScript?.script?.scenes) return currentScript
-        const updatedScenes = [...currentScript.script.scenes]
-        updatedScenes[sceneIdx] = ensureSceneBeats({
-          ...updatedScenes[sceneIdx],
-          sceneDirection: data.sceneDirection,
-        } as Record<string, unknown>)
-        const updatedScript = {
-          ...currentScript,
-          script: { ...currentScript.script, scenes: updatedScenes }
-        }
+      if (runSceneDirection) {
+        console.log(`[AutoDirection] Auto-generating direction for Scene ${sceneIdx + 1}...`)
+        try { const { toast } = require('sonner'); toast.info(`Updating Scene ${sceneIdx + 1} direction & optimizing shots...`, { duration: 3000 }) } catch {}
         
-        // Update project state with the new direction (local only, no DB write)
-        // Use functional setProject to read latest state, preventing stale closure
-        setProject((p: any) => {
-          if (!p) return p
-          const updated = {
-            ...p,
-            metadata: {
-              ...p.metadata,
-              visionPhase: {
-                ...p.metadata?.visionPhase,
-                script: updatedScript
+        const directionResponse = await fetch('/api/scene/generate-direction', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            projectId,
+            sceneIndex: sceneIdx,
+            scene: {
+              heading: scene.heading,
+              action: scene.action,
+              visualDescription: scene.visualDescription,
+              narration: scene.narration,
+              dialogue: scene.dialogue,
+              characters: scene.characters,
+              beats: scene.beats,
+              sceneMovements: scene.sceneMovements,
+            }
+          })
+        })
+
+        if (!directionResponse.ok) {
+          const errorData = await directionResponse.json().catch(() => ({ error: 'Unknown error' }))
+          const apiErr =
+            typeof errorData.error === 'string'
+              ? errorData.error
+              : typeof errorData.message === 'string'
+                ? errorData.message
+                : errorData.error != null
+                  ? JSON.stringify(errorData.error)
+                  : 'Failed to generate scene direction'
+          throw new Error(apiErr)
+        }
+
+        const data = await directionResponse.json()
+        
+        if (!data.success || !data.sceneDirection) {
+          const apiErr =
+            typeof data.error === 'string'
+              ? data.error
+              : data.error != null
+                ? JSON.stringify(data.error)
+                : 'Failed to generate scene direction'
+          throw new Error(apiErr)
+        }
+
+        // Re-read current script state (may have changed during async operation)
+        // LOCAL STATE ONLY — the API route (/api/scene/generate-direction) already
+        // saved the direction to DB server-side via project.update(). No client DB
+        // write needed here, which eliminates the double-save race condition that was
+        // causing ghost script reversions.
+        setScript((currentScript: any) => {
+          if (!currentScript?.script?.scenes) return currentScript
+          const updatedScenes = [...currentScript.script.scenes]
+          updatedScenes[sceneIdx] = ensureSceneBeats({
+            ...updatedScenes[sceneIdx],
+            sceneDirection: data.sceneDirection,
+          } as Record<string, unknown>)
+          const updatedScript = {
+            ...currentScript,
+            script: { ...currentScript.script, scenes: updatedScenes }
+          }
+          scriptRef.current = updatedScript
+          
+          // Update project state with the new direction (local only, no DB write)
+          // Use functional setProject to read latest state, preventing stale closure
+          setProject((p: any) => {
+            if (!p) return p
+            const updated = {
+              ...p,
+              metadata: {
+                ...p.metadata,
+                visionPhase: {
+                  ...p.metadata?.visionPhase,
+                  script: updatedScript,
+                  scenes: updatedScenes,
+                }
               }
             }
-          }
-          projectRef.current = updated
-          return updated
+            projectRef.current = updated
+            return updated
+          })
+          
+          return updatedScript
         })
-        
-        return updatedScript
-      })
+      }
 
-      console.log(`[AutoDirection] Scene ${sceneIdx + 1} direction updated successfully`)
-      try { const { toast } = require('sonner'); toast.success(`Scene ${sceneIdx + 1} direction updated`) } catch {}
+      if (runShotOptimization && projectId) {
+        try {
+          if (!runSceneDirection) {
+            try { const { toast } = require('sonner'); toast.info(`Optimizing Scene ${sceneIdx + 1} shots...`, { duration: 3000 }) } catch {}
+          }
+          const shotRes = await requestSceneShotDirection({
+            projectId,
+            sceneIndex: sceneIdx,
+            force: options?.forceShotOptimization ?? true,
+          })
+          if (shotRes.scene && typeof shotRes.scene === 'object') {
+            setScript((currentScript: any) => {
+              if (!currentScript?.script?.scenes) return currentScript
+              const updatedScenes = [...currentScript.script.scenes]
+              updatedScenes[sceneIdx] = {
+                ...(shotRes.scene as Record<string, unknown>),
+                shotDirectionNeedsRefresh: false,
+              }
+              const updatedScript = {
+                ...currentScript,
+                script: { ...currentScript.script, scenes: updatedScenes },
+              }
+              scriptRef.current = updatedScript
+              setProject((p: any) => {
+                if (!p) return p
+                const updated = {
+                  ...p,
+                  metadata: {
+                    ...p.metadata,
+                    visionPhase: {
+                      ...p.metadata?.visionPhase,
+                      script: updatedScript,
+                      scenes: updatedScenes,
+                    },
+                  },
+                }
+                projectRef.current = updated
+                return updated
+              })
+              return updatedScript
+            })
+          }
+        } catch (shotErr) {
+          console.warn(`[AutoDirection] Shot optimization warning for Scene ${sceneIdx + 1}:`, shotErr)
+        }
+      }
+
+      console.log(`[AutoDirection] Scene ${sceneIdx + 1} direction & shot optimization updated successfully`)
+      try { const { toast } = require('sonner'); toast.success(`Scene ${sceneIdx + 1} direction & shots optimized`) } catch {}
       
       // NOTE: Removed auto handleGenerateSceneScore() call.
       // It was reading `script` from a stale closure, building updatedScenes from
@@ -14852,6 +14945,51 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
 
             return updatedScript
           })
+
+          if (projectId) {
+            try {
+              const shotRes = await requestSceneShotDirection({
+                projectId,
+                sceneIndex: idx,
+                force: true,
+              })
+              if (shotRes.scene && typeof shotRes.scene === 'object') {
+                setScript((currentScript: any) => {
+                  if (!currentScript?.script?.scenes) return currentScript
+                  const updatedScenes = [...currentScript.script.scenes]
+                  updatedScenes[idx] = {
+                    ...(shotRes.scene as Record<string, unknown>),
+                    shotDirectionNeedsRefresh: false,
+                  }
+                  const updatedScript = {
+                    ...currentScript,
+                    script: { ...currentScript.script, scenes: updatedScenes },
+                  }
+                  scriptRef.current = updatedScript
+                  setProject((p: any) => {
+                    if (!p) return p
+                    const updated = {
+                      ...p,
+                      metadata: {
+                        ...p.metadata,
+                        visionPhase: {
+                          ...p.metadata?.visionPhase,
+                          script: updatedScript,
+                          scenes: updatedScenes,
+                        },
+                      },
+                    }
+                    projectRef.current = updated
+                    return updated
+                  })
+                  return updatedScript
+                })
+              }
+            } catch (shotErr) {
+              console.warn(`[UpdateAllDirections] Shot optimization warning for Scene ${idx + 1}:`, shotErr)
+            }
+          }
+
           markScene(idx, 'done')
         } catch (err) {
           failures += 1
@@ -16176,7 +16314,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     // For light/moderate, invalidate storyboard frames only for beats whose content changed.
     if (!shouldSkipBeatRederivation(preserveElements)) {
       cleanedScene.segments = undefined
-      cleanedScene.shotDirectionNeedsRefresh = false
+      cleanedScene.shotDirectionNeedsRefresh = true
       if (!isDeepRestructure && getSceneBeats(cleanedScene).length > 0) {
         cleanedScene = invalidateChangedBeatFramesOnScene(cleanedScene, originalScene)
       }
@@ -16189,7 +16327,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       delete part[REVISION_DEPTH_SCENE_KEY]
       delete part.segments
       if (!shouldSkipBeatRederivation(preserveElements)) {
-        part.shotDirectionNeedsRefresh = false
+        part.shotDirectionNeedsRefresh = true
       }
       if (!shouldSkipBeatRederivation(preserveElements) && !isDeepRestructure && getSceneBeats(part).length > 0) {
         part = invalidateChangedBeatFramesOnScene(part, originalScene)
@@ -16285,11 +16423,17 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       setScriptEditedAt(Date.now())
 
       const insertedCount = continuationScenes.length
-      if (shouldRegenerateSceneDirection(preserveElements)) {
+      const regenerateSceneDir = shouldRegenerateSceneDirection(preserveElements)
+      const optimizeShots = !shouldSkipBeatRederivation(preserveElements)
+      if (regenerateSceneDir || optimizeShots) {
         void (async () => {
           for (let offset = 0; offset <= insertedCount; offset++) {
             const idx = sceneIndex + offset
-            await handleBackgroundDirectionGeneration(idx, persistedScenes[idx])
+            await handleBackgroundDirectionGeneration(idx, persistedScenes[idx], {
+              skipSceneDirection: !regenerateSceneDir,
+              skipShotOptimization: !optimizeShots,
+              forceShotOptimization: true,
+            })
           }
         })()
       }
@@ -16418,8 +16562,8 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       }
 
       cleanedScene.segments = undefined
-      // Scene Director already outputs complete beatDirection and composed prompts on every beat.
-      cleanedScene.shotDirectionNeedsRefresh = false
+      // Mark for concurrent single-shot optimization pass after Scene Director revision.
+      cleanedScene.shotDirectionNeedsRefresh = true
       if (getSceneBeats(cleanedScene).length > 0) {
         cleanedScene = invalidateChangedBeatFramesOnScene(cleanedScene, originalScene)
       }
@@ -16429,7 +16573,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         let part = { ...scene }
         delete part[REVISION_DEPTH_SCENE_KEY]
         delete part.segments
-        part.shotDirectionNeedsRefresh = false
+        part.shotDirectionNeedsRefresh = true
         if (getSceneBeats(part).length > 0) {
           part = invalidateChangedBeatFramesOnScene(part, originalScene)
         }
@@ -16511,6 +16655,20 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     }
 
     setScriptEditedAt(Date.now())
+
+    const revisedSceneIndices = persistedScenes
+      .map((s: any, idx: number) => (s?.shotDirectionNeedsRefresh ? idx : -1))
+      .filter((idx: number) => idx >= 0)
+    if (revisedSceneIndices.length > 0) {
+      void (async () => {
+        for (const idx of revisedSceneIndices) {
+          await handleBackgroundDirectionGeneration(idx, persistedScenes[idx], {
+            forceShotOptimization: true,
+          })
+        }
+      })()
+    }
+
     return { sceneCount: persistedScenes.length }
   }
 

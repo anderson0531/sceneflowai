@@ -1,4 +1,4 @@
-import { composeBeatActionFraming, STILL_DIRECTOR_BEAT_CHUNK } from '@/lib/intelligence/beat-sequence-planner-fallback'
+import { composeBeatActionFraming } from '@/lib/intelligence/beat-sequence-planner-fallback'
 import type { BeatSequenceReferenceCatalog } from '@/lib/intelligence/beat-sequence-planner-fallback'
 import {
   buildStillDirectorSceneContext,
@@ -16,15 +16,20 @@ import {
   saveDirectorPatchToScenes,
 } from '@/lib/vision/saveBeatDirection'
 
-/** Beats per Still Director call. Same size Express already uses. */
-export const SHOT_DIRECTION_BEAT_CHUNK = STILL_DIRECTOR_BEAT_CHUNK
+/**
+ * Single-shot focus per Still Director call (`1` beat per request).
+ * Focusing on a single shot at a time allows the model to richly describe the
+ * shot's setting, blocking, and emotional tells, which produces superior
+ * Stills (`framePrompt`) and Clips (`videoPrompt`) prompts for one-take Agent processing.
+ */
+export const SHOT_DIRECTION_BEAT_CHUNK = 1
 
 /**
- * Parallel Still Director calls for one scene.
+ * Parallel single-shot optimizations for one scene.
  * Wider than stills and clips (those stay at 2) because this is text generation.
  * Override with SHOT_DIRECTION_TEXT_CONCURRENCY.
  */
-export const DEFAULT_SHOT_DIRECTION_TEXT_CONCURRENCY = 4
+export const DEFAULT_SHOT_DIRECTION_TEXT_CONCURRENCY = 5
 
 export function getShotDirectionTextConcurrency(): number {
   const raw = Number(process.env.SHOT_DIRECTION_TEXT_CONCURRENCY)
@@ -191,6 +196,7 @@ export async function runShotDirectionChunks(args: {
     }
   })
 
+  collected.sort((a, b) => a.beatIndex - b.beatIndex)
   return { patches: collected, failed, requested: targets.length }
 }
 

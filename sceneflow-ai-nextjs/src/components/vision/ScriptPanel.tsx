@@ -5039,18 +5039,33 @@ function SceneCard({
           typeof data?.error === 'string' ? data.error : 'Scene direction could not be locked'
         )
       }
-      const nextScene = ensureSceneBeats({
+      let nextScene: Record<string, unknown> = ensureSceneBeats({
         ...scene,
         sceneDirection: {
           ...data.sceneDirection,
           basedOnContentHash: generateSceneContentHash(scene),
         },
       } as Record<string, unknown>)
+      try {
+        const shotRes = await requestSceneShotDirection({
+          projectId,
+          sceneIndex: sceneIdx,
+          force: true,
+        })
+        if (shotRes.scene && typeof shotRes.scene === 'object') {
+          nextScene = {
+            ...(shotRes.scene as Record<string, unknown>),
+            shotDirectionNeedsRefresh: false,
+          }
+        }
+      } catch (shotErr) {
+        console.warn('[ScriptPanel] Shot optimization after scene direction lock warning:', shotErr)
+      }
       const updatedScenes = scenes.map((entry: any, idx: number) =>
         idx === sceneIdx ? nextScene : entry
       )
       onScriptChange({ ...script, script: { ...script.script, scenes: updatedScenes } })
-      toast.success('Scene direction locked. Update references, then draw the plates.')
+      toast.success('Scene direction locked and shots optimized.')
     } catch (error) {
       toast.error(error instanceof Error ? error.message : 'Scene direction could not be locked')
     } finally {

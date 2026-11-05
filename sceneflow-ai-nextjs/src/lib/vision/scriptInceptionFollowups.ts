@@ -114,6 +114,11 @@ export async function runScriptInceptionFollowups(args: {
   fetchImpl?: typeof fetch
   onSceneDirectionProgress?: (done: number, total: number) => void
   onShotDirectionProgress?: (done: number, total: number) => void
+  onSceneDirected?: (
+    sceneIndex: number,
+    scene: unknown,
+    result: SceneShotDirectionResult
+  ) => void
 }): Promise<ScriptInceptionFollowupResult> {
   const fetchImpl = args.fetchImpl ?? fetch
   const result: ScriptInceptionFollowupResult = {
@@ -174,6 +179,9 @@ export async function runScriptInceptionFollowups(args: {
         signal: args.signal,
         fetchImpl,
       })
+      if (directed.scene !== undefined) {
+        args.onSceneDirected?.(sceneIndex, directed.scene, directed)
+      }
       result.shotDirection.optimized += directed.optimized
       result.shotDirection.failed += directed.failed
       result.shotDirection.scenesCompleted += 1

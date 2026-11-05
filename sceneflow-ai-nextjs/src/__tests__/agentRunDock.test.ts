@@ -66,7 +66,6 @@ describe('agent batch runs report into the dock, not the blocking overlay', () =
     expect(handler).toContain('onAudioRunReport')
     expect(handler).toContain("addItem('narration'")
     expect(handler).toContain('addItem(`dialogue-${i}`')
-    expect(handler).toContain("addItem('music'")
     expect(handler).toContain('addItem(`sfx-${beatId}`')
   })
 

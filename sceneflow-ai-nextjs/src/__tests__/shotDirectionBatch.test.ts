@@ -29,26 +29,26 @@ function beat(beatId: string, sequenceIndex: number, overrides: Partial<SceneBea
 }
 
 describe('shot direction batches', () => {
-  it('uses a wider text concurrency than the two-wide still and clip cap', () => {
+  it('uses single-shot focus (chunkSize = 1) and 5 concurrent shot optimizations by default', () => {
     const previous = process.env.SHOT_DIRECTION_TEXT_CONCURRENCY
     delete process.env.SHOT_DIRECTION_TEXT_CONCURRENCY
     try {
-      expect(SHOT_DIRECTION_BEAT_CHUNK).toBe(6)
-      expect(DEFAULT_SHOT_DIRECTION_TEXT_CONCURRENCY).toBe(4)
+      expect(SHOT_DIRECTION_BEAT_CHUNK).toBe(1)
+      expect(DEFAULT_SHOT_DIRECTION_TEXT_CONCURRENCY).toBe(5)
       expect(DEFAULT_SHOT_DIRECTION_TEXT_CONCURRENCY).toBeGreaterThan(2)
-      expect(getShotDirectionTextConcurrency()).toBe(4)
+      expect(getShotDirectionTextConcurrency()).toBe(5)
       process.env.SHOT_DIRECTION_TEXT_CONCURRENCY = '6'
       expect(getShotDirectionTextConcurrency()).toBe(6)
     } finally {
       if (previous === undefined) delete process.env.SHOT_DIRECTION_TEXT_CONCURRENCY
       else process.env.SHOT_DIRECTION_TEXT_CONCURRENCY = previous
     }
-    expect(read('src/app/api/vision/direct-scene-shots/route.ts')).toContain(
-      'getShotDirectionTextConcurrency()'
-    )
+    const route = read('src/app/api/vision/direct-scene-shots/route.ts')
+    expect(route).toContain('getShotDirectionTextConcurrency()')
+    expect(route).toContain('syncSceneDirectionToContinuityCatalog')
   })
 
-  it('chunks shootable shots and skips protected direction unless forced', () => {
+  it('chunks shootable shots into single-shot requests and skips protected direction unless forced', () => {
     const scene = {
       beats: [
         beat('s1', 0),
@@ -76,7 +76,10 @@ describe('shot direction batches', () => {
       's9',
       's10',
     ])
-    expect(chunkShotDirectionTargets(targets).map((chunk) => chunk.length)).toEqual([6, 1])
+    expect(chunkShotDirectionTargets(targets).map((chunk) => chunk.length)).toEqual([
+      1, 1, 1, 1, 1, 1, 1,
+    ])
+    expect(chunkShotDirectionTargets(targets, 6).map((chunk) => chunk.length)).toEqual([6, 1])
     expect(shotDirectionTargets(scene, { force: true }).map((target) => target.beat.beatId)).toEqual([
       's1',
       's3',
@@ -255,6 +258,14 @@ describe('shot direction batches', () => {
     const workbenchSource = read('src/components/vision/scene-production/SceneDirectionWorkbench.tsx')
     expect(workbenchSource).not.toContain('Shot Direction Agent')
     expect(workbenchSource).toContain('shots directed')
+  })
+
+  it('integrates concurrent single-shot optimization as the end process of both initial script build and Scene Director build', () => {
+    const page = read('src/app/dashboard/workflow/vision/[projectId]/page.tsx')
+    expect(page).toContain('onSceneDirected: (directedIdx, directedScene) => {')
+    expect(page).toContain('const shotRes = await requestSceneShotDirection({')
+    expect(page).toContain('force: options?.forceShotOptimization ?? true,')
+    expect(page).toContain('const optimizeShots = !shouldSkipBeatRederivation(preserveElements)')
   })
 })
 
