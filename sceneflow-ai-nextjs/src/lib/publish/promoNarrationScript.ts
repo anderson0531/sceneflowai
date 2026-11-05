@@ -118,13 +118,53 @@ function dialogueAudioRecord(scene: unknown): Record<string, unknown[]> | undefi
 }
 
 function firstTrackLine(tracks: unknown): string | undefined {
-  if (!Array.isArray(tracks) || !tracks[0] || typeof tracks[0] !== 'object') return undefined
-  const line = (tracks[0] as { line?: unknown }).line
+  if (!Array.isArray(tracks) || tracks.length === 0) return undefined
+  const explicitNarration = tracks.find(
+    (t) =>
+      t &&
+      typeof t === 'object' &&
+      ((t as { kind?: unknown }).kind === 'narration' ||
+        String((t as { character?: unknown }).character || '')
+          .trim()
+          .toUpperCase() === 'NARRATOR')
+  ) as { line?: unknown } | undefined
+  if (
+    explicitNarration &&
+    typeof explicitNarration.line === 'string' &&
+    explicitNarration.line.trim()
+  ) {
+    return explicitNarration.line.trim()
+  }
+  const first = tracks[0]
+  if (!first || typeof first !== 'object') return undefined
+  const firstKind = (first as { kind?: unknown }).kind
+  const firstChar = String((first as { character?: unknown }).character || '')
+    .trim()
+    .toUpperCase()
+  if (firstKind && firstKind !== 'narration' && firstChar && firstChar !== 'NARRATOR') {
+    return undefined
+  }
+  const line = (first as { line?: unknown }).line
   return typeof line === 'string' && line.trim() ? line.trim() : undefined
 }
 
 export function promoNarrationLineFromScene(scene: unknown, language: string): string | undefined {
-  return firstTrackLine(dialogueAudioRecord(scene)?.[language])
+  const fromAudio = firstTrackLine(dialogueAudioRecord(scene)?.[language])
+  if (fromAudio) return fromAudio
+  if (scene && typeof scene === 'object') {
+    const beats = Array.isArray((scene as { beats?: unknown }).beats)
+      ? ((scene as { beats: Array<Record<string, unknown>> }).beats ?? [])
+      : []
+    const narrBeat = beats.find((b) => b && typeof b === 'object' && b.kind === 'narration')
+    if (narrBeat && typeof narrBeat.line === 'string' && narrBeat.line.trim()) {
+      return narrBeat.line.trim()
+    }
+    if (language === 'en') {
+      const rawNarr = (scene as { narration?: unknown }).narration
+      if (typeof rawNarr === 'string' && rawNarr.trim()) return rawNarr.trim()
+    }
+  }
+  return undefined
 }
 
 /**

@@ -1288,6 +1288,7 @@ function SpokenBeatAudio(
                       })
                     }
                     if (
+                      speaker.kind === 'character' &&
                       typeof promoSource.sourceSceneIndex === 'number' &&
                       promoSource.sourceBeatId &&
                       idx === promoSource.sourceSceneIndex

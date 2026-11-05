@@ -1054,19 +1054,66 @@ export function reconcilePromoBeatsWithPlan(
     return withNarrationDirected
   }
 
-  const narrationBeats = withNarrationDirected.filter((b) => b.kind === 'narration')
-  const nonNarrationBeats = withNarrationDirected.filter((b) => b.kind !== 'narration')
+  // Separate legacy unlinked narration beats (`bt_promo_narration_0`) from shared shots (`sourceSceneIndex`, `sourceBeatId`).
+  const unlinkedNarrationBeats = withNarrationDirected.filter(
+    (b) =>
+      b.kind === 'narration' &&
+      (typeof (b as { sourceSceneIndex?: unknown }).sourceSceneIndex !== 'number' ||
+        !(b as { sourceBeatId?: unknown }).sourceBeatId)
+  )
+  const linkedCandidateBeats = withNarrationDirected.filter(
+    (b) => !unlinkedNarrationBeats.includes(b)
+  )
+
+  const dubNarrationOntoShots = (shots: SceneBeat[]): SceneBeat[] => {
+    if (shots.some((b) => b.kind === 'narration')) {
+      return shots
+    }
+    const legacyNarr = unlinkedNarrationBeats[0]
+    const fallbackSceneNarration =
+      typeof scene.narration === 'string' && scene.narration.trim()
+        ? scene.narration.trim()
+        : undefined
+    const narrationLine = legacyNarr?.line?.trim() || fallbackSceneNarration
+    if (!narrationLine) return shots
+    const targetIdx = shots.findIndex((b) => b.kind !== 'dialogue')
+    if (targetIdx < 0) return shots
+    const target = shots[targetIdx]!
+    const next = [...shots]
+    next[targetIdx] = {
+      ...target,
+      kind: 'narration',
+      character: legacyNarr?.character?.trim() || 'NARRATOR',
+      characterId: legacyNarr?.characterId?.trim() || 'narrator',
+      line: narrationLine,
+      lineId: legacyNarr?.lineId?.trim() || 'ln_promo_narration_0',
+      ...(legacyNarr?.voiceDirection?.trim()
+        ? { voiceDirection: legacyNarr.voiceDirection.trim() }
+        : {}),
+      ...(legacyNarr?.audioUrl?.trim() ? { audioUrl: legacyNarr.audioUrl.trim() } : {}),
+      beatDirection:
+        target.beatDirection && Object.keys(target.beatDirection).length > 0
+          ? {
+              ...target.beatDirection,
+              audioCue:
+                target.beatDirection.audioCue ||
+                'Trailer voice-over narration dubbed over establishing shot with atmospheric score swell',
+            }
+          : buildDefaultPromoNarrationDirection(narrationLine, target.actionDescription),
+    }
+    return next
+  }
 
   // If all planned shots are already present and still carry source links, keep their current order
   const allLinkedPresent =
-    nonNarrationBeats.length >= rawPlan.length &&
-    nonNarrationBeats.every(
+    linkedCandidateBeats.length >= rawPlan.length &&
+    linkedCandidateBeats.every(
       (b) =>
         typeof (b as { sourceSceneIndex?: unknown }).sourceSceneIndex === 'number' &&
         typeof (b as { sourceBeatId?: unknown }).sourceBeatId === 'string'
     )
   if (allLinkedPresent) {
-    return withNarrationDirected
+    return normalizeBeatsForProduction(dubNarrationOntoShots(linkedCandidateBeats))
   }
 
   // Reconstruct missing or unlinked Promo shots from promoBeatPlan while preserving surviving beats
@@ -1108,7 +1155,7 @@ export function reconcilePromoBeatsWithPlan(
       typeof plan.videoUrl === 'string' && plan.videoUrl.trim() ? plan.videoUrl.trim() : undefined
     const isClimax = Boolean(plan.isClimaxCandidate)
 
-    const existingMatch = nonNarrationBeats.find((candidate) => {
+    const existingMatch = linkedCandidateBeats.find((candidate) => {
       if (usedExistingIds.has(candidate.beatId)) return false
       const candSourceBeatId = (candidate as { sourceBeatId?: string }).sourceBeatId
       const candSourceSceneIdx = (candidate as { sourceSceneIndex?: number }).sourceSceneIndex
@@ -1172,7 +1219,7 @@ export function reconcilePromoBeatsWithPlan(
     const deterministicId = `bt_promo_${planSceneIndex}_${planBeatId || 'shot'}_${index}`
     return {
       beatId: deterministicId,
-      sequenceIndex: narrationBeats.length + index,
+      sequenceIndex: index,
       kind: planKind,
       actionDescription: planLabel,
       ...(planKind === 'dialogue'
@@ -1196,7 +1243,7 @@ export function reconcilePromoBeatsWithPlan(
     } as SceneBeat
   })
 
-  return normalizeBeatsForProduction([...narrationBeats, ...reconstructedShots])
+  return normalizeBeatsForProduction(dubNarrationOntoShots(reconstructedShots))
 }
 
 function tryParseExistingBeats(scene: Record<string, unknown>): SceneBeat[] {

@@ -713,26 +713,26 @@ describe('promo source guards', () => {
     expect(findPromoScenes(afterRemove)[0]?.promoId).toBe('promo-vertical')
   })
 
-  it('gives promo narration initial beatDirection, preserves dialogue/action shared shots across ensureSceneBeats, and self-heals stripped promo scenes', () => {
+  it('dubs promo narration onto an actual non-dialogue shared shot instead of inserting a synthetic shot, preserves shared shots across ensureSceneBeats, and self-heals legacy narration beats', () => {
     const sourceScenes = [
       {
         id: 'scene-0',
         heading: 'INT. VAULT - NIGHT',
         beats: [
           {
-            beatId: 'b_dial',
+            beatId: 'b_act',
             sequenceIndex: 0,
+            kind: 'action' as const,
+            actionDescription: 'Sparks arc across the copper coil.',
+            storyboardImageUrl: 'https://example.com/vault-1.png',
+          },
+          {
+            beatId: 'b_dial',
+            sequenceIndex: 1,
             kind: 'dialogue' as const,
             character: 'GIDEON',
             line: 'The current bleeds out.',
             storyboardImageUrl: 'https://example.com/vault-0.png',
-          },
-          {
-            beatId: 'b_act',
-            sequenceIndex: 1,
-            kind: 'action' as const,
-            actionDescription: 'Sparks arc across the copper coil.',
-            storyboardImageUrl: 'https://example.com/vault-1.png',
           },
         ],
       },
@@ -742,27 +742,27 @@ describe('promo source guards', () => {
       beatPlan: [
         {
           sceneId: 'scene-0',
-          beatId: 'b_dial',
-          sceneIndex: 0,
-          beatKind: 'dialogue',
-          startSec: 0,
-          endSec: 5,
-          durationSec: 5,
-          score: 90,
-          label: 'GIDEON: The current bleeds out.',
-          frameUrl: 'https://example.com/vault-0.png',
-        },
-        {
-          sceneId: 'scene-0',
           beatId: 'b_act',
           sceneIndex: 0,
           beatKind: 'action',
-          startSec: 5,
-          endSec: 10,
+          startSec: 0,
+          endSec: 5,
           durationSec: 5,
           score: 85,
           label: 'Sparks arc across the copper coil.',
           frameUrl: 'https://example.com/vault-1.png',
+        },
+        {
+          sceneId: 'scene-0',
+          beatId: 'b_dial',
+          sceneIndex: 0,
+          beatKind: 'dialogue',
+          startSec: 5,
+          endSec: 10,
+          durationSec: 5,
+          score: 90,
+          label: 'GIDEON: The current bleeds out.',
+          frameUrl: 'https://example.com/vault-0.png',
         },
       ],
       narrationLine: 'In the depths beneath the city, one spark changes everything.',
@@ -771,24 +771,35 @@ describe('promo source guards', () => {
       promoId: 'promo-main',
     })
 
-    // 1. Narration beat immediately has beatDirection and opening frame
-    expect(promoScene.beats).toHaveLength(3)
+    // 1. No extra synthetic narration shot is inserted: beats stay 1-to-1 with beatPlan (2 shots),
+    // and narration is dubbed onto the actual non-dialogue establishing shot (b_act).
+    expect(promoScene.beats).toHaveLength(2)
     expect(promoScene.beats[0]?.kind).toBe('narration')
+    expect(promoScene.beats[0]?.character).toBe('NARRATOR')
+    expect(promoScene.beats[0]?.line).toBe(
+      'In the depths beneath the city, one spark changes everything.'
+    )
+    expect(promoScene.beats[0]?.actionDescription).toBe('Sparks arc across the copper coil.')
+    expect(promoScene.beats[0]?.sourceBeatId).toBe('b_act')
+    expect(promoScene.beats[0]?.sourceSceneIndex).toBe(0)
     expect(promoScene.beats[0]?.beatDirection?.shotType).toBeTruthy()
-    expect(promoScene.beats[0]?.storyboardImageUrl).toBe('https://example.com/vault-0.png')
+    expect(promoScene.beats[0]?.storyboardImageUrl).toBe('https://example.com/vault-1.png')
+    expect(promoScene.beats[1]?.kind).toBe('dialogue')
+    expect(promoScene.beats[1]?.sourceBeatId).toBe('b_dial')
 
-    // 2. Running ensureSceneBeats (e.g. when clicking Direction) preserves all 3 shots AND source links
+    // 2. Running ensureSceneBeats (e.g. when clicking Direction) preserves all 2 shared shots AND source links
     const ensured = ensureSceneBeats(promoScene as unknown as Record<string, unknown>)
     const ensuredBeats = getSceneBeats(ensured)
-    expect(ensuredBeats).toHaveLength(3)
+    expect(ensuredBeats).toHaveLength(2)
     expect(ensuredBeats[0]?.kind).toBe('narration')
+    expect((ensuredBeats[0] as { sourceBeatId?: string }).sourceBeatId).toBe('b_act')
+    expect((ensuredBeats[0] as { sourceSceneIndex?: number }).sourceSceneIndex).toBe(0)
     expect((ensuredBeats[1] as { sourceBeatId?: string }).sourceBeatId).toBe('b_dial')
     expect((ensuredBeats[1] as { sourceSceneIndex?: number }).sourceSceneIndex).toBe(0)
-    expect((ensuredBeats[2] as { sourceBeatId?: string }).sourceBeatId).toBe('b_act')
-    expect((ensuredBeats[2] as { sourceSceneIndex?: number }).sourceSceneIndex).toBe(0)
 
-    // 3. Self-healing: if a legacy promo scene had its dialogue/action beats stripped leaving only narration,
-    // getSceneBeats and hydratePromoSceneWithSharedShots reconstruct all planned shots from promoBeatPlan
+    // 3. Self-healing: if a legacy promo scene had an unlinked synthetic narration beat (`bt_only_narr`),
+    // getSceneBeats and hydratePromoSceneWithSharedShots reconstruct all planned shots from promoBeatPlan,
+    // dub the narration onto the non-dialogue establishing shot (`b_act`), and drop the duplicate synthetic beat.
     const strippedPromoScene = {
       ...promoScene,
       beats: [
@@ -807,11 +818,14 @@ describe('promo source guards', () => {
       {}
     )
     const healedBeats = (hydrated.scene as { beats: Array<Record<string, unknown>> }).beats
-    expect(healedBeats).toHaveLength(3)
+    expect(healedBeats).toHaveLength(2)
     expect(healedBeats[0]?.kind).toBe('narration')
+    expect(healedBeats[0]?.line).toBe(
+      'In the depths beneath the city, one spark changes everything.'
+    )
     expect(healedBeats[0]?.beatDirection).toBeTruthy()
+    expect(healedBeats[0]?.sourceBeatId).toBe('b_act')
     expect(healedBeats[1]?.sourceBeatId).toBe('b_dial')
-    expect(healedBeats[2]?.sourceBeatId).toBe('b_act')
   })
 
   it('streamlines Promo Builder dialog to focus strictly on promo version list and building promo shots', () => {
@@ -854,8 +868,15 @@ describe('promo source guards', () => {
         characters: ['Gideon Croft'],
         beats: [
           {
-            beatId: 'bt_3f0e54b8-977',
+            beatId: 'bt_est_lab',
             sequenceIndex: 0,
+            kind: 'action',
+            actionDescription: 'Wide establishing shot of the archive lab humming in darkness.',
+            durationSeconds: 5,
+          },
+          {
+            beatId: 'bt_3f0e54b8-977',
+            sequenceIndex: 1,
             kind: 'dialogue',
             character: '',
             line: 'The current bleeds out. Every damn time… the loop refuses to close.',
@@ -874,7 +895,10 @@ describe('promo source guards', () => {
       scenes: sourceScenes,
       targetDurationSec: 30,
     })
-    expect(planned.beatPlan[0]?.character).toBe('Gideon Croft')
+    const plannedDialogueBeat = planned.beatPlan.find((b) => b.beatId === 'bt_3f0e54b8-977')
+    expect(plannedDialogueBeat?.character).toBe('Gideon Croft')
+    // Trailer opens with the non-dialogue establishing shot so narration can dub cleanly over Shot 1
+    expect(planned.beatPlan[0]?.beatId).toBe('bt_est_lab')
 
     // Even if a legacy Promo scene had empty character in its persisted dialogue array,
     // hydratePromoSceneWithSharedShots resolves the speaker from the source beat / castInFrame
@@ -883,11 +907,22 @@ describe('promo source guards', () => {
       beatPlan: [
         {
           sceneId: 'scene-1',
+          beatId: 'bt_est_lab',
+          sceneIndex: 0,
+          beatKind: 'action',
+          startSec: 0,
+          endSec: 5,
+          durationSec: 5,
+          score: 88,
+          label: 'Wide establishing shot of the archive lab humming in darkness.',
+        },
+        {
+          sceneId: 'scene-1',
           beatId: 'bt_3f0e54b8-977',
           sceneIndex: 0,
           beatKind: 'dialogue',
-          startSec: 0,
-          endSec: 6,
+          startSec: 5,
+          endSec: 11,
           durationSec: 6,
           score: 95,
           label: 'The current bleeds out. Every damn time… the loop refuses to close.',
@@ -904,6 +939,8 @@ describe('promo source guards', () => {
     const hydratedBeats = (hydrated.scene as { beats: Array<Record<string, unknown>> }).beats
     const hydratedDialogue = (hydrated.scene as { dialogue: Array<Record<string, unknown>> }).dialogue
 
+    expect(hydratedBeats).toHaveLength(2)
+    expect(hydratedBeats[0]?.sourceBeatId).toBe('bt_est_lab')
     expect(hydratedBeats[0]?.character).toBe('NARRATOR')
     expect(hydratedBeats[1]?.character).toBe('Gideon Croft')
     expect(hydratedDialogue[0]?.character).toBe('NARRATOR')
@@ -922,6 +959,7 @@ describe('promo source guards', () => {
             sequenceIndex: 0,
             kind: 'action',
             actionDescription: 'Rain streaks the glass.',
+            storyboardImageUrl: 'https://example.com/s1-shot1.png',
           },
         ],
       },
@@ -958,15 +996,28 @@ describe('promo source guards', () => {
     const { scene: promoScene, productionSeed } = buildPromoSceneFromPlan({
       beatPlan: [
         {
+          sceneId: 'scene-0',
+          beatId: 's1-b1',
+          sceneIndex: 0,
+          beatKind: 'action',
+          startSec: 0,
+          endSec: 5,
+          durationSec: 5,
+          score: 88,
+          label: 'Rain streaks the glass.',
+          frameUrl: 'https://example.com/s1-shot1.png',
+        },
+        {
           sceneId: 'scene-1',
           beatId: 's2-b3',
           sceneIndex: 1,
           beatKind: 'dialogue',
-          startSec: 0,
-          endSec: 5,
+          startSec: 5,
+          endSec: 10,
           durationSec: 5,
           score: 92,
           label: 'The loop refuses to close.',
+          frameUrl: 'https://example.com/s2-shot3-old.png',
         },
       ],
       narrationLine: 'Every memory has a price.',
@@ -980,7 +1031,11 @@ describe('promo source guards', () => {
     expect(promoScene.sceneMusicCues).toHaveLength(1)
     expect(promoScene.sceneMusicCues?.[0]?.url).toBe('https://example.com/promo-score.mp3')
 
-    // 2. Narration shot (Shot 1) includes its dialogue in both seed segment and hydratedBeat clips
+    // 2. Narration is dubbed over Shot 1 (actual establishing shot s1-b1) and includes both its visual action and narration in Clip prompts
+    expect(promoScene.beats).toHaveLength(2)
+    expect(promoScene.beats[0]?.sourceBeatId).toBe('s1-b1')
+    expect(promoScene.beats[0]?.kind).toBe('narration')
+    expect(productionSeed.segments[0]?.generatedPrompt).toContain('Rain streaks the glass.')
     expect(productionSeed.segments[0]?.generatedPrompt).toContain('Every memory has a price.')
     expect(productionSeed.segments[0]?.generatedPrompt).not.toContain('No spoken dialogue')
 
@@ -992,6 +1047,12 @@ describe('promo source guards', () => {
     )
     const hydratedBeats = (hydrated.scene as { beats: Array<Record<string, unknown>> }).beats
     expect(hydratedBeats).toHaveLength(2)
+
+    // First promo shot is Scene 1 Shot 1 (dubbed narration over establishing shot)
+    const firstPromoBeat = hydratedBeats[0]
+    expect(firstPromoBeat?.sourceSceneNumber).toBe(1)
+    expect(firstPromoBeat?.sourceShotNumber).toBe(1)
+    expect(formatPromoSourceBadge(firstPromoBeat as never)).toBe('S1 · Shot 1')
 
     // 3. Second promo shot is Scene 2 Shot 3 and carries explicit source attribution
     const secondPromoBeat = hydratedBeats[1]
@@ -1063,5 +1124,114 @@ describe('promo source guards', () => {
     expect(syncedScene2Beats[2]?.storyboardImageUrl).toBe(
       'https://example.com/s2-shot3-new-from-promo.png'
     )
+  })
+
+  it('prevents Shot 1 and Shot 2 from combining or overlapping when narration is added or migrated from legacy bt_promo_narration_0', () => {
+    const sourceScenes = [
+      {
+        id: 'scene-0',
+        sceneNumber: 1,
+        heading: 'EXT. CANAL - NIGHT',
+        beats: [
+          {
+            beatId: 's1-est',
+            sequenceIndex: 0,
+            kind: 'action' as const,
+            actionDescription: 'Fog rolls across the canal bridge.',
+            storyboardImageUrl: 'https://example.com/s1-est.png',
+          },
+          {
+            beatId: 's1-dial',
+            sequenceIndex: 1,
+            kind: 'dialogue' as const,
+            character: 'MARA',
+            line: 'Look at the water.',
+            storyboardImageUrl: 'https://example.com/s1-dial.png',
+          },
+        ],
+      },
+    ]
+
+    const beatPlan = [
+      {
+        sceneId: 'scene-0',
+        beatId: 's1-est',
+        sceneIndex: 0,
+        beatKind: 'action',
+        startSec: 0,
+        endSec: 5,
+        durationSec: 5,
+        score: 90,
+        label: 'Fog rolls across the canal bridge.',
+        frameUrl: 'https://example.com/s1-est.png',
+      },
+      {
+        sceneId: 'scene-0',
+        beatId: 's1-dial',
+        sceneIndex: 0,
+        beatKind: 'dialogue',
+        startSec: 5,
+        endSec: 10,
+        durationSec: 5,
+        score: 88,
+        label: 'Look at the water.',
+        frameUrl: 'https://example.com/s1-dial.png',
+      },
+    ]
+
+    // First build without narration (as happens on initial Build Promo Shots)
+    const initial = buildPromoSceneFromPlan({
+      beatPlan,
+      targetDurationSec: 30,
+      projectTitle: 'Canal',
+      promoId: 'promo-canal',
+    })
+    expect(initial.scene.beats).toHaveLength(2)
+
+    // Legacy state where `bt_promo_narration_0` was unshifted ahead of the 2 shots while production segments still had the 2 initial segments
+    const legacyPromoWithInsertedNarration = {
+      ...initial.scene,
+      beats: [
+        {
+          beatId: 'bt_promo_narration_0',
+          sequenceIndex: 0,
+          kind: 'narration',
+          character: 'NARRATOR',
+          line: 'Beneath the fog, the city remembers.',
+          storyboardImageUrl: 'https://example.com/s1-est.png',
+          durationSeconds: 6,
+        },
+        ...initial.scene.beats.map((b, i) => ({ ...b, sequenceIndex: i + 1 })),
+      ],
+    }
+
+    const hydrated = hydratePromoSceneWithSharedShots(
+      legacyPromoWithInsertedNarration as unknown as Record<string, unknown>,
+      sourceScenes,
+      { 'promo-canal': initial.productionSeed as never }
+    )
+    const hydratedBeats = (hydrated.scene as { beats: Array<Record<string, unknown>> }).beats
+    const hydratedSegments = hydrated.productionData?.segments || []
+
+    // Folds the narration onto Shot 1 (s1-est) and drops the duplicate synthetic beat
+    expect(hydratedBeats).toHaveLength(2)
+    expect(hydratedSegments).toHaveLength(2)
+    expect(hydratedBeats[0]?.sourceBeatId).toBe('s1-est')
+    expect(hydratedBeats[0]?.kind).toBe('narration')
+    expect(hydratedBeats[0]?.line).toBe('Beneath the fog, the city remembers.')
+    expect(hydratedBeats[0]?.storyboardImageUrl).toBe('https://example.com/s1-est.png')
+
+    expect(hydratedBeats[1]?.sourceBeatId).toBe('s1-dial')
+    expect(hydratedBeats[1]?.kind).toBe('dialogue')
+    expect(hydratedBeats[1]?.storyboardImageUrl).toBe('https://example.com/s1-dial.png')
+
+    // Segments have distinct IDs, distinct beatIds, and non-overlapping timelines
+    expect(hydratedSegments[0]?.segmentId).not.toBe(hydratedSegments[1]?.segmentId)
+    expect(hydratedSegments[0]?.beatId).toBe(hydratedBeats[0]?.beatId)
+    expect(hydratedSegments[1]?.beatId).toBe(hydratedBeats[1]?.beatId)
+    expect(hydratedSegments[0]?.startTime).toBe(0)
+    expect(hydratedSegments[0]?.endTime).toBe(5)
+    expect(hydratedSegments[1]?.startTime).toBe(5)
+    expect(hydratedSegments[1]?.endTime).toBe(10)
   })
 })

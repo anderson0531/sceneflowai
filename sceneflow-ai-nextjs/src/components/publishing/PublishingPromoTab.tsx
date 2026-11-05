@@ -150,10 +150,43 @@ function narrationTrackFor(
   language: string
 ): { audioUrl?: string; line?: string; durationSec?: number } | undefined {
   const tracks = scene?.dialogueAudio as
-    | Record<string, Array<{ audioUrl?: string; line?: string; durationSec?: number }>>
+    | Record<
+        string,
+        Array<{
+          audioUrl?: string
+          url?: string
+          line?: string
+          durationSec?: number
+          duration?: number
+          kind?: string
+          character?: string
+        }>
+      >
     | undefined
-  const track = tracks?.[language]?.[0]
-  return track && typeof track === 'object' ? track : undefined
+  const langTracks = Array.isArray(tracks?.[language]) ? tracks![language] : []
+  const explicit = langTracks.find(
+    (t) =>
+      t &&
+      typeof t === 'object' &&
+      (t.kind === 'narration' || String(t.character || '').trim().toUpperCase() === 'NARRATOR')
+  )
+  const track = explicit || langTracks[0]
+  if (track && typeof track === 'object') {
+    return {
+      audioUrl: track.audioUrl || track.url,
+      line: track.line,
+      durationSec: track.durationSec ?? track.duration,
+    }
+  }
+  const beats = Array.isArray(scene?.beats) ? (scene.beats as Array<Record<string, unknown>>) : []
+  const narrBeat = beats.find((b) => b && typeof b === 'object' && b.kind === 'narration')
+  if (narrBeat) {
+    return {
+      audioUrl: typeof narrBeat.audioUrl === 'string' ? narrBeat.audioUrl : undefined,
+      line: typeof narrBeat.line === 'string' ? narrBeat.line : undefined,
+    }
+  }
+  return undefined
 }
 
 function narrationUrlFor(scene: Record<string, unknown> | null, language: string): string | undefined {

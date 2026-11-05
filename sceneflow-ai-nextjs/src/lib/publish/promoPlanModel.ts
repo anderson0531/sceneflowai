@@ -308,6 +308,7 @@ Rules:
 - Choose shots and pacing that resonate with the target audience.
 - When director notes are present, follow them and revise the current plan instead of ignoring it.
 - Order the trailer for impact: hook, then rising shots, then a peak, then the title as the button. Do not follow screenplay order.
+- Open the trailer hook on a non-dialogue establishing or action shot (kind: "action") when available so the promo voice-over narration can dub cleanly over the opening shot.
 - Cover the blueprint beat promises. Do not replay them in screenplay order.
 - End on the title_reveal shot from the title sequence. A credit beat is not the title.
 - Include every shot marked hero.

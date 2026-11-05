@@ -804,14 +804,26 @@ export async function POST(request: NextRequest) {
         scene.dialogueAudio && typeof scene.dialogueAudio === 'object' ? { ...scene.dialogueAudio } : {}
       const nextDialogueAudio: Record<string, unknown[]> = { ...priorAudio }
       for (const [lang, entry] of Object.entries(generatedByLanguage)) {
+        const existingLangTracks = Array.isArray(priorAudio[lang])
+          ? (priorAudio[lang] as Array<Record<string, unknown>>).filter(
+              (row) =>
+                row &&
+                typeof row === 'object' &&
+                row.kind !== 'narration' &&
+                String(row.character || '').trim().toUpperCase() !== 'NARRATOR'
+            )
+          : []
         nextDialogueAudio[lang] = [
           {
             character: 'NARRATOR',
+            characterId: 'narrator',
             kind: 'narration',
+            lineId: 'ln_promo_narration_0',
             line: entry.text,
             ...(entry.audioUrl ? { audioUrl: entry.audioUrl } : {}),
             ...(entry.durationSec ? { durationSec: entry.durationSec } : {}),
           },
+          ...existingLangTracks,
         ]
       }
       scene.dialogueAudio = nextDialogueAudio

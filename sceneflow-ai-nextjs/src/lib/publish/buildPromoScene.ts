@@ -420,7 +420,7 @@ function buildPromoBeats(
     const isClimax = Boolean(plan.isClimaxCandidate)
     return {
       beatId: `bt_promo_${plan.sceneIndex}_${plan.beatId || 'shot'}_${index}`,
-      sequenceIndex: narrationLine ? index + 1 : index,
+      sequenceIndex: index,
       kind,
       actionDescription: label,
       ...(kind === 'dialogue'
@@ -456,39 +456,45 @@ function buildPromoBeats(
 
   if (narrationLine?.trim()) {
     const cleanNarration = narrationLine.trim()
-    const firstShotLabel = beatPlan[0]?.label?.trim()
-    beats.unshift({
-      beatId: 'bt_promo_narration_0',
-      sequenceIndex: 0,
-      kind: 'narration',
-      character: 'NARRATOR',
-      characterId: 'narrator',
-      line: cleanNarration,
-      lineId: 'ln_promo_narration_0',
-      actionDescription: 'Promo trailer voice-over',
-      beatRole: 'opening',
-      storyboardImageUrl: beatPlan[0]?.frameUrl,
-      durationSeconds: Math.min(12, Math.max(6, cleanNarration.split(/\s+/).length * 0.35)),
-      musicEnabled: true,
-      beatDirection: {
-        shotType: 'Wide establishing shot',
-        cameraAngle: 'Eye-level cinematic framing',
-        cameraMovement: 'Slow push-in establishing trailer tone',
-        frozenMoment: firstShotLabel
-          ? `Opening trailer montage image: ${firstShotLabel}`
-          : `Trailer opening frame accompanying voice-over: "${cleanNarration}"`,
-        blocking: 'Voice-over narration plays over the opening promotional montage sequence.',
-        emotion: 'Anticipation and cinematic intrigue',
-        lightingAccent: 'High-contrast dramatic trailer lighting',
-        audioCue: 'Trailer voice-over with atmospheric score swell',
-        transition: 'DISSOLVE',
-        castInFrame: [],
-        generatedBy: 'planner',
-      },
-    })
-    beats.forEach((b, i) => {
-      b.sequenceIndex = i
-    })
+    // Dub the voice-over narration onto the first actual non-dialogue (establishing / action) shot
+    // instead of inserting a synthetic duplicate shot.
+    const targetIdx = beats.findIndex((b) => b.kind !== 'dialogue')
+    if (targetIdx >= 0) {
+      const targetBeat = beats[targetIdx]!
+      beats[targetIdx] = {
+        ...targetBeat,
+        kind: 'narration',
+        character: 'NARRATOR',
+        characterId: 'narrator',
+        line: cleanNarration,
+        lineId: 'ln_promo_narration_0',
+        beatDirection: {
+          ...(targetBeat.beatDirection || {}),
+          shotType: targetBeat.beatDirection?.shotType || 'Wide establishing shot',
+          cameraAngle: targetBeat.beatDirection?.cameraAngle || 'Eye-level cinematic framing',
+          cameraMovement:
+            targetBeat.beatDirection?.cameraMovement ||
+            'Slow push-in establishing trailer tone',
+          frozenMoment:
+            targetBeat.beatDirection?.frozenMoment ||
+            targetBeat.actionDescription ||
+            cleanNarration,
+          blocking:
+            targetBeat.beatDirection?.blocking ||
+            targetBeat.actionDescription ||
+            'Voice-over narration dubbed over establishing shot.',
+          emotion:
+            targetBeat.beatDirection?.emotion || 'Anticipation and cinematic intrigue',
+          lightingAccent:
+            targetBeat.beatDirection?.lightingAccent ||
+            'High-contrast dramatic trailer lighting',
+          audioCue:
+            'Trailer voice-over narration dubbed over establishing shot with atmospheric score swell',
+          transition: targetBeat.beatDirection?.transition || 'DISSOLVE',
+          generatedBy: targetBeat.beatDirection?.generatedBy || 'planner',
+        },
+      }
+    }
   }
 
   return beats
@@ -598,7 +604,10 @@ function buildSeedSegments(
       visualFrame: beat.storyboardImageUrl,
       action:
         beat.kind === 'narration' && beat.line?.trim()
-          ? `Voiceover narration: "${beat.line.trim()}"`
+          ? beat.actionDescription?.trim() &&
+            beat.actionDescription.trim() !== 'Promo trailer voice-over'
+            ? `${beat.actionDescription.trim()} — Voiceover narration: "${beat.line.trim()}"`
+            : `Voiceover narration: "${beat.line.trim()}"`
           : beat.actionDescription,
     }
     return segment
@@ -654,7 +663,40 @@ export function buildPromoSceneFromPlan(input: BuildPromoSceneInput): BuildPromo
       : presetDef?.defaultAspect)
 
   const beats = buildPromoBeats(input.beatPlan, input.narrationLine)
+  const existingDialogueAudio =
+    input.existingPromoScene?.dialogueAudio &&
+    typeof input.existingPromoScene.dialogueAudio === 'object'
+      ? (input.existingPromoScene.dialogueAudio as Record<string, unknown[]>)
+      : undefined
+  if (existingDialogueAudio) {
+    const narrBeat = beats.find((b) => b.kind === 'narration')
+    if (narrBeat && !narrBeat.audioUrl) {
+      for (const list of Object.values(existingDialogueAudio)) {
+        if (!Array.isArray(list)) continue
+        const found = list.find(
+          (row) =>
+            row &&
+            typeof row === 'object' &&
+            ((row as { kind?: unknown }).kind === 'narration' ||
+              String((row as { character?: unknown }).character || '')
+                .trim()
+                .toUpperCase() === 'NARRATOR') &&
+            typeof (row as { audioUrl?: unknown }).audioUrl === 'string' &&
+            String((row as { audioUrl?: unknown }).audioUrl).trim()
+        ) as { audioUrl?: string } | undefined
+        if (found?.audioUrl) {
+          narrBeat.audioUrl = found.audioUrl.trim()
+          break
+        }
+      }
+    }
+  }
   const legacyFromBeats = beatsToLegacyFields(beats)
+  const resolvedNarrationText =
+    legacyFromBeats.narration ||
+    (typeof input.narrationLine === 'string' && input.narrationLine.trim()
+      ? input.narrationLine.trim()
+      : undefined)
   const promoCharacters = Array.from(
     new Set(
       beats
@@ -735,7 +777,7 @@ export function buildPromoSceneFromPlan(input: BuildPromoSceneInput): BuildPromo
       campaignObjective || presetDef?.description || `Captivating highlights for ${title}.`
     }`,
     dialogue: legacyFromBeats.dialogue,
-    ...(legacyFromBeats.narration ? { narration: legacyFromBeats.narration } : {}),
+    ...(resolvedNarrationText ? { narration: resolvedNarrationText } : {}),
     characters: promoCharacters,
     duration: input.targetDurationSec,
     cinematicType: PROMO_SCENE_CINEMATIC_TYPE,
@@ -868,7 +910,63 @@ export function hydratePromoSceneWithSharedShots(
   }
 
   const promoSceneId = String(promoScene.sceneId || promoScene.id || 'promo-main')
-  const rawBeats = getSceneBeats(promoScene) as PromoSceneBeat[]
+  const parsedBeats = getSceneBeats(promoScene) as PromoSceneBeat[]
+
+  // Self-heal legacy Promo scenes that inserted an unlinked synthetic `bt_promo_narration_0` shot:
+  // fold its narration line/audio onto the first actual non-dialogue shared shot and drop the duplicate beat.
+  const unlinkedNarrationBeats = parsedBeats.filter(
+    (b) => b.kind === 'narration' && (typeof b.sourceSceneIndex !== 'number' || !b.sourceBeatId)
+  )
+  const linkedOrNonNarrationBeats = parsedBeats.filter((b) => !unlinkedNarrationBeats.includes(b))
+  const rawBeats: PromoSceneBeat[] = (() => {
+    if (unlinkedNarrationBeats.length === 0 || linkedOrNonNarrationBeats.length === 0) {
+      return parsedBeats
+    }
+    const legacyNarr = unlinkedNarrationBeats[0]!
+    const next = [...linkedOrNonNarrationBeats]
+    if (!next.some((b) => b.kind === 'narration')) {
+      const targetIdx = next.findIndex((b) => b.kind !== 'dialogue')
+      if (targetIdx >= 0) {
+        const target = next[targetIdx]!
+        next[targetIdx] = {
+          ...target,
+          kind: 'narration',
+          character: legacyNarr.character?.trim() || 'NARRATOR',
+          characterId: legacyNarr.characterId?.trim() || 'narrator',
+          line: legacyNarr.line?.trim() || target.line,
+          lineId: legacyNarr.lineId?.trim() || 'ln_promo_narration_0',
+          ...(legacyNarr.voiceDirection?.trim()
+            ? { voiceDirection: legacyNarr.voiceDirection.trim() }
+            : {}),
+          ...(legacyNarr.audioUrl?.trim() ? { audioUrl: legacyNarr.audioUrl.trim() } : {}),
+        }
+      }
+    }
+    return next.map((b, idx) => ({ ...b, sequenceIndex: idx }))
+  })()
+
+  let promoNarrationAudioUrl: string | undefined
+  if (promoScene.dialogueAudio && typeof promoScene.dialogueAudio === 'object') {
+    for (const list of Object.values(promoScene.dialogueAudio as Record<string, unknown>)) {
+      if (!Array.isArray(list)) continue
+      for (const item of list) {
+        if (!item || typeof item !== 'object') continue
+        const row = item as Record<string, unknown>
+        if (
+          row.kind === 'narration' ||
+          String(row.character || '').trim().toUpperCase() === 'NARRATOR'
+        ) {
+          const url = String(row.audioUrl ?? row.url ?? '').trim()
+          if (url) {
+            promoNarrationAudioUrl = url
+            break
+          }
+        }
+      }
+      if (promoNarrationAudioUrl) break
+    }
+  }
+
   const firstAvailableSharedFrame = rawBeats
     .map((beat) => {
       if (typeof beat.sourceSceneIndex === 'number' && beat.sourceBeatId) {
@@ -888,6 +986,9 @@ export function hydratePromoSceneWithSharedShots(
       return {
         ...beat,
         storyboardImageUrl: beat.storyboardImageUrl || firstAvailableSharedFrame,
+        ...(beat.audioUrl || promoNarrationAudioUrl
+          ? { audioUrl: beat.audioUrl || promoNarrationAudioUrl }
+          : {}),
         ...(hasDir
           ? {}
           : {
@@ -1011,6 +1112,7 @@ export function hydratePromoSceneWithSharedShots(
     }
     const resolvedAudioUrl =
       beat.audioUrl?.trim() ||
+      (beat.kind === 'narration' ? promoNarrationAudioUrl : undefined) ||
       sourceBeat.audioUrl?.trim() ||
       (typeof matchedSourceDialogue?.audioUrl === 'string' &&
         matchedSourceDialogue.audioUrl.trim()) ||
@@ -1126,7 +1228,10 @@ export function hydratePromoSceneWithSharedShots(
     cursor = endTime
 
     const existingPromoSeg =
-      ownProd?.segments?.find((s) => s.beatId === beat.beatId) || ownProd?.segments?.[index]
+      ownProd?.segments?.find((s) => s.beatId === beat.beatId) ||
+      (ownProd?.segments?.[index] && !ownProd.segments[index].beatId
+        ? ownProd.segments[index]
+        : undefined)
     let sourceSeg: SceneSegment | undefined
     if (typeof beat.sourceSceneIndex === 'number' && beat.sourceBeatId && sceneProductionState) {
       const sourceScene = scenes[beat.sourceSceneIndex] as Record<string, unknown> | undefined
@@ -1218,7 +1323,10 @@ export function hydratePromoSceneWithSharedShots(
       visualFrame: startFrame || undefined,
       action:
         beat.kind === 'narration' && beat.line?.trim()
-          ? `Voiceover narration: "${beat.line.trim()}"`
+          ? beat.actionDescription?.trim() &&
+            beat.actionDescription.trim() !== 'Promo trailer voice-over'
+            ? `${beat.actionDescription.trim()} — Voiceover narration: "${beat.line.trim()}"`
+            : `Voiceover narration: "${beat.line.trim()}"`
           : beat.actionDescription,
     } as SceneSegment
   })
