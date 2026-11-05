@@ -5073,13 +5073,29 @@ function SceneCard({
         if (byLineId >= 0) dialogueIndex = byLineId
       }
       spokenBeatCursor = Math.max(spokenBeatCursor + 1, dialogueIndex + 1)
-      const line = dialogueLines[dialogueIndex] ?? {
-        character: beat.character,
-        line: beat.line,
-        lineId: beat.lineId,
-        kind: beat.kind,
-        characterId: beat.characterId,
-        voiceDirection: beat.voiceDirection,
+      const rawLine = dialogueLines[dialogueIndex]
+      const castFallback = beat.beatDirection?.castInFrame?.find(
+        (name: unknown) => typeof name === 'string' && name.trim().length > 0
+      )?.trim()
+      const resolvedKind = rawLine?.kind || beat.kind
+      const resolvedCharacterId =
+        (typeof rawLine?.characterId === 'string' && rawLine.characterId.trim()) ||
+        (typeof beat.characterId === 'string' && beat.characterId.trim()) ||
+        (resolvedKind === 'narration' ? 'narrator' : undefined)
+      const resolvedCharacter =
+        (typeof rawLine?.character === 'string' && rawLine.character.trim()) ||
+        (typeof beat.character === 'string' && beat.character.trim()) ||
+        (resolvedKind === 'narration' ? 'NARRATOR' : '') ||
+        castFallback ||
+        ''
+      const line = {
+        ...(rawLine ?? {}),
+        character: resolvedCharacter,
+        line: rawLine?.line ?? rawLine?.text ?? beat.line,
+        lineId: rawLine?.lineId || beat.lineId,
+        kind: resolvedKind,
+        characterId: resolvedCharacterId,
+        voiceDirection: rawLine?.voiceDirection ?? beat.voiceDirection,
       }
       const audioEntry = findDialogueAudioForLine(scene, {
         language: selectedLanguage,
@@ -5087,7 +5103,7 @@ function SceneCard({
         dialogueIndex,
         character: line.character,
       })
-      const hasAudio = !!(audioEntry?.audioUrl || audioEntry?.url)
+      const hasAudio = !!(audioEntry?.audioUrl || audioEntry?.url || beat.audioUrl)
       const kind = beat.kind === 'narration' ? 'narration' : 'dialogue'
       return {
         beatId: beat.beatId,

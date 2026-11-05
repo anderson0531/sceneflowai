@@ -50,6 +50,14 @@ export interface PromoTrailerBeatPlan {
   videoUrl?: string
   beatRole?: string
   beatKind?: string
+  /** Speaker character name for dialogue/narration beats. */
+  character?: string
+  /** Speaker character ID for dialogue/narration beats. */
+  characterId?: string
+  /** Source dialogue line ID for spoken beats. */
+  lineId?: string
+  /** Voice delivery direction from the source beat. */
+  voiceDirection?: string
   /** Title, outro, or story. Copied from the source scene so a language pass can see it. */
   cinematicType?: string
   /** English on-screen title or credit. */

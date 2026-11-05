@@ -449,7 +449,11 @@ import {
 } from '@/lib/publish/publishingState'
 import type { PublishingLibraryTab } from '@/types/publishingAssets'
 import { resolvePromoBeatMedia, resolvePromoPlayback } from '@/lib/publish/promoBeatMedia'
-import { findPromoSceneIndex } from '@/lib/publish/buildPromoScene'
+import {
+  findPromoSceneIndex,
+  hydratePromoSceneWithSharedShots,
+  isPromoCinematicScene,
+} from '@/lib/publish/buildPromoScene'
 import {
   promoAgentShotNeedsGeneration,
   promoOnScreenEnglish,
@@ -15080,13 +15084,99 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     // Robust scene lookup using normalizeScenes helper that checks 6 different paths
     // Priority: sceneOverride > normalizeScenes(script)
     const scenes = normalizeScenes(script)
-    const scene = sceneOverride ?? scenes[sceneIdx]
-    if (!scene) {
+    const rawScene = sceneOverride ?? scenes[sceneIdx]
+    if (!rawScene) {
       console.error('[Generate Scene Audio] Scene not found at index:', sceneIdx, 
         '| Total scenes:', scenes.length, 
         '| Script structure:', script ? Object.keys(script) : 'null',
         '| script.script:', script?.script ? Object.keys(script.script) : 'undefined')
       return
+    }
+    const scene: any = isPromoCinematicScene(rawScene)
+      ? hydratePromoSceneWithSharedShots(
+          rawScene as Record<string, unknown>,
+          scenes,
+          sceneProductionData
+        ).scene
+      : rawScene
+
+    // For dialogue, find the specific line and corresponding spoken beat first so we can
+    // resolve any missing speaker characterName (e.g. on hydrated Promo shots or beats with castInFrame).
+    let dialogueLine: any = null
+    let spokenBeat: any = null
+    if (audioType === 'dialogue') {
+      const spokenBeats = getSceneBeats(scene).filter(
+        (b) => b.kind === 'dialogue' || b.kind === 'narration'
+      )
+      if (dialogueIndex !== undefined) {
+        dialogueLine = scene.dialogue?.[dialogueIndex]
+        spokenBeat =
+          (dialogueLine?.lineId &&
+            spokenBeats.find((b) => b.lineId && b.lineId === dialogueLine.lineId)) ||
+          spokenBeats[dialogueIndex] ||
+          null
+      } else {
+        dialogueLine = scene.dialogue?.find((d: any) => d.character === characterName)
+        spokenBeat =
+          (dialogueLine?.lineId &&
+            spokenBeats.find((b) => b.lineId && b.lineId === dialogueLine.lineId)) ||
+          (characterName
+            ? spokenBeats.find((b) => b.character === characterName)
+            : null) ||
+          null
+      }
+
+      if (!dialogueLine && spokenBeat) {
+        dialogueLine = {
+          character: spokenBeat.character,
+          characterId: spokenBeat.characterId,
+          line: spokenBeat.line,
+          lineId: spokenBeat.lineId,
+          kind: spokenBeat.kind,
+          voiceDirection: spokenBeat.voiceDirection,
+        }
+      } else if (dialogueLine && spokenBeat) {
+        dialogueLine = {
+          ...dialogueLine,
+          character:
+            (typeof dialogueLine.character === 'string' && dialogueLine.character.trim()) ||
+            spokenBeat.character ||
+            dialogueLine.character,
+          characterId: dialogueLine.characterId || spokenBeat.characterId,
+          line: dialogueLine.line || spokenBeat.line,
+          lineId: dialogueLine.lineId || spokenBeat.lineId,
+          kind: dialogueLine.kind || spokenBeat.kind,
+          voiceDirection: dialogueLine.voiceDirection || spokenBeat.voiceDirection,
+        }
+      }
+
+      if (!characterName?.trim()) {
+        const lineChar =
+          typeof dialogueLine?.character === 'string' ? dialogueLine.character.trim() : ''
+        const beatChar =
+          typeof spokenBeat?.character === 'string' ? spokenBeat.character.trim() : ''
+        const candidateCharId =
+          (typeof dialogueLine?.characterId === 'string' && dialogueLine.characterId.trim()) ||
+          (typeof spokenBeat?.characterId === 'string' && spokenBeat.characterId.trim()) ||
+          undefined
+        const charFromId = candidateCharId
+          ? characters?.find((c) => c.id === candidateCharId)?.name?.trim()
+          : undefined
+        const isNarratorKind =
+          dialogueLine?.kind === 'narration' || spokenBeat?.kind === 'narration'
+        const castFallback = Array.isArray(spokenBeat?.beatDirection?.castInFrame)
+          ? spokenBeat.beatDirection.castInFrame
+              .find((n: unknown) => typeof n === 'string' && n.trim().length > 0)
+              ?.trim()
+          : undefined
+        characterName =
+          lineChar ||
+          beatChar ||
+          charFromId ||
+          (isNarratorKind ? 'NARRATOR' : '') ||
+          castFallback ||
+          ''
+      }
     }
 
     // Add a lock mechanism to prevent concurrent dialogue generations
@@ -15099,22 +15189,39 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     setGeneratingAudioLocks(prev => new Set(prev).add(lockKey))
 
     try {
-      // Critical: Ensure character name is passed for dialogue
-      if (audioType === 'dialogue' && !characterName) {
-        console.error('[Generate Scene Audio] Character name required for dialogue')
-        throw new Error('Character name required for dialogue generation')
-      }
-      
-      // For dialogue, find the specific line by index if provided
-      let dialogueLine = null
-      if (audioType === 'dialogue') {
-        if (dialogueIndex !== undefined) {
-          // Find by index for precise matching
-          dialogueLine = scene.dialogue?.[dialogueIndex]
-        } else {
-          // Fallback: find by character name (first match)
-          dialogueLine = scene.dialogue?.find((d: any) => d.character === characterName)
-        }
+      // Critical: Ensure character name is resolved for dialogue
+      if (audioType === 'dialogue' && !characterName?.trim()) {
+        console.warn('[Generate Scene Audio] Speaker not assigned for dialogue line:', {
+          sceneIdx,
+          dialogueIndex,
+          dialogueLine,
+          spokenBeatId: spokenBeat?.beatId,
+        })
+        try {
+          const { toast } = require('sonner')
+          const dialogueIndexForAssign =
+            typeof dialogueIndex === 'number' ? dialogueIndex : undefined
+          toast.error(
+            'No speaker is assigned to this line yet. Pick a character on this shot before generating dialogue audio.',
+            {
+              duration: 8000,
+              ...(dialogueIndexForAssign !== undefined
+                ? {
+                    action: {
+                      label: 'Assign speaker',
+                      onClick: () => {
+                        setPendingSpeakerAssign({
+                          sceneIdx,
+                          dialogueIndex: dialogueIndexForAssign,
+                        })
+                      },
+                    },
+                  }
+                : {}),
+            }
+          )
+        } catch {}
+        return
       }
       
       let text: string | undefined
@@ -15592,6 +15699,31 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
             
             scene.dialogueAudio[targetLanguage] = dialogueArray
             scene.dialogueAudioGeneratedAt = new Date().toISOString()
+
+            // Self-heal missing character on persisted scene.dialogue / scene.beats (e.g. Promo shared shots)
+            if (Array.isArray(scene.dialogue) && dialogueIndex !== undefined && scene.dialogue[dialogueIndex]) {
+              const existingEntry = scene.dialogue[dialogueIndex]
+              if (!existingEntry.character?.trim()) {
+                const nextDialogue = [...scene.dialogue]
+                nextDialogue[dialogueIndex] = {
+                  ...existingEntry,
+                  character: characterName,
+                  ...(character?.id && !existingEntry.characterId ? { characterId: character.id } : {}),
+                }
+                scene.dialogue = nextDialogue
+              }
+            }
+            if (Array.isArray(scene.beats) && spokenBeat?.beatId) {
+              scene.beats = scene.beats.map((b: any) =>
+                b?.beatId === spokenBeat.beatId && !b?.character?.trim()
+                  ? {
+                      ...b,
+                      character: characterName,
+                      ...(character?.id && !b.characterId ? { characterId: character.id } : {}),
+                    }
+                  : b
+              )
+            }
             
             updatedScenes[sceneIdx] = scene
           }

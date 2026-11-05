@@ -837,4 +837,70 @@ describe('promo source guards', () => {
     expect(renderBody).not.toContain('3 · Render Promo')
     expect(renderBody).not.toContain('Promo streams')
   })
+
+  it('preserves and resolves speaker character names for Promo dialogue shots so audio generation never receives empty characterName', () => {
+    const sourceScenes = [
+      {
+        id: 'scene-1',
+        sceneNumber: 2,
+        heading: 'INT. ARCHIVE LAB - NIGHT',
+        action: 'The copper coil hums.',
+        characters: ['Gideon Croft'],
+        beats: [
+          {
+            beatId: 'bt_3f0e54b8-977',
+            sequenceIndex: 0,
+            kind: 'dialogue',
+            character: '',
+            line: 'The current bleeds out. Every damn time… the loop refuses to close.',
+            lineId: 'ln_gideon_1',
+            durationSeconds: 6,
+            beatDirection: {
+              shotType: 'Medium close-up',
+              castInFrame: ['Gideon Croft'],
+            },
+          },
+        ],
+      },
+    ]
+
+    const planned = planPromoTrailer({
+      scenes: sourceScenes,
+      targetDurationSec: 30,
+    })
+    expect(planned.beatPlan[0]?.character).toBe('Gideon Croft')
+
+    // Even if a legacy Promo scene had empty character in its persisted dialogue array,
+    // hydratePromoSceneWithSharedShots resolves the speaker from the source beat / castInFrame
+    // and syncs hydrated.scene.dialogue so dialogue[1].character is non-empty.
+    const { scene: promoScene } = buildPromoSceneFromPlan({
+      beatPlan: [
+        {
+          sceneId: 'scene-1',
+          beatId: 'bt_3f0e54b8-977',
+          sceneIndex: 0,
+          beatKind: 'dialogue',
+          startSec: 0,
+          endSec: 6,
+          durationSec: 6,
+          score: 95,
+          label: 'The current bleeds out. Every damn time… the loop refuses to close.',
+        },
+      ],
+      narrationLine: 'Some loops were never meant to close.',
+      targetDurationSec: 30,
+      projectTitle: 'Current',
+      promoId: 'promo-main',
+    })
+
+    const ensured = ensureSceneBeats(promoScene as unknown as Record<string, unknown>)
+    const hydrated = hydratePromoSceneWithSharedShots(ensured, sourceScenes, {})
+    const hydratedBeats = (hydrated.scene as { beats: Array<Record<string, unknown>> }).beats
+    const hydratedDialogue = (hydrated.scene as { dialogue: Array<Record<string, unknown>> }).dialogue
+
+    expect(hydratedBeats[0]?.character).toBe('NARRATOR')
+    expect(hydratedBeats[1]?.character).toBe('Gideon Croft')
+    expect(hydratedDialogue[0]?.character).toBe('NARRATOR')
+    expect(hydratedDialogue[1]?.character).toBe('Gideon Croft')
+  })
 })

@@ -60,6 +60,10 @@ function beatFromCatalog(shot: PromoShotCatalogEntry): PromoTrailerBeatPlan {
     videoUrl: shot.videoUrl,
     beatRole: shot.beatRole,
     beatKind: shot.beatKind,
+    ...(shot.character ? { character: shot.character } : {}),
+    ...(shot.characterId ? { characterId: shot.characterId } : {}),
+    ...(shot.lineId ? { lineId: shot.lineId } : {}),
+    ...(shot.voiceDirection ? { voiceDirection: shot.voiceDirection } : {}),
     trailerRole: trailerRoleForBeatRole(shot.beatRole),
     ...(shot.cinematicType ? { cinematicType: shot.cinematicType } : {}),
     ...(shot.overlayText ? { overlayText: shot.overlayText } : {}),
@@ -165,6 +169,18 @@ export function sanitizePromoTimeline(
       videoUrl: record.videoUrl || shot.videoUrl,
       beatRole: shot.beatRole,
       beatKind: shot.beatKind,
+      ...(record.character?.trim() || shot.character
+        ? { character: record.character?.trim() || shot.character }
+        : {}),
+      ...(record.characterId?.trim() || shot.characterId
+        ? { characterId: record.characterId?.trim() || shot.characterId }
+        : {}),
+      ...(record.lineId?.trim() || shot.lineId
+        ? { lineId: record.lineId?.trim() || shot.lineId }
+        : {}),
+      ...(record.voiceDirection?.trim() || shot.voiceDirection
+        ? { voiceDirection: record.voiceDirection?.trim() || shot.voiceDirection }
+        : {}),
       trailerRole,
       ...(shot.cinematicType ? { cinematicType: shot.cinematicType } : {}),
       ...(shot.overlayText ? { overlayText: shot.overlayText } : {}),

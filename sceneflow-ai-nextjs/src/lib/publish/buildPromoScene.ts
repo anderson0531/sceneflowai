@@ -2,7 +2,7 @@
  * Build / upsert a cinematic promo scene from a trailer beat plan.
  */
 
-import { getSceneBeats, mintBeatId } from '@/lib/script/beatMigration'
+import { beatsToLegacyFields, getSceneBeats, mintBeatId } from '@/lib/script/beatMigration'
 import type { SceneBeat } from '@/lib/script/segmentTypes'
 import type {
   PromoCampaignPresetId,
@@ -299,7 +299,10 @@ function buildPromoBeats(
       ...(kind === 'dialogue'
         ? {
             line: label,
-            lineId: `ln_promo_${plan.sceneIndex}_${index}`,
+            lineId: plan.lineId?.trim() || `ln_promo_${plan.sceneIndex}_${index}`,
+            ...(plan.character?.trim() ? { character: plan.character.trim() } : {}),
+            ...(plan.characterId?.trim() ? { characterId: plan.characterId.trim() } : {}),
+            ...(plan.voiceDirection?.trim() ? { voiceDirection: plan.voiceDirection.trim() } : {}),
           }
         : {}),
       beatRole: plan.beatRole || 'progression',
@@ -460,6 +463,14 @@ export function buildPromoSceneFromPlan(input: BuildPromoSceneInput): BuildPromo
       : presetDef?.defaultAspect)
 
   const beats = buildPromoBeats(input.beatPlan, input.narrationLine)
+  const legacyFromBeats = beatsToLegacyFields(beats)
+  const promoCharacters = Array.from(
+    new Set(
+      beats
+        .map((b) => (b.kind === 'dialogue' ? b.character?.trim() : undefined))
+        .filter((name): name is string => Boolean(name))
+    )
+  )
   const defaultSceneDirection =
     input.existingPromoScene?.sceneDirection &&
     typeof input.existingPromoScene.sceneDirection === 'object'
@@ -507,8 +518,9 @@ export function buildPromoSceneFromPlan(input: BuildPromoSceneInput): BuildPromo
     action: `[${heading} — ${input.targetDurationSec}s${promoAspect ? ` · ${promoAspect}` : ''}]\n${
       campaignObjective || presetDef?.description || `Captivating highlights for ${title}.`
     }`,
-    dialogue: [],
-    characters: [],
+    dialogue: legacyFromBeats.dialogue,
+    ...(legacyFromBeats.narration ? { narration: legacyFromBeats.narration } : {}),
+    characters: promoCharacters,
     duration: input.targetDurationSec,
     cinematicType: PROMO_SCENE_CINEMATIC_TYPE,
     sceneDirection: defaultSceneDirection,
@@ -659,6 +671,61 @@ export function hydratePromoSceneWithSharedShots(
     )
     if (!sourceBeat) return beat
 
+    const sourceDialogue = Array.isArray(sourceScene.dialogue)
+      ? (sourceScene.dialogue as Array<Record<string, unknown>>)
+      : []
+    const matchedSourceDialogue = sourceDialogue.find((entry) => {
+      if (!entry || typeof entry !== 'object') return false
+      if (sourceBeat.lineId?.trim() && entry.lineId === sourceBeat.lineId.trim()) return true
+      const entryLine = String(entry.line ?? entry.text ?? '').trim()
+      const beatLine = String(sourceBeat.line ?? beat.line ?? '').trim()
+      return Boolean(beatLine && entryLine && entryLine === beatLine)
+    })
+    const castFallback =
+      sourceBeat.beatDirection?.castInFrame?.find(
+        (name) => typeof name === 'string' && name.trim().length > 0
+      )?.trim() ||
+      beat.beatDirection?.castInFrame?.find(
+        (name) => typeof name === 'string' && name.trim().length > 0
+      )?.trim()
+    const sourceScenePrimaryCharacter = Array.isArray(sourceScene.characters)
+      ? sourceScene.characters
+          .map((entry) =>
+            typeof entry === 'string'
+              ? entry.trim()
+              : entry && typeof entry === 'object'
+                ? String((entry as { name?: unknown }).name ?? '').trim()
+                : ''
+          )
+          .find((name) => name.length > 0)
+      : undefined
+    const resolvedCharacter =
+      beat.kind === 'narration'
+        ? beat.character?.trim() || 'NARRATOR'
+        : sourceBeat.character?.trim() ||
+          beat.character?.trim() ||
+          (typeof matchedSourceDialogue?.character === 'string' &&
+            matchedSourceDialogue.character.trim()) ||
+          castFallback ||
+          (beat.kind === 'dialogue' || sourceBeat.kind === 'dialogue'
+            ? sourceScenePrimaryCharacter
+            : undefined)
+    const resolvedCharacterId =
+      beat.kind === 'narration'
+        ? beat.characterId?.trim() || 'narrator'
+        : sourceBeat.characterId?.trim() ||
+          beat.characterId?.trim() ||
+          (typeof matchedSourceDialogue?.characterId === 'string' &&
+            matchedSourceDialogue.characterId.trim()) ||
+          undefined
+    const resolvedVoiceDirection =
+      beat.voiceDirection?.trim() ||
+      sourceBeat.voiceDirection?.trim() ||
+      (typeof matchedSourceDialogue?.voiceDirection === 'string' &&
+        matchedSourceDialogue.voiceDirection.trim()) ||
+      undefined
+    const resolvedAudioUrl = beat.audioUrl?.trim() || sourceBeat.audioUrl?.trim() || undefined
+
     return {
       ...sourceBeat,
       ...beat,
@@ -688,8 +755,10 @@ export function hydratePromoSceneWithSharedShots(
       actionDescription:
         sourceBeat.actionDescription || beat.actionDescription,
       line: beat.kind === 'narration' ? beat.line : sourceBeat.line || beat.line,
-      character:
-        beat.kind === 'narration' ? beat.character : sourceBeat.character || beat.character,
+      character: resolvedCharacter,
+      ...(resolvedCharacterId ? { characterId: resolvedCharacterId } : {}),
+      ...(resolvedVoiceDirection ? { voiceDirection: resolvedVoiceDirection } : {}),
+      ...(resolvedAudioUrl ? { audioUrl: resolvedAudioUrl } : {}),
     }
   })
 
@@ -802,11 +871,40 @@ export function hydratePromoSceneWithSharedShots(
           },
         }
 
+  const hydratedLegacy = beatsToLegacyFields(hydratedBeats)
+  const existingDialogue = Array.isArray(promoScene.dialogue)
+    ? (promoScene.dialogue as Array<Record<string, unknown>>)
+    : []
+  const syncedDialogue = hydratedLegacy.dialogue.map((derivedLine, idx) => {
+    const existingLine =
+      (typeof derivedLine.lineId === 'string' &&
+        existingDialogue.find((d) => d && d.lineId === derivedLine.lineId)) ||
+      existingDialogue[idx]
+    const existingChar =
+      typeof existingLine?.character === 'string' ? existingLine.character.trim() : ''
+    const derivedChar =
+      typeof derivedLine.character === 'string' ? derivedLine.character.trim() : ''
+    return {
+      ...(existingLine || {}),
+      ...derivedLine,
+      character: derivedChar || existingChar || '',
+      characterId: derivedLine.characterId || existingLine?.characterId,
+      line: derivedLine.line || existingLine?.line || '',
+      lineId: derivedLine.lineId || existingLine?.lineId,
+      voiceDirection: derivedLine.voiceDirection || existingLine?.voiceDirection,
+      audioUrl: derivedLine.audioUrl || existingLine?.audioUrl,
+    }
+  })
+
   return {
     scene: {
       ...promoScene,
       sceneDirection: hydratedSceneDirection,
       beats: hydratedBeats,
+      dialogue: syncedDialogue,
+      ...(hydratedLegacy.narration && !promoScene.narration
+        ? { narration: hydratedLegacy.narration }
+        : {}),
     },
     productionData: {
       ...(ownProd || { isSegmented: true, targetDuration: Number(promoScene.duration) || cursor }),

@@ -1078,6 +1078,20 @@ export function reconcilePromoBeatsWithPlan(
         ? plan.label.trim()
         : `Promo moment ${index + 1}`
     const planKind: BeatKind = plan.beatKind === 'dialogue' ? 'dialogue' : 'action'
+    const planCharacter =
+      typeof plan.character === 'string' && plan.character.trim()
+        ? plan.character.trim()
+        : undefined
+    const planCharacterId =
+      typeof plan.characterId === 'string' && plan.characterId.trim()
+        ? plan.characterId.trim()
+        : undefined
+    const planLineId =
+      typeof plan.lineId === 'string' && plan.lineId.trim() ? plan.lineId.trim() : undefined
+    const planVoiceDirection =
+      typeof plan.voiceDirection === 'string' && plan.voiceDirection.trim()
+        ? plan.voiceDirection.trim()
+        : undefined
     const durationSec =
       typeof plan.durationSec === 'number' && plan.durationSec > 0
         ? plan.durationSec
@@ -1116,7 +1130,18 @@ export function reconcilePromoBeatsWithPlan(
         kind: existingMatch.kind || planKind,
         actionDescription: existingMatch.actionDescription?.trim() || planLabel,
         ...(planKind === 'dialogue'
-          ? { line: existingMatch.line?.trim() || planLabel }
+          ? {
+              line: existingMatch.line?.trim() || planLabel,
+              ...(existingMatch.character?.trim() || planCharacter
+                ? { character: existingMatch.character?.trim() || planCharacter }
+                : {}),
+              ...(existingMatch.characterId?.trim() || planCharacterId
+                ? { characterId: existingMatch.characterId?.trim() || planCharacterId }
+                : {}),
+              ...(existingMatch.voiceDirection?.trim() || planVoiceDirection
+                ? { voiceDirection: existingMatch.voiceDirection?.trim() || planVoiceDirection }
+                : {}),
+            }
           : {}),
         beatRole:
           existingMatch.beatRole ||
@@ -1149,7 +1174,10 @@ export function reconcilePromoBeatsWithPlan(
       ...(planKind === 'dialogue'
         ? {
             line: planLabel,
-            lineId: `ln_promo_${planSceneIndex}_${index}`,
+            lineId: planLineId || `ln_promo_${planSceneIndex}_${index}`,
+            ...(planCharacter ? { character: planCharacter } : {}),
+            ...(planCharacterId ? { characterId: planCharacterId } : {}),
+            ...(planVoiceDirection ? { voiceDirection: planVoiceDirection } : {}),
           }
         : {}),
       beatRole: typeof plan.beatRole === 'string' ? plan.beatRole : 'progression',

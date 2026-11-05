@@ -45,6 +45,10 @@ export interface PromoShotCatalogEntry {
   label: string
   beatRole?: string
   beatKind?: string
+  character?: string
+  characterId?: string
+  lineId?: string
+  voiceDirection?: string
   direction?: string
   audienceScore?: number
   hero: boolean
@@ -249,6 +253,11 @@ export function buildPromoShotCatalog(input: PromoShotCatalogInput): PromoShotCa
         beat.line || beat.actionDescription || beat.kind || `Shot ${beatIndex + 1}`
       const spokenDurationSec =
         beat.kind === 'dialogue' ? resolveBeatSpokenDuration(beat, scene) : undefined
+      const resolvedCharacter =
+        beat.character?.trim() ||
+        (beat.kind === 'narration' ? 'NARRATOR' : undefined) ||
+        beat.beatDirection?.castInFrame?.find((name) => name.trim())?.trim() ||
+        (beat.kind === 'dialogue' ? primarySceneCharacter(scene) : undefined)
 
       catalog.push({
         sceneId,
@@ -259,6 +268,10 @@ export function buildPromoShotCatalog(input: PromoShotCatalogInput): PromoShotCa
         label,
         beatRole: beat.beatRole,
         beatKind: beat.kind,
+        ...(resolvedCharacter ? { character: resolvedCharacter } : {}),
+        ...(beat.characterId?.trim() ? { characterId: beat.characterId.trim() } : {}),
+        ...(beat.lineId?.trim() ? { lineId: beat.lineId.trim() } : {}),
+        ...(beat.voiceDirection?.trim() ? { voiceDirection: beat.voiceDirection.trim() } : {}),
         direction: directionSummary(beat),
         audienceScore,
         hero: isPromoHeroBeat(sceneIndex, beatIndex, beat.beatId, input.heroBeatIds),

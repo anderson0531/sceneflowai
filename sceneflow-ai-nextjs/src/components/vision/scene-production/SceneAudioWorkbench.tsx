@@ -886,14 +886,20 @@ function AudioStage({
     const dialogueLines = Array.isArray(scene.dialogue) ? scene.dialogue : []
     const dialogueIndex = resolveSpokenIndex(beats, beat, dialogueLines)
     const line = dialogueLines[dialogueIndex]
+    const resolvedLineChar =
+      (typeof line?.character === 'string' && line.character.trim()) ||
+      (typeof beat.character === 'string' && beat.character.trim()) ||
+      (beat.kind === 'narration' ? 'NARRATOR' : '') ||
+      beat.beatDirection?.castInFrame?.find((n) => typeof n === 'string' && n.trim())?.trim() ||
+      undefined
     const audioEntry = findDialogueAudioForLine(scene, {
       language: selectedLanguage,
-      lineId: line?.lineId ?? beat.lineId,
+      lineId: line?.lineId || beat.lineId,
       dialogueIndex,
-      character: line?.character ?? beat.character,
+      character: resolvedLineChar,
     })
-    audioUrl = audioEntry?.audioUrl || audioEntry?.url
-    label = line?.character || beat.character || label
+    audioUrl = audioEntry?.audioUrl || audioEntry?.url || beat.audioUrl
+    label = resolvedLineChar || label
   }
   const sceneKey = scene.id || scene.sceneId || `scene-${sceneIdx}`
   const beatNumber = (typeof beat.sequenceIndex === 'number' ? beat.sequenceIndex : beats.indexOf(beat)) + 1
@@ -1095,12 +1101,33 @@ function SpokenBeatAudio(
   const [isExtractingClipAudio, setIsExtractingClipAudio] = useState(false)
   const dialogueLines = Array.isArray(scene.dialogue) ? scene.dialogue : []
   const dialogueIndex = resolveSpokenIndex(beats, beat, dialogueLines)
-  const d = dialogueLines[dialogueIndex] ?? {
-    character: beat.character,
-    line: beat.line,
-    lineId: beat.lineId,
-    kind: beat.kind,
-    characterId: beat.characterId,
+  const rawLine = dialogueLines[dialogueIndex]
+  const castFallback = beat.beatDirection?.castInFrame?.find(
+    (name) => typeof name === 'string' && name.trim().length > 0
+  )?.trim()
+  const resolvedKind = rawLine?.kind || beat.kind
+  const rawCharacterId =
+    (typeof rawLine?.characterId === 'string' && rawLine.characterId.trim()) ||
+    (typeof beat.characterId === 'string' && beat.characterId.trim()) ||
+    (resolvedKind === 'narration' ? 'narrator' : undefined)
+  const characterFromId = rawCharacterId
+    ? (characters as any[]).find((c) => c?.id === rawCharacterId)?.name?.trim()
+    : undefined
+  const resolvedCharacter =
+    (typeof rawLine?.character === 'string' && rawLine.character.trim()) ||
+    (typeof beat.character === 'string' && beat.character.trim()) ||
+    characterFromId ||
+    (resolvedKind === 'narration' ? 'NARRATOR' : '') ||
+    castFallback ||
+    ''
+  const d = {
+    ...(rawLine ?? {}),
+    character: resolvedCharacter,
+    line: rawLine?.line ?? rawLine?.text ?? beat.line,
+    lineId: rawLine?.lineId || beat.lineId,
+    kind: resolvedKind,
+    characterId: rawCharacterId,
+    voiceDirection: rawLine?.voiceDirection ?? beat.voiceDirection,
   }
   const i = dialogueIndex
   const audioEntry = findDialogueAudioForLine(scene, {
@@ -1109,7 +1136,7 @@ function SpokenBeatAudio(
     dialogueIndex: i,
     character: d.character,
   })
-  const dialogueAudioUrl = audioEntry?.audioUrl || audioEntry?.url
+  const dialogueAudioUrl = audioEntry?.audioUrl || audioEntry?.url || beat.audioUrl
   const sceneKey = scene.id || scene.sceneId || `scene-${sceneIdx}`
   const clipUrl = resolveBeatVideoClipUrl(props.segments, beat.beatId, props.selectedLanguage)
   const segmentDuration = resolveBeatSegmentDuration(props.segments, beat.beatId)
@@ -1234,14 +1261,31 @@ function SpokenBeatAudio(
                     }
                     speaker = { kind: 'character', id: String(match.id), name: String(match.name) }
                   }
+                  const promoSource = beat as SceneBeat & {
+                    sourceSceneIndex?: number
+                    sourceBeatId?: string
+                  }
                   const updatedScenes = props.scenes.map((s: any, idx: number) => {
-                    if (idx !== sceneIdx) return s
-                    return assignDialogueSpeakerToScene(s, {
-                      beatId: beat.beatId,
-                      dialogueIndex: i,
-                      lineId: d.lineId || beat.lineId,
-                      speaker,
-                    })
+                    if (idx === sceneIdx) {
+                      return assignDialogueSpeakerToScene(s, {
+                        beatId: beat.beatId,
+                        dialogueIndex: i,
+                        lineId: d.lineId || beat.lineId,
+                        speaker,
+                      })
+                    }
+                    if (
+                      typeof promoSource.sourceSceneIndex === 'number' &&
+                      promoSource.sourceBeatId &&
+                      idx === promoSource.sourceSceneIndex
+                    ) {
+                      return assignDialogueSpeakerToScene(s, {
+                        beatId: promoSource.sourceBeatId,
+                        dialogueIndex: 0,
+                        speaker,
+                      })
+                    }
+                    return s
                   })
                   props.onScriptChange({
                     ...props.script,
