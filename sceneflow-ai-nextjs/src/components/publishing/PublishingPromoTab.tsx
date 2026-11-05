@@ -314,13 +314,21 @@ export function PublishingPromoTab({
   const [aspectOverride, setAspectOverride] = useState<PromoFrameAspect | null>(null)
   const [creatingNewPromo, setCreatingNewPromo] = useState(false)
   const [deletingPromoId, setDeletingPromoId] = useState<string | null>(null)
+  const [confirmDeletePromoId, setConfirmDeletePromoId] = useState<string | null>(null)
+  const [previewMode, setPreviewMode] = useState<'clips' | 'rendered'>('clips')
+  const [selectedClipKey, setSelectedClipKey] = useState<string>('')
+  const [selectedRenderedStreamId, setSelectedRenderedStreamId] = useState<string>('')
   const [multilangGenerating, setMultilangGenerating] = useState(false)
+
+  const promoSceneIndex = useMemo(
+    () => (creatingNewPromo ? -1 : findPromoSceneIndex(scenes, activePromoId || undefined)),
+    [scenes, activePromoId, creatingNewPromo]
+  )
 
   const promoScene = useMemo(() => {
     if (creatingNewPromo) return null
-    const idx = findPromoSceneIndex(scenes, activePromoId || undefined)
-    return idx >= 0 ? (scenes[idx] as Record<string, unknown>) : null
-  }, [scenes, activePromoId, creatingNewPromo])
+    return promoSceneIndex >= 0 ? (scenes[promoSceneIndex] as Record<string, unknown>) : null
+  }, [scenes, promoSceneIndex, creatingNewPromo])
 
   const aspect: PromoFrameAspect = useMemo(() => {
     if (aspectOverride) return aspectOverride
@@ -345,6 +353,8 @@ export function PublishingPromoTab({
   const handleSelectExistingPromo = useCallback(
     (summary: (typeof promoScenes)[number]) => {
       setCreatingNewPromo(false)
+      setConfirmDeletePromoId(null)
+      setPreviewing(false)
       setActivePromoId(summary.promoId)
       setCampaignName(summary.name)
       if (summary.preset) setCampaignPreset(summary.preset)
@@ -560,6 +570,95 @@ export function PublishingPromoTab({
   const musicAudioUrl = typeof promoScene?.musicAudio === 'string' ? promoScene.musicAudio : undefined
   const activeTrailer = promoAssetForLanguage(publishingState.promo, language)
 
+  const promoProductionData = useMemo(() => {
+    if (!sceneProductionState || !promoScene) return undefined
+    const sceneId = String(promoScene.id || promoScene.sceneId || activePromoId || '')
+    return (
+      (sceneId ? sceneProductionState[sceneId] : undefined) ||
+      (promoSceneIndex >= 0 ? sceneProductionState[`scene-${promoSceneIndex}`] : undefined)
+    )
+  }, [sceneProductionState, promoScene, activePromoId, promoSceneIndex])
+
+  const renderedPromoStreams = useMemo(() => {
+    const items: Array<{ id: string; label: string; mp4Url: string; language?: string }> = []
+    const seenUrls = new Set<string>()
+    const prodStreams = Array.isArray(promoProductionData?.productionStreams)
+      ? promoProductionData.productionStreams
+      : []
+    for (const s of prodStreams) {
+      const rec = s as { id?: string; mp4Url?: string; status?: string; language?: string; label?: string }
+      if (rec?.mp4Url && (!rec.status || rec.status === 'complete' || rec.status === 'ready')) {
+        if (!seenUrls.has(rec.mp4Url)) {
+          seenUrls.add(rec.mp4Url)
+          items.push({
+            id: rec.id || `stream-${items.length}`,
+            label:
+              rec.label ||
+              (rec.language ? `${promoLanguageName(rec.language)} Stream` : 'Rendered Promo Stream'),
+            mp4Url: rec.mp4Url,
+            language: rec.language,
+          })
+        }
+      }
+    }
+    const directSceneUrl =
+      (typeof promoProductionData?.renderedSceneUrl === 'string' && promoProductionData.renderedSceneUrl) ||
+      (typeof promoScene?.renderedSceneUrl === 'string' && promoScene.renderedSceneUrl) ||
+      ''
+    if (directSceneUrl && !seenUrls.has(directSceneUrl)) {
+      seenUrls.add(directSceneUrl)
+      items.push({
+        id: 'scene-render',
+        label: 'Rendered Promo (Mixer)',
+        mp4Url: directSceneUrl,
+      })
+    }
+    const trailersByLang = publishingState.promo?.trailersByLanguage || {}
+    for (const [langCode, asset] of Object.entries(trailersByLang)) {
+      if (asset?.mp4Url && !seenUrls.has(asset.mp4Url)) {
+        seenUrls.add(asset.mp4Url)
+        items.push({
+          id: `trailer-${langCode}`,
+          label: `${promoLanguageName(langCode)} Promo (${Math.round(asset.durationSec || targetDuration)}s)`,
+          mp4Url: asset.mp4Url,
+          language: langCode,
+        })
+      }
+    }
+    if (activeTrailer?.mp4Url && !seenUrls.has(activeTrailer.mp4Url)) {
+      seenUrls.add(activeTrailer.mp4Url)
+      items.push({
+        id: 'active-trailer',
+        label: `${promoLanguageName(activeTrailer.language || language)} Promo`,
+        mp4Url: activeTrailer.mp4Url,
+        language: activeTrailer.language || language,
+      })
+    }
+    return items
+  }, [promoProductionData, promoScene, publishingState.promo, activeTrailer, language, targetDuration])
+
+  const clipRows = useMemo(
+    () =>
+      timelineRows.filter(
+        (row) => row.playback.hasClip && Boolean(row.playback.videoUrl) && !brokenBeatKeys.has(row.key)
+      ),
+    [timelineRows, brokenBeatKeys]
+  )
+
+  const activeClipRow = useMemo(() => {
+    if (clipRows.length === 0) return null
+    return clipRows.find((r) => r.key === selectedClipKey) ?? clipRows[0] ?? null
+  }, [clipRows, selectedClipKey])
+
+  const activeRenderedStream = useMemo(() => {
+    if (renderedPromoStreams.length === 0) return null
+    return (
+      renderedPromoStreams.find((s) => s.id === selectedRenderedStreamId) ??
+      renderedPromoStreams[0] ??
+      null
+    )
+  }, [renderedPromoStreams, selectedRenderedStreamId])
+
   const markBeatBroken = useCallback((key: string) => {
     setBrokenBeatKeys((prev) => {
       if (prev.has(key)) return prev
@@ -696,6 +795,7 @@ export function PublishingPromoTab({
         toast.error(err instanceof Error ? err.message : 'Failed to delete promo')
       } finally {
         setDeletingPromoId(null)
+        setConfirmDeletePromoId(null)
       }
     },
     [projectId, scenes, applyScenes, handleSelectExistingPromo]
@@ -1050,53 +1150,97 @@ export function PublishingPromoTab({
 
         {/* Multi-Promo Version Switcher */}
         {(promoScenes.length > 0 || creatingNewPromo) && (
-          <div
-            data-testid="promo-campaign-switcher"
-            className="mb-4 flex flex-wrap items-center gap-1.5 rounded-lg border border-zinc-800/80 bg-zinc-900/50 p-2"
-          >
-            {promoScenes.map((summary) => {
-              const isSelected = !creatingNewPromo && summary.promoId === (promoScene?.id || activePromoId)
-              return (
-                <div key={summary.promoId} className="inline-flex items-center gap-1">
-                  <button
-                    type="button"
-                    onClick={() => handleSelectExistingPromo(summary)}
-                    className={cn(
-                      'inline-flex items-center gap-1.5 rounded-md border px-2.5 py-1 text-xs font-medium transition-colors',
-                      isSelected
-                        ? 'border-fuchsia-500/60 bg-fuchsia-500/20 text-fuchsia-100 shadow-sm'
-                        : 'border-zinc-700/80 bg-zinc-950/70 text-zinc-300 hover:border-zinc-600 hover:text-white'
-                    )}
-                  >
-                    <span className="rounded bg-fuchsia-500/30 px-1.5 py-0.5 text-[10px] font-bold uppercase text-fuchsia-200">
-                      P{summary.promoNumber}
-                    </span>
-                    <span className="max-w-[14rem] truncate">{summary.name}</span>
-                  </button>
-                  {promoScenes.length > 1 && isSelected && (
+          <div className="mb-4 space-y-2">
+            <div
+              data-testid="promo-campaign-switcher"
+              className="flex flex-wrap items-center gap-1.5 rounded-lg border border-zinc-800/80 bg-zinc-900/50 p-2"
+            >
+              {promoScenes.map((summary) => {
+                const isSelected = !creatingNewPromo && summary.promoId === (promoScene?.id || activePromoId)
+                return (
+                  <div key={summary.promoId} className="inline-flex items-center gap-1">
                     <button
                       type="button"
-                      disabled={deletingPromoId === summary.promoId}
-                      onClick={() => void handleDeletePromo(summary.promoId)}
-                      title="Delete this promo version"
-                      className="inline-flex h-6 w-6 items-center justify-center rounded border border-zinc-800 text-zinc-400 hover:border-rose-500/50 hover:bg-rose-500/10 hover:text-rose-300 disabled:opacity-50"
-                    >
-                      {deletingPromoId === summary.promoId ? (
-                        <Loader2 className="h-3 w-3 animate-spin" />
-                      ) : (
-                        <Trash2 className="h-3 w-3" />
+                      onClick={() => handleSelectExistingPromo(summary)}
+                      className={cn(
+                        'inline-flex items-center gap-1.5 rounded-md border px-2.5 py-1 text-xs font-medium transition-colors',
+                        isSelected
+                          ? 'border-fuchsia-500/60 bg-fuchsia-500/20 text-fuchsia-100 shadow-sm'
+                          : 'border-zinc-700/80 bg-zinc-950/70 text-zinc-300 hover:border-zinc-600 hover:text-white'
                       )}
+                    >
+                      <span className="rounded bg-fuchsia-500/30 px-1.5 py-0.5 text-[10px] font-bold uppercase text-fuchsia-200">
+                        P{summary.promoNumber}
+                      </span>
+                      <span className="max-w-[14rem] truncate">{summary.name}</span>
                     </button>
-                  )}
+                    {isSelected && (
+                      <button
+                        type="button"
+                        data-testid="delete-promo-version-btn"
+                        disabled={deletingPromoId === summary.promoId}
+                        onClick={() => setConfirmDeletePromoId(summary.promoId)}
+                        title="Delete this promo version"
+                        className="inline-flex h-6 w-6 items-center justify-center rounded border border-zinc-800 text-zinc-400 hover:border-rose-500/50 hover:bg-rose-500/10 hover:text-rose-300 disabled:opacity-50"
+                      >
+                        {deletingPromoId === summary.promoId ? (
+                          <Loader2 className="h-3 w-3 animate-spin" />
+                        ) : (
+                          <Trash2 className="h-3 w-3" />
+                        )}
+                      </button>
+                    )}
+                  </div>
+                )
+              })}
+              {creatingNewPromo && (
+                <span className="inline-flex items-center gap-1.5 rounded-md border border-fuchsia-500/60 bg-fuchsia-500/20 px-2.5 py-1 text-xs font-medium text-fuchsia-100">
+                  <Sparkles className="h-3 w-3 text-fuchsia-300" />
+                  New Promo: {campaignName || 'Untitled Promo'}
+                </span>
+              )}
+            </div>
+
+            {confirmDeletePromoId ? (
+              <div
+                data-testid="promo-delete-confirmation"
+                className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-rose-500/40 bg-rose-950/30 px-3 py-2 text-xs text-rose-200"
+              >
+                <span>
+                  Delete promo version{' '}
+                  <strong className="font-semibold text-white">
+                    {promoScenes.find((p) => p.promoId === confirmDeletePromoId)?.name || 'this promo'}
+                  </strong>
+                  ? This removes the promo scene and its shot plan.
+                </span>
+                <div className="flex items-center gap-2">
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    data-testid="cancel-delete-promo-btn"
+                    disabled={deletingPromoId === confirmDeletePromoId}
+                    onClick={() => setConfirmDeletePromoId(null)}
+                    className="h-7 px-2.5 text-xs text-zinc-300 hover:bg-zinc-800 hover:text-white"
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    size="sm"
+                    data-testid="confirm-delete-promo-btn"
+                    disabled={deletingPromoId === confirmDeletePromoId}
+                    onClick={() => void handleDeletePromo(confirmDeletePromoId)}
+                    className="h-7 bg-rose-600 px-3 text-xs font-medium text-white hover:bg-rose-500"
+                  >
+                    {deletingPromoId === confirmDeletePromoId ? (
+                      <Loader2 className="h-3 w-3 animate-spin mr-1" />
+                    ) : (
+                      <Trash2 className="h-3 w-3 mr-1" />
+                    )}
+                    Confirm Delete
+                  </Button>
                 </div>
-              )
-            })}
-            {creatingNewPromo && (
-              <span className="inline-flex items-center gap-1.5 rounded-md border border-fuchsia-500/60 bg-fuchsia-500/20 px-2.5 py-1 text-xs font-medium text-fuchsia-100">
-                <Sparkles className="h-3 w-3 text-fuchsia-300" />
-                New Promo: {campaignName || 'Untitled Promo'}
-              </span>
-            )}
+              </div>
+            ) : null}
           </div>
         )}
 
@@ -1238,6 +1382,209 @@ export function PublishingPromoTab({
           ) : null}
         </div>
 
+        {(timelineRows.length > 0 || renderedPromoStreams.length > 0) && (
+          <div
+            data-testid="promo-video-preview-panel"
+            className="mb-4 rounded-lg border border-zinc-800 bg-zinc-950/60 p-3"
+          >
+            <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+              <div className="flex items-center gap-1.5">
+                <button
+                  type="button"
+                  data-testid="preview-mode-clips-btn"
+                  onClick={() => setPreviewMode('clips')}
+                  className={cn(
+                    'rounded-md border px-2.5 py-1 text-xs font-medium transition-colors',
+                    previewMode === 'clips'
+                      ? 'border-fuchsia-500/60 bg-fuchsia-500/20 text-fuchsia-100'
+                      : 'border-zinc-800 bg-zinc-900/70 text-zinc-400 hover:text-zinc-200'
+                  )}
+                >
+                  Promo Shot Clips ({clipRows.length}/{includedRows.length})
+                </button>
+                <button
+                  type="button"
+                  data-testid="preview-mode-rendered-btn"
+                  onClick={() => {
+                    setPreviewing(false)
+                    setPreviewMode('rendered')
+                  }}
+                  className={cn(
+                    'rounded-md border px-2.5 py-1 text-xs font-medium transition-colors',
+                    previewMode === 'rendered'
+                      ? 'border-emerald-500/60 bg-emerald-500/20 text-emerald-100'
+                      : 'border-zinc-800 bg-zinc-900/70 text-zinc-400 hover:text-zinc-200'
+                  )}
+                >
+                  Rendered Promo ({renderedPromoStreams.length})
+                </button>
+              </div>
+
+              {previewMode === 'clips' && previewShots.length > 0 ? (
+                <div className="flex items-center gap-2">
+                  {clipRows.length > 1 && !previewing ? (
+                    <select
+                      value={activeClipRow?.key || ''}
+                      onChange={(e) => setSelectedClipKey(e.target.value)}
+                      className="h-7 rounded border border-zinc-700 bg-zinc-950 px-2 text-xs text-zinc-100"
+                    >
+                      {clipRows.map((row) => (
+                        <option key={row.key} value={row.key}>
+                          {`S${row.sceneNumber}${row.shotNumber ? ` · Shot ${row.shotNumber}` : ''}${
+                            row.beat.trailerRole ? ` (${row.beat.trailerRole})` : ''
+                          }`}
+                        </option>
+                      ))}
+                    </select>
+                  ) : null}
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    data-testid="play-all-promo-clips-btn"
+                    className="h-7 px-2.5 text-xs border-zinc-700 text-zinc-200"
+                    onClick={() => {
+                      if (previewing) {
+                        setPreviewing(false)
+                        return
+                      }
+                      flushSync(() => setPreviewing(true))
+                      previewRef.current?.start()
+                    }}
+                  >
+                    {previewing ? (
+                      <>
+                        <Square className="w-3 h-3 mr-1" />
+                        Stop Sequence
+                      </>
+                    ) : (
+                      <>
+                        <Play className="w-3 h-3 mr-1" />
+                        Play Cut Sequence
+                      </>
+                    )}
+                  </Button>
+                </div>
+              ) : null}
+
+              {previewMode === 'rendered' && renderedPromoStreams.length > 1 ? (
+                <select
+                  value={activeRenderedStream?.id || ''}
+                  onChange={(e) => setSelectedRenderedStreamId(e.target.value)}
+                  className="h-7 rounded border border-zinc-700 bg-zinc-950 px-2 text-xs text-zinc-100"
+                >
+                  {renderedPromoStreams.map((stream) => (
+                    <option key={stream.id} value={stream.id}>
+                      {stream.label}
+                    </option>
+                  ))}
+                </select>
+              ) : null}
+            </div>
+
+            {previewMode === 'clips' ? (
+              <div>
+                <PromoCutPreview
+                  ref={previewRef}
+                  playing={previewing}
+                  shots={previewShots}
+                  narrationUrl={narrationAudioUrl}
+                  narrationStartSec={promoNarrationStartSec(
+                    timelineBeats.filter((beat) => promoShotIncluded(beat)),
+                    narrationStartShotKey
+                  )}
+                  musicUrl={musicAudioUrl}
+                  aspect={aspect}
+                  watermark={watermarkEnabled}
+                  onEnded={() => setPreviewing(false)}
+                />
+                {!previewing && activeClipRow?.playback.videoUrl ? (
+                  <div className="space-y-1.5">
+                    <div
+                      className={cn(
+                        'overflow-hidden rounded-lg border border-zinc-800 bg-black',
+                        promoFrameClass(aspect),
+                        aspect === '9:16' ? 'max-w-[220px]' : 'max-w-2xl'
+                      )}
+                    >
+                      <video
+                        key={activeClipRow.key}
+                        data-testid="promo-shot-clip-video-player"
+                        src={activeClipRow.playback.videoUrl}
+                        controls
+                        playsInline
+                        preload="metadata"
+                        className="h-full w-full object-contain"
+                      />
+                    </div>
+                    <p className="text-[11px] text-zinc-400">
+                      Previewing clip:{' '}
+                      <span className="font-medium text-zinc-200">
+                        S{activeClipRow.sceneNumber}
+                        {activeClipRow.shotNumber ? ` · Shot ${activeClipRow.shotNumber}` : ''}
+                      </span>
+                      {activeClipRow.beat.label ? ` — ${activeClipRow.beat.label}` : ''}
+                    </p>
+                  </div>
+                ) : !previewing ? (
+                  <p className="text-xs text-zinc-500">
+                    No generated shot video clips yet. Open the Promo Scene in Studio to generate shot clips, or click{' '}
+                    <strong className="text-zinc-300">Play Cut Sequence</strong> to preview the animatic frames.
+                  </p>
+                ) : null}
+              </div>
+            ) : activeRenderedStream ? (
+              <div className="space-y-2">
+                <div
+                  className={cn(
+                    'overflow-hidden rounded-lg border border-emerald-500/30 bg-black',
+                    promoFrameClass(aspect),
+                    aspect === '9:16' ? 'max-w-[220px]' : 'max-w-2xl'
+                  )}
+                >
+                  <video
+                    key={activeRenderedStream.mp4Url}
+                    data-testid="promo-rendered-video-player"
+                    src={activeRenderedStream.mp4Url}
+                    controls
+                    playsInline
+                    preload="metadata"
+                    className="h-full w-full object-contain"
+                  />
+                </div>
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <span className="text-xs text-emerald-200">{activeRenderedStream.label}</span>
+                  <div className="flex items-center gap-2">
+                    <a
+                      href={activeRenderedStream.mp4Url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      download
+                      className="inline-flex items-center rounded-md border border-emerald-500/30 px-2.5 py-1 text-xs font-medium text-emerald-200 hover:bg-emerald-500/10"
+                    >
+                      <Download className="w-3.5 h-3.5 mr-1" />
+                      Download
+                    </a>
+                    {onPreviewPromo ? (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="h-7 px-2.5 text-xs"
+                        onClick={() => onPreviewPromo(activeRenderedStream.language || language)}
+                      >
+                        Play in Screening Room
+                      </Button>
+                    ) : null}
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <p className="text-xs text-zinc-500">
+                No rendered Promo video yet. Open the Promo Scene in Studio and render the Promo in the Mixer to watch it here.
+              </p>
+            )}
+          </div>
+        )}
+
         {(timelineRows.length > 0 || shotCatalog.length > 0) && (
           <div className="rounded-lg border border-zinc-800 bg-zinc-950/60 p-3">
             <div className="mb-2 flex items-center justify-between gap-2">
@@ -1245,17 +1592,11 @@ export function PublishingPromoTab({
                 Shot timeline ({timelineRows.length} shots)
               </p>
               <p className="text-[11px] text-zinc-400">
-                {includedRows.length} active ·{' '}
-                {Math.round(
-                  includedRows.reduce(
-                    (sum, r) => sum + (r.beat.durationSec ?? r.beat.endSec - r.beat.startSec),
-                    0
-                  )
-                )}
-                s total
+                {includedRows.length} active
                 {timelineRows.length > includedRows.length
                   ? ` · ${timelineRows.length - includedRows.length} excluded`
                   : ''}
+                {' · '}Edit shot timing in Mixer
               </p>
             </div>
             {shotCatalog.length > 0 ? (
@@ -1328,7 +1669,6 @@ export function PublishingPromoTab({
                 const broken = brokenBeatKeys.has(key)
                 const hasClip = playback.hasClip && !broken
                 const included = promoShotIncluded(beat)
-                const durationSec = beat.durationSec ?? beat.endSec - beat.startSec
                 const showImage = Boolean(playback.thumbnailUrl || beat.frameUrl) && !broken && !hasClip
                 const showVideo = hasClip && Boolean(playback.videoUrl)
                 const thumb = playback.thumbnailUrl || beat.frameUrl
@@ -1399,38 +1739,34 @@ export function PublishingPromoTab({
                       <p className="text-[11px] text-zinc-100">
                         S{sceneNumber}
                         {shotNumber ? ` · Shot ${shotNumber}` : ''}
-                        {beat.trailerRole ? ` · ${beat.trailerRole}` : ''} · {durationSec}s
+                        {beat.trailerRole ? ` · ${beat.trailerRole}` : ''}
                       </p>
                       {beat.label ? (
                         <p className="truncate text-[10px] text-zinc-500">{beat.label}</p>
                       ) : null}
                     </div>
-                    <label className="flex shrink-0 items-center gap-1 text-[10px] text-zinc-500">
-                      <input
-                        type="number"
-                        min={1}
-                        max={12}
-                        step={1}
-                        key={`${key}-${durationSec}`}
-                        defaultValue={Math.round(durationSec)}
-                        disabled={timelineSaving}
-                        title="Shot length in seconds"
-                        className="h-7 w-16 rounded border border-zinc-700 bg-zinc-950 px-1 text-center text-[11px] tabular-nums text-zinc-100 [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
-                        onBlur={(event) => {
-                          const next = Number(event.target.value)
-                          if (!Number.isFinite(next) || Math.round(next) === Math.round(durationSec)) return
-                          void commitTimeline(
-                            timelineBeats.map((row, rowIndex) =>
-                              rowIndex === index ? withPromoShotDuration(row, next) : row
-                            )
-                          )
+                    {showVideo ? (
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        data-testid={`preview-shot-clip-${key}`}
+                        className={cn(
+                          'h-7 shrink-0 px-2 text-[10px]',
+                          previewMode === 'clips' && !previewing && activeClipRow?.key === key
+                            ? 'text-fuchsia-300 bg-fuchsia-500/15'
+                            : 'text-zinc-300'
+                        )}
+                        title="Preview this shot clip"
+                        onClick={() => {
+                          setPreviewing(false)
+                          setPreviewMode('clips')
+                          setSelectedClipKey(key)
                         }}
-                        onKeyDown={(event) => {
-                          if (event.key === 'Enter') event.currentTarget.blur()
-                        }}
-                      />
-                      s
-                    </label>
+                      >
+                        <Play className="h-3 w-3 mr-1" />
+                        Preview Clip
+                      </Button>
+                    ) : null}
                     <Button
                       size="sm"
                       variant="ghost"

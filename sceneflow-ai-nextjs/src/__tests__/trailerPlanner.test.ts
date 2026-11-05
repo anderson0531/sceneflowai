@@ -813,22 +813,28 @@ describe('promo source guards', () => {
     const tabSource = readFileSync(tabPath, 'utf8')
     const renderBody = tabSource.slice(tabSource.indexOf('<div className="space-y-4 overflow-y-auto'))
 
-    // Retains promo version list & shot building controls
+    // Retains promo version list, delete confirmation, video preview player, & shot building controls
     expect(renderBody).toContain('promo-campaign-switcher')
+    expect(renderBody).toContain('delete-promo-version-btn')
+    expect(renderBody).toContain('promo-delete-confirmation')
+    expect(renderBody).toContain('confirm-delete-promo-btn')
+    expect(renderBody).toContain('cancel-delete-promo-btn')
+    expect(renderBody).toContain('promo-video-preview-panel')
+    expect(renderBody).toContain('promo-shot-clip-video-player')
+    expect(renderBody).toContain('promo-rendered-video-player')
     expect(renderBody).toContain('open-promo-in-studio-btn')
     expect(renderBody).toContain('Open Promo Scene in Studio')
     expect(renderBody).toContain('Build Promo Shots')
     expect(renderBody).toContain('Rebuild Promo Shots')
     expect(renderBody).toContain('Promo Director')
     expect(renderBody).toContain('Shot timeline')
+    expect(renderBody).not.toContain('title="Shot length in seconds"')
 
     // Removes redundant studio/render/stream controls from the rendered Promo Builder UI
     expect(renderBody).not.toContain('Format / Aspect Ratio')
     expect(renderBody).not.toContain('Active Stream Language')
     expect(renderBody).not.toContain('2 · Preview')
     expect(renderBody).not.toContain('3 · Render Promo')
-    expect(renderBody).not.toContain('<PromoCutPreview')
     expect(renderBody).not.toContain('Promo streams')
-    expect(renderBody).not.toContain('Play in Screening Room')
   })
 })
