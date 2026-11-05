@@ -197,12 +197,6 @@ import {
   rewriteScenesForObjectMerge,
   selectCanonicalNewObjects,
 } from '@/lib/vision/objectDuplicateClusters'
-import {
-  hydratePromoSceneWithSharedShots,
-  isPromoCinematicScene,
-  syncPromoSharedBeatsToSourceScenes,
-  type PromoSceneBeat,
-} from '@/lib/publish/buildPromoScene'
 
 // Dynamic import to break TDZ initialization chain - ScriptPanel imports heavy scene-production modules
 const ScriptPanel = dynamic(
@@ -459,6 +453,8 @@ import {
   findPromoSceneIndex,
   hydratePromoSceneWithSharedShots,
   isPromoCinematicScene,
+  syncPromoSharedBeatsToSourceScenes,
+  type PromoSceneBeat,
 } from '@/lib/publish/buildPromoScene'
 import {
   promoAgentShotNeedsGeneration,
