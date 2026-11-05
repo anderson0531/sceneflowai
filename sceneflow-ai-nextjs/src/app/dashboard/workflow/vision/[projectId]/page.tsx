@@ -449,6 +449,7 @@ import {
 } from '@/lib/publish/publishingState'
 import type { PublishingLibraryTab } from '@/types/publishingAssets'
 import { resolvePromoBeatMedia, resolvePromoPlayback } from '@/lib/publish/promoBeatMedia'
+import { findPromoSceneIndex } from '@/lib/publish/buildPromoScene'
 import {
   promoAgentShotNeedsGeneration,
   promoOnScreenEnglish,
@@ -20398,9 +20399,17 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
             return { ...prev, scenes }
           })
         }}
-        onOpenPromoInStudio={() => {
+        onOpenPromoInStudio={(promoSceneId) => {
           setPromoStudioOpen(false)
           setProductionViewWithUrl('studio')
+          const currentScenes = scriptRef.current?.script?.scenes || script?.script?.scenes || []
+          const targetIdx =
+            findPromoSceneIndex(currentScenes, promoSceneId) >= 0
+              ? findPromoSceneIndex(currentScenes, promoSceneId)
+              : findPromoSceneIndex(currentScenes)
+          if (targetIdx >= 0) {
+            setSelectedSceneIndex(targetIdx)
+          }
         }}
         onGenerateBeatClip={handleGeneratePromoBeatClip}
         onRunPromoAgent={handleRunPromoAgent}

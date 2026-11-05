@@ -7,6 +7,7 @@
  */
 
 import { getGeminiTextModel } from '@/lib/config/modelConfig'
+import { getPromoCampaignPreset } from '@/lib/publish/buildPromoScene'
 import {
   dialogueClipDuration,
   dropExtraIntroShots,
@@ -26,7 +27,11 @@ import {
   type TrailerPlannerResult,
 } from '@/lib/publish/trailerPlanner'
 import { generateText } from '@/lib/vertexai/gemini'
-import type { PromoTrailerBeatPlan, PromoTrailerRole } from '@/types/publishingAssets'
+import type {
+  PromoCampaignPresetId,
+  PromoTrailerBeatPlan,
+  PromoTrailerRole,
+} from '@/types/publishingAssets'
 
 const TRAILER_ROLES = new Set<PromoTrailerRole>(['hook', 'rise', 'peak', 'button'])
 
@@ -42,6 +47,14 @@ export interface PromoModelPlanInput extends TrailerPlannerInput {
   directorNotes?: string
   /** Plan the director is revising. Omitted on a first composition. */
   currentPlan?: PromoTrailerBeatPlan[]
+  /** Intelligent marketing campaign preset id. */
+  campaignPreset?: PromoCampaignPresetId | string
+  /** Display name of the marketing campaign. */
+  campaignName?: string
+  /** Custom marketing objective or hook for this campaign. */
+  campaignObjective?: string
+  /** Target languages for a multilanguage campaign. */
+  targetLanguages?: string[]
 }
 
 interface ModelPick {
@@ -223,6 +236,10 @@ export function buildPromoPlanPrompt(input: {
   directorNotes?: string
   blueprintBeats?: Array<{ title?: string; intent?: string }>
   currentPlan?: PromoTrailerBeatPlan[]
+  campaignPreset?: PromoCampaignPresetId | string
+  campaignName?: string
+  campaignObjective?: string
+  targetLanguages?: string[]
 }): string {
   const shots = input.catalog.map((shot) => ({
     sceneIndex: shot.sceneIndex,
@@ -246,7 +263,19 @@ export function buildPromoPlanPrompt(input: {
     label: beat.label,
   }))
 
-  const audience = input.audienceText?.trim()
+  const presetDef = getPromoCampaignPreset(input.campaignPreset)
+  const campaignName = input.campaignName?.trim() || presetDef?.name || ''
+  const campaignStrategy = [
+    presetDef?.directorStrategyPrompt || '',
+    input.campaignObjective?.trim() || '',
+  ]
+    .filter(Boolean)
+    .join('\n')
+  const targetLangs = Array.isArray(input.targetLanguages)
+    ? input.targetLanguages.filter((l) => typeof l === 'string' && l.trim())
+    : []
+  const audience =
+    input.audienceText?.trim() || presetDef?.defaultAudienceHint || ''
   const notes = input.directorNotes?.trim()
   const blueprint = (input.blueprintBeats ?? [])
     .map((beat, index) => {
@@ -262,7 +291,7 @@ Title: ${input.title?.trim() || 'Untitled'}
 ${input.logline?.trim() ? `Logline: ${input.logline.trim()}` : ''}
 ${input.genre?.trim() ? `Genre: ${input.genre.trim()}` : ''}
 Target length: ${input.targetDurationSec} seconds (stay between 30 and 120).
-${audience ? `\nTarget audience:\n${audience}\n` : ''}
+${campaignName ? `Marketing Campaign: ${campaignName}\n` : ''}${campaignStrategy ? `\nCampaign Strategy & Editorial Goal:\n${campaignStrategy}\n` : ''}${targetLangs.length > 1 ? `\nMultilanguage Campaign Targets: ${targetLangs.join(', ')} (favor universally clear visual beats alongside high-impact spoken lines that localize cleanly across these languages)\n` : ''}${audience ? `\nTarget audience:\n${audience}\n` : ''}
 ${notes ? `\nDirector notes:\n${notes}\n` : ''}
 ${blueprint ? `\nBlueprint beats to cover (coverage, not screenplay order):\n${blueprint}\n` : ''}
 ${current?.length ? `\nCurrent plan to revise:\n${JSON.stringify(current)}\n` : ''}
@@ -313,6 +342,10 @@ export async function planPromoTrailerWithModel(
       directorNotes: input.directorNotes,
       blueprintBeats: input.blueprintBeats,
       currentPlan: input.currentPlan,
+      campaignPreset: input.campaignPreset,
+      campaignName: input.campaignName,
+      campaignObjective: input.campaignObjective,
+      targetLanguages: input.targetLanguages,
     }), {
       model: getGeminiTextModel('flash'),
       temperature: 0.4,

@@ -212,7 +212,13 @@ import { useCredits } from '@/contexts/CreditsContext'
 import { ProductionBudgetManager } from '@/components/credits/ProductionBudgetManager'
 import { getProjectCreditsBudget } from '@/lib/credits/projectBudgetShared'
 import type { DirectShotRequest, DirectShotTarget } from '@/lib/vision/directShotTarget'
-import { isPromoCinematicScene } from '@/lib/publish/buildPromoScene'
+import {
+  findPromoScenes,
+  hydratePromoSceneWithSharedShots,
+  isPromoCinematicScene,
+  promoSceneDisplayName,
+  type PromoSceneBeat,
+} from '@/lib/publish/buildPromoScene'
 import {
   syncSceneDirectionToContinuityCatalog,
   syncSceneReferenceSelections,
@@ -703,14 +709,42 @@ function getScoreColor(score: number): string {
 }
 
 function sceneHeadingLabel(scene: any, index: number): string {
-  if (isPromoCinematicScene(scene)) return 'Promo'
+  if (isPromoCinematicScene(scene)) {
+    return promoSceneDisplayName(scene)
+  }
   const headingText =
     typeof scene?.heading === 'string'
       ? scene.heading
-      : typeof scene?.heading === 'object' && scene.heading !== null
+      : typeof scene?.heading === 'object' && scene?.heading !== null
         ? (scene.heading as { text?: string })?.text
         : ''
   return formatSceneHeading(headingText) || headingText || `Scene ${index + 1}`
+}
+
+function sceneNavBadgeLabel(scene: any, index: number, allScenes?: unknown[]): string {
+  if (isPromoCinematicScene(scene)) {
+    const promos = findPromoScenes(allScenes)
+    if (promos.length > 1) {
+      const found = promos.find((p) => p.index === index)
+      return found ? `PROMO ${found.promoNumber}` : 'PROMO'
+    }
+    return 'PROMO'
+  }
+  return `S${index + 1}`
+}
+
+function sceneNavOptionLabel(
+  scene: any,
+  index: number,
+  totalScenes: number,
+  allScenes?: unknown[]
+): string {
+  if (isPromoCinematicScene(scene)) {
+    const badge = sceneNavBadgeLabel(scene, index, allScenes)
+    const name = promoSceneDisplayName(scene)
+    return name && name.toUpperCase() !== 'PROMO' ? `${badge}: ${name}` : badge
+  }
+  return `S${index + 1}/${totalScenes}: ${sceneHeadingLabel(scene, index)}`
 }
 
 function audienceScoreClass(score: number): string {
@@ -3472,11 +3506,112 @@ export function ScriptPanel({ script, onScriptChange, onAudioSlotSaved, isGenera
                 >
                           {displayedScenes.map(({ scene, originalIndex: idx }) => {
                             const domId = getSceneDomId(scene, idx)
+                            const isPromoScene = isPromoCinematicScene(scene)
+                            const hydratedPromo = isPromoScene
+                              ? hydratePromoSceneWithSharedShots(
+                                  scene as Record<string, any>,
+                                  scenes,
+                                  sceneProductionData
+                                )
+                              : null
+                            const effectiveScene = hydratedPromo ? hydratedPromo.scene : scene
+                            const effectiveSceneProductionData = hydratedPromo
+                              ? hydratedPromo.productionData
+                              : sceneProductionData[scene.sceneId || scene.id || `scene-${idx}`] || undefined
+
+                            const resolveSharedBeatTarget = (
+                              targetSceneIdx: number,
+                              beatId: string
+                            ): { sceneIdx: number; beatId: string } => {
+                              if (!isPromoScene) return { sceneIdx: targetSceneIdx, beatId }
+                              const promoBeat = (
+                                effectiveScene.beats as PromoSceneBeat[] | undefined
+                              )?.find((b) => b.beatId === beatId)
+                              if (
+                                promoBeat &&
+                                typeof promoBeat.sourceSceneIndex === 'number' &&
+                                promoBeat.sourceBeatId
+                              ) {
+                                return {
+                                  sceneIdx: promoBeat.sourceSceneIndex,
+                                  beatId: promoBeat.sourceBeatId,
+                                }
+                              }
+                              return { sceneIdx: targetSceneIdx, beatId }
+                            }
+
+                            const resolveSharedSlotTarget = (
+                              targetSceneIdx: number,
+                              slot: import('@/lib/storyboard/types').StoryboardFrameSlot
+                            ): {
+                              sceneIdx: number
+                              slot: import('@/lib/storyboard/types').StoryboardFrameSlot
+                            } => {
+                              if (!isPromoScene || !slot.beatId) {
+                                return { sceneIdx: targetSceneIdx, slot }
+                              }
+                              const promoBeat = (
+                                effectiveScene.beats as PromoSceneBeat[] | undefined
+                              )?.find((b) => b.beatId === slot.beatId)
+                              if (
+                                promoBeat &&
+                                typeof promoBeat.sourceSceneIndex === 'number' &&
+                                promoBeat.sourceBeatId
+                              ) {
+                                return {
+                                  sceneIdx: promoBeat.sourceSceneIndex,
+                                  slot: {
+                                    ...slot,
+                                    beatId: promoBeat.sourceBeatId,
+                                  },
+                                }
+                              }
+                              return { sceneIdx: targetSceneIdx, slot }
+                            }
+
+                            const resolveSharedSegmentTarget = (
+                              targetSceneId: string,
+                              segmentId: string
+                            ): { sceneId: string; segmentId: string } => {
+                              if (!isPromoScene) return { sceneId: targetSceneId, segmentId }
+                              const promoSeg = effectiveSceneProductionData?.segments?.find(
+                                (s) => s.segmentId === segmentId
+                              )
+                              const promoBeat = promoSeg?.beatId
+                                ? (effectiveScene.beats as PromoSceneBeat[] | undefined)?.find(
+                                    (b) => b.beatId === promoSeg.beatId
+                                  )
+                                : undefined
+                              if (
+                                promoBeat &&
+                                typeof promoBeat.sourceSceneIndex === 'number' &&
+                                promoBeat.sourceBeatId
+                              ) {
+                                const sourceScene = scenes[promoBeat.sourceSceneIndex]
+                                const sourceKeyCandidates = [
+                                  promoBeat.sourceSceneId,
+                                  sourceScene?.sceneId,
+                                  sourceScene?.id,
+                                  `scene-${promoBeat.sourceSceneIndex}`,
+                                ].filter((k): k is string => Boolean(k))
+                                for (const key of sourceKeyCandidates) {
+                                  const sourceProd = sceneProductionData[key]
+                                  const sourceSeg = sourceProd?.segments?.find(
+                                    (s) => s.beatId === promoBeat.sourceBeatId
+                                  )
+                                  if (sourceSeg) {
+                                    return { sceneId: key, segmentId: sourceSeg.segmentId }
+                                  }
+                                }
+                              }
+                              return { sceneId: targetSceneId, segmentId }
+                            }
+
                     return (
                     <SortableSceneCard
                   key={idx}
                       id={idx}
-                  scene={scene}
+                  scene={effectiveScene}
                   sceneNumber={idx + 1}
                   isSelected={selectedScene === idx}
                   onClick={() => setSelectedScene(idx)}
@@ -3534,14 +3669,42 @@ export function ScriptPanel({ script, onScriptChange, onAudioSlotSaved, isGenera
                       onSaveSfxAudio={saveSceneAudio}
                       onAudioSlotSaved={onAudioSlotSaved}
                       generatingDirectionFor={generatingDirectionFor}
-                      sceneProductionData={sceneProductionData[scene.sceneId || scene.id || `scene-${idx}`] || undefined}
+                      sceneProductionData={effectiveSceneProductionData}
                       sceneProductionReferences={sceneProductionReferences[scene.sceneId || scene.id || `scene-${idx}`] || undefined}
                       onInitializeSceneProduction={onInitializeSceneProduction}
-                      onSegmentPromptChange={onSegmentPromptChange}
-                      onSegmentKeyframeChange={onSegmentKeyframeChange}
+                      onSegmentPromptChange={
+                        onSegmentPromptChange
+                          ? (targetSceneId, segmentId, prompt) => {
+                              const resolved = resolveSharedSegmentTarget(targetSceneId, segmentId)
+                              onSegmentPromptChange(resolved.sceneId, resolved.segmentId, prompt)
+                            }
+                          : undefined
+                      }
+                      onSegmentKeyframeChange={
+                        onSegmentKeyframeChange
+                          ? (targetSceneId, segmentId, keyframeSettings) => {
+                              const resolved = resolveSharedSegmentTarget(targetSceneId, segmentId)
+                              onSegmentKeyframeChange(resolved.sceneId, resolved.segmentId, keyframeSettings)
+                            }
+                          : undefined
+                      }
                       onSegmentDialogueAssignmentChange={onSegmentDialogueAssignmentChange}
-                      onSegmentGenerate={onSegmentGenerate}
-                      onSegmentUpload={onSegmentUpload}
+                      onSegmentGenerate={
+                        onSegmentGenerate
+                          ? (targetSceneId, segmentId, mode, options) => {
+                              const resolved = resolveSharedSegmentTarget(targetSceneId, segmentId)
+                              return onSegmentGenerate(resolved.sceneId, resolved.segmentId, mode, options)
+                            }
+                          : undefined
+                      }
+                      onSegmentUpload={
+                        onSegmentUpload
+                          ? (targetSceneId, segmentId, file) => {
+                              const resolved = resolveSharedSegmentTarget(targetSceneId, segmentId)
+                              return onSegmentUpload(resolved.sceneId, resolved.segmentId, file)
+                            }
+                          : undefined
+                      }
                       onSegmentAnimaticSettingsChange={onSegmentAnimaticSettingsChange}
                       onRenderedSceneUrlChange={onRenderedSceneUrlChange}
                       onProductionDataChange={onProductionDataChange}
@@ -3560,8 +3723,22 @@ export function ScriptPanel({ script, onScriptChange, onAudioSlotSaved, isGenera
                       onGenerateEndFrame={onGenerateEndFrame}
                       onEndFrameGenerated={onEndFrameGenerated}
                       characters={characters}
-                      onSelectTake={onSelectTake}
-                      onDeleteTake={onDeleteTake}
+                      onSelectTake={
+                        onSelectTake
+                          ? (targetSceneId, segmentId, takeId, assetUrl) => {
+                              const resolved = resolveSharedSegmentTarget(targetSceneId, segmentId)
+                              onSelectTake(resolved.sceneId, resolved.segmentId, takeId, assetUrl)
+                            }
+                          : undefined
+                      }
+                      onDeleteTake={
+                        onDeleteTake
+                          ? (targetSceneId, segmentId, takeId) => {
+                              const resolved = resolveSharedSegmentTarget(targetSceneId, segmentId)
+                              onDeleteTake(resolved.sceneId, resolved.segmentId, takeId)
+                            }
+                          : undefined
+                      }
                       sceneAudioTracks={sceneAudioTracks[scene.sceneId || scene.id || `scene-${idx}`]}
                       domId={domId}
                       isRecentlyUpdated={recentlyUpdatedSceneIndex === idx}
@@ -3596,8 +3773,27 @@ export function ScriptPanel({ script, onScriptChange, onAudioSlotSaved, isGenera
                       onMarkWorkflowComplete={onMarkWorkflowComplete}
                       onDismissStaleWarning={onDismissStaleWarning}
                       onSyncPreVisToScript={onSyncPreVisToScript}
-                      onGenerateSegmentFrames={onGenerateSegmentFrames}
-                      onEditFrame={onEditFrame}
+                      onGenerateSegmentFrames={
+                        onGenerateSegmentFrames
+                          ? (targetSceneId, segmentId, frameType, options) => {
+                              const resolved = resolveSharedSegmentTarget(targetSceneId, segmentId)
+                              return onGenerateSegmentFrames(
+                                resolved.sceneId,
+                                resolved.segmentId,
+                                frameType,
+                                options
+                              )
+                            }
+                          : undefined
+                      }
+                      onEditFrame={
+                        onEditFrame
+                          ? (targetSceneId, segmentId, frameType, frameUrl) => {
+                              const resolved = resolveSharedSegmentTarget(targetSceneId, segmentId)
+                              onEditFrame(resolved.sceneId, resolved.segmentId, frameType, frameUrl)
+                            }
+                          : undefined
+                      }
                       generatingFrameForSegment={generatingFrameForSegment}
                       generatingFramePhase={generatingFramePhase}
                       bookmarkedSceneIndex={bookmarkedSceneIndex}
@@ -3657,25 +3853,88 @@ export function ScriptPanel({ script, onScriptChange, onAudioSlotSaved, isGenera
                       onApproveStoryboard={onApproveStoryboard}
                       approvingStoryboardFor={approvingStoryboardFor}
                       onReorderBeats={onReorderBeats}
-                      onGenerateBeatFrame={onGenerateBeatFrame}
-                      onGenerateBeatStartFrame={onGenerateBeatStartFrame}
-                      onGenerateBeatEndFrame={onGenerateBeatEndFrame}
-                      onGenerateBeatFrames={onGenerateBeatFrames}
+                      onGenerateBeatFrame={
+                        onGenerateBeatFrame
+                          ? (targetSceneIdx, beatId) => {
+                              const resolved = resolveSharedBeatTarget(targetSceneIdx, beatId)
+                              return onGenerateBeatFrame(resolved.sceneIdx, resolved.beatId)
+                            }
+                          : undefined
+                      }
+                      onGenerateBeatStartFrame={
+                        onGenerateBeatStartFrame
+                          ? (targetSceneIdx, beatId) => {
+                              const resolved = resolveSharedBeatTarget(targetSceneIdx, beatId)
+                              return onGenerateBeatStartFrame(resolved.sceneIdx, resolved.beatId)
+                            }
+                          : undefined
+                      }
+                      onGenerateBeatEndFrame={
+                        onGenerateBeatEndFrame
+                          ? (targetSceneIdx, beatId) => {
+                              const resolved = resolveSharedBeatTarget(targetSceneIdx, beatId)
+                              return onGenerateBeatEndFrame(resolved.sceneIdx, resolved.beatId)
+                            }
+                          : undefined
+                      }
+                      onGenerateBeatFrames={
+                        onGenerateBeatFrames
+                          ? (targetSceneIdx, beatId) => {
+                              const resolved = resolveSharedBeatTarget(targetSceneIdx, beatId)
+                              return onGenerateBeatFrames(resolved.sceneIdx, resolved.beatId)
+                            }
+                          : undefined
+                      }
                       onUsePrevEndFrameAsStart={onUsePrevEndFrameAsStart}
                       onDeleteBeatStartFrame={onDeleteBeatStartFrame}
                       onDeleteBeatEndFrame={onDeleteBeatEndFrame}
                       onGenerateDialogueFrame={onGenerateDialogueFrame}
-                      onUploadBeatFrame={onUploadBeatFrame}
+                      onUploadBeatFrame={
+                        onUploadBeatFrame
+                          ? (targetSceneIdx, beatId, file, frameRole) => {
+                              const resolved = resolveSharedBeatTarget(targetSceneIdx, beatId)
+                              onUploadBeatFrame(resolved.sceneIdx, resolved.beatId, file, frameRole)
+                            }
+                          : undefined
+                      }
                       onUploadDialogueFrame={onUploadDialogueFrame}
-                      onSaveEditedBeatFrame={onSaveEditedBeatFrame}
-                      onRestoreStillVersion={onRestoreStillVersion}
+                      onSaveEditedBeatFrame={
+                        onSaveEditedBeatFrame
+                          ? (targetSceneIdx, beatId, url, frameRole) => {
+                              const resolved = resolveSharedBeatTarget(targetSceneIdx, beatId)
+                              onSaveEditedBeatFrame(resolved.sceneIdx, resolved.beatId, url, frameRole)
+                            }
+                          : undefined
+                      }
+                      onRestoreStillVersion={
+                        onRestoreStillVersion
+                          ? (targetSceneIdx, slot, versionId) => {
+                              const resolved = resolveSharedSlotTarget(targetSceneIdx, slot)
+                              onRestoreStillVersion(resolved.sceneIdx, resolved.slot, versionId)
+                            }
+                          : undefined
+                      }
                       onSaveBeatKenBurns={onSaveBeatKenBurns}
                       onSetScreeningPoster={onSetScreeningPoster}
                       onSaveEditedDialogueFrame={onSaveEditedDialogueFrame}
                       onSaveEditedCustomFrame={onSaveEditedCustomFrame}
                       onSaveEditedStoryboardScene={onSaveEditedStoryboardScene}
-                      onDirectFrame={onDirectFrame}
-                      onDirectorFrame={onDirectorFrame}
+                      onDirectFrame={
+                        onDirectFrame
+                          ? (targetSceneIdx, slot) => {
+                              const resolved = resolveSharedSlotTarget(targetSceneIdx, slot)
+                              onDirectFrame(resolved.sceneIdx, resolved.slot)
+                            }
+                          : undefined
+                      }
+                      onDirectorFrame={
+                        onDirectorFrame
+                          ? (targetSceneIdx, slot) => {
+                              const resolved = resolveSharedSlotTarget(targetSceneIdx, slot)
+                              onDirectorFrame(resolved.sceneIdx, resolved.slot)
+                            }
+                          : undefined
+                      }
                       generatingDirectSlotKey={generatingDirectSlotKey}
                       onAddStoryboardFrame={onAddStoryboardFrame}
                       onDeleteStoryboardFrame={onDeleteStoryboardFrame}
@@ -3705,6 +3964,7 @@ export function ScriptPanel({ script, onScriptChange, onAudioSlotSaved, isGenera
                       pendingDirectShot={pendingDirectShot}
                       onPendingDirectShotHandled={onPendingDirectShotHandled}
                       onOpenDirectShot={onOpenDirectShot}
+                      onOpenPromo={onOpenPromo}
                       storedTranslations={storedTranslations}
                       onSaveTranslations={onSaveTranslations}
                       projectStreams={projectStreams}
@@ -4399,6 +4659,7 @@ interface SceneCardProps {
   pendingDirectShot?: DirectShotTarget | null
   onPendingDirectShotHandled?: () => void
   onOpenDirectShot?: (request: DirectShotRequest) => void
+  onOpenPromo?: () => void
   storedTranslations?: ProjectTranslations
   onSaveTranslations?: (langCode: string, translations: { [sceneIndex: number]: SceneTranslation }) => Promise<void>
   projectStreams?: ProjectStream[]
@@ -4632,6 +4893,7 @@ function SceneCard({
   pendingDirectShot = null,
   onPendingDirectShotHandled,
   onOpenDirectShot,
+  onOpenPromo,
   storedTranslations,
   onSaveTranslations,
   projectStreams = [],
@@ -5941,11 +6203,19 @@ function SceneCard({
               <Popover>
                 <PopoverTrigger asChild>
                   <button
-                    className="flex items-center gap-1 text-xs text-gray-400 hover:text-white hover:bg-white/10 rounded px-2 py-1 transition-colors cursor-pointer"
-                    title="Jump to any scene"
+                    className={`flex items-center gap-1 text-xs rounded px-2 py-1 transition-colors cursor-pointer ${
+                      isPromoCinematicScene(scene)
+                        ? 'bg-fuchsia-500/20 text-fuchsia-200 border border-fuchsia-500/40 hover:bg-fuchsia-500/30'
+                        : 'text-gray-400 hover:text-white hover:bg-white/10'
+                    }`}
+                    title="Jump to any scene or promo"
                   >
                     <List className="w-3.5 h-3.5" />
-                    <span className="font-medium">S{sceneNumber}/{totalScenes}</span>
+                    <span className="font-medium">
+                      {isPromoCinematicScene(scene)
+                        ? sceneNavBadgeLabel(scene, sceneIdx, scenes)
+                        : `S${sceneNumber}/${totalScenes}`}
+                    </span>
                     <ChevronDown className="w-3 h-3 opacity-60" />
                   </button>
                 </PopoverTrigger>
@@ -5955,8 +6225,20 @@ function SceneCard({
                   sideOffset={8}
                   onWheel={(e) => e.stopPropagation()}
                 >
-                  <div className="text-xs text-gray-400 px-2 py-1.5 mb-1 border-b border-gray-700">
-                    Jump to Scene
+                  <div className="flex items-center justify-between text-xs text-gray-400 px-2 py-1.5 mb-1 border-b border-gray-700">
+                    <span>Jump to Scene / Promo</span>
+                    {onOpenPromo && (
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          onOpenPromo()
+                        }}
+                        className="text-[10px] font-semibold text-fuchsia-300 hover:text-fuchsia-200"
+                      >
+                        + Promo Campaign
+                      </button>
+                    )}
                   </div>
                   <div 
                     className="space-y-0.5 max-h-52 overflow-y-scroll pr-1 [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-track]:bg-gray-800 [&::-webkit-scrollbar-track]:rounded [&::-webkit-scrollbar-thumb]:bg-gray-600 [&::-webkit-scrollbar-thumb]:rounded [&::-webkit-scrollbar-thumb]:hover:bg-gray-500"
@@ -5969,6 +6251,7 @@ function SceneCard({
                       const isCurrentScene = i === sceneIdx
                       const isBookmarked = i === bookmarkedSceneIndex
                       const listScene = scenes?.[i]
+                      const isListPromo = isPromoCinematicScene(listScene)
                       const mark = navigationTimeline.marks[i]
                       const score = listScene?.audienceAnalysis?.score
                       const hasScore = typeof score === 'number'
@@ -5983,14 +6266,22 @@ function SceneCard({
                           }}
                           className={`w-full flex items-center gap-2 px-2 py-1.5 rounded text-left transition-colors ${
                             isCurrentScene
-                              ? 'bg-purple-600/30 text-purple-300'
+                              ? isListPromo
+                                ? 'bg-fuchsia-600/30 text-fuchsia-200'
+                                : 'bg-purple-600/30 text-purple-300'
                               : 'hover:bg-gray-800 text-gray-300 hover:text-white'
                           }`}
                         >
                           <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded min-w-[32px] text-center ${
-                            isCurrentScene ? 'bg-purple-500 text-white' : 'bg-gray-700 text-gray-300'
+                            isCurrentScene
+                              ? isListPromo
+                                ? 'bg-fuchsia-500 text-white'
+                                : 'bg-purple-500 text-white'
+                              : isListPromo
+                                ? 'bg-fuchsia-900/60 text-fuchsia-200 border border-fuchsia-500/40'
+                                : 'bg-gray-700 text-gray-300'
                           }`}>
-                            S{i + 1}
+                            {sceneNavBadgeLabel(listScene, i, scenes)}
                           </span>
                           <span className="text-xs truncate flex-1" title={sceneHeadingLabel(listScene, i)}>
                             {sceneHeadingLabel(listScene, i)}
@@ -6019,6 +6310,61 @@ function SceneCard({
                 </PopoverContent>
               </Popover>
             )}
+
+            {/* Quick Promo Scene / Campaign Navigation Pill */}
+            {(() => {
+              const promoEntries = findPromoScenes(scenes)
+              if (promoEntries.length === 0 && !onOpenPromo) return null
+              const activePromoEntry = promoEntries.find((p) => p.index === sceneIdx) || promoEntries[0]
+              return (
+                <div className="flex items-center gap-1">
+                  {activePromoEntry && (
+                    <button
+                      type="button"
+                      data-testid="scene-nav-promo-button"
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        if (onNavigateScene && sceneIdx !== activePromoEntry.index) {
+                          onNavigateScene(activePromoEntry.index)
+                        } else if (onOpenPromo) {
+                          onOpenPromo()
+                        }
+                      }}
+                      className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-semibold transition-colors ${
+                        isPromoCinematicScene(scene)
+                          ? 'border-fuchsia-400 bg-fuchsia-500/25 text-fuchsia-100'
+                          : 'border-fuchsia-500/40 bg-fuchsia-950/40 text-fuchsia-200 hover:bg-fuchsia-500/20'
+                      }`}
+                      title={
+                        isPromoCinematicScene(scene)
+                          ? 'Open Promo Campaign Planner'
+                          : `Navigate to ${promoSceneDisplayName(activePromoEntry.scene, activePromoEntry.promoNumber)}`
+                      }
+                    >
+                      <Clapperboard className="w-3 h-3" />
+                      <span>
+                        {promoEntries.length > 1 ? `Promos (${promoEntries.length})` : 'Promo'}
+                      </span>
+                    </button>
+                  )}
+                  {!activePromoEntry && onOpenPromo && (
+                    <button
+                      type="button"
+                      data-testid="scene-nav-promo-button"
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        onOpenPromo()
+                      }}
+                      className="inline-flex items-center gap-1 rounded-full border border-fuchsia-500/40 bg-fuchsia-950/30 px-2 py-0.5 text-[10px] font-semibold text-fuchsia-200 hover:bg-fuchsia-500/20 transition-colors"
+                      title="Create a Promo scene on the workflow"
+                    >
+                      <Clapperboard className="w-3 h-3" />
+                      <span>+ Promo</span>
+                    </button>
+                  )}
+                </div>
+              )
+            })()}
                 </motion.div>
               )}
             </AnimatePresence>
@@ -6030,7 +6376,9 @@ function SceneCard({
               <Tooltip>
                 <TooltipTrigger asChild>
                   <div className="flex items-center gap-1.5 bg-indigo-900/30 rounded-full px-2 py-0.5 text-[10px] border border-indigo-700/50 cursor-help">
-                    <span className="text-indigo-300 font-semibold">S{sceneNumber}</span>
+                    <span className="text-indigo-300 font-semibold">
+                      {sceneNavBadgeLabel(scene, sceneIdx, scenes)}
+                    </span>
                     <span className="text-gray-500">·</span>
                     <span className="text-gray-300 tabular-nums">
                       {formatNavigationClock(timelineStartSeconds)}–{formatNavigationClock(timelineEndSeconds)}
@@ -6138,6 +6486,7 @@ function SceneCard({
               {navigationTimeline.marks.map((mark) => {
                 const isCurrentScene = mark.index === sceneIdx
                 const listScene = scenes?.[mark.index]
+                const isListPromo = isPromoCinematicScene(listScene)
                 const score = listScene?.audienceAnalysis?.score
                 const hasScore = typeof score === 'number'
                 const chipWidth = Math.max(96, mark.beatCount * 12)
@@ -6155,16 +6504,26 @@ function SceneCard({
                     style={{ width: chipWidth }}
                     className={`flex-shrink-0 rounded-lg border px-2 py-1.5 text-left transition-colors ${
                       isCurrentScene
-                        ? 'bg-purple-600/30 border-purple-500 text-purple-100'
-                        : 'bg-slate-900/60 border-white/10 text-gray-300 hover:border-white/30 hover:text-white'
+                        ? isListPromo
+                          ? 'bg-fuchsia-600/30 border-fuchsia-500 text-fuchsia-100'
+                          : 'bg-purple-600/30 border-purple-500 text-purple-100'
+                        : isListPromo
+                          ? 'bg-fuchsia-950/30 border-fuchsia-500/30 text-fuchsia-200 hover:border-fuchsia-400/60 hover:text-white'
+                          : 'bg-slate-900/60 border-white/10 text-gray-300 hover:border-white/30 hover:text-white'
                     }`}
                     title={sceneHeadingLabel(listScene, mark.index)}
                   >
                     <div className="flex items-center justify-between gap-1">
                       <span className={`text-[10px] font-bold px-1 py-0.5 rounded ${
-                        isCurrentScene ? 'bg-purple-500 text-white' : 'bg-gray-700 text-gray-300'
+                        isCurrentScene
+                          ? isListPromo
+                            ? 'bg-fuchsia-500 text-white'
+                            : 'bg-purple-500 text-white'
+                          : isListPromo
+                            ? 'bg-fuchsia-900/70 text-fuchsia-200'
+                            : 'bg-gray-700 text-gray-300'
                       }`}>
-                        S{mark.index + 1}
+                        {sceneNavBadgeLabel(listScene, mark.index, scenes)}
                       </span>
                       <span
                         className={`text-[10px] font-semibold tabular-nums px-1 py-0.5 rounded border ${
@@ -6179,6 +6538,20 @@ function SceneCard({
                   </button>
                 )
               })}
+              {onOpenPromo && (
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    onOpenPromo()
+                  }}
+                  className="flex-shrink-0 flex flex-col items-center justify-center rounded-lg border border-dashed border-fuchsia-500/40 bg-fuchsia-950/20 px-3 py-1.5 text-fuchsia-200 hover:border-fuchsia-400 hover:bg-fuchsia-950/40 transition-colors"
+                  title="Create or manage Promo campaigns"
+                >
+                  <Clapperboard className="w-4 h-4 text-fuchsia-300" />
+                  <span className="mt-1 text-[10px] font-semibold">+ Promo</span>
+                </button>
+              )}
             </div>
           </div>
         )}
@@ -6214,9 +6587,33 @@ function SceneCard({
                 </Tooltip>
               </TooltipProvider>
               <div className="min-w-0 flex-1">
-                <p id="production-studio-scene-title" className="text-xl font-semibold text-white leading-tight">
-                  SCENE {sceneNumber}: {formattedHeading}
-                </p>
+                <div className="flex flex-wrap items-center gap-2">
+                  <p id="production-studio-scene-title" className="text-xl font-semibold text-white leading-tight">
+                    {isPromoCinematicScene(scene)
+                      ? `${sceneNavBadgeLabel(scene, sceneIdx, scenes)}: ${promoSceneDisplayName(scene)}`
+                      : `SCENE ${sceneNumber}: ${formattedHeading}`}
+                  </p>
+                  {isPromoCinematicScene(scene) && (
+                    <>
+                      <span className="inline-flex items-center gap-1 rounded-full border border-fuchsia-500/40 bg-fuchsia-500/15 px-2.5 py-0.5 text-[11px] font-medium text-fuchsia-200">
+                        Shared Shots Scene
+                      </span>
+                      {onOpenPromo && (
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            onOpenPromo()
+                          }}
+                          className="inline-flex items-center gap-1 rounded-md border border-fuchsia-500/40 bg-fuchsia-950/50 px-2.5 py-1 text-xs font-medium text-fuchsia-200 hover:bg-fuchsia-900/60 transition-colors"
+                        >
+                          <Clapperboard className="w-3.5 h-3.5" />
+                          Campaign Planner
+                        </button>
+                      )}
+                    </>
+                  )}
+                </div>
                 {sceneDescriptionText && (
                   <p id="production-studio-scene-description" className="text-sm text-slate-400 leading-relaxed pr-4">
                     {sceneDescriptionText}
@@ -6847,12 +7244,12 @@ function SceneCard({
                     >
                       <div
                         data-testid="scene-workflow-menu-bar"
-                        className="flex shrink-0 items-center justify-between gap-2 rounded-lg border border-indigo-500/40 bg-slate-950 px-1.5 py-0.5 shadow-md"
+                        className="flex shrink-0 items-center justify-between gap-2 rounded-lg border border-indigo-500/40 bg-slate-950 px-2 py-1 shadow-md"
                       >
                         {workflowFullscreen && (
                           <div
                             data-testid="scene-workflow-fullscreen-header"
-                            className="flex shrink-0 items-center gap-1 border-r border-slate-800 pr-2"
+                            className="flex shrink-0 items-center gap-1.5 border-r border-slate-800 pr-2.5"
                           >
                             <button
                               type="button"
@@ -6865,7 +7262,7 @@ function SceneCard({
                               disabled={sceneIdx === 0}
                               aria-label="Previous scene"
                               title="Previous scene (Alt+←)"
-                              className="inline-flex h-7 w-7 items-center justify-center rounded-md border border-slate-700/80 bg-slate-900 text-slate-300 transition-colors hover:bg-slate-800 hover:text-white disabled:cursor-not-allowed disabled:opacity-30"
+                              className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-slate-700/80 bg-slate-900 text-slate-300 transition-colors hover:bg-slate-800 hover:text-white disabled:cursor-not-allowed disabled:opacity-30"
                             >
                               <ChevronLeft className="h-3.5 w-3.5" />
                             </button>
@@ -6879,21 +7276,21 @@ function SceneCard({
                                     onNavigateScene(nextIdx)
                                   }
                                 }}
-                                title={`Scene ${sceneNumber} of ${totalScenes}: ${formattedHeading}`}
-                                className="h-7 max-w-[9rem] sm:max-w-[13rem] lg:max-w-[17rem] truncate rounded-md border border-indigo-500/40 bg-slate-900 px-2 text-xs font-semibold text-white focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                                title={sceneNavOptionLabel(scene, sceneIdx, totalScenes, scenes)}
+                                className="h-8 max-w-[11rem] sm:max-w-[15rem] lg:max-w-[19rem] rounded-md border border-indigo-500/40 bg-slate-900 px-2.5 py-0 text-xs font-semibold leading-normal text-white focus:outline-none focus:ring-1 focus:ring-indigo-500 cursor-pointer"
                               >
                                 {scenes.map((listScene: any, idx: number) => (
                                   <option key={idx} value={idx}>
-                                    S{idx + 1}/{totalScenes}: {sceneHeadingLabel(listScene, idx)}
+                                    {sceneNavOptionLabel(listScene, idx, totalScenes, scenes)}
                                   </option>
                                 ))}
                               </select>
                             ) : (
                               <span
-                                className="inline-flex h-7 max-w-[9rem] sm:max-w-[13rem] items-center truncate rounded-md border border-indigo-500/40 bg-slate-900 px-2 text-xs font-semibold text-white"
+                                className="inline-flex h-8 max-w-[11rem] sm:max-w-[15rem] items-center truncate rounded-md border border-indigo-500/40 bg-slate-900 px-2.5 py-0 text-xs font-semibold leading-normal text-white"
                                 title={`Scene ${sceneNumber}: ${formattedHeading}`}
                               >
-                                S{sceneNumber}: {formattedHeading}
+                                {sceneNavBadgeLabel(scene, sceneIdx, scenes)}: {formattedHeading}
                               </span>
                             )}
                             <button
@@ -6907,7 +7304,7 @@ function SceneCard({
                               disabled={!totalScenes || sceneIdx >= totalScenes - 1}
                               aria-label="Next scene"
                               title="Next scene (Alt+→)"
-                              className="inline-flex h-7 w-7 items-center justify-center rounded-md border border-slate-700/80 bg-slate-900 text-slate-300 transition-colors hover:bg-slate-800 hover:text-white disabled:cursor-not-allowed disabled:opacity-30"
+                              className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-slate-700/80 bg-slate-900 text-slate-300 transition-colors hover:bg-slate-800 hover:text-white disabled:cursor-not-allowed disabled:opacity-30"
                             >
                               <ChevronRight className="h-3.5 w-3.5" />
                             </button>
@@ -7000,7 +7397,7 @@ function SceneCard({
                                         : 'Open scene workflow in fullscreen window'
                                     }
                                     aria-pressed={workflowFullscreen}
-                                    className="inline-flex h-7 items-center gap-1.5 rounded-md border border-indigo-500/40 bg-indigo-500/15 px-2.5 text-xs font-medium text-indigo-200 transition-colors hover:bg-indigo-500/25 hover:text-white"
+                                    className="inline-flex h-8 items-center gap-1.5 rounded-md border border-indigo-500/40 bg-indigo-500/15 px-2.5 py-0 text-xs font-medium leading-normal text-indigo-200 transition-colors hover:bg-indigo-500/25 hover:text-white"
                                   >
                                     {workflowFullscreen ? (
                                       <>
@@ -7030,6 +7427,83 @@ function SceneCard({
                         data-testid="scene-workflow-body"
                         className="mt-2 min-h-0 flex-1 overflow-y-auto overscroll-contain pr-1"
                       >
+                        {isPromoCinematicScene(scene) && sceneBeatsForTabs.length > 0 && (
+                          <div
+                            data-testid="promo-shared-shots-bar"
+                            className="mb-3 rounded-lg border border-fuchsia-500/35 bg-fuchsia-950/20 px-3 py-2"
+                          >
+                            <div className="flex flex-wrap items-center justify-between gap-2">
+                              <div className="flex flex-wrap items-center gap-2 text-xs text-fuchsia-100">
+                                <span className="inline-flex items-center gap-1 rounded bg-fuchsia-500/25 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-fuchsia-200">
+                                  Promo Cut • Shared Shots
+                                </span>
+                                <span className="text-[11px] text-slate-300">
+                                  Shots below share live Stills, Clips & Direction with their source scenes.
+                                </span>
+                                {Array.isArray(scene.campaignLanguages) && scene.campaignLanguages.length > 0 && (
+                                  <span className="rounded border border-cyan-500/30 bg-cyan-950/40 px-2 py-0.5 text-[10px] font-medium text-cyan-200">
+                                    Languages: {scene.campaignLanguages.map((l: string) => l.toUpperCase()).join(', ')}
+                                  </span>
+                                )}
+                              </div>
+                              {onOpenPromo && (
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation()
+                                    onOpenPromo()
+                                  }}
+                                  className="inline-flex items-center gap-1 rounded border border-fuchsia-500/40 bg-fuchsia-900/40 px-2 py-1 text-[11px] font-medium text-fuchsia-100 hover:bg-fuchsia-800/50 transition-colors"
+                                >
+                                  <Clapperboard className="h-3 w-3" />
+                                  Manage Promo Campaigns
+                                </button>
+                              )}
+                            </div>
+                            <div className="mt-2 flex flex-wrap items-center gap-1.5">
+                              {(sceneBeatsForTabs as PromoSceneBeat[]).map((beat, bIdx) => {
+                                const isSel = selectedBeatId === beat.beatId
+                                const hasSource = typeof beat.sourceSceneIndex === 'number' && beat.sourceSceneIndex >= 0
+                                const hasStill = Boolean(beat.storyboardImageUrl)
+                                return (
+                                  <div
+                                    key={beat.beatId}
+                                    className={`inline-flex items-center rounded-md border text-[11px] transition-colors ${
+                                      isSel
+                                        ? 'border-fuchsia-400 bg-fuchsia-500/25 text-white'
+                                        : 'border-slate-700/80 bg-slate-900/80 text-slate-300 hover:border-slate-600'
+                                    }`}
+                                  >
+                                    <button
+                                      type="button"
+                                      onClick={() => setSelectedBeatId(beat.beatId)}
+                                      className="inline-flex items-center gap-1.5 px-2 py-1"
+                                      title={beat.actionDescription || beat.line || `Promo Shot ${bIdx + 1}`}
+                                    >
+                                      <span className="font-semibold">Shot {bIdx + 1}</span>
+                                      {hasStill && (
+                                        <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" title="Shared still ready" />
+                                      )}
+                                    </button>
+                                    {hasSource && onNavigateScene && (
+                                      <button
+                                        type="button"
+                                        onClick={(e) => {
+                                          e.stopPropagation()
+                                          onNavigateScene(beat.sourceSceneIndex as number)
+                                        }}
+                                        className="border-l border-slate-700/80 px-1.5 py-1 text-[10px] font-semibold text-fuchsia-300 hover:bg-fuchsia-500/20 hover:text-fuchsia-100"
+                                        title={`Jump to source Scene ${(beat.sourceSceneIndex as number) + 1}`}
+                                      >
+                                        S{(beat.sourceSceneIndex as number) + 1} ↗
+                                      </button>
+                                    )}
+                                  </div>
+                                )
+                              })}
+                            </div>
+                          </div>
+                        )}
 
                   {/* Direction */}
                   {hasDirectionTab && (
@@ -7043,20 +7517,6 @@ function SceneCard({
                       beats={sceneBeatsForTabs}
                       selectedBeatId={selectedBeatId}
                       onSelectBeat={(beatId) => {
-                        if (isPromoCinematicScene(scene) && onOpenDirectShot) {
-                          const source = sceneBeatsForTabs.find((entry) => entry.beatId === beatId) as
-                            | { sourceSceneId?: string; sourceSceneIndex?: number; sourceBeatId?: string }
-                            | undefined
-                          if (source?.sourceBeatId && typeof source.sourceSceneIndex === 'number') {
-                            onOpenDirectShot({
-                              sceneId: source.sourceSceneId,
-                              sceneIndex: source.sourceSceneIndex,
-                              beatId: source.sourceBeatId,
-                              openDialog: false,
-                            })
-                            return
-                          }
-                        }
                         setSelectedBeatId(beatId)
                       }}
                       segments={sceneProductionData?.segments}

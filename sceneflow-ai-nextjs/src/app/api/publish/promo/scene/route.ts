@@ -54,10 +54,18 @@ import {
   formatAudienceDefinitionForPrompt,
   type AudienceDefinition,
 } from '@/lib/types/audienceResonance'
-import type { ProjectPublishingPromo, ProjectPublishingState, PromoTrailerBeatPlan } from '@/types/publishingAssets'
+import type {
+  ProjectPublishingPromo,
+  ProjectPublishingState,
+  PromoCampaignConfig,
+  PromoCampaignPresetId,
+  PromoTrailerBeatPlan,
+} from '@/types/publishingAssets'
 import {
   buildPromoSceneFromPlan,
   findPromoSceneIndex,
+  getPromoCampaignPreset,
+  removePromoSceneFromScenes,
   upsertPromoSceneInScenes,
 } from '@/lib/publish/buildPromoScene'
 
@@ -146,15 +154,50 @@ function readPromo(metadata: Record<string, unknown>): ProjectPublishingPromo | 
 
 function mergePromoPublishing(
   metadata: Record<string, unknown>,
-  patch: Partial<ProjectPublishingPromo>
+  patch: Partial<ProjectPublishingPromo>,
+  campaignPatch?: Partial<PromoCampaignConfig> & { id: string }
 ): Record<string, unknown> {
   const current = readPromo(metadata) || {}
   const languages = Array.from(
     new Set([...(current.languages || []), ...(patch.languages || [])].filter(Boolean))
   )
+  let campaigns = Array.isArray(current.campaigns) ? [...current.campaigns] : []
+  if (campaignPatch?.id) {
+    const existingIdx = campaigns.findIndex((c) => c.id === campaignPatch.id)
+    const now = new Date().toISOString()
+    if (existingIdx >= 0) {
+      const prev = campaigns[existingIdx]!
+      const mergedLangs = Array.from(
+        new Set([...(prev.languages || []), ...(campaignPatch.languages || [])].filter(Boolean))
+      )
+      campaigns[existingIdx] = {
+        ...prev,
+        ...campaignPatch,
+        name: campaignPatch.name?.trim() || prev.name || 'Promo Trailer',
+        languages: mergedLangs.length > 0 ? mergedLangs : prev.languages,
+        updatedAt: now,
+      }
+    } else {
+      campaigns.push({
+        id: campaignPatch.id,
+        name: campaignPatch.name?.trim() || 'Promo Trailer',
+        preset: campaignPatch.preset,
+        campaignObjective: campaignPatch.campaignObjective,
+        audienceDefinition: campaignPatch.audienceDefinition,
+        targetDurationSec: campaignPatch.targetDurationSec,
+        aspect: campaignPatch.aspect,
+        primaryLanguage: campaignPatch.primaryLanguage,
+        languages: campaignPatch.languages,
+        createdAt: now,
+        updatedAt: now,
+      })
+    }
+  }
   const promo: ProjectPublishingPromo = {
     ...current,
     ...patch,
+    ...(campaignPatch?.id ? { activePromoId: campaignPatch.id } : {}),
+    ...(campaigns.length > 0 ? { campaigns } : {}),
     languages: languages.length > 0 ? languages : current.languages,
     trailersByLanguage: patch.trailersByLanguage
       ? { ...current.trailersByLanguage, ...patch.trailersByLanguage }
@@ -166,12 +209,15 @@ function mergePromoPublishing(
 function promoSceneForRebuild(
   clientScenes: unknown[],
   metadata: Record<string, unknown>,
-  language: string
+  language: string,
+  promoId?: string,
+  createNew?: boolean
 ): { existing: Record<string, unknown> | null; narrationLine?: string } {
-  const clientIdx = findPromoSceneIndex(clientScenes)
+  if (createNew) return { existing: null }
+  const clientIdx = findPromoSceneIndex(clientScenes, promoId)
   const client = clientIdx >= 0 ? (clientScenes[clientIdx] as Record<string, unknown>) : null
   const storedScenes = getScenesFromMetadata(metadata)
-  const storedIdx = findPromoSceneIndex(storedScenes)
+  const storedIdx = findPromoSceneIndex(storedScenes, promoId)
   const stored = storedIdx >= 0 ? (storedScenes[storedIdx] as Record<string, unknown>) : null
   const dialogueAudio = mergePromoDialogueAudio(client, stored)
   if (!client && !stored && !dialogueAudio) return { existing: null }
@@ -194,8 +240,12 @@ async function generatePromoNarrationScript(opts: {
   targetDurationSec: number
   language: string
   audienceText?: string
+  campaignStrategyText?: string
 }): Promise<string> {
   const budget = promoNarrationWordBudget(opts.targetDurationSec)
+  const combinedAudience = [opts.audienceText, opts.campaignStrategyText]
+    .filter(Boolean)
+    .join('\n')
   const prompt = buildPromoNarrationPrompt({
     title: opts.title,
     logline: opts.logline,
@@ -203,7 +253,7 @@ async function generatePromoNarrationScript(opts: {
     shots: opts.shots,
     targetDurationSec: opts.targetDurationSec,
     languageName: promoLanguageName(opts.language),
-    audienceText: opts.audienceText,
+    audienceText: combinedAudience || undefined,
     minWords: budget.minWords,
     maxWords: budget.maxWords,
   })
@@ -280,7 +330,13 @@ export async function POST(request: NextRequest) {
 
     const body = (await request.json()) as {
       projectId?: string
-      action?: 'plan' | 'upsert' | 'timeline' | 'narration' | 'music'
+      action?: 'plan' | 'upsert' | 'timeline' | 'narration' | 'music' | 'delete'
+      promoId?: string
+      createNew?: boolean
+      campaignName?: string
+      campaignPreset?: PromoCampaignPresetId
+      campaignObjective?: string
+      targetLanguages?: string[]
       targetDurationSec?: number
       heroBeatIds?: string[]
       sceneScores?: Record<number, number>
@@ -317,21 +373,80 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Project has no scenes' }, { status: 400 })
     }
 
+    const requestedPromoId = typeof body.promoId === 'string' && body.promoId.trim() ? body.promoId.trim() : undefined
+    const createNew = body.createNew === true
+    const campaignPreset = body.campaignPreset
+    const presetDef = getPromoCampaignPreset(campaignPreset)
+    const campaignName =
+      typeof body.campaignName === 'string' && body.campaignName.trim()
+        ? body.campaignName.trim()
+        : presetDef?.name
+    const campaignObjective =
+      typeof body.campaignObjective === 'string' && body.campaignObjective.trim()
+        ? body.campaignObjective.trim()
+        : undefined
+
+    if (action === 'delete') {
+      if (!requestedPromoId) {
+        return NextResponse.json({ error: 'promoId is required to delete a promo' }, { status: 400 })
+      }
+      scenes = removePromoSceneFromScenes(scenes, requestedPromoId)
+      metadata = setScenesOnMetadata(metadata, scenes)
+      const currentPromo = readPromo(metadata) || {}
+      const nextCampaigns = (currentPromo.campaigns || []).filter((c) => c.id !== requestedPromoId)
+      metadata = upsertPublishingState(metadata, {
+        promo: {
+          ...currentPromo,
+          campaigns: nextCampaigns,
+          activePromoId:
+            currentPromo.activePromoId === requestedPromoId
+              ? nextCampaigns[0]?.id
+              : currentPromo.activePromoId,
+        },
+      })
+      project.metadata = metadata
+      project.changed('metadata', true)
+      await project.save()
+      return NextResponse.json({
+        success: true,
+        action: 'delete',
+        deletedPromoId: requestedPromoId,
+        scenes,
+        metadata,
+      })
+    }
+
     const productionState =
       body.sceneProductionState && typeof body.sceneProductionState === 'object'
         ? body.sceneProductionState
         : getSceneProductionStateFromMetadata(metadata)
-    const targetDurationSec = clampTrailerSec(body.targetDurationSec)
+    const targetDurationSec = clampTrailerSec(body.targetDurationSec ?? presetDef?.defaultDurationSec)
     const language = normalizeStreamLanguage(body.language)
-    const audienceText = audiencePromptText(body.audienceDefinition)
+    const targetLanguages = Array.from(
+      new Set(
+        [
+          language,
+          ...(Array.isArray(body.targetLanguages)
+            ? body.targetLanguages.map((l) => normalizeStreamLanguage(l))
+            : []),
+          ...(presetDef?.recommendedLanguages || []),
+        ].filter(Boolean)
+      )
+    )
+    const audienceText =
+      audiencePromptText(body.audienceDefinition) || presetDef?.defaultAudienceHint
     const url = new URL(request.url)
     const baseUrl = `${url.protocol}//${url.host}`
     const cookie = request.headers.get('cookie') || ''
+    const aspect: '16:9' | '9:16' =
+      body.aspect === '9:16' || body.aspect === '16:9'
+        ? body.aspect
+        : presetDef?.defaultAspect || '16:9'
 
     const promoOptions: Partial<ProjectPublishingPromo> = {
       targetDurationSec,
-      languages: [language],
-      ...(body.aspect === '16:9' || body.aspect === '9:16' ? { aspect: body.aspect } : {}),
+      languages: targetLanguages,
+      aspect,
       ...(body.audienceDefinition && audienceText
         ? { audienceDefinition: createAudienceDefinition(body.audienceDefinition) }
         : {}),
@@ -351,6 +466,10 @@ export async function POST(request: NextRequest) {
       blueprintBeats,
       directorNotes: typeof body.directorNotes === 'string' ? body.directorNotes : undefined,
       currentPlan: Array.isArray(body.beatPlan) ? body.beatPlan : undefined,
+      campaignPreset,
+      campaignName,
+      campaignObjective,
+      targetLanguages,
     }
 
     const reviewPlan = async (beatPlan: import('@/types/publishingAssets').PromoTrailerBeatPlan[]) => {
@@ -381,7 +500,22 @@ export async function POST(request: NextRequest) {
     if (action === 'plan') {
       const plan = await planPromoTrailerWithModel(planInput)
       const analysis = await reviewPlan(plan.beatPlan)
-      metadata = mergePromoPublishing(metadata, promoOptions)
+      metadata = mergePromoPublishing(
+        metadata,
+        promoOptions,
+        requestedPromoId
+          ? {
+              id: requestedPromoId,
+              name: campaignName || 'Promo Trailer',
+              preset: campaignPreset,
+              campaignObjective,
+              targetDurationSec,
+              aspect,
+              primaryLanguage: language,
+              languages: targetLanguages,
+            }
+          : undefined
+      )
       project.metadata = metadata
       project.changed('metadata', true)
       await project.save()
@@ -406,22 +540,46 @@ export async function POST(request: NextRequest) {
           { status: 400 }
         )
       }
-      const { existing, narrationLine } = promoSceneForRebuild(scenes, metadata, language)
+      const { existing, narrationLine } = promoSceneForRebuild(
+        scenes,
+        metadata,
+        language,
+        requestedPromoId,
+        false
+      )
       const { scene, productionSeed } = buildPromoSceneFromPlan({
         beatPlan: accepted,
         targetDurationSec,
         projectTitle: project.title,
         existingPromoScene: existing,
         narrationLine,
+        promoId: requestedPromoId,
+        campaignName,
+        campaignPreset,
+        campaignObjective,
+        campaignLanguages: targetLanguages,
+        promoAspect: aspect,
       })
-      scenes = upsertPromoSceneInScenes(scenes, scene)
+      scenes = upsertPromoSceneInScenes(scenes, scene, {
+        promoId: scene.id,
+        createNew: false,
+      })
       metadata = setScenesOnMetadata(metadata, scenes)
       metadata = seedProductionOnMetadata(
         metadata,
         scene.id,
         productionSeed as unknown as Record<string, unknown>
       )
-      metadata = mergePromoPublishing(metadata, promoOptions)
+      metadata = mergePromoPublishing(metadata, promoOptions, {
+        id: scene.id,
+        name: scene.campaignName || campaignName || 'Promo Trailer',
+        preset: scene.campaignPreset,
+        campaignObjective: scene.campaignObjective,
+        targetDurationSec,
+        aspect,
+        primaryLanguage: language,
+        languages: targetLanguages,
+      })
       const playing = accepted.filter((beat) => promoShotIncluded(beat))
       const analysis = await reviewPlan(playing)
       project.metadata = metadata
@@ -457,23 +615,47 @@ export async function POST(request: NextRequest) {
           : null
       const plan = accepted ?? (await planPromoTrailerWithModel(planInput))
 
-      const { existing, narrationLine } = promoSceneForRebuild(scenes, metadata, language)
+      const { existing, narrationLine } = promoSceneForRebuild(
+        scenes,
+        metadata,
+        language,
+        requestedPromoId,
+        createNew
+      )
       const { scene, productionSeed } = buildPromoSceneFromPlan({
         beatPlan: plan.beatPlan,
         targetDurationSec: plan.targetDurationSec,
         projectTitle: project.title,
         existingPromoScene: existing,
         narrationLine,
+        promoId: createNew ? requestedPromoId || `promo-${Date.now()}` : requestedPromoId,
+        campaignName,
+        campaignPreset,
+        campaignObjective,
+        campaignLanguages: targetLanguages,
+        promoAspect: aspect,
       })
 
-      scenes = upsertPromoSceneInScenes(scenes, scene)
+      scenes = upsertPromoSceneInScenes(scenes, scene, {
+        promoId: scene.id,
+        createNew,
+      })
       metadata = setScenesOnMetadata(metadata, scenes)
       metadata = seedProductionOnMetadata(
         metadata,
         scene.id,
         productionSeed as unknown as Record<string, unknown>
       )
-      metadata = mergePromoPublishing(metadata, promoOptions)
+      metadata = mergePromoPublishing(metadata, promoOptions, {
+        id: scene.id,
+        name: scene.campaignName || campaignName || 'Promo Trailer',
+        preset: scene.campaignPreset,
+        campaignObjective: scene.campaignObjective,
+        targetDurationSec: plan.targetDurationSec,
+        aspect,
+        primaryLanguage: language,
+        languages: targetLanguages,
+      })
       const analysis = await reviewPlan(plan.beatPlan)
 
       project.metadata = metadata
@@ -494,7 +676,7 @@ export async function POST(request: NextRequest) {
       })
     }
 
-    const promoIdx = findPromoSceneIndex(scenes)
+    const promoIdx = findPromoSceneIndex(scenes, requestedPromoId)
     if (promoIdx < 0) {
       return NextResponse.json(
         { error: 'Create a promo scene first' },
@@ -509,30 +691,62 @@ export async function POST(request: NextRequest) {
         fromPlan.length > 0
           ? fromPlan
           : planLabels(promoScene).map((label) => ({ label, durationSec: 5 }))
-      const narrationText = await generatePromoNarrationScript({
-        title: project.title || 'Untitled',
-        logline: typeof project.description === 'string' ? project.description : undefined,
-        genre: typeof project.genre === 'string' ? project.genre : undefined,
-        shots,
-        targetDurationSec,
-        language,
-        audienceText,
-      })
+      const campaignStrategyText = [
+        presetDef?.directorStrategyPrompt,
+        campaignObjective ||
+          (typeof promoScene.campaignObjective === 'string'
+            ? promoScene.campaignObjective
+            : undefined),
+      ]
+        .filter(Boolean)
+        .join('\n')
 
       const visionPhase = (metadata.visionPhase as Record<string, unknown> | undefined) ?? {}
       const narrationVoice =
         visionPhase.narrationVoice && typeof visionPhase.narrationVoice === 'object'
           ? (visionPhase.narrationVoice as { voiceId?: string })
           : null
-      const narrationAudio = await synthesizeNarrationTts({
-        text: narrationText,
-        language,
-        voiceId: resolvePromoNarrationVoiceId({
-          characters: Array.isArray(visionPhase.characters) ? visionPhase.characters : [],
-          narrationVoice,
-        }),
+      const voiceId = resolvePromoNarrationVoiceId({
+        characters: Array.isArray(visionPhase.characters) ? visionPhase.characters : [],
+        narrationVoice,
       })
-      const audioUrl = narrationAudio?.audioUrl
+
+      // Support generating narration for the active language AND any additional requested targetLanguages
+      const languagesToGenerate =
+        Array.isArray(body.targetLanguages) && body.targetLanguages.length > 1
+          ? Array.from(new Set(body.targetLanguages.map((l) => normalizeStreamLanguage(l)).filter(Boolean)))
+          : [language]
+
+      let primaryNarrationText = ''
+      let primaryAudioUrl: string | undefined
+      const generatedByLanguage: Record<string, { text: string; audioUrl?: string; durationSec?: number }> = {}
+
+      for (const lang of languagesToGenerate) {
+        const text = await generatePromoNarrationScript({
+          title: project.title || 'Untitled',
+          logline: typeof project.description === 'string' ? project.description : undefined,
+          genre: typeof project.genre === 'string' ? project.genre : undefined,
+          shots,
+          targetDurationSec,
+          language: lang,
+          audienceText,
+          campaignStrategyText: campaignStrategyText || undefined,
+        })
+        const tts = await synthesizeNarrationTts({
+          text,
+          language: lang,
+          voiceId,
+        })
+        generatedByLanguage[lang] = {
+          text,
+          ...(tts?.audioUrl ? { audioUrl: tts.audioUrl } : {}),
+          ...(tts?.durationSec ? { durationSec: tts.durationSec } : {}),
+        }
+        if (lang === language || !primaryNarrationText) {
+          primaryNarrationText = text
+          primaryAudioUrl = tts?.audioUrl
+        }
+      }
 
       // Rebuild with narration beat while preserving music
       const storedPlan =
@@ -569,34 +783,60 @@ export async function POST(request: NextRequest) {
         targetDurationSec: plan.targetDurationSec ?? targetDurationSec,
         projectTitle: project.title,
         existingPromoScene: promoScene,
-        narrationLine: narrationText,
+        narrationLine: primaryNarrationText,
+        promoId: String(promoScene.id || requestedPromoId || ''),
+        campaignName:
+          typeof promoScene.campaignName === 'string' ? promoScene.campaignName : campaignName,
+        campaignPreset:
+          (typeof promoScene.campaignPreset === 'string'
+            ? (promoScene.campaignPreset as PromoCampaignPresetId)
+            : undefined) ?? campaignPreset,
+        campaignObjective:
+          typeof promoScene.campaignObjective === 'string'
+            ? promoScene.campaignObjective
+            : campaignObjective,
+        campaignLanguages: targetLanguages,
+        promoAspect: aspect,
       })
 
       const priorAudio =
         scene.dialogueAudio && typeof scene.dialogueAudio === 'object' ? { ...scene.dialogueAudio } : {}
-      scene.dialogueAudio = {
-        ...priorAudio,
-        [language]: [
+      const nextDialogueAudio: Record<string, unknown[]> = { ...priorAudio }
+      for (const [lang, entry] of Object.entries(generatedByLanguage)) {
+        nextDialogueAudio[lang] = [
           {
             character: 'NARRATOR',
             kind: 'narration',
-            line: narrationText,
-            ...(audioUrl ? { audioUrl } : {}),
-            ...(narrationAudio?.durationSec ? { durationSec: narrationAudio.durationSec } : {}),
+            line: entry.text,
+            ...(entry.audioUrl ? { audioUrl: entry.audioUrl } : {}),
+            ...(entry.durationSec ? { durationSec: entry.durationSec } : {}),
           },
-        ],
+        ]
       }
+      scene.dialogueAudio = nextDialogueAudio
       const narrationBeat = scene.beats.find((b) => b.kind === 'narration')
-      if (narrationBeat && audioUrl) narrationBeat.audioUrl = audioUrl
+      if (narrationBeat && primaryAudioUrl) narrationBeat.audioUrl = primaryAudioUrl
 
-      scenes = upsertPromoSceneInScenes(scenes, scene)
+      scenes = upsertPromoSceneInScenes(scenes, scene, {
+        promoId: scene.id,
+        createNew: false,
+      })
       metadata = setScenesOnMetadata(metadata, scenes)
       metadata = seedProductionOnMetadata(
         metadata,
         scene.id,
         productionSeed as unknown as Record<string, unknown>
       )
-      metadata = mergePromoPublishing(metadata, promoOptions)
+      metadata = mergePromoPublishing(metadata, promoOptions, {
+        id: scene.id,
+        name: scene.campaignName || campaignName || 'Promo Trailer',
+        preset: scene.campaignPreset,
+        campaignObjective: scene.campaignObjective,
+        targetDurationSec,
+        aspect,
+        primaryLanguage: language,
+        languages: targetLanguages,
+      })
       project.metadata = metadata
       project.changed('metadata', true)
       await project.save()
@@ -604,8 +844,9 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({
         success: true,
         action: 'narration',
-        narrationText,
-        audioUrl,
+        narrationText: primaryNarrationText,
+        audioUrl: primaryAudioUrl,
+        generatedByLanguage,
         promoScene: scene,
         scenes,
         metadata,
@@ -641,7 +882,21 @@ export async function POST(request: NextRequest) {
       promoScene.musicAudio = music.url
       scenes[promoIdx] = promoScene
       metadata = setScenesOnMetadata(metadata, scenes)
-      metadata = mergePromoPublishing(metadata, promoOptions)
+      metadata = mergePromoPublishing(metadata, promoOptions, {
+        id: String(promoScene.id || requestedPromoId || 'promo'),
+        name:
+          (typeof promoScene.campaignName === 'string' && promoScene.campaignName) ||
+          campaignName ||
+          'Promo Trailer',
+        preset:
+          typeof promoScene.campaignPreset === 'string'
+            ? (promoScene.campaignPreset as PromoCampaignPresetId)
+            : campaignPreset,
+        targetDurationSec,
+        aspect,
+        primaryLanguage: language,
+        languages: targetLanguages,
+      })
       project.metadata = metadata
       project.changed('metadata', true)
       await project.save()

@@ -6,6 +6,10 @@ import {
   buildPromoSceneFromPlan,
   isPromoCinematicScene,
   filmSceneIndices,
+  findPromoScenes,
+  hydratePromoSceneWithSharedShots,
+  PROMO_CAMPAIGN_PRESETS,
+  removePromoSceneFromScenes,
   upsertPromoSceneInScenes,
 } from '@/lib/publish/buildPromoScene'
 import { readFileSync, existsSync } from 'fs'
@@ -597,5 +601,108 @@ describe('promo source guards', () => {
     expect(source).toContain('includeNarration')
     expect(source).toContain('includeMusic')
     expect(source).toContain('videoUrl')
+  })
+
+  it('supports multiple targeted marketing promo scenes and live-shared shots on the workflow', () => {
+    expect(PROMO_CAMPAIGN_PRESETS.length).toBeGreaterThanOrEqual(6)
+
+    const baseScenes = [
+      {
+        id: 'scene-0',
+        heading: 'INT. LAB - NIGHT',
+        beats: [
+          {
+            beatId: 'b0',
+            sequenceIndex: 0,
+            kind: 'action' as const,
+            actionDescription: 'Initial spark',
+            storyboardImageUrl: 'https://example.com/original-still.png',
+          },
+        ],
+      },
+    ]
+
+    const plan = planPromoTrailer({ scenes: baseScenes, targetDurationSec: 30 })
+    const built1 = buildPromoSceneFromPlan({
+      beatPlan: plan.beatPlan,
+      targetDurationSec: 30,
+      promoId: 'promo-theatrical',
+      campaignName: 'Theatrical Launch',
+      campaignPreset: 'theatrical_trailer',
+      campaignLanguages: ['en', 'es'],
+    })
+    const afterFirst = upsertPromoSceneInScenes(baseScenes, built1.scene, {
+      promoId: 'promo-theatrical',
+      createNew: true,
+    })
+
+    const built2 = buildPromoSceneFromPlan({
+      beatPlan: plan.beatPlan,
+      targetDurationSec: 30,
+      promoId: 'promo-vertical',
+      campaignName: 'Vertical Social Hook',
+      campaignPreset: 'social_vertical_hook',
+      campaignLanguages: ['en', 'ja'],
+      promoAspect: '9:16',
+    })
+    const afterSecond = upsertPromoSceneInScenes(afterFirst, built2.scene, {
+      promoId: 'promo-vertical',
+      createNew: true,
+    })
+
+    const promos = findPromoScenes(afterSecond)
+    expect(promos).toHaveLength(2)
+    expect(promos[0]?.promoId).toBe('promo-theatrical')
+    expect(promos[1]?.promoId).toBe('promo-vertical')
+
+    // Live-hydrate shared shots from updated source scene still & clip
+    const updatedSourceScenes = afterSecond.map((s: any, idx: number) =>
+      idx === 0
+        ? {
+            ...s,
+            beats: [
+              {
+                ...s.beats[0],
+                storyboardImageUrl: 'https://example.com/updated-shared-still.png',
+              },
+            ],
+          }
+        : s
+    )
+    const hydrated = hydratePromoSceneWithSharedShots(
+      promos[0]!.scene as Record<string, any>,
+      updatedSourceScenes,
+      {
+        'scene-0': {
+          isSegmented: true,
+          targetDuration: 5,
+          segments: [
+            {
+              segmentId: 'seg-0',
+              sequenceIndex: 0,
+              startTime: 0,
+              endTime: 5,
+              status: 'COMPLETE',
+              beatId: 'b0',
+              activeAssetUrl: 'https://example.com/shared-clip.mp4',
+              assetType: 'video',
+              references: { characterIds: [], sceneRefIds: [], objectRefIds: [] },
+              takes: [],
+            },
+          ],
+        },
+      }
+    )
+    const hydratedBeats = (hydrated.scene as { beats?: Array<{ storyboardImageUrl?: string }> }).beats
+    expect(hydratedBeats?.[0]?.storyboardImageUrl).toBe(
+      'https://example.com/updated-shared-still.png'
+    )
+    expect(hydrated.productionData?.segments[0]?.activeAssetUrl).toBe(
+      'https://example.com/shared-clip.mp4'
+    )
+
+    const afterRemove = removePromoSceneFromScenes(afterSecond, 'promo-theatrical')
+    expect(findPromoScenes(afterRemove)).toHaveLength(1)
+    expect(findPromoScenes(afterRemove)[0]?.promoId).toBe('promo-vertical')
   })
 })

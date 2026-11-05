@@ -38,6 +38,12 @@ describe('Scene workflow viewport-fitted window and uncropped menu', () => {
     expect(menuSlice).toContain('aria-label="Previous scene"')
     expect(menuSlice).toContain('aria-label="Jump to scene"')
     expect(menuSlice).toContain('aria-label="Next scene"')
+    // Ensure fullscreen scene navigation matches workflow tab height (h-8) and does not crop text descenders via truncate on <select>
+    expect(menuSlice).toContain('inline-flex h-8 w-8 items-center justify-center')
+    expect(menuSlice).toContain(
+      'h-8 max-w-[11rem] sm:max-w-[15rem] lg:max-w-[19rem] rounded-md border border-indigo-500/40 bg-slate-900 px-2.5 py-0 text-xs font-semibold leading-normal text-white'
+    )
+    expect(menuSlice).not.toContain('h-7 max-w-[9rem]')
 
     const bodySlice = panel.slice(bodyIdx, bodyIdx + 220)
     expect(bodySlice).toContain('min-h-0 flex-1 overflow-y-auto')

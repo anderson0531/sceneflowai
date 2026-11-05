@@ -62,6 +62,15 @@ export interface PromoTrailerBeatPlan {
 
 export type PromoFrameAspect = '16:9' | '9:16'
 
+/** Intelligent marketing campaign preset archetypes for multi-promo creation. */
+export type PromoCampaignPresetId =
+  | 'theatrical_trailer'
+  | 'social_vertical_hook'
+  | 'character_spotlight'
+  | 'high_octane_action'
+  | 'mystery_cliffhanger'
+  | 'global_multilanguage'
+
 export interface PromoTrailerAsset {
   mp4Url: string
   aspect: PromoFrameAspect
@@ -73,6 +82,34 @@ export interface PromoTrailerAsset {
   renderedAt: string
   status: 'ready' | 'rendering' | 'error'
   error?: string
+  /** Optional campaign id this render belongs to. */
+  promoId?: string
+}
+
+export interface PromoCampaignConfig {
+  /** Unique promo campaign id (matches promoScene.id or promoScene.promoId). */
+  id: string
+  /** Display name of the promo campaign (e.g., "Theatrical Trailer", "Social Vertical Hook"). */
+  name: string
+  /** Intelligent marketing campaign preset. */
+  preset?: PromoCampaignPresetId
+  /** Custom campaign objective or marketing hook note. */
+  campaignObjective?: string
+  /** Target audience definition for this specific campaign. */
+  audienceDefinition?: AudienceDefinition
+  targetDurationSec?: number
+  aspect?: PromoFrameAspect
+  /** Active language selected for this campaign. */
+  primaryLanguage?: string
+  /** Languages enabled for this campaign (multilanguage support). */
+  languages?: string[]
+  watermarkEnabled?: boolean
+  narrationStartShotKey?: string
+  /** Rendered promo assets per language for this campaign. */
+  trailersByLanguage?: Record<string, PromoTrailerAsset>
+  trailer?: PromoTrailerAsset
+  createdAt?: string
+  updatedAt?: string
 }
 
 export interface ProjectPublishingPromo {
@@ -91,6 +128,10 @@ export interface ProjectPublishingPromo {
   watermarkEnabled?: boolean
   /** Included shot where narration begins. Missing starts with the first shot. */
   narrationStartShotKey?: string
+  /** Currently active promo campaign id. */
+  activePromoId?: string
+  /** Multiple targeted marketing promo campaigns. */
+  campaigns?: PromoCampaignConfig[]
 }
 
 export interface PublishingReadiness {

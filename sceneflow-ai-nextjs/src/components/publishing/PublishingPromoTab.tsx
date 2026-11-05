@@ -15,6 +15,10 @@ import {
   Sparkles,
   Square,
   Clapperboard,
+  Plus,
+  Trash2,
+  Globe,
+  Target,
 } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { cn } from '@/lib/utils'
@@ -54,7 +58,13 @@ import {
   type PromoBeatClipRequest,
 } from '@/lib/publish/promoLanguage'
 import { PromoCutPreview, type PromoCutPreviewHandle } from '@/components/publishing/PromoCutPreview'
-import { findPromoSceneIndex, isPromoCinematicScene } from '@/lib/publish/buildPromoScene'
+import {
+  PROMO_CAMPAIGN_PRESETS,
+  findPromoSceneIndex,
+  findPromoScenes,
+  getPromoCampaignPreset,
+  isPromoCinematicScene,
+} from '@/lib/publish/buildPromoScene'
 import { getSceneBeats } from '@/lib/script/beatMigration'
 import { treatmentBeatsFromMetadata } from '@/lib/script/sceneDecomposition'
 import { isLanguageClipTarget } from '@/lib/scene/languageClipVersions'
@@ -63,10 +73,29 @@ import {
   resolveDirectShotTarget,
   type DirectShotRequest,
 } from '@/lib/vision/directShotTarget'
-import type { AudienceDefinition } from '@/lib/types/audienceResonance'
-import type { PromoTrailerBeatPlan, PromoTrailerAsset, ProjectPublishingPromo } from '@/types/publishingAssets'
+import { createAudienceDefinition, type AudienceDefinition } from '@/lib/types/audienceResonance'
+import type {
+  PromoCampaignPresetId,
+  PromoFrameAspect,
+  PromoTrailerBeatPlan,
+  PromoTrailerAsset,
+  ProjectPublishingPromo,
+} from '@/types/publishingAssets'
 import type { ProjectStream } from '@/lib/streams/projectStreams'
 import type { SceneProductionData } from '@/components/vision/scene-production/types'
+
+const MULTILANG_CAMPAIGN_CHOICES = [
+  { code: 'en', label: 'English' },
+  { code: 'es', label: 'Spanish' },
+  { code: 'fr', label: 'French' },
+  { code: 'de', label: 'German' },
+  { code: 'ja', label: 'Japanese' },
+  { code: 'pt', label: 'Portuguese' },
+  { code: 'zh', label: 'Mandarin' },
+  { code: 'ko', label: 'Korean' },
+  { code: 'it', label: 'Italian' },
+  { code: 'hi', label: 'Hindi' },
+] as const
 
 export interface PublishingPromoTabProps {
   projectId: string
@@ -246,17 +275,156 @@ export function PublishingPromoTab({
   const skipOptionPersist = useRef(true)
 
   const publishingState = useMemo(() => getPublishingState(metadata), [metadata])
-  const aspect = useMemo(() => resolvePromoFrameAspect(metadata), [metadata])
+  const defaultAspect = useMemo(() => resolvePromoFrameAspect(metadata), [metadata])
 
   const scenes = useMemo(() => {
     const s = script as { script?: { scenes?: unknown[] }; scenes?: unknown[] } | undefined
     return s?.script?.scenes ?? s?.scenes ?? []
   }, [script])
 
+  const promoScenes = useMemo(() => findPromoScenes(scenes), [scenes])
+
+  const [activePromoId, setActivePromoId] = useState<string>(() => {
+    const storedActive = getPublishingState(metadata).promo?.activePromoId
+    if (storedActive) return storedActive
+    const existing = findPromoScenes(
+      (script as { script?: { scenes?: unknown[] }; scenes?: unknown[] } | undefined)?.script
+        ?.scenes ??
+        (script as { scenes?: unknown[] } | undefined)?.scenes ??
+        []
+    )
+    return existing[0]?.promoId || ''
+  })
+
+  const [campaignPreset, setCampaignPreset] = useState<PromoCampaignPresetId>(
+    () =>
+      (findPromoScenes(
+        (script as { script?: { scenes?: unknown[] }; scenes?: unknown[] } | undefined)?.script
+          ?.scenes ?? []
+      )[0]?.preset as PromoCampaignPresetId | undefined) || 'theatrical_trailer'
+  )
+  const [campaignName, setCampaignName] = useState<string>(() => {
+    const first = findPromoScenes(
+      (script as { script?: { scenes?: unknown[] }; scenes?: unknown[] } | undefined)?.script
+        ?.scenes ?? []
+    )[0]
+    return first?.name || 'Theatrical Main Trailer'
+  })
+  const [campaignObjective, setCampaignObjective] = useState<string>('')
+  const [aspectOverride, setAspectOverride] = useState<PromoFrameAspect | null>(null)
+  const [creatingNewPromo, setCreatingNewPromo] = useState(false)
+  const [deletingPromoId, setDeletingPromoId] = useState<string | null>(null)
+  const [multilangGenerating, setMultilangGenerating] = useState(false)
+
   const promoScene = useMemo(() => {
-    const idx = findPromoSceneIndex(scenes)
+    if (creatingNewPromo) return null
+    const idx = findPromoSceneIndex(scenes, activePromoId || undefined)
     return idx >= 0 ? (scenes[idx] as Record<string, unknown>) : null
-  }, [scenes])
+  }, [scenes, activePromoId, creatingNewPromo])
+
+  const aspect: PromoFrameAspect = useMemo(() => {
+    if (aspectOverride) return aspectOverride
+    if (promoScene?.promoAspect === '9:16' || promoScene?.promoAspect === '16:9') {
+      return promoScene.promoAspect
+    }
+    return defaultAspect
+  }, [aspectOverride, promoScene, defaultAspect])
+
+  // Sync activePromoId when promoScenes change and activePromoId is empty
+  useEffect(() => {
+    if (creatingNewPromo) return
+    if (!activePromoId && promoScenes.length > 0) {
+      const first = promoScenes[0]!
+      setActivePromoId(first.promoId)
+      if (first.name) setCampaignName(first.name)
+      if (first.preset) setCampaignPreset(first.preset)
+      if (first.aspect) setAspectOverride(first.aspect)
+    }
+  }, [promoScenes, activePromoId, creatingNewPromo])
+
+  const handleSelectExistingPromo = useCallback(
+    (summary: (typeof promoScenes)[number]) => {
+      setCreatingNewPromo(false)
+      setActivePromoId(summary.promoId)
+      setCampaignName(summary.name)
+      if (summary.preset) setCampaignPreset(summary.preset)
+      if (summary.aspect) setAspectOverride(summary.aspect)
+      const sceneRec = summary.scene
+      if (typeof sceneRec.campaignObjective === 'string') {
+        setCampaignObjective(sceneRec.campaignObjective)
+      } else {
+        setCampaignObjective('')
+      }
+      if (isPromoDuration(sceneRec.duration)) {
+        setTargetDuration(sceneRec.duration)
+      }
+      if (Array.isArray(summary.languages) && summary.languages.length > 0) {
+        setExtraLanguages((prev) => Array.from(new Set([...prev, ...summary.languages!])))
+      }
+      const storedPlan = Array.isArray(sceneRec.promoBeatPlan)
+        ? (sceneRec.promoBeatPlan as PromoTrailerBeatPlan[])
+        : []
+      setBeatPlan(storedPlan)
+    },
+    []
+  )
+
+  const handleSelectCampaignPreset = useCallback(
+    (presetId: PromoCampaignPresetId) => {
+      const preset = getPromoCampaignPreset(presetId)
+      if (!preset) return
+      setCampaignPreset(presetId)
+      setCampaignName((prev) => {
+        const matchesAnyPreset = PROMO_CAMPAIGN_PRESETS.some((p) => p.name === prev)
+        if (!prev.trim() || matchesAnyPreset || prev === 'Promo Trailer') {
+          return preset.name
+        }
+        return prev
+      })
+      if (isPromoDuration(preset.defaultDurationSec)) {
+        setTargetDuration(preset.defaultDurationSec)
+      }
+      setAspectOverride(preset.defaultAspect)
+      if (!audience.description.trim() && preset.defaultAudienceHint) {
+        setAudience(createAudienceDefinition({ description: preset.defaultAudienceHint }))
+      }
+      if (Array.isArray(preset.recommendedLanguages) && preset.recommendedLanguages.length > 0) {
+        setExtraLanguages((prev) =>
+          Array.from(new Set([...prev, ...preset.recommendedLanguages!]))
+        )
+      }
+    },
+    [audience.description]
+  )
+
+  const handleStartNewPromo = useCallback(
+    (presetId?: PromoCampaignPresetId) => {
+      const nextPresetId = presetId || 'social_vertical_hook'
+      const preset = getPromoCampaignPreset(nextPresetId) || PROMO_CAMPAIGN_PRESETS[0]!
+      const newId = `promo-${Date.now()}`
+      const promoNumber = promoScenes.length + 1
+      setCreatingNewPromo(true)
+      setActivePromoId(newId)
+      setCampaignPreset(preset.id)
+      setCampaignName(`${preset.name}${promoNumber > 1 ? ` #${promoNumber}` : ''}`)
+      setCampaignObjective('')
+      setAspectOverride(preset.defaultAspect)
+      if (isPromoDuration(preset.defaultDurationSec)) {
+        setTargetDuration(preset.defaultDurationSec)
+      }
+      if (preset.defaultAudienceHint) {
+        setAudience(createAudienceDefinition({ description: preset.defaultAudienceHint }))
+      }
+      if (Array.isArray(preset.recommendedLanguages) && preset.recommendedLanguages.length > 0) {
+        setExtraLanguages((prev) =>
+          Array.from(new Set([...prev, ...preset.recommendedLanguages!]))
+        )
+      }
+      setBeatPlan([])
+      setAnalysis(null)
+    },
+    [promoScenes.length]
+  )
 
   const languages = useMemo(() => {
     const codes = new Set<string>(['en', language, ...extraLanguages])
@@ -421,7 +589,12 @@ export function PublishingPromoTab({
   const audiencePayload = audience.description.trim() ? audience : undefined
 
   const postScene = useCallback(
-    async (action: 'plan' | 'upsert' | 'timeline' | 'narration' | 'music', beatPlanBody?: PromoTrailerBeatPlan[]) => {
+    async (
+      action: 'plan' | 'upsert' | 'timeline' | 'narration' | 'music',
+      beatPlanBody?: PromoTrailerBeatPlan[],
+      extraOpts?: { targetLanguages?: string[]; createNew?: boolean }
+    ) => {
+      const shouldCreateNew = extraOpts?.createNew ?? (creatingNewPromo && action === 'upsert')
       const res = await fetch('/api/publish/promo/scene', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -429,6 +602,12 @@ export function PublishingPromoTab({
           projectId,
           legacyOwnerId: legacyOwnerIdFromStorage(),
           action,
+          promoId: activePromoId || undefined,
+          createNew: shouldCreateNew,
+          campaignName: campaignName.trim() || undefined,
+          campaignPreset,
+          campaignObjective: campaignObjective.trim() || undefined,
+          targetLanguages: extraOpts?.targetLanguages || languages,
           targetDurationSec: targetDuration,
           language,
           aspect,
@@ -444,6 +623,10 @@ export function PublishingPromoTab({
       })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error || 'Promo request failed')
+      if (data.promoScene && typeof data.promoScene.id === 'string') {
+        setActivePromoId(data.promoScene.id)
+        setCreatingNewPromo(false)
+      }
       if (Array.isArray(data.beatPlan)) setBeatPlan(data.beatPlan)
       if (Array.isArray(data.analysis)) setAnalysis(data.analysis as PromoPlanFinding[])
       if (Array.isArray(data.scenes)) applyScenes(data.scenes, data.metadata)
@@ -456,10 +639,18 @@ export function PublishingPromoTab({
         totalDurationSec?: number
         source?: string
         analysis?: PromoPlanFinding[]
+        promoScene?: Record<string, unknown>
+        generatedByLanguage?: Record<string, unknown>
       }
     },
     [
       projectId,
+      activePromoId,
+      creatingNewPromo,
+      campaignName,
+      campaignPreset,
+      campaignObjective,
+      languages,
       targetDuration,
       language,
       aspect,
@@ -471,6 +662,58 @@ export function PublishingPromoTab({
       onSaveMetadata,
     ]
   )
+
+  const handleDeletePromo = useCallback(
+    async (promoIdToDelete: string) => {
+      if (!promoIdToDelete) return
+      setDeletingPromoId(promoIdToDelete)
+      try {
+        const res = await fetch('/api/publish/promo/scene', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            projectId,
+            legacyOwnerId: legacyOwnerIdFromStorage(),
+            action: 'delete',
+            promoId: promoIdToDelete,
+            scenes,
+          }),
+        })
+        const data = await res.json()
+        if (!res.ok) throw new Error(data.error || 'Failed to delete promo')
+        if (Array.isArray(data.scenes)) {
+          applyScenes(data.scenes, data.metadata)
+          const remaining = findPromoScenes(data.scenes)
+          if (remaining.length > 0) {
+            handleSelectExistingPromo(remaining[0]!)
+          } else {
+            setActivePromoId('')
+            setBeatPlan([])
+          }
+        }
+        toast.success('Promo campaign deleted')
+      } catch (err) {
+        toast.error(err instanceof Error ? err.message : 'Failed to delete promo')
+      } finally {
+        setDeletingPromoId(null)
+      }
+    },
+    [projectId, scenes, applyScenes, handleSelectExistingPromo]
+  )
+
+  const handleGenerateMultilangNarration = useCallback(async () => {
+    if (languages.length === 0) return
+    setMultilangGenerating(true)
+    try {
+      const data = await postScene('narration', undefined, { targetLanguages: languages })
+      const count = data.generatedByLanguage ? Object.keys(data.generatedByLanguage).length : languages.length
+      toast.success(`Narration generated for ${count} language${count === 1 ? '' : 's'}`)
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Multilanguage narration failed')
+    } finally {
+      setMultilangGenerating(false)
+    }
+  }, [languages, postScene])
 
   const shotCatalog = useMemo(
     () =>
@@ -765,46 +1008,218 @@ export function PublishingPromoTab({
   ])
 
   const languageLabel = promoLanguageName(language)
+  const activePresetDef = getPromoCampaignPreset(campaignPreset)
 
   return (
     <div className="space-y-4 overflow-y-auto flex-1 min-h-0 pr-1">
       <div className="rounded-xl border border-zinc-800/70 bg-zinc-950/45 p-4">
-        <h3 className="text-sm font-semibold text-white flex items-center gap-2 mb-1">
-          <Film className="w-4 h-4 text-fuchsia-300" />
-          Promo
-        </h3>
-        <p className="text-xs text-zinc-500 mb-4">
-          A {aspect} trailer in the film&apos;s frame. Plan the cut, then Promo Agent builds the
-          clips, narration, and music for {languageLabel}.
-        </p>
-
-        <div className="mb-4">
-          <p className="mb-2 text-[10px] uppercase tracking-wider text-zinc-500">Duration</p>
-          <div className="flex flex-wrap gap-2">
-            {TARGET_OPTIONS.map((sec) => (
-              <button
-                key={sec}
-                type="button"
-                onClick={() => setTargetDuration(sec)}
-                className={cn(
-                  'rounded-full px-3 py-1 text-xs border transition-colors',
-                  targetDuration === sec
-                    ? 'border-fuchsia-500/50 bg-fuchsia-500/15 text-fuchsia-100'
-                    : 'border-zinc-700 text-zinc-400 hover:border-zinc-500'
-                )}
-              >
-                {sec}s
-              </button>
-            ))}
+        <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
+          <div>
+            <h3 className="text-sm font-semibold text-white flex items-center gap-2">
+              <Film className="w-4 h-4 text-fuchsia-300" />
+              Promo Campaigns
+            </h3>
+            <p className="text-xs text-zinc-500 mt-0.5">
+              Create multiple targeted marketing promos ({aspect}) sharing shots with their respective scenes. Plan the cut, then Promo Agent builds clips, narration, and music for {languageLabel}.
+            </p>
           </div>
-          <label className="mt-3 flex items-center gap-2 text-xs text-zinc-300">
-            <input
-              type="checkbox"
-              checked={watermarkEnabled}
-              onChange={(event) => setWatermarkEnabled(event.target.checked)}
-            />
-            Watermark · SceneFlow Studio
-          </label>
+          <div className="flex items-center gap-2">
+            {promoScene && onOpenPromoInStudio ? (
+              <Button
+                size="sm"
+                variant="outline"
+                className="h-8 border-fuchsia-500/40 bg-fuchsia-500/10 text-xs text-fuchsia-100 hover:bg-fuchsia-500/20"
+                onClick={() => onOpenPromoInStudio(String(promoScene.id || promoScene.sceneId || activePromoId || ''))}
+              >
+                <Clapperboard className="w-3.5 h-3.5 mr-1.5" />
+                Open Promo Scene on Stage
+              </Button>
+            ) : null}
+            <Button
+              size="sm"
+              variant="outline"
+              data-testid="create-new-promo-button"
+              onClick={() => handleStartNewPromo()}
+              className="h-8 border-fuchsia-500/40 text-xs text-fuchsia-200 hover:bg-fuchsia-500/15"
+            >
+              <Plus className="w-3.5 h-3.5 mr-1" />
+              New Promo
+            </Button>
+          </div>
+        </div>
+
+        {/* Multi-Promo Campaign Switcher */}
+        {(promoScenes.length > 0 || creatingNewPromo) && (
+          <div
+            data-testid="promo-campaign-switcher"
+            className="mb-4 flex flex-wrap items-center gap-1.5 rounded-lg border border-zinc-800/80 bg-zinc-900/50 p-2"
+          >
+            {promoScenes.map((summary) => {
+              const isSelected = !creatingNewPromo && summary.promoId === (promoScene?.id || activePromoId)
+              return (
+                <div key={summary.promoId} className="inline-flex items-center gap-1">
+                  <button
+                    type="button"
+                    onClick={() => handleSelectExistingPromo(summary)}
+                    className={cn(
+                      'inline-flex items-center gap-1.5 rounded-md border px-2.5 py-1 text-xs font-medium transition-colors',
+                      isSelected
+                        ? 'border-fuchsia-500/60 bg-fuchsia-500/20 text-fuchsia-100 shadow-sm'
+                        : 'border-zinc-700/80 bg-zinc-950/70 text-zinc-300 hover:border-zinc-600 hover:text-white'
+                    )}
+                  >
+                    <span className="rounded bg-fuchsia-500/30 px-1.5 py-0.5 text-[10px] font-bold uppercase text-fuchsia-200">
+                      P{summary.promoNumber}
+                    </span>
+                    <span className="max-w-[14rem] truncate">{summary.name}</span>
+                    {summary.aspect && (
+                      <span className="text-[10px] text-zinc-400">{summary.aspect}</span>
+                    )}
+                  </button>
+                  {promoScenes.length > 1 && isSelected && (
+                    <button
+                      type="button"
+                      disabled={deletingPromoId === summary.promoId}
+                      onClick={() => void handleDeletePromo(summary.promoId)}
+                      title="Delete this promo campaign"
+                      className="inline-flex h-6 w-6 items-center justify-center rounded border border-zinc-800 text-zinc-400 hover:border-rose-500/50 hover:bg-rose-500/10 hover:text-rose-300 disabled:opacity-50"
+                    >
+                      {deletingPromoId === summary.promoId ? (
+                        <Loader2 className="h-3 w-3 animate-spin" />
+                      ) : (
+                        <Trash2 className="h-3 w-3" />
+                      )}
+                    </button>
+                  )}
+                </div>
+              )
+            })}
+            {creatingNewPromo && (
+              <span className="inline-flex items-center gap-1.5 rounded-md border border-fuchsia-500/60 bg-fuchsia-500/20 px-2.5 py-1 text-xs font-medium text-fuchsia-100">
+                <Sparkles className="h-3 w-3 text-fuchsia-300" />
+                New Campaign: {campaignName || 'Untitled Promo'}
+              </span>
+            )}
+          </div>
+        )}
+
+        {/* Intelligent Targeted Marketing Campaign Presets */}
+        <div className="mb-4 rounded-lg border border-zinc-800/80 bg-zinc-950/60 p-3">
+          <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
+            <p className="text-[10px] font-semibold uppercase tracking-wider text-fuchsia-300 flex items-center gap-1.5">
+              <Target className="w-3.5 h-3.5" />
+              Intelligent Marketing Campaign Strategy
+            </p>
+            <span className="text-[11px] text-zinc-500">
+              Select a campaign archetype to tailor shot selection, pacing, aspect ratio, and localization
+            </span>
+          </div>
+          <div
+            data-testid="promo-campaign-presets"
+            className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3 mb-3"
+          >
+            {PROMO_CAMPAIGN_PRESETS.map((preset) => {
+              const active = campaignPreset === preset.id
+              return (
+                <button
+                  key={preset.id}
+                  type="button"
+                  onClick={() => handleSelectCampaignPreset(preset.id)}
+                  className={cn(
+                    'flex flex-col items-start rounded-lg border p-2.5 text-left transition-all',
+                    active
+                      ? 'border-fuchsia-500/60 bg-fuchsia-500/15 text-fuchsia-100 shadow-sm'
+                      : 'border-zinc-800 bg-zinc-900/50 text-zinc-300 hover:border-zinc-600 hover:bg-zinc-900'
+                  )}
+                >
+                  <div className="flex w-full items-center justify-between gap-1.5 mb-1">
+                    <span className="text-xs font-semibold text-white truncate">{preset.name}</span>
+                    <span className="shrink-0 rounded bg-zinc-800 px-1.5 py-0.5 text-[10px] font-medium text-fuchsia-300">
+                      {preset.badge}
+                    </span>
+                  </div>
+                  <p className="text-[11px] leading-snug text-zinc-400 line-clamp-2">
+                    {preset.description}
+                  </p>
+                </button>
+              )
+            })}
+          </div>
+
+          <div className="grid gap-3 sm:grid-cols-2">
+            <label className="block text-[10px] uppercase tracking-wider text-zinc-500">
+              Campaign Name
+              <input
+                type="text"
+                value={campaignName}
+                onChange={(e) => setCampaignName(e.target.value)}
+                placeholder={activePresetDef?.name || 'e.g., Theatrical Main Trailer'}
+                className="mt-1 w-full rounded-md border border-zinc-700 bg-zinc-950 px-2.5 py-1.5 text-xs text-zinc-100 focus:border-fuchsia-500 focus:outline-none"
+              />
+            </label>
+            <label className="block text-[10px] uppercase tracking-wider text-zinc-500">
+              Campaign Hook / Editorial Focus (Optional)
+              <input
+                type="text"
+                value={campaignObjective}
+                onChange={(e) => setCampaignObjective(e.target.value)}
+                placeholder="e.g., Emphasize mystery reveal & protagonist rivalry for sci-fi fans"
+                className="mt-1 w-full rounded-md border border-zinc-700 bg-zinc-950 px-2.5 py-1.5 text-xs text-zinc-100 focus:border-fuchsia-500 focus:outline-none"
+              />
+            </label>
+          </div>
+        </div>
+
+        <div className="mb-4 grid gap-4 sm:grid-cols-2">
+          <div>
+            <p className="mb-2 text-[10px] uppercase tracking-wider text-zinc-500">Duration</p>
+            <div className="flex flex-wrap gap-2">
+              {TARGET_OPTIONS.map((sec) => (
+                <button
+                  key={sec}
+                  type="button"
+                  onClick={() => setTargetDuration(sec)}
+                  className={cn(
+                    'rounded-full px-3 py-1 text-xs border transition-colors',
+                    targetDuration === sec
+                      ? 'border-fuchsia-500/50 bg-fuchsia-500/15 text-fuchsia-100'
+                      : 'border-zinc-700 text-zinc-400 hover:border-zinc-500'
+                  )}
+                >
+                  {sec}s
+                </button>
+              ))}
+            </div>
+            <label className="mt-3 flex items-center gap-2 text-xs text-zinc-300">
+              <input
+                type="checkbox"
+                checked={watermarkEnabled}
+                onChange={(event) => setWatermarkEnabled(event.target.checked)}
+              />
+              Watermark · SceneFlow Studio
+            </label>
+          </div>
+
+          <div>
+            <p className="mb-2 text-[10px] uppercase tracking-wider text-zinc-500">Format / Aspect Ratio</p>
+            <div className="flex flex-wrap gap-2">
+              {(['16:9', '9:16'] as const).map((ratio) => (
+                <button
+                  key={ratio}
+                  type="button"
+                  onClick={() => setAspectOverride(ratio)}
+                  className={cn(
+                    'rounded-full px-3 py-1 text-xs border transition-colors',
+                    aspect === ratio
+                      ? 'border-fuchsia-500/50 bg-fuchsia-500/15 text-fuchsia-100'
+                      : 'border-zinc-700 text-zinc-400 hover:border-zinc-500'
+                  )}
+                >
+                  {ratio === '16:9' ? '16:9 Widescreen' : '9:16 Vertical (Reels / TikTok / Shorts)'}
+                </button>
+              ))}
+            </div>
+          </div>
         </div>
 
         <div className="mb-4 grid gap-4 lg:grid-cols-[minmax(0,1.4fr)_minmax(12rem,0.8fr)]">
@@ -821,7 +1236,7 @@ export function PublishingPromoTab({
             />
           </div>
           <div>
-            <p className="mb-2 text-[10px] uppercase tracking-wider text-zinc-500">Language</p>
+            <p className="mb-2 text-[10px] uppercase tracking-wider text-zinc-500">Active Stream Language</p>
             <GroupedLanguageSelector
               value={language}
               onValueChange={(code) => {
@@ -833,9 +1248,73 @@ export function PublishingPromoTab({
               placeholder="Promo language"
               className="w-full"
             />
+            <div className="mt-3">
+              <div className="flex items-center justify-between gap-2 mb-1.5">
+                <p className="text-[10px] uppercase tracking-wider text-zinc-500 flex items-center gap-1">
+                  <Globe className="w-3 h-3 text-fuchsia-300" />
+                  Multilanguage Campaign Markets ({languages.length})
+                </p>
+                {languages.length > 1 && promoScene && (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    disabled={multilangGenerating || audioGenerating !== null}
+                    onClick={() => void handleGenerateMultilangNarration()}
+                    className="h-6 px-2 text-[10px] border-fuchsia-500/40 text-fuchsia-200"
+                  >
+                    {multilangGenerating ? (
+                      <Loader2 className="w-3 h-3 animate-spin mr-1" />
+                    ) : (
+                      <Globe className="w-3 h-3 mr-1" />
+                    )}
+                    Voiceover All ({languages.length})
+                  </Button>
+                )}
+              </div>
+              <div
+                data-testid="promo-multilanguage-markets"
+                className="flex flex-wrap gap-1"
+              >
+                {MULTILANG_CAMPAIGN_CHOICES.map((choice) => {
+                  const selected = languages.includes(choice.code)
+                  const isCurrent = language === choice.code
+                  return (
+                    <button
+                      key={choice.code}
+                      type="button"
+                      onClick={() => {
+                        if (selected && choice.code !== 'en' && choice.code !== language) {
+                          setExtraLanguages((prev) => prev.filter((c) => c !== choice.code))
+                        } else {
+                          setExtraLanguages((prev) =>
+                            prev.includes(choice.code) ? prev : [...prev, choice.code]
+                          )
+                          setLanguage(choice.code)
+                        }
+                      }}
+                      className={cn(
+                        'rounded px-2 py-0.5 text-[10px] border transition-colors',
+                        isCurrent
+                          ? 'border-fuchsia-400 bg-fuchsia-500/25 text-fuchsia-100 font-semibold'
+                          : selected
+                            ? 'border-fuchsia-500/40 bg-fuchsia-500/10 text-fuchsia-200'
+                            : 'border-zinc-800 bg-zinc-900/60 text-zinc-400 hover:border-zinc-600'
+                      )}
+                      title={
+                        selected
+                          ? `Included in campaign (${choice.label}) — click to focus or toggle`
+                          : `Add ${choice.label} to this campaign`
+                      }
+                    >
+                      {choice.label}
+                    </button>
+                  )
+                })}
+              </div>
+            </div>
             <p className="mt-2 text-[11px] leading-relaxed text-zinc-500">
-              Dialogue, titles, and credits are made for this language. Action shots with no
-              on-screen text stay on the source picture. Music is shared.
+              Dialogue, titles, and credits are made for each language. Action shots with no
+              on-screen text stay on the shared source picture. Music is shared.
             </p>
           </div>
         </div>

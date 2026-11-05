@@ -81,6 +81,25 @@ export function SceneDirectionWorkbench({
   const description = sceneDir?.sceneDescription || prose
 
   const selected = beats.find((beat) => beat.beatId === selectedBeatId) ?? beats[0]
+  const selectedPromoSource = selected as
+    | (SceneBeat & { sourceSceneIndex?: number; sourceBeatId?: string; sourceSceneId?: string })
+    | undefined
+  const hasSharedSourceShot =
+    Boolean(selectedPromoSource?.sourceBeatId) &&
+    typeof selectedPromoSource?.sourceSceneIndex === 'number' &&
+    selectedPromoSource.sourceSceneIndex >= 0 &&
+    selectedPromoSource.sourceSceneIndex !== sceneIdx
+  const editorSceneIdx = hasSharedSourceShot
+    ? (selectedPromoSource!.sourceSceneIndex as number)
+    : sceneIdx
+  const editorBeat = useMemo<SceneBeat | undefined>(() => {
+    if (!selected) return undefined
+    if (!hasSharedSourceShot || !selectedPromoSource?.sourceBeatId) return selected
+    return {
+      ...selected,
+      beatId: selectedPromoSource.sourceBeatId,
+    }
+  }, [selected, hasSharedSourceShot, selectedPromoSource])
   const segment = selected
     ? segments.find((row) => row.beatId === selected.beatId && segmentHasPlayableVideo(row)) ??
       segments.find((row) => row.beatId === selected.beatId)
@@ -232,20 +251,29 @@ export function SceneDirectionWorkbench({
             />
           }
           detail={
-            selected ? (
-              <BeatDirectionEditor
-                layout="board"
-                beat={selected}
-                sceneIdx={sceneIdx}
-                scenes={scenes ?? []}
-                script={script}
-                onScriptChange={onScriptChange}
-                promptComposition={promptComposition}
-                characters={characters}
-                locationReferences={locationReferences}
-                objectReferences={objectReferences}
-                projectId={projectId}
-              />
+            editorBeat ? (
+              <div className="space-y-2">
+                {hasSharedSourceShot && (
+                  <div className="flex items-center justify-between gap-2 rounded-md border border-fuchsia-500/35 bg-fuchsia-950/30 px-2.5 py-1.5 text-[11px] text-fuchsia-200">
+                    <span>
+                      Shared Shot • Linked with Scene {editorSceneIdx + 1} (edits sync to both Promo and Scene {editorSceneIdx + 1})
+                    </span>
+                  </div>
+                )}
+                <BeatDirectionEditor
+                  layout="board"
+                  beat={editorBeat}
+                  sceneIdx={editorSceneIdx}
+                  scenes={scenes ?? []}
+                  script={script}
+                  onScriptChange={onScriptChange}
+                  promptComposition={promptComposition}
+                  characters={characters}
+                  locationReferences={locationReferences}
+                  objectReferences={objectReferences}
+                  projectId={projectId}
+                />
+              </div>
             ) : null
           }
         />

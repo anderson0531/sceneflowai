@@ -4,11 +4,116 @@
 
 import { getSceneBeats, mintBeatId } from '@/lib/script/beatMigration'
 import type { SceneBeat } from '@/lib/script/segmentTypes'
-import type { PromoTrailerBeatPlan } from '@/types/publishingAssets'
+import type {
+  PromoCampaignPresetId,
+  PromoFrameAspect,
+  PromoTrailerBeatPlan,
+} from '@/types/publishingAssets'
 import type { SceneSegment, SceneProductionData } from '@/components/vision/scene-production/types'
 
 export const PROMO_SCENE_CINEMATIC_TYPE = 'promo' as const
 export const PROMO_SCENE_HEADING = 'PROMO TRAILER'
+
+export interface PromoCampaignPresetDefinition {
+  id: PromoCampaignPresetId
+  name: string
+  badge: string
+  description: string
+  defaultDurationSec: number
+  defaultAspect: PromoFrameAspect
+  defaultAudienceHint: string
+  directorStrategyPrompt: string
+  recommendedLanguages?: string[]
+}
+
+export const PROMO_CAMPAIGN_PRESETS: PromoCampaignPresetDefinition[] = [
+  {
+    id: 'theatrical_trailer',
+    name: 'Theatrical Main Trailer',
+    badge: '16:9 · Main Arc',
+    description:
+      'Classic 4-act trailer structure: world hook, rising stakes, emotional & dramatic peak, and title card button.',
+    defaultDurationSec: 60,
+    defaultAspect: '16:9',
+    defaultAudienceHint:
+      'Broad theatrical and streaming audiences looking for a compelling story hook, clear stakes, and cinematic scale.',
+    directorStrategyPrompt:
+      'Compose a flagship theatrical trailer: open with an arresting establishing hook, build character stakes in the rise, hit a dramatic peak without spoiling the resolution, and land on the title reveal.',
+  },
+  {
+    id: 'social_vertical_hook',
+    name: 'Social Hook Teaser (Reels / TikTok / Shorts)',
+    badge: '9:16 · Fast Hook',
+    description:
+      'High-retention vertical teaser engineered to stop the scroll in the first 3 seconds with punchy cuts.',
+    defaultDurationSec: 30,
+    defaultAspect: '9:16',
+    defaultAudienceHint:
+      'Mobile-first social media viewers (TikTok, Instagram Reels, YouTube Shorts) who respond to immediate visual intrigue and fast pacing.',
+    directorStrategyPrompt:
+      'Compose a high-retention vertical social teaser: lead immediately with the most visually striking or emotionally charged shot as a 3-second scroll-stopper, keep cuts tight (4–5s), and end on a cliffhanger question before the title card.',
+  },
+  {
+    id: 'character_spotlight',
+    name: 'Character & Emotion Spotlight',
+    badge: '16:9 · Character',
+    description:
+      'Intimate, performance-driven cut spotlighting the protagonist’s emotional journey and signature dialogue.',
+    defaultDurationSec: 60,
+    defaultAspect: '16:9',
+    defaultAudienceHint:
+      'Drama and character-focused viewers drawn to emotional depth, relatable conflict, and standout performances.',
+    directorStrategyPrompt:
+      'Compose a character-driven spotlight promo: prioritize expressive close-ups, pivotal spoken dialogue lines, and interpersonal turning points that reveal the protagonist’s inner conflict.',
+  },
+  {
+    id: 'high_octane_action',
+    name: 'High-Impact Action & Thrill Cut',
+    badge: '16:9 · Kinetic',
+    description:
+      'Adrenaline-fueled kinetic cut emphasizing visual momentum, set-pieces, and escalating tension.',
+    defaultDurationSec: 30,
+    defaultAspect: '16:9',
+    defaultAudienceHint:
+      'Genre, thriller, sci-fi, and action fans energized by dynamic movement, spectacle, and high-stakes urgency.',
+    directorStrategyPrompt:
+      'Compose a high-octane kinetic promo: favor dynamic action shots, high-energy movement, urgent stakes, and rapid escalation toward a thrilling peak.',
+  },
+  {
+    id: 'mystery_cliffhanger',
+    name: 'Mystery & Intrigue Teaser',
+    badge: '16:9 · Suspense',
+    description:
+      'Atmospheric slow-burn teaser built around unanswered questions, tension, and a haunting reveal.',
+    defaultDurationSec: 60,
+    defaultAspect: '16:9',
+    defaultAudienceHint:
+      'Mystery, thriller, and prestige-drama audiences intrigued by secrets, atmospheric tension, and puzzles.',
+    directorStrategyPrompt:
+      'Compose a suspenseful mystery teaser: juxtapose enigmatic visuals with cryptic or revealing dialogue lines, withhold full explanations, and leave the audience with an unforgettable dramatic question.',
+  },
+  {
+    id: 'global_multilanguage',
+    name: 'Global Multilanguage Launch',
+    badge: 'Multi-Lang · Global',
+    description:
+      'International campaign cut balancing universal visual storytelling with localized voiceover and dialogue across target markets.',
+    defaultDurationSec: 60,
+    defaultAspect: '16:9',
+    defaultAudienceHint:
+      'Global international audiences across multiple language markets; relies on universally resonant visuals paired with localized narration and key dialogue.',
+    directorStrategyPrompt:
+      'Compose an international global-launch trailer: balance universally legible visual storytelling and iconic action moments with clear, high-impact spoken lines and narration that localize cleanly across multiple languages.',
+    recommendedLanguages: ['en', 'es', 'fr', 'de', 'ja', 'pt'],
+  },
+]
+
+export function getPromoCampaignPreset(
+  presetId?: string | null
+): PromoCampaignPresetDefinition | undefined {
+  if (!presetId) return undefined
+  return PROMO_CAMPAIGN_PRESETS.find((preset) => preset.id === presetId)
+}
 
 export interface PromoSceneBeat extends SceneBeat {
   sourceSceneId?: string
@@ -20,6 +125,12 @@ export interface PromoSceneBeat extends SceneBeat {
 
 export interface PromoSceneRecord {
   id: string
+  promoId?: string
+  campaignName?: string
+  campaignPreset?: PromoCampaignPresetId
+  campaignObjective?: string
+  campaignLanguages?: string[]
+  promoAspect?: PromoFrameAspect
   sceneNumber: number
   heading: string
   location: string
@@ -42,11 +153,85 @@ export function isPromoCinematicScene(scene: unknown): boolean {
   const s = scene as Record<string, unknown>
   if (s.cinematicType === PROMO_SCENE_CINEMATIC_TYPE) return true
   const heading = String(s.heading || '').toUpperCase()
-  return heading.includes('PROMO TRAILER')
+  return heading.includes('PROMO TRAILER') || heading.startsWith('PROMO:') || heading.startsWith('PROMO —')
 }
 
-export function findPromoSceneIndex(scenes: unknown[]): number {
+function matchesPromoSceneId(scene: unknown, promoId: string): boolean {
+  if (!isPromoCinematicScene(scene)) return false
+  const s = scene as Record<string, unknown>
+  const id = String(s.promoId || s.id || s.sceneId || '').trim()
+  return Boolean(id && id === promoId.trim())
+}
+
+export function findPromoSceneIndex(scenes: unknown[], promoId?: string): number {
+  if (!Array.isArray(scenes)) return -1
+  if (promoId && promoId.trim()) {
+    const exact = scenes.findIndex((s) => matchesPromoSceneId(s, promoId))
+    if (exact >= 0) return exact
+  }
   return scenes.findIndex((s) => isPromoCinematicScene(s))
+}
+
+export function promoSceneDisplayName(scene: unknown, promoNumber = 1): string {
+  if (!scene || typeof scene !== 'object') return promoNumber > 1 ? `Promo ${promoNumber}` : 'Promo'
+  const s = scene as Record<string, unknown>
+  const explicitName = typeof s.campaignName === 'string' ? s.campaignName.trim() : ''
+  if (explicitName) return explicitName
+  const rawHeading = typeof s.heading === 'string' ? s.heading.trim() : ''
+  if (rawHeading) {
+    const stripped = rawHeading
+      .replace(/^PROMO\s*(TRAILER)?\s*[:—\-–]?\s*/i, '')
+      .trim()
+    if (stripped && stripped.toUpperCase() !== 'PROMO TRAILER') {
+      return stripped
+    }
+  }
+  return promoNumber > 1 ? `Promo ${promoNumber}` : 'Promo Trailer'
+}
+
+export interface PromoSceneSummary {
+  scene: Record<string, unknown>
+  index: number
+  promoNumber: number
+  promoId: string
+  name: string
+  preset?: PromoCampaignPresetId
+  aspect?: PromoFrameAspect
+  languages?: string[]
+}
+
+export function findPromoScenes(scenes: unknown[] | undefined): PromoSceneSummary[] {
+  if (!Array.isArray(scenes)) return []
+  const list: PromoSceneSummary[] = []
+  scenes.forEach((raw, index) => {
+    if (!isPromoCinematicScene(raw)) return
+    const scene = raw as Record<string, unknown>
+    const promoNumber = list.length + 1
+    const promoId = String(scene.promoId || scene.id || scene.sceneId || `promo-${promoNumber}`)
+    const name = promoSceneDisplayName(scene, promoNumber)
+    const preset =
+      typeof scene.campaignPreset === 'string'
+        ? (scene.campaignPreset as PromoCampaignPresetId)
+        : undefined
+    const aspect =
+      scene.promoAspect === '9:16' || scene.promoAspect === '16:9'
+        ? (scene.promoAspect as PromoFrameAspect)
+        : undefined
+    const languages = Array.isArray(scene.campaignLanguages)
+      ? scene.campaignLanguages.filter((l): l is string => typeof l === 'string' && Boolean(l.trim()))
+      : undefined
+    list.push({
+      scene,
+      index,
+      promoNumber,
+      promoId,
+      name,
+      preset,
+      aspect,
+      languages,
+    })
+  })
+  return list
 }
 
 export function filterOutPromoScenes<T>(scenes: T[]): T[] {
@@ -81,6 +266,12 @@ export interface BuildPromoSceneInput {
   projectTitle?: string
   existingPromoScene?: Record<string, unknown> | null
   narrationLine?: string
+  promoId?: string
+  campaignName?: string
+  campaignPreset?: PromoCampaignPresetId
+  campaignObjective?: string
+  campaignLanguages?: string[]
+  promoAspect?: PromoFrameAspect
 }
 
 export interface BuildPromoSceneResult {
@@ -184,22 +375,68 @@ function buildSeedSegments(
 /** Convert a trailer plan into a script promo scene + production seed. */
 export function buildPromoSceneFromPlan(input: BuildPromoSceneInput): BuildPromoSceneResult {
   const existingId =
-    typeof input.existingPromoScene?.id === 'string'
+    (typeof input.promoId === 'string' && input.promoId.trim() ? input.promoId.trim() : '') ||
+    (typeof input.existingPromoScene?.id === 'string'
       ? input.existingPromoScene.id
       : typeof input.existingPromoScene?.sceneId === 'string'
         ? String(input.existingPromoScene.sceneId)
-        : `promo-${Date.now()}`
+        : `promo-${Date.now()}`)
 
   const title = input.projectTitle?.trim() || 'Untitled'
+  const presetDef = getPromoCampaignPreset(
+    input.campaignPreset ??
+      (typeof input.existingPromoScene?.campaignPreset === 'string'
+        ? input.existingPromoScene.campaignPreset
+        : undefined)
+  )
+  const campaignName =
+    input.campaignName?.trim() ||
+    (typeof input.existingPromoScene?.campaignName === 'string'
+      ? input.existingPromoScene.campaignName.trim()
+      : '') ||
+    presetDef?.name ||
+    ''
+  const heading = campaignName ? `${PROMO_SCENE_HEADING} — ${campaignName}` : PROMO_SCENE_HEADING
+  const campaignPreset =
+    input.campaignPreset ??
+    (typeof input.existingPromoScene?.campaignPreset === 'string'
+      ? (input.existingPromoScene.campaignPreset as PromoCampaignPresetId)
+      : undefined)
+  const campaignObjective =
+    input.campaignObjective?.trim() ||
+    (typeof input.existingPromoScene?.campaignObjective === 'string'
+      ? input.existingPromoScene.campaignObjective.trim()
+      : undefined)
+  const campaignLanguages =
+    Array.isArray(input.campaignLanguages) && input.campaignLanguages.length > 0
+      ? input.campaignLanguages
+      : Array.isArray(input.existingPromoScene?.campaignLanguages)
+        ? (input.existingPromoScene?.campaignLanguages as string[])
+        : undefined
+  const promoAspect =
+    input.promoAspect ||
+    (input.existingPromoScene?.promoAspect === '9:16' ||
+    input.existingPromoScene?.promoAspect === '16:9'
+      ? (input.existingPromoScene.promoAspect as PromoFrameAspect)
+      : presetDef?.defaultAspect)
+
   const beats = buildPromoBeats(input.beatPlan, input.narrationLine)
   const scene: PromoSceneRecord = {
     id: existingId,
+    promoId: existingId,
+    ...(campaignName ? { campaignName } : {}),
+    ...(campaignPreset ? { campaignPreset } : {}),
+    ...(campaignObjective ? { campaignObjective } : {}),
+    ...(campaignLanguages ? { campaignLanguages } : {}),
+    ...(promoAspect ? { promoAspect } : {}),
     sceneNumber: 9999,
-    heading: PROMO_SCENE_HEADING,
-    location: 'PROMO TRAILER',
+    heading,
+    location: campaignName || 'PROMO TRAILER',
     timeOfDay: 'DAY',
     interior: true,
-    action: `[PROMO TRAILER — ${input.targetDurationSec}s]\nCaptivating highlights for ${title}.`,
+    action: `[${heading} — ${input.targetDurationSec}s${promoAspect ? ` · ${promoAspect}` : ''}]\n${
+      campaignObjective || presetDef?.description || `Captivating highlights for ${title}.`
+    }`,
     dialogue: [],
     characters: [],
     duration: input.targetDurationSec,
@@ -209,7 +446,9 @@ export function buildPromoSceneFromPlan(input: BuildPromoSceneInput): BuildPromo
     music:
       typeof input.existingPromoScene?.music === 'string'
         ? input.existingPromoScene.music
-        : `Cinematic promotional trailer score for "${title}", building tension, emotional swell, memorable theme, no vocals`,
+        : `Cinematic promotional trailer score for "${title}"${
+            campaignName ? ` (${campaignName})` : ''
+          }, building tension, emotional swell, memorable theme, no vocals`,
     musicAudio:
       typeof input.existingPromoScene?.musicAudio === 'string'
         ? input.existingPromoScene.musicAudio
@@ -230,15 +469,29 @@ export function buildPromoSceneFromPlan(input: BuildPromoSceneInput): BuildPromo
   return { scene, productionSeed }
 }
 
-/** Upsert promo scene at end of script scene list (after outro/credits). */
+/** Upsert promo scene at end of script scene list (supports multiple promo scenes by promoId). */
 export function upsertPromoSceneInScenes(
   scenes: unknown[],
-  promoScene: PromoSceneRecord
+  promoScene: PromoSceneRecord,
+  options?: { promoId?: string; createNew?: boolean }
 ): unknown[] {
   const next = [...scenes]
-  const existingIdx = findPromoSceneIndex(next)
+  const targetPromoId = options?.promoId?.trim() || promoScene.promoId || promoScene.id
+  let existingIdx = -1
+  if (!options?.createNew) {
+    if (options?.promoId) {
+      existingIdx = next.findIndex((s) => matchesPromoSceneId(s, targetPromoId))
+    } else {
+      const byOwnId = targetPromoId
+        ? next.findIndex((s) => matchesPromoSceneId(s, targetPromoId))
+        : -1
+      existingIdx = byOwnId >= 0 ? byOwnId : findPromoSceneIndex(next)
+    }
+  }
   const sceneWithNumber = {
     ...promoScene,
+    id: promoScene.id || targetPromoId,
+    promoId: promoScene.promoId || promoScene.id || targetPromoId,
     sceneNumber: existingIdx >= 0 ? existingIdx + 1 : next.length + 1,
   }
   if (existingIdx >= 0) {
@@ -247,4 +500,178 @@ export function upsertPromoSceneInScenes(
   }
   next.push(sceneWithNumber)
   return next
+}
+
+export function removePromoSceneFromScenes(
+  scenes: unknown[],
+  promoId: string
+): unknown[] {
+  if (!Array.isArray(scenes) || !promoId.trim()) return scenes
+  return scenes
+    .filter((s) => !matchesPromoSceneId(s, promoId))
+    .map((scene, index) =>
+      scene && typeof scene === 'object'
+        ? { ...(scene as Record<string, unknown>), sceneNumber: index + 1 }
+        : scene
+    )
+}
+
+/**
+ * Hydrate a Promo scene and its production segments dynamically from their shared source scenes.
+ * This ensures that when viewing or producing a Promo scene on the Production Stage workflow,
+ * stills, shot direction, and video clips are live-shared with their respective source scenes.
+ */
+export function hydratePromoSceneWithSharedShots(
+  promoScene: Record<string, unknown>,
+  scenes: unknown[] | undefined,
+  sceneProductionState: Record<string, SceneProductionData> | undefined
+): {
+  scene: Record<string, unknown>
+  productionData: SceneProductionData | undefined
+} {
+  if (!isPromoCinematicScene(promoScene) || !Array.isArray(scenes)) {
+    const id = String(promoScene?.sceneId || promoScene?.id || '')
+    return {
+      scene: promoScene,
+      productionData: id && sceneProductionState ? sceneProductionState[id] : undefined,
+    }
+  }
+
+  const promoSceneId = String(promoScene.sceneId || promoScene.id || 'promo-main')
+  const rawBeats = getSceneBeats(promoScene) as PromoSceneBeat[]
+  const hydratedBeats: PromoSceneBeat[] = rawBeats.map((beat) => {
+    if (typeof beat.sourceSceneIndex !== 'number' || !beat.sourceBeatId) {
+      return beat
+    }
+    const sourceScene = scenes[beat.sourceSceneIndex] as Record<string, unknown> | undefined
+    if (!sourceScene) return beat
+    const sourceBeat = getSceneBeats(sourceScene).find(
+      (candidate) => candidate.beatId === beat.sourceBeatId
+    )
+    if (!sourceBeat) return beat
+
+    return {
+      ...sourceBeat,
+      ...beat,
+      beatId: beat.beatId,
+      sequenceIndex: beat.sequenceIndex,
+      durationSeconds: beat.durationSeconds ?? sourceBeat.durationSeconds,
+      sourceSceneId:
+        beat.sourceSceneId ||
+        String(sourceScene.id || sourceScene.sceneId || `scene-${beat.sourceSceneIndex}`),
+      sourceSceneIndex: beat.sourceSceneIndex,
+      sourceBeatId: beat.sourceBeatId,
+      // Live-share still frames, versions, prompts, direction, and references from the source shot:
+      storyboardImageUrl: sourceBeat.storyboardImageUrl || beat.storyboardImageUrl,
+      storyboardEndImageUrl: sourceBeat.storyboardEndImageUrl || beat.storyboardEndImageUrl,
+      storyboardImagePrompt: sourceBeat.storyboardImagePrompt || beat.storyboardImagePrompt,
+      storyboardEndImagePrompt:
+        sourceBeat.storyboardEndImagePrompt || beat.storyboardEndImagePrompt,
+      storyboardImagePromptDirectionKey:
+        sourceBeat.storyboardImagePromptDirectionKey || beat.storyboardImagePromptDirectionKey,
+      beatDirection: sourceBeat.beatDirection || beat.beatDirection,
+      stillVersions: sourceBeat.stillVersions || beat.stillVersions,
+      endStillVersions: sourceBeat.endStillVersions || beat.endStillVersions,
+      characterIds: sourceBeat.characterIds || beat.characterIds,
+      locationId: sourceBeat.locationId || beat.locationId,
+      propIds: sourceBeat.propIds || beat.propIds,
+      actionDescription:
+        sourceBeat.actionDescription || beat.actionDescription,
+      line: beat.kind === 'narration' ? beat.line : sourceBeat.line || beat.line,
+      character:
+        beat.kind === 'narration' ? beat.character : sourceBeat.character || beat.character,
+    }
+  })
+
+  const ownProd = sceneProductionState?.[promoSceneId]
+  let cursor = 0
+  const hydratedSegments: SceneSegment[] = hydratedBeats
+    .filter((b) => b.kind !== 'narration' || b.promoVideoUrl || b.storyboardImageUrl)
+    .map((beat, index) => {
+      const duration = beat.durationSeconds || 5
+      const startTime = cursor
+      const endTime = cursor + duration
+      cursor = endTime
+
+      const existingPromoSeg = ownProd?.segments?.find((s) => s.beatId === beat.beatId) || ownProd?.segments?.[index]
+      let sourceSeg: SceneSegment | undefined
+      if (typeof beat.sourceSceneIndex === 'number' && beat.sourceBeatId && sceneProductionState) {
+        const sourceScene = scenes[beat.sourceSceneIndex] as Record<string, unknown> | undefined
+        const sourceKeyCandidates = [
+          beat.sourceSceneId,
+          typeof sourceScene?.id === 'string' ? sourceScene.id : undefined,
+          typeof sourceScene?.sceneId === 'string' ? sourceScene.sceneId : undefined,
+          `scene-${beat.sourceSceneIndex}`,
+        ].filter((k): k is string => Boolean(k))
+        for (const key of sourceKeyCandidates) {
+          const prod = sceneProductionState[key]
+          const found = prod?.segments?.find((s) => s.beatId === beat.sourceBeatId)
+          if (found) {
+            sourceSeg = found
+            break
+          }
+        }
+      }
+
+      const activeVideoUrl =
+        sourceSeg?.activeAssetUrl ||
+        existingPromoSeg?.activeAssetUrl ||
+        beat.promoVideoUrl ||
+        null
+      const startFrame =
+        sourceSeg?.startFrameUrl ||
+        sourceSeg?.references?.startFrameUrl ||
+        beat.storyboardImageUrl ||
+        existingPromoSeg?.references?.startFrameUrl ||
+        null
+      const endFrame =
+        sourceSeg?.endFrameUrl ||
+        sourceSeg?.references?.endFrameUrl ||
+        beat.storyboardEndImageUrl ||
+        existingPromoSeg?.references?.endFrameUrl ||
+        null
+
+      return {
+        ...(sourceSeg || {}),
+        ...(existingPromoSeg || {}),
+        segmentId: existingPromoSeg?.segmentId || `${promoSceneId}-seg-${index}`,
+        sequenceIndex: index,
+        startTime,
+        endTime,
+        duration,
+        beatId: beat.beatId,
+        status: activeVideoUrl ? 'COMPLETE' : sourceSeg?.status || existingPromoSeg?.status || 'DRAFT',
+        activeAssetUrl: activeVideoUrl,
+        assetType: activeVideoUrl ? 'video' : startFrame ? 'image' : null,
+        startFrameUrl: startFrame || undefined,
+        endFrameUrl: endFrame || undefined,
+        references: {
+          ...(sourceSeg?.references || existingPromoSeg?.references || {
+            characterIds: [],
+            sceneRefIds: [],
+            objectRefIds: [],
+          }),
+          startFrameUrl: startFrame,
+          endFrameUrl: endFrame,
+        },
+        takes:
+          sourceSeg?.takes && sourceSeg.takes.length > 0
+            ? sourceSeg.takes
+            : existingPromoSeg?.takes || [],
+        visualFrame: startFrame || undefined,
+        action: beat.actionDescription,
+      } as SceneSegment
+    })
+
+  return {
+    scene: {
+      ...promoScene,
+      beats: hydratedBeats,
+    },
+    productionData: {
+      ...(ownProd || { isSegmented: true, targetDuration: Number(promoScene.duration) || cursor }),
+      isSegmented: true,
+      segments: hydratedSegments,
+    } as SceneProductionData,
+  }
 }
