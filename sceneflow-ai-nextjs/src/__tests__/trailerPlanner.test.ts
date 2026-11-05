@@ -1234,4 +1234,106 @@ describe('promo source guards', () => {
     expect(hydratedSegments[1]?.startTime).toBe(5)
     expect(hydratedSegments[1]?.endTime).toBe(10)
   })
+
+  it('hydrates dialogueAudio and beat audioUrl from both promoScene.dialogueAudio and shared source scenes', () => {
+    const sourceScenes = [
+      {
+        id: 'scene-0',
+        sceneNumber: 1,
+        heading: 'INT. LAB - NIGHT',
+        beats: [
+          {
+            beatId: 's1-b1',
+            sequenceIndex: 0,
+            kind: 'dialogue' as const,
+            character: 'GIDEON CROFT',
+            line: 'The current bleeds out.',
+            lineId: 'ln_gideon_1',
+          },
+          {
+            beatId: 's1-b2',
+            sequenceIndex: 1,
+            kind: 'dialogue' as const,
+            character: 'PIPER HAYES',
+            line: 'Hold the manifold steady.',
+            lineId: 'ln_piper_1',
+          },
+        ],
+        dialogueAudio: {
+          en: [
+            {
+              character: 'GIDEON CROFT',
+              dialogueIndex: 0,
+              lineId: 'ln_gideon_1',
+              audioUrl: 'https://example.com/gideon-source.mp3',
+              duration: 2.5,
+            },
+          ],
+        },
+      },
+    ]
+
+    const built = buildPromoSceneFromPlan({
+      beatPlan: [
+        {
+          sceneId: 'scene-0',
+          beatId: 's1-b1',
+          sceneIndex: 0,
+          beatKind: 'dialogue',
+          startSec: 0,
+          endSec: 5,
+          durationSec: 5,
+          score: 90,
+          label: 'The current bleeds out.',
+        },
+        {
+          sceneId: 'scene-0',
+          beatId: 's1-b2',
+          sceneIndex: 0,
+          beatKind: 'dialogue',
+          startSec: 5,
+          endSec: 10,
+          durationSec: 5,
+          score: 88,
+          label: 'Hold the manifold steady.',
+        },
+      ],
+      targetDurationSec: 15,
+      projectTitle: 'Current',
+      promoId: 'promo-audio',
+    })
+
+    // Simulate generating Piper Hayes's line directly on the Promo scene (sceneIdx=23)
+    const promoWithGeneratedLine = {
+      ...built.scene,
+      dialogueAudio: {
+        en: [
+          {
+            character: 'PIPER HAYES',
+            dialogueIndex: 1,
+            lineId: built.scene.beats[1]?.lineId || 'ln_piper_1',
+            audioUrl: 'https://example.com/piper-promo.mp3',
+            duration: 3.1,
+          },
+        ],
+      },
+    }
+
+    const hydrated = hydratePromoSceneWithSharedShots(
+      promoWithGeneratedLine as unknown as Record<string, unknown>,
+      sourceScenes,
+      { 'promo-audio': built.productionSeed as never }
+    )
+    const hydratedBeats = (hydrated.scene as { beats: Array<Record<string, unknown>> }).beats
+    const hydratedDialogue = (hydrated.scene as { dialogue: Array<Record<string, unknown>> }).dialogue
+    const hydratedDialogueAudio = (
+      hydrated.scene as { dialogueAudio?: { en?: Array<Record<string, unknown>> } }
+    ).dialogueAudio?.en
+
+    expect(hydratedBeats[0]?.audioUrl).toBe('https://example.com/gideon-source.mp3')
+    expect(hydratedBeats[1]?.audioUrl).toBe('https://example.com/piper-promo.mp3')
+    expect(hydratedDialogue[0]?.audioUrl).toBe('https://example.com/gideon-source.mp3')
+    expect(hydratedDialogue[1]?.audioUrl).toBe('https://example.com/piper-promo.mp3')
+    expect(hydratedDialogueAudio).toHaveLength(2)
+  })
 })

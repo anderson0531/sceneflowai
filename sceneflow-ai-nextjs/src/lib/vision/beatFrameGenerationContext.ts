@@ -498,6 +498,8 @@ function buildCharacterWardrobes(
   return result
 }
 
+const loggedBeatReferenceProvenance = new Map<string, string>()
+
 export function resolveBeatFrameGenerationContext(
   args: ResolveBeatFrameGenerationContextArgs
 ): ResolvedBeatFrameContext {
@@ -544,7 +546,17 @@ export function resolveBeatFrameGenerationContext(
   )
   const objectRefIds = detectedObjects.map((o) => o.id).filter(Boolean) as string[]
 
-  const characterWardrobes = buildCharacterWardrobes(scene, characterIds, projectCharacters, sceneIndex)
+  const beatSourceSceneIndex =
+    typeof (beat as { sourceSceneIndex?: unknown }).sourceSceneIndex === 'number' &&
+    (beat as { sourceSceneIndex: number }).sourceSceneIndex >= 0
+      ? (beat as { sourceSceneIndex: number }).sourceSceneIndex
+      : sceneIndex
+  const characterWardrobes = buildCharacterWardrobes(
+    scene,
+    characterIds,
+    projectCharacters,
+    beatSourceSceneIndex
+  )
 
   const beats = getSceneBeats(scene)
   const beatIndex = Math.max(
@@ -606,16 +618,19 @@ export function resolveBeatFrameGenerationContext(
   ]
 
   if (referenceProvenance.length > 0) {
-    console.log(
-      `[Beat References] Beat ${beat.beatId} attaching ${referenceProvenance.length} reference(s): ` +
-        referenceProvenance
-          .map(
-            (entry) =>
-              `${entry.kind} "${entry.name}" via ${entry.selector}` +
-              (entry.matchedTerm ? ` ("${entry.matchedTerm}")` : '')
-          )
-          .join('; ')
-    )
+    const summary = referenceProvenance
+      .map(
+        (entry) =>
+          `${entry.kind} "${entry.name}" via ${entry.selector}` +
+          (entry.matchedTerm ? ` ("${entry.matchedTerm}")` : '')
+      )
+      .join('; ')
+    if (loggedBeatReferenceProvenance.get(beat.beatId) !== summary) {
+      loggedBeatReferenceProvenance.set(beat.beatId, summary)
+      console.log(
+        `[Beat References] Beat ${beat.beatId} attaching ${referenceProvenance.length} reference(s): ${summary}`
+      )
+    }
   }
 
   return {

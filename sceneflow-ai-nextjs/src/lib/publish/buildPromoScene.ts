@@ -1085,6 +1085,34 @@ export function hydratePromoSceneWithSharedShots(
       (typeof matchedSourceDialogue?.voiceDirection === 'string' &&
         matchedSourceDialogue.voiceDirection.trim()) ||
       undefined
+    let promoDialogueAudioUrl: string | undefined
+    if (promoScene.dialogueAudio && typeof promoScene.dialogueAudio === 'object') {
+      const langEntries = Array.isArray(promoScene.dialogueAudio)
+        ? [promoScene.dialogueAudio]
+        : Object.values(promoScene.dialogueAudio as Record<string, unknown>)
+      for (const list of langEntries) {
+        if (!Array.isArray(list)) continue
+        for (const item of list) {
+          if (!item || typeof item !== 'object') continue
+          const row = item as Record<string, unknown>
+          const rowLineId = typeof row.lineId === 'string' ? row.lineId.trim() : ''
+          const rowLine = String(row.line ?? row.text ?? '').trim()
+          const targetLine = String(sourceBeat.line ?? beat.line ?? '').trim()
+          if (
+            (beat.lineId?.trim() && rowLineId === beat.lineId.trim()) ||
+            (sourceBeat.lineId?.trim() && rowLineId === sourceBeat.lineId.trim()) ||
+            (targetLine && rowLine && rowLine === targetLine)
+          ) {
+            const url = String(row.audioUrl ?? row.url ?? '').trim()
+            if (url) {
+              promoDialogueAudioUrl = url
+              break
+            }
+          }
+        }
+        if (promoDialogueAudioUrl) break
+      }
+    }
     let sourceDialogueAudioUrl: string | undefined
     if (sourceScene.dialogueAudio && typeof sourceScene.dialogueAudio === 'object') {
       const langEntries = Object.values(sourceScene.dialogueAudio as Record<string, unknown>)
@@ -1111,6 +1139,7 @@ export function hydratePromoSceneWithSharedShots(
       }
     }
     const resolvedAudioUrl =
+      promoDialogueAudioUrl ||
       beat.audioUrl?.trim() ||
       (beat.kind === 'narration' ? promoNarrationAudioUrl : undefined) ||
       sourceBeat.audioUrl?.trim() ||
@@ -1356,6 +1385,46 @@ export function hydratePromoSceneWithSharedShots(
     }
   })
 
+  const hydratedDialogueAudio: Record<string, Array<Record<string, unknown>>> = (() => {
+    const rawMap = promoScene.dialogueAudio
+    const base: Record<string, Array<Record<string, unknown>>> = {}
+    if (Array.isArray(rawMap)) {
+      base.en = rawMap.filter((x): x is Record<string, unknown> => Boolean(x && typeof x === 'object'))
+    } else if (rawMap && typeof rawMap === 'object') {
+      for (const [lang, list] of Object.entries(rawMap as Record<string, unknown>)) {
+        if (Array.isArray(list)) {
+          base[lang] = list.filter((x): x is Record<string, unknown> => Boolean(x && typeof x === 'object'))
+        }
+      }
+    }
+    const enList = [...(base.en ?? [])]
+    syncedDialogue.forEach((d, idx) => {
+      const url = typeof d.audioUrl === 'string' ? d.audioUrl.trim() : ''
+      if (!url) return
+      const lineId = typeof d.lineId === 'string' ? d.lineId.trim() : ''
+      const alreadyPresent = enList.some(
+        (entry) =>
+          (lineId && entry.lineId === lineId) ||
+          entry.dialogueIndex === idx
+      )
+      if (!alreadyPresent) {
+        enList.push({
+          character: d.character || '',
+          dialogueIndex: idx,
+          ...(lineId ? { lineId } : {}),
+          ...(d.kind ? { kind: d.kind } : {}),
+          ...(d.characterId ? { characterId: d.characterId } : {}),
+          audioUrl: url,
+          ...(typeof d.duration === 'number' && d.duration > 0 ? { duration: d.duration } : {}),
+        })
+      }
+    })
+    if (enList.length > 0) {
+      base.en = enList
+    }
+    return base
+  })()
+
   const hydratedMusicPrompt =
     typeof promoScene.music === 'string' && promoScene.music.trim()
       ? promoScene.music.trim()
@@ -1384,6 +1453,9 @@ export function hydratePromoSceneWithSharedShots(
       sceneDirection: hydratedSceneDirection,
       beats: hydratedBeats,
       dialogue: syncedDialogue,
+      ...(Object.keys(hydratedDialogueAudio).length > 0
+        ? { dialogueAudio: hydratedDialogueAudio }
+        : {}),
       music: hydratedMusicPrompt,
       ...(hydratedMusicAudio ? { musicAudio: hydratedMusicAudio } : {}),
       sceneMusicCues: hydratedMusicCues,

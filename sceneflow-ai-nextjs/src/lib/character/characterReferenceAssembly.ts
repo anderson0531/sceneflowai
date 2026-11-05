@@ -377,15 +377,21 @@ export function resolveWardrobeForCharacter(
     const fallback = (wardrobes as Record<string, unknown>[])[0] ?? null
     if (fallback) {
       const charName = (character.name || charId) as string
-      console.warn(
-        `[Wardrobe] No scene-specific wardrobe for ${charName} (sceneIndex=${sceneIndex ?? 'unknown'}); falling back to first wardrobe "${fallback.name ?? fallback.id}"`
-      )
+      const warnKey = `${charName}:${sceneIndex ?? 'unknown'}:${String(fallback.id ?? fallback.name ?? '')}`
+      if (!warnedWardrobeFallbacks.has(warnKey)) {
+        warnedWardrobeFallbacks.add(warnKey)
+        console.warn(
+          `[Wardrobe] No scene-specific wardrobe for ${charName} (sceneIndex=${sceneIndex ?? 'unknown'}); falling back to first wardrobe "${fallback.name ?? fallback.id}"`
+        )
+      }
       resolved = fallback
     }
   }
 
   return resolved
 }
+
+const warnedWardrobeFallbacks = new Set<string>()
 
 type WardrobeScenePickerItem = {
   id: string

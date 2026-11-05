@@ -333,7 +333,7 @@ import { Button, buttonVariants } from '@/components/ui/Button'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Share2, ArrowRight, ArrowLeft, Play, Volume2, Image as ImageIcon, Copy, Check, X, Settings, Info, ChevronDown, ChevronUp, ChevronRight, Eye, Sparkles, BarChart3, Save, Home, FolderOpen, Key, CreditCard, User, Bookmark, FileText, Coins, ExternalLink, CheckCircle2, Circle, Music, Video, Loader2, Clapperboard, Layers, Film, Bot } from 'lucide-react'
+import { Share2, ArrowRight, ArrowLeft, Play, Volume2, Image as ImageIcon, Copy, Check, X, Settings, Info, ChevronDown, ChevronUp, ChevronRight, Eye, Sparkles, BarChart3, Save, Home, FolderOpen, Key, CreditCard, User, Bookmark, FileText, Coins, ExternalLink, CheckCircle2, Circle, Music, Video, Loader2, Clapperboard, Layers, Film, Bot, AlertTriangle, RefreshCw } from 'lucide-react'
 import { ProductionBuilderDialog } from '@/components/vision/ProductionBuilderDialog'
 import {
   ProductionAgentDock,
@@ -15202,7 +15202,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       ? hydratePromoSceneWithSharedShots(
           rawScene as Record<string, unknown>,
           scenes,
-          sceneProductionData
+          sceneProductionStateRef.current ?? sceneProductionState
         ).scene
       : rawScene
 
@@ -15821,11 +15821,12 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
             }
             if (Array.isArray(scene.beats) && spokenBeat?.beatId) {
               scene.beats = scene.beats.map((b: any) =>
-                b?.beatId === spokenBeat.beatId && !b?.character?.trim()
+                b?.beatId === spokenBeat.beatId
                   ? {
                       ...b,
-                      character: characterName,
+                      ...(b?.character?.trim() ? {} : { character: characterName }),
                       ...(character?.id && !b.characterId ? { characterId: character.id } : {}),
+                      ...(targetLanguage === 'en' && data.audioUrl ? { audioUrl: data.audioUrl } : {}),
                     }
                   : b
               )
