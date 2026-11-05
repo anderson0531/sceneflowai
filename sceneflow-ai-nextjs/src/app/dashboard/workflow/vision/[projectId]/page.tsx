@@ -2664,56 +2664,115 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
 
   // Scene production handlers
   // Lightweight persist function that only sends specific scene's production data
-  // This avoids 413 errors by not sending the entire project metadata
+  // This avoids 413 errors by not sending the entire project metadata.
+  // Requests are coalesced per sceneId and serialized so rapid edits never flood
+  // `/api/projects/[id]/production` with concurrent PostgreSQL row-lock transactions.
+  const pendingProductionPayloadsRef = useRef<
+    Map<string, { payload: string; productionData: SceneProductionData }>
+  >(new Map())
+  const lastPersistedProductionPayloadsRef = useRef<Map<string, string>>(new Map())
+  const productionPersistDrainPromiseRef = useRef<Promise<void> | null>(null)
+
   const persistSceneProductionLightweight = useCallback(
     async (sceneId: string, productionData: SceneProductionData) => {
       if (!project?.id) return
-      try {
-        // Debug: Log the size of what we're sending
-        const payload = JSON.stringify({ sceneId, productionData })
-        console.log(`[SceneProduction] Payload size for ${sceneId}: ${(payload.length / 1024).toFixed(2)} KB`)
-        
-        // Check if any segment has base64 data (shouldn't happen)
-        // Safety check: ensure segments array exists
-        if (productionData.segments && Array.isArray(productionData.segments)) {
-          productionData.segments.forEach((seg, i) => {
-            if (
-              seg.activeAssetUrl?.startsWith('data:') &&
-              !seg.activeAssetUrl.startsWith('data:image/svg+xml')
-            ) {
-              console.error(`[SceneProduction] ERROR: Segment ${i} has base64 activeAssetUrl!`)
-            }
-            // Safety check: ensure takes array exists
-            if (seg.takes && Array.isArray(seg.takes)) {
-              seg.takes.forEach((take, j) => {
-                if (
-                  take.assetUrl?.startsWith('data:') &&
-                  !take.assetUrl.startsWith('data:image/svg+xml')
-                ) {
-                  console.error(`[SceneProduction] ERROR: Segment ${i} take ${j} has base64 assetUrl!`)
-                }
-              })
-            }
-          })
-        }
-        
-        const response = await fetch(`/api/projects/${project.id}/production`, {
-          method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
-          body: payload,
-        })
-        
-        if (!response.ok) {
-          const errorText = await response.text()
-          console.error('[SceneProduction] Lightweight persist failed:', response.status, errorText.substring(0, 200))
-          throw new Error(errorText || `Failed to save production data (${response.status})`)
-        }
-        
-        console.log('[SceneProduction] Lightweight persist successful for scene:', sceneId)
-      } catch (error) {
-        console.error('[SceneProduction] Failed to persist production data (lightweight)', error)
-        throw error
+      const projectIdForPersist = project.id
+      const payload = JSON.stringify({ sceneId, productionData })
+
+      if (
+        lastPersistedProductionPayloadsRef.current.get(sceneId) === payload &&
+        !pendingProductionPayloadsRef.current.has(sceneId)
+      ) {
+        return
       }
+
+      pendingProductionPayloadsRef.current.set(sceneId, { payload, productionData })
+
+      if (productionPersistDrainPromiseRef.current) {
+        await productionPersistDrainPromiseRef.current
+        return
+      }
+
+      const drain = (async () => {
+        try {
+          while (pendingProductionPayloadsRef.current.size > 0) {
+            const nextEntry = pendingProductionPayloadsRef.current.entries().next().value as
+              | [string, { payload: string; productionData: SceneProductionData }]
+              | undefined
+            if (!nextEntry) break
+            const [targetSceneId, { payload: targetPayload, productionData: targetData }] =
+              nextEntry
+            pendingProductionPayloadsRef.current.delete(targetSceneId)
+
+            if (lastPersistedProductionPayloadsRef.current.get(targetSceneId) === targetPayload) {
+              continue
+            }
+
+            try {
+              console.log(
+                `[SceneProduction] Payload size for ${targetSceneId}: ${(targetPayload.length / 1024).toFixed(2)} KB`
+              )
+
+              if (targetData.segments && Array.isArray(targetData.segments)) {
+                targetData.segments.forEach((seg, i) => {
+                  if (
+                    seg.activeAssetUrl?.startsWith('data:') &&
+                    !seg.activeAssetUrl.startsWith('data:image/svg+xml')
+                  ) {
+                    console.error(
+                      `[SceneProduction] ERROR: Segment ${i} has base64 activeAssetUrl!`
+                    )
+                  }
+                  if (seg.takes && Array.isArray(seg.takes)) {
+                    seg.takes.forEach((take, j) => {
+                      if (
+                        take.assetUrl?.startsWith('data:') &&
+                        !take.assetUrl.startsWith('data:image/svg+xml')
+                      ) {
+                        console.error(
+                          `[SceneProduction] ERROR: Segment ${i} take ${j} has base64 assetUrl!`
+                        )
+                      }
+                    })
+                  }
+                })
+              }
+
+              const response = await fetch(`/api/projects/${projectIdForPersist}/production`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: targetPayload,
+              })
+
+              if (!response.ok) {
+                const errorText = await response.text()
+                console.error(
+                  '[SceneProduction] Lightweight persist failed:',
+                  response.status,
+                  errorText.substring(0, 200)
+                )
+                continue
+              }
+
+              lastPersistedProductionPayloadsRef.current.set(targetSceneId, targetPayload)
+              console.log(
+                '[SceneProduction] Lightweight persist successful for scene:',
+                targetSceneId
+              )
+            } catch (error) {
+              console.error(
+                '[SceneProduction] Failed to persist production data (lightweight)',
+                error
+              )
+            }
+          }
+        } finally {
+          productionPersistDrainPromiseRef.current = null
+        }
+      })()
+
+      productionPersistDrainPromiseRef.current = drain
+      await drain
     },
     [project?.id]
   )
@@ -2786,6 +2845,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       const nextSceneData = typeof updater === 'function' ? updater(prev[sceneId]) : updater
       // Callers signal "nothing to do" by returning the current value untouched.
       if (!nextSceneData || nextSceneData === prev[sceneId]) return
+      if (prev[sceneId] && JSON.stringify(nextSceneData) === JSON.stringify(prev[sceneId])) return
 
       const nextState = { ...prev, [sceneId]: nextSceneData }
       sceneProductionStateRef.current = nextState

@@ -84,8 +84,32 @@ describe('applySceneProductionUpdate runs no side effects inside a setState upda
     expect(body).not.toMatch(/\n {8,}setScenes\(/)
   })
 
-  it('skips the save when the updater returns the value it was given', () => {
+  it('skips the save when the updater returns the value it was given or identical JSON', () => {
     expect(body).toContain('nextSceneData === prev[sceneId]')
+    expect(body).toContain('JSON.stringify(nextSceneData) === JSON.stringify(prev[sceneId])')
+  })
+
+  it('coalesces and serializes lightweight production PATCH calls per sceneId', () => {
+    expect(page).toContain('pendingProductionPayloadsRef')
+    expect(page).toContain('productionPersistDrainPromiseRef')
+    expect(page).toContain('lastPersistedProductionPayloadsRef')
+  })
+})
+
+describe('Promo & Studio mixer persistence does not loop on hydrated segment references', () => {
+  const mixer = readSource('src/components/vision/scene-production/SceneProductionMixer.tsx')
+  const consoleImpl = readSource('src/components/vision/scene-production/DirectorConsoleImpl.tsx')
+
+  it('initializes segmentAudioConfigs from segmentIdsKey without depending on segments array identity', () => {
+    expect(mixer).toContain('}, [segmentIdsKey])')
+    expect(mixer).not.toContain('}, [segmentIdsKey, segments])')
+  })
+
+  it('deduplicates mixer settings snapshots before scheduling persistence', () => {
+    expect(mixer).toContain('lastPersistedSnapshotJsonRef')
+    expect(consoleImpl).toContain(
+      'JSON.stringify(base.mixerSettingsByLanguage) ==='
+    )
   })
 })
 

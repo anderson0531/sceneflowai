@@ -94,6 +94,15 @@ describe('buildSegmentAudioConfigsForSegments', () => {
     expect(result.beat_a).toEqual({ includeAudio: false, volume: 0.4 })
     expect(result.beat_b).toEqual(DEFAULT_MIXER_SEGMENT_AUDIO_CONFIG)
   })
+
+  it('returns the exact saved reference when segment IDs are unchanged to prevent mixer persist loops', () => {
+    const saved = {
+      beat_a: { includeAudio: false, volume: 0.4 },
+      beat_b: { includeAudio: true, volume: 1 },
+    }
+    const result = buildSegmentAudioConfigsForSegments(['beat_a', 'beat_b'], saved)
+    expect(result).toBe(saved)
+  })
 })
 
 describe('buildPersistedMixerSettings', () => {

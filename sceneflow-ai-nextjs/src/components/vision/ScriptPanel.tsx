@@ -5139,6 +5139,60 @@ function SceneCard({
     () => new Map(beatFacts.map((facts) => [facts.beatId, facts])),
     [beatFacts]
   )
+  const workflowSceneId = scene.sceneId || scene.id || `scene-${sceneIdx}`
+  const directorWorkflowScene = useMemo(
+    () => ({
+      ...scene,
+      filmTitle: projectTitle || script?.title,
+      logline: projectLogline || script?.logline,
+      genre: script?.genre,
+      tone: script?.tone,
+      visualStyle: visualStyle,
+      sceneHeading: scene.sceneHeading,
+    }),
+    [scene, projectTitle, script?.title, projectLogline, script?.logline, script?.genre, script?.tone, visualStyle]
+  )
+  const directorGuideCharacters = useMemo(
+    () =>
+      (characters || []).map((c) => ({
+        name: c.name,
+        age: (c as { age?: string }).age,
+        gender: (c as { gender?: string }).gender,
+        ethnicity: (c as { ethnicity?: string }).ethnicity,
+      })),
+    [characters]
+  )
+  const directorCharacters = useMemo(
+    () =>
+      (characters || []).map((c) => ({
+        name: c.name,
+        referenceImage: (c as { referenceImage?: string }).referenceImage,
+        description: c.description,
+        wardrobes: (
+          c as {
+            wardrobes?: Array<{
+              id: string
+              name: string
+              headshotUrl?: string
+              fullBodyUrl?: string
+              previewImageUrl?: string
+            }>
+          }
+        ).wardrobes?.map((w) => ({
+          id: w.id,
+          name: w.name,
+          headshotUrl: w.headshotUrl ?? w.previewImageUrl,
+          fullBodyUrl: w.fullBodyUrl ?? w.previewImageUrl,
+        })),
+      })),
+    [characters]
+  )
+  const handleDirectorProductionDataChange = useCallback(
+    (data: SceneProductionData) => {
+      onProductionDataChange?.(workflowSceneId, data)
+    },
+    [onProductionDataChange, workflowSceneId]
+  )
   const beatFiltersActive = beatListFiltersActive(beatListFilters)
   const visibleBeatCount = beatFacts.filter((facts) => beatMatchesFilters(facts, beatListFilters)).length
   const hasDirectionPromptChanged = useMemo(
@@ -7173,47 +7227,16 @@ function SceneCard({
                       }}
                       selectedBeatId={selectedBeatId}
                       onSelectBeat={setSelectedBeatId}
-                      scene={{
-                        ...scene,
-                        filmTitle: projectTitle || script?.title,
-                        logline: projectLogline || script?.logline,
-                        genre: script?.genre,
-                        tone: script?.tone,
-                        visualStyle: visualStyle,
-                        sceneHeading: scene.sceneHeading,
-                      }}
-                      guideCharacters={(characters || []).map((c) => ({
-                        name: c.name,
-                        age: (c as { age?: string }).age,
-                        gender: (c as { gender?: string }).gender,
-                        ethnicity: (c as { ethnicity?: string }).ethnicity,
-                      }))}
-                      characters={(characters || []).map((c) => ({
-                        name: c.name,
-                        referenceImage: (c as { referenceImage?: string }).referenceImage,
-                        description: c.description,
-                        wardrobes: (c as {
-                          wardrobes?: Array<{
-                            id: string
-                            name: string
-                            headshotUrl?: string
-                            fullBodyUrl?: string
-                            previewImageUrl?: string
-                          }>
-                        }).wardrobes?.map(w => ({
-                          id: w.id,
-                          name: w.name,
-                          headshotUrl: w.headshotUrl ?? w.previewImageUrl,
-                          fullBodyUrl: w.fullBodyUrl ?? w.previewImageUrl,
-                        })),
-                      }))}
+                      scene={directorWorkflowScene}
+                      guideCharacters={directorGuideCharacters}
+                      characters={directorCharacters}
                       sceneReferences={sceneReferences}
                       objectReferences={objectReferences}
                       locationReferences={locationReferences}
                       onGenerate={onSegmentGenerate || (async () => {})}
                       onSegmentUpload={onSegmentUpload ? (segmentId, file) => onSegmentUpload(workflowSceneId, segmentId, file) : undefined}
                       onRenderedSceneUrlChange={onRenderedSceneUrlChange ? (url) => onRenderedSceneUrlChange(workflowSceneId, url) : undefined}
-                      onProductionDataChange={onProductionDataChange ? (data) => onProductionDataChange(workflowSceneId, data) : undefined}
+                      onProductionDataChange={onProductionDataChange ? handleDirectorProductionDataChange : undefined}
                       sceneIndex={sceneIdx}
                       onGenerateSceneAudio={onGenerateSceneAudio ? (idx, audioType, characterName, dialogueIndex, language) => onGenerateSceneAudio(idx, audioType, characterName, dialogueIndex, language) : undefined}
                       onGenerateLanguageStream={onGenerateLanguageStream}

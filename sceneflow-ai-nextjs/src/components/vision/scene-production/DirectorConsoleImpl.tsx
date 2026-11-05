@@ -705,6 +705,8 @@ export function DirectorConsoleRoot({
   productionDataRef.current = productionData
   const sceneRecordRef = useRef(scene)
   sceneRecordRef.current = scene
+  const onProductionDataChangeRef = useRef(onProductionDataChange)
+  onProductionDataChangeRef.current = onProductionDataChange
 
   const beatVideoDirectionKey = useMemo(() => {
     const beats = getSceneBeats((scene as Record<string, unknown> | undefined) ?? null)
@@ -745,7 +747,8 @@ export function DirectorConsoleRoot({
   useEffect(() => {
     const current = productionDataRef.current
     const currentScene = sceneRecordRef.current as Record<string, unknown> | undefined
-    if (!onProductionDataChange || !current?.segments?.length || !currentScene) return
+    const notifyChange = onProductionDataChangeRef.current
+    if (!notifyChange || !current?.segments?.length || !currentScene) return
     const nextSegments = refreshProductionSegmentVideoPrompts(current.segments, currentScene, {
       artStyleId,
     })
@@ -757,11 +760,11 @@ export function DirectorConsoleRoot({
       return next
     })
     if (!nextSegments && !healedAny) return
-    onProductionDataChange({
+    notifyChange({
       ...current,
       segments: healed,
     })
-  }, [beatVideoDirectionKey, productionData?.segments?.length, missingVideoPointerKey, onProductionDataChange, artStyleId])
+  }, [beatVideoDirectionKey, productionData?.segments?.length, missingVideoPointerKey, artStyleId])
 
   useEffect(() => {
     const language = productionTarget.language
@@ -1976,22 +1979,36 @@ export function DirectorConsoleRoot({
               segments,
             } as import('./types').SceneProductionData)
           const byLang = migrateMixerSettingsByLanguage(base)
+          const nextMixerSettingsByLanguage = {
+            ...byLang,
+            [payload.language]: {
+              ...byLang[payload.language],
+              ...payload.languageSettings,
+            },
+          }
+          const nextMixerSettings = {
+            productionTarget: payload.productionTarget ?? base.mixerSettings?.productionTarget,
+            collapsedSections: payload.collapsedSections ?? base.mixerSettings?.collapsedSections,
+            theaterMode: payload.theaterMode ?? base.mixerSettings?.theaterMode,
+          }
+          const nextTextOverlayTranslations =
+            payload.textOverlayTranslations ?? base.textOverlayTranslations
+
+          if (
+            JSON.stringify(base.mixerSettingsByLanguage) ===
+              JSON.stringify(nextMixerSettingsByLanguage) &&
+            JSON.stringify(base.mixerSettings) === JSON.stringify(nextMixerSettings) &&
+            JSON.stringify(base.textOverlayTranslations) ===
+              JSON.stringify(nextTextOverlayTranslations)
+          ) {
+            return
+          }
+
           onProductionDataChange({
             ...base,
-            mixerSettingsByLanguage: {
-              ...byLang,
-              [payload.language]: {
-                ...byLang[payload.language],
-                ...payload.languageSettings,
-              },
-            },
-            mixerSettings: {
-              productionTarget: payload.productionTarget ?? base.mixerSettings?.productionTarget,
-              collapsedSections: payload.collapsedSections ?? base.mixerSettings?.collapsedSections,
-              theaterMode: payload.theaterMode ?? base.mixerSettings?.theaterMode,
-            },
-            textOverlayTranslations:
-              payload.textOverlayTranslations ?? base.textOverlayTranslations,
+            mixerSettingsByLanguage: nextMixerSettingsByLanguage,
+            mixerSettings: nextMixerSettings,
+            textOverlayTranslations: nextTextOverlayTranslations,
           })
         }}
         projectStreams={projectStreams}

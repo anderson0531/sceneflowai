@@ -217,6 +217,18 @@ export function buildSegmentAudioConfigsForSegments(
   segmentIds: string[],
   saved?: Record<string, MixerSegmentAudioConfig>
 ): Record<string, MixerSegmentAudioConfig> {
+  if (saved) {
+    const savedKeys = Object.keys(saved)
+    const uniqueIds = new Set(segmentIds)
+    if (
+      savedKeys.length === uniqueIds.size &&
+      segmentIds.every(
+        (id) => Object.prototype.hasOwnProperty.call(saved, id) && saved[id] !== undefined
+      )
+    ) {
+      return saved
+    }
+  }
   const configs: Record<string, MixerSegmentAudioConfig> = {}
   for (const segmentId of segmentIds) {
     configs[segmentId] =

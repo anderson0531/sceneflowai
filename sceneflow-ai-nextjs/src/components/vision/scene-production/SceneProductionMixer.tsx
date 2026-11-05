@@ -3768,6 +3768,7 @@ export function SceneProductionMixer({
   const hydratedSettingsTokenRef = useRef<string | null>(null)
   const hasHydratedMixerSettingsRef = useRef(false)
   const activeLanguageRef = useRef(selectedLanguage)
+  const lastPersistedSnapshotJsonRef = useRef<string | null>(null)
 
   const applyMergedSettingsToState = useCallback(
     (merged: ReturnType<typeof mergeMixerSettings>) => {
@@ -3782,15 +3783,15 @@ export function SceneProductionMixer({
       setLanguageShotConfigs(merged.languageShotConfigs)
       setWatermarkConfig(merged.watermarkConfig)
       setLoudnessTarget(merged.loudnessTarget)
-      setSegmentAudioConfigs(
-        buildSegmentAudioConfigsForSegments(
-          segments.map((seg) => seg.segmentId),
-          merged.segmentAudioConfigs
-        )
+      const nextSegmentAudioConfigs = buildSegmentAudioConfigsForSegments(
+        segmentsRef.current.map((seg) => seg.segmentId),
+        merged.segmentAudioConfigs
       )
+      setSegmentAudioConfigs(nextSegmentAudioConfigs)
       previousEnglishWatermarkRef.current = merged.watermarkConfig.text?.trim() || ''
+      return nextSegmentAudioConfigs
     },
-    [segments]
+    []
   )
 
   const hydrateLanguageSettings = useCallback(
@@ -3802,18 +3803,44 @@ export function SceneProductionMixer({
         : mergeMixerSettings(
             productionData?.mixerSettings ?? migrateLegacyLocalStorageSettings()
           )
-      applyMergedSettingsToState(merged)
+      const hydratedSegmentAudioConfigs = applyMergedSettingsToState(merged)
 
       const shared = getSharedMixerUiSettings(productionData)
       setCollapsedSections(shared.collapsedSections)
       setTheaterMode(shared.theaterMode)
 
+      const nextTranslations = productionData?.textOverlayTranslations ?? textOverlayTranslations
       if (productionData?.textOverlayTranslations) {
         setTextOverlayTranslations(productionData.textOverlayTranslations)
       }
       previousEnglishOverlaysRef.current = externalTextOverlays || productionData?.textOverlays || []
+
+      const hydratedTarget = shared.productionTarget
+        ? { ...shared.productionTarget, streamType: 'video' as const }
+        : productionTarget
+      lastPersistedSnapshotJsonRef.current = JSON.stringify({
+        language,
+        languageSettings: buildLanguageMixerSnapshot({
+          audioTracks: merged.audioTracks,
+          segmentAudioConfigs: hydratedSegmentAudioConfigs,
+          dialogueClipConfigs: merged.dialogueClipConfigs,
+          musicShotConfigs: merged.musicShotConfigs,
+          masterSegmentVolume: merged.masterSegmentVolume,
+          resolution: merged.resolution,
+          preserveBackgroundStem: merged.preserveBackgroundStem,
+          includeSpeechStem: merged.includeSpeechStem,
+          klingLipsyncEnabled: merged.klingLipsyncEnabled,
+          languageShotConfigs: merged.languageShotConfigs,
+          watermarkConfig: merged.watermarkConfig,
+          loudnessTarget: merged.loudnessTarget,
+        }),
+        productionTarget: hydratedTarget,
+        collapsedSections: shared.collapsedSections,
+        theaterMode: shared.theaterMode,
+        textOverlayTranslations: nextTranslations,
+      })
     },
-    [productionData, applyMergedSettingsToState, externalTextOverlays]
+    [productionData, applyMergedSettingsToState, externalTextOverlays, productionTarget, textOverlayTranslations]
   )
 
   // Hydrate mixer settings when scene changes
@@ -3867,7 +3894,7 @@ export function SceneProductionMixer({
 
   useEffect(() => {
     if (!hasHydratedMixerSettingsRef.current || !onMixerSettingsChange) return
-    schedulePersistMixerSettings({
+    const nextPayload: MixerSettingsPersistPayload = {
       language: selectedLanguage,
       languageSettings: buildLanguageMixerSnapshot({
         audioTracks,
@@ -3887,7 +3914,11 @@ export function SceneProductionMixer({
       collapsedSections,
       theaterMode,
       textOverlayTranslations,
-    })
+    }
+    const nextSnapshotJson = JSON.stringify(nextPayload)
+    if (lastPersistedSnapshotJsonRef.current === nextSnapshotJson) return
+    lastPersistedSnapshotJsonRef.current = nextSnapshotJson
+    schedulePersistMixerSettings(nextPayload)
   }, [
     audioTracks,
     segmentAudioConfigs,
@@ -3960,11 +3991,11 @@ export function SceneProductionMixer({
   useEffect(() => {
     setSegmentAudioConfigs((prev) =>
       buildSegmentAudioConfigsForSegments(
-        segments.map((seg) => seg.segmentId),
+        segmentsRef.current.map((seg) => seg.segmentId),
         prev
       )
     )
-  }, [segmentIdsKey, segments])
+  }, [segmentIdsKey])
   
   // Languages available in the mixer: configured streams + per-scene audio keys
   const availableLanguages = useMemo(() => {
