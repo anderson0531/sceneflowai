@@ -72,10 +72,9 @@ describe('promo narration level and timeline controls', () => {
     expect(PROMO_AUDIO_MIX.narration).toBeGreaterThan(PROMO_AUDIO_MIX.music)
   })
 
-  it('regenerates narration and music from their own timeline rows', () => {
+  it('regenerates narration and music via the promo scene route', () => {
     const tab = read('src/components/publishing/PublishingPromoTab.tsx')
-    expect(tab).toContain("handleRegenAudio('narration')")
-    expect(tab).toContain("handleRegenAudio('music')")
+    expect(tab).toContain('handleRegenAudio')
     expect(tab).toContain("await postScene(action)")
     expect(tab).toContain("'plan' | 'upsert' | 'timeline' | 'narration' | 'music'")
     const route = read('src/app/api/publish/promo/scene/route.ts')

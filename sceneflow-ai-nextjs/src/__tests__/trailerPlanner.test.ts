@@ -12,6 +12,7 @@ import {
   removePromoSceneFromScenes,
   upsertPromoSceneInScenes,
 } from '@/lib/publish/buildPromoScene'
+import { ensureSceneBeats, getSceneBeats } from '@/lib/script/beatMigration'
 import { readFileSync, existsSync } from 'fs'
 import path from 'path'
 
@@ -704,5 +705,130 @@ describe('promo source guards', () => {
     const afterRemove = removePromoSceneFromScenes(afterSecond, 'promo-theatrical')
     expect(findPromoScenes(afterRemove)).toHaveLength(1)
     expect(findPromoScenes(afterRemove)[0]?.promoId).toBe('promo-vertical')
+  })
+
+  it('gives promo narration initial beatDirection, preserves dialogue/action shared shots across ensureSceneBeats, and self-heals stripped promo scenes', () => {
+    const sourceScenes = [
+      {
+        id: 'scene-0',
+        heading: 'INT. VAULT - NIGHT',
+        beats: [
+          {
+            beatId: 'b_dial',
+            sequenceIndex: 0,
+            kind: 'dialogue' as const,
+            character: 'GIDEON',
+            line: 'The current bleeds out.',
+            storyboardImageUrl: 'https://example.com/vault-0.png',
+          },
+          {
+            beatId: 'b_act',
+            sequenceIndex: 1,
+            kind: 'action' as const,
+            actionDescription: 'Sparks arc across the copper coil.',
+            storyboardImageUrl: 'https://example.com/vault-1.png',
+          },
+        ],
+      },
+    ]
+
+    const { scene: promoScene } = buildPromoSceneFromPlan({
+      beatPlan: [
+        {
+          sceneId: 'scene-0',
+          beatId: 'b_dial',
+          sceneIndex: 0,
+          beatKind: 'dialogue',
+          startSec: 0,
+          endSec: 5,
+          durationSec: 5,
+          score: 90,
+          label: 'GIDEON: The current bleeds out.',
+          frameUrl: 'https://example.com/vault-0.png',
+        },
+        {
+          sceneId: 'scene-0',
+          beatId: 'b_act',
+          sceneIndex: 0,
+          beatKind: 'action',
+          startSec: 5,
+          endSec: 10,
+          durationSec: 5,
+          score: 85,
+          label: 'Sparks arc across the copper coil.',
+          frameUrl: 'https://example.com/vault-1.png',
+        },
+      ],
+      narrationLine: 'In the depths beneath the city, one spark changes everything.',
+      targetDurationSec: 30,
+      projectTitle: 'Current',
+      promoId: 'promo-main',
+    })
+
+    // 1. Narration beat immediately has beatDirection and opening frame
+    expect(promoScene.beats).toHaveLength(3)
+    expect(promoScene.beats[0]?.kind).toBe('narration')
+    expect(promoScene.beats[0]?.beatDirection?.shotType).toBeTruthy()
+    expect(promoScene.beats[0]?.storyboardImageUrl).toBe('https://example.com/vault-0.png')
+
+    // 2. Running ensureSceneBeats (e.g. when clicking Direction) preserves all 3 shots AND source links
+    const ensured = ensureSceneBeats(promoScene as unknown as Record<string, unknown>)
+    const ensuredBeats = getSceneBeats(ensured)
+    expect(ensuredBeats).toHaveLength(3)
+    expect(ensuredBeats[0]?.kind).toBe('narration')
+    expect((ensuredBeats[1] as { sourceBeatId?: string }).sourceBeatId).toBe('b_dial')
+    expect((ensuredBeats[1] as { sourceSceneIndex?: number }).sourceSceneIndex).toBe(0)
+    expect((ensuredBeats[2] as { sourceBeatId?: string }).sourceBeatId).toBe('b_act')
+    expect((ensuredBeats[2] as { sourceSceneIndex?: number }).sourceSceneIndex).toBe(0)
+
+    // 3. Self-healing: if a legacy promo scene had its dialogue/action beats stripped leaving only narration,
+    // getSceneBeats and hydratePromoSceneWithSharedShots reconstruct all planned shots from promoBeatPlan
+    const strippedPromoScene = {
+      ...promoScene,
+      beats: [
+        {
+          beatId: 'bt_only_narr',
+          sequenceIndex: 0,
+          kind: 'narration',
+          character: 'NARRATOR',
+          line: 'In the depths beneath the city, one spark changes everything.',
+        },
+      ],
+    }
+    const hydrated = hydratePromoSceneWithSharedShots(
+      strippedPromoScene as unknown as Record<string, unknown>,
+      sourceScenes,
+      {}
+    )
+    const healedBeats = (hydrated.scene as { beats: Array<Record<string, unknown>> }).beats
+    expect(healedBeats).toHaveLength(3)
+    expect(healedBeats[0]?.kind).toBe('narration')
+    expect(healedBeats[0]?.beatDirection).toBeTruthy()
+    expect(healedBeats[1]?.sourceBeatId).toBe('b_dial')
+    expect(healedBeats[2]?.sourceBeatId).toBe('b_act')
+  })
+
+  it('streamlines Promo Builder dialog to focus strictly on promo version list and building promo shots', () => {
+    const tabPath = path.join(process.cwd(), 'src/components/publishing/PublishingPromoTab.tsx')
+    const tabSource = readFileSync(tabPath, 'utf8')
+    const renderBody = tabSource.slice(tabSource.indexOf('<div className="space-y-4 overflow-y-auto'))
+
+    // Retains promo version list & shot building controls
+    expect(renderBody).toContain('promo-campaign-switcher')
+    expect(renderBody).toContain('open-promo-in-studio-btn')
+    expect(renderBody).toContain('Open Promo Scene in Studio')
+    expect(renderBody).toContain('Build Promo Shots')
+    expect(renderBody).toContain('Rebuild Promo Shots')
+    expect(renderBody).toContain('Promo Director')
+    expect(renderBody).toContain('Shot timeline')
+
+    // Removes redundant studio/render/stream controls from the rendered Promo Builder UI
+    expect(renderBody).not.toContain('Format / Aspect Ratio')
+    expect(renderBody).not.toContain('Active Stream Language')
+    expect(renderBody).not.toContain('2 · Preview')
+    expect(renderBody).not.toContain('3 · Render Promo')
+    expect(renderBody).not.toContain('<PromoCutPreview')
+    expect(renderBody).not.toContain('Promo streams')
+    expect(renderBody).not.toContain('Play in Screening Room')
   })
 })

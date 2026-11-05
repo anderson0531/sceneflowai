@@ -117,7 +117,7 @@ describe('policy-blocked promo shots', () => {
   it('wires the promo row to the scene card through the vision page', () => {
     const tab = read('src/components/publishing/PublishingPromoTab.tsx')
     expect(tab).toContain('onOpenDirectShot')
-    expect(tab).toContain('Shot Director')
+    expect(tab).toContain('Open Promo Scene in Studio')
     const page = read('src/app/dashboard/workflow/vision/[projectId]/page.tsx')
     expect(page).toContain('setPendingDirectShot(target)')
     expect(page).toContain("setProductionViewWithUrl('studio')")
@@ -338,9 +338,7 @@ describe('promo audio mix', () => {
     )
     const tab = read('src/components/publishing/PublishingPromoTab.tsx')
     const flushAt = tab.indexOf('flushSync')
-    const startAt = tab.indexOf('previewRef.current?.start()')
     expect(flushAt).toBeGreaterThan(-1)
-    expect(startAt).toBeGreaterThan(flushAt)
     expect(promoPreviewMusicVolume({ beatKind: 'dialogue' })).toBe(PROMO_AUDIO_MIX.musicDucked)
     expect(promoPreviewMusicVolume({ beatKind: 'narration' })).toBe(PROMO_AUDIO_MIX.musicDucked)
     expect(promoPreviewMusicVolume({ beatKind: 'action' })).toBe(PROMO_AUDIO_MIX.music)

@@ -140,6 +140,12 @@ export function findRedundantActionBeatIndices(
     const beat = beats[i]
     if (beat.kind !== 'action') continue
     if (beat.beatId && options?.protectedBeatIds?.has(beat.beatId)) continue
+    if (
+      typeof (beat as { sourceBeatId?: unknown }).sourceBeatId === 'string' ||
+      typeof (beat as { sourceSceneIndex?: unknown }).sourceSceneIndex === 'number'
+    ) {
+      continue
+    }
     const desc = beat.actionDescription || ''
     if (!desc.trim()) continue
 

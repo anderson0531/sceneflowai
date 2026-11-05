@@ -5926,6 +5926,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         return
       }
       setPublishingLibraryOpen(false)
+      setPromoStudioOpen(false)
       setProductionViewWithUrl('studio')
       setSelectedSceneIndex(target.sceneIndex)
       setPendingDirectShot(target)
@@ -20387,20 +20388,49 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         onScriptScenesUpdated={(scenes) => {
           setScript((prev: any) => {
             if (!prev) return prev
-            if (prev.script?.scenes) {
-              return {
-                ...prev,
-                script: {
-                  ...prev.script,
+            const updatedScript = prev.script?.scenes
+              ? {
+                  ...prev,
+                  script: {
+                    ...prev.script,
+                    scenes,
+                  },
+                }
+              : { ...prev, scenes }
+            scriptRef.current = updatedScript
+            return updatedScript
+          })
+          setProject((p: any) => {
+            if (!p) return p
+            const updated = {
+              ...p,
+              metadata: {
+                ...p.metadata,
+                visionPhase: {
+                  ...p.metadata?.visionPhase,
                   scenes,
+                  script: p.metadata?.visionPhase?.script?.script
+                    ? {
+                        ...p.metadata.visionPhase.script,
+                        script: {
+                          ...p.metadata.visionPhase.script.script,
+                          scenes,
+                        },
+                      }
+                    : {
+                        ...(p.metadata?.visionPhase?.script || {}),
+                        scenes,
+                      },
                 },
-              }
+              },
             }
-            return { ...prev, scenes }
+            projectRef.current = updated
+            return updated
           })
         }}
         onOpenPromoInStudio={(promoSceneId) => {
           setPromoStudioOpen(false)
+          setPublishingLibraryOpen(false)
           setProductionViewWithUrl('studio')
           const currentScenes = scriptRef.current?.script?.scenes || script?.script?.scenes || []
           const targetIdx =

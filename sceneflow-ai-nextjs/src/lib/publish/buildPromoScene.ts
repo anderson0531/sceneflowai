@@ -288,11 +288,20 @@ function buildPromoBeats(
 ): PromoSceneBeat[] {
   const beats: PromoSceneBeat[] = beatPlan.map((plan, index) => {
     const durationSec = plan.durationSec ?? plan.endSec - plan.startSec
+    const label = plan.label || `Promo moment ${index + 1}`
+    const kind = plan.beatKind === 'dialogue' ? 'dialogue' : 'action'
+    const isClimax = Boolean(plan.isClimaxCandidate)
     return {
-      beatId: mintBeatId(),
+      beatId: `bt_promo_${plan.sceneIndex}_${plan.beatId || 'shot'}_${index}`,
       sequenceIndex: narrationLine ? index + 1 : index,
-      kind: plan.beatKind === 'dialogue' ? 'dialogue' : 'action',
-      actionDescription: plan.label || `Promo moment ${index + 1}`,
+      kind,
+      actionDescription: label,
+      ...(kind === 'dialogue'
+        ? {
+            line: label,
+            lineId: `ln_promo_${plan.sceneIndex}_${index}`,
+          }
+        : {}),
       beatRole: plan.beatRole || 'progression',
       storyboardImageUrl: plan.frameUrl,
       durationSeconds: durationSec,
@@ -301,21 +310,51 @@ function buildPromoBeats(
       sourceBeatId: plan.beatId,
       sourceSceneIndex: plan.sceneIndex,
       promoVideoUrl: plan.videoUrl,
+      beatDirection: {
+        shotType: isClimax ? 'Dynamic medium close-up' : 'Medium cinematic shot',
+        cameraAngle: isClimax ? 'Low heroic angle' : 'Eye-level cinematic framing',
+        cameraMovement: isClimax ? 'Rapid dramatic push-in' : 'Controlled tracking movement',
+        frozenMoment: label,
+        blocking: label,
+        emotion: isClimax ? 'Peak dramatic tension' : 'Heightened trailer momentum',
+        lightingAccent: 'High-contrast cinematic lighting',
+        transition: 'CUT',
+        generatedBy: 'planner',
+      },
     }
   })
 
   if (narrationLine?.trim()) {
+    const cleanNarration = narrationLine.trim()
+    const firstShotLabel = beatPlan[0]?.label?.trim()
     beats.unshift({
-      beatId: mintBeatId(),
+      beatId: 'bt_promo_narration_0',
       sequenceIndex: 0,
       kind: 'narration',
       character: 'NARRATOR',
       characterId: 'narrator',
-      line: narrationLine.trim(),
+      line: cleanNarration,
+      lineId: 'ln_promo_narration_0',
       actionDescription: 'Promo trailer voice-over',
       beatRole: 'opening',
-      durationSeconds: Math.min(12, Math.max(6, narrationLine.trim().split(/\s+/).length * 0.35)),
+      storyboardImageUrl: beatPlan[0]?.frameUrl,
+      durationSeconds: Math.min(12, Math.max(6, cleanNarration.split(/\s+/).length * 0.35)),
       musicEnabled: true,
+      beatDirection: {
+        shotType: 'Wide establishing shot',
+        cameraAngle: 'Eye-level cinematic framing',
+        cameraMovement: 'Slow push-in establishing trailer tone',
+        frozenMoment: firstShotLabel
+          ? `Opening trailer montage image: ${firstShotLabel}`
+          : `Trailer opening frame accompanying voice-over: "${cleanNarration}"`,
+        blocking: 'Voice-over narration plays over the opening promotional montage sequence.',
+        emotion: 'Anticipation and cinematic intrigue',
+        lightingAccent: 'High-contrast dramatic trailer lighting',
+        audioCue: 'Trailer voice-over with atmospheric score swell',
+        transition: 'DISSOLVE',
+        castInFrame: [],
+        generatedBy: 'planner',
+      },
     })
     beats.forEach((b, i) => {
       b.sequenceIndex = i
@@ -421,6 +460,37 @@ export function buildPromoSceneFromPlan(input: BuildPromoSceneInput): BuildPromo
       : presetDef?.defaultAspect)
 
   const beats = buildPromoBeats(input.beatPlan, input.narrationLine)
+  const defaultSceneDirection =
+    input.existingPromoScene?.sceneDirection &&
+    typeof input.existingPromoScene.sceneDirection === 'object'
+      ? input.existingPromoScene.sceneDirection
+      : {
+          sceneDescription:
+            campaignObjective ||
+            presetDef?.description ||
+            `High-impact promotional trailer montage for "${title}".`,
+          scene: {
+            location: campaignName || 'PROMO TRAILER MONTAGE',
+            atmosphere: 'Dynamic trailer pacing with high-contrast cinematic continuity',
+          },
+          camera: {
+            shots: input.beatPlan.map((p) => p.label).filter(Boolean).slice(0, 6),
+            angle: 'Cinematic multi-angle montage coverage',
+            movement: 'Rhythmic push-ins and kinetic trailer cuts',
+          },
+          lighting: {
+            overallMood: 'High-contrast promotional trailer grade',
+            timeOfDay: 'MULTI-SCENE MONTAGE',
+            colorTemperature: 'Rich cinematic contrast',
+          },
+          talent: {
+            emotionalBeat: campaignObjective || 'Escalating intrigue and emotional hook',
+            blocking: 'Montage cross-cutting key character and action highlights',
+          },
+          audio: {
+            priorities: 'Voice-over hook, dramatic score swell, and crisp transition hits',
+          },
+        }
   const scene: PromoSceneRecord = {
     id: existingId,
     promoId: existingId,
@@ -441,6 +511,7 @@ export function buildPromoSceneFromPlan(input: BuildPromoSceneInput): BuildPromo
     characters: [],
     duration: input.targetDurationSec,
     cinematicType: PROMO_SCENE_CINEMATIC_TYPE,
+    sceneDirection: defaultSceneDirection,
     beats,
     promoBeatPlan: input.beatPlan,
     music:
@@ -539,7 +610,45 @@ export function hydratePromoSceneWithSharedShots(
 
   const promoSceneId = String(promoScene.sceneId || promoScene.id || 'promo-main')
   const rawBeats = getSceneBeats(promoScene) as PromoSceneBeat[]
+  const firstAvailableSharedFrame = rawBeats
+    .map((beat) => {
+      if (typeof beat.sourceSceneIndex === 'number' && beat.sourceBeatId) {
+        const srcScene = scenes[beat.sourceSceneIndex] as Record<string, unknown> | undefined
+        const srcBeat = srcScene
+          ? getSceneBeats(srcScene).find((candidate) => candidate.beatId === beat.sourceBeatId)
+          : undefined
+        return srcBeat?.storyboardImageUrl || beat.storyboardImageUrl
+      }
+      return beat.storyboardImageUrl
+    })
+    .find((url): url is string => typeof url === 'string' && url.trim().length > 0)
+
   const hydratedBeats: PromoSceneBeat[] = rawBeats.map((beat) => {
+    if (beat.kind === 'narration' && (typeof beat.sourceSceneIndex !== 'number' || !beat.sourceBeatId)) {
+      const hasDir = beat.beatDirection && Object.keys(beat.beatDirection).length > 0
+      return {
+        ...beat,
+        storyboardImageUrl: beat.storyboardImageUrl || firstAvailableSharedFrame,
+        ...(hasDir
+          ? {}
+          : {
+              beatDirection: {
+                shotType: 'Wide establishing shot',
+                cameraAngle: 'Eye-level cinematic framing',
+                cameraMovement: 'Slow push-in establishing trailer tone',
+                frozenMoment:
+                  beat.line?.trim() || 'Promo trailer opening voice-over sequence',
+                blocking: 'Voice-over narration plays over the opening promotional montage sequence.',
+                emotion: 'Anticipation and cinematic intrigue',
+                lightingAccent: 'High-contrast dramatic trailer lighting',
+                audioCue: 'Trailer voice-over with atmospheric score swell',
+                transition: 'DISSOLVE',
+                castInFrame: [],
+                generatedBy: 'planner',
+              },
+            }),
+      }
+    }
     if (typeof beat.sourceSceneIndex !== 'number' || !beat.sourceBeatId) {
       return beat
     }
@@ -570,6 +679,7 @@ export function hydratePromoSceneWithSharedShots(
       storyboardImagePromptDirectionKey:
         sourceBeat.storyboardImagePromptDirectionKey || beat.storyboardImagePromptDirectionKey,
       beatDirection: sourceBeat.beatDirection || beat.beatDirection,
+      referenceSelection: sourceBeat.referenceSelection || beat.referenceSelection,
       stillVersions: sourceBeat.stillVersions || beat.stillVersions,
       endStillVersions: sourceBeat.endStillVersions || beat.endStillVersions,
       characterIds: sourceBeat.characterIds || beat.characterIds,
@@ -663,9 +773,39 @@ export function hydratePromoSceneWithSharedShots(
       } as SceneSegment
     })
 
+  const hydratedSceneDirection =
+    promoScene.sceneDirection && typeof promoScene.sceneDirection === 'object'
+      ? promoScene.sceneDirection
+      : {
+          sceneDescription:
+            typeof promoScene.campaignObjective === 'string' && promoScene.campaignObjective.trim()
+              ? promoScene.campaignObjective.trim()
+              : typeof promoScene.action === 'string' && promoScene.action.trim()
+                ? promoScene.action.trim()
+                : 'Promotional trailer cut assembling key shared shots across scenes.',
+          scene: {
+            location: String(promoScene.location || promoScene.campaignName || 'PROMO TRAILER'),
+            atmosphere: 'Dynamic trailer pacing with high-contrast cinematic continuity',
+          },
+          camera: {
+            shots: hydratedBeats
+              .map((b) => b.actionDescription || b.line)
+              .filter((s): s is string => Boolean(s && s.trim()))
+              .slice(0, 6),
+            angle: 'Cinematic multi-angle montage coverage',
+            movement: 'Rhythmic push-ins and kinetic trailer cuts',
+          },
+          lighting: {
+            overallMood: 'High-contrast promotional trailer grade',
+            timeOfDay: 'MULTI-SCENE MONTAGE',
+            colorTemperature: 'Rich cinematic contrast',
+          },
+        }
+
   return {
     scene: {
       ...promoScene,
+      sceneDirection: hydratedSceneDirection,
       beats: hydratedBeats,
     },
     productionData: {

@@ -7427,83 +7427,67 @@ function SceneCard({
                         data-testid="scene-workflow-body"
                         className="mt-2 min-h-0 flex-1 overflow-y-auto overscroll-contain pr-1"
                       >
-                        {isPromoCinematicScene(scene) && sceneBeatsForTabs.length > 0 && (
-                          <div
-                            data-testid="promo-shared-shots-bar"
-                            className="mb-3 rounded-lg border border-fuchsia-500/35 bg-fuchsia-950/20 px-3 py-2"
-                          >
-                            <div className="flex flex-wrap items-center justify-between gap-2">
-                              <div className="flex flex-wrap items-center gap-2 text-xs text-fuchsia-100">
-                                <span className="inline-flex items-center gap-1 rounded bg-fuchsia-500/25 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-fuchsia-200">
-                                  Promo Cut • Shared Shots
-                                </span>
-                                <span className="text-[11px] text-slate-300">
-                                  Shots below share live Stills, Clips & Direction with their source scenes.
-                                </span>
-                                {Array.isArray(scene.campaignLanguages) && scene.campaignLanguages.length > 0 && (
-                                  <span className="rounded border border-cyan-500/30 bg-cyan-950/40 px-2 py-0.5 text-[10px] font-medium text-cyan-200">
-                                    Languages: {scene.campaignLanguages.map((l: string) => l.toUpperCase()).join(', ')}
+                        {isPromoCinematicScene(scene) && sceneBeatsForTabs.length > 0 && (() => {
+                          const activePromoBeat = (
+                            (sceneBeatsForTabs as PromoSceneBeat[]).find((b) => b.beatId === selectedBeatId) ??
+                            (sceneBeatsForTabs[0] as PromoSceneBeat | undefined)
+                          )
+                          const activeSourceSceneIdx =
+                            typeof activePromoBeat?.sourceSceneIndex === 'number' &&
+                            activePromoBeat.sourceSceneIndex >= 0
+                              ? activePromoBeat.sourceSceneIndex
+                              : null
+                          return (
+                            <div
+                              data-testid="promo-shared-shots-bar"
+                              className="mb-3 rounded-lg border border-fuchsia-500/35 bg-fuchsia-950/20 px-3 py-2"
+                            >
+                              <div className="flex flex-wrap items-center justify-between gap-2">
+                                <div className="flex flex-wrap items-center gap-2 text-xs text-fuchsia-100">
+                                  <span className="inline-flex items-center gap-1 rounded bg-fuchsia-500/25 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-fuchsia-200">
+                                    Promo Cut • Shared Shots
                                   </span>
-                                )}
-                              </div>
-                              {onOpenPromo && (
-                                <button
-                                  type="button"
-                                  onClick={(e) => {
-                                    e.stopPropagation()
-                                    onOpenPromo()
-                                  }}
-                                  className="inline-flex items-center gap-1 rounded border border-fuchsia-500/40 bg-fuchsia-900/40 px-2 py-1 text-[11px] font-medium text-fuchsia-100 hover:bg-fuchsia-800/50 transition-colors"
-                                >
-                                  <Clapperboard className="h-3 w-3" />
-                                  Manage Promo Campaigns
-                                </button>
-                              )}
-                            </div>
-                            <div className="mt-2 flex flex-wrap items-center gap-1.5">
-                              {(sceneBeatsForTabs as PromoSceneBeat[]).map((beat, bIdx) => {
-                                const isSel = selectedBeatId === beat.beatId
-                                const hasSource = typeof beat.sourceSceneIndex === 'number' && beat.sourceSceneIndex >= 0
-                                const hasStill = Boolean(beat.storyboardImageUrl)
-                                return (
-                                  <div
-                                    key={beat.beatId}
-                                    className={`inline-flex items-center rounded-md border text-[11px] transition-colors ${
-                                      isSel
-                                        ? 'border-fuchsia-400 bg-fuchsia-500/25 text-white'
-                                        : 'border-slate-700/80 bg-slate-900/80 text-slate-300 hover:border-slate-600'
-                                    }`}
-                                  >
+                                  <span className="text-[11px] text-slate-300">
+                                    Select shots in the vertical rail below — Stills, Clips & Direction sync live with their source scenes.
+                                  </span>
+                                  {Array.isArray(scene.campaignLanguages) && scene.campaignLanguages.length > 0 && (
+                                    <span className="rounded border border-cyan-500/30 bg-cyan-950/40 px-2 py-0.5 text-[10px] font-medium text-cyan-200">
+                                      Languages: {scene.campaignLanguages.map((l: string) => l.toUpperCase()).join(', ')}
+                                    </span>
+                                  )}
+                                </div>
+                                <div className="flex flex-wrap items-center gap-1.5">
+                                  {activeSourceSceneIdx !== null && onNavigateScene && (
                                     <button
                                       type="button"
-                                      onClick={() => setSelectedBeatId(beat.beatId)}
-                                      className="inline-flex items-center gap-1.5 px-2 py-1"
-                                      title={beat.actionDescription || beat.line || `Promo Shot ${bIdx + 1}`}
+                                      onClick={(e) => {
+                                        e.stopPropagation()
+                                        onNavigateScene(activeSourceSceneIdx)
+                                      }}
+                                      className="inline-flex items-center gap-1 rounded border border-fuchsia-500/40 bg-slate-900/80 px-2 py-1 text-[11px] font-semibold text-fuchsia-200 hover:bg-fuchsia-500/20 hover:text-white transition-colors"
+                                      title={`Jump to source Scene ${activeSourceSceneIdx + 1}`}
                                     >
-                                      <span className="font-semibold">Shot {bIdx + 1}</span>
-                                      {hasStill && (
-                                        <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" title="Shared still ready" />
-                                      )}
+                                      Source: Scene {activeSourceSceneIdx + 1} ↗
                                     </button>
-                                    {hasSource && onNavigateScene && (
-                                      <button
-                                        type="button"
-                                        onClick={(e) => {
-                                          e.stopPropagation()
-                                          onNavigateScene(beat.sourceSceneIndex as number)
-                                        }}
-                                        className="border-l border-slate-700/80 px-1.5 py-1 text-[10px] font-semibold text-fuchsia-300 hover:bg-fuchsia-500/20 hover:text-fuchsia-100"
-                                        title={`Jump to source Scene ${(beat.sourceSceneIndex as number) + 1}`}
-                                      >
-                                        S{(beat.sourceSceneIndex as number) + 1} ↗
-                                      </button>
-                                    )}
-                                  </div>
-                                )
-                              })}
+                                  )}
+                                  {onOpenPromo && (
+                                    <button
+                                      type="button"
+                                      onClick={(e) => {
+                                        e.stopPropagation()
+                                        onOpenPromo()
+                                      }}
+                                      className="inline-flex items-center gap-1 rounded border border-fuchsia-500/40 bg-fuchsia-900/40 px-2 py-1 text-[11px] font-medium text-fuchsia-100 hover:bg-fuchsia-800/50 transition-colors"
+                                    >
+                                      <Clapperboard className="h-3 w-3" />
+                                      Manage Promo Campaigns
+                                    </button>
+                                  )}
+                                </div>
+                              </div>
                             </div>
-                          </div>
-                        )}
+                          )
+                        })()}
 
                   {/* Direction */}
                   {hasDirectionTab && (
@@ -7525,6 +7509,7 @@ function SceneCard({
                       locationReferences={locationReferences}
                       objectReferences={objectReferences}
                       projectId={projectId}
+                      onNavigateScene={onNavigateScene}
                     />
                   </TabsContent>
                   )}

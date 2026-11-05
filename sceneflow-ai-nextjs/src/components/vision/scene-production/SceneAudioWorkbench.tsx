@@ -426,10 +426,16 @@ export function SceneAudioWorkbench(props: SceneAudioWorkbenchProps & { onSaveSf
         if (cue ? isCuedBeatMusicEnabled(beat) : isBeatMusicEnabled(beat)) {
           markers.push('Music')
         }
+        const promoSource = beat as SceneBeat & { sourceSceneIndex?: number; sourceBeatId?: string }
+        const hasSourceScene =
+          Boolean(promoSource.sourceBeatId) &&
+          typeof promoSource.sourceSceneIndex === 'number' &&
+          promoSource.sourceSceneIndex >= 0
         return {
           id: beat.beatId,
           beatNumber: Number.isFinite(beatNumber) ? beatNumber : index + 1,
           markers,
+          sourceSceneLabel: hasSourceScene ? `S${promoSource.sourceSceneIndex! + 1}` : undefined,
           status: rail?.status,
           statusLabel: rail?.label || undefined,
           statusDetail: facts ? beatRailTooltip(facts) : undefined,

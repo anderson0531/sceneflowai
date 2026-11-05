@@ -59,6 +59,10 @@ export interface SceneBeatStageItem {
   markers?: SceneBeatStageMarker[]
   /** Short extra chip, e.g. "End" on an optional end frame. */
   caption?: string
+  /** Optional source scene badge for shared Promo shots (e.g. "S1"). */
+  sourceSceneLabel?: string
+  /** Optional callback to jump directly to the shared shot's source scene. */
+  onJumpToSourceScene?: () => void
   ariaLabel: string
 }
 
@@ -123,6 +127,9 @@ function markerClass(marker: string): string {
     case 'In promo':
       return 'border-fuchsia-500/40 bg-fuchsia-500/10 text-fuchsia-200'
     default:
+      if (/^S\d+$/i.test(marker)) {
+        return 'border-fuchsia-500/45 bg-fuchsia-500/15 text-fuchsia-200'
+      }
       return 'border-slate-600/50 bg-slate-800/80 text-slate-300'
   }
 }
@@ -195,6 +202,35 @@ function ShotRow({
             {marker}
           </span>
         ))}
+        {item.sourceSceneLabel &&
+          (item.onJumpToSourceScene ? (
+            <span
+              role="button"
+              tabIndex={0}
+              onClick={(e) => {
+                e.stopPropagation()
+                item.onJumpToSourceScene?.()
+              }}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault()
+                  e.stopPropagation()
+                  item.onJumpToSourceScene?.()
+                }
+              }}
+              title={`Jump to source scene (${item.sourceSceneLabel})`}
+              className="inline-flex items-center gap-0.5 rounded border border-fuchsia-500/45 bg-fuchsia-500/15 px-1 py-px text-[9px] font-semibold uppercase tracking-wide text-fuchsia-200 transition-colors hover:bg-fuchsia-500/30 hover:text-white cursor-pointer"
+            >
+              {item.sourceSceneLabel} ↗
+            </span>
+          ) : (
+            <span
+              title={`Shared from scene ${item.sourceSceneLabel}`}
+              className="inline-flex items-center rounded border border-fuchsia-500/45 bg-fuchsia-500/15 px-1 py-px text-[9px] font-semibold uppercase tracking-wide text-fuchsia-200"
+            >
+              {item.sourceSceneLabel}
+            </span>
+          ))}
       </span>
       {(dot || statusLabel) && (
         <span

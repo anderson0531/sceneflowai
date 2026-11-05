@@ -92,4 +92,25 @@ describe('Scene workflow viewport-fitted window and uncropped menu', () => {
     expect(sfxControls).toContain('slot.description?.trim() ||')
     expect(sfxControls).toContain('audioSourceFingerprintForSfxBeat(beat)')
   })
+
+  it('maintains a single vertical shot navigation rail on Promo scenes and renders a prominent Open Promo Scene in Studio CTA', () => {
+    const panel = readSource('src/components/vision/ScriptPanel.tsx')
+    const promoBarIdx = panel.indexOf('data-testid="promo-shared-shots-bar"')
+    const directionTabIdx = panel.indexOf('<TabsContent value="direction"', promoBarIdx)
+    expect(promoBarIdx).toBeGreaterThan(-1)
+    expect(directionTabIdx).toBeGreaterThan(promoBarIdx)
+
+    const promoBarSlice = panel.slice(promoBarIdx, directionTabIdx)
+    // No duplicate horizontal Shot 1, Shot 2 button list inside promo-shared-shots-bar
+    expect(promoBarSlice).not.toContain('Shot {bIdx + 1}')
+    expect(promoBarSlice).toContain('Select shots in the vertical rail below')
+
+    const stage = readSource('src/components/vision/scene-production/SceneBeatStage.tsx')
+    expect(stage).toContain('sourceSceneLabel')
+    expect(stage).toContain('onJumpToSourceScene')
+
+    const promoTab = readSource('src/components/publishing/PublishingPromoTab.tsx')
+    expect(promoTab).toContain('data-testid="open-promo-in-studio-btn"')
+    expect(promoTab).toContain('bg-gradient-to-r from-fuchsia-600 to-indigo-600')
+  })
 })

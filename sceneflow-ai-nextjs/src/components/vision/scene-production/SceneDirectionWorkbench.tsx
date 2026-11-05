@@ -35,6 +35,7 @@ interface SceneDirectionWorkbenchProps {
   locationReferences?: DirectionLocation[]
   objectReferences?: DirectionObject[]
   projectId?: string
+  onNavigateScene?: (sceneIdx: number) => void
   onRunShotDirector?: () => void
   shotDirectorProgress?: { done: number; total: number } | null
   shotDirectorRunning?: boolean
@@ -70,6 +71,7 @@ export function SceneDirectionWorkbench({
   locationReferences,
   objectReferences,
   projectId,
+  onNavigateScene,
   onRunShotDirector,
   shotDirectorProgress,
   shotDirectorRunning,
@@ -129,17 +131,28 @@ export function SceneDirectionWorkbench({
         if (isEstablishing) markers.push('Establishing')
         if (beat.excluded === true) markers.push('Excluded')
         if (promoShots.has(`${sceneIdx}:${beat.beatId}`)) markers.push('In promo')
+        const promoSource = beat as SceneBeat & { sourceSceneIndex?: number; sourceBeatId?: string }
+        const hasSourceScene =
+          Boolean(promoSource.sourceBeatId) &&
+          typeof promoSource.sourceSceneIndex === 'number' &&
+          promoSource.sourceSceneIndex >= 0 &&
+          promoSource.sourceSceneIndex !== sceneIdx
         return {
           id: beat.beatId,
           beatNumber: (typeof beat.sequenceIndex === 'number' ? beat.sequenceIndex : index) + 1,
           markers: markers.length > 0 ? markers : undefined,
+          sourceSceneLabel: hasSourceScene ? `S${promoSource.sourceSceneIndex! + 1}` : undefined,
+          onJumpToSourceScene:
+            hasSourceScene && onNavigateScene
+              ? () => onNavigateScene(promoSource.sourceSceneIndex!)
+              : undefined,
           status: rail.status,
           statusLabel: rail.label,
           statusDetail: directionRailTooltip(rail),
           ariaLabel: `Shot ${index + 1}`,
         }
       }),
-    [beats, promoShots, sceneIdx]
+    [beats, promoShots, sceneIdx, onNavigateScene]
   )
 
   const readyShotCount = useMemo(
@@ -254,10 +267,19 @@ export function SceneDirectionWorkbench({
             editorBeat ? (
               <div className="space-y-2">
                 {hasSharedSourceShot && (
-                  <div className="flex items-center justify-between gap-2 rounded-md border border-fuchsia-500/35 bg-fuchsia-950/30 px-2.5 py-1.5 text-[11px] text-fuchsia-200">
+                  <div className="flex flex-wrap items-center justify-between gap-2 rounded-md border border-fuchsia-500/35 bg-fuchsia-950/30 px-2.5 py-1.5 text-[11px] text-fuchsia-200">
                     <span>
                       Shared Shot • Linked with Scene {editorSceneIdx + 1} (edits sync to both Promo and Scene {editorSceneIdx + 1})
                     </span>
+                    {onNavigateScene && (
+                      <button
+                        type="button"
+                        onClick={() => onNavigateScene(editorSceneIdx)}
+                        className="inline-flex items-center gap-1 rounded border border-fuchsia-500/40 bg-fuchsia-900/40 px-2 py-0.5 text-[10px] font-semibold text-fuchsia-100 hover:bg-fuchsia-800/50 transition-colors"
+                      >
+                        Jump to Scene {editorSceneIdx + 1} ↗
+                      </button>
+                    )}
                   </div>
                 )}
                 <BeatDirectionEditor

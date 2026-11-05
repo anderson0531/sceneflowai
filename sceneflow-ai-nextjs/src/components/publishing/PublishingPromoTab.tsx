@@ -1017,22 +1017,22 @@ export function PublishingPromoTab({
           <div>
             <h3 className="text-sm font-semibold text-white flex items-center gap-2">
               <Film className="w-4 h-4 text-fuchsia-300" />
-              Promo Campaigns
+              Promo Versions & Shot Builder
             </h3>
             <p className="text-xs text-zinc-500 mt-0.5">
-              Create multiple targeted marketing promos ({aspect}) sharing shots with their respective scenes. Plan the cut, then Promo Agent builds clips, narration, and music for {languageLabel}.
+              Build your Promo shot cut and manage Promo versions. Open any Promo in Studio to direct shots, audio, music, stills, clips, and streams.
             </p>
           </div>
           <div className="flex items-center gap-2">
             {promoScene && onOpenPromoInStudio ? (
               <Button
                 size="sm"
-                variant="outline"
-                className="h-8 border-fuchsia-500/40 bg-fuchsia-500/10 text-xs text-fuchsia-100 hover:bg-fuchsia-500/20"
+                data-testid="open-promo-in-studio-header-btn"
+                className="h-8 border border-fuchsia-400/50 bg-gradient-to-r from-fuchsia-600 to-indigo-600 px-3 text-xs font-semibold text-white shadow-md shadow-fuchsia-950/50 hover:from-fuchsia-500 hover:to-indigo-500"
                 onClick={() => onOpenPromoInStudio(String(promoScene.id || promoScene.sceneId || activePromoId || ''))}
               >
                 <Clapperboard className="w-3.5 h-3.5 mr-1.5" />
-                Open Promo Scene on Stage
+                Open Promo Scene in Studio
               </Button>
             ) : null}
             <Button
@@ -1048,7 +1048,7 @@ export function PublishingPromoTab({
           </div>
         </div>
 
-        {/* Multi-Promo Campaign Switcher */}
+        {/* Multi-Promo Version Switcher */}
         {(promoScenes.length > 0 || creatingNewPromo) && (
           <div
             data-testid="promo-campaign-switcher"
@@ -1072,16 +1072,13 @@ export function PublishingPromoTab({
                       P{summary.promoNumber}
                     </span>
                     <span className="max-w-[14rem] truncate">{summary.name}</span>
-                    {summary.aspect && (
-                      <span className="text-[10px] text-zinc-400">{summary.aspect}</span>
-                    )}
                   </button>
                   {promoScenes.length > 1 && isSelected && (
                     <button
                       type="button"
                       disabled={deletingPromoId === summary.promoId}
                       onClick={() => void handleDeletePromo(summary.promoId)}
-                      title="Delete this promo campaign"
+                      title="Delete this promo version"
                       className="inline-flex h-6 w-6 items-center justify-center rounded border border-zinc-800 text-zinc-400 hover:border-rose-500/50 hover:bg-rose-500/10 hover:text-rose-300 disabled:opacity-50"
                     >
                       {deletingPromoId === summary.promoId ? (
@@ -1097,7 +1094,7 @@ export function PublishingPromoTab({
             {creatingNewPromo && (
               <span className="inline-flex items-center gap-1.5 rounded-md border border-fuchsia-500/60 bg-fuchsia-500/20 px-2.5 py-1 text-xs font-medium text-fuchsia-100">
                 <Sparkles className="h-3 w-3 text-fuchsia-300" />
-                New Campaign: {campaignName || 'Untitled Promo'}
+                New Promo: {campaignName || 'Untitled Promo'}
               </span>
             )}
           </div>
@@ -1108,10 +1105,10 @@ export function PublishingPromoTab({
           <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
             <p className="text-[10px] font-semibold uppercase tracking-wider text-fuchsia-300 flex items-center gap-1.5">
               <Target className="w-3.5 h-3.5" />
-              Intelligent Marketing Campaign Strategy
+              Promo Strategy & Archetype
             </p>
             <span className="text-[11px] text-zinc-500">
-              Select a campaign archetype to tailor shot selection, pacing, aspect ratio, and localization
+              Choose a campaign archetype to guide shot selection and trailer pacing
             </span>
           </div>
           <div
@@ -1148,7 +1145,7 @@ export function PublishingPromoTab({
 
           <div className="grid gap-3 sm:grid-cols-2">
             <label className="block text-[10px] uppercase tracking-wider text-zinc-500">
-              Campaign Name
+              Promo Name
               <input
                 type="text"
                 value={campaignName}
@@ -1170,9 +1167,9 @@ export function PublishingPromoTab({
           </div>
         </div>
 
-        <div className="mb-4 grid gap-4 sm:grid-cols-2">
+        <div className="mb-4 grid gap-4 sm:grid-cols-[minmax(0,0.8fr)_minmax(0,1.2fr)]">
           <div>
-            <p className="mb-2 text-[10px] uppercase tracking-wider text-zinc-500">Duration</p>
+            <p className="mb-2 text-[10px] uppercase tracking-wider text-zinc-500">Target Duration</p>
             <div className="flex flex-wrap gap-2">
               {TARGET_OPTIONS.map((sec) => (
                 <button
@@ -1190,320 +1187,77 @@ export function PublishingPromoTab({
                 </button>
               ))}
             </div>
-            <label className="mt-3 flex items-center gap-2 text-xs text-zinc-300">
-              <input
-                type="checkbox"
-                checked={watermarkEnabled}
-                onChange={(event) => setWatermarkEnabled(event.target.checked)}
-              />
-              Watermark · SceneFlow Studio
-            </label>
           </div>
 
-          <div>
-            <p className="mb-2 text-[10px] uppercase tracking-wider text-zinc-500">Format / Aspect Ratio</p>
-            <div className="flex flex-wrap gap-2">
-              {(['16:9', '9:16'] as const).map((ratio) => (
-                <button
-                  key={ratio}
-                  type="button"
-                  onClick={() => setAspectOverride(ratio)}
-                  className={cn(
-                    'rounded-full px-3 py-1 text-xs border transition-colors',
-                    aspect === ratio
-                      ? 'border-fuchsia-500/50 bg-fuchsia-500/15 text-fuchsia-100'
-                      : 'border-zinc-700 text-zinc-400 hover:border-zinc-500'
-                  )}
-                >
-                  {ratio === '16:9' ? '16:9 Widescreen' : '9:16 Vertical (Reels / TikTok / Shorts)'}
-                </button>
-              ))}
-            </div>
-          </div>
-        </div>
-
-        <div className="mb-4 grid gap-4 lg:grid-cols-[minmax(0,1.4fr)_minmax(12rem,0.8fr)]">
           <div>
             <p className="mb-2 text-[10px] uppercase tracking-wider text-zinc-500">Target audience</p>
             <AudienceDescriptionField
               value={audience}
               onChange={setAudience}
               variant="compact"
-              rows={3}
+              rows={2}
               projectId={projectId}
               context={{ title: projectTitle }}
-              placeholder="Who this promo is for — the same description Audience Resonance uses."
+              placeholder="Who this promo is for — guides AI shot selection."
             />
           </div>
-          <div>
-            <p className="mb-2 text-[10px] uppercase tracking-wider text-zinc-500">Active Stream Language</p>
-            <GroupedLanguageSelector
-              value={language}
-              onValueChange={(code) => {
-                setExtraLanguages((current) => (current.includes(code) ? current : [...current, code]))
-                setLanguage(code)
-              }}
+        </div>
+
+        <div className="mb-4 flex flex-wrap items-center justify-between gap-2 rounded-lg border border-fuchsia-500/35 bg-fuchsia-950/20 px-3 py-2.5">
+          <div className="flex flex-wrap items-center gap-2">
+            <Button
               size="sm"
-              intent="navigate"
-              placeholder="Promo language"
-              className="w-full"
-            />
-            <div className="mt-3">
-              <div className="flex items-center justify-between gap-2 mb-1.5">
-                <p className="text-[10px] uppercase tracking-wider text-zinc-500 flex items-center gap-1">
-                  <Globe className="w-3 h-3 text-fuchsia-300" />
-                  Multilanguage Campaign Markets ({languages.length})
-                </p>
-                {languages.length > 1 && promoScene && (
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    disabled={multilangGenerating || audioGenerating !== null}
-                    onClick={() => void handleGenerateMultilangNarration()}
-                    className="h-6 px-2 text-[10px] border-fuchsia-500/40 text-fuchsia-200"
-                  >
-                    {multilangGenerating ? (
-                      <Loader2 className="w-3 h-3 animate-spin mr-1" />
-                    ) : (
-                      <Globe className="w-3 h-3 mr-1" />
-                    )}
-                    Voiceover All ({languages.length})
-                  </Button>
-                )}
-              </div>
-              <div
-                data-testid="promo-multilanguage-markets"
-                className="flex flex-wrap gap-1"
-              >
-                {MULTILANG_CAMPAIGN_CHOICES.map((choice) => {
-                  const selected = languages.includes(choice.code)
-                  const isCurrent = language === choice.code
-                  return (
-                    <button
-                      key={choice.code}
-                      type="button"
-                      onClick={() => {
-                        if (selected && choice.code !== 'en' && choice.code !== language) {
-                          setExtraLanguages((prev) => prev.filter((c) => c !== choice.code))
-                        } else {
-                          setExtraLanguages((prev) =>
-                            prev.includes(choice.code) ? prev : [...prev, choice.code]
-                          )
-                          setLanguage(choice.code)
-                        }
-                      }}
-                      className={cn(
-                        'rounded px-2 py-0.5 text-[10px] border transition-colors',
-                        isCurrent
-                          ? 'border-fuchsia-400 bg-fuchsia-500/25 text-fuchsia-100 font-semibold'
-                          : selected
-                            ? 'border-fuchsia-500/40 bg-fuchsia-500/10 text-fuchsia-200'
-                            : 'border-zinc-800 bg-zinc-900/60 text-zinc-400 hover:border-zinc-600'
-                      )}
-                      title={
-                        selected
-                          ? `Included in campaign (${choice.label}) — click to focus or toggle`
-                          : `Add ${choice.label} to this campaign`
-                      }
-                    >
-                      {choice.label}
-                    </button>
-                  )
-                })}
-              </div>
-            </div>
-            <p className="mt-2 text-[11px] leading-relaxed text-zinc-500">
-              Dialogue, titles, and credits are made for each language. Action shots with no
-              on-screen text stay on the shared source picture. Music is shared.
-            </p>
+              onClick={() => void handlePlan()}
+              disabled={planning}
+              className="bg-fuchsia-600 hover:bg-fuchsia-500 text-white font-medium"
+            >
+              {planning ? <Loader2 className="w-4 h-4 animate-spin mr-1.5" /> : <Sparkles className="w-4 h-4 mr-1.5" />}
+              {promoScene && !creatingNewPromo ? 'Rebuild Promo Shots' : 'Build Promo Shots'}
+            </Button>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => setDirectorOpen(true)}
+              disabled={planning}
+              className="border-zinc-700 text-zinc-200 hover:bg-zinc-800"
+            >
+              <Clapperboard className="w-4 h-4 mr-1.5" />
+              Promo Director
+            </Button>
           </div>
+          {promoScene && onOpenPromoInStudio ? (
+            <Button
+              size="sm"
+              data-testid="open-promo-in-studio-btn"
+              className="h-8 shrink-0 border border-fuchsia-400/50 bg-gradient-to-r from-fuchsia-600 to-indigo-600 px-3.5 text-xs font-semibold text-white shadow-md shadow-fuchsia-950/50 hover:from-fuchsia-500 hover:to-indigo-500"
+              onClick={() => onOpenPromoInStudio(String(promoScene.id || promoScene.sceneId || activePromoId || ''))}
+            >
+              <Clapperboard className="w-3.5 h-3.5 mr-1.5" />
+              Open Promo Scene in Studio
+            </Button>
+          ) : null}
         </div>
-
-        <div className="mb-3 grid gap-2 sm:grid-cols-3">
-          <div className="rounded-lg border border-zinc-800 bg-zinc-950/70 p-3">
-            <p className="text-[10px] uppercase tracking-wider text-zinc-500">1 · Plan</p>
-            <div className="mt-2 flex flex-wrap gap-2">
-              <Button size="sm" onClick={() => void handlePlan()} disabled={planning} className="bg-fuchsia-600 hover:bg-fuchsia-500">
-                {planning ? <Loader2 className="w-4 h-4 animate-spin mr-1" /> : <Sparkles className="w-4 h-4 mr-1" />}
-                Plan
-              </Button>
-              <Button size="sm" variant="outline" onClick={() => setDirectorOpen(true)} disabled={planning}>
-                <Clapperboard className="w-4 h-4 mr-1" />
-                Promo Director
-              </Button>
-            </div>
-          </div>
-          <div className="rounded-lg border border-zinc-800 bg-zinc-950/70 p-3">
-            <p className="text-[10px] uppercase tracking-wider text-zinc-500">2 · Preview</p>
-            <div className="mt-2">
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={() => {
-                  if (previewing) {
-                    setPreviewing(false)
-                    return
-                  }
-                  flushSync(() => {
-                    setPreviewing(true)
-                  })
-                  previewRef.current?.start()
-                }}
-                disabled={rendering || previewShots.length === 0}
-              >
-                {previewing ? <Square className="w-4 h-4 mr-1" /> : <Play className="w-4 h-4 mr-1" />}
-                {previewing ? 'Stop preview' : 'Preview'}
-              </Button>
-            </div>
-          </div>
-          <div className="rounded-lg border border-zinc-800 bg-zinc-950/70 p-3">
-            <p className="text-[10px] uppercase tracking-wider text-zinc-500">3 · Render Promo</p>
-            <div className="mt-2">
-              <Button
-                size="sm"
-                onClick={() => void handleRenderTrailer()}
-                disabled={rendering || timelineRows.length === 0}
-                className="bg-fuchsia-600 hover:bg-fuchsia-500"
-              >
-                {rendering ? <Loader2 className="w-4 h-4 animate-spin mr-1" /> : <Film className="w-4 h-4 mr-1" />}
-                Render Promo
-              </Button>
-            </div>
-          </div>
-        </div>
-
-        <div className="mb-4 flex flex-wrap items-center gap-3 rounded-lg border border-fuchsia-500/25 bg-fuchsia-500/5 px-3 py-2.5">
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={() => void handleRunContinuityAgent()}
-            disabled={
-              continuityRunning ||
-              agentRunning ||
-              !onRunContinuityAgent ||
-              timelineBeats.length === 0
-            }
-            className="border-fuchsia-500/40 text-fuchsia-100"
-          >
-            {continuityRunning ? (
-              <Loader2 className="w-4 h-4 animate-spin mr-1" />
-            ) : (
-              <Images className="w-4 h-4 mr-1" />
-            )}
-            Continuity Agent
-          </Button>
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={() => void handleRunPromoAgent()}
-            disabled={
-              agentRunning || continuityRunning || !onRunPromoAgent || timelineBeats.length === 0
-            }
-            className="border-fuchsia-500/40 text-fuchsia-100"
-          >
-            {agentRunning ? <Loader2 className="w-4 h-4 animate-spin mr-1" /> : <Bot className="w-4 h-4 mr-1" />}
-            Promo Agent
-          </Button>
-          <p className="min-w-0 flex-1 text-[11px] leading-relaxed text-zinc-400">
-            Continuity Agent draws the missing wardrobe, location, and prop plates for these shots.
-            Promo Agent does that, then builds the clips, narration, and music for {languageLabel}.
-            Dialogue, titles, and credits are translated. Action shots are shared.
-          </p>
-        </div>
-
-        <PromoCutPreview
-          ref={previewRef}
-          playing={previewing}
-          shots={previewShots}
-          watermark={watermarkEnabled}
-          narrationUrl={narrationAudioUrl}
-          narrationStartSec={promoNarrationStartSec(
-            includedRows.map((row) => row.beat),
-            narrationStartShotKey
-          )}
-          musicUrl={musicAudioUrl}
-          aspect={aspect}
-          onEnded={() => setPreviewing(false)}
-        />
-
-        {languages.length > 0 && timelineRows.length > 0 ? (
-          <div className="mb-4 rounded-lg border border-zinc-800 bg-zinc-950/60 p-3">
-            <p className="mb-2 text-[10px] uppercase tracking-wider text-zinc-500">Promo streams</p>
-            <div className="flex flex-col gap-1.5">
-              {languages.map((code) => {
-                const asset = promoAssetForLanguage(publishingState.promo, code)
-                const narration = narrationUrlFor(promoScene, code)
-                const playingBeats = timelineBeats.filter((beat) => promoShotIncluded(beat))
-                const playback = playingBeats.map((beat) =>
-                  resolvePromoPlayback(
-                    beat,
-                    sceneProductionState as Record<string, unknown> | undefined,
-                    code
-                  )
-                )
-                const localizedBeats = playingBeats.filter(
-                  (beat) => promoShotLocalizes(readPromoShotLocalization(scenes, beat)) !== null
-                )
-                const dialogueReady = localizedBeats.filter((beat) =>
-                  resolvePromoPlayback(
-                    { ...beat, ...readPromoShotLocalization(scenes, beat) },
-                    sceneProductionState as Record<string, unknown> | undefined,
-                    code
-                  ).hasLanguageClip
-                ).length
-                const readyForLanguage = playback.filter((row) => row.hasClip).length
-                const active = code === language
-                return (
-                  <button
-                    key={code}
-                    type="button"
-                    onClick={() => setLanguage(code)}
-                    className={cn(
-                      'flex flex-wrap items-center gap-x-3 gap-y-1 rounded border px-2 py-1.5 text-left text-[11px]',
-                      active
-                        ? 'border-fuchsia-500/40 bg-fuchsia-500/10 text-fuchsia-100'
-                        : 'border-zinc-800 text-zinc-400 hover:border-zinc-600'
-                    )}
-                  >
-                    <span className="font-medium text-zinc-100">{getLanguageDisplayName(code)}</span>
-                    <span>
-                      {isLanguageClipTarget(code)
-                        ? `${dialogueReady}/${localizedBeats.length} language clips`
-                        : `${readyForLanguage}/${playingBeats.length} clips`}
-                    </span>
-                    <span>{narration ? 'Narration' : 'No narration'}</span>
-                    <span>{musicAudioUrl ? 'Music' : 'No music'}</span>
-                    <span>{asset?.status === 'ready' ? 'Rendered' : 'Not rendered'}</span>
-                  </button>
-                )
-              })}
-            </div>
-          </div>
-        ) : null}
-
-        {promoScene && onOpenPromoInStudio ? (
-          <Button
-            size="sm"
-            variant="ghost"
-            className="mb-3 text-xs text-zinc-400"
-            onClick={() => onOpenPromoInStudio(String(promoScene.id || promoScene.sceneId || ''))}
-          >
-            Open promo scene in Studio
-          </Button>
-        ) : null}
 
         {(timelineRows.length > 0 || shotCatalog.length > 0) && (
           <div className="rounded-lg border border-zinc-800 bg-zinc-950/60 p-3">
-            <p className="text-[10px] uppercase tracking-wider text-zinc-500 mb-1">
-              Shot timeline ({timelineRows.length} shots)
-            </p>
-            <p className="text-[11px] text-zinc-400 mb-2">
-              {readyClipCount} of {includedRows.length} clips
-              {timelineRows.length > includedRows.length
-                ? ` · ${timelineRows.length - includedRows.length} excluded`
-                : ''}
-              {dialogueGaps > 0 ? ` · ${dialogueGaps} language clips still needed in ${languageLabel}` : ''}
-            </p>
+            <div className="mb-2 flex items-center justify-between gap-2">
+              <p className="text-[10px] font-semibold uppercase tracking-wider text-zinc-400">
+                Shot timeline ({timelineRows.length} shots)
+              </p>
+              <p className="text-[11px] text-zinc-400">
+                {includedRows.length} active ·{' '}
+                {Math.round(
+                  includedRows.reduce(
+                    (sum, r) => sum + (r.beat.durationSec ?? r.beat.endSec - r.beat.startSec),
+                    0
+                  )
+                )}
+                s total
+                {timelineRows.length > includedRows.length
+                  ? ` · ${timelineRows.length - includedRows.length} excluded`
+                  : ''}
+              </p>
+            </div>
             {shotCatalog.length > 0 ? (
               <div className="mb-2 flex flex-wrap items-end gap-2">
                 <label className="min-w-[10rem] text-[10px] text-zinc-500">
@@ -1577,7 +1331,6 @@ export function PublishingPromoTab({
                 const durationSec = beat.durationSec ?? beat.endSec - beat.startSec
                 const showImage = Boolean(playback.thumbnailUrl || beat.frameUrl) && !broken && !hasClip
                 const showVideo = hasClip && Boolean(playback.videoUrl)
-                const generating = generatingBeatKey === key
                 const thumb = playback.thumbnailUrl || beat.frameUrl
                 return (
                   <div
@@ -1647,14 +1400,6 @@ export function PublishingPromoTab({
                         S{sceneNumber}
                         {shotNumber ? ` · Shot ${shotNumber}` : ''}
                         {beat.trailerRole ? ` · ${beat.trailerRole}` : ''} · {durationSec}s
-                        <span
-                          className={cn(
-                            'ml-2',
-                            playback.policyBlocked && !hasClip ? 'text-amber-300' : 'text-zinc-500'
-                          )}
-                        >
-                          {hasClip ? 'Clip' : playback.policyBlocked ? 'Blocked' : 'Needed'}
-                        </span>
                       </p>
                       {beat.label ? (
                         <p className="truncate text-[10px] text-zinc-500">{beat.label}</p>
@@ -1702,144 +1447,13 @@ export function PublishingPromoTab({
                     >
                       {included ? 'Exclude' : 'Include'}
                     </Button>
-                    {onOpenDirectShot ? (
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        className="h-7 shrink-0 gap-1 px-2 text-[10px] text-teal-200 hover:text-teal-100"
-                        title="Open this shot in Shot Director to rewrite its direction"
-                        onClick={() =>
-                          onOpenDirectShot({
-                            sceneId: beat.sceneId,
-                            sceneIndex: beat.sceneIndex,
-                            beatId: beat.beatId,
-                            safety: playback.policyBlocked === true && !hasClip,
-                          })
-                        }
-                      >
-                        <Clapperboard className="h-3 w-3" />
-                        Shot Director
-                      </Button>
-                    ) : null}
-                    {onOptimizeDirection &&
-                    (!hasClip &&
-                      (!sourceDirectionOptimized(scenes, beat) || playback.policyBlocked)) ? (
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        className="h-7 shrink-0 px-2 text-[10px] text-amber-200 hover:text-amber-100"
-                        title="Rewrite this shot with Optimize direction before generating it"
-                        disabled={optimizingKey === key}
-                        onClick={() => {
-                          setOptimizingKey(key)
-                          void onOptimizeDirection({
-                            sceneId: beat.sceneId,
-                            sceneIndex: beat.sceneIndex,
-                            beatId: beat.beatId,
-                            safety: playback.policyBlocked === true,
-                            policyBlocked: playback.policyBlocked === true,
-                          })
-                            .catch((error) => {
-                              toast.error(error instanceof Error ? error.message : 'Direction optimize failed')
-                            })
-                            .finally(() => setOptimizingKey(null))
-                        }}
-                      >
-                        {optimizingKey === key ? <Loader2 className="h-3 w-3 animate-spin" /> : 'Optimize direction'}
-                      </Button>
-                    ) : null}
-                    {!hasClip ? (
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        className="h-7 shrink-0 px-2 text-[10px]"
-                        disabled={!onGenerateBeatClip || generating}
-                        title="Generate clip"
-                        onClick={() => void handleGenerateBeatClip(key, beat, playback)}
-                      >
-                        {generating ? <Loader2 className="h-3 w-3 animate-spin" /> : 'Generate'}
-                      </Button>
-                    ) : null}
                   </div>
                 )
               })}
-              <PromoAudioRow
-                label="Narration"
-                detail={narrationDetailFor(promoScene, language)}
-                ready={Boolean(narrationAudioUrl)}
-                generating={audioGenerating === 'narration'}
-                disabled={audioGenerating !== null}
-                onGenerate={() => void handleRegenAudio('narration')}
-                extra={
-                  includedRows.length > 0 ? (
-                    <label className="shrink-0 text-[10px] text-zinc-500">
-                      Starts at
-                      <select
-                        value={
-                          includedRows.some((row) => promoShotKey(row.beat) === narrationStartShotKey)
-                            ? narrationStartShotKey
-                            : ''
-                        }
-                        onChange={(event) => setNarrationStartShotKey(event.target.value)}
-                        className="ml-1 h-7 max-w-[9rem] rounded border border-zinc-700 bg-zinc-950 px-1 text-[11px] text-zinc-100"
-                      >
-                        <option value="">From the start</option>
-                        {includedRows.map((row, shotIndex) => (
-                          <option key={row.key} value={promoShotKey(row.beat)}>
-                            {`${shotIndex + 1} · S${row.sceneNumber}${
-                              row.shotNumber ? ` · Shot ${row.shotNumber}` : ''
-                            }`}
-                          </option>
-                        ))}
-                      </select>
-                    </label>
-                  ) : null
-                }
-              />
-              <PromoAudioRow
-                label="Music"
-                detail={typeof promoScene?.music === 'string' ? promoScene.music : undefined}
-                ready={Boolean(musicAudioUrl)}
-                generating={audioGenerating === 'music'}
-                disabled={audioGenerating !== null}
-                onGenerate={() => void handleRegenAudio('music')}
-              />
             </div>
           </div>
         )}
       </div>
-
-      {activeTrailer?.mp4Url ? (
-        <div className="rounded-xl border border-emerald-500/30 bg-emerald-500/5 p-4">
-          <p className="text-xs text-emerald-200 mb-2">
-            {promoLanguageName(activeTrailer.language || language)} promo ready ·{' '}
-            {Math.round(activeTrailer.durationSec)}s · {activeTrailer.aspect}
-          </p>
-          <div className="flex flex-wrap gap-2">
-            <a
-              href={activeTrailer.mp4Url}
-              target="_blank"
-              rel="noopener noreferrer"
-              download
-              className="inline-flex items-center rounded-md border border-emerald-500/30 px-3 py-1.5 text-xs font-medium text-emerald-200 hover:bg-emerald-500/10"
-            >
-              <Download className="w-3.5 h-3.5 mr-1" />
-              Download
-            </a>
-            {onPreviewPromo ? (
-              <Button size="sm" variant="outline" onClick={() => onPreviewPromo(language)}>
-                Play in Screening Room
-              </Button>
-            ) : null}
-          </div>
-        </div>
-      ) : null}
-
-      {promoScene && isPromoCinematicScene(promoScene) ? (
-        <p className="text-[11px] text-zinc-500">
-          Promo scene is excluded from Animatic/Video film playthrough — use Screening Room → Promo.
-        </p>
-      ) : null}
 
       <PromoPlanDirectorDialog
         open={directorOpen}

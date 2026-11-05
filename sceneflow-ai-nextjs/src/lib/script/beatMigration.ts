@@ -338,6 +338,16 @@ const PERSISTED_BEAT_MEDIA_KEYS = [
   'beatRole',
   'musicEnabled',
   'referenceSelection',
+  'sourceSceneId',
+  'sourceBeatId',
+  'sourceSceneIndex',
+  'promoVideoUrl',
+  'actionDescription',
+  'stillVersions',
+  'endStillVersions',
+  'characterIds',
+  'locationId',
+  'propIds',
 ] as const
 
 function pickPersistedBeatMedia(source: Record<string, unknown>): Partial<SceneBeat> {
@@ -956,8 +966,214 @@ export function deriveBeatsFromSceneContent(scene: Record<string, unknown>): Sce
   return legacyBeats
 }
 
+function buildDefaultPromoNarrationDirection(narrationLine?: string, firstShotLabel?: string): BeatDirection {
+  const line = narrationLine?.trim() || 'Promotional trailer voice-over'
+  const visualFocus = firstShotLabel?.trim()
+    ? `Opening trailer montage image: ${firstShotLabel.trim()}`
+    : `Trailer opening frame accompanying voice-over: "${line}"`
+  return {
+    shotType: 'Wide establishing shot',
+    cameraAngle: 'Eye-level cinematic framing',
+    cameraMovement: 'Slow push-in establishing trailer tone',
+    frozenMoment: visualFocus,
+    blocking: 'Voice-over narration plays over the opening promotional montage sequence.',
+    emotion: 'Anticipation and cinematic intrigue',
+    lightingAccent: 'High-contrast dramatic trailer lighting',
+    audioCue: 'Trailer voice-over with atmospheric score swell',
+    transition: 'DISSOLVE',
+    castInFrame: [],
+    generatedBy: 'planner',
+  }
+}
+
+function buildDefaultPromoShotDirection(label?: string, isClimax?: boolean): BeatDirection {
+  const cleanLabel = label?.trim() || 'Promotional highlight moment'
+  return {
+    shotType: isClimax ? 'Dynamic medium close-up' : 'Medium cinematic shot',
+    cameraAngle: isClimax ? 'Low heroic angle' : 'Eye-level cinematic framing',
+    cameraMovement: isClimax ? 'Rapid dramatic push-in' : 'Controlled tracking movement',
+    frozenMoment: cleanLabel,
+    blocking: cleanLabel,
+    emotion: isClimax ? 'Peak dramatic tension' : 'Heightened trailer momentum',
+    lightingAccent: 'High-contrast cinematic lighting',
+    transition: 'CUT',
+    generatedBy: 'planner',
+  }
+}
+
+/**
+ * Self-heal Promo scenes whose beats[] were partially stripped by earlier migrations
+ * while `promoBeatPlan` is still present on the scene, and ensure the narration beat
+ * always carries an initial `beatDirection`.
+ */
+export function reconcilePromoBeatsWithPlan(
+  scene: Record<string, unknown>,
+  beats: SceneBeat[]
+): SceneBeat[] {
+  const isPromo =
+    scene.cinematicType === 'promo' ||
+    (Array.isArray(scene.promoBeatPlan) && scene.promoBeatPlan.length > 0)
+  if (!isPromo) return beats
+
+  const rawPlan = Array.isArray(scene.promoBeatPlan)
+    ? (scene.promoBeatPlan as Array<Record<string, unknown>>)
+    : []
+  const firstPlanFrame =
+    typeof rawPlan[0]?.frameUrl === 'string' && rawPlan[0].frameUrl.trim()
+      ? rawPlan[0].frameUrl.trim()
+      : undefined
+  const firstPlanLabel =
+    typeof rawPlan[0]?.label === 'string' && rawPlan[0].label.trim()
+      ? rawPlan[0].label.trim()
+      : undefined
+
+  // Ensure any narration beat on a Promo scene has initial beatDirection & fallback frame
+  const withNarrationDirected = beats.map((beat) => {
+    if (beat.kind !== 'narration') return beat
+    const hasDir = beat.beatDirection && Object.keys(beat.beatDirection).length > 0
+    const nextBeat: SceneBeat = {
+      ...beat,
+      actionDescription: beat.actionDescription?.trim() || 'Promo trailer voice-over',
+      ...(hasDir
+        ? {}
+        : {
+            beatDirection: buildDefaultPromoNarrationDirection(beat.line, firstPlanLabel),
+          }),
+      ...(!beat.storyboardImageUrl && firstPlanFrame
+        ? { storyboardImageUrl: firstPlanFrame }
+        : {}),
+    }
+    return nextBeat
+  })
+
+  if (rawPlan.length === 0) {
+    return withNarrationDirected
+  }
+
+  const narrationBeats = withNarrationDirected.filter((b) => b.kind === 'narration')
+  const nonNarrationBeats = withNarrationDirected.filter((b) => b.kind !== 'narration')
+
+  // If all planned shots are already present and still carry source links, keep their current order
+  const allLinkedPresent =
+    nonNarrationBeats.length >= rawPlan.length &&
+    nonNarrationBeats.every(
+      (b) =>
+        typeof (b as { sourceSceneIndex?: unknown }).sourceSceneIndex === 'number' &&
+        typeof (b as { sourceBeatId?: unknown }).sourceBeatId === 'string'
+    )
+  if (allLinkedPresent) {
+    return withNarrationDirected
+  }
+
+  // Reconstruct missing or unlinked Promo shots from promoBeatPlan while preserving surviving beats
+  const usedExistingIds = new Set<string>()
+  const reconstructedShots: SceneBeat[] = rawPlan.map((plan, index) => {
+    const planSceneIndex =
+      typeof plan.sceneIndex === 'number' ? plan.sceneIndex : Number(plan.sceneIndex ?? 0)
+    const planBeatId = typeof plan.beatId === 'string' ? plan.beatId : undefined
+    const planSceneId =
+      typeof plan.sceneId === 'string' ? plan.sceneId : `scene-${planSceneIndex}`
+    const planLabel =
+      typeof plan.label === 'string' && plan.label.trim()
+        ? plan.label.trim()
+        : `Promo moment ${index + 1}`
+    const planKind: BeatKind = plan.beatKind === 'dialogue' ? 'dialogue' : 'action'
+    const durationSec =
+      typeof plan.durationSec === 'number' && plan.durationSec > 0
+        ? plan.durationSec
+        : typeof plan.endSec === 'number' && typeof plan.startSec === 'number'
+          ? Math.max(2, plan.endSec - plan.startSec)
+          : 5
+    const frameUrl =
+      typeof plan.frameUrl === 'string' && plan.frameUrl.trim() ? plan.frameUrl.trim() : undefined
+    const videoUrl =
+      typeof plan.videoUrl === 'string' && plan.videoUrl.trim() ? plan.videoUrl.trim() : undefined
+    const isClimax = Boolean(plan.isClimaxCandidate)
+
+    const existingMatch = nonNarrationBeats.find((candidate) => {
+      if (usedExistingIds.has(candidate.beatId)) return false
+      const candSourceBeatId = (candidate as { sourceBeatId?: string }).sourceBeatId
+      const candSourceSceneIdx = (candidate as { sourceSceneIndex?: number }).sourceSceneIndex
+      if (planBeatId && candSourceBeatId === planBeatId && candSourceSceneIdx === planSceneIndex) {
+        return true
+      }
+      if (
+        candSourceSceneIdx === planSceneIndex &&
+        (candidate.actionDescription?.trim() === planLabel ||
+          candidate.line?.trim() === planLabel)
+      ) {
+        return true
+      }
+      return false
+    })
+
+    if (existingMatch) {
+      usedExistingIds.add(existingMatch.beatId)
+      const hasDir =
+        existingMatch.beatDirection && Object.keys(existingMatch.beatDirection).length > 0
+      return {
+        ...existingMatch,
+        kind: existingMatch.kind || planKind,
+        actionDescription: existingMatch.actionDescription?.trim() || planLabel,
+        ...(planKind === 'dialogue'
+          ? { line: existingMatch.line?.trim() || planLabel }
+          : {}),
+        beatRole:
+          existingMatch.beatRole ||
+          (typeof plan.beatRole === 'string' ? plan.beatRole : 'progression'),
+        storyboardImageUrl: existingMatch.storyboardImageUrl || frameUrl,
+        durationSeconds: existingMatch.durationSeconds ?? durationSec,
+        musicEnabled: existingMatch.musicEnabled ?? true,
+        sourceSceneId:
+          (existingMatch as { sourceSceneId?: string }).sourceSceneId || planSceneId,
+        sourceBeatId:
+          (existingMatch as { sourceBeatId?: string }).sourceBeatId || planBeatId,
+        sourceSceneIndex:
+          typeof (existingMatch as { sourceSceneIndex?: number }).sourceSceneIndex === 'number'
+            ? (existingMatch as { sourceSceneIndex?: number }).sourceSceneIndex
+            : planSceneIndex,
+        promoVideoUrl:
+          (existingMatch as { promoVideoUrl?: string }).promoVideoUrl || videoUrl,
+        ...(hasDir
+          ? {}
+          : { beatDirection: buildDefaultPromoShotDirection(planLabel, isClimax) }),
+      } as SceneBeat
+    }
+
+    const deterministicId = `bt_promo_${planSceneIndex}_${planBeatId || 'shot'}_${index}`
+    return {
+      beatId: deterministicId,
+      sequenceIndex: narrationBeats.length + index,
+      kind: planKind,
+      actionDescription: planLabel,
+      ...(planKind === 'dialogue'
+        ? {
+            line: planLabel,
+            lineId: `ln_promo_${planSceneIndex}_${index}`,
+          }
+        : {}),
+      beatRole: typeof plan.beatRole === 'string' ? plan.beatRole : 'progression',
+      storyboardImageUrl: frameUrl,
+      durationSeconds: durationSec,
+      musicEnabled: true,
+      sourceSceneId: planSceneId,
+      sourceBeatId: planBeatId,
+      sourceSceneIndex: planSceneIndex,
+      promoVideoUrl: videoUrl,
+      beatDirection: buildDefaultPromoShotDirection(planLabel, isClimax),
+    } as SceneBeat
+  })
+
+  return normalizeBeatsForProduction([...narrationBeats, ...reconstructedShots])
+}
+
 function tryParseExistingBeats(scene: Record<string, unknown>): SceneBeat[] {
-  if (!Array.isArray(scene.beats) || scene.beats.length === 0) return []
+  if (!Array.isArray(scene.beats) || scene.beats.length === 0) {
+    if (scene.cinematicType === 'promo' && Array.isArray(scene.promoBeatPlan) && scene.promoBeatPlan.length > 0) {
+      return reconcilePromoBeatsWithPlan(scene, [])
+    }
+    return []
+  }
   const raw = scene.beats as unknown[]
   const parsed =
     typeof (raw[0] as Record<string, unknown>)?.kind === 'string'
@@ -971,14 +1187,16 @@ function tryParseExistingBeats(scene: Record<string, unknown>): SceneBeat[] {
       rawById.set(id.trim(), item)
     }
   }
-  return parsed
+  const filtered = parsed
     .map((beat, index) =>
       overlayPersistedBeatFields(beat, (beat.beatId && rawById.get(beat.beatId)) || raw[index])
     )
     .filter((beat) => {
+      if ((beat as { sourceBeatId?: string }).sourceBeatId) return true
       if (beat.kind === 'action') return !!beat.actionDescription?.trim()
-      return !!beat.line?.trim()
+      return !!(beat.line?.trim() || beat.actionDescription?.trim())
     })
+  return reconcilePromoBeatsWithPlan(scene, filtered)
 }
 
 /**
@@ -1819,10 +2037,11 @@ export function reconcileSceneBeatsFromScript(
 
 export function getSceneBeats(scene: Record<string, unknown> | null | undefined): SceneBeat[] {
   if (!scene) return []
-  const beats =
+  const rawBeats =
     Array.isArray(scene.beats) && scene.beats.length > 0
       ? normalizeBeatsForProduction(scene.beats as SceneBeat[])
       : flatSceneToBeats(scene)
+  const beats = reconcilePromoBeatsWithPlan(scene, rawBeats)
   return hydrateBeatAudioFromLegacy(
     scene,
     hydrateBeatStoryboardMediaFromLegacy(scene, beats)
@@ -2418,7 +2637,14 @@ export function parseLlmBeats(raw: unknown[]): SceneBeat[] {
           : kind === 'narration'
             ? NARRATOR_CHARACTER_ID
             : undefined
-      beat.line = String(b.line ?? b.text ?? '').trim()
+      const fallbackPromoLine =
+        typeof b.sourceBeatId === 'string' && typeof b.actionDescription === 'string'
+          ? b.actionDescription
+          : ''
+      beat.line = String(b.line ?? b.text ?? fallbackPromoLine ?? '').trim()
+      if (typeof b.actionDescription === 'string' && b.actionDescription.trim()) {
+        beat.actionDescription = b.actionDescription.trim()
+      }
       beat.voiceDirection =
         typeof b.voiceDirection === 'string' ? b.voiceDirection : undefined
       beat.lineId =
@@ -2456,7 +2682,10 @@ export function parseLlmBeats(raw: unknown[]): SceneBeat[] {
 export function ensureSceneBeats(scene: Record<string, unknown>): Record<string, unknown> {
   const parsed = tryParseExistingBeats(scene)
   const rawBeats = parsed.length > 0 ? parsed : deriveBeatsFromSceneContent(scene)
-  const beats = dedupeRedundantActionBeats(rawBeats)
+  const isPromo =
+    scene.cinematicType === 'promo' ||
+    (Array.isArray(scene.promoBeatPlan) && scene.promoBeatPlan.length > 0)
+  const beats = isPromo ? reconcilePromoBeatsWithPlan(scene, rawBeats) : dedupeRedundantActionBeats(rawBeats)
   const withBeats = applyBeatsToScene(scene, beats)
   const withSfx = applyDerivedSfxToScene(withBeats, beats)
   // The arc is resolved before direction backfill so per-beat direction can be

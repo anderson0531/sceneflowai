@@ -185,6 +185,11 @@ function mergeBeatMedia(canonBeat: any, incomingBeat: any): any {
   if (!canonBeat) return incomingBeat
 
   const merged = { ...incomingBeat }
+  for (const promoKey of ['sourceSceneId', 'sourceBeatId', 'sourceSceneIndex', 'promoVideoUrl'] as const) {
+    if (merged[promoKey] === undefined && canonBeat[promoKey] !== undefined) {
+      merged[promoKey] = canonBeat[promoKey]
+    }
+  }
   mergeStillSlot(merged, incomingBeat, canonBeat, BEAT_START_STILL_SLOT)
   mergeStillSlot(merged, incomingBeat, canonBeat, BEAT_ACTION_START_STILL_SLOT)
   mergeStillSlot(merged, incomingBeat, canonBeat, BEAT_END_STILL_SLOT)

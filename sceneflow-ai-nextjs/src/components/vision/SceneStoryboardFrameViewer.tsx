@@ -1545,10 +1545,20 @@ export function SceneStoryboardFrameViewer({
                     (!!beatRow?.storyboardEndImageUrl?.trim() &&
                       beatRow.storyboardEndImageUrl.trim() !== beatRow.storyboardImageUrl?.trim())
                   if (hasDistinctEnd) markers.push('End')
+                  const promoSource = beatRow as
+                    | (typeof beatRow & { sourceSceneIndex?: number; sourceBeatId?: string })
+                    | undefined
+                  const hasSourceScene =
+                    Boolean(promoSource?.sourceBeatId) &&
+                    typeof promoSource?.sourceSceneIndex === 'number' &&
+                    promoSource.sourceSceneIndex >= 0
                   return {
                     id: slot.key,
                     beatNumber: slot.beatNumber,
                     markers,
+                    sourceSceneLabel: hasSourceScene
+                      ? `S${promoSource!.sourceSceneIndex! + 1}`
+                      : undefined,
                     status: rail?.status,
                     statusLabel: rail?.label,
                     statusDetail: facts ? frameRailTooltip(facts) : undefined,
