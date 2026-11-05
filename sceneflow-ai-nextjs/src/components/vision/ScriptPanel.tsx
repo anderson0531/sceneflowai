@@ -5751,6 +5751,40 @@ function SceneCard({
     selected?.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'nearest' })
   }, [sceneNavigationView, sceneNavigationCollapsed, sceneIdx])
 
+  useEffect(() => {
+    if (!workflowFullscreen || !onNavigateScene || !totalScenes || totalScenes <= 1) return
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.defaultPrevented || !event.altKey || event.metaKey || event.ctrlKey || event.shiftKey) return
+      if (event.key !== 'ArrowLeft' && event.key !== 'ArrowRight') return
+      const target = event.target as HTMLElement | null
+      if (
+        target &&
+        (target.tagName === 'INPUT' ||
+          target.tagName === 'TEXTAREA' ||
+          target.tagName === 'SELECT' ||
+          target.isContentEditable)
+      ) {
+        return
+      }
+      if (
+        document.querySelector(
+          '[role="dialog"][data-state="open"], [role="alertdialog"][data-state="open"]'
+        )
+      ) {
+        return
+      }
+      if (event.key === 'ArrowLeft' && sceneIdx > 0) {
+        event.preventDefault()
+        onNavigateScene(sceneIdx - 1)
+      } else if (event.key === 'ArrowRight' && sceneIdx < totalScenes - 1) {
+        event.preventDefault()
+        onNavigateScene(sceneIdx + 1)
+      }
+    }
+    window.addEventListener('keydown', onKeyDown)
+    return () => window.removeEventListener('keydown', onKeyDown)
+  }, [workflowFullscreen, onNavigateScene, sceneIdx, totalScenes])
+
   const headingText =
     typeof scene?.heading === 'string'
       ? scene.heading
@@ -6610,166 +6644,6 @@ function SceneCard({
                     : 'flex max-h-[calc(100dvh-10.5rem)] min-h-[24rem] flex-col overflow-hidden rounded-xl border border-slate-700/60 bg-slate-900/50 p-3 sm:p-4 shadow-lg'
                 }
               >
-                {workflowFullscreen && (
-                  <div
-                    data-testid="scene-workflow-fullscreen-header"
-                    className="mb-2 flex shrink-0 flex-wrap items-center justify-between gap-2 border-b border-slate-800 pb-2"
-                  >
-                    <div className="flex min-w-0 items-center gap-1.5">
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          if (onNavigateScene && sceneIdx > 0) {
-                            onNavigateScene(sceneIdx - 1)
-                          }
-                        }}
-                        disabled={sceneIdx === 0}
-                        aria-label="Previous scene"
-                        title="Previous scene"
-                        className="rounded-md border border-slate-700 bg-slate-900 p-1.5 text-slate-300 transition-colors hover:bg-slate-800 hover:text-white disabled:cursor-not-allowed disabled:opacity-30"
-                      >
-                        <ChevronLeft className="h-4 w-4" />
-                      </button>
-                      {totalScenes && totalScenes > 1 && Array.isArray(scenes) ? (
-                        <select
-                          aria-label="Jump to scene"
-                          value={sceneIdx}
-                          onChange={(e) => {
-                            const nextIdx = Number(e.target.value)
-                            if (Number.isFinite(nextIdx) && onNavigateScene) {
-                              onNavigateScene(nextIdx)
-                            }
-                          }}
-                          className="h-8 max-w-[20rem] sm:max-w-[28rem] truncate rounded-md border border-indigo-500/40 bg-slate-900 px-2.5 text-xs font-semibold text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                        >
-                          {scenes.map((listScene: any, idx: number) => (
-                            <option key={idx} value={idx}>
-                              SCENE {idx + 1}/{totalScenes}: {sceneHeadingLabel(listScene, idx)}
-                            </option>
-                          ))}
-                        </select>
-                      ) : (
-                        <span className="truncate rounded-md border border-indigo-500/40 bg-slate-900 px-2.5 py-1 text-xs font-semibold text-white">
-                          SCENE {sceneNumber}: {formattedHeading}
-                        </span>
-                      )}
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          if (onNavigateScene && totalScenes && sceneIdx < totalScenes - 1) {
-                            onNavigateScene(sceneIdx + 1)
-                          }
-                        }}
-                        disabled={!totalScenes || sceneIdx >= totalScenes - 1}
-                        aria-label="Next scene"
-                        title="Next scene"
-                        className="rounded-md border border-slate-700 bg-slate-900 p-1.5 text-slate-300 transition-colors hover:bg-slate-800 hover:text-white disabled:cursor-not-allowed disabled:opacity-30"
-                      >
-                        <ChevronRight className="h-4 w-4" />
-                      </button>
-                      <span className="hidden md:inline-flex items-center gap-1 rounded-full border border-indigo-700/50 bg-indigo-950/60 px-2 py-0.5 text-[10px] font-medium tabular-nums text-indigo-200">
-                        {formatNavigationClock(sceneDurationSeconds)}
-                      </span>
-                    </div>
-
-                    <div className="flex flex-wrap items-center gap-1.5">
-                      {onRecommendationsOpenChange && (
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation()
-                            onRecommendationsOpenChange(true)
-                          }}
-                          className={`${sceneToolbarControl} font-medium border border-violet-400/50 bg-violet-500/20 text-violet-200 hover:bg-violet-500/30`}
-                        >
-                          <Lightbulb className="w-3.5 h-3.5" />
-                          <span className="hidden lg:inline">{tStudio('recommendations')}</span>
-                          {pendingRecommendationCount(scene.audienceAnalysis, scene.polishAnalysis) > 0 && (
-                            <span className="flex items-center justify-center h-4 min-w-4 px-1 text-[10px] font-bold bg-violet-500/40 text-violet-100 rounded-full tabular-nums">
-                              {pendingRecommendationCount(scene.audienceAnalysis, scene.polishAnalysis)}
-                            </span>
-                          )}
-                        </button>
-                      )}
-                      {onEditScene && (
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation()
-                            onEditScene(sceneIdx)
-                          }}
-                          className={`${sceneToolbarControl} font-medium border border-blue-400/60 text-blue-200 hover:bg-blue-900/30`}
-                        >
-                          <Pencil className="w-3.5 h-3.5" />
-                          <span>Scene Director</span>
-                        </button>
-                      )}
-                      {activeStep && (
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation()
-                            if (!isWorkflowOpen && onWorkflowOpenChange) {
-                              onWorkflowOpenChange(true)
-                            }
-                            setActiveSceneTab('review')
-                          }}
-                          title="FlowDirector — Multimodal Audience Resonance (AR), script compliance, continuity & pickup recommendations"
-                          className={`${sceneToolbarControl} font-medium border border-indigo-400/60 bg-indigo-500/15 text-indigo-200 hover:bg-indigo-500/25`}
-                        >
-                          <Eye className="w-3.5 h-3.5" />
-                          <span>FlowDirector</span>
-                          {typeof scene.videoReview?.arScore === 'number' && (
-                            <span className="rounded-full bg-indigo-500/35 px-1.5 py-0.2 text-[10px] font-bold text-indigo-100 tabular-nums">
-                              AR {scene.videoReview.arScore}
-                            </span>
-                          )}
-                        </button>
-                      )}
-                      <GroupedLanguageSelector
-                        value={selectedLanguage}
-                        onValueChange={(code) => onLanguageChange?.(code)}
-                        size="sm"
-                        intent="generate"
-                        placeholder="Generate language..."
-                        className="border-slate-600 bg-transparent text-slate-200"
-                      />
-                      {activeStep && (
-                        <button
-                          type="button"
-                          disabled={
-                            isExpressAudioRunning ||
-                            !!isExpressRunning ||
-                            shotDirectionRunning ||
-                            !(productionReadiness?.isAudioReady ?? true) ||
-                            !(productionReadiness?.hasNarrationVoice ?? true) ||
-                            (!onExpressSceneGenerate && expressAudioItems.length === 0)
-                          }
-                          onClick={(e) => {
-                            e.stopPropagation()
-                            setExpressGenerateAllDialogOpen(true)
-                          }}
-                          className={`${sceneToolbarControl} font-medium bg-sky-600 text-white hover:bg-sky-500`}
-                        >
-                          {isExpressAudioRunning || !!isExpressRunning ? (
-                            <>
-                              <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                              <span>Scene Agent...</span>
-                            </>
-                          ) : (
-                            <>
-                              <Zap className="w-3.5 h-3.5" />
-                              <span>Scene Agent</span>
-                            </>
-                          )}
-                        </button>
-                      )}
-                    </div>
-                  </div>
-                )}
-
                 {/* Staleness Warning Banner */}
                 {(() => {
                   // Direction is now hidden, so show Direction stale warning on Frame tab too
@@ -6836,7 +6710,7 @@ function SceneCard({
                 
                 {(
                   <div className="flex min-h-0 flex-1 flex-col gap-2">
-                  {(() => {
+                  {!workflowFullscreen && (() => {
                     const mood = scene.sceneDirection?.mood || scene.mood
                     const intent = scene.sceneDirection?.intent || scene.objective
                     const pacing = scene.sceneDirection?.pacing || scene.pacing
@@ -6975,6 +6849,70 @@ function SceneCard({
                         data-testid="scene-workflow-menu-bar"
                         className="flex shrink-0 items-center justify-between gap-2 rounded-lg border border-indigo-500/40 bg-slate-950 px-1.5 py-0.5 shadow-md"
                       >
+                        {workflowFullscreen && (
+                          <div
+                            data-testid="scene-workflow-fullscreen-header"
+                            className="flex shrink-0 items-center gap-1 border-r border-slate-800 pr-2"
+                          >
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                if (onNavigateScene && sceneIdx > 0) {
+                                  onNavigateScene(sceneIdx - 1)
+                                }
+                              }}
+                              disabled={sceneIdx === 0}
+                              aria-label="Previous scene"
+                              title="Previous scene (Alt+←)"
+                              className="inline-flex h-7 w-7 items-center justify-center rounded-md border border-slate-700/80 bg-slate-900 text-slate-300 transition-colors hover:bg-slate-800 hover:text-white disabled:cursor-not-allowed disabled:opacity-30"
+                            >
+                              <ChevronLeft className="h-3.5 w-3.5" />
+                            </button>
+                            {totalScenes && totalScenes > 1 && Array.isArray(scenes) ? (
+                              <select
+                                aria-label="Jump to scene"
+                                value={sceneIdx}
+                                onChange={(e) => {
+                                  const nextIdx = Number(e.target.value)
+                                  if (Number.isFinite(nextIdx) && onNavigateScene) {
+                                    onNavigateScene(nextIdx)
+                                  }
+                                }}
+                                title={`Scene ${sceneNumber} of ${totalScenes}: ${formattedHeading}`}
+                                className="h-7 max-w-[9rem] sm:max-w-[13rem] lg:max-w-[17rem] truncate rounded-md border border-indigo-500/40 bg-slate-900 px-2 text-xs font-semibold text-white focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                              >
+                                {scenes.map((listScene: any, idx: number) => (
+                                  <option key={idx} value={idx}>
+                                    S{idx + 1}/{totalScenes}: {sceneHeadingLabel(listScene, idx)}
+                                  </option>
+                                ))}
+                              </select>
+                            ) : (
+                              <span
+                                className="inline-flex h-7 max-w-[9rem] sm:max-w-[13rem] items-center truncate rounded-md border border-indigo-500/40 bg-slate-900 px-2 text-xs font-semibold text-white"
+                                title={`Scene ${sceneNumber}: ${formattedHeading}`}
+                              >
+                                S{sceneNumber}: {formattedHeading}
+                              </span>
+                            )}
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                if (onNavigateScene && totalScenes && sceneIdx < totalScenes - 1) {
+                                  onNavigateScene(sceneIdx + 1)
+                                }
+                              }}
+                              disabled={!totalScenes || sceneIdx >= totalScenes - 1}
+                              aria-label="Next scene"
+                              title="Next scene (Alt+→)"
+                              className="inline-flex h-7 w-7 items-center justify-center rounded-md border border-slate-700/80 bg-slate-900 text-slate-300 transition-colors hover:bg-slate-800 hover:text-white disabled:cursor-not-allowed disabled:opacity-30"
+                            >
+                              <ChevronRight className="h-3.5 w-3.5" />
+                            </button>
+                          </div>
+                        )}
                         <div className="min-w-0 flex-1 overflow-x-auto overflow-y-hidden">
                           <TabsList
                             aria-label="Scene workflow"

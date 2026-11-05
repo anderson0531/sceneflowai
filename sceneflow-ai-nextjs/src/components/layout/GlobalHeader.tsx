@@ -58,7 +58,7 @@ export function GlobalHeader() {
   return (
     <>
       <header
-        className={`sticky top-0 z-50 w-full border-b border-gray-200 dark:border-gray-800 bg-white/80 dark:bg-gray-950/80 backdrop-blur sf-brand ${
+        className={`sticky top-0 z-[35] w-full border-b border-gray-200 dark:border-gray-800 bg-white/80 dark:bg-gray-950/80 backdrop-blur sf-brand ${
           showOnMobile ? 'flex flex-col' : 'hidden lg:flex lg:flex-col'
         }`}
       >

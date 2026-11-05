@@ -23,19 +23,30 @@ describe('Scene workflow viewport-fitted window and uncropped menu', () => {
   it('pins the scene workflow menu bar outside the scrollable tab body so it never gets cropped', () => {
     const panel = readSource('src/components/vision/ScriptPanel.tsx')
     const menuIdx = panel.indexOf('data-testid="scene-workflow-menu-bar"')
+    const fullscreenHeaderIdx = panel.indexOf('data-testid="scene-workflow-fullscreen-header"', menuIdx)
     const tabsListIdx = panel.indexOf('aria-label="Scene workflow"', menuIdx)
     const bodyIdx = panel.indexOf('data-testid="scene-workflow-body"', tabsListIdx)
 
     expect(menuIdx).toBeGreaterThan(-1)
-    expect(tabsListIdx).toBeGreaterThan(menuIdx)
+    expect(fullscreenHeaderIdx).toBeGreaterThan(menuIdx)
+    expect(tabsListIdx).toBeGreaterThan(fullscreenHeaderIdx)
     expect(bodyIdx).toBeGreaterThan(tabsListIdx)
 
     const menuSlice = panel.slice(menuIdx, bodyIdx)
     expect(menuSlice).toContain('shrink-0')
     expect(menuSlice).toContain('overflow-x-auto overflow-y-hidden')
+    expect(menuSlice).toContain('aria-label="Previous scene"')
+    expect(menuSlice).toContain('aria-label="Jump to scene"')
+    expect(menuSlice).toContain('aria-label="Next scene"')
 
     const bodySlice = panel.slice(bodyIdx, bodyIdx + 220)
     expect(bodySlice).toContain('min-h-0 flex-1 overflow-y-auto')
+  })
+
+  it('keeps GlobalHeader below the fullscreen workflow window z-index so the fullscreen menu bar is never occluded', () => {
+    const header = readSource('src/components/layout/GlobalHeader.tsx')
+    expect(header).toContain('sticky top-0 z-[35]')
+    expect(header).not.toContain('sticky top-0 z-50')
   })
 
   it('keeps backdrop-blur and overflow-hidden off the outer SceneCard container so fixed/sticky children are not clipped', () => {
