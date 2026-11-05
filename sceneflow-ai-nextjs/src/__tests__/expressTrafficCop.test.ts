@@ -376,4 +376,49 @@ describe('ExpressTrafficCop', () => {
     await expect(pending).rejects.toMatchObject({ name: 'AbortError' })
     expect(taskRan).toBe(false)
   })
+
+  it('counts a failed policy-ladder shot as 2 runs in the 60s rolling RPM window', async () => {
+    const cop = new ExpressTrafficCop({
+      laneMax: { image: 2 },
+      minSpacingMs: { image: 100 },
+      postReleaseDelayMs: { image: 1_000 },
+      rollingWindowRpm: { image: 3 },
+    })
+
+    const enteredAt: number[] = []
+
+    // Shot 1 fails after 2 policy attempts (counts as 2 runs in the 3 RPM rolling window)
+    const shot1 = cop
+      .runInLane('image', async () => {
+        enteredAt.push(Date.now())
+        throw new Error('Image generation blocked by safety after 2 attempts')
+      })
+      .catch(() => 'failed')
+
+    // Shot 2 succeeds (3rd run in the 3 RPM rolling window)
+    const shot2 = cop.runInLane('image', async () => {
+      enteredAt.push(Date.now())
+      return 'ok'
+    })
+
+    await vi.advanceTimersByTimeAsync(500)
+    await Promise.all([shot1, shot2])
+    expect(enteredAt).toHaveLength(2)
+
+    // Shot 3 is now the 4th run in the 60s window and must wait for the 60s rolling window to slide
+    let shot3Entered = false
+    const shot3 = cop.runInLane('image', async () => {
+      shot3Entered = true
+      enteredAt.push(Date.now())
+      return 'ok'
+    })
+
+    await vi.advanceTimersByTimeAsync(10_000)
+    expect(shot3Entered).toBe(false)
+
+    await vi.advanceTimersByTimeAsync(50_500)
+    await shot3
+    expect(shot3Entered).toBe(true)
+    expect(enteredAt[2]! - enteredAt[0]!).toBeGreaterThanOrEqual(60_000)
+  })
 })

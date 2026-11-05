@@ -385,10 +385,7 @@ export function recordVertexRollingTokens(
       }
       const intervalMs = getVertexDispatchIntervalMs('image')
       if (intervalMs > 0) {
-        memoryNextAt.image = Math.max(
-          memoryNextAt.image,
-          Math.min(releaseAt, now + Math.max(intervalMs * 4, 5_000))
-        )
+        memoryNextAt.image = Math.max(memoryNextAt.image, releaseAt)
       }
     }
   }
@@ -416,7 +413,7 @@ function computeRollingWindowPacing(
     effectiveIntervalMs = Math.min(15_000, Math.round(baseIntervalMs * (1 + overBurst * 0.5)))
   }
 
-  // Rolling 60s RPM ceiling
+  // Rolling 60s RPM ceiling (counts all admitted attempts in the 60s window, including failures)
   const rpmCap = getVertexRollingRpmCap(lane)
   if (
     rpmCap > 0 &&
@@ -426,10 +423,7 @@ function computeRollingWindowPacing(
     const oldestInCap = recent[recent.length - rpmCap]
     if (oldestInCap) {
       const rpmFloorAt = oldestInCap.startAt + VERTEX_ROLLING_WINDOW_MS
-      effectiveNextAt = Math.max(
-        effectiveNextAt,
-        explicitRpmSet ? rpmFloorAt : Math.min(rpmFloorAt, now + Math.max(effectiveIntervalMs * 2, 4_000))
-      )
+      effectiveNextAt = Math.max(effectiveNextAt, rpmFloorAt)
     }
   }
 
@@ -450,10 +444,7 @@ function computeRollingWindowPacing(
         running -= entry.tokens
         if (running < tpmCap) break
       }
-      effectiveNextAt = Math.max(
-        effectiveNextAt,
-        explicitTpmSet ? tpmFloorAt : Math.min(tpmFloorAt, now + Math.max(effectiveIntervalMs * 2, 5_000))
-      )
+      effectiveNextAt = Math.max(effectiveNextAt, tpmFloorAt)
     }
   }
 
@@ -467,6 +458,30 @@ function recordRollingDispatchStart(
 ): void {
   const recent = pruneRollingWindow(lane, startAt)
   recent.push({ startAt, tokens: Math.max(0, Math.floor(estimatedTokens)) })
+}
+
+/**
+ * Record an additional outbound Vertex attempt that occurs inside an already-held
+ * image lease (e.g., safety escalation from Flash to Pro, or inner retry after a
+ * failed attempt). Vertex bills RPM and input TPM at request admission even when
+ * an attempt fails or is refused, so nested attempts must count as runs in the
+ * 60s rolling window.
+ */
+export function recordNestedVertexDispatchAttempt(
+  lane: VertexDispatchLane,
+  estimatedTokens = 0,
+  now = Date.now()
+): void {
+  recordRollingDispatchStart(lane, now, estimatedTokens)
+  const intervalMs = getVertexDispatchIntervalMs(lane)
+  if (intervalMs > 0) {
+    const { effectiveNextAt, effectiveIntervalMs } = computeRollingWindowPacing(
+      lane,
+      now,
+      intervalMs
+    )
+    memoryNextAt[lane] = Math.max(memoryNextAt[lane], effectiveNextAt, now + effectiveIntervalMs)
+  }
 }
 
 /**
@@ -610,7 +625,13 @@ async function reserveWithRedis(
   config: { url: string; token: string },
   estimatedTokens = 0
 ): Promise<ReserveDispatchSlotResult> {
-  const { effectiveIntervalMs } = computeRollingWindowPacing(lane, now, intervalMs)
+  const priorMemoryNextAt = memoryNextAt[lane]
+  const { effectiveNextAt, effectiveIntervalMs } = computeRollingWindowPacing(lane, now, intervalMs)
+  const rollingFloorWaitMs =
+    effectiveNextAt > priorMemoryNextAt ? Math.max(0, effectiveNextAt - now) : 0
+  if (rollingFloorWaitMs > maxWaitMs) {
+    return { nextAt: effectiveNextAt, waitMs: rollingFloorWaitMs, reserved: false }
+  }
   const response = await fetch(`${config.url}/eval`, {
     method: 'POST',
     headers: {
@@ -630,6 +651,10 @@ async function reserveWithRedis(
   const payload = (await response.json()) as { result?: unknown }
   const reserved = reservationFromEvalResult(payload.result)
   if (reserved.reserved) {
+    if (rollingFloorWaitMs > reserved.waitMs) {
+      reserved.waitMs = rollingFloorWaitMs
+      reserved.nextAt = Math.max(reserved.nextAt, effectiveNextAt + effectiveIntervalMs)
+    }
     memoryNextAt[lane] = Math.max(memoryNextAt[lane], reserved.nextAt)
     recordRollingDispatchStart(lane, now + reserved.waitMs, estimatedTokens)
   }
@@ -755,11 +780,24 @@ async function claimImageLeaseWithRedis(
   },
   config: { url: string; token: string }
 ): Promise<ReserveImageLeaseResult> {
-  const { effectiveIntervalMs } = computeRollingWindowPacing(
+  const priorMemoryNextAt = memoryNextAt.image
+  const { effectiveNextAt, effectiveIntervalMs } = computeRollingWindowPacing(
     'image',
     input.now,
     input.intervalMs
   )
+  const rollingFloorWaitMs =
+    effectiveNextAt > priorMemoryNextAt ? Math.max(0, effectiveNextAt - input.now) : 0
+  if (rollingFloorWaitMs > input.maxWaitMs) {
+    return {
+      nextAt: effectiveNextAt,
+      waitMs: rollingFloorWaitMs,
+      reserved: false,
+      reason: 'gap',
+      leases: [],
+      token: '',
+    }
+  }
   const response = await fetch(`${config.url}/eval`, {
     method: 'POST',
     headers: {
@@ -786,6 +824,10 @@ async function claimImageLeaseWithRedis(
   const payload = (await response.json()) as { result?: unknown }
   const reserved = imageLeaseClaimFromEvalResult(payload.result)
   if (reserved.reserved) {
+    if (rollingFloorWaitMs > reserved.waitMs) {
+      reserved.waitMs = rollingFloorWaitMs
+      reserved.nextAt = Math.max(reserved.nextAt, effectiveNextAt + effectiveIntervalMs)
+    }
     memoryNextAt.image = Math.max(memoryNextAt.image, reserved.nextAt)
     recordRollingDispatchStart('image', input.now + reserved.waitMs, input.estimatedTokens ?? 0)
     const expiresAt = input.now + input.leaseTtlMs
@@ -1014,7 +1056,10 @@ export async function acquireImageGenerationLease(
   const token = randomUUID()
   const frozenNow = options.now != null
   let now = options.now ?? Date.now()
-  const maxWaitMs = options.maxWaitMs ?? getVertexDispatchMaxWaitMs()
+  const { effectiveNextAt } = computeRollingWindowPacing('image', now, intervalMs)
+  const rollingFloorWaitMs = Math.max(0, effectiveNextAt - now)
+  const maxWaitMs =
+    options.maxWaitMs ?? Math.max(getVertexDispatchMaxWaitMs(), rollingFloorWaitMs + 1_000)
   const deadline = now + maxWaitMs
 
   while (true) {

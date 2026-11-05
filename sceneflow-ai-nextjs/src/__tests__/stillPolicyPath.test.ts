@@ -171,4 +171,23 @@ describe('generateImageWithVertexKlingFallback designer retry', () => {
     expect(second?.prompt).toMatch(/embedded in cracked brick beside person \[1\]'s open hand/i)
     expect(second?.prompt).toContain('spanner')
   })
+
+  it('does not fire a 3rd redundant Vertex call when an eco frame already escalated internally to pro and failed', async () => {
+    vi.mocked(generateVertexImage).mockRejectedValueOnce(
+      new Error(
+        'No image in Vertex Gemini Image response — blocked by safety (model=gemini-3-pro-image, finishReason=IMAGE_SAFETY)'
+      )
+    )
+
+    await expect(
+      generateImageWithVertexKlingFallback({
+        prompt: 'person [1] confronts person [2]',
+        modelTier: 'eco',
+        policyMaxAttempts: 2,
+        skipProductionStillFraming: true,
+      })
+    ).rejects.toThrow(/IMAGE_SAFETY|blocked by safety/i)
+
+    expect(generateVertexImage).toHaveBeenCalledTimes(1)
+  })
 })

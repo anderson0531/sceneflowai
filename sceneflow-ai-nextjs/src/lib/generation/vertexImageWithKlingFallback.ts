@@ -64,6 +64,16 @@ export async function generateImageWithVertexKlingFallback(
       console.warn(
         `[VertexImagePolicy] Attempt ${attempt}/${maxAttempts} blocked: ${lastError.slice(0, 180)}`
       )
+      // When an eco/flash identity-ref frame already escalated internally to
+      // gemini-3-pro-image (`escalateEcoRefusalToPro`) and that rewritten pro
+      // attempt also failed, two Vertex calls have already been spent for this
+      // still. Do not fire a 3rd redundant pro call.
+      if (
+        currentOptions.modelTier === 'eco' &&
+        lastError.includes('model=gemini-3-pro-image')
+      ) {
+        break
+      }
       if (attempt < maxAttempts) {
         const nextEscalationLevel = escalationOffset + attempt
         prompt = escalateImagePromptForRetry(basePrompt, nextEscalationLevel, {

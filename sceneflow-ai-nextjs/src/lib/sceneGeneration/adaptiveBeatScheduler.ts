@@ -304,14 +304,20 @@ export async function runAdaptiveBeatPool(
 
     recordFailure(beatIndex, err)
     const cooldownMs = options.cooldownMsAfterError?.(err) ?? 0
-    if (cooldownMs > 0) {
+    // When postShotDelayMs > 0 (production Frame Agent), any failed shot has
+    // already consumed 1–2+ Vertex runs against the 60s rolling quota window.
+    // Drop target concurrency to 1 and apply a cooldown so the failing worker
+    // does not immediately launch a 3rd shot while the sibling worker's 2nd
+    // shot is still running in the same minute.
+    const effectiveCooldownMs = Math.max(cooldownMs, postShotDelayMs * 2)
+    if (effectiveCooldownMs > 0) {
       successStreak = 0
       const nextTarget = Math.max(minConcurrency, Math.floor(target / 2))
       if (nextTarget < target) {
         target = nextTarget
         options.onConcurrencyChange?.(target, 'decrease')
       }
-      const readyAt = Date.now() + cooldownMs
+      const readyAt = Date.now() + effectiveCooldownMs
       nextAllowedDispatchAt = Math.max(nextAllowedDispatchAt, readyAt)
       for (const entry of queue) {
         entry.readyAt = Math.max(entry.readyAt, readyAt)

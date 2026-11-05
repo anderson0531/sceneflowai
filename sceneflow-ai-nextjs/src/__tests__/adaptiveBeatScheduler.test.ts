@@ -836,4 +836,64 @@ describe('runAdaptiveBeatPool abort signal', () => {
       vi.useRealTimers()
     }
   })
+
+  it('drops concurrency to 1 and delays the 3rd shot when a shot fails while a 2nd shot is running', async () => {
+    vi.useFakeTimers()
+    try {
+      const t0 = Date.now()
+      const startedAt = new Map<number, number>()
+      let releaseSecond!: () => void
+
+      const promise = runAdaptiveBeatPool(
+        [0, 1, 2],
+        async (beatIndex) => {
+          startedAt.set(beatIndex, Date.now() - t0)
+          if (beatIndex === 0) {
+            await new Promise((r) => setTimeout(r, 1_000))
+            throw new Error('Blocked by safety after 2 attempts')
+          }
+          if (beatIndex === 1) {
+            await new Promise<void>((resolve) => {
+              releaseSecond = resolve
+            })
+          }
+        },
+        {
+          initialConcurrency: 2,
+          maxConcurrency: 2,
+          minConcurrency: 1,
+          maxAttempts: 1,
+          postShotDelayMs: 3_000,
+          isRetryable: isExpressBeatPoolRetryable,
+          isCanaryAbort: isExpressImageCanaryAbortError,
+        }
+      )
+
+      await vi.advanceTimersByTimeAsync(0)
+      expect(startedAt.has(0)).toBe(true)
+      expect(startedAt.has(1)).toBe(true)
+      expect(startedAt.has(2)).toBe(false)
+
+      // Shot 0 fails at t=1000ms while Shot 1 is still running.
+      // Because Shot 0 failed, target concurrency drops from 2 -> 1, so Shot 2
+      // MUST NOT start while Shot 1 is still running, even after postShotDelayMs!
+      await vi.advanceTimersByTimeAsync(5_000)
+      expect(startedAt.has(2)).toBe(false)
+
+      // Shot 1 completes at t=7000ms; Shot 2 starts after postShotDelayMs (t=10000ms)
+      await vi.advanceTimersByTimeAsync(2_000)
+      releaseSecond()
+      await vi.advanceTimersByTimeAsync(2_999)
+      expect(startedAt.has(2)).toBe(false)
+      await vi.advanceTimersByTimeAsync(1)
+      expect(startedAt.get(2)).toBe(10_000)
+
+      const result = await promise
+      expect(result.failed.has(0)).toBe(true)
+      expect(result.succeeded.has(1)).toBe(true)
+      expect(result.succeeded.has(2)).toBe(true)
+    } finally {
+      vi.useRealTimers()
+    }
+  })
 })

@@ -254,6 +254,15 @@ export class ExpressTrafficCop {
       }
       return await fn()
     } catch (err) {
+      const isAbort = err instanceof Error && err.name === 'AbortError'
+      if (!isAbort && lane === 'image') {
+        const msg = String((err as Error)?.message ?? err)
+        // A shot that failed after policy-ladder escalation/retry spent 2 Vertex
+        // runs inside the 60s window; record the second run against rollingStarts.
+        if (/(?:policy|safety|blocked|after [2-9]\d* attempt)/i.test(msg)) {
+          this.lanes.image.rollingStarts.push(Date.now())
+        }
+      }
       const failFastImage429 =
         isExpressFailFastRateLimitError(err) ||
         (lane === 'image' && isExpressImageRateLimitError(err))
@@ -261,6 +270,12 @@ export class ExpressTrafficCop {
         this.reportRateLimit(lane, { countTowardRegulator: false })
       } else if (isRetryableError(err)) {
         this.reportRateLimit(lane)
+      } else if (!isAbort && lane === 'image' && this.lanes.image.postReleaseDelayMs > 0) {
+        const state = this.lanes.image
+        state.max = Math.max(1, Math.floor(state.max / 2))
+        const failureCooldownMs = state.postReleaseDelayMs * 2
+        state.cooldownUntil = Math.max(state.cooldownUntil ?? 0, Date.now() + failureCooldownMs)
+        this.onThrottle?.('image', state.max, failureCooldownMs)
       }
       throw err
     } finally {

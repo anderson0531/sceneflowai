@@ -17,6 +17,7 @@ import {
   getVertexRollingWindowSnapshot,
   noteImageGenerationCooldown,
   paceOutboundVertexFetch,
+  recordNestedVertexDispatchAttempt,
   recordVertexRollingTokens,
   reserveDispatchSlot,
   reserveImageLease,
@@ -562,5 +563,22 @@ describe('acquireImageGenerationLease', () => {
     await secondFetch
     expect(fetchedAt).toHaveLength(2)
     expect(fetchedAt[1] - fetchedAt[0]).toBe(500)
+  })
+
+  it('counts nested/failed Vertex attempts and tokens toward the 60s rolling RPM and TPM window', async () => {
+    process.env.VERTEX_IMAGE_DISPATCH_INTERVAL_MS = '500'
+    resetVertexDispatchBucketForTests()
+
+    // Shot 1 acquires a lease (+5,280 tokens), then escalates Flash -> Pro inside the same lease (+5,280 tokens)
+    const releaseShot1 = await acquireImageGenerationLease({
+      maxWaitMs: 20_000,
+      estimatedTokens: 5_280,
+    })
+    recordNestedVertexDispatchAttempt('image', 5_280)
+    await releaseShot1()
+
+    const snapshot = getVertexRollingWindowSnapshot('image')
+    expect(snapshot.requestsInWindow).toBe(2)
+    expect(snapshot.tokensInWindow).toBe(10_560)
   })
 })

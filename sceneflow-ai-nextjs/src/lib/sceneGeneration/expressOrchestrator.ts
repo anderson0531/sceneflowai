@@ -670,8 +670,11 @@ function buildAdaptiveBeatPoolOptions(
       }
     },
     abortOnNonRetryableCanary: true,
-    cooldownMsAfterError: (err) =>
-      isExpressImageRateLimitError(err) ? getSceneExpressBeat429CooldownMs() : 0,
+    cooldownMsAfterError: (err) => {
+      const rateLimitCooldownMs = isExpressImageRateLimitError(err) ? getSceneExpressBeat429CooldownMs() : 0
+      if (rateLimitCooldownMs > 0) return rateLimitCooldownMs
+      return getSceneExpressPostShotDelayMs() * 2
+    },
     ...(onBeatFailed ? { onBeatFailed } : {}),
     ...(signal ? { signal } : {}),
   }

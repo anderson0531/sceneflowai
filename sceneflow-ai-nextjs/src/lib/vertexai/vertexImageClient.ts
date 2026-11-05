@@ -17,6 +17,7 @@ import {
   getImageAdmissionCooldownMs,
   noteImageGenerationCooldown,
   paceOutboundVertexFetch,
+  recordNestedVertexDispatchAttempt,
   recordVertexRollingTokens,
   VertexDispatchDeferredError,
 } from '@/lib/vertexai/vertexDispatchBucket'
@@ -617,6 +618,7 @@ function logPromptImageTokenUsage(
 /** Shared with nested retries so a fetch inside a re-entry still marks the outer lease. */
 interface ImageLeaseAttempt {
   providerRequestSent: boolean
+  providerAttemptCount: number
 }
 
 const imageLeaseHeld = new AsyncLocalStorage<ImageLeaseAttempt>()
@@ -638,7 +640,7 @@ async function runWithinImageLease<T>(
   const maxWaitMs =
     options.deadlineAt != null ? Math.max(0, options.deadlineAt - Date.now()) : undefined
   const estimatedTokens = Math.max(800, (options.referenceImages?.length ?? 0) * 1120 + 800)
-  const attempt: ImageLeaseAttempt = { providerRequestSent: false }
+  const attempt: ImageLeaseAttempt = { providerRequestSent: false, providerAttemptCount: 0 }
   let finishLease: (mode?: 'release' | 'abandon') => Promise<void> = async () => {}
   let finished = false
   const finish = async (mode: 'release' | 'abandon') => {
@@ -830,7 +832,17 @@ async function generateVertexGeminiImageAttempt(
         await paceOutboundVertexFetch('image', { signal: requestSignal })
         throwIfImageAborted(requestSignal, options.signal, model)
         const leaseAttempt = imageLeaseHeld.getStore()
-        if (leaseAttempt) leaseAttempt.providerRequestSent = true
+        if (leaseAttempt) {
+          if (leaseAttempt.providerAttemptCount > 0) {
+            const attemptTokens = Math.max(
+              800,
+              (options.referenceImages?.length ?? 0) * 1120 + 800
+            )
+            recordNestedVertexDispatchAttempt('image', attemptTokens)
+          }
+          leaseAttempt.providerRequestSent = true
+          leaseAttempt.providerAttemptCount += 1
+        }
         return await fetch(endpoint, {
           method: 'POST',
           headers: {
