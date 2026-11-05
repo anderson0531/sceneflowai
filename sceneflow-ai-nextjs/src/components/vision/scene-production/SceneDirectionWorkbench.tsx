@@ -14,7 +14,12 @@ import {
 } from '@/lib/vision/directionRailStatus'
 import type { SceneSegment } from './types'
 import { BeatStillClipViewer } from './BeatStillClipViewer'
-import { promoSourceShotKeys } from '@/lib/publish/buildPromoScene'
+import {
+  formatPromoSourceBadge,
+  formatPromoSourceLongLabel,
+  promoSourceShotKeys,
+  type PromoSceneBeat,
+} from '@/lib/publish/buildPromoScene'
 import { SceneBeatStage, shotKindMarker, type SceneBeatStageItem } from './SceneBeatStage'
 
 interface SceneDirectionWorkbenchProps {
@@ -131,7 +136,7 @@ export function SceneDirectionWorkbench({
         if (isEstablishing) markers.push('Establishing')
         if (beat.excluded === true) markers.push('Excluded')
         if (promoShots.has(`${sceneIdx}:${beat.beatId}`)) markers.push('In promo')
-        const promoSource = beat as SceneBeat & { sourceSceneIndex?: number; sourceBeatId?: string }
+        const promoSource = beat as PromoSceneBeat
         const hasSourceScene =
           Boolean(promoSource.sourceBeatId) &&
           typeof promoSource.sourceSceneIndex === 'number' &&
@@ -141,7 +146,7 @@ export function SceneDirectionWorkbench({
           id: beat.beatId,
           beatNumber: (typeof beat.sequenceIndex === 'number' ? beat.sequenceIndex : index) + 1,
           markers: markers.length > 0 ? markers : undefined,
-          sourceSceneLabel: hasSourceScene ? `S${promoSource.sourceSceneIndex! + 1}` : undefined,
+          sourceSceneLabel: hasSourceScene ? formatPromoSourceBadge(promoSource) : undefined,
           onJumpToSourceScene:
             hasSourceScene && onNavigateScene
               ? () => onNavigateScene(promoSource.sourceSceneIndex!)
@@ -269,7 +274,13 @@ export function SceneDirectionWorkbench({
                 {hasSharedSourceShot && (
                   <div className="flex flex-wrap items-center justify-between gap-2 rounded-md border border-fuchsia-500/35 bg-fuchsia-950/30 px-2.5 py-1.5 text-[11px] text-fuchsia-200">
                     <span>
-                      Shared Shot • Linked with Scene {editorSceneIdx + 1} (edits sync to both Promo and Scene {editorSceneIdx + 1})
+                      Shared Shot • Linked with{' '}
+                      {formatPromoSourceLongLabel(selectedPromoSource as PromoSceneBeat) ||
+                        `Scene ${editorSceneIdx + 1}`}{' '}
+                      (edits sync to both Promo and{' '}
+                      {formatPromoSourceLongLabel(selectedPromoSource as PromoSceneBeat) ||
+                        `Scene ${editorSceneIdx + 1}`}
+                      )
                     </span>
                     {onNavigateScene && (
                       <button
@@ -277,7 +288,10 @@ export function SceneDirectionWorkbench({
                         onClick={() => onNavigateScene(editorSceneIdx)}
                         className="inline-flex items-center gap-1 rounded border border-fuchsia-500/40 bg-fuchsia-900/40 px-2 py-0.5 text-[10px] font-semibold text-fuchsia-100 hover:bg-fuchsia-800/50 transition-colors"
                       >
-                        Jump to Scene {editorSceneIdx + 1} ↗
+                        Jump to{' '}
+                        {formatPromoSourceLongLabel(selectedPromoSource as PromoSceneBeat) ||
+                          `Scene ${editorSceneIdx + 1}`}{' '}
+                        ↗
                       </button>
                     )}
                   </div>

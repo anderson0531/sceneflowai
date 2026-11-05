@@ -8,6 +8,7 @@ import type { ExpressEvent, ExpressOptions } from '@/lib/sceneGeneration/types'
 import { auditStoryboardSceneMedia } from '@/lib/storyboard/mergeSceneMedia'
 import { mergeExpressOrchestratedScenes } from '@/lib/audio/cleanupAudio'
 import { resolveStoryboardScenes } from '@/lib/storyboard/resolveStoryboardScenes'
+import { syncPromoSharedBeatsToSourceScenes } from '@/lib/publish/buildPromoScene'
 import {
   formatReferenceReadinessMessage,
   resolveProjectSceneReferenceReadiness,
@@ -98,7 +99,9 @@ async function persistExpressScenes(
     const nested = !!freshVisionPhase?.script?.script?.scenes?.length
 
     const freshDbScenes = getFreshDbScenes(freshVisionPhase)
-    const orchestratedScenes = getOrchestratedScenes(orchestratedProject)
+    const orchestratedScenes = syncPromoSharedBeatsToSourceScenes(
+      getOrchestratedScenes(orchestratedProject)
+    )
 
     if (auditLabel) {
       console.log(`[Express] Storyboard audit ${auditLabel}:`, {
@@ -107,9 +110,8 @@ async function persistExpressScenes(
       })
     }
 
-    const mergedScenes = mergeExpressOrchestratedScenes(
-      orchestratedScenes,
-      freshDbScenes
+    const mergedScenes = syncPromoSharedBeatsToSourceScenes(
+      mergeExpressOrchestratedScenes(orchestratedScenes, freshDbScenes)
     )
 
     if (auditLabel) {
@@ -209,10 +211,12 @@ export async function POST(req: NextRequest) {
 
   // Merge fragmented storyboard storage before orchestrator reads scenes
   const visionPhase = project.metadata?.visionPhase || {}
-  const resolvedScenes = resolveStoryboardScenes({
-    script: visionPhase.script,
-    visionPhaseScenes: visionPhase.scenes,
-  })
+  const resolvedScenes = syncPromoSharedBeatsToSourceScenes(
+    resolveStoryboardScenes({
+      script: visionPhase.script,
+      visionPhaseScenes: visionPhase.scenes,
+    })
+  )
   if (resolvedScenes.length > 0) {
     injectResolvedScenesIntoProject(project, resolvedScenes)
   }

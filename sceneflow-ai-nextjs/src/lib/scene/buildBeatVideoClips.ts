@@ -1,5 +1,10 @@
 import type { BeatVideoClip } from '@/components/vision/scene-production/BeatVideoGallery'
 import type { DirectorQueueItem, SceneSegment } from '@/components/vision/scene-production/types'
+import {
+  formatPromoSourceBadge,
+  formatPromoSourceLongLabel,
+  type PromoSceneBeat,
+} from '@/lib/publish/buildPromoScene'
 import { compileBeatVideoPromptFromDirection } from '@/lib/scene/beatVideoPromptCompiler'
 import { getSceneBeats, isBeatExcluded } from '@/lib/script/beatMigration'
 import { parsePersistedMusicCues, resolveBeatMusicCue } from '@/lib/script/sceneMusicCues'
@@ -98,15 +103,33 @@ export function buildBeatVideoClips({
           : index) + 1
     const musicCue =
       rawBeatIndex >= 0 ? resolveBeatMusicCue(persistedMusicCues, rawBeatIndex) : undefined
-    const resolvedPrompt =
-      item?.config.prompt ||
+    const compiledFromDirection = compileBeatVideoPromptFromDirection(beat, sceneDirection, {
+      previousBeat,
+      ...(musicCue ? { musicCue } : {}),
+    }).prompt
+    const rawCandidatePrompt =
       segment?.userEditedPrompt ||
+      item?.config.prompt ||
       segment?.generatedPrompt ||
       beat.beatDirection?.videoPrompt?.trim() ||
-      compileBeatVideoPromptFromDirection(beat, sceneDirection, {
-        previousBeat,
-        ...(musicCue ? { musicCue } : {}),
-      }).prompt
+      compiledFromDirection
+    const narrationLine = beat.kind === 'narration' ? beat.line?.trim() : undefined
+    const narrationSnippet = narrationLine
+      ? narrationLine.slice(0, Math.min(20, narrationLine.length))
+      : undefined
+    const resolvedPrompt =
+      narrationSnippet &&
+      !segment?.userEditedPrompt &&
+      (/no spoken dialogue/i.test(rawCandidatePrompt) ||
+        /^medium shot,\s*promo trailer voice-over/i.test(rawCandidatePrompt) ||
+        !rawCandidatePrompt.includes(narrationSnippet))
+        ? compiledFromDirection
+        : rawCandidatePrompt
+    const promoBeat = beat as PromoSceneBeat
+    const hasSharedSource =
+      Boolean(promoBeat.sourceBeatId) &&
+      typeof promoBeat.sourceSceneIndex === 'number' &&
+      promoBeat.sourceSceneIndex >= 0
     return {
       key: beat.beatId,
       beatId: beat.beatId,
@@ -123,6 +146,13 @@ export function buildBeatVideoClips({
       queueItem: item,
       imageTier: resolveBeatStillTier(beat, segment),
       promptChanged: isBeatFrameStale(beat) || !!segment?.isStale,
+      ...(hasSharedSource
+        ? {
+            sourceSceneLabel: formatPromoSourceBadge(promoBeat),
+            sourceSceneLongLabel: formatPromoSourceLongLabel(promoBeat),
+            sourceSceneIndex: promoBeat.sourceSceneIndex,
+          }
+        : {}),
     }
   })
 

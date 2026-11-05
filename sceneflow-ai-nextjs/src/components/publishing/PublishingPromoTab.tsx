@@ -567,7 +567,21 @@ export function PublishingPromoTab({
   )
 
   const narrationAudioUrl = narrationUrlFor(promoScene, language)
-  const musicAudioUrl = typeof promoScene?.musicAudio === 'string' ? promoScene.musicAudio : undefined
+  const musicAudioUrl =
+    (typeof promoScene?.musicAudio === 'string' && promoScene.musicAudio.trim()
+      ? promoScene.musicAudio.trim()
+      : undefined) ||
+    (Array.isArray(promoScene?.sceneMusicCues)
+      ? (
+          promoScene.sceneMusicCues.find(
+            (c: unknown) =>
+              c &&
+              typeof c === 'object' &&
+              typeof (c as { url?: unknown }).url === 'string' &&
+              String((c as { url?: unknown }).url).trim()
+          ) as { url?: string } | undefined
+        )?.url?.trim()
+      : undefined)
   const activeTrailer = promoAssetForLanguage(publishingState.promo, language)
 
   const promoProductionData = useMemo(() => {
@@ -1381,6 +1395,57 @@ export function PublishingPromoTab({
             </Button>
           ) : null}
         </div>
+
+        {promoScene && !creatingNewPromo && (
+          <div
+            data-testid="promo-audio-tracks-bar"
+            className="mb-4 grid gap-2 sm:grid-cols-2"
+          >
+            <PromoAudioRow
+              label="Promo Music Track"
+              detail={
+                typeof promoScene.music === 'string' && promoScene.music.trim()
+                  ? promoScene.music.trim()
+                  : 'Cinematic promotional trailer score'
+              }
+              ready={Boolean(musicAudioUrl)}
+              generating={audioGenerating === 'music'}
+              disabled={Boolean(audioGenerating) || planning}
+              onGenerate={() => void handleRegenAudio('music')}
+              extra={
+                musicAudioUrl ? (
+                  <audio
+                    controls
+                    preload="metadata"
+                    src={musicAudioUrl}
+                    className="h-7 max-w-[150px]"
+                  />
+                ) : null
+              }
+            />
+            <PromoAudioRow
+              label="Promo Voiceover"
+              detail={
+                narrationDetailFor(promoScene, language) ||
+                'Opening trailer voice-over hook'
+              }
+              ready={Boolean(narrationAudioUrl)}
+              generating={audioGenerating === 'narration'}
+              disabled={Boolean(audioGenerating) || planning}
+              onGenerate={() => void handleRegenAudio('narration')}
+              extra={
+                narrationAudioUrl ? (
+                  <audio
+                    controls
+                    preload="metadata"
+                    src={narrationAudioUrl}
+                    className="h-7 max-w-[150px]"
+                  />
+                ) : null
+              }
+            />
+          </div>
+        )}
 
         {(timelineRows.length > 0 || renderedPromoStreams.length > 0) && (
           <div

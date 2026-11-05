@@ -501,17 +501,20 @@ function buildVideoPrompt(beat: SceneBeat, spokenText?: string): string {
   if (beat.kind === 'action') {
     return `${beat.actionDescription ?? 'Scene action unfolds with natural motion'}${summarySuffix}`
   }
-  if (beat.kind === 'narration') {
-    return `Visual backdrop for narration; atmospheric motion, no on-screen dialogue text.${summarySuffix}`
-  }
-  const character = beat.character ?? 'Character'
   const rawLine = spokenText ?? beat.line ?? ''
   const parsed = parsePerformanceCue(rawLine)
-  const line = parsed.spokenText.replace(/"/g, "'")
+  const line = parsed.spokenText.replace(/"/g, "'").trim()
   const deliverySuffix = parsed.deliveryProse
     ? ` Delivery: ${parsed.deliveryProse}.`
     : ''
   const performance = formatPerformanceClause(beat.voiceDirection)
+  if (beat.kind === 'narration') {
+    if (line) {
+      return `Visual backdrop for narration; atmospheric motion, no on-screen dialogue text. Voiceover narration: "${line}".${deliverySuffix}${performance}${summarySuffix}`
+    }
+    return `Visual backdrop for narration; atmospheric motion, no on-screen dialogue text.${summarySuffix}`
+  }
+  const character = beat.character ?? 'Character'
   return `${character} speaks with natural lip sync: "${line}".${deliverySuffix}${performance}${summarySuffix}`
 }
 

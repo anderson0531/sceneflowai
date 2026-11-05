@@ -375,3 +375,48 @@ describe('music cue steer', () => {
     expect(result.prompt.match(/the turn into violence/g)).toHaveLength(1)
   })
 })
+
+describe('narration beat video prompt compilation', () => {
+  const narrationBeat: SceneBeat = {
+    beatId: 'beat_narr_1',
+    sequenceIndex: 0,
+    kind: 'narration',
+    character: 'NARRATOR',
+    line: 'In a city wired to remember everything, one archive is about to forget.',
+    voiceDirection: 'Low, urgent trailer cadence',
+    beatDirection: {
+      shotType: 'Wide establishing shot',
+      cameraMovement: 'Slow push-in establishing trailer tone',
+      frozenMoment: 'Promo trailer opening voice-over sequence',
+      blocking: 'Voice-over narration plays over the opening promotional montage sequence.',
+    },
+  }
+
+  it('includes the narration spoken line and omits No spoken dialogue in compiled clip prompts', () => {
+    const result = compileBeatVideoPrompt(narrationBeat)
+    expect(result.prompt).toContain(
+      'Voiceover narration: "In a city wired to remember everything, one archive is about to forget."'
+    )
+    expect(result.prompt).toContain(
+      'The only spoken line is: "In a city wired to remember everything, one archive is about to forget."'
+    )
+    expect(result.prompt).not.toContain('No spoken dialogue')
+    expect(result.negativePrompt).not.toContain('speech')
+  })
+
+  it('replaces a stale stored beatDirection.videoPrompt that omitted the narration line', () => {
+    const staleBeat: SceneBeat = {
+      ...narrationBeat,
+      beatDirection: {
+        ...narrationBeat.beatDirection,
+        videoPrompt:
+          'Promo trailer opening voice-over sequence. Slow push-in establishing trailer tone. Real-time motion, no lip flap, no speech. No spoken dialogue.',
+      },
+    }
+    const result = compileBeatVideoPromptFromDirection(staleBeat, null)
+    expect(result.prompt).toContain(
+      'In a city wired to remember everything, one archive is about to forget.'
+    )
+    expect(result.prompt).not.toContain('No spoken dialogue')
+  })
+})

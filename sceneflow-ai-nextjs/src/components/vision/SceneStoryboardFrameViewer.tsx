@@ -42,6 +42,11 @@ import {
   type StoryboardFrameSlot,
 } from '@/lib/storyboard/types'
 import { getSceneBeats } from '@/lib/script/beatMigration'
+import {
+  formatPromoSourceBadge,
+  formatPromoSourceLongLabel,
+  type PromoSceneBeat,
+} from '@/lib/publish/buildPromoScene'
 import { resolveBeatStillTier } from '@/lib/storyboard/mediaVersions'
 import {
   isStoredFrameBookendPromptAligned,
@@ -1545,9 +1550,7 @@ export function SceneStoryboardFrameViewer({
                     (!!beatRow?.storyboardEndImageUrl?.trim() &&
                       beatRow.storyboardEndImageUrl.trim() !== beatRow.storyboardImageUrl?.trim())
                   if (hasDistinctEnd) markers.push('End')
-                  const promoSource = beatRow as
-                    | (typeof beatRow & { sourceSceneIndex?: number; sourceBeatId?: string })
-                    | undefined
+                  const promoSource = beatRow as PromoSceneBeat | undefined
                   const hasSourceScene =
                     Boolean(promoSource?.sourceBeatId) &&
                     typeof promoSource?.sourceSceneIndex === 'number' &&
@@ -1557,7 +1560,7 @@ export function SceneStoryboardFrameViewer({
                     beatNumber: slot.beatNumber,
                     markers,
                     sourceSceneLabel: hasSourceScene
-                      ? `S${promoSource!.sourceSceneIndex! + 1}`
+                      ? formatPromoSourceBadge(promoSource)
                       : undefined,
                     status: rail?.status,
                     statusLabel: rail?.label,
@@ -1769,6 +1772,14 @@ export function SceneStoryboardFrameViewer({
                         {activeDisplaySlot.beatNumber != null && (
                           <span className="shrink-0 text-[10px] px-1.5 py-0.5 rounded-full bg-slate-700/50 text-slate-300 border border-slate-600/40 font-medium tabular-nums">
                             Shot {activeDisplaySlot.beatNumber}
+                          </span>
+                        )}
+                        {activeBeat && formatPromoSourceLongLabel(activeBeat as PromoSceneBeat) && (
+                          <span
+                            className="shrink-0 text-[10px] px-2 py-0.5 rounded-full bg-fuchsia-500/15 text-fuchsia-200 border border-fuchsia-500/45 font-semibold tabular-nums"
+                            title={`Shared shot from ${formatPromoSourceLongLabel(activeBeat as PromoSceneBeat)} — frame & direction updates sync with ${formatPromoSourceLongLabel(activeBeat as PromoSceneBeat)}`}
+                          >
+                            Shared: {formatPromoSourceLongLabel(activeBeat as PromoSceneBeat)}
                           </span>
                         )}
                         {activeDisplaySlot.frameRole === 'action-start' && (

@@ -63,6 +63,7 @@ import type {
 } from '@/types/publishingAssets'
 import {
   buildPromoSceneFromPlan,
+  buildPromoSceneMusicCues,
   findPromoSceneIndex,
   getPromoCampaignPreset,
   removePromoSceneFromScenes,
@@ -878,8 +879,16 @@ export async function POST(request: NextRequest) {
         )
       }
 
+      const promoBeatsCount = Array.isArray(promoScene.beats) ? promoScene.beats.length : 1
       promoScene.music = musicPrompt
       promoScene.musicAudio = music.url
+      promoScene.sceneMusicCues = buildPromoSceneMusicCues({
+        beatsCount: promoBeatsCount,
+        musicPrompt,
+        musicAudio: music.url,
+        durationSec: targetDurationSec,
+        existingCues: promoScene.sceneMusicCues,
+      })
       scenes[promoIdx] = promoScene
       metadata = setScenesOnMetadata(metadata, scenes)
       metadata = mergePromoPublishing(metadata, promoOptions, {

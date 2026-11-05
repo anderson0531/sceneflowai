@@ -105,6 +105,11 @@ export interface BeatVideoClip {
   /** Pre-Vis frame tier for this beat. Clips do not store their own Draft | Final. */
   imageTier?: 'draft' | 'final'
   promptChanged?: boolean
+  /** Shared source scene badge for Promo shots (e.g. "S2 · Shot 3"). */
+  sourceSceneLabel?: string
+  /** Descriptive shared source label for Promo shots (e.g. "Scene 2 · Shot 3"). */
+  sourceSceneLongLabel?: string
+  sourceSceneIndex?: number
 }
 
 interface BeatVideoGalleryProps {
@@ -444,6 +449,7 @@ export function BeatVideoGallery({
               id: clip.key,
               beatNumber: clip.beatNumber,
               markers,
+              sourceSceneLabel: clip.sourceSceneLabel,
               status: rail?.status,
               statusLabel: rail?.label || undefined,
               statusDetail: facts ? videoRailTooltip(facts, errorText) : undefined,
@@ -848,6 +854,14 @@ export function BeatVideoGallery({
                   <span className="shrink-0 rounded-full border border-slate-600/40 bg-slate-700/50 px-1.5 py-0.5 text-[10px] font-medium text-slate-300">
                     Shot {preview.beatNumber}
                   </span>
+                  {(preview.sourceSceneLongLabel || preview.sourceSceneLabel) && (
+                    <span
+                      className="shrink-0 rounded-full border border-fuchsia-500/45 bg-fuchsia-500/15 px-2 py-0.5 text-[10px] font-semibold text-fuchsia-200"
+                      title={`Shared shot from ${preview.sourceSceneLongLabel || preview.sourceSceneLabel} — clip & direction updates sync with ${preview.sourceSceneLongLabel || preview.sourceSceneLabel}`}
+                    >
+                      Shared: {preview.sourceSceneLongLabel || preview.sourceSceneLabel}
+                    </span>
+                  )}
                   <p className="min-w-0 flex-1 truncate text-sm font-semibold text-slate-200" title={preview.label}>
                     {preview.label}
                   </p>

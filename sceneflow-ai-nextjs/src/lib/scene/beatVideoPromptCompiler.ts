@@ -248,9 +248,13 @@ export function beatVideoFidelityClose(
     parts.push(`The only action is: ${statedAction.replace(/\.+$/, '')}`)
   }
 
-  if (beat.kind === 'dialogue') {
+  if (beat.kind === 'dialogue' || beat.kind === 'narration') {
     const line = (options?.spokenLine ?? spokenLineOf(beat)).trim()
-    if (line) parts.push(`The only spoken line is: "${line}"`)
+    if (line) {
+      parts.push(`The only spoken line is: "${line}"`)
+    } else if (beat.kind === 'narration') {
+      parts.push('No spoken dialogue')
+    }
   } else {
     parts.push('No spoken dialogue')
   }
@@ -258,8 +262,14 @@ export function beatVideoFidelityClose(
   return parts.join('. ')
 }
 
+function hasSpokenDialogue(beat: SceneBeat, excerpt?: string): boolean {
+  if (beat.kind === 'dialogue') return true
+  if (beat.kind === 'narration') return Boolean(spokenLineOf(beat, excerpt).trim())
+  return false
+}
+
 function videoNegatives(beat: SceneBeat, styleNegative: string): string {
-  const silent = beat.kind === 'dialogue' ? '' : `, ${SILENT_NEGATIVES}`
+  const silent = hasSpokenDialogue(beat) ? '' : `, ${SILENT_NEGATIVES}`
   return `${BASE_NEGATIVES}, ${styleNegative}${silent}`
 }
 
@@ -268,7 +278,37 @@ function leadForBeat(beat: SceneBeat, options?: CompileBeatVideoPromptOptions): 
     return beat.actionDescription?.trim() || 'Scene action'
   }
   if (beat.kind === 'narration') {
-    return 'Atmospheric visual scene supporting voiceover mood. Subtle environmental motion. No on-screen text'
+    const parsed = parsePerformanceCue(options?.excerpt ?? beat.line ?? '')
+    let cleanLine = parsed.spokenText.replace(/"/g, "'").trim()
+    const rawSpeaker = beat.character?.trim()
+    const hasCustomSpeaker = Boolean(
+      rawSpeaker &&
+        rawSpeaker.toUpperCase() !== 'NARRATOR' &&
+        rawSpeaker.toUpperCase() !== 'VOICEOVER'
+    )
+    if (cleanLine && options?.characterGender) {
+      cleanLine = correctPronounsToGender(cleanLine, options.characterGender, {
+        characterName: options.characterName ?? (rawSpeaker || 'Narrator'),
+      })
+    }
+    const delivery = parsed.deliveryProse ? ` Delivery: ${parsed.deliveryProse}` : ''
+    const performance = formatPerformanceClause(beat.voiceDirection)
+    const customAction =
+      beat.actionDescription?.trim() &&
+      beat.actionDescription.trim() !== 'Promo trailer voice-over'
+        ? beat.actionDescription.trim()
+        : undefined
+    const baseVisual =
+      customAction ||
+      'Atmospheric visual scene supporting voiceover mood. Subtle environmental motion. No on-screen text'
+    if (!cleanLine) {
+      return baseVisual
+    }
+    if (hasCustomSpeaker && rawSpeaker) {
+      const speakerAlias = toCharacterPromptAlias(rawSpeaker)
+      return `${baseVisual}. ${speakerAlias} speaks: "${cleanLine}".${delivery}${performance}`
+    }
+    return `${baseVisual}. Voiceover narration: "${cleanLine}".${delivery}${performance}`
   }
 
   const character = beat.character ?? 'Character'
@@ -364,7 +404,9 @@ export function compileBeatVideoPrompt(
   const styleSuffix = getArtStyleVideoPromptSuffix(artStyleId)
   const styleNegative = getArtStyleNegativeTerms(artStyleId)
   const steer = formatMusicCueSteer(options?.musicCue)
-  const spokenLine = beat.kind === 'dialogue' ? spokenLineOf(beat, options?.excerpt) : undefined
+  const spokenLine = hasSpokenDialogue(beat, options?.excerpt)
+    ? spokenLineOf(beat, options?.excerpt)
+    : undefined
   const core = withMotionWhenUnstated(beat, leadForBeat(beat, options))
   return finishVideoPrompt({
     core,
@@ -401,7 +443,9 @@ function compileOwnedBeatVideoPrompt(
   styleNegative: string,
   steer: string
 ): BeatVideoPromptResult {
-  const spokenLine = beat.kind === 'dialogue' ? spokenLineOf(beat, options?.excerpt) : undefined
+  const spokenLine = hasSpokenDialogue(beat, options?.excerpt)
+    ? spokenLineOf(beat, options?.excerpt)
+    : undefined
   const lead = leadForBeat(beat, options)
   const clauses = directionClauses(beat, lead)
   let core = clauses.length > 0 ? normalizePromptJoin(lead, clauses.join('. ')) : lead
@@ -434,8 +478,17 @@ export function compileBeatVideoPromptFromDirection(
   const styleSuffix = getArtStyleVideoPromptSuffix(artStyleId)
   const styleNegative = getArtStyleNegativeTerms(artStyleId)
   const steer = formatMusicCueSteer(options?.musicCue)
+  const spokenLine = hasSpokenDialogue(beat, options?.excerpt)
+    ? spokenLineOf(beat, options?.excerpt)
+    : undefined
   const stored = beat.beatDirection?.videoPrompt?.trim()
-  if (stored) {
+  const storedOmitsNarrationLine =
+    beat.kind === 'narration' &&
+    Boolean(spokenLine?.trim()) &&
+    Boolean(stored) &&
+    (/no spoken dialogue/i.test(stored!) ||
+      !stored!.includes(spokenLine!.trim().slice(0, Math.min(24, spokenLine!.trim().length))))
+  if (stored && !storedOmitsNarrationLine) {
     const continuity = incomingContinuityClause(options)
     let prompt =
       continuity && !tokenAlreadyInPrompt(continuity, stored)
@@ -462,7 +515,6 @@ export function compileBeatVideoPromptFromDirection(
     )
   }
 
-  const spokenLine = beat.kind === 'dialogue' ? spokenLineOf(beat, options?.excerpt) : undefined
   const entry = findBundleEntryForBeat(beat, sceneDirection?.segmentPromptBundle)
 
   if (entry?.videoPrompt?.trim()) {

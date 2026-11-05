@@ -214,6 +214,8 @@ import { getProjectCreditsBudget } from '@/lib/credits/projectBudgetShared'
 import type { DirectShotRequest, DirectShotTarget } from '@/lib/vision/directShotTarget'
 import {
   findPromoScenes,
+  formatPromoSourceBadge,
+  formatPromoSourceLongLabel,
   hydratePromoSceneWithSharedShots,
   isPromoCinematicScene,
   promoSceneDisplayName,
@@ -3607,6 +3609,55 @@ export function ScriptPanel({ script, onScriptChange, onAudioSlotSaved, isGenera
                               return { sceneId: targetSceneId, segmentId }
                             }
 
+                            const effectiveGeneratingDirectSlotKey = (() => {
+                              if (!isPromoScene || !generatingDirectSlotKey) {
+                                return generatingDirectSlotKey
+                              }
+                              const promoBeats =
+                                (effectiveScene.beats as PromoSceneBeat[] | undefined) || []
+                              for (const pb of promoBeats) {
+                                if (typeof pb.sourceSceneIndex === 'number' && pb.sourceBeatId) {
+                                  const srcPrefixes = [
+                                    `${pb.sourceSceneIndex}-${pb.sourceBeatId}`,
+                                    `${pb.sourceSceneIndex}-beat-${pb.sourceBeatId}`,
+                                  ]
+                                  for (const srcPrefix of srcPrefixes) {
+                                    if (
+                                      generatingDirectSlotKey === srcPrefix ||
+                                      generatingDirectSlotKey.startsWith(`${srcPrefix}-`)
+                                    ) {
+                                      const suffix = generatingDirectSlotKey.slice(srcPrefix.length)
+                                      const usesBeatWord = srcPrefix.includes('-beat-')
+                                      return usesBeatWord
+                                        ? `${idx}-beat-${pb.beatId}${suffix}`
+                                        : `${idx}-${pb.beatId}${suffix}`
+                                    }
+                                  }
+                                }
+                              }
+                              return generatingDirectSlotKey
+                            })()
+
+                            const effectiveExpressStatus = (() => {
+                              if (!isPromoScene || !expressStatus || expressStatus[idx]) {
+                                return expressStatus
+                              }
+                              const promoBeats =
+                                (effectiveScene.beats as PromoSceneBeat[] | undefined) || []
+                              for (const pb of promoBeats) {
+                                if (
+                                  typeof pb.sourceSceneIndex === 'number' &&
+                                  expressStatus[pb.sourceSceneIndex]?.status === 'running'
+                                ) {
+                                  return {
+                                    ...expressStatus,
+                                    [idx]: expressStatus[pb.sourceSceneIndex],
+                                  }
+                                }
+                              }
+                              return expressStatus
+                            })()
+
                     return (
                     <SortableSceneCard
                   key={idx}
@@ -3707,7 +3758,86 @@ export function ScriptPanel({ script, onScriptChange, onAudioSlotSaved, isGenera
                       }
                       onSegmentAnimaticSettingsChange={onSegmentAnimaticSettingsChange}
                       onRenderedSceneUrlChange={onRenderedSceneUrlChange}
-                      onProductionDataChange={onProductionDataChange}
+                      onProductionDataChange={
+                        onProductionDataChange
+                          ? (targetSceneId, nextData) => {
+                              onProductionDataChange(targetSceneId, nextData)
+                              if (!isPromoScene || !Array.isArray(nextData?.segments)) return
+                              const promoBeats =
+                                (effectiveScene.beats as PromoSceneBeat[] | undefined) || []
+                              const updatesBySourceKey = new Map<string, SceneProductionData>()
+                              for (const seg of nextData.segments) {
+                                const promoBeat = seg.beatId
+                                  ? promoBeats.find((b) => b.beatId === seg.beatId)
+                                  : undefined
+                                if (
+                                  !promoBeat ||
+                                  typeof promoBeat.sourceSceneIndex !== 'number' ||
+                                  !promoBeat.sourceBeatId
+                                ) {
+                                  continue
+                                }
+                                const sourceScene = scenes[promoBeat.sourceSceneIndex]
+                                const sourceKeyCandidates = [
+                                  promoBeat.sourceSceneId,
+                                  sourceScene?.sceneId,
+                                  sourceScene?.id,
+                                  `scene-${promoBeat.sourceSceneIndex}`,
+                                ].filter((k): k is string => Boolean(k))
+                                let matchedKey: string | undefined
+                                let sourceProd: SceneProductionData | undefined
+                                for (const key of sourceKeyCandidates) {
+                                  const candidate =
+                                    updatesBySourceKey.get(key) || sceneProductionData[key]
+                                  if (candidate?.segments?.some((s) => s.beatId === promoBeat.sourceBeatId)) {
+                                    matchedKey = key
+                                    sourceProd = candidate
+                                    break
+                                  }
+                                }
+                                if (!matchedKey || !sourceProd?.segments) continue
+                                let changed = false
+                                const nextSourceSegments = sourceProd.segments.map((srcSeg) => {
+                                  if (srcSeg.beatId !== promoBeat.sourceBeatId) return srcSeg
+                                  const nextUserPrompt = seg.userEditedPrompt ?? srcSeg.userEditedPrompt
+                                  const nextGenPrompt = seg.generatedPrompt || srcSeg.generatedPrompt
+                                  const nextAssetUrl = seg.activeAssetUrl ?? srcSeg.activeAssetUrl
+                                  const nextStatus = seg.status || srcSeg.status
+                                  const nextTakes =
+                                    Array.isArray(seg.takes) && seg.takes.length > (srcSeg.takes?.length || 0)
+                                      ? seg.takes
+                                      : srcSeg.takes
+                                  if (
+                                    nextUserPrompt === srcSeg.userEditedPrompt &&
+                                    nextGenPrompt === srcSeg.generatedPrompt &&
+                                    nextAssetUrl === srcSeg.activeAssetUrl &&
+                                    nextTakes === srcSeg.takes
+                                  ) {
+                                    return srcSeg
+                                  }
+                                  changed = true
+                                  return {
+                                    ...srcSeg,
+                                    userEditedPrompt: nextUserPrompt,
+                                    generatedPrompt: nextGenPrompt,
+                                    activeAssetUrl: nextAssetUrl,
+                                    status: nextStatus,
+                                    takes: nextTakes,
+                                  }
+                                })
+                                if (changed) {
+                                  updatesBySourceKey.set(matchedKey, {
+                                    ...sourceProd,
+                                    segments: nextSourceSegments,
+                                  })
+                                }
+                              }
+                              for (const [sourceKey, updatedProd] of updatesBySourceKey.entries()) {
+                                onProductionDataChange(sourceKey, updatedProd)
+                              }
+                            }
+                          : undefined
+                      }
                       onResetSegments={onResetSegments}
                       onGenerateLanguageStream={onGenerateLanguageStream}
                       isGeneratingAudio={isGeneratingAudio}
@@ -3886,8 +4016,22 @@ export function ScriptPanel({ script, onScriptChange, onAudioSlotSaved, isGenera
                           : undefined
                       }
                       onUsePrevEndFrameAsStart={onUsePrevEndFrameAsStart}
-                      onDeleteBeatStartFrame={onDeleteBeatStartFrame}
-                      onDeleteBeatEndFrame={onDeleteBeatEndFrame}
+                      onDeleteBeatStartFrame={
+                        onDeleteBeatStartFrame
+                          ? (targetSceneIdx, beatId) => {
+                              const resolved = resolveSharedBeatTarget(targetSceneIdx, beatId)
+                              onDeleteBeatStartFrame(resolved.sceneIdx, resolved.beatId)
+                            }
+                          : undefined
+                      }
+                      onDeleteBeatEndFrame={
+                        onDeleteBeatEndFrame
+                          ? (targetSceneIdx, beatId) => {
+                              const resolved = resolveSharedBeatTarget(targetSceneIdx, beatId)
+                              onDeleteBeatEndFrame(resolved.sceneIdx, resolved.beatId)
+                            }
+                          : undefined
+                      }
                       onGenerateDialogueFrame={onGenerateDialogueFrame}
                       onUploadBeatFrame={
                         onUploadBeatFrame
@@ -3935,7 +4079,7 @@ export function ScriptPanel({ script, onScriptChange, onAudioSlotSaved, isGenera
                             }
                           : undefined
                       }
-                      generatingDirectSlotKey={generatingDirectSlotKey}
+                      generatingDirectSlotKey={effectiveGeneratingDirectSlotKey}
                       onAddStoryboardFrame={onAddStoryboardFrame}
                       onDeleteStoryboardFrame={onDeleteStoryboardFrame}
                       onGenerateCustomFrame={onGenerateCustomFrame}
@@ -3952,7 +4096,7 @@ export function ScriptPanel({ script, onScriptChange, onAudioSlotSaved, isGenera
                       onVideoGenerationModeChange={onVideoGenerationModeChange}
                       videoSourceMethod={videoSourceMethod}
                       onVideoSourceMethodChange={onVideoSourceMethodChange}
-                      expressStatus={expressStatus}
+                      expressStatus={effectiveExpressStatus}
                       expressGateBlocked={expressGateBlocked}
                       onExpressGateBlocked={onExpressGateBlocked}
                       isExpressRunning={isExpressRunning}
@@ -5743,7 +5887,9 @@ function SceneCard({
                     ? sceneBeats[beatIdx].sequenceIndex
                     : beatIdx) + 1
                 : i + 1
-            addItem(`dialogue-${i}`, `Shot ${shotNum}: ${d.character}`, 'tts')
+            const promoBadge = beatIdx >= 0 ? formatPromoSourceBadge(sceneBeats[beatIdx]) : undefined
+            const shotLabel = promoBadge ? `Shot ${shotNum} (${promoBadge})` : `Shot ${shotNum}`
+            addItem(`dialogue-${i}`, `${shotLabel}: ${d.character}`, 'tts')
             tasks.push({
               id: `dialogue-${i}`,
               execute: async () => {
@@ -5787,7 +5933,14 @@ function SceneCard({
                     ? sceneBeats[beatIdx].sequenceIndex
                     : beatIdx) + 1
                 : 0
-            addItem(`sfx-${beatId}`, beatNumber > 0 ? `Shot ${beatNumber}: SFX` : 'SFX', 'sfx')
+            const promoBadge = beatIdx >= 0 ? formatPromoSourceBadge(sceneBeats[beatIdx]) : undefined
+            const shotLabel =
+              beatNumber > 0
+                ? promoBadge
+                  ? `Shot ${beatNumber} (${promoBadge}): SFX`
+                  : `Shot ${beatNumber}: SFX`
+                : 'SFX'
+            addItem(`sfx-${beatId}`, shotLabel, 'sfx')
           }
           await dispatchExpressElevenLabsSfx({
             projectId,
@@ -7467,15 +7620,21 @@ function SceneCard({
                         className="mt-2 min-h-0 flex-1 overflow-y-auto overscroll-contain pr-1"
                       >
                         {isPromoCinematicScene(scene) && sceneBeatsForTabs.length > 0 && (() => {
-                          const activePromoBeat = (
-                            (sceneBeatsForTabs as PromoSceneBeat[]).find((b) => b.beatId === selectedBeatId) ??
-                            (sceneBeatsForTabs[0] as PromoSceneBeat | undefined)
+                          const activePromoBeatIdx = (sceneBeatsForTabs as PromoSceneBeat[]).findIndex(
+                            (b) => b.beatId === selectedBeatId
                           )
+                          const activePromoBeat = (
+                            activePromoBeatIdx >= 0
+                              ? (sceneBeatsForTabs[activePromoBeatIdx] as PromoSceneBeat)
+                              : (sceneBeatsForTabs[0] as PromoSceneBeat | undefined)
+                          )
+                          const activePromoShotNum = activePromoBeatIdx >= 0 ? activePromoBeatIdx + 1 : 1
                           const activeSourceSceneIdx =
                             typeof activePromoBeat?.sourceSceneIndex === 'number' &&
                             activePromoBeat.sourceSceneIndex >= 0
                               ? activePromoBeat.sourceSceneIndex
                               : null
+                          const activeSourceLongLabel = formatPromoSourceLongLabel(activePromoBeat)
                           return (
                             <div
                               data-testid="promo-shared-shots-bar"
@@ -7486,8 +7645,19 @@ function SceneCard({
                                   <span className="inline-flex items-center gap-1 rounded bg-fuchsia-500/25 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-fuchsia-200">
                                     Promo Cut • Shared Shots
                                   </span>
+                                  {activeSourceLongLabel ? (
+                                    <span className="inline-flex items-center gap-1.5 rounded border border-fuchsia-400/40 bg-fuchsia-950/60 px-2 py-0.5 text-[11px] font-semibold text-fuchsia-100">
+                                      <span>Promo Shot {activePromoShotNum}</span>
+                                      <span className="text-fuchsia-300/70">→</span>
+                                      <span className="text-white">{activeSourceLongLabel}</span>
+                                    </span>
+                                  ) : (
+                                    <span className="inline-flex items-center gap-1 rounded border border-amber-400/35 bg-amber-950/40 px-2 py-0.5 text-[11px] font-medium text-amber-200">
+                                      Promo Shot {activePromoShotNum} • Promo Voiceover / Owned Beat
+                                    </span>
+                                  )}
                                   <span className="text-[11px] text-slate-300">
-                                    Select shots in the vertical rail below — Stills, Clips & Direction sync live with their source scenes.
+                                    Updates run here or on the source scene stay synchronized in real time.
                                   </span>
                                   {Array.isArray(scene.campaignLanguages) && scene.campaignLanguages.length > 0 && (
                                     <span className="rounded border border-cyan-500/30 bg-cyan-950/40 px-2 py-0.5 text-[10px] font-medium text-cyan-200">
@@ -7504,9 +7674,9 @@ function SceneCard({
                                         onNavigateScene(activeSourceSceneIdx)
                                       }}
                                       className="inline-flex items-center gap-1 rounded border border-fuchsia-500/40 bg-slate-900/80 px-2 py-1 text-[11px] font-semibold text-fuchsia-200 hover:bg-fuchsia-500/20 hover:text-white transition-colors"
-                                      title={`Jump to source Scene ${activeSourceSceneIdx + 1}`}
+                                      title={`Jump to ${activeSourceLongLabel || `Scene ${activeSourceSceneIdx + 1}`}`}
                                     >
-                                      Source: Scene {activeSourceSceneIdx + 1} ↗
+                                      Source: {activeSourceLongLabel || `Scene ${activeSourceSceneIdx + 1}`} ↗
                                     </button>
                                   )}
                                   {onOpenPromo && (

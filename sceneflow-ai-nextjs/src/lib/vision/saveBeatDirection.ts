@@ -438,8 +438,7 @@ export function directionFromDirectorPatch(
   return next
 }
 
-/** Writes one beat's direction and refreshes its still and clip prompts. Returns the new scenes array. */
-export function applyBeatDirectionToScenes(args: {
+function applyBeatDirectionToOneScene(args: {
   scenes: any[]
   sceneIdx: number
   beatId: string
@@ -448,10 +447,10 @@ export function applyBeatDirectionToScenes(args: {
   referenceSelection?: BeatReferenceSelection | null
   actionDescription?: string
   promptComposition?: BeatPromptComposition
-  /** Direct Shot saves as the user. The shot-direction pass stamps the director. */
   generatedBy?: 'user' | 'director'
 }): any[] {
   const { scenes, sceneIdx, beatId, direction: next, promptComposition } = args
+  if (!scenes[sceneIdx]) return scenes
   const refreshPrompts = args.refreshPrompts ?? 'keep'
   const keptFrame = refreshPrompts === 'keep' ? next?.framePrompt?.trim() : ''
   const updatedScenes = [...scenes]
@@ -535,6 +534,81 @@ export function applyBeatDirectionToScenes(args: {
     }
   }
   updatedScenes[sceneIdx] = restampPreVisHashIfScriptCurrent(scene, withBeats)
+  return updatedScenes
+}
+
+/**
+ * Writes one beat's direction and refreshes its still and clip prompts.
+ * When the beat is a shared Promo shot (or is referenced by a Promo scene),
+ * synchronizes both the source scene beat and the Promo scene beat.
+ */
+export function applyBeatDirectionToScenes(args: {
+  scenes: any[]
+  sceneIdx: number
+  beatId: string
+  direction: BeatDirection | undefined
+  refreshPrompts?: BeatPromptRefresh
+  referenceSelection?: BeatReferenceSelection | null
+  actionDescription?: string
+  promptComposition?: BeatPromptComposition
+  /** Direct Shot saves as the user. The shot-direction pass stamps the director. */
+  generatedBy?: 'user' | 'director'
+}): any[] {
+  const targetBeat = getSceneBeats(args.scenes[args.sceneIdx] ?? {}).find(
+    (entry) => entry.beatId === args.beatId
+  ) as (SceneBeat & { sourceSceneIndex?: number; sourceBeatId?: string }) | undefined
+
+  let updatedScenes = applyBeatDirectionToOneScene(args)
+
+  const canonicalSourceSceneIdx =
+    typeof targetBeat?.sourceSceneIndex === 'number' &&
+    targetBeat.sourceSceneIndex >= 0 &&
+    Boolean(targetBeat.sourceBeatId)
+      ? targetBeat.sourceSceneIndex
+      : args.sceneIdx
+  const canonicalSourceBeatId =
+    typeof targetBeat?.sourceSceneIndex === 'number' &&
+    targetBeat.sourceSceneIndex >= 0 &&
+    targetBeat.sourceBeatId
+      ? targetBeat.sourceBeatId
+      : args.beatId
+
+  // 1. If we saved on a Promo scene beat, also write to the canonical source scene beat (e.g. Scene 2 Shot 3)
+  if (
+    canonicalSourceSceneIdx !== args.sceneIdx ||
+    canonicalSourceBeatId !== args.beatId
+  ) {
+    updatedScenes = applyBeatDirectionToOneScene({
+      ...args,
+      scenes: updatedScenes,
+      sceneIdx: canonicalSourceSceneIdx,
+      beatId: canonicalSourceBeatId,
+    })
+  }
+
+  // 2. Also sync any Promo scene beat that references (canonicalSourceSceneIdx, canonicalSourceBeatId)
+  updatedScenes.forEach((sceneEntry, idx) => {
+    if (!sceneEntry || typeof sceneEntry !== 'object') return
+    for (const candidate of getSceneBeats(sceneEntry)) {
+      const promoBeat = candidate as SceneBeat & {
+        sourceSceneIndex?: number
+        sourceBeatId?: string
+      }
+      if (
+        promoBeat.sourceSceneIndex === canonicalSourceSceneIdx &&
+        promoBeat.sourceBeatId === canonicalSourceBeatId &&
+        !(idx === args.sceneIdx && promoBeat.beatId === args.beatId)
+      ) {
+        updatedScenes = applyBeatDirectionToOneScene({
+          ...args,
+          scenes: updatedScenes,
+          sceneIdx: idx,
+          beatId: promoBeat.beatId,
+        })
+      }
+    }
+  })
+
   return updatedScenes
 }
 

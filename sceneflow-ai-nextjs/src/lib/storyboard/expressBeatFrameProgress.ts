@@ -1,5 +1,7 @@
 import { getSceneBeats } from '@/lib/script/beatMigration'
+import { formatPromoSourceBadge } from '@/lib/publish/buildPromoScene'
 import type { ExpressPhase } from '@/lib/sceneGeneration/types'
+import type { SceneBeat } from '@/lib/script/segmentTypes'
 import {
   beatFrameSlotKey,
   enumerateStoryboardFrameSlots,
@@ -73,7 +75,7 @@ export interface BuildExpressBeatFrameItemsOptions {
   storyboardQuality?: 'draft' | 'final'
 }
 
-function slotToItem(slot: StoryboardFrameSlot): ExpressBeatFrameItem {
+function slotToItem(slot: StoryboardFrameSlot, beat?: SceneBeat): ExpressBeatFrameItem {
   const n = slot.beatNumber ?? (slot.beatIndex ?? 0) + 1
   const roleSuffix =
     slot.frameRole === 'end'
@@ -81,9 +83,11 @@ function slotToItem(slot: StoryboardFrameSlot): ExpressBeatFrameItem {
       : slot.frameRole === 'action-start'
         ? ' (Start)'
         : ''
+  const promoBadge = formatPromoSourceBadge(beat)
+  const promoSuffix = promoBadge ? ` · ${promoBadge}` : ''
   return {
     key: slot.key,
-    label: `Shot ${n}${roleSuffix}`,
+    label: `Shot ${n}${promoSuffix}${roleSuffix}`,
     beatIndex: slot.beatIndex ?? 0,
     frameRole: slot.frameRole ?? 'start',
     status: 'pending',
@@ -116,14 +120,16 @@ export function buildExpressBeatFrameItems(
     }),
     { includeEndFrames: hasSupplementalSelected }
   )
+  const beats = getSceneBeats(scene)
 
   if (options.selectedFrameKeys?.length) {
     const keySet = new Set(options.selectedFrameKeys)
-    return allSlots.filter((slot) => keySet.has(slot.key)).map(slotToItem)
+    return allSlots
+      .filter((slot) => keySet.has(slot.key))
+      .map((slot) => slotToItem(slot, slot.beatIndex != null ? beats[slot.beatIndex] : undefined))
   }
 
   const genCtx = buildGenerationContext(options)
-  const beats = getSceneBeats(scene)
 
   return allSlots
     .filter((slot) => {
@@ -137,7 +143,7 @@ export function buildExpressBeatFrameItems(
       }
       return beatFrameNeedsGeneration(beat, genCtx)
     })
-    .map(slotToItem)
+    .map((slot) => slotToItem(slot, slot.beatIndex != null ? beats[slot.beatIndex] : undefined))
 }
 
 /** Map SSE beatIndex + frameRole to the overlay item key. */

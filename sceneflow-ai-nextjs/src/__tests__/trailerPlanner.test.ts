@@ -4,14 +4,20 @@ import { buildPromoShotCatalog, slimPromoProductionState } from '@/lib/publish/p
 import { promoPlanWithLiveMedia, resolvePromoBeatMedia } from '@/lib/publish/promoBeatMedia'
 import {
   buildPromoSceneFromPlan,
+  formatPromoSourceBadge,
+  formatPromoSourceLongLabel,
   isPromoCinematicScene,
   filmSceneIndices,
   findPromoScenes,
   hydratePromoSceneWithSharedShots,
   PROMO_CAMPAIGN_PRESETS,
   removePromoSceneFromScenes,
+  syncPromoSharedBeatsToSourceScenes,
   upsertPromoSceneInScenes,
 } from '@/lib/publish/buildPromoScene'
+import { buildBeatVideoClips } from '@/lib/scene/buildBeatVideoClips'
+import { buildExpressBeatFrameItems } from '@/lib/storyboard/expressBeatFrameProgress'
+import { applyBeatDirectionToScenes } from '@/lib/vision/saveBeatDirection'
 import { ensureSceneBeats, getSceneBeats } from '@/lib/script/beatMigration'
 import { readFileSync, existsSync } from 'fs'
 import path from 'path'
@@ -902,5 +908,160 @@ describe('promo source guards', () => {
     expect(hydratedBeats[1]?.character).toBe('Gideon Croft')
     expect(hydratedDialogue[0]?.character).toBe('NARRATOR')
     expect(hydratedDialogue[1]?.character).toBe('Gideon Croft')
+  })
+
+  it('includes narration dialogue in Clip prompts, labels shared shots (e.g. Scene 2 · Shot 3), syncs shared beats bidirectionally, and creates a Promo music track cue', () => {
+    const sourceScenes: Array<Record<string, unknown>> = [
+      {
+        id: 'scene-0',
+        sceneNumber: 1,
+        heading: 'INT. FOYER - NIGHT',
+        beats: [
+          {
+            beatId: 's1-b1',
+            sequenceIndex: 0,
+            kind: 'action',
+            actionDescription: 'Rain streaks the glass.',
+          },
+        ],
+      },
+      {
+        id: 'scene-1',
+        sceneNumber: 2,
+        heading: 'INT. ARCHIVE LAB - NIGHT',
+        beats: [
+          {
+            beatId: 's2-b1',
+            sequenceIndex: 0,
+            kind: 'action',
+            actionDescription: 'First shot in scene 2.',
+          },
+          {
+            beatId: 's2-b2',
+            sequenceIndex: 1,
+            kind: 'action',
+            actionDescription: 'Second shot in scene 2.',
+          },
+          {
+            beatId: 's2-b3',
+            sequenceIndex: 2,
+            kind: 'dialogue',
+            character: 'GIDEON',
+            line: 'The loop refuses to close.',
+            actionDescription: 'Gideon stares at the glowing copper coil.',
+            storyboardImageUrl: 'https://example.com/s2-shot3-old.png',
+          },
+        ],
+      },
+    ]
+
+    const { scene: promoScene, productionSeed } = buildPromoSceneFromPlan({
+      beatPlan: [
+        {
+          sceneId: 'scene-1',
+          beatId: 's2-b3',
+          sceneIndex: 1,
+          beatKind: 'dialogue',
+          startSec: 0,
+          endSec: 5,
+          durationSec: 5,
+          score: 92,
+          label: 'The loop refuses to close.',
+        },
+      ],
+      narrationLine: 'Every memory has a price.',
+      targetDurationSec: 15,
+      projectTitle: 'Current',
+      promoId: 'promo-main',
+      musicAudioUrl: 'https://example.com/promo-score.mp3',
+    })
+
+    // 1. Promo music track cue is created and carries the music audio URL
+    expect(promoScene.sceneMusicCues).toHaveLength(1)
+    expect(promoScene.sceneMusicCues?.[0]?.url).toBe('https://example.com/promo-score.mp3')
+
+    // 2. Narration shot (Shot 1) includes its dialogue in both seed segment and hydratedBeat clips
+    expect(productionSeed.segments[0]?.generatedPrompt).toContain('Every memory has a price.')
+    expect(productionSeed.segments[0]?.generatedPrompt).not.toContain('No spoken dialogue')
+
+    const allScenes = [...sourceScenes, promoScene as unknown as Record<string, unknown>]
+    const hydrated = hydratePromoSceneWithSharedShots(
+      promoScene as unknown as Record<string, unknown>,
+      allScenes,
+      { [promoScene.id]: productionSeed as never }
+    )
+    const hydratedBeats = (hydrated.scene as { beats: Array<Record<string, unknown>> }).beats
+    expect(hydratedBeats).toHaveLength(2)
+
+    // 3. Second promo shot is Scene 2 Shot 3 and carries explicit source attribution
+    const secondPromoBeat = hydratedBeats[1]
+    expect(secondPromoBeat?.sourceSceneNumber).toBe(2)
+    expect(secondPromoBeat?.sourceShotNumber).toBe(3)
+    expect(formatPromoSourceBadge(secondPromoBeat as never)).toBe('S2 · Shot 3')
+    expect(formatPromoSourceLongLabel(secondPromoBeat as never)).toBe('Scene 2 · Shot 3')
+
+    // Stills Agent progress items include S2 · Shot 3 on shared Promo shots
+    const expressItems = buildExpressBeatFrameItems(hydrated.scene, {
+      selectedFrameKeys: [String(secondPromoBeat?.beatId)],
+    })
+    expect(expressItems[0]?.label).toBe('Shot 2 · S2 · Shot 3')
+
+    // Clip gallery items include narration line on Shot 1 and sourceSceneLabel on Shot 2
+    const clips = buildBeatVideoClips({
+      scene: hydrated.scene,
+      segments: hydrated.productionData?.segments || [],
+      queue: [],
+    })
+    expect(clips[0]?.prompt).toContain('Every memory has a price.')
+    expect(clips[0]?.prompt).not.toContain('No spoken dialogue')
+    expect(clips[1]?.sourceSceneLabel).toBe('S2 · Shot 3')
+    expect(clips[1]?.sourceSceneLongLabel).toBe('Scene 2 · Shot 3')
+
+    // 4. Updating direction on the Promo scene beat syncs back to Scene 2 Shot 3
+    const afterDirectionUpdate = applyBeatDirectionToScenes({
+      scenes: allScenes,
+      sceneIdx: 2,
+      beatId: String(secondPromoBeat?.beatId),
+      direction: {
+        shotType: 'Extreme Close-Up',
+        cameraAngle: 'Low angle',
+        cameraMovement: 'Push in',
+        frozenMoment: 'Sparks arc across Gideon’s glasses',
+      },
+    })
+    const updatedSourceScene2Beats = getSceneBeats(afterDirectionUpdate[1])
+    expect(updatedSourceScene2Beats[2]?.beatDirection?.shotType).toBe('Extreme Close-Up')
+    expect(updatedSourceScene2Beats[2]?.beatDirection?.frozenMoment).toBe(
+      'Sparks arc across Gideon’s glasses'
+    )
+
+    // 5. Updating a still frame on the Promo scene beat syncs back to Scene 2 Shot 3
+    const promoWithNewFrame = {
+      ...(afterDirectionUpdate[2] as Record<string, unknown>),
+      beats: getSceneBeats(afterDirectionUpdate[2]).map((b, i) =>
+        i === 1
+          ? {
+              ...b,
+              storyboardImageUrl: 'https://example.com/s2-shot3-new-from-promo.png',
+              storyboardImageVersions: [
+                {
+                  id: 'v-new',
+                  url: 'https://example.com/s2-shot3-new-from-promo.png',
+                  createdAt: new Date(Date.now() + 60_000).toISOString(),
+                },
+              ],
+            }
+          : b
+      ),
+    }
+    const syncedScenes = syncPromoSharedBeatsToSourceScenes([
+      afterDirectionUpdate[0],
+      afterDirectionUpdate[1],
+      promoWithNewFrame,
+    ])
+    const syncedScene2Beats = getSceneBeats(syncedScenes[1])
+    expect(syncedScene2Beats[2]?.storyboardImageUrl).toBe(
+      'https://example.com/s2-shot3-new-from-promo.png'
+    )
   })
 })

@@ -28,6 +28,11 @@ import {
   resolveBeatVideoClipUrl,
 } from '@/lib/audio/extractAndApplyShotClipAudio'
 import { BeatAudioStatusBadge } from '@/components/vision/BeatAudioStatusBadge'
+import {
+  formatPromoSourceBadge,
+  formatPromoSourceLongLabel,
+  type PromoSceneBeat,
+} from '@/lib/publish/buildPromoScene'
 import { BeatCaptionControl } from '@/components/vision/BeatCaptionControl'
 import { BeatMusicToggle } from '@/components/vision/BeatMusicToggle'
 import { BeatPerformanceDirectorControl } from '@/components/vision/BeatPerformanceDirectorDialog'
@@ -426,7 +431,7 @@ export function SceneAudioWorkbench(props: SceneAudioWorkbenchProps & { onSaveSf
         if (cue ? isCuedBeatMusicEnabled(beat) : isBeatMusicEnabled(beat)) {
           markers.push('Music')
         }
-        const promoSource = beat as SceneBeat & { sourceSceneIndex?: number; sourceBeatId?: string }
+        const promoSource = beat as PromoSceneBeat
         const hasSourceScene =
           Boolean(promoSource.sourceBeatId) &&
           typeof promoSource.sourceSceneIndex === 'number' &&
@@ -435,7 +440,7 @@ export function SceneAudioWorkbench(props: SceneAudioWorkbenchProps & { onSaveSf
           id: beat.beatId,
           beatNumber: Number.isFinite(beatNumber) ? beatNumber : index + 1,
           markers,
-          sourceSceneLabel: hasSourceScene ? `S${promoSource.sourceSceneIndex! + 1}` : undefined,
+          sourceSceneLabel: hasSourceScene ? formatPromoSourceBadge(promoSource) : undefined,
           status: rail?.status,
           statusLabel: rail?.label || undefined,
           statusDetail: facts ? beatRailTooltip(facts) : undefined,
@@ -1237,6 +1242,14 @@ function SpokenBeatAudio(
               <span className="shrink-0 rounded-full border border-slate-600/40 bg-slate-700/50 px-1.5 py-0.5 text-[10px] font-medium tabular-nums text-slate-300">
                 Shot {beatNumber}
               </span>
+              {formatPromoSourceLongLabel(beat as PromoSceneBeat) && (
+                <span
+                  className="shrink-0 rounded-full border border-fuchsia-500/45 bg-fuchsia-500/15 px-2 py-0.5 text-[10px] font-semibold text-fuchsia-200"
+                  title={`Shared shot from ${formatPromoSourceLongLabel(beat as PromoSceneBeat)}`}
+                >
+                  Shared: {formatPromoSourceLongLabel(beat as PromoSceneBeat)}
+                </span>
+              )}
               <label className="sr-only" htmlFor={`speaker-assign-${sceneIdx}-${beat.beatId}`}>
                 Assign speaker
               </label>

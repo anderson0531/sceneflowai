@@ -197,6 +197,12 @@ import {
   rewriteScenesForObjectMerge,
   selectCanonicalNewObjects,
 } from '@/lib/vision/objectDuplicateClusters'
+import {
+  hydratePromoSceneWithSharedShots,
+  isPromoCinematicScene,
+  syncPromoSharedBeatsToSourceScenes,
+  type PromoSceneBeat,
+} from '@/lib/publish/buildPromoScene'
 
 // Dynamic import to break TDZ initialization chain - ScriptPanel imports heavy scene-production modules
 const ScriptPanel = dynamic(
@@ -1340,13 +1346,14 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
   }, [project, isDismissingImportOnboarding, serializedProjectSave])
 
   const persistVisionScriptScenes = useCallback(async (
-    updatedScenes: any[],
+    rawUpdatedScenes: any[],
     debugLabel?: string
   ): Promise<boolean> => {
     const currentScript = scriptRef.current
     const currentProject = projectRef.current
     if (!currentScript?.script || !currentProject?.id) return false
 
+    const updatedScenes = syncPromoSharedBeatsToSourceScenes(rawUpdatedScenes)
     const refScenes = currentScript.script.scenes || []
     const projectPersistedScenes =
       currentProject.metadata?.visionPhase?.script?.script?.scenes || []
@@ -1441,7 +1448,9 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     const useResolved =
       totalStoryboardMediaScore(resolvedScenes) >
       totalStoryboardMediaScore(baseScenes)
-    const finalScenes = useResolved ? resolvedScenes : baseScenes
+    const finalScenes = syncPromoSharedBeatsToSourceScenes(
+      useResolved ? resolvedScenes : baseScenes
+    )
 
     const nextScript = {
       ...loadedScript,
@@ -1773,7 +1782,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     const incomingScenes = updatedScript?.script?.scenes || []
     const canonicalScenes = canonical?.script?.scenes || []
 
-    const mergedScenes =
+    const mergedScenes = syncPromoSharedBeatsToSourceScenes(
       canonicalScenes.length > 0 && incomingScenes.length > 0
         ? options?.trustIncomingAudio
           ? mergeScenesTrustingIncomingAudio(canonicalScenes, incomingScenes)
@@ -1781,6 +1790,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
               preserveAudio: audioRegenInProgressRef.current,
             })
         : incomingScenes
+    )
 
     const mergedScript = {
       ...updatedScript,
@@ -2997,6 +3007,40 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           syncBeatEndFrameToProduction(sceneId, beat.beatId, imageUrl)
         } else {
           syncBeatStartFrameToProduction(sceneId, beat.beatId, imageUrl)
+        }
+        const promoBeat = beat as PromoSceneBeat
+        if (typeof promoBeat.sourceSceneIndex === 'number' && promoBeat.sourceBeatId) {
+          const srcScene = scenes[promoBeat.sourceSceneIndex] as Record<string, unknown> | undefined
+          if (srcScene) {
+            const srcSceneId =
+              (typeof srcScene.id === 'string' && srcScene.id) ||
+              (typeof srcScene.sceneId === 'string' && srcScene.sceneId) ||
+              `scene-${promoBeat.sourceSceneIndex}`
+            if (frameRole === 'end') {
+              syncBeatEndFrameToProduction(srcSceneId, promoBeat.sourceBeatId, imageUrl)
+            } else {
+              syncBeatStartFrameToProduction(srcSceneId, promoBeat.sourceBeatId, imageUrl)
+            }
+          }
+        } else {
+          scenes.forEach((candidate: unknown, cIdx: number) => {
+            if (!isPromoCinematicScene(candidate)) return
+            const cRec = candidate as Record<string, unknown>
+            const cSceneId =
+              (typeof cRec.id === 'string' && cRec.id) ||
+              (typeof cRec.sceneId === 'string' && cRec.sceneId) ||
+              `scene-${cIdx}`
+            const cBeats = getSceneBeats(cRec) as PromoSceneBeat[]
+            for (const pb of cBeats) {
+              if (pb.sourceSceneIndex === sceneIndex && pb.sourceBeatId === beat.beatId) {
+                if (frameRole === 'end') {
+                  syncBeatEndFrameToProduction(cSceneId, pb.beatId, imageUrl)
+                } else {
+                  syncBeatStartFrameToProduction(cSceneId, pb.beatId, imageUrl)
+                }
+              }
+            }
+          })
         }
       }
     },
@@ -17149,7 +17193,8 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           referenceStatus: params?.referenceStatus,
           referenceReason: params?.referenceReason,
         })
-        const next = { ...prev, script: { ...prev.script, scenes } }
+        const syncedScenes = syncPromoSharedBeatsToSourceScenes(scenes)
+        const next = { ...prev, script: { ...prev.script, scenes: syncedScenes } }
         scriptRef.current = next
         return next
       })
@@ -17868,7 +17913,14 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       const abortController = new AbortController()
       expressAbortRef.current = abortController
 
-      const sceneRecord = script.script.scenes[sceneIndex] as Record<string, unknown>
+      const rawSceneRecord = script.script.scenes[sceneIndex] as Record<string, unknown>
+      const sceneRecord = isPromoCinematicScene(rawSceneRecord)
+        ? hydratePromoSceneWithSharedShots(
+            rawSceneRecord,
+            script.script.scenes,
+            sceneProductionState
+          ).scene
+        : rawSceneRecord
       const sceneNumber =
         typeof sceneRecord.sceneNumber === 'number' ? sceneRecord.sceneNumber : sceneIndex + 1
       const imageTier: 'draft' | 'final' = options?.quality === 'final' ? 'final' : 'draft'
@@ -17955,19 +18007,45 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         [sceneIndex]: { direction: 'pending', audio: 'pending', image: 'pending' },
       })
       setIsExpressRunning(true)
+      const rawOverlayItems = buildExpressBeatFrameItems(sceneRecord, {
+        selectedFrameKeys: options?.selectedFrameKeys,
+        includeEndFrames: options?.includeEndFrames,
+        // Mirrors the request below, or the overlay would list a different
+        // set of frames than the run actually draws.
+        scope: options?.scope,
+        storyboardQuality: imageTier,
+      })
+      const overlayItems = isPromoCinematicScene(sceneRecord)
+        ? rawOverlayItems
+        : (() => {
+            const sceneBeats = getSceneBeats(sceneRecord)
+            const allScenes = script.script.scenes || []
+            return rawOverlayItems.map((item) => {
+              const beat = sceneBeats[item.beatIndex]
+              if (!beat?.beatId) return item
+              for (const candidate of allScenes) {
+                if (!isPromoCinematicScene(candidate)) continue
+                const promoBeats = getSceneBeats(candidate as Record<string, unknown>) as PromoSceneBeat[]
+                const pIdx = promoBeats.findIndex(
+                  (pb) => pb.sourceSceneIndex === sceneIndex && pb.sourceBeatId === beat.beatId
+                )
+                if (pIdx >= 0) {
+                  return {
+                    ...item,
+                    label: `${item.label} (Promo Shot ${pIdx + 1})`,
+                  }
+                }
+              }
+              return item
+            })
+          })()
+
       setExpressBeatFrameOverlay({
         visible: true,
         sceneIndex,
         sceneNumber,
         language: language || 'en',
-        items: buildExpressBeatFrameItems(sceneRecord, {
-          selectedFrameKeys: options?.selectedFrameKeys,
-          includeEndFrames: options?.includeEndFrames,
-          // Mirrors the request below, or the overlay would list a different
-          // set of frames than the run actually draws.
-          scope: options?.scope,
-          storyboardQuality: imageTier,
-        }),
+        items: overlayItems,
         phases: {
           references: 'pending',
           direction: 'pending',

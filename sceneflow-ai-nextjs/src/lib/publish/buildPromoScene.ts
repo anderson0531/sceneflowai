@@ -3,13 +3,16 @@
  */
 
 import { beatsToLegacyFields, getSceneBeats, mintBeatId } from '@/lib/script/beatMigration'
-import type { SceneBeat } from '@/lib/script/segmentTypes'
+import { compileBeatVideoPromptFromDirection } from '@/lib/scene/beatVideoPromptCompiler'
+import { mediaBlobUrlTimestamp } from '@/lib/storyboard/mediaVersions'
+import type { SceneBeat, SceneMusicCue } from '@/lib/script/segmentTypes'
 import type {
   PromoCampaignPresetId,
   PromoFrameAspect,
   PromoTrailerBeatPlan,
 } from '@/types/publishingAssets'
 import type { SceneSegment, SceneProductionData } from '@/components/vision/scene-production/types'
+import type { DetailedSceneDirection } from '@/types/scene-direction'
 
 export const PROMO_SCENE_CINEMATIC_TYPE = 'promo' as const
 export const PROMO_SCENE_HEADING = 'PROMO TRAILER'
@@ -119,8 +122,52 @@ export interface PromoSceneBeat extends SceneBeat {
   sourceSceneId?: string
   sourceBeatId?: string
   sourceSceneIndex?: number
+  /** 1-based scene number of the shared source scene (e.g. 2 for Scene 2). */
+  sourceSceneNumber?: number
+  /** 1-based shot number inside the shared source scene (e.g. 3 for Shot 3). */
+  sourceShotNumber?: number
   /** Copied production clip URL for trailer stitch / seeded segments. */
   promoVideoUrl?: string
+}
+
+/** Compact pill badge for a shared promo beat, e.g. `"S2 · Shot 3"` (or `"S2"` if shot number is unknown). */
+export function formatPromoSourceBadge(
+  beat?: {
+    sourceSceneIndex?: number
+    sourceSceneNumber?: number
+    sourceShotNumber?: number
+    sourceBeatId?: string
+  } | null
+): string | undefined {
+  if (!beat || typeof beat.sourceSceneIndex !== 'number') return undefined
+  const sceneNum =
+    typeof beat.sourceSceneNumber === 'number' && beat.sourceSceneNumber > 0
+      ? beat.sourceSceneNumber
+      : beat.sourceSceneIndex + 1
+  if (typeof beat.sourceShotNumber === 'number' && beat.sourceShotNumber > 0) {
+    return `S${sceneNum} · Shot ${beat.sourceShotNumber}`
+  }
+  return `S${sceneNum}`
+}
+
+/** Descriptive source label for headers/toasts, e.g. `"Scene 2 · Shot 3"`. */
+export function formatPromoSourceLongLabel(
+  beat?: {
+    sourceSceneIndex?: number
+    sourceSceneNumber?: number
+    sourceShotNumber?: number
+    sourceBeatId?: string
+  } | null
+): string | undefined {
+  if (!beat || typeof beat.sourceSceneIndex !== 'number') return undefined
+  const sceneNum =
+    typeof beat.sourceSceneNumber === 'number' && beat.sourceSceneNumber > 0
+      ? beat.sourceSceneNumber
+      : beat.sourceSceneIndex + 1
+  if (typeof beat.sourceShotNumber === 'number' && beat.sourceShotNumber > 0) {
+    return `Scene ${sceneNum} · Shot ${beat.sourceShotNumber}`
+  }
+  return `Scene ${sceneNum}`
 }
 
 export interface PromoSceneRecord {
@@ -144,8 +191,87 @@ export interface PromoSceneRecord {
   beats: PromoSceneBeat[]
   music?: string
   musicAudio?: string
+  sceneMusicCues?: SceneMusicCue[]
   dialogueAudio?: Record<string, unknown[]>
   promoBeatPlan?: PromoTrailerBeatPlan[]
+}
+
+export function buildPromoSceneMusicCues(opts: {
+  beatsCount: number
+  musicPrompt: string
+  musicAudio?: string
+  durationSec?: number
+  existingCues?: unknown
+}): SceneMusicCue[] {
+  const endIdx = Math.max(0, opts.beatsCount - 1)
+  if (Array.isArray(opts.existingCues) && opts.existingCues.length > 0) {
+    const valid = opts.existingCues.filter(
+      (c): c is Record<string, unknown> => Boolean(c && typeof c === 'object')
+    )
+    if (valid.length > 0) {
+      return valid.map((cue, idx) => {
+        const cueUrl =
+          (typeof cue.url === 'string' && cue.url.trim()) ||
+          (idx === 0 && opts.musicAudio?.trim()) ||
+          undefined
+        const cueDesc =
+          (typeof cue.description === 'string' && cue.description.trim()) ||
+          opts.musicPrompt
+        return {
+          cueId:
+            typeof cue.cueId === 'string' && cue.cueId.trim()
+              ? cue.cueId.trim()
+              : `cue-0-${endIdx}`,
+          beatStart:
+            typeof cue.beatStart === 'number' && cue.beatStart >= 0
+              ? Math.min(endIdx, cue.beatStart)
+              : 0,
+          beatEnd:
+            idx === valid.length - 1
+              ? endIdx
+              : typeof cue.beatEnd === 'number' && cue.beatEnd >= 0
+                ? Math.min(endIdx, cue.beatEnd)
+                : endIdx,
+          description: cueDesc,
+          intent:
+            (typeof cue.intent === 'string' && cue.intent.trim()) ||
+            'Escalating promotional trailer momentum and emotional hook',
+          entry: (cue.entry === 'fade' || cue.entry === 'hard' || cue.entry === 'swell'
+            ? cue.entry
+            : 'swell') as SceneMusicCue['entry'],
+          exit: (cue.exit === 'fade' || cue.exit === 'hard' || cue.exit === 'tail'
+            ? cue.exit
+            : 'tail') as SceneMusicCue['exit'],
+          ...(cueUrl ? { url: cueUrl } : {}),
+          ...(typeof cue.duration === 'number' && cue.duration > 0
+            ? { duration: cue.duration }
+            : opts.durationSec && opts.durationSec > 0
+              ? { duration: opts.durationSec }
+              : {}),
+          generatedBy:
+            cue.generatedBy === 'llm' || cue.generatedBy === 'user' || cue.generatedBy === 'derived'
+              ? cue.generatedBy
+              : 'derived',
+          volume: typeof cue.volume === 'number' ? cue.volume : 0.35,
+        }
+      })
+    }
+  }
+  return [
+    {
+      cueId: `cue-0-${endIdx}`,
+      beatStart: 0,
+      beatEnd: endIdx,
+      description: opts.musicPrompt,
+      intent: 'Escalating promotional trailer momentum and emotional hook',
+      entry: 'swell',
+      exit: 'tail',
+      ...(opts.musicAudio?.trim() ? { url: opts.musicAudio.trim() } : {}),
+      ...(opts.durationSec && opts.durationSec > 0 ? { duration: opts.durationSec } : {}),
+      generatedBy: 'derived',
+      volume: 0.35,
+    },
+  ]
 }
 
 export function isPromoCinematicScene(scene: unknown): boolean {
@@ -272,6 +398,7 @@ export interface BuildPromoSceneInput {
   campaignObjective?: string
   campaignLanguages?: string[]
   promoAspect?: PromoFrameAspect
+  musicAudioUrl?: string
 }
 
 export interface BuildPromoSceneResult {
@@ -367,51 +494,115 @@ function buildPromoBeats(
   return beats
 }
 
+function buildSegmentDialogueLinesForBeat(
+  beat: PromoSceneBeat,
+  existing?: SceneSegment['dialogueLines']
+): {
+  dialogueLines?: SceneSegment['dialogueLines']
+  dialogueLineIds?: string[]
+} {
+  const spokenText = beat.line?.trim()
+  if ((beat.kind === 'dialogue' || beat.kind === 'narration') && spokenText) {
+    const id = beat.lineId?.trim() || `${beat.beatId}-line-0`
+    const character =
+      beat.character?.trim() || (beat.kind === 'narration' ? 'NARRATOR' : 'CHARACTER')
+    return {
+      dialogueLines: [
+        {
+          id,
+          character,
+          line: spokenText,
+          covered: false,
+        },
+      ],
+      dialogueLineIds: [id],
+    }
+  }
+  return existing && existing.length > 0 ? { dialogueLines: existing } : {}
+}
+
+function resolveSegmentGeneratedPromptForBeat(
+  beat: PromoSceneBeat,
+  previousBeat: PromoSceneBeat | undefined,
+  sceneDirection: DetailedSceneDirection | null | undefined,
+  existingPrompt?: string
+): string {
+  const compiled = compileBeatVideoPromptFromDirection(beat, sceneDirection ?? null, {
+    previousBeat,
+  }).prompt
+  const stored = existingPrompt?.trim()
+  if (!stored) return compiled
+  const spoken = beat.line?.trim()
+  if ((beat.kind === 'narration' || beat.kind === 'dialogue') && spoken) {
+    const snippet = spoken.slice(0, Math.min(20, spoken.length))
+    if (
+      /no spoken dialogue/i.test(stored) ||
+      /^medium shot,\s*promo trailer voice-over/i.test(stored) ||
+      !stored.includes(snippet)
+    ) {
+      return compiled
+    }
+  }
+  return stored
+}
+
 function buildSeedSegments(
   sceneId: string,
-  beats: PromoSceneBeat[]
+  beats: PromoSceneBeat[],
+  sceneDirection?: DetailedSceneDirection | null
 ): SceneSegment[] {
   let cursor = 0
-  return beats
-    .filter((b) => b.kind !== 'narration' || b.promoVideoUrl || b.storyboardImageUrl)
-    .map((beat, index) => {
-      const duration = beat.durationSeconds || 5
-      const startTime = cursor
-      const endTime = cursor + duration
-      cursor = endTime
-      const segment: SceneSegment = {
-        segmentId: `${sceneId}-seg-${index}`,
-        sequenceIndex: index,
-        startTime,
-        endTime,
-        status: beat.promoVideoUrl ? 'COMPLETE' : 'DRAFT',
-        activeAssetUrl: beat.promoVideoUrl || null,
-        assetType: beat.promoVideoUrl ? 'video' : beat.storyboardImageUrl ? 'image' : null,
-        references: {
-          startFrameUrl: beat.storyboardImageUrl || null,
-          endFrameUrl: beat.storyboardEndImageUrl || null,
-          characterIds: [],
-          sceneRefIds: [],
-          objectRefIds: [],
-        },
-        takes: beat.promoVideoUrl
-          ? [
-              {
-                id: `${sceneId}-take-${index}`,
-                assetUrl: beat.promoVideoUrl,
-                videoUrl: beat.promoVideoUrl,
-                createdAt: new Date().toISOString(),
-                status: 'COMPLETE',
-                notes: 'Promo reuse',
-              },
-            ]
-          : [],
-        beatId: beat.beatId,
-        visualFrame: beat.storyboardImageUrl,
-        action: beat.actionDescription,
-      }
-      return segment
-    })
+  const activeBeats = beats.filter((b) => !b.excluded)
+  return activeBeats.map((beat, index) => {
+    const duration = beat.durationSeconds || 5
+    const startTime = cursor
+    const endTime = cursor + duration
+    cursor = endTime
+    const previousBeat = index > 0 ? activeBeats[index - 1] : undefined
+    const generatedPrompt = resolveSegmentGeneratedPromptForBeat(
+      beat,
+      previousBeat,
+      sceneDirection
+    )
+    const dialogueMeta = buildSegmentDialogueLinesForBeat(beat)
+    const segment: SceneSegment = {
+      segmentId: `${sceneId}-seg-${index}`,
+      sequenceIndex: index,
+      startTime,
+      endTime,
+      status: beat.promoVideoUrl ? 'COMPLETE' : 'DRAFT',
+      activeAssetUrl: beat.promoVideoUrl || null,
+      assetType: beat.promoVideoUrl ? 'video' : beat.storyboardImageUrl ? 'image' : null,
+      generatedPrompt,
+      ...dialogueMeta,
+      references: {
+        startFrameUrl: beat.storyboardImageUrl || null,
+        endFrameUrl: beat.storyboardEndImageUrl || null,
+        characterIds: [],
+        sceneRefIds: [],
+        objectRefIds: [],
+      },
+      takes: beat.promoVideoUrl
+        ? [
+            {
+              id: `${sceneId}-take-${index}`,
+              assetUrl: beat.promoVideoUrl,
+              videoUrl: beat.promoVideoUrl,
+              createdAt: new Date().toISOString(),
+              status: 'COMPLETE',
+              notes: 'Promo reuse',
+            },
+          ]
+        : [],
+      beatId: beat.beatId,
+      visualFrame: beat.storyboardImageUrl,
+      action:
+        beat.kind === 'narration' && beat.line?.trim()
+          ? `Voiceover narration: "${beat.line.trim()}"`
+          : beat.actionDescription,
+    }
+    return segment
+  })
 }
 
 /** Convert a trailer plan into a script promo scene + production seed. */
@@ -502,6 +693,31 @@ export function buildPromoSceneFromPlan(input: BuildPromoSceneInput): BuildPromo
             priorities: 'Voice-over hook, dramatic score swell, and crisp transition hits',
           },
         }
+  const musicPrompt =
+    typeof input.existingPromoScene?.music === 'string' && input.existingPromoScene.music.trim()
+      ? input.existingPromoScene.music.trim()
+      : `Cinematic promotional trailer score for "${title}"${
+          campaignName ? ` (${campaignName})` : ''
+        }, building tension, emotional swell, memorable theme, no vocals`
+  const existingCues = Array.isArray(input.existingPromoScene?.sceneMusicCues)
+    ? (input.existingPromoScene?.sceneMusicCues as Array<Record<string, unknown>>)
+    : undefined
+  const existingCueAudio = existingCues?.find(
+    (c) => c && typeof c.url === 'string' && c.url.trim()
+  )?.url as string | undefined
+  const musicAudio =
+    (typeof input.musicAudioUrl === 'string' && input.musicAudioUrl.trim()) ||
+    (typeof input.existingPromoScene?.musicAudio === 'string' &&
+      input.existingPromoScene.musicAudio.trim()) ||
+    existingCueAudio ||
+    undefined
+  const sceneMusicCues = buildPromoSceneMusicCues({
+    beatsCount: beats.length,
+    musicPrompt,
+    musicAudio,
+    durationSec: input.targetDurationSec,
+    existingCues,
+  })
   const scene: PromoSceneRecord = {
     id: existingId,
     promoId: existingId,
@@ -526,16 +742,9 @@ export function buildPromoSceneFromPlan(input: BuildPromoSceneInput): BuildPromo
     sceneDirection: defaultSceneDirection,
     beats,
     promoBeatPlan: input.beatPlan,
-    music:
-      typeof input.existingPromoScene?.music === 'string'
-        ? input.existingPromoScene.music
-        : `Cinematic promotional trailer score for "${title}"${
-            campaignName ? ` (${campaignName})` : ''
-          }, building tension, emotional swell, memorable theme, no vocals`,
-    musicAudio:
-      typeof input.existingPromoScene?.musicAudio === 'string'
-        ? input.existingPromoScene.musicAudio
-        : undefined,
+    music: musicPrompt,
+    musicAudio,
+    sceneMusicCues,
     dialogueAudio:
       input.existingPromoScene?.dialogueAudio &&
       typeof input.existingPromoScene.dialogueAudio === 'object'
@@ -543,7 +752,11 @@ export function buildPromoSceneFromPlan(input: BuildPromoSceneInput): BuildPromo
         : undefined,
   }
 
-  const segments = buildSeedSegments(existingId, beats)
+  const segments = buildSeedSegments(
+    existingId,
+    beats,
+    defaultSceneDirection as DetailedSceneDirection
+  )
   const productionSeed = {
     sceneId: existingId,
     segments,
@@ -597,6 +810,40 @@ export function removePromoSceneFromScenes(
         ? { ...(scene as Record<string, unknown>), sceneNumber: index + 1 }
         : scene
     )
+}
+
+function latestStillCreatedAtMs(beat?: SceneBeat | null): number {
+  const b = beat as Record<string, unknown> | null | undefined
+  const storyboardVersions = Array.isArray(b?.storyboardImageVersions)
+    ? (b!.storyboardImageVersions as Array<{ createdAt?: string }>)
+    : []
+  const legacyVersions = Array.isArray(beat?.stillVersions) ? beat!.stillVersions : []
+  let max = 0
+  for (const v of [...storyboardVersions, ...legacyVersions]) {
+    if (v?.createdAt) {
+      const t = Date.parse(v.createdAt)
+      if (Number.isFinite(t) && t > max) max = t
+    }
+  }
+  const urlTs = mediaBlobUrlTimestamp(
+    typeof beat?.storyboardImageUrl === 'string' ? beat.storyboardImageUrl : ''
+  )
+  if (urlTs > max) max = urlTs
+  return max
+}
+
+function preferBeatDirection(
+  sourceDir?: SceneBeat['beatDirection'],
+  promoDir?: SceneBeat['beatDirection']
+): SceneBeat['beatDirection'] {
+  if (!sourceDir) return promoDir
+  if (!promoDir) return sourceDir
+  const srcTime = sourceDir.updatedAt ? Date.parse(sourceDir.updatedAt) : 0
+  const promoTime = promoDir.updatedAt ? Date.parse(promoDir.updatedAt) : 0
+  if (Number.isFinite(promoTime) && promoTime > 0 && promoTime > (Number.isFinite(srcTime) ? srcTime : 0)) {
+    return promoDir
+  }
+  return sourceDir
 }
 
 /**
@@ -666,10 +913,23 @@ export function hydratePromoSceneWithSharedShots(
     }
     const sourceScene = scenes[beat.sourceSceneIndex] as Record<string, unknown> | undefined
     if (!sourceScene) return beat
-    const sourceBeat = getSceneBeats(sourceScene).find(
+    const sourceSceneBeats = getSceneBeats(sourceScene)
+    const sourceShotIdx = sourceSceneBeats.findIndex(
       (candidate) => candidate.beatId === beat.sourceBeatId
     )
-    if (!sourceBeat) return beat
+    const sourceBeat = sourceShotIdx >= 0 ? sourceSceneBeats[sourceShotIdx] : undefined
+    const sourceSceneNumber =
+      typeof sourceScene.sceneNumber === 'number' && sourceScene.sceneNumber > 0
+        ? sourceScene.sceneNumber
+        : beat.sourceSceneIndex + 1
+    const sourceShotNumber = sourceShotIdx >= 0 ? sourceShotIdx + 1 : undefined
+    if (!sourceBeat) {
+      return {
+        ...beat,
+        sourceSceneNumber,
+        ...(sourceShotNumber ? { sourceShotNumber } : {}),
+      }
+    }
 
     const sourceDialogue = Array.isArray(sourceScene.dialogue)
       ? (sourceScene.dialogue as Array<Record<string, unknown>>)
@@ -724,7 +984,44 @@ export function hydratePromoSceneWithSharedShots(
       (typeof matchedSourceDialogue?.voiceDirection === 'string' &&
         matchedSourceDialogue.voiceDirection.trim()) ||
       undefined
-    const resolvedAudioUrl = beat.audioUrl?.trim() || sourceBeat.audioUrl?.trim() || undefined
+    let sourceDialogueAudioUrl: string | undefined
+    if (sourceScene.dialogueAudio && typeof sourceScene.dialogueAudio === 'object') {
+      const langEntries = Object.values(sourceScene.dialogueAudio as Record<string, unknown>)
+      for (const list of langEntries) {
+        if (!Array.isArray(list)) continue
+        for (const item of list) {
+          if (!item || typeof item !== 'object') continue
+          const row = item as Record<string, unknown>
+          const rowLineId = typeof row.lineId === 'string' ? row.lineId.trim() : ''
+          const rowLine = String(row.line ?? row.text ?? '').trim()
+          const targetLine = String(sourceBeat.line ?? beat.line ?? '').trim()
+          if (
+            (sourceBeat.lineId?.trim() && rowLineId === sourceBeat.lineId.trim()) ||
+            (targetLine && rowLine && rowLine === targetLine)
+          ) {
+            const url = String(row.audioUrl ?? row.url ?? '').trim()
+            if (url) {
+              sourceDialogueAudioUrl = url
+              break
+            }
+          }
+        }
+        if (sourceDialogueAudioUrl) break
+      }
+    }
+    const resolvedAudioUrl =
+      beat.audioUrl?.trim() ||
+      sourceBeat.audioUrl?.trim() ||
+      (typeof matchedSourceDialogue?.audioUrl === 'string' &&
+        matchedSourceDialogue.audioUrl.trim()) ||
+      sourceDialogueAudioUrl ||
+      undefined
+
+    const promoStillNewer =
+      latestStillCreatedAtMs(beat) > 0 &&
+      latestStillCreatedAtMs(beat) > latestStillCreatedAtMs(sourceBeat)
+    const srcAny = sourceBeat as Record<string, unknown>
+    const beatAny = beat as Record<string, unknown>
 
     return {
       ...sourceBeat,
@@ -737,17 +1034,45 @@ export function hydratePromoSceneWithSharedShots(
         String(sourceScene.id || sourceScene.sceneId || `scene-${beat.sourceSceneIndex}`),
       sourceSceneIndex: beat.sourceSceneIndex,
       sourceBeatId: beat.sourceBeatId,
-      // Live-share still frames, versions, prompts, direction, and references from the source shot:
-      storyboardImageUrl: sourceBeat.storyboardImageUrl || beat.storyboardImageUrl,
-      storyboardEndImageUrl: sourceBeat.storyboardEndImageUrl || beat.storyboardEndImageUrl,
-      storyboardImagePrompt: sourceBeat.storyboardImagePrompt || beat.storyboardImagePrompt,
+      sourceSceneNumber,
+      ...(sourceShotNumber ? { sourceShotNumber } : {}),
+      // Live-share still frames, versions, prompts, direction, and references between source and promo shot:
+      storyboardImageUrl: promoStillNewer
+        ? beat.storyboardImageUrl || sourceBeat.storyboardImageUrl
+        : sourceBeat.storyboardImageUrl || beat.storyboardImageUrl,
+      storyboardImageTier: promoStillNewer
+        ? beatAny.storyboardImageTier || srcAny.storyboardImageTier
+        : srcAny.storyboardImageTier || beatAny.storyboardImageTier,
+      storyboardImageGcsPath: promoStillNewer
+        ? beatAny.storyboardImageGcsPath || srcAny.storyboardImageGcsPath
+        : srcAny.storyboardImageGcsPath || beatAny.storyboardImageGcsPath,
+      storyboardImageVersions: promoStillNewer
+        ? beatAny.storyboardImageVersions || srcAny.storyboardImageVersions
+        : srcAny.storyboardImageVersions || beatAny.storyboardImageVersions,
+      storyboardImageVersionId: promoStillNewer
+        ? beatAny.storyboardImageVersionId || srcAny.storyboardImageVersionId
+        : srcAny.storyboardImageVersionId || beatAny.storyboardImageVersionId,
+      storyboardStartImageUrl:
+        srcAny.storyboardStartImageUrl || beatAny.storyboardStartImageUrl,
+      storyboardStartImageVersions:
+        srcAny.storyboardStartImageVersions || beatAny.storyboardStartImageVersions,
+      storyboardEndImageUrl:
+        sourceBeat.storyboardEndImageUrl || beat.storyboardEndImageUrl,
+      storyboardEndImageVersions:
+        srcAny.storyboardEndImageVersions || beatAny.storyboardEndImageVersions,
+      storyboardImagePrompt: promoStillNewer
+        ? beat.storyboardImagePrompt || sourceBeat.storyboardImagePrompt
+        : sourceBeat.storyboardImagePrompt || beat.storyboardImagePrompt,
       storyboardEndImagePrompt:
         sourceBeat.storyboardEndImagePrompt || beat.storyboardEndImagePrompt,
-      storyboardImagePromptDirectionKey:
-        sourceBeat.storyboardImagePromptDirectionKey || beat.storyboardImagePromptDirectionKey,
-      beatDirection: sourceBeat.beatDirection || beat.beatDirection,
+      storyboardImagePromptDirectionKey: promoStillNewer
+        ? beat.storyboardImagePromptDirectionKey || sourceBeat.storyboardImagePromptDirectionKey
+        : sourceBeat.storyboardImagePromptDirectionKey || beat.storyboardImagePromptDirectionKey,
+      beatDirection: preferBeatDirection(sourceBeat.beatDirection, beat.beatDirection),
       referenceSelection: sourceBeat.referenceSelection || beat.referenceSelection,
-      stillVersions: sourceBeat.stillVersions || beat.stillVersions,
+      stillVersions: promoStillNewer
+        ? beat.stillVersions || sourceBeat.stillVersions
+        : sourceBeat.stillVersions || beat.stillVersions,
       endStillVersions: sourceBeat.endStillVersions || beat.endStillVersions,
       characterIds: sourceBeat.characterIds || beat.characterIds,
       locationId: sourceBeat.locationId || beat.locationId,
@@ -761,86 +1086,6 @@ export function hydratePromoSceneWithSharedShots(
       ...(resolvedAudioUrl ? { audioUrl: resolvedAudioUrl } : {}),
     }
   })
-
-  const ownProd = sceneProductionState?.[promoSceneId]
-  let cursor = 0
-  const hydratedSegments: SceneSegment[] = hydratedBeats
-    .filter((b) => b.kind !== 'narration' || b.promoVideoUrl || b.storyboardImageUrl)
-    .map((beat, index) => {
-      const duration = beat.durationSeconds || 5
-      const startTime = cursor
-      const endTime = cursor + duration
-      cursor = endTime
-
-      const existingPromoSeg = ownProd?.segments?.find((s) => s.beatId === beat.beatId) || ownProd?.segments?.[index]
-      let sourceSeg: SceneSegment | undefined
-      if (typeof beat.sourceSceneIndex === 'number' && beat.sourceBeatId && sceneProductionState) {
-        const sourceScene = scenes[beat.sourceSceneIndex] as Record<string, unknown> | undefined
-        const sourceKeyCandidates = [
-          beat.sourceSceneId,
-          typeof sourceScene?.id === 'string' ? sourceScene.id : undefined,
-          typeof sourceScene?.sceneId === 'string' ? sourceScene.sceneId : undefined,
-          `scene-${beat.sourceSceneIndex}`,
-        ].filter((k): k is string => Boolean(k))
-        for (const key of sourceKeyCandidates) {
-          const prod = sceneProductionState[key]
-          const found = prod?.segments?.find((s) => s.beatId === beat.sourceBeatId)
-          if (found) {
-            sourceSeg = found
-            break
-          }
-        }
-      }
-
-      const activeVideoUrl =
-        sourceSeg?.activeAssetUrl ||
-        existingPromoSeg?.activeAssetUrl ||
-        beat.promoVideoUrl ||
-        null
-      const startFrame =
-        sourceSeg?.startFrameUrl ||
-        sourceSeg?.references?.startFrameUrl ||
-        beat.storyboardImageUrl ||
-        existingPromoSeg?.references?.startFrameUrl ||
-        null
-      const endFrame =
-        sourceSeg?.endFrameUrl ||
-        sourceSeg?.references?.endFrameUrl ||
-        beat.storyboardEndImageUrl ||
-        existingPromoSeg?.references?.endFrameUrl ||
-        null
-
-      return {
-        ...(sourceSeg || {}),
-        ...(existingPromoSeg || {}),
-        segmentId: existingPromoSeg?.segmentId || `${promoSceneId}-seg-${index}`,
-        sequenceIndex: index,
-        startTime,
-        endTime,
-        duration,
-        beatId: beat.beatId,
-        status: activeVideoUrl ? 'COMPLETE' : sourceSeg?.status || existingPromoSeg?.status || 'DRAFT',
-        activeAssetUrl: activeVideoUrl,
-        assetType: activeVideoUrl ? 'video' : startFrame ? 'image' : null,
-        startFrameUrl: startFrame || undefined,
-        endFrameUrl: endFrame || undefined,
-        references: {
-          ...(sourceSeg?.references || existingPromoSeg?.references || {
-            characterIds: [],
-            sceneRefIds: [],
-            objectRefIds: [],
-          }),
-          startFrameUrl: startFrame,
-          endFrameUrl: endFrame,
-        },
-        takes:
-          sourceSeg?.takes && sourceSeg.takes.length > 0
-            ? sourceSeg.takes
-            : existingPromoSeg?.takes || [],
-        visualFrame: startFrame || undefined,
-        action: beat.actionDescription,
-      } as SceneSegment
-    })
 
   const hydratedSceneDirection =
     promoScene.sceneDirection && typeof promoScene.sceneDirection === 'object'
@@ -871,6 +1116,113 @@ export function hydratePromoSceneWithSharedShots(
           },
         }
 
+  const ownProd = sceneProductionState?.[promoSceneId]
+  let cursor = 0
+  const activeHydratedBeats = hydratedBeats.filter((b) => !b.excluded)
+  const hydratedSegments: SceneSegment[] = activeHydratedBeats.map((beat, index) => {
+    const duration = beat.durationSeconds || 5
+    const startTime = cursor
+    const endTime = cursor + duration
+    cursor = endTime
+
+    const existingPromoSeg =
+      ownProd?.segments?.find((s) => s.beatId === beat.beatId) || ownProd?.segments?.[index]
+    let sourceSeg: SceneSegment | undefined
+    if (typeof beat.sourceSceneIndex === 'number' && beat.sourceBeatId && sceneProductionState) {
+      const sourceScene = scenes[beat.sourceSceneIndex] as Record<string, unknown> | undefined
+      const sourceKeyCandidates = [
+        beat.sourceSceneId,
+        typeof sourceScene?.id === 'string' ? sourceScene.id : undefined,
+        typeof sourceScene?.sceneId === 'string' ? sourceScene.sceneId : undefined,
+        `scene-${beat.sourceSceneIndex}`,
+      ].filter((k): k is string => Boolean(k))
+      for (const key of sourceKeyCandidates) {
+        const prod = sceneProductionState[key]
+        const found = prod?.segments?.find((s) => s.beatId === beat.sourceBeatId)
+        if (found) {
+          sourceSeg = found
+          break
+        }
+      }
+    }
+
+    const mergedTakes = (() => {
+      const srcTakes = Array.isArray(sourceSeg?.takes) ? sourceSeg!.takes : []
+      const promoTakes = Array.isArray(existingPromoSeg?.takes) ? existingPromoSeg!.takes : []
+      if (srcTakes.length === 0) return promoTakes
+      if (promoTakes.length === 0) return srcTakes
+      const byUrl = new Map<string, (typeof srcTakes)[number]>()
+      for (const t of [...srcTakes, ...promoTakes]) {
+        const key = t.assetUrl || t.videoUrl || t.id
+        if (key && !byUrl.has(key)) byUrl.set(key, t)
+      }
+      return Array.from(byUrl.values())
+    })()
+
+    const activeVideoUrl =
+      sourceSeg?.activeAssetUrl ||
+      existingPromoSeg?.activeAssetUrl ||
+      beat.promoVideoUrl ||
+      null
+    const startFrame =
+      sourceSeg?.startFrameUrl ||
+      sourceSeg?.references?.startFrameUrl ||
+      beat.storyboardImageUrl ||
+      existingPromoSeg?.references?.startFrameUrl ||
+      null
+    const endFrame =
+      sourceSeg?.endFrameUrl ||
+      sourceSeg?.references?.endFrameUrl ||
+      beat.storyboardEndImageUrl ||
+      existingPromoSeg?.references?.endFrameUrl ||
+      null
+
+    const previousBeat = index > 0 ? activeHydratedBeats[index - 1] : undefined
+    const generatedPrompt = resolveSegmentGeneratedPromptForBeat(
+      beat,
+      previousBeat,
+      hydratedSceneDirection as DetailedSceneDirection,
+      sourceSeg?.generatedPrompt || existingPromoSeg?.generatedPrompt
+    )
+    const dialogueMeta = buildSegmentDialogueLinesForBeat(
+      beat,
+      sourceSeg?.dialogueLines || existingPromoSeg?.dialogueLines
+    )
+
+    return {
+      ...(sourceSeg || {}),
+      ...(existingPromoSeg || {}),
+      segmentId: existingPromoSeg?.segmentId || `${promoSceneId}-seg-${index}`,
+      sequenceIndex: index,
+      startTime,
+      endTime,
+      duration,
+      beatId: beat.beatId,
+      status: activeVideoUrl ? 'COMPLETE' : sourceSeg?.status || existingPromoSeg?.status || 'DRAFT',
+      activeAssetUrl: activeVideoUrl,
+      assetType: activeVideoUrl ? 'video' : startFrame ? 'image' : null,
+      generatedPrompt,
+      ...dialogueMeta,
+      startFrameUrl: startFrame || undefined,
+      endFrameUrl: endFrame || undefined,
+      references: {
+        ...(sourceSeg?.references || existingPromoSeg?.references || {
+          characterIds: [],
+          sceneRefIds: [],
+          objectRefIds: [],
+        }),
+        startFrameUrl: startFrame,
+        endFrameUrl: endFrame,
+      },
+      takes: mergedTakes,
+      visualFrame: startFrame || undefined,
+      action:
+        beat.kind === 'narration' && beat.line?.trim()
+          ? `Voiceover narration: "${beat.line.trim()}"`
+          : beat.actionDescription,
+    } as SceneSegment
+  })
+
   const hydratedLegacy = beatsToLegacyFields(hydratedBeats)
   const existingDialogue = Array.isArray(promoScene.dialogue)
     ? (promoScene.dialogue as Array<Record<string, unknown>>)
@@ -896,12 +1248,37 @@ export function hydratePromoSceneWithSharedShots(
     }
   })
 
+  const hydratedMusicPrompt =
+    typeof promoScene.music === 'string' && promoScene.music.trim()
+      ? promoScene.music.trim()
+      : 'Cinematic promotional trailer score, building tension, emotional swell, memorable theme, no vocals'
+  const existingPromoCues = Array.isArray(promoScene.sceneMusicCues)
+    ? (promoScene.sceneMusicCues as Array<Record<string, unknown>>)
+    : undefined
+  const cueTrackUrl = existingPromoCues?.find(
+    (c) => c && typeof c.url === 'string' && c.url.trim()
+  )?.url as string | undefined
+  const hydratedMusicAudio =
+    (typeof promoScene.musicAudio === 'string' && promoScene.musicAudio.trim()) ||
+    cueTrackUrl ||
+    undefined
+  const hydratedMusicCues = buildPromoSceneMusicCues({
+    beatsCount: hydratedBeats.length,
+    musicPrompt: hydratedMusicPrompt,
+    musicAudio: hydratedMusicAudio,
+    durationSec: typeof promoScene.duration === 'number' ? promoScene.duration : cursor,
+    existingCues: promoScene.sceneMusicCues,
+  })
+
   return {
     scene: {
       ...promoScene,
       sceneDirection: hydratedSceneDirection,
       beats: hydratedBeats,
       dialogue: syncedDialogue,
+      music: hydratedMusicPrompt,
+      ...(hydratedMusicAudio ? { musicAudio: hydratedMusicAudio } : {}),
+      sceneMusicCues: hydratedMusicCues,
       ...(hydratedLegacy.narration && !promoScene.narration
         ? { narration: hydratedLegacy.narration }
         : {}),
@@ -912,4 +1289,151 @@ export function hydratePromoSceneWithSharedShots(
       segments: hydratedSegments,
     } as SceneProductionData,
   }
+}
+
+/**
+ * Bidirectionally synchronize shared Promo beats (`sourceSceneIndex`, `sourceBeatId`)
+ * with their canonical source scene beats across a `scenes` array.
+ *
+ * When Stills Agent, Direction Agent, or frame edits run on the Promo scene, this writes
+ * updated stills, versions, prompts, and `beatDirection` back to the canonical source scene
+ * (e.g. Scene 2 Shot 3), and vice versa, based on newest timestamps.
+ */
+export function syncPromoSharedBeatsToSourceScenes<T = Record<string, unknown>>(
+  scenes: T[]
+): T[] {
+  if (!Array.isArray(scenes) || scenes.length === 0) return scenes
+  const hasPromo = scenes.some((s) => isPromoCinematicScene(s))
+  if (!hasPromo) return scenes
+
+  const cloned = scenes.map((s) =>
+    s && typeof s === 'object' ? ({ ...(s as Record<string, unknown>) } as Record<string, unknown>) : s
+  )
+
+  for (let pIdx = 0; pIdx < cloned.length; pIdx++) {
+    const promoScene = cloned[pIdx]
+    if (!promoScene || typeof promoScene !== 'object' || !isPromoCinematicScene(promoScene)) {
+      continue
+    }
+    const promoBeats = Array.isArray(promoScene.beats)
+      ? ([...(promoScene.beats as PromoSceneBeat[])] as PromoSceneBeat[])
+      : ([] as PromoSceneBeat[])
+    if (promoBeats.length === 0) continue
+
+    let promoMutated = false
+    for (let bIdx = 0; bIdx < promoBeats.length; bIdx++) {
+      const promoBeat = promoBeats[bIdx]
+      if (
+        !promoBeat ||
+        typeof promoBeat.sourceSceneIndex !== 'number' ||
+        !promoBeat.sourceBeatId
+      ) {
+        continue
+      }
+      const srcSceneIdx = promoBeat.sourceSceneIndex
+      const srcScene = cloned[srcSceneIdx]
+      if (!srcScene || typeof srcScene !== 'object' || isPromoCinematicScene(srcScene)) {
+        continue
+      }
+      const srcBeats = Array.isArray(srcScene.beats)
+        ? ([...(srcScene.beats as SceneBeat[])] as SceneBeat[])
+        : getSceneBeats(srcScene)
+      const srcBeatIdx = srcBeats.findIndex((b) => b.beatId === promoBeat.sourceBeatId)
+      if (srcBeatIdx < 0) continue
+
+      const srcBeat = srcBeats[srcBeatIdx]
+      const srcTs = latestStillCreatedAtMs(srcBeat)
+      const promoTs = latestStillCreatedAtMs(promoBeat)
+      const promoStillWins =
+        (promoTs > 0 && promoTs > srcTs) ||
+        (!srcBeat.storyboardImageUrl && Boolean(promoBeat.storyboardImageUrl))
+
+      const srcAny = srcBeat as Record<string, unknown>
+      const promoAny = promoBeat as Record<string, unknown>
+
+      const resolvedImageUrl = promoStillWins
+        ? promoBeat.storyboardImageUrl || srcBeat.storyboardImageUrl
+        : srcBeat.storyboardImageUrl || promoBeat.storyboardImageUrl
+      const resolvedImagePrompt = promoStillWins
+        ? promoBeat.storyboardImagePrompt || srcBeat.storyboardImagePrompt
+        : srcBeat.storyboardImagePrompt || promoBeat.storyboardImagePrompt
+      const resolvedImageTier = promoStillWins
+        ? promoAny.storyboardImageTier || srcAny.storyboardImageTier
+        : srcAny.storyboardImageTier || promoAny.storyboardImageTier
+      const resolvedImageGcsPath = promoStillWins
+        ? promoAny.storyboardImageGcsPath || srcAny.storyboardImageGcsPath
+        : srcAny.storyboardImageGcsPath || promoAny.storyboardImageGcsPath
+      const resolvedImageVersions = promoStillWins
+        ? promoAny.storyboardImageVersions || srcAny.storyboardImageVersions
+        : srcAny.storyboardImageVersions || promoAny.storyboardImageVersions
+      const resolvedImageVersionId = promoStillWins
+        ? promoAny.storyboardImageVersionId || srcAny.storyboardImageVersionId
+        : srcAny.storyboardImageVersionId || promoAny.storyboardImageVersionId
+      const resolvedStillVersions = promoStillWins
+        ? promoBeat.stillVersions || srcBeat.stillVersions
+        : srcBeat.stillVersions || promoBeat.stillVersions
+      const resolvedDirKey = promoStillWins
+        ? promoBeat.storyboardImagePromptDirectionKey || srcBeat.storyboardImagePromptDirectionKey
+        : srcBeat.storyboardImagePromptDirectionKey || promoBeat.storyboardImagePromptDirectionKey
+
+      const resolvedDirection = preferBeatDirection(srcBeat.beatDirection, promoBeat.beatDirection)
+      const resolvedEndImageUrl =
+        promoBeat.storyboardEndImageUrl || srcBeat.storyboardEndImageUrl
+      const resolvedEndImagePrompt =
+        promoBeat.storyboardEndImagePrompt || srcBeat.storyboardEndImagePrompt
+      const resolvedStartImageUrl =
+        promoAny.storyboardStartImageUrl || srcAny.storyboardStartImageUrl
+
+      const sourceSceneNumber =
+        typeof srcScene.sceneNumber === 'number' && srcScene.sceneNumber > 0
+          ? srcScene.sceneNumber
+          : srcSceneIdx + 1
+      const sourceShotNumber = srcBeatIdx + 1
+
+      const sharedFields: Record<string, unknown> = {
+        ...(resolvedImageUrl ? { storyboardImageUrl: resolvedImageUrl } : {}),
+        ...(resolvedImagePrompt ? { storyboardImagePrompt: resolvedImagePrompt } : {}),
+        ...(resolvedImageTier ? { storyboardImageTier: resolvedImageTier } : {}),
+        ...(resolvedImageGcsPath ? { storyboardImageGcsPath: resolvedImageGcsPath } : {}),
+        ...(resolvedImageVersions ? { storyboardImageVersions: resolvedImageVersions } : {}),
+        ...(resolvedImageVersionId ? { storyboardImageVersionId: resolvedImageVersionId } : {}),
+        ...(resolvedStillVersions ? { stillVersions: resolvedStillVersions } : {}),
+        ...(resolvedDirKey ? { storyboardImagePromptDirectionKey: resolvedDirKey } : {}),
+        ...(resolvedDirection ? { beatDirection: resolvedDirection } : {}),
+        ...(resolvedEndImageUrl ? { storyboardEndImageUrl: resolvedEndImageUrl } : {}),
+        ...(resolvedEndImagePrompt ? { storyboardEndImagePrompt: resolvedEndImagePrompt } : {}),
+        ...(resolvedStartImageUrl ? { storyboardStartImageUrl: resolvedStartImageUrl } : {}),
+      }
+
+      srcBeats[srcBeatIdx] = {
+        ...srcBeat,
+        ...sharedFields,
+      } as SceneBeat
+      const firstSrcImage = srcBeats.find((b) => !b.excluded && b.storyboardImageUrl)?.storyboardImageUrl
+      cloned[srcSceneIdx] = {
+        ...srcScene,
+        beats: srcBeats,
+        ...(firstSrcImage && !srcScene.imageUrl ? { imageUrl: firstSrcImage } : {}),
+      }
+
+      promoBeats[bIdx] = {
+        ...promoBeat,
+        ...sharedFields,
+        sourceSceneNumber,
+        sourceShotNumber,
+      } as PromoSceneBeat
+      promoMutated = true
+    }
+
+    if (promoMutated) {
+      const firstPromoImage = promoBeats.find((b) => !b.excluded && b.storyboardImageUrl)?.storyboardImageUrl
+      cloned[pIdx] = {
+        ...promoScene,
+        beats: promoBeats,
+        ...(firstPromoImage ? { imageUrl: firstPromoImage } : {}),
+      }
+    }
+  }
+
+  return cloned as T[]
 }

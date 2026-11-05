@@ -28,6 +28,7 @@ import {
 } from '@/lib/storyboard/expressBeatFrameProgress'
 import { type StoryboardQuality } from '@/lib/storyboard/storyboardQuality'
 import { getSceneBeats } from '@/lib/script/beatMigration'
+import { formatPromoSourceBadge, formatPromoSourceLongLabel } from '@/lib/publish/buildPromoScene'
 import { isBeatFrameStale } from '@/lib/storyboard/syncBeatStillPrompt'
 import type { SceneBeat } from '@/lib/script/segmentTypes'
 import {
@@ -504,6 +505,8 @@ export function ExpressSceneConfirmDialog({
                               status === 'final' ? t('qualityFinal') : t('qualityDraft')
                             }`
                   const line = numberedShotLine(slot.beatNumber ?? 0, stillDescription(slot, beat))
+                  const promoSourceBadge = formatPromoSourceBadge(beat)
+                  const promoSourceLong = formatPromoSourceLongLabel(beat)
                   return (
                   <label
                     key={slot.key}
@@ -521,11 +524,19 @@ export function ExpressSceneConfirmDialog({
                           <TooltipTrigger asChild>
                             <span className="flex items-center gap-1.5 text-sm text-gray-100 truncate">
                               <ImageIcon className="w-3.5 h-3.5 shrink-0 text-amber-300/80" />
-                              {line.visible}
+                              {promoSourceBadge && (
+                                <span
+                                  className="shrink-0 rounded border border-fuchsia-500/40 bg-fuchsia-950/60 px-1.5 py-0.5 text-[10px] font-medium text-fuchsia-200"
+                                  title={promoSourceLong ? `Shared from ${promoSourceLong}` : undefined}
+                                >
+                                  {promoSourceBadge}
+                                </span>
+                              )}
+                              <span className="truncate">{line.visible}</span>
                             </span>
                           </TooltipTrigger>
                           <TooltipContent className="max-w-sm bg-gray-900 text-white border border-gray-700">
-                            {line.full}
+                            {promoSourceLong ? `[Shared: ${promoSourceLong}] ${line.full}` : line.full}
                           </TooltipContent>
                         </Tooltip>
                       </TooltipProvider>

@@ -108,11 +108,16 @@ export function assignDialogueSpeakerToScene(
 
     if (!byBeatId && !byLineId && !bySpokenIndex) return beat
 
+    const nextDirection = beat.beatDirection
+      ? { ...beat.beatDirection, videoPrompt: undefined }
+      : undefined
+
     return {
       ...beat,
       character: fields.character,
       characterId: fields.characterId,
       kind: fields.kind,
+      ...(nextDirection ? { beatDirection: nextDirection } : {}),
     }
   })
 
