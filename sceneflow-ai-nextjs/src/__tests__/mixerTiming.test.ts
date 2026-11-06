@@ -126,4 +126,18 @@ describe('mixerTiming', () => {
       3 + 4 + MIXER_DIALOGUE_INTRA_GAP_SEC
     expect(multi[0].imageDuration).toBeGreaterThanOrEqual(content)
   })
+
+  it('prefers measured video clip duration over stale animatic imageDuration when dialogue track is disabled', () => {
+    const playback = computePlaybackSegmentDuration({
+      segment: makeSegment({
+        imageDuration: 16,
+        startTime: 0,
+        endTime: 16,
+      }),
+      dialogueClips,
+      measuredVideoDuration: 8,
+      dialogueEnabled: false,
+    })
+    expect(playback).toBe(8)
+  })
 })

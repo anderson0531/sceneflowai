@@ -34,9 +34,16 @@ export function getVisualBaseDuration(
   segment: SceneSegment,
   measuredSourceDurationSec?: number
 ): number {
+  const hasVideoDuration =
+    (typeof measuredSourceDurationSec === 'number' &&
+      Number.isFinite(measuredSourceDurationSec) &&
+      measuredSourceDurationSec > 0) ||
+    (typeof segment.actualVideoDuration === 'number' &&
+      Number.isFinite(segment.actualVideoDuration) &&
+      segment.actualVideoDuration > 0)
   const sourceDuration = resolveSegmentSourceDurationSec(segment, measuredSourceDurationSec)
   const { playableSec, isTrimmed } = resolveVideoTrimWindow(segment, sourceDuration)
-  if (isTrimmed) {
+  if (isTrimmed || hasVideoDuration) {
     return Math.max(MIXER_MIN_SEGMENT_VISUAL_SEC, playableSec)
   }
 

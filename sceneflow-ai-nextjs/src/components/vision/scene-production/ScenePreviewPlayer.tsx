@@ -522,13 +522,10 @@ export function ScenePreviewPlayer({
               ? getSegmentStartTime(audioTracks.narration.startSegment) +
                 (currentAudioUrls.narrationDuration ?? 0)
               : 0
+          // Music is a background bed and never extends playback past the video clip end
           const audioEndTime = Math.max(
             narrEnd,
-            ...dialogueEnds,
-            audioTracks.music.enabled &&
-              (currentAudioUrls.musicClips?.length || currentAudioUrls.music)
-              ? totalDuration
-              : 0
+            ...dialogueEnds
           )
           
           if (audioEndTime > timelineVideoDuration && currentTime < audioEndTime) {
@@ -688,7 +685,15 @@ export function ScenePreviewPlayer({
         const cDur = dialogueClipWallDuration(clip.duration, lineCfg?.playbackRate)
         return currentTime >= cStart - 0.1 && currentTime <= cStart + cDur + 0.15
       })
-    const isSpeechActiveNow = isNarrationSpeaking || isDialogueSpeaking
+    const activeSegId = currentSegment.segment?.segmentId
+    const activeSegCfg = activeSegId ? segmentAudioConfigs[activeSegId] : undefined
+    const isClipAudioPlaying =
+      playbackKind === 'video' &&
+      !isVideoFrozen &&
+      (activeSegCfg?.includeAudio ?? true) &&
+      (activeSegCfg?.volume ?? 1) > 0 &&
+      masterSegmentVolume > 0
+    const isSpeechActiveNow = isNarrationSpeaking || isDialogueSpeaking || isClipAudioPlaying
     const musicDuckFactor = audioTracks.music.autoDuck && isSpeechActiveNow ? 0.398 : 1
 
     // Music sync — Score cues (or a single legacy clip) placed on the mixer timeline

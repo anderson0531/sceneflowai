@@ -254,10 +254,11 @@ export async function POST(
     const segmentAudioVolume = body.audioConfig.segmentAudioVolume ?? 0.7
     const includeSegmentAudio = body.audioConfig.includeSegmentAudio ?? false
 
-    // Build audio clips from selected tracks (preserving per-clip volume, trimStart, playbackRate, and auto-ducking)
+    // Build audio clips from selected tracks (preserving per-clip volume, trimStart, playbackRate, auto-ducking, and clamping to video clip duration)
     const audioClips: SceneRenderAudioClip[] = buildSceneRenderAudioClips(
       body.audioConfig,
-      body.audioTracks
+      body.audioTracks,
+      videoSegments
     )
     
     // Note: totalDuration already calculated above for credit cost

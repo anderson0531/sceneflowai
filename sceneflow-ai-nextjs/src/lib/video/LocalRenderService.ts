@@ -725,9 +725,15 @@ export class LocalRenderService {
         return adjustedSegment
       })
       
-      // Keep composition length aligned with mixer: audio/elastic timeline can exceed visual segments.
-      // Previously we only used sum(segment durations), so narration/music at 6s produced a 4s WebM while UI showed 6s.
-      const compositionDuration = Math.max(adjustedTotalDuration, config.totalDuration)
+      // For video segments, end the rendered video at the end of the video clips (adjustedTotalDuration).
+      // Only image-only animatic renders extend composition length to config.totalDuration.
+      const allSegmentsAreImages =
+        adjustedSegments.length > 0 &&
+        adjustedSegments.every((s) => s.assetType === 'image')
+      const compositionDuration =
+        !allSegmentsAreImages && adjustedTotalDuration > 0
+          ? adjustedTotalDuration
+          : Math.max(adjustedTotalDuration, config.totalDuration)
 
       // Update config with adjusted segments and total duration
       const adjustedConfig: LocalRenderConfig = {
@@ -770,9 +776,6 @@ export class LocalRenderService {
       // Timed captureStream(fps) on video runs for the whole wall-clock render; the browser keeps
       // sampling at fps while the loop only updates the canvas ~totalFrames times → thousands of
       // duplicate timeline ticks → multi-minute file with slow-motion picture vs ~48s audio.
-      const allSegmentsAreImages =
-        adjustedConfig.segments.length > 0 &&
-        adjustedConfig.segments.every((s) => s.assetType === 'image')
       const captureFps = Math.min(60, Math.max(1, Math.round(adjustedConfig.fps)))
       const stream = allSegmentsAreImages
         ? this.canvas.captureStream(captureFps)

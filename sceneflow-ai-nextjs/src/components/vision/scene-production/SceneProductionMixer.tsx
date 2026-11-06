@@ -176,6 +176,8 @@ import type {
   WatermarkConfig,
 } from './types'
 import {
+  BACKGROUND_MUSIC_DEFAULT_VOLUME,
+  BACKGROUND_MUSIC_LEVEL_PRESETS,
   buildLanguageMixerSnapshot,
   buildSegmentAudioConfigsForSegments,
   DEFAULT_MIXER_AUDIO_TRACKS,
@@ -649,8 +651,8 @@ function AudioTrackRow({
     ? (segmentCount || 1) - 1
     : Math.min(config.endSegment, (segmentCount || 1) - 1)
   
-  // Calculate time delta for elastic timing warning
-  const timeDelta = (audioDuration && videoTotalDuration && audioDuration > videoTotalDuration) 
+  // Calculate time delta for elastic timing warning (background music is trimmed to video duration and never extends playback)
+  const timeDelta = (type !== 'music' && audioDuration && videoTotalDuration && audioDuration > videoTotalDuration) 
     ? audioDuration - videoTotalDuration 
     : 0
   
@@ -857,24 +859,99 @@ function AudioTrackRow({
             </span>
           </div>
 
-          {/* Auto-Ducking (-8 dB under Dialogue / Narration) for Music & SFX */}
+          {/* Background Music Level Presets & One-Click Auto-Reduce */}
+          {type === 'music' && (
+            <div className="flex flex-col gap-2 px-2.5 py-2 rounded-md bg-zinc-950/80 border border-zinc-800/80">
+              <div className="flex items-center justify-between gap-2 flex-wrap">
+                <div className="flex items-center gap-1.5">
+                  <span className="text-[10px] font-semibold uppercase tracking-wider text-purple-300">
+                    Background Music Level
+                  </span>
+                  {config.autoDuck && (
+                    <span className="text-[10px] text-emerald-400/90 font-mono">
+                      (~{Math.max(1, Math.round(config.volume * 0.398 * 100))}% under clip audio)
+                    </span>
+                  )}
+                </div>
+                <button
+                  type="button"
+                  disabled={disabled}
+                  onClick={() =>
+                    onConfigChange({
+                      ...config,
+                      volume: BACKGROUND_MUSIC_DEFAULT_VOLUME,
+                      autoDuck: true,
+                      duckDb: -8,
+                    })
+                  }
+                  className={`px-2 py-0.5 rounded text-[10px] font-semibold transition-colors border ${
+                    Math.abs(config.volume - BACKGROUND_MUSIC_DEFAULT_VOLUME) < 0.015 && !!config.autoDuck
+                      ? 'bg-emerald-500/20 text-emerald-200 border-emerald-500/50'
+                      : 'bg-purple-500/20 text-purple-200 border-purple-500/40 hover:bg-purple-500/30'
+                  }`}
+                  title="Auto-reduce music to recommended 15% background bed level and duck -8 dB under principal video clip audio"
+                >
+                  Auto-Reduce Background (15%)
+                </button>
+              </div>
+              <div className="grid grid-cols-4 gap-1.5">
+                {BACKGROUND_MUSIC_LEVEL_PRESETS.map((preset) => {
+                  const isActive = Math.abs(config.volume - preset.volume) < 0.015
+                  return (
+                    <button
+                      key={preset.id}
+                      type="button"
+                      disabled={disabled}
+                      onClick={() =>
+                        onConfigChange({
+                          ...config,
+                          volume: preset.volume,
+                          autoDuck: preset.volume <= 0.25 ? true : config.autoDuck,
+                          duckDb: config.duckDb ?? -8,
+                        })
+                      }
+                      title={preset.description}
+                      className={`px-2 py-1 rounded text-[10px] font-medium transition-colors border text-center ${
+                        isActive
+                          ? 'bg-purple-600/35 text-purple-100 border-purple-400/60'
+                          : 'bg-zinc-900/90 text-zinc-400 border-zinc-800 hover:bg-zinc-800 hover:text-zinc-200'
+                      }`}
+                    >
+                      {preset.label} ({Math.round(preset.volume * 100)}%)
+                    </button>
+                  )
+                })}
+              </div>
+            </div>
+          )}
+
+          {/* Auto-Ducking (-8 dB under Principal Clip Audio / Dialogue / Narration) for Music & SFX */}
           {(type === 'music' || type === 'sfx') && (
             <div
               className="flex items-center justify-between gap-2 px-2.5 py-1.5 rounded bg-zinc-950/70 border border-zinc-800/80"
-              title="Auto-Ducking (-8 dB sidechain gain reduction under A1 Dialogue & A2 Narration speech)"
+              title="Auto-Ducking (-8 dB sidechain gain reduction under principal video clip audio, A1 Dialogue & A2 Narration)"
             >
               <div className="flex items-center gap-2 min-w-0">
                 <span className="text-[10px] font-semibold uppercase tracking-wider text-emerald-300">
-                  Auto-Lower During Speech
+                  {type === 'music' ? 'Auto-Lower Under Clip Audio & Speech' : 'Auto-Lower During Speech'}
                 </span>
                 <span className="text-[10px] text-zinc-500 truncate">
-                  Gently lowers volume while someone is speaking
+                  {type === 'music'
+                    ? 'Reduces music by -8 dB under principal video clip audio & dialogue'
+                    : 'Gently lowers volume while someone is speaking'}
                 </span>
               </div>
               <Switch
                 checked={!!config.autoDuck}
                 onCheckedChange={(autoDuck) =>
-                  onConfigChange({ ...config, autoDuck, duckDb: config.duckDb ?? -8 })
+                  onConfigChange({
+                    ...config,
+                    autoDuck,
+                    duckDb: config.duckDb ?? -8,
+                    ...(type === 'music' && autoDuck && config.volume > 0.25
+                      ? { volume: BACKGROUND_MUSIC_DEFAULT_VOLUME }
+                      : {}),
+                  })
                 }
                 disabled={disabled}
                 className="scale-90"
@@ -2953,15 +3030,9 @@ export function SceneProductionMixer({
 
   const getPlaybackSegmentDuration = useCallback(
     (segment: SceneSegment) => {
-      const fromTiming = computePlaybackSegmentDuration(buildSegmentDurationInput(segment))
-      const measured = measuredSegmentDurations[segment.segmentId]
-      if (measured != null && Number.isFinite(measured) && measured > 0) {
-        const trimmed = resolveVideoTrimWindow(segment, measured).playableSec
-        return Math.max(trimmed, fromTiming)
-      }
-      return fromTiming
+      return computePlaybackSegmentDuration(buildSegmentDurationInput(segment))
     },
-    [buildSegmentDurationInput, measuredSegmentDurations]
+    [buildSegmentDurationInput]
   )
 
   const [playbackTime, setPlaybackTime] = useState(0)
@@ -4403,6 +4474,49 @@ export function SceneProductionMixer({
     return renderedSegments
   }, [videoSegments, renderedSegments])
 
+  const videoSegmentProbeKey = useMemo(
+    () =>
+      previewSegments
+        .filter((s) => !!s.activeAssetUrl)
+        .map((s) => `${s.segmentId}:${s.activeAssetUrl}`)
+        .join('|'),
+    [previewSegments]
+  )
+
+  // Probe decoded MP4 durations for all active video segments on mount so the Mixer
+  // timeline and render payload know the true video clip lengths without requiring
+  // the user to play every shot first.
+  useEffect(() => {
+    if (!videoSegmentProbeKey) return
+    const cleaners: Array<() => void> = []
+    for (const seg of previewSegments) {
+      const url = seg.activeAssetUrl
+      if (!url) continue
+      const segId = seg.segmentId
+      const video = document.createElement('video')
+      video.preload = 'metadata'
+      video.muted = true
+      video.playsInline = true
+      video.src = url
+      const onMeta = () => {
+        const d = video.duration
+        if (!Number.isFinite(d) || d <= 0) return
+        setMeasuredSegmentDurations((prev) => {
+          if (prev[segId] != null && Math.abs(prev[segId] - d) < 0.02) return prev
+          return { ...prev, [segId]: d }
+        })
+      }
+      video.addEventListener('loadedmetadata', onMeta)
+      cleaners.push(() => {
+        video.removeEventListener('loadedmetadata', onMeta)
+        video.removeAttribute('src')
+        video.load()
+      })
+    }
+    return () => cleaners.forEach((fn) => fn())
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- probe when segmentId:url set changes
+  }, [videoSegmentProbeKey])
+
   const mixerMusic = useMemo(
     () =>
       resolveMixerMusicClips({
@@ -4770,6 +4884,7 @@ export function SceneProductionMixer({
 
       // Build segment data
       const useStemDubbingPolicy = productionTarget.language !== 'en' && preserveBackgroundStem
+      let runningRenderStartSec = 0
       const segmentData = serverRenderSegments.map((seg, index) => {
         const audioConfig = segmentAudioConfigs[seg.segmentId] || { includeAudio: true, volume: 1.0, postSegmentPause: 0 }
         const hasBackgroundStem = !!seg.stemSeparation?.backgroundStemUrl
@@ -4789,9 +4904,14 @@ export function SceneProductionMixer({
         const trimWin = resolveVideoTrimWindow(seg, sourceDur)
         const videoRate = shotVideoRateFor(seg.segmentId)
         const videoWall = videoWallDurationSec(trimWin.playableSec, videoRate)
-        const pauseDuration = Math.max(0, getPlaybackSegmentDuration(seg) - videoWall)
-        const segStartTime = shotStartTimesBySegmentId[seg.segmentId] ?? seg.startTime ?? 0
+        const manualPostPause = Math.max(0, audioConfig.postSegmentPause ?? 0)
+        const autoDialoguePause = audioTracks.dialogue.enabled
+          ? Math.max(0, getPlaybackSegmentDuration(seg) - videoWall - manualPostPause)
+          : 0
+        const pauseDuration = manualPostPause + autoDialoguePause
+        const segStartTime = runningRenderStartSec
         const segEndTime = segStartTime + videoWall + pauseDuration
+        runningRenderStartSec = segEndTime
         const previous = index > 0 ? serverRenderSegments[index - 1] : undefined
         const join = renderTransitionFromPreviousShot(
           previous,
@@ -4816,6 +4936,7 @@ export function SceneProductionMixer({
           ...join,
         }
       })
+      const renderVideoTotalDuration = runningRenderStartSec
       
       // Build audio tracks payload
       const audioTracksPayload: Record<
@@ -4835,10 +4956,21 @@ export function SceneProductionMixer({
       > = {}
 
       const speechWindows: SpeechDuckWindow[] = []
+
+      // Include active embedded video clip audio spans so Auto-Reduce ducks music under principal video clip audio
+      for (const seg of segmentData) {
+        const clipAudioDur = Math.max(0, (seg.endTime - seg.startTime) - (seg.pauseDuration || 0))
+        if (seg.audioSource !== 'none' && (seg.audioVolume ?? 1) > 0 && clipAudioDur > 0) {
+          speechWindows.push({
+            startTime: Math.max(0, seg.startTime),
+            endTime: Math.max(0, seg.startTime) + clipAudioDur,
+          })
+        }
+      }
       
       if (audioTracks.narration.enabled && playbackAudioUrls.narration) {
         const narrStart = audioTracks.narration.startOffset
-        const narrDur = playbackAudioUrls.narrationDuration || totalDuration
+        const narrDur = playbackAudioUrls.narrationDuration || renderVideoTotalDuration || totalDuration
         if (narrDur > 0) {
           speechWindows.push({
             startTime: Math.max(0, narrStart),
@@ -4883,7 +5015,8 @@ export function SceneProductionMixer({
         audioTracksPayload.music = mixerMusicClipsToRenderPayload(
           playbackAudioUrls.musicClips!,
           audioTracks.music,
-          speechWindows
+          speechWindows,
+          renderVideoTotalDuration
         )
       }
       
@@ -5128,7 +5261,19 @@ export function SceneProductionMixer({
         fadeOutSec?: number
       }> = []
       
+      const headlessVideoTotalDuration = segmentsForHeadless.reduce((sum, s) => sum + (s.duration || 0), 0)
       const headlessSpeechWindows: SpeechDuckWindow[] = []
+      let headlessRunningStart = 0
+      for (const seg of segmentsForHeadless) {
+        const segDur = seg.duration || 0
+        if (seg.includeVideoAudio && (seg.volume ?? 1) > 0 && segDur > 0) {
+          headlessSpeechWindows.push({
+            startTime: headlessRunningStart,
+            endTime: headlessRunningStart + segDur,
+          })
+        }
+        headlessRunningStart += segDur
+      }
 
       if (audioTracks.narration.enabled && playbackAudioUrls.narration) {
         const narrStart = audioTracks.narration.startOffset
@@ -5178,7 +5323,8 @@ export function SceneProductionMixer({
         mixerMusicClipsToRenderPayload(
           playbackAudioUrls.musicClips!,
           audioTracks.music,
-          headlessSpeechWindows
+          headlessSpeechWindows,
+          headlessVideoTotalDuration
         ).forEach((clip) => {
           audioClips.push({
             ...clip,

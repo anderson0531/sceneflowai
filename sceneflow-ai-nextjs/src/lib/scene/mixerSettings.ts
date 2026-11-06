@@ -55,12 +55,21 @@ export const DEFAULT_MIXER_COLLAPSED_SECTIONS: SceneMixerCollapsedSections = {
   timeline: false,
 }
 
+export const BACKGROUND_MUSIC_DEFAULT_VOLUME = 0.15
+
+export const BACKGROUND_MUSIC_LEVEL_PRESETS = [
+  { id: 'subtle', label: 'Subtle', volume: 0.08, description: 'Whisper bed (-22 dB)' },
+  { id: 'background', label: 'Background', volume: 0.15, description: 'Recommended under clip audio (-16.5 dB)' },
+  { id: 'balanced', label: 'Balanced', volume: 0.25, description: 'Warm underscore (-12 dB)' },
+  { id: 'featured', label: 'Featured', volume: 0.4, description: 'Music-forward montage (-8 dB)' },
+] as const
+
 export const DEFAULT_MIXER_AUDIO_TRACKS: MixerAudioTracks = {
   narration: { enabled: false, volume: 0.8, startOffset: 0, startSegment: 0, endSegment: -1 },
   dialogue: { enabled: false, volume: 1, startOffset: 0, startSegment: 0, endSegment: -1 },
   music: {
     enabled: false,
-    volume: 0.4,
+    volume: BACKGROUND_MUSIC_DEFAULT_VOLUME,
     startOffset: 0,
     startSegment: 0,
     endSegment: -1,

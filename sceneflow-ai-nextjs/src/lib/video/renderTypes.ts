@@ -663,29 +663,58 @@ function clampRenderPlaybackRate(pr: number | undefined): number | undefined {
  */
 export function buildSceneRenderAudioClips(
   audioConfig: SceneRenderAudioConfig,
-  audioTracks: CreateSceneRenderJobRequest['audioTracks']
+  audioTracks: CreateSceneRenderJobRequest['audioTracks'],
+  videoSegments?: SceneRenderVideoSegment[]
 ): SceneRenderAudioClip[] {
   const narrationVolume = audioConfig.narrationVolume ?? 0.8
   const dialogueVolume = audioConfig.dialogueVolume ?? 0.9
-  const musicVolume = audioConfig.musicVolume ?? 0.5
+  const musicVolume = audioConfig.musicVolume ?? 0.15
   const sfxVolume = audioConfig.sfxVolume ?? 0.6
+
+  const maxVideoDuration =
+    videoSegments && videoSegments.length > 0
+      ? videoSegments.reduce((sum, seg) => sum + (seg.duration || 0) + (seg.pauseDuration || 0), 0)
+      : undefined
+
+  const clampDurationToVideo = (startTime: number, duration: number): number | null => {
+    if (maxVideoDuration == null || maxVideoDuration <= 0) return duration
+    if (startTime >= maxVideoDuration - 0.01) return null
+    return Math.max(0.05, Math.min(duration, maxVideoDuration - startTime))
+  }
 
   const audioClips: SceneRenderAudioClip[] = []
   const speechWindows: SpeechDuckWindow[] = []
 
+  // When embedded video clip audio is included, treat active video clip audio spans as principal audio windows for auto-ducking
+  if (audioConfig.includeSegmentAudio && videoSegments && videoSegments.length > 0) {
+    let runningStart = 0
+    for (const seg of videoSegments) {
+      const segDur = (seg.duration || 0) + (seg.pauseDuration || 0)
+      const segStart = typeof seg.startTime === 'number' && Number.isFinite(seg.startTime) ? seg.startTime : runningStart
+      if (seg.audioSource !== 'none' && (seg.audioVolume ?? 1) > 0 && (seg.duration || 0) > 0) {
+        speechWindows.push({
+          startTime: Math.max(0, segStart),
+          endTime: Math.max(0, segStart) + (seg.duration || 0),
+        })
+      }
+      runningStart = segStart + segDur
+    }
+  }
+
   if (audioConfig.includeNarration && audioTracks.narration) {
     for (const track of audioTracks.narration) {
-      const dur = track.duration || 0
-      if (dur > 0) {
+      const clampedDuration = clampDurationToVideo(track.startTime, track.duration || 0)
+      if (clampedDuration == null) continue
+      if (clampedDuration > 0) {
         speechWindows.push({
           startTime: Math.max(0, track.startTime),
-          endTime: Math.max(0, track.startTime) + dur,
+          endTime: Math.max(0, track.startTime) + clampedDuration,
         })
       }
       audioClips.push({
         url: track.url,
         startTime: track.startTime,
-        duration: track.duration,
+        duration: clampedDuration,
         volume: clampRenderVolume(track.volume, narrationVolume),
         type: 'narration',
       })
@@ -694,9 +723,11 @@ export function buildSceneRenderAudioClips(
 
   if (audioConfig.includeDialogue && audioTracks.dialogue) {
     for (const track of audioTracks.dialogue) {
+      const clampedDuration = clampDurationToVideo(track.startTime, track.duration || 0)
+      if (clampedDuration == null) continue
       const playbackRate = clampRenderPlaybackRate(track.playbackRate)
       const effectiveRate = playbackRate ?? 1
-      const wallDur = (track.duration || 0) / effectiveRate
+      const wallDur = clampedDuration / effectiveRate
       if (wallDur > 0) {
         speechWindows.push({
           startTime: Math.max(0, track.startTime - 0.1),
@@ -706,7 +737,7 @@ export function buildSceneRenderAudioClips(
       audioClips.push({
         url: track.url,
         startTime: track.startTime,
-        duration: track.duration,
+        duration: clampedDuration,
         volume: clampRenderVolume(track.volume, dialogueVolume),
         type: 'dialogue',
         character: track.character,
@@ -716,31 +747,33 @@ export function buildSceneRenderAudioClips(
   }
 
   if (audioConfig.includeMusic && audioTracks.music) {
-    const musicCount = audioTracks.music.length
     for (const track of audioTracks.music) {
+      const clampedDuration = clampDurationToVideo(track.startTime, track.duration || 0)
+      if (clampedDuration == null) continue
       const playbackRate = clampRenderPlaybackRate(track.playbackRate)
       const hasExplicitClipVolume = track.volume != null && Number.isFinite(track.volume)
       const duckMult =
         !hasExplicitClipVolume && audioConfig.autoDuckMusic
-          ? computeSpeechDuckMultiplier(track.startTime, track.duration, speechWindows)
+          ? computeSpeechDuckMultiplier(track.startTime, clampedDuration, speechWindows)
           : 1
       const volume = clampRenderVolume(
         hasExplicitClipVolume ? track.volume : musicVolume * duckMult,
         musicVolume
       )
-      // Ensure non-looping or multi-slice music clips starting at 0 carry at least 0.001s trimStart
-      // so stream-copy _overlay_audio_filter always runs audio_source_window_filters and trims to duration
+      // Always ensure music clips with duration > 0 carry at least 0.001s trimStart
+      // so Cloud Run FFmpeg's audio_source_window_filters always emits atrim and cuts
+      // the music track at the end of the video clip instead of playing to the end of the file.
       const resolvedTrimStart =
         track.trimStart != null && track.trimStart > 0
           ? track.trimStart
-          : (track.loop === false || musicCount > 1) && track.duration > 0
+          : clampedDuration > 0
             ? 0.001
             : undefined
 
       audioClips.push({
         url: track.url,
         startTime: track.startTime,
-        duration: track.duration,
+        duration: clampedDuration,
         volume,
         type: 'music',
         ...(playbackRate != null ? { playbackRate } : {}),
@@ -754,23 +787,30 @@ export function buildSceneRenderAudioClips(
 
   if (audioConfig.includeSfx && audioTracks.sfx) {
     for (const track of audioTracks.sfx) {
+      const clampedDuration = clampDurationToVideo(track.startTime, track.duration || 0)
+      if (clampedDuration == null) continue
       const playbackRate = clampRenderPlaybackRate(track.playbackRate)
       const hasExplicitClipVolume = track.volume != null && Number.isFinite(track.volume)
       const duckMult =
         !hasExplicitClipVolume && audioConfig.autoDuckSfx
-          ? computeSpeechDuckMultiplier(track.startTime, track.duration, speechWindows)
+          ? computeSpeechDuckMultiplier(track.startTime, clampedDuration, speechWindows)
           : 1
       const volume = clampRenderVolume(
         hasExplicitClipVolume ? track.volume : sfxVolume * duckMult,
         sfxVolume
       )
+      const wasTrimmedByVideoEnd =
+        maxVideoDuration != null &&
+        maxVideoDuration > 0 &&
+        track.startTime + (track.duration || 0) > maxVideoDuration + 0.01
       audioClips.push({
         url: track.url,
         startTime: track.startTime,
-        duration: track.duration,
+        duration: clampedDuration,
         volume,
         type: 'sfx',
         ...(playbackRate != null ? { playbackRate } : {}),
+        ...(wasTrimmedByVideoEnd && clampedDuration > 0 ? { trimStart: 0.001 } : {}),
       })
     }
   }

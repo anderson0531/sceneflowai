@@ -293,7 +293,8 @@ export function coalesceContiguousMusicClips(clips: MixerMusicClip[]): MixerMusi
 export function mixerMusicClipsToRenderPayload(
   clips: MixerMusicClip[],
   musicConfig: AudioTrackConfig,
-  speechWindows?: SpeechDuckWindow[]
+  speechWindows?: SpeechDuckWindow[],
+  maxDurationSec?: number
 ): Array<{
   url: string
   startTime: number
@@ -306,16 +307,25 @@ export function mixerMusicClipsToRenderPayload(
   trimStart?: number
 }> {
   const playbackRate = clampAudioPlaybackRate(musicConfig.playbackRate)
+  const boundedClips =
+    maxDurationSec != null && Number.isFinite(maxDurationSec) && maxDurationSec > 0
+      ? clips
+          .filter((clip) => clip.startTime < maxDurationSec - 0.01)
+          .map((clip) => ({
+            ...clip,
+            duration: Math.max(0.05, Math.min(clip.duration, maxDurationSec - clip.startTime)),
+          }))
+      : clips
   const duckedClips =
     musicConfig.autoDuck && speechWindows && speechWindows.length > 0
-      ? clips.map((clip) => {
+      ? boundedClips.map((clip) => {
           const duckMult = computeSpeechDuckMultiplier(clip.startTime, clip.duration, speechWindows)
           return {
             ...clip,
             volume: resolveMusicCueVolume(clip.volume) * duckMult,
           }
         })
-      : clips
+      : boundedClips
   const coalesced = coalesceContiguousMusicClips(duckedClips)
   const faded = foldScoreStemFades(
     coalesced,

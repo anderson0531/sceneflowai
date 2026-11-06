@@ -143,4 +143,47 @@ describe('buildSceneRenderAudioClips', () => {
     const music = clips.find((c) => c.type === 'music')!
     expect(music.volume).toBeCloseTo(0.4 * 0.398, 4)
   })
+
+  it('always sets trimStart >= 0.001 on single looping music clips and clamps audio to total video clip duration', () => {
+    const videoSegments = [
+      toSceneRenderVideoSegment({
+        segmentId: 'seg-1',
+        sequenceIndex: 0,
+        videoUrl: 'https://example.com/beat1.mp4',
+        startTime: 0,
+        endTime: 8,
+        audioSource: 'original',
+        audioVolume: 1,
+      }),
+    ]
+
+    const clips = buildSceneRenderAudioClips(
+      {
+        includeNarration: false,
+        includeDialogue: false,
+        includeMusic: true,
+        includeSfx: false,
+        includeSegmentAudio: true,
+        language: 'en',
+        musicVolume: 0.15,
+        autoDuckMusic: true,
+      },
+      {
+        music: [
+          {
+            url: 'https://example.com/music30s.wav',
+            startTime: 0,
+            duration: 30,
+            loop: true,
+          },
+        ],
+      },
+      videoSegments
+    )
+
+    expect(clips).toHaveLength(1)
+    expect(clips[0].duration).toBe(8)
+    expect(clips[0].trimStart).toBeCloseTo(0.001)
+    expect(clips[0].volume).toBeCloseTo(0.15 * 0.398, 4)
+  })
 })
