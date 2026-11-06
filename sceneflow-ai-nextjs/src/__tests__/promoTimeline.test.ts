@@ -3,6 +3,12 @@ import path from 'path'
 import { describe, expect, it } from 'vitest'
 import type { PromoShotCatalogEntry } from '@/lib/publish/promoShotCatalog'
 import {
+  buildPromoSceneFromPlan,
+  hydratePromoSceneWithSharedShots,
+  promoSourceShotKeys,
+  syncPromoSharedBeatsToSourceScenes,
+} from '@/lib/publish/buildPromoScene'
+import {
   movePromoShot,
   placePromoShot,
   promoNarrationStartSec,
@@ -13,6 +19,7 @@ import {
   withPromoShotDuration,
   withPromoShotIncluded,
 } from '@/lib/publish/promoTimeline'
+import { getSceneBeats } from '@/lib/script/beatMigration'
 import type { PromoTrailerBeatPlan } from '@/types/publishingAssets'
 
 function shot(sceneIndex: number, beatId: string, durationSec = 5): PromoShotCatalogEntry {
@@ -133,5 +140,99 @@ describe('promo watermark', () => {
     expect(tab).not.toContain('title="Shot length in seconds"')
     expect(tab).toContain('w-16')
     expect(tab).not.toContain('w-12 rounded border border-zinc-700')
+  })
+
+  it('removes excluded shot references from promo scene beats, segments, and source shot keys', () => {
+    const plan: PromoTrailerBeatPlan[] = [
+      row(0, 'bt_1', 5),
+      withPromoShotIncluded(row(0, 'bt_2', 5), false),
+      row(1, 'bt_3', 5),
+    ]
+    const { scene, productionSeed } = buildPromoSceneFromPlan({
+      beatPlan: plan,
+      targetDurationSec: 15,
+      projectTitle: 'Test Film',
+      narrationLine: 'A world on the edge.',
+    })
+
+    expect(scene.beats.map((b) => `${b.sourceSceneIndex}:${b.sourceBeatId}`)).toEqual([
+      '0:bt_1',
+      '1:bt_3',
+    ])
+    expect(productionSeed.segments).toHaveLength(2)
+
+    const reconciledBeats = getSceneBeats(scene as unknown as Record<string, unknown>)
+    expect(
+      reconciledBeats.map(
+        (b) =>
+          `${(b as { sourceSceneIndex?: number }).sourceSceneIndex}:${(b as { sourceBeatId?: string }).sourceBeatId}`
+      )
+    ).toEqual(['0:bt_1', '1:bt_3'])
+
+    const sourceScenes = [
+      {
+        id: 'scene-0',
+        beats: [
+          { beatId: 'bt_1', sequenceIndex: 0, kind: 'action', actionDescription: 'Shot 1' },
+          { beatId: 'bt_2', sequenceIndex: 1, kind: 'action', actionDescription: 'Shot 2' },
+        ],
+      },
+      {
+        id: 'scene-1',
+        beats: [
+          { beatId: 'bt_3', sequenceIndex: 0, kind: 'action', actionDescription: 'Shot 3' },
+        ],
+      },
+      scene,
+    ]
+
+    const shotKeys = promoSourceShotKeys(sourceScenes)
+    expect(shotKeys.has('0:bt_1')).toBe(true)
+    expect(shotKeys.has('0:bt_2')).toBe(false)
+    expect(shotKeys.has('1:bt_3')).toBe(true)
+
+    // Even if a legacy promo scene still had the excluded shot in scene.beats, hydration and sync strip it
+    const legacyPromoWithExcludedBeat = {
+      ...scene,
+      beats: [
+        ...scene.beats,
+        {
+          beatId: 'bt_promo_0_bt_2_legacy',
+          sequenceIndex: 2,
+          kind: 'action' as const,
+          actionDescription: 'Excluded shot',
+          sourceSceneId: 'scene-0',
+          sourceBeatId: 'bt_2',
+          sourceSceneIndex: 0,
+        },
+      ],
+    }
+    const hydrated = hydratePromoSceneWithSharedShots(
+      legacyPromoWithExcludedBeat as unknown as Record<string, unknown>,
+      sourceScenes,
+      {}
+    )
+    const hydratedBeats = (hydrated.scene.beats || []) as Array<{
+      sourceSceneIndex?: number
+      sourceBeatId?: string
+    }>
+    expect(hydratedBeats.map((b) => `${b.sourceSceneIndex}:${b.sourceBeatId}`)).toEqual([
+      '0:bt_1',
+      '1:bt_3',
+    ])
+    expect(hydrated.productionData?.segments).toHaveLength(2)
+
+    const synced = syncPromoSharedBeatsToSourceScenes([
+      sourceScenes[0],
+      sourceScenes[1],
+      legacyPromoWithExcludedBeat,
+    ])
+    const syncedPromo = synced[2] as {
+      beats: Array<{ sourceSceneIndex?: number; sourceBeatId?: string }>
+    }
+    expect(syncedPromo.beats.map((b) => `${b.sourceSceneIndex}:${b.sourceBeatId}`)).toEqual([
+      '0:bt_1',
+      '1:bt_3',
+    ])
   })
 })

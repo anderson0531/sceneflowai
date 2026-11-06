@@ -686,10 +686,10 @@ export function PublishingPromoTab({
 
   const clipRows = useMemo(
     () =>
-      timelineRows.filter(
+      includedRows.filter(
         (row) => row.playback.hasClip && Boolean(row.playback.videoUrl) && !brokenBeatKeys.has(row.key)
       ),
-    [timelineRows, brokenBeatKeys]
+    [includedRows, brokenBeatKeys]
   )
 
   const activeClipRow = useMemo(() => {

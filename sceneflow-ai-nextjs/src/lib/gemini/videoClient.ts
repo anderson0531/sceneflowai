@@ -248,11 +248,6 @@ async function generateVideoWithOmniInteractions(
   const previousInteractionId = resolveOmniPreviousInteractionId(options.sourceVideo)
   const hasValidPreviousInteraction = !!previousInteractionId
 
-  if (isFTV && options.lastFrame) {
-    console.warn(
-      '[Omni Video] FTV (start+end frame interpolation) is unsupported on Omni — using start frame only as I2V'
-    )
-  }
   if (isEXT && !hasValidPreviousInteraction) {
     console.warn(
       '[Omni Video] EXT without valid previous_interaction_id — degrading to I2V/T2V (Omni does not support legacy video refs)'
@@ -260,17 +255,22 @@ async function generateVideoWithOmniInteractions(
   }
 
   let effectiveDuration: VeoClipDuration = options.durationSeconds ?? DEFAULT_VEO_CLIP_DURATION
-  if (isFTV) {
-    effectiveDuration = stabilityDuration
-  } else if (isEXT && hasValidPreviousInteraction) {
+  if (isEXT && hasValidPreviousInteraction) {
     effectiveDuration = 10
   }
+
+  const defaultOmniResolution =
+    quality === 'premium' || quality === 'standard' ? '1080p' : '720p'
+  const requestedResolution = options.resolution ?? defaultOmniResolution
 
   const omniBuildOptions = normalizeOmniInteractionBuildOptions(
     {
       aspectRatio: options.aspectRatio,
       durationSeconds: effectiveDuration,
-      resolution: options.resolution?.toLowerCase() === '4k' ? '4k' : (options.resolution as '360p' | '720p' | '1080p' | undefined),
+      resolution:
+        requestedResolution.toLowerCase() === '4k'
+          ? '4k'
+          : (requestedResolution as '360p' | '720p' | '1080p'),
       frameRate: options.frameRate,
       thinkingLevel: options.thinkingLevel,
       omniMultiShot: options.omniMultiShot,
@@ -634,15 +634,12 @@ export async function generateVideoWithVeo(
   const isFTV = !!veoOptions.startFrame && !!veoOptions.lastFrame
   
   // FTV/EXT Stability Constraints (Veo predictLongRunning):
-  // - duration MUST be 8s, resolution MUST be 720p
+  // - duration MUST be 8s; EXT requires 720p, while FTV supports 720p and 1080p
   if (isFTV) {
     if (veoOptions.durationSeconds && veoOptions.durationSeconds !== stabilityDuration) {
       console.warn(`[Veo Video] FTV mode: Overriding duration ${veoOptions.durationSeconds}s → ${stabilityDuration}s (required for stability)`)
     }
-    if (veoOptions.resolution && veoOptions.resolution !== '720p') {
-      console.warn(`[Veo Video] FTV mode: Overriding resolution ${veoOptions.resolution} → 720p (required for stability)`)
-    }
-    console.log(`[Veo Video] FTV MODE: Enforcing stability constraints (${stabilityDuration}s duration, 720p resolution)`)
+    console.log(`[Veo Video] FTV MODE: Enforcing duration stability constraint (${stabilityDuration}s duration, ${veoOptions.resolution || '720p'} resolution)`)
   }
   
   // Safety setting: Use configurable setting from environment (default: 'block_only_high')
@@ -665,10 +662,13 @@ export async function generateVideoWithVeo(
     isFTV,
   })
 
-  // Add resolution - FTV/EXT require 720p for stability
-  if (isFTV || isEXT) {
+  // Add resolution - legacy Veo EXT requires 720p, while FTV/I2V/T2V support 1080p
+  if (isEXT) {
     parameters.resolution = '720p'
     parameters.durationSeconds = stabilityDuration
+  } else if (isFTV) {
+    parameters.durationSeconds = stabilityDuration
+    parameters.resolution = veoOptions.resolution === '1080p' ? '1080p' : '720p'
   } else if (veoOptions.resolution === '1080p') {
     parameters.resolution = '1080p'
   }

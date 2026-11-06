@@ -58,8 +58,11 @@ interface ReferenceImage {
 
 export interface GeminiVideoOptions {
   aspectRatio?: '16:9' | '9:16'
-  resolution?: '720p' | '1080p'
+  resolution?: '360p' | '720p' | '1080p' | '4k' | '4K'
   durationSeconds?: VeoClipDuration
+  frameRate?: 24 | 30
+  thinkingLevel?: import('@/lib/config/modelConfig').GeminiThinkingLevel
+  omniMultiShot?: boolean
   negativePrompt?: string
   personGeneration?: 'allow_adult' | 'allow_all' | 'dont_allow'
   startFrame?: string // Base64 or URL for I2V
@@ -189,7 +192,7 @@ async function generateVideoWithOmniGeminiStudio(
   const isFTV = !!options.startFrame && !!options.lastFrame
   const isEXT = !!options.sourceVideo && !options.startFrame
   let effectiveDuration: VeoClipDuration = options.durationSeconds ?? DEFAULT_VEO_CLIP_DURATION
-  if (isFTV || isEXT) {
+  if (isEXT) {
     effectiveDuration = stabilityDuration
   } else if (options.durationSeconds) {
     let duration = options.durationSeconds
@@ -203,21 +206,26 @@ async function generateVideoWithOmniGeminiStudio(
   const previousInteractionId = resolveOmniPreviousInteractionId(options.sourceVideo)
   const hasValidPreviousInteraction = !!previousInteractionId
 
-  if (isFTV && options.lastFrame) {
-    console.warn(
-      '[Gemini Studio Omni] FTV (start+end frame interpolation) is unsupported on Omni — using start frame only as I2V'
-    )
-  }
   if (isEXT && !hasValidPreviousInteraction) {
     console.warn(
       '[Gemini Studio Omni] EXT without valid previous_interaction_id — degrading to I2V/T2V'
     )
   }
 
+  const defaultOmniResolution = quality === 'standard' ? '1080p' : '720p'
+  const requestedResolution = options.resolution ?? defaultOmniResolution
+
   const omniBuildOptions = normalizeOmniInteractionBuildOptions(
     {
       aspectRatio: options.aspectRatio,
       durationSeconds: effectiveDuration,
+      resolution:
+        requestedResolution.toLowerCase() === '4k'
+          ? '4k'
+          : (requestedResolution as '360p' | '720p' | '1080p'),
+      frameRate: options.frameRate,
+      thinkingLevel: options.thinkingLevel,
+      omniMultiShot: options.omniMultiShot,
       negativePrompt: options.negativePrompt,
       personGeneration: options.personGeneration,
       startFrame: options.startFrame,
@@ -585,20 +593,16 @@ export async function generateVideoWithGeminiStudio(
       mimeType: mimeType
     }
     
-    // FTV/EXT Stability Constraints:
-    // - Legacy Veo 3.1: duration MUST be 8s, resolution MUST be 720p
-    // - Gemini Omni Flash: duration MAY be 10s, resolution MUST be 720p
+    // FTV Stability Constraints (legacy Veo 3.1 predictLongRunning):
+    // - duration MUST be 8s; resolution supports 720p and 1080p
     if (parameters.durationSeconds && parameters.durationSeconds !== stabilityDuration) {
       console.warn(`[Gemini Studio Video] FTV mode: Overriding duration ${parameters.durationSeconds}s → ${stabilityDuration}s (required for stability)`)
     }
-    if (parameters.resolution && parameters.resolution !== '720p') {
-      console.warn(`[Gemini Studio Video] FTV mode: Overriding resolution ${parameters.resolution} → 720p (required for stability)`)
-    }
     parameters.durationSeconds = stabilityDuration
-    parameters.resolution = '720p'
+    parameters.resolution = options.resolution === '1080p' ? '1080p' : '720p'
     
     console.log('[Gemini Studio Video] FTV MODE: last_frame added to parameters (snake_case)')
-    console.log(`[Gemini Studio Video] FTV MODE: Enforcing stability constraints (${stabilityDuration}s duration, 720p resolution)`)
+    console.log(`[Gemini Studio Video] FTV MODE: Enforcing duration constraint (${stabilityDuration}s duration, ${parameters.resolution} resolution)`)
   }
   
   // Add reference images (REF mode) - T2V only, not compatible with I2V

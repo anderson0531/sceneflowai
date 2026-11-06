@@ -29,6 +29,7 @@ interface GenerateContinuousBody {
   projectId: string
   guidePrompt?: string
   aspectRatio?: '16:9' | '9:16'
+  resolution?: '360p' | '720p' | '1080p' | '4k'
   qualityTier?: 'fast' | 'premium'
   videoProvider?: 'kling' | 'vertex'
 }
@@ -51,7 +52,7 @@ export async function POST(
   try {
     const { sceneId, beatId } = await context.params
     const body = (await req.json()) as GenerateContinuousBody
-    const { projectId, guidePrompt, aspectRatio, qualityTier, videoProvider } = body
+    const { projectId, guidePrompt, aspectRatio, resolution, qualityTier, videoProvider } = body
     const chainVideoProvider: 'kling' | 'vertex' =
       videoProvider === 'kling' ? 'kling' : 'vertex'
 
@@ -214,7 +215,7 @@ export async function POST(
         totalSegments: allSegments.length,
         duration: Math.round(segment.endTime - segment.startTime),
         aspectRatio: aspectRatio || '16:9',
-        resolution: '720p',
+        resolution: resolution || (qualityTier === 'premium' ? '1080p' : '720p'),
         qualityTier,
         guidePrompt,
         requireVeoRefForExt: i > 0 && method === 'EXT' && chainVideoProvider === 'vertex',

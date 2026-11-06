@@ -248,7 +248,12 @@ export interface DirectorConsoleProps {
       duration?: number
       aspectRatio?: '16:9' | '9:16'
       resolution?: '360p' | '720p' | '1080p' | '4k' | '4K'
-      duration?: number
+      frameRate?: 24 | 30
+      thinkingLevel?: 'minimal' | 'low' | 'medium' | 'high'
+      omniMultiShot?: boolean
+      qualityTier?: 'fast' | 'premium'
+      klingModel?: string
+      klingQuality?: 'std' | 'pro' | '4k'
       guidePrompt?: string
       generationMethod?: VideoGenerationMethod
       videoProvider?: 'kling' | 'vertex' | 'aggregator'
@@ -1836,6 +1841,11 @@ export function DirectorConsoleRoot({
         signageTranslatedText,
       })
       const config = queueItem?.config
+      const sessionPolicy = resolveVideoGeneration({
+        quality: videoGenerationQuality,
+        mode: videoGenerationMode,
+        sourceMethod: effectiveVideoSourceMethod,
+      })
       const startFrameUrl =
         resolveEffectiveStartFrameUrl(
           segment,
@@ -1849,10 +1859,16 @@ export function DirectorConsoleRoot({
         negativePrompt: config?.negativePrompt || undefined,
         startFrameUrl: startFrameUrl || undefined,
         generationMethod: mode,
-        videoProvider: config?.videoProvider,
+        videoProvider: sessionPolicy.videoProvider,
+        qualityTier: sessionPolicy.qualityTier,
+        klingModel: sessionPolicy.klingModel,
+        klingQuality: sessionPolicy.klingQuality,
         aspectRatio: config?.aspectRatio,
-        resolution: config?.resolution,
+        resolution: sessionPolicy.resolution,
         duration: config?.duration,
+        frameRate: config?.frameRate,
+        thinkingLevel: config?.thinkingLevel,
+        omniMultiShot: config?.omniMultiShot,
         clipLanguage: language,
       })
     } catch {
@@ -1870,6 +1886,9 @@ export function DirectorConsoleRoot({
     onGenerate,
     sceneId,
     productionData?.mixerSettingsByLanguage,
+    videoGenerationQuality,
+    videoGenerationMode,
+    effectiveVideoSourceMethod,
   ])
 
   const videoClips = useMemo<BeatVideoClip[]>(

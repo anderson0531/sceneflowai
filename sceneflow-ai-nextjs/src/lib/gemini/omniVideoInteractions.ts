@@ -8,7 +8,7 @@ import {
   type VeoClipDuration,
 } from '@/lib/config/modelConfig'
 import { MAX_VERTEX_GEMINI_REFERENCE_IMAGES } from '@/lib/vision/referenceLimits'
-import { OPENING_FRAME_CAPTION } from '@/lib/vision/referenceImageBinding'
+import { CLOSING_FRAME_CAPTION, OPENING_FRAME_CAPTION } from '@/lib/vision/referenceImageBinding'
 import {
   getOmniVideoSafetySettings,
   isOmniVideoSafetySettingsEnabled,
@@ -171,8 +171,9 @@ export function formatOmniInteractionErrorMessage(
 }
 
 /**
- * Normalize build options for Omni limitations:
- * - FTV (start+end frame interpolation) is unsupported — use start frame only (I2V)
+ * Normalize build options for Omni Interactions API:
+ * - Omni 1.1 Flash natively supports first+last frame interpolation (FTV) up to 1080p/4k
+ * - End frame without a start frame is invalid — omit lastFrame if startFrame is missing
  * - EXT without a valid previous_interaction_id is unsupported — omit continuation
  */
 export function normalizeOmniInteractionBuildOptions(
@@ -181,7 +182,7 @@ export function normalizeOmniInteractionBuildOptions(
 ): OmniInteractionBuildOptions {
   const normalized = { ...options }
 
-  if (ctx.isFTV && normalized.lastFrame) {
+  if (!normalized.startFrame && normalized.lastFrame) {
     normalized.lastFrame = undefined
   }
 
@@ -302,11 +303,8 @@ export function assertOmniReferenceImagesAttached(
 
 function inferOmniVideoTask(options: OmniInteractionBuildOptions): string {
   if (options.previousInteractionId) return 'text_to_video'
-  if (options.startFrame && (options.lastFrame || (options.referenceImages?.length ?? 0) > 0)) {
-    return 'reference_to_video'
-  }
+  if ((options.referenceImages?.length ?? 0) > 0) return 'reference_to_video'
   if (options.startFrame) return 'image_to_video'
-  if (options.referenceImages && options.referenceImages.length > 0) return 'reference_to_video'
   return 'text_to_video'
 }
 
@@ -329,7 +327,7 @@ export async function buildOmniInteractionInput(
   }
 
   if (options.startFrame) {
-    if ((options.referenceImages?.length ?? 0) > 0) {
+    if ((options.referenceImages?.length ?? 0) > 0 || Boolean(options.lastFrame)) {
       parts.push({ type: 'text', text: OPENING_FRAME_CAPTION })
     }
     const { base64, mimeType } = await resolveImageBase64(options.startFrame)
@@ -337,6 +335,7 @@ export async function buildOmniInteractionInput(
   }
 
   if (options.lastFrame) {
+    parts.push({ type: 'text', text: CLOSING_FRAME_CAPTION })
     const { base64, mimeType } = await resolveImageBase64(options.lastFrame)
     parts.push({ type: 'image', data: base64, mime_type: mimeType })
   }

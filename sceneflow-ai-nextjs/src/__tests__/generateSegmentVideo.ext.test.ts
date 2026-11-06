@@ -315,4 +315,93 @@ describe('generateSegmentVideoCore REF start frame', () => {
       })
     )
   })
+
+  it('uses Omni 1.1 Flash at 1080p for Final FTV (2-keyframe interpolation) instead of legacy 720p fallback', async () => {
+    await generateSegmentVideoCore({
+      segmentId: 'seg-ftv-final',
+      projectId: 'proj-1',
+      sceneId: 'scene-1',
+      userId: 'user-1',
+      prompt: 'Smooth transition between keyframes',
+      genType: 'FTV',
+      generationMethod: 'FTV',
+      startFrameUrl: 'https://cdn.example.com/start.png',
+      endFrameUrl: 'https://cdn.example.com/end.png',
+      qualityTier: 'premium',
+      resolution: '1080p',
+      videoProvider: 'vertex',
+      duration: 8,
+    })
+
+    expect(generateVideoWithVeoKlingFallback).toHaveBeenCalledWith(
+      expect.objectContaining({
+        method: 'FTV',
+        videoOptions: expect.objectContaining({
+          preferOmni: true,
+          resolution: '1080p',
+          quality: 'premium',
+          startFrame: 'https://cdn.example.com/start.png',
+          lastFrame: 'https://cdn.example.com/end.png',
+        }),
+      })
+    )
+  })
+
+  it('preserves 1080p resolution on Final EXT with Vertex Omni instead of forcing 720p', async () => {
+    await generateSegmentVideoCore({
+      segmentId: 'seg-ext-final',
+      projectId: 'proj-1',
+      sceneId: 'scene-1',
+      userId: 'user-1',
+      prompt: 'Seamless continuation shot',
+      genType: 'EXT',
+      generationMethod: 'EXT',
+      segmentIndex: 1,
+      totalSegments: 2,
+      previousSegmentAssetUrl: 'https://cdn.example.com/prev.mp4',
+      previousSegmentVeoRef: 'files/veo-prev-123',
+      qualityTier: 'premium',
+      resolution: '1080p',
+      videoProvider: 'vertex',
+      duration: 8,
+    })
+
+    expect(generateVideoWithVeoKlingFallback).toHaveBeenCalledWith(
+      expect.objectContaining({
+        method: 'EXT',
+        videoOptions: expect.objectContaining({
+          preferOmni: true,
+          resolution: '1080p',
+          quality: 'premium',
+          sourceVideo: 'files/veo-prev-123',
+        }),
+      })
+    )
+  })
+
+  it('defaults to 1080p when qualityTier is premium (Final) even if resolution is omitted', async () => {
+    await generateSegmentVideoCore({
+      segmentId: 'seg-premium-default-res',
+      projectId: 'proj-1',
+      sceneId: 'scene-1',
+      userId: 'user-1',
+      prompt: 'High definition final shot',
+      genType: 'I2V',
+      generationMethod: 'I2V',
+      startFrameUrl: 'https://cdn.example.com/start.png',
+      qualityTier: 'premium',
+      videoProvider: 'vertex',
+      duration: 8,
+    })
+
+    expect(generateVideoWithVeoKlingFallback).toHaveBeenCalledWith(
+      expect.objectContaining({
+        videoOptions: expect.objectContaining({
+          preferOmni: true,
+          resolution: '1080p',
+          quality: 'premium',
+        }),
+      })
+    )
+  })
 })

@@ -926,7 +926,7 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
   }, [])
 
   const fetchApiPromptPreview = useCallback(async () => {
-    const method = modeToMethod[mode]
+    const method = resolveStandardEffectiveMethod(mode)
     const attachStart =
       useBeatFrameAsStart || method === 'I2V' || method === 'FTV' || method === 'EXT'
     const startFrameUrl = attachStart ? effectiveStartFrameUrl || undefined : undefined
@@ -976,7 +976,17 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
     } finally {
       setApiPromptPreviewLoading(false)
     }
-  }, [mode, visualPrompt, guidePrompt, referenceImages, segment, effectiveStartFrameUrl, useBeatFrameAsStart])
+  }, [
+    mode,
+    resolveStandardEffectiveMethod,
+    visualPrompt,
+    guidePrompt,
+    referenceImages,
+    segment,
+    effectiveStartFrameUrl,
+    effectiveEndFrameUrl,
+    useBeatFrameAsStart,
+  ])
 
   useEffect(() => {
     if (!isOpen) return
@@ -997,51 +1007,71 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
     videoGenerationQuality != null &&
     (takeMode === 'standard' || (takeMode === 'creative' && isSceneFlowEngine))
 
-  const appendAdvancedConfig = (config: VideoGenerationConfig): VideoGenerationConfig => ({
-    ...config,
-    useCustomApiPrompt,
-    apiPromptOverride: useCustomApiPrompt ? apiPromptOverride.trim() : undefined,
-    ...resolvedEngine,
-    allowPolicyFallback: false,
-    allowVeoFallback: false,
-    resolution: applySessionPolicy
-      ? sessionPolicy.resolution
-      : (resolvedEngine.resolution ?? config.resolution),
-    qualityTier: applySessionPolicy
-      ? sessionPolicy.qualityTier
-      : (resolvedEngine.qualityTier ?? config.qualityTier),
-    ...(applySessionPolicy
-      ? {
-          videoProvider: sessionPolicy.videoProvider,
-          klingModel: sessionPolicy.klingModel,
-          klingQuality: sessionPolicy.klingQuality,
-        }
-      : {}),
-    cfgScale: isSceneFlowEngine ? cfgScale : undefined,
-    sound: isSceneFlowEngine ? soundEnabled : undefined,
-    watermarkEnabled: isSceneFlowEngine ? watermarkEnabled : undefined,
-    multiShot: isSceneFlowEngine ? multiShot : undefined,
-    shotType: isSceneFlowEngine ? shotType : undefined,
-    multiPrompt:
-      isSceneFlowEngine && multiShot
-        ? multiPromptRows.map((row) => ({
-            index: row.index,
-            prompt: row.prompt,
-            duration: row.duration,
-          }))
-        : undefined,
-    preset: isSceneFlowEngine ? selectedPreset : undefined,
-    frameRate: takeMode === 'standard' ? frameRate : undefined,
-    thinkingLevel: takeMode === 'standard' ? thinkingLevel : undefined,
-    omniMultiShot: takeMode === 'standard' ? omniMultiShotEnabled : undefined,
-    optimizedSettingsReason:
-      takeMode === 'standard' && optimizedSettingsReason ? optimizedSettingsReason : undefined,
-    useBeatFrameAsStart:
-      useBeatFrameAsStart ||
-      mode === 'IMAGE_TO_VIDEO' ||
-      mode === 'FRAME_TO_VIDEO' ||
-      mode === 'EXTEND',
-  })
+  useEffect(() => {
+    if (!isOpen || settingsUserEdited || !videoGenerationQuality) return
+    setResolution(sessionPolicy.resolution)
+    setQualityTierId(videoGenerationQuality === 'draft' ? 'standard' : 'cinematic')
+  }, [isOpen, settingsUserEdited, videoGenerationQuality, sessionPolicy.resolution])
+
+  const appendAdvancedConfig = (config: VideoGenerationConfig): VideoGenerationConfig => {
+    const effectiveResolution =
+      applySessionPolicy && !settingsUserEdited
+        ? sessionPolicy.resolution
+        : takeMode === 'standard'
+          ? config.resolution
+          : (resolvedEngine.resolution ?? config.resolution)
+    const effectiveQualityTier =
+      takeMode === 'standard'
+        ? effectiveResolution === '1080p' || effectiveResolution === '4k'
+          ? 'premium'
+          : 'fast'
+        : applySessionPolicy && !settingsUserEdited
+          ? sessionPolicy.qualityTier
+          : (resolvedEngine.qualityTier ?? config.qualityTier)
+    return {
+      ...config,
+      useCustomApiPrompt,
+      apiPromptOverride: useCustomApiPrompt ? apiPromptOverride.trim() : undefined,
+      ...resolvedEngine,
+      allowPolicyFallback: false,
+      allowVeoFallback: false,
+      resolution: effectiveResolution,
+      qualityTier: effectiveQualityTier,
+      ...(applySessionPolicy
+        ? {
+            videoProvider: sessionPolicy.videoProvider,
+            klingModel:
+              !settingsUserEdited ? sessionPolicy.klingModel : (resolvedEngine.klingModel ?? sessionPolicy.klingModel),
+            klingQuality:
+              !settingsUserEdited ? sessionPolicy.klingQuality : (resolvedEngine.klingQuality ?? sessionPolicy.klingQuality),
+          }
+        : {}),
+      cfgScale: isSceneFlowEngine ? cfgScale : undefined,
+      sound: isSceneFlowEngine ? soundEnabled : undefined,
+      watermarkEnabled: isSceneFlowEngine ? watermarkEnabled : undefined,
+      multiShot: isSceneFlowEngine ? multiShot : undefined,
+      shotType: isSceneFlowEngine ? shotType : undefined,
+      multiPrompt:
+        isSceneFlowEngine && multiShot
+          ? multiPromptRows.map((row) => ({
+              index: row.index,
+              prompt: row.prompt,
+              duration: row.duration,
+            }))
+          : undefined,
+      preset: isSceneFlowEngine ? selectedPreset : undefined,
+      frameRate: takeMode === 'standard' ? frameRate : undefined,
+      thinkingLevel: takeMode === 'standard' ? thinkingLevel : undefined,
+      omniMultiShot: takeMode === 'standard' ? omniMultiShotEnabled : undefined,
+      optimizedSettingsReason:
+        takeMode === 'standard' && optimizedSettingsReason ? optimizedSettingsReason : undefined,
+      useBeatFrameAsStart:
+        useBeatFrameAsStart ||
+        mode === 'IMAGE_TO_VIDEO' ||
+        mode === 'FRAME_TO_VIDEO' ||
+        mode === 'EXTEND',
+    }
+  }
 
   const generateButtonLabel = t('generateVideo')
 
@@ -1482,25 +1512,34 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
                     ['IMAGE_TO_VIDEO', t('omniMethodStartFrame')],
                     ['REFERENCE_IMAGES', t('omniMethodIngredients')],
                   ] as const
-                ).map(([value, label]) => (
-                  <Button
-                    key={value}
-                    type="button"
-                    size="sm"
-                    variant={mode === value ? 'default' : 'outline'}
-                    className={cn(
-                      'text-xs',
-                      mode === value ? 'bg-indigo-600' : 'bg-slate-800 border-slate-700 text-slate-300'
-                    )}
-                    disabled={value === 'IMAGE_TO_VIDEO' && !tabStates.IMAGE_TO_VIDEO}
-                    onClick={() => {
-                      markSettingsEdited()
-                      setMode(value)
-                    }}
-                  >
-                    {label}
-                  </Button>
-                ))}
+                ).map(([value, label]) => {
+                  const isActive =
+                    mode === value ||
+                    (value === 'IMAGE_TO_VIDEO' && mode === 'FRAME_TO_VIDEO')
+                  return (
+                    <Button
+                      key={value}
+                      type="button"
+                      size="sm"
+                      variant={isActive ? 'default' : 'outline'}
+                      className={cn(
+                        'text-xs',
+                        isActive ? 'bg-indigo-600' : 'bg-slate-800 border-slate-700 text-slate-300'
+                      )}
+                      disabled={value === 'IMAGE_TO_VIDEO' && !tabStates.IMAGE_TO_VIDEO}
+                      onClick={() => {
+                        markSettingsEdited()
+                        setMode(
+                          value === 'IMAGE_TO_VIDEO' && effectiveEndFrameUrl
+                            ? 'FRAME_TO_VIDEO'
+                            : value
+                        )
+                      }}
+                    >
+                      {label}
+                    </Button>
+                  )
+                })}
                 <Button
                   type="button"
                   size="sm"
@@ -2130,6 +2169,7 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
                             <Select
                               value={qualityTierId}
                               onValueChange={(v) => {
+                                markSettingsEdited()
                                 const tierId = v as SceneFlowQualityTierId
                                 setQualityTierId(tierId)
                                 const tier = SCENEFLOW_QUALITY_TIERS.find((t) => t.id === tierId)

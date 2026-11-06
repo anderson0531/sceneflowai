@@ -2253,6 +2253,17 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         if (!response.ok) {
           throw new Error('Failed to save publishing metadata')
         }
+        const patchedScenes = getSceneProductionStateFromMetadata(metadataPatch) as Record<
+          string,
+          SceneProductionData
+        >
+        if (Object.keys(patchedScenes).length > 0) {
+          setSceneProductionState((prev) => {
+            const next = { ...prev, ...patchedScenes }
+            sceneProductionStateRef.current = next
+            return next
+          })
+        }
         setProject((prev) => {
           if (!prev) return prev
           return { ...prev, metadata: metadataPatch }
@@ -4895,6 +4906,10 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           mode: videoGenerationMode,
         })
         const videoProvider = options?.videoProvider ?? sessionVideo.videoProvider
+        const effectiveResolution = options?.resolution ?? sessionVideo.resolution
+        const effectiveQualityTier = options?.qualityTier ?? sessionVideo.qualityTier
+        const effectiveKlingModel = options?.klingModel ?? sessionVideo.klingModel
+        const effectiveKlingQuality = options?.klingQuality ?? sessionVideo.klingQuality
         
         // Debug: Log which prompt source is being used
         console.log('[Segment Generate] Prompt source:', {
@@ -4906,6 +4921,8 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           generationMethod: options?.generationMethod,
           videoProvider,
           videoModel: options?.videoModel,
+          resolution: effectiveResolution,
+          qualityTier: effectiveQualityTier,
         })
         const isContinuation =
           segment.veoTimelineContinuation ||
@@ -4937,11 +4954,11 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                 prompt,
                 negativePrompt: options?.negativePrompt,
                 startFrameUrl: resolvedStartFrameUrl,
-                klingModel: options?.klingModel,
-                klingQuality: options?.klingQuality,
+                klingModel: effectiveKlingModel,
+                klingQuality: effectiveKlingQuality,
                 cfgScale: options?.cfgScale,
                 aspectRatio: options?.aspectRatio,
-                resolution: options?.resolution,
+                resolution: effectiveResolution,
                 faceConsistency: true,
               }),
             }
@@ -4978,7 +4995,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
             sourceVideoUrl: options?.sourceVideoUrl,  // For EXT mode: Veo extends video directly
             referenceImages: normalizedReferenceImages,
             generationMethod: effectiveGenerationMethod,
-            qualityTier: options?.qualityTier,
+            qualityTier: effectiveQualityTier,
             sceneId,
             projectId: project.id,
             sceneImageUrl: sceneImageUrlForApi,
@@ -4992,7 +5009,10 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
             negativePrompt: options?.negativePrompt,
             duration: options?.duration,
             aspectRatio: options?.aspectRatio,
-            resolution: options?.resolution,
+            resolution: effectiveResolution,
+            frameRate: options?.frameRate,
+            thinkingLevel: options?.thinkingLevel,
+            omniMultiShot: options?.omniMultiShot,
             // Pass guidePrompt containing voice/dialogue/SFX for Veo 3.1 audio generation
             guidePrompt: options?.guidePrompt,
             segmentIndex: segmentIndexForApi,
@@ -5005,8 +5025,8 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
             allowPolicyFallback: options?.allowPolicyFallback === true,
             videoProvider,
             videoModel: options?.videoModel,
-            klingModel: options?.klingModel,
-            klingQuality: options?.klingQuality,
+            klingModel: effectiveKlingModel,
+            klingQuality: effectiveKlingQuality,
             cfgScale: options?.cfgScale,
             sound: options?.sound,
             watermarkEnabled: options?.watermarkEnabled,

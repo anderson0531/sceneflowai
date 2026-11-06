@@ -26,6 +26,8 @@ export interface ReferenceImageBinding {
 
 export const OPENING_FRAME_CAPTION = 'The next image is the opening frame.'
 
+export const CLOSING_FRAME_CAPTION = 'The next image is the closing frame.'
+
 export const IMAGES_ABOVE_LEAD = 'Use the images above.'
 
 const NEXT_IMAGE_CAPTION =

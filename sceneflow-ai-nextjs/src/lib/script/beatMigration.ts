@@ -1022,9 +1022,28 @@ export function reconcilePromoBeatsWithPlan(
     (Array.isArray(scene.promoBeatPlan) && scene.promoBeatPlan.length > 0)
   if (!isPromo) return beats
 
-  const rawPlan = Array.isArray(scene.promoBeatPlan)
+  const fullPlan = Array.isArray(scene.promoBeatPlan)
     ? (scene.promoBeatPlan as Array<Record<string, unknown>>)
     : []
+  const excludedSourceKeys = new Set<string>()
+  for (const plan of fullPlan) {
+    if (!plan || plan.included !== false) continue
+    const sIdx = typeof plan.sceneIndex === 'number' ? plan.sceneIndex : Number(plan.sceneIndex)
+    const bId = typeof plan.beatId === 'string' ? plan.beatId.trim() : ''
+    if (Number.isFinite(sIdx) && bId) {
+      excludedSourceKeys.add(`${sIdx}:${bId}`)
+    }
+  }
+  const rawPlan = fullPlan.filter((plan) => plan && plan.included !== false)
+  const isBeatExcludedByPlan = (beat: SceneBeat): boolean => {
+    if (beat.excluded) return true
+    const sIdx = (beat as { sourceSceneIndex?: unknown }).sourceSceneIndex
+    const bId = (beat as { sourceBeatId?: unknown }).sourceBeatId
+    if (typeof sIdx === 'number' && typeof bId === 'string' && bId.trim()) {
+      return excludedSourceKeys.has(`${sIdx}:${bId.trim()}`)
+    }
+    return false
+  }
   const firstPlanFrame =
     typeof rawPlan[0]?.frameUrl === 'string' && rawPlan[0].frameUrl.trim()
       ? rawPlan[0].frameUrl.trim()
@@ -1053,26 +1072,31 @@ export function reconcilePromoBeatsWithPlan(
     return nextBeat
   })
 
+  if (fullPlan.length === 0) {
+    return withNarrationDirected.filter((b) => !b.excluded)
+  }
   if (rawPlan.length === 0) {
-    return withNarrationDirected
+    return []
   }
 
-  // Separate legacy unlinked narration beats (`bt_promo_narration_0`) from shared shots (`sourceSceneIndex`, `sourceBeatId`).
-  const unlinkedNarrationBeats = withNarrationDirected.filter(
+  // Separate legacy unlinked narration beats (`bt_promo_narration_0`) or narration beats on
+  // excluded shots from active shared shots (`sourceSceneIndex`, `sourceBeatId`).
+  const displacedNarrationBeats = withNarrationDirected.filter(
     (b) =>
       b.kind === 'narration' &&
       (typeof (b as { sourceSceneIndex?: unknown }).sourceSceneIndex !== 'number' ||
-        !(b as { sourceBeatId?: unknown }).sourceBeatId)
+        !(b as { sourceBeatId?: unknown }).sourceBeatId ||
+        isBeatExcludedByPlan(b))
   )
   const linkedCandidateBeats = withNarrationDirected.filter(
-    (b) => !unlinkedNarrationBeats.includes(b)
+    (b) => !displacedNarrationBeats.includes(b) && !isBeatExcludedByPlan(b)
   )
 
   const dubNarrationOntoShots = (shots: SceneBeat[]): SceneBeat[] => {
     if (shots.some((b) => b.kind === 'narration')) {
       return shots
     }
-    const legacyNarr = unlinkedNarrationBeats[0]
+    const legacyNarr = displacedNarrationBeats[0]
     const fallbackSceneNarration =
       typeof scene.narration === 'string' && scene.narration.trim()
         ? scene.narration.trim()

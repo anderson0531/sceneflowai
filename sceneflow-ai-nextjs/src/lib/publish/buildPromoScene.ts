@@ -10,6 +10,7 @@ import {
   storedStillDirectionKeyMatches,
 } from '@/lib/script/beatDirectionFingerprint'
 import { compileBeatVideoPromptFromDirection } from '@/lib/scene/beatVideoPromptCompiler'
+import { promoShotIncluded } from '@/lib/publish/promoTimeline'
 import { mediaBlobUrlTimestamp } from '@/lib/storyboard/mediaVersions'
 import type { SceneBeat, SceneMusicCue } from '@/lib/script/segmentTypes'
 import type {
@@ -370,14 +371,50 @@ export function filterOutPromoScenes<T>(scenes: T[]): T[] {
   return scenes.filter((s) => !isPromoCinematicScene(s))
 }
 
+function excludedPromoSourceKeysFromScene(scene: Record<string, unknown>): Set<string> {
+  const excluded = new Set<string>()
+  const rawPlan = Array.isArray(scene.promoBeatPlan)
+    ? (scene.promoBeatPlan as PromoTrailerBeatPlan[])
+    : []
+  for (const plan of rawPlan) {
+    if (!plan || promoShotIncluded(plan)) continue
+    if (
+      typeof plan.sceneIndex === 'number' &&
+      typeof plan.beatId === 'string' &&
+      plan.beatId.trim()
+    ) {
+      excluded.add(`${plan.sceneIndex}:${plan.beatId.trim()}`)
+    }
+  }
+  return excluded
+}
+
+function isPromoBeatExcludedByPlan(
+  beat: PromoSceneBeat,
+  excludedKeys: Set<string>
+): boolean {
+  if (beat.excluded) return true
+  if (
+    typeof beat.sourceSceneIndex === 'number' &&
+    typeof beat.sourceBeatId === 'string' &&
+    beat.sourceBeatId.trim()
+  ) {
+    return excludedKeys.has(`${beat.sourceSceneIndex}:${beat.sourceBeatId.trim()}`)
+  }
+  return false
+}
+
 /** Source shots the current promo cut points at, as `sceneIndex:beatId`. */
 export function promoSourceShotKeys(scenes: unknown[] | undefined): Set<string> {
   const keys = new Set<string>()
   if (!Array.isArray(scenes)) return keys
   for (const scene of scenes) {
     if (!isPromoCinematicScene(scene)) continue
-    for (const beat of getSceneBeats(scene as Record<string, unknown>)) {
+    const sceneObj = scene as Record<string, unknown>
+    const excludedKeys = excludedPromoSourceKeysFromScene(sceneObj)
+    for (const beat of getSceneBeats(sceneObj)) {
       const source = beat as PromoSceneBeat
+      if (isPromoBeatExcludedByPlan(source, excludedKeys)) continue
       if (source.sourceBeatId && typeof source.sourceSceneIndex === 'number') {
         keys.add(`${source.sourceSceneIndex}:${source.sourceBeatId}`)
       }
@@ -417,14 +454,75 @@ export interface BuildPromoSceneResult {
 
 function buildPromoBeats(
   beatPlan: PromoTrailerBeatPlan[],
-  narrationLine?: string
+  narrationLine?: string,
+  existingBeats?: PromoSceneBeat[]
 ): PromoSceneBeat[] {
-  const beats: PromoSceneBeat[] = beatPlan.map((plan, index) => {
+  const includedPlan = beatPlan.filter((plan) => promoShotIncluded(plan))
+  const usedExistingIndices = new Set<number>()
+  const beats: PromoSceneBeat[] = includedPlan.map((plan, index) => {
     const durationSec = plan.durationSec ?? plan.endSec - plan.startSec
     const label = plan.label || `Promo moment ${index + 1}`
     const kind = plan.beatKind === 'dialogue' ? 'dialogue' : 'action'
     const isClimax = Boolean(plan.isClimaxCandidate)
+    const existingIdx = Array.isArray(existingBeats)
+      ? existingBeats.findIndex((candidate, candIdx) => {
+          if (usedExistingIndices.has(candIdx) || !candidate) return false
+          if (
+            plan.beatId &&
+            candidate.sourceSceneIndex === plan.sceneIndex &&
+            candidate.sourceBeatId === plan.beatId
+          ) {
+            return true
+          }
+          if (
+            !plan.beatId &&
+            candidate.sourceSceneIndex === plan.sceneIndex &&
+            (candidate.actionDescription?.trim() === label || candidate.line?.trim() === label)
+          ) {
+            return true
+          }
+          return false
+        })
+      : -1
+    const existingMatch = existingIdx >= 0 ? existingBeats?.[existingIdx] : undefined
+    if (existingIdx >= 0) {
+      usedExistingIndices.add(existingIdx)
+    }
+    const defaultBeatDirection: PromoSceneBeat['beatDirection'] = {
+      shotType: isClimax ? 'Dynamic medium close-up' : 'Medium cinematic shot',
+      cameraAngle: isClimax ? 'Low heroic angle' : 'Eye-level cinematic framing',
+      cameraMovement: isClimax ? 'Rapid dramatic push-in' : 'Controlled tracking movement',
+      frozenMoment: label,
+      blocking: label,
+      emotion: isClimax ? 'Peak dramatic tension' : 'Heightened trailer momentum',
+      lightingAccent: 'High-contrast cinematic lighting',
+      transition: 'CUT',
+      generatedBy: 'planner',
+    }
     return {
+      ...(existingMatch
+        ? {
+            ...(existingMatch.stillVersions ? { stillVersions: existingMatch.stillVersions } : {}),
+            ...(existingMatch.endStillVersions
+              ? { endStillVersions: existingMatch.endStillVersions }
+              : {}),
+            ...(existingMatch.storyboardEndImageUrl
+              ? { storyboardEndImageUrl: existingMatch.storyboardEndImageUrl }
+              : {}),
+            ...(existingMatch.storyboardImagePrompt
+              ? { storyboardImagePrompt: existingMatch.storyboardImagePrompt }
+              : {}),
+            ...(existingMatch.storyboardImageDirectionKey
+              ? { storyboardImageDirectionKey: existingMatch.storyboardImageDirectionKey }
+              : {}),
+            ...(existingMatch.storyboardImageContentKey
+              ? { storyboardImageContentKey: existingMatch.storyboardImageContentKey }
+              : {}),
+            ...(existingMatch.referenceSelection
+              ? { referenceSelection: existingMatch.referenceSelection }
+              : {}),
+          }
+        : {}),
       beatId: `bt_promo_${plan.sceneIndex}_${plan.beatId || 'shot'}_${index}`,
       sequenceIndex: index,
       kind,
@@ -432,31 +530,30 @@ function buildPromoBeats(
       ...(kind === 'dialogue'
         ? {
             line: label,
-            lineId: plan.lineId?.trim() || `ln_promo_${plan.sceneIndex}_${index}`,
+            lineId:
+              plan.lineId?.trim() ||
+              (existingMatch?.kind === 'dialogue' ? existingMatch.lineId?.trim() : undefined) ||
+              `ln_promo_${plan.sceneIndex}_${index}`,
             ...(plan.character?.trim() ? { character: plan.character.trim() } : {}),
             ...(plan.characterId?.trim() ? { characterId: plan.characterId.trim() } : {}),
             ...(plan.voiceDirection?.trim() ? { voiceDirection: plan.voiceDirection.trim() } : {}),
+            ...(existingMatch?.kind === 'dialogue' && existingMatch.audioUrl?.trim()
+              ? { audioUrl: existingMatch.audioUrl.trim() }
+              : {}),
           }
         : {}),
-      beatRole: plan.beatRole || 'progression',
-      storyboardImageUrl: plan.frameUrl,
+      beatRole: plan.beatRole || existingMatch?.beatRole || 'progression',
+      storyboardImageUrl: plan.frameUrl || existingMatch?.storyboardImageUrl,
       durationSeconds: durationSec,
-      musicEnabled: true,
-      sourceSceneId: plan.sceneId,
-      sourceBeatId: plan.beatId,
+      musicEnabled: existingMatch?.musicEnabled ?? true,
+      sourceSceneId: plan.sceneId || existingMatch?.sourceSceneId,
+      sourceBeatId: plan.beatId || existingMatch?.sourceBeatId,
       sourceSceneIndex: plan.sceneIndex,
-      promoVideoUrl: plan.videoUrl,
-      beatDirection: {
-        shotType: isClimax ? 'Dynamic medium close-up' : 'Medium cinematic shot',
-        cameraAngle: isClimax ? 'Low heroic angle' : 'Eye-level cinematic framing',
-        cameraMovement: isClimax ? 'Rapid dramatic push-in' : 'Controlled tracking movement',
-        frozenMoment: label,
-        blocking: label,
-        emotion: isClimax ? 'Peak dramatic tension' : 'Heightened trailer momentum',
-        lightingAccent: 'High-contrast cinematic lighting',
-        transition: 'CUT',
-        generatedBy: 'planner',
-      },
+      promoVideoUrl: plan.videoUrl || existingMatch?.promoVideoUrl,
+      beatDirection:
+        existingMatch?.beatDirection && Object.keys(existingMatch.beatDirection).length > 0
+          ? existingMatch.beatDirection
+          : defaultBeatDirection,
     }
   })
 
@@ -668,7 +765,10 @@ export function buildPromoSceneFromPlan(input: BuildPromoSceneInput): BuildPromo
       ? (input.existingPromoScene.promoAspect as PromoFrameAspect)
       : presetDef?.defaultAspect)
 
-  const beats = buildPromoBeats(input.beatPlan, input.narrationLine)
+  const existingPromoBeats = Array.isArray(input.existingPromoScene?.beats)
+    ? (input.existingPromoScene?.beats as PromoSceneBeat[])
+    : undefined
+  const beats = buildPromoBeats(input.beatPlan, input.narrationLine, existingPromoBeats)
   const existingDialogueAudio =
     input.existingPromoScene?.dialogueAudio &&
     typeof input.existingPromoScene.dialogueAudio === 'object'
@@ -697,6 +797,45 @@ export function buildPromoSceneFromPlan(input: BuildPromoSceneInput): BuildPromo
       }
     }
   }
+  const activeDialogueLineIds = new Set(
+    beats
+      .filter((b) => b.kind === 'dialogue' && b.lineId?.trim())
+      .map((b) => b.lineId!.trim())
+  )
+  const activeDialogueCharacters = new Set(
+    beats
+      .filter((b) => b.kind === 'dialogue' && b.character?.trim())
+      .map((b) => b.character!.trim().toUpperCase())
+  )
+  const filteredDialogueAudio: Record<string, unknown[]> | undefined = (() => {
+    if (!existingDialogueAudio) return undefined
+    const out: Record<string, unknown[]> = {}
+    for (const [lang, list] of Object.entries(existingDialogueAudio)) {
+      if (!Array.isArray(list)) continue
+      const kept = list.filter((row) => {
+        if (!row || typeof row !== 'object') return false
+        const r = row as Record<string, unknown>
+        const isNarr =
+          r.kind === 'narration' ||
+          String(r.character || '')
+            .trim()
+            .toUpperCase() === 'NARRATOR'
+        if (isNarr) return true
+        const rowLineId = typeof r.lineId === 'string' ? r.lineId.trim() : ''
+        if (rowLineId) {
+          return activeDialogueLineIds.has(rowLineId)
+        }
+        const rowChar = String(r.character || '')
+          .trim()
+          .toUpperCase()
+        return Boolean(rowChar && activeDialogueCharacters.has(rowChar))
+      })
+      if (kept.length > 0) {
+        out[lang] = kept
+      }
+    }
+    return Object.keys(out).length > 0 ? out : undefined
+  })()
   const legacyFromBeats = beatsToLegacyFields(beats)
   const resolvedNarrationText =
     legacyFromBeats.narration ||
@@ -710,6 +849,7 @@ export function buildPromoSceneFromPlan(input: BuildPromoSceneInput): BuildPromo
         .filter((name): name is string => Boolean(name))
     )
   )
+  const includedBeatPlan = input.beatPlan.filter((p) => promoShotIncluded(p))
   const defaultSceneDirection =
     input.existingPromoScene?.sceneDirection &&
     typeof input.existingPromoScene.sceneDirection === 'object'
@@ -724,7 +864,7 @@ export function buildPromoSceneFromPlan(input: BuildPromoSceneInput): BuildPromo
             atmosphere: 'Dynamic trailer pacing with high-contrast cinematic continuity',
           },
           camera: {
-            shots: input.beatPlan.map((p) => p.label).filter(Boolean).slice(0, 6),
+            shots: includedBeatPlan.map((p) => p.label).filter(Boolean).slice(0, 6),
             angle: 'Cinematic multi-angle montage coverage',
             movement: 'Rhythmic push-ins and kinetic trailer cuts',
           },
@@ -793,11 +933,7 @@ export function buildPromoSceneFromPlan(input: BuildPromoSceneInput): BuildPromo
     music: musicPrompt,
     musicAudio,
     sceneMusicCues,
-    dialogueAudio:
-      input.existingPromoScene?.dialogueAudio &&
-      typeof input.existingPromoScene.dialogueAudio === 'object'
-        ? (input.existingPromoScene.dialogueAudio as Record<string, unknown[]>)
-        : undefined,
+    dialogueAudio: filteredDialogueAudio,
   }
 
   const segments = buildSeedSegments(
@@ -916,19 +1052,30 @@ export function hydratePromoSceneWithSharedShots(
   }
 
   const promoSceneId = String(promoScene.sceneId || promoScene.id || 'promo-main')
+  const excludedKeys = excludedPromoSourceKeysFromScene(promoScene)
   const parsedBeats = getSceneBeats(promoScene) as PromoSceneBeat[]
 
-  // Self-heal legacy Promo scenes that inserted an unlinked synthetic `bt_promo_narration_0` shot:
-  // fold its narration line/audio onto the first actual non-dialogue shared shot and drop the duplicate beat.
-  const unlinkedNarrationBeats = parsedBeats.filter(
-    (b) => b.kind === 'narration' && (typeof b.sourceSceneIndex !== 'number' || !b.sourceBeatId)
+  // Self-heal legacy Promo scenes that inserted an unlinked synthetic `bt_promo_narration_0` shot,
+  // or where the narration beat was on a shot that has since been excluded:
+  // fold its narration line/audio onto the first actual non-dialogue shared shot and drop the duplicate/excluded beat.
+  const displacedNarrationBeats = parsedBeats.filter(
+    (b) =>
+      b.kind === 'narration' &&
+      (typeof b.sourceSceneIndex !== 'number' ||
+        !b.sourceBeatId ||
+        isPromoBeatExcludedByPlan(b, excludedKeys))
   )
-  const linkedOrNonNarrationBeats = parsedBeats.filter((b) => !unlinkedNarrationBeats.includes(b))
+  const linkedOrNonNarrationBeats = parsedBeats.filter(
+    (b) => !displacedNarrationBeats.includes(b) && !isPromoBeatExcludedByPlan(b, excludedKeys)
+  )
   const rawBeats: PromoSceneBeat[] = (() => {
-    if (unlinkedNarrationBeats.length === 0 || linkedOrNonNarrationBeats.length === 0) {
-      return parsedBeats
+    if (displacedNarrationBeats.length === 0) {
+      return linkedOrNonNarrationBeats.map((b, idx) => ({ ...b, sequenceIndex: idx }))
     }
-    const legacyNarr = unlinkedNarrationBeats[0]!
+    if (linkedOrNonNarrationBeats.length === 0) {
+      return []
+    }
+    const legacyNarr = displacedNarrationBeats[0]!
     const next = [...linkedOrNonNarrationBeats]
     if (!next.some((b) => b.kind === 'narration')) {
       const targetIdx = next.findIndex((b) => b.kind !== 'dialogue')
@@ -1468,12 +1615,44 @@ export function hydratePromoSceneWithSharedShots(
   const hydratedDialogueAudio: Record<string, Array<Record<string, unknown>>> = (() => {
     const rawMap = promoScene.dialogueAudio
     const base: Record<string, Array<Record<string, unknown>>> = {}
+    const activeLineIds = new Set(
+      syncedDialogue
+        .map((d) => (typeof d.lineId === 'string' ? d.lineId.trim() : ''))
+        .filter(Boolean)
+    )
+    const activeCharacters = new Set(
+      syncedDialogue
+        .map((d) => (typeof d.character === 'string' ? d.character.trim().toUpperCase() : ''))
+        .filter(Boolean)
+    )
+    const keepAudioEntry = (x: unknown): x is Record<string, unknown> => {
+      if (!x || typeof x !== 'object') return false
+      const row = x as Record<string, unknown>
+      const isNarr =
+        row.kind === 'narration' ||
+        String(row.character || '')
+          .trim()
+          .toUpperCase() === 'NARRATOR'
+      if (isNarr) return true
+      if (syncedDialogue.length === 0) return false
+      const rowLineId = typeof row.lineId === 'string' ? row.lineId.trim() : ''
+      if (rowLineId) {
+        return activeLineIds.has(rowLineId)
+      }
+      const rowChar = String(row.character || '')
+        .trim()
+        .toUpperCase()
+      return Boolean(rowChar && activeCharacters.has(rowChar))
+    }
     if (Array.isArray(rawMap)) {
-      base.en = rawMap.filter((x): x is Record<string, unknown> => Boolean(x && typeof x === 'object'))
+      base.en = rawMap.filter(keepAudioEntry)
     } else if (rawMap && typeof rawMap === 'object') {
       for (const [lang, list] of Object.entries(rawMap as Record<string, unknown>)) {
         if (Array.isArray(list)) {
-          base[lang] = list.filter((x): x is Record<string, unknown> => Boolean(x && typeof x === 'object'))
+          const filtered = list.filter(keepAudioEntry)
+          if (filtered.length > 0) {
+            base[lang] = filtered
+          }
         }
       }
     }
@@ -1589,12 +1768,16 @@ export function syncPromoSharedBeatsToSourceScenes<T = Record<string, unknown>>(
     if (!promoScene || typeof promoScene !== 'object' || !isPromoCinematicScene(promoScene)) {
       continue
     }
-    const promoBeats = Array.isArray(promoScene.beats)
+    const rawPromoBeats = Array.isArray(promoScene.beats)
       ? ([...(promoScene.beats as PromoSceneBeat[])] as PromoSceneBeat[])
       : ([] as PromoSceneBeat[])
-    if (promoBeats.length === 0) continue
+    if (rawPromoBeats.length === 0) continue
 
-    let promoMutated = false
+    const excludedKeys = excludedPromoSourceKeysFromScene(promoScene)
+    const promoBeats = rawPromoBeats
+      .filter((b) => !isPromoBeatExcludedByPlan(b, excludedKeys))
+      .map((b, idx) => ({ ...b, sequenceIndex: idx }))
+    let promoMutated = promoBeats.length !== rawPromoBeats.length
     for (let bIdx = 0; bIdx < promoBeats.length; bIdx++) {
       const promoBeat = promoBeats[bIdx]
       if (

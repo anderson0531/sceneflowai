@@ -713,7 +713,10 @@ export function useVideoQueue(
                     : DEFAULT_VEO_CLIP_DURATION
                   : config.duration,
               aspectRatio: config.aspectRatio,
-              resolution: batchMethod === 'EXT' ? '720p' : config.resolution,
+              resolution:
+                batchMethod === 'EXT' && config.videoProvider !== 'vertex'
+                  ? '720p'
+                  : config.resolution,
               frameRate: config.frameRate,
               thinkingLevel: config.thinkingLevel,
               omniMultiShot: config.omniMultiShot,

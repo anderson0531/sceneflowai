@@ -74,7 +74,7 @@ describe('omniVideoInteractions helpers', () => {
     expect(msg).toContain('fixed-quota allocation')
   })
 
-  it('strips unsupported FTV lastFrame and EXT without valid previous id', () => {
+  it('preserves FTV lastFrame for Omni 1.1 Flash interpolation and strips EXT without valid previous id', () => {
     const normalized = normalizeOmniInteractionBuildOptions(
       {
         startFrame: 'https://example.com/start.png',
@@ -83,9 +83,39 @@ describe('omniVideoInteractions helpers', () => {
       },
       { isFTV: true, isEXT: true, hasValidPreviousInteraction: false }
     )
-    expect(normalized.lastFrame).toBeUndefined()
+    expect(normalized.lastFrame).toBe('https://example.com/end.png')
     expect(normalized.previousInteractionId).toBeUndefined()
     expect(normalized.startFrame).toBe('https://example.com/start.png')
+  })
+
+  it('builds FTV (start + end frame interpolation) body at 1080p with opening and closing frame captions', async () => {
+    const body = await buildOmniInteractionRequestBody(
+      'gemini-omni-1.1-flash-preview',
+      'Smooth camera dolly from start keyframe to end keyframe.',
+      {
+        aspectRatio: '16:9',
+        durationSeconds: 10,
+        resolution: '1080p',
+        startFrame: 'c3RhcnRmcmFtZQ==',
+        lastFrame: 'ZW5kZnJhbWU=',
+      }
+    )
+
+    expect(Array.isArray(body.input)).toBe(true)
+    const parts = body.input as Array<{ type: string; text?: string; data?: string }>
+    expect(parts.filter((p) => p.type === 'image')).toHaveLength(2)
+    expect(parts.some((p) => p.text === 'The next image is the opening frame.')).toBe(true)
+    expect(parts.some((p) => p.text === 'The next image is the closing frame.')).toBe(true)
+    expect(body.generation_config).toEqual({
+      video_config: { task: 'image_to_video' },
+    })
+    expect(body.response_format).toEqual({
+      type: 'video',
+      aspect_ratio: '16:9',
+      delivery: 'inline',
+      duration: '10s',
+      resolution: '1080p',
+    })
   })
 
   it('builds Interactions API body with duration and resolution', async () => {

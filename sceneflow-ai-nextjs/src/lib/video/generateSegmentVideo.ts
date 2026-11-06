@@ -388,12 +388,14 @@ export async function generateSegmentVideoCore(
   }
 
   const effectiveQualityTier = qualityTier || getQualityForMethod(method)
+  const defaultVertexResolution =
+    effectiveQualityTier === 'premium' ? '1080p' : '720p'
   const effectiveResolution =
     videoProvider === 'kling'
       ? (klingQuality === 'std' ? '720p' : klingQuality === '4k' ? '4k' : resolution || '1080p')
-      : method === 'EXT'
+      : method === 'EXT' && !isStandardOmni
         ? '720p'
-        : resolution || '720p'
+        : resolution || defaultVertexResolution
 
   const videoOptions: Record<string, unknown> = {
     aspectRatio: aspectRatio || '16:9',
@@ -402,7 +404,7 @@ export async function generateSegmentVideoCore(
     frameRate: frameRate ?? 24,
     thinkingLevel,
     omniMultiShot: isStandardOmni ? omniMultiShot : undefined,
-    preferOmni: isStandardOmni && !(method === 'FTV' && startFrameUrl && endFrameUrl),
+    preferOmni: isStandardOmni,
     negativePrompt,
     personGeneration: isImageBasedMethod ? 'allow_adult' : 'allow_all',
     quality: effectiveQualityTier,
