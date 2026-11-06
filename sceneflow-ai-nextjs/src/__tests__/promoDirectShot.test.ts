@@ -337,6 +337,10 @@ describe('Shot Direction Agent', () => {
     expect(dialogSource).toContain(
       'Audio direction, still direction, and clip direction update with the save.'
     )
+    expect(dialogSource).toContain('optimizeDirection')
+    expect(dialogSource).toContain("mode: 'optimize'")
+    expect(dialogSource).toContain('Optimize')
+    expect(dialogSource).toContain('Preview direction')
   })
 
   it('replaces a previous plate list with the selection the save is given', () => {

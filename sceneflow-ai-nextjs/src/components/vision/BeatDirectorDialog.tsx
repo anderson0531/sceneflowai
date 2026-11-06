@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react'
 import { useTranslations } from 'next-intl'
-import { Clapperboard, ImageOff, Loader2 } from 'lucide-react'
+import { Clapperboard, ImageOff, Loader2, Sparkles } from 'lucide-react'
 import { toast } from 'sonner'
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@/components/ui/dialog'
 import { Checkbox } from '@/components/ui/checkbox'
@@ -137,7 +137,9 @@ export function BeatDirectorDialog({
   const [instruction, setInstruction] = useState(initialInstruction)
   const [preview, setPreview] = useState<StillDirectorPatch | null>(initialPatch)
   const [previewing, setPreviewing] = useState(false)
+  const [optimizing, setOptimizing] = useState(false)
   const [safety, setSafety] = useState(initialSafety)
+  const busy = previewing || optimizing
 
   useEffect(() => {
     if (!open) return
@@ -212,6 +214,35 @@ export function BeatDirectorDialog({
     }
   }
 
+  const optimizeDirection = async () => {
+    if (!projectId) {
+      toast.error('Project is still loading.')
+      return
+    }
+    setInstruction('')
+    setOptimizing(true)
+    try {
+      const response = await fetch('/api/scene/direct-beat-still', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          projectId,
+          sceneIndex,
+          beatId: beat.beatId,
+          mode: 'optimize',
+          policyCompliance: safety || undefined,
+        }),
+      })
+      const data = await response.json()
+      if (!response.ok) throw new Error(data.error || 'Direction optimize failed')
+      setPreview((data.patch ?? {}) as StillDirectorPatch)
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Direction optimize failed')
+    } finally {
+      setOptimizing(false)
+    }
+  }
+
   const saveDirection = () => {
     if (!preview) return
     onSaveDirection(safety ? applyPolicyComplianceToPatch(preview) : preview)
@@ -228,7 +259,8 @@ export function BeatDirectorDialog({
           Shot Director · Scene {sceneNumber} · Shot {beat.sequenceIndex + 1}
         </DialogTitle>
         <DialogDescription className="min-w-0 break-words text-sm text-slate-400">
-          Type or dictate how this shot should be directed. Preview the direction, then save it.
+          Type or dictate how this shot should be directed and preview it, or click Optimize to
+          auto-generate an intelligent direction preview, then save it.
           Audio direction, still direction, and clip direction update with the save.
         </DialogDescription>
 
@@ -238,8 +270,8 @@ export function BeatDirectorDialog({
             value={instruction}
             onChange={setInstruction}
             rows={4}
-            disabled={readOnly || previewing}
-            placeholder="Describe the shot, action, or change you want."
+            disabled={readOnly || busy}
+            placeholder="Describe the shot, action, or change you want, or click Optimize below."
             className="min-w-0"
           />
         </label>
@@ -250,7 +282,7 @@ export function BeatDirectorDialog({
                 <Checkbox
                   checked={safety}
                   onCheckedChange={(checked) => setSafety(checked === true)}
-                  disabled={readOnly || previewing}
+                  disabled={readOnly || busy}
                 />
                 {t('safetyOption')}
               </label>
@@ -260,15 +292,31 @@ export function BeatDirectorDialog({
         </TooltipProvider>
         {safety && <p className="text-[11px] text-slate-500">{t('safetyHint')}</p>}
 
-        <button
-          type="button"
-          className="inline-flex w-fit items-center gap-1 rounded border border-teal-800/80 px-3 py-1.5 text-xs text-teal-100 hover:bg-teal-950/40 disabled:opacity-50"
-          disabled={readOnly || previewing}
-          onClick={() => void previewDirection()}
-        >
-          {previewing ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : null}
-          Preview direction
-        </button>
+        <div className="flex flex-wrap items-center gap-2">
+          <button
+            type="button"
+            className="inline-flex w-fit items-center gap-1 rounded border border-teal-800/80 px-3 py-1.5 text-xs text-teal-100 hover:bg-teal-950/40 disabled:opacity-50"
+            disabled={readOnly || busy}
+            onClick={() => void previewDirection()}
+          >
+            {previewing ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : null}
+            Preview direction
+          </button>
+          <button
+            type="button"
+            className="inline-flex w-fit items-center gap-1 rounded border border-amber-700/80 bg-amber-950/30 px-3 py-1.5 text-xs text-amber-100 hover:bg-amber-900/40 disabled:opacity-50"
+            disabled={readOnly || busy}
+            onClick={() => void optimizeDirection()}
+            title="Auto-generate an optimized direction preview for this shot without typing a note"
+          >
+            {optimizing ? (
+              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+            ) : (
+              <Sparkles className="h-3.5 w-3.5 text-amber-400" />
+            )}
+            Optimize
+          </button>
+        </div>
 
         {lines.length > 0 && (
           <div className="min-w-0 space-y-1 rounded border border-slate-700 bg-slate-950/70 p-3">
