@@ -3,6 +3,10 @@
  * persisted still and clip prompts the same way the direction editor does.
  */
 
+import {
+  syncBeatAudioDirectionToDirection,
+  syncSceneAudioDirectionForBeat,
+} from '@/lib/audio/syncBeatAudioDirection'
 import { refreshSceneSegmentVideoPrompts } from '@/lib/scene/syncBeatVideoPrompt'
 import { applyBeatsToScene, getSceneBeats } from '@/lib/script/beatMigration'
 import { beatStillDirectionFingerprint } from '@/lib/script/beatDirectionFingerprint'
@@ -11,6 +15,7 @@ import type { BeatDirection, BeatReferenceSelection, SceneBeat } from '@/lib/scr
 function stripPromptOverrides(direction: BeatDirection | undefined): BeatDirection | undefined {
   if (!direction) return undefined
   const next = { ...direction }
+  delete next.audioDirection
   delete next.framePrompt
   delete next.videoPrompt
   return next
@@ -68,7 +73,11 @@ export function applyBeatDirectionSelections(
         }
         if (update.referenceSelection) patched.referenceSelection = update.referenceSelection
         else delete patched.referenceSelection
-        return syncBeatStillPromptToDirection(patched, {
+        const withAudio = syncBeatAudioDirectionToDirection(patched, {
+          previousBeat: entry,
+          force: options.rebuildPrompts,
+        })
+        return syncBeatStillPromptToDirection(withAudio, {
           sceneIndex,
           artStyleAnchor: options.artStyleAnchor,
           lookbook: options.lookbook,
@@ -81,6 +90,7 @@ export function applyBeatDirectionSelections(
         withBeats = refreshSceneSegmentVideoPrompts(withBeats, edited, {
           artStyleId: options.artStyleAnchor,
         })
+        withBeats = syncSceneAudioDirectionForBeat(withBeats, edited, scene)
       }
       if (keptFrame) {
         const restored = getSceneBeats(withBeats).map((entry) => {

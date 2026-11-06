@@ -193,6 +193,101 @@ describe('applyStillDirectorPatch', () => {
     expect(segments[0].generatedPrompt).not.toContain('turns sharply toward the exit')
     expect(segments[1].userEditedPrompt).toBe('Keep this clip wording.')
     expect(segments[1].generatedPrompt).toBe('old')
+    expect(directed.beatDirection?.audioDirection).toBeTruthy()
+  })
+
+  it('updates Audio direction (voiceDirection, audioDirection, scene.sfx, and stale flags) alongside Still and Clip direction', () => {
+    const spokenScene = {
+      dialogue: [
+        {
+          lineId: 'ln_piper_1',
+          character: 'Piper',
+          line: 'Open the ledger.',
+          kind: 'dialogue',
+          voiceDirection: 'Calm and unhurried.',
+        },
+      ],
+      dialogueAudio: {
+        en: [
+          {
+            lineId: 'ln_piper_1',
+            dialogueIndex: 0,
+            character: 'Piper',
+            audioUrl: 'https://example.com/piper.mp3',
+            sourceFingerprint: 'dialogue|piper|Open the ledger.|vd:Calm and unhurried.',
+          },
+        ],
+      },
+      sfx: [
+        {
+          sfxId: 'sfx_1',
+          sourceBeatId: 'bt_spoken',
+          description: 'Soft paper rustle',
+        },
+      ],
+      beats: [
+        {
+          beatId: 'bt_spoken',
+          sequenceIndex: 0,
+          kind: 'dialogue' as const,
+          character: 'Piper',
+          line: 'Open the ledger.',
+          lineId: 'ln_piper_1',
+          voiceDirection: 'Calm and unhurried.',
+          beatDirection: {
+            shotType: 'Medium Shot',
+            emotion: 'calm',
+            audioCue: 'Soft paper rustle',
+            generatedBy: 'llm' as const,
+          },
+        },
+      ],
+      segments: [
+        {
+          beatId: 'bt_spoken',
+          generatedPrompt: 'Old video prompt',
+          videoPrompt: 'Old video prompt',
+        },
+      ],
+    }
+
+    const { scene: updated } = applyStillDirectorPatchToScene(
+      spokenScene,
+      'bt_spoken',
+      {
+        shotType: 'Close-Up',
+        frozenMoment: 'Piper leans across the brass desk, fingers digging into the ledger.',
+        emotion: 'Urgent, breathless whisper with coiled tension',
+        audioCue: 'Heavy brass clasp snaps open',
+      },
+      { generatedBy: 'user' }
+    )
+
+    const [updatedBeat] = getSceneBeats(updated)
+    // 1. Audio direction updated
+    expect(updatedBeat.voiceDirection).toContain('Urgent, breathless whisper with coiled tension')
+    expect(updatedBeat.beatDirection?.audioCue).toBe('Heavy brass clasp snaps open')
+    expect(updatedBeat.beatDirection?.audioDirection).toContain(
+      'Urgent, breathless whisper with coiled tension'
+    )
+    expect(updatedBeat.beatDirection?.audioDirection).toContain('Heavy brass clasp snaps open')
+    const updatedDialogue = (updated.dialogue as Array<{ voiceDirection?: string }>)[0]
+    expect(updatedDialogue?.voiceDirection).toContain('Urgent, breathless whisper with coiled tension')
+    const updatedSfx = (updated.sfx as Array<{ description?: string }>)[0]
+    expect(updatedSfx?.description).toBe('Heavy brass clasp snaps open')
+    const updatedAudioEntry = (updated.dialogueAudio as { en: Array<{ audioStale?: boolean }> }).en[0]
+    expect(updatedAudioEntry?.audioStale).toBe(true)
+
+    // 2. Still direction updated
+    expect(updatedBeat.storyboardImagePrompt).toContain(
+      'Piper leans across the brass desk, fingers digging into the ledger.'
+    )
+
+    // 3. Clip direction updated
+    const updatedSeg = (updated.segments as Array<{ videoPrompt?: string }>)[0]
+    expect(updatedSeg?.videoPrompt).toContain(
+      'Piper leans across the brass desk, fingers digging into the ledger.'
+    )
   })
 })
 

@@ -989,7 +989,10 @@ function ActionBeatAudio(
   } catch {
     sfxAudioUrl = undefined
   }
-  const hasBeatSfx = beatSfx.length > 0 || inlineSfx.length > 0 || !!sfxAudioUrl
+  const directedAudioCue = beat.beatDirection?.audioCue?.trim() || ''
+  const actionProse = stripInlineSfxLinesFromActionText(beat.actionDescription)
+  const hasBeatSfx =
+    beatSfx.length > 0 || inlineSfx.length > 0 || Boolean(directedAudioCue) || !!sfxAudioUrl
   const sfxStale = actionBeatSfxIsStale(scene, beat, !!sfxAudioUrl)
 
   return (
@@ -1032,8 +1035,13 @@ function ActionBeatAudio(
         )}
       </div>
       <p className="whitespace-pre-wrap text-sm leading-relaxed text-gray-200">
-        {stripInlineSfxLinesFromActionText(beat.actionDescription) || 'No action description'}
+        {actionProse || directedAudioCue || 'No action description'}
       </p>
+      {directedAudioCue && actionProse && directedAudioCue.toLowerCase() !== actionProse.toLowerCase() && (
+        <p className="mt-1 text-[11px] leading-snug text-amber-200/80" title={directedAudioCue}>
+          Audio direction: {directedAudioCue}
+        </p>
+      )}
       <ActionBeatSfxControls
         beat={beat}
         scene={scene}
@@ -1125,6 +1133,12 @@ function SpokenBeatAudio(
     (resolvedKind === 'narration' ? 'NARRATOR' : '') ||
     castFallback ||
     ''
+  const resolvedVoiceDirection =
+    beat.voiceDirection?.trim() ||
+    (typeof rawLine?.voiceDirection === 'string' && rawLine.voiceDirection.trim()) ||
+    beat.beatDirection?.audioDirection?.trim() ||
+    beat.beatDirection?.emotion?.trim() ||
+    undefined
   const d = {
     ...(rawLine ?? {}),
     character: resolvedCharacter,
@@ -1132,7 +1146,7 @@ function SpokenBeatAudio(
     lineId: rawLine?.lineId || beat.lineId,
     kind: resolvedKind,
     characterId: rawCharacterId,
-    voiceDirection: rawLine?.voiceDirection ?? beat.voiceDirection,
+    voiceDirection: resolvedVoiceDirection,
   }
   const i = dialogueIndex
   const audioEntry = findDialogueAudioForLine(scene, {
@@ -1151,7 +1165,8 @@ function SpokenBeatAudio(
     d.voiceDirection ?? beat.voiceDirection
   )
   const isNarrationBeat = beat.kind === 'narration'
-  const showSfx = (sfxByBeatId.get(beat.beatId)?.length ?? 0) > 0
+  const directedSpokenAudioCue = beat.beatDirection?.audioCue?.trim() || ''
+  const showSfx = (sfxByBeatId.get(beat.beatId)?.length ?? 0) > 0 || Boolean(directedSpokenAudioCue)
   const speakerNeedsAssign = dialogueSpeakerNeedsAssignment({
     characters: characters as any[],
     characterId: d.characterId ?? beat.characterId,
@@ -1390,6 +1405,15 @@ function SpokenBeatAudio(
               {brief}
             </div>
           )}
+          {directedSpokenAudioCue &&
+            (!brief || !brief.toLowerCase().includes(directedSpokenAudioCue.toLowerCase())) && (
+              <div
+                className="mt-1 text-[11px] leading-snug text-emerald-300/80"
+                title={directedSpokenAudioCue}
+              >
+                Sound cue: {directedSpokenAudioCue}
+              </div>
+            )}
           {audioEntry?.duration && (
             <span className="mt-1 text-[10px] text-gray-500">Duration: {audioEntry.duration.toFixed(1)}s</span>
           )}

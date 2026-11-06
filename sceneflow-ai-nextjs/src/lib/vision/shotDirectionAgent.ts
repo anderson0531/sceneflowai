@@ -29,6 +29,7 @@ const PATCH_FIELDS = [
   'lightingAccent',
   'cameraMovement',
   'audioCue',
+  'voiceDirection',
 ] as const
 
 function patchHasDirection(patch: StillDirectorPatch): boolean {

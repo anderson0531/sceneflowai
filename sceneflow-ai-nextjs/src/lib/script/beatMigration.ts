@@ -227,6 +227,9 @@ export function normalizeBeatDirection(raw: unknown): BeatDirection | undefined 
   const audioCue = trimmedString(b.audioCue ?? b.audio_cue ?? b.sfx)
   if (audioCue) direction.audioCue = audioCue
 
+  const audioDirection = trimmedString(b.audioDirection ?? b.audio_direction)
+  if (audioDirection) direction.audioDirection = audioDirection
+
   const framePrompt = trimmedString(b.framePrompt ?? b.frame_prompt)
   if (framePrompt) direction.framePrompt = framePrompt
 

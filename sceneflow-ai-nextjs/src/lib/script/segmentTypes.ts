@@ -162,6 +162,11 @@ export interface BeatDirection {
   /** Transition INTO the next beat. */
   transition?: BeatDirectionTransition
   /**
+   * Audio direction brief for this shot (vocal delivery + diegetic sound cue
+   * for spoken beats, or sound effect cue / action sound prompt for action beats).
+   */
+  audioDirection?: string
+  /**
    * Still prompt the frame model receives. When set, generation sends this
    * text. When absent, the still composer builds it from the fields above.
    */

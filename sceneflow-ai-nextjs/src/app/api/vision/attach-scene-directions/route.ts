@@ -7,6 +7,10 @@ import {
   migrateProjectBeatDirection,
   migrateProjectBeatSetContext,
 } from '@/lib/script/beatMigration'
+import {
+  syncBeatAudioDirectionToDirection,
+  syncSceneAudioDirectionForBeat,
+} from '@/lib/audio/syncBeatAudioDirection'
 import { syncBeatStillPromptToDirection } from '@/lib/storyboard/syncBeatStillPrompt'
 import { refreshProductionSegmentVideoPrompts } from '@/lib/scene/syncBeatVideoPrompt'
 import { stampSceneDirectionContentHash } from '@/lib/utils/contentHash'
@@ -139,13 +143,25 @@ export async function POST(request: NextRequest) {
             if (beats.length === 0) return sceneRow
             const syncedBeats = beats.map((beat) =>
               beat.beatDirection
-                ? syncBeatStillPromptToDirection(beat, { sceneIndex: idx })
+                ? syncBeatStillPromptToDirection(
+                    syncBeatAudioDirectionToDirection(beat, { force: true }),
+                    { sceneIndex: idx }
+                  )
                 : beat
             )
             let updatedScene = applyBeatsToScene(
               sceneRow as Record<string, unknown>,
               syncedBeats
             )
+            for (const syncedBeat of syncedBeats) {
+              if (syncedBeat.beatDirection) {
+                updatedScene = syncSceneAudioDirectionForBeat(
+                  updatedScene,
+                  syncedBeat,
+                  sceneRow as Record<string, unknown>
+                )
+              }
+            }
             if (Array.isArray(updatedScene.segments) && updatedScene.segments.length > 0) {
               const refreshedSegments = refreshProductionSegmentVideoPrompts(
                 updatedScene.segments as any[],

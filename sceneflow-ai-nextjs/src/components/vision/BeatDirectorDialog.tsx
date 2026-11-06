@@ -108,6 +108,7 @@ function previewLines(patch: StillDirectorPatch): Array<{ label: string; value: 
   add('Lighting', patch.lightingAccent)
   add('Props', patch.keyProps?.join(', '))
   add('Interaction', patch.propInteraction)
+  add('Voice direction', patch.voiceDirection)
   add('Audio', patch.audioCue)
   return rows
 }
@@ -228,7 +229,7 @@ export function BeatDirectorDialog({
         </DialogTitle>
         <DialogDescription className="min-w-0 break-words text-sm text-slate-400">
           Type or dictate how this shot should be directed. Preview the direction, then save it.
-          Still and clip prompts update with the save.
+          Audio direction, still direction, and clip direction update with the save.
         </DialogDescription>
 
         <label className="flex min-w-0 flex-col gap-1 text-xs">

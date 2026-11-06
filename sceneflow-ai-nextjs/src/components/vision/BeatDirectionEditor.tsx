@@ -5,6 +5,7 @@ import { Check, ChevronDown, ChevronRight, Clapperboard, Copy } from 'lucide-rea
 import { toast } from 'sonner'
 import { BeatDirectorDialog } from '@/components/vision/BeatDirectorDialog'
 import { BeatExcludeToggle } from '@/components/vision/BeatExcludeToggle'
+import { composeBeatAudioDirection } from '@/lib/audio/syncBeatAudioDirection'
 import { getSceneBeats } from '@/lib/script/beatMigration'
 import type {
   BeatDirection,
@@ -125,6 +126,9 @@ const DIRECTION_TILE_ACCENT: Record<string, { border: string; label: string }> =
   Interaction: { border: 'border-orange-500/50', label: 'text-orange-300' },
   Audio: { border: 'border-emerald-500/50', label: 'text-emerald-300' },
   Props: { border: 'border-indigo-500/50', label: 'text-indigo-300' },
+  'Audio direction': { border: 'border-emerald-500/50', label: 'text-emerald-300' },
+  'Still direction': { border: 'border-cyan-500/50', label: 'text-cyan-300' },
+  'Clip direction': { border: 'border-sky-500/50', label: 'text-sky-300' },
 }
 
 function DirectionTile({
@@ -240,6 +244,11 @@ export function BeatDirectionEditor({
   const sceneDirection = (sceneRecord?.sceneDirection ??
     sceneRecord?.detailedDirection ??
     null) as DetailedSceneDirection | null
+
+  const audioPreview = useMemo(() => {
+    if (direction?.audioDirection?.trim()) return direction.audioDirection.trim()
+    return composeBeatAudioDirection(beat)
+  }, [beat, direction?.audioDirection])
 
   const framePreview = useMemo(() => {
     if (direction?.framePrompt?.trim()) return direction.framePrompt.trim()
@@ -427,6 +436,8 @@ export function BeatDirectionEditor({
     !!direction?.lightingAccent?.trim() ||
     !!direction?.propInteraction?.trim() ||
     !!direction?.audioCue?.trim() ||
+    !!direction?.audioDirection?.trim() ||
+    !!beat.voiceDirection?.trim() ||
     (direction?.keyProps?.length ?? 0) > 0 ||
     castInFrame !== undefined
 
@@ -552,7 +563,10 @@ export function BeatDirectionEditor({
             <DirectionTile label="Gaze" value={direction?.gaze} />
             <DirectionTile label="Lighting" value={direction?.lightingAccent} />
             <DirectionTile label="Interaction" value={direction?.propInteraction} />
-            <DirectionTile label="Audio" value={direction?.audioCue} />
+            <DirectionTile
+              label="Audio"
+              value={direction?.audioCue || direction?.audioDirection || beat.voiceDirection}
+            />
             <DirectionTile label="Props" value={direction?.keyProps?.filter(Boolean).join(', ')} />
           </div>
 
@@ -593,9 +607,24 @@ export function BeatDirectionEditor({
                 ) : (
                   <ChevronRight className="h-3.5 w-3.5" />
                 )}
-                Frame and clip prompts
+                Audio, still, and clip direction
               </button>
               <div className="flex flex-wrap items-center gap-1.5">
+                {audioPreview?.trim() && (
+                  <button
+                    type="button"
+                    className="inline-flex h-6 items-center gap-1 rounded border border-slate-700 px-2 text-[10px] text-slate-300 hover:bg-slate-800/70"
+                    title="Copy audio direction for Google AI Studio"
+                    onClick={() => {
+                      void navigator.clipboard.writeText(audioPreview.trim()).then(() => {
+                        toast.success('Audio direction copied')
+                      })
+                    }}
+                  >
+                    <Copy className="h-3 w-3" />
+                    Copy audio direction
+                  </button>
+                )}
                 {framePreview?.trim() && (
                   <button
                     type="button"
@@ -631,14 +660,21 @@ export function BeatDirectionEditor({
             {promptsOpen && (
               <div className="mt-2 space-y-3">
                 <DirectionTile
-                  label="Frame prompt"
+                  label="Audio direction"
+                  value={audioPreview}
+                  copyable
+                  copyToastLabel="Audio direction copied"
+                  copyButtonTitle="Copy audio direction for Google AI Studio"
+                />
+                <DirectionTile
+                  label="Still direction"
                   value={framePreview}
                   copyable
                   copyToastLabel="Still prompt copied"
                   copyButtonTitle="Copy still prompt for Google AI Studio"
                 />
                 <DirectionTile
-                  label="Clip prompt"
+                  label="Clip direction"
                   value={videoPreview}
                   copyable
                   copyToastLabel="Clip prompt copied"

@@ -246,8 +246,97 @@ describe('Shot Direction Agent', () => {
     })
     expect(second.actionDescription).toContain('presses her palm flat')
     expect(second.storyboardImagePrompt).toContain('palm flat against the cold glass')
+    expect(second.beatDirection?.audioDirection).toContain('presses her palm flat')
+    expect(second.beatDirection?.framePrompt).toContain('palm flat against the cold glass')
     expect(second.referenceSelection).toEqual(noSelection)
     expect(scenes[0].beats[1].beatDirection?.shotType).toBe('Medium Shot')
+  })
+
+  it('updates Audio direction, Still direction, and Clip direction together when saving a shot direction', () => {
+    const scenes = [
+      {
+        id: 'scene-a',
+        dialogue: [
+          {
+            lineId: 'ln_1',
+            character: 'Elara',
+            line: 'Do not touch the valve.',
+            kind: 'dialogue',
+            voiceDirection: 'Flat.',
+          },
+        ],
+        sfx: [],
+        beats: [
+          beat('a1', 0, {
+            kind: 'dialogue',
+            character: 'Elara',
+            line: 'Do not touch the valve.',
+            lineId: 'ln_1',
+            voiceDirection: 'Flat.',
+            beatDirection: {
+              shotType: 'Medium Shot',
+              emotion: 'calm',
+              frozenMoment: 'Elara stands by the door',
+            },
+          }),
+        ],
+        segments: [
+          {
+            beatId: 'a1',
+            videoPrompt: 'Old clip prompt',
+            generatedPrompt: 'Old clip prompt',
+          },
+        ],
+      },
+    ]
+
+    const next = saveDirectorPatchToScenes({
+      scenes,
+      sceneIdx: 0,
+      beatId: 'a1',
+      patch: {
+        shotType: 'Close-Up',
+        frozenMoment: 'Elara grips the brass valve wheel with both hands',
+        emotion: 'Fierce whispered urgency',
+        voiceDirection: 'Whispered fiercely through clenched teeth, leaning into the microphone.',
+        audioCue: 'High-pressure steam hiss from the manifold',
+      },
+      referenceSelection: noSelection,
+      objectReferences: [],
+    })
+
+    const [updatedBeat] = getSceneBeats(next[0])
+    expect(updatedBeat.voiceDirection).toBe(
+      'Whispered fiercely through clenched teeth, leaning into the microphone.'
+    )
+    expect(updatedBeat.beatDirection?.audioDirection).toContain(
+      'Whispered fiercely through clenched teeth'
+    )
+    expect(updatedBeat.beatDirection?.audioDirection).toContain(
+      'High-pressure steam hiss from the manifold'
+    )
+    expect(updatedBeat.beatDirection?.framePrompt).toContain(
+      'Elara grips the brass valve wheel with both hands'
+    )
+    expect(updatedBeat.beatDirection?.videoPrompt).toContain(
+      'Elara grips the brass valve wheel with both hands'
+    )
+    expect(next[0].dialogue[0].voiceDirection).toBe(
+      'Whispered fiercely through clenched teeth, leaning into the microphone.'
+    )
+    expect(next[0].sfx).toHaveLength(1)
+    expect(next[0].sfx[0].description).toBe('High-pressure steam hiss from the manifold')
+
+    const editorSource = read('src/components/vision/BeatDirectionEditor.tsx')
+    expect(editorSource).toContain('label="Audio direction"')
+    expect(editorSource).toContain('label="Still direction"')
+    expect(editorSource).toContain('label="Clip direction"')
+    expect(editorSource).toContain('Audio, still, and clip direction')
+
+    const dialogSource = read('src/components/vision/BeatDirectorDialog.tsx')
+    expect(dialogSource).toContain(
+      'Audio direction, still direction, and clip direction update with the save.'
+    )
   })
 
   it('replaces a previous plate list with the selection the save is given', () => {

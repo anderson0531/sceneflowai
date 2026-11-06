@@ -1079,12 +1079,21 @@ export function hydratePromoSceneWithSharedShots(
           (typeof matchedSourceDialogue?.characterId === 'string' &&
             matchedSourceDialogue.characterId.trim()) ||
           undefined
+    const preferredBeatDirection = preferBeatDirection(sourceBeat.beatDirection, beat.beatDirection)
+    const sourceDirectionNewer = preferredBeatDirection === sourceBeat.beatDirection
     const resolvedVoiceDirection =
-      beat.voiceDirection?.trim() ||
-      sourceBeat.voiceDirection?.trim() ||
-      (typeof matchedSourceDialogue?.voiceDirection === 'string' &&
-        matchedSourceDialogue.voiceDirection.trim()) ||
-      undefined
+      beat.kind === 'narration'
+        ? beat.voiceDirection?.trim() ||
+          sourceBeat.voiceDirection?.trim() ||
+          (typeof matchedSourceDialogue?.voiceDirection === 'string' &&
+            matchedSourceDialogue.voiceDirection.trim()) ||
+          undefined
+        : (sourceDirectionNewer
+            ? sourceBeat.voiceDirection?.trim() || beat.voiceDirection?.trim()
+            : beat.voiceDirection?.trim() || sourceBeat.voiceDirection?.trim()) ||
+          (typeof matchedSourceDialogue?.voiceDirection === 'string' &&
+            matchedSourceDialogue.voiceDirection.trim()) ||
+          undefined
     let promoDialogueAudioUrl: string | undefined
     if (promoScene.dialogueAudio && typeof promoScene.dialogueAudio === 'object') {
       const langEntries = Array.isArray(promoScene.dialogueAudio)
@@ -1199,7 +1208,7 @@ export function hydratePromoSceneWithSharedShots(
       storyboardImagePromptDirectionKey: promoStillNewer
         ? beat.storyboardImagePromptDirectionKey || sourceBeat.storyboardImagePromptDirectionKey
         : sourceBeat.storyboardImagePromptDirectionKey || beat.storyboardImagePromptDirectionKey,
-      beatDirection: preferBeatDirection(sourceBeat.beatDirection, beat.beatDirection),
+      beatDirection: preferredBeatDirection,
       referenceSelection: sourceBeat.referenceSelection || beat.referenceSelection,
       stillVersions: promoStillNewer
         ? beat.stillVersions || sourceBeat.stillVersions
@@ -1557,6 +1566,13 @@ export function syncPromoSharedBeatsToSourceScenes<T = Record<string, unknown>>(
         : srcBeat.storyboardImagePromptDirectionKey || promoBeat.storyboardImagePromptDirectionKey
 
       const resolvedDirection = preferBeatDirection(srcBeat.beatDirection, promoBeat.beatDirection)
+      const promoDirectionWins = resolvedDirection === promoBeat.beatDirection
+      const resolvedVoiceDirection =
+        promoBeat.kind === 'narration'
+          ? srcBeat.voiceDirection
+          : promoDirectionWins
+            ? promoBeat.voiceDirection || srcBeat.voiceDirection
+            : srcBeat.voiceDirection || promoBeat.voiceDirection
       const resolvedEndImageUrl =
         promoBeat.storyboardEndImageUrl || srcBeat.storyboardEndImageUrl
       const resolvedEndImagePrompt =
@@ -1580,6 +1596,7 @@ export function syncPromoSharedBeatsToSourceScenes<T = Record<string, unknown>>(
         ...(resolvedStillVersions ? { stillVersions: resolvedStillVersions } : {}),
         ...(resolvedDirKey ? { storyboardImagePromptDirectionKey: resolvedDirKey } : {}),
         ...(resolvedDirection ? { beatDirection: resolvedDirection } : {}),
+        ...(resolvedVoiceDirection ? { voiceDirection: resolvedVoiceDirection } : {}),
         ...(resolvedEndImageUrl ? { storyboardEndImageUrl: resolvedEndImageUrl } : {}),
         ...(resolvedEndImagePrompt ? { storyboardEndImagePrompt: resolvedEndImagePrompt } : {}),
         ...(resolvedStartImageUrl ? { storyboardStartImageUrl: resolvedStartImageUrl } : {}),

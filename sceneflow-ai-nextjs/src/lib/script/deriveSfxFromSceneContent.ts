@@ -153,11 +153,14 @@ function collectRawSfxDescriptions(
   const fromAction = extractInlineSfxFromActionText(
     String(scene.action ?? scene.visualDescription ?? '')
   )
-  const fromBeats = beats.flatMap((b) =>
-    b.kind === 'action'
-      ? extractInlineSfxFromActionText(b.actionDescription ?? '')
-      : []
-  )
+  const fromBeats = beats.flatMap((b) => {
+    const inline =
+      b.kind === 'action'
+        ? extractInlineSfxFromActionText(b.actionDescription ?? '')
+        : []
+    const cue = b.beatDirection?.audioCue?.trim()
+    return cue ? [...inline, cue] : inline
+  })
 
   const direction =
     scene.sceneDirection && typeof scene.sceneDirection === 'object'
@@ -540,13 +543,16 @@ export function readBeatSfxAudio(
 /** Find or append an sfx[] entry scoped to a storyboard beat. */
 export function resolveBeatSfxSlot(
   scene: Record<string, unknown>,
-  beat: Pick<SceneBeat, 'beatId' | 'actionDescription' | 'kind'>
+  beat: Pick<SceneBeat, 'beatId' | 'actionDescription' | 'kind'> & {
+    beatDirection?: { audioCue?: string | null } | null
+  }
 ): BeatSfxSlot {
   if (beat.kind !== 'action') {
     throw new Error('resolveBeatSfxSlot requires an action beat')
   }
 
-  const actionText = String(beat.actionDescription ?? '').trim()
+  const directedCue = String(beat.beatDirection?.audioCue ?? '').trim()
+  const actionText = directedCue || String(beat.actionDescription ?? '').trim()
   if (!actionText) {
     throw new Error('Action beat has no description for SFX generation')
   }
@@ -560,7 +566,7 @@ export function resolveBeatSfxSlot(
     return {
       sfxIndex: match.idx,
       sfxId: match.cue.sfxId ?? mintSfxId(),
-      description: match.cue.description,
+      description: directedCue ? truncateBeatSfxDescription(directedCue) : match.cue.description,
       sourceBeatId: beat.beatId,
       created: false,
     }
@@ -580,10 +586,28 @@ export function resolveBeatSfxSlot(
 /** In-place upsert of beat-scoped sfx cue on a scene object (for PATCH / client). */
 export function upsertBeatSfxCueOnScene(
   scene: Record<string, unknown>,
-  beat: Pick<SceneBeat, 'beatId' | 'actionDescription' | 'kind'>
+  beat: Pick<SceneBeat, 'beatId' | 'actionDescription' | 'kind'> & {
+    beatDirection?: { audioCue?: string | null } | null
+  }
 ): BeatSfxSlot {
   const slot = resolveBeatSfxSlot(scene, beat)
-  if (!slot.created) return slot
+  if (!slot.created) {
+    const list = [...coerceSceneSfxFlatArray(scene.sfx)]
+    const entry = list[slot.sfxIndex]
+    if (
+      entry &&
+      typeof entry === 'object' &&
+      !Array.isArray(entry) &&
+      (entry as Record<string, unknown>).description !== slot.description
+    ) {
+      list[slot.sfxIndex] = {
+        ...(entry as Record<string, unknown>),
+        description: slot.description,
+      }
+      scene.sfx = list
+    }
+    return slot
+  }
 
   const list = [...coerceSceneSfxFlatArray(scene.sfx)]
   while (list.length <= slot.sfxIndex) {

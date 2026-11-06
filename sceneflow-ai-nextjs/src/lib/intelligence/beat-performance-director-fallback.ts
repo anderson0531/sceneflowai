@@ -243,6 +243,7 @@ export function applyBeatPerformanceDirectorToScene(
     ...patch,
     direction: {
       ...patch.direction,
+      ...(patch.voiceDirection?.trim() ? { voiceDirection: patch.voiceDirection.trim() } : {}),
       ...(guardedCast ? { castInFrame: guardedCast } : { castInFrame: undefined }),
     },
   }

@@ -6,6 +6,11 @@ import type {
 } from '@/lib/script/segmentTypes'
 import type { StillDirectorPatch } from '@/lib/intelligence/beat-still-director-fallback'
 import type { ProjectLookbook } from '@/lib/intelligence/project-lookbook-fallback'
+import {
+  composeBeatAudioDirection,
+  syncBeatAudioDirectionToDirection,
+  syncSceneAudioDirectionForBeat,
+} from '@/lib/audio/syncBeatAudioDirection'
 import { refreshSceneSegmentVideoPrompts } from '@/lib/scene/syncBeatVideoPrompt'
 import { beatStillDirectionFingerprint } from '@/lib/script/beatDirectionFingerprint'
 import { restampPreVisHashIfScriptCurrent } from '@/lib/storyboard/preVisSync'
@@ -44,6 +49,7 @@ export type BeatPromptRefresh = 'recompute' | 'keep' | 'rebuild'
 export function stripPromptOverrides(direction: BeatDirection | undefined): BeatDirection | undefined {
   if (!direction) return undefined
   const next = { ...direction }
+  delete next.audioDirection
   delete next.framePrompt
   delete next.videoPrompt
   return next
@@ -446,6 +452,7 @@ function applyBeatDirectionToOneScene(args: {
   refreshPrompts?: BeatPromptRefresh
   referenceSelection?: BeatReferenceSelection | null
   actionDescription?: string
+  voiceDirection?: string
   promptComposition?: BeatPromptComposition
   generatedBy?: 'user' | 'director'
 }): any[] {
@@ -474,7 +481,12 @@ function applyBeatDirectionToOneScene(args: {
       if (args.referenceSelection) patched.referenceSelection = args.referenceSelection
       else delete patched.referenceSelection
     }
-    return syncBeatStillPromptToDirection(patched, {
+    const withAudio = syncBeatAudioDirectionToDirection(patched, {
+      previousBeat: entry,
+      voiceDirection: args.voiceDirection,
+      force: refreshPrompts === 'recompute' || refreshPrompts === 'rebuild',
+    })
+    return syncBeatStillPromptToDirection(withAudio, {
       sceneIndex: sceneIdx,
       artStyleAnchor: promptComposition?.artStyleAnchor,
       lookbook: promptComposition?.lookbook,
@@ -487,6 +499,7 @@ function applyBeatDirectionToOneScene(args: {
     withBeats = refreshSceneSegmentVideoPrompts(withBeats, edited, {
       artStyleId: promptComposition?.artStyleAnchor,
     })
+    withBeats = syncSceneAudioDirectionForBeat(withBeats, edited, scene)
   }
   if (keptFrame) {
     const restored = getSceneBeats(withBeats).map((entry) => {
@@ -516,15 +529,18 @@ function applyBeatDirectionToOneScene(args: {
         row.beatId === beatId &&
         !(typeof row.userEditedPrompt === 'string' && row.userEditedPrompt.trim())
     )
+    const audioDirection =
+      edited.beatDirection.audioDirection?.trim() || composeBeatAudioDirection(edited).trim()
     const framePrompt = edited.storyboardImagePrompt?.trim()
     const videoPrompt = segment?.videoPrompt?.trim()
-    if (framePrompt || videoPrompt) {
+    if (audioDirection || framePrompt || videoPrompt) {
       const storedBeats = getSceneBeats(withBeats).map((entry) => {
         if (entry.beatId !== beatId || !entry.beatDirection) return entry
         return {
           ...entry,
           beatDirection: {
             ...entry.beatDirection,
+            ...(audioDirection ? { audioDirection } : {}),
             ...(framePrompt ? { framePrompt } : {}),
             ...(videoPrompt ? { videoPrompt } : {}),
           },
@@ -538,7 +554,7 @@ function applyBeatDirectionToOneScene(args: {
 }
 
 /**
- * Writes one beat's direction and refreshes its still and clip prompts.
+ * Writes one beat's direction and refreshes its audio, still, and clip directions.
  * When the beat is a shared Promo shot (or is referenced by a Promo scene),
  * synchronizes both the source scene beat and the Promo scene beat.
  */
@@ -550,6 +566,7 @@ export function applyBeatDirectionToScenes(args: {
   refreshPrompts?: BeatPromptRefresh
   referenceSelection?: BeatReferenceSelection | null
   actionDescription?: string
+  voiceDirection?: string
   promptComposition?: BeatPromptComposition
   /** Direct Shot saves as the user. The shot-direction pass stamps the director. */
   generatedBy?: 'user' | 'director'
@@ -638,6 +655,7 @@ export function saveDirectorPatchToScenes(args: {
     direction: alignDirectionToConnectedObjects(merged, objectNames) ?? merged,
     refreshPrompts: 'recompute',
     actionDescription: args.patch.actionDescription,
+    voiceDirection: args.patch.voiceDirection,
     referenceSelection: args.referenceSelection,
     promptComposition: args.promptComposition,
     generatedBy: args.generatedBy,

@@ -25,6 +25,10 @@ import type {
   BeatDirectionSource,
   SceneBeat,
 } from '@/lib/script/segmentTypes'
+import {
+  syncBeatAudioDirectionToDirection,
+  syncSceneAudioDirectionForBeat,
+} from '@/lib/audio/syncBeatAudioDirection'
 import { refreshSceneSegmentVideoPrompts } from '@/lib/scene/syncBeatVideoPrompt'
 import { syncBeatStillPromptToDirection } from '@/lib/storyboard/syncBeatStillPrompt'
 
@@ -101,6 +105,7 @@ export interface StillDirectorPatch {
   actionDescription?: string
   cameraMovement?: string
   audioCue?: string
+  voiceDirection?: string
   transition?: BeatDirection['transition']
   castInFrame?: string[]
   keyProps?: string[]
@@ -228,11 +233,19 @@ export function parseStillDirectorPatch(raw: unknown): StillDirectorPatch | unde
   const actionDescription = trimOrUndef(
     typeof record.actionDescription === 'string' ? record.actionDescription : undefined
   )
+  const voiceDirection = trimOrUndef(
+    typeof record.voiceDirection === 'string'
+      ? record.voiceDirection
+      : typeof record.voice_direction === 'string'
+        ? record.voice_direction
+        : undefined
+  )
   const patch: StillDirectorPatch = {
     ...(normalized ?? {}),
     ...(actionFraming ? { actionFraming } : {}),
     ...(suggestedNotes ? { suggestedNotes } : {}),
     ...(actionDescription ? { actionDescription } : {}),
+    ...(voiceDirection ? { voiceDirection } : {}),
   }
   if (!normalized?.frozenMoment && actionFraming) {
     patch.frozenMoment = actionFraming
@@ -291,11 +304,18 @@ export function applyStillDirectorPatch(
   nextDirection.generatedBy = options.generatedBy
   nextDirection.updatedAt = new Date().toISOString()
 
-  const patched: SceneBeat = {
-    ...beat,
-    ...(actionDescription ? { actionDescription } : {}),
-    beatDirection: nextDirection,
-  }
+  const patched: SceneBeat = syncBeatAudioDirectionToDirection(
+    {
+      ...beat,
+      ...(actionDescription ? { actionDescription } : {}),
+      beatDirection: nextDirection,
+    },
+    {
+      previousBeat: beat,
+      voiceDirection: patch.voiceDirection,
+      force: true,
+    }
+  )
   return {
     beat: syncBeatStillPromptToDirection(patched, {
       force: true,
@@ -323,13 +343,14 @@ export function applyStillDirectorPatchToScene(
   })
   const withBeats = applyBeatsToScene(scene, nextBeats)
   const edited = nextBeats.find((entry) => entry.beatId === beatId)
+  if (skipped || !edited) {
+    return { scene: withBeats, skipped }
+  }
+  const withVideo = refreshSceneSegmentVideoPrompts(withBeats, edited, {
+    artStyleId: options.artStyleAnchor,
+  })
   return {
-    scene:
-      !skipped && edited
-        ? refreshSceneSegmentVideoPrompts(withBeats, edited, {
-            artStyleId: options.artStyleAnchor,
-          })
-        : withBeats,
+    scene: syncSceneAudioDirectionForBeat(withVideo, edited, scene),
     skipped,
   }
 }
@@ -347,6 +368,8 @@ export function applyPolicyComplianceToPatch(patch: StillDirectorPatch): StillDi
   }
   const actionFraming = soften(next.actionFraming)
   if (actionFraming) next.actionFraming = actionFraming
+  const voiceDirection = soften(next.voiceDirection)
+  if (voiceDirection) next.voiceDirection = voiceDirection
   return next
 }
 
@@ -466,7 +489,7 @@ HARD RULES:
 6. Insert/Extreme Close-Up of a limb: only the specified limb/hand. Insert/Extreme Close-Up of an object with nobody in frame: describe the instrument's settled state, not a limb, hand, or face.
 7. frozenMoment repeats locked facts from the action: any on-screen words in quotes, and what a photograph or prop actually depicts. Do not replace them with a vague label such as "production credits." actionDescription is two to four concrete sentences of the motion, with those same quoted words and depicted subjects.
 8. Do NOT write style, lighting essays, exclusions, F2V, start-frame, or appearance of library refs — code owns those.
-9. Include audioCue only for a distinct sound the score cannot carry (a slam, a mechanism, a creature, a specific device). Omit audioCue when music should carry the shot, and never use it for generic ambience. Include cameraMovement and transition only when the user note or the current beat calls for them. transition must be one of CUT, CONTINUE, DISSOLVE, FADE, MATCH_CUT. Omit a field to leave it unchanged.
+9. Include audioCue only for a distinct sound the score cannot carry (a slam, a mechanism, a creature, a specific device). Omit audioCue when music should carry the shot, and never use it for generic ambience. For dialogue and narration beats, include voiceDirection (1–2 sentences of vocal delivery direction matching the directed emotion, breath, and physical staging; omit voiceDirection for action beats). Include cameraMovement and transition only when the user note or the current beat calls for them. transition must be one of CUT, CONTINUE, DISSOLVE, FADE, MATCH_CUT. Omit a field to leave it unchanged.
 10. ${buildPolicySafePhrasingRules()}
 11. SCENE SHOT FLOW & CONTINUITY: When SCENE DIRECTION & SHOT FLOW CONTEXT is provided, honor the scene's coverage philosophy, movement turns, and 180-degree camera axis. Maintain consistent screen-left / screen-right character geography and eyeline match across consecutive beats, and vary shot scales purposefully across each movement (establish geography → medium/OTS interaction → close-up or insert on emotional turns) so the sequence cuts together smoothly. When a beat is marked with Role: establishing (typically Beat 0 opening a new location), preserve its wide/establishing shotType ("Wide Establishing Shot" or "Establishing Shot") to orient the viewer spatially unless USER NOTES or VISUAL / TALENT OVERLAY explicitly ask for a different shot scale.
 
@@ -489,6 +512,7 @@ Output JSON only:
       "keyProps": ["Exact Prop Name"],
       "cameraMovement": "slow push-in",
       "audioCue": "timer chirps twice",
+      "voiceDirection": "1-2 sentences of vocal delivery matching the directed emotion and staging (dialogue and narration beats only)",
       "transition": "CUT",
       "suggestedNotes": "bullet-like director notes a human can paste into Direction"
     }
@@ -599,6 +623,9 @@ export function buildStillDirectorUserPrompt(request: DirectBeatStillRequest): s
     }
     if (beat.character || beat.line) {
       parts.push(`Spoken: ${[beat.character, beat.line].filter(Boolean).join(' — ')}`)
+    }
+    if (beat.voiceDirection?.trim()) {
+      parts.push(`Current voice direction: ${beat.voiceDirection.trim()}`)
     }
     if (direction) {
       parts.push(`Current direction JSON: ${JSON.stringify({
