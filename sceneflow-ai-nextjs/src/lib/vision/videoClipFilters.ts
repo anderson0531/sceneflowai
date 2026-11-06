@@ -108,7 +108,7 @@ export function videoRailTooltip(
     return 'Action needed: Shot prompt or direction changed after this clip was rendered — run Video Agent (highlighted in yellow) or click Regenerate Clip to update it.'
   }
   if (facts.imageTier === 'draft') {
-    return 'Rendered from a Draft still frame — upgrade the still to Final and re-render when ready.'
+    return 'Rendered in Draft quality (720p) or from a Draft still frame — select Final (1080p) and re-render when ready.'
   }
   return 'Video clip is rendered and in sync with the shot prompt.'
 }

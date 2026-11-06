@@ -8,7 +8,10 @@ import {
 import { compileBeatVideoPromptFromDirection } from '@/lib/scene/beatVideoPromptCompiler'
 import { getSceneBeats, isBeatExcluded } from '@/lib/script/beatMigration'
 import { parsePersistedMusicCues, resolveBeatMusicCue } from '@/lib/script/sceneMusicCues'
-import { resolveBeatStillTier, segmentHasPlayableVideo } from '@/lib/storyboard/mediaVersions'
+import {
+  resolveSegmentClipTier,
+  segmentHasPlayableVideo,
+} from '@/lib/storyboard/mediaVersions'
 import { isBeatFrameStale } from '@/lib/storyboard/syncBeatStillPrompt'
 import {
   f2vStartFromPreviousEnd,
@@ -144,7 +147,7 @@ export function buildBeatVideoClips({
       previousEndFrameUrl,
       segment,
       queueItem: item,
-      imageTier: resolveBeatStillTier(beat, segment),
+      imageTier: resolveSegmentClipTier(beat, segment, item?.config),
       promptChanged:
         segment?.isStale !== undefined ? Boolean(segment.isStale) : isBeatFrameStale(beat),
       ...(hasSharedSource
@@ -196,7 +199,7 @@ export function buildBeatVideoClips({
         ),
         segment,
         queueItem: item,
-        imageTier: resolveBeatStillTier(undefined, segment),
+        imageTier: resolveSegmentClipTier(undefined, segment, item?.config),
         promptChanged: !!segment.isStale,
       }
     })
@@ -216,7 +219,7 @@ export function buildBeatVideoClips({
         hasStartFrame: !!(item.thumbnailUrl || segment?.startFrameUrl),
         segment,
         queueItem: item,
-        imageTier: resolveBeatStillTier(undefined, segment),
+        imageTier: resolveSegmentClipTier(undefined, segment, item.config),
         promptChanged: !!segment?.isStale,
       }
     })

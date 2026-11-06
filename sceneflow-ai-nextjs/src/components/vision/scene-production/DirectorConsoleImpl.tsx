@@ -158,6 +158,7 @@ import {
   applyVideoTakeSelection,
   healMissingVideoPointer,
   resolveBeatStillTier,
+  resolveSegmentClipTier,
   segmentHasPlayableVideo,
 } from '@/lib/storyboard/mediaVersions'
 import {
@@ -1192,7 +1193,7 @@ export function DirectorConsoleRoot({
               : beat
                 ? isBeatFrameStale(beat)
                 : false,
-          imageTier: resolveBeatStillTier(beat, segment),
+          imageTier: resolveSegmentClipTier(beat, segment, item.config),
         },
       ]
     })

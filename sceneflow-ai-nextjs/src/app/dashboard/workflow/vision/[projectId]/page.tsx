@@ -4877,10 +4877,16 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
             ? beatForEnd.storyboardEndImageUrl.trim()
             : undefined
 
+        const rawSegEndFrameUrl =
+          segment.endFrameUrl || segment.references?.endFrameUrl || undefined
+        const cleanSegEndFrameUrl =
+          rawSegEndFrameUrl && !/last[_-]?frame/i.test(rawSegEndFrameUrl)
+            ? rawSegEndFrameUrl
+            : undefined
+
         const resolvedEndFrameUrl =
           options?.endFrameUrl?.trim() ||
-          segment.endFrameUrl ||
-          segment.references?.endFrameUrl ||
+          cleanSegEndFrameUrl ||
           beatDistinctEndUrl ||
           undefined
 
@@ -5211,14 +5217,26 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
               })
             }
 
+            const renderedResolution =
+              data.assetType === 'video'
+                ? (data.resolution ?? effectiveResolution)
+                : undefined
+            const renderedQualityTier =
+              data.assetType === 'video'
+                ? (data.qualityTier ?? effectiveQualityTier)
+                : undefined
+
             const newTake = {
               id: `${segmentId}-take-${Date.now()}`,
               createdAt: new Date().toISOString(),
               assetUrl: data.assetUrl,
               // For images, use the image itself as thumbnail. For videos, use the extracted last frame.
               thumbnailUrl: data.assetType === 'image' ? data.assetUrl : (lastFrameUrl || undefined),
+              lastFrameUrl: data.assetType === 'video' ? (lastFrameUrl || undefined) : undefined,
               status: data.status === 'COMPLETE' ? 'COMPLETE' as const : 'GENERATING' as const,
               durationSec: measuredDuration ?? segment.endTime - segment.startTime,
+              ...(renderedResolution ? { resolution: renderedResolution } : {}),
+              ...(renderedQualityTier ? { qualityTier: renderedQualityTier } : {}),
               // Store Veo video reference for future video extension
               veoVideoRef: data.veoVideoRef,
               veoVideoRefExpiry: data.veoVideoRefExpiry,
@@ -5234,6 +5252,12 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
             const languageVersion = applyGeneratedClipTake(segment, newTake, clipLanguage)
             if (languageVersion) return languageVersion
 
+            const existingEndFrameUrl = segment.references?.endFrameUrl
+            const preservedEndFrameUrl =
+              existingEndFrameUrl && !/last[_-]?frame/i.test(existingEndFrameUrl)
+                ? existingEndFrameUrl
+                : undefined
+
             return {
               ...segment,
               status: data.status === 'COMPLETE' ? 'COMPLETE' : 'GENERATING',
@@ -5245,6 +5269,8 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
               usedBackupEngine: data.usedBackupEngine,
               provenanceId: data.provenanceId,
               contentHash: data.contentHash,
+              ...(renderedResolution ? { resolution: renderedResolution } : {}),
+              ...(renderedQualityTier ? { qualityTier: renderedQualityTier } : {}),
               ...(data.assetType === 'video' && measuredDuration != null
                 ? { actualVideoDuration: measuredDuration }
                 : {}),
@@ -5255,7 +5281,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                 references: {
                   ...segment.references,
                   startFrameUrl: resolvedStartFrameUrl || segment.references?.startFrameUrl,
-                  endFrameUrl: lastFrameUrl || segment.references?.endFrameUrl,
+                  endFrameUrl: resolvedEndFrameUrl || preservedEndFrameUrl,
                 },
               stemSeparation: data.stemSeparation
                 ? {

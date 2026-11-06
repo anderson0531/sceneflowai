@@ -231,6 +231,8 @@ export interface GenerateSegmentVideoResult {
   wasVeoFallback?: boolean
   klingModel?: string
   asyncPending?: boolean
+  resolution?: '360p' | '720p' | '1080p' | '4k' | '4K'
+  qualityTier?: 'fast' | 'premium'
 }
 
 export { KlingSafetyGuardBlockedError } from '@/lib/moderation/klingSafetyGuard'
@@ -950,5 +952,7 @@ export async function generateSegmentVideoCore(
     klingJobId,
     wasVeoFallback,
     klingModel: responseKlingModel,
+    resolution: effectiveResolution as '360p' | '720p' | '1080p' | '4k' | '4K',
+    qualityTier: effectiveQualityTier,
   }
 }

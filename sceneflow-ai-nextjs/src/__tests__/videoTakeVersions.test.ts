@@ -6,8 +6,12 @@ import {
   deriveClipQueueStatus,
   healMissingVideoPointer,
   listPlayableTakes,
+  resolveBeatStillTier,
   resolveLiveTake,
+  resolveSegmentClipTier,
 } from '@/lib/storyboard/mediaVersions'
+import { buildBeatVideoClips } from '@/lib/scene/buildBeatVideoClips'
+import { videoRailStatus } from '@/lib/vision/videoClipFilters'
 
 const CLIP_A = 'https://blob.example/segments/a.mp4'
 const CLIP_B = 'https://blob.example/segments/b.mp4'
@@ -182,5 +186,148 @@ describe('deriveClipQueueStatus', () => {
         takes: [{ id: 't1', assetUrl: CLIP_A, status: 'COMPLETE' }],
       })
     ).toBe('rendering')
+  })
+})
+
+describe('resolveSegmentClipTier and Final 1080p clip status', () => {
+  it('ignores extracted video last_frame URLs in segment.references.endFrameUrl', () => {
+    const beat = {
+      beatId: 'bt_1',
+      sequenceIndex: 0,
+      kind: 'narration' as const,
+      line: 'Beneath an empire built on steel and shadow...',
+    }
+    const segment = {
+      segmentId: 'seg_1',
+      beatId: 'bt_1',
+      sequenceIndex: 0,
+      startTime: 0,
+      endTime: 10,
+      status: 'COMPLETE' as const,
+      assetType: 'video' as const,
+      activeAssetUrl: CLIP_A,
+      takes: [
+        {
+          id: 'take_1',
+          createdAt: '2026-11-06T06:22:43.000Z',
+          assetUrl: CLIP_A,
+          thumbnailUrl: 'https://storage.googleapis.com/bucket/segments-seg_1-last_frame.jpg-123.jpg',
+          status: 'COMPLETE' as const,
+        },
+      ],
+      references: {
+        characterIds: [],
+        sceneRefIds: [],
+        objectRefIds: [],
+        endFrameUrl: 'https://storage.googleapis.com/bucket/segments-seg_1-last_frame.jpg-123.jpg',
+      },
+    }
+
+    expect(resolveBeatStillTier(beat, segment)).toBeUndefined()
+    expect(resolveSegmentClipTier(beat, segment)).toBeUndefined()
+
+    const clips = buildBeatVideoClips({
+      scene: { beats: [beat] },
+      segments: [segment as any],
+      queue: [],
+    })
+    expect(clips[0]?.imageTier).toBeUndefined()
+    expect(
+      videoRailStatus({
+        key: clips[0]!.key,
+        status: 'complete',
+        promptChanged: false,
+        imageTier: clips[0]!.imageTier,
+      })
+    ).toEqual({ status: 'ready', label: 'Final' })
+  })
+
+  it('resolves Final (1080p / premium) clip takes as final even when the beat has a Draft Pre-Vis still', () => {
+    const beatWithDraftStill = {
+      beatId: 'bt_2',
+      sequenceIndex: 0,
+      kind: 'narration' as const,
+      line: 'Beneath an empire built on steel and shadow...',
+      storyboardImageUrl: STILL,
+      storyboardImageTier: 'draft' as const,
+    }
+    const segmentWith1080pTake = {
+      segmentId: 'seg_2',
+      beatId: 'bt_2',
+      sequenceIndex: 0,
+      startTime: 0,
+      endTime: 10,
+      status: 'COMPLETE' as const,
+      assetType: 'video' as const,
+      activeAssetUrl: CLIP_A,
+      resolution: '1080p' as const,
+      qualityTier: 'premium' as const,
+      takes: [
+        {
+          id: 'take_final',
+          createdAt: '2026-11-06T06:22:43.000Z',
+          assetUrl: CLIP_A,
+          status: 'COMPLETE' as const,
+          resolution: '1080p' as const,
+          qualityTier: 'premium' as const,
+        },
+      ],
+      references: {
+        characterIds: [],
+        sceneRefIds: [],
+        objectRefIds: [],
+      },
+    }
+
+    expect(resolveSegmentClipTier(beatWithDraftStill, segmentWith1080pTake)).toBe('final')
+
+    const clips = buildBeatVideoClips({
+      scene: { beats: [beatWithDraftStill] },
+      segments: [segmentWith1080pTake as any],
+      queue: [],
+    })
+    expect(clips[0]?.imageTier).toBe('final')
+    expect(
+      videoRailStatus({
+        key: clips[0]!.key,
+        status: 'complete',
+        promptChanged: false,
+        imageTier: clips[0]!.imageTier,
+      })
+    ).toEqual({ status: 'ready', label: 'Final' })
+  })
+
+  it('resolves Standard REF clips without beat start frame as final even when legacy take resolution is absent', () => {
+    const beatWithDraftStill = {
+      beatId: 'bt_3',
+      sequenceIndex: 0,
+      kind: 'narration' as const,
+      storyboardImageUrl: STILL,
+      storyboardImageTier: 'draft' as const,
+    }
+    const legacyRefSegment = {
+      segmentId: 'seg_3',
+      beatId: 'bt_3',
+      sequenceIndex: 0,
+      status: 'COMPLETE' as const,
+      assetType: 'video' as const,
+      activeAssetUrl: CLIP_A,
+      generationProvider: 'vertex' as const,
+      takes: [
+        {
+          id: 'take_legacy',
+          createdAt: '2026-11-06T06:22:43.000Z',
+          assetUrl: CLIP_A,
+          status: 'COMPLETE' as const,
+        },
+      ],
+    }
+
+    expect(
+      resolveSegmentClipTier(beatWithDraftStill, legacyRefSegment, {
+        mode: 'REF',
+        useBeatFrameAsStart: false,
+      })
+    ).toBe('final')
   })
 })

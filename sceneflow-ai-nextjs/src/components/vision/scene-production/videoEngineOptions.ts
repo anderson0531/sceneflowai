@@ -91,7 +91,7 @@ export const SCENEFLOW_DEFAULT_MODEL = 'kling-v3-omni' as const
 
 export type EngineSelection =
   | { engineId: typeof SCENEFLOW_ENGINE_ID; qualityTierId: SceneFlowQualityTierId }
-  | { engineId: AlternativeEngineId }
+  | { engineId: AlternativeEngineId; qualityTierId?: SceneFlowQualityTierId }
 
 export type ResolvedEngineConfig = Pick<
   VideoGenerationConfig,
@@ -134,10 +134,12 @@ export function resolveEngineConfig(selection: EngineSelection): ResolvedEngineC
   }
 
   if (alt.provider === 'vertex') {
+    const isFinal =
+      selection.qualityTierId === 'cinematic' || selection.qualityTierId === 'ultra-4k'
     return {
       videoProvider: 'vertex',
-      qualityTier: 'fast',
-      resolution: '720p',
+      qualityTier: isFinal ? 'premium' : 'fast',
+      resolution: isFinal ? '1080p' : '720p',
       allowVeoFallback: false,
       allowPolicyFallback: false,
     }

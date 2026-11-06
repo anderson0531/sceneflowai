@@ -313,14 +313,26 @@ export function resolveBeatStillTier(
     if (tiers.includes('draft')) return 'draft'
   }
   if (segment) {
+    const rawSegStart = segment.startFrameUrl ?? segment.references?.startFrameUrl
+    const segStartUrl =
+      rawSegStart && !/last[_-]?frame/i.test(rawSegStart) ? rawSegStart : undefined
     const segStartTier = resolveCurrentStillTier({
-      url: segment.startFrameUrl ?? segment.references?.startFrameUrl,
+      url: segStartUrl,
       versionId: segment.references?.startFrameVersionId,
       versions: segment.references?.startFrameVersions,
       beatTier: beat?.storyboardStartImageTier ?? beat?.storyboardImageTier,
     })
+    const rawSegEnd = segment.endFrameUrl ?? segment.references?.endFrameUrl
+    const endVersions = asMediaVersions(segment.references?.endFrameVersions)
+    const hasExplicitEndVersion = endVersions.some((v) => !v.inferred)
+    const segEndUrl =
+      rawSegEnd &&
+      !/last[_-]?frame/i.test(rawSegEnd) &&
+      (!beat || hasExplicitEndVersion || Boolean(beat.storyboardEndImageTier))
+        ? rawSegEnd
+        : undefined
     const segEndTier = resolveCurrentStillTier({
-      url: segment.endFrameUrl ?? segment.references?.endFrameUrl,
+      url: segEndUrl,
       versionId: segment.references?.endFrameVersionId,
       versions: segment.references?.endFrameVersions,
       beatTier:
@@ -659,6 +671,8 @@ export interface PlayableTake {
   createdAt: string
   status?: string
   durationSec?: number
+  resolution?: '360p' | '720p' | '1080p' | '4k' | '4K'
+  qualityTier?: 'fast' | 'premium'
   /** True when this row was inferred from activeAssetUrl and is not yet stored. */
   backfill?: boolean
 }
@@ -671,6 +685,8 @@ export interface TakeRow {
   createdAt?: string
   status?: string
   durationSec?: number
+  resolution?: '360p' | '720p' | '1080p' | '4k' | '4K'
+  qualityTier?: 'fast' | 'premium'
 }
 
 export interface VideoPointerSegment {
@@ -679,6 +695,8 @@ export interface VideoPointerSegment {
   activeAssetUrl?: string | null
   currentTakeId?: string
   actualVideoDuration?: number
+  resolution?: '360p' | '720p' | '1080p' | '4k' | '4K'
+  qualityTier?: 'fast' | 'premium'
   takes?: TakeRow[]
 }
 
@@ -746,6 +764,8 @@ export function listPlayableTakes(
       ...(thumbnail && isUsableMediaUrl(thumbnail) ? { thumbnailUrl: thumbnail } : {}),
       ...(row.status ? { status: row.status } : {}),
       ...(typeof row.durationSec === 'number' ? { durationSec: row.durationSec } : {}),
+      ...(row.resolution ? { resolution: row.resolution } : {}),
+      ...(row.qualityTier ? { qualityTier: row.qualityTier } : {}),
     })
   }
 
@@ -885,6 +905,8 @@ export function applyVideoTakeSelection<T extends VideoPointerSegment>(segment: 
         status: 'COMPLETE',
         ...(selected.thumbnailUrl ? { thumbnailUrl: selected.thumbnailUrl } : {}),
         ...(selected.durationSec != null ? { durationSec: selected.durationSec } : {}),
+        ...(selected.resolution ? { resolution: selected.resolution } : {}),
+        ...(selected.qualityTier ? { qualityTier: selected.qualityTier } : {}),
       })
     }
     return {
@@ -896,6 +918,8 @@ export function applyVideoTakeSelection<T extends VideoPointerSegment>(segment: 
       status: 'COMPLETE',
       isStale: false,
       ...(selected.durationSec != null ? { actualVideoDuration: selected.durationSec } : {}),
+      ...(selected.resolution ? { resolution: selected.resolution } : {}),
+      ...(selected.qualityTier ? { qualityTier: selected.qualityTier } : {}),
     }
   }
 
@@ -911,4 +935,86 @@ export function applyVideoTakeSelection<T extends VideoPointerSegment>(segment: 
     activeAssetUrl: rawUrl,
     isStale: false,
   }
+}
+
+function tierFromClipQuality(
+  resolution?: string | null,
+  qualityTier?: string | null
+): 'draft' | 'final' | undefined {
+  const r = resolution?.trim().toLowerCase()
+  if (r === '1080p' || r === '4k') return 'final'
+  if (qualityTier === 'premium') return 'final'
+  if (r === '360p' || r === '720p') return 'draft'
+  if (qualityTier === 'fast') return 'draft'
+  return undefined
+}
+
+/**
+ * Resolve the effective Draft | Final tier for a shot in the Video Clips tab.
+ * When a playable video clip exists, its rendered resolution/quality tier
+ * (`1080p` / `4K` / `premium` -> `'final'`, `720p` / `360p` / `fast` -> `'draft'`)
+ * takes precedence over the Pre-Vis still frame tier.
+ */
+export function resolveSegmentClipTier(
+  beat: Parameters<typeof resolveBeatStillTier>[0],
+  segment?:
+    | (Parameters<typeof resolveBeatStillTier>[1] &
+        VideoPointerSegment & {
+          generationMethod?: string | null
+          generationProvider?: string | null
+        })
+    | null,
+  queueConfig?: {
+    mode?: string | null
+    resolution?: string | null
+    qualityTier?: string | null
+    approvalStatus?: string | null
+    useBeatFrameAsStart?: boolean | null
+  } | null
+): 'draft' | 'final' | undefined {
+  if (segment && segmentHasPlayableVideo(segment)) {
+    const liveTake = resolveLiveTake(
+      segment.takes,
+      segment.currentTakeId,
+      segment.activeAssetUrl
+    )
+    const rawTake = liveTake
+      ? (segment.takes ?? []).find(
+          (row) => row.id === liveTake.id || takeMediaUrl(row) === liveTake.url
+        )
+      : undefined
+    const takeTier =
+      tierFromClipQuality(liveTake?.resolution, liveTake?.qualityTier) ??
+      tierFromClipQuality(rawTake?.resolution, rawTake?.qualityTier)
+    if (takeTier) return takeTier
+
+    const segTier = tierFromClipQuality(segment.resolution, segment.qualityTier)
+    if (segTier) return segTier
+
+    if (
+      queueConfig?.qualityTier === 'premium' ||
+      (queueConfig?.approvalStatus === 'user-approved' &&
+        tierFromClipQuality(queueConfig.resolution, queueConfig.qualityTier))
+    ) {
+      const cfgTier = tierFromClipQuality(queueConfig?.resolution, queueConfig?.qualityTier)
+      if (cfgTier) return cfgTier
+    }
+    if (
+      queueConfig?.qualityTier === 'fast' &&
+      tierFromClipQuality(queueConfig.resolution, undefined) === 'draft'
+    ) {
+      return 'draft'
+    }
+
+    const isRefClipWithoutBeatStart =
+      segment.generationMethod === 'REF' ||
+      (segment.generationProvider === 'vertex' &&
+        (queueConfig?.mode === 'REF' || !queueConfig?.mode) &&
+        !queueConfig?.useBeatFrameAsStart)
+    if (isRefClipWithoutBeatStart) {
+      return 'final'
+    }
+  }
+
+  return resolveBeatStillTier(beat, segment)
 }

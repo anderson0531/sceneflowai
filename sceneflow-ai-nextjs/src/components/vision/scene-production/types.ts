@@ -531,6 +531,8 @@ export interface SceneSegmentTake {
   // After this time, video extension falls back to I2V mode with the last frame
   veoVideoRefExpiry?: string
   stemSeparation?: StemSeparationState
+  resolution?: '360p' | '720p' | '1080p' | '4k' | '4K'
+  qualityTier?: 'fast' | 'premium'
 }
 
 export interface SceneSegmentReferences {
@@ -584,6 +586,9 @@ export interface SceneSegment {
   visualFrame?: string // e.g. "Shot Frame" url if separate from activeAssetUrl
   // Enhanced Veo 3.1 metadata
   generationMethod?: VideoGenerationMethod
+  resolution?: '360p' | '720p' | '1080p' | '4k' | '4K'
+  qualityTier?: 'fast' | 'premium'
+  generationProvider?: 'vertex' | 'fal' | 'kling' | 'aggregator'
   triggerReason?: string // Why we cut here (speaker change, action change, etc.)
   endFrameDescription?: string // Lookahead for next segment
   emotionalBeat?: string // The emotional intent of this segment

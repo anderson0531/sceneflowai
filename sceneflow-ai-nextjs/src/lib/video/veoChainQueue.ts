@@ -71,11 +71,11 @@ export function resolvePriorChainLastFrameUrl(
 
   const successfulTakes =
     prev.takes?.filter(
-      (t) => t.status === 'done' && (t.lastFrameUrl || t.thumbnailUrl)
+      (t) => (t.status === 'COMPLETE' || t.status === 'done') && (t.lastFrameUrl || t.thumbnailUrl)
     ) || []
 
   if (successfulTakes.length > 0) {
-    const latestTake = successfulTakes[successfulTakes.length - 1]
+    const latestTake = successfulTakes[0]
     return latestTake.lastFrameUrl || latestTake.thumbnailUrl || undefined
   }
 

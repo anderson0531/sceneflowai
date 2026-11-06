@@ -642,9 +642,14 @@ export function resolveF2VFrameUrls(
     segStart ||
     beatStill ||
     null
-  const rawEnd =
+  const segEndCandidate =
     segment.endFrameUrl?.trim() ||
     segment.references?.endFrameUrl?.trim() ||
+    null
+  const cleanSegEnd =
+    segEndCandidate && !/last[_-]?frame/i.test(segEndCandidate) ? segEndCandidate : null
+  const rawEnd =
+    cleanSegEnd ||
     beatEndStill ||
     null
 
@@ -660,14 +665,16 @@ export function resolveF2VFrameUrls(
 
   const dedicated = (url?: string | null) => {
     const trimmed = url?.trim() || null
-    if (!trimmed || (beatStill && trimmed === beatStill)) return null
+    if (!trimmed || /last[_-]?frame/i.test(trimmed) || (beatStill && trimmed === beatStill)) {
+      return null
+    }
     return trimmed
   }
   return {
     startFrameUrl:
       beatActionStartStill ||
       dedicated(segment.startFrameUrl || segment.references?.startFrameUrl),
-    endFrameUrl: dedicated(segment.endFrameUrl || segment.references?.endFrameUrl),
+    endFrameUrl: dedicated(cleanSegEnd),
   }
 }
 
@@ -697,8 +704,9 @@ export function resolveSegmentFrameUrls(
       beatEndUrl = candidateEnd
     }
   }
-  const endFrameUrl =
-    segment.endFrameUrl || segment.references?.endFrameUrl || beatEndUrl || null
+  const segEnd = segment.endFrameUrl || segment.references?.endFrameUrl || null
+  const cleanSegEnd = segEnd && !/last[_-]?frame/i.test(segEnd) ? segEnd : null
+  const endFrameUrl = cleanSegEnd || beatEndUrl || null
   return { startFrameUrl, endFrameUrl }
 }
 

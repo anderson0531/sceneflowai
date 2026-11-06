@@ -280,15 +280,27 @@ export function useVideoQueue(
     
     // CONTENT HASH GUARD: Prevent render loop by checking actual content, not references
     // This stops the cascade where new Map/array references trigger infinite re-renders
-    const contentHash = JSON.stringify(
-      segments.map(s => ({
+    const contentHash = JSON.stringify({
+      segments: segments.map((s) => ({
         id: s.segmentId,
         status: s.status,
         asset: s.activeAssetUrl?.slice(-20), // Last 20 chars of URL for change detection
-        take: `${s.currentTakeId || ''}:${(s.takes || []).map((take) => take.id).join('|')}`,
+        take: `${s.currentTakeId || ''}:${(s.takes || []).map((take) => `${take.id}:${take.resolution || ''}:${take.qualityTier || ''}`).join('|')}`,
+        resolution: s.resolution,
+        qualityTier: s.qualityTier,
         prompt: s.generatedPrompt,
-      }))
-    )
+      })),
+      userConfigs: Array.from(userConfigs.entries()).map(([id, cfg]) => ({
+        id,
+        mode: cfg.mode,
+        resolution: cfg.resolution,
+        qualityTier: cfg.qualityTier,
+        videoProvider: cfg.videoProvider,
+        approvalStatus: cfg.approvalStatus,
+        duration: cfg.duration,
+        prompt: cfg.prompt?.slice(0, 60),
+      })),
+    })
     
     if (contentHash === lastContentHashRef.current && lastQueueRef.current.length > 0) {
       // Content hasn't changed - return cached queue to break render loop

@@ -68,8 +68,8 @@ const videoQualityLabels: Record<VideoQualityFilter, string> = {
 
 const videoQualityTooltips: Record<VideoQualityFilter, string> = {
   all: 'All clips in this scene.',
-  final: 'Clips rendered on a Final frame or via Standard Reference-to-Video.',
-  draft: 'Clips whose source frame is a draft.',
+  final: 'Clips rendered in Final quality (1080p / 4K), on a Final frame, or via Standard Reference-to-Video.',
+  draft: 'Clips rendered in Draft quality (720p) or whose source frame is a draft.',
 }
 
 function clipStatus(item?: DirectorQueueItem): { label: string; className: string } | null {
@@ -887,6 +887,13 @@ export function BeatVideoGallery({
                   {preview.imageTier === 'draft' && (
                     <span className="rounded-full bg-gray-500/25 px-1.5 py-0.5 text-[10px] text-gray-300">
                       Draft
+                    </span>
+                  )}
+                  {previewHasClip && (liveTake?.resolution || previewSegment?.resolution) && (
+                    <span className="rounded-full border border-slate-600/40 bg-slate-800/70 px-1.5 py-0.5 text-[10px] font-medium text-slate-300">
+                      {String(liveTake?.resolution || previewSegment?.resolution).toUpperCase() === '4K'
+                        ? '4K'
+                        : String(liveTake?.resolution || previewSegment?.resolution).toLowerCase()}
                     </span>
                   )}
                   {preview.prompt?.trim() && (

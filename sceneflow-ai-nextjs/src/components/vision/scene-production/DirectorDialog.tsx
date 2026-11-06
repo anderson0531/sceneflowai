@@ -518,7 +518,7 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
     () =>
       selectedEngine === SCENEFLOW_ENGINE_ID
         ? ({ engineId: SCENEFLOW_ENGINE_ID, qualityTierId } as const)
-        : ({ engineId: selectedEngine } as const),
+        : ({ engineId: selectedEngine, qualityTierId } as const),
     [selectedEngine, qualityTierId]
   )
 
@@ -544,12 +544,16 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
     const sceneRecord = scene as Record<string, unknown> | undefined
     const f2v = resolveF2VFrameUrls(segment, sceneRecord)
     const segFrames = resolveSegmentFrameUrls(segment, sceneImageUrl, sceneRecord)
+    const segEnd =
+      segment.endFrameUrl?.trim() ||
+      segment.references?.endFrameUrl?.trim() ||
+      null
+    const cleanSegEnd = segEnd && !/last[_-]?frame/i.test(segEnd) ? segEnd : null
     const candidate =
       f2v.endFrameUrl ||
       segFrames.endFrameUrl ||
       savedConfig?.endFrameUrl?.trim() ||
-      segment.endFrameUrl?.trim() ||
-      segment.references?.endFrameUrl?.trim() ||
+      cleanSegEnd ||
       null
     if (candidate && candidate !== effectiveStartFrameUrl) {
       return candidate
@@ -815,18 +819,20 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
       | '720p'
       | '1080p'
       | '4k'
-    setResolution(
-      videoGenerationQuality
-        ? policy.resolution
-        : normalizedResolution === '4k'
-          ? '4k'
-          : (normalizedResolution as '360p' | '720p' | '1080p')
-    )
-    if (!savedConfig && !settingsUserEdited) {
+    const effectiveInitResolution = videoGenerationQuality
+      ? policy.resolution
+      : normalizedResolution === '4k'
+        ? '4k'
+        : (normalizedResolution as '360p' | '720p' | '1080p')
+    setResolution(effectiveInitResolution)
+    if (!settingsUserEdited) {
       setFrameRate(autoConfig.frameRate ?? 24)
       setThinkingLevel(autoConfig.thinkingLevel ?? 'low')
       setOmniMultiShotEnabled(autoConfig.omniMultiShot ?? false)
-      setOptimizedSettingsReason(autoConfig.optimizedSettingsReason ?? '')
+      const rawReason = autoConfig.optimizedSettingsReason ?? ''
+      setOptimizedSettingsReason(
+        rawReason ? rawReason.replace(/\b(?:360p|720p|1080p|4k)\b/i, effectiveInitResolution) : ''
+      )
     }
     setTakeMode(nextTakeMode)
     if (nextTakeMode === 'standard') {
@@ -2089,7 +2095,8 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
                 {isStandardTake && optimizedSettingsReason && !settingsUserEdited && (
                   <div className="flex items-center justify-between gap-2 rounded-md border border-indigo-500/30 bg-indigo-500/10 px-3 py-2">
                     <p className="text-[11px] text-indigo-200">
-                      {t('optimizedForShot')}: {optimizedSettingsReason}
+                      {t('optimizedForShot')}:{' '}
+                      {optimizedSettingsReason.replace(/\b(?:360p|720p|1080p|4k)\b/i, resolution)}
                     </p>
                     <Button
                       type="button"

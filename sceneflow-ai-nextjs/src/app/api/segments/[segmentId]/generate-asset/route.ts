@@ -521,6 +521,8 @@ export async function POST(
     let modelUpgraded: boolean | undefined
     let effectiveModel: string | undefined
     let upgradeLabel: string | undefined
+    let responseResolution: '360p' | '720p' | '1080p' | '4k' | '4K' | undefined
+    let responseQualityTier: 'fast' | 'premium' | undefined
 
     if (genType === 'T2V' || genType === 'I2V') {
       console.log(
@@ -746,6 +748,8 @@ export async function POST(
       modelUpgraded = videoResult.modelUpgraded
       effectiveModel = videoResult.effectiveAggregatorType
       upgradeLabel = videoResult.upgradeLabel
+      responseResolution = videoResult.resolution
+      responseQualityTier = videoResult.qualityTier
 
       const billedDuration = requestedVideoDurationSeconds ?? duration ?? 10
       const billedUserId = dbUserId
@@ -897,6 +901,8 @@ export async function POST(
       jobId: assetType === 'video' && assetUrl.startsWith('job:') ? assetUrl.replace('job:', '') : undefined,
       requestedDurationSeconds: requestedVideoDurationSeconds,
       actualDurationSeconds: actualVideoDurationSeconds ?? undefined,
+      resolution: responseResolution,
+      qualityTier: responseQualityTier,
       // Method selection info for UI feedback
       methodSelection: methodSelectionResult ? {
         method: methodSelectionResult.method,
