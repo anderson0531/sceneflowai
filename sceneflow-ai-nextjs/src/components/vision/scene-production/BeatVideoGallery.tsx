@@ -105,6 +105,8 @@ export interface BeatVideoClip {
   /** Pre-Vis frame tier for this beat. Clips do not store their own Draft | Final. */
   imageTier?: 'draft' | 'final'
   promptChanged?: boolean
+  /** True when this shot requires a localized video clip in non-English streams. */
+  needsLanguageClip?: boolean
   /** Shared source scene badge for Promo shots (e.g. "S2 · Shot 3"). */
   sourceSceneLabel?: string
   /** Descriptive shared source label for Promo shots (e.g. "Scene 2 · Shot 3"). */
@@ -196,22 +198,56 @@ export function BeatVideoGallery({
   const previewVideoRef = useRef<HTMLVideoElement>(null)
   const previewStageRef = useRef<HTMLDivElement>(null)
 
+  const languageStream = !isMasterStreamLanguage(streamLanguage)
+  const streamCode = normalizeStreamLanguage(streamLanguage)
+  const languageName =
+    streamLanguageLabel(
+      streamCode,
+      SUPPORTED_LANGUAGES.find((lang) => lang.code === streamCode)?.name
+    ).replace(' (master)', '')
+
   const clipFacts = useMemo<VideoClipFacts[]>(
     () =>
-      clips.map((clip) => ({
-        key: clip.key,
-        status:
-          clip.queueItem?.status === 'rendering'
-            ? 'rendering'
-            : clip.queueItem?.status === 'complete' || segmentHasPlayableVideo(clip.segment)
-              ? 'complete'
-              : clip.queueItem?.status === 'error'
-                ? 'error'
-                : 'queued',
-        promptChanged: !!clip.promptChanged,
-        imageTier: clip.imageTier,
-      })),
-    [clips]
+      clips.map((clip) => {
+        const masterComplete =
+          clip.queueItem?.status === 'complete' || segmentHasPlayableVideo(clip.segment)
+        if (!languageStream) {
+          return {
+            key: clip.key,
+            status:
+              clip.queueItem?.status === 'rendering'
+                ? 'rendering'
+                : masterComplete
+                  ? 'complete'
+                  : clip.queueItem?.status === 'error'
+                    ? 'error'
+                    : 'queued',
+            promptChanged: !!clip.promptChanged,
+            imageTier: clip.imageTier,
+          }
+        }
+        const playback = clip.segment
+          ? resolveLanguageClipPlayback(clip.segment, streamLanguage)
+          : undefined
+        const hasLanguageClip = !!playback?.url && !playback?.usingMaster
+        const isGeneratingLang =
+          !!clip.segment && generatingLanguageClipId === clip.segment.segmentId
+        const langComplete = hasLanguageClip || (!clip.needsLanguageClip && masterComplete)
+        return {
+          key: clip.key,
+          status:
+            isGeneratingLang || clip.queueItem?.status === 'rendering'
+              ? 'rendering'
+              : langComplete
+                ? 'complete'
+                : clip.queueItem?.status === 'error'
+                  ? 'error'
+                  : 'queued',
+          promptChanged: !!clip.promptChanged,
+          imageTier: clip.imageTier,
+        }
+      }),
+    [clips, languageStream, streamLanguage, generatingLanguageClipId]
   )
   const visibleClips = useMemo(
     () =>
@@ -240,7 +276,6 @@ export function BeatVideoGallery({
   }, [selectedBeatId, visibleClips, selectedKey])
 
   const preview = visibleClips.find((clip) => clip.key === selectedKey) ?? visibleClips[0]
-  const previewStatus = clipStatus(preview?.queueItem)
   const previewSegment = preview?.segment
   const previewError =
     previewSegment?.errorMessage?.trim() || preview?.queueItem?.error?.trim() || ''
@@ -253,13 +288,6 @@ export function BeatVideoGallery({
     previewSegment?.lastContentPolicyFailure?.optionalSanitized?.guidePrompt,
   ].filter((value): value is string => !!value?.trim())
   const policyHints = previewSegment?.lastContentPolicyFailure?.hints?.filter((hint) => hint.trim()) ?? []
-  const languageStream = !isMasterStreamLanguage(streamLanguage)
-  const streamCode = normalizeStreamLanguage(streamLanguage)
-  const languageName =
-    streamLanguageLabel(
-      streamCode,
-      SUPPORTED_LANGUAGES.find((lang) => lang.code === streamCode)?.name
-    ).replace(' (master)', '')
   const languageOptions = languageStream
     ? listLanguageClipVersionOptions(previewSegment?.languageVersions?.[streamCode])
     : []
@@ -272,7 +300,8 @@ export function BeatVideoGallery({
       ? listPlayableTakes(previewSegment.takes, previewSegment.activeAssetUrl)
       : []
   const liveTake = languageStream
-    ? undefined
+    ? playableTakes.find((take) => take.id === languagePlayback?.takeId) ??
+      playableTakes[playableTakes.length - 1]
     : previewSegment
       ? resolveLiveTake(
           previewSegment.takes,
@@ -282,9 +311,36 @@ export function BeatVideoGallery({
       : undefined
   const previewVideoUrl = languageStream ? languagePlayback?.url : liveTake?.url
   const showingMasterFallback = languageStream && !!languagePlayback?.usingMaster && !!previewVideoUrl
+  const hasLocalizedPreviewClip =
+    languageStream && !languagePlayback?.usingMaster && !!languagePlayback?.url
   const previewHasClip = !!previewVideoUrl
   const languageVersionValue = languageClipSelectionValue(languageOptions)
   const generatingLanguageClip = !!previewSegment && generatingLanguageClipId === previewSegment.segmentId
+  const previewStatus = (() => {
+    if (!languageStream) return clipStatus(preview?.queueItem)
+    if (generatingLanguageClip || preview?.queueItem?.status === 'rendering') {
+      return { label: 'Rolling', className: 'border-blue-500/40 bg-blue-500/15 text-blue-200' }
+    }
+    if (hasLocalizedPreviewClip) {
+      return {
+        label: 'In the Can',
+        className: 'border-emerald-500/40 bg-emerald-500/15 text-emerald-200',
+      }
+    }
+    if (preview?.needsLanguageClip && showingMasterFallback) {
+      return {
+        label: `Needs ${languageName} clip`,
+        className: 'border-amber-500/40 bg-amber-500/15 text-amber-200',
+      }
+    }
+    if (!preview?.needsLanguageClip && showingMasterFallback) {
+      return {
+        label: 'In the Can',
+        className: 'border-emerald-500/40 bg-emerald-500/15 text-emerald-200',
+      }
+    }
+    return clipStatus(preview?.queueItem)
+  })()
   const formatStreamName = (lang: { code: string; name: string }) =>
     streamLanguageLabel(lang.code, lang.name)
   const versionStrip = [...playableTakes].sort((a, b) => {
@@ -464,35 +520,40 @@ export function BeatVideoGallery({
           }}
         >
           <div className="sticky top-2 flex w-full min-w-0 max-w-full flex-1 flex-col gap-2 self-start lg:min-w-[40rem]">
-            {onStreamLanguageChange && streamLanguages.length > 0 && (
+            {((onStreamLanguageChange && streamLanguages.length > 0) ||
+              (languageStream && languageOptions.length > 0)) && (
               <div className="flex flex-wrap items-center gap-2 px-1">
-                <span className="text-[10px] font-medium uppercase tracking-wide text-slate-400">
-                  Stream
-                </span>
-                <GroupedLanguageSelector
-                  value={streamCode}
-                  onValueChange={onStreamLanguageChange}
-                  filterCodes={streamLanguages}
-                  size="xs"
-                  intent="navigate"
-                  showFlags
-                  formatName={formatStreamName}
-                  placeholder="Select language..."
-                  className="h-7 min-w-[140px] border-slate-600 bg-slate-900/80 text-[11px]"
-                />
-                {onAddStreamLanguage && languagesNotYetGenerated.length > 0 && (
-                  <GroupedLanguageSelector
-                    value=""
-                    onValueChange={(code) => {
-                      onStreamLanguageChange(code)
-                      void onAddStreamLanguage(code)
-                    }}
-                    filterCodes={languagesNotYetGenerated}
-                    size="xs"
-                    intent="generate"
-                    placeholder="+ Add Language"
-                    className="h-7 w-auto min-w-[110px] border-purple-500/40 bg-gray-700/30 text-[11px] text-purple-200"
-                  />
+                {onStreamLanguageChange && streamLanguages.length > 0 && (
+                  <>
+                    <span className="text-[10px] font-medium uppercase tracking-wide text-slate-400">
+                      Stream
+                    </span>
+                    <GroupedLanguageSelector
+                      value={streamCode}
+                      onValueChange={onStreamLanguageChange}
+                      filterCodes={streamLanguages}
+                      size="xs"
+                      intent="navigate"
+                      showFlags
+                      formatName={formatStreamName}
+                      placeholder="Select language..."
+                      className="h-7 min-w-[140px] border-slate-600 bg-slate-900/80 text-[11px]"
+                    />
+                    {onAddStreamLanguage && languagesNotYetGenerated.length > 0 && (
+                      <GroupedLanguageSelector
+                        value=""
+                        onValueChange={(code) => {
+                          onStreamLanguageChange(code)
+                          void onAddStreamLanguage(code)
+                        }}
+                        filterCodes={languagesNotYetGenerated}
+                        size="xs"
+                        intent="generate"
+                        placeholder="+ Add Language"
+                        className="h-7 w-auto min-w-[110px] border-purple-500/40 bg-gray-700/30 text-[11px] text-purple-200"
+                      />
+                    )}
+                  </>
                 )}
                 {languageStream && languageOptions.length > 0 && (
                   <label className="flex items-center gap-1.5 text-[10px] text-slate-400">

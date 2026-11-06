@@ -6,6 +6,7 @@ import {
   type PromoSceneBeat,
 } from '@/lib/publish/buildPromoScene'
 import { compileBeatVideoPromptFromDirection } from '@/lib/scene/beatVideoPromptCompiler'
+import { segmentNeedsLanguageClip } from '@/lib/scene/languageClipPrompt'
 import { getSceneBeats, isBeatExcluded } from '@/lib/script/beatMigration'
 import { parsePersistedMusicCues, resolveBeatMusicCue } from '@/lib/script/sceneMusicCues'
 import {
@@ -24,6 +25,10 @@ export interface BuildBeatVideoClipsArgs {
   scene: Record<string, unknown> | null | undefined
   segments: SceneSegment[]
   queue: DirectorQueueItem[]
+  languageShotConfigs?: Record<
+    string,
+    { method?: 'double' | 'lipsync' | 'regenerate'; signageText?: string }
+  >
 }
 
 /**
@@ -43,6 +48,7 @@ export function buildBeatVideoClips({
   scene,
   segments,
   queue,
+  languageShotConfigs,
 }: BuildBeatVideoClipsArgs): BeatVideoClip[] {
   const sceneRecord = scene ?? null
   const allBeats = getSceneBeats(sceneRecord)
@@ -133,6 +139,17 @@ export function buildBeatVideoClips({
       Boolean(promoBeat.sourceBeatId) &&
       typeof promoBeat.sourceSceneIndex === 'number' &&
       promoBeat.sourceSceneIndex >= 0
+    const shotCfg = segment ? languageShotConfigs?.[segment.segmentId] : undefined
+    const needsLanguageClip = segmentNeedsLanguageClip({
+      beatKind: beat.kind,
+      beatCharacter: beat.character,
+      beatLine: beat.line,
+      excerpt: segment?.dialoguePortion?.excerpt,
+      dialogueLines: segment?.dialogueLines,
+      sourcePrompt: resolvedPrompt,
+      shotMethod: shotCfg?.method,
+      customSignageText: shotCfg?.signageText,
+    })
     return {
       key: beat.beatId,
       beatId: beat.beatId,
@@ -150,6 +167,7 @@ export function buildBeatVideoClips({
       imageTier: resolveSegmentClipTier(beat, segment, item?.config),
       promptChanged:
         segment?.isStale !== undefined ? Boolean(segment.isStale) : isBeatFrameStale(beat),
+      needsLanguageClip,
       ...(hasSharedSource
         ? {
             sourceSceneLabel: formatPromoSourceBadge(promoBeat),
@@ -175,18 +193,14 @@ export function buildBeatVideoClips({
     .map((segment, index) => {
       const item = queue.find((entry) => entry.segmentId === segment.segmentId)
       const beatNumber = maxBeatNumber + index + 1
+      const orphanPrompt =
+        item?.config.prompt || segment.userEditedPrompt || segment.generatedPrompt
+      const shotCfg = languageShotConfigs?.[segment.segmentId]
       return {
         key: segment.segmentId,
         beatNumber,
-        label: (
-          item?.config.prompt ||
-          segment.userEditedPrompt ||
-          segment.generatedPrompt ||
-          `Clip ${beatNumber}`
-        )
-          .replace(/\s+/g, ' ')
-          .trim(),
-        prompt: item?.config.prompt || segment.userEditedPrompt || segment.generatedPrompt,
+        label: (orphanPrompt || `Clip ${beatNumber}`).replace(/\s+/g, ' ').trim(),
+        prompt: orphanPrompt,
         thumbnailUrl:
           item?.thumbnailUrl ||
           segment.startFrameUrl ||
@@ -201,6 +215,13 @@ export function buildBeatVideoClips({
         queueItem: item,
         imageTier: resolveSegmentClipTier(undefined, segment, item?.config),
         promptChanged: !!segment.isStale,
+        needsLanguageClip: segmentNeedsLanguageClip({
+          excerpt: segment.dialoguePortion?.excerpt,
+          dialogueLines: segment.dialogueLines,
+          sourcePrompt: orphanPrompt,
+          shotMethod: shotCfg?.method,
+          customSignageText: shotCfg?.signageText,
+        }),
       }
     })
 

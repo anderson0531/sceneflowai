@@ -6994,135 +6994,63 @@ export function SceneProductionMixer({
                 extractingStemIds={extractingStemIds}
                 onExtractSegmentStem={onSegmentsChange ? handleExtractSegmentStem : undefined}
               />
-              </div>
-              
-              <div className={cn('space-y-3', inspectorTab !== 'all' && inspectorTab !== 'graphics' && 'hidden')}>
-              {/* Stream — the language version Clips and Streams share with this mix */}
-              {availableLanguages.length > 0 && (
-                <div className="bg-zinc-900/80 border border-zinc-800 rounded-lg">
-                  <ProductionSectionHeader
-                    icon={Languages}
-                    title="Stream"
-                    badge={availableLanguages.length}
-                    rightAction={
-                      onGenerateLanguageStream && languagesNotYetGenerated.length > 0 ? (
-                        <GroupedLanguageSelector
-                          value=""
-                          onValueChange={(code) => {
-                            onProductionTargetChange({ ...productionTarget, language: code })
-                            void onGenerateLanguageStream(code)
-                          }}
-                          filterCodes={languagesNotYetGenerated}
-                          size="xs"
-                          intent="generate"
-                          placeholder="+ Add Language"
-                          disabled={isRendering || isGeneratingAudio || isGeneratingLanguageAudio}
-                          className="h-[26px] w-auto min-w-[110px] text-[11px] bg-zinc-800 border-cyan-500/40 text-cyan-200"
-                        />
-                      ) : undefined
-                    }
+              <div className="bg-zinc-900/80 border border-zinc-800 rounded-lg px-3 py-2.5 space-y-2">
+                <div
+                  className="flex items-center justify-between"
+                  title="Preserve generated ambience, SFX, and music from the original Veo video clip while muting original spoken dialogue"
+                >
+                  <div className="text-[11px] text-zinc-400">
+                    Keep Scene Background Sounds
+                  </div>
+                  <Switch
+                    checked={preserveBackgroundStem}
+                    onCheckedChange={setPreserveBackgroundStem}
+                    disabled={isRendering}
                   />
-                  <p className="px-3 pb-2 text-[11px] text-zinc-400">
-                    {selectedLanguage === 'en'
-                      ? 'Mixing the English master — dialogue, sound effects, and music.'
-                      : `Dubbing the ${languageLabel} version — dialogue, sound effects, and music.`}
-                  </p>
-                  <div className="px-3 pb-3 flex flex-wrap gap-1.5">
-                    {(availableLanguages.length <= 5 ? availableLanguages : availableLanguages.slice(0, 4)).map(langCode => {
-                      const langInfo = SUPPORTED_LANGUAGES.find(l => l.code === langCode)
-                      const isActive = langCode === productionTarget.language
-                      const hasNarration = !!audioAssets.narrationAudio?.[langCode]?.url
-                      const hasDialogue = (audioAssets.dialogueAudio?.[langCode]?.length || 0) > 0
-                      
-                      return (
-                        <button
-                          key={langCode}
-                          onClick={() => onProductionTargetChange({ ...productionTarget, language: langCode })}
-                          className={`flex items-center gap-1.5 px-2 py-1 rounded-md text-xs transition-all border ${
-                            isActive
-                              ? 'bg-cyan-500/20 border-cyan-500/50 text-cyan-200'
-                              : 'bg-zinc-950/70 border-zinc-800 text-zinc-400 hover:text-zinc-200 hover:border-zinc-700'
-                          }`}
-                        >
-                          <span>{FLAG_EMOJIS[langCode] || '🌐'}</span>
-                          <span>{streamLanguageLabel(langCode, langInfo?.name)}</span>
-                          <div className="flex gap-0.5 ml-0.5">
-                            <span className={`w-1.5 h-1.5 rounded-full ${hasDialogue ? 'bg-blue-400' : 'bg-zinc-600'}`} title={hasDialogue ? 'Dialogue ready' : 'No dialogue'} />
-                          </div>
-                        </button>
-                      )
-                    })}
-                    {availableLanguages.length > 5 && (
-                      <GroupedLanguageSelector
-                        value={productionTarget.language}
-                        onValueChange={(code) => onProductionTargetChange({ ...productionTarget, language: code })}
-                        filterCodes={availableLanguages}
-                        size="xs"
-                        showFlags={true}
-                        className="h-[26px] w-auto min-w-[90px] text-[11px] bg-zinc-900 border-zinc-800 text-zinc-300"
-                        placeholder={`+${availableLanguages.length - 4} more`}
-                      />
-                    )}
-                  </div>
-                  <div className="px-3 pb-3 pt-2 space-y-2 border-t border-zinc-800">
-                    <div
-                      className="flex items-center justify-between"
-                      title="Preserve generated ambience, SFX, and music from the original Veo video clip while muting original spoken dialogue"
-                    >
-                      <div className="text-[11px] text-zinc-400">
-                        Keep Scene Background Sounds
-                      </div>
-                      <Switch
-                        checked={preserveBackgroundStem}
-                        onCheckedChange={setPreserveBackgroundStem}
-                        disabled={isRendering}
-                      />
-                    </div>
-                    {preserveBackgroundStem && (
-                      <div
-                        className="flex items-center justify-between"
-                        title="Keep original spoken dialogue stem from the master video clip"
-                      >
-                        <div className="text-[11px] text-zinc-500">
-                          Keep Original Spoken Voice
-                        </div>
-                        <Switch
-                          checked={includeSpeechStem}
-                          onCheckedChange={setIncludeSpeechStem}
-                          disabled={isRendering}
-                        />
-                      </div>
-                    )}
-                    {preserveBackgroundStem && productionTarget.language !== 'en' && nonEnglishBeatsMissingBackgroundStem > 0 && (
-                      <div className="space-y-1.5 rounded-md bg-amber-500/10 border border-amber-500/30 p-2">
-                        <p className="text-[11px] text-amber-200/90 leading-snug">
-                          {nonEnglishBeatsMissingBackgroundStem} shot{nonEnglishBeatsMissingBackgroundStem > 1 ? 's still have' : ' still has'} original English speech in the video clip. Remove the original voice so background sounds and music play cleanly under your {languageLabel} dub.
-                        </p>
-                        {onSegmentsChange && (
-                          <button
-                            type="button"
-                            disabled={isRendering || isExtractingAllStems}
-                            onClick={() => void handleExtractAllMissingStems()}
-                            title="Run Demucs stem separation on shots to isolate background SFX/music and remove original speech"
-                            className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded text-[10px] font-semibold bg-amber-500/20 border border-amber-400/50 text-amber-100 hover:bg-amber-500/30 transition-colors disabled:opacity-50"
-                          >
-                            {isExtractingAllStems ? (
-                              <Loader2 className="w-3 h-3 animate-spin" />
-                            ) : (
-                              <Sparkles className="w-3 h-3 text-amber-300" />
-                            )}
-                            <span>
-                              {isExtractingAllStems
-                                ? 'Removing Original Voice…'
-                                : `Keep Background Sounds Only (${nonEnglishBeatsMissingBackgroundStem})`}
-                            </span>
-                          </button>
-                        )}
-                      </div>
-                    )}
-                  </div>
                 </div>
-              )}
+                {preserveBackgroundStem && (
+                  <div
+                    className="flex items-center justify-between"
+                    title="Keep original spoken dialogue stem from the master video clip"
+                  >
+                    <div className="text-[11px] text-zinc-500">
+                      Keep Original Spoken Voice
+                    </div>
+                    <Switch
+                      checked={includeSpeechStem}
+                      onCheckedChange={setIncludeSpeechStem}
+                      disabled={isRendering}
+                    />
+                  </div>
+                )}
+                {preserveBackgroundStem && productionTarget.language !== 'en' && nonEnglishBeatsMissingBackgroundStem > 0 && (
+                  <div className="space-y-1.5 rounded-md bg-amber-500/10 border border-amber-500/30 p-2">
+                    <p className="text-[11px] text-amber-200/90 leading-snug">
+                      {nonEnglishBeatsMissingBackgroundStem} shot{nonEnglishBeatsMissingBackgroundStem > 1 ? 's still have' : ' still has'} original English speech in the video clip. Remove the original voice so background sounds and music play cleanly under your {languageLabel} dub.
+                    </p>
+                    {onSegmentsChange && (
+                      <button
+                        type="button"
+                        disabled={isRendering || isExtractingAllStems}
+                        onClick={() => void handleExtractAllMissingStems()}
+                        title="Run Demucs stem separation on shots to isolate background SFX/music and remove original speech"
+                        className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded text-[10px] font-semibold bg-amber-500/20 border border-amber-400/50 text-amber-100 hover:bg-amber-500/30 transition-colors disabled:opacity-50"
+                      >
+                        {isExtractingAllStems ? (
+                          <Loader2 className="w-3 h-3 animate-spin" />
+                        ) : (
+                          <Sparkles className="w-3 h-3 text-amber-300" />
+                        )}
+                        <span>
+                          {isExtractingAllStems
+                            ? 'Removing Original Voice…'
+                            : `Keep Background Sounds Only (${nonEnglishBeatsMissingBackgroundStem})`}
+                        </span>
+                      </button>
+                    )}
+                  </div>
+                )}
+              </div>
               </div>
               
               <div className={cn('space-y-3', inspectorTab !== 'all' && inspectorTab !== 'audio' && 'hidden')}>

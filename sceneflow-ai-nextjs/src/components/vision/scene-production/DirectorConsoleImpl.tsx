@@ -352,6 +352,9 @@ export interface DirectorConsoleProps {
   /** Shared beat selection with Direction, Audio, and Pre-Vis. */
   selectedBeatId?: string | null
   onSelectBeat?: (beatId: string) => void
+  /** Active language selected on the Scene card header. */
+  selectedLanguage?: string
+  onLanguageChange?: (language: string) => void
   /** Stored scene translations keyed by language, then scene index. */
   sceneTranslations?: Record<string, Record<number, { dialogue?: string[]; narration?: string }>>
 }
@@ -362,6 +365,7 @@ export type DirectorWorkflowSlots = {
   mixerBody: React.ReactNode
   streamsBody: React.ReactNode
   streamCount: number
+  clipStats: { rendered: number; total: number }
   mixerCollapsed: boolean
   setMixerCollapsed: React.Dispatch<React.SetStateAction<boolean>>
   streamsCollapsed: boolean
@@ -434,6 +438,8 @@ export function DirectorConsoleRoot({
   onDirectBeat,
   selectedBeatId = null,
   onSelectBeat,
+  selectedLanguage,
+  onLanguageChange,
   sceneTranslations,
   children,
 }: DirectorConsoleProps & {
@@ -619,7 +625,10 @@ export function DirectorConsoleRoot({
   const [isUploadingStream, setIsUploadingStream] = useState(false)
   const [streamUploadError, setStreamUploadError] = useState<string | null>(null)
   const [isDesignatingScreening, setIsDesignatingScreening] = useState(false)
-  const [productionTarget, setProductionTarget] = useState<ProductionTarget>({ streamType: 'video', language: 'en' })
+  const [productionTarget, setProductionTarget] = useState<ProductionTarget>(() => ({
+    streamType: 'video',
+    language: normalizeStreamLanguage(selectedLanguage || 'en'),
+  }))
   const [languageClipBusyId, setLanguageClipBusyId] = useState<string | null>(null)
   const hydratedProductionTargetRef = useRef<string | null>(null)
   const prevProductionLanguageRef = useRef(productionTarget.language)
@@ -656,14 +665,24 @@ export function DirectorConsoleRoot({
     }
   }, [mixerCollapsed])
 
-  // Hydrate production target from persisted mixer settings (per scene)
+  // Sync production target language from Scene card header when controlled
   useEffect(() => {
+    if (!selectedLanguage) return
+    const normalized = normalizeStreamLanguage(selectedLanguage)
+    setProductionTarget((prev) =>
+      prev.language === normalized ? prev : { ...prev, language: normalized }
+    )
+  }, [selectedLanguage])
+
+  // Hydrate production target from persisted mixer settings (per scene) when not controlled by header
+  useEffect(() => {
+    if (selectedLanguage) return
     const saved = productionData?.mixerSettings?.productionTarget
     const token = `${sceneId}:${saved ? `${saved.streamType}:${saved.language}` : 'default'}`
     if (hydratedProductionTargetRef.current === token) return
     setProductionTarget(saved ? { ...saved, streamType: 'video' } : { streamType: 'video', language: 'en' })
     hydratedProductionTargetRef.current = token
-  }, [sceneId, productionData?.mixerSettings?.productionTarget])
+  }, [sceneId, productionData?.mixerSettings?.productionTarget, selectedLanguage])
 
   // Sync renderedSceneUrl when productionData changes (e.g., after page reload)
   useEffect(() => {
@@ -1867,8 +1886,37 @@ export function DirectorConsoleRoot({
     }
   }, [renderingStreamId, productionStreams, productionTarget.language, publishAppendedRender])
   
-  // Count active (included) segments by status
+  const videoClips = useMemo<BeatVideoClip[]>(
+    () =>
+      buildBeatVideoClips({
+        scene: (scene as Record<string, unknown> | undefined) ?? null,
+        segments,
+        queue,
+        languageShotConfigs:
+          productionData?.mixerSettingsByLanguage?.[productionTarget.language]?.shotConfigs,
+      }),
+    [scene, segments, queue, productionData?.mixerSettingsByLanguage, productionTarget.language]
+  )
+
+  // Count active (included) segments by status for the selected language
   const statusCounts = useMemo(() => {
+    const isLangStream = !isMasterStreamLanguage(productionTarget.language)
+    if (videoClips.length > 0) {
+      const rendered = videoClips.filter((clip) => {
+        const masterDone =
+          clip.queueItem?.status === 'complete' || segmentHasPlayableVideo(clip.segment)
+        if (!isLangStream) return masterDone
+        if (!clip.segment) return false
+        const playback = resolveLanguageClipPlayback(clip.segment, productionTarget.language)
+        const hasLangClip = !playback.usingMaster && !!playback.url
+        if (hasLangClip) return true
+        return !clip.needsLanguageClip && masterDone
+      }).length
+      return {
+        rendered,
+        total: videoClips.length,
+      }
+    }
     const allBeats = getSceneBeats((scene as Record<string, unknown> | undefined) ?? null)
     const excludedIds = new Set(
       allBeats.filter((beat) => isBeatExcluded(beat)).map((beat) => beat.beatId)
@@ -1884,7 +1932,7 @@ export function DirectorConsoleRoot({
       rendered: activeQueue.filter((q) => q.status === 'complete').length,
       total: activeQueue.length,
     }
-  }, [queue, segments, scene])
+  }, [videoClips, productionTarget.language, queue, segments, scene])
 
   const handleRestoreVideoTake = useCallback((segmentId: string, takeId: string) => {
     if (!onProductionDataChange || !productionData) return
@@ -1915,6 +1963,7 @@ export function DirectorConsoleRoot({
   const handleStreamLanguageChange = useCallback((language: string) => {
     const next = { ...productionTarget, language }
     setProductionTarget(next)
+    onLanguageChange?.(language)
     if (!onProductionDataChange || !productionData) return
     const saved = productionData.mixerSettings?.productionTarget
     if (saved?.language === next.language && saved?.streamType === next.streamType) return
@@ -1925,7 +1974,7 @@ export function DirectorConsoleRoot({
         productionTarget: next,
       },
     })
-  }, [onProductionDataChange, productionData, productionTarget])
+  }, [onProductionDataChange, productionData, productionTarget, onLanguageChange])
 
   const streamLanguages = useMemo(() => {
     const langs = new Set<string>()
@@ -2026,16 +2075,6 @@ export function DirectorConsoleRoot({
     videoGenerationMode,
     effectiveVideoSourceMethod,
   ])
-
-  const videoClips = useMemo<BeatVideoClip[]>(
-    () =>
-      buildBeatVideoClips({
-        scene: (scene as Record<string, unknown> | undefined) ?? null,
-        segments,
-        queue,
-      }),
-    [scene, segments, queue]
-  )
 
   // No segments state — only when this console owns the whole layout.
   // The production strip still needs Video / Mixer / Streams slots with zero clips.
@@ -2353,10 +2392,10 @@ export function DirectorConsoleRoot({
         onUpload={onSegmentUpload}
         onRetake={(segment) => setRetakeSegment(segment)}
         streamLanguage={productionTarget.language}
-        streamLanguages={streamLanguages}
-        onStreamLanguageChange={handleStreamLanguageChange}
-        onAddStreamLanguage={onGenerateLanguageStream}
-        languagesNotYetGenerated={languagesNotYetGenerated}
+        streamLanguages={onLanguageChange ? [] : streamLanguages}
+        onStreamLanguageChange={onLanguageChange ? undefined : handleStreamLanguageChange}
+        onAddStreamLanguage={onLanguageChange ? undefined : onGenerateLanguageStream}
+        languagesNotYetGenerated={onLanguageChange ? [] : languagesNotYetGenerated}
         onGenerateLanguageVersion={(segment) => {
           void handleGenerateLanguageVersion(segment)
         }}
@@ -2464,6 +2503,7 @@ export function DirectorConsoleRoot({
           mixerBody,
           streamsBody,
           streamCount: productionStreams.length,
+          clipStats: statusCounts,
           mixerCollapsed,
           setMixerCollapsed,
           streamsCollapsed,

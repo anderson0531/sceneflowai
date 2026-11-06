@@ -18,6 +18,9 @@ function listSources(dir: string): string[] {
 
 const visionPage = readSource('src/app/dashboard/workflow/vision/[projectId]/page.tsx')
 const mixer = readSource('src/components/vision/scene-production/SceneProductionMixer.tsx')
+const scriptPanel = readSource('src/components/vision/ScriptPanel.tsx')
+const audioWorkbench = readSource('src/components/vision/scene-production/SceneAudioWorkbench.tsx')
+const beatVideoGallery = readSource('src/components/vision/scene-production/BeatVideoGallery.tsx')
 
 describe('Adding a language', () => {
   /**
@@ -47,10 +50,20 @@ describe('Adding a language', () => {
     expect(offenders).toEqual([])
   })
 
-  it('lets the mixer pick the language instead of guessing Spanish', () => {
-    expect(mixer).toContain('languagesNotYetGenerated')
-    expect(mixer).toContain('placeholder="+ Add Language"')
+  it('places Select Language (added only) and + Add Language on the Scene Card header while removing the redundant Mixer Stream card', () => {
+    expect(scriptPanel).toContain('languagesNotYetAdded')
+    expect(scriptPanel).toContain('addedSceneLanguages')
+    expect(scriptPanel).toContain('placeholder="+ Add Language"')
+    expect(scriptPanel).toContain('placeholder="Select language..."')
+    expect(mixer).not.toContain('title="Stream"')
     expect(mixer).not.toMatch(/language === 'en' \? 'es'/)
+  })
+
+  it('keeps Audio and Clips statuses specific to the selected language instead of leaking English master status', () => {
+    expect(scriptPanel).toContain("(selectedLanguage === 'en' ? beat.audioUrl : undefined)")
+    expect(audioWorkbench).toContain("(props.selectedLanguage === 'en' ? beat.audioUrl : undefined)")
+    expect(beatVideoGallery).toContain('const langComplete = hasLanguageClip || (!clip.needsLanguageClip && masterComplete)')
+    expect(beatVideoGallery).toContain('label: `Needs ${languageName} clip`')
   })
 
   it('does not block dialogue-only language stream generation on project-wide reference images', () => {

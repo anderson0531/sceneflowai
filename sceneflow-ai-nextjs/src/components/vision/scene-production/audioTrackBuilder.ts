@@ -274,7 +274,9 @@ export function findDialogueAudioForLine(
   if (!scene?.dialogueAudio) return null
   const lang = options.language || 'en'
   const arr: any[] = Array.isArray(scene.dialogueAudio)
-    ? scene.dialogueAudio
+    ? lang === 'en'
+      ? scene.dialogueAudio
+      : []
     : Array.isArray(scene.dialogueAudio?.[lang])
       ? scene.dialogueAudio[lang]
       : []

@@ -192,7 +192,12 @@ import { getKenBurnsConfig, generateKenBurnsKeyframes, type KenBurnsIntensity } 
 import { SceneDirectionProvider } from '@/contexts/SceneDirectionContext'
 import { SUPPORTED_LANGUAGES } from '@/constants/languages'
 import { GroupedLanguageSelector } from '@/components/vision/GroupedLanguageSelector'
-import { type ProjectStream } from '@/lib/streams/projectStreams'
+import {
+  mergeStreamSelectorLanguages,
+  normalizeStreamLanguage,
+  streamLanguageLabel,
+  type ProjectStream,
+} from '@/lib/streams/projectStreams'
 import { WebAudioMixer, type SceneAudioConfig, type AudioSource } from '@/lib/audio/webAudioMixer'
 import { getAudioDuration } from '@/lib/audio/audioDuration'
 import { getAudioUrl } from '@/lib/audio/languageDetection'
@@ -5293,7 +5298,18 @@ function SceneCard({
         dialogueIndex,
         character: line.character,
       })
-      const hasAudio = !!(audioEntry?.audioUrl || audioEntry?.url || beat.audioUrl)
+      const narrationFallbackUrl =
+        beat.kind === 'narration'
+          ? selectedLanguage === 'en'
+            ? scene.narrationAudio?.en?.url || scene.narrationAudioUrl
+            : scene.narrationAudio?.[selectedLanguage]?.url
+          : undefined
+      const hasAudio = !!(
+        audioEntry?.audioUrl ||
+        audioEntry?.url ||
+        narrationFallbackUrl ||
+        (selectedLanguage === 'en' ? beat.audioUrl : undefined)
+      )
       const kind = beat.kind === 'narration' ? 'narration' : 'dialogue'
       return {
         beatId: beat.beatId,
@@ -5328,6 +5344,112 @@ function SceneCard({
   const beatFactsById = useMemo(
     () => new Map(beatFacts.map((facts) => [facts.beatId, facts])),
     [beatFacts]
+  )
+  const audioTabStats = useMemo(() => {
+    const activeFacts = beatFacts.filter(
+      (f) => !f.excluded && (f.kind !== 'action' || f.tracksSfx || f.hasAudio)
+    )
+    const ready = activeFacts.filter((f) => f.hasAudio).length
+    return {
+      ready,
+      total: activeFacts.length,
+    }
+  }, [beatFacts])
+  const [localAddedLanguages, setLocalAddedLanguages] = useState<string[]>([])
+  const addedSceneLanguages = useMemo(() => {
+    const codes = new Set<string>(['en'])
+    const collectFromScene = (s: any) => {
+      if (!s || typeof s !== 'object') return
+      if (s.dialogueAudio && !Array.isArray(s.dialogueAudio) && typeof s.dialogueAudio === 'object') {
+        Object.keys(s.dialogueAudio).forEach((k) => codes.add(k))
+      }
+      if (s.narrationAudio && typeof s.narrationAudio === 'object') {
+        Object.keys(s.narrationAudio).forEach((k) => codes.add(k))
+      }
+      if (s.descriptionAudio && typeof s.descriptionAudio === 'object') {
+        Object.keys(s.descriptionAudio).forEach((k) => codes.add(k))
+      }
+      if (Array.isArray(s.campaignLanguages)) {
+        s.campaignLanguages.forEach((k: unknown) => {
+          if (typeof k === 'string' && k.trim()) codes.add(k.trim())
+        })
+      }
+      if (Array.isArray(s.addedLanguages)) {
+        s.addedLanguages.forEach((k: unknown) => {
+          if (typeof k === 'string' && k.trim()) codes.add(k.trim())
+        })
+      }
+    }
+    collectFromScene(scene)
+    if (Array.isArray(scenes)) {
+      scenes.forEach(collectFromScene)
+    }
+    if (sceneProductionData) {
+      for (const seg of sceneProductionData.segments || []) {
+        Object.keys(seg.languageVersions || {}).forEach((k) => codes.add(k))
+      }
+      for (const ps of sceneProductionData.productionStreams || []) {
+        if (ps?.language) codes.add(ps.language)
+      }
+      Object.keys(sceneProductionData.mixerSettingsByLanguage || {}).forEach((k) => codes.add(k))
+    }
+    if (storedTranslations && typeof storedTranslations === 'object') {
+      Object.keys(storedTranslations).forEach((k) => codes.add(k))
+    }
+    localAddedLanguages.forEach((k) => codes.add(k))
+    if (selectedLanguage) codes.add(selectedLanguage)
+    return mergeStreamSelectorLanguages(projectStreams, codes)
+  }, [
+    scene,
+    scenes,
+    sceneProductionData,
+    storedTranslations,
+    localAddedLanguages,
+    selectedLanguage,
+    projectStreams,
+  ])
+
+  const languagesNotYetAdded = useMemo(
+    () =>
+      SUPPORTED_LANGUAGES.map((lang) => lang.code).filter(
+        (code) => !addedSceneLanguages.includes(code)
+      ),
+    [addedSceneLanguages]
+  )
+
+  const handleAddSceneLanguage = useCallback(
+    (rawCode: string) => {
+      const code = normalizeStreamLanguage(rawCode)
+      if (!code) return
+      setLocalAddedLanguages((prev) => (prev.includes(code) ? prev : [...prev, code]))
+      onLanguageChange?.(code)
+      if (onScriptChange && script?.script?.scenes && Array.isArray(script.script.scenes)) {
+        const currentScene = script.script.scenes[sceneIdx]
+        const existingAdded: string[] = Array.isArray(currentScene?.addedLanguages)
+          ? currentScene.addedLanguages
+          : []
+        if (!existingAdded.includes(code)) {
+          const nextScenes = script.script.scenes.map((s: any, idx: number) =>
+            idx === sceneIdx
+              ? { ...s, addedLanguages: [...existingAdded, code] }
+              : s
+          )
+          onScriptChange({
+            ...script,
+            script: {
+              ...script.script,
+              scenes: nextScenes,
+            },
+          })
+        }
+      }
+      const langName =
+        SUPPORTED_LANGUAGES.find((l) => l.code === code)?.name || code.toUpperCase()
+      toast.success(`Added ${langName}`, {
+        description: `Switched scene to ${langName}. Generate audio or clips for this language using the scene tools.`,
+      })
+    },
+    [onLanguageChange, onScriptChange, script, sceneIdx]
   )
   const workflowSceneId = scene.sceneId || scene.id || `scene-${sceneIdx}`
   const directorWorkflowScene = useMemo(
@@ -7087,13 +7209,27 @@ function SceneCard({
                       </TooltipProvider>
                     )}
                     <GroupedLanguageSelector
-                      value={selectedLanguage}
+                      value={normalizeStreamLanguage(selectedLanguage)}
                       onValueChange={(code) => onLanguageChange?.(code)}
+                      filterCodes={addedSceneLanguages}
                       size="sm"
-                      intent="generate"
-                      placeholder="Generate language..."
+                      intent="navigate"
+                      showFlags
+                      formatName={(lang) => streamLanguageLabel(lang.code, lang.name)}
+                      placeholder="Select language..."
                       className="border-slate-600 bg-transparent text-slate-200"
                     />
+                    {languagesNotYetAdded.length > 0 && (
+                      <GroupedLanguageSelector
+                        value=""
+                        onValueChange={handleAddSceneLanguage}
+                        filterCodes={languagesNotYetAdded}
+                        size="sm"
+                        intent="generate"
+                        placeholder="+ Add Language"
+                        className="w-auto min-w-[135px] border-indigo-500/50 bg-indigo-950/40 text-indigo-200"
+                      />
+                    )}
                     {/* Generate All — audio + frames in parallel */}
                     {activeStep && (() => {
                       const voicesReady = productionReadiness?.isAudioReady ?? true
@@ -7484,6 +7620,8 @@ function SceneCard({
                       onVideoSourceMethodChange={onVideoSourceMethodChange}
                       projectAspectRatio={projectAspectRatio}
                       projectStreams={projectStreams}
+                      selectedLanguage={selectedLanguage}
+                      onLanguageChange={onLanguageChange}
                       sceneTranslations={storedTranslations}
                     >
                     {(slots) => (
@@ -7586,8 +7724,14 @@ function SceneCard({
                               <FileText className="w-3.5 h-3.5 shrink-0" />
                               Audio
                               {sceneBeatsForTabs.length > 0 && (
-                                <span className="text-[10px] font-medium opacity-60">
-                                  ({sceneBeatsForTabs.length}
+                                <span
+                                  className={`text-[10px] font-medium ${
+                                    audioTabStats.total > 0 && audioTabStats.ready < audioTabStats.total
+                                      ? 'text-amber-400'
+                                      : 'opacity-60'
+                                  }`}
+                                >
+                                  ({audioTabStats.total > 0 ? `${audioTabStats.ready}/${audioTabStats.total}` : sceneBeatsForTabs.length}
                                   {excludedBeatCount > 0 ? `, ${excludedBeatCount} excluded` : ''})
                                 </span>
                               )}
@@ -7620,6 +7764,17 @@ function SceneCard({
                             <TabsTrigger value="video" className={sceneTabTriggerClass}>
                               <Film className="w-3.5 h-3.5 shrink-0" />
                               Clips
+                              {slots.clipStats.total > 0 && (
+                                <span
+                                  className={`text-[10px] font-medium ${
+                                    slots.clipStats.rendered < slots.clipStats.total
+                                      ? 'text-amber-400'
+                                      : 'opacity-60'
+                                  }`}
+                                >
+                                  ({slots.clipStats.rendered}/{slots.clipStats.total})
+                                </span>
+                              )}
                             </TabsTrigger>
                             <TabsTrigger value="review" title="FlowDirector — Multimodal Audience & Director review to iterate and optimize Stills & Clips before Mixer and Streams" className={sceneTabTriggerClass}>
                               <Eye className="w-3.5 h-3.5 shrink-0" />

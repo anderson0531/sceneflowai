@@ -673,7 +673,7 @@ function VoiceChips({
 >) {
   let castingDialogueAudioArray: any[] = []
   if (Array.isArray(scene.dialogueAudio)) {
-    castingDialogueAudioArray = scene.dialogueAudio
+    castingDialogueAudioArray = selectedLanguage === 'en' ? scene.dialogueAudio : []
   } else if (scene.dialogueAudio && typeof scene.dialogueAudio === 'object') {
     castingDialogueAudioArray = scene.dialogueAudio[selectedLanguage] || []
   }
@@ -684,10 +684,17 @@ function VoiceChips({
         const charDialogues = scene.dialogue.filter((d: any) => d.character === character)
         const charAudioReady = charDialogues.filter((d: any, idx: number) => {
           const dialogueIndex = scene.dialogue.findIndex((dd: any, i: number) => dd === d && i <= idx)
-          const audioEntry = castingDialogueAudioArray.find(
-            (a: any) => a.character === character && a.dialogueIndex === dialogueIndex
-          )
-          return audioEntry?.audioUrl
+          const audioEntry =
+            findDialogueAudioForLine(scene, {
+              language: selectedLanguage,
+              lineId: d?.lineId,
+              dialogueIndex,
+              character,
+            }) ??
+            castingDialogueAudioArray.find(
+              (a: any) => a.character === character && a.dialogueIndex === dialogueIndex
+            )
+          return Boolean(audioEntry?.audioUrl || audioEntry?.url)
         }).length
         const allReady = charAudioReady === charDialogues.length
         return (
@@ -903,7 +910,17 @@ function AudioStage({
       dialogueIndex,
       character: resolvedLineChar,
     })
-    audioUrl = audioEntry?.audioUrl || audioEntry?.url || beat.audioUrl
+    const narrationFallbackUrl =
+      beat.kind === 'narration'
+        ? selectedLanguage === 'en'
+          ? scene.narrationAudio?.en?.url || scene.narrationAudioUrl
+          : scene.narrationAudio?.[selectedLanguage]?.url
+        : undefined
+    audioUrl =
+      audioEntry?.audioUrl ||
+      audioEntry?.url ||
+      narrationFallbackUrl ||
+      (selectedLanguage === 'en' ? beat.audioUrl : undefined)
     label = resolvedLineChar || label
   }
   const sceneKey = scene.id || scene.sceneId || `scene-${sceneIdx}`
@@ -1158,7 +1175,17 @@ function SpokenBeatAudio(
     dialogueIndex: i,
     character: d.character,
   })
-  const dialogueAudioUrl = audioEntry?.audioUrl || audioEntry?.url || beat.audioUrl
+  const narrationFallbackUrl =
+    beat.kind === 'narration'
+      ? props.selectedLanguage === 'en'
+        ? scene.narrationAudio?.en?.url || scene.narrationAudioUrl
+        : scene.narrationAudio?.[props.selectedLanguage]?.url
+      : undefined
+  const dialogueAudioUrl =
+    audioEntry?.audioUrl ||
+    audioEntry?.url ||
+    narrationFallbackUrl ||
+    (props.selectedLanguage === 'en' ? beat.audioUrl : undefined)
   const sceneKey = scene.id || scene.sceneId || `scene-${sceneIdx}`
   const clipUrl = resolveBeatVideoClipUrl(props.segments, beat.beatId, props.selectedLanguage)
   const segmentDuration = resolveBeatSegmentDuration(props.segments, beat.beatId)

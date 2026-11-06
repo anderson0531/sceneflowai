@@ -5,19 +5,18 @@ import { join } from 'path'
 describe('full-catalog language selectors', () => {
   const root = process.cwd()
 
-  it('ScriptPanel Beats selector lists all languages (no filterCodes / generate intent)', () => {
+  it('ScriptPanel Scene Card header splits Select Language (added only) and + Add Language into two distinctive controls', () => {
     const source = readFileSync(
       join(root, 'src/components/vision/ScriptPanel.tsx'),
       'utf8'
     )
-    // Studio Beats bar should not gate the picker to streams/audio-only langs.
-    expect(source).not.toMatch(/filterCodes=\{streamLanguages\}/)
     expect(source).toMatch(
-      /GroupedLanguageSelector[\s\S]*?intent="generate"[\s\S]*?placeholder="Generate language\.\.\."/
+      /GroupedLanguageSelector[\s\S]*?filterCodes=\{addedSceneLanguages\}[\s\S]*?intent="navigate"[\s\S]*?placeholder="Select language\.\.\."/
     )
-    expect(source).not.toMatch(
-      /if \(!streamLanguages\.includes\(selectedLanguage\)\)/
+    expect(source).toMatch(
+      /GroupedLanguageSelector[\s\S]*?onValueChange=\{handleAddSceneLanguage\}[\s\S]*?filterCodes=\{languagesNotYetAdded\}[\s\S]*?intent="generate"[\s\S]*?placeholder="\+ Add Language"/
     )
+    expect(source).not.toMatch(/placeholder="Generate language\.\.\."/)
   })
 
   it('SceneGallery Screening selector omits filterCodes so missing langs can open generate dialog', () => {

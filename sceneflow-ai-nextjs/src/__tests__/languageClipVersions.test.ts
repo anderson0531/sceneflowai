@@ -19,6 +19,8 @@ import {
   replacePromoOnScreenText,
   segmentNeedsLanguageClip,
 } from '@/lib/scene/languageClipPrompt'
+import { findDialogueAudioForLine } from '@/components/vision/scene-production/audioTrackBuilder'
+import { buildBeatVideoClips } from '@/lib/scene/buildBeatVideoClips'
 
 function take(id: string, url = `${id}.mp4`): SceneSegmentTake {
   return {
@@ -283,6 +285,79 @@ describe('language clip prompts', () => {
         shotMethod: 'double',
       })
     ).toBe(false)
+  })
+
+  it('does not return legacy English dialogueAudio array entries when querying non-English languages', () => {
+    const legacyScene = {
+      dialogueAudio: [
+        { lineId: 'line-1', dialogueIndex: 0, character: 'ELARA', audioUrl: 'https://cdn/en-1.mp3' },
+      ],
+    }
+    expect(
+      findDialogueAudioForLine(legacyScene, {
+        language: 'en',
+        lineId: 'line-1',
+        dialogueIndex: 0,
+        character: 'ELARA',
+      })?.audioUrl
+    ).toBe('https://cdn/en-1.mp3')
+
+    expect(
+      findDialogueAudioForLine(legacyScene, {
+        language: 'es',
+        lineId: 'line-1',
+        dialogueIndex: 0,
+        character: 'ELARA',
+      })
+    ).toBeNull()
+  })
+
+  it('marks dialogue clips with needsLanguageClip in buildBeatVideoClips while keeping action clips shared', () => {
+    const clips = buildBeatVideoClips({
+      scene: {
+        beats: [
+          {
+            beatId: 'beat-1',
+            sequenceIndex: 0,
+            kind: 'action',
+            actionDescription: 'Rain falls over the courtyard.',
+          },
+          {
+            beatId: 'beat-2',
+            sequenceIndex: 1,
+            kind: 'dialogue',
+            character: 'ELARA',
+            line: 'Start the generator.',
+          },
+        ],
+      },
+      segments: [
+        {
+          segmentId: 'seg-1',
+          beatId: 'beat-1',
+          sequenceIndex: 0,
+          startTime: 0,
+          endTime: 4,
+          status: 'COMPLETE',
+          activeAssetUrl: 'https://cdn/shot1.mp4',
+          takes: [take('t1', 'https://cdn/shot1.mp4')],
+        } as SceneSegment,
+        {
+          segmentId: 'seg-2',
+          beatId: 'beat-2',
+          sequenceIndex: 1,
+          startTime: 4,
+          endTime: 8,
+          status: 'COMPLETE',
+          activeAssetUrl: 'https://cdn/shot2.mp4',
+          takes: [take('t2', 'https://cdn/shot2.mp4')],
+        } as SceneSegment,
+      ],
+      queue: [],
+    })
+    expect(clips).toHaveLength(2)
+    expect(clips[0].needsLanguageClip).toBe(false)
+    expect(clips[1].needsLanguageClip).toBe(true)
   })
 })
 
