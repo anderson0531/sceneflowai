@@ -155,6 +155,7 @@ export function applyGeneratedClipTake<T extends SceneSegment>(
   if (!take.assetUrl?.trim()) return null
   return {
     ...segment,
+    isStale: false,
     languageVersions: appendLanguageClipTake(segment.languageVersions, clipLanguage, take),
   }
 }

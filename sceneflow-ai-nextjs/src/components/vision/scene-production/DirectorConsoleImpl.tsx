@@ -1181,7 +1181,12 @@ export function DirectorConsoleRoot({
           eligible: inputs.eligible,
           hasStartFrame: inputs.hasStartFrame,
           hasEndFrame: inputs.hasEndFrame,
-          promptChanged: beat ? isBeatFrameStale(beat) || !!segment?.isStale : !!segment?.isStale,
+          promptChanged:
+            segment?.isStale !== undefined
+              ? Boolean(segment.isStale)
+              : beat
+                ? isBeatFrameStale(beat)
+                : false,
           imageTier: resolveBeatStillTier(beat, segment),
         },
       ]

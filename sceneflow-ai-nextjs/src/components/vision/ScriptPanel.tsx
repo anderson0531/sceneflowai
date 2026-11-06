@@ -2316,7 +2316,36 @@ export function ScriptPanel({ script, onScriptChange, onAudioSlotSaved, isGenera
             musicCueId
           )
         } else if (type === 'sfx') {
-          await saveSceneAudio(sceneIdx, 'sfx', audioUrl, sfxIdx, null)
+          const targetScene = scenes[sceneIdx]
+          const sfxItem =
+            sfxIdx !== undefined && Array.isArray(targetScene?.sfx)
+              ? targetScene.sfx[sfxIdx]
+              : undefined
+          const sourceBeatId =
+            sfxItem && typeof sfxItem === 'object' && typeof sfxItem.sourceBeatId === 'string'
+              ? sfxItem.sourceBeatId.trim()
+              : undefined
+          const matchedBeat =
+            sourceBeatId && targetScene
+              ? getSceneBeats(targetScene).find((b) => b.beatId === sourceBeatId)
+              : undefined
+          const beatDescription = matchedBeat
+            ? audioSourceFingerprintForSfxBeat(matchedBeat)
+            : typeof sfxItem === 'string'
+              ? sfxItem.trim()
+              : typeof sfxItem?.description === 'string'
+                ? sfxItem.description.trim()
+                : ''
+          await saveSceneAudio(
+            sceneIdx,
+            'sfx',
+            audioUrl,
+            sfxIdx,
+            null,
+            sourceBeatId || beatDescription
+              ? { beatId: sourceBeatId ?? '', beatDescription }
+              : undefined
+          )
         } else if (type === 'description') {
           // Update description audio
           const updatedScenes = [...scenes]
@@ -2333,13 +2362,25 @@ export function ScriptPanel({ script, onScriptChange, onAudioSlotSaved, isGenera
         } else if (type === 'narration') {
           // Update narration audio
           const updatedScenes = [...scenes]
-          if (!updatedScenes[sceneIdx].narrationAudio) {
-            updatedScenes[sceneIdx].narrationAudio = {}
+          const targetScene = updatedScenes[sceneIdx]
+          if (!targetScene.narrationAudio) {
+            targetScene.narrationAudio = {}
           }
-          updatedScenes[sceneIdx].narrationAudio[selectedLanguage] = { url: audioUrl }
+          const narrationBeat = getSceneBeats(targetScene).find((b) => b.kind === 'narration')
+          const narrationFingerprint = audioSourceFingerprintForSpoken({
+            kind: 'narration',
+            character: narrationBeat?.character ?? 'Narrator',
+            line: String(targetScene.narration ?? narrationBeat?.line ?? ''),
+            voiceDirection: narrationBeat?.voiceDirection,
+          })
+          targetScene.narrationAudio[selectedLanguage] = {
+            url: audioUrl,
+            sourceFingerprint: narrationFingerprint,
+            audioStale: false,
+          }
           // Also set legacy field for 'en'
           if (selectedLanguage === 'en') {
-            updatedScenes[sceneIdx].narrationAudioUrl = audioUrl
+            targetScene.narrationAudioUrl = audioUrl
           }
           const updatedScript = { ...script, script: { ...script.script, scenes: updatedScenes } }
           onScriptChange(updatedScript)
@@ -2386,7 +2427,9 @@ export function ScriptPanel({ script, onScriptChange, onAudioSlotSaved, isGenera
           const resolvedLineText =
             dialogueLine?.line ?? dialogueLine?.text ?? matchedSpokenBeat?.line
           const resolvedVoiceDirection =
-            dialogueLine?.voiceDirection ?? matchedSpokenBeat?.voiceDirection
+            matchedSpokenBeat?.voiceDirection?.trim() ||
+            (typeof dialogueLine?.voiceDirection === 'string' && dialogueLine.voiceDirection.trim()) ||
+            undefined
 
           let measuredDuration = 0
           try {
@@ -5239,7 +5282,10 @@ function SceneCard({
         lineId: rawLine?.lineId || beat.lineId,
         kind: resolvedKind,
         characterId: resolvedCharacterId,
-        voiceDirection: rawLine?.voiceDirection ?? beat.voiceDirection,
+        voiceDirection:
+          beat.voiceDirection?.trim() ||
+          (typeof rawLine?.voiceDirection === 'string' && rawLine.voiceDirection.trim()) ||
+          undefined,
       }
       const audioEntry = findDialogueAudioForLine(scene, {
         language: selectedLanguage,
@@ -5830,11 +5876,29 @@ function SceneCard({
           if (!onGenerateSceneAudio) return
           const tasks: Array<{ id: string; execute: () => Promise<void> }> = []
 
+          const sceneBeats = getSceneBeats(scene)
           const hasNarrationText = !!String(scene.narration || '').trim()
+          const narrationBeat = sceneBeats.find((entry) => entry.kind === 'narration')
+          const narrationEntry = (scene.narrationAudio as Record<string, any> | undefined)?.[lang]
+          const narrationUrl = getNarrationAudioUrlForLang(lang)
+          const narrationStale =
+            hasNarrationText &&
+            Boolean(narrationUrl) &&
+            isBeatAudioStale({
+              hasAudio: true,
+              sourceFingerprint: narrationEntry?.sourceFingerprint,
+              audioStale: narrationEntry?.audioStale,
+              currentFingerprint: audioSourceFingerprintForSpoken({
+                kind: 'narration',
+                character: narrationBeat?.character ?? 'Narrator',
+                line: String(scene.narration || ''),
+                voiceDirection: narrationBeat?.voiceDirection,
+              }),
+            })
           const narrationNeeded =
             selection.includeNarration &&
             hasNarrationText &&
-            (isAll || !getNarrationAudioUrlForLang(lang))
+            (isAll || !narrationUrl || narrationStale)
           if (narrationNeeded) {
             addItem('narration', 'Narration', 'tts')
             tasks.push({
@@ -5846,11 +5910,22 @@ function SceneCard({
             })
           }
 
-          const sceneBeats = getSceneBeats(scene)
           const dialogueLines: any[] = Array.isArray(scene.dialogue) ? scene.dialogue : []
           dialogueLines.forEach((d: any, i: number) => {
             if (!d?.line || !d?.character) return
             if (!selectedDialogueIndices.has(i)) return
+            const beatIdx = sceneBeats.findIndex(
+              (entry) =>
+                (d.lineId && entry.lineId === d.lineId) ||
+                (entry.kind !== 'action' &&
+                  entry.character === d.character &&
+                  String(entry.line ?? '').trim() === String(d.line ?? '').trim())
+            )
+            const matchedBeat = beatIdx >= 0 ? sceneBeats[beatIdx] : undefined
+            const resolvedVoiceDirection =
+              matchedBeat?.voiceDirection?.trim() ||
+              (typeof d.voiceDirection === 'string' && d.voiceDirection.trim()) ||
+              undefined
             if (!isAll) {
               const entry = findDialogueAudioForLine(scene, {
                 language: lang,
@@ -5869,18 +5944,11 @@ function SceneCard({
                   kind: d.kind === 'narration' ? 'narration' : 'dialogue',
                   character: d.character,
                   line: d.line,
-                  voiceDirection: d.voiceDirection,
+                  voiceDirection: resolvedVoiceDirection,
                 }),
               })
               if ((entry?.audioUrl || entry?.url) && !stale) return
             }
-            const beatIdx = sceneBeats.findIndex(
-              (entry) =>
-                (d.lineId && entry.lineId === d.lineId) ||
-                (entry.kind !== 'action' &&
-                  entry.character === d.character &&
-                  String(entry.line ?? '').trim() === String(d.line ?? '').trim())
-            )
             const shotNum =
               beatIdx >= 0
                 ? (typeof sceneBeats[beatIdx].sequenceIndex === 'number'

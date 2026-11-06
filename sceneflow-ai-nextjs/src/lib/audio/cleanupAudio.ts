@@ -205,10 +205,52 @@ function applyDialogueAudioSlot(scene: any, payload: AudioSlotSavedPayload): any
   filtered.push(nextEntry)
   dialogueAudio[language] = filtered
 
+  const sceneDialogueLine =
+    Array.isArray(scene.dialogue) &&
+    dialogueIndex !== undefined &&
+    typeof scene.dialogue[dialogueIndex] === 'object'
+      ? scene.dialogue[dialogueIndex]
+      : undefined
+  const isNarrationEntry =
+    payload.lineKind === 'narration' ||
+    sceneDialogueLine?.kind === 'narration' ||
+    String(nextCharacter).trim().toUpperCase() === 'NARRATOR'
+  const sceneNarrationText = typeof scene.narration === 'string' ? scene.narration.trim() : ''
+  const lineText = String(sceneDialogueLine?.line ?? sceneDialogueLine?.text ?? '').trim()
+  let narrationAudio = scene.narrationAudio
+  let narrationAudioUrl = scene.narrationAudioUrl
+  if (
+    isNarrationEntry &&
+    sceneNarrationText &&
+    (!lineText || lineText === sceneNarrationText)
+  ) {
+    const prevMap =
+      narrationAudio && typeof narrationAudio === 'object' && !Array.isArray(narrationAudio)
+        ? narrationAudio
+        : {}
+    const prevLang =
+      prevMap[language] && typeof prevMap[language] === 'object' ? prevMap[language] : {}
+    narrationAudio = {
+      ...prevMap,
+      [language]: {
+        ...prevLang,
+        url: payload.audioUrl,
+        ...(typeof payload.duration === 'number' ? { duration: payload.duration } : {}),
+        ...(payload.sourceFingerprint ? { sourceFingerprint: payload.sourceFingerprint } : {}),
+        audioStale: false,
+      },
+    }
+    if (language === 'en') {
+      narrationAudioUrl = payload.audioUrl
+    }
+  }
+
   return {
     ...scene,
     dialogueAudio,
     dialogueAudioGeneratedAt: new Date().toISOString(),
+    ...(narrationAudio !== scene.narrationAudio ? { narrationAudio } : {}),
+    ...(narrationAudioUrl !== scene.narrationAudioUrl ? { narrationAudioUrl } : {}),
   }
 }
 
@@ -272,10 +314,19 @@ export function applyAudioSlotToScene(scene: any, payload: AudioSlotSavedPayload
   const sfx = [...updated.sfx]
   while (sfx.length <= sfxIndex) sfx.push(null)
   const sfxEntry = sfx[sfxIndex]
-  const sourceFingerprint = String(payload.beatContext?.beatDescription ?? '').trim()
+  const rawDescription =
+    typeof sfxEntry === 'string'
+      ? sfxEntry.trim()
+      : sfxEntry && typeof sfxEntry === 'object' && typeof (sfxEntry as any).description === 'string'
+        ? String((sfxEntry as any).description).trim()
+        : ''
+  const sourceFingerprint =
+    String(payload.beatContext?.beatDescription ?? '').trim() || rawDescription
   const fingerprintFields = sourceFingerprint
     ? { sourceFingerprint, audioStale: false }
-    : {}
+    : sfxEntry && typeof sfxEntry === 'object' && (sfxEntry as any).audioStale !== undefined
+      ? { audioStale: false }
+      : {}
   if (sfxEntry) {
     if (typeof sfxEntry === 'string') {
       sfx[sfxIndex] = {

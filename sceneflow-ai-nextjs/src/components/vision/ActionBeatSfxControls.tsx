@@ -63,7 +63,7 @@ export function ActionBeatSfxControls({
 
   const slot = useMemo(
     () => resolveBeatSfxSlot(scene, beat),
-    [scene, beat.beatId, beat.actionDescription]
+    [scene, beat.beatId, beat.actionDescription, beat.beatDirection?.audioCue]
   )
 
   const sfxAudio = readBeatSfxAudio(scene, slot)

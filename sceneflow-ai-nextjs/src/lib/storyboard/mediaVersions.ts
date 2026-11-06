@@ -894,6 +894,7 @@ export function applyVideoTakeSelection<T extends VideoPointerSegment>(segment: 
       activeAssetUrl: selected.url,
       assetType: 'video',
       status: 'COMPLETE',
+      isStale: false,
       ...(selected.durationSec != null ? { actualVideoDuration: selected.durationSec } : {}),
     }
   }
@@ -908,5 +909,6 @@ export function applyVideoTakeSelection<T extends VideoPointerSegment>(segment: 
     ...segment,
     currentTakeId: takeId,
     activeAssetUrl: rawUrl,
+    isStale: false,
   }
 }

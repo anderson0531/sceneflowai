@@ -1582,6 +1582,7 @@ export function applyEstablishingImageToScene(
       ...(extras?.imagePrompt
         ? { storyboardImagePrompt: extras.imagePrompt }
         : {}),
+      ...beatStillImageStamp(beat, { imagePrompt: extras?.imagePrompt }),
     } as SceneBeat
   })
   return applyBeatsToScene(
@@ -1682,6 +1683,7 @@ export function applyDialogueStoryboardImageToScene(
       ...(extras?.imagePrompt
         ? { storyboardImagePrompt: extras.imagePrompt }
         : {}),
+      ...beatStillImageStamp(beat, { imagePrompt: extras?.imagePrompt }),
     } as SceneBeat
   })
 
@@ -1770,6 +1772,7 @@ export function applyBeatStoryboardImageToScene(
       ...(extras?.imagePrompt
         ? { storyboardStartImagePrompt: extras.imagePrompt }
         : {}),
+      ...beatStillImageStamp(beats[beatIndex], { imagePrompt: extras?.imagePrompt }),
     } as SceneBeat
     return applyBeatsToScene(scene, beats)
   }

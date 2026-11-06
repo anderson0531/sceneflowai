@@ -145,7 +145,8 @@ export function buildBeatVideoClips({
       segment,
       queueItem: item,
       imageTier: resolveBeatStillTier(beat, segment),
-      promptChanged: isBeatFrameStale(beat) || !!segment?.isStale,
+      promptChanged:
+        segment?.isStale !== undefined ? Boolean(segment.isStale) : isBeatFrameStale(beat),
       ...(hasSharedSource
         ? {
             sourceSceneLabel: formatPromoSourceBadge(promoBeat),

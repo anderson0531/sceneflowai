@@ -1133,9 +1133,12 @@ function SpokenBeatAudio(
     (resolvedKind === 'narration' ? 'NARRATOR' : '') ||
     castFallback ||
     ''
-  const resolvedVoiceDirection =
+  const canonicalVoiceDirection =
     beat.voiceDirection?.trim() ||
     (typeof rawLine?.voiceDirection === 'string' && rawLine.voiceDirection.trim()) ||
+    undefined
+  const displayVoiceDirection =
+    canonicalVoiceDirection ||
     beat.beatDirection?.audioDirection?.trim() ||
     beat.beatDirection?.emotion?.trim() ||
     undefined
@@ -1146,7 +1149,7 @@ function SpokenBeatAudio(
     lineId: rawLine?.lineId || beat.lineId,
     kind: resolvedKind,
     characterId: rawCharacterId,
-    voiceDirection: resolvedVoiceDirection,
+    voiceDirection: canonicalVoiceDirection,
   }
   const i = dialogueIndex
   const audioEntry = findDialogueAudioForLine(scene, {
@@ -1162,7 +1165,7 @@ function SpokenBeatAudio(
   const dialogueLineText = coerceDialogueLineText(d.line ?? d.text)
   const { chip, spokenDisplay, brief } = dialogueDirectionDisplay(
     dialogueLineText,
-    d.voiceDirection ?? beat.voiceDirection
+    displayVoiceDirection
   )
   const isNarrationBeat = beat.kind === 'narration'
   const directedSpokenAudioCue = beat.beatDirection?.audioCue?.trim() || ''

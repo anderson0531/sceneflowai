@@ -235,7 +235,11 @@ export function ExpressSceneConfirmDialog({
           ? sceneBeats.find((entry) => entry.beatId === slot.beatId)
           : undefined
         if (frameFilterActive) return frameMatchesFilters(stillFacts(slot, beat), frameAttention, frameType)
-        return slotEligibleForScope(slot, scope)
+        return slotEligibleForScope(
+          slot,
+          scope,
+          !!beat && slot.frameRole !== 'end' && isBeatFrameStale(beat)
+        )
       })
       .map((slot) => slot.key)
     setSelectedFrameKeys(selected)

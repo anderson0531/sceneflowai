@@ -7,6 +7,7 @@
 
 import { getSceneBeats } from '@/lib/script/beatMigration'
 import type { SceneBeat } from '@/lib/script/segmentTypes'
+import { isBeatFrameStale } from '@/lib/storyboard/syncBeatStillPrompt'
 
 export type StoryboardQuality = 'draft' | 'final'
 export type StoryboardImageTier = StoryboardQuality
@@ -83,27 +84,41 @@ export interface BeatFrameGenerationContext {
 
 /** Whether a beat frame should be generated for the current Express pass. */
 export function beatFrameNeedsGeneration(
-  beat: Pick<SceneBeat, 'storyboardImageUrl' | 'storyboardImageTier'>,
+  beat: Pick<
+    SceneBeat,
+    | 'storyboardImageUrl'
+    | 'storyboardImageTier'
+    | 'storyboardImageDirectionKey'
+    | 'storyboardImageContentKey'
+    | 'stillPromptDirectionKey'
+    | 'beatDirection'
+    | 'kind'
+    | 'character'
+    | 'line'
+    | 'actionDescription'
+    | 'text'
+  >,
   ctx: BeatFrameGenerationContext
 ): boolean {
   const url = beat.storyboardImageUrl?.trim()
   const effectiveTier = resolveEffectiveStoryboardTier(beat.storyboardImageTier)
+  const stale = isBeatFrameStale(beat)
 
   if (ctx.missingOnly) {
-    return !url
+    return !url || stale
   }
 
   if (ctx.regenerate) return true
 
   if (ctx.finalizeOnly) {
-    if (!url) return true
+    if (!url || stale) return true
     return effectiveTier !== 'final'
   }
 
-  // Default Express pass fills empty slots only. A quality mismatch is not
+  // Default Express pass fills empty or direction-stale slots. A quality mismatch is not
   // "missing" — upgrading drafts to Final is an explicit finalizeOnly or
   // selected regenerate, not a silent scale-up.
-  return !url
+  return !url || stale
 }
 
 /** Whether a beat F2V action-start frame (t=0s) should be generated for the current Express pass. */

@@ -10,6 +10,7 @@ import {
 import { getSceneBeats } from '@/lib/script/beatMigration'
 import { parsePersistedMusicCues, resolveBeatMusicCue } from '@/lib/script/sceneMusicCues'
 import type { SceneBeat, SceneMusicCue } from '@/lib/script/segmentTypes'
+import { segmentHasPlayableVideo } from '@/lib/storyboard/mediaVersions'
 import type { DetailedSceneDirection } from '@/types/scene-direction'
 
 type SegmentPromptRow = {
@@ -17,7 +18,20 @@ type SegmentPromptRow = {
   userEditedPrompt?: string | null
   generatedPrompt?: string
   videoPrompt?: string | null
-  dialoguePortion?: { excerpt?: string }
+  dialoguePortion?: { excerpt?: string; partIndex?: number }
+  activeAssetUrl?: string | null
+  assetType?: string | null
+  status?: string | null
+  takes?: Array<{
+    id?: string
+    assetUrl?: string | null
+    videoUrl?: string | null
+    status?: string | null
+    createdAt?: string
+    thumbnailUrl?: string | null
+    durationSec?: number
+  }>
+  isStale?: boolean
 }
 
 export interface SyncBeatVideoPromptOptions {
@@ -78,10 +92,12 @@ function refreshSegmentList<T extends SegmentPromptRow>(
       return segment
     }
     changed = true
+    const hasPlayableClip = segmentHasPlayableVideo(segment)
     return {
       ...segment,
       generatedPrompt: compiled.prompt,
       videoPrompt: compiled.prompt,
+      ...(hasPlayableClip ? { isStale: true } : {}),
     }
   })
   return changed ? next : null

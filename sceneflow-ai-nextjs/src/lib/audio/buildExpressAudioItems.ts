@@ -102,7 +102,8 @@ function getNarrationAudioStatus(
   scene: Record<string, unknown>,
   lang: string,
   character: string | undefined,
-  line: string
+  line: string,
+  voiceDirection?: string
 ): { hasAudio: boolean; stale: boolean } {
   const url = getNarrationAudioUrl(scene, lang)
   const hasUrl = !!url
@@ -118,6 +119,7 @@ function getNarrationAudioStatus(
       kind: 'narration',
       character,
       line,
+      voiceDirection,
     }),
   })
   return { hasAudio: hasUrl && !stale, stale }
@@ -200,7 +202,18 @@ export function buildExpressAudioItems(
         coerceDialogueLineText(beat.line).trim() === narrationText
 
       if (isSceneNarration) {
-        const narrationStatus = getNarrationAudioStatus(scene, lang, beat.character, narrationText)
+        const resolvedVoiceDirection =
+          beat.voiceDirection ||
+          (typeof dialogueLine?.voiceDirection === 'string'
+            ? dialogueLine.voiceDirection
+            : undefined)
+        const narrationStatus = getNarrationAudioStatus(
+          scene,
+          lang,
+          beat.character,
+          narrationText,
+          resolvedVoiceDirection
+        )
         const dialogueStatus = dialogueLineAudioStatus(
           scene,
           lang,
@@ -209,19 +222,16 @@ export function buildExpressAudioItems(
           beat.character,
           'narration',
           beat.line,
-          beat.voiceDirection ||
-            (typeof dialogueLine?.voiceDirection === 'string'
-              ? dialogueLine.voiceDirection
-              : undefined)
+          resolvedVoiceDirection
         )
-        const stale = narrationStatus.stale || dialogueStatus.stale
+        const hasFreshAudio = narrationStatus.hasAudio || dialogueStatus.hasAudio
+        const stale = !hasFreshAudio && (narrationStatus.stale || dialogueStatus.stale)
         items.push({
           id: 'narration',
           kind: 'narration',
           label,
           typeLabel: TYPE_LABELS.narration,
-          hasAudio:
-            (narrationStatus.hasAudio || dialogueStatus.hasAudio) && !stale,
+          hasAudio: hasFreshAudio,
           stale,
           shotNumber,
         })

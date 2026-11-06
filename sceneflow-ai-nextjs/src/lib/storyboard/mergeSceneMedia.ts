@@ -164,7 +164,8 @@ function pickStillPromptPair(
 function pickBeatImageStamp(
   incomingBeat: Record<string, unknown>,
   canonBeat: Record<string, unknown>,
-  winnerUrl: string | undefined
+  winnerUrl: string | undefined,
+  beatDirection?: unknown
 ): { directionKey?: unknown; contentKey?: unknown } {
   const incUrl = isValidStoryboardMediaUrl(incomingBeat.storyboardImageUrl)
     ? String(incomingBeat.storyboardImageUrl).trim()
@@ -172,8 +173,26 @@ function pickBeatImageStamp(
   const canUrl = isValidStoryboardMediaUrl(canonBeat.storyboardImageUrl)
     ? String(canonBeat.storyboardImageUrl).trim()
     : undefined
-  const source =
-    winnerUrl && canUrl === winnerUrl && incUrl !== winnerUrl ? canonBeat : incomingBeat
+  let source = incomingBeat
+  if (winnerUrl && canUrl === winnerUrl && incUrl !== winnerUrl) {
+    source = canonBeat
+  } else if (winnerUrl && canUrl === winnerUrl && incUrl === winnerUrl) {
+    const incMatches = storedStillDirectionKeyMatches(
+      typeof incomingBeat[STILL_IMAGE_DIRECTION_KEY] === 'string'
+        ? (incomingBeat[STILL_IMAGE_DIRECTION_KEY] as string)
+        : undefined,
+      beatDirection
+    )
+    const canMatches = storedStillDirectionKeyMatches(
+      typeof canonBeat[STILL_IMAGE_DIRECTION_KEY] === 'string'
+        ? (canonBeat[STILL_IMAGE_DIRECTION_KEY] as string)
+        : undefined,
+      beatDirection
+    )
+    if (canMatches && !incMatches) {
+      source = canonBeat
+    }
+  }
   return {
     directionKey: source[STILL_IMAGE_DIRECTION_KEY],
     contentKey: source[STILL_IMAGE_CONTENT_KEY],
@@ -239,7 +258,7 @@ function mergeBeatMedia(canonBeat: any, incomingBeat: any): any {
   const winnerUrl = isValidStoryboardMediaUrl(merged.storyboardImageUrl)
     ? String(merged.storyboardImageUrl).trim()
     : undefined
-  const imageStamp = pickBeatImageStamp(incomingBeat, canonBeat, winnerUrl)
+  const imageStamp = pickBeatImageStamp(incomingBeat, canonBeat, winnerUrl, merged.beatDirection)
   if (imageStamp.directionKey !== undefined) {
     merged[STILL_IMAGE_DIRECTION_KEY] = imageStamp.directionKey
   } else {

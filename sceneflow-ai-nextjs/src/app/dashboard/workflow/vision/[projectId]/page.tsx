@@ -1377,6 +1377,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     // mirrors `script` has not run yet, so without this the PUT replaces
     // the versioned payload with the pre-generate snapshot.
     scriptRef.current = updatedScript
+    setScript(updatedScript)
 
     // Script and timestamp only — one scene when callers replaced a single
     // index. Production has its own PATCH; characters have persistVisionCharacters;
@@ -5218,6 +5219,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
               status: data.status === 'COMPLETE' ? 'COMPLETE' : 'GENERATING',
               assetType: data.assetType,
               activeAssetUrl: data.assetUrl,
+              isStale: false,
               generationProvider: data.generationProvider,
               wasPolicyFallback: data.wasPolicyFallback,
               usedBackupEngine: data.usedBackupEngine,
@@ -5466,6 +5468,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                                 status: 'COMPLETE' as const,
                                 assetType: retryData.assetType,
                                 activeAssetUrl: retryData.assetUrl,
+                                isStale: false,
                                 takes: appendSegmentTake(seg.takes, newTake),
                                 currentTakeId: newTake.id,
                                 errorMessage: undefined,
@@ -5664,6 +5667,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                                 status: 'COMPLETE' as const,
                                 assetType: retryData.assetType,
                                 activeAssetUrl: retryData.assetUrl,
+                                isStale: false,
                                 takes: appendSegmentTake(seg.takes, newTake),
                                 currentTakeId: newTake.id,
                                 errorMessage: undefined,
@@ -6320,6 +6324,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                 status: 'COMPLETE' as const,
                 assetType: file.type.startsWith('image') ? 'image' : 'video',
                 activeAssetUrl: assetUrl,
+                isStale: false,
                 endTime: newEndTime,
                 actualVideoDuration: actualVideoDuration,
                 isUserUpload: true,
@@ -6779,6 +6784,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
               ...segment,
               activeAssetUrl: takeAssetUrl,
               currentTakeId: takeId,
+              isStale: false,
               thumbnailUrl: selectedTake?.thumbnailUrl || segment.thumbnailUrl,
             }
           }
@@ -15252,7 +15258,10 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           line: dialogueLine.line || spokenBeat.line,
           lineId: dialogueLine.lineId || spokenBeat.lineId,
           kind: dialogueLine.kind || spokenBeat.kind,
-          voiceDirection: dialogueLine.voiceDirection || spokenBeat.voiceDirection,
+          voiceDirection:
+            spokenBeat.voiceDirection?.trim() ||
+            (typeof dialogueLine.voiceDirection === 'string' && dialogueLine.voiceDirection.trim()) ||
+            undefined,
         }
       }
 
@@ -15549,6 +15558,15 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         return
       }
 
+      const narrationFallbackBeat =
+        audioType === 'narration' && !dialogueLine
+          ? getSceneBeats(scene).find((b) => b.kind === 'narration')
+          : undefined
+      const effectiveVoiceDirection =
+        resolveLineVoiceDirection(dialogueLine ?? narrationFallbackBeat, scene) ||
+        narrationFallbackBeat?.voiceDirection?.trim() ||
+        undefined
+
       const MAX_CLIENT_429_RETRIES = 2
       const audioRequestBody = {
         projectId,
@@ -15567,7 +15585,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         // Skip server-side translation if we already have pre-translated text from stored translations
         // This prevents double-translation (translating already-translated text)
         skipTranslation: isPreTranslated,
-        voiceDirection: resolveLineVoiceDirection(dialogueLine, scene),
+        voiceDirection: effectiveVoiceDirection,
       }
 
       let response!: Response
@@ -15700,18 +15718,31 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
               scene.narrationAudio = { ...scene.narrationAudio }
             }
             
+            const narrationBeatInScene = getSceneBeats(scene).find((b) => b.kind === 'narration')
+            const narrationVoiceDir =
+              resolveLineVoiceDirection(dialogueLine ?? narrationBeatInScene, scene) ||
+              narrationBeatInScene?.voiceDirection?.trim() ||
+              undefined
+            const narrationCharacter =
+              characterName || narrationBeatInScene?.character || 'NARRATOR'
+            const canonicalNarrationText =
+              typeof scene.narration === 'string' && scene.narration.trim()
+                ? scene.narration.trim()
+                : narrationBeatInScene?.line || text
+            const narrationFingerprint = audioSourceFingerprintForSpoken({
+              kind: 'narration',
+              character: narrationCharacter,
+              line: canonicalNarrationText,
+              voiceDirection: narrationVoiceDir,
+            })
+
             // Store narration audio under the target language key
             scene.narrationAudio[targetLanguage] = {
               url: data.audioUrl,
               duration: data.duration || undefined,
               generatedAt: new Date().toISOString(),
               voiceId: voiceConfig.voiceId,
-              sourceFingerprint: audioSourceFingerprintForSpoken({
-                kind: 'narration',
-                character: characterName,
-                line: text,
-                voiceDirection: resolveLineVoiceDirection(dialogueLine, scene),
-              }),
+              sourceFingerprint: narrationFingerprint,
               audioStale: false,
             }
             
@@ -15719,6 +15750,34 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
             if (targetLanguage === 'en') {
               scene.narrationAudioUrl = data.audioUrl
               scene.narrationAudioGeneratedAt = new Date().toISOString()
+            }
+
+            // Keep matching narration entry in scene.dialogueAudio[targetLanguage] synchronized
+            if (
+              scene.dialogueAudio &&
+              typeof scene.dialogueAudio === 'object' &&
+              !Array.isArray(scene.dialogueAudio) &&
+              Array.isArray(scene.dialogueAudio[targetLanguage])
+            ) {
+              scene.dialogueAudio = {
+                ...scene.dialogueAudio,
+                [targetLanguage]: scene.dialogueAudio[targetLanguage].map((entry: any) => {
+                  if (!entry || typeof entry !== 'object') return entry
+                  const isNarr =
+                    entry.kind === 'narration' ||
+                    String(entry.character ?? '')
+                      .trim()
+                      .toUpperCase() === 'NARRATOR'
+                  if (!isNarr) return entry
+                  return {
+                    ...entry,
+                    audioUrl: data.audioUrl,
+                    ...(data.duration ? { duration: data.duration } : {}),
+                    sourceFingerprint: narrationFingerprint,
+                    audioStale: false,
+                  }
+                }),
+              }
             }
             
             updatedScenes[sceneIdx] = scene
@@ -15779,6 +15838,18 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
               existingIndex = dialogueArray.findIndex((d: any) => d.dialogueIndex === dialogueIndex)
             }
             
+            const canonicalLineText =
+              typeof (dialogueLine as any)?.line === 'string' && (dialogueLine as any).line.trim()
+                ? (dialogueLine as any).line
+                : typeof spokenBeat?.line === 'string' && spokenBeat.line.trim()
+                  ? spokenBeat.line
+                  : text
+            const dialogueFingerprint = audioSourceFingerprintForSpoken({
+              kind: (dialogueLine as any)?.kind === 'narration' ? 'narration' : 'dialogue',
+              character: characterName,
+              line: canonicalLineText,
+              voiceDirection: resolveLineVoiceDirection(dialogueLine, scene),
+            })
             const dialogueEntry = {
               character: characterName,
               dialogueIndex: dialogueIndex!,
@@ -15788,12 +15859,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
               audioUrl: data.audioUrl,
               duration: data.duration || undefined,
               voiceId: voiceConfig.voiceId,
-              sourceFingerprint: audioSourceFingerprintForSpoken({
-                kind: (dialogueLine as any)?.kind === 'narration' ? 'narration' : 'dialogue',
-                character: characterName,
-                line: text,
-                voiceDirection: resolveLineVoiceDirection(dialogueLine, scene),
-              }),
+              sourceFingerprint: dialogueFingerprint,
               audioStale: false,
             }
             
@@ -15805,6 +15871,38 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
             
             scene.dialogueAudio[targetLanguage] = dialogueArray
             scene.dialogueAudioGeneratedAt = new Date().toISOString()
+
+            // When this dialogue line is the scene's narration, keep scene.narrationAudio synchronized
+            const isNarrationDialogue =
+              (dialogueLine as any)?.kind === 'narration' ||
+              spokenBeat?.kind === 'narration' ||
+              String(characterName).trim().toUpperCase() === 'NARRATOR'
+            const sceneNarrationStr =
+              typeof scene.narration === 'string' ? scene.narration.trim() : ''
+            if (
+              isNarrationDialogue &&
+              sceneNarrationStr &&
+              (!canonicalLineText || String(canonicalLineText).trim() === sceneNarrationStr)
+            ) {
+              scene.narrationAudio = {
+                ...(scene.narrationAudio && typeof scene.narrationAudio === 'object'
+                  ? scene.narrationAudio
+                  : {}),
+                [targetLanguage]: {
+                  ...(scene.narrationAudio?.[targetLanguage] || {}),
+                  url: data.audioUrl,
+                  duration: data.duration || undefined,
+                  generatedAt: new Date().toISOString(),
+                  voiceId: voiceConfig.voiceId,
+                  sourceFingerprint: dialogueFingerprint,
+                  audioStale: false,
+                },
+              }
+              if (targetLanguage === 'en') {
+                scene.narrationAudioUrl = data.audioUrl
+                scene.narrationAudioGeneratedAt = new Date().toISOString()
+              }
+            }
 
             // Self-heal missing character on persisted scene.dialogue / scene.beats (e.g. Promo shared shots)
             if (Array.isArray(scene.dialogue) && dialogueIndex !== undefined && scene.dialogue[dialogueIndex]) {
@@ -15846,31 +15944,36 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
             }
           })
           
+          const syncedScenes = syncPromoSharedBeatsToSourceScenes(updatedScenes)
+          
           // Preserve original script structure when updating
           // Check which path the original data used
+          let nextScript: any
           if (prevScript?.script?.scenes) {
-            return {
+            nextScript = {
               ...prevScript,
               script: {
                 ...prevScript.script,
-                scenes: updatedScenes
+                scenes: syncedScenes
               }
             }
           } else if (prevScript?.scenes) {
-            return {
+            nextScript = {
               ...prevScript,
-              scenes: updatedScenes
+              scenes: syncedScenes
             }
           } else {
             // Fallback: create nested structure
-            return {
+            nextScript = {
               ...prevScript,
               script: {
                 ...prevScript?.script,
-                scenes: updatedScenes
+                scenes: syncedScenes
               }
             }
           }
+          scriptRef.current = nextScript
+          return nextScript
         })
         
         // NOTE: Database save is handled by the API's updateSceneAudio() function.
@@ -18313,7 +18416,8 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
             includeSFX: false,
             includeEndFrames: !!options?.includeEndFrames,
             missingFramesOnly: options?.scope === 'missing',
-            regenerate: options?.scope === 'selected',
+            regenerate:
+              options?.scope === 'selected' || Boolean(options?.selectedFrameKeys?.length),
             framesOnly: options?.scope === 'selected' || options?.scope === 'missing',
             ...(options?.selectedFrameKeys?.length
               ? { selectedFrameKeys: options.selectedFrameKeys }

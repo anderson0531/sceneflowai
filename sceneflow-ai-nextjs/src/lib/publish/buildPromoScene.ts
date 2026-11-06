@@ -2,7 +2,13 @@
  * Build / upsert a cinematic promo scene from a trailer beat plan.
  */
 
+import { audioSourceFingerprintForSpoken } from '@/lib/audio/beatAudioStale'
 import { beatsToLegacyFields, getSceneBeats, mintBeatId } from '@/lib/script/beatMigration'
+import {
+  beatStillContentFingerprint,
+  beatStillDirectionFingerprint,
+  storedStillDirectionKeyMatches,
+} from '@/lib/script/beatDirectionFingerprint'
 import { compileBeatVideoPromptFromDirection } from '@/lib/scene/beatVideoPromptCompiler'
 import { mediaBlobUrlTimestamp } from '@/lib/storyboard/mediaVersions'
 import type { SceneBeat, SceneMusicCue } from '@/lib/script/segmentTypes'
@@ -983,30 +989,40 @@ export function hydratePromoSceneWithSharedShots(
   const hydratedBeats: PromoSceneBeat[] = rawBeats.map((beat) => {
     if (beat.kind === 'narration' && (typeof beat.sourceSceneIndex !== 'number' || !beat.sourceBeatId)) {
       const hasDir = beat.beatDirection && Object.keys(beat.beatDirection).length > 0
+      const resolvedUrl = beat.storyboardImageUrl || firstAvailableSharedFrame
+      const defaultNarrationDirection = {
+        shotType: 'Wide establishing shot',
+        cameraAngle: 'Eye-level cinematic framing',
+        cameraMovement: 'Slow push-in establishing trailer tone',
+        frozenMoment:
+          beat.line?.trim() || 'Promo trailer opening voice-over sequence',
+        blocking: 'Voice-over narration plays over the opening promotional montage sequence.',
+        emotion: 'Anticipation and cinematic intrigue',
+        lightingAccent: 'High-contrast dramatic trailer lighting',
+        audioCue: 'Trailer voice-over with atmospheric score swell',
+        transition: 'DISSOLVE' as const,
+        castInFrame: [] as string[],
+        generatedBy: 'planner' as const,
+      }
+      const nextBeatDirection = hasDir ? beat.beatDirection : defaultNarrationDirection
+      const needsDirectionStampOnDefaultInjection =
+        !hasDir &&
+        Boolean(resolvedUrl) &&
+        (beat.storyboardImageDirectionKey === undefined || beat.storyboardImageDirectionKey === '')
       return {
         ...beat,
-        storyboardImageUrl: beat.storyboardImageUrl || firstAvailableSharedFrame,
+        storyboardImageUrl: resolvedUrl,
         ...(beat.audioUrl || promoNarrationAudioUrl
           ? { audioUrl: beat.audioUrl || promoNarrationAudioUrl }
           : {}),
-        ...(hasDir
-          ? {}
-          : {
-              beatDirection: {
-                shotType: 'Wide establishing shot',
-                cameraAngle: 'Eye-level cinematic framing',
-                cameraMovement: 'Slow push-in establishing trailer tone',
-                frozenMoment:
-                  beat.line?.trim() || 'Promo trailer opening voice-over sequence',
-                blocking: 'Voice-over narration plays over the opening promotional montage sequence.',
-                emotion: 'Anticipation and cinematic intrigue',
-                lightingAccent: 'High-contrast dramatic trailer lighting',
-                audioCue: 'Trailer voice-over with atmospheric score swell',
-                transition: 'DISSOLVE',
-                castInFrame: [],
-                generatedBy: 'planner',
-              },
-            }),
+        ...(hasDir ? {} : { beatDirection: defaultNarrationDirection }),
+        ...(needsDirectionStampOnDefaultInjection
+          ? {
+              storyboardImageDirectionKey: beatStillDirectionFingerprint(nextBeatDirection),
+              storyboardImageContentKey:
+                beat.storyboardImageContentKey || beatStillContentFingerprint(beat),
+            }
+          : {}),
       }
     }
     if (typeof beat.sourceSceneIndex !== 'number' || !beat.sourceBeatId) {
@@ -1163,6 +1179,45 @@ export function hydratePromoSceneWithSharedShots(
     const srcAny = sourceBeat as Record<string, unknown>
     const beatAny = beat as Record<string, unknown>
 
+    const hydratedLine = beat.kind === 'narration' ? beat.line : sourceBeat.line || beat.line
+    const hydratedActionDescription = sourceBeat.actionDescription || beat.actionDescription
+    const hydratedContentKey = beatStillContentFingerprint({
+      kind: beat.kind ?? sourceBeat.kind,
+      character: resolvedCharacter,
+      line: hydratedLine,
+      actionDescription: hydratedActionDescription,
+    })
+    const sourceContentFresh =
+      !sourceBeat.storyboardImageContentKey ||
+      sourceBeat.storyboardImageContentKey === beatStillContentFingerprint(sourceBeat)
+    const promoContentFresh =
+      Boolean(beat.storyboardImageContentKey) &&
+      beat.storyboardImageContentKey === hydratedContentKey
+    const resolvedImageContentKey =
+      promoStillNewer
+        ? promoContentFresh || sourceContentFresh
+          ? hydratedContentKey
+          : beat.storyboardImageContentKey || sourceBeat.storyboardImageContentKey
+        : sourceContentFresh || promoContentFresh
+          ? hydratedContentKey
+          : sourceBeat.storyboardImageContentKey || beat.storyboardImageContentKey
+
+    const promoDirKeyMatches = storedStillDirectionKeyMatches(
+      beat.storyboardImageDirectionKey,
+      preferredBeatDirection
+    )
+    const sourceDirKeyMatches = storedStillDirectionKeyMatches(
+      sourceBeat.storyboardImageDirectionKey,
+      preferredBeatDirection
+    )
+    const resolvedImageDirectionKey = promoDirKeyMatches
+      ? beat.storyboardImageDirectionKey
+      : sourceDirKeyMatches
+        ? sourceBeat.storyboardImageDirectionKey
+        : promoStillNewer
+          ? beat.storyboardImageDirectionKey ?? sourceBeat.storyboardImageDirectionKey
+          : sourceBeat.storyboardImageDirectionKey ?? beat.storyboardImageDirectionKey
+
     return {
       ...sourceBeat,
       ...beat,
@@ -1208,6 +1263,12 @@ export function hydratePromoSceneWithSharedShots(
       storyboardImagePromptDirectionKey: promoStillNewer
         ? beat.storyboardImagePromptDirectionKey || sourceBeat.storyboardImagePromptDirectionKey
         : sourceBeat.storyboardImagePromptDirectionKey || beat.storyboardImagePromptDirectionKey,
+      ...(resolvedImageDirectionKey !== undefined
+        ? { storyboardImageDirectionKey: resolvedImageDirectionKey }
+        : {}),
+      ...(resolvedImageContentKey !== undefined
+        ? { storyboardImageContentKey: resolvedImageContentKey }
+        : {}),
       beatDirection: preferredBeatDirection,
       referenceSelection: sourceBeat.referenceSelection || beat.referenceSelection,
       stillVersions: promoStillNewer
@@ -1302,11 +1363,20 @@ export function hydratePromoSceneWithSharedShots(
       return Array.from(byUrl.values())
     })()
 
-    const activeVideoUrl =
-      sourceSeg?.activeAssetUrl ||
-      existingPromoSeg?.activeAssetUrl ||
-      beat.promoVideoUrl ||
-      null
+    const promoClipTs = mediaBlobUrlTimestamp(existingPromoSeg?.activeAssetUrl || '')
+    const sourceClipTs = mediaBlobUrlTimestamp(sourceSeg?.activeAssetUrl || '')
+    const promoClipWins =
+      Boolean(existingPromoSeg?.activeAssetUrl) &&
+      (!sourceSeg?.activeAssetUrl ||
+        (promoClipTs > 0 && promoClipTs > sourceClipTs) ||
+        (existingPromoSeg?.isStale === false && sourceSeg?.isStale === true))
+    const activeVideoUrl = promoClipWins
+      ? existingPromoSeg?.activeAssetUrl || sourceSeg?.activeAssetUrl || beat.promoVideoUrl || null
+      : sourceSeg?.activeAssetUrl || existingPromoSeg?.activeAssetUrl || beat.promoVideoUrl || null
+    const resolvedIsStale =
+      existingPromoSeg?.isStale === false || sourceSeg?.isStale === false
+        ? false
+        : existingPromoSeg?.isStale ?? sourceSeg?.isStale
     const startFrame =
       sourceSeg?.startFrameUrl ||
       sourceSeg?.references?.startFrameUrl ||
@@ -1335,6 +1405,7 @@ export function hydratePromoSceneWithSharedShots(
     return {
       ...(sourceSeg || {}),
       ...(existingPromoSeg || {}),
+      ...(resolvedIsStale !== undefined ? { isStale: resolvedIsStale } : {}),
       segmentId: existingPromoSeg?.segmentId || `${promoSceneId}-seg-${index}`,
       sequenceIndex: index,
       startTime,
@@ -1411,12 +1482,18 @@ export function hydratePromoSceneWithSharedShots(
       const url = typeof d.audioUrl === 'string' ? d.audioUrl.trim() : ''
       if (!url) return
       const lineId = typeof d.lineId === 'string' ? d.lineId.trim() : ''
-      const alreadyPresent = enList.some(
+      const expectedFp = audioSourceFingerprintForSpoken({
+        kind: d.kind === 'narration' ? 'narration' : 'dialogue',
+        character: typeof d.character === 'string' ? d.character : '',
+        line: typeof d.line === 'string' ? d.line : '',
+        voiceDirection: typeof d.voiceDirection === 'string' ? d.voiceDirection : undefined,
+      })
+      const existingIdx = enList.findIndex(
         (entry) =>
           (lineId && entry.lineId === lineId) ||
           entry.dialogueIndex === idx
       )
-      if (!alreadyPresent) {
+      if (existingIdx < 0) {
         enList.push({
           character: d.character || '',
           dialogueIndex: idx,
@@ -1424,8 +1501,16 @@ export function hydratePromoSceneWithSharedShots(
           ...(d.kind ? { kind: d.kind } : {}),
           ...(d.characterId ? { characterId: d.characterId } : {}),
           audioUrl: url,
+          sourceFingerprint: expectedFp,
+          audioStale: false,
           ...(typeof d.duration === 'number' && d.duration > 0 ? { duration: d.duration } : {}),
         })
+      } else if (!enList[existingIdx].sourceFingerprint && enList[existingIdx].audioStale !== true) {
+        enList[existingIdx] = {
+          ...enList[existingIdx],
+          sourceFingerprint: expectedFp,
+          audioStale: false,
+        }
       }
     })
     if (enList.length > 0) {
@@ -1567,6 +1652,32 @@ export function syncPromoSharedBeatsToSourceScenes<T = Record<string, unknown>>(
 
       const resolvedDirection = preferBeatDirection(srcBeat.beatDirection, promoBeat.beatDirection)
       const promoDirectionWins = resolvedDirection === promoBeat.beatDirection
+      const promoImageDirMatches = storedStillDirectionKeyMatches(
+        promoBeat.storyboardImageDirectionKey,
+        resolvedDirection
+      )
+      const srcImageDirMatches = storedStillDirectionKeyMatches(
+        srcBeat.storyboardImageDirectionKey,
+        resolvedDirection
+      )
+      const resolvedImageDirectionKey = promoImageDirMatches
+        ? promoBeat.storyboardImageDirectionKey
+        : srcImageDirMatches
+          ? srcBeat.storyboardImageDirectionKey
+          : promoStillWins
+            ? promoBeat.storyboardImageDirectionKey ?? srcBeat.storyboardImageDirectionKey
+            : srcBeat.storyboardImageDirectionKey ?? promoBeat.storyboardImageDirectionKey
+
+      const srcContentFresh =
+        !srcBeat.storyboardImageContentKey ||
+        srcBeat.storyboardImageContentKey === beatStillContentFingerprint(srcBeat)
+      const promoContentFresh =
+        !promoBeat.storyboardImageContentKey ||
+        promoBeat.storyboardImageContentKey === beatStillContentFingerprint(promoBeat)
+      const shouldStampFreshContent = promoStillWins
+        ? promoContentFresh
+        : srcContentFresh
+
       const resolvedVoiceDirection =
         promoBeat.kind === 'narration'
           ? srcBeat.voiceDirection
@@ -1595,6 +1706,9 @@ export function syncPromoSharedBeatsToSourceScenes<T = Record<string, unknown>>(
         ...(resolvedImageVersionId ? { storyboardImageVersionId: resolvedImageVersionId } : {}),
         ...(resolvedStillVersions ? { stillVersions: resolvedStillVersions } : {}),
         ...(resolvedDirKey ? { storyboardImagePromptDirectionKey: resolvedDirKey } : {}),
+        ...(resolvedImageDirectionKey !== undefined
+          ? { storyboardImageDirectionKey: resolvedImageDirectionKey }
+          : {}),
         ...(resolvedDirection ? { beatDirection: resolvedDirection } : {}),
         ...(resolvedVoiceDirection ? { voiceDirection: resolvedVoiceDirection } : {}),
         ...(resolvedEndImageUrl ? { storyboardEndImageUrl: resolvedEndImageUrl } : {}),
@@ -1605,6 +1719,9 @@ export function syncPromoSharedBeatsToSourceScenes<T = Record<string, unknown>>(
       srcBeats[srcBeatIdx] = {
         ...srcBeat,
         ...sharedFields,
+        ...(shouldStampFreshContent && resolvedImageUrl
+          ? { storyboardImageContentKey: beatStillContentFingerprint(srcBeat) }
+          : {}),
       } as SceneBeat
       const firstSrcImage = srcBeats.find((b) => !b.excluded && b.storyboardImageUrl)?.storyboardImageUrl
       cloned[srcSceneIdx] = {
@@ -1616,6 +1733,9 @@ export function syncPromoSharedBeatsToSourceScenes<T = Record<string, unknown>>(
       promoBeats[bIdx] = {
         ...promoBeat,
         ...sharedFields,
+        ...(shouldStampFreshContent && resolvedImageUrl
+          ? { storyboardImageContentKey: beatStillContentFingerprint(promoBeat) }
+          : {}),
         sourceSceneNumber,
         sourceShotNumber,
       } as PromoSceneBeat

@@ -220,16 +220,22 @@ function applySfxMutation(
   const sourceFingerprint = String(params.beatDescription ?? '').trim()
   if (sfxEntry) {
     if (typeof sfxEntry === 'string') {
+      const resolvedFingerprint = sourceFingerprint || sfxEntry.trim()
       ;(scene.sfx as unknown[])[sfxIndex] = {
         description: sfxEntry,
         audioUrl: params.audioUrl,
-        ...(sourceFingerprint ? { sourceFingerprint, audioStale: false } : {}),
+        ...(resolvedFingerprint ? { sourceFingerprint: resolvedFingerprint } : {}),
+        audioStale: false,
       }
     } else if (typeof sfxEntry === 'object') {
-      ;(sfxEntry as Record<string, unknown>).audioUrl = params.audioUrl
-      if (sourceFingerprint) {
-        ;(sfxEntry as Record<string, unknown>).sourceFingerprint = sourceFingerprint
-        ;(sfxEntry as Record<string, unknown>).audioStale = false
+      const entryObj = sfxEntry as Record<string, unknown>
+      entryObj.audioUrl = params.audioUrl
+      entryObj.audioStale = false
+      const fallbackDesc =
+        typeof entryObj.description === 'string' ? entryObj.description.trim() : ''
+      const resolvedFingerprint = sourceFingerprint || fallbackDesc
+      if (resolvedFingerprint) {
+        entryObj.sourceFingerprint = resolvedFingerprint
       }
     }
   }
@@ -296,6 +302,31 @@ function applyNarrationMutation(
   if (language === 'en') {
     scene.narrationAudioUrl = params.audioUrl
     scene.narrationAudioGeneratedAt = new Date().toISOString()
+  }
+
+  // Keep any matching narration entry in scene.dialogueAudio[language] synchronized
+  const dialogueAudio = scene.dialogueAudio as Record<string, unknown[]> | undefined
+  if (dialogueAudio && typeof dialogueAudio === 'object' && !Array.isArray(dialogueAudio)) {
+    const langArr = dialogueAudio[language]
+    if (Array.isArray(langArr)) {
+      dialogueAudio[language] = langArr.map((item) => {
+        if (!item || typeof item !== 'object') return item
+        const rec = item as Record<string, unknown>
+        const isNarrationItem =
+          rec.kind === 'narration' ||
+          String(rec.character ?? '')
+            .trim()
+            .toUpperCase() === 'NARRATOR'
+        if (!isNarrationItem) return item
+        return {
+          ...rec,
+          audioUrl: params.audioUrl,
+          ...(params.duration ? { duration: params.duration } : {}),
+          ...(params.sourceFingerprint ? { sourceFingerprint: params.sourceFingerprint } : {}),
+          audioStale: false,
+        }
+      })
+    }
   }
 }
 
@@ -442,6 +473,38 @@ function applyDialogueMutation(
 
   dialogueAudio[language] = deduplicatedArray
   scene.dialogueAudioGeneratedAt = new Date().toISOString()
+
+  // When a narration dialogue line matches scene.narration, keep scene.narrationAudio synchronized
+  const isNarrationEntry =
+    params.lineMeta?.lineKind === 'narration' ||
+    sceneDialogueLine?.kind === 'narration' ||
+    resolvedCharacter.toUpperCase() === 'NARRATOR'
+  const sceneNarrationText = typeof scene.narration === 'string' ? scene.narration.trim() : ''
+  const lineText = String(sceneDialogueLine?.line ?? sceneDialogueLine?.text ?? '').trim()
+  if (
+    isNarrationEntry &&
+    sceneNarrationText &&
+    (!lineText || lineText === sceneNarrationText)
+  ) {
+    if (!scene.narrationAudio || typeof scene.narrationAudio !== 'object') {
+      scene.narrationAudio = {}
+    }
+    const narrationAudio = scene.narrationAudio as Record<string, Record<string, unknown>>
+    const prevNarration =
+      narrationAudio[language] && typeof narrationAudio[language] === 'object'
+        ? narrationAudio[language]
+        : {}
+    narrationAudio[language] = {
+      ...prevNarration,
+      url: params.audioUrl,
+      ...(params.duration ? { duration: params.duration } : {}),
+      ...(params.sourceFingerprint ? { sourceFingerprint: params.sourceFingerprint } : {}),
+      audioStale: false,
+    }
+    if (language === 'en') {
+      scene.narrationAudioUrl = params.audioUrl
+    }
+  }
 }
 
 /**

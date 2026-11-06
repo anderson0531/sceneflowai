@@ -233,14 +233,35 @@ export function formatDirectorNotes(input: {
 
 /** Prefer the line's own brief, then the matching beat. */
 export function resolveLineVoiceDirection(
-  dialogueLine: { voiceDirection?: string; lineId?: string } | null | undefined,
-  scene?: { beats?: Array<{ lineId?: string; voiceDirection?: string }> } | null
+  dialogueLine: { voiceDirection?: string; lineId?: string; character?: string; line?: string; text?: string } | null | undefined,
+  scene?: {
+    beats?: Array<{
+      lineId?: string
+      voiceDirection?: string
+      kind?: string
+      character?: string
+      line?: string
+      text?: string
+    }>
+  } | null
 ): string | undefined {
   const fromLine = dialogueLine?.voiceDirection?.trim()
   if (fromLine) return fromLine
   const lineId = dialogueLine?.lineId?.trim()
-  if (!lineId || !Array.isArray(scene?.beats)) return undefined
-  const beat = scene.beats.find((b) => b.lineId === lineId)
+  if (!Array.isArray(scene?.beats)) return undefined
+  let beat = lineId ? scene.beats.find((b) => b?.lineId === lineId) : undefined
+  if (!beat && dialogueLine) {
+    const targetLine = String(dialogueLine.line ?? dialogueLine.text ?? '').trim()
+    const targetChar = String(dialogueLine.character ?? '').trim()
+    if (targetLine) {
+      beat = scene.beats.find(
+        (b) =>
+          b?.kind !== 'action' &&
+          String(b?.line ?? b?.text ?? '').trim() === targetLine &&
+          (!targetChar || String(b?.character ?? '').trim() === targetChar)
+      )
+    }
+  }
   const fromBeat = beat?.voiceDirection?.trim()
   return fromBeat || undefined
 }

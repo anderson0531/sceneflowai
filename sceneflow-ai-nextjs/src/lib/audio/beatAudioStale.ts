@@ -70,7 +70,11 @@ function splitVoiceState(fingerprint: string): { content: string; voice: string 
 export function fingerprintsDiverge(stored: string, current: string): boolean {
   const a = splitVoiceState(stored)
   const b = splitVoiceState(current)
-  if (a.content !== b.content) return true
+  if (a.content !== b.content) {
+    const normalizeNarration = (s: string) =>
+      s.startsWith('narration||') ? `narration|NARRATOR|${s.slice('narration||'.length)}` : s
+    if (normalizeNarration(a.content) !== normalizeNarration(b.content)) return true
+  }
   if (a.voice && b.voice) return a.voice !== b.voice
   return false
 }
