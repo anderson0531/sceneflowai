@@ -43,4 +43,21 @@ describe('full-catalog language selectors', () => {
     // Do not hide the toolbar selector behind length > 1 for English-only projects.
     expect(source).not.toMatch(/languageFilterCodes\.length > 1 && \(/)
   })
+
+  it('DirectorConsoleImpl and ScriptPanel import normalizeStreamLanguage before calling it in state initializers', () => {
+    const directorSource = readFileSync(
+      join(root, 'src/components/vision/scene-production/DirectorConsoleImpl.tsx'),
+      'utf8'
+    )
+    expect(directorSource).toMatch(
+      /import\s*\{[^}]*\bnormalizeStreamLanguage\b[^}]*\}\s*from\s*['"]@\/lib\/scene\/languageClipVersions['"]/
+    )
+    const scriptPanelSource = readFileSync(
+      join(root, 'src/components/vision/ScriptPanel.tsx'),
+      'utf8'
+    )
+    expect(scriptPanelSource).toMatch(
+      /import\s*\{[^}]*\bnormalizeStreamLanguage\b[^}]*\}\s*from\s*['"]@\/lib\/scene\/languageClipVersions['"]/
+    )
+  })
 })
