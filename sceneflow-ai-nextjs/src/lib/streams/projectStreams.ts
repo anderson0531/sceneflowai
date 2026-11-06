@@ -1,6 +1,12 @@
 import { buildFinalCutClips, type BuildFinalCutClipsArgs } from '@/lib/final-cut/useFinalCutClips'
 import { getAvailablePublishLanguages } from '@/lib/publish/buildLanguageAudioTrack'
+import {
+  normalizeStreamLanguage,
+  streamLanguageLabel,
+} from '@/lib/scene/languageClipVersions'
 import type { FinalCutSelection, ProductionFormat } from '@/lib/types/finalCut'
+
+export { normalizeStreamLanguage, streamLanguageLabel }
 
 type ProjectLike = NonNullable<BuildFinalCutClipsArgs['project']>
 

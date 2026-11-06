@@ -504,7 +504,7 @@ describe('Production showcase videos', () => {
       getProductionShowcaseVideoLocales('drama').map((locale) => [locale.id, locale.src])
     )
 
-    expect(byId.en).toContain('The%20Cinematic%20Drama%20(English).mp4')
+    expect(byId.en).toContain('scene-24.mp4')
     expect(byId.es).toContain('The%20Cinematic%20Drama%20(Spanish).mp4')
     expect(byId.zh).toContain('The%20Cinematic%20Drama%20(Chinese).mp4')
     expect(byId.ar).toContain('The%20Cinematic%20Drama%20(Arabic).mp4')
@@ -577,6 +577,10 @@ describe('Production showcase videos', () => {
     }
     expect(card).toContain('Featured Player')
     expect(card).toContain('grid-cols-3')
+    expect(card).toContain('Interactive Production Rooms')
+    expect(card.indexOf('aria-label="Production review"')).toBeLessThan(
+      card.indexOf('{showDetail && (')
+    )
     expect(card).not.toContain('Rough Cut')
     expect(card).not.toContain('>Draft<')
     expect(card).toContain('explorerHandoff')
@@ -639,10 +643,10 @@ describe('Production showcase screening embeds', () => {
   it('ships a trailer and pipeline doors on every example before the longform master exists', () => {
     expect(getProductionExampleMedia('drama').isFlagship).toBe(true)
     expect(getProductionExampleMedia('drama').trailerSrc).toBe(
-      '/videos/cinematic-drama-trailer.webm?v=20261101'
+      '/videos/cinematic-drama-trailer.webm?v=20261107'
     )
     expect(getProductionExampleMedia('drama').trailerMp4Src).toBe(
-      '/videos/cinematic-drama-trailer.mp4?v=20261101'
+      '/videos/cinematic-drama-trailer.mp4?v=20261107'
     )
     expect(getProductionExampleMedia('drama').longformHref).toBeNull()
     expect(getProductionExampleMedia('animation').isFlagship).toBe(false)

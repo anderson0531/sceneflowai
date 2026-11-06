@@ -18,7 +18,7 @@ import {
 
 const PRODUCED_VIDEOS: Record<string, Partial<Record<VideoLocaleId, ProducedVideo>>> = {
   drama: {
-    en: { src: videoUrl('The Cinematic Drama (English).mp4') },
+    en: { src: 'https://xxavfkdhdebrqida.public.blob.vercel-storage.com/scene-24.mp4#t=0.1' },
     es: { src: videoUrl('The Cinematic Drama (Spanish).mp4') },
     zh: { src: videoUrl('The Cinematic Drama (Chinese).mp4') },
     ar: { src: videoUrl('The Cinematic Drama (Arabic).mp4') },

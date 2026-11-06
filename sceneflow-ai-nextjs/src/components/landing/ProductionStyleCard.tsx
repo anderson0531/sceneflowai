@@ -5,12 +5,15 @@ import { motion } from 'framer-motion'
 import { useLocale } from 'next-intl'
 import {
   ArrowRight,
+  ArrowUpRight,
+  BookOpen,
   ChevronDown,
   ChevronUp,
   Clapperboard,
   Film,
   GraduationCap,
   Heart,
+  Layers,
   Mic,
   Palette,
   Play,
@@ -227,18 +230,113 @@ export function ProductionStyleCard({
         </div>
       </div>
 
-      <div className="pointer-events-none relative z-10 flex flex-1 flex-col bg-gradient-to-b from-slate-950/95 to-slate-950 p-4 sm:p-6">
-        <div className="mb-4 flex items-start gap-4">
-          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-gray-900/50 ring-1 ring-white/10">
-            <Icon className={`h-6 w-6 ${style.accent}`} />
+      <div className="pointer-events-none relative z-10 flex flex-1 flex-col bg-gradient-to-b from-slate-950/95 via-slate-950 to-slate-950 p-4 sm:p-6">
+        {/* Interactive Example Links — directly below the trailer player for immediate discovery */}
+        <nav
+          aria-label="Production review"
+          className="pointer-events-auto mb-5 rounded-xl border border-white/10 bg-slate-900/60 p-3 shadow-inner backdrop-blur-sm"
+        >
+          <div className="mb-2.5 flex items-center justify-between gap-2 px-0.5">
+            <span className="text-[11px] font-semibold uppercase tracking-wider text-cyan-300/90">
+              Interactive Production Rooms
+            </span>
+            {screeningRoomInstruction ? (
+              <span className="hidden truncate text-[11px] text-slate-400 sm:inline">
+                {screeningRoomInstruction}
+              </span>
+            ) : null}
           </div>
-          <div>
-            <h3 className="mb-1 text-lg font-bold text-white">{card.title}</h3>
-            <p className="text-sm text-gray-300">{card.subtitle}</p>
+
+          <div className="space-y-2.5">
+            {screeningMilestone ? (
+              <button
+                key={screeningMilestone.id}
+                type="button"
+                onClick={() => openReview(screeningMilestone.id)}
+                className={`group/screening relative flex w-full flex-col gap-2.5 rounded-xl bg-gradient-to-r p-3.5 text-left text-white shadow-lg ring-1 ring-white/25 transition-all hover:brightness-110 hover:ring-white/40 ${style.ctaGradient}`}
+              >
+                <div className="flex w-full items-center justify-between gap-2">
+                  <div className="flex items-center gap-2.5">
+                    <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-black/25 ring-1 ring-white/20">
+                      <Play className="h-4 w-4 fill-current text-white" />
+                    </span>
+                    <div>
+                      <span className="block text-[10px] font-bold uppercase tracking-widest text-white/80">
+                        {featuredPlayerLabel}
+                      </span>
+                      <span className="text-base font-bold tracking-tight text-white">
+                        {milestoneLabels[screeningMilestone.id]}
+                      </span>
+                    </div>
+                  </div>
+                  <span className="inline-flex items-center gap-1 rounded-full bg-black/25 px-2.5 py-1 text-xs font-semibold text-white ring-1 ring-white/20 transition-transform group-hover/screening:translate-x-0.5">
+                    {openPlayerLabel}
+                    <ArrowRight className="h-3.5 w-3.5" />
+                  </span>
+                </div>
+                <div className="flex flex-wrap items-center gap-1.5">
+                  {resolvedFeatureModes.map((modeLabel) => (
+                    <span
+                      key={modeLabel}
+                      className="rounded-md bg-black/30 px-2 py-0.5 text-[11px] font-medium text-white/95 ring-1 ring-white/15"
+                    >
+                      {modeLabel}
+                    </span>
+                  ))}
+                </div>
+              </button>
+            ) : null}
+
+            {supportingMilestones.length > 0 ? (
+              <div className="grid grid-cols-3 gap-2">
+                {supportingMilestones.map((milestone) => {
+                  const MilestoneIcon =
+                    milestone.id === 'series'
+                      ? Layers
+                      : milestone.id === 'blueprint'
+                        ? BookOpen
+                        : Clapperboard
+                  return (
+                    <button
+                      key={milestone.id}
+                      type="button"
+                      onClick={() => openReview(milestone.id)}
+                      className="group/room flex items-center justify-between gap-1.5 rounded-lg border border-white/15 bg-slate-950/80 px-3 py-2.5 text-left text-xs font-semibold text-slate-200 transition-all hover:border-cyan-400/45 hover:bg-slate-800/90 hover:text-white"
+                    >
+                      <span className="flex min-w-0 items-center gap-1.5">
+                        <MilestoneIcon className={`h-3.5 w-3.5 shrink-0 ${style.accent}`} />
+                        <span className="truncate">{milestoneLabels[milestone.id]}</span>
+                      </span>
+                      <ArrowUpRight className="h-3.5 w-3.5 shrink-0 text-slate-400 transition-transform group-hover/room:translate-x-0.5 group-hover/room:-translate-y-0.5 group-hover/room:text-cyan-300" />
+                    </button>
+                  )
+                })}
+              </div>
+            ) : null}
+          </div>
+        </nav>
+
+        {media.longformHref ? (
+          <a
+            href={media.longformHref}
+            className={`pointer-events-auto mb-4 inline-flex w-full items-center justify-center rounded-xl bg-gradient-to-r px-4 py-3 text-sm font-semibold text-white ${style.ctaGradient}`}
+          >
+            {watchLabel}
+          </a>
+        ) : null}
+
+        {/* Card Title, Subtitle & Detail Toggle */}
+        <div className="mb-3 flex items-start gap-3.5">
+          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-gray-900/60 ring-1 ring-white/10">
+            <Icon className={`h-5 w-5 ${style.accent}`} />
+          </div>
+          <div className="min-w-0 flex-1">
+            <h3 className="mb-1 text-lg font-bold tracking-tight text-white">{card.title}</h3>
+            <p className="text-sm leading-relaxed text-gray-300">{card.subtitle}</p>
           </div>
         </div>
 
-        <div className="pointer-events-auto">
+        <div className="pointer-events-auto mt-auto flex flex-wrap items-center justify-between gap-2 pt-2">
           <button
             type="button"
             onClick={() => setShowDetail((prev) => !prev)}
@@ -255,77 +353,8 @@ export function ProductionStyleCard({
         </div>
 
         {showDetail && (
-          <div className="mt-4 flex flex-1 flex-col">
+          <div className="mt-4 flex flex-1 flex-col border-t border-white/10 pt-4">
             <SeriesInputPanel cardId={card.id} />
-
-            {screeningRoomInstruction ? (
-              <p className="mb-4 text-sm leading-relaxed text-gray-200">{screeningRoomInstruction}</p>
-            ) : null}
-
-            <nav aria-label="Production review" className="pointer-events-auto mb-4 space-y-2.5">
-              {screeningMilestone ? (
-                <button
-                  key={screeningMilestone.id}
-                  type="button"
-                  onClick={() => openReview(screeningMilestone.id)}
-                  className={`group/screening relative flex w-full flex-col gap-2.5 rounded-xl bg-gradient-to-r p-3.5 text-left text-white shadow-lg ring-1 ring-white/25 transition-all hover:brightness-110 hover:ring-white/40 ${style.ctaGradient}`}
-                >
-                  <div className="flex w-full items-center justify-between gap-2">
-                    <div className="flex items-center gap-2.5">
-                      <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-black/25 ring-1 ring-white/20">
-                        <Play className="h-4 w-4 fill-current text-white" />
-                      </span>
-                      <div>
-                        <span className="block text-[10px] font-bold uppercase tracking-widest text-white/80">
-                          {featuredPlayerLabel}
-                        </span>
-                        <span className="text-base font-bold tracking-tight text-white">
-                          {milestoneLabels[screeningMilestone.id]}
-                        </span>
-                      </div>
-                    </div>
-                    <span className="inline-flex items-center gap-1 rounded-full bg-black/25 px-2.5 py-1 text-xs font-semibold text-white ring-1 ring-white/20 transition-transform group-hover/screening:translate-x-0.5">
-                      {openPlayerLabel}
-                      <ArrowRight className="h-3.5 w-3.5" />
-                    </span>
-                  </div>
-                  <div className="flex flex-wrap items-center gap-1.5">
-                    {resolvedFeatureModes.map((modeLabel) => (
-                      <span
-                        key={modeLabel}
-                        className="rounded-md bg-black/30 px-2 py-0.5 text-[11px] font-medium text-white/95 ring-1 ring-white/15"
-                      >
-                        {modeLabel}
-                      </span>
-                    ))}
-                  </div>
-                </button>
-              ) : null}
-
-              {supportingMilestones.length > 0 ? (
-                <div className="grid grid-cols-3 gap-2">
-                  {supportingMilestones.map((milestone) => (
-                    <button
-                      key={milestone.id}
-                      type="button"
-                      onClick={() => openReview(milestone.id)}
-                      className="rounded-lg border border-white/15 bg-slate-900/75 px-2.5 py-2 text-center text-xs font-medium text-gray-200 transition-colors hover:border-white/30 hover:bg-slate-800/90 hover:text-white"
-                    >
-                      {milestoneLabels[milestone.id]}
-                    </button>
-                  ))}
-                </div>
-              ) : null}
-            </nav>
-
-            {media.longformHref ? (
-              <a
-                href={media.longformHref}
-                className={`pointer-events-auto mb-4 inline-flex w-full items-center justify-center rounded-xl bg-gradient-to-r px-4 py-3 text-sm font-semibold text-white ${style.ctaGradient}`}
-              >
-                {watchLabel}
-              </a>
-            ) : null}
 
             {card.benefit ? (
               <div className="mt-auto border-t border-white/10 pt-4">

@@ -194,10 +194,12 @@ import { SUPPORTED_LANGUAGES } from '@/constants/languages'
 import { GroupedLanguageSelector } from '@/components/vision/GroupedLanguageSelector'
 import {
   mergeStreamSelectorLanguages,
-  normalizeStreamLanguage,
-  streamLanguageLabel,
   type ProjectStream,
 } from '@/lib/streams/projectStreams'
+import {
+  normalizeStreamLanguage,
+  streamLanguageLabel,
+} from '@/lib/scene/languageClipVersions'
 import { WebAudioMixer, type SceneAudioConfig, type AudioSource } from '@/lib/audio/webAudioMixer'
 import { getAudioDuration } from '@/lib/audio/audioDuration'
 import { getAudioUrl } from '@/lib/audio/languageDetection'

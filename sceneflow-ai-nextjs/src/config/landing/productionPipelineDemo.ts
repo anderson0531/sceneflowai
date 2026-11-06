@@ -12,7 +12,10 @@
 
 export const FLAGSHIP_PRODUCTION_ID = 'drama' as const
 
-export const CINEMATIC_DRAMA_TRAILER_VERSION = '20261101'
+export const CINEMATIC_DRAMA_SOURCE_BLOB_URL =
+  'https://xxavfkdhdebrqida.public.blob.vercel-storage.com/scene-24.mp4'
+
+export const CINEMATIC_DRAMA_TRAILER_VERSION = '20261107'
 
 /** Same-path public files. The query busts previously cached trailers. */
 export const CINEMATIC_DRAMA_TRAILER_WEBM = `/videos/cinematic-drama-trailer.webm?v=${CINEMATIC_DRAMA_TRAILER_VERSION}`
