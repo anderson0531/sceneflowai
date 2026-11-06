@@ -140,6 +140,7 @@ export function useVideoQueue(
       allowVeoFallback?: boolean
       expressMode?: boolean
       useBeatFrameAsStart?: boolean
+      clipLanguage?: string
     }
   ) => Promise<void>,
   segmentGuideContext?: SegmentGuideContext,
@@ -413,7 +414,7 @@ export function useVideoQueue(
       return
     }
 
-    const { mode, priority, delayBetween, selectedIds, overrideConfigs } = options
+    const { mode, priority, delayBetween, selectedIds, overrideConfigs, clipLanguage } = options
     const concurrency = Math.min(
       options.concurrency || 1,
       CONCURRENCY_DEFAULTS.VIDEO_GENERATION
@@ -620,13 +621,17 @@ export function useVideoQueue(
         let handedOff = false
         
         const config = overrideConfigs?.get(item.segmentId) || item.config
+        const effectiveClipLanguage = clipLanguage || config.clipLanguage
+        const isLanguageTarget = Boolean(
+          effectiveClipLanguage && effectiveClipLanguage.trim().toLowerCase() !== 'en'
+        )
         const liveSegments = getSegments?.() ?? segments
         const liveSegment = liveSegments.find((s) => s.segmentId === item.segmentId)
         
         try {
           let batchMethod = config.mode
           const isKlingProvider = config.videoProvider === 'kling'
-          if (liveSegment && isVeoChainContinuation(liveSegment)) {
+          if (liveSegment && isVeoChainContinuation(liveSegment) && !isLanguageTarget) {
             const veoRef = resolveVeoRefForExtension(liveSegments, liveSegment)
             if (veoRef) {
               batchMethod = 'EXT'
@@ -645,6 +650,8 @@ export function useVideoQueue(
                 continue
               }
             }
+          } else if (isLanguageTarget && batchMethod === 'EXT') {
+            batchMethod = normalizeReferenceImages(config.referenceImages)?.length ? 'REF' : 'I2V'
           }
 
           const f2vFrames =
@@ -756,6 +763,7 @@ export function useVideoQueue(
               allowVeoFallback: config.allowVeoFallback,
               expressMode: config.expressMode,
               useBeatFrameAsStart: config.useBeatFrameAsStart === true,
+              ...(effectiveClipLanguage ? { clipLanguage: effectiveClipLanguage } : {}),
             }
           )
           

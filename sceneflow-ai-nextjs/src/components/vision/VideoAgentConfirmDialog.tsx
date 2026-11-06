@@ -81,6 +81,8 @@ export interface VideoAgentBeatOption {
   hasEndFrame?: boolean
   promptChanged?: boolean
   imageTier?: 'draft' | 'final'
+  /** True when a non-English stream is active and this shot retains the English master clip by default. */
+  retainsMasterInLanguage?: boolean
 }
 
 interface VideoAgentConfirmDialogProps {
@@ -92,6 +94,8 @@ interface VideoAgentConfirmDialogProps {
   defaultQuality?: VideoGenerationQuality
   defaultGenerationMode?: VideoGenerationMode
   defaultSourceMethod?: VideoSourceMethod
+  streamLanguage?: string
+  streamLanguageLabel?: string
 }
 
 function clipFacts(beat: VideoAgentBeatOption): VideoClipFacts {
@@ -116,7 +120,10 @@ function beatEligibleForScope(
 ): boolean {
   if (!beat.eligible || beat.isRendering) return false
   if (requiresFrames && beat.hasStartFrame === false) return false
-  if (scope === 'missing') return !beat.hasVideo
+  if (scope === 'missing') {
+    if (beat.retainsMasterInLanguage) return false
+    return !beat.hasVideo
+  }
   return true
 }
 
@@ -129,6 +136,8 @@ export function VideoAgentConfirmDialog({
   defaultQuality = 'draft',
   defaultGenerationMode = 'standard',
   defaultSourceMethod = 'reference',
+  streamLanguage = 'en',
+  streamLanguageLabel,
 }: VideoAgentConfirmDialogProps) {
   const t = useTranslations('production.videoAgent')
   const tCommon = useTranslations('common')
@@ -193,6 +202,9 @@ export function VideoAgentConfirmDialog({
     quality,
     mode: generationMode,
   })
+  const isLanguageStream = Boolean(
+    streamLanguage && streamLanguage.trim().toLowerCase() !== 'en'
+  )
   const nothingSelected = selectedSegmentIds.length === 0
   const scopeBeats = checklistBeats.filter(
     (beat) => beatEligibleForScope(beat, scope, requiresFrames) || scope === 'selected'
@@ -208,9 +220,16 @@ export function VideoAgentConfirmDialog({
           <DialogTitle className="flex items-center gap-2 text-amber-200">
             <Zap className="w-5 h-5" />
             {t('title')}
+            {isLanguageStream && (
+              <span className="ml-1 rounded bg-cyan-500/20 border border-cyan-400/40 px-2 py-0.5 text-xs font-medium text-cyan-200">
+                {streamLanguageLabel || streamLanguage.toUpperCase()}
+              </span>
+            )}
           </DialogTitle>
           <DialogDescription className="text-gray-400">
-            {t('description')}
+            {isLanguageStream
+              ? `Batch-generate localized dialogue & signage clips for ${streamLanguageLabel || streamLanguage.toUpperCase()} (1 clip at a time to minimize 429s). Action and voiceover shots retain the master clip.`
+              : t('description')}
           </DialogDescription>
         </DialogHeader>
 
@@ -407,22 +426,26 @@ export function VideoAgentConfirmDialog({
                             ? 'text-indigo-300'
                             : requiresFrames && beat.hasStartFrame === false
                               ? 'text-amber-300'
-                              : beat.hasVideo
-                                ? 'text-green-400'
-                                : beat.hasError
-                                  ? 'text-rose-400'
-                                  : 'text-amber-400'
+                              : beat.retainsMasterInLanguage
+                                ? 'text-cyan-300/80'
+                                : beat.hasVideo
+                                  ? 'text-green-400'
+                                  : beat.hasError
+                                    ? 'text-rose-400'
+                                    : 'text-amber-400'
                         }`}
                       >
                         {beat.isRendering
                           ? t('rendering')
                           : requiresFrames && beat.hasStartFrame === false
                             ? 'Frames required for Creative (Kling AI)'
-                            : beat.hasVideo
-                              ? t('hasVideo')
-                              : beat.hasError
-                                ? t('failed')
-                                : t('missing')}
+                            : beat.retainsMasterInLanguage
+                              ? 'Retains master clip (no on-camera dialogue)'
+                              : beat.hasVideo
+                                ? t('hasVideo')
+                                : beat.hasError
+                                  ? t('failed')
+                                  : t('missing')}
                       </span>
                     </span>
                   </label>

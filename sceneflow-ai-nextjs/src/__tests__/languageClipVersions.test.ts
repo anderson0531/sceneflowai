@@ -17,6 +17,7 @@ import {
   extractPromptSignageText,
   preferStoredSpokenTranslation,
   replacePromoOnScreenText,
+  segmentNeedsLanguageClip,
 } from '@/lib/scene/languageClipPrompt'
 
 function take(id: string, url = `${id}.mp4`): SceneSegmentTake {
@@ -220,4 +221,68 @@ describe('language clip prompts', () => {
       })
     ).toBe('Érase una vez')
   })
+
+  it('identifies dialogue, title, and signage shots for language Clips Agent while skipping action and off-screen narrator shots', () => {
+    expect(
+      segmentNeedsLanguageClip({
+        beatKind: 'dialogue',
+        beatCharacter: 'ELARA',
+        beatLine: 'We need to shut down the dynamo now.',
+      })
+    ).toBe(true)
+
+    expect(
+      segmentNeedsLanguageClip({
+        beatKind: 'title',
+        beatLine: 'THE WHITE CITY CURRENT',
+      })
+    ).toBe(true)
+
+    expect(
+      segmentNeedsLanguageClip({
+        beatKind: 'action',
+        sourcePrompt: 'Medium shot of a glowing neon sign reading "OPEN 24 HOURS" in the rain.',
+      })
+    ).toBe(true)
+
+    expect(
+      segmentNeedsLanguageClip({
+        beatKind: 'action',
+        sourcePrompt: 'Wide establishing shot of rain-soaked cobblestones at night.',
+      })
+    ).toBe(false)
+
+    expect(
+      segmentNeedsLanguageClip({
+        beatKind: 'narration',
+        beatCharacter: 'NARRATOR',
+        beatLine: 'Beneath an empire built on steel and shadow, an impossible breakthrough awaits.',
+      })
+    ).toBe(false)
+
+    expect(
+      segmentNeedsLanguageClip({
+        beatKind: 'dialogue',
+        beatCharacter: 'NARRATOR (V.O.)',
+        beatLine: 'The city never slept.',
+      })
+    ).toBe(false)
+
+    expect(
+      segmentNeedsLanguageClip({
+        beatKind: 'action',
+        shotMethod: 'regenerate',
+      })
+    ).toBe(true)
+
+    expect(
+      segmentNeedsLanguageClip({
+        beatKind: 'dialogue',
+        beatCharacter: 'ELARA',
+        beatLine: 'Wait here.',
+        shotMethod: 'double',
+      })
+    ).toBe(false)
+  })
 })
+

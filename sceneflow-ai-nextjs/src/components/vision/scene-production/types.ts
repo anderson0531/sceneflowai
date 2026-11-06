@@ -382,6 +382,8 @@ export interface VideoGenerationConfig {
   expressMode?: boolean
   /** When true, attach the beat/animatic frame as the video start image. Off by default. */
   useBeatFrameAsStart?: boolean
+  /** Store the finished clip on this language stream instead of the English master. */
+  clipLanguage?: string
 }
 
 /**
@@ -405,6 +407,8 @@ export interface BatchRenderOptions {
   priority: 'sequence' | 'approved_first'
   delayBetween: number        // ms delay between API calls (rate limiting)
   selectedIds?: string[]      // Segment IDs to render when mode is 'selected'
+  /** Optional target language stream when batch rendering localized dialogue/signage clips. */
+  clipLanguage?: string
 }
 
 // ============================================================================

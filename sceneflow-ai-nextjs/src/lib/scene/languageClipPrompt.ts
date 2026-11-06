@@ -177,3 +177,37 @@ export function replacePromoOnScreenText(
   const line = `On-screen text: "${spoken}".`
   return source ? `${source} ${line}` : line
 }
+
+/**
+ * Determine whether a shot needs a localized video clip when running the Clips Agent
+ * for a non-English language stream.
+ *
+ * Pure action shots and off-screen narrator voiceover shots without burned-in signage
+ * retain the English master video clip (`double`) and get dubbed TTS audio in the Mixer.
+ */
+export function segmentNeedsLanguageClip(args: {
+  beatKind?: string | null
+  beatCharacter?: string | null
+  beatLine?: string | null
+  excerpt?: string | null
+  dialogueLines?: Array<{ line?: string | null }> | null
+  sourcePrompt?: string | null
+  shotMethod?: 'double' | 'lipsync' | 'regenerate' | null
+  customSignageText?: string | null
+}): boolean {
+  if (args.shotMethod === 'regenerate') return true
+  if (args.shotMethod === 'double' || args.shotMethod === 'lipsync') return false
+  const kind = args.beatKind?.trim().toLowerCase()
+  if (kind === 'title') return true
+  if (args.customSignageText?.trim()) return true
+  if (extractPromptSignageText(args.sourcePrompt)) return true
+  if (kind === 'action' || kind === 'narration') return false
+  if (args.beatCharacter && /^narrator\b/i.test(args.beatCharacter.trim())) return false
+  const spoken = englishSpokenLine({
+    excerpt: args.excerpt,
+    beatLine: args.beatLine,
+    dialogueLines: args.dialogueLines,
+  })
+  return Boolean(spoken.trim())
+}
+

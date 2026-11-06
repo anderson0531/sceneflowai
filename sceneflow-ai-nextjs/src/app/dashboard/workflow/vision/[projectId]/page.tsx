@@ -5292,6 +5292,29 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                 : segment.stemSeparation,
             }
           })
+          if (languageClip && clipLanguage) {
+            const langKey = clipLanguage.trim().toLowerCase()
+            const existingByLang = current.mixerSettingsByLanguage ?? {}
+            const existingLang = existingByLang[langKey] ?? {}
+            const existingShotConfigs = existingLang.languageShotConfigs ?? {}
+            return {
+              ...current,
+              segments,
+              mixerSettingsByLanguage: {
+                ...existingByLang,
+                [langKey]: {
+                  ...existingLang,
+                  languageShotConfigs: {
+                    ...existingShotConfigs,
+                    [segmentId]: {
+                      ...existingShotConfigs[segmentId],
+                      method: 'regenerate',
+                    },
+                  },
+                },
+              },
+            }
+          }
           return { ...current, segments }
         })
 
