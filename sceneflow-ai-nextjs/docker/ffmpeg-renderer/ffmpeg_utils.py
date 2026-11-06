@@ -1235,6 +1235,12 @@ def apply_scene_end_transition(
 
 def explicit_audio_duration_filters(clip: Dict[str, Any]) -> List[str]:
     """Trim only when the caller set a duration. A missing duration plays the file."""
+    try:
+        trim = float(clip.get('trimStart') or 0)
+    except (TypeError, ValueError):
+        trim = 0.0
+    if trim >= 0.001:
+        return []
     if 'duration' not in clip or clip.get('duration') is None:
         return []
     try:
@@ -1292,7 +1298,11 @@ def _overlay_audio_filter(input_idx: int, clip: Dict[str, Any], label: str) -> s
     volume = clip.get('volume', 1.0)
     playback_rate = clip.get('playbackRate', 1.0) or 1.0
     tempo = build_atempo_filter_chain(float(playback_rate))
-    chain = audio_source_window_filters(clip) + audio_fade_filters(clip)
+    chain = (
+        audio_source_window_filters(clip)
+        + explicit_audio_duration_filters(clip)
+        + audio_fade_filters(clip)
+    )
     chain.append(f'adelay={delay_ms}|{delay_ms}')
     if tempo:
         chain.append(tempo)
@@ -1587,7 +1597,12 @@ def build_concat_ffmpeg_command(
         
         # Check per-segment audio source and volume
         audio_source = segment.get('audioSource', 'original')
-        seg_audio_volume = segment.get('audioVolume', segment_audio_volume)
+        raw_seg_volume = segment.get('audioVolume')
+        seg_audio_volume = (
+            float(raw_seg_volume) * float(segment_audio_volume)
+            if raw_seg_volume is not None
+            else float(segment_audio_volume)
+        )
         duration = segment.get('duration', 5)
         
         # Debug: Log per-segment audio settings

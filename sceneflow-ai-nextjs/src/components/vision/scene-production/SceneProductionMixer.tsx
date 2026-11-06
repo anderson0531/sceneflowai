@@ -29,9 +29,11 @@ import {
   isMusicActiveInBeatWindow,
 } from '@/lib/scene/mixerMusicTiming'
 import {
+  computeSpeechDuckMultiplier,
   mixerMusicClipsToRenderPayload,
   resolveMixerMusicClips,
   type MixerMusicClip,
+  type SpeechDuckWindow,
 } from '@/lib/scene/mixerScoreMusic'
 import {
   DEFAULT_MUSIC_FILE_DURATION_SEC,
@@ -1082,7 +1084,7 @@ function DialogueLineControls({
       audio.currentTime = 0
       const clip = dialogueClips[index]
       const key = dialogueClipConfigKey(clip, index)
-      audio.volume = (clipConfigs[key]?.volume ?? globalVolume)
+      audio.volume = Math.max(0, Math.min(1, (clipConfigs[key]?.volume ?? 1) * globalVolume))
       audio.playbackRate = clampDialoguePlaybackRate(clipConfigs[key]?.playbackRate)
       audio.play().catch(() => {})
       setPlayingIndex(index)
@@ -1101,7 +1103,7 @@ function DialogueLineControls({
     const current = clipConfigs[clipId] || {
       id: clipId,
       enabled: true,
-      volume: globalVolume,
+      volume: 1,
       startTime: clip.startTime ?? 0,
       duration: clip.duration || 3,
       playbackRate: 1,
@@ -1130,7 +1132,7 @@ function DialogueLineControls({
         const config = clipConfigs[clipId] || {
           id: clipId,
           enabled: true,
-          volume: globalVolume,
+          volume: 1,
           startTime: startT,
           duration: dur,
           playbackRate: 1,
@@ -4787,9 +4789,7 @@ export function SceneProductionMixer({
         const trimWin = resolveVideoTrimWindow(seg, sourceDur)
         const videoRate = shotVideoRateFor(seg.segmentId)
         const videoWall = videoWallDurationSec(trimWin.playableSec, videoRate)
-        const pauseDuration = audioTracks?.dialogue?.enabled
-          ? Math.max(0, getPlaybackSegmentDuration(seg) - videoWall)
-          : 0.0
+        const pauseDuration = Math.max(0, getPlaybackSegmentDuration(seg) - videoWall)
         const segStartTime = shotStartTimesBySegmentId[seg.segmentId] ?? seg.startTime ?? 0
         const segEndTime = segStartTime + videoWall + pauseDuration
         const previous = index > 0 ? serverRenderSegments[index - 1] : undefined
@@ -4830,14 +4830,25 @@ export function SceneProductionMixer({
           loop?: boolean
           fadeInSec?: number
           fadeOutSec?: number
+          trimStart?: number
         }>
       > = {}
+
+      const speechWindows: SpeechDuckWindow[] = []
       
       if (audioTracks.narration.enabled && playbackAudioUrls.narration) {
+        const narrStart = audioTracks.narration.startOffset
+        const narrDur = playbackAudioUrls.narrationDuration || totalDuration
+        if (narrDur > 0) {
+          speechWindows.push({
+            startTime: Math.max(0, narrStart),
+            endTime: Math.max(0, narrStart) + narrDur,
+          })
+        }
         audioTracksPayload.narration = [{
           url: playbackAudioUrls.narration,
-          startTime: audioTracks.narration.startOffset,
-          duration: playbackAudioUrls.narrationDuration || totalDuration,
+          startTime: narrStart,
+          duration: narrDur,
           volume: audioTracks.narration.volume,
         }]
       }
@@ -4847,34 +4858,49 @@ export function SceneProductionMixer({
           .filter(d => d?.audioUrl)
           .map((d, i) => ({ d, i }))
           .filter(({ d, i }) => dialogueClipConfigs[dialogueClipConfigKey(d, i)]?.enabled !== false)
-          .map(({ d, i }) => ({
-            url: d.audioUrl!,
-            startTime: audioTracks.dialogue.startOffset + mixerDialogueStart(d, i, 2),
-            duration: (d as { duration?: number }).duration || 3,
-            volume:
-              (dialogueClipConfigs[dialogueClipConfigKey(d, i)]?.volume ?? 1) *
-              audioTracks.dialogue.volume,
-            character: (d as { character?: string }).character,
-            playbackRate: clampDialoguePlaybackRate(
-              dialogueClipConfigs[dialogueClipConfigKey(d, i)]?.playbackRate
-            ),
-          }))
+          .map(({ d, i }) => {
+            const key = dialogueClipConfigKey(d, i)
+            const startTime = audioTracks.dialogue.startOffset + mixerDialogueStart(d, i, 2)
+            const duration = (d as { duration?: number }).duration || 3
+            const playbackRate = clampDialoguePlaybackRate(dialogueClipConfigs[key]?.playbackRate)
+            const wallDur = dialogueClipWallDuration(duration, playbackRate)
+            speechWindows.push({
+              startTime: Math.max(0, startTime - 0.1),
+              endTime: Math.max(0, startTime) + wallDur + 0.15,
+            })
+            return {
+              url: d.audioUrl!,
+              startTime,
+              duration,
+              volume: (dialogueClipConfigs[key]?.volume ?? 1) * audioTracks.dialogue.volume,
+              character: (d as { character?: string }).character,
+              playbackRate,
+            }
+          })
       }
       
       if (audioTracks.music.enabled && (playbackAudioUrls.musicClips?.length ?? 0) > 0) {
         audioTracksPayload.music = mixerMusicClipsToRenderPayload(
           playbackAudioUrls.musicClips!,
-          audioTracks.music
+          audioTracks.music,
+          speechWindows
         )
       }
       
       if (audioTracks.sfx.enabled && playbackAudioUrls.sfx.length > 0) {
-        audioTracksPayload.sfx = playbackAudioUrls.sfx.filter(s => s?.audioUrl).map(s => ({
-          url: s.audioUrl!,
-          startTime: audioTracks.sfx.startOffset + (s.startTime ?? 0),
-          duration: s.duration || 5,
-          volume: audioTracks.sfx.volume,
-        }))
+        audioTracksPayload.sfx = playbackAudioUrls.sfx.filter(s => s?.audioUrl).map(s => {
+          const startTime = audioTracks.sfx.startOffset + (s.startTime ?? 0)
+          const duration = s.duration || 5
+          const duckMult = audioTracks.sfx.autoDuck
+            ? computeSpeechDuckMultiplier(startTime, duration, speechWindows)
+            : 1
+          return {
+            url: s.audioUrl!,
+            startTime,
+            duration,
+            volume: Math.max(0, Math.min(1, audioTracks.sfx.volume * duckMult)),
+          }
+        })
       }
 
       if (useStemDubbingPolicy) {
@@ -5102,11 +5128,23 @@ export function SceneProductionMixer({
         fadeOutSec?: number
       }> = []
       
+      const headlessSpeechWindows: SpeechDuckWindow[] = []
+
       if (audioTracks.narration.enabled && playbackAudioUrls.narration) {
+        const narrStart = audioTracks.narration.startOffset
+        const narrDur =
+          playbackAudioUrls.narrationDuration ||
+          Math.max(0, totalDuration - audioTracks.narration.startOffset)
+        if (narrDur > 0) {
+          headlessSpeechWindows.push({
+            startTime: Math.max(0, narrStart),
+            endTime: Math.max(0, narrStart) + narrDur,
+          })
+        }
         audioClips.push({
           url: playbackAudioUrls.narration,
-          startTime: audioTracks.narration.startOffset,
-          duration: playbackAudioUrls.narrationDuration || Math.max(0, totalDuration - audioTracks.narration.startOffset),
+          startTime: narrStart,
+          duration: narrDur,
           volume: audioTracks.narration.volume,
           type: 'narration',
         })
@@ -5119,10 +5157,16 @@ export function SceneProductionMixer({
           if (clipConfig?.enabled === false) return
           const startTime = audioTracks.dialogue.startOffset + mixerDialogueStart(clip, idx, 2)
           const pr = clampDialoguePlaybackRate(clipConfig?.playbackRate)
+          const duration = clip.duration || Math.max(0, totalDuration - startTime)
+          const wallDur = dialogueClipWallDuration(duration, pr)
+          headlessSpeechWindows.push({
+            startTime: Math.max(0, startTime - 0.1),
+            endTime: Math.max(0, startTime) + wallDur + 0.15,
+          })
           audioClips.push({
             url: clip.audioUrl,
             startTime,
-            duration: clip.duration || Math.max(0, totalDuration - startTime),
+            duration,
             volume: (clipConfig?.volume ?? 1.0) * audioTracks.dialogue.volume,
             type: 'dialogue',
             playbackRate: pr,
@@ -5131,25 +5175,31 @@ export function SceneProductionMixer({
       }
       
       if (audioTracks.music.enabled && (playbackAudioUrls.musicClips?.length ?? 0) > 0) {
-        mixerMusicClipsToRenderPayload(playbackAudioUrls.musicClips!, audioTracks.music).forEach(
-          (clip) => {
-            audioClips.push({
-              ...clip,
-              type: 'music',
-            })
-          }
-        )
+        mixerMusicClipsToRenderPayload(
+          playbackAudioUrls.musicClips!,
+          audioTracks.music,
+          headlessSpeechWindows
+        ).forEach((clip) => {
+          audioClips.push({
+            ...clip,
+            type: 'music',
+          })
+        })
       }
       
       if (audioTracks.sfx.enabled && playbackAudioUrls.sfx.length > 0) {
         playbackAudioUrls.sfx.forEach(s => {
           if (!s.audioUrl) return
           const startTime = audioTracks.sfx.startOffset + (s.startTime ?? 0)
+          const duration = s.duration || Math.max(0, totalDuration - startTime)
+          const duckMult = audioTracks.sfx.autoDuck
+            ? computeSpeechDuckMultiplier(startTime, duration, headlessSpeechWindows)
+            : 1
           audioClips.push({
             url: s.audioUrl,
             startTime,
-            duration: s.duration || Math.max(0, totalDuration - startTime),
-            volume: audioTracks.sfx.volume,
+            duration,
+            volume: Math.max(0, Math.min(1, audioTracks.sfx.volume * duckMult)),
             type: 'sfx',
           })
         })

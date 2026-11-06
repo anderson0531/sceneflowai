@@ -388,7 +388,7 @@ import type {
   SceneRenderAudioClip,
   CreateSceneRenderJobRequest,
 } from './renderTypes'
-import { toSceneRenderVideoSegment } from './renderTypes'
+import { buildSceneRenderAudioClips, toSceneRenderVideoSegment } from './renderTypes'
 
 /**
  * Create and trigger a scene render job (video concatenation with audio mixing)
@@ -423,68 +423,11 @@ export async function createSceneRenderJob(
       }
     }
     
-    // Build audio clips from audio tracks
-    const audioClips: SceneRenderAudioClip[] = []
-    
-    if (request.audioConfig.includeNarration && request.audioTracks.narration) {
-      for (const track of request.audioTracks.narration) {
-        audioClips.push({
-          url: track.url,
-          startTime: track.startTime,
-          duration: track.duration,
-          volume: 0.8,
-          type: 'narration',
-        })
-      }
-    }
-    
-    if (request.audioConfig.includeDialogue && request.audioTracks.dialogue) {
-      for (const track of request.audioTracks.dialogue) {
-        const pr = track.playbackRate
-        const playbackRate =
-          pr != null && Number.isFinite(pr) && pr > 0 ? Math.min(1.5, Math.max(0.5, pr)) : undefined
-        audioClips.push({
-          url: track.url,
-          startTime: track.startTime,
-          duration: track.duration,
-          volume: 0.9,
-          type: 'dialogue',
-          character: track.character,
-          ...(playbackRate != null && Math.abs(playbackRate - 1) > 1e-4 ? { playbackRate } : {}),
-        })
-      }
-    }
-    
-    if (request.audioConfig.includeMusic && request.audioTracks.music) {
-      for (const track of request.audioTracks.music) {
-        const pr = track.playbackRate
-        const playbackRate =
-          pr != null && Number.isFinite(pr) && pr > 0 ? Math.min(1.5, Math.max(0.5, pr)) : undefined
-        audioClips.push({
-          url: track.url,
-          startTime: track.startTime,
-          duration: track.duration,
-          volume: 0.5,
-          type: 'music',
-          ...(playbackRate != null && Math.abs(playbackRate - 1) > 1e-4 ? { playbackRate } : {}),
-          ...(track.loop != null ? { loop: track.loop } : {}),
-          ...(track.fadeInSec != null && track.fadeInSec > 0 ? { fadeInSec: track.fadeInSec } : {}),
-          ...(track.fadeOutSec != null && track.fadeOutSec > 0 ? { fadeOutSec: track.fadeOutSec } : {}),
-        })
-      }
-    }
-    
-    if (request.audioConfig.includeSfx && request.audioTracks.sfx) {
-      for (const track of request.audioTracks.sfx) {
-        audioClips.push({
-          url: track.url,
-          startTime: track.startTime,
-          duration: track.duration,
-          volume: 0.6,
-          type: 'sfx',
-        })
-      }
-    }
+    // Build audio clips from audio tracks (preserving per-clip volume, trimStart, playbackRate, and auto-ducking)
+    const audioClips: SceneRenderAudioClip[] = buildSceneRenderAudioClips(
+      request.audioConfig,
+      request.audioTracks
+    )
     
     // Calculate estimated duration
     const estimatedDuration = videoSegments.reduce((sum, seg) => sum + seg.duration, 0)

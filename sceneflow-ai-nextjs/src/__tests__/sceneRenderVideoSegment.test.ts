@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { toSceneRenderVideoSegment } from '@/lib/video/renderTypes'
+import { buildSceneRenderAudioClips, toSceneRenderVideoSegment } from '@/lib/video/renderTypes'
 
 describe('toSceneRenderVideoSegment', () => {
   it('passes watermarkCropPercent through to the job spec segment', () => {
@@ -45,5 +45,102 @@ describe('toSceneRenderVideoSegment', () => {
 
     expect(mapped.audioSource).toBe('none')
     expect(mapped.audioVolume).toBe(0)
+  })
+})
+
+describe('buildSceneRenderAudioClips', () => {
+  it('preserves per-clip volume, trimStart, and playbackRate instead of overwriting with top-level track volumes', () => {
+    const clips = buildSceneRenderAudioClips(
+      {
+        includeNarration: true,
+        includeDialogue: true,
+        includeMusic: true,
+        includeSfx: true,
+        includeSegmentAudio: true,
+        language: 'en',
+        narrationVolume: 0.8,
+        dialogueVolume: 0.9,
+        musicVolume: 0.4,
+        sfxVolume: 0.5,
+      },
+      {
+        narration: [{ url: 'https://example.com/narr.mp3', startTime: 0, duration: 6, volume: 0.35 }],
+        dialogue: [
+          {
+            url: 'https://example.com/line1.mp3',
+            startTime: 2,
+            duration: 3,
+            volume: 0.27,
+            playbackRate: 1.1,
+          },
+        ],
+        music: [
+          {
+            url: 'https://example.com/cue.wav',
+            startTime: 0,
+            duration: 5,
+            volume: 0.08,
+            loop: false,
+            fadeInSec: 1,
+          },
+          {
+            url: 'https://example.com/cue.wav',
+            startTime: 5,
+            duration: 5,
+            trimStart: 5,
+            volume: 0.2,
+            loop: false,
+            fadeOutSec: 2,
+          },
+        ],
+        sfx: [
+          {
+            url: 'https://example.com/bg_stem.wav',
+            startTime: 0,
+            duration: 5,
+            volume: 0.15,
+            playbackRate: 1.05,
+          },
+        ],
+      }
+    )
+
+    const narr = clips.find((c) => c.type === 'narration')!
+    const dlg = clips.find((c) => c.type === 'dialogue')!
+    const musicSlices = clips.filter((c) => c.type === 'music')
+    const sfx = clips.find((c) => c.type === 'sfx')!
+
+    expect(narr.volume).toBeCloseTo(0.35)
+    expect(dlg.volume).toBeCloseTo(0.27)
+    expect(dlg.playbackRate).toBeCloseTo(1.1)
+    expect(musicSlices[0].volume).toBeCloseTo(0.08)
+    expect(musicSlices[0].trimStart).toBeCloseTo(0.001)
+    expect(musicSlices[1].volume).toBeCloseTo(0.2)
+    expect(musicSlices[1].trimStart).toBeCloseTo(5)
+    expect(sfx.volume).toBeCloseTo(0.15)
+    expect(sfx.playbackRate).toBeCloseTo(1.05)
+  })
+
+  it('applies speech auto-ducking when callers omit per-clip music volume and enable autoDuckMusic', () => {
+    const clips = buildSceneRenderAudioClips(
+      {
+        includeNarration: true,
+        includeDialogue: false,
+        includeMusic: true,
+        includeSfx: false,
+        includeSegmentAudio: false,
+        language: 'en',
+        narrationVolume: 0.8,
+        musicVolume: 0.4,
+        autoDuckMusic: true,
+      },
+      {
+        narration: [{ url: 'https://example.com/narr.mp3', startTime: 0, duration: 5 }],
+        music: [{ url: 'https://example.com/cue.wav', startTime: 0, duration: 5, loop: false }],
+      }
+    )
+
+    const music = clips.find((c) => c.type === 'music')!
+    expect(music.volume).toBeCloseTo(0.4 * 0.398, 4)
   })
 })

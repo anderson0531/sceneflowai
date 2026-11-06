@@ -280,6 +280,85 @@ describe('mixerMusicClipsToRenderPayload', () => {
     expect(payload[0].trimStart).toBe(8)
     expect(payload[0].volume).toBeCloseTo(0.2)
   })
+
+  it('coalesces contiguous equal-volume shot slices of the same cue into one render clip', () => {
+    const payload = mixerMusicClipsToRenderPayload(
+      [
+        {
+          id: 'music-cue-0-1-bt_a1',
+          beatId: 'bt_a1',
+          url: DREAD_URL,
+          startTime: 0,
+          duration: 8,
+          trimStart: 0,
+          label: 'rising dread',
+          loop: false,
+          actualDuration: 30,
+          volume: 0.5,
+          fadeInSec: 1.5,
+        },
+        {
+          id: 'music-cue-0-1-bt_a2',
+          beatId: 'bt_a2',
+          url: DREAD_URL,
+          startTime: 8,
+          duration: 12,
+          trimStart: 8,
+          label: 'rising dread',
+          loop: false,
+          actualDuration: 30,
+          volume: 0.5,
+        },
+      ],
+      musicConfig()
+    )
+    expect(payload).toHaveLength(1)
+    expect(payload[0]).toMatchObject({
+      url: DREAD_URL,
+      startTime: 0,
+      duration: 20,
+      volume: 0.2,
+      fadeInSec: 1.5,
+      fadeOutSec: 2,
+    })
+  })
+
+  it('applies speech auto-ducking (-8 dB) per shot when musicConfig.autoDuck is enabled', () => {
+    const payload = mixerMusicClipsToRenderPayload(
+      [
+        {
+          id: 'music-cue-0-1-bt_a1',
+          beatId: 'bt_a1',
+          url: DREAD_URL,
+          startTime: 0,
+          duration: 8,
+          trimStart: 0,
+          label: 'rising dread',
+          loop: false,
+          actualDuration: 30,
+          volume: 0.5,
+        },
+        {
+          id: 'music-cue-0-1-bt_a2',
+          beatId: 'bt_a2',
+          url: DREAD_URL,
+          startTime: 8,
+          duration: 12,
+          trimStart: 8,
+          label: 'rising dread',
+          loop: false,
+          actualDuration: 30,
+          volume: 0.5,
+        },
+      ],
+      { ...musicConfig(), autoDuck: true },
+      [{ startTime: 1, endTime: 7 }]
+    )
+    expect(payload).toHaveLength(2)
+    expect(payload[0].volume).toBeCloseTo(0.2 * 0.398, 4)
+    expect(payload[1].volume).toBeCloseTo(0.2, 4)
+    expect(payload[1].trimStart).toBe(8)
+  })
 })
 
 describe('score stem fades', () => {

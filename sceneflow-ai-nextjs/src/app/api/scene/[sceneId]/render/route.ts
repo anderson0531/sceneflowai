@@ -27,7 +27,12 @@ import type {
   SceneRenderTextOverlay,
   SceneRenderWatermark,
 } from '@/lib/video/renderTypes'
-import { RENDER_DEFAULTS, deliveryFrameSize, toSceneRenderVideoSegment } from '@/lib/video/renderTypes'
+import {
+  RENDER_DEFAULTS,
+  buildSceneRenderAudioClips,
+  deliveryFrameSize,
+  toSceneRenderVideoSegment,
+} from '@/lib/video/renderTypes'
 import { uploadJobSpec, getOutputPath, getRenderBucket, getSignedDownloadUrl } from '@/lib/gcs/renderStorage'
 import { isCloudRunJobsEnabled } from '@/lib/video/CloudRunJobsService'
 import { getJobStatus, getJobStatusAsync, setJobStatus } from '@/lib/render/jobStatusStore'
@@ -246,79 +251,14 @@ export async function POST(
     })
     
     // Get volume settings from audioConfig (with defaults)
-    const narrationVolume = body.audioConfig.narrationVolume ?? 0.8
-    const dialogueVolume = body.audioConfig.dialogueVolume ?? 0.9
-    const musicVolume = body.audioConfig.musicVolume ?? 0.5
-    const sfxVolume = body.audioConfig.sfxVolume ?? 0.6
     const segmentAudioVolume = body.audioConfig.segmentAudioVolume ?? 0.7
     const includeSegmentAudio = body.audioConfig.includeSegmentAudio ?? false
-    
-    // Build audio clips from selected tracks
-    const audioClips: SceneRenderAudioClip[] = []
-    
-    // Add narration
-    if (body.audioConfig.includeNarration && body.audioTracks.narration) {
-      for (const track of body.audioTracks.narration) {
-        audioClips.push({
-          url: track.url,
-          startTime: track.startTime,
-          duration: track.duration,
-          volume: narrationVolume,
-          type: 'narration',
-        })
-      }
-    }
-    
-    // Add dialogue
-    if (body.audioConfig.includeDialogue && body.audioTracks.dialogue) {
-      for (const track of body.audioTracks.dialogue) {
-        const pr = track.playbackRate
-        const playbackRate =
-          pr != null && Number.isFinite(pr) && pr > 0 ? Math.min(1.5, Math.max(0.5, pr)) : undefined
-        audioClips.push({
-          url: track.url,
-          startTime: track.startTime,
-          duration: track.duration,
-          volume: dialogueVolume,
-          type: 'dialogue',
-          character: track.character,
-          ...(playbackRate != null && Math.abs(playbackRate - 1) > 1e-4 ? { playbackRate } : {}),
-        })
-      }
-    }
-    
-    // Add music
-    if (body.audioConfig.includeMusic && body.audioTracks.music) {
-      for (const track of body.audioTracks.music) {
-        const pr = track.playbackRate
-        const playbackRate =
-          pr != null && Number.isFinite(pr) && pr > 0 ? Math.min(1.5, Math.max(0.5, pr)) : undefined
-        audioClips.push({
-          url: track.url,
-          startTime: track.startTime,
-          duration: track.duration,
-          volume: musicVolume,
-          type: 'music',
-          ...(playbackRate != null && Math.abs(playbackRate - 1) > 1e-4 ? { playbackRate } : {}),
-          ...(track.loop != null ? { loop: track.loop } : {}),
-          ...(track.fadeInSec != null && track.fadeInSec > 0 ? { fadeInSec: track.fadeInSec } : {}),
-          ...(track.fadeOutSec != null && track.fadeOutSec > 0 ? { fadeOutSec: track.fadeOutSec } : {}),
-        })
-      }
-    }
-    
-    // Add SFX
-    if (body.audioConfig.includeSfx && body.audioTracks.sfx) {
-      for (const track of body.audioTracks.sfx) {
-        audioClips.push({
-          url: track.url,
-          startTime: track.startTime,
-          duration: track.duration,
-          volume: sfxVolume,
-          type: 'sfx',
-        })
-      }
-    }
+
+    // Build audio clips from selected tracks (preserving per-clip volume, trimStart, playbackRate, and auto-ducking)
+    const audioClips: SceneRenderAudioClip[] = buildSceneRenderAudioClips(
+      body.audioConfig,
+      body.audioTracks
+    )
     
     // Note: totalDuration already calculated above for credit cost
     

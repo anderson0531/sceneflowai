@@ -372,6 +372,12 @@ export interface SceneRenderAudioConfig {
   musicVolume: number
   sfxVolume: number
   segmentAudioVolume: number
+  /** Auto-lower music by -8 dB (×0.398) during active narration/dialogue speech */
+  autoDuckMusic?: boolean
+  /** Auto-lower discrete SFX by -8 dB (×0.398) during active narration/dialogue speech */
+  autoDuckSfx?: boolean
+  /** Target loudness preset selected in the Mixer */
+  loudnessTarget?: 'broadcast-24lkfs' | 'web-14lufs' | 'off'
 }
 
 /**
@@ -570,11 +576,12 @@ export interface CreateSceneRenderJobRequest {
   }>
   /** Audio tracks with timing */
   audioTracks: {
-    narration?: Array<{ url: string; startTime: number; duration: number }>
+    narration?: Array<{ url: string; startTime: number; duration: number; volume?: number }>
     dialogue?: Array<{
       url: string
       startTime: number
       duration: number
+      volume?: number
       character?: string
       playbackRate?: number
     }>
@@ -582,6 +589,7 @@ export interface CreateSceneRenderJobRequest {
       url: string
       startTime: number
       duration: number
+      volume?: number
       loop?: boolean
       fadeInSec?: number
       fadeOutSec?: number
@@ -589,7 +597,13 @@ export interface CreateSceneRenderJobRequest {
       /** Offset into the music file so per-shot slices stay continuous. */
       trimStart?: number
     }>
-    sfx?: Array<{ url: string; startTime: number; duration: number }>
+    sfx?: Array<{
+      url: string
+      startTime: number
+      duration: number
+      volume?: number
+      playbackRate?: number
+    }>
   }
   /** Text overlays to burn into video */
   textOverlays?: Array<{
@@ -627,6 +641,141 @@ export interface CreateSceneRenderJobRequest {
     holdSec?: number
     nextFrameUrl?: string
   }
+}
+
+import { computeSpeechDuckMultiplier, type SpeechDuckWindow } from '@/lib/scene/mixerScoreMusic'
+
+function clampRenderVolume(vol: number | undefined, fallback: number): number {
+  const raw = vol != null && Number.isFinite(vol) ? vol : fallback
+  return Math.max(0, Math.min(1.5, raw))
+}
+
+function clampRenderPlaybackRate(pr: number | undefined): number | undefined {
+  if (pr == null || !Number.isFinite(pr) || pr <= 0) return undefined
+  const clamped = Math.min(1.5, Math.max(0.5, pr))
+  return Math.abs(clamped - 1) > 1e-4 ? clamped : undefined
+}
+
+/**
+ * Build FFmpeg job-spec audioClips from Mixer POST audioConfig and audioTracks.
+ * Preserves per-clip volume, playbackRate, trimStart, and applies speech auto-ducking
+ * when callers did not pre-compute ducked per-clip volumes.
+ */
+export function buildSceneRenderAudioClips(
+  audioConfig: SceneRenderAudioConfig,
+  audioTracks: CreateSceneRenderJobRequest['audioTracks']
+): SceneRenderAudioClip[] {
+  const narrationVolume = audioConfig.narrationVolume ?? 0.8
+  const dialogueVolume = audioConfig.dialogueVolume ?? 0.9
+  const musicVolume = audioConfig.musicVolume ?? 0.5
+  const sfxVolume = audioConfig.sfxVolume ?? 0.6
+
+  const audioClips: SceneRenderAudioClip[] = []
+  const speechWindows: SpeechDuckWindow[] = []
+
+  if (audioConfig.includeNarration && audioTracks.narration) {
+    for (const track of audioTracks.narration) {
+      const dur = track.duration || 0
+      if (dur > 0) {
+        speechWindows.push({
+          startTime: Math.max(0, track.startTime),
+          endTime: Math.max(0, track.startTime) + dur,
+        })
+      }
+      audioClips.push({
+        url: track.url,
+        startTime: track.startTime,
+        duration: track.duration,
+        volume: clampRenderVolume(track.volume, narrationVolume),
+        type: 'narration',
+      })
+    }
+  }
+
+  if (audioConfig.includeDialogue && audioTracks.dialogue) {
+    for (const track of audioTracks.dialogue) {
+      const playbackRate = clampRenderPlaybackRate(track.playbackRate)
+      const effectiveRate = playbackRate ?? 1
+      const wallDur = (track.duration || 0) / effectiveRate
+      if (wallDur > 0) {
+        speechWindows.push({
+          startTime: Math.max(0, track.startTime - 0.1),
+          endTime: Math.max(0, track.startTime) + wallDur + 0.15,
+        })
+      }
+      audioClips.push({
+        url: track.url,
+        startTime: track.startTime,
+        duration: track.duration,
+        volume: clampRenderVolume(track.volume, dialogueVolume),
+        type: 'dialogue',
+        character: track.character,
+        ...(playbackRate != null ? { playbackRate } : {}),
+      })
+    }
+  }
+
+  if (audioConfig.includeMusic && audioTracks.music) {
+    const musicCount = audioTracks.music.length
+    for (const track of audioTracks.music) {
+      const playbackRate = clampRenderPlaybackRate(track.playbackRate)
+      const hasExplicitClipVolume = track.volume != null && Number.isFinite(track.volume)
+      const duckMult =
+        !hasExplicitClipVolume && audioConfig.autoDuckMusic
+          ? computeSpeechDuckMultiplier(track.startTime, track.duration, speechWindows)
+          : 1
+      const volume = clampRenderVolume(
+        hasExplicitClipVolume ? track.volume : musicVolume * duckMult,
+        musicVolume
+      )
+      // Ensure non-looping or multi-slice music clips starting at 0 carry at least 0.001s trimStart
+      // so stream-copy _overlay_audio_filter always runs audio_source_window_filters and trims to duration
+      const resolvedTrimStart =
+        track.trimStart != null && track.trimStart > 0
+          ? track.trimStart
+          : (track.loop === false || musicCount > 1) && track.duration > 0
+            ? 0.001
+            : undefined
+
+      audioClips.push({
+        url: track.url,
+        startTime: track.startTime,
+        duration: track.duration,
+        volume,
+        type: 'music',
+        ...(playbackRate != null ? { playbackRate } : {}),
+        ...(track.loop != null ? { loop: track.loop } : {}),
+        ...(track.fadeInSec != null && track.fadeInSec > 0 ? { fadeInSec: track.fadeInSec } : {}),
+        ...(track.fadeOutSec != null && track.fadeOutSec > 0 ? { fadeOutSec: track.fadeOutSec } : {}),
+        ...(resolvedTrimStart != null ? { trimStart: resolvedTrimStart } : {}),
+      })
+    }
+  }
+
+  if (audioConfig.includeSfx && audioTracks.sfx) {
+    for (const track of audioTracks.sfx) {
+      const playbackRate = clampRenderPlaybackRate(track.playbackRate)
+      const hasExplicitClipVolume = track.volume != null && Number.isFinite(track.volume)
+      const duckMult =
+        !hasExplicitClipVolume && audioConfig.autoDuckSfx
+          ? computeSpeechDuckMultiplier(track.startTime, track.duration, speechWindows)
+          : 1
+      const volume = clampRenderVolume(
+        hasExplicitClipVolume ? track.volume : sfxVolume * duckMult,
+        sfxVolume
+      )
+      audioClips.push({
+        url: track.url,
+        startTime: track.startTime,
+        duration: track.duration,
+        volume,
+        type: 'sfx',
+        ...(playbackRate != null ? { playbackRate } : {}),
+      })
+    }
+  }
+
+  return audioClips
 }
 
 /** Map Mixer POST segment payload to FFmpeg job-spec video segment. */

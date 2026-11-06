@@ -178,6 +178,26 @@ class NarrationBassTests(unittest.TestCase):
         self.assertIn('bass=g=6:f=120:w=0.5,volume=1.5', narration)
         self.assertNotIn('bass=', music)
 
+    def test_overlay_filter_trims_explicit_duration_in_stream_copy_mode(self):
+        shot_one = _overlay_audio_filter(
+            1,
+            {'type': 'music', 'volume': 0.25, 'startTime': 0, 'duration': 5.0},
+            '[m0]',
+        )
+        self.assertIn('atrim=duration=5.000,asetpts=PTS-STARTPTS', shot_one)
+        self.assertIn('volume=0.25', shot_one)
+
+    def test_overlay_filter_trims_source_window_without_duplicate_duration_trim(self):
+        shot_two = _overlay_audio_filter(
+            2,
+            {'type': 'music', 'volume': 0.125, 'startTime': 5.0, 'duration': 5.0, 'trimStart': 5.0},
+            '[m1]',
+        )
+        self.assertIn('atrim=start=5.000,atrim=end=10.000,asetpts=PTS-STARTPTS', shot_two)
+        self.assertNotIn('atrim=duration=', shot_two)
+        self.assertIn('adelay=5000|5000', shot_two)
+        self.assertIn('volume=0.125', shot_two)
+
 
 if __name__ == '__main__':
     unittest.main()

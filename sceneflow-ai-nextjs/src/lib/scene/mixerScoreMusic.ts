@@ -197,9 +197,103 @@ export function foldScoreStemFades<
   })
 }
 
+export const AUTO_DUCK_SPEECH_GAIN = 0.398
+
+export interface SpeechDuckWindow {
+  startTime: number
+  endTime: number
+}
+
+/**
+ * Compute the auto-duck gain multiplier (1.0 when silent, down to 0.398 / -8 dB during speech)
+ * for a music or SFX clip spanning `[clipStart, clipStart + clipDuration]`.
+ */
+export function computeSpeechDuckMultiplier(
+  clipStart: number,
+  clipDuration: number,
+  speechWindows?: SpeechDuckWindow[]
+): number {
+  if (!speechWindows || speechWindows.length === 0 || clipDuration <= 0) return 1
+  const clipEnd = clipStart + clipDuration
+  const relevant = speechWindows
+    .map((w) => ({
+      start: Math.max(clipStart, w.startTime),
+      end: Math.min(clipEnd, w.endTime),
+    }))
+    .filter((w) => w.end > w.start)
+    .sort((a, b) => a.start - b.start)
+
+  if (relevant.length === 0) return 1
+
+  let overlapSec = 0
+  let curStart = relevant[0].start
+  let curEnd = relevant[0].end
+  for (let i = 1; i < relevant.length; i++) {
+    const next = relevant[i]
+    if (next.start <= curEnd) {
+      curEnd = Math.max(curEnd, next.end)
+    } else {
+      overlapSec += curEnd - curStart
+      curStart = next.start
+      curEnd = next.end
+    }
+  }
+  overlapSec += curEnd - curStart
+
+  if (overlapSec <= 0.05) return 1
+  const overlapRatio = Math.min(1, overlapSec / clipDuration)
+  // Full -8 dB duck when speech covers >= 25% of the clip (or >= 0.5s), smooth ramp below that
+  if (overlapRatio >= 0.25 || overlapSec >= 0.5) {
+    return AUTO_DUCK_SPEECH_GAIN
+  }
+  const t = overlapRatio / 0.25
+  return 1 - (1 - AUTO_DUCK_SPEECH_GAIN) * t
+}
+
+/**
+ * Coalesce adjacent per-shot slices of the same cue when their URL, loop flag,
+ * and effective volume match and their timeline + file windows are contiguous.
+ * Prevents N duplicate audio inputs in FFmpeg when consecutive shots share the same mix.
+ */
+export function coalesceContiguousMusicClips(clips: MixerMusicClip[]): MixerMusicClip[] {
+  if (clips.length <= 1) return clips
+  const merged: MixerMusicClip[] = []
+  for (const clip of clips) {
+    const prev = merged[merged.length - 1]
+    if (!prev) {
+      merged.push({ ...clip })
+      continue
+    }
+    const prevVol = resolveMusicCueVolume(prev.volume)
+    const currVol = resolveMusicCueVolume(clip.volume)
+    const prevEnd = prev.startTime + prev.duration
+    const prevTrimEnd = (prev.trimStart ?? 0) + prev.duration
+    const currTrimStart = clip.trimStart ?? 0
+    const isContiguousTimeline = Math.abs(prevEnd - clip.startTime) < 0.05
+    const isContiguousSource = Math.abs(prevTrimEnd - currTrimStart) < 0.05
+    const hasInternalFade = (prev.fadeOutSec ?? 0) > 0.001 || (clip.fadeInSec ?? 0) > 0.001
+
+    if (
+      prev.url === clip.url &&
+      Boolean(prev.loop) === Boolean(clip.loop) &&
+      Math.abs(prevVol - currVol) < 1e-4 &&
+      isContiguousTimeline &&
+      isContiguousSource &&
+      !hasInternalFade
+    ) {
+      prev.duration = clip.startTime + clip.duration - prev.startTime
+      prev.fadeOutSec = clip.fadeOutSec
+    } else {
+      merged.push({ ...clip })
+    }
+  }
+  return merged
+}
+
 export function mixerMusicClipsToRenderPayload(
   clips: MixerMusicClip[],
-  musicConfig: AudioTrackConfig
+  musicConfig: AudioTrackConfig,
+  speechWindows?: SpeechDuckWindow[]
 ): Array<{
   url: string
   startTime: number
@@ -212,8 +306,19 @@ export function mixerMusicClipsToRenderPayload(
   trimStart?: number
 }> {
   const playbackRate = clampAudioPlaybackRate(musicConfig.playbackRate)
+  const duckedClips =
+    musicConfig.autoDuck && speechWindows && speechWindows.length > 0
+      ? clips.map((clip) => {
+          const duckMult = computeSpeechDuckMultiplier(clip.startTime, clip.duration, speechWindows)
+          return {
+            ...clip,
+            volume: resolveMusicCueVolume(clip.volume) * duckMult,
+          }
+        })
+      : clips
+  const coalesced = coalesceContiguousMusicClips(duckedClips)
   const faded = foldScoreStemFades(
-    clips,
+    coalesced,
     musicConfig.fadeInSec ?? 0,
     musicConfig.fadeOutSec ?? 0
   )
