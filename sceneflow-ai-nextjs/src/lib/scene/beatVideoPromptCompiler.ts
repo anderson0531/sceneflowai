@@ -16,6 +16,10 @@
 import { getArtStyleNegativeTerms, getArtStyleVideoPromptSuffix } from '@/lib/vision/artStyle'
 import { formatPerformanceClause, parsePerformanceCue } from '@/lib/scene/performanceCues'
 import {
+  normalizeSingleCastShotType,
+  sanitizeSingleCastListenerPhrasing,
+} from '@/lib/intelligence/beat-sequence-planner-fallback'
+import {
   correctPronounsToGender,
   type CharacterGender,
 } from '@/lib/character/visualGender'
@@ -182,25 +186,36 @@ function pushClause(clauses: string[], existing: string, label: string, value?: 
   clauses.push(clause)
 }
 
+function isSingleCastBeat(beat: SceneBeat): boolean {
+  const cast = beat.beatDirection?.castInFrame
+  if (Array.isArray(cast)) {
+    return cast.map((name) => name.trim()).filter(Boolean).length === 1
+  }
+  return beat.kind === 'dialogue' && Boolean(beat.character?.trim())
+}
+
 /** Shot, movement, blocking, and the rest, as clauses of one direction. */
 function directionClauses(beat: SceneBeat, existing: string): string[] {
   const direction = beat.beatDirection
   if (!direction) return []
+  const singleCast = isSingleCastBeat(beat)
+  const cleanSingle = (value?: string): string | undefined =>
+    singleCast ? sanitizeSingleCastListenerPhrasing(value) || undefined : value
   const clauses: string[] = []
   pushClause(clauses, existing, 'Coverage', direction.coveragePurpose)
   pushClause(clauses, existing, 'Lens', direction.lensEnergy)
-  pushClause(clauses, existing, 'Space', direction.spatialRelationship)
-  pushClause(clauses, existing, 'Shot', direction.shotType)
+  pushClause(clauses, existing, 'Space', cleanSingle(direction.spatialRelationship))
+  pushClause(clauses, existing, 'Shot', normalizeSingleCastShotType(direction.shotType, singleCast))
   pushClause(clauses, existing, 'Angle', direction.cameraAngle)
   pushClause(clauses, existing, 'Camera', direction.cameraMovement)
-  pushClause(clauses, existing, 'Blocking', direction.blocking)
+  pushClause(clauses, existing, 'Blocking', cleanSingle(direction.blocking))
   pushClause(clauses, existing, 'Emotion', direction.emotion)
-  pushClause(clauses, existing, 'Gaze', direction.gaze)
+  pushClause(clauses, existing, 'Gaze', cleanSingle(direction.gaze))
   pushClause(clauses, existing, 'Prop interaction', direction.propInteraction)
   const props = direction.keyProps?.map((name) => name.trim()).filter(Boolean) ?? []
   if (props.length > 0) pushClause(clauses, existing, 'Props', props.join(', '))
   pushClause(clauses, existing, 'Lighting', direction.lightingAccent)
-  pushClause(clauses, existing, 'End on', direction.frozenMoment)
+  pushClause(clauses, existing, 'End on', cleanSingle(direction.frozenMoment))
   pushClause(clauses, existing, 'Sound', direction.audioCue)
   return clauses
 }
@@ -220,12 +235,15 @@ export function beatVideoFidelityClose(
 ): string {
   const parts: string[] = []
   const cast = beat.beatDirection?.castInFrame
+  const singleCast = isSingleCastBeat(beat)
   if (Array.isArray(cast)) {
     const names = cast.map((name) => name.trim()).filter(Boolean)
     parts.push(
       names.length === 0
         ? 'No people in frame'
-        : `Only these people are visible: ${names.join(', ')}. No other people`
+        : names.length === 1
+          ? `Only these people are visible: ${names[0]}. No other people, no foreground silhouette or back of another person's head (any listener is off-camera out of frame)`
+          : `Only these people are visible: ${names.join(', ')}. No other people`
     )
   }
 
@@ -239,11 +257,14 @@ export function beatVideoFidelityClose(
     )
   }
 
-  const statedAction = (
+  const rawStatedAction = (
     beat.kind === 'action'
       ? beat.actionDescription
       : beat.beatDirection?.blocking || beat.actionDescription
   )?.trim()
+  const statedAction = singleCast
+    ? sanitizeSingleCastListenerPhrasing(rawStatedAction)
+    : rawStatedAction
   if (statedAction) {
     parts.push(`The only action is: ${statedAction.replace(/\.+$/, '')}`)
   }
@@ -270,7 +291,10 @@ function hasSpokenDialogue(beat: SceneBeat, excerpt?: string): boolean {
 
 function videoNegatives(beat: SceneBeat, styleNegative: string): string {
   const silent = hasSpokenDialogue(beat) ? '' : `, ${SILENT_NEGATIVES}`
-  return `${BASE_NEGATIVES}, ${styleNegative}${silent}`
+  const singleCastNegatives = isSingleCastBeat(beat)
+    ? ', over-the-shoulder foreground person, back of second person head, unreferenced listener in frame'
+    : ''
+  return `${BASE_NEGATIVES}, ${styleNegative}${silent}${singleCastNegatives}`
 }
 
 function leadForBeat(beat: SceneBeat, options?: CompileBeatVideoPromptOptions): string {

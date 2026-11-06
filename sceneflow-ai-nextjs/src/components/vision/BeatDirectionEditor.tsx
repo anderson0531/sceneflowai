@@ -26,8 +26,10 @@ import {
 } from '@/lib/vision/resolveBeatVideoReferences'
 import {
   alignDirectionToConnectedObjects,
+  connectCharacterReference,
   connectLocationReference,
   connectObjectReference,
+  disconnectCharacterReference,
   disconnectObjectReference,
 } from '@/lib/vision/beatReferenceConnections'
 import { applyBeatDirectionSelections } from '@/lib/vision/applyBeatDirectionSelection'
@@ -349,11 +351,52 @@ export function BeatDirectionEditor({
           beatId: beat.beatId,
           patch,
           referenceSelection,
+          characters,
           objectReferences,
           promptComposition,
         }),
       },
     })
+  }
+
+  const connectedCast = characters.filter(
+    (character) =>
+      character.type !== 'narrator' &&
+      (referenceSelection.characterIds.includes(character.id || '') ||
+        referenceSelection.characterIds.includes(character.name))
+  )
+
+  const toggleCharacter = (character: DirectionCharacter, connect: boolean) => {
+    const resolvedAt = new Date().toISOString()
+    const connectedCharacterNames = connectedCast.map((entry) => entry.name)
+    const next = connect
+      ? connectCharacterReference({
+          direction,
+          selection: referenceSelection,
+          characterId: character.id || character.name,
+          characterName: character.name,
+          connectedCharacterNames,
+          resolvedAt,
+        })
+      : disconnectCharacterReference({
+          direction,
+          selection: referenceSelection,
+          characterId: character.id || character.name,
+          characterName: character.name,
+          connectedCharacterNames,
+          resolvedAt,
+        })
+    writeConnection(
+      [
+        {
+          sceneIndex: sceneIdx,
+          beatId: beat.beatId,
+          direction: directionAlignedToSelection(next.direction, next.selection),
+          referenceSelection: next.selection,
+        },
+      ],
+      { rebuildPrompts: true }
+    )
   }
 
   const toggleObject = (object: DirectionObject, connect: boolean) => {
@@ -413,12 +456,6 @@ export function BeatDirectionEditor({
     direction?.cameraMovement,
     direction?.transition ? TRANSITION_LABEL[direction.transition] : undefined,
   ].filter((value): value is string => !!value?.trim())
-  const connectedCast = characters.filter(
-    (character) =>
-      character.type !== 'narrator' &&
-      (referenceSelection.characterIds.includes(character.id || '') ||
-        referenceSelection.characterIds.includes(character.name))
-  )
   const connectedLocation = locationReferences.find(
     (location) => location.id === referenceSelection.locationRefId
   )
@@ -467,6 +504,7 @@ export function BeatDirectionEditor({
       objectReferences={objectReferences}
       referenceSelection={referenceSelection}
       onSaveDirection={saveDirectionPreview}
+      onToggleCharacter={toggleCharacter}
       onToggleObject={toggleObject}
       onSelectLocation={selectLocation}
       initialSafety={initialSafety}

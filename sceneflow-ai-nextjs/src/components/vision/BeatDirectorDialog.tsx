@@ -63,6 +63,7 @@ export interface BeatDirectorDialogProps {
   objectReferences: DirectorObject[]
   referenceSelection: BeatReferenceSelection
   onSaveDirection: (patch: StillDirectorPatch) => void
+  onToggleCharacter?: (character: DirectorCharacter, connect: boolean) => void
   onToggleObject: (object: DirectorObject, connect: boolean) => void
   onSelectLocation: (locationRefId: string | null, locationVersionId: string | null) => void
 }
@@ -127,6 +128,7 @@ export function BeatDirectorDialog({
   objectReferences,
   referenceSelection,
   onSaveDirection,
+  onToggleCharacter,
   onToggleObject,
   onSelectLocation,
   initialSafety = false,
@@ -152,6 +154,14 @@ export function BeatDirectorDialog({
   const [tab, setTab] = useState<ReferenceTab>('locations')
 
   const sceneOptions = useMemo(() => librarySceneOptions(scenes), [scenes])
+  const visibleCharacters = useMemo(() => {
+    const q = query.trim().toLowerCase()
+    return characters.filter(
+      (character) =>
+        character.type !== 'narrator' &&
+        (!q || character.name.toLowerCase().includes(q))
+    )
+  }, [characters, query])
   const visibleLocations = useMemo(
     () => filterLocationReferences(locationReferences, query, scope),
     [locationReferences, query, scope]
@@ -164,11 +174,11 @@ export function BeatDirectorDialog({
   const selectedLocation = locationReferences.find(
     (location) => location.id === referenceSelection.locationRefId
   )
+  const isCharacterConnected = (character: DirectorCharacter): boolean =>
+    referenceSelection.characterIds.includes(character.id || '') ||
+    referenceSelection.characterIds.includes(character.name)
   const cast = characters.filter(
-    (character) =>
-      character.type !== 'narrator' &&
-      (referenceSelection.characterIds.includes(character.id || '') ||
-        referenceSelection.characterIds.includes(character.name))
+    (character) => character.type !== 'narrator' && isCharacterConnected(character)
   )
   const connectedObjects = objectReferences.filter((object) =>
     referenceSelection.objectRefIds.includes(object.id)
@@ -425,15 +435,46 @@ export function BeatDirectorDialog({
           </div>
           <div className="max-h-48 min-w-0 space-y-1 overflow-y-auto overflow-x-hidden rounded border border-slate-800 p-2">
             {tab === 'cast' &&
-              (cast.length === 0 ? (
-                <p className="text-xs text-slate-500">Cast comes from the shot direction.</p>
+              (visibleCharacters.length === 0 ? (
+                <p className="text-xs text-slate-500">No cast members in this view.</p>
               ) : (
-                cast.map((character) => (
-                  <div key={character.id || character.name} className="flex min-w-0 items-center gap-2 text-xs">
-                    <StillMark imageUrl={character.referenceImage} />
-                    <span className="truncate">{character.name}</span>
-                  </div>
-                ))
+                visibleCharacters.map((character) => {
+                  const checked = isCharacterConnected(character)
+                  return (
+                    <label
+                      key={character.id || character.name}
+                      className="flex min-w-0 items-center gap-2 text-xs"
+                    >
+                      <input
+                        type="checkbox"
+                        checked={checked}
+                        disabled={readOnly || !onToggleCharacter}
+                        onChange={(event) => {
+                          const nextChecked = event.target.checked
+                          onToggleCharacter?.(character, nextChecked)
+                          setPreview((prev) => {
+                            if (!prev) return prev
+                            const baseCast = Array.isArray(prev.castInFrame)
+                              ? prev.castInFrame
+                              : cast.map((entry) => entry.name)
+                            const nextCast = nextChecked
+                              ? baseCast.some(
+                                  (name) => name.trim().toLowerCase() === character.name.trim().toLowerCase()
+                                )
+                                ? baseCast
+                                : [...baseCast, character.name]
+                              : baseCast.filter(
+                                  (name) => name.trim().toLowerCase() !== character.name.trim().toLowerCase()
+                                )
+                            return { ...prev, castInFrame: nextCast }
+                          })
+                        }}
+                      />
+                      <StillMark imageUrl={character.referenceImage} />
+                      <span className="min-w-0 truncate">{character.name}</span>
+                    </label>
+                  )
+                })
               ))}
             {tab === 'locations' &&
               (visibleLocations.length === 0 ? (

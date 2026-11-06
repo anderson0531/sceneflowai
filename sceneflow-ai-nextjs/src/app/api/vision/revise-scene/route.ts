@@ -435,7 +435,7 @@ Output the REWRITTEN scene as JSON with this exact structure:
       "character": "CHARACTER NAME",
       "line": "[emotion] One sentence of dialogue",
       "voiceDirection": "1-2 sentences of actor-facing direction for this take.",
-      "beatDirection": {"castInFrame": ["CHARACTER NAME"], "coveragePurpose": "isolate the confession", "lensEnergy": "hold", "spatialRelationship": "speaker turns toward the listener, listener at frame edge", "blocking": "speaker turns to face listener", "emotion": "guarded honesty", "gaze": "into listener's eyes", "frozenMoment": "Speaker mid-word.", "transition": "CUT"}
+      "beatDirection": {"castInFrame": ["CHARACTER NAME"], "coveragePurpose": "isolate the confession", "lensEnergy": "hold", "spatialRelationship": "clean single on speaker, off-camera eyeline", "blocking": "speaker leans forward, shoulders squared", "emotion": "guarded honesty", "gaze": "angled slightly off-camera", "frozenMoment": "Speaker mid-word.", "transition": "CUT"}
     },
     {
       "kind": "narration",

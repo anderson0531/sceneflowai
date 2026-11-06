@@ -229,6 +229,97 @@ export function connectLocationReference(
   }
 }
 
+export interface CharacterConnectionInput {
+  direction?: BeatDirection
+  selection: BeatReferenceSelection
+  characterId: string
+  characterName: string
+  /** Currently connected character names used to seed castInFrame when direction.castInFrame was undefined */
+  connectedCharacterNames?: string[]
+  resolvedAt: string
+}
+
+export interface CharacterConnectionResult {
+  direction: BeatDirection
+  selection: BeatReferenceSelection
+}
+
+function castNamesMatch(left: string, right: string): boolean {
+  const a = left.trim().toLowerCase()
+  const b = right.trim().toLowerCase()
+  return Boolean(a && b && a === b)
+}
+
+export function connectCharacterReference(input: CharacterConnectionInput): CharacterConnectionResult {
+  const name = input.characterName.trim()
+  const id = (input.characterId || name).trim()
+  const baseCast = Array.isArray(input.direction?.castInFrame)
+    ? input.direction!.castInFrame
+    : (input.connectedCharacterNames ?? [])
+  const nextCast = baseCast.some((entry) => castNamesMatch(entry, name))
+    ? [...baseCast]
+    : [...baseCast, ...(name ? [name] : [])]
+  const nextDirection: BeatDirection = {
+    ...(input.direction ?? {}),
+    castInFrame: nextCast,
+  }
+  const hasId = input.selection.characterIds.some(
+    (entry) => castNamesMatch(entry, id) || castNamesMatch(entry, name)
+  )
+  return {
+    direction: nextDirection,
+    selection: {
+      ...input.selection,
+      characterIds: hasId
+        ? [...input.selection.characterIds]
+        : [...input.selection.characterIds, id],
+      source: 'user',
+      resolvedAt: input.resolvedAt,
+    },
+  }
+}
+
+export function disconnectCharacterReference(
+  input: CharacterConnectionInput
+): CharacterConnectionResult {
+  const name = input.characterName.trim()
+  const id = (input.characterId || name).trim()
+  const baseCast = Array.isArray(input.direction?.castInFrame)
+    ? input.direction!.castInFrame
+    : (input.connectedCharacterNames ?? [])
+  const nextCast = baseCast.filter(
+    (entry) => !castNamesMatch(entry, name) && !castNamesMatch(entry, id)
+  )
+  const nextDirection: BeatDirection = {
+    ...(input.direction ?? {}),
+    castInFrame: nextCast,
+  }
+  if (
+    nextCast.length <= 1 &&
+    nextDirection.shotType &&
+    /\b(?:two[- ]shot|over[- ]the[- ]shoulder|ots)\b/i.test(nextDirection.shotType)
+  ) {
+    nextDirection.shotType = 'Medium Close-Up'
+  }
+  const nextCharacterIds = input.selection.characterIds.filter(
+    (entry) => !castNamesMatch(entry, id) && !castNamesMatch(entry, name)
+  )
+  const nextWardrobes = input.selection.characterWardrobes?.filter(
+    (entry) =>
+      !castNamesMatch(entry.characterId, id) && !castNamesMatch(entry.characterId, name)
+  )
+  return {
+    direction: nextDirection,
+    selection: {
+      ...input.selection,
+      characterIds: nextCharacterIds,
+      ...(nextWardrobes ? { characterWardrobes: nextWardrobes } : {}),
+      source: 'user',
+      resolvedAt: input.resolvedAt,
+    },
+  }
+}
+
 export interface MentionedBeat {
   sceneIndex: number
   sceneNumber: number

@@ -290,7 +290,7 @@ Beat-kind requirements:
 
 Rules:
 • Do NOT invent prop names. keyProps MUST be a subset of scene "Key Props" — never a character name and never a possessive. Do not list built-in architectural hardware (door/hatch/vault/lockdown/valve wheels); put those in the location description.
-• castInFrame, blocking, gaze and frozenMoment must agree: do not describe a person in blocking, gaze or frozenMoment when castInFrame is [].
+• castInFrame, blocking, gaze and frozenMoment must agree: do not describe a person in blocking, gaze or frozenMoment when castInFrame is []. When a shot is a Two-Shot or Over-the-Shoulder (OTS), BOTH characters must be listed in castInFrame. When castInFrame has only ONE character (a clean single), direct their gaze slightly off-camera rather than naming an unreferenced listener in frame.
 • Do NOT restate the scene direction verbatim — refine it for THIS beat.
 • Do NOT put dialogue content in beatDirection fields.
 • frozenMoment is a photograph, not a video: no temporal verbs ("pulses", "walks toward"). Describe the instant.
@@ -320,7 +320,7 @@ function buildCompactBeatDirectionPromptBlock(includeProps: boolean): string {
   return `BEAT DIRECTION (COMPACT — MANDATORY OBJECT ON EVERY BEAT):
 Every beat MUST include a "beatDirection" object with the fields below and NO others. Richer direction is added by a later pass — extra fields here cost the scene budget.
 
-• "castInFrame": array of the character names visible on camera in THIS beat, exactly as spelled in the scene's character list. It is the only thing that decides who appears. Use [] for a frame with no people in it. Never list NARRATOR.
+• "castInFrame": array of the character names visible on camera in THIS beat, exactly as spelled in the scene's character list. It is the only thing that decides who appears. Use [] for a frame with no people in it. Never list NARRATOR. Every visible person (including an Over-the-Shoulder foreground shoulder/back-of-head) must be listed here; when castInFrame has only one character, frame a clean single with an off-camera eyeline (never name an unreferenced listener in frame).
 • "shotType": named shot for this beat, 1–4 words (e.g., "Wide Establishing Shot", "Establishing Shot", "Wide Shot", "Medium Two-Shot", "Over-the-Shoulder", "Medium Close-Up", "Close-Up", "Extreme Close-Up", "Insert Shot"). Whenever a scene enters a new location, switches INT/EXT, or jumps in time, Beat 0 MUST be an action beat with "beatRole": "establishing" and "shotType": "Wide Establishing Shot" to anchor location geography before cutting to medium/OTS interaction or close-up/insert turns; avoid repeating the same shotType on consecutive beats unless holding for a deliberate dramatic beat.
 • "frozenMoment": ONE settled instant (e.g., "Piper screen-left halts Gideon mid-lean, journal pressed to his sternum, her jaw set and eyes locked on his."). Noun-first, concrete, one composition — pack screen-left/right placement, body weight/posture, readable facial expression, and eyeline target into this sentence. Repeat quoted on-screen words and what a photograph or prop depicts; do not replace them with a vague label such as "production credits." It is a photograph, not a video: no temporal verbs ("pulses", "walks toward"). Do not write empty stillness ("standing motionless") without the face and body that make the hold readable.
 • "transition": how this beat cuts into the NEXT beat. One of: "CUT", "CONTINUE", "DISSOLVE", "FADE", "MATCH_CUT". Default is "CUT".${propFields}

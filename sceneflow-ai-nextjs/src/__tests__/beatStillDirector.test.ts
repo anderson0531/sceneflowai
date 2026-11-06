@@ -567,6 +567,41 @@ describe('buildStillDirectorSystemPrompt', () => {
     expect(system).toContain('"transition": "CUT"')
     expect(system).toContain('production credits')
     expect(system).toContain('actionDescription is two to four concrete sentences')
+    expect(system).toContain('Never use Over-the-Shoulder (OTS) or Two-Shot')
+    expect(system).toContain('"castInFrame": ["Exact Character Name", "Second Character Name"]')
+  })
+
+  it('prevents single-cast dialogue shots from triggering an unreferenced OTS listener in still and video prompts', () => {
+    const singleDialogueBeat: SceneBeat = {
+      beatId: 'bt_single_dialogue',
+      sequenceIndex: 0,
+      kind: 'dialogue',
+      character: 'Piper Hayes',
+      line: 'The current is unstable.',
+      beatDirection: {
+        shotType: 'Over-the-Shoulder',
+        castInFrame: ['Piper Hayes'],
+        spatialRelationship: 'speaker turns toward the listener, listener at frame edge',
+        blocking: 'Piper Hayes turns to face listener',
+        gaze: "into listener's eyes",
+        frozenMoment: 'Piper Hayes mid-word, eyes locked on the listener.',
+      },
+    }
+
+    const framing = composeBeatActionFraming(singleDialogueBeat)
+    expect(framing).toContain('Medium Close-Up')
+    expect(framing).not.toMatch(/Over-the-Shoulder/i)
+    expect(framing).not.toMatch(/\blistener\b/i)
+    expect(framing).toContain('off-camera')
+
+    const video = compileBeatVideoPromptFromDirection(singleDialogueBeat, null)
+    expect(video.prompt).toContain('Shot: Medium Close-Up')
+    expect(video.prompt).not.toMatch(/Over-the-Shoulder/i)
+    expect(video.prompt).not.toMatch(/listener at frame edge/i)
+    expect(video.prompt).toContain(
+      "no foreground silhouette or back of another person's head"
+    )
+    expect(video.negativePrompt).toContain('back of second person head')
   })
 })
 

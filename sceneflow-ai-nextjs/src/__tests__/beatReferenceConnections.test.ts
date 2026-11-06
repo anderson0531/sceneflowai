@@ -2,7 +2,9 @@ import { describe, expect, it } from 'vitest'
 import { composeBeatActionFraming } from '@/lib/intelligence/beat-sequence-planner-fallback'
 import {
   alignDirectionToConnectedObjects,
+  connectCharacterReference,
   connectObjectReference,
+  disconnectCharacterReference,
   disconnectObjectReference,
   objectReferenceClause,
 } from '@/lib/vision/beatReferenceConnections'
@@ -131,5 +133,38 @@ describe('disconnectObjectReference', () => {
     expect(disconnected.direction.framePrompt).toBe('Close on the mantel.')
     expect(disconnected.direction.videoPrompt).toBe('Hold on the desk.')
     expect(disconnected.direction.shotType).toBe('Insert Shot')
+  })
+})
+
+describe('connectCharacterReference and disconnectCharacterReference', () => {
+  it('adds a second cast member to selection.characterIds and direction.castInFrame, and normalizes OTS when disconnected back to 1', () => {
+    const connected = connectCharacterReference({
+      direction: {
+        shotType: 'Over-the-Shoulder',
+        castInFrame: ['Ada'],
+      },
+      selection,
+      characterId: 'gideon',
+      characterName: 'Gideon',
+      connectedCharacterNames: ['Ada'],
+      resolvedAt: '2026-09-24T00:00:00.000Z',
+    })
+
+    expect(connected.selection.characterIds).toEqual(['ada', 'gideon'])
+    expect(connected.selection.source).toBe('user')
+    expect(connected.direction.castInFrame).toEqual(['Ada', 'Gideon'])
+
+    const disconnected = disconnectCharacterReference({
+      direction: connected.direction,
+      selection: connected.selection,
+      characterId: 'gideon',
+      characterName: 'Gideon',
+      connectedCharacterNames: ['Ada', 'Gideon'],
+      resolvedAt: '2026-09-24T00:00:01.000Z',
+    })
+
+    expect(disconnected.selection.characterIds).toEqual(['ada'])
+    expect(disconnected.direction.castInFrame).toEqual(['Ada'])
+    expect(disconnected.direction.shotType).toBe('Medium Close-Up')
   })
 })

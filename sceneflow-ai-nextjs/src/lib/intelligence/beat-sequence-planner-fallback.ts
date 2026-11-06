@@ -395,6 +395,73 @@ function hasVisualDirection(direction?: BeatDirection): boolean {
 }
 
 /**
+ * When a beat has only one character in frame (`castInFrame.length === 1`),
+ * phrases like "into listener's eyes", "listener at frame edge", or "turns to
+ * face listener" cause image and video models to invent an unreferenced second
+ * person in the foreground with their back to the camera (an OTS silhouette).
+ * Rewrite those listener references to an off-camera eyeline.
+ */
+export function sanitizeSingleCastListenerPhrasing(text?: string | null): string {
+  const raw = text?.trim() ?? ''
+  if (!raw) return ''
+  return raw
+    .replace(/,?\s*\b(?:with\s+)?(?:the\s+)?listener\s+at\s+(?:the\s+)?frame\s+edge\b/gi, '')
+    .replace(/\binto\s+(?:the\s+)?listener(?:'s|’s)?\s+eyes\b/gi, 'slightly off-camera')
+    .replace(
+      /\b(?:locked\s+on|fixed\s+on|focused\s+on)\s+(?:the\s+)?listener(?:'s|’s)?(?:\s+eyes)?\b/gi,
+      'angled slightly off-camera'
+    )
+    .replace(
+      /\b(?:on|at|toward|towards|to\s+face|facing|addressing)\s+(?:the\s+)?listener(?:'s|’s)?(?:\s+eyes)?\b/gi,
+      'slightly off-camera'
+    )
+    .replace(/\b(?:the\s+)?listener(?:'s|’s)?\s+eyes\b/gi, 'off-camera')
+    .replace(/\b(?:the\s+)?listener\b/gi, 'off-camera')
+    .replace(/\s+,/g, ',')
+    .replace(/\s{2,}/g, ' ')
+    .trim()
+}
+
+export function normalizeSingleCastShotType(
+  shotType: string | undefined,
+  singleCast: boolean
+): string | undefined {
+  if (!shotType?.trim()) return shotType
+  if (
+    singleCast &&
+    /\b(?:over[- ]the[- ]shoulder|ots|two[- ]shot)\b/i.test(shotType)
+  ) {
+    return 'Medium Close-Up'
+  }
+  return shotType
+}
+
+function syncPersonRefsWithCastInFrame(
+  refs: StillPromptBoundRef[],
+  castInFrame: string[]
+): StillPromptBoundRef[] {
+  const existingPeople = refs.filter((ref) => ref.kind === 'person')
+  const nonPeople = refs.filter((ref) => ref.kind !== 'person')
+  const nextPeople: StillPromptBoundRef[] = castInFrame
+    .map((name) => name.trim())
+    .filter(Boolean)
+    .map((name, idx) => {
+      const prev = existingPeople.find(
+        (person) => person.name.trim().toLowerCase() === name.toLowerCase()
+      )
+      return prev
+        ? { ...prev, token: `person [${idx + 1}]`, name }
+        : {
+            kind: 'person',
+            token: `person [${idx + 1}]`,
+            name,
+            roleLabel: 'identity',
+          }
+    })
+  return [...nextPeople, ...nonPeople]
+}
+
+/**
  * Build the frame description for a beat out of its structured direction.
  *
  * A pure function of the direction and the beat's own prose. It deliberately
@@ -455,16 +522,21 @@ export function composeBeatActionFraming(beat?: SceneBeat | null): string {
     ? direction.castInFrame.map((name) => name.trim()).filter(Boolean)
     : undefined
   const emptyCast = Array.isArray(direction?.castInFrame) && (namedCast?.length ?? 0) === 0
+  const singleCast = (namedCast?.length ?? 0) === 1
+  const cleanSingleCastText = (value?: string | null): string =>
+    singleCast ? sanitizeSingleCastListenerPhrasing(value) : (value?.trim() ?? '')
 
-  appendFacet(parts, policySafe(frozen || described))
+  appendFacet(parts, policySafe(cleanSingleCastText(frozen || described)))
   if (frozen && described) {
-    appendFacet(parts, policySafe(lockedReadableDetail(described, frozen)))
+    appendFacet(parts, policySafe(cleanSingleCastText(lockedReadableDetail(described, frozen))))
   }
   // "Blocking" and "Prop handling" are stage-direction words, and direction
   // written under them reads as choreography: a move, or a run of them. A still
   // can only hold one position per body, so the label asks for one and the
   // reduction drops the stages that lead into it.
-  const blocking = policySafe(reduceActionToSingleInstant(direction?.blocking))
+  const blocking = policySafe(
+    cleanSingleCastText(reduceActionToSingleInstant(direction?.blocking))
+  )
   const skipEmptyCastBlocking =
     emptyCast &&
     Boolean(frozen) &&
@@ -494,7 +566,7 @@ export function composeBeatActionFraming(beat?: SceneBeat | null): string {
     appendFacet(parts, propNames.join(', '), 'Props')
   }
 
-  const gaze = direction?.gaze?.trim() ?? ''
+  const gaze = cleanSingleCastText(direction?.gaze)
   if (!(emptyCast || isNullOccupancyGaze(gaze))) {
     appendFacet(parts, gaze, 'Gaze')
   }
@@ -524,7 +596,8 @@ export function composeBeatActionFraming(beat?: SceneBeat | null): string {
   // Framing leads the description, unless the beat's own prose already names
   // this shot and would otherwise state it twice. Direction is authored for
   // coverage, so it can hold a camera move; a still gets the end state of it.
-  const { shot, rewrites } = normalizeStillFraming(direction?.shotType, direction?.cameraAngle)
+  const effectiveShotType = normalizeSingleCastShotType(direction?.shotType, singleCast)
+  const { shot, rewrites } = normalizeStillFraming(effectiveShotType, direction?.cameraAngle)
   for (const rewrite of rewrites) {
     console.warn(
       `[Beat Still] Beat ${beat.beatId} ${rewrite.field} "${rewrite.from}" describes a camera move; a still cannot hold one — using "${rewrite.to}"`
@@ -550,7 +623,7 @@ export function composeBeatActionFraming(beat?: SceneBeat | null): string {
     speakerName: beat.character,
     defaultEmotion: namedEmotions.shared || (Object.keys(namedEmotions.byName).length ? '' : resolvedEmotion),
     emotionsByName: namedEmotions.byName,
-    shotType: direction?.shotType,
+    shotType: effectiveShotType,
   })
 }
 
@@ -609,24 +682,37 @@ export function composePersistedBeatStillPrompt(args: {
   const leadIn = args.actionLeadIn?.trim()
   const actionFraming =
     leadIn && !composed.includes(leadIn) ? `${asSentence(leadIn)} ${composed}` : composed
+  const singleCast =
+    Array.isArray(beat.beatDirection?.castInFrame) &&
+    beat.beatDirection.castInFrame.map((n) => n.trim()).filter(Boolean).length === 1
+  const effectiveShotType = normalizeSingleCastShotType(
+    beat.beatDirection?.shotType,
+    singleCast
+  )
   const seed = composeBeatStillPrompt({
     actionFraming,
     lookbook,
     sceneIndex: args.sceneIndex,
     artStyleAnchor: args.artStyleAnchor,
     lighting: beat.beatDirection?.lightingAccent,
-    shotType: beat.beatDirection?.shotType,
+    shotType: effectiveShotType,
   })
   if (!seed) return undefined
-  const refs =
+  const parsedRefs =
     args.refs && args.refs.length > 0
       ? args.refs
       : parseStillReferencesLegend(beat.storyboardImagePrompt)
+  const refs =
+    !(args.refs && args.refs.length > 0) &&
+    parsedRefs.length > 0 &&
+    Array.isArray(beat.beatDirection?.castInFrame)
+      ? syncPersonRefsWithCastInFrame(parsedRefs, beat.beatDirection.castInFrame)
+      : parsedRefs
   return assembleStructuredStillPrompt({
     actionOrStructured: seed,
     refs,
     includeCandid: !isExplicitDirectToCameraBeat(beat),
-    shotType: beat.beatDirection?.shotType,
+    shotType: effectiveShotType,
     allowTypography: Boolean(leadIn),
   })
 }

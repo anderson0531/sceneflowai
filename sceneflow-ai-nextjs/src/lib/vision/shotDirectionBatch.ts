@@ -237,7 +237,7 @@ export function applyOptimizedShotPatches(args: {
     const directed = {
       ...current,
       actionDescription: entry.patch.actionDescription?.trim() || current.actionDescription,
-      beatDirection: directionFromDirectorPatch(current.beatDirection, entry.patch),
+      beatDirection: directionFromDirectorPatch(current.beatDirection, entry.patch, args.characters),
     }
     scenes = saveDirectorPatchToScenes({
       scenes,
@@ -253,6 +253,7 @@ export function applyOptimizedShotPatches(args: {
         locationReferences: args.locationReferences,
         objectReferences: args.objectReferences,
       }),
+      characters: args.characters,
       objectReferences: args.objectReferences,
       promptComposition: args.promptComposition,
     })

@@ -16,7 +16,11 @@ import { beatStillDirectionFingerprint } from '@/lib/script/beatDirectionFingerp
 import { restampPreVisHashIfScriptCurrent } from '@/lib/storyboard/preVisSync'
 import { syncBeatStillPromptToDirection } from '@/lib/storyboard/syncBeatStillPrompt'
 import { resolveBeatElementSelection } from '@/lib/vision/resolveBeatVideoReferences'
-import { shouldUseExplicitBeatReferences } from '@/lib/vision/beatFrameGenerationContext'
+import {
+  directedCastForBeat,
+  shouldUseExplicitBeatReferences,
+} from '@/lib/vision/beatFrameGenerationContext'
+import { detectCharactersInText } from '@/lib/scene/characterDetection'
 import { alignDirectionToConnectedObjects } from '@/lib/vision/beatReferenceConnections'
 import { matchObjectsBySelectedNames } from '@/lib/character/matching'
 import { extractLocationCanonicalScale } from '@/lib/imagen/locationScaleClause'
@@ -416,7 +420,8 @@ export function syncSceneDirectionToContinuityCatalog(args: {
 /** Merges a Direct Shot preview patch over the beat's saved direction. */
 export function directionFromDirectorPatch(
   direction: BeatDirection | undefined,
-  patch: StillDirectorPatch
+  patch: StillDirectorPatch,
+  characters?: Array<{ id?: string; name: string; referenceImage?: string; type?: string }>
 ): BeatDirection {
   const next: BeatDirection = { ...(direction ?? {}) }
   const textKeys = [
@@ -441,6 +446,46 @@ export function directionFromDirectorPatch(
   if (Array.isArray(patch.castInFrame)) next.castInFrame = patch.castInFrame
   if (patch.keyProps && patch.keyProps.length > 0) next.keyProps = patch.keyProps
   if (patch.transition) next.transition = patch.transition
+
+  // If the new patch explicitly names a second library character in its visual
+  // staging (frozenMoment / actionFraming / blocking / gaze) on a non-empty-cast
+  // shot, include that character in castInFrame so their reference plate attaches.
+  const explicitEmptyCast =
+    (Array.isArray(patch.castInFrame) && patch.castInFrame.length === 0) ||
+    (Array.isArray(next.castInFrame) && next.castInFrame.length === 0 && !patch.castInFrame)
+  if (!explicitEmptyCast && characters && characters.length > 0) {
+    const patchStagingText = [
+      patch.frozenMoment,
+      patch.actionFraming,
+      patch.blocking,
+      patch.gaze,
+    ]
+      .filter((part): part is string => Boolean(part?.trim()))
+      .join(' ')
+    if (patchStagingText.trim()) {
+      const detected = detectCharactersInText(
+        patchStagingText,
+        characters.filter((c) => c.type !== 'narrator')
+      )
+      if (detected.length > 0) {
+        const currentCast = Array.isArray(next.castInFrame) ? [...next.castInFrame] : []
+        for (const char of detected) {
+          const name = char.name?.trim()
+          if (!name) continue
+          const alreadyListed = currentCast.some(
+            (existing) => existing.trim().toLowerCase() === name.toLowerCase()
+          )
+          if (!alreadyListed) {
+            currentCast.push(name)
+          }
+        }
+        if (currentCast.length > 0) {
+          next.castInFrame = currentCast
+        }
+      }
+    }
+  }
+
   return next
 }
 
@@ -636,6 +681,7 @@ export function saveDirectorPatchToScenes(args: {
   beatId: string
   patch: StillDirectorPatch
   referenceSelection: BeatReferenceSelection
+  characters?: Array<{ id?: string; name: string; referenceImage?: string; type?: string }>
   objectReferences: Array<{ id: string; name: string }>
   promptComposition?: BeatPromptComposition
   generatedBy?: 'user' | 'director'
@@ -644,8 +690,20 @@ export function saveDirectorPatchToScenes(args: {
     (entry) => entry.beatId === args.beatId
   )
   if (!beat) return args.scenes
-  const merged = directionFromDirectorPatch(beat.beatDirection, args.patch)
-  const objectNames = args.referenceSelection.objectRefIds
+  const merged = directionFromDirectorPatch(beat.beatDirection, args.patch, args.characters)
+  let nextReferenceSelection = args.referenceSelection
+  if (args.characters && args.characters.length > 0 && Array.isArray(merged.castInFrame)) {
+    const directedCast =
+      directedCastForBeat({ ...beat, beatDirection: merged }, args.characters) ?? []
+    const nextCharacterIds = directedCast
+      .map((char) => char.id || char.name)
+      .filter((id): id is string => Boolean(id))
+    nextReferenceSelection = {
+      ...args.referenceSelection,
+      characterIds: nextCharacterIds,
+    }
+  }
+  const objectNames = nextReferenceSelection.objectRefIds
     .map((id) => args.objectReferences.find((object) => object.id === id)?.name?.trim())
     .filter((name): name is string => !!name)
   return applyBeatDirectionToScenes({
@@ -656,7 +714,7 @@ export function saveDirectorPatchToScenes(args: {
     refreshPrompts: 'recompute',
     actionDescription: args.patch.actionDescription,
     voiceDirection: args.patch.voiceDirection,
-    referenceSelection: args.referenceSelection,
+    referenceSelection: nextReferenceSelection,
     promptComposition: args.promptComposition,
     generatedBy: args.generatedBy,
   })

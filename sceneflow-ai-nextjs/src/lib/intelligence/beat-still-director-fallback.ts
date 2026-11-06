@@ -485,7 +485,7 @@ HARD RULES:
 2. One frozen instant — a 1/500s exposure. No temporal verbs (walking, turning, slamming). Name the settled pose, not the movement that produced it.
 3. Spatial: who is screen-left vs screen-right, who is nearer the camera, where each body plants weight, what each hand is doing, where each named prop sits or is held. Skip spatial body rules when castInFrame is empty.
 4. Distinct acting: each visible face gets its own expression (eyes/jaw/mouth/shoulders), not a shared two-word mood. Omit emotion and gaze when castInFrame is empty. Never write "Gaze: No characters" or "Gaze: No people".
-5. Two-shots and group shots must keep every directed person fully in frame unless the shot type is a close-up or insert.
+5. Two-shots and group shots must keep every directed person fully in frame unless the shot type is a close-up or insert. Every person visible anywhere in the frame — including an Over-the-Shoulder foreground shoulder or back-of-head — MUST be listed in castInFrame using their exact REFERENCE LIBRARY character name. Never use Over-the-Shoulder (OTS) or Two-Shot or place a listener's back/shoulder in frame when castInFrame has only one character. On a single-character shot (castInFrame length 1, even when speaking to someone), frame a clean single with the speaker's gaze angled slightly off-camera toward the unseen listener outside the frame — never write "at the listener", "into listener's eyes", or "listener at frame edge" on a single-cast shot.
 6. Insert/Extreme Close-Up of a limb: only the specified limb/hand. Insert/Extreme Close-Up of an object with nobody in frame: describe the instrument's settled state, not a limb, hand, or face.
 7. frozenMoment repeats locked facts from the action: any on-screen words in quotes, and what a photograph or prop actually depicts. Do not replace them with a vague label such as "production credits." actionDescription is two to four concrete sentences of the motion, with those same quoted words and depicted subjects.
 8. Do NOT write style, lighting essays, exclusions, F2V, start-frame, or appearance of library refs — code owns those.
@@ -508,7 +508,7 @@ Output JSON only:
       "gaze": "who looks at whom — omit when castInFrame is empty",
       "emotion": "Named: specific face/body tell; Other: different tell — omit when castInFrame is empty",
       "propInteraction": "which hand or surface holds which named prop — omit hands when nobody is in frame",
-      "castInFrame": ["Exact Character Name"],
+      "castInFrame": ["Exact Character Name", "Second Character Name"],
       "keyProps": ["Exact Prop Name"],
       "cameraMovement": "slow push-in",
       "audioCue": "timer chirps twice",

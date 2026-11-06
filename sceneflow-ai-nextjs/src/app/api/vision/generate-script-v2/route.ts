@@ -1915,7 +1915,7 @@ ${shared.narrationSchemaLine}
           "character": "Character Name",
           "line": "[emotion] Dialogue...",
           "voiceDirection": "1-2 sentences of actor-facing direction for this take.",
-          "beatDirection": {"castInFrame": ["Character Name"], "shotType": "Medium Close-Up", "frozenMoment": "Speaker mid-word, eyes locked on the listener.", "transition": "CUT"}
+          "beatDirection": {"castInFrame": ["Character Name"], "shotType": "Medium Close-Up", "frozenMoment": "Speaker mid-word, eyes angled slightly off-camera.", "transition": "CUT"}
         },
         {
           "kind": "action",
