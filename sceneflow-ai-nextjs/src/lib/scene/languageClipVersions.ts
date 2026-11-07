@@ -134,9 +134,18 @@ export function presentSegmentForStream<
   if (!isLanguageClipTarget(language)) return segment
   const playback = resolveLanguageClipPlayback(segment, language)
   if (playback.usingMaster || !playback.url) return segment
+  const langKey = normalizeStreamLanguage(language)
+  const langSet = segment.languageVersions?.[langKey]
+  const langTakes =
+    Array.isArray(langSet?.takes) && langSet.takes.length > 0 ? langSet.takes : segment.takes
+  const rawStem = (segment as { stemSeparation?: SceneSegment['stemSeparation'] }).stemSeparation
+  const keepStem = rawStem?.sourceAudioUrl === playback.url
   return {
     ...segment,
     activeAssetUrl: playback.url,
+    ...(playback.takeId ? { currentTakeId: playback.takeId } : {}),
+    takes: langTakes,
+    ...(rawStem && !keepStem ? { stemSeparation: undefined } : {}),
     assetType: 'video',
     status: 'COMPLETE',
   }

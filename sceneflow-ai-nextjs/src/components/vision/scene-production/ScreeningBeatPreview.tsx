@@ -3,6 +3,7 @@
 import React, { useCallback, useMemo, useState } from 'react'
 import { coerceSceneSfxFlatArray } from '@/lib/script/segmentScript'
 import { listIncludedBeatVideos } from '@/lib/scene/mixerBeatInclude'
+import { resolveLanguageClipPlayback } from '@/lib/scene/languageClipVersions'
 import {
   presentSegmentForShotMethod,
   resolveLanguageShotMethod,
@@ -80,9 +81,17 @@ export function ScreeningBeatPreview({
   const segments = useMemo(() => {
     const included = listIncludedBeatVideos(productionData?.segments, scene)
     return included.map((segment) => {
+      const hasLanguageClip =
+        language !== 'en' && !resolveLanguageClipPlayback(segment, language).usingMaster
+      const rawCfg = settings.languageShotConfigs?.[segment.segmentId]
+      const effectiveCfg =
+        hasLanguageClip && rawCfg?.method === 'double'
+          ? { ...rawCfg, method: 'regenerate' as const }
+          : rawCfg
       const method = resolveLanguageShotMethod({
-        config: settings.languageShotConfigs?.[segment.segmentId],
+        config: effectiveCfg,
         klingLipsyncEnabled: settings.klingLipsyncEnabled,
+        hasLanguageClip,
       })
       return presentSegmentForShotMethod(segment, language, method)
     })
@@ -189,15 +198,17 @@ export function ScreeningBeatPreview({
     const narrationAudio = scene?.narrationAudio as
       | Record<string, { url?: string; duration?: number }>
       | undefined
-    const narrationUrl =
-      narrationAudio?.[language]?.url ||
-      narrationAudio?.en?.url ||
-      (typeof scene?.narrationAudioUrl === 'string' ? scene.narrationAudioUrl : undefined)
+    const isEnglish = language === 'en'
+    const narrationUrl = isEnglish
+      ? narrationAudio?.en?.url ||
+        (typeof scene?.narrationAudioUrl === 'string' ? scene.narrationAudioUrl : undefined)
+      : narrationAudio?.[language]?.url
 
-    const rawDialogue =
-      (scene?.dialogueAudio as Record<string, Array<{ audioUrl?: string; character?: string; line?: string; text?: string; dialogueIndex?: number }>> | undefined)?.[language] ||
-      (scene?.dialogueAudio as Record<string, Array<{ audioUrl?: string; character?: string; line?: string; text?: string; dialogueIndex?: number }>> | undefined)?.en ||
-      []
+    const rawDialogue = isEnglish
+      ? (scene?.dialogueAudio as Record<string, Array<{ audioUrl?: string; character?: string; line?: string; text?: string; dialogueIndex?: number }>> | undefined)?.en ||
+        (Array.isArray(scene?.dialogueAudio) ? scene.dialogueAudio : [])
+      : (scene?.dialogueAudio as Record<string, Array<{ audioUrl?: string; character?: string; line?: string; text?: string; dialogueIndex?: number }>> | undefined)?.[language] ||
+        []
 
     const dialogueEntries = resolvedDialogueClips
       .filter((clip) => clip.url)

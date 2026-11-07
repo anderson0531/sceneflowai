@@ -21,7 +21,10 @@ import {
   replacePromoOnScreenText,
   segmentNeedsLanguageClip,
 } from '@/lib/scene/languageClipPrompt'
-import { findDialogueAudioForLine } from '@/components/vision/scene-production/audioTrackBuilder'
+import {
+  buildAudioTracksForLanguage,
+  findDialogueAudioForLine,
+} from '@/components/vision/scene-production/audioTrackBuilder'
 import { buildBeatVideoClips } from '@/lib/scene/buildBeatVideoClips'
 import { hydratePromoSceneWithSharedShots } from '@/lib/publish/buildPromoScene'
 import { resolvePromoPlayback } from '@/lib/publish/promoBeatMedia'
@@ -386,6 +389,18 @@ describe('language clip prompts', () => {
         character: 'ELARA',
       })
     ).toBeNull()
+
+    const sceneWithEnglishDialogueOnly = {
+      dialogueAudio: {
+        en: [{ character: 'ELARA', audioUrl: 'https://cdn/en-1.mp3', duration: 3 }],
+      },
+      dialogue: [{ character: 'ELARA', text: 'Hello', audioUrl: 'https://cdn/en-legacy.mp3' }],
+    }
+    const esTracks = buildAudioTracksForLanguage(sceneWithEnglishDialogueOnly, 'es')
+    expect(esTracks.dialogue).toHaveLength(0)
+    const enTracks = buildAudioTracksForLanguage(sceneWithEnglishDialogueOnly, 'en')
+    expect(enTracks.dialogue).toHaveLength(1)
+    expect(enTracks.dialogue[0].url).toBe('https://cdn/en-1.mp3')
   })
 
   it('marks dialogue clips with needsLanguageClip in buildBeatVideoClips while keeping action clips shared', () => {

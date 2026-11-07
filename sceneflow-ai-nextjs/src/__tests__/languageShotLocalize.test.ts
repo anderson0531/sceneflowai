@@ -10,12 +10,23 @@ import {
   resolveShotVideoPlaybackRate,
   videoWallDurationSec,
 } from '@/lib/scene/languageShotLocalize'
+import { listIncludedBeatVideos } from '@/lib/scene/mixerBeatInclude'
 import { buildSceneDubRenderRequest } from '@/lib/streams/streamLocalize'
 import type { SceneSegment } from '@/components/vision/scene-production/types'
 
 describe('resolveLanguageShotMethod', () => {
-  it('defaults to double', () => {
+  it('defaults to double when no language clip exists', () => {
     expect(resolveLanguageShotMethod({})).toBe('double')
+  })
+
+  it('defaults to regenerate when a localized language clip exists and no method is explicitly configured', () => {
+    expect(resolveLanguageShotMethod({ hasLanguageClip: true })).toBe('regenerate')
+    expect(
+      resolveLanguageShotMethod({
+        config: { method: 'double' },
+        hasLanguageClip: true,
+      })
+    ).toBe('double')
   })
 
   it('keeps an explicit choice ahead of the legacy scene-wide switch', () => {
@@ -84,7 +95,20 @@ describe('presentSegmentForShotMethod', () => {
     activeAssetUrl: 'https://example.com/master.mp4',
     assetType: 'video',
     status: 'COMPLETE',
-    takes: [],
+    currentTakeId: 'take-master',
+    takes: [
+      {
+        id: 'take-master',
+        createdAt: '2026-01-01T00:00:00.000Z',
+        assetUrl: 'https://example.com/master.mp4',
+        status: 'COMPLETE',
+      },
+    ],
+    stemSeparation: {
+      status: 'complete',
+      sourceAudioUrl: 'https://example.com/master.mp4',
+      backgroundStemUrl: 'https://example.com/master-bg.mp3',
+    },
     languageVersions: {
       es: {
         takes: [
@@ -100,16 +124,22 @@ describe('presentSegmentForShotMethod', () => {
     },
   } as unknown as SceneSegment
 
-  it('plays the language clip only for regenerate', () => {
+  it('plays the language clip for regenerate and preserves it through listIncludedBeatVideos', () => {
     expect(presentSegmentForShotMethod(segment, 'es', 'double').activeAssetUrl).toBe(
       'https://example.com/master.mp4'
     )
     expect(presentSegmentForShotMethod(segment, 'es', 'lipsync').activeAssetUrl).toBe(
       'https://example.com/master.mp4'
     )
-    expect(presentSegmentForShotMethod(segment, 'es', 'regenerate').activeAssetUrl).toBe(
-      'https://example.com/es.mp4'
-    )
+    const presentedRegen = presentSegmentForShotMethod(segment, 'es', 'regenerate')
+    expect(presentedRegen.activeAssetUrl).toBe('https://example.com/es.mp4')
+    expect(presentedRegen.currentTakeId).toBe('take-es')
+    expect(presentedRegen.stemSeparation).toBeUndefined()
+
+    const mixerVideoSegments = listIncludedBeatVideos([presentedRegen], undefined)
+    expect(mixerVideoSegments).toHaveLength(1)
+    expect(mixerVideoSegments[0].activeAssetUrl).toBe('https://example.com/es.mp4')
+    expect(mixerVideoSegments[0].currentTakeId).toBe('take-es')
   })
 
   it('builds dub render request retaining unselected master shots, using regenerated shots, and preserving dialogue-free stems', () => {

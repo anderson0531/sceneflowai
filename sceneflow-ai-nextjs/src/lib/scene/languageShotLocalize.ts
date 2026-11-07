@@ -27,15 +27,18 @@ export function isLanguageShotMethod(value: unknown): value is LanguageShotMetho
 }
 
 /**
- * Explicit per-shot choice wins. A saved scene-wide Kling switch, or a legacy
- * localize tier of lip-sync, applies only when the shot has no choice yet.
+ * Explicit per-shot choice wins. When no explicit choice is set, a shot that
+ * already has a generated localized clip defaults to 'regenerate'; otherwise a
+ * saved scene-wide Kling switch or legacy lip-sync tier applies before 'double'.
  */
 export function resolveLanguageShotMethod(args: {
   config?: MixerLanguageShotConfig | null
   klingLipsyncEnabled?: boolean
   legacyLocalizeLipsync?: boolean
+  hasLanguageClip?: boolean
 }): LanguageShotMethod {
   if (isLanguageShotMethod(args.config?.method)) return args.config.method
+  if (args.hasLanguageClip) return 'regenerate'
   if (args.klingLipsyncEnabled || args.legacyLocalizeLipsync) return 'lipsync'
   return 'double'
 }

@@ -606,8 +606,15 @@ export function buildAudioTracksForLanguage(
     return 'Dialogue line may have been modified'
   }
   
-  // Source 1: dialogueAudio[language] array (preferred)
-  const dialogueAudioArray = scene.dialogueAudio?.[language] || scene.dialogueAudio?.en
+  // Source 1: dialogueAudio[language] array (never fall back to English for non-English streams)
+  const dialogueAudioArray =
+    language === 'en'
+      ? Array.isArray(scene.dialogueAudio)
+        ? scene.dialogueAudio
+        : scene.dialogueAudio?.en
+      : Array.isArray(scene.dialogueAudio)
+        ? undefined
+        : scene.dialogueAudio?.[language]
   if (Array.isArray(dialogueAudioArray)) {
     dialogueAudioArray.forEach((audio: any, idx: number) => {
       const url = audio?.audioUrl || audio?.url
@@ -646,8 +653,8 @@ export function buildAudioTracksForLanguage(
     })
   }
   
-  // Source 2: scene.dialogue[].audioUrl (fallback for legacy data)
-  if (dialogueClips.length === 0 && Array.isArray(scene.dialogue)) {
+  // Source 2: scene.dialogue[].audioUrl (fallback for legacy English data only)
+  if (language === 'en' && dialogueClips.length === 0 && Array.isArray(scene.dialogue)) {
     scene.dialogue.forEach((d: any, idx: number) => {
       const url = d.audioUrl || d.url
       if (url && typeof url === 'string' && url.trim()) {

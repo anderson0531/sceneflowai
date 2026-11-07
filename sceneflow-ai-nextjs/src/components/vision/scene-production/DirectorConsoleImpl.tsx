@@ -1066,12 +1066,44 @@ export function DirectorConsoleRoot({
     }
   }, [selectedSegment, updateConfig])
   
+  const markShotLanguageRegenerate = useCallback(
+    (language: string, segmentIds: string[]) => {
+      if (!isLanguageClipTarget(language) || !onProductionDataChange || !productionData) return
+      const byLang = migrateMixerSettingsByLanguage(productionData)
+      const existingLangSettings = byLang[language] ?? {}
+      const nextShotConfigs = { ...(existingLangSettings.languageShotConfigs ?? {}) }
+      let changed = false
+      for (const segmentId of segmentIds) {
+        if (nextShotConfigs[segmentId]?.method !== 'regenerate') {
+          nextShotConfigs[segmentId] = {
+            ...nextShotConfigs[segmentId],
+            method: 'regenerate',
+          }
+          changed = true
+        }
+      }
+      if (!changed) return
+      onProductionDataChange({
+        ...productionData,
+        mixerSettingsByLanguage: {
+          ...byLang,
+          [language]: {
+            ...existingLangSettings,
+            languageShotConfigs: nextShotConfigs,
+          },
+        },
+      })
+    },
+    [onProductionDataChange, productionData]
+  )
+
   // Handle generate from dialog - saves config and triggers single segment generation
   // Pass config via overrideConfigs to bypass React state async timing issues
   const handleGenerateFromDialog = useCallback(
     async (segmentId: string, config: VideoGenerationConfig) => {
       const language = productionTarget.language
       if (isLanguageClipTarget(language)) {
+        markShotLanguageRegenerate(language, [segmentId])
         const segment = segments.find((s) => s.segmentId === segmentId)
         const languageName = getLanguageName(language)
         const shotNumber = (segment?.sequenceIndex ?? 0) + 1
@@ -1124,6 +1156,7 @@ export function DirectorConsoleRoot({
     },
     [
       productionTarget.language,
+      markShotLanguageRegenerate,
       segments,
       sceneId,
       composeSegmentLanguageClip,
@@ -1309,6 +1342,9 @@ export function DirectorConsoleRoot({
 
       const activeLang = productionTarget.language
       const isLangRetake = isLanguageClipTarget(activeLang)
+      if (isLangRetake) {
+        markShotLanguageRegenerate(activeLang, [segmentId])
+      }
       const retakeComposed = isLangRetake
         ? await composeSegmentLanguageClip(
             retakeSegment,
@@ -1348,6 +1384,7 @@ export function DirectorConsoleRoot({
       productionData,
       updateConfig,
       productionTarget.language,
+      markShotLanguageRegenerate,
       composeSegmentLanguageClip,
       onGenerate,
     ]
@@ -2251,17 +2288,34 @@ export function DirectorConsoleRoot({
 
   const handleRestoreLanguageVersion = useCallback((segmentId: string, takeId: string) => {
     if (!onProductionDataChange || !productionData) return
-    if (isMasterStreamLanguage(productionTarget.language)) {
+    const language = productionTarget.language
+    if (isMasterStreamLanguage(language)) {
       handleRestoreVideoTake(segmentId, takeId)
       return
+    }
+    const byLang = migrateMixerSettingsByLanguage(productionData)
+    const existingLangSettings = byLang[language] ?? {}
+    const nextShotConfigs = {
+      ...(existingLangSettings.languageShotConfigs ?? {}),
+      [segmentId]: {
+        ...(existingLangSettings.languageShotConfigs?.[segmentId] ?? {}),
+        method: 'regenerate' as const,
+      },
     }
     onProductionDataChange({
       ...productionData,
       segments: productionData.segments.map((segment) =>
         segment.segmentId === segmentId
-          ? withSelectedLanguageClip(segment, productionTarget.language, takeId)
+          ? withSelectedLanguageClip(segment, language, takeId)
           : segment
       ),
+      mixerSettingsByLanguage: {
+        ...byLang,
+        [language]: {
+          ...existingLangSettings,
+          languageShotConfigs: nextShotConfigs,
+        },
+      },
     })
   }, [onProductionDataChange, productionData, productionTarget.language, handleRestoreVideoTake])
 
@@ -2304,6 +2358,7 @@ export function DirectorConsoleRoot({
   const handleGenerateLanguageVersion = useCallback(async (segment: SceneSegment) => {
     const language = productionTarget.language
     if (isMasterStreamLanguage(language)) return
+    markShotLanguageRegenerate(language, [segment.segmentId])
     setLanguageClipBusyId(segment.segmentId)
     const languageName = getLanguageName(language)
     const shotNumber = (segment.sequenceIndex ?? 0) + 1
@@ -2431,6 +2486,7 @@ export function DirectorConsoleRoot({
     }
   }, [
     productionTarget.language,
+    markShotLanguageRegenerate,
     scene,
     sceneNumber,
     getQueueItem,
@@ -2526,7 +2582,14 @@ export function DirectorConsoleRoot({
         generatingLanguageClipId={languageClipBusyId}
         isGeneratingAudio={isGeneratingAudio}
         productionTarget={productionTarget}
-        onProductionTargetChange={setProductionTarget}
+        onProductionTargetChange={(nextTarget) => {
+          const normalizedLang = normalizeStreamLanguage(nextTarget.language)
+          const next = { ...nextTarget, language: normalizedLang }
+          setProductionTarget(next)
+          if (normalizedLang !== productionTarget.language) {
+            onLanguageChange?.(normalizedLang)
+          }
+        }}
         videoGenerationAvailable={videoGenerationAvailable}
         onSegmentsChange={(updatedSegments) => {
           if (onProductionDataChange && productionData) {

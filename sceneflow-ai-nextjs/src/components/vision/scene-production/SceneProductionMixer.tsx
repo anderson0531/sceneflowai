@@ -137,7 +137,10 @@ import {
   resolveShotVideoPlaybackRate,
   videoWallDurationSec,
 } from '@/lib/scene/languageShotLocalize'
-import { extractPromptSignageText } from '@/lib/scene/languageClipPrompt'
+import {
+  extractPromptSignageText,
+  extractSpokenLineFromPrompt,
+} from '@/lib/scene/languageClipPrompt'
 import { cn, forceDownload } from '@/lib/utils'
 import { SUPPORTED_LANGUAGES, FLAG_EMOJIS } from '@/constants/languages'
 import {
@@ -1440,9 +1443,14 @@ function SegmentBeatVideoControls({
 
   const methodCounts = togglable.reduce(
     (acc, row) => {
+      const hasLanguageClip =
+        languageActive &&
+        !!languageCode &&
+        !resolveLanguageClipPlayback(row.segment!, languageCode).usingMaster
       const m = resolveLanguageShotMethod({
         config: shotConfigs[row.segment!.segmentId],
         klingLipsyncEnabled: legacyLipsync,
+        hasLanguageClip,
       })
       acc[m] += 1
       return acc
@@ -1635,17 +1643,18 @@ function SegmentBeatVideoControls({
             const trimWindow = seg ? resolveVideoTrimWindow(seg, trimSource) : null
             const isTrimExpanded = !!seg && expandedTrimSegmentId === seg.segmentId
             const playableTakes = seg ? listPlayableTakes(seg) : []
-            const method = seg
-              ? resolveLanguageShotMethod({
-                  config: shotConfigs[seg.segmentId],
-                  klingLipsyncEnabled: legacyLipsync,
-                })
-              : 'double'
-            const videoRate = resolveShotVideoPlaybackRate(seg ? shotConfigs[seg.segmentId] : undefined)
             const langPlayback =
               languageActive && seg && languageCode
                 ? resolveLanguageClipPlayback(seg, languageCode)
                 : null
+            const method = seg
+              ? resolveLanguageShotMethod({
+                  config: shotConfigs[seg.segmentId],
+                  klingLipsyncEnabled: legacyLipsync,
+                  hasLanguageClip: !!langPlayback && !langPlayback.usingMaster,
+                })
+              : 'double'
+            const videoRate = resolveShotVideoPlaybackRate(seg ? shotConfigs[seg.segmentId] : undefined)
             const langTakeOptions =
               languageActive && seg && languageCode
                 ? listLanguageClipVersionOptions(seg.languageVersions?.[languageCode])
@@ -2978,16 +2987,25 @@ export function SceneProductionMixer({
   // A later const is a temporal dead zone and crashes the Mixer
   // (`Cannot access '…' before initialization`).
   const [klingLipsyncEnabled, setKlingLipsyncEnabled] = useState(false)
+  const [preserveBackgroundStem, setPreserveBackgroundStem] = useState(true)
+  const [includeSpeechStem, setIncludeSpeechStem] = useState(false)
+  const [masterSegmentVolume, setMasterSegmentVolume] = useState(0.8)
 
   const shotMethodFor = useCallback(
-    (segmentId: string) =>
-      isEnglish
-        ? 'double'
-        : resolveLanguageShotMethod({
-            config: languageShotConfigs[segmentId],
-            klingLipsyncEnabled,
-          }),
-    [isEnglish, languageShotConfigs, klingLipsyncEnabled]
+    (segmentId: string) => {
+      if (isEnglish) return 'double'
+      const seg =
+        mixerBeatSegments.find((s) => s.segmentId === segmentId) ??
+        segments.find((s) => s.segmentId === segmentId)
+      const hasLanguageClip =
+        !!seg && !resolveLanguageClipPlayback(seg, selectedLanguage).usingMaster
+      return resolveLanguageShotMethod({
+        config: languageShotConfigs[segmentId],
+        klingLipsyncEnabled,
+        hasLanguageClip,
+      })
+    },
+    [isEnglish, mixerBeatSegments, segments, selectedLanguage, languageShotConfigs, klingLipsyncEnabled]
   )
 
   const shotVideoRateFor = useCallback(
@@ -2997,19 +3015,27 @@ export function SceneProductionMixer({
   )
 
   const buildSegmentDurationInput = useCallback(
-    (segment: SceneSegment) => ({
-      segment,
-      dialogueClips: resolvedDialogueClips,
-      probedDurations,
-      measuredVideoDuration: measuredSegmentDurations[segment.segmentId],
-      manualPostPause: segmentAudioConfigs[segment.segmentId]?.postSegmentPause,
-      dialogueEnabled: audioTracks.dialogue.enabled,
-      narrationPrefix,
-      getPlaybackRate: getDialoguePlaybackRate,
-      videoPlaybackRate: isEnglish
-        ? 1
-        : resolveShotVideoPlaybackRate(languageShotConfigs[segment.segmentId]),
-    }),
+    (segment: SceneSegment) => {
+      const isLocalizedRegenWithEmbedAudio =
+        !isEnglish &&
+        shotMethodFor(segment.segmentId) === 'regenerate' &&
+        !resolveLanguageClipPlayback(segment, selectedLanguage).usingMaster &&
+        isBeatEmbedAudioIncluded(segmentAudioConfigs[segment.segmentId]) &&
+        masterSegmentVolume > 0
+      return {
+        segment,
+        dialogueClips: resolvedDialogueClips,
+        probedDurations,
+        measuredVideoDuration: measuredSegmentDurations[segment.segmentId],
+        manualPostPause: segmentAudioConfigs[segment.segmentId]?.postSegmentPause,
+        dialogueEnabled: audioTracks.dialogue.enabled && !isLocalizedRegenWithEmbedAudio,
+        narrationPrefix,
+        getPlaybackRate: getDialoguePlaybackRate,
+        videoPlaybackRate: isEnglish
+          ? 1
+          : resolveShotVideoPlaybackRate(languageShotConfigs[segment.segmentId]),
+      }
+    },
     [
       resolvedDialogueClips,
       probedDurations,
@@ -3019,6 +3045,9 @@ export function SceneProductionMixer({
       narrationPrefix,
       getDialoguePlaybackRate,
       isEnglish,
+      selectedLanguage,
+      shotMethodFor,
+      masterSegmentVolume,
       languageShotConfigs,
     ]
   )
@@ -3144,6 +3173,13 @@ export function SceneProductionMixer({
   const handleSelectLanguageTake = useCallback(
     (segmentId: string, clipId: string) => {
       if (isEnglish) return
+      setLanguageShotConfigs((prev) => ({
+        ...prev,
+        [segmentId]: {
+          ...prev[segmentId],
+          method: 'regenerate',
+        },
+      }))
       onSegmentsChange?.(
         segments.map((seg) =>
           seg.segmentId === segmentId
@@ -3200,14 +3236,16 @@ export function SceneProductionMixer({
     setLanguageShotConfigs((prev) => {
       const next = { ...prev }
       mixerBeatSegments.forEach((seg) => {
+        const hasLanguageClip = !resolveLanguageClipPlayback(seg, selectedLanguage).usingMaster
+        const promptText = seg.userEditedPrompt || seg.generatedPrompt
         const hasDialogue =
           (seg.dialogueLineIds?.length ?? 0) > 0 ||
           (seg.dialogueLines?.length ?? 0) > 0 ||
+          !!seg.dialoguePortion?.excerpt?.trim() ||
+          !!extractSpokenLineFromPrompt(promptText) ||
           (dubAudioBySegmentId[seg.segmentId]?.clipIds.length ?? 0) > 0
-        const detectedSignage = extractPromptSignageText(
-          seg.userEditedPrompt || seg.generatedPrompt
-        )
-        const shouldRegen = hasDialogue || !!detectedSignage
+        const detectedSignage = extractPromptSignageText(promptText)
+        const shouldRegen = hasLanguageClip || hasDialogue || !!detectedSignage
         if (shouldRegen) regenMarked += 1
         next[seg.segmentId] = {
           ...next[seg.segmentId],
@@ -3221,7 +3259,7 @@ export function SceneProductionMixer({
         ? `Marked ${regenMarked} dialogue/signage shot${regenMarked > 1 ? 's' : ''} for Regenerate; unselected shots retain Master`
         : 'No dialogue or signage detected — all shots retained on Master'
     )
-  }, [isEnglish, mixerBeatSegments, dubAudioBySegmentId])
+  }, [isEnglish, selectedLanguage, mixerBeatSegments, dubAudioBySegmentId])
 
   const handleRetainAllMasterShots = useCallback(() => {
     if (isEnglish) return
@@ -3241,12 +3279,7 @@ export function SceneProductionMixer({
   const handleBatchRegenerateShots = useCallback(async () => {
     if (isEnglish || !onGenerateLanguageVersion) return
     const regenTargets = mixerBeatSegments.filter(
-      (seg) =>
-        isMixerBeatIncluded(seg) &&
-        resolveLanguageShotMethod({
-          config: languageShotConfigs[seg.segmentId],
-          klingLipsyncEnabled,
-        }) === 'regenerate'
+      (seg) => isMixerBeatIncluded(seg) && shotMethodFor(seg.segmentId) === 'regenerate'
     )
     if (regenTargets.length === 0) {
       toast.info('Mark at least one shot as Regenerate first')
@@ -3270,8 +3303,7 @@ export function SceneProductionMixer({
     isEnglish,
     onGenerateLanguageVersion,
     mixerBeatSegments,
-    languageShotConfigs,
-    klingLipsyncEnabled,
+    shotMethodFor,
     selectedLanguage,
   ])
 
@@ -3837,10 +3869,6 @@ export function SceneProductionMixer({
   
   // Watermark state
   const [watermarkConfig, setWatermarkConfig] = useState<WatermarkConfig>(() => DEFAULT_WATERMARK_CONFIG)
-
-  const [preserveBackgroundStem, setPreserveBackgroundStem] = useState(true)
-  const [includeSpeechStem, setIncludeSpeechStem] = useState(false)
-  const [masterSegmentVolume, setMasterSegmentVolume] = useState(0.8)
   
   const toggleSection = useCallback((section: keyof typeof collapsedSections) => {
     setCollapsedSections(prev => ({ ...prev, [section]: !prev[section] }))
@@ -3850,9 +3878,31 @@ export function SceneProductionMixer({
   const hasHydratedMixerSettingsRef = useRef(false)
   const activeLanguageRef = useRef(selectedLanguage)
   const lastPersistedSnapshotJsonRef = useRef<string | null>(null)
+  const languageClipCountsRef = useRef<Record<string, number>>({})
 
   const applyMergedSettingsToState = useCallback(
-    (merged: ReturnType<typeof mergeMixerSettings>) => {
+    (
+      merged: ReturnType<typeof mergeMixerSettings>,
+      language: string
+    ) => {
+      const nextLanguageShotConfigs = { ...merged.languageShotConfigs }
+      if (language !== 'en') {
+        for (const seg of segmentsRef.current) {
+          const takeCount = seg.languageVersions?.[language]?.takes?.length ?? 0
+          languageClipCountsRef.current[`${language}:${seg.segmentId}`] = takeCount
+          const hasClip = !resolveLanguageClipPlayback(seg, language).usingMaster
+          if (
+            hasClip &&
+            (nextLanguageShotConfigs[seg.segmentId]?.method === 'double' ||
+              nextLanguageShotConfigs[seg.segmentId]?.method === undefined)
+          ) {
+            nextLanguageShotConfigs[seg.segmentId] = {
+              ...nextLanguageShotConfigs[seg.segmentId],
+              method: 'regenerate',
+            }
+          }
+        }
+      }
       setAudioTracks(merged.audioTracks)
       setDialogueClipConfigs(merged.dialogueClipConfigs)
       setMusicShotConfigs(merged.musicShotConfigs)
@@ -3861,7 +3911,7 @@ export function SceneProductionMixer({
       setPreserveBackgroundStem(merged.preserveBackgroundStem)
       setIncludeSpeechStem(merged.includeSpeechStem)
       setKlingLipsyncEnabled(merged.klingLipsyncEnabled)
-      setLanguageShotConfigs(merged.languageShotConfigs)
+      setLanguageShotConfigs(nextLanguageShotConfigs)
       setWatermarkConfig(merged.watermarkConfig)
       setLoudnessTarget(merged.loudnessTarget)
       const nextSegmentAudioConfigs = buildSegmentAudioConfigsForSegments(
@@ -3870,7 +3920,7 @@ export function SceneProductionMixer({
       )
       setSegmentAudioConfigs(nextSegmentAudioConfigs)
       previousEnglishWatermarkRef.current = merged.watermarkConfig.text?.trim() || ''
-      return nextSegmentAudioConfigs
+      return { nextSegmentAudioConfigs, nextLanguageShotConfigs }
     },
     []
   )
@@ -3884,7 +3934,10 @@ export function SceneProductionMixer({
         : mergeMixerSettings(
             productionData?.mixerSettings ?? migrateLegacyLocalStorageSettings()
           )
-      const hydratedSegmentAudioConfigs = applyMergedSettingsToState(merged)
+      const {
+        nextSegmentAudioConfigs: hydratedSegmentAudioConfigs,
+        nextLanguageShotConfigs: hydratedLanguageShotConfigs,
+      } = applyMergedSettingsToState(merged, language)
 
       const shared = getSharedMixerUiSettings(productionData)
       setCollapsedSections(shared.collapsedSections)
@@ -3896,9 +3949,6 @@ export function SceneProductionMixer({
       }
       previousEnglishOverlaysRef.current = externalTextOverlays || productionData?.textOverlays || []
 
-      const hydratedTarget = shared.productionTarget
-        ? { ...shared.productionTarget, streamType: 'video' as const }
-        : productionTarget
       lastPersistedSnapshotJsonRef.current = JSON.stringify({
         language,
         languageSettings: buildLanguageMixerSnapshot({
@@ -3911,11 +3961,11 @@ export function SceneProductionMixer({
           preserveBackgroundStem: merged.preserveBackgroundStem,
           includeSpeechStem: merged.includeSpeechStem,
           klingLipsyncEnabled: merged.klingLipsyncEnabled,
-          languageShotConfigs: merged.languageShotConfigs,
+          languageShotConfigs: hydratedLanguageShotConfigs,
           watermarkConfig: merged.watermarkConfig,
           loudnessTarget: merged.loudnessTarget,
         }),
-        productionTarget: hydratedTarget,
+        productionTarget,
         collapsedSections: shared.collapsedSections,
         theaterMode: shared.theaterMode,
         textOverlayTranslations: nextTranslations,
@@ -3931,11 +3981,6 @@ export function SceneProductionMixer({
 
     hydrateLanguageSettings(selectedLanguage)
 
-    const shared = getSharedMixerUiSettings(productionData)
-    if (shared.productionTarget && onProductionTargetChange) {
-      onProductionTargetChange({ ...shared.productionTarget, streamType: 'video' })
-    }
-
     hydratedSettingsTokenRef.current = token
     hasHydratedMixerSettingsRef.current = true
     activeLanguageRef.current = selectedLanguage
@@ -3949,6 +3994,35 @@ export function SceneProductionMixer({
     productionData,
     selectedLanguage,
   ])
+
+  // Auto-upgrade shot method to 'regenerate' when a new language clip take arrives for the selected language
+  useEffect(() => {
+    if (isEnglish) return
+    setLanguageShotConfigs((prev) => {
+      let changed = false
+      const next = { ...prev }
+      for (const seg of segments) {
+        const key = `${selectedLanguage}:${seg.segmentId}`
+        const count = seg.languageVersions?.[selectedLanguage]?.takes?.length ?? 0
+        const prevCount = languageClipCountsRef.current[key] ?? 0
+        languageClipCountsRef.current[key] = count
+        const hasClip = !resolveLanguageClipPlayback(seg, selectedLanguage).usingMaster
+        if (
+          hasClip &&
+          (count > prevCount || next[seg.segmentId]?.method === undefined) &&
+          next[seg.segmentId]?.method !== 'regenerate' &&
+          next[seg.segmentId]?.method !== 'lipsync'
+        ) {
+          next[seg.segmentId] = {
+            ...next[seg.segmentId],
+            method: 'regenerate',
+          }
+          changed = true
+        }
+      }
+      return changed ? next : prev
+    })
+  }, [isEnglish, selectedLanguage, segments])
 
   const onMixerSettingsChangeRef = useRef(onMixerSettingsChange)
   onMixerSettingsChangeRef.current = onMixerSettingsChange
@@ -4078,18 +4152,21 @@ export function SceneProductionMixer({
     )
   }, [segmentIdsKey])
   
-  // Languages available in the mixer: configured streams + per-scene audio keys
+  // Languages available in the mixer: configured streams + per-scene audio keys + segment language clips
   const availableLanguages = useMemo(() => {
     const langs = new Set<string>()
     if (audioAssets.narrationAudio) {
       Object.keys(audioAssets.narrationAudio).forEach((l) => langs.add(l))
     }
-    if (audioAssets.dialogueAudio) {
+    if (audioAssets.dialogueAudio && !Array.isArray(audioAssets.dialogueAudio)) {
       Object.keys(audioAssets.dialogueAudio).forEach((l) => langs.add(l))
+    }
+    for (const seg of segments) {
+      Object.keys(seg.languageVersions || {}).forEach((l) => langs.add(l))
     }
     if (selectedLanguage) langs.add(selectedLanguage)
     return mergeStreamSelectorLanguages(projectStreams, langs)
-  }, [audioAssets, projectStreams, selectedLanguage])
+  }, [audioAssets, segments, projectStreams, selectedLanguage])
 
   const languagesNotYetGenerated = useMemo(
     () =>
@@ -4174,16 +4251,16 @@ export function SceneProductionMixer({
   ])
   // Removed unused dialogueLayoutSignature useMemo here
 
-  // Get audio URLs for selected language
+  // Get audio URLs for selected language (never fall back to English audio when mixing a non-English stream)
   const currentAudioUrls = useMemo(() => {
-    const narrationUrl = audioAssets.narrationAudio?.[selectedLanguage]?.url 
-      || audioAssets.narrationAudio?.en?.url 
-      || audioAssets.narrationAudioUrl
-    
-    const rawDialogue =
-      audioAssets.dialogueAudio?.[selectedLanguage] ||
-      audioAssets.dialogueAudio?.en ||
-      []
+    const narrationUrl = isEnglish
+      ? audioAssets.narrationAudio?.en?.url || audioAssets.narrationAudioUrl
+      : audioAssets.narrationAudio?.[selectedLanguage]?.url
+
+    const rawDialogue = isEnglish
+      ? audioAssets.dialogueAudio?.en ||
+        (Array.isArray(audioAssets.dialogueAudio) ? audioAssets.dialogueAudio : [])
+      : audioAssets.dialogueAudio?.[selectedLanguage] || []
 
     const dialogueEntries = resolvedDialogueClips
       .filter(c => c.url)
@@ -4221,7 +4298,7 @@ export function SceneProductionMixer({
       music: musicUrl,
       sfx: sfxEntries,
     }
-  }, [audioAssets, selectedLanguage, resolvedDialogueClips, normalizedSceneSfx])
+  }, [audioAssets, isEnglish, selectedLanguage, resolvedDialogueClips, normalizedSceneSfx])
 
   /** Dialogue start/duration from timeline drags override layout engine for preview + render. */
   const dialoguePlaybackAudioUrls = useMemo(() => {
@@ -4246,35 +4323,52 @@ export function SceneProductionMixer({
     // Track offset within the same segment (if multiple clips in one segment)
     const segmentTimeCursors = new Map<number, number>()
 
-    const dialogue = currentAudioUrls.dialogue.map((d, idx) => {
-      const clipKey = d.id || `dialogue-${idx}`
-      const sourceDur = probedDurations[clipKey] ?? d.duration ?? 3
-      const rate = getDialoguePlaybackRate(clipKey)
-      const wallDur = dialogueClipWallDuration(sourceDur, rate)
-
-      let startTime = d.startTime ?? 0
-      if (d.id) {
+    const dialogue = currentAudioUrls.dialogue
+      .filter((d) => {
+        if (isEnglish || !d.id) return true
         const segIdx = clipIdToSegmentIndex.get(d.id)
-        if (segIdx !== undefined) {
-          let segStart = 0
-          for (let i = 0; i < Math.min(segIdx, segments.length); i++) {
-            segStart += getPlaybackSegmentDuration(segments[i])
+        const seg = segIdx !== undefined ? segments[segIdx] : undefined
+        if (!seg) return true
+        const isLocalizedRegenWithEmbedAudio =
+          shotMethodFor(seg.segmentId) === 'regenerate' &&
+          !resolveLanguageClipPlayback(seg, selectedLanguage).usingMaster &&
+          isBeatEmbedAudioIncluded(segmentAudioConfigs[seg.segmentId]) &&
+          masterSegmentVolume > 0
+        return !isLocalizedRegenWithEmbedAudio
+      })
+      .map((d, idx) => {
+        const clipKey = d.id || `dialogue-${idx}`
+        const sourceDur = probedDurations[clipKey] ?? d.duration ?? 3
+        const rate = getDialoguePlaybackRate(clipKey)
+        const wallDur = dialogueClipWallDuration(sourceDur, rate)
+
+        let startTime = d.startTime ?? 0
+        if (d.id) {
+          const segIdx = clipIdToSegmentIndex.get(d.id)
+          if (segIdx !== undefined) {
+            let segStart = 0
+            for (let i = 0; i < Math.min(segIdx, segments.length); i++) {
+              segStart += getPlaybackSegmentDuration(segments[i])
+            }
+
+            const segId = segments[segIdx]?.segmentId
+            const jCutLeadIn = segIdx > 0 && segId ? (segmentAudioConfigs[segId]?.audioLeadInSec ?? 0) : 0
+            const effectiveSegStart = Math.max(0, segStart - jCutLeadIn)
+            const cursor = segmentTimeCursors.get(segIdx) ?? effectiveSegStart
+            startTime = cursor
+            segmentTimeCursors.set(segIdx, cursor + wallDur + MIXER_DIALOGUE_INTRA_GAP_SEC)
           }
-
-          const segId = segments[segIdx]?.segmentId
-          const jCutLeadIn = segIdx > 0 && segId ? (segmentAudioConfigs[segId]?.audioLeadInSec ?? 0) : 0
-          const effectiveSegStart = Math.max(0, segStart - jCutLeadIn)
-          const cursor = segmentTimeCursors.get(segIdx) ?? effectiveSegStart
-          startTime = cursor
-          segmentTimeCursors.set(segIdx, cursor + wallDur + MIXER_DIALOGUE_INTRA_GAP_SEC)
         }
-      }
 
-      return { ...d, startTime, duration: sourceDur }
-    })
+        return { ...d, startTime, duration: sourceDur }
+      })
     return { ...currentAudioUrls, dialogue }
   }, [
     currentAudioUrls,
+    isEnglish,
+    selectedLanguage,
+    shotMethodFor,
+    masterSegmentVolume,
     probedDurations,
     segments,
     resolvedDialogueClips,
@@ -4414,25 +4508,29 @@ export function SceneProductionMixer({
 
   // Rendered segments (includes both video and image assets)
   const renderedSegments = useMemo(() => {
-    return filterMixerIncludedSegments(mixerBeatSegments)
-  }, [mixerBeatSegments])
+    return filterMixerIncludedSegments(mixerBeatSegments).map((segment) =>
+      presentSegmentForShotMethod(
+        segment,
+        productionTarget.language,
+        shotMethodFor(segment.segmentId)
+      )
+    )
+  }, [mixerBeatSegments, productionTarget.language, shotMethodFor])
   
   // Video-only segments for Video render mode (excludes image-only segments)
   const videoSegments = useMemo(
     () =>
       listIncludedBeatVideos(
-        mixerBeatSegments.map((segment) => {
-          const method = isEnglish
-            ? 'double'
-            : resolveLanguageShotMethod({
-                config: languageShotConfigs[segment.segmentId],
-                klingLipsyncEnabled,
-              })
-          return presentSegmentForShotMethod(segment, productionTarget.language, method)
-        }),
+        mixerBeatSegments.map((segment) =>
+          presentSegmentForShotMethod(
+            segment,
+            productionTarget.language,
+            shotMethodFor(segment.segmentId)
+          )
+        ),
         audioAssets.scoreScene
       ),
-    [mixerBeatSegments, productionTarget.language, isEnglish, languageShotConfigs, klingLipsyncEnabled, audioAssets.scoreScene]
+    [mixerBeatSegments, productionTarget.language, shotMethodFor, audioAssets.scoreScene]
   )
 
   const completeRenderableSegments = useMemo(() => {
@@ -5230,7 +5328,12 @@ export function SceneProductionMixer({
       const segmentsForHeadless = videoSegments.map(seg => {
         const audioConfig = segmentAudioConfigs[seg.segmentId] || { includeAudio: true, volume: 1.0 }
         const hasBackgroundStem = !!seg.stemSeparation?.backgroundStemUrl
-        const useStemDubbingPolicy = productionTarget.language !== 'en' && preserveBackgroundStem
+        const isLocalizedRegenClip =
+          !isEnglish &&
+          shotMethodFor(seg.segmentId) === 'regenerate' &&
+          !resolveLanguageClipPlayback(seg, selectedLanguage).usingMaster
+        const useStemDubbingPolicy =
+          productionTarget.language !== 'en' && preserveBackgroundStem && !isLocalizedRegenClip
         const embedAudio = resolveSegmentEmbedAudioForRender(audioConfig, masterSegmentVolume, {
           useStemDubbingPolicy,
           includeSpeechStem,
@@ -5687,6 +5790,15 @@ export function SceneProductionMixer({
                       const trimWin = seg ? resolveVideoTrimWindow(seg, sourceDur) : null
                       const playDur = seg && included ? getPlaybackSegmentDuration(seg) : trimWin?.playableSec ?? 0
                       const takes = seg ? listPlayableTakes(seg) : []
+                      const isLangRegenShot =
+                        !isEnglish &&
+                        !!seg &&
+                        shotMethodFor(seg.segmentId) === 'regenerate' &&
+                        !resolveLanguageClipPlayback(seg, selectedLanguage).usingMaster
+                      const langTakeOpts =
+                        isLangRegenShot && seg
+                          ? listLanguageClipVersionOptions(seg.languageVersions?.[selectedLanguage])
+                          : []
                       const joinToNext: ShotJoin =
                         seg?.shotJoin === 'dissolve' || seg?.shotJoin === 'fade' ? seg.shotJoin : 'cut'
 
@@ -5799,7 +5911,34 @@ export function SceneProductionMixer({
 
                             {/* Footer: Take Switcher or Status */}
                             <div className="flex items-center justify-between gap-1 text-[9px] font-mono">
-                              {seg && takes.length > 1 && onSegmentsChange ? (
+                              {seg && isLangRegenShot && langTakeOpts.length > 1 && onSegmentsChange ? (
+                                <div
+                                  className="flex items-center gap-0.5"
+                                  onClick={(e) => e.stopPropagation()}
+                                >
+                                  {langTakeOpts.map((opt) => (
+                                    <button
+                                      key={opt.id}
+                                      type="button"
+                                      disabled={isRendering}
+                                      onClick={() => handleSelectLanguageTake(seg.segmentId, opt.id)}
+                                      className={cn(
+                                        'px-1 py-0.2 rounded text-[8px] font-semibold transition-colors',
+                                        opt.isCurrent
+                                          ? 'bg-emerald-500/25 text-emerald-200 border border-emerald-500/40'
+                                          : 'bg-zinc-900 text-zinc-500 hover:text-zinc-300'
+                                      )}
+                                      title={`Select ${selectedLanguage.toUpperCase()} ${opt.label}`}
+                                    >
+                                      {opt.label}
+                                    </button>
+                                  ))}
+                                </div>
+                              ) : seg && isLangRegenShot ? (
+                                <span className="text-emerald-400/90 truncate">
+                                  {selectedLanguage.toUpperCase()} {langTakeOpts[0]?.label ?? 'v1'}
+                                </span>
+                              ) : seg && takes.length > 1 && onSegmentsChange ? (
                                 <div
                                   className="flex items-center gap-0.5"
                                   onClick={(e) => e.stopPropagation()}

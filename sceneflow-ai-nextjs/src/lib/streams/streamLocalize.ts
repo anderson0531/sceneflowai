@@ -101,13 +101,14 @@ export function buildSceneDubRenderRequest({
 
   let cursor = 0
   const segmentData = segments.map((seg) => {
+    const hasLanguageClip = !resolveLanguageClipPlayback(seg, language).usingMaster
     const method = resolveLanguageShotMethod({
       config: mixerSettings?.languageShotConfigs?.[seg.segmentId],
       klingLipsyncEnabled: mixerSettings?.klingLipsyncEnabled,
       legacyLocalizeLipsync,
+      hasLanguageClip,
     })
-    const isLocalizedRegenClip =
-      method === 'regenerate' && !resolveLanguageClipPlayback(seg, language).usingMaster
+    const isLocalizedRegenClip = method === 'regenerate' && hasLanguageClip
     const segAudioCfg = mixerSettings?.segmentAudioConfigs?.[seg.segmentId]
     const embedAudio = resolveSegmentEmbedAudioForRender(
       {
@@ -189,13 +190,14 @@ export function buildSceneDubRenderRequest({
   if (useStemDubbingPolicy) {
     const stemClips = segments
       .filter((seg) => {
+        const hasLanguageClip = !resolveLanguageClipPlayback(seg, language).usingMaster
         const method = resolveLanguageShotMethod({
           config: mixerSettings?.languageShotConfigs?.[seg.segmentId],
           klingLipsyncEnabled: mixerSettings?.klingLipsyncEnabled,
           legacyLocalizeLipsync,
+          hasLanguageClip,
         })
-        const isLocalizedRegenClip =
-          method === 'regenerate' && !resolveLanguageClipPlayback(seg, language).usingMaster
+        const isLocalizedRegenClip = method === 'regenerate' && hasLanguageClip
         const segAudioCfg = mixerSettings?.segmentAudioConfigs?.[seg.segmentId]
         return (
           !isLocalizedRegenClip &&
@@ -234,9 +236,11 @@ export function buildSceneDubRenderRequest({
       includeDialogue: hasDialogue,
       includeMusic: hasMusic,
       includeSfx: hasSfx,
-      includeSegmentAudio: useStemDubbingPolicy
-        ? segments.some((s) => !!s.stemSeparation?.backgroundStemUrl)
-        : false,
+      includeSegmentAudio:
+        segmentData.some((s) => s.audioSource === 'original' && (s.audioVolume ?? 0) > 0) ||
+        (useStemDubbingPolicy
+          ? segments.some((s) => !!s.stemSeparation?.backgroundStemUrl)
+          : false),
       language,
       narrationVolume: 0,
       dialogueVolume: 0.9,
@@ -347,6 +351,7 @@ export function collectLipsyncSegmentInputs(
           config: mixerSettings?.languageShotConfigs?.[seg.segmentId],
           klingLipsyncEnabled: mixerSettings?.klingLipsyncEnabled,
           legacyLocalizeLipsync: options?.legacyLocalizeLipsync,
+          hasLanguageClip: !resolveLanguageClipPlayback(seg, language).usingMaster,
         }) === 'lipsync'
     )
     .map((seg) => {

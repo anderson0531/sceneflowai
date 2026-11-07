@@ -1698,7 +1698,7 @@ export function ScenePreviewPlayer({
           <video
             ref={videoRef}
             className="w-full h-full object-contain transition-transform duration-150"
-            muted={isMuted || !segmentAudioConfigs[currentSegment.segment.segmentId]?.includeAudio}
+            muted={isMuted || segmentAudioConfigs[currentSegment.segment.segmentId]?.includeAudio === false}
             playsInline
             style={{
               clipPath: getFrameCropClipPath(currentSegment.segment.watermarkCropPercent),
