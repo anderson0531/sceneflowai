@@ -5069,6 +5069,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
             allowVeoFallback: options?.allowVeoFallback,
             expressMode: options?.expressMode,
             useBeatFrameAsStart: options?.useBeatFrameAsStart === true,
+            clipLanguage: options?.clipLanguage,
           }),
         })
 
@@ -5259,6 +5260,10 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
               lastFrameUrl: data.assetType === 'video' ? (lastFrameUrl || undefined) : undefined,
               status: data.status === 'COMPLETE' ? 'COMPLETE' as const : 'GENERATING' as const,
               durationSec: measuredDuration ?? segment.endTime - segment.startTime,
+              prompt:
+                typeof data.effectivePrompt === 'string' && data.effectivePrompt.trim()
+                  ? data.effectivePrompt.trim()
+                  : prompt,
               ...(renderedResolution ? { resolution: renderedResolution } : {}),
               ...(renderedQualityTier ? { qualityTier: renderedQualityTier } : {}),
               // Store Veo video reference for future video extension
@@ -5350,7 +5355,9 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
               duration: 6000,
             })
           } else if (languageClip) {
-            toast.success('Language version ready')
+            toast.success(
+              `${getLanguageName(clipLanguage || 'en')} clip version ready for Shot ${segmentIndexForApi + 1}`
+            )
           } else {
             toast.success(`Asset generated successfully for shot ${segmentId.slice(0, 6)}`)
           }
@@ -5997,14 +6004,41 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
             beatLine: beat?.line,
             dialogueLines: segment?.dialogueLines,
           })
-          const stored = preferStoredSpokenTranslation({
+          const isExcerpt = !!segment?.dialoguePortion?.excerpt?.trim()
+          let stored = preferStoredSpokenTranslation({
             translation: sceneIndex != null ? storedTranslations[clipLanguage]?.[sceneIndex] : undefined,
             kind: beat?.kind || beatKind,
             lineId: beat?.lineId || segment?.dialoguePortion?.lineId,
+            beatId: beat?.beatId,
             dialogue: Array.isArray(scene?.dialogue) ? scene.dialogue : undefined,
             englishLine,
-            isExcerpt: !!segment?.dialoguePortion?.excerpt?.trim(),
+            isExcerpt,
           })
+          const promoBeat = beat as { sourceSceneIndex?: number; sourceBeatId?: string } | undefined
+          if (
+            !stored &&
+            promoBeat &&
+            typeof promoBeat.sourceSceneIndex === 'number' &&
+            promoBeat.sourceSceneIndex >= 0
+          ) {
+            const sourceScene = scenes[promoBeat.sourceSceneIndex] as
+              | Record<string, unknown>
+              | undefined
+            const sourceBeats = sourceScene ? getSceneBeats(sourceScene) : []
+            const sourceBeat = sourceBeats.find((b) => b.beatId === promoBeat.sourceBeatId)
+            stored = preferStoredSpokenTranslation({
+              translation: storedTranslations[clipLanguage]?.[promoBeat.sourceSceneIndex],
+              kind: beat?.kind || beatKind,
+              lineId:
+                sourceBeat?.lineId ||
+                beat?.lineId ||
+                segment?.dialoguePortion?.lineId,
+              beatId: promoBeat.sourceBeatId || beat?.beatId,
+              dialogue: Array.isArray(sourceScene?.dialogue) ? sourceScene.dialogue : undefined,
+              englishLine,
+              isExcerpt,
+            })
+          }
           let translated = stored
           if (!translated && englishLine.trim()) {
             translated = await translateGuideDialogueLine(englishLine, clipLanguage)
@@ -6050,20 +6084,40 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       clipLanguage,
       beatKind,
     }: PromoBeatClipRequest) => {
-      const id = segmentId || (await ensurePromoShotSegment(sceneId, beatId, durationSec))
-      await generatePromoClip({
-        sceneId,
-        beatId,
-        sceneIndex,
-        segmentId: id,
-        frameUrl,
-        durationSec,
-        aspectRatio,
-        clipLanguage,
-        beatKind,
-      })
+      const isLang = Boolean(clipLanguage && isLanguageClipTarget(clipLanguage))
+      const langName = isLang && clipLanguage ? getLanguageName(clipLanguage) : 'English'
+      const runLabel = isLang ? `Promo (${langName})` : 'Promo'
+      const itemLabel = isLang ? `Promo shot (${langName})` : 'Promo shot'
+      const toastId = `promo-clip-${sceneId}-${beatId}-${clipLanguage || 'en'}`
+      if (isLang) {
+        toast.loading(`Translating & generating ${langName} promo clip…`, { id: toastId })
+      }
+      startAgentRun('video', runLabel, [
+        { id: beatId, label: itemLabel, status: 'running' },
+      ])
+      try {
+        const id = segmentId || (await ensurePromoShotSegment(sceneId, beatId, durationSec))
+        await generatePromoClip({
+          sceneId,
+          beatId,
+          sceneIndex,
+          segmentId: id,
+          frameUrl,
+          durationSec,
+          aspectRatio,
+          clipLanguage,
+          beatKind,
+        })
+        if (isLang) toast.dismiss(toastId)
+        finishAgentRun('video', [{ id: beatId, label: itemLabel, status: 'done' }])
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : 'Promo clip generation failed'
+        if (isLang) toast.error(msg, { id: toastId })
+        failAgentRun('video', msg)
+        throw err
+      }
     },
-    [ensurePromoShotSegment, generatePromoClip]
+    [ensurePromoShotSegment, generatePromoClip, startAgentRun, finishAgentRun, failAgentRun]
   )
 
   const optimizePromoSourceShot = useCallback(

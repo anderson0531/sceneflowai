@@ -523,6 +523,8 @@ export interface SceneSegmentTake {
   durationSec?: number
   status: SceneSegmentStatus
   notes?: string
+  /** Resolved prompt used to generate this take (e.g. localized clip prompt). */
+  prompt?: string
   // Video URL - the actual playable video asset (may differ from assetUrl for blob storage)
   videoUrl?: string
   // Last frame URL - extracted from the actual video for I2V extension continuity

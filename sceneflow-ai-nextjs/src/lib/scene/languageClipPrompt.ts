@@ -3,9 +3,19 @@
  * Stage direction stays in English. Spoken dialogue is the translated line.
  */
 
+import { parsePerformanceCue } from '@/lib/scene/performanceCues'
+
 export interface StoredSceneLines {
   dialogue?: string[]
+  dialogueByLineId?: Record<string, string>
   narration?: string
+  beatsByBeatId?: Record<
+    string,
+    {
+      overlayText?: string
+      overlayEdited?: boolean
+    }
+  >
 }
 
 function dialogueLineText(entry: unknown): string {
@@ -19,6 +29,22 @@ function dialogueLineId(entry: unknown): string {
   if (!entry || typeof entry !== 'object') return ''
   const row = entry as { lineId?: unknown; id?: unknown }
   return String(row.lineId ?? row.id ?? '').trim()
+}
+
+export function cleanSpokenLineText(raw: string | null | undefined): string {
+  const trimmed = raw?.trim() || ''
+  if (!trimmed) return ''
+  return parsePerformanceCue(trimmed).spokenText.replace(/\s+/g, ' ').trim()
+}
+
+export function normalizeSpokenMatchKey(raw: string | null | undefined): string {
+  const clean = cleanSpokenLineText(raw)
+  if (!clean) return ''
+  return clean
+    .toLowerCase()
+    .replace(/[.…!?,'";:—–-]+/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
 }
 
 export function englishSpokenLine(args: {
@@ -45,46 +71,111 @@ export function preferStoredSpokenTranslation(args: {
   translation?: StoredSceneLines | null
   kind?: string | null
   lineId?: string | null
+  beatId?: string | null
   dialogue?: unknown[] | null
   englishLine: string
   isExcerpt?: boolean
 }): string | undefined {
+  if (args.kind === 'title') {
+    const beatId = args.beatId?.trim()
+    const overlay = beatId ? args.translation?.beatsByBeatId?.[beatId]?.overlayText?.trim() : undefined
+    if (overlay) return overlay
+  }
   if (args.kind === 'narration') {
     const narration = args.translation?.narration?.trim()
-    return narration || undefined
+    if (!narration) return undefined
+    return cleanSpokenLineText(narration) || narration
   }
   if (args.isExcerpt) return undefined
+  const lineId = args.lineId?.trim()
+  if (lineId && args.translation?.dialogueByLineId?.[lineId]?.trim()) {
+    const byId = args.translation.dialogueByLineId[lineId].trim()
+    return cleanSpokenLineText(byId) || byId
+  }
   const english = args.englishLine.trim()
   const dialogue = args.dialogue ?? []
   let index = -1
-  const lineId = args.lineId?.trim()
   if (lineId) {
     index = dialogue.findIndex((entry) => dialogueLineId(entry) === lineId)
   }
   if (index < 0 && english) {
     index = dialogue.findIndex((entry) => dialogueLineText(entry) === english)
   }
+  if (index < 0 && english) {
+    const targetKey = normalizeSpokenMatchKey(english)
+    if (targetKey) {
+      index = dialogue.findIndex(
+        (entry) => normalizeSpokenMatchKey(dialogueLineText(entry)) === targetKey
+      )
+    }
+  }
   if (index < 0) return undefined
   const translated = args.translation?.dialogue?.[index]?.trim()
-  return translated || undefined
+  if (!translated) return undefined
+  return cleanSpokenLineText(translated) || translated
 }
 
 function quotedSpokenLine(translatedLine: string): string {
-  return translatedLine.replace(/"/g, "'").trim()
+  const clean = cleanSpokenLineText(translatedLine) || translatedLine
+  return clean.replace(/"/g, "'").trim()
+}
+
+/**
+ * Extract the spoken line from a compiled beat video prompt or legacy lip-sync prompt.
+ */
+export function extractSpokenLineFromPrompt(sourcePrompt?: string | null): string | undefined {
+  const source = sourcePrompt?.trim() || ''
+  if (!source) return undefined
+  const match = source.match(
+    /(?:speaks with natural lip sync|speaks naturally|\bspeaks|Voiceover narration|The only spoken line is):\s*"([^"]+)"/i
+  )
+  return match?.[1]?.trim() || undefined
 }
 
 export function buildLanguageClipPrompt(
   sourcePrompt: string | null | undefined,
   translatedLine: string,
-  character?: string | null
+  character?: string | null,
+  englishLine?: string | null
 ): string {
   const spoken = quotedSpokenLine(translatedLine)
   const source = sourcePrompt?.trim() || ''
   if (!spoken) return source
-  const lipSync = /speaks with natural lip sync:\s*"[^"]*"/
-  if (lipSync.test(source)) {
-    return source.replace(lipSync, `speaks with natural lip sync: "${spoken}"`)
+
+  let updated = source
+  let replacedSpokenClause = false
+
+  const spokenPrefixPatterns: RegExp[] = [
+    /(speaks with natural lip sync:\s*)"[^"]*"/gi,
+    /(speaks naturally:\s*)"[^"]*"/gi,
+    /(Voiceover narration:\s*)"[^"]*"/gi,
+    /(\bspeaks:\s*)"[^"]*"/gi,
+    /(The only spoken line is:\s*)"[^"]*"/gi,
+  ]
+
+  for (const pattern of spokenPrefixPatterns) {
+    if (pattern.test(updated)) {
+      pattern.lastIndex = 0
+      updated = updated.replace(pattern, `$1"${spoken}"`)
+      replacedSpokenClause = true
+    }
   }
+
+  if (englishLine?.trim()) {
+    const cleanEng = quotedSpokenLine(englishLine)
+    const collapsedDotsEng = cleanEng.replace(/\.{2,}/g, '.')
+    for (const candidate of [cleanEng, collapsedDotsEng]) {
+      if (candidate && updated.includes(`"${candidate}"`)) {
+        updated = updated.split(`"${candidate}"`).join(`"${spoken}"`)
+        replacedSpokenClause = true
+      }
+    }
+  }
+
+  if (replacedSpokenClause) {
+    return updated
+  }
+
   const quoted = /"[^"]*"/
   if (quoted.test(source)) {
     return source.replace(quoted, `"${spoken}"`)
@@ -101,7 +192,13 @@ export function buildLanguageClipPrompt(
 export function extractPromptSignageText(sourcePrompt?: string | null): string | undefined {
   const source = sourcePrompt?.trim() || ''
   if (!source) return undefined
-  const stripped = source.replace(/speaks with natural lip sync:\s*"[^"]*"/gi, '')
+  const stripped = source
+    .replace(/speaks with natural lip sync:\s*"[^"]*"/gi, '')
+    .replace(/speaks naturally:\s*"[^"]*"/gi, '')
+    .replace(/\bspeaks:\s*"[^"]*"/gi, '')
+    .replace(/Voiceover narration:\s*"[^"]*"/gi, '')
+    .replace(/The only spoken line is:\s*"[^"]*"/gi, '')
+    .replace(/Narration:\s*"[^"]*"/gi, '')
   const explicitSignage = stripped.match(
     /(?:sign|signage|billboard|banner|storefront|neon|screen|display|headline|poster|label|plaque|marquee|card|text|reads?|reading|titled?)\s*(?:that\s+says|reading|with\s+text|:)?\s*"([^"]+)"/i
   )
@@ -127,12 +224,17 @@ export function composeLanguageClipPrompt(args: {
 }): { prompt: string; guidePrompt?: string } {
   const source = args.sourcePrompt?.trim() || ''
   const english = args.englishLine?.trim() || ''
-  const translated = args.translatedLine?.trim() || ''
+  const cleanEnglish = cleanSpokenLineText(english) || english
+  const rawTranslated = args.translatedLine?.trim() || ''
+  const translated = cleanSpokenLineText(rawTranslated) || rawTranslated
   const signageOrig = args.signageSourceText?.trim() || ''
   const signageTrans = args.signageTranslatedText?.trim() || ''
   let guide = args.guidePrompt?.trim() || ''
   if (english && translated && guide.includes(english)) {
     guide = guide.split(english).join(translated)
+  }
+  if (cleanEnglish && translated && guide.includes(cleanEnglish)) {
+    guide = guide.split(cleanEnglish).join(translated)
   }
   if (signageOrig && signageTrans && guide.includes(signageOrig)) {
     guide = guide.split(signageOrig).join(signageTrans)
@@ -141,12 +243,18 @@ export function composeLanguageClipPrompt(args: {
   if (kind === 'narration' && translated && !guide.includes(translated)) {
     guide = guide ? `${guide} Narration: "${quotedSpokenLine(translated)}".` : `Narration: "${quotedSpokenLine(translated)}".`
   }
-  const speakInPicture = kind !== 'action' && kind !== 'narration' && kind !== 'title' && !!translated
+  const hasCompiledNarrationClause =
+    kind === 'narration' &&
+    !!translated &&
+    /(?:Voiceover narration|The only spoken line is):\s*"[^"]*"/i.test(source)
+  const speakInPicture =
+    (kind !== 'action' && kind !== 'narration' && kind !== 'title' && !!translated) ||
+    hasCompiledNarrationClause
   let prompt =
     kind === 'title' && translated
       ? replacePromoOnScreenText(source, english, translated)
       : speakInPicture
-        ? buildLanguageClipPrompt(source, translated, args.character)
+        ? buildLanguageClipPrompt(source, translated, args.character, english)
         : source
 
   if (signageTrans && kind !== 'title') {

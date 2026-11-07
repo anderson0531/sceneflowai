@@ -10,7 +10,20 @@ import {
   compileBeatVideoPromptFromDirection,
   isStaleSavedVideoPrompt,
 } from '@/lib/scene/beatVideoPromptCompiler'
-import { segmentNeedsLanguageClip } from '@/lib/scene/languageClipPrompt'
+import {
+  composeLanguageClipPrompt,
+  englishSpokenLine,
+  extractPromptSignageText,
+  extractSpokenLineFromPrompt,
+  normalizeSpokenMatchKey,
+  preferStoredSpokenTranslation,
+  segmentNeedsLanguageClip,
+  type StoredSceneLines,
+} from '@/lib/scene/languageClipPrompt'
+import {
+  isLanguageClipTarget,
+  normalizeStreamLanguage,
+} from '@/lib/scene/languageClipVersions'
 import { getSceneBeats, isBeatExcluded } from '@/lib/script/beatMigration'
 import { parsePersistedMusicCues, resolveBeatMusicCue } from '@/lib/script/sceneMusicCues'
 import {
@@ -33,6 +46,10 @@ export interface BuildBeatVideoClipsArgs {
     string,
     { method?: 'double' | 'lipsync' | 'regenerate'; signageText?: string }
   >
+  streamLanguage?: string | null
+  sceneIndex?: number
+  scenes?: Array<Record<string, unknown> | null | undefined>
+  sceneTranslations?: Record<string, Record<number, StoredSceneLines>>
 }
 
 /**
@@ -53,8 +70,14 @@ export function buildBeatVideoClips({
   segments,
   queue,
   languageShotConfigs,
+  streamLanguage,
+  sceneIndex,
+  scenes,
+  sceneTranslations,
 }: BuildBeatVideoClipsArgs): BeatVideoClip[] {
   const sceneRecord = scene ?? null
+  const isLangStream = isLanguageClipTarget(streamLanguage)
+  const langKey = isLangStream ? normalizeStreamLanguage(streamLanguage) : ''
   const allBeats = getSceneBeats(sceneRecord)
   const beats = allBeats.filter((beat) => !isBeatExcluded(beat))
   const excludedBeatIds = new Set(
@@ -161,12 +184,91 @@ export function buildBeatVideoClips({
       shotMethod: shotCfg?.method,
       customSignageText: shotCfg?.signageText,
     })
+
+    let displayPrompt = resolvedPrompt
+    let displaySpoken = spoken
+    if (isLangStream && langKey) {
+      const englishLine = englishSpokenLine({
+        excerpt: segment?.dialoguePortion?.excerpt,
+        beatLine: beat.line,
+        dialogueLines: segment?.dialogueLines,
+      })
+      const isExcerpt = !!segment?.dialoguePortion?.excerpt?.trim()
+      let translatedLine = preferStoredSpokenTranslation({
+        translation:
+          sceneIndex != null ? sceneTranslations?.[langKey]?.[sceneIndex] : undefined,
+        kind: beat.kind,
+        lineId: beat.lineId || segment?.dialoguePortion?.lineId,
+        beatId: beat.beatId,
+        dialogue: Array.isArray(sceneRecord?.dialogue)
+          ? (sceneRecord.dialogue as unknown[])
+          : undefined,
+        englishLine,
+        isExcerpt,
+      })
+      if (
+        !translatedLine &&
+        hasSharedSource &&
+        typeof promoBeat.sourceSceneIndex === 'number'
+      ) {
+        const sourceScene = scenes?.[promoBeat.sourceSceneIndex]
+        const sourceBeats = sourceScene ? getSceneBeats(sourceScene) : []
+        const sourceBeat = sourceBeats.find((b) => b.beatId === promoBeat.sourceBeatId)
+        translatedLine = preferStoredSpokenTranslation({
+          translation: sceneTranslations?.[langKey]?.[promoBeat.sourceSceneIndex],
+          kind: beat.kind,
+          lineId:
+            sourceBeat?.lineId ||
+            beat.lineId ||
+            segment?.dialoguePortion?.lineId,
+          beatId: promoBeat.sourceBeatId || beat.beatId,
+          dialogue: Array.isArray(sourceScene?.dialogue)
+            ? (sourceScene.dialogue as unknown[])
+            : undefined,
+          englishLine,
+          isExcerpt,
+        })
+      }
+      if (!translatedLine && segment?.languageVersions?.[langKey]) {
+        const langSet = segment.languageVersions[langKey]
+        const langTake =
+          langSet.takes.find((t) => t.id === langSet.currentTakeId) ??
+          langSet.takes[langSet.takes.length - 1]
+        const fromTakePrompt = extractSpokenLineFromPrompt(langTake?.prompt)
+        if (
+          fromTakePrompt &&
+          normalizeSpokenMatchKey(fromTakePrompt) !==
+            normalizeSpokenMatchKey(englishLine)
+        ) {
+          translatedLine = fromTakePrompt
+        }
+      }
+      const signageTranslatedText = shotCfg?.signageText?.trim() || undefined
+      if (translatedLine || signageTranslatedText) {
+        const composed = composeLanguageClipPrompt({
+          sourcePrompt: resolvedPrompt,
+          character: beat.character || segment?.dialogueLines?.[0]?.character,
+          kind: beat.kind,
+          englishLine,
+          translatedLine,
+          signageSourceText: extractPromptSignageText(resolvedPrompt),
+          signageTranslatedText,
+        })
+        if (composed.prompt) {
+          displayPrompt = composed.prompt
+        }
+        if (translatedLine && beat.kind !== 'action') {
+          displaySpoken = translatedLine
+        }
+      }
+    }
+
     return {
       key: beat.beatId,
       beatId: beat.beatId,
       beatNumber,
-      label: (spoken || beat.kind || `Shot ${beatNumber}`).replace(/\s+/g, ' ').trim(),
-      prompt: resolvedPrompt,
+      label: (displaySpoken || beat.kind || `Shot ${beatNumber}`).replace(/\s+/g, ' ').trim(),
+      prompt: displayPrompt,
       kind: beat.kind,
       thumbnailUrl: thumbnail,
       hasStartFrame: !!thumbnail,

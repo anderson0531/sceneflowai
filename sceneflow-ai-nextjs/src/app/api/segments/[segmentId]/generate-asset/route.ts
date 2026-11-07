@@ -69,6 +69,21 @@ import {
   resolveKlingElementsFromSources,
 } from '@/lib/kling/elementRegistry'
 import { resolveKlingApiModelName } from '@/lib/kling/types'
+import {
+  cleanSpokenLineText,
+  composeLanguageClipPrompt,
+  extractPromptSignageText,
+  extractSpokenLineFromPrompt,
+  normalizeSpokenMatchKey,
+  preferStoredSpokenTranslation,
+  type StoredSceneLines,
+} from '@/lib/scene/languageClipPrompt'
+import {
+  isLanguageClipTarget,
+  normalizeStreamLanguage,
+} from '@/lib/scene/languageClipVersions'
+import { translateWithVertexAI } from '@/lib/vertexai/translate'
+import type { PromoSceneBeat } from '@/lib/publish/buildPromoScene'
 
 export const maxDuration = 300 // 5 minutes for video generation
 export const runtime = 'nodejs'
@@ -141,6 +156,8 @@ interface GenerateAssetRequest {
   expressMode?: boolean
   /** Attach beat/animatic frame as start image. Default false for REF ingredients. */
   useBeatFrameAsStart?: boolean
+  /** Target non-English stream language code when generating a localized clip take. */
+  clipLanguage?: string
   /** When true, verify aggregator routing without generating video or charging credits. */
   routeProbe?: boolean
   /** True only when this request ran on the user's own provider key. */
@@ -156,8 +173,10 @@ export async function POST(
     const { segmentId } = await params
     requestBody = await req.json()
     const body = requestBody as GenerateAssetRequest
+    const clientPrompt = body.prompt?.trim() || ''
     let prompt = body.prompt
     let negativePrompt = body.negativePrompt
+    let guidePrompt = body.guidePrompt
     let referenceImages = normalizeReferenceImages(
       body.referenceImages as string[] | GenerateAssetRequest['referenceImages'],
     )
@@ -188,9 +207,6 @@ export async function POST(
       isEstablishingShot = false,
       // Audio context for atmospheric guidance
       audioContext,
-      // Guide prompt with voice/dialogue cues for Veo 3.1 native audio
-      guidePrompt
-      ,
       existingStemSourceAudioUrl,
       existingStemSourceHash,
       existingStemStatus
@@ -216,6 +232,7 @@ export async function POST(
       allowVeoFallback,
       expressMode,
       useBeatFrameAsStart,
+      clipLanguage,
       routeProbe,
       userKeyUsed: userKeyUsedBody,
     } = body
@@ -295,6 +312,123 @@ export async function POST(
     let cachedProject: Awaited<ReturnType<typeof Project.findByPk>> | null = null
     let cachedScene: Record<string, unknown> | undefined
     let cachedBeat: SceneBeat | undefined
+    let resolvedTranslatedSpokenLine: string | undefined
+    let resolvedSignageTranslatedText: string | undefined
+
+    const localizeCompiledBeatPrompt = async (
+      beat: SceneBeat,
+      compiledPrompt: string
+    ): Promise<string> => {
+      const englishLine = beat.line?.trim() || ''
+      const clientSpoken = extractSpokenLineFromPrompt(clientPrompt)
+      const clientHasTranslatedSpoken = Boolean(
+        clientSpoken &&
+          (!englishLine ||
+            normalizeSpokenMatchKey(clientSpoken) !== normalizeSpokenMatchKey(englishLine))
+      )
+      const isLangClip = isLanguageClipTarget(clipLanguage)
+      if (!isLangClip && !clientHasTranslatedSpoken) {
+        return compiledPrompt
+      }
+
+      if (!resolvedTranslatedSpokenLine) {
+        if (clientHasTranslatedSpoken && clientSpoken) {
+          resolvedTranslatedSpokenLine = clientSpoken
+        } else if (isLangClip && englishLine) {
+          const langKey = normalizeStreamLanguage(clipLanguage)
+          const visionPhase = (cachedProject?.metadata?.visionPhase || {}) as Record<
+            string,
+            unknown
+          >
+          const translations = (visionPhase.translations || {}) as Record<
+            string,
+            Record<number, StoredSceneLines>
+          >
+          const scenes = getVisionScriptScenes(visionPhase)
+          const sceneIdx = findSceneById(scenes, sceneId).index
+          let stored = preferStoredSpokenTranslation({
+            translation: sceneIdx >= 0 ? translations?.[langKey]?.[sceneIdx] : undefined,
+            kind: beat.kind,
+            lineId: beat.lineId,
+            beatId: beat.beatId,
+            dialogue: Array.isArray(cachedScene?.dialogue)
+              ? (cachedScene.dialogue as unknown[])
+              : undefined,
+            englishLine,
+          })
+          const promoBeat = beat as PromoSceneBeat
+          if (
+            !stored &&
+            typeof promoBeat.sourceSceneIndex === 'number' &&
+            promoBeat.sourceSceneIndex >= 0
+          ) {
+            const sourceScene = scenes[promoBeat.sourceSceneIndex] as
+              | Record<string, unknown>
+              | undefined
+            const sourceBeats = sourceScene ? getSceneBeats(sourceScene) : []
+            const sourceBeat = sourceBeats.find((b) => b.beatId === promoBeat.sourceBeatId)
+            stored = preferStoredSpokenTranslation({
+              translation: translations?.[langKey]?.[promoBeat.sourceSceneIndex],
+              kind: beat.kind,
+              lineId: sourceBeat?.lineId || beat.lineId,
+              beatId: promoBeat.sourceBeatId || beat.beatId,
+              dialogue: Array.isArray(sourceScene?.dialogue)
+                ? (sourceScene.dialogue as unknown[])
+                : undefined,
+              englishLine,
+            })
+          }
+          if (stored) {
+            resolvedTranslatedSpokenLine = stored
+          } else {
+            try {
+              const spokenToTranslate = cleanSpokenLineText(englishLine) || englishLine
+              const result = await translateWithVertexAI({
+                text: spokenToTranslate,
+                targetLanguage: langKey,
+                sourceLanguage: 'en',
+              })
+              if (result.translatedText?.trim()) {
+                resolvedTranslatedSpokenLine =
+                  cleanSpokenLineText(result.translatedText) || result.translatedText.trim()
+              }
+            } catch (translateErr) {
+              console.warn(
+                `[Segment Asset Generation] Failed to translate beat line for ${langKey}:`,
+                translateErr
+              )
+            }
+          }
+        }
+      }
+
+      const compiledSignage = extractPromptSignageText(compiledPrompt)
+      if (!resolvedSignageTranslatedText && compiledSignage) {
+        const clientSignage = extractPromptSignageText(clientPrompt)
+        if (clientSignage && clientSignage !== compiledSignage) {
+          resolvedSignageTranslatedText = clientSignage
+        }
+      }
+
+      if (!resolvedTranslatedSpokenLine && !resolvedSignageTranslatedText) {
+        return compiledPrompt
+      }
+
+      const composed = composeLanguageClipPrompt({
+        sourcePrompt: compiledPrompt,
+        guidePrompt,
+        character: beat.character,
+        kind: beat.kind,
+        englishLine,
+        translatedLine: resolvedTranslatedSpokenLine,
+        signageSourceText: compiledSignage,
+        signageTranslatedText: resolvedSignageTranslatedText,
+      })
+      if (composed.guidePrompt) {
+        guidePrompt = composed.guidePrompt
+      }
+      return composed.prompt || compiledPrompt
+    }
 
     if (isBeatFirstPipelineEnabled()) {
       await sequelize.authenticate()
@@ -339,7 +473,7 @@ export async function POST(
               ...(musicCue ? { musicCue } : {}),
             }
           )
-          prompt = compiled.prompt
+          prompt = await localizeCompiledBeatPrompt(beat, compiled.prompt)
           negativePrompt = negativePrompt || compiled.negativePrompt
 
           const trimmedStart = startFrameUrl?.trim()
@@ -503,7 +637,7 @@ export async function POST(
           ...(musicCue ? { musicCue } : {}),
           catalog: buildExpressReferenceCatalog(cachedProject),
         })
-        prompt = prepared.prompt
+        prompt = await localizeCompiledBeatPrompt(prepared.beat, prepared.prompt)
         if (prepared.beat !== beat && beatIndex >= 0) {
           const nextBeats = [...beats]
           nextBeats[beatIndex] = prepared.beat
@@ -926,6 +1060,7 @@ export async function POST(
       segmentId,
       assetUrl,
       assetType,
+      effectivePrompt: prompt,
       lastFrameUrl,
       veoVideoRef,  // Gemini Files API reference for video extension
       veoVideoRefExpiry,  // ISO timestamp when veoVideoRef expires (48 hours from generation)

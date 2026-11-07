@@ -152,6 +152,26 @@ describe('language clip prompts', () => {
     )
   })
 
+  it('replaces both speaks naturally lead and fidelity close spoken line in compiled beat prompts', () => {
+    const currentPrompt =
+      'Char_GIDEON_CROFT speaks naturally: "The current bleeds out. Every damn time. the loop refuses to close.". Delivery: with obsessive delivery; with breathless delivery Performance: Close-mic, private, and strained on ragged leftover air. Rush the first clause in an obsessive whisper, hitch on the ellipsis, and land \'refuses to close\' as a bitter, self-lacerating indictment. Coverage: Capture Gideon\'s vocalized obsession and breath control amid the isolating silence. Lens: Slow, deliberate push-in, shallow focus on Gideon\'s sweat-beaded brow. Space: Gideon in profile at screen-right, background falls away into dark tunnel mouth screen-left. Shot: Medium Close-Up. Angle: low angle. Camera: slow push-in. Blocking: Gideon Croft is framed from the chest up, planted screen-right in three-quarter profile facing screen-left. His weight leans forward over his planted right foot toward the slate board; his right elbow is sharply bent with his forearm raised chest-high, while his left shoulder drops rigid against his side. Emotion: Gideon Croft: obsessive fixity and fevered exhaustion; jaw bunched, lips parted over clenched lower teeth, deep horizontal furrow across his brow, and neck tendons pulled tight. Gaze: Gideon Croft stares unblinkingly toward screen-left, his eyeline fixed into empty air three feet past the slate surface. Prop interaction: Gideon Croft\'s right thumb, index, and middle finger pinch the fractured stub of white Chalk one inch off the slate wall beside the struck-through text \'RESONANCE FLUX = 0\'. Props: Chalk. Lighting: Warm tungsten key light sculpting the hollows of his cheeks, deep charcoal shadows masking his eyes. End on: Gideon Croft\'s lips are parted mid-syllable with a suspended wisp of condensation before his mouth, his chalk-dusted right fingers pinching the stub of Chalk an inch from the struck-through formula \'RESONANCE FLUX = 0\' on the slate wall. Film Noir, dynamic motion. Scored moment: electrifying rebellious adrenaline — carry that in the pacing and performance. Incoming continuity from Wide Establishing Shot. Only these people are visible: Gideon Croft. No other people, no foreground silhouette or back of another person\'s head (any listener is off-camera out of frame). Only these objects: Chalk. Do not add other objects. The only action is: Gideon Croft is framed from the chest up, planted screen-right in three-quarter profile facing screen-left. The only spoken line is: "The current bleeds out. Every damn time. the loop refuses to close.". photorealistic, cinematic motion, professional cinematography, natural lighting, shallow depth of field'
+
+    const expectedPrompt =
+      'Char_GIDEON_CROFT speaks naturally: "La corriente se escapa. Siempre. El circuito se niega a cerrarse.". Delivery: with obsessive delivery; with breathless delivery Performance: Close-mic, private, and strained on ragged leftover air. Rush the first clause in an obsessive whisper, hitch on the ellipsis, and land \'refuses to close\' as a bitter, self-lacerating indictment. Coverage: Capture Gideon\'s vocalized obsession and breath control amid the isolating silence. Lens: Slow, deliberate push-in, shallow focus on Gideon\'s sweat-beaded brow. Space: Gideon in profile at screen-right, background falls away into dark tunnel mouth screen-left. Shot: Medium Close-Up. Angle: low angle. Camera: slow push-in. Blocking: Gideon Croft is framed from the chest up, planted screen-right in three-quarter profile facing screen-left. His weight leans forward over his planted right foot toward the slate board; his right elbow is sharply bent with his forearm raised chest-high, while his left shoulder drops rigid against his side. Emotion: Gideon Croft: obsessive fixity and fevered exhaustion; jaw bunched, lips parted over clenched lower teeth, deep horizontal furrow across his brow, and neck tendons pulled tight. Gaze: Gideon Croft stares unblinkingly toward screen-left, his eyeline fixed into empty air three feet past the slate surface. Prop interaction: Gideon Croft\'s right thumb, index, and middle finger pinch the fractured stub of white Chalk one inch off the slate wall beside the struck-through text \'RESONANCE FLUX = 0\'. Props: Chalk. Lighting: Warm tungsten key light sculpting the hollows of his cheeks, deep charcoal shadows masking his eyes. End on: Gideon Croft\'s lips are parted mid-syllable with a suspended wisp of condensation before his mouth, his chalk-dusted right fingers pinching the stub of Chalk an inch from the struck-through formula \'RESONANCE FLUX = 0\' on the slate wall. Film Noir, dynamic motion. Scored moment: electrifying rebellious adrenaline — carry that in the pacing and performance. Incoming continuity from Wide Establishing Shot. Only these people are visible: Gideon Croft. No other people, no foreground silhouette or back of another person\'s head (any listener is off-camera out of frame). Only these objects: Chalk. Do not add other objects. The only action is: Gideon Croft is framed from the chest up, planted screen-right in three-quarter profile facing screen-left. The only spoken line is: "La corriente se escapa. Siempre. El circuito se niega a cerrarse.". photorealistic, cinematic motion, professional cinematography, natural lighting, shallow depth of field'
+
+    const composed = composeLanguageClipPrompt({
+      sourcePrompt: currentPrompt,
+      character: 'GIDEON CROFT',
+      kind: 'dialogue',
+      englishLine:
+        '[obsessive, breathless] The current bleeds out. Every damn time... the loop refuses to close.',
+      translatedLine:
+        '[obsesivo, sin aliento] La corriente se escapa. Siempre. El circuito se niega a cerrarse.',
+    })
+    expect(composed.prompt).toBe(expectedPrompt)
+    expect(extractPromptSignageText(currentPrompt)).toBeUndefined()
+  })
+
   it('replaces title and credit copy without a lip-sync line', () => {
     const source = 'A black card holds the title "The Current" in white serif type.'
     expect(replacePromoOnScreenText(source, 'The Current', 'La Corriente')).toBe(
@@ -358,6 +378,65 @@ describe('language clip prompts', () => {
     expect(clips).toHaveLength(2)
     expect(clips[0].needsLanguageClip).toBe(false)
     expect(clips[1].needsLanguageClip).toBe(true)
+  })
+
+  it('localizes compiled dialogue prompts in buildBeatVideoClips when a non-English streamLanguage and stored translation are provided', () => {
+    const clips = buildBeatVideoClips({
+      scene: {
+        dialogue: [
+          {
+            lineId: 'line-gideon-1',
+            character: 'Gideon Croft',
+            line: '[obsessive, breathless] The current bleeds out. Every damn time... the loop refuses to close.',
+          },
+        ],
+        beats: [
+          {
+            beatId: 'beat-gideon-1',
+            sequenceIndex: 0,
+            kind: 'dialogue',
+            character: 'Gideon Croft',
+            line: '[obsessive, breathless] The current bleeds out. Every damn time... the loop refuses to close.',
+          },
+        ],
+      },
+      segments: [
+        {
+          segmentId: 'seg-gideon-1',
+          beatId: 'beat-gideon-1',
+          sequenceIndex: 0,
+          startTime: 0,
+          endTime: 6,
+          status: 'COMPLETE',
+          activeAssetUrl: 'https://cdn/shot1.mp4',
+          takes: [take('t1', 'https://cdn/shot1.mp4')],
+        } as SceneSegment,
+      ],
+      queue: [],
+      streamLanguage: 'es',
+      sceneIndex: 0,
+      sceneTranslations: {
+        es: {
+          0: {
+            dialogue: [
+              '[obsesivo, sin aliento] La corriente se escapa. Siempre. El circuito se niega a cerrarse.',
+            ],
+          },
+        },
+      },
+    })
+
+    expect(clips).toHaveLength(1)
+    expect(clips[0].label).toBe(
+      'La corriente se escapa. Siempre. El circuito se niega a cerrarse.'
+    )
+    expect(clips[0].prompt).toContain(
+      'speaks naturally: "La corriente se escapa. Siempre. El circuito se niega a cerrarse."'
+    )
+    expect(clips[0].prompt).toContain(
+      'The only spoken line is: "La corriente se escapa. Siempre. El circuito se niega a cerrarse."'
+    )
+    expect(clips[0].prompt).not.toContain('The current bleeds out')
   })
 })
 

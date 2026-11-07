@@ -170,12 +170,19 @@ import {
   withSelectedLanguageClip,
 } from '@/lib/scene/languageClipVersions'
 import {
+  cleanSpokenLineText,
   composeLanguageClipPrompt,
   englishSpokenLine,
   extractPromptSignageText,
   preferStoredSpokenTranslation,
   segmentNeedsLanguageClip,
 } from '@/lib/scene/languageClipPrompt'
+import {
+  compileBeatVideoPromptFromDirection,
+  isStaleSavedVideoPrompt,
+} from '@/lib/scene/beatVideoPromptCompiler'
+import type { PromoSceneBeat } from '@/lib/publish/buildPromoScene'
+import type { DetailedSceneDirection } from '@/types/scene-direction'
 import { translateGuideDialogueLine } from '@/lib/scene/translateGuideDialogue'
 import { mergeStreamSelectorLanguages } from '@/lib/streams/projectStreams'
 import { BeatVideoGallery, type BeatVideoClip } from './BeatVideoGallery'
@@ -221,7 +228,7 @@ function normalizeGuideCharacters(raw: unknown): GuideCharacterDemographic[] {
     .filter((c) => c.name.length > 0)
 }
 import { upload } from '@vercel/blob/client'
-import { SUPPORTED_LANGUAGES } from '@/constants/languages'
+import { SUPPORTED_LANGUAGES, getLanguageName } from '@/constants/languages'
 import { getNextProductionStreamVersion, getProductionStreamDisplayName } from './defaults'
 import { planSceneRenderAppend } from '@/lib/projects/planSceneRenderAppend'
 import {
@@ -1269,27 +1276,72 @@ export function DirectorConsoleRoot({
       fallbackPrompt?: string,
       fallbackGuidePrompt?: string
     ): Promise<{ prompt: string; guidePrompt?: string }> => {
-      const beat = getSceneBeats((scene as Record<string, unknown> | undefined) ?? null).find(
-        (entry) => entry.beatId === segment.beatId
-      )
+      const sceneRecord = (scene as Record<string, unknown> | undefined) ?? null
+      const allBeats = getSceneBeats(sceneRecord)
+      const beatIndex = allBeats.findIndex((entry) => entry.beatId === segment.beatId)
+      const beat = beatIndex >= 0 ? allBeats[beatIndex] : undefined
       const englishLine = englishSpokenLine({
         excerpt: segment.dialoguePortion?.excerpt,
         beatLine: beat?.line,
         dialogueLines: segment.dialogueLines,
       })
+      const isExcerpt = !!segment.dialoguePortion?.excerpt?.trim()
       let translated = preferStoredSpokenTranslation({
         translation: sceneIndex != null ? sceneTranslations?.[language]?.[sceneIndex] : undefined,
         kind: beat?.kind,
         lineId: beat?.lineId || segment.dialoguePortion?.lineId,
+        beatId: beat?.beatId,
         dialogue: scene?.dialogue,
         englishLine,
-        isExcerpt: !!segment.dialoguePortion?.excerpt?.trim(),
+        isExcerpt,
       })
-      if (!translated && englishLine.trim()) {
-        translated = await translateGuideDialogueLine(englishLine, language)
+      const promoBeat = beat as PromoSceneBeat | undefined
+      if (
+        !translated &&
+        promoBeat &&
+        typeof promoBeat.sourceSceneIndex === 'number' &&
+        promoBeat.sourceSceneIndex >= 0
+      ) {
+        const sourceScene = scenes?.[promoBeat.sourceSceneIndex] as
+          | Record<string, unknown>
+          | undefined
+        const sourceBeats = sourceScene ? getSceneBeats(sourceScene) : []
+        const sourceBeat = sourceBeats.find((b) => b.beatId === promoBeat.sourceBeatId)
+        translated = preferStoredSpokenTranslation({
+          translation: sceneTranslations?.[language]?.[promoBeat.sourceSceneIndex],
+          kind: beat?.kind,
+          lineId:
+            sourceBeat?.lineId || beat?.lineId || segment.dialoguePortion?.lineId,
+          beatId: promoBeat.sourceBeatId || beat?.beatId,
+          dialogue: Array.isArray(sourceScene?.dialogue)
+            ? (sourceScene.dialogue as unknown[])
+            : undefined,
+          englishLine,
+          isExcerpt,
+        })
       }
+      if (!translated && englishLine.trim()) {
+        const spokenToTranslate = cleanSpokenLineText(englishLine) || englishLine
+        translated = await translateGuideDialogueLine(spokenToTranslate, language)
+      }
+      const userEdited = segment.userEditedPrompt?.trim()
+      const hasGenuineUserEditedPrompt = Boolean(
+        userEdited && (!beat || !isStaleSavedVideoPrompt(beat, userEdited, beat.line?.trim()))
+      )
+      const sceneDirection = ((sceneRecord?.sceneDirection ??
+        sceneRecord?.detailedDirection ??
+        null) || null) as DetailedSceneDirection | null
+      const compiledFromBeat = beat
+        ? compileBeatVideoPromptFromDirection(beat, sceneDirection, {
+            previousBeat: beatIndex > 0 ? allBeats[beatIndex - 1] : undefined,
+          }).prompt
+        : ''
       const sourcePrompt =
-        segment.userEditedPrompt || segment.generatedPrompt || fallbackPrompt || ''
+        (hasGenuineUserEditedPrompt ? userEdited : undefined) ||
+        fallbackPrompt ||
+        compiledFromBeat ||
+        segment.generatedPrompt ||
+        ''
       const signageSourceText = extractPromptSignageText(sourcePrompt)
       const customSignageOverride =
         productionData?.mixerSettingsByLanguage?.[language]?.languageShotConfigs?.[
@@ -1318,7 +1370,7 @@ export function DirectorConsoleRoot({
         guidePrompt: composed.guidePrompt ?? fallbackGuidePrompt,
       }
     },
-    [scene, sceneIndex, sceneTranslations, productionData?.mixerSettingsByLanguage]
+    [scene, scenes, sceneIndex, sceneTranslations, productionData?.mixerSettingsByLanguage]
   )
 
   const applyVideoAgentPolicyToItem = useCallback(
@@ -1424,38 +1476,87 @@ export function DirectorConsoleRoot({
       }
 
       const overrideConfigs = new Map<string, VideoGenerationConfig>()
-      for (const segmentId of expressIds) {
-        const item = queue.find((q) => q.segmentId === segmentId)
-        if (!item) continue
-        const nextConfig = applyVideoAgentPolicyToItem(item, options)
-        if (isLanguageStream) {
-          const segment = segments.find((s) => s.segmentId === segmentId)
-          if (segment) {
-            try {
-              const composed = await composeSegmentLanguageClip(
-                segment,
-                language,
-                nextConfig.prompt,
-                nextConfig.guidePrompt
-              )
-              overrideConfigs.set(segmentId, {
-                ...nextConfig,
-                prompt: composed.prompt,
-                motionPrompt: composed.prompt,
-                guidePrompt: composed.guidePrompt,
-                clipLanguage: language,
-              })
-            } catch (error) {
-              const { toast } = await import('sonner')
-              toast.error(
-                error instanceof Error ? error.message : 'Could not translate shot for language stream'
-              )
-              return
+      if (isLanguageStream) {
+        const languageName = getLanguageName(language)
+        const translateToastId = `lang-clips-prep-${sceneId}-${language}`
+        const { toast } = await import('sonner')
+        toast.loading(
+          `Translating & queueing ${expressIds.length} ${languageName} clip${expressIds.length > 1 ? 's' : ''}…`,
+          { id: translateToastId }
+        )
+        onVideoRunReport?.({
+          sceneLabel: `Scene ${sceneNumber} (${languageName})`,
+          items: expressIds.map((segId, idx) => {
+            const seg = segments.find((s) => s.segmentId === segId)
+            const shotNum = (seg?.sequenceIndex ?? idx) + 1
+            return {
+              id: segId,
+              label: `Shot ${shotNum}`,
+              status: idx === 0 ? ('running' as const) : ('pending' as const),
             }
-          } else {
-            overrideConfigs.set(segmentId, { ...nextConfig, clipLanguage: language })
-          }
-        } else {
+          }),
+          finished: false,
+        })
+
+        try {
+          await Promise.all(
+            expressIds.map(async (segmentId) => {
+              const item = queue.find((q) => q.segmentId === segmentId)
+              if (!item) return
+              const nextConfig = applyVideoAgentPolicyToItem(item, options)
+              const segment = segments.find((s) => s.segmentId === segmentId)
+              if (segment) {
+                const composed = await composeSegmentLanguageClip(
+                  segment,
+                  language,
+                  nextConfig.prompt,
+                  nextConfig.guidePrompt
+                )
+                overrideConfigs.set(segmentId, {
+                  ...nextConfig,
+                  prompt: composed.prompt,
+                  motionPrompt: composed.prompt,
+                  guidePrompt: composed.guidePrompt,
+                  clipLanguage: language,
+                })
+              } else {
+                overrideConfigs.set(segmentId, { ...nextConfig, clipLanguage: language })
+              }
+            })
+          )
+          toast.info(
+            `Generating ${expressIds.length} ${languageName} clip${expressIds.length > 1 ? 's' : ''} in background…`,
+            { id: translateToastId, duration: 4000 }
+          )
+        } catch (error) {
+          toast.error(
+            error instanceof Error ? error.message : 'Could not translate shot for language stream',
+            { id: translateToastId }
+          )
+          onVideoRunReport?.({
+            sceneLabel: `Scene ${sceneNumber} (${languageName})`,
+            items: expressIds.map((segId, idx) => {
+              const seg = segments.find((s) => s.segmentId === segId)
+              const shotNum = (seg?.sequenceIndex ?? idx) + 1
+              return {
+                id: segId,
+                label: `Shot ${shotNum}`,
+                status: 'error' as const,
+                detail:
+                  error instanceof Error
+                    ? error.message
+                    : 'Could not translate shot for language stream',
+              }
+            }),
+            finished: true,
+          })
+          return
+        }
+      } else {
+        for (const segmentId of expressIds) {
+          const item = queue.find((q) => q.segmentId === segmentId)
+          if (!item) continue
+          const nextConfig = applyVideoAgentPolicyToItem(item, options)
           overrideConfigs.set(segmentId, nextConfig)
           updateConfig(segmentId, nextConfig)
         }
@@ -1464,9 +1565,9 @@ export function DirectorConsoleRoot({
       processQueue({
         mode: 'selected',
         priority: 'sequence',
-        delayBetween: isLanguageStream ? 1500 : 500,
+        delayBetween: 500,
         selectedIds: expressIds,
-        concurrency: isLanguageStream ? 1 : CONCURRENCY_DEFAULTS.VIDEO_GENERATION,
+        concurrency: CONCURRENCY_DEFAULTS.VIDEO_GENERATION,
         ...(isLanguageStream ? { clipLanguage: language } : {}),
         overrideConfigs,
       })
@@ -1481,6 +1582,9 @@ export function DirectorConsoleRoot({
       productionData,
       segments,
       composeSegmentLanguageClip,
+      onVideoRunReport,
+      sceneId,
+      sceneNumber,
     ]
   )
 
@@ -1938,9 +2042,22 @@ export function DirectorConsoleRoot({
         segments,
         queue,
         languageShotConfigs:
-          productionData?.mixerSettingsByLanguage?.[productionTarget.language]?.shotConfigs,
+          productionData?.mixerSettingsByLanguage?.[productionTarget.language]?.languageShotConfigs,
+        streamLanguage: productionTarget.language,
+        sceneIndex,
+        scenes: scenes as Array<Record<string, unknown> | null | undefined> | undefined,
+        sceneTranslations,
       }),
-    [scene, segments, queue, productionData?.mixerSettingsByLanguage, productionTarget.language]
+    [
+      scene,
+      segments,
+      queue,
+      productionData?.mixerSettingsByLanguage,
+      productionTarget.language,
+      sceneIndex,
+      scenes,
+      sceneTranslations,
+    ]
   )
 
   // Count active (included) segments by status for the selected language
@@ -2045,6 +2162,20 @@ export function DirectorConsoleRoot({
     const language = productionTarget.language
     if (isMasterStreamLanguage(language)) return
     setLanguageClipBusyId(segment.segmentId)
+    const languageName = getLanguageName(language)
+    const shotNumber = (segment.sequenceIndex ?? 0) + 1
+    const shotLabel = `Shot ${shotNumber} (${languageName})`
+    const runSceneLabel = `Scene ${sceneNumber} (${languageName})`
+    const toastId = `lang-clip-${sceneId}-${segment.segmentId}-${language}`
+    const { toast } = await import('sonner')
+    toast.loading(`Translating & generating ${languageName} clip for Shot ${shotNumber}…`, {
+      id: toastId,
+    })
+    onVideoRunReport?.({
+      sceneLabel: runSceneLabel,
+      items: [{ id: segment.segmentId, label: shotLabel, status: 'running' }],
+      finished: false,
+    })
     try {
       const queueItem = getQueueItem(segment.segmentId)
       const config = queueItem?.config
@@ -2057,8 +2188,13 @@ export function DirectorConsoleRoot({
           config?.guidePrompt
         )
       } catch (error) {
-        const { toast } = await import('sonner')
-        toast.error(error instanceof Error ? error.message : 'Could not translate this shot')
+        const message = error instanceof Error ? error.message : 'Could not translate this shot'
+        toast.error(message, { id: toastId })
+        onVideoRunReport?.({
+          sceneLabel: runSceneLabel,
+          items: [{ id: segment.segmentId, label: shotLabel, status: 'error', detail: message }],
+          finished: true,
+        })
         return
       }
       const sessionPolicy = resolveVideoGeneration({
@@ -2103,17 +2239,37 @@ export function DirectorConsoleRoot({
         omniMultiShot: config?.omniMultiShot,
         clipLanguage: language,
       })
-    } catch {
-      // The generate handler already reports the failure.
+      toast.dismiss(toastId)
+      onVideoRunReport?.({
+        sceneLabel: runSceneLabel,
+        items: [{ id: segment.segmentId, label: shotLabel, status: 'done' }],
+        finished: true,
+      })
+    } catch (error) {
+      toast.dismiss(toastId)
+      onVideoRunReport?.({
+        sceneLabel: runSceneLabel,
+        items: [
+          {
+            id: segment.segmentId,
+            label: shotLabel,
+            status: 'error',
+            detail: error instanceof Error ? error.message : 'Generation failed',
+          },
+        ],
+        finished: true,
+      })
     } finally {
       setLanguageClipBusyId(null)
     }
   }, [
     productionTarget.language,
     scene,
+    sceneNumber,
     getQueueItem,
     sceneImageUrl,
     onGenerate,
+    onVideoRunReport,
     sceneId,
     composeSegmentLanguageClip,
     videoGenerationQuality,

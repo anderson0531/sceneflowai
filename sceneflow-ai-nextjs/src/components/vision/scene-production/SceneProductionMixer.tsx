@@ -3252,12 +3252,20 @@ export function SceneProductionMixer({
       toast.info('Mark at least one shot as Regenerate first')
       return
     }
-    toast.info(
-      `Regenerating ${regenTargets.length} selected shot${regenTargets.length > 1 ? 's' : ''} in ${selectedLanguage.toUpperCase()} while retaining unselected master shots…`
-    )
-    for (const seg of regenTargets) {
+    const langUpper = selectedLanguage.toUpperCase()
+    const batchToastId = `mixer-batch-regen-${selectedLanguage}`
+    for (let i = 0; i < regenTargets.length; i += 1) {
+      const seg = regenTargets[i]
+      toast.loading(
+        `Regenerating ${langUpper} clip ${i + 1}/${regenTargets.length} (Shot ${(seg.sequenceIndex ?? i) + 1})…`,
+        { id: batchToastId }
+      )
       await Promise.resolve(onGenerateLanguageVersion(seg))
     }
+    toast.success(
+      `Finished regenerating ${regenTargets.length} ${langUpper} clip${regenTargets.length > 1 ? 's' : ''}`,
+      { id: batchToastId }
+    )
   }, [
     isEnglish,
     onGenerateLanguageVersion,
