@@ -50,7 +50,7 @@ describe('Screening Room stage fullscreen', () => {
       preview.indexOf('{!fillScreen && ('),
       preview.indexOf('{/* Text Overlays')
     )
-    expect(badges).toContain('Seg {activeSegmentIndex + 1}')
+    expect(badges).toContain('Shot {activeSegmentIndex + 1}/{segments.length}')
     const bar = preview.slice(
       preview.lastIndexOf('{!fillScreen && ('),
       preview.indexOf('Hidden Audio Elements')

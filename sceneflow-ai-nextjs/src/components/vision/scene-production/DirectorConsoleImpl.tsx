@@ -1565,10 +1565,14 @@ export function DirectorConsoleRoot({
         language: stream.language as ProductionLanguage,
         streamVersion: stream.streamVersion ?? 1,
       }
+      if (stream.mp4Url) {
+        setRenderedSceneUrl(stream.mp4Url)
+      }
       if (onProductionDataChange && productionData) {
         onProductionDataChange({
           ...productionData,
           currentStreamId: stream.id,
+          ...(stream.mp4Url ? { renderedSceneUrl: stream.mp4Url } : {}),
         })
       }
       await persistFinalCutSelection(
@@ -1593,12 +1597,39 @@ export function DirectorConsoleRoot({
       if (!onProductionDataChange || !productionData) return
       const stream = productionStreams.find((s) => s.id === streamId)
       if (!stream || stream.status !== 'complete') return
+      if (stream.streamType === 'video' && stream.mp4Url) {
+        setRenderedSceneUrl(stream.mp4Url)
+      }
       onProductionDataChange({
         ...productionData,
         currentStreamId: stream.id,
+        ...(stream.streamType === 'video' && stream.mp4Url
+          ? { renderedSceneUrl: stream.mp4Url }
+          : {}),
       })
+      if (stream.streamType === 'video' && currentProject) {
+        const base = readFinalCutSelection(currentProject.metadata)
+        const overrides = { ...(base.perSceneOverrides ?? {}) }
+        overrides[sceneId] = {
+          streamType: 'video',
+          language: stream.language as ProductionLanguage,
+          streamVersion: stream.streamVersion ?? 1,
+        }
+        void persistFinalCutSelection(
+          { ...base, perSceneOverrides: overrides },
+          `Scene ${sceneNumber}: Using Video v${stream.streamVersion ?? 1}`
+        )
+      }
     },
-    [onProductionDataChange, productionData, productionStreams]
+    [
+      onProductionDataChange,
+      productionData,
+      productionStreams,
+      currentProject,
+      sceneId,
+      sceneNumber,
+      persistFinalCutSelection,
+    ]
   )
   
   // Delete a production stream

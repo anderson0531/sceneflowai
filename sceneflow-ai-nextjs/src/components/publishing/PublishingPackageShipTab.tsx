@@ -9,6 +9,8 @@ import { getLanguageDisplayName } from '@/lib/publish/buildLanguageAudioTrack'
 import { promoAssetForLanguage } from '@/lib/publish/promoLanguage'
 import { resolvePromoFrameAspect } from '@/lib/publish/promoFrame'
 import { getPublishingState, upsertPublishUnit } from '@/lib/publish/publishingState'
+import { resolvePromoScreeningVideoUrl } from '@/lib/final-cut/resolveScreeningVideoStreamUrl'
+import { readFinalCutSelection } from '@/hooks/final-cut/useFinalCutSelection'
 import {
   collectPublishScenes,
   listPublishChapters,
@@ -123,6 +125,19 @@ export function PublishingPackageShipTab({
 
   const publishingState = useMemo(() => getPublishingState(metadata), [metadata])
   const promo = promoAssetForLanguage(publishingState.promo, language)
+  const rawScenes = useMemo(() => scenesFromProps(script, metadata), [script, metadata])
+  const resolvedPromoStreamUrl = useMemo(
+    () =>
+      resolvePromoScreeningVideoUrl({
+        scenes: rawScenes,
+        sceneProductionState: production as Record<string, unknown>,
+        language,
+        finalCut: readFinalCutSelection(metadata),
+        activePromoId: publishingState.promo?.activePromoId,
+        fallbackPromoTrailerUrl: promo?.mp4Url || null,
+      }),
+    [rawScenes, production, language, metadata, publishingState.promo?.activePromoId, promo?.mp4Url]
+  )
 
   useEffect(() => {
     if (kind !== 'promo') return
@@ -147,17 +162,18 @@ export function PublishingPackageShipTab({
           mp4Url: stream.mp4Url || undefined,
           status: stream.status,
         })),
-        promo: promo
-          ? {
-              mp4Url: promo.mp4Url,
-              durationSec: promo.durationSec,
-              status: promo.status,
-              aspect: promo.aspect,
-            }
-          : undefined,
+        promo:
+          resolvedPromoStreamUrl || promo
+            ? {
+                mp4Url: resolvedPromoStreamUrl || promo?.mp4Url,
+                durationSec: promo?.durationSec,
+                status: resolvedPromoStreamUrl ? 'ready' : promo?.status,
+                aspect: promo?.aspect ?? resolvePromoFrameAspect(metadata),
+              }
+            : undefined,
         projectTitle,
       }),
-    [kind, aspect, language, sceneId, beatIndex, scenes, streams, promo, projectTitle]
+    [kind, aspect, language, sceneId, beatIndex, scenes, streams, promo, resolvedPromoStreamUrl, metadata, projectTitle]
   )
 
   const savedUnit = publishingState.units?.find((unit) => unit.id === plan.id)

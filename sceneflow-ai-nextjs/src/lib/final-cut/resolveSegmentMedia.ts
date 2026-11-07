@@ -240,13 +240,18 @@ export function resolveSceneStreamUrl(
   }
   if (!chosen && rows.length > 0) {
     const pinned = currentStreamId ? rows.find((r) => r.id === currentStreamId) : undefined
-    if (
-      pinned &&
-      (!latestOverall ||
-        streamTimestampMs(pinned) === 0 ||
-        streamTimestampMs(latestOverall) === 0 ||
-        streamTimestampMs(pinned) >= streamTimestampMs(latestOverall))
-    ) {
+    const latestSupersedesPinned =
+      Boolean(
+        pinned &&
+          latestOverall &&
+          pinned !== latestOverall &&
+          streamTimestampMs(pinned) > 0 &&
+          streamTimestampMs(latestOverall) > streamTimestampMs(pinned) &&
+          renderedUrl &&
+          latestOverall.mp4Url?.trim() === renderedUrl &&
+          pinned.mp4Url?.trim() !== renderedUrl
+      )
+    if (pinned && !latestSupersedesPinned) {
       chosen = pinned
     } else {
       chosen = latestOverall

@@ -16,6 +16,7 @@ import {
   Clapperboard,
   Video as VideoIcon,
   Maximize2,
+  Minimize2,
   X,
   Pause,
   Upload,
@@ -165,16 +166,17 @@ function formatTimeAgo(isoString: string): string {
 interface InlineVideoPlayerProps {
   stream: ProductionStream
   onClose: () => void
-  onExpandFullscreen: () => void
   onDownload: () => void
 }
 
-function InlineVideoPlayer({ stream, onClose, onExpandFullscreen, onDownload }: InlineVideoPlayerProps) {
+function InlineVideoPlayer({ stream, onClose, onDownload }: InlineVideoPlayerProps) {
+  const playerContainerRef = useRef<HTMLDivElement>(null)
   const videoRef = useRef<HTMLVideoElement>(null)
   const [isPlaying, setIsPlaying] = useState(false)
   const [currentTime, setCurrentTime] = useState(0)
   const [duration, setDuration] = useState(0)
   const [isLoaded, setIsLoaded] = useState(false)
+  const [isFullscreen, setIsFullscreen] = useState(false)
 
   const timelineDuration = useMemo(() => {
     if (Number.isFinite(duration) && duration > 0 && !Number.isNaN(duration)) {
@@ -197,6 +199,72 @@ function InlineVideoPlayer({ stream, onClose, onExpandFullscreen, onDownload }: 
       videoRef.current.play()
     }
   }, [isPlaying])
+
+  useEffect(() => {
+    const handleFullscreenChange = () => {
+      const fsEl =
+        document.fullscreenElement ||
+        (document as Document & { webkitFullscreenElement?: Element | null }).webkitFullscreenElement
+      setIsFullscreen(
+        Boolean(
+          fsEl &&
+            (fsEl === playerContainerRef.current || fsEl === videoRef.current)
+        )
+      )
+    }
+    document.addEventListener('fullscreenchange', handleFullscreenChange)
+    document.addEventListener('webkitfullscreenchange', handleFullscreenChange)
+    return () => {
+      document.removeEventListener('fullscreenchange', handleFullscreenChange)
+      document.removeEventListener('webkitfullscreenchange', handleFullscreenChange)
+    }
+  }, [])
+
+  const toggleFullscreen = useCallback(() => {
+    const fsEl =
+      document.fullscreenElement ||
+      (document as Document & { webkitFullscreenElement?: Element | null }).webkitFullscreenElement
+    if (fsEl) {
+      if (typeof document.exitFullscreen === 'function') {
+        void document.exitFullscreen().catch(() => {})
+      } else {
+        const webkitExit = (document as Document & { webkitExitFullscreen?: () => void }).webkitExitFullscreen
+        webkitExit?.()
+      }
+      return
+    }
+    const container = playerContainerRef.current
+    const video = videoRef.current
+    if (container && typeof container.requestFullscreen === 'function') {
+      void container.requestFullscreen().catch(() => {
+        if (video && typeof video.requestFullscreen === 'function') {
+          void video.requestFullscreen().catch(() => {})
+        }
+      })
+      return
+    }
+    if (video && typeof video.requestFullscreen === 'function') {
+      void video.requestFullscreen().catch(() => {})
+      return
+    }
+    const webkitEnter = (video as (HTMLVideoElement & { webkitEnterFullscreen?: () => void }) | null)?.webkitEnterFullscreen
+    webkitEnter?.()
+  }, [])
+
+  const handleClose = useCallback(() => {
+    const fsEl =
+      document.fullscreenElement ||
+      (document as Document & { webkitFullscreenElement?: Element | null }).webkitFullscreenElement
+    if (fsEl && (fsEl === playerContainerRef.current || fsEl === videoRef.current)) {
+      if (typeof document.exitFullscreen === 'function') {
+        void document.exitFullscreen().catch(() => {})
+      } else {
+        const webkitExit = (document as Document & { webkitExitFullscreen?: () => void }).webkitExitFullscreen
+        webkitExit?.()
+      }
+    }
+    onClose()
+  }, [onClose])
   
   const handleTimeUpdate = useCallback(() => {
     if (videoRef.current) {
@@ -259,9 +327,17 @@ function InlineVideoPlayer({ stream, onClose, onExpandFullscreen, onDownload }: 
   }, [stream.mp4Url])
   
   return (
-    <div className="mb-4 bg-slate-900/90 rounded-xl border border-cyan-500/30 overflow-hidden shadow-lg shadow-cyan-500/10 animate-in slide-in-from-top-2 duration-300">
+    <div
+      ref={playerContainerRef}
+      data-testid="stream-inline-video-player"
+      className={
+        isFullscreen
+          ? 'flex h-screen w-screen max-w-none flex-col bg-black overflow-hidden'
+          : 'mb-4 mx-auto w-full max-w-3xl bg-slate-900/95 rounded-xl border border-cyan-500/30 overflow-hidden shadow-lg shadow-cyan-500/10 animate-in slide-in-from-top-2 duration-300'
+      }
+    >
       {/* Header */}
-      <div className="flex items-center justify-between px-3 py-2 bg-slate-800/80 border-b border-slate-700/50">
+      <div className="flex items-center justify-between px-3 py-2 bg-slate-800/80 border-b border-slate-700/50 shrink-0">
         <div className="flex items-center gap-2">
           <span className="text-lg">{flag}</span>
           <div className="flex items-center gap-2">
@@ -289,14 +365,15 @@ function InlineVideoPlayer({ stream, onClose, onExpandFullscreen, onDownload }: 
             <Download className="w-4 h-4" />
           </button>
           <button
-            onClick={onExpandFullscreen}
+            onClick={toggleFullscreen}
             className="p-1.5 text-slate-400 hover:text-cyan-400 hover:bg-slate-700 rounded transition-colors"
-            title="Expand to fullscreen"
+            title={isFullscreen ? 'Exit fullscreen' : 'Fullscreen'}
+            aria-label={isFullscreen ? 'Exit fullscreen' : 'Fullscreen'}
           >
-            <Maximize2 className="w-4 h-4" />
+            {isFullscreen ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
           </button>
           <button
-            onClick={onClose}
+            onClick={handleClose}
             className="p-1.5 text-slate-400 hover:text-red-400 hover:bg-slate-700 rounded transition-colors"
             title="Close preview"
           >
@@ -306,11 +383,23 @@ function InlineVideoPlayer({ stream, onClose, onExpandFullscreen, onDownload }: 
       </div>
       
       {/* Video Container */}
-      <div className="relative bg-black">
+      <div
+        className={
+          isFullscreen
+            ? 'relative flex-1 min-h-0 flex items-center justify-center bg-black overflow-hidden'
+            : 'relative flex items-center justify-center bg-black max-h-[42vh] overflow-hidden'
+        }
+      >
         <video
           ref={videoRef}
           src={stream.mp4Url || undefined}
-          className="w-full aspect-video"
+          className={
+            isFullscreen
+              ? 'h-full w-full max-h-none object-contain cursor-pointer'
+              : 'w-full max-h-[42vh] aspect-video object-contain mx-auto cursor-pointer'
+          }
+          onClick={togglePlayPause}
+          onDoubleClick={toggleFullscreen}
           onPlay={() => setIsPlaying(true)}
           onPause={() => setIsPlaying(false)}
           onTimeUpdate={handleTimeUpdate}
@@ -322,17 +411,18 @@ function InlineVideoPlayer({ stream, onClose, onExpandFullscreen, onDownload }: 
         
         {/* Loading overlay */}
         {!isLoaded && (
-          <div className="absolute inset-0 flex items-center justify-center bg-black/50">
+          <div className="absolute inset-0 flex items-center justify-center bg-black/50 pointer-events-none">
             <Loader2 className="w-8 h-8 text-cyan-400 animate-spin" />
           </div>
         )}
       </div>
       
       {/* Custom Controls */}
-      <div className="flex items-center gap-3 px-3 py-2 bg-slate-800/80">
+      <div className="flex items-center gap-3 px-3 py-2 bg-slate-800/80 shrink-0">
         <button
           onClick={togglePlayPause}
           className="p-1.5 text-white hover:text-cyan-400 transition-colors"
+          aria-label={isPlaying ? 'Pause' : 'Play'}
         >
           {isPlaying ? <Pause className="w-5 h-5" /> : <Play className="w-5 h-5" />}
         </button>
@@ -356,6 +446,15 @@ function InlineVideoPlayer({ stream, onClose, onExpandFullscreen, onDownload }: 
         <span className="text-xs text-slate-400 min-w-[40px] text-right">
           {formatTime(timelineDuration)}
         </span>
+
+        <button
+          onClick={toggleFullscreen}
+          className="p-1.5 text-slate-400 hover:text-cyan-400 hover:bg-slate-700 rounded transition-colors"
+          title={isFullscreen ? 'Exit fullscreen' : 'Fullscreen'}
+          aria-label={isFullscreen ? 'Exit fullscreen' : 'Fullscreen'}
+        >
+          {isFullscreen ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
+        </button>
       </div>
     </div>
   )
@@ -722,14 +821,6 @@ export function ProductionStreamsPanel({
     setPreviewingStreamId(current => current === streamId ? null : streamId)
   }, [])
   
-  // Handle expanding to fullscreen (uses existing parent callback)
-  const handleExpandFullscreen = useCallback(() => {
-    if (previewingStream?.mp4Url) {
-      onPreviewStream(previewingStream.id, previewingStream.mp4Url)
-      setPreviewingStreamId(null)
-    }
-  }, [previewingStream, onPreviewStream])
-  
   // Handle download from inline player
   const handleInlineDownload = useCallback(() => {
     if (previewingStream?.mp4Url) {
@@ -896,7 +987,6 @@ export function ProductionStreamsPanel({
         <InlineVideoPlayer
           stream={previewingStream}
           onClose={() => setPreviewingStreamId(null)}
-          onExpandFullscreen={handleExpandFullscreen}
           onDownload={handleInlineDownload}
         />
       )}

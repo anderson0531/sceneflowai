@@ -68,11 +68,18 @@ describe('Scene workflow viewport-fitted window and uncropped menu', () => {
     const viewer = readSource('src/components/vision/scene-production/BeatStillClipViewer.tsx')
     const imageFrame = readSource('src/components/vision/SceneImageFrame.tsx')
     const videoGallery = readSource('src/components/vision/scene-production/BeatVideoGallery.tsx')
+    const streamsPanel = readSource('src/components/vision/scene-production/ProductionStreamsPanel.tsx')
 
     expect(stage).toContain('lg:sticky lg:top-2')
     expect(viewer).toContain('max-h-[38vh]')
     expect(imageFrame).toContain('max-h-[42vh]')
     expect(videoGallery).toContain('max-h-[42vh]')
+    expect(streamsPanel).toContain('data-testid="stream-inline-video-player"')
+    expect(streamsPanel).toContain('max-w-3xl')
+    expect(streamsPanel).toContain('max-h-[42vh]')
+    expect(streamsPanel).toContain('toggleFullscreen')
+    expect(streamsPanel).toContain('requestFullscreen')
+    expect(streamsPanel).not.toContain('handleExpandFullscreen')
   })
 
   it('prevents Vercel Blob overwrite 500s on dialogue generation and checks both .wav and .mp3 caches', () => {
@@ -103,7 +110,7 @@ describe('Scene workflow viewport-fitted window and uncropped menu', () => {
     const promoBarSlice = panel.slice(promoBarIdx, directionTabIdx)
     // No duplicate horizontal Shot 1, Shot 2 button list inside promo-shared-shots-bar
     expect(promoBarSlice).not.toContain('Shot {bIdx + 1}')
-    expect(promoBarSlice).toContain('Select shots in the vertical rail below')
+    expect(promoBarSlice).toContain('Updates run here or on the source scene stay synchronized in real time.')
 
     const stage = readSource('src/components/vision/scene-production/SceneBeatStage.tsx')
     expect(stage).toContain('sourceSceneLabel')

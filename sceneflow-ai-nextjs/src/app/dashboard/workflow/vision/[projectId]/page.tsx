@@ -489,6 +489,9 @@ import {
   SCENE_RENDER_APPENDED_EVENT,
   appendSceneRenderClient,
 } from '@/lib/projects/appendSceneRenderClient'
+import { FINAL_CUT_SELECTION_UPDATED_EVENT } from '@/lib/final-cut/persistFinalCutSelection'
+import { resolvePromoScreeningVideoUrl } from '@/lib/final-cut/resolveScreeningVideoStreamUrl'
+import { readFinalCutSelection } from '@/hooks/final-cut/useFinalCutSelection'
 import { patchMixerTrackVolumes } from '@/lib/scene/screeningTrackVolume'
 import { applyIntelligentDefaults } from '@/lib/audio/anchoredTiming'
 // audioTrackBuilder functions are imported dynamically inside callbacks to break TDZ scope-hoisting chain
@@ -2958,6 +2961,27 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     window.addEventListener(SCENE_RENDER_APPENDED_EVENT, handler)
     return () => window.removeEventListener(SCENE_RENDER_APPENDED_EVENT, handler)
   }, [rememberAppendedSceneRender])
+
+  useEffect(() => {
+    const handler = (event: Event) => {
+      const detail = (
+        event as CustomEvent<{ projectId?: string; finalCut?: import('@/lib/types/finalCut').FinalCutSelection }>
+      ).detail
+      if (!detail?.finalCut || (detail.projectId && detail.projectId !== projectId)) return
+      setProject((prev: any) => {
+        if (!prev) return prev
+        return {
+          ...prev,
+          metadata: {
+            ...(prev.metadata || {}),
+            finalCut: detail.finalCut,
+          },
+        }
+      })
+    }
+    window.addEventListener(FINAL_CUT_SELECTION_UPDATED_EVENT, handler)
+    return () => window.removeEventListener(FINAL_CUT_SELECTION_UPDATED_EVENT, handler)
+  }, [projectId])
 
   const syncBeatStartFrameToProduction = useCallback(
     (sceneId: string, beatId: string, newUrl: string) => {
@@ -20678,7 +20702,15 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                     screeningPlaybackHint={screeningPlaybackHint}
                     onScreeningPlaybackHintConsumed={() => setScreeningPlaybackHint(null)}
                     promoTrailerUrl={
-                      getPublishingState(project?.metadata).promo?.trailer?.mp4Url || null
+                      resolvePromoScreeningVideoUrl({
+                        scenes: storyboardGalleryScenes,
+                        sceneProductionState: sceneProductionState as Record<string, unknown>,
+                        language: 'en',
+                        finalCut: readFinalCutSelection(project?.metadata),
+                        activePromoId: getPublishingState(project?.metadata).promo?.activePromoId,
+                        fallbackPromoTrailerUrl:
+                          getPublishingState(project?.metadata).promo?.trailer?.mp4Url || null,
+                      })
                     }
                   />
                 </div>

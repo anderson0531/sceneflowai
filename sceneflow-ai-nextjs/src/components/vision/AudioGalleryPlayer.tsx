@@ -85,7 +85,10 @@ import {
   sceneMixerTrackVolumes,
   type ScreeningTrackVolumes,
 } from '@/lib/scene/screeningTrackVolume'
-import { resolveScreeningVideoStreamUrl } from '@/lib/final-cut/resolveScreeningVideoStreamUrl'
+import {
+  resolvePromoScreeningVideoUrl,
+  resolveScreeningVideoStreamUrl,
+} from '@/lib/final-cut/resolveScreeningVideoStreamUrl'
 import {
   findStreamMaster,
   getReadyStreamLanguages,
@@ -836,7 +839,19 @@ export function AudioGalleryPlayer({
 
   const streamMasterUrl = activeStreamMaster?.mp4Url ?? null
 
-  const hasPromoTrailer = !!promoTrailerUrl?.trim()
+  const resolvedPromoTrailerUrl = useMemo(
+    () =>
+      resolvePromoScreeningVideoUrl({
+        scenes,
+        sceneProductionState: sceneProductionState as Record<string, unknown> | undefined,
+        language: selectedLanguage,
+        finalCut: finalCutSelection,
+        fallbackPromoTrailerUrl: promoTrailerUrl,
+      }),
+    [scenes, sceneProductionState, selectedLanguage, finalCutSelection, promoTrailerUrl]
+  )
+
+  const hasPromoTrailer = !!resolvedPromoTrailerUrl?.trim()
   const usePromoMaster = playbackMode === 'promo' && hasPromoTrailer
   const useStreamMaster = playbackMode === 'stream' && !!streamMasterUrl
   const useMasterVideo = useStreamMaster || usePromoMaster
@@ -1271,6 +1286,7 @@ export function AudioGalleryPlayer({
     }
     if (mode === 'promo') {
       setPlaybackMode('promo')
+      if (language) onLanguageChange(language)
       onScreeningPlaybackHintConsumed?.()
       return
     }
@@ -1386,7 +1402,7 @@ export function AudioGalleryPlayer({
     const el = videoRef.current
     if (!el) return
     void el.play().then(() => setVideoPlaying(true)).catch(() => setVideoPlaying(false))
-  }, [useMasterVideo, useVideoForCurrentScene, currentSceneIndex, currentSceneVideoUrl, streamMasterUrl, promoTrailerUrl])
+  }, [useMasterVideo, useVideoForCurrentScene, currentSceneIndex, currentSceneVideoUrl, streamMasterUrl, resolvedPromoTrailerUrl])
 
   const handleVideoEnded = useCallback(() => {
     setVideoPlaying(false)
@@ -1404,7 +1420,7 @@ export function AudioGalleryPlayer({
   }, [useMasterVideo, playbackMode, chapterSceneIndices, videoSceneIndices, currentSceneIndex, goToScene])
 
   const activeVideoUrl = usePromoMaster
-    ? promoTrailerUrl
+    ? resolvedPromoTrailerUrl
     : useStreamMaster
       ? streamMasterUrl
       : currentSceneVideoUrl
@@ -1761,8 +1777,8 @@ export function AudioGalleryPlayer({
             </TooltipTrigger>
             <TooltipContent>
               {hasPromoTrailer
-                ? 'Play the 9:16 promotional trailer'
-                : 'Create and render a promo trailer in Publishing → Promo'}
+                ? 'Play the promotional trailer stream'
+                : 'Render a stream version on the Promo scene to enable Promo'}
             </TooltipContent>
           </Tooltip>
         </div>

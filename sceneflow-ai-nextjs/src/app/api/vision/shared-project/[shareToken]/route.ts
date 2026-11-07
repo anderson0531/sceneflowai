@@ -5,6 +5,8 @@ import { validateAndCleanSceneAudio } from '../../../../../lib/audio/cleanupAudi
 import { findActiveShareProject } from '../../../../../lib/storyboard/shareProjectLookup'
 import { getProjectStreams } from '@/lib/streams/projectStreams'
 import { getPublishingState } from '@/lib/publish/publishingState'
+import { resolvePromoScreeningVideoUrl } from '@/lib/final-cut/resolveScreeningVideoStreamUrl'
+import { readFinalCutSelection } from '@/hooks/final-cut/useFinalCutSelection'
 import { sequelize } from '../../../../../config/database'
 
 export const runtime = 'nodejs'
@@ -102,7 +104,15 @@ export async function GET(
 
     const audienceResonance = sanitizeAudienceResonance(visionPhase?.reviews?.audience)
     const publishingState = getPublishingState(md)
-    const promoTrailerUrl = publishingState.promo?.trailer?.mp4Url || null
+    const finalCutSelection = readFinalCutSelection(md)
+    const promoTrailerUrl = resolvePromoScreeningVideoUrl({
+      scenes: resolvedScenes,
+      sceneProductionState: (visionPhase.production?.scenes || {}) as Record<string, unknown>,
+      language: finalCutSelection?.language || 'en',
+      finalCut: finalCutSelection,
+      activePromoId: publishingState.promo?.activePromoId,
+      fallbackPromoTrailerUrl: publishingState.promo?.trailer?.mp4Url || null,
+    })
 
     // Return only necessary data (no sensitive info)
     const sharedData = {

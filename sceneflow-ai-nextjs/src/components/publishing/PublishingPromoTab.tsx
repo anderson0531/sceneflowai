@@ -45,6 +45,7 @@ import { buildPromoPreviewSequence } from '@/lib/publish/promoPreviewSequence'
 import { parsePromoRenderBody, pollPromoRenderJob } from '@/lib/publish/promoRenderPoll'
 import { getPublishingState, upsertPublishingState } from '@/lib/publish/publishingState'
 import { promoFrameClass, resolvePromoFrameAspect } from '@/lib/publish/promoFrame'
+import { readFinalCutSelection } from '@/hooks/final-cut/useFinalCutSelection'
 import {
   promoAgentShotNeedsGeneration,
   promoAssetForLanguage,
@@ -629,19 +630,90 @@ export function PublishingPromoTab({
   const renderedPromoStreams = useMemo(() => {
     const items: Array<{ id: string; label: string; mp4Url: string; language?: string }> = []
     const seenUrls = new Set<string>()
+    const deletedIds = new Set(
+      Array.isArray((promoProductionData as { deletedStreamIds?: unknown } | undefined)?.deletedStreamIds)
+        ? ((promoProductionData as { deletedStreamIds?: string[] }).deletedStreamIds ?? [])
+        : []
+    )
+    const currentStreamId =
+      typeof promoProductionData?.currentStreamId === 'string'
+        ? promoProductionData.currentStreamId.trim()
+        : ''
+    const finalCut = readFinalCutSelection(metadata)
+    const promoSceneId = String(promoScene?.id || promoScene?.sceneId || activePromoId || '')
+    const sceneOverride =
+      (promoSceneId ? finalCut?.perSceneOverrides?.[promoSceneId] : undefined) ||
+      (promoSceneIndex >= 0 ? finalCut?.perSceneOverrides?.[`scene-${promoSceneIndex}`] : undefined)
+
     const prodStreams = Array.isArray(promoProductionData?.productionStreams)
-      ? promoProductionData.productionStreams
+      ? [...promoProductionData.productionStreams]
+          .filter((s) => {
+            const rec = s as { id?: string; mp4Url?: string; status?: string }
+            if (!rec?.mp4Url || (rec.id && deletedIds.has(rec.id))) return false
+            return !rec.status || rec.status === 'complete' || rec.status === 'ready'
+          })
+          .sort((a, b) => {
+            const ra = a as {
+              id?: string
+              language?: string
+              streamVersion?: number
+              completedAt?: string
+              createdAt?: string
+            }
+            const rb = b as {
+              id?: string
+              language?: string
+              streamVersion?: number
+              completedAt?: string
+              createdAt?: string
+            }
+            const aMatchesOverride = Boolean(
+              sceneOverride &&
+                (!sceneOverride.language || sceneOverride.language === ra.language) &&
+                (sceneOverride.streamVersion ?? 1) === (ra.streamVersion ?? 1)
+            )
+            const bMatchesOverride = Boolean(
+              sceneOverride &&
+                (!sceneOverride.language || sceneOverride.language === rb.language) &&
+                (sceneOverride.streamVersion ?? 1) === (rb.streamVersion ?? 1)
+            )
+            if (aMatchesOverride !== bMatchesOverride) return aMatchesOverride ? -1 : 1
+            const aCurrent = Boolean(currentStreamId && ra.id === currentStreamId)
+            const bCurrent = Boolean(currentStreamId && rb.id === currentStreamId)
+            if (aCurrent !== bCurrent) return aCurrent ? -1 : 1
+            const aLang = ra.language === language
+            const bLang = rb.language === language
+            if (aLang !== bLang) return aLang ? -1 : 1
+            const dv = (rb.streamVersion ?? 1) - (ra.streamVersion ?? 1)
+            if (dv !== 0) return dv
+            return (
+              new Date(rb.completedAt || rb.createdAt || 0).getTime() -
+              new Date(ra.completedAt || ra.createdAt || 0).getTime()
+            )
+          })
       : []
     for (const s of prodStreams) {
-      const rec = s as { id?: string; mp4Url?: string; status?: string; language?: string; label?: string }
+      const rec = s as {
+        id?: string
+        mp4Url?: string
+        status?: string
+        language?: string
+        label?: string
+        displayName?: string
+        streamVersion?: number
+      }
       if (rec?.mp4Url && (!rec.status || rec.status === 'complete' || rec.status === 'ready')) {
         if (!seenUrls.has(rec.mp4Url)) {
           seenUrls.add(rec.mp4Url)
+          const verSuffix = rec.streamVersion ? ` v${rec.streamVersion}` : ''
           items.push({
             id: rec.id || `stream-${items.length}`,
             label:
+              rec.displayName ||
               rec.label ||
-              (rec.language ? `${promoLanguageName(rec.language)} Stream` : 'Rendered Promo Stream'),
+              (rec.language
+                ? `${promoLanguageName(rec.language)} Stream${verSuffix}`
+                : `Rendered Promo Stream${verSuffix}`),
             mp4Url: rec.mp4Url,
             language: rec.language,
           })
@@ -649,9 +721,10 @@ export function PublishingPromoTab({
       }
     }
     const directSceneUrl =
-      (typeof promoProductionData?.renderedSceneUrl === 'string' && promoProductionData.renderedSceneUrl) ||
-      (typeof promoScene?.renderedSceneUrl === 'string' && promoScene.renderedSceneUrl) ||
-      ''
+      !deletedIds.size &&
+      ((typeof promoProductionData?.renderedSceneUrl === 'string' && promoProductionData.renderedSceneUrl) ||
+        (typeof promoScene?.renderedSceneUrl === 'string' && promoScene.renderedSceneUrl) ||
+        '')
     if (directSceneUrl && !seenUrls.has(directSceneUrl)) {
       seenUrls.add(directSceneUrl)
       items.push({
@@ -682,7 +755,17 @@ export function PublishingPromoTab({
       })
     }
     return items
-  }, [promoProductionData, promoScene, publishingState.promo, activeTrailer, language, targetDuration])
+  }, [
+    promoProductionData,
+    promoScene,
+    promoSceneIndex,
+    activePromoId,
+    metadata,
+    publishingState.promo,
+    activeTrailer,
+    language,
+    targetDuration,
+  ])
 
   const clipRows = useMemo(
     () =>

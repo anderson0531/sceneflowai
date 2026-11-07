@@ -1,5 +1,8 @@
 import { describe, it, expect } from 'vitest'
-import { resolveScreeningVideoStreamUrl } from '@/lib/final-cut/resolveScreeningVideoStreamUrl'
+import {
+  resolvePromoScreeningVideoUrl,
+  resolveScreeningVideoStreamUrl,
+} from '@/lib/final-cut/resolveScreeningVideoStreamUrl'
 import type { FinalCutSelection } from '@/lib/types/finalCut'
 
 const sceneId = 'scene-1'
@@ -228,5 +231,111 @@ describe('resolveScreeningVideoStreamUrl', () => {
     expect(resolveScreeningVideoStreamUrl(sceneId, state, 'en', staleFinalCut)).toBe(
       'https://example.com/new-v2.mp4'
     )
+  })
+})
+
+describe('resolvePromoScreeningVideoUrl', () => {
+  const promoScene = {
+    id: 'promo-trailer',
+    promoId: 'promo-trailer',
+    cinematicType: 'promo',
+    heading: 'PROMO TRAILER',
+  }
+
+  it('prefers the designated stream version on the promo scene over deprecated fallbackPromoTrailerUrl', () => {
+    const state = {
+      'promo-trailer': {
+        currentStreamId: 'promo-stream-v1',
+        renderedSceneUrl: 'https://example.com/promo-v1.mp4',
+        productionStreams: [
+          {
+            id: 'promo-stream-v1',
+            streamType: 'video',
+            language: 'en',
+            streamVersion: 1,
+            status: 'complete',
+            completedAt: '2026-10-20T10:00:00.000Z',
+            mp4Url: 'https://example.com/promo-v1.mp4',
+          },
+          {
+            id: 'promo-stream-v2',
+            streamType: 'video',
+            language: 'en',
+            streamVersion: 2,
+            status: 'complete',
+            completedAt: '2026-10-21T10:00:00.000Z',
+            mp4Url: 'https://example.com/promo-v2.mp4',
+          },
+        ],
+      },
+    }
+    const finalCut: FinalCutSelection = {
+      format: 'full-video',
+      language: 'en',
+      perSceneOverrides: {
+        'promo-trailer': { streamType: 'video', language: 'en', streamVersion: 1 },
+      },
+    }
+
+    expect(
+      resolvePromoScreeningVideoUrl({
+        scenes: [promoScene],
+        sceneProductionState: state,
+        language: 'en',
+        finalCut,
+        fallbackPromoTrailerUrl: 'https://example.com/deprecated-promo.mp4',
+      })
+    ).toBe('https://example.com/promo-v1.mp4')
+  })
+
+  it('honors currentStreamId on the promo scene when no perSceneOverrides entry is set', () => {
+    const state = {
+      'promo-trailer': {
+        currentStreamId: 'promo-stream-v1',
+        renderedSceneUrl: 'https://example.com/promo-v1.mp4',
+        productionStreams: [
+          {
+            id: 'promo-stream-v1',
+            streamType: 'video',
+            language: 'en',
+            streamVersion: 1,
+            status: 'complete',
+            completedAt: '2026-10-20T10:00:00.000Z',
+            mp4Url: 'https://example.com/promo-v1.mp4',
+          },
+          {
+            id: 'promo-stream-v2',
+            streamType: 'video',
+            language: 'en',
+            streamVersion: 2,
+            status: 'complete',
+            completedAt: '2026-10-21T10:00:00.000Z',
+            mp4Url: 'https://example.com/promo-v2.mp4',
+          },
+        ],
+      },
+    }
+
+    expect(
+      resolvePromoScreeningVideoUrl({
+        scenes: [promoScene],
+        sceneProductionState: state,
+        language: 'en',
+        finalCut: null,
+        fallbackPromoTrailerUrl: 'https://example.com/deprecated-promo.mp4',
+      })
+    ).toBe('https://example.com/promo-v1.mp4')
+  })
+
+  it('falls back to legacy fallbackPromoTrailerUrl only when no promo scene stream exists', () => {
+    expect(
+      resolvePromoScreeningVideoUrl({
+        scenes: [promoScene],
+        sceneProductionState: {},
+        language: 'en',
+        finalCut: null,
+        fallbackPromoTrailerUrl: 'https://example.com/legacy-promo.mp4',
+      })
+    ).toBe('https://example.com/legacy-promo.mp4')
   })
 })
