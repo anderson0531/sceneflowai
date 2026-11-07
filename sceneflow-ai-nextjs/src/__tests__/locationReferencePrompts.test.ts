@@ -1,6 +1,4 @@
 import { describe, expect, it } from 'vitest'
-import { buildSceneImageLocationLabel } from '@/lib/imagen/sceneImageReferenceLabels'
-import { locationScaleClause } from '@/lib/imagen/locationScaleClause'
 import {
   LOCATION_OBJECT_INSERT_CONSUMPTION_INSTRUCTION,
   LOCATION_TURNAROUND_CONSUMPTION_INSTRUCTION,
@@ -15,6 +13,9 @@ import {
   buildLocationBasePrompt,
   stripBeatPropsFromLocationStateNotes,
 } from '@/lib/vision/locationReferencePrompts'
+import { buildSceneImageLocationLabel } from '@/lib/imagen/sceneImageReferenceLabels'
+import { extractActionFramingBody } from '@/lib/imagen/structuredStillPrompt'
+import { locationScaleClause } from '@/lib/imagen/locationScaleClause'
 
 describe('locationReferencePrompts', () => {
   it('generation instruction requests single extreme-wide establishing shot', () => {
@@ -233,6 +234,13 @@ describe('locationReferencePrompts', () => {
     )
     expect(prompt.toLowerCase()).toContain('heavy door wheel')
     expect(prompt).toContain(LOCATION_TURNAROUND_GENERATION_INSTRUCTION)
+  })
+
+  it('initializes LOCATION_VERSION_CONSUMPTION_SUFFIX without circular TDZ when locationReferencePrompts loads before structuredStillPrompt', () => {
+    const body = extractActionFramingBody(
+      `Action/Framing: Wide shot of the vault.\n${LOCATION_VERSION_CONSUMPTION_SUFFIX}`
+    )
+    expect(body).toBe('Wide shot of the vault.')
   })
 })
 

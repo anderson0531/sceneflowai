@@ -6,7 +6,32 @@
  */
 
 import { extractLocationResidentInstrumentPhrases } from '@/lib/vision/locationResidentInstruments'
-import { affirmativeStartFrameState } from '@/lib/scene/beatVideoPromptCompiler'
+
+/**
+ * Convert negative illumination phrasing in an opening frame description into
+ * affirmative dark-state visual nouns (Omni 1.1 Flash / Veo best practice:
+ * positive prompt text should state what IS visible rather than negated target
+ * nouns like "without a single electric light", which prime attention for lights
+ * at t=0s).
+ */
+export function affirmativeStartFrameState(value?: string | null): string {
+  const raw = (value ?? '').trim()
+  if (!raw) return ''
+  return raw
+    .replace(
+      /\bwithout\s+a\s+single\s+electric(?:al)?\s+light(?:s)?\b/gi,
+      'in total blackout with every window and streetlamp dark and unlit'
+    )
+    .replace(
+      /\bwith\s+(?:zero|no)\s+electric(?:al)?\s+light(?:s)?(?:\s+or\s+power)?\b/gi,
+      'in total blackout with every window and streetlamp dark and unlit'
+    )
+    .replace(
+      /\bwith\s+no\s+lights?\s+on\b|\bwithout\s+any\s+lights?(?:\s+on)?\b/gi,
+      'with every window and fixture dark and unlit'
+    )
+    .replace(/\bcompletely\s+unilluminated\b/gi, 'deep in cold shadow')
+}
 
 export interface LocationAnalysisBeatInput {
   beatId?: string
