@@ -73,9 +73,11 @@ import {
   cleanSpokenLineText,
   composeLanguageClipPrompt,
   extractPromptSignageText,
+  extractPromptSignageTexts,
   extractSpokenLineFromPrompt,
   normalizeSpokenMatchKey,
   preferStoredSpokenTranslation,
+  preserveSignageCaseAndFormulaStyle,
   type StoredSceneLines,
 } from '@/lib/scene/languageClipPrompt'
 import {
@@ -314,6 +316,7 @@ export async function POST(
     let cachedBeat: SceneBeat | undefined
     let resolvedTranslatedSpokenLine: string | undefined
     let resolvedSignageTranslatedText: string | undefined
+    const resolvedSignageTranslations: Record<string, string> = {}
 
     const localizeCompiledBeatPrompt = async (
       beat: SceneBeat,
@@ -331,21 +334,23 @@ export async function POST(
         return compiledPrompt
       }
 
+      const langKey = isLangClip ? normalizeStreamLanguage(clipLanguage) : undefined
+      const visionPhase = (cachedProject?.metadata?.visionPhase || {}) as Record<
+        string,
+        unknown
+      >
+      const translations = (visionPhase.translations || {}) as Record<
+        string,
+        Record<number, StoredSceneLines>
+      >
+      const scenes = getVisionScriptScenes(visionPhase)
+      const sceneIdx = findSceneById(scenes, sceneId).index
+      const promoBeat = beat as PromoSceneBeat
+
       if (!resolvedTranslatedSpokenLine) {
         if (clientHasTranslatedSpoken && clientSpoken) {
           resolvedTranslatedSpokenLine = clientSpoken
-        } else if (isLangClip && englishLine) {
-          const langKey = normalizeStreamLanguage(clipLanguage)
-          const visionPhase = (cachedProject?.metadata?.visionPhase || {}) as Record<
-            string,
-            unknown
-          >
-          const translations = (visionPhase.translations || {}) as Record<
-            string,
-            Record<number, StoredSceneLines>
-          >
-          const scenes = getVisionScriptScenes(visionPhase)
-          const sceneIdx = findSceneById(scenes, sceneId).index
+        } else if (isLangClip && langKey && englishLine) {
           let stored = preferStoredSpokenTranslation({
             translation: sceneIdx >= 0 ? translations?.[langKey]?.[sceneIdx] : undefined,
             kind: beat.kind,
@@ -356,7 +361,6 @@ export async function POST(
               : undefined,
             englishLine,
           })
-          const promoBeat = beat as PromoSceneBeat
           if (
             !stored &&
             typeof promoBeat.sourceSceneIndex === 'number' &&
@@ -377,6 +381,32 @@ export async function POST(
                 : undefined,
               englishLine,
             })
+          }
+          if (!stored && translations?.[langKey]) {
+            for (let idx = 0; idx < scenes.length; idx += 1) {
+              if (idx === sceneIdx) continue
+              const candTrans = translations[langKey]?.[idx]
+              if (!candTrans) continue
+              const candScene = scenes[idx] as Record<string, unknown> | undefined
+              const candBeats = candScene ? getSceneBeats(candScene) : []
+              const sharedBeat = candBeats.find(
+                (b) =>
+                  b.beatId === beat.beatId ||
+                  ((b as PromoSceneBeat).sourceSceneIndex === sceneIdx &&
+                    (b as PromoSceneBeat).sourceBeatId === beat.beatId)
+              )
+              stored = preferStoredSpokenTranslation({
+                translation: candTrans,
+                kind: beat.kind,
+                lineId: sharedBeat?.lineId || beat.lineId,
+                beatId: sharedBeat?.beatId || beat.beatId,
+                dialogue: Array.isArray(candScene?.dialogue)
+                  ? (candScene.dialogue as unknown[])
+                  : undefined,
+                englishLine,
+              })
+              if (stored) break
+            }
           }
           if (stored) {
             resolvedTranslatedSpokenLine = stored
@@ -402,15 +432,66 @@ export async function POST(
         }
       }
 
-      const compiledSignage = extractPromptSignageText(compiledPrompt)
-      if (!resolvedSignageTranslatedText && compiledSignage) {
-        const clientSignage = extractPromptSignageText(clientPrompt)
-        if (clientSignage && clientSignage !== compiledSignage) {
-          resolvedSignageTranslatedText = clientSignage
+      const compiledSignageSources = extractPromptSignageTexts(compiledPrompt, englishLine)
+      const compiledSignage = compiledSignageSources[0]
+      const clientSignageSources = extractPromptSignageTexts(
+        clientPrompt,
+        resolvedTranslatedSpokenLine || englishLine
+      )
+      for (let i = 0; i < compiledSignageSources.length; i += 1) {
+        const src = compiledSignageSources[i]
+        if (resolvedSignageTranslations[src]) continue
+        const clientCand = clientSignageSources[i]
+        if (clientCand && clientCand !== src) {
+          resolvedSignageTranslations[src] = preserveSignageCaseAndFormulaStyle(src, clientCand)
+          continue
+        }
+        if (langKey) {
+          const anyStoredSignage = Object.values(translations?.[langKey] || {})
+            .map((t) => t?.signageByText?.[src])
+            .find(Boolean)
+          const storedSignage =
+            (sceneIdx >= 0 ? translations?.[langKey]?.[sceneIdx]?.signageByText?.[src] : undefined) ||
+            (typeof promoBeat.sourceSceneIndex === 'number' && promoBeat.sourceSceneIndex >= 0
+              ? translations?.[langKey]?.[promoBeat.sourceSceneIndex]?.signageByText?.[src]
+              : undefined) ||
+            anyStoredSignage
+          if (storedSignage) {
+            resolvedSignageTranslations[src] = preserveSignageCaseAndFormulaStyle(
+              src,
+              storedSignage
+            )
+            continue
+          }
+          try {
+            const result = await translateWithVertexAI({
+              text: src,
+              targetLanguage: langKey,
+              sourceLanguage: 'en',
+            })
+            if (result.translatedText?.trim()) {
+              resolvedSignageTranslations[src] = preserveSignageCaseAndFormulaStyle(
+                src,
+                result.translatedText
+              )
+            }
+          } catch (signageErr) {
+            console.warn(
+              `[Segment Asset Generation] Failed to translate signage "${src}" for ${langKey}:`,
+              signageErr
+            )
+          }
         }
       }
+      if (!resolvedSignageTranslatedText && compiledSignage && resolvedSignageTranslations[compiledSignage]) {
+        resolvedSignageTranslatedText = resolvedSignageTranslations[compiledSignage]
+      }
 
-      if (!resolvedTranslatedSpokenLine && !resolvedSignageTranslatedText) {
+      if (
+        !resolvedTranslatedSpokenLine &&
+        !resolvedSignageTranslatedText &&
+        Object.keys(resolvedSignageTranslations).length === 0
+      ) {
         return compiledPrompt
       }
 
@@ -423,6 +504,8 @@ export async function POST(
         translatedLine: resolvedTranslatedSpokenLine,
         signageSourceText: compiledSignage,
         signageTranslatedText: resolvedSignageTranslatedText,
+        signageTranslations: resolvedSignageTranslations,
+        targetLanguage: langKey,
       })
       if (composed.guidePrompt) {
         guidePrompt = composed.guidePrompt

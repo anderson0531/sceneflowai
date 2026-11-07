@@ -470,7 +470,9 @@ import { isOptimizedShotDirection } from '@/lib/publish/promoShotCatalog'
 import {
   composeLanguageClipPrompt,
   englishSpokenLine,
+  extractPromptSignageTexts,
   preferStoredSpokenTranslation,
+  preserveSignageCaseAndFormulaStyle,
   replacePromoOnScreenText,
 } from '@/lib/scene/languageClipPrompt'
 import { translateGuideDialogueLine } from '@/lib/scene/translateGuideDialogue'
@@ -5222,10 +5224,13 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         }
 
         // Update segment with generated asset
+        let syncedGeneratedTake: SceneSegmentTake | undefined
+        let syncedBeatId: string | undefined
         applySceneProductionUpdate(sceneId, (current) => {
           if (!current) return current
           const segments = current.segments.map((segment) => {
             if (segment.segmentId !== segmentId) return segment
+            syncedBeatId = segment.beatId
 
             const measuredDuration =
               typeof data.actualDurationSeconds === 'number' && !Number.isNaN(data.actualDurationSeconds)
@@ -5277,6 +5282,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                   }
                 : undefined,
             }
+            syncedGeneratedTake = newTake
 
             const languageVersion = applyGeneratedClipTake(segment, newTake, clipLanguage)
             if (languageVersion) return languageVersion
@@ -5346,6 +5352,94 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           }
           return { ...current, segments }
         })
+
+        // Keep Promo <-> Source shared beat segments in lockstep for both master and language clips
+        if (syncedGeneratedTake && syncedBeatId) {
+          const allScenes = (scriptRef.current?.script?.scenes ??
+            scriptRef.current?.scenes ??
+            []) as Array<Record<string, unknown>>
+          const currentSceneIdx = allScenes.findIndex(
+            (s, i) => (s.id || s.sceneId || `scene-${i}`) === sceneId
+          )
+          const applySharedTake = (targetSceneKey: string, targetBeatId: string) => {
+            if (!targetSceneKey || targetSceneKey === sceneId) return
+            const takeToSync = syncedGeneratedTake!
+            applySceneProductionUpdate(targetSceneKey, (current) => {
+              if (!current?.segments?.length) return current
+              let updatedSegId: string | undefined
+              const nextSegments = current.segments.map((seg) => {
+                if (seg.beatId !== targetBeatId) return seg
+                updatedSegId = seg.segmentId
+                const langUpdated = applyGeneratedClipTake(seg, takeToSync, clipLanguage)
+                if (langUpdated) return langUpdated
+                return {
+                  ...seg,
+                  status: data.status === 'COMPLETE' ? 'COMPLETE' : 'GENERATING',
+                  assetType: data.assetType,
+                  activeAssetUrl: data.assetUrl,
+                  isStale: false,
+                  takes: appendSegmentTake(seg.takes, takeToSync),
+                  currentTakeId: takeToSync.id,
+                }
+              })
+              if (!updatedSegId) return current
+              if (languageClip && clipLanguage) {
+                const langKey = clipLanguage.trim().toLowerCase()
+                const existingByLang = current.mixerSettingsByLanguage ?? {}
+                const existingLang = existingByLang[langKey] ?? {}
+                const existingShotConfigs = existingLang.languageShotConfigs ?? {}
+                return {
+                  ...current,
+                  segments: nextSegments,
+                  mixerSettingsByLanguage: {
+                    ...existingByLang,
+                    [langKey]: {
+                      ...existingLang,
+                      languageShotConfigs: {
+                        ...existingShotConfigs,
+                        [updatedSegId]: {
+                          ...existingShotConfigs[updatedSegId],
+                          method: 'regenerate',
+                        },
+                      },
+                    },
+                  },
+                }
+              }
+              return { ...current, segments: nextSegments }
+            })
+          }
+          if (currentSceneIdx >= 0) {
+            const currentSceneRec = allScenes[currentSceneIdx]
+            const currentBeat = getSceneBeats(currentSceneRec).find(
+              (b) => b.beatId === syncedBeatId
+            ) as PromoSceneBeat | undefined
+            if (
+              currentBeat &&
+              typeof currentBeat.sourceSceneIndex === 'number' &&
+              currentBeat.sourceBeatId
+            ) {
+              const srcScene = allScenes[currentBeat.sourceSceneIndex]
+              if (srcScene) {
+                const srcKey = String(
+                  srcScene.id || srcScene.sceneId || `scene-${currentBeat.sourceSceneIndex}`
+                )
+                applySharedTake(srcKey, currentBeat.sourceBeatId)
+              }
+            } else {
+              allScenes.forEach((cand, cIdx) => {
+                if (!isPromoCinematicScene(cand)) return
+                const promoKey = String(cand.id || cand.sceneId || `scene-${cIdx}`)
+                const promoBeats = getSceneBeats(cand) as PromoSceneBeat[]
+                for (const pb of promoBeats) {
+                  if (pb.sourceSceneIndex === currentSceneIdx && pb.sourceBeatId === syncedBeatId) {
+                    applySharedTake(promoKey, pb.beatId)
+                  }
+                }
+              })
+            }
+          }
+        }
 
         try {
           const { toast } = require('sonner')
@@ -6043,12 +6137,41 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           if (!translated && englishLine.trim()) {
             translated = await translateGuideDialogueLine(englishLine, clipLanguage)
           }
+          const signageSources = extractPromptSignageTexts(sourcePrompt, englishLine)
+          const signageTranslations: Record<string, string> = {}
+          const storedSignage =
+            sceneIndex != null ? storedTranslations[clipLanguage]?.[sceneIndex]?.signageByText : undefined
+          const sourceSignage =
+            promoBeat &&
+            typeof promoBeat.sourceSceneIndex === 'number' &&
+            promoBeat.sourceSceneIndex >= 0
+              ? storedTranslations[clipLanguage]?.[promoBeat.sourceSceneIndex]?.signageByText
+              : undefined
+          for (const srcSignage of signageSources) {
+            const fromStored = storedSignage?.[srcSignage]?.trim() || sourceSignage?.[srcSignage]?.trim()
+            if (fromStored) {
+              signageTranslations[srcSignage] = preserveSignageCaseAndFormulaStyle(
+                srcSignage,
+                fromStored
+              )
+            } else {
+              const translatedSignage = await translateGuideDialogueLine(srcSignage, clipLanguage)
+              if (translatedSignage.trim()) {
+                signageTranslations[srcSignage] = preserveSignageCaseAndFormulaStyle(
+                  srcSignage,
+                  translatedSignage.trim()
+                )
+              }
+            }
+          }
           const composed = composeLanguageClipPrompt({
             sourcePrompt,
             character: beat?.character || segment?.dialogueLines?.[0]?.character,
             kind: 'dialogue',
             englishLine,
             translatedLine: translated,
+            signageTranslations,
+            targetLanguage: clipLanguage,
           })
           await handleSegmentGenerate(sceneId, segmentId, method, {
             prompt: composed.prompt || sourcePrompt,
@@ -6089,12 +6212,15 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       const runLabel = isLang ? `Promo (${langName})` : 'Promo'
       const itemLabel = isLang ? `Promo shot (${langName})` : 'Promo shot'
       const toastId = `promo-clip-${sceneId}-${beatId}-${clipLanguage || 'en'}`
+      const runId = toastId
       if (isLang) {
         toast.loading(`Translating & generating ${langName} promo clip…`, { id: toastId })
       }
-      startAgentRun('video', runLabel, [
-        { id: beatId, label: itemLabel, status: 'running' },
-      ])
+      startAgentRun({
+        id: runId,
+        title: `Video Agent · ${runLabel}`,
+        items: [{ key: beatId, label: itemLabel, status: 'running' }],
+      })
       try {
         const id = segmentId || (await ensurePromoShotSegment(sceneId, beatId, durationSec))
         await generatePromoClip({
@@ -6109,11 +6235,11 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           beatKind,
         })
         if (isLang) toast.dismiss(toastId)
-        finishAgentRun('video', [{ id: beatId, label: itemLabel, status: 'done' }])
+        finishAgentRun(runId)
       } catch (err) {
         const msg = err instanceof Error ? err.message : 'Promo clip generation failed'
         if (isLang) toast.error(msg, { id: toastId })
-        failAgentRun('video', msg)
+        failAgentRun(runId, msg)
         throw err
       }
     },

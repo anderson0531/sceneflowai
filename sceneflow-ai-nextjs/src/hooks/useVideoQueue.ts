@@ -287,6 +287,9 @@ export function useVideoQueue(
         status: s.status,
         asset: s.activeAssetUrl?.slice(-20), // Last 20 chars of URL for change detection
         take: `${s.currentTakeId || ''}:${(s.takes || []).map((take) => `${take.id}:${take.resolution || ''}:${take.qualityTier || ''}`).join('|')}`,
+        langTakes: Object.entries(s.languageVersions || {})
+          .map(([lang, set]) => `${lang}:${set.currentTakeId || ''}:${(set.takes || []).map((t) => t.id).join(',')}`)
+          .join(';'),
         resolution: s.resolution,
         qualityTier: s.qualityTier,
         prompt: s.generatedPrompt,

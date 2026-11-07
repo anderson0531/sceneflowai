@@ -5,10 +5,10 @@ import type {
   SceneSegmentTake,
 } from '@/components/vision/scene-production/types'
 import {
+  MEDIA_VERSION_CAP,
   appendSegmentTake,
   listPlayableTakes,
   resolveLiveTake,
-  unionRowsById,
 } from '@/lib/storyboard/mediaVersions'
 
 export const MASTER_STREAM_LANGUAGE = 'en'
@@ -173,9 +173,56 @@ export function mergeLanguageClipVersions(
   for (const lang of keys) {
     const inc = incoming?.[lang]
     const ex = existing?.[lang]
-    const takes = unionRowsById(inc?.takes, ex?.takes, 'id') as SceneSegmentTake[]
+    const incTakes = Array.isArray(inc?.takes) ? inc.takes : []
+    const exTakes = Array.isArray(ex?.takes) ? ex.takes : []
+    const incKeys = new Set(
+      incTakes.map((t) => t.id?.trim() || t.assetUrl?.trim()).filter(Boolean)
+    )
+    const exKeys = new Set(
+      exTakes.map((t) => t.id?.trim() || t.assetUrl?.trim()).filter(Boolean)
+    )
+    const incNewestMs = Math.max(
+      0,
+      ...incTakes.map((t) => Date.parse(t.createdAt || '') || 0)
+    )
+    const exNewestMs = Math.max(
+      0,
+      ...exTakes.map((t) => Date.parse(t.createdAt || '') || 0)
+    )
+    const exHasNewerOnly =
+      exTakes.some((t) => {
+        const k = t.id?.trim() || t.assetUrl?.trim()
+        return Boolean(k && !incKeys.has(k))
+      }) &&
+      !incTakes.some((t) => {
+        const k = t.id?.trim() || t.assetUrl?.trim()
+        return Boolean(k && !exKeys.has(k))
+      })
+    const preferExistingCurrent =
+      exNewestMs > incNewestMs || (exNewestMs === incNewestMs && exHasNewerOnly)
+    const orderedCandidates = preferExistingCurrent
+      ? [...exTakes, ...incTakes]
+      : [...incTakes, ...exTakes]
+    const byKey = new Map<string, SceneSegmentTake>()
+    for (const row of orderedCandidates) {
+      const key =
+        row.id?.trim() ||
+        row.assetUrl?.trim() ||
+        (row as { videoUrl?: string }).videoUrl?.trim()
+      if (!key || byKey.has(key)) continue
+      byKey.set(key, row)
+    }
+    const takes = Array.from(byKey.values())
+      .sort((a, b) => {
+        const ta = Date.parse(a.createdAt || '') || 0
+        const tb = Date.parse(b.createdAt || '') || 0
+        return tb - ta
+      })
+      .slice(0, MEDIA_VERSION_CAP)
     if (takes.length === 0) continue
-    const requested = inc?.currentTakeId ?? ex?.currentTakeId
+    const requested = preferExistingCurrent
+      ? ex?.currentTakeId ?? inc?.currentTakeId
+      : inc?.currentTakeId ?? ex?.currentTakeId
     const currentTakeId =
       requested && takes.some((take) => take.id === requested) ? requested : takes[0]?.id
     merged[normalizeStreamLanguage(lang)] = {

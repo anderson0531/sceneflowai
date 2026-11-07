@@ -3,6 +3,11 @@
  */
 
 import { translateWithVertexAI } from '@/lib/vertexai/translate'
+import { getSceneBeats } from '@/lib/script/beatMigration'
+import {
+  extractPromptSignageTexts,
+  preserveSignageCaseAndFormulaStyle,
+} from '@/lib/scene/languageClipPrompt'
 import {
   PREVIS_PLAYER_LABEL_KEYS,
   type PlayerLabelMap,
@@ -100,12 +105,43 @@ export async function translateSceneForLanguage(
     translatedDialogue.push(text ? await translateText(text, language) : '')
   }
 
+  const signageSources = new Set<string>()
+  for (const beat of getSceneBeats(scene)) {
+    if (beat.overlayText?.trim()) {
+      signageSources.add(beat.overlayText.trim())
+    }
+    const dir = beat.beatDirection
+    const proseBlob = [
+      beat.actionDescription,
+      dir?.propInteraction,
+      dir?.startFrame,
+      dir?.clipAction,
+      dir?.endFrame,
+      dir?.blocking,
+      dir?.videoPrompt,
+    ]
+      .filter((v): v is string => typeof v === 'string' && v.trim().length > 0)
+      .join('. ')
+    for (const candidate of extractPromptSignageTexts(proseBlob, beat.line)) {
+      signageSources.add(candidate)
+    }
+  }
+
+  const signageByText: Record<string, string> = {}
+  for (const src of signageSources) {
+    const rawTrans = await translateText(src, language)
+    if (rawTrans?.trim()) {
+      signageByText[src] = preserveSignageCaseAndFormulaStyle(src, rawTrans)
+    }
+  }
+
   return {
     heading: heading ? await translateText(heading, language) : undefined,
     description: description ? await translateText(description, language) : undefined,
     action: action ? await translateText(action, language) : undefined,
     narration: narration ? await translateText(narration, language) : undefined,
     dialogue: translatedDialogue,
+    ...(Object.keys(signageByText).length > 0 ? { signageByText } : {}),
   }
 }
 

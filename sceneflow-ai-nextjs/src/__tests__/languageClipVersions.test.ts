@@ -15,12 +15,16 @@ import {
   buildLanguageClipPrompt,
   composeLanguageClipPrompt,
   extractPromptSignageText,
+  extractPromptSignageTexts,
   preferStoredSpokenTranslation,
+  preserveSignageCaseAndFormulaStyle,
   replacePromoOnScreenText,
   segmentNeedsLanguageClip,
 } from '@/lib/scene/languageClipPrompt'
 import { findDialogueAudioForLine } from '@/components/vision/scene-production/audioTrackBuilder'
 import { buildBeatVideoClips } from '@/lib/scene/buildBeatVideoClips'
+import { hydratePromoSceneWithSharedShots } from '@/lib/publish/buildPromoScene'
+import { resolvePromoPlayback } from '@/lib/publish/promoBeatMedia'
 
 function take(id: string, url = `${id}.mp4`): SceneSegmentTake {
   return {
@@ -169,7 +173,36 @@ describe('language clip prompts', () => {
         '[obsesivo, sin aliento] La corriente se escapa. Siempre. El circuito se niega a cerrarse.',
     })
     expect(composed.prompt).toBe(expectedPrompt)
-    expect(extractPromptSignageText(currentPrompt)).toBeUndefined()
+    expect(extractPromptSignageText(currentPrompt)).toBe('RESONANCE FLUX = 0')
+    expect(extractPromptSignageTexts(currentPrompt)).toEqual(['RESONANCE FLUX = 0'])
+
+    const composedWithSignage = composeLanguageClipPrompt({
+      sourcePrompt: currentPrompt,
+      character: 'GIDEON CROFT',
+      kind: 'dialogue',
+      englishLine:
+        '[obsessive, breathless] The current bleeds out. Every damn time... the loop refuses to close.',
+      translatedLine:
+        '[obsesivo, sin aliento] La corriente se escapa. Siempre. El circuito se niega a cerrarse.',
+      signageTranslations: {
+        'RESONANCE FLUX = 0': preserveSignageCaseAndFormulaStyle(
+          'RESONANCE FLUX = 0',
+          'Flujo de resonancia = 0'
+        ),
+      },
+      targetLanguage: 'es',
+    })
+    expect(composedWithSignage.prompt).toContain(
+      "beside the struck-through text 'FLUJO DE RESONANCIA = 0'"
+    )
+    expect(composedWithSignage.prompt).toContain(
+      "from the struck-through formula 'FLUJO DE RESONANCIA = 0' on the slate wall"
+    )
+    expect(composedWithSignage.prompt).toContain(
+      'The only spoken line is: "La corriente se escapa. Siempre. El circuito se niega a cerrarse.". All visible signage and significant writing must be rendered in Spanish: "FLUJO DE RESONANCIA = 0".'
+    )
+    expect(composedWithSignage.prompt).not.toContain('RESONANCE FLUX = 0')
+    expect(composedWithSignage.prompt).toContain("land 'refuses to close' as a bitter")
   })
 
   it('replaces title and credit copy without a lip-sync line', () => {
@@ -195,9 +228,32 @@ describe('language clip prompts', () => {
       translatedLine: '',
       signageSourceText: 'OPEN 24 HOURS',
       signageTranslatedText: 'ABIERTO 24 HORAS',
+      targetLanguage: 'es',
     })
     expect(localized.prompt).toContain('"ABIERTO 24 HORAS"')
     expect(localized.prompt).not.toContain('"OPEN 24 HOURS"')
+    expect(localized.prompt).toContain(
+      'All visible signage and significant writing must be rendered in Spanish: "ABIERTO 24 HORAS".'
+    )
+
+    const unquotedSignagePrompt =
+      'Close-up of a chalkboard covered in handwritten physics equations and a street sign at the corner. No spoken dialogue.'
+    expect(
+      segmentNeedsLanguageClip({
+        beatKind: 'action',
+        sourcePrompt: unquotedSignagePrompt,
+      })
+    ).toBe(true)
+    const localizedUnquoted = composeLanguageClipPrompt({
+      sourcePrompt: unquotedSignagePrompt,
+      kind: 'action',
+      englishLine: '',
+      translatedLine: '',
+      targetLanguage: 'es',
+    })
+    expect(localizedUnquoted.prompt).toContain(
+      'No spoken dialogue. Translate and render any visible signage and significant writing in Spanish.'
+    )
   })
 
   it('leaves narration and action pictures in English and translates the guide line', () => {
@@ -380,7 +436,7 @@ describe('language clip prompts', () => {
     expect(clips[1].needsLanguageClip).toBe(true)
   })
 
-  it('localizes compiled dialogue prompts in buildBeatVideoClips when a non-English streamLanguage and stored translation are provided', () => {
+  it('localizes compiled dialogue and signage prompts in buildBeatVideoClips when a non-English streamLanguage and stored translation are provided', () => {
     const clips = buildBeatVideoClips({
       scene: {
         dialogue: [
@@ -397,6 +453,10 @@ describe('language clip prompts', () => {
             kind: 'dialogue',
             character: 'Gideon Croft',
             line: '[obsessive, breathless] The current bleeds out. Every damn time... the loop refuses to close.',
+            beatDirection: {
+              propInteraction:
+                "Gideon Croft's right thumb pinches the stub of Chalk beside the struck-through text 'RESONANCE FLUX = 0'.",
+            },
           },
         ],
       },
@@ -421,6 +481,9 @@ describe('language clip prompts', () => {
             dialogue: [
               '[obsesivo, sin aliento] La corriente se escapa. Siempre. El circuito se niega a cerrarse.',
             ],
+            signageByText: {
+              'RESONANCE FLUX = 0': 'FLUJO DE RESONANCIA = 0',
+            },
           },
         },
       },
@@ -436,7 +499,128 @@ describe('language clip prompts', () => {
     expect(clips[0].prompt).toContain(
       'The only spoken line is: "La corriente se escapa. Siempre. El circuito se niega a cerrarse."'
     )
+    expect(clips[0].prompt).toContain("beside the struck-through text 'FLUJO DE RESONANCIA = 0'")
+    expect(clips[0].prompt).toContain(
+      'All visible signage and significant writing must be rendered in Spanish: "FLUJO DE RESONANCIA = 0".'
+    )
     expect(clips[0].prompt).not.toContain('The current bleeds out')
+    expect(clips[0].prompt).not.toContain('RESONANCE FLUX = 0')
+  })
+
+  it('shares newly generated base scene language clips with the Promo scene during hydration and playback', () => {
+    const baseSpanishTake: SceneSegmentTake = {
+      id: 'es_v2',
+      createdAt: '2026-04-01T12:00:00.000Z',
+      assetUrl: 'https://cdn/scene2-gideon-es-v2.mp4',
+      status: 'COMPLETE',
+    }
+    const olderPromoSpanishTake: SceneSegmentTake = {
+      id: 'es_v1',
+      createdAt: '2026-04-01T10:00:00.000Z',
+      assetUrl: 'https://cdn/promo-gideon-es-v1.mp4',
+      status: 'COMPLETE',
+    }
+
+    const promoScene = {
+      id: 'promo-1791551192964',
+      cinematicType: 'promo',
+      beats: [
+        {
+          beatId: 'bt_promo_1_bt_3f0e54b8-977_1',
+          sequenceIndex: 0,
+          kind: 'dialogue',
+          character: 'Gideon Croft',
+          line: 'The current bleeds out. Every damn time... the loop refuses to close.',
+          sourceSceneIndex: 1,
+          sourceSceneId: 'scene-2',
+          sourceBeatId: 'bt_3f0e54b8-977',
+          durationSeconds: 8,
+        },
+      ],
+    }
+
+    const scenes = [
+      { id: 'scene-1', beats: [] },
+      {
+        id: 'scene-2',
+        beats: [
+          {
+            beatId: 'bt_3f0e54b8-977',
+            sequenceIndex: 0,
+            kind: 'dialogue',
+            character: 'Gideon Croft',
+            line: 'The current bleeds out. Every damn time... the loop refuses to close.',
+          },
+        ],
+      },
+      promoScene,
+    ]
+
+    const sceneProductionState = {
+      'scene-2': {
+        isSegmented: true,
+        targetSegmentDuration: 8,
+        segments: [
+          segment({
+            segmentId: 'seg_ea59fca6-2bb',
+            beatId: 'bt_3f0e54b8-977',
+            languageVersions: {
+              es: {
+                takes: [baseSpanishTake, olderPromoSpanishTake],
+                currentTakeId: 'es_v2',
+              },
+            },
+          }),
+        ],
+      },
+      'promo-1791551192964': {
+        isSegmented: true,
+        targetSegmentDuration: 8,
+        segments: [
+          segment({
+            segmentId: 'promo-1791551192964-seg-0',
+            beatId: 'bt_promo_1_bt_3f0e54b8-977_1',
+            languageVersions: {
+              es: {
+                takes: [olderPromoSpanishTake],
+                currentTakeId: 'es_v1',
+              },
+            },
+          }),
+        ],
+      },
+    }
+
+    const hydrated = hydratePromoSceneWithSharedShots(
+      promoScene,
+      scenes,
+      sceneProductionState as never
+    )
+    const hydratedSeg = hydrated.productionData.segments[0]
+    expect(hydratedSeg.languageVersions?.es.currentTakeId).toBe('es_v2')
+    expect(hydratedSeg.languageVersions?.es.takes.map((t) => t.id)).toEqual(['es_v2', 'es_v1'])
+    expect(presentSegmentForStream(hydratedSeg, 'es').activeAssetUrl).toBe(
+      'https://cdn/scene2-gideon-es-v2.mp4'
+    )
+
+    const playback = resolvePromoPlayback(
+      {
+        sceneIndex: 1,
+        sceneId: 'scene-2',
+        beatId: 'bt_3f0e54b8-977',
+        startSec: 0,
+        endSec: 8,
+        score: 1,
+        beatKind: 'dialogue',
+      },
+      {
+        ...sceneProductionState,
+        'promo-1791551192964': hydrated.productionData,
+      },
+      'es'
+    )
+    expect(playback.videoUrl).toBe('https://cdn/scene2-gideon-es-v2.mp4')
+    expect(playback.hasLanguageClip).toBe(true)
   })
 })
 

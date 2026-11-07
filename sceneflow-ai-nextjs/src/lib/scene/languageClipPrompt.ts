@@ -3,12 +3,14 @@
  * Stage direction stays in English. Spoken dialogue is the translated line.
  */
 
+import { getLanguageName } from '@/constants/languages'
 import { parsePerformanceCue } from '@/lib/scene/performanceCues'
 
 export interface StoredSceneLines {
   dialogue?: string[]
   dialogueByLineId?: Record<string, string>
   narration?: string
+  signageByText?: Record<string, string>
   beatsByBeatId?: Record<
     string,
     {
@@ -186,30 +188,186 @@ export function buildLanguageClipPrompt(
 }
 
 /**
- * Extract visible signage, billboard, storefront, screen, or title copy from a shot prompt
- * (ignoring spoken lip-sync quotes).
+ * Preserve ALL-CAPS typography when translating uppercase signage, stencils, or chalk formulas
+ * (e.g. "RESONANCE FLUX = 0" -> "FLUJO DE RESONANCIA = 0").
  */
-export function extractPromptSignageText(sourcePrompt?: string | null): string | undefined {
-  const source = sourcePrompt?.trim() || ''
-  if (!source) return undefined
-  const stripped = source
+export function preserveSignageCaseAndFormulaStyle(
+  sourceText: string,
+  translatedText: string
+): string {
+  const src = sourceText.trim()
+  const trans = translatedText.trim()
+  if (!src || !trans) return trans
+  const hasLetters = /[A-Za-z]/.test(src)
+  if (hasLetters && src === src.toUpperCase() && src !== src.toLowerCase()) {
+    return trans.toUpperCase()
+  }
+  return trans
+}
+
+function stripSpokenAndPerformanceClausesForSignage(
+  sourcePrompt: string,
+  englishSpoken?: string | null
+): string {
+  let stripped = sourcePrompt
     .replace(/speaks with natural lip sync:\s*"[^"]*"/gi, '')
     .replace(/speaks naturally:\s*"[^"]*"/gi, '')
     .replace(/\bspeaks:\s*"[^"]*"/gi, '')
     .replace(/Voiceover narration:\s*"[^"]*"/gi, '')
     .replace(/The only spoken line is:\s*"[^"]*"/gi, '')
     .replace(/Narration:\s*"[^"]*"/gi, '')
-  const explicitSignage = stripped.match(
-    /(?:sign|signage|billboard|banner|storefront|neon|screen|display|headline|poster|label|plaque|marquee|card|text|reads?|reading|titled?)\s*(?:that\s+says|reading|with\s+text|:)?\s*"([^"]+)"/i
+    .replace(
+      /All visible signage and significant writing must (?:be rendered in [^:]+|read):\s*"[^"]*"(?:\s*,\s*"[^"]*")*\.?/gi,
+      ''
+    )
+    .replace(
+      /\bPerformance:\s*[\s\S]*?(?=\s+(?:Coverage|Lens|Space|Shot|Angle|Camera|Blocking|Emotion|Gaze|Prop interaction|Props|Lighting|End on|Only these people|The only action):|$)/gi,
+      ' '
+    )
+
+  if (englishSpoken?.trim()) {
+    const cleanEng = cleanSpokenLineText(englishSpoken)
+    if (cleanEng) {
+      stripped = stripped.split(`"${cleanEng}"`).join('')
+      stripped = stripped.split(`'${cleanEng}'`).join('')
+    }
+  }
+  return stripped
+}
+
+/**
+ * Extract all visible signage, billboard, storefront, screen, title, chalkboard/slate formula,
+ * or significant writing strings from a shot prompt (ignoring spoken lip-sync and performance quotes).
+ */
+export function extractPromptSignageTexts(
+  sourcePrompt?: string | null,
+  englishSpoken?: string | null
+): string[] {
+  const source = sourcePrompt?.trim() || ''
+  if (!source) return []
+  const stripped = stripSpokenAndPerformanceClausesForSignage(source, englishSpoken)
+  const spokenNorm = englishSpoken ? normalizeSpokenMatchKey(englishSpoken) : ''
+  const results: string[] = []
+  const seen = new Set<string>()
+
+  const pushCandidate = (raw: string | undefined) => {
+    const candidate = raw?.trim()
+    if (!candidate || candidate.length < 2) return
+    const norm = normalizeSpokenMatchKey(candidate)
+    if (spokenNorm && norm && spokenNorm.includes(norm) && candidate.length < spokenNorm.length) {
+      return
+    }
+    if (seen.has(candidate)) return
+    seen.add(candidate)
+    results.push(candidate)
+  }
+
+  // 1. Keyword before double-quoted or single-quoted text/formula/signage
+  const beforeQuoteRegex =
+    /\b(?:sign|signage|billboard|banner|storefront|neon|screen|monitor|display|headline|masthead|poster|label|labeled|plaque|placard|marquee|card|title|titled|text|formula|equation|inscription|inscribed|writing|written|chalk|slate|board|chalkboard|blackboard|whiteboard|graffiti|note|notebook|letter|document|page|ledger|blueprint|newspaper|journal|book|engraving|engraved|carved|stenciled|painted|printed|stamped|marked|reads?|reading|says?|saying|bearing|showing|words?|caption|subtitle|chyron)\b(?:\s+(?:on|in|across|beside|above|below|over|under|from|at|near)\s+[^"'\n]{1,35}?)?\s*(?:that\s+(?:says|reads)|reading|saying|with\s+(?:the\s+)?(?:struck-through\s+)?(?:text|words|formula|equation|title|inscription|label)|inscribed\s+with|written\s+as|labeled|titled|:)?\s*(?:"([^"\n]{2,140})"|(?<![A-Za-z0-9])'([^'\n]{2,140})'(?![A-Za-z0-9]))/gi
+
+  let match: RegExpExecArray | null
+  while ((match = beforeQuoteRegex.exec(stripped)) !== null) {
+    pushCandidate(match[1] ?? match[2])
+  }
+
+  // 2. Quoted text/formula/signage followed by surface/writing descriptor
+  const afterQuoteRegex =
+    /(?:"([^"\n]{2,140})"|(?<![A-Za-z0-9])'([^'\n]{2,140})'(?![A-Za-z0-9]))\s*(?:written|inscribed|scrawled|chalked|painted|printed|stenciled|carved|engraved|stamped|displayed|shown|on\s+the\s+(?:sign|billboard|banner|storefront|screen|monitor|display|poster|plaque|marquee|card|slate|board|chalkboard|blackboard|whiteboard|wall|note|letter|document|page|ledger|blueprint|newspaper))/gi
+
+  while ((match = afterQuoteRegex.exec(stripped)) !== null) {
+    pushCandidate(match[1] ?? match[2])
+  }
+
+  // 3. Fallback: any remaining double-quoted string in stripped prompt
+  if (results.length === 0) {
+    const anyDoubleQuoted = /"([^"\n]+)"/g
+    while ((match = anyDoubleQuoted.exec(stripped)) !== null) {
+      pushCandidate(match[1])
+    }
+  }
+
+  return results
+}
+
+/**
+ * Extract the primary visible signage or significant writing string from a shot prompt.
+ */
+export function extractPromptSignageText(
+  sourcePrompt?: string | null,
+  englishSpoken?: string | null
+): string | undefined {
+  return extractPromptSignageTexts(sourcePrompt, englishSpoken)[0]
+}
+
+/**
+ * True when a shot prompt references in-scene signage or significant visible writing
+ * (even when the writing is not enclosed in quotes).
+ */
+export function promptHasSignageOrSignificantWriting(
+  sourcePrompt?: string | null,
+  englishSpoken?: string | null
+): boolean {
+  if (extractPromptSignageTexts(sourcePrompt, englishSpoken).length > 0) {
+    return true
+  }
+  const source = sourcePrompt?.trim() || ''
+  if (!source) return false
+  return /\b(?:signage|billboard|storefront\s+sign|neon\s+sign|marquee|placard|plaque|headline|newspaper|chalkboard|blackboard|whiteboard|slate\s+(?:wall|board)|struck-through\s+(?:text|formula|equation)|written\s+on|inscribed\s+on|chalk\s+(?:text|formula|writing|equation)|handwritten|graffiti|banner\s+reading|sign\s+reading|text\s+reading)\b/i.test(
+    source
   )
-  if (explicitSignage?.[1]?.trim()) {
-    return explicitSignage[1].trim()
+}
+
+function injectSignageModelInstruction(
+  prompt: string,
+  translatedSignageList: string[],
+  targetLanguage?: string | null,
+  hasUnquotedSignageSurface?: boolean
+): string {
+  const cleanList = translatedSignageList
+    .map((item) => item.replace(/"/g, "'").trim())
+    .filter(Boolean)
+  const langCode = targetLanguage?.trim()
+  const langName =
+    langCode && langCode.toLowerCase() !== 'en' ? getLanguageName(langCode) : undefined
+
+  let directive = ''
+  if (cleanList.length > 0) {
+    const formattedQuotes = cleanList.map((text) => `"${text}"`).join(', ')
+    directive = langName
+      ? `All visible signage and significant writing must be rendered in ${langName}: ${formattedQuotes}`
+      : `All visible signage and significant writing must read: ${formattedQuotes}`
+  } else if (langName && hasUnquotedSignageSurface) {
+    directive = `Translate and render any visible signage and significant writing in ${langName}`
   }
-  const anyQuoted = stripped.match(/"([^"]+)"/)
-  if (anyQuoted?.[1]?.trim()) {
-    return anyQuoted[1].trim()
+
+  if (!directive) return prompt
+  if (prompt.includes(directive)) return prompt
+
+  // Place right after `The only spoken line is: "..."` or `No spoken dialogue` in compiled prompts
+  const spokenCloseRegex = /(The only spoken line is:\s*"[^"]*"\.?)/i
+  if (spokenCloseRegex.test(prompt)) {
+    return prompt.replace(spokenCloseRegex, (match) => {
+      const base = match.endsWith('.') ? match : `${match}.`
+      return `${base} ${directive}.`
+    })
   }
-  return undefined
+
+  const silentCloseRegex = /(\bNo spoken dialogue\.?)/i
+  if (silentCloseRegex.test(prompt)) {
+    return prompt.replace(silentCloseRegex, (match) => {
+      const base = match.endsWith('.') ? match : `${match}.`
+      return `${base} ${directive}.`
+    })
+  }
+
+  // Append to non-compiled prompts when targetLanguage was explicitly specified
+  if (langName && (cleanList.length > 0 || hasUnquotedSignageSurface)) {
+    const trimmed = prompt.replace(/\.+$/, '')
+    return `${trimmed}. ${directive}.`
+  }
+
+  return prompt
 }
 
 export function composeLanguageClipPrompt(args: {
@@ -221,14 +379,36 @@ export function composeLanguageClipPrompt(args: {
   translatedLine?: string | null
   signageSourceText?: string | null
   signageTranslatedText?: string | null
+  signageTranslations?: Record<string, string> | null
+  targetLanguage?: string | null
 }): { prompt: string; guidePrompt?: string } {
   const source = args.sourcePrompt?.trim() || ''
   const english = args.englishLine?.trim() || ''
   const cleanEnglish = cleanSpokenLineText(english) || english
   const rawTranslated = args.translatedLine?.trim() || ''
   const translated = cleanSpokenLineText(rawTranslated) || rawTranslated
-  const signageOrig = args.signageSourceText?.trim() || ''
-  const signageTrans = args.signageTranslatedText?.trim() || ''
+  const signagePairs: Array<[string, string]> = []
+  if (args.signageTranslations) {
+    for (const [orig, trans] of Object.entries(args.signageTranslations)) {
+      if (orig.trim() && trans?.trim()) {
+        signagePairs.push([
+          orig.trim(),
+          preserveSignageCaseAndFormulaStyle(orig, trans),
+        ])
+      }
+    }
+  }
+  const singleOrig = args.signageSourceText?.trim() || ''
+  const singleTrans = args.signageTranslatedText?.trim() || ''
+  if (singleOrig && singleTrans && !signagePairs.some(([o]) => o === singleOrig)) {
+    signagePairs.push([
+      singleOrig,
+      preserveSignageCaseAndFormulaStyle(singleOrig, singleTrans),
+    ])
+  } else if (!singleOrig && singleTrans && signagePairs.length === 0) {
+    signagePairs.push(['', singleTrans])
+  }
+
   let guide = args.guidePrompt?.trim() || ''
   if (english && translated && guide.includes(english)) {
     guide = guide.split(english).join(translated)
@@ -236,8 +416,10 @@ export function composeLanguageClipPrompt(args: {
   if (cleanEnglish && translated && guide.includes(cleanEnglish)) {
     guide = guide.split(cleanEnglish).join(translated)
   }
-  if (signageOrig && signageTrans && guide.includes(signageOrig)) {
-    guide = guide.split(signageOrig).join(signageTrans)
+  for (const [orig, trans] of signagePairs) {
+    if (orig && trans && guide.includes(orig)) {
+      guide = guide.split(orig).join(trans)
+    }
   }
   const kind = args.kind || 'dialogue'
   if (kind === 'narration' && translated && !guide.includes(translated)) {
@@ -257,9 +439,21 @@ export function composeLanguageClipPrompt(args: {
         ? buildLanguageClipPrompt(source, translated, args.character, english)
         : source
 
-  if (signageTrans && kind !== 'title') {
-    prompt = replacePromoOnScreenText(prompt, signageOrig, signageTrans)
+  const appliedSignageTranslations: string[] = []
+  if (kind !== 'title') {
+    for (const [orig, trans] of signagePairs) {
+      if (!trans) continue
+      prompt = replacePromoOnScreenText(prompt, orig, trans)
+      appliedSignageTranslations.push(trans)
+    }
   }
+
+  prompt = injectSignageModelInstruction(
+    prompt,
+    appliedSignageTranslations,
+    args.targetLanguage,
+    promptHasSignageOrSignificantWriting(source, english)
+  )
 
   return {
     prompt,
@@ -267,20 +461,35 @@ export function composeLanguageClipPrompt(args: {
   }
 }
 
-/** Put translated title or credit copy into the shot prompt without a lip-sync line. */
+/** Put translated title, signage, or significant writing copy into the shot prompt without a lip-sync line. */
 export function replacePromoOnScreenText(
   sourcePrompt: string,
   english: string,
   translated: string
 ): string {
-  const spoken = translated.replace(/"/g, "'").trim()
+  const spoken = preserveSignageCaseAndFormulaStyle(
+    english,
+    translated.replace(/"/g, "'").trim()
+  )
   const source = sourcePrompt.trim()
   const original = english.trim()
   if (!spoken) return source
-  if (original && source.includes(original)) return source.split(original).join(spoken)
+  if (original && source.includes(`'${original}'`)) {
+    return source.split(`'${original}'`).join(`'${spoken}'`)
+  }
+  if (original && source.includes(`"${original}"`)) {
+    return source.split(`"${original}"`).join(`"${spoken}"`)
+  }
+  if (original && source.includes(original)) {
+    return source.split(original).join(spoken)
+  }
   const quoted = source.match(/"([^"]*)"/)
   if (quoted && (!original || quoted[1] === original)) {
     return source.replace(/"([^"]*)"/, `"${spoken}"`)
+  }
+  const singleQuoted = source.match(/(?<![A-Za-z0-9])'([^'\n]*)'(?![A-Za-z0-9])/)
+  if (singleQuoted && (!original || singleQuoted[1] === original)) {
+    return source.replace(/(?<![A-Za-z0-9])'([^'\n]*)'(?![A-Za-z0-9])/, `'${spoken}'`)
   }
   const line = `On-screen text: "${spoken}".`
   return source ? `${source} ${line}` : line
@@ -308,14 +517,14 @@ export function segmentNeedsLanguageClip(args: {
   const kind = args.beatKind?.trim().toLowerCase()
   if (kind === 'title') return true
   if (args.customSignageText?.trim()) return true
-  if (extractPromptSignageText(args.sourcePrompt)) return true
-  if (kind === 'action' || kind === 'narration') return false
-  if (args.beatCharacter && /^narrator\b/i.test(args.beatCharacter.trim())) return false
   const spoken = englishSpokenLine({
     excerpt: args.excerpt,
     beatLine: args.beatLine,
     dialogueLines: args.dialogueLines,
   })
+  if (promptHasSignageOrSignificantWriting(args.sourcePrompt, spoken)) return true
+  if (kind === 'action' || kind === 'narration') return false
+  if (args.beatCharacter && /^narrator\b/i.test(args.beatCharacter.trim())) return false
   return Boolean(spoken.trim())
 }
 

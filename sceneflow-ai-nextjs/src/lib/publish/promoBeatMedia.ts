@@ -1,5 +1,9 @@
 import type { LanguageClipVersions } from '@/components/vision/scene-production/types'
-import { resolveLanguageClipPlayback, isLanguageClipTarget } from '@/lib/scene/languageClipVersions'
+import {
+  resolveLanguageClipPlayback,
+  isLanguageClipTarget,
+  mergeLanguageClipVersions,
+} from '@/lib/scene/languageClipVersions'
 import {
   isVideoLikeUrl,
   resolveLiveTake,
@@ -73,6 +77,28 @@ function matchingSegment(segments: PromoBeatSegment[] | undefined, beatId: strin
   return matches.find((segment) => segmentHasPlayableVideo(segment)) ?? matches[0]
 }
 
+function findPromoFallbackSegment(
+  beat: PromoTrailerBeatPlan,
+  sceneProductionState: Record<string, unknown> | undefined,
+  excludeSegment?: PromoBeatSegment
+): PromoBeatSegment | undefined {
+  if (!sceneProductionState || !beat.beatId) return undefined
+  const sharedPrefix = `bt_promo_${beat.sceneIndex}_${beat.beatId}_`
+  for (const value of Object.values(sceneProductionState)) {
+    if (!value || typeof value !== 'object') continue
+    const segments = (value as { segments?: PromoBeatSegment[] }).segments
+    if (!Array.isArray(segments)) continue
+    const match = segments.find(
+      (seg) =>
+        seg !== excludeSegment &&
+        (seg.beatId === beat.beatId ||
+          (typeof seg.beatId === 'string' && seg.beatId.startsWith(sharedPrefix)))
+    )
+    if (match) return match
+  }
+  return undefined
+}
+
 /** Prefer the live production clip over a URL frozen into the plan. */
 export function promoPlanWithLiveMedia(
   plan: PromoTrailerBeatPlan[],
@@ -142,10 +168,21 @@ export function resolvePromoPlayback(
   language?: string
 ): PromoBeatPlayback {
   const master = resolvePromoBeatMedia(beat, sceneProductionState)
-  const segment = matchingSegment(
+  const primarySegment = matchingSegment(
     productionForBeat(beat, sceneProductionState)?.segments,
     beat.beatId
   )
+  const fallbackSegment = findPromoFallbackSegment(beat, sceneProductionState, primarySegment)
+  const segment =
+    primarySegment && fallbackSegment
+      ? {
+          ...primarySegment,
+          languageVersions: mergeLanguageClipVersions(
+            primarySegment.languageVersions,
+            fallbackSegment.languageVersions
+          ),
+        }
+      : primarySegment || fallbackSegment
   const localized = languageClipUrl(segment, language || 'en')
   const needsLanguageClip = promoShotLocalizes(beat) !== null && isLanguageClipTarget(language)
   if (needsLanguageClip) {

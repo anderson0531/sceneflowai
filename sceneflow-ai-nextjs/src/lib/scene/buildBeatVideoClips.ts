@@ -14,6 +14,7 @@ import {
   composeLanguageClipPrompt,
   englishSpokenLine,
   extractPromptSignageText,
+  extractPromptSignageTexts,
   extractSpokenLineFromPrompt,
   normalizeSpokenMatchKey,
   preferStoredSpokenTranslation,
@@ -244,15 +245,39 @@ export function buildBeatVideoClips({
         }
       }
       const signageTranslatedText = shotCfg?.signageText?.trim() || undefined
-      if (translatedLine || signageTranslatedText) {
+      const sceneTrans =
+        sceneIndex != null ? sceneTranslations?.[langKey]?.[sceneIndex] : undefined
+      const sourceSceneTrans =
+        hasSharedSource && typeof promoBeat.sourceSceneIndex === 'number'
+          ? sceneTranslations?.[langKey]?.[promoBeat.sourceSceneIndex]
+          : undefined
+      const signageSources = extractPromptSignageTexts(resolvedPrompt, englishLine)
+      const signageTranslations: Record<string, string> = {}
+      for (const src of signageSources) {
+        const fromStored =
+          sceneTrans?.signageByText?.[src] ||
+          sourceSceneTrans?.signageByText?.[src] ||
+          (src === beat.overlayText?.trim()
+            ? sceneTrans?.beatsByBeatId?.[beat.beatId]?.overlayText?.trim() ||
+              (promoBeat.sourceBeatId
+                ? sourceSceneTrans?.beatsByBeatId?.[promoBeat.sourceBeatId]?.overlayText?.trim()
+                : undefined)
+            : undefined)
+        if (fromStored) {
+          signageTranslations[src] = fromStored
+        }
+      }
+      if (translatedLine || signageTranslatedText || Object.keys(signageTranslations).length > 0) {
         const composed = composeLanguageClipPrompt({
           sourcePrompt: resolvedPrompt,
           character: beat.character || segment?.dialogueLines?.[0]?.character,
           kind: beat.kind,
           englishLine,
           translatedLine,
-          signageSourceText: extractPromptSignageText(resolvedPrompt),
+          signageSourceText: extractPromptSignageText(resolvedPrompt, englishLine),
           signageTranslatedText,
+          signageTranslations,
+          targetLanguage: langKey,
         })
         if (composed.prompt) {
           displayPrompt = composed.prompt

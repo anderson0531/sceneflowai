@@ -15,6 +15,7 @@ import {
   isStaleSavedVideoPrompt,
 } from '@/lib/scene/beatVideoPromptCompiler'
 import { parsePersistedMusicCues, resolveBeatMusicCue } from '@/lib/script/sceneMusicCues'
+import { mergeLanguageClipVersions } from '@/lib/scene/languageClipVersions'
 import { promoShotIncluded } from '@/lib/publish/promoTimeline'
 import { mediaBlobUrlTimestamp } from '@/lib/storyboard/mediaVersions'
 import type { SceneBeat, SceneMusicCue } from '@/lib/script/segmentTypes'
@@ -1494,21 +1495,27 @@ export function hydratePromoSceneWithSharedShots(
         ? ownProd.segments[index]
         : undefined)
     let sourceSeg: SceneSegment | undefined
-    if (typeof beat.sourceSceneIndex === 'number' && beat.sourceBeatId && sceneProductionState) {
+    if (typeof beat.sourceSceneIndex === 'number' && beat.sourceBeatId) {
       const sourceScene = scenes[beat.sourceSceneIndex] as Record<string, unknown> | undefined
-      const sourceKeyCandidates = [
-        beat.sourceSceneId,
-        typeof sourceScene?.id === 'string' ? sourceScene.id : undefined,
-        typeof sourceScene?.sceneId === 'string' ? sourceScene.sceneId : undefined,
-        `scene-${beat.sourceSceneIndex}`,
-      ].filter((k): k is string => Boolean(k))
-      for (const key of sourceKeyCandidates) {
-        const prod = sceneProductionState[key]
-        const found = prod?.segments?.find((s) => s.beatId === beat.sourceBeatId)
-        if (found) {
-          sourceSeg = found
-          break
+      if (sceneProductionState) {
+        const sourceKeyCandidates = [
+          typeof sourceScene?.id === 'string' ? sourceScene.id : undefined,
+          typeof sourceScene?.sceneId === 'string' ? sourceScene.sceneId : undefined,
+          beat.sourceSceneId,
+          `scene-${beat.sourceSceneIndex}`,
+        ].filter((k): k is string => Boolean(k))
+        for (const key of sourceKeyCandidates) {
+          const prod = sceneProductionState[key]
+          const found = prod?.segments?.find((s) => s.beatId === beat.sourceBeatId)
+          if (found) {
+            sourceSeg = found
+            break
+          }
         }
+      }
+      if (!sourceSeg) {
+        const inlineProd = sourceScene?.productionData as SceneProductionData | undefined
+        sourceSeg = inlineProd?.segments?.find((s) => s.beatId === beat.sourceBeatId)
       }
     }
 
@@ -1524,6 +1531,10 @@ export function hydratePromoSceneWithSharedShots(
       }
       return Array.from(byUrl.values())
     })()
+    const mergedLanguageVersions = mergeLanguageClipVersions(
+      sourceSeg?.languageVersions,
+      existingPromoSeg?.languageVersions
+    )
 
     const promoClipTs = mediaBlobUrlTimestamp(existingPromoSeg?.activeAssetUrl || '')
     const sourceClipTs = mediaBlobUrlTimestamp(sourceSeg?.activeAssetUrl || '')
@@ -1608,6 +1619,18 @@ export function hydratePromoSceneWithSharedShots(
         endFrameUrl: endFrame,
       },
       takes: mergedTakes,
+      currentTakeId: promoClipWins
+        ? existingPromoSeg?.currentTakeId || sourceSeg?.currentTakeId
+        : sourceSeg?.currentTakeId || existingPromoSeg?.currentTakeId,
+      ...(mergedLanguageVersions ? { languageVersions: mergedLanguageVersions } : {}),
+      ...(sourceSeg?.mixerSettingsByLanguage || existingPromoSeg?.mixerSettingsByLanguage
+        ? {
+            mixerSettingsByLanguage: {
+              ...(sourceSeg?.mixerSettingsByLanguage || {}),
+              ...(existingPromoSeg?.mixerSettingsByLanguage || {}),
+            },
+          }
+        : {}),
       visualFrame: startFrame || undefined,
       action:
         beat.kind === 'narration' && beat.line?.trim()

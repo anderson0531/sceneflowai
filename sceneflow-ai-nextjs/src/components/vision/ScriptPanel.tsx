@@ -136,6 +136,7 @@ import { buildBeatFirstPlaybackTimeline } from '@/lib/storyboard/types'
 import { buildStoryboardMusicClips } from '@/lib/storyboard/musicPlayback'
 import { isBeatSfxMuted } from '@/lib/storyboard/sfxPlayback'
 import { mergeScenePreservingMedia } from '@/lib/storyboard/mergeSceneMedia'
+import { mergeLanguageClipVersions } from '@/lib/scene/languageClipVersions'
 import {
   readBeatSfxAudio,
   resolveBeatSfxSlot,
@@ -3850,18 +3851,26 @@ export function ScriptPanel({ script, onScriptChange, onAudioSlotSaved, isGenera
                                 const nextSourceSegments = sourceProd.segments.map((srcSeg) => {
                                   if (srcSeg.beatId !== promoBeat.sourceBeatId) return srcSeg
                                   const nextUserPrompt = seg.userEditedPrompt ?? srcSeg.userEditedPrompt
-                                  const nextGenPrompt = seg.generatedPrompt || srcSeg.generatedPrompt
+                                  const nextGenPrompt = srcSeg.generatedPrompt || seg.generatedPrompt
                                   const nextAssetUrl = seg.activeAssetUrl ?? srcSeg.activeAssetUrl
                                   const nextStatus = seg.status || srcSeg.status
                                   const nextTakes =
                                     Array.isArray(seg.takes) && seg.takes.length > (srcSeg.takes?.length || 0)
                                       ? seg.takes
                                       : srcSeg.takes
+                                  const nextLanguageVersions = mergeLanguageClipVersions(
+                                    seg.languageVersions,
+                                    srcSeg.languageVersions
+                                  )
+                                  const languageVersionsChanged =
+                                    JSON.stringify(nextLanguageVersions ?? null) !==
+                                    JSON.stringify(srcSeg.languageVersions ?? null)
                                   if (
                                     nextUserPrompt === srcSeg.userEditedPrompt &&
                                     nextGenPrompt === srcSeg.generatedPrompt &&
                                     nextAssetUrl === srcSeg.activeAssetUrl &&
-                                    nextTakes === srcSeg.takes
+                                    nextTakes === srcSeg.takes &&
+                                    !languageVersionsChanged
                                   ) {
                                     return srcSeg
                                   }
@@ -3873,6 +3882,9 @@ export function ScriptPanel({ script, onScriptChange, onAudioSlotSaved, isGenera
                                     activeAssetUrl: nextAssetUrl,
                                     status: nextStatus,
                                     takes: nextTakes,
+                                    ...(nextLanguageVersions
+                                      ? { languageVersions: nextLanguageVersions }
+                                      : {}),
                                   }
                                 })
                                 if (changed) {
