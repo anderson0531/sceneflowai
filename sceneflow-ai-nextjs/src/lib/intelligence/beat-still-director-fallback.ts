@@ -29,6 +29,7 @@ import {
   syncBeatAudioDirectionToDirection,
   syncSceneAudioDirectionForBeat,
 } from '@/lib/audio/syncBeatAudioDirection'
+import { stripLeadingTimeLabel } from '@/lib/scene/beatVideoPromptCompiler'
 import { refreshSceneSegmentVideoPrompts } from '@/lib/scene/syncBeatVideoPrompt'
 import { syncBeatStillPromptToDirection } from '@/lib/storyboard/syncBeatStillPrompt'
 
@@ -215,9 +216,18 @@ export function parseStillDirectorPatch(raw: unknown): StillDirectorPatch | unde
     shotType: record.shotType,
     cameraAngle: record.cameraAngle,
     frozenMoment: record.frozenMoment,
-    startFrame: record.startFrame ?? record.start_frame,
-    clipAction: record.clipAction ?? record.clip_action,
-    endFrame: record.endFrame ?? record.end_frame,
+    startFrame:
+      typeof (record.startFrame ?? record.start_frame) === 'string'
+        ? stripLeadingTimeLabel(String(record.startFrame ?? record.start_frame))
+        : undefined,
+    clipAction:
+      typeof (record.clipAction ?? record.clip_action) === 'string'
+        ? stripLeadingTimeLabel(String(record.clipAction ?? record.clip_action))
+        : undefined,
+    endFrame:
+      typeof (record.endFrame ?? record.end_frame) === 'string'
+        ? stripLeadingTimeLabel(String(record.endFrame ?? record.end_frame))
+        : undefined,
     blocking: record.blocking,
     gaze: record.gaze,
     emotion: record.emotion,
@@ -502,9 +512,9 @@ HARD RULES:
 6. Insert/Extreme Close-Up of a limb: only the specified limb/hand. Insert/Extreme Close-Up of an object with nobody in frame: describe the instrument's settled state, not a limb, hand, or face.
 7. frozenMoment repeats locked facts from the action: any on-screen words in quotes, and what a photograph or prop actually depicts. Do not replace them with a vague label such as "production credits." actionDescription is two to four concrete sentences of the motion, with those same quoted words and depicted subjects.
 8. 10s CLIP PROGRESSION (startFrame, clipAction, endFrame):
-   - "startFrame": The opening visual state at t=0s just as the shot begins (before the 10s action and camera move complete). Keep frozenMoment aligned with this opening keyframe so the Still serves as the t=0s start frame.
-   - "clipAction": 1 to 3 concrete sentences directing the temporal motion progression across the 10s clip (from t=0s through mid-shot to t=10s — how subjects, lighting, physics, and environment move and transform).
-   - "endFrame": The terminal visual state at t=10s ("End on:") after the clip's action and camera movement complete. It must show a clear visual delta from startFrame rather than repeating startFrame verbatim.
+   - "startFrame": The opening visual state held during 0s–2s just as the shot begins (before the 2s–8s action and transition unfold). Do not prefix with "At t=0s," or "Start frame:" — write the concrete opening state directly. Keep frozenMoment aligned with this opening keyframe so the Still serves as the 0s–2s start frame.
+   - "clipAction": 2 concrete sentences directing the timed motion progression across 2s–8s (Sentence 1: the initiating action from 2s–5s; Sentence 2: the developing/escalating progression from 5s–8s — how subjects, lighting, physics, and environment move and transform). Do not prefix with "From t=0s to t=10s,".
+   - "endFrame": The terminal settled visual state during 8s–10s after the clip's action and camera movement complete. Do not prefix with "End on:" or "At t=10s," — code adds the timed label. It must show a clear visual delta from startFrame rather than repeating startFrame verbatim.
 9. Do NOT write style, lighting essays, exclusions, F2V, or appearance of library refs — code owns those.
 10. Include audioCue only for a distinct sound the score cannot carry (a slam, a mechanism, a creature, a specific device). Omit audioCue when music should carry the shot, and never use it for generic ambience. For dialogue and narration beats, include voiceDirection (1–2 sentences of vocal delivery direction matching the directed emotion, breath, and physical staging; omit voiceDirection for action beats). Always include cameraMovement (e.g., "slow push-in", "tracking left", "static") and transition (one of CUT, CONTINUE, DISSOLVE, FADE, MATCH_CUT) for the 10s clip. Omit a field to leave it unchanged.
 11. ${buildPolicySafePhrasingRules()}

@@ -6,6 +6,7 @@
 import {
   beatDirectionOwnsVideoPrompt,
   compileBeatVideoPromptFromDirection,
+  isStaleSavedVideoPrompt,
 } from '@/lib/scene/beatVideoPromptCompiler'
 import { getSceneBeats } from '@/lib/script/beatMigration'
 import { parsePersistedMusicCues, resolveBeatMusicCue } from '@/lib/script/sceneMusicCues'
@@ -72,10 +73,15 @@ function refreshSegmentList<T extends SegmentPromptRow>(
     const beat = beats.find((entry) => entry.beatId === segment.beatId)
     if (!beat) return segment
     if (!options?.allBeats && !beatDirectionOwnsVideoPrompt(beat)) return segment
-    if (typeof segment.userEditedPrompt === 'string' && segment.userEditedPrompt.trim()) {
+    const excerpt = segment.dialoguePortion?.excerpt?.trim()
+    const userEdited =
+      typeof segment.userEditedPrompt === 'string' ? segment.userEditedPrompt.trim() : ''
+    const hasStaleCompilerUserEdited = Boolean(
+      userEdited && isStaleSavedVideoPrompt(beat, userEdited, excerpt || beat.line?.trim())
+    )
+    if (userEdited && !hasStaleCompilerUserEdited) {
       return segment
     }
-    const excerpt = segment.dialoguePortion?.excerpt?.trim()
     const beatIndex = beats.findIndex((entry) => entry.beatId === beat.beatId)
     const previousBeat = beatIndex > 0 ? beats[beatIndex - 1] : undefined
     const compiled = compileBeatVideoPromptFromDirection(beat, sceneDirection, {
@@ -86,6 +92,7 @@ function refreshSegmentList<T extends SegmentPromptRow>(
       musicCue: musicCueForBeat(scene, beats, beat),
     })
     if (
+      !hasStaleCompilerUserEdited &&
       segment.generatedPrompt === compiled.prompt &&
       segment.videoPrompt === compiled.prompt
     ) {
@@ -95,6 +102,7 @@ function refreshSegmentList<T extends SegmentPromptRow>(
     const hasPlayableClip = segmentHasPlayableVideo(segment)
     return {
       ...segment,
+      ...(hasStaleCompilerUserEdited ? { userEditedPrompt: null } : {}),
       generatedPrompt: compiled.prompt,
       videoPrompt: compiled.prompt,
       ...(hasPlayableClip ? { isStale: true } : {}),

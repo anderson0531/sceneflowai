@@ -209,6 +209,33 @@ export interface ResolvedBeatClipDirection {
   endFrame?: string
 }
 
+const LEADING_TIME_LABEL_RE =
+  /^(?:(?:0\s*s?\s*[–-]\s*2\s*s\s*(?:\(start\s+frame\))?|2\s*s?\s*[–-]\s*[58]\s*s\s*(?:\(action\))?|5\s*s?\s*[–-]\s*8\s*s\s*(?:\(action\s+progression\))?|8\s*s?\s*[–-]\s*10\s*s\s*(?:\(end\s+frame\))?|start\s+frame|opening\s+frame|clip\s+action(?:\s*\(10s\))?|action\s+progression|action|end\s+frame|end\s+on)\s*:\s*|(?:from\s+t\s*=\s*0\s*s\s+to\s+t\s*=\s*10\s*s|from\s+0\s*s?\s+to\s+10\s*s|at\s+t\s*=\s*(?:0|10)\s*s|by\s+t\s*=\s*10\s*s|at\s+(?:0|10)\s*s)\s*[,:—-]\s*)/i
+
+/**
+ * Strip redundant leading temporal or section labels (e.g. "At t=0s,",
+ * "From t=0s to t=10s,", "End on:", "Start frame:") so timed clip prompts and
+ * UI tiles do not stack duplicate prefixes.
+ */
+export function stripLeadingTimeLabel(value?: string | null): string {
+  let out = (value ?? '').trim()
+  if (!out) return ''
+  let strippedAny = false
+  let prev = ''
+  while (out && out !== prev) {
+    prev = out
+    const next = out.replace(LEADING_TIME_LABEL_RE, '').trim()
+    if (next !== out) {
+      strippedAny = true
+      out = next
+    }
+  }
+  if (strippedAny && out.length > 0 && /^[a-z]/.test(out)) {
+    out = out.charAt(0).toUpperCase() + out.slice(1)
+  }
+  return out
+}
+
 /**
  * Resolve explicit or derived 10s Clip direction facets (`startFrame`, `clipAction`,
  * `emotion`, `endFrame`) for a beat so both the Shot Director UI and the video
@@ -222,7 +249,7 @@ export function resolveBeatClipDirection(
   const direction = beat.beatDirection
   const singleCast = isSingleCastBeat(beat)
   const cleanSingle = (value?: string): string | undefined => {
-    const trimmed = value?.trim()
+    const trimmed = stripLeadingTimeLabel(value)
     if (!trimmed) return undefined
     return singleCast ? sanitizeSingleCastListenerPhrasing(trimmed) || undefined : trimmed
   }
@@ -233,7 +260,7 @@ export function resolveBeatClipDirection(
     const sentences = actionText
       ? actionText.split(/(?<=[.!?])\s+/).map((s) => s.trim()).filter(Boolean)
       : []
-    const frozen = direction?.frozenMoment?.trim()
+    const frozen = stripLeadingTimeLabel(direction?.frozenMoment)
     if (
       sentences.length > 1 &&
       frozen &&
@@ -272,6 +299,63 @@ export function resolveBeatClipDirection(
   }
 }
 
+function hasExplicitTimedClipDirection(beat: SceneBeat): boolean {
+  const d = beat.beatDirection
+  if (Boolean(d?.startFrame?.trim() || d?.clipAction?.trim() || d?.endFrame?.trim())) {
+    return true
+  }
+  if (beat.kind === 'action') {
+    const resolved = resolveBeatClipDirection(beat)
+    if (
+      resolved.startFrame &&
+      resolved.endFrame &&
+      resolved.startFrame.toLowerCase() !== resolved.endFrame.toLowerCase()
+    ) {
+      return true
+    }
+  }
+  return false
+}
+
+/**
+ * Build a chronological 10s timed sequence (`0s–2s` start frame → `2s–5s` / `5s–8s`
+ * action progression → `8s–10s` end frame) so video models hold the initial state
+ * before executing the transition and settling into the terminal state.
+ */
+export function buildTimedClipSequence(beat: SceneBeat): string | undefined {
+  if (!hasExplicitTimedClipDirection(beat)) return undefined
+  const resolved = resolveBeatClipDirection(beat)
+  const parts: string[] = []
+
+  if (resolved.startFrame) {
+    parts.push(`0s–2s (Start frame): ${resolved.startFrame.replace(/\.+$/, '')}`)
+  }
+
+  if (resolved.clipAction) {
+    const cleanedAction = resolved.clipAction.replace(/\.+$/, '').trim()
+    if (/\b2\s*s?\s*[–-]\s*[58]\s*s\b/i.test(cleanedAction)) {
+      parts.push(cleanedAction)
+    } else {
+      const sentences = cleanedAction
+        .split(/(?<=[.!?])\s+/)
+        .map((s) => stripLeadingTimeLabel(s).replace(/\.+$/, '').trim())
+        .filter(Boolean)
+      if (sentences.length >= 2) {
+        parts.push(`2s–5s (Action): ${sentences[0]}`)
+        parts.push(`5s–8s (Action progression): ${sentences.slice(1).join('. ')}`)
+      } else if (sentences.length === 1) {
+        parts.push(`2s–8s (Action): ${sentences[0]}`)
+      }
+    }
+  }
+
+  if (resolved.endFrame) {
+    parts.push(`8s–10s (End frame): End on: ${resolved.endFrame.replace(/\.+$/, '')}`)
+  }
+
+  return parts.length > 0 ? normalizePromptJoin(...parts) : undefined
+}
+
 /** Shot, movement, blocking, and the rest, as clauses of one direction. */
 function directionClauses(beat: SceneBeat, existing: string): string[] {
   const direction = beat.beatDirection
@@ -279,9 +363,14 @@ function directionClauses(beat: SceneBeat, existing: string): string[] {
   const singleCast = isSingleCastBeat(beat)
   const cleanSingle = (value?: string): string | undefined =>
     singleCast ? sanitizeSingleCastListenerPhrasing(value) || undefined : value
+  const cleanTimed = (value?: string): string | undefined => {
+    const stripped = stripLeadingTimeLabel(value)
+    if (!stripped) return undefined
+    return cleanSingle(stripped)
+  }
   const clauses: string[] = []
-  pushClause(clauses, existing, 'Start frame', cleanSingle(direction.startFrame))
-  pushClause(clauses, existing, 'Action', cleanSingle(direction.clipAction))
+  pushClause(clauses, existing, '0s–2s (Start frame)', cleanTimed(direction.startFrame))
+  pushClause(clauses, existing, '2s–8s (Action)', cleanTimed(direction.clipAction))
   pushClause(clauses, existing, 'Coverage', direction.coveragePurpose)
   pushClause(clauses, existing, 'Lens', direction.lensEnergy)
   pushClause(clauses, existing, 'Space', cleanSingle(direction.spatialRelationship))
@@ -295,7 +384,14 @@ function directionClauses(beat: SceneBeat, existing: string): string[] {
   const props = direction.keyProps?.map((name) => name.trim()).filter(Boolean) ?? []
   if (props.length > 0) pushClause(clauses, existing, 'Props', props.join(', '))
   pushClause(clauses, existing, 'Lighting', direction.lightingAccent)
-  pushClause(clauses, existing, 'End on', cleanSingle(direction.endFrame || direction.frozenMoment))
+  const endText = cleanTimed(direction.endFrame || direction.frozenMoment)
+  if (endText && !tokenAlreadyInPrompt(endText, existing)) {
+    const endLabel =
+      direction.startFrame || direction.clipAction || direction.endFrame
+        ? '8s–10s (End frame): End on'
+        : 'End on'
+    pushClause(clauses, existing, endLabel, endText)
+  }
   pushClause(clauses, existing, 'Sound', direction.audioCue)
   return clauses
 }
@@ -352,14 +448,19 @@ export function beatVideoFidelityClose(
     )
   }
 
-  const rawStatedAction = (
+  const rawStatedAction = stripLeadingTimeLabel(
     beat.kind === 'action'
       ? beat.beatDirection?.clipAction || beat.actionDescription
       : beat.beatDirection?.blocking || beat.actionDescription
-  )?.trim()
+  )
   const statedAction = singleCast
     ? sanitizeSingleCastListenerPhrasing(rawStatedAction)
     : rawStatedAction
+  if (hasExplicitTimedClipDirection(beat)) {
+    parts.push(
+      'Hold the 0s–2s start state before initiating the 2s–8s progression, and settle cleanly into the 8s–10s end frame without inventing unstated events or extra cuts'
+    )
+  }
   if (statedAction) {
     const guardrailAction = summarizeStatedActionForGuardrail(statedAction, options?.coreText)
     if (guardrailAction) {
@@ -397,7 +498,13 @@ function videoNegatives(beat: SceneBeat, styleNegative: string): string {
 
 function leadForBeat(beat: SceneBeat, options?: CompileBeatVideoPromptOptions): string {
   if (beat.kind === 'action') {
-    return beat.beatDirection?.clipAction?.trim() || beat.actionDescription?.trim() || 'Scene action'
+    const timed = buildTimedClipSequence(beat)
+    if (timed) return timed
+    return (
+      stripLeadingTimeLabel(beat.beatDirection?.clipAction) ||
+      beat.actionDescription?.trim() ||
+      'Scene action'
+    )
   }
   if (beat.kind === 'narration') {
     const parsed = parsePerformanceCue(options?.excerpt ?? beat.line ?? '')
@@ -606,7 +713,7 @@ export function isStaleSavedVideoPrompt(
   }
 
   const isCompilerGenerated =
-    /\b(?:No spoken dialogue\.|The only spoken line is:|The only action is:|End on:)\b/i.test(
+    /\b(?:No spoken dialogue|The only spoken line is:|The only action is:|End on:|photorealistic,\s*cinematic motion)/i.test(
       trimmed
     )
   if (!isCompilerGenerated) {
@@ -620,25 +727,38 @@ export function isStaleSavedVideoPrompt(
     return true
   }
 
-  if (d?.startFrame?.trim() && !tokenAlreadyInPrompt(d.startFrame.slice(0, 48), trimmed)) {
+  const cleanStart = stripLeadingTimeLabel(d?.startFrame)
+  const cleanClipAction = stripLeadingTimeLabel(d?.clipAction)
+  const cleanEnd = stripLeadingTimeLabel(d?.endFrame)
+  const cleanFrozen = stripLeadingTimeLabel(d?.frozenMoment)
+
+  if (
+    hasExplicitTimedClipDirection(beat) &&
+    !/0s[–-]2s\s*\(Start frame\):/i.test(trimmed) &&
+    !/2s[–-][58]s\s*\(Action\):/i.test(trimmed)
+  ) {
     return true
   }
-  if (d?.clipAction?.trim() && !tokenAlreadyInPrompt(d.clipAction.slice(0, 48), trimmed)) {
+
+  if (cleanStart && !tokenAlreadyInPrompt(cleanStart.slice(0, 48), trimmed)) {
     return true
   }
-  if (d?.endFrame?.trim() && !tokenAlreadyInPrompt(d.endFrame.slice(0, 48), trimmed)) {
+  if (cleanClipAction && !tokenAlreadyInPrompt(cleanClipAction.slice(0, 48), trimmed)) {
+    return true
+  }
+  if (cleanEnd && !tokenAlreadyInPrompt(cleanEnd.slice(0, 48), trimmed)) {
     return true
   }
   if (
-    !d?.endFrame?.trim() &&
-    d?.frozenMoment?.trim() &&
-    !tokenAlreadyInPrompt(d.frozenMoment.slice(0, 48), trimmed)
+    !cleanEnd &&
+    cleanFrozen &&
+    !tokenAlreadyInPrompt(cleanFrozen.slice(0, 48), trimmed)
   ) {
     return true
   }
   if (
     beat.kind !== 'dialogue' &&
-    !d?.clipAction?.trim() &&
+    !cleanClipAction &&
     beat.actionDescription?.trim() &&
     !tokenAlreadyInPrompt(beat.actionDescription.slice(0, 48), trimmed)
   ) {

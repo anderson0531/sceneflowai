@@ -146,11 +146,11 @@ export function buildStartFramePrompt(
   }
   if (startState) {
     startCues.push(`Opening frame state (t=0s): ${startState}`)
-  }
-  if (baseAction && (!startState || !startState.toLowerCase().includes(baseAction.toLowerCase()))) {
+  } else if (baseAction) {
     startCues.push(`Starting action state (t=0s): ${baseAction}`)
   }
-  if (blocking && (!baseAction || !baseAction.toLowerCase().includes(blocking.toLowerCase()))) {
+  const openingRefText = (startState || baseAction || '').toLowerCase()
+  if (blocking && (!openingRefText || !openingRefText.includes(blocking.toLowerCase()))) {
     startCues.push(
       noPeopleInFrame
         ? `Initial spatial staging at the start of action: ${blocking}`
@@ -159,7 +159,7 @@ export function buildStartFramePrompt(
   }
   if (
     space &&
-    (!baseAction || !baseAction.toLowerCase().includes(space.toLowerCase())) &&
+    (!openingRefText || !openingRefText.includes(space.toLowerCase())) &&
     (!blocking || !blocking.toLowerCase().includes(space.toLowerCase()))
   ) {
     startCues.push(`Spatial composition: ${space}`)

@@ -13,6 +13,7 @@ import {
 } from '@/lib/audio/syncBeatAudioDirection'
 import { refreshSceneSegmentVideoPrompts } from '@/lib/scene/syncBeatVideoPrompt'
 import { compileBeatVideoPromptFromDirection } from '@/lib/scene/beatVideoPromptCompiler'
+import { parsePersistedMusicCues, resolveBeatMusicCue } from '@/lib/script/sceneMusicCues'
 import { beatStillDirectionFingerprint } from '@/lib/script/beatDirectionFingerprint'
 import { restampPreVisHashIfScriptCurrent } from '@/lib/storyboard/preVisSync'
 import { syncBeatStillPromptToDirection } from '@/lib/storyboard/syncBeatStillPrompt'
@@ -586,11 +587,16 @@ function applyBeatDirectionToOneScene(args: {
     const framePrompt = edited.storyboardImagePrompt?.trim()
     const editedIdx = beats.findIndex((b) => b.beatId === beatId)
     const previousBeat = editedIdx > 0 ? beats[editedIdx - 1] : undefined
+    const musicCue =
+      editedIdx >= 0
+        ? resolveBeatMusicCue(parsePersistedMusicCues(withBeats.sceneMusicCues, beats), editedIdx)
+        : undefined
     const videoPrompt =
       segment?.videoPrompt?.trim() ||
       compileBeatVideoPromptFromDirection(edited, withBeats.sceneDirection, {
         previousBeat,
         artStyleId: promptComposition?.artStyleAnchor,
+        ...(musicCue ? { musicCue } : {}),
       }).prompt.trim()
     if (audioDirection || framePrompt || videoPrompt) {
       const storedBeats = getSceneBeats(withBeats).map((entry) => {

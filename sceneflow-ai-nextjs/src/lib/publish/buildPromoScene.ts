@@ -9,7 +9,12 @@ import {
   beatStillDirectionFingerprint,
   storedStillDirectionKeyMatches,
 } from '@/lib/script/beatDirectionFingerprint'
-import { compileBeatVideoPromptFromDirection } from '@/lib/scene/beatVideoPromptCompiler'
+import {
+  beatDirectionOwnsVideoPrompt,
+  compileBeatVideoPromptFromDirection,
+  isStaleSavedVideoPrompt,
+} from '@/lib/scene/beatVideoPromptCompiler'
+import { parsePersistedMusicCues, resolveBeatMusicCue } from '@/lib/script/sceneMusicCues'
 import { promoShotIncluded } from '@/lib/publish/promoTimeline'
 import { mediaBlobUrlTimestamp } from '@/lib/storyboard/mediaVersions'
 import type { SceneBeat, SceneMusicCue } from '@/lib/script/segmentTypes'
@@ -634,14 +639,19 @@ function resolveSegmentGeneratedPromptForBeat(
   beat: PromoSceneBeat,
   previousBeat: PromoSceneBeat | undefined,
   sceneDirection: DetailedSceneDirection | null | undefined,
-  existingPrompt?: string
+  existingPrompt?: string,
+  musicCue?: SceneMusicCue
 ): string {
   const compiled = compileBeatVideoPromptFromDirection(beat, sceneDirection ?? null, {
     previousBeat,
+    ...(musicCue ? { musicCue } : {}),
   }).prompt
   const stored = existingPrompt?.trim()
   if (!stored) return compiled
   const spoken = beat.line?.trim()
+  if (beatDirectionOwnsVideoPrompt(beat) || isStaleSavedVideoPrompt(beat, stored, spoken)) {
+    return compiled
+  }
   if ((beat.kind === 'narration' || beat.kind === 'dialogue') && spoken) {
     const snippet = spoken.slice(0, Math.min(20, spoken.length))
     if (
@@ -1327,7 +1337,9 @@ export function hydratePromoSceneWithSharedShots(
     const beatAny = beat as Record<string, unknown>
 
     const hydratedLine = beat.kind === 'narration' ? beat.line : sourceBeat.line || beat.line
-    const hydratedActionDescription = sourceBeat.actionDescription || beat.actionDescription
+    const hydratedActionDescription = sourceDirectionNewer
+      ? sourceBeat.actionDescription || beat.actionDescription
+      : beat.actionDescription || sourceBeat.actionDescription
     const hydratedContentKey = beatStillContentFingerprint({
       kind: beat.kind ?? sourceBeat.kind,
       character: resolvedCharacter,
@@ -1425,8 +1437,7 @@ export function hydratePromoSceneWithSharedShots(
       characterIds: sourceBeat.characterIds || beat.characterIds,
       locationId: sourceBeat.locationId || beat.locationId,
       propIds: sourceBeat.propIds || beat.propIds,
-      actionDescription:
-        sourceBeat.actionDescription || beat.actionDescription,
+      actionDescription: hydratedActionDescription,
       line: beat.kind === 'narration' ? beat.line : sourceBeat.line || beat.line,
       character: resolvedCharacter,
       ...(resolvedCharacterId ? { characterId: resolvedCharacterId } : {}),
@@ -1465,6 +1476,10 @@ export function hydratePromoSceneWithSharedShots(
         }
 
   const ownProd = sceneProductionState?.[promoSceneId]
+  const persistedPromoMusicCues = parsePersistedMusicCues(
+    promoScene.sceneMusicCues,
+    hydratedBeats
+  )
   let cursor = 0
   const activeHydratedBeats = hydratedBeats.filter((b) => !b.excluded)
   const hydratedSegments: SceneSegment[] = activeHydratedBeats.map((beat, index) => {
@@ -1538,12 +1553,27 @@ export function hydratePromoSceneWithSharedShots(
       null
 
     const previousBeat = index > 0 ? activeHydratedBeats[index - 1] : undefined
+    const rawBeatIndex = hydratedBeats.findIndex((entry) => entry.beatId === beat.beatId)
+    const musicCue =
+      rawBeatIndex >= 0
+        ? resolveBeatMusicCue(persistedPromoMusicCues, rawBeatIndex)
+        : undefined
     const generatedPrompt = resolveSegmentGeneratedPromptForBeat(
       beat,
       previousBeat,
       hydratedSceneDirection as DetailedSceneDirection,
-      sourceSeg?.generatedPrompt || existingPromoSeg?.generatedPrompt
+      sourceSeg?.generatedPrompt || existingPromoSeg?.generatedPrompt,
+      musicCue
     )
+    const rawUserEdited = (
+      existingPromoSeg?.userEditedPrompt ||
+      sourceSeg?.userEditedPrompt ||
+      ''
+    ).trim()
+    const cleanUserEdited =
+      rawUserEdited && !isStaleSavedVideoPrompt(beat, rawUserEdited, beat.line?.trim())
+        ? rawUserEdited
+        : undefined
     const dialogueMeta = buildSegmentDialogueLinesForBeat(
       beat,
       sourceSeg?.dialogueLines || existingPromoSeg?.dialogueLines
@@ -1563,6 +1593,8 @@ export function hydratePromoSceneWithSharedShots(
       activeAssetUrl: activeVideoUrl,
       assetType: activeVideoUrl ? 'video' : startFrame ? 'image' : null,
       generatedPrompt,
+      videoPrompt: generatedPrompt,
+      userEditedPrompt: cleanUserEdited,
       ...dialogueMeta,
       startFrameUrl: startFrame || undefined,
       endFrameUrl: endFrame || undefined,

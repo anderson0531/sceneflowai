@@ -6,6 +6,7 @@ import {
   type PromoSceneBeat,
 } from '@/lib/publish/buildPromoScene'
 import {
+  beatDirectionOwnsVideoPrompt,
   compileBeatVideoPromptFromDirection,
   isStaleSavedVideoPrompt,
 } from '@/lib/scene/beatVideoPromptCompiler'
@@ -119,23 +120,29 @@ export function buildBeatVideoClips({
       previousBeat,
       ...(musicCue ? { musicCue } : {}),
     }).prompt
+    const narrationLine = beat.kind === 'narration' ? beat.line?.trim() : undefined
+    const spokenForStaleCheck = narrationLine || beat.line?.trim()
+    const userEdited = segment?.userEditedPrompt?.trim()
+    const hasGenuineUserEditedPrompt = Boolean(
+      userEdited && !isStaleSavedVideoPrompt(beat, userEdited, spokenForStaleCheck)
+    )
     const rawCandidatePrompt =
-      segment?.userEditedPrompt ||
+      (hasGenuineUserEditedPrompt ? userEdited : undefined) ||
       item?.config.prompt ||
       segment?.generatedPrompt ||
       beat.beatDirection?.videoPrompt?.trim() ||
       compiledFromDirection
-    const narrationLine = beat.kind === 'narration' ? beat.line?.trim() : undefined
     const narrationSnippet = narrationLine
       ? narrationLine.slice(0, Math.min(20, narrationLine.length))
       : undefined
     const resolvedPrompt =
-      !segment?.userEditedPrompt &&
-      ((narrationSnippet &&
-        (/no spoken dialogue/i.test(rawCandidatePrompt) ||
-          /^medium shot,\s*promo trailer voice-over/i.test(rawCandidatePrompt) ||
-          !rawCandidatePrompt.includes(narrationSnippet))) ||
-        isStaleSavedVideoPrompt(beat, rawCandidatePrompt, narrationLine || beat.line?.trim()))
+      !hasGenuineUserEditedPrompt &&
+      (beatDirectionOwnsVideoPrompt(beat) ||
+        (narrationSnippet &&
+          (/no spoken dialogue/i.test(rawCandidatePrompt) ||
+            /^medium shot,\s*promo trailer voice-over/i.test(rawCandidatePrompt) ||
+            !rawCandidatePrompt.includes(narrationSnippet))) ||
+        isStaleSavedVideoPrompt(beat, rawCandidatePrompt, spokenForStaleCheck))
         ? compiledFromDirection
         : rawCandidatePrompt
     const promoBeat = beat as PromoSceneBeat

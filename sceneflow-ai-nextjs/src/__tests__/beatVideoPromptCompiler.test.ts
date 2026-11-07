@@ -470,20 +470,84 @@ describe('narration beat video prompt compilation', () => {
     expect(resolved.endFrame).toContain('sprawling Chicago shoreline grid across Englewood and Woodlawn')
 
     const result = compileBeatVideoPromptFromDirection(shorelineBeat, null, { previousBeat })
-    expect(result.prompt).toContain('Start frame: Darkened Chicago shoreline')
-    expect(result.prompt).toContain('harmonic shockwave of incandescent gold sweeps inland')
+    expect(result.prompt).toContain('0s–2s (Start frame): Darkened Chicago shoreline')
+    expect(result.prompt).toContain('2s–8s (Action): A harmonic shockwave of incandescent gold sweeps inland')
     expect(result.prompt).toContain('Camera: slow push-in')
     expect(result.prompt).toContain('Blocking: The jagged blue-gray pack ice')
     expect(result.prompt).toContain('Emotion: Electrifying, awe-inspiring infrastructural awakening')
     expect(result.prompt).toContain(
-      'End on: The sprawling Chicago shoreline grid across Englewood and Woodlawn sits locked in blazing incandescent gold'
+      '8s–10s (End frame): End on: The sprawling Chicago shoreline grid across Englewood and Woodlawn sits locked in blazing incandescent gold'
     )
     expect(result.prompt).toContain(
       'Sound: Resonant low-frequency electrical surge humming across the frozen lake'
+    )
+    expect(result.prompt).toContain(
+      'Hold the 0s–2s start state before initiating the 2s–8s progression, and settle cleanly into the 8s–10s end frame without inventing unstated events or extra cuts'
     )
     expect(result.prompt).toContain('No people in frame')
     expect(result.prompt).not.toContain('same people already in frame: Julian Ward')
     expect(result.prompt).toContain('deep depth of field')
     expect(result.prompt).not.toContain('shallow depth of field')
+  })
+
+  it('directs a 10s shot with explicit timed phases (0s–2s start, 2s–5s / 5s–8s action, 8s–10s end) and strips redundant temporal prefixes', () => {
+    const awakeningBeat: SceneBeat = {
+      beatId: 'beat_chicago_awakening',
+      sequenceIndex: 2,
+      kind: 'action',
+      actionDescription:
+        'The camera pushes slowly inward high over the frozen lakefront as a dormant Chicago awakens. A resonant electrical wave sweeps inland across the ice, sequentially igniting rows of amber incandescent streetlights along the rail corridors of Englewood and Woodlawn. Clustered tenement windows light up in warm gold while awakened rooftop boilers vent dense vertical plumes of white steam against the pre-dawn indigo sky.',
+      beatDirection: {
+        generatedBy: 'user',
+        shotType: 'Wide Shot',
+        cameraAngle: 'high angle',
+        cameraMovement: 'slow high-angle push-in',
+        transition: 'CUT',
+        castInFrame: [],
+        frozenMoment:
+          'The dormant Chicago shoreline stands frozen in complete darkness at t=0s, showing unlit brick tenement silhouettes and cold rail yards across Englewood and Woodlawn beneath a deep indigo pre-dawn sky, with jagged blue-gray shelf ice completely unilluminated across the lower frame.',
+        startFrame:
+          'At t=0s, the Chicago coastline sits in complete pitch-black darkness with zero electrical light or power, framing the dormant silhouettes of Englewood and Woodlawn tenement blocks against a deep indigo sky, while motionless blue-gray shelf ice blankets the foreground lake.',
+        clipAction:
+          'From t=0s to t=10s, a radiant violet-gold electrical surge hits the shoreline and propels westward through the dormant municipal grid, sequentially igniting lines of incandescent amber streetlights through Englewood and Woodlawn. Hundreds of tenement windows illuminate in rapid succession in warm golden squares, while dense vertical plumes of white exhaust steam erupt from awakened rooftop boilers and catch the golden glare.',
+        blocking:
+          'Cracked blue-gray lake ice blankets the lower third of the frame from screen-left to screen-right; the unlit, pitch-black municipal grid of Englewood and Woodlawn spans the middle and upper frame, receding southwest toward the horizon.',
+        emotion:
+          'Atmospheric tension begins in frozen, pitch-black desolation before accelerating into an overwhelming, triumphant crescendo of warmth and restored civic power.',
+        endFrame:
+          'End on: At t=10s, the entire street and rail grid across Englewood and Woodlawn blazes in radiant amber and golden illumination, with towering white steam plumes billowing into the indigo sky and long warm light ribbons reflected across the cracked lake ice below.',
+        audioCue:
+          'Deep resonant sub-bass surge of municipal transformers humming into phase accompanied by the sharp crackle of expanding high-voltage lines',
+        // Simulate a stale videoPrompt from an earlier Shot Director run
+        videoPrompt:
+          'A resonant electrical wave surges through the dormant municipal infrastructure along the southern Chicago lakefront. The dark street grids of Englewood and Woodlawn ignite into thousands of incandescent amber streetlights and glowing tenement windows. Dense vertical plumes of white exhaust steam billow from industrial rooftop boilers, catching the warm golden glare against the deep indigo horizon. Shot: Wide Shot. Angle: high angle. Camera: slow push-in. Blocking: Cracked blue-gray lake ice and dark open water occupy the bottom third of the frame, tapering along the diagonal shoreline from screen-left to screen-right; the glowing grid of brick tenement blocks, switchyards, and rail corridors fills the middle and upper frame, receding toward the western horizon. End on: The interconnected street grid of Englewood and Woodlawn stands fully illuminated in radiant amber and gold, casting sharp reflective ribbons across the cracked shelf ice of Lake Michigan in the lower frame while tall, dense plumes of white boiler steam hang suspended in the freezing air against the dark western sky. Sound: Deep resonant sub-bass surge of thousands of municipal transformers humming simultaneously. Film Noir, dynamic motion. Scored moment: electrifying rebellious adrenaline — carry that in the pacing and performance. Incoming continuity from Long Shot. No people in frame. The only action is: A resonant electrical wave surges through the dormant municipal infrastructure along the southern Chicago lakefront. No spoken dialogue. photorealistic, cinematic motion, professional cinematography, natural lighting, deep depth of field',
+      },
+    }
+
+    const result = compileBeatVideoPromptFromDirection(awakeningBeat, null)
+    expect(result.prompt).toMatch(
+      /^0s–2s \(Start frame\): The Chicago coastline sits in complete pitch-black darkness with zero electrical light or power/
+    )
+    expect(result.prompt).toContain(
+      '2s–5s (Action): A radiant violet-gold electrical surge hits the shoreline and propels westward through the dormant municipal grid, sequentially igniting lines of incandescent amber streetlights through Englewood and Woodlawn'
+    )
+    expect(result.prompt).toContain(
+      '5s–8s (Action progression): Hundreds of tenement windows illuminate in rapid succession in warm golden squares, while dense vertical plumes of white exhaust steam erupt from awakened rooftop boilers and catch the golden glare'
+    )
+    expect(result.prompt).toContain(
+      '8s–10s (End frame): End on: The entire street and rail grid across Englewood and Woodlawn blazes in radiant amber and golden illumination'
+    )
+    expect(result.prompt).not.toContain('End on: End on:')
+    expect(result.prompt).not.toContain('From t=0s to t=10s,')
+    expect(result.prompt).toContain('Camera: slow high-angle push-in')
+    expect(result.prompt).toContain(
+      'Emotion: Atmospheric tension begins in frozen, pitch-black desolation before accelerating into an overwhelming, triumphant crescendo of warmth and restored civic power'
+    )
+    expect(result.prompt).toContain(
+      'Hold the 0s–2s start state before initiating the 2s–8s progression, and settle cleanly into the 8s–10s end frame without inventing unstated events or extra cuts'
+    )
+    expect(result.prompt).toContain(
+      'The only action is: A radiant violet-gold electrical surge hits the shoreline and propels westward through the dormant municipal grid, sequentially igniting lines of incandescent amber streetlights through Englewood and Woodlawn'
+    )
   })
 })

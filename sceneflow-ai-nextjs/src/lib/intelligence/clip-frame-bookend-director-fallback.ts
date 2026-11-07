@@ -55,8 +55,20 @@ export interface ClipBookendPrompts {
 }
 
 const STRUCTURED_LABELS = [
+  '0s–2s (Start frame)',
+  '0s-2s (Start frame)',
   'Start frame',
+  '2s–5s (Action)',
+  '2s-5s (Action)',
+  '5s–8s (Action progression)',
+  '5s-8s (Action progression)',
+  '2s–8s (Action)',
+  '2s-8s (Action)',
   'Action',
+  '8s–10s (End frame): End on',
+  '8s-10s (End frame): End on',
+  '8s–10s (End frame)',
+  '8s-10s (End frame)',
   'Coverage',
   'Lens',
   'Space',
@@ -74,6 +86,7 @@ const STRUCTURED_LABELS = [
   'Sound',
   'Only these people are visible',
   'Only these objects',
+  'Hold the 0s–2s start state before initiating the 2s–8s progression, and settle cleanly into the 8s–10s end frame without inventing unstated events or extra cuts',
   'The only action is',
   'The only spoken line is',
 ] as const
@@ -166,14 +179,45 @@ export function extractClipPromptFacets(clipPrompt?: string | null): ExtractedCl
     .filter((v, idx, arr) => arr.findIndex((other) => other.toLowerCase() === v.toLowerCase()) === idx)
     .join(', ')
 
+  const startFrameRaw =
+    clauseMap.get('0s–2s (start frame)') ||
+    clauseMap.get('0s-2s (start frame)') ||
+    clauseMap.get('start frame')
+  const actionParts = [
+    clauseMap.get('2s–5s (action)'),
+    clauseMap.get('2s-5s (action)'),
+    clauseMap.get('5s–8s (action progression)'),
+    clauseMap.get('5s-8s (action progression)'),
+    clauseMap.get('2s–8s (action)'),
+    clauseMap.get('2s-8s (action)'),
+    clauseMap.get('action'),
+  ]
+    .filter((v): v is string => isMeaningfulDirectionFacet(v))
+    .filter((v, idx, arr) => arr.findIndex((other) => other.toLowerCase() === v.toLowerCase()) === idx)
+  const combinedClipAction = actionParts.join('. ')
+  const endOnRaw = (
+    clauseMap.get('8s–10s (end frame): end on') ||
+    clauseMap.get('8s-10s (end frame): end on') ||
+    clauseMap.get('8s–10s (end frame)') ||
+    clauseMap.get('8s-10s (end frame)') ||
+    clauseMap.get('end on') ||
+    ''
+  )
+    .replace(/^end\s+on:\s*/i, '')
+    .trim()
+
+  const resolvedStartFrame = isMeaningfulDirectionFacet(startFrameRaw)
+    ? startFrameRaw
+    : undefined
+  const resolvedClipAction = isMeaningfulDirectionFacet(combinedClipAction)
+    ? combinedClipAction
+    : undefined
+  const resolvedEndOn = isMeaningfulDirectionFacet(endOnRaw) ? endOnRaw : undefined
+
   return {
-    lead,
-    startFrame: isMeaningfulDirectionFacet(clauseMap.get('start frame'))
-      ? clauseMap.get('start frame')
-      : undefined,
-    clipAction: isMeaningfulDirectionFacet(clauseMap.get('action'))
-      ? clauseMap.get('action')
-      : undefined,
+    lead: lead || resolvedClipAction || resolvedStartFrame || '',
+    startFrame: resolvedStartFrame,
+    clipAction: resolvedClipAction,
     coverage: isMeaningfulDirectionFacet(clauseMap.get('coverage'))
       ? clauseMap.get('coverage')
       : undefined,
@@ -198,9 +242,7 @@ export function extractClipPromptFacets(clipPrompt?: string | null): ExtractedCl
     lighting: isMeaningfulDirectionFacet(clauseMap.get('lighting'))
       ? clauseMap.get('lighting')
       : undefined,
-    endOn: isMeaningfulDirectionFacet(clauseMap.get('end on'))
-      ? clauseMap.get('end on')
-      : undefined,
+    endOn: resolvedEndOn,
     statedAction: isMeaningfulDirectionFacet(clauseMap.get('the only action is'))
       ? clauseMap.get('the only action is')
       : undefined,
@@ -235,7 +277,10 @@ export function resolveBeatClipPrompt(
     : []
   const matchingSegment = segments.find((seg) => seg && seg.beatId === beat.beatId)
 
-  if (matchingSegment?.userEditedPrompt?.trim()) {
+  if (
+    matchingSegment?.userEditedPrompt?.trim() &&
+    !isStaleSavedVideoPrompt(beat, matchingSegment.userEditedPrompt.trim(), beat.line?.trim())
+  ) {
     return matchingSegment.userEditedPrompt.trim()
   }
 

@@ -10,6 +10,12 @@ import {
   resolveEffectiveStoryboardTier,
 } from '@/lib/storyboard/storyboardQuality'
 import { getSceneBeats } from '@/lib/script/beatMigration'
+import {
+  beatDirectionOwnsVideoPrompt,
+  compileBeatVideoPromptFromDirection,
+  isStaleSavedVideoPrompt,
+} from '@/lib/scene/beatVideoPromptCompiler'
+import { parsePersistedMusicCues, resolveBeatMusicCue } from '@/lib/script/sceneMusicCues'
 import type { VideoGenerationConfig, ApprovalStatus } from '@/components/vision/scene-production/types'
 import {
   buildDefaultBatchGuidePrompt,
@@ -880,8 +886,52 @@ export function buildDraftVideoGenerationConfig(
   const method = detectRecommendedMethod(segment, sceneImageUrl, allSegments, guideContext)
   const confidence = calculateConfidence(segment, method)
   const approvalStatus = determineApprovalStatus(segment)
-  const motionPrompt = generateMotionPrompt(segment, sceneImageUrl)
-  const visualPrompt = generateVisualPrompt(segment, sceneImageUrl)
+  let effectiveSegment = segment
+  if (guideContext?.fullScene && segment.beatId && !segment.userInstruction?.trim()) {
+    const fullScene = guideContext.fullScene as Record<string, unknown>
+    const sceneBeats = getSceneBeats(fullScene)
+    const beatIndex = sceneBeats.findIndex((entry) => entry.beatId === segment.beatId)
+    const beat = beatIndex >= 0 ? sceneBeats[beatIndex] : undefined
+    if (beat) {
+      const spokenLine =
+        segment.dialoguePortion?.excerpt?.trim() || beat.line?.trim() || undefined
+      const userEdited = segment.userEditedPrompt?.trim()
+      const hasGenuineUserEdited = Boolean(
+        userEdited && !isStaleSavedVideoPrompt(beat, userEdited, spokenLine)
+      )
+      const currentGenerated = segment.generatedPrompt?.trim() || ''
+      if (
+        !hasGenuineUserEdited &&
+        (beatDirectionOwnsVideoPrompt(beat) ||
+          !currentGenerated ||
+          isStaleSavedVideoPrompt(beat, currentGenerated, spokenLine))
+      ) {
+        const previousBeat = beatIndex > 0 ? sceneBeats[beatIndex - 1] : undefined
+        const musicCue = resolveBeatMusicCue(
+          parsePersistedMusicCues(fullScene.sceneMusicCues, sceneBeats),
+          beatIndex
+        )
+        const sceneDirection = (fullScene.sceneDirection ??
+          fullScene.detailedDirection ??
+          null) as any
+        const compiledPrompt = compileBeatVideoPromptFromDirection(beat, sceneDirection, {
+          previousBeat,
+          ...(segment.dialoguePortion?.excerpt?.trim()
+            ? { excerpt: segment.dialoguePortion.excerpt.trim() }
+            : {}),
+          continuesSameLine: (segment.dialoguePortion?.partIndex ?? 0) > 0,
+          ...(musicCue ? { musicCue } : {}),
+        }).prompt
+        effectiveSegment = {
+          ...segment,
+          userEditedPrompt: undefined,
+          generatedPrompt: compiledPrompt,
+        }
+      }
+    }
+  }
+  const motionPrompt = generateMotionPrompt(effectiveSegment, sceneImageUrl)
+  const visualPrompt = generateVisualPrompt(effectiveSegment, sceneImageUrl)
 
   const { startFrameUrl: resolvedStart } = resolveSegmentFrameUrls(
     segment,
