@@ -50,6 +50,7 @@ describe('generateVertexGeminiImage deadlines', () => {
     vi.restoreAllMocks()
     vi.unstubAllGlobals()
     delete process.env.VERTEX_IMAGE_DISPATCH_INTERVAL_MS
+    delete process.env.VERTEX_IMAGE_MAX_CONCURRENCY
   })
 
   it('refuses to start a request after the caller deadline has passed', async () => {
@@ -194,6 +195,7 @@ describe('generateVertexGeminiImage deadlines', () => {
 
   it('keeps the shared slot after its own timeout and frees it on cancel', async () => {
     process.env.VERTEX_IMAGE_DISPATCH_INTERVAL_MS = '1'
+    process.env.VERTEX_IMAGE_MAX_CONCURRENCY = '2'
     resetVertexDispatchBucketForTests()
     vi.useFakeTimers()
 
@@ -260,6 +262,7 @@ describe('generateVertexGeminiImage deadlines', () => {
 
   it('keeps the shared slot when the Stills Agent cancels after the provider fetch starts', async () => {
     process.env.VERTEX_IMAGE_DISPATCH_INTERVAL_MS = '1'
+    process.env.VERTEX_IMAGE_MAX_CONCURRENCY = '2'
     resetVertexDispatchBucketForTests()
     vi.useFakeTimers()
 
@@ -317,6 +320,7 @@ describe('generateVertexGeminiImage deadlines', () => {
 
   it('keeps the shared slot when a timeout lands on an already-aborted parent signal', async () => {
     process.env.VERTEX_IMAGE_DISPATCH_INTERVAL_MS = '1'
+    process.env.VERTEX_IMAGE_MAX_CONCURRENCY = '2'
     resetVertexDispatchBucketForTests()
     vi.useFakeTimers()
 

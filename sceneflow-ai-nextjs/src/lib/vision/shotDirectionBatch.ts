@@ -26,10 +26,10 @@ export const SHOT_DIRECTION_BEAT_CHUNK = 1
 
 /**
  * Parallel single-shot optimizations for one scene.
- * Wider than stills and clips (those stay at 2) because this is text generation.
+ * Wider than stills and clips because this is text generation.
  * Override with SHOT_DIRECTION_TEXT_CONCURRENCY.
  */
-export const DEFAULT_SHOT_DIRECTION_TEXT_CONCURRENCY = 5
+export const DEFAULT_SHOT_DIRECTION_TEXT_CONCURRENCY = 8
 
 export function getShotDirectionTextConcurrency(): number {
   const raw = Number(process.env.SHOT_DIRECTION_TEXT_CONCURRENCY)

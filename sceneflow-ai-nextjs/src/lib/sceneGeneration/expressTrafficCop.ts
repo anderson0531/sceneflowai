@@ -76,14 +76,14 @@ const EXPRESS_LANES: ExpressLane[] = ['text', 'image', 'audio']
 export const EXPRESS_ROLLING_WINDOW_MS = 60_000
 const EXPRESS_BURST_ALLOWANCE = 6
 
-/** Default image in-flight cap — two concurrent still jobs, fail-fast isolated. */
-export const DEFAULT_EXPRESS_IMAGE_CONCURRENCY = 2
+/** Default image in-flight cap — six concurrent still jobs, fail-fast isolated. */
+export const DEFAULT_EXPRESS_IMAGE_CONCURRENCY = 6
 
 /**
- * Draft beats share the same two-wide cap as pro identity-ref frames.
+ * Draft beats share the same six-wide cap as pro identity-ref frames.
  * Frame Agent pins the pool to this default.
  */
-export const DEFAULT_EXPRESS_FLASH_IMAGE_CONCURRENCY = 2
+export const DEFAULT_EXPRESS_FLASH_IMAGE_CONCURRENCY = 6
 
 /** Default TTS in-flight cap for Express Audio / Storyboard Express audio lane. */
 export const DEFAULT_EXPRESS_AUDIO_CONCURRENCY = 8
@@ -116,7 +116,7 @@ export function getExpressImageMinSpacingMs(): number {
 }
 
 export function getExpressSceneConcurrency(): number {
-  return parsePositiveInt(process.env.EXPRESS_SCENE_CONCURRENCY, 3)
+  return parsePositiveInt(process.env.EXPRESS_SCENE_CONCURRENCY, 6)
 }
 
 /** Image-lane max; override via EXPRESS_IMAGE_CONCURRENCY when dedicated GCP arrives. */
@@ -140,7 +140,7 @@ function defaultLaneMax(lane: ExpressLane, overrides?: Partial<Record<ExpressLan
   if (overrides?.[lane] !== undefined) return overrides[lane]!
   switch (lane) {
     case 'text':
-      return parsePositiveInt(process.env.EXPRESS_TEXT_CONCURRENCY, 3)
+      return parsePositiveInt(process.env.EXPRESS_TEXT_CONCURRENCY, 6)
     case 'image':
       return getExpressImageConcurrency()
     case 'audio':

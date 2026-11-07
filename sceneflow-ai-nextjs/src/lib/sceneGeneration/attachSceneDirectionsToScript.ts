@@ -10,7 +10,7 @@ import { generateSceneDirection } from '@/lib/sceneGeneration/generateDirection'
 import { runWithConcurrencyLimit } from '@/lib/utils/concurrency'
 
 /** Parallel scene-direction calls. Text generation, not the still/clip cap. */
-export const SCENE_DIRECTION_CONCURRENCY = 4
+export const SCENE_DIRECTION_CONCURRENCY = 6
 
 /** Wall clock for the scene-direction route, matching its vercel maxDuration. */
 export const SCENE_DIRECTION_BUDGET_MS = 600_000

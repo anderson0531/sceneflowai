@@ -81,23 +81,23 @@ describe('usesFlashDraftTier', () => {
 })
 
 describe('animatic concurrency', () => {
-  it('caps draft and pro identity-ref frames at two concurrent gens', () => {
-    expect(DEFAULT_EXPRESS_FLASH_IMAGE_CONCURRENCY).toBe(2)
-    expect(DEFAULT_SCENE_EXPRESS_FLASH_BEAT_CONCURRENCY).toBe(2)
-    expect(DEFAULT_EXPRESS_IMAGE_CONCURRENCY).toBe(2)
-    expect(DEFAULT_SCENE_EXPRESS_BEAT_CONCURRENCY).toBe(2)
+  it('caps draft and pro identity-ref frames at six concurrent gens', () => {
+    expect(DEFAULT_EXPRESS_FLASH_IMAGE_CONCURRENCY).toBe(6)
+    expect(DEFAULT_SCENE_EXPRESS_FLASH_BEAT_CONCURRENCY).toBe(6)
+    expect(DEFAULT_EXPRESS_IMAGE_CONCURRENCY).toBe(6)
+    expect(DEFAULT_SCENE_EXPRESS_BEAT_CONCURRENCY).toBe(6)
   })
 
-  it('keeps flash and pro image lanes at the two-wide default unless env overrides', () => {
+  it('keeps flash and pro image lanes at the six-wide default unless env overrides', () => {
     delete process.env.EXPRESS_IMAGE_CONCURRENCY
     expect(getExpressImageConcurrency()).toBe(DEFAULT_EXPRESS_IMAGE_CONCURRENCY)
-    expect(getExpressImageConcurrency({ flashAnimatic: false })).toBe(2)
+    expect(getExpressImageConcurrency({ flashAnimatic: false })).toBe(6)
     expect(getExpressImageConcurrency({ flashAnimatic: true })).toBe(
       DEFAULT_EXPRESS_FLASH_IMAGE_CONCURRENCY
     )
   })
 
-  it('keeps the flash beat pool at the two-wide default unless env overrides', () => {
+  it('keeps the flash beat pool at the six-wide default unless env overrides', () => {
     delete process.env.SCENE_EXPRESS_BEAT_CONCURRENCY
     delete process.env.VERTEX_GEMINI_FLASH_IMAGE_CONCURRENCY
     delete process.env.EXPRESS_IMAGE_CONCURRENCY
@@ -114,17 +114,17 @@ describe('animatic concurrency', () => {
   })
 
   it('lets an explicit env override win over both defaults', () => {
-    process.env.EXPRESS_IMAGE_CONCURRENCY = '6'
-    expect(getExpressImageConcurrency({ flashAnimatic: true })).toBe(6)
-    expect(getExpressImageConcurrency({ flashAnimatic: false })).toBe(6)
+    process.env.EXPRESS_IMAGE_CONCURRENCY = '8'
+    expect(getExpressImageConcurrency({ flashAnimatic: true })).toBe(8)
+    expect(getExpressImageConcurrency({ flashAnimatic: false })).toBe(8)
   })
 
-  it('defaults geminiFlashImage concurrency to 2, not the leftover 3', () => {
+  it('defaults geminiFlashImage concurrency to 6, not the leftover 3', () => {
     const src = readFileSync(
       join(process.cwd(), 'src/lib/utils/concurrent-processor.ts'),
       'utf8'
     )
-    expect(src).toContain('VERTEX_GEMINI_FLASH_IMAGE_CONCURRENCY ?? 2')
+    expect(src).toContain('VERTEX_GEMINI_FLASH_IMAGE_CONCURRENCY ?? 6')
     expect(src).not.toContain('VERTEX_GEMINI_FLASH_IMAGE_CONCURRENCY ?? 3')
   })
 })

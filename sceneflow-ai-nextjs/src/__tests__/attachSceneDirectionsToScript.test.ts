@@ -134,7 +134,7 @@ describe('script inception direction wiring', () => {
     expect(source).toContain('await project.update({')
   })
 
-  it('scene-direction pass attaches, then backfills beat direction, at concurrency 4', () => {
+  it('scene-direction pass attaches, then backfills beat direction, at concurrency 6', () => {
     const source = readSource('src/app/api/vision/attach-scene-directions/route.ts')
     const attachIdx = source.indexOf('await attachSceneDirectionsToScript')
     const migrateIdx = source.indexOf('migrateProjectBeatDirection(metadata)')
@@ -144,7 +144,7 @@ describe('script inception direction wiring', () => {
     expect(setContextIdx).toBeGreaterThan(migrateIdx)
     expect(source).toContain('SCENE_DIRECTION_CONCURRENCY')
     expect(source).toContain('maxDuration = 600')
-    expect(SCENE_DIRECTION_CONCURRENCY).toBe(4)
+    expect(SCENE_DIRECTION_CONCURRENCY).toBe(6)
   })
 
   it('generate-script v1 also attaches directions at inception', () => {

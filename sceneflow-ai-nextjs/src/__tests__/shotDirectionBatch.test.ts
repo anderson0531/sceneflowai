@@ -29,14 +29,14 @@ function beat(beatId: string, sequenceIndex: number, overrides: Partial<SceneBea
 }
 
 describe('shot direction batches', () => {
-  it('uses single-shot focus (chunkSize = 1) and 5 concurrent shot optimizations by default', () => {
+  it('uses single-shot focus (chunkSize = 1) and 8 concurrent shot optimizations by default', () => {
     const previous = process.env.SHOT_DIRECTION_TEXT_CONCURRENCY
     delete process.env.SHOT_DIRECTION_TEXT_CONCURRENCY
     try {
       expect(SHOT_DIRECTION_BEAT_CHUNK).toBe(1)
-      expect(DEFAULT_SHOT_DIRECTION_TEXT_CONCURRENCY).toBe(5)
+      expect(DEFAULT_SHOT_DIRECTION_TEXT_CONCURRENCY).toBe(8)
       expect(DEFAULT_SHOT_DIRECTION_TEXT_CONCURRENCY).toBeGreaterThan(2)
-      expect(getShotDirectionTextConcurrency()).toBe(5)
+      expect(getShotDirectionTextConcurrency()).toBe(8)
       process.env.SHOT_DIRECTION_TEXT_CONCURRENCY = '6'
       expect(getShotDirectionTextConcurrency()).toBe(6)
     } finally {

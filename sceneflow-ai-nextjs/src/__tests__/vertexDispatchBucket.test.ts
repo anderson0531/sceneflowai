@@ -114,12 +114,12 @@ describe('acquireVertexDispatchSlot', () => {
     vi.restoreAllMocks()
   })
 
-  it('defaults to 500ms for images and 1500ms for video, and 0 disables the lane', () => {
+  it('defaults to 250ms for images and 500ms for video, and 0 disables the lane', () => {
     delete process.env.VERTEX_IMAGE_DISPATCH_INTERVAL_MS
     delete process.env.VERTEX_VIDEO_DISPATCH_INTERVAL_MS
     delete process.env.VERTEX_DISPATCH_MAX_WAIT_MS
-    expect(getVertexDispatchIntervalMs('image')).toBe(500)
-    expect(getVertexDispatchIntervalMs('video')).toBe(1_500)
+    expect(getVertexDispatchIntervalMs('image')).toBe(250)
+    expect(getVertexDispatchIntervalMs('video')).toBe(500)
     expect(getVertexDispatchMaxWaitMs()).toBe(20_000)
 
     process.env.VERTEX_IMAGE_DISPATCH_INTERVAL_MS = '0'
@@ -362,6 +362,7 @@ describe('acquireImageGenerationLease', () => {
   })
 
   it('lets the first completion start one still and the second completion start one more', async () => {
+    process.env.VERTEX_IMAGE_MAX_CONCURRENCY = '2'
     const first = await acquireImageGenerationLease({ maxWaitMs: 20_000 })
     const secondPromise = acquireImageGenerationLease({ maxWaitMs: 20_000 })
     await vi.advanceTimersByTimeAsync(1_000)
@@ -458,6 +459,7 @@ describe('acquireImageGenerationLease', () => {
 
     delete process.env.KV_REST_API_URL
     delete process.env.KV_REST_API_TOKEN
+    process.env.VERTEX_IMAGE_MAX_CONCURRENCY = '2'
 
     const first = await acquireImageGenerationLease({ maxWaitMs: 5_000 })
     const secondPromise = acquireImageGenerationLease({ maxWaitMs: 5_000 })
@@ -511,33 +513,33 @@ describe('acquireImageGenerationLease', () => {
     await release()
   })
 
-  it('progressively scales spacing for later runs in a batch sequence (5th+ dispatch in 60s window)', async () => {
+  it('progressively scales spacing for later runs in a batch sequence (13th+ dispatch in 60s window)', async () => {
     process.env.VERTEX_IMAGE_DISPATCH_INTERVAL_MS = '500'
     resetVertexDispatchBucketForTests()
 
-    for (let i = 0; i < 4; i++) {
+    for (let i = 0; i < 12; i++) {
       const release = await acquireImageGenerationLease({ maxWaitMs: 20_000 })
       await release()
       await vi.advanceTimersByTimeAsync(500)
     }
 
-    const beforeFifth = Date.now()
-    const fifthRelease = await acquireImageGenerationLease({ maxWaitMs: 20_000 })
-    await fifthRelease()
+    const beforeNext = Date.now()
+    const thirteenthRelease = await acquireImageGenerationLease({ maxWaitMs: 20_000 })
+    await thirteenthRelease()
 
-    // 5th dispatch pushed nextAt by scaled interval (750ms instead of 500ms), so 6th dispatch waits 750ms
-    let sixthResolved = false
-    const sixthPromise = acquireImageGenerationLease({ maxWaitMs: 20_000 }).then((r) => {
-      sixthResolved = true
+    // 13th dispatch pushed nextAt by scaled interval (750ms instead of 500ms), so 14th dispatch waits 750ms
+    let fourteenthResolved = false
+    const fourteenthPromise = acquireImageGenerationLease({ maxWaitMs: 20_000 }).then((r) => {
+      fourteenthResolved = true
       return r
     })
     await vi.advanceTimersByTimeAsync(500)
-    expect(sixthResolved).toBe(false)
+    expect(fourteenthResolved).toBe(false)
     await vi.advanceTimersByTimeAsync(250)
-    const sixthRelease = await sixthPromise
-    expect(sixthResolved).toBe(true)
-    expect(Date.now() - beforeFifth).toBe(750)
-    await sixthRelease()
+    const fourteenthRelease = await fourteenthPromise
+    expect(fourteenthResolved).toBe(true)
+    expect(Date.now() - beforeNext).toBe(750)
+    await fourteenthRelease()
   })
 
   it('tracks rolling-window tokens and paces outbound Vertex fetches that converge after reference download', async () => {

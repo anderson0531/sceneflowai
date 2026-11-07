@@ -440,8 +440,16 @@ describe('resolveReferenceExpressWindow', () => {
 })
 
 describe('runReferenceExpressStep concurrency', () => {
+  const prevConcurrency = process.env.REFERENCE_EXPRESS_CONCURRENCY
+
   beforeEach(() => {
+    process.env.REFERENCE_EXPRESS_CONCURRENCY = '2'
     row.payload = { items: WIDE_ITEMS, itemCount: WIDE_ITEMS.length }
+  })
+
+  afterEach(() => {
+    if (prevConcurrency === undefined) delete process.env.REFERENCE_EXPRESS_CONCURRENCY
+    else process.env.REFERENCE_EXPRESS_CONCURRENCY = prevConcurrency
   })
 
   it('draws the location and prop tail together but never alongside cast', async () => {
@@ -450,7 +458,7 @@ describe('runReferenceExpressStep concurrency', () => {
     expect(await runReferenceExpressStep('job-1')).toEqual({ done: false, cursor: 1 })
     expect(mockRunItem.mock.calls.map((call) => call[0]!.item.targetId)).toEqual(['c1'])
 
-    // Default cap is 2, so the three non-cast items take two more steps.
+    // With REFERENCE_EXPRESS_CONCURRENCY=2, the three non-cast items take two more steps.
     expect(await runReferenceExpressStep('job-1')).toEqual({ done: false, cursor: 3 })
     expect(mockRunItem.mock.calls.map((call) => call[0]!.item.targetId)).toEqual([
       'c1',

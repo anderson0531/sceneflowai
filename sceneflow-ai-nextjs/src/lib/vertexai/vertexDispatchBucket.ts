@@ -55,13 +55,13 @@ export interface AcquireVertexDispatchOptions {
 }
 
 export const VERTEX_ROLLING_WINDOW_MS = 60_000
-export const DEFAULT_VERTEX_IMAGE_RPM_CAP = 10
-export const DEFAULT_VERTEX_VIDEO_RPM_CAP = 6
-export const DEFAULT_VERTEX_IMAGE_TPM_CAP = 60_000
+export const DEFAULT_VERTEX_IMAGE_RPM_CAP = 60
+export const DEFAULT_VERTEX_VIDEO_RPM_CAP = 30
+export const DEFAULT_VERTEX_IMAGE_TPM_CAP = 300_000
 
 const BURST_ALLOWANCE: Record<VertexDispatchLane, number> = {
-  image: 4,
-  video: 3,
+  image: 12,
+  video: 10,
 }
 
 const RPM_CAP_ENV: Record<VertexDispatchLane, string> = {
@@ -75,8 +75,8 @@ const DEFAULT_RPM_CAP: Record<VertexDispatchLane, number> = {
 }
 
 const DEFAULT_INTERVAL_MS: Record<VertexDispatchLane, number> = {
-  image: 500,
-  video: 1_500,
+  image: 250,
+  video: 500,
 }
 
 const INTERVAL_ENV: Record<VertexDispatchLane, string> = {

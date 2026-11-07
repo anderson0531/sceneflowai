@@ -33,9 +33,9 @@ describe('vertexImageGate', () => {
     delete process.env.VERTEX_IMAGE_MAX_CONCURRENCY
   })
 
-  it('caps concurrent generations at two by default', () => {
-    expect(DEFAULT_VERTEX_IMAGE_MAX_CONCURRENCY).toBe(2)
-    expect(getVertexImageMaxConcurrency()).toBe(2)
+  it('caps concurrent generations at six by default', () => {
+    expect(DEFAULT_VERTEX_IMAGE_MAX_CONCURRENCY).toBe(6)
+    expect(getVertexImageMaxConcurrency()).toBe(6)
   })
 
   it('matches the Express flash image lane so a single run never queues', async () => {

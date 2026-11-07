@@ -11,12 +11,11 @@ import type { ReferenceExpressItem } from './types'
 /**
  * How many location or prop images a single step may draw at once.
  *
- * Two, because the 429 bursts that made this worker serial come from the
+ * Four, because the 429 bursts that made this worker serial come from the
  * identity-reference lane that cast portraits use; a location or a prop is one
- * plain image call. Kept low so the default is barely a change from serial,
- * and raisable via `REFERENCE_EXPRESS_CONCURRENCY` on dedicated quota.
+ * plain image call. Raisable via `REFERENCE_EXPRESS_CONCURRENCY` on dedicated quota.
  */
-export const DEFAULT_REFERENCE_EXPRESS_CONCURRENCY = 2
+export const DEFAULT_REFERENCE_EXPRESS_CONCURRENCY = 4
 
 function isLocationBaseItem(item: Pick<ReferenceExpressItem, 'kind' | 'versionId'>): boolean {
   return item.kind === 'location' && !item.versionId

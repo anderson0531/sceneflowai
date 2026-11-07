@@ -19,9 +19,9 @@ describe('a Reference Express run quotes itself before the click', () => {
   })
 
   /**
-   * The worker draws locations and props two at a time, so the quote counts
-   * windows rather than items. Credits are still per item — running two at once
-   * does not make either of them free.
+   * The worker draws locations and props four at a time, so the quote counts
+   * windows rather than items. Credits are still per item — running four at once
+   * does not make any of them free.
    */
   it('adds up a mixed scope the way the worker will run it', () => {
     const estimate = estimateReferenceExpress([
@@ -29,13 +29,15 @@ describe('a Reference Express run quotes itself before the click', () => {
       { kind: 'location' },
       { kind: 'prop' },
       { kind: 'prop' },
+      { kind: 'prop' },
+      { kind: 'prop' },
     ])
 
-    expect(estimate.itemCount).toBe(4)
+    expect(estimate.itemCount).toBe(6)
     expect(estimate.seconds).toBe(
       SECONDS_PER_ITEM.cast + SECONDS_PER_ITEM.location + SECONDS_PER_ITEM.prop
     )
-    expect(estimate.credits).toBe(CAST_ITEM_CREDITS + IMAGE_CREDIT * 3)
+    expect(estimate.credits).toBe(CAST_ITEM_CREDITS + IMAGE_CREDIT * 5)
   })
 
   it('quotes a serial run when concurrency is turned off', () => {

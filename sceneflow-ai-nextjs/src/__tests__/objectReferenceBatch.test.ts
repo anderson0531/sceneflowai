@@ -144,7 +144,7 @@ describe('a batch of objects generates a few at a time', () => {
     await batch
 
     expect(peak).toBe(OBJECT_BATCH_CONCURRENCY)
-    expect(OBJECT_BATCH_CONCURRENCY).toBe(3)
+    expect(OBJECT_BATCH_CONCURRENCY).toBe(6)
   })
 
   it('generates every object rather than stopping at the first failure', async () => {

@@ -16,14 +16,14 @@ function parsePositiveInt(value: string | undefined, fallback: number): number {
 
 /**
  * Hard cap for Frame Agent stills. The pool pins initial = max to this so
- * up to two stills render concurrently across a 20-30 shot scene.
+ * up to six stills render concurrently across a 20-30 shot scene.
  */
-export const FRAME_AGENT_STILL_CONCURRENCY = 2
+export const FRAME_AGENT_STILL_CONCURRENCY = 6
 
 /** Runtime beat concurrency for Scene Express, aligned with the image lane. */
 export const DEFAULT_SCENE_EXPRESS_BEAT_CONCURRENCY = FRAME_AGENT_STILL_CONCURRENCY
 
-/** Draft beats share the same two-wide cap as pro identity-ref frames. */
+/** Draft beats share the same six-wide cap as pro identity-ref frames. */
 export const DEFAULT_SCENE_EXPRESS_FLASH_BEAT_CONCURRENCY = FRAME_AGENT_STILL_CONCURRENCY
 
 /**
@@ -57,7 +57,7 @@ export function getSceneExpressBeat429CooldownMs(): number {
  * Quiet delay after a shot completes before starting a new shot run, giving
  * Vertex Gemini Image quota buckets time to replenish between shots.
  */
-export const DEFAULT_SCENE_EXPRESS_POST_SHOT_DELAY_MS = 3_000
+export const DEFAULT_SCENE_EXPRESS_POST_SHOT_DELAY_MS = 500
 
 export function getSceneExpressPostShotDelayMs(): number {
   return parseNonNegativeInt(
@@ -67,11 +67,11 @@ export function getSceneExpressPostShotDelayMs(): number {
 }
 
 /**
- * Stagger delay between initial concurrent worker launches at t=0 so two
+ * Stagger delay between initial concurrent worker launches at t=0 so
  * multi-reference Gemini Image calls do not hit the Vertex endpoint on the
  * exact same millisecond.
  */
-export const DEFAULT_SCENE_EXPRESS_INITIAL_STAGGER_MS = 1_500
+export const DEFAULT_SCENE_EXPRESS_INITIAL_STAGGER_MS = 400
 
 export function getSceneExpressInitialStaggerMs(): number {
   return parseNonNegativeInt(

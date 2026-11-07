@@ -53,12 +53,12 @@ describe('getSceneExpressBeatConcurrency', () => {
     else process.env.SCENE_EXPRESS_BEAT_MAX_ATTEMPTS = prevAttempts
   })
 
-  it('defaults to 2 so Frame Agent can run two identity-ref frames', () => {
+  it('defaults to 6 so Frame Agent can run six identity-ref frames', () => {
     delete process.env.SCENE_EXPRESS_BEAT_CONCURRENCY
     delete process.env.VERTEX_GEMINI_FLASH_IMAGE_CONCURRENCY
     delete process.env.EXPRESS_IMAGE_CONCURRENCY
-    expect(FRAME_AGENT_STILL_CONCURRENCY).toBe(2)
-    expect(getSceneExpressBeatConcurrency()).toBe(2)
+    expect(FRAME_AGENT_STILL_CONCURRENCY).toBe(6)
+    expect(getSceneExpressBeatConcurrency()).toBe(6)
   })
 
   it('defaults maxAttempts to 1 so Express fail-fast stamps the frame and continues', () => {
@@ -77,10 +77,10 @@ describe('getSceneExpressBeatConcurrency', () => {
     expect(DEFAULT_SCENE_EXPRESS_BEAT_429_COOLDOWN_MS).toBe(15_000)
   })
 
-  it('defaults post-shot completion delay to 3s', () => {
+  it('defaults post-shot completion delay to 500ms', () => {
     delete process.env.SCENE_EXPRESS_POST_SHOT_DELAY_MS
     expect(getSceneExpressPostShotDelayMs()).toBe(DEFAULT_SCENE_EXPRESS_POST_SHOT_DELAY_MS)
-    expect(DEFAULT_SCENE_EXPRESS_POST_SHOT_DELAY_MS).toBe(3_000)
+    expect(DEFAULT_SCENE_EXPRESS_POST_SHOT_DELAY_MS).toBe(500)
   })
 })
 
@@ -807,7 +807,7 @@ describe('runAdaptiveBeatPool abort signal', () => {
   it('staggers initial concurrent worker launches when initialLaunchStaggerMs is set', async () => {
     delete process.env.SCENE_EXPRESS_INITIAL_STAGGER_MS
     expect(getSceneExpressInitialStaggerMs()).toBe(DEFAULT_SCENE_EXPRESS_INITIAL_STAGGER_MS)
-    expect(DEFAULT_SCENE_EXPRESS_INITIAL_STAGGER_MS).toBe(1_500)
+    expect(DEFAULT_SCENE_EXPRESS_INITIAL_STAGGER_MS).toBe(400)
 
     vi.useFakeTimers()
     try {

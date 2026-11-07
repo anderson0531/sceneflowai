@@ -6,7 +6,7 @@ function parsePositiveInt(value: string | undefined, fallback: number): number {
 }
 
 export function getExpressVeoSfxConcurrency(): number {
-  return parsePositiveInt(process.env.EXPRESS_VEO_SFX_CONCURRENCY, 4)
+  return parsePositiveInt(process.env.EXPRESS_VEO_SFX_CONCURRENCY, 6)
 }
 
 export interface VeoSfxTrafficCopOptions {
