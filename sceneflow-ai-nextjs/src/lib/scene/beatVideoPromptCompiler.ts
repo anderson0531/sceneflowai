@@ -14,7 +14,11 @@
  */
 
 import { getArtStyleNegativeTerms, getArtStyleVideoPromptSuffix } from '@/lib/vision/artStyle'
-import { formatPerformanceClause, parsePerformanceCue } from '@/lib/scene/performanceCues'
+import {
+  formatPerformanceClause,
+  parsePerformanceCue,
+  resolveBeatDirectedEmotion,
+} from '@/lib/scene/performanceCues'
 import {
   normalizeSingleCastShotType,
   sanitizeSingleCastListenerPhrasing,
@@ -194,6 +198,80 @@ function isSingleCastBeat(beat: SceneBeat): boolean {
   return beat.kind === 'dialogue' && Boolean(beat.character?.trim())
 }
 
+export interface ResolvedBeatClipDirection {
+  /** Opening visual state at t=0s before the 10s clip action unfolds. */
+  startFrame?: string
+  /** Temporal motion and action progression across the 10s clip (0s → 10s). */
+  clipAction?: string
+  /** Directed character performance emotion or atmospheric/cinematic mood & pacing arc. */
+  emotion?: string
+  /** Terminal settled visual state at t=10s ("End on:") after the clip's action completes. */
+  endFrame?: string
+}
+
+/**
+ * Resolve explicit or derived 10s Clip direction facets (`startFrame`, `clipAction`,
+ * `emotion`, `endFrame`) for a beat so both the Shot Director UI and the video
+ * prompt compiler have complete 10s clip guidance.
+ */
+export function resolveBeatClipDirection(
+  beat: SceneBeat,
+  sceneDirection?: DetailedSceneDirection | null,
+  options?: { musicCue?: SceneMusicCue }
+): ResolvedBeatClipDirection {
+  const direction = beat.beatDirection
+  const singleCast = isSingleCastBeat(beat)
+  const cleanSingle = (value?: string): string | undefined => {
+    const trimmed = value?.trim()
+    if (!trimmed) return undefined
+    return singleCast ? sanitizeSingleCastListenerPhrasing(trimmed) || undefined : trimmed
+  }
+
+  let startFrame = cleanSingle(direction?.startFrame)
+  if (!startFrame) {
+    const actionText = beat.kind === 'action' ? beat.actionDescription?.trim() : undefined
+    const sentences = actionText
+      ? actionText.split(/(?<=[.!?])\s+/).map((s) => s.trim()).filter(Boolean)
+      : []
+    const frozen = direction?.frozenMoment?.trim()
+    if (
+      sentences.length > 1 &&
+      frozen &&
+      sentences[0].toLowerCase() !== frozen.toLowerCase()
+    ) {
+      startFrame = cleanSingle(sentences[0])
+    } else {
+      startFrame = cleanSingle(frozen)
+    }
+  }
+
+  const clipAction = cleanSingle(
+    direction?.clipAction ||
+      (beat.kind === 'action'
+        ? beat.actionDescription
+        : beat.actionDescription || direction?.blocking)
+  )
+
+  const emotion =
+    direction?.emotion?.trim() ||
+    resolveBeatDirectedEmotion({
+      beatLine: beat.line,
+      beatAction: beat.actionDescription,
+    }) ||
+    options?.musicCue?.intent?.trim() ||
+    sceneDirection?.talent?.emotionalBeat?.trim() ||
+    undefined
+
+  const endFrame = cleanSingle(direction?.endFrame || direction?.frozenMoment)
+
+  return {
+    ...(startFrame ? { startFrame } : {}),
+    ...(clipAction ? { clipAction } : {}),
+    ...(emotion ? { emotion } : {}),
+    ...(endFrame ? { endFrame } : {}),
+  }
+}
+
 /** Shot, movement, blocking, and the rest, as clauses of one direction. */
 function directionClauses(beat: SceneBeat, existing: string): string[] {
   const direction = beat.beatDirection
@@ -202,6 +280,8 @@ function directionClauses(beat: SceneBeat, existing: string): string[] {
   const cleanSingle = (value?: string): string | undefined =>
     singleCast ? sanitizeSingleCastListenerPhrasing(value) || undefined : value
   const clauses: string[] = []
+  pushClause(clauses, existing, 'Start frame', cleanSingle(direction.startFrame))
+  pushClause(clauses, existing, 'Action', cleanSingle(direction.clipAction))
   pushClause(clauses, existing, 'Coverage', direction.coveragePurpose)
   pushClause(clauses, existing, 'Lens', direction.lensEnergy)
   pushClause(clauses, existing, 'Space', cleanSingle(direction.spatialRelationship))
@@ -215,7 +295,7 @@ function directionClauses(beat: SceneBeat, existing: string): string[] {
   const props = direction.keyProps?.map((name) => name.trim()).filter(Boolean) ?? []
   if (props.length > 0) pushClause(clauses, existing, 'Props', props.join(', '))
   pushClause(clauses, existing, 'Lighting', direction.lightingAccent)
-  pushClause(clauses, existing, 'End on', cleanSingle(direction.frozenMoment))
+  pushClause(clauses, existing, 'End on', cleanSingle(direction.endFrame || direction.frozenMoment))
   pushClause(clauses, existing, 'Sound', direction.audioCue)
   return clauses
 }
@@ -225,13 +305,28 @@ function spokenLineOf(beat: SceneBeat, excerpt?: string): string {
   return parsePerformanceCue(raw).spokenText.replace(/"/g, "'").trim()
 }
 
+function summarizeStatedActionForGuardrail(
+  statedAction: string,
+  coreText?: string
+): string {
+  const trimmed = statedAction.trim()
+  if (!trimmed) return ''
+  if (coreText && tokenAlreadyInPrompt(trimmed, coreText) && trimmed.length > 100) {
+    const firstSentence = trimmed.split(/(?<=[.!?])\s+/)[0]?.trim()
+    if (firstSentence && firstSentence.length >= 16) {
+      return firstSentence
+    }
+  }
+  return trimmed
+}
+
 /**
  * Who may appear, which objects exist, and whether anyone speaks.
  * Built only from fields this beat actually has.
  */
 export function beatVideoFidelityClose(
   beat: SceneBeat,
-  options?: { spokenLine?: string }
+  options?: { spokenLine?: string; coreText?: string }
 ): string {
   const parts: string[] = []
   const cast = beat.beatDirection?.castInFrame
@@ -259,14 +354,17 @@ export function beatVideoFidelityClose(
 
   const rawStatedAction = (
     beat.kind === 'action'
-      ? beat.actionDescription
+      ? beat.beatDirection?.clipAction || beat.actionDescription
       : beat.beatDirection?.blocking || beat.actionDescription
   )?.trim()
   const statedAction = singleCast
     ? sanitizeSingleCastListenerPhrasing(rawStatedAction)
     : rawStatedAction
   if (statedAction) {
-    parts.push(`The only action is: ${statedAction.replace(/\.+$/, '')}`)
+    const guardrailAction = summarizeStatedActionForGuardrail(statedAction, options?.coreText)
+    if (guardrailAction) {
+      parts.push(`The only action is: ${guardrailAction.replace(/\.+$/, '')}`)
+    }
   }
 
   if (beat.kind === 'dialogue' || beat.kind === 'narration') {
@@ -299,7 +397,7 @@ function videoNegatives(beat: SceneBeat, styleNegative: string): string {
 
 function leadForBeat(beat: SceneBeat, options?: CompileBeatVideoPromptOptions): string {
   if (beat.kind === 'action') {
-    return beat.actionDescription?.trim() || 'Scene action'
+    return beat.beatDirection?.clipAction?.trim() || beat.actionDescription?.trim() || 'Scene action'
   }
   if (beat.kind === 'narration') {
     const parsed = parsePerformanceCue(options?.excerpt ?? beat.line ?? '')
@@ -349,7 +447,10 @@ function leadForBeat(beat: SceneBeat, options?: CompileBeatVideoPromptOptions): 
   return `${speakerAlias} speaks naturally: "${cleanLine}".${delivery}${performance}`
 }
 
-function incomingContinuityClause(options?: CompileBeatVideoPromptOptions): string {
+function incomingContinuityClause(
+  options?: CompileBeatVideoPromptOptions,
+  currentBeat?: SceneBeat
+): string {
   if (options?.continuesSameLine) {
     return 'Continues the same spoken line and eyeline from the previous shot without resetting blocking'
   }
@@ -359,14 +460,23 @@ function incomingContinuityClause(options?: CompileBeatVideoPromptOptions): stri
   const parts: string[] = []
   const prevShot = prev.beatDirection?.shotType?.trim()
   if (prevShot) parts.push(`Incoming continuity from ${prevShot}`)
+  const currentCast = currentBeat?.beatDirection?.castInFrame
   const prevCast = Array.isArray(prev.beatDirection?.castInFrame)
     ? prev.beatDirection.castInFrame.map((name) => name.trim()).filter(Boolean)
     : []
-  if (prevCast.length) parts.push(`same people already in frame: ${prevCast.join(', ')}`)
+  const sharedCast = Array.isArray(currentCast)
+    ? prevCast.filter((name) =>
+        currentCast.some((curr) => curr.trim().toLowerCase() === name.toLowerCase())
+      )
+    : prevCast
+  if (sharedCast.length) parts.push(`same people already in frame: ${sharedCast.join(', ')}`)
+  const currentProps = currentBeat?.beatDirection?.keyProps
   const prevProps = Array.isArray(prev.beatDirection?.keyProps)
     ? prev.beatDirection.keyProps.map((name) => name.trim()).filter(Boolean)
     : []
-  if (prevProps.length) parts.push(`props remain: ${prevProps.join(', ')}`)
+  const sharedProps =
+    Array.isArray(currentProps) && currentProps.length === 0 ? [] : prevProps
+  if (sharedProps.length) parts.push(`props remain: ${sharedProps.join(', ')}`)
   if (ledgerClause) parts.push(ledgerClause)
   return parts.join('. ')
 }
@@ -394,7 +504,10 @@ function finishVideoPrompt(args: {
   if (args.continuity && !tokenAlreadyInPrompt(args.continuity, core)) {
     core = normalizePromptJoin(core, args.continuity)
   }
-  const fidelity = beatVideoFidelityClose(args.beat, { spokenLine: args.spokenLine })
+  const fidelity = beatVideoFidelityClose(args.beat, {
+    spokenLine: args.spokenLine,
+    coreText: core,
+  })
   if (fidelity && !tokenAlreadyInPrompt(fidelity, core)) {
     core = normalizePromptJoin(core, fidelity)
   }
@@ -402,7 +515,13 @@ function finishVideoPrompt(args: {
   if (performance && !/performance:/i.test(core)) {
     core = normalizePromptJoin(core, performance)
   }
-  const style = args.styleSuffix.trim()
+  const isWideLandscapeShot = /\b(?:wide|establish|aerial|long\s+shot|master)\b/i.test(
+    args.beat.beatDirection?.shotType || ''
+  )
+  const rawStyle = args.styleSuffix.trim()
+  const style = isWideLandscapeShot
+    ? rawStyle.replace(/\bshallow depth of field\b/gi, 'deep depth of field')
+    : rawStyle
   const prompt =
     style && !tokenAlreadyInPrompt(style, core) ? normalizePromptJoin(core, style) : core
   return {
@@ -439,7 +558,7 @@ export function compileBeatVideoPrompt(
     styleSuffix,
     styleNegative,
     spokenLine,
-    continuity: incomingContinuityClause(options),
+    continuity: incomingContinuityClause(options, beat),
   })
 }
 
@@ -453,6 +572,89 @@ const DIRECTION_OWNED_SOURCES = new Set(['user', 'planner', 'director'])
 export function beatDirectionOwnsVideoPrompt(beat: SceneBeat): boolean {
   const source = beat.beatDirection?.generatedBy
   return !!source && DIRECTION_OWNED_SOURCES.has(source)
+}
+
+/**
+ * Detect when a cached compiler-generated `beatDirection.videoPrompt` is out of sync
+ * with the beat's current Shot Director / 10s Clip direction fields.
+ * Genuine manual overrides (which lack compiler fidelity guardrails) are preserved.
+ */
+export function isStaleSavedVideoPrompt(
+  beat: SceneBeat,
+  stored: string,
+  spokenLine?: string
+): boolean {
+  const trimmed = stored.trim()
+  if (!trimmed) return true
+
+  if (
+    beat.kind === 'narration' &&
+    Boolean(spokenLine?.trim()) &&
+    (/no spoken dialogue/i.test(trimmed) ||
+      !trimmed.includes(spokenLine!.trim().slice(0, Math.min(24, spokenLine!.trim().length))))
+  ) {
+    return true
+  }
+
+  const d = beat.beatDirection
+  if (
+    Array.isArray(d?.castInFrame) &&
+    d.castInFrame.length === 0 &&
+    /same people already in frame:/i.test(trimmed)
+  ) {
+    return true
+  }
+
+  const isCompilerGenerated =
+    /\b(?:No spoken dialogue\.|The only spoken line is:|The only action is:|End on:)\b/i.test(
+      trimmed
+    )
+  if (!isCompilerGenerated) {
+    return false
+  }
+
+  if (
+    /\b(?:wide|establish|aerial|long\s+shot|master)\b/i.test(d?.shotType || '') &&
+    /\bshallow depth of field\b/i.test(trimmed)
+  ) {
+    return true
+  }
+
+  if (d?.startFrame?.trim() && !tokenAlreadyInPrompt(d.startFrame.slice(0, 48), trimmed)) {
+    return true
+  }
+  if (d?.clipAction?.trim() && !tokenAlreadyInPrompt(d.clipAction.slice(0, 48), trimmed)) {
+    return true
+  }
+  if (d?.endFrame?.trim() && !tokenAlreadyInPrompt(d.endFrame.slice(0, 48), trimmed)) {
+    return true
+  }
+  if (
+    !d?.endFrame?.trim() &&
+    d?.frozenMoment?.trim() &&
+    !tokenAlreadyInPrompt(d.frozenMoment.slice(0, 48), trimmed)
+  ) {
+    return true
+  }
+  if (
+    beat.kind !== 'dialogue' &&
+    !d?.clipAction?.trim() &&
+    beat.actionDescription?.trim() &&
+    !tokenAlreadyInPrompt(beat.actionDescription.slice(0, 48), trimmed)
+  ) {
+    return true
+  }
+  if (d?.cameraMovement?.trim() && !tokenAlreadyInPrompt(d.cameraMovement, trimmed)) {
+    return true
+  }
+  if (d?.blocking?.trim() && !tokenAlreadyInPrompt(d.blocking.slice(0, 48), trimmed)) {
+    return true
+  }
+  if (d?.emotion?.trim() && !tokenAlreadyInPrompt(d.emotion, trimmed)) {
+    return true
+  }
+
+  return false
 }
 
 /**
@@ -482,16 +684,17 @@ function compileOwnedBeatVideoPrompt(
     styleSuffix,
     styleNegative,
     spokenLine,
-    continuity: incomingContinuityClause(options),
+    continuity: incomingContinuityClause(options, beat),
   })
 }
 
 /**
  * Clip prompt from the current beat.
  *
- * A saved `beatDirection.videoPrompt` is the clip text. Otherwise user,
- * planner, and director writes compile one motion direction from the beat.
- * A scene-bundle videoPrompt is the core only when this beat has no such write.
+ * A saved `beatDirection.videoPrompt` is the clip text unless it is a stale
+ * auto-compiled prompt. Otherwise user, planner, and director writes compile
+ * one motion direction from the beat. A scene-bundle videoPrompt is the core
+ * only when this beat has no such write.
  */
 export function compileBeatVideoPromptFromDirection(
   beat: SceneBeat,
@@ -506,14 +709,8 @@ export function compileBeatVideoPromptFromDirection(
     ? spokenLineOf(beat, options?.excerpt)
     : undefined
   const stored = beat.beatDirection?.videoPrompt?.trim()
-  const storedOmitsNarrationLine =
-    beat.kind === 'narration' &&
-    Boolean(spokenLine?.trim()) &&
-    Boolean(stored) &&
-    (/no spoken dialogue/i.test(stored!) ||
-      !stored!.includes(spokenLine!.trim().slice(0, Math.min(24, spokenLine!.trim().length))))
-  if (stored && !storedOmitsNarrationLine) {
-    const continuity = incomingContinuityClause(options)
+  if (stored && !isStaleSavedVideoPrompt(beat, stored, spokenLine)) {
+    const continuity = incomingContinuityClause(options, beat)
     let prompt =
       continuity && !tokenAlreadyInPrompt(continuity, stored)
         ? normalizePromptJoin(stored, continuity)
@@ -558,7 +755,7 @@ export function compileBeatVideoPromptFromDirection(
       styleSuffix,
       styleNegative,
       spokenLine,
-      continuity: incomingContinuityClause(options),
+      continuity: incomingContinuityClause(options, beat),
     })
   }
 
@@ -574,6 +771,6 @@ export function compileBeatVideoPromptFromDirection(
     styleSuffix,
     styleNegative,
     spokenLine,
-    continuity: incomingContinuityClause(options),
+    continuity: incomingContinuityClause(options, beat),
   })
 }

@@ -5,7 +5,10 @@ import {
   formatPromoSourceLongLabel,
   type PromoSceneBeat,
 } from '@/lib/publish/buildPromoScene'
-import { compileBeatVideoPromptFromDirection } from '@/lib/scene/beatVideoPromptCompiler'
+import {
+  compileBeatVideoPromptFromDirection,
+  isStaleSavedVideoPrompt,
+} from '@/lib/scene/beatVideoPromptCompiler'
 import { segmentNeedsLanguageClip } from '@/lib/scene/languageClipPrompt'
 import { getSceneBeats, isBeatExcluded } from '@/lib/script/beatMigration'
 import { parsePersistedMusicCues, resolveBeatMusicCue } from '@/lib/script/sceneMusicCues'
@@ -127,11 +130,12 @@ export function buildBeatVideoClips({
       ? narrationLine.slice(0, Math.min(20, narrationLine.length))
       : undefined
     const resolvedPrompt =
-      narrationSnippet &&
       !segment?.userEditedPrompt &&
-      (/no spoken dialogue/i.test(rawCandidatePrompt) ||
-        /^medium shot,\s*promo trailer voice-over/i.test(rawCandidatePrompt) ||
-        !rawCandidatePrompt.includes(narrationSnippet))
+      ((narrationSnippet &&
+        (/no spoken dialogue/i.test(rawCandidatePrompt) ||
+          /^medium shot,\s*promo trailer voice-over/i.test(rawCandidatePrompt) ||
+          !rawCandidatePrompt.includes(narrationSnippet))) ||
+        isStaleSavedVideoPrompt(beat, rawCandidatePrompt, narrationLine || beat.line?.trim()))
         ? compiledFromDirection
         : rawCandidatePrompt
     const promoBeat = beat as PromoSceneBeat

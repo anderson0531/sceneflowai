@@ -224,6 +224,21 @@ export function normalizeBeatDirection(raw: unknown): BeatDirection | undefined 
   )
   if (frozenMoment) direction.frozenMoment = frozenMoment
 
+  const startFrame = trimmedString(
+    b.startFrame ?? b.start_frame ?? b.openingFrame
+  )
+  if (startFrame) direction.startFrame = startFrame
+
+  const clipAction = trimmedString(
+    b.clipAction ?? b.clip_action ?? b.motionAction
+  )
+  if (clipAction) direction.clipAction = clipAction
+
+  const endFrame = trimmedString(
+    b.endFrame ?? b.end_frame ?? b.closingFrame ?? b.endOn
+  )
+  if (endFrame) direction.endFrame = endFrame
+
   const audioCue = trimmedString(b.audioCue ?? b.audio_cue ?? b.sfx)
   if (audioCue) direction.audioCue = audioCue
 

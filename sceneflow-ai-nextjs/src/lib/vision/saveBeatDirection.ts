@@ -12,6 +12,7 @@ import {
   syncSceneAudioDirectionForBeat,
 } from '@/lib/audio/syncBeatAudioDirection'
 import { refreshSceneSegmentVideoPrompts } from '@/lib/scene/syncBeatVideoPrompt'
+import { compileBeatVideoPromptFromDirection } from '@/lib/scene/beatVideoPromptCompiler'
 import { beatStillDirectionFingerprint } from '@/lib/script/beatDirectionFingerprint'
 import { restampPreVisHashIfScriptCurrent } from '@/lib/storyboard/preVisSync'
 import { syncBeatStillPromptToDirection } from '@/lib/storyboard/syncBeatStillPrompt'
@@ -428,6 +429,9 @@ export function directionFromDirectorPatch(
     'shotType',
     'cameraAngle',
     'frozenMoment',
+    'startFrame',
+    'clipAction',
+    'endFrame',
     'blocking',
     'gaze',
     'emotion',
@@ -442,6 +446,9 @@ export function directionFromDirectorPatch(
   }
   if (!next.frozenMoment?.trim() && patch.actionFraming?.trim()) {
     next.frozenMoment = patch.actionFraming.trim()
+  }
+  if (!next.frozenMoment?.trim() && next.startFrame?.trim()) {
+    next.frozenMoment = next.startFrame.trim()
   }
   if (Array.isArray(patch.castInFrame)) next.castInFrame = patch.castInFrame
   if (patch.keyProps && patch.keyProps.length > 0) next.keyProps = patch.keyProps
@@ -577,7 +584,14 @@ function applyBeatDirectionToOneScene(args: {
     const audioDirection =
       edited.beatDirection.audioDirection?.trim() || composeBeatAudioDirection(edited).trim()
     const framePrompt = edited.storyboardImagePrompt?.trim()
-    const videoPrompt = segment?.videoPrompt?.trim()
+    const editedIdx = beats.findIndex((b) => b.beatId === beatId)
+    const previousBeat = editedIdx > 0 ? beats[editedIdx - 1] : undefined
+    const videoPrompt =
+      segment?.videoPrompt?.trim() ||
+      compileBeatVideoPromptFromDirection(edited, withBeats.sceneDirection, {
+        previousBeat,
+        artStyleId: promptComposition?.artStyleAnchor,
+      }).prompt.trim()
     if (audioDirection || framePrompt || videoPrompt) {
       const storedBeats = getSceneBeats(withBeats).map((entry) => {
         if (entry.beatId !== beatId || !entry.beatDirection) return entry

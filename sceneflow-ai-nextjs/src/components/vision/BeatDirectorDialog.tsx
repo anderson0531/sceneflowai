@@ -97,7 +97,10 @@ function previewLines(patch: StillDirectorPatch): Array<{ label: string; value: 
   const add = (label: string, value?: string) => {
     if (value?.trim()) rows.push({ label, value: value.trim() })
   }
-  add('Frozen moment', patch.frozenMoment || patch.actionFraming)
+  add('Frozen moment', patch.frozenMoment || patch.startFrame || patch.actionFraming)
+  add('Start frame', patch.startFrame)
+  add('Clip action (10s)', patch.clipAction)
+  add('End frame', patch.endFrame)
   add('Shot', patch.shotType)
   add('Angle', patch.cameraAngle)
   add('Movement', patch.cameraMovement)

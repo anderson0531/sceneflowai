@@ -745,8 +745,13 @@ export function DirectorConsoleRoot({
       .map((entry) =>
         [
           entry.beatId,
+          entry.actionDescription ?? '',
+          entry.line ?? '',
           entry.beatDirection?.generatedBy ?? '',
           entry.beatDirection?.updatedAt ?? '',
+          entry.beatDirection?.startFrame ?? '',
+          entry.beatDirection?.clipAction ?? '',
+          entry.beatDirection?.endFrame ?? '',
           entry.beatDirection?.frozenMoment ?? '',
           entry.beatDirection?.blocking ?? '',
           entry.beatDirection?.shotType ?? '',

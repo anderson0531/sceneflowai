@@ -14,7 +14,10 @@ import type {
   SceneBeat,
 } from '@/lib/script/segmentTypes'
 import type { StillDirectorPatch } from '@/lib/intelligence/beat-still-director-fallback'
-import { compileBeatVideoPromptFromDirection } from '@/lib/scene/beatVideoPromptCompiler'
+import {
+  compileBeatVideoPromptFromDirection,
+  resolveBeatClipDirection,
+} from '@/lib/scene/beatVideoPromptCompiler'
 import { parsePersistedMusicCues, resolveBeatMusicCue } from '@/lib/script/sceneMusicCues'
 import {
   composeBeatActionFraming,
@@ -119,6 +122,9 @@ const TRANSITION_LABEL: Record<BeatDirectionTransition, string> = {
 
 const DIRECTION_TILE_ACCENT: Record<string, { border: string; label: string }> = {
   Still: { border: 'border-cyan-500/50', label: 'text-cyan-300' },
+  'Start Frame': { border: 'border-cyan-500/50', label: 'text-cyan-300' },
+  'Clip Action (10s)': { border: 'border-sky-500/50', label: 'text-sky-300' },
+  'End Frame': { border: 'border-indigo-500/50', label: 'text-indigo-300' },
   Camera: { border: 'border-sky-500/50', label: 'text-sky-300' },
   Cast: { border: 'border-violet-500/50', label: 'text-violet-300' },
   Blocking: { border: 'border-amber-500/50', label: 'text-amber-300' },
@@ -267,20 +273,34 @@ export function BeatDirectionEditor({
     )
   }, [beat, direction?.framePrompt, sceneIdx, promptComposition])
 
-  const videoPreview = useMemo(() => {
-    if (direction?.videoPrompt?.trim()) return direction.videoPrompt.trim()
+  const { previousBeat, beatMusicCue } = useMemo(() => {
     const beats = getSceneBeats(sceneRecord ?? {})
     const index = beats.findIndex((entry) => entry.beatId === beat.beatId)
     const cue = resolveBeatMusicCue(
       parsePersistedMusicCues(sceneRecord?.sceneMusicCues, beats),
       index
     )
-    const stripped: SceneBeat = { ...beat, beatDirection: stripPromptOverrides(beat.beatDirection) }
-    return compileBeatVideoPromptFromDirection(stripped, sceneDirection, {
+    return {
+      previousBeat: index > 0 ? beats[index - 1] : undefined,
+      beatMusicCue: cue,
+    }
+  }, [sceneRecord, beat.beatId])
+
+  const clipDirection = useMemo(
+    () =>
+      resolveBeatClipDirection(beat, sceneDirection, {
+        ...(beatMusicCue ? { musicCue: beatMusicCue } : {}),
+      }),
+    [beat, sceneDirection, beatMusicCue]
+  )
+
+  const videoPreview = useMemo(() => {
+    return compileBeatVideoPromptFromDirection(beat, sceneDirection, {
+      previousBeat,
       artStyleId: promptComposition?.artStyleAnchor,
-      ...(cue ? { musicCue: cue } : {}),
+      ...(beatMusicCue ? { musicCue: beatMusicCue } : {}),
     }).prompt
-  }, [beat, direction?.videoPrompt, sceneRecord, sceneDirection, promptComposition?.artStyleAnchor])
+  }, [beat, previousBeat, sceneDirection, promptComposition?.artStyleAnchor, beatMusicCue])
 
   const resolvedSelection = useMemo(
     () =>
@@ -467,6 +487,9 @@ export function BeatDirectionEditor({
   const hasStructuredDirection =
     cameraChips.length > 0 ||
     !!direction?.frozenMoment?.trim() ||
+    !!direction?.startFrame?.trim() ||
+    !!direction?.clipAction?.trim() ||
+    !!direction?.endFrame?.trim() ||
     !!direction?.blocking?.trim() ||
     !!direction?.emotion?.trim() ||
     !!direction?.gaze?.trim() ||
@@ -582,7 +605,21 @@ export function BeatDirectionEditor({
           ) : null}
 
           <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3">
-            <DirectionTile label="Still" value={direction?.frozenMoment} />
+            <DirectionTile label="Still" value={direction?.frozenMoment || direction?.startFrame} />
+            <DirectionTile
+              label="Start Frame"
+              value={
+                direction?.startFrame ||
+                (hasStructuredDirection ? clipDirection.startFrame : undefined)
+              }
+            />
+            <DirectionTile
+              label="Clip Action (10s)"
+              value={
+                direction?.clipAction ||
+                (hasStructuredDirection ? clipDirection.clipAction : undefined)
+              }
+            />
             <DirectionTile label="Camera" value={cameraChips.join(' • ')} />
             <DirectionTile
               label="Cast"
@@ -597,7 +634,18 @@ export function BeatDirectionEditor({
               }
             />
             <DirectionTile label="Blocking" value={direction?.blocking} />
-            <DirectionTile label="Emotion" value={direction?.emotion} />
+            <DirectionTile
+              label="Emotion"
+              value={
+                direction?.emotion || (hasStructuredDirection ? clipDirection.emotion : undefined)
+              }
+            />
+            <DirectionTile
+              label="End Frame"
+              value={
+                direction?.endFrame || (hasStructuredDirection ? clipDirection.endFrame : undefined)
+              }
+            />
             <DirectionTile label="Gaze" value={direction?.gaze} />
             <DirectionTile label="Lighting" value={direction?.lightingAccent} />
             <DirectionTile label="Interaction" value={direction?.propInteraction} />

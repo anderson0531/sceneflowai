@@ -97,6 +97,9 @@ export interface StillDirectorPatch {
   shotType?: string
   cameraAngle?: string
   frozenMoment?: string
+  startFrame?: string
+  clipAction?: string
+  endFrame?: string
   blocking?: string
   gaze?: string
   emotion?: string
@@ -158,6 +161,9 @@ const PATCH_STRING_KEYS = [
   'shotType',
   'cameraAngle',
   'frozenMoment',
+  'startFrame',
+  'clipAction',
+  'endFrame',
   'blocking',
   'gaze',
   'emotion',
@@ -209,6 +215,9 @@ export function parseStillDirectorPatch(raw: unknown): StillDirectorPatch | unde
     shotType: record.shotType,
     cameraAngle: record.cameraAngle,
     frozenMoment: record.frozenMoment,
+    startFrame: record.startFrame ?? record.start_frame,
+    clipAction: record.clipAction ?? record.clip_action,
+    endFrame: record.endFrame ?? record.end_frame,
     blocking: record.blocking,
     gaze: record.gaze,
     emotion: record.emotion,
@@ -286,6 +295,7 @@ export function applyStillDirectorPatch(
   }
 
   const nextDirection: BeatDirection = { ...(beat.beatDirection ?? {}) }
+  delete nextDirection.videoPrompt
   const actionDescription = trimOrUndef(patch.actionDescription)
   for (const key of PATCH_STRING_KEYS) {
     const value = trimOrUndef(patch[key])
@@ -293,6 +303,9 @@ export function applyStillDirectorPatch(
   }
   if (!trimOrUndef(nextDirection.frozenMoment) && trimOrUndef(patch.actionFraming)) {
     nextDirection.frozenMoment = patch.actionFraming!.trim()
+  }
+  if (!trimOrUndef(nextDirection.frozenMoment) && trimOrUndef(nextDirection.startFrame)) {
+    nextDirection.frozenMoment = nextDirection.startFrame!.trim()
   }
   if (Array.isArray(patch.castInFrame)) {
     nextDirection.castInFrame = patch.castInFrame
@@ -476,22 +489,26 @@ export function previewActionFramingFromPatch(
 }
 
 export function buildStillDirectorSystemPrompt(): string {
-  return `You are a cinematographer rewriting animatic still direction so a still camera can render the beat on the first attempt.
+  return `You are a cinematographer and shot director designing unified Still + 10s Clip direction so both the still camera keyframe and the 10-second motion clip render on the first attempt.
 
-The current Action/Framing is often photographically ambiguous: same expression on every face, contradictory prop placement, no screen-left/right, missing weight/contact, bodies cropped out of a two-shot. Rewrite so a viewer reads the whole action from one settled pose.
+The current Action/Framing is often photographically ambiguous or lacks a clear 10s clip progression (startFrame → clipAction → endFrame): same expression on every face, contradictory prop placement, no screen-left/right, missing weight/contact, bodies cropped out of a two-shot, or identical start and end states. Rewrite so a viewer reads the opening keyframe pose AND the full 10s motion progression.
 
 HARD RULES:
 1. Do not change the story beat. Do not invent people, props, or locations. Use EXACT labels from the REFERENCE LIBRARY.
-2. One frozen instant — a 1/500s exposure. No temporal verbs (walking, turning, slamming). Name the settled pose, not the movement that produced it.
+2. One frozen instant for frozenMoment / startFrame — a 1/500s exposure at t=0s before the 10s clip action completes. No temporal verbs (walking, turning, slamming) in frozenMoment. Name the settled pose, not the movement that produced it.
 3. Spatial: who is screen-left vs screen-right, who is nearer the camera, where each body plants weight, what each hand is doing, where each named prop sits or is held. Skip spatial body rules when castInFrame is empty.
-4. Distinct acting: each visible face gets its own expression (eyes/jaw/mouth/shoulders), not a shared two-word mood. Omit emotion and gaze when castInFrame is empty. Never write "Gaze: No characters" or "Gaze: No people".
+4. Distinct acting & 10s clip emotion: each visible face gets its own expression (eyes/jaw/mouth/shoulders), not a shared two-word mood. For character face tells, Omit emotion and gaze when castInFrame is empty; however, for 10s clips where castInFrame is empty and the shot has an environmental or dramatic arc, populate emotion with the atmospheric mood, tension, and pacing progression of the 10s clip. Never write "Gaze: No characters" or "Gaze: No people".
 5. Two-shots and group shots must keep every directed person fully in frame unless the shot type is a close-up or insert. Every person visible anywhere in the frame — including an Over-the-Shoulder foreground shoulder or back-of-head — MUST be listed in castInFrame using their exact REFERENCE LIBRARY character name. Never use Over-the-Shoulder (OTS) or Two-Shot or place a listener's back/shoulder in frame when castInFrame has only one character. On a single-character shot (castInFrame length 1, even when speaking to someone), frame a clean single with the speaker's gaze angled slightly off-camera toward the unseen listener outside the frame — never write "at the listener", "into listener's eyes", or "listener at frame edge" on a single-cast shot.
 6. Insert/Extreme Close-Up of a limb: only the specified limb/hand. Insert/Extreme Close-Up of an object with nobody in frame: describe the instrument's settled state, not a limb, hand, or face.
 7. frozenMoment repeats locked facts from the action: any on-screen words in quotes, and what a photograph or prop actually depicts. Do not replace them with a vague label such as "production credits." actionDescription is two to four concrete sentences of the motion, with those same quoted words and depicted subjects.
-8. Do NOT write style, lighting essays, exclusions, F2V, start-frame, or appearance of library refs — code owns those.
-9. Include audioCue only for a distinct sound the score cannot carry (a slam, a mechanism, a creature, a specific device). Omit audioCue when music should carry the shot, and never use it for generic ambience. For dialogue and narration beats, include voiceDirection (1–2 sentences of vocal delivery direction matching the directed emotion, breath, and physical staging; omit voiceDirection for action beats). Include cameraMovement and transition only when the user note or the current beat calls for them. transition must be one of CUT, CONTINUE, DISSOLVE, FADE, MATCH_CUT. Omit a field to leave it unchanged.
-10. ${buildPolicySafePhrasingRules()}
-11. SCENE SHOT FLOW & CONTINUITY: When SCENE DIRECTION & SHOT FLOW CONTEXT is provided, honor the scene's coverage philosophy, movement turns, and 180-degree camera axis. Maintain consistent screen-left / screen-right character geography and eyeline match across consecutive beats, and vary shot scales purposefully across each movement (establish geography → medium/OTS interaction → close-up or insert on emotional turns) so the sequence cuts together smoothly. When a beat is marked with Role: establishing (typically Beat 0 opening a new location), preserve its wide/establishing shotType ("Wide Establishing Shot" or "Establishing Shot") to orient the viewer spatially unless USER NOTES or VISUAL / TALENT OVERLAY explicitly ask for a different shot scale.
+8. 10s CLIP PROGRESSION (startFrame, clipAction, endFrame):
+   - "startFrame": The opening visual state at t=0s just as the shot begins (before the 10s action and camera move complete). Keep frozenMoment aligned with this opening keyframe so the Still serves as the t=0s start frame.
+   - "clipAction": 1 to 3 concrete sentences directing the temporal motion progression across the 10s clip (from t=0s through mid-shot to t=10s — how subjects, lighting, physics, and environment move and transform).
+   - "endFrame": The terminal visual state at t=10s ("End on:") after the clip's action and camera movement complete. It must show a clear visual delta from startFrame rather than repeating startFrame verbatim.
+9. Do NOT write style, lighting essays, exclusions, F2V, or appearance of library refs — code owns those.
+10. Include audioCue only for a distinct sound the score cannot carry (a slam, a mechanism, a creature, a specific device). Omit audioCue when music should carry the shot, and never use it for generic ambience. For dialogue and narration beats, include voiceDirection (1–2 sentences of vocal delivery direction matching the directed emotion, breath, and physical staging; omit voiceDirection for action beats). Always include cameraMovement (e.g., "slow push-in", "tracking left", "static") and transition (one of CUT, CONTINUE, DISSOLVE, FADE, MATCH_CUT) for the 10s clip. Omit a field to leave it unchanged.
+11. ${buildPolicySafePhrasingRules()}
+12. SCENE SHOT FLOW & CONTINUITY: When SCENE DIRECTION & SHOT FLOW CONTEXT is provided, honor the scene's coverage philosophy, movement turns, and 180-degree camera axis. Maintain consistent screen-left / screen-right character geography and eyeline match across consecutive beats, and vary shot scales purposefully across each movement (establish geography → medium/OTS interaction → close-up or insert on emotional turns) so the sequence cuts together smoothly. When a beat is marked with Role: establishing (typically Beat 0 opening a new location), preserve its wide/establishing shotType ("Wide Establishing Shot" or "Establishing Shot") to orient the viewer spatially unless USER NOTES or VISUAL / TALENT OVERLAY explicitly ask for a different shot scale.
 
 Output JSON only:
 {
@@ -503,10 +520,13 @@ Output JSON only:
       "shotType": "Two-Shot",
       "cameraAngle": "low angle",
       "actionDescription": "two to four sentences naming the motion, what each object depicts, and on-screen words in quotes",
+      "startFrame": "t=0s opening visual state before the 10s motion completes (repeats quoted words and depicted subjects)",
+      "clipAction": "10s temporal motion progression from t=0s through mid-shot to t=10s",
+      "endFrame": "t=10s terminal settled visual state after the motion and camera move complete",
       "frozenMoment": "one settled instant that repeats those quoted words and depicted subjects",
       "blocking": "body positions, weight, contact — omit for empty-cast object inserts unless it names a settled instrument pose",
       "gaze": "who looks at whom — omit when castInFrame is empty",
-      "emotion": "Named: specific face/body tell; Other: different tell — omit when castInFrame is empty",
+      "emotion": "Named: specific face/body tell; Other: different tell — or atmospheric tension & pacing arc for 10s clips",
       "propInteraction": "which hand or surface holds which named prop — omit hands when nobody is in frame",
       "castInFrame": ["Exact Character Name", "Second Character Name"],
       "keyProps": ["Exact Prop Name"],
@@ -524,15 +544,15 @@ export function buildStillDirectorUserPrompt(request: DirectBeatStillRequest): s
   const parts: string[] = []
   if (request.mode === 'suggest') {
     parts.push(
-      'Analyze each beat still and write suggestedNotes a director can paste into Direction. Also fill the structured fields as the rewrite you would make.'
+      'Analyze each beat still and 10s clip direction and write suggestedNotes a director can paste into Direction. Also fill the structured fields as the rewrite you would make.'
     )
   } else if (request.mode === 'rewrite') {
     parts.push(
-      'Rewrite each beat so Action/Framing is photographically unambiguous. Honor USER NOTES and overlays; they override conflicting framing but not the story beat or library labels.'
+      'Rewrite each beat so both the Still and the 10s Clip direction (startFrame, clipAction, emotion, endFrame, cameraMovement, blocking) are photographically unambiguous. Honor USER NOTES and overlays; they override conflicting framing but not the story beat or library labels.'
     )
   } else {
     parts.push(
-      'Optimize each beat still for first-try photographic legibility. Keep the story beat. Thicken blocking, gaze, prop placement, and distinct faces. Focus deeply on this shot\'s specific physical setting, spatial staging, lighting atmosphere, and nuanced character emotion so both the still frame and motion clip prompts land in one take.'
+      'Optimize each beat for both first-try Still legibility and 10s Clip progression (startFrame at t=0s, clipAction across 0–10s, emotion/pacing arc, and endFrame at t=10s). Keep the story beat. Thicken blocking, gaze, prop placement, cameraMovement, and distinct faces. Focus deeply on this shot\'s specific physical setting, spatial staging, lighting atmosphere, and nuanced character or atmospheric emotion so both the still frame and 10s motion clip prompts land in one take.'
     )
   }
   if (request.policyCompliance) {
@@ -631,6 +651,9 @@ export function buildStillDirectorUserPrompt(request: DirectBeatStillRequest): s
       parts.push(`Current direction JSON: ${JSON.stringify({
         shotType: direction.shotType,
         cameraAngle: direction.cameraAngle,
+        startFrame: direction.startFrame,
+        clipAction: direction.clipAction,
+        endFrame: direction.endFrame,
         frozenMoment: direction.frozenMoment,
         blocking: direction.blocking,
         gaze: direction.gaze,

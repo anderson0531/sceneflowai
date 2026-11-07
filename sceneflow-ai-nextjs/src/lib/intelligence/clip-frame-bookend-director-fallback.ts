@@ -3,7 +3,10 @@
  * still frame prompts directly from a shot's compiled Clips prompt.
  */
 
-import { compileBeatVideoPromptFromDirection } from '@/lib/scene/beatVideoPromptCompiler'
+import {
+  compileBeatVideoPromptFromDirection,
+  isStaleSavedVideoPrompt,
+} from '@/lib/scene/beatVideoPromptCompiler'
 import { getSceneBeats } from '@/lib/script/beatMigration'
 import { parsePersistedMusicCues, resolveBeatMusicCue } from '@/lib/script/sceneMusicCues'
 import type { SceneBeat } from '@/lib/script/segmentTypes'
@@ -11,6 +14,8 @@ import type { DetailedSceneDirection } from '@/types/scene-direction'
 
 export interface ExtractedClipPromptFacets {
   lead: string
+  startFrame?: string
+  clipAction?: string
   coverage?: string
   lens?: string
   space?: string
@@ -50,6 +55,8 @@ export interface ClipBookendPrompts {
 }
 
 const STRUCTURED_LABELS = [
+  'Start frame',
+  'Action',
   'Coverage',
   'Lens',
   'Space',
@@ -161,6 +168,12 @@ export function extractClipPromptFacets(clipPrompt?: string | null): ExtractedCl
 
   return {
     lead,
+    startFrame: isMeaningfulDirectionFacet(clauseMap.get('start frame'))
+      ? clauseMap.get('start frame')
+      : undefined,
+    clipAction: isMeaningfulDirectionFacet(clauseMap.get('action'))
+      ? clauseMap.get('action')
+      : undefined,
     coverage: isMeaningfulDirectionFacet(clauseMap.get('coverage'))
       ? clauseMap.get('coverage')
       : undefined,
@@ -226,8 +239,12 @@ export function resolveBeatClipPrompt(
     return matchingSegment.userEditedPrompt.trim()
   }
 
-  if (beat.beatDirection?.videoPrompt?.trim()) {
-    return beat.beatDirection.videoPrompt.trim()
+  const storedVideoPrompt = beat.beatDirection?.videoPrompt?.trim()
+  if (
+    storedVideoPrompt &&
+    !isStaleSavedVideoPrompt(beat, storedVideoPrompt, beat.line?.trim())
+  ) {
+    return storedVideoPrompt
   }
 
   const generatedBy = beat.beatDirection?.generatedBy

@@ -104,8 +104,11 @@ export function buildStartFramePrompt(
       !beat.character?.trim() &&
       !facets.visiblePeople?.trim())
 
+  const startState = meaningfulBookendField(d?.startFrame || facets.startFrame)
   const baseAction = meaningfulBookendField(
-    facets.statedAction ||
+    d?.clipAction ||
+      facets.clipAction ||
+      facets.statedAction ||
       facets.lead ||
       actionFramingFromStoredPrompt(beat.storyboardImagePrompt) ||
       (beat.kind === 'action' ? beat.actionDescription?.trim() : undefined) ||
@@ -141,7 +144,10 @@ export function buildStartFramePrompt(
       startCues.push(`Camera positioned at initial starting point before ${cameraMove}`)
     }
   }
-  if (baseAction) {
+  if (startState) {
+    startCues.push(`Opening frame state (t=0s): ${startState}`)
+  }
+  if (baseAction && (!startState || !startState.toLowerCase().includes(baseAction.toLowerCase()))) {
     startCues.push(`Starting action state (t=0s): ${baseAction}`)
   }
   if (blocking && (!baseAction || !baseAction.toLowerCase().includes(blocking.toLowerCase()))) {
@@ -244,9 +250,11 @@ export function buildEndFramePrompt(
       !beat.character?.trim() &&
       !facets.visiblePeople?.trim())
 
-  const endOn = meaningfulBookendField(facets.endOn || d?.frozenMoment)
+  const endOn = meaningfulBookendField(d?.endFrame || facets.endOn || d?.frozenMoment)
   const baseAction = meaningfulBookendField(
-    facets.statedAction ||
+    d?.clipAction ||
+      facets.clipAction ||
+      facets.statedAction ||
       facets.lead ||
       actionFramingFromStoredPrompt(beat.storyboardImagePrompt) ||
       (beat.kind === 'action' ? beat.actionDescription?.trim() : undefined) ||

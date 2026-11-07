@@ -157,6 +157,12 @@ export interface BeatDirection {
   lightingAccent?: string
   /** One-sentence description of the frozen still moment. */
   frozenMoment?: string
+  /** Opening visual state at t=0s before the 10s clip action unfolds. */
+  startFrame?: string
+  /** Temporal motion and action progression across the 10s clip (0s → mid-shot → 10s). */
+  clipAction?: string
+  /** Terminal visual state at t=10s ("End on:") after the clip's action completes. */
+  endFrame?: string
   /** Per-beat diegetic audio cue (e.g., "glitching proximity timer"). */
   audioCue?: string
   /** Transition INTO the next beat. */

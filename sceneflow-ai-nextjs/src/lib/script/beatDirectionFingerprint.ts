@@ -22,12 +22,15 @@ const STILL_FINGERPRINTED_KEYS: Array<keyof BeatDirection> = [
   'propInteraction',
   'lightingAccent',
   'frozenMoment',
+  'startFrame',
   'emotion',
 ]
 
 const VIDEO_ONLY_FINGERPRINTED_KEYS: Array<keyof BeatDirection> = [
   'cameraMovement',
   'lensEnergy',
+  'clipAction',
+  'endFrame',
   'audioCue',
   'transition',
 ]
