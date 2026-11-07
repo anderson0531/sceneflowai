@@ -157,7 +157,7 @@ export async function POST(req: NextRequest) {
             }))
         : []
 
-      const syncedCatalog = syncSceneDirectionToContinuityCatalog({
+      const preSyncedCatalog = syncSceneDirectionToContinuityCatalog({
         scenes: freshScenes,
         sceneIdx: sceneIndex,
         characters,
@@ -166,18 +166,31 @@ export async function POST(req: NextRequest) {
       })
 
       const applied = applyOptimizedShotPatches({
-        scenes: syncedCatalog.scenes,
+        scenes: preSyncedCatalog.scenes,
         sceneIdx: sceneIndex,
         patches: directed.patches,
         characters,
-        locationReferences: syncedCatalog.locationReferences,
-        objectReferences: syncedCatalog.objectReferences,
+        locationReferences: preSyncedCatalog.locationReferences,
+        objectReferences: preSyncedCatalog.objectReferences,
         promptComposition: {
           artStyleAnchor: resolveProjectArtStyle(fresh.metadata),
           lookbook: freshPhase.lookbook as ProjectLookbook | undefined,
         },
         force,
       })
+
+      const syncedCatalog = syncSceneDirectionToContinuityCatalog({
+        scenes: applied.scenes,
+        sceneIdx: sceneIndex,
+        characters,
+        locationReferences: preSyncedCatalog.locationReferences,
+        objectReferences: preSyncedCatalog.objectReferences,
+      })
+      applied.scenes = syncedCatalog.scenes
+      const locationsChanged =
+        preSyncedCatalog.locationsChanged || syncedCatalog.locationsChanged
+      const objectsChanged =
+        preSyncedCatalog.objectsChanged || syncedCatalog.objectsChanged
 
       let hashRepaired = false
       if (applied.scenes[sceneIndex] && typeof applied.scenes[sceneIndex] === 'object') {
@@ -200,19 +213,19 @@ export async function POST(req: NextRequest) {
       const shouldPersist =
         !demoMode &&
         (applied.optimized > 0 ||
-          syncedCatalog.locationsChanged ||
-          syncedCatalog.objectsChanged ||
+          locationsChanged ||
+          objectsChanged ||
           hashRepaired) &&
         typeof fresh.update === 'function'
       if (shouldPersist) {
         let nextMetadata = writeScenesIntoVisionMetadata(fresh.metadata, applied.scenes)
-        if (syncedCatalog.locationsChanged || syncedCatalog.objectsChanged) {
+        if (locationsChanged || objectsChanged) {
           const nextVisionPhase = { ...(nextMetadata.visionPhase || {}) }
           const nextReferences = { ...(nextVisionPhase.references || {}) }
-          if (syncedCatalog.locationsChanged) {
+          if (locationsChanged) {
             nextReferences.locationReferences = syncedCatalog.locationReferences
           }
-          if (syncedCatalog.objectsChanged) {
+          if (objectsChanged) {
             nextReferences.objectReferences = syncedCatalog.objectReferences
           }
           nextVisionPhase.references = nextReferences

@@ -155,4 +155,33 @@ describe('locationStateAnalysis', () => {
     expect(beatHasLocationStateChange(v3)).toBe(true)
     expect(beatHasLocationStateChange(v4)).toBe(true)
   })
+
+  it('extracts opening dark/unlit startFrame state as a Start frame location hit before an in-clip lighting surge', () => {
+    const hits = extractLocationStateHitsFromScene({
+      sceneNumber: 1,
+      heading: 'EXT. CHICAGO SHORELINE - NIGHT',
+      beats: [
+        {
+          beatId: 'b-chicago',
+          actionDescription:
+            'The harmonic wave impacts the shoreline. Simultaneously, thousands of municipal streetlights, darkened tenements, and frozen housing blocks in Englewood and Woodlawn erupt into brilliant, warm incandescent gold.',
+          startFrame:
+            'At t=0s, the Chicago coastline sits in complete pitch-black darkness with zero electrical light or power, framing the dormant silhouettes of Englewood and Woodlawn tenement blocks against a deep indigo sky, while motionless blue-gray shelf ice blankets the foreground lake.',
+          clipAction:
+            'From 2s to 5s, a luminous electrical wave surges westward across the frozen lake ice to the shoreline, sequentially igniting rows of amber incandescent streetlights.',
+          endFrame:
+            'The urban grid across Englewood and Woodlawn stands fully illuminated in an interconnected web of amber streetlights.',
+        },
+      ],
+    })
+
+    expect(hits).toHaveLength(1)
+    expect(hits[0].beatId).toBe('b-chicago')
+    expect(hits[0].isStartFrameState).toBe(true)
+    expect(hits[0].notes).toContain(
+      'in total blackout with every window and streetlamp dark and unlit'
+    )
+    expect(hits[0].notes).not.toMatch(/at\s+t\s*=\s*0s/i)
+    expect(hits[0].notes).not.toMatch(/zero electrical light/i)
+  })
 })

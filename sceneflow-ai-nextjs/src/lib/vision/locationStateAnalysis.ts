@@ -6,6 +6,7 @@
  */
 
 import { extractLocationResidentInstrumentPhrases } from '@/lib/vision/locationResidentInstruments'
+import { affirmativeStartFrameState } from '@/lib/scene/beatVideoPromptCompiler'
 
 export interface LocationAnalysisBeatInput {
   beatId?: string
@@ -15,6 +16,9 @@ export interface LocationAnalysisBeatInput {
   action?: string
   line?: string
   frozenMoment?: string
+  startFrame?: string
+  clipAction?: string
+  endFrame?: string
   propInteraction?: string
   lightingAccent?: string
   blocking?: string
@@ -56,17 +60,29 @@ export const REVERSIBLE_APERTURE_PATTERN = new RegExp(
   'i'
 )
 
-const LIGHT_NOUN = '(?:lights?|lamps?|chandeliers?)'
-const LIGHT_ADJ = '(?:vault\\s+|room\\s+|house\\s+|practical\\s+|overhead\\s+|table\\s+)*'
+const LIGHT_NOUN =
+  '(?:lights?|lamps?|chandeliers?|streetlights?|streetlamps?|floodlights?|searchlights?|windows?|housing\\s+blocks?|tenements?|power\\s+grid)'
+const LIGHT_ADJ =
+  '(?:vault\\s+|room\\s+|house\\s+|practical\\s+|overhead\\s+|table\\s+|municipal\\s+|incandescent\\s+|amber\\s+|golden\\s+|tenement\\s+|street\\s+|city\\s+|rows?\\s+of\\s+|thousands?\\s+of\\s+)*'
 
 /**
- * Practical fixtures going on/off. Mood "lighting" adjectives are not a match,
- * and a bare "light on" fragment is not a lasting change.
+ * Practical fixtures or municipal grid lights going on/off. Mood "lighting" adjectives
+ * are not a match, and a bare "light on" fragment is not a lasting change.
  */
 export const PRACTICAL_LIGHTS_PATTERN = new RegExp(
-  String.raw`\b(?:(?:kill|cut|douse|switch(?:es|ed)?\s+off)\s+(?:the\s+)?${LIGHT_ADJ}${LIGHT_NOUN}|(?:the\s+)?${LIGHT_ADJ}${LIGHT_NOUN}\s+(?:go(?:es|ne)?\s+(?:on|off|out)|(?:out|die|dies|died|dying|dead|blown)|switch(?:es|ed)?\s+(?:on|off)))\b`,
+  String.raw`\b(?:(?:kill|cut|douse|switch(?:es|ed)?\s+off|ignite(?:s|d|ing)?|illuminat(?:e|es|ed|ing))\s+(?:the\s+)?${LIGHT_ADJ}${LIGHT_NOUN}|(?:the\s+)?${LIGHT_ADJ}${LIGHT_NOUN}(?:\s+(?:and|across|along|in)\s+[^.;,]+){0,3}\s+(?:go(?:es|ne)?\s+(?:on|off|out)|(?:out|die|dies|died|dying|dead|blown)|switch(?:es|ed)?\s+(?:on|off)|ignite(?:s|d)?|flare(?:s|d)?(?:\s+into\s+[^.;,]+)?|erupt(?:s|ed)?\s+into\s+(?:brilliant|warm|incandescent|golden|amber)\b|light(?:s)?\s+up))\b`,
   'i'
 )
+
+/**
+ * Opening start-frame environment / blackout state (t=0s) before an in-clip
+ * lighting or power transition (such as a dark, unlit city shoreline before
+ * streetlights ignite). When present on a beat's startFrame / frozenMoment,
+ * the Location Reference / Version for that beat must depict this opening
+ * t=0s state rather than the post-action lit end state.
+ */
+export const OPENING_ENVIRONMENT_STATE_PATTERN =
+  /\b(total\s+blackout|pitch[- ]black(?:\s+darkness)?|complete(?:\s+pitch[- ]black)?\s+darkness|every\s+window\s+and\s+streetlamp\s+dark\s+and\s+unlit|without\s+a\s+single\s+electric(?:al)?\s+light|zero\s+electric(?:al)?\s+(?:light|power)|no\s+electric(?:al)?\s+lights?(?:\s+or\s+power)?|completely\s+unilluminated|completely\s+unlit(?:\s+silhouettes?)?|unlit\s+(?:silhouettes?|brick\s+tenement|tenement|streetlights?|streetlamps?|rail\s+corridors?|windows?|buildings?|city|coastline|shoreline|grid)|dormant\s+(?:[a-z]+\s+){0,2}(?:coastline|shoreline|grid|city|skyline|infrastructure|tenements?|rail\s+yards?))\b/i
 
 const INSTRUMENT_NOUN =
   '(?:gauges?|galvanometers?|manometers?|barometers?|dials?|seismographs?|telegraphs?|oscilloscopes?|switchboards?)'
@@ -129,11 +145,59 @@ export function beatSetStateText(beat: LocationAnalysisBeatInput): string {
   return [
     resolveBeatActionText(beat),
     beat.line,
+    beat.startFrame,
     beat.frozenMoment,
     beat.lightingAccent,
   ]
     .filter((part): part is string => Boolean(part?.trim()))
     .join(' ')
+}
+
+export function beatHasOpeningEnvironmentState(text: string): boolean {
+  const trimmed = stripCharacterMetaphorsAndPosture((text || '').trim())
+  if (!trimmed) return false
+  return OPENING_ENVIRONMENT_STATE_PATTERN.test(trimmed)
+}
+
+/**
+ * Extract an affirmative start-frame environment description when a beat's
+ * `startFrame` (or `frozenMoment`) establishes a distinct opening set/lighting
+ * state (e.g. total blackout / dark unlit city view at t=0s before an in-clip
+ * power surge or lighting change).
+ */
+export function extractStartFrameEnvironmentNotes(
+  beat: LocationAnalysisBeatInput
+): string | undefined {
+  const rawStart = beat.startFrame?.trim() || ''
+  const rawFrozen = beat.frozenMoment?.trim() || ''
+  const candidate =
+    rawStart && beatHasOpeningEnvironmentState(rawStart)
+      ? rawStart
+      : rawFrozen && beatHasOpeningEnvironmentState(rawFrozen)
+        ? rawFrozen
+        : rawStart &&
+            beatHasLocationStateChange(
+              [resolveBeatActionText(beat), beat.clipAction, beat.endFrame]
+                .filter(Boolean)
+                .join(' ')
+            ) &&
+            SET_PIECE_NOUN_PATTERN.test(rawStart)
+          ? rawStart
+          : ''
+  if (!candidate) return undefined
+
+  const strippedTime = candidate
+    .replace(
+      /^(?:0s\s*[–—-]\s*\d+s\s*(?:\([^)]*\))?\s*:\s*|at\s+t\s*=\s*0s\b[,:\s-]*|at\s+0(?:\.0+)?\s*(?:s|sec|seconds?)\b[,:\s-]*|start\s+frame\s*:\s*)/i,
+      ''
+    )
+    .trim()
+  const affirmative = affirmativeStartFrameState(strippedTime)
+  const cleaned = stripCharacterMetaphorsAndPosture(affirmative)
+    .replace(/^[.!;,\s]+|[.!;,\s]+$/g, '')
+    .trim()
+  if (!cleaned || !/\s/.test(cleaned)) return undefined
+  return cleaned.charAt(0).toUpperCase() + cleaned.slice(1)
 }
 
 /** Shattered glass of a photograph is a handheld prop, not the set. */
@@ -193,12 +257,14 @@ export function formatSceneForLocationVersionAnalysis(
     beats.forEach((beat, index) => {
       const action = resolveBeatActionText(beat)
       const line = beat.line?.trim()
+      const startFrame = beat.startFrame?.trim()
       const frozen = beat.frozenMoment?.trim()
       const props = beat.propInteraction?.trim()
       const lighting = beat.lightingAccent?.trim()
       const chunks = [
         action ? `action: ${action}` : '',
         line ? `line: ${line}` : '',
+        startFrame ? `startFrame: ${startFrame}` : '',
         frozen ? `frozenMoment: ${frozen}` : '',
         props ? `propInteraction: ${props}` : '',
         lighting ? `lightingAccent: ${lighting}` : '',
@@ -232,15 +298,28 @@ export interface LocationStateBeatHit {
   beatIndex: number
   beatId?: string
   notes: string
+  /** True when `notes` describes the opening t=0s start-frame environment state for this beat. */
+  isStartFrameState?: boolean
 }
 
-/** Beats whose action, dialogue, or frozen moment describe a lasting set-piece change. */
+/** Beats whose action, dialogue, startFrame, or frozen moment describe a lasting set-piece or opening environment state. */
 export function extractLocationStateHitsFromScene(
   scene: LocationAnalysisSceneInput
 ): LocationStateBeatHit[] {
   const hits: LocationStateBeatHit[] = []
   const beats = scene.beats ?? []
   beats.forEach((beat, beatIndex) => {
+    const startFrameNotes = extractStartFrameEnvironmentNotes(beat)
+    if (startFrameNotes) {
+      hits.push({
+        sceneNumber: scene.sceneNumber,
+        beatIndex,
+        beatId: beat.beatId,
+        notes: startFrameNotes,
+        isStartFrameState: true,
+      })
+      return
+    }
     const text = beatSetStateText(beat)
     if (!beatHasLocationStateChange(text)) return
     const distilled = distillLocationStateNotesFromText(text)

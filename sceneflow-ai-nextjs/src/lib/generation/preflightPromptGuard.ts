@@ -61,7 +61,7 @@ Rules:
 2. No negations ("no", "without", "avoid"). No injury, threat, accusation, or distress verbs.
 3. Preserve dialogue lines verbatim when quoted (e.g. CHARACTER says: '...').
 4. Preserve character names, blocking, camera moves, and location context.
-5. Keep output to at most 2 sentences for scene/action prose; leave dialogue blocks intact.
+5. When the prompt contains timed phase headers (e.g. "0s–2s (Start frame):", "2s–5s (Action):", "5s–8s (Action progression):", "8s–10s (End frame):"), preserve every timed phase header and its opening-to-closing progression intact. Otherwise keep output to at most 2 sentences for scene/action prose; leave dialogue blocks intact.
 6. Example: "desperate defiance as she pleads her innocence... framed me" -> "leaning forward earnestly, speaking with urgent conviction during a formal interview."
 
 Return JSON only: {"prompt":"...","guidePrompt":"..."} — omit guidePrompt key if unchanged/empty.`

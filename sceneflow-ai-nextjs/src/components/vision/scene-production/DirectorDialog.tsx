@@ -788,8 +788,8 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
     const preferFrameMode =
       nextTakeMode === 'creative' ||
       policy.sourceMethod === 'frame' ||
-      savedConfig?.mode === 'FTV' ||
-      savedConfig?.mode === 'I2V'
+      (videoSourceMethod == null &&
+        (savedConfig?.mode === 'FTV' || savedConfig?.mode === 'I2V'))
     const initialMode = isContinuation
       ? 'EXTEND'
       : preferFrameMode
@@ -878,7 +878,8 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
     setSelectedPreset(savedConfig?.preset ?? autoConfig.preset)
     setUseBeatFrameAsStart(
       preferFrameMode ||
-        (savedConfig?.useBeatFrameAsStart ?? autoConfig.useBeatFrameAsStart ?? false)
+        (videoSourceMethod == null &&
+          (savedConfig?.useBeatFrameAsStart ?? autoConfig.useBeatFrameAsStart ?? false))
     )
     setApiPromptPreview('')
   }, [

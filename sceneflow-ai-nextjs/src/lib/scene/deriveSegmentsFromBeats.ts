@@ -26,7 +26,10 @@ import {
   resolveBeatClipPrompt,
   type ResolveBeatClipPromptOptions,
 } from '@/lib/intelligence/clip-frame-bookend-director-fallback'
-import { compileBeatVideoPromptFromDirection } from '@/lib/scene/beatVideoPromptCompiler'
+import {
+  affirmativeStartFrameState,
+  compileBeatVideoPromptFromDirection,
+} from '@/lib/scene/beatVideoPromptCompiler'
 import {
   buildPreVisEndFrameEditInstruction,
   buildPreVisStartFrameEditInstruction,
@@ -104,7 +107,9 @@ export function buildStartFramePrompt(
       !beat.character?.trim() &&
       !facets.visiblePeople?.trim())
 
-  const startState = meaningfulBookendField(d?.startFrame || facets.startFrame)
+  const startState = affirmativeStartFrameState(
+    meaningfulBookendField(d?.startFrame || facets.startFrame)
+  )
   const baseAction = meaningfulBookendField(
     d?.clipAction ||
       facets.clipAction ||

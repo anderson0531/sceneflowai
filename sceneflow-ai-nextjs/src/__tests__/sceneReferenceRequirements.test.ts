@@ -919,4 +919,55 @@ describe('buildDeepLinkForRequirement and syncSceneDirectionToContinuityCatalog'
     expect(synced.objectReferences[0].name).toBe('12-inch sample canister')
     expect(synced.objectReferences[0].dimensions).toBe('12-inch')
   })
+
+  it('auto-creates a dark unlit start-frame LocationReference when none exists and preserves undrawn locationRefId on beats', () => {
+    const scene = {
+      heading: 'EXT. CHICAGO COASTLINE - PRE-DAWN',
+      sceneNumber: 1,
+      beats: [
+        {
+          beatId: 'b-grid',
+          kind: 'action',
+          actionDescription:
+            'Thousands of municipal streetlights across Englewood and Woodlawn flare into intense incandescent gold.',
+          beatDirection: {
+            shotType: 'Wide Shot',
+            castInFrame: [],
+            startFrame:
+              'At t=0s, the Chicago coastline sits in complete pitch-black darkness with zero electrical light or power, framing the dormant silhouettes of Englewood and Woodlawn tenement blocks against a deep indigo sky.',
+            clipAction:
+              'From 2s to 8s, a luminous electrical wave surges westward across the frozen lake ice, sequentially igniting rows of amber incandescent streetlights.',
+            endFrame:
+              'The urban grid across Englewood and Woodlawn stands fully illuminated in amber streetlights.',
+          },
+        },
+      ],
+    }
+
+    const synced = syncSceneDirectionToContinuityCatalog({
+      scenes: [scene],
+      sceneIdx: 0,
+      characters: [],
+      locationReferences: [],
+      objectReferences: [],
+    })
+
+    expect(synced.locationsChanged).toBe(true)
+    expect(synced.locationReferences).toHaveLength(1)
+    expect(synced.locationReferences[0].location).toBe('CHICAGO COASTLINE')
+    expect(synced.locationReferences[0].description).toContain(
+      'in total blackout with every window and streetlamp dark and unlit'
+    )
+    const syncedBeat = synced.scenes[0].beats[0]
+    expect(syncedBeat.referenceSelection?.locationRefId).toBe(synced.locationReferences[0].id)
+
+    const requirements = resolveSceneRequiredReferences({
+      scene: synced.scenes[0],
+      sceneIndex: 0,
+      characters: [],
+      locationReferences: synced.locationReferences,
+      objectReferences: [],
+    })
+    expect(requirements.map((r) => r.id)).toContain(synced.locationReferences[0].id)
+  })
 })

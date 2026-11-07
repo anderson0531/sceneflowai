@@ -198,4 +198,38 @@ describe('resolveBeatVideoReferences', () => {
       )
     ).toBe(false)
   })
+
+  it('falls back to a beat opening frame image as location [1] when no library location image is drawn yet', () => {
+    const beat: SceneBeat = {
+      beatId: 'beat-env-start',
+      sequenceIndex: 0,
+      kind: 'action',
+      actionDescription: 'A luminous electrical wave surges across the shoreline.',
+      storyboardStartImageUrl: 'https://blob.example/dark-chicago-start.jpg',
+      beatDirection: {
+        shotType: 'Wide Shot',
+        castInFrame: [],
+        startFrame:
+          'Jagged slabs of blue-gray shelf ice span the lower foreground in dark shadow while the Englewood rail corridors sit in total blackout with every window and streetlamp dark and unlit.',
+      },
+    }
+    const resolved = resolveBeatVideoReferences({
+      scene: { heading: 'EXT. CHICAGO COASTLINE - NIGHT', beats: [beat] },
+      beat,
+      projectCharacters: [],
+      locationReferences: [
+        {
+          id: 'loc-chicago',
+          location: 'CHICAGO COASTLINE',
+          imageUrl: '',
+        },
+      ],
+      objectReferences: [],
+    })
+
+    expect(resolved.urlList).toEqual(['https://blob.example/dark-chicago-start.jpg'])
+    expect(resolved.labeledRefs).toHaveLength(1)
+    expect(resolved.labeledRefs[0].role).toBe('location')
+    expect(resolved.labeledRefs[0].promptToken).toBe('location [1]')
+  })
 })

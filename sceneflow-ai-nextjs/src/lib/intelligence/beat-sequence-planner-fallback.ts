@@ -480,7 +480,8 @@ export function composeBeatActionFraming(beat?: SceneBeat | null): string {
   const direction = beat.beatDirection
 
   const spokenLine = beat.line?.trim() ?? ''
-  const directedFrozen = direction?.frozenMoment?.trim() ?? ''
+  const directedFrozen =
+    direction?.frozenMoment?.trim() || direction?.startFrame?.trim() || ''
   const frozenIsSpokenLine = restatesSpokenLine(directedFrozen, spokenLine)
   if (frozenIsSpokenLine) {
     console.warn(

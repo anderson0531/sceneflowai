@@ -1329,10 +1329,18 @@ export function DirectorConsoleRoot({
         sourceMethod: options.sourceMethod ?? effectiveVideoSourceMethod,
       })
       const segment = segments.find((s) => s.segmentId === item.segmentId)
+      const beat = segment?.beatId
+        ? getSceneBeats((scene as Record<string, unknown> | undefined) ?? null).find(
+            (entry) => entry.beatId === segment.beatId
+          )
+        : undefined
       const inputs = segmentHasVideoAgentInputs(item, segment)
+      const staleReferenceStartFrame =
+        policy.sourceMethod === 'reference' &&
+        Boolean(beat && isBeatFrameStale(beat) && !beat.storyboardStartImageUrl?.trim())
       const expressMethod = resolveExpressGenerationMethod(
         inputs.hasRefs,
-        inputs.hasStartFrame,
+        staleReferenceStartFrame ? false : inputs.hasStartFrame,
         inputs.hasEndFrame,
         policy.sourceMethod
       )

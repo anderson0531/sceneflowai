@@ -163,7 +163,8 @@ function beatTextImpliesPerson(text: string): boolean {
 function pickBestLocationRef(
   scene: Record<string, unknown>,
   locationRefs: LocationReference[],
-  sceneIndex?: number
+  sceneIndex?: number,
+  beat?: SceneBeat
 ): {
   id: string | null
   confidence: LocationMatchConfidence
@@ -171,54 +172,121 @@ function pickBestLocationRef(
   warnings: string[]
 } {
   const warnings: string[] = []
-  const withImages = locationRefs.filter((r) => r.imageUrl)
-  if (!withImages.length) return { id: null, confidence: 'none', warnings }
+  if (!locationRefs.length) return { id: null, confidence: 'none', warnings }
 
-  const sceneNumber = resolveSceneNumberForLocationMatch(scene, sceneIndex)
-  if (sceneNumber !== undefined) {
-    const assigned = findLocationReferencesAssignedToScene(withImages, sceneNumber)
-    if (assigned.length === 1) {
-      return {
-        id: assigned[0].id,
-        confidence: 'assigned',
-        name: assigned[0].location,
-        warnings,
+  const matchPool = (
+    pool: LocationReference[],
+    includeWithoutImages: boolean
+  ): { id: string; confidence: LocationMatchConfidence; name?: string; multiWarning?: string } | null => {
+    if (!pool.length) return null
+
+    const sceneNumber = resolveSceneNumberForLocationMatch(scene, sceneIndex)
+    if (sceneNumber !== undefined) {
+      const assigned = findLocationReferencesAssignedToScene(pool, sceneNumber, {
+        includeWithoutImages,
+      })
+      if (assigned.length === 1) {
+        return {
+          id: assigned[0].id,
+          confidence: 'assigned',
+          name: assigned[0].location,
+        }
+      }
+      if (assigned.length > 1) {
+        return {
+          id: assigned[0].id,
+          confidence: 'assigned',
+          name: assigned[0].location,
+          multiWarning: `Multiple location references are assigned to Scene ${sceneNumber} — using the first match.`,
+        }
       }
     }
-    if (assigned.length > 1) {
-      warnings.push(
-        `Multiple location references are assigned to Scene ${sceneNumber} — using the first match.`
-      )
-      return {
-        id: assigned[0].id,
-        confidence: 'assigned',
-        name: assigned[0].location,
-        warnings,
+
+    const beatSourceSceneIndex =
+      typeof (beat as { sourceSceneIndex?: unknown } | undefined)?.sourceSceneIndex === 'number' &&
+      (beat as { sourceSceneIndex: number }).sourceSceneIndex >= 0
+        ? (beat as { sourceSceneIndex: number }).sourceSceneIndex
+        : undefined
+    if (beatSourceSceneIndex !== undefined) {
+      const sourceSceneNumber = beatSourceSceneIndex + 1
+      const sourceAssigned = findLocationReferencesAssignedToScene(pool, sourceSceneNumber, {
+        includeWithoutImages,
+      })
+      if (sourceAssigned.length > 0) {
+        return {
+          id: sourceAssigned[0].id,
+          confidence: 'assigned',
+          name: sourceAssigned[0].location,
+        }
+      }
+      const bySourceIdx = pool.find((r) => r.sourceSceneIndex === beatSourceSceneIndex)
+      if (bySourceIdx) {
+        return {
+          id: bySourceIdx.id,
+          confidence: 'assigned',
+          name: bySourceIdx.location,
+        }
       }
     }
+
+    const headingLoc = (extractLocation(sceneHeadingText(scene)) || '').toUpperCase()
+    if (headingLoc) {
+      for (const ref of pool) {
+        const loc = (ref.location || '').toUpperCase()
+        const display = (ref.locationDisplay || '').toUpperCase()
+        if (loc && (loc === headingLoc || loc.includes(headingLoc) || headingLoc.includes(loc))) {
+          return { id: ref.id, confidence: 'heading', name: ref.location }
+        }
+        if (display && display.includes(headingLoc)) {
+          return { id: ref.id, confidence: 'heading', name: ref.location }
+        }
+      }
+    }
+
+    const matches = findMatchingLocationReferences(scene, pool, sceneIndex, {
+      includeWithoutImages,
+    })
+    if (matches.length > 0) {
+      const first = matches[0]
+      const ref = pool.find((r) => r.id === first.id)
+      const confidence: LocationMatchConfidence = headingLoc ? 'direction' : 'weak'
+      return { id: first.id, confidence, name: first.name ?? ref?.location }
+    }
+
+    if (beat) {
+      const beatBlob = [
+        beat.beatDirection?.startFrame,
+        beat.beatDirection?.frozenMoment,
+        beat.beatDirection?.blocking,
+        beat.actionDescription,
+      ]
+        .filter((part): part is string => Boolean(part?.trim()))
+        .join(' ')
+        .toLowerCase()
+      if (beatBlob) {
+        for (const ref of pool) {
+          const loc = (ref.location || '').trim()
+          if (loc.length >= 4 && beatBlob.includes(loc.toLowerCase())) {
+            return { id: ref.id, confidence: 'direction', name: ref.location }
+          }
+        }
+      }
+    }
+
+    return null
   }
 
-  const headingLoc = (extractLocation(sceneHeadingText(scene)) || '').toUpperCase()
-
-  if (headingLoc) {
-    for (const ref of withImages) {
-      const loc = (ref.location || '').toUpperCase()
-      const display = (ref.locationDisplay || '').toUpperCase()
-      if (loc === headingLoc || loc.includes(headingLoc) || headingLoc.includes(loc)) {
-        return { id: ref.id, confidence: 'heading', name: ref.location, warnings }
-      }
-      if (display.includes(headingLoc)) {
-        return { id: ref.id, confidence: 'heading', name: ref.location, warnings }
-      }
-    }
+  const withImages = locationRefs.filter((r) => Boolean(r.imageUrl?.trim()))
+  const drawnHit = matchPool(withImages, false)
+  if (drawnHit) {
+    if (drawnHit.multiWarning) warnings.push(drawnHit.multiWarning)
+    return { id: drawnHit.id, confidence: drawnHit.confidence, name: drawnHit.name, warnings }
   }
 
-  const matches = findMatchingLocationReferences(scene, locationRefs, sceneIndex)
-  if (matches.length > 0) {
-    const first = matches[0]
-    const ref = withImages.find((r) => r.id === first.id)
-    const confidence: LocationMatchConfidence = headingLoc ? 'direction' : 'weak'
-    return { id: first.id, confidence, name: first.name ?? ref?.location, warnings }
+  const undrawnHit = matchPool(locationRefs, true)
+  if (undrawnHit) {
+    if (undrawnHit.multiWarning) warnings.push(undrawnHit.multiWarning)
+    return { id: undrawnHit.id, confidence: undrawnHit.confidence, name: undrawnHit.name, warnings }
   }
 
   return { id: null, confidence: 'none', warnings }
@@ -524,7 +592,7 @@ export function resolveBeatFrameGenerationContext(
     }
   }
 
-  const locationPick = pickBestLocationRef(scene, locationReferences, sceneIndex)
+  const locationPick = pickBestLocationRef(scene, locationReferences, sceneIndex, beat)
   warnings.push(...locationPick.warnings)
   if (locationPick.confidence === 'weak') {
     warnings.push('Location match is uncertain — verify the selected environment reference.')

@@ -58,7 +58,7 @@ export function extractLocation(rawHeading?: string | null): string | null {
     if (lastPart) {
       // Heuristic: Is it a time/state modifier?
       const isModifier = 
-        /^(DAY|NIGHT|MORNING|EVENING|SUNSET|SUNRISE|DUSK|DAWN|CONTINUOUS|LATER|SAME|MOMENTS LATER)$/.test(lastPart) ||
+        /^(DAY|NIGHT|MORNING|EVENING|SUNSET|SUNRISE|DUSK|DAWN|PRE-DAWN|PREDAWN|TWILIGHT|MIDNIGHT|NOON|CONTINUOUS|LATER|SAME|MOMENTS LATER)$/.test(lastPart) ||
         /\bTO\b/.test(lastPart) || // e.g. DAY TO NIGHT
         /LATER$/.test(lastPart) || // e.g. MONTHS LATER, YEARS LATER
         /^(FLASHBACK|DREAM|MONTAGE)/.test(lastPart) || // sequence types

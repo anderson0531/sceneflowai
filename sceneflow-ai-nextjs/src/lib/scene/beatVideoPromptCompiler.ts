@@ -135,8 +135,8 @@ export function isRedundantSummary(summary: string, videoPrompt: string): boolea
 }
 
 function tokenAlreadyInPrompt(token: string, videoPrompt: string): boolean {
-  const t = token.trim().toLowerCase()
-  const v = videoPrompt.toLowerCase()
+  const t = token.trim().replace(/\.+$/, '').toLowerCase()
+  const v = videoPrompt.trim().replace(/\.+$/, '').toLowerCase()
   if (!t) return true
   return v.includes(t)
 }
@@ -209,13 +209,18 @@ export interface ResolvedBeatClipDirection {
   endFrame?: string
 }
 
-const LEADING_TIME_LABEL_RE =
-  /^(?:(?:0\s*s?\s*[–-]\s*2\s*s\s*(?:\(start\s+frame\))?|2\s*s?\s*[–-]\s*[58]\s*s\s*(?:\(action\))?|5\s*s?\s*[–-]\s*8\s*s\s*(?:\(action\s+progression\))?|8\s*s?\s*[–-]\s*10\s*s\s*(?:\(end\s+frame\))?|start\s+frame|opening\s+frame|clip\s+action(?:\s*\(10s\))?|action\s+progression|action|end\s+frame|end\s+on)\s*:\s*|(?:from\s+t\s*=\s*0\s*s\s+to\s+t\s*=\s*10\s*s|from\s+0\s*s?\s+to\s+10\s*s|at\s+t\s*=\s*(?:0|10)\s*s|by\s+t\s*=\s*10\s*s|at\s+(?:0|10)\s*s)\s*[,:—-]\s*)/i
+const TIME_WORD_OR_NUM =
+  '(?:t\\s*=\\s*)?(?:\\d+(?:\\.\\d+)?\\s*(?:s|sec(?:ond)?s?)?|(?:zero|one|two|three|four|five|six|seven|eight|nine|ten)(?:\\s+seconds?)?)'
+
+const LEADING_TIME_LABEL_RE = new RegExp(
+  `^(?:(?:0\\s*s?\\s*[–-]\\s*2\\s*s\\s*(?:\\(start\\s+frame\\))?|2\\s*s?\\s*[–-]\\s*[58]\\s*s\\s*(?:\\(action\\))?|5\\s*s?\\s*[–-]\\s*8\\s*s\\s*(?:\\(action\\s+progression\\))?|8\\s*s?\\s*[–-]\\s*10\\s*s\\s*(?:\\(end\\s+frame\\))?|start\\s+frame|opening\\s+frame|clip\\s+action(?:\\s*\\(10s\\))?|action\\s+progression|action|end\\s+frame|end\\s+on)\\s*:\\s*|(?:(?:from|between)\\s+${TIME_WORD_OR_NUM}\\s+(?:to|and|[–-])\\s+${TIME_WORD_OR_NUM}(?:\\s+seconds?)?|(?:at|by|during)\\s+${TIME_WORD_OR_NUM}(?:\\s*[–-]\\s*${TIME_WORD_OR_NUM})?(?:\\s+seconds?)?)\\s*[,:—-]\\s*)`,
+  'i'
+)
 
 /**
  * Strip redundant leading temporal or section labels (e.g. "At t=0s,",
- * "From t=0s to t=10s,", "End on:", "Start frame:") so timed clip prompts and
- * UI tiles do not stack duplicate prefixes.
+ * "From t=0s to t=10s,", "From two to five seconds,", "End on:", "Start frame:")
+ * so timed clip prompts and UI tiles do not stack duplicate prefixes.
  */
 export function stripLeadingTimeLabel(value?: string | null): string {
   let out = (value ?? '').trim()
@@ -234,6 +239,38 @@ export function stripLeadingTimeLabel(value?: string | null): string {
     out = out.charAt(0).toUpperCase() + out.slice(1)
   }
   return out
+}
+
+/**
+ * Convert negative illumination phrasing in an opening frame description into
+ * affirmative dark-state visual nouns (Omni 1.1 Flash / Veo best practice:
+ * positive prompt text should state what IS visible rather than negated target
+ * nouns like "without a single electric light", which prime attention for lights
+ * at t=0s).
+ */
+export function affirmativeStartFrameState(value?: string | null): string {
+  const raw = (value ?? '').trim()
+  if (!raw) return ''
+  return raw
+    .replace(
+      /\bwithout\s+a\s+single\s+electric(?:al)?\s+light(?:s)?\b/gi,
+      'in total blackout with every window and streetlamp dark and unlit'
+    )
+    .replace(
+      /\bwith\s+(?:zero|no)\s+electric(?:al)?\s+light(?:s)?(?:\s+or\s+power)?\b/gi,
+      'in total blackout with every window and streetlamp dark and unlit'
+    )
+    .replace(
+      /\bwith\s+no\s+lights?\s+on\b|\bwithout\s+any\s+lights?(?:\s+on)?\b/gi,
+      'with every window and fixture dark and unlit'
+    )
+    .replace(/\bcompletely\s+unilluminated\b/gi, 'deep in cold shadow')
+}
+
+function sanitizeEmotionForModeration(value?: string | null): string | undefined {
+  const raw = (value ?? '').trim()
+  if (!raw) return undefined
+  return raw.replace(/\bsuffocating\b/gi, 'oppressive')
 }
 
 /**
@@ -271,6 +308,9 @@ export function resolveBeatClipDirection(
       startFrame = cleanSingle(frozen)
     }
   }
+  if (startFrame) {
+    startFrame = affirmativeStartFrameState(startFrame)
+  }
 
   const clipAction = cleanSingle(
     direction?.clipAction ||
@@ -279,15 +319,16 @@ export function resolveBeatClipDirection(
         : beat.actionDescription || direction?.blocking)
   )
 
-  const emotion =
+  const emotion = sanitizeEmotionForModeration(
     direction?.emotion?.trim() ||
-    resolveBeatDirectedEmotion({
-      beatLine: beat.line,
-      beatAction: beat.actionDescription,
-    }) ||
-    options?.musicCue?.intent?.trim() ||
-    sceneDirection?.talent?.emotionalBeat?.trim() ||
-    undefined
+      resolveBeatDirectedEmotion({
+        beatLine: beat.line,
+        beatAction: beat.actionDescription,
+      }) ||
+      options?.musicCue?.intent?.trim() ||
+      sceneDirection?.talent?.emotionalBeat?.trim() ||
+      undefined
+  )
 
   const endFrame = cleanSingle(direction?.endFrame || direction?.frozenMoment)
 
@@ -368,9 +409,20 @@ function directionClauses(beat: SceneBeat, existing: string): string[] {
     if (!stripped) return undefined
     return cleanSingle(stripped)
   }
+  const hasTimedLead =
+    /\b0s[–-]2s\s*\(Start frame\):/i.test(existing) ||
+    /\b2s[–-][58]s\s*\(Action\):/i.test(existing) ||
+    /\b8s[–-]10s\s*\(End frame\):/i.test(existing)
   const clauses: string[] = []
-  pushClause(clauses, existing, '0s–2s (Start frame)', cleanTimed(direction.startFrame))
-  pushClause(clauses, existing, '2s–8s (Action)', cleanTimed(direction.clipAction))
+  if (!hasTimedLead) {
+    pushClause(
+      clauses,
+      existing,
+      '0s–2s (Start frame)',
+      affirmativeStartFrameState(cleanTimed(direction.startFrame))
+    )
+    pushClause(clauses, existing, '2s–8s (Action)', cleanTimed(direction.clipAction))
+  }
   pushClause(clauses, existing, 'Coverage', direction.coveragePurpose)
   pushClause(clauses, existing, 'Lens', direction.lensEnergy)
   pushClause(clauses, existing, 'Space', cleanSingle(direction.spatialRelationship))
@@ -378,19 +430,21 @@ function directionClauses(beat: SceneBeat, existing: string): string[] {
   pushClause(clauses, existing, 'Angle', direction.cameraAngle)
   pushClause(clauses, existing, 'Camera', direction.cameraMovement)
   pushClause(clauses, existing, 'Blocking', cleanSingle(direction.blocking))
-  pushClause(clauses, existing, 'Emotion', direction.emotion)
+  pushClause(clauses, existing, 'Emotion', sanitizeEmotionForModeration(direction.emotion))
   pushClause(clauses, existing, 'Gaze', cleanSingle(direction.gaze))
   pushClause(clauses, existing, 'Prop interaction', direction.propInteraction)
   const props = direction.keyProps?.map((name) => name.trim()).filter(Boolean) ?? []
   if (props.length > 0) pushClause(clauses, existing, 'Props', props.join(', '))
   pushClause(clauses, existing, 'Lighting', direction.lightingAccent)
-  const endText = cleanTimed(direction.endFrame || direction.frozenMoment)
-  if (endText && !tokenAlreadyInPrompt(endText, existing)) {
-    const endLabel =
-      direction.startFrame || direction.clipAction || direction.endFrame
-        ? '8s–10s (End frame): End on'
-        : 'End on'
-    pushClause(clauses, existing, endLabel, endText)
+  if (!hasTimedLead) {
+    const endText = cleanTimed(direction.endFrame || direction.frozenMoment)
+    if (endText && !tokenAlreadyInPrompt(endText, existing)) {
+      const endLabel =
+        direction.startFrame || direction.clipAction || direction.endFrame
+          ? '8s–10s (End frame): End on'
+          : 'End on'
+      pushClause(clauses, existing, endLabel, endText)
+    }
   }
   pushClause(clauses, existing, 'Sound', direction.audioCue)
   return clauses
@@ -456,12 +510,12 @@ export function beatVideoFidelityClose(
   const statedAction = singleCast
     ? sanitizeSingleCastListenerPhrasing(rawStatedAction)
     : rawStatedAction
-  if (hasExplicitTimedClipDirection(beat)) {
+  const isTimedClip = hasExplicitTimedClipDirection(beat)
+  if (isTimedClip) {
     parts.push(
       'Hold the 0s–2s start state before initiating the 2s–8s progression, and settle cleanly into the 8s–10s end frame without inventing unstated events or extra cuts'
     )
-  }
-  if (statedAction) {
+  } else if (statedAction) {
     const guardrailAction = summarizeStatedActionForGuardrail(statedAction, options?.coreText)
     if (guardrailAction) {
       parts.push(`The only action is: ${guardrailAction.replace(/\.+$/, '')}`)
@@ -727,7 +781,7 @@ export function isStaleSavedVideoPrompt(
     return true
   }
 
-  const cleanStart = stripLeadingTimeLabel(d?.startFrame)
+  const cleanStart = affirmativeStartFrameState(stripLeadingTimeLabel(d?.startFrame))
   const cleanClipAction = stripLeadingTimeLabel(d?.clipAction)
   const cleanEnd = stripLeadingTimeLabel(d?.endFrame)
   const cleanFrozen = stripLeadingTimeLabel(d?.frozenMoment)
@@ -736,6 +790,25 @@ export function isStaleSavedVideoPrompt(
     hasExplicitTimedClipDirection(beat) &&
     !/0s[–-]2s\s*\(Start frame\):/i.test(trimmed) &&
     !/2s[–-][58]s\s*\(Action\):/i.test(trimmed)
+  ) {
+    return true
+  }
+
+  // Invalidate previously compiled timed prompts that contained duplicate phase
+  // clauses, unstripped word-number time headers, negated light nouns, or a
+  // contradictory "The only action is:" suffix alongside 0s–2s start holds.
+  if (
+    (/\b2s[–-]5s\s*\(Action\):/i.test(trimmed) && /\b2s[–-]8s\s*\(Action\):/i.test(trimmed)) ||
+    (trimmed.match(/\b8s[–-]10s\s*\(End frame\):/gi)?.length ?? 0) > 1 ||
+    (trimmed.match(/\bIncoming continuity from\b/gi)?.length ?? 0) > 1 ||
+    (/\b0s[–-]2s\s*\(Start frame\):/i.test(trimmed) && /\bThe only action is:/i.test(trimmed)) ||
+    /\b(?:without\s+a\s+single\s+electric(?:al)?\s+light|with\s+zero\s+electric(?:al)?\s+light)/i.test(
+      trimmed
+    ) ||
+    /\bFrom\s+(?:zero|one|two|three|four|five|six|seven|eight|nine|ten|\d+)\s+to\s+(?:zero|one|two|three|four|five|six|seven|eight|nine|ten|\d+)\s+seconds,/i.test(
+      trimmed
+    ) ||
+    /\bsuffocating\b/i.test(trimmed)
   ) {
     return true
   }
@@ -832,7 +905,9 @@ export function compileBeatVideoPromptFromDirection(
   if (stored && !isStaleSavedVideoPrompt(beat, stored, spokenLine)) {
     const continuity = incomingContinuityClause(options, beat)
     let prompt =
-      continuity && !tokenAlreadyInPrompt(continuity, stored)
+      continuity &&
+      !tokenAlreadyInPrompt(continuity, stored) &&
+      !/\bIncoming continuity from\b/i.test(stored)
         ? normalizePromptJoin(stored, continuity)
         : stored
     const performance = formatPerformanceClause(beat.voiceDirection).trim()

@@ -526,8 +526,9 @@ describe('narration beat video prompt compilation', () => {
 
     const result = compileBeatVideoPromptFromDirection(awakeningBeat, null)
     expect(result.prompt).toMatch(
-      /^0s–2s \(Start frame\): The Chicago coastline sits in complete pitch-black darkness with zero electrical light or power/
+      /^0s–2s \(Start frame\): The Chicago coastline sits in complete pitch-black darkness in total blackout with every window and streetlamp dark and unlit/
     )
+    expect(result.prompt).not.toContain('with zero electrical light or power')
     expect(result.prompt).toContain(
       '2s–5s (Action): A radiant violet-gold electrical surge hits the shoreline and propels westward through the dormant municipal grid, sequentially igniting lines of incandescent amber streetlights through Englewood and Woodlawn'
     )
@@ -537,6 +538,8 @@ describe('narration beat video prompt compilation', () => {
     expect(result.prompt).toContain(
       '8s–10s (End frame): End on: The entire street and rail grid across Englewood and Woodlawn blazes in radiant amber and golden illumination'
     )
+    expect(result.prompt).not.toContain('2s–8s (Action):')
+    expect(result.prompt.match(/8s–10s \(End frame\):/g)).toHaveLength(1)
     expect(result.prompt).not.toContain('End on: End on:')
     expect(result.prompt).not.toContain('From t=0s to t=10s,')
     expect(result.prompt).toContain('Camera: slow high-angle push-in')
@@ -546,8 +549,67 @@ describe('narration beat video prompt compilation', () => {
     expect(result.prompt).toContain(
       'Hold the 0s–2s start state before initiating the 2s–8s progression, and settle cleanly into the 8s–10s end frame without inventing unstated events or extra cuts'
     )
+    expect(result.prompt).not.toContain('The only action is:')
+  })
+
+  it('optimizes Omni 1.1 Flash timed prompts by converting negated light nouns to affirmative blackout state, stripping word-number time labels, and eliminating duplicate action/end clauses', () => {
+    const omniFlashBeat: SceneBeat = {
+      beatId: 'bt_ba099b7c-1ce',
+      sequenceIndex: 2,
+      kind: 'action',
+      actionDescription:
+        'The camera pushes slowly inward high over the frozen lakefront as a dormant Chicago awakens.',
+      beatDirection: {
+        generatedBy: 'director',
+        shotType: 'Wide Shot',
+        cameraAngle: 'high angle',
+        cameraMovement: 'slow push-in',
+        transition: 'CUT',
+        castInFrame: [],
+        startFrame:
+          'Jagged slabs of blue-gray shelf ice span the lower foreground in dark shadow, while the completely unlit silhouettes of the Englewood rail corridors on screen-left and Woodlawn tenement blocks on screen-right stand black against a deep pre-dawn indigo sky without a single electric light.',
+        clipAction:
+          'From two to five seconds, a luminous electrical wave surges westward across the frozen lake ice to the shoreline, sequentially igniting rows of amber incandescent streetlights along the Englewood rail corridors. From five to eight seconds, warm golden illumination propagates block by block through hundreds of Woodlawn tenement windows as dense vertical plumes of white steam erupt from awakened rooftop boilers against the pre-dawn indigo sky.',
+        endFrame:
+          'The urban grid across Englewood and Woodlawn stands fully illuminated in an interconnected web of amber streetlights and glowing golden tenement windows, with dense vertical plumes of white boiler steam rising into the pale pre-dawn sky.',
+        blocking:
+          'Cracked blue-gray shelf ice blankets the lower third of the frame from screen-left to screen-right; the dark grid of Englewood rail corridors occupies screen-left receding southwest, while Woodlawn\'s tenement clusters sit across screen-right beneath the open indigo horizon.',
+        emotion:
+          'Cold, desolate stillness and suffocating suspense transitioning into an accelerating, triumphant wave of electric heat, civic illumination, and sudden kinetic awakening.',
+        audioCue:
+          'Deep resonant sub-bass pulse of municipal transformers humming into phase followed by the sharp snapping crackle of expanding high-voltage electrical lines.',
+        // Simulate the previously polluted cached videoPrompt with duplicate 2s–8s, duplicate 8s–10s, and "The only action is:"
+        videoPrompt:
+          '0s–2s (Start frame): Jagged slabs of blue-gray shelf ice span the lower foreground in dark shadow, while the completely unlit silhouettes of the Englewood rail corridors on screen-left and Woodlawn tenement blocks on screen-right stand black against a deep pre-dawn indigo sky without a single electric light. 2s–5s (Action): From two to five seconds, a luminous electrical wave surges westward across the frozen lake ice to the shoreline, sequentially igniting rows of amber incandescent streetlights along the Englewood rail corridors. 5s–8s (Action progression): From five to eight seconds, warm golden illumination propagates block by block through hundreds of Woodlawn tenement windows as dense vertical plumes of white steam erupt from awakened rooftop boilers against the pre-dawn indigo sky. 8s–10s (End frame): End on: The urban grid across Englewood and Woodlawn stands fully illuminated in an interconnected web of amber streetlights and glowing golden tenement windows, with dense vertical plumes of white boiler steam rising into the pale pre-dawn sky. 2s–8s (Action): From two to five seconds, a luminous electrical wave surges westward across the frozen lake ice to the shoreline, sequentially igniting rows of amber incandescent streetlights along the Englewood rail corridors. From five to eight seconds, warm golden illumination propagates block by block through hundreds of Woodlawn tenement windows as dense vertical plumes of white steam erupt from awakened rooftop boilers against the pre-dawn indigo sky. Shot: Wide Shot. Angle: high angle. Camera: slow push-in. 8s–10s (End frame): End on: The urban grid across Englewood and Woodlawn stands fully illuminated in an interconnected web of amber streetlights and glowing golden tenement windows, with dense vertical plumes of white boiler steam rising into the pale pre-dawn sky. No people in frame. The only action is: From two to five seconds, a luminous electrical wave surges westward across the frozen lake ice to the shoreline, sequentially igniting rows of amber incandescent streetlights along the Englewood rail corridors. No spoken dialogue. photorealistic, cinematic motion, professional cinematography, natural lighting, deep depth of field',
+      },
+    }
+
+    const result = compileBeatVideoPromptFromDirection(omniFlashBeat, null, {
+      previousBeat: {
+        beatId: 'bt_prev',
+        sequenceIndex: 1,
+        kind: 'action',
+        beatDirection: { shotType: 'Long Shot', castInFrame: [] },
+      },
+    })
+
     expect(result.prompt).toContain(
-      'The only action is: A radiant violet-gold electrical surge hits the shoreline and propels westward through the dormant municipal grid, sequentially igniting lines of incandescent amber streetlights through Englewood and Woodlawn'
+      '0s–2s (Start frame): Jagged slabs of blue-gray shelf ice span the lower foreground in dark shadow, while the completely unlit silhouettes of the Englewood rail corridors on screen-left and Woodlawn tenement blocks on screen-right stand black against a deep pre-dawn indigo sky in total blackout with every window and streetlamp dark and unlit'
     )
+    expect(result.prompt).not.toContain('without a single electric light')
+    expect(result.prompt).toContain(
+      '2s–5s (Action): A luminous electrical wave surges westward across the frozen lake ice to the shoreline, sequentially igniting rows of amber incandescent streetlights along the Englewood rail corridors'
+    )
+    expect(result.prompt).toContain(
+      '5s–8s (Action progression): Warm golden illumination propagates block by block through hundreds of Woodlawn tenement windows as dense vertical plumes of white steam erupt from awakened rooftop boilers against the pre-dawn indigo sky'
+    )
+    expect(result.prompt).not.toContain('From two to five seconds,')
+    expect(result.prompt).not.toContain('From five to eight seconds,')
+    expect(result.prompt).not.toContain('2s–8s (Action):')
+    expect(result.prompt.match(/8s–10s \(End frame\):/g)).toHaveLength(1)
+    expect(result.prompt.match(/Incoming continuity from/g)).toHaveLength(1)
+    expect(result.prompt).not.toContain('The only action is:')
+    expect(result.prompt).not.toContain('suffocating')
+    expect(result.prompt).toContain('oppressive suspense')
   })
 })

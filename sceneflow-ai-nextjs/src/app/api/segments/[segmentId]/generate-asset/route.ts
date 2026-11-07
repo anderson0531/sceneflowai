@@ -28,6 +28,7 @@ import { applyBeatsToScene, isBeatFirstPipelineEnabled, getSceneBeats } from '@/
 import { enforceVideoGenerationUnlock } from '@/lib/script/enforceVideoGenerationUnlock'
 import type { SceneBeat } from '@/lib/script/segmentTypes'
 import { compileBeatVideoPromptFromDirection } from '@/lib/scene/beatVideoPromptCompiler'
+import { isBeatFrameStale } from '@/lib/storyboard/syncBeatStillPrompt'
 import { buildExpressReferenceCatalog } from '@/lib/sceneGeneration/expressOrchestrator'
 import {
   expectsUnstatedCast,
@@ -160,10 +161,10 @@ export async function POST(
     let referenceImages = normalizeReferenceImages(
       body.referenceImages as string[] | GenerateAssetRequest['referenceImages'],
     )
+    let genType = body.genType
+    let startFrameUrl = body.startFrameUrl
     const {
-      genType, 
       referenceImageIds, 
-      startFrameUrl, 
       endFrameUrl,
       sourceVideoUrl,
       generationMethod,
@@ -340,6 +341,37 @@ export async function POST(
           )
           prompt = compiled.prompt
           negativePrompt = negativePrompt || compiled.negativePrompt
+
+          const trimmedStart = startFrameUrl?.trim()
+          const hasDedicatedActionStart =
+            Boolean(beat.storyboardStartImageUrl?.trim()) &&
+            trimmedStart === beat.storyboardStartImageUrl?.trim()
+          const startFrameDirection = beat.beatDirection?.startFrame?.trim() || ''
+          const directsDarkStart =
+            /\b(?:pitch-black|blackout|complete darkness|unlit|dark shadow|zero electrical light|without a single electric)\b/i.test(
+              startFrameDirection
+            )
+          const stillDescribesLit =
+            /\b(?:blazing|incandescent|illuminated|glowing|golden glare|amber highlights)\b/i.test(
+              `${beat.beatDirection?.frozenMoment || ''} ${beat.storyboardImagePrompt || ''}`
+            )
+          if (
+            resolvedVideoProvider === 'vertex' &&
+            trimmedStart &&
+            !endFrameUrl?.trim() &&
+            resolvedGenerationMethod !== 'EXT' &&
+            !hasDedicatedActionStart &&
+            (isBeatFrameStale(beat) ||
+              (Boolean(startFrameDirection) && trimmedStart !== beat.storyboardImageUrl?.trim()) ||
+              (directsDarkStart && stillDescribesLit))
+          ) {
+            console.log(
+              `[Segment Asset Generation] Dropping stale/mismatched startFrameUrl for beat ${beatId} so Omni follows timed 0s–2s startFrame prompt direction`
+            )
+            startFrameUrl = undefined
+            if (genType === 'I2V') genType = 'T2V'
+            if (resolvedGenerationMethod === 'I2V') resolvedGenerationMethod = 'T2V'
+          }
         }
       }
     }

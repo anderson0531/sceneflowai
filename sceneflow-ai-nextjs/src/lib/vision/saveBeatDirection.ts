@@ -25,6 +25,7 @@ import {
 import { detectCharactersInText } from '@/lib/scene/characterDetection'
 import { alignDirectionToConnectedObjects } from '@/lib/vision/beatReferenceConnections'
 import { matchObjectsBySelectedNames } from '@/lib/character/matching'
+import { extractLocation } from '@/lib/script/formatSceneHeading'
 import { extractLocationCanonicalScale } from '@/lib/imagen/locationScaleClause'
 import { extractPropScalePhrase } from '@/lib/imagen/propScaleClause'
 import {
@@ -44,6 +45,48 @@ import {
   type LocationAnalysisSceneInput,
 } from '@/lib/vision/locationStateAnalysis'
 import type { LocationReference, VisualReference } from '@/types/visionReferences'
+
+const GENERIC_SCENE_HEADING_LOCATION_RE =
+  /^(?:scene\s+\d+(?:\s*:\s*)?)?(?:title\s+sequence|promo|trailer|montage|prologue|epilogue|n\/a|none)$/i
+
+function deriveAutoLocationReferenceName(
+  scene: Record<string, any>,
+  sceneNumber: number | undefined,
+  startFrameNotes?: string
+): string | null {
+  const sceneDir = scene?.sceneDirection as Record<string, any> | undefined
+  const dirLoc =
+    typeof sceneDir?.scene?.location === 'string' ? sceneDir.scene.location.trim() : ''
+  if (dirLoc && !GENERIC_SCENE_HEADING_LOCATION_RE.test(dirLoc)) {
+    return dirLoc.toUpperCase()
+  }
+
+  const headingStr =
+    typeof scene?.heading === 'string'
+      ? scene.heading.trim()
+      : typeof (scene?.heading as { text?: unknown } | undefined)?.text === 'string'
+        ? ((scene.heading as { text: string }).text || '').trim()
+        : ''
+  const extracted = extractLocation(headingStr)
+  if (extracted && !GENERIC_SCENE_HEADING_LOCATION_RE.test(extracted)) {
+    return extracted.toUpperCase()
+  }
+
+  if (startFrameNotes?.trim()) {
+    const placeMatch = startFrameNotes.match(
+      /\b(?:the\s+)?((?:[A-Z][a-zA-Z0-9'-]+\s+){1,3}(?:coastline|shoreline|skyline|grid|corridors?|yards?|blocks?|harbor|lakefront|tunnel|vault|station|laboratory|street|avenue|bridge|plaza|atrium|hall|chamber))\b/
+    )
+    if (placeMatch?.[1]) {
+      return placeMatch[1].trim().toUpperCase()
+    }
+  }
+
+  if (startFrameNotes?.trim()) {
+    return `SCENE ${sceneNumber ?? 1} ENVIRONMENT`
+  }
+
+  return null
+}
 
 export interface BeatPromptComposition {
   artStyleAnchor?: string
@@ -202,36 +245,105 @@ export function syncSceneDirectionToContinuityCatalog(args: {
   let objectsChanged = false
 
   // 1. Sync location scale & setting-change versions from Scene Direction + Shot Direction
-  const assignedLocs = findLocationReferencesAssignedToScene(nextLocations, sceneNumber, {
-    includeWithoutImages: true,
-  })
+  const headingStr =
+    typeof scene.heading === 'string'
+      ? scene.heading
+      : (scene.heading as { text?: string } | undefined)?.text || ''
+  const sceneDir = scene.sceneDirection as Record<string, any> | undefined
+  const dirSettingText = [
+    typeof scene.locationDescription === 'string' ? scene.locationDescription : '',
+    typeof scene.visualDescription === 'string' ? scene.visualDescription : '',
+    typeof sceneDir?.scene?.locationDescription === 'string'
+      ? sceneDir.scene.locationDescription
+      : '',
+    typeof sceneDir?.scene?.setting === 'string' ? sceneDir.scene.setting : '',
+    typeof sceneDir?.locationDescription === 'string' ? sceneDir.locationDescription : '',
+  ]
+    .filter(Boolean)
+    .join(' ')
+
+  const shootableBeats = getSceneBeats(scene).filter((b) => !isBeatExcluded(b))
+  const analysisInput: LocationAnalysisSceneInput = {
+    sceneNumber: sceneNumber ?? args.sceneIdx + 1,
+    heading: headingStr || undefined,
+    action: typeof scene.action === 'string' ? scene.action : undefined,
+    visualDescription:
+      typeof scene.visualDescription === 'string' ? scene.visualDescription : undefined,
+    locationDescription: dirSettingText || undefined,
+    beats: shootableBeats.map((b) => ({
+      beatId: b.beatId,
+      kind: b.kind,
+      actionDescription: b.actionDescription,
+      description: b.description,
+      action: b.action,
+      line: b.line,
+      startFrame: b.beatDirection?.startFrame,
+      clipAction: b.beatDirection?.clipAction,
+      endFrame: b.beatDirection?.endFrame,
+      frozenMoment: b.beatDirection?.frozenMoment,
+      propInteraction: b.beatDirection?.propInteraction,
+      lightingAccent: b.beatDirection?.lightingAccent,
+      blocking: b.beatDirection?.blocking,
+    })),
+  }
+  const hits = extractLocationStateHitsFromScene(analysisInput)
+
+  const assignedLocs =
+    sceneNumber !== undefined
+      ? findLocationReferencesAssignedToScene(nextLocations, sceneNumber, {
+          includeWithoutImages: true,
+        })
+      : []
   const matchedLocs =
     assignedLocs.length > 0
       ? assignedLocs
-      : findMatchingLocationReferences(
-          typeof scene.heading === 'string'
-            ? scene.heading
-            : (scene.heading as { text?: string } | undefined)?.text || '',
-          nextLocations
-        )
-  const primaryLoc = matchedLocs[0]
+      : findMatchingLocationReferences(scene, nextLocations, args.sceneIdx, {
+          includeWithoutImages: true,
+        })
+  let primaryLoc = matchedLocs[0]
+  let autoCreatedFromBeatZeroStartFrame = false
+
+  if (!primaryLoc) {
+    const startHit = hits.find((h) => h.isStartFrameState)
+    const canAutoCreate = Boolean(startHit) || Boolean(dirSettingText.trim())
+    const derivedLocName = canAutoCreate
+      ? deriveAutoLocationReferenceName(scene, sceneNumber, startHit?.notes)
+      : null
+    if (derivedLocName) {
+      const resolvedNum = sceneNumber ?? args.sceneIdx + 1
+      const beat0StartNotes =
+        hits[0]?.beatIndex === 0 && hits[0]?.isStartFrameState ? hits[0].notes : undefined
+      const initialDescription = [beat0StartNotes, dirSettingText.trim()]
+        .filter(Boolean)
+        .join(' ')
+        .trim()
+      const beat0 = shootableBeats[0]
+      const seedImageUrl = beat0?.storyboardStartImageUrl?.trim() || ''
+      const createdLoc: LocationReference = {
+        id: `loc-dir-${Date.now()}-${args.sceneIdx}`,
+        location: derivedLocName,
+        locationDisplay: headingStr.trim() || derivedLocName,
+        description: initialDescription || derivedLocName,
+        imageUrl: seedImageUrl,
+        sourceSceneIndex: args.sceneIdx,
+        sourceSceneHeading: headingStr.trim() || derivedLocName,
+        pinnedAt: now,
+        sceneNumbers: [resolvedNum],
+        versions: [],
+      }
+      nextLocations.push(createdLoc)
+      primaryLoc = createdLoc
+      locationsChanged = true
+      if (beat0StartNotes) {
+        autoCreatedFromBeatZeroStartFrame = true
+      }
+    }
+  }
+
   if (primaryLoc) {
     const locIdx = nextLocations.findIndex((l) => l.id === primaryLoc.id)
     if (locIdx >= 0) {
       let updatedLoc: LocationReference = { ...nextLocations[locIdx] }
-
-      const sceneDir = scene.sceneDirection as Record<string, any> | undefined
-      const dirSettingText = [
-        typeof scene.locationDescription === 'string' ? scene.locationDescription : '',
-        typeof scene.visualDescription === 'string' ? scene.visualDescription : '',
-        typeof sceneDir?.scene?.locationDescription === 'string'
-          ? sceneDir.scene.locationDescription
-          : '',
-        typeof sceneDir?.scene?.setting === 'string' ? sceneDir.scene.setting : '',
-        typeof sceneDir?.locationDescription === 'string' ? sceneDir.locationDescription : '',
-      ]
-        .filter(Boolean)
-        .join(' ')
 
       if (dirSettingText.trim()) {
         const extractedScale = extractLocationCanonicalScale(
@@ -258,33 +370,33 @@ export function syncSceneDirectionToContinuityCatalog(args: {
         }
       }
 
-      const shootableBeats = getSceneBeats(scene).filter((b) => !isBeatExcluded(b))
-      const analysisInput: LocationAnalysisSceneInput = {
-        sceneNumber,
-        heading:
-          typeof scene.heading === 'string'
-            ? scene.heading
-            : (scene.heading as { text?: string } | undefined)?.text,
-        action: typeof scene.action === 'string' ? scene.action : undefined,
-        visualDescription:
-          typeof scene.visualDescription === 'string' ? scene.visualDescription : undefined,
-        locationDescription: dirSettingText || updatedLoc.description,
-        beats: shootableBeats.map((b) => ({
-          beatId: b.beatId,
-          kind: b.kind,
-          actionDescription: b.actionDescription,
-          description: b.description,
-          action: b.action,
-          line: b.line,
-          frozenMoment: b.beatDirection?.frozenMoment,
-          propInteraction: b.beatDirection?.propInteraction,
-          lightingAccent: b.beatDirection?.lightingAccent,
-          blocking: b.beatDirection?.blocking,
-        })),
-      }
-
-      const hits = extractLocationStateHitsFromScene(analysisInput)
       for (const hit of hits) {
+        // When a brand-new LocationReference was just created from Beat 0's startFrame
+        // (or when an undrawn base LocationReference has no versions yet and Beat 0
+        // establishes an opening blackout/start-frame state), bake the opening start-frame
+        // state directly into the base LocationReference description so the base reference
+        // image itself is drawn as the opening t=0s environment.
+        if (
+          hit.beatIndex === 0 &&
+          hit.isStartFrameState &&
+          !updatedLoc.imageUrl?.trim() &&
+          (!updatedLoc.versions || updatedLoc.versions.length === 0)
+        ) {
+          if (
+            !autoCreatedFromBeatZeroStartFrame &&
+            !notesCoverState(updatedLoc.description || '', hit.notes)
+          ) {
+            updatedLoc = {
+              ...updatedLoc,
+              description: [hit.notes, updatedLoc.description?.trim()]
+                .filter(Boolean)
+                .join(' '),
+            }
+            locationsChanged = true
+          }
+          continue
+        }
+
         const versions = updatedLoc.versions ?? []
         const exactBeatVer = versions.find(
           (v) =>
@@ -331,10 +443,11 @@ export function syncSceneDirectionToContinuityCatalog(args: {
           continue
         }
 
+        const versionLabel = hit.isStartFrameState ? 'Start frame' : 'Set change'
         const appended = appendDirectedLocationVersion(
           updatedLoc,
           {
-            name: `Scene ${hit.sceneNumber}, Shot ${hit.beatIndex + 1} — Set change`,
+            name: `Scene ${hit.sceneNumber}, Shot ${hit.beatIndex + 1} — ${versionLabel}`,
             stateNotes: hit.notes,
             appliesFrom: {
               sceneNumber: hit.sceneNumber,
@@ -357,7 +470,6 @@ export function syncSceneDirectionToContinuityCatalog(args: {
   // 2. Sync directed keyProps from Scene Direction into objectReferences
   // (Only fall back to beatDirection.keyProps when Scene Direction has no keyProps yet,
   // so re-running Shot Direction Agent does not invent duplicate un-drawn prop rows.)
-  const sceneDir = scene.sceneDirection as Record<string, any> | undefined
   const scenePropCandidates: string[] = [
     ...(Array.isArray(sceneDir?.scene?.keyProps) ? sceneDir.scene.keyProps : []),
     ...(Array.isArray(sceneDir?.keyProps) ? sceneDir.keyProps : []),

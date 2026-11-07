@@ -8,8 +8,10 @@ import { formatLocationScaleDescriptor } from '@/lib/imagen/locationScaleClause'
 import { extractPropScalePhrase, formatPropScaleDescriptor } from '@/lib/imagen/propScaleClause'
 import { extractCharacterHeightPhrase } from '@/lib/imagen/identityTraitsClause'
 import { getSceneBeats } from '@/lib/script/beatMigration'
+import { isBeatFrameStale } from '@/lib/storyboard/syncBeatStillPrompt'
 import type { SceneBeat } from '@/lib/script/segmentTypes'
 import type { LocationReference, VisualReference } from '@/types/visionReferences'
+import { beatHasOpeningEnvironmentState } from '@/lib/vision/locationStateAnalysis'
 import {
   resolveBeatFrameGenerationContext,
   shouldUseExplicitBeatReferences,
@@ -316,10 +318,46 @@ export function resolveBeatVideoReferences(
       promptToken: `prop [${index + 1}]`,
     })
   )
-  const locationRefEntry = buildLocationReferenceEntry(
+  let locationRefEntry = buildLocationReferenceEntry(
     mappedLocation,
     characterRefEntries.length + propRefEntries.length
   )
+  if (!locationRefEntry) {
+    // When no library LocationReference image is drawn yet (or the beat has an
+    // explicit start-frame environment still), fall back to the beat's valid opening
+    // frame image as a location [1] reference so Omni reference_to_video anchors on
+    // the start-frame environment instead of inventing the setting from text alone.
+    const explicitStartUrl = beat.storyboardStartImageUrl?.trim()
+    const startHasDarkState = beatHasOpeningEnvironmentState(beat.beatDirection?.startFrame || '')
+    const stillPromptCoversDarkState =
+      !startHasDarkState ||
+      beatHasOpeningEnvironmentState(beat.storyboardImagePrompt || '') ||
+      beatHasOpeningEnvironmentState(beat.beatDirection?.framePrompt || '')
+    const nonStaleStillUrl =
+      !isBeatFrameStale(beat) && stillPromptCoversDarkState
+        ? beat.storyboardImageUrl?.trim()
+        : undefined
+    const fallbackEnvUrl =
+      explicitStartUrl ||
+      (characterRefEntries.length === 0 && propRefEntries.length === 0 ? nonStaleStillUrl : undefined)
+    if (fallbackEnvUrl) {
+      locationRefEntry = buildLocationReferenceEntry(
+        {
+          imageUrl: fallbackEnvUrl,
+          location:
+            mappedLocation?.location ||
+            locationRef?.location ||
+            beatContext.locationName ||
+            'Opening frame environment',
+          description:
+            beat.beatDirection?.startFrame ||
+            beat.beatDirection?.frozenMoment ||
+            mappedLocation?.description,
+        },
+        characterRefEntries.length + propRefEntries.length
+      )
+    }
+  }
   if (locationRefEntry) locationRefEntry.promptToken = 'location [1]'
 
   const allPrioritized = [
