@@ -209,6 +209,8 @@ export interface SceneStoryboardFrameViewerProps {
   /** Shared beat selection with Direction, Audio, and Video. */
   selectedBeatId?: string | null
   onSelectBeat?: (beatId: string) => void
+  /** Whether shot/still prompts are currently being updated or saved. */
+  isUpdatingPrompts?: boolean
 }
 
 interface StoryboardSlotHandlers {
@@ -577,6 +579,7 @@ export function SceneStoryboardFrameViewer({
   onFrameGenerationModeChange,
   selectedBeatId = null,
   onSelectBeat,
+  isUpdatingPrompts = false,
 }: SceneStoryboardFrameViewerProps) {
   const tExpressScene = useTranslations('production.expressScene')
   const tStillPolicy = useTranslations('production.direction.stillPolicy')
@@ -1019,7 +1022,7 @@ export function SceneStoryboardFrameViewer({
     !sceneExpressPreflight.ok && !expressCanDrawMissingReferences
 
   const sceneExpressDisabled =
-    isExpressRunning || (!expressGateBlocked && expressPreflightBlocks)
+    isExpressRunning || isUpdatingPrompts || (!expressGateBlocked && expressPreflightBlocks)
 
   const sceneExpressTooltip = expressPreflightBlocks
     ? sceneExpressPreflight.errors[0]
@@ -1167,7 +1170,9 @@ export function SceneStoryboardFrameViewer({
         isFirstTimeFrameGeneration && onExpressSceneGenerate
           ? openExpressSceneDialog
           : undefined,
-      generateBlockedReason: referenceGateMessage || undefined,
+      generateBlockedReason: isUpdatingPrompts
+        ? 'Updating shot prompts — please wait…'
+        : referenceGateMessage || undefined,
     }),
     [
       sceneIndex,
@@ -1201,6 +1206,7 @@ export function SceneStoryboardFrameViewer({
       isFirstTimeFrameGeneration,
       onExpressSceneGenerate,
       openExpressSceneDialog,
+      isUpdatingPrompts,
     ]
   )
 
@@ -1396,13 +1402,22 @@ export function SceneStoryboardFrameViewer({
                     : ''}
                 </span>
                 <div className="flex items-center gap-2 flex-wrap">
+                  {isUpdatingPrompts && (
+                    <span
+                      data-testid="stills-updating-prompts-badge"
+                      className="inline-flex h-7 items-center gap-1.5 rounded border border-cyan-500/40 bg-cyan-500/10 px-2 text-[10px] font-medium text-cyan-200"
+                    >
+                      <Loader className="w-3 h-3 animate-spin text-cyan-400" />
+                      Updating prompts…
+                    </span>
+                  )}
                   {preVisStale && onSyncPreVisToScript && (
                     <Button
                       type="button"
                       variant="outline"
                       size="sm"
                       className="h-7 text-[10px] border-amber-500/50 text-amber-300 hover:bg-amber-500/15"
-                      disabled={isExpressRunning}
+                      disabled={isExpressRunning || isUpdatingPrompts}
                       onClick={() => void onSyncPreVisToScript()}
                     >
                       <RefreshCw className="w-3 h-3 mr-0.5" />
@@ -1672,6 +1687,7 @@ export function SceneStoryboardFrameViewer({
                             size="sm"
                             disabled={
                               isExpressRunning ||
+                              isUpdatingPrompts ||
                               generatingDialogueFrames.has(
                                 `${sceneIndex}-beat-${previewSlot.beatId}-frames`
                               ) ||

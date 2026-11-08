@@ -92,6 +92,7 @@ import {
   reorderSegmentsToMatchBeats,
 } from '@/lib/scene/deriveSegmentsFromBeats'
 import { restoreIncludedMixerBeats } from '@/lib/scene/mixerBeatInclude'
+import { refreshProductionSegmentVideoPrompts } from '@/lib/scene/syncBeatVideoPrompt'
 import { mergeSceneProductionData } from '@/lib/storyboard/mergeProductionMedia'
 import { invalidateChangedBeatFramesOnScene, applyDeepRestructureAssetClear, REVISION_DEPTH_SCENE_KEY, type RevisionDepth } from '@/lib/script/structuredSceneRevision'
 import { replaceSceneWithSplit } from '@/lib/script/sceneDecomposition'
@@ -1777,6 +1778,59 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
   // and that changes are persisted to the database
   // Reference Library opens in a dialog (see openReferenceLibrary below)
 
+  const promptSyncInFlightCountRef = useRef(0)
+  const [isUpdatingScriptPrompts, setIsUpdatingScriptPrompts] = useState(false)
+  const beginPromptSync = useCallback(() => {
+    promptSyncInFlightCountRef.current += 1
+    setIsUpdatingScriptPrompts(true)
+  }, [])
+  const endPromptSync = useCallback(() => {
+    promptSyncInFlightCountRef.current = Math.max(0, promptSyncInFlightCountRef.current - 1)
+    if (promptSyncInFlightCountRef.current === 0) {
+      setIsUpdatingScriptPrompts(false)
+    }
+  }, [])
+  const applySceneProductionUpdateRef = useRef<
+    ((
+      sceneId: string,
+      updater:
+        | SceneProductionData
+        | ((current: SceneProductionData | undefined) => SceneProductionData | undefined)
+    ) => void) | null
+  >(null)
+
+  const syncProductionPromptsForScenes = useCallback(
+    (scenesList: any[]) => {
+      if (!Array.isArray(scenesList) || scenesList.length === 0) return
+      const currentMap = sceneProductionStateRef.current
+      if (!currentMap || Object.keys(currentMap).length === 0) return
+      scenesList.forEach((sceneEntry, idx) => {
+        if (!sceneEntry || typeof sceneEntry !== 'object') return
+        const sceneKey = getSceneProductionKey(sceneEntry as Scene, idx)
+        const currentProd = sceneProductionStateRef.current[sceneKey]
+        if (!currentProd?.segments?.length) return
+        const refreshedSegments = refreshProductionSegmentVideoPrompts(
+          currentProd.segments,
+          sceneEntry as Record<string, unknown>,
+          { artStyleId: lockedArtStyle }
+        )
+        if (!refreshedSegments) return
+        const refreshed: SceneProductionData = {
+          ...currentProd,
+          segments: refreshedSegments,
+        }
+        if (applySceneProductionUpdateRef.current) {
+          applySceneProductionUpdateRef.current(sceneKey, () => refreshed)
+        } else {
+          const nextState = { ...sceneProductionStateRef.current, [sceneKey]: refreshed }
+          sceneProductionStateRef.current = nextState
+          setSceneProductionState(nextState)
+        }
+      })
+    },
+    [lockedArtStyle]
+  )
+
   const handleScriptChange = useCallback(async (
     updatedScript: any,
     options?: { trustIncomingAudio?: boolean }
@@ -1807,6 +1861,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     setScript(mergedScript)
     scriptRef.current = mergedScript
     setScriptEditedAt(Date.now())
+    syncProductionPromptsForScenes(mergedScenes)
     
     // Guard: Don't save if projectId is invalid
     if (!isValidProjectId(projectId)) {
@@ -1823,6 +1878,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     // RACE CONDITION FIX: Use projectRef for latest metadata instead of stale closure
     const currentProject = projectRef.current || project
     if (mergedScenes.length > 0 && currentProject) {
+      beginPromptSync()
       try {
         const existingMetadata = currentProject?.metadata || {}
         const existingVisionPhase = existingMetadata.visionPhase || {}
@@ -1844,11 +1900,14 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           }
         }
         
-        const response = await serializedProjectSave(
-          payload,
-          'handleScriptChange',
-          { refreshLiveScript: true, mintScriptUpdatedAt: true }
-        )
+        const [response] = await Promise.all([
+          serializedProjectSave(
+            payload,
+            'handleScriptChange',
+            { refreshLiveScript: true, mintScriptUpdatedAt: true }
+          ),
+          productionPersistDrainPromiseRef.current ?? Promise.resolve(),
+        ])
         
         if (!response.ok) {
           console.error('[handleScriptChange] Failed to save script to database')
@@ -1865,9 +1924,11 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           const { toast } = require('sonner')
           toast.error('Failed to save script changes')
         } catch {}
+      } finally {
+        endPromptSync()
       }
     }
-  }, [projectId])
+  }, [projectId, syncProductionPromptsForScenes, beginPromptSync, endPromptSync])
 
   const handleAudioSlotSaved = useCallback((payload: AudioSlotSavedPayload) => {
     setScript((prev) => {
@@ -2892,6 +2953,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     },
     [persistSceneProduction]
   )
+  applySceneProductionUpdateRef.current = applySceneProductionUpdate
 
   useEffect(() => {
     const handler = (event: Event) => {
@@ -4811,6 +4873,10 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       segmentGenerateInFlightRef.current.add(inFlightKey)
 
       try {
+      await Promise.all([
+        saveQueueRef.current ?? Promise.resolve(),
+        productionPersistDrainPromiseRef.current ?? Promise.resolve(),
+      ])
       // Language-stream clips must not mark the English master as rolling.
       if (!languageClip) {
       applySceneProductionUpdate(sceneId, (current) => {
@@ -4843,7 +4909,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         const segmentIndexForApi = currentProduction?.segments.findIndex((s) => s.segmentId === segmentId) ?? -1
         const totalSegmentsForApi = currentProduction?.segments.length ?? 0
 
-        const scriptScenes = script?.script?.scenes ?? []
+        const scriptScenes = (scriptRef.current || script)?.script?.scenes ?? []
         const visionScene = scriptScenes.find(
           (s: any, i: number) => (s.id || s.sceneId || `scene-${i}`) === sceneId
         )
@@ -13601,7 +13667,8 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       return
     }
 
-    const scene = script?.script?.scenes?.[sceneIdx]
+    const currentScript = scriptRef.current || script
+    const scene = currentScript?.script?.scenes?.[sceneIdx]
     if (!scene) {
       try { const { toast } = require('sonner'); toast.error('Scene not found') } catch {}
       return
@@ -13619,13 +13686,14 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     // beat — a choice just made in the reference dialog would otherwise be
     // invisible to the server.
     if (referenceSelection) {
-      const updatedScenes = [...(script.script.scenes || [])]
+      const latestScript = scriptRef.current || script
+      const updatedScenes = [...(latestScript.script.scenes || [])]
       updatedScenes[sceneIdx] = applyBeatReferenceSelectionToScene(
         updatedScenes[sceneIdx],
         beatId,
         referenceSelection
       )
-      setScript({ ...script, script: { ...script.script, scenes: updatedScenes } })
+      setScript({ ...latestScript, script: { ...latestScript.script, scenes: updatedScenes } })
       const saved = await persistVisionScriptScenes(updatedScenes, 'handleGenerateBeatFrameImage')
       if (!saved) {
         try { const { toast } = require('sonner'); toast.error('Failed to save reference selection') } catch {}
@@ -13644,7 +13712,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
   }
 
   const handleRequestGenerateBeatFrame = async (sceneIdx: number, beatId: string) => {
-    const scene = script?.script?.scenes?.[sceneIdx]
+    const scene = (scriptRef.current || script)?.script?.scenes?.[sceneIdx]
     if (!scene) {
       await handleGenerateBeatFrameImage(sceneIdx, beatId)
       return
@@ -13990,12 +14058,22 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       script: { ...latestScript.script, scenes: updatedScenes },
     }
     setScript(nextScript)
-    const saved = await persistVisionScriptScenes(updatedScenes, 'persistStillDirectorPatch')
-    if (!saved) {
-      toast.error('Failed to save directed still')
-      return false
+    scriptRef.current = nextScript
+    syncProductionPromptsForScenes(updatedScenes)
+    beginPromptSync()
+    try {
+      const [saved] = await Promise.all([
+        persistVisionScriptScenes(updatedScenes, 'persistStillDirectorPatch'),
+        productionPersistDrainPromiseRef.current ?? Promise.resolve(),
+      ])
+      if (!saved) {
+        toast.error('Failed to save directed still')
+        return false
+      }
+      return true
+    } finally {
+      endPromptSync()
     }
-    return true
   }
 
   const persistBeatImageSafetyError = async (
@@ -14044,7 +14122,11 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
 
   const handleDirectFrameGenerate = async (options: PreVisDirectGenerationOptions) => {
     const { sceneIndex, slot } = options
-    const scene = script?.script?.scenes?.[sceneIndex]
+    await Promise.all([
+      saveQueueRef.current ?? Promise.resolve(),
+      productionPersistDrainPromiseRef.current ?? Promise.resolve(),
+    ])
+    const scene = (scriptRef.current || script)?.script?.scenes?.[sceneIndex]
     if (!scene) {
       toast.error('Scene not found')
       return
@@ -17715,7 +17797,11 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
 
       try {
         if (!options.dialogueOnly) {
-          await syncVisionReferencesForExpress()
+          await Promise.all([
+          saveQueueRef.current ?? Promise.resolve(),
+          productionPersistDrainPromiseRef.current ?? Promise.resolve(),
+        ])
+        await syncVisionReferencesForExpress({ includeScript: true })
         }
         if (abortController.signal.aborted) {
           finishProjectRun({ cancelled: true })
@@ -18688,7 +18774,11 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           updateOverlayPhase('references', 'done')
         }
 
-        await syncVisionReferencesForExpress()
+        await Promise.all([
+          saveQueueRef.current ?? Promise.resolve(),
+          productionPersistDrainPromiseRef.current ?? Promise.resolve(),
+        ])
+        await syncVisionReferencesForExpress({ includeScript: true })
         if (abortController.signal.aborted) {
           finishBeatFrameOverlay({ cancelled: true })
           return
@@ -20617,6 +20707,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
               <ScriptPanel 
                 script={script}
                 onScriptChange={handleScriptChange}
+                isUpdatingPrompts={isUpdatingScriptPrompts}
                 onAudioSlotSaved={handleAudioSlotSaved}
                 isGenerating={isGenerating}
                 onExpandScene={expandScene}

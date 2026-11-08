@@ -49,7 +49,7 @@ export interface BeatDirectionEditorProps {
   sceneIdx: number
   scenes: any[]
   script: any
-  onScriptChange?: (script: any) => void
+  onScriptChange?: (script: any) => void | Promise<void>
   readOnly?: boolean
   className?: string
   /**
@@ -361,7 +361,7 @@ export function BeatDirectionEditor({
 
   const saveDirectionPreview = (patch: StillDirectorPatch) => {
     if (!onScriptChange) return
-    onScriptChange({
+    return onScriptChange({
       ...script,
       script: {
         ...script.script,

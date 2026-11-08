@@ -620,3 +620,52 @@ describe('buildStillDirectorUserPrompt', () => {
     expect(without).not.toContain('SAFETY COMPLIANCE')
   })
 })
+
+describe('Shot direction prompt update synchronization and generation gating', () => {
+  it('awaits onSaveDirection in BeatDirectorDialog and disables generation controls while prompts update', () => {
+    const dialog = readSource('src/components/vision/BeatDirectorDialog.tsx')
+    const editor = readSource('src/components/vision/BeatDirectionEditor.tsx')
+    const videoQueue = readSource('src/hooks/useVideoQueue.ts')
+    const consoleImpl = readSource(
+      'src/components/vision/scene-production/DirectorConsoleImpl.tsx'
+    )
+    const gallery = readSource('src/components/vision/scene-production/BeatVideoGallery.tsx')
+    const frameViewer = readSource('src/components/vision/SceneStoryboardFrameViewer.tsx')
+    const directorDialog = readSource('src/components/vision/scene-production/DirectorDialog.tsx')
+    const page = readSource('src/app/dashboard/workflow/vision/[projectId]/page.tsx')
+
+    // BeatDirectorDialog awaits onSaveDirection and shows Updating prompts…
+    expect(dialog).toContain('await onSaveDirection(')
+    expect(dialog).toContain("{saving ? 'Updating prompts…' : 'Save direction'}")
+    expect(editor).toContain('return onScriptChange({')
+
+    // useVideoQueue tracks configInputSignature, exposes isUpdatingPrompts, includes autoConfigs in contentHash,
+    // and refreshes cached userConfigs when autoConfig.prompt changes after a direction save.
+    expect(videoQueue).toContain('isUpdatingPrompts: boolean')
+    expect(videoQueue).toContain('const isUpdatingPrompts = !isReady || !configsReady || settledConfigSignature !== configInputSignature')
+    expect(videoQueue).toContain('autoConfigs: Array.from(configsMap.entries())')
+    expect(videoQueue).toContain('changedAutoPrompts.forEach')
+
+    // DirectorConsoleImpl synchronously refreshes segment prompts on render and combines prompt-updating states
+    expect(consoleImpl).toContain('const pendingProductionRefresh = useMemo(')
+    expect(consoleImpl).toContain('const segments = pendingProductionRefresh ?? productionData?.segments ?? EMPTY_SEGMENTS')
+    expect(consoleImpl).toContain('const effectiveIsUpdatingPrompts = Boolean(')
+    expect(consoleImpl).toContain('data-testid="clips-updating-prompts-badge"')
+    expect(consoleImpl).toContain('disabled={queue.length === 0 || effectiveIsUpdatingPrompts}')
+
+    // BeatVideoGallery, SceneStoryboardFrameViewer, and DirectorDialog gate generation while isUpdatingPrompts is true
+    expect(gallery).toContain('data-testid="updating-shot-prompts-badge"')
+    expect(gallery).toContain('disabled={isUpdatingPrompts || generatingClipId === previewSegment.segmentId}')
+    expect(gallery).toContain('disabled={generatingLanguageClip || isUpdatingPrompts}')
+    expect(frameViewer).toContain('data-testid="stills-updating-prompts-badge"')
+    expect(frameViewer).toContain("isUpdatingPrompts\n        ? 'Updating shot prompts — please wait…'")
+    expect(directorDialog).toContain('disabled={!canGenerateWithCustomPrompt || isUpdatingPrompts}')
+
+    // Vision page synchronously refreshes production segment prompts on script/direction save and awaits in-flight saves before generation
+    expect(page).toContain('syncProductionPromptsForScenes(mergedScenes)')
+    expect(page).toContain('syncProductionPromptsForScenes(updatedScenes)')
+    expect(page).toContain('await syncVisionReferencesForExpress({ includeScript: true })')
+    expect(page).toContain('isUpdatingPrompts={isUpdatingScriptPrompts}')
+  })
+})
+

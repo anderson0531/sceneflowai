@@ -66,6 +66,8 @@ export interface VideoQueueState {
   isRateLimitPaused: boolean
   /** Seconds remaining until rate limit pause ends */
   rateLimitCountdown: number
+  /** Whether segment video prompts/configs are currently rebuilding after a direction or beat update */
+  isUpdatingPrompts: boolean
 }
 
 export interface BatchRenderOptionsWithOverrides extends BatchRenderOptions {
@@ -175,6 +177,40 @@ export function useVideoQueue(
   // ('Cannot access tO/tz before initialization') when the queue first builds.
   const [configsMap, setConfigsMap] = useState<Map<string, SegmentConfigResult>>(new Map())
   const [configsReady, setConfigsReady] = useState(false)
+  const [settledConfigSignature, setSettledConfigSignature] = useState<string>('')
+  const lastAutoPromptBySegmentRef = useRef<Map<string, string>>(new Map())
+
+  const configInputSignature = useMemo(() => {
+    const rawBeats = Array.isArray((segmentGuideContext?.fullScene as any)?.beats)
+      ? ((segmentGuideContext?.fullScene as any).beats as Array<Record<string, any>>)
+      : []
+    return JSON.stringify({
+      sceneImageUrl: sceneImageUrl || '',
+      defaultAspectRatio,
+      segments: (segments || []).map((s) => ({
+        id: s.segmentId,
+        beatId: (s as any).beatId || '',
+        generatedPrompt: s.generatedPrompt || '',
+        videoPrompt: (s as any).videoPrompt || '',
+        userEditedPrompt: s.userEditedPrompt || '',
+        userInstruction: s.userInstruction || '',
+        startFrameUrl: s.startFrameUrl || s.references?.startFrameUrl || '',
+        endFrameUrl: s.endFrameUrl || s.references?.endFrameUrl || '',
+      })),
+      beats: rawBeats.map((b) => ({
+        id: b?.beatId || b?.id || '',
+        updatedAt: b?.beatDirection?.updatedAt || '',
+        dirVideoPrompt: b?.beatDirection?.videoPrompt || '',
+        dirFramePrompt: b?.beatDirection?.framePrompt || '',
+        videoPrompt: b?.videoPrompt || '',
+        stillPrompt: b?.storyboardImagePrompt || '',
+        startUrl: b?.storyboardStartImageUrl || b?.storyboardImageUrl || '',
+        endUrl: b?.storyboardEndImageUrl || '',
+        line: b?.line || '',
+        action: b?.actionDescription || '',
+      })),
+    })
+  }, [segments, sceneImageUrl, segmentGuideContext?.fullScene, defaultAspectRatio])
 
   useEffect(() => {
     if (!isReady) {
@@ -187,28 +223,65 @@ export function useVideoQueue(
     import('@/lib/vision/segmentConfigBuilder')
       .then(({ buildSegmentConfigsMap }) => {
         if (cancelled) return
-        setConfigsMap(
-          buildSegmentConfigsMap(
-            segments,
-            sceneImageUrl,
-            segmentGuideContext,
-            defaultAspectRatio
-          )
+        const nextMap = buildSegmentConfigsMap(
+          segments,
+          sceneImageUrl,
+          segmentGuideContext,
+          defaultAspectRatio
         )
+        setConfigsMap(nextMap)
+
+        const changedAutoPrompts = new Map<string, SegmentConfigResult['config']>()
+        nextMap.forEach((res, segId) => {
+          const prevAutoPrompt = lastAutoPromptBySegmentRef.current.get(segId)
+          const nextAutoPrompt = res.config.prompt || ''
+          if (prevAutoPrompt !== undefined && prevAutoPrompt !== nextAutoPrompt) {
+            changedAutoPrompts.set(segId, res.config)
+          }
+          lastAutoPromptBySegmentRef.current.set(segId, nextAutoPrompt)
+        })
+
+        if (changedAutoPrompts.size > 0) {
+          setUserConfigs((prev) => {
+            if (prev.size === 0) return prev
+            let mutated = false
+            const next = new Map(prev)
+            changedAutoPrompts.forEach((freshAutoCfg, segId) => {
+              const existing = next.get(segId)
+              if (!existing || existing.useCustomApiPrompt) return
+              const seg = segments.find((s) => s.segmentId === segId)
+              if (seg?.userEditedPrompt?.trim()) return
+              next.set(segId, {
+                ...existing,
+                prompt: freshAutoCfg.prompt,
+                visualPrompt: freshAutoCfg.visualPrompt || existing.visualPrompt,
+                motionPrompt: freshAutoCfg.motionPrompt || existing.motionPrompt,
+                guidePrompt: freshAutoCfg.guidePrompt || existing.guidePrompt,
+              })
+              mutated = true
+            })
+            return mutated ? next : prev
+          })
+        }
+
         setConfigsReady(true)
+        setSettledConfigSignature(configInputSignature)
       })
       .catch((err) => {
         console.error('[useVideoQueue] Failed to load segment config builder:', err)
         if (!cancelled) {
           setConfigsMap(new Map())
           setConfigsReady(true)
+          setSettledConfigSignature(configInputSignature)
         }
       })
 
     return () => {
       cancelled = true
     }
-  }, [isReady, segments, sceneImageUrl, segmentGuideContext, defaultAspectRatio])
+  }, [isReady, segments, sceneImageUrl, segmentGuideContext, defaultAspectRatio, configInputSignature])
+
+  const isUpdatingPrompts = !isReady || !configsReady || settledConfigSignature !== configInputSignature
   
   // Refresh cached user configs when live beat start frames change
   useEffect(() => {
@@ -294,6 +367,15 @@ export function useVideoQueue(
         resolution: s.resolution,
         qualityTier: s.qualityTier,
         prompt: s.generatedPrompt,
+        videoPrompt: (s as any).videoPrompt,
+        userEditedPrompt: s.userEditedPrompt,
+      })),
+      autoConfigs: Array.from(configsMap.entries()).map(([id, res]) => ({
+        id,
+        mode: res.config.mode,
+        prompt: res.config.prompt,
+        start: res.config.startFrameUrl?.slice(-20),
+        end: res.config.endFrameUrl?.slice(-20),
       })),
       userConfigs: Array.from(userConfigs.entries()).map(([id, cfg]) => ({
         id,
@@ -303,7 +385,7 @@ export function useVideoQueue(
         videoProvider: cfg.videoProvider,
         approvalStatus: cfg.approvalStatus,
         duration: cfg.duration,
-        prompt: cfg.prompt?.slice(0, 60),
+        prompt: cfg.prompt,
       })),
     })
     
@@ -332,7 +414,8 @@ export function useVideoQueue(
           ? '16:9'
           : defaultAspectRatio
 
-      // Prefer user config over auto config
+      // Prefer user config over auto config, while syncing fresh auto-generated direction prompts
+      // when the segment does not have a manual userEditedPrompt override.
       let config = userConfig || autoConfig?.config || {
         mode: 'T2V' as VideoGenerationMethod,
         prompt: '',
@@ -347,6 +430,23 @@ export function useVideoQueue(
         sourceVideoUrl: null,
         approvalStatus: 'auto-ready' as const,
         confidence: 50,
+      }
+
+      if (
+        userConfig &&
+        autoConfig?.config?.prompt &&
+        !segment.userEditedPrompt?.trim() &&
+        !userConfig.useCustomApiPrompt &&
+        userConfig.prompt !== autoConfig.config.prompt &&
+        !userConfig.prompt?.startsWith(autoConfig.config.prompt)
+      ) {
+        config = {
+          ...config,
+          prompt: autoConfig.config.prompt,
+          visualPrompt: autoConfig.config.visualPrompt || config.visualPrompt,
+          motionPrompt: autoConfig.config.motionPrompt || config.motionPrompt,
+          guidePrompt: autoConfig.config.guidePrompt || config.guidePrompt,
+        }
       }
       
       const liveStartFrameUrl = resolveEffectiveStartFrameUrl(
@@ -912,6 +1012,7 @@ export function useVideoQueue(
     failedCount,
     isRateLimitPaused,
     rateLimitCountdown,
+    isUpdatingPrompts,
     // Actions
     updateConfig,
     approveSegment,

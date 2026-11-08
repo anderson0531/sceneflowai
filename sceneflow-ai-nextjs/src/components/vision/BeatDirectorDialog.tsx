@@ -62,7 +62,7 @@ export interface BeatDirectorDialogProps {
   locationReferences: DirectorLocation[]
   objectReferences: DirectorObject[]
   referenceSelection: BeatReferenceSelection
-  onSaveDirection: (patch: StillDirectorPatch) => void
+  onSaveDirection: (patch: StillDirectorPatch) => void | Promise<void>
   onToggleCharacter?: (character: DirectorCharacter, connect: boolean) => void
   onToggleObject: (object: DirectorObject, connect: boolean) => void
   onSelectLocation: (locationRefId: string | null, locationVersionId: string | null) => void
@@ -143,8 +143,9 @@ export function BeatDirectorDialog({
   const [preview, setPreview] = useState<StillDirectorPatch | null>(initialPatch)
   const [previewing, setPreviewing] = useState(false)
   const [optimizing, setOptimizing] = useState(false)
+  const [saving, setSaving] = useState(false)
   const [safety, setSafety] = useState(initialSafety)
-  const busy = previewing || optimizing
+  const busy = previewing || optimizing || saving
 
   useEffect(() => {
     if (!open) return
@@ -256,12 +257,19 @@ export function BeatDirectorDialog({
     }
   }
 
-  const saveDirection = () => {
-    if (!preview) return
-    onSaveDirection(safety ? applyPolicyComplianceToPatch(preview) : preview)
-    setInstruction('')
-    setPreview(null)
-    onOpenChange(false)
+  const saveDirection = async () => {
+    if (!preview || saving) return
+    setSaving(true)
+    try {
+      await onSaveDirection(safety ? applyPolicyComplianceToPatch(preview) : preview)
+      setInstruction('')
+      setPreview(null)
+      onOpenChange(false)
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Failed to save direction')
+    } finally {
+      setSaving(false)
+    }
   }
 
   return (
@@ -344,11 +352,12 @@ export function BeatDirectorDialog({
             ))}
             <button
               type="button"
-              className="mt-2 rounded bg-teal-700 px-3 py-1.5 text-xs text-white hover:bg-teal-600 disabled:opacity-50"
-              disabled={readOnly}
-              onClick={saveDirection}
+              className="mt-2 inline-flex items-center gap-1.5 rounded bg-teal-700 px-3 py-1.5 text-xs text-white hover:bg-teal-600 disabled:opacity-50"
+              disabled={readOnly || busy}
+              onClick={() => void saveDirection()}
             >
-              Save direction
+              {saving ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : null}
+              {saving ? 'Updating prompts…' : 'Save direction'}
             </button>
           </div>
         )}

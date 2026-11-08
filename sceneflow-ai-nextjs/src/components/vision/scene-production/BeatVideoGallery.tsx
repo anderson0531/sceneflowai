@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { AlertTriangle, Camera, Check, Clapperboard, Copy, Download, Film, Maximize2, Minimize2, Pause, PlayCircle, Settings2, Subtitles, Upload, Wand2 } from 'lucide-react'
+import { AlertTriangle, Camera, Check, Clapperboard, Copy, Download, Film, Loader2, Maximize2, Minimize2, Pause, PlayCircle, Settings2, Subtitles, Upload, Wand2 } from 'lucide-react'
 import { toast } from 'sonner'
 import { saveVideoFile } from '@/lib/download/saveFile'
 import { SUPPORTED_LANGUAGES } from '@/constants/languages'
@@ -159,6 +159,8 @@ interface BeatVideoGalleryProps {
   generatingLanguageClipId?: string | null
   /** Toggle whether the clip prompt intentionally includes burned-in captions (default false). */
   onToggleClipCaptions?: (segmentId: string, nextIncludeCaptions: boolean) => void
+  /** Whether shot/clip prompts are currently being updated or saved. */
+  isUpdatingPrompts?: boolean
 }
 
 export function BeatVideoGallery({
@@ -194,6 +196,7 @@ export function BeatVideoGallery({
   onRestoreLanguageVersion,
   generatingLanguageClipId = null,
   onToggleClipCaptions,
+  isUpdatingPrompts = false,
 }: BeatVideoGalleryProps) {
   const [selectedKey, setSelectedKey] = useState<string | null>(clips[0]?.key ?? null)
   const [attention, setAttention] = useState<VideoAttentionFilter>('all')
@@ -692,6 +695,9 @@ export function BeatVideoGallery({
                   className="w-full"
                   imageUrl={preview.thumbnailUrl}
                   imagePrompt={preview.prompt}
+                  generateBlockedReason={
+                    isUpdatingPrompts ? 'Updating shot prompts — please wait…' : undefined
+                  }
                   showControls
                   controlsVariant="comfortable"
                   alwaysShowControls
@@ -825,16 +831,37 @@ export function BeatVideoGallery({
                         Download
                       </Button>
                     )}
+                    {isUpdatingPrompts && (
+                      <span
+                        data-testid="updating-shot-prompts-badge"
+                        className="inline-flex h-7 items-center gap-1.5 rounded border border-cyan-500/40 bg-cyan-500/10 px-2 text-[10px] font-medium text-cyan-200"
+                      >
+                        <Loader2 className="h-3 w-3 animate-spin text-cyan-400" />
+                        Updating prompts…
+                      </span>
+                    )}
                     {onGenerateClip && !languageStream && (
                       <Button
                         type="button"
                         size="sm"
                         variant="outline"
                         className="h-7 border-indigo-500/40 text-[10px] text-indigo-200"
+                        disabled={isUpdatingPrompts || generatingClipId === previewSegment.segmentId}
+                        title={
+                          isUpdatingPrompts ? 'Updating shot prompts — please wait…' : undefined
+                        }
                         onClick={() => onGenerateClip(previewSegment)}
                       >
-                        <Wand2 className="mr-1 h-3 w-3" />
-                        {previewHasClip ? 'Regenerate clip' : 'Generate clip'}
+                        {isUpdatingPrompts ? (
+                          <Loader2 className="mr-1 h-3 w-3 animate-spin" />
+                        ) : (
+                          <Wand2 className="mr-1 h-3 w-3" />
+                        )}
+                        {isUpdatingPrompts
+                          ? 'Updating prompts…'
+                          : previewHasClip
+                            ? 'Regenerate clip'
+                            : 'Generate clip'}
                       </Button>
                     )}
                     {languageStream && onGenerateLanguageVersion && (
@@ -843,15 +870,24 @@ export function BeatVideoGallery({
                         size="sm"
                         variant="outline"
                         className="h-7 border-indigo-500/40 text-[10px] text-indigo-200"
-                        disabled={generatingLanguageClip}
+                        disabled={generatingLanguageClip || isUpdatingPrompts}
+                        title={
+                          isUpdatingPrompts ? 'Updating shot prompts — please wait…' : undefined
+                        }
                         onClick={() => onGenerateLanguageVersion(previewSegment)}
                       >
-                        <Wand2 className="mr-1 h-3 w-3" />
+                        {generatingLanguageClip || isUpdatingPrompts ? (
+                          <Loader2 className="mr-1 h-3 w-3 animate-spin" />
+                        ) : (
+                          <Wand2 className="mr-1 h-3 w-3" />
+                        )}
                         {generatingLanguageClip
                           ? `Generating ${languageName} version…`
-                          : languageOptions.length > 0
-                            ? `New ${languageName} version`
-                            : `Generate ${languageName} version`}
+                          : isUpdatingPrompts
+                            ? 'Updating prompts…'
+                            : languageOptions.length > 0
+                              ? `New ${languageName} version`
+                              : `Generate ${languageName} version`}
                       </Button>
                     )}
                     {onToggleClipCaptions && preview.kind !== 'title' && (
@@ -895,6 +931,7 @@ export function BeatVideoGallery({
                         size="sm"
                         variant="outline"
                         className="h-7 text-[10px]"
+                        disabled={isUpdatingPrompts}
                         onClick={() => onTake(previewSegment)}
                       >
                         <Settings2 className="mr-1 h-3 w-3" />
@@ -934,6 +971,7 @@ export function BeatVideoGallery({
                         size="sm"
                         variant="outline"
                         className="h-7 border-indigo-500/40 text-[10px] text-indigo-200"
+                        disabled={isUpdatingPrompts}
                         onClick={() => onRetake(previewSegment)}
                       >
                         Retake

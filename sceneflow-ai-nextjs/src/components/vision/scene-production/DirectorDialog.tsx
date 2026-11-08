@@ -226,6 +226,8 @@ interface DirectorDialogProps {
   onRegenerateStill?: () => void
   /** Scroll the visual prompt into view when the dialog opens. */
   focusPrompt?: boolean
+  /** Whether shot/clip prompts are currently being updated or saved. */
+  isUpdatingPrompts?: boolean
 }
 
 // Map internal mode names to VideoGenerationMethod
@@ -287,6 +289,7 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
   videoSourceMethod,
   onRegenerateStill,
   focusPrompt = false,
+  isUpdatingPrompts = false,
 }) => {
   const t = useTranslations('production.direction.director')
   const tp = useTranslations('production.direction.stillPolicy')
@@ -1240,6 +1243,34 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
 
     wasOpenRef.current = isOpen
   }, [isOpen, segment.segmentId, effectiveStartFrameUrl, initializeDialogState])
+
+  useEffect(() => {
+    if (!isOpen || settingsUserEdited || segment.userEditedPrompt?.trim()) return
+    const nextPrompt =
+      (mode === 'FRAME_TO_VIDEO' && effectiveEndFrameUrl)
+        ? generateFTVMotionPrompt(segment)
+        : autoConfig.prompt
+    if (nextPrompt && nextPrompt !== visualPrompt) {
+      setPrompt(nextPrompt)
+      setMotionPrompt(nextPrompt)
+      setVisualPrompt(nextPrompt)
+    }
+    const nextGuide = batchGuideSeed || autoConfig.guidePrompt || ''
+    if (nextGuide && nextGuide !== guidePrompt) {
+      setGuidePrompt(nextGuide)
+    }
+  }, [
+    isOpen,
+    settingsUserEdited,
+    segment,
+    mode,
+    effectiveEndFrameUrl,
+    autoConfig.prompt,
+    autoConfig.guidePrompt,
+    batchGuideSeed,
+    visualPrompt,
+    guidePrompt,
+  ])
 
   const handleSave = () => {
     const effectiveMethod = resolveStandardEffectiveMethod(mode)
@@ -2581,10 +2612,19 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
               <Button 
                 className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white disabled:opacity-50"
                 onClick={() => handleGenerate()}
-                disabled={!canGenerateWithCustomPrompt}
+                disabled={!canGenerateWithCustomPrompt || isUpdatingPrompts}
               >
-                <Play className="w-4 h-4 mr-2" />
-                {generateButtonLabel}
+                {isUpdatingPrompts ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    Updating prompts…
+                  </>
+                ) : (
+                  <>
+                    <Play className="w-4 h-4 mr-2" />
+                    {generateButtonLabel}
+                  </>
+                )}
               </Button>
             </div>
           </div>

@@ -372,6 +372,8 @@ export interface DirectorConsoleProps {
   onLanguageChange?: (language: string) => void
   /** Stored scene translations keyed by language, then scene index. */
   sceneTranslations?: Record<string, Record<number, { dialogue?: string[]; narration?: string }>>
+  /** Whether shot/still/clip prompts are currently being updated or saved. */
+  isUpdatingPrompts?: boolean
 }
 
 /** Slots for splitting Video / Mixer / Streams across parent section cards (ScriptPanel). */
@@ -456,13 +458,25 @@ export function DirectorConsoleRoot({
   selectedLanguage,
   onLanguageChange,
   sceneTranslations,
+  isUpdatingPrompts = false,
   children,
 }: DirectorConsoleProps & {
   children?: (slots: DirectorWorkflowSlots) => React.ReactNode
 }) {
+  // Synchronously refresh production segment video prompts when beat direction changes
+  // so the queue and clip gallery never read stale pre-save prompts on the first render.
+  const pendingProductionRefresh = useMemo(() => {
+    const rawSegments = productionData?.segments
+    const currentScene = scene as Record<string, unknown> | undefined
+    if (!rawSegments?.length || !currentScene) return null
+    return refreshProductionSegmentVideoPrompts(rawSegments, currentScene, {
+      artStyleId,
+    })
+  }, [productionData?.segments, scene, artStyleId])
+
   // Use stable EMPTY_SEGMENTS constant to prevent TDZ render loops
   // productionData?.segments || [] creates a new array reference each render
-  const segments = productionData?.segments ?? EMPTY_SEGMENTS
+  const segments = pendingProductionRefresh ?? productionData?.segments ?? EMPTY_SEGMENTS
   const beatFirstReadOnlyPrompts = isBeatFirstPipelineEnabled()
   const aspectClass = getAspectRatioTailwindClass(projectAspectRatio)
   const videoAspectRatio = toVideoAspectRatio(projectAspectRatio)
@@ -534,6 +548,7 @@ export function DirectorConsoleRoot({
     failedCount,
     isRateLimitPaused,
     rateLimitCountdown,
+    isUpdatingPrompts: isQueueUpdatingPrompts,
     updateConfig,
     processQueue,
     cancelRendering,
@@ -544,7 +559,7 @@ export function DirectorConsoleRoot({
     sceneImageUrl,
     onGenerate,
     segmentGuideContext,
-    () => productionData?.segments ?? EMPTY_SEGMENTS,
+    () => pendingProductionRefresh ?? productionData?.segments ?? EMPTY_SEGMENTS,
     videoAspectRatio,
     videoRunReport
   )
@@ -902,6 +917,14 @@ export function DirectorConsoleRoot({
     Record<string, Record<string, string>>
   >({})
   const inFlightTimedKeysRef = useRef<Set<string>>(new Set())
+  const [inFlightTimedAdaptCount, setInFlightTimedAdaptCount] = useState(0)
+  const isTranslatingTimedDialogue = inFlightTimedAdaptCount > 0
+  const effectiveIsUpdatingPrompts = Boolean(
+    isUpdatingPrompts ||
+      isQueueUpdatingPrompts ||
+      isTranslatingTimedDialogue ||
+      pendingProductionRefresh !== null
+  )
 
   useEffect(() => {
     const rawLang = productionTarget.language
@@ -962,6 +985,7 @@ export function DirectorConsoleRoot({
       const inFlightKey = `${langKey}:${beat.beatId}:${englishLine}`
       if (inFlightTimedKeysRef.current.has(inFlightKey)) continue
       inFlightTimedKeysRef.current.add(inFlightKey)
+      setInFlightTimedAdaptCount((count) => count + 1)
 
       void translateGuideDialogueLine(englishLine, langKey, {
         targetDurationSeconds,
@@ -985,6 +1009,9 @@ export function DirectorConsoleRoot({
         })
         .catch(() => {
           inFlightTimedKeysRef.current.delete(inFlightKey)
+        })
+        .finally(() => {
+          setInFlightTimedAdaptCount((count) => Math.max(0, count - 1))
         })
     }
 
@@ -1821,12 +1848,28 @@ export function DirectorConsoleRoot({
             } as const)
           : ({ engineId: 'natural-dialogue' } as const)
       const duration = snapDurationForEngine(item.config.duration || 10, selection)
-      const baseNext = applyVideoGenerationToConfig(item.config, policy, {
+      const freshOwnedPrompt =
+        !segment?.userEditedPrompt?.trim() &&
+        !item.config.useCustomApiPrompt &&
+        segment?.generatedPrompt?.trim() &&
+        beat &&
+        beatDirectionOwnsVideoPrompt(beat)
+          ? segment.generatedPrompt.trim()
+          : undefined
+      const baseNextRaw = applyVideoGenerationToConfig(item.config, policy, {
         mode: expressMethod,
         expressMode: true,
         duration,
         resolution: policy.resolution,
       })
+      const baseNext = freshOwnedPrompt
+        ? {
+            ...baseNextRaw,
+            prompt: freshOwnedPrompt,
+            visualPrompt: freshOwnedPrompt,
+            motionPrompt: freshOwnedPrompt,
+          }
+        : baseNextRaw
       if (policy.sourceMethod === 'frame' || expressMethod === 'FTV' || expressMethod === 'I2V') {
         const ftvPrompt =
           expressMethod === 'FTV' && segment && !segment.userEditedPrompt?.trim()
@@ -3056,20 +3099,31 @@ export function DirectorConsoleRoot({
         </>
       ) : (
         <>
+          {effectiveIsUpdatingPrompts && (
+            <span
+              data-testid="clips-updating-prompts-badge"
+              className="inline-flex h-7 items-center gap-1.5 rounded border border-cyan-500/40 bg-cyan-500/10 px-2 text-[10px] font-medium text-cyan-200"
+            >
+              <Loader2 className="w-3 h-3 animate-spin text-cyan-400" />
+              Updating prompts…
+            </span>
+          )}
           <Button
             size="sm"
             variant="outline"
             onClick={handleOpenVideoAgent}
-            disabled={queue.length === 0}
+            disabled={queue.length === 0 || effectiveIsUpdatingPrompts}
             className={
               videoClips.some((clip) => clip.status === 'complete' && clip.promptChanged)
                 ? 'h-7 px-2 text-[10px] font-medium border-amber-400/80 bg-amber-500/20 text-amber-200 ring-1 ring-amber-400/35 hover:bg-amber-500/30 hover:border-amber-400 shadow-md hover:shadow-lg transition-all'
                 : 'h-7 px-2 text-[10px] font-medium border-indigo-500/50 text-indigo-300 hover:bg-indigo-500/10 hover:border-indigo-400 shadow-md hover:shadow-lg transition-all'
             }
             title={
-              videoClips.some((clip) => clip.status === 'complete' && clip.promptChanged)
-                ? 'Action needed: One or more clips have "Prompt changed" — run Video Agent to refresh stale clips'
-                : tVideoAgent('toolbarTitle')
+              effectiveIsUpdatingPrompts
+                ? 'Updating shot prompts — please wait…'
+                : videoClips.some((clip) => clip.status === 'complete' && clip.promptChanged)
+                  ? 'Action needed: One or more clips have "Prompt changed" — run Video Agent to refresh stale clips'
+                  : tVideoAgent('toolbarTitle')
             }
           >
             <Zap className="w-3 h-3 mr-1" />
@@ -3098,6 +3152,7 @@ export function DirectorConsoleRoot({
         toolbar={generateControls}
         aspectClass={aspectClass}
         isRendering={isRendering}
+        isUpdatingPrompts={effectiveIsUpdatingPrompts}
         progress={progress}
         completedCount={completedCount}
         failedCount={failedCount}
@@ -3264,6 +3319,7 @@ export function DirectorConsoleRoot({
           videoGenerationMode={videoGenerationMode}
           videoSourceMethod={effectiveVideoSourceMethod}
           focusPrompt={dialogFocusPrompt}
+          isUpdatingPrompts={effectiveIsUpdatingPrompts}
         />
       )}
 
