@@ -3,6 +3,7 @@
  */
 
 import { translateWithVertexAI } from '@/lib/vertexai/translate'
+import { translateAndAdaptTimedDialogue } from '@/lib/translation/scriptAdaptation'
 import { getSceneBeats } from '@/lib/script/beatMigration'
 import {
   extractPromptSignageTexts,
@@ -94,19 +95,45 @@ export async function translateSceneForLanguage(
   const action = typeof scene.action === 'string' ? scene.action.trim() : ''
   const narration = typeof scene.narration === 'string' ? scene.narration.trim() : ''
   const dialogueLines = Array.isArray(scene.dialogue) ? scene.dialogue : []
+  const sceneBeats = getSceneBeats(scene)
 
   const translatedDialogue: string[] = []
+  const dialogueByLineId: Record<string, string> = {}
   for (const line of dialogueLines) {
-    const text = String(
-      (line as { line?: unknown; text?: unknown })?.line ??
-        (line as { text?: unknown })?.text ??
-        ''
-    ).trim()
-    translatedDialogue.push(text ? await translateText(text, language) : '')
+    const row = line as { line?: unknown; text?: unknown; lineId?: unknown; id?: unknown } | undefined
+    const text = String(row?.line ?? row?.text ?? '').trim()
+    const lineId = String(row?.lineId ?? row?.id ?? '').trim()
+    if (!text) {
+      translatedDialogue.push('')
+      continue
+    }
+    const matchingBeat = sceneBeats.find(
+      (b) => (lineId && b.lineId === lineId) || b.line?.trim() === text
+    )
+    const targetDurationSeconds = Math.min(
+      10,
+      Math.max(
+        3,
+        typeof matchingBeat?.durationSeconds === 'number' && matchingBeat.durationSeconds > 0
+          ? matchingBeat.durationSeconds
+          : 10
+      )
+    )
+    const adapted = await translateAndAdaptTimedDialogue({
+      sourceText: text,
+      targetLanguage: language,
+      sourceLanguage: 'en',
+      targetDurationSeconds,
+    })
+    const translatedLine = adapted.translatedText || (await translateText(text, language))
+    translatedDialogue.push(translatedLine)
+    if (lineId && translatedLine) {
+      dialogueByLineId[lineId] = translatedLine
+    }
   }
 
   const signageSources = new Set<string>()
-  for (const beat of getSceneBeats(scene)) {
+  for (const beat of sceneBeats) {
     if (beat.overlayText?.trim()) {
       signageSources.add(beat.overlayText.trim())
     }
@@ -141,6 +168,7 @@ export async function translateSceneForLanguage(
     action: action ? await translateText(action, language) : undefined,
     narration: narration ? await translateText(narration, language) : undefined,
     dialogue: translatedDialogue,
+    ...(Object.keys(dialogueByLineId).length > 0 ? { dialogueByLineId } : {}),
     ...(Object.keys(signageByText).length > 0 ? { signageByText } : {}),
   }
 }

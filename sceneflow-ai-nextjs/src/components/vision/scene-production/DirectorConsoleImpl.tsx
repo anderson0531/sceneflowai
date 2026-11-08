@@ -180,9 +180,11 @@ import {
   segmentNeedsLanguageClip,
 } from '@/lib/scene/languageClipPrompt'
 import {
+  beatDirectionOwnsVideoPrompt,
   compileBeatVideoPromptFromDirection,
   isStaleSavedVideoPrompt,
 } from '@/lib/scene/beatVideoPromptCompiler'
+import { isStoredTranslationTimedForShot } from '@/lib/translation/timedDialogueMetrics'
 import type { PromoSceneBeat } from '@/lib/publish/buildPromoScene'
 import type { DetailedSceneDirection } from '@/types/scene-direction'
 import { translateGuideDialogueLine } from '@/lib/scene/translateGuideDialogue'
@@ -909,7 +911,18 @@ export function DirectorConsoleRoot({
         beatLine: beat?.line,
         dialogueLines: segment.dialogueLines,
       })
-      const isExcerpt = !!segment.dialoguePortion?.excerpt?.trim()
+      const isExcerpt = !beat?.line?.trim() && !!segment.dialoguePortion?.excerpt?.trim()
+      const rawSegmentDur =
+        (typeof segment.endTime === 'number' &&
+        typeof segment.startTime === 'number' &&
+        segment.endTime > segment.startTime
+          ? segment.endTime - segment.startTime
+          : 0) ||
+        (typeof beat?.durationSeconds === 'number' && beat.durationSeconds > 0
+          ? beat.durationSeconds
+          : 0) ||
+        10
+      const targetDurationSeconds = Math.min(10, Math.max(3, rawSegmentDur))
       let translated = preferStoredSpokenTranslation({
         translation: sceneIndex != null ? sceneTranslations?.[language]?.[sceneIndex] : undefined,
         kind: beat?.kind,
@@ -971,9 +984,23 @@ export function DirectorConsoleRoot({
           if (translated) break
         }
       }
+      if (
+        translated &&
+        beat?.kind !== 'title' &&
+        !isStoredTranslationTimedForShot(
+          englishLine,
+          translated,
+          language,
+          targetDurationSeconds
+        )
+      ) {
+        translated = undefined
+      }
       if (!translated && englishLine.trim()) {
-        const spokenToTranslate = cleanSpokenLineText(englishLine) || englishLine
-        translated = await translateGuideDialogueLine(spokenToTranslate, language)
+        translated = await translateGuideDialogueLine(englishLine, language, {
+          targetDurationSeconds,
+          adaptForTiming: beat?.kind !== 'title',
+        })
       }
       const userEdited = segment.userEditedPrompt?.trim()
       const hasGenuineUserEditedPrompt = Boolean(
@@ -989,6 +1016,12 @@ export function DirectorConsoleRoot({
         : ''
       const sourcePrompt =
         (hasGenuineUserEditedPrompt ? userEdited : undefined) ||
+        (beat &&
+        compiledFromBeat &&
+        (beatDirectionOwnsVideoPrompt(beat) ||
+          (fallbackPrompt && isStaleSavedVideoPrompt(beat, fallbackPrompt, beat.line?.trim())))
+          ? compiledFromBeat
+          : undefined) ||
         fallbackPrompt ||
         compiledFromBeat ||
         segment.generatedPrompt ||
@@ -1025,7 +1058,9 @@ export function DirectorConsoleRoot({
               return
             }
             try {
-              const raw = await translateGuideDialogueLine(src, language)
+              const raw = await translateGuideDialogueLine(src, language, {
+                adaptForTiming: false,
+              })
               if (raw?.trim()) {
                 signageTranslations[src] = preserveSignageCaseAndFormulaStyle(src, raw)
               }

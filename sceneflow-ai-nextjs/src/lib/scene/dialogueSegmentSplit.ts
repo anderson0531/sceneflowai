@@ -138,7 +138,7 @@ export function splitSpokenTextAtBoundaries(text: string, maxSeconds: number): s
   if (!cleaned) return ['']
 
   const totalSec = estimateSpokenDurationSeconds(cleaned)
-  if (totalSec <= maxSeconds) return [cleaned]
+  if (totalSec <= maxSeconds * SPOKEN_DURATION_SAFETY_MARGIN) return [cleaned]
 
   const sentences = cleaned
     .split(/(?<=[.!?])\s+/)

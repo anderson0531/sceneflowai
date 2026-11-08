@@ -14,6 +14,7 @@ import {
 import {
   buildLanguageClipPrompt,
   composeLanguageClipPrompt,
+  englishSpokenLine,
   extractPromptSignageText,
   extractPromptSignageTexts,
   preferStoredSpokenTranslation,
@@ -637,5 +638,88 @@ describe('language clip prompts', () => {
     expect(playback.videoUrl).toBe('https://cdn/scene2-gideon-es-v2.mp4')
     expect(playback.hasLanguageClip).toBe(true)
   })
+
+  it('prefers full beatLine over a split segment excerpt and uses timed take prompt over truncated stored translation', () => {
+    const fullEnglishLine =
+      "[fragile, weeping] She knew I would run... She knew I'd invent a thousand mathematical excuses just to stay alive down in the dark."
+    const splitFirstClauseExcerpt = 'She knew I would run...'
+    const adaptedSpanishSpoken =
+      'Ella sabía que yo huiría... que inventaría mil cálculos solo para sobrevivir en la oscuridad.'
+
+    expect(
+      englishSpokenLine({
+        excerpt: splitFirstClauseExcerpt,
+        beatLine: fullEnglishLine,
+      })
+    ).toBe(fullEnglishLine)
+
+    const clips = buildBeatVideoClips({
+      scene: {
+        dialogue: [
+          {
+            lineId: 'line-elara-weeping',
+            character: 'Elara',
+            line: fullEnglishLine,
+          },
+        ],
+        beats: [
+          {
+            beatId: 'beat-elara-weeping',
+            sequenceIndex: 0,
+            kind: 'dialogue',
+            lineId: 'line-elara-weeping',
+            character: 'Elara',
+            line: fullEnglishLine,
+            durationSeconds: 10,
+          },
+        ],
+      },
+      segments: [
+        {
+          segmentId: 'seg-elara-weeping',
+          beatId: 'beat-elara-weeping',
+          sequenceIndex: 0,
+          startTime: 0,
+          endTime: 10,
+          status: 'COMPLETE',
+          activeAssetUrl: 'https://cdn/en.mp4',
+          takes: [take('t-en', 'https://cdn/en.mp4')],
+          dialoguePortion: {
+            character: 'Elara',
+            lineId: 'line-elara-weeping',
+            partIndex: 0,
+            totalParts: 2,
+            excerpt: splitFirstClauseExcerpt,
+          },
+          languageVersions: {
+            es: {
+              currentTakeId: 't-es',
+              takes: [
+                {
+                  ...take('t-es', 'https://cdn/es.mp4'),
+                  prompt: `Char_ELARA speaks naturally: "${adaptedSpanishSpoken}". The only spoken line is: "${adaptedSpanishSpoken}".`,
+                },
+              ],
+            },
+          },
+        } as SceneSegment,
+      ],
+      queue: [],
+      streamLanguage: 'es',
+      sceneIndex: 0,
+      sceneTranslations: {
+        es: {
+          0: {
+            dialogue: ['Ella sabía que yo huiría...'],
+          },
+        },
+      },
+    })
+
+    expect(clips).toHaveLength(1)
+    expect(clips[0].label).toBe(adaptedSpanishSpoken)
+    expect(clips[0].prompt).toContain(adaptedSpanishSpoken)
+  })
 })
+
 

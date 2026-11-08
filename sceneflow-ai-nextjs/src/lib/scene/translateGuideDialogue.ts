@@ -1,4 +1,19 @@
 import { toGoogleTranslateCode } from '@/constants/veoLanguages'
+import { preserveLeadingPerformanceCue } from '@/lib/translation/timedDialogueMetrics'
+
+export interface TranslateGuideDialogueOptions {
+  /** Target shot duration in seconds (default 10.0s for Veo/Kling dialogue shots). */
+  targetDurationSeconds?: number
+  sourceDurationSeconds?: number
+  maxTargetSyllables?: number
+  /**
+   * When true (default), uses Timed Dialogue Adaptation & Translation so expanded
+   * languages (e.g. Spanish) are rewritten to fit the shot duration while preserving
+   * emotion, subtext, ellipses, and bracketed performance cues.
+   * Set false for literal translation of on-screen signage or title cards.
+   */
+  adaptForTiming?: boolean
+}
 
 /**
  * Split leading [emotion, tags] from dialogue body.
@@ -16,7 +31,8 @@ export function splitEmotionPrefix(text: string): { emotion: string | null; body
 export async function translatePlainText(
   text: string,
   targetLanguage: string,
-  sourceLanguage = 'en'
+  sourceLanguage = 'en',
+  options?: TranslateGuideDialogueOptions
 ): Promise<string> {
   const trimmed = text.trim()
   if (!trimmed) return text
@@ -34,6 +50,18 @@ export async function translatePlainText(
       text: trimmed,
       targetLanguage: target,
       sourceLanguage: source,
+      ...(options?.adaptForTiming
+        ? {
+            adaptForTiming: true,
+            targetDurationSeconds: options.targetDurationSeconds ?? 10.0,
+            ...(options.sourceDurationSeconds
+              ? { sourceDurationSeconds: options.sourceDurationSeconds }
+              : {}),
+            ...(options.maxTargetSyllables
+              ? { maxTargetSyllables: options.maxTargetSyllables }
+              : {}),
+          }
+        : {}),
     }),
   })
 
@@ -47,29 +75,39 @@ export async function translatePlainText(
 }
 
 /**
- * Translate dialogue/narration for Veo while preserving [emotion] prefix structure.
+ * Translate and adapt dialogue/narration for Veo/Kling shots while preserving
+ * leading `[emotion, delivery]` performance cues in English and fitting the
+ * shot's target duration (default 10.0s).
  */
 export async function translateGuideDialogueLine(
   englishText: string,
-  targetLanguage: string
+  targetLanguage: string,
+  options?: TranslateGuideDialogueOptions
 ): Promise<string> {
-  if (!englishText.trim() || targetLanguage === 'en') {
+  const trimmed = englishText.trim()
+  if (!trimmed || targetLanguage === 'en') {
     return englishText
   }
 
-  const { emotion, body } = splitEmotionPrefix(englishText)
-
-  if (emotion && body) {
-    const [translatedEmotion, translatedBody] = await Promise.all([
-      translatePlainText(emotion, targetLanguage),
-      translatePlainText(body, targetLanguage),
-    ])
-    return `[${translatedEmotion}] ${translatedBody}`
-  }
+  const { emotion, body } = splitEmotionPrefix(trimmed)
 
   if (emotion && !body) {
-    return `[${await translatePlainText(emotion, targetLanguage)}]`
+    return `[${emotion}]`
   }
 
-  return translatePlainText(englishText, targetLanguage)
+  const adaptForTiming = options?.adaptForTiming !== false
+
+  if (adaptForTiming) {
+    const adapted = await translatePlainText(trimmed, targetLanguage, 'en', {
+      ...options,
+      adaptForTiming: true,
+      targetDurationSeconds: options?.targetDurationSeconds ?? 10.0,
+    })
+    return preserveLeadingPerformanceCue(trimmed, adapted)
+  }
+
+  const translatedBody = await translatePlainText(body || trimmed, targetLanguage, 'en', {
+    adaptForTiming: false,
+  })
+  return emotion ? `[${emotion}] ${translatedBody}` : translatedBody
 }

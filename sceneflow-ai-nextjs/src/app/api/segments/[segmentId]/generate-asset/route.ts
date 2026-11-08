@@ -85,6 +85,10 @@ import {
   normalizeStreamLanguage,
 } from '@/lib/scene/languageClipVersions'
 import { translateWithVertexAI } from '@/lib/vertexai/translate'
+import {
+  isStoredTranslationTimedForShot,
+  translateAndAdaptTimedDialogue,
+} from '@/lib/translation/scriptAdaptation'
 import type { PromoSceneBeat } from '@/lib/publish/buildPromoScene'
 
 export const maxDuration = 300 // 5 minutes for video generation
@@ -348,7 +352,30 @@ export async function POST(
       const promoBeat = beat as PromoSceneBeat
 
       if (!resolvedTranslatedSpokenLine) {
-        if (clientHasTranslatedSpoken && clientSpoken) {
+        const targetDurationSeconds = Math.min(
+          10,
+          Math.max(
+            3,
+            typeof duration === 'number' && duration > 0
+              ? duration
+              : typeof beat.durationSeconds === 'number' && beat.durationSeconds > 0
+                ? beat.durationSeconds
+                : 10
+          )
+        )
+        const effectiveLang = langKey || normalizeStreamLanguage(clipLanguage) || 'es'
+        if (
+          clientHasTranslatedSpoken &&
+          clientSpoken &&
+          (beat.kind === 'title' ||
+            !englishLine ||
+            isStoredTranslationTimedForShot(
+              englishLine,
+              clientSpoken,
+              effectiveLang,
+              targetDurationSeconds
+            ))
+        ) {
           resolvedTranslatedSpokenLine = clientSpoken
         } else if (isLangClip && langKey && englishLine) {
           let stored = preferStoredSpokenTranslation({
@@ -408,19 +435,39 @@ export async function POST(
               if (stored) break
             }
           }
+          if (
+            stored &&
+            beat.kind !== 'title' &&
+            !isStoredTranslationTimedForShot(englishLine, stored, langKey, targetDurationSeconds)
+          ) {
+            stored = undefined
+          }
           if (stored) {
             resolvedTranslatedSpokenLine = stored
           } else {
             try {
-              const spokenToTranslate = cleanSpokenLineText(englishLine) || englishLine
-              const result = await translateWithVertexAI({
-                text: spokenToTranslate,
-                targetLanguage: langKey,
-                sourceLanguage: 'en',
-              })
-              if (result.translatedText?.trim()) {
-                resolvedTranslatedSpokenLine =
-                  cleanSpokenLineText(result.translatedText) || result.translatedText.trim()
+              if (beat.kind === 'title') {
+                const spokenToTranslate = cleanSpokenLineText(englishLine) || englishLine
+                const result = await translateWithVertexAI({
+                  text: spokenToTranslate,
+                  targetLanguage: langKey,
+                  sourceLanguage: 'en',
+                })
+                if (result.translatedText?.trim()) {
+                  resolvedTranslatedSpokenLine =
+                    cleanSpokenLineText(result.translatedText) || result.translatedText.trim()
+                }
+              } else {
+                const adapted = await translateAndAdaptTimedDialogue({
+                  sourceText: englishLine,
+                  targetLanguage: langKey,
+                  sourceLanguage: 'en',
+                  targetDurationSeconds,
+                })
+                if (adapted.translatedText?.trim()) {
+                  resolvedTranslatedSpokenLine =
+                    cleanSpokenLineText(adapted.translatedText) || adapted.translatedText.trim()
+                }
               }
             } catch (translateErr) {
               console.warn(

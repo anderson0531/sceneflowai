@@ -476,6 +476,7 @@ import {
   replacePromoOnScreenText,
 } from '@/lib/scene/languageClipPrompt'
 import { translateGuideDialogueLine } from '@/lib/scene/translateGuideDialogue'
+import { isStoredTranslationTimedForShot } from '@/lib/translation/timedDialogueMetrics'
 import { resolveDirectShotTarget, type DirectShotRequest, type DirectShotTarget } from '@/lib/vision/directShotTarget'
 import {
   directionFromDirectorPatch,
@@ -6079,7 +6080,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
             actionDescription: beat?.actionDescription,
           })
           const translated = english.trim()
-            ? await translateGuideDialogueLine(english, clipLanguage)
+            ? await translateGuideDialogueLine(english, clipLanguage, { adaptForTiming: false })
             : ''
           const prompt = replacePromoOnScreenText(sourcePrompt, english, translated)
           await handleSegmentGenerate(sceneId, segmentId, method, {
@@ -6098,7 +6099,11 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
             beatLine: beat?.line,
             dialogueLines: segment?.dialogueLines,
           })
-          const isExcerpt = !!segment?.dialoguePortion?.excerpt?.trim()
+          const isExcerpt = !beat?.line?.trim() && !!segment?.dialoguePortion?.excerpt?.trim()
+          const targetDurationSeconds = Math.min(
+            10,
+            Math.max(3, durationSec || beat?.durationSeconds || 10)
+          )
           let stored = preferStoredSpokenTranslation({
             translation: sceneIndex != null ? storedTranslations[clipLanguage]?.[sceneIndex] : undefined,
             kind: beat?.kind || beatKind,
@@ -6133,9 +6138,17 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
               isExcerpt,
             })
           }
+          if (
+            stored &&
+            !isStoredTranslationTimedForShot(englishLine, stored, clipLanguage, targetDurationSeconds)
+          ) {
+            stored = undefined
+          }
           let translated = stored
           if (!translated && englishLine.trim()) {
-            translated = await translateGuideDialogueLine(englishLine, clipLanguage)
+            translated = await translateGuideDialogueLine(englishLine, clipLanguage, {
+              targetDurationSeconds,
+            })
           }
           const signageSources = extractPromptSignageTexts(sourcePrompt, englishLine)
           const signageTranslations: Record<string, string> = {}
@@ -6155,7 +6168,9 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                 fromStored
               )
             } else {
-              const translatedSignage = await translateGuideDialogueLine(srcSignage, clipLanguage)
+              const translatedSignage = await translateGuideDialogueLine(srcSignage, clipLanguage, {
+                adaptForTiming: false,
+              })
               if (translatedSignage.trim()) {
                 signageTranslations[srcSignage] = preserveSignageCaseAndFormulaStyle(
                   srcSignage,

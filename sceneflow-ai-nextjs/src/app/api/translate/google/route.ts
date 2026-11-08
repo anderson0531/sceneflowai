@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { resolveTranslateApiKey } from '@/lib/i18n/translateApiKey'
 import { translateRawText } from '@/lib/i18n/contentTranslator'
 import { sourceHash } from '@/lib/i18n/contentHash'
+import { translateAndAdaptTimedDialogue } from '@/lib/translation/scriptAdaptation'
 
 export const dynamic = 'force-dynamic'
 
@@ -19,7 +20,15 @@ export const dynamic = 'force-dynamic'
  */
 export async function POST(request: NextRequest) {
   try {
-    const { text, targetLanguage, sourceLanguage = 'en' } = await request.json()
+    const {
+      text,
+      targetLanguage,
+      sourceLanguage = 'en',
+      adaptForTiming = false,
+      targetDurationSeconds,
+      sourceDurationSeconds,
+      maxTargetSyllables,
+    } = await request.json()
 
     if (!text || !targetLanguage) {
       return NextResponse.json({ error: 'Missing required parameters' }, { status: 400 })
@@ -27,6 +36,37 @@ export async function POST(request: NextRequest) {
 
     if (targetLanguage === sourceLanguage) {
       return NextResponse.json({ translatedText: text, sourceLanguage })
+    }
+
+    if (adaptForTiming) {
+      try {
+        const adapted = await translateAndAdaptTimedDialogue({
+          sourceText: text,
+          targetLanguage,
+          sourceLanguage,
+          targetDurationSeconds:
+            typeof targetDurationSeconds === 'number' && targetDurationSeconds > 0
+              ? targetDurationSeconds
+              : 10.0,
+          sourceDurationSeconds:
+            typeof sourceDurationSeconds === 'number' && sourceDurationSeconds > 0
+              ? sourceDurationSeconds
+              : undefined,
+          maxTargetSyllables:
+            typeof maxTargetSyllables === 'number' && maxTargetSyllables > 0
+              ? maxTargetSyllables
+              : undefined,
+        })
+        if (adapted.translatedText?.trim()) {
+          return NextResponse.json({
+            translatedText: adapted.translatedText,
+            sourceLanguage,
+            diagnostics: adapted.diagnostics,
+          })
+        }
+      } catch (adaptErr) {
+        console.warn('[Google Translate] Timed dialogue adaptation failed, falling back:', adaptErr)
+      }
     }
 
     // Vertex first: it shares the cache and uses service account auth, which is

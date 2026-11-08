@@ -6,7 +6,11 @@ import { optimizeTextForTTS, optimizeTextForGeminiTTS, finalizeTextForGoogleTts,
 import { getAudioDurationFromBuffer } from '../../../../lib/audio/serverAudioDuration'
 import { translateWithVertexAI } from '../../../../lib/vertexai/translate'
 import { getVertexAIAuthToken } from '../../../../lib/vertexai/client'
-import { adaptScriptForTranslationTiming, type AdaptationDiagnostics } from '../../../../lib/translation/scriptAdaptation'
+import {
+  adaptScriptForTranslationTiming,
+  translateAndAdaptTimedDialogue,
+  type AdaptationDiagnostics,
+} from '../../../../lib/translation/scriptAdaptation'
 import { GoogleTtsBlockedError, parseVertexTtsPolicyViolation } from '../../../../lib/tts/googleTtsPolicy'
 import {
   GoogleTtsRateLimitedError,
@@ -221,35 +225,59 @@ export async function POST(req: NextRequest) {
     // Uses direct Vertex AI library call (not HTTP fetch) to avoid self-referential URL issues
     if (language !== 'en' && !skipTranslation) {
       try {
-        const adaptation = await adaptScriptForTranslationTiming({
-          sourceText: textToGenerate,
-          targetLanguage: language,
-        })
-        adaptationDiagnostics = adaptation.diagnostics
-        textToGenerate = adaptation.adaptedText
-        console.log('[Scene Audio] Pre-translation adaptation:', {
-          targetLanguage: language,
-          strategy: adaptationDiagnostics.strategy,
-          usedFallback: adaptationDiagnostics.usedFallback,
-          sourceSyllables: adaptationDiagnostics.sourceSyllables,
-          adaptedSyllables: adaptationDiagnostics.adaptedSyllables,
-          targetSyllableBudget: adaptationDiagnostics.targetSyllableBudget,
-          withinTolerance: adaptationDiagnostics.withinTolerance,
-          adaptationError: adaptationDiagnostics.error,
-        })
-
-        console.log(`[Scene Audio] Translating text to ${language} via Vertex AI (direct)...`)
-        const result = await translateWithVertexAI({
-          text: textToGenerate,
-          targetLanguage: language,
-          sourceLanguage: 'en'
-        })
-        if (result.translatedText) {
-          console.log(`[Scene Audio] Translation successful:`, {
-            original: textToGenerate.substring(0, 50),
-            translated: result.translatedText.substring(0, 50)
+        if (audioType === 'dialogue' || audioType === 'narration') {
+          const adapted = await translateAndAdaptTimedDialogue({
+            sourceText: textToGenerate,
+            targetLanguage: language,
+            sourceLanguage: 'en',
+            targetDurationSeconds: 10,
           })
-          textToGenerate = result.translatedText
+          adaptationDiagnostics = adapted.diagnostics
+          if (adapted.translatedText) {
+            console.log(`[Scene Audio] Timed dialogue adaptation + translation successful:`, {
+              targetLanguage: language,
+              strategy: adaptationDiagnostics.strategy,
+              usedFallback: adaptationDiagnostics.usedFallback,
+              sourceSyllables: adaptationDiagnostics.sourceSyllables,
+              adaptedSyllables: adaptationDiagnostics.adaptedSyllables,
+              targetSyllableBudget: adaptationDiagnostics.targetSyllableBudget,
+              withinTolerance: adaptationDiagnostics.withinTolerance,
+              original: textToGenerate.substring(0, 50),
+              translated: adapted.translatedText.substring(0, 50),
+            })
+            textToGenerate = adapted.translatedText
+          }
+        } else {
+          const adaptation = await adaptScriptForTranslationTiming({
+            sourceText: textToGenerate,
+            targetLanguage: language,
+          })
+          adaptationDiagnostics = adaptation.diagnostics
+          textToGenerate = adaptation.adaptedText
+          console.log('[Scene Audio] Pre-translation adaptation:', {
+            targetLanguage: language,
+            strategy: adaptationDiagnostics.strategy,
+            usedFallback: adaptationDiagnostics.usedFallback,
+            sourceSyllables: adaptationDiagnostics.sourceSyllables,
+            adaptedSyllables: adaptationDiagnostics.adaptedSyllables,
+            targetSyllableBudget: adaptationDiagnostics.targetSyllableBudget,
+            withinTolerance: adaptationDiagnostics.withinTolerance,
+            adaptationError: adaptationDiagnostics.error,
+          })
+
+          console.log(`[Scene Audio] Translating text to ${language} via Vertex AI (direct)...`)
+          const result = await translateWithVertexAI({
+            text: textToGenerate,
+            targetLanguage: language,
+            sourceLanguage: 'en',
+          })
+          if (result.translatedText) {
+            console.log(`[Scene Audio] Translation successful:`, {
+              original: textToGenerate.substring(0, 50),
+              translated: result.translatedText.substring(0, 50),
+            })
+            textToGenerate = result.translatedText
+          }
         }
       } catch (translateError: any) {
         // CRITICAL: Do NOT silently fall back to English — log prominently and still attempt TTS

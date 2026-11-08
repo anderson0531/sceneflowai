@@ -10,6 +10,7 @@ export interface SceneTranslation {
   action?: string
   narration?: string
   dialogue?: string[]
+  dialogueByLineId?: Record<string, string>
   signageByText?: Record<string, string>
   beatsByBeatId?: Record<
     string,

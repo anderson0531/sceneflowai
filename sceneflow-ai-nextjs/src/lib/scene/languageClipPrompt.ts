@@ -54,10 +54,10 @@ export function englishSpokenLine(args: {
   beatLine?: string | null
   dialogueLines?: Array<{ line?: string | null }> | null
 }): string {
-  const excerpt = args.excerpt?.trim()
-  if (excerpt) return excerpt
   const beatLine = args.beatLine?.trim()
   if (beatLine) return beatLine
+  const excerpt = args.excerpt?.trim()
+  if (excerpt) return excerpt
   const joined = (args.dialogueLines ?? [])
     .map((line) => line.line?.trim())
     .filter((line): line is string => !!line)

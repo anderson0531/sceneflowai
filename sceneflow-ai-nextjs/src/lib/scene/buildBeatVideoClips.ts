@@ -25,6 +25,7 @@ import {
   isLanguageClipTarget,
   normalizeStreamLanguage,
 } from '@/lib/scene/languageClipVersions'
+import { isStoredTranslationTimedForShot } from '@/lib/translation/timedDialogueMetrics'
 import { getSceneBeats, isBeatExcluded } from '@/lib/script/beatMigration'
 import { parsePersistedMusicCues, resolveBeatMusicCue } from '@/lib/script/sceneMusicCues'
 import {
@@ -194,7 +195,7 @@ export function buildBeatVideoClips({
         beatLine: beat.line,
         dialogueLines: segment?.dialogueLines,
       })
-      const isExcerpt = !!segment?.dialoguePortion?.excerpt?.trim()
+      const isExcerpt = !beat.line?.trim() && !!segment?.dialoguePortion?.excerpt?.trim()
       let translatedLine = preferStoredSpokenTranslation({
         translation:
           sceneIndex != null ? sceneTranslations?.[langKey]?.[sceneIndex] : undefined,
@@ -230,7 +231,7 @@ export function buildBeatVideoClips({
           isExcerpt,
         })
       }
-      if (!translatedLine && segment?.languageVersions?.[langKey]) {
+      if (segment?.languageVersions?.[langKey]) {
         const langSet = segment.languageVersions[langKey]
         const langTake =
           langSet.takes.find((t) => t.id === langSet.currentTakeId) ??
@@ -239,7 +240,9 @@ export function buildBeatVideoClips({
         if (
           fromTakePrompt &&
           normalizeSpokenMatchKey(fromTakePrompt) !==
-            normalizeSpokenMatchKey(englishLine)
+            normalizeSpokenMatchKey(englishLine) &&
+          (!translatedLine ||
+            !isStoredTranslationTimedForShot(englishLine, translatedLine, langKey))
         ) {
           translatedLine = fromTakePrompt
         }
