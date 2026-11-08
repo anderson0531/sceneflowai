@@ -6,11 +6,13 @@
  * canonical references from both an Audience (AR Score) and Director perspective.
  */
 
+import { SUPPORTED_LANGUAGES } from '@/constants/languages'
 import { getAudienceResonanceModel, getGeminiTextModel } from '@/lib/config/modelConfig'
 import type { StillDirectorPatch } from '@/lib/intelligence/beat-still-director-fallback'
 import {
   ANOMALY_CATEGORY_LABELS,
   normalizeRecommendationShotPatch,
+  normalizeReviewLanguageCode,
   type AnomalyCategory,
   type AnomalyOrigin,
   type AnomalySeverity,
@@ -26,6 +28,15 @@ import {
   type SceneVideoReviewSourceMode,
   type ShotReviewAssessment,
 } from '@/lib/intelligence/scene-video-reviewer-types'
+import {
+  preferStoredSpokenTranslation,
+  type StoredSceneLines,
+} from '@/lib/scene/languageClipPrompt'
+import {
+  isLanguageClipTarget,
+  normalizeStreamLanguage,
+  resolveLanguageClipPlayback,
+} from '@/lib/scene/languageClipVersions'
 import { getSceneBeats, isBeatExcluded } from '@/lib/script/beatMigration'
 import type { SceneBeat } from '@/lib/script/segmentTypes'
 import {
@@ -86,6 +97,7 @@ export interface ReviewerSegmentInput {
   endTime?: number
   status?: string
   activeAssetUrl?: string | null
+  currentTakeId?: string
   assetType?: 'video' | 'image' | null
   generatedPrompt?: string
   videoPrompt?: string | null
@@ -96,14 +108,41 @@ export interface ReviewerSegmentInput {
   cameraAngle?: string
   startFrameUrl?: string | null
   endFrameUrl?: string | null
-   references?: {
+  references?: {
     startFrameUrl?: string | null
     endFrameUrl?: string | null
   }
   takes?: Array<{
     id: string
     assetUrl: string
+    videoUrl?: string
+    prompt?: string
     status?: string
+    createdAt?: string
+  }>
+  languageVersions?: Record<
+    string,
+    {
+      takes?: Array<{
+        id: string
+        assetUrl: string
+        videoUrl?: string
+        prompt?: string
+        status?: string
+        createdAt?: string
+      }>
+      currentTakeId?: string
+    }
+  >
+  dialoguePortion?: {
+    character?: string
+    excerpt?: string
+    lineId?: string
+  }
+  dialogueLines?: Array<{
+    id?: string
+    character: string
+    line: string
   }>
 }
 
@@ -157,6 +196,7 @@ export interface ReviewSceneVideoInput {
   references?: ReviewerReferenceCatalog
   previousArScore?: number
   language?: string
+  sceneTranslation?: StoredSceneLines | null
 }
 
 // ============================================================================
@@ -313,8 +353,10 @@ export interface NormalizedShotContext {
   segmentId?: string
   timecodeRange: string
   kind: 'action' | 'spoken'
+  beatKind?: string
   speaker?: string
   scriptText: string
+  localizedScriptText?: string
   actionDescription?: string
   shotType?: string
   cameraAngle?: string
@@ -327,6 +369,7 @@ export interface NormalizedShotContext {
   videoPrompt?: string
   negativePrompt?: string
   videoClipUrl?: string
+  usingMasterClipFallback?: boolean
   startFrameUrl?: string
   endFrameUrl?: string
 }
@@ -338,13 +381,27 @@ function formatTimecodeSec(sec: number): string {
   return `${String(mins).padStart(2, '0')}:${String(rem).padStart(2, '0')}`
 }
 
+export function resolveLanguageDisplayName(language?: string | null): string {
+  const langKey = normalizeStreamLanguage(language || 'en')
+  const match = SUPPORTED_LANGUAGES.find((l) => l.code === langKey)
+  return match?.name || langKey.toUpperCase()
+}
+
 /**
  * Pair scene beats and segments into an ordered shot-by-shot ledger.
+ * When `options.language` is a non-English target (e.g. 'es'), resolves localized
+ * video clips (`segment.languageVersions[lang]`) and translated dialogue lines.
  */
 export function buildShotContextLedger(
   scene: Record<string, unknown>,
-  segmentsInput?: ReviewerSegmentInput[]
+  segmentsInput?: ReviewerSegmentInput[],
+  options?: {
+    language?: string | null
+    sceneTranslation?: StoredSceneLines | null
+  }
 ): NormalizedShotContext[] {
+  const langKey = normalizeStreamLanguage(options?.language || 'en')
+  const isLocalizedReview = isLanguageClipTarget(langKey)
   const allBeats = getSceneBeats(scene)
   const activeBeats = allBeats
     .map((beat, beatIndex) => ({ beat, beatIndex }))
@@ -388,13 +445,38 @@ export function buildShotContextLedger(
         matchedSegment?.takes && matchedSegment.takes.length > 0
           ? matchedSegment.takes[matchedSegment.takes.length - 1]?.assetUrl
           : undefined
-      const rawClipUrl = matchedSegment?.activeAssetUrl || latestTakeUrl || undefined
-      const isVideoAsset =
-        !!rawClipUrl &&
+      const masterClipUrl = matchedSegment?.activeAssetUrl || latestTakeUrl || undefined
+      const masterIsVideo =
+        !!masterClipUrl &&
         (matchedSegment?.assetType === 'video' ||
-          /\.(mp4|webm|mov)(\?|$)/i.test(rawClipUrl) ||
+          /\.(mp4|webm|mov)(\?|$)/i.test(masterClipUrl) ||
           matchedSegment?.status === 'COMPLETE' ||
           matchedSegment?.status === 'UPLOADED')
+
+      let resolvedClipUrl: string | undefined = masterIsVideo ? masterClipUrl : undefined
+      let usingMasterClipFallback = false
+      let localizedTakePrompt: string | undefined
+
+      if (isLocalizedReview && matchedSegment) {
+        const playback = resolveLanguageClipPlayback(matchedSegment as any, langKey)
+        if (!playback.usingMaster && playback.url) {
+          resolvedClipUrl = playback.url
+          usingMasterClipFallback = false
+          const langTakes = matchedSegment.languageVersions?.[langKey]?.takes
+          const matchedTake = Array.isArray(langTakes)
+            ? langTakes.find((t) => t.id === playback.takeId) ?? langTakes[0]
+            : undefined
+          if (matchedTake?.prompt?.trim()) {
+            localizedTakePrompt = matchedTake.prompt.trim()
+          }
+        } else if (masterIsVideo && masterClipUrl) {
+          resolvedClipUrl = masterClipUrl
+          usingMasterClipFallback = true
+        } else {
+          resolvedClipUrl = undefined
+          usingMasterClipFallback = false
+        }
+      }
 
       const startFrameUrl =
         matchedSegment?.startFrameUrl ||
@@ -408,10 +490,52 @@ export function buildShotContextLedger(
         undefined
 
       const dir = beat.beatDirection
-      const scriptText =
-        beat.kind === 'spoken'
-          ? `${beat.speaker ? `${beat.speaker}: ` : ''}"${beat.line || ''}"${beat.actionDescription ? ` (${beat.actionDescription})` : ''}`
-          : beat.actionDescription || beat.text || ''
+      const rawBeatKind = String((beat as { kind?: string }).kind || 'action')
+      const isSpokenBeat =
+        rawBeatKind === 'dialogue' ||
+        rawBeatKind === 'narration' ||
+        rawBeatKind === 'spoken'
+      const speaker =
+        beat.character ||
+        (beat as { speaker?: string }).speaker ||
+        (rawBeatKind === 'narration' ? 'NARRATOR' : undefined)
+      const englishLine =
+        beat.line ||
+        matchedSegment?.dialoguePortion?.excerpt ||
+        matchedSegment?.dialogueLines?.[0]?.line ||
+        ''
+
+      const scriptText = isSpokenBeat
+        ? `${speaker ? `${speaker}: ` : ''}"${englishLine}"${beat.actionDescription ? ` (${beat.actionDescription})` : ''}`
+        : beat.actionDescription || beat.text || ''
+
+      let localizedScriptText: string | undefined
+      if (isLocalizedReview && isSpokenBeat) {
+        const sceneDialogueList =
+          Array.isArray(scene.dialogue) && scene.dialogue.length > 0
+            ? (scene.dialogue as unknown[])
+            : activeBeats
+                .filter(({ beat: b }) => {
+                  const k = String((b as { kind?: string }).kind || '')
+                  return k === 'dialogue' || k === 'spoken'
+                })
+                .map(({ beat: b }) => ({
+                  lineId: b.lineId,
+                  line: b.line || b.text || '',
+                }))
+        const translatedLine = preferStoredSpokenTranslation({
+          translation: options?.sceneTranslation ?? undefined,
+          kind: beat.kind,
+          lineId: beat.lineId || matchedSegment?.dialoguePortion?.lineId,
+          beatId: beat.beatId,
+          dialogue: sceneDialogueList,
+          englishLine,
+          isExcerpt: !beat.line?.trim() && !!matchedSegment?.dialoguePortion?.excerpt?.trim(),
+        })
+        if (translatedLine) {
+          localizedScriptText = `${speaker ? `${speaker}: ` : ''}"${translatedLine}"${beat.actionDescription ? ` (${beat.actionDescription})` : ''}`
+        }
+      }
 
       ledger.push({
         shotNumber,
@@ -419,9 +543,11 @@ export function buildShotContextLedger(
         beatId: beat.beatId,
         segmentId: matchedSegment?.segmentId,
         timecodeRange: `${formatTimecodeSec(startSec)} - ${formatTimecodeSec(endSec)}`,
-        kind: beat.kind,
-        speaker: beat.speaker,
+        kind: isSpokenBeat ? 'spoken' : 'action',
+        beatKind: rawBeatKind,
+        speaker,
         scriptText: scriptText.trim(),
+        localizedScriptText: localizedScriptText?.trim(),
         actionDescription: beat.actionDescription,
         shotType: dir?.shotType || matchedSegment?.shotType,
         cameraAngle: dir?.cameraAngle || matchedSegment?.cameraAngle,
@@ -432,12 +558,14 @@ export function buildShotContextLedger(
         keyProps: dir?.keyProps,
         framePrompt: dir?.framePrompt || beat.storyboardImagePrompt,
         videoPrompt:
+          localizedTakePrompt ||
           matchedSegment?.userEditedPrompt ||
           matchedSegment?.videoPrompt ||
           matchedSegment?.generatedPrompt ||
           dir?.videoPrompt,
         negativePrompt: matchedSegment?.negativePrompt,
-        videoClipUrl: isVideoAsset ? rawClipUrl : undefined,
+        videoClipUrl: resolvedClipUrl,
+        usingMasterClipFallback,
         startFrameUrl: startFrameUrl || undefined,
         endFrameUrl: endFrameUrl || undefined,
       })
@@ -454,13 +582,37 @@ export function buildShotContextLedger(
     runningSec = endSec
     const latestTakeUrl =
       seg.takes && seg.takes.length > 0 ? seg.takes[seg.takes.length - 1]?.assetUrl : undefined
-    const rawClipUrl = seg.activeAssetUrl || latestTakeUrl || undefined
-    const isVideoAsset =
-      !!rawClipUrl &&
+    const masterClipUrl = seg.activeAssetUrl || latestTakeUrl || undefined
+    const masterIsVideo =
+      !!masterClipUrl &&
       (seg.assetType === 'video' ||
-        /\.(mp4|webm|mov)(\?|$)/i.test(rawClipUrl) ||
+        /\.(mp4|webm|mov)(\?|$)/i.test(masterClipUrl) ||
         seg.status === 'COMPLETE' ||
         seg.status === 'UPLOADED')
+
+    let resolvedClipUrl: string | undefined = masterIsVideo ? masterClipUrl : undefined
+    let usingMasterClipFallback = false
+    let localizedTakePrompt: string | undefined
+
+    if (isLocalizedReview) {
+      const playback = resolveLanguageClipPlayback(seg as any, langKey)
+      if (!playback.usingMaster && playback.url) {
+        resolvedClipUrl = playback.url
+        usingMasterClipFallback = false
+        const langTakes = seg.languageVersions?.[langKey]?.takes
+        const matchedTake = Array.isArray(langTakes)
+          ? langTakes.find((t) => t.id === playback.takeId) ?? langTakes[0]
+          : undefined
+        if (matchedTake?.prompt?.trim()) {
+          localizedTakePrompt = matchedTake.prompt.trim()
+        }
+      } else if (masterIsVideo && masterClipUrl) {
+        resolvedClipUrl = masterClipUrl
+        usingMasterClipFallback = true
+      } else {
+        resolvedClipUrl = undefined
+      }
+    }
 
     ledger.push({
       shotNumber,
@@ -473,9 +625,10 @@ export function buildShotContextLedger(
       shotType: seg.shotType,
       cameraAngle: seg.cameraAngle,
       cameraMovement: seg.cameraMovement,
-      videoPrompt: seg.userEditedPrompt || seg.videoPrompt || seg.generatedPrompt,
+      videoPrompt: localizedTakePrompt || seg.userEditedPrompt || seg.videoPrompt || seg.generatedPrompt,
       negativePrompt: seg.negativePrompt,
-      videoClipUrl: isVideoAsset ? rawClipUrl : undefined,
+      videoClipUrl: resolvedClipUrl,
+      usingMasterClipFallback,
       startFrameUrl: seg.startFrameUrl || seg.references?.startFrameUrl || undefined,
       endFrameUrl: seg.endFrameUrl || seg.references?.endFrameUrl || undefined,
     })
@@ -486,23 +639,52 @@ export function buildShotContextLedger(
 
 /**
  * Select the rendered scene MP4 stream to inspect when available.
+ * When `language` is provided, selects a stream matching that language and
+ * avoids falling back to an English stream when reviewing a non-English language.
  */
 export function selectRenderedStreamForReview(
   streams: ReviewerStreamInput[] | undefined,
   renderedSceneUrl: string | null | undefined,
-  preferredStreamId?: string
-): { url: string; streamId?: string; streamLabel?: string } | null {
+  preferredStreamId?: string,
+  language?: string | null
+): { url: string; streamId?: string; streamLabel?: string; language?: string } | null {
   const list = Array.isArray(streams) ? streams : []
   const completeStreams = list.filter((s) => s && s.mp4Url && s.status === 'complete')
 
   if (preferredStreamId) {
     const exact = list.find((s) => s.id === preferredStreamId && s.mp4Url)
     if (exact?.mp4Url) {
+      const exactLang = normalizeStreamLanguage(exact.language || 'en')
       return {
         url: exact.mp4Url,
         streamId: exact.id,
-        streamLabel: `${exact.streamType === 'animatic' ? 'Animatic' : 'Video'} (${(exact.language || 'en').toUpperCase()})`,
+        streamLabel: `${exact.streamType === 'animatic' ? 'Animatic' : 'Video'} (${exactLang.toUpperCase()})`,
+        language: exactLang,
       }
+    }
+  }
+
+  const hasExplicitLanguage = typeof language === 'string' && language.trim().length > 0
+  const targetLang = normalizeStreamLanguage(language || 'en')
+
+  if (hasExplicitLanguage) {
+    const langStreams = completeStreams.filter(
+      (s) => normalizeStreamLanguage(s.language || 'en') === targetLang
+    )
+    const langVideoStreams = langStreams.filter((s) => s.streamType === 'video')
+    const chosenForLang =
+      langVideoStreams[langVideoStreams.length - 1] ?? langStreams[langStreams.length - 1]
+    if (chosenForLang?.mp4Url) {
+      return {
+        url: chosenForLang.mp4Url,
+        streamId: chosenForLang.id,
+        streamLabel: `${chosenForLang.streamType === 'animatic' ? 'Animatic' : 'Video'} (${targetLang.toUpperCase()})`,
+        language: targetLang,
+      }
+    }
+    // For non-English reviews, do not fall back to an English stream or master renderedSceneUrl
+    if (isLanguageClipTarget(targetLang)) {
+      return null
     }
   }
 
@@ -510,10 +692,12 @@ export function selectRenderedStreamForReview(
   const videoStreams = completeStreams.filter((s) => s.streamType === 'video')
   const chosen = videoStreams[videoStreams.length - 1] ?? completeStreams[completeStreams.length - 1]
   if (chosen?.mp4Url) {
+    const chosenLang = normalizeStreamLanguage(chosen.language || 'en')
     return {
       url: chosen.mp4Url,
       streamId: chosen.id,
-      streamLabel: `${chosen.streamType === 'animatic' ? 'Animatic' : 'Video'} (${(chosen.language || 'en').toUpperCase()})`,
+      streamLabel: `${chosen.streamType === 'animatic' ? 'Animatic' : 'Video'} (${chosenLang.toUpperCase()})`,
+      language: chosenLang,
     }
   }
 
@@ -521,6 +705,7 @@ export function selectRenderedStreamForReview(
     return {
       url: renderedSceneUrl.trim(),
       streamLabel: 'Rendered Scene MP4',
+      language: 'en',
     }
   }
 
@@ -560,7 +745,7 @@ Your job has THREE core deliverables:
 
 Respond ONLY with valid JSON matching the requested schema.`
 
-function buildSceneTextPrompt(args: {
+export function buildSceneTextPrompt(args: {
   sceneNumber: number
   scene: Record<string, unknown>
   shots: NormalizedShotContext[]
@@ -568,8 +753,24 @@ function buildSceneTextPrompt(args: {
   streamLabel?: string
   references?: ReviewerReferenceCatalog
   previousArScore?: number
+  language?: string | null
+  sceneTranslation?: StoredSceneLines | null
 }): string {
-  const { sceneNumber, scene, shots, reviewedSource, streamLabel, references, previousArScore } = args
+  const {
+    sceneNumber,
+    scene,
+    shots,
+    reviewedSource,
+    streamLabel,
+    references,
+    previousArScore,
+    language,
+    sceneTranslation,
+  } = args
+
+  const langKey = normalizeStreamLanguage(language || 'en')
+  const languageLabel = resolveLanguageDisplayName(langKey)
+  const isLocalizedReview = isLanguageClipTarget(langKey)
 
   const heading =
     typeof scene.heading === 'string'
@@ -587,6 +788,24 @@ function buildSceneTextPrompt(args: {
           )
           .join('\n')
       : '  (No dialogue lines)'
+
+  const localizedNarration = sceneTranslation?.narration?.trim()
+  const localizedDialogueList = Array.isArray(sceneTranslation?.dialogue)
+    ? sceneTranslation!.dialogue
+    : []
+  const localizedDialogueBlock =
+    localizedDialogueList.length > 0
+      ? localizedDialogueList
+          .map((line, i) => {
+            const speaker =
+              (dialogueList[i] as { character?: string } | undefined)?.character || 'SPEAKER'
+            return `  ${i + 1}. ${speaker} (${langKey.toUpperCase()}): "${line || ''}"`
+          })
+          .join('\n')
+      : shots
+          .filter((s) => !!s.localizedScriptText)
+          .map((s) => `  Shot #${s.shotNumber} (${langKey.toUpperCase()}): ${s.localizedScriptText}`)
+          .join('\n')
 
   const sceneDir = (scene.sceneDirection || scene.detailedDirection || {}) as Record<string, unknown>
   const dirSummary = Object.keys(sceneDir).length > 0 ? JSON.stringify(sceneDir) : '(None specified)'
@@ -611,15 +830,28 @@ function buildSceneTextPrompt(args: {
 
   const shotLedgerText = shots
     .map((s) => {
+      const clipSourceTag =
+        isLocalizedReview && s.videoClipUrl
+          ? `, clipLanguageSource="${
+              s.usingMasterClipFallback
+                ? s.kind === 'spoken' || s.beatKind === 'title'
+                  ? `MASTER_EN_FALLBACK (Not yet localized to ${langKey.toUpperCase()})`
+                  : 'SHARED_MASTER_ACTION_CLIP'
+                : `LOCALIZED_${langKey.toUpperCase()}`
+            }"`
+          : ''
       return [
         `SHOT #${s.shotNumber} [beatId="${s.beatId}"${s.segmentId ? `, segmentId="${s.segmentId}"` : ''}, timecode="${s.timecodeRange}", kind="${s.kind}"]`,
         `  Script Beat: ${s.scriptText || '(none)'}`,
+        ...(s.localizedScriptText
+          ? [`  Localized Beat (${languageLabel} / ${langKey.toUpperCase()}): ${s.localizedScriptText}`]
+          : []),
         `  Camera Direction: shotType="${s.shotType || 'auto'}", angle="${s.cameraAngle || 'auto'}", movement="${s.cameraMovement || 'auto'}"`,
         `  Blocking & Lighting: blocking="${s.blocking || 'n/a'}", lighting="${s.lightingAccent || 'n/a'}"`,
         `  Cast in Frame: ${s.castInFrame?.join(', ') || '(auto)'} | Key Props: ${s.keyProps?.join(', ') || '(none)'}`,
         `  Current Frame Prompt: ${(s.framePrompt || '(none)').slice(0, 320)}`,
         `  Current Video Prompt: ${(s.videoPrompt || '(none)').slice(0, 320)}`,
-        `  Media Attached: videoClip=${s.videoClipUrl ? 'YES' : 'NO'}, startKeyframe=${s.startFrameUrl ? 'YES' : 'NO'}, endKeyframe=${s.endFrameUrl ? 'YES' : 'NO'}`,
+        `  Media Attached: videoClip=${s.videoClipUrl ? 'YES' : 'NO'}${clipSourceTag}, startKeyframe=${s.startFrameUrl ? 'YES' : 'NO'}, endKeyframe=${s.endFrameUrl ? 'YES' : 'NO'}`,
       ].join('\n')
     })
     .join('\n\n')
@@ -631,13 +863,32 @@ function buildSceneTextPrompt(args: {
         ? 'MODE FOCUS — CLIPS (SHOT VIDEO CLIPS): You are inspecting the individual rendered shot video clips (MP4). Focus on temporal motion stability, morphing/anatomy artifacts, camera movement execution, performance, and shot-to-shot continuity.'
         : 'MODE FOCUS — SCENE (RENDERED SCENE MP4): You are inspecting the assembled full-scene MP4 stream. Focus on holistic pacing, cut transitions, audio-visual synchronization, dialogue timing, and end-to-end audience resonance.'
 
+  const languageVersionSection = isLocalizedReview
+    ? `
+--- TARGET LANGUAGE VERSION EVALUATION: ${languageLabel.toUpperCase()} (${langKey.toUpperCase()}) ---
+You are specifically evaluating the ${languageLabel} (${langKey.toUpperCase()}) language version of Scene ${sceneNumber}.
+Your scores ("arScore", "directorScore", "overallScore"), executive summary, perspective dimensions, shot breakdown notes, anomalies, and recommendations MUST distinctively reflect this ${languageLabel} version:
+1. DUBBING CADENCE, LIP-SYNC & TEMPORAL FIT: Evaluate whether the ${languageLabel} dialogue delivery and lip movements fit naturally within each shot's timecode window without rushing, premature cutoffs, or audio-visual desynchronization (flag issues as category="audio_sync_mismatch", origin="audio" or "motion").
+2. EMOTIONAL & SUBTEXT LOCALIZATION FIDELITY: Assess how effectively the ${languageLabel} adaptation preserves the emotional tone, character urgency, and dramatic subtext for a native ${languageLabel} audience.
+3. LOCALIZED SIGNAGE, TITLES & BURNED-IN CAPTIONS: Inspect whether any on-screen titles or environmental signage are properly rendered in ${languageLabel}, and flag any unintended burned-in subtitles/captions or garbled text as category="gibberish_text".
+4. UNLOCALIZED MASTER CLIP DETECTION: If any spoken or title shot in the ledger is marked clipLanguageSource="MASTER_EN_FALLBACK", flag that the shot is still using the English master clip and needs a localized ${languageLabel} clip render.
+
+Localized ${languageLabel} Narration:
+${localizedNarration || '(None / uses master narration)'}
+
+Localized ${languageLabel} Dialogue:
+${localizedDialogueBlock || '  (See per-shot localized prompts and beats in Shot Ledger)'}
+`
+    : ''
+
   return `=== MULTIMODAL SCENE VIDEO REVIEW REQUEST ===
 Scene Number: ${sceneNumber}
 Scene Heading: ${heading}
+Target Review Language: ${languageLabel} (${langKey.toUpperCase()})
 Review Mode / Source: ${reviewedSource}${streamLabel ? ` (${streamLabel})` : ''}
 ${modeFocusGuidance}
 ${typeof previousArScore === 'number' ? `Previous AR Score: ${previousArScore}/100` : ''}
-
+${languageVersionSection}
 --- SCREENPLAY CONTEXT ---
 Action / Visual Description:
 ${action || '(None)'}
@@ -920,6 +1171,8 @@ export function normalizeReviewResult(
     sceneId: string
     sceneNumber: number
     sceneHeading?: string
+    reviewedLanguage?: string
+    reviewedLanguageLabel?: string
     reviewedSource: ResolvedReviewSource
     reviewedStreamId?: string
     reviewedStreamLabel?: string
@@ -1304,10 +1557,16 @@ export function normalizeReviewResult(
     ),
   }
 
+  const resolvedLang = normalizeReviewLanguageCode(context.reviewedLanguage || 'en')
+  const resolvedLangLabel =
+    context.reviewedLanguageLabel || resolveLanguageDisplayName(resolvedLang)
+
   return {
     sceneId: context.sceneId,
     sceneNumber: context.sceneNumber,
     sceneHeading: context.sceneHeading,
+    reviewedLanguage: resolvedLang,
+    reviewedLanguageLabel: resolvedLangLabel,
     reviewedSource: context.reviewedSource,
     reviewedStreamId: context.reviewedStreamId,
     reviewedStreamLabel: context.reviewedStreamLabel,
@@ -1415,12 +1674,20 @@ export async function reviewSceneVideoMultimodal(
   input: ReviewSceneVideoInput
 ): Promise<SceneVideoReviewResult> {
   const sourceMode: SceneVideoReviewSourceMode = input.sourceMode || 'auto'
-  const shots = buildShotContextLedger(input.scene, input.segments)
   const selectedStream = selectRenderedStreamForReview(
     input.productionStreams,
     input.renderedSceneUrl,
-    input.streamId
+    input.streamId,
+    input.language
   )
+  const effectiveLanguage = normalizeReviewLanguageCode(
+    input.language || selectedStream?.language || 'en'
+  )
+  const effectiveLanguageLabel = resolveLanguageDisplayName(effectiveLanguage)
+  const shots = buildShotContextLedger(input.scene, input.segments, {
+    language: effectiveLanguage,
+    sceneTranslation: input.sceneTranslation,
+  })
   const shotsWithClips = shots.filter((s) => !!s.videoClipUrl)
   const shotsWithKeyframes = shots.filter((s) => !!s.startFrameUrl)
 
@@ -1566,6 +1833,8 @@ export async function reviewSceneVideoMultimodal(
     streamLabel: selectedStream?.streamLabel,
     references: input.references,
     previousArScore: input.previousArScore,
+    language: effectiveLanguage,
+    sceneTranslation: input.sceneTranslation,
   })
   parts.push({ text: promptText })
 
@@ -1625,6 +1894,8 @@ export async function reviewSceneVideoMultimodal(
     sceneId: input.sceneId,
     sceneNumber: input.sceneNumber,
     sceneHeading: heading,
+    reviewedLanguage: effectiveLanguage,
+    reviewedLanguageLabel: effectiveLanguageLabel,
     reviewedSource,
     reviewedStreamId: selectedStream?.streamId,
     reviewedStreamLabel: selectedStream?.streamLabel,

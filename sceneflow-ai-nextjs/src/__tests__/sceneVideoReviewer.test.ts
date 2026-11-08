@@ -3,12 +3,17 @@ import { join } from 'path'
 import { describe, expect, it } from 'vitest'
 import {
   applyShotDirectorRecommendationsToScenes,
+  getSceneVideoReviewForLanguage,
+  getSceneVideoReviewsMap,
   mergeShotDirectorPatches,
   normalizeRecommendationShotPatch,
   resolveBeatForRecommendation,
+  setSceneVideoReviewForLanguage,
   type SceneVideoRecommendation,
+  type SceneVideoReviewResult,
 } from '@/lib/intelligence/scene-video-reviewer-types'
 import {
+  buildSceneTextPrompt,
   buildShotContextLedger,
   calibrateSceneReviewScores,
   normalizeReviewResult,
@@ -16,6 +21,7 @@ import {
   selectRenderedStreamForReview,
   toVertexGcsUri,
 } from '@/lib/intelligence/scene-video-reviewer'
+import { mergeScenePreservingMedia } from '@/lib/storyboard/mergeSceneMedia'
 import { getSceneBeats } from '@/lib/script/beatMigration'
 
 function readSource(relativePath: string): string {
@@ -606,5 +612,229 @@ describe('Multimodal Scene Video Reviewer — Source & UI Wiring', () => {
     const beatDirectorDialog = readSource('src/components/vision/BeatDirectorDialog.tsx')
     expect(beatDirectorDialog).toContain('initialInstruction')
     expect(beatDirectorDialog).toContain('initialPatch')
+  })
+})
+
+describe('Multimodal Scene Video Reviewer — Language-Distinctive Analysis & Saved Scores', () => {
+  it('resolves localized clips, localized prompts, and translated dialogue lines per language in buildShotContextLedger', () => {
+    const multilingualScene = {
+      id: 'scene-multi-1',
+      sceneNumber: 1,
+      heading: 'INT. BUNKER - NIGHT',
+      dialogue: [
+        {
+          character: 'GIDEON CROFT',
+          line: '[fragile, weeping] She knew I would run... She knew I would invent a thousand mathematical excuses just to stay alive down in the dark.',
+        },
+      ],
+      beats: [
+        {
+          beatId: 'beat-1',
+          sequenceIndex: 0,
+          kind: 'dialogue' as const,
+          character: 'GIDEON CROFT',
+          line: '[fragile, weeping] She knew I would run... She knew I would invent a thousand mathematical excuses just to stay alive down in the dark.',
+          text: 'GIDEON CROFT: [fragile, weeping] She knew I would run...',
+          estimatedDuration: 10,
+        },
+        {
+          beatId: 'beat-2',
+          sequenceIndex: 1,
+          kind: 'action' as const,
+          text: 'Gideon stares at the flickering monitor.',
+          estimatedDuration: 4,
+        },
+      ],
+      segments: [
+        {
+          segmentId: 'seg-1',
+          beatId: 'beat-1',
+          sequenceIndex: 0,
+          startTime: 0,
+          endTime: 10,
+          status: 'COMPLETE',
+          assetType: 'video' as const,
+          activeAssetUrl: 'https://storage.googleapis.com/sceneflow-assets/clip-1-en.mp4',
+          videoPrompt: 'English master prompt for shot 1',
+          dialogueLines: [
+            {
+              character: 'GIDEON CROFT',
+              line: '[fragile, weeping] She knew I would run... She knew I would invent a thousand mathematical excuses just to stay alive down in the dark.',
+            },
+          ],
+          languageVersions: {
+            es: {
+              currentTakeId: 'take-es-1',
+              takes: [
+                {
+                  id: 'take-es-1',
+                  assetUrl: 'https://storage.googleapis.com/sceneflow-assets/clip-1-es.mp4',
+                  prompt: 'Spanish localized prompt for shot 1 with Spanish dialogue',
+                  createdAt: '2026-04-19T12:00:00.000Z',
+                },
+              ],
+            },
+          },
+        },
+        {
+          segmentId: 'seg-2',
+          beatId: 'beat-2',
+          sequenceIndex: 1,
+          startTime: 10,
+          endTime: 14,
+          status: 'COMPLETE',
+          assetType: 'video' as const,
+          activeAssetUrl: 'https://storage.googleapis.com/sceneflow-assets/clip-2-en.mp4',
+          videoPrompt: 'English master prompt for shot 2',
+        },
+      ],
+    }
+
+    const enLedger = buildShotContextLedger(multilingualScene, undefined, { language: 'en' })
+    expect(enLedger[0].videoClipUrl).toBe(
+      'https://storage.googleapis.com/sceneflow-assets/clip-1-en.mp4'
+    )
+    expect(enLedger[0].usingMasterClipFallback).toBe(false)
+    expect(enLedger[0].localizedScriptText).toBeUndefined()
+
+    const esLedger = buildShotContextLedger(multilingualScene, undefined, {
+      language: 'es',
+      sceneTranslation: {
+        dialogue: [
+          '[fragile, weeping] Ella sabía que yo huiría... que inventaría mil cálculos solo para sobrevivir en la oscuridad.',
+        ],
+      },
+    })
+    // Shot 1 has a dedicated Spanish clip in segment.languageVersions.es
+    expect(esLedger[0].videoClipUrl).toBe(
+      'https://storage.googleapis.com/sceneflow-assets/clip-1-es.mp4'
+    )
+    expect(esLedger[0].usingMasterClipFallback).toBe(false)
+    expect(esLedger[0].videoPrompt).toBe(
+      'Spanish localized prompt for shot 1 with Spanish dialogue'
+    )
+    expect(esLedger[0].localizedScriptText).toContain(
+      'Ella sabía que yo huiría... que inventaría mil cálculos solo para sobrevivir en la oscuridad.'
+    )
+    // Shot 2 has no dedicated Spanish clip, so it falls back to master clip and flags usingMasterClipFallback
+    expect(esLedger[1].videoClipUrl).toBe(
+      'https://storage.googleapis.com/sceneflow-assets/clip-2-en.mp4'
+    )
+    expect(esLedger[1].usingMasterClipFallback).toBe(true)
+
+    // Verify prompt includes Spanish localization criteria and translated dialogue
+    const esPrompt = buildSceneTextPrompt({
+      scene: multilingualScene,
+      sceneNumber: 1,
+      sceneHeading: 'INT. BUNKER - NIGHT',
+      reviewedSource: 'shot_clips',
+      shots: esLedger,
+      references: {},
+      language: 'es',
+      sceneTranslation: {
+        dialogue: [
+          '[fragile, weeping] Ella sabía que yo huiría... que inventaría mil cálculos solo para sobrevivir en la oscuridad.',
+        ],
+      },
+    })
+    expect(esPrompt).toContain('Target Review Language: Spanish (ES)')
+    expect(esPrompt).toContain('TARGET LANGUAGE VERSION EVALUATION: SPANISH (ES)')
+    expect(esPrompt).toContain(
+      'Ella sabía que yo huiría... que inventaría mil cálculos solo para sobrevivir en la oscuridad.'
+    )
+    expect(esPrompt).toContain('clipLanguageSource="LOCALIZED_ES"')
+    expect(esPrompt).toContain('clipLanguageSource="SHARED_MASTER_ACTION_CLIP"')
+  })
+
+  it('selects rendered streams matching the requested language and avoids cross-language stream fallback', () => {
+    const streams = [
+      {
+        id: 'stream-en',
+        language: 'en',
+        streamType: 'video',
+        status: 'complete',
+        mp4Url: 'https://storage.googleapis.com/sceneflow-assets/scene-en.mp4',
+      },
+      {
+        id: 'stream-es',
+        language: 'es',
+        streamType: 'video',
+        status: 'complete',
+        mp4Url: 'https://storage.googleapis.com/sceneflow-assets/scene-es.mp4',
+      },
+    ]
+
+    const chosenEs = selectRenderedStreamForReview(
+      streams,
+      'https://storage.googleapis.com/sceneflow-assets/legacy-en.mp4',
+      undefined,
+      'es'
+    )
+    expect(chosenEs?.streamId).toBe('stream-es')
+    expect(chosenEs?.url).toContain('scene-es.mp4')
+    expect(chosenEs?.language).toBe('es')
+
+    // Requesting French ('fr') when only EN and ES streams exist should return null, NOT the English stream
+    const chosenFr = selectRenderedStreamForReview(
+      streams,
+      'https://storage.googleapis.com/sceneflow-assets/legacy-en.mp4',
+      undefined,
+      'fr'
+    )
+    expect(chosenFr).toBeNull()
+  })
+
+  it('persists and merges distinct FlowDirector reviews and scores per language without overwriting other languages', () => {
+    const enReview = {
+      sceneId: 'scene-1',
+      sceneNumber: 1,
+      generatedAt: '2026-04-19T10:00:00.000Z',
+      modelId: 'gemini-2.5-flash',
+      reviewedSource: 'shot_clips',
+      reviewedLanguage: 'en',
+      reviewedLanguageLabel: 'English',
+      arScore: 91,
+      directorScore: 87,
+      overallScore: 89,
+    } as SceneVideoReviewResult
+
+    const esReview = {
+      sceneId: 'scene-1',
+      sceneNumber: 1,
+      generatedAt: '2026-04-19T10:05:00.000Z',
+      modelId: 'gemini-2.5-flash',
+      reviewedSource: 'shot_clips',
+      reviewedLanguage: 'es',
+      reviewedLanguageLabel: 'Spanish',
+      arScore: 83,
+      directorScore: 78,
+      overallScore: 81,
+    } as SceneVideoReviewResult
+
+    let scene: Record<string, unknown> = { id: 'scene-1', sceneNumber: 1 }
+    scene = setSceneVideoReviewForLanguage(scene, 'en', enReview)
+    scene = setSceneVideoReviewForLanguage(scene, 'es', esReview)
+
+    expect(getSceneVideoReviewForLanguage(scene, 'en')?.arScore).toBe(91)
+    expect(getSceneVideoReviewForLanguage(scene, 'es')?.arScore).toBe(83)
+    expect(getSceneVideoReviewForLanguage(scene, 'fr')).toBeNull()
+
+    const map = getSceneVideoReviewsMap(scene)
+    expect(Object.keys(map).sort()).toEqual(['en', 'es'])
+
+    // Verify mergeScenePreservingMedia preserves both language reviews across concurrent saves
+    const merged = mergeScenePreservingMedia(
+      {
+        id: 'scene-1',
+        videoReviewsByLanguage: { en: enReview },
+      } as any,
+      {
+        id: 'scene-1',
+        videoReviewsByLanguage: { es: esReview },
+      } as any
+    ) as unknown as Record<string, unknown>
+
+    expect(getSceneVideoReviewForLanguage(merged, 'en')?.arScore).toBe(91)
+    expect(getSceneVideoReviewForLanguage(merged, 'es')?.arScore).toBe(83)
   })
 })

@@ -10,6 +10,7 @@
 
 import type { StillDirectorPatch } from '@/lib/intelligence/beat-still-director-fallback'
 import type { ProjectLookbook } from '@/lib/intelligence/project-lookbook-fallback'
+import { normalizeStreamLanguage } from '@/lib/scene/languageClipVersions'
 import { getSceneBeats, isBeatExcluded } from '@/lib/script/beatMigration'
 import type { SceneBeat } from '@/lib/script/segmentTypes'
 import {
@@ -158,6 +159,10 @@ export interface SceneVideoReviewResult {
   sceneId: string
   sceneNumber: number
   sceneHeading?: string
+  /** Normalized language code of the reviewed version (e.g. 'en', 'es', 'th') */
+  reviewedLanguage?: string
+  /** Display name of the reviewed language (e.g. 'English', 'Spanish') */
+  reviewedLanguageLabel?: string
   reviewedSource: ResolvedReviewSource
   reviewedStreamId?: string
   reviewedStreamLabel?: string
@@ -182,6 +187,117 @@ export interface SceneVideoReviewResult {
   shotBreakdown: ShotReviewAssessment[]
   anomalies: SceneVideoAnomaly[]
   recommendations: SceneVideoRecommendation[]
+}
+
+// ============================================================================
+// Per-Language Review Storage Helpers
+// ============================================================================
+
+export function normalizeReviewLanguageCode(language?: string | null): string {
+  return normalizeStreamLanguage(language || 'en')
+}
+
+export function inferReviewLanguageFromResult(
+  review: SceneVideoReviewResult | null | undefined
+): string {
+  if (!review || typeof review !== 'object') return 'en'
+  if (typeof review.reviewedLanguage === 'string' && review.reviewedLanguage.trim()) {
+    return normalizeReviewLanguageCode(review.reviewedLanguage)
+  }
+  if (typeof review.reviewedStreamLabel === 'string') {
+    const match = review.reviewedStreamLabel.match(/\(([a-zA-Z]{2,5})\)\s*$/)
+    if (match?.[1]) {
+      return normalizeReviewLanguageCode(match[1])
+    }
+  }
+  return 'en'
+}
+
+/**
+ * Return all saved per-language FlowDirector reviews for a scene, migrating any
+ * legacy `scene.videoReview` entry into its corresponding language key.
+ */
+export function getSceneVideoReviewsMap(
+  scene: Record<string, any> | null | undefined
+): Record<string, SceneVideoReviewResult> {
+  if (!scene || typeof scene !== 'object') return {}
+  const map: Record<string, SceneVideoReviewResult> = {}
+
+  const rawByLang = scene.videoReviewsByLanguage
+  if (rawByLang && typeof rawByLang === 'object' && !Array.isArray(rawByLang)) {
+    for (const [key, val] of Object.entries(rawByLang)) {
+      if (val && typeof val === 'object' && typeof (val as any).arScore === 'number') {
+        const langKey = normalizeReviewLanguageCode(key)
+        map[langKey] = {
+          ...(val as SceneVideoReviewResult),
+          reviewedLanguage: langKey,
+        }
+      }
+    }
+  }
+
+  const legacy = scene.videoReview as SceneVideoReviewResult | undefined
+  if (legacy && typeof legacy === 'object' && typeof legacy.arScore === 'number') {
+    const legacyLang = inferReviewLanguageFromResult(legacy)
+    const existing = map[legacyLang]
+    const existingMs = existing?.generatedAt ? Date.parse(existing.generatedAt) || 0 : 0
+    const legacyMs = legacy.generatedAt ? Date.parse(legacy.generatedAt) || 0 : 0
+    if (!existing || legacyMs > existingMs) {
+      map[legacyLang] = {
+        ...legacy,
+        reviewedLanguage: legacyLang,
+      }
+    }
+  }
+
+  return map
+}
+
+/**
+ * Retrieve the saved FlowDirector review for a specific language version of a scene.
+ * Does NOT return an English review when asking for a non-English language (e.g. 'es').
+ */
+export function getSceneVideoReviewForLanguage(
+  scene: Record<string, any> | null | undefined,
+  language?: string | null
+): SceneVideoReviewResult | null {
+  const langKey = normalizeReviewLanguageCode(language)
+  const map = getSceneVideoReviewsMap(scene)
+  return map[langKey] ?? null
+}
+
+/**
+ * Persist a FlowDirector review onto a scene for a specific language version,
+ * maintaining `scene.videoReviewsByLanguage[langKey]` alongside `scene.videoReview`
+ * for backward compatibility.
+ */
+export function setSceneVideoReviewForLanguage<T extends Record<string, any>>(
+  scene: T,
+  language: string | undefined | null,
+  review: SceneVideoReviewResult
+): T {
+  const langKey = normalizeReviewLanguageCode(language || review.reviewedLanguage)
+  const stampedReview: SceneVideoReviewResult = {
+    ...review,
+    reviewedLanguage: langKey,
+  }
+  const existingMap = getSceneVideoReviewsMap(scene)
+  const nextMap: Record<string, SceneVideoReviewResult> = {
+    ...existingMap,
+    [langKey]: stampedReview,
+  }
+
+  // Keep `scene.videoReview` pointing to the English master review if one exists,
+  // or to the newly saved review if no English review exists or if English was just reviewed.
+  const currentLegacyLang = inferReviewLanguageFromResult(scene?.videoReview)
+  const shouldUpdateLegacyPointer =
+    langKey === 'en' || !scene?.videoReview || currentLegacyLang === langKey
+
+  return {
+    ...scene,
+    videoReviewsByLanguage: nextMap,
+    videoReview: shouldUpdateLegacyPointer ? stampedReview : scene.videoReview,
+  }
 }
 
 // ============================================================================

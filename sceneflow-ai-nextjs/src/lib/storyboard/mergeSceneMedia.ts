@@ -821,6 +821,39 @@ export function mergeScenePreservingMedia(canonical: any, incoming: any): any {
   if (keptPolish) merged.polishAnalysis = keptPolish
   else delete merged.polishAnalysis
 
+  if (canonical.videoReviewsByLanguage || incoming.videoReviewsByLanguage) {
+    const canonMap =
+      canonical.videoReviewsByLanguage &&
+      typeof canonical.videoReviewsByLanguage === 'object' &&
+      !Array.isArray(canonical.videoReviewsByLanguage)
+        ? canonical.videoReviewsByLanguage
+        : {}
+    const incMap =
+      incoming.videoReviewsByLanguage &&
+      typeof incoming.videoReviewsByLanguage === 'object' &&
+      !Array.isArray(incoming.videoReviewsByLanguage)
+        ? incoming.videoReviewsByLanguage
+        : {}
+    const mergedReviews: Record<string, any> = { ...canonMap }
+    for (const [lang, incRev] of Object.entries(incMap)) {
+      if (!incRev || typeof incRev !== 'object') continue
+      const canonRev = mergedReviews[lang]
+      if (!canonRev || typeof canonRev !== 'object') {
+        mergedReviews[lang] = incRev
+        continue
+      }
+      const incMs = Date.parse(String((incRev as any).generatedAt || '')) || 0
+      const canonMs = Date.parse(String((canonRev as any).generatedAt || '')) || 0
+      mergedReviews[lang] = incMs >= canonMs ? incRev : canonRev
+    }
+    if (Object.keys(mergedReviews).length > 0) {
+      merged.videoReviewsByLanguage = mergedReviews
+    }
+  }
+  if (!merged.videoReview && canonical.videoReview) {
+    merged.videoReview = canonical.videoReview
+  }
+
   if (sceneSfxHasIdentityKeys(canonical, incoming)) {
     const canonSfxArr = Array.isArray(canonical.sfx) ? canonical.sfx : []
     const incomingSfxArr = Array.isArray(incoming.sfx) ? incoming.sfx : []

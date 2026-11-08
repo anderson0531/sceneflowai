@@ -10,7 +10,13 @@ import {
   type ReviewerSegmentInput,
   type ReviewerStreamInput,
 } from '@/lib/intelligence/scene-video-reviewer'
-import type { SceneVideoReviewSourceMode } from '@/lib/intelligence/scene-video-reviewer-types'
+import {
+  getSceneVideoReviewForLanguage,
+  normalizeReviewLanguageCode,
+  setSceneVideoReviewForLanguage,
+  type SceneVideoReviewSourceMode,
+} from '@/lib/intelligence/scene-video-reviewer-types'
+import type { StoredSceneLines } from '@/lib/scene/languageClipPrompt'
 
 export const runtime = 'nodejs'
 export const maxDuration = 120
@@ -150,12 +156,34 @@ export async function POST(req: NextRequest) {
           : [],
     }
 
+    const explicitLanguage =
+      typeof body.language === 'string' && body.language.trim()
+        ? body.language.trim()
+        : undefined
+    const streamLanguage = streamId
+      ? productionStreams.find((s) => s.id === streamId)?.language
+      : undefined
+    const requestedLanguage = normalizeReviewLanguageCode(
+      explicitLanguage || streamLanguage || 'en'
+    )
+
+    const sceneTranslation: StoredSceneLines | null =
+      body.sceneTranslation && typeof body.sceneTranslation === 'object'
+        ? (body.sceneTranslation as StoredSceneLines)
+        : (visionPhase?.translations?.[requestedLanguage]?.[effectiveSceneIndex] as
+            | StoredSceneLines
+            | undefined) ?? null
+
+    const existingLangReview =
+      getSceneVideoReviewForLanguage(sceneObj, requestedLanguage) ??
+      getSceneVideoReviewForLanguage(dbScene, requestedLanguage)
+
     const previousArScore =
       typeof body.previousArScore === 'number'
         ? body.previousArScore
-        : typeof sceneObj.videoReview?.arScore === 'number'
-          ? sceneObj.videoReview.arScore
-          : typeof sceneObj.scoreAnalysis?.audienceScore === 'number'
+        : typeof existingLangReview?.arScore === 'number'
+          ? existingLangReview.arScore
+          : requestedLanguage === 'en' && typeof sceneObj.scoreAnalysis?.audienceScore === 'number'
             ? sceneObj.scoreAnalysis.audienceScore
             : undefined
 
@@ -171,6 +199,8 @@ export async function POST(req: NextRequest) {
       renderedSceneUrl,
       references,
       previousArScore,
+      language: requestedLanguage,
+      sceneTranslation,
     })
 
     // Persist review onto DB project scene if available and non-demo
@@ -183,10 +213,11 @@ export async function POST(req: NextRequest) {
     ) {
       try {
         const updatedScenes = [...dbScenes]
-        updatedScenes[effectiveSceneIndex] = {
-          ...updatedScenes[effectiveSceneIndex],
-          videoReview: review,
-        }
+        updatedScenes[effectiveSceneIndex] = setSceneVideoReviewForLanguage(
+          updatedScenes[effectiveSceneIndex],
+          review.reviewedLanguage || requestedLanguage,
+          review
+        )
         const existingScript = visionPhase.script || {}
         const updatedVisionPhase = {
           ...visionPhase,

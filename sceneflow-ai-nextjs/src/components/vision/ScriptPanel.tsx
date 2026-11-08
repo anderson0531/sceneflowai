@@ -28,6 +28,7 @@ import {
 import { SceneProductionManager } from './scene-production/SceneProductionManager'
 import { SceneProductionDirector } from './scene-production/SceneProductionDirector'
 import { SceneVideoReviewerPanel } from './scene-production/SceneVideoReviewerPanel'
+import { getSceneVideoReviewForLanguage } from '@/lib/intelligence/scene-video-reviewer-types'
 import type { StillDirectorPatch } from '@/lib/intelligence/beat-still-director-fallback'
 import { SegmentFrameTimeline } from './scene-production/SegmentFrameTimeline'
 import { AddSegmentDialog } from './scene-production/AddSegmentDialog'
@@ -7793,11 +7794,17 @@ function SceneCard({
                             <TabsTrigger value="review" title="FlowDirector — Multimodal Audience & Director review to iterate and optimize Stills & Clips before Mixer and Streams" className={sceneTabTriggerClass}>
                               <Eye className="w-3.5 h-3.5 shrink-0" />
                               FlowDirector
-                              {typeof scene.videoReview?.arScore === 'number' && (
-                                <span className="text-[10px] font-medium text-emerald-400">
-                                  (AR {scene.videoReview.arScore})
-                                </span>
-                              )}
+                              {(() => {
+                                const activeLangReview = getSceneVideoReviewForLanguage(
+                                  scene,
+                                  selectedLanguage
+                                )
+                                return typeof activeLangReview?.arScore === 'number' ? (
+                                  <span className="text-[10px] font-medium text-emerald-400">
+                                    (AR {activeLangReview.arScore})
+                                  </span>
+                                ) : null
+                              })()}
                             </TabsTrigger>
                             <TabsTrigger value="mixer" className={sceneTabTriggerClass}>
                               <Clapperboard className="w-3.5 h-3.5 shrink-0" />
@@ -8531,6 +8538,10 @@ function SceneCard({
                                   locationReferences={locationReferences}
                                   objectReferences={objectReferences}
                                   promptComposition={promptComposition}
+                                  selectedLanguage={selectedLanguage}
+                                  availableLanguages={addedSceneLanguages}
+                                  onLanguageChange={onLanguageChange}
+                                  sceneTranslations={storedTranslations}
                                   onEditSceneWithRecommendations={onEditSceneWithRecommendations}
                                   onOpenDirectShotWithRecommendation={({
                                     beatId,

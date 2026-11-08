@@ -11,6 +11,7 @@ import {
   Clock,
   Eye,
   Film,
+  Globe,
   Layers,
   Loader2,
   Play,
@@ -40,15 +41,20 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip'
+import { getLanguageName } from '@/constants/languages'
 import type { StillDirectorPatch } from '@/lib/intelligence/beat-still-director-fallback'
 import type { ProjectLookbook } from '@/lib/intelligence/project-lookbook-fallback'
 import {
   ANOMALY_CATEGORY_LABELS,
   RECOMMENDATION_CATEGORY_LABELS,
   applyShotDirectorRecommendationsToScenes,
+  getSceneVideoReviewForLanguage,
+  getSceneVideoReviewsMap,
   mergeShotDirectorPatches,
   normalizeRecommendationShotPatch,
+  normalizeReviewLanguageCode,
   resolveBeatForRecommendation,
+  setSceneVideoReviewForLanguage,
   type AnomalyOrigin,
   type AnomalySeverity,
   type SceneVideoAnomaly,
@@ -57,6 +63,10 @@ import {
   type SceneVideoReviewSourceMode,
   type ShotReviewAssessment,
 } from '@/lib/intelligence/scene-video-reviewer-types'
+import {
+  isLanguageClipTarget,
+  resolveLanguageClipPlayback,
+} from '@/lib/scene/languageClipVersions'
 import { getSceneBeats, isBeatExcluded } from '@/lib/script/beatMigration'
 
 // ============================================================================
@@ -133,6 +143,17 @@ export interface SceneVideoReviewerPanelProps {
   ) => void
   /** Callback when a new review is completed so parent can sync state if needed */
   onReviewComplete?: (review: SceneVideoReviewResult) => void
+  /** Currently selected scene language code (e.g. 'en', 'es') */
+  selectedLanguage?: string
+  /** Available language codes for this scene */
+  availableLanguages?: string[]
+  /** Callback when user switches language inside FlowDirector */
+  onLanguageChange?: (language: string) => void
+  /** Stored scene line translations keyed by language code */
+  sceneTranslations?: Record<
+    string,
+    Array<{ narration?: string; dialogue?: string[] }>
+  >
   className?: string
 }
 
@@ -278,15 +299,32 @@ export function SceneVideoReviewerPanel({
   onOpenDirectShotWithRecommendation,
   onEditSceneWithRecommendations,
   onReviewComplete,
+  selectedLanguage,
+  availableLanguages,
+  onLanguageChange,
+  sceneTranslations,
   className = '',
 }: SceneVideoReviewerPanelProps) {
-  const persistedReview = (scene?.videoReview ?? null) as SceneVideoReviewResult | null
-  const [review, setReview] = useState<SceneVideoReviewResult | null>(persistedReview)
+  const normalizedPropLanguage = normalizeReviewLanguageCode(selectedLanguage || 'en')
+  const [reviewLanguage, setReviewLanguage] = useState<string>(normalizedPropLanguage)
+  const [localReviewsByLanguage, setLocalReviewsByLanguage] = useState<
+    Record<string, SceneVideoReviewResult>
+  >(() => getSceneVideoReviewsMap(scene))
+
+  const review: SceneVideoReviewResult | null = useMemo(() => {
+    return (
+      localReviewsByLanguage[reviewLanguage] ??
+      getSceneVideoReviewForLanguage(scene, reviewLanguage) ??
+      null
+    )
+  }, [localReviewsByLanguage, reviewLanguage, scene])
+
   const [isReviewing, setIsReviewing] = useState(false)
   const [sourceMode, setSourceMode] = useState<SceneVideoReviewSourceMode>(() => {
-    if (persistedReview?.reviewedSource === 'rendered_mp4') return 'rendered_mp4'
-    if (persistedReview?.reviewedSource === 'shot_clips') return 'shot_clips'
-    if (persistedReview?.reviewedSource === 'keyframes_only') return 'stills'
+    const initialRev = getSceneVideoReviewForLanguage(scene, normalizedPropLanguage)
+    if (initialRev?.reviewedSource === 'rendered_mp4') return 'rendered_mp4'
+    if (initialRev?.reviewedSource === 'shot_clips') return 'shot_clips'
+    if (initialRev?.reviewedSource === 'keyframes_only') return 'stills'
     return 'stills'
   })
   const [hasUserChosenSourceMode, setHasUserChosenSourceMode] = useState(false)
@@ -307,16 +345,53 @@ export function SceneVideoReviewerPanel({
   const [expandedRecIds, setExpandedRecIds] = useState<Set<string>>(new Set())
   const videoRef = useRef<HTMLVideoElement | null>(null)
 
-  // Sync when scene changes or persisted review updates
+  // Keep reviewLanguage synced when parent selectedLanguage changes
   useEffect(() => {
-    if (scene?.videoReview) {
-      setReview(scene.videoReview as SceneVideoReviewResult)
-    }
-  }, [scene?.videoReview, sceneId])
+    setReviewLanguage(normalizedPropLanguage)
+  }, [normalizedPropLanguage])
 
-  // Auto-select unapplied high-priority recommendations when a fresh review arrives
+  // Reset local review cache when switching scenes, and merge persisted reviews on scene updates
   useEffect(() => {
-    if (!review?.recommendations) return
+    setLocalReviewsByLanguage(getSceneVideoReviewsMap(scene))
+  }, [sceneId])
+
+  useEffect(() => {
+    const persistedMap = getSceneVideoReviewsMap(scene)
+    if (Object.keys(persistedMap).length > 0) {
+      setLocalReviewsByLanguage((prev) => ({
+        ...prev,
+        ...persistedMap,
+      }))
+    }
+  }, [scene?.videoReviewsByLanguage, scene?.videoReview, sceneId])
+
+  const setReviewForLanguage = useCallback(
+    (lang: string, nextRev: SceneVideoReviewResult) => {
+      const norm = normalizeReviewLanguageCode(lang)
+      setLocalReviewsByLanguage((prev) => ({
+        ...prev,
+        [norm]: nextRev,
+      }))
+    },
+    []
+  )
+
+  const handleSelectLanguage = useCallback(
+    (lang: string) => {
+      const norm = normalizeReviewLanguageCode(lang)
+      setReviewLanguage(norm)
+      setSelectedStreamId('')
+      onLanguageChange?.(norm)
+    },
+    [onLanguageChange]
+  )
+
+  // Auto-select unapplied high-priority recommendations when a fresh review arrives or language switches
+  useEffect(() => {
+    if (!review?.recommendations) {
+      setSelectedRecIds(new Set())
+      return
+    }
     const initialSelected = new Set<string>()
     for (const rec of review.recommendations) {
       if (!rec.applied && (rec.priority === 'high' || rec.priority === 'medium')) {
@@ -324,7 +399,7 @@ export function SceneVideoReviewerPanel({
       }
     }
     setSelectedRecIds(initialSelected)
-  }, [review?.generatedAt])
+  }, [review?.generatedAt, reviewLanguage])
 
   // Extract segments, streams, and beats for readiness counters and monitor playback
   const segments = useMemo(() => {
@@ -348,8 +423,62 @@ export function SceneVideoReviewerPanel({
     return raw.filter((s: any) => s && s.mp4Url && s.status === 'complete')
   }, [productionData?.productionStreams, scene?.productionStreams])
 
+  // Discover all language versions available for this scene
+  const availableReviewLanguages = useMemo(() => {
+    const codes = new Set<string>(['en'])
+    if (Array.isArray(availableLanguages)) {
+      for (const l of availableLanguages) {
+        if (l) codes.add(normalizeReviewLanguageCode(l))
+      }
+    }
+    for (const s of completedStreams) {
+      if (s?.language) codes.add(normalizeReviewLanguageCode(s.language))
+    }
+    for (const seg of segments) {
+      if (seg?.languageVersions && typeof seg.languageVersions === 'object') {
+        for (const l of Object.keys(seg.languageVersions)) {
+          if (l) codes.add(normalizeReviewLanguageCode(l))
+        }
+      }
+    }
+    if (scene?.dialogueAudio && typeof scene.dialogueAudio === 'object' && !Array.isArray(scene.dialogueAudio)) {
+      for (const l of Object.keys(scene.dialogueAudio)) {
+        if (l) codes.add(normalizeReviewLanguageCode(l))
+      }
+    }
+    if (scene?.narrationAudio && typeof scene.narrationAudio === 'object' && !Array.isArray(scene.narrationAudio)) {
+      for (const l of Object.keys(scene.narrationAudio)) {
+        if (l) codes.add(normalizeReviewLanguageCode(l))
+      }
+    }
+    for (const l of Object.keys(localReviewsByLanguage)) {
+      if (l) codes.add(normalizeReviewLanguageCode(l))
+    }
+    if (reviewLanguage) {
+      codes.add(normalizeReviewLanguageCode(reviewLanguage))
+    }
+    const list = Array.from(codes)
+    return ['en', ...list.filter((c) => c !== 'en')]
+  }, [
+    availableLanguages,
+    completedStreams,
+    segments,
+    scene?.dialogueAudio,
+    scene?.narrationAudio,
+    localReviewsByLanguage,
+    reviewLanguage,
+  ])
+
+  const completedStreamsForLanguage = useMemo(() => {
+    return completedStreams.filter(
+      (s: any) => normalizeReviewLanguageCode(s?.language || 'en') === reviewLanguage
+    )
+  }, [completedStreams, reviewLanguage])
+
   const renderedSceneUrl =
-    productionData?.renderedSceneUrl || scene?.renderedSceneUrl || null
+    reviewLanguage === 'en'
+      ? productionData?.renderedSceneUrl || scene?.renderedSceneUrl || null
+      : null
 
   const activeBeats = useMemo(() => {
     return getSceneBeats(scene || {}).filter((b) => !isBeatExcluded(b))
@@ -357,11 +486,13 @@ export function SceneVideoReviewerPanel({
 
   const shotMediaItems = useMemo(() => {
     const count = Math.max(activeBeats.length, segments.length)
+    const isLocalizedTarget = isLanguageClipTarget(reviewLanguage)
     const items: Array<{
       shotNumber: number
       beatId?: string
       segmentId?: string
       videoUrl?: string
+      usingMasterFallback?: boolean
       frameUrl?: string
       label: string
     }> = []
@@ -375,57 +506,97 @@ export function SceneVideoReviewerPanel({
         Array.isArray(seg?.takes) && seg.takes.length > 0
           ? seg.takes[seg.takes.length - 1]?.assetUrl
           : undefined
-      const rawUrl = seg?.activeAssetUrl || latestTakeUrl || undefined
-      const isVideo =
-        !!rawUrl &&
+      const masterUrl = seg?.activeAssetUrl || latestTakeUrl || undefined
+      const masterIsVideo =
+        !!masterUrl &&
         (seg?.assetType === 'video' ||
-          /\.(mp4|webm|mov)(\?|$)/i.test(rawUrl) ||
+          /\.(mp4|webm|mov)(\?|$)/i.test(masterUrl) ||
           seg?.status === 'COMPLETE' ||
           seg?.status === 'UPLOADED')
+
+      let videoUrl: string | undefined = masterIsVideo ? masterUrl : undefined
+      let usingMasterFallback = false
+
+      if (isLocalizedTarget && seg) {
+        const playback = resolveLanguageClipPlayback(seg as any, reviewLanguage)
+        if (!playback.usingMaster && playback.url) {
+          videoUrl = playback.url
+          usingMasterFallback = false
+        } else if (masterIsVideo && masterUrl) {
+          videoUrl = masterUrl
+          usingMasterFallback = true
+        } else {
+          videoUrl = undefined
+          usingMasterFallback = false
+        }
+      }
+
       const frameUrl =
         seg?.startFrameUrl ||
         seg?.references?.startFrameUrl ||
         beat?.storyboardImageUrl ||
         undefined
+      const speakerName = (beat as any)?.character || beat?.speaker
       items.push({
         shotNumber: i + 1,
         beatId: beat?.beatId || seg?.beatId,
         segmentId: seg?.segmentId,
-        videoUrl: isVideo ? rawUrl : undefined,
+        videoUrl,
+        usingMasterFallback,
         frameUrl,
         label:
-          beat?.kind === 'spoken' && beat?.speaker
-            ? `Shot ${i + 1} · ${beat.speaker}`
+          (beat?.kind === 'spoken' ||
+            (beat?.kind as string) === 'dialogue' ||
+            (beat?.kind as string) === 'narration') &&
+          speakerName
+            ? `Shot ${i + 1} · ${speakerName}`
             : `Shot ${i + 1}`,
       })
     }
     return items
-  }, [activeBeats, segments])
+  }, [activeBeats, segments, reviewLanguage])
 
   const readyClipCount = useMemo(
     () => shotMediaItems.filter((item) => !!item.videoUrl).length,
+    [shotMediaItems]
+  )
+  const localizedClipCount = useMemo(
+    () =>
+      shotMediaItems.filter((item) => !!item.videoUrl && !item.usingMasterFallback)
+        .length,
     [shotMediaItems]
   )
   const readyKeyframeCount = useMemo(
     () => shotMediaItems.filter((item) => !!item.frameUrl).length,
     [shotMediaItems]
   )
-  const hasRenderedStream = completedStreams.length > 0 || !!renderedSceneUrl
+  const hasRenderedStream =
+    completedStreamsForLanguage.length > 0 || !!renderedSceneUrl
 
   const activeStreamUrl = useMemo(() => {
     if (selectedStreamId) {
       const found = completedStreams.find((s: any) => s.id === selectedStreamId)
       if (found?.mp4Url) return found.mp4Url as string
     }
-    const videoStream = completedStreams.find((s: any) => s.streamType === 'video')
+    const videoStream = completedStreamsForLanguage.find(
+      (s: any) => s.streamType === 'video'
+    )
     return (
       (videoStream?.mp4Url as string | undefined) ||
-      (completedStreams[completedStreams.length - 1]?.mp4Url as string | undefined) ||
+      (completedStreamsForLanguage[completedStreamsForLanguage.length - 1]?.mp4Url as
+        | string
+        | undefined) ||
       renderedSceneUrl ||
       review?.reviewedVideoUrl ||
       null
     )
-  }, [completedStreams, selectedStreamId, renderedSceneUrl, review?.reviewedVideoUrl])
+  }, [
+    completedStreams,
+    completedStreamsForLanguage,
+    selectedStreamId,
+    renderedSceneUrl,
+    review?.reviewedVideoUrl,
+  ])
 
   // Auto-select the highest ready production stage (Scene -> Clips -> Stills) until user explicitly picks one
   useEffect(() => {
@@ -474,6 +645,12 @@ export function SceneVideoReviewerPanel({
 
   const handleRunReview = async () => {
     setIsReviewing(true)
+    const targetLanguage = normalizeReviewLanguageCode(reviewLanguage)
+    const targetLanguageName = getLanguageName(targetLanguage)
+    const storedSceneTranslation =
+      targetLanguage !== 'en'
+        ? sceneTranslations?.[targetLanguage]?.[sceneIndex] ?? undefined
+        : undefined
     try {
       const response = await fetch('/api/vision/review-scene-video', {
         method: 'POST',
@@ -482,9 +659,11 @@ export function SceneVideoReviewerPanel({
           projectId,
           sceneIndex,
           sceneId,
+          language: targetLanguage,
           sourceMode,
           streamId: selectedStreamId || undefined,
           sceneOverride: scene,
+          sceneTranslation: storedSceneTranslation,
           segments,
           productionStreams: completedStreams,
           renderedSceneUrl,
@@ -500,17 +679,22 @@ export function SceneVideoReviewerPanel({
       if (!response.ok || !data.review) {
         throw new Error(data.error || 'Scene video review failed')
       }
-      const nextReview = data.review as SceneVideoReviewResult
-      setReview(nextReview)
+      const nextReview: SceneVideoReviewResult = {
+        ...(data.review as SceneVideoReviewResult),
+        reviewedLanguage: targetLanguage,
+        reviewedLanguageLabel: targetLanguageName,
+      }
+      setReviewForLanguage(targetLanguage, nextReview)
       onReviewComplete?.(nextReview)
 
-      // Persist review onto in-memory script scenes so it survives tab switches
+      // Persist review onto in-memory script scenes (per-language map + backward-compatible videoReview)
       if (onScriptChange && Array.isArray(scenes) && scenes[sceneIndex]) {
         const nextScenes = [...scenes]
-        nextScenes[sceneIndex] = {
-          ...nextScenes[sceneIndex],
-          videoReview: nextReview,
-        }
+        nextScenes[sceneIndex] = setSceneVideoReviewForLanguage(
+          nextScenes[sceneIndex],
+          targetLanguage,
+          nextReview
+        )
         onScriptChange({
           ...script,
           script: script?.script
@@ -521,7 +705,7 @@ export function SceneVideoReviewerPanel({
       }
 
       toast.success(
-        `Scene ${sceneNumber} reviewed — AR Score ${nextReview.arScore} · Director Score ${nextReview.directorScore}`
+        `Scene ${sceneNumber} (${targetLanguage.toUpperCase()}) reviewed — AR Score ${nextReview.arScore} · Director Score ${nextReview.directorScore}`
       )
     } catch (error) {
       toast.error(
@@ -667,11 +851,12 @@ export function SceneVideoReviewerPanel({
         : null
 
       if (updatedReview) {
-        setReview(updatedReview)
-        result.scenes[sceneIndex] = {
-          ...result.scenes[sceneIndex],
-          videoReview: updatedReview,
-        }
+        setReviewForLanguage(reviewLanguage, updatedReview)
+        result.scenes[sceneIndex] = setSceneVideoReviewForLanguage(
+          result.scenes[sceneIndex],
+          reviewLanguage,
+          updatedReview
+        )
       }
 
       // Update script state (updates beatDirection, storyboardImagePrompt, and scene.segments)
@@ -777,12 +962,28 @@ export function SceneVideoReviewerPanel({
     const appliedAt = new Date().toISOString()
     const appliedIds = new Set(sceneRecs.map((r) => r.id))
     if (review) {
-      setReview({
+      const updatedRev: SceneVideoReviewResult = {
         ...review,
         recommendations: review.recommendations.map((r) =>
           appliedIds.has(r.id) ? { ...r, applied: true, appliedAt } : r
         ),
-      })
+      }
+      setReviewForLanguage(reviewLanguage, updatedRev)
+      if (onScriptChange && Array.isArray(scenes) && scenes[sceneIndex]) {
+        const nextScenes = [...scenes]
+        nextScenes[sceneIndex] = setSceneVideoReviewForLanguage(
+          nextScenes[sceneIndex],
+          reviewLanguage,
+          updatedRev
+        )
+        onScriptChange({
+          ...script,
+          script: script?.script
+            ? { ...script.script, scenes: nextScenes }
+            : undefined,
+          ...(script?.script ? {} : { scenes: nextScenes }),
+        })
+      }
     }
     setSelectedRecIds((prev) => {
       const next = new Set(prev)
@@ -911,6 +1112,10 @@ export function SceneVideoReviewerPanel({
                 <h3 className="text-sm font-semibold text-white">
                   FlowDirector · Scene {sceneNumber}
                 </h3>
+                <span className="inline-flex items-center gap-1 rounded border border-indigo-500/40 bg-indigo-950/60 px-1.5 py-0.5 text-[10px] font-semibold text-indigo-200">
+                  <Globe className="h-2.5 w-2.5 text-indigo-400" />
+                  {getLanguageName(reviewLanguage)} ({reviewLanguage.toUpperCase()})
+                </span>
                 {review?.modelId && (
                   <span className="rounded border border-slate-700 bg-slate-800/80 px-1.5 py-0.5 text-[10px] font-mono text-slate-300">
                     {review.modelId}
@@ -925,6 +1130,57 @@ export function SceneVideoReviewerPanel({
 
           <div className="hidden h-5 w-px bg-slate-800 sm:block" />
 
+          {/* Language Version Switcher with Per-Language Saved Scores */}
+          <div
+            role="group"
+            aria-label="Language version"
+            className="flex flex-wrap items-center gap-1 text-[11px]"
+          >
+            {availableReviewLanguages.map((langCode) => {
+              const langReview =
+                localReviewsByLanguage[langCode] ??
+                getSceneVideoReviewForLanguage(scene, langCode)
+              const isSelected = langCode === reviewLanguage
+              return (
+                <button
+                  key={langCode}
+                  type="button"
+                  onClick={() => handleSelectLanguage(langCode)}
+                  disabled={isReviewing}
+                  title={`Inspect ${getLanguageName(langCode)} (${langCode.toUpperCase()}) version${
+                    typeof langReview?.arScore === 'number'
+                      ? ` — Saved AR ${langReview.arScore} · Director ${langReview.directorScore}`
+                      : ' — Not yet reviewed'
+                  }`}
+                  className={`inline-flex items-center gap-1.5 rounded-md border px-2 py-0.5 font-medium transition-colors ${
+                    isSelected
+                      ? 'border-indigo-500/70 bg-indigo-600/25 text-white shadow-sm'
+                      : 'border-slate-700/80 bg-slate-900/90 text-slate-300 hover:border-slate-600 hover:text-white'
+                  }`}
+                >
+                  <span className="font-semibold uppercase">{langCode}</span>
+                  {typeof langReview?.arScore === 'number' ? (
+                    <span
+                      className={`rounded px-1 py-0.2 text-[10px] font-semibold ${
+                        langReview.arScore >= 85
+                          ? 'bg-emerald-500/20 text-emerald-300'
+                          : langReview.arScore >= 70
+                            ? 'bg-amber-500/20 text-amber-300'
+                            : 'bg-rose-500/20 text-rose-300'
+                      }`}
+                    >
+                      AR {langReview.arScore}
+                    </span>
+                  ) : (
+                    <span className="text-[10px] text-slate-500">—</span>
+                  )}
+                </button>
+              )
+            })}
+          </div>
+
+          <div className="hidden h-5 w-px bg-slate-800 sm:block" />
+
           {/* Media Readiness Pills */}
           <div className="flex flex-wrap items-center gap-1.5 text-[11px]">
             <span
@@ -935,11 +1191,11 @@ export function SceneVideoReviewerPanel({
               }`}
             >
               <Film className="h-3 w-3" />
-              {completedStreams.length > 0
-                ? `${completedStreams.length} Rendered MP4${completedStreams.length > 1 ? 's' : ''}`
+              {completedStreamsForLanguage.length > 0
+                ? `${completedStreamsForLanguage.length} ${reviewLanguage.toUpperCase()} MP4${completedStreamsForLanguage.length > 1 ? 's' : ''}`
                 : renderedSceneUrl
                   ? '1 Rendered MP4'
-                  : 'No Rendered MP4'}
+                  : `No ${reviewLanguage.toUpperCase()} MP4`}
             </span>
             <span
               className={`inline-flex items-center gap-1 rounded-md border px-2 py-0.5 ${
@@ -947,9 +1203,16 @@ export function SceneVideoReviewerPanel({
                   ? 'border-teal-500/40 bg-teal-950/40 text-teal-300'
                   : 'border-slate-700 bg-slate-900 text-slate-400'
               }`}
+              title={
+                reviewLanguage !== 'en'
+                  ? `${localizedClipCount} dedicated ${getLanguageName(reviewLanguage)} clip(s); ${Math.max(0, readyClipCount - localizedClipCount)} using English master fallback`
+                  : undefined
+              }
             >
               <Video className="h-3 w-3" />
-              {readyClipCount}/{shotMediaItems.length} Shot Clips
+              {reviewLanguage !== 'en'
+                ? `${localizedClipCount}/${shotMediaItems.length} ${reviewLanguage.toUpperCase()} Clips`
+                : `${readyClipCount}/${shotMediaItems.length} Shot Clips`}
             </span>
             <span
               className={`inline-flex items-center gap-1 rounded-md border px-2 py-0.5 ${
@@ -1019,12 +1282,12 @@ export function SceneVideoReviewerPanel({
               <Film className="h-3.5 w-3.5" />
               <span>Scene</span>
               <span className="text-[10px] opacity-80">
-                ({completedStreams.length || (renderedSceneUrl ? 1 : 0)})
+                ({completedStreamsForLanguage.length || (renderedSceneUrl ? 1 : 0)})
               </span>
             </button>
           </div>
 
-          {sourceMode === 'rendered_mp4' && completedStreams.length > 1 && (
+          {sourceMode === 'rendered_mp4' && completedStreamsForLanguage.length > 1 && (
             <select
               aria-label="Select rendered stream"
               value={selectedStreamId}
@@ -1032,11 +1295,11 @@ export function SceneVideoReviewerPanel({
               disabled={isReviewing}
               className="h-8 rounded-md border border-slate-700 bg-slate-900 px-2 text-xs text-slate-200 focus:border-indigo-500 focus:outline-none"
             >
-              <option value="">Latest Video Stream</option>
-              {completedStreams.map((s: any) => (
+              <option value="">Latest {reviewLanguage.toUpperCase()} Video Stream</option>
+              {completedStreamsForLanguage.map((s: any) => (
                 <option key={s.id} value={s.id}>
                   {s.streamType === 'animatic' ? 'Animatic' : 'Video'} ·{' '}
-                  {(s.language || 'en').toUpperCase()}
+                  {(s.language || reviewLanguage).toUpperCase()}
                 </option>
               ))}
             </select>
