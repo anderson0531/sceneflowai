@@ -5,8 +5,13 @@ import { deriveSegmentsFromBeats } from '@/lib/scene/deriveSegmentsFromBeats'
 import { isBeatFirstPipelineEnabled } from '@/lib/script/beatMigration'
 import { resolveProjectArtStyle } from '@/lib/vision/artStyle'
 import { compileBeatVideoPromptFromDirection } from '@/lib/scene/beatVideoPromptCompiler'
+import { buildSceneStateLedger } from '@/lib/scene/sceneStateLedger'
+import {
+  parsePersistedMusicCues,
+  resolveBeatMusicCue,
+} from '@/lib/script/sceneMusicCues'
 import type { DetailedSceneDirection } from '@/types/scene-direction'
-import { getSceneBeats } from '@/lib/script/beatMigration'
+import { getSceneBeats, isBeatExcluded } from '@/lib/script/beatMigration'
 import {
   findSceneById,
   getVisionScriptScenes,
@@ -149,21 +154,33 @@ export async function POST(
 
     const { sceneIndex, artStyleId, segmentsToKeep, result, workingScene } = txOutcome
 
-    const beats = getSceneBeats(workingScene)
+    const allBeats = getSceneBeats(workingScene)
+    const activeBeats = allBeats.filter((b) => !isBeatExcluded(b))
+    const stateLedger = buildSceneStateLedger(activeBeats)
+    const musicCues = parsePersistedMusicCues(
+      (workingScene as Record<string, unknown>).sceneMusicCues,
+      activeBeats
+    )
     const sceneDirection =
       (workingScene as { sceneDirection?: unknown; detailedDirection?: unknown })
         .sceneDirection ??
       (workingScene as { detailedDirection?: unknown }).detailedDirection ??
       null
     const compiledSegments = result.segments.map((seg) => {
-      const beat = beats.find((b) => b.beatId === seg.beatId)
+      const beatIndex = activeBeats.findIndex((b) => b.beatId === seg.beatId)
+      const beat = beatIndex >= 0 ? activeBeats[beatIndex] : allBeats.find((b) => b.beatId === seg.beatId)
       if (!beat) return seg
+      const musicCue = beatIndex >= 0 ? resolveBeatMusicCue(musicCues, beatIndex) : undefined
       const compiled = compileBeatVideoPromptFromDirection(
         beat,
         sceneDirection as DetailedSceneDirection | null,
         {
           artStyleId,
           excerpt: seg.dialoguePortion?.excerpt,
+          continuesSameLine: (seg.dialoguePortion?.partIndex ?? 0) > 0,
+          previousBeat: beatIndex > 0 ? activeBeats[beatIndex - 1] : undefined,
+          sceneState: beatIndex >= 0 ? stateLedger[beatIndex] : undefined,
+          ...(musicCue ? { musicCue } : {}),
         }
       )
       return {

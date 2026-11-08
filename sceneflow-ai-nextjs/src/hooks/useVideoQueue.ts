@@ -202,9 +202,21 @@ export function useVideoQueue(
     const rawBeats = Array.isArray((segmentGuideContext?.fullScene as any)?.beats)
       ? ((segmentGuideContext?.fullScene as any).beats as Array<Record<string, any>>)
       : []
+    const chars = Array.isArray(segmentGuideContext?.projectCharacters)
+      ? segmentGuideContext.projectCharacters
+      : []
+    const locs = Array.isArray(segmentGuideContext?.locationReferences)
+      ? segmentGuideContext.locationReferences
+      : []
+    const objs = Array.isArray(segmentGuideContext?.objectReferences)
+      ? segmentGuideContext.objectReferences
+      : []
     return JSON.stringify({
       sceneImageUrl: sceneImageUrl || '',
       defaultAspectRatio,
+      charRefs: chars.map((c: any) => `${c?.id || c?.name || ''}:${c?.referenceImage || ''}:${(c?.wardrobes || []).length}`),
+      locRefs: locs.map((l: any) => `${l?.id || l?.location || l?.name || ''}:${l?.imageUrl || ''}`),
+      objRefs: objs.map((o: any) => `${o?.id || o?.name || ''}:${o?.imageUrl || ''}`),
       segments: (segments || []).map((s) => ({
         id: s.segmentId,
         beatId: (s as any).beatId || '',
@@ -220,6 +232,12 @@ export function useVideoQueue(
         updatedAt: b?.beatDirection?.updatedAt || '',
         dirVideoPrompt: b?.beatDirection?.videoPrompt || '',
         dirFramePrompt: b?.beatDirection?.framePrompt || '',
+        castInFrame: b?.beatDirection?.castInFrame || null,
+        keyProps: b?.beatDirection?.keyProps || null,
+        blocking: b?.beatDirection?.blocking || '',
+        frozenMoment: b?.beatDirection?.frozenMoment || '',
+        shotType: b?.beatDirection?.shotType || '',
+        refSelection: b?.referenceSelection || null,
         videoPrompt: b?.videoPrompt || '',
         stillPrompt: b?.storyboardImagePrompt || '',
         startUrl: b?.storyboardStartImageUrl || b?.storyboardImageUrl || '',
@@ -228,7 +246,15 @@ export function useVideoQueue(
         action: b?.actionDescription || '',
       })),
     })
-  }, [segments, sceneImageUrl, segmentGuideContext?.fullScene, defaultAspectRatio])
+  }, [
+    segments,
+    sceneImageUrl,
+    segmentGuideContext?.fullScene,
+    segmentGuideContext?.projectCharacters,
+    segmentGuideContext?.locationReferences,
+    segmentGuideContext?.objectReferences,
+    defaultAspectRatio,
+  ])
 
   useEffect(() => {
     if (!isReady) {
@@ -249,14 +275,25 @@ export function useVideoQueue(
       )
       setConfigsMap(nextMap)
 
-      const changedAutoPrompts = new Map<string, SegmentConfigResult['config']>()
+      const changedAutoPrompts = new Map<
+        string,
+        { config: SegmentConfigResult['config']; promptChanged: boolean; refsChanged: boolean }
+      >()
       nextMap.forEach((res, segId) => {
-        const prevAutoPrompt = lastAutoPromptBySegmentRef.current.get(segId)
-        const nextAutoPrompt = res.config.prompt || ''
-        if (prevAutoPrompt !== undefined && prevAutoPrompt !== nextAutoPrompt) {
-          changedAutoPrompts.set(segId, res.config)
+        const refSig = (res.config.referenceImages || [])
+          .map((r) => `${r.type}:${r.name || ''}:${r.url}`)
+          .join('|')
+        const nextAutoSig = `${res.config.prompt || ''}@@${refSig}`
+        const prevAutoSig = lastAutoPromptBySegmentRef.current.get(segId)
+        if (prevAutoSig !== undefined && prevAutoSig !== nextAutoSig) {
+          const [prevPrompt = '', prevRefs = ''] = prevAutoSig.split('@@')
+          changedAutoPrompts.set(segId, {
+            config: res.config,
+            promptChanged: prevPrompt !== (res.config.prompt || ''),
+            refsChanged: prevRefs !== refSig,
+          })
         }
-        lastAutoPromptBySegmentRef.current.set(segId, nextAutoPrompt)
+        lastAutoPromptBySegmentRef.current.set(segId, nextAutoSig)
       })
 
       if (changedAutoPrompts.size > 0) {
@@ -264,19 +301,31 @@ export function useVideoQueue(
           if (prev.size === 0) return prev
           let mutated = false
           const next = new Map(prev)
-          changedAutoPrompts.forEach((freshAutoCfg, segId) => {
+          changedAutoPrompts.forEach(({ config: freshAutoCfg, promptChanged, refsChanged }, segId) => {
             const existing = next.get(segId)
-            if (!existing || existing.useCustomApiPrompt) return
+            if (!existing) return
             const seg = current.segments.find((s) => s.segmentId === segId)
-            if (seg?.userEditedPrompt?.trim()) return
-            next.set(segId, {
-              ...existing,
-              prompt: freshAutoCfg.prompt,
-              visualPrompt: freshAutoCfg.visualPrompt || existing.visualPrompt,
-              motionPrompt: freshAutoCfg.motionPrompt || existing.motionPrompt,
-              guidePrompt: freshAutoCfg.guidePrompt || existing.guidePrompt,
-            })
-            mutated = true
+            const canSyncPrompt = !existing.useCustomApiPrompt && !seg?.userEditedPrompt?.trim()
+            const nextEntry: VideoGenerationConfig = { ...existing }
+            let entryChanged = false
+            if (promptChanged && canSyncPrompt) {
+              nextEntry.prompt = freshAutoCfg.prompt
+              nextEntry.visualPrompt = freshAutoCfg.visualPrompt || existing.visualPrompt
+              nextEntry.motionPrompt = freshAutoCfg.motionPrompt || existing.motionPrompt
+              nextEntry.guidePrompt = freshAutoCfg.guidePrompt || existing.guidePrompt
+              entryChanged = true
+            }
+            if (refsChanged && freshAutoCfg.referenceImages) {
+              nextEntry.referenceImages = freshAutoCfg.referenceImages
+              if (existing.mode === 'T2V' && freshAutoCfg.mode === 'REF' && freshAutoCfg.referenceImages.length > 0) {
+                nextEntry.mode = 'REF'
+              }
+              entryChanged = true
+            }
+            if (entryChanged) {
+              next.set(segId, nextEntry)
+              mutated = true
+            }
           })
           return mutated ? next : prev
         })
@@ -404,6 +453,7 @@ export function useVideoQueue(
         prompt: res.config.prompt,
         start: res.config.startFrameUrl?.slice(-20),
         end: res.config.endFrameUrl?.slice(-20),
+        refs: (res.config.referenceImages || []).map((r) => `${r.type}:${r.name || ''}:${r.url.slice(-20)}`).join('|'),
       })),
       userConfigs: Array.from(userConfigs.entries()).map(([id, cfg]) => ({
         id,
@@ -414,6 +464,7 @@ export function useVideoQueue(
         approvalStatus: cfg.approvalStatus,
         duration: cfg.duration,
         prompt: cfg.prompt,
+        refs: (cfg.referenceImages || []).map((r) => `${r.type}:${r.name || ''}:${r.url.slice(-20)}`).join('|'),
       })),
     })
     
@@ -474,6 +525,25 @@ export function useVideoQueue(
           visualPrompt: autoConfig.config.visualPrompt || config.visualPrompt,
           motionPrompt: autoConfig.config.motionPrompt || config.motionPrompt,
           guidePrompt: autoConfig.config.guidePrompt || config.guidePrompt,
+        }
+      }
+
+      if (userConfig && autoConfig?.config?.referenceImages?.length) {
+        const userRefSig = (config.referenceImages || [])
+          .map((r) => `${r.type}:${r.name || ''}:${r.url}`)
+          .join('|')
+        const autoRefSig = autoConfig.config.referenceImages
+          .map((r) => `${r.type}:${r.name || ''}:${r.url}`)
+          .join('|')
+        if (userRefSig !== autoRefSig) {
+          config = {
+            ...config,
+            referenceImages: autoConfig.config.referenceImages,
+            mode:
+              config.mode === 'T2V' && autoConfig.config.mode === 'REF'
+                ? 'REF'
+                : config.mode,
+          }
         }
       }
       

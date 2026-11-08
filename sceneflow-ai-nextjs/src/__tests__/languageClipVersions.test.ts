@@ -260,6 +260,10 @@ describe('language clip prompts', () => {
     expect(localizedUnquoted.prompt).toContain(
       'No spoken dialogue. Translate and render any visible signage and significant writing in Spanish.'
     )
+
+    const nonSignageQuotedPrompt =
+      'Medium Close-Up. Blocking: Gideon Croft holds the "spud wrench" tightly at his side while staring into the dark tunnel. No spoken dialogue.'
+    expect(extractPromptSignageTexts(nonSignageQuotedPrompt)).toEqual([])
   })
 
   it('leaves narration and action pictures in English and translates the guide line', () => {

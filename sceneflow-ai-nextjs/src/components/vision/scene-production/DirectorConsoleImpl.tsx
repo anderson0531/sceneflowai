@@ -185,6 +185,11 @@ import {
   compileBeatVideoPromptFromDirection,
   isStaleSavedVideoPrompt,
 } from '@/lib/scene/beatVideoPromptCompiler'
+import { buildSceneStateLedger } from '@/lib/scene/sceneStateLedger'
+import {
+  parsePersistedMusicCues,
+  resolveBeatMusicCue,
+} from '@/lib/script/sceneMusicCues'
 import { isStoredTranslationTimedForShot } from '@/lib/translation/timedDialogueMetrics'
 import type { PromoSceneBeat } from '@/lib/publish/buildPromoScene'
 import type { DetailedSceneDirection } from '@/types/scene-direction'
@@ -1188,9 +1193,30 @@ export function DirectorConsoleRoot({
       const sceneDirection = ((sceneRecord?.sceneDirection ??
         sceneRecord?.detailedDirection ??
         null) || null) as DetailedSceneDirection | null
+      const activeBeats = allBeats.filter((entry) => !isBeatExcluded(entry))
+      const activeBeatIndex = beat
+        ? activeBeats.findIndex((entry) => entry.beatId === beat.beatId)
+        : -1
+      const stateLedger = buildSceneStateLedger(activeBeats)
+      const musicCue =
+        activeBeatIndex >= 0
+          ? resolveBeatMusicCue(
+              parsePersistedMusicCues(sceneRecord?.sceneMusicCues, activeBeats),
+              activeBeatIndex
+            )
+          : undefined
       const compiledFromBeat = beat
         ? compileBeatVideoPromptFromDirection(beat, sceneDirection, {
-            previousBeat: beatIndex > 0 ? allBeats[beatIndex - 1] : undefined,
+            previousBeat:
+              activeBeatIndex > 0
+                ? activeBeats[activeBeatIndex - 1]
+                : beatIndex > 0
+                  ? allBeats[beatIndex - 1]
+                  : undefined,
+            sceneState: activeBeatIndex >= 0 ? stateLedger[activeBeatIndex] : undefined,
+            excerpt: segment.dialoguePortion?.excerpt?.trim(),
+            continuesSameLine: (segment.dialoguePortion?.partIndex ?? 0) > 0,
+            ...(musicCue ? { musicCue } : {}),
           }).prompt
         : ''
       const sourcePrompt =

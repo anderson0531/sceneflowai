@@ -8,6 +8,7 @@ import {
 import {
   hasCompleteAuthoredBeatDirection,
   plateNamesFromVideoRefs,
+  rewriteThinClipPrompt,
 } from '@/lib/intelligence/shotDirectionPreflight'
 import type { SceneBeat } from '@/lib/script/segmentTypes'
 
@@ -130,5 +131,33 @@ describe('shotNeedsDirectionRewrite', () => {
         { characterName: 'Gideon', propName: 'Brass Key', locationName: 'Subterranean Vault' },
       ])
     ).toEqual(['Gideon', 'Brass Key'])
+  })
+
+  it('preserves director-optimized shots with empty castInFrame or videoPrompt during language clip preflight', async () => {
+    const emptyCastDirectorBeat = beat({
+      beatDirection: {
+        generatedBy: 'director',
+        shotType: 'Extreme Close-Up',
+        frozenMoment: 'Sparks arc across the brass induction coil terminals.',
+        clipAction: 'Blue-white electrical arcs snap between the twin terminals.',
+        castInFrame: [],
+        keyProps: ['Brass Induction Coil'],
+      },
+    })
+    expect(hasCompleteAuthoredBeatDirection(emptyCastDirectorBeat)).toBe(true)
+
+    const prepared = await rewriteThinClipPrompt({
+      beat: emptyCastDirectorBeat,
+      beats: [emptyCastDirectorBeat],
+      beatIndex: 0,
+      prompt: 'Shot: Extreme Close-Up. Action: Blue-white electrical arcs snap between the twin terminals.',
+      plateNames: ['Gideon Croft', 'Brass Induction Coil'],
+      expectsCast: false,
+      sceneDirection: null,
+    })
+    expect(prepared.beat).toBe(emptyCastDirectorBeat)
+    expect(prepared.prompt).toBe(
+      'Shot: Extreme Close-Up. Action: Blue-white electrical arcs snap between the twin terminals.'
+    )
   })
 })

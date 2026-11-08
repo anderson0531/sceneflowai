@@ -268,7 +268,7 @@ export function extractPromptSignageTexts(
 
   // 1. Keyword before double-quoted or single-quoted text/formula/signage
   const beforeQuoteRegex =
-    /\b(?:sign|signage|billboard|banner|storefront|neon|screen|monitor|display|headline|masthead|poster|label|labeled|plaque|placard|marquee|card|title|titled|text|formula|equation|inscription|inscribed|writing|written|chalk|slate|board|chalkboard|blackboard|whiteboard|graffiti|note|notebook|letter|document|page|ledger|blueprint|newspaper|journal|book|engraving|engraved|carved|stenciled|painted|printed|stamped|marked|reads?|reading|says?|saying|bearing|showing|words?|caption|subtitle|chyron)\b(?:\s+(?:on|in|across|beside|above|below|over|under|from|at|near)\s+[^"'\n]{1,35}?)?\s*(?:that\s+(?:says|reads)|reading|saying|with\s+(?:the\s+)?(?:struck-through\s+)?(?:text|words|formula|equation|title|inscription|label)|inscribed\s+with|written\s+as|labeled|titled|:)?\s*(?:"([^"\n]{2,140})"|(?<![A-Za-z0-9])'([^'\n]{2,140})'(?![A-Za-z0-9]))/gi
+    /\b(?:sign|signage|billboard|banner|storefront|neon|screen|monitor|display|displaying|headline|masthead|poster|label|labeled|plaque|placard|marquee|card|title|titled|text|formula|equation|inscription|inscribed|writing|written|chalk|slate|board|chalkboard|blackboard|whiteboard|graffiti|note|notebook|letter|document|page|ledger|blueprint|newspaper|journal|book|engraving|engraved|carved|stenciled|painted|printed|stamped|marked|reads?|reading|says?|saying|bearing|showing|words?|caption|subtitle|chyron)\b(?:\s+(?:on|in|across|beside|above|below|over|under|from|at|near)\s+[^"'\n]{1,35}?)?\s*(?:that\s+(?:says|reads)|reading|saying|with\s+(?:the\s+)?(?:struck-through\s+)?(?:text|words|formula|equation|title|inscription|label)|inscribed\s+with|written\s+as|labeled|titled|:)?\s*(?:"([^"\n]{2,140})"|(?<![A-Za-z0-9])'([^'\n]{2,140})'(?![A-Za-z0-9]))/gi
 
   let match: RegExpExecArray | null
   while ((match = beforeQuoteRegex.exec(stripped)) !== null) {
@@ -281,14 +281,6 @@ export function extractPromptSignageTexts(
 
   while ((match = afterQuoteRegex.exec(stripped)) !== null) {
     pushCandidate(match[1] ?? match[2])
-  }
-
-  // 3. Fallback: any remaining double-quoted string in stripped prompt
-  if (results.length === 0) {
-    const anyDoubleQuoted = /"([^"\n]+)"/g
-    while ((match = anyDoubleQuoted.exec(stripped)) !== null) {
-      pushCandidate(match[1])
-    }
   }
 
   return results

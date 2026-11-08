@@ -435,13 +435,58 @@ export function resolveBeatVideoReferences(
 
 /**
  * User-saved beat references replace whatever the client attached.
+ * Also replaces stale client references when beatDirection specifies castInFrame
+ * or keyProps that are missing from (or contradict) the client reference list.
  * Otherwise only unlabeled client urls are rebuilt on the server.
  */
 export function shouldReplaceClientVideoReferences(
   beat: SceneBeat | null | undefined,
   clientRefs: Parameters<typeof shouldRelabelRefs>[0]
 ): boolean {
-  return shouldUseExplicitBeatReferences(beat) || shouldRelabelRefs(clientRefs)
+  if (shouldUseExplicitBeatReferences(beat) || shouldRelabelRefs(clientRefs)) {
+    return true
+  }
+  const dir = beat?.beatDirection
+  if (!dir || !Array.isArray(clientRefs)) return false
+  const structuredRefs = clientRefs.filter(
+    (ref): ref is Exclude<(typeof clientRefs)[number], string> =>
+      Boolean(ref && typeof ref === 'object')
+  )
+  if (Array.isArray(dir.castInFrame)) {
+    const directedCast = dir.castInFrame.map((name) => name.trim()).filter(Boolean)
+    if (directedCast.length === 0) {
+      const hasClientCharacter = structuredRefs.some(
+        (ref) =>
+          Boolean(ref.characterName?.trim()) ||
+          ref.role === 'identity' ||
+          ref.role === 'wardrobe'
+      )
+      if (hasClientCharacter) return true
+    } else {
+      const missingDirectedCast = directedCast.some((castName) => {
+        const needle = castName.toLowerCase()
+        return !structuredRefs.some(
+          (ref) =>
+            ref.characterName?.trim().toLowerCase() === needle ||
+            ref.name?.toLowerCase().includes(needle)
+        )
+      })
+      if (missingDirectedCast) return true
+    }
+  }
+  if (Array.isArray(dir.keyProps) && dir.keyProps.length > 0) {
+    const directedProps = dir.keyProps.map((name) => name.trim()).filter(Boolean)
+    const missingDirectedProp = directedProps.some((propName) => {
+      const needle = propName.toLowerCase()
+      return !structuredRefs.some(
+        (ref) =>
+          ref.propName?.trim().toLowerCase() === needle ||
+          ref.name?.toLowerCase().includes(needle)
+      )
+    })
+    if (missingDirectedProp) return true
+  }
+  return false
 }
 
 /** Resolve references for a segment using its beatId. */

@@ -19,6 +19,7 @@ import {
   titleBeatNeedsCastClarify,
 } from '@/lib/vision/beatFrameGenerationContext'
 import { compileBeatVideoPromptFromDirection } from '@/lib/scene/beatVideoPromptCompiler'
+import type { CumulativeSceneStateAtBeat } from '@/lib/scene/sceneStateLedger'
 import type { SceneBeat } from '@/lib/script/segmentTypes'
 import type { DetailedSceneDirection } from '@/types/scene-direction'
 import type { SceneMusicCue } from '@/lib/script/segmentTypes'
@@ -81,11 +82,13 @@ export function hasCompleteAuthoredBeatDirection(beat: SceneBeat | null | undefi
   if (!dir) return false
   if (dir.generatedBy === 'user') return true
   if (dir.generatedBy !== 'director' && dir.generatedBy !== 'llm') return false
+  if (dir.generatedBy === 'director' && dir.videoPrompt?.trim()) return true
+  const hasCast = !Array.isArray(dir.castInFrame) || dir.castInFrame.length > 0
   return Boolean(
     dir.shotType?.trim() &&
       dir.frozenMoment?.trim() &&
-      dir.blocking?.trim() &&
-      Array.isArray(dir.castInFrame)
+      Array.isArray(dir.castInFrame) &&
+      (!hasCast || dir.blocking?.trim() || dir.clipAction?.trim())
   )
 }
 
@@ -142,6 +145,7 @@ export async function rewriteThinClipPrompt(args: {
   sceneDirection?: DetailedSceneDirection | null
   artStyleId?: string
   previousBeat?: SceneBeat
+  sceneState?: CumulativeSceneStateAtBeat | null
   musicCue?: SceneMusicCue
   catalog?: { characterNames: string[]; propNames: string[]; locationNames: string[] }
 }): Promise<{ beat: SceneBeat; prompt: string }> {
@@ -164,6 +168,7 @@ export async function rewriteThinClipPrompt(args: {
     prompt = compileBeatVideoPromptFromDirection(beat, args.sceneDirection, {
       artStyleId: args.artStyleId,
       previousBeat: args.previousBeat,
+      ...(args.sceneState ? { sceneState: args.sceneState } : {}),
       ...(args.musicCue ? { musicCue: args.musicCue } : {}),
     }).prompt
   }
@@ -173,7 +178,11 @@ export async function rewriteThinClipPrompt(args: {
     const escaped = trimmed.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
     return !new RegExp(`\\b${escaped}\\b`, 'i').test(prompt)
   })
-  if (!unnamedPlate || beat.beatDirection?.generatedBy === 'user') {
+  if (
+    !unnamedPlate ||
+    beat.beatDirection?.generatedBy === 'user' ||
+    beat.beatDirection?.generatedBy === 'director'
+  ) {
     return { beat, prompt }
   }
   const directed = await directBeatVideo({

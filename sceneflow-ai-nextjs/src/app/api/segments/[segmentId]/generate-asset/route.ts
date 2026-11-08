@@ -24,10 +24,11 @@ import { quoteAndCharge } from '@/lib/credits/chargeQuotedGeneration'
 import { resolveGenerationQuote } from '@/lib/credits/resolveGenerationQuote'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
-import { applyBeatsToScene, isBeatFirstPipelineEnabled, getSceneBeats } from '@/lib/script/beatMigration'
+import { applyBeatsToScene, isBeatExcluded, isBeatFirstPipelineEnabled, getSceneBeats } from '@/lib/script/beatMigration'
 import { enforceVideoGenerationUnlock } from '@/lib/script/enforceVideoGenerationUnlock'
 import type { SceneBeat } from '@/lib/script/segmentTypes'
 import { compileBeatVideoPromptFromDirection } from '@/lib/scene/beatVideoPromptCompiler'
+import { buildSceneStateLedger } from '@/lib/scene/sceneStateLedger'
 import { isBeatFrameStale } from '@/lib/storyboard/syncBeatStillPrompt'
 import { buildExpressReferenceCatalog } from '@/lib/sceneGeneration/expressOrchestrator'
 import {
@@ -581,6 +582,7 @@ export async function POST(
       return composed.prompt || compiledPrompt
     }
 
+    let englishCompiledPrompt = ''
     if (isBeatFirstPipelineEnabled()) {
       await sequelize.authenticate()
       const project = await Project.findByPk(projectId)
@@ -596,7 +598,9 @@ export async function POST(
         (genType === 'T2V' || genType === 'I2V' || generationMethod === 'REF')
       ) {
         const beats = getSceneBeats(sceneRecord as Record<string, unknown>)
+        const activeBeats = beats.filter((b) => !isBeatExcluded(b))
         const beatIndex = beats.findIndex((b) => b.beatId === beatId)
+        const activeBeatIndex = activeBeats.findIndex((b) => b.beatId === beatId)
         const beat = beatIndex >= 0 ? beats[beatIndex] : undefined
         cachedBeat = beat
         if (beat) {
@@ -606,24 +610,32 @@ export async function POST(
               .sceneDirection ??
             (sceneRecord as { detailedDirection?: unknown }).detailedDirection ??
             null
+          const stateLedger = buildSceneStateLedger(activeBeats)
           // Music the beat plays under shapes how it should be shot, so the
           // clip's pacing matches the score that will sit beneath it.
           const musicCue = resolveBeatMusicCue(
             parsePersistedMusicCues(
               (sceneRecord as Record<string, unknown>).sceneMusicCues,
-              beats
+              activeBeats
             ),
-            beatIndex
+            Math.max(activeBeatIndex, 0)
           )
           const compiled = compileBeatVideoPromptFromDirection(
             beat,
             sceneDirection as DetailedSceneDirection | null,
             {
               artStyleId,
-              previousBeat: beatIndex > 0 ? beats[beatIndex - 1] : undefined,
+              previousBeat:
+                activeBeatIndex > 0
+                  ? activeBeats[activeBeatIndex - 1]
+                  : beatIndex > 0
+                    ? beats[beatIndex - 1]
+                    : undefined,
+              sceneState: activeBeatIndex >= 0 ? stateLedger[activeBeatIndex] : undefined,
               ...(musicCue ? { musicCue } : {}),
             }
           )
+          englishCompiledPrompt = compiled.prompt
           prompt = await localizeCompiledBeatPrompt(beat, compiled.prompt)
           negativePrompt = negativePrompt || compiled.negativePrompt
 
@@ -750,8 +762,11 @@ export async function POST(
       try {
         const visionPhase = (cachedProject.metadata?.visionPhase || {}) as Record<string, unknown>
         const beats = getSceneBeats(cachedScene)
+        const activeBeats = beats.filter((b) => !isBeatExcluded(b))
         const beatIndex = beats.findIndex((candidate) => candidate.beatId === beatId)
+        const activeBeatIndex = activeBeats.findIndex((candidate) => candidate.beatId === beatId)
         const beat = beatIndex >= 0 ? beats[beatIndex] : cachedBeat
+        const stateLedger = buildSceneStateLedger(activeBeats)
         const references = ((visionPhase.references || {}) as {
           objectReferences?: Array<{ name?: string; imageUrl?: string }>
           locationReferences?: Array<{ location?: string; name?: string; imageUrl?: string }>
@@ -764,14 +779,15 @@ export async function POST(
           null
         const artStyleId = resolveProjectArtStyle(cachedProject.metadata)
         const musicCue = resolveBeatMusicCue(
-          parsePersistedMusicCues(cachedScene.sceneMusicCues, beats),
-          Math.max(beatIndex, 0)
+          parsePersistedMusicCues(cachedScene.sceneMusicCues, activeBeats),
+          Math.max(activeBeatIndex, 0)
         )
+        const basePromptForPreflight = englishCompiledPrompt || prompt
         const prepared = await rewriteThinClipPrompt({
           beat,
           beats,
           beatIndex: Math.max(beatIndex, 0),
-          prompt,
+          prompt: basePromptForPreflight,
           plateNames: plateNamesFromVideoRefs(referenceImages || []),
           expectsCast: expectsUnstatedCast({
             scene: cachedScene,
@@ -780,15 +796,27 @@ export async function POST(
             filmTitle: cachedProject.metadata?.title || cachedProject.title,
             objectReferences: references.objectReferences,
             locationReferences: references.locationReferences,
-            promptText: prompt,
+            promptText: basePromptForPreflight,
           }),
           sceneDirection: sceneDirection as DetailedSceneDirection | null,
           artStyleId,
-          previousBeat: beatIndex > 0 ? beats[beatIndex - 1] : undefined,
+          previousBeat:
+            activeBeatIndex > 0
+              ? activeBeats[activeBeatIndex - 1]
+              : beatIndex > 0
+                ? beats[beatIndex - 1]
+                : undefined,
+          sceneState: activeBeatIndex >= 0 ? stateLedger[activeBeatIndex] : undefined,
           ...(musicCue ? { musicCue } : {}),
           catalog: buildExpressReferenceCatalog(cachedProject),
         })
-        prompt = await localizeCompiledBeatPrompt(prepared.beat, prepared.prompt)
+        if (
+          prepared.beat !== beat ||
+          !englishCompiledPrompt ||
+          prepared.prompt !== englishCompiledPrompt
+        ) {
+          prompt = await localizeCompiledBeatPrompt(prepared.beat, prepared.prompt)
+        }
         if (prepared.beat !== beat && beatIndex >= 0) {
           const nextBeats = [...beats]
           nextBeats[beatIndex] = prepared.beat

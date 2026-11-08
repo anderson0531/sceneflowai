@@ -232,4 +232,62 @@ describe('resolveBeatVideoReferences', () => {
     expect(resolved.labeledRefs[0].role).toBe('location')
     expect(resolved.labeledRefs[0].promptToken).toBe('location [1]')
   })
+
+  it('replaces stale client video references when beatDirection castInFrame or keyProps are missing from clientRefs', () => {
+    const optimizedBeat: SceneBeat = {
+      beatId: 'beat-opt',
+      sequenceIndex: 1,
+      kind: 'dialogue',
+      character: 'Gideon Croft',
+      line: 'Look at the coil.',
+      beatDirection: {
+        generatedBy: 'director',
+        shotType: 'Medium Shot',
+        frozenMoment: 'Gideon Croft and Piper Hayes inspect the Brass Coil.',
+        blocking: 'Gideon Croft and Piper Hayes stand beside the workbench.',
+        castInFrame: ['Gideon Croft', 'Piper Hayes'],
+        keyProps: ['Brass Coil'],
+      },
+    }
+
+    // Stale clientRefs that only contain location [1] from before Shot Direction Optimization
+    expect(
+      shouldReplaceClientVideoReferences(optimizedBeat, [
+        {
+          url: 'https://blob.example/vault.jpg',
+          type: 'scene',
+          role: 'location',
+          locationName: 'FREIGHT TUNNEL VAULT',
+          name: 'The next image is the setting for location [1].',
+        },
+      ])
+    ).toBe(true)
+
+    // Complete clientRefs that include both characters and the key prop
+    expect(
+      shouldReplaceClientVideoReferences(optimizedBeat, [
+        {
+          url: 'https://blob.example/gideon.jpg',
+          type: 'character',
+          role: 'character-identity',
+          characterName: 'Gideon Croft',
+          name: 'The next image is the identity of person [1].',
+        },
+        {
+          url: 'https://blob.example/piper.jpg',
+          type: 'character',
+          role: 'character-identity',
+          characterName: 'Piper Hayes',
+          name: 'The next image is the identity of person [2].',
+        },
+        {
+          url: 'https://blob.example/coil.jpg',
+          type: 'object',
+          role: 'prop',
+          propName: 'Brass Coil',
+          name: 'The next image is object [1] (Brass Coil).',
+        },
+      ])
+    ).toBe(false)
+  })
 })
