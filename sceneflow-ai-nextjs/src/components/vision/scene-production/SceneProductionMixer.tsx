@@ -4589,16 +4589,19 @@ export function SceneProductionMixer({
     [previewSegments]
   )
 
-  // Probe decoded MP4 durations for all active video segments on mount so the Mixer
-  // timeline and render payload know the true video clip lengths without requiring
-  // the user to play every shot first.
+  const previewPlaybackKind: 'video' | 'image-sequence' = 'video'
+
+  // Probe decoded MP4 durations for any active video segments not already preloaded by
+  // ScenePreviewPlayer's preloadSceneVideoClips manager. When previewPlaybackKind === 'video',
+  // ScenePreviewPlayer preloads and measures durations directly to avoid duplicate network fetches.
   useEffect(() => {
-    if (!videoSegmentProbeKey) return
+    if (!videoSegmentProbeKey || previewPlaybackKind === 'video') return
     const cleaners: Array<() => void> = []
     for (const seg of previewSegments) {
       const url = seg.activeAssetUrl
       if (!url) continue
       const segId = seg.segmentId
+      if (measuredSegmentDurations[segId] != null) continue
       const video = document.createElement('video')
       video.preload = 'metadata'
       video.muted = true
@@ -4621,7 +4624,7 @@ export function SceneProductionMixer({
     }
     return () => cleaners.forEach((fn) => fn())
     // eslint-disable-next-line react-hooks/exhaustive-deps -- probe when segmentId:url set changes
-  }, [videoSegmentProbeKey])
+  }, [videoSegmentProbeKey, previewPlaybackKind])
 
   const mixerMusic = useMemo(
     () =>
@@ -4739,8 +4742,6 @@ export function SceneProductionMixer({
       setIsExtractingAllStems(false)
     }
   }, [productionTarget.language, previewSegments, shotMethodFor, handleExtractSegmentStem])
-
-  const previewPlaybackKind: 'video' | 'image-sequence' = 'video'
 
   // Playback timeline length (dialogue-aware segment durations, matches preview scrubber)
   const videoTotalDuration = useMemo(() => {
@@ -5680,13 +5681,13 @@ export function SceneProductionMixer({
       {/* Main Content */}
       <div className="p-3 sm:p-4">
         {hasRenderablePreview ? (
-          <div className={`grid gap-3.5 sm:gap-4 transition-all duration-300 ${
+          <div className={`grid items-start gap-3.5 sm:gap-4 transition-all duration-300 ${
             theaterMode 
               ? 'grid-cols-1' 
               : 'grid-cols-1 lg:grid-cols-[1fr,460px] xl:grid-cols-[1fr,500px]'
           }`}>
             {/* Left Column: Video Preview + Shot Stitch Strip + Sequence Timeline */}
-            <div className="space-y-2.5 min-w-0">
+            <div className="space-y-3 min-w-0">
               <ScenePreviewPlayer
                 segments={previewSegments}
                 playbackKind={previewPlaybackKind}
@@ -6405,9 +6406,9 @@ export function SceneProductionMixer({
             
             {/* Right Column: Controls Panel — collapses in Theater Mode */}
             {!theaterMode && (
-            <div className="space-y-3">
+            <div className="space-y-3 min-w-0">
               {/* Inspector Workspace Filter Tabs */}
-              <div className="flex items-center gap-1 p-1 bg-zinc-900 border border-zinc-800 rounded-lg">
+              <div className="flex items-center gap-1 p-1.5 bg-zinc-900/90 border border-zinc-800 rounded-lg shadow-sm">
                 {([
                   ['all', 'All Controls', 'Show all mixer panels'],
                   ['shots', 'Shots & Cuts', 'Shot selection, trimming, and transitions'],
@@ -6433,7 +6434,7 @@ export function SceneProductionMixer({
 
               <div className={cn('space-y-3', inspectorTab !== 'all' && inspectorTab !== 'graphics' && 'hidden')}>
               {/* Text Overlay Controls */}
-              <div className="bg-zinc-900/80 border border-zinc-800 rounded-lg">
+              <div className="bg-zinc-900/90 border border-zinc-800 rounded-lg">
                 <div 
                   className="flex items-center justify-between p-3 cursor-pointer hover:bg-white/5"
                   onClick={() => toggleSection('textOverlays')}
@@ -6905,7 +6906,7 @@ export function SceneProductionMixer({
               </div>
               
               {/* Watermark Controls */}
-              <div className="bg-gray-800/50 border border-gray-700/50 rounded-lg">
+              <div className="bg-zinc-900/90 border border-zinc-800 rounded-lg">
                 <div 
                   className="flex items-center justify-between p-3 cursor-pointer hover:bg-white/5"
                   onClick={() => toggleSection('watermark')}

@@ -1,6 +1,7 @@
 'use client'
 
 import React, { useState, useMemo, useCallback, useRef, useEffect } from 'react'
+import { toast } from 'sonner'
 import {
   Play,
   Pause,
@@ -18,10 +19,17 @@ import {
   ChevronRight,
   Activity,
   Download,
+  Loader2,
+  Monitor,
 } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { computeEpisodeProductionTelemetry } from '@/lib/production/episodeTelemetryHud'
 import { buildFcpxmlDocument } from '@/lib/export/fcpxmlExport'
+import {
+  areAllClipUrlsCached,
+  getResolvedClipUrl,
+  preloadSceneVideoClips,
+} from '@/lib/video/mixerClipPreloader'
 import {
   computeClipAudioTime,
   loopingDrift,
@@ -94,15 +102,17 @@ function formatSmpteTimecode(secs: number, fps = 24): string {
   return `${mm.toString().padStart(2, '0')}:${ss.toString().padStart(2, '0')}:${ff.toString().padStart(2, '0')}`
 }
 
-const PLAYER_WIDTH_MIN = 320
-const PLAYER_WIDTH_MAX = 1100
-const PLAYER_WIDTH_DEFAULT = 480
-const PLAYER_WIDTH_STORAGE_KEY = 'sceneflow-mixer-player-width-px'
+const PLAYER_WIDTH_MIN = 360
+const PLAYER_WIDTH_MAX = 1280
+/** 0 = Fit full width of the Mixer monitor column (default, aligned with timelines & control panel) */
+const PLAYER_WIDTH_FIT = 0
+const PLAYER_WIDTH_STORAGE_KEY = 'sceneflow-mixer-stage-width-px'
+const MIXER_CLIP_LOAD_TOAST_ID = 'sceneflow-mixer-clips-preload'
 const PLAYER_SIZE_PRESETS = [
-  { label: 'S', width: 380, title: 'Small 16:9 player (380×214)' },
-  { label: 'M', width: 480, title: 'Medium 16:9 player (480×270 — Default)' },
-  { label: 'L', width: 640, title: 'Large 16:9 player (640×360)' },
-  { label: 'XL', width: 860, title: 'Extra-large 16:9 player (860×484)' },
+  { label: 'S', width: 420, title: 'Compact 16:9 stage (420×236)' },
+  { label: 'M', width: 560, title: 'Medium 16:9 stage (560×315)' },
+  { label: 'L', width: 740, title: 'Large 16:9 stage (740×416)' },
+  { label: 'Fit', width: PLAYER_WIDTH_FIT, title: 'Fit full monitor panel width (Default)' },
 ] as const
 
 function animaticKeyframeUrl(segment: SceneSegment): string | null {
@@ -228,7 +238,9 @@ export function ScenePreviewPlayer({
   includeSpeechStem?: boolean
 }) {
   const containerRef = useRef<HTMLDivElement>(null)
+  const videoStageRef = useRef<HTMLDivElement>(null)
   const videoRef = useRef<HTMLVideoElement>(null)
+  const standbyVideoRef = useRef<HTMLVideoElement>(null)
   const dissolveVideoRef = useRef<HTMLVideoElement>(null)
   const narrationRef = useRef<HTMLAudioElement>(null)
   const backgroundStemRef = useRef<HTMLAudioElement>(null)
@@ -241,22 +253,110 @@ export function ScenePreviewPlayer({
   const [isLooping, setIsLooping] = useState(false)
   const [showSafeGuides, setShowSafeGuides] = useState(false)
   const [showTelemetryHud, setShowTelemetryHud] = useState(false)
+  const [isVideoBuffering, setIsVideoBuffering] = useState(false)
+  const [pendingPlayWhenReady, setPendingPlayWhenReady] = useState(false)
+  const [allowPlayBeforeReady, setAllowPlayBeforeReady] = useState(false)
+  const [resolvedUrlsBySegmentId, setResolvedUrlsBySegmentId] = useState<Record<string, string>>({})
+
+  const isPlayingRef = useRef(isPlaying)
+  isPlayingRef.current = isPlaying
+  const currentTimeRef = useRef(currentTime)
+  currentTimeRef.current = currentTime
+  const pendingPlayWhenReadyRef = useRef(pendingPlayWhenReady)
+  pendingPlayWhenReadyRef.current = pendingPlayWhenReady
+  const measuredSegmentDurationsRef = useRef(measuredSegmentDurations)
+  measuredSegmentDurationsRef.current = measuredSegmentDurations
+  const onMeasuredDurationsChangeRef = useRef(onMeasuredDurationsChange)
+  onMeasuredDurationsChangeRef.current = onMeasuredDurationsChange
+  const onPlaybackTimeChangeRef = useRef(onPlaybackTimeChange)
+  onPlaybackTimeChangeRef.current = onPlaybackTimeChange
+
+  const segmentVideoUrls = useMemo(
+    () =>
+      playbackKind === 'image-sequence'
+        ? []
+        : segments
+            .map((s) => s.activeAssetUrl?.trim())
+            .filter((u): u is string => Boolean(u)),
+    [playbackKind, segments]
+  )
+
+  const segmentPreloadKey = useMemo(
+    () =>
+      playbackKind === 'image-sequence'
+        ? ''
+        : segments
+            .map((s) => `${s.segmentId}:${s.activeAssetUrl?.trim() || ''}`)
+            .join('|'),
+    [playbackKind, segments]
+  )
+
+  const [clipLoadProgress, setClipLoadProgress] = useState<{
+    loaded: number
+    total: number
+    isReady: boolean
+  }>(() => {
+    const unique = Array.from(new Set(segmentVideoUrls))
+    const cached = areAllClipUrlsCached(unique)
+    return {
+      loaded: cached ? unique.length : 0,
+      total: unique.length,
+      isReady: cached,
+    }
+  })
+
+  // Throttle parent playback-time synchronization (~13fps during continuous playback)
+  // so the 7,700-line SceneProductionMixer parent is not forced to re-render 60 times/sec.
+  const lastParentTimeSyncMsRef = useRef(0)
+  const trailingTimeSyncTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  useEffect(() => {
+    const cb = onPlaybackTimeChangeRef.current
+    if (!cb) return
+    const now = performance.now()
+    const isBoundaryTime = currentTime === 0 || !isPlaying
+    if (isBoundaryTime || now - lastParentTimeSyncMsRef.current >= 75) {
+      if (trailingTimeSyncTimerRef.current) {
+        clearTimeout(trailingTimeSyncTimerRef.current)
+        trailingTimeSyncTimerRef.current = null
+      }
+      lastParentTimeSyncMsRef.current = now
+      cb(currentTime)
+      return
+    }
+    if (!trailingTimeSyncTimerRef.current) {
+      const waitMs = Math.max(16, 75 - (now - lastParentTimeSyncMsRef.current))
+      trailingTimeSyncTimerRef.current = setTimeout(() => {
+        trailingTimeSyncTimerRef.current = null
+        lastParentTimeSyncMsRef.current = performance.now()
+        onPlaybackTimeChangeRef.current?.(currentTimeRef.current)
+      }, waitMs)
+    }
+  }, [currentTime, isPlaying])
 
   useEffect(() => {
-    onPlaybackTimeChange?.(currentTime)
-  }, [currentTime, onPlaybackTimeChange])
+    return () => {
+      if (trailingTimeSyncTimerRef.current) {
+        clearTimeout(trailingTimeSyncTimerRef.current)
+      }
+    }
+  }, [])
+
   const [currentSegmentIndex, setCurrentSegmentIndex] = useState(0)
   const [isVideoFrozen, setIsVideoFrozen] = useState(false)
+  const isVideoFrozenRef = useRef(isVideoFrozen)
+  isVideoFrozenRef.current = isVideoFrozen
   const [isFullscreen, setIsFullscreen] = useState(false)
-  const [playerWidthPx, setPlayerWidthPx] = useState<number>(PLAYER_WIDTH_DEFAULT)
+  const [playerWidthPx, setPlayerWidthPx] = useState<number>(PLAYER_WIDTH_FIT)
   const [isResizingPlayer, setIsResizingPlayer] = useState(false)
 
   useEffect(() => {
     try {
       const saved = window.localStorage.getItem(PLAYER_WIDTH_STORAGE_KEY)
-      if (saved) {
+      if (saved !== null) {
         const parsed = Number(saved)
-        if (Number.isFinite(parsed) && parsed >= PLAYER_WIDTH_MIN && parsed <= PLAYER_WIDTH_MAX) {
+        if (parsed === PLAYER_WIDTH_FIT) {
+          setPlayerWidthPx(PLAYER_WIDTH_FIT)
+        } else if (Number.isFinite(parsed) && parsed >= PLAYER_WIDTH_MIN && parsed <= PLAYER_WIDTH_MAX) {
           setPlayerWidthPx(Math.round(parsed))
         }
       }
@@ -266,10 +366,13 @@ export function ScenePreviewPlayer({
   }, [])
 
   const updatePlayerWidth = useCallback((nextWidth: number) => {
-    const clamped = Math.max(PLAYER_WIDTH_MIN, Math.min(PLAYER_WIDTH_MAX, Math.round(nextWidth)))
-    setPlayerWidthPx(clamped)
+    const normalized =
+      nextWidth <= 0
+        ? PLAYER_WIDTH_FIT
+        : Math.max(PLAYER_WIDTH_MIN, Math.min(PLAYER_WIDTH_MAX, Math.round(nextWidth)))
+    setPlayerWidthPx(normalized)
     try {
-      window.localStorage.setItem(PLAYER_WIDTH_STORAGE_KEY, String(clamped))
+      window.localStorage.setItem(PLAYER_WIDTH_STORAGE_KEY, String(normalized))
     } catch {
       // Ignore localStorage write errors
     }
@@ -281,12 +384,13 @@ export function ScenePreviewPlayer({
       e.stopPropagation()
       const startX = e.clientX
       const startY = e.clientY
-      const startWidth = containerRef.current?.getBoundingClientRect().width ?? playerWidthPx
+      const startWidth =
+        videoStageRef.current?.getBoundingClientRect().width ??
+        containerRef.current?.getBoundingClientRect().width ??
+        640
       setIsResizingPlayer(true)
 
       const handleMouseMove = (moveEvent: MouseEvent) => {
-        // Since container is centered (mx-auto), horizontal drag from right edge scales 2x,
-        // or use max of deltaX and deltaY * (16/9) for natural diagonal corner dragging
         const deltaX = (moveEvent.clientX - startX) * 1.5
         const deltaY = (moveEvent.clientY - startY) * (16 / 9)
         const delta = Math.abs(deltaX) >= Math.abs(deltaY) ? deltaX : deltaY
@@ -302,7 +406,7 @@ export function ScenePreviewPlayer({
       document.addEventListener('mousemove', handleMouseMove)
       document.addEventListener('mouseup', handleMouseUp)
     },
-    [playerWidthPx, updatePlayerWidth]
+    [updatePlayerWidth]
   )
   const onPlaybackCompleteRef = useRef(onPlaybackComplete)
   onPlaybackCompleteRef.current = onPlaybackComplete
@@ -332,17 +436,143 @@ export function ScenePreviewPlayer({
     if (isPlaying) playbackEndedRef.current = false
   }, [isPlaying])
 
+  // Eagerly preload all video clips for the scene into memory (blob: URLs / warm video pool)
+  // and surface a Loading Clips toast when clips are buffering so playback never freezes mid-cut.
   useEffect(() => {
-    if (autoPlay) setIsPlaying(true)
-  }, [autoPlay])
+    if (playbackKind === 'image-sequence' || !segmentPreloadKey) {
+      setClipLoadProgress({ loaded: 0, total: 0, isReady: true })
+      setPendingPlayWhenReady(false)
+      return
+    }
+
+    const uniqueUrls = Array.from(new Set(segmentVideoUrls))
+    if (uniqueUrls.length === 0) {
+      setClipLoadProgress({ loaded: 0, total: 0, isReady: true })
+      return
+    }
+
+    const abortController = new AbortController()
+    const alreadyCached = areAllClipUrlsCached(uniqueUrls)
+    let showedToast = false
+
+    setAllowPlayBeforeReady(false)
+
+    if (alreadyCached) {
+      setClipLoadProgress({
+        loaded: uniqueUrls.length,
+        total: uniqueUrls.length,
+        isReady: true,
+      })
+    } else {
+      setClipLoadProgress((prev) => ({
+        loaded: Math.min(prev.loaded, uniqueUrls.length - 1),
+        total: uniqueUrls.length,
+        isReady: false,
+      }))
+      showedToast = true
+      toast.loading(`Loading scene clips (0/${uniqueUrls.length})…`, {
+        id: MIXER_CLIP_LOAD_TOAST_ID,
+        description: pendingPlayWhenReadyRef.current
+          ? 'Playback will start automatically as soon as all clips finish loading.'
+          : 'Buffering shots into memory for smooth, freeze-free playback.',
+      })
+    }
+
+    void preloadSceneVideoClips(
+      segments,
+      {
+        onProgress: (loaded, total) => {
+          if (abortController.signal.aborted) return
+          const isReady = loaded >= total
+          setClipLoadProgress({ loaded, total, isReady })
+          if (showedToast && !isReady) {
+            toast.loading(
+              pendingPlayWhenReadyRef.current
+                ? `Loading clips (${loaded}/${total}) — playback will start when ready…`
+                : `Loading scene clips (${loaded}/${total})…`,
+              {
+                id: MIXER_CLIP_LOAD_TOAST_ID,
+                description: pendingPlayWhenReadyRef.current
+                  ? 'Waiting for all scene shots to buffer so playback does not freeze.'
+                  : 'Buffering shots into memory for smooth, freeze-free playback.',
+              }
+            )
+          }
+        },
+        onDurationsMeasured: (newlyMeasured) => {
+          if (abortController.signal.aborted) return
+          const current = measuredSegmentDurationsRef.current
+          let changed = false
+          const merged = { ...current }
+          for (const [segId, dur] of Object.entries(newlyMeasured)) {
+            if (!Number.isFinite(dur) || dur <= 0) continue
+            if (current[segId] == null || Math.abs(current[segId] - dur) >= 0.02) {
+              merged[segId] = dur
+              changed = true
+            }
+          }
+          if (changed) {
+            onMeasuredDurationsChangeRef.current(merged)
+          }
+        },
+      },
+      abortController.signal
+    ).then(({ resolvedUrlsBySegmentId: nextResolved }) => {
+      if (abortController.signal.aborted) return
+      setResolvedUrlsBySegmentId(nextResolved)
+      setClipLoadProgress({
+        loaded: uniqueUrls.length,
+        total: uniqueUrls.length,
+        isReady: true,
+      })
+      if (pendingPlayWhenReadyRef.current) {
+        setPendingPlayWhenReady(false)
+        setIsPlaying(true)
+        toast.success(
+          `Clips loaded (${uniqueUrls.length}/${uniqueUrls.length}) — starting playback`,
+          {
+            id: MIXER_CLIP_LOAD_TOAST_ID,
+            description: 'All scene shots are buffered in memory.',
+            duration: 2200,
+          }
+        )
+      } else if (showedToast) {
+        toast.success(
+          `Scene clips ready (${uniqueUrls.length}/${uniqueUrls.length})`,
+          {
+            id: MIXER_CLIP_LOAD_TOAST_ID,
+            description: 'All shots buffered for freeze-free playback.',
+            duration: 2000,
+          }
+        )
+      }
+    })
+
+    return () => {
+      abortController.abort()
+      if (showedToast) {
+        toast.dismiss(MIXER_CLIP_LOAD_TOAST_ID)
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- keyed by segmentPreloadKey + playbackKind
+  }, [playbackKind, segmentPreloadKey])
+
+  useEffect(() => {
+    if (!autoPlay) return
+    if (playbackKind === 'image-sequence' || clipLoadProgress.isReady) {
+      setIsPlaying(true)
+    } else {
+      setPendingPlayWhenReady(true)
+    }
+  }, [autoPlay, playbackKind, clipLoadProgress.isReady])
   
-  // Track container width for proportional overlay scaling
+  // Track video stage width for proportional overlay scaling
   // Text overlays use vh units (viewport-relative) but need to be scaled
-  // proportionally to the player width so they match the rendered output.
+  // proportionally to the 16:9 stage width so they match the rendered output.
   const [containerWidth, setContainerWidth] = useState(0)
   
   useEffect(() => {
-    const el = containerRef.current
+    const el = videoStageRef.current || containerRef.current
     if (!el) return
     const ro = new ResizeObserver(([entry]) => {
       setContainerWidth(entry.contentRect.width)
@@ -528,7 +758,7 @@ export function ScenePreviewPlayer({
             ...dialogueEnds
           )
           
-          if (audioEndTime > timelineVideoDuration && currentTime < audioEndTime) {
+          if (audioEndTime > timelineVideoDuration && currentTimeRef.current < audioEndTime) {
             // Freeze video on last frame, continue audio
             setIsVideoFrozen(true)
             
@@ -544,7 +774,7 @@ export function ScenePreviewPlayer({
               if (elapsedFrozen >= remainingTime) {
                 // Audio complete - end playback
                 if (audioTimerRef.current) {
-                  cancelAnimationFrame(audioTimerRef.current)
+                  cancelAnimationFrame(audioTimerRef.current as unknown as number)
                   audioTimerRef.current = null
                 }
                 finishPlayback()
@@ -592,6 +822,7 @@ export function ScenePreviewPlayer({
       if (isVideoFrozen) return // Don't update from video when frozen
       
       const seg = segments[currentSegmentIndex]
+      if (!seg) return
       const trim = getTrimForSegment(seg)
       const videoRate = getVideoPlaybackRate?.(seg.segmentId) ?? 1
       if (Math.abs(video.playbackRate - videoRate) > 0.01) {
@@ -629,7 +860,6 @@ export function ScenePreviewPlayer({
     dialogueClipConfigs,
     totalDuration,
     timelineVideoDuration,
-    currentTime,
     segmentAudioConfigs,
     getPlaybackSegmentDuration,
     getVideoPlaybackRate,
@@ -638,8 +868,11 @@ export function ScenePreviewPlayer({
     finishPlayback,
   ])
   
-  // Sync audio tracks with video playback
+  // Sync audio tracks with video playback (pauses audio if video element is mid-stream buffering)
   useEffect(() => {
+    const effectiveIsPlaying =
+      isPlaying && (!isVideoBuffering || isVideoFrozen || playbackKind === 'image-sequence')
+
     // Narration sync — only when a real narration URL exists (avoids enabled + empty track)
     if (
       narrationRef.current &&
@@ -649,7 +882,7 @@ export function ScenePreviewPlayer({
       narrationRef.current.volume = isMuted ? 0 : audioTracks.narration.volume
       const narrationStartTime = getSegmentStartTime(audioTracks.narration.startSegment)
       
-      if (isPlaying && currentTime >= narrationStartTime) {
+      if (effectiveIsPlaying && currentTime >= narrationStartTime) {
         const narrationLocalTime = currentTime - narrationStartTime
         const drift = Math.abs(narrationRef.current.currentTime - narrationLocalTime)
         if (drift > 0.85) {
@@ -713,7 +946,7 @@ export function ScenePreviewPlayer({
           currentTime,
           clip.startTime,
           musicEndTime,
-          isPlaying
+          effectiveIsPlaying
         )
         if (!withinWindow) {
           if (!audioEl.paused) audioEl.pause()
@@ -796,15 +1029,10 @@ export function ScenePreviewPlayer({
         const wallDur = dialogueClipWallDuration(clip.duration, lineCfg?.playbackRate)
         const clipEnd = clipStart + wallDur + EPS
 
-        if (isPlaying && currentTime >= clipStart && currentTime < clipEnd) {
-          // When adjusting playbackRate on HTMLAudioElement, it naturally plays faster/slower.
-          // The currentTime of the audio element tracks the *audio file's* time.
-          // Therefore, we do NOT multiply our wall-clock delta by rate when checking drift,
-          // because HTMLAudioElement.currentTime already advances at `rate` times real-time.
+        if (effectiveIsPlaying && currentTime >= clipStart && currentTime < clipEnd) {
           const expectedAudioTime = Math.max(0, (currentTime - clipStart) * rate)
           const drift = Math.abs(audioEl.currentTime - expectedAudioTime)
           
-          // Use a looser drift threshold to prevent stuttering
           if (drift > 0.85) {
             audioEl.currentTime = expectedAudioTime
           }
@@ -831,7 +1059,7 @@ export function ScenePreviewPlayer({
         const sfxDur = sfxClip.duration ?? 3
         const sfxEnd = sfxStart + sfxDur
         audioEl.volume = isMuted ? 0 : Math.max(0, Math.min(1, audioTracks.sfx.volume * sfxDuckFactor))
-        if (isPlaying && currentTime >= sfxStart && currentTime < sfxEnd) {
+        if (effectiveIsPlaying && currentTime >= sfxStart && currentTime < sfxEnd) {
           const expectedSfxTime = Math.max(0, currentTime - sfxStart)
           if (Math.abs(audioEl.currentTime - expectedSfxTime) > 0.85) {
             audioEl.currentTime = expectedSfxTime
@@ -877,7 +1105,7 @@ export function ScenePreviewPlayer({
         stemEl.playbackRate = videoRate
       }
       stemEl.volume = stemMuted ? 0 : stemVol
-      if (isPlaying && !isVideoFrozen && !stemMuted && stemVol > 0) {
+      if (effectiveIsPlaying && !isVideoFrozen && !stemMuted && stemVol > 0) {
         const videoEl = videoRef.current
         const targetStemTime = videoEl ? videoEl.currentTime : 0
         if (Math.abs(stemEl.currentTime - targetStemTime) > 0.85) {
@@ -894,6 +1122,7 @@ export function ScenePreviewPlayer({
     }
   }, [
     isPlaying,
+    isVideoBuffering,
     currentTime,
     audioTracks,
     currentAudioUrls,
@@ -911,6 +1140,8 @@ export function ScenePreviewPlayer({
     masterSegmentVolume,
     getVideoPlaybackRate,
     isVideoFrozen,
+    scoreStemFade,
+    currentSegment.segment,
   ])
 
   // Sync embedded beat video audio volume with Beat Audio panel sliders
@@ -946,49 +1177,98 @@ export function ScenePreviewPlayer({
     includeSpeechStem,
   ])
   
-  // Load new segment video when segment index changes
+  // Load new segment video when segment index changes (uses preloaded blob: URL when available)
   useEffect(() => {
     if (playbackKind === 'image-sequence') return
     const video = videoRef.current
-    const newUrl = currentSegment.segment?.activeAssetUrl
-    const segmentId = currentSegment.segment?.segmentId ?? null
-    const isNewUrl = newUrl !== loadedVideoUrlRef.current
+    const seg = currentSegment.segment
+    const rawUrl = seg?.activeAssetUrl?.trim()
+    const resolvedUrl =
+      (seg && resolvedUrlsBySegmentId[seg.segmentId]) ||
+      getResolvedClipUrl(rawUrl)
+    const segmentId = seg?.segmentId ?? null
+    const isNewUrl = resolvedUrl !== loadedVideoUrlRef.current
     const isNewSegment = segmentId !== segmentIdForLoadedVideoRef.current
     
-    if (video && newUrl && currentSegment.segment && (isNewUrl || isNewSegment)) {
-      loadedVideoUrlRef.current = newUrl
+    if (video && resolvedUrl && seg && (isNewUrl || isNewSegment)) {
+      loadedVideoUrlRef.current = resolvedUrl
       segmentIdForLoadedVideoRef.current = segmentId
-      const seekToTrimIn = () => {
+      const applyTrimAndPlay = () => {
         if (!currentSegment.segment) return
         const trim = getTrimForSegment(currentSegment.segment)
         const videoRate = getVideoPlaybackRate?.(currentSegment.segment.segmentId) ?? 1
         video.playbackRate = videoRate
-        video.currentTime = trim.inSec
+        if (Math.abs(video.currentTime - trim.inSec) > 0.03) {
+          video.currentTime = trim.inSec
+        }
+        setIsVideoBuffering(false)
+        if (isPlayingRef.current && !isVideoFrozenRef.current && !segmentEndHandledRef.current) {
+          video.play().catch(() => {})
+        }
       }
       if (isNewUrl) {
-        video.src = newUrl
+        video.src = resolvedUrl
         video.load()
         if (video.readyState >= 1) {
-          seekToTrimIn()
+          applyTrimAndPlay()
         } else {
-          video.addEventListener('loadedmetadata', seekToTrimIn, { once: true })
+          video.addEventListener('loadedmetadata', applyTrimAndPlay, { once: true })
         }
       } else {
-        seekToTrimIn()
+        applyTrimAndPlay()
       }
-      if (isPlaying && !isVideoFrozen && !segmentEndHandledRef.current) {
-        video.play().catch(() => {})
-      }
-    } else if (video && newUrl && currentSegment.segment) {
-      const trim = getTrimForSegment(currentSegment.segment)
+    } else if (video && resolvedUrl && seg) {
+      const trim = getTrimForSegment(seg)
       if (video.currentTime < trim.inSec - 0.05 || video.currentTime > trim.outSec) {
         video.currentTime = trim.inSec
       }
-      if (isPlaying && !isVideoFrozen && !segmentEndHandledRef.current) {
+      if (isPlaying && !isVideoFrozen && !segmentEndHandledRef.current && video.paused) {
         video.play().catch(() => {})
       }
     }
-  }, [playbackKind, currentSegmentIndex, currentSegment.segment, isPlaying, isVideoFrozen, getTrimForSegment, getVideoPlaybackRate])
+  }, [
+    playbackKind,
+    currentSegmentIndex,
+    currentSegment.segment,
+    resolvedUrlsBySegmentId,
+    isPlaying,
+    isVideoFrozen,
+    getTrimForSegment,
+    getVideoPlaybackRate,
+  ])
+
+  // Pre-warm the upcoming shot (currentSegmentIndex + 1) in a standby <video> element
+  // seeked to its trim.inSec so the decoder and keyframe are hot before the cut arrives.
+  useEffect(() => {
+    if (playbackKind === 'image-sequence') return
+    const standby = standbyVideoRef.current
+    const nextSeg =
+      currentSegmentIndex + 1 < segments.length ? segments[currentSegmentIndex + 1] : null
+    if (!standby || !nextSeg?.activeAssetUrl) return
+    const nextResolvedUrl =
+      resolvedUrlsBySegmentId[nextSeg.segmentId] ||
+      getResolvedClipUrl(nextSeg.activeAssetUrl)
+    if (!nextResolvedUrl) return
+    const nextTrimIn = getTrimForSegment(nextSeg).inSec
+
+    if (standby.getAttribute('data-standby-src') !== nextResolvedUrl) {
+      standby.setAttribute('data-standby-src', nextResolvedUrl)
+      standby.src = nextResolvedUrl
+      standby.load()
+      const primeNextFrame = () => {
+        try {
+          standby.currentTime = nextTrimIn
+        } catch {
+          // Ignore seek errors on unready media
+        }
+      }
+      if (standby.readyState >= 1) {
+        primeNextFrame()
+      } else {
+        standby.addEventListener('loadedmetadata', primeNextFrame, { once: true })
+      }
+    }
+  }, [playbackKind, currentSegmentIndex, segments, resolvedUrlsBySegmentId, getTrimForSegment])
 
   useEffect(() => {
     if (!focusBeatSegmentId || playbackKind === 'image-sequence') return
@@ -1011,20 +1291,20 @@ export function ScenePreviewPlayer({
   // Comprehensive cleanup on unmount - prevents memory leaks
   useEffect(() => {
     return () => {
-      // Clear audio timer
       if (audioTimerRef.current) {
         cancelAnimationFrame(audioTimerRef.current as unknown as number)
         audioTimerRef.current = null
       }
-      
-      // Pause and clear video
       if (videoRef.current) {
         videoRef.current.pause()
         videoRef.current.src = ''
         videoRef.current.load()
       }
-      
-      // Pause and clear all audio
+      if (standbyVideoRef.current) {
+        standbyVideoRef.current.pause()
+        standbyVideoRef.current.src = ''
+        standbyVideoRef.current.load()
+      }
       if (narrationRef.current) {
         narrationRef.current.pause()
         narrationRef.current.src = ''
@@ -1054,11 +1334,7 @@ export function ScenePreviewPlayer({
         }
       })
       sfxRefsById.current.clear()
-      
-      // Clear loaded URL ref
       loadedVideoUrlRef.current = null
-      
-      console.log('[ScenePreviewPlayer] Cleanup complete')
     }
   }, [])
   
@@ -1093,13 +1369,49 @@ export function ScenePreviewPlayer({
       }
       setIsPlaying(false)
       setIsVideoFrozen(false)
-    } else {
-      if (!isVideoFrozen) {
-        video.play().catch(() => {})
-      }
-      setIsPlaying(true)
+      setPendingPlayWhenReady(false)
+      return
     }
+
+    // Gate playback if clips are still preloading so the player never starts cold and freezes
+    if (!clipLoadProgress.isReady && !allowPlayBeforeReady) {
+      if (pendingPlayWhenReady) {
+        setPendingPlayWhenReady(false)
+        toast.loading(
+          `Loading scene clips (${clipLoadProgress.loaded}/${clipLoadProgress.total})…`,
+          {
+            id: MIXER_CLIP_LOAD_TOAST_ID,
+            description: 'Buffering shots into memory for smooth, freeze-free playback.',
+          }
+        )
+      } else {
+        setPendingPlayWhenReady(true)
+        toast.loading(
+          `Loading clips (${clipLoadProgress.loaded}/${clipLoadProgress.total}) — playback will start when ready…`,
+          {
+            id: MIXER_CLIP_LOAD_TOAST_ID,
+            description: 'Waiting for all scene shots to finish loading so playback does not freeze.',
+          }
+        )
+      }
+      return
+    }
+
+    if (!isVideoFrozen) {
+      video.play().catch(() => {})
+    }
+    setIsPlaying(true)
   }
+
+  const handlePlayAnyway = useCallback(() => {
+    setAllowPlayBeforeReady(true)
+    setPendingPlayWhenReady(false)
+    toast.dismiss(MIXER_CLIP_LOAD_TOAST_ID)
+    if (!isVideoFrozenRef.current) {
+      videoRef.current?.play().catch(() => {})
+    }
+    setIsPlaying(true)
+  }, [])
   
   const seekToTime = useCallback(
     (rawTargetTime: number) => {
@@ -1296,7 +1608,9 @@ export function ScenePreviewPlayer({
       fadeBlack = Math.max(fadeBlack, Math.max(0, 1 - (duration - local) / outgoing.durationSec))
     }
     const next = index + 1 < segments.length ? segments[index + 1] : undefined
-    const nextUrl = next?.activeAssetUrl?.trim()
+    const nextUrl = next
+      ? resolvedUrlsBySegmentId[next.segmentId] || getResolvedClipUrl(next.activeAssetUrl)
+      : ''
     let dissolve: { url: string; opacity: number; trimIn: number; rate: number } | null = null
     if (outgoing?.effect === 'dissolve' && outgoing.durationSec > 0 && next && nextUrl) {
       const start = Math.max(0, duration - outgoing.durationSec)
@@ -1516,7 +1830,7 @@ export function ScenePreviewPlayer({
         beatId: seg.beatId,
         assetType: seg.assetType,
         generationMethod: seg.generationMethod,
-        sourceDurationSec: trim.sourceDuration,
+        sourceDurationSec: trim.sourceDurationSec,
         editedDurationSec: editedDur,
         isTrimmed: trim.isTrimmed,
         hasStartFrame: Boolean(seg.references?.startFrameUrl),
@@ -1546,8 +1860,8 @@ export function ScenePreviewPlayer({
           name: `Shot_${String(idx + 1).padStart(3, '0')}`,
           assetUrl: seg.activeAssetUrl!,
           assetType: (seg.assetType === 'image' ? 'image' : 'video') as 'video' | 'image',
-          sourceDurationSec: trim.sourceDuration,
-          trimInSec: trim.trimIn,
+          sourceDurationSec: trim.sourceDurationSec,
+          trimInSec: trim.inSec,
           timelineDurationSec: editedDur,
           alternateTakeUrls: altUrls,
           beatId: seg.beatId,
@@ -1576,9 +1890,10 @@ export function ScenePreviewPlayer({
     }
     currentAudioUrls.dialogue.forEach((d, idx) => {
       if (!d?.audioUrl) return
+      const charName = (d as { character?: string }).character
       audioClips.push({
         id: d.id || `dialogue-${idx + 1}`,
-        name: d.character ? `${d.character} Dialogue` : `Dialogue ${idx + 1}`,
+        name: charName ? `${charName} Dialogue` : `Dialogue ${idx + 1}`,
         url: d.audioUrl,
         type: 'dialogue',
         startTimeSec: d.startTime ?? idx * 4,
@@ -1660,25 +1975,133 @@ export function ScenePreviewPlayer({
           void toggleFullscreen()
         }
       }}
-      style={
-        !fillScreen && !isFullscreen
-          ? { maxWidth: `${playerWidthPx}px`, width: '100%' }
-          : undefined
-      }
-      className={`bg-zinc-950 overflow-hidden outline-none focus-visible:ring-1 focus-visible:ring-cyan-500/40 ${
+      className={`overflow-hidden outline-none focus-visible:ring-1 focus-visible:ring-cyan-500/40 ${
         fillScreen
-          ? 'flex h-full w-full flex-col rounded-none border-0'
+          ? 'flex h-full w-full flex-col rounded-none border-0 bg-zinc-950'
           : isFullscreen
             ? 'fixed inset-0 z-[100] flex flex-col w-screen h-screen bg-black border-0 rounded-none shadow-2xl'
-            : 'w-full mx-auto rounded-lg border border-zinc-800/90 shadow-xl transition-[max-width] duration-75'
+            : 'w-full rounded-lg border border-zinc-800 bg-zinc-900/90 shadow-xl flex flex-col'
       }`}
     >
-      {/* Video Display Area — true 16:9 (aspect-video) sized via user-adjustable playerWidthPx; expands on Fullscreen */}
-      <div className={`relative bg-black flex items-center justify-center overflow-hidden ${
-        fillScreen || isFullscreen
-          ? 'min-h-0 flex-1 w-full'
-          : 'aspect-video w-full'
-      }`}>
+      {/* Top Program Monitor Header Bar — Aligned with Shot Sequence Strip, Timeline & Inspector Control Panel */}
+      {!fillScreen && (
+        <div className="px-3 py-2 bg-zinc-900/95 border-b border-zinc-800/80 flex flex-wrap items-center justify-between gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
+            <div className="flex items-center gap-1.5">
+              <Monitor className="w-3.5 h-3.5 text-cyan-400 shrink-0" />
+              <span className="text-xs font-semibold uppercase tracking-wider text-zinc-200">
+                Program Monitor
+              </span>
+            </div>
+
+            <Badge
+              variant="outline"
+              className="bg-zinc-950/90 border-cyan-500/40 text-cyan-200 text-[10px] font-mono tabular-nums px-2 py-0.5"
+              title={`Playing Shot ${activeSegmentIndex + 1} of ${segments.length}`}
+            >
+              Shot {activeSegmentIndex + 1}/{ Math.max(1, segments.length) }
+            </Badge>
+
+            {playbackKind === 'video' && clipLoadProgress.total > 0 && (
+              clipLoadProgress.isReady ? (
+                <Badge
+                  variant="outline"
+                  className="bg-emerald-950/70 border-emerald-500/35 text-emerald-300 text-[10px] font-medium px-2 py-0.5"
+                  title={`All ${clipLoadProgress.total} video clip(s) buffered in memory for instant playback`}
+                >
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 mr-1.5 inline-block" />
+                  Clips Ready ({clipLoadProgress.total})
+                </Badge>
+              ) : (
+                <Badge
+                  variant="outline"
+                  className="bg-amber-950/80 border-amber-500/45 text-amber-200 text-[10px] font-medium px-2 py-0.5"
+                  title="Preloading video clips into memory so playback does not freeze at shot cuts"
+                >
+                  <Loader2 className="w-3 h-3 mr-1.5 animate-spin text-amber-400" />
+                  Loading Clips {clipLoadProgress.loaded}/{clipLoadProgress.total}
+                </Badge>
+              )
+            )}
+
+            {currentSegment.segment && getTrimForSegment(currentSegment.segment).isTrimmed && (
+              <Badge variant="outline" className="bg-amber-950/80 border-amber-500/40 text-amber-300 text-[10px] uppercase tracking-wider px-1.5 py-0">
+                Trimmed
+              </Badge>
+            )}
+            {currentSegment.segment?.shotJoin && currentSegment.segment.shotJoin !== 'cut' && (
+              <Badge variant="outline" className="bg-violet-950/80 border-violet-500/40 text-violet-200 text-[10px] uppercase tracking-wider px-1.5 py-0">
+                {currentSegment.segment.shotJoin}
+              </Badge>
+            )}
+            {isVideoFrozen && (
+              <Badge
+                variant="outline"
+                className="bg-amber-500/20 border-amber-500/50 text-amber-300 text-[10px] animate-pulse px-2 py-0.5"
+                title={activeHoldVisual.technicalLabel || activeHoldVisual.label}
+              >
+                <Pause className="w-2.5 h-2.5 mr-1" />
+                {activeHoldVisual.label}
+              </Badge>
+            )}
+            {stereoMeterState.isDucking && (
+              <Badge
+                variant="outline"
+                className="bg-emerald-950/85 border-emerald-500/40 text-emerald-300 text-[10px] font-medium px-2 py-0.5"
+                title="Auto-Ducking active: lowers background music & sound effects by -8 dB during speech (sidechain gain reduction)"
+              >
+                Auto-Lower Music
+              </Badge>
+            )}
+          </div>
+
+          <div className="flex items-center gap-1.5 ml-auto">
+            {isResizingPlayer && playerWidthPx > 0 && (
+              <Badge
+                variant="outline"
+                className="bg-cyan-950/90 border-cyan-400/60 text-cyan-200 text-[10px] font-mono px-2 py-0.5"
+              >
+                {playerWidthPx}×{Math.round((playerWidthPx * 9) / 16)} (16:9)
+              </Badge>
+            )}
+            {isLooping && (
+              <Badge variant="outline" className="hidden sm:inline-flex bg-emerald-950/80 border-emerald-500/40 text-emerald-300 text-[10px] uppercase tracking-wider px-1.5 py-0">
+                Loop
+              </Badge>
+            )}
+            <div
+              className="inline-flex items-center gap-1.5 rounded-md bg-zinc-950/90 border border-zinc-800 px-2 py-0.5 text-[11px] font-mono tabular-nums text-zinc-200"
+              title="SMPTE Timecode (MM:SS:FF @ 24fps)"
+            >
+              <Clock className="w-3 h-3 text-cyan-400" />
+              <span>{formatSmpteTimecode(currentTime)}</span>
+              <span className="text-zinc-600">/</span>
+              <span className="text-zinc-400">{formatSmpteTimecode(scrubberTotalDuration)}</span>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Full-Width Monitor Stage Wrapper — Houses the 16:9 Canvas */}
+      <div
+        className={`relative w-full bg-zinc-950 flex items-center justify-center overflow-hidden ${
+          fillScreen || isFullscreen ? 'min-h-0 flex-1' : ''
+        }`}
+      >
+        {/* Inner 16:9 Video Canvas — Scales cleanly inside the full-width monitor card */}
+        <div
+          ref={videoStageRef}
+          style={
+            !fillScreen && !isFullscreen && playerWidthPx > 0
+              ? { maxWidth: `${playerWidthPx}px`, width: '100%' }
+              : { width: '100%' }
+          }
+          className={`relative bg-black flex items-center justify-center overflow-hidden transition-[max-width] duration-75 ${
+            fillScreen || isFullscreen
+              ? 'h-full w-full'
+              : `aspect-video mx-auto ${playerWidthPx > 0 ? 'border-x border-zinc-800/70 shadow-2xl' : ''}`
+          }`}
+        >
         {currentSegment.segment?.activeAssetUrl ? (
           playbackKind === 'image-sequence' ? (
             <div className="relative w-full h-full">
@@ -1697,6 +2120,7 @@ export function ScenePreviewPlayer({
           ) : (
           <video
             ref={videoRef}
+            preload="auto"
             className="w-full h-full object-contain transition-transform duration-150"
             muted={isMuted || segmentAudioConfigs[currentSegment.segment.segmentId]?.includeAudio === false}
             playsInline
@@ -1705,22 +2129,43 @@ export function ScenePreviewPlayer({
               transform: activeHoldVisual.transform,
               transformOrigin: 'center center',
             }}
+            onWaiting={() => {
+              if (isPlaying && !isVideoFrozen) {
+                setIsVideoBuffering(true)
+              }
+            }}
+            onPlaying={() => setIsVideoBuffering(false)}
+            onCanPlay={() => setIsVideoBuffering(false)}
+            onSeeked={() => setIsVideoBuffering(false)}
             onLoadedMetadata={(e) => {
               const video = e.currentTarget
               const id = segmentIdForLoadedVideoRef.current
               if (!id) return
               const d = video.duration
               if (!Number.isFinite(d) || d <= 0) return
-              onMeasuredDurationsChange({ ...measuredSegmentDurations, [id]: d })
+              const prevDur = measuredSegmentDurations[id]
+              if (prevDur == null || Math.abs(prevDur - d) >= 0.02) {
+                onMeasuredDurationsChange({ ...measuredSegmentDurations, [id]: d })
+              }
             }}
           />
           )
         ) : (
-          <div className="text-gray-500 text-sm flex flex-col items-center gap-2">
+          <div className="text-zinc-500 text-sm flex flex-col items-center gap-2">
             <Film className="w-12 h-12 opacity-30" />
             <span>No video preview available</span>
           </div>
         )}
+
+        {/* Hidden standby video element to pre-warm the next shot at its trim-in frame */}
+        <video
+          ref={standbyVideoRef}
+          preload="auto"
+          muted
+          playsInline
+          className="hidden"
+          aria-hidden="true"
+        />
 
         {dissolveJoin && (
           <video
@@ -1752,6 +2197,18 @@ export function ScenePreviewPlayer({
             className="absolute inset-0 bg-black pointer-events-none"
             style={{ opacity: sceneEndOverlay.opacity }}
           />
+        )}
+
+        {/* Thin top buffer progress bar when clips are preloading in background */}
+        {playbackKind === 'video' && !clipLoadProgress.isReady && clipLoadProgress.total > 0 && (
+          <div className="absolute top-0 left-0 right-0 h-1 bg-zinc-900/90 z-30 pointer-events-none overflow-hidden">
+            <div
+              className="h-full bg-gradient-to-r from-cyan-400 via-sky-400 to-indigo-400 transition-all duration-200"
+              style={{
+                width: `${Math.max(8, Math.round((clipLoadProgress.loaded / Math.max(1, clipLoadProgress.total)) * 100))}%`,
+              }}
+            />
+          </div>
         )}
         
         {/* Broadcast Safe Area Guides (90% Action Safe & 80% Title Safe + Center Crosshair) */}
@@ -1805,105 +2262,6 @@ export function ScenePreviewPlayer({
               </div>
             </div>
           </div>
-        )}
-
-        {/* Overlay Info — hidden when the parent stage is the fullscreen view */}
-        {!fillScreen && (
-        <div className="absolute top-3 left-3 right-3 flex items-center justify-between gap-2 pointer-events-none z-20">
-          <div className="flex items-center gap-1.5 flex-wrap">
-            <Badge variant="outline" className="bg-zinc-950/85 backdrop-blur-md border-zinc-700/80 text-zinc-100 text-[11px] font-mono tabular-nums px-2 py-0.5 shadow-sm">
-              <Clock className="w-3 h-3 mr-1.5 text-cyan-400" />
-              {formatSmpteTimecode(currentTime)} <span className="text-zinc-500 mx-1">/</span> {formatSmpteTimecode(scrubberTotalDuration)}
-            </Badge>
-            <Badge
-              variant="outline"
-              className="bg-zinc-950/85 backdrop-blur-md border-cyan-500/40 text-cyan-200 text-[11px] font-mono tabular-nums px-2 py-0.5 shadow-sm pointer-events-auto"
-              title={`Playing Shot ${activeSegmentIndex + 1} of ${segments.length}`}
-            >
-              Shot {activeSegmentIndex + 1}/{segments.length}
-            </Badge>
-            {currentSegment.segment && getTrimForSegment(currentSegment.segment).isTrimmed && (
-              <Badge variant="outline" className="bg-amber-950/80 backdrop-blur-md border-amber-500/40 text-amber-300 text-[10px] uppercase tracking-wider px-2 py-0.5">
-                Trimmed
-              </Badge>
-            )}
-            {currentSegment.segment?.shotJoin && currentSegment.segment.shotJoin !== 'cut' && (
-              <Badge variant="outline" className="bg-violet-950/80 backdrop-blur-md border-violet-500/40 text-violet-200 text-[10px] uppercase tracking-wider px-2 py-0.5">
-                {currentSegment.segment.shotJoin}
-              </Badge>
-            )}
-            {isVideoFrozen && (
-              <Badge
-                variant="outline"
-                className="bg-amber-500/20 backdrop-blur-md border-amber-500/50 text-amber-300 text-[11px] animate-pulse pointer-events-auto"
-                title={activeHoldVisual.technicalLabel || activeHoldVisual.label}
-              >
-                <Pause className="w-3 h-3 mr-1" />
-                {activeHoldVisual.label}
-              </Badge>
-            )}
-            {stereoMeterState.isDucking && (
-              <Badge
-                variant="outline"
-                className="bg-emerald-950/85 backdrop-blur-md border-emerald-500/40 text-emerald-300 text-[10px] font-medium px-2 py-0.5 pointer-events-auto"
-                title="Auto-Ducking active: lowers background music & sound effects by -8 dB during speech (sidechain gain reduction)"
-              >
-                Auto-Lower Music
-              </Badge>
-            )}
-          </div>
-          <div className="flex items-center gap-1.5 pointer-events-auto">
-            {isResizingPlayer && (
-              <Badge
-                variant="outline"
-                className="bg-cyan-950/90 backdrop-blur-md border-cyan-400/60 text-cyan-200 text-[10px] font-mono px-2 py-0.5"
-              >
-                {playerWidthPx}×{Math.round((playerWidthPx * 9) / 16)} (16:9)
-              </Badge>
-            )}
-            {isLooping && (
-              <Badge variant="outline" className="hidden sm:inline-flex bg-emerald-950/80 backdrop-blur-md border-emerald-500/40 text-emerald-300 text-[10px] uppercase tracking-wider px-2 py-0.5">
-                Loop
-              </Badge>
-            )}
-            <Badge
-              variant="outline"
-              className="hidden sm:inline-flex bg-zinc-950/85 backdrop-blur-md border-zinc-700/80 text-zinc-300 text-[10px] font-medium px-2 py-0.5"
-              title={`Audio Level: ${stereoMeterState.lufsReadout} • Target: ${stereoMeterState.technicalTarget}`}
-            >
-              {stereoMeterState.friendlyLabel}
-            </Badge>
-            <Badge
-              variant="outline"
-              className="hidden md:inline-flex bg-zinc-950/80 backdrop-blur-md border-zinc-800 text-zinc-400 text-[10px] font-medium px-2 py-0.5"
-              title="Standard HD preview • 24 FPS cinematic frame rate • Rec.709 color profile"
-            >
-              Standard HD
-            </Badge>
-            {/* Top-Right Fullscreen Button — always visible on the video frame */}
-            <button
-              type="button"
-              onClick={(e) => {
-                e.stopPropagation()
-                void toggleFullscreen()
-              }}
-              title={isFullscreen ? 'Exit Fullscreen [F or Esc]' : 'Fullscreen video player [F]'}
-              className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-zinc-950/90 hover:bg-cyan-500/25 border border-zinc-700 hover:border-cyan-400/60 text-zinc-200 hover:text-white text-[10px] font-medium transition-colors shadow-sm"
-            >
-              {isFullscreen ? (
-                <>
-                  <Minimize2 className="w-3.5 h-3.5 text-cyan-300" />
-                  <span>Exit</span>
-                </>
-              ) : (
-                <>
-                  <Maximize2 className="w-3.5 h-3.5 text-cyan-300" />
-                  <span className="hidden sm:inline">Fullscreen</span>
-                </>
-              )}
-            </button>
-          </div>
-        </div>
         )}
         
         {/* Text Overlays - Rendered on top of video */}
@@ -2092,17 +2450,80 @@ export function ScenePreviewPlayer({
             )}
           </div>
         )}
+
+        {/* Clip Loading / Pending Play Overlay — Prevents frozen playback before clips finish loading */}
+        {playbackKind === 'video' &&
+          ((pendingPlayWhenReady && !clipLoadProgress.isReady) || (isPlaying && isVideoBuffering && !isVideoFrozen)) && (
+          <div className="absolute inset-0 z-30 flex items-center justify-center bg-zinc-950/70 backdrop-blur-sm px-4">
+            <div className="max-w-xs w-full rounded-xl border border-cyan-500/35 bg-zinc-900/95 px-4 py-3.5 shadow-2xl flex flex-col items-center text-center gap-2.5">
+              <div className="w-10 h-10 rounded-full bg-cyan-500/15 border border-cyan-400/40 flex items-center justify-center">
+                <Loader2 className="w-5 h-5 text-cyan-400 animate-spin" />
+              </div>
+              <div className="space-y-0.5">
+                <p className="text-xs font-semibold text-zinc-100">
+                  {pendingPlayWhenReady && !clipLoadProgress.isReady
+                    ? `Loading Scene Clips (${clipLoadProgress.loaded}/${clipLoadProgress.total})`
+                    : 'Buffering Video Clip…'}
+                </p>
+                <p className="text-[11px] text-zinc-400 leading-snug">
+                  {pendingPlayWhenReady && !clipLoadProgress.isReady
+                    ? 'Playback will start automatically once clips are buffered so the player does not freeze.'
+                    : 'Syncing audio and video tracks…'}
+                </p>
+              </div>
+              {clipLoadProgress.total > 0 && !clipLoadProgress.isReady && (
+                <div className="w-full h-1.5 bg-zinc-800 rounded-full overflow-hidden">
+                  <div
+                    className="h-full bg-gradient-to-r from-cyan-400 to-indigo-400 rounded-full transition-all duration-200"
+                    style={{
+                      width: `${Math.max(10, Math.round((clipLoadProgress.loaded / Math.max(1, clipLoadProgress.total)) * 100))}%`,
+                    }}
+                  />
+                </div>
+              )}
+              {pendingPlayWhenReady && !clipLoadProgress.isReady && (
+                <div className="flex items-center gap-2 pt-0.5">
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      setPendingPlayWhenReady(false)
+                      toast.dismiss(MIXER_CLIP_LOAD_TOAST_ID)
+                    }}
+                    className="px-2.5 py-1 rounded-md bg-zinc-800 hover:bg-zinc-700 text-zinc-300 text-[10px] font-medium transition-colors"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      handlePlayAnyway()
+                    }}
+                    className="px-2.5 py-1 rounded-md bg-cyan-500/20 hover:bg-cyan-500/30 border border-cyan-400/40 text-cyan-200 text-[10px] font-medium transition-colors"
+                  >
+                    Play Anyway
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
         
-        {/* Play Button Overlay */}
+        {/* Studio Play/Pause Hover Overlay */}
         <button
+          type="button"
           onClick={handlePlayPause}
-          className="absolute inset-0 flex items-center justify-center bg-black/20 opacity-0 hover:opacity-100 transition-opacity"
+          className="absolute inset-0 flex items-center justify-center bg-black/20 opacity-0 hover:opacity-100 transition-opacity z-20"
+          aria-label={isPlaying ? 'Pause' : 'Play'}
         >
-          <div className="w-16 h-16 rounded-full bg-purple-600/80 flex items-center justify-center">
-            {isPlaying ? (
-              <Pause className="w-8 h-8 text-white" />
+          <div className="w-14 h-14 rounded-full bg-zinc-950/80 border border-cyan-400/50 text-cyan-300 backdrop-blur-md shadow-xl flex items-center justify-center hover:scale-105 transition-transform">
+            {pendingPlayWhenReady ? (
+              <Loader2 className="w-6 h-6 text-cyan-300 animate-spin" />
+            ) : isPlaying ? (
+              <Pause className="w-6 h-6 text-white" />
             ) : (
-              <Play className="w-8 h-8 text-white ml-1" />
+              <Play className="w-6 h-6 text-white ml-0.5" />
             )}
           </div>
         </button>
@@ -2113,9 +2534,9 @@ export function ScenePreviewPlayer({
             onMouseDown={handleResizeDragStart}
             onDoubleClick={(e) => {
               e.stopPropagation()
-              updatePlayerWidth(PLAYER_WIDTH_DEFAULT)
+              updatePlayerWidth(PLAYER_WIDTH_FIT)
             }}
-            title="Drag corner to resize 16:9 video window • Double-click to reset to default size"
+            title="Drag corner to resize 16:9 video canvas • Double-click to fit column width"
             className="absolute bottom-1.5 right-1.5 z-30 w-6 h-6 rounded bg-zinc-950/85 hover:bg-cyan-500/25 border border-zinc-700/90 hover:border-cyan-400/60 flex items-center justify-center cursor-nwse-resize text-zinc-400 hover:text-cyan-200 transition-colors shadow-md"
           >
             <svg className="w-3.5 h-3.5" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.5">
@@ -2123,20 +2544,21 @@ export function ScenePreviewPlayer({
             </svg>
           </div>
         )}
+        </div>
       </div>
       
-      {/* Controls Bar — 2-row compact layout so Scrubber, Window Size Controls, and Fullscreen are always visible at any player size */}
+      {/* Controls Bar — 100% Width Studio Transport & Scrubber Bar */}
       {!fillScreen && (
-      <div className="px-3 py-2 bg-zinc-950 border-t border-zinc-800/90 flex flex-col gap-1.5">
+      <div className="px-3 py-2.5 bg-zinc-900/95 border-t border-zinc-800/80 flex flex-col gap-2">
         {/* Row 1: Full-Width Timeline Scrubber & Timecode */}
-        <div className="flex items-center gap-2">
-          <span className="text-[11px] text-zinc-300 font-mono tabular-nums min-w-[36px]">
+        <div className="flex items-center gap-2.5">
+          <span className="text-[11px] text-zinc-300 font-mono tabular-nums min-w-[38px]">
             {formatTime(currentTime)}
           </span>
           
           {/* Progress Bar with Shot Boundary Markers */}
           <div 
-            className="flex-1 h-2 bg-zinc-800 rounded-full cursor-pointer relative group"
+            className="flex-1 h-2 bg-zinc-800/90 rounded-full cursor-pointer relative group"
             onClick={(e) => {
               const rect = e.currentTarget.getBoundingClientRect()
               const percent = ((e.clientX - rect.left) / rect.width) * 100
@@ -2161,7 +2583,7 @@ export function ScenePreviewPlayer({
             />
           </div>
           
-          <span className="text-[11px] text-zinc-400 font-mono tabular-nums min-w-[36px] text-right">
+          <span className="text-[11px] text-zinc-400 font-mono tabular-nums min-w-[38px] text-right">
             {formatTime(scrubberTotalDuration)}
           </span>
         </div>
@@ -2195,10 +2617,26 @@ export function ScenePreviewPlayer({
             <button
               type="button"
               onClick={handlePlayPause}
-              title={isPlaying ? 'Pause [Space]' : 'Play [Space]'}
-              className="p-1.5 px-2.5 rounded-md bg-cyan-500 hover:bg-cyan-400 text-zinc-950 font-semibold transition-colors shadow-sm"
+              title={
+                pendingPlayWhenReady
+                  ? 'Waiting for clips to finish loading (click to cancel)'
+                  : isPlaying
+                    ? 'Pause [Space]'
+                    : 'Play [Space]'
+              }
+              className={`p-1.5 px-2.5 rounded-md font-semibold transition-colors shadow-sm flex items-center justify-center ${
+                pendingPlayWhenReady
+                  ? 'bg-amber-500/25 border border-amber-400/50 text-amber-200 hover:bg-amber-500/35'
+                  : 'bg-cyan-500 hover:bg-cyan-400 text-zinc-950'
+              }`}
             >
-              {isPlaying ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4 ml-0.5" />}
+              {pendingPlayWhenReady ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : isPlaying ? (
+                <Pause className="w-4 h-4" />
+              ) : (
+                <Play className="w-4 h-4 ml-0.5" />
+              )}
             </button>
 
             {/* Fine Step Forward (+0.25s) */}
@@ -2272,7 +2710,7 @@ export function ScenePreviewPlayer({
               type="button"
               onClick={handleExportFcpxml}
               title="Export non-destructive FCPXML v1.10 timeline (DaVinci Resolve / Final Cut Pro / Premiere Pro) with multi-lane audio stems & alternate takes"
-              className="hidden md:inline-flex items-center gap-1 px-1.5 py-1 rounded-md bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 hover:border-cyan-500/40 text-zinc-300 hover:text-cyan-200 text-[9px] font-mono transition-colors"
+              className="hidden md:inline-flex items-center gap-1 px-1.5 py-1 rounded-md bg-zinc-950 hover:bg-zinc-800 border border-zinc-800 hover:border-cyan-500/40 text-zinc-300 hover:text-cyan-200 text-[9px] font-mono transition-colors"
             >
               <Download className="w-3 h-3 text-cyan-400" />
               <span>FCPXML</span>
@@ -2294,7 +2732,7 @@ export function ScenePreviewPlayer({
 
             {/* Stereo L/R Audio Level Meter */}
             <div
-              className="hidden sm:flex items-center gap-1.5 px-2 py-1 rounded bg-zinc-900/90 border border-zinc-800/80"
+              className="hidden sm:flex items-center gap-1.5 px-2 py-1 rounded bg-zinc-950/90 border border-zinc-800/80"
               title={`Audio Level Meter • Live: ${stereoMeterState.lufsReadout} • Target: ${stereoMeterState.technicalTarget}`}
             >
               <div className="flex flex-col gap-0.5 w-10">
@@ -2328,23 +2766,30 @@ export function ScenePreviewPlayer({
               </span>
             </div>
 
-            {/* 16:9 Window Size Control (Presets S / M / L / XL + Stepper) */}
+            {/* 16:9 Stage Size Control (Presets S / M / L / Fit + Stepper) */}
             {!isFullscreen && (
               <div
-                className="inline-flex items-center gap-0.5 px-1 py-0.5 rounded-md bg-zinc-900 border border-zinc-800"
-                title="Adjust 16:9 video player window size (or drag the bottom-right corner of the video)"
+                className="inline-flex items-center gap-0.5 px-1 py-0.5 rounded-md bg-zinc-950 border border-zinc-800"
+                title="Adjust 16:9 video canvas size inside the monitor (or choose Fit for full column width)"
               >
                 <button
                   type="button"
-                  onClick={() => updatePlayerWidth(playerWidthPx - 60)}
-                  disabled={playerWidthPx <= PLAYER_WIDTH_MIN}
-                  title="Make video player window smaller"
+                  onClick={() =>
+                    updatePlayerWidth(
+                      playerWidthPx === PLAYER_WIDTH_FIT ? 560 : playerWidthPx - 60
+                    )
+                  }
+                  disabled={playerWidthPx > 0 && playerWidthPx <= PLAYER_WIDTH_MIN}
+                  title="Make video canvas smaller"
                   className="px-1 py-0.5 rounded text-[10px] font-mono text-zinc-400 hover:text-white hover:bg-zinc-800 disabled:opacity-30"
                 >
                   −
                 </button>
                 {PLAYER_SIZE_PRESETS.map((preset) => {
-                  const isActivePreset = Math.abs(playerWidthPx - preset.width) < 35
+                  const isActivePreset =
+                    preset.width === PLAYER_WIDTH_FIT
+                      ? playerWidthPx === PLAYER_WIDTH_FIT
+                      : playerWidthPx > 0 && Math.abs(playerWidthPx - preset.width) < 35
                   return (
                     <button
                       key={preset.label}
@@ -2363,9 +2808,17 @@ export function ScenePreviewPlayer({
                 })}
                 <button
                   type="button"
-                  onClick={() => updatePlayerWidth(playerWidthPx + 60)}
-                  disabled={playerWidthPx >= PLAYER_WIDTH_MAX}
-                  title="Make video player window larger"
+                  onClick={() =>
+                    updatePlayerWidth(
+                      playerWidthPx === PLAYER_WIDTH_FIT
+                        ? PLAYER_WIDTH_FIT
+                        : playerWidthPx + 60 >= 760
+                          ? PLAYER_WIDTH_FIT
+                          : playerWidthPx + 60
+                    )
+                  }
+                  disabled={playerWidthPx === PLAYER_WIDTH_FIT}
+                  title="Make video canvas larger"
                   className="px-1 py-0.5 rounded text-[10px] font-mono text-zinc-400 hover:text-white hover:bg-zinc-800 disabled:opacity-30"
                 >
                   +
@@ -2380,7 +2833,7 @@ export function ScenePreviewPlayer({
               className={`inline-flex items-center gap-1 px-2 py-1 rounded-md border text-[10px] font-medium transition-colors shrink-0 ${
                 isFullscreen
                   ? 'bg-cyan-500/20 border-cyan-400/50 text-cyan-200 hover:bg-cyan-500/30'
-                  : 'bg-zinc-900 hover:bg-zinc-800 border-zinc-700 text-zinc-200 hover:text-white'
+                  : 'bg-zinc-950 hover:bg-zinc-800 border-zinc-700 text-zinc-200 hover:text-white'
               }`}
               title={isFullscreen ? 'Exit Fullscreen [F or Esc]' : 'Enter Fullscreen [F]'}
             >

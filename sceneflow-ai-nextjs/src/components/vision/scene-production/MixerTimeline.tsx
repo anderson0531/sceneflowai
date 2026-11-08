@@ -237,7 +237,7 @@ function buildAutoDuckSvgPath(
 // MixerTimeline Component
 // ============================================================================
 
-export const MixerTimeline: React.FC<MixerTimelineProps> = ({
+const MixerTimelineComponent: React.FC<MixerTimelineProps> = ({
   videoTotalDuration,
   timelineDuration,
   dialogueClips = [],
@@ -1125,3 +1125,5 @@ export const MixerTimeline: React.FC<MixerTimelineProps> = ({
     </div>
   )
 }
+
+export const MixerTimeline = React.memo(MixerTimelineComponent)
