@@ -76,6 +76,12 @@ export interface CompileBeatVideoPromptOptions {
   continuesSameLine?: boolean
   /** Optional cumulative scene state ledger entry for multi-shot wardrobe/lighting carryover. */
   sceneState?: CumulativeSceneStateAtBeat | null
+  /**
+   * Target video conditioning mode:
+   * - 'reference' (default): Reference-to-Video (R2V) using character/location/prop reference plates.
+   * - 'frame': Frame-to-Video (FTV / I2V) conditioned on Start and End keyframe images.
+   */
+  targetMethod?: 'reference' | 'frame'
 }
 
 function normalizeLine(text: string): string {
@@ -250,6 +256,67 @@ function sanitizeEmotionForModeration(value?: string | null): string | undefined
   return raw.replace(/\bsuffocating\b/gi, 'oppressive')
 }
 
+const ACTIVE_SURFACE_WRITING_RE =
+  /\b(?:writes?|writing|inscribes?|inscribing|scrawls?|scrawling|spells?\s+out|draws?\s+(?:the\s+)?(?:words|letters|formula|equation|symbols))\b/i
+
+/**
+ * When a beat's action does NOT involve physically writing text onto a board or wall,
+ * strip literal quoted inscriptions (e.g. `the crisp chalk inscription 'RESONANCE FLUX = 0'`)
+ * so Reference-to-Video models do not hallucinate ghost text popping onto the background surface.
+ */
+export function sanitizeUnactuatedSurfaceInscriptions(
+  value?: string | null,
+  clipAction?: string | null
+): string | undefined {
+  const raw = (value ?? '').trim()
+  if (!raw) return undefined
+  if (ACTIVE_SURFACE_WRITING_RE.test(clipAction || '')) {
+    return raw
+  }
+  return raw
+    .replace(
+      /\b(the\s+)?(?:crisp\s+|faint\s+|smudged\s+|fresh\s+|existing\s+)?(chalk(?:ed)?\s+|white\s+|painted\s+|carved\s+)?(inscription|formula|equation|writing|words|text)\s+(?:reading\s+|titled\s+)?'[^'\n]{2,80}'/gi,
+      (_match, det?: string, medium?: string, noun?: string) => {
+        const prefix = det ? det : 'the '
+        const med = medium ? medium : 'chalked '
+        const kind = (noun || 'formula').toLowerCase()
+        return `${prefix}${med}${kind}`
+      }
+    )
+    .replace(/\s{2,}/g, ' ')
+    .trim()
+}
+
+/**
+ * Prevent Reference-mode `endFrame` descriptions from asserting static board/wall text
+ * states that were not physically created by `clipAction`, which otherwise triggers
+ * late ghost changes in the final 2 seconds of an Omni R2V clip.
+ */
+export function sanitizeReferenceEndFrame(
+  endFrame?: string | null,
+  clipAction?: string | null
+): string | undefined {
+  const sanitized = sanitizeUnactuatedSurfaceInscriptions(endFrame, clipAction)
+  if (!sanitized) return undefined
+  if (ACTIVE_SURFACE_WRITING_RE.test(clipAction || '')) {
+    return sanitized
+  }
+  const sentences = sanitized
+    .split(/(?<=[.!?])\s+/)
+    .map((s) => s.trim())
+    .filter(Boolean)
+  if (sentences.length <= 1) {
+    return sanitized
+  }
+  const filtered = sentences.filter(
+    (s) =>
+      !/^On\s+the\s+(?:damp\s+|dark\s+|wet\s+|subterranean\s+)?(?:slate\s+|stone\s+|brick\s+)?(?:wall|board|chalkboard|blackboard|surface)\b[\s\S]*\b(?:formula|inscription|equation|writing|text)\b/i.test(
+        s
+      )
+  )
+  return (filtered.length > 0 ? filtered : sentences).join(' ').trim()
+}
+
 /**
  * Resolve explicit or derived 10s Clip direction facets (`startFrame`, `clipAction`,
  * `emotion`, `endFrame`) for a beat so both the Shot Director UI and the video
@@ -267,6 +334,13 @@ export function resolveBeatClipDirection(
     if (!trimmed) return undefined
     return singleCast ? sanitizeSingleCastListenerPhrasing(trimmed) || undefined : trimmed
   }
+
+  const rawClipAction = cleanSingle(
+    direction?.clipAction ||
+      (beat.kind === 'action'
+        ? beat.actionDescription
+        : beat.actionDescription || direction?.blocking)
+  )
 
   let startFrame = cleanSingle(direction?.startFrame)
   if (!startFrame) {
@@ -286,15 +360,13 @@ export function resolveBeatClipDirection(
     }
   }
   if (startFrame) {
-    startFrame = affirmativeStartFrameState(startFrame)
+    startFrame = sanitizeUnactuatedSurfaceInscriptions(
+      affirmativeStartFrameState(startFrame),
+      rawClipAction
+    )
   }
 
-  const clipAction = cleanSingle(
-    direction?.clipAction ||
-      (beat.kind === 'action'
-        ? beat.actionDescription
-        : beat.actionDescription || direction?.blocking)
-  )
+  const clipAction = sanitizeUnactuatedSurfaceInscriptions(rawClipAction, rawClipAction)
 
   const emotion = sanitizeEmotionForModeration(
     direction?.emotion?.trim() ||
@@ -307,7 +379,10 @@ export function resolveBeatClipDirection(
       undefined
   )
 
-  const endFrame = cleanSingle(direction?.endFrame || direction?.frozenMoment)
+  const endFrame = sanitizeReferenceEndFrame(
+    cleanSingle(direction?.endFrame || direction?.frozenMoment),
+    rawClipAction
+  )
 
   return {
     ...(startFrame ? { startFrame } : {}),
@@ -390,37 +465,41 @@ function directionClauses(beat: SceneBeat, existing: string): string[] {
     /\b0s[–-]2s\s*\(Start frame\):/i.test(existing) ||
     /\b2s[–-][58]s\s*\(Action\):/i.test(existing) ||
     /\b8s[–-]10s\s*\(End frame\):/i.test(existing)
-  const clauses: string[] = []
-  if (!hasTimedLead) {
-    pushClause(
-      clauses,
-      existing,
-      '0s–2s (Start frame)',
-      affirmativeStartFrameState(cleanTimed(direction.startFrame))
+  const hasTimedDirection =
+    hasTimedLead ||
+    Boolean(
+      direction.startFrame?.trim() ||
+        direction.clipAction?.trim() ||
+        direction.endFrame?.trim()
     )
-    pushClause(clauses, existing, '2s–8s (Action)', cleanTimed(direction.clipAction))
+  const clauses: string[] = []
+  if (!hasTimedLead && hasTimedDirection) {
+    const timedSeq = buildTimedClipSequence(beat)
+    if (timedSeq && !tokenAlreadyInPrompt(timedSeq, existing)) {
+      clauses.push(timedSeq)
+    }
   }
-  pushClause(clauses, existing, 'Coverage', direction.coveragePurpose)
-  pushClause(clauses, existing, 'Lens', direction.lensEnergy)
-  pushClause(clauses, existing, 'Space', cleanSingle(direction.spatialRelationship))
+  if (!hasTimedDirection) {
+    pushClause(clauses, existing, 'Coverage', direction.coveragePurpose)
+    pushClause(clauses, existing, 'Lens', direction.lensEnergy)
+    pushClause(clauses, existing, 'Space', cleanSingle(direction.spatialRelationship))
+  }
   pushClause(clauses, existing, 'Shot', normalizeSingleCastShotType(direction.shotType, singleCast))
   pushClause(clauses, existing, 'Angle', direction.cameraAngle)
   pushClause(clauses, existing, 'Camera', direction.cameraMovement)
   pushClause(clauses, existing, 'Blocking', cleanSingle(direction.blocking))
   pushClause(clauses, existing, 'Emotion', sanitizeEmotionForModeration(direction.emotion))
-  pushClause(clauses, existing, 'Gaze', cleanSingle(direction.gaze))
-  pushClause(clauses, existing, 'Prop interaction', direction.propInteraction)
+  if (!hasTimedDirection) {
+    pushClause(clauses, existing, 'Gaze', cleanSingle(direction.gaze))
+    pushClause(clauses, existing, 'Prop interaction', direction.propInteraction)
+  }
   const props = direction.keyProps?.map((name) => name.trim()).filter(Boolean) ?? []
   if (props.length > 0) pushClause(clauses, existing, 'Props', props.join(', '))
   pushClause(clauses, existing, 'Lighting', direction.lightingAccent)
-  if (!hasTimedLead) {
+  if (!hasTimedLead && !hasTimedDirection) {
     const endText = cleanTimed(direction.endFrame || direction.frozenMoment)
     if (endText && !tokenAlreadyInPrompt(endText, existing)) {
-      const endLabel =
-        direction.startFrame || direction.clipAction || direction.endFrame
-          ? '8s–10s (End frame): End on'
-          : 'End on'
-      pushClause(clauses, existing, endLabel, endText)
+      pushClause(clauses, existing, 'End on', endText)
     }
   }
   pushClause(clauses, existing, 'Sound', direction.audioCue)
@@ -453,7 +532,11 @@ function summarizeStatedActionForGuardrail(
  */
 export function beatVideoFidelityClose(
   beat: SceneBeat,
-  options?: { spokenLine?: string; coreText?: string }
+  options?: {
+    spokenLine?: string
+    coreText?: string
+    targetMethod?: 'reference' | 'frame'
+  }
 ): string {
   const parts: string[] = []
   const cast = beat.beatDirection?.castInFrame
@@ -488,7 +571,11 @@ export function beatVideoFidelityClose(
     ? sanitizeSingleCastListenerPhrasing(rawStatedAction)
     : rawStatedAction
   const isTimedClip = hasExplicitTimedClipDirection(beat)
-  if (isTimedClip) {
+  if (options?.targetMethod === 'frame') {
+    parts.push(
+      'Progress smoothly and continuously from the start frame across the entire shot duration to arrive naturally at the end frame without holding the opening pose or jumping in the final 2 seconds'
+    )
+  } else if (isTimedClip) {
     parts.push(
       'Hold the 0s–2s start state before initiating the 2s–8s progression, and settle cleanly into the 8s–10s end frame without inventing unstated events or extra cuts'
     )
@@ -634,6 +721,7 @@ function finishVideoPrompt(args: {
   styleNegative: string
   spokenLine?: string
   continuity?: string
+  targetMethod?: 'reference' | 'frame'
 }): BeatVideoPromptResult {
   let core = args.core.trim()
   if (args.steer && !tokenAlreadyInPrompt(args.steer, core)) {
@@ -645,6 +733,7 @@ function finishVideoPrompt(args: {
   const fidelity = beatVideoFidelityClose(args.beat, {
     spokenLine: args.spokenLine,
     coreText: core,
+    targetMethod: args.targetMethod,
   })
   if (fidelity && !tokenAlreadyInPrompt(fidelity, core)) {
     core = normalizePromptJoin(core, fidelity)
@@ -677,10 +766,122 @@ function applySceneHints(
   return hints ? normalizePromptJoin(core, hints) : core
 }
 
+/**
+ * Strip embedded time-bucket prefixes (`2s–5s (Action):`, `5s–8s (Action progression):`,
+ * `2s–8s (Action):`, `From two to five seconds,`) from an action string so Frame-to-Video
+ * prompts distribute motion smoothly across the entire 0s–10s keyframe bridge.
+ */
+function flattenActionForContinuousFrameBridge(actionText: string): string {
+  return actionText
+    .split(/(?<=[.!?])\s+/)
+    .map((sentence) => stripLeadingTimeLabel(sentence).replace(/\.+$/, '').trim())
+    .filter(Boolean)
+    .join('. ')
+}
+
+/**
+ * Dedicated Frame-to-Video (`targetMethod === 'frame'`) prompt compiler.
+ *
+ * Unlike Reference-to-Video (which must describe `0s–2s` start hold, static blocking,
+ * and `8s–10s` end state from scratch), Frame mode receives the Start Frame and End Frame
+ * images as pixel boundary conditions. Including `0s–2s (Start frame)` and `8s–10s (End frame)`
+ * holds causes the video model to freeze on the start frame and jump to the end frame
+ * in the final 2 seconds. This compiler emits continuous 0s–10s transition motion
+ * plus lip-sync dialogue and camera movement without static `t=0s` pose anchors.
+ */
+export function compileBeatFrameVideoPrompt(
+  beat: SceneBeat,
+  sceneDirection?: DetailedSceneDirection | null,
+  options?: CompileBeatVideoPromptOptions
+): BeatVideoPromptResult {
+  const artStyleId = options?.artStyleId ?? 'photorealistic'
+  const styleSuffix = getArtStyleVideoPromptSuffix(artStyleId)
+  const styleNegative = getArtStyleNegativeTerms(artStyleId)
+  const steer = formatMusicCueSteer(options?.musicCue)
+  const spokenLine = hasSpokenDialogue(beat, options?.excerpt)
+    ? spokenLineOf(beat, options?.excerpt)
+    : undefined
+
+  const resolved = resolveBeatClipDirection(beat, sceneDirection, {
+    musicCue: options?.musicCue,
+  })
+  const direction = beat.beatDirection
+  const singleCast = isSingleCastBeat(beat)
+
+  const segments: string[] = []
+  if (beat.kind === 'dialogue' || beat.kind === 'narration') {
+    segments.push(leadForBeat(beat, options))
+  }
+
+  const continuousAction = resolved.clipAction
+    ? flattenActionForContinuousFrameBridge(resolved.clipAction)
+    : stripLeadingTimeLabel(beat.actionDescription || direction?.blocking)
+  if (continuousAction) {
+    segments.push(
+      `Continuous motion from start frame to end frame (0s–10s): ${continuousAction.replace(/\.+$/, '')}`
+    )
+  }
+
+  if (
+    resolved.endFrame &&
+    (!continuousAction || !tokenAlreadyInPrompt(resolved.endFrame.slice(0, 40), continuousAction))
+  ) {
+    segments.push(
+      `Smoothly reach the closing keyframe state by the end of the shot: ${resolved.endFrame.replace(/\.+$/, '')}`
+    )
+  }
+
+  let core = normalizePromptJoin(...segments)
+  const frameClauses: string[] = []
+  pushClause(
+    frameClauses,
+    core,
+    'Shot',
+    normalizeSingleCastShotType(direction?.shotType, singleCast)
+  )
+  pushClause(frameClauses, frameClauses.join('. ') + ' ' + core, 'Angle', direction?.cameraAngle)
+  pushClause(
+    frameClauses,
+    frameClauses.join('. ') + ' ' + core,
+    'Camera',
+    direction?.cameraMovement
+  )
+  pushClause(
+    frameClauses,
+    frameClauses.join('. ') + ' ' + core,
+    'Emotion',
+    resolved.emotion || sanitizeEmotionForModeration(direction?.emotion)
+  )
+  const props = direction?.keyProps?.map((name) => name.trim()).filter(Boolean) ?? []
+  if (props.length > 0) {
+    pushClause(frameClauses, frameClauses.join('. ') + ' ' + core, 'Props', props.join(', '))
+  }
+  pushClause(frameClauses, frameClauses.join('. ') + ' ' + core, 'Sound', direction?.audioCue)
+
+  if (frameClauses.length > 0) {
+    core = normalizePromptJoin(core, frameClauses.join('. '))
+  }
+  core = withMotionWhenUnstated(beat, core)
+
+  return finishVideoPrompt({
+    core,
+    beat,
+    steer,
+    styleSuffix,
+    styleNegative,
+    spokenLine,
+    continuity: incomingContinuityClause(options, beat),
+    targetMethod: 'frame',
+  })
+}
+
 export function compileBeatVideoPrompt(
   beat: SceneBeat,
   options?: CompileBeatVideoPromptOptions
 ): BeatVideoPromptResult {
+  if (options?.targetMethod === 'frame') {
+    return compileBeatFrameVideoPrompt(beat, null, options)
+  }
   const artStyleId = options?.artStyleId ?? 'photorealistic'
   const styleSuffix = getArtStyleVideoPromptSuffix(artStyleId)
   const styleNegative = getArtStyleNegativeTerms(artStyleId)
@@ -720,7 +921,8 @@ export function beatDirectionOwnsVideoPrompt(beat: SceneBeat): boolean {
 export function isStaleSavedVideoPrompt(
   beat: SceneBeat,
   stored: string,
-  spokenLine?: string
+  spokenLine?: string,
+  targetMethod?: 'reference' | 'frame'
 ): boolean {
   const trimmed = stored.trim()
   if (!trimmed) return true
@@ -744,11 +946,28 @@ export function isStaleSavedVideoPrompt(
   }
 
   const isCompilerGenerated =
-    /\b(?:No spoken dialogue|The only spoken line is:|The only action is:|End on:|photorealistic,\s*cinematic motion)/i.test(
+    /\b(?:No spoken dialogue|The only spoken line is:|The only action is:|End on:|Continuous motion from start frame to end frame|photorealistic,\s*cinematic motion)/i.test(
       trimmed
     )
   if (!isCompilerGenerated) {
     return false
+  }
+
+  if (
+    targetMethod === 'frame' &&
+    (/\b0s[–-]2s\s*\(Start frame\):/i.test(trimmed) ||
+      /\b8s[–-]10s\s*\(End frame\):/i.test(trimmed) ||
+      /\bHold the 0s[–-]2s start state\b/i.test(trimmed))
+  ) {
+    return true
+  }
+
+  if (
+    targetMethod !== 'frame' &&
+    (/\bContinuous motion from start frame to end frame\b/i.test(trimmed) ||
+      /\bProgress smoothly and continuously from the start frame\b/i.test(trimmed))
+  ) {
+    return true
   }
 
   if (
@@ -758,9 +977,10 @@ export function isStaleSavedVideoPrompt(
     return true
   }
 
-  const cleanStart = affirmativeStartFrameState(stripLeadingTimeLabel(d?.startFrame))
-  const cleanClipAction = stripLeadingTimeLabel(d?.clipAction)
-  const cleanEnd = stripLeadingTimeLabel(d?.endFrame)
+  const resolved = resolveBeatClipDirection(beat)
+  const cleanStart = resolved.startFrame
+  const cleanClipAction = resolved.clipAction
+  const cleanEnd = resolved.endFrame
   const cleanFrozen = stripLeadingTimeLabel(d?.frozenMoment)
 
   if (
@@ -772,13 +992,18 @@ export function isStaleSavedVideoPrompt(
   }
 
   // Invalidate previously compiled timed prompts that contained duplicate phase
-  // clauses, unstripped word-number time headers, negated light nouns, or a
-  // contradictory "The only action is:" suffix alongside 0s–2s start holds.
+  // clauses, unstripped word-number time headers, negated light nouns, static
+  // Prop interaction/Coverage/Gaze mid-sequence, unactuated quoted surface inscriptions,
+  // or a contradictory "The only action is:" suffix alongside 0s–2s start holds.
   if (
     (/\b2s[–-]5s\s*\(Action\):/i.test(trimmed) && /\b2s[–-]8s\s*\(Action\):/i.test(trimmed)) ||
     (trimmed.match(/\b8s[–-]10s\s*\(End frame\):/gi)?.length ?? 0) > 1 ||
     (trimmed.match(/\bIncoming continuity from\b/gi)?.length ?? 0) > 1 ||
     (/\b0s[–-]2s\s*\(Start frame\):/i.test(trimmed) && /\bThe only action is:/i.test(trimmed)) ||
+    (/\b0s[–-]2s\s*\(Start frame\):/i.test(trimmed) &&
+      /\b(?:Coverage|Lens|Space|Prop interaction|Gaze):/i.test(trimmed)) ||
+    (!ACTIVE_SURFACE_WRITING_RE.test(d?.clipAction || '') &&
+      /\b(?:inscription|formula|equation)\s+'[^'\n]{2,80}'/i.test(trimmed)) ||
     /\b(?:without\s+a\s+single\s+electric(?:al)?\s+light|with\s+zero\s+electric(?:al)?\s+light)/i.test(
       trimmed
     ) ||
@@ -871,6 +1096,9 @@ export function compileBeatVideoPromptFromDirection(
   sceneDirection?: DetailedSceneDirection | null,
   options?: CompileBeatVideoPromptOptions
 ): BeatVideoPromptResult {
+  if (options?.targetMethod === 'frame') {
+    return compileBeatFrameVideoPrompt(beat, sceneDirection, options)
+  }
   const artStyleId = options?.artStyleId ?? 'photorealistic'
   const styleSuffix = getArtStyleVideoPromptSuffix(artStyleId)
   const styleNegative = getArtStyleNegativeTerms(artStyleId)
@@ -879,7 +1107,10 @@ export function compileBeatVideoPromptFromDirection(
     ? spokenLineOf(beat, options?.excerpt)
     : undefined
   const stored = beat.beatDirection?.videoPrompt?.trim()
-  if (stored && !isStaleSavedVideoPrompt(beat, stored, spokenLine)) {
+  if (
+    stored &&
+    !isStaleSavedVideoPrompt(beat, stored, spokenLine, options?.targetMethod)
+  ) {
     const continuity = incomingContinuityClause(options, beat)
     let prompt =
       continuity &&

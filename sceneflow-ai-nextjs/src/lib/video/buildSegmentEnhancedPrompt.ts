@@ -71,13 +71,19 @@ export function buildSegmentEnhancedPrompt(
     audioContext,
   } = input
 
+  const promptAlreadyCarriesCompiledDialogue =
+    /\b(?:speaks naturally|speaks with natural lip sync|Voiceover narration|The only spoken line is|No spoken dialogue)\b/i.test(
+      prompt || ''
+    )
+  const effectiveGuidePrompt = promptAlreadyCarriesCompiledDialogue ? undefined : guidePrompt
+
   let referenceFallbackPrompt: string | undefined
 
   if (method === 'REF' && referenceImages && referenceImages.length > 0) {
     const neutralScenePrompt = neutralizeReferenceConflictPrompt(
       cleanOmniRefScenePrompt(prompt)
     )
-    const refGuidePrompt = sanitizeOmniRefGuide(guidePrompt)
+    const refGuidePrompt = sanitizeOmniRefGuide(effectiveGuidePrompt)
     referenceFallbackPrompt = buildOmniVideoReferencePrompt({
       scenePrompt: neutralScenePrompt,
       refs: [],
@@ -102,14 +108,14 @@ export function buildSegmentEnhancedPrompt(
     const neutralScenePrompt = neutralizeReferenceConflictPrompt(
       cleanOmniRefScenePrompt(tokenizedPrompt)
     )
-    const refGuidePrompt = sanitizeOmniRefGuide(guidePrompt)
+    const refGuidePrompt = sanitizeOmniRefGuide(effectiveGuidePrompt)
     enhancedPrompt = buildOmniVideoReferencePrompt({
       scenePrompt: neutralScenePrompt,
       refs: prioritized,
       guidePrompt: refGuidePrompt,
     })
-  } else if (guidePrompt?.trim()) {
-    const gpRaw = guidePrompt.trim()
+  } else if (effectiveGuidePrompt?.trim()) {
+    const gpRaw = effectiveGuidePrompt.trim()
     const gp = method === 'FTV' ? neutralizeFtvGuidePrompt(gpRaw) : gpRaw
     if (gp) {
       enhancedPrompt = enhancedPrompt.trim() ? `${enhancedPrompt.trim()}\n\n${gp}` : gp

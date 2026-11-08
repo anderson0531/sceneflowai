@@ -59,6 +59,7 @@ export interface BuildBeatVideoClipsArgs {
   scenes?: Array<Record<string, unknown> | null | undefined>
   sceneTranslations?: Record<string, Record<number, StoredSceneLines>>
   timedDialogueOverrides?: Record<string, string>
+  videoSourceMethod?: 'reference' | 'frame'
 }
 
 /**
@@ -85,6 +86,7 @@ export function buildBeatVideoClips({
   scenes,
   sceneTranslations,
   timedDialogueOverrides,
+  videoSourceMethod,
 }: BuildBeatVideoClipsArgs): BeatVideoClip[] {
   const sceneRecord = scene ?? null
   const isLangStream = isLanguageClipTarget(streamLanguage)
@@ -150,15 +152,19 @@ export function buildBeatVideoClips({
           : index) + 1
     const musicCue =
       rawBeatIndex >= 0 ? resolveBeatMusicCue(persistedMusicCues, rawBeatIndex) : undefined
+    const targetMethod: 'reference' | 'frame' =
+      videoSourceMethod === 'frame' ? 'frame' : 'reference'
     const compiledFromDirection = compileBeatVideoPromptFromDirection(beat, sceneDirection, {
       previousBeat,
+      targetMethod,
       ...(musicCue ? { musicCue } : {}),
     }).prompt
     const narrationLine = beat.kind === 'narration' ? beat.line?.trim() : undefined
     const spokenForStaleCheck = narrationLine || beat.line?.trim()
     const userEdited = segment?.userEditedPrompt?.trim()
     const hasGenuineUserEditedPrompt = Boolean(
-      userEdited && !isStaleSavedVideoPrompt(beat, userEdited, spokenForStaleCheck)
+      userEdited &&
+        !isStaleSavedVideoPrompt(beat, userEdited, spokenForStaleCheck, targetMethod)
     )
     const rawCandidatePrompt =
       (hasGenuineUserEditedPrompt ? userEdited : undefined) ||
@@ -172,11 +178,12 @@ export function buildBeatVideoClips({
     const resolvedPrompt =
       !hasGenuineUserEditedPrompt &&
       (beatDirectionOwnsVideoPrompt(beat) ||
+        targetMethod === 'frame' ||
         (narrationSnippet &&
           (/no spoken dialogue/i.test(rawCandidatePrompt) ||
             /^medium shot,\s*promo trailer voice-over/i.test(rawCandidatePrompt) ||
             !rawCandidatePrompt.includes(narrationSnippet))) ||
-        isStaleSavedVideoPrompt(beat, rawCandidatePrompt, spokenForStaleCheck))
+        isStaleSavedVideoPrompt(beat, rawCandidatePrompt, spokenForStaleCheck, targetMethod))
         ? compiledFromDirection
         : rawCandidatePrompt
     const promoBeat = beat as PromoSceneBeat

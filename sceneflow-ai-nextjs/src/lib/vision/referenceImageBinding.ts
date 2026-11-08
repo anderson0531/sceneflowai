@@ -278,6 +278,48 @@ function libraryToken(promptToken: string | undefined, kind: 'prop' | 'location'
   return new RegExp(`^${kind} \\[\\d+\\]$`, 'i').test(token) ? normalizeToken(token) : undefined
 }
 
+const GENERIC_PERSON_FIRST_TOKENS = new Set([
+  'the',
+  'a',
+  'an',
+  'man',
+  'woman',
+  'boy',
+  'girl',
+  'person',
+  'character',
+  'narrator',
+  'voice',
+  'voiceover',
+  'young',
+  'old',
+  'elderly',
+  'dr',
+  'mr',
+  'mrs',
+  'ms',
+  'miss',
+  'sir',
+  'lady',
+  'lord',
+  'captain',
+  'detective',
+  'officer',
+  'agent',
+  'doctor',
+  'professor',
+  'general',
+  'colonel',
+  'major',
+  'sergeant',
+  'lieutenant',
+  'guard',
+  'soldier',
+])
+
+const QUOTED_SPEECH_SPLIT =
+  /("[^"\n]*"|(?<![A-Za-z0-9])'(?:[^'\n]|(?<=[A-Za-z0-9])'(?=[A-Za-z0-9]))*'(?![A-Za-z0-9]))/g
+
 /**
  * Replace visual names with the token on their image. Quoted speech is left
  * alone so a spoken line can keep the speaker's name.
@@ -287,16 +329,68 @@ export function rewriteVisualNamesToTokens(
   replacements: Array<{ name?: string; token?: string }>
 ): string {
   if (!text?.trim()) return text
-  const sorted = replacements
+  const baseEntries = replacements
     .map((entry) => ({
       name: entry.name?.trim() || '',
       token: entry.token?.replace(/\s+/g, ' ').trim() || '',
     }))
     .filter((entry) => entry.name && entry.token && entry.name !== entry.token)
-    .sort((a, b) => b.name.length - a.name.length)
+  if (baseEntries.length === 0) return text
+
+  const firstWordCounts = new Map<string, number>()
+  for (const entry of baseEntries) {
+    if (!/^person\s*\[\d+\]$/i.test(entry.token)) continue
+    const words = entry.name.split(/\s+/).filter(Boolean)
+    if (words.length >= 2) {
+      const firstLower = words[0].replace(/[^A-Za-z0-9_-]/g, '').toLowerCase()
+      if (firstLower.length >= 3 && !GENERIC_PERSON_FIRST_TOKENS.has(firstLower)) {
+        firstWordCounts.set(firstLower, (firstWordCounts.get(firstLower) ?? 0) + 1)
+      }
+    }
+  }
+
+  const expanded: Array<{ name: string; token: string }> = []
+  const seenNames = new Set<string>()
+  const pushCandidate = (name: string, token: string) => {
+    const clean = name.trim()
+    if (!clean || clean === token) return
+    const key = clean.toLowerCase()
+    if (seenNames.has(key)) return
+    seenNames.add(key)
+    expanded.push({ name: clean, token })
+  }
+
+  for (const entry of baseEntries) {
+    if (/^person\s*\[\d+\]$/i.test(entry.token)) {
+      const charAlias = `Char_${entry.name
+        .replace(/[^A-Za-z0-9]+/g, '_')
+        .replace(/^_+|_+$/g, '')
+        .toUpperCase()}`
+      if (charAlias.length > 5) {
+        pushCandidate(charAlias, entry.token)
+      }
+    }
+    pushCandidate(entry.name, entry.token)
+    if (/^person\s*\[\d+\]$/i.test(entry.token)) {
+      const words = entry.name.split(/\s+/).filter(Boolean)
+      if (words.length >= 2) {
+        const firstWord = words[0].replace(/[^A-Za-z0-9_-]/g, '')
+        const firstLower = firstWord.toLowerCase()
+        if (
+          firstLower.length >= 3 &&
+          !GENERIC_PERSON_FIRST_TOKENS.has(firstLower) &&
+          firstWordCounts.get(firstLower) === 1
+        ) {
+          pushCandidate(firstWord, entry.token)
+        }
+      }
+    }
+  }
+
+  const sorted = expanded.sort((a, b) => b.name.length - a.name.length)
   if (sorted.length === 0) return text
 
-  const parts = text.split(/("[^"]*"|'[^']*')/g)
+  const parts = text.split(QUOTED_SPEECH_SPLIT)
   return parts
     .map((part, index) => {
       if (index % 2 === 1) return part

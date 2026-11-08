@@ -168,16 +168,38 @@ export function buildMinimalFtvPerformPrompt(
 
 /**
  * Compile an FTV (Frame-to-Video) transition prompt that preserves BOTH
- * physical transition motion (camera movement, blocking, prop interaction, `End on:` state)
+ * physical transition motion (camera movement, continuous 0s–10s action, closing keyframe arrival)
  * AND any spoken dialogue cue, while stripping static environment/character/wardrobe blocks
- * that are already locked into the Start and End keyframe pixels.
+ * and `0s–2s` / `8s–10s` hold buckets that otherwise cause the clip to hold the start pose
+ * and jump to the end frame in the final 2 seconds.
  */
 export function compileFtvTransitionPrompt(raw: string): string {
   if (!raw?.trim()) return ''
   let narrowed = narrowPromptForFtvFrameLock(raw)
-  // Drop static space/lens/coverage setup clauses that duplicate keyframe pixels
+  // Drop static 0s–2s start-frame hold and static t=0s pose clauses that anchor the clip to the start image
   narrowed = narrowed
-    .replace(/\b(?:Coverage|Lens|Space):\s*[^.!?]+[.!?]\s*/gi, '')
+    .replace(
+      /\s*\b0s[–-]2s\s*\(Start frame\):\s*[\s\S]*?(?=\s+(?:\d+s[–-]\d+s\s*\([^)]+\)|Continuous motion|Coverage|Lens|Space|Shot|Angle|Camera|Blocking|Emotion|Gaze|Prop interaction|Props|Lighting|End on|Sound|Only these people|No people in frame):|$)/gi,
+      ''
+    )
+    .replace(
+      /\b2s[–-][58]s\s*\(Action\):\s*/gi,
+      'Continuous motion from start frame to end frame (0s–10s): '
+    )
+    .replace(/\b5s[–-]8s\s*\(Action progression\):\s*/gi, '')
+    .replace(
+      /\b8s[–-]10s\s*\(End frame\):\s*(?:End on:\s*)?/gi,
+      'Smoothly reach the closing keyframe state by the end of the shot: '
+    )
+    .replace(/\b(?:Coverage|Lens|Space|Gaze|Prop interaction|Lighting):\s*[^.!?]+[.!?]\s*/gi, '')
+    .replace(
+      /\s*\bBlocking:\s*[\s\S]*?(?=\s+(?:Emotion|Gaze|Prop interaction|Props|Lighting|\d+s[–-]\d+s\s*\([^)]+\)|Smoothly reach|End on|Sound|Only these people|No people in frame|Only these objects):|$)/gi,
+      ''
+    )
+    .replace(
+      /\bHold the 0s[–-]2s start state before initiating the 2s[–-]8s progression,\s*and settle cleanly into the 8s[–-]10s end frame without inventing unstated events or extra cuts\b/gi,
+      'Progress smoothly and continuously from the start frame across the entire shot duration to arrive naturally at the end frame without holding the opening pose or jumping in the final 2 seconds'
+    )
     .trim()
 
   const performCue = extractSpeaksQuotedPerformCue(raw)

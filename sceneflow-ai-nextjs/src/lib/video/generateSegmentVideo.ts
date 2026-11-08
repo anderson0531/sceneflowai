@@ -464,7 +464,7 @@ export async function generateSegmentVideoCore(
 
   let referenceFallbackPrompt: string | undefined
 
-  if (referenceImages && referenceImages.length > 0) {
+  if (method !== 'FTV' && referenceImages && referenceImages.length > 0) {
     const prioritized = veoRefsToPrioritized(referenceImages)
     const bindings = bindingsFromReferenceRecords(prioritized)
 
@@ -488,7 +488,7 @@ export async function generateSegmentVideoCore(
     prompt,
     guidePrompt,
     method,
-    referenceImages,
+    referenceImages: method === 'FTV' ? undefined : referenceImages,
     segmentIndex,
     hasEndFrame: Boolean(method === 'FTV' && endFrameUrl),
     audioContext,

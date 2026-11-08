@@ -1059,7 +1059,8 @@ export function DirectorConsoleRoot({
       language: string,
       fallbackPrompt?: string,
       fallbackGuidePrompt?: string,
-      includeCaptionsOverride?: boolean
+      includeCaptionsOverride?: boolean,
+      sourceMethodOverride?: VideoSourceMethod
     ): Promise<{ prompt: string; guidePrompt?: string; includeCaptions: boolean }> => {
       const sceneRecord = (scene as Record<string, unknown> | undefined) ?? null
       const allBeats = getSceneBeats(sceneRecord)
@@ -1186,9 +1187,20 @@ export function DirectorConsoleRoot({
           }))
         }
       }
+      const resolvedSourceMethod: 'reference' | 'frame' =
+        (sourceMethodOverride ?? effectiveVideoSourceMethod) === 'frame'
+          ? 'frame'
+          : 'reference'
       const userEdited = segment.userEditedPrompt?.trim()
       const hasGenuineUserEditedPrompt = Boolean(
-        userEdited && (!beat || !isStaleSavedVideoPrompt(beat, userEdited, beat.line?.trim()))
+        userEdited &&
+          (!beat ||
+            !isStaleSavedVideoPrompt(
+              beat,
+              userEdited,
+              beat.line?.trim(),
+              resolvedSourceMethod
+            ))
       )
       const sceneDirection = ((sceneRecord?.sceneDirection ??
         sceneRecord?.detailedDirection ??
@@ -1207,6 +1219,7 @@ export function DirectorConsoleRoot({
           : undefined
       const compiledFromBeat = beat
         ? compileBeatVideoPromptFromDirection(beat, sceneDirection, {
+            targetMethod: resolvedSourceMethod,
             previousBeat:
               activeBeatIndex > 0
                 ? activeBeats[activeBeatIndex - 1]
@@ -1224,7 +1237,14 @@ export function DirectorConsoleRoot({
         (beat &&
         compiledFromBeat &&
         (beatDirectionOwnsVideoPrompt(beat) ||
-          (fallbackPrompt && isStaleSavedVideoPrompt(beat, fallbackPrompt, beat.line?.trim())))
+          resolvedSourceMethod === 'frame' ||
+          (fallbackPrompt &&
+            isStaleSavedVideoPrompt(
+              beat,
+              fallbackPrompt,
+              beat.line?.trim(),
+              resolvedSourceMethod
+            )))
           ? compiledFromBeat
           : undefined) ||
         fallbackPrompt ||
@@ -1314,6 +1334,7 @@ export function DirectorConsoleRoot({
       sceneTranslations,
       productionData?.mixerSettingsByLanguage,
       timedDialogueOverrides,
+      effectiveVideoSourceMethod,
     ]
   )
   
@@ -1871,12 +1892,13 @@ export function DirectorConsoleRoot({
         mode: options.generationMode,
         sourceMethod: options.sourceMethod ?? effectiveVideoSourceMethod,
       })
+      const sceneRecord = (scene as Record<string, unknown> | undefined) ?? null
+      const allBeats = getSceneBeats(sceneRecord)
       const segment = segments.find((s) => s.segmentId === item.segmentId)
-      const beat = segment?.beatId
-        ? getSceneBeats((scene as Record<string, unknown> | undefined) ?? null).find(
-            (entry) => entry.beatId === segment.beatId
-          )
-        : undefined
+      const beatIndex = segment?.beatId
+        ? allBeats.findIndex((entry) => entry.beatId === segment.beatId)
+        : -1
+      const beat = beatIndex >= 0 ? allBeats[beatIndex] : undefined
       const inputs = segmentHasVideoAgentInputs(item, segment)
       const staleReferenceStartFrame =
         policy.sourceMethod === 'reference' &&
@@ -1887,6 +1909,9 @@ export function DirectorConsoleRoot({
         inputs.hasEndFrame,
         policy.sourceMethod
       )
+      const isFrameMode =
+        policy.sourceMethod === 'frame' || expressMethod === 'FTV' || expressMethod === 'I2V'
+      const targetMethod: 'reference' | 'frame' = isFrameMode ? 'frame' : 'reference'
       const selection =
         policy.videoProvider === 'kling'
           ? ({
@@ -1895,14 +1920,48 @@ export function DirectorConsoleRoot({
             } as const)
           : ({ engineId: 'natural-dialogue' } as const)
       const duration = snapDurationForEngine(item.config.duration || 10, selection)
-      const freshOwnedPrompt =
-        !segment?.userEditedPrompt?.trim() &&
-        !item.config.useCustomApiPrompt &&
-        segment?.generatedPrompt?.trim() &&
-        beat &&
-        beatDirectionOwnsVideoPrompt(beat)
-          ? segment.generatedPrompt.trim()
+      const sceneDirection = ((sceneRecord?.sceneDirection ??
+        sceneRecord?.detailedDirection ??
+        null) || null) as DetailedSceneDirection | null
+      const activeBeats = allBeats.filter((entry) => !isBeatExcluded(entry))
+      const activeBeatIndex = beat
+        ? activeBeats.findIndex((entry) => entry.beatId === beat.beatId)
+        : -1
+      const stateLedger = buildSceneStateLedger(activeBeats)
+      const musicCue =
+        activeBeatIndex >= 0
+          ? resolveBeatMusicCue(
+              parsePersistedMusicCues(sceneRecord?.sceneMusicCues, activeBeats),
+              activeBeatIndex
+            )
           : undefined
+      const compiledForMethod = beat
+        ? compileBeatVideoPromptFromDirection(beat, sceneDirection, {
+            targetMethod,
+            previousBeat:
+              activeBeatIndex > 0
+                ? activeBeats[activeBeatIndex - 1]
+                : beatIndex > 0
+                  ? allBeats[beatIndex - 1]
+                  : undefined,
+            sceneState: activeBeatIndex >= 0 ? stateLedger[activeBeatIndex] : undefined,
+            excerpt: segment?.dialoguePortion?.excerpt?.trim(),
+            continuesSameLine: (segment?.dialoguePortion?.partIndex ?? 0) > 0,
+            ...(musicCue ? { musicCue } : {}),
+          }).prompt
+        : undefined
+      const userEdited = segment?.userEditedPrompt?.trim()
+      const hasGenuineUserEdited = Boolean(
+        userEdited &&
+          (!beat || !isStaleSavedVideoPrompt(beat, userEdited, beat.line?.trim(), targetMethod))
+      )
+      const freshOwnedPrompt =
+        !hasGenuineUserEdited &&
+        !item.config.useCustomApiPrompt &&
+        (compiledForMethod ||
+          (segment?.generatedPrompt?.trim() && beat && beatDirectionOwnsVideoPrompt(beat)
+            ? segment.generatedPrompt.trim()
+            : undefined))
       const baseNextRaw = applyVideoGenerationToConfig(item.config, policy, {
         mode: expressMethod,
         expressMode: true,
@@ -1917,11 +1976,13 @@ export function DirectorConsoleRoot({
             motionPrompt: freshOwnedPrompt,
           }
         : baseNextRaw
-      if (policy.sourceMethod === 'frame' || expressMethod === 'FTV' || expressMethod === 'I2V') {
-        const ftvPrompt =
-          expressMethod === 'FTV' && segment && !segment.userEditedPrompt?.trim()
+      if (isFrameMode) {
+        const framePrompt =
+          (hasGenuineUserEdited ? userEdited : undefined) ||
+          compiledForMethod ||
+          (expressMethod === 'FTV' && segment
             ? generateFTVMotionPrompt(segment)
-            : baseNext.prompt
+            : baseNext.prompt)
         return {
           ...baseNext,
           mode: expressMethod,
@@ -1930,14 +1991,21 @@ export function DirectorConsoleRoot({
             expressMethod === 'FTV'
               ? inputs.resolvedEnd || baseNext.endFrameUrl
               : null,
+          referenceImages: undefined,
           useBeatFrameAsStart: true,
-          prompt: ftvPrompt,
-          motionPrompt: ftvPrompt,
+          prompt: framePrompt,
+          visualPrompt: framePrompt,
+          motionPrompt: framePrompt,
         }
       }
-      return baseNext
+      return {
+        ...baseNext,
+        startFrameUrl: null,
+        endFrameUrl: null,
+        useBeatFrameAsStart: false,
+      }
     },
-    [segments, segmentHasVideoAgentInputs, effectiveVideoSourceMethod]
+    [scene, segments, segmentHasVideoAgentInputs, effectiveVideoSourceMethod]
   )
 
   const handleVideoAgentConfirm = useCallback(
@@ -2604,6 +2672,7 @@ export function DirectorConsoleRoot({
       sceneTranslations,
       timedDialogueOverrides:
         timedDialogueOverrides[normalizeStreamLanguage(productionTarget.language)],
+      videoSourceMethod: effectiveVideoSourceMethod,
     })
   }, [
     scene,
@@ -2615,6 +2684,7 @@ export function DirectorConsoleRoot({
     scenes,
     sceneTranslations,
     timedDialogueOverrides,
+    effectiveVideoSourceMethod,
   ])
 
   // Count active (included) segments by status for the selected language
@@ -2759,14 +2829,24 @@ export function DirectorConsoleRoot({
     })
     try {
       const queueItem = getQueueItem(segment.segmentId)
-      const config = queueItem?.config
+      const config = queueItem
+        ? applyVideoAgentPolicyToItem(queueItem, {
+            scope: 'selected',
+            selectedSegmentIds: [segment.segmentId],
+            quality: videoGenerationQuality,
+            generationMode: videoGenerationMode,
+            sourceMethod: effectiveVideoSourceMethod,
+          })
+        : undefined
       let composed: { prompt: string; guidePrompt?: string; includeCaptions: boolean }
       try {
         composed = await composeSegmentLanguageClip(
           segment,
           language,
           config?.prompt,
-          config?.guidePrompt
+          config?.guidePrompt,
+          undefined,
+          effectiveVideoSourceMethod
         )
       } catch (error) {
         const message = error instanceof Error ? error.message : 'Could not translate this shot'
@@ -2789,12 +2869,21 @@ export function DirectorConsoleRoot({
         mode: videoGenerationMode,
         sourceMethod: effectiveVideoSourceMethod,
       })
-      const startFrameUrl =
+      const f2vFrames = resolveF2VFrameUrls(
+        segment,
+        scene as Record<string, unknown> | undefined
+      )
+      const fallbackStartFrameUrl =
+        f2vFrames.startFrameUrl ||
         resolveEffectiveStartFrameUrl(
           segment,
           scene as Record<string, unknown> | undefined,
           sceneImageUrl
-        ) || config?.startFrameUrl || undefined
+        ) ||
+        config?.startFrameUrl ||
+        undefined
+      const fallbackEndFrameUrl =
+        f2vFrames.endFrameUrl || config?.endFrameUrl || undefined
       const effectiveMethod: VideoGenerationMethod =
         config?.mode === 'REF'
           ? 'REF'
@@ -2802,17 +2891,27 @@ export function DirectorConsoleRoot({
             ? 'FTV'
             : config?.mode === 'T2V'
               ? 'T2V'
-              : 'I2V'
+              : effectiveVideoSourceMethod === 'frame'
+                ? fallbackStartFrameUrl &&
+                  fallbackEndFrameUrl &&
+                  fallbackEndFrameUrl !== fallbackStartFrameUrl
+                  ? 'FTV'
+                  : 'I2V'
+                : 'I2V'
+      const isFrameMethod = effectiveMethod === 'FTV' || effectiveMethod === 'I2V'
       const mode: 'T2V' | 'I2V' =
         effectiveMethod === 'T2V' || effectiveMethod === 'REF' ? 'T2V' : 'I2V'
       await onGenerate(sceneId, segment.segmentId, mode, {
         prompt: composed.prompt,
         guidePrompt: composed.guidePrompt,
         negativePrompt: config?.negativePrompt || undefined,
-        startFrameUrl: startFrameUrl || undefined,
-        endFrameUrl: effectiveMethod === 'FTV' ? config?.endFrameUrl || undefined : undefined,
-        referenceImages: config?.referenceImages,
-        useBeatFrameAsStart: config?.useBeatFrameAsStart,
+        startFrameUrl:
+          isFrameMethod || config?.useBeatFrameAsStart
+            ? fallbackStartFrameUrl
+            : undefined,
+        endFrameUrl: effectiveMethod === 'FTV' ? fallbackEndFrameUrl : undefined,
+        referenceImages: isFrameMethod ? undefined : config?.referenceImages,
+        useBeatFrameAsStart: isFrameMethod ? true : Boolean(config?.useBeatFrameAsStart),
         generationMethod: effectiveMethod,
         videoProvider: sessionPolicy.videoProvider,
         qualityTier: sessionPolicy.qualityTier,
@@ -2868,6 +2967,7 @@ export function DirectorConsoleRoot({
     scene,
     sceneNumber,
     getQueueItem,
+    applyVideoAgentPolicyToItem,
     sceneImageUrl,
     onGenerate,
     onVideoRunReport,
@@ -3162,8 +3262,8 @@ export function DirectorConsoleRoot({
             disabled={queue.length === 0 || effectiveIsUpdatingPrompts}
             className={
               videoClips.some((clip) => clip.status === 'complete' && clip.promptChanged)
-                ? 'h-7 px-2 text-[10px] font-medium border-amber-400/80 bg-amber-500/20 text-amber-200 ring-1 ring-amber-400/35 hover:bg-amber-500/30 hover:border-amber-400 shadow-md hover:shadow-lg transition-all'
-                : 'h-7 px-2 text-[10px] font-medium border-indigo-500/50 text-indigo-300 hover:bg-indigo-500/10 hover:border-indigo-400 shadow-md hover:shadow-lg transition-all'
+                ? 'h-7 px-2.5 text-[10px] font-semibold !border-2 !border-amber-400 bg-amber-500/20 text-amber-100 ring-1 ring-amber-400/45 hover:bg-amber-500/30 hover:!border-amber-300 shadow-md shadow-amber-500/20 hover:shadow-lg transition-all'
+                : 'h-7 px-2.5 text-[10px] font-semibold !border-2 !border-indigo-400 bg-indigo-500/20 text-indigo-100 ring-1 ring-indigo-400/45 hover:bg-indigo-500/30 hover:!border-indigo-300 shadow-md shadow-indigo-500/20 hover:shadow-lg transition-all'
             }
             title={
               effectiveIsUpdatingPrompts
@@ -3173,7 +3273,7 @@ export function DirectorConsoleRoot({
                   : tVideoAgent('toolbarTitle')
             }
           >
-            <Zap className="w-3 h-3 mr-1" />
+            <Zap className="w-3 h-3 mr-1 text-indigo-300" />
             {tVideoAgent('toolbarButton')}
           </Button>
           {statusCounts.rendered > 0 && onPlayScene && (

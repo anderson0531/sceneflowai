@@ -4971,7 +4971,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
             segment.startFrameUrl ||
             segment.references?.startFrameUrl ||
             (segment.sequenceIndex === 0 && sceneImageUrlForApi ? sceneImageUrlForApi : undefined)
-          : options?.startFrameUrl?.trim() || undefined
+          : undefined
 
         const beatForEnd =
           segment.beatId && visionScene
@@ -4993,10 +4993,12 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
             : undefined
 
         const resolvedEndFrameUrl =
-          options?.endFrameUrl?.trim() ||
-          cleanSegEndFrameUrl ||
-          beatDistinctEndUrl ||
-          undefined
+          rawGenerationMethod === 'FTV'
+            ? options?.endFrameUrl?.trim() ||
+              cleanSegEndFrameUrl ||
+              beatDistinctEndUrl ||
+              undefined
+            : undefined
 
         const effectiveGenerationMethod =
           rawGenerationMethod === 'FTV'
@@ -5005,9 +5007,10 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
               : 'I2V'
             : rawGenerationMethod
 
-        const normalizedReferenceImages = normalizeReferenceImages(
-          options?.referenceImages,
-        )
+        const normalizedReferenceImages =
+          effectiveGenerationMethod === 'FTV' || effectiveGenerationMethod === 'I2V'
+            ? []
+            : normalizeReferenceImages(options?.referenceImages)
 
         // Use prompt from options (from prompt builder) or fall back to segment prompt
         const prompt = options?.prompt || segment.userEditedPrompt || segment.generatedPrompt || ''

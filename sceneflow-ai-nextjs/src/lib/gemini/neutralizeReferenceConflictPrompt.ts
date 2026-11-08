@@ -48,11 +48,15 @@ const INLINE_WARDROBE_CLAUSE_PATTERNS: RegExp[] = [
 ]
 
 /**
- * Static inline eye/hair color re-descriptions that conflict with identity reference plates.
+ * Static inline eye/hair color and micro-anatomical facial overrides that conflict
+ * with identity reference plates (e.g., masking eyes in shadow or re-sculpting jaw/cheeks).
  */
 const INLINE_FACIAL_TRAIT_PATTERNS: RegExp[] = [
   /,\s*with\s+(?:piercing\s+|bright\s+|dark\s+|deep\s+|pale\s+)?(?:blue|green|brown|hazel|amber|gray|grey)\s+eyes(?:\s+and\s+[^,.;!?]+?\s+hair)?(?=[,.;!?])/gi,
   /\bwith\s+(?:piercing\s+|bright\s+|dark\s+|deep\s+|pale\s+)?(?:blue|green|brown|hazel|amber|gray|grey)\s+eyes(?:\s+and\s+[^,.;!?]+?\s+hair)?\b/gi,
+  /,?\s*registered through\s+[^.!?]+(?=[.!?]|$)/gi,
+  /,?\s*sculpting the hollows of (?:his|her|their|the subject's|person \[\d+\]'s) cheeks\b/gi,
+  /,?\s*(?:with\s+)?(?:deep\s+)?(?:charcoal\s+|heavy\s+|dark\s+)?shadows\s+(?:masking|obscuring|hiding)\s+(?:his|her|their|the subject's|person \[\d+\]'s)\s+(?:eyes|face)\b/gi,
 ]
 
 /**
@@ -77,7 +81,10 @@ export function neutralizeReferenceConflictPrompt(scenePrompt: string): string {
     text = text.replace(pattern, '')
   }
 
-  text = text.replace(POSSESSIVE_NAME_PATTERN, "the subject's")
+  text = text.replace(POSSESSIVE_NAME_PATTERN, (match) => {
+    if (/^The\b/i.test(match)) return match
+    return "the subject's"
+  })
   text = text.replace(PRONOUN_BODY_PATTERN, (_, _pronoun, bodyPart) => {
     const part = typeof bodyPart === 'string' ? bodyPart.toLowerCase() : 'body'
     return `The subject's ${part}`

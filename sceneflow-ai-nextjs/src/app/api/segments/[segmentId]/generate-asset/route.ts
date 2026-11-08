@@ -620,11 +620,16 @@ export async function POST(
             ),
             Math.max(activeBeatIndex, 0)
           )
+          const targetMethodForPrompt: 'reference' | 'frame' =
+            resolvedGenerationMethod === 'FTV' || resolvedGenerationMethod === 'I2V'
+              ? 'frame'
+              : 'reference'
           const compiled = compileBeatVideoPromptFromDirection(
             beat,
             sceneDirection as DetailedSceneDirection | null,
             {
               artStyleId,
+              targetMethod: targetMethodForPrompt,
               previousBeat:
                 activeBeatIndex > 0
                   ? activeBeats[activeBeatIndex - 1]
@@ -673,7 +678,9 @@ export async function POST(
       }
     }
 
-    if (beatId && projectId) {
+    if (resolvedGenerationMethod === 'FTV' || resolvedGenerationMethod === 'I2V') {
+      referenceImages = undefined
+    } else if (beatId && projectId) {
       try {
         let projectForRefs = cachedProject
         let sceneForRefs = cachedScene
@@ -815,7 +822,27 @@ export async function POST(
           !englishCompiledPrompt ||
           prepared.prompt !== englishCompiledPrompt
         ) {
-          prompt = await localizeCompiledBeatPrompt(prepared.beat, prepared.prompt)
+          const isFrameMethod =
+            resolvedGenerationMethod === 'FTV' || resolvedGenerationMethod === 'I2V'
+          const recompiledPrompt = isFrameMethod
+            ? compileBeatVideoPromptFromDirection(
+                prepared.beat,
+                sceneDirection as DetailedSceneDirection | null,
+                {
+                  artStyleId,
+                  targetMethod: 'frame',
+                  previousBeat:
+                    activeBeatIndex > 0
+                      ? activeBeats[activeBeatIndex - 1]
+                      : beatIndex > 0
+                        ? beats[beatIndex - 1]
+                        : undefined,
+                  sceneState: activeBeatIndex >= 0 ? stateLedger[activeBeatIndex] : undefined,
+                  ...(musicCue ? { musicCue } : {}),
+                }
+              ).prompt
+            : prepared.prompt
+          prompt = await localizeCompiledBeatPrompt(prepared.beat, recompiledPrompt)
         }
         if (prepared.beat !== beat && beatIndex >= 0) {
           const nextBeats = [...beats]

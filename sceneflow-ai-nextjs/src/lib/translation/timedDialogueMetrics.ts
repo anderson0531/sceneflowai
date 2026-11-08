@@ -105,7 +105,36 @@ export function estimateSyllables(text: string, language: string = 'en'): number
     const cjkChars = (
       withoutCues.match(/[\u3040-\u30ff\u3400-\u4dbf\u4e00-\u9fff\uac00-\ud7af]/g) || []
     ).length
-    return Math.max(1, Math.round(cjkChars * 0.9))
+    if (cjkChars > 0) {
+      return Math.max(1, Math.round(cjkChars * 0.9))
+    }
+  }
+
+  // Cyrillic and Greek have explicit vowel letters per syllable.
+  if (/[\u0370-\u03ff\u0400-\u04ff]/.test(withoutCues)) {
+    const vowelMatches = withoutCues
+      .toLowerCase()
+      .match(/[аеёиоуыэюяіїєґαεηιουωάέήίόύώϊϋΐΰaeiouy]+/g)
+    if (vowelMatches && vowelMatches.length > 0) {
+      return vowelMatches.length
+    }
+  }
+
+  // Non-Latin scripts (Arabic, Hebrew, Indic/Devanagari, Thai, etc.) where ASCII folding strips letters.
+  const nonLatinWords = withoutCues
+    .replace(/[\p{M}]/gu, '')
+    .match(/[^\p{Script=Latin}\p{P}\p{Z}\p{S}\d]+/gu)
+  if (nonLatinWords && nonLatinWords.length > 0 && !/[a-zA-Z]{2,}/.test(withoutCues)) {
+    let nonLatinSyllables = 0
+    for (const token of nonLatinWords) {
+      const letters = (token.match(/\p{L}/gu) || []).length
+      if (letters > 0) {
+        nonLatinSyllables += Math.max(1, Math.round(letters * 0.55))
+      }
+    }
+    if (nonLatinSyllables > 0) {
+      return nonLatinSyllables
+    }
   }
 
   // Separate Romance hiatuses where an accented weak vowel (í, ú) meets a strong vowel (a, e, o)
@@ -338,9 +367,16 @@ export function isTruncatedTimedTranslation(
 
   const englishWords = cleanEnglish.split(/\s+/).filter(Boolean).length
   const candidateWords = cleanCandidate.split(/\s+/).filter(Boolean).length
+  const isSpacelessScript = /^(zh|ja|ko|th)\b/i.test(targetLanguage || '')
+  const isPrefixAttachingScript = /^(ar|he|fa|ur)\b/i.test(targetLanguage || '')
+  const minWordRatio = isPrefixAttachingScript ? 0.25 : 0.35
 
   // 1. Word-count truncation guard (e.g. 1-word "Ella" for a multi-word sentence)
-  if (englishWords >= 3 && candidateWords < Math.max(2, Math.floor(englishWords * 0.35))) {
+  if (
+    !isSpacelessScript &&
+    englishWords >= 3 &&
+    candidateWords < Math.max(2, Math.floor(englishWords * minWordRatio))
+  ) {
     return true
   }
 

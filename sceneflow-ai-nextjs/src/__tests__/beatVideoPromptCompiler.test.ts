@@ -4,6 +4,15 @@ import {
   compileBeatVideoPromptFromDirection,
   resolveBeatClipDirection,
 } from '@/lib/scene/beatVideoPromptCompiler'
+import {
+  estimateSyllables,
+  isStoredTranslationTimedForShot,
+  isTruncatedTimedTranslation,
+} from '@/lib/translation/timedDialogueMetrics'
+import {
+  bindingsFromReferenceRecords,
+  rewriteVisualNamesToTokens,
+} from '@/lib/vision/referenceImageBinding'
 import type { SceneBeat, SceneMusicCue } from '@/lib/script/segmentTypes'
 import type { DetailedSceneDirection } from '@/types/scene-direction'
 
@@ -611,5 +620,119 @@ describe('narration beat video prompt compilation', () => {
     expect(result.prompt).not.toContain('The only action is:')
     expect(result.prompt).not.toContain('suffocating')
     expect(result.prompt).toContain('oppressive suspense')
+  })
+
+  it('compiles separate optimized prompts for Reference vs Frame mode and strips unactuated board inscriptions', () => {
+    const gideonBeat: SceneBeat = {
+      beatId: 'bt_gideon_chalk',
+      sequenceIndex: 1,
+      kind: 'dialogue',
+      character: 'Gideon Croft',
+      line: '[obsessive, breathless] The current bleeds out. Every damn time... the loop refuses to close.',
+      voiceDirection:
+        'Deliver in a rapid, breathless, close-mic rasp fogged with cold; rush the opening clause obsessively, hitch sharply on the ellipsis, and drop the final words into a low, self-condemning growl.',
+      beatDirection: {
+        generatedBy: 'director',
+        shotType: 'Medium Close-Up',
+        cameraAngle: 'low angle',
+        cameraMovement: 'slow handheld push-in',
+        castInFrame: ['Gideon Croft'],
+        keyProps: ['Chalk'],
+        coveragePurpose: "Capture Gideon's vocalized obsession and breath control amid the isolating silence.",
+        lensEnergy: "Slow, deliberate push-in, shallow focus on Gideon's sweat-beaded brow.",
+        spatialRelationship: 'Gideon in profile at screen-right, background falls away into dark tunnel mouth screen-left.',
+        startFrame:
+          "Gideon Croft is framed chest-up on screen-right at a low angle, his torso pitched forward toward the damp subterranean slate wall covered in drafted equations and the crisp chalk inscription 'RESONANCE FLUX = 0'. His chalk-whitened right thumb and index finger hold a stick of Chalk suspended an inch off the wet dark stone while cold breath vapor gathers at his parted lips.",
+        clipAction:
+          "Gideon lunges his weight forward into the slate face, dragging the Chalk in a jagged diagonal strike across the inscription 'RESONANCE FLUX = 0' until the brittle stick snaps apart against the stone and scatters fine white dust down the crevices. He jerks his chalk-stained right fist back against his sternum while his chest heaves in rapid breaths and his jaw tightens in bitter defeat as the handheld camera executes a tight push-in.",
+        blocking:
+          'Gideon Croft stands screen-right in three-quarter profile facing screen-left, planting his body weight firmly on his forward right foot with his upper torso pitched toward the damp slate wall.',
+        emotion:
+          'Gideon Croft: obsessive intellectual mania collapsing into physical exhaustion and defeat, registered through tightly bunched masseter muscles, flared nostrils drawing cold air, hollowed shadows under his eyes, and a sharp tremor along his parted lower lip.',
+        gaze:
+          "Gideon Croft fixes his bloodshot eyes intently screen-left on the chalk formula 'RESONANCE FLUX = 0' inscribed on the slate wall.",
+        propInteraction:
+          "Gideon Croft's right thumb and forefinger grip a stick of Chalk poised an inch away from the formula 'RESONANCE FLUX = 0' on the damp slate wall.",
+        lightingAccent:
+          'Warm tungsten key light sculpting the hollows of his cheeks, deep charcoal shadows masking his eyes.',
+        endFrame:
+          "Gideon Croft stands locked in three-quarter profile on screen-right with his chalk-smeared right knuckles clamped hard against his collarbone, his chest rising and falling in shallow tremors. On the slate wall at screen-left, the formula 'RESONANCE FLUX = 0' is bisected by a jagged white fracture score, surrounded by scattered chalk dust clinging to the glistening dark rock face.",
+        audioCue: 'brittle snap of chalk fracturing against wet slate',
+      },
+    }
+
+    const refPrompt = compileBeatVideoPromptFromDirection(gideonBeat, null, {
+      targetMethod: 'reference',
+    }).prompt
+    expect(refPrompt).toContain('0s–2s (Start frame):')
+    expect(refPrompt).toContain('2s–5s (Action):')
+    expect(refPrompt).toContain('5s–8s (Action progression):')
+    expect(refPrompt).toContain('8s–10s (End frame): End on:')
+    // Unactuated quoted board text and static mid-clip reset clauses are stripped
+    expect(refPrompt).not.toContain("'RESONANCE FLUX = 0'")
+    expect(refPrompt).not.toContain('Prop interaction:')
+    expect(refPrompt).not.toContain('Coverage:')
+    expect(refPrompt).not.toContain('Lens:')
+    expect(refPrompt).not.toContain('Space:')
+    expect(refPrompt).not.toContain('Gaze:')
+
+    const framePrompt = compileBeatVideoPromptFromDirection(gideonBeat, null, {
+      targetMethod: 'frame',
+    }).prompt
+    expect(framePrompt).toContain(
+      'Continuous motion from start frame to end frame (0s–10s):'
+    )
+    expect(framePrompt).toContain(
+      'Smoothly reach the closing keyframe state by the end of the shot:'
+    )
+    expect(framePrompt).toContain(
+      'Progress smoothly and continuously from the start frame across the entire shot duration to arrive naturally at the end frame without holding the opening pose or jumping in the final 2 seconds'
+    )
+    expect(framePrompt).not.toContain('0s–2s (Start frame):')
+    expect(framePrompt).not.toContain('8s–10s (End frame):')
+    expect(framePrompt).not.toContain('Hold the 0s–2s start state')
+    expect(framePrompt).not.toContain('Blocking:')
+    expect(framePrompt).not.toContain('Prop interaction:')
+  })
+
+  it('counts Arabic syllables and binds person [1] across possessive apostrophes, Char_ aliases, and first names in translated prompts', () => {
+    const englishLine =
+      '[obsessive, breathless] The current bleeds out. Every damn time... the loop refuses to close.'
+    const arabicLine = '[obsessive, breathless] التيار يتسرب. كل مرة لعينة... الحلقة ترفض أن تغلق.'
+
+    expect(estimateSyllables(arabicLine)).toBeGreaterThan(8)
+    expect(isTruncatedTimedTranslation(englishLine, arabicLine, 'ar')).toBe(false)
+    expect(isStoredTranslationTimedForShot(englishLine, arabicLine, 'ar', 10)).toBe(true)
+
+    const bindings = bindingsFromReferenceRecords([
+      {
+        url: 'https://example.com/gideon.png',
+        type: 'character',
+        name: 'Gideon Croft',
+        characterName: 'Gideon Croft',
+      },
+      {
+        url: 'https://example.com/vault.png',
+        type: 'style',
+        name: 'FREIGHT TUNNEL VAULT',
+        locationName: 'FREIGHT TUNNEL VAULT',
+      },
+      {
+        url: 'https://example.com/chalk.png',
+        type: 'object',
+        name: 'Chalk',
+        propName: 'Chalk',
+      },
+    ])
+
+    const samplePrompt =
+      'Char_GIDEON_CROFT speaks naturally: "التيار يتسرب. كل مرة لعينة. الحلقة ترفض أن تغلق.". 0s–2s (Start frame): Gideon Croft is framed chest-up on screen-right toward the formula \'RESONANCE FLUX = 0\'. 2s–8s (Action): Gideon lunges forward, dragging the Chalk across \'RESONANCE FLUX = 0\' as focus stays on Gideon\'s brow. Only these people are visible: Gideon Croft.'
+    const rewritten = rewriteVisualNamesToTokens(samplePrompt, bindings)
+    expect(rewritten).toContain('person [1] speaks naturally: "التيار يتسرب.')
+    expect(rewritten).not.toContain('Char_GIDEON_CROFT')
+    expect(rewritten).not.toContain('Gideon Croft')
+    expect(rewritten).toContain('person [1] lunges forward')
+    expect(rewritten).toContain("person [1]'s brow")
+    expect(rewritten).toContain('Only these people are visible: person [1]')
   })
 })

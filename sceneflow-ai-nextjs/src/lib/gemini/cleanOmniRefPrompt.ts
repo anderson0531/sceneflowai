@@ -5,6 +5,7 @@
 
 import { neutralizeReferenceConflictPrompt } from '@/lib/gemini/neutralizeReferenceConflictPrompt'
 import { aliasCharacterVideoLabel } from '@/lib/character/characterPromptAlias'
+import { sanitizeUnactuatedSurfaceInscriptions } from '@/lib/scene/beatVideoPromptCompiler'
 
 const STYLE_TOKEN_PATTERNS = [
   /\bphotorealistic\b/gi,
@@ -103,6 +104,12 @@ const REDUNDANT_REF_META_CLAUSE_RE = /^(Coverage|Lens|Space):\s*/i
 const STRUCTURED_DIRECTOR_CLAUSE_RE =
   /^(Shot|Angle|Camera|Blocking|Emotion|Gaze|Props?|Prop interaction|End on|Delivery|Only these people|No people in frame|Only these objects|No spoken dialogue|The only spoken line|The only action is|Continues the same spoken line|Cut from the previous shot|Strictly no extra)\b/i
 
+const TIMED_COMPILED_BEAT_PROMPT_RE =
+  /\b\d+s[–-]\d+s\s*\((?:Start frame|Action|Action progression|End frame)\):/i
+
+const PERFORMANCE_CLAUSE_RE =
+  /\bPerformance:\s*[\s\S]*?(?=\s+(?:\d+s[–-]\d+s\s*\([^)]+\)|Opening pose|Action|Coverage|Lens|Space|Shot|Angle|Camera|Blocking|Emotion|Gaze|Prop interaction|Props|Lighting|End on|Settle on|Sound|Only these people|No people in frame|Only these objects|Hold the 0s|The only spoken line|No spoken dialogue|All visible signage|Translate and render|Include clear on-screen captions|Do not render subtitles):?|$)/i
+
 /**
  * Reduce a stored segment prompt to a concise neutral scene for Omni REF.
  * Caps freeform narrative prose to ~2 sentences while preserving structured
@@ -111,9 +118,43 @@ const STRUCTURED_DIRECTOR_CLAUSE_RE =
 export function cleanOmniRefScenePrompt(prompt: string): string {
   if (!prompt?.trim()) return prompt
 
-  const performanceMatch = prompt.match(/\bPerformance:\s*[\s\S]*$/)
+  if (TIMED_COMPILED_BEAT_PROMPT_RE.test(prompt)) {
+    const actionMatch = prompt.match(
+      /\b2s[–-][58]s\s*\(Action\):\s*([\s\S]*?)(?=\s+(?:\d+s[–-]\d+s\s*\([^)]+\)|Coverage|Lens|Space|Shot|Angle|Camera|Blocking|Emotion|Gaze|Prop interaction|Props|Lighting|End on|Sound):|$)/i
+    )
+    const clipActionText = actionMatch?.[1] ?? ''
+    let timed = prompt
+      .replace(/\s*\b(?:Coverage|Lens|Space):\s*[^.]*\./gi, '')
+      .replace(
+        /\s*\bBlocking:\s*[\s\S]*?(?=\s+(?:Emotion|Gaze|Prop interaction|Props|Lighting|\d+s[–-]\d+s\s*\([^)]+\)|End on|Settle on|Sound|Only these people|No people in frame|Only these objects):|$)/gi,
+        ''
+      )
+      .replace(/\s*\bGaze:\s*[^.]*\./gi, '')
+      .replace(/\s*\bProp interaction:\s*[^.]*\./gi, '')
+      .replace(
+        /\s*On\s+the\s+(?:damp\s+|dark\s+|wet\s+|subterranean\s+)?(?:slate\s+|stone\s+|brick\s+)?(?:wall|board|chalkboard|blackboard|surface)\b[^.]*\b(?:formula|inscription|equation|writing|text)\b[^.]*\./gi,
+        ''
+      )
+      .replace(
+        /\s*\bphotorealistic,\s*cinematic motion,\s*professional cinematography,\s*natural lighting,\s*shallow depth of field\.?/gi,
+        ''
+      )
+    timed = sanitizeUnactuatedSurfaceInscriptions(timed, clipActionText) ?? timed
+    timed = stripStyleTokens(timed)
+      .replace(/\.\.+/g, '.')
+      .replace(/\s{2,}/g, ' ')
+      .trim()
+    return timed || prompt.trim()
+  }
+
+  const performanceMatch = prompt.match(PERFORMANCE_CLAUSE_RE)
   const performance = performanceMatch?.[0].replace(/\s+/g, ' ').trim()
-  const body = performanceMatch?.index != null ? prompt.slice(0, performanceMatch.index).trim() : prompt
+  const body =
+    performanceMatch?.index != null
+      ? `${prompt.slice(0, performanceMatch.index).trim()} ${prompt
+          .slice(performanceMatch.index + performanceMatch[0].length)
+          .trim()}`.trim()
+      : prompt
 
   const rawSegments = splitPromptSegments(body || prompt)
     .map(stripStyleTokens)
