@@ -170,6 +170,7 @@ import {
   withSelectedLanguageClip,
 } from '@/lib/scene/languageClipVersions'
 import {
+  applyClipCaptionsDirective,
   cleanSpokenLineText,
   composeLanguageClipPrompt,
   englishSpokenLine,
@@ -277,6 +278,8 @@ export interface DirectorConsoleProps {
       useBeatFrameAsStart?: boolean
       /** Store the finished clip on this language stream instead of the English master. */
       clipLanguage?: string
+      /** When true, intentionally include burned-in captions in the clip prompt (default false). */
+      includeCaptions?: boolean
     }
   ) => Promise<void>
   onSegmentUpload?: (segmentId: string, file: File) => void
@@ -1002,8 +1005,9 @@ export function DirectorConsoleRoot({
       segment: SceneSegment,
       language: string,
       fallbackPrompt?: string,
-      fallbackGuidePrompt?: string
-    ): Promise<{ prompt: string; guidePrompt?: string }> => {
+      fallbackGuidePrompt?: string,
+      includeCaptionsOverride?: boolean
+    ): Promise<{ prompt: string; guidePrompt?: string; includeCaptions: boolean }> => {
       const sceneRecord = (scene as Record<string, unknown> | undefined) ?? null
       const allBeats = getSceneBeats(sceneRecord)
       const beatIndex = allBeats.findIndex((entry) => entry.beatId === segment.beatId)
@@ -1200,6 +1204,16 @@ export function DirectorConsoleRoot({
           signageTranslatedText = signageTranslations[signageSourceText]
         }
       }
+      const langSettings =
+        productionData?.mixerSettingsByLanguage?.[language] ??
+        productionData?.mixerSettingsByLanguage?.[langKey]
+      const shotCfg = langSettings?.languageShotConfigs?.[segment.segmentId]
+      const includeCaptions = Boolean(
+        includeCaptionsOverride ??
+          shotCfg?.includeCaptions ??
+          langSettings?.includeClipCaptions ??
+          false
+      )
       const composed = composeLanguageClipPrompt({
         sourcePrompt,
         guidePrompt: fallbackGuidePrompt,
@@ -1211,10 +1225,12 @@ export function DirectorConsoleRoot({
         signageTranslatedText,
         signageTranslations,
         targetLanguage: language,
+        includeCaptions,
       })
       return {
         prompt: composed.prompt || sourcePrompt,
         guidePrompt: composed.guidePrompt ?? fallbackGuidePrompt,
+        includeCaptions,
       }
     },
     [
@@ -1266,6 +1282,34 @@ export function DirectorConsoleRoot({
     [onProductionDataChange, productionData]
   )
 
+  const handleToggleClipCaptions = useCallback(
+    (segmentId: string, nextIncludeCaptions: boolean) => {
+      if (!onProductionDataChange || !productionData) return
+      const language = normalizeStreamLanguage(productionTarget.language) || 'en'
+      const byLang = migrateMixerSettingsByLanguage(productionData)
+      const existingLangSettings = byLang[language] ?? {}
+      const existingShotCfg = existingLangSettings.languageShotConfigs?.[segmentId] ?? {}
+      const nextShotConfigs = {
+        ...(existingLangSettings.languageShotConfigs ?? {}),
+        [segmentId]: {
+          ...existingShotCfg,
+          includeCaptions: nextIncludeCaptions,
+        },
+      }
+      onProductionDataChange({
+        ...productionData,
+        mixerSettingsByLanguage: {
+          ...byLang,
+          [language]: {
+            ...existingLangSettings,
+            languageShotConfigs: nextShotConfigs,
+          },
+        },
+      })
+    },
+    [onProductionDataChange, productionData, productionTarget.language]
+  )
+
   // Handle generate from dialog - saves config and triggers single segment generation
   // Pass config via overrideConfigs to bypass React state async timing issues
   const handleGenerateFromDialog = useCallback(
@@ -1287,15 +1331,21 @@ export function DirectorConsoleRoot({
                 segment,
                 language,
                 config.prompt,
-                config.guidePrompt
+                config.guidePrompt,
+                config.includeCaptions
               )
-            : { prompt: config.prompt, guidePrompt: config.guidePrompt }
+            : {
+                prompt: config.prompt,
+                guidePrompt: config.guidePrompt,
+                includeCaptions: Boolean(config.includeCaptions),
+              }
           const localizedConfig: VideoGenerationConfig = {
             ...config,
             prompt: composed.prompt,
             motionPrompt: composed.prompt,
             guidePrompt: composed.guidePrompt,
             clipLanguage: language,
+            includeCaptions: composed.includeCaptions,
           }
           toast.dismiss(toastId)
           await processQueue({
@@ -1314,17 +1364,47 @@ export function DirectorConsoleRoot({
         }
         return
       }
-      updateConfig(segmentId, config)
+      const enLangSettings =
+        productionData?.mixerSettingsByLanguage?.en ??
+        productionData?.mixerSettingsByLanguage?.[normalizeStreamLanguage(language) || 'en']
+      const shotIncludeCaptions =
+        config.includeCaptions ??
+        enLangSettings?.languageShotConfigs?.[segmentId]?.includeCaptions ??
+        enLangSettings?.includeClipCaptions
+      let finalConfig = config
+      if (shotIncludeCaptions !== undefined) {
+        const segment = segments.find((s) => s.segmentId === segmentId)
+        const allBeats = getSceneBeats((scene as Record<string, unknown> | undefined) ?? null)
+        const beat = segment?.beatId ? allBeats.find((b) => b.beatId === segment.beatId) : undefined
+        const nextPrompt =
+          String(beat?.kind) !== 'title'
+            ? applyClipCaptionsDirective(config.prompt, {
+                includeCaptions: shotIncludeCaptions === true,
+                spokenLine: beat?.line || segment?.dialoguePortion?.excerpt,
+                targetLanguage: 'en',
+                kind: beat?.kind,
+              })
+            : config.prompt
+        finalConfig = {
+          ...config,
+          prompt: nextPrompt,
+          motionPrompt: nextPrompt,
+          includeCaptions: shotIncludeCaptions === true,
+        }
+      }
+      updateConfig(segmentId, finalConfig)
       await processQueue({
         mode: 'selected',
         priority: 'sequence',
         delayBetween: 6000,
         selectedIds: [segmentId],
-        overrideConfigs: new Map([[segmentId, config]]),
+        overrideConfigs: new Map([[segmentId, finalConfig]]),
       })
     },
     [
       productionTarget.language,
+      productionData?.mixerSettingsByLanguage,
+      scene,
       markShotLanguageRegenerate,
       segments,
       sceneId,
@@ -1790,22 +1870,29 @@ export function DirectorConsoleRoot({
       const isLanguageStream = isLanguageClipTarget(language)
       setVideoAgentDialogOpen(false)
 
-      if (isLanguageStream && onProductionDataChange && productionData) {
+      if (onProductionDataChange && productionData) {
+        const langKey = isLanguageStream ? language : 'en'
         const byLang = migrateMixerSettingsByLanguage(productionData)
-        const existingLangSettings = byLang[language] ?? {}
+        const existingLangSettings = byLang[langKey] ?? {}
         const nextShotConfigs = { ...(existingLangSettings.languageShotConfigs ?? {}) }
         for (const segmentId of expressIds) {
           nextShotConfigs[segmentId] = {
             ...nextShotConfigs[segmentId],
-            method: 'regenerate',
+            ...(isLanguageStream ? { method: 'regenerate' as const } : {}),
+            ...(options.includeCaptions !== undefined
+              ? { includeCaptions: options.includeCaptions === true }
+              : {}),
           }
         }
         onProductionDataChange({
           ...productionData,
           mixerSettingsByLanguage: {
             ...byLang,
-            [language]: {
+            [langKey]: {
               ...existingLangSettings,
+              ...(options.includeCaptions !== undefined
+                ? { includeClipCaptions: options.includeCaptions === true }
+                : {}),
               languageShotConfigs: nextShotConfigs,
             },
           },
@@ -1853,7 +1940,8 @@ export function DirectorConsoleRoot({
                   segment,
                   language,
                   nextConfig.prompt,
-                  nextConfig.guidePrompt
+                  nextConfig.guidePrompt,
+                  options.includeCaptions
                 )
                 overrideConfigs.set(segmentId, {
                   ...nextConfig,
@@ -1861,9 +1949,14 @@ export function DirectorConsoleRoot({
                   motionPrompt: composed.prompt,
                   guidePrompt: composed.guidePrompt,
                   clipLanguage: language,
+                  includeCaptions: composed.includeCaptions,
                 })
               } else {
-                overrideConfigs.set(segmentId, { ...nextConfig, clipLanguage: language })
+                overrideConfigs.set(segmentId, {
+                  ...nextConfig,
+                  clipLanguage: language,
+                  includeCaptions: options.includeCaptions === true,
+                })
               }
             })
           )
@@ -1902,10 +1995,30 @@ export function DirectorConsoleRoot({
           return
         }
       } else {
+        const allBeats = getSceneBeats((scene as Record<string, unknown> | undefined) ?? null)
         for (const segmentId of expressIds) {
           const item = queue.find((q) => q.segmentId === segmentId)
           if (!item) continue
-          const nextConfig = applyVideoAgentPolicyToItem(item, options)
+          let nextConfig = applyVideoAgentPolicyToItem(item, options)
+          if (options.includeCaptions !== undefined) {
+            const segment = segments.find((s) => s.segmentId === segmentId)
+            const beat = segment?.beatId ? allBeats.find((b) => b.beatId === segment.beatId) : undefined
+            const nextPrompt =
+              String(beat?.kind) !== 'title'
+                ? applyClipCaptionsDirective(nextConfig.prompt, {
+                    includeCaptions: options.includeCaptions === true,
+                    spokenLine: beat?.line || segment?.dialoguePortion?.excerpt,
+                    targetLanguage: 'en',
+                    kind: beat?.kind,
+                  })
+                : nextConfig.prompt
+            nextConfig = {
+              ...nextConfig,
+              prompt: nextPrompt,
+              motionPrompt: nextPrompt,
+              includeCaptions: options.includeCaptions === true,
+            }
+          }
           overrideConfigs.set(segmentId, nextConfig)
           updateConfig(segmentId, nextConfig)
         }
@@ -2384,33 +2497,35 @@ export function DirectorConsoleRoot({
     }
   }, [renderingStreamId, productionStreams, productionTarget.language, publishAppendedRender])
   
-  const videoClips = useMemo<BeatVideoClip[]>(
-    () =>
-      buildBeatVideoClips({
-        scene: (scene as Record<string, unknown> | undefined) ?? null,
-        segments,
-        queue,
-        languageShotConfigs:
-          productionData?.mixerSettingsByLanguage?.[productionTarget.language]?.languageShotConfigs,
-        streamLanguage: productionTarget.language,
-        sceneIndex,
-        scenes: scenes as Array<Record<string, unknown> | null | undefined> | undefined,
-        sceneTranslations,
-        timedDialogueOverrides:
-          timedDialogueOverrides[normalizeStreamLanguage(productionTarget.language)],
-      }),
-    [
-      scene,
+  const videoClips = useMemo<BeatVideoClip[]>(() => {
+    const activeLangKey = normalizeStreamLanguage(productionTarget.language) || 'en'
+    const activeLangSettings =
+      productionData?.mixerSettingsByLanguage?.[productionTarget.language] ??
+      productionData?.mixerSettingsByLanguage?.[activeLangKey]
+    return buildBeatVideoClips({
+      scene: (scene as Record<string, unknown> | undefined) ?? null,
       segments,
       queue,
-      productionData?.mixerSettingsByLanguage,
-      productionTarget.language,
+      languageShotConfigs: activeLangSettings?.languageShotConfigs,
+      includeClipCaptions: activeLangSettings?.includeClipCaptions,
+      streamLanguage: productionTarget.language,
       sceneIndex,
-      scenes,
+      scenes: scenes as Array<Record<string, unknown> | null | undefined> | undefined,
       sceneTranslations,
-      timedDialogueOverrides,
-    ]
-  )
+      timedDialogueOverrides:
+        timedDialogueOverrides[normalizeStreamLanguage(productionTarget.language)],
+    })
+  }, [
+    scene,
+    segments,
+    queue,
+    productionData?.mixerSettingsByLanguage,
+    productionTarget.language,
+    sceneIndex,
+    scenes,
+    sceneTranslations,
+    timedDialogueOverrides,
+  ])
 
   // Count active (included) segments by status for the selected language
   const statusCounts = useMemo(() => {
@@ -2555,7 +2670,7 @@ export function DirectorConsoleRoot({
     try {
       const queueItem = getQueueItem(segment.segmentId)
       const config = queueItem?.config
-      let composed: { prompt: string; guidePrompt?: string }
+      let composed: { prompt: string; guidePrompt?: string; includeCaptions: boolean }
       try {
         composed = await composeSegmentLanguageClip(
           segment,
@@ -2620,6 +2735,7 @@ export function DirectorConsoleRoot({
         thinkingLevel: config?.thinkingLevel,
         omniMultiShot: config?.omniMultiShot,
         clipLanguage: language,
+        includeCaptions: composed.includeCaptions,
       })
       toast.dismiss(toastId)
       onVideoRunReport?.({
@@ -3004,6 +3120,7 @@ export function DirectorConsoleRoot({
         }}
         onRestoreLanguageVersion={handleRestoreLanguageVersion}
         generatingLanguageClipId={languageClipBusyId}
+        onToggleClipCaptions={handleToggleClipCaptions}
         onGenerateClip={(segment) => {
           const item = queue.find((entry) => entry.segmentId === segment.segmentId)
           if (!item) {
@@ -3159,6 +3276,14 @@ export function DirectorConsoleRoot({
         defaultQuality={videoGenerationQuality}
         defaultGenerationMode={videoGenerationMode}
         defaultSourceMethod={effectiveVideoSourceMethod}
+        defaultIncludeCaptions={Boolean(
+          (
+            productionData?.mixerSettingsByLanguage?.[productionTarget.language] ??
+            productionData?.mixerSettingsByLanguage?.[
+              normalizeStreamLanguage(productionTarget.language) || 'en'
+            ]
+          )?.includeClipCaptions ?? false
+        )}
         streamLanguage={productionTarget.language}
         streamLanguageLabel={
           SUPPORTED_LANGUAGES.find((lang) => lang.code === productionTarget.language)?.name ||

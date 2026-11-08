@@ -384,6 +384,8 @@ export interface VideoGenerationConfig {
   useBeatFrameAsStart?: boolean
   /** Store the finished clip on this language stream instead of the English master. */
   clipLanguage?: string
+  /** When true, intentionally include burned-in captions in the video prompt (default false). */
+  includeCaptions?: boolean
 }
 
 /**
@@ -1757,6 +1759,8 @@ export interface MixerLanguageShotConfig {
   videoPlaybackRate?: number
   /** Optional localized signage / on-screen text override when regenerating this shot. */
   signageText?: string
+  /** When true, intentionally include burned-in captions in the clip prompt (default false). */
+  includeCaptions?: boolean
 }
 
 /** Per-dialogue-line control in the Production Mixer (not timeline AudioClipConfig) */
@@ -1799,6 +1803,8 @@ export interface SceneMixerSettings {
   preserveBackgroundStem?: boolean
   includeSpeechStem?: boolean
   klingLipsyncEnabled?: boolean
+  /** Scene-level default for including burned-in captions in clip prompts (default false). */
+  includeClipCaptions?: boolean
   watermarkConfig?: Partial<WatermarkConfig>
   collapsedSections?: Partial<SceneMixerCollapsedSections>
   theaterMode?: boolean

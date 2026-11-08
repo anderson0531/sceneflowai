@@ -141,6 +141,7 @@ export function useVideoQueue(
       expressMode?: boolean
       useBeatFrameAsStart?: boolean
       clipLanguage?: string
+      includeCaptions?: boolean
     }
   ) => Promise<void>,
   segmentGuideContext?: SegmentGuideContext,
@@ -767,6 +768,9 @@ export function useVideoQueue(
               expressMode: config.expressMode,
               useBeatFrameAsStart: config.useBeatFrameAsStart === true,
               ...(effectiveClipLanguage ? { clipLanguage: effectiveClipLanguage } : {}),
+              ...(config.includeCaptions !== undefined
+                ? { includeCaptions: config.includeCaptions === true }
+                : {}),
             }
           )
           

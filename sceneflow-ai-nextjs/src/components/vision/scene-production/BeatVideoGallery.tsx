@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { AlertTriangle, Camera, Check, Clapperboard, Copy, Download, Film, Maximize2, Minimize2, Pause, PlayCircle, Settings2, Upload, Wand2 } from 'lucide-react'
+import { AlertTriangle, Camera, Check, Clapperboard, Copy, Download, Film, Maximize2, Minimize2, Pause, PlayCircle, Settings2, Subtitles, Upload, Wand2 } from 'lucide-react'
 import { toast } from 'sonner'
 import { saveVideoFile } from '@/lib/download/saveFile'
 import { SUPPORTED_LANGUAGES } from '@/constants/languages'
@@ -92,8 +92,8 @@ export interface BeatVideoClip {
   beatNumber: number
   label: string
   prompt?: string
-  /** Action, dialogue, or narration. Omitted for clips that are not beat-backed. */
-  kind?: 'action' | 'dialogue' | 'narration'
+  /** Action, dialogue, narration, or title. Omitted for clips that are not beat-backed. */
+  kind?: 'action' | 'dialogue' | 'narration' | 'title'
   thumbnailUrl?: string
   hasStartFrame: boolean
   /** Dedicated frame-to-video frames. Not the beat still. */
@@ -107,6 +107,8 @@ export interface BeatVideoClip {
   promptChanged?: boolean
   /** True when this shot requires a localized video clip in non-English streams. */
   needsLanguageClip?: boolean
+  /** When true, intentionally include burned-in captions in the clip prompt (default false). */
+  includeCaptions?: boolean
   /** Shared source scene badge for Promo shots (e.g. "S2 · Shot 3"). */
   sourceSceneLabel?: string
   /** Descriptive shared source label for Promo shots (e.g. "Scene 2 · Shot 3"). */
@@ -155,6 +157,8 @@ interface BeatVideoGalleryProps {
   onGenerateLanguageVersion?: (segment: SceneSegment) => void
   onRestoreLanguageVersion?: (segmentId: string, takeId: string) => void
   generatingLanguageClipId?: string | null
+  /** Toggle whether the clip prompt intentionally includes burned-in captions (default false). */
+  onToggleClipCaptions?: (segmentId: string, nextIncludeCaptions: boolean) => void
 }
 
 export function BeatVideoGallery({
@@ -189,6 +193,7 @@ export function BeatVideoGallery({
   onGenerateLanguageVersion,
   onRestoreLanguageVersion,
   generatingLanguageClipId = null,
+  onToggleClipCaptions,
 }: BeatVideoGalleryProps) {
   const [selectedKey, setSelectedKey] = useState<string | null>(clips[0]?.key ?? null)
   const [attention, setAttention] = useState<VideoAttentionFilter>('all')
@@ -847,6 +852,31 @@ export function BeatVideoGallery({
                           : languageOptions.length > 0
                             ? `New ${languageName} version`
                             : `Generate ${languageName} version`}
+                      </Button>
+                    )}
+                    {onToggleClipCaptions && preview.kind !== 'title' && (
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="outline"
+                        className={cn(
+                          'h-7 text-[10px]',
+                          preview.includeCaptions
+                            ? 'border-cyan-400/70 bg-cyan-500/20 text-cyan-100 hover:bg-cyan-500/30'
+                            : 'border-slate-600/60 text-slate-300 hover:bg-slate-800/70'
+                        )}
+                        title={
+                          preview.includeCaptions
+                            ? 'Captions are included in this clip prompt. Click to default to no captions.'
+                            : 'Default: no burned-in captions in clip prompt. Click to intentionally include captions.'
+                        }
+                        aria-pressed={Boolean(preview.includeCaptions)}
+                        onClick={() =>
+                          onToggleClipCaptions(previewSegment.segmentId, !preview.includeCaptions)
+                        }
+                      >
+                        <Subtitles className="mr-1 h-3 w-3" />
+                        {preview.includeCaptions ? 'Captions: On' : 'Captions: Off'}
                       </Button>
                     )}
                     {onDirectBeat && preview.beatId && (

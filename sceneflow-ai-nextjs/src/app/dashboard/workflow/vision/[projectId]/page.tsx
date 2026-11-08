@@ -4792,6 +4792,8 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         useBeatFrameAsStart?: boolean
         /** When set to a non-English stream, the finished clip is stored as that stream's version. */
         clipLanguage?: string
+        /** When true, intentionally include burned-in captions in the clip prompt (default false). */
+        includeCaptions?: boolean
       }
     ) => {
       if (!project?.id) {
@@ -5073,6 +5075,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
             expressMode: options?.expressMode,
             useBeatFrameAsStart: options?.useBeatFrameAsStart === true,
             clipLanguage: options?.clipLanguage,
+            includeCaptions: options?.includeCaptions,
           }),
         })
 

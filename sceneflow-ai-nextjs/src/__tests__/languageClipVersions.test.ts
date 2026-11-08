@@ -12,11 +12,13 @@ import {
   withSelectedLanguageClip,
 } from '@/lib/scene/languageClipVersions'
 import {
+  applyClipCaptionsDirective,
   buildLanguageClipPrompt,
   composeLanguageClipPrompt,
   englishSpokenLine,
   extractPromptSignageText,
   extractPromptSignageTexts,
+  NO_CAPTIONS_PROMPT_DIRECTIVE,
   preferStoredSpokenTranslation,
   preserveSignageCaseAndFormulaStyle,
   replacePromoOnScreenText,
@@ -719,6 +721,58 @@ describe('language clip prompts', () => {
     expect(clips).toHaveLength(1)
     expect(clips[0].label).toBe(adaptedSpanishSpoken)
     expect(clips[0].prompt).toContain(adaptedSpanishSpoken)
+    expect(clips[0].includeCaptions).toBe(false)
+    expect(clips[0].prompt).toContain(NO_CAPTIONS_PROMPT_DIRECTIVE)
+  })
+
+  it('defaults translated clip prompts to no captions and supports intentionally enabling captions', () => {
+    const sourcePrompt =
+      'Char_GIDEON_CROFT speaks naturally: "She knew I would run... She knew I\'d invent a thousand mathematical excuses just to stay alive down in the dark.". Delivery: with fragile delivery; with weeping delivery. Blocking: Gideon leans against the slate wall pinching a stub of white chalk. The only spoken line is: "She knew I would run... She knew I\'d invent a thousand mathematical excuses just to stay alive down in the dark.". photorealistic, cinematic motion'
+    const englishLine =
+      "[fragile, weeping] She knew I would run... She knew I'd invent a thousand mathematical excuses just to stay alive down in the dark."
+    const spanishLine =
+      '[fragile, weeping] Ella sabía que yo huiría... que inventaría mil cálculos solo para sobrevivir en la oscuridad.'
+
+    const defaultNoCaptions = composeLanguageClipPrompt({
+      sourcePrompt,
+      character: 'GIDEON CROFT',
+      kind: 'dialogue',
+      englishLine,
+      translatedLine: spanishLine,
+      targetLanguage: 'es',
+    })
+
+    expect(defaultNoCaptions.prompt).toContain(
+      `${NO_CAPTIONS_PROMPT_DIRECTIVE}.`
+    )
+    expect(defaultNoCaptions.prompt).not.toContain(
+      'Translate and render any visible signage'
+    )
+    expect(defaultNoCaptions.prompt).not.toContain('Include clear on-screen captions')
+
+    const withCaptions = composeLanguageClipPrompt({
+      sourcePrompt,
+      character: 'GIDEON CROFT',
+      kind: 'dialogue',
+      englishLine,
+      translatedLine: spanishLine,
+      targetLanguage: 'es',
+      includeCaptions: true,
+    })
+
+    expect(withCaptions.prompt).toContain(
+      'Include clear on-screen captions in Spanish: "Ella sabía que yo huiría... que inventaría mil cálculos solo para sobrevivir en la oscuridad.".'
+    )
+    expect(withCaptions.prompt).not.toContain(NO_CAPTIONS_PROMPT_DIRECTIVE)
+
+    const toggledBackOff = applyClipCaptionsDirective(withCaptions.prompt, {
+      includeCaptions: false,
+      spokenLine: spanishLine,
+      targetLanguage: 'es',
+      kind: 'dialogue',
+    })
+    expect(toggledBackOff).toContain(`${NO_CAPTIONS_PROMPT_DIRECTIVE}.`)
+    expect(toggledBackOff).not.toContain('Include clear on-screen captions')
   })
 })
 

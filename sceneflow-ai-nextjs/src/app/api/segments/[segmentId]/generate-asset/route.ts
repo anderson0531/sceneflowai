@@ -70,6 +70,7 @@ import {
 } from '@/lib/kling/elementRegistry'
 import { resolveKlingApiModelName } from '@/lib/kling/types'
 import {
+  applyClipCaptionsDirective,
   cleanSpokenLineText,
   composeLanguageClipPrompt,
   extractPromptSignageText,
@@ -164,6 +165,8 @@ interface GenerateAssetRequest {
   useBeatFrameAsStart?: boolean
   /** Target non-English stream language code when generating a localized clip take. */
   clipLanguage?: string
+  /** When true, intentionally include burned-in captions in the clip prompt (default false). */
+  includeCaptions?: boolean
   /** When true, verify aggregator routing without generating video or charging credits. */
   routeProbe?: boolean
   /** True only when this request ran on the user's own provider key. */
@@ -239,10 +242,14 @@ export async function POST(
       expressMode,
       useBeatFrameAsStart,
       clipLanguage,
+      includeCaptions,
       routeProbe,
       userKeyUsed: userKeyUsedBody,
     } = body
     const userKeyUsed = userKeyUsedBody === true
+    const clientRequestedCaptions = /\bInclude clear on-screen captions\b/i.test(clientPrompt)
+    const effectiveIncludeCaptions =
+      includeCaptions !== undefined ? includeCaptions === true : clientRequestedCaptions
 
     // Get user session for authentication
     const session = await getServerSession(authOptions)
@@ -335,6 +342,14 @@ export async function POST(
       )
       const isLangClip = isLanguageClipTarget(clipLanguage)
       if (!isLangClip && !clientHasTranslatedSpoken) {
+        if (includeCaptions !== undefined || clientRequestedCaptions) {
+          return applyClipCaptionsDirective(compiledPrompt, {
+            includeCaptions: effectiveIncludeCaptions,
+            spokenLine: englishLine,
+            targetLanguage: 'en',
+            kind: beat.kind,
+          })
+        }
         return compiledPrompt
       }
 
@@ -539,7 +554,12 @@ export async function POST(
         !resolvedSignageTranslatedText &&
         Object.keys(resolvedSignageTranslations).length === 0
       ) {
-        return compiledPrompt
+        return applyClipCaptionsDirective(compiledPrompt, {
+          includeCaptions: effectiveIncludeCaptions,
+          spokenLine: englishLine,
+          targetLanguage: langKey,
+          kind: beat.kind,
+        })
       }
 
       const composed = composeLanguageClipPrompt({
@@ -553,6 +573,7 @@ export async function POST(
         signageTranslatedText: resolvedSignageTranslatedText,
         signageTranslations: resolvedSignageTranslations,
         targetLanguage: langKey,
+        includeCaptions: effectiveIncludeCaptions,
       })
       if (composed.guidePrompt) {
         guidePrompt = composed.guidePrompt
@@ -784,6 +805,43 @@ export async function POST(
           '[Segment Asset Generation] Preflight clip rewrite failed; using the compiled prompt:',
           preflightError
         )
+      }
+    }
+
+    if ((genType === 'T2V' || genType === 'I2V') && String(cachedBeat?.kind) !== 'title') {
+      const isLangClip = isLanguageClipTarget(clipLanguage)
+      if (effectiveIncludeCaptions) {
+        prompt = applyClipCaptionsDirective(prompt, {
+          includeCaptions: true,
+          spokenLine:
+            resolvedTranslatedSpokenLine ||
+            extractSpokenLineFromPrompt(prompt) ||
+            cachedBeat?.line,
+          targetLanguage: isLangClip ? normalizeStreamLanguage(clipLanguage) : 'en',
+          kind: cachedBeat?.kind,
+        })
+        if (negativePrompt) {
+          negativePrompt = negativePrompt
+            .replace(/\b(?:subtitles|captions|text overlay|on-screen dialogue text)\b\s*,?\s*/gi, '')
+            .replace(/,\s*$/, '')
+            .trim()
+        }
+      } else if (isLangClip || includeCaptions === false) {
+        prompt = applyClipCaptionsDirective(prompt, {
+          includeCaptions: false,
+          spokenLine:
+            resolvedTranslatedSpokenLine ||
+            extractSpokenLineFromPrompt(prompt) ||
+            cachedBeat?.line,
+          targetLanguage: isLangClip ? normalizeStreamLanguage(clipLanguage) : 'en',
+          kind: cachedBeat?.kind,
+        })
+        const captionNeg = 'subtitles, captions, burned-in text, on-screen dialogue text'
+        if (!negativePrompt) {
+          negativePrompt = captionNeg
+        } else if (!/\bcaptions\b/i.test(negativePrompt)) {
+          negativePrompt = `${negativePrompt}, captions, burned-in text, on-screen dialogue text`
+        }
       }
     }
 

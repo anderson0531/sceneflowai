@@ -11,6 +11,7 @@ import {
   isStaleSavedVideoPrompt,
 } from '@/lib/scene/beatVideoPromptCompiler'
 import {
+  applyClipCaptionsDirective,
   composeLanguageClipPrompt,
   englishSpokenLine,
   extractPromptSignageText,
@@ -46,8 +47,13 @@ export interface BuildBeatVideoClipsArgs {
   queue: DirectorQueueItem[]
   languageShotConfigs?: Record<
     string,
-    { method?: 'double' | 'lipsync' | 'regenerate'; signageText?: string }
+    {
+      method?: 'double' | 'lipsync' | 'regenerate'
+      signageText?: string
+      includeCaptions?: boolean
+    }
   >
+  includeClipCaptions?: boolean
   streamLanguage?: string | null
   sceneIndex?: number
   scenes?: Array<Record<string, unknown> | null | undefined>
@@ -73,6 +79,7 @@ export function buildBeatVideoClips({
   segments,
   queue,
   languageShotConfigs,
+  includeClipCaptions,
   streamLanguage,
   sceneIndex,
   scenes,
@@ -178,6 +185,9 @@ export function buildBeatVideoClips({
       typeof promoBeat.sourceSceneIndex === 'number' &&
       promoBeat.sourceSceneIndex >= 0
     const shotCfg = segment ? languageShotConfigs?.[segment.segmentId] : undefined
+    const includeCaptions = Boolean(shotCfg?.includeCaptions ?? includeClipCaptions ?? false)
+    const hasExplicitCaptionSetting =
+      shotCfg?.includeCaptions !== undefined || includeClipCaptions !== undefined
     const needsLanguageClip = segmentNeedsLanguageClip({
       beatKind: beat.kind,
       beatCharacter: beat.character,
@@ -244,7 +254,7 @@ export function buildBeatVideoClips({
       )
       if (
         translatedLine &&
-        beat.kind !== 'title' &&
+        String(beat.kind) !== 'title' &&
         !isStoredTranslationTimedForShot(
           englishLine,
           translatedLine,
@@ -268,7 +278,7 @@ export function buildBeatVideoClips({
           fromTakePrompt &&
           normalizeSpokenMatchKey(fromTakePrompt) !==
             normalizeSpokenMatchKey(englishLine) &&
-          (beat.kind === 'title' ||
+          (String(beat.kind) === 'title' ||
             isStoredTranslationTimedForShot(
               englishLine,
               fromTakePrompt,
@@ -313,6 +323,7 @@ export function buildBeatVideoClips({
           signageTranslatedText,
           signageTranslations,
           targetLanguage: langKey,
+          includeCaptions,
         })
         if (composed.prompt) {
           displayPrompt = composed.prompt
@@ -320,7 +331,25 @@ export function buildBeatVideoClips({
         if (translatedLine && beat.kind !== 'action') {
           displaySpoken = translatedLine
         }
+      } else if (
+        String(beat.kind) !== 'title' &&
+        displayPrompt &&
+        (needsLanguageClip || hasExplicitCaptionSetting)
+      ) {
+        displayPrompt = applyClipCaptionsDirective(displayPrompt, {
+          includeCaptions,
+          spokenLine: englishLine,
+          targetLanguage: langKey,
+          kind: beat.kind,
+        })
       }
+    } else if (hasExplicitCaptionSetting && String(beat.kind) !== 'title' && displayPrompt) {
+      displayPrompt = applyClipCaptionsDirective(displayPrompt, {
+        includeCaptions,
+        spokenLine: beat.line,
+        targetLanguage: 'en',
+        kind: beat.kind,
+      })
     }
 
     return {
@@ -341,6 +370,7 @@ export function buildBeatVideoClips({
       promptChanged:
         segment?.isStale !== undefined ? Boolean(segment.isStale) : isBeatFrameStale(beat),
       needsLanguageClip,
+      includeCaptions,
       ...(hasSharedSource
         ? {
             sourceSceneLabel: formatPromoSourceBadge(promoBeat),

@@ -221,6 +221,10 @@ function stripSpokenAndPerformanceClausesForSignage(
       ''
     )
     .replace(
+      /Include clear on-screen captions(?:\s+in\s+[A-Za-z\s()-]+)?(?::\s*"[^"]*")?\.?/gi,
+      ''
+    )
+    .replace(
       /\bPerformance:\s*[\s\S]*?(?=\s+(?:Coverage|Lens|Space|Shot|Angle|Camera|Blocking|Emotion|Gaze|Prop interaction|Props|Lighting|End on|Only these people|The only action):|$)/gi,
       ' '
     )
@@ -370,6 +374,80 @@ function injectSignageModelInstruction(
   return prompt
 }
 
+export const NO_CAPTIONS_PROMPT_DIRECTIVE =
+  'Do not render subtitles, captions, or on-screen dialogue text'
+
+export function applyClipCaptionsDirective(
+  prompt: string,
+  options?: {
+    includeCaptions?: boolean
+    spokenLine?: string | null
+    targetLanguage?: string | null
+    kind?: string | null
+  }
+): string {
+  const trimmedPrompt = prompt?.trim() || ''
+  if (!trimmedPrompt) return ''
+  const kind = options?.kind?.trim().toLowerCase()
+  if (kind === 'title') return trimmedPrompt
+
+  const includeCaptions = options?.includeCaptions === true
+  const langCode = options?.targetLanguage?.trim()
+  const langName =
+    langCode && langCode.toLowerCase() !== 'en' ? getLanguageName(langCode) : undefined
+  const rawSpoken = options?.spokenLine?.trim() || ''
+  const cleanSpoken = cleanSpokenLineText(rawSpoken) || rawSpoken
+  const quotedSpoken = cleanSpoken ? quotedSpokenLine(cleanSpoken) : ''
+
+  let working = trimmedPrompt
+    .replace(/\s*Do not render subtitles, captions, or on-screen dialogue text\.?/gi, '')
+    .replace(
+      /\s*Include clear on-screen captions(?:\s+in\s+[A-Za-z\s()-]+)?(?::\s*"[^"]*")?\.?/gi,
+      ''
+    )
+    .trim()
+
+  if (includeCaptions) {
+    working = working.replace(/,\s*no on-screen dialogue text\b/gi, '').trim()
+  }
+
+  const directive = includeCaptions
+    ? quotedSpoken
+      ? `Include clear on-screen captions${langName ? ` in ${langName}` : ''}: "${quotedSpoken}"`
+      : `Include clear on-screen captions${langName ? ` in ${langName}` : ''}`
+    : NO_CAPTIONS_PROMPT_DIRECTIVE
+
+  if (working.includes(directive)) return working
+
+  const signageDirectiveRegex =
+    /(All visible signage and significant writing must (?:be rendered in [^:]+|read):\s*"[^"]*"(?:\s*,\s*"[^"]*")*\.?|Translate and render any visible signage and significant writing in [A-Za-z\s()-]+\.?)/i
+  if (signageDirectiveRegex.test(working)) {
+    return working.replace(signageDirectiveRegex, (match) => {
+      const base = match.endsWith('.') ? match : `${match}.`
+      return `${base} ${directive}.`
+    })
+  }
+
+  const spokenCloseRegex = /(The only spoken line is:\s*"[^"]*"\.?)/i
+  if (spokenCloseRegex.test(working)) {
+    return working.replace(spokenCloseRegex, (match) => {
+      const base = match.endsWith('.') ? match : `${match}.`
+      return `${base} ${directive}.`
+    })
+  }
+
+  const silentCloseRegex = /(\bNo spoken dialogue\.?)/i
+  if (silentCloseRegex.test(working)) {
+    return working.replace(silentCloseRegex, (match) => {
+      const base = match.endsWith('.') ? match : `${match}.`
+      return `${base} ${directive}.`
+    })
+  }
+
+  const base = working.replace(/\.+$/, '')
+  return `${base}. ${directive}.`
+}
+
 export function composeLanguageClipPrompt(args: {
   sourcePrompt?: string | null
   guidePrompt?: string | null
@@ -381,6 +459,7 @@ export function composeLanguageClipPrompt(args: {
   signageTranslatedText?: string | null
   signageTranslations?: Record<string, string> | null
   targetLanguage?: string | null
+  includeCaptions?: boolean
 }): { prompt: string; guidePrompt?: string } {
   const source = args.sourcePrompt?.trim() || ''
   const english = args.englishLine?.trim() || ''
@@ -448,12 +527,35 @@ export function composeLanguageClipPrompt(args: {
     }
   }
 
+  const hasUnquotedSignageSurface =
+    kind === 'action' && promptHasSignageOrSignificantWriting(source, english)
+
   prompt = injectSignageModelInstruction(
     prompt,
     appliedSignageTranslations,
     args.targetLanguage,
-    promptHasSignageOrSignificantWriting(source, english)
+    hasUnquotedSignageSurface
   )
+
+  const isNonEnglishTarget = Boolean(
+    args.targetLanguage && args.targetLanguage.trim().toLowerCase() !== 'en'
+  )
+  const shouldApplyCaptionDirective =
+    kind !== 'title' &&
+    (args.includeCaptions !== undefined ||
+      (isNonEnglishTarget &&
+        (speakInPicture ||
+          Boolean(translated) ||
+          appliedSignageTranslations.length > 0 ||
+          hasUnquotedSignageSurface)))
+  if (shouldApplyCaptionDirective && prompt) {
+    prompt = applyClipCaptionsDirective(prompt, {
+      includeCaptions: args.includeCaptions === true,
+      spokenLine: translated || cleanEnglish,
+      targetLanguage: args.targetLanguage,
+      kind,
+    })
+  }
 
   return {
     prompt,

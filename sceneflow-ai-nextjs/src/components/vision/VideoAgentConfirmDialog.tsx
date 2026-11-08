@@ -65,6 +65,8 @@ export interface VideoAgentConfirmOptions {
   quality: VideoGenerationQuality
   generationMode: VideoGenerationMode
   sourceMethod?: VideoSourceMethod
+  /** When true, intentionally include burned-in captions in generated clip prompts (default false). */
+  includeCaptions?: boolean
 }
 
 export interface VideoAgentBeatOption {
@@ -94,6 +96,7 @@ interface VideoAgentConfirmDialogProps {
   defaultQuality?: VideoGenerationQuality
   defaultGenerationMode?: VideoGenerationMode
   defaultSourceMethod?: VideoSourceMethod
+  defaultIncludeCaptions?: boolean
   streamLanguage?: string
   streamLanguageLabel?: string
 }
@@ -136,6 +139,7 @@ export function VideoAgentConfirmDialog({
   defaultQuality = 'draft',
   defaultGenerationMode = 'standard',
   defaultSourceMethod = 'reference',
+  defaultIncludeCaptions = false,
   streamLanguage = 'en',
   streamLanguageLabel,
 }: VideoAgentConfirmDialogProps) {
@@ -149,6 +153,7 @@ export function VideoAgentConfirmDialog({
     useState<VideoSourceMethod>(
       defaultGenerationMode === 'creative' ? 'frame' : defaultSourceMethod
     )
+  const [includeCaptions, setIncludeCaptions] = useState<boolean>(defaultIncludeCaptions)
   const [selectedSegmentIds, setSelectedSegmentIds] = useState<string[]>([])
   const [clipAttention, setClipAttention] = useState<VideoAttentionFilter>('all')
 
@@ -160,8 +165,9 @@ export function VideoAgentConfirmDialog({
     setSourceMethod(
       defaultGenerationMode === 'creative' ? 'frame' : defaultSourceMethod
     )
+    setIncludeCaptions(defaultIncludeCaptions)
     setClipAttention('all')
-  }, [open, defaultQuality, defaultGenerationMode, defaultSourceMethod])
+  }, [open, defaultQuality, defaultGenerationMode, defaultSourceMethod, defaultIncludeCaptions])
 
   const effectiveSourceMethod: VideoSourceMethod =
     generationMode === 'creative' ? 'frame' : sourceMethod
@@ -291,6 +297,25 @@ export function VideoAgentConfirmDialog({
                 ? 'Frame-to-Video (F2V): interpolates between each shot’s Start Frame and End Frame with the F2V transition prompt.'
                 : 'Reference-to-Video (Ingredients): sends Continuity Library reference plates with the optimized scene direction prompt.'}
             </p>
+          </div>
+
+          <div className="rounded-md border border-gray-700/80 bg-gray-800/40 px-3 py-2">
+            <label className="flex items-start gap-2.5 cursor-pointer">
+              <Checkbox
+                checked={includeCaptions}
+                onCheckedChange={(checked) => setIncludeCaptions(checked === true)}
+                disabled={isRunning}
+                className="mt-0.5"
+              />
+              <span className="min-w-0 flex-1">
+                <span className="block text-xs font-medium text-gray-200">
+                  Intentionally include burned-in captions in clip prompts
+                </span>
+                <span className="block text-[11px] text-gray-400">
+                  Off by default — prompts instruct the video model not to render subtitles or captions unless enabled.
+                </span>
+              </span>
+            </label>
           </div>
 
           <div>
@@ -482,6 +507,7 @@ export function VideoAgentConfirmDialog({
                 quality,
                 generationMode,
                 sourceMethod: effectiveSourceMethod,
+                includeCaptions,
               })
             }
             disabled={isRunning || nothingSelected}
