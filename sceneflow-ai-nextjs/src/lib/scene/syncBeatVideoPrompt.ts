@@ -91,15 +91,16 @@ function refreshSegmentList<T extends SegmentPromptRow>(
       previousBeat,
       musicCue: musicCueForBeat(scene, beats, beat),
     })
+    const promptChanged =
+      hasStaleCompilerUserEdited || segment.generatedPrompt !== compiled.prompt
     if (
-      !hasStaleCompilerUserEdited &&
-      segment.generatedPrompt === compiled.prompt &&
-      segment.videoPrompt === compiled.prompt
+      !promptChanged &&
+      (segment.videoPrompt === undefined || segment.videoPrompt === compiled.prompt)
     ) {
       return segment
     }
     changed = true
-    const hasPlayableClip = segmentHasPlayableVideo(segment)
+    const hasPlayableClip = promptChanged && segmentHasPlayableVideo(segment)
     return {
       ...segment,
       ...(hasStaleCompilerUserEdited ? { userEditedPrompt: null } : {}),

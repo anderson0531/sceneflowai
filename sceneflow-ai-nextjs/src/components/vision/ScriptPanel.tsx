@@ -1518,6 +1518,27 @@ export function ScriptPanel({ script, onScriptChange, isUpdatingPrompts = false,
     return [{ scene: scenes[idx], originalIndex: idx }]
   }, [scenes, selectedSceneIndex])
 
+  const hydratedPromoByIndex = useMemo(() => {
+    const map = new Map<
+      number,
+      ReturnType<typeof hydratePromoSceneWithSharedShots>
+    >()
+    for (const { scene, originalIndex } of displayedScenes) {
+      if (isPromoCinematicScene(scene)) {
+        map.set(
+          originalIndex,
+          hydratePromoSceneWithSharedShots(
+            scene as Record<string, any>,
+            scenes,
+            sceneProductionData,
+            { artStyleId: promptComposition.artStyleAnchor }
+          )
+        )
+      }
+    }
+    return map
+  }, [displayedScenes, scenes, sceneProductionData, promptComposition.artStyleAnchor])
+
   const bookmarkedSceneIndex = useMemo(() => {
     if (!bookmarkedScene) return -1
     return scenes.findIndex((scene: any, idx: number) => {
@@ -3564,11 +3585,13 @@ export function ScriptPanel({ script, onScriptChange, isUpdatingPrompts = false,
                             const domId = getSceneDomId(scene, idx)
                             const isPromoScene = isPromoCinematicScene(scene)
                             const hydratedPromo = isPromoScene
-                              ? hydratePromoSceneWithSharedShots(
-                                  scene as Record<string, any>,
-                                  scenes,
-                                  sceneProductionData
-                                )
+                              ? (hydratedPromoByIndex.get(idx) ??
+                                  hydratePromoSceneWithSharedShots(
+                                    scene as Record<string, any>,
+                                    scenes,
+                                    sceneProductionData,
+                                    { artStyleId: promptComposition.artStyleAnchor }
+                                  ))
                               : null
                             const effectiveScene = hydratedPromo ? hydratedPromo.scene : scene
                             const effectiveSceneProductionData = hydratedPromo
@@ -3869,9 +3892,9 @@ export function ScriptPanel({ script, onScriptChange, isUpdatingPrompts = false,
                                     JSON.stringify(nextLanguageVersions ?? null) !==
                                     JSON.stringify(srcSeg.languageVersions ?? null)
                                   if (
-                                    nextUserPrompt === srcSeg.userEditedPrompt &&
-                                    nextGenPrompt === srcSeg.generatedPrompt &&
-                                    nextAssetUrl === srcSeg.activeAssetUrl &&
+                                    (nextUserPrompt || null) === (srcSeg.userEditedPrompt || null) &&
+                                    (nextGenPrompt || '') === (srcSeg.generatedPrompt || '') &&
+                                    (nextAssetUrl || null) === (srcSeg.activeAssetUrl || null) &&
                                     nextTakes === srcSeg.takes &&
                                     !languageVersionsChanged
                                   ) {

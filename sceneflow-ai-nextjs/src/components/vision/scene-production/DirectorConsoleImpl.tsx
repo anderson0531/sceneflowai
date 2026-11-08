@@ -463,15 +463,39 @@ export function DirectorConsoleRoot({
 }: DirectorConsoleProps & {
   children?: (slots: DirectorWorkflowSlots) => React.ReactNode
 }) {
+  const lastRefreshedSegmentsRef = useRef<{
+    sig: string
+    segments: SceneSegment[]
+  } | null>(null)
+
   // Synchronously refresh production segment video prompts when beat direction changes
   // so the queue and clip gallery never read stale pre-save prompts on the first render.
   const pendingProductionRefresh = useMemo(() => {
     const rawSegments = productionData?.segments
     const currentScene = scene as Record<string, unknown> | undefined
     if (!rawSegments?.length || !currentScene) return null
-    return refreshProductionSegmentVideoPrompts(rawSegments, currentScene, {
+    const refreshed = refreshProductionSegmentVideoPrompts(rawSegments, currentScene, {
       artStyleId,
     })
+    if (!refreshed) return null
+    const sig = JSON.stringify(
+      refreshed.map((s) => ({
+        id: s.segmentId,
+        gp: s.generatedPrompt || '',
+        ue: s.userEditedPrompt || '',
+        st: s.status || '',
+        url: s.activeAssetUrl || '',
+        sf: s.startFrameUrl || s.references?.startFrameUrl || '',
+        ef: s.endFrameUrl || s.references?.endFrameUrl || '',
+        stale: Boolean(s.isStale),
+        takes: s.takes?.length || 0,
+      }))
+    )
+    if (lastRefreshedSegmentsRef.current?.sig === sig) {
+      return lastRefreshedSegmentsRef.current.segments
+    }
+    lastRefreshedSegmentsRef.current = { sig, segments: refreshed }
+    return refreshed
   }, [productionData?.segments, scene, artStyleId])
 
   // Use stable EMPTY_SEGMENTS constant to prevent TDZ render loops
@@ -920,10 +944,7 @@ export function DirectorConsoleRoot({
   const [inFlightTimedAdaptCount, setInFlightTimedAdaptCount] = useState(0)
   const isTranslatingTimedDialogue = inFlightTimedAdaptCount > 0
   const effectiveIsUpdatingPrompts = Boolean(
-    isUpdatingPrompts ||
-      isQueueUpdatingPrompts ||
-      isTranslatingTimedDialogue ||
-      pendingProductionRefresh !== null
+    isUpdatingPrompts || isQueueUpdatingPrompts
   )
 
   useEffect(() => {

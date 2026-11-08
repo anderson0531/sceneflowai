@@ -1089,6 +1089,11 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
   // concurrent writes from racing each other and causing data loss.
   // Each call waits for the previous save to finish before executing.
   const saveQueueRef = useRef<Promise<Response | null>>(Promise.resolve(null))
+  const pendingProductionPayloadsRef = useRef<
+    Map<string, { payload: string; productionData: SceneProductionData }>
+  >(new Map())
+  const lastPersistedProductionPayloadsRef = useRef<Map<string, string>>(new Map())
+  const productionPersistDrainPromiseRef = useRef<Promise<void> | null>(null)
 
   const serializedProjectSave = useCallback(async (
     body: Record<string, any>,
@@ -1779,14 +1784,27 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
   // Reference Library opens in a dialog (see openReferenceLibrary below)
 
   const promptSyncInFlightCountRef = useRef(0)
+  const promptSyncSafetyTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const [isUpdatingScriptPrompts, setIsUpdatingScriptPrompts] = useState(false)
   const beginPromptSync = useCallback(() => {
     promptSyncInFlightCountRef.current += 1
     setIsUpdatingScriptPrompts(true)
+    if (promptSyncSafetyTimerRef.current) {
+      clearTimeout(promptSyncSafetyTimerRef.current)
+    }
+    promptSyncSafetyTimerRef.current = setTimeout(() => {
+      promptSyncInFlightCountRef.current = 0
+      setIsUpdatingScriptPrompts(false)
+      promptSyncSafetyTimerRef.current = null
+    }, 2500)
   }, [])
   const endPromptSync = useCallback(() => {
     promptSyncInFlightCountRef.current = Math.max(0, promptSyncInFlightCountRef.current - 1)
     if (promptSyncInFlightCountRef.current === 0) {
+      if (promptSyncSafetyTimerRef.current) {
+        clearTimeout(promptSyncSafetyTimerRef.current)
+        promptSyncSafetyTimerRef.current = null
+      }
       setIsUpdatingScriptPrompts(false)
     }
   }, [])
@@ -2752,11 +2770,6 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
   // This avoids 413 errors by not sending the entire project metadata.
   // Requests are coalesced per sceneId and serialized so rapid edits never flood
   // `/api/projects/[id]/production` with concurrent PostgreSQL row-lock transactions.
-  const pendingProductionPayloadsRef = useRef<
-    Map<string, { payload: string; productionData: SceneProductionData }>
-  >(new Map())
-  const lastPersistedProductionPayloadsRef = useRef<Map<string, string>>(new Map())
-  const productionPersistDrainPromiseRef = useRef<Promise<void> | null>(null)
 
   const persistSceneProductionLightweight = useCallback(
     async (sceneId: string, productionData: SceneProductionData) => {
@@ -18395,7 +18408,8 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         ? hydratePromoSceneWithSharedShots(
             rawSceneRecord,
             script.script.scenes,
-            sceneProductionState
+            sceneProductionState,
+            { artStyleId: lockedArtStyle }
           ).scene
         : rawSceneRecord
       const sceneNumber =

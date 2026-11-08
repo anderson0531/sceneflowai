@@ -641,15 +641,23 @@ function resolveSegmentGeneratedPromptForBeat(
   previousBeat: PromoSceneBeat | undefined,
   sceneDirection: DetailedSceneDirection | null | undefined,
   existingPrompt?: string,
-  musicCue?: SceneMusicCue
+  musicCue?: SceneMusicCue,
+  options?: {
+    artStyleId?: string
+    dialoguePortion?: { excerpt?: string; partIndex?: number }
+  }
 ): string {
+  const excerpt = options?.dialoguePortion?.excerpt?.trim()
   const compiled = compileBeatVideoPromptFromDirection(beat, sceneDirection ?? null, {
+    ...(options?.artStyleId ? { artStyleId: options.artStyleId } : {}),
+    ...(excerpt ? { excerpt } : {}),
+    continuesSameLine: (options?.dialoguePortion?.partIndex ?? 0) > 0,
     previousBeat,
     ...(musicCue ? { musicCue } : {}),
   }).prompt
   const stored = existingPrompt?.trim()
   if (!stored) return compiled
-  const spoken = beat.line?.trim()
+  const spoken = excerpt || beat.line?.trim()
   if (beatDirectionOwnsVideoPrompt(beat) || isStaleSavedVideoPrompt(beat, stored, spoken)) {
     return compiled
   }
@@ -1049,7 +1057,8 @@ function preferBeatDirection(
 export function hydratePromoSceneWithSharedShots(
   promoScene: Record<string, unknown>,
   scenes: unknown[] | undefined,
-  sceneProductionState: Record<string, SceneProductionData> | undefined
+  sceneProductionState: Record<string, SceneProductionData> | undefined,
+  options?: { artStyleId?: string }
 ): {
   scene: Record<string, unknown>
   productionData: SceneProductionData | undefined
@@ -1477,8 +1486,35 @@ export function hydratePromoSceneWithSharedShots(
         }
 
   const ownProd = sceneProductionState?.[promoSceneId]
+  const totalEstimatedDuration =
+    typeof promoScene.duration === 'number' && promoScene.duration > 0
+      ? promoScene.duration
+      : hydratedBeats
+          .filter((b) => !b.excluded)
+          .reduce((sum, b) => sum + (b.durationSeconds || 5), 0)
+  const hydratedMusicPrompt =
+    typeof promoScene.music === 'string' && promoScene.music.trim()
+      ? promoScene.music.trim()
+      : 'Cinematic promotional trailer score, building tension, emotional swell, memorable theme, no vocals'
+  const existingPromoCues = Array.isArray(promoScene.sceneMusicCues)
+    ? (promoScene.sceneMusicCues as Array<Record<string, unknown>>)
+    : undefined
+  const cueTrackUrl = existingPromoCues?.find(
+    (c) => c && typeof c.url === 'string' && c.url.trim()
+  )?.url as string | undefined
+  const hydratedMusicAudio =
+    (typeof promoScene.musicAudio === 'string' && promoScene.musicAudio.trim()) ||
+    cueTrackUrl ||
+    undefined
+  const hydratedMusicCues = buildPromoSceneMusicCues({
+    beatsCount: hydratedBeats.length,
+    musicPrompt: hydratedMusicPrompt,
+    musicAudio: hydratedMusicAudio,
+    durationSec: totalEstimatedDuration,
+    existingCues: promoScene.sceneMusicCues,
+  })
   const persistedPromoMusicCues = parsePersistedMusicCues(
-    promoScene.sceneMusicCues,
+    hydratedMusicCues,
     hydratedBeats
   )
   let cursor = 0
@@ -1574,7 +1610,11 @@ export function hydratePromoSceneWithSharedShots(
       previousBeat,
       hydratedSceneDirection as DetailedSceneDirection,
       sourceSeg?.generatedPrompt || existingPromoSeg?.generatedPrompt,
-      musicCue
+      musicCue,
+      {
+        artStyleId: options?.artStyleId,
+        dialoguePortion: existingPromoSeg?.dialoguePortion || sourceSeg?.dialoguePortion,
+      }
     )
     const rawUserEdited = (
       existingPromoSeg?.userEditedPrompt ||
@@ -1752,28 +1792,6 @@ export function hydratePromoSceneWithSharedShots(
     }
     return base
   })()
-
-  const hydratedMusicPrompt =
-    typeof promoScene.music === 'string' && promoScene.music.trim()
-      ? promoScene.music.trim()
-      : 'Cinematic promotional trailer score, building tension, emotional swell, memorable theme, no vocals'
-  const existingPromoCues = Array.isArray(promoScene.sceneMusicCues)
-    ? (promoScene.sceneMusicCues as Array<Record<string, unknown>>)
-    : undefined
-  const cueTrackUrl = existingPromoCues?.find(
-    (c) => c && typeof c.url === 'string' && c.url.trim()
-  )?.url as string | undefined
-  const hydratedMusicAudio =
-    (typeof promoScene.musicAudio === 'string' && promoScene.musicAudio.trim()) ||
-    cueTrackUrl ||
-    undefined
-  const hydratedMusicCues = buildPromoSceneMusicCues({
-    beatsCount: hydratedBeats.length,
-    musicPrompt: hydratedMusicPrompt,
-    musicAudio: hydratedMusicAudio,
-    durationSec: typeof promoScene.duration === 'number' ? promoScene.duration : cursor,
-    existingCues: promoScene.sceneMusicCues,
-  })
 
   return {
     scene: {

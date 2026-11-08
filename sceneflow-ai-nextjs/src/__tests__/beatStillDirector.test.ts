@@ -17,6 +17,8 @@ import {
 import { getSceneBeats } from '@/lib/script/beatMigration'
 import type { SceneBeat } from '@/lib/script/segmentTypes'
 import { isBeatFrameStale } from '@/lib/storyboard/syncBeatStillPrompt'
+import { refreshProductionSegmentVideoPrompts } from '@/lib/scene/syncBeatVideoPrompt'
+import { hydratePromoSceneWithSharedShots } from '@/lib/publish/buildPromoScene'
 
 function readSource(relativePath: string): string {
   return readFileSync(join(process.cwd(), relativePath), 'utf8')
@@ -666,6 +668,87 @@ describe('Shot direction prompt update synchronization and generation gating', (
     expect(page).toContain('syncProductionPromptsForScenes(updatedScenes)')
     expect(page).toContain('await syncVisionReferencesForExpress({ includeScript: true })')
     expect(page).toContain('isUpdatingPrompts={isUpdatingScriptPrompts}')
+
+    // TDZ safety: userConfigs is declared before the useEffect that calls setUserConfigs in useVideoQueue,
+    // and productionPersistDrainPromiseRef is declared before handleScriptChange in page.tsx
+    expect(videoQueue.indexOf('const [userConfigs, setUserConfigs]')).toBeLessThan(
+      videoQueue.indexOf('setUserConfigs((prev) =>')
+    )
+    expect(page.indexOf('const productionPersistDrainPromiseRef = useRef')).toBeLessThan(
+      page.indexOf('const handleScriptChange = useCallback')
+    )
+  })
+
+  it('does not trigger endless segment refresh when generatedPrompt matches and videoPrompt is undefined (promo & studio scenes)', () => {
+    const sourceBeat = beat({
+      beatId: 'bt_src_1',
+      beatDirection: {
+        shotType: 'Medium Shot',
+        frozenMoment: 'Gideon holds the brass calipers.',
+        cameraMovement: 'slow push-in',
+        generatedBy: 'user',
+      },
+    })
+    const sourceScene = {
+      id: 'scene-3',
+      beats: [sourceBeat],
+    }
+    const promoBeat = {
+      ...sourceBeat,
+      beatId: 'bt_promo_0_bt_src_1_0',
+      sourceSceneId: 'scene-3',
+      sourceSceneIndex: 0,
+      sourceBeatId: 'bt_src_1',
+    }
+    const promoScene = {
+      id: 'promo-123',
+      cinematicType: 'promo',
+      beats: [promoBeat],
+    }
+
+    const hydrated = hydratePromoSceneWithSharedShots(
+      promoScene,
+      [sourceScene, promoScene],
+      {
+        'scene-3': {
+          isSegmented: true,
+          targetDuration: 6,
+          segments: [
+            {
+              segmentId: 'seg_src_1',
+              beatId: 'bt_src_1',
+              sequenceIndex: 0,
+              startTime: 0,
+              endTime: 6,
+              status: 'DRAFT',
+              generatedPrompt: 'stale old prompt',
+              userEditedPrompt: undefined,
+              activeAssetUrl: null,
+              assetType: null,
+              references: {
+                startFrameUrl: null,
+                endFrameUrl: null,
+                characterIds: [],
+                sceneRefIds: [],
+                objectRefIds: [],
+              },
+              takes: [],
+            },
+          ],
+        },
+      },
+      { artStyleId: 'cinematic-noir' }
+    )
+
+    expect(hydrated.productionData?.segments).toHaveLength(1)
+    // Calling refreshProductionSegmentVideoPrompts with the same artStyleId must return null (no-op) so
+    // DirectorConsoleImpl never enters an infinite pendingProductionRefresh / onProductionDataChange loop.
+    const refreshedAgain = refreshProductionSegmentVideoPrompts(
+      hydrated.productionData!.segments,
+      hydrated.scene,
+      { artStyleId: 'cinematic-noir' }
+    )
+    expect(refreshedAgain).toBeNull()
   })
 })
 

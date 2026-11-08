@@ -94,6 +94,10 @@ export interface VideoQueueActions {
 
 export interface UseVideoQueueReturn extends VideoQueueState, VideoQueueActions {}
 
+let cachedBuildSegmentConfigsMap:
+  | typeof import('@/lib/vision/segmentConfigBuilder').buildSegmentConfigsMap
+  | null = null
+
 /**
  * Hook to manage video rendering queue for Director's Console
  */
@@ -162,6 +166,8 @@ export function useVideoQueue(
   // QUARANTINE GUARD: Delay initialization by one frame to let module graph settle
   // This prevents TDZ errors from rapid re-renders during initial mount
   const [isReady, setIsReady] = useState(false)
+  // Local state for user-modified configs (declared before effects to prevent TDZ errors)
+  const [userConfigs, setUserConfigs] = useState<Map<string, VideoGenerationConfig>>(new Map())
   
   useEffect(() => {
     // Delay by one frame using requestAnimationFrame to ensure all modules are fully evaluated
@@ -179,6 +185,18 @@ export function useVideoQueue(
   const [configsReady, setConfigsReady] = useState(false)
   const [settledConfigSignature, setSettledConfigSignature] = useState<string>('')
   const lastAutoPromptBySegmentRef = useRef<Map<string, string>>(new Map())
+  const latestInputsRef = useRef({
+    segments,
+    sceneImageUrl,
+    segmentGuideContext,
+    defaultAspectRatio,
+  })
+  latestInputsRef.current = {
+    segments,
+    sceneImageUrl,
+    segmentGuideContext,
+    defaultAspectRatio,
+  }
 
   const configInputSignature = useMemo(() => {
     const rawBeats = Array.isArray((segmentGuideContext?.fullScene as any)?.beats)
@@ -219,53 +237,66 @@ export function useVideoQueue(
       return
     }
 
+    const applyBuilder = (
+      buildSegmentConfigsMap: typeof import('@/lib/vision/segmentConfigBuilder').buildSegmentConfigsMap
+    ) => {
+      const current = latestInputsRef.current
+      const nextMap = buildSegmentConfigsMap(
+        current.segments,
+        current.sceneImageUrl,
+        current.segmentGuideContext,
+        current.defaultAspectRatio
+      )
+      setConfigsMap(nextMap)
+
+      const changedAutoPrompts = new Map<string, SegmentConfigResult['config']>()
+      nextMap.forEach((res, segId) => {
+        const prevAutoPrompt = lastAutoPromptBySegmentRef.current.get(segId)
+        const nextAutoPrompt = res.config.prompt || ''
+        if (prevAutoPrompt !== undefined && prevAutoPrompt !== nextAutoPrompt) {
+          changedAutoPrompts.set(segId, res.config)
+        }
+        lastAutoPromptBySegmentRef.current.set(segId, nextAutoPrompt)
+      })
+
+      if (changedAutoPrompts.size > 0) {
+        setUserConfigs((prev) => {
+          if (prev.size === 0) return prev
+          let mutated = false
+          const next = new Map(prev)
+          changedAutoPrompts.forEach((freshAutoCfg, segId) => {
+            const existing = next.get(segId)
+            if (!existing || existing.useCustomApiPrompt) return
+            const seg = current.segments.find((s) => s.segmentId === segId)
+            if (seg?.userEditedPrompt?.trim()) return
+            next.set(segId, {
+              ...existing,
+              prompt: freshAutoCfg.prompt,
+              visualPrompt: freshAutoCfg.visualPrompt || existing.visualPrompt,
+              motionPrompt: freshAutoCfg.motionPrompt || existing.motionPrompt,
+              guidePrompt: freshAutoCfg.guidePrompt || existing.guidePrompt,
+            })
+            mutated = true
+          })
+          return mutated ? next : prev
+        })
+      }
+
+      setConfigsReady(true)
+      setSettledConfigSignature(configInputSignature)
+    }
+
+    if (cachedBuildSegmentConfigsMap) {
+      applyBuilder(cachedBuildSegmentConfigsMap)
+      return
+    }
+
     let cancelled = false
     import('@/lib/vision/segmentConfigBuilder')
       .then(({ buildSegmentConfigsMap }) => {
+        cachedBuildSegmentConfigsMap = buildSegmentConfigsMap
         if (cancelled) return
-        const nextMap = buildSegmentConfigsMap(
-          segments,
-          sceneImageUrl,
-          segmentGuideContext,
-          defaultAspectRatio
-        )
-        setConfigsMap(nextMap)
-
-        const changedAutoPrompts = new Map<string, SegmentConfigResult['config']>()
-        nextMap.forEach((res, segId) => {
-          const prevAutoPrompt = lastAutoPromptBySegmentRef.current.get(segId)
-          const nextAutoPrompt = res.config.prompt || ''
-          if (prevAutoPrompt !== undefined && prevAutoPrompt !== nextAutoPrompt) {
-            changedAutoPrompts.set(segId, res.config)
-          }
-          lastAutoPromptBySegmentRef.current.set(segId, nextAutoPrompt)
-        })
-
-        if (changedAutoPrompts.size > 0) {
-          setUserConfigs((prev) => {
-            if (prev.size === 0) return prev
-            let mutated = false
-            const next = new Map(prev)
-            changedAutoPrompts.forEach((freshAutoCfg, segId) => {
-              const existing = next.get(segId)
-              if (!existing || existing.useCustomApiPrompt) return
-              const seg = segments.find((s) => s.segmentId === segId)
-              if (seg?.userEditedPrompt?.trim()) return
-              next.set(segId, {
-                ...existing,
-                prompt: freshAutoCfg.prompt,
-                visualPrompt: freshAutoCfg.visualPrompt || existing.visualPrompt,
-                motionPrompt: freshAutoCfg.motionPrompt || existing.motionPrompt,
-                guidePrompt: freshAutoCfg.guidePrompt || existing.guidePrompt,
-              })
-              mutated = true
-            })
-            return mutated ? next : prev
-          })
-        }
-
-        setConfigsReady(true)
-        setSettledConfigSignature(configInputSignature)
+        applyBuilder(buildSegmentConfigsMap)
       })
       .catch((err) => {
         console.error('[useVideoQueue] Failed to load segment config builder:', err)
@@ -279,7 +310,7 @@ export function useVideoQueue(
     return () => {
       cancelled = true
     }
-  }, [isReady, segments, sceneImageUrl, segmentGuideContext, defaultAspectRatio, configInputSignature])
+  }, [isReady, configInputSignature])
 
   const isUpdatingPrompts = !isReady || !configsReady || settledConfigSignature !== configInputSignature
   
@@ -309,9 +340,6 @@ export function useVideoQueue(
       return changed ? next : prev
     })
   }, [segments, segmentGuideContext?.fullScene, sceneImageUrl, configsReady])
-  
-  // Local state for user-modified configs
-  const [userConfigs, setUserConfigs] = useState<Map<string, VideoGenerationConfig>>(new Map())
   
   // Rendering state
   const [isRendering, setIsRendering] = useState(false)
