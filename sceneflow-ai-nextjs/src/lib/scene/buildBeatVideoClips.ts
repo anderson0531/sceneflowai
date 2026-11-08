@@ -52,6 +52,7 @@ export interface BuildBeatVideoClipsArgs {
   sceneIndex?: number
   scenes?: Array<Record<string, unknown> | null | undefined>
   sceneTranslations?: Record<string, Record<number, StoredSceneLines>>
+  timedDialogueOverrides?: Record<string, string>
 }
 
 /**
@@ -76,6 +77,7 @@ export function buildBeatVideoClips({
   sceneIndex,
   scenes,
   sceneTranslations,
+  timedDialogueOverrides,
 }: BuildBeatVideoClipsArgs): BeatVideoClip[] {
   const sceneRecord = scene ?? null
   const isLangStream = isLanguageClipTarget(streamLanguage)
@@ -231,7 +233,32 @@ export function buildBeatVideoClips({
           isExcerpt,
         })
       }
-      if (segment?.languageVersions?.[langKey]) {
+      const targetDurationSeconds = Math.min(
+        10,
+        Math.max(
+          3,
+          typeof beat.durationSeconds === 'number' && beat.durationSeconds > 0
+            ? beat.durationSeconds
+            : 10
+        )
+      )
+      if (
+        translatedLine &&
+        beat.kind !== 'title' &&
+        !isStoredTranslationTimedForShot(
+          englishLine,
+          translatedLine,
+          langKey,
+          targetDurationSeconds
+        )
+      ) {
+        translatedLine = undefined
+      }
+      const overrideLine = timedDialogueOverrides?.[beat.beatId]?.trim()
+      if (overrideLine) {
+        translatedLine = overrideLine
+      }
+      if (!translatedLine && segment?.languageVersions?.[langKey]) {
         const langSet = segment.languageVersions[langKey]
         const langTake =
           langSet.takes.find((t) => t.id === langSet.currentTakeId) ??
@@ -241,8 +268,13 @@ export function buildBeatVideoClips({
           fromTakePrompt &&
           normalizeSpokenMatchKey(fromTakePrompt) !==
             normalizeSpokenMatchKey(englishLine) &&
-          (!translatedLine ||
-            !isStoredTranslationTimedForShot(englishLine, translatedLine, langKey))
+          (beat.kind === 'title' ||
+            isStoredTranslationTimedForShot(
+              englishLine,
+              fromTakePrompt,
+              langKey,
+              targetDurationSeconds
+            ))
         ) {
           translatedLine = fromTakePrompt
         }

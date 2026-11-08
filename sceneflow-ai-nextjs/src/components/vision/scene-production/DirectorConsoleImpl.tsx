@@ -895,6 +895,108 @@ export function DirectorConsoleRoot({
     return previousSegment.references?.endFrameUrl || null
   }, [editingVideoSegment, segments])
 
+  const [timedDialogueOverrides, setTimedDialogueOverrides] = useState<
+    Record<string, Record<string, string>>
+  >({})
+  const inFlightTimedKeysRef = useRef<Set<string>>(new Set())
+
+  useEffect(() => {
+    const rawLang = productionTarget.language
+    if (!isLanguageClipTarget(rawLang)) return
+    const langKey = normalizeStreamLanguage(rawLang)
+    const sceneRecord = (scene as Record<string, unknown> | undefined) ?? null
+    const allBeats = getSceneBeats(sceneRecord).filter((b) => !isBeatExcluded(b))
+    let cancelled = false
+
+    for (const beat of allBeats) {
+      if (beat.kind === 'action') continue
+      const seg = segments.find((s) => s.beatId === beat.beatId)
+      const englishLine = englishSpokenLine({
+        excerpt: seg?.dialoguePortion?.excerpt,
+        beatLine: beat.line,
+        dialogueLines: seg?.dialogueLines,
+      })
+      if (!englishLine.trim()) continue
+      const targetDurationSeconds = Math.min(
+        10,
+        Math.max(
+          3,
+          typeof beat.durationSeconds === 'number' && beat.durationSeconds > 0
+            ? beat.durationSeconds
+            : 10
+        )
+      )
+      const existingOverride = timedDialogueOverrides[langKey]?.[beat.beatId]?.trim()
+      if (
+        existingOverride &&
+        (beat.kind === 'title' ||
+          isStoredTranslationTimedForShot(
+            englishLine,
+            existingOverride,
+            langKey,
+            targetDurationSeconds
+          ))
+      ) {
+        continue
+      }
+      const isExcerpt = !beat.line?.trim() && !!seg?.dialoguePortion?.excerpt?.trim()
+      const stored = preferStoredSpokenTranslation({
+        translation: sceneIndex != null ? sceneTranslations?.[langKey]?.[sceneIndex] : undefined,
+        kind: beat.kind,
+        lineId: beat.lineId || seg?.dialoguePortion?.lineId,
+        beatId: beat.beatId,
+        dialogue: scene?.dialogue,
+        englishLine,
+        isExcerpt,
+      })
+      if (
+        stored &&
+        (beat.kind === 'title' ||
+          isStoredTranslationTimedForShot(englishLine, stored, langKey, targetDurationSeconds))
+      ) {
+        continue
+      }
+      const inFlightKey = `${langKey}:${beat.beatId}:${englishLine}`
+      if (inFlightTimedKeysRef.current.has(inFlightKey)) continue
+      inFlightTimedKeysRef.current.add(inFlightKey)
+
+      void translateGuideDialogueLine(englishLine, langKey, {
+        targetDurationSeconds,
+        adaptForTiming: beat.kind !== 'title',
+      })
+        .then((adapted) => {
+          if (cancelled || !adapted?.trim()) return
+          if (
+            beat.kind !== 'title' &&
+            !isStoredTranslationTimedForShot(englishLine, adapted, langKey, targetDurationSeconds)
+          ) {
+            return
+          }
+          setTimedDialogueOverrides((prev) => ({
+            ...prev,
+            [langKey]: {
+              ...(prev[langKey] ?? {}),
+              [beat.beatId]: adapted.trim(),
+            },
+          }))
+        })
+        .catch(() => {
+          inFlightTimedKeysRef.current.delete(inFlightKey)
+        })
+    }
+
+    return () => {
+      cancelled = true
+    }
+  }, [
+    productionTarget.language,
+    scene,
+    segments,
+    sceneIndex,
+    sceneTranslations,
+    timedDialogueOverrides,
+  ])
+
   const composeSegmentLanguageClip = useCallback(
     async (
       segment: SceneSegment,
@@ -996,11 +1098,36 @@ export function DirectorConsoleRoot({
       ) {
         translated = undefined
       }
+      const langKey = normalizeStreamLanguage(language)
+      if (!translated && beat?.beatId && timedDialogueOverrides[langKey]?.[beat.beatId]?.trim()) {
+        const candidateOverride = timedDialogueOverrides[langKey][beat.beatId].trim()
+        if (
+          beat.kind === 'title' ||
+          isStoredTranslationTimedForShot(
+            englishLine,
+            candidateOverride,
+            language,
+            targetDurationSeconds
+          )
+        ) {
+          translated = candidateOverride
+        }
+      }
       if (!translated && englishLine.trim()) {
         translated = await translateGuideDialogueLine(englishLine, language, {
           targetDurationSeconds,
           adaptForTiming: beat?.kind !== 'title',
         })
+        if (translated?.trim() && beat?.beatId) {
+          const cleanAdapted = translated.trim()
+          setTimedDialogueOverrides((prev) => ({
+            ...prev,
+            [langKey]: {
+              ...(prev[langKey] ?? {}),
+              [beat.beatId]: cleanAdapted,
+            },
+          }))
+        }
       }
       const userEdited = segment.userEditedPrompt?.trim()
       const hasGenuineUserEditedPrompt = Boolean(
@@ -1090,7 +1217,14 @@ export function DirectorConsoleRoot({
         guidePrompt: composed.guidePrompt ?? fallbackGuidePrompt,
       }
     },
-    [scene, scenes, sceneIndex, sceneTranslations, productionData?.mixerSettingsByLanguage]
+    [
+      scene,
+      scenes,
+      sceneIndex,
+      sceneTranslations,
+      productionData?.mixerSettingsByLanguage,
+      timedDialogueOverrides,
+    ]
   )
   
   // Handle saving config from dialog
@@ -2262,6 +2396,8 @@ export function DirectorConsoleRoot({
         sceneIndex,
         scenes: scenes as Array<Record<string, unknown> | null | undefined> | undefined,
         sceneTranslations,
+        timedDialogueOverrides:
+          timedDialogueOverrides[normalizeStreamLanguage(productionTarget.language)],
       }),
     [
       scene,
@@ -2272,6 +2408,7 @@ export function DirectorConsoleRoot({
       sceneIndex,
       scenes,
       sceneTranslations,
+      timedDialogueOverrides,
     ]
   )
 

@@ -314,10 +314,77 @@ export function buildTimedDialogueUserPrompt(args: {
 }
 
 /**
+ * Detect whether a candidate translation is truncated or incomplete relative to the English source line.
+ * Catches 1-word MAX_TOKENS cutoffs (e.g. "Ella"), dangling conjunction/pronoun cutoffs, and
+ * multi-clause lines cut off at an ellipsis ("Ella sabía que yo huiría...").
+ */
+export function isTruncatedTimedTranslation(
+  englishLine: string,
+  candidateLine: string | null | undefined,
+  targetLanguage: string
+): boolean {
+  const candidate = candidateLine?.trim() || ''
+  if (!candidate) return true
+  const english = englishLine?.trim() || ''
+  if (!english) return false
+
+  const { body: englishBody } = extractLeadingPerformanceCue(english)
+  const { body: candidateBody } = extractLeadingPerformanceCue(candidate)
+  const cleanEnglish = englishBody.trim()
+  const cleanCandidate = candidateBody.trim()
+
+  if (!cleanEnglish) return false
+  if (!cleanCandidate) return true
+
+  const englishWords = cleanEnglish.split(/\s+/).filter(Boolean).length
+  const candidateWords = cleanCandidate.split(/\s+/).filter(Boolean).length
+
+  // 1. Word-count truncation guard (e.g. 1-word "Ella" for a multi-word sentence)
+  if (englishWords >= 3 && candidateWords < Math.max(2, Math.floor(englishWords * 0.35))) {
+    return true
+  }
+
+  // 2. Syllable-count truncation guard
+  const sourceSyllables = estimateSyllables(cleanEnglish, 'en')
+  const candidateSyllables = estimateSyllables(cleanCandidate, targetLanguage)
+  if (
+    sourceSyllables >= 4 &&
+    candidateSyllables <= Math.max(2, Math.floor(sourceSyllables * 0.48))
+  ) {
+    return true
+  }
+
+  // 3. Dangling subject pronoun / preposition / conjunction cutoff on multi-word lines
+  if (
+    englishWords >= 4 &&
+    /\b(?:ella|él|yo|tú|nosotros|ellos|ellas|que|de|en|con|para|por|sin|y|o|pero|como|cuando|si|la|el|los|las|un|una)\.?$/i.test(
+      cleanCandidate
+    )
+  ) {
+    return true
+  }
+
+  // 4. Multi-clause source lines where the translation cuts off at an ellipsis
+  const ellipsisSplit = cleanEnglish
+    .split(/\.{3,}|…/)
+    .map((s) => s.trim())
+    .filter(Boolean)
+  if (
+    ellipsisSplit.length >= 2 &&
+    estimateSyllables(ellipsisSplit[1], 'en') >= 6 &&
+    (/(\.{3,}|…)$/.test(cleanCandidate) ||
+      candidateSyllables <= Math.floor(sourceSyllables * 0.55))
+  ) {
+    return true
+  }
+
+  return false
+}
+
+/**
  * Determine whether a stored translation is properly timed and complete for a shot.
- * Rejects truncated first-clause fragments (e.g. "Ella sabía que yo huiría..." for a
- * 2-sentence 27-syllable English line) and unadapted literal translations that overflow
- * the shot's syllable budget.
+ * Rejects truncated fragments (e.g. "Ella", "Ella sabía que yo huiría...") and
+ * unadapted literal translations that overflow the shot's syllable budget.
  */
 export function isStoredTranslationTimedForShot(
   englishLine: string,
@@ -330,29 +397,14 @@ export function isStoredTranslationTimedForShot(
   const english = englishLine?.trim() || ''
   if (!english) return true
 
+  if (isTruncatedTimedTranslation(english, stored, targetLanguage)) {
+    return false
+  }
+
   const sourceSyllables = estimateSyllables(english, 'en')
   if (sourceSyllables <= 0) return true
 
   const storedSyllables = estimateSyllables(stored, targetLanguage)
-
-  // 1. Reject truncated fragments where less than half the line was translated
-  if (sourceSyllables >= 14 && storedSyllables <= Math.floor(sourceSyllables * 0.48)) {
-    return false
-  }
-
-  // 2. Reject multi-clause source lines where the stored translation cuts off at an ellipsis
-  const { body: englishBody } = extractLeadingPerformanceCue(english)
-  const { body: storedBody } = extractLeadingPerformanceCue(stored)
-  const ellipsisSplit = englishBody.split(/\.{3,}|…/).map((s) => s.trim()).filter(Boolean)
-  if (
-    ellipsisSplit.length >= 2 &&
-    estimateSyllables(ellipsisSplit[1], 'en') >= 8 &&
-    (/(\.{3,}|…)$/.test(storedBody) || storedSyllables <= Math.floor(sourceSyllables * 0.55))
-  ) {
-    return false
-  }
-
-  // 3. Reject unadapted literal translations that overflow the shot's syllable budget
   const window = computeTargetSyllableWindow(english, targetDurationSeconds, targetLanguage)
   if (sourceSyllables >= 14 && storedSyllables > window.maxSyllables + 4) {
     return false

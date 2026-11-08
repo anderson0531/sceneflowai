@@ -8,6 +8,7 @@ import {
   estimateSyllables,
   extractLeadingPerformanceCue,
   isStoredTranslationTimedForShot,
+  isTruncatedTimedTranslation,
   preserveLeadingPerformanceCue,
   type DialogueCadenceAnalysis,
   type DialogueCadenceKind,
@@ -22,6 +23,7 @@ export {
   estimateSyllables,
   extractLeadingPerformanceCue,
   isStoredTranslationTimedForShot,
+  isTruncatedTimedTranslation,
   preserveLeadingPerformanceCue,
   type DialogueCadenceAnalysis,
   type DialogueCadenceKind,
@@ -80,6 +82,7 @@ function isWithinTolerance(value: number, target: number, tolerancePercent: numb
 function cleanLlmLine(raw: string): string {
   return raw
     .trim()
+    .replace(/^(?:output|translated\s+dialogue|finalized\s+line)\s*:\s*/i, '')
     .replace(/^["'`]+|["'`]+$/g, '')
     .replace(/\s+/g, ' ')
     .trim()
@@ -106,9 +109,9 @@ async function rewriteEnglishForTiming(
   const result = await generateText(prompt, {
     model: 'gemini-2.5-flash',
     temperature: 0.2,
-    maxOutputTokens: 180,
+    maxOutputTokens: 2048,
     responseMimeType: 'text/plain',
-    thinkingLevel: 'minimal',
+    thinkingBudget: 256,
     timeoutMs: 12000,
     maxRetries: 1,
   })
@@ -259,13 +262,17 @@ export async function translateAndAdaptTimedDialogue(
   }
 
   try {
+    // IMPORTANT: In Vertex AI Gemini 2.5, `max_output_tokens` caps `thoughtsTokenCount + candidatesTokenCount`
+    // combined, and `gemini.ts` omits `thinking_config` when `thinkingBudget: 0` (triggering default dynamic
+    // thinking). Always pass a generous `maxOutputTokens` (4096) with an explicit non-zero `thinkingBudget`
+    // (512) so internal thinking never starves the visible translation output.
     const firstPass = await generateText(prompt, {
       model: 'gemini-2.5-flash',
       systemInstruction: TIMED_DIALOGUE_ADAPTATION_SYSTEM_INSTRUCTION,
       temperature: 0.25,
-      maxOutputTokens: 240,
+      maxOutputTokens: 4096,
       responseMimeType: 'text/plain',
-      thinkingBudget: 0,
+      thinkingBudget: 512,
       timeoutMs: 15000,
       maxRetries: 1,
     })
@@ -274,26 +281,39 @@ export async function translateAndAdaptTimedDialogue(
     if (adapted) {
       adapted = preserveLeadingPerformanceCue(source, adapted)
       let adaptedSyllables = estimateSyllables(adapted, targetLang)
+      const firstPassTruncated =
+        firstPass.finishReason === 'MAX_TOKENS' ||
+        isTruncatedTimedTranslation(source, adapted, targetLang)
 
-      // If the first pass is still significantly over the syllable ceiling, run one tightening pass
-      if (sourceSyllables >= 12 && adaptedSyllables > window.maxSyllables + 4) {
+      // If the first pass was truncated OR significantly exceeds the syllable ceiling, run a second pass
+      if (
+        firstPassTruncated ||
+        (sourceSyllables >= 12 && adaptedSyllables > window.maxSyllables + 4)
+      ) {
         try {
-          const tightenPrompt = [
-            prompt,
-            '',
-            `Draft translation (${adaptedSyllables} syllables — exceeds maximum of ${window.maxSyllables} syllables):`,
-            `"${adapted}"`,
-            '',
-            `Condense the entire line in ${languageName} to ${window.minSyllables}–${window.maxSyllables} syllables maximum while keeping all emotional beats, metaphors, ellipses, and bracketed performance cues intact. Never drop the second half of the thought. Return only the finalized line.`,
-          ].join('\n')
+          const secondPassPrompt = firstPassTruncated
+            ? [
+                prompt,
+                '',
+                `Previous draft was incomplete/cut off: "${adapted}"`,
+                `Translate and adapt the ENTIRE source line from start to finish into ${languageName} within ${window.minSyllables}–${window.maxSyllables} syllables. Keep all emotional beats, metaphors, ellipses, and bracketed performance cues intact. Never stop after the first word or clause. Return only the finalized line.`,
+              ].join('\n')
+            : [
+                prompt,
+                '',
+                `Draft translation (${adaptedSyllables} syllables — exceeds maximum of ${window.maxSyllables} syllables):`,
+                `"${adapted}"`,
+                '',
+                `Condense the entire line in ${languageName} to ${window.minSyllables}–${window.maxSyllables} syllables maximum while keeping all emotional beats, metaphors, ellipses, and bracketed performance cues intact. Never drop the second half of the thought. Return only the finalized line.`,
+              ].join('\n')
 
-          const secondPass = await generateText(tightenPrompt, {
+          const secondPass = await generateText(secondPassPrompt, {
             model: 'gemini-2.5-flash',
             systemInstruction: TIMED_DIALOGUE_ADAPTATION_SYSTEM_INSTRUCTION,
             temperature: 0.2,
-            maxOutputTokens: 200,
+            maxOutputTokens: 4096,
             responseMimeType: 'text/plain',
-            thinkingBudget: 0,
+            thinkingBudget: 256,
             timeoutMs: 12000,
             maxRetries: 0,
           })
@@ -301,33 +321,43 @@ export async function translateAndAdaptTimedDialogue(
           if (tightened) {
             const candidate = preserveLeadingPerformanceCue(source, tightened)
             const candidateSyllables = estimateSyllables(candidate, targetLang)
+            const candidateTruncated =
+              secondPass.finishReason === 'MAX_TOKENS' ||
+              isTruncatedTimedTranslation(source, candidate, targetLang)
             if (
+              !candidateTruncated &&
               candidateSyllables > 0 &&
-              candidateSyllables < adaptedSyllables &&
-              candidateSyllables >= Math.floor(window.minSyllables * 0.6)
+              (firstPassTruncated || candidateSyllables < adaptedSyllables)
             ) {
               adapted = candidate
               adaptedSyllables = candidateSyllables
             }
           }
         } catch {
-          // Keep first-pass adaptation if tightening pass fails
+          // Handled by completeness validation below
         }
       }
 
-      return {
-        translatedText: adapted,
-        diagnostics: {
-          enabled: true,
-          strategy: 'llm-rewrite',
-          usedFallback: false,
-          sourceSyllables,
-          adaptedSyllables,
-          targetSyllableBudget: window.maxSyllables,
-          tolerancePercent: DEFAULT_TOLERANCE_PERCENT,
-          withinTolerance: adaptedSyllables <= window.maxSyllables + 2,
-        },
+      // Only return the LLM adaptation if it is complete (never return a truncated 1-word fragment like "Ella")
+      if (!isTruncatedTimedTranslation(source, adapted, targetLang)) {
+        return {
+          translatedText: adapted,
+          diagnostics: {
+            enabled: true,
+            strategy: 'llm-rewrite',
+            usedFallback: false,
+            sourceSyllables,
+            adaptedSyllables,
+            targetSyllableBudget: window.maxSyllables,
+            tolerancePercent: DEFAULT_TOLERANCE_PERCENT,
+            withinTolerance: adaptedSyllables <= window.maxSyllables + 2,
+          },
+        }
       }
+
+      console.warn(
+        `[Timed Dialogue Adaptation] Rejecting truncated LLM output for ${targetLang} ("${adapted.slice(0, 40)}"), falling back to Vertex translation.`
+      )
     }
   } catch (llmError: any) {
     console.warn(

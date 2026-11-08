@@ -142,6 +142,12 @@ describe('Timed Dialogue Adaptation & Translation', () => {
 
   it('validates stored translations against truncation and syllable overflow via isStoredTranslationTimedForShot', () => {
     expect(
+      isStoredTranslationTimedForShot(sourceWeepingLine, 'Ella', 'es', 10)
+    ).toBe(false)
+    expect(
+      isStoredTranslationTimedForShot(sourceWeepingLine, '[fragile, weeping] Ella', 'es', 10)
+    ).toBe(false)
+    expect(
       isStoredTranslationTimedForShot(sourceWeepingLine, truncatedSpanishLine, 'es', 10)
     ).toBe(false)
     expect(
@@ -150,6 +156,58 @@ describe('Timed Dialogue Adaptation & Translation', () => {
     expect(
       isStoredTranslationTimedForShot(sourceWeepingLine, adaptedSpanishLine, 'es', 10)
     ).toBe(true)
+  })
+
+  it('retries and never returns a 1-word MAX_TOKENS cutoff like "Ella" from first pass', async () => {
+    vi.mocked(generateText)
+      .mockResolvedValueOnce({
+        text: '[fragile, weeping] Ella',
+        finishReason: 'MAX_TOKENS',
+      } as any)
+      .mockResolvedValueOnce({
+        text: adaptedSpanishLine,
+        finishReason: 'STOP',
+      } as any)
+
+    const result = await translateAndAdaptTimedDialogue({
+      sourceText: sourceWeepingLine,
+      targetLanguage: 'es',
+      targetDurationSeconds: 10,
+    })
+
+    expect(generateText).toHaveBeenCalledTimes(2)
+    const [, firstOptions] = vi.mocked(generateText).mock.calls[0]
+    expect(firstOptions?.maxOutputTokens).toBeGreaterThanOrEqual(2048)
+    expect(firstOptions?.thinkingBudget).toBeGreaterThan(0)
+    expect(result.translatedText).toBe(adaptedSpanishLine)
+  })
+
+  it('falls back to full Vertex NMT if both LLM passes return a truncated 1-word fragment like "Ella"', async () => {
+    vi.mocked(generateText)
+      .mockResolvedValueOnce({
+        text: '[fragile, weeping] Ella',
+        finishReason: 'MAX_TOKENS',
+      } as any)
+      .mockResolvedValueOnce({
+        text: '[fragile, weeping] Ella',
+        finishReason: 'MAX_TOKENS',
+      } as any)
+    vi.mocked(translateWithVertexAI).mockResolvedValueOnce({
+      translatedText:
+        'Ella sabía que yo huiría... Sabía que inventaría mil excusas matemáticas solo para seguir con vida en la oscuridad.',
+      sourceLanguage: 'en',
+      targetLanguage: 'es',
+    })
+
+    const result = await translateAndAdaptTimedDialogue({
+      sourceText: sourceWeepingLine,
+      targetLanguage: 'es',
+      targetDurationSeconds: 10,
+    })
+
+    expect(result.translatedText).toContain('Ella sabía que yo huiría')
+    expect(result.translatedText).not.toBe('[fragile, weeping] Ella')
+    expect(result.diagnostics.usedFallback).toBe(true)
   })
 
   it('falls back to Vertex NMT while preserving leading performance cues if LLM fails', async () => {
