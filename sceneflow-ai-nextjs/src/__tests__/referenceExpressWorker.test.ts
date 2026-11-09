@@ -437,6 +437,35 @@ describe('resolveReferenceExpressWindow', () => {
     expect(resolveReferenceExpressWindow(mixed, 0, 2)).toBe(1)
     expect(resolveReferenceExpressWindow(mixed, 1, 2)).toBe(1)
   })
+
+  it('batches wardrobe items across different characters while separating wardrobes of the same character', () => {
+    const wardrobes: ReferenceExpressItem[] = [
+      {
+        kind: 'cast',
+        targetId: 'c1',
+        wardrobeId: 'w-c1-base',
+        label: 'Mira — Default',
+        sourceFingerprint: 'w1',
+      },
+      {
+        kind: 'cast',
+        targetId: 'c2',
+        wardrobeId: 'w-c2-base',
+        label: 'Bo — Default',
+        sourceFingerprint: 'w2',
+      },
+      {
+        kind: 'cast',
+        targetId: 'c1',
+        wardrobeId: 'w-c1-scene2',
+        label: 'Mira — Scene 2',
+        sourceFingerprint: 'w3',
+      },
+    ]
+    // First two belong to c1 and c2 -> share window 1; third belongs to c1 -> starts window 2
+    expect(resolveReferenceExpressWindow(wardrobes, 0, 6)).toBe(2)
+    expect(resolveReferenceExpressWindow(wardrobes, 2, 6)).toBe(1)
+  })
 })
 
 describe('runReferenceExpressStep concurrency', () => {

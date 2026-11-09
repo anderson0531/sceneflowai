@@ -70,6 +70,146 @@ export interface FullBodyWardrobePromptInput {
   hairAnchor?: string
   /** Scene-state marks (bruises, makeup wear, exhaustion) to bake into the wardrobe image. */
   appearanceNotes?: string
+  /** Drawn full-body URL of the base or preceding wardrobe for continuity transitions. */
+  baseWardrobeUrl?: string
+  /** Description of the base or preceding wardrobe being transitioned from. */
+  baseWardrobeDescription?: string
+  /** Name of the base or preceding wardrobe (e.g. "Default", "Scene 1"). */
+  baseWardrobeName?: string
+}
+
+export interface WardrobeTransitionCandidate {
+  id?: string
+  name?: string
+  description?: string
+  accessories?: string
+  appearanceNotes?: string
+  isDefault?: boolean
+  sceneNumbers?: number[]
+  fullBodyUrl?: string
+  headshotUrl?: string
+  previewImageUrl?: string
+}
+
+export interface ResolvedAnchorWardrobe {
+  baseWardrobeUrl: string
+  baseWardrobeName?: string
+  baseWardrobeDescription?: string
+}
+
+function getDrawnWardrobeFullBodyUrl(w?: WardrobeTransitionCandidate | null): string | undefined {
+  if (!w) return undefined
+  const url = w.fullBodyUrl?.trim() || w.previewImageUrl?.trim()
+  return url || undefined
+}
+
+function formatAnchorWardrobeText(w: WardrobeTransitionCandidate): string | undefined {
+  const parts = [w.description?.trim(), w.accessories?.trim(), w.appearanceNotes?.trim()].filter(
+    Boolean
+  ) as string[]
+  return parts.length > 0 ? parts.join('. ') : undefined
+}
+
+/**
+ * Resolve the best drawn baseline or preceding wardrobe reference for a wardrobe transition.
+ * - For a scene-specific or non-default wardrobe, prefers the closest preceding drawn wardrobe
+ *   in scene order, falling back to the character's default/first drawn wardrobe.
+ * - When regenerating a single existing wardrobe with newly added scene appearance notes,
+ *   anchors to its own existing fullBodyUrl so the underlying garment stays consistent.
+ */
+export function resolveAnchorWardrobeForTransition(
+  wardrobes: ReadonlyArray<WardrobeTransitionCandidate> | null | undefined,
+  targetWardrobe: WardrobeTransitionCandidate | null | undefined
+): ResolvedAnchorWardrobe | undefined {
+  if (!Array.isArray(wardrobes) || wardrobes.length === 0 || !targetWardrobe) {
+    return undefined
+  }
+
+  const targetId = targetWardrobe.id
+  const targetIndex = targetId ? wardrobes.findIndex((w) => w.id === targetId) : -1
+  const targetScenes = Array.isArray(targetWardrobe.sceneNumbers)
+    ? targetWardrobe.sceneNumbers.filter((n) => typeof n === 'number' && Number.isFinite(n))
+    : []
+  const minTargetScene = targetScenes.length > 0 ? Math.min(...targetScenes) : undefined
+
+  const otherDrawn = wardrobes.filter(
+    (w, idx) =>
+      (targetId ? w.id !== targetId : idx !== targetIndex) && Boolean(getDrawnWardrobeFullBodyUrl(w))
+  )
+
+  if (otherDrawn.length > 0) {
+    // 1. If target is tied to specific scene numbers, pick the closest preceding drawn wardrobe by scene number
+    if (minTargetScene !== undefined) {
+      let bestPreceding: WardrobeTransitionCandidate | undefined
+      let bestMaxScene = -Infinity
+      for (const candidate of otherDrawn) {
+        const candidateScenes = Array.isArray(candidate.sceneNumbers)
+          ? candidate.sceneNumbers.filter((n) => typeof n === 'number' && Number.isFinite(n) && n <= minTargetScene)
+          : []
+        if (candidateScenes.length > 0) {
+          const maxScene = Math.max(...candidateScenes)
+          if (maxScene >= bestMaxScene) {
+            bestMaxScene = maxScene
+            bestPreceding = candidate
+          }
+        }
+      }
+      if (bestPreceding) {
+        const url = getDrawnWardrobeFullBodyUrl(bestPreceding)!
+        return {
+          baseWardrobeUrl: url,
+          baseWardrobeName: bestPreceding.name?.trim() || undefined,
+          baseWardrobeDescription: formatAnchorWardrobeText(bestPreceding),
+        }
+      }
+    }
+
+    // 2. If target appears after an earlier drawn wardrobe in list order (and target is not the explicit default),
+    // pick the immediately preceding drawn wardrobe
+    if (!targetWardrobe.isDefault && targetIndex > 0) {
+      for (let i = targetIndex - 1; i >= 0; i--) {
+        const candidate = wardrobes[i]
+        const url = getDrawnWardrobeFullBodyUrl(candidate)
+        if (url) {
+          return {
+            baseWardrobeUrl: url,
+            baseWardrobeName: candidate.name?.trim() || undefined,
+            baseWardrobeDescription: formatAnchorWardrobeText(candidate),
+          }
+        }
+      }
+    }
+
+    // 3. Fall back to the default or first drawn wardrobe (when target itself is not default)
+    if (!targetWardrobe.isDefault) {
+      const defaultDrawn = otherDrawn.find((w) => w.isDefault) || otherDrawn[0]
+      if (defaultDrawn) {
+        const url = getDrawnWardrobeFullBodyUrl(defaultDrawn)!
+        return {
+          baseWardrobeUrl: url,
+          baseWardrobeName: defaultDrawn.name?.trim() || undefined,
+          baseWardrobeDescription: formatAnchorWardrobeText(defaultDrawn),
+        }
+      }
+    }
+  }
+
+  // 4. Same wardrobe being updated with scene continuity / appearance notes: anchor to its own drawn fullBodyUrl
+  const selfUrl = getDrawnWardrobeFullBodyUrl(targetWardrobe)
+  if (selfUrl && targetWardrobe.appearanceNotes?.trim()) {
+    return {
+      baseWardrobeUrl: selfUrl,
+      baseWardrobeName: targetWardrobe.name?.trim() || undefined,
+      baseWardrobeDescription: [
+        targetWardrobe.description?.trim(),
+        targetWardrobe.accessories?.trim(),
+      ]
+        .filter(Boolean)
+        .join('. ') || undefined,
+    }
+  }
+
+  return undefined
 }
 
 function formatWardrobeLine(description: string): string {
@@ -248,6 +388,20 @@ export function buildFullBodyWardrobePrompt(input: FullBodyWardrobePromptInput):
 
   if (input.appearanceDescription?.trim()) {
     lines.push(`Identity notes: ${input.appearanceDescription.trim()}.`)
+  }
+
+  if (input.baseWardrobeUrl?.trim()) {
+    const baseLabel = input.baseWardrobeName?.trim()
+      ? ` (${input.baseWardrobeName.trim()})`
+      : ''
+    const baseDesc = input.baseWardrobeDescription?.trim()
+      ? ` Baseline outfit for reference: ${input.baseWardrobeDescription.trim()}.`
+      : ''
+    lines.push(
+      '',
+      `WARDROBE CONTINUITY & TRANSITION LOCK: Reference Image 1 is the Character Identity portrait (facial likeness lock). Reference Image 2 is the Character's Baseline/Preceding Wardrobe full-body reference${baseLabel}.${baseDesc}`,
+      'Maintain strict garment cut, fabric texture, color palette, fit, footwear, and body-proportion continuity with Reference Image 2 wherever the outfit overlaps or transitions from the baseline look, applying ONLY the directed wardrobe/state modifications below rather than inventing a new costume from scratch.'
+    )
   }
 
   if (wardrobeParts.length) {

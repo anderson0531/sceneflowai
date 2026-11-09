@@ -268,21 +268,40 @@ export function planReferenceExpressItems(
   })
 
   if (includeNested) {
+    const perCharacterWardrobeItems: ReferenceExpressItem[][] = []
     input.characters.forEach((character, index) => {
       if (character.type === 'narrator') return
       const targetId = resolveCharacterId(character, index)
       const characterName = character.name?.trim() || `Character ${index + 1}`
-      for (const wardrobe of character.wardrobes || []) {
-        if (!wardrobeNeedsGeneration(character, wardrobe, 'stale')) continue
-        items.push({
-          kind: 'cast',
-          targetId,
-          wardrobeId: wardrobe.id,
-          label: `${characterName} — ${wardrobe.name?.trim() || 'Wardrobe'}`,
-          sourceFingerprint: wardrobeFingerprint(wardrobe),
+      const queuedWardrobes = (character.wardrobes || [])
+        .filter((wardrobe) => wardrobeNeedsGeneration(character, wardrobe, 'stale'))
+        .slice()
+        .sort((a, b) => {
+          const aDefault = (a as { isDefault?: boolean }).isDefault ? 0 : 1
+          const bDefault = (b as { isDefault?: boolean }).isDefault ? 0 : 1
+          return aDefault - bDefault
         })
+      if (queuedWardrobes.length > 0) {
+        perCharacterWardrobeItems.push(
+          queuedWardrobes.map((wardrobe) => ({
+            kind: 'cast' as const,
+            targetId,
+            wardrobeId: wardrobe.id,
+            label: `${characterName} — ${wardrobe.name?.trim() || 'Wardrobe'}`,
+            sourceFingerprint: wardrobeFingerprint(wardrobe),
+          }))
+        )
       }
     })
+    const maxDepth = perCharacterWardrobeItems.reduce(
+      (max, list) => Math.max(max, list.length),
+      0
+    )
+    for (let depth = 0; depth < maxDepth; depth += 1) {
+      for (const list of perCharacterWardrobeItems) {
+        if (list[depth]) items.push(list[depth]!)
+      }
+    }
   }
 
   const orderedLocations = sortLocationsParentsFirst(input.locations)

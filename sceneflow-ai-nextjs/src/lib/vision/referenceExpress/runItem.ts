@@ -32,6 +32,7 @@ import {
 } from '@/lib/vision/mountedSetFixtures'
 import { resolveParentLocationAnchor } from '@/lib/vision/locationFamily'
 import { generateAndUploadFullBodyWardrobe } from '@/lib/character/sceneCharacterHeadshot'
+import { resolveAnchorWardrobeForTransition } from '@/lib/character/characterReferencePrompts'
 import {
   composeUploadAndPersistCombinedCharacterRef,
   recomposeCombinedCharacterRefsForCast,
@@ -347,6 +348,7 @@ async function runWardrobeItem(input: {
 
   const usedFingerprint = wardrobeFingerprint(wardrobe)
   const uploadPath = `characters/${projectId}/${item.targetId}/wardrobes/${wardrobe.id}/full-body-${Date.now()}.png`
+  const anchorWardrobe = resolveAnchorWardrobeForTransition(character.wardrobes, wardrobe)
 
   const generated = await generateAndUploadFullBodyWardrobe(
     {
@@ -359,6 +361,13 @@ async function runWardrobeItem(input: {
       hairStyle: typeof character.hairStyle === 'string' ? character.hairStyle : undefined,
       hairColor: typeof character.hairColor === 'string' ? character.hairColor : undefined,
       existingFullBodyUrl: wardrobe.fullBodyUrl,
+      ...(anchorWardrobe
+        ? {
+            baseWardrobeUrl: anchorWardrobe.baseWardrobeUrl,
+            baseWardrobeDescription: anchorWardrobe.baseWardrobeDescription,
+            baseWardrobeName: anchorWardrobe.baseWardrobeName,
+          }
+        : {}),
       forceRegenerate:
         item.forceRegenerate === true ||
         !!wardrobe.needsImageRegen ||

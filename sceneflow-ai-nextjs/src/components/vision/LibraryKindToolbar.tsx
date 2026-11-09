@@ -19,9 +19,9 @@ export function LibraryKindToolbar({
   agentTitle,
   extra,
 }: {
-  updateLabel: string
+  updateLabel?: string
   agentLabel: string
-  onUpdate: () => void
+  onUpdate?: () => void
   onAgent?: () => void
   isUpdating?: boolean
   isAgentRunning?: boolean
@@ -34,22 +34,24 @@ export function LibraryKindToolbar({
 }) {
   return (
     <div className="flex items-center gap-2 flex-wrap">
-      <Button
-        type="button"
-        variant="outline"
-        size="sm"
-        onClick={onUpdate}
-        disabled={updateDisabled || isUpdating || isAgentRunning}
-        title={updateTitle}
-        className="h-7 text-xs font-medium"
-      >
-        {isUpdating ? (
-          <Loader2 className="w-3.5 h-3.5 mr-1 animate-spin" />
-        ) : (
-          <RefreshCw className="w-3.5 h-3.5 mr-1" />
-        )}
-        {updateLabel}
-      </Button>
+      {updateLabel && onUpdate ? (
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          onClick={onUpdate}
+          disabled={updateDisabled || isUpdating || isAgentRunning}
+          title={updateTitle}
+          className="h-7 text-xs font-medium"
+        >
+          {isUpdating ? (
+            <Loader2 className="w-3.5 h-3.5 mr-1 animate-spin" />
+          ) : (
+            <RefreshCw className="w-3.5 h-3.5 mr-1" />
+          )}
+          {updateLabel}
+        </Button>
+      ) : null}
       {onAgent ? (
         <Button
           type="button"

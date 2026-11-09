@@ -31,13 +31,15 @@ describe('a Reference Express run quotes itself before the click', () => {
       { kind: 'prop' },
       { kind: 'prop' },
       { kind: 'prop' },
+      { kind: 'prop' },
+      { kind: 'prop' },
     ])
 
-    expect(estimate.itemCount).toBe(6)
+    expect(estimate.itemCount).toBe(8)
     expect(estimate.seconds).toBe(
       SECONDS_PER_ITEM.cast + SECONDS_PER_ITEM.location + SECONDS_PER_ITEM.prop
     )
-    expect(estimate.credits).toBe(CAST_ITEM_CREDITS + IMAGE_CREDIT * 5)
+    expect(estimate.credits).toBe(CAST_ITEM_CREDITS + IMAGE_CREDIT * 7)
   })
 
   it('quotes a serial run when concurrency is turned off', () => {

@@ -76,6 +76,12 @@ export interface FullBodyWardrobeInput {
   appearanceNotes?: string
   /** Existing full-body wardrobe URL — reused unless forceRegenerate */
   existingFullBodyUrl?: string
+  /** Drawn full-body URL of the base or preceding wardrobe for continuity transitions */
+  baseWardrobeUrl?: string
+  /** Description of the base or preceding wardrobe being transitioned from */
+  baseWardrobeDescription?: string
+  /** Name of the base or preceding wardrobe (e.g. "Default", "Scene 1") */
+  baseWardrobeName?: string
   forceRegenerate?: boolean
   /** Directed prompt; when set, skip rebuild from outfit fields. */
   promptOverride?: string
@@ -377,19 +383,34 @@ export async function generateFullBodyWardrobeImage(
     wardrobeAccessories: input.wardrobeAccessories,
     hairAnchor,
     appearanceNotes: input.appearanceNotes,
+    baseWardrobeUrl: input.baseWardrobeUrl,
+    baseWardrobeDescription: input.baseWardrobeDescription,
+    baseWardrobeName: input.baseWardrobeName,
   })
+
+  const referenceImages: Array<{ imageUrl: string; name: string }> = [
+    {
+      imageUrl: input.identityReferenceUrl,
+      name: `Identity: ${input.characterName}`,
+    },
+  ]
+
+  const baseWardrobeUrl = input.baseWardrobeUrl?.trim()
+  if (baseWardrobeUrl && baseWardrobeUrl !== input.identityReferenceUrl.trim()) {
+    referenceImages.push({
+      imageUrl: baseWardrobeUrl,
+      name: `Baseline Wardrobe: ${input.characterName}${
+        input.baseWardrobeName?.trim() ? ` (${input.baseWardrobeName.trim()})` : ''
+      }`,
+    })
+  }
 
   const result = await generateImageWithGeminiStudio({
     prompt,
     aspectRatio: FULL_BODY_WARDROBE_ASPECT_RATIO,
     imageSize: FULL_BODY_WARDROBE_IMAGE_SIZE,
     modelTier: FULL_BODY_WARDROBE_MODEL_TIER,
-    referenceImages: [
-      {
-        imageUrl: input.identityReferenceUrl,
-        name: `Identity: ${input.characterName}`,
-      },
-    ],
+    referenceImages,
     negativePrompt: mergePhysicsNegativePrompt(
       'mannequin, faceless figure, turnaround sheet, diptych, split panel, illustration, cartoon'
     ),

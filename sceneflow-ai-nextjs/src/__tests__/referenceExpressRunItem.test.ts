@@ -75,6 +75,11 @@ import {
   recomposeCombinedCharacterRefsForCast,
 } from '@/lib/character/combinedCharacterRef'
 import { generateAndUploadFullBodyWardrobe } from '@/lib/character/sceneCharacterHeadshot'
+import {
+  buildFullBodyWardrobePrompt,
+  resolveAnchorWardrobeForTransition,
+} from '@/lib/character/characterReferencePrompts'
+import { autoSyncCharactersFromScriptScenes } from '@/lib/character/detection'
 import { runReferenceExpressItem } from '@/lib/vision/referenceExpress/runItem'
 
 const mockGenerate = vi.mocked(generateCastReferenceImage)
@@ -358,5 +363,158 @@ describe('runReferenceExpressItem wardrobe path', () => {
         wardrobeUrl: 'https://cdn/mira-body.png',
       })
     )
+  })
+
+  it('anchors a transition wardrobe to the preceding drawn wardrobe reference', async () => {
+    mockLoadContext.mockResolvedValueOnce({
+      characters: [
+        {
+          ...CHARACTER,
+          referenceImage: 'https://cdn/mira-face.png',
+          wardrobes: [
+            {
+              id: 'w-base',
+              name: 'Default',
+              description: 'navy canvas dock coat, dark work trousers, heavy boots',
+              fullBodyUrl: 'https://cdn/mira-base-body.png',
+              isDefault: true,
+              sceneNumbers: [1],
+            },
+            {
+              id: 'w-scene2',
+              name: 'Scene 2 — Rain',
+              description: 'rain-soaked navy canvas dock coat, dark work trousers',
+              appearanceNotes: 'bloodshot eyes',
+              needsImageRegen: true,
+              sceneNumbers: [2],
+            },
+          ],
+        },
+      ],
+      locations: [],
+      props: [],
+      scenes: [],
+      screenplayContext: { genre: 'thriller' },
+    } as never)
+    mockFullBody.mockResolvedValueOnce({
+      imageUrl: 'https://cdn/mira-scene2-body.png',
+      prompt: 'wardrobe-transition',
+      generated: true,
+    })
+
+    const result = await runReferenceExpressItem({
+      userId: 'user-1',
+      projectId: 'project-1',
+      item: {
+        kind: 'cast',
+        targetId: 'c1',
+        label: 'Mira — Scene 2 — Rain',
+        sourceFingerprint: 'fp',
+        wardrobeId: 'w-scene2',
+      },
+    })
+
+    expect(result.status).toBe('succeeded')
+    expect(mockFullBody).toHaveBeenCalledWith(
+      expect.objectContaining({
+        identityReferenceUrl: 'https://cdn/mira-face.png',
+        baseWardrobeUrl: 'https://cdn/mira-base-body.png',
+        baseWardrobeName: 'Default',
+        baseWardrobeDescription: 'navy canvas dock coat, dark work trousers, heavy boots',
+      }),
+      expect.any(String)
+    )
+  })
+})
+
+describe('resolveAnchorWardrobeForTransition and buildFullBodyWardrobePrompt', () => {
+  it('selects the closest preceding drawn wardrobe and injects continuity transition instructions', () => {
+    const wardrobes = [
+      {
+        id: 'w1',
+        name: 'Default',
+        description: 'charcoal wool overcoat, leather boots',
+        fullBodyUrl: 'https://cdn/w1.png',
+        isDefault: true,
+        sceneNumbers: [1],
+      },
+      {
+        id: 'w2',
+        name: 'Lab Smock',
+        description: 'white lab coat over charcoal wool trousers',
+        fullBodyUrl: 'https://cdn/w2.png',
+        sceneNumbers: [2],
+      },
+      {
+        id: 'w3',
+        name: 'Tunnel — Chalk',
+        description: 'chalk-stained white lab coat over charcoal wool trousers',
+        appearanceNotes: 'chalk-stained knuckles',
+        sceneNumbers: [3],
+      },
+    ]
+
+    const anchor = resolveAnchorWardrobeForTransition(wardrobes, wardrobes[2])
+    expect(anchor).toEqual({
+      baseWardrobeUrl: 'https://cdn/w2.png',
+      baseWardrobeName: 'Lab Smock',
+      baseWardrobeDescription: 'white lab coat over charcoal wool trousers',
+    })
+
+    const prompt = buildFullBodyWardrobePrompt({
+      characterName: 'Gideon Croft',
+      wardrobeDescription: wardrobes[2]!.description,
+      appearanceNotes: wardrobes[2]!.appearanceNotes,
+      baseWardrobeUrl: anchor?.baseWardrobeUrl,
+      baseWardrobeName: anchor?.baseWardrobeName,
+      baseWardrobeDescription: anchor?.baseWardrobeDescription,
+    })
+
+    expect(prompt).toContain('WARDROBE CONTINUITY & TRANSITION LOCK')
+    expect(prompt).toContain('Reference Image 2')
+    expect(prompt).toContain('Lab Smock')
+  })
+})
+
+describe('autoSyncCharactersFromScriptScenes', () => {
+  it('auto-pushes newly introduced script cast members and flags stale existing wardrobes', () => {
+    const existing = [
+      {
+        id: 'c1',
+        name: 'Gideon Croft',
+        role: 'lead',
+        type: 'lead',
+        wardrobes: [
+          {
+            id: 'wd-1',
+            name: 'Default',
+            description: 'clean tweed jacket and dark trousers',
+            fullBodyUrl: 'https://cdn/gideon-body.png',
+            isDefault: true,
+          },
+        ],
+      },
+    ]
+
+    const scenes = [
+      {
+        sceneNumber: 1,
+        action:
+          'Gideon Croft enters wearing a bloodstained lab coat and protective goggles. Elena Vance steps out from the shadows wearing a dark trench coat.',
+        dialogue: [
+          { character: 'GIDEON CROFT', line: 'The loop refuses to close.' },
+          { character: 'ELENA VANCE', line: 'Then cut the power.' },
+        ],
+      },
+    ]
+
+    const synced = autoSyncCharactersFromScriptScenes(scenes, existing)
+    expect(synced.changed).toBe(true)
+    expect(synced.addedNames).toEqual(['ELENA VANCE'])
+    expect(synced.staledWardrobeCount).toBe(1)
+    expect(synced.characters).toHaveLength(2)
+    expect(synced.characters[0]!.wardrobes[0].needsImageRegen).toBe(true)
+    expect(synced.characters[1]!.name).toBe('ELENA VANCE')
+    expect(synced.characters[1]!.wardrobes?.[0]?.description).toContain('trench coat')
   })
 })

@@ -61,6 +61,7 @@ import {
   seedCastDirectorPrompt,
   seedWardrobeDirectorPrompt,
 } from "@/lib/intelligence/reference-still-director-fallback";
+import { resolveAnchorWardrobeForTransition } from "@/lib/character/characterReferencePrompts";
 import {
   AddCharacterModal,
   useOrphanCharacters,
@@ -333,6 +334,10 @@ async function regenerateWardrobeImage(
     .join(" ")
     .trim();
   const uploadPath = `characters/${projectId || "default"}/${characterId}/wardrobes/${wardrobe.id}/full-body-${Date.now()}.png`;
+  const anchorWardrobe = resolveAnchorWardrobeForTransition(
+    character.wardrobes,
+    wardrobe,
+  );
 
   const response = await fetch("/api/character/generate-scene-headshot", {
     method: "POST",
@@ -354,6 +359,13 @@ async function regenerateWardrobeImage(
       sceneAction,
       referenceMode: "fullBody",
       existingFullBodyUrl: wardrobe.fullBodyUrl,
+      ...(anchorWardrobe
+        ? {
+            baseWardrobeUrl: anchorWardrobe.baseWardrobeUrl,
+            baseWardrobeDescription: anchorWardrobe.baseWardrobeDescription,
+            baseWardrobeName: anchorWardrobe.baseWardrobeName,
+          }
+        : {}),
       forceRegenerate: !!wardrobe.fullBodyUrl,
       uploadPath,
       ...(wardrobe.generationPrompt?.trim()
@@ -402,7 +414,7 @@ async function regenerateStaleWardrobesBatch(
   targets: WardrobeRegenTarget[],
   projectId: string | undefined,
   onUpdateWardrobe: CharacterLibraryProps["onUpdateCharacterWardrobe"] | undefined,
-  limit = 3,
+  limit = 6,
 ): Promise<{ succeeded: number; failed: number }> {
   if (targets.length === 0) return { succeeded: 0, failed: 0 };
 
@@ -959,7 +971,13 @@ export function CharacterLibrary({
       return false;
     }
 
+    const syncRunId = `cast-wardrobe-sync:${projectId || "default"}`;
     setIsSyncingAllWardrobes(true);
+    startAgentRun({
+      id: syncRunId,
+      title: "Cast Agent",
+      subtitle: "Syncing cast looks from script — you can keep editing",
+    });
     try {
       const response = await fetch("/api/character/sync-wardrobes-from-script", {
         method: "POST",
@@ -1002,20 +1020,24 @@ export function CharacterLibrary({
       }
       const diffs = (body.diffs as WardrobeSyncDiffPreview[]) || [];
       if (!diffs.length) {
+        finishAgentRun(syncRunId, { subtitle: "Cast already matches script" });
         toast.info("Cast already matches the script");
         return true;
       }
       if (!onApplyWardrobeSyncDiffs) {
+        failAgentRun(syncRunId, "Wardrobe sync handler unavailable");
         toast.error("Wardrobe sync handler unavailable");
         return false;
       }
       await onApplyWardrobeSyncDiffs(diffs);
+      finishAgentRun(syncRunId, { subtitle: "Cast looks synced from script" });
       return true;
     } catch (error) {
       console.error("[Wardrobe Sync All] Error:", error);
-      toast.error(
-        error instanceof Error ? error.message : "Failed to sync all wardrobes",
-      );
+      const msg =
+        error instanceof Error ? error.message : "Failed to sync all wardrobes";
+      failAgentRun(syncRunId, msg);
+      toast.error(msg);
       return false;
     } finally {
       setIsSyncingAllWardrobes(false);
@@ -1051,21 +1073,21 @@ export function CharacterLibrary({
       targets,
       projectId,
       onUpdateCharacterWardrobe,
-      3,
+      6,
     );
   };
 
   const handleCastAgent = async () => {
     if (!onExpressGenerateReferences) return;
     if (isExpressGeneratingReferences) {
-      await onExpressGenerateReferences({ kinds: ["cast"] });
+      await onExpressGenerateReferences({ kinds: ["cast"], includeNestedStills: true });
       return;
     }
     setIsCastAgentRunning(true);
     try {
       const synced = await handleUpdateAllWardrobesFromScript();
       if (!synced) return;
-      await onExpressGenerateReferences({ kinds: ["cast"] });
+      await onExpressGenerateReferences({ kinds: ["cast"], includeNestedStills: true });
     } finally {
       setIsCastAgentRunning(false);
     }
@@ -1126,9 +1148,7 @@ export function CharacterLibrary({
           </div>
           {showCastToolbar && (
             <LibraryKindToolbar
-              updateLabel="Update Cast"
               agentLabel={castAgentLabel}
-              onUpdate={() => void handleUpdateAllWardrobesFromScript()}
               onAgent={
                 onExpressGenerateReferences
                   ? () => void handleCastAgent()
@@ -1139,9 +1159,7 @@ export function CharacterLibrary({
                 isCastAgentRunning || isExpressGeneratingReferences
               }
               agentHasWork={castAgentCount > 0}
-              updateDisabled={!scenes?.length || castCharacters.length === 0}
-              updateTitle="Rescan the script and update every character's scene looks"
-              agentTitle="Update wardrobes from the script, then draw missing cast identity stills and stale looks"
+              agentTitle="Sync wardrobes from the script, then draw missing cast identity stills and stale looks in the background"
               extra={mergeDuplicatesButton}
             />
           )}
@@ -1151,9 +1169,7 @@ export function CharacterLibrary({
       {compact && showCastToolbar && (
         <div className="mb-3 shrink-0">
           <LibraryKindToolbar
-            updateLabel="Update Cast"
             agentLabel={castAgentLabel}
-            onUpdate={() => void handleUpdateAllWardrobesFromScript()}
             onAgent={
               onExpressGenerateReferences
                 ? () => void handleCastAgent()
@@ -1164,9 +1180,7 @@ export function CharacterLibrary({
               isCastAgentRunning || isExpressGeneratingReferences
             }
             agentHasWork={castAgentCount > 0}
-            updateDisabled={!scenes?.length || castCharacters.length === 0}
-            updateTitle="Rescan the script and update every character's scene looks"
-            agentTitle="Update wardrobes from the script, then draw missing cast identity stills and stale looks"
+            agentTitle="Sync wardrobes from the script, then draw missing cast identity stills and stale looks in the background"
             extra={mergeDuplicatesButton}
           />
         </div>
@@ -1622,10 +1636,33 @@ const CharacterCard = ({
     ) : null;
     const directorOverlay = (
       <div
-        className={`absolute inset-0 z-10 bg-black/40 flex items-center justify-center gap-3 ${
+        className={`absolute inset-0 z-10 bg-black/40 flex items-center justify-center gap-2.5 ${
           hasWardrobeImage ? "opacity-0 group-hover:opacity-100 transition-opacity" : ""
         }`}
       >
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            if (isGenerating || !hasCharacterReferenceForVoice) return;
+            void handleGenerateWardrobeImage(w);
+          }}
+          disabled={isGenerating || !hasCharacterReferenceForVoice}
+          className="p-2.5 bg-indigo-600/80 hover:bg-indigo-600 rounded-full transition-colors disabled:opacity-50"
+          title={
+            !hasCharacterReferenceForVoice
+              ? "Generate character identity reference first"
+              : hasWardrobeImage
+                ? "Quick Regenerate Wardrobe"
+                : "Quick Generate Wardrobe"
+          }
+        >
+          {isGenerating ? (
+            <Loader className="w-4 h-4 text-white animate-spin" />
+          ) : (
+            <Zap className="w-4 h-4 text-white" />
+          )}
+        </button>
         <button
           type="button"
           onClick={(e) => {
@@ -1634,10 +1671,10 @@ const CharacterCard = ({
             setDirectorTarget({ kind: "wardrobe", wardrobeId: w.id });
           }}
           disabled={isGenerating}
-          className="p-3 bg-teal-600/90 hover:bg-teal-500 rounded-full transition-colors disabled:opacity-50"
+          className="p-2.5 bg-teal-600/90 hover:bg-teal-500 rounded-full transition-colors disabled:opacity-50"
           title="Director"
         >
-          <Clapperboard className="w-5 h-5 text-white" />
+          <Clapperboard className="w-4 h-4 text-white" />
         </button>
         {wardrobeImageUrl && (
           <button
@@ -1653,10 +1690,23 @@ const CharacterCard = ({
                 })
                 .catch(() => toast.error("Failed to download wardrobe image"));
             }}
-            className="p-3 bg-sky-600/80 hover:bg-sky-600 rounded-full transition-colors"
+            className="p-2.5 bg-sky-600/80 hover:bg-sky-600 rounded-full transition-colors"
             title="Download Image"
           >
-            <Download className="w-5 h-5 text-white" />
+            <Download className="w-4 h-4 text-white" />
+          </button>
+        )}
+        {expandedWardrobe?.id !== w.id && (
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              setExpandedWardrobe(w);
+            }}
+            className="p-2.5 bg-slate-700/80 hover:bg-slate-600 rounded-full transition-colors"
+            title="Expand Details"
+          >
+            <Maximize2 className="w-4 h-4 text-white" />
           </button>
         )}
       </div>
@@ -2996,6 +3046,10 @@ const CharacterCard = ({
         .join(" ")
         .trim();
       const uploadPath = `characters/${projectId || "default"}/${characterId}/wardrobes/${wardrobe.id}/full-body-${Date.now()}.png`;
+      const anchorWardrobe = resolveAnchorWardrobeForTransition(
+        wardrobes,
+        wardrobe,
+      );
 
       const response = await fetch("/api/character/generate-scene-headshot", {
         method: "POST",
@@ -3016,6 +3070,13 @@ const CharacterCard = ({
           sceneAction,
           referenceMode: "fullBody",
           existingFullBodyUrl: wardrobe.fullBodyUrl,
+          ...(anchorWardrobe
+            ? {
+                baseWardrobeUrl: anchorWardrobe.baseWardrobeUrl,
+                baseWardrobeDescription: anchorWardrobe.baseWardrobeDescription,
+                baseWardrobeName: anchorWardrobe.baseWardrobeName,
+              }
+            : {}),
           forceRegenerate: !!wardrobe.fullBodyUrl,
           uploadPath,
           ...(wardrobe.generationPrompt?.trim()
@@ -3137,22 +3198,35 @@ const CharacterCard = ({
       toast.error("Wardrobe update handler unavailable");
       return;
     }
+    const runId = `wardrobe-regen:${characterId}`;
     setIsRegeneratingStale(true);
+    startAgentRun({
+      id: runId,
+      title: "Wardrobe Agent",
+      subtitle: `Updating ${targets.length} wardrobe look(s) — you can keep editing`,
+    });
     try {
       const { succeeded, failed } = await regenerateStaleWardrobesBatch(
         targets,
         projectId,
         onUpdateWardrobe,
-        3,
+        6,
       );
       if (succeeded > 0) {
         toast.success(`Regenerated ${succeeded} wardrobe image(s)`);
       }
       if (failed > 0) {
         toast.error(`${failed} wardrobe image(s) failed to regenerate`);
+        finishAgentRun(runId, {
+          tone: succeeded === 0 ? "error" : "warning",
+          subtitle: `${failed} of ${targets.length} wardrobe image(s) failed`,
+        });
+      } else {
+        finishAgentRun(runId, { subtitle: "Wardrobe images updated" });
       }
     } catch (error) {
       console.error("[Wardrobe Sync] Regen error:", error);
+      failAgentRun(runId, "Failed to regenerate wardrobe images");
     } finally {
       setIsRegeneratingStale(false);
     }
@@ -3421,21 +3495,6 @@ const CharacterCard = ({
           )}
         </button>
 
-        {onOpenCharacterPrompt && (
-          <button
-            type="button"
-            onClick={(e) => {
-              e.stopPropagation();
-              onOpenCharacterPrompt();
-            }}
-            disabled={isGenerating}
-            className="p-3 bg-amber-600/80 hover:bg-amber-600 rounded-full transition-colors disabled:opacity-50"
-            title="Open Prompt Builder"
-          >
-            <Wand2 className="w-5 h-5 text-white" />
-          </button>
-        )}
-
         <button
           type="button"
           onClick={(e) => {
@@ -3461,30 +3520,6 @@ const CharacterCard = ({
             title="Edit Image"
           >
             <Settings2 className="w-5 h-5 text-white" />
-          </button>
-        )}
-
-        {character.referenceImage && !imageError && (
-          <button
-            type="button"
-            onClick={(e) => {
-              e.stopPropagation();
-              if (isEnhancingReference) return;
-              handleEnhanceReference();
-            }}
-            disabled={isEnhancingReference || enhanceIterationCount >= 3}
-            className="p-3 bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 rounded-full transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-            title={
-              enhanceIterationCount >= 3
-                ? "Max iterations reached - upload new image"
-                : `Enhance Reference (${3 - enhanceIterationCount} left)`
-            }
-          >
-            {isEnhancingReference ? (
-              <Loader className="w-5 h-5 text-white animate-spin" />
-            ) : (
-              <Sparkles className="w-5 h-5 text-white" />
-            )}
           </button>
         )}
 
@@ -4607,45 +4642,29 @@ const CharacterCard = ({
                                           !hasCharacterReferenceForVoice
                                             ? "Generate character identity reference first"
                                             : (w.fullBodyUrl || w.headshotUrl)
-                                              ? "Regenerate wardrobe reference image"
-                                              : "Generate wardrobe reference image"
+                                              ? "Quick Regenerate Wardrobe"
+                                              : "Quick Generate Wardrobe"
                                         }
                                       >
                                         {generatingWardrobeImageId === w.id ? (
                                           <Loader className="w-3.5 h-3.5 animate-spin" />
                                         ) : (
-                                          <ImagePlus className="w-3.5 h-3.5" />
+                                          <Zap className="w-3.5 h-3.5" />
                                         )}
                                       </button>
                                       <button
                                         onClick={(e) => {
                                           e.stopPropagation();
-                                          handleEnhanceWardrobe(w.id);
+                                          setDirectorTarget({
+                                            kind: "wardrobe",
+                                            wardrobeId: w.id,
+                                          });
                                         }}
-                                        disabled={enhancingWardrobeId === w.id}
+                                        disabled={generatingWardrobeImageId === w.id}
                                         className="p-1.5 rounded-lg text-zinc-500 dark:text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800/80 disabled:opacity-50"
-                                        title="Enhance"
+                                        title="Director"
                                       >
-                                        {enhancingWardrobeId === w.id ? (
-                                          <Loader className="w-3.5 h-3.5 animate-spin" />
-                                        ) : (
-                                          <Wand2 className="w-3.5 h-3.5" />
-                                        )}
-                                      </button>
-                                      <button
-                                        onClick={(e) => {
-                                          e.stopPropagation();
-                                          handleSoftenWardrobe(w.id);
-                                        }}
-                                        disabled={softeningWardrobeId === w.id}
-                                        className="p-1.5 rounded-lg text-zinc-500 dark:text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800/80 disabled:opacity-50"
-                                        title="Soften for image safety"
-                                      >
-                                        {softeningWardrobeId === w.id ? (
-                                          <Loader className="w-3.5 h-3.5 animate-spin" />
-                                        ) : (
-                                          <Shield className="w-3.5 h-3.5" />
-                                        )}
+                                        <Clapperboard className="w-3.5 h-3.5" />
                                       </button>
                                       <button
                                         onClick={(e) => {
@@ -4771,45 +4790,29 @@ const CharacterCard = ({
                                             !hasCharacterReferenceForVoice
                                               ? "Generate character identity reference first"
                                               : (w.fullBodyUrl || w.headshotUrl)
-                                                ? "Regenerate wardrobe reference image"
-                                                : "Generate wardrobe reference image"
+                                                ? "Quick Regenerate Wardrobe"
+                                                : "Quick Generate Wardrobe"
                                           }
                                         >
                                           {generatingWardrobeImageId === w.id ? (
                                             <Loader className="w-3.5 h-3.5 animate-spin" />
                                           ) : (
-                                            <ImagePlus className="w-3.5 h-3.5" />
+                                            <Zap className="w-3.5 h-3.5" />
                                           )}
                                         </button>
                                         <button
                                           onClick={(e) => {
                                             e.stopPropagation();
-                                            handleEnhanceWardrobe(w.id);
+                                            setDirectorTarget({
+                                              kind: "wardrobe",
+                                              wardrobeId: w.id,
+                                            });
                                           }}
-                                          disabled={enhancingWardrobeId === w.id}
+                                          disabled={generatingWardrobeImageId === w.id}
                                           className="p-1.5 rounded-lg text-zinc-500 dark:text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800/80 disabled:opacity-50"
-                                          title="Enhance"
+                                          title="Director"
                                         >
-                                          {enhancingWardrobeId === w.id ? (
-                                            <Loader className="w-3.5 h-3.5 animate-spin" />
-                                          ) : (
-                                            <Wand2 className="w-3.5 h-3.5" />
-                                          )}
-                                        </button>
-                                        <button
-                                          onClick={(e) => {
-                                            e.stopPropagation();
-                                            handleSoftenWardrobe(w.id);
-                                          }}
-                                          disabled={softeningWardrobeId === w.id}
-                                          className="p-1.5 rounded-lg text-zinc-500 dark:text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800/80 disabled:opacity-50"
-                                          title="Soften for image safety"
-                                        >
-                                          {softeningWardrobeId === w.id ? (
-                                            <Loader className="w-3.5 h-3.5 animate-spin" />
-                                          ) : (
-                                            <Shield className="w-3.5 h-3.5" />
-                                          )}
+                                          <Clapperboard className="w-3.5 h-3.5" />
                                         </button>
                                         <button
                                           onClick={(e) => {
@@ -4920,44 +4923,6 @@ const CharacterCard = ({
                     })}
                   </div>
                 )}
-
-                {/* Bottom action row */}
-                {wardrobes.length > 0 &&
-                  !editingWardrobe &&
-                  !showAddWardrobeForm &&
-                  !showAiAssist && (
-                    <div className="flex gap-2">
-                      {/* Update from Script */}
-                      {scenes && scenes.length > 0 && (
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleUpdateWardrobesFromScript();
-                          }}
-                          disabled={isAnalyzingScript}
-                          className="flex-1 flex items-center justify-center gap-1.5 px-2 py-1.5 text-[11px] text-amber-500 border border-amber-500/30 rounded-lg hover:bg-amber-500/10 disabled:opacity-50"
-                        >
-                          {isAnalyzingScript ? (
-                            <Loader className="w-3 h-3 animate-spin" />
-                          ) : (
-                            <RefreshCw className="w-3 h-3" />
-                          )}
-                          Update
-                        </button>
-                      )}
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          cancelEditingWardrobe();
-                          setShowAddWardrobeForm(true);
-                        }}
-                        className="flex items-center justify-center gap-1 px-2 py-1.5 text-[11px] text-purple-400 border border-purple-500/30 rounded-lg hover:bg-purple-500/10"
-                      >
-                        <Sparkles className="w-3 h-3" />
-                        Direct
-                      </button>
-                    </div>
-                  )}
 
             </TabsContent>
           </Tabs>
@@ -5187,12 +5152,22 @@ const CharacterCard = ({
                           <div className="group relative">
                             <Info className="w-3.5 h-3.5 text-gray-400 cursor-help" />
                             <div className="absolute right-0 bottom-full mb-1 w-56 p-2 bg-gray-900 text-gray-200 text-[10px] rounded-lg shadow-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50">
-                              More detailed descriptions produce more consistent
-                              images across scenes. Enhance adds specifics like exact
-                              colors, materials, fit, and footwear. Soften rewrites
-                              unsafe costume language for image generation.
+                              Use Director to refine the visual prompt or Edit to
+                              update the outfit description and scene appearance notes.
                             </div>
                           </div>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setDirectorTarget({
+                                kind: "wardrobe",
+                                wardrobeId: expandedWardrobe.id,
+                              });
+                            }}
+                            className="flex items-center gap-1 h-7 px-2 text-xs font-medium rounded-md border border-teal-500/40 text-teal-300 hover:bg-teal-500/10"
+                          >
+                            <Clapperboard className="w-3 h-3" /> Director
+                          </button>
                           <button
                             onClick={(e) => {
                               e.stopPropagation();
@@ -5200,45 +5175,7 @@ const CharacterCard = ({
                             }}
                             className="flex items-center gap-1 h-7 px-2 text-xs font-medium rounded-md border border-zinc-600 text-zinc-200 hover:bg-zinc-800"
                           >
-                            <Sparkles className="w-3 h-3" /> Direct
-                          </button>
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleEnhanceWardrobe(expandedWardrobe.id);
-                            }}
-                            disabled={enhancingWardrobeId === expandedWardrobe.id}
-                            className="flex items-center gap-1 h-7 px-2 text-xs font-medium rounded-md border border-zinc-600 text-zinc-200 hover:bg-zinc-800 disabled:opacity-50"
-                          >
-                            {enhancingWardrobeId === expandedWardrobe.id ? (
-                              <>
-                                <Loader className="w-3 h-3 animate-spin" />{" "}
-                                Enhancing...
-                              </>
-                            ) : (
-                              <>
-                                <Wand2 className="w-3 h-3" /> Enhance
-                              </>
-                            )}
-                          </button>
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleSoftenWardrobe(expandedWardrobe.id);
-                            }}
-                            disabled={softeningWardrobeId === expandedWardrobe.id}
-                            className="flex items-center gap-1 h-7 px-2 text-xs font-medium rounded-md border border-zinc-600 text-zinc-200 hover:bg-zinc-800 disabled:opacity-50"
-                          >
-                            {softeningWardrobeId === expandedWardrobe.id ? (
-                              <>
-                                <Loader className="w-3 h-3 animate-spin" />{" "}
-                                Softening...
-                              </>
-                            ) : (
-                              <>
-                                <Shield className="w-3 h-3" /> Soften
-                              </>
-                            )}
+                            <Edit className="w-3 h-3" /> Edit
                           </button>
                         </div>
                       </div>
@@ -5267,7 +5204,7 @@ const CharacterCard = ({
                           {expandedWardrobe.appearanceNotes}
                         </p>
                         <p className="text-[10px] text-gray-500 dark:text-gray-400">
-                          Makeup, hair, and injury details from script analysis — applied to the close-up panel when generating the wardrobe reference.
+                          Makeup, hair, and injury details from script analysis — baked into the full-body wardrobe reference.
                         </p>
                       </div>
                     )}
@@ -5309,29 +5246,10 @@ const CharacterCard = ({
                 {/* Wardrobe reference image */}
                 <div className="space-y-2">
                   <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                    Wardrobe Reference (Face + Full Body)
+                    Wardrobe Reference
                   </h4>
-                  <div className="relative aspect-video max-w-md mx-auto bg-gray-100 dark:bg-gray-800 rounded-lg overflow-hidden border border-gray-200 dark:border-gray-700">
-                    {expandedWardrobe.headshotUrl ? (
-                      <img
-                        src={expandedWardrobe.headshotUrl}
-                        alt={`${character.name} — ${expandedWardrobe.name}`}
-                        className="w-full h-full object-cover object-top"
-                      />
-                    ) : (
-                      <div className="w-full h-full flex flex-col items-center justify-center text-gray-400 dark:text-gray-500 p-4 text-center">
-                        <ImagePlus className="w-8 h-8 mb-2 opacity-50" />
-                        <span className="text-xs">
-                          No wardrobe reference yet — generate a close-up + full-body diptych from the outfit description
-                        </span>
-                      </div>
-                    )}
-                    {generatingWardrobeImageId === expandedWardrobe.id && (
-                      <div className="absolute inset-0 bg-black/60 flex flex-col items-center justify-center">
-                        <Loader className="w-8 h-8 animate-spin text-white mb-2" />
-                        <span className="text-xs text-white">Generating...</span>
-                      </div>
-                    )}
+                  <div className="relative min-h-[220px] max-h-[50vh] max-w-md mx-auto bg-gray-100 dark:bg-gray-800 rounded-lg overflow-hidden border border-gray-200 dark:border-gray-700">
+                    {renderWardrobeImage(expandedWardrobe, "split")}
                   </div>
                 </div>
 
@@ -5345,12 +5263,22 @@ const CharacterCard = ({
                       <div className="group relative">
                         <Info className="w-3.5 h-3.5 text-gray-400 cursor-help" />
                         <div className="absolute right-0 bottom-full mb-1 w-56 p-2 bg-gray-900 text-gray-200 text-[10px] rounded-lg shadow-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50">
-                          More detailed descriptions produce more consistent
-                          images across scenes. Enhance adds specifics like exact
-                          colors, materials, fit, and footwear. Soften rewrites
-                          unsafe costume language for image generation.
+                          Use Director to refine the visual prompt or Edit to
+                          update the outfit description and scene appearance notes.
                         </div>
                       </div>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setDirectorTarget({
+                            kind: "wardrobe",
+                            wardrobeId: expandedWardrobe.id,
+                          });
+                        }}
+                        className="flex items-center gap-1 h-7 px-2 text-xs font-medium rounded-md border border-teal-500/40 text-teal-300 hover:bg-teal-500/10"
+                      >
+                        <Clapperboard className="w-3 h-3" /> Director
+                      </button>
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
@@ -5358,45 +5286,7 @@ const CharacterCard = ({
                         }}
                         className="flex items-center gap-1 h-7 px-2 text-xs font-medium rounded-md border border-zinc-600 text-zinc-200 hover:bg-zinc-800"
                       >
-                        <Sparkles className="w-3 h-3" /> Direct
-                      </button>
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleEnhanceWardrobe(expandedWardrobe.id);
-                        }}
-                        disabled={enhancingWardrobeId === expandedWardrobe.id}
-                        className="flex items-center gap-1 h-7 px-2 text-xs font-medium rounded-md border border-zinc-600 text-zinc-200 hover:bg-zinc-800 disabled:opacity-50"
-                      >
-                        {enhancingWardrobeId === expandedWardrobe.id ? (
-                          <>
-                            <Loader className="w-3 h-3 animate-spin" />{" "}
-                            Enhancing...
-                          </>
-                        ) : (
-                          <>
-                            <Wand2 className="w-3 h-3" /> Enhance
-                          </>
-                        )}
-                      </button>
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleSoftenWardrobe(expandedWardrobe.id);
-                        }}
-                        disabled={softeningWardrobeId === expandedWardrobe.id}
-                        className="flex items-center gap-1 h-7 px-2 text-xs font-medium rounded-md border border-zinc-600 text-zinc-200 hover:bg-zinc-800 disabled:opacity-50"
-                      >
-                        {softeningWardrobeId === expandedWardrobe.id ? (
-                          <>
-                            <Loader className="w-3 h-3 animate-spin" />{" "}
-                            Softening...
-                          </>
-                        ) : (
-                          <>
-                            <Shield className="w-3 h-3" /> Soften
-                          </>
-                        )}
+                        <Edit className="w-3 h-3" /> Edit
                       </button>
                     </div>
                   </div>

@@ -126,6 +126,7 @@ import {
   appendDirectedLocationVersion,
   stampLocationVersionAppliesFrom,
 } from '@/lib/vision/locationScriptSync'
+import { autoSyncCharactersFromScriptScenes } from '@/lib/character/detection'
 import {
   mountedFixturesForLocation,
   withMountedFixturesInLocationDescription,
@@ -19942,6 +19943,28 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
 
       const derivedScript = metadataToPersist?.visionPhase?.script
       const derivedScenes = derivedScript?.script?.scenes || mergedScenes
+
+      // Auto-push newly introduced script cast members and wardrobe staleness flags
+      const currentCharacters =
+        charactersRef.current ||
+        existingVisionPhase.characters ||
+        characters ||
+        []
+      const castAutoSync = autoSyncCharactersFromScriptScenes(derivedScenes, currentCharacters)
+      if (castAutoSync.changed) {
+        charactersRef.current = castAutoSync.characters
+        setCharacters(castAutoSync.characters)
+        if (metadataToPersist?.visionPhase) {
+          metadataToPersist = {
+            ...metadataToPersist,
+            visionPhase: {
+              ...metadataToPersist.visionPhase,
+              characters: castAutoSync.characters,
+            },
+          }
+        }
+      }
+
       const { scenes: scenesToSend, persistSceneIds } = persistSceneIdsForChangedScenes(
         canonicalScenes,
         derivedScenes
@@ -19963,6 +19986,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
             script: putScript,
             scriptUpdatedAt,
             ...(updatedReviews ? { reviews: updatedReviews } : {}),
+            ...(castAutoSync.changed ? { characters: castAutoSync.characters } : {}),
           },
         },
       }

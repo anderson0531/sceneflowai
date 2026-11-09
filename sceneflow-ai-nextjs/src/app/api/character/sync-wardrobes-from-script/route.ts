@@ -16,6 +16,10 @@ import {
   type WardrobeSuggestionLike,
   type WardrobeSyncDiff,
 } from '@/lib/character/wardrobeScriptSync'
+import {
+  CONCURRENCY_DEFAULTS,
+  processWithConcurrency,
+} from '@/lib/utils/concurrent-processor'
 
 export const runtime = 'nodejs'
 export const maxDuration = 300
@@ -194,6 +198,7 @@ export async function POST(req: NextRequest) {
 
     const diffs: WardrobeSyncDiff[] = []
     const errors: Array<{ characterId: string; characterName: string; error: string }> = []
+    const validCharacters: SyncCharacterInput[] = []
 
     for (const character of characters) {
       if (!character?.name?.trim()) {
@@ -204,36 +209,52 @@ export async function POST(req: NextRequest) {
         })
         continue
       }
+      validCharacters.push(character)
+    }
 
-      try {
-        console.log(
-          `[Wardrobe Sync] Analyzing ${scenes.length} scenes for ${character.name}`
-        )
-        const { suggestions, analysis, characterScenes } =
-          await analyzeCharacterLooks(character, scenes, screenplayContext)
+    const syncResults = await processWithConcurrency(
+      validCharacters.map((character, idx) => ({
+        id: character.id || `${idx}`,
+        execute: async () => {
+          console.log(
+            `[Wardrobe Sync] Analyzing ${scenes.length} scenes for ${character.name}`
+          )
+          const { suggestions, analysis, characterScenes } =
+            await analyzeCharacterLooks(character, scenes, screenplayContext)
 
-        const diff = buildWardrobeSyncDiff(
-          character.id,
-          character.name,
-          character.wardrobes || [],
-          suggestions,
-          analysis
-        )
+          const diff = buildWardrobeSyncDiff(
+            character.id,
+            character.name,
+            character.wardrobes || [],
+            suggestions,
+            analysis
+          )
 
-        console.log(
-          `[Wardrobe Sync] ${character.name}: scenes=${characterScenes}`,
-          summarizeWardrobeSyncDiff(diff)
-        )
-        diffs.push(diff)
-      } catch (err: any) {
-        console.error(`[Wardrobe Sync] Failed for ${character.name}:`, err)
+          console.log(
+            `[Wardrobe Sync] ${character.name}: scenes=${characterScenes}`,
+            summarizeWardrobeSyncDiff(diff)
+          )
+          return diff
+        },
+      })),
+      CONCURRENCY_DEFAULTS.API_CALLS,
+      undefined,
+      false
+    )
+
+    syncResults.forEach((res, idx) => {
+      const character = validCharacters[idx]!
+      if (res.status === 'fulfilled' && res.value) {
+        diffs.push(res.value)
+      } else {
+        console.error(`[Wardrobe Sync] Failed for ${character.name}:`, res.error)
         errors.push({
           characterId: character.id,
           characterName: character.name,
-          error: err?.message || 'Failed to sync wardrobes',
+          error: res.error?.message || 'Failed to sync wardrobes',
         })
       }
-    }
+    })
 
     const totals = diffs.reduce(
       (acc, diff) => {
