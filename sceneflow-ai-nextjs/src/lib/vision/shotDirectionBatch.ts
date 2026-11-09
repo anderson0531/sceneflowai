@@ -28,6 +28,7 @@ import type { LocationReference, VisualReference } from '@/types/visionReference
  * Stills (`framePrompt`) and Clips (`videoPrompt`) prompts for one-take Agent processing.
  */
 export const SHOT_DIRECTION_BEAT_CHUNK = 1
+export const SHOT_DIRECTION_CONTINUITY_BOUND_DEFAULT = true
 
 /**
  * Parallel single-shot optimizations for one scene.
