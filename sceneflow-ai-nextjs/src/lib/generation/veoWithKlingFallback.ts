@@ -68,7 +68,8 @@ function stripExtForKling(opts: VideoGenerationOptions): VideoGenerationOptions 
 }
 
 function sanitizeReferenceImageLabels(
-  options: VideoGenerationOptions
+  options: VideoGenerationOptions,
+  opts: { stripOutfitDescriptors?: boolean } = {}
 ): VideoGenerationOptions {
   if (!options.referenceImages?.length) return options
   return {
@@ -77,12 +78,38 @@ function sanitizeReferenceImageLabels(
       const label = (ref as { label?: string }).label
       if (!label?.trim()) return ref
       const sanitized = autoSanitizePrompt(label, { logChanges: true })
-      const nextLabel = neutralizeReferenceConflictPrompt(
+      let nextLabel = neutralizeReferenceConflictPrompt(
         sanitized.wasModified ? sanitized.sanitizedPrompt : label
       )
+      if (opts.stripOutfitDescriptors) {
+        nextLabel = nextLabel
+          .replace(
+            /(\bExtract exact facial identity from the face close-up and outfit)\s*\([^)]*\)/gi,
+            '$1'
+          )
+          .replace(/\s+Outfit:\s*[^.]+\./gi, '')
+          .replace(/\s{2,}/g, ' ')
+          .trim()
+      }
       return { ...ref, label: nextLabel }
     }),
   }
+}
+
+function softenChoreographyForPolicyRetry(prompt: string): string {
+  if (!prompt?.trim()) return prompt
+  return prompt
+    .replace(
+      /\bhaul(?:s|ing|ed)?\s+(person\s*\[\d+\]|[A-Z][a-z]+(?:\s+[A-Z][a-z]+)?)\s+forward\s+by\s+(?:her|his|their|the|the subject's)\s+(?:upper\s+)?arm\b/gi,
+      'steadying $1 forward by the arm'
+    )
+    .replace(/\bhaul(?:s|ing|ed)?\s+(person\s*\[\d+\])\b/gi, 'guiding $1')
+    .replace(/\bsags?\s+against\b/gi, 'leans beside')
+    .replace(/\btorn\s+(canvas|coat|jacket|parka|shirt|cloth|garment)/gi, 'weathered $1')
+    .replace(/\bsoiled\b/gi, 'work-worn')
+    .replace(/\bhypotherm(?:ic|ia)\b/gi, 'wind-chilled')
+    .replace(/\s{2,}/g, ' ')
+    .trim()
 }
 
 function preparePolicyRetry(
@@ -91,30 +118,39 @@ function preparePolicyRetry(
   ctx: {
     method: VideoGenerationMethod
     prompt: string
+    guidePrompt?: string
     options: VideoGenerationOptions
     referenceFallbackPrompt?: string
   }
 ): {
   method: VideoGenerationMethod
   prompt: string
+  guidePrompt?: string
   options: VideoGenerationOptions
 } {
-  let { method, prompt, options } = ctx
+  let { method, prompt, guidePrompt, options } = ctx
+
+  if (guidePrompt?.trim()) {
+    const sg = autoSanitizePrompt(guidePrompt, { logChanges: true })
+    if (sg.wasModified) guidePrompt = sg.sanitizedPrompt
+  }
 
   if (attempt === 1) {
     const sp = autoSanitizePrompt(prompt, { logChanges: true })
     if (sp.wasModified) prompt = sp.sanitizedPrompt
-    options = sanitizeReferenceImageLabels(options)
-    return { method, prompt, options }
+    options = sanitizeReferenceImageLabels(options, { stripOutfitDescriptors: true })
+    return { method, prompt, guidePrompt, options }
   }
 
   if (attempt >= 2 && method === 'REF' && options.referenceImages?.length) {
-    options = sanitizeReferenceImageLabels(options)
+    options = sanitizeReferenceImageLabels(options, { stripOutfitDescriptors: true })
     const sp = autoSanitizePrompt(prompt, { logChanges: true })
     if (sp.wasModified) prompt = sp.sanitizedPrompt
-    return { method, prompt, options }
+    prompt = softenChoreographyForPolicyRetry(prompt)
+    return { method, prompt, guidePrompt, options }
   }
 
+  prompt = softenChoreographyForPolicyRetry(prompt)
   const next = downgradeMethod(method)
   if (next !== method && method !== 'REF') {
     method = next
@@ -123,7 +159,7 @@ function preparePolicyRetry(
     }
   }
 
-  return { method, prompt, options }
+  return { method, prompt, guidePrompt, options }
 }
 
 async function runVertexAttempt(
@@ -245,11 +281,13 @@ export async function generateVideoWithVeoKlingFallback(
           const next = preparePolicyRetry(attempt, maxAttempts, {
             method,
             prompt,
+            guidePrompt,
             options,
             referenceFallbackPrompt: input.referenceFallbackPrompt,
           })
           method = next.method
           prompt = next.prompt
+          guidePrompt = next.guidePrompt
           options = next.options
           continue
         }
@@ -280,6 +318,19 @@ export async function generateVideoWithVeoKlingFallback(
       }
       policyBlocked = true
       if (fastFallback) break
+      if (attempt < maxAttempts) {
+        const next = preparePolicyRetry(attempt, maxAttempts, {
+          method,
+          prompt,
+          guidePrompt,
+          options,
+          referenceFallbackPrompt: input.referenceFallbackPrompt,
+        })
+        method = next.method
+        prompt = next.prompt
+        guidePrompt = next.guidePrompt
+        options = next.options
+      }
     }
   }
 

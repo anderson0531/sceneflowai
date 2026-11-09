@@ -52,6 +52,7 @@ import {
 } from '@/lib/vision/intelligentMethodSelection'
 import type { StemSeparationResult } from '@/lib/audio/stemSeparation'
 import { autoSanitizePrompt } from '@/utils/promptModerator'
+import { isVertexContentPolicyError } from '@/lib/generation/contentPolicy'
 import { extractVeoRaiDetailsFromErrorString } from '@/lib/vertexai/safety'
 import { normalizeReferenceImages, type VeoReferenceImage } from '@/lib/video/normalizeReferenceImages'
 import {
@@ -1482,7 +1483,8 @@ export async function POST(
 
     if (
       !isAggregatorRequest &&
-      (errorMessage.includes('Content Safety Filter') ||
+      (isVertexContentPolicyError(errorMessage) ||
+        errorMessage.includes('Content Safety Filter') ||
         errorMessage.includes('Content Policy') ||
         errLow.includes('safety filter') ||
         errorMessage.includes('filtered') ||

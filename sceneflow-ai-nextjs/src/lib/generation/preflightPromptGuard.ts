@@ -6,7 +6,7 @@
 import { createHash } from 'crypto'
 import { generateText, generateWithVision } from '@/lib/vertexai/gemini'
 import { getGeminiTextModel } from '@/lib/config/modelConfig'
-import { moderatePrompt } from '@/utils/promptModerator'
+import { autoSanitizePrompt, moderatePrompt } from '@/utils/promptModerator'
 import type { VideoGenerationMethod } from '@/lib/vision/intelligentMethodSelection'
 
 export type PromptRiskLevel = 'low' | 'borderline' | 'high'
@@ -52,17 +52,27 @@ const SEMANTIC_RISK_PATTERNS: Array<{ pattern: RegExp; label: string; weight: nu
   { pattern: /\barrest/i, label: 'arrest', weight: 2 },
   { pattern: /\bhostage/i, label: 'hostage', weight: 3 },
   { pattern: /\bthreat/i, label: 'threat', weight: 2 },
+  { pattern: /\bhypotherm/i, label: 'hypothermia', weight: 2 },
+  { pattern: /\bacute\s+pain\b/i, label: 'acute-pain', weight: 2 },
+  { pattern: /\bgauze\s+dressing\b/i, label: 'medical-dressing', weight: 2 },
+  {
+    pattern: /\bhaul(?:s|ing|ed)?\s+(?:person\s*\[\d+\]|[A-Z][a-z]+)\b[^.]{0,40}\barm\b/i,
+    label: 'physical-hauling',
+    weight: 2,
+  },
 ]
 
 const CHOREOGRAPHY_SYSTEM = `You rewrite video generation prompts so they pass strict AI safety filters while preserving cinematic intent.
 
 Rules:
-1. Replace emotionally/criminally-loaded phrasing with neutral cinematic choreography and additive affirmation (describe only what occupies the frame).
-2. No negations ("no", "without", "avoid"). No injury, threat, accusation, or distress verbs.
+1. Replace emotionally/criminally/physically-loaded phrasing (blood/gore stains, medical bandages/shock, acute pain, physical hauling/grabbing, threats, or accusations) with neutral cinematic choreography, weathered costume textures, and supportive blocking (describe only what occupies the frame).
+2. Avoid introducing negations in descriptive action prose, and remove injury, threat, accusation, or medical-distress terms.
 3. Preserve dialogue lines verbatim when quoted (e.g. CHARACTER says: '...').
-4. Preserve character names, blocking, camera moves, and location context.
+4. Preserve character names, blocking, camera moves, location context, and ALL reference-binding headers and structural directives verbatim when present (including "Use the images above.", bracketed tokens such as "person [1]", "prop [1]", "location [1]", and trailing occupancy/audio rules such as "Only these people are visible: ...", "No other people.", "Only these objects: ...", "Do not add other objects.", "No spoken dialogue.").
 5. When the prompt contains timed phase headers (e.g. "0s–2s (Start frame):", "2s–5s (Action):", "5s–8s (Action progression):", "8s–10s (End frame):"), preserve every timed phase header and its opening-to-closing progression intact. Otherwise keep output to at most 2 sentences for scene/action prose; leave dialogue blocks intact.
-6. Example: "desperate defiance as she pleads her innocence... framed me" -> "leaning forward earnestly, speaking with urgent conviction during a formal interview."
+6. Examples:
+   - "desperate defiance as she pleads her innocence... framed me" -> "leaning forward earnestly, speaking with urgent conviction during a formal interview."
+   - "sags against his side in her blood-stained torn canvas parka... hauling person [2] forward by her upper arm... acute pain... hypothermic shock... brutal exposure to the lethal elements" -> "leans beside him in her weather-worn dark canvas parka... steadying person [2] by the arm while stepping forward... strained focus... shivering in the biting wind... enduring the harsh winter storm"
 
 Return JSON only: {"prompt":"...","guidePrompt":"..."} — omit guidePrompt key if unchanged/empty.`
 
@@ -191,8 +201,8 @@ async function rewriteWithFlash(
       systemInstruction: CHOREOGRAPHY_SYSTEM,
       responseMimeType: 'application/json',
       temperature: 0.2,
-      maxOutputTokens: 1024,
-      timeoutMs: 8000,
+      maxOutputTokens: 4096,
+      timeoutMs: 12000,
       thinkingLevel: 'minimal',
       maxRetries: 0,
     })
@@ -242,12 +252,26 @@ export async function neutralizePromptForVeo(
 
   const rewritten = await rewriteWithFlash(prompt, guidePrompt)
   if (!rewritten) {
+    // Deterministic fallback: scrub explicit gore/blood/violence trigger words
+    // when Flash fails (e.g. timeout/429/JSON error), while leaving purely
+    // semantic prompts untouched.
+    const fallbackPrompt = autoSanitizePrompt(prompt, { logChanges: true })
+    const fallbackGuide = guidePrompt
+      ? autoSanitizePrompt(guidePrompt, { logChanges: true })
+      : undefined
+    const nextPrompt = fallbackPrompt.wasModified ? fallbackPrompt.sanitizedPrompt : prompt
+    const nextGuide = fallbackGuide?.wasModified ? fallbackGuide.sanitizedPrompt : guidePrompt
+    const wasModified = nextPrompt !== prompt || nextGuide !== guidePrompt
+    const postFallbackRisk = wasModified
+      ? scorePromptRisk(nextPrompt, { guidePrompt: nextGuide })
+      : riskScore
+
     return {
-      prompt,
-      guidePrompt,
-      wasRewritten: false,
-      riskScore,
-      requiresUserReview: riskScore.level === 'high',
+      prompt: nextPrompt,
+      guidePrompt: nextGuide,
+      wasRewritten: wasModified,
+      riskScore: postFallbackRisk,
+      requiresUserReview: riskScore.level === 'high' && postFallbackRisk.level === 'high',
     }
   }
 

@@ -124,4 +124,40 @@ describe('Omni Interactions request', () => {
     }
     expect(retryBody.response_format.delivery).toBeUndefined()
   })
+
+  it('fetches each remote reference image only once per Omni submission', async () => {
+    mockFetch
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        headers: { get: () => 'image/jpeg' },
+        arrayBuffer: async () => new TextEncoder().encode('img-bytes').buffer,
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        json: async () => ({ id: 'v1_ref_once', status: 'in_progress' }),
+        text: async () => '',
+      })
+
+    const { generateVideoWithVeo } = await import('@/lib/gemini/videoClient')
+    const result = await generateVideoWithVeo('Use the images above.\nperson [1] walks forward.', {
+      preferOmni: true,
+      durationSeconds: 10,
+      referenceImages: [
+        {
+          url: 'https://blob.example/person1.jpg',
+          type: 'character',
+          label: 'The next image is the identity of person [1].',
+        } as unknown as NonNullable<
+          Parameters<typeof generateVideoWithVeo>[1]
+        >['referenceImages'][number],
+      ],
+      requiredReferenceCount: 1,
+    })
+
+    expect(result.status).toBe('QUEUED')
+    // 1 image fetch + 1 POST /interactions (previously fetched every image twice)
+    expect(mockFetch).toHaveBeenCalledTimes(2)
+  })
 })

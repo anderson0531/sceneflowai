@@ -336,4 +336,42 @@ describe('resolveBeatVideoReferences', () => {
     expect(reemittedCaption).toContain('Extract exact facial identity from the face close-up')
     expect(reemittedCaption).toContain('Charcoal wool trench coat')
   })
+
+  it('sanitizes gore/injury wardrobe terms in composite reference captions before Omni REF submission', () => {
+    const beat: SceneBeat = {
+      beatId: 'beat-seawall',
+      sequenceIndex: 0,
+      kind: 'action',
+      actionDescription: 'Piper Hayes braces on the granite rocks.',
+    }
+    const resolved = resolveBeatVideoReferences({
+      scene: { heading: 'EXT. LAKE MICHIGAN SEAWALL - NIGHT', beats: [beat] },
+      beat,
+      projectCharacters: [
+        {
+          id: 'c-piper',
+          name: 'Piper Hayes',
+          referenceImage: 'https://blob.example/piper-headshot.jpg',
+          wardrobes: [
+            {
+              id: 'w-parka',
+              name: 'Parka',
+              description:
+                'Thoroughly waterlogged, freezing canvas parka with sheared left collar and bloodied gauze dressing, soaked dark wool',
+              combinedCharacterRefUrl: 'https://blob.example/piper-diptych.jpg',
+              isDefault: true,
+            },
+          ],
+        },
+      ],
+      locationReferences: locations,
+      objectReferences: [],
+    })
+
+    const charRef = resolved.labeledRefs.find((r) => r.type === 'character')
+    expect(charRef?.name).toContain('The next image is the identity and wardrobe of person [1].')
+    expect(charRef?.name).not.toContain('bloodied')
+    expect(charRef?.name).not.toContain('gauze dressing')
+    expect(charRef?.name).toContain('dark cloth wrap')
+  })
 })

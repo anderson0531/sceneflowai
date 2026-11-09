@@ -6,6 +6,7 @@ import { downloadProductionVideo } from '@/lib/gemini/productionVideoClient'
 import { generateVideoWithVeoKlingFallback } from '@/lib/generation/veoWithKlingFallback'
 import { ContentPolicyExhaustedError } from '@/lib/generation/contentPolicy'
 import { neutralizePromptForVeo } from '@/lib/generation/preflightPromptGuard'
+import { autoSanitizePrompt } from '@/utils/promptModerator'
 import {
   moderateKlingVideoBuffer,
   KlingSafetyGuardBlockedError,
@@ -472,12 +473,14 @@ export async function generateSegmentVideoCore(
       const binding = bindings[i]
       const caption = binding ? formatNextImageCaption(binding) : ''
       const rawLabel = img.name || prioritized[i]?.name || ''
+      const baseLabel = isNextImageCaption(caption)
+        ? caption
+        : sanitizeOmniRefLabel(neutralizeReferenceConflictPrompt(rawLabel))
+      const sanitizedLabel = autoSanitizePrompt(baseLabel, { logChanges: false })
       return {
         url: img.url,
         type: img.type,
-        label: isNextImageCaption(caption)
-          ? caption
-          : sanitizeOmniRefLabel(neutralizeReferenceConflictPrompt(rawLabel)),
+        label: sanitizedLabel.wasModified ? sanitizedLabel.sanitizedPrompt : baseLabel,
         role: prioritized[i]?.role,
       }
     })

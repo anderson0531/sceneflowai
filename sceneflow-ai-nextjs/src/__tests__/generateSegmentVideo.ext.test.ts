@@ -404,4 +404,32 @@ describe('generateSegmentVideoCore REF start frame', () => {
       })
     )
   })
+
+  it('sanitizes pre-formatted Next-image reference captions before forwarding to Vertex Omni', async () => {
+    await generateSegmentVideoCore({
+      segmentId: 'seg-ref-sanitize',
+      projectId: 'proj-1',
+      sceneId: 'scene-1',
+      userId: 'user-1',
+      prompt: 'person [1] crouches on icy granite boulders.',
+      genType: 'T2V',
+      generationMethod: 'REF',
+      referenceImages: [
+        {
+          url: 'https://cdn.example.com/piper.jpg',
+          type: 'character',
+          name: 'The next image is the identity and wardrobe of person [1]. Extract exact facial identity from the face close-up and outfit (Thoroughly waterlogged, freezing canvas parka with sheared left collar and bloodied gauze dressing, soaked dark wool) from the full-body standing figure; do not render the character-card layout or headshot overlay.',
+        },
+      ],
+      videoProvider: 'vertex',
+      duration: 10,
+    })
+
+    const callArg = vi.mocked(generateVideoWithVeoKlingFallback).mock.calls[0]?.[0]
+    const label = callArg?.videoOptions.referenceImages?.[0]?.label ?? ''
+    expect(label).toContain('The next image is the identity and wardrobe of person [1].')
+    expect(label.toLowerCase()).not.toContain('bloodied')
+    expect(label.toLowerCase()).not.toContain('gauze dressing')
+    expect(label).toContain('dark cloth wrap')
+  })
 })

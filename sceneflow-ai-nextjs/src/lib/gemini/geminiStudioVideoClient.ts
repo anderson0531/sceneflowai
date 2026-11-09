@@ -284,7 +284,7 @@ async function generateVideoWithOmniGeminiStudio(
     const data = (await response.json()) as Record<string, unknown>
     logOmniInteractionPayload('[Gemini Studio Omni] Response', data)
 
-    if (data.error) {
+    if (data.error || (Array.isArray(data.errors) && data.errors.length > 0)) {
       const errMsg = formatOmniInteractionErrorMessage(
         data,
         'Unknown Gemini Interactions error',
@@ -365,7 +365,7 @@ async function checkOmniGeminiInteractionStatus(
     const data = (await response.json()) as Record<string, unknown>
     logOmniInteractionPayload('[Gemini Studio Omni] Status response', data)
 
-    if (data.error) {
+    if (data.error || (Array.isArray(data.errors) && data.errors.length > 0)) {
       const errMsg = formatOmniInteractionErrorMessage(
         data,
         'Generation failed',

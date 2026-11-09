@@ -256,4 +256,72 @@ describe('generateVideoWithVeoKlingFallback', () => {
 
     expect(runKlingVideo).not.toHaveBeenCalled()
   })
+
+  it('retries Omni content_blocked errors with sanitized prompt and stripped outfit parentheticals while keeping reference URLs', async () => {
+    const calls: Array<{ prompt: string; options: VideoGenerationOptions }> = []
+
+    vi.mocked(generateProductionVideo).mockResolvedValue({
+      status: 'QUEUED',
+      operationName: 'interaction:ChBhMDY1N2NhZDUwNTJlOGZmEAgaAjAzKgRtYWlu',
+    })
+    vi.mocked(waitForProductionVideoCompletion)
+      .mockResolvedValueOnce({
+        status: 'FAILED',
+        operationName: 'interaction:ChBhMDY1N2NhZDUwNTJlOGZmEAgaAjAzKgRtYWlu',
+        error:
+          '[content_blocked] Request blocked for an unspecified policy reason. Please modify your input and retry.',
+      })
+      .mockResolvedValueOnce({
+        status: 'FAILED',
+        operationName: 'interaction:ChBhMDY1N2NhZDUwNTJlOGZmEAgaAjAzKgRtYWlu',
+        error:
+          '[content_blocked] Request blocked for an unspecified policy reason. Please modify your input and retry.',
+      })
+      .mockResolvedValueOnce({
+        status: 'COMPLETED',
+        operationName: 'interaction:ChBhMDY1N2NhZDUwNTJlOGZmEAgaAjAzKgRtYWlu',
+        videoUrl: 'data:video/mp4;base64,AAAA',
+      })
+
+    vi.mocked(generateProductionVideo).mockImplementation(async (prompt, opts) => {
+      calls.push({ prompt, options: opts as VideoGenerationOptions })
+      return {
+        status: 'QUEUED',
+        operationName: 'interaction:ChBhMDY1N2NhZDUwNTJlOGZmEAgaAjAzKgRtYWlu',
+      }
+    })
+
+    const result = await generateVideoWithVeoKlingFallback({
+      prompt:
+        'Use the images above.\nperson [1] is braced while person [2] sags against his side in her blood-stained torn canvas parka, hauling person [2] forward by her upper arm.',
+      method: 'REF',
+      allowPolicyFallback: false,
+      videoOptions: {
+        durationSeconds: 10,
+        aspectRatio: '16:9',
+        referenceImages: [
+          {
+            url: 'https://example.com/piper.jpg',
+            type: 'character',
+            label:
+              'The next image is the identity and wardrobe of person [2]. Extract exact facial identity from the face close-up and outfit (Thoroughly waterlogged canvas parka with bloodied gauze dressing) from the full-body standing figure; do not render the character-card layout or headshot overlay.',
+            role: 'character',
+          } as unknown as NonNullable<VideoGenerationOptions['referenceImages']>[number],
+        ],
+      },
+    })
+
+    expect(result.status).toBe('COMPLETED')
+    expect(result.vertexAttempts).toBe(3)
+    expect(calls).toHaveLength(3)
+    expect(calls[1].options.referenceImages?.[0]?.url).toBe('https://example.com/piper.jpg')
+    const retry1Label = (calls[1].options.referenceImages?.[0] as { label?: string })?.label
+    expect(retry1Label).not.toContain('bloodied')
+    expect(retry1Label).not.toContain('waterlogged')
+    expect(retry1Label).toContain('The next image is the identity and wardrobe of person [2].')
+    expect(calls[1].prompt).not.toContain('blood-stained')
+    expect(calls[2].prompt).toContain('steadying person [2] forward by the arm')
+    expect(calls[2].prompt).toContain('leans beside')
+    expect(calls[2].prompt).toContain('weathered canvas')
+  })
 })

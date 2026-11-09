@@ -35,6 +35,10 @@ const POLICY_MARKERS = [
   'finishreason=image_safety',
   'prohibited content',
   'support code',
+  'content_blocked',
+  'policy reason',
+  'request blocked',
+  'blocked due to',
 ]
 
 /**

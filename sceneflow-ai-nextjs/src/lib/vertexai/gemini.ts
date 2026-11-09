@@ -186,17 +186,13 @@ async function generateTextWithModel(
 
   if (isThinkingModel) {
     if (isGemini3) {
-      if (!isMinimal) {
-        const validLevels = ['LOW', 'MEDIUM', 'HIGH'];
-        const level = (options.thinkingLevel || 'LOW').toUpperCase();
-        thinking_config.thinking_level = validLevels.includes(level) ? level : 'LOW';
-      }
+      const validLevels = ['LOW', 'MEDIUM', 'HIGH'];
+      const level = isMinimal ? 'LOW' : (options.thinkingLevel || 'LOW').toUpperCase();
+      thinking_config.thinking_level = validLevels.includes(level) ? level : 'LOW';
     } else {
       const budgets = { minimal: 0, low: 1024, medium: 4096, high: 8192 };
       const budget = options.thinkingBudget ?? budgets[options.thinkingLevel as keyof typeof budgets] ?? 1024;
       thinking_config.thinking_budget = budget;
-      
-      // If budget is 0, we shouldn't send thinking_config at all
       if (budget === 0) {
         thinking_config.include_thoughts = false;
       }
@@ -211,7 +207,7 @@ async function generateTextWithModel(
       top_p: 0.95,
       max_output_tokens: options.maxOutputTokens ?? 8192,
       response_mime_type: options.responseMimeType ?? 'application/json',
-      ...(isThinkingModel && !isMinimal ? { thinking_config } : {})
+      ...(isThinkingModel ? { thinking_config } : {})
     },
     safety_settings: [
       { category: "HARM_CATEGORY_HATE_SPEECH", threshold: "OFF" },
@@ -325,17 +321,13 @@ export async function streamText(
 
   if (isThinkingModel) {
     if (isGemini3) {
-      if (!isMinimal) {
-        const validLevels = ['LOW', 'MEDIUM', 'HIGH'];
-        const level = (options.thinkingLevel || 'LOW').toUpperCase();
-        thinking_config.thinking_level = validLevels.includes(level) ? level : 'LOW';
-      }
+      const validLevels = ['LOW', 'MEDIUM', 'HIGH'];
+      const level = isMinimal ? 'LOW' : (options.thinkingLevel || 'LOW').toUpperCase();
+      thinking_config.thinking_level = validLevels.includes(level) ? level : 'LOW';
     } else {
       const budgets = { minimal: 0, low: 1024, medium: 4096, high: 8192 };
       const budget = options.thinkingBudget ?? budgets[options.thinkingLevel as keyof typeof budgets] ?? 1024;
       thinking_config.thinking_budget = budget;
-      
-      // If budget is 0, we shouldn't send thinking_config at all
       if (budget === 0) {
         thinking_config.include_thoughts = false;
       }
@@ -350,7 +342,7 @@ export async function streamText(
       top_p: 0.95,
       max_output_tokens: 8192,
       response_mime_type: "text/plain", // Change to text/plain for streaming raw markdown
-      ...(isThinkingModel && !isMinimal ? { thinking_config } : {})
+      ...(isThinkingModel ? { thinking_config } : {})
     },
     safety_settings: [
       { category: "HARM_CATEGORY_HATE_SPEECH", threshold: "OFF" },
@@ -517,6 +509,10 @@ export async function generateWithVision(
 
     if (isThinkingModel && !isMinimal) {
       generationConfig.thinkingConfig = thinkingConfig
+    } else if (isThinkingModel && isMinimal && isGemini3) {
+      // Omitting thinkingConfig leaves Gemini 3 on dynamic HIGH thinking, which
+      // spends maxOutputTokens and latency budgets before JSON output finishes.
+      generationConfig.thinkingConfig = { includeThoughts: false, thinkingLevel: 'LOW' }
     } else if (isThinkingModel && isMinimal && !isGemini3) {
       // Omitting the config leaves Gemini 2.5 on dynamic thinking, which spends
       // the output budget before the answer is finished.

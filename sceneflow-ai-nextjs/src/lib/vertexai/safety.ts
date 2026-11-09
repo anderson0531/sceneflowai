@@ -337,6 +337,28 @@ function collectRaiLines(obj: unknown, depth: number, lines: string[]): void {
   const err = o.error
   if (err && typeof err === 'object') collectRaiLines(err, depth + 1, lines)
 
+  const errs = o.errors
+  if (Array.isArray(errs)) {
+    for (const item of errs) {
+      if (!item || typeof item !== 'object') continue
+      const ei = item as JsonObject
+      const code =
+        typeof ei.code === 'string' || typeof ei.code === 'number' ? String(ei.code).trim() : ''
+      const msg = typeof ei.message === 'string' ? ei.message.trim() : ''
+      if (msg) {
+        lines.push(...extractVertexErrorDetailLines(msg))
+      }
+      if (
+        code &&
+        (code.toLowerCase().includes('blocked') ||
+          code.toLowerCase().includes('safety') ||
+          code.toLowerCase().includes('policy'))
+      ) {
+        lines.push(msg ? `Interaction block (${code}): ${msg}` : `Interaction block (${code})`)
+      }
+    }
+  }
+
   const response = o.response
   if (response && typeof response === 'object') collectRaiLines(response, depth + 1, lines)
 

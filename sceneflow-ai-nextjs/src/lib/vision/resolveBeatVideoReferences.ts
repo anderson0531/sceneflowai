@@ -4,6 +4,7 @@
 
 import { resolveCharacterReferencePair } from '@/lib/character/characterReferenceAssembly'
 import { formatNextImageCaption } from '@/lib/vision/referenceImageBinding'
+import { autoSanitizePrompt } from '@/utils/promptModerator'
 import { formatLocationScaleDescriptor } from '@/lib/imagen/locationScaleClause'
 import { extractPropScalePhrase, formatPropScaleDescriptor } from '@/lib/imagen/propScaleClause'
 import { extractCharacterHeightPhrase } from '@/lib/imagen/identityTraitsClause'
@@ -91,14 +92,15 @@ function formatShortWardrobeSummary(wardrobe?: {
   appearanceNotes?: string
 } | null): string | undefined {
   if (!wardrobe) return undefined
-  const parts = [wardrobe.description?.trim(), wardrobe.accessories?.trim()]
+  const rawParts = [wardrobe.description?.trim(), wardrobe.accessories?.trim()]
     .filter(Boolean)
     .join(', ')
     .replace(/\s+/g, ' ')
     .trim()
-  if (!parts) return undefined
-  const words = parts.split(/\s+/)
-  return words.length > 16 ? `${words.slice(0, 16).join(' ')}` : parts
+  if (!rawParts) return undefined
+  const sanitized = autoSanitizePrompt(rawParts, { logChanges: false }).sanitizedPrompt
+  const words = sanitized.split(/\s+/)
+  return words.length > 16 ? `${words.slice(0, 16).join(' ')}` : sanitized
 }
 
 function videoWardrobeLabel(

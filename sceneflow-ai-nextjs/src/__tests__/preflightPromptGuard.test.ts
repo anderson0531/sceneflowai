@@ -101,9 +101,28 @@ describe('preflightPromptGuard', () => {
     expect(generateText).toHaveBeenCalledTimes(1)
     expect(generateText).toHaveBeenCalledWith(
       expect.any(String),
-      expect.objectContaining({ maxRetries: 0 })
+      expect.objectContaining({ maxRetries: 0, maxOutputTokens: 4096 })
     )
     expect(result.prompt).toBe(original)
     expect(result.wasRewritten).toBe(false)
+  })
+
+  it('deterministically scrubs explicit blood/violence/shock triggers when Flash rewrite fails', async () => {
+    vi.mocked(generateText).mockRejectedValue(
+      new Error('Unterminated string in JSON at position 968 (line 1 column 969)')
+    )
+
+    const original =
+      'person [2] sags in her blood-stained torn canvas parka as a violent surge erupts; acute pain and hypothermic shock during brutal exposure to the lethal elements.'
+    const result = await neutralizePromptForVeo({ prompt: original })
+
+    expect(result.wasRewritten).toBe(true)
+    expect(result.prompt).not.toContain('blood-stained')
+    expect(result.prompt).not.toContain('violent')
+    expect(result.prompt).not.toContain('brutal exposure')
+    expect(result.prompt).not.toContain('lethal elements')
+    expect(result.prompt).not.toContain('acute pain')
+    expect(result.prompt).not.toContain('hypothermic shock')
+    expect(result.prompt).toContain('person [2]')
   })
 })

@@ -109,7 +109,7 @@ export function redactOmniPayloadForLog(data: unknown): unknown {
 /** Log interaction response/status without truncating away error details behind base64 */
 export function logOmniInteractionPayload(prefix: string, data: Record<string, unknown>): void {
   console.log(
-    `${prefix} id=${String(data.id ?? '')} status=${String(data.status ?? '')} error=${JSON.stringify(data.error ?? null)} status_message=${JSON.stringify(data.status_message ?? null)}`
+    `${prefix} id=${String(data.id ?? '')} status=${String(data.status ?? '')} error=${JSON.stringify(data.error ?? null)} errors=${JSON.stringify(data.errors ?? null)} status_message=${JSON.stringify(data.status_message ?? null)}`
   )
   console.log(`${prefix} payload:`, JSON.stringify(redactOmniPayloadForLog(data)))
 }
@@ -126,9 +126,34 @@ export function formatOmniInteractionErrorMessage(
   if (err && typeof err === 'object') {
     const errObj = err as Record<string, unknown>
     if (errObj.message) parts.push(String(errObj.message))
-    else parts.push(JSON.stringify(redactOmniPayloadForLog(err)))
+    else parts.push(JSON.stringify(redactOmniPayloadForLog(errObj)))
   } else if (typeof err === 'string' && err.trim()) {
     parts.push(err)
+  }
+
+  if (Array.isArray(data.errors)) {
+    for (const item of data.errors) {
+      if (typeof item === 'string' && item.trim()) {
+        parts.push(item.trim())
+        continue
+      }
+      if (!item || typeof item !== 'object') continue
+      const errItem = item as Record<string, unknown>
+      const code =
+        typeof errItem.code === 'string' || typeof errItem.code === 'number'
+          ? String(errItem.code).trim()
+          : ''
+      const msg = typeof errItem.message === 'string' ? errItem.message.trim() : ''
+      if (code && msg) {
+        parts.push(`[${code}] ${msg}`)
+      } else if (msg) {
+        parts.push(msg)
+      } else if (code) {
+        parts.push(code)
+      } else {
+        parts.push(JSON.stringify(redactOmniPayloadForLog(errItem)))
+      }
+    }
   }
 
   if (typeof data.status_message === 'string' && data.status_message.trim()) {

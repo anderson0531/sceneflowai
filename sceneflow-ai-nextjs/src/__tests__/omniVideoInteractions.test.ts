@@ -15,6 +15,7 @@ import {
   redactOmniPayloadForLog,
   resolveOmniPreviousInteractionId,
 } from '@/lib/gemini/omniVideoInteractions'
+import { formatVeoRaiDetailsFromPayload } from '@/lib/vertexai/safety'
 
 describe('omniVideoInteractions helpers', () => {
   it('formats duration as Omni response_format string', () => {
@@ -72,6 +73,34 @@ describe('omniVideoInteractions helpers', () => {
     })
     expect(msg).toContain('RESOURCE_EXHAUSTED')
     expect(msg).toContain('fixed-quota allocation')
+  })
+
+  it('extracts plural errors[] from failed Omni interactions without dumping steps JSON', () => {
+    const payload = {
+      id: 'ChBhMDY1N2NhZDUwNTJlOGZmEAgaAjAzKgRtYWlu',
+      status: 'failed',
+      steps: [
+        { type: 'user_input', content: [{ type: 'text', text: 'Use the images above.' }] },
+      ],
+      errors: [
+        {
+          message:
+            'Request blocked for an unspecified policy reason. Please modify your input and retry.',
+          code: 'content_blocked',
+        },
+      ],
+      object: 'interaction',
+      model: 'gemini-omni-1.1-flash-preview',
+    }
+    const msg = formatOmniInteractionErrorMessage(
+      payload,
+      'Omni video generation failed',
+      formatVeoRaiDetailsFromPayload
+    )
+    expect(msg).toContain('[content_blocked]')
+    expect(msg).toContain('Request blocked for an unspecified policy reason.')
+    expect(msg).toContain('Interaction block (content_blocked)')
+    expect(msg).not.toContain('"steps"')
   })
 
   it('preserves FTV lastFrame for Omni 1.1 Flash interpolation and strips EXT without valid previous id', () => {

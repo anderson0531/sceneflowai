@@ -21,6 +21,7 @@ import {
   SegmentVideoExtRefRequiredError,
   SegmentVideoRateLimitError,
 } from '@/lib/video/generateSegmentVideo'
+import { isVertexContentPolicyError } from '@/lib/generation/contentPolicy'
 
 export const maxDuration = 300
 export const runtime = 'nodejs'
@@ -277,6 +278,16 @@ export async function POST(
     }
     const message = error instanceof Error ? error.message : 'Continuous generation failed'
     console.error('[generate-continuous]', message, error)
+    if (isVertexContentPolicyError(message)) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: message,
+          code: 'CONTENT_POLICY_VIOLATION',
+        },
+        { status: 422 }
+      )
+    }
     return NextResponse.json({ success: false, error: message }, { status: 500 })
   }
 }

@@ -34,6 +34,16 @@ describe('contentPolicy', () => {
   it('detects safety-filter and prohibited-content blocks', () => {
     expect(isVertexContentPolicyError('Request blocked by safety systems')).toBe(true)
     expect(isVertexContentPolicyError('The prompt is blocked due to prohibited contents')).toBe(true)
+    expect(
+      isVertexContentPolicyError(
+        '[content_blocked] Request blocked for an unspecified policy reason. Please modify your input and retry.'
+      )
+    ).toBe(true)
+    expect(
+      isVertexContentPolicyError(
+        'Omni video generation failed: {"status":"failed","errors":[{"message":"Request blocked for an unspecified policy reason.","code":"content_blocked"}]}'
+      )
+    ).toBe(true)
   })
 
   it('does not treat generic Omni transport errors as content policy', () => {

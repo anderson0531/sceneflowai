@@ -288,10 +288,10 @@ async function generateVideoWithOmniInteractions(
   const endpoint = `${apiBase}/interactions`
 
   const postOmniInteraction = async (
+    bodyToPost: Record<string, unknown>,
     buildOptions: typeof omniBuildOptions
   ): Promise<Response> => {
-    const requestBody = await buildOmniInteractionRequestBody(model, prompt, buildOptions)
-    assertOmniReferenceImagesAttached(requestBody.input, buildOptions)
+    assertOmniReferenceImagesAttached(bodyToPost.input, buildOptions)
     const accessToken = await getVertexAccessToken()
     await paceOutboundVertexFetch('video')
     return fetch(endpoint, {
@@ -300,7 +300,7 @@ async function generateVideoWithOmniInteractions(
         'Content-Type': 'application/json',
         Authorization: `Bearer ${accessToken}`,
       },
-      body: JSON.stringify(requestBody),
+      body: JSON.stringify(bodyToPost),
     })
   }
 
@@ -339,7 +339,7 @@ async function generateVideoWithOmniInteractions(
   }
 
   try {
-    let response = await postOmniInteraction(omniBuildOptions)
+    let response = await postOmniInteraction(requestBody, omniBuildOptions)
     let strippedUnsupported = false
 
     if (!response.ok && response.status === 400 && !strippedUnsupported) {
@@ -371,7 +371,7 @@ async function generateVideoWithOmniInteractions(
           .join(' and ')}`
       )
       requestBody = await buildOmniInteractionRequestBody(model, prompt, retryOptions)
-      response = await postOmniInteraction(retryOptions)
+      response = await postOmniInteraction(requestBody, retryOptions)
     }
 
     if (!response.ok) {
@@ -383,7 +383,7 @@ async function generateVideoWithOmniInteractions(
     const data = (await response.json()) as Record<string, unknown>
     logOmniInteractionPayload('[Omni Video] Response', data)
 
-    if (data.error) {
+    if (data.error || (Array.isArray(data.errors) && data.errors.length > 0)) {
       const errMsg = formatOmniInteractionErrorMessage(
         data,
         'Unknown Vertex AI Interactions error',
