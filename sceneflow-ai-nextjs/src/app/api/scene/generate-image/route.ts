@@ -220,6 +220,7 @@ import {
 } from '@/lib/sceneGeneration/expressImageErrors'
 import { isVertexImageAbortedByClient } from '@/lib/vertexai/vertexImageClient'
 import { runInSceneImageAdmission } from '@/lib/vertexai/vertexImageGate'
+import { evaluateGenerationErrorForApi } from '@/lib/errors/generationErrorServerEvaluator'
 
 export const runtime = 'nodejs'
 export const maxDuration = 300  // One still, the blob upload, and the credit charge
@@ -3721,9 +3722,17 @@ async function postGenerateImage(req: NextRequest) {
         googleError: error.message?.substring(0, 300),
         elapsedMs: Date.now() - routeStart,
       })
+      const quotaGuidance = await evaluateGenerationErrorForApi({
+        mediaType: 'still',
+        rawError: error.message,
+        statusCode: 429,
+        errorCode: 'quota',
+      })
       return NextResponse.json({
         success: false,
-        error: 'Google Cloud quota limit reached',
+        error: quotaGuidance.explanation,
+        userGuidance: quotaGuidance,
+        technicalDetails: error.message,
         errorType: 'quota',
         googleError: error.message,
         retryable: true,
@@ -3736,11 +3745,19 @@ async function postGenerateImage(req: NextRequest) {
       error?.name === 'ContentPolicyExhaustedError' ||
       isVertexContentPolicyError(error?.message)
     ) {
+      const policyGuidance = await evaluateGenerationErrorForApi({
+        mediaType: 'still',
+        rawError: error?.message,
+        statusCode: 422,
+        errorCode: IMAGE_CONTENT_POLICY_CODE,
+      })
       return NextResponse.json(
         {
           success: false,
           error: IMAGE_CONTENT_POLICY_USER_MESSAGE,
           code: IMAGE_CONTENT_POLICY_CODE,
+          userGuidance: policyGuidance,
+          technicalDetails: error?.message,
         },
         { status: 422 }
       )
@@ -3750,23 +3767,45 @@ async function postGenerateImage(req: NextRequest) {
       error?.message === CREATIVE_KLING_UNAVAILABLE_MESSAGE ||
       error?.code === CREATIVE_KLING_UNAVAILABLE_CODE
     ) {
+      const klingGuidance = await evaluateGenerationErrorForApi({
+        mediaType: 'still',
+        rawError: CREATIVE_KLING_UNAVAILABLE_MESSAGE,
+        statusCode: 422,
+        errorCode: CREATIVE_KLING_UNAVAILABLE_CODE,
+      })
       return NextResponse.json(
         {
           success: false,
           error: CREATIVE_KLING_UNAVAILABLE_MESSAGE,
           code: CREATIVE_KLING_UNAVAILABLE_CODE,
+          userGuidance: klingGuidance,
+          technicalDetails: error?.message,
         },
         { status: 422 }
       )
     }
     
-    // Provide detailed error message to frontend
-    const errorMessage = error.message || 'Failed to generate scene image'
-    const detailedError = `${errorMessage}${error.code ? ` (Code: ${error.code})` : ''}${error.statusCode ? ` (Status: ${error.statusCode})` : ''}`
+    // Evaluate raw upstream error into concise creator-facing guidance while preserving technicalDetails
+    const rawMessage = error.message || 'Failed to generate scene image'
+    const detailedError = `${rawMessage}${error.code ? ` (Code: ${error.code})` : ''}${error.statusCode ? ` (Status: ${error.statusCode})` : ''}`
+    const userGuidance = await evaluateGenerationErrorForApi({
+      mediaType: 'still',
+      rawError: detailedError,
+      statusCode: typeof error.statusCode === 'number' ? error.statusCode : 500,
+      errorCode: typeof error.code === 'string' ? error.code : undefined,
+    })
+    const httpStatus =
+      userGuidance.category === 'timeout'
+        ? 504
+        : userGuidance.category === 'provider_unavailable'
+          ? 503
+          : 500
     
     return NextResponse.json({
       success: false,
-      error: detailedError,
+      error: userGuidance.explanation,
+      userGuidance,
+      technicalDetails: detailedError,
       errorType: 'api',
       errorDetails: {
         originalMessage: error.message,
@@ -3774,6 +3813,6 @@ async function postGenerateImage(req: NextRequest) {
         statusCode: error.statusCode,
         name: error.name
       }
-    }, { status: 500 })
+    }, { status: httpStatus })
   }
 }

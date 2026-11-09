@@ -1,13 +1,15 @@
 'use client'
 
 import React, { useEffect, useState, useRef } from 'react'
-import { ImageIcon, Sparkles, Upload, Download, Wand2, Loader2, CheckCircle2, RefreshCw, FolderPlus, Trash2, AlertTriangle, SlidersHorizontal, Maximize2, Minimize2, Zap, Clapperboard } from 'lucide-react'
+import { ImageIcon, Sparkles, Upload, Download, Wand2, Loader2, CheckCircle2, RefreshCw, FolderPlus, Trash2, AlertTriangle, SlidersHorizontal, Maximize2, Minimize2, Zap, Clapperboard, LifeBuoy } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { motion, AnimatePresence } from 'framer-motion'
 import { toast } from 'sonner'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { saveImageFile } from '@/lib/download/saveFile'
 import { isImageContentPolicyError, isStillPolicyImageError } from '@/lib/generation/stillPolicy'
+import { evaluateGenerationError } from '@/lib/errors/generationErrorIntelligence'
+import { openSupportErrorReport } from '@/components/vision/ReportGenerationErrorDialog'
 import {
   DeferredImageSkeleton,
   isDeferredImageUrl,
@@ -392,6 +394,9 @@ export function SceneImageFrame({
   const promptPreview = imagePrompt?.trim()
   const policyError = isStillPolicyImageError(imageError)
   const contentPolicyError = isImageContentPolicyError(imageError)
+  const evaluatedImageError = imageError
+    ? evaluateGenerationError({ mediaType: 'still', rawError: imageError })
+    : null
   const useOverlayControls =
     compact ||
     alwaysShowControls ||
@@ -770,12 +775,14 @@ export function SceneImageFrame({
                   ? contentPolicyError
                     ? 'Content policy blocked this still'
                     : 'References were declined'
-                  : 'Generation failed'
+                  : evaluatedImageError?.title || 'Still generation failed'
                 : 'No scene reference yet'}
             </p>
             {imageError && (
               <p className="text-xs text-rose-300 text-center mb-3 max-w-xs" title={imageError}>
-                {imageError}
+                {policyError
+                  ? imageError
+                  : evaluatedImageError?.explanation || imageError}
               </p>
             )}
             <p className="text-xs text-gray-500 text-center mb-3 max-w-xs">
@@ -784,9 +791,11 @@ export function SceneImageFrame({
                   ? contentPolicyError
                     ? 'Open Director to rewrite for Safety, or switch Frames to Creative'
                     : 'Open Director to rewrite the prompt, or switch Frames to Creative'
-                  : 'Create a reference image for scene consistency across production')}
+                  : imageError
+                    ? evaluatedImageError?.suggestion || 'Click Rerun to try again, or report to Support.'
+                    : 'Create a reference image for scene consistency across production')}
             </p>
-            <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center justify-center gap-2">
               <Button
                 onClick={(e) => {
                   e.stopPropagation()
@@ -800,10 +809,12 @@ export function SceneImageFrame({
                   <Loader2 className="w-4 h-4 animate-spin mr-1" />
                 ) : useExpressGenerateIcon ? (
                   <Zap className="w-4 h-4 mr-1" />
+                ) : imageError ? (
+                  <RefreshCw className="w-4 h-4 mr-1" />
                 ) : (
                   <Sparkles className="w-4 h-4 mr-1" />
                 )}
-                {generateLabel ?? 'Generate'}
+                {generateLabel ?? (imageError ? 'Rerun' : 'Generate')}
               </Button>
               {policyError && onDirector && (
                 <Button
@@ -816,6 +827,32 @@ export function SceneImageFrame({
                 >
                   <Clapperboard className="w-4 h-4 mr-1" />
                   Director
+                </Button>
+              )}
+              {imageError && evaluatedImageError?.canReportToSupport && (
+                <Button
+                  variant="outline"
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    openSupportErrorReport({
+                      mediaType: 'still',
+                      rawError: imageError,
+                      technicalDetails: imageError,
+                      title: evaluatedImageError.title,
+                      explanation: evaluatedImageError.explanation,
+                      recommendedAction: evaluatedImageError.primaryCta.label,
+                      prompt: promptPreview,
+                      context: {
+                        sceneNumber,
+                        shotNumber: beatNumber,
+                        shotLabel: label,
+                      },
+                    })
+                  }}
+                  className="border-cyan-500/40 text-cyan-200 hover:bg-cyan-950/40"
+                >
+                  <LifeBuoy className="w-4 h-4 mr-1" />
+                  Report to Support
                 </Button>
               )}
               <Button

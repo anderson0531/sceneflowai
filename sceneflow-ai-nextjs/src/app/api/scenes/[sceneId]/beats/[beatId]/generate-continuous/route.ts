@@ -22,6 +22,7 @@ import {
   SegmentVideoRateLimitError,
 } from '@/lib/video/generateSegmentVideo'
 import { isVertexContentPolicyError } from '@/lib/generation/contentPolicy'
+import { evaluateGenerationErrorForApi } from '@/lib/errors/generationErrorServerEvaluator'
 
 export const maxDuration = 300
 export const runtime = 'nodejs'
@@ -278,16 +279,33 @@ export async function POST(
     }
     const message = error instanceof Error ? error.message : 'Continuous generation failed'
     console.error('[generate-continuous]', message, error)
-    if (isVertexContentPolicyError(message)) {
+    const isPolicy = isVertexContentPolicyError(message)
+    const userGuidance = await evaluateGenerationErrorForApi({
+      mediaType: 'clip',
+      rawError: message,
+      statusCode: isPolicy ? 422 : 500,
+      errorCode: isPolicy ? 'CONTENT_POLICY_VIOLATION' : undefined,
+    })
+    if (isPolicy) {
       return NextResponse.json(
         {
           success: false,
-          error: message,
+          error: userGuidance.explanation,
+          userGuidance,
+          technicalDetails: message,
           code: 'CONTENT_POLICY_VIOLATION',
         },
         { status: 422 }
       )
     }
-    return NextResponse.json({ success: false, error: message }, { status: 500 })
+    return NextResponse.json(
+      {
+        success: false,
+        error: userGuidance.explanation,
+        userGuidance,
+        technicalDetails: message,
+      },
+      { status: 500 }
+    )
   }
 }

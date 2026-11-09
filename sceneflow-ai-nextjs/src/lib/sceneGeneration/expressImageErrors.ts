@@ -1,4 +1,5 @@
 import { isRetryableError } from '../utils/retry'
+import { evaluateGenerationError } from '@/lib/errors/generationErrorIntelligence'
 import {
   IMAGE_CONTENT_POLICY_BOARD_MESSAGE,
   IMAGE_CONTENT_POLICY_CODE,
@@ -268,5 +269,6 @@ export function formatExpressImageErrorForUser(err: unknown): string {
     return IMAGE_CONTENT_POLICY_BOARD_MESSAGE
   }
   if (!msg) return 'Generation failed'
-  return msg.length > 120 ? `${msg.slice(0, 117)}…` : msg
+  const evaluated = evaluateGenerationError({ mediaType: 'still', rawError: err })
+  return evaluated.shortSummary || 'Still generation failed — rerun or report to Support'
 }

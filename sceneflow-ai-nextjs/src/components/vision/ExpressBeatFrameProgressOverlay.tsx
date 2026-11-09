@@ -1,10 +1,13 @@
 'use client'
 
 import { useEffect, useMemo, useState } from 'react'
+import { LifeBuoy } from 'lucide-react'
 import { useTranslations } from 'next-intl'
 import { Button } from '@/components/ui/Button'
 import type { ExpressPhaseStatus } from '@/components/vision/SceneGallery'
 import { AgentRunDock, type AgentRunPhase } from '@/components/vision/AgentRunDock'
+import { evaluateGenerationError } from '@/lib/errors/generationErrorIntelligence'
+import { openSupportErrorReport } from '@/components/vision/ReportGenerationErrorDialog'
 import {
   countCompletedFrames,
   estimateRemainingSec,
@@ -192,11 +195,11 @@ export function ExpressBeatFrameProgressOverlay({
       ? `Scene ${sceneNumber} — drawing the missing references first`
       : `Scene ${sceneNumber} — you can keep editing`
     : preflightError
-      ? preflightError
+      ? evaluateGenerationError({ mediaType: 'still', rawError: preflightError }).shortSummary
       : cancelled
         ? t('cancelled')
         : hasIncompleteFrames
-          ? 'Some frames failed — retry to fill the gaps'
+          ? 'Some frames failed — retry or report to Support'
           : 'Frames ready'
 
   return (
@@ -263,6 +266,34 @@ export function ExpressBeatFrameProgressOverlay({
                 className="h-7 text-[11px]"
               >
                 {t('auto')}
+              </Button>
+            )}
+            {(frameErrors || preflightError) && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  const failedRows = items.filter((item) => item.status === 'error')
+                  const details = [
+                    preflightError ? `Preflight: ${preflightError}` : '',
+                    ...failedRows.map((r) => `${r.label}: ${r.error || 'Failed'}`),
+                  ]
+                    .filter(Boolean)
+                    .join('\n\n')
+                  openSupportErrorReport({
+                    mediaType: 'still',
+                    rawError: preflightError || failedRows[0]?.error,
+                    technicalDetails: details,
+                    context: {
+                      sceneNumber,
+                      shotLabel: `Stills Agent · Scene ${sceneNumber}`,
+                    },
+                  })
+                }}
+                className="h-7 text-[11px] border-cyan-500/40 text-cyan-200 hover:bg-cyan-950/40"
+              >
+                <LifeBuoy className="h-3 w-3 mr-1" />
+                Report
               </Button>
             )}
             <Button variant="outline" size="sm" onClick={onClose} className="h-7 text-[11px]">

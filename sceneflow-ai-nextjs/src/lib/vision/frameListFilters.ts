@@ -86,9 +86,9 @@ export type FrameRailStatus = 'action' | 'attention' | 'ready'
  * Green only for a clean final whose plates passed or were never scored.
  */
 export function frameRailStatus(facts: FrameListFacts): { status: FrameRailStatus; label: string } {
+  if (facts.hasImageError) return { status: 'action', label: 'Error' }
   if (facts.isPlaceholder) return { status: 'action', label: 'Placeholder' }
   if (facts.isMissing || !facts.hasOwnImage) return { status: 'action', label: 'Missing' }
-  if (facts.hasImageError) return { status: 'action', label: 'Error' }
   if (facts.referenceStatus === 'miss') return { status: 'action', label: 'Reference missed' }
   if (facts.promptChanged) return { status: 'attention', label: 'Prompt changed' }
   if (facts.referenceStatus === 'drift') return { status: 'attention', label: 'Reference drifted' }

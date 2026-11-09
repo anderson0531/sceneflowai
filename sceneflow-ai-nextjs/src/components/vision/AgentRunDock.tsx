@@ -6,6 +6,7 @@ import { cn } from '@/lib/utils'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 import { isStillCancelledFailureMessage } from '@/lib/sceneGeneration/expressImageErrors'
 import { isContentPolicyFailureMessage } from '@/lib/vision/videoClipFilters'
+import { evaluateGenerationError } from '@/lib/errors/generationErrorIntelligence'
 
 /**
  * The one shape every agent run reports through.
@@ -144,11 +145,15 @@ function AgentItemRow({ item }: { item: AgentRunItem }) {
 
   if (item.status !== 'error' || !item.error) return row
 
+  const evaluated = evaluateGenerationError({ mediaType: 'clip', rawError: item.error })
+
   return (
     <Tooltip>
       <TooltipTrigger asChild>{row}</TooltipTrigger>
-      <TooltipContent side="left" className="max-w-sm whitespace-pre-wrap text-left">
-        {item.error}
+      <TooltipContent side="left" className="max-w-xs space-y-1 text-left">
+        <p className="text-xs font-semibold text-white">{evaluated.title}</p>
+        <p className="text-[11px] leading-snug text-slate-200">{evaluated.explanation}</p>
+        <p className="text-[10px] leading-snug text-slate-400">{evaluated.suggestion}</p>
       </TooltipContent>
     </Tooltip>
   )

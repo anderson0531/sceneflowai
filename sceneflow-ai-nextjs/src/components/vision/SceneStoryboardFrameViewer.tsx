@@ -27,6 +27,7 @@ import {
   type ExpressSceneConfirmOptions,
 } from './ExpressSceneConfirmDialog'
 import { SceneImageFrame, type SceneImageFrameProps } from './SceneImageFrame'
+import { GenerationErrorCard } from './GenerationErrorCard'
 import {
   SceneBeatStage,
   shotKindMarker,
@@ -2007,6 +2008,44 @@ export function SceneStoryboardFrameViewer({
                             </Button>
                           )}
                       </div>
+                      {!activeDisplaySlot.ownImageUrl && activeDisplaySlot.imageError?.trim() && (
+                        <div className="mt-2">
+                          <GenerationErrorCard
+                            mediaType="still"
+                            rawError={activeDisplaySlot.imageError}
+                            generationMethod={activeDisplaySlot.frameRole || 'start'}
+                            provider={frameGenerationMode === 'creative' ? 'kling' : 'vertex'}
+                            prompt={previewStillPrompt}
+                            isBusy={isExpressRunning || isUpdatingPrompts}
+                            onRerun={() => {
+                              const slotProps = buildStoryboardSlotFrameProps(
+                                activeDisplaySlot,
+                                slotHandlers,
+                                false
+                              )
+                              slotProps.onGenerate()
+                            }}
+                            onOpenDirector={
+                              onDirectorFrame && activeDisplaySlot.beatId
+                                ? () => onDirectorFrame(activeDisplaySlot)
+                                : undefined
+                            }
+                            onSwitchCreative={
+                              frameGenerationMode !== 'creative' && onFrameGenerationModeChange
+                                ? () => onFrameGenerationModeChange('creative')
+                                : undefined
+                            }
+                            supportContext={{
+                              sceneNumber,
+                              beatId: activeDisplaySlot.beatId,
+                              shotNumber: activeDisplaySlot.beatNumber,
+                              shotLabel: activeDisplaySlot.label,
+                              frameRole: activeDisplaySlot.frameRole || 'still',
+                              qualityTier: frameGenerationQuality,
+                            }}
+                          />
+                        </div>
+                      )}
                       {previewStillPrompt && (
                         <p
                           className="mt-1.5 text-xs text-slate-400 leading-relaxed cursor-pointer"

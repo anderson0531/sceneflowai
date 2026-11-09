@@ -272,4 +272,14 @@ describe('formatExpressImageErrorForUser', () => {
       formatExpressImageErrorForUser(err('Failed to download reference image: Piper Hayes'))
     ).toBe('Reference image could not be loaded — retry this frame')
   })
+
+  it('replaces raw technical API errors with concise user-friendly guidance', () => {
+    const raw = err(
+      'Vertex Gemini Image error 500: {"error":{"code":500,"message":"Internal error encountered"}}',
+      500
+    )
+    const formatted = formatExpressImageErrorForUser(raw)
+    expect(formatted).not.toContain('{"error"')
+    expect(formatted).toContain('report to Support')
+  })
 })

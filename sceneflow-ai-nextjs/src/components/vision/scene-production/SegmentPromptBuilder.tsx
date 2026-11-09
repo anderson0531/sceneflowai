@@ -17,6 +17,8 @@ import { resolveFrameGenerationContext, isNoTalentSceneForFrames } from '@/lib/v
 import { cn } from '@/lib/utils'
 import { wardrobesForScene } from '@/lib/character/characterReferenceAssembly'
 import { ImageEditModal } from '@/components/vision/ImageEditModal'
+import { GenerationErrorCard } from '@/components/vision/GenerationErrorCard'
+import { openSupportErrorReport } from '@/components/vision/ReportGenerationErrorDialog'
 import { AnalyzeKeyframeRiskPanel } from './AnalyzeKeyframeRiskPanel'
 import { 
   CINEMATIC_ELEMENT_TYPES, 
@@ -1083,35 +1085,64 @@ export function SegmentPromptBuilder({
                     emphasizeImageHypothesis={isFTVContentPolicyFailure}
                   />
                 )}
-                <button
-                  onClick={() => {
-                    setLocalError(null)
-                    setIsContentPolicyFailure(false)
-                    setIsFTVContentPolicyFailure(false)
-                  }}
-                  className="text-xs text-red-400 hover:text-red-300 underline"
-                >
-                  Dismiss
-                </button>
-              </div>
-            ) : (
-              /* Generic error banner for non-content-policy errors */
-              <div className="p-3 rounded-lg bg-red-900/30 border border-red-700 max-h-[200px] overflow-y-auto">
-                <div className="flex items-start gap-2">
-                  <AlertCircle className="w-5 h-5 text-red-400 flex-shrink-0 mt-0.5" />
-                  <div className="flex-1 min-w-0">
-                    <pre className="text-xs text-red-200 whitespace-pre-wrap font-sans leading-relaxed">
-                      {localError}
-                    </pre>
-                    <button
-                      onClick={() => setLocalError(null)}
-                      className="mt-2 text-xs text-red-400 hover:text-red-300 underline"
-                    >
-                      Dismiss
-                    </button>
-                  </div>
+                <div className="flex items-center gap-3">
+                  <button
+                    onClick={() => {
+                      openSupportErrorReport({
+                        mediaType: mode === 'video' ? 'clip' : 'still',
+                        rawError: localError,
+                        technicalDetails:
+                          segment.errorDetails ||
+                          segment.lastContentPolicyFailure?.vertexRaiDetails ||
+                          localError,
+                        prompt: getRawPrompt() || undefined,
+                        context: {
+                          beatId: segment.beatId,
+                          segmentId: segment.segmentId,
+                          shotNumber: segment.sequenceIndex + 1,
+                          generationMethod: mode === 'video' ? generationMethod : 'still',
+                        },
+                      })
+                    }}
+                    className="text-xs text-cyan-300 hover:text-cyan-200 underline"
+                  >
+                    Report to Support
+                  </button>
+                  <button
+                    onClick={() => {
+                      setLocalError(null)
+                      setIsContentPolicyFailure(false)
+                      setIsFTVContentPolicyFailure(false)
+                    }}
+                    className="text-xs text-red-400 hover:text-red-300 underline"
+                  >
+                    Dismiss
+                  </button>
                 </div>
               </div>
+            ) : (
+              /* Intelligent error card for non-content-policy errors */
+              <GenerationErrorCard
+                mediaType={mode === 'video' ? 'clip' : 'still'}
+                rawError={localError}
+                technicalDetails={segment.errorDetails}
+                userGuidance={segment.errorGuidance}
+                generationMethod={mode === 'video' ? generationMethod : 'still'}
+                hasStartFrame={Boolean(startFrameUrl)}
+                prompt={getRawPrompt() || undefined}
+                isBusy={isGenerating}
+                onRerun={() => {
+                  setLocalError(null)
+                  handleGenerate()
+                }}
+                onDismiss={() => setLocalError(null)}
+                supportContext={{
+                  beatId: segment.beatId,
+                  segmentId: segment.segmentId,
+                  shotNumber: segment.sequenceIndex + 1,
+                  generationMethod: mode === 'video' ? generationMethod : 'still',
+                }}
+              />
             )}
           </div>
         )}

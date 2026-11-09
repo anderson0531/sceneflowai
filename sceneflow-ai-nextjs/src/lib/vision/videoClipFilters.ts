@@ -79,12 +79,20 @@ export function videoRailStatus(facts: VideoClipFacts): { status: VideoRailStatu
 }
 
 export function isContentPolicyFailureMessage(message: string): boolean {
-  return /content policy|content safety filter|usage guidelines|safety filters/i.test(message)
+  return /content policy|content safety filter|usage guidelines|safety filter|content_blocked|policy reason|blocked by safety/i.test(
+    message
+  )
 }
 
 /** Hover copy for a failed clip thumbnail. Policy failures name the next step. */
 export function clipFailureTooltip(message: string): string {
   const trimmed = message.trim()
+  if (/\{[\s\S]*\}/.test(trimmed) || /omni video generation failed|vertex ai interactions error/i.test(trimmed)) {
+    if (isContentPolicyFailureMessage(trimmed)) {
+      return 'Content policy blocked. Select this shot to rewrite it or switch to Creative.'
+    }
+    return 'Clip generation failed — select this shot to rerun or report to Support.'
+  }
   const sentence = (trimmed.match(/^.*?[.!?](?:\s|$)/)?.[0] ?? trimmed).trim()
   if (!isContentPolicyFailureMessage(trimmed)) return sentence
   return `Content policy blocked. ${sentence} Select this shot to rewrite it.`

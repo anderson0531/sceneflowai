@@ -9,6 +9,7 @@ import { CreditService } from '@/services/CreditService'
 import { buildPreVisEndFrameEditInstruction } from '@/lib/vision/framePromptBaseline'
 import { englishForModel, resolveRequestStoryLocale } from '@/i18n/server/requestLocale'
 import { mergeBeatFrameNegativePrompt } from '@/lib/character/sceneCharacterHeadshot'
+import { evaluateGenerationErrorForApi } from '@/lib/errors/generationErrorServerEvaluator'
 
 export const maxDuration = 60 // 1 minute for image generation
 export const runtime = 'nodejs'
@@ -145,10 +146,17 @@ export async function POST(
     console.error('[Generate End Frame] Error:', error)
 
     const errorMessage = error instanceof Error ? error.message : 'Unknown error'
+    const userGuidance = await evaluateGenerationErrorForApi({
+      mediaType: 'still',
+      rawError: errorMessage,
+      statusCode: 500,
+    })
 
     return NextResponse.json(
       {
-        error: 'Failed to generate end frame',
+        error: userGuidance.explanation,
+        userGuidance,
+        technicalDetails: errorMessage,
         details: errorMessage,
       },
       { status: 500 }

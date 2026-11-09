@@ -54,6 +54,7 @@ import type { StemSeparationResult } from '@/lib/audio/stemSeparation'
 import { autoSanitizePrompt } from '@/utils/promptModerator'
 import { isVertexContentPolicyError } from '@/lib/generation/contentPolicy'
 import { extractVeoRaiDetailsFromErrorString } from '@/lib/vertexai/safety'
+import { evaluateGenerationErrorForApi } from '@/lib/errors/generationErrorServerEvaluator'
 import { normalizeReferenceImages, type VeoReferenceImage } from '@/lib/video/normalizeReferenceImages'
 import {
   resolveBeatVideoReferences,
@@ -1494,15 +1495,14 @@ export async function POST(
       statusCode = 422 // Unprocessable Entity - indicates content issue, not server error
 
       const hints: string[] = [
-        'Vertex reviews the full request: your text plus any start frame, end frame, or reference images. Dramatic abstract visuals are sometimes misread as explosions or harm—even when the frames were AI-generated.',
-        'Preflight may show Low Risk while Vertex still blocks — different classifiers. Server uses VEO_SAFETY_SETTING (default block_only_high). Expand “Vertex RAI / safety details” when present to see categories and probabilities.',
-        'If you used Frame-to-Video, try Image-to-Video with only the start frame, or swap one of the keyframes.',
-        'If you used reference images, try Text-to-Video without them.',
-        'You were not charged for a completed clip when the request is blocked; optional wording fixes below are suggestions only.',
+        'Safety filters evaluate your prompt together with any attached start frame, end frame, or reference plates.',
+        isFTVMethod || hasMultipleFrames
+          ? 'Retry with Start Frame (Image-to-Video) or adjust the shot in Shot Director.'
+          : 'Use Shot Director to soften dramatic, medical, or conflict phrasing, or switch Clips to Creative.',
       ]
       if (requestBody.allowPolicyFallback !== true) {
         hints.push(
-          'Enable "Allow backup engine if blocked" in generation settings to try an alternate video provider when Vertex rejects the prompt.'
+          'Switch Clips to Creative mode in the toolbar to use an alternate video engine when blocked.'
         )
       }
 
@@ -1528,17 +1528,29 @@ export async function POST(
 
       if (isFTVMethod || hasMultipleFrames) {
         errorMessage =
-          'Content policy: Vertex blocked this generation. For Frame-to-Video, filters often react to the pair of images or the imagined transition—not only your text. Try Image-to-Video with the start frame, change a keyframe, or use optional wording suggestions if they help.'
+          'Content policy: Vertex blocked this generation. Two-frame transitions often trigger false-positive safety blocks — retry with Start Frame or adjust the prompt in Shot Director.'
       } else {
         errorMessage =
-          'Content policy: Vertex blocked this generation. The trigger may be your text or a reference/start image. Try optional wording suggestions, remove reference images, or simplify the prompt.'
+          'Content policy: Vertex blocked this generation. Use Shot Director to soften sensitive phrasing or switch Clips to Creative.'
       }
 
       const vertexRaiDetails = extractVeoRaiDetailsFromErrorString(originalErrorMessage) || undefined
+      const policyGuidance = await evaluateGenerationErrorForApi({
+        mediaType: requestBody.genType === 'T2I' ? 'still' : 'clip',
+        rawError: originalErrorMessage,
+        statusCode: 422,
+        errorCode: 'CONTENT_POLICY_VIOLATION',
+        generationMethod: effectiveGenerationMethod,
+        provider: requestBody.videoProvider || 'vertex',
+        hasStartFrame: Boolean(requestBody.startFrameUrl),
+        isFTVRelated: isFTVMethod || hasMultipleFrames,
+      })
 
       return NextResponse.json(
         {
           error: errorMessage,
+          userGuidance: policyGuidance,
+          technicalDetails: originalErrorMessage,
           retryAfter,
           isRateLimited: false,
           code: 'CONTENT_POLICY_VIOLATION',
@@ -1565,14 +1577,26 @@ export async function POST(
     } else if (errorMessage.includes('Vertex AI Interactions error 400')) {
       statusCode = 400
     } else if (errorMessage.includes('Invalid JSON payload') || errorMessage.includes('INVALID_ARGUMENT')) {
-      errorMessage = 'API Error: Invalid request format. Please try a different generation method.'
+      statusCode = 400
     } else if (errorMessage.includes('timeout') || errorMessage.includes('DEADLINE_EXCEEDED')) {
-      errorMessage = 'Request timed out. The video generation is taking too long. Please try again.'
+      statusCode = 504
     }
-    
+
+    const userGuidance = await evaluateGenerationErrorForApi({
+      mediaType: requestBody.genType === 'T2I' ? 'still' : 'clip',
+      rawError: originalErrorMessage,
+      statusCode,
+      errorCode: isAggregatorRequest ? 'AGGREGATOR_GENERATION_FAILED' : undefined,
+      generationMethod: effectiveGenerationMethod,
+      provider: requestBody.videoProvider || 'vertex',
+      hasStartFrame: Boolean(requestBody.startFrameUrl),
+    })
+
     return NextResponse.json(
       {
-        error: errorMessage,
+        error: userGuidance.explanation,
+        userGuidance,
+        technicalDetails: originalErrorMessage,
         retryAfter,
         isRateLimited: statusCode === 429,
         routingTrace: buildRoutingTrace(
@@ -1586,10 +1610,6 @@ export async function POST(
               code: 'AGGREGATOR_GENERATION_FAILED',
               generationProvider: 'aggregator' as const,
               videoModel: requestBody.videoModel,
-              hints: [
-                'This request was routed to the multiplatform (Renderful) provider, not Google Veo.',
-                'Check Vercel logs for Renderful submit/poll errors.',
-              ],
             }
           : {}),
         details: process.env.NODE_ENV === 'development' ? (error instanceof Error ? error.stack : undefined) : undefined,

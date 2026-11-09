@@ -220,6 +220,14 @@ describe('frame and video filters', () => {
     expect(frameRailStatus(placeholder)).toEqual({ status: 'action', label: 'Placeholder' })
     expect(frameRailStatus(missingFrame)).toEqual({ status: 'action', label: 'Missing' })
     expect(frameRailStatus(errored)).toEqual({ status: 'action', label: 'Error' })
+    expect(frameRailStatus({ ...missingFrame, hasImageError: true })).toEqual({
+      status: 'action',
+      label: 'Error',
+    })
+    expect(frameRailStatus({ ...placeholder, hasImageError: true })).toEqual({
+      status: 'action',
+      label: 'Error',
+    })
     expect(frameRailStatus(draftFrame)).toEqual({ status: 'attention', label: 'Draft' })
     expect(frameRailStatus({ ...draftFrame, promptChanged: true })).toEqual({
       status: 'attention',

@@ -629,6 +629,10 @@ export interface SceneSegment {
   userInstruction?: string
   // Error message - stored when generation fails for detailed display
   errorMessage?: string
+  /** Raw upstream technical details preserved for collapsible inspection & support escalation */
+  errorDetails?: string
+  /** Server-evaluated or client-evaluated structured UX guidance for the last error */
+  errorGuidance?: import('@/lib/errors/generationErrorIntelligence').EvaluatedGenerationError
 
   /** Structured metadata when Vertex returns a content / safety rejection (set by client after API 422) */
   lastContentPolicyFailure?: {

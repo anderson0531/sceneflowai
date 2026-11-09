@@ -1,6 +1,10 @@
 'use client'
 
+import { LifeBuoy } from 'lucide-react'
+import { Button } from '@/components/ui/Button'
 import { AgentRunDock, type AgentRunItemStatus } from '@/components/vision/AgentRunDock'
+import { evaluateGenerationError } from '@/lib/errors/generationErrorIntelligence'
+import { openSupportErrorReport } from '@/components/vision/ReportGenerationErrorDialog'
 
 /**
  * Single-frame Direct (prompt builder) run, reported without locking the page.
@@ -29,10 +33,18 @@ export function DirectFrameRunDock({
 }) {
   const tone = !run.finished ? 'running' : run.status === 'error' ? 'error' : 'success'
 
+  const evaluated =
+    run.finished && run.status === 'error'
+      ? evaluateGenerationError({
+          mediaType: 'still',
+          rawError: run.error || 'Direct generation failed',
+        })
+      : null
+
   const subtitle = !run.finished
     ? `Scene ${run.sceneNumber} — you can keep editing`
     : run.status === 'error'
-      ? run.error || 'Direct generation failed'
+      ? evaluated?.shortSummary || 'Still generation failed — rerun or report to Support'
       : `Scene ${run.sceneNumber} — frame ready`
 
   return (
@@ -50,6 +62,33 @@ export function DirectFrameRunDock({
       ]}
       progressPct={run.finished ? 100 : 8}
       onClose={run.finished ? onClose : undefined}
+      footer={
+        evaluated?.canReportToSupport ? (
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            className="h-7 text-[11px] border-cyan-500/40 text-cyan-200 hover:bg-cyan-950/40"
+            onClick={() =>
+              openSupportErrorReport({
+                mediaType: 'still',
+                rawError: run.error,
+                technicalDetails: run.error,
+                title: evaluated.title,
+                explanation: evaluated.explanation,
+                recommendedAction: evaluated.primaryCta.label,
+                context: {
+                  sceneNumber: run.sceneNumber,
+                  shotLabel: run.label,
+                },
+              })
+            }
+          >
+            <LifeBuoy className="h-3 w-3 mr-1" />
+            Report to Support
+          </Button>
+        ) : undefined
+      }
     />
   )
 }

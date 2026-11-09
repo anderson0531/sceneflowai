@@ -9,6 +9,7 @@ import { GroupedLanguageSelector } from '@/components/vision/GroupedLanguageSele
 import { Button } from '@/components/ui/Button'
 import { cn } from '@/lib/utils'
 import { SceneImageFrame } from '@/components/vision/SceneImageFrame'
+import { GenerationErrorCard } from '@/components/vision/GenerationErrorCard'
 import { StatusFilterBar } from '@/components/vision/StatusFilterBar'
 import {
   SceneBeatStage,
@@ -1049,37 +1050,57 @@ export function BeatVideoGallery({
                   )}
                 </div>
                 {previewFailed && (
-                  <div className="mt-2 space-y-2 rounded-md border border-rose-500/40 bg-rose-950/40 p-2">
-                    <p className="text-xs leading-relaxed text-rose-100">{previewError}</p>
-                    {policyHints.length > 0 && (
-                      <ul className="list-disc space-y-0.5 pl-4 text-[11px] text-rose-100/90">
-                        {policyHints.map((hint) => (
-                          <li key={hint}>{hint}</li>
-                        ))}
-                      </ul>
-                    )}
-                    {suggestedWording.length > 0 && (
-                      <div className="space-y-1">
-                        <p className="text-[10px] uppercase tracking-wide text-rose-200/80">
-                          Suggested wording
-                        </p>
-                        {suggestedWording.map((wording) => (
-                          <p key={wording} className="text-[11px] leading-relaxed text-rose-50">
-                            {wording}
-                          </p>
-                        ))}
-                      </div>
-                    )}
-                    {previewPolicy && onDirectBeat && preview.beatId && (
-                      <button
-                        type="button"
-                        className="inline-flex h-7 items-center gap-1 rounded bg-rose-700 px-2 text-[11px] text-white hover:bg-rose-600"
-                        onClick={() => onDirectBeat(preview.beatId!, { safety: true })}
-                      >
-                        <Clapperboard className="h-3.5 w-3.5" />
-                        Rewrite for Safety
-                      </button>
-                    )}
+                  <div className="mt-2">
+                    <GenerationErrorCard
+                      mediaType="clip"
+                      rawError={previewError}
+                      technicalDetails={previewSegment?.errorDetails}
+                      userGuidance={previewSegment?.errorGuidance}
+                      vertexRaiDetails={previewSegment?.lastContentPolicyFailure?.vertexRaiDetails}
+                      isFTVRelated={previewSegment?.lastContentPolicyFailure?.isFTVRelated}
+                      generationMethod={
+                        previewSegment?.lastContentPolicyFailure?.method ||
+                        preview?.queueItem?.config?.generationMethod
+                      }
+                      provider={previewSegment?.generationProvider}
+                      hasStartFrame={Boolean(
+                        preview?.thumbnailUrl || previewSegment?.startFrameUrl
+                      )}
+                      prompt={preview?.prompt}
+                      suggestedWording={suggestedWording}
+                      isBusy={
+                        isUpdatingPrompts ||
+                        generatingClipId === previewSegment?.segmentId ||
+                        generatingLanguageClip
+                      }
+                      onRerun={
+                        previewSegment
+                          ? () =>
+                              languageStream
+                                ? onGenerateLanguageVersion?.(previewSegment)
+                                : onGenerateClip?.(previewSegment)
+                          : undefined
+                      }
+                      onOpenDirector={
+                        onDirectBeat && preview.beatId
+                          ? () =>
+                              onDirectBeat(
+                                preview.beatId!,
+                                previewPolicy ? { safety: true } : undefined
+                              )
+                          : undefined
+                      }
+                      supportContext={{
+                        beatId: preview.beatId,
+                        segmentId: previewSegment?.segmentId,
+                        shotNumber: preview.beatNumber,
+                        shotLabel: preview.label,
+                        resolution:
+                          typeof (liveTake?.resolution || previewSegment?.resolution) === 'string'
+                            ? String(liveTake?.resolution || previewSegment?.resolution)
+                            : undefined,
+                      }}
+                    />
                   </div>
                 )}
                 {preview.prompt?.trim() && (

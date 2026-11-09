@@ -21,6 +21,7 @@ import { AudioTrackClip, AudioTracksData } from './SceneTimeline'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 import { BackdropVideoModal, SceneForBackdrop, CharacterForBackdrop } from '@/components/vision/BackdropVideoModal'
+import { GenerationErrorCard } from '@/components/vision/GenerationErrorCard'
 import { BackdropMode } from '@/lib/vision/backdropGenerator'
 
 export type GenerationType = 'T2V' | 'I2V' | 'T2I' | 'UPLOAD'
@@ -590,17 +591,30 @@ export function SegmentStudio({
         </div>
       )}
       
-      {/* Error Banner - Show detailed error message when generation fails */}
+      {/* Error Banner - Intelligent explanation, CTA, and Support Escalation */}
       {segment.status === 'ERROR' && segment.errorMessage && (
-        <div className="flex-shrink-0 bg-red-50 dark:bg-red-900/20 border-b border-red-200 dark:border-red-800 p-3 max-h-[300px] overflow-y-auto">
-          <div className="flex items-start gap-2">
-            <AlertCircle className="w-5 h-5 text-red-600 dark:text-red-400 flex-shrink-0 mt-0.5" />
-            <div className="flex-1 min-w-0">
-              <pre className="text-xs text-red-900 dark:text-red-100 whitespace-pre-wrap font-sans leading-relaxed">
-                {segment.errorMessage}
-              </pre>
-            </div>
-          </div>
+        <div className="flex-shrink-0 border-b border-gray-800 p-3">
+          <GenerationErrorCard
+            mediaType={segment.assetType === 'image' ? 'still' : 'clip'}
+            rawError={segment.errorMessage}
+            technicalDetails={segment.errorDetails}
+            userGuidance={segment.errorGuidance}
+            vertexRaiDetails={segment.lastContentPolicyFailure?.vertexRaiDetails}
+            isFTVRelated={segment.lastContentPolicyFailure?.isFTVRelated}
+            generationMethod={segment.lastContentPolicyFailure?.method}
+            provider={segment.generationProvider}
+            hasStartFrame={Boolean(segment.startFrameUrl || segment.references?.startFrameUrl)}
+            prompt={segment.userEditedPrompt || segment.generatedPrompt}
+            onRerun={() => {
+              setPromptBuilderMode(segment.assetType === 'image' ? 'image' : 'video')
+              setIsPromptBuilderOpen(true)
+            }}
+            supportContext={{
+              beatId: segment.beatId,
+              segmentId: segment.segmentId,
+              shotNumber: segment.sequenceIndex + 1,
+            }}
+          />
         </div>
       )}
 

@@ -4,6 +4,7 @@ import { englishForModel, resolveRequestStoryLocale } from '@/i18n/server/reques
 // import { callVertexAIImagen } from '@/lib/vertexai/client'
 import { generateImageWithGeminiStudio, editImageWithGeminiStudio } from '@/lib/gemini/geminiStudioImageClient'
 import { uploadImageToBlob } from '@/lib/storage/blob'
+import { evaluateGenerationErrorForApi } from '@/lib/errors/generationErrorServerEvaluator'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import {
@@ -1277,21 +1278,37 @@ Render this scene in ${selectedStyle.name} style.`
       (error && typeof error === 'object' && (error as { name?: string }).name === 'ContentPolicyExhaustedError') ||
       isVertexContentPolicyError(errorMessage)
     ) {
+      const policyGuidance = await evaluateGenerationErrorForApi({
+        mediaType: 'still',
+        rawError: errorMessage,
+        statusCode: 422,
+        errorCode: IMAGE_CONTENT_POLICY_CODE,
+      })
       return NextResponse.json(
         {
           success: false,
           error: IMAGE_CONTENT_POLICY_USER_MESSAGE,
           code: IMAGE_CONTENT_POLICY_CODE,
+          userGuidance: policyGuidance,
+          technicalDetails: errorMessage,
         },
         { status: 422 }
       )
     }
-    
+
+    const userGuidance = await evaluateGenerationErrorForApi({
+      mediaType: 'still',
+      rawError: errorMessage,
+      statusCode: 500,
+    })
+
     return NextResponse.json(
-      { 
+      {
         success: false,
-        error: 'Failed to generate frames',
-        details: errorMessage
+        error: userGuidance.explanation,
+        userGuidance,
+        technicalDetails: errorMessage,
+        details: errorMessage,
       },
       { status: 500 }
     )

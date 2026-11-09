@@ -189,6 +189,11 @@ import {
 import { frameReferenceNotice } from '@/lib/vision/frameListFilters'
 import { toast } from 'sonner'
 import { SceneImageQuotaToast } from '@/components/vision/SceneImageQuotaToast'
+import { evaluateGenerationError } from '@/lib/errors/generationErrorIntelligence'
+import {
+  ReportGenerationErrorDialogHost,
+  openSupportErrorReport,
+} from '@/components/vision/ReportGenerationErrorDialog'
 import {
   resolveCharacterId,
   updateCharacterInList,
@@ -3926,8 +3931,14 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         })
         
         if (!response.ok) {
-          const error = await response.json()
-          throw new Error(error.details || error.error || 'Failed to generate end frame')
+          const errorData = await response.json().catch(() => ({}))
+          const err = new Error(
+            errorData.error || errorData.details || 'Failed to generate end frame'
+          ) as Error & { technicalDetails?: string; userGuidance?: any; status?: number }
+          err.technicalDetails = errorData.technicalDetails || errorData.details || errorData.error
+          err.userGuidance = errorData.userGuidance
+          err.status = response.status
+          throw err
         }
         
         const data = await response.json()
@@ -3937,7 +3948,40 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         return data.endFrameUrl
       } catch (error) {
         console.error('[VisionPage] Failed to generate end frame:', error)
-        toast.error(error instanceof Error ? error.message : 'Failed to generate end frame')
+        const guidance = evaluateGenerationError({
+          mediaType: 'still',
+          rawError: error,
+          generationMethod: 'end',
+        })
+        toast.error(guidance.title, {
+          description: guidance.explanation,
+          duration: 12000,
+          ...(guidance.canReportToSupport
+            ? {
+                action: {
+                  label: 'Report to Support',
+                  onClick: () =>
+                    openSupportErrorReport({
+                      mediaType: 'still',
+                      rawError: error instanceof Error ? error.message : String(error),
+                      technicalDetails:
+                        (error as { technicalDetails?: string })?.technicalDetails ||
+                        (error instanceof Error ? error.message : String(error)),
+                      title: guidance.title,
+                      explanation: guidance.explanation,
+                      recommendedAction: guidance.primaryCta.label,
+                      prompt: segmentPrompt,
+                      context: {
+                        projectId: project?.id,
+                        projectTitle: project?.title,
+                        segmentId,
+                        frameRole: 'end',
+                      },
+                    }),
+                },
+              }
+            : {}),
+        })
         return null
       }
     },
@@ -4302,7 +4346,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         })
 
         if (!response.ok) {
-          const errorData = await response.json()
+          const errorData = await response.json().catch(() => ({}))
           if (errorData?.code === IMAGE_CONTENT_POLICY_CODE || isImageContentPolicyError(errorData)) {
             throw stillPolicyErrorWithCode(
               IMAGE_CONTENT_POLICY_USER_MESSAGE,
@@ -4312,7 +4356,15 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           if (errorData?.code === IMAGE_SAFETY_CODE || isImageSafetyError(errorData?.error)) {
             throw stillPolicyErrorWithCode(IMAGE_SAFETY_USER_MESSAGE, IMAGE_SAFETY_CODE)
           }
-          throw new Error(errorData.error || 'Failed to generate frames')
+          const err = new Error(errorData.error || 'Failed to generate frames') as Error & {
+            technicalDetails?: string
+            userGuidance?: any
+            status?: number
+          }
+          err.technicalDetails = errorData.technicalDetails || errorData.details || errorData.error
+          err.userGuidance = errorData.userGuidance
+          err.status = response.status
+          throw err
         }
 
         const data = await response.json()
@@ -4387,7 +4439,40 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
             openDirectorLabel: tStillPolicy('openDirector'),
           })
         ) {
-          toast.error(error instanceof Error ? error.message : 'Failed to generate frames')
+          const guidance = evaluateGenerationError({
+            mediaType: 'still',
+            rawError: error,
+            generationMethod: frameType,
+          })
+          toast.error(guidance.title, {
+            description: guidance.explanation,
+            duration: 12000,
+            ...(guidance.canReportToSupport
+              ? {
+                  action: {
+                    label: 'Report to Support',
+                    onClick: () =>
+                      openSupportErrorReport({
+                        mediaType: 'still',
+                        rawError: error instanceof Error ? error.message : String(error),
+                        technicalDetails:
+                          (error as { technicalDetails?: string })?.technicalDetails ||
+                          (error instanceof Error ? error.message : String(error)),
+                        title: guidance.title,
+                        explanation: guidance.explanation,
+                        recommendedAction: guidance.primaryCta.label,
+                        context: {
+                          projectId: project?.id,
+                          projectTitle: project?.title,
+                          sceneId,
+                          segmentId,
+                          frameRole: frameType,
+                        },
+                      }),
+                  },
+                }
+              : {}),
+          })
         }
       } finally {
         setGeneratingFrameForSegment(null)
@@ -5182,13 +5267,20 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
             | undefined
           if (routingTrace) {
             console.warn('[Segment Generate] routingTrace:', routingTrace)
-            try {
-              toast.warning(
-                `Routing: requested ${routingTrace.requestedProvider ?? '?'} → resolved ${routingTrace.resolvedProvider ?? '?'} (aggregator enabled: ${routingTrace.aggregatorEnabled ?? '?'})`
-              )
-            } catch {}
           }
-          
+          const rawDiagParts = [
+            errorData?.technicalDetails,
+            errorData?.vertexDetails,
+            errorData?.vertexRaiDetails
+              ? `RAI / safety (from Vertex): ${errorData.vertexRaiDetails}`
+              : undefined,
+            routingTrace
+              ? `Routing trace: requested=${routingTrace.requestedProvider}, resolved=${routingTrace.resolvedProvider}, aggregatorEnabled=${routingTrace.aggregatorEnabled}`
+              : undefined,
+          ].filter((v): v is string => typeof v === 'string' && v.trim().length > 0)
+          const rawTechnicalDetails =
+            [...new Set(rawDiagParts)].join('\n\n') || errorMessage
+
           // Handle specific error codes with user-friendly messages
           if (response.status === 401) {
             throw new Error('Session expired. Please refresh the page and sign in again.')
@@ -5200,17 +5292,12 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
             throw new Error('You do not have permission to generate assets.')
           }
           if (response.status === 422) {
-            // Content policy violation — include vertexDetails for full error context
-            const vertexDetails = errorData?.vertexDetails
             const vertexRaiDetails = errorData?.vertexRaiDetails as string | undefined
-            let enrichedMessage = vertexDetails
-              ? `${errorMessage}\n\nVertex AI Details: ${vertexDetails}`
-              : errorMessage
-            if (vertexRaiDetails?.trim()) {
-              enrichedMessage += `\n\nRAI / safety (from Vertex): ${vertexRaiDetails}`
-            }
-            // Attach structured error data for the catch handler to use
-            const err = new Error(enrichedMessage) as any
+            const err = new Error(errorMessage) as any
+            err.status = 422
+            err.code = errorData?.code || 'CONTENT_POLICY_VIOLATION'
+            err.technicalDetails = rawTechnicalDetails
+            err.userGuidance = errorData?.userGuidance
             err.contentPolicyData = {
               code: errorData?.code || 'CONTENT_POLICY_VIOLATION',
               generationMethod: errorData?.generationMethod,
@@ -5229,20 +5316,22 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
               typeof errorData?.retryAfter === 'number' && errorData.retryAfter > 0
                 ? Math.max(60, Math.ceil(errorData.retryAfter))
                 : 60
-            throw new Error(
+            const err = new Error(
               `Rate limit exceeded. Please wait ${retrySec} seconds and try again.`
-            )
+            ) as any
+            err.status = 429
+            err.isRateLimited = true
+            err.retryAfter = retrySec
+            err.technicalDetails = rawTechnicalDetails
+            err.userGuidance = errorData?.userGuidance
+            throw err
           }
-          if (response.status === 503 && errorData?.code === 'AGGREGATOR_NOT_CONFIGURED') {
-            throw new Error(
-              (errorData.error ||
-                'Multiplatform video is not configured on the server. Set VIDEO_AGGREGATOR_API_KEY in Vercel.') +
-                (routingTrace
-                  ? `\n\nRouting trace: requested=${routingTrace.requestedProvider}, resolved=${routingTrace.resolvedProvider}, aggregatorEnabled=${routingTrace.aggregatorEnabled}`
-                  : '')
-            )
-          }
-          throw new Error(errorMessage)
+          const err = new Error(errorMessage) as any
+          err.status = response.status
+          err.code = errorData?.code
+          err.technicalDetails = rawTechnicalDetails
+          err.userGuidance = errorData?.userGuidance
+          throw err
         }
 
         let data = await response.json()
@@ -5403,6 +5492,8 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                 : {}),
               lastContentPolicyFailure: undefined,
               errorMessage: undefined,
+              errorDetails: undefined,
+              errorGuidance: undefined,
               takes: appendSegmentTake(segment.takes, newTake),
               currentTakeId: newTake.id,
                 references: {
@@ -5616,8 +5707,19 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       } catch (error) {
         console.error('[Segment Generate] Error:', error)
         const errorMessage = error instanceof Error ? error.message : 'Failed to generate asset'
-        // Extract structured content policy data if available
+        // Extract structured content policy & guidance data if available
         const contentPolicyData = (error as any)?.contentPolicyData
+        const errorDetails = (error as any)?.technicalDetails as string | undefined
+        const evaluatedClipGuidance = evaluateGenerationError({
+          mediaType: mode === 'T2I' ? 'still' : 'clip',
+          rawError: error,
+          statusCode: (error as any)?.status,
+          errorCode: (error as any)?.code,
+          generationMethod: options?.generationMethod || mode,
+          provider: options?.videoProvider,
+          hasStartFrame: Boolean(options?.startFrameUrl),
+          isFTVRelated: Boolean(contentPolicyData?.isFTVRelated),
+        })
         
         // Language-stream failures stay off the English master.
         if (!languageClip) {
@@ -5627,7 +5729,9 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
             segment.segmentId === segmentId ? { 
               ...segment, 
               status: 'ERROR', 
-              errorMessage,
+              errorMessage: evaluatedClipGuidance.explanation,
+              errorDetails: errorDetails || errorMessage,
+              errorGuidance: evaluatedClipGuidance,
               // Store content policy failure metadata for UI recovery and FTV deprioritization
               ...(contentPolicyData && {
                 lastContentPolicyFailure: {
@@ -6059,7 +6163,50 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           ) {
             toast.error(errorMessage)
           } else {
-            toast.error(languageClip ? errorMessage : 'Generation failed - click shot for details')
+            const sceneState = sceneProductionState[sceneId]
+            const failedSeg = sceneState?.segments?.find((s: any) => s.segmentId === segmentId)
+            toast.error(evaluatedClipGuidance.title, {
+              description: evaluatedClipGuidance.explanation,
+              duration: 12000,
+              ...(evaluatedClipGuidance.canReportToSupport
+                ? {
+                    action: {
+                      label: 'Report to Support',
+                      onClick: () =>
+                        openSupportErrorReport({
+                          mediaType: mode === 'T2I' ? 'still' : 'clip',
+                          rawError: errorMessage,
+                          technicalDetails: errorDetails || errorMessage,
+                          statusCode: (error as any)?.status,
+                          errorCode: (error as any)?.code,
+                          title: evaluatedClipGuidance.title,
+                          explanation: evaluatedClipGuidance.explanation,
+                          recommendedAction: evaluatedClipGuidance.primaryCta.label,
+                          prompt:
+                            options?.prompt ||
+                            failedSeg?.userEditedPrompt ||
+                            failedSeg?.generatedPrompt ||
+                            undefined,
+                          context: {
+                            projectId: project?.id,
+                            projectTitle: project?.title,
+                            sceneId,
+                            beatId: failedSeg?.beatId,
+                            segmentId,
+                            shotNumber:
+                              typeof failedSeg?.sequenceIndex === 'number'
+                                ? failedSeg.sequenceIndex + 1
+                                : undefined,
+                            generationMethod: options?.generationMethod || mode,
+                            provider: options?.videoProvider,
+                            resolution: options?.resolution,
+                            qualityTier: options?.qualityTier,
+                          },
+                        }),
+                    },
+                  }
+                : {}),
+            })
           }
         } catch {}
         throw error
@@ -12387,8 +12534,36 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       }
     } catch (error: any) {
       console.error('[handleGenerateSceneReferenceImage] Error:', error)
-      try { const { toast } = require('sonner'); toast.error(error.message || 'Failed to generate scene reference') } catch {}
-      failAgentRun(runId, error?.message || 'Failed to generate scene reference')
+      const guidance = evaluateGenerationError({ mediaType: 'still', rawError: error })
+      try {
+        toast.error(guidance.title, {
+          description: guidance.explanation,
+          duration: 12000,
+          ...(guidance.canReportToSupport
+            ? {
+                action: {
+                  label: 'Report to Support',
+                  onClick: () =>
+                    openSupportErrorReport({
+                      mediaType: 'still',
+                      rawError: error?.message || String(error),
+                      technicalDetails: error?.message || String(error),
+                      title: guidance.title,
+                      explanation: guidance.explanation,
+                      recommendedAction: guidance.primaryCta.label,
+                      context: {
+                        projectId,
+                        projectTitle: project?.title,
+                        sceneNumber: sceneIdx + 1,
+                        frameRole: 'scene-reference',
+                      },
+                    }),
+                },
+              }
+            : {}),
+        })
+      } catch {}
+      failAgentRun(runId, guidance.shortSummary)
     } finally {
       setGeneratingSceneReferenceIndex(null)
     }
@@ -13725,7 +13900,17 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       
       if (!response.ok) {
         const errorMsg = data?.error || 'Image generation failed'
-        throw new Error(errorMsg)
+        const err = new Error(errorMsg) as Error & {
+          technicalDetails?: string
+          userGuidance?: any
+          status?: number
+          errorType?: string
+        }
+        err.technicalDetails = data?.technicalDetails || data?.googleError || errorMsg
+        err.userGuidance = data?.userGuidance
+        err.status = response.status
+        err.errorType = data?.errorType
+        throw err
       }
       
       // Handle validation info based on response
@@ -13808,7 +13993,15 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       console.error('Failed to generate scene image:', error)
       
       // Check for quota error
-      if (error.message?.includes('quota') || error.message?.includes('RESOURCE_EXHAUSTED')) {
+      const sceneErrText = error instanceof Error ? error.message : String(error)
+      const isQuota =
+        (error as any)?.status === 429 ||
+        (error as any)?.errorType === 'quota' ||
+        sceneErrText.includes('quota') ||
+        sceneErrText.includes('RESOURCE_EXHAUSTED') ||
+        sceneErrText.includes('rate-limited')
+      const guidance = evaluateGenerationError({ mediaType: 'still', rawError: error })
+      if (isQuota) {
         try { 
           toast.error(
             <SceneImageQuotaToast
@@ -13818,10 +14011,39 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           )
         } catch {}
       } else {
-        try { const { toast } = require('sonner'); toast.error(`Failed to generate scene image: ${error.message}`, { duration: Infinity }) } catch {}
+        try {
+          toast.error(guidance.title, {
+            description: guidance.explanation,
+            duration: 12000,
+            ...(guidance.canReportToSupport
+              ? {
+                  action: {
+                    label: 'Report to Support',
+                    onClick: () =>
+                      openSupportErrorReport({
+                        mediaType: 'still',
+                        rawError: error instanceof Error ? error.message : String(error),
+                        technicalDetails:
+                          (error as any)?.technicalDetails ||
+                          (error instanceof Error ? error.message : String(error)),
+                        title: guidance.title,
+                        explanation: guidance.explanation,
+                        recommendedAction: guidance.primaryCta.label,
+                        context: {
+                          projectId,
+                          projectTitle: project?.title,
+                          sceneNumber: sceneIdx + 1,
+                          frameRole: 'establishing',
+                        },
+                      }),
+                  },
+                }
+              : {}),
+          })
+        } catch {}
       }
       if (!batchGeneratingRef.current) {
-        failAgentRun(frameRunId, error instanceof Error ? error.message : 'Failed to generate scene image')
+        failAgentRun(frameRunId, guidance.shortSummary)
       }
     } finally {
       setGeneratingKeyframeSceneNumber(null)
@@ -14564,7 +14786,28 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           await persistBeatImageSafetyError(sceneIndex, payload.beatIndex as number)
           throw stillPolicyErrorWithCode(IMAGE_SAFETY_USER_MESSAGE, IMAGE_SAFETY_CODE)
         }
-        throw new Error(data?.error || 'Direct generation failed')
+        const err = new Error(data?.error || 'Direct generation failed') as Error & {
+          technicalDetails?: string
+          userGuidance?: any
+          status?: number
+        }
+        err.technicalDetails = data?.technicalDetails || data?.googleError || data?.error
+        err.userGuidance = data?.userGuidance
+        err.status = response.status
+        if (payload.frameType === 'beat' && typeof payload.beatIndex === 'number') {
+          const evalBoard = evaluateGenerationError({
+            mediaType: 'still',
+            rawError: err,
+            statusCode: response.status,
+            errorCode: data?.code,
+          })
+          await persistBeatImageSafetyError(
+            sceneIndex,
+            payload.beatIndex as number,
+            evalBoard.shortSummary
+          )
+        }
+        throw err
       }
 
       const latestAfterGenerate = scriptRef.current || script
@@ -14653,6 +14896,13 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       finishDirectFrameRun({ status: 'done' })
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : 'Direct generation failed'
+      const tech = (error as { technicalDetails?: string })?.technicalDetails || message
+      const guidance = evaluateGenerationError({
+        mediaType: 'still',
+        rawError: error,
+        generationMethod: slot.frameRole || 'start',
+        provider: frameGenerationMode === 'creative' ? 'kling' : 'vertex',
+      })
       if (
         !toastStillPolicyFailure({
           error,
@@ -14660,9 +14910,37 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           openDirectorLabel: tStillPolicy('openDirector'),
         })
       ) {
-        toast.error(message)
+        toast.error(guidance.title, {
+          description: guidance.explanation,
+          duration: 12000,
+          ...(guidance.canReportToSupport
+            ? {
+                action: {
+                  label: 'Report to Support',
+                  onClick: () =>
+                    openSupportErrorReport({
+                      mediaType: 'still',
+                      rawError: message,
+                      technicalDetails: tech,
+                      title: guidance.title,
+                      explanation: guidance.explanation,
+                      recommendedAction: guidance.primaryCta.label,
+                      context: {
+                        projectId,
+                        projectTitle: project?.title,
+                        sceneNumber,
+                        beatId: slot.beatId,
+                        shotNumber: slot.beatNumber,
+                        shotLabel: slot.label,
+                        frameRole: slot.frameRole || 'still',
+                      },
+                    }),
+                },
+              }
+            : {}),
+        })
       }
-      finishDirectFrameRun({ status: 'error', error: message })
+      finishDirectFrameRun({ status: 'error', error: tech })
     }
   }
 
@@ -22262,6 +22540,9 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           />
         )}
       </AgentDockStack>
+
+      {/* Global Support Escalation Modal Host */}
+      <ReportGenerationErrorDialogHost />
 
       {/* First-time onboarding tour */}
       <ProductionOnboarding />
