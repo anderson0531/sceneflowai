@@ -4,6 +4,7 @@ import {
   buildStillDirectorSceneContext,
   shouldSkipStillDirectorAuto,
   type DirectBeatStillRequest,
+  type StillDirectorBoundContinuity,
   type StillDirectorPatch,
 } from '@/lib/intelligence/beat-still-director-fallback'
 import { getSceneBeats, isBeatExcluded } from '@/lib/script/beatMigration'
@@ -11,10 +12,14 @@ import type { SceneBeat } from '@/lib/script/segmentTypes'
 import { runWithConcurrencyLimit } from '@/lib/utils/concurrency'
 import type { ProjectLookbook } from '@/lib/intelligence/project-lookbook-fallback'
 import {
+  boundBeatReferenceSelection,
   directionFromDirectorPatch,
   freshBeatReferenceSelection,
   saveDirectorPatchToScenes,
 } from '@/lib/vision/saveBeatDirection'
+import { resolveBeatElementSelection } from '@/lib/vision/resolveBeatVideoReferences'
+import { resolveWardrobeForCharacter } from '@/lib/character/characterReferenceAssembly'
+import type { LocationReference, VisualReference } from '@/types/visionReferences'
 
 /**
  * Single-shot focus per Still Director call (`1` beat per request).
@@ -134,12 +139,127 @@ export interface ShotDirectionChunkResult {
 }
 
 /**
+ * Builds the bound continuity snapshot for a beat so the Still Director aligns
+ * its direction with the shot's existing Cast, Wardrobes, Location/Set Version,
+ * and Props by default rather than inventing unbound continuity changes.
+ */
+export function buildBeatBoundContinuity(args: {
+  scene: Record<string, unknown> | undefined
+  beat: SceneBeat
+  sceneIdx?: number
+  characters?: Array<Record<string, any>>
+  locationReferences?: Array<Record<string, any>>
+  objectReferences?: Array<Record<string, any>>
+}): StillDirectorBoundContinuity | undefined {
+  const characters = Array.isArray(args.characters) ? args.characters : []
+  const locationReferences = Array.isArray(args.locationReferences)
+    ? (args.locationReferences as LocationReference[])
+    : []
+  const objectReferences = Array.isArray(args.objectReferences)
+    ? (args.objectReferences as VisualReference[])
+    : []
+  if (
+    characters.length === 0 &&
+    locationReferences.length === 0 &&
+    objectReferences.length === 0
+  ) {
+    return undefined
+  }
+  const sceneObj = args.scene ?? {}
+  const resolved = resolveBeatElementSelection({
+    scene: sceneObj,
+    beat: args.beat,
+    sceneIndex: args.sceneIdx,
+    projectCharacters: characters as any,
+    locationReferences,
+    objectReferences,
+  })
+  const castNames: string[] = []
+  const wardrobes: NonNullable<StillDirectorBoundContinuity['wardrobes']> = []
+  for (const charId of resolved.characterIds) {
+    const charObj = characters.find(
+      (c) => (c.id || c.name) === charId || String(c.name || '').trim() === charId
+    )
+    if (!charObj) continue
+    const charName = String(charObj.name || '').trim()
+    if (!charName) continue
+    castNames.push(charName)
+    const w = resolveWardrobeForCharacter(
+      charObj,
+      sceneObj,
+      resolved.characterWardrobes,
+      args.sceneIdx
+    )
+    if (w) {
+      const wName = typeof w.name === 'string' && w.name.trim() ? w.name.trim() : 'Wardrobe'
+      const wDesc = [
+        typeof w.description === 'string' ? w.description.trim() : '',
+        typeof w.accessories === 'string' ? w.accessories.trim() : '',
+        typeof w.appearanceNotes === 'string' ? w.appearanceNotes.trim() : '',
+      ]
+        .filter(Boolean)
+        .join('; ')
+      wardrobes.push({
+        characterName: charName,
+        wardrobeName: wName,
+        ...(wDesc ? { description: wDesc } : {}),
+      })
+    } else if (typeof charObj.defaultWardrobe === 'string' && charObj.defaultWardrobe.trim()) {
+      wardrobes.push({
+        characterName: charName,
+        wardrobeName: 'Default Wardrobe',
+        description: charObj.defaultWardrobe.trim(),
+      })
+    }
+  }
+
+  let location: StillDirectorBoundContinuity['location']
+  if (resolved.locationRefId) {
+    const locObj = locationReferences.find((l) => l.id === resolved.locationRefId)
+    if (locObj) {
+      const verObj = resolved.locationVersionId
+        ? locObj.versions?.find((v) => v.id === resolved.locationVersionId)
+        : undefined
+      const locName =
+        locObj.location?.trim() || locObj.locationDisplay?.trim() || 'Connected Location'
+      const locDesc = [
+        locObj.description?.trim(),
+        verObj?.stateNotes?.trim() || verObj?.description?.trim(),
+      ]
+        .filter(Boolean)
+        .join(' — ')
+      location = {
+        name: locName,
+        ...(verObj?.name?.trim() ? { versionName: verObj.name.trim() } : {}),
+        ...(locDesc ? { description: locDesc } : {}),
+      }
+    }
+  }
+
+  const propNames = resolved.objectRefIds
+    .map((id) => objectReferences.find((o) => o.id === id)?.name?.trim())
+    .filter((name): name is string => Boolean(name))
+
+  return {
+    ...(castNames.length > 0 ? { castNames } : {}),
+    ...(wardrobes.length > 0 ? { wardrobes } : {}),
+    ...(location ? { location } : {}),
+    propNames,
+  }
+}
+
+/**
  * Ask the Still Director for every eligible shot in a scene, a few beats per
  * call and several calls at once. One scene at a time is the caller's job.
  */
 export async function runShotDirectionChunks(args: {
   scene: Record<string, unknown>
+  sceneIdx?: number
   catalog?: BeatSequenceReferenceCatalog
+  characters?: Array<Record<string, any>>
+  locationReferences?: Array<Record<string, any>>
+  objectReferences?: Array<Record<string, any>>
+  allowUnboundReferences?: boolean
   concurrency?: number
   chunkSize?: number
   force?: boolean
@@ -163,17 +283,31 @@ export async function runShotDirectionChunks(args: {
     const request: DirectBeatStillRequest = {
       mode: 'optimize',
       catalog: args.catalog,
+      ...(args.allowUnboundReferences !== undefined
+        ? { allowUnboundReferences: args.allowUnboundReferences }
+        : {}),
       ...(sceneContext ? { sceneContext } : {}),
-      beats: chunk.map(({ beat, beatIndex }) => ({
-        beatIndex,
-        beat,
-        previousMoment:
-          beatIndex > 0 ? composeBeatActionFraming(beats[beatIndex - 1]) : undefined,
-        nextMoment:
-          beatIndex + 1 < beats.length
-            ? composeBeatActionFraming(beats[beatIndex + 1])
-            : undefined,
-      })),
+      beats: chunk.map(({ beat, beatIndex }) => {
+        const boundContinuity = buildBeatBoundContinuity({
+          scene: args.scene,
+          beat,
+          sceneIdx: args.sceneIdx,
+          characters: args.characters,
+          locationReferences: args.locationReferences,
+          objectReferences: args.objectReferences,
+        })
+        return {
+          beatIndex,
+          beat,
+          ...(boundContinuity ? { boundContinuity } : {}),
+          previousMoment:
+            beatIndex > 0 ? composeBeatActionFraming(beats[beatIndex - 1]) : undefined,
+          nextMoment:
+            beatIndex + 1 < beats.length
+              ? composeBeatActionFraming(beats[beatIndex + 1])
+              : undefined,
+        }
+      }),
     }
     try {
       const result = await args.direct(request)
@@ -213,11 +347,18 @@ export function applyOptimizedShotPatches(args: {
   objectReferences: Array<{ id: string; name: string }>
   promptComposition?: { artStyleAnchor?: string; lookbook?: ProjectLookbook }
   force?: boolean
+  /**
+   * When false/omitted (default), preserves each beat's bound continuity references
+   * (only pruning off-camera characters) rather than wiping `referenceSelection`
+   * via `freshBeatReferenceSelection`.
+   */
+  allowUnboundReferences?: boolean
 }): { scenes: any[]; optimized: number; skipped: number } {
   let scenes = Array.isArray(args.scenes) ? args.scenes : []
   let optimized = 0
   let skipped = 0
   if (!scenes[args.sceneIdx]) return { scenes, optimized, skipped }
+  const allowUnbound = args.allowUnboundReferences === true
 
   for (const entry of args.patches) {
     const scene = scenes[args.sceneIdx]
@@ -242,23 +383,35 @@ export function applyOptimizedShotPatches(args: {
       actionDescription: entry.patch.actionDescription?.trim() || current.actionDescription,
       beatDirection: directionFromDirectorPatch(current.beatDirection, entry.patch, args.characters),
     }
+    const referenceSelection = allowUnbound
+      ? freshBeatReferenceSelection({
+          scene,
+          beat: directed,
+          sceneIdx: args.sceneIdx,
+          characters: args.characters,
+          locationReferences: args.locationReferences,
+          objectReferences: args.objectReferences,
+        })
+      : boundBeatReferenceSelection({
+          scene,
+          beat: current,
+          directedBeat: directed,
+          sceneIdx: args.sceneIdx,
+          characters: args.characters,
+          locationReferences: args.locationReferences,
+          objectReferences: args.objectReferences,
+        })
     scenes = saveDirectorPatchToScenes({
       scenes,
       sceneIdx: args.sceneIdx,
       beatId: current.beatId,
       patch: entry.patch,
       generatedBy: 'director',
-      referenceSelection: freshBeatReferenceSelection({
-        scene,
-        beat: directed,
-        sceneIdx: args.sceneIdx,
-        characters: args.characters,
-        locationReferences: args.locationReferences,
-        objectReferences: args.objectReferences,
-      }),
+      referenceSelection,
       characters: args.characters,
       objectReferences: args.objectReferences,
       promptComposition: args.promptComposition,
+      allowUnboundReferences: allowUnbound,
     })
     optimized += 1
   }

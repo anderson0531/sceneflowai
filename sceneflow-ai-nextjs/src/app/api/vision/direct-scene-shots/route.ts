@@ -43,6 +43,7 @@ export async function POST(req: NextRequest) {
     const projectId = typeof body.projectId === 'string' ? body.projectId : ''
     const sceneIndex = typeof body.sceneIndex === 'number' ? body.sceneIndex : -1
     const force = body.force === true
+    const allowUnboundReferences = body.allowUnboundReferences === true
     if (!projectId || sceneIndex < 0) {
       return NextResponse.json(
         { error: 'projectId and sceneIndex are required' },
@@ -77,9 +78,22 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Scene not found' }, { status: 404 })
     }
 
+    const initialCharacters = Array.isArray(visionPhase.characters) ? visionPhase.characters : []
+    const initialLocationReferences = Array.isArray(visionPhase.references?.locationReferences)
+      ? visionPhase.references.locationReferences
+      : []
+    const initialObjectReferences = Array.isArray(visionPhase.references?.objectReferences)
+      ? visionPhase.references.objectReferences
+      : []
+
     const directed = await runShotDirectionChunks({
       scene: scene as Record<string, unknown>,
+      sceneIdx: sceneIndex,
       catalog: shotDirectionCatalogFromPhase(visionPhase),
+      characters: initialCharacters,
+      locationReferences: initialLocationReferences,
+      objectReferences: initialObjectReferences,
+      allowUnboundReferences,
       concurrency: getShotDirectionTextConcurrency(),
       force,
       signal: req.signal,
@@ -157,42 +171,62 @@ export async function POST(req: NextRequest) {
             }))
         : []
 
-      const preSyncedCatalog = syncSceneDirectionToContinuityCatalog({
-        scenes: freshScenes,
-        sceneIdx: sceneIndex,
-        characters,
-        locationReferences: rawLocationReferences,
-        objectReferences: rawObjectReferences,
-      })
+      let workingScenes = freshScenes
+      let workingCharacters = characters
+      let workingLocationReferences = rawLocationReferences
+      let workingObjectReferences = rawObjectReferences
+      let charactersChanged = false
+      let locationsChanged = false
+      let objectsChanged = false
+
+      if (allowUnboundReferences) {
+        const preSyncedCatalog = syncSceneDirectionToContinuityCatalog({
+          scenes: workingScenes,
+          sceneIdx: sceneIndex,
+          characters: workingCharacters,
+          locationReferences: workingLocationReferences,
+          objectReferences: workingObjectReferences,
+        })
+        workingScenes = preSyncedCatalog.scenes
+        workingCharacters = preSyncedCatalog.characters as typeof characters
+        workingLocationReferences = preSyncedCatalog.locationReferences
+        workingObjectReferences = preSyncedCatalog.objectReferences
+        charactersChanged = preSyncedCatalog.charactersChanged
+        locationsChanged = preSyncedCatalog.locationsChanged
+        objectsChanged = preSyncedCatalog.objectsChanged
+      }
 
       const applied = applyOptimizedShotPatches({
-        scenes: preSyncedCatalog.scenes,
+        scenes: workingScenes,
         sceneIdx: sceneIndex,
         patches: directed.patches,
-        characters: preSyncedCatalog.characters as typeof characters,
-        locationReferences: preSyncedCatalog.locationReferences,
-        objectReferences: preSyncedCatalog.objectReferences,
+        characters: workingCharacters,
+        locationReferences: workingLocationReferences,
+        objectReferences: workingObjectReferences,
         promptComposition: {
           artStyleAnchor: resolveProjectArtStyle(fresh.metadata),
           lookbook: freshPhase.lookbook as ProjectLookbook | undefined,
         },
         force,
+        allowUnboundReferences,
       })
 
-      const syncedCatalog = syncSceneDirectionToContinuityCatalog({
-        scenes: applied.scenes,
-        sceneIdx: sceneIndex,
-        characters: preSyncedCatalog.characters as typeof characters,
-        locationReferences: preSyncedCatalog.locationReferences,
-        objectReferences: preSyncedCatalog.objectReferences,
-      })
-      applied.scenes = syncedCatalog.scenes
-      const charactersChanged =
-        preSyncedCatalog.charactersChanged || syncedCatalog.charactersChanged
-      const locationsChanged =
-        preSyncedCatalog.locationsChanged || syncedCatalog.locationsChanged
-      const objectsChanged =
-        preSyncedCatalog.objectsChanged || syncedCatalog.objectsChanged
+      if (allowUnboundReferences) {
+        const syncedCatalog = syncSceneDirectionToContinuityCatalog({
+          scenes: applied.scenes,
+          sceneIdx: sceneIndex,
+          characters: workingCharacters,
+          locationReferences: workingLocationReferences,
+          objectReferences: workingObjectReferences,
+        })
+        applied.scenes = syncedCatalog.scenes
+        workingCharacters = syncedCatalog.characters as typeof characters
+        workingLocationReferences = syncedCatalog.locationReferences
+        workingObjectReferences = syncedCatalog.objectReferences
+        charactersChanged = charactersChanged || syncedCatalog.charactersChanged
+        locationsChanged = locationsChanged || syncedCatalog.locationsChanged
+        objectsChanged = objectsChanged || syncedCatalog.objectsChanged
+      }
 
       let hashRepaired = false
       if (applied.scenes[sceneIndex] && typeof applied.scenes[sceneIndex] === 'object') {
@@ -225,15 +259,15 @@ export async function POST(req: NextRequest) {
         if (charactersChanged || locationsChanged || objectsChanged) {
           const nextVisionPhase = { ...(nextMetadata.visionPhase || {}) }
           if (charactersChanged) {
-            nextVisionPhase.characters = syncedCatalog.characters
+            nextVisionPhase.characters = workingCharacters
           }
           if (locationsChanged || objectsChanged) {
             const nextReferences = { ...(nextVisionPhase.references || {}) }
             if (locationsChanged) {
-              nextReferences.locationReferences = syncedCatalog.locationReferences
+              nextReferences.locationReferences = workingLocationReferences
             }
             if (objectsChanged) {
-              nextReferences.objectReferences = syncedCatalog.objectReferences
+              nextReferences.objectReferences = workingObjectReferences
             }
             nextVisionPhase.references = nextReferences
           }

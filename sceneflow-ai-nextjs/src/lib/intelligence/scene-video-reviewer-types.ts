@@ -14,6 +14,7 @@ import { normalizeStreamLanguage } from '@/lib/scene/languageClipVersions'
 import { getSceneBeats, isBeatExcluded } from '@/lib/script/beatMigration'
 import type { SceneBeat } from '@/lib/script/segmentTypes'
 import {
+  boundBeatReferenceSelection,
   directionFromDirectorPatch,
   freshBeatReferenceSelection,
   saveDirectorPatchToScenes,
@@ -503,7 +504,11 @@ export function applyShotDirectorRecommendationsToScenes(args: {
       ...beat,
       actionDescription:
         effectivePatch.actionDescription?.trim() || beat.actionDescription,
-      beatDirection: directionFromDirectorPatch(beat.beatDirection, effectivePatch),
+      beatDirection: directionFromDirectorPatch(
+        beat.beatDirection,
+        effectivePatch,
+        args.characters
+      ),
     }
 
     workingScenes = saveDirectorPatchToScenes({
@@ -512,14 +517,16 @@ export function applyShotDirectorRecommendationsToScenes(args: {
       beatId: beat.beatId,
       patch: effectivePatch,
       generatedBy: 'director',
-      referenceSelection: freshBeatReferenceSelection({
+      referenceSelection: boundBeatReferenceSelection({
         scene,
-        beat: directedBeat,
+        beat,
+        directedBeat,
         sceneIdx: args.sceneIdx,
         characters: args.characters,
         locationReferences: args.locationReferences,
         objectReferences: args.objectReferences,
       }),
+      characters: args.characters,
       objectReferences: args.objectReferences,
       promptComposition: args.promptComposition,
     })

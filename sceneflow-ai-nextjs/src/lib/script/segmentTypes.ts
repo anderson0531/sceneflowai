@@ -184,6 +184,12 @@ export interface BeatDirection {
   videoPrompt?: string
   /** Provenance of this direction record. */
   generatedBy?: BeatDirectionSource
+  /**
+   * True when the user intentionally ran Shot Direction in unbound mode
+   * (`allowUnboundReferences: true`), allowing the shot direction to introduce
+   * new continuity references beyond the previously bound references.
+   */
+  unboundContinuity?: boolean
   /** ISO timestamp of last write. */
   updatedAt?: string
 }

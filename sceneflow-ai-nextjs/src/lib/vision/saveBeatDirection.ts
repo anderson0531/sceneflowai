@@ -191,6 +191,68 @@ export function freshBeatReferenceSelection(args: {
   }
 }
 
+/**
+ * Preserves a shot's existing bound continuity references (`locationRefId`,
+ * `locationVersionId`, `objectRefIds`, `characterWardrobes`, and `source`),
+ * resolving from the pre-patch beat only when no `referenceSelection` is saved yet,
+ * and allowing a newly directed shot to narrow `characterIds` (pruning off-camera
+ * characters) without introducing unbound characters, props, or location changes.
+ */
+export function boundBeatReferenceSelection(args: {
+  scene: Record<string, unknown> | undefined
+  beat: SceneBeat
+  directedBeat?: SceneBeat
+  sceneIdx: number
+  characters: Array<{ id?: string; name: string; referenceImage?: string; type?: string }>
+  locationReferences: Array<{ id: string }>
+  objectReferences: Array<{ id: string; name: string }>
+  resolvedAt?: string
+}): BeatReferenceSelection {
+  const baseSelection = resolveBeatReferenceSelection({
+    scene: args.scene,
+    beat: args.beat,
+    sceneIdx: args.sceneIdx,
+    characters: args.characters,
+    locationReferences: args.locationReferences,
+    objectReferences: args.objectReferences,
+  })
+  const targetBeat = args.directedBeat ?? args.beat
+  if (
+    args.characters.length > 0 &&
+    Array.isArray(targetBeat.beatDirection?.castInFrame)
+  ) {
+    const directedCast = directedCastForBeat(targetBeat, args.characters) ?? []
+    const directedIds = directedCast
+      .map((char) => char.id || char.name)
+      .filter((id): id is string => Boolean(id))
+    const allowedIds =
+      baseSelection.characterIds.length > 0
+        ? directedIds.filter((id) => baseSelection.characterIds.includes(id))
+        : directedIds
+    const nextCharacterIds =
+      targetBeat.beatDirection.castInFrame.length === 0
+        ? []
+        : allowedIds.length > 0
+          ? allowedIds
+          : baseSelection.characterIds
+    const nextCharacterWardrobes = Array.isArray(baseSelection.characterWardrobes)
+      ? baseSelection.characterWardrobes.filter((entry) =>
+          nextCharacterIds.includes(entry.characterId)
+        )
+      : undefined
+    return {
+      ...baseSelection,
+      characterIds: nextCharacterIds,
+      ...(nextCharacterWardrobes ? { characterWardrobes: nextCharacterWardrobes } : {}),
+      resolvedAt: args.resolvedAt ?? baseSelection.resolvedAt ?? new Date().toISOString(),
+    }
+  }
+  return {
+    ...baseSelection,
+    resolvedAt: args.resolvedAt ?? baseSelection.resolvedAt ?? new Date().toISOString(),
+  }
+}
+
 /** Rewrite every shootable shot's plates from the current scene and shot direction. */
 export function syncSceneReferenceSelections(args: {
   scenes: any[]
@@ -303,21 +365,27 @@ export function syncSceneDirectionToContinuityCatalog(args: {
     visualDescription:
       typeof scene.visualDescription === 'string' ? scene.visualDescription : undefined,
     locationDescription: dirSettingText || undefined,
-    beats: shootableBeats.map((b) => ({
-      beatId: b.beatId,
-      kind: b.kind,
-      actionDescription: b.actionDescription,
-      description: b.description,
-      action: b.action,
-      line: b.line,
-      startFrame: b.beatDirection?.startFrame,
-      clipAction: b.beatDirection?.clipAction,
-      endFrame: b.beatDirection?.endFrame,
-      frozenMoment: b.beatDirection?.frozenMoment,
-      propInteraction: b.beatDirection?.propInteraction,
-      lightingAccent: b.beatDirection?.lightingAccent,
-      blocking: b.beatDirection?.blocking,
-    })),
+    beats: shootableBeats.map((b) => {
+      const dir = b.beatDirection
+      const isBoundDirectedBeat =
+        (dir?.generatedBy === 'director' || dir?.generatedBy === 'user') &&
+        dir?.unboundContinuity !== true
+      return {
+        beatId: b.beatId,
+        kind: b.kind,
+        actionDescription: isBoundDirectedBeat ? undefined : b.actionDescription,
+        description: b.description,
+        action: b.action,
+        line: b.line,
+        startFrame: isBoundDirectedBeat ? undefined : dir?.startFrame,
+        clipAction: isBoundDirectedBeat ? undefined : dir?.clipAction,
+        endFrame: isBoundDirectedBeat ? undefined : dir?.endFrame,
+        frozenMoment: isBoundDirectedBeat ? undefined : dir?.frozenMoment,
+        propInteraction: isBoundDirectedBeat ? undefined : dir?.propInteraction,
+        lightingAccent: isBoundDirectedBeat ? undefined : dir?.lightingAccent,
+        blocking: isBoundDirectedBeat ? undefined : dir?.blocking,
+      }
+    }),
   }
   const hits = extractLocationStateHitsFromScene(analysisInput)
 
@@ -515,7 +583,15 @@ export function syncSceneDirectionToContinuityCatalog(args: {
     scenePropCandidates.length > 0
       ? scenePropCandidates
       : getSceneBeats(scene)
-          .filter((b) => !isBeatExcluded(b))
+          .filter(
+            (b) =>
+              !isBeatExcluded(b) &&
+              !(
+                (b.beatDirection?.generatedBy === 'director' ||
+                  b.beatDirection?.generatedBy === 'user') &&
+                b.beatDirection?.unboundContinuity !== true
+              )
+          )
           .flatMap((b) => (Array.isArray(b.beatDirection?.keyProps) ? b.beatDirection.keyProps : []))
           .map((p) => (typeof p === 'string' ? p.trim() : ''))
           .filter(Boolean)
@@ -999,22 +1075,110 @@ export function saveDirectorPatchToScenes(args: {
   objectReferences: Array<{ id: string; name: string }>
   promptComposition?: BeatPromptComposition
   generatedBy?: 'user' | 'director'
+  /**
+   * When false/omitted (default), keeps Shot Direction aligned with the beat's
+   * bound continuity references (`referenceSelection`), only allowing cast pruning
+   * when fewer characters are staged in frame and rejecting unbound library cast/props.
+   * When true, allows the patch to introduce new library characters and props.
+   */
+  allowUnboundReferences?: boolean
 }): any[] {
   const beat = getSceneBeats(args.scenes[args.sceneIdx] ?? {}).find(
     (entry) => entry.beatId === args.beatId
   )
   if (!beat) return args.scenes
+  const allowUnbound = args.allowUnboundReferences === true
   const merged = directionFromDirectorPatch(beat.beatDirection, args.patch, args.characters)
+  if (allowUnbound) {
+    merged.unboundContinuity = true
+  } else {
+    delete merged.unboundContinuity
+  }
   let nextReferenceSelection = args.referenceSelection
   if (args.characters && args.characters.length > 0 && Array.isArray(merged.castInFrame)) {
     const directedCast =
       directedCastForBeat({ ...beat, beatDirection: merged }, args.characters) ?? []
-    const nextCharacterIds = directedCast
+    const directedIds = directedCast
       .map((char) => char.id || char.name)
       .filter((id): id is string => Boolean(id))
+    const boundIds = args.referenceSelection.characterIds
+    const nextCharacterIds = allowUnbound
+      ? directedIds
+      : merged.castInFrame.length === 0
+        ? []
+        : boundIds.length > 0
+          ? directedIds.filter((id) => boundIds.includes(id))
+          : directedIds
+    const resolvedCharacterIds =
+      !allowUnbound &&
+      merged.castInFrame.length > 0 &&
+      boundIds.length > 0 &&
+      nextCharacterIds.length === 0
+        ? boundIds
+        : nextCharacterIds
+    if (!allowUnbound && boundIds.length > 0 && merged.castInFrame.length > 0) {
+      const allowedNamesLower = new Set(
+        args.characters
+          .filter((c) => resolvedCharacterIds.includes(c.id || c.name))
+          .map((c) => c.name.trim().toLowerCase())
+      )
+      const filteredCastNames = merged.castInFrame.filter((name) =>
+        allowedNamesLower.has(name.trim().toLowerCase())
+      )
+      merged.castInFrame =
+        filteredCastNames.length > 0
+          ? filteredCastNames
+          : args.characters
+              .filter((c) => resolvedCharacterIds.includes(c.id || c.name))
+              .map((c) => c.name.trim())
+    }
+    const nextCharacterWardrobes = Array.isArray(nextReferenceSelection.characterWardrobes)
+      ? nextReferenceSelection.characterWardrobes.filter((entry) =>
+          resolvedCharacterIds.includes(entry.characterId)
+        )
+      : undefined
     nextReferenceSelection = {
       ...args.referenceSelection,
-      characterIds: nextCharacterIds,
+      characterIds: resolvedCharacterIds,
+      ...(nextCharacterWardrobes ? { characterWardrobes: nextCharacterWardrobes } : {}),
+    }
+  }
+  if (
+    Array.isArray(merged.keyProps) &&
+    merged.keyProps.length > 0 &&
+    args.objectReferences.length > 0
+  ) {
+    if (allowUnbound) {
+      const matchedObjIds = matchObjectsBySelectedNames(
+        merged.keyProps,
+        args.objectReferences as VisualReference[]
+      )
+        .map((obj) => obj.id)
+        .filter((id): id is string => Boolean(id))
+      if (matchedObjIds.length > 0) {
+        nextReferenceSelection = {
+          ...nextReferenceSelection,
+          objectRefIds: Array.from(
+            new Set([...nextReferenceSelection.objectRefIds, ...matchedObjIds])
+          ),
+        }
+      }
+    } else {
+      const boundObjectIdSet = new Set(nextReferenceSelection.objectRefIds)
+      const priorPropsLower = new Set(
+        (beat.beatDirection?.keyProps ?? []).map((p) => p.trim().toLowerCase())
+      )
+      merged.keyProps = merged.keyProps.filter((prop) => {
+        const trimmed = prop.trim()
+        if (!trimmed) return false
+        if (priorPropsLower.has(trimmed.toLowerCase())) return true
+        const matchedObjs = matchObjectsBySelectedNames(
+          [trimmed],
+          args.objectReferences as VisualReference[]
+        )
+        if (matchedObjs.length === 0) return true
+        return matchedObjs.some((obj) => boundObjectIdSet.has(obj.id))
+      })
     }
   }
   const objectNames = nextReferenceSelection.objectRefIds

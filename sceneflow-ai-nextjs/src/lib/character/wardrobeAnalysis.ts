@@ -149,7 +149,7 @@ export function sceneIncludesCharacter(
 
 /** Keywords that indicate makeup, hair, or injury appearance changes. */
 const APPEARANCE_KEYWORD_PATTERN =
-  /\b(bruise|bruises|bruised|bloodshot|swelling|swollen|cut|cuts|scratch|scratches|black\s*eye|black\s*eyes|bandage|bandages|laceration|contusion|wound|wounds|disheveled|mascara|lipstick|makeup|injury|injuries|bleeding|bloody|bloodied|gash|gashed|soot-streaked|red\s*eyes|temple)\b/i
+  /\b(bruise|bruises|bruised|bloodshot|swelling|swollen|(?:fresh\s+|deep\s+|bleeding\s+|open\s+|jagged\s+)?cuts?\s+(?:across|on|along|above|below|over)|scratch|scratches|black\s*eye|black\s*eyes|bandage|bandages|laceration|contusion|wound|wounds|disheveled|mascara|lipstick|makeup|injury|injuries|bleeding|bloody|bloodied|gash|gashed|soot-streaked|red\s*eyes)\b/i
 
 /** Extract appearance-relevant phrases from beat/segment text for a character. */
 export function extractAppearanceNotesFromSceneText(
@@ -288,19 +288,22 @@ export function extractSceneWardrobeAndAppearanceNotes(
 
   pushText(scene.action)
   pushText(scene.visualDescription)
-  pushText(sceneDir?.talent)
-  pushText(sceneDir?.scene?.talent)
   pushText(sceneDir?.costume)
   pushText(sceneDir?.wardrobe)
 
   const beats = Array.isArray(scene.beats) ? scene.beats : []
   for (const beat of beats) {
     if (!beat || typeof beat !== 'object' || beat.excluded === true) continue
-    pushText(beat.actionDescription)
+    const dir = beat.beatDirection as Record<string, any> | undefined
+    const isBoundDirectedBeat =
+      (dir?.generatedBy === 'director' || dir?.generatedBy === 'user') &&
+      dir?.unboundContinuity !== true
+    if (!isBoundDirectedBeat) {
+      pushText(beat.actionDescription)
+    }
     pushText(beat.description)
     pushText(beat.action)
-    const dir = beat.beatDirection as Record<string, any> | undefined
-    if (dir && typeof dir === 'object') {
+    if (dir && typeof dir === 'object' && dir.unboundContinuity === true) {
       pushText(dir.startFrame)
       pushText(dir.clipAction)
       pushText(dir.endFrame)

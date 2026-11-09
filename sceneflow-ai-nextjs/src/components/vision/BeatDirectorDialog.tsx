@@ -62,7 +62,10 @@ export interface BeatDirectorDialogProps {
   locationReferences: DirectorLocation[]
   objectReferences: DirectorObject[]
   referenceSelection: BeatReferenceSelection
-  onSaveDirection: (patch: StillDirectorPatch) => void | Promise<void>
+  onSaveDirection: (
+    patch: StillDirectorPatch,
+    options?: { allowUnboundReferences?: boolean }
+  ) => void | Promise<void>
   onToggleCharacter?: (character: DirectorCharacter, connect: boolean) => void
   onToggleObject: (object: DirectorObject, connect: boolean) => void
   onSelectLocation: (locationRefId: string | null, locationVersionId: string | null) => void
@@ -145,6 +148,7 @@ export function BeatDirectorDialog({
   const [optimizing, setOptimizing] = useState(false)
   const [saving, setSaving] = useState(false)
   const [safety, setSafety] = useState(initialSafety)
+  const [allowUnboundReferences, setAllowUnboundReferences] = useState(false)
   const busy = previewing || optimizing || saving
 
   useEffect(() => {
@@ -152,6 +156,7 @@ export function BeatDirectorDialog({
     setInstruction(initialInstruction || '')
     setPreview(initialPatch ?? null)
     setSafety(initialSafety)
+    setAllowUnboundReferences(false)
   }, [open, initialSafety, initialInstruction, initialPatch])
   const [query, setQuery] = useState('')
   const [scope, setScope] = useState<LibrarySceneFilter>(sceneNumber)
@@ -216,6 +221,7 @@ export function BeatDirectorDialog({
           mode: note ? 'rewrite' : 'optimize',
           userDirection: note || undefined,
           policyCompliance: safety || undefined,
+          allowUnboundReferences: allowUnboundReferences || undefined,
         }),
       })
       const data = await response.json()
@@ -245,6 +251,7 @@ export function BeatDirectorDialog({
           beatId: beat.beatId,
           mode: 'optimize',
           policyCompliance: safety || undefined,
+          allowUnboundReferences: allowUnboundReferences || undefined,
         }),
       })
       const data = await response.json()
@@ -261,7 +268,9 @@ export function BeatDirectorDialog({
     if (!preview || saving) return
     setSaving(true)
     try {
-      await onSaveDirection(safety ? applyPolicyComplianceToPatch(preview) : preview)
+      await onSaveDirection(safety ? applyPolicyComplianceToPatch(preview) : preview, {
+        allowUnboundReferences,
+      })
       setInstruction('')
       setPreview(null)
       onOpenChange(false)
@@ -296,21 +305,42 @@ export function BeatDirectorDialog({
             className="min-w-0"
           />
         </label>
-        <TooltipProvider>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <label className="inline-flex w-fit cursor-pointer items-center gap-2 text-xs text-slate-300">
-                <Checkbox
-                  checked={safety}
-                  onCheckedChange={(checked) => setSafety(checked === true)}
-                  disabled={readOnly || busy}
-                />
-                {t('safetyOption')}
-              </label>
-            </TooltipTrigger>
-            <TooltipContent className="max-w-xs">{t('safetyOptionTooltip')}</TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
+        <div className="flex flex-wrap items-center gap-4">
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <label className="inline-flex w-fit cursor-pointer items-center gap-2 text-xs text-slate-300">
+                  <Checkbox
+                    checked={safety}
+                    onCheckedChange={(checked) => setSafety(checked === true)}
+                    disabled={readOnly || busy}
+                  />
+                  {t('safetyOption')}
+                </label>
+              </TooltipTrigger>
+              <TooltipContent className="max-w-xs">{t('safetyOptionTooltip')}</TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <label className="inline-flex w-fit cursor-pointer items-center gap-2 text-xs text-slate-300">
+                  <Checkbox
+                    checked={allowUnboundReferences}
+                    onCheckedChange={(checked) => setAllowUnboundReferences(checked === true)}
+                    disabled={readOnly || busy}
+                  />
+                  Optimize beyond current continuity references
+                </label>
+              </TooltipTrigger>
+              <TooltipContent className="max-w-xs">
+                By default, Shot Direction stays aligned with this shot&apos;s connected Cast,
+                Wardrobe, Location, and Props. Check this only when you intentionally want the
+                director to introduce new continuity references or state changes.
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        </div>
         {safety && <p className="text-[11px] text-slate-500">{t('safetyHint')}</p>}
 
         <div className="flex flex-wrap items-center gap-2">

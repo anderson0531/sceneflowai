@@ -16,6 +16,7 @@ import {
 import { directBeatStills } from '@/lib/intelligence/beat-still-director'
 import { scoreBeatDirectionFidelity } from '@/lib/intelligence/beatDirectionFidelity'
 import { getSceneBeats } from '@/lib/script/beatMigration'
+import { buildBeatBoundContinuity } from '@/lib/vision/shotDirectionBatch'
 import { englishForModel, resolveRequestStoryLocale } from '@/i18n/server/requestLocale'
 import { getUiSandboxProject, isDemoProjectId } from '@/lib/demo/uiSandboxProject'
 
@@ -111,28 +112,39 @@ export async function POST(req: NextRequest) {
 
     const overlay = overlayFromBody(body)
     const policyCompliance = body.policyCompliance === true
+    const allowUnboundReferences = body.allowUnboundReferences === true
     const previous = beats[beatIndex - 1]
     const next = beats[beatIndex + 1]
     const visionPhase = project.metadata?.visionPhase || {}
+    const characters = Array.isArray(visionPhase.characters) ? visionPhase.characters : []
+    const objectReferences = Array.isArray(visionPhase.references?.objectReferences)
+      ? visionPhase.references.objectReferences
+      : []
+    const locationReferences = Array.isArray(visionPhase.references?.locationReferences)
+      ? visionPhase.references.locationReferences
+      : []
     const catalog = {
-      characterNames: Array.isArray(visionPhase.characters)
-        ? visionPhase.characters
-            .map((c: { name?: string }) => String(c?.name ?? '').trim())
-            .filter(Boolean)
-        : [],
-      propNames: Array.isArray(visionPhase.references?.objectReferences)
-        ? visionPhase.references.objectReferences
-            .map((o: { name?: string }) => String(o?.name ?? '').trim())
-            .filter(Boolean)
-        : [],
-      locationNames: Array.isArray(visionPhase.references?.locationReferences)
-        ? visionPhase.references.locationReferences
-            .map((l: { location?: string; name?: string }) =>
-              String(l?.location || l?.name || '').trim()
-            )
-            .filter(Boolean)
-        : [],
+      characterNames: characters
+        .map((c: { name?: string }) => String(c?.name ?? '').trim())
+        .filter(Boolean),
+      propNames: objectReferences
+        .map((o: { name?: string }) => String(o?.name ?? '').trim())
+        .filter(Boolean),
+      locationNames: locationReferences
+        .map((l: { location?: string; name?: string }) =>
+          String(l?.location || l?.name || '').trim()
+        )
+        .filter(Boolean),
     }
+
+    const boundContinuity = buildBeatBoundContinuity({
+      scene: scene as Record<string, unknown>,
+      beat,
+      sceneIdx: sceneIndex,
+      characters,
+      locationReferences,
+      objectReferences,
+    })
 
     const sceneContext = buildStillDirectorSceneContext(
       scene as Record<string, unknown>,
@@ -146,6 +158,7 @@ export async function POST(req: NextRequest) {
           {
             beatIndex,
             beat,
+            ...(boundContinuity ? { boundContinuity } : {}),
             previousMoment: previous ? composeBeatActionFraming(previous) : undefined,
             nextMoment: next ? composeBeatActionFraming(next) : undefined,
           },
@@ -154,6 +167,7 @@ export async function POST(req: NextRequest) {
         userDirection,
         overlay,
         policyCompliance,
+        allowUnboundReferences,
         ...(sceneContext ? { sceneContext } : {}),
       })
     } catch (error: unknown) {

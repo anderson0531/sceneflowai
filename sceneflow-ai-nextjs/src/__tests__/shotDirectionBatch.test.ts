@@ -12,6 +12,9 @@ import {
   SHOT_DIRECTION_BEAT_CHUNK,
   shotDirectionTargets,
 } from '@/lib/vision/shotDirectionBatch'
+import { buildStillDirectorUserPrompt } from '@/lib/intelligence/beat-still-director-fallback'
+import { isWardrobeStaleForSceneScript } from '@/lib/character/wardrobeScriptSync'
+import { syncSceneDirectionToContinuityCatalog } from '@/lib/vision/saveBeatDirection'
 
 function read(relative: string): string {
   return readFileSync(path.join(process.cwd(), relative), 'utf8')
@@ -266,6 +269,221 @@ describe('shot direction batches', () => {
     expect(page).toContain('const shotRes = await requestSceneShotDirection({')
     expect(page).toContain('force: options?.forceShotOptimization ?? true,')
     expect(page).toContain('const optimizeShots = !shouldSkipBeatRederivation(preserveElements)')
+  })
+
+  it('aligns Shot Direction with existing bound continuity references by default and only allows unbound changes when intentional', async () => {
+    const characters = [
+      {
+        id: 'char-piper',
+        name: 'Piper Hayes',
+        referenceImage: 'https://example.com/piper.png',
+        wardrobes: [
+          {
+            id: 'w-piper-coat',
+            name: 'Field Trench Coat',
+            description: 'Dark wool trench coat over slate sweater',
+            fullBodyUrl: 'https://example.com/piper-coat.png',
+            sceneNumbers: [1],
+            isDefault: true,
+          },
+        ],
+      },
+      {
+        id: 'char-gideon',
+        name: 'Gideon Croft',
+        referenceImage: 'https://example.com/gideon.png',
+      },
+      {
+        id: 'char-sullivan',
+        name: 'Father Sullivan',
+        referenceImage: 'https://example.com/sullivan.png',
+      },
+    ]
+    const locationReferences = [
+      {
+        id: 'loc-tunnel',
+        location: 'SUBTERRANEAN FLOOD TUNNEL',
+        locationDisplay: 'INT. SUBTERRANEAN FLOOD TUNNEL - NIGHT',
+        description: 'Riveted steel columns and wet subterranean flagstones.',
+        imageUrl: 'https://example.com/tunnel.png',
+        sceneNumbers: [1],
+        versions: [
+          {
+            id: 'ver-lantern',
+            name: 'Lantern Lit',
+            stateNotes: 'Raking amber lantern beam across wet flagstones.',
+            imageUrl: 'https://example.com/tunnel-lantern.png',
+          },
+        ],
+      },
+    ]
+    const objectReferences = [
+      {
+        id: 'obj-coil',
+        name: "Clara's Atmospheric Induction Coil",
+        description: 'Rectangular brass chassis with twin copper windings.',
+        imageUrl: 'https://example.com/coil.png',
+        type: 'object' as const,
+      },
+      {
+        id: 'obj-ledger',
+        name: 'St. Jude Parish Ledger',
+        description: 'Leather-bound parish ledger.',
+        imageUrl: 'https://example.com/ledger.png',
+        type: 'object' as const,
+      },
+    ]
+
+    const initialBeat = beat('b1', 0, {
+      kind: 'dialogue',
+      character: 'Piper Hayes',
+      line: "Clara entrusted this to Father Sullivan at St. Jude's three hours before Ward's contractors cut her brake lines.",
+      referenceSelection: {
+        characterIds: ['char-piper', 'char-gideon'],
+        objectRefIds: ['obj-coil'],
+        locationRefId: 'loc-tunnel',
+        locationVersionId: 'ver-lantern',
+        characterWardrobes: [{ characterId: 'char-piper', wardrobeId: 'w-piper-coat' }],
+        source: 'user',
+        resolvedAt: '2026-01-01T00:00:00.000Z',
+      },
+    })
+    const scene = {
+      id: 'scene-1',
+      sceneNumber: 1,
+      heading: 'INT. SUBTERRANEAN FLOOD TUNNEL - NIGHT',
+      beats: [initialBeat],
+    }
+
+    let capturedPrompt = ''
+    await runShotDirectionChunks({
+      scene,
+      sceneIdx: 0,
+      characters,
+      locationReferences,
+      objectReferences,
+      force: true,
+      direct: async (request) => {
+        capturedPrompt = buildStillDirectorUserPrompt(request)
+        return {
+          usedAI: true,
+          patches: [
+            {
+              beatIndex: 0,
+              beatId: 'b1',
+              patch: {
+                shotType: 'Medium Shot',
+                frozenMoment:
+                  "Piper Hayes kneels in her soaked coat holding Clara's Atmospheric Induction Coil.",
+              },
+            },
+          ],
+        }
+      },
+    })
+
+    expect(capturedPrompt).toContain('CONTINUITY MODE — ALIGN WITH EXISTING REFERENCES (DEFAULT):')
+    expect(capturedPrompt).toContain('Bound cast: Piper Hayes, Gideon Croft')
+    expect(capturedPrompt).toContain('Bound wardrobe: Piper Hayes (Field Trench Coat: Dark wool trench coat over slate sweater)')
+    expect(capturedPrompt).toContain('Bound location: SUBTERRANEAN FLOOD TUNNEL — Set version: Lantern Lit')
+    expect(capturedPrompt).toContain("Bound props: Clara's Atmospheric Induction Coil")
+
+    // Default bound mode: prunes off-camera Gideon Croft, rejects unbound Father Sullivan and St. Jude Parish Ledger,
+    // preserves locationRefId, locationVersionId, objectRefIds, and characterWardrobes, and does NOT flag wardrobe stale.
+    const boundApplied = applyOptimizedShotPatches({
+      scenes: [scene],
+      sceneIdx: 0,
+      force: true,
+      characters,
+      locationReferences,
+      objectReferences,
+      patches: [
+        {
+          beatId: 'b1',
+          beatIndex: 0,
+          patch: {
+            shotType: 'Medium Shot',
+            actionDescription:
+              'Piper Hayes wearing a soaked trench coat kneels against a riveted steel column, holding the coil as her temple throbs before they cut her brake lines.',
+            frozenMoment:
+              "Piper Hayes wearing a soaked trench coat holds Clara's Atmospheric Induction Coil steady at chest height.",
+            startFrame:
+              'At t=0s, the subterranean tunnel sits in pitch-black darkness around Piper Hayes.',
+            gaze: 'Piper Hayes directs her fierce gaze toward upper screen-right off-camera.',
+            castInFrame: ['Piper Hayes', 'Father Sullivan'],
+            keyProps: ["Clara's Atmospheric Induction Coil", 'St. Jude Parish Ledger'],
+          },
+        },
+      ],
+    })
+
+    const savedBoundBeat = getSceneBeats(boundApplied.scenes[0])[0]
+    expect(savedBoundBeat.beatDirection?.unboundContinuity).toBeUndefined()
+    expect(savedBoundBeat.referenceSelection?.locationRefId).toBe('loc-tunnel')
+    expect(savedBoundBeat.referenceSelection?.locationVersionId).toBe('ver-lantern')
+    expect(savedBoundBeat.referenceSelection?.characterIds).toEqual(['char-piper'])
+    expect(savedBoundBeat.referenceSelection?.characterWardrobes).toEqual([
+      { characterId: 'char-piper', wardrobeId: 'w-piper-coat' },
+    ])
+    expect(savedBoundBeat.referenceSelection?.objectRefIds).toEqual(['obj-coil'])
+    expect(savedBoundBeat.beatDirection?.castInFrame).toEqual(['Piper Hayes'])
+    expect(savedBoundBeat.beatDirection?.keyProps).toEqual([
+      "Clara's Atmospheric Induction Coil",
+    ])
+    expect(
+      isWardrobeStaleForSceneScript(
+        characters[0].wardrobes[0],
+        boundApplied.scenes[0],
+        'Piper Hayes'
+      )
+    ).toBe(false)
+
+    const syncedAfterBound = syncSceneDirectionToContinuityCatalog({
+      scenes: boundApplied.scenes,
+      sceneIdx: 0,
+      characters: characters as any,
+      locationReferences: locationReferences as any,
+      objectReferences: objectReferences as any,
+    })
+    expect(syncedAfterBound.charactersChanged).toBe(false)
+    expect(syncedAfterBound.locationsChanged).toBe(false)
+    expect(syncedAfterBound.objectsChanged).toBe(false)
+
+    // Intentional unbound mode: allows introducing Father Sullivan and St. Jude Parish Ledger and stamps unboundContinuity
+    const unboundApplied = applyOptimizedShotPatches({
+      scenes: [scene],
+      sceneIdx: 0,
+      force: true,
+      allowUnboundReferences: true,
+      characters,
+      locationReferences,
+      objectReferences,
+      patches: [
+        {
+          beatId: 'b1',
+          beatIndex: 0,
+          patch: {
+            shotType: 'Medium Shot',
+            frozenMoment:
+              "Piper Hayes and Father Sullivan inspect Clara's Atmospheric Induction Coil beside the St. Jude Parish Ledger.",
+            blocking:
+              'Piper Hayes kneels at screen-left while Father Sullivan leans in at screen-right.',
+            castInFrame: ['Piper Hayes', 'Father Sullivan'],
+            keyProps: ["Clara's Atmospheric Induction Coil", 'St. Jude Parish Ledger'],
+          },
+        },
+      ],
+    })
+    const savedUnboundBeat = getSceneBeats(unboundApplied.scenes[0])[0]
+    expect(savedUnboundBeat.beatDirection?.unboundContinuity).toBe(true)
+    expect(savedUnboundBeat.referenceSelection?.characterIds).toEqual([
+      'char-piper',
+      'char-sullivan',
+    ])
+    expect(savedUnboundBeat.referenceSelection?.objectRefIds).toEqual([
+      'obj-coil',
+      'obj-ledger',
+    ])
   })
 })
 

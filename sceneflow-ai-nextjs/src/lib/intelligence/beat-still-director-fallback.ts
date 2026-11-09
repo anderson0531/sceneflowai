@@ -118,11 +118,35 @@ export interface StillDirectorPatch {
   keyProps?: string[]
 }
 
+export interface StillDirectorBoundWardrobe {
+  characterName: string
+  name?: string
+  description?: string
+  accessories?: string
+  appearanceNotes?: string
+}
+
+export interface StillDirectorBoundLocation {
+  name: string
+  description?: string
+  versionName?: string
+  stateNotes?: string
+}
+
+export interface StillDirectorBoundContinuity {
+  castNames?: string[]
+  wardrobes?: StillDirectorBoundWardrobe[]
+  location?: StillDirectorBoundLocation
+  propNames?: string[]
+}
+
 export interface StillDirectorBeatInput {
   beatIndex: number
   beat: SceneBeat
   previousMoment?: string
   nextMoment?: string
+  /** Existing continuity references bound to this shot. */
+  boundContinuity?: StillDirectorBoundContinuity
 }
 
 export interface StillDirectorSceneContext {
@@ -150,6 +174,13 @@ export interface DirectBeatStillRequest {
   policyCompliance?: boolean
   /** Scene-level direction and movement arc so shot batches maintain cohesive flow. */
   sceneContext?: StillDirectorSceneContext
+  /**
+   * When false/omitted (default), Shot Direction aligns with each beat's existing
+   * `boundContinuity` references rather than introducing unbound cast, props,
+   * wardrobe changes, or set-state changes.
+   * When true, Shot Direction may optimize beyond the current continuity references.
+   */
+  allowUnboundReferences?: boolean
 }
 
 export interface ApplyStillDirectorPatchOptions {
@@ -594,6 +625,25 @@ export function buildStillDirectorUserPrompt(request: DirectBeatStillRequest): s
     parts.push('')
   }
 
+  const hasBoundContinuity = request.beats.some((entry) => Boolean(entry.boundContinuity))
+  if (request.allowUnboundReferences) {
+    parts.push('CONTINUITY MODE — UNBOUND OPTIMIZATION (INTENTIONAL):')
+    parts.push(
+      'You may optimize castInFrame, keyProps, character wardrobe/appearance staging, and location set-state beyond the shot\'s currently connected references when the story beat or USER NOTES call for it. Use exact REFERENCE LIBRARY labels whenever referencing library cast, locations, or props.'
+    )
+    parts.push('')
+  } else if (hasBoundContinuity) {
+    parts.push('CONTINUITY MODE — ALIGN WITH EXISTING REFERENCES (DEFAULT):')
+    parts.push(
+      'Keep each shot aligned with its BOUND CONTINUITY REFERENCES below. ' +
+        'Only stage characters from the beat\'s bound cast (pruning any character who is off-camera in this specific shot; do not add unbound characters unless USER NOTES explicitly ask for them). ' +
+        'Keep character attire and physical appearance aligned with the bound wardrobe description — do not invent new garments, costume changes, or facial injuries/wounds. ' +
+        'Stage the environment to match the bound location and active set version — do not invent lasting set destruction or blackout states that contradict the bound location. ' +
+        'Only include props from the beat\'s bound props in keyProps (do not attach extra props from the global catalog unless USER NOTES explicitly ask for them).'
+    )
+    parts.push('')
+  }
+
   if (request.overlay) {
     const overlayLines = [
       trimOrUndef(request.overlay.shotType) && `Shot: ${request.overlay.shotType}`,
@@ -660,6 +710,41 @@ export function buildStillDirectorUserPrompt(request: DirectBeatStillRequest): s
     const { beat, beatIndex } = entry
     const direction = beat.beatDirection
     parts.push(`--- Beat ${beatIndex} id=${beat.beatId} (${beat.kind}) ---`)
+    if (entry.boundContinuity) {
+      const bc = entry.boundContinuity
+      const bcLines: string[] = []
+      if (bc.castNames && bc.castNames.length > 0) {
+        bcLines.push(`Bound cast: ${bc.castNames.join(', ')}`)
+      }
+      if (bc.wardrobes && bc.wardrobes.length > 0) {
+        const wText = bc.wardrobes
+          .map(
+            (w) =>
+              `${w.characterName} (${w.wardrobeName}${w.description ? `: ${w.description}` : ''})`
+          )
+          .join('; ')
+        bcLines.push(`Bound wardrobe: ${wText}`)
+      }
+      if (bc.location) {
+        const locLabel = [
+          bc.location.name,
+          bc.location.versionName && `Set version: ${bc.location.versionName}`,
+          bc.location.description,
+        ]
+          .filter(Boolean)
+          .join(' — ')
+        bcLines.push(`Bound location: ${locLabel}`)
+      }
+      if (bc.propNames) {
+        bcLines.push(
+          `Bound props: ${bc.propNames.length > 0 ? bc.propNames.join(', ') : '(none)'}`
+        )
+      }
+      if (bcLines.length > 0) {
+        parts.push('BOUND CONTINUITY REFERENCES:')
+        for (const line of bcLines) parts.push(`  ${line}`)
+      }
+    }
     if (beat.beatRole?.trim()) {
       parts.push(`Role: ${beat.beatRole.trim()}`)
     }

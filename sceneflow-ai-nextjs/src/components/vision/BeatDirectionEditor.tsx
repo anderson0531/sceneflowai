@@ -363,7 +363,10 @@ export function BeatDirectionEditor({
   ): BeatDirection | undefined =>
     alignDirectionToConnectedObjects(nextDirection, namesForSelection(selection)) ?? nextDirection
 
-  const saveDirectionPreview = (patch: StillDirectorPatch) => {
+  const saveDirectionPreview = (
+    patch: StillDirectorPatch,
+    options?: { allowUnboundReferences?: boolean }
+  ) => {
     if (!onScriptChange) return
     return onScriptChange({
       ...script,
@@ -378,6 +381,7 @@ export function BeatDirectionEditor({
           characters,
           objectReferences,
           promptComposition,
+          allowUnboundReferences: options?.allowUnboundReferences,
         }),
       },
     })

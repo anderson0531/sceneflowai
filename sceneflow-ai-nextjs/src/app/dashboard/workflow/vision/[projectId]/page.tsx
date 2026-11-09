@@ -485,6 +485,7 @@ import { translateGuideDialogueLine } from '@/lib/scene/translateGuideDialogue'
 import { isStoredTranslationTimedForShot } from '@/lib/translation/timedDialogueMetrics'
 import { resolveDirectShotTarget, type DirectShotRequest, type DirectShotTarget } from '@/lib/vision/directShotTarget'
 import {
+  boundBeatReferenceSelection,
   directionFromDirectorPatch,
   freshBeatReferenceSelection,
   saveDirectorPatchToScenes,
@@ -6376,21 +6377,23 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       const directed = {
         ...beat,
         actionDescription: patch.actionDescription?.trim() || beat.actionDescription,
-        beatDirection: directionFromDirectorPatch(beat.beatDirection, patch),
+        beatDirection: directionFromDirectorPatch(beat.beatDirection, patch, castForSelection),
       }
       const nextScenes = saveDirectorPatchToScenes({
         scenes,
         sceneIdx: shot.sceneIndex,
         beatId: shot.beatId,
         patch,
-        referenceSelection: freshBeatReferenceSelection({
+        referenceSelection: boundBeatReferenceSelection({
           scene,
-          beat: directed,
+          beat,
+          directedBeat: directed,
           sceneIdx: shot.sceneIndex,
           characters: castForSelection,
           locationReferences: locationReferencesRef.current,
           objectReferences: objectReferencesRef.current,
         }),
+        characters: castForSelection,
         objectReferences: objectReferencesRef.current.map((object) => ({
           id: object.id,
           name: object.name,

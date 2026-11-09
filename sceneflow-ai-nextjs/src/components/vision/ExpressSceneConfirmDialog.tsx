@@ -272,8 +272,8 @@ export function ExpressSceneConfirmDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-lg bg-gray-900 border-gray-700 text-gray-100">
-        <DialogHeader>
+      <DialogContent className="sm:max-w-lg max-h-[85vh] overflow-hidden flex flex-col bg-gray-900 border-gray-700 text-gray-100">
+        <DialogHeader className="shrink-0">
           <DialogTitle className="flex items-center gap-2 text-amber-200">
             <Zap className="w-5 h-5" />
             {t('title')}
@@ -283,7 +283,7 @@ export function ExpressSceneConfirmDialog({
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-4 py-2">
+        <div className="flex-1 min-h-0 min-w-0 overflow-y-auto space-y-4 py-2 pr-1">
           {missingReferences.length > 0 && (
             <div className="rounded-md border border-cyan-700/50 bg-cyan-950/30 p-3">
               <p className="text-xs font-semibold uppercase tracking-wide text-cyan-300 mb-1.5 flex items-center gap-1.5">
@@ -389,7 +389,7 @@ export function ExpressSceneConfirmDialog({
             )}
           </div>
 
-          <div>
+          <div className="min-w-0">
             <div className="mb-2 flex items-center justify-between gap-2">
               <div className="flex min-w-0 items-center gap-2">
                 <p className="text-xs font-semibold uppercase tracking-wide text-gray-400">
@@ -514,19 +514,19 @@ export function ExpressSceneConfirmDialog({
                   return (
                   <label
                     key={slot.key}
-                    className="flex items-start gap-2 rounded border border-gray-700/80 bg-gray-800/40 p-2 cursor-pointer hover:bg-gray-800/70"
+                    className="flex w-full min-w-0 box-border items-start gap-2 rounded border border-gray-700/80 bg-gray-800/40 p-2 cursor-pointer hover:bg-gray-800/70"
                   >
                     <Checkbox
                       checked={selectedSet.has(slot.key)}
                       onCheckedChange={(checked) => toggleSlot(slot.key, checked === true)}
                       disabled={isRunning}
-                      className="mt-0.5"
+                      className="mt-0.5 shrink-0"
                     />
                     <span className="min-w-0 flex-1">
                       <TooltipProvider>
                         <Tooltip>
                           <TooltipTrigger asChild>
-                            <span className="flex items-center gap-1.5 text-sm text-gray-100 truncate">
+                            <span className="flex items-center gap-1.5 min-w-0 text-sm text-gray-100">
                               <ImageIcon className="w-3.5 h-3.5 shrink-0 text-amber-300/80" />
                               {promoSourceBadge && (
                                 <span
@@ -536,7 +536,7 @@ export function ExpressSceneConfirmDialog({
                                   {promoSourceBadge}
                                 </span>
                               )}
-                              <span className="truncate">{line.visible}</span>
+                              <span className="block truncate flex-1 min-w-0">{line.visible}</span>
                             </span>
                           </TooltipTrigger>
                           <TooltipContent className="max-w-sm bg-gray-900 text-white border border-gray-700">
@@ -573,7 +573,7 @@ export function ExpressSceneConfirmDialog({
           </div>
         </div>
 
-        <DialogFooter>
+        <DialogFooter className="shrink-0">
           <Button
             type="button"
             variant="outline"

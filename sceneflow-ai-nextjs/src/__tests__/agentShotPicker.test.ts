@@ -44,4 +44,18 @@ describe('Stills and Clips Agent shot picker', () => {
     expect(clips).toContain('numberedShotLine')
     expect(clips).toContain('description')
   })
+
+  it('constrains Stills and Clips Agent dialog width and truncates shot rows inside a single frame', () => {
+    const dialogUi = readSource('src/components/ui/dialog.tsx')
+    const stills = readSource('src/components/vision/ExpressSceneConfirmDialog.tsx')
+    const clips = readSource('src/components/vision/VideoAgentConfirmDialog.tsx')
+
+    expect(dialogUi).toContain('grid grid-cols-1 w-full max-w-lg')
+    for (const source of [stills, clips]) {
+      expect(source).toContain('max-h-[85vh] overflow-hidden flex flex-col')
+      expect(source).toContain('flex-1 min-h-0 min-w-0 overflow-y-auto')
+      expect(source).toContain('w-full min-w-0 box-border')
+      expect(source).toContain('block truncate flex-1 min-w-0')
+    }
+  })
 })
