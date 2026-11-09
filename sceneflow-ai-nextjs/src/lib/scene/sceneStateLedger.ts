@@ -47,7 +47,7 @@ export interface PrecedingShotContinuityAnchor {
 }
 
 const WARDROBE_MUTATION_REGEX =
-  /\b(?:puts? on|takes? off|removes?|unbuttons?|buttons?|zips?|unzips?|drapes?|wraps?|wears?|holding|carries|clutches|picks? up|sets? down)\s+([^.,;]+)/i
+  /\b(?:puts? on|takes? off(?!\s+(?:running|sprinting|bolting|down|into|across|toward|through)\b)|removes?|unbuttons?|buttons?|zips?|unzips?|drapes?|wraps?(?!\s+(?:up|around)\b)|wears?|holding(?!\s+(?:(?:his|her|their|its|my|your)\s+)?(?:ground|breath|gaze|eye\s+contact|steady|back|still|firm|pose|posture|position|silence|court|focus|line|hands?)\b)|carries(?!\s+(?:himself|herself|themselves|on|weight|a\s+tune)\b)|clutches(?!\s+(?:at\s+straws)\b)|picks? up(?!\s+(?:speed|pace|steam|momentum|where)\b)|sets? down)\s+([^.,;]+)/i
 
 const ENVIRONMENT_MUTATION_REGEX =
   /\b(?:lights?\s+(?:flicker|dim|turn\s+\w+|go\s+out)|rain\s+(?:starts|intensifies|stops)|alarms?\s+flash|smoke\s+fills|door\s+(?:opens|slams\s+shut))\b[^.,;]*/i

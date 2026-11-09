@@ -1825,7 +1825,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
   >(null)
 
   const syncProductionPromptsForScenes = useCallback(
-    (scenesList: any[]) => {
+    (scenesList: any[], options?: { onlyBeatId?: string }) => {
       if (!Array.isArray(scenesList) || scenesList.length === 0) return
       const currentMap = sceneProductionStateRef.current
       if (!currentMap || Object.keys(currentMap).length === 0) return
@@ -1837,7 +1837,10 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         const refreshedSegments = refreshProductionSegmentVideoPrompts(
           currentProd.segments,
           sceneEntry as Record<string, unknown>,
-          { artStyleId: lockedArtStyle }
+          {
+            artStyleId: lockedArtStyle,
+            ...(options?.onlyBeatId ? { onlyBeatId: options.onlyBeatId } : {}),
+          }
         )
         if (!refreshedSegments) return
         const refreshed: SceneProductionData = {
@@ -18854,7 +18857,15 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
             return
           }
           updateOverlayPhase('references', 'done')
-        } else if (!isSceneScriptReadyForReferences(sceneForRefs)) {
+        } else if (
+          !isSceneScriptReadyForReferences(sceneForRefs) &&
+          !(
+            Boolean(sceneForRefs.sceneDirection && typeof sceneForRefs.sceneDirection === 'object') &&
+            (options?.scope === 'selected' ||
+              options?.scope === 'missing' ||
+              Boolean(options?.selectedFrameKeys?.length))
+          )
+        ) {
           updateOverlayPhase('direction', 'running')
           setPhase(sceneIndex, 'direction', 'running')
           const refreshed = await refreshSceneDirectionForReferences(sceneIndex, sceneForRefs)

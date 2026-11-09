@@ -1954,6 +1954,8 @@ export async function planSceneBeatKeyframes(
 
   try {
     const selectedKeys = getSelectedFrameKeySet(options)
+    const genCtx = getBeatGenerationContext(options)
+    const isScopedRun = Boolean(selectedKeys || options.missingFramesOnly)
     const activeEntries = beats
       .map((beat, beatIndex) => ({ beat, beatIndex }))
       .filter(({ beat }) => !isBeatExcluded(beat))
@@ -1969,15 +1971,25 @@ export async function planSceneBeatKeyframes(
             isBeatActionStartSlotSelected(beat, selectedKeys) ||
             isBeatEndSlotSelected(beat, selectedKeys)
         )
-      : activeEntries
+      : options.missingFramesOnly
+        ? activeEntries.filter(
+            ({ beat }) =>
+              beatFrameNeedsGeneration(beat, genCtx) ||
+              (options.includeEndFrames &&
+                (beatActionStartFrameNeedsGeneration(beat, genCtx) ||
+                  beatEndFrameNeedsGeneration(beat, genCtx)))
+          )
+        : activeEntries
 
     // A stored prompt whose direction fingerprint still matches describes the
-    // beat as it stands, so it is replayed instead of re-planned. Beats that
-    // already carry complete authored direction from Scene Director / Shot Director
-    // also reuse their composed direction rather than firing a redundant
-    // scene-wide planner LLM pass, even when regenerating frames.
+    // beat as it stands, so it is replayed instead of re-planned on scoped runs.
+    // Beats that already carry complete authored direction from Scene Director /
+    // Shot Director also reuse their composed direction rather than firing a
+    // redundant scene-wide planner LLM pass.
     const canReuseBeatDirection = (beat: SceneBeat): boolean =>
-      storedPromptMatchesDirection(beat) || hasCompleteAuthoredBeatDirection(beat)
+      isScopedRun
+        ? storedPromptMatchesDirection(beat) || hasCompleteAuthoredBeatDirection(beat)
+        : hasCompleteAuthoredBeatDirection(beat)
 
     const toPlan = inScope.filter(({ beat }) => !canReuseBeatDirection(beat))
 

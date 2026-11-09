@@ -1217,9 +1217,22 @@ function mergePlannerDirectionIntoBeat(
   const merged: BeatDirection = { ...(existing ?? {}) }
   if (!merged.shotType && planShotType) merged.shotType = planShotType
   if (!merged.frozenMoment && planFrozenMoment) merged.frozenMoment = planFrozenMoment
-  if (!merged.lightingAccent && planLighting) merged.lightingAccent = planLighting
+  if (!merged.lightingAccent && planLighting && !(authored && beat.storyboardImageUrl?.trim())) {
+    merged.lightingAccent = planLighting
+  }
 
-  merged.generatedBy = authored ? existing?.generatedBy : merged.generatedBy || 'planner'
+  const nextGeneratedBy = authored ? existing?.generatedBy : merged.generatedBy || 'planner'
+  if (
+    existing &&
+    merged.shotType === existing.shotType &&
+    merged.frozenMoment === existing.frozenMoment &&
+    merged.lightingAccent === existing.lightingAccent &&
+    nextGeneratedBy === existing.generatedBy
+  ) {
+    return existing
+  }
+
+  merged.generatedBy = nextGeneratedBy
   merged.updatedAt = new Date().toISOString()
   return merged
 }

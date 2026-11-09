@@ -735,4 +735,188 @@ describe('narration beat video prompt compilation', () => {
     expect(rewritten).toContain("person [1]'s brow")
     expect(rewritten).toContain('Only these people are visible: person [1]')
   })
+
+  it('does not mark untouched completed shots 2–4 as Prompt Changed when shot 1 prompt or direction is updated', async () => {
+    const { buildSceneStateLedger } = await import('@/lib/scene/sceneStateLedger')
+    const { refreshProductionSegmentVideoPrompts } = await import('@/lib/scene/syncBeatVideoPrompt')
+    const { buildBeatVideoClips } = await import('@/lib/scene/buildBeatVideoClips')
+    const { applyStillDirectorPatchToScene } = await import(
+      '@/lib/intelligence/beat-still-director-fallback'
+    )
+    const { isBeatFrameStale } = await import('@/lib/storyboard/syncBeatStillPrompt')
+    const { beatStillDirectionFingerprint } = await import(
+      '@/lib/script/beatDirectionFingerprint'
+    )
+    const { getSceneBeats } = await import('@/lib/script/beatMigration')
+
+    const makeCompletedBeat = (
+      index: number,
+      shotType: string,
+      frozenMoment: string,
+      clipAction: string
+    ): SceneBeat => {
+      const beatDirection: SceneBeat['beatDirection'] = {
+        generatedBy: 'director',
+        shotType,
+        cameraAngle: 'eye-level',
+        cameraMovement: 'static lock',
+        castInFrame: ['Piper Hayes', 'Gideon Croft'],
+        frozenMoment,
+        startFrame: frozenMoment,
+        clipAction,
+        endFrame: `${frozenMoment} Settled at 10s.`,
+        lightingAccent: 'Warm tungsten overhead light',
+      }
+      const key = beatStillDirectionFingerprint(beatDirection)
+      return {
+        beatId: `bt_shot_${index + 1}`,
+        sequenceIndex: index,
+        kind: 'action',
+        actionDescription: frozenMoment,
+        beatDirection,
+        storyboardImageUrl: `https://blob.example.com/shot-${index + 1}.png`,
+        storyboardImagePrompt: `[TASK]\nProduce one photograph.\n\n[STILL]\nAction/Framing: ${shotType}. ${frozenMoment}\n\n[EXCLUSIONS]\nStrictly Avoid: Watermarks.`,
+        storyboardImagePromptDirectionKey: key,
+        storyboardImageDirectionKey: key,
+      }
+    }
+
+    const initialBeats: SceneBeat[] = [
+      makeCompletedBeat(
+        0,
+        'Wide Shot',
+        'Piper Hayes confronts Gideon Croft across the workbench, holding her ground with unyielding intensity.',
+        'Piper steps up to the workbench and plants both palms on the zinc surface.'
+      ),
+      makeCompletedBeat(
+        1,
+        'Medium Close-Up',
+        'Gideon Croft stares back across the workbench.',
+        'Gideon slowly lowers the brass calipers onto the ledger.'
+      ),
+      makeCompletedBeat(
+        2,
+        'Over-the-Shoulder Shot',
+        'Piper Hayes watches Gideon set down the calipers.',
+        'Piper leans forward slightly as her jaw tightens.'
+      ),
+      makeCompletedBeat(
+        3,
+        'Close-Up',
+        'The brass calipers rest beside the open ledger on the workbench.',
+        'Condensation drips onto the zinc tabletop beside the ledger.'
+      ),
+    ]
+
+    // Figurative idiom "holding her ground" in Shot 1 must not be extracted as a wardrobe mutation
+    const initialLedger = buildSceneStateLedger(initialBeats)
+    expect(initialLedger[1].wardrobeByCharacter['piper hayes']).toBeUndefined()
+
+    // Derive initial completed segments (just as /api/scenes/[sceneId]/derive-segments does with stateLedger)
+    const initialSegments = initialBeats.map((beat, idx) => {
+      const compiled = compileBeatVideoPromptFromDirection(beat, null, {
+        previousBeat: idx > 0 ? initialBeats[idx - 1] : undefined,
+        sceneState: initialLedger[idx],
+      })
+      return {
+        segmentId: `seg_${idx + 1}`,
+        beatId: beat.beatId,
+        sequenceIndex: idx,
+        startTime: idx * 8,
+        endTime: (idx + 1) * 8,
+        status: 'COMPLETE' as const,
+        assetType: 'video' as const,
+        activeAssetUrl: `https://blob.example.com/clip-${idx + 1}.mp4`,
+        generatedPrompt: compiled.prompt,
+        videoPrompt: compiled.prompt,
+        isStale: false,
+        takes: [
+          {
+            id: `take_${idx + 1}`,
+            assetUrl: `https://blob.example.com/clip-${idx + 1}.mp4`,
+            videoUrl: `https://blob.example.com/clip-${idx + 1}.mp4`,
+            status: 'COMPLETE' as const,
+            createdAt: '2026-11-09T07:00:00.000Z',
+          },
+        ],
+      }
+    })
+
+    const initialScene: Record<string, unknown> = {
+      sceneId: 'scene-4',
+      heading: 'INT. FREIGHT TUNNEL ARCHIVE VAULT - NIGHT',
+      beats: initialBeats,
+      segments: initialSegments,
+    }
+
+    // All 4 stills and all 4 clips start as Final (not stale)
+    for (const beat of getSceneBeats(initialScene)) {
+      expect(isBeatFrameStale(beat)).toBe(false)
+    }
+
+    // Now update ONLY Shot 1's prompt / direction
+    const patched = applyStillDirectorPatchToScene(
+      initialScene,
+      'bt_shot_1',
+      {
+        shotType: 'Low-Angle Medium Shot',
+        cameraAngle: 'low angle',
+        frozenMoment:
+          'Piper Hayes leans over the zinc workbench under the flashing red beacon, her soot-streaked face taut with defiance.',
+        startFrame:
+          'Piper Hayes leans over the zinc workbench under the flashing red beacon, her soot-streaked face taut with defiance.',
+        clipAction:
+          'Piper slams her open palm onto the workbench and leans across the ledger toward Gideon.',
+        lightingAccent: 'Rhythmic red distress beacon and warm tungsten overhead key',
+      },
+      {
+        generatedBy: 'user',
+        sceneIndex: 0,
+      }
+    )
+
+    const updatedBeats = getSceneBeats(patched.scene)
+    // Shot 1 still is now "Prompt changed" (stale), while Shots 2, 3, and 4 remain "Final"
+    expect(isBeatFrameStale(updatedBeats[0])).toBe(true)
+    expect(isBeatFrameStale(updatedBeats[1])).toBe(false)
+    expect(isBeatFrameStale(updatedBeats[2])).toBe(false)
+    expect(isBeatFrameStale(updatedBeats[3])).toBe(false)
+
+    // Shots 2, 3, and 4 keep their exact still prompts
+    expect(updatedBeats[1].storyboardImagePrompt).toBe(initialBeats[1].storyboardImagePrompt)
+    expect(updatedBeats[2].storyboardImagePrompt).toBe(initialBeats[2].storyboardImagePrompt)
+    expect(updatedBeats[3].storyboardImagePrompt).toBe(initialBeats[3].storyboardImagePrompt)
+
+    // Refresh production segment video prompts across the scene (as syncProductionPromptsForScenes does)
+    const refreshedSegments = refreshProductionSegmentVideoPrompts(
+      initialSegments,
+      patched.scene
+    )
+    expect(refreshedSegments).not.toBeNull()
+    // Shot 1 clip is marked stale ("Prompt changed"), while Shots 2, 3, and 4 remain Final!
+    expect(refreshedSegments![0].isStale).toBe(true)
+    expect(refreshedSegments![1].isStale).toBe(false)
+    expect(refreshedSegments![2].isStale).toBe(false)
+    expect(refreshedSegments![3].isStale).toBe(false)
+
+    // Shots 2, 3, and 4 keep their exact video prompts
+    expect(refreshedSegments![1].generatedPrompt).toBe(initialSegments[1].generatedPrompt)
+    expect(refreshedSegments![2].generatedPrompt).toBe(initialSegments[2].generatedPrompt)
+    expect(refreshedSegments![3].generatedPrompt).toBe(initialSegments[3].generatedPrompt)
+
+    // And buildBeatVideoClips reports promptChanged=true ONLY for Shot 1, and false for Shots 2, 3, 4
+    const clips = buildBeatVideoClips({
+      scene: patched.scene,
+      segments: refreshedSegments as any,
+      queue: [],
+    })
+    expect(clips).toHaveLength(4)
+    expect(clips[0].promptChanged).toBe(true)
+    expect(clips[1].promptChanged).toBe(false)
+    expect(clips[2].promptChanged).toBe(false)
+    expect(clips[3].promptChanged).toBe(false)
+    expect(clips[1].prompt).toBe(initialSegments[1].generatedPrompt)
+    expect(clips[2].prompt).toBe(initialSegments[2].generatedPrompt)
+    expect(clips[3].prompt).toBe(initialSegments[3].generatedPrompt)
+  })
 })

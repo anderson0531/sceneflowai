@@ -31,7 +31,12 @@ import {
   applyDirectionCoverageToBeats,
   backfillBeatDirectionsOnScene,
 } from '@/lib/script/beatDirectionDerive'
-import { beatStillImageStamp } from '@/lib/script/beatDirectionFingerprint'
+import {
+  beatStillDirectionFingerprint,
+  beatStillImageStamp,
+  storedStillDirectionContentMatches,
+  storedStillDirectionKeyMatches,
+} from '@/lib/script/beatDirectionFingerprint'
 import {
   assignStillUrl,
   BEAT_ACTION_START_STILL_SLOT,
@@ -484,33 +489,45 @@ export function normalizeBeatsForProduction(beats: SceneBeat[]): SceneBeat[] {
     seenBeatIds.add(beatId)
     let beatDirection = raw.beatDirection
     if (beatDirection) {
-      const nextFrozen = stripSpokenDeliveryClause(beatDirection.frozenMoment)
-      const nextStart = stripSpokenDeliveryClause(beatDirection.startFrame)
-      const nextClip = stripSpokenDeliveryClause(beatDirection.clipAction)
-      const nextEnd = stripSpokenDeliveryClause(beatDirection.endFrame)
-      const nextCast = filterCastInFrameByVisualStaging(beatDirection)
-      const strippedDelivery =
-        nextFrozen !== beatDirection.frozenMoment ||
-        nextStart !== beatDirection.startFrame ||
-        nextClip !== beatDirection.clipAction ||
-        nextEnd !== beatDirection.endFrame
-      const prunedCast =
-        Array.isArray(beatDirection.castInFrame) &&
-        Array.isArray(nextCast) &&
-        nextCast.length < beatDirection.castInFrame.length
-      if (strippedDelivery || prunedCast) {
-        beatDirection = {
-          ...beatDirection,
-          ...(nextFrozen !== undefined ? { frozenMoment: nextFrozen } : {}),
-          ...(nextStart !== undefined ? { startFrame: nextStart } : {}),
-          ...(nextClip !== undefined ? { clipAction: nextClip } : {}),
-          ...(nextEnd !== undefined ? { endFrame: nextEnd } : {}),
-          ...(nextCast !== undefined ? { castInFrame: nextCast } : {}),
-        }
-        // Clear cached prompt overrides if they baked in pruned cast or spoken delivery quotes
-        if (prunedCast || strippedDelivery) {
-          delete beatDirection.framePrompt
-          delete beatDirection.videoPrompt
+      const hasCompletedMatchingStill =
+        Boolean(raw.storyboardImageUrl?.trim()) &&
+        ((raw.storyboardImageDirectionKey !== undefined &&
+          storedStillDirectionContentMatches(raw.storyboardImageDirectionKey, beatDirection)) ||
+          (raw.storyboardImageDirectionKey === undefined &&
+            raw.storyboardImagePromptDirectionKey !== undefined &&
+            storedStillDirectionContentMatches(
+              raw.storyboardImagePromptDirectionKey,
+              beatDirection
+            )))
+      if (!hasCompletedMatchingStill) {
+        const nextFrozen = stripSpokenDeliveryClause(beatDirection.frozenMoment)
+        const nextStart = stripSpokenDeliveryClause(beatDirection.startFrame)
+        const nextClip = stripSpokenDeliveryClause(beatDirection.clipAction)
+        const nextEnd = stripSpokenDeliveryClause(beatDirection.endFrame)
+        const nextCast = filterCastInFrameByVisualStaging(beatDirection)
+        const strippedDelivery =
+          nextFrozen !== beatDirection.frozenMoment ||
+          nextStart !== beatDirection.startFrame ||
+          nextClip !== beatDirection.clipAction ||
+          nextEnd !== beatDirection.endFrame
+        const prunedCast =
+          Array.isArray(beatDirection.castInFrame) &&
+          Array.isArray(nextCast) &&
+          nextCast.length < beatDirection.castInFrame.length
+        if (strippedDelivery || prunedCast) {
+          beatDirection = {
+            ...beatDirection,
+            ...(nextFrozen !== undefined ? { frozenMoment: nextFrozen } : {}),
+            ...(nextStart !== undefined ? { startFrame: nextStart } : {}),
+            ...(nextClip !== undefined ? { clipAction: nextClip } : {}),
+            ...(nextEnd !== undefined ? { endFrame: nextEnd } : {}),
+            ...(nextCast !== undefined ? { castInFrame: nextCast } : {}),
+          }
+          // Clear cached prompt overrides if they baked in pruned cast or spoken delivery quotes
+          if (prunedCast || strippedDelivery) {
+            delete beatDirection.framePrompt
+            delete beatDirection.videoPrompt
+          }
         }
       }
     }

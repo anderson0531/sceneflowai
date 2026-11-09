@@ -9,6 +9,7 @@ import {
   beatDirectionOwnsVideoPrompt,
   compileBeatVideoPromptFromDirection,
   isStaleSavedVideoPrompt,
+  sameBeatOwnVideoPrompt,
 } from '@/lib/scene/beatVideoPromptCompiler'
 import {
   applyClipCaptionsDirective,
@@ -175,8 +176,13 @@ export function buildBeatVideoClips({
     const narrationSnippet = narrationLine
       ? narrationLine.slice(0, Math.min(20, narrationLine.length))
       : undefined
+    const preserveCurrentSegmentPrompt =
+      !segment?.isStale &&
+      Boolean(segment?.generatedPrompt?.trim()) &&
+      sameBeatOwnVideoPrompt(segment?.generatedPrompt, compiledFromDirection)
     const resolvedPrompt =
       !hasGenuineUserEditedPrompt &&
+      !preserveCurrentSegmentPrompt &&
       (beatDirectionOwnsVideoPrompt(beat) ||
         targetMethod === 'frame' ||
         (narrationSnippet &&

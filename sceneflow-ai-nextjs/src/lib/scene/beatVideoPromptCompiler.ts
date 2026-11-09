@@ -31,6 +31,7 @@ import {
   type CharacterGender,
 } from '@/lib/character/visualGender'
 import { toCharacterPromptAlias } from '@/lib/character/characterPromptAlias'
+import { beatDirectionFingerprint } from '@/lib/script/beatDirectionFingerprint'
 import type { SceneBeat, SceneMusicCue } from '@/lib/script/segmentTypes'
 import { formatMusicCueSteer } from '@/lib/script/sceneMusicCues'
 import {
@@ -1176,4 +1177,73 @@ export function compileBeatVideoPromptFromDirection(
     spokenLine,
     continuity: incomingContinuityClause(options, beat),
   })
+}
+
+const CROSS_SHOT_CONTINUITY_PATTERNS: RegExp[] = [
+  /\bIncoming continuity from [^.]+\.?\s*/gi,
+  /\bsame people already in frame:\s*[^.]+\.?\s*/gi,
+  /\bprops remain:\s*[^.]+\.?\s*/gi,
+  /\bShot continuity from preceding [^.]+\.?\s*/gi,
+  /\bMaintain 180-degree axis:\s*[^.]+\.?\s*/gi,
+  /\bConsistent scene lighting:\s*[^.]+\.?\s*/gi,
+  /\bCarryover state:\s*[^.]+\.?\s*/gi,
+  /\bEnvironment state:\s*[^.]+\.?\s*/gi,
+]
+
+/**
+ * Strip cross-shot continuity clauses (`previousBeat` and `sceneState` carryover)
+ * so two prompts for the same beat can be compared on that beat's own content alone.
+ */
+export function stripCrossShotContinuityClauses(prompt: string): string {
+  let out = prompt.trim()
+  if (!out) return ''
+  for (const pattern of CROSS_SHOT_CONTINUITY_PATTERNS) {
+    out = out.replace(pattern, ' ')
+  }
+  return out
+    .replace(/\s*\.\s*\./g, '.')
+    .replace(/\s{2,}/g, ' ')
+    .replace(/^[.\s]+|[.\s]+$/g, '')
+    .trim()
+}
+
+/**
+ * True when two compiled video prompts differ only in cross-shot continuity
+ * (`previousBeat` / `sceneState`) and have identical beat-own content.
+ */
+export function sameBeatOwnVideoPrompt(
+  promptA: string | undefined | null,
+  promptB: string | undefined | null
+): boolean {
+  const a = stripCrossShotContinuityClauses(promptA ?? '')
+  const b = stripCrossShotContinuityClauses(promptB ?? '')
+  return Boolean(a && b && a === b)
+}
+
+/**
+ * Deterministic fingerprint of a single beat's own video-prompt inputs,
+ * deliberately excluding cross-shot `previousBeat` and `sceneState` so
+ * editing Shot 1 never invalidates the stored prompt keys of Shots 2..N.
+ */
+export function beatOwnVideoPromptFingerprint(
+  beat: SceneBeat,
+  options?: {
+    excerpt?: string
+    continuesSameLine?: boolean
+    artStyleId?: string
+    musicCue?: SceneMusicCue
+  }
+): string {
+  return [
+    `kind=${beat.kind ?? ''}`,
+    `char=${(beat.character ?? '').trim()}`,
+    `line=${(options?.excerpt ?? beat.line ?? '').trim()}`,
+    `cont=${options?.continuesSameLine ? '1' : '0'}`,
+    `voice=${(beat.voiceDirection ?? '').trim()}`,
+    `action=${(beat.actionDescription ?? '').trim()}`,
+    `dir=${beatDirectionFingerprint(beat.beatDirection)}`,
+    `vp=${(beat.beatDirection?.videoPrompt ?? '').trim()}`,
+    `style=${(options?.artStyleId ?? 'photorealistic').trim()}`,
+    `cue=${(options?.musicCue?.intent ?? options?.musicCue?.description ?? '').trim()}`,
+  ].join('|')
 }

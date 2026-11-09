@@ -114,7 +114,11 @@ export async function POST(req: NextRequest) {
         const beats = getSceneBeats(ensured)
         const syncedBeats = beats.map((beat) =>
           beat.beatDirection
-            ? syncBeatStillPromptToDirection(beat, { sceneIndex: idx })
+            ? syncBeatStillPromptToDirection(beat, {
+                sceneIndex: idx,
+                lookbook: visionPhase.lookbook,
+                artStyleAnchor: visionPhase.artStyle,
+              })
             : beat
         )
         let nextScene = applyBeatsToScene(ensured, syncedBeats)

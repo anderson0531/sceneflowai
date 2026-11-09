@@ -20,7 +20,11 @@ import {
   storedStillDirectionKeyMatches,
 } from '@/lib/script/beatDirectionFingerprint'
 import { applyDerivedSfxToScene } from '@/lib/script/deriveSfxFromSceneContent'
-import { generateSceneContentHash } from '@/lib/utils/contentHash'
+import {
+  generateSceneContentHash,
+  isDirectionStale,
+  stampSceneDirectionContentHash,
+} from '@/lib/utils/contentHash'
 import { isValidStoryboardMediaUrl } from '@/lib/storyboard/mergeSceneMedia'
 import { syncBeatStillPromptToDirection } from '@/lib/storyboard/syncBeatStillPrompt'
 import type { ProjectLookbook } from '@/lib/intelligence/project-lookbook-fallback'
@@ -135,10 +139,14 @@ export function restampPreVisHashIfScriptCurrent(
   previousScene: Record<string, unknown>,
   nextScene: Record<string, unknown>
 ): Record<string, unknown> {
+  let out = nextScene
+  if (Boolean(previousScene.sceneDirection) && !isDirectionStale(previousScene)) {
+    out = stampSceneDirectionContentHash(out)
+  }
   const stored = previousScene[PRE_VIS_CONTENT_HASH_FIELD]
-  if (typeof stored !== 'string' || !stored.trim()) return nextScene
-  if (isPreVisStale(previousScene)) return nextScene
-  return stampPreVisContentHash(nextScene)
+  if (typeof stored !== 'string' || !stored.trim()) return out
+  if (isPreVisStale(previousScene)) return out
+  return stampPreVisContentHash(out)
 }
 
 export interface SyncPreVisOptions {

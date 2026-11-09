@@ -99,7 +99,7 @@ function buildBeats(): SceneBeat[] {
 
 function runPlanner(
   beats: SceneBeat[],
-  options: { selectedFrameKeys?: string[] } = {},
+  options: { selectedFrameKeys?: string[]; missingFramesOnly?: boolean } = {},
   emit: (event: ExpressEvent) => void = () => {}
 ): ReturnType<typeof planSceneBeatKeyframes> {
   const scene = { heading: 'INT. GATE - NIGHT', beats }
@@ -195,6 +195,28 @@ describe('a scoped run plans only the frame it was asked to render', () => {
 
     expect([...plans.keys()]).toEqual([1])
     expect(plans.get(1)!.prompt).toBe('Medium Shot. BOB under the awning.')
+  })
+
+  it('scopes missingFramesOnly runs to beats that actually need generation and leaves Final siblings untouched', async () => {
+    const beats = buildBeats()
+    // Beat 1 has a stale direction key ("Prompt changed"), Beat 2 has a Final image and matching key
+    beats[0].storyboardImageUrl = 'https://blob.example/shot-1.png'
+    beats[0].storyboardImageDirectionKey = 'stale-fingerprint'
+    beats[0].storyboardImagePromptDirectionKey = 'stale-fingerprint'
+
+    beats[1].storyboardImageUrl = 'https://blob.example/shot-2.png'
+    beats[1].storyboardImageDirectionKey = beats[1].storyboardImagePromptDirectionKey
+    const beat2Before = JSON.stringify(beats[1])
+
+    planBeatSequence.mockResolvedValue({
+      plans: [{ beatIndex: 0, beatRole: 'progression', prompt: 'FRESH: Alice at the gate.' }],
+      usedAI: true,
+    })
+
+    const plans = await runPlanner(beats, { missingFramesOnly: true })
+
+    expect([...plans.keys()]).toEqual([0])
+    expect(JSON.stringify(beats[1])).toBe(beat2Before)
   })
 })
 
@@ -350,15 +372,14 @@ describe('one definition of the frame selection key', () => {
     }
 
     const types = readFileSync(join(process.cwd(), 'src/lib/storyboard/types.ts'), 'utf8')
-    expect(types).toContain(
-      "return frameRole === 'end' ? `${beatId}-end` : beatId"
-    )
+    expect(types).toContain("if (frameRole === 'end') return `${beatId}-end`")
   })
 
-  it('round-trips both slots of a beat', async () => {
+  it('round-trips all slots of a beat', async () => {
     const { beatFrameSlotKey } = await import('@/lib/storyboard/types')
     expect(beatFrameSlotKey('bt_one')).toBe('bt_one')
     expect(beatFrameSlotKey('bt_one', 'start')).toBe('bt_one')
+    expect(beatFrameSlotKey('bt_one', 'action-start')).toBe('bt_one-start')
     expect(beatFrameSlotKey('bt_one', 'end')).toBe('bt_one-end')
   })
 })

@@ -4,7 +4,11 @@ import { sequelize } from '../../../../../config/database'
 import { deriveSegmentsFromBeats } from '@/lib/scene/deriveSegmentsFromBeats'
 import { isBeatFirstPipelineEnabled } from '@/lib/script/beatMigration'
 import { resolveProjectArtStyle } from '@/lib/vision/artStyle'
-import { compileBeatVideoPromptFromDirection } from '@/lib/scene/beatVideoPromptCompiler'
+import {
+  beatOwnVideoPromptFingerprint,
+  compileBeatVideoPromptFromDirection,
+  sameBeatOwnVideoPrompt,
+} from '@/lib/scene/beatVideoPromptCompiler'
 import { buildSceneStateLedger } from '@/lib/scene/sceneStateLedger'
 import {
   parsePersistedMusicCues,
@@ -171,22 +175,38 @@ export async function POST(
       const beat = beatIndex >= 0 ? activeBeats[beatIndex] : allBeats.find((b) => b.beatId === seg.beatId)
       if (!beat) return seg
       const musicCue = beatIndex >= 0 ? resolveBeatMusicCue(musicCues, beatIndex) : undefined
+      const continuesSameLine = (seg.dialoguePortion?.partIndex ?? 0) > 0
       const compiled = compileBeatVideoPromptFromDirection(
         beat,
         sceneDirection as DetailedSceneDirection | null,
         {
           artStyleId,
           excerpt: seg.dialoguePortion?.excerpt,
-          continuesSameLine: (seg.dialoguePortion?.partIndex ?? 0) > 0,
+          continuesSameLine,
           previousBeat: beatIndex > 0 ? activeBeats[beatIndex - 1] : undefined,
           sceneState: beatIndex >= 0 ? stateLedger[beatIndex] : undefined,
           ...(musicCue ? { musicCue } : {}),
         }
       )
+      const videoPromptDirectionKey = beatOwnVideoPromptFingerprint(beat, {
+        artStyleId,
+        excerpt: seg.dialoguePortion?.excerpt,
+        continuesSameLine,
+        musicCue,
+      })
+      const existingMatch = segmentsToKeep.find((s) => s.segmentId === seg.segmentId)
+      const resolvedGeneratedPrompt =
+        existingMatch &&
+        !existingMatch.isStale &&
+        Boolean(existingMatch.generatedPrompt?.trim()) &&
+        sameBeatOwnVideoPrompt(existingMatch.generatedPrompt, compiled.prompt)
+          ? existingMatch.generatedPrompt!
+          : compiled.prompt
       return {
         ...seg,
-        generatedPrompt: compiled.prompt,
-        videoPrompt: compiled.prompt,
+        generatedPrompt: resolvedGeneratedPrompt,
+        videoPrompt: resolvedGeneratedPrompt,
+        videoPromptDirectionKey,
         userEditedPrompt: seg.userEditedPrompt ?? null,
       }
     })

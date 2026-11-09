@@ -1491,15 +1491,51 @@ export function hydratePromoSceneWithSharedShots(
       storyboardEndImageVersionId: promoEndNewer
         ? beatAny.storyboardEndImageVersionId || srcAny.storyboardEndImageVersionId
         : srcAny.storyboardEndImageVersionId || beatAny.storyboardEndImageVersionId,
-      storyboardImagePrompt: promoStillNewer
+      storyboardImagePrompt: storedStillDirectionKeyMatches(
+        beat.storyboardImagePromptDirectionKey,
+        preferredBeatDirection
+      ) &&
+      !storedStillDirectionKeyMatches(
+        sourceBeat.storyboardImagePromptDirectionKey,
+        preferredBeatDirection
+      )
         ? beat.storyboardImagePrompt || sourceBeat.storyboardImagePrompt
-        : sourceBeat.storyboardImagePrompt || beat.storyboardImagePrompt,
+        : storedStillDirectionKeyMatches(
+              sourceBeat.storyboardImagePromptDirectionKey,
+              preferredBeatDirection
+            ) &&
+            !storedStillDirectionKeyMatches(
+              beat.storyboardImagePromptDirectionKey,
+              preferredBeatDirection
+            )
+          ? sourceBeat.storyboardImagePrompt || beat.storyboardImagePrompt
+          : !sourceDirectionNewer
+            ? beat.storyboardImagePrompt || sourceBeat.storyboardImagePrompt
+            : sourceBeat.storyboardImagePrompt || beat.storyboardImagePrompt,
       storyboardEndImagePrompt: promoEndNewer
         ? beat.storyboardEndImagePrompt || sourceBeat.storyboardEndImagePrompt
         : sourceBeat.storyboardEndImagePrompt || beat.storyboardEndImagePrompt,
-      storyboardImagePromptDirectionKey: promoStillNewer
+      storyboardImagePromptDirectionKey: storedStillDirectionKeyMatches(
+        beat.storyboardImagePromptDirectionKey,
+        preferredBeatDirection
+      ) &&
+      !storedStillDirectionKeyMatches(
+        sourceBeat.storyboardImagePromptDirectionKey,
+        preferredBeatDirection
+      )
         ? beat.storyboardImagePromptDirectionKey || sourceBeat.storyboardImagePromptDirectionKey
-        : sourceBeat.storyboardImagePromptDirectionKey || beat.storyboardImagePromptDirectionKey,
+        : storedStillDirectionKeyMatches(
+              sourceBeat.storyboardImagePromptDirectionKey,
+              preferredBeatDirection
+            ) &&
+            !storedStillDirectionKeyMatches(
+              beat.storyboardImagePromptDirectionKey,
+              preferredBeatDirection
+            )
+          ? sourceBeat.storyboardImagePromptDirectionKey || beat.storyboardImagePromptDirectionKey
+          : !sourceDirectionNewer
+            ? beat.storyboardImagePromptDirectionKey || sourceBeat.storyboardImagePromptDirectionKey
+            : sourceBeat.storyboardImagePromptDirectionKey || beat.storyboardImagePromptDirectionKey,
       ...(resolvedImageDirectionKey !== undefined
         ? { storyboardImageDirectionKey: resolvedImageDirectionKey }
         : {}),
@@ -1952,9 +1988,6 @@ export function syncPromoSharedBeatsToSourceScenes<T = Record<string, unknown>>(
       const resolvedImageUrl = promoStillWins
         ? promoBeat.storyboardImageUrl || srcBeat.storyboardImageUrl
         : srcBeat.storyboardImageUrl || promoBeat.storyboardImageUrl
-      const resolvedImagePrompt = promoStillWins
-        ? promoBeat.storyboardImagePrompt || srcBeat.storyboardImagePrompt
-        : srcBeat.storyboardImagePrompt || promoBeat.storyboardImagePrompt
       const resolvedImageTier = promoStillWins
         ? promoAny.storyboardImageTier || srcAny.storyboardImageTier
         : srcAny.storyboardImageTier || promoAny.storyboardImageTier
@@ -1973,9 +2006,6 @@ export function syncPromoSharedBeatsToSourceScenes<T = Record<string, unknown>>(
       const resolvedStillVersions = promoStillWins
         ? promoBeat.stillVersions || srcBeat.stillVersions
         : srcBeat.stillVersions || promoBeat.stillVersions
-      const resolvedDirKey = promoStillWins
-        ? promoBeat.storyboardImagePromptDirectionKey || srcBeat.storyboardImagePromptDirectionKey
-        : srcBeat.storyboardImagePromptDirectionKey || promoBeat.storyboardImagePromptDirectionKey
 
       const srcStartTs = latestSlotRecencyMs(srcBeat, BEAT_ACTION_START_STILL_SLOT)
       const promoStartTs = latestSlotRecencyMs(promoBeat, BEAT_ACTION_START_STILL_SLOT)
@@ -2036,6 +2066,26 @@ export function syncPromoSharedBeatsToSourceScenes<T = Record<string, unknown>>(
 
       const resolvedDirection = preferBeatDirection(srcBeat.beatDirection, promoBeat.beatDirection)
       const promoDirectionWins = resolvedDirection === promoBeat.beatDirection
+      const promoPromptKeyMatches = storedStillDirectionKeyMatches(
+        promoBeat.storyboardImagePromptDirectionKey,
+        resolvedDirection
+      )
+      const srcPromptKeyMatches = storedStillDirectionKeyMatches(
+        srcBeat.storyboardImagePromptDirectionKey,
+        resolvedDirection
+      )
+      const usePromoPromptSide =
+        promoPromptKeyMatches && !srcPromptKeyMatches
+          ? true
+          : srcPromptKeyMatches && !promoPromptKeyMatches
+            ? false
+            : promoDirectionWins
+      const resolvedImagePrompt = usePromoPromptSide
+        ? promoBeat.storyboardImagePrompt || srcBeat.storyboardImagePrompt
+        : srcBeat.storyboardImagePrompt || promoBeat.storyboardImagePrompt
+      const resolvedDirKey = usePromoPromptSide
+        ? promoBeat.storyboardImagePromptDirectionKey || srcBeat.storyboardImagePromptDirectionKey
+        : srcBeat.storyboardImagePromptDirectionKey || promoBeat.storyboardImagePromptDirectionKey
       const promoImageDirMatches = storedStillDirectionKeyMatches(
         promoBeat.storyboardImageDirectionKey,
         resolvedDirection

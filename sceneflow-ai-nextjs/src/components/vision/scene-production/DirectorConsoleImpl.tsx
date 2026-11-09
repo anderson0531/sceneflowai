@@ -184,6 +184,7 @@ import {
   beatDirectionOwnsVideoPrompt,
   compileBeatVideoPromptFromDirection,
   isStaleSavedVideoPrompt,
+  sameBeatOwnVideoPrompt,
 } from '@/lib/scene/beatVideoPromptCompiler'
 import { buildSceneStateLedger } from '@/lib/scene/sceneStateLedger'
 import {
@@ -1232,8 +1233,13 @@ export function DirectorConsoleRoot({
             ...(musicCue ? { musicCue } : {}),
           }).prompt
         : ''
+      const preserveStoredSegmentPrompt =
+        !segment.isStale &&
+        Boolean(segment.generatedPrompt?.trim()) &&
+        sameBeatOwnVideoPrompt(segment.generatedPrompt, compiledFromBeat)
       const sourcePrompt =
         (hasGenuineUserEditedPrompt ? userEdited : undefined) ||
+        (preserveStoredSegmentPrompt ? segment.generatedPrompt?.trim() : undefined) ||
         (beat &&
         compiledFromBeat &&
         (beatDirectionOwnsVideoPrompt(beat) ||
@@ -1955,10 +1961,15 @@ export function DirectorConsoleRoot({
         userEdited &&
           (!beat || !isStaleSavedVideoPrompt(beat, userEdited, beat.line?.trim(), targetMethod))
       )
+      const preserveStoredForMethod =
+        !segment?.isStale &&
+        Boolean(segment?.generatedPrompt?.trim()) &&
+        sameBeatOwnVideoPrompt(segment?.generatedPrompt, compiledForMethod)
       const freshOwnedPrompt =
         !hasGenuineUserEdited &&
         !item.config.useCustomApiPrompt &&
-        (compiledForMethod ||
+        ((preserveStoredForMethod ? segment?.generatedPrompt?.trim() : undefined) ||
+          compiledForMethod ||
           (segment?.generatedPrompt?.trim() && beat && beatDirectionOwnsVideoPrompt(beat)
             ? segment.generatedPrompt.trim()
             : undefined))

@@ -5,8 +5,10 @@
 
 import {
   beatDirectionOwnsVideoPrompt,
+  beatOwnVideoPromptFingerprint,
   compileBeatVideoPromptFromDirection,
   isStaleSavedVideoPrompt,
+  sameBeatOwnVideoPrompt,
 } from '@/lib/scene/beatVideoPromptCompiler'
 import { getSceneBeats } from '@/lib/script/beatMigration'
 import { parsePersistedMusicCues, resolveBeatMusicCue } from '@/lib/script/sceneMusicCues'
@@ -19,6 +21,7 @@ type SegmentPromptRow = {
   userEditedPrompt?: string | null
   generatedPrompt?: string
   videoPrompt?: string | null
+  videoPromptDirectionKey?: string
   dialoguePortion?: { excerpt?: string; partIndex?: number }
   activeAssetUrl?: string | null
   assetType?: string | null
@@ -84,18 +87,46 @@ function refreshSegmentList<T extends SegmentPromptRow>(
     }
     const beatIndex = beats.findIndex((entry) => entry.beatId === beat.beatId)
     const previousBeat = beatIndex > 0 ? beats[beatIndex - 1] : undefined
+    const continuesSameLine = (segment.dialoguePortion?.partIndex ?? 0) > 0
+    const musicCue = musicCueForBeat(scene, beats, beat)
+    const currentBeatVideoKey = beatOwnVideoPromptFingerprint(beat, {
+      ...(options?.artStyleId ? { artStyleId: options.artStyleId } : {}),
+      ...(excerpt ? { excerpt } : {}),
+      continuesSameLine,
+      musicCue,
+    })
+    if (
+      !hasStaleCompilerUserEdited &&
+      Boolean(segment.generatedPrompt?.trim()) &&
+      segment.videoPromptDirectionKey &&
+      segment.videoPromptDirectionKey === currentBeatVideoKey &&
+      (segment.videoPrompt === undefined || segment.videoPrompt === segment.generatedPrompt)
+    ) {
+      return segment
+    }
     const compiled = compileBeatVideoPromptFromDirection(beat, sceneDirection, {
       ...(options?.artStyleId ? { artStyleId: options.artStyleId } : {}),
       ...(excerpt ? { excerpt } : {}),
-      continuesSameLine: (segment.dialoguePortion?.partIndex ?? 0) > 0,
+      continuesSameLine,
       previousBeat,
-      musicCue: musicCueForBeat(scene, beats, beat),
+      musicCue,
     })
+    if (
+      !hasStaleCompilerUserEdited &&
+      options?.onlyBeatId !== segment.beatId &&
+      Boolean(segment.generatedPrompt?.trim()) &&
+      sameBeatOwnVideoPrompt(segment.generatedPrompt, compiled.prompt)
+    ) {
+      return segment
+    }
     const promptChanged =
-      hasStaleCompilerUserEdited || segment.generatedPrompt !== compiled.prompt
+      hasStaleCompilerUserEdited ||
+      !sameBeatOwnVideoPrompt(segment.generatedPrompt, compiled.prompt)
     if (
       !promptChanged &&
-      (segment.videoPrompt === undefined || segment.videoPrompt === compiled.prompt)
+      segment.generatedPrompt === compiled.prompt &&
+      (segment.videoPrompt === undefined || segment.videoPrompt === compiled.prompt) &&
+      segment.videoPromptDirectionKey === currentBeatVideoKey
     ) {
       return segment
     }
@@ -106,6 +137,7 @@ function refreshSegmentList<T extends SegmentPromptRow>(
       ...(hasStaleCompilerUserEdited ? { userEditedPrompt: null } : {}),
       generatedPrompt: compiled.prompt,
       videoPrompt: compiled.prompt,
+      videoPromptDirectionKey: currentBeatVideoKey,
       ...(hasPlayableClip ? { isStale: true } : {}),
     }
   })

@@ -137,6 +137,26 @@ export function storedStillDirectionKeyMatches(
   return stillDirectionKeyFromStored(storedKey) === current
 }
 
+/**
+ * True when the facet content of a stored still direction key matches the
+ * current direction, even if `STILL_FINGERPRINT_VERSION` was bumped.
+ */
+export function storedStillDirectionContentMatches(
+  storedKey: string | undefined,
+  direction?: BeatDirection | null
+): boolean {
+  const currentFacets = fingerprintDirection(direction, STILL_FINGERPRINTED_KEYS, true)
+  if (storedKey === undefined) return currentFacets === ''
+  const parts = storedKey.split('|')
+  if (VERSION_PREFIX_PATTERN.test(parts[0] ?? '')) {
+    parts.shift()
+  }
+  const storedFacets = parts
+    .filter((part) => STILL_KEY_NAMES.has(part.split('=')[0] ?? ''))
+    .join('|')
+  return storedFacets === currentFacets
+}
+
 /** Script prose that feeds the still prompt, independent of still-v4 direction. */
 export type BeatStillContentSource = {
   kind?: string

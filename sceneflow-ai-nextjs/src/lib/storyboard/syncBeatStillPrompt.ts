@@ -11,6 +11,7 @@ import type { ProjectLookbook } from '@/lib/intelligence/project-lookbook-fallba
 import {
   beatStillContentFingerprint,
   beatStillDirectionFingerprint,
+  storedStillDirectionContentMatches,
   storedStillDirectionKeyMatches,
 } from '@/lib/script/beatDirectionFingerprint'
 import {
@@ -63,7 +64,17 @@ export function syncBeatStillPromptToDirection(
     next.beatDirection = direction
   }
   if (next.storyboardImageUrl?.trim() && next.storyboardImageDirectionKey === undefined) {
-    next.storyboardImageDirectionKey = next.storyboardImagePromptDirectionKey ?? ''
+    if (
+      next.storyboardImagePromptDirectionKey !== undefined &&
+      !storedStillDirectionContentMatches(
+        next.storyboardImagePromptDirectionKey,
+        next.beatDirection
+      )
+    ) {
+      next.storyboardImageDirectionKey = next.storyboardImagePromptDirectionKey
+    } else {
+      next.storyboardImageDirectionKey = beatStillDirectionFingerprint(next.beatDirection)
+    }
   }
 
   // Composed without a lookbook too — the style anchor is the only part a

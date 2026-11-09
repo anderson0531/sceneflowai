@@ -623,6 +623,8 @@ export interface SceneSegment {
   promptContext?: PromptContext
   // Staleness flag - set when script changes invalidate the prompt
   isStale?: boolean
+  /** Fingerprint of this segment's own beat inputs when `generatedPrompt` was last compiled. */
+  videoPromptDirectionKey?: string
   // User instruction - general text instruction that overrides/augments prompts
   userInstruction?: string
   // Error message - stored when generation fails for detailed display
