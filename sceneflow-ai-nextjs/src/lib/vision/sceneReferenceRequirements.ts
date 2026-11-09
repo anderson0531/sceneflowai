@@ -20,6 +20,7 @@
  */
 
 import { resolveWardrobeForCharacter } from '@/lib/character/characterReferenceAssembly'
+import { isWardrobeStaleForSceneScript } from '@/lib/character/wardrobeScriptSync'
 import {
   findSceneCharacters,
   findSceneObjects,
@@ -718,7 +719,10 @@ function resolveOne(input: SceneReferenceRequirementsInput): SceneReferenceRequi
       name: `${characterName} — ${wardrobeName}`,
       imageUrl: wardrobeImageUrl(wardrobe),
       source,
-      stale: wardrobe.needsImageRegen === true || undefined,
+      stale:
+        wardrobe.needsImageRegen === true ||
+        isWardrobeStaleForSceneScript(wardrobe, scene, characterName) ||
+        undefined,
       characterId: castId,
       characterName,
     })
@@ -1009,7 +1013,10 @@ function applyOverrides(
           name: `${characterName} — ${wardrobeName}`,
           imageUrl: wardrobeImageUrl(wardrobe),
           source: 'scene-assigned',
-          stale: wardrobe.needsImageRegen === true || undefined,
+          stale:
+            wardrobe.needsImageRegen === true ||
+            isWardrobeStaleForSceneScript(wardrobe, input.scene, characterName) ||
+            undefined,
           characterId,
           characterName,
         })

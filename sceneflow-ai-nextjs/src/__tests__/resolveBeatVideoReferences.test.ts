@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { resolveBeatElementSelection, resolveBeatVideoReferences, shouldReplaceClientVideoReferences } from '@/lib/vision/resolveBeatVideoReferences'
+import { bindingFromCaption, formatNextImageCaption } from '@/lib/vision/referenceImageBinding'
 import type { SceneBeat } from '@/lib/script/segmentTypes'
 import type { LocationReference } from '@/types/visionReferences'
 
@@ -289,5 +290,50 @@ describe('resolveBeatVideoReferences', () => {
         },
       ])
     ).toBe(false)
+  })
+
+  it('preserves combination-image inset instructions and outfit descriptions through bindingFromCaption and formatNextImageCaption', () => {
+    const beat: SceneBeat = {
+      beatId: 'beat-pip',
+      sequenceIndex: 0,
+      kind: 'action',
+      actionDescription: 'Elara Vance enters the kitchen.',
+    }
+    const resolved = resolveBeatVideoReferences({
+      scene: { heading: 'INT. KITCHEN - DAY', beats: [beat] },
+      beat,
+      projectCharacters: [
+        {
+          id: 'c1',
+          name: 'Elara Vance',
+          referenceImage: 'https://blob.example/elara-headshot.jpg',
+          wardrobes: [
+            {
+              id: 'w-pip',
+              name: 'Subterranean Arrival',
+              description: 'Charcoal wool trench coat over slate turtleneck',
+              accessories: 'Brass lantern',
+              fullBodyUrl: 'https://blob.example/elara-full.jpg',
+              combinedCharacterRefUrl: 'https://blob.example/elara-combined-pip.jpg',
+            },
+          ],
+        },
+      ],
+      locationReferences: locations,
+      objectReferences: [],
+    })
+
+    const charRef = resolved.labeledRefs.find((r) => r.type === 'character')
+    expect(charRef?.url).toBe('https://blob.example/elara-combined-pip.jpg')
+    expect(charRef?.refRole).toBe('wardrobe-diptych')
+    expect(charRef?.name).toContain('Extract exact facial identity from the face close-up')
+    expect(charRef?.name).toContain('Charcoal wool trench coat')
+
+    const parsedBinding = bindingFromCaption(charRef!.name, charRef!.url)
+    expect(parsedBinding?.role).toBe('character')
+    expect(parsedBinding?.token).toBe('person [1]')
+    const reemittedCaption = formatNextImageCaption(parsedBinding!)
+    expect(reemittedCaption).toContain('Extract exact facial identity from the face close-up')
+    expect(reemittedCaption).toContain('Charcoal wool trench coat')
   })
 })

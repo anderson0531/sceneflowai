@@ -578,7 +578,7 @@ function planItemsForRequirements(
     if (!wardrobe?.id) continue
     if (!hasImage(character.referenceImage)) continue
     if (!wardrobe.description?.trim()) continue
-    if (!force && !wardrobeNeedsGeneration(character, wardrobe, 'undrawn-or-stale')) continue
+    if (!force && !requirement.stale && !wardrobeNeedsGeneration(character, wardrobe, 'undrawn-or-stale')) continue
     const characterName = character.name?.trim() || `Character ${index + 1}`
     push({
       kind: 'cast',
@@ -586,6 +586,7 @@ function planItemsForRequirements(
       wardrobeId: wardrobe.id,
       label: `${characterName} — ${wardrobe.name?.trim() || 'Wardrobe'}`,
       sourceFingerprint: wardrobeFingerprint(wardrobe),
+      ...(requirement.stale ? { forceRegenerate: true } : {}),
     })
   }
 

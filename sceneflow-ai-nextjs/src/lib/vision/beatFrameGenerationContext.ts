@@ -27,7 +27,11 @@ import {
   isNoTalentSceneForFrames,
   resolveSceneNumberForLocationMatch,
 } from '@/lib/vision/frameGenerationContext'
-import { resolveWardrobeIdForCharacterInScene } from '@/lib/character/characterReferenceAssembly'
+import {
+  resolveWardrobeForCharacter,
+  resolveWardrobeIdForCharacterInScene,
+} from '@/lib/character/characterReferenceAssembly'
+import { isWardrobeStaleForSceneScript } from '@/lib/character/wardrobeScriptSync'
 import { collapseObjectClusters } from '@/lib/vision/objectDuplicateClusters'
 import { isMountedSetFixtureName } from '@/lib/vision/mountedSetFixtures'
 import {
@@ -651,6 +655,27 @@ export function resolveBeatFrameGenerationContext(
     warnings.push(
       `Location version "${locationVersion.name}" is stale — regenerate from the base location image.`
     )
+  }
+
+  for (const char of matchedChars) {
+    const resolvedWardrobe = resolveWardrobeForCharacter(
+      char as Record<string, unknown>,
+      scene,
+      characterWardrobes,
+      beatSourceSceneIndex
+    )
+    if (
+      resolvedWardrobe &&
+      isWardrobeStaleForSceneScript(resolvedWardrobe, scene, char.name)
+    ) {
+      const wardrobeLabel =
+        typeof resolvedWardrobe.name === 'string' && resolvedWardrobe.name.trim()
+          ? resolvedWardrobe.name.trim()
+          : 'Wardrobe'
+      warnings.push(
+        `Wardrobe "${char.name} — ${wardrobeLabel}" is out of sync with the script — update or regenerate the wardrobe reference.`
+      )
+    }
   }
 
   const referenceProvenance: AttachedReferenceProvenance[] = [

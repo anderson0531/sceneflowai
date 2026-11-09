@@ -149,6 +149,7 @@ export interface CharacterReferencePair {
     description?: string
     accessories?: string
     appearanceNotes?: string
+    needsImageRegen?: boolean
   } | null
 }
 
@@ -334,6 +335,17 @@ export function buildHairStyleNegativeTerms(
   return [...new Set(negatives)]
 }
 
+function matchesCharacterKey(
+  candidateId: unknown,
+  character: Record<string, unknown>
+): boolean {
+  const needle = typeof candidateId === 'string' ? candidateId.trim().toLowerCase() : ''
+  if (!needle) return false
+  const id = typeof character.id === 'string' ? character.id.trim().toLowerCase() : ''
+  const name = typeof character.name === 'string' ? character.name.trim().toLowerCase() : ''
+  return (Boolean(id) && id === needle) || (Boolean(name) && name === needle)
+}
+
 /** Resolve scene wardrobe object for a character (override → scene number → default). */
 export function resolveWardrobeForCharacter(
   character: Record<string, unknown>,
@@ -347,7 +359,7 @@ export function resolveWardrobeForCharacter(
   const charId = (character.id || character.name) as string
   let resolved: Record<string, unknown> | null = null
 
-  const override = characterWardrobes?.find((cw) => cw.characterId === charId)
+  const override = characterWardrobes?.find((cw) => matchesCharacterKey(cw.characterId, character))
   if (override?.wardrobeId) {
     resolved =
       (wardrobes as Record<string, unknown>[]).find((w) => w.id === override.wardrobeId) ?? null
@@ -365,7 +377,7 @@ export function resolveWardrobeForCharacter(
 
   if (!resolved && scene && Array.isArray(scene.characterWardrobes) && charId) {
     const sceneOverride = (scene.characterWardrobes as Array<{ characterId: string; wardrobeId: string }>).find(
-      (cw) => cw.characterId === charId
+      (cw) => matchesCharacterKey(cw.characterId, character)
     )
     if (sceneOverride?.wardrobeId) {
       resolved =
@@ -447,9 +459,12 @@ export function resolveCharacterReferencePair(
     sceneIndex
   )
   const fullBodyUrl = trimUrl(resolvedWardrobe?.fullBodyUrl)
-  const storedCombinedUrl = includeWardrobeDiptych
-    ? trimUrl(resolvedWardrobe?.combinedCharacterRefUrl)
-    : undefined
+  const wardrobeStaleWithFullBody =
+    resolvedWardrobe?.needsImageRegen === true && Boolean(fullBodyUrl)
+  const storedCombinedUrl =
+    includeWardrobeDiptych && !wardrobeStaleWithFullBody
+      ? trimUrl(resolvedWardrobe?.combinedCharacterRefUrl)
+      : undefined
 
   // Face-first dual ref: dedicated identity headshot + full-body wardrobe image.
   // A stored PiP already combines those, so do not also attach the pair when
@@ -489,6 +504,8 @@ export function resolveCharacterReferencePair(
           description: resolvedWardrobe.description as string | undefined,
           accessories: resolvedWardrobe.accessories as string | undefined,
           appearanceNotes: resolvedWardrobe.appearanceNotes as string | undefined,
+          needsImageRegen:
+            resolvedWardrobe.needsImageRegen === true ? true : undefined,
         }
       : null,
   }

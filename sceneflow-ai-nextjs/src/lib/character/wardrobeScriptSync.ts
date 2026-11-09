@@ -7,6 +7,7 @@ import { toCanonicalName } from '@/lib/character/canonical'
 import {
   distillAppearanceNotesFromText,
   extractAppearanceNotesFromSceneText,
+  extractSceneWardrobeAndAppearanceNotes,
   type WardrobeAnalysisSceneInput,
 } from '@/lib/character/wardrobeAnalysis'
 
@@ -30,6 +31,7 @@ export interface ExistingWardrobeLike {
   previewImageUrl?: string
   headshotUrl?: string
   fullBodyUrl?: string
+  combinedCharacterRefUrl?: string
   isDefault?: boolean
   createdAt?: string
   reason?: string
@@ -371,6 +373,7 @@ export function mergeWardrobeSyncDiff(
     const next = { ...current, ...update.patch }
     if (update.imageStale) {
       next.needsImageRegen = true
+      next.combinedCharacterRefUrl = undefined
       staleWardrobeIds.push(current.id)
     }
     byId.set(update.wardrobeId, next)
@@ -494,4 +497,56 @@ export function summarizeWardrobeSyncDiff(diff: WardrobeSyncDiff): {
     obsoleteCount: diff.obsolete.length,
     staleImageCount: diff.updates.filter((u) => u.imageStale).length + diff.creates.length,
   }
+}
+
+function wardrobeHasDrawnImage(wardrobe: Record<string, unknown> | null | undefined): boolean {
+  if (!wardrobe) return false
+  for (const field of [
+    'headshotUrl',
+    'fullBodyUrl',
+    'previewImageUrl',
+    'combinedCharacterRefUrl',
+  ] as const) {
+    const val = wardrobe[field]
+    if (typeof val === 'string' && val.trim().length > 0) return true
+  }
+  return false
+}
+
+/**
+ * True when a drawn wardrobe reference is either flagged `needsImageRegen` or
+ * when the current scene's script/direction describes explicit outfit or
+ * physical appearance changes for `characterName` that are not covered by the
+ * wardrobe's stored description, accessories, and appearanceNotes.
+ */
+export function isWardrobeStaleForSceneScript(
+  wardrobe: Record<string, unknown> | null | undefined,
+  scene: Record<string, any> | null | undefined,
+  characterName?: string | null
+): boolean {
+  if (!wardrobe) return false
+  if (wardrobe.needsImageRegen === true) return true
+  if (!wardrobeHasDrawnImage(wardrobe)) return false
+  const name = characterName?.trim()
+  if (!name || !scene) return false
+
+  const extracted = extractSceneWardrobeAndAppearanceNotes(scene, name)
+  if (!extracted.combinedNotes) return false
+
+  const existingCoverage = [
+    typeof wardrobe.name === 'string' ? wardrobe.name : '',
+    typeof wardrobe.description === 'string' ? wardrobe.description : '',
+    typeof wardrobe.accessories === 'string' ? wardrobe.accessories : '',
+    typeof wardrobe.appearanceNotes === 'string' ? wardrobe.appearanceNotes : '',
+  ]
+    .filter(Boolean)
+    .join(' ')
+
+  if (extracted.outfitNotes && !notesCoverBeat(existingCoverage, extracted.outfitNotes)) {
+    return true
+  }
+  if (extracted.appearanceNotes && !notesCoverBeat(existingCoverage, extracted.appearanceNotes)) {
+    return true
+  }
+  return false
 }

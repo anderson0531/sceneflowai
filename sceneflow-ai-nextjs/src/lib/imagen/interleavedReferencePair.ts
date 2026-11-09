@@ -170,7 +170,11 @@ function characterCompositeDescriptor(
     height: character?.height,
     wordCap: 10,
   })
-  const detail = traits ? `: ${traits}` : ''
+  const outfit = formatWardrobeLegendClause(
+    character?.wardrobeDescription || character?.defaultWardrobe || character?.wardrobe
+  )
+  const detailParts = [traits, outfit].filter(Boolean)
+  const detail = detailParts.length > 0 ? `: ${detailParts.join('; ')}` : ''
   return `Use face close-up for exact facial identity and full-body standing figure for wardrobe of ${characterName}${detail}; Do not copy the character-card layout or headshot overlay`
 }
 

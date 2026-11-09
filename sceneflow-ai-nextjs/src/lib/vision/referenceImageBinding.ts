@@ -146,26 +146,64 @@ export function formatImagesAboveBinding(bindings: ReferenceImageBinding[]): str
   return [IMAGES_ABOVE_LEAD, ...lines].join('\n')
 }
 
+function withTrailingDescriptor(
+  binding: ReferenceImageBinding,
+  fullText: string,
+  matchedPrefix: string
+): ReferenceImageBinding {
+  const rest = fullText.slice(matchedPrefix.length).trim()
+  return rest ? { ...binding, descriptor: rest } : binding
+}
+
 export function bindingFromCaption(caption?: string | null): ReferenceImageBinding | null {
   const text = (caption || '').trim()
   if (!text) return null
-  if (/^The next image is the opening frame\./i.test(text)) {
-    return { role: 'opening-frame' }
+  const openingMatch = text.match(/^The next image is the opening frame\./i)
+  if (openingMatch) {
+    return withTrailingDescriptor({ role: 'opening-frame' }, text, openingMatch[0])
   }
   const identity = text.match(/^The next image is the identity of (person \[\d+\])\./i)
   if (identity && !/identity and wardrobe/i.test(text)) {
-    return { role: 'identity', token: normalizeToken(identity[1]) }
+    return withTrailingDescriptor(
+      { role: 'identity', token: normalizeToken(identity[1]) },
+      text,
+      identity[0]
+    )
   }
   const wardrobe = text.match(/^The next image is the wardrobe of (person \[\d+\])\./i)
-  if (wardrobe) return { role: 'wardrobe', token: normalizeToken(wardrobe[1]) }
+  if (wardrobe) {
+    return withTrailingDescriptor(
+      { role: 'wardrobe', token: normalizeToken(wardrobe[1]) },
+      text,
+      wardrobe[0]
+    )
+  }
   const character = text.match(
     /^The next image is the identity and wardrobe of (person \[\d+\])\./i
   )
-  if (character) return { role: 'character', token: normalizeToken(character[1]) }
+  if (character) {
+    return withTrailingDescriptor(
+      { role: 'character', token: normalizeToken(character[1]) },
+      text,
+      character[0]
+    )
+  }
   const prop = text.match(/^The next image is (prop \[\d+\])\./i)
-  if (prop) return { role: 'prop', token: normalizeToken(prop[1]) }
+  if (prop) {
+    return withTrailingDescriptor(
+      { role: 'prop', token: normalizeToken(prop[1]) },
+      text,
+      prop[0]
+    )
+  }
   const location = text.match(/^The next image is (location \[\d+\])\./i)
-  if (location) return { role: 'location', token: normalizeToken(location[1]) }
+  if (location) {
+    return withTrailingDescriptor(
+      { role: 'location', token: normalizeToken(location[1]) },
+      text,
+      location[0]
+    )
+  }
   return null
 }
 
@@ -222,7 +260,8 @@ export function bindingsFromReferenceRecords(
     const refRole = ref.refRole || ''
     const role = (ref.role || '').toLowerCase()
     const isWardrobe = refRole === 'wardrobe' || legacyRole === 'wardrobe' || role === 'wardrobe'
-    const isDiptych = refRole === 'wardrobe-diptych'
+    const isDiptych =
+      refRole === 'wardrobe-diptych' || role === 'wardrobe-diptych' || role === 'character'
     const isProp = Boolean(propName) || role.startsWith('prop') || legacyRole === 'prop'
     const isLocation = Boolean(locationName) || role === 'location' || legacyRole === 'location'
     const isPerson = Boolean(characterName) || role === 'identity' || legacyRole === 'identity' || isWardrobe || isDiptych

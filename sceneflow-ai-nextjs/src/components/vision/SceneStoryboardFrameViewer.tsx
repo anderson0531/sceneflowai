@@ -997,6 +997,14 @@ export function SceneStoryboardFrameViewer({
     [sceneRequirements]
   )
 
+  const staleSceneReferenceCount = useMemo(
+    () =>
+      sceneRequirements.filter(
+        (requirement) => Boolean(requirement.imageUrl?.trim()) && requirement.stale === true
+      ).length,
+    [sceneRequirements]
+  )
+
   /**
    * Un-imaged references sink single-frame generation too, not just Express:
    * the beat planner names the reference, nothing gets attached, and the model
@@ -1383,7 +1391,7 @@ export function SceneStoryboardFrameViewer({
                 <span
                   className={cn(
                     'text-[10px]',
-                    frameStats.missing > 0 || staleFrameCount > 0
+                    frameStats.missing > 0 || staleFrameCount > 0 || staleSceneReferenceCount > 0
                       ? 'text-amber-500'
                       : frameStats.placeholders > 0
                         ? 'text-amber-400'
@@ -1396,6 +1404,9 @@ export function SceneStoryboardFrameViewer({
                   {frameStats.placeholders > 0 ? ` · ${frameStats.placeholders} placeholder` : ''}
                   {staleFrameCount > 0
                     ? ` · ${staleFrameCount} out of sync`
+                    : ''}
+                  {staleSceneReferenceCount > 0
+                    ? ` · ${staleSceneReferenceCount} ref${staleSceneReferenceCount === 1 ? '' : 's'} outdated`
                     : ''}
                   {stalePromptCount > 0
                     ? ` · ${stalePromptCount} prompt${stalePromptCount === 1 ? '' : 's'} to refresh`

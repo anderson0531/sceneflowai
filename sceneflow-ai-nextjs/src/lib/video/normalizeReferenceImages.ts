@@ -79,6 +79,7 @@ export type VeoReferenceImage = {
   type: 'style' | 'character'
   name?: string
   role?: PrioritizedReferenceImage['role']
+  refRole?: PrioritizedReferenceImage['refRole']
   characterName?: string
   propName?: string
   locationName?: string
@@ -104,6 +105,7 @@ export function normalizeReferenceImages(
         type: item.type === 'style' ? 'style' : 'character',
         name: item.name,
         role: item.role,
+        refRole: item.refRole,
         characterName: item.characterName,
         propName: item.propName,
         locationName: item.locationName,
@@ -123,7 +125,12 @@ export function veoRefsToPrioritized(
     name: ref.name?.trim() || `Reference ${i + 1}`,
     role:
       ref.role ??
-      (ref.type === 'style' ? 'location' : 'identity'),
+      (ref.refRole === 'wardrobe'
+        ? 'wardrobe'
+        : ref.type === 'style'
+          ? 'location'
+          : 'identity'),
+    refRole: ref.refRole,
     characterName: ref.characterName,
     propName: ref.propName,
     locationName: ref.locationName,

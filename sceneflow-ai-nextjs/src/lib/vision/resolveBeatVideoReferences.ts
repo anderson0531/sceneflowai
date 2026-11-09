@@ -34,6 +34,7 @@ export type LabeledVideoReference = {
   type: 'character' | 'style'
   name: string
   role?: PrioritizedReferenceImage['role']
+  refRole?: PrioritizedReferenceImage['refRole']
   characterName?: string
   propName?: string
   locationName?: string
@@ -83,29 +84,50 @@ function videoIdentityLabel(
   return heightPhrase ? `${base} Scale: ${heightPhrase}.` : base
 }
 
+function formatShortWardrobeSummary(wardrobe?: {
+  name?: string
+  description?: string
+  accessories?: string
+  appearanceNotes?: string
+} | null): string | undefined {
+  if (!wardrobe) return undefined
+  const parts = [wardrobe.description?.trim(), wardrobe.accessories?.trim()]
+    .filter(Boolean)
+    .join(', ')
+    .replace(/\s+/g, ' ')
+    .trim()
+  if (!parts) return undefined
+  const words = parts.split(/\s+/)
+  return words.length > 16 ? `${words.slice(0, 16).join(' ')}` : parts
+}
+
 function videoWardrobeLabel(
   _name: string,
   _index: number,
-  personTokenIndex?: number
+  personTokenIndex?: number,
+  wardrobeSummary?: string
 ): string {
-  return formatNextImageCaption({
+  const base = formatNextImageCaption({
     role: 'wardrobe',
     token: videoPersonToken(personTokenIndex),
   })
+  return wardrobeSummary ? `${base} Outfit: ${wardrobeSummary}.` : base
 }
 
 function videoDiptychLabel(
   _name: string,
   _index?: number,
   personTokenIndex?: number,
-  heightPhrase?: string
+  heightPhrase?: string,
+  wardrobeSummary?: string
 ): string {
   const base = formatNextImageCaption({
     role: 'character',
     token: videoPersonToken(personTokenIndex),
   })
   const scaleSuffix = heightPhrase ? ` (${heightPhrase})` : ''
-  return `${base} Extract exact facial identity from the face close-up and outfit from the full-body standing figure${scaleSuffix}; do not render the character-card layout or headshot overlay.`
+  const outfitClause = wardrobeSummary ? ` (${wardrobeSummary})` : ''
+  return `${base} Extract exact facial identity from the face close-up and outfit${outfitClause} from the full-body standing figure${scaleSuffix}; do not render the character-card layout or headshot overlay.`
 }
 
 /** Cast, location, and key props used for both Omni REF and Kling elements. */
@@ -149,7 +171,10 @@ export function resolveBeatElementSelection(args: ResolveBeatVideoReferencesArgs
 
   return {
     characterIds,
-    characterWardrobes: selection.characterWardrobes ?? beatContext.characterWardrobes ?? [],
+    characterWardrobes:
+      selection.characterWardrobes && selection.characterWardrobes.length > 0
+        ? selection.characterWardrobes
+        : beatContext.characterWardrobes ?? [],
     objectRefIds: selection.objectRefIds ?? [],
     locationRefId: selection.locationRefId,
     locationVersionId: selection.locationVersionId,
@@ -177,10 +202,16 @@ export function resolveBeatVideoReferences(
     return { refs: [], labeledRefs: [], urlList: [], warnings: [] }
   }
 
+  const beatSourceSceneIndex =
+    typeof (beat as { sourceSceneIndex?: unknown }).sourceSceneIndex === 'number' &&
+    ((beat as { sourceSceneIndex: number }).sourceSceneIndex >= 0)
+      ? (beat as { sourceSceneIndex: number }).sourceSceneIndex
+      : sceneIndex
+
   const beatContext = resolveBeatFrameGenerationContext({
     scene,
     beat,
-    sceneIndex,
+    sceneIndex: beatSourceSceneIndex,
     projectCharacters,
     locationReferences,
     objectReferences,
@@ -197,7 +228,10 @@ export function resolveBeatVideoReferences(
         characterWardrobes: beatContext.characterWardrobes,
       }
 
-  const characterWardrobes = selection.characterWardrobes ?? beatContext.characterWardrobes
+  const characterWardrobes =
+    selection.characterWardrobes && selection.characterWardrobes.length > 0
+      ? selection.characterWardrobes
+      : beatContext.characterWardrobes
 
   const imageReferences: Array<{
     imageUrl: string
@@ -211,6 +245,7 @@ export function resolveBeatVideoReferences(
     hasWardrobeDiptych?: boolean
     subjectOrdinal?: number
     characterHeight?: string
+    wardrobeSummary?: string
   }> = []
 
   for (const charId of selection.characterIds ?? []) {
@@ -220,7 +255,7 @@ export function resolveBeatVideoReferences(
     const refPair = resolveCharacterReferencePair({
       character: char as Record<string, unknown>,
       scene,
-      sceneIndex,
+      sceneIndex: beatSourceSceneIndex,
       characterWardrobes,
       includeWardrobeReferenceImages: true,
       includeWardrobeDiptych: true,
@@ -232,12 +267,14 @@ export function resolveBeatVideoReferences(
       appearanceDescription: char.appearanceDescription,
       visionDescription: char.visionDescription,
     })
+    const wardrobeSummary = formatShortWardrobeSummary(refPair.resolvedWardrobe)
     characterMeta.push({
       name: char.name,
       hasDualReferences: sentDiptych ? false : refPair.hasDualReferences,
       hasWardrobeDiptych: sentDiptych,
       subjectOrdinal: characterMeta.length + 1,
       characterHeight: heightPhrase,
+      wardrobeSummary,
     })
 
     // Prefer the single-slot composite card (full-body wardrobe with top-right
@@ -299,16 +336,26 @@ export function resolveBeatVideoReferences(
     const meta = characterMeta.find((c) => c.name === name)
     return videoIdentityLabel(name, index, personTokenIndex, meta?.characterHeight)
   }
+  const buildWardrobeWithSummary = (name: string, index: number, personTokenIndex?: number) => {
+    const meta = characterMeta.find((c) => c.name === name)
+    return videoWardrobeLabel(name, index, personTokenIndex, meta?.wardrobeSummary)
+  }
   const buildDiptychWithHeight = (name: string, index?: number, personTokenIndex?: number) => {
     const meta = characterMeta.find((c) => c.name === name)
-    return videoDiptychLabel(name, index, personTokenIndex, meta?.characterHeight)
+    return videoDiptychLabel(
+      name,
+      index,
+      personTokenIndex,
+      meta?.characterHeight,
+      meta?.wardrobeSummary
+    )
   }
 
   const characterRefEntries = buildCharacterReferenceEntries(
     imageReferences,
     characterMeta,
     buildIdentityWithHeight,
-    videoWardrobeLabel,
+    buildWardrobeWithSummary,
     0,
     buildDiptychWithHeight
   )
@@ -371,7 +418,7 @@ export function resolveBeatVideoReferences(
     MAX_VERTEX_GEMINI_REFERENCE_IMAGES,
     {
       buildIdentityLabel: buildIdentityWithHeight,
-      buildWardrobeLabel: videoWardrobeLabel,
+      buildWardrobeLabel: buildWardrobeWithSummary,
       buildDiptychLabel: buildDiptychWithHeight,
       buildPropLabel: (propName, _sendIndex, promptToken) => {
         const base = formatNextImageCaption({ role: 'prop', token: promptToken || 'prop [1]' })
@@ -418,6 +465,7 @@ export function resolveBeatVideoReferences(
     type: ref.role === 'location' || ref.role.startsWith('prop-') ? 'style' : 'character',
     name: ref.name,
     role: ref.role,
+    refRole: ref.refRole,
     characterName: ref.characterName,
     propName: ref.propName,
     locationName: ref.locationName,

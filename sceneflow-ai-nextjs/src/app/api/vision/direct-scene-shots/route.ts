@@ -169,7 +169,7 @@ export async function POST(req: NextRequest) {
         scenes: preSyncedCatalog.scenes,
         sceneIdx: sceneIndex,
         patches: directed.patches,
-        characters,
+        characters: preSyncedCatalog.characters as typeof characters,
         locationReferences: preSyncedCatalog.locationReferences,
         objectReferences: preSyncedCatalog.objectReferences,
         promptComposition: {
@@ -182,11 +182,13 @@ export async function POST(req: NextRequest) {
       const syncedCatalog = syncSceneDirectionToContinuityCatalog({
         scenes: applied.scenes,
         sceneIdx: sceneIndex,
-        characters,
+        characters: preSyncedCatalog.characters as typeof characters,
         locationReferences: preSyncedCatalog.locationReferences,
         objectReferences: preSyncedCatalog.objectReferences,
       })
       applied.scenes = syncedCatalog.scenes
+      const charactersChanged =
+        preSyncedCatalog.charactersChanged || syncedCatalog.charactersChanged
       const locationsChanged =
         preSyncedCatalog.locationsChanged || syncedCatalog.locationsChanged
       const objectsChanged =
@@ -213,22 +215,28 @@ export async function POST(req: NextRequest) {
       const shouldPersist =
         !demoMode &&
         (applied.optimized > 0 ||
+          charactersChanged ||
           locationsChanged ||
           objectsChanged ||
           hashRepaired) &&
         typeof fresh.update === 'function'
       if (shouldPersist) {
         let nextMetadata = writeScenesIntoVisionMetadata(fresh.metadata, applied.scenes)
-        if (locationsChanged || objectsChanged) {
+        if (charactersChanged || locationsChanged || objectsChanged) {
           const nextVisionPhase = { ...(nextMetadata.visionPhase || {}) }
-          const nextReferences = { ...(nextVisionPhase.references || {}) }
-          if (locationsChanged) {
-            nextReferences.locationReferences = syncedCatalog.locationReferences
+          if (charactersChanged) {
+            nextVisionPhase.characters = syncedCatalog.characters
           }
-          if (objectsChanged) {
-            nextReferences.objectReferences = syncedCatalog.objectReferences
+          if (locationsChanged || objectsChanged) {
+            const nextReferences = { ...(nextVisionPhase.references || {}) }
+            if (locationsChanged) {
+              nextReferences.locationReferences = syncedCatalog.locationReferences
+            }
+            if (objectsChanged) {
+              nextReferences.objectReferences = syncedCatalog.objectReferences
+            }
+            nextVisionPhase.references = nextReferences
           }
-          nextVisionPhase.references = nextReferences
           nextMetadata = { ...nextMetadata, visionPhase: nextVisionPhase }
         }
         await fresh.update(

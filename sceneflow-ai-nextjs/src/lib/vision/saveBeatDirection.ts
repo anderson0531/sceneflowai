@@ -24,7 +24,10 @@ import {
 } from '@/lib/vision/beatFrameGenerationContext'
 import { detectCharactersInText } from '@/lib/scene/characterDetection'
 import { alignDirectionToConnectedObjects } from '@/lib/vision/beatReferenceConnections'
+import { resolveWardrobeForCharacter } from '@/lib/character/characterReferenceAssembly'
 import { matchObjectsBySelectedNames } from '@/lib/character/matching'
+import { extractSceneWardrobeAndAppearanceNotes } from '@/lib/character/wardrobeAnalysis'
+import { notesCoverBeat } from '@/lib/character/wardrobeScriptSync'
 import { extractLocation } from '@/lib/script/formatSceneHeading'
 import { extractLocationCanonicalScale } from '@/lib/imagen/locationScaleClause'
 import { extractPropScalePhrase } from '@/lib/imagen/propScaleClause'
@@ -206,8 +209,10 @@ export function syncSceneReferenceSelections(args: {
 
 export interface SyncSceneDirectionToContinuityResult {
   scenes: any[]
+  characters: Array<Record<string, any>>
   locationReferences: LocationReference[]
   objectReferences: VisualReference[]
+  charactersChanged: boolean
   locationsChanged: boolean
   objectsChanged: boolean
 }
@@ -221,7 +226,16 @@ export interface SyncSceneDirectionToContinuityResult {
 export function syncSceneDirectionToContinuityCatalog(args: {
   scenes: any[]
   sceneIdx: number
-  characters: Array<{ id?: string; name: string; referenceImage?: string; type?: string }>
+  characters: Array<{
+    id?: string
+    name: string
+    referenceImage?: string
+    type?: string
+    wardrobes?: Array<Record<string, any>>
+    defaultWardrobe?: string
+    wardrobeAccessories?: string
+    [key: string]: any
+  }>
   locationReferences: LocationReference[]
   objectReferences: VisualReference[]
   resolvedAt?: string
@@ -230,8 +244,10 @@ export function syncSceneDirectionToContinuityCatalog(args: {
   if (!Array.isArray(args.scenes) || !args.scenes[args.sceneIdx]) {
     return {
       scenes: args.scenes,
+      characters: args.characters,
       locationReferences: args.locationReferences,
       objectReferences: args.objectReferences,
+      charactersChanged: false,
       locationsChanged: false,
       objectsChanged: false,
     }
@@ -239,8 +255,10 @@ export function syncSceneDirectionToContinuityCatalog(args: {
 
   const scene = args.scenes[args.sceneIdx]
   const sceneNumber = resolveSceneNumberForLocationMatch(scene, args.sceneIdx)
+  let nextCharacters = [...args.characters]
   let nextLocations = [...args.locationReferences]
   let nextObjects = [...args.objectReferences]
+  let charactersChanged = false
   let locationsChanged = false
   let objectsChanged = false
 
@@ -512,11 +530,131 @@ export function syncSceneDirectionToContinuityCatalog(args: {
     objectsChanged = true
   }
 
+  // 2b. Sync character wardrobe/appearance state from Scene Direction + Shot Direction
+  const resolvedSceneNum = sceneNumber ?? args.sceneIdx + 1
+  nextCharacters = nextCharacters.map((character, charIdx) => {
+    if (!character || character.type === 'narrator' || character.type === 'description') {
+      return character
+    }
+    const charName = typeof character.name === 'string' ? character.name.trim() : ''
+    if (!charName) return character
+
+    const extracted = extractSceneWardrobeAndAppearanceNotes(scene, charName)
+    if (!extracted.combinedNotes) return character
+
+    const resolvedWardrobe = resolveWardrobeForCharacter(
+      character as Record<string, unknown>,
+      scene,
+      undefined,
+      args.sceneIdx
+    )
+    const existingCoverage = [
+      typeof resolvedWardrobe?.name === 'string' ? resolvedWardrobe.name : '',
+      typeof resolvedWardrobe?.description === 'string' ? resolvedWardrobe.description : '',
+      typeof resolvedWardrobe?.accessories === 'string' ? resolvedWardrobe.accessories : '',
+      typeof resolvedWardrobe?.appearanceNotes === 'string' ? resolvedWardrobe.appearanceNotes : '',
+    ]
+      .filter(Boolean)
+      .join(' ')
+
+    const outfitCovered =
+      !extracted.outfitNotes || notesCoverBeat(existingCoverage, extracted.outfitNotes)
+    const appearanceCovered =
+      !extracted.appearanceNotes || notesCoverBeat(existingCoverage, extracted.appearanceNotes)
+    if (outfitCovered && appearanceCovered) return character
+
+    const existingWardrobes = Array.isArray(character.wardrobes)
+      ? character.wardrobes.map((w) => ({ ...w }))
+      : []
+
+    const resolvedId = typeof resolvedWardrobe?.id === 'string' ? resolvedWardrobe.id : ''
+    const resolvedScenes = Array.isArray(resolvedWardrobe?.sceneNumbers)
+      ? (resolvedWardrobe.sceneNumbers as number[])
+      : []
+    const isSceneExclusive =
+      resolvedScenes.length === 1 && resolvedScenes[0] === resolvedSceneNum
+
+    if (resolvedId && isSceneExclusive) {
+      const nextWardrobes = existingWardrobes.map((w) => {
+        if (w.id !== resolvedId) return w
+        const mergedAppearance = extracted.appearanceNotes
+          ? w.appearanceNotes?.trim()
+            ? dedupeStateNoteClauses(`${w.appearanceNotes}; ${extracted.appearanceNotes}`)
+            : extracted.appearanceNotes
+          : w.appearanceNotes
+        return {
+          ...w,
+          ...(extracted.outfitNotes && !outfitCovered
+            ? { description: extracted.outfitNotes }
+            : {}),
+          ...(mergedAppearance !== w.appearanceNotes
+            ? { appearanceNotes: mergedAppearance }
+            : {}),
+          needsImageRegen: true,
+          combinedCharacterRefUrl: undefined,
+        }
+      })
+      charactersChanged = true
+      return { ...character, wardrobes: nextWardrobes }
+    }
+
+    const baseDescription =
+      typeof resolvedWardrobe?.description === 'string' && resolvedWardrobe.description.trim()
+        ? resolvedWardrobe.description.trim()
+        : typeof character.defaultWardrobe === 'string' && character.defaultWardrobe.trim()
+          ? character.defaultWardrobe.trim()
+          : 'Baseline outfit'
+    const baseAccessories =
+      typeof resolvedWardrobe?.accessories === 'string'
+        ? resolvedWardrobe.accessories
+        : character.wardrobeAccessories
+    const baseAppearance =
+      typeof resolvedWardrobe?.appearanceNotes === 'string' &&
+      resolvedWardrobe.appearanceNotes.trim()
+        ? resolvedWardrobe.appearanceNotes.trim()
+        : undefined
+    const mergedAppearance = extracted.appearanceNotes
+      ? baseAppearance
+        ? dedupeStateNoteClauses(`${baseAppearance}; ${extracted.appearanceNotes}`)
+        : extracted.appearanceNotes
+      : baseAppearance
+
+    const createdWardrobe = {
+      id: `wardrobe-dir-${Date.now()}-${args.sceneIdx}-${charIdx}`,
+      name: `Scene ${resolvedSceneNum} — ${
+        extracted.outfitNotes && !outfitCovered ? 'Directed Outfit' : 'Appearance State'
+      }`,
+      description:
+        extracted.outfitNotes && !outfitCovered ? extracted.outfitNotes : baseDescription,
+      ...(baseAccessories ? { accessories: baseAccessories } : {}),
+      ...(mergedAppearance ? { appearanceNotes: mergedAppearance } : {}),
+      sceneNumbers: [resolvedSceneNum],
+      reason: `Synced from Scene ${resolvedSceneNum} direction`,
+      isDefault: existingWardrobes.length === 0,
+      createdAt: now,
+      needsImageRegen: true,
+    }
+
+    const updatedExisting = existingWardrobes.map((w) => {
+      if (!Array.isArray(w.sceneNumbers) || !w.sceneNumbers.includes(resolvedSceneNum)) return w
+      return {
+        ...w,
+        sceneNumbers: w.sceneNumbers.filter((n: number) => n !== resolvedSceneNum),
+      }
+    })
+
+    charactersChanged = true
+    return {
+      ...character,
+      wardrobes: [...updatedExisting, createdWardrobe],
+    }
+  })
+
   // 3. Re-resolve all shootable beat referenceSelections against the updated catalog
   const updatedScenes = syncSceneReferenceSelections({
     scenes: args.scenes,
     sceneIdx: args.sceneIdx,
-    characters: args.characters,
+    characters: nextCharacters as any,
     locationReferences: nextLocations,
     objectReferences: nextObjects,
     resolvedAt: now,
@@ -524,8 +662,10 @@ export function syncSceneDirectionToContinuityCatalog(args: {
 
   return {
     scenes: updatedScenes,
+    characters: nextCharacters,
     locationReferences: nextLocations,
     objectReferences: nextObjects,
+    charactersChanged,
     locationsChanged,
     objectsChanged,
   }

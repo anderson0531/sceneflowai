@@ -970,4 +970,84 @@ describe('buildDeepLinkForRequirement and syncSceneDirectionToContinuityCatalog'
     })
     expect(requirements.map((r) => r.id)).toContain(synced.locationReferences[0].id)
   })
+
+  it('flags a drawn character wardrobe requirement as stale when the scene/shot script changes the outfit or appearance, and syncs it via syncSceneDirectionToContinuityCatalog', () => {
+    const characters = [
+      {
+        id: 'char-gideon',
+        name: 'Gideon Croft',
+        referenceImage: 'https://blob.example/gideon-face.png',
+        wardrobes: [
+          {
+            id: 'w-smock',
+            name: 'Archivist Smock',
+            description: 'Charcoal archivist smock and dark trousers',
+            fullBodyUrl: 'https://blob.example/gideon-smock.png',
+            combinedCharacterRefUrl: 'https://blob.example/gideon-pip.png',
+            sceneNumbers: [1, 2],
+            isDefault: true,
+          },
+        ],
+      },
+    ]
+
+    const scene = {
+      sceneNumber: 2,
+      heading: 'INT. FREIGHT TUNNEL VAULT - NIGHT',
+      action:
+        'Gideon Croft wearing a drenched yellow hazmat suit and cracked respirator stumbles along the flooded tracks.',
+      beats: [
+        {
+          beatId: 'b-hazmat',
+          kind: 'action',
+          actionDescription:
+            'Gideon Croft wearing a drenched yellow hazmat suit with bloodied knuckles braces against the vault door.',
+          beatDirection: {
+            shotType: 'Medium Shot',
+            castInFrame: ['Gideon Croft'],
+          },
+        },
+      ],
+    }
+
+    // 1. Live staleness detection immediately marks the wardrobe requirement as stale
+    const beforeSyncReqs = resolveSceneRequiredReferences({
+      scene,
+      sceneIndex: 1,
+      characters,
+      locationReferences: [],
+      objectReferences: [],
+    })
+    const wardrobeReq = beforeSyncReqs.find((r) => r.kind === 'wardrobe')
+    expect(wardrobeReq).toBeDefined()
+    expect(wardrobeReq?.stale).toBe(true)
+
+    // 2. Syncing continuity catalog creates a scene-specific wardrobe with needsImageRegen: true
+    //    because w-smock is shared across scenes [1, 2]
+    const synced = syncSceneDirectionToContinuityCatalog({
+      scenes: [{ sceneNumber: 1, heading: 'INT. LAB - DAY', beats: [] }, scene],
+      sceneIdx: 1,
+      characters,
+      locationReferences: [],
+      objectReferences: [],
+    })
+
+    expect(synced.charactersChanged).toBe(true)
+    const updatedGideon = synced.characters[0]
+    expect(updatedGideon.wardrobes).toHaveLength(2)
+    const scene2Wardrobe = updatedGideon.wardrobes.find((w: any) =>
+      Array.isArray(w.sceneNumbers) && w.sceneNumbers.includes(2) && !w.sceneNumbers.includes(1)
+    )
+    expect(scene2Wardrobe).toBeDefined()
+    expect(scene2Wardrobe.needsImageRegen).toBe(true)
+    expect(scene2Wardrobe.description).toMatch(/drenched yellow hazmat suit/i)
+    expect(scene2Wardrobe.appearanceNotes).toMatch(/bloodied knuckles/i)
+
+    // And the beat's referenceSelection points to the new scene-specific wardrobe
+    const syncedBeat = synced.scenes[1].beats[0]
+    expect(syncedBeat.referenceSelection?.characterWardrobes).toContainEqual({
+      characterId: 'char-gideon',
+      wardrobeId: scene2Wardrobe.id,
+    })
+  })
 })

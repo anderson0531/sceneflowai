@@ -149,7 +149,7 @@ export function sceneIncludesCharacter(
 
 /** Keywords that indicate makeup, hair, or injury appearance changes. */
 const APPEARANCE_KEYWORD_PATTERN =
-  /\b(bruise|bruises|bloodshot|swelling|swollen|cut|cuts|scratch|scratches|black\s*eye|black\s*eyes|bandage|bandages|laceration|contusion|wound|wounds|disheveled|mascara|lipstick|makeup|injury|injuries|bleeding|bloody|red\s*eyes|temple)\b/i
+  /\b(bruise|bruises|bruised|bloodshot|swelling|swollen|cut|cuts|scratch|scratches|black\s*eye|black\s*eyes|bandage|bandages|laceration|contusion|wound|wounds|disheveled|mascara|lipstick|makeup|injury|injuries|bleeding|bloody|bloodied|gash|gashed|soot-streaked|red\s*eyes|temple)\b/i
 
 /** Extract appearance-relevant phrases from beat/segment text for a character. */
 export function extractAppearanceNotesFromSceneText(
@@ -202,7 +202,11 @@ export function distillAppearanceNotesFromText(text: string): string | undefined
   const patterns: Array<{ re: RegExp; label: string }> = [
     { re: /bloodshot(?:\s*eyes?)?/i, label: 'bloodshot eyes' },
     { re: /faint\s+bruise[^.]*?(?:temple|cheek|forehead|face)?/i, label: '' },
+    { re: /bruised?\s+[a-z-]+/i, label: '' },
     { re: /bruise[^.]*?(?:temple|cheek|forehead|face)?/i, label: '' },
+    { re: /bloodied\s+[a-z-]+/i, label: '' },
+    { re: /(?:fresh\s+)?gash(?:\s+(?:across|on)\s+(?:his|her|their)?\s*[a-z-]+)?/i, label: '' },
+    { re: /soot[- ]?streaked\s+[a-z-]+/i, label: '' },
     { re: /black\s*eye/i, label: 'black eye' },
     { re: /swollen[^.]{0,40}/i, label: '' },
     { re: /disheveled\s+hair/i, label: 'disheveled hair' },
@@ -223,4 +227,130 @@ export function distillAppearanceNotesFromText(text: string): string | undefined
 
   const unique = [...new Set(phrases.map((p) => p.trim()).filter(Boolean))]
   return unique.length > 0 ? unique.join('; ') : undefined
+}
+
+const GARMENT_NOUN_SOURCE =
+  '(?:trench\\s*coat|lab\\s*coat|hazmat\\s+suit|tactical\\s+gear|bow\\s*tie|t-shirt|overcoat|raincoat|parka|jacket|blazer|tuxedo|suit|smock|coat|gown|scrubs|uniform|coveralls|jumpsuit|overalls|waistcoat|vest|sweater|cardigan|hoodie|pullover|blouse|tunic|shirt|tee|henley|jersey|dress|skirt|trousers|pants|jeans|slacks|chinos|shorts|waders|boots|gloves|scarf|necktie|respirator|helmet|goggles|apron|robe|cloak|cape|armor|attire|outfit)'
+
+const GARMENT_NOUN_PATTERN = new RegExp(`\\b${GARMENT_NOUN_SOURCE}\\b`, 'i')
+
+const SINGLE_GARMENT_PHRASE_SOURCE = `(?:(?:a|an|his|her|their|the)\\s+)?(?:[a-z0-9'-]+\\s+){0,4}${GARMENT_NOUN_SOURCE}`
+
+const EXPLICIT_ATTIRE_PHRASE_PATTERNS: RegExp[] = [
+  new RegExp(
+    `\\b(?:wearing|dressed\\s+in|clad\\s+in|changes?\\s+into|changed\\s+into|puts?\\s+on|donning|dons)\\s+(${SINGLE_GARMENT_PHRASE_SOURCE}(?:\\s+(?:and|over|under|with)\\s+${SINGLE_GARMENT_PHRASE_SOURCE})?)`,
+    'gi'
+  ),
+  new RegExp(
+    `\\b((?:bloodstained|blood-soaked|soaked|drenched|rain-soaked|torn|ripped|tattered|mud-splattered|mud-caked|singed|charred|ash-covered|oil-stained|grease-stained|chalk-stained)\\s+(?:[a-z-]+\\s+){0,2}${GARMENT_NOUN_SOURCE})\\b`,
+    'gi'
+  ),
+]
+
+function sentenceMentionsCharacter(sentence: string, characterName: string): boolean {
+  const cleanName = characterName.trim()
+  if (!cleanName || !sentence.trim()) return false
+  const lower = sentence.toLowerCase()
+  if (lower.includes(cleanName.toLowerCase())) return true
+  const tokens = cleanName
+    .split(/\s+/)
+    .map((t) => t.replace(/[^a-z0-9'-]/gi, '').trim())
+    .filter((t) => t.length >= 3)
+  return tokens.some((tok) => {
+    const escaped = tok.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+    return new RegExp(`\\b${escaped}\\b`, 'i').test(sentence)
+  })
+}
+
+export interface ExtractedSceneWardrobeNotes {
+  outfitNotes?: string
+  appearanceNotes?: string
+  combinedNotes?: string
+}
+
+/**
+ * Deterministic extraction of explicit wardrobe/outfit and physical appearance
+ * notes for a character from a scene's screenplay prose, sceneDirection, and
+ * shootable beats. Used to detect script-to-wardrobe drift and flag stale
+ * wardrobe references immediately when the script or direction changes.
+ */
+export function extractSceneWardrobeAndAppearanceNotes(
+  scene: Record<string, any> | null | undefined,
+  characterName: string
+): ExtractedSceneWardrobeNotes {
+  if (!scene || !characterName?.trim()) return {}
+
+  const sceneDir = scene.sceneDirection as Record<string, any> | undefined
+  const textBlocks: string[] = []
+  const pushText = (val: unknown) => {
+    if (typeof val === 'string' && val.trim()) textBlocks.push(val.trim())
+  }
+
+  pushText(scene.action)
+  pushText(scene.visualDescription)
+  pushText(sceneDir?.talent)
+  pushText(sceneDir?.scene?.talent)
+  pushText(sceneDir?.costume)
+  pushText(sceneDir?.wardrobe)
+
+  const beats = Array.isArray(scene.beats) ? scene.beats : []
+  for (const beat of beats) {
+    if (!beat || typeof beat !== 'object' || beat.excluded === true) continue
+    pushText(beat.actionDescription)
+    pushText(beat.description)
+    pushText(beat.action)
+    const dir = beat.beatDirection as Record<string, any> | undefined
+    if (dir && typeof dir === 'object') {
+      pushText(dir.startFrame)
+      pushText(dir.clipAction)
+      pushText(dir.endFrame)
+      pushText(dir.frozenMoment)
+      pushText(dir.blocking)
+    }
+  }
+
+  if (textBlocks.length === 0) return {}
+
+  const outfitPhrases: string[] = []
+  const appearancePhrases: string[] = []
+
+  for (const block of textBlocks) {
+    const sentences = block
+      .split(/(?<=[.!?])\s+|\n+/)
+      .map((s) => s.trim())
+      .filter(Boolean)
+
+    for (const sentence of sentences) {
+      if (!sentenceMentionsCharacter(sentence, characterName)) continue
+
+      for (const pattern of EXPLICIT_ATTIRE_PHRASE_PATTERNS) {
+        pattern.lastIndex = 0
+        let match: RegExpExecArray | null
+        while ((match = pattern.exec(sentence)) !== null) {
+          const candidate = (match[1] || match[0] || '').trim().replace(/[,:;]+$/, '').trim()
+          if (candidate && GARMENT_NOUN_PATTERN.test(candidate)) {
+            outfitPhrases.push(candidate)
+          }
+        }
+      }
+
+      const distilledApp = distillAppearanceNotesFromText(sentence)
+      if (distilledApp) {
+        appearancePhrases.push(distilledApp)
+      }
+    }
+  }
+
+  const uniqueOutfits = [...new Set(outfitPhrases.map((p) => p.trim()).filter(Boolean))]
+  const uniqueAppearance = [...new Set(appearancePhrases.map((p) => p.trim()).filter(Boolean))]
+
+  const outfitNotes = uniqueOutfits.length > 0 ? uniqueOutfits.join('; ') : undefined
+  const appearanceNotes = uniqueAppearance.length > 0 ? uniqueAppearance.join('; ') : undefined
+  const combinedParts = [outfitNotes, appearanceNotes].filter(Boolean)
+
+  return {
+    outfitNotes,
+    appearanceNotes,
+    combinedNotes: combinedParts.length > 0 ? combinedParts.join('; ') : undefined,
+  }
 }

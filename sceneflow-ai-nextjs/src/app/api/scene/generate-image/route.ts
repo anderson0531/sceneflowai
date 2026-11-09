@@ -1845,6 +1845,15 @@ async function postGenerateImage(req: NextRequest) {
         includeWardrobeReferenceImages,
         includeWardrobeDiptych: includeWardrobeDiptych !== false,
       })
+      const hasExplicitTextOverride = Boolean(
+        wardrobeOverrides && char.name && wardrobeOverrides[char.name]?.trim()
+      )
+      if (!hasExplicitTextOverride && refPair.resolvedWardrobe?.description?.trim()) {
+        effectiveWardrobe = refPair.resolvedWardrobe.description.trim()
+        if (refPair.resolvedWardrobe.accessories !== undefined) {
+          effectiveAccessories = refPair.resolvedWardrobe.accessories
+        }
+      }
       const hasWardrobeDiptych = refPair.hasWardrobeDiptych
       const wardrobeDiptychUrl = refPair.wardrobeDiptychUrl
       const identitySlotUrl = refPair.identityUrl
@@ -2026,7 +2035,7 @@ async function postGenerateImage(req: NextRequest) {
         height: char.height,
         defaultWardrobe: hasWardrobeReference ? undefined : effectiveWardrobe,
         wardrobeAccessories: hasWardrobeReference ? undefined : effectiveAccessories,
-        wardrobeDescription: hasCostumeReference ? undefined : effectiveWardrobe,
+        wardrobeDescription: effectiveWardrobe,
         hasCostumeReference,
         hasWardrobeDiptych,
         hasDualReferences,

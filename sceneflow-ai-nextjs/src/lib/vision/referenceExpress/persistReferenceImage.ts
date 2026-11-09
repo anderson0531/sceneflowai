@@ -70,7 +70,16 @@ export async function persistReferenceImage(input: {
             if (wardrobe.id !== wardrobeId) return wardrobe
             wardrobeFound = true
             staleSource = wardrobeFingerprint(wardrobe) !== expectedFingerprint
-            return { ...wardrobe, ...patch, needsImageRegen: false }
+            return {
+              ...wardrobe,
+              ...(typeof patch.fullBodyUrl === 'string' &&
+              patch.fullBodyUrl &&
+              patch.combinedCharacterRefUrl === undefined
+                ? { combinedCharacterRefUrl: undefined }
+                : {}),
+              ...patch,
+              needsImageRegen: false,
+            }
           })
           if (!wardrobeFound) return character
           saved = true
@@ -79,7 +88,20 @@ export async function persistReferenceImage(input: {
 
         saved = true
         staleSource = castFingerprint(character) !== expectedFingerprint
-        return { ...character, ...patch }
+        return {
+          ...character,
+          ...patch,
+          ...(typeof patch.referenceImage === 'string' && patch.referenceImage
+            ? {
+                wardrobes: (Array.isArray(character.wardrobes) ? character.wardrobes : []).map(
+                  (wardrobe) =>
+                    wardrobe?.combinedCharacterRefUrl
+                      ? { ...wardrobe, combinedCharacterRefUrl: undefined }
+                      : wardrobe
+                ),
+              }
+            : {}),
+        }
       })
       if (!saved) return { saved: false, staleSource: false }
       visionPhase.characters = nextCharacters

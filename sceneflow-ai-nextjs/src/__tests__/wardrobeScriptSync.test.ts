@@ -3,6 +3,7 @@ import {
   buildWardrobeSyncDiff,
   enrichSuggestionsWithBeatAppearanceNotes,
   isWardrobeOutfitChanged,
+  isWardrobeStaleForSceneScript,
   matchSuggestionToExisting,
   mergeWardrobeSyncDiff,
   notesCoverBeat,
@@ -273,5 +274,84 @@ describe('wardrobeScriptSync', () => {
     expect(wardrobes.find((w) => w.id === existing[0].id)?.isDefault).toBe(true)
     expect(wardrobes.find((w) => w.id === existing[1].id)?.isDefault).toBe(false)
     expect(wardrobes.filter((w) => w.name === 'Raincoat Escape')[0]?.isDefault).toBe(false)
+  })
+
+  it('clears combinedCharacterRefUrl when merging a stale content update so the stale PiP composite is not reused', () => {
+    const existingWithComposite = [
+      {
+        ...existing[0],
+        combinedCharacterRefUrl: 'https://blob.example/office-pip.png',
+      },
+    ]
+    const diff = buildWardrobeSyncDiff('char-1', 'Piper', existingWithComposite, [
+      {
+        name: 'Office Attire',
+        description: 'Torn charcoal trench coat over thermal shirt',
+        accessories: 'Brass compass',
+        appearanceNotes: 'Soot-streaked forehead',
+        sceneNumbers: [1, 2],
+        reason: 'Tunnel collapse rewrite',
+      },
+    ])
+    const { wardrobes } = mergeWardrobeSyncDiff(existingWithComposite, diff)
+    expect(wardrobes[0].needsImageRegen).toBe(true)
+    expect(wardrobes[0].combinedCharacterRefUrl).toBeUndefined()
+  })
+
+  it('isWardrobeStaleForSceneScript detects when scene/shot prose introduces uncovered outfit or appearance changes', () => {
+    const drawnWardrobe = {
+      id: 'w-smock',
+      name: 'Archivist Smock',
+      description: 'Charcoal wool archivist smock over linen shirt',
+      accessories: 'Leather tool apron',
+      appearanceNotes: '',
+      fullBodyUrl: 'https://blob.example/smock.png',
+    }
+
+    // Matching scene prose -> not stale
+    expect(
+      isWardrobeStaleForSceneScript(
+        drawnWardrobe,
+        {
+          heading: 'INT. VAULT - NIGHT',
+          action: 'Gideon Croft wearing his charcoal wool archivist smock inspects the slate.',
+          beats: [],
+        },
+        'Gideon Croft'
+      )
+    ).toBe(false)
+
+    // Script changes outfit -> stale
+    expect(
+      isWardrobeStaleForSceneScript(
+        drawnWardrobe,
+        {
+          heading: 'INT. VAULT - NIGHT',
+          action:
+            'Gideon Croft wearing a heavy oilskin trench coat and rubber waders steps into the flooded tunnel.',
+          beats: [],
+        },
+        'Gideon Croft'
+      )
+    ).toBe(true)
+
+    // Shot direction introduces uncovered physical appearance/injury -> stale
+    expect(
+      isWardrobeStaleForSceneScript(
+        drawnWardrobe,
+        {
+          heading: 'INT. VAULT - NIGHT',
+          action: 'Gideon Croft stands at the slate wall.',
+          beats: [
+            {
+              kind: 'action',
+              actionDescription:
+                'Close-up: Gideon Croft with bloodied knuckles and a fresh gash across his brow.',
+            },
+          ],
+        },
+        'Gideon Croft'
+      )
+    ).toBe(true)
   })
 })

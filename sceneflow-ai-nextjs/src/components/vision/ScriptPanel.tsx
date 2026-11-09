@@ -508,6 +508,7 @@ interface ScriptPanelProps {
   onSyncContinuityCatalog?: (payload: {
     locationReferences?: LocationReference[]
     objectReferences?: VisualReference[]
+    characters?: any[]
   }) => void | Promise<void>
   // Take management
   onSelectTake?: (sceneId: string, segmentId: string, takeId: string, assetUrl: string) => void
@@ -4799,6 +4800,7 @@ interface SceneCardProps {
   onSyncContinuityCatalog?: (payload: {
     locationReferences?: LocationReference[]
     objectReferences?: VisualReference[]
+    characters?: any[]
   }) => void | Promise<void>
   // Language playback offset for translated audio alignment
   getPlaybackOffsetForScene?: (sceneId: string, language: string) => number
@@ -5690,6 +5692,14 @@ function SceneCard({
     [sceneRequiredReferences]
   )
 
+  const staleSceneReferenceCount = useMemo(
+    () =>
+      sceneRequiredReferences.filter(
+        (requirement) => Boolean(requirement.imageUrl?.trim()) && requirement.stale === true
+      ).length,
+    [sceneRequiredReferences]
+  )
+
   // The tab earns its place as soon as the scene has anything to shoot, even
   // with nothing detected yet: "nothing needed" is the answer the user came for.
   const hasReferencesTab = hasBeatsTab || hasPreVisTab || sceneRequiredReferences.length > 0
@@ -5772,10 +5782,14 @@ function SceneCard({
         locationReferences: (locationReferences ?? []) as LocationReference[],
         objectReferences: (objectReferences ?? []) as VisualReference[],
       })
-      if ((synced.locationsChanged || synced.objectsChanged) && onSyncContinuityCatalog) {
+      if (
+        (synced.locationsChanged || synced.objectsChanged || synced.charactersChanged) &&
+        onSyncContinuityCatalog
+      ) {
         await onSyncContinuityCatalog({
           ...(synced.locationsChanged ? { locationReferences: synced.locationReferences } : {}),
           ...(synced.objectsChanged ? { objectReferences: synced.objectReferences } : {}),
+          ...(synced.charactersChanged ? { characters: synced.characters } : {}),
         })
       }
       onScriptChange({ ...script, script: { ...script.script, scenes: synced.scenes } })
@@ -7789,10 +7803,14 @@ function SceneCard({
                               Continuity
                               {sceneRequiredReferences.length > 0 && (
                                 <span
-                                  className={`text-[10px] font-medium ${missingSceneReferenceCount > 0 ? 'text-amber-500' : 'opacity-60'}`}
+                                  className={`text-[10px] font-medium ${missingSceneReferenceCount > 0 || staleSceneReferenceCount > 0 ? 'text-amber-500' : 'opacity-60'}`}
                                 >
                                   ({sceneRequiredReferences.length - missingSceneReferenceCount}/
-                                  {sceneRequiredReferences.length})
+                                  {sceneRequiredReferences.length}
+                                  {staleSceneReferenceCount > 0
+                                    ? ` · ${staleSceneReferenceCount} outdated`
+                                    : ''}
+                                  )
                                 </span>
                               )}
                             </TabsTrigger>

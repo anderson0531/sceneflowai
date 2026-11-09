@@ -8485,7 +8485,9 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                     ...(wardrobe.fullBodyUrl ? { fullBodyUrl: wardrobe.fullBodyUrl, needsImageRegen: false } : {}),
                     ...(wardrobe.combinedCharacterRefUrl
                       ? { combinedCharacterRefUrl: wardrobe.combinedCharacterRefUrl }
-                      : {}),
+                      : wardrobe.fullBodyUrl || wardrobe.needsImageRegen === true
+                        ? { combinedCharacterRefUrl: undefined }
+                        : {}),
                     ...(wardrobe.sceneNumbers ? { sceneNumbers: wardrobe.sceneNumbers } : {}),
                     ...(wardrobe.appearanceNotes !== undefined ? { appearanceNotes: wardrobe.appearanceNotes } : {}),
                     ...(wardrobe.reason ? { reason: wardrobe.reason } : {}),
@@ -13041,9 +13043,14 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
   }
 
   const handleSyncContinuityCatalog = async (payload: {
+    characters?: any[]
     locationReferences?: LocationReference[]
     objectReferences?: VisualReference[]
   }) => {
+    if (payload.characters) {
+      charactersRef.current = payload.characters
+      setCharacters(payload.characters)
+    }
     if (payload.locationReferences) {
       locationReferencesRef.current = payload.locationReferences
       setLocationReferences(payload.locationReferences)
@@ -13053,6 +13060,9 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       setObjectReferences(payload.objectReferences)
     }
     try {
+      if (payload.characters) {
+        await persistVisionCharacters(payload.characters, 'handleSyncContinuityCatalog')
+      }
       await persistObjectLibrary(objectReferencesRef.current, {
         objectDuplicateIgnores: objectDuplicateIgnoresRef.current,
         debugLabel: 'handleSyncContinuityCatalog',
@@ -13370,6 +13380,10 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
             locationReferences: (locationReferencesRef.current ?? []) as LocationReference[],
             objectReferences: (objectReferencesRef.current ?? []) as VisualReference[],
           })
+          if (synced.charactersChanged) {
+            charactersRef.current = synced.characters as any
+            setCharacters(synced.characters as any)
+          }
           if (synced.locationsChanged) {
             locationReferencesRef.current = synced.locationReferences
             setLocationReferences(synced.locationReferences)
