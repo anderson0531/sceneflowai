@@ -31,10 +31,12 @@ import { resolvePreferredStoryboardUrl } from '@/lib/storyboard/mergeSceneMedia'
 import {
   assignStillUrl,
   BEAT_ACTION_START_STILL_SLOT,
+  BEAT_END_STILL_SLOT,
   BEAT_START_STILL_SLOT,
   END_FRAME_STILL_SLOT,
   START_FRAME_STILL_SLOT,
   mediaRecencyMs,
+  resolveDesignatedStillUrl,
   stillVersionsOnRow,
   type MediaVersionSource,
 } from '@/lib/storyboard/mediaVersions'
@@ -554,8 +556,18 @@ export function resolveEffectiveStartFrameUrl(
   if (beatId && scene) {
     const beat = getSceneBeats(scene).find((b) => b.beatId === beatId)
     beatRow = beat as unknown as Record<string, unknown> | undefined
-    beatActionStartUrl = beat?.storyboardStartImageUrl?.trim() || null
-    beatStillUrl = beat?.storyboardImageUrl?.trim() || null
+    beatActionStartUrl =
+      resolveDesignatedStillUrl(
+        beat?.storyboardStartImageUrl,
+        beat?.storyboardStartImageVersionId,
+        beat?.storyboardStartImageVersions
+      ) || null
+    beatStillUrl =
+      resolveDesignatedStillUrl(
+        beat?.storyboardImageUrl,
+        beat?.storyboardImageVersionId,
+        beat?.storyboardImageVersions
+      ) || null
     if (beatActionStartUrl && beatStillUrl && beatActionStartUrl !== beatStillUrl) {
       const actionStartAt = mediaRecencyMs(
         beatActionStartUrl,
@@ -595,15 +607,15 @@ export function resolveEffectiveStartFrameUrl(
 
   if (beatUrl && segmentUrl) {
     if (beatUrl === segmentUrl) return beatUrl
-    const beatAt = mediaRecencyMs(beatUrl, stillVersionsOnRow(beatRow, beatPreferredSlot))
-    const segmentAt = mediaRecencyMs(
-      segmentUrl,
-      stillVersionsOnRow(
-        segment.references as unknown as Record<string, unknown> | undefined,
-        START_FRAME_STILL_SLOT
-      )
+    const beatVersions = stillVersionsOnRow(beatRow, beatPreferredSlot)
+    const segVersions = stillVersionsOnRow(
+      segment.references as unknown as Record<string, unknown> | undefined,
+      START_FRAME_STILL_SLOT
     )
+    const beatAt = mediaRecencyMs(beatUrl, beatVersions)
+    const segmentAt = mediaRecencyMs(segmentUrl, segVersions)
     if (beatAt && segmentAt) return beatAt >= segmentAt ? beatUrl : segmentUrl
+    if (beatVersions.some((v) => v.url === segmentUrl)) return beatUrl
     return resolvePreferredStoryboardUrl(segmentUrl, beatUrl) || segmentUrl || beatUrl
   }
   if (beatUrl) return beatUrl
@@ -617,6 +629,28 @@ export function resolveEffectiveStartFrameUrl(
   return masterSceneFrame || null
 }
 
+function resolveEffectiveEndUrl(
+  segment: SceneSegment,
+  beatRow: Record<string, unknown> | undefined,
+  beatEndUrl: string | null,
+  cleanSegEnd: string | null
+): string | null {
+  if (beatEndUrl && cleanSegEnd) {
+    if (beatEndUrl === cleanSegEnd) return beatEndUrl
+    const beatVersions = stillVersionsOnRow(beatRow, BEAT_END_STILL_SLOT)
+    const segVersions = stillVersionsOnRow(
+      segment.references as unknown as Record<string, unknown> | undefined,
+      END_FRAME_STILL_SLOT
+    )
+    const beatAt = mediaRecencyMs(beatEndUrl, beatVersions)
+    const segAt = mediaRecencyMs(cleanSegEnd, segVersions)
+    if (beatAt && segAt) return beatAt >= segAt ? beatEndUrl : cleanSegEnd
+    if (beatVersions.some((v) => v.url === cleanSegEnd)) return beatEndUrl
+    return resolvePreferredStoryboardUrl(cleanSegEnd, beatEndUrl) || beatEndUrl || cleanSegEnd
+  }
+  return beatEndUrl || cleanSegEnd || null
+}
+
 /**
  * Frames sent to frame-to-video. A single beat still copied into both slots is
  * not a start+end keyframe pair, whereas a beat with a distinct `storyboardEndImageUrl`
@@ -627,14 +661,31 @@ export function resolveF2VFrameUrls(
   scene?: Record<string, unknown> | null
 ): { startFrameUrl: string | null; endFrameUrl: string | null } {
   const beatId = segment.beatId?.trim()
+  let beatRow: Record<string, unknown> | undefined
   let beatStill: string | null = null
   let beatActionStartStill: string | null = null
   let beatEndStill: string | null = null
   if (beatId && scene) {
     const beat = getSceneBeats(scene).find((row) => row.beatId === beatId)
-    beatStill = beat?.storyboardImageUrl?.trim() || null
-    beatActionStartStill = beat?.storyboardStartImageUrl?.trim() || null
-    beatEndStill = beat?.storyboardEndImageUrl?.trim() || null
+    beatRow = beat as unknown as Record<string, unknown> | undefined
+    beatStill =
+      resolveDesignatedStillUrl(
+        beat?.storyboardImageUrl,
+        beat?.storyboardImageVersionId,
+        beat?.storyboardImageVersions
+      ) || null
+    beatActionStartStill =
+      resolveDesignatedStillUrl(
+        beat?.storyboardStartImageUrl,
+        beat?.storyboardStartImageVersionId,
+        beat?.storyboardStartImageVersions
+      ) || null
+    beatEndStill =
+      resolveDesignatedStillUrl(
+        beat?.storyboardEndImageUrl,
+        beat?.storyboardEndImageVersionId,
+        beat?.storyboardEndImageVersions
+      ) || null
   }
   const segStart =
     segment.startFrameUrl?.trim() ||
@@ -654,10 +705,7 @@ export function resolveF2VFrameUrls(
     null
   const cleanSegEnd =
     segEndCandidate && !/last[_-]?frame/i.test(segEndCandidate) ? segEndCandidate : null
-  const rawEnd =
-    cleanSegEnd ||
-    beatEndStill ||
-    null
+  const rawEnd = resolveEffectiveEndUrl(segment, beatRow, beatEndStill, cleanSegEnd)
 
   const distinctEnd =
     rawEnd && (!beatStill || rawEnd !== beatStill) ? rawEnd : null
@@ -680,7 +728,7 @@ export function resolveF2VFrameUrls(
     startFrameUrl:
       beatActionStartStill ||
       dedicated(segment.startFrameUrl || segment.references?.startFrameUrl),
-    endFrameUrl: dedicated(cleanSegEnd),
+    endFrameUrl: dedicated(rawEnd),
   }
 }
 
@@ -697,14 +745,29 @@ export function resolveSegmentFrameUrls(
   scene?: Record<string, unknown> | null
 ) {
   const startFrameUrl = resolveEffectiveStartFrameUrl(segment, scene, sceneImageUrl)
+  let beatRow: Record<string, unknown> | undefined
   let beatEndUrl: string | null = null
   const beatId = segment.beatId?.trim()
   if (beatId && scene) {
     const beat = getSceneBeats(scene).find((b) => b.beatId === beatId)
-    const candidateEnd = beat?.storyboardEndImageUrl?.trim() || null
+    beatRow = beat as unknown as Record<string, unknown> | undefined
+    const candidateEnd =
+      resolveDesignatedStillUrl(
+        beat?.storyboardEndImageUrl,
+        beat?.storyboardEndImageVersionId,
+        beat?.storyboardEndImageVersions
+      ) || null
     const candidateStart =
-      beat?.storyboardStartImageUrl?.trim() ||
-      beat?.storyboardImageUrl?.trim() ||
+      resolveDesignatedStillUrl(
+        beat?.storyboardStartImageUrl,
+        beat?.storyboardStartImageVersionId,
+        beat?.storyboardStartImageVersions
+      ) ||
+      resolveDesignatedStillUrl(
+        beat?.storyboardImageUrl,
+        beat?.storyboardImageVersionId,
+        beat?.storyboardImageVersions
+      ) ||
       null
     if (candidateEnd && candidateEnd !== candidateStart) {
       beatEndUrl = candidateEnd
@@ -712,7 +775,7 @@ export function resolveSegmentFrameUrls(
   }
   const segEnd = segment.endFrameUrl || segment.references?.endFrameUrl || null
   const cleanSegEnd = segEnd && !/last[_-]?frame/i.test(segEnd) ? segEnd : null
-  const endFrameUrl = cleanSegEnd || beatEndUrl || null
+  const endFrameUrl = resolveEffectiveEndUrl(segment, beatRow, beatEndUrl, cleanSegEnd)
   return { startFrameUrl, endFrameUrl }
 }
 

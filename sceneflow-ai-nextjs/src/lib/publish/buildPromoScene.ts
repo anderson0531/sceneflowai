@@ -17,7 +17,16 @@ import {
 import { parsePersistedMusicCues, resolveBeatMusicCue } from '@/lib/script/sceneMusicCues'
 import { mergeLanguageClipVersions } from '@/lib/scene/languageClipVersions'
 import { promoShotIncluded } from '@/lib/publish/promoTimeline'
-import { mediaBlobUrlTimestamp } from '@/lib/storyboard/mediaVersions'
+import {
+  BEAT_ACTION_START_STILL_SLOT,
+  BEAT_END_STILL_SLOT,
+  BEAT_START_STILL_SLOT,
+  mediaBlobUrlTimestamp,
+  mediaRecencyMs,
+  stillVersionsOnRow,
+  unionMediaVersions,
+  type StillSlotSpec,
+} from '@/lib/storyboard/mediaVersions'
 import type { SceneBeat, SceneMusicCue } from '@/lib/script/segmentTypes'
 import type {
   PromoCampaignPresetId,
@@ -1015,24 +1024,34 @@ export function removePromoSceneFromScenes(
     )
 }
 
-function latestStillCreatedAtMs(beat?: SceneBeat | null): number {
-  const b = beat as Record<string, unknown> | null | undefined
-  const storyboardVersions = Array.isArray(b?.storyboardImageVersions)
-    ? (b!.storyboardImageVersions as Array<{ createdAt?: string }>)
-    : []
-  const legacyVersions = Array.isArray(beat?.stillVersions) ? beat!.stillVersions : []
-  let max = 0
-  for (const v of [...storyboardVersions, ...legacyVersions]) {
-    if (v?.createdAt) {
-      const t = Date.parse(v.createdAt)
-      if (Number.isFinite(t) && t > max) max = t
+function latestSlotRecencyMs(
+  beat?: SceneBeat | null,
+  spec: StillSlotSpec = BEAT_START_STILL_SLOT
+): number {
+  if (!beat) return 0
+  const b = beat as Record<string, unknown>
+  const rawUrl = typeof b[spec.urlKey] === 'string' ? (b[spec.urlKey] as string).trim() : ''
+  const versions = stillVersionsOnRow(b, spec)
+  let max = rawUrl ? mediaRecencyMs(rawUrl, versions) : 0
+  for (const v of versions) {
+    const t = Date.parse(v.selectedAt || v.createdAt)
+    if (Number.isFinite(t) && t > max) max = t
+  }
+  if (spec === BEAT_START_STILL_SLOT && Array.isArray(beat.stillVersions)) {
+    for (const v of beat.stillVersions) {
+      if (v?.createdAt) {
+        const t = Date.parse(v.createdAt)
+        if (Number.isFinite(t) && t > max) max = t
+      }
     }
   }
-  const urlTs = mediaBlobUrlTimestamp(
-    typeof beat?.storyboardImageUrl === 'string' ? beat.storyboardImageUrl : ''
-  )
+  const urlTs = mediaBlobUrlTimestamp(rawUrl)
   if (urlTs > max) max = urlTs
   return max
+}
+
+function latestStillCreatedAtMs(beat?: SceneBeat | null): number {
+  return latestSlotRecencyMs(beat, BEAT_START_STILL_SLOT)
 }
 
 function preferBeatDirection(
@@ -1343,8 +1362,37 @@ export function hydratePromoSceneWithSharedShots(
     const promoStillNewer =
       latestStillCreatedAtMs(beat) > 0 &&
       latestStillCreatedAtMs(beat) > latestStillCreatedAtMs(sourceBeat)
+    const promoStartNewer =
+      latestSlotRecencyMs(beat, BEAT_ACTION_START_STILL_SLOT) > 0 &&
+      latestSlotRecencyMs(beat, BEAT_ACTION_START_STILL_SLOT) >
+        latestSlotRecencyMs(sourceBeat, BEAT_ACTION_START_STILL_SLOT)
+    const promoEndNewer =
+      latestSlotRecencyMs(beat, BEAT_END_STILL_SLOT) > 0 &&
+      latestSlotRecencyMs(beat, BEAT_END_STILL_SLOT) >
+        latestSlotRecencyMs(sourceBeat, BEAT_END_STILL_SLOT)
     const srcAny = sourceBeat as Record<string, unknown>
     const beatAny = beat as Record<string, unknown>
+    const hydratedStillVersions =
+      beatAny.storyboardImageVersions && srcAny.storyboardImageVersions
+        ? unionMediaVersions(beatAny.storyboardImageVersions, srcAny.storyboardImageVersions)
+        : (promoStillNewer
+            ? beatAny.storyboardImageVersions || srcAny.storyboardImageVersions
+            : srcAny.storyboardImageVersions || beatAny.storyboardImageVersions)
+    const hydratedStartVersions =
+      beatAny.storyboardStartImageVersions && srcAny.storyboardStartImageVersions
+        ? unionMediaVersions(
+            beatAny.storyboardStartImageVersions,
+            srcAny.storyboardStartImageVersions
+          )
+        : (promoStartNewer
+            ? beatAny.storyboardStartImageVersions || srcAny.storyboardStartImageVersions
+            : srcAny.storyboardStartImageVersions || beatAny.storyboardStartImageVersions)
+    const hydratedEndVersions =
+      beatAny.storyboardEndImageVersions && srcAny.storyboardEndImageVersions
+        ? unionMediaVersions(beatAny.storyboardEndImageVersions, srcAny.storyboardEndImageVersions)
+        : (promoEndNewer
+            ? beatAny.storyboardEndImageVersions || srcAny.storyboardEndImageVersions
+            : srcAny.storyboardEndImageVersions || beatAny.storyboardEndImageVersions)
 
     const hydratedLine = beat.kind === 'narration' ? beat.line : sourceBeat.line || beat.line
     const hydratedActionDescription = sourceDirectionNewer
@@ -1410,25 +1458,45 @@ export function hydratePromoSceneWithSharedShots(
       storyboardImageGcsPath: promoStillNewer
         ? beatAny.storyboardImageGcsPath || srcAny.storyboardImageGcsPath
         : srcAny.storyboardImageGcsPath || beatAny.storyboardImageGcsPath,
-      storyboardImageVersions: promoStillNewer
-        ? beatAny.storyboardImageVersions || srcAny.storyboardImageVersions
-        : srcAny.storyboardImageVersions || beatAny.storyboardImageVersions,
+      storyboardImageVersions: hydratedStillVersions,
       storyboardImageVersionId: promoStillNewer
         ? beatAny.storyboardImageVersionId || srcAny.storyboardImageVersionId
         : srcAny.storyboardImageVersionId || beatAny.storyboardImageVersionId,
-      storyboardStartImageUrl:
-        srcAny.storyboardStartImageUrl || beatAny.storyboardStartImageUrl,
-      storyboardStartImageVersions:
-        srcAny.storyboardStartImageVersions || beatAny.storyboardStartImageVersions,
-      storyboardEndImageUrl:
-        sourceBeat.storyboardEndImageUrl || beat.storyboardEndImageUrl,
-      storyboardEndImageVersions:
-        srcAny.storyboardEndImageVersions || beatAny.storyboardEndImageVersions,
+      storyboardStartImageUrl: promoStartNewer
+        ? beatAny.storyboardStartImageUrl || srcAny.storyboardStartImageUrl
+        : srcAny.storyboardStartImageUrl || beatAny.storyboardStartImageUrl,
+      storyboardStartImageTier: promoStartNewer
+        ? beatAny.storyboardStartImageTier || srcAny.storyboardStartImageTier
+        : srcAny.storyboardStartImageTier || beatAny.storyboardStartImageTier,
+      storyboardStartImageGcsPath: promoStartNewer
+        ? beatAny.storyboardStartImageGcsPath || srcAny.storyboardStartImageGcsPath
+        : srcAny.storyboardStartImageGcsPath || beatAny.storyboardStartImageGcsPath,
+      storyboardStartImageVersions: hydratedStartVersions,
+      storyboardStartImageVersionId: promoStartNewer
+        ? beatAny.storyboardStartImageVersionId || srcAny.storyboardStartImageVersionId
+        : srcAny.storyboardStartImageVersionId || beatAny.storyboardStartImageVersionId,
+      storyboardStartImagePrompt: promoStartNewer
+        ? beatAny.storyboardStartImagePrompt || srcAny.storyboardStartImagePrompt
+        : srcAny.storyboardStartImagePrompt || beatAny.storyboardStartImagePrompt,
+      storyboardEndImageUrl: promoEndNewer
+        ? beat.storyboardEndImageUrl || sourceBeat.storyboardEndImageUrl
+        : sourceBeat.storyboardEndImageUrl || beat.storyboardEndImageUrl,
+      storyboardEndImageTier: promoEndNewer
+        ? beatAny.storyboardEndImageTier || srcAny.storyboardEndImageTier
+        : srcAny.storyboardEndImageTier || beatAny.storyboardEndImageTier,
+      storyboardEndImageGcsPath: promoEndNewer
+        ? beatAny.storyboardEndImageGcsPath || srcAny.storyboardEndImageGcsPath
+        : srcAny.storyboardEndImageGcsPath || beatAny.storyboardEndImageGcsPath,
+      storyboardEndImageVersions: hydratedEndVersions,
+      storyboardEndImageVersionId: promoEndNewer
+        ? beatAny.storyboardEndImageVersionId || srcAny.storyboardEndImageVersionId
+        : srcAny.storyboardEndImageVersionId || beatAny.storyboardEndImageVersionId,
       storyboardImagePrompt: promoStillNewer
         ? beat.storyboardImagePrompt || sourceBeat.storyboardImagePrompt
         : sourceBeat.storyboardImagePrompt || beat.storyboardImagePrompt,
-      storyboardEndImagePrompt:
-        sourceBeat.storyboardEndImagePrompt || beat.storyboardEndImagePrompt,
+      storyboardEndImagePrompt: promoEndNewer
+        ? beat.storyboardEndImagePrompt || sourceBeat.storyboardEndImagePrompt
+        : sourceBeat.storyboardEndImagePrompt || beat.storyboardEndImagePrompt,
       storyboardImagePromptDirectionKey: promoStillNewer
         ? beat.storyboardImagePromptDirectionKey || sourceBeat.storyboardImagePromptDirectionKey
         : sourceBeat.storyboardImagePromptDirectionKey || beat.storyboardImagePromptDirectionKey,
@@ -1893,9 +1961,12 @@ export function syncPromoSharedBeatsToSourceScenes<T = Record<string, unknown>>(
       const resolvedImageGcsPath = promoStillWins
         ? promoAny.storyboardImageGcsPath || srcAny.storyboardImageGcsPath
         : srcAny.storyboardImageGcsPath || promoAny.storyboardImageGcsPath
-      const resolvedImageVersions = promoStillWins
-        ? promoAny.storyboardImageVersions || srcAny.storyboardImageVersions
-        : srcAny.storyboardImageVersions || promoAny.storyboardImageVersions
+      const resolvedImageVersions =
+        promoAny.storyboardImageVersions && srcAny.storyboardImageVersions
+          ? unionMediaVersions(promoAny.storyboardImageVersions, srcAny.storyboardImageVersions)
+          : promoStillWins
+            ? promoAny.storyboardImageVersions || srcAny.storyboardImageVersions
+            : srcAny.storyboardImageVersions || promoAny.storyboardImageVersions
       const resolvedImageVersionId = promoStillWins
         ? promoAny.storyboardImageVersionId || srcAny.storyboardImageVersionId
         : srcAny.storyboardImageVersionId || promoAny.storyboardImageVersionId
@@ -1905,6 +1976,63 @@ export function syncPromoSharedBeatsToSourceScenes<T = Record<string, unknown>>(
       const resolvedDirKey = promoStillWins
         ? promoBeat.storyboardImagePromptDirectionKey || srcBeat.storyboardImagePromptDirectionKey
         : srcBeat.storyboardImagePromptDirectionKey || promoBeat.storyboardImagePromptDirectionKey
+
+      const srcStartTs = latestSlotRecencyMs(srcBeat, BEAT_ACTION_START_STILL_SLOT)
+      const promoStartTs = latestSlotRecencyMs(promoBeat, BEAT_ACTION_START_STILL_SLOT)
+      const promoStartWins =
+        (promoStartTs > 0 && promoStartTs > srcStartTs) ||
+        (!srcAny.storyboardStartImageUrl && Boolean(promoAny.storyboardStartImageUrl))
+      const resolvedStartImageUrl = promoStartWins
+        ? promoAny.storyboardStartImageUrl || srcAny.storyboardStartImageUrl
+        : srcAny.storyboardStartImageUrl || promoAny.storyboardStartImageUrl
+      const resolvedStartImagePrompt = promoStartWins
+        ? promoAny.storyboardStartImagePrompt || srcAny.storyboardStartImagePrompt
+        : srcAny.storyboardStartImagePrompt || promoAny.storyboardStartImagePrompt
+      const resolvedStartImageTier = promoStartWins
+        ? promoAny.storyboardStartImageTier || srcAny.storyboardStartImageTier
+        : srcAny.storyboardStartImageTier || promoAny.storyboardStartImageTier
+      const resolvedStartImageGcsPath = promoStartWins
+        ? promoAny.storyboardStartImageGcsPath || srcAny.storyboardStartImageGcsPath
+        : srcAny.storyboardStartImageGcsPath || promoAny.storyboardStartImageGcsPath
+      const resolvedStartImageVersions =
+        promoAny.storyboardStartImageVersions && srcAny.storyboardStartImageVersions
+          ? unionMediaVersions(
+              promoAny.storyboardStartImageVersions,
+              srcAny.storyboardStartImageVersions
+            )
+          : promoStartWins
+            ? promoAny.storyboardStartImageVersions || srcAny.storyboardStartImageVersions
+            : srcAny.storyboardStartImageVersions || promoAny.storyboardStartImageVersions
+      const resolvedStartImageVersionId = promoStartWins
+        ? promoAny.storyboardStartImageVersionId || srcAny.storyboardStartImageVersionId
+        : srcAny.storyboardStartImageVersionId || promoAny.storyboardStartImageVersionId
+
+      const srcEndTs = latestSlotRecencyMs(srcBeat, BEAT_END_STILL_SLOT)
+      const promoEndTs = latestSlotRecencyMs(promoBeat, BEAT_END_STILL_SLOT)
+      const promoEndWins =
+        (promoEndTs > 0 && promoEndTs > srcEndTs) ||
+        (!srcBeat.storyboardEndImageUrl && Boolean(promoBeat.storyboardEndImageUrl))
+      const resolvedEndImageUrl = promoEndWins
+        ? promoBeat.storyboardEndImageUrl || srcBeat.storyboardEndImageUrl
+        : srcBeat.storyboardEndImageUrl || promoBeat.storyboardEndImageUrl
+      const resolvedEndImagePrompt = promoEndWins
+        ? promoBeat.storyboardEndImagePrompt || srcBeat.storyboardEndImagePrompt
+        : srcBeat.storyboardEndImagePrompt || promoBeat.storyboardEndImagePrompt
+      const resolvedEndImageTier = promoEndWins
+        ? promoAny.storyboardEndImageTier || srcAny.storyboardEndImageTier
+        : srcAny.storyboardEndImageTier || promoAny.storyboardEndImageTier
+      const resolvedEndImageGcsPath = promoEndWins
+        ? promoAny.storyboardEndImageGcsPath || srcAny.storyboardEndImageGcsPath
+        : srcAny.storyboardEndImageGcsPath || promoAny.storyboardEndImageGcsPath
+      const resolvedEndImageVersions =
+        promoAny.storyboardEndImageVersions && srcAny.storyboardEndImageVersions
+          ? unionMediaVersions(promoAny.storyboardEndImageVersions, srcAny.storyboardEndImageVersions)
+          : promoEndWins
+            ? promoAny.storyboardEndImageVersions || srcAny.storyboardEndImageVersions
+            : srcAny.storyboardEndImageVersions || promoAny.storyboardEndImageVersions
+      const resolvedEndImageVersionId = promoEndWins
+        ? promoAny.storyboardEndImageVersionId || srcAny.storyboardEndImageVersionId
+        : srcAny.storyboardEndImageVersionId || promoAny.storyboardEndImageVersionId
 
       const resolvedDirection = preferBeatDirection(srcBeat.beatDirection, promoBeat.beatDirection)
       const promoDirectionWins = resolvedDirection === promoBeat.beatDirection
@@ -1940,12 +2068,6 @@ export function syncPromoSharedBeatsToSourceScenes<T = Record<string, unknown>>(
           : promoDirectionWins
             ? promoBeat.voiceDirection || srcBeat.voiceDirection
             : srcBeat.voiceDirection || promoBeat.voiceDirection
-      const resolvedEndImageUrl =
-        promoBeat.storyboardEndImageUrl || srcBeat.storyboardEndImageUrl
-      const resolvedEndImagePrompt =
-        promoBeat.storyboardEndImagePrompt || srcBeat.storyboardEndImagePrompt
-      const resolvedStartImageUrl =
-        promoAny.storyboardStartImageUrl || srcAny.storyboardStartImageUrl
 
       const sourceSceneNumber =
         typeof srcScene.sceneNumber === 'number' && srcScene.sceneNumber > 0
@@ -1969,7 +2091,28 @@ export function syncPromoSharedBeatsToSourceScenes<T = Record<string, unknown>>(
         ...(resolvedVoiceDirection ? { voiceDirection: resolvedVoiceDirection } : {}),
         ...(resolvedEndImageUrl ? { storyboardEndImageUrl: resolvedEndImageUrl } : {}),
         ...(resolvedEndImagePrompt ? { storyboardEndImagePrompt: resolvedEndImagePrompt } : {}),
+        ...(resolvedEndImageTier ? { storyboardEndImageTier: resolvedEndImageTier } : {}),
+        ...(resolvedEndImageGcsPath ? { storyboardEndImageGcsPath: resolvedEndImageGcsPath } : {}),
+        ...(resolvedEndImageVersions
+          ? { storyboardEndImageVersions: resolvedEndImageVersions }
+          : {}),
+        ...(resolvedEndImageVersionId
+          ? { storyboardEndImageVersionId: resolvedEndImageVersionId }
+          : {}),
         ...(resolvedStartImageUrl ? { storyboardStartImageUrl: resolvedStartImageUrl } : {}),
+        ...(resolvedStartImagePrompt
+          ? { storyboardStartImagePrompt: resolvedStartImagePrompt }
+          : {}),
+        ...(resolvedStartImageTier ? { storyboardStartImageTier: resolvedStartImageTier } : {}),
+        ...(resolvedStartImageGcsPath
+          ? { storyboardStartImageGcsPath: resolvedStartImageGcsPath }
+          : {}),
+        ...(resolvedStartImageVersions
+          ? { storyboardStartImageVersions: resolvedStartImageVersions }
+          : {}),
+        ...(resolvedStartImageVersionId
+          ? { storyboardStartImageVersionId: resolvedStartImageVersionId }
+          : {}),
       }
 
       srcBeats[srcBeatIdx] = {

@@ -2107,6 +2107,7 @@ export function clearBeatStoryboardStartImageFromScene(
     storyboardStartImageGcsPath,
     storyboardStartImageTier,
     storyboardStartImageError,
+    storyboardStartImageVersionId,
     ...rest
   } = beats[beatIndex]
   beats[beatIndex] = rest as SceneBeat
@@ -2122,8 +2123,15 @@ export function clearBeatStoryboardEndImageFromScene(
   const beats = getSceneBeats(scene)
   if (!beats[beatIndex]) return scene
 
-  const { storyboardEndImageUrl, storyboardEndImagePrompt, storyboardEndImageGcsPath, storyboardEndImageTier, ...rest } =
-    beats[beatIndex]
+  const {
+    storyboardEndImageUrl,
+    storyboardEndImagePrompt,
+    storyboardEndImageGcsPath,
+    storyboardEndImageTier,
+    storyboardEndImageError,
+    storyboardEndImageVersionId,
+    ...rest
+  } = beats[beatIndex]
   beats[beatIndex] = rest as SceneBeat
 
   return applyBeatsToScene(scene, beats)

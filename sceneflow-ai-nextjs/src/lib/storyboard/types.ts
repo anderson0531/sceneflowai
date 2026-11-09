@@ -297,12 +297,13 @@ export function resolveDesignatedStillUrl(
   versionsValue?: unknown
 ): string | undefined {
   const direct = isValidStoryboardMediaUrl(urlValue) ? String(urlValue).trim() : undefined
+  if (!direct) return undefined
   const versionId = typeof versionIdValue === 'string' ? versionIdValue.trim() : ''
   if (versionId && Array.isArray(versionsValue)) {
     const versions = versionsValue as Array<{ id?: string; url?: string }>
-    const directInHistory =
-      !direct ||
-      versions.some((v) => typeof v?.url === 'string' && v.url.trim() === direct)
+    const directInHistory = versions.some(
+      (v) => typeof v?.url === 'string' && v.url.trim() === direct
+    )
     if (directInHistory) {
       const byId = versions.find((v) => v?.id === versionId && isValidStoryboardMediaUrl(v?.url))
       if (byId?.url) return byId.url.trim()
@@ -318,7 +319,8 @@ function getRawBeatStoryboardUrl(
   const rawBeats = Array.isArray(scene.beats) ? (scene.beats as SceneBeat[]) : []
   const raw =
     (beat.beatId && rawBeats.find((b) => b.beatId === beat.beatId)) ||
-    rawBeats[beat.sequenceIndex ?? -1]
+    rawBeats[beat.sequenceIndex ?? -1] ||
+    beat
   const rawRec = raw as unknown as Record<string, unknown> | undefined
   return resolveDesignatedStillUrl(
     raw?.storyboardImageUrl,
@@ -334,7 +336,8 @@ function getRawBeatStoryboardStartUrl(
   const rawBeats = Array.isArray(scene.beats) ? (scene.beats as SceneBeat[]) : []
   const raw =
     (beat.beatId && rawBeats.find((b) => b.beatId === beat.beatId)) ||
-    rawBeats[beat.sequenceIndex ?? -1]
+    rawBeats[beat.sequenceIndex ?? -1] ||
+    beat
   return resolveDesignatedStillUrl(
     raw?.storyboardStartImageUrl,
     raw?.storyboardStartImageVersionId,
@@ -349,7 +352,8 @@ function getRawBeatStoryboardEndUrl(
   const rawBeats = Array.isArray(scene.beats) ? (scene.beats as SceneBeat[]) : []
   const raw =
     (beat.beatId && rawBeats.find((b) => b.beatId === beat.beatId)) ||
-    rawBeats[beat.sequenceIndex ?? -1]
+    rawBeats[beat.sequenceIndex ?? -1] ||
+    beat
   return resolveDesignatedStillUrl(
     raw?.storyboardEndImageUrl,
     raw?.storyboardEndImageVersionId,

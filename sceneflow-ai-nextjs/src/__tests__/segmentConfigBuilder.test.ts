@@ -219,6 +219,95 @@ describe('resolveF2VFrameUrls', () => {
     }
     expect(resolveEffectiveStartFrameUrl(segment, sceneWithNewerShotStill)).toBe(newShotStill)
   })
+
+  it('prefers a restored earlier Start Frame version over an older Shot Still or stale segment startFrameUrl', () => {
+    const startV1 = 'https://example.com/action-start-v1-1779527366000.jpeg'
+    const shotStill = 'https://example.com/shot-still-1779527367000.jpeg'
+    const startV2 = 'https://example.com/action-start-v2-1779527368000.jpeg'
+    const segment = makeSegment({
+      startFrameUrl: startV2,
+      references: {
+        startFrameUrl: startV2,
+        startFrameVersions: [
+          { id: 'sv_1', url: startV1, createdAt: '2026-06-01T00:00:00.000Z', source: 'generate' },
+          { id: 'sv_2', url: startV2, createdAt: '2026-06-03T00:00:00.000Z', source: 'generate' },
+        ],
+        characterIds: [],
+        sceneRefIds: [],
+        objectRefIds: [],
+      },
+    })
+    const sceneWithRestoredStartV1 = {
+      beats: [
+        {
+          beatId: BEAT_ID,
+          kind: 'action',
+          storyboardImageUrl: shotStill,
+          storyboardImageVersions: [
+            { id: 'still_1', url: shotStill, createdAt: '2026-06-02T00:00:00.000Z', source: 'generate' },
+          ],
+          storyboardStartImageUrl: startV1,
+          storyboardStartImageVersionId: 'sv_1',
+          storyboardStartImageVersions: [
+            {
+              id: 'sv_1',
+              url: startV1,
+              createdAt: '2026-06-01T00:00:00.000Z',
+              selectedAt: '2026-06-04T00:00:00.000Z',
+              source: 'generate',
+            },
+            { id: 'sv_2', url: startV2, createdAt: '2026-06-03T00:00:00.000Z', source: 'generate' },
+          ],
+        },
+      ],
+    }
+    expect(resolveEffectiveStartFrameUrl(segment, sceneWithRestoredStartV1)).toBe(startV1)
+  })
+
+  it('prefers a restored or newer beat End Frame over a stale segment endFrameUrl', () => {
+    const endV1 = 'https://example.com/action-end-v1-1779527366000.jpeg'
+    const endV2 = 'https://example.com/action-end-v2-1779527368000.jpeg'
+    const segment = makeSegment({
+      startFrameUrl: 'https://example.com/action-start.jpeg',
+      endFrameUrl: endV2,
+      references: {
+        startFrameUrl: 'https://example.com/action-start.jpeg',
+        endFrameUrl: endV2,
+        endFrameVersions: [
+          { id: 'ev_1', url: endV1, createdAt: '2026-06-01T00:00:00.000Z', source: 'generate' },
+          { id: 'ev_2', url: endV2, createdAt: '2026-06-03T00:00:00.000Z', source: 'generate' },
+        ],
+        characterIds: [],
+        sceneRefIds: [],
+        objectRefIds: [],
+      },
+    })
+    const sceneWithRestoredEndV1 = {
+      beats: [
+        {
+          beatId: BEAT_ID,
+          kind: 'action',
+          storyboardStartImageUrl: 'https://example.com/action-start.jpeg',
+          storyboardEndImageUrl: endV1,
+          storyboardEndImageVersionId: 'ev_1',
+          storyboardEndImageVersions: [
+            {
+              id: 'ev_1',
+              url: endV1,
+              createdAt: '2026-06-01T00:00:00.000Z',
+              selectedAt: '2026-06-04T00:00:00.000Z',
+              source: 'generate',
+            },
+            { id: 'ev_2', url: endV2, createdAt: '2026-06-03T00:00:00.000Z', source: 'generate' },
+          ],
+        },
+      ],
+    }
+    expect(resolveSegmentFrameUrls(segment, undefined, sceneWithRestoredEndV1).endFrameUrl).toBe(
+      endV1
+    )
+    expect(resolveF2VFrameUrls(segment, sceneWithRestoredEndV1).endFrameUrl).toBe(endV1)
+  })
 })
 
 describe('applyEndFrameUrlToProductionSegments', () => {

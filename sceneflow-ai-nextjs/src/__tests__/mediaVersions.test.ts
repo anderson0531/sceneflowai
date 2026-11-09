@@ -95,7 +95,7 @@ describe('assignStillUrl / mergeStillSlot', () => {
     expect(typeof beat.storyboardImageVersionId).toBe('string')
   })
 
-  it('restore switches current without dropping history', () => {
+  it('restore switches current without dropping history and stamps selectedAt for recency without reordering v1/v2', () => {
     let beat = assignStillUrl({}, BEAT_START_STILL_SLOT, OLD_URL, {
       source: 'generate',
       createdAt: '2026-01-01T00:00:00.000Z',
@@ -107,10 +107,26 @@ describe('assignStillUrl / mergeStillSlot', () => {
     const oldId = (beat.storyboardImageVersions as { id: string; url: string }[]).find(
       (v) => v.url === OLD_URL
     )!.id
-    const restored = assignStillUrl(beat, BEAT_START_STILL_SLOT, OLD_URL, { restoreVersionId: oldId })
+    const restored = assignStillUrl(beat, BEAT_START_STILL_SLOT, OLD_URL, {
+      restoreVersionId: oldId,
+      createdAt: '2026-07-01T00:00:00.000Z',
+    })
     expect(restored.storyboardImageUrl).toBe(OLD_URL)
     expect(restored.storyboardImageVersionId).toBe(oldId)
-    expect((restored.storyboardImageVersions as unknown[]).length).toBe(2)
+    const versions = restored.storyboardImageVersions as Array<{
+      id: string
+      url: string
+      createdAt: string
+      selectedAt?: string
+    }>
+    expect(versions.length).toBe(2)
+    expect(versions.map((v) => v.url)).toEqual([OLD_URL, NEW_URL])
+    expect(versions[0].createdAt).toBe('2026-01-01T00:00:00.000Z')
+    expect(versions[0].selectedAt).toBe('2026-07-01T00:00:00.000Z')
+    // Unioning preserves v1 -> v2 creation order while keeping selectedAt
+    const unioned = unionMediaVersions(versions, versions)
+    expect(unioned.map((v) => v.url)).toEqual([OLD_URL, NEW_URL])
+    expect(unioned[0].selectedAt).toBe('2026-07-01T00:00:00.000Z')
   })
 
   it('unions versions and keeps the newer current on merge', () => {

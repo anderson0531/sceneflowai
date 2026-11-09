@@ -401,9 +401,14 @@ export function resolveBeatVideoReferences(
       !isBeatFrameStale(beat) && stillPromptCoversDarkState
         ? beat.storyboardImageUrl?.trim()
         : undefined
+    const hasExpectedLocationContext = Boolean(
+      locationRef || beatContext.locationName || beat.beatDirection?.startFrame
+    )
     const fallbackEnvUrl =
       explicitStartUrl ||
-      (characterRefEntries.length === 0 && propRefEntries.length === 0 ? nonStaleStillUrl : undefined)
+      (hasExpectedLocationContext && characterRefEntries.length === 0 && propRefEntries.length === 0
+        ? nonStaleStillUrl
+        : undefined)
     if (fallbackEnvUrl) {
       locationRefEntry = buildLocationReferenceEntry(
         {

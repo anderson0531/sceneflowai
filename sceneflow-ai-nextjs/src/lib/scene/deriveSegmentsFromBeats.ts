@@ -40,12 +40,17 @@ import type { DetailedSceneDirection } from '@/types/scene-direction'
 import type { SceneSegment } from '@/components/vision/scene-production/types'
 import type { VideoGenerationMethod } from '@/components/vision/scene-production/types'
 import {
+  asMediaVersions,
   BEAT_ACTION_START_STILL_SLOT,
+  BEAT_END_STILL_SLOT,
   BEAT_START_STILL_SLOT,
+  END_FRAME_STILL_SLOT,
   mediaRecencyMs,
+  resolveDesignatedStillUrl,
   resolveLiveTake,
   START_FRAME_STILL_SLOT,
   stillVersionsOnRow,
+  unionMediaVersions,
   unionRowsById,
 } from '@/lib/storyboard/mediaVersions'
 
@@ -562,8 +567,17 @@ function beatToSegment(
   const generationMethod: VideoGenerationMethod = opts.generationMethod ?? 'REF'
 
   const beatRow = beat as unknown as Record<string, unknown>
-  const actionStartCandidate = beat.storyboardStartImageUrl?.trim() || undefined
-  const shotStillCandidate = beat.storyboardImageUrl?.trim() || undefined
+  const actionStartCandidate = resolveDesignatedStillUrl(
+    beat.storyboardStartImageUrl,
+    beat.storyboardStartImageVersionId,
+    beat.storyboardStartImageVersions
+  )
+  const shotStillCandidate = resolveDesignatedStillUrl(
+    beat.storyboardImageUrl,
+    beat.storyboardImageVersionId,
+    beat.storyboardImageVersions
+  )
+  let chosenStartSlot = BEAT_START_STILL_SLOT
   const preVisStartUrl = (() => {
     if (actionStartCandidate && shotStillCandidate && actionStartCandidate !== shotStillCandidate) {
       const actionStartAt = mediaRecencyMs(
@@ -575,13 +589,33 @@ function beatToSegment(
         stillVersionsOnRow(beatRow, BEAT_START_STILL_SLOT)
       )
       if (shotStillAt > 0 && actionStartAt > 0 && shotStillAt > actionStartAt) {
+        chosenStartSlot = BEAT_START_STILL_SLOT
         return shotStillCandidate
       }
+      chosenStartSlot = BEAT_ACTION_START_STILL_SLOT
       return actionStartCandidate
     }
-    return actionStartCandidate || shotStillCandidate || undefined
+    if (actionStartCandidate) {
+      chosenStartSlot = BEAT_ACTION_START_STILL_SLOT
+      return actionStartCandidate
+    }
+    return shotStillCandidate || undefined
   })()
-  const preVisEndUrl = beat.storyboardEndImageUrl?.trim() || undefined
+  const preVisEndUrl = resolveDesignatedStillUrl(
+    beat.storyboardEndImageUrl,
+    beat.storyboardEndImageVersionId,
+    beat.storyboardEndImageVersions
+  )
+  const explicitStartVersions = asMediaVersions(beatRow[chosenStartSlot.versionsKey])
+  const explicitStartVersionId =
+    typeof beatRow[chosenStartSlot.versionIdKey] === 'string'
+      ? (beatRow[chosenStartSlot.versionIdKey] as string)
+      : undefined
+  const explicitEndVersions = asMediaVersions(beatRow[BEAT_END_STILL_SLOT.versionsKey])
+  const explicitEndVersionId =
+    typeof beatRow[BEAT_END_STILL_SLOT.versionIdKey] === 'string'
+      ? (beatRow[BEAT_END_STILL_SLOT.versionIdKey] as string)
+      : undefined
   const fullyAnchored = !!(preVisStartUrl && preVisEndUrl)
 
   const beatTransition = beat.beatDirection?.transition
@@ -644,6 +678,10 @@ function beatToSegment(
     references: {
       startFrameUrl: preVisStartUrl,
       endFrameUrl: preVisEndUrl,
+      ...(explicitStartVersions.length > 0 ? { startFrameVersions: explicitStartVersions } : {}),
+      ...(explicitStartVersionId ? { startFrameVersionId: explicitStartVersionId } : {}),
+      ...(explicitEndVersions.length > 0 ? { endFrameVersions: explicitEndVersions } : {}),
+      ...(explicitEndVersionId ? { endFrameVersionId: explicitEndVersionId } : {}),
       characterIds: beat.characterId ? [beat.characterId] : [],
       sceneRefIds: [],
       objectRefIds: [],
@@ -980,26 +1018,64 @@ export function mergeDerivedSegmentsWithExisting(
       undefined
     const preservedStart = (() => {
       if (existingStart && derivedStart && existingStart !== derivedStart) {
-        const existingAt = mediaRecencyMs(
-          existingStart,
-          stillVersionsOnRow(
-            match.references as unknown as Record<string, unknown> | undefined,
-            START_FRAME_STILL_SLOT
-          )
+        const existingVersions = stillVersionsOnRow(
+          match.references as unknown as Record<string, unknown> | undefined,
+          START_FRAME_STILL_SLOT
         )
-        const derivedAt = mediaRecencyMs(
-          derivedStart,
-          stillVersionsOnRow(
-            seg.references as unknown as Record<string, unknown> | undefined,
-            START_FRAME_STILL_SLOT
-          )
+        const derivedVersions = stillVersionsOnRow(
+          seg.references as unknown as Record<string, unknown> | undefined,
+          START_FRAME_STILL_SLOT
         )
-        if (derivedAt > 0 && existingAt > 0 && derivedAt > existingAt) {
+        const existingAt = mediaRecencyMs(existingStart, existingVersions)
+        const derivedAt = mediaRecencyMs(derivedStart, derivedVersions)
+        if (derivedAt > 0 && existingAt > 0 && derivedAt >= existingAt) {
+          return derivedStart
+        }
+        if (derivedVersions.some((v) => v.url === existingStart)) {
           return derivedStart
         }
       }
       return existingStart || derivedStart
     })()
+
+    const existingEnd =
+      match.endFrameUrl?.trim() ||
+      match.references?.endFrameUrl?.trim() ||
+      undefined
+    const derivedEnd =
+      seg.endFrameUrl?.trim() ||
+      seg.references?.endFrameUrl?.trim() ||
+      undefined
+    const preservedEnd = (() => {
+      if (existingEnd && derivedEnd && existingEnd !== derivedEnd) {
+        const existingEndVersions = stillVersionsOnRow(
+          match.references as unknown as Record<string, unknown> | undefined,
+          END_FRAME_STILL_SLOT
+        )
+        const derivedEndVersions = stillVersionsOnRow(
+          seg.references as unknown as Record<string, unknown> | undefined,
+          END_FRAME_STILL_SLOT
+        )
+        const existingAt = mediaRecencyMs(existingEnd, existingEndVersions)
+        const derivedAt = mediaRecencyMs(derivedEnd, derivedEndVersions)
+        if (derivedAt > 0 && existingAt > 0 && derivedAt >= existingAt) {
+          return derivedEnd
+        }
+        if (derivedEndVersions.some((v) => v.url === existingEnd)) {
+          return derivedEnd
+        }
+      }
+      return existingEnd || derivedEnd
+    })()
+
+    const mergedStartVersions =
+      match.references?.startFrameVersions && seg.references?.startFrameVersions
+        ? unionMediaVersions(seg.references.startFrameVersions, match.references.startFrameVersions)
+        : match.references?.startFrameVersions ?? seg.references?.startFrameVersions
+    const mergedEndVersions =
+      match.references?.endFrameVersions && seg.references?.endFrameVersions
+        ? unionMediaVersions(seg.references.endFrameVersions, match.references.endFrameVersions)
+        : match.references?.endFrameVersions ?? seg.references?.endFrameVersions
 
     return {
       ...seg,
@@ -1024,24 +1100,28 @@ export function mergeDerivedSegmentsWithExisting(
       ...(preservedStart ? { startFrameUrl: preservedStart } : {}),
       references: {
         ...seg.references,
-        ...(match.references?.startFrameVersions
-          ? { startFrameVersions: match.references.startFrameVersions }
+        ...(mergedStartVersions ? { startFrameVersions: mergedStartVersions } : {}),
+        ...(match.references?.startFrameVersionId || seg.references?.startFrameVersionId
+          ? {
+              startFrameVersionId:
+                preservedStart === derivedStart && seg.references?.startFrameVersionId
+                  ? seg.references.startFrameVersionId
+                  : match.references?.startFrameVersionId ?? seg.references?.startFrameVersionId,
+            }
           : {}),
-        ...(match.references?.startFrameVersionId
-          ? { startFrameVersionId: match.references.startFrameVersionId }
-          : {}),
-        ...(match.references?.endFrameVersions
-          ? { endFrameVersions: match.references.endFrameVersions }
-          : {}),
-        ...(match.references?.endFrameVersionId
-          ? { endFrameVersionId: match.references.endFrameVersionId }
+        ...(mergedEndVersions ? { endFrameVersions: mergedEndVersions } : {}),
+        ...(match.references?.endFrameVersionId || seg.references?.endFrameVersionId
+          ? {
+              endFrameVersionId:
+                preservedEnd === derivedEnd && seg.references?.endFrameVersionId
+                  ? seg.references.endFrameVersionId
+                  : match.references?.endFrameVersionId ?? seg.references?.endFrameVersionId,
+            }
           : {}),
         ...(preservedStart ? { startFrameUrl: preservedStart } : {}),
-        ...(match.references?.endFrameUrl
-          ? { endFrameUrl: match.references.endFrameUrl }
-          : {}),
+        ...(preservedEnd ? { endFrameUrl: preservedEnd } : {}),
       },
-      endFrameUrl: match.endFrameUrl ?? seg.endFrameUrl,
+      endFrameUrl: preservedEnd,
       watermarkCropPercent: match.watermarkCropPercent ?? seg.watermarkCropPercent,
       videoTrimInSec: match.videoTrimInSec ?? seg.videoTrimInSec,
       videoTrimOutSec: match.videoTrimOutSec ?? seg.videoTrimOutSec,

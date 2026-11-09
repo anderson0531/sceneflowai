@@ -77,6 +77,7 @@ import {
   applyEstablishingImageToScene,
   applyExpressStoryboardImageErrorToScene,
   applyExpressStoryboardImageToScene,
+  clearBeatStoryboardEndImageFromScene,
   clearBeatStoryboardStartImageFromScene,
   ensureSceneBeats,
   getSceneBeats,
@@ -3119,9 +3120,10 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         (typeof sceneRec.sceneId === 'string' && sceneRec.sceneId) ||
         `scene-${sceneIndex}`
       if (beat?.beatId) {
+        const hasDedicatedActionStart = Boolean(beat.storyboardStartImageUrl?.trim())
         if (frameRole === 'end') {
           syncBeatEndFrameToProduction(sceneId, beat.beatId, imageUrl)
-        } else {
+        } else if (frameRole === 'action-start' || !hasDedicatedActionStart) {
           syncBeatStartFrameToProduction(sceneId, beat.beatId, imageUrl)
         }
         const promoBeat = beat as PromoSceneBeat
@@ -3134,7 +3136,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
               `scene-${promoBeat.sourceSceneIndex}`
             if (frameRole === 'end') {
               syncBeatEndFrameToProduction(srcSceneId, promoBeat.sourceBeatId, imageUrl)
-            } else {
+            } else if (frameRole === 'action-start' || !hasDedicatedActionStart) {
               syncBeatStartFrameToProduction(srcSceneId, promoBeat.sourceBeatId, imageUrl)
             }
           }
@@ -3151,7 +3153,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
               if (pb.sourceSceneIndex === sceneIndex && pb.sourceBeatId === beat.beatId) {
                 if (frameRole === 'end') {
                   syncBeatEndFrameToProduction(cSceneId, pb.beatId, imageUrl)
-                } else {
+                } else if (frameRole === 'action-start' || !hasDedicatedActionStart) {
                   syncBeatStartFrameToProduction(cSceneId, pb.beatId, imageUrl)
                 }
               }
@@ -3179,23 +3181,18 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       if (rawBeatIdx === undefined) return
 
       const existingBeat = getSceneBeats(scenes[sceneIdx])[rawBeatIdx]
+      const hasShotStill = Boolean(existingBeat?.storyboardImageUrl?.trim())
       const hasDedicatedActionStart = Boolean(existingBeat?.storyboardStartImageUrl?.trim())
 
       const updatedScenes = [...scenes]
-      let nextScene = applyBeatStoryboardImageToScene(
+      const targetFrameRole: 'start' | 'action-start' =
+        hasDedicatedActionStart || hasShotStill ? 'action-start' : 'start'
+      const nextScene = applyBeatStoryboardImageToScene(
         updatedScenes[sceneIdx],
         rawBeatIdx,
         newUrl,
-        { frameRole: 'start', source: 'edit' }
+        { frameRole: targetFrameRole, source: 'edit' }
       )
-      if (hasDedicatedActionStart) {
-        nextScene = applyBeatStoryboardImageToScene(
-          nextScene,
-          rawBeatIdx,
-          newUrl,
-          { frameRole: 'action-start', source: 'edit' }
-        )
-      }
       updatedScenes[sceneIdx] = stampPreVisContentHash(nextScene)
 
       const currentScript = scriptRef.current
@@ -14161,16 +14158,8 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     if (rawBeatIdx === undefined) return
 
     const updatedScenes = script.script.scenes.map((s: any, idx: number) => {
-      if (idx !== sceneIdx || !Array.isArray(s.beats)) return s
-      const beats = [...s.beats]
-      const currentBeat = beats[rawBeatIdx]
-      if (!currentBeat) return s
-      const nextBeat = { ...currentBeat }
-      delete nextBeat.storyboardEndImageUrl
-      delete nextBeat.storyboardEndImagePrompt
-      delete nextBeat.storyboardEndImageError
-      beats[rawBeatIdx] = nextBeat
-      return stampPreVisContentHash({ ...s, beats })
+      if (idx !== sceneIdx) return s
+      return stampPreVisContentHash(clearBeatStoryboardEndImageFromScene(s, rawBeatIdx))
     })
 
     setScript((prev: any) => ({
@@ -14643,9 +14632,14 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           (scene.id as string) ||
           (scene.sceneId as string) ||
           `scene-${sceneIndex}`
+        const updatedBeat =
+          typeof payload.beatIndex === 'number'
+            ? getSceneBeats(updatedScenes[sceneIndex])[payload.beatIndex]
+            : undefined
+        const hasDedicatedActionStart = Boolean(updatedBeat?.storyboardStartImageUrl?.trim())
         if (slot.frameRole === 'end') {
           syncBeatEndFrameToProduction(sceneId, payload.beatId, data.imageUrl)
-        } else {
+        } else if (slot.frameRole === 'action-start' || !hasDedicatedActionStart) {
           syncBeatStartFrameToProduction(sceneId, payload.beatId, data.imageUrl)
         }
       }
@@ -14814,9 +14808,11 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       const saved = await persistVisionScriptScenes(updatedScenes, 'handleUploadBeatFrame')
       if (saved) {
         const sceneId = scene.id || scene.sceneId || `scene-${sceneIndex}`
+        const updatedBeat = getSceneBeats(updatedScenes[sceneIndex])[rawBeatIdx]
+        const hasDedicatedActionStart = Boolean(updatedBeat?.storyboardStartImageUrl?.trim())
         if (frameRole === 'end') {
           syncBeatEndFrameToProduction(sceneId, beatId, uploadedUrl)
-        } else {
+        } else if (frameRole === 'action-start' || !hasDedicatedActionStart) {
           syncBeatStartFrameToProduction(sceneId, beatId, uploadedUrl)
         }
         try {
@@ -14869,9 +14865,11 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     try {
       await persistVisionScriptScenes(updatedScenes, 'handleSaveEditedBeatFrame')
       const sceneId = scene.id || scene.sceneId || `scene-${sceneIndex}`
+      const updatedBeat = getSceneBeats(updatedScenes[sceneIndex])[rawBeatIdx]
+      const hasDedicatedActionStart = Boolean(updatedBeat?.storyboardStartImageUrl?.trim())
       if (frameRole === 'end') {
         syncBeatEndFrameToProduction(sceneId, beatId, newImageUrl)
-      } else {
+      } else if (frameRole === 'action-start' || !hasDedicatedActionStart) {
         syncBeatStartFrameToProduction(sceneId, beatId, newImageUrl)
       }
       try {
@@ -14954,9 +14952,10 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
               : beatRow?.storyboardImageUrl
         if (restoredUrl) {
           const sceneId = scene.id || scene.sceneId || `scene-${sceneIndex}`
+          const hasDedicatedActionStart = Boolean(beatRow?.storyboardStartImageUrl?.trim())
           if (slot.frameRole === 'end') {
             syncBeatEndFrameToProduction(sceneId, slot.beatId, restoredUrl)
-          } else {
+          } else if (slot.frameRole === 'action-start' || !hasDedicatedActionStart) {
             syncBeatStartFrameToProduction(sceneId, slot.beatId, restoredUrl)
           }
         }

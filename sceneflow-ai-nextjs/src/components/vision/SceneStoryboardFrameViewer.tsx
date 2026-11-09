@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useCallback, useEffect, useMemo, useState } from 'react'
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import {
   AlertTriangle,
   Camera,
@@ -37,6 +37,7 @@ import {
   beatFrameSlotKey,
   countStoryboardFrameStats,
   enumerateStoryboardFrameSlots,
+  resolveDesignatedStillUrl,
   sceneHasNoOwnedBeatImages,
   storyboardGeneratingSlotKey,
   type StoryboardFrameSlot,
@@ -47,7 +48,13 @@ import {
   formatPromoSourceLongLabel,
   type PromoSceneBeat,
 } from '@/lib/publish/buildPromoScene'
-import { resolveBeatStillTier } from '@/lib/storyboard/mediaVersions'
+import {
+  BEAT_ACTION_START_STILL_SLOT,
+  BEAT_END_STILL_SLOT,
+  resolveBeatStillTier,
+  resolveCurrentStillTier,
+  stillVersionsOnRow,
+} from '@/lib/storyboard/mediaVersions'
 import {
   isStoredFrameBookendPromptAligned,
   resolveAlignedEndFrameInstruction,
@@ -677,10 +684,23 @@ export function SceneStoryboardFrameViewer({
   )
 
   const sceneKey = scene?.sceneId || scene?.id || `scene-${sceneIndex}`
+  const lastSceneKeyRef = useRef<string | null>(null)
+  const lastPreviewBeatKeyRef = useRef<string | null>(null)
 
   useEffect(() => {
-    setSelectedFrameKey(frameSlots[0]?.key ?? null)
-  }, [sceneKey, frameSlots])
+    if (lastSceneKeyRef.current !== sceneKey) {
+      lastSceneKeyRef.current = sceneKey
+      const matchForSelectedBeat = selectedBeatId
+        ? (frameSlots.find((slot) => slot.beatId === selectedBeatId && slot.frameRole !== 'end') ??
+            frameSlots.find((slot) => slot.beatId === selectedBeatId))
+        : undefined
+      setSelectedFrameKey(matchForSelectedBeat?.key ?? frameSlots[0]?.key ?? null)
+      return
+    }
+    if (!selectedFrameKey || !frameSlots.some((slot) => slot.key === selectedFrameKey)) {
+      setSelectedFrameKey(frameSlots[0]?.key ?? null)
+    }
+  }, [sceneKey, frameSlots, selectedFrameKey, selectedBeatId])
 
   useEffect(() => {
     if (visibleFrameSlots.length === 0) return
@@ -716,6 +736,11 @@ export function SceneStoryboardFrameViewer({
   }, [activeBeatIndex, sceneBeats])
 
   useEffect(() => {
+    const targetBeatKey = previewSlot?.beatId ?? previewSlot?.key ?? null
+    if (lastPreviewBeatKeyRef.current === targetBeatKey) {
+      return
+    }
+    lastPreviewBeatKeyRef.current = targetBeatKey
     if (
       !previewSlot?.ownImageUrl &&
       activeBeat?.storyboardStartImageUrl?.trim()
@@ -723,23 +748,48 @@ export function SceneStoryboardFrameViewer({
       setActiveBeatFrameRole('action-start')
       return
     }
+    if (
+      !previewSlot?.ownImageUrl &&
+      activeBeat?.storyboardEndImageUrl?.trim()
+    ) {
+      setActiveBeatFrameRole('end')
+      return
+    }
     setActiveBeatFrameRole('start')
-  }, [previewSlot?.beatId, previewSlot?.ownImageUrl, activeBeat?.storyboardStartImageUrl])
+  }, [
+    previewSlot?.beatId,
+    previewSlot?.key,
+    previewSlot?.ownImageUrl,
+    activeBeat?.storyboardStartImageUrl,
+    activeBeat?.storyboardEndImageUrl,
+  ])
 
   const prevBeatForContinuity = useMemo(() => {
     if (activeBeatIndex <= 0) return undefined
     const prev = sceneBeats[activeBeatIndex - 1]
-    const prevEndOrStartUrl =
-      prev?.storyboardEndImageUrl?.trim() ||
-      prev?.storyboardStartImageUrl?.trim() ||
-      prev?.storyboardImageUrl?.trim()
+    const prevEndUrl = resolveDesignatedStillUrl(
+      prev?.storyboardEndImageUrl,
+      prev?.storyboardEndImageVersionId,
+      prev?.storyboardEndImageVersions
+    )
+    const prevStartUrl = resolveDesignatedStillUrl(
+      prev?.storyboardStartImageUrl,
+      prev?.storyboardStartImageVersionId,
+      prev?.storyboardStartImageVersions
+    )
+    const prevStillUrl = resolveDesignatedStillUrl(
+      prev?.storyboardImageUrl,
+      prev?.storyboardImageVersionId,
+      prev?.storyboardImageVersions
+    )
+    const prevEndOrStartUrl = prevEndUrl || prevStartUrl || prevStillUrl
     if (!prev || !prevEndOrStartUrl) return undefined
     return {
       beat: prev,
       beatNumber:
         (typeof prev.sequenceIndex === 'number' ? prev.sequenceIndex : activeBeatIndex - 1) + 1,
       imageUrl: prevEndOrStartUrl,
-      hasOwnEndFrame: !!prev.storyboardEndImageUrl?.trim(),
+      hasOwnEndFrame: !!prevEndUrl,
     }
   }, [activeBeatIndex, sceneBeats])
 
@@ -758,7 +808,15 @@ export function SceneStoryboardFrameViewer({
       }
     }
     if (!activeBeat) return null
-    const ownStart = activeBeat.storyboardStartImageUrl?.trim() || undefined
+    const ownStart = resolveDesignatedStillUrl(
+      activeBeat.storyboardStartImageUrl,
+      activeBeat.storyboardStartImageVersionId,
+      activeBeat.storyboardStartImageVersions
+    )
+    const startVersions = stillVersionsOnRow(
+      activeBeat as unknown as Record<string, unknown>,
+      BEAT_ACTION_START_STILL_SLOT
+    )
     const resolvedStartPrompt =
       activeBeat.storyboardStartImagePrompt?.trim() &&
       /^Edit the reference shot still/i.test(activeBeat.storyboardStartImagePrompt.trim())
@@ -771,11 +829,17 @@ export function SceneStoryboardFrameViewer({
       frameRole: 'action-start',
       ownImageUrl: ownStart,
       displayImageUrl: ownStart,
+      imageTier: resolveCurrentStillTier({
+        url: ownStart,
+        versionId: activeBeat.storyboardStartImageVersionId,
+        versions: startVersions,
+        beatTier: activeBeat.storyboardStartImageTier,
+      }),
       isPlaceholder: false,
       isMissing: !ownStart,
       storyboardImagePrompt: resolvedStartPrompt,
       imageError: activeBeat.storyboardStartImageError,
-      imageVersions: activeBeat.storyboardStartImageVersions,
+      imageVersions: startVersions,
       imageVersionId: activeBeat.storyboardStartImageVersionId,
     }
   }, [previewSlot, allFrameSlots, activeBeat, scene])
@@ -795,7 +859,15 @@ export function SceneStoryboardFrameViewer({
       }
     }
     if (!activeBeat) return null
-    const ownEnd = activeBeat.storyboardEndImageUrl?.trim() || undefined
+    const ownEnd = resolveDesignatedStillUrl(
+      activeBeat.storyboardEndImageUrl,
+      activeBeat.storyboardEndImageVersionId,
+      activeBeat.storyboardEndImageVersions
+    )
+    const endVersions = stillVersionsOnRow(
+      activeBeat as unknown as Record<string, unknown>,
+      BEAT_END_STILL_SLOT
+    )
     const resolvedEndPrompt =
       activeBeat.storyboardEndImagePrompt?.trim() &&
       /^Edit the start frame image/i.test(activeBeat.storyboardEndImagePrompt.trim())
@@ -808,11 +880,17 @@ export function SceneStoryboardFrameViewer({
       frameRole: 'end',
       ownImageUrl: ownEnd,
       displayImageUrl: ownEnd,
+      imageTier: resolveCurrentStillTier({
+        url: ownEnd,
+        versionId: activeBeat.storyboardEndImageVersionId,
+        versions: endVersions,
+        beatTier: activeBeat.storyboardEndImageTier,
+      }),
       isPlaceholder: false,
       isMissing: !ownEnd,
       storyboardImagePrompt: resolvedEndPrompt,
       imageError: activeBeat.storyboardEndImageError,
-      imageVersions: activeBeat.storyboardEndImageVersions,
+      imageVersions: endVersions,
       imageVersionId: activeBeat.storyboardEndImageVersionId,
     }
   }, [previewSlot, allFrameSlots, activeBeat, scene])

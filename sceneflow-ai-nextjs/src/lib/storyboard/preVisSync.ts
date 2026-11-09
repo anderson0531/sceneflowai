@@ -176,6 +176,14 @@ function clearBeatStoryboardMedia(beat: SceneBeat): SceneBeat {
   delete next.storyboardImageVersionId
   delete next.storyboardImageReferenceStatus
   delete next.storyboardImageReferenceReason
+  delete next.storyboardStartImageUrl
+  delete next.storyboardStartImageGcsPath
+  delete next.storyboardStartImageTier
+  delete next.storyboardStartImageVersionId
+  delete next.storyboardEndImageUrl
+  delete next.storyboardEndImageGcsPath
+  delete next.storyboardEndImageTier
+  delete next.storyboardEndImageVersionId
   return next
 }
 

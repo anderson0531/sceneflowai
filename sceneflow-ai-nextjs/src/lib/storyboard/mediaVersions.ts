@@ -14,6 +14,8 @@ export interface MediaVersion {
   id: string
   url: string
   createdAt: string
+  /** ISO timestamp when this version was most recently restored/selected as active, without altering creation order. */
+  selectedAt?: string
   source: MediaVersionSource
   prompt?: string
   /** Quality of this still. Absent on rows written before tier was versioned. */
@@ -83,6 +85,27 @@ export function isUsableMediaUrl(value: unknown): value is string {
   return true
 }
 
+export function resolveDesignatedStillUrl(
+  urlValue: unknown,
+  versionIdValue?: unknown,
+  versionsValue?: unknown
+): string | undefined {
+  const direct = isUsableMediaUrl(urlValue) ? urlValue.trim() : undefined
+  if (!direct) return undefined
+  const versionId = typeof versionIdValue === 'string' ? versionIdValue.trim() : ''
+  if (versionId && Array.isArray(versionsValue)) {
+    const versions = versionsValue as Array<{ id?: string; url?: string }>
+    const directInHistory = versions.some(
+      (v) => typeof v?.url === 'string' && v.url.trim() === direct
+    )
+    if (directInHistory) {
+      const byId = versions.find((v) => v?.id === versionId && isUsableMediaUrl(v?.url))
+      if (byId?.url) return byId.url.trim()
+    }
+  }
+  return direct
+}
+
 /**
  * Millisecond timestamp from Vercel blob paths.
  * Matches `1779527367355.jpeg` and suffixed `1779527367355-AbCdEf.jpeg` / `scene-1779527367355-x.png`.
@@ -118,6 +141,9 @@ export function asMediaVersions(value: unknown): MediaVersion[] {
       id: typeof row.id === 'string' && row.id.trim() ? row.id.trim() : newMediaVersionId(),
       url: row.url.trim(),
       createdAt,
+      ...(typeof row.selectedAt === 'string' && row.selectedAt.trim()
+        ? { selectedAt: row.selectedAt.trim() }
+        : {}),
       source,
       ...(row.inferred === true ? { inferred: true } : {}),
       ...(typeof row.prompt === 'string' && row.prompt.trim()
@@ -176,20 +202,24 @@ export function appendMediaVersion(
   const existing = asMediaVersions(list)
   const duplicate = existing.find((version) => version.url === next.url)
   if (duplicate) {
-    return existing.map((version) =>
-      version.url === next.url
-        ? {
-            ...version,
-            createdAt:
-              Date.parse(next.createdAt) > Date.parse(version.createdAt)
-                ? next.createdAt
-                : version.createdAt,
-            inferred: next.inferred ? version.inferred : undefined,
-            ...(next.prompt ? { prompt: next.prompt } : {}),
-            ...(next.tier ? { tier: next.tier } : {}),
-          }
-        : version
-    )
+    return existing.map((version) => {
+      if (version.url !== next.url) return version
+      const nextTime = Date.parse(next.selectedAt || next.createdAt) || 0
+      const prevActiveTime = Date.parse(version.selectedAt || version.createdAt) || 0
+      return {
+        ...version,
+        createdAt:
+          version.inferred && !next.inferred
+            ? next.createdAt
+            : version.createdAt,
+        ...(nextTime > prevActiveTime && !next.inferred
+          ? { selectedAt: next.selectedAt || next.createdAt }
+          : {}),
+        inferred: next.inferred ? version.inferred : undefined,
+        ...(next.prompt ? { prompt: next.prompt } : {}),
+        ...(next.tier ? { tier: next.tier } : {}),
+      }
+    })
   }
   return capVersions([...existing, next])
 }
@@ -205,9 +235,35 @@ export function unionMediaVersions(
       merged.set(version.url, version)
       return
     }
-    const prevTime = Date.parse(prev.createdAt) || 0
-    const nextTime = Date.parse(version.createdAt) || 0
-    merged.set(version.url, nextTime >= prevTime ? { ...prev, ...version, id: prev.id } : prev)
+    const prevTime = Date.parse(prev.selectedAt || prev.createdAt) || 0
+    const nextTime = Date.parse(version.selectedAt || version.createdAt) || 0
+    const mergedSelectedAt =
+      prev.selectedAt && version.selectedAt
+        ? (Date.parse(version.selectedAt) || 0) >= (Date.parse(prev.selectedAt) || 0)
+          ? version.selectedAt
+          : prev.selectedAt
+        : version.selectedAt || prev.selectedAt
+    const earliestCreatedAt =
+      !prev.inferred && prev.createdAt
+        ? prev.createdAt
+        : !version.inferred && version.createdAt
+          ? version.createdAt
+          : prev.createdAt || version.createdAt
+    merged.set(
+      version.url,
+      nextTime >= prevTime
+        ? {
+            ...prev,
+            ...version,
+            id: prev.id,
+            createdAt: earliestCreatedAt,
+            ...(mergedSelectedAt ? { selectedAt: mergedSelectedAt } : {}),
+          }
+        : {
+            ...prev,
+            ...(mergedSelectedAt ? { selectedAt: mergedSelectedAt } : {}),
+          }
+    )
   }
   asMediaVersions(a).forEach(upsert)
   asMediaVersions(b).forEach(upsert)
@@ -370,9 +426,9 @@ export function resolveCurrentMedia(
   }
   return versions.reduce((newest, version) => {
     if (!newest) return version
-    return (Date.parse(version.createdAt) || 0) >= (Date.parse(newest.createdAt) || 0)
-      ? version
-      : newest
+    const versionTime = Date.parse(version.selectedAt || version.createdAt) || 0
+    const newestTime = Date.parse(newest.selectedAt || newest.createdAt) || 0
+    return versionTime >= newestTime ? version : newest
   })
 }
 
@@ -382,9 +438,15 @@ export function createdAtForUrl(
 ): number {
   if (!url || !isUsableMediaUrl(url)) return 0
   const match = asMediaVersions(list).find((version) => version.url === url.trim())
-  if (match && !match.inferred) {
-    const parsed = Date.parse(match.createdAt)
-    if (Number.isFinite(parsed) && parsed > 0) return parsed
+  if (match) {
+    if (match.selectedAt) {
+      const selected = Date.parse(match.selectedAt)
+      if (Number.isFinite(selected) && selected > 0) return selected
+    }
+    if (!match.inferred) {
+      const parsed = Date.parse(match.createdAt)
+      if (Number.isFinite(parsed) && parsed > 0) return parsed
+    }
   }
   return 0
 }
@@ -475,10 +537,19 @@ export function assignStillUrl<T extends Record<string, unknown>>(
   if (options?.restoreVersionId) {
     const restore = versions.find((version) => version.id === options.restoreVersionId)
     if (!restore) return row
+    const selectedAt = options?.createdAt || new Date().toISOString()
+    const updatedVersions = versions.map((version) =>
+      version.id === restore.id
+        ? {
+            ...version,
+            selectedAt,
+          }
+        : version
+    )
     return {
       ...row,
       [spec.urlKey]: restore.url,
-      [spec.versionsKey]: versions,
+      [spec.versionsKey]: updatedVersions,
       [spec.versionIdKey]: restore.id,
     }
   }
